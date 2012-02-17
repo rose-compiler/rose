@@ -3286,6 +3286,67 @@ static void makeSysIncludeList(const Rose_STL_Container<string>& dirs, Rose_STL_
         }
    }
 
+void SgFile::build_CLANG_CommandLine ( vector<string> & inputCommandLine, vector<string> & argv, int fileNameIndex ) {
+    std::vector<std::string> inc_dirs_list;
+    std::vector<std::string> define_list;
+    std::string input_file;
+
+    for (int i = 0; i < argv.size(); i++) {
+        std::string current_arg(argv[i]);
+        if (current_arg.find("-I") == 0) {
+            if (current_arg.length() > 2) {
+                inc_dirs_list.push_back(current_arg.substr(2));
+            }
+            else {
+                i++;
+                if (i < argv.size())
+                    inc_dirs_list.push_back(current_arg);
+                else
+                    break;
+            }
+        }
+        else if (current_arg.find("-D") == 0) {
+            if (current_arg.length() > 2) {
+                define_list.push_back(current_arg.substr(2));
+            }
+            else {
+                i++;
+                if (i < argv.size())
+                    define_list.push_back(current_arg);
+                else
+                    break;
+            }
+        }
+        else if (current_arg.find("-c") == 0) {}
+        else if (current_arg.find("-o") == 0) {
+            if (current_arg.length() == 2) {
+                i++;
+                if (i >= argv.size()) break;
+            }
+        }
+        else if (current_arg.find("-rose") == 0) {}
+        else {
+            input_file = current_arg;
+        }
+    }
+
+    // TODO add system include dirs 
+    // TODO add system define 
+
+    std::vector<std::string>::iterator it_str;
+    for (it_str = define_list.begin(); it_str != define_list.end(); it_str++)
+        inputCommandLine.push_back("-D" + *it_str);
+    for (it_str = inc_dirs_list.begin(); it_str != inc_dirs_list.end(); it_str++)
+        inputCommandLine.push_back("-I" + StringUtility::getAbsolutePathFromRelativePath(*it_str));
+
+    std::string input_file_path = StringUtility::getPathFromFileName(input_file);
+    input_file = StringUtility::stripPathFromFileName(input_file);
+    if (input_file_path == "" ) input_file_path = "./";
+    input_file_path = StringUtility::getAbsolutePathFromRelativePath(input_file_path);
+    input_file = input_file_path + "/" + input_file;
+    inputCommandLine.push_back(input_file);
+
+}
 
 void
 SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string> & argv, int fileNameIndex )
@@ -4529,9 +4590,9 @@ SgProject::parse()
         {
           SgFile *file = *fIterator;
           ROSE_ASSERT(file != NULL);
-#ifndef ROSE_USE_CLANG_FRONTEND
+//#ifndef ROSE_USE_CLANG_FRONTEND
           file->secondaryPassOverSourceFile();
-#endif
+//#endif
         }
 
      if ( get_verbose() > 0 )
@@ -5160,8 +5221,7 @@ SgFile::callFrontEnd()
   #ifndef ROSE_USE_CLANG_FRONTEND
      build_EDG_CommandLine (inputCommandLine,localCopy_argv,fileNameIndex );
   #else
-     // TODO build_CLANG_CommandLine (inputCommandLine,localCopy_argv,fileNameIndex );
-     build_EDG_CommandLine (inputCommandLine,localCopy_argv,fileNameIndex );
+     build_CLANG_CommandLine (inputCommandLine,localCopy_argv,fileNameIndex );
   #endif
   // printf ("DONE: Inside of SgFile::callFrontEnd(): Calling build_EDG_CommandLine (fileNameIndex = %d) \n",fileNameIndex);
 

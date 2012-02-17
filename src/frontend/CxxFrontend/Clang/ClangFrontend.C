@@ -3,14 +3,149 @@
 
 #include "ClangFrontend-private.h"
 
-int clang_main(int argc, char* argv[], SgSourceFile& sageFile) {
-    std::vector<std::string> args;
-    for (int i = 0; i < argc; i++)
-        args.push_back(std::string(argv[i]));
+#define DEBUG_VISITOR 1
 
-    ClangToSageTranslator translator(args);
+int clang_main(int argc, char ** argv, SgSourceFile& sageFile) {
+  // 0 - Analyse Cmd Line
+
+    std::vector<std::string> inc_dirs_list;
+    std::vector<std::string> define_list;
+    std::string input_file;
+
+    for (int i = 0; i < argc; i++) {
+        std::string current_arg(argv[i]);
+        if (current_arg.find("-I") == 0) {
+            if (current_arg.length() > 2) {
+                inc_dirs_list.push_back(current_arg.substr(2));
+            }
+            else {
+                i++;
+                if (i < argc)
+                    inc_dirs_list.push_back(current_arg);
+                else
+                    break;
+            }
+        }
+        else if (current_arg.find("-D") == 0) {
+            if (current_arg.length() > 2) {
+                define_list.push_back(current_arg.substr(2));
+            }
+            else {
+                i++;
+                if (i < argc)
+                    define_list.push_back(current_arg);
+                else
+                    break;
+            }
+        }
+        else if (current_arg.find("-c") == 0) {}
+        else if (current_arg.find("-o") == 0) {
+            if (current_arg.length() == 2) {
+                i++;
+                if (i >= argc) break;
+            }
+        }
+        else {
+            std::cerr << "argv[" << i << "] = " << current_arg << " is neither define or include dir. Use it as input file."  << std::endl;
+            input_file = current_arg;
+        }
+    }
+
+  // 1 - Create a compiler instance
+
+    clang::CompilerInstance * compiler_instance = new clang::CompilerInstance();
+
+  // 2 - Fill the compiler instance
+
+    clang::TextDiagnosticPrinter * diag_printer = new clang::TextDiagnosticPrinter(llvm::errs(), clang::DiagnosticOptions());
+    compiler_instance->createDiagnostics(argc, argv, diag_printer, true, false);
+
+    clang::TargetOptions target_options;
+    target_options.Triple = llvm::sys::getDefaultTargetTriple();
+    clang::TargetInfo * target_info = clang::TargetInfo::CreateTargetInfo(compiler_instance->getDiagnostics(), target_options);
+    compiler_instance->setTarget(target_info);
+
+    compiler_instance->createFileManager();
+    compiler_instance->createSourceManager(compiler_instance->getFileManager());
+
+    unsigned cnt = define_list.size() + inc_dirs_list.size();
+    char ** args = new char*[cnt];
+    std::vector<std::string>::iterator it_str;
+    unsigned i = 0;
+    for (it_str = define_list.begin(); it_str != define_list.end(); it_str++) {
+        args[i] = new char[it_str->size() + 3];
+        args[i][0] = '-';
+        args[i][0] = 'D';
+        strcpy(&(args[i][2]), it_str->c_str());
+        i++;
+    }
+    for (it_str = inc_dirs_list.begin(); it_str != inc_dirs_list.end(); it_str++) {
+        args[i] = new char[it_str->size() + 3];
+        args[i][0] = '-';
+        args[i][1] = 'I';
+        strcpy(&(args[i][2]), it_str->c_str());
+        i++;
+    }
+    clang::CompilerInvocation::CreateFromArgs(compiler_instance->getInvocation(), args, &(args[cnt]), compiler_instance->getDiagnostics());
+
+//    clang::PreprocessorOptions & preproc_opts = compiler_instance->getPreprocessorOpts();
+    // TODO sys dir
+    // ?TODO? fill 'preproc_opts' from 'define_list'
+
+//    clang::HeaderSearchOptions & header_opts = compiler_instance->getHeaderSearchOpts();
+    // ?TODO? add include dirs 'inc_dirs_list'
+/*
+    clang::LangOptions & lang_opts = compiler_instance->getLangOpts();
+    size_t last_period = input_file.find_last_of(".");
+    std::string extention(input_file.substr(last_period + 1));
+
+    if (extention == "c") {
+    }
+    else if (extention == "C" || extention == "cxx" || extention == "cpp") {
+        lang_opts.CPlusPlus = 1;
+    }
+    else if (extention == "objc") {
+        ROSE_ASSERT(!"Objective-C is not supported by ROSE Compiler.");
+    }
+    else if (extention == "cu") {
+        lang_opts.CUDA = 1;
+        lang_opts.CPlusPlus = 1;
+    }
+    else if (extention == "ocl" || extention == "cl") {
+        lang_opts.OpenCL = 1;
+    }
+*/
+
+    const clang::FileEntry * input_file_entry = compiler_instance->getFileManager().getFile(input_file);
+    compiler_instance->getSourceManager().createMainFileID(input_file_entry);
+
+    compiler_instance->createPreprocessor();
+
+    compiler_instance->createASTContext();
+
+
+    ClangToSageTranslator translator(compiler_instance);
+    compiler_instance->setASTConsumer(&translator);   
+
+    compiler_instance->createSema(clang::TU_Complete, NULL);
+
+    ROSE_ASSERT (compiler_instance->hasDiagnostics());
+    ROSE_ASSERT (compiler_instance->hasTarget());
+    ROSE_ASSERT (compiler_instance->hasFileManager());
+    ROSE_ASSERT (compiler_instance->hasSourceManager());
+    ROSE_ASSERT (compiler_instance->hasPreprocessor());
+    ROSE_ASSERT (compiler_instance->hasASTContext());
+    ROSE_ASSERT (compiler_instance->hasSema());
+
+  // 3 - Translate
+
+//    compiler_instance->getDiagnosticClient().BeginSourceFile(compiler_instance->getLangOpts(), &(compiler_instance->getPreprocessor()));
+    clang::ParseAST(compiler_instance->getPreprocessor(), &translator, compiler_instance->getASTContext());
+//    compiler_instance->getDiagnosticClient().EndSourceFile();
 
     SgGlobal * global_scope = translator.getGlobalScope();
+
+  // 4 - Attach to the file
 
     if (sageFile.get_globalScope() != NULL) SageInterface::deleteAST(sageFile.get_globalScope());
 
@@ -18,12 +153,18 @@ int clang_main(int argc, char* argv[], SgSourceFile& sageFile) {
 
     global_scope->set_parent(&sageFile);
 
-    Sg_File_Info * start_fi = new Sg_File_Info(args[args.size()-1], 0, 0);
-    Sg_File_Info * end_fi   = new Sg_File_Info(args[args.size()-1], 0, 0);
+    size_t last_slash = input_file.find_last_of("/");
+    //std::string file_name(input_file.substr(last_slash + 1));
+    std::string file_name(input_file);
+
+    Sg_File_Info * start_fi = new Sg_File_Info(file_name, 0, 0);
+    Sg_File_Info * end_fi   = new Sg_File_Info(file_name, 0, 0);
 
     global_scope->set_startOfConstruct(start_fi);
 
     global_scope->set_endOfConstruct(end_fi);
+
+  // 5 - Finish the AST (fixup phase)
 
     finishSageAST(translator);
 
@@ -52,131 +193,18 @@ void finishSageAST(ClangToSageTranslator & translator) {
 
 SgGlobal * ClangToSageTranslator::getGlobalScope() { return p_global_scope; }
 
-ClangToSageTranslator::ClangToSageTranslator(std::vector<std::string> & arg) :
+ClangToSageTranslator::ClangToSageTranslator(clang::CompilerInstance * compiler_instance) :
     clang::ASTConsumer(),
     p_decl_translation_map(),
     p_stmt_translation_map(),
     p_type_translation_map(),
     p_global_scope(NULL),
-    p_diagnostic_engine(NULL),
-    p_file_manager(NULL),
-    p_diagnostic(NULL),
-    p_source_manager(NULL),
-    p_header_search(NULL),
-    p_compiler_instance(NULL),
-    p_sage_preprocessor_recorder(NULL),
-    p_preprocessor(NULL)
-{
-  /* 1 - Analyse command line */
-
-    // TODO !!!!!!!!!!!!!!!!!!
-
-    /* Input file */
-    std::string input = arg[arg.size() - 1];
-
-    /* Language detection */
-    Language language = unknown;
-    size_t last_period = input.find_last_of(".");
-    std::string extention(input.substr(last_period + 1));
-
-    if (extention == "c") {
-        language = C;
-    }
-    else if (extention == "C" || extention == "cxx" || extention == "cpp") {
-        language = CPLUSPLUS;
-    }
-    else if (extention == "objc") {
-        language = OBJC;
-    }
-    else if (extention == "cu") {
-        language = CUDA;
-    }
-    else if (extention == "ocl" || extention == "cl") {
-        language = OPENCL;
-    }
-
-  /* 2 - Call the parser... */
-
-    clang::FileSystemOptions file_options;
-
-    p_file_manager = new clang::FileManager(file_options);
-
-    clang::DiagnosticIDs * diag_id = new clang::DiagnosticIDs();
-
-    const llvm::IntrusiveRefCntPtr<clang::DiagnosticIDs> diag_id_ptr(diag_id);
-
-    llvm::raw_os_ostream output_stream(std::cout);
-
-    clang::DiagnosticOptions diag_opts;
-
-    clang::TextDiagnosticPrinter * diag_printer = new clang::TextDiagnosticPrinter(output_stream, diag_opts);
-
-    p_diagnostic_engine = new clang::DiagnosticsEngine(diag_id_ptr, diag_printer);
-
-    p_diagnostic = new clang::Diagnostic(p_diagnostic_engine);
-
-    p_source_manager = new clang::SourceManager(*p_diagnostic_engine, *p_file_manager);
-
-    clang::LangOptions lang_options;
-        switch (language) {
-            case C: break;
-            case CPLUSPLUS: lang_options.CPlusPlus = 1; break;
-            case CUDA:
-                lang_options.CUDA = 1;
-                lang_options.CPlusPlus = 1;
-                break;
-            case OPENCL:    lang_options.OpenCL = 1; break;
-            default:
-                std::cerr << "Unsupported language..." << std::endl;
-                exit(-1);
-        }
-
-    p_header_search = new clang::HeaderSearch(*p_file_manager, *p_diagnostic_engine, lang_options);
-
-    clang::TargetOptions target_options;
-        target_options.Triple = llvm::sys::getDefaultTargetTriple();
-        target_options.ABI = "";
-        target_options.CPU = "";
-        target_options.Features.clear();
-
-    const clang::TargetInfo * target_info = clang::TargetInfo::CreateTargetInfo(*p_diagnostic_engine, target_options);
-
-    p_compiler_instance = new clang::CompilerInstance();
-
-    p_sage_preprocessor_recorder = new SagePreprocessorRecord(p_source_manager);
-    p_preprocessor = new clang::Preprocessor(*p_diagnostic_engine, lang_options, target_info, *p_source_manager, *p_header_search, *p_compiler_instance);
-        p_preprocessor->addPPCallbacks(p_sage_preprocessor_recorder);
-
-    clang::IdentifierTable identifier_table(lang_options);
-
-    clang::SelectorTable selector_table;
-
-    clang::Builtin::Context builtin_context;
-
-    clang::ASTContext context(
-        lang_options,
-        *p_source_manager,
-        target_info,
-        identifier_table,
-        selector_table,
-        builtin_context,
-        0
-    );
-
-    const clang::FileEntry * input_file_id = p_file_manager->getFile(input);
-
-    p_source_manager->createMainFileID(input_file_id);
-
-    clang::ParseAST(*p_preprocessor, this, context, false);
-}
-
+    p_compiler_instance(compiler_instance),
+    p_sage_preprocessor_recorder(new SagePreprocessorRecord(&(p_compiler_instance->getSourceManager())))
+{}
 
 ClangToSageTranslator::~ClangToSageTranslator() {
-    delete p_preprocessor;
-    delete p_header_search;
-    delete p_source_manager;
-    delete p_diagnostic;
-    delete p_file_manager;
+    delete p_sage_preprocessor_recorder;
 }
 
 /* (protected) Helper methods */
@@ -205,23 +233,39 @@ void ClangToSageTranslator::applySourceRange(SgNode * node, clang::SourceRange s
     clang::SourceLocation begin  = source_range.getBegin();
     clang::SourceLocation end    = source_range.getEnd();
 
-    clang::FileID file_begin = p_source_manager->getFileID(begin);
-    clang::FileID file_end   = p_source_manager->getFileID(end);
+    clang::FileID file_begin = p_compiler_instance->getSourceManager().getFileID(begin);
+    clang::FileID file_end   = p_compiler_instance->getSourceManager().getFileID(end);
 
     bool inv_begin_line;
     bool inv_begin_col;
     bool inv_end_line;
     bool inv_end_col;
 
-    unsigned ls = p_source_manager->getSpellingLineNumber(begin, &inv_begin_line);
-    unsigned cs = p_source_manager->getSpellingColumnNumber(begin, &inv_begin_col);
-    unsigned le = p_source_manager->getSpellingLineNumber(end, &inv_end_line);
-    unsigned ce = p_source_manager->getSpellingColumnNumber(end, &inv_end_col);
+    unsigned ls = p_compiler_instance->getSourceManager().getSpellingLineNumber(begin, &inv_begin_line);
+    unsigned cs = p_compiler_instance->getSourceManager().getSpellingColumnNumber(begin, &inv_begin_col);
+    unsigned le = p_compiler_instance->getSourceManager().getSpellingLineNumber(end, &inv_end_line);
+    unsigned ce = p_compiler_instance->getSourceManager().getSpellingColumnNumber(end, &inv_end_col);
 
-    std::string file = p_source_manager->getFileEntryForID(file_begin)->getName();
+    Sg_File_Info * start_fi;
+    Sg_File_Info * end_fi;
 
-    Sg_File_Info * start_fi = new Sg_File_Info(file, ls, cs);
-    Sg_File_Info * end_fi   = new Sg_File_Info(file, le, ce);
+    if (file_begin.isInvalid()) {
+        std::string file = p_compiler_instance->getSourceManager().getFileEntryForID(file_begin)->getName();
+
+        start_fi = new Sg_File_Info(file, ls, cs);
+        end_fi   = new Sg_File_Info(file, le, ce);
+
+        std::cerr << "Create FI for node in " << file << std::endl;
+    }
+    else {
+        start_fi = Sg_File_Info::generateDefaultFileInfoForCompilerGeneratedNode();
+        end_fi   = Sg_File_Info::generateDefaultFileInfoForCompilerGeneratedNode();
+
+        start_fi->setCompilerGenerated();
+        end_fi->setCompilerGenerated();
+
+        std::cerr << "Create FI for compiler generated node" << std::endl;
+    }
 
     if (located_node != NULL) {
         located_node->set_startOfConstruct(start_fi);
@@ -529,7 +573,10 @@ SgNode * ClangToSageTranslator::TraverseForDeclContext(clang::DeclContext * decl
 /* Visit Declarations */
 /**********************/
 
-bool ClangToSageTranslator::VisitDecl(clang::Decl * decl, SgNode ** node) { 
+bool ClangToSageTranslator::VisitDecl(clang::Decl * decl, SgNode ** node) {
+#if DEBUG_VISITOR
+    std::cerr << "ClangToSageTranslator::VisitDecl" << std::endl;
+#endif    
     if (*node == NULL) {
         std::cerr << "Runtime error: No Sage node associated with the declaration..." << std::endl;
         return false;
@@ -544,6 +591,9 @@ bool ClangToSageTranslator::VisitDecl(clang::Decl * decl, SgNode ** node) {
 }
 
 bool ClangToSageTranslator::VisitRecordDecl(clang::RecordDecl * record_decl, SgNode ** node) {
+#if DEBUG_VISITOR
+    std::cerr << "ClangToSageTranslator::VisitRecordDecl" << std::endl;
+#endif
     bool res = true;
 
     SgClassDeclaration * sg_class_decl = NULL;
@@ -639,6 +689,9 @@ bool ClangToSageTranslator::VisitRecordDecl(clang::RecordDecl * record_decl, SgN
 }
 
 bool ClangToSageTranslator::VisitTypedefDecl(clang::TypedefDecl * typedef_decl, SgNode ** node) {
+#if DEBUG_VISITOR
+    std::cerr << "ClangToSageTranslator::VisitTypedefDecl" << std::endl;
+#endif
     bool res = true;
 
     SgName name(typedef_decl->getNameAsString());
@@ -656,6 +709,9 @@ bool ClangToSageTranslator::VisitTypedefDecl(clang::TypedefDecl * typedef_decl, 
 }
 
 bool ClangToSageTranslator::VisitFieldDecl(clang::FieldDecl * field_decl, SgNode ** node) {
+#if DEBUG_VISITOR
+    std::cerr << "ClangToSageTranslator::VisitFieldDecl" << std::endl;
+#endif  
     bool res = true;
     
     SgName name(field_decl->getNameAsString());
@@ -689,6 +745,9 @@ bool ClangToSageTranslator::VisitFieldDecl(clang::FieldDecl * field_decl, SgNode
 }
 
 bool ClangToSageTranslator::VisitFunctionDecl(clang::FunctionDecl * function_decl, SgNode ** node) {
+#if DEBUG_VISITOR
+    std::cerr << "ClangToSageTranslator::VisitFunctionDecl" << std::endl;
+#endif
     bool res = true;
 
     // FIXME: There is something weird here when try to Traverse a function reference in a recursive function (when first Traverse is not complete)
@@ -827,6 +886,9 @@ bool ClangToSageTranslator::VisitFunctionDecl(clang::FunctionDecl * function_dec
 }
 
 bool ClangToSageTranslator::VisitVarDecl(clang::VarDecl * var_decl, SgNode ** node) {
+#if DEBUG_VISITOR
+    std::cerr << "ClangToSageTranslator::VisitVarDecl" << std::endl;
+#endif
      bool res = true;
 
   // Create the SAGE node: SgVariableDeclaration
@@ -867,6 +929,9 @@ bool ClangToSageTranslator::VisitVarDecl(clang::VarDecl * var_decl, SgNode ** no
 }
 
 bool ClangToSageTranslator::VisitParmVarDecl(clang::ParmVarDecl * param_var_decl, SgNode ** node) {
+#if DEBUG_VISITOR
+    std::cerr << "ClangToSageTranslator::VisitParmVarDecl" << std::endl;
+#endif
     bool res = true;
 
     SgName name(param_var_decl->getNameAsString());
@@ -904,6 +969,9 @@ bool ClangToSageTranslator::VisitParmVarDecl(clang::ParmVarDecl * param_var_decl
 }
 
 bool ClangToSageTranslator::VisitTranslationUnitDecl(clang::TranslationUnitDecl * translation_unit_decl, SgNode ** node) {
+#if DEBUG_VISITOR
+    std::cerr << "ClangToSageTranslator::VisitTranslationUnitDecl" << std::endl;
+#endif
     if (*node != NULL) {
         std::cerr << "Runtime error: The TranslationUnitDecl is already associated to a SAGE node." << std::endl;
         return false;
@@ -1635,7 +1703,7 @@ bool ClangToSageTranslator::VisitBuiltinType(clang::BuiltinType * builtin_type, 
         case clang::BuiltinType::BoundMember:
         case clang::BuiltinType::UnknownAny:
         default:
-            std::cerr << "Unknown builtin type: " << builtin_type->getName(p_preprocessor->getLangOptions()) << " !" << std::endl;
+            std::cerr << "Unknown builtin type: " << builtin_type->getName(p_compiler_instance->getLangOpts()) << " !" << std::endl;
             exit(-1);
     }
 
@@ -1781,7 +1849,45 @@ bool ClangToSageTranslator::preprocessor_pop() {
     return p_sage_preprocessor_recorder->pop();
 }
 
-// 
+// struct NextPreprocessorToInsert
+
+NextPreprocessorToInsert::NextPreprocessorToInsert(ClangToSageTranslator & translator_) :
+  cursor(NULL),
+  candidat(NULL),
+  next_to_insert(NULL),
+  translator(translator_)
+{}
+
+NextPreprocessorToInsert * NextPreprocessorToInsert::next() {
+    if (!translator.preprocessor_pop()) return NULL;
+
+    NextPreprocessorToInsert * res = new NextPreprocessorToInsert(translator);
+
+    std::pair<Sg_File_Info *, PreprocessingInfo *> next = translator.preprocessor_top();
+    res->cursor = next.first;
+    res->next_to_insert = next.second;
+    res->candidat = candidat;
+}
+
+// class
+
+NextPreprocessorToInsert * PreprocessorInserter::evaluateInheritedAttribute(SgNode * astNode, NextPreprocessorToInsert * inheritedValue) {
+    SgLocatedNode * loc_node = isSgLocatedNode(astNode);
+    if (loc_node == NULL) return inheritedValue;
+
+    Sg_File_Info * current_pos = loc_node->get_startOfConstruct();
+
+    bool passed_cursor = *current_pos > *(inheritedValue->cursor);
+
+    if (passed_cursor) {
+        // TODO insert on inheritedValue->candidat
+        return inheritedValue->next();
+    }
+
+    
+}
+
+// class SagePreprocessorRecord
 
 SagePreprocessorRecord::SagePreprocessorRecord(clang::SourceManager * source_manager) :
   p_source_manager(source_manager),

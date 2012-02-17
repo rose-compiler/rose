@@ -4810,6 +4810,9 @@ HEADER_APPLICATION_FILE_START
        // BP : 11/13/2001, modified to take compiler name
           void build_EDG_CommandLine ( std::vector<std::string> & inputCommandLine, std::vector<std::string>& argv, int fileNameIndex );
 
+       // TV: 02/15/12, CLANG also need a command line builder
+          void build_CLANG_CommandLine ( std::vector<std::string> & inputCommandLine, std::vector<std::string>& argv, int fileNameIndex );
+
       //! Move this function from ROSE into the AST restructuring tool
       //  friend void pdfPrintAbstractSyntaxTreeEDG  ( SgFile *file, bool writeOutHeaderFiles = false );
       //  friend void pdfPrintAbstractSyntaxTreeEDG  ( SgFile *file );

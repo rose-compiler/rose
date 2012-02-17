@@ -80,21 +80,15 @@ class ClangToSageTranslator : public clang::ASTConsumer {
         std::map<const clang::Type *, SgNode *> p_type_translation_map;
         SgGlobal * p_global_scope;
 
-        clang::DiagnosticsEngine * p_diagnostic_engine;
-        clang::FileManager       * p_file_manager;
-        clang::Diagnostic        * p_diagnostic;
-        clang::SourceManager     * p_source_manager;
-        clang::HeaderSearch      * p_header_search;
         clang::CompilerInstance  * p_compiler_instance;
         SagePreprocessorRecord   * p_sage_preprocessor_recorder;
-        clang::Preprocessor      * p_preprocessor;
 
         void applySourceRange(SgNode * node, clang::SourceRange source_range);
 
         SgSymbol * GetSymbolFromSymbolTable(clang::NamedDecl * decl);
 
     public:
-        ClangToSageTranslator(std::vector<std::string> & arg);
+        ClangToSageTranslator(clang::CompilerInstance * compiler_instance);
 
         virtual ~ClangToSageTranslator();
 
