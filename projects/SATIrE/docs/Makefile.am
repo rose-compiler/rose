@@ -38,8 +38,9 @@ clean-local: clean-termite
 		rm -rf `basename $$f .pdf`.build ; \
 	done
 	rm -f $(PDFS)
+	rm -f SATIrE-@PACKAGE_VERSION@-manual.pdf
 
-# pig-doc is not using bibtex, thus we make these to speps explicit here
+# pig-doc is not using bibtex, thus we make these to steps explicit here
 # without invoking bibtex (you cannot invoke bibtex without bibliography)
 pig-doc.dvi: pig-doc.tex # We can't use pdlatex to include *.ps graphics
 	latex pig-doc < /dev/null || (rm -f $@ && false)

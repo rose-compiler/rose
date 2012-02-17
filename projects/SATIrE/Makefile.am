@@ -28,12 +28,6 @@ endif
 docs:
 	$(MAKE) -C docs docs
 
-install-data-local:
-	$(MAKE) -C docs install
-
-uninstall-local:
-	$(MAKE) -C docs uninstall
-
 # clang connection is currently not maintained and may be discontinued
 clang: $(top_srcdir)/src/termite/clang/clang-termite.patch $(top_builddir)/clang/build/Makefile
 	$(MAKE) -C $(top_builddir)/clang/build
