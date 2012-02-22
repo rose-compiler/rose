@@ -1,4 +1,5 @@
 #include "rose.h"
+#include "rose_getline.h"
 
 int
 main(int argc, char *argv[])
@@ -17,7 +18,7 @@ main(int argc, char *argv[])
     char *line = NULL;
     size_t linesz = 0;
     ssize_t n;
-    while ((n=getline(&line, &linesz, f))>0) {
+    while ((n=rose_getline(&line, &linesz, f))>0) {
         while (n>0 && isspace(line[n-1]))
             line[--n]='\0';
         char *basename = strrchr(line, '/');
