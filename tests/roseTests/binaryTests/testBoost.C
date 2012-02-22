@@ -12,6 +12,8 @@ main(int argc, char *argv[])
     // What version of boost libraries was I compiled with?  We want to check every boost library individually, so we look at
     // our memory map rather than calling a particular boost library function.
     FILE *f = fopen("/proc/self/maps", "r");
+    if (!f)
+        return 0;
     char *line = NULL;
     size_t linesz = 0;
     ssize_t n;
