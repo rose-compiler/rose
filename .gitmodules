@@ -1,3 +1,6 @@
 [submodule "src/frontend/CxxFrontend/EDG"]
 	path = src/frontend/CxxFrontend/EDG
 	url = ../ROSE-EDG.git
+[submodule "projects/vulnerabilitySeeding"]
+	path = projects/vulnerabilitySeeding
+	url = ../vulnerabilitySeeding.git
