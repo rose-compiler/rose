@@ -1172,8 +1172,10 @@ const SgExpression* cfgUtils::unwrapCasts(const SgExpression* e)
 }
 
 // returns the DataflowNode that represents that start of the CFG of the given function's body
-DataflowNode cfgUtils::getFuncStartCFG(SgFunctionDefinition* func)
+DataflowNode cfgUtils::getFuncStartCFG(SgFunctionDefinition* func, bool (*f) (CFGNode) /* = defaultFilter */)
 {
+  return DataflowNode (func->cfgForBeginning(), f);
+#if 0  
   DataflowNode funcCFGStart = (DataflowNode)func->cfgForBeginning();
   for(VirtualCFG::iterator it(funcCFGStart); it!=VirtualCFG::iterator::end(); it++)
   {
@@ -1193,12 +1195,14 @@ DataflowNode cfgUtils::getFuncStartCFG(SgFunctionDefinition* func)
      ROSE_ASSERT(bodyStart.outEdges().size());
 
      return (*(bodyStart.outEdges().begin())).target();*/
+#endif     
 }
 
 // returns the DataflowNode that represents that end of the CFG of the given function's body
-DataflowNode cfgUtils::getFuncEndCFG(SgFunctionDefinition* func)
+DataflowNode cfgUtils::getFuncEndCFG(SgFunctionDefinition* func, bool (*f) (CFGNode) /* = defaultFilter */)
 {
-  return (DataflowNode) func->cfgForEnd();
+  //return (DataflowNode) func->cfgForEnd();
+  return DataflowNode (func->cfgForEnd(),f);
 }
 
 // returns a string containing a unique name that is not otherwise used inside this project

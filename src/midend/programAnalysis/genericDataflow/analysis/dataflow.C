@@ -147,7 +147,9 @@ vector<DataflowNode> IntraUniDirectionalDataflow::gatherDescendants(vector<Dataf
   vector<DataflowNode> descendants;
 
   for(vector<DataflowEdge>::const_iterator ei = edges.begin(); ei!=edges.end(); ei++)
+  {
     descendants.push_back(mem_fn(edgeFn)(*ei));
+  }
 
   return descendants;
 }
@@ -348,6 +350,7 @@ bool IntraUniDirectionalDataflow::runAnalysis(const Function& func, NodeState* f
                                 // The CFG node corresponding to the current descendant of n
                                 DataflowNode nextNode = *di;
                                 SgNode *nextSgNode = nextNode.getNode();
+                                ROSE_ASSERT  (nextSgNode != NULL);
                                 if(analysisDebugLevel>=1)
                                         Dbg::dbg << "    Descendant: "<<nextSgNode<<"["<<nextSgNode->class_name()<<" | "<<Dbg::escape(nextSgNode->unparseToString())<<"]"<<endl;
                         
