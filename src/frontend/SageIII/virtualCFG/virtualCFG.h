@@ -102,7 +102,7 @@ namespace VirtualCFG {
     CFGNode src, tgt;
     public:
     //! Constructor
-    CFGEdge(CFGNode src, CFGNode tgt): src(src), tgt(tgt) {}
+    CFGEdge(CFGNode src, CFGNode tgt): src(src), tgt(tgt) { assert(src.getNode() != NULL && tgt.getNode() != NULL); }
     
     //! Default constructor. Used for compatibility with containers
     CFGEdge() {}
