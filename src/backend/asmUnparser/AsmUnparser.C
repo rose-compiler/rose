@@ -1,8 +1,4 @@
 #include "sage3basic.h"
-
-#define __STDC_FORMAT_MACROS
-#include <inttypes.h>
-
 #include "AsmUnparser.h"
 #include "AsmUnparser_compat.h" /*FIXME: needed until no longer dependent upon unparseInstruction()*/
 

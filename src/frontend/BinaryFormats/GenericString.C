@@ -1,9 +1,6 @@
 /* Strings. Uniform treatment for strings stored in a binary file and strings generated on the fly. */
 
-// tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
-#define __STDC_FORMAT_MACROS
-#include <inttypes.h>
 
 std::string
 SgAsmGenericString::get_string(bool escape) const
@@ -453,6 +450,6 @@ SgAsmGenericStrtab::dump(FILE *f, const char *prefix, ssize_t idx) const
         p_storage_list[i]->dump(f, p, i);
     }
 
-    fprintf(f, "%s%-*s = %zu free regions\n", p, w, "freelist", get_freelist().size());
+    fprintf(f, "%s%-*s = %"PRIu64" free regions\n", p, w, "freelist", get_freelist().size());
     get_freelist().dump_extents(f, p, "freelist");
 }

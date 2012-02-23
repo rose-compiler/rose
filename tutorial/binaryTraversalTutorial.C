@@ -1,29 +1,29 @@
 #include <iostream>
 #include <fstream>
 #include <rose.h>
+//#include "interproceduralCFG.h"
 #include <string>
 #include <err.h>
 #include "graphProcessing.h"
 #include "BinaryControlFlow.h"
-
+#include "BinaryLoader.h"
+/* Testing the graph traversal mechanism now implementing in graphProcessing.h (inside src/midend/astProcessing/)*/
 
 using namespace std;
-// you need boost to put together the graph
 using namespace boost;
 
-//renaming to Vertex and Edge to save space
+
 typedef boost::graph_traits<BinaryAnalysis::ControlFlow::Graph>::vertex_descriptor Vertex;   /**< Graph vertex type. */
 typedef boost::graph_traits<BinaryAnalysis::ControlFlow::Graph>::edge_descriptor   Edge;     /**< Graph edge type. */
 
 
 
-//visitor class, analyze path runs on the paths as they are completed, it is declared in the graphProcessing.h as a virtual function
-//that will be implemented by the user
+
 class visitorTraversal : public SgGraphTraversal<BinaryAnalysis::ControlFlow::Graph>
    {
      public:
-         int pths;
-         int tltnodes;
+         long int pths;
+         long int tltnodes;
 
           virtual void analyzePath( vector<Vertex>& pth);
  
@@ -31,9 +31,10 @@ class visitorTraversal : public SgGraphTraversal<BinaryAnalysis::ControlFlow::Gr
    };
 
 
-//The path analysis function, relatively self explanatory
+
 void visitorTraversal::analyzePath(vector<Vertex>& pth) {
-    tltnodes += pth.size();
+    //tltnodes += pth.size();
+    #pragma omp atomic
     pths++;
 }
 
@@ -53,17 +54,14 @@ int main(int argc, char *argv[]) {
         BinaryAnalysis::ControlFlow::Graph* cfg = new BinaryAnalysis::ControlFlow::Graph;
 
         cfg_analyzer.build_cfg_from_ast(interps.back(), *cfg);
-//instantiating the graph visitor
+        std::ofstream mf;
+        mf.open("analysis.dot");
         visitorTraversal* vis = new visitorTraversal;
-//setting object variables
         vis->tltnodes = 0;
         vis->pths = 0;
-//the algorithm
-        vis->constructPathAnalyzer(cfg);
-//printing object variables
+        vis->constructPathAnalyzer(cfg, true, 0, 0, false);
         std::cout << "pths: " << vis->pths << std::endl;
         std::cout << "tltnodes: " << vis->tltnodes << std::endl;
-        return 0;
 }
 
 
