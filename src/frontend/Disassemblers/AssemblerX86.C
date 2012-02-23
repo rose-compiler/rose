@@ -6,10 +6,8 @@
 #include "AsmUnparser_compat.h"
 #include "rose_getline.h"
 
-#define __STDC_FORMAT_MACROS
 #include <errno.h>
 #include <fcntl.h>
-#include <inttypes.h>
 
 AssemblerX86::InsnDictionary AssemblerX86::defns;
 

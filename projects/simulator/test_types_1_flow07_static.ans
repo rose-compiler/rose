@@ -1,0 +1,4 @@
+Pointers discovered by PtrAnalysis:
+    data pointer, function argument at 0xb000000c[32]
+    data pointer, auto variable at 0xaffffff8[32]
+    data pointer, function argument at 0xb0000008[32]

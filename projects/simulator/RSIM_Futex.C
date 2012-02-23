@@ -11,7 +11,7 @@ RSIM_FutexTable::ctor(const std::string &name, bool do_unlink)
 {
     if (fd<0) {
         /* Obtain a lock */
-        int status = sem_wait(semaphore);
+        int status __attribute__((unused)) = TEMP_FAILURE_RETRY(sem_wait(semaphore));
         assert(0==status);
 
         int err = 0;
@@ -206,6 +206,8 @@ RSIM_FutexTable::insert(rose_addr_t key, uint32_t bitset, LockStatus lock_state)
     assert(table && table->magic==MAGIC);
     if (UNLOCKED==lock_state) {
         int status = sem_wait(semaphore);
+        if (-1==status && EINTR==errno)
+            return -EINTR;
         assert(0==status);
     }
 
@@ -235,8 +237,11 @@ RSIM_FutexTable::insert(rose_addr_t key, uint32_t bitset, LockStatus lock_state)
         /* Initialize the member. */
         table->member[mno].key = key;
         table->member[mno].bitset = bitset;
-        int status __attribute__((unused)) = sem_init(&table->member[mno].sem, 1, 0);
-        assert(0==status);
+        int status = sem_init(&table->member[mno].sem, 1, 0);
+        if (-1==status) {
+            retval = -errno;
+            break;
+        }
     } while (0);
 
 #ifdef RSIM_FUTEX_CHECKING
@@ -245,7 +250,7 @@ RSIM_FutexTable::insert(rose_addr_t key, uint32_t bitset, LockStatus lock_state)
 
     /* Release lock if we aquired it here. */
     if (UNLOCKED==lock_state) {
-        int status = sem_post(semaphore);
+        int status __attribute__((unused)) = sem_post(semaphore);
         assert(0==status);
     }
 
@@ -257,11 +262,10 @@ int
 RSIM_FutexTable::wait(int mno)
 {
     int status = sem_wait(&table->member[mno].sem);
-    assert(0==status);
-    return 0;
+    return -1==status ? -errno : status;
 }
 
-/* Releases the specified member index from the queue with the specified key.  THe lock is acquired/released by this function. */
+/* Releases the specified member index from the queue with the specified key.  The lock is acquired/released by this function. */
 int
 RSIM_FutexTable::erase(rose_addr_t key, size_t member_number, LockStatus lock_state)
 {
@@ -269,6 +273,8 @@ RSIM_FutexTable::erase(rose_addr_t key, size_t member_number, LockStatus lock_st
     assert(table && table->magic==MAGIC);
     if (UNLOCKED==lock_state) {
         int status = sem_wait(semaphore);
+        if (-1==status && EINTR==errno)
+            return -EINTR;
         assert(0==status);
     }
 
@@ -306,7 +312,7 @@ RSIM_FutexTable::erase(rose_addr_t key, size_t member_number, LockStatus lock_st
         table->free_head = member_number;
 
         /* Destroy semaphore. */
-        int status = sem_destroy(&table->member[member_number].sem);
+        int status __attribute__((unused)) = sem_destroy(&table->member[member_number].sem);
         assert(0==status);
     }
 
@@ -316,7 +322,7 @@ RSIM_FutexTable::erase(rose_addr_t key, size_t member_number, LockStatus lock_st
 
     /* Release lock if we acquired it here. */
     if (UNLOCKED==lock_state) {
-        int status = sem_post(semaphore);
+        int status __attribute__((unused)) = sem_post(semaphore);
         assert(0==status);
     }
 
@@ -334,7 +340,7 @@ RSIM_FutexTable::signal(rose_addr_t key, uint32_t bitset, int nprocs, LockStatus
     /* Obtain lock if necessary */
     assert(table && table->magic==MAGIC);
     if (UNLOCKED==lock_state) {
-        int status = sem_wait(semaphore);
+        int status __attribute__((unused)) = TEMP_FAILURE_RETRY(sem_wait(semaphore));
         assert(0==status);
     }
 
@@ -346,7 +352,11 @@ RSIM_FutexTable::signal(rose_addr_t key, uint32_t bitset, int nprocs, LockStatus
     for (size_t mno=table->bucket[bno]; mno!=0 && retval>=0 && retval<nprocs; mno=table->member[mno].next) {
         if (table->member[mno].key==key && 0!=(table->member[mno].bitset & bitset)) {
             table->member[mno].key = 0;
-            sem_post(&table->member[mno].sem);
+            if (-1==sem_post(&table->member[mno].sem)) {
+                if (0==retval)
+                    retval = -errno;
+                break;
+            }
             retval++;
         }
     }
@@ -357,7 +367,7 @@ RSIM_FutexTable::signal(rose_addr_t key, uint32_t bitset, int nprocs, LockStatus
 
     /* Release lock if we acquired it here. */
     if (UNLOCKED==lock_state) {
-        int status = sem_post(semaphore);
+        int status __attribute__((unused)) = sem_post(semaphore);
         assert(0==status);
     }
 

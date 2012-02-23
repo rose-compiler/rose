@@ -745,12 +745,10 @@ main(int argc, char *argv[])
             }
 
             SgAsmPEImportDirectory *idir = isSgAsmPEImportDirectory(node);
-            if (idir && idir->get_iat_rva()!=0 && idir->get_iat()!=NULL) {
-                SgAsmPEImportLookupTable *iat = idir->get_iat();
-                SgAsmPEImportILTEntryPtrList iat_entries = iat->get_entries()->get_vector();
-                rose_addr_t addr = idir->get_iat_rva() + fhdr->get_base_va();
-                size_t size = iat_entries.size() * fhdr->get_word_size();
-                MemoryMap::MapElement me(addr, size, MemoryMap::MM_PROT_READ);
+            if (idir && idir->get_iat_rva().get_rva()!=0) {
+                rose_addr_t iat_va = idir->get_iat_rva().get_va();
+                size_t iat_sz = idir->get_iat_nalloc();
+                MemoryMap::MapElement me(iat_va, iat_sz, MemoryMap::MM_PROT_READ);
                 map->mprotect(me, true/*relax*/);
             }
         }

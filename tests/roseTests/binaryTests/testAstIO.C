@@ -1,5 +1,30 @@
 /* Reads a binary file, writes out the AST, then reads the AST */
 #include "rose.h"
+#include "stringify.h"
+
+static void
+dump_ast(std::ostream &o, SgNode *ast)
+{
+    struct T1: public AstPrePostProcessing {
+        std::ostream &o;
+        size_t depth;
+
+        T1(std::ostream &o): o(o), depth(0) {}
+        
+        void preOrderVisit(SgNode *node) {
+            for (size_t i=0; i<depth; ++i) o <<"   |";
+            o <<"-- " <<stringifyVariantT(node->variantT(), "V_") <<" at " <<node <<" with parent " <<node->get_parent() <<"\n";
+            ++depth;
+        }
+
+        void postOrderVisit(SgNode*) {
+            assert(depth>0);
+            --depth;
+        }
+    };
+
+    T1(o).traverse(ast);
+}
 
 /* Computes a dump file name for an AST by looking for the first SgAsmGenericFile node */
 struct BaseName: public SgSimpleProcessing {
@@ -50,7 +75,7 @@ struct Dumper: public SgSimpleProcessing {
                 }
 
                 /* Dump interpretations that point only to this file. */
-                SgBinaryComposite *binary = isSgBinaryComposite(file->get_parent());
+                SgBinaryComposite *binary = SageInterface::getEnclosingNode<SgBinaryComposite>(file);
                 ROSE_ASSERT(binary!=NULL);
                 const SgAsmInterpretationPtrList &interps = binary->get_interpretations()->get_interpretations();
                 for (size_t i=0; i<interps.size(); i++) {
@@ -78,6 +103,7 @@ main(int argc, char *argv[])
     std::string base_name = BaseName(p1).string();
     std::string d1_name = base_name + "-1.dump";
     Dumper(p1, d1_name);
+    //dump_ast(std::cout, p1);
 
     /* Write the AST to a file and then read it back */
     std::string ast_name = base_name + ".ast";

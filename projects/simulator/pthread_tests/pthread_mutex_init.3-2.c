@@ -86,7 +86,7 @@
 /********************************** Configuration ******************************************/
 /********************************************************************************************/
 #ifndef VERBOSE
-#define VERBOSE 1
+#define VERBOSE 2
 #endif
  
 /********************************************************************************************/
@@ -178,6 +178,8 @@ int main(int argc, char *argv[])
 	void * th_ret;
 	
 	int i;
+
+        setbuf(stdout, NULL);
 	
 	output_init();
 	#if VERBOSE >1
@@ -280,9 +282,20 @@ int main(int argc, char *argv[])
 		/* Now we are waiting the thread is ready to relock the mutex. */
 		if ((ret=sem_wait(&semA)))
 		{ UNRESOLVED(errno, "Sem wait"); }
-		
+
+#if 1
+                /* Give some time for the thread to run. */
+                {
+                    struct timespec tv, rem;
+                    tv.tv_sec = 4;
+                    tv.tv_nsec = 0;
+                    while (-1==nanosleep(&tv, &rem) && EINTR==errno)
+                        tv = rem;
+                }
+#else
 		/* To ensure thread runs until second lock, we yield here */
 		sched_yield();
+#endif
 		
 		/* OK, now we cancel the thread */
 		canceled=0;

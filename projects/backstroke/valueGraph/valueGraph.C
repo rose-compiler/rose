@@ -388,6 +388,7 @@ void EventReverser::processExpression(SgExpression* expr)
         case V_SgLessOrEqualOp:
         case V_SgAndOp:
         case V_SgOrOp:
+        case V_SgModOp:
         case V_SgBitAndOp:
         case V_SgBitOrOp:
         case V_SgBitXorOp:
@@ -2260,7 +2261,7 @@ void EventReverser::writeValueGraphNode(std::ostream& out, VGVertex node) const
 {
     string str = valueGraph_[node]->toString();
     if (SgNode* astNode = valueGraph_[node]->astNode)
-        str += "\\n" + astNode->class_name();
+        str += "\\n" + astNode->class_name() + "\\n" + astNode->unparseToString();
     out << "[label=\"" << str << "\"";
     
     if (node == root_)

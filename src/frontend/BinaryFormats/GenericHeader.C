@@ -2,11 +2,7 @@
  * least one header that serves as sort of a superblock for describing the rest of the file.  Many formats have more than one
  * header (e.g., Microsoft Windows files have both a DOS header and a PE header). */
 
-// tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
-#define __STDC_FORMAT_MACROS
-#include <inttypes.h>
-
 
 /** Constructor.
  *  Headers (SgAsmGenericHeader and derived classes) set the file/header relationship--a bidirectional link between this new
@@ -36,28 +32,16 @@ SgAsmGenericHeader::ctor()
     p_sections->set_parent(this);
 }
 
-/* Destructor must remove header/file link. */
+/* Destructor must remove header/file link. Children in the AST have already been deleted when called from
+ * SageInterface::deleteAST() */
 SgAsmGenericHeader::~SgAsmGenericHeader() 
 {
-    /* Delete child sections before this */
-    SgAsmGenericSectionPtrList to_delete = get_sections()->get_sections();
-    for (size_t i=0; i<to_delete.size(); i++) {
-        SgAsmGenericSection *section = to_delete[i];
-        delete section;
-    }
-
     /* Deletion of section children should have emptied the list of header-to-section links */
     ROSE_ASSERT(p_sections->get_sections().empty() == true);
 
     /* Destroy the header/file bidirectional link. See comment in constructor. */
     ROSE_ASSERT(get_file()!=NULL);
     get_file()->remove_header(this);
-    //set_file(NULL);   -- the file pointer was moved into the superclass in order to be easily available to all sections
-
-    /* Delete children */
-    delete p_dlls;        p_dlls        = NULL;
-    delete p_exec_format; p_exec_format = NULL;
-    delete p_sections;    p_sections    = NULL;
 }
 
 /** Allow all sections to reallocate themselves */

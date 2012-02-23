@@ -9064,10 +9064,11 @@ int SageInterface::fixVariableReferences(SgNode* root)
         {
             // make sure the lhs operand has been fixed
             counter += fixVariableReferences(arrowExp->get_lhs_operand_i());
-
-            SgPointerType* ptrType = isSgPointerType(arrowExp->get_lhs_operand_i()->get_type());
+            SgType* lhs_type = arrowExp->get_lhs_operand_i()->get_type() ;
+            lhs_type = lhs_type->stripType(SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_REFERENCE_TYPE | SgType::STRIP_TYPEDEF_TYPE);
+            SgPointerType* ptrType = isSgPointerType(lhs_type);
             ROSE_ASSERT(ptrType);
-            SgClassType* clsType = isSgClassType(ptrType->get_base_type());
+            SgClassType* clsType = isSgClassType(ptrType->get_base_type()-> stripType(SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_REFERENCE_TYPE | SgType::STRIP_TYPEDEF_TYPE));
             ROSE_ASSERT(clsType);
             SgClassDeclaration* decl = isSgClassDeclaration(clsType->get_declaration());
             decl = isSgClassDeclaration(decl->get_definingDeclaration());
@@ -9084,7 +9085,9 @@ int SageInterface::fixVariableReferences(SgNode* root)
             // make sure the lhs operand has been fixed
             counter += fixVariableReferences(dotExp->get_lhs_operand_i());
 
-            SgClassType* clsType = isSgClassType(dotExp->get_lhs_operand_i()->get_type());
+            SgType* lhs_type = dotExp->get_lhs_operand_i()->get_type() ;
+            lhs_type = lhs_type->stripType(SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_REFERENCE_TYPE | SgType::STRIP_TYPEDEF_TYPE);
+            SgClassType* clsType = isSgClassType(lhs_type);
             ROSE_ASSERT(clsType);
             SgClassDeclaration* decl = isSgClassDeclaration(clsType->get_declaration());
             decl = isSgClassDeclaration(decl->get_definingDeclaration());
@@ -10540,7 +10543,7 @@ void SageInterface::replaceSubexpressionWithStatement(SgExpression* from, Statem
 SgAsmInterpretation *
 SageInterface::getMainInterpretation(SgAsmGenericFile *file)
 {
-    SgBinaryComposite *binary = isSgBinaryComposite(file->get_parent());
+    SgBinaryComposite *binary = getEnclosingNode<SgBinaryComposite>(file);
     ROSE_ASSERT(binary!=NULL);
 
     /* Find the only header or the PE header of this file */

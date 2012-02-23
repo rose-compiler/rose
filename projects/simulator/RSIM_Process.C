@@ -13,6 +13,8 @@
 void
 RSIM_Process::ctor()
 {
+    gettimeofday(&time_created, NULL);
+
     bool do_unlink;
     sem_t *sem = simulator->get_semaphore(&do_unlink);
     futexes = new RSIM_FutexTable(sem, simulator->get_semaphore_name(), do_unlink);
@@ -76,6 +78,21 @@ RSIM_Process::create_thread()
         threads.insert(std::make_pair(tid, thread));
     } RTS_WRITE_END;
     return thread;
+}
+
+void
+RSIM_Process::set_main_thread(RSIM_Thread *t)
+{
+    threads.clear();
+    threads[t->get_tid()] = t;
+}
+
+RSIM_Thread *
+RSIM_Process::get_main_thread() const
+{
+    std::map<pid_t, RSIM_Thread*>::const_iterator found = threads.find(getpid());
+    assert(found!=threads.end());
+    return found->second;
 }
 
 void
@@ -257,6 +274,7 @@ public:
         }
 
         vdso_entry_va = vdso_mapped_va + entry_rva;
+        vdso = fhdr;
         return true;
     }
 };
@@ -314,6 +332,7 @@ RSIM_Process::load(const char *name)
      * (we'll use the PE interpretation). */
     interpretation = SageInterface::querySubTree<SgAsmInterpretation>(project, V_SgAsmInterpretation).back();
     SgAsmGenericHeader *fhdr = interpretation->get_headers()->get_headers().front();
+    headers.push_back(fhdr);
     ep_orig_va = ep_start_va = fhdr->get_entry_rva() + fhdr->get_base_va();
     thread->policy.writeRegister<32>(thread->policy.reg_eip, ep_orig_va);
 
@@ -324,6 +343,7 @@ RSIM_Process::load(const char *name)
      * in Linux with "setarch i386 -LRB3", the ld-linux.so.2 gets mapped to 0x40000000 if it has no preferred address.  We can
      * accomplish the same thing simply by rebasing the library. */
     if (loader->interpreter) {
+        headers.push_back(loader->interpreter);
         SgAsmGenericSection *load0 = loader->interpreter->get_section_by_name("LOAD#0");
         if (load0 && load0->is_mapped() && load0->get_mapped_preferred_rva()==0 && load0->get_mapped_size()>0)
             loader->interpreter->set_base_va(ld_linux_base_va);
@@ -356,6 +376,7 @@ RSIM_Process::load(const char *name)
             if ((vdso_loaded = loader->map_vdso(vdso_name, interpretation, map))) {
                 vdso_mapped_va = loader->vdso_mapped_va;
                 vdso_entry_va = loader->vdso_entry_va;
+                headers.push_back(loader->vdso);
                 if (trace) {
                     fprintf(trace, "mapped %s at 0x%08"PRIx64" with entry va 0x%08"PRIx64"\n",
                             vdso_name.c_str(), vdso_mapped_va, vdso_entry_va);
@@ -365,7 +386,6 @@ RSIM_Process::load(const char *name)
     }
     if (!vdso_loaded && trace && !vdso_paths.empty())
         fprintf(trace, "warning: cannot find a virtual dynamic shared object\n");
-
 
     /* Find a disassembler. */
     if (!disassembler) {
@@ -1516,17 +1536,6 @@ RSIM_Process::initialize_stack(SgAsmGenericHeader *_fhdr, int argc, char *argv[]
     } RTS_WRITE_END;
 }
 
-void
-RSIM_Process::post_fork()
-{
-    assert(1==threads.size());
-    RSIM_Thread *t = threads.begin()->second;
-    threads.clear();
-    threads[t->get_tid()] = t;
-
-    t->policy.set_ninsns(0);            /* restart instruction counter for trace output */
-}
-
 /* The "thread" arg must be the calling thread */
 pid_t
 RSIM_Process::clone_thread(RSIM_Thread *thread, unsigned flags, uint32_t parent_tid_va, uint32_t child_tls_va,
@@ -1741,22 +1750,44 @@ RSIM_Process::signal_dispatch()
     /* write lock not required for thread safety here since called functions are already thread safe */
     RSIM_SignalHandling::siginfo_32 info;
     for (int signo=signal_dequeue(&info); signo>0; signo=signal_dequeue(&info)) {
-        int status = sys_kill(getpid(), info);
+        int status __attribute__((unused)) = sys_kill(getpid(), info);
         assert(status>=0);
     }
 }
 
 SgAsmBlock *
-RSIM_Process::disassemble()
+RSIM_Process::disassemble(bool fast)
 {
-    Partitioner partitioner;
     SgAsmBlock *block = NULL;
 
     RTS_WRITE(rwlock()) { /* while using the memory map */
-        block = partitioner.partition(interpretation, disassembler, map);
-        const Disassembler::InstructionMap &insns = partitioner.get_instructions();
-        for (Disassembler::InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
-            icache[ii->first] = ii->second;
+        /* Disassemble instructions */
+        Disassembler::InstructionMap insns;
+        if (fast) {
+            MemoryMap emap = *map;
+            emap.prune(MemoryMap::MM_PROT_EXEC);
+
+            rose_addr_t start_va = 0; // arbitrary since we set the disassembler's SEARCH_UNUSED bit
+            unsigned search = disassembler->get_search();
+            disassembler->set_search(search | Disassembler::SEARCH_UNUSED);
+            Disassembler::AddressSet successors;
+            Disassembler::BadMap bad;
+            insns = disassembler->disassembleBuffer(&emap, start_va, &successors, &bad);
+            disassembler->set_search(search);
+        } else {
+            Partitioner partitioner;
+            block = partitioner.partition(interpretation, disassembler, map);
+            insns = partitioner.get_instructions();
+        }
+
+        /* Add new instructions to cache */
+        icache.insert(insns.begin(), insns.end());
+
+        /* Fast disassembly puts all the instructions in a single SgAsmBlock */
+        if (!block) {
+            block = new SgAsmBlock;
+            for (Disassembler::InstructionMap::const_iterator ii=icache.begin(); ii!=icache.end(); ++ii)
+                block->get_statementList().push_back(ii->second);
         }
     } RTS_WRITE_END;
     return block;

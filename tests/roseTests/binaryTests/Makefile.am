@@ -20,6 +20,13 @@ INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/src/midend/binaryAnalyses/libraryIde
 # The executables and their test cases...
 ###############################################################################################################################
 
+# Check boost consistency
+noinst_PROGRAMS += testBoost
+testBoost_SOURCES = testBoost.C
+testBoost_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+STATIC_TEST_TARGETS += testBoost.passed
+testBoost.passed: testBoost
+	./testBoost
 
 # Parses an executable to produce a dump file (*.dump), an assembly file (rose_*.s), and a new executable created by unparsing
 # the AST (*.new). The *.new file is typically identical to the original executable.
@@ -176,6 +183,11 @@ MOSTLYCLEANFILES += arm-ctrlaltdel.dump-1 arm-ctrlaltdel.dump-2 arm-ctrlaltdel.d
 shiftResizeSection.passed: shiftResizeSection.conf shiftResizeSection
 	@$(RTH_RUN) INPUT=arm-ctrlaltdel $< $@
 
+# Check whether the instruction semantics classes can be specialized. This is only a compile test; we never actually
+# run the program since the same classes are exercised by other tests.
+noinst_PROGRAMS += subSemantics
+subSemantics_SOURCES = subSemantics.C
+subSemantics_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 
 # Finds constant values and propagates them across instructions
 noinst_PROGRAMS += findConstants
@@ -255,12 +267,13 @@ endif
 noinst_PROGRAMS += disassemble
 disassemble_SOURCES = disassemble.C linux_syscalls.C
 disassemble_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-STATIC_TEST_TARGETS += disassemble.passed assembler.passed
+#STATIC_TEST_TARGETS += disassemble.passed assembler.passed
+STATIC_TEST_TARGETS += disassemble.passed
 EXTRA_DIST += disassemble.conf disassemble.ans assembler.conf
 disassemble.passed: disassemble.conf disassemble
 	@$(RTH_RUN) INPUT=i686-test1.O0.bin $< $@
-assembler.passed: assembler.conf disassemble
-	@$(RTH_RUN) $< $@
+#assembler.passed: assembler.conf disassemble
+#	@$(RTH_RUN) $< $@
 
 
 # Disassemble a file containing bare instructions
@@ -373,6 +386,15 @@ MOSTLYCLEANFILES += test.db
 testLibraryDb.passed: testLibraryDb.conf testLibraryDb
 	@$(RTH_RUN) $< $@
 endif
+
+# Tests reading import sections from PE files
+noinst_PROGRAMS += testPeImports
+testPeImports_SOURCES = testPeImports.C
+testPeImports_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+STATIC_TEST_TARGETS += testPeImports.passed
+EXTRA_DIST += testPeImports.conf testPeImports.ans
+testPeImports.passed: testPeImports.conf testPeImports
+	@$(RTH_RUN) INPUT=proxycfg.exe $< $@
 
 ###############################################################################################################################
 # DEMOS

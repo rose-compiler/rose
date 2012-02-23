@@ -121,10 +121,10 @@ AstDOTGenerationExtended<ExtraNodeInfo_t, ExtraNodeOptions_t, ExtraEdgeInfo_t, E
                    name = genericString->get_string();
                  }
 
-          SgAsmPEImportHNTEntry* peImportHNTEntry = isSgAsmPEImportHNTEntry(node);
-          if (peImportHNTEntry != NULL)
+          SgAsmPEImportItem* peImportItem = isSgAsmPEImportItem(node);
+          if (peImportItem != NULL)
                  {
-                   SgAsmGenericString* genericString = peImportHNTEntry->get_name();
+                   SgAsmGenericString* genericString = peImportItem->get_name();
                    ROSE_ASSERT(genericString != NULL);
 
                    name = genericString->get_string();

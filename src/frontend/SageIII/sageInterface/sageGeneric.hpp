@@ -31,6 +31,14 @@ namespace sg
   static inline
   void unused(const T&) {}
 
+  /// \brief  dereferences an object (= checked dereference in debug mode)
+  template <class T>
+  T& deref(T* ptr)
+  {
+    assert(ptr);
+    return *ptr;
+  }
+
   /// \brief projects the constness of T1 on T2
   template <class T1, class T2>
   struct ConstLike
@@ -43,6 +51,9 @@ namespace sg
   {
     typedef const T2 type;
   };
+
+  //
+  // error reporting
 
   static inline
   void unexpected_node(const SgNode& n)
@@ -1736,12 +1747,8 @@ namespace sg
         Dispatcher::dispatch(rv, assume_sage_type<SgAsmGenericDLL>(*n));
         break;
 
-      case V_SgAsmPEImportHNTEntryList:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmPEImportHNTEntryList>(*n));
-        break;
-
-      case V_SgAsmPEImportILTEntryList:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmPEImportILTEntryList>(*n));
+      case V_SgAsmPEImportItemList:
+        Dispatcher::dispatch(rv, assume_sage_type<SgAsmPEImportItemList>(*n));
         break;
 
       case V_SgAsmPEImportDirectoryList:
@@ -2044,16 +2051,8 @@ namespace sg
         Dispatcher::dispatch(rv, assume_sage_type<SgAsmPEImportDirectory>(*n));
         break;
 
-      case V_SgAsmPEImportILTEntry:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmPEImportILTEntry>(*n));
-        break;
-
-      case V_SgAsmPEImportHNTEntry:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmPEImportHNTEntry>(*n));
-        break;
-
-      case V_SgAsmPEImportLookupTable:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmPEImportLookupTable>(*n));
+      case V_SgAsmPEImportItem:
+        Dispatcher::dispatch(rv, assume_sage_type<SgAsmPEImportItem>(*n));
         break;
 
       case V_SgAsmPESectionTableEntry:

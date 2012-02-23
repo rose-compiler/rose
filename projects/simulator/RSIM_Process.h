@@ -71,6 +71,7 @@ private:
     std::string tracing_file_name;      /**< Pattern for trace file names. May include %d for thread ID. */
     FILE *tracing_file;                 /**< Stream to which debugging output is sent (or NULL to suppress it) */
     unsigned tracing_flags;             /**< Bit vector of what to trace. See TraceFlags. */
+    struct timeval time_created;        /**< Time at which process object was created. */
 
 public:
 
@@ -101,7 +102,13 @@ public:
      * bitwise OR of the facilityBitMask() for each enabled facility. */
     unsigned get_tracing_flags() const;
 
+    /** Returns the time at which this process was created. */
+    const struct timeval &get_ctime() const {
+        return time_created;
+    }
 
+
+    
     /**************************************************************************************************************************
      *                                  Callbacks
      **************************************************************************************************************************/
@@ -316,10 +323,14 @@ public:
     /** Disassembles an entire process based on the current memory map, returning a pointer to a SgAsmBlock AST node and
      *  inserting all new instructions into the instruction cache used by get_instruction().
      *
+     *  If the @p fast argument is set then the partitioner is not run and the disassembly simply disassembles all executable
+     *  addresses that haven't been disassembled yet, adding them to the process' instruction cache.  The return value in this
+     *  case is an SgAsmBlock that contains all the instructions.
+     *
      *  Thread safety:  This method is thread safe; it can be invoked on a single object by multiple threaads concurrently.
      *  The callers are serialized and each caller will generate a new AST that does not share nodes with any AST returned by
      *  any previous call by this thread or any other. */
-    SgAsmBlock *disassemble();
+    SgAsmBlock *disassemble(bool fast=false);
 
     /** Returns the disassembler that is being used to obtain instructions. This disassembler is chosen automatically when the
      *  specimen is loaded.
@@ -461,6 +472,15 @@ private:
     RSIM_Thread *create_thread();
 
 public:
+    /** Sets the main thread.  This discards all known threads from the "threads" map and reinitializes the map with the single
+     *  specified thread.
+     *
+     *  Thread safety:  Not thread safe.  This should only be called during process initialization. */
+    void set_main_thread(RSIM_Thread *t);
+
+    /** Returns the main thread. */
+    RSIM_Thread *get_main_thread() const;
+
     /** Creates a new simulated thread and corresponding real thread.  Returns the ID of the new thread, or a negative errno.
      *  The @p parent_tid_va and @p child_tid_va are optional addresses at which to write the new thread's TID if the @p flags
      *  contain the CLONE_PARENT_TID and/or CLONE_CHILD_TID bits.  We gaurantee that the TID is written to both before the
@@ -497,6 +517,7 @@ private:
     rose_addr_t ep_start_va;                    /**< Entry point where simulation starts (e.g., the dynamic linker). */
     bool terminated;                            /**< True when the process has finished running. */
     int termination_status;                     /**< As would be returned by the parent's waitpid() call. */
+    std::vector<SgAsmGenericHeader*> headers;   /**< Headers of files loaded into the process (only those that we parse). */
 
 public:
     /** Thrown by exit system calls. */
@@ -547,6 +568,12 @@ public:
      *  Operating system simulation data is initialized (brk, mmap, etc). */
     SgAsmGenericHeader *load(const char *name);
 
+    /** Returns the list of projects loaded for this process.  The list is initialized by the load() method.  The first item in
+     *  the list is the main executable file; additional items are for dynamic libraries, etc. */
+    const std::vector<SgAsmGenericHeader*> get_loads() const {
+        return headers;
+    }
+
     /** Returns the interpretation that is being simulated.  The interpretation was chosen by the load() method. */
     SgAsmInterpretation *get_interpretation() const {
         return interpretation;
@@ -591,8 +618,6 @@ public:
     }
 
 public:
-    void post_fork();
-
     void btrace_close();
 
     /** Sets the core dump styles. */
