@@ -468,9 +468,7 @@ INPUT                  = \
 			 @top_srcdir@/src/frontend/BinaryFormats/PeExport.C \
 			 @top_srcdir@/src/frontend/BinaryFormats/PeFileHeader.C \
 			 @top_srcdir@/src/frontend/BinaryFormats/PeImportDirectory.C \
-			 @top_srcdir@/src/frontend/BinaryFormats/PeImportHNTEntry.C \
-			 @top_srcdir@/src/frontend/BinaryFormats/PeImportILTEntry.C \
-			 @top_srcdir@/src/frontend/BinaryFormats/PeImportLookupTable.C \
+			 @top_srcdir@/src/frontend/BinaryFormats/PeImportItem.C \
 			 @top_srcdir@/src/frontend/BinaryFormats/PeImportSection.C \
 			 @top_srcdir@/src/frontend/BinaryFormats/PeRvaSizePair.C \
 			 @top_srcdir@/src/frontend/BinaryFormats/PeSection.C \
@@ -484,6 +482,7 @@ INPUT                  = \
                          @top_srcdir@/src/frontend/SageIII/docs \
 			 @top_srcdir@/src/frontend/SageIII/astPostProcessing/checkIsModifiedFlag.C \
                          @top_srcdir@/src/frontend/SageIII/sageInterface \
+                         @top_srcdir@/src/frontend/SageIII/astFromString \
                          @top_srcdir@/src/frontend/SageIII/virtualCFG \
 			 @top_srcdir@/src/frontend/SageIII/virtualCFG/virtualBinCFG.C \
 			 @top_srcdir@/src/frontend/BinaryFormats \

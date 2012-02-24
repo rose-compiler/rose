@@ -34,6 +34,10 @@ namespace AbstractMemoryObject {
   // so we have to use two keys (parent ObjSet and SgSymbol) to ensure the uniqueness of named objects
   //
   // Array elements are represented as NamedObj also. They need one more key (IndexVector) to differentiate them
+  // Total three keys: 
+  //    Parent ObjSet: needed only for a member of a data structure, or an element of an array
+  //    Associated symbol: needed for all NamedObj, the unique symbol for a scalar, a member of a data structure.  Or the shared symbol for array and all its elements
+  //    IndexVector: needed only for an element of an array only 
   map<ObjSet*,  map<SgSymbol*, map <IndexVector*, ObjSet* > > > named_objset_map; 
 
 
