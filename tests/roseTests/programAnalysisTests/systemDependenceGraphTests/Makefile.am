@@ -771,9 +771,9 @@ $(CXX_TESTCODES_REQUIRED_TO_PASS): testSDG
 	./testSDG --edg:no_warnings -w -rose:verbose 0 $(TEST_INCLUDES) -c $@
 
 check-local:
-	@echo TESTS DISABLED! #@$(MAKE) TEST_C
+	@$(MAKE) TEST_C
 if !ROSE_USE_EDG_VERSION_4
-	@echo TESTS DISABLED! #@$(MAKE) TEST_CXX
+	@$(MAKE) TEST_CXX
 endif
 	@echo "*********************************************************************************************************"
 	@echo "****** ROSE/tests/roseTests/programAnalysisTests/systemDependenceGraphTests: make check rule complete (terminated normally) ******"
