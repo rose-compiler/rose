@@ -1,7 +1,5 @@
 /* Partitioner statistics */
-#define __STDC_FORMAT_MACROS
 #include "sage3basic.h"
-#include <inttypes.h>
 #include <cmath>
 
 #include "Partitioner.h"
@@ -808,7 +806,7 @@ Partitioner::region_statistics(const ExtentMap &addresses)
             /* Add instruction as vertex to CFG */
             std::pair<Addr2Vertex::iterator, bool> inserted = va2id.insert(std::make_pair(va, va2id.size()));
             if (inserted.second) {
-                CFGVertex vertex = add_vertex(cfg);
+                CFGVertex vertex __attribute__((unused)) = add_vertex(cfg);
                 assert(vertex==inserted.first->second);
             }
 

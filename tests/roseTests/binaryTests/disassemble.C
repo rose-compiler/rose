@@ -205,7 +205,6 @@ digest_to_str(const unsigned char digest[20])
 bool
 block_hash(SgAsmBlock *blk, unsigned char digest[20]) 
 {
-    using namespace VirtualMachineSemantics;
 
     if (!blk || blk->get_statementList().empty() || !isSgAsmx86Instruction(blk->get_statementList().front())) {
         memset(digest, 0, 20);
@@ -213,7 +212,8 @@ block_hash(SgAsmBlock *blk, unsigned char digest[20])
     }
     const SgAsmStatementPtrList &stmts = blk->get_statementList();
 
-    typedef X86InstructionSemantics<Policy, ValueType> Semantics;
+    typedef VirtualMachineSemantics::Policy<VirtualMachineSemantics::State, VirtualMachineSemantics::ValueType> Policy;
+    typedef X86InstructionSemantics<Policy, VirtualMachineSemantics::ValueType> Semantics;
     Policy policy;
     policy.set_discard_popped_memory(true);
     Semantics semantics(policy);
@@ -358,7 +358,8 @@ private:
                         if (isSgAsmInstruction(stmts[int_n])==args.insn)
                             break;
 
-                    typedef VirtualMachineSemantics::Policy Policy;
+                    typedef VirtualMachineSemantics::Policy<VirtualMachineSemantics::State,
+                                                            VirtualMachineSemantics::ValueType> Policy;
                     typedef X86InstructionSemantics<Policy, VirtualMachineSemantics::ValueType> Semantics;
                     Policy policy;
                     Semantics semantics(policy);
@@ -687,9 +688,7 @@ dump_CFG_CG(SgNode *ast)
     CFG global_cfg = cfg_analyzer.build_cfg_from_ast<CFG>(ast);
 
     /* Get the base name for the output files. */
-    SgFile *srcfile = NULL;
-    for (SgNode *n=ast; n && !srcfile; n=n->get_parent())
-        srcfile = isSgFile(n);
+    SgFile *srcfile = SageInterface::getEnclosingNode<SgFile>(ast);
     std::string filename = srcfile ? srcfile->get_sourceFileNameWithoutPath() : "x";
 
     /* Generate a dot file for the function call graph. */

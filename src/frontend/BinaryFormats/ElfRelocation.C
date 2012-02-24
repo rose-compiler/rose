@@ -1,8 +1,6 @@
 /* ELF Relocations (SgAsmElfRelocSection and related classes) */
 #include "sage3basic.h"
 #include "stringify.h"
-#define __STDC_FORMAT_MACROS
-#include <inttypes.h>
 
 /** Constructor adds the new entry to the relocation table. */
 void

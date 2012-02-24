@@ -538,13 +538,13 @@ public:
 
     /** Reads a value from memory.  For simplicity, this policy assumes that all of memory is defined. */
     template <size_t Len> ValueType<Len>
-    readMemory(X86SegmentRegister segreg, const ValueType<32> &addr, const ValueType<1> cond) const {
+    readMemory(X86SegmentRegister segreg, const ValueType<32> &addr, const ValueType<1> &cond) const {
         return ValueType<Len>::defined();
     }
 
     /** Writes a value to memory. For simplicity, this is a no-op. */
     template <size_t Len> void
-    writeMemory(X86SegmentRegister segreg, const ValueType<32> &addr, const ValueType<Len> &data, ValueType<1> cond) {
+    writeMemory(X86SegmentRegister segreg, const ValueType<32> &addr, const ValueType<Len> &data, const ValueType<1> &cond) {
     }
 
     /*************************************************************************************************************************

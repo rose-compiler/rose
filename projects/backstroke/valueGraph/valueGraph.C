@@ -2261,7 +2261,7 @@ void EventReverser::writeValueGraphNode(std::ostream& out, VGVertex node) const
 {
     string str = valueGraph_[node]->toString();
     if (SgNode* astNode = valueGraph_[node]->astNode)
-        str += "\\n" + astNode->class_name();
+        str += "\\n" + astNode->class_name() + "\\n" + astNode->unparseToString();
     out << "[label=\"" << str << "\"";
     
     if (node == root_)

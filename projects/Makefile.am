@@ -32,9 +32,11 @@ SUBDIRS = \
 	pragmaParsing \
 	roseToLLVM \
 	taintcheck \
+	RTC \
 	PowerAwareCompiler \
 	ManyCoreRuntime \
 	mint \
+	extractMPISkeleton \
 	$(OPTIONAL_PROJECTS)
 
 # DQ (9/26/2011): Directory removed for failing new AST consistancy test for references to deleted IR nodes.
@@ -96,15 +98,17 @@ if !ROSE_USING_ROSE_CODE_GENERATION
 
 # DQ (10/17/2010): This seems to be problem for Java, we can fix this later.
 if !ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
-   SUBDIRS += compass binCompass
-endif
-
-# DQ (10/17/2010): Since we can't process Compass with Java we can't compiler palette (which requires Compass).
-if !ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
+if ROSE_BUILD_COMPASS2
+   SUBDIRS += compass2
+else
+   SUBDIRS += compass
+ # DQ (10/17/2010): Since we can't process Compass with Java we can't compiler palette (which requires Compass).
  # DQ (2/13/2010): This appears to have a dependence on compass, but I don't know why.
  # All projects should be independent of each other so that they should be able to be
  # compiled in any order. It was originally listed after "haskellport".
    SUBDIRS += palette
+endif
+   SUBDIRS += binCompass
 endif
 endif
 

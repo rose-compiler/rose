@@ -20,6 +20,10 @@ static const char x86_reg_size[] = {32,    32,    32,    32,         32,    32, 
 template<size_t Nbits>
 class VerifierValue {
 public:
+    VerifierValue(): v_(0) {
+        assert(Nbits<=8*sizeof v_);
+        mask = (uint64_t)-1 >> (8*sizeof(v_)-Nbits);
+    }
     VerifierValue(uint64_t n): v_(n) {
         assert(Nbits<=8*sizeof v_);
         mask = (uint64_t)-1 >> (8*sizeof(v_)-Nbits);

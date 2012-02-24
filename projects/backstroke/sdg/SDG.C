@@ -167,6 +167,7 @@ void SystemDependenceGraph::build()
             
             if (SgFunctionCallExp* funcCallExpr = isSgFunctionCallExp(astNode))
             {
+                cout << funcCallExpr->unparseToString() << endl;
                 CallSiteInfo callInfo;
                 callInfo.funcCall = funcCallExpr;
                 callInfo.vertex = sdgVertex;
@@ -262,7 +263,8 @@ void SystemDependenceGraph::build()
     // Add call edges.
     foreach (const CallSiteInfo& callInfo, functionCalls)
     {
-        SgFunctionDeclaration* funcDecl = callInfo.funcCall->getAssociatedFunctionDeclaration();
+        SgFunctionDeclaration* funcDecl = isSgFunctionDeclaration(callInfo.funcCall->
+                                            getAssociatedFunctionDeclaration()->get_definingDeclaration());
         ROSE_ASSERT(funcDecl);
         if (functionsToEntries_.count(funcDecl))
             addEdge(callInfo.vertex, functionsToEntries_[funcDecl], new SDGEdge(SDGEdge::Call));

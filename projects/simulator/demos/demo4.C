@@ -57,8 +57,9 @@ public:
     virtual bool operator()(bool enabled, const Args &args) {
         if (enabled && args.insn->get_address()==trigger_addr) {
             /* Create the symbolic analysis to drive the sign analysis. */
-            SymbolicSemantics::Policy symbolic_policy;
-            X86InstructionSemantics<SymbolicSemantics::Policy, SymbolicSemantics::ValueType> symbolic_semantics(symbolic_policy);
+            SymbolicSemantics::Policy<SymbolicSemantics::State, SymbolicSemantics::ValueType> symbolic_policy;
+            X86InstructionSemantics<SymbolicSemantics::Policy<SymbolicSemantics::State, SymbolicSemantics::ValueType>,
+                                    SymbolicSemantics::ValueType> symbolic_semantics(symbolic_policy);
 
             /* Create the sign analysis. */
             SignAnalysisExample::Policy sign_policy;

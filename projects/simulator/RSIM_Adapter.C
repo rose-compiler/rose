@@ -282,7 +282,7 @@ RSIM_Adapter::TraceFileIO::DupSyscall::operator()(bool b, const Args &args)
             args.thread->tracing(TRACE_MISC)->mesg("%sactivating fd=%"PRId32, tracer->prefix().c_str(), new_fd);
             tracer->trace_fd(new_fd, true);
         } else if (tracer->is_tracing_fd(new_fd)) {
-            args.thread->tracing(TRACE_MISC)->mesg("%deactivating fd=%"PRId32, tracer->prefix().c_str(), new_fd);
+            args.thread->tracing(TRACE_MISC)->mesg("%sdeactivating fd=%"PRId32, tracer->prefix().c_str(), new_fd);
             tracer->trace_fd(new_fd, false);
         }
     }

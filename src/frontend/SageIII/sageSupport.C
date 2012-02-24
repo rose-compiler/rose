@@ -4556,7 +4556,10 @@ SgBinaryComposite::SgBinaryComposite ( vector<string> & argv ,  SgProject* proje
 {
 #ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
     p_interpretations = new SgAsmInterpretationList();
+    p_interpretations->set_parent(this);
+
     p_genericFileList = new SgAsmGenericFileList();
+    p_genericFileList->set_parent(this);
 
   // DQ (2/3/2009): This data member has disappeared (in favor of a list).
   // p_binaryFile = NULL;
@@ -7167,7 +7170,7 @@ SgBinaryComposite::buildAsmAST(string executableFileName)
 
   // Attach the file to this node
      get_genericFileList()->get_files().push_back(file);
-     file->set_parent(this);
+     file->set_parent(get_genericFileList());
 
   // Add a disassembly interpretation for each header. Actual disassembly will occur later.
   // NOTE: This probably isn't the right place to add interpretation nodes, but I'm leaving it here for the time being. We
@@ -7177,7 +7180,7 @@ SgBinaryComposite::buildAsmAST(string executableFileName)
         {
           SgAsmInterpretation* interp = new SgAsmInterpretation();
           get_interpretations()->get_interpretations().push_back(interp);
-          interp->set_parent(this);
+          interp->set_parent(get_interpretations());
           interp->get_headers()->get_headers().push_back(headers[i]);
         }
 

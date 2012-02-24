@@ -62,8 +62,9 @@ public:
 
             /* Create the policy that holds the analysis state which is modified by each instruction.  Then plug the policy
              * into the X86InstructionSemantics to which we'll feed each instruction. */
-            SymbolicSemantics::Policy policy(&smt_solver);
-            X86InstructionSemantics<SymbolicSemantics::Policy, SymbolicSemantics::ValueType> semantics(policy);
+            SymbolicSemantics::Policy<SymbolicSemantics::State, SymbolicSemantics::ValueType> policy(&smt_solver);
+            X86InstructionSemantics<SymbolicSemantics::Policy<SymbolicSemantics::State, SymbolicSemantics::ValueType>,
+                                    SymbolicSemantics::ValueType> semantics(policy);
 
             /* The top of the stack contains the (unknown) return address.  The value above that is the function's first
              * argument, which we print for reference.  It will be an unkown value, like "v62[32]". */
@@ -91,8 +92,8 @@ public:
             if (!arg1.is_known()) {
                 using namespace InsnSemanticsExpr;
                 LeafNode *target = LeafNode::create_integer(32, 2067789406);
-                uint64_t arg1_varno = dynamic_cast<LeafNode*>(arg1.expr)->get_name();
-                InternalNode expr(32, OP_EQ, policy.readRegister<32>("eax").expr, target);
+                uint64_t arg1_varno = dynamic_cast<LeafNode*>(arg1.get_expression())->get_name();
+                InternalNode expr(32, OP_EQ, policy.readRegister<32>("eax").get_expression(), target);
                 std::cout <<"using an SMT solver to find a solution to f(x) = " <<target <<"...\n";
                 if (smt_solver.satisfiable(&expr)) {
                     LeafNode *arg1_value = dynamic_cast<LeafNode*>(smt_solver.get_definition(arg1_varno));

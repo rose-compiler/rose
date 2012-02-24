@@ -197,8 +197,7 @@ va 0x080495bc + 0x00000a44 = 0x0804a000 rw-p at anon null + 0x00000000 buffer2.b
 
 0x080483f4: 89 d7                   |..      | F080483c0 FH....    mov    edi, edx
 0x080483f6: 89 f6                   |..      |                     mov    esi, esi
-
-0x080483f8: ff 14 b2                |...     | F080483c0 .2....    call   DWORD PTR ds:[edx + esi*0x04]
+0x080483f8: ff 14 b2                |...     |                     call   DWORD PTR ds:[edx + esi*0x04]
 
 0x080483fb: 8b 4d f0                |.M.     | F080483c0 FH....    mov    ecx, DWORD PTR ss:[ebp + 0xf0<-0x10>]
 0x080483fe: 29 f9                   |).      |                     sub    ecx, edi
@@ -208,7 +207,7 @@ va 0x080495bc + 0x00000a44 = 0x0804a000 rw-p at anon null + 0x00000000 buffer2.b
 0x08048406: 89 fa                   |..      |                     mov    edx, edi
 0x08048408: 72 ee                   |r.      |                     jb     0x080483f8
 
-0x0804840a: 83 c4 0c                |...     | F080483c0 .2....    add    esp, 0x0c
+0x0804840a: 83 c4 0c                |...     |                     add    esp, 0x0c
 0x0804840d: 5b                      |[       |                     pop    ebx
 0x0804840e: 5e                      |^       |                     pop    esi
 0x0804840f: 5f                      |_       |                     pop    edi
@@ -235,15 +234,13 @@ va 0x080495bc + 0x00000a44 = 0x0804a000 rw-p at anon null + 0x00000000 buffer2.b
 0x0804843d: eb 05                   |..      |                     jmp    0x08048444
 
 0x0804843f: 90                      |.       | F08048414 FH....    nop    
-
-0x08048440: ff 14 b7                |...     | F08048414 .2....    call   DWORD PTR ds:[edi + esi*0x04]
+0x08048440: ff 14 b7                |...     |                     call   DWORD PTR ds:[edi + esi*0x04]
 
 0x08048443: 4e                      |N       | F08048414 FH....    dec    esi
 
-0x08048444: 83 fe ff                |...     | F08048414 .2....    cmp    esi, 0xff<-0x01>
+0x08048444: 83 fe ff                |...     |                     cmp    esi, 0xff<-0x01>
 0x08048447: 75 f7                   |u.      |                     jne    0x08048440
-
-0x08048449: e8 46 00 00 00          |.F...   | F08048414 .2....    call   0x08048494
+0x08048449: e8 46 00 00 00          |.F...   |                     call   0x08048494
 
 0x0804844e: 83 c4 0c                |...     | F08048414 .1....    add    esp, 0x0c
 0x08048451: 5b                      |[       |                     pop    ebx

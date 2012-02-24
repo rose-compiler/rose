@@ -784,7 +784,7 @@ Grammar::setUpBinaryInstructions()
      NEW_TERMINAL_MACRO(AsmElfSymverDefinedAux, "AsmElfSymverDefinedAux", "AsmElfSymverDefinedAuxTag");
      AsmElfSymverDefinedAux.setFunctionPrototype("HEADER_ELF_SYMVER_DEFINED_AUX", "../Grammar/BinaryInstruction.code");
      AsmElfSymverDefinedAux.setDataPrototype("SgAsmGenericString*", "name", "= 0",
-                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
 
 
@@ -810,7 +810,7 @@ Grammar::setUpBinaryInstructions()
      AsmElfSymverNeededEntry.setDataPrototype("size_t", "version", "= 0",
                                               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmElfSymverNeededEntry.setDataPrototype("SgAsmGenericString*", "file_name", "= 0",
-                                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      AsmElfSymverNeededEntry.setDataPrototype("SgAsmElfSymverNeededAuxList*", "entries", "",
                                               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
@@ -831,7 +831,7 @@ Grammar::setUpBinaryInstructions()
      AsmElfSymverNeededAux.setDataPrototype("size_t", "other", "= 0",
                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmElfSymverNeededAux.setDataPrototype("SgAsmGenericString*", "name", "= 0",
-                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
 
 
@@ -897,7 +897,7 @@ Grammar::setUpBinaryInstructions()
      AsmElfDynamicEntry.setDataPrototype("rose_rva_t", "d_val", "",
                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmElfDynamicEntry.setDataPrototype("SgAsmGenericString*", "name", "= NULL",
-                                         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      AsmElfDynamicEntry.setDataPrototype("SgUnsignedCharList", "extra", "",
                                          NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
@@ -946,7 +946,7 @@ Grammar::setUpBinaryInstructions()
      AsmElfNoteEntry.setDataPrototype("unsigned", "type", "= 0",
                                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmElfNoteEntry.setDataPrototype("SgAsmGenericString*", "name", "= NULL",
-                                      NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                      NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      AsmElfNoteEntry.setDataPrototype("SgUnsignedCharList", "payload", "",
                                       NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
@@ -1113,7 +1113,6 @@ Grammar::setUpBinaryInstructions()
      NEW_TERMINAL_MACRO(AsmPEFileHeader, "AsmPEFileHeader", "AsmPEFileHeaderTag");
      AsmPEFileHeader.setFunctionPrototype("HEADER_PE_FILE_HEADER", "../Grammar/BinaryInstruction.code");
      AsmPEFileHeader.setFunctionSource("SOURCE_PE_FILE_HEADER", "../Grammar/BinaryInstruction.code");
-     AsmPEFileHeader.setAutomaticGenerationOfDestructor(false);
      AsmPEFileHeader.setDataPrototype("unsigned", "e_cpu_type", "= 0",
                                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmPEFileHeader.setDataPrototype("unsigned", "e_nsections", "= 0",
@@ -1216,87 +1215,73 @@ Grammar::setUpBinaryInstructions()
       *                                         PE Import Tables
       *************************************************************************************************************************/
 
-     NEW_TERMINAL_MACRO(AsmPEImportSection, "AsmPEImportSection", "AsmPEImportSectionTag");
-     AsmPEImportSection.setFunctionPrototype("HEADER_PE_IMPORT_SECTION", "../Grammar/BinaryInstruction.code");
-     AsmPEImportSection.setDataPrototype ("SgAsmPEImportDirectoryList*", "import_directories", "= NULL",
-                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     // A single imported object.  Each of these nodes is created from a combination of the PE Import Lookup Table and the PE
+     // Import Address Table, pointers to which are stored in the Import Directory (SgAsmPEImportDirectory).
+     NEW_TERMINAL_MACRO(AsmPEImportItem, "AsmPEImportItem", "AsmPEImportItemTag");
+     AsmPEImportItem.setFunctionPrototype("HEADER_PE_IMPORT_ITEM", "../Grammar/BinaryInstruction.code");
+     AsmPEImportItem.setDataPrototype("bool", "by_ordinal", "=true",      // store ordinal number if ILT/IAT?
+                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmPEImportItem.setDataPrototype("unsigned", "ordinal", "=0",        // ordinal number
+                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmPEImportItem.setDataPrototype("unsigned", "hint", "=0",           // export name table hint if not by_ordinal
+                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmPEImportItem.setDataPrototype("SgAsmGenericString*", "name", "",  // name if not by ordinal
+                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     AsmPEImportItem.setDataPrototype("rose_rva_t", "hintname_rva", "=0", // rva of hint/name pair
+                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmPEImportItem.setDataPrototype("size_t", "hintname_nalloc", "=0",  // file bytes allocated for hint/name pair
+                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmPEImportItem.setDataPrototype("rose_rva_t", "bound_rva", "=0",    // bound rva from IAT if not a copy of ILT
+                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
 
+     // A list of imported items.
+     NEW_TERMINAL_MACRO(AsmPEImportItemList, "AsmPEImportItemList", "AsmPEImportItemListTag");
+     AsmPEImportItemList.setDataPrototype("SgAsmPEImportItemPtrList", "vector", "",
+                                          NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+
+
+     // One import directory per library.  The import directory points to the Import Lookup Table and Import Address Table.
+     // ROSE no longer represents the ILT and IAT with separate IR nodes.
+     NEW_TERMINAL_MACRO(AsmPEImportDirectory, "AsmPEImportDirectory", "AsmPEImportDirectoryTag");
+     AsmPEImportDirectory.setFunctionPrototype("HEADER_PE_IMPORT_DIRECTORY", "../Grammar/BinaryInstruction.code");
+     AsmPEImportDirectory.setFunctionSource("SOURCE_PE_IMPORT_DIRECTORY", "../Grammar/BinaryInstruction.code");
+     AsmPEImportDirectory.setDataPrototype("SgAsmGenericString*", "dll_name", "=0", // name of library from which to import
+                                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     AsmPEImportDirectory.setDataPrototype("rose_rva_t", "dll_name_rva", "= 0", // address of the name
+                                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmPEImportDirectory.setDataPrototype("size_t", "dll_name_nalloc", "=0",   // bytes allocated in the file for the name
+                                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmPEImportDirectory.setDataPrototype("time_t", "time", "= 0",
+                                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmPEImportDirectory.setDataPrototype("unsigned", "forwarder_chain", "= 0",
+                                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmPEImportDirectory.setDataPrototype("rose_rva_t", "ilt_rva", "= 0", // starting address of the ILT
+                                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmPEImportDirectory.setDataPrototype("size_t", "ilt_nalloc", "= 0",  // bytes allocated in the file for the ILT
+                                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmPEImportDirectory.setDataPrototype("rose_rva_t", "iat_rva", "= 0", // usually in the .rdata section
+                                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmPEImportDirectory.setDataPrototype("size_t", "iat_nalloc", "=0",   // bytes allocated in the file for the IAT
+                                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmPEImportDirectory.setDataPrototype("SgAsmPEImportItemList*", "imports", "=NULL",
+                                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+
+     // A list of PE Import Directories.
      NEW_TERMINAL_MACRO(AsmPEImportDirectoryList, "AsmPEImportDirectoryList", "AsmPEImportDirectoryListTag");
      AsmPEImportDirectoryList.setDataPrototype("SgAsmPEImportDirectoryPtrList", "vector", "",
                                                NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
 
 
-     NEW_TERMINAL_MACRO(AsmPEImportDirectory, "AsmPEImportDirectory", "AsmPEImportDirectoryTag");
-     AsmPEImportDirectory.setFunctionPrototype("HEADER_PE_IMPORT_DIRECTORY", "../Grammar/BinaryInstruction.code");
-     AsmPEImportDirectory.setFunctionSource("SOURCE_PE_IMPORT_DIRECTORY", "../Grammar/BinaryInstruction.code");
-     AsmPEImportDirectory.setDataPrototype("rose_rva_t", "ilt_rva", "= 0",
-                                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmPEImportDirectory.setDataPrototype("SgAsmPEImportLookupTable*", "ilt", "= 0",
-                                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-     AsmPEImportDirectory.setDataPrototype("time_t", "time", "= 0",
-                                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmPEImportDirectory.setDataPrototype("unsigned", "forwarder_chain", "= 0",
-                                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmPEImportDirectory.setDataPrototype("rose_rva_t", "dll_name_rva", "= 0",
-                                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmPEImportDirectory.setDataPrototype("SgAsmGenericString*", "dll_name", "=0",
-                                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmPEImportDirectory.setDataPrototype("rose_rva_t", "iat_rva", "= 0",
-                                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmPEImportDirectory.setDataPrototype("SgAsmPEImportLookupTable*", "iat", "= 0",
-                                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-
-
-
-     NEW_TERMINAL_MACRO(AsmPEImportLookupTable, "AsmPEImportLookupTable", "AsmPEImportLookupTableTag");
-     AsmPEImportLookupTable.setFunctionPrototype("HEADER_PE_IMPORT_LOOKUP_TABLE", "../Grammar/BinaryInstruction.code");
-     AsmPEImportLookupTable.setDataPrototype("SgAsmPEImportLookupTable::TableKind", "table_kind", "",
-                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmPEImportLookupTable.setDataPrototype("SgAsmPEImportILTEntryList*", "entries", "= NULL",
-                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-
-
-
-     NEW_TERMINAL_MACRO(AsmPEImportILTEntryList, "AsmPEImportILTEntryList", "AsmPEImportILTEntryListTag");
-     AsmPEImportILTEntryList.setDataPrototype("SgAsmPEImportILTEntryPtrList", "vector", "",
-                                              NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-
-
-
-     NEW_TERMINAL_MACRO(AsmPEImportILTEntry, "AsmPEImportILTEntry", "AsmPEImportILTEntryTag");
-     AsmPEImportILTEntry.setFunctionPrototype("HEADER_PE_IMPORT_ILT_ENTRY", "../Grammar/BinaryInstruction.code");
-     AsmPEImportILTEntry.setDataPrototype("SgAsmPEImportILTEntry::ILTEntryType", "entry_type", "=ILT_ORDINAL",
-                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmPEImportILTEntry.setDataPrototype("unsigned", "ordinal", "= 0",                 /*if entry_type==ILT_ORDINAL*/
-                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmPEImportILTEntry.setDataPrototype("rose_rva_t", "hnt_entry_rva", "= 0",         /*if entry_type==ILT_HNT_ENTRY_RVA*/
-                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmPEImportILTEntry.setDataPrototype("SgAsmPEImportHNTEntry*", "hnt_entry", "= 0", /*if entry_type==ILT_HNT_ENTRY_RVA*/
-                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmPEImportILTEntry.setDataPrototype("rose_rva_t", "bound_rva", "= 0",             /*if entry_type==ILT_BOUND_RVA*/
-                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmPEImportILTEntry.setDataPrototype("uint64_t", "extra_bits", "= 0",              /*non-zero reserved bits, all entry types*/
-                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-
-
-     NEW_TERMINAL_MACRO(AsmPEImportHNTEntryList, "AsmPEImportHNTEntryList", "AsmPEImportHNTEntryListTag");
-     AsmPEImportHNTEntryList.setDataPrototype("SgAsmPEImportHNTEntryPtrList", "hintnames", "",
-                                              NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-
-
-
-     NEW_TERMINAL_MACRO(AsmPEImportHNTEntry, "AsmPEImportHNTEntry", "AsmPEImportHNTEntryTag");
-     AsmPEImportHNTEntry.setFunctionPrototype("HEADER_PE_IMPORT_HNT_ENTRY", "../Grammar/BinaryInstruction.code");
-     AsmPEImportHNTEntry.setDataPrototype("unsigned", "hint", "= 0",
-                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmPEImportHNTEntry.setDataPrototype("SgAsmGenericString*", "name", "= 0",
-                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmPEImportHNTEntry.setDataPrototype("unsigned char", "padding", "= 0",
-                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     // A file section containing a list of PE Import Directories.  Documentation is in PeImportSection.C */
+     NEW_TERMINAL_MACRO(AsmPEImportSection, "AsmPEImportSection", "AsmPEImportSectionTag");
+     AsmPEImportSection.setFunctionPrototype("HEADER_PE_IMPORT_SECTION", "../Grammar/BinaryInstruction.code");
+     AsmPEImportSection.setDataPrototype ("SgAsmPEImportDirectoryList*", "import_directories", "= NULL",
+                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
 
 
@@ -1338,7 +1323,7 @@ Grammar::setUpBinaryInstructions()
      AsmPEExportDirectory.setDataPrototype("rose_rva_t", "ordinals_rva", "= 0",
                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmPEExportDirectory.setDataPrototype("SgAsmGenericString*", "name", "= NULL",
-                                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
 
 
@@ -2464,7 +2449,7 @@ Grammar::setUpBinaryInstructions()
      AsmGenericSymbol.setDataPrototype("SgAsmGenericSection*", "bound", "= NULL",
                                        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmGenericSymbol.setDataPrototype("SgAsmGenericString*", "name", "= 0",
-                                       NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                       NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
 
 
@@ -2526,7 +2511,10 @@ Grammar::setUpBinaryInstructions()
      // Non-unique section ID (unique for ELF) or negative
      AsmGenericSection.setDataPrototype("int", "id", "= 0",
                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     // Non-unique name of section (may be empty string)
+     // Non-unique name of section (may be empty string).  The name is not part of the AST traversal because if we
+     // made it part of the traversal then we'd need to fix some of the subclasses which contain a solitary list
+     // data member (ROSE cannot have IR nodes that contain a list and other data members).  Therefore, the SgAsmGenericSection
+     // destructor will need to explicitly delete the name.
      AsmGenericSection.setDataPrototype("SgAsmGenericString*", "name", "= NULL",
                                         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmGenericSection.setDataPrototype("rose_addr_t", "mapped_preferred_rva", "= 0", // DOXYGEN
@@ -2560,7 +2548,7 @@ Grammar::setUpBinaryInstructions()
      AsmGenericDLL.setFunctionPrototype("HEADER_GENERIC_DLL", "../Grammar/BinaryInstruction.code");
      AsmGenericDLL.setFunctionSource("SOURCE_GENERIC_DLL", "../Grammar/BinaryInstruction.code");
      AsmGenericDLL.setDataPrototype("SgAsmGenericString*", "name", "= 0",
-                                    NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+                                    NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
      AsmGenericDLL.setDataPrototype("SgStringList", "symbols", "",
                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 
@@ -2641,18 +2629,18 @@ Grammar::setUpBinaryInstructions()
                            AsmGenericDLL | AsmGenericFormat | AsmGenericDLLList | AsmElfEHFrameEntryFD | AsmGenericFile |
                            AsmGenericSection | AsmGenericSymbol | AsmGenericStrtab | AsmGenericSymbolList |
                            AsmGenericSectionList | AsmGenericHeaderList | AsmGenericString | AsmElfSectionTableEntry |
-                           AsmElfSegmentTableEntry | AsmElfSymbolList | AsmPEImportILTEntry | AsmElfRelocEntry |
+                           AsmElfSegmentTableEntry | AsmElfSymbolList | AsmElfRelocEntry |
                            AsmElfRelocEntryList | AsmPEExportEntry | AsmPEExportEntryList | AsmElfDynamicEntry |
                            AsmElfDynamicEntryList | AsmElfSegmentTableEntryList | AsmStringStorage | AsmElfNoteEntry |
                            AsmElfNoteEntryList | AsmElfSymverEntry | AsmElfSymverEntryList | AsmElfSymverDefinedEntry |
                            AsmElfSymverDefinedEntryList | AsmElfSymverDefinedAux | AsmElfSymverDefinedAuxList |
                            AsmElfSymverNeededEntry | AsmElfSymverNeededEntryList | AsmElfSymverNeededAux |
-                           AsmElfSymverNeededAuxList | AsmPEImportDirectory | AsmPEImportHNTEntry | AsmPESectionTableEntry |
+                           AsmElfSymverNeededAuxList | AsmPEImportDirectory | AsmPESectionTableEntry |
                            AsmPEExportDirectory | AsmPERVASizePair | AsmCoffSymbolList | AsmPERVASizePairList |
-                           AsmElfEHFrameEntryCI | AsmPEImportHNTEntryList | AsmPEImportILTEntryList | AsmPEImportLookupTable |
+                           AsmElfEHFrameEntryCI |
                            AsmPEImportDirectoryList | AsmNEEntryPoint | AsmNERelocEntry | AsmNESectionTableEntry |
                            AsmElfEHFrameEntryCIList | AsmLEPageTableEntry | AsmLEEntryPoint | AsmLESectionTableEntry |
-                           AsmElfEHFrameEntryFDList | AsmDwarfInformation,
+                           AsmElfEHFrameEntryFDList | AsmDwarfInformation | AsmPEImportItem | AsmPEImportItemList,
                            "AsmExecutableFileFormat", "AsmExecutableFileFormatTag", false);
      AsmExecutableFileFormat.setFunctionPrototype("HEADER_EXECUTABLE_FILE_FORMAT", "../Grammar/BinaryInstruction.code");
      AsmExecutableFileFormat.setFunctionSource("SOURCE_EXECUTABLE_FILE_FORMAT", "../Grammar/BinaryInstruction.code");

@@ -1549,7 +1549,6 @@ void CodeAttributesVisitor::preOrderVisit(SgNode *node) {
      //             SgAsmElfSectionTableEntry
      //             SgAsmElfSegmentTableEntry
      //             SgAsmElfSymbolList
-     //             SgAsmPEImportILTEntry
      //             SgAsmElfRelocEntry
      //             SgAsmElfRelocEntryList
      //             SgAsmPEExportEntry
@@ -1561,16 +1560,12 @@ void CodeAttributesVisitor::preOrderVisit(SgNode *node) {
      //             SgAsmElfNoteEntry
      //             SgAsmElfNoteEntryList
      //             SgAsmPEImportDirectory
-     //             SgAsmPEImportHNTEntry
      //             SgAsmPESectionTableEntry
      //             SgAsmPEExportDirectory
      //             SgAsmPERVASizePair
      //             SgAsmCoffSymbolList
      //             SgAsmPERVASizePairList
      //             SgAsmElfEHFrameEntryCI
-     //             SgAsmPEImportHNTEntryList
-     //             SgAsmPEImportILTEntryList
-     //             SgAsmPEImportLookupTable
      //             SgAsmPEImportDirectoryList
      //             SgAsmNEEntryPoint
      //             SgAsmNERelocEntry
@@ -3572,7 +3567,6 @@ void CodeAttributesVisitor::postOrderVisit(SgNode *node) {
      //             SgAsmElfSectionTableEntry
      //             SgAsmElfSegmentTableEntry
      //             SgAsmElfSymbolList
-     //             SgAsmPEImportILTEntry
      //             SgAsmElfRelocEntry
      //             SgAsmElfRelocEntryList
      //             SgAsmPEExportEntry
@@ -3584,16 +3578,12 @@ void CodeAttributesVisitor::postOrderVisit(SgNode *node) {
      //             SgAsmElfNoteEntry
      //             SgAsmElfNoteEntryList
      //             SgAsmPEImportDirectory
-     //             SgAsmPEImportHNTEntry
      //             SgAsmPESectionTableEntry
      //             SgAsmPEExportDirectory
      //             SgAsmPERVASizePair
      //             SgAsmCoffSymbolList
      //             SgAsmPERVASizePairList
      //             SgAsmElfEHFrameEntryCI
-     //             SgAsmPEImportHNTEntryList
-     //             SgAsmPEImportILTEntryList
-     //             SgAsmPEImportLookupTable
      //             SgAsmPEImportDirectoryList
      //             SgAsmNEEntryPoint
      //             SgAsmNERelocEntry

@@ -67,7 +67,7 @@ void BtorFunctionPolicy::makeRegMap(BTRegisterInfo& rm, const std::string& prefi
   rm.memory = problem.build_array(8, 32, prefix + "memory");
 }
 
-BtorFunctionPolicy::BtorFunctionPolicy(): problem() {
+BtorFunctionPolicy::BtorFunctionPolicy(): problem(), regdict(NULL) {
 //  Comp stepCount = problem.build_var(32, "stepCount_saturating_at_" + boost::lexical_cast<std::string>(maxNumStepsToFindError + 1));
   makeRegMap(registerMap, "");
 }

@@ -1,4 +1,3 @@
-// tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
 #include "Assembler.h"
 #include "AssemblerX86.h"
@@ -6,9 +5,6 @@
 #include "Disassembler.h"
 #include "sageBuilderAsm.h"
 #include "DisassemblerPowerpc.h"
-
-#define __STDC_FORMAT_MACROS
-#include <inttypes.h>
 
 /* See header file for full documentation. */
 

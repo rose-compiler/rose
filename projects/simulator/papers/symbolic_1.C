@@ -65,8 +65,9 @@ public:
 
             // Create the policy that holds the analysis state which is modified by each instruction.  Then plug the policy
             // into the X86InstructionSemantics to which we'll feed each instruction.
-            SymbolicSemantics::Policy policy(&smt_solver);
-            X86InstructionSemantics<SymbolicSemantics::Policy, SymbolicSemantics::ValueType> semantics(policy);
+            SymbolicSemantics::Policy<SymbolicSemantics::State, SymbolicSemantics::ValueType> policy(&smt_solver);
+            X86InstructionSemantics<SymbolicSemantics::Policy<SymbolicSemantics::State, SymbolicSemantics::ValueType>,
+                                    SymbolicSemantics::ValueType> semantics(policy);
 
             // The top of the stack contains the (unknown) return address.  The value above that (in memory) is the address of
             // the buffer, to which we give a concrete value, and above that is the size of the buffer, which we also give a
@@ -92,7 +93,7 @@ public:
             // Show the value of the EAX register since this is where GCC puts the function's return value.  If we did things
             // right, the return value should depend only on the unknown bytes from the beginning of the buffer.
             SymbolicSemantics::ValueType<32> result = policy.readRegister<32>("eax");
-            std::set<const InsnSemanticsExpr::LeafNode*> vars = result.expr->get_variables();
+            std::set<const InsnSemanticsExpr::LeafNode*> vars = result.get_expression()->get_variables();
             {
                 std::ostringstream s;
                 s <<"Analysis: symbolic return value is " <<result <<"\n"
@@ -108,7 +109,7 @@ public:
                 using namespace InsnSemanticsExpr;
                 std::vector<const TreeNode*> exprs;
                 LeafNode *result_var = LeafNode::create_variable(32);
-                InternalNode *expr = new InternalNode(32, OP_EQ, result.expr, result_var);
+                InternalNode *expr = new InternalNode(32, OP_EQ, result.get_expression(), result_var);
                 exprs.push_back(expr);
                 for (std::set<const LeafNode*>::iterator vi=vars.begin(); vi!=vars.end(); ++vi) {
                     expr = new InternalNode(32, OP_EQ, *vi, LeafNode::create_integer(32, (int)'x'));
@@ -133,7 +134,8 @@ public:
             if (!result.is_known()) {
                 trace->mesg("Analysis: setting result equal to 0xff015e7c and trying to find inputs...");
                 using namespace InsnSemanticsExpr;
-                InternalNode *expr = new InternalNode(32, OP_EQ, result.expr, LeafNode::create_integer(32, 0xff015e7c));
+                InternalNode *expr = new InternalNode(32, OP_EQ, result.get_expression(),
+                                                      LeafNode::create_integer(32, 0xff015e7c));
                 if (smt_solver.satisfiable(expr)) {
                     for (std::set<const LeafNode*>::iterator vi=vars.begin(); vi!=vars.end(); ++vi) {
                         LeafNode *var_val = dynamic_cast<LeafNode*>(smt_solver.get_definition(*vi));

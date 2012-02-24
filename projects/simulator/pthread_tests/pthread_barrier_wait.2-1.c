@@ -32,8 +32,8 @@
 #include <signal.h>
 #include "posixtest.h"
 
-#define THREAD_NUM 5 
-#define LOOP_NUM 3 
+#define THREAD_NUM 2
+#define LOOP_NUM 1
 
 static pthread_barrier_t barrier;
 static int serial;
@@ -71,6 +71,8 @@ int main()
 	pthread_t child_threads[THREAD_NUM];
 	int cnt;
 	int loop;
+
+        setbuf(stdout, NULL);
 
 	printf("Initialize barrier with count = %d\n", THREAD_NUM);
 	if(pthread_barrier_init(&barrier, NULL, THREAD_NUM) != 0)

@@ -2,6 +2,7 @@
 
 #include "x86print.h"
 
+#undef __STDC_FORMAT_MACROS
 #define __STDC_FORMAT_MACROS
 #include <assert.h>
 #include <errno.h>

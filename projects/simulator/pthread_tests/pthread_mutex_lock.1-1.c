@@ -25,15 +25,29 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <errno.h>
 #include "posixtest.h"
 
-#define    THREAD_NUM  	5
-#define    LOOPS     	4
+#define    THREAD_NUM  	10
+#define    LOOPS     	500
+#define    OPERATION_LENGTH 100000 /* length of operation in microseconds */
+#define    INTERTEST_DELAY  100000 /* microseconds to delay between tests */
 
 void *f1(void *parm);
 
 pthread_mutex_t    mutex = PTHREAD_MUTEX_INITIALIZER;
 int                value;	/* value protected by mutex */
+
+/* Thread-safe sleep */
+static void delay(microsec)
+{
+    struct timespec tv, rem;
+    tv.tv_sec = microsec / 1000000;
+    tv.tv_nsec = microsec % 1000000;
+    int status;
+    while (-1==(status = nanosleep(&tv, NULL)) && EINTR==errno)
+        tv = rem;
+}
 
 int main()
 {
@@ -72,7 +86,6 @@ void *f1(void *parm)
 {
   	int   i, tmp;
   	int   rc = 0;
-  	pthread_t  self = pthread_self();
 
 	/* Loopd M times to acquire the mutex, increase the value, 
 	   and then release the mutex. */
@@ -86,8 +99,10 @@ void *f1(void *parm)
 
     		tmp = value;
     		tmp = tmp+1;
-    		fprintf(stderr,"Thread(0x%p) holds the mutex\n",(void*)self);
-    		usleep(1000);	  /* delay the increasement operation */
+#if 0 /* Only needed when debugging, and commenting it out makes this loop much more efficient */
+    		fprintf(stderr,"Thread(0x%p) holds the mutex\n",(void*)pthread_self());
+#endif
+                delay(OPERATION_LENGTH); /* delay the increasement operation */
     		value = tmp;
 
       		rc = pthread_mutex_unlock(&mutex);
@@ -95,7 +110,7 @@ void *f1(void *parm)
         		fprintf(stderr,"Error on pthread_mutex_unlock(), rc=%d\n", rc);
  			return (void*)(PTS_UNRESOLVED);
       		}
-    		sleep(1);
+    		delay(INTERTEST_DELAY);
   	}
   	pthread_exit(0);
   	return (void*)(0);

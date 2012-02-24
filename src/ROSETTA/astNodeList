@@ -206,11 +206,8 @@ SgAsmPEExportSection
 SgAsmPEFileHeader
 SgAsmPEImportDirectory
 SgAsmPEImportDirectoryList
-SgAsmPEImportHNTEntry
-SgAsmPEImportHNTEntryList
-SgAsmPEImportILTEntry
-SgAsmPEImportILTEntryList
-SgAsmPEImportLookupTable
+SgAsmPEImportItem
+SgAsmPEImportItemList
 SgAsmPEImportSection
 SgAsmPERVASizePair
 SgAsmPERVASizePairList

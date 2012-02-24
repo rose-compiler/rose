@@ -73,8 +73,9 @@ public:
 
             // Create the policy that holds the analysis state which is modified by each instruction.  Then plug the policy
             // into the X86InstructionSemantics to which we'll feed each instruction.
-            SymbolicSemantics::Policy policy(&smt_solver);
-            X86InstructionSemantics<SymbolicSemantics::Policy, SymbolicSemantics::ValueType> semantics(policy);
+            SymbolicSemantics::Policy<SymbolicSemantics::State, SymbolicSemantics::ValueType> policy(&smt_solver);
+            X86InstructionSemantics<SymbolicSemantics::Policy<SymbolicSemantics::State, SymbolicSemantics::ValueType>,
+                                    SymbolicSemantics::ValueType> semantics(policy);
 
             // The top of the stack contains the (unknown) return address.  The value above that (in memory) is the address of
             // the buffer, to which we give a concrete value, and above that is the size of the buffer, which we also give a
@@ -93,8 +94,10 @@ public:
                 // linker thunk and execute the instruction concretely to advance the instruction pointer.
                 SgAsmx86Instruction *insn = isSgAsmx86Instruction(args.thread->get_process()->get_instruction(analysis_addr));
                 if (x86_jmp==insn->get_kind()) {
-                    VirtualMachineSemantics::Policy p;
-                    X86InstructionSemantics<VirtualMachineSemantics::Policy, VirtualMachineSemantics::ValueType> sem(p);
+                    VirtualMachineSemantics::Policy<VirtualMachineSemantics::State, VirtualMachineSemantics::ValueType> p;
+                    X86InstructionSemantics<VirtualMachineSemantics::Policy<VirtualMachineSemantics::State,
+                                                                            VirtualMachineSemantics::ValueType>,
+                                            VirtualMachineSemantics::ValueType> sem(p);
                     p.set_map(args.thread->get_process()->get_memory()); // won't be thread safe
                     sem.processInstruction(insn);
                     policy.writeRegister("eip", SymbolicSemantics::ValueType<32>(p.readRegister<32>("eip").known_value()));
@@ -139,10 +142,10 @@ public:
                     trace->mesg("%s: branch %staken; target=0x%08"PRIx64, name, take?"":"not ", target);
 
                     // Is this path feasible?  We don't really need to check it now; we could wait until the end.
-                    InternalNode *c = new InternalNode(32, OP_EQ, policy.readRegister<32>("eip").expr,
+                    InternalNode *c = new InternalNode(32, OP_EQ, policy.readRegister<32>("eip").get_expression(),
                                                        LeafNode::create_integer(32, target));
                     constraints.push_back(c); // shouldn't really have to do this again if we could save some state
-                    if (smt_solver.satisfiable(c)) {
+                    if (smt_solver.satisfiable(constraints)) {
                         policy.writeRegister("eip", SymbolicSemantics::ValueType<32>(target));
                     } else {
                         trace->mesg("%s: chosen control flow path is not feasible.", name);
@@ -154,7 +157,7 @@ public:
             // Show the value of the EAX register since this is where GCC puts the function's return value.  If we did things
             // right, the return value should depend only on the unknown bytes from the beginning of the buffer.
             SymbolicSemantics::ValueType<32> result = policy.readRegister<32>("eax");
-            std::set<const InsnSemanticsExpr::LeafNode*> vars = result.expr->get_variables();
+            std::set<const InsnSemanticsExpr::LeafNode*> vars = result.get_expression()->get_variables();
             {
                 std::ostringstream s;
                 s <<name <<": symbolic return value is " <<result <<"\n"
@@ -175,7 +178,7 @@ public:
                 trace->mesg("%s: setting variables (buffer bytes) to 'x' and evaluating the function symbolically...", name);
                 std::vector<const TreeNode*> exprs = constraints;
                 LeafNode *result_var = LeafNode::create_variable(32);
-                InternalNode *expr = new InternalNode(32, OP_EQ, result.expr, result_var);
+                InternalNode *expr = new InternalNode(32, OP_EQ, result.get_expression(), result_var);
                 exprs.push_back(expr);
                 for (std::set<const LeafNode*>::iterator vi=vars.begin(); vi!=vars.end(); ++vi) {
                     expr = new InternalNode(32, OP_EQ, *vi, LeafNode::create_integer(32, (int)'x'));
@@ -200,7 +203,8 @@ public:
             if (!result.is_known()) {
                 trace->mesg("%s: setting result equal to 0xff015e7c and trying to find inputs...", name);
                 std::vector<const TreeNode*> exprs = constraints;
-                InternalNode *expr = new InternalNode(32, OP_EQ, result.expr, LeafNode::create_integer(32, 0xff015e7c));
+                InternalNode *expr = new InternalNode(32, OP_EQ, result.get_expression(),
+                                                      LeafNode::create_integer(32, 0xff015e7c));
                 exprs.push_back(expr);
                 if (smt_solver.satisfiable(exprs)) {
                     for (std::set<const LeafNode*>::iterator vi=vars.begin(); vi!=vars.end(); ++vi) {
