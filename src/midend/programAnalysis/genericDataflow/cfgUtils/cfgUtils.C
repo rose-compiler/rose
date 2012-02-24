@@ -1172,7 +1172,7 @@ const SgExpression* cfgUtils::unwrapCasts(const SgExpression* e)
 }
 
 // returns the DataflowNode that represents that start of the CFG of the given function's body
-DataflowNode cfgUtils::getFuncStartCFG(SgFunctionDefinition* func, bool (*f) (CFGNode) /* = defaultFilter */)
+DataflowNode cfgUtils::getFuncStartCFG(SgFunctionDefinition* func, bool (*f) (CFGNode) )
 {
   return DataflowNode (func->cfgForBeginning(), f);
 #if 0  
@@ -1199,7 +1199,7 @@ DataflowNode cfgUtils::getFuncStartCFG(SgFunctionDefinition* func, bool (*f) (CF
 }
 
 // returns the DataflowNode that represents that end of the CFG of the given function's body
-DataflowNode cfgUtils::getFuncEndCFG(SgFunctionDefinition* func, bool (*f) (CFGNode) /* = defaultFilter */)
+DataflowNode cfgUtils::getFuncEndCFG(SgFunctionDefinition* func, bool (*f) (CFGNode) )
 {
   //return (DataflowNode) func->cfgForEnd();
   return DataflowNode (func->cfgForEnd(),f);
