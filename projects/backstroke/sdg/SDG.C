@@ -237,6 +237,7 @@ void SystemDependenceGraph::build()
                     Vertex paraOutVertex = addVertex(paraOutNode);
                     actualOutParameters[funcDecl].push_back(paraOutVertex);
                     callInfo.outPara.push_back(paraOutVertex);
+                    callInfo.isVoid = false;
                     callInfo.returned = paraOutVertex;
 
                     // Add a CD edge from call node to this actual-out node.
@@ -498,6 +499,10 @@ void SystemDependenceGraph::addDataDependenceEdges(
     // Add an edge from returned result of each function call to all uses of this function call.
     foreach (const CallSiteInfo& callInfo, callSiteInfo)
     {
+        // Functions of void type does not return anything.
+        if (callInfo.isVoid)
+            continue;
+
         SgNode* node = (*this)[callInfo.returned]->astNode;
         if (isSgFunctionCallExp(node))
         {
