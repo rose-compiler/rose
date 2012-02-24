@@ -1,4 +1,27 @@
-PDFS=manual.pdf pig-doc.pdf 
+if WITH_SWI_PROLOG
+
+TERMITE_PDF=termite.pdf
+TERMITE_HTML = \
+	termite-html/Contents.html \
+	termite-html/DocIndex.html \
+	termite-html/index.html \
+	termite-html/info.gif \
+	termite-html/sec-1.html \
+	termite-html/sec-1.1.html \
+	termite-html/sec-2.html \
+	termite-html/sec-2.1.html \
+	termite-html/sec-3.html \
+	termite-html/folder-saved-search.png \
+	termite-html/go-next.png \
+	termite-html/go-up.png \
+	termite-html/go-home.png \
+	termite-html/go-previous.png \
+	termite-html/internet-news-reader.png \
+	$(patsubst %.pl, termite-html/%.html,$(INPUTFILES))
+endif
+
+PDFS=manual.pdf pig-doc.pdf $(TERMITE_PDF)
+nobase_dist_doc_DATA = $(TERMITE_HTML)
 dist_doc_DATA=$(PDFS)
 nodist_EXTRA_DATA=manual/manual_vars.tex.in
 
@@ -20,7 +43,7 @@ EXTRA_DIST= \
 	icons/internet-news-reader.png
 
 .PHONY: docs HTML clean-termite
-docs: $(PDFS) SATIrE-@PACKAGE_VERSION@-manual.pdf # docs-termite
+docs: $(PDFS) SATIrE-@PACKAGE_VERSION@-manual.pdf docs-termite
 
 SATIrE-@PACKAGE_VERSION@-manual.pdf: manual.pdf
 	cp manual.pdf SATIrE-@PACKAGE_VERSION@-manual.pdf
@@ -86,29 +109,8 @@ MYTEXINPUT=$(srcdir)/ltx2htm:$(srcdir)
 if WITH_SWI_PROLOG  # --------------------------------------------------
 
 docs-termite: termite.pdf mostlyclean # MS: deactivated HTML here (target is still available)
-dist_doc_DATA += termite.pdf
-
-nobase_dist_doc_DATA = $(TERMITE_HTML)
 
 $(TERMITE_HTML): HTML
-
-TERMITE_HTML = \
-	termite-html/Contents.html \
-	termite-html/DocIndex.html \
-	termite-html/index.html \
-	termite-html/info.gif \
-	termite-html/sec-1.html \
-	termite-html/sec-1.1.html \
-	termite-html/sec-2.html \
-	termite-html/sec-2.1.html \
-	termite-html/sec-3.html \
-	termite-html/folder-saved-search.png \
-	termite-html/go-next.png \
-	termite-html/go-up.png \
-	termite-html/go-home.png \
-	termite-html/go-previous.png \
-	termite-html/internet-news-reader.png \
-	$(patsubst %.pl, termite-html/%.html,$(INPUTFILES))
 
 clean-termite: 
 	rm -f termite-pdf.dvi termite-pdf.idx termite-pdf.log termite-pdf.aux \

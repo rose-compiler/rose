@@ -59,7 +59,7 @@ libtermsupport_la_SOURCES = \
 	RoseToTerm.C \
 	TermToRose.C PrologTerm.C RoseEnums.C
 nodist_libtermsupport_la_SOURCES = \
-	dfiparser.tab.c++ dfiparser.tab.h++ dfiscanner.c++
+	dfiparser.tab.c++  dfiscanner.c++ #dfiparser.tab.h++
 
 CLEANFILES = termpretty.c++ \
 	     dfiparser.c++ dfiparser.h dfiscanner.c++ \
