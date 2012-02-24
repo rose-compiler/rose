@@ -26,7 +26,8 @@ do_subst= sed -e 's,[@]pkgdatadir[@],$(pkgdatadir),g' \
               -e 's,[@]satireinclude[@],$(pkgincludedir),g' \
               -e 's,[@]satirelib[@],$(libdir),g' \
               -e 's,[@]cc[@],$(CC),g' \
-              -e 's,[@]cxx[@],$(CXX),g'
+              -e 's,[@]cxx[@],$(CXX),g' \
+              -e 's,[@]satire-libtool[@],$(bindir)/satire-libtool,g'
 
 newanalysis: newanalysis.in Makefile
 	$(do_subst) < $(srcdir)/newanalysis.in > newanalysis \

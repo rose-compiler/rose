@@ -8,6 +8,7 @@ AC_CONFIG_SRCDIR([README])
 AC_CONFIG_MACRO_DIR([m4])
 
 AM_INIT_AUTOMAKE([foreign no-installinfo no-texinfo.tex tar-pax 1.9.5])
+AM_MAINTAINER_MODE
 
 # Checks for programs.
 AC_PROG_YACC

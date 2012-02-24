@@ -10,10 +10,10 @@ SATIRE_LIB=@satirelib@
 SATIRE_INCLUDE=@satireinclude@
 SATIRE_DATA=@pkgdatadir@
 # Adrian: By using libtool, we are creating both static and shared object files
-CC=satire-libtool --tag=C --mode=compile @cc@
-CXX=satire-libtool --tag=CXX --mode=compile @cxx@
+CC=@satire-libtool@ --tag=C --mode=compile @cc@
+CXX=@satire-libtool@ --tag=CXX --mode=compile @cxx@
 # Adrian: we use libtool to extract the correct -rpath for the C++ runtime libraries
-LD=satire-libtool --tag=CXX --mode=link @cxx@
+LD=@satire-libtool@ --tag=CXX --mode=link @cxx@
 
 # variable CUSTOM_CFLAGS can be in separate file; so can options from
 # newcombinedanalysis

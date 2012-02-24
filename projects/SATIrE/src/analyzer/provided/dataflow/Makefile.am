@@ -52,7 +52,8 @@ do_local_subst = \
         -e 's,[@]satireinclude[@],$(realpath .)/local_include_dir,g' \
         -e 's,[@]satirelib[@],$(realpath $(top_builddir))/src/analyzer/astaccess/satire/.libs,g' \
         -e 's,[@]cc[@],$(CC),g' \
-        -e 's,[@]cxx[@],$(CXX),g'
+        -e 's,[@]cxx[@],$(CXX),g' \
+        -e 's,[@]satire-libtool[@],$(top_builddir)/../satire-libtool,g' # let satire-libtool point to builddir instead of $prefix/bin/satire-libtool
 
 # We manually instantiate newanalysis.in and Makefile-template.in according
 # to our needs here; also, we copy all the SATIrE headers, and some other
