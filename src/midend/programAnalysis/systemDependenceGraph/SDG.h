@@ -124,12 +124,15 @@ SDGNode*, SDGEdge*>
 
         struct CallSiteInfo
         {
+            CallSiteInfo() : funcCall(NULL), isVoid(true) {}
             typedef SystemDependenceGraph::Vertex Vertex;
 
             SgFunctionCallExp* funcCall;
             Vertex vertex;
             std::vector<Vertex> inPara;
             std::vector<Vertex> outPara;
+            // If the called function returns anything.
+            bool isVoid;
             Vertex returned;
         };
 
