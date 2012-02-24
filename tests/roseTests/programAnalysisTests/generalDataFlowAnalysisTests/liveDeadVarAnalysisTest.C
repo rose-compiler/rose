@@ -35,12 +35,12 @@ bool gfilter (CFGNode cfgn)
 //    case V_SgFunctionCallExp:
 //      return (cfgn == node->cfgForEnd());
 //
-//      //For basic blocks and other "container" nodes, keep the node that appears before the contents are executed
-//    case V_SgBasicBlock:
-//    case V_SgExprStatement:
-//    case V_SgCommaOpExp:
-//      return (cfgn == node->cfgForBeginning());
-//
+   //For basic blocks and other "container" nodes, keep the node that appears before the contents are executed
+    case V_SgBasicBlock:
+    case V_SgExprStatement:
+    case V_SgCommaOpExp:
+      return (cfgn == node->cfgForBeginning());
+
       //Keep the last index for initialized names. This way the def of the variable doesn't propagate to its assign
       //initializer.
     case V_SgInitializedName:
