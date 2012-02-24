@@ -1,3 +1,4 @@
+#include "rose.h"
 #include <string>
 #include <list>
 #include <iostream>

@@ -3,7 +3,7 @@
 #include <vector>
 #include <set>
 
-#include "common.h"
+#include "genericDataflowCommon.h"
 #include "variables.h"
 #include "varBitVector.h"
 using namespace std;
