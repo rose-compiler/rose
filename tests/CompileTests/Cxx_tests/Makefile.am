@@ -361,6 +361,7 @@ test2006_59.C \
 test2006_61.C \
 test2006_62.C \
 test2006_63.C \
+test2004_64.C \
 test2006_66.C \
 test2006_68.C \
 test2006_69.C \
@@ -654,6 +655,7 @@ test2005_09.C \
  test2012_02.C \
  test2012_03.C \
  test2012_04.C \
+ test2012_05.C \
  test2006_125.C 
 
 # DQ (2/15/2012): These test codes fail on OSX only.
@@ -682,9 +684,6 @@ endif
 #
 if ROSE_USE_EDG_VERSION_4_3
 TESTCODE_CURRENTLY_FAILING = \
-test2007_62.C \
-math.C \
-test2004_64.C \
 test2004_77.C \
 test2004_78.C \
 test2004_79.C \
@@ -884,6 +883,11 @@ test2010_24.C \
  test2011_65.C \
  test2011_66.C \
  test2011_121.C 
+
+# DQ (2/19/2012): These appear to fail only sometimes and were noticed just before going on travel (test with valgrind).
+STATISTICALLY_FAILING_TESTS = \
+test2007_62.C \
+math.C 
 
 else
 include $(srcdir)/Makefile-fail.inc
