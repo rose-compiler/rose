@@ -106,7 +106,7 @@ public:
     if (inits.size() > 0) {
       res->copy(getLattice(inits[0]));
       modified = true;
-      for (int i = 1; i < inits.size(); ++i)
+      for (size_t i = 1; i < inits.size(); ++i)
         res->meetUpdate(getLattice(inits[i]));
     }
   }
