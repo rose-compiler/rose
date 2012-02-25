@@ -1027,8 +1027,8 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
           currentFileNameId = n->get_file_info()->get_file_id();
 #endif
 
-#if 0
-          printf ("currentFileNameId = %d \n",currentFileNameId);
+#if 1
+          printf ("n = %p = %s currentFileNameId = %d \n",n,n->class_name().c_str(),currentFileNameId);
 #endif
        // DQ (10/27/2007): This is a valgrind error: use of uninitialized variable below!
        // Initialized with a value that could not match a valid file_id.
@@ -1120,6 +1120,10 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                     return returnSynthesizeAttribute;
                   }
 
+               if (previousLocatedNodeMap.find(currentFileNameId) == previousLocatedNodeMap.end())
+                  {
+                    printf ("currentFileNameId = %d \n",currentFileNameId);
+                  }
                ROSE_ASSERT(previousLocatedNodeMap.find(currentFileNameId) != previousLocatedNodeMap.end());
                SgLocatedNode* previousLocNodePtr = previousLocatedNodeMap[currentFileNameId];
 

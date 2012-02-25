@@ -588,6 +588,7 @@ CustomMemoryPoolDOTGenerationData::visit(SgNode* node)
 
      bool ignoreThisIRnode = false;
   // bool ignoreThisIRnode = true;
+
 #if 0
      Sg_File_Info* fileInfo = node->get_file_info();
      if (fileInfo != NULL)
@@ -2098,6 +2099,14 @@ SimpleColorMemoryPoolTraversal::visit(SgNode* node)
    {
      ROSE_ASSERT (filterFlags != NULL);
 
+  // printf ("In SimpleColorMemoryPoolTraversal::visit(node = %p = %s) \n",node,node->class_name().c_str());
+
+#if 0
+  // DQ (2/20/2012): This is actually called.
+     printf ("This does not appear to be used! \n");
+     ROSE_ASSERT(false);
+#endif
+
   // DQ (3/2/2010): Test if we have turned off all filtering of the AST.
      if ( filterFlags->m_noFilter == 0) 
         {
@@ -2445,12 +2454,15 @@ generateWholeGraphOfAST_filteredFrontendSpecificNodes( string filename, CustomMe
    {
 #ifdef _MSC_VER
   // DQ (11/27/2009): This appears to be required for MSVC (I think it is correct for GNU as well).
-         extern set<SgNode*> getSetOfFrontendSpecificNodes();
+     extern set<SgNode*> getSetOfFrontendSpecificNodes();
 #endif
 
 #if 1
   // Normally we want to skip the frontend IR nodes so avoid cluttering the graphs for users.
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+  // DQ (2/20/2012): This(fails when compiled with ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT.
+  // This is because with this option the the getSetOfFrontendSpecificNodes() function is not seen.
+  // To eliminate the frontend specific nodes we turn off the processing of them in the header file directly.
      set<SgNode*> skippedNodeSet = getSetOfFrontendSpecificNodes();
 #else
      set<SgNode*> skippedNodeSet;
