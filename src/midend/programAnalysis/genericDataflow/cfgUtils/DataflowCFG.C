@@ -4,7 +4,9 @@ using namespace std;
 
 #define SgNULL_FILE Sg_File_Info::generateDefaultFileInfoForTransformationNode()
 
-namespace VirtualCFG {
+namespace VirtualCFG 
+{
+      // the default interesting filter
       bool defaultFilter (CFGNode cfgn)
       {
           return (cfgn.isInteresting());
@@ -63,12 +65,12 @@ top:
           for (unsigned int j = 0; j < currentPaths2.size(); ++j) {
             CFGPath merged = (*merge)(currentPaths[i], currentPaths2[j]);
             if (std::find(currentPaths.begin(), currentPaths.end(), merged) == currentPaths.end()) { // find a new path? push it to the working set of initial edges
-              currentPaths.push_back(merged); // TODO plant a flag indicating changed or not here
+              currentPaths.push_back(merged); // a new path will be inserted. Old path ending with non-interesting node still exists
+
             }
           }
-          if (currentPaths.size() != oldSize) // TODO, the condition should be if a merge happens ?
-            // it is possible an invalid path is merged with a successor path, but the number of the paths is the same. We should not stop searching!
-            goto top; // go through all paths again? not efficient!!
+          if (currentPaths.size() != oldSize) 
+            goto top; // TODO go through all paths again? not very efficient!!
         }
       }
 #endif
@@ -87,6 +89,11 @@ top:
     //cout << "makeClosure done: #edges=" << edges.size() << endl;
     //for(vector<DataflowEdge>::iterator e=edges.begin(); e!=edges.end(); e++)
     //    printf("Current Node %p<%s | %s>\n", e.target().getNode(), e.target().getNode()->unparseToString().c_str(), e.target().getNode()->class_name().c_str());
+    for (vector<DataflowEdge>::const_iterator i = edges.begin(); i != edges.end(); ++i) {
+      CFGNode end1 = (*i).source().n;
+      CFGNode end2 = (*i).target().n;
+       assert (filter (end1)  || filter (end2)); // at least one node is interesting
+    }
     return edges;
   }
         

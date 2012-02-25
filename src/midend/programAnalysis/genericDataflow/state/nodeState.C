@@ -744,7 +744,7 @@ NodeState* NodeState::getNodeState(const DataflowNode& n, int index)
 {
         // if we haven't assigned a NodeState for every dataflow node
         if(!nodeStateMapInit)
-                initNodeStateMap();
+                initNodeStateMap(n.filter);
         
         return nodeStateMap[n][index];
 }
@@ -754,7 +754,7 @@ const vector<NodeState*> NodeState::getNodeStates(const DataflowNode& n)
 {
         // if we haven't assigned a NodeState for every dataflow node
         if(!nodeStateMapInit)
-                initNodeStateMap();
+                initNodeStateMap(n.filter);
         
         return nodeStateMap[n];
 }
@@ -764,13 +764,13 @@ int NodeState::numNodeStates(DataflowNode& n)
 {
         // if we haven't assigned a NodeState for every dataflow node
         if(!nodeStateMapInit)
-                initNodeStateMap();
+                initNodeStateMap(n.filter);
         
         return nodeStateMap[n].size();
 }
 
 // initializes the nodeStateMap
-void NodeState::initNodeStateMap()
+void NodeState::initNodeStateMap(bool (*filter) (CFGNode cfgn))
 {
         set<FunctionState*> allFuncs = FunctionState::getAllDefinedFuncs();
         
@@ -778,8 +778,8 @@ void NodeState::initNodeStateMap()
         for(set<FunctionState*>::iterator it=allFuncs.begin(); it!=allFuncs.end(); it++)
         {
                 const Function& func = (*it)->func;
-                DataflowNode funcCFGStart = cfgUtils::getFuncStartCFG(func.get_definition());
-                DataflowNode funcCFGEnd = cfgUtils::getFuncEndCFG(func.get_definition());
+                DataflowNode funcCFGStart = cfgUtils::getFuncStartCFG(func.get_definition(),filter);
+                DataflowNode funcCFGEnd = cfgUtils::getFuncEndCFG(func.get_definition(), filter);
                 
                 // Iterate over all the dataflow nodes in this function
                 for(VirtualCFG::iterator it(funcCFGStart); it!=VirtualCFG::dataflow::end(); it++)
