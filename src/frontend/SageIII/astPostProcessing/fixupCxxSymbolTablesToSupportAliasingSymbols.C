@@ -583,12 +583,30 @@ FixupAstSymbolTablesToSupportAliasedSymbols::visit ( SgNode* node )
 
                SgClassDeclaration* tmpClassDeclaration    = baseClass->get_base_class();
                ROSE_ASSERT(tmpClassDeclaration != NULL);
+#if 0
+            // ROSE_ASSERT(tmpClassDeclaration->get_definingDeclaration() != NULL);
                SgClassDeclaration* targetClassDeclaration = isSgClassDeclaration(tmpClassDeclaration->get_definingDeclaration());
                ROSE_ASSERT(targetClassDeclaration != NULL);
                SgScopeStatement*   referencedScope  = targetClassDeclaration->get_definition();
-
             // We need this function to restrict it's injection of symbol to just those that are associated with public and protected declarations.
                injectSymbolsFromReferencedScopeIntoCurrentScope(referencedScope,classDefinition,accessLevel);
+#else
+            // DQ (2/25/2012) We only want to inject the symbol where we have identified the defining scope.
+               if (tmpClassDeclaration->get_definingDeclaration() != NULL)
+                  {
+                    SgClassDeclaration* targetClassDeclaration = isSgClassDeclaration(tmpClassDeclaration->get_definingDeclaration());
+                    ROSE_ASSERT(targetClassDeclaration != NULL);
+                    SgScopeStatement*   referencedScope  = targetClassDeclaration->get_definition();
+
+                 // We need this function to restrict it's injection of symbol to just those that are associated with public and protected declarations.
+                    injectSymbolsFromReferencedScopeIntoCurrentScope(referencedScope,classDefinition,accessLevel);
+                  }
+                 else
+                  {
+                 // DQ (2/25/2012): Print a warning message when this happens (so far only test2012_08.C).
+                    printf ("WARNING: In FixupAstSymbolTablesToSupportAliasedSymbols::visit(): Not really clear how to handle this case where tmpClassDeclaration->get_definingDeclaration() == NULL! \n");
+                  }
+#endif
              }
         }
 
