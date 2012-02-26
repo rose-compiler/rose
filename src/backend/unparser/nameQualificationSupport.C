@@ -477,8 +477,12 @@ NameQualificationTraversal::requiresTypeElaboration(SgSymbol* symbol)
        // DQ (7/23/2011): Class elaboration can be required....
           case V_SgClassSymbol:
 
+       // DQ (2/25/2012): Added support for SgTemplateClassSymbol.
+          case V_SgTemplateClassSymbol:
+
        // DQ (2/12/2012): Added support for SgTemplateMemberFunctionSymbol.
           case V_SgTemplateMemberFunctionSymbol:
+
 
        // DQ (6/21/2011): Added case for SgFunctionSymbol (triggers type elaboration).
           case V_SgFunctionSymbol:
@@ -3074,6 +3078,11 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
         {
           SgMemberFunctionDeclaration* memberFunctionDeclaration = constructorInitializer->get_declaration();
           SgStatement* currentStatement = TransformationSupport::getStatement(constructorInitializer);
+          if (currentStatement == NULL)
+             {
+               printf ("Error in constructorInitializer = %p \n",constructorInitializer);
+               ROSE_ASSERT(constructorInitializer->get_parent() != NULL);
+             }
           ROSE_ASSERT(currentStatement != NULL);
 
        // If this could occur in a SgForStatement then this should be fixed up as it is elsewhere...

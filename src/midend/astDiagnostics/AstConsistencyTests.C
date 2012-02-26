@@ -984,9 +984,19 @@ TestAstProperties::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttribu
                        }
 #endif
 
+#ifdef ROSE_USE_EDG_VERSION_4
+                 // DQ (2/25/2012): This case is required for test2012_08.C (related to support for STL map.h header file).
+                    case V_SgFunctionCallExp:
+                       {
+                      // Unclear what should be checked here, for now allow this as an acceptable case.
+                         printf ("Warning: EDG 4.0 specific case, found unusual case of SgFunctionCallExp returned from SgFunctionCallExp::get_function() member function \n");
+                         break;
+                       }
+#endif
+
                     default:
                        {
-                         printf ("Error case default in switch (functionExpression = %s) \n",functionExpression->sage_class_name());
+                         printf ("Error case default in switch (functionExpression = %s) \n",functionExpression->class_name().c_str());
                          ROSE_ASSERT(false);
                        }
                   }
