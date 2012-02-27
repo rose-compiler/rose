@@ -1,6 +1,6 @@
 #include <numeric>
 
-#include "Utils.h";
+#include "Utils.h"
 #include "APIDepFinder.h"
 
 /** Is node @n@ marked with an attribute that contains @attr@? */
@@ -254,6 +254,17 @@ void APIDepFinder::finalize(SgNode *n) {
         SgFunctionCallExp *fc = isSgFunctionCallExp(*ci);
         SgFunctionRefExp *f =
             fc ? isSgFunctionRefExp(fc->get_function()) : NULL;
+
+        /* skip if f is null, since we are looking just for
+         * SgFunctionRefExp instances.  This prohibits us from
+         * working with APIs that are based on member functions of
+         * classes (e.g., class.foo()) for the time being, and
+         * restricts us to C-like APIs.
+         */
+        if (f == NULL) {
+          continue;
+        }
+
         std::string n = f->get_symbol_i()->get_name();
         if(f && users.find(n) != users.end()) {
             if (debug) std::cout << "Adding call to "
