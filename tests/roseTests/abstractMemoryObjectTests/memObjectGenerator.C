@@ -75,6 +75,13 @@ int main(int argc, char * argv[])
        cout<<array->getDereference()->toString()<<endl;
       }
 
+    // Sriram's mod
+      Pointer* pointer = dynamic_cast<Pointer*> (mem_obj);
+      if(pointer) {
+          std::cout << "test Pointer->getDereference() .. " <<endl;
+          cout << pointer->getDereference()->toString() << std::endl;
+      }
+
     }
   }
 
