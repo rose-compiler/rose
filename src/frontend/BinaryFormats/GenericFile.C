@@ -75,14 +75,8 @@ SgAsmGenericFile::parse(std::string fileName)
 /* Destructs by closing and unmapping the file and destroying all sections, headers, etc. */
 SgAsmGenericFile::~SgAsmGenericFile() 
 {
-    /* Delete child headers before this */
-    while (p_headers->get_headers().size()) {
-        SgAsmGenericHeader *header = p_headers->get_headers().back();
-        p_headers->get_headers().pop_back();
-        delete header;
-    }
-    ROSE_ASSERT(p_headers->get_headers().empty()   == true);
-    
+    /* AST child nodes have already been deleted if we're called from SageInterface::deleteAST() */
+
     /* Unmap and close */
     unsigned char *mapped = p_data.pool();
     if (mapped && p_data.size()>0)
@@ -91,12 +85,6 @@ SgAsmGenericFile::~SgAsmGenericFile()
 
     if ( p_fd >= 0 )
         close(p_fd);
-
-    // Delete the pointers to the IR nodes containing the STL lists
-    delete p_headers;
-    p_headers = NULL;
-    delete p_holes;
-    p_holes = NULL;
 }
 
 /** Returns original size of file, based on file system */
@@ -593,7 +581,7 @@ SgAsmGenericFile::best_section_by_va(const SgAsmGenericSectionPtrList &sections,
     rose_addr_t fo0 = sections[0]->get_va_offset(va);
     for (size_t i=1; i<sections.size(); i++) {
         if (fo0 != sections[i]->get_va_offset(va))
-            return NULL; /* all sections sections must map the VA to the same file offset */
+            return NULL; /* all sections must map the VA to the same file offset */
         if (best->get_mapped_size() > sections[i]->get_mapped_size()) {
             best = sections[i]; /*prefer sections with a smaller mapped size*/
         } else if (best->get_name()->get_string().size()==0 && sections[i]->get_name()->get_string().size()>0) {
@@ -1116,7 +1104,7 @@ SgAsmGenericFile::dump_all(const std::string &dump_name)
         }
 
         /* Dump interpretations that point only to this file. */
-        SgBinaryComposite *binary = isSgBinaryComposite(get_parent());
+        SgBinaryComposite *binary = SageInterface::getEnclosingNode<SgBinaryComposite>(this);
         ROSE_ASSERT(binary!=NULL);
         const SgAsmInterpretationPtrList &interps = binary->get_interpretations()->get_interpretations();
         for (size_t i=0; i<interps.size(); i++) {
@@ -1293,7 +1281,7 @@ SgAsmGenericFile::unfill_holes()
     SgAsmGenericSectionPtrList to_delete = get_holes()->get_sections();
     for (size_t i=0; i<to_delete.size(); i++) {
         SgAsmGenericSection *hole = to_delete[i];
-        delete hole;
+        SageInterface::deleteAST(hole);
     }
     
     /* Destructor for holes should have removed links to those holes. */

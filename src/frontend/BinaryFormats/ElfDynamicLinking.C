@@ -66,7 +66,7 @@ SgAsmElfDynamicEntry::set_name(SgAsmGenericString *name)
     if (name!=p_name) {
         if (p_name) {
             p_name->set_parent(NULL);
-            delete p_name;
+            SageInterface::deleteAST(p_name);
         }
         p_name = name;
         if (p_name)
@@ -153,6 +153,7 @@ SgAsmElfDynamicSection::parse()
             ROSE_ASSERT(entry->get_name()==NULL);
             SgAsmStoredString *name = new SgAsmStoredString(strsec->get_strtab(), entry->get_d_val().get_rva());
             entry->set_name(name);
+            name->set_parent(entry);
 #if 1       /* FIXME: Do we really want this stuff duplicated in the AST? [RPM 2008-12-12] */
             SgAsmStoredString *name2 = new SgAsmStoredString(strsec->get_strtab(), entry->get_d_val().get_rva());
             fhdr->add_dll(new SgAsmGenericDLL(name2));

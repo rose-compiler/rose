@@ -45,7 +45,7 @@ class JavaParser  implements Callable<Boolean>
                System.out.println("In JavaParser constructor: verboseLevel = " + verboseLevel);
              }
         }
-         
+
   // -------------------------------------------------------------------------------------------
      public native void cactionCompilationUnitList(int argc, String[] argv);
 
@@ -54,32 +54,34 @@ class JavaParser  implements Callable<Boolean>
      public native void cactionCompilationUnitDeclarationEnd(int java_numberOfStatements, JavaToken jToken);
      public native void cactionTypeDeclaration(String filename, JavaToken jToken);
   // public native void cactionTypeDeclaration(String filename, JavaToken jToken);
-     public native void cactionTypeDeclarationEnd(String filename,int java_numberOfStatements, JavaToken jToken);
+     public native void cactionTypeDeclarationEnd(String filename, boolean java_has_super_class, int java_numberOfinterfaces, int java_numberofTypeParameters, JavaToken jToken);
 
   // Need to change the names of the function parameters (should not all be "filename").
-     public native void cactionConstructorDeclaration(String filename, boolean java_is_native, JavaToken jToken);
-     public native void cactionConstructorDeclarationEnd(int java_numberOfStatements, JavaToken jToken);
+     public native void cactionConstructorDeclaration(String filename, int java_numberOfArguments, boolean java_is_native, JavaToken jToken);
+     public native void cactionConstructorDeclarationEnd(int java_numberOfArguments, int java_numberOfStatements, JavaToken jToken);
      public native void cactionExplicitConstructorCall(String filename, JavaToken jToken);
      public native void cactionExplicitConstructorCallEnd(String filename, JavaToken jToken);
-     public native void cactionMethodDeclaration(String filename, boolean java_is_abstract, boolean java_is_native, boolean java_is_static, boolean java_is_final, boolean java_is_synchronized, boolean java_is_public, boolean java_is_protected, boolean java_is_private, boolean java_is_strictfp, JavaToken jToken);
+     public native void cactionMethodDeclaration(String filename, int java_numberOfArguments, boolean java_is_abstract, boolean java_is_native, boolean java_is_static, boolean java_is_final, boolean java_is_synchronized, boolean java_is_public, boolean java_is_protected, boolean java_is_private, boolean java_is_strictfp, JavaToken jToken);
      public native void cactionSingleTypeReference(String filename, JavaToken jToken);
      public native void cactionArgument(String argumentName, int modifiers, JavaToken jToken);
-     public native void cactionArrayTypeReference(String filename, JavaToken jToken);
-     public native void cactionArrayTypeReferenceEnd(String filename, JavaToken jToken);
+     public native void cactionArgumentEnd(String argumentName, int modifiers, JavaToken jToken);
+     public native void cactionArrayTypeReference(String filename, int numberOfDimensions, JavaToken jToken);
+     public native void cactionArrayTypeReferenceEnd(String filename, int numberOfDimensions, JavaToken jToken);
      public native void cactionMessageSend(String functionName, String associatedClassName, JavaToken jToken);
 
      public native void cactionMessageSendEnd(int numTypeArguments, int numArguments, JavaToken jToken);
 
-     public native void cactionQualifiedNameReference(String qualifiedName, JavaToken jToken);
+     public native void cactionQualifiedNameReference(String package_name, String type_prefix, String type_name, String name, JavaToken jToken);
      public native void cactionStringLiteral(String value, JavaToken jToken);
 
      public native void cactionAllocationExpression(JavaToken jToken);
-     public native void cactionAllocationExpressionEnd(String nameOfType, JavaToken jToken);
+     public native void cactionAllocationExpressionEnd(String nameOfType, int numArguments, JavaToken jToken);
      public native void cactionANDANDExpression(JavaToken jToken);
      public native void cactionANDANDExpressionEnd(JavaToken jToken);
      public native void cactionAnnotationMethodDeclaration(JavaToken jToken);
      public native void cactionArgumentClassScope(String variableName, JavaToken jToken);
      public native void cactionArrayAllocationExpression(JavaToken jToken);
+     public native void cactionArrayAllocationExpressionEnd(String nameOfType, int numberOfDimensions, boolean hasInitializers, JavaToken jToken);
      public native void cactionArrayInitializer(JavaToken jToken);
      public native void cactionArrayQualifiedTypeReference(JavaToken jToken);
      public native void cactionArrayQualifiedTypeReferenceClassScope(JavaToken jToken);
@@ -126,8 +128,12 @@ class JavaParser  implements Callable<Boolean>
   // public native void cactionFieldDeclarationEnd(String variableName, boolean java_hasInitializer, JavaToken jToken);
      public native void cactionFieldDeclarationEnd(String variableName, boolean java_hasInitializer, boolean java_is_final, boolean java_is_private, boolean java_is_protected, boolean java_is_public, boolean java_is_volatile, boolean java_is_synthetic, boolean java_is_static, boolean java_is_transient, JavaToken jToken);
 
-     public native void cactionFieldReference(JavaToken jToken);
-     public native void cactionFieldReferenceClassScope(JavaToken jToken);
+     public native void cactionFieldReference(String field_name, JavaToken jToken);
+     public native void cactionFieldReferenceEnd(String field_name, JavaToken jToken);
+
+     public native void cactionFieldReferenceClassScope(String field_name, JavaToken jToken);
+     public native void cactionFieldReferenceClassScopeEnd(String firld_name, JavaToken jToken);
+
      public native void cactionFloatLiteral(JavaToken jToken);
      
      public native void cactionForeachStatement(JavaToken jToken);
@@ -142,7 +148,7 @@ class JavaParser  implements Callable<Boolean>
   // public native void cactionImportReference(String path);
   // public native void cactionImportReference(String path , Boolean inputContainsWildcard );
   // public native void cactionImportReference(String path , int java_ContainsWildcard );
-     public native void cactionImportReference(String path , int java_ContainsWildcard, JavaToken jToken);
+     public native void cactionImportReference(String path , boolean java_ContainsWildcard, JavaToken jToken);
 
      public native void cactionInitializer(JavaToken jToken);
      public native void cactionInstanceOfExpression(JavaToken jToken);
@@ -233,7 +239,7 @@ class JavaParser  implements Callable<Boolean>
      public native void cactionTryStatement(int numCatchBlocks, boolean hasFinallyBlock, JavaToken jToken);
      public native void cactionTryStatementEnd(int numCatchBlocks, boolean hasFinallyBlock, JavaToken jToken);
 
-     public native void cactionCatchBlock(String name, JavaToken jToken);
+     public native void cactionCatchBlock(JavaToken jToken);
      public native void cactionCatchBlockEnd(JavaToken jToken);
 
      public native void cactionTypeParameter(JavaToken jToken);
@@ -256,21 +262,20 @@ class JavaParser  implements Callable<Boolean>
   // Added new support functions for Argument IR nodes.
      public native void cactionArgumentName(String name);
      public native void cactionArgumentModifiers(int modifiers);
-     public native void cactionArgumentEnd();
 
   // Type support
-     public static native void cactionGenerateType(String typeName);
-     public static native void cactionGenerateClassType(String className);
+     public static native void cactionGenerateType(String typeName, int num_dimensions);
+//     public static native void cactionGenerateClassType(String className, int num_dimensions);
 
   // Closing support to finish up statement handling.
      public static native void cactionStatementEnd(String typeName);
 
   // public native void cactionMethodDeclarationEnd(String methodName);
   // public native void cactionMethodDeclarationEnd();
-     public native void cactionMethodDeclarationEnd(int java_numberOfStatements, JavaToken jToken);
+     public native void cactionMethodDeclarationEnd(int java_numberOfArguments, int java_numberOfStatements, JavaToken jToken);
 
   // Build an array type using the base type that will be found on the astJavaTypeStack.
-     public static native void cactionGenerateArrayType();
+//     public static native void cactionGenerateArrayType();
 
   // Support for primative types.
      public static native void generateBooleanType();

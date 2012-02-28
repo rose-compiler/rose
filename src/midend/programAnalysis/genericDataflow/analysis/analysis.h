@@ -20,8 +20,13 @@ extern int analysisDebugLevel;
 
 class Analysis
 {
-        public:
-        Analysis() {}
+  public:
+    // a filter function to decide which raw CFG node to show (if return true) or hide (otherwise)  
+    // This is required to support custom filters of virtual CFG
+    // Custom filter is set inside the intra-procedural analysis.
+    // Inter-procedural analysis will copy the filter from its intra-procedural analysis during the call to its constructor.
+    bool (*filter) (CFGNode cfgn); 
+    Analysis(bool (*f)(CFGNode) = defaultFilter):filter(f) {}
 };
 
 class InterProceduralAnalysis;
