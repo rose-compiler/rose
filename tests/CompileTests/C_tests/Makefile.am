@@ -26,12 +26,9 @@ TESTCODES_REQUIRED_TO_PASS = \
      commentTest.c \
      test2003_12.c \
      test2004_20.c \
-     test2004_21.c \
      test2005_172.c \
-     test2005_168.c \
      test2005_186.c \
      test2006_48.c  \
-     test2006_65.c  \
      test2006_110.c \
      test2006_114.c \
      test2006_132.c \
@@ -55,10 +52,8 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2010_08.c \
      test2010_09.c \
      test2010_10.c \
-     test2010_11.c \
      test2010_12.c \
      test2010_13.c \
-     test2010_14.c \
      test2010_15.c \
      test2010_17.c \
      test2011_05.c \
@@ -75,13 +70,26 @@ if !OS_MACOSX
    TESTCODES_REQUIRED_TO_PASS += test2009_19.c
 endif
 
+if !ROSE_USE_CLANG_FRONTEND
+   TESTCODES_REQUIRED_TO_PASS += \
+     test2004_21.c \
+     test2005_168.c \
+     test2006_65.c  \
+     test2010_11.c \
+     test2010_14.c 
+endif
+
 #Liao, 5/16/2009 add a set of self-verifiable test code with main() 
 # and let them run during make check
 TESTCODES_REQUIRED_TO_RUN = \
-     test2009_05.c \
-     test2009_17.c \
      test2009_18.c \
      test2009_20.c
+
+if !ROSE_USE_CLANG_FRONTEND
+   TESTCODES_REQUIRED_TO_RUN += \
+     test2009_05.c \
+     test2009_17.c
+endif
 
 TESTCODE_CURRENTLY_FAILING = \
      test2004_126.c \

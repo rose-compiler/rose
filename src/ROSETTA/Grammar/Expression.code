@@ -2718,7 +2718,7 @@ SgFunctionCallExp::get_type() const
 
           functionType = isSgFunctionType(likelyFunctionType);
 
-#ifdef ROSE_USE_EDG_VERSION_4
+#if defined(ROSE_USE_EDG_VERSION_4) || defined(ROSE_USE_CLANG_FRONTEND)
        // DQ (12/31/2008): EDG version 4.0 has a simpler representation which translates a bit differently.
        // I think this is an improvement to this functionality of this function.
           if (functionType == NULL)
@@ -2728,7 +2728,7 @@ SgFunctionCallExp::get_type() const
 #endif
         }
 
-#ifdef ROSE_USE_EDG_VERSION_4
+#if defined(ROSE_USE_EDG_VERSION_4) || defined(ROSE_USE_CLANG_FRONTEND)
   // if not already set
      if (returnType == NULL)
           returnType = functionType->get_return_type();
@@ -2867,7 +2867,7 @@ SgDotStarOp::get_type() const
              }
           default:
              {
-#ifdef ROSE_USE_EDG_VERSION_4
+#if defined(ROSE_USE_EDG_VERSION_4) || defined(ROSE_USE_CLANG_FRONTEND)
             // DQ (12/31/2008): This appears to be the correct fix for EDG version 4.0, 
             // but it is unclear why this is not an issue for EDG 3.x previously.
             // printf ("Using default case in SgDotStarOp::get_type() differently with EDG version 4.x someType = %s \n",someType->class_name().c_str());
@@ -5697,7 +5697,7 @@ SgType* SgCudaKernelCallExp::get_type() const
 
           functionType = isSgFunctionType(likelyFunctionType);
 
-#ifdef ROSE_USE_EDG_VERSION_4
+#if defined(ROSE_USE_EDG_VERSION_4) || defined(ROSE_USE_CLANG_FRONTEND)
        // DQ (12/31/2008): EDG version 4.0 has a simpler representation which translates a bit differently.
        // I think this is an improvement to this functionality of this function.
           if (functionType == NULL)
@@ -5707,7 +5707,7 @@ SgType* SgCudaKernelCallExp::get_type() const
 #endif
         }
 
-#ifdef ROSE_USE_EDG_VERSION_4
+#if defined(ROSE_USE_EDG_VERSION_4) || defined(ROSE_USE_CLANG_FRONTEND)
   // if not already set
      if (returnType == NULL)
           returnType = functionType->get_return_type();

@@ -4564,10 +4564,12 @@ SgProject::parse()
   // calling the backend on them. (If only the backend is used, this was
   // never called by SgFile::callFrontEnd either.)
   // if ( !get_fileList().empty() && !get_useBackendOnly() )
+#ifndef ROSE_USE_CLANG_FRONTEND
      if ( (get_fileList().empty() == false) && (get_useBackendOnly() == false) )
         {
           AstPostProcessing(this);
         }
+#endif
 #if 0
        else
         {

@@ -514,12 +514,6 @@ HEADER_STORAGE_MODIFIER_START
                e_cuda_shared         = 17, /*!< CUDA, in device's shared memory */
                e_cuda_dynamic_shared = 18, /*!< CUDA, in device's shared memory, dynamically allocated */
 
-            // TV (05/06/2010): Support for OpenCL storage modifiers
-               e_opencl_global   = 19, /*!< OpenCL, accessible from all the device */
-               e_opencl_local    = 20, /*!< OpenCL, accessible for a work-group only */
-               e_opencl_constant = 21, /*!< OpenCL, read-only variable accessible from all the device */
-               e_opencl_private  = 22, /*!< OpenCL, accessible only from one work-item */
-               
                e_last_modifier  /*!< last value (upper bound on range of values, used in error checking) */
              };
 
@@ -597,20 +591,6 @@ HEADER_STORAGE_MODIFIER_START
 
           bool isCudaDynamicShared() const;
           void setCudaDynamicShared();
-
-       // TV (05/06/2010): Support for OpenCL storage modifiers
-
-          bool isOpenclGlobal() const;
-          void setOpenclGlobal();
-
-          bool isOpenclLocal() const;
-          void setOpenclLocal();
-
-          bool isOpenclConstant() const;
-          void setOpenclConstant();
-
-          bool isOpenclPrivate() const;
-          void setOpenclPrivate();
 
           std::string displayString() const;
           void display ( std::string label ) const;
@@ -1194,6 +1174,13 @@ HEADER_TYPE_MODIFIER_START
                e_gnu_attribute__nonnull__            = 27,/*!< GNU specific attribute for function type (GNU extension) */
                e_gnu_attribute__sentinel__           = 28,/*!< GNU specific attribute for function type (GNU extension) */
 
+            // TV (02/27/2012): Address space modifer and OpenCL related Modifier
+               e_address_space__                     = 29,/*!< address space modifier, get_address_space_value() give the associated param */
+
+               e_ocl_global__                        = 30,/*!< OpenCL specific address space modifier */
+               e_ocl_local__                         = 31,/*!< OpenCL specific address space modifier */
+               e_ocl_constant__                      = 32,/*!< OpenCL specific address space modifier */
+
             // Last attribute enum (used for internal bounds checking)
                e_last_modifier /*!< last value (upper bound on range of values, used in error checking) */
              };
@@ -1416,6 +1403,22 @@ HEADER_TYPE_MODIFIER_START
           bool isGnuAttributeSentinel() const;
           void setGnuAttributeSentinel();
           void unsetGnuAttributeSentinel();
+
+          bool haveAddressSpace() const;
+          void setAddressSpace();
+          void unsetAddressSpace();
+
+          bool isOpenclGlobal() const;
+          void setOpenclGlobal();
+          void unsetOpenclGlobal();
+
+          bool isOpenclLocal() const;
+          void setOpenclLocal();
+          void unsetOpenclLocal();
+
+          bool isOpenclConstant() const;
+          void setOpenclConstant();
+          void unsetOpenclConstant();
 
           std::string displayString() const;
           void display ( std::string label ) const;
@@ -2100,20 +2103,6 @@ void SgStorageModifier::setCudaShared()      { p_modifier = e_cuda_shared; }
 bool SgStorageModifier::isCudaDynamicShared() const { return p_modifier == e_cuda_dynamic_shared; }
 void SgStorageModifier::setCudaDynamicShared()      { p_modifier = e_cuda_dynamic_shared; }
 
-// TV (05/06/2010): Support for OpenCL storage modifiers
-
-bool SgStorageModifier::isOpenclGlobal() const { return p_modifier == e_opencl_global; }
-void SgStorageModifier::setOpenclGlobal()      { p_modifier = e_opencl_global; }
-
-bool SgStorageModifier::isOpenclLocal() const { return p_modifier == e_opencl_local; }
-void SgStorageModifier::setOpenclLocal()      { p_modifier = e_opencl_local; }
-
-bool SgStorageModifier::isOpenclConstant() const { return p_modifier == e_opencl_constant; }
-void SgStorageModifier::setOpenclConstant()      { p_modifier = e_opencl_constant; }
-
-bool SgStorageModifier::isOpenclPrivate() const { return p_modifier == e_opencl_private; }
-void SgStorageModifier::setOpenclPrivate()      { p_modifier = e_opencl_private; }
-
 string
 $CLASSNAME::displayString() const
    {
@@ -2169,10 +2158,6 @@ bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs)
 	       (lhs.isCudaConstant()   == rhs.isCudaConstant()  ) &&
 	       (lhs.isCudaShared()     == rhs.isCudaShared()  ) &&
 	       (lhs.isCudaDynamicShared() == rhs.isCudaDynamicShared()  ) &&
-	       (lhs.isOpenclGlobal()   == rhs.isOpenclGlobal()  ) &&
-	       (lhs.isOpenclLocal()    == rhs.isOpenclLocal()  ) &&
-	       (lhs.isOpenclConstant() == rhs.isOpenclConstant()  ) &&
-	       (lhs.isOpenclPrivate()  == rhs.isOpenclPrivate()  ) &&
 		   true;
 }
 
@@ -3100,6 +3085,22 @@ bool SgTypeModifier::isGnuAttributeSentinel() const  { return checkBit(e_gnu_att
 void SgTypeModifier::setGnuAttributeSentinel()       { setBit(e_gnu_attribute__sentinel__,p_modifierVector); }
 void SgTypeModifier::unsetGnuAttributeSentinel()     { unsetBit(e_gnu_attribute__sentinel__,p_modifierVector); }
 
+bool SgTypeModifier::haveAddressSpace() const { return checkBit(e_address_space__,p_modifierVector); }
+void SgTypeModifier::setAddressSpace()        { setBit(e_address_space__,p_modifierVector); }
+void SgTypeModifier::unsetAddressSpace()      { unsetBit(e_address_space__,p_modifierVector); }
+
+bool SgTypeModifier::isOpenclGlobal() const { return checkBit(e_ocl_global__,p_modifierVector); }
+void SgTypeModifier::setOpenclGlobal()      { setBit(e_ocl_global__,p_modifierVector); }
+void SgTypeModifier::unsetOpenclGlobal()    { unsetBit(e_ocl_global__,p_modifierVector); }
+
+bool SgTypeModifier::isOpenclLocal() const { return checkBit(e_ocl_local__,p_modifierVector); }
+void SgTypeModifier::setOpenclLocal()      { setBit(e_ocl_local__,p_modifierVector); }
+void SgTypeModifier::unsetOpenclLocal()    { unsetBit(e_ocl_local__,p_modifierVector); }
+
+bool SgTypeModifier::isOpenclConstant() const { return checkBit(e_ocl_constant__,p_modifierVector); }
+void SgTypeModifier::setOpenclConstant()      { setBit(e_ocl_constant__,p_modifierVector); }
+void SgTypeModifier::unsetOpenclConstant()    { unsetBit(e_ocl_constant__,p_modifierVector); }
+
 string
 $CLASSNAME::displayString() const
    {
@@ -3163,6 +3164,13 @@ bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs)
 	       (lhs.isGnuAttributeWarnUnusedResult() == rhs.isGnuAttributeWarnUnusedResult()) &&
 	       (lhs.isGnuAttributeNonnull()          == rhs.isGnuAttributeNonnull()         ) &&
 	       (lhs.isGnuAttributeSentinel()         == rhs.isGnuAttributeSentinel()        ) &&
+           // Address Space
+               (lhs.haveAddressSpace()        == rhs.haveAddressSpace()        ) &&
+               (lhs.get_address_space_value() == rhs.get_address_space_value() ) &&
+           // OpenCL specific
+               (lhs.isOpenclGlobal()   == rhs.isOpenclGlobal()    ) &&
+               (lhs.isOpenclLocal()    == rhs.isOpenclLocal()    ) &&
+               (lhs.isOpenclConstant() == rhs.isOpenclConstant() ) &&
 		   true;
 }
 
