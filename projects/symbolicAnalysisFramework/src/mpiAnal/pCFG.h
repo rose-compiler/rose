@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <iostream>
 
-#include "common.h"
+#include "genericDataflowCommon.h"
 #include "VirtualCFGIterator.h"
 #include "cfgUtils.h"
 #include "analysisCommon.h"

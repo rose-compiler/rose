@@ -477,7 +477,8 @@ bool LiveDeadVarsTransfer::finish()
 }
 
 // Initialize vars to hold all the variables and expressions that are live at DataflowNode n
-void getAllLiveVarsAt(LiveDeadVarsAnalysis* ldva, const DataflowNode& n, const NodeState& state, set<varID>& vars, string indent)
+//void getAllLiveVarsAt(LiveDeadVarsAnalysis* ldva, const DataflowNode& n, const NodeState& state, set<varID>& vars, string indent)
+void getAllLiveVarsAt(LiveDeadVarsAnalysis* ldva, const NodeState& state, set<varID>& vars, string indent)
 {
         //Dbg::dbg << "getAllLiveVarsAt() n="<<Dbg::escape(n.getNode()->unparseToString()) << " | " << n.getNode()->class_name()<<" | "<<n.getIndex()<<endl;
         //Dbg::dbg << "    state.getLatticeAbove(ldva): #="<<state.getLatticeAbove(ldva).size()<<endl;
@@ -492,7 +493,6 @@ void getAllLiveVarsAt(LiveDeadVarsAnalysis* ldva, const DataflowNode& n, const N
         //}
         //Dbg::dbg << "    state = "<<state.str(ldva, "        ")<<endl;
         //Dbg::dbg.flush();
-        
         LiveVarsLattice* liveLAbove = dynamic_cast<LiveVarsLattice*>(*(state.getLatticeAbove(ldva).begin()));
         LiveVarsLattice* liveLBelow = dynamic_cast<LiveVarsLattice*>(*(state.getLatticeBelow(ldva).begin()));
 
@@ -504,10 +504,12 @@ void getAllLiveVarsAt(LiveDeadVarsAnalysis* ldva, const DataflowNode& n, const N
 }
 
 // Returns the set of variables and expressions that are live at DataflowNode n
-set<varID> getAllLiveVarsAt(LiveDeadVarsAnalysis* ldva, const DataflowNode& n, const NodeState& state, string indent)
+//set<varID> getAllLiveVarsAt(LiveDeadVarsAnalysis* ldva, const DataflowNode& n, const NodeState& state, string indent)
+set<varID> getAllLiveVarsAt(LiveDeadVarsAnalysis* ldva, const NodeState& state, string indent)
 {
         set<varID> vars;
-        getAllLiveVarsAt(ldva, n, state, vars, indent);
+        //getAllLiveVarsAt(ldva, n, state, vars, indent);
+        getAllLiveVarsAt(ldva, state, vars, indent);
         return vars;
 }
 
@@ -553,7 +555,7 @@ VarsExprsProductLattice::VarsExprsProductLattice
         // If a LiveDeadVarsAnalysis was provided, create a lattice only for each live object
         if(ldva) { 
                 // Initialize varLatticeIndex with instances of perVarLattice for each variable that is live at n
-                varIDSet liveVars = getAllLiveVarsAt(ldva, n, state, "    ");
+                varIDSet liveVars = getAllLiveVarsAt(ldva, state, "    ");
                 int idx=0;
                 for(varIDSet::iterator var=liveVars.begin(); var!=liveVars.end(); var++, idx++) {
                         varLatticeIndex[*var] = idx;
@@ -796,7 +798,7 @@ bool VarsExprsProductLattice::meetUpdate(Lattice *lThat)
 // varNameMap - maps all variable names that have changed, in each mapping pair, pair->first is the 
 //              old variable and pair->second is the new variable
 // func - the function that the copy Lattice will now be associated with
-void VarsExprsProductLattice::remapVars(const map<varID, varID>& varNameMap, const Function& newFunc)
+void VarsExprsProductLattice::remapVars(const map<varID, varID>& varNameMap, const Function& newFunc, bool (*filter) (CFGNode cfgn))
 {
 //      Dbg::dbg << "remapVars("<<newFunc.get_name().getString()<<"()), func="<<func.get_name().getString<<endl;
         
@@ -807,8 +809,8 @@ void VarsExprsProductLattice::remapVars(const map<varID, varID>& varNameMap, con
         map<varID, int> newVarLatticeIndex;
         
         // Fill newLattices with lattices associated with variables in the new function 
-        DataflowNode funcCFGStart = cfgUtils::getFuncStartCFG(newFunc.get_definition());
-        varIDSet newRefVars = getAllLiveVarsAt(ldva, funcCFGStart, *NodeState::getNodeState(funcCFGStart, 0), "    ");
+        DataflowNode funcCFGStart = cfgUtils::getFuncStartCFG(newFunc.get_definition(),filter); //TODO This function is never being used somehow
+        varIDSet newRefVars = getAllLiveVarsAt(ldva, *NodeState::getNodeState(funcCFGStart, 0), "    ");
         
         // Iterate through all the variables that are live at the top of newFunc and for each one 
         int idx=0;

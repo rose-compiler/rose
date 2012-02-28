@@ -57,6 +57,7 @@ include_HEADERS = \
    instructionSemantics/findConstants.h \
    instructionSemantics/FindRegisterDefs.h \
    instructionSemantics/InsnSemanticsExpr.h \
+   instructionSemantics/SemanticState.h \
    instructionSemantics/SMTSolver.h \
    instructionSemantics/SymbolicSemantics.h \
    instructionSemantics/VirtualMachineSemantics.h \

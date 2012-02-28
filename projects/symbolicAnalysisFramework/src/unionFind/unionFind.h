@@ -1,7 +1,7 @@
 #ifndef UNION_FIND_H
 #define UNION_FIND_H
 
-#include "common.h"
+#include "genericDataflowCommon.h"
 #include "variables.h"
 #include "cfgUtils.h"
 

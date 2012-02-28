@@ -27,6 +27,7 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2011_18.java \
      test2011_19.java \
      test2011_20.java \
+     test2011_21.java \
      test2011_26.java \
      test2011_27.java \
      test2011_29.java \
@@ -42,6 +43,7 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2011_39.java \
      test2011_40.java \
      test2011_41.java \
+     test2011_42.java \
      test2011_47.java \
      test2011_50.java \
      pgc_2011_30.java \
@@ -57,9 +59,11 @@ TESTCODES_REQUIRED_TO_PASS = \
      pgc_test2011_09.java \
      pgc_test2011_10.java \
      pgc_test2011_11.java \
+     pgc_test2011_12.java \
      pgc_test2011_13.java \
      pgc_test2011_14.java \
      pgc_test2011_15.java \
+     pgc_test2011_16.java \
      \
      cave3_IntLit0.java \
      cave3_DoubleLit0.java \
@@ -121,8 +125,7 @@ TESTCODE_CURRENTLY_FAILING = \
      test2011_23.java \
      test2011_24.java \
      test2011_25.java \
-     \
-     pgc_test2011_12.java \
+     test2011_44.java \
      \
      cave3_instanceof0.java \
      cave3_import0.java \
@@ -136,15 +139,12 @@ TESTCODE_CURRENTLY_FAILING = \
 # These tests pass the compilation using ROSE, all AST tests, and unparsing to generate 
 # Java code, but fails the final compilation step of the generated Java code.
 TESTCODES_REQUIRED_TO_PASS_FAILING_BACKEND_COMPILE = \
-     test2011_21.java \
      test2011_28.java \
-     test2011_42.java \
      simple.java
 
 # This is where the Java generics tests are put (currently not required to pass all phases).
 TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_6 = \
      test2011_43.java \
-     test2011_44.java \
      test2011_46.java \
      test2011_48.java \
      test2011_49.java \

@@ -4065,12 +4065,22 @@ SgDesignatedInitializer::cfgFindChildIndex(SgNode* n)
 
 unsigned int
 SgInitializedName::cfgIndexForEnd() const {
-  return this->get_initializer() ? 1 : 0;
+  return this->get_initializer() ? 1 : 0; // SgInitializedName may have one or two CFGNodes, depending on if it  has initializer (2 CFG nodes) or not (only 1, so the end index is 0)
 }
 
 bool
 SgInitializedName::cfgIsIndexInteresting(unsigned int idx) const {
+#if 0 //TODO turn this on at some point, though we have filters to handle this.
+  if ( this->get_initializer() ) // Liao 2/23/2012, more accurate handling. only the last one is interesting if there is an initializer
+    return (idx == 1 );
+  else 
+  {
+    assert (idx == 0); // there should be only one CFGNode if no initializer
+    return true;
+  }
+#else
   return true;
+#endif  
 }
 
 unsigned int

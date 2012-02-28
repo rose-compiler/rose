@@ -81,7 +81,7 @@ bool ConstrGraphAnalysis::transfer(const Function& func, const DataflowNode& n, 
         
         bool modified = false;
         ConstrGraph* cg = dynamic_cast<ConstrGraph*>(dfInfo[0]);
-        set<varID> liveVars = getAllLiveVarsAt(ldva, n, state, "    ");
+        set<varID> liveVars = getAllLiveVarsAt(ldva, state, "    ");
         /* ??? InfiniteVarsExprsProductLattice* prodLat = dynamic_cast<InfiniteVarsExprsProductLattice*>(dfInfo[1]);
         
         // Make sure that all the lattices are initialized
@@ -675,7 +675,7 @@ bool ConstrGraphAnalysis::removeConstrDivVars(const Function& func, const Datafl
         cout << indent << "removeConstrDivVars()\n";
         cout << indent << "     Initial cg="<<cg->str(indent+"        ")<<"\n";
         
-        varIDSet liveVars = getAllLiveVarsAt(ldva, n, state, "");
+        varIDSet liveVars = getAllLiveVarsAt(ldva, state, "");
         for(varIDSet::iterator it = liveVars.begin(); it!=liveVars.end(); it++)
         {
                 varID var = *it;

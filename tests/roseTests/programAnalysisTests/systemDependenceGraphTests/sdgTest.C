@@ -118,6 +118,7 @@ int main(int argc, char *argv[])
     SgProject* project = frontend(argc,argv);
     SgSourceFile* sourceFile = isSgSourceFile((*project)[0]);
 
+#if 0
     // Process all function definition bodies for static control flow graph generation
     Rose_STL_Container<SgNode*> functions = NodeQuery::querySubTree(project, V_SgFunctionDefinition);
     for (Rose_STL_Container<SgNode*>::const_iterator i = functions.begin(); i != functions.end(); ++i)
@@ -129,7 +130,7 @@ int main(int argc, char *argv[])
             continue;
 
         //ControlFlowGraph cfg(proc, InterestingCFGNodeFilter());
-        ControlFlowGraph cfg(proc, filterCfgNode);
+        StaticCFG::ControlFlowGraph cfg(proc, filterCfgNode);
         cfg.toDot("CFG.dot");
         
         ControlDependenceGraph cdg(cfg);
@@ -144,11 +145,12 @@ int main(int argc, char *argv[])
         
         break;
     }
+#endif
 
 
     SDG::SystemDependenceGraph sdg(project, filterCFGNodesByKeepingStmt);
     //sdg.setDefUseChainsGenerator(generateDefUseChainsFromVariableRenaming);
-    sdg.setDefUseChainsGenerator(generateDefUseChainsFromSSA);
+    sdg.setDefUseChainsGenerator(SDG::generateDefUseChainsFromVariableRenaming);
     sdg.build();
     sdg.toDot("SDG.dot");
 }

@@ -20,6 +20,13 @@ INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/src/midend/binaryAnalyses/libraryIde
 # The executables and their test cases...
 ###############################################################################################################################
 
+# Check boost consistency
+noinst_PROGRAMS += testBoost
+testBoost_SOURCES = testBoost.C
+testBoost_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+STATIC_TEST_TARGETS += testBoost.passed
+testBoost.passed: testBoost
+	./testBoost
 
 # Parses an executable to produce a dump file (*.dump), an assembly file (rose_*.s), and a new executable created by unparsing
 # the AST (*.new). The *.new file is typically identical to the original executable.
@@ -379,6 +386,15 @@ MOSTLYCLEANFILES += test.db
 testLibraryDb.passed: testLibraryDb.conf testLibraryDb
 	@$(RTH_RUN) $< $@
 endif
+
+# Tests reading import sections from PE files
+noinst_PROGRAMS += testPeImports
+testPeImports_SOURCES = testPeImports.C
+testPeImports_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+STATIC_TEST_TARGETS += testPeImports.passed
+EXTRA_DIST += testPeImports.conf testPeImports.ans
+testPeImports.passed: testPeImports.conf testPeImports
+	@$(RTH_RUN) INPUT=proxycfg.exe $< $@
 
 ###############################################################################################################################
 # DEMOS
