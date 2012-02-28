@@ -16,6 +16,7 @@ SgAsmGenericSection::ctor(SgAsmGenericFile *ef, SgAsmGenericHeader *hdr)
 
     ROSE_ASSERT(p_name==NULL);
     p_name = new SgAsmBasicString("");
+    p_name->set_parent(this);
 
     /* Add this section to the header's section list */
     if (hdr)
@@ -33,14 +34,19 @@ SgAsmGenericSection::~SgAsmGenericSection()
         hdr->remove_section(this);
         set_header(NULL);
     }
+
+    /* See comment in ROSETTA/src/binaryInstruction.C.  We need to explicitly delete the section name. */
+    if (p_name) {
+        SageInterface::deleteAST(p_name);
+        p_name = NULL;
+    }
     
     /* FIXME: holes should probably be their own class, which would make the file/hole bidirectional linking more like the
      *        header/section bidirectional links (RPM 2008-09-02) */
     ef->remove_hole(this);
 
     /* Delete children */
-    /*not a child*/;     p_file   = NULL;
-    delete p_name;       p_name   = NULL;
+    p_file   = NULL; // deleted by SageInterface::deleteAST()
 
     /* If the section has allocated its own local pool for the p_data member (rather than pointing into the SgAsmGenericFile)
      * then free that now. */
@@ -128,7 +134,7 @@ SgAsmGenericSection::set_name(SgAsmGenericString *s)
     if (s!=p_name) {
         if (p_name) {
             p_name->set_parent(NULL);
-            delete p_name;
+            SageInterface::deleteAST(p_name);
         }
         p_name = s;
         if (p_name)

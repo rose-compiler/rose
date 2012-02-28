@@ -182,9 +182,9 @@ namespace AbstractMemoryObject
   class Pointer: public ObjSet
   {
     public:
-      ObjSet* getDereference () ;
+      virtual ObjSet* getDereference () ;
       // Returns true if this pointer refers to the same abstract object as that pointer.
-      bool equalPoints(const Pointer & that);
+      virtual bool equalPoints(const Pointer & that);
       // Returns true if this object and that object may/must refer to the same pointer memory object.
       //virtual bool operator == (const Pointer & that) const;
       //virtual bool operator < (const Pointer & that) const;
