@@ -945,7 +945,7 @@ TestAstProperties::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttribu
                          break;
                        }
 
-#ifdef ROSE_USE_EDG_VERSION_4
+#if defined(ROSE_USE_EDG_VERSION_4) || defined(ROSE_USE_CLANG_FRONTEND)
                  // DQ (12/31/2008): In EDG 4.0, the translation of a function call such as "(*callback_lookup)();" 
                  // can cause the functionExpression to be a wider number of IR nodes (e.g. SgVarRefExp).
                  // See test2007_94.C for an example.
