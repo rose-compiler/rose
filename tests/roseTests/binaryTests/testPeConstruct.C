@@ -151,39 +151,54 @@ main()
     imports->align();                           /* necessary because we changed alignment values above */
     sectab->add_section(imports);
 
-    SgAsmPEImportLookupTable *ilt=NULL, *iat=NULL; /* import lookup table and import address table per directory */
-
-    /* kernel32.dll imports */
+    /* kernel32.dll imports by name and hint */
     SgAsmPEImportDirectory *kernel32 = new SgAsmPEImportDirectory(imports, "KERNEL32.dll");
-    ilt = new SgAsmPEImportLookupTable(kernel32, SgAsmPEImportLookupTable::ILT_LOOKUP_TABLE);
-    iat = new SgAsmPEImportLookupTable(kernel32, SgAsmPEImportLookupTable::ILT_ADDRESS_TABLE);
-    iat->add_address(0x7c8284d5, ilt->add_name("GetTimeFormatW", 467));
-    iat->add_address(0x7c827c79, ilt->add_name("GetDateFormatW", 320));
-    iat->add_address(0x7c80e9ec, ilt->add_name("FileTimeToSystemTime", 195));
-    iat->add_address(0x7c80ea66, ilt->add_name("FileTimeToLocalFileTime", 194));
-    iat->add_address(0x7c80e63c, ilt->add_name("GetModuleHandleW", 376));
-    iat->add_address(0x7c80a417, ilt->add_name("QueryPerformanceCounter", 657));
-    iat->add_address(0x7c8092ac, ilt->add_name("GetTickCount", 465));
-    iat->add_address(0x7c809737, ilt->add_name("GetCurrentThreadId", 318));
-    iat->add_address(0x7c80994e, ilt->add_name("GetCurrentProcessId", 316));
-    iat->add_address(0x7c8017e5, ilt->add_name("GetSytemTimeAsFileTime", 445));
-    iat->add_address(0x7c801e16, ilt->add_name("TerminateProcess", 838));
-    iat->add_address(0x7c80e00d, ilt->add_name("GetCurrentProcess", 315));
-    iat->add_address(0x7c862b8a, ilt->add_name("UnhandledExceptionFilter", 855));
-    iat->add_address(0x7c810386, ilt->add_name("SetUnhandledExceptionFilter", 818));
+    new SgAsmPEImportItem(kernel32, "GetTimeFormatW",              467);
+    new SgAsmPEImportItem(kernel32, "GetDateFormatW",              320);
+    new SgAsmPEImportItem(kernel32, "FileTimeToSystemTime",        195);
+    new SgAsmPEImportItem(kernel32, "FileTimeToLocalFileTime",     194);
+    new SgAsmPEImportItem(kernel32, "GetModuleHandleW",            376);
+    new SgAsmPEImportItem(kernel32, "QueryPerformanceCounter",     657);
+    new SgAsmPEImportItem(kernel32, "GetTickCount",                465);
+    new SgAsmPEImportItem(kernel32, "GetCurrentThreadId",          318);
+    new SgAsmPEImportItem(kernel32, "GetCurrentProcessId",         316);
+    new SgAsmPEImportItem(kernel32, "GetSytemTimeAsFileTime",      445);
+    new SgAsmPEImportItem(kernel32, "TerminateProcess",            838);
+    new SgAsmPEImportItem(kernel32, "GetCurrentProcess",           315);
+    new SgAsmPEImportItem(kernel32, "UnhandledExceptionFilter",    855);
+    new SgAsmPEImportItem(kernel32, "SetUnhandledExceptionFilter", 818);
 
-    /* user32.dll imports */
+    /* user32.dll imports by ordinal */
     SgAsmPEImportDirectory *user32 = new SgAsmPEImportDirectory(imports, "USER32.dll");
-    ilt = new SgAsmPEImportLookupTable(user32, SgAsmPEImportLookupTable::ILT_LOOKUP_TABLE);
-    iat = new SgAsmPEImportLookupTable(user32, SgAsmPEImportLookupTable::ILT_ADDRESS_TABLE);
-    iat->add_address(0x77d49c36, ilt->add_name("LoadStringW", 457));
+    new SgAsmPEImportItem(user32, 457);
 
-    /* shell32.dll imports */
+    /* shell32.dll imports by name but no hint */
     SgAsmPEImportDirectory *shell32 = new SgAsmPEImportDirectory(imports, "SHELL32.dll");
-    ilt = new SgAsmPEImportLookupTable(shell32, SgAsmPEImportLookupTable::ILT_LOOKUP_TABLE);
-    iat = new SgAsmPEImportLookupTable(shell32, SgAsmPEImportLookupTable::ILT_ADDRESS_TABLE);
-    iat->add_address(0x7ca5f8eb, ilt->add_name("ShellAboutW", 259));
-    
+    new SgAsmPEImportItem(shell32, "ShellAboutW");
+
+    /* Each Import Directory has it's own IAT, but the IATs are contiguous in memory to form a global IAT.  This global IAT is
+     * usually allocated in the .rdata section and it's address normally needs to be known and fixed because it's reference by
+     * indirect jumps in the .text section.  If we allow ROSE to allocate the IATs, ROSE will place them inside the import
+     * section and probably not contiguously with each other.  There's nothing wrong with letting ROSE allocate the IATs inside
+     * the import section and then asking the import directories for their IAT address and using those addresses when
+     * generating code.  A better approach is to allocate space manually in a specific section, which is what we do here. */
+    SgAsmPESection *rdata = new SgAsmPESection(fhdr);
+    rdata->get_name()->set_string(".rdata");
+    rdata->set_file_alignment(0x200);
+    rdata->set_mapped_preferred_rva(0x5000);
+    rdata->set_mapped_alignment(0x1000);
+    rdata->set_mapped_rperm(true);
+    rdata->set_mapped_wperm(false);
+    rdata->set_mapped_xperm(false);
+    rdata->align();                             /* necessary because we changed alignment values above */
+    sectab->add_section(rdata);
+
+    /* Allocate the individual IATs in contiguous memory beginning at the start of .rdata */
+    rose_rva_t rdata_rva(rdata->get_mapped_preferred_rva(), rdata);
+    size_t global_iat_size = imports->reallocate_iats(rdata_rva);
+    rdata->set_mapped_size(global_iat_size);
+    rdata->set_size(global_iat_size);
+
     /***************************************************************************************************************************
      * Generate the output.
      ***************************************************************************************************************************/

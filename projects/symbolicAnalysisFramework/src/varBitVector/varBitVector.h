@@ -1,7 +1,7 @@
 #ifndef VARBITVECTOR_H
 #define VARBITVECTOR_H
 
-#include "common.h"
+#include "genericDataflowCommon.h"
 #include "variables.h"
 
 class VarBitVector{

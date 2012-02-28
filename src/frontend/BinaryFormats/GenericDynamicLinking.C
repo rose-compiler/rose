@@ -14,7 +14,7 @@ SgAsmGenericDLL::set_name(SgAsmGenericString *s)
     if (s!=p_name) {
         if (p_name) {
             p_name->set_parent(NULL);
-            delete p_name;
+            SageInterface::deleteAST(p_name);
         }
         p_name = s;
         if (p_name)
@@ -48,6 +48,7 @@ void
 SgAsmGenericSymbol::ctor()
 {
     p_name = new SgAsmBasicString("");
+    p_name->set_parent(this);
 }
 
 /** Like ROSETTA-generated accessors, but also sets parent */
@@ -62,7 +63,7 @@ SgAsmGenericSymbol::set_name(SgAsmGenericString *s)
     if (s!=p_name) {
         if (p_name) {
             p_name->set_parent(NULL);
-            delete p_name;
+            SageInterface::deleteAST(p_name);
         }
         p_name = s;
         if (p_name)

@@ -688,9 +688,7 @@ dump_CFG_CG(SgNode *ast)
     CFG global_cfg = cfg_analyzer.build_cfg_from_ast<CFG>(ast);
 
     /* Get the base name for the output files. */
-    SgFile *srcfile = NULL;
-    for (SgNode *n=ast; n && !srcfile; n=n->get_parent())
-        srcfile = isSgFile(n);
+    SgFile *srcfile = SageInterface::getEnclosingNode<SgFile>(ast);
     std::string filename = srcfile ? srcfile->get_sourceFileNameWithoutPath() : "x";
 
     /* Generate a dot file for the function call graph. */

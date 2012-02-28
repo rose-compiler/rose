@@ -7,7 +7,7 @@
 #include <map>
 using namespace std;
 
-#include "common.h"
+#include "genericDataflowCommon.h"
 #include "variables.h"
 #include "cfgUtils.h"
 #include "analysisCommon.h"

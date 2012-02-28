@@ -10,7 +10,9 @@ SgAsmElfNoteEntry::ctor(SgAsmElfNoteSection *section)
     section->get_entries()->get_entries().push_back(this);
     ROSE_ASSERT(section->get_entries()->get_entries().size()>0);
     set_parent(section->get_entries());
-    set_name(new SgAsmBasicString(""));
+
+    p_name = new SgAsmBasicString("");
+    p_name->set_parent(this);
 }
 
 /** Get name of note. */
@@ -27,7 +29,7 @@ SgAsmElfNoteEntry::set_name(SgAsmGenericString *name)
     if (name!=p_name) {
         if (p_name) {
             p_name->set_parent(NULL);
-            delete p_name;
+            SageInterface::deleteAST(p_name);
         }
         p_name = name;
         if (p_name)
@@ -53,10 +55,7 @@ rose_addr_t
 SgAsmElfNoteEntry::parse(rose_addr_t at)
 {
     /* Find the section holding this note */
-    SgAsmElfNoteSection *notes = NULL;
-    for (SgNode *node=this->get_parent(); node && !notes; node=node->get_parent()) {
-        notes = dynamic_cast<SgAsmElfNoteSection*>(node);
-    }
+    SgAsmElfNoteSection *notes = SageInterface::getEnclosingNode<SgAsmElfNoteSection>(this);
     ROSE_ASSERT(notes!=NULL);
     ROSE_ASSERT(at < notes->get_size());
     SgAsmElfFileHeader *fhdr = dynamic_cast<SgAsmElfFileHeader*>(notes->get_header());
@@ -98,10 +97,7 @@ rose_addr_t
 SgAsmElfNoteEntry::unparse(std::ostream &f, rose_addr_t at)
 {
     /* Find the section holding this note */
-    SgAsmElfNoteSection *notes = NULL;
-    for (SgNode *node=this->get_parent(); node && !notes; node=node->get_parent()) {
-        notes = dynamic_cast<SgAsmElfNoteSection*>(node);
-    }
+    SgAsmElfNoteSection *notes = SageInterface::getEnclosingNode<SgAsmElfNoteSection>(this);
     ROSE_ASSERT(notes!=NULL);
     ROSE_ASSERT(at < notes->get_size());
     SgAsmElfFileHeader *fhdr = dynamic_cast<SgAsmElfFileHeader*>(notes->get_header());

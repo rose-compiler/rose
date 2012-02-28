@@ -1,7 +1,7 @@
 #ifndef PROC_SET_H
 #define PROC_SET_H
 
-#include "common.h"
+#include "genericDataflowCommon.h"
 #include "cfgUtils.h"
 #include "variables.h"
 #include "ConstrGraph.h"

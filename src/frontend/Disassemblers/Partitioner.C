@@ -2729,27 +2729,12 @@ Partitioner::name_import_entries(SgAsmGenericHeader *fhdr)
             traverse(fhdr, preorder);
         }
         void visit(SgNode *node) {
-            SgAsmPEImportDirectory *idir = isSgAsmPEImportDirectory(node);
-            SgAsmPEImportLookupTable *ilt = idir ? idir->get_ilt() : NULL;
-            SgAsmPEImportLookupTable *iat = idir ? idir->get_iat() : NULL;
-            if (ilt && iat) {
-                rose_addr_t iat_base_va = idir->get_iat_rva() + fhdr->get_base_va();
-                size_t nentries = ilt->get_entries()->get_vector().size();
-                if (nentries!=iat->get_entries()->get_vector().size()) {
-                    if (partitioner->debug)
-                        fprintf(partitioner->debug, "Partitioner::name_import_entries: malformed import directory skipped\n");
-                    return;
-                }
-                for (size_t i=0; i<nentries; ++i) {
-                    SgAsmPEImportILTEntry *ilt_entry = ilt->get_entries()->get_vector()[i];
-                    if (NULL!=ilt_entry && NULL!=iat->get_entries()->get_vector()[i]) {
-                        rose_addr_t iat_entry_va = iat_base_va + i*fhdr->get_word_size();
-                        if (ilt_entry->get_entry_type() == SgAsmPEImportILTEntry::ILT_HNT_ENTRY_RVA)
-                            index[iat_entry_va] = ilt_entry->get_hnt_entry()->get_name()->get_string();
-                    } else if (partitioner->debug) {
-                        fprintf(partitioner->debug, "Partitioner::name_import_entries: malformed ILT/IAT entry skipped\n");
-                    }
-                }
+            SgAsmPEImportItem *import = isSgAsmPEImportItem(node);
+            if (import) {
+                std::string name = import->get_name()->get_string();
+                rose_addr_t va = import->get_bound_rva().get_va();
+                if (va!=0 && !name.empty())
+                    index[va] = name;
             }
         }
     } imports(this, fhdr);
@@ -3025,60 +3010,18 @@ Partitioner::analyze_cfg(SgAsmBlock::Reason reason)
         /* Analyze function return characteristics. */
         for (BasicBlocks::iterator bi=basic_blocks.begin(); bi!=basic_blocks.end(); ++bi) {
             BasicBlock *bb = bi->second;
-            rose_addr_t return_va = canonic_block(bb->last_insn()->get_address() + bb->last_insn()->get_size());
-            BasicBlock *return_bb = find_bb_starting(return_va);
+            if (!bb->function)
+                continue;
+
             rose_addr_t target_va = NO_TARGET; /*call target*/
-            BasicBlock *target_bb = NULL;
+            bool iscall = is_function_call(bb, &target_va);
+            rose_addr_t return_va = canonic_block(bb->last_insn()->get_address() + bb->last_insn()->get_size()); // fall through
+            BasicBlock *return_bb = NULL, *target_bb = NULL; /* computed only if needed since they might split basic blocks */
             bool succs_complete;
             Disassembler::AddressSet succs = successors(bb, &succs_complete);
-#if 0 /*DEBUG [RPM 2010-07-30]*/
-            do {
-                static rose_addr_t req_call_block_va   = 0x08048364;
-                static rose_addr_t req_target_va       = 0x0804836e;
-                static rose_addr_t req_return_va       = 0x0804836e;
 
-                if (address(bb)!=req_call_block_va) break;
-                fprintf(stderr, "in pass %zu found block 0x%08"PRIx64"\n", pass, req_call_block_va);
-                fprintf(stderr, "  belongs to function? %s\n", bb->function?"yes":"no");
-                if (!bb->function) break;
-                fprintf(stderr, "    that function is 0x%08"PRIx64"\n", bb->function->entry_va);
-                bool is_call = is_function_call(bb, &target_va);
-                fprintf(stderr, "  is a function call? %s\n", is_call?"yes":"no");
-                if (!is_call) break;
-                fprintf(stderr, "    target va is 0x%08"PRIx64"\n", target_va);
-                if (target_va!=req_target_va) break;
-                target_bb = find_bb_starting(target_va, false);
-                fprintf(stderr, "  target block exists? %s\n", target_bb?"yes":"no");
-                if (!target_bb) break;
-                fprintf(stderr, "  target block belongs to a function? %s\n", target_bb->function?"yes":"no");
-                if (!target_bb->function) break;
-                fprintf(stderr, "    that function is 0x%08"PRIx64"\n", target_bb->function->entry_va);
-                if (target_bb->function->entry_va!=req_target_va) break;
-                fprintf(stderr, "  target function returns? %s\n", target_bb->function->returns?"yes":"no");
-                if (!target_bb->function->returns) break;
-                fprintf(stderr, "  return address is 0x%08"PRIx64"\n", return_va);
-                if (return_va!=req_return_va) break;
-                fprintf(stderr, "  return block exists? %s\n", return_bb?"yes":"no");
-                if (!return_bb) break;
-                fprintf(stderr, "  return block in a function? %s\n", return_bb->function?"yes":"no");
-                if (!return_bb->function) {
-                    fprintf(stderr, "  marking function 0x%08"PRIx64" as pending!\n", bb->function->entry_va);
-                } else if (return_bb->function->entry_va==return_va) {
-                    fprintf(stderr, "    returns to fall-through address\n");
-                    if (!bb->function->returns) {
-                        fprintf(stderr, "    marking calling function as returning\n");
-                        fprintf(stderr, "    NEED ANOTHER PASS!\n");
-                        /* Track the parent now */
-                        req_call_block_va       = 0x080482c8;
-                        req_target_va           = 0x08048364;
-                        req_return_va           = 0x080482d3;
-
-                    }
-                }
-            } while (0);
-#endif
-            if (bb->function && return_bb &&
-                is_function_call(bb, &target_va) && target_va!=NO_TARGET &&
+            if (iscall && target_va!=NO_TARGET &&
+                NULL!=(return_bb=find_bb_starting(return_va)) &&
                 NULL!=(target_bb=find_bb_starting(target_va, false)) &&
                 target_bb->function && target_bb->function->may_return) {
                 if (!return_bb->function) {
@@ -3104,7 +3047,7 @@ Partitioner::analyze_cfg(SgAsmBlock::Reason reason)
                                 bb->function->entry_va, bb->address());
                     }
                 }
-            } else if (bb->function && !bb->function->may_return && !is_function_call(bb, NULL) && succs_complete) {
+            } else if (!bb->function->may_return && !is_function_call(bb, NULL) && succs_complete) {
                 for (Disassembler::AddressSet::iterator si=succs.begin(); si!=succs.end() && !bb->function->may_return; ++si) {
                     if (0!=(target_va=*si) && NULL!=(target_bb=find_bb_starting(target_va, false)) &&
                         target_bb->function && target_bb->function!=bb->function &&

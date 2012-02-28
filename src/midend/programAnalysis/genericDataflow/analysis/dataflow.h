@@ -162,6 +162,7 @@ class InitDataflowState : public UnstructuredPassIntraAnalysis
         InitDataflowState(IntraProceduralDataflow* dfAnalysis/*, std::vector<Lattice*> &initState*/)
         {
                 this->dfAnalysis = dfAnalysis;
+                this->filter = dfAnalysis->filter; // Must transfer the custom CFG filter, this is tricky!!
                 //this->initState = initState;
         }
         
