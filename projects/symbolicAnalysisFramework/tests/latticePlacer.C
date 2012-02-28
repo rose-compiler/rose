@@ -6,7 +6,7 @@
 #include <string.h>
 using namespace std;
 
-#include "common.h"
+#include "genericDataflowCommon.h"
 #include "cfgUtils.h"
 #include "analysisCommon.h"
 #include "nodeState.h"

@@ -1,7 +1,7 @@
 #ifndef RANK_DEP_ANALYSIS_H
 #define RANK_DEP_ANALYSIS_H
 
-#include "common.h"
+#include "genericDataflowCommon.h"
 #include "cfgUtils.h"
 #include "VirtualCFGIterator.h"
 #include "cfgUtils.h"

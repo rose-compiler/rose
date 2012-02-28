@@ -529,7 +529,7 @@ class JavaParserSupport
 
                       // Push a type to serve as the return type which will be ignored for the case of a constructor
                       // (this allows us to reuse the general member function support).
-                         JavaParser.cactionGenerateType("void");
+                         JavaParser.cactionGenerateType("void", 0);
 
                          if (verboseLevel > 2)
                               System.out.println("DONE: Push void as a return type for now (ignored because this is a constructor)");
@@ -737,8 +737,9 @@ class JavaParserSupport
                     System.out.println("Inside of generateType(TypeReference) ArrayBinding baseType (debugName) = " + baseType.debugName());
                     System.out.println("Inside of generateType(TypeReference) recursive call to generateType()");
                   }
-
-               generateType(baseType);
+// charles4: 02/24/2012 12:57AM   -- Replace this call by the one below it.               
+//               generateType(baseType);
+                 JavaParser.cactionGenerateType(baseType.debugName(), arrayType.dimensions());
              }
             else
              {
@@ -838,7 +839,7 @@ class JavaParserSupport
                   }
 
             // DQ (8/20/2011): Moved to be after buildImplicitClassSupport().
-               JavaParser.cactionGenerateType(name);
+               JavaParser.cactionGenerateType(name, 0);
 
             // System.out.println("Exiting as a test (built type name " + name + " by default) in generateType(TypeReference)");
             // System.exit(1);
@@ -1007,10 +1008,21 @@ class JavaParserSupport
 
                  // Build an integer type instead of an array of the proper type (temporary fix so that I can focus on proper class support).
                  // JavaParser.cactionGenerateType("int");
+//charles4: 02/24/2012 12:57AM   -- Replace this call by the one below it.
+/*
                     generateType(node.getComponentType());
 
                  // System.out.println("Calling JavaParser.cactionGenerateArrayType()");
-                    JavaParser.cactionGenerateArrayType();
+//                    JavaParser.cactionGenerateArrayType();
+*/
+                    int num_dimensions = 0;
+                    Class n = node;
+                    while (n.isArray()) {
+                        num_dimensions++;
+                        n = n.getComponentType();
+                    }
+//                    JavaParser.cactionGenerateClassType(n.getName(), num_dimensions);
+                    JavaParser.cactionGenerateType(n.getName(), num_dimensions);
 
                  // System.out.println("Exiting as a test in generateType(Class) (case of array type class)");
                  // System.exit(1);
@@ -1026,8 +1038,8 @@ class JavaParserSupport
 
                  // We know that this name should be interpreted as a proper class so we need to call a specific JNI function to cause it to be generated on the C++ side.
                  // JavaParser.cactionGenerateType(className);
-                    JavaParser.cactionGenerateClassType(className);
-
+//                    JavaParser.cactionGenerateClassType(className, 0);
+                    JavaParser.cactionGenerateType(className, 0);
                  // System.out.println("Exiting as a test in generateType(Class) (case of proper class)");
                  // System.exit(1);
                   }
@@ -1041,7 +1053,7 @@ class JavaParserSupport
 
             // For now just build the type to be SgTypeInt.
             // JavaParser.cactionGenerateType("int");
-               JavaParser.cactionGenerateType(className);
+               JavaParser.cactionGenerateType(className, 0);
 
             // buildType(className);
              }
@@ -1079,7 +1091,7 @@ class JavaParserSupport
                  // return TypeBinding.BOOLEAN;
                     if (verboseLevel > 2)
                          System.out.println("switch case of T_boolean");
-                    JavaParser.cactionGenerateType("boolean");
+                    JavaParser.cactionGenerateType("boolean", node.dimensions());
                     break;
                   }
 
@@ -1088,7 +1100,7 @@ class JavaParserSupport
                  // return TypeBinding.BYTE;
                     if (verboseLevel > 2)
                          System.out.println("switch case of T_byte");
-                    JavaParser.cactionGenerateType("byte");
+                    JavaParser.cactionGenerateType("byte", node.dimensions());
                     break;
                   }
 
@@ -1097,7 +1109,7 @@ class JavaParserSupport
                  // return TypeBinding.CHAR;
                     if (verboseLevel > 2)
                          System.out.println("switch case of T_char");
-                    JavaParser.cactionGenerateType("char");
+                    JavaParser.cactionGenerateType("char", node.dimensions());
                     break;
                   }
 
@@ -1106,7 +1118,7 @@ class JavaParserSupport
                  // return TypeBinding.SHORT;
                     if (verboseLevel > 2)
                          System.out.println("switch case of T_short");
-                    JavaParser.cactionGenerateType("short");
+                    JavaParser.cactionGenerateType("short", node.dimensions());
                     break;
                   }
 
@@ -1115,7 +1127,7 @@ class JavaParserSupport
                  // return TypeBinding.DOUBLE;
                     if (verboseLevel > 2)
                          System.out.println("switch case of T_double");
-                    JavaParser.cactionGenerateType("double");
+                    JavaParser.cactionGenerateType("double", node.dimensions());
                     break;
                   }
 
@@ -1124,7 +1136,7 @@ class JavaParserSupport
                  // return TypeBinding.FLOAT;
                     if (verboseLevel > 2)
                          System.out.println("switch case of T_float");
-                    JavaParser.cactionGenerateType("float");
+                    JavaParser.cactionGenerateType("float", node.dimensions());
                     break;
                   }
 
@@ -1135,7 +1147,7 @@ class JavaParserSupport
                          System.out.println("switch case of T_int");
 
                  // Later we want to have the "id" be passed directly.
-                    JavaParser.cactionGenerateType("int");
+                    JavaParser.cactionGenerateType("int", node.dimensions());
                     break;
                   }
 
@@ -1144,7 +1156,7 @@ class JavaParserSupport
                  // return TypeBinding.LONG;
                     if (verboseLevel > 2)
                          System.out.println("switch case of T_long");
-                    JavaParser.cactionGenerateType("long");
+                    JavaParser.cactionGenerateType("long", node.dimensions());
                     break;
                   }
 
@@ -1167,7 +1179,7 @@ class JavaParserSupport
                     if (verboseLevel > 2)
                          System.out.println("switch case of T_JavaLangString");
 
-                    JavaParser.cactionGenerateType("java.lang.String");
+                    JavaParser.cactionGenerateType("java.lang.String", node.dimensions());
                     break;
                   }
 

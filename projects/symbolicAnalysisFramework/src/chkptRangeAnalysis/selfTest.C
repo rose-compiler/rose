@@ -6,7 +6,7 @@
 #include <string.h>
 using namespace std;
 
-#include "common.h"
+#include "genericDataflowCommon.h"
 #include "unionFind.h"
 #include "variables.h"
 #include "cfgUtils.h"
