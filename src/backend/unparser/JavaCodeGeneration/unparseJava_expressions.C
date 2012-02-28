@@ -835,7 +835,7 @@ Unparse_Java::unparseNewOp(SgExpression* expr, SgUnparse_Info& info)
      if (isSgArrayType(new_op->get_specified_type())) {
          unparseType(isSgArrayType(new_op->get_specified_type()) -> get_base_type(), info);
          ROSE_ASSERT(new_op -> get_constructor_args());
-	 SgConstructorInitializer *init = new_op -> get_constructor_args();
+         SgConstructorInitializer *init = new_op -> get_constructor_args();
          ROSE_ASSERT(init);
          vector<SgExpression *> args = init -> get_args() -> get_expressions();
          for (int i = 0; i < args.size(); i++) {
@@ -849,7 +849,7 @@ Unparse_Java::unparseNewOp(SgExpression* expr, SgUnparse_Info& info)
          unparseType(new_op->get_specified_type(), info);
          curprint ( "(");
          ROSE_ASSERT(new_op -> get_constructor_args());
-	 SgConstructorInitializer *init = new_op -> get_constructor_args();
+         SgConstructorInitializer *init = new_op -> get_constructor_args();
          ROSE_ASSERT(init);
          vector<SgExpression *> args = init -> get_args() -> get_expressions();
          for (int i = 0; i < args.size(); i++) {
