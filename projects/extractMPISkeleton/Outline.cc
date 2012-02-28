@@ -140,10 +140,9 @@ void blockifySpansOfFillets (SgBasicBlock *block) {
 
       // Replace/Remove from 'block'/'ss':
       i = ss.erase(i,j);
-      ss.insert(i,newblock);
-    } else {
-      i++;
+      i = ss.insert(i,newblock);
     }
+    i++;
   }
 }
 
