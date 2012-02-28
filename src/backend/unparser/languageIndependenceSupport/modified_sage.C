@@ -1434,28 +1434,6 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
         {
           curprint( "extern __device__ __shared__ ");
         }
-
-  // TV (05/06/2010): OpenCL storage modifiers
-
-     if (decl_stmt->get_declarationModifier().get_storageModifier().isOpenclGlobal())
-        {
-          curprint( "__global ");
-        }
-
-     if (decl_stmt->get_declarationModifier().get_storageModifier().isOpenclLocal())
-        {
-          curprint( "__local ");
-        }
-
-     if (decl_stmt->get_declarationModifier().get_storageModifier().isOpenclConstant())
-        {
-          curprint( "__constant ");
-        }
-
-     if (decl_stmt->get_declarationModifier().get_storageModifier().isOpenclPrivate())
-        {
-          curprint( "__private ");
-        }
    }
 
 
