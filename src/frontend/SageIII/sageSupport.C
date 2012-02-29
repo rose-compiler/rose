@@ -3446,6 +3446,67 @@ static void makeSysIncludeList(const Rose_STL_Container<string>& dirs, Rose_STL_
         }
    }
 
+void SgFile::build_CLANG_CommandLine ( vector<string> & inputCommandLine, vector<string> & argv, int fileNameIndex ) {
+    std::vector<std::string> inc_dirs_list;
+    std::vector<std::string> define_list;
+    std::string input_file;
+
+    for (int i = 0; i < argv.size(); i++) {
+        std::string current_arg(argv[i]);
+        if (current_arg.find("-I") == 0) {
+            if (current_arg.length() > 2) {
+                inc_dirs_list.push_back(current_arg.substr(2));
+            }
+            else {
+                i++;
+                if (i < argv.size())
+                    inc_dirs_list.push_back(current_arg);
+                else
+                    break;
+            }
+        }
+        else if (current_arg.find("-D") == 0) {
+            if (current_arg.length() > 2) {
+                define_list.push_back(current_arg.substr(2));
+            }
+            else {
+                i++;
+                if (i < argv.size())
+                    define_list.push_back(current_arg);
+                else
+                    break;
+            }
+        }
+        else if (current_arg.find("-c") == 0) {}
+        else if (current_arg.find("-o") == 0) {
+            if (current_arg.length() == 2) {
+                i++;
+                if (i >= argv.size()) break;
+            }
+        }
+        else if (current_arg.find("-rose") == 0) {}
+        else {
+            input_file = current_arg;
+        }
+    }
+
+    // TODO add system include dirs 
+    // TODO add system define 
+
+    std::vector<std::string>::iterator it_str;
+    for (it_str = define_list.begin(); it_str != define_list.end(); it_str++)
+        inputCommandLine.push_back("-D" + *it_str);
+    for (it_str = inc_dirs_list.begin(); it_str != inc_dirs_list.end(); it_str++)
+        inputCommandLine.push_back("-I" + StringUtility::getAbsolutePathFromRelativePath(*it_str));
+
+    std::string input_file_path = StringUtility::getPathFromFileName(input_file);
+    input_file = StringUtility::stripPathFromFileName(input_file);
+    if (input_file_path == "" ) input_file_path = "./";
+    input_file_path = StringUtility::getAbsolutePathFromRelativePath(input_file_path);
+    input_file = input_file_path + "/" + input_file;
+    inputCommandLine.push_back(input_file);
+
+}
 
 void
 SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string> & argv, int fileNameIndex )
@@ -4560,7 +4621,10 @@ SgBinaryComposite::SgBinaryComposite ( vector<string> & argv ,  SgProject* proje
 {
 #ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
     p_interpretations = new SgAsmInterpretationList();
+    p_interpretations->set_parent(this);
+
     p_genericFileList = new SgAsmGenericFileList();
+    p_genericFileList->set_parent(this);
 
   // DQ (2/3/2009): This data member has disappeared (in favor of a list).
   // p_binaryFile = NULL;
@@ -4671,10 +4735,12 @@ SgProject::parse()
   // calling the backend on them. (If only the backend is used, this was
   // never called by SgFile::callFrontEnd either.)
   // if ( !get_fileList().empty() && !get_useBackendOnly() )
+#ifndef ROSE_USE_CLANG_FRONTEND
      if ( (get_fileList().empty() == false) && (get_useBackendOnly() == false) )
         {
           AstPostProcessing(this);
         }
+#endif
 #if 0
        else
         {
@@ -4715,9 +4781,9 @@ SgProject::parse()
         {
           SgFile *file = *fIterator;
           ROSE_ASSERT(file != NULL);
-#ifndef ROSE_USE_CLANG_FRONTEND
+//#ifndef ROSE_USE_CLANG_FRONTEND
           file->secondaryPassOverSourceFile();
-#endif
+//#endif
         }
 
      // negara1 (06/23/2011): Collect information about the included files to support unparsing of those that are modified.
@@ -5399,8 +5465,7 @@ SgFile::callFrontEnd()
   #ifndef ROSE_USE_CLANG_FRONTEND
      build_EDG_CommandLine (inputCommandLine,localCopy_argv,fileNameIndex );
   #else
-     // TODO build_CLANG_CommandLine (inputCommandLine,localCopy_argv,fileNameIndex );
-     build_EDG_CommandLine (inputCommandLine,localCopy_argv,fileNameIndex );
+     build_CLANG_CommandLine (inputCommandLine,localCopy_argv,fileNameIndex );
   #endif
   // printf ("DONE: Inside of SgFile::callFrontEnd(): Calling build_EDG_CommandLine (fileNameIndex = %d) \n",fileNameIndex);
 
@@ -7183,7 +7248,7 @@ SgBinaryComposite::buildAsmAST(string executableFileName)
 
   // Attach the file to this node
      get_genericFileList()->get_files().push_back(file);
-     file->set_parent(this);
+     file->set_parent(get_genericFileList());
 
   // Add a disassembly interpretation for each header. Actual disassembly will occur later.
   // NOTE: This probably isn't the right place to add interpretation nodes, but I'm leaving it here for the time being. We
@@ -7193,7 +7258,7 @@ SgBinaryComposite::buildAsmAST(string executableFileName)
         {
           SgAsmInterpretation* interp = new SgAsmInterpretation();
           get_interpretations()->get_interpretations().push_back(interp);
-          interp->set_parent(this);
+          interp->set_parent(get_interpretations());
           interp->get_headers()->get_headers().push_back(headers[i]);
         }
 

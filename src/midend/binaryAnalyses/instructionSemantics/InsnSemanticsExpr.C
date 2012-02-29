@@ -80,7 +80,10 @@ InsnSemanticsExpr::InternalNode::add_child(const TreeNode *child)
 void
 InsnSemanticsExpr::InternalNode::print(std::ostream &o, RenameMap *rmap/*NULL*/) const
 {
-    o <<"(" <<to_str(op) <<"[" <<nbits <<"]";
+    o <<"(" <<to_str(op) <<"[" <<nbits;
+    if (!comment.empty())
+        o <<"," <<comment;
+    o <<"]";
     for (size_t i=0; i<children.size(); i++) {
         o <<" ";
         children[i]->print(o, rmap);
@@ -124,11 +127,11 @@ InsnSemanticsExpr::InternalNode::depth_first_visit(Visitor *v) const
 
 /* class method */
 InsnSemanticsExpr::LeafNode *
-InsnSemanticsExpr::LeafNode::create_variable(size_t nbits)
+InsnSemanticsExpr::LeafNode::create_variable(size_t nbits, std::string comment)
 {
     static uint64_t name_counter = 0;
 
-    LeafNode *retval = new LeafNode();
+    LeafNode *retval = new LeafNode(comment);
     retval->nbits = nbits;
     retval->known = false;
     retval->name = name_counter++;
@@ -137,9 +140,9 @@ InsnSemanticsExpr::LeafNode::create_variable(size_t nbits)
 
 /* class method */
 InsnSemanticsExpr::LeafNode *
-InsnSemanticsExpr::LeafNode::create_integer(size_t nbits, uint64_t n)
+InsnSemanticsExpr::LeafNode::create_integer(size_t nbits, uint64_t n, std::string comment)
 {
-    LeafNode *retval = new LeafNode();
+    LeafNode *retval = new LeafNode(comment);
     retval->nbits = nbits;
     retval->known = true;
     retval->ival = n & (((uint64_t)1<<nbits)-1);
@@ -193,7 +196,10 @@ InsnSemanticsExpr::LeafNode::print(std::ostream &o, RenameMap *rmap/*NULL*/) con
         }
         o <<"v" <<renamed;
     }
-    o <<"[" <<nbits <<"]";
+    o <<"[" <<nbits;
+    if (!comment.empty())
+        o <<"," <<comment;
+    o <<"]";
 }
 
 bool

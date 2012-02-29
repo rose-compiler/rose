@@ -21,9 +21,7 @@ SgAsmInterpretation::get_files() const
     std::set<SgAsmGenericFile*> files;
     for (size_t i=0; i<headers.size(); i++) {
         SgAsmGenericHeader *header = headers[i];
-        SgAsmGenericFile *file = NULL;
-        for (SgNode *node=header; node && !file; node=node->get_parent())
-            file = isSgAsmGenericFile(node);
+        SgAsmGenericFile *file = SageInterface::getEnclosingNode<SgAsmGenericFile>(header);
         ROSE_ASSERT(file!=NULL);
         files.insert(file);
     }

@@ -81,8 +81,9 @@ namespace InsnSemanticsExpr {
     protected:
         size_t nbits;           /**< Number of significant bits. Constant over the life of the node. */
         mutable size_t nrefs;   /**< Number of parent nodes. Zero implies this node can be deleted. */
+        std::string comment;    /**< Optional comment. */
     public:
-        TreeNode(size_t nbits): nbits(nbits), nrefs(0) { assert(nbits>0); }
+        TreeNode(size_t nbits, std::string comment=""): nbits(nbits), nrefs(0), comment(comment) { assert(nbits>0); }
 
         /** Shallow delete. Deletes only this node, decrementing reference counts in any children. It is an error to delete a
          *  node whose reference count is nonzero. */
@@ -110,6 +111,12 @@ namespace InsnSemanticsExpr {
         /** Returns the integer value of a node for which is_known() returns true.  The high-order bits, those beyond the
          *  number of significant bits returned by get_nbits(), are guaranteed to be zero. */
         virtual uint64_t get_value() const = 0;
+
+        /** Accessors for the comment string associated with a node.
+         * @{ */
+        const std::string& get_comment() const { return comment; }
+        void set_comment(const std::string &s) { comment=s; }
+        /** @} */
 
         /** Returns the number of significant bits.  An expression with a known value is guaranteed to have all higher-order
          *  bits cleared. */
@@ -152,19 +159,19 @@ namespace InsnSemanticsExpr {
     public:
         /** Constructs an internal node with no children. It is expected that the appropriate number and bit sized children
          *  will be added before the node is used. The number and sizes depend on the operator chosen. */
-        InternalNode(size_t nbits, Operator op)
-            : TreeNode(nbits), op(op) {}
-        InternalNode(size_t nbits, Operator op, const TreeNode *a)
-            : TreeNode(nbits), op(op) {
+        InternalNode(size_t nbits, Operator op, const std::string comment="")
+            : TreeNode(nbits, comment), op(op) {}
+        InternalNode(size_t nbits, Operator op, const TreeNode *a, std::string comment="")
+            : TreeNode(nbits, comment), op(op) {
             add_child(a);
         }
-        InternalNode(size_t nbits, Operator op, const TreeNode *a, const TreeNode *b)
-            : TreeNode(nbits), op(op) {
+        InternalNode(size_t nbits, Operator op, const TreeNode *a, const TreeNode *b, std::string comment="")
+            : TreeNode(nbits, comment), op(op) {
             add_child(a);
             add_child(b);
         }
-        InternalNode(size_t nbits, Operator op, const TreeNode *a, const TreeNode *b, const TreeNode *c)
-            : TreeNode(nbits), op(op) {
+        InternalNode(size_t nbits, Operator op, const TreeNode *a, const TreeNode *b, const TreeNode *c, std::string comment="")
+            : TreeNode(nbits, comment), op(op) {
             add_child(a);
             add_child(b);
             add_child(c);
@@ -219,14 +226,14 @@ namespace InsnSemanticsExpr {
             uint64_t name;                  /**< Variable ID number when 'known' is false. */
         };
     public:
-        LeafNode(): TreeNode(32), known(true), ival(0) {}
+        LeafNode(std::string comment=""): TreeNode(32, comment), known(true), ival(0) {}
 
         /** Construct a new free variable with a specified number of significant bits. */
-        static LeafNode *create_variable(size_t nbits);
+        static LeafNode *create_variable(size_t nbits, std::string comment="");
 
         /** Construct a new integer with the specified number of significant bits. Any high-order bits beyond the specified
          *  size will be zeroed. */
-        static LeafNode *create_integer(size_t nbits, uint64_t n);
+        static LeafNode *create_integer(size_t nbits, uint64_t n, std::string comment="");
 
         /* see superclass, where this is pure virtual */
         virtual bool is_known() const;

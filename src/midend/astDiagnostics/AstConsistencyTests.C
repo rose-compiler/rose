@@ -945,7 +945,7 @@ TestAstProperties::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttribu
                          break;
                        }
 
-#ifdef ROSE_USE_EDG_VERSION_4
+#if defined(ROSE_USE_EDG_VERSION_4) || defined(ROSE_USE_CLANG_FRONTEND)
                  // DQ (12/31/2008): In EDG 4.0, the translation of a function call such as "(*callback_lookup)();" 
                  // can cause the functionExpression to be a wider number of IR nodes (e.g. SgVarRefExp).
                  // See test2007_94.C for an example.
@@ -2986,7 +2986,6 @@ TestExpressionTypes::visit ( SgNode* node )
    {
   // DQ (2/21/2006): Test the get_type() member function which is common on many IR nodes
   // printf ("In TestExpressionTypes::visit(): node = %s \n",node->class_name().c_str());
-
      SgExpression* expression = isSgExpression(node);
      if (expression != NULL)
         {
@@ -2994,7 +2993,6 @@ TestExpressionTypes::visit ( SgNode* node )
           SgType* type = expression->get_type();
           ROSE_ASSERT(type != NULL);
        // printf ("TestExpressionTypes::visit(): calling expression->get_type() on expression = %p = %s type = %s \n",expression,expression->class_name().c_str(),type->class_name().c_str());
-
        // PC (10/12/2009): The following test verifies that array types properly decay to pointer types
        //  From C99 6.3.2.1p3:
        /* Except when it is the operand of the sizeof operator or the unary & operator, or is a

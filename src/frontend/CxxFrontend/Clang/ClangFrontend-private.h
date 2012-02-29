@@ -74,27 +74,29 @@ class ClangToSageTranslator : public clang::ASTConsumer {
             unknown
         };
 
+        void applySourceRange(SgNode * node, clang::SourceRange source_range);
+        void setCompilerGeneratedFileInfo(SgNode * node, bool to_be_unparse = false);
+
     protected:
         std::map<clang::Decl *, SgNode *> p_decl_translation_map;
         std::map<clang::Stmt *, SgNode *> p_stmt_translation_map;
         std::map<const clang::Type *, SgNode *> p_type_translation_map;
         SgGlobal * p_global_scope;
 
-        clang::DiagnosticsEngine * p_diagnostic_engine;
-        clang::FileManager       * p_file_manager;
-        clang::Diagnostic        * p_diagnostic;
-        clang::SourceManager     * p_source_manager;
-        clang::HeaderSearch      * p_header_search;
+        std::map<SgClassType *, bool> p_class_type_decl_first_see_in_type;
+        std::map<SgEnumType *, bool>  p_enum_type_decl_first_see_in_type;
+
         clang::CompilerInstance  * p_compiler_instance;
         SagePreprocessorRecord   * p_sage_preprocessor_recorder;
-        clang::Preprocessor      * p_preprocessor;
 
-        void applySourceRange(SgNode * node, clang::SourceRange source_range);
+        Language language;
 
         SgSymbol * GetSymbolFromSymbolTable(clang::NamedDecl * decl);
 
+        SgType * buildTypeFromQualifiedType(const clang::QualType & qual_type);
+
     public:
-        ClangToSageTranslator(std::vector<std::string> & arg);
+        ClangToSageTranslator(clang::CompilerInstance * compiler_instance, Language language_);
 
         virtual ~ClangToSageTranslator();
 
@@ -144,7 +146,7 @@ class ClangToSageTranslator : public clang::ASTConsumer {
     //                      virtual bool VisitCXXRecordDecl(clang::CXXRecordDecl * cxx_record_decl);
     //                          virtual bool VisitClassTemplateSpecializationDecl(clang::ClassTemplateSpecializationDecl * class_tpl_spec_decl);
     //                              virtual bool VisitClassTemplatePartialSpecializationDecl(clang::ClassTemplatePartialSpecializationDecl * class_tpl_part_spec_decl);
-    //                  virtual bool VisitEnumDecl(clang::EnumDecl * enum_decl); 
+                        virtual bool VisitEnumDecl(clang::EnumDecl * enum_decl, SgNode ** node); 
     //              virtual bool VisitTemplateTypeParmDecl(clang::TemplateTypeParmDecl * template_type_parm_decl);
     //              virtual bool VisitTypedefNameDecl(clang::TypedefNameDecl * typedef_name_decl);
                         virtual bool VisitTypedefDecl(clang::TypedefDecl * typedef_decl, SgNode ** node);
@@ -163,20 +165,20 @@ class ClangToSageTranslator : public clang::ASTConsumer {
                         virtual bool VisitVarDecl(clang::VarDecl * var_decl, SgNode ** node);
     //                      virtual bool VisitImplicitParamDecl(clang::ImplicitParamDecl * implicit_param_decl);
                             virtual bool VisitParmVarDecl(clang::ParmVarDecl * param_var_decl, SgNode ** node);
-    //              virtual bool VisitEnumConstantDecl(clang::EnumConstantDecl * enum_constant_decl);
+                    virtual bool VisitEnumConstantDecl(clang::EnumConstantDecl * enum_constant_decl, SgNode ** node);
     //              virtual bool VisitIndirectFieldDecl(clang::IndirectFieldDecl * indirect_field_decl);
             virtual bool VisitTranslationUnitDecl(clang::TranslationUnitDecl * translation_unit_decl, SgNode ** node);
 
         virtual bool VisitStmt(clang::Stmt * stmt, SgNode ** node);
     //      virtual bool VisitAsmStmt(clang::AsmStmt * asm_stmt);
-    //      virtual bool VisitBreakStmt(clang::BreakStmt * break_stmt);
+            virtual bool VisitBreakStmt(clang::BreakStmt * break_stmt, SgNode ** node);
             virtual bool VisitCompoundStmt(clang::CompoundStmt * compound_stmt, SgNode ** node);
-    //      virtual bool VisitContinueStmt(clang::ContinueStmt * continue_stmt);
+            virtual bool VisitContinueStmt(clang::ContinueStmt * continue_stmt, SgNode ** node);
     //      virtual bool VisitCXXCatchStmt(clang::CXXCatchStmt * cxx_catch_stmt);
     //      virtual bool VisitCXXForRangeStmt(clang::CXXForRangeStmt * cxx_for_range_stmt);
     //      virtual bool VisitCXXTryStmt(clang::CXXTryStmt * cxx_try_stmt);
             virtual bool VisitDeclStmt(clang::DeclStmt * decl_stmt, SgNode ** node);
-    //      virtual bool VisitDoStmt(clang::DoStmt * do_stmt);
+            virtual bool VisitDoStmt(clang::DoStmt * do_stmt, SgNode ** node);
             virtual bool VisitExpr(clang::Expr * expr, SgNode ** node);
     //          virtual bool VisitAbstractConditionalOperator(clang::AbstractConditionalOperator * abstract_conditional_operator);
     //              virtual bool VisitBinaryConditionalOperator(clang::BinaryConditionalOperator * binary_conditionnal_operator);
@@ -196,7 +198,7 @@ class ClangToSageTranslator : public clang::ASTConsumer {
     //              virtual bool VisitCXXOperatorCallExpr(clang::CXXOperatorCallExpr * cxx_operator_call_expr);
     //          virtual bool VisitCastExpr(clang::CastExpr * cast_expr);
     //              virtual bool VisitExplicitCastExpr(clang::ExplicitCastExpr * explicit_cast_expr);
-    //                  virtual bool VisitCStyleCastExpr(clang::CStyleCastExpr * c_style_cast);
+                        virtual bool VisitCStyleCastExpr(clang::CStyleCastExpr * c_style_cast, SgNode ** node);
     //                  virtual bool VisitCXXFunctionalCastExpr(clang::CXXFunctionalCastExpr * cxx_functional_cast_expr);
     //                  virtual bool VisitCXXNamedCastExpr(clang::CXXNamedCastExpr * cxx_named_cast_expr);
     //                      virtual bool VisitCXXConstCastExpr(clang::CXXConstCastExpr * cxx_const_cast_expr);
@@ -226,16 +228,16 @@ class ClangToSageTranslator : public clang::ASTConsumer {
     //          virtual bool VisitCXXUuidofExpr(clang::CXXUuidofExpr * cxx_uuidof_expr);
                 virtual bool VisitDeclRefExpr(clang::DeclRefExpr * decl_ref_expr, SgNode ** node);
     //          virtual bool VisitDependentScopeDeclRefExpr(clang::DependentScopeDeclRefExpr * dependent_scope_decl_ref_expr);
-    //          virtual bool VisitDesignatedInitExpr(clang::DesignatedInitExpr * designated_init_expr);
+                virtual bool VisitDesignatedInitExpr(clang::DesignatedInitExpr * designated_init_expr, SgNode ** node);
     //          virtual bool VisitExpressionTraitExpr(clang::ExpressionTraitExpr * expression_trait_expr);
     //          virtual bool VisitExprWithCleanups(clang::ExprWithCleanups * expr_with_cleanups);
     //          virtual bool VisitExtVectorElementExpr(clang::ExtVectorElementExpr * ext_vector_element_expr);
-    //          virtual bool VisitFloatingLiteral(clang::FloatingLiteral * floating_literal);
+                virtual bool VisitFloatingLiteral(clang::FloatingLiteral * floating_literal, SgNode ** node);
     //          virtual bool VisitGenericSelectionExpr(clang::GenericSelectionExpr * generic_selection_expr);
     //          virtual bool VisitGNUNullExpr(clang::GNUNullExpr * gnu_null_expr);
-    //          virtual bool VisitImaginaryLiteral(clang::ImaginaryLiteral * imaginary_literal);
+                virtual bool VisitImaginaryLiteral(clang::ImaginaryLiteral * imaginary_literal, SgNode ** node);
     //          virtual bool VisitImplicitValueInitExpr(clang::ImplicitValueInitExpr * implicit_value_init_expr);
-    //          virtual bool VisitInitListExpr(clang::InitListExpr * init_list_expr);
+                virtual bool VisitInitListExpr(clang::InitListExpr * init_list_expr, SgNode ** node);
                 virtual bool VisitIntegerLiteral(clang::IntegerLiteral * integer_literal, SgNode ** node);
                 virtual bool VisitMemberExpr(clang::MemberExpr * member_expr, SgNode ** node);
 //              virtual bool VisitObjCEncodeExpr(clang::ObjCEncodeExpr * objc_encoder_expr);
@@ -252,18 +254,18 @@ class ClangToSageTranslator : public clang::ASTConsumer {
     //              virtual bool VisitUnresolvedLookupExpr(clang::UnresolvedLookupExpr * unresolved_lookup_expr);
     //              virtual bool VisitUnresolvedMemberExpr(clang::UnresolvedMemberExpr * unresolved_member_expr);
     //          virtual bool VisitPackExpansionExpr(clang::PackExpansionExpr * pack_expansion_expr);
-    //          virtual bool VisitParenExpr(clang::ParenExpr * paren_expr);
+                virtual bool VisitParenExpr(clang::ParenExpr * paren_expr, SgNode ** node);
     //          virtual bool VisitParenListExpr(clang::ParenListExpr * paren_list_expr);
-    //          virtual bool VisitPredefinedExpr(clang::PredefinedExpr * predefined_expr);
+                virtual bool VisitPredefinedExpr(clang::PredefinedExpr * predefined_expr, SgNode ** node);
     //          virtual bool VisitShuffleVectorExpr(clang::ShuffleVectorExpr * shuffle_vector_expr);
     //          virtual bool VisitSizeOfPackExpr(clang::SizeOfPackExpr * size_of_pack_expr);
     //          virtual bool VisitStmtExpr(clang::StmtExpr * stmt_expr);
                 virtual bool VisitStringLiteral(clang::StringLiteral * string_literal, SgNode ** node);
     //          virtual bool VisitSubstNonTypeTemplateParmPackExpr(clang::SubstNonTypeTemplateParmPackExpr * subst_non_type_template_parm_pack_expr);
-    //          virtual bool VisitUnaryExprOrTypeTraitExpr(clang::UnaryExprOrTypeTraitExpr * unary_expr_or_type_trait_expr);
+                virtual bool VisitUnaryExprOrTypeTraitExpr(clang::UnaryExprOrTypeTraitExpr * unary_expr_or_type_trait_expr, SgNode ** node);
                 virtual bool VisitUnaryOperator(clang::UnaryOperator * unary_operator, SgNode ** node);
     //          virtual bool VisitUnaryTypeTraitExpr(clang::UnaryTypeTraitExpr * unary_type_trait_expr);
-    //          virtual bool VisitVAArgExpr(clang::VAArgExpr * va_arg_expr);
+                virtual bool VisitVAArgExpr(clang::VAArgExpr * va_arg_expr, SgNode ** node);
             virtual bool VisitForStmt(clang::ForStmt * for_stmt, SgNode ** node);
             virtual bool VisitGotoStmt(clang::GotoStmt * goto_stmt, SgNode ** node);
             virtual bool VisitIfStmt(clang::IfStmt * if_stmt, SgNode ** node);
@@ -281,22 +283,22 @@ class ClangToSageTranslator : public clang::ASTConsumer {
 //          virtual bool VisitSEHFinallyStmt(clang::SEHFinallyStmt * seh_finally_stmt);
 //          virtual bool VisitSEHTryStmt(clang::SEHTryStmt * seh_try_stmt);
     //      virtual bool VisitSwitchCase(clang::SwitchCase * switch_case);
-    //          virtual bool VisitCaseStmt(clang::CaseStmt * case_stmt);
-    //          virtual bool VisitDefaultStmt(clang::DefaultStmt * default_stmt);
-    //      virtual bool VisitSwitchStmt(clang::SwitchStmt * switch_stmt);
-    //      virtual bool VisitWhileStmt(clang::WhileStmt * while_stmt);
+                virtual bool VisitCaseStmt(clang::CaseStmt * case_stmt, SgNode ** node);
+                virtual bool VisitDefaultStmt(clang::DefaultStmt * default_stmt, SgNode ** node);
+            virtual bool VisitSwitchStmt(clang::SwitchStmt * switch_stmt, SgNode ** node);
+            virtual bool VisitWhileStmt(clang::WhileStmt * while_stmt, SgNode ** node);
 
         virtual bool VisitType(clang::Type * type, SgNode ** node);
     //      virtual bool VisitArrayType(clang::ArrayType * array_type);
                 virtual bool VisitConstantArrayType(clang::ConstantArrayType * constant_array_type, SgNode ** node);
     //          virtual bool VisitDependentSizedArrayType(clang::DependentSizedArrayType * dependent_sized_array_type);
-    //          virtual bool VisitIncompleteArrayType(clang::IncompleteArrayType * incomplete_array_type);
+                virtual bool VisitIncompleteArrayType(clang::IncompleteArrayType * incomplete_array_type, SgNode ** node);
     //          virtual bool VisitVariableArrayType(clang::VariableArrayType * variable_array_type);
-    //      virtual bool VisitAttributedType(clang::AttributedType * attributed_type);
+            virtual bool VisitAttributedType(clang::AttributedType * attributed_type, SgNode ** node);
     //      virtual bool VisitAutoType(clang::AutoType * auto_type);
     //      virtual bool VisitBlockPointerType(clang::BlockPointerType * block_pointer_type);
             virtual bool VisitBuiltinType(clang::BuiltinType * builtin_type, SgNode ** node);
-    //      virtual bool VisitComplexType(clang::ComplexType * complex_type);
+            virtual bool VisitComplexType(clang::ComplexType * complex_type, SgNode ** node);
     //      virtual bool VisitDecltypeType(clang::DecltypeType * decltype_type);
     //          virtual bool VisitDependentDecltypeType(clang::DependentDecltypeType * dependent_decltype_type);
     //      virtual bool VisitDependentSizedExtVectorType(clang::DependentSizedExtVectorType * dependent_sized_ext_vector_type);
@@ -319,7 +321,7 @@ class ClangToSageTranslator : public clang::ASTConsumer {
     //      virtual bool VisitSubstTemplateTypeParmPackType(clang::SubstTemplateTypeParmPackType * subst_template_type_parm_pack_type);
     //      virtual bool VisitSubstTemplateTypeParmType(clang::SubstTemplateTypeParmType * subst_template_type_parm_type);
     //      virtual bool VisitTagType(clang::TagType * tag_type);
-    //          virtual bool VisitEnumType(clang::EnumType * enum_type);
+                virtual bool VisitEnumType(clang::EnumType * enum_type, SgNode ** node);
                 virtual bool VisitRecordType(clang::RecordType * record_type, SgNode ** node);
     //      virtual bool VisitTemplateSpecializationType(clang::TemplateSpecializationType * template_specialization_type);
     //      virtual bool VisitTemplateTypeParmType(clang::TemplateTypeParmType * template_type_parm_type);

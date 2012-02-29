@@ -18,7 +18,8 @@ test_14.c \
 test_15.c \
 test_16.c \
 test_17.c \
-test_18.c
+test_18.c \
+test_19.c
 
 C_TEST_CODES_obj = $(C_TEST_CODES:.c=.o)
 

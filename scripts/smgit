@@ -2099,6 +2099,10 @@ sub do_merge {
     my($rev) = $remote;
     if ($path ne ".") {
       $rev = git1 {cd=>".."}, "rev-parse", "$remote:$path" or die;
+      if ($rev eq "$remote:$path") {
+	print STDERR "$arg0: $remote does not have this submodule; skipping it\n";
+	return;
+      }
     }
     my @gitargs;
     push @gitargs, "--no-commit" if $path eq ".";

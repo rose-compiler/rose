@@ -1,40 +1,5 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
-#include $(top_srcdir)/projects/symbolicAnalysisFramework/common.for.dep.libs
-
-SAF_SRC_ROOT=$(top_srcdir)/src/midend/programAnalysis/genericDataflow/
-
-# To keep compile commands tidy, please ONLY put required include flags here.                                                                
-XXX_INCLUDES = $(ROSE_INCLUDES) \
-           -I$(SAF_SRC_ROOT)/include \
-           -I$(SAF_SRC_ROOT)/src/analysis \
-           -I$(SAF_SRC_ROOT)/src/arrIndexLabeler \
-           -I$(SAF_SRC_ROOT)/src/cfgUtils \
-           -I$(SAF_SRC_ROOT)/src/chkptRangeAnalysis \
-           -I$(SAF_SRC_ROOT)/src/common \
-           -I$(SAF_SRC_ROOT)/src/external \
-           -I$(SAF_SRC_ROOT)/src/lattice \
-           -I$(SAF_SRC_ROOT)/src/mpiAnal \
-           -I$(SAF_SRC_ROOT)/src/ompAnal \
-           -I$(SAF_SRC_ROOT)/src/rwAccessLabeler \
-           -I$(SAF_SRC_ROOT)/src/simpleAnalyses \
-           -I$(SAF_SRC_ROOT)/src/state \
-           -I$(SAF_SRC_ROOT)/src/unionFind \
-           -I$(SAF_SRC_ROOT)/src/varBitVector \
-           -I$(SAF_SRC_ROOT)/src/variables \
-           -I$(SAF_SRC_ROOT)/src/varLatticeVector
-
-INCLUDES = $(ROSE_INCLUDES) \
-           -I$(srcdir) \
-           -I$(SAF_SRC_ROOT) \
-           -I$(SAF_SRC_ROOT)/analysis \
-           -I$(SAF_SRC_ROOT)/arrIndexLabeler \
-           -I$(SAF_SRC_ROOT)/cfgUtils \
-           -I$(SAF_SRC_ROOT)/lattice \
-           -I$(SAF_SRC_ROOT)/rwAccessLabeler \
-           -I$(SAF_SRC_ROOT)/simpleAnalyses \
-           -I$(SAF_SRC_ROOT)/state \
-           -I$(SAF_SRC_ROOT)/variables
-
+include $(top_srcdir)/projects/symbolicAnalysisFramework/common.for.dep.libs
 
 # Saf is the short for symbolic analysis framework.
 # it is used to avoid possible name collision 
