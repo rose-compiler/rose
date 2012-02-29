@@ -13,11 +13,7 @@ include_HEADERS = unionFind.h
 noinst_PROGRAMS = selfTest
 selfTest_SOURCES = selfTest.C
 selfTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) \
-         libSafunionFind.la \
-         $(SAF_BUILD_ROOT)/src/cfgUtils/libSafcfgUtils.la \
-         $(SAF_BUILD_ROOT)/src/arrIndexLabeler/libSafarrIndexLabeler.la \
-         $(SAF_BUILD_ROOT)/src/rwAccessLabeler/libSafrwAccessLabeler.la \
-         $(SAF_BUILD_ROOT)/src/variables/libSafvariables.la 
+         libSafunionFind.la
 
 check-local:selfTest
 #	./selfTest $(srcdir)/test_example.c

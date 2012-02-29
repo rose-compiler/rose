@@ -129,7 +129,6 @@ extern std::list<SgInitializedName*> astJavaInitializedNameStack;
 // sure that we never deleted the last entry in the stack until the end of the program.
 extern std::list<JavaSourceCodePosition*> astJavaSourceCodePositionStack;
 
-
 SgGlobal* getGlobalScope();
 
 // Function used by SgType::getCurrentScope()
@@ -198,7 +197,7 @@ void buildClass (const SgName & className, Token_t* token);
 void buildImplicitClass (const SgName & className);
 void buildClassSupport (const SgName & className, bool implicitClass, Token_t* token);
 
-SgVariableDeclaration* buildSimpleVariableDeclaration(const SgName & name);
+SgVariableDeclaration* buildSimpleVariableDeclaration(const SgName & name, SgType *type);
 
 std::list<SgName> generateQualifierList (const SgName & classNameWithQualification);
 SgName stripQualifiers (const SgName & classNameWithQualification);
@@ -226,6 +225,12 @@ SgName processNameOfRawType(SgName name);
 
 //! Support for identification of symbols using qualified names (used by the import statement).
 SgSymbol* lookupSymbolInParentScopesUsingQualifiedName( SgName qualifiedName, SgScopeStatement* currentScope);
+
+//! charles4: Support for identification of symbols using qualified names (used by the import statement).
+//SgSymbol *FindSymbolInParentScopesUsingQualifiedName(SgName qualifiedName, SgScopeStatement* currentScope);
+
+//! charles4: 02/15/2012 
+//SgSymbol *lookupSymbolInParentScopesUsingSimpleName(SgName name, SgScopeStatement *currentScope);
 
 //! Refactored support to extraction of associated scope from symbol (where possible, i.e. SgClassSymbol, etc.).
 SgScopeStatement* get_scope_from_symbol( SgSymbol* returnSymbol );
