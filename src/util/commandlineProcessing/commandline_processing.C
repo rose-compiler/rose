@@ -988,9 +988,9 @@ CommandlineProcessing::isOpenCLFileNameSuffix ( const std::string & suffix )
   // For now define CASE_SENSITIVE_SYSTEM to be true, as we are currently a UNIXish project.
 
 #if(CASE_SENSITIVE_SYSTEM == 1)
-     if ( suffix == "ocl" )
+     if ( suffix == "ocl" || suffix == "cl" )
 #else//It is a case insensitive system
-     if ( suffix == "ocl" )
+     if ( suffix == "ocl" || suffix == "cl" )
 #endif
         {
           returnValue = true;
