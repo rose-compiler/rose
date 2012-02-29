@@ -633,12 +633,30 @@ namespace VirtualCFG {
 
   vector<CFGEdge> CFGNode::outEdges() const {
     ROSE_ASSERT (node);
-    return node->cfgOutEdges(index);
+    vector<CFGEdge> result = node->cfgOutEdges(index);
+    for ( vector<CFGEdge>::const_iterator i = result.begin(); i!= result.end(); i++)
+   {
+      CFGEdge e = *i;
+      assert (e.source().getNode() != NULL && e.target().getNode() != NULL);
+    }
+    
+    return result;
+   // return node->cfgOutEdges(index);
   }
 
   vector<CFGEdge> CFGNode::inEdges() const {
     ROSE_ASSERT (node);
-    return node->cfgInEdges(index);
+    
+    vector<CFGEdge> result = node->cfgInEdges(index);
+   for ( vector<CFGEdge>::const_iterator i = result.begin(); i!= result.end(); i++)
+   {
+      CFGEdge e = *i;
+      assert (e.source().getNode() != NULL && e.target().getNode() != NULL);
+    }
+    
+    
+    //return node->cfgInEdges(index);
+    return result;
   }
 
 

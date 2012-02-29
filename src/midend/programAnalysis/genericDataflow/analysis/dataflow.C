@@ -13,8 +13,8 @@ using boost::mem_fn;
 
 NodeState* IntraBWDataflow::initializeFunctionNodeState(const Function &func, NodeState *fState)
 {
-  DataflowNode funcCFGStart = cfgUtils::getFuncStartCFG(func.get_definition());
-  DataflowNode funcCFGEnd   = cfgUtils::getFuncEndCFG(func.get_definition());
+  DataflowNode funcCFGStart = cfgUtils::getFuncStartCFG(func.get_definition(),filter);
+  DataflowNode funcCFGEnd   = cfgUtils::getFuncEndCFG(func.get_definition(),filter);
   
   //Dbg::dbg << "funcCFGStart="<<funcCFGStart.getNode()<<" = ["<<Dbg::escape(funcCFGStart.getNode()->unparseToString())<<" | "<<funcCFGStart.getNode()->class_name()<<" | "<<funcCFGStart.getIndex()<<"]"<<endl;
   //Dbg::dbg << "funcCFGEnd="<<funcCFGEnd.getNode()<<" = ["<<Dbg::escape(funcCFGEnd.getNode()->unparseToString())<<" | "<<funcCFGEnd.getNode()->class_name()<<" | "<<funcCFGEnd.getIndex()<<"]"<<endl;
@@ -29,8 +29,8 @@ NodeState* IntraBWDataflow::initializeFunctionNodeState(const Function &func, No
 
 NodeState* IntraFWDataflow::initializeFunctionNodeState(const Function &func, NodeState *fState)
 {
-  DataflowNode funcCFGStart = cfgUtils::getFuncStartCFG(func.get_definition());
-  DataflowNode funcCFGEnd   = cfgUtils::getFuncEndCFG(func.get_definition());
+  DataflowNode funcCFGStart = cfgUtils::getFuncStartCFG(func.get_definition(), filter);
+  DataflowNode funcCFGEnd   = cfgUtils::getFuncEndCFG(func.get_definition(), filter);
   
   //Dbg::dbg << "funcCFGStart="<<funcCFGStart.getNode()<<" = ["<<Dbg::escape(funcCFGStart.getNode()->unparseToString())<<" | "<<funcCFGStart.getNode()->class_name()<<" | "<<funcCFGStart.getIndex()<<"]"<<endl;
   //Dbg::dbg << "funcCFGEnd="<<funcCFGEnd.getNode()<<" = ["<<Dbg::escape(funcCFGEnd.getNode()->unparseToString())<<" | "<<funcCFGEnd.getNode()->class_name()<<" | "<<funcCFGEnd.getIndex()<<"]"<<endl;
@@ -58,8 +58,8 @@ NodeState* IntraFWDataflow::initializeFunctionNodeState(const Function &func, No
 VirtualCFG::dataflow*
 IntraFWDataflow::getInitialWorklist(const Function &func, bool firstVisit, bool analyzeDueToCallers, const set<Function> &calleesUpdated, NodeState *fState)
 {
-  DataflowNode funcCFGStart = cfgUtils::getFuncStartCFG(func.get_definition());
-  DataflowNode funcCFGEnd   = cfgUtils::getFuncEndCFG(func.get_definition());
+  DataflowNode funcCFGStart = cfgUtils::getFuncStartCFG(func.get_definition(),filter);
+  DataflowNode funcCFGEnd   = cfgUtils::getFuncEndCFG(func.get_definition(),filter);
 
   // Initialize the set of nodes that this dataflow will iterate over
   VirtualCFG::dataflow *it = new VirtualCFG::dataflow(funcCFGEnd);
@@ -88,8 +88,8 @@ IntraFWDataflow::getInitialWorklist(const Function &func, bool firstVisit, bool 
 VirtualCFG::dataflow*
 IntraBWDataflow::getInitialWorklist(const Function &func, bool firstVisit, bool analyzeDueToCallers, const set<Function> &calleesUpdated, NodeState *fState)
 {
-  DataflowNode funcCFGStart = cfgUtils::getFuncStartCFG(func.get_definition());
-  DataflowNode funcCFGEnd   = cfgUtils::getFuncEndCFG(func.get_definition());
+  DataflowNode funcCFGStart = cfgUtils::getFuncStartCFG(func.get_definition(),filter);
+  DataflowNode funcCFGEnd   = cfgUtils::getFuncEndCFG(func.get_definition(),filter);
 
   return new VirtualCFG::back_dataflow(funcCFGEnd, funcCFGStart);
 }
@@ -147,7 +147,9 @@ vector<DataflowNode> IntraUniDirectionalDataflow::gatherDescendants(vector<Dataf
   vector<DataflowNode> descendants;
 
   for(vector<DataflowEdge>::const_iterator ei = edges.begin(); ei!=edges.end(); ei++)
+  {
     descendants.push_back(mem_fn(edgeFn)(*ei));
+  }
 
   return descendants;
 }
@@ -157,9 +159,9 @@ vector<DataflowNode> IntraBWDataflow::getDescendants(const DataflowNode &n)
 { return gatherDescendants(n.inEdges(),  &DataflowEdge::source); }
 
 DataflowNode IntraFWDataflow::getUltimate(const Function &func)
-{ return cfgUtils::getFuncEndCFG(func.get_definition()); }
+{ return cfgUtils::getFuncEndCFG(func.get_definition(), filter); }
 DataflowNode IntraBWDataflow::getUltimate(const Function &func)
-{ return cfgUtils::getFuncStartCFG(func.get_definition()); }
+{ return cfgUtils::getFuncStartCFG(func.get_definition(), filter); }
 
 // Runs the intra-procedural analysis on the given function. Returns true if 
 // the function's NodeState gets modified as a result and false otherwise.
@@ -200,9 +202,9 @@ bool IntraUniDirectionalDataflow::runAnalysis(const Function& func, NodeState* f
         }
 
         // Initialize the function's entry NodeState 
-        NodeState* entryState = initializeFunctionNodeState(func, fState);
+        //NodeState* entryState = initializeFunctionNodeState(func, fState);
 
-        int i=0;
+        // int i=0;
         //Dbg::dbg << "after: entryState-above="<<endl;
         //for(vector<Lattice*>::const_iterator l=entryState->getLatticeAbove(this).begin(); l!=entryState->getLatticeAbove(this).end(); l++, i++)
         //      Dbg::dbg << "Lattice "<<i<<": "<<(*l)->str("            ")<<endl;
@@ -348,6 +350,7 @@ bool IntraUniDirectionalDataflow::runAnalysis(const Function& func, NodeState* f
                                 // The CFG node corresponding to the current descendant of n
                                 DataflowNode nextNode = *di;
                                 SgNode *nextSgNode = nextNode.getNode();
+                                ROSE_ASSERT  (nextSgNode != NULL);
                                 if(analysisDebugLevel>=1)
                                         Dbg::dbg << "    Descendant: "<<nextSgNode<<"["<<nextSgNode->class_name()<<" | "<<Dbg::escape(nextSgNode->unparseToString())<<"]"<<endl;
                         

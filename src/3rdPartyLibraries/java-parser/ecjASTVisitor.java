@@ -45,6 +45,16 @@ class ecjASTVisitor extends ASTVisitor
      //
      HashSet<Argument> catchArguments = new HashSet<Argument>();
      HashSet<Block> catchBlocks = new HashSet<Block>();
+     
+     //
+     // Keep track of Argument(s) that were already processed in a different context.
+     //
+     HashSet<Argument> processedArguments = new HashSet<Argument>();
+
+     //
+     //
+     //
+     ArrayList<String> importOnDemand = new ArrayList<String>();
 
   // This is the older version oc the constructor, before Vincent's work
   // to support the source code position.
@@ -53,7 +63,7 @@ class ecjASTVisitor extends ASTVisitor
           java_parser = x;
         }
   */
-
+ 
   // *************************************************
   // Support for source code position (from Vincent).
   // *************************************************
@@ -162,23 +172,16 @@ class ecjASTVisitor extends ASTVisitor
        // IR nodes via the stack (rules called should have generated the constructed IR nodes on 
        // the stack within ROSE).
        // java_parser.cactionArgument(nameString, node.modifiers, this.createJavaToken(node));
-
-        //
-        // charles4 (09/26/2011): If this Argument declaration belongs to a Catch statement,
-        // initiate processing of the Catch statement.
-        //
-        if (catchArguments.contains(node)) {
-              System.out.println("This call to JavaParserSupport.generateType() pushes a type onto the astJavaTypeStack (visit (Argument, Blockscope)): type = " + node.type + " nameString = " + nameString);
-              JavaParserSupport.generateType(node.type);
-
-              // This rule assumes that the type will be made available on the stack (astJavaTypeStack).
-              // In general we want to have rules that are specific to IR nodes and pass any constructed
-              // IR nodes via the stack (rules called should have generated the constructed IR nodes on 
-              // the stack within ROSE).
-              
-              java_parser.cactionCatchBlock(nameString, this.createJavaToken(node)); // Set up Catch Block environment
+          if (processedArguments.contains(node)) {
+              return false;
           }
-          
+          else {
+              JavaParserSupport.generateType(node.type);
+              if (! catchArguments.contains(node)) {
+                  java_parser.cactionArgument(nameString, node.modifiers, this.createJavaToken(node));
+              }
+          }
+        
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving visit (Argument,BlockScope)");
 
@@ -203,6 +206,7 @@ class ecjASTVisitor extends ASTVisitor
           if (java_parser.verboseLevel > 0)
                System.out.println("Inside of visit (ArrayAllocationExpression,BlockScope)");
 
+          JavaParserSupport.generateType(node.type);
           java_parser.cactionArrayAllocationExpression(this.createJavaToken(node));
 
           if (java_parser.verboseLevel > 0)
@@ -264,21 +268,42 @@ class ecjASTVisitor extends ASTVisitor
 
      public boolean visit(ArrayTypeReference  node, BlockScope scope)
         {
+         if (java_parser.verboseLevel > 0)
+             System.out.println("Inside of visit (ArrayTypeReference,BlockScope)");
+
+          if (node.resolvedType != null) {
+              JavaParserSupport.generateType(node);
+          }
+          else {
+              System.out.println("Sorry, not implemented SingleTypeReference: node.resolvedType == NULL");
+          }
+
+          java_parser.cactionArrayTypeReference(new String(node.token) /* node.resolvedType.debugName()*/, node.dimensions(), this.createJavaToken(node));
+
           if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (ArrayTypeReference,BlockScope)");
+              System.out.println("Leaving visit (ArrayTypeReference,BlockScope)");
 
-          java_parser.cactionArrayTypeReference("ArrayTypeReference_block_abc", this.createJavaToken(node));
-
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (ArrayTypeReference,BlockScope)");
-
-          return true; // do nothing by  node, keep traversing
+         return true; // do nothing by  node, keep traversing
         }
 
      public boolean visit(ArrayTypeReference  node, ClassScope scope)
         {
-          java_parser.cactionArrayTypeReferenceClassScope("ArrayTypeReference_class_abc", this.createJavaToken(node));
-          return true; // do nothing by  node, keep traversing
+         if (java_parser.verboseLevel > 0)
+             System.out.println("Inside of visit (ArrayTypeReference,ClassScope)");
+
+         if (node.resolvedType != null) {
+             JavaParserSupport.generateType(node);
+         }
+         else {
+             System.out.println("Sorry, not implemented SingleTypeReference: node.resolvedType == NULL");
+         }
+
+         java_parser.cactionArrayTypeReference(new String(node.token) /* node.resolvedType.debugName()*/, node.dimensions(), this.createJavaToken(node));
+
+         if (java_parser.verboseLevel > 0)
+             System.out.println("Leaving visit (ArrayTypeReference, ClassScope)");
+
+        return true; // do nothing by  node, keep traversing
         }
 
      public boolean visit(AssertStatement  node, BlockScope scope)
@@ -549,6 +574,7 @@ class ecjASTVisitor extends ASTVisitor
                  // IR nodes via the stack (rules called should have generated the constructed IR nodes on 
                  // the stack within ROSE).
                     java_parser.cactionArgument(nameString,node.modifiers, this.createJavaToken(node));
+                    processedArguments.add(node.arguments[i]);
 
                  // System.out.println("DONE: This call to JavaParserSupport.generateType() pushes a type onto the astJavaTypeStack (visit (ConstructorDeclaration,ClassScope)): type = " + node.arguments[i].type + " nameString = " + nameString);
                   }
@@ -566,7 +592,7 @@ class ecjASTVisitor extends ASTVisitor
 
        // Push a type to serve as the return type which will be ignored for the case of a constructor
        // (this allows us to reuse the general member function support).
-          JavaParser.cactionGenerateType("void");
+          JavaParser.cactionGenerateType("void", 0);
 
           if (java_parser.verboseLevel > 2)
                System.out.println("DONE: Push void as a return type for now (will be ignored because this is a constructor)");
@@ -576,7 +602,9 @@ class ecjASTVisitor extends ASTVisitor
 
           boolean isStatic = node.isNative();
 
-          java_parser.cactionConstructorDeclaration(name,isNative, this.createJavaToken(node));
+          java_parser.cactionConstructorDeclaration(name,
+                                                    node.arguments == null ? 0 : node.arguments.length,
+                                                    isNative, this.createJavaToken(node));
 
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving visit (ConstructorDeclaration,ClassScope)");
@@ -823,8 +851,7 @@ class ecjASTVisitor extends ASTVisitor
 
           String name = new String(node.name);
 
-       // String selectorName = new String(node.selector);
-       // System.out.println("node.name = " + selectorName);
+       // String selectorName = new String5      // System.out.println("node.name = " + selectorName);
        // System.out.println("node.modfiers = " + node.modfiers);
 
           if (java_parser.verboseLevel > 0)
@@ -872,7 +899,9 @@ class ecjASTVisitor extends ASTVisitor
                if (java_parser.verboseLevel > 0)
                     System.out.println("Inside of visit (FieldReference,BlockScope)");
 
-               java_parser.cactionFieldReference(this.createJavaToken(node));
+               String fieldRefName = new String(node.token);
+               
+               java_parser.cactionFieldReference(fieldRefName, this.createJavaToken(node));
 
                if (java_parser.verboseLevel > 0)
                     System.out.println("Leaving visit (FieldReference,BlockScope)");
@@ -886,7 +915,10 @@ class ecjASTVisitor extends ASTVisitor
                if (java_parser.verboseLevel > 0)
                     System.out.println("Inside of visit (FieldReference,ClassScope)");
 
-               java_parser.cactionFieldReferenceClassScope(this.createJavaToken(node));
+
+               String fieldRefName = new String(node.token);
+
+               java_parser.cactionFieldReferenceClassScope(fieldRefName, this.createJavaToken(node));
 
                if (java_parser.verboseLevel > 0)
                     System.out.println("Leaving visit (FieldReference,ClassScope)");
@@ -974,14 +1006,11 @@ class ecjASTVisitor extends ASTVisitor
                importReference.append(tokenString);
              }
 
-          boolean withOnDemand = true;
-          boolean containsWildcard = false;
+          boolean containsWildcard = ((node.bits & node.OnDemand) != 0);
           String importReferenceWithoutWildcard = importReference.toString();
-          if (withOnDemand && ((node.bits & node.OnDemand) != 0))
+          if (containsWildcard)
              {
-            // System.out.println("     --- ImportReference tokens = *");
                importReference.append(".*");
-               containsWildcard = true;
              }
 
           if (java_parser.verboseLevel > 1)
@@ -989,12 +1018,20 @@ class ecjASTVisitor extends ASTVisitor
 
        // DQ (8/22/2011): Read the referenced class or set of classes defined by the import statement.
        // System.out.println("In visit (ImportReference,CompilationUnitScope): Calling buildImplicitClassSupport() to recursively build the class structure with member declarations: name = " + importReferenceWithoutWildcard);
-          JavaParserSupport.buildImplicitClassSupport(importReferenceWithoutWildcard);
+          if (! containsWildcard) { // Build support for a real class
+              JavaParserSupport.buildImplicitClassSupport(importReferenceWithoutWildcard);
+          }
+          else { // just prime the system for an "import ... .*;"
+	      //              JavaParser.cactionLookupClassType(importReferenceWithoutWildcard);
+        	  importOnDemand.add(importReferenceWithoutWildcard);
+              java_parser.cactionBuildImplicitClassSupportStart(importReferenceWithoutWildcard);
+              java_parser.cactionBuildImplicitClassSupportEnd(0, importReferenceWithoutWildcard);
+          }
+
        // System.out.println("DONE: In visit (ImportReference,CompilationUnitScope): Calling buildImplicitClassSupport() to recursively build the class structure with member declarations: name = " + importReferenceWithoutWildcard);
 
        // DQ (4/15/2011): I could not get the passing of a boolean to work, so I am just passing an integer.
-          int containsWildcard_integer = containsWildcard ? 1 : 0;
-          java_parser.cactionImportReference(importReferenceWithoutWildcard,containsWildcard_integer,this.createJavaToken(node));
+          java_parser.cactionImportReference(importReferenceWithoutWildcard, containsWildcard, this.createJavaToken(node));
 
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving visit (ImportReference,CompilationUnitScope)");
@@ -1532,6 +1569,8 @@ class ecjASTVisitor extends ASTVisitor
 
        // java_parser.cactionExplicitConstructorCall("super");
        // java_parser.cactionMessageSend(name,associatedClassVariableName, this.createJavaToken(node));
+//System.out.println(node.receiver instanceof ThisReference ? "The receiver is a \"this\"" : "The receiver is NOT a \"this\" !!!");
+
           java_parser.cactionMessageSend(name,associatedClassName, this.createJavaToken(node));
 
           if (java_parser.verboseLevel > 0)
@@ -1604,6 +1643,7 @@ class ecjASTVisitor extends ASTVisitor
                  // IR nodes via the stack (rules called should have generated the constructed IR nodes on 
                  // the stack within ROSE).
                     java_parser.cactionArgument(nameString,node.modifiers, this.createJavaToken(node));
+                    processedArguments.add(node.arguments[i]);
 
                  // System.out.println("DONE: This call to JavaParserSupport.generateType() pushes a type onto the astJavaTypeStack (visit (MethodDeclaration,ClassScope)): type = " + node.arguments[i].type + " nameString = " + nameString);
                   }
@@ -1619,13 +1659,13 @@ class ecjASTVisitor extends ASTVisitor
 
           if (java_parser.verboseLevel > 2)
                System.out.println("Process the return type = " + node.returnType);
-
+/*
           if (node.returnType == null)
              {
                System.out.println("Error: no return type defined for the member function node.returnType = " + node.returnType);
                System.exit(1);
              }
-
+*/
        // Build the return type in ROSE and push it onto the stack (astJavaTypeStack).
           JavaParserSupport.generateType(node.returnType);
 
@@ -1690,7 +1730,9 @@ class ecjASTVisitor extends ASTVisitor
        // We can build this here but we can't put the symbol into the symbol tabel until 
        // we have gathered the function parameter types so that the correct function type 
        // can be computed.
-          java_parser.cactionMethodDeclaration(name,isAbstract,isNative,isStatic,isFinal,isSynchronized,isPublic,isProtected,isPrivate,isStrictfp, this.createJavaToken(node));
+          java_parser.cactionMethodDeclaration(name,
+        		                               node.arguments == null ? 0 : node.arguments.length,
+        		                               isAbstract,isNative,isStatic,isFinal,isSynchronized,isPublic,isProtected,isPrivate,isStrictfp, this.createJavaToken(node));
 
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving visit (MethodDeclaration,ClassScope)");
@@ -1846,16 +1888,36 @@ class ecjASTVisitor extends ASTVisitor
        // Note that if we want to traverse this object in more detail then the QualifiedNameReference::traverse() functions can/should be modified.
           String components[] = new String[node.tokens.length];
           StringBuffer strbuf = new StringBuffer();
-          for (int i = 0; i < node.tokens.length; i++) {
+          int typePrefixLength = node.indexOfFirstFieldBinding - 1;
+          for (int i = 0; i < typePrefixLength; i++) {
               components[i] = new String(node.tokens[i]);
               strbuf.append(components[i]);
-              if (i + 1 < node.tokens.length)
+              if (i + 1 < typePrefixLength)
                   strbuf.append(".");
           }
-          String qualifiedName = new String(strbuf);
 
-          java_parser.cactionQualifiedNameReference(qualifiedName, this.createJavaToken(node));
+          String type_prefix = new String(strbuf);
+          String package_name = new String(node.actualReceiverType.qualifiedPackageName());
+          String type_name = new String(node.actualReceiverType.qualifiedSourceName());
+          if (typePrefixLength > 0) { // is there an type prefix?
+              String full_type_name = (package_name.length() > 0
+            		                      ? new String(node.actualReceiverType.qualifiedPackageName()) + "."
+            		                      : "")
+            		                  + type_name;
+              JavaParserSupport.buildImplicitClassSupport(full_type_name);
+          }
+          
+          strbuf = new StringBuffer();
+          for (int i = typePrefixLength; i < node.tokens.length; i++) {
+               components[i] = new String(node.tokens[i]);
+               strbuf.append(components[i]);
+               if (i + 1 < node.tokens.length)
+                   strbuf.append(".");
+          }
+          String name = new String(strbuf);
 
+          java_parser.cactionQualifiedNameReference(package_name, type_prefix, type_name, name, this.createJavaToken(node));
+/*
        // This is a reference to a variable (non data member)...? Is this correct?
           System.out.println("Sorry, not implemented in support for QualifiedNameReference(BlockScope): variable");
 
@@ -1948,7 +2010,7 @@ class ecjASTVisitor extends ASTVisitor
                  // This is the last token standing for the data member reference (the "field" defined above).
                   }
              }
-
+*/
           return true; // do nothing by  node, keep traversing
         }
 
@@ -1957,17 +2019,41 @@ class ecjASTVisitor extends ASTVisitor
        // This is a reference to a data member.
           System.out.println("Sorry, not implemented in support for QualifiedNameReference(ClassScope): data member");
 
+          // Note that if we want to traverse this object in more detail then the QualifiedNameReference::traverse() functions can/should be modified.
           String components[] = new String[node.tokens.length];
           StringBuffer strbuf = new StringBuffer();
-          for (int i = 0; i < node.tokens.length; i++) {
+          int typePrefixLength = node.indexOfFirstFieldBinding - 1;
+
+          for (int i = 0; i < typePrefixLength; i++) {
               components[i] = new String(node.tokens[i]);
               strbuf.append(components[i]);
-              if (i + 1 < node.tokens.length)
+              if (i + 1 < typePrefixLength)
                   strbuf.append(".");
           }
-          String qualifiedName = new String(strbuf);
 
-          java_parser.cactionQualifiedNameReference(qualifiedName, this.createJavaToken(node));
+          String type_prefix = new String(strbuf);
+
+          String package_name = new String(node.actualReceiverType.qualifiedPackageName());
+          String type_name = new String(node.actualReceiverType.qualifiedSourceName());
+          if (typePrefixLength > 0) { // is there an type prefix?
+              String full_type_name = (package_name.length() > 0
+            		                      ? new String(node.actualReceiverType.qualifiedPackageName()) + "."
+            		                      : "")
+            		                  + type_name;
+              JavaParserSupport.buildImplicitClassSupport(full_type_name);
+          }
+          
+          strbuf = new StringBuffer();
+          for (int i = typePrefixLength; i < node.tokens.length; i++) {
+               components[i] = new String(node.tokens[i]);
+               strbuf.append(components[i]);
+               if (i + 1 < node.tokens.length)
+                   strbuf.append(".");
+          }
+          String name = new String(strbuf);
+
+          java_parser.cactionQualifiedNameReference(package_name, type_prefix, type_name, name, this.createJavaToken(node));
+
 
 /*
     if (runtimeTimeType == null || compileTimeType == null)
@@ -2126,6 +2212,21 @@ class ecjASTVisitor extends ASTVisitor
 
      public boolean visit(SingleTypeReference node, BlockScope scope)
         {
+          if (java_parser.verboseLevel > 0)
+              System.out.println("Inside of visit (SingleTypeReference,BlockScope)");
+
+          if (node.resolvedType != null) {
+              JavaParserSupport.generateType(node);
+          }
+          else {
+              System.out.println("Sorry, not implemented SingleTypeReference: node.resolvedType == NULL");
+          }
+
+          java_parser.cactionSingleTypeReference(node.resolvedType.debugName(), this.createJavaToken(node));
+          
+          if (java_parser.verboseLevel > 0)
+              System.out.println("Leaving visit (SingleTypeReference,BlockScope)");
+
        // java_parser.cactionSingleTypeReference("abc");
 
 /*
@@ -2156,14 +2257,28 @@ class ecjASTVisitor extends ASTVisitor
 
      public boolean visit(SingleTypeReference node, ClassScope scope)
         {
-          java_parser.cactionSingleTypeReference("SingleTypeReference_class_abc", this.createJavaToken(node));
+          if (java_parser.verboseLevel > 0)
+              System.out.println("Inside of visit (SingleTypeReference,BlockScope)");
+         
+          if (node.resolvedType != null) {
+              JavaParserSupport.generateType(node);
+          }
+          else {
+              System.out.println("Sorry, not implemented SingleTypeReference: node.resolvedType == NULL");
+          }
+
+          java_parser.cactionSingleTypeReference(node.resolvedType.debugName(), this.createJavaToken(node));
+          
+          if (java_parser.verboseLevel > 0)
+              System.out.println("Leaving visit (SingleTypeReference,BlockScope)");
+
           return true; // do nothing by  node, keep traversing
         }
 
      public boolean visit(StringLiteral  node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (StringLiteral,BlockScope)");
+         if (java_parser.verboseLevel > 0)
+             System.out.println("Inside of visit (StringLiteral,BlockScope)");
 
        // System.out.println("Inside of visit (StringLiteral,BlockScope): node = " + node);
           String literal = new String(node.source());
@@ -2172,7 +2287,7 @@ class ecjASTVisitor extends ASTVisitor
           java_parser.cactionStringLiteral(literal, this.createJavaToken(node));
 
           if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (StringLiteral,BlockScope)");
+              System.out.println("Leaving visit (StringLiteral,BlockScope)");
 
        // System.out.println("Exiting at base of visit (StringLiteral,BlockScope)");
        // System.exit(1);
@@ -2442,7 +2557,9 @@ class ecjASTVisitor extends ASTVisitor
           JavaParserSupport.generateType(node.type);
 
        // Call the Java side of the JNI function.
-          java_parser.cactionAllocationExpressionEnd(nameString,this.createJavaToken(node));
+          java_parser.cactionAllocationExpressionEnd(nameString,
+        		                                     node.arguments == null ? 0 : node.arguments.length,
+        				                             this.createJavaToken(node));
 
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving endVisit (AllocationExpression,BlockScope)");
@@ -2458,7 +2575,7 @@ class ecjASTVisitor extends ASTVisitor
           java_parser.cactionANDANDExpressionEnd(this.createJavaToken(node));
 
           if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (AND_AND_Expression,BlockScope)");
+              System.out.println("Leaving endVisit (AND_AND_Expression,BlockScope)");
 
         }
 
@@ -2474,6 +2591,24 @@ class ecjASTVisitor extends ASTVisitor
        // do nothing by default
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving endVisit (Argument,BlockScope)");
+
+          if (! processedArguments.contains(node)) { // If argument was already processed, skip it!
+              String nameString = new String(node.name);
+          
+              java_parser.cactionArgumentEnd(nameString, node.modifiers, this.createJavaToken(node));
+
+              //
+              // charles4 (09/26/2011): If this Argument declaration belongs to a Catch statement,
+              // initiate processing of the Catch statement.
+              //
+              if (catchArguments.contains(node)) {
+                  java_parser.cactionCatchBlock(this.createJavaToken(node)); // Set up Catch Block environment
+              }
+          }
+          
+          if (java_parser.verboseLevel > 0)
+              System.out.println("Leaving endVisit (Argument,BlockScope)");
+
         }
 
      public void endVisit(Argument node,ClassScope scope)
@@ -2488,6 +2623,14 @@ class ecjASTVisitor extends ASTVisitor
        // do nothing by default
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving endVisit (ArrayAllocationExpression,BlockScope)");
+
+          java_parser.cactionArrayAllocationExpressionEnd(node.type.toString(),
+        		                                          node.dimensions == null ? 0 : node.dimensions.length,
+        		                                          node.initializer != null,
+        		                                          this.createJavaToken(node));
+
+          if (java_parser.verboseLevel > 0)
+              System.out.println("Leaving endVisit (ArrayAllocationExpression,BlockScope)");
         }
 
      public void endVisit(ArrayInitializer  node, BlockScope scope)
@@ -2520,9 +2663,9 @@ class ecjASTVisitor extends ASTVisitor
 
      public void endVisit(ArrayTypeReference  node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of endVisit (ArrayTypeReference,BlockScope)");
-
+         if (java_parser.verboseLevel > 0)
+             System.out.println("Inside of endVisit (ArrayTypeReference,BlockScope)");
+/*
           String type_name = new String(node.token);
 
           if (java_parser.verboseLevel > 0)
@@ -2535,13 +2678,15 @@ class ecjASTVisitor extends ASTVisitor
        // TODO: Currently no dimenion information is passed, this should likely be fixed.
        //       Also, the name of the base type is passed, but not used except for debugging.
           java_parser.cactionArrayTypeReferenceEnd(type_name, this.createJavaToken(node));
-
+*/
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving endVisit (ArrayTypeReference,BlockScope)");
         }
 
      public void endVisit(ArrayTypeReference  node, ClassScope scope)
         {
+         if (java_parser.verboseLevel > 0)
+             System.out.println("Inside of endVisit (ArrayTypeReference,ClassScope)");
        // do nothing by default
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving endVisit (ArrayTypeReference,ClassScope)");
@@ -2747,7 +2892,9 @@ class ecjASTVisitor extends ASTVisitor
             // System.out.println("Inside of endVisit (ConstructorDeclaration,ClassScope): increment the numberOfStatements = " + numberOfStatements);
              }
 
-          java_parser.cactionConstructorDeclarationEnd(numberOfStatements, this.createJavaToken(node));
+          java_parser.cactionConstructorDeclarationEnd(node.arguments == null ? 0 : node.arguments.length,
+                                                       numberOfStatements,
+                                                       this.createJavaToken(node));
         }
 
      public void endVisit(ContinueStatement  node, BlockScope scope)
@@ -2902,6 +3049,13 @@ class ecjASTVisitor extends ASTVisitor
        // do nothing  by default
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving endVisit (FieldReference,BlockScope)");
+
+          String fieldRefName = new String(node.token);
+          
+          java_parser.cactionFieldReferenceEnd(fieldRefName, this.createJavaToken(node));
+
+          if (java_parser.verboseLevel > 0)
+               System.out.println("Leaving endVisit (FieldReference,BlockScope)");
         }
 
      public void endVisit(FieldReference  node, ClassScope scope)
@@ -2909,6 +3063,13 @@ class ecjASTVisitor extends ASTVisitor
        // do nothing  by default
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving endVisit (FieldReference,ClassScope)");
+
+          String fieldRefName = new String(node.token);
+          
+          java_parser.cactionFieldReferenceClassScopeEnd(fieldRefName, this.createJavaToken(node));
+
+          if (java_parser.verboseLevel > 0)
+               System.out.println("Leaving endVisit (FieldReference,BlockScope)");
         }
 
      public void endVisit(FloatLiteral  node, BlockScope scope)
@@ -3254,13 +3415,9 @@ class ecjASTVisitor extends ASTVisitor
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving endVisit (MethodDeclaration,ClassScope)");
 
-       // DQ (9/30/2011): We have to specify exactly how many statements we will collect off the stack.
-          int numberOfStatements = 0;
-          if (node.statements != null)
-               numberOfStatements = node.statements.length;
-       // System.out.println("numberOfStatements = " + numberOfStatements);
-
-          java_parser.cactionMethodDeclarationEnd(numberOfStatements, this.createJavaToken(node));
+          java_parser.cactionMethodDeclarationEnd(node.arguments == null  ? 0 : node.arguments.length,
+        		                                  node.statements == null ? 0 : node.statements.length,
+        		                                  this.createJavaToken(node));
         }
 
      public void endVisit(StringLiteralConcatenation  node, BlockScope scope)
@@ -3478,7 +3635,7 @@ class ecjASTVisitor extends ASTVisitor
        // do nothing  by default
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving endVisit (SingleTypeReference,BlockScope)");
-
+/*
           if (node.resolvedType != null)
              {
                java_parser.cactionSingleTypeReference("SingleTypeReference_block_abc", this.createJavaToken(node));
@@ -3498,6 +3655,7 @@ class ecjASTVisitor extends ASTVisitor
              {
                System.out.println("Sorry, not implemented SingleTypeReference: node.resolvedType == NULL");
              }
+*/
         }
 
      public void endVisit(SingleTypeReference node, ClassScope scope)
@@ -3596,7 +3754,11 @@ class ecjASTVisitor extends ASTVisitor
                System.out.println("endVisit TypeDeclaration -- BlockScope");
 
           String typename = new String(node.name);
-          java_parser.cactionTypeDeclarationEnd(typename, 0, this.createJavaToken(node));
+          java_parser.cactionTypeDeclarationEnd(typename,
+                                                node.superclass != null,
+                                                node.superInterfaces == null ? 0 : node.superInterfaces.length,
+                                                node.typeParameters == null  ? 0 : node.typeParameters.length,
+                                                this.createJavaToken(node));
 
           System.out.println("Leaving endVisit (TypeDeclaration,BlockScope)");
         }
@@ -3607,7 +3769,11 @@ class ecjASTVisitor extends ASTVisitor
                System.out.println("endVisit TypeDeclaration -- ClassScope");
 
           String typename = new String(node.name);
-          java_parser.cactionTypeDeclarationEnd(typename,0, this.createJavaToken(node));
+          java_parser.cactionTypeDeclarationEnd(typename,
+                                                node.superclass != null,
+                                                node.superInterfaces == null ? 0 : node.superInterfaces.length,
+                                                node.typeParameters == null  ? 0 : node.typeParameters.length,
+        		                                this.createJavaToken(node));
 
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving endVisit (TypeDeclaration,ClassScope)");
@@ -3619,7 +3785,7 @@ class ecjASTVisitor extends ASTVisitor
                System.out.println("Inside of endVisit (TypeDeclaration,CompilationUnitScope)");
 
           String typename = new String(node.name);
-
+/*
           int numberOfMethods     = 0;
           int numberOfMemberTypes = 0;
           int numberOfFields      = 0;
@@ -3646,8 +3812,12 @@ class ecjASTVisitor extends ASTVisitor
 
           if (java_parser.verboseLevel > 0)
                System.out.println("Inside of endVisit (TypeDeclaration,CompilationUnitScope): numberOfStatements      = " + numberOfStatements);
-
-          java_parser.cactionTypeDeclarationEnd(typename,numberOfStatements, this.createJavaToken(node));
+*/
+          java_parser.cactionTypeDeclarationEnd(typename,
+                                                node.superclass != null,
+                                                node.superInterfaces == null ? 0 : node.superInterfaces.length,
+                                                node.typeParameters == null  ? 0 : node.typeParameters.length,
+        		                                this.createJavaToken(node));
 
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving endVisit (TypeDeclaration,CompilationUnitScope)");

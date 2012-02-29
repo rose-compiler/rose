@@ -72,8 +72,6 @@ list<JavaSourceCodePosition*> astJavaSourceCodePositionStack;
 // when visiting a node that may need to be remember on the end visit
 list<VisitorContext *> astVisitorContextStack;
 
-
-
 SgGlobal*
 getGlobalScope()
    {
@@ -1375,21 +1373,17 @@ buildClass (const SgName & className, Token_t* token)
 
 
 SgVariableDeclaration*
-buildSimpleVariableDeclaration(const SgName & name)
+buildSimpleVariableDeclaration(const SgName & name, SgType *type)
    {
      if (SgProject::get_verbose() > 0)
           printf ("Building a variable (%s) within scope = %p = %s \n",name.str(),astJavaScopeStack.front(),astJavaScopeStack.front()->class_name().c_str());
 
-  // SgType* type = SgTypeInt::createType();
-     ROSE_ASSERT(astJavaTypeStack.empty() == false);
-     SgType* type = astJavaTypeStack.front();
-
-  // Not clear if we should pop this off at this point or in an alternative step.
-     astJavaTypeStack.pop_front();
-
   // We are not supporting an initialized at this point in the implementation of the Java support.
      SgVariableDeclaration* variableDeclaration = SageBuilder::buildVariableDeclaration (name, type, NULL, astJavaScopeStack.front() );
      ROSE_ASSERT(variableDeclaration != NULL);
+// REMOVE THIS!!!
+//cout << "Processing field " << name.str() << " with type " << (type == NULL ? "NULL" : type -> class_name()) << endl;
+//cout.flush();
 
   // DQ (8/21/2011): Note that the default access permission is default, but this is the same enum value as public.
   // Most language support ignores this in the unparser, but we might want to set it better than this.
@@ -1529,6 +1523,8 @@ lookupSymbolFromQualifiedName(string className)
      SgScopeStatement* previousClassScope = astJavaScopeStack.front();
      ROSE_ASSERT(previousClassScope != NULL);
 
+// REMOVE THIS!!!
+//cout << "Looking for qualified name " << className << endl;
   // Traverse all of the classes to get to the class containing the functionName.
      for (list<SgName>::iterator i = qualifiedClassName.begin(); i != qualifiedClassName.end(); i++)
         {
@@ -1541,10 +1537,13 @@ lookupSymbolFromQualifiedName(string className)
                printf ("Lookup SgSymbol for name = %s in scope = %p = %s = %s \n",(*i).str(),previousClassScope,previousClassScope->class_name().c_str(),SageInterface::get_name(previousClassScope).c_str());
 
           SgSymbol* tmpSymbol = SageInterface::lookupSymbolInParentScopes(*i,previousClassScope);
-
+// REMOVE THIS!!!
+//cout << "    Looking up symbol " << (*i) << endl;
        // ROSE_ASSERT(tmpSymbol != NULL);
           if (tmpSymbol != NULL)
              {
+// REMOVE THIS!!!
+//cout << "    Found symbol " << (*i) << endl;
                if (SgProject::get_verbose() > 2)
                     printf ("Found a symbol tmpSymbol = %s = %s \n",tmpSymbol->class_name().c_str(),tmpSymbol->get_name().str());
 
@@ -1774,7 +1773,22 @@ std::list<SgStatement*> pop_from_stack_and_reverse(std::list<SgStatement*>& l, i
 //        }
 //   }
 
+/*
+SgSymbol *lookupSymbolInParentScopesUsingSimpleName(SgName name, SgScopeStatement *scope) {
+    if (scope == NULL)
+{
+cout << "In lookupSymbolInParentScopesUsingSimpleName, reached the top!" << endl;
+cout.flush();
+        return NULL;
+}
 
+cout << "In lookupSymbolInParentScopesUsingSimpleName, looking at a scope of type " << scope -> class_name() << endl;
+cout.flush();
+    ROSE_ASSERT(scope -> get_symbol_table() != NULL);
+    SgSymbol *symbol = scope -> lookup_symbol(name);
+    return (symbol == NULL ? lookupSymbolInParentScopesUsingSimpleName(name, (SgScopeStatement *) scope -> get_parent()) : symbol);
+}
+*/
 SgClassDefinition*
 getCurrentClassDefinition()
    {
@@ -1861,6 +1875,9 @@ get_scope_from_symbol( SgSymbol* returnSymbol )
 SgSymbol*
 lookupSymbolInParentScopesUsingQualifiedName( SgName qualifiedName, SgScopeStatement* currentScope)
    {
+// REMOVE THIS!!!
+//cout << "Entered lookupSymbolInParentScopesUsingQualifiedName( SgName qualifiedName, SgScopeStatement* currentScope)" << endl;
+//cout.flush();
   // The name is likely qualified, and we can't directly look up a qualified name.
 
      list<SgName> qualifiedNameList = generateQualifierList(qualifiedName);
@@ -1871,9 +1888,15 @@ lookupSymbolInParentScopesUsingQualifiedName( SgName qualifiedName, SgScopeState
   // printf ("In lookupSymbolInParentScopesUsingQualifiedName(): Seaching for symbol for qualifiedName = %s name = %s (inital name) \n",qualifiedName.str(),(*i).str());
 
   // Lookup the first name using the parent scopes, but then drill down into the identified scopes only.
+// REMOVE THIS!!!
+//cout << "Looking up symbol " << (*i) << endl;
+//cout.flush();
      SgSymbol* returnSymbol = SageInterface::lookupSymbolInParentScopes(*i,currentScope);
      ROSE_ASSERT(returnSymbol != NULL);
 
+// REMOVE THIS!!!
+//cout << "Found symbol " << returnSymbol -> get_name().getString() << endl;
+//cout.flush();
   // Increment past the first name in the qualified name.
      i++;
 
@@ -1894,7 +1917,44 @@ lookupSymbolInParentScopesUsingQualifiedName( SgName qualifiedName, SgScopeState
      return returnSymbol;
    }
 
+// REMOVE THIS!!!
+/*
+SgSymbol*
+FindSymbolInParentScopesUsingQualifiedName(SgName qualifiedName, SgScopeStatement* currentScope)
+   {
+cout << "Entered FindSymbolInParentScopesUsingQualifiedName( SgName qualifiedName, SgScopeStatement* currentScope)" << endl;
+cout.flush();
+  // The name is likely qualified, and we can't directly look up a qualified name.
 
+     list<SgName> qualifiedNameList = generateQualifierList(qualifiedName);
+     ROSE_ASSERT(qualifiedNameList.empty() == false);
+
+     list<SgName>::iterator i = qualifiedNameList.begin();
+
+  // printf ("In lookupSymbolInParentScopesUsingQualifiedName(): Seaching for symbol for qualifiedName = %s name = %s (inital name) \n",qualifiedName.str(),(*i).str());
+
+  // Lookup the first name using the parent scopes, but then drill down into the identified scopes only.
+cout << "Looking up symbol " << (*i) << endl;
+cout.flush();
+     SgSymbol* returnSymbol = SageInterface::lookupSymbolInParentScopes(*i,currentScope);
+     // Increment past the first name in the qualified name.
+     for (i++; returnSymbol != NULL && i != qualifiedNameList.end(); i++) {
+cout << "Found symbol " << returnSymbol -> get_name().getString() << endl;
+cout.flush();
+          currentScope = get_scope_from_symbol(returnSymbol);
+          ROSE_ASSERT(currentScope != NULL);
+
+          returnSymbol = currentScope -> lookup_class_symbol(*i);
+     }
+
+if(returnSymbol != NULL) {
+cout << "Found symbol " << returnSymbol -> get_name().getString() << endl;
+cout.flush();
+}
+
+     return returnSymbol;
+   }
+*/
 
 list<SgName>
 generateGenericTypeNameList (const SgName & parameterizedTypeName)

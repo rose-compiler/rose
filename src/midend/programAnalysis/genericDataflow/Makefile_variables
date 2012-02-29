@@ -20,6 +20,7 @@ mpaGenericDataflow_la_sources=\
 	$(mpaGenericDataflowPath)/arrIndexLabeler/arrIndexLabeler.C \
 	$(mpaGenericDataflowPath)/cfgUtils/CallGraphTraverse.C \
 	$(mpaGenericDataflowPath)/cfgUtils/cfgUtils.C \
+	$(mpaGenericDataflowPath)/cfgUtils/CFGRewrite.C \
 	$(mpaGenericDataflowPath)/cfgUtils/DataflowCFG.C \
 	$(mpaGenericDataflowPath)/cfgUtils/VirtualCFGIterator.C \
 	$(mpaGenericDataflowPath)/genUID.C \
@@ -52,6 +53,7 @@ mpaGenericDataflow_includeHeaders=\
 	$(mpaGenericDataflowPath)/cfgUtils/baseCFGIterator.h \
 	$(mpaGenericDataflowPath)/cfgUtils/CallGraphTraverse.h \
 	$(mpaGenericDataflowPath)/cfgUtils/cfgUtils.h \
+	$(mpaGenericDataflowPath)/cfgUtils/CFGRewrite.h \
 	$(mpaGenericDataflowPath)/cfgUtils/DataflowCFG.h \
 	$(mpaGenericDataflowPath)/cfgUtils/VirtualCFGIterator.h \
 	$(mpaGenericDataflowPath)/genericDataflowCommon.h \
