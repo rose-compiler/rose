@@ -176,10 +176,12 @@ class LiveDeadVarsAnalysis : public IntraBWDataflow
 };
 
 // Initialize vars to hold all the variables and expressions that are live at DataflowNode n
-void getAllLiveVarsAt(LiveDeadVarsAnalysis* ldva, const DataflowNode& n, const NodeState& state, std::set<varID>& vars, std::string indent="");
+//void getAllLiveVarsAt(LiveDeadVarsAnalysis* ldva, const DataflowNode& n, const NodeState& state, std::set<varID>& vars, std::string indent="");
+void getAllLiveVarsAt(LiveDeadVarsAnalysis* ldva, const NodeState& state, std::set<varID>& vars, std::string indent="");
 
 // Returns the set of variables and expressions that are live at DataflowNode n
-std::set<varID> getAllLiveVarsAt(LiveDeadVarsAnalysis* ldva, const DataflowNode& n, const NodeState& state, std::string indent="");
+//std::set<varID> getAllLiveVarsAt(LiveDeadVarsAnalysis* ldva, const DataflowNode& n, const NodeState& state, std::string indent="");
+std::set<varID> getAllLiveVarsAt(LiveDeadVarsAnalysis* ldva, const NodeState& state, std::string indent="");
 
 class VarsExprsProductLattice: public virtual ProductLattice
 {
@@ -270,7 +272,7 @@ class VarsExprsProductLattice: public virtual ProductLattice
         // varNameMap - maps all variable names that have changed, in each mapping pair, pair->first is the 
         //              old variable and pair->second is the new variable
         // func - the function that the copy Lattice will now be associated with
-        /*Lattice**/void remapVars(const std::map<varID, varID>& varNameMap, const Function& newFunc);
+        /*Lattice**/void remapVars(const std::map<varID, varID>& varNameMap, const Function& newFunc, bool (*f)(CFGNode));
         
         // Called by analyses to copy over from the that Lattice dataflow information into this Lattice.
         // that contains data for a set of variables and incorporateVars must overwrite the state of just

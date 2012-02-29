@@ -283,15 +283,14 @@ typedef SgAsmGenericSectionPtrList*           SgAsmGenericFilePtrListPtr;
 // typedef Rose_STL_Container<SgAsmElfSegmentEntry*> SgAsmElfSegmentEntryPtrList;
 // typedef SgAsmElfSegmentEntryPtrList*              SgAsmElfSegmentEntryPtrListPtr;
 
-// DQ (8/3/2008): Added support for new IR nodes for new binary file formate work by Robb.
-typedef Rose_STL_Container<SgAsmPEImportHNTEntry*> SgAsmPEImportHNTEntryPtrList;
-typedef SgAsmPEImportHNTEntryPtrList*              SgAsmPEImportHNTEntryPtrListPtr;
-
-typedef Rose_STL_Container<SgAsmPEImportILTEntry*> SgAsmPEImportILTEntryPtrList;
-typedef SgAsmPEImportILTEntryPtrList*              SgAsmPEImportILTEntryPtrListPtr;
+typedef Rose_STL_Container<SgAsmPEImportItem*> SgAsmPEImportItemPtrList;
+typedef SgAsmPEImportItemPtrList*              SgAsmPEImportItemPtrListPtr;
 
 typedef Rose_STL_Container<SgAsmPEImportDirectory*> SgAsmPEImportDirectoryPtrList;
 typedef SgAsmPEImportDirectoryPtrList*              SgAsmPEImportDirectoryPtrListPtr;
+
+typedef Rose_STL_Container<SgAsmPEImportItem*> SgAsmPEImportItemPtrList;
+typedef SgAsmPEImportItemPtrList*              SgAsmPEImportItemPtrListPtr;
 
 // DQ (6/14/2008): Added to support new exec format IR nodes
 typedef Rose_STL_Container<SgAsmElfSymbol*> SgAsmElfSymbolPtrList;
