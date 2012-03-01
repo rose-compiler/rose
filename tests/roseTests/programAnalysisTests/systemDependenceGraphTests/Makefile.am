@@ -2,6 +2,8 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 INCLUDES = $(ROSE_INCLUDES)
 
+.NOTPARALLEL:
+	
 noinst_PROGRAMS = testSDG
 testSDG_SOURCES = sdgTest.C
 testSDG_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
