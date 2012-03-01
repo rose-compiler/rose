@@ -9,7 +9,7 @@ and support for an external format (reading and writing) in Prolog
 term syntax.
 
 * Tested with Debian and Ubuntu 11.10
-  (for exact program versions used in testing SATIrE 0.9.0 see ChangeLog)
+  (for exact program versions used in testing SATIrE 0.9.1 see ChangeLog)
 
 ------------------------------------------------------------
 (0) UPGRADING AN EXISTING SATIrE INSTALLATION
@@ -60,10 +60,10 @@ term syntax.
            features (e.g. this deactivates the loop bound analysis).
 
  b) Unpack the satire tar-ball with:
-    tar xvzf SATIrE-0.9.0.tgz
+    tar xvzf SATIrE-0.9.1.tgz
 
  c) Go to the satire directory:
-    cd SATIrE-0.9.0
+    cd SATIrE-0.9.1
 
  d) Configure the sources for your platform and set the install path prefix
     for ROSE and BOOST:

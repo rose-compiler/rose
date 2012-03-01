@@ -1,5 +1,9 @@
-V0.9.1 2012-01-xx MS
+V0.9.1 2012-02-29 MS
 
+* This version is the first release in ROSE/projects/SATIrE
+	
+* small fixes to make sure we pass all ROSE policies [MS]
+	
 * Termite FIX [MS]
   workaround for new bug in flex 2.5.4 (does not properly parse single line 
   comments in difference to flex 2.5.35)

@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.67)
-AC_INIT(SATIrE, 0.9.0, schordan@technikum-wien.at or adrian@llnl.gov)
+AC_INIT(SATIrE, 0.9.1, schordan@technikum-wien.at or adrian@llnl.gov)
 AC_CONFIG_SRCDIR([README])
 
 AC_CONFIG_MACRO_DIR([m4])
