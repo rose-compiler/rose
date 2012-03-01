@@ -1,3 +1,4 @@
+#include "rose.h"
 #include "unionFind.h"
 #include "cfgUtils.h"
 #include "VirtualCFGIterator.h"
