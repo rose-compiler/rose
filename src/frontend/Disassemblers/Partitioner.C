@@ -470,6 +470,72 @@ Partitioner::set_map(MemoryMap *map, MemoryMap *ro_map)
     }
 }
 
+/* Looks for a jump table. Documented in header file. */
+Disassembler::AddressSet
+Partitioner::discover_jump_table(BasicBlock *bb, bool do_create, rose_addr_t *base_va_ptr, size_t *size_ptr)
+{
+    Disassembler::AddressSet successors;
+    if (base_va_ptr)
+        *base_va_ptr = 0;
+    if (size_ptr)
+        *size_ptr = 0;
+
+    SgAsmx86Instruction *insn_x86 = isSgAsmx86Instruction(bb->last_insn());
+    if (!insn_x86 || (insn_x86->get_kind()!=x86_jmp && insn_x86->get_kind()==x86_farjmp) ||
+        1!=insn_x86->get_operandList()->get_operands().size())
+        return successors; // empty
+
+    SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(insn_x86->get_operandList()->get_operands()[0]);
+    SgAsmBinaryAdd *add = mre ? isSgAsmBinaryAdd(mre->get_address()) : NULL;
+    SgAsmValueExpression *base = add ? isSgAsmValueExpression(add->get_lhs()) : NULL;
+    SgAsmBinaryMultiply *mult = add ? isSgAsmBinaryMultiply(add->get_rhs()) : NULL;
+    SgAsmRegisterReferenceExpression *reg = mult ? isSgAsmRegisterReferenceExpression(mult->get_lhs()) : NULL;
+    SgAsmValueExpression *step = mult ? isSgAsmValueExpression(mult->get_rhs()) : NULL;
+    if (!mre || !add || !base || !mult || !reg || !step)
+        return successors; // empty
+
+    rose_addr_t base_va = value_of(base);
+    size_t entry_size = value_of(step);
+    if (! ((entry_size==2 && insn_x86->get_operandSize()==x86_insnsize_16) ||
+           (entry_size==4 && insn_x86->get_operandSize()==x86_insnsize_32) ||
+           (entry_size==8 && insn_x86->get_operandSize()==x86_insnsize_64)))
+        return successors; // empty
+
+    /* How big is the table? Add successors to list as we discover them. */
+    size_t nentries = 0;
+    while (1) {
+        uint8_t buf[8];
+        size_t nread = ro_map.read(buf, base_va+nentries*entry_size, entry_size);
+        if (nread!=entry_size)
+            break;
+        rose_addr_t target_va = 0;
+        for (size_t i=0; i<entry_size; i++)
+            target_va |= buf[i] << (i*8);
+        const MemoryMap::MapElement *me = map->find(target_va);
+        if (!me || 0==(me->get_mapperms() & MemoryMap::MM_PROT_EXEC))
+            break;
+        ++nentries;
+        successors.insert(target_va);
+    }
+    if (0==nentries)
+        return successors; // empty
+
+    /* Create a data block for the jump table and insert it into the basic block. */
+    if (do_create) {
+        DataBlock *dblock = find_db_starting(base_va, nentries*entry_size);
+        append(bb, dblock, SgAsmBlock::BLK_JUMPTABLE);
+    }
+
+    if (debug)
+        fprintf(debug, "[jump table at 0x%08"PRIx64"+%zu*%zu]", base_va, nentries, entry_size);
+
+    if (base_va_ptr)
+        *base_va_ptr = base_va;
+    if (size_ptr)
+        *size_ptr = nentries;
+    return successors;
+}
+
 /** Runs local block analyses if their cached results are invalid and caches the results.  A local analysis is one whose
  *  results only depend on the specified block and which are valid into the future as long as the instructions in the block do
  *  not change. */
@@ -491,62 +557,17 @@ Partitioner::update_analyses(BasicBlock *bb)
      * map. We use a "do" loop so the logic nesting doesn't get so deep: just break when we find that something doesn't match
      * what we expect. */
     if (!bb->cache.sucs_complete && bb->cache.sucs.empty()) {
-        do {
-            SgAsmx86Instruction *insn_x86 = isSgAsmx86Instruction(bb->last_insn());
-            if (!insn_x86 || (insn_x86->get_kind()!=x86_jmp && insn_x86->get_kind()==x86_farjmp) ||
-                1!=insn_x86->get_operandList()->get_operands().size())
-                break;
-            SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(insn_x86->get_operandList()->get_operands()[0]);
-            if (!mre)
-                break;
-            SgAsmBinaryAdd *add = isSgAsmBinaryAdd(mre->get_address());
-            if (!add)
-                break;
-            SgAsmValueExpression *base = isSgAsmValueExpression(add->get_lhs());
-            if (!base)
-                break;
-            SgAsmBinaryMultiply *mult = isSgAsmBinaryMultiply(add->get_rhs());
-            if (!mult)
-                break;
-            SgAsmRegisterReferenceExpression *reg = isSgAsmRegisterReferenceExpression(mult->get_lhs());
-            if (!reg)
-                break;
-            SgAsmValueExpression *step = isSgAsmValueExpression(mult->get_rhs());
-            if (!step)
-                break;
-            rose_addr_t base_va = value_of(base);
-            size_t entry_size = value_of(step);
-            if (! ((entry_size==2 && insn_x86->get_operandSize()==x86_insnsize_16) ||
-                   (entry_size==4 && insn_x86->get_operandSize()==x86_insnsize_32) ||
-                   (entry_size==8 && insn_x86->get_operandSize()==x86_insnsize_64)))
-                break;
-
-            /* How big is the table? */
-            size_t nentries = 0;
-            while (1) {
-                uint8_t buf[8];
-                size_t nread = ro_map.read(buf, base_va+nentries*entry_size, entry_size);
-                if (nread!=entry_size)
-                    break;
-                rose_addr_t target_va = 0;
-                for (size_t i=0; i<entry_size; i++)
-                    target_va |= buf[i] << (i*8);
-                const MemoryMap::MapElement *me = map->find(target_va);
-                if (!me || 0==(me->get_mapperms() & MemoryMap::MM_PROT_EXEC))
-                    break;
-                ++nentries;
-                bb->cache.sucs.insert(target_va);
-            }
-            if (0==nentries)
-                break;
-
-            /* Create a data block for the jump table. */
-            DataBlock *dblock = find_db_starting(base_va, nentries*entry_size);
-            append(bb, dblock, SgAsmBlock::BLK_JUMPTABLE);
-
-            if (debug)
+        rose_addr_t base_va;
+        size_t nbytes;
+        Disassembler::AddressSet table_entries = discover_jump_table(bb, true, &base_va, &nbytes);
+        if (!table_entries.empty()) {
+            bb->cache.sucs.insert(table_entries.begin(), table_entries.end());
+            if (debug) {
+                size_t entry_size = nbytes / table_entries.size();
+                size_t nentries = table_entries.size() / entry_size;
                 fprintf(debug, "[jump table at 0x%08"PRIx64"+%zu*%zu]", base_va, nentries, entry_size);
-        } while (0);
+            }
+        }
     }
 
     /* Call target analysis. For x86, a function call is any CALL instruction except when the call target is the fall-through
