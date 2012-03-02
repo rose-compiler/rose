@@ -472,67 +472,77 @@ Partitioner::set_map(MemoryMap *map, MemoryMap *ro_map)
 
 /* Looks for a jump table. Documented in header file. */
 Disassembler::AddressSet
-Partitioner::discover_jump_table(BasicBlock *bb, bool do_create, rose_addr_t *base_va_ptr, size_t *size_ptr)
+Partitioner::discover_jump_table(BasicBlock *bb, bool do_create, ExtentMap *table_extent)
 {
-    Disassembler::AddressSet successors;
-    if (base_va_ptr)
-        *base_va_ptr = 0;
-    if (size_ptr)
-        *size_ptr = 0;
-
+    /* Do some cheap up-front checks. */
     SgAsmx86Instruction *insn_x86 = isSgAsmx86Instruction(bb->last_insn());
     if (!insn_x86 || (insn_x86->get_kind()!=x86_jmp && insn_x86->get_kind()==x86_farjmp) ||
         1!=insn_x86->get_operandList()->get_operands().size())
-        return successors; // empty
+        return Disassembler::AddressSet();
+    SgAsmExpression *target_expr = insn_x86->get_operandList()->get_operands()[0];
+    SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(target_expr);
+    SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(target_expr);
+    if (!mre && !rre)
+        return Disassembler::AddressSet(); // no indirection
 
-    SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(insn_x86->get_operandList()->get_operands()[0]);
-    SgAsmBinaryAdd *add = mre ? isSgAsmBinaryAdd(mre->get_address()) : NULL;
-    SgAsmValueExpression *base = add ? isSgAsmValueExpression(add->get_lhs()) : NULL;
-    SgAsmBinaryMultiply *mult = add ? isSgAsmBinaryMultiply(add->get_rhs()) : NULL;
-    SgAsmRegisterReferenceExpression *reg = mult ? isSgAsmRegisterReferenceExpression(mult->get_lhs()) : NULL;
-    SgAsmValueExpression *step = mult ? isSgAsmValueExpression(mult->get_rhs()) : NULL;
-    if (!mre || !add || !base || !mult || !reg || !step)
-        return successors; // empty
+    /* Evaluate the basic block semantically to get an expression for the final EIP. */
+    typedef VirtualMachineSemantics::ValueType<32> RegisterValueType;
+    typedef VirtualMachineSemantics::Policy<VirtualMachineSemantics::State, VirtualMachineSemantics::ValueType> Policy;
+    typedef X86InstructionSemantics<Policy, VirtualMachineSemantics::ValueType> Semantics;
+    Policy policy;
+    policy.set_map(&ro_map);
+    Semantics semantics(policy);
+    try {
+        for (size_t i=0; i<bb->insns.size(); ++i) {
+            insn_x86 = isSgAsmx86Instruction(bb->insns[i]->node);
+            assert(insn_x86); // we know we're in a basic block of x86 instructions already
+            policy.writeRegister(semantics.REG_EIP, policy.number<32>(insn_x86->get_address()));
+            semantics.processInstruction(insn_x86);
+        }
+    } catch (...) {
+        return Disassembler::AddressSet(); // something went wrong, so just give up (e.g., unhandled instruction)
 
-    rose_addr_t base_va = value_of(base);
-    size_t entry_size = value_of(step);
-    if (! ((entry_size==2 && insn_x86->get_operandSize()==x86_insnsize_16) ||
-           (entry_size==4 && insn_x86->get_operandSize()==x86_insnsize_32) ||
-           (entry_size==8 && insn_x86->get_operandSize()==x86_insnsize_64)))
-        return successors; // empty
-
-    /* How big is the table? Add successors to list as we discover them. */
-    size_t nentries = 0;
-    while (1) {
-        uint8_t buf[8];
-        size_t nread = ro_map.read(buf, base_va+nentries*entry_size, entry_size);
-        if (nread!=entry_size)
-            break;
-        rose_addr_t target_va = 0;
-        for (size_t i=0; i<entry_size; i++)
-            target_va |= buf[i] << (i*8);
-        const MemoryMap::MapElement *me = map->find(target_va);
-        if (!me || 0==(me->get_mapperms() & MemoryMap::MM_PROT_EXEC))
-            break;
-        ++nentries;
-        successors.insert(target_va);
-    }
-    if (0==nentries)
-        return successors; // empty
-
-    /* Create a data block for the jump table and insert it into the basic block. */
-    if (do_create) {
-        DataBlock *dblock = find_db_starting(base_va, nentries*entry_size);
-        append(bb, dblock, SgAsmBlock::BLK_JUMPTABLE);
     }
 
-    if (debug)
-        fprintf(debug, "[jump table at 0x%08"PRIx64"+%zu*%zu]", base_va, nentries, entry_size);
-
-    if (base_va_ptr)
-        *base_va_ptr = base_va;
-    if (size_ptr)
-        *size_ptr = nentries;
+    /* Scan through memory to find from whence the EIP value came.  There's no need to scan for an EIP which is a known value
+     * since such control flow successors would be picked the usual way elsewhere.  It's also quite possible that the EIP value
+     * is also stored at some other memory addresses outside the jump table (e.g., a function pointer argument stored on the
+     * stack), so we also skip over any memory whose address is known. */
+    Disassembler::AddressSet successors;
+    RegisterValueType eip = policy.readRegister<32>(semantics.REG_EIP);
+    size_t entry_size = 4; // FIXME: bytes per jump table entry
+    if (!eip.is_known()) {
+        for (size_t i=0; i<policy.get_state().mem.size(); ++i) {
+            if (policy.get_state().mem[i].get_data()==eip && !policy.get_state().mem[i].get_address().is_known()) {
+                rose_addr_t base_va = policy.get_state().mem[i].get_address().offset;
+                size_t nentries = 0;
+                while (1) {
+                    uint8_t buf[entry_size];
+                    size_t nread = ro_map.read(buf, base_va+nentries*entry_size, entry_size);
+                    if (nread!=entry_size)
+                        break;
+                    rose_addr_t target_va = 0;
+                    for (size_t i=0; i<entry_size; i++)
+                        target_va |= buf[i] << (i*8);
+                    const MemoryMap::MapElement *me = map->find(target_va);
+                    if (!me || 0==(me->get_mapperms() & MemoryMap::MM_PROT_EXEC))
+                        break;
+                    successors.insert(target_va);
+                    ++nentries;
+                }
+                if (nentries>0) {
+                    if (table_extent)
+                        table_extent->insert(Extent(base_va, nentries*entry_size));
+                    if (do_create) {
+                        DataBlock *dblock = find_db_starting(base_va, nentries*entry_size);
+                        append(bb, dblock, SgAsmBlock::BLK_JUMPTABLE);
+                    }
+                    if (debug)
+                        fprintf(debug, "[jump table at 0x%08"PRIx64"+%zu*%zu]", base_va, nentries, entry_size);
+                }
+            }
+        }
+    }
     return successors;
 }
 
@@ -557,15 +567,14 @@ Partitioner::update_analyses(BasicBlock *bb)
      * map. We use a "do" loop so the logic nesting doesn't get so deep: just break when we find that something doesn't match
      * what we expect. */
     if (!bb->cache.sucs_complete && bb->cache.sucs.empty()) {
-        rose_addr_t base_va;
-        size_t nbytes;
-        Disassembler::AddressSet table_entries = discover_jump_table(bb, true, &base_va, &nbytes);
+        ExtentMap table_extent;
+        Disassembler::AddressSet table_entries = discover_jump_table(bb, true, &table_extent);
         if (!table_entries.empty()) {
             bb->cache.sucs.insert(table_entries.begin(), table_entries.end());
             if (debug) {
-                size_t entry_size = nbytes / table_entries.size();
-                size_t nentries = table_entries.size() / entry_size;
-                fprintf(debug, "[jump table at 0x%08"PRIx64"+%zu*%zu]", base_va, nentries, entry_size);
+                std::ostringstream ss;
+                ss <<"[jump table at " <<table_extent <<"]";
+                fprintf(debug, "%s", ss.str().c_str());
             }
         }
     }

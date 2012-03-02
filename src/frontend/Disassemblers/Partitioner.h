@@ -1457,13 +1457,11 @@ public:
     virtual void adjust_padding();
 
     /** Looks for a jump table.  This method looks at the specified basic block and tries to discover if the last instruction
-     * is an indirect branch through a jump table.  If it is, then the entries of the jump table are returned (i.e., the
-     * control flow successors of the given basic block) and a data block is optionally added to the basic block.  The jump
-     * table address and size are returned through optional arguments @p base_va_ptr and @p size_ptr (the size is measured in
-     * bytes).  If the basic block does not appear to have a jump table, then the returned list of successors is empty and @p
-     * base_va_ptr and @p size_ptr are both set to zero. */
-    Disassembler::AddressSet discover_jump_table(BasicBlock *bb, bool do_create=true,
-                                                 rose_addr_t *base_va_ptr=NULL/*out*/, size_t *size_ptr=NULL/*out*/);
+     *  is an indirect jump through memory.  If it is, then the entries of the jump table are returned by value (i.e., the
+     *  control flow successors of the given basic block), and the addresses of the table are added to the optional extent
+     *  map.  It is possible for the jump table to be discontiguous, but this is not usually the case.  If @p do_create is true
+     *  then data blocks are created for the jump table and added to the basic block. */
+    Disassembler::AddressSet discover_jump_table(BasicBlock *bb, bool do_create=true, ExtentMap *table_addresses=NULL);
 
     /*************************************************************************************************************************
      *                                   IPD Parser for initializing the Partitioner
