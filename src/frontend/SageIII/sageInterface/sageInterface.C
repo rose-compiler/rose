@@ -10543,7 +10543,7 @@ void SageInterface::replaceSubexpressionWithStatement(SgExpression* from, Statem
 SgAsmInterpretation *
 SageInterface::getMainInterpretation(SgAsmGenericFile *file)
 {
-    SgBinaryComposite *binary = isSgBinaryComposite(file->get_parent());
+    SgBinaryComposite *binary = getEnclosingNode<SgBinaryComposite>(file);
     ROSE_ASSERT(binary!=NULL);
 
     /* Find the only header or the PE header of this file */

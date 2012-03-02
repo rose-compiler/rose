@@ -6,9 +6,6 @@
 #include <boost/regex.hpp>
 #include <boost/filesystem.hpp>
 
-#define __STDC_FORMAT_MACROS
-#include <inttypes.h>
-
 /* This binary loader can handle all ELF files. */
 bool
 BinaryLoaderElf::can_load(SgAsmGenericHeader *hdr) const

@@ -1,0 +1,497 @@
+%			SWI-Prolog document-style
+
+% Test for PDF generation using pdflatex
+
+\usepackage{ifpdf}
+%Old tex versions
+%\newif\ifpdf
+%\ifx\pdfoutput\undefined
+%   \pdffalse
+%\else
+%   \pdfoutput=1
+%   \pdftrue
+%\fi
+
+% Get hyperrefs to work
+
+\usepackage{makeidx}
+\usepackage{url}
+
+\ifpdf
+  \usepackage[pdftex,colorlinks=true,urlcolor=blue]{hyperref}
+  \pdfcompresslevel=9
+%  \pdfcatalog{
+%    /PageMode /UseOutLines
+%  }
+  \usepackage[pdftex]{graphicx}
+  \DeclareGraphicsExtensions{.pdf,.jpg,.png}
+\else
+  \usepackage[dvips]{graphicx}
+  \DeclareGraphicsExtensions{.eps,.ps}
+\fi
+\graphicspath{{figs/}{./}}
+
+%	Other styles
+
+\usepackage{a4wide}
+\usepackage{longtable}
+\usepackage{ifthen}
+\usepackage{dcolumn}
+\usepackage{calc}
+\setlongtables
+
+\catcode`\^^A=8% downarrow are for subscripts
+\catcode`\_=\active
+\def_{\ifmmode\else\_\fi}
+\def\vobeyspaces{\@vobeyspaces}
+
+\newcommand{\onlinebreak}{}
+
+%	References
+
+\newcommand{\secref}[1]{section~\ref{sec:#1}}
+\newcommand{\appref}[1]{appendix~\ref{sec:#1}}
+\newcommand{\chapref}[1]{chapter~\ref{sec:#1}}
+\newcommand{\figref}[1]{figure~\ref{fig:#1}}
+\newcommand{\tabref}[1]{table~\ref{tab:#1}}
+
+\newcommand{\Secref}[1]{Section~\ref{sec:#1}}
+\newcommand{\Appref}[1]{Appendix~\ref{sec:#1}}
+\newcommand{\Chapref}[1]{Chapter~\ref{sec:#1}}
+\newcommand{\Figref}[1]{Figure~\ref{fig:#1}}
+\newcommand{\Tabref}[1]{Table~\ref{tab:#1}}
+
+\newcommand{\tm}{$^{tm}$}
+
+\newcommand{\reffont}{\tt}
+\newcommand{\predref}[2]{%		% functor/arity
+	\mbox{\reffont #1/#2}}
+\newcommand{\dcgref}[2]{%		% functor//arity
+	\mbox{\reffont #1//#2}}
+\newcommand{\qpredref}[3]{%		% module:functor/arity
+	\mbox{\reffont #1:#2/#3}}
+\newcommand{\qdcgref}[3]{%		% module:functor//arity
+	\mbox{\reffont #1:#2//#3}}
+\newcommand{\nopredref}[2]{%		% functor/arity (external)
+	\mbox{\reffont #1/#2}}
+\newcommand{\functor}[2]{%		% functor/arity (no predicate)
+	\mbox{\reffont #1/#2}}
+\newcommand{\manref}[2]{%		% page(n)
+	\mbox{{\reffont #1(}{\rm #2}{\tt )}}}
+\newcommand{\funcref}[2]{%		% function(Args...)
+	\mbox{{\reffont #1(}{\it #2}{\tt )}}}
+\newcommand{\prologflag}[1]{%
+	\mbox{\reffont #1}}
+
+%	Descriptions (definitions) of various things
+%	Note: I do not know where the 1ex comes from. This should fit
+%	exactly, but appearently some dimension is missing.  I suspect
+%	a space creaping in somewhere.
+
+\def\@nodescription{false}
+
+\newcommand{\defentry}[1]{\definition{#1}}
+\newcommand{\definition}[1]{%
+	\onlinebreak%
+	\ifthenelse{\equal{\@nodescription}{true}}{%
+	    \def\@nodescription{false}%
+	    \makebox[-\leftmargin]{\mbox{}}\makebox[\linewidth+\leftmargin-1ex][l]{\bf #1}\\}{%
+	    \item[{\makebox[\linewidth+\leftmargin-1ex][l]{#1}}]}}
+\newcommand{\nodescription}{\def\@nodescription{true}}
+
+\makeatletter
+\def\cmdlineoptionitem{\@ifstar{\@gluedcmdoptitem}{\@cmdoptitem}}
+\def\@gluedcmdoptitem#1#2{\definition{#1\var{#2}}}
+\def\@cmdoptitem#1#2{\definition{#1 \var{#2}}}
+\makeatother
+\newcommand{\longoptionitem}[2]{%
+	\ifthenelse{\equal{}{#2}}{%
+	    \definition{-{}-#1}}{%
+	    \definition{-{}-#1={\it #2}}}\ignorespaces}
+\newcommand{\longoption}[2]{%
+	\ifthenelse{\equal{}{#2}}{%
+	    \mbox{\reffont -{}-#1}}{%
+	    \mbox{\reffont -{}-#1={\it #2}}}}
+
+\newcommand{\traceoption}[3]{%
+	\definition{{\tt #1} (#2)}#3%
+	\ignorespaces}
+\newcommand{\pleaseoption}[3]{%
+	\definition{#1 {\it #2} {\rm(default: \it #3)}}%
+	\ignorespaces}
+%\prologflagitem{Name}{Type}{Access}
+\newcommand{\prologflagitem}[3]{%
+	\definition{#1 {\it (#2%
+	    \ifthenelse{\equal{rw}{#3}}{, changeable}{})}}%
+	\index{flag:#1}\ignorespaces}
+\newcommand{\escapeitem}[1]{%
+	\definition{\Sesc{\tt #1}}
+	\ignorespaces}
+\newcommand{\fmtchar}[1]{%
+	\item[\tt #1]%
+	\ignorespaces}
+
+%	\directive{Name}{Arity}{Args}
+%	\predicate[Attibutes]{Name}{Arity}{Args}
+%	\infixop{Name}{Left}{Right}
+%	\prefixop{Name}{Right}
+%	\dcg[Attibutes]{Name}{Arity}{Args}
+%
+%	Predicate   descriptions.   Must   appear   in   a   description
+%	environment.
+
+\newcommand{\resitem}[1]{%
+	\defentry{#1}%
+	\index{#1}\ignorespaces}
+\makeatletter
+\def\predatt#1{\hfill{\it\footnotesize[#1]}}
+\def\predicate{\@ifnextchar[{\@attpredicate}{\@predicate}}
+\def\@predicate#1#2#3{%
+	\ifthenelse{\equal{#2}{0}}{%
+	    \defentry{#1}}{%
+	    \defentry{#1({\it #3})}}%
+	\index{#1/#2}\ignorespaces}
+\def\@attpredicate[#1]#2#3#4{%
+	\ifthenelse{\equal{#3}{0}}{%
+	    \defentry{#2\predatt{#1}}}{%
+	    \defentry{#2({\it #4})\predatt{#1}}}%
+	\index{#2/#3}\ignorespaces}
+\def\directive{\@ifnextchar[{\@attdirective}{\@directive}}
+\def\@directive#1#2#3{%
+	\ifthenelse{\equal{#2}{0}}{%
+	    \defentry{:- #1}}{%
+	    \defentry{:- #1({\it #3})}}%
+	\index{#1/#2}\ignorespaces}
+\def\@attdirective[#1]#2#3#4{%
+	\ifthenelse{\equal{#3}{0}}{%
+	    \defentry{:- #2\predatt{#1}}}{%
+	    \defentry{:- #2({\it #4})\predatt{#1}}}%
+	\index{#2/#3}\ignorespaces}
+\def\dcg{\@ifnextchar[{\@attdcg}{\@dcg}}
+\def\@dcg#1#2#3{%
+	\ifthenelse{\equal{#2}{0}}{%
+	    \defentry{#1}}{%
+	    \defentry{#1({\it #3}) \texttt{//}}}%
+	\index{#1/#2}\ignorespaces}
+\def\@attdcg[#1]#2#3#4{%
+	\ifthenelse{\equal{#3}{0}}{%
+	    \defentry{#2 \texttt{//}\predatt{#1}}}{%
+	    \defentry{#2({\it #4}) \texttt{//}\predatt{#1}}}%
+	\index{#2//#3}\ignorespaces}
+\def\infixop{\@ifnextchar[{\@attinfixop}{\@infixop}}
+\def\@infixop#1#2#3{%
+	\defentry{{\it #2} #1 {\it #3}}%
+	\index{#1/2}\ignorespaces}
+\def\@attinfixop[#1]#2#3#4{%
+	\defentry{{\it #3} #2 {\it #4}\predatt{#1}}%
+	\index{#2/2}\ignorespaces}
+\def\prefixop{\@ifnextchar[{\@attprefixop}{\@prefixop}}
+\def\@prefixop#1#2{%
+	\defentry{#1 {\it #2}}%
+	\index{#1/1}\ignorespaces}
+\def\@attprefixop[#1]#2#3{%
+	\defentry{#2 {\it #3}\predatt{#1}}%
+	\index{#2/1}\ignorespaces}
+\makeatother
+
+%	\termitem{functor}{Args}
+%	\infixtermitem{functor}{Left}{Right}
+%	\prefixtermitem{functor}{Right}
+%	\postfixtermitem{functor}{Left}
+%
+%	Terms in description lists. Typically used to describe various
+%	possible values or types for a term.
+
+\newcommand{\termitem}[2]{%
+	\ifthenelse{\equal{}{#2}}{%
+	    \definition{#1}}{%
+	    \definition{#1({\it #2})}}\ignorespaces}
+\newcommand{\infixtermitem}[3]{%
+	    \definition{{\it #2} #1 {\it #3}}\ignorespaces}
+\newcommand{\prefixtermitem}[2]{%
+	    \definition{#1 {\it #2}}\ignorespaces}
+\newcommand{\postfixtermitem}[2]{%
+	    \definition{{\it #2} #1}\ignorespaces}
+
+%	\term{functor}{Args}
+%	\infixterm{functor}{Left}{Right}
+%	\prefixterm{functor}{Right}
+%	\postfixterm{functor}{Left}
+%
+%	Terms used in running text.
+
+\def\term{}
+\renewcommand{\term}[2]{%
+	\ifthenelse{\equal{\protect}{\protect#2}}{%
+	    {\reffont #1}}{%
+	    {\reffont #1}({\it #2})}}
+\newcommand{\infixterm}[3]{{\it #2} #1 {\it #3}}
+\newcommand{\prefixterm}[2]{#1 {\it #2}}
+\newcommand{\postfixterm}[2]{{\it #2} #1}
+\newcommand{\errorterm}[2]{\mbox{\tt%
+	\ifthenelse{\equal{}{#2}}{%
+	    #1}{%
+	    #1(#2)}}}
+
+
+\newcommand{\cfunction}[3]{%
+	\defentry{{\tt #1} #2{\rm (}{\it #3}{\rm )}}%
+	\index{#2()}\ignorespaces}
+\newcommand{\constructor}[2]{%
+	\defentry{#1::#1{\rm (}{\it #2}{\rm )}}%
+	\index{#1::#1()}\ignorespaces}
+\newcommand{\destructor}[1]{%
+	\defentry{#1::\Stilde{}#1{\rm ()}}%
+	\index{#1::\Stilde{}#1()}\ignorespaces}
+\newcommand{\cppcast}[2]{%
+	\defentry{#1::operator #2{\rm ({\it void})}}%
+	\index{#1::operator #2()}\ignorespaces}
+\newcommand{\cdecl}[2]{{\tt #1} {\em #2}}
+\newcommand{\cmacro}[3]{%
+	\defentry{{\it #1} #2({\it #3})}%
+	\index{#2()}\ignorespaces}
+\newcommand{\constitem}[1]{%
+	\definition{#1}%
+	\index{#1}\ignorespaces}
+\newcommand{\cglobalvar}[1]{{\tt #1}}
+\newcommand{\classitem}[1]{%
+	\definition{Class #1}%
+	\index{#1 \string\idxtype{class}}\ignorespaces}
+\newcommand{\menuitem}[2]{%
+	\ifthenelse{\equal{\protect}{\protect#2}}{%
+	    \definition{\textsf #1}}{%
+	    \definition{\textsf #1 ({\it #2})}}%
+	\index{#1 \string\idxtype{menu}}%
+	\ignorespaces}
+
+
+%	\tag{Keyword}
+%
+%	PlDoc @keyword expansion.  \mtag{Keyword} is a multi-valued tag
+
+\newcommand{\tag}[1]{%
+	\item[#1]}
+\newcommand{\mtag}[1]{%
+	\item[#1]\mbox{}\\}
+
+\newcommand{\bnfmeta}[1]{\ifmmode{\langle\mbox{\it #1}\rangle}\else$\langle\mbox{\it #1}\rangle$\fi}
+\newcommand{\bnfor}{\ifmmode\mid\else$\mid$\fi}
+\newcommand{\isa}{& ::= &}
+\newcommand{\ora}{& $\mid$ &}
+
+\renewcommand{\arg}[1]{\ifmmode\mbox{\em #1}\else{\it #1}\fi}
+\newcommand{\class}[1]{{\em #1}\index{#1 \string\idxtype{class}}}
+\newcommand{\classs}[1]{{\em #1s}\index{#1 \string\idxtype{class}}}
+\newcommand{\demo}[1]{{\sf #1}\index{#1 \string\idxtype{demo}}}
+\newcommand{\pllib}[1]{{\texttt{#1}}\index{#1 \string\idxtype{library}}}
+\newcommand{\clib}[1]{{\tt #1}\index{#1 \string\idxtype{library}}}
+\newcommand{\tool}[1]{{\em #1}\index{#1 \string\idxtype{tool}}}
+\newcommand{\menuref}[1]{\textsf{#1}\index{#1 \string\idxtype{menu}}}
+\newcommand{\constf}[1]{{\reffont #1}}
+\newcommand{\const}[1]{{\tt #1}}
+\newcommand{\plflag}[1]{{\tt #1}}
+\newcommand{\type}[1]{{\reffont #1}}
+\newcommand{\idx}[1]{#1\index{#1}}
+\newcommand{\foreseen}[1]{\footnote{#1}}
+\newcommand{\metafile}[1]{\mbox{\tt #1}}
+\newcommand\file{\begingroup \urlstyle{tt}\Url}
+\newcommand\email{\begingroup \urlstyle{tt}\Url}
+\newcommand{\env}[1]{\mbox{\tt #1}}
+\newcommand{\except}[1]{\mbox{\tt #1}}
+\newcommand{\exam}[1]{\mbox{\tt #1}}
+\newcommand{\module}[1]{\mbox{\reffont #1}}
+\newcommand{\fileext}[1]{\mbox{\texttt{.#1}}}
+\newcommand{\option}[1]{\mbox{\tt #1}}
+\newcommand{\resource}[1]{\mbox{\reffont #1}}
+\newcommand{\cmdlineoption}[1]{\mbox{\tt #1}}
+\newcommand{\argoption}[2]{\mbox{\tt #1 \em #2}}
+\newcommand{\ctype}[1]{{\texttt{#1}}}
+\newcommand{\op}[1]{{\tt #1}}
+\newcommand{\program}[1]{\texttt{#1}}
+\newcommand{\manpage}[2]{{\bf #1}(#2)}
+\newcommand{\chr}[1]{{\tt #1}}
+\newcommand{\jargon}[1]{{\em #1}}
+\newcommand{\strong}[1]{{\bf #1}}
+\newcommand{\texcmd}[1]{{\Sesc}{\tt #1}}
+\newcommand{\texenv}[1]{{\tt #1}}
+\newcommand{\texmode}[1]{{\tt #1}}
+\newcommand{\HTML}[1]{{\bf #1}}
+\newcommand{\libdoc}[2]{\section{\pllib{#1}: #2}}
+\newcommand{\key}[1]{{\sf #1}}
+\newcommand{\menu}[2]{%
+	{\sf #1}%
+	\ifthenelse{\equal{#2}{}}{%
+	    }{%
+	    ~(\texttt{#2})}}
+
+\newcommand\satom{\begingroup \urlstyle{tt}\Url}
+\newcommand\fmtseq{\begingroup \urlstyle{tt}\Url}
+
+\urldef{\Sexe}\satom{#!}		% #!
+\urldef{\Scgt}\satom{#>}		% #>
+\urldef{\Scge}\satom{#>=}		% #>=
+\urldef{\Sclt}\satom{#<}		% #<
+\urldef{\Scle}\satom{#=<}		% #=<
+\urldef{\Sceq}\satom{#=}		% #=
+\urldef{\Scne}\satom{#\=}		% #\=
+\urldef{\Scnot}\satom{#\}		% #\
+\urldef{\Scor}\satom{#\/}		% #\/
+\urldef{\Scand}\satom{#/\}		% #/\
+\urldef{\Sequiv}\satom{#<=>}            % #<=>
+\urldef{\Slimpl}\satom{#<=}             % #<=
+\urldef{\Srimpl}\satom{#=>}             % #=>
+\urldef{\Slimplies}\satom{#<==}         % #<==
+\urldef{\Srimplies}\satom{#==>}         % #==>
+\urldef{\Scequal}\satom{#<==>}          % #<==>
+\urldef{\Scieq}\satom{#=:=}		% #=:=
+\urldef{\Scine}\satom{#=\=}		% #=\=
+\urldef{\Scut}\satom{!}			% !
+\urldef{\Scomma}\satom{,}		% ,
+\urldef{\Sifthen}\satom{->}		% ->
+\urldef{\Ssoftcut}\satom{*->} 		% *->
+\urldef{\Sdot}\satom{.} 		% .
+\urldef{\Ssemicolon}\satom{;} 		% ;
+\urldef{\Slt}\satom{<} 			% <
+\urldef{\Sxor}\satom{><} 		% ><
+\urldef{\Seq}\satom{=} 			% =
+\urldef{\Suniv}\satom{=..} 		% =..
+\urldef{\Saeq}\satom{=:=} 		% =:=
+\urldef{\Sle}\satom{=<} 		% =<
+\urldef{\Sel}\satom{<=} 		% <=
+\urldef{\Sequal}\satom{==} 		% ==
+\urldef{\Sstructeq}\satom{=@=} 		% =@=
+\urldef{\Sstructneq}\satom{\=@=} 	% \=@=
+\urldef{\Sane}\satom{=\=} 		% =\=
+\urldef{\Sgt}\satom{>} 			% >
+\urldef{\Sge}\satom{>=} 		% >=
+\urldef{\Stlt}\satom{@<} 		% @<
+\urldef{\Stle}\satom{@=<} 		% @=<
+\urldef{\Stgt}\satom{@>} 		% @>
+\urldef{\Stge}\satom{@>=} 		% @>=
+\urldef{\Snot}\satom{\+} 		% \+
+\urldef{\Sne}\satom{\=} 		% \=
+\urldef{\Snequal}\satom{\==} 		% \==
+\urldef{\Shat}\satom{^} 		% ^
+\urldef{\Sbar}\satom{|} 		% |
+\urldef{\Stimes}\satom{*}		% *
+\urldef{\Spow}\satom{**}		% **
+\urldef{\Splus}\satom{+}		% +
+\urldef{\Sminus}\satom{-}		% -
+\urldef{\Sdiv}\satom{/}			% /
+\urldef{\Sidiv}\satom{//}		% //
+\urldef{\Sand}\satom{/\}		% /\
+\urldef{\Slshift}\satom{<<}		% <<
+\urldef{\Srshift}\satom{>>}		% >>
+\urldef{\Sneg}\satom{\}			% \
+\urldef{\Sesc}\satom{\}			% \
+\urldef{\Sor}\satom{\/}			% \/
+\urldef{\Sdollar}\satom{$}		% $
+\urldef{\Squest}\satom{?}		% ?
+\urldef{\Smodule}\satom{:}		% :
+\urldef{\Sneck}\satom{:-}		% :-
+\urldef{\Sdirective}\satom{?-}		% ?-
+\urldef{\Sdcg}\satom{-->}		% -->
+\urldef{\Bc}\satom{\c}			% \c
+\urldef{\Bn}\satom{\n}			% \n
+\urldef{\Br}\satom{\r}			% \r
+\urldef{\Bl}\satom{\l}			% \l
+\urldef{\BB}\satom{\\}			% \\
+\urldef{\Stilde}\satom{~}		% ~
+\urldef{\Spercent}\satom{%}		% %
+\urldef{\Shash}\satom{#}		% #
+\urldef{\Scurl}\satom{{}}		% {}
+\urldef{\SxXX}\satom{xXX..\}		% xXX..\
+
+\newcommand{\bug}[1]{\footnote{BUG: #1}}
+
+\newcommand{\mod}[2]{#1 \mbox{\rm mod} #2}
+\newcommand{\rem}[2]{#1 \mbox{\rm rem} #2}
+\newcommand{\pow}[2]{{#1}^{#2}}
+\newcommand{\bsl}[0]{\Sesc}
+
+%	Index handling
+
+\newcommand{\idxtype}[1]{{\small\em #1}}
+
+%	Prolog predicate summary
+
+\newenvironment{summarylist}[1]{\begin{longtable}[l]{#1}}{\end{longtable}}
+\newcommand{\predicatesummary}[3]{#1/#2 & #3 \\}
+\newcommand{\oppredsummary}[5]{#1/#2 & #5 \\}
+\newcommand{\functionsummary}[3]{#1/#2 & #3 \\}
+\newcommand{\opfuncsummary}[5]{#1/#2 & #5 \\}
+\newcommand{\opsummary}[4]{#3 & #1 & #2 & #4 \\}
+\newcommand{\hook}[1]{(hook)}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%			CODE environment			%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\usepackage{fancyvrb}
+\usepackage{color}
+
+%\definecolor{codeboxcolor}{rgb}{0.7,0.7,0.7}
+\definecolor{codeboxcolor}{rgb}{0.4,0.4,0.4}
+\DefineVerbatimEnvironment%
+  {code}{Verbatim}
+  {frame=single,
+   framerule=0.2pt,
+   rulecolor=\color{codeboxcolor},
+  }
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%			INCLUDE FIGURES				%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%	PostScript figures
+%	\postscriptfig[width=5in]{label}{Title}
+
+\makeatletter
+\def\postscriptfig{\@ifnextchar[{\@scaledpostscriptfig}{\@postscriptfig}}
+\def\@scaledpostscriptfig[#1]#2#3{%
+	\begin{figure}%
+	    \centerline{\includegraphics[#1]{#2}}
+	    \caption{#3}
+	    \label{fig:#2}
+	\end{figure}}
+\def\@postscriptfig#1#2{%
+	\begin{figure}%
+	    \centerline{\includegraphics{#1}}
+	    \caption{#2}
+	    \label{fig:#1}
+	\end{figure}}
+\makeatother
+
+%	\begin{tabularlp}{longest-text}
+
+\newlength{\tabDright}
+\newlength{\tabDleft}
+\newcommand{\PreserveBackslash}[1]{\let\temp=\\#1\let\\=\temp}
+\newcommand{\raggedrightcolumn}{\PreserveBackslash\raggedright\hspace{0pt}}
+\newenvironment{tabularlp}[1]%
+	{\settowidth{\tabDleft}{#1}%
+	 \setlength{\tabDright}{\linewidth-\columnsep*3-\tabDleft}%
+	 \begin{tabular}{|p{\tabDleft}|>{\raggedrightcolumn}p{\tabDright}|}}%
+	{\end{tabular}}
+
+%	\begin{tags} ... \end{tags}
+
+\newenvironment{tags}%
+	{\begin{quote}\begin{description}%
+		\setlength{\itemsep}{0pt}%
+		\footnotesize}%
+	{\end{description}\end{quote}}
+
+
+%	\begin{parameters} ... \end{parameters}
+
+\newenvironment{parameters}%
+	{\par%
+	 \makebox[\linewidth]{\hfill\footnotesize Parameters}
+	 \begin{tabular*}{\linewidth}{lp{0.7\linewidth}}
+	 \hline}%
+	{\end{tabular*}}
+
+

@@ -25,9 +25,6 @@
 #include <direct.h>
 #endif
 
-#define __STDC_FORMAT_MACROS
-#include <inttypes.h>
-
 #include "IncludedFilesUnparser.h"
 #include "FileHelper.h"
 

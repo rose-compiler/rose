@@ -1,4 +1,3 @@
-// tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
 #include "Assembler.h"
 #include "AssemblerX86.h"
@@ -10,8 +9,6 @@
 #include "BinaryLoader.h"
 #include "Partitioner.h"
 
-#define __STDC_FORMAT_MACROS
-#include <inttypes.h>
 #include <stdarg.h>
 
 /* See header file for full documentation of all methods in this file. */
@@ -286,8 +283,7 @@ Disassembler::disassembleInterpretation(SgAsmInterpretation *interp)
 
     /* Search methods specified with "-rose:disassembler_search" are stored in the SgFile object. Use them rather than the
      * defaults built into the Disassembler class. */
-    SgNode *file = interp;
-    while (file && !isSgFile(file)) file = file->get_parent();
+    SgNode *file = SageInterface::getEnclosingNode<SgFile>(interp);
     ROSE_ASSERT(file);
     disassembler->set_search(isSgFile(file)->get_disassemblerSearchHeuristics());
 

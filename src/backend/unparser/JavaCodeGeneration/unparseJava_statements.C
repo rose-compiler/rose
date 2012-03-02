@@ -176,6 +176,7 @@ Unparse_Java::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_Info
             case V_SgForStatement:
             case V_SgIfStmt:
             case V_SgSwitchStatement:
+            case V_SgTryStmt:
             case V_SgCaseOptionStmt:
             case V_SgCatchOptionStmt:
             case V_SgDefaultOptionStmt:
@@ -224,6 +225,8 @@ Unparse_Java::unparseImportDeclarationStatement (SgStatement* stmt, SgUnparse_In
 
      curprint("import ");
      unparseName(importDeclaration->get_path(), info);
+     if (importDeclaration -> get_containsWildCard())
+         curprint(".*");
    }
 
 void

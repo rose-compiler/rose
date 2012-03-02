@@ -1765,6 +1765,7 @@ AC_COMPILE_IFELSE([struct S {int a, b;}; static __thread struct S x;],
 AC_CHECK_HEADERS([asm/ldt.h elf.h linux/types.h linux/dirent.h linux/unistd.h])
 AC_CHECK_HEADERS([sys/types.h sys/mman.h sys/stat.h sys/uio.h sys/wait.h sys/utsname.h sys/ioctl.h sys/sysinfo.h sys/socket.h])
 AC_CHECK_HEADERS([termios.h grp.h syscall.h])
+AC_CHECK_FUNCS(pipe2)
 AC_CHECK_TYPE(user_desc,
               AC_DEFINE(HAVE_USER_DESC, [], [Defined if the user_desc type is declared in <asm/ldt.h>]),
               [],
@@ -2113,21 +2114,12 @@ projects/roseToLLVM/src/rosetollvm/Makefile
 projects/roseToLLVM/tests/Makefile
 projects/simulator/Makefile
 projects/symbolicAnalysisFramework/Makefile
-projects/symbolicAnalysisFramework/src/analysis/Makefile
-projects/symbolicAnalysisFramework/src/arrIndexLabeler/Makefile
-projects/symbolicAnalysisFramework/src/cfgUtils/Makefile
 projects/symbolicAnalysisFramework/src/chkptRangeAnalysis/Makefile
-projects/symbolicAnalysisFramework/src/common/Makefile
 projects/symbolicAnalysisFramework/src/external/Makefile
-projects/symbolicAnalysisFramework/src/lattice/Makefile
 projects/symbolicAnalysisFramework/src/mpiAnal/Makefile
 projects/symbolicAnalysisFramework/src/ompAnal/Makefile
-projects/symbolicAnalysisFramework/src/rwAccessLabeler/Makefile
-projects/symbolicAnalysisFramework/src/simpleAnalyses/Makefile
-projects/symbolicAnalysisFramework/src/state/Makefile
 projects/symbolicAnalysisFramework/src/unionFind/Makefile
 projects/symbolicAnalysisFramework/src/varBitVector/Makefile
-projects/symbolicAnalysisFramework/src/variables/Makefile
 projects/symbolicAnalysisFramework/src/varLatticeVector/Makefile
 projects/symbolicAnalysisFramework/src/taintAnalysis/Makefile
 projects/symbolicAnalysisFramework/src/parallelCFG/Makefile

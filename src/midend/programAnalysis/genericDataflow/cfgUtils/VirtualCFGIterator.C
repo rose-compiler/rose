@@ -79,6 +79,7 @@ void iterator::advance(bool fwDir, bool pushAllChildren)
                         for(vector<DataflowEdge>::iterator it=nextE.begin(); it!=nextE.end(); it++)
                         {
                                 DataflowNode nextN((*it).target()/* need to put something here because DataflowNodes don't have a default constructor*/);
+
                                 if(fwDir) nextN = (*it).target();
                                 else nextN = (*it).source();
                                         

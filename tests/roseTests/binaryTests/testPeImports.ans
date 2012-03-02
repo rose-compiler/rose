@@ -1,0 +1,46 @@
+=== msvcrt.dll ===
+  IAT entry #0 at 0x01004164 bound to 0x4dc3ee2f (1304686127), hint=214, name="_controlfp"
+  IAT entry #1 at 0x01004168 bound to 0x4dc25c94 (1304583316), hint=237, name="_except_handler3"
+  IAT entry #2 at 0x0100416c bound to 0x4dc2537c (1304580988), hint=152, name="__set_app_type"
+  IAT entry #3 at 0x01004170 bound to 0x4dc0f1db (1304490459), hint=133, name="__p__fmode"
+  IAT entry #4 at 0x01004174 bound to 0x4dc0f1a4 (1304490404), hint=128, name="__p__commode"
+  IAT entry #5 at 0x01004178 bound to 0x4dc523d8 (1304765400), hint=182, name="_adjust_fdiv"
+  IAT entry #6 at 0x0100417c bound to 0x4dc3d675 (1304680053), hint=154, name="__setusermatherr"
+  IAT entry #7 at 0x01004180 bound to 0x4dc0eeeb (1304489707), hint=109, name="__getmainargs"
+  IAT entry #8 at 0x01004184 bound to 0x4dc51a38 (1304762936), hint=110, name="__initenv"
+  IAT entry #9 at 0x01004188 bound to 0x4dc29eb6 (1304600246), hint=200, name="_cexit"
+  IAT entry #10 at 0x0100418c bound to 0x4dc22dae (1304571310), hint=78, name="_XcptFilter"
+  IAT entry #11 at 0x01004190 bound to 0x4dc29e9a (1304600218), hint=246, name="_exit"
+  IAT entry #12 at 0x01004194 bound to 0x4dc29ece (1304600270), hint=197, name="_c_exit"
+  IAT entry #13 at 0x01004198 bound to 0x4dc29e7e (1304600190), hint=656, name="exit"
+  IAT entry #14 at 0x0100419c bound to 0x4dc0c9c9 (1304480201), hint=794, name="tolower"
+  IAT entry #15 at 0x010041a0 bound to 0x4dc29d67 (1304599911), hint=315, name="_initterm"
+  IAT entry #16 at 0x010041a4 bound to 0x4dc37fcc (1304657868), hint=813, name="wcslen"
+  IAT entry #17 at 0x010041a8 bound to 0x4dc19cc5 (1304534213), hint=17, name="??2@YAPAXI@Z"
+  IAT entry #18 at 0x010041ac bound to 0x4dc19cdd (1304534237), hint=18, name="??3@YAXPAX@Z"
+=== KERNEL32.dll ===
+  IAT entry #0 at 0x0100410c bound to 0x7c80aa66 (2088807014), hint=240, name="FreeLibrary"
+  IAT entry #1 at 0x01004110 bound to 0x7c801d4f (2088770895), hint=578, name="LoadLibraryExA"
+  IAT entry #2 at 0x01004114 bound to 0x7c810f9f (2088832927), hint=907, name="WriteFile"
+  IAT entry #3 at 0x01004118 bound to 0x7c80b529 (2088809769), hint=373, name="GetModuleHandleA"
+  IAT entry #4 at 0x0100411c bound to 0x7c80fe2f (2088828463), hint=497, name="GlobalFree"
+  IAT entry #5 at 0x01004120 bound to 0x7c80995d (2088802653), hint=587, name="LocalFree"
+  IAT entry #6 at 0x01004124 bound to 0x7c910331 (2089878321), hint=360, name="GetLastError"
+  IAT entry #7 at 0x01004128 bound to 0x7c80c6e0 (2088814304), hint=947, name="lstrlenA"
+  IAT entry #8 at 0x0100412c bound to 0x7c809cad (2088803501), hint=612, name="MultiByteToWideChar"
+  IAT entry #9 at 0x01004130 bound to 0x7c812ca9 (2088840361), hint=430, name="GetStdHandle"
+  IAT entry #10 at 0x01004134 bound to 0x7c811069 (2088833129), hint=350, name="GetFileType"
+  IAT entry #11 at 0x01004138 bound to 0x7c81abe4 (2088872932), hint=300, name="GetConsoleMode"
+  IAT entry #12 at 0x0100413c bound to 0x7c839882 (2088999042), hint=906, name="WriteConsoleW"
+  IAT entry #13 at 0x01004140 bound to 0x7c81ae5f (2088873567), hint=302, name="GetConsoleOutputCP"
+  IAT entry #14 at 0x01004144 bound to 0x7c80a0c7 (2088804551), hint=894, name="WideCharToMultiByte"
+  IAT entry #15 at 0x01004148 bound to 0x7c829047 (2088931399), hint=236, name="FormatMessageW"
+=== WININET.dll ===
+  IAT entry #0 at 0x0100415c bound to 0x771b81a7 (1998291367), hint=152, name="InternetQueryOptionA"
+=== WINHTTP.dll ===
+  IAT entry #0 at 0x01004150 bound to 0x4d4f84d4 (1297056980), hint=11, name="WinHttpGetDefaultProxyConfiguration"
+  IAT entry #1 at 0x01004154 bound to 0x4d4f85a6 (1297057190), hint=24, name="WinHttpSetDefaultProxyConfiguration"
+msvcrt.dll hint/name table has 19 entries at virtual addresses: 0x010041b4+0x000000f6=0x010042aa, 0x010042b6+0x0000000e=0x010042c4
+KERNEL32.dll hint/name table has 16 entries at virtual addresses: 0x010042c4+0x0000010a=0x010043ce
+WININET.dll hint/name table has 1 entry at virtual addresses: 0x010043dc+0x00000018=0x010043f4
+WINHTTP.dll hint/name table has 2 entries at virtual addresses: 0x01004400+0x0000004c=0x0100444c

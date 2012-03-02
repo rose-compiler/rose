@@ -1,9 +1,9 @@
 #ifndef SPEAR_WRAP_H
 #define SPEAR_WRAP_H
 
-#include "common.h"
+#include "genericDataflowCommon.h"
 #include "cfgUtils.h"
-#include "logical.h"
+#include "LogicalCond.h"
 #include "variables.h"
 
 #include <string>

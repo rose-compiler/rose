@@ -4,9 +4,6 @@
 
 #include <iomanip>
 
-#define __STDC_FORMAT_MACROS
-#include <inttypes.h>
-
 /** Returns a string containing everthing before the first operand in a typical x86 assembly statement. */
 std::string unparseX86Mnemonic(SgAsmx86Instruction *insn) {
     ROSE_ASSERT(insn!=NULL);

@@ -34,8 +34,8 @@ InterProceduralAnalysis::~InterProceduralAnalysis() {}
 // state - the function's NodeState
 bool UnstructuredPassIntraAnalysis::runAnalysis(const Function& func, NodeState* state)
 {
-        DataflowNode funcCFGStart = cfgUtils::getFuncStartCFG(func.get_definition());
-        DataflowNode funcCFGEnd = cfgUtils::getFuncEndCFG(func.get_definition());
+        DataflowNode funcCFGStart = cfgUtils::getFuncStartCFG(func.get_definition(),filter);
+        DataflowNode funcCFGEnd = cfgUtils::getFuncEndCFG(func.get_definition(), filter);
         
         if(analysisDebugLevel>=2)
                 Dbg::dbg << "UnstructuredPassIntraAnalysis::runAnalysis() function "<<func.get_name().getString()<<"()\n";
@@ -83,6 +83,7 @@ void UnstructuredPassInterAnalysis::runAnalysis()
 InterProceduralDataflow::InterProceduralDataflow(IntraProceduralDataflow* intraDataflowAnalysis) : 
         InterProceduralAnalysis((IntraProceduralAnalysis*)intraDataflowAnalysis)
 {
+       filter = intraDataflowAnalysis->filter; // propagate the CFG filter from intra- to inter-level, or the default filter will kick in at inter-level.
         Dbg::dbg << "InterProceduralDataflow() intraAnalysis="<<intraAnalysis<<", intraDataflowAnalysis="<<intraDataflowAnalysis<<endl;
         set<FunctionState*> allFuncs = FunctionState::getAllDefinedFuncs();
         
@@ -117,9 +118,9 @@ InterProceduralDataflow::InterProceduralDataflow(IntraProceduralDataflow* intraD
                                         Dbg::dbg << *it << ": " << (*it)->str("    ") << endl;
                                 }
                         */
-                        DataflowNode begin = func.get_definition()->cfgForBeginning();
+                        DataflowNode begin(func.get_definition()->cfgForBeginning(), filter);
                         Dbg::dbg << "begin="<<begin.getNode()<<" = ["<<Dbg::escape(begin.getNode()->unparseToString())<<" | "<<begin.getNode()->class_name()<<"]"<<endl;
-                        intraDataflowAnalysis->genInitState(func, func.get_definition()->cfgForBeginning(), funcS->state,
+                        intraDataflowAnalysis->genInitState(func, DataflowNode(func.get_definition()->cfgForBeginning(), filter), funcS->state,
                                                             initLats, initFacts);
                         // Make sure that the starting lattices are initialized
                         for(vector<Lattice*>::iterator it=initLats.begin(); it!=initLats.end(); it++)
@@ -852,7 +853,7 @@ void ContextInsensitiveInterProceduralDataflow::visit(const CGFunction* funcCG)
                 if (intraDataflow->visited.find(func) == intraDataflow->visited.end()) {
                         vector<Lattice*>  initLats;
                         vector<NodeFact*> initFacts;
-                        intraDataflow->genInitState(func, cfgUtils::getFuncStartCFG(func.get_definition()),
+                        intraDataflow->genInitState(func, cfgUtils::getFuncStartCFG(func.get_definition(), filter),
                                                     fState->state, initLats, initFacts);
                         //                        intraAnalysis->genInitState(func, cfgUtils::getFuncEndCFG(func.get_definition()),
                         //                            fState->state, initLats, initFacts);

@@ -6,7 +6,7 @@
 #include <string.h>
 using namespace std;
 
-#include "common.h"
+#include "genericDataflowCommon.h"
 #include "variables.h"
 #include "cfgUtils.h"
 #include "analysisCommon.h"
@@ -32,7 +32,7 @@ class evaluateAnalysisStates : public UnstructuredPassIntraAnalysis
                 if(isSgFunctionCallExp(n.getNode()) && isSgFunctionCallExp(n.getNode())->getAssociatedFunctionSymbol()) {
                         string funcName = isSgFunctionCallExp(n.getNode())->getAssociatedFunctionSymbol()->get_name().getString();
                         if(funcName.find("testFunc")!=string::npos) {
-                                set<varID> liveVars = getAllLiveVarsAt(ldva, n, state, "    ");
+                                set<varID> liveVars = getAllLiveVarsAt(ldva, state, "    ");
                                 if(liveDeadAnalysisDebugLevel>=1) {
                                         cout << funcName<<"(): liveVars=";
                                         for(set<varID>::iterator v=liveVars.begin(); v!=liveVars.end(); v++)

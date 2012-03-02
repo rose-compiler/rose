@@ -18,14 +18,20 @@ size_t RSIM_Thread::next_sequence_number = 1;
 void
 RSIM_Thread::ctor()
 {
-    my_tid = syscall(SYS_gettid);
-    assert(my_tid>0);
+    set_tid();
     my_seq = next_sequence_number++;
 
     memset(&last_report, 0, sizeof last_report);
     memset(tls_array, 0, sizeof tls_array);
 
     reopen_trace_facilities(process->get_tracing_file());
+}
+
+void
+RSIM_Thread::set_tid()
+{
+    my_tid = syscall(SYS_gettid);
+    assert(my_tid>0);
 }
 
 void
@@ -524,6 +530,12 @@ RSIM_Thread::sys_sigprocmask(int how, const RSIM_SignalHandling::sigset_32 *in, 
     return sighand.sigprocmask(how, in, out);
 }
 
+void
+RSIM_Thread::signal_clear_pending()
+{
+    sighand.clear_all_pending();
+}
+
 int
 RSIM_Thread::signal_accept(const RSIM_SignalHandling::siginfo_32 &_info)
 {
@@ -558,6 +570,64 @@ RSIM_Thread::signal_dequeue(RSIM_SignalHandling::siginfo_32 *info/*out*/)
         signo = get_process()->sighand.dequeue(info, &mask);
     }
     return signo;
+}
+
+/* Called by the thread that is invoking the fork system call. */
+void
+RSIM_Thread::atfork_prepare()
+{
+    RSIM_Process *p = get_process();
+
+    /* Grab the simulator semaphore. We can have only one thread doing this at a time. */
+    int status __attribute__((unused)) = TEMP_FAILURE_RETRY(sem_wait(p->get_simulator()->get_semaphore()));
+    assert(0==status);
+
+    /* Flush some files so buffered content isn't output twice. */
+    fflush(stdout);
+    fflush(stderr);
+    if (p->get_tracing_file())
+        fflush(p->get_tracing_file());
+}
+
+/* Called in the parent by the thread that invoked the fork system call. */
+void
+RSIM_Thread::atfork_parent()
+{
+    /* The parent is responsible for posting the global IPC semaphore.  This is safe to do now since the child process has its
+     * own copy of RSIM data structures now. I.e., atfork_parent() isn't called until after the process has forked. */
+    RSIM_Process *p = get_process();
+    assert(NULL!=p);
+    int status __attribute__((unused)) = sem_post(p->get_simulator()->get_semaphore());
+    assert(0==status);
+}
+
+/* Called in the child by its main (only) thread.  RSIM data structures look like they did in the parent process, so we need to
+ * fix up some things. */
+void
+RSIM_Thread::atfork_child()
+{
+    /* The simulator global IPC semaphore might or might not have been released yet by the parent process.  However, we now
+     * have our own copy of fork_info and our process has only this one thread. */
+    RSIM_Process *p = get_process();
+    assert(p!=NULL);
+
+    /* All threads have died in the child process except this main thread. */
+    set_tid();
+    p->set_main_thread(this);
+
+    /* Thread (re)initialization */
+    signal_clear_pending();     /* pending signals are for the parent process */
+    policy.set_ninsns(0);       /* restart instruction counter for trace output */
+
+    /* Redirect tracing output for new process */
+    p->open_tracing_file();
+    p->btrace_close();
+    reopen_trace_facilities(p->get_tracing_file());
+
+    /* FIXME: According to the Linux 2.6.32 man page for pthread_atfork(), all mutexes must be reinitialized with
+     * pthread_mutex_init. (FIXME: There may be mutexes in other parts of ROSE that need to be reinitialized--we need to make
+     * sure that appropriate atfork callbacks were registered by those layers to reinitialize their mutexes).
+     * [RPM 2012-01-19] */
 }
 
 void
@@ -680,7 +750,7 @@ RSIM_Thread::main()
             bool cb_status = callbacks.call_insn_callbacks(RSIM_Callbacks::BEFORE, this, insn, true);
             if (cb_status) {
                 process->binary_trace_add(this, insn);
-                int status = sem_wait(process->get_simulator()->get_semaphore());
+                int status = TEMP_FAILURE_RETRY(sem_wait(process->get_simulator()->get_semaphore()));
                 assert(0==status);
                 insn_semaphore_posted = false;
                 semantics.processInstruction(insn);             // blocking syscalls will post, and set insn_semaphore_posted
@@ -1062,24 +1132,6 @@ RSIM_Thread::sys_sigaltstack(const stack_32 *in, stack_32 *out)
 }
 
 void
-RSIM_Thread::post_fork()
-{
-    /* Delete all the message queues and trace file, reopen the logging file(s), and recreate the RTS_Message objects based on
-     * the new file handles. */
-    get_process()->open_tracing_file();
-    get_process()->btrace_close();
-    reopen_trace_facilities(process->get_tracing_file());
-
-    my_tid = syscall(SYS_gettid);
-    assert(my_tid==getpid());
-    process->post_fork();
-
-    /* Pending signals are only for the parent */
-    sighand.clear_all_pending();
-
-}
-
-void
 RSIM_Thread::emulate_syscall()
 {
     /* Post the instruction semphore because some system calls can block indefinitely. */
@@ -1209,6 +1261,8 @@ RSIM_Thread::futex_wait(rose_addr_t va, uint32_t oldval, uint32_t bitset)
      * use the simulator's global semaphore for that purpose. */
     assert(insn_semaphore_posted);
     int status = sem_wait(process->get_simulator()->get_semaphore());
+    if (-1==status && EINTR==errno)
+        return -errno;
     assert(0==status);
 
     uint32_t *futex_ptr = NULL;
@@ -1236,8 +1290,13 @@ RSIM_Thread::futex_wait(rose_addr_t va, uint32_t oldval, uint32_t bitset)
         /* Block until we're signaled */
         trace->mesg("futex wait: about to block...");
         status = process->get_futexes()->wait(futex_number);
-        assert(0==status);
-        trace->mesg("futex wait: resumed");
+        if (-EINTR==status) {
+            trace->mesg("futex wait: interrupted by signal");
+            retval = -EINTR;
+        } else {
+            assert(0==status);
+            trace->mesg("futex wait: resumed");
+        }
 
         /* Remove the semaphore from the table. */
         status = process->get_futexes()->erase(key, futex_number, RSIM_FutexTable::UNLOCKED);
@@ -1256,6 +1315,8 @@ RSIM_Thread::futex_wake(rose_addr_t va, int nprocs, uint32_t bitset)
     /* The futex wait queues are protected by the simulator global semaphore (the same one used to make instructions atomic). */
     assert(insn_semaphore_posted);
     int status = sem_wait(process->get_simulator()->get_semaphore());
+    if (-1==status && EINTR==errno)
+        return -errno;
     assert(0==status);
 
     uint32_t *futex_ptr = NULL;

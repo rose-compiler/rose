@@ -81,6 +81,21 @@ RSIM_Process::create_thread()
 }
 
 void
+RSIM_Process::set_main_thread(RSIM_Thread *t)
+{
+    threads.clear();
+    threads[t->get_tid()] = t;
+}
+
+RSIM_Thread *
+RSIM_Process::get_main_thread() const
+{
+    std::map<pid_t, RSIM_Thread*>::const_iterator found = threads.find(getpid());
+    assert(found!=threads.end());
+    return found->second;
+}
+
+void
 RSIM_Process::remove_thread(RSIM_Thread *thread)
 {
     RTS_WRITE(rwlock()) {
@@ -259,6 +274,7 @@ public:
         }
 
         vdso_entry_va = vdso_mapped_va + entry_rva;
+        vdso = fhdr;
         return true;
     }
 };
@@ -316,6 +332,7 @@ RSIM_Process::load(const char *name)
      * (we'll use the PE interpretation). */
     interpretation = SageInterface::querySubTree<SgAsmInterpretation>(project, V_SgAsmInterpretation).back();
     SgAsmGenericHeader *fhdr = interpretation->get_headers()->get_headers().front();
+    headers.push_back(fhdr);
     ep_orig_va = ep_start_va = fhdr->get_entry_rva() + fhdr->get_base_va();
     thread->policy.writeRegister<32>(thread->policy.reg_eip, ep_orig_va);
 
@@ -326,6 +343,7 @@ RSIM_Process::load(const char *name)
      * in Linux with "setarch i386 -LRB3", the ld-linux.so.2 gets mapped to 0x40000000 if it has no preferred address.  We can
      * accomplish the same thing simply by rebasing the library. */
     if (loader->interpreter) {
+        headers.push_back(loader->interpreter);
         SgAsmGenericSection *load0 = loader->interpreter->get_section_by_name("LOAD#0");
         if (load0 && load0->is_mapped() && load0->get_mapped_preferred_rva()==0 && load0->get_mapped_size()>0)
             loader->interpreter->set_base_va(ld_linux_base_va);
@@ -358,6 +376,7 @@ RSIM_Process::load(const char *name)
             if ((vdso_loaded = loader->map_vdso(vdso_name, interpretation, map))) {
                 vdso_mapped_va = loader->vdso_mapped_va;
                 vdso_entry_va = loader->vdso_entry_va;
+                headers.push_back(loader->vdso);
                 if (trace) {
                     fprintf(trace, "mapped %s at 0x%08"PRIx64" with entry va 0x%08"PRIx64"\n",
                             vdso_name.c_str(), vdso_mapped_va, vdso_entry_va);
@@ -367,7 +386,6 @@ RSIM_Process::load(const char *name)
     }
     if (!vdso_loaded && trace && !vdso_paths.empty())
         fprintf(trace, "warning: cannot find a virtual dynamic shared object\n");
-
 
     /* Find a disassembler. */
     if (!disassembler) {
@@ -1516,17 +1534,6 @@ RSIM_Process::initialize_stack(SgAsmGenericHeader *_fhdr, int argc, char *argv[]
 
         main_thread->policy.writeRegister<32>(main_thread->policy.reg_esp, sp);
     } RTS_WRITE_END;
-}
-
-void
-RSIM_Process::post_fork()
-{
-    assert(1==threads.size());
-    RSIM_Thread *t = threads.begin()->second;
-    threads.clear();
-    threads[t->get_tid()] = t;
-
-    t->policy.set_ninsns(0);            /* restart instruction counter for trace output */
 }
 
 /* The "thread" arg must be the calling thread */
