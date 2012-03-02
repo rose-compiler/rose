@@ -292,7 +292,7 @@ class NodeState
         
         private:
         // initializes the nodeStateMap
-        static void initNodeStateMap();
+        static void initNodeStateMap(bool (*filter) (CFGNode cfgn));
         
         public:
         /*// copies the facts from that to this

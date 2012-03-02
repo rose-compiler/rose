@@ -1,8 +1,6 @@
 /* Functions that produce output reminiscent of the Unix "hexdump" command. */
 // tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
-#define __STDC_FORMAT_MACROS
-#include <inttypes.h>
 #include <stdarg.h>
 
 /* Helper function that safely sprintfs to a buffer, allocation the buffer as needed. Note that the buffer is never freed (so
