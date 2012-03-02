@@ -2,6 +2,8 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 SUBDIRS = Clang
 
+if !ROSE_USE_CLANG_FRONTEND
+
 release_binary_compatibility_signature=$(shell ${top_srcdir}/scripts/bincompat-sig)
 # BINARY_EDG_DIRNAME=roseBinaryEDG-${build_triplet_without_redhat}-${GENERATED_COMPILER_NAME_AND_VERSION_SUFFIX}-${release_binary_compatibility_signature}
 
@@ -142,4 +144,6 @@ CLEANFILES = EDG/libroseEDG.la
 clean-local:
 	-rm -rf EDG/.libs/
 	-rm -rf roseBinaryEDG-3-3-*.tar.gz
+endif
+
 endif

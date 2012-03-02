@@ -150,6 +150,7 @@ SgExpression * develop(SgExpression * e) {
 		case V_SgVarRefExp:
 		case V_SgFunctionCallExp:
                 case V_SgPntrArrRefExp:
+                case V_SgArrowExp:
 		  return e;
 		case V_SgFunctionRefExp:
 		  ROSE_ASSERT(DEBUG_TODO == 0); // TODO .

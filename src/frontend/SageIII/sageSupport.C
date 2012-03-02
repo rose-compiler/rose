@@ -5635,7 +5635,7 @@ SgFile::callFrontEnd()
 
                     default:
                        {
-                         printf ("Error: default reached in unparser: class name = %s \n",this->class_name().c_str());
+                         printf ("Error: default reached in Rose parser/IR translation processing: class name = %s \n",this->class_name().c_str());
                          ROSE_ASSERT(false);
                        }
                   }

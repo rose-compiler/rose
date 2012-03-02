@@ -21,6 +21,7 @@ if ROSE_BUILD_TESTS_DIRECTORY_SUPPORT
    SUBDIRS += tests
 endif
 
+if !ROSE_USE_CLANG_FRONTEND
 if !ROSE_USE_INSURE
 # DQ (4/23/2011): Ignoring all of these whole directories might be over kill.  But I have had problems with 
 # Insure++ compilation specific to Hudson and want to start small and work to grow the number of parts of ROSE
@@ -39,6 +40,7 @@ if ROSE_BUILD_TUTORIAL_DIRECTORY_SUPPORT
 endif
 SUBDIRS += binaries
 # endif for controling Insure++ usage.
+endif
 endif
 
 ACLOCAL_AMFLAGS = -I ./config -I ./acmacros -I ./libltdl -I /usr/share/aclocal
