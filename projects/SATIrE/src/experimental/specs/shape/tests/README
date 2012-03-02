@@ -1,0 +1,5 @@
+OOtest1a.[hC]: constructors: user-def
+             : destructors: non-virtual user-def; 
+	     : inheritance: A<=B;
+	     : behavior: a+,b+,a-,b-
+
