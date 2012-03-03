@@ -104,7 +104,10 @@ libPolyModelRoseMaxCover_la_CXXFLAGS        =  \
   $(ROSE_INCLUDES)
 libPolyModelRoseMaxCover_la_LIBADD          = 
 libPolyModelRoseMaxCover_la_includedir      = $(includedir)/polyhedral-model/rose-max-cover
-libPolyModelRoseMaxCover_la_include_HEADERS = rose-max-cover/TDBUtraversal.hpp
+libPolyModelRoseMaxCover_la_include_HEADERS = \
+  rose-max-cover/TDBUtraversal.hpp \
+  maths/Expression.hpp \
+  maths/Expression.tpp
 
 # ROSE-FROM-POLY-DESC directory
 

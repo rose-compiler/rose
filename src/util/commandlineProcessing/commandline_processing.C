@@ -1076,6 +1076,7 @@ CommandlineProcessing::initSourceFileSuffixList ( )
           validSourceFileSuffixes.push_back(".cu");
        // TV (05/17/2010) Support for OpenCL
           validSourceFileSuffixes.push_back(".ocl");
+          validSourceFileSuffixes.push_back(".cl");
 
        // DQ (10/11/2010): Adding support for java.
           validSourceFileSuffixes.push_back(".java");
@@ -1121,6 +1122,7 @@ CommandlineProcessing::initSourceFileSuffixList ( )
           validSourceFileSuffixes.push_back(".cu");
        // TV (05/17/2010) Support for OpenCL
           validSourceFileSuffixes.push_back(".ocl");
+          validSourceFileSuffixes.push_back(".cl");
 
        // DQ (10/11/2010): Adding support for java.
           validSourceFileSuffixes.push_back(".java");

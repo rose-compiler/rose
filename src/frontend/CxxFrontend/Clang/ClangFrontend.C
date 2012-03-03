@@ -10,6 +10,7 @@
 #define USE_CLANG_HACK 0
 #define DEBUG_SYMBOL_TABLE_LOOKUP 0
 #define DEBUG_TRAVERSE_DECL 0
+#define DEBUG_ARGS 1
 
 int clang_main(int argc, char ** argv, SgSourceFile& sageFile) {
   // 0 - Analyse Cmd Line
@@ -93,14 +94,9 @@ int clang_main(int argc, char ** argv, SgSourceFile& sageFile) {
     clang::TextDiagnosticPrinter * diag_printer = new clang::TextDiagnosticPrinter(llvm::errs(), clang::DiagnosticOptions());
     compiler_instance->createDiagnostics(argc, argv, diag_printer, true, false);
 
-    const char * cxx_config_defs_array         [] = CXX_SPEC_DEF;
     const char * cxx_config_include_dirs_array [] = CXX_INCLUDE_STRING;
     const char * c_config_include_dirs_array   [] = C_INCLUDE_STRING;
 
-    std::vector<std::string> cxx_config_defs         (
-                                                       cxx_config_defs_array,
-                                                       cxx_config_defs_array + sizeof(cxx_config_defs_array) / sizeof(const char*)
-                                                     );
     std::vector<std::string> cxx_config_include_dirs (
                                                        cxx_config_include_dirs_array,
                                                        cxx_config_include_dirs_array + sizeof(cxx_config_include_dirs_array) / sizeof(const char*)
@@ -117,21 +113,23 @@ int clang_main(int argc, char ** argv, SgSourceFile& sageFile) {
             break;
         case ClangToSageTranslator::CPLUSPLUS:
             inc_dirs_list.insert(inc_dirs_list.begin(), cxx_config_include_dirs.begin(), cxx_config_include_dirs.end());
-            define_list.insert(define_list.begin(), cxx_config_defs.begin(), cxx_config_defs.end());
             break;
         case ClangToSageTranslator::CUDA:
             inc_dirs_list.insert(inc_dirs_list.begin(), cxx_config_include_dirs.begin(), cxx_config_include_dirs.end());
-            define_list.insert(define_list.begin(), cxx_config_defs.begin(), cxx_config_defs.end());
             break;
         case ClangToSageTranslator::OPENCL:
             inc_dirs_list.insert(inc_dirs_list.begin(), c_config_include_dirs.begin(), c_config_include_dirs.end());
             inc_dirs_list.push_back("/home/tristan/gradschool/ROSE/build-rose/include-staging/OpenCL/");
+            // FIXME Does not work...
             inc_list.push_back("/home/tristan/gradschool/ROSE/build-rose/include-staging/OpenCL/OpenCL.h");
             break;
         case ClangToSageTranslator::OBJC:
         default:
             ROSE_ASSERT(false);
     }
+
+    // FIXME should be handle by Clang ?
+    define_list.push_back("__I__=_Complex_I");
 
     unsigned cnt = define_list.size() + inc_dirs_list.size();
     char ** args = new char*[cnt];
@@ -191,7 +189,7 @@ int clang_main(int argc, char ** argv, SgSourceFile& sageFile) {
             break;
         case ClangToSageTranslator::CUDA:
             lang_opts.CUDA = 1;
-            lang_opts.CPlusPlus = 1;
+//          lang_opts.CPlusPlus = 1;
 //          compiler_instance->getInvocation().setLangDefaults(lang_opts, clang::IK_CUDA,   clang::LangStandard::lang_cuda);
             break;
         case ClangToSageTranslator::OPENCL:
@@ -561,6 +559,16 @@ SgSymbol * ClangToSageTranslator::GetSymbolFromSymbolTable(clang::NamedDecl * de
             it = SageBuilder::ScopeStack.rbegin();
             while (it != SageBuilder::ScopeStack.rend() && sym == NULL) {
                 sym = (*it)->lookup_enum_field_symbol(name);
+                it++;
+            }
+            break;
+        }
+        case clang::Decl::Enum:
+        {
+            name = SgName(((clang::EnumDecl *)decl)->getName());
+            it = SageBuilder::ScopeStack.rbegin();
+            while (it != SageBuilder::ScopeStack.rend() && sym == NULL) {
+                sym = (*it)->lookup_enum_symbol(name);
                 it++;
             }
             break;
