@@ -3,7 +3,7 @@
 #include <vector>
 #include <set>
 
-#include "common.h"
+#include "genericDataflowCommon.h"
 #include "unionFind.h"
 #include "variables.h"
 #include "rwAccessLabeler.h"
