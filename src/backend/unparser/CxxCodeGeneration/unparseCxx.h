@@ -171,6 +171,10 @@ class Unparse_ExprStmt : public UnparseLanguageIndependentConstructs
           virtual void unparseFuncRef                 (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseMFuncRef                (SgExpression* expr, SgUnparse_Info& info);
 
+       // DQ (2/26/2012): Adding support for template member function calls.
+          virtual void unparseTemplateFuncRef (SgExpression* expr, SgUnparse_Info& info);
+          virtual void unparseTemplateMFuncRef(SgExpression* expr, SgUnparse_Info& info);
+
        // DQ (11/10/2005): Added general support for SgValue (so that we could unparse 
        // expression trees from contant folding)
        // virtual void unparseValue                   (SgExpression* expr, SgUnparse_Info& info);

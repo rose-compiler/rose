@@ -141,6 +141,10 @@ Unparse_ExprStmt::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpars
           case PSEUDO_DESTRUCTOR_REF:   { unparsePseudoDtorRef(expr, info); break; }
           case KERN_CALL:               { unparseCudaKernelCall(expr, info); break; }
 
+       // DQ (2/26/2012): Added support for template function calls (member and non-member).
+          case TEMPLATE_FUNCTION_REF:        { unparseTemplateFuncRef(expr, info);  break; }
+          case TEMPLATE_MEMBER_FUNCTION_REF: { unparseTemplateMFuncRef(expr, info); break; }
+
           default:
              {
             // printf ("Default reached in switch statement for unparsing expressions! expr = %p = %s \n",expr,expr->class_name().c_str());
@@ -149,6 +153,19 @@ Unparse_ExprStmt::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpars
                break;
              }
         }
+   }
+
+
+void
+Unparse_ExprStmt::unparseTemplateFuncRef(SgExpression* expr, SgUnparse_Info& info)
+   {
+     unp->u_exprStmt->curprint ("Output TemplateFunctionRefExp");
+   }
+
+void
+Unparse_ExprStmt::unparseTemplateMFuncRef(SgExpression* expr, SgUnparse_Info& info)
+   {
+     unp->u_exprStmt->curprint ("Output TemplateMemberFunctionRefExp");
    }
 
 
@@ -3199,9 +3216,9 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
 void
 Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
    {
-#if 0
+#if 1
      printf ("In Unparse_ExprStmt::unparseConInit expr = %p \n",expr);
-     printf ("WARNING: This is redundent with the Unparse_ExprStmt::unp->u_sage->unparseOneElemConInit (This function does not handle qualidied names!) \n");
+     printf ("WARNING: This is redundent with the Unparse_ExprStmt::unp->u_sage->unparseOneElemConInit (This function does not handle qualified names!) \n");
 #endif
 
      SgConstructorInitializer* con_init = isSgConstructorInitializer(expr);

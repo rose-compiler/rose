@@ -8968,10 +8968,13 @@ void SageInterface::fixStructDeclaration(SgClassDeclaration* structDecl, SgScope
      if (nondefdecl->get_scope() == NULL)
           nondefdecl->set_scope(scope);
 
+     printf ("*** WARNING: In SageInterface::fixStructDeclaration(): Commented out the setting of the parent to be the same as the scope \n");
+#if 0
      if (structDecl->get_parent() == NULL)
           structDecl->set_parent(scope);
      if (nondefdecl->get_parent() == NULL)
           nondefdecl->set_parent(scope);
+#endif
 
      SgName name= structDecl->get_name();
   // This is rare case (translation error) when scope->lookup_class_symbol(name) will find something
@@ -9003,9 +9006,12 @@ void SageInterface::fixStructDeclaration(SgClassDeclaration* structDecl, SgScope
                     defdecl->set_scope(scope);
                nondefdecl->set_scope(scope);
 
+               printf ("*** WARNING: In SageInterface::fixStructDeclaration(): (mysymbol == NULL) Commented out the setting of the parent to be the same as the scope \n");
+#if 0
                if (defdecl)
                     defdecl->set_parent(scope);
                nondefdecl->set_parent(scope);
+#endif
              }
         }
 
@@ -9491,8 +9497,10 @@ void SageInterface::fixFunctionDeclaration(SgFunctionDeclaration* stmt, SgScopeS
      SgFunctionDeclaration*       func        = isSgFunctionDeclaration(stmt);
      SgMemberFunctionDeclaration* mfunc       = isSgMemberFunctionDeclaration(stmt); 
 
+#if 0
      printf ("In SageInterface::fixStatement(): scope = %p = %s \n",scope,scope->class_name().c_str());
      printf ("In SageInterface::fixStatement(): stmt->get_scope() = %p \n",stmt->get_scope());
+#endif
 
   // DQ (12/3/2011): This is a scary piece of code, but I think it is OK now!
   // It is an error to put the symbol for a function into the current scope if the function's scope 
@@ -9502,10 +9510,13 @@ void SageInterface::fixFunctionDeclaration(SgFunctionDeclaration* stmt, SgScopeS
   // If the scope of the function is not set, or if it matches the current scope then allow this step.
      if (stmt->get_scope() == NULL || scope == stmt->get_scope())
         {
+#if 0
           printf ("Looking up the function symbol using name = %s and type = %p = %s \n",func->get_name().str(),func->get_type(),func->get_type()->class_name().c_str());
-          SgFunctionSymbol*            func_symbol = scope->lookup_function_symbol (func->get_name(), func->get_type());
-
+#endif
+          SgFunctionSymbol* func_symbol = scope->lookup_function_symbol (func->get_name(), func->get_type());
+#if 0
           printf ("In SageInterface::fixStatement(): func_symbol = %p \n",func_symbol);
+#endif
           if (func_symbol == NULL)
              {
             // DQ (12/3/2011): Added support for C++ member functions.
@@ -9524,7 +9535,9 @@ void SageInterface::fixFunctionDeclaration(SgFunctionDeclaration* stmt, SgScopeS
              }
             else
              {
+#if 0
                printf ("In SageInterface::fixStatement(): found a valid function so no need to insert new symbol \n");
+#endif
              }
         }
 #if 0
@@ -9615,7 +9628,9 @@ void SageInterface::fixStatement(SgStatement* stmt, SgScopeStatement* scope)
        // If the scope of the function is not set, or if it matches the current scope then allow this step.
           if (stmt->get_scope() == NULL || scope == stmt->get_scope())
              {
+#if 0
                printf ("Looking up the function symbol using name = %s and type = %p = %s \n",func->get_name().str(),func->get_type(),func->get_type()->class_name().c_str());
+#endif
                SgFunctionSymbol*            func_symbol = scope->lookup_function_symbol (func->get_name(), func->get_type());
 
                printf ("In SageInterface::fixStatement(): func_symbol = %p \n",func_symbol);

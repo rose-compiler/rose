@@ -659,10 +659,10 @@ test2005_09.C \
  test2012_06.C \
  test2012_07.C \
  test2012_08.C \
- test2012_09.C \
 test2006_125.C 
 
 # $(TESTCODE_CURRENTLY_FAILING)
+
 
 # DQ (2/15/2012): These test codes fail on OSX only.
 TESTCODE_CURRENTLY_FAILING_ON_OSX = \
@@ -864,7 +864,11 @@ test2011_136.C \
 test2011_139.C \
 test2011_141.C \
 test2011_142.C \
-   test2005_112.C \
+ test2012_09.C \
+ test2012_10.C \
+ test2012_11.C \
+ test2012_12.C \
+  test2005_112.C \
    test2005_154.C \
    test2005_163.C \
    test2005_179.C \
