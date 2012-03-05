@@ -51,12 +51,12 @@ Outliner::collectVars (const SgStatement* s,
   // L = {symbols defined within 's'}, local variables declared within 's'
   ASTtools::VarSymSet_t L;
   ASTtools::collectDefdVarSyms (s, L);
-  dump (L, "L = ");
+  dump (L, "L (local variables declared within s) = ");
 
   // U = {symbols used within 's'}
   ASTtools::VarSymSet_t U;
   ASTtools::collectRefdVarSyms (s, U);
-  dump (U, "U = ");
+  dump (U, "U (variables used within s) = ");
 
   // U - L = {symbols used within 's' but not defined in 's'}
   // variable references to non-local-declared variables
@@ -78,21 +78,19 @@ Outliner::collectVars (const SgStatement* s,
   }
   else
   {
-    // Q = {symbols defined within the function surrounding 's' that are
-    // visible at 's'}, including function parameters
+    // Q = {symbols defined within the function surrounding 's' that are visible at 's'}, including function parameters
     ASTtools::VarSymSet_t Q;
     ASTtools::collectLocalVisibleVarSyms (outer_func_s->get_declaration (),
         s, Q);
-    dump (Q, "Q = ");
+    dump (Q, "Q (variables defined within the function surrounding s that are visible at s) = ");
 
-    // (U - L) \cap Q = {variables that need to be passed as parameters
-    // to the outlined function}
-    // a sub set of variables that are not globally visible (no need to pass at all)
+    // (U - L) \cap Q = {variables that need to be passed as parameters to the outlined function}
+    // This is a subset of variables that are not globally visible (no need to pass at all)
     // It excludes the variables with a scope between global and the enclosing function
     set_intersection (diff_U_L.begin (), diff_U_L.end (),
         Q.begin (), Q.end (),
         inserter (syms, syms.begin ()));
-    dump (syms, "(U - L) \\cap Q = ");
+    dump (syms, "(U - L) InterSection Q [the variables to be passed into the outlined function]= ");
   }
 }
 
