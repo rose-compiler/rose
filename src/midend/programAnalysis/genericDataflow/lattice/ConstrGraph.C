@@ -206,7 +206,7 @@ void ConstrGraph::initCG(const Function& func, const set<NodeDesc>& nodes, bool 
         for(set<NodeDesc>::const_iterator nt=nodes.begin(); nt!=nodes.end(); nt++) {
                 // Get the variables live at DataflowNode n
                 set<varID> nodeVars;
-                getAllLiveVarsAt(ldva, nt->n, nt->state, nodeVars, indent+"    ");
+                getAllLiveVarsAt(ldva, nt->state, nodeVars, indent+"    ");
                 
                 // Add these variables to vars, using annotation nt->annotName/nt->annotVal if it is provided
                 for(set<varID>::iterator nv=nodeVars.begin(); nv!=nodeVars.end(); nv++) {

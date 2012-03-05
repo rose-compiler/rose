@@ -19,7 +19,7 @@
 using namespace std;
   //------------ function level dot graph output ----------------
   // this is purposely put outside of the namespace scope for simplicity 
-  class analysisStatesToDOT : public UnstructuredPassIntraAnalysis
+  class analysisStatesToDOT : virtual public UnstructuredPassIntraAnalysis
   {
     private:
       //    LiveDeadVarsAnalysis* lda; // reference to the source analysis
@@ -29,7 +29,8 @@ using namespace std;
       void visit(const Function& func, const DataflowNode& n, NodeState& state); // visitor function
     public:
       std::ostream* ostr; 
-      analysisStatesToDOT (Analysis* l):  lda(l){ };
+      // must transfer the custom filter from l, or the default filter will kick in!
+      analysisStatesToDOT (Analysis* l):  lda(l), Analysis(l->filter){ }; 
   };
   
   void analysisStatesToDOT::printEdge (const DataflowEdge& e)
