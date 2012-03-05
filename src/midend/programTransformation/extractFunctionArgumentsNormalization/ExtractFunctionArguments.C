@@ -180,7 +180,11 @@ void ExtractFunctionArguments::InsertStatement(SgStatement* newStatement, SgStat
             SgScopeStatement* scopeStatement = isSgScopeStatement(location);
             if (scopeStatement == NULL)
             {
-                scopeStatement = isSgScopeStatement(SageInterface::ensureBasicBlockAsParent(location));
+                //scopeStatement = isSgScopeStatement(SageInterface::ensureBasicBlockAsParent(location));
+                if (SageInterface::isBodyStatement(location)) // if the location is a single body statement (not a basic block) at this point
+                  scopeStatement = SageInterface::makeSingleStatementBodyToBlock (location);
+                else  
+                 scopeStatement = isSgScopeStatement(location->get_parent());
             }
             ROSE_ASSERT(scopeStatement != NULL);
 
