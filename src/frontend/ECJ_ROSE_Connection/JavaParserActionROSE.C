@@ -3935,7 +3935,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionSingleNameReference(JNIEnv *env, j
        else
         {
           //
-	  // charles4 - 03/02/2012 - This is incorrect for java... The search for a variable must
+          // charles4 - 03/02/2012 - This is incorrect for java... The search for a variable must
           // traverse the superclasses of each class that is encountered in the Scope stack.
           //
           varRefExp = SageBuilder::buildVarRefExp(name, astJavaScopeStack.front());
