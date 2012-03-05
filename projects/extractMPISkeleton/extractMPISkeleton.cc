@@ -3,6 +3,7 @@
 #include "DangerousOperationFinder.h"
 #include "GenericDepAttrib.h"
 #include "Outline.h"
+#include "processPragmas.h"
 
 #include <Outliner.hh>
 #include <staticSingleAssignment.h>
@@ -62,6 +63,8 @@ int main(int argc, char **argv) {
 
     bool outline = false;  // if true,   'outlines' non-skeleton code
                            // otherwise, removes non-skeleton code
+    bool genPDF = false;   // if true, generate a PDF dump of the entire
+                           // AST of the input program
 
     // Local Command Line Processing:
     Rose_STL_Container<std::string> l =
@@ -72,6 +75,9 @@ int main(int argc, char **argv) {
     }
     if ( CommandlineProcessing::isOption(l,"-skel:","(d|debug)",true) ) {
         debug = true;
+    }
+    if ( CommandlineProcessing::isOption(l,"-skel:","(p|pdf)",true) ) {
+        genPDF = true;
     }
 
     std::string spec_fname;
@@ -111,7 +117,11 @@ int main(int argc, char **argv) {
 
     // Create skeletons from the code (& generates report):
     if(debug) std::cout << "Create Skeleton" << std::endl;
-    skeletonizeCode(&apiSpecs, project, outline);
+    skeletonizeCode(&apiSpecs, project, outline, genPDF);
+
+    // Process Pragmas
+    if(debug) std::cout << "Processing Pragmas" << std::endl;
+    processPragmas(project);
 
     // Generating modified code:
     if(debug) std::cout << "Generating modified code" << std::endl;
