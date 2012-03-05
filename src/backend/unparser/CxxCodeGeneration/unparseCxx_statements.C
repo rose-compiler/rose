@@ -3831,7 +3831,10 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
                  // statementInfo.display("Debugging the initializer (set SkipClassDefinition");
 
-                 // printf ("Unparse the initializer \n");
+                 // DQ (2/26/2012): Added test.
+                    ROSE_ASSERT(tmp_init != NULL);
+                    printf ("Unparse the initializer = %p = %s \n",tmp_init,tmp_init->class_name().c_str());
+
                  // curprint (string("/* Unparse the initializer */ \n"));
                  // unparseExpression(tmp_init, ninfo);
                     unparseExpression(tmp_init, statementInfo);

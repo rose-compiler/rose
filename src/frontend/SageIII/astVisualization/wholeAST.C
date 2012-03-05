@@ -1284,6 +1284,10 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
 
           switch(statement->variantT())
              {
+            // DQ (2/27/2012): Added template support (new template declaration IR nodes).
+               case V_SgTemplateFunctionDeclaration:
+               case V_SgTemplateMemberFunctionDeclaration:
+
                case V_SgFunctionDeclaration:
                case V_SgProgramHeaderStatement:
                case V_SgProcedureHeaderStatement:
@@ -1311,6 +1315,9 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                                           "\\n  " +  StringUtility::numberToString(templateDeclaration) + "  ";
                     break;
                   }
+
+            // DQ (2/27/2012): Added template support (new template declaration IR nodes).
+               case V_SgTemplateClassDeclaration:
 
                case V_SgClassDeclaration:
                case V_SgModuleStatement:

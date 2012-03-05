@@ -4282,6 +4282,11 @@ SgTypedefType::createType(SgTypedefDeclaration *decl, SgExpression* optional_for
                ROSE_ASSERT( (*i) != NULL);
                SgTypedefType *tptr= isSgTypedefType(*i);
                ROSE_ASSERT(tptr != NULL);
+
+            // DQ (3/3/2012): I think this is always NULL pointer to a SgSymbol.
+               ROSE_ASSERT(decl->get_parent_scope() == NULL);
+               ROSE_ASSERT(tptr->get_parent_scope() == NULL);
+
                if( (decl->get_name() == tptr->get_name()) &&
                    (decl->get_parent_scope() == tptr->get_parent_scope()) )
                     return (tptr);
