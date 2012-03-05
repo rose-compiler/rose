@@ -15,17 +15,18 @@ static bool debug = 0;
 // Utilities ///////////////////////////////////////////////////////////////////
 
 
-void warn (SgStatement *stmt, const char *pragma_arg, const char *message) {
+void exitWithMsg (SgStatement *stmt, const char *pragma_arg, const char *msg) {
   fprintf (stderr,
-           "Warning: Ignoring pragma '#pragma skel %s':\n  %s\n",
+           "ERROR: In pragma '#pragma skel %s':\n  %s\n",
            pragma_arg,
-           message);
+           msg);
 
   Sg_File_Info &fileInfo = *(stmt->get_file_info());
   fprintf (stderr, "  (File %s, line %d, column %d)\n",
            fileInfo.get_filename(),
            fileInfo.get_line(),
            fileInfo.get_col());
+  exit (1);
 }
 
 // loop pragma /////////////////////////////////////////////////////////////////
@@ -38,7 +39,7 @@ SgExpression *modifyTestExpr (SgStatement *stmt,
 {
   SgExprStatement *origtest1 = isSgExprStatement(origtest0);
   if (!origtest1) {
-    warn(stmt,
+    exitWithMsg(stmt,
          "loop", "does not support loops if test is a statement");
     return NULL;  // FIXME
   }
@@ -107,11 +108,10 @@ void loopIterate (SgStatement *statement, SgExpression *count, IterationType it)
       buildWhileStmt( modifyTestExpr(statement, cond, count, it, kref),
                       buildBasicBlock(body, buildExprStatement(incrementk)));
   }
-  else {
-    warn (statement, "loop",
-          "must be followed by for(;;){},  do{}while(),  or while(){}");
-    return;
-  }
+  else
+    exitWithMsg (statement,
+                 "loop",
+                 "must be followed by for(;;){},  do{}while(),  or while(){}");
 
   // Common code for for/do-while/while:
 
@@ -141,10 +141,8 @@ void conditionProbability (SgStatement *statement, SgExpression *x) {
   // ISSUES: Q. if stdlib.h not included?
 
   SgIfStmt *stmt = isSgIfStmt(statement);
-  if (!stmt) {
-    warn(statement, "condition",  "must be followed by if statement");
-    return;
-  }
+  if (!stmt)
+    exitWithMsg(statement, "condition",  "must be followed by if statement");
 
   SgScopeStatement *ss = getScope(stmt);
   assert(ss);
@@ -152,11 +150,10 @@ void conditionProbability (SgStatement *statement, SgExpression *x) {
 
   // Create the new test:
   SgExprStatement *test = isSgExprStatement(stmt->get_conditional());
-  if (!test) {
-    warn(statement, "condition",
-         "does not support 'if(t) ...' when 't' is a statement");
-    return;
-  }
+  if (!test)
+    exitWithMsg(statement,
+                "condition",
+                "does not support 'if(t) ...' when 't' is a statement");
 
   SgVarRefExp *rand_max = buildOpaqueVarRefExp("RAND_MAX");
   SgName randfunc("rand");
@@ -191,10 +188,10 @@ void conditionProbability (SgStatement *statement, SgExpression *x) {
 void arrayInitializer (SgStatement *statement, SgExpression *x) {
 
   SgVariableDeclaration *stmt = isSgVariableDeclaration(statement);
-  if (!stmt) {
-    warn(statement, "initializer",  "must be followed by declaration of array");
-    return;
-  }
+  if (!stmt)
+    exitWithMsg(statement,
+                "initializer",
+                "must be followed by declaration of array");
 
   SgScopeStatement *ss = getScope(stmt);
   assert(ss);
@@ -209,12 +206,11 @@ void arrayInitializer (SgStatement *statement, SgExpression *x) {
   const SgInitializer *init = name->get_initializer();
   const SgArrayType *at     = isSgArrayType(type);
 
-  if (init != NULL || at == NULL) {
-    warn(statement,
-         "initializer",
-         "must be followed by declaration of array without initializers");
-    return;
-  }
+  if (init != NULL || at == NULL)
+    exitWithMsg(
+      statement,
+      "initializer",
+      "must be followed by declaration of array without initializers");
 
   // const SgType *bt    = at->get_base_type();
     // TODO: support nested arrays.
@@ -227,12 +223,10 @@ void arrayInitializer (SgStatement *statement, SgExpression *x) {
     // TODO: Way to determine if index evals to constant expr?  [For static arrays]
     SgUnsignedLongVal *i = isSgUnsignedLongVal(index);
     // Get length of list: (FIXME: Ad hoc!)
-    if (!i) {
-      warn(statement,
-           "initializer",
-           "only supports arrays of constant length");
-      return;
-    }
+    if (!i)
+      exitWithMsg(statement,
+                  "initializer",
+                  "only supports arrays of constant length");
     unsigned long int ival = i->get_value();
     printf ("size = %ld \n",ival);
   */
@@ -349,35 +343,35 @@ void process1pragma(SgPragmaDeclaration *p) {
     if ((j = match(s,"loop iterate atmost")) != 0) {
       SgExpression *e = parseExpr (p, s+j);
       if (!e)
-        warn(stmt, s, parseErrorMsg);
+        exitWithMsg(stmt, s, parseErrorMsg);
       else
         loopIterate (stmt, e, i_max);
     } else if ((j = match(s,"loop iterate atleast")) != 0) {
       SgExpression *e = parseExpr (p, s+j);
       if (!e)
-        warn(stmt, s, parseErrorMsg);
+        exitWithMsg(stmt, s, parseErrorMsg);
       else
         loopIterate (stmt, e, i_min);
     } else if ((j = match(s,"loop iterate exactly")) != 0) {
       SgExpression *e = parseExpr (p, s+j);
       if (!e)
-        warn(stmt, s, parseErrorMsg);
+        exitWithMsg(stmt, s, parseErrorMsg);
       else
         loopIterate (stmt, e, i_const);
     } else if ((j = match(s,"condition prob")) != 0) {
       SgExpression *e = parseExpr (p, s+j);
       if (!e)
-        warn(stmt, s, parseErrorMsg);
+        exitWithMsg(stmt, s, parseErrorMsg);
       else
         conditionProbability (stmt, e);
     } else if ((j = match(s,"initializer repeat")) != 0) {
       SgExpression *e = parseExpr (p, s+j);
       if (!e)
-        warn(stmt, s, parseErrorMsg);
+        exitWithMsg(stmt, s, parseErrorMsg);
       else
         arrayInitializer (stmt, e);
     } else {
-        warn (stmt, s, "unrecognized arguments");
+        exitWithMsg (stmt, s, "unrecognized arguments");
     }
   }
 }
