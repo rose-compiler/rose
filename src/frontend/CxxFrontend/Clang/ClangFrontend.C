@@ -10,7 +10,7 @@
 #define USE_CLANG_HACK 0
 #define DEBUG_SYMBOL_TABLE_LOOKUP 0
 #define DEBUG_TRAVERSE_DECL 0
-#define DEBUG_ARGS 1
+#define DEBUG_ARGS 0
 
 int clang_main(int argc, char ** argv, SgSourceFile& sageFile) {
   // 0 - Analyse Cmd Line
@@ -85,15 +85,6 @@ int clang_main(int argc, char ** argv, SgSourceFile& sageFile) {
 
     ROSE_ASSERT(language != ClangToSageTranslator::unknown);
 
-  // 1 - Create a compiler instance
-
-    clang::CompilerInstance * compiler_instance = new clang::CompilerInstance();
-
-  // 2 - Fill the compiler instance
-
-    clang::TextDiagnosticPrinter * diag_printer = new clang::TextDiagnosticPrinter(llvm::errs(), clang::DiagnosticOptions());
-    compiler_instance->createDiagnostics(argc, argv, diag_printer, true, false);
-
     const char * cxx_config_include_dirs_array [] = CXX_INCLUDE_STRING;
     const char * c_config_include_dirs_array   [] = C_INCLUDE_STRING;
 
@@ -118,10 +109,9 @@ int clang_main(int argc, char ** argv, SgSourceFile& sageFile) {
             inc_dirs_list.insert(inc_dirs_list.begin(), cxx_config_include_dirs.begin(), cxx_config_include_dirs.end());
             break;
         case ClangToSageTranslator::OPENCL:
-            inc_dirs_list.insert(inc_dirs_list.begin(), c_config_include_dirs.begin(), c_config_include_dirs.end());
-            inc_dirs_list.push_back("/home/tristan/gradschool/ROSE/build-rose/include-staging/OpenCL/");
-            // FIXME Does not work...
-            inc_list.push_back("/home/tristan/gradschool/ROSE/build-rose/include-staging/OpenCL/OpenCL.h");
+//          inc_dirs_list.insert(inc_dirs_list.begin(), c_config_include_dirs.begin(), c_config_include_dirs.end());
+            // FIXME get the path right
+            inc_list.push_back("/home/tristan/gradschool/ROSE/build-rose/include-staging/preinclude-opencl.h");
             break;
         case ClangToSageTranslator::OBJC:
         default:
@@ -131,7 +121,7 @@ int clang_main(int argc, char ** argv, SgSourceFile& sageFile) {
     // FIXME should be handle by Clang ?
     define_list.push_back("__I__=_Complex_I");
 
-    unsigned cnt = define_list.size() + inc_dirs_list.size();
+    unsigned cnt = define_list.size() + inc_dirs_list.size() + inc_list.size();
     char ** args = new char*[cnt];
     std::vector<std::string>::iterator it_str;
     unsigned i = 0;
@@ -156,22 +146,23 @@ int clang_main(int argc, char ** argv, SgSourceFile& sageFile) {
         i++;
     }
     for (it_str = inc_list.begin(); it_str != inc_list.end(); it_str++) {
-        args[i] = new char[it_str->size() + 10];
-        args[i][0] = '-';
-        args[i][1] = 'i';
-        args[i][2] = 'n';
-        args[i][3] = 'c';
-        args[i][4] = 'l';
-        args[i][5] = 'u';
-        args[i][6] = 'd';
-        args[i][7] = 'e';
-        args[i][8] = ' ';
-        strcpy(&(args[i][9]), it_str->c_str());
+        args[i] = new char[it_str->size() + 9];
+        args[i][0] = '-'; args[i][1] = 'i'; args[i][2] = 'n'; args[i][3] = 'c';
+        args[i][4] = 'l'; args[i][5] = 'u'; args[i][6] = 'd'; args[i][7] = 'e';
+        strcpy(&(args[i][8]), it_str->c_str());
 #if DEBUG_ARGS
         std::cerr << "args[" << i << "] = " << args[i] << std::endl;
 #endif
         i++;
     }
+
+
+  // 2 - Create a compiler instance
+
+    clang::CompilerInstance * compiler_instance = new clang::CompilerInstance();
+
+    clang::TextDiagnosticPrinter * diag_printer = new clang::TextDiagnosticPrinter(llvm::errs(), clang::DiagnosticOptions());
+    compiler_instance->createDiagnostics(argc, argv, diag_printer, true, false);
 
     clang::CompilerInvocation * invocation = new clang::CompilerInvocation();
     ROSE_ASSERT(clang::CompilerInvocation::CreateFromArgs(*invocation, args, &(args[cnt]), compiler_instance->getDiagnostics()));
@@ -726,6 +717,9 @@ SgNode * ClangToSageTranslator::Traverse(clang::Stmt * stmt) {
         case clang::Stmt::ImaginaryLiteralClass:
             ret_status = VisitImaginaryLiteral((clang::ImaginaryLiteral *)stmt, &result);
             break;
+        case clang::Stmt::CompoundLiteralExprClass:
+            ret_status = VisitCompoundLiteralExpr((clang::CompoundLiteralExpr *)stmt, &result);
+            break;
         case clang::Stmt::ImplicitCastExprClass:
             ret_status = VisitImplicitCastExpr((clang::ImplicitCastExpr *)stmt, &result);
             break;
@@ -743,6 +737,9 @@ SgNode * ClangToSageTranslator::Traverse(clang::Stmt * stmt) {
             break;
         case clang::Stmt::UnaryExprOrTypeTraitExprClass:
             ret_status = VisitUnaryExprOrTypeTraitExpr((clang::UnaryExprOrTypeTraitExpr *)stmt, &result);
+            break;
+        case clang::Stmt::ExtVectorElementExprClass:
+            ret_status = VisitExtVectorElementExpr((clang::ExtVectorElementExpr *)stmt, &result);
             break;
         case clang::Stmt::BreakStmtClass:
             ret_status = VisitBreakStmt((clang::BreakStmt *)stmt, &result);
@@ -878,6 +875,10 @@ SgNode * ClangToSageTranslator::Traverse(const clang::Type * type) {
             break;
         case clang::Type::Typedef:
             ret_status = VisitTypedefType((clang::TypedefType *)type, &result);
+            break;
+        case clang::Type::ExtVector:
+        case clang::Type::Vector:
+            ret_status = VisitVectorType((clang::VectorType *)type, &result);
             break;
         // TODO cases
         default:
@@ -1344,7 +1345,11 @@ bool ClangToSageTranslator::VisitFunctionDecl(clang::FunctionDecl * function_dec
                 first_decl = isSgFunctionDeclaration(symbol->get_declaration());
             }
             else {
-                ROSE_ASSERT(!"We should have see the first declaration already");
+                // FIXME Is it correct?
+                SgNode * tmp_first_decl = Traverse(function_decl->getFirstDeclaration());
+                first_decl = isSgFunctionDeclaration(tmp_first_decl);
+                ROSE_ASSERT(first_decl != NULL);
+                // ROSE_ASSERT(!"We should have see the first declaration already");
             }
 
             if (first_decl != NULL) {
@@ -1882,6 +1887,21 @@ bool ClangToSageTranslator::VisitCharacterLiteral(clang::CharacterLiteral * char
     return VisitExpr(character_literal, node);
 }
 
+bool ClangToSageTranslator::VisitCompoundLiteralExpr(clang::CompoundLiteralExpr * compound_literal, SgNode ** node) {
+    SgNode * tmp_node = Traverse(compound_literal->getInitializer());
+    SgExprListExp * expr = isSgExprListExp(tmp_node);
+
+    ROSE_ASSERT(expr != NULL);
+
+    SgType * type = buildTypeFromQualifiedType(compound_literal->getType());
+
+    ROSE_ASSERT(type != NULL);
+
+    *node = SageBuilder::buildCompoundInitializer_nfi(expr, type);
+
+    return VisitExpr(compound_literal, node);
+}
+
 bool ClangToSageTranslator::VisitDeclRefExpr(clang::DeclRefExpr * decl_ref_expr, SgNode ** node) {
     bool res = true;
 
@@ -1986,6 +2006,43 @@ bool ClangToSageTranslator::VisitDesignatedInitExpr(clang::DesignatedInitExpr * 
     *node = design_init;
 
     return VisitExpr(designated_init_expr, node);
+}
+
+bool ClangToSageTranslator::VisitExtVectorElementExpr(clang::ExtVectorElementExpr * ext_vector_element_expr, SgNode ** node) {
+    SgNode * tmp_base = Traverse(ext_vector_element_expr->getBase());
+    SgExpression * base = isSgExpression(tmp_base);
+
+    ROSE_ASSERT(base != NULL);
+
+    SgType * type = buildTypeFromQualifiedType(ext_vector_element_expr->getType());
+
+    clang::IdentifierInfo & ident_info = ext_vector_element_expr->getAccessor();
+    std::string ident = ident_info.getName().str();
+
+    SgScopeStatement * scope = SageBuilder::ScopeStack.front();
+    SgGlobal * global = isSgGlobal(scope);
+    ROSE_ASSERT(global != NULL);
+
+  // Build Manually a SgVarRefExp to have the same Accessor (text version) TODO ExtVectorAccessor and ExtVectorType
+    SgInitializedName * init_name = SageBuilder::buildInitializedName(ident, SageBuilder::buildVoidType(), NULL);
+    setCompilerGeneratedFileInfo(init_name);
+    init_name->set_scope(global);
+    SgVariableSymbol * var_symbol = new SgVariableSymbol(init_name);
+    SgVarRefExp * pseudo_field = new SgVarRefExp(var_symbol);
+    setCompilerGeneratedFileInfo(pseudo_field, true);
+    init_name->set_parent(pseudo_field);
+
+    SgExpression * res = NULL;
+    if (ext_vector_element_expr->isArrow())
+        res = SageBuilder::buildArrowExp(base, pseudo_field);
+    else
+        res = SageBuilder::buildDotExp(base, pseudo_field);
+
+    ROSE_ASSERT(res != NULL);
+
+    *node = res;
+
+   return VisitExpr(ext_vector_element_expr, node);
 }
 
 bool ClangToSageTranslator::VisitFloatingLiteral(clang::FloatingLiteral * floating_literal, SgNode ** node) {
@@ -2773,6 +2830,9 @@ bool ClangToSageTranslator::VisitBuiltinType(clang::BuiltinType * builtin_type, 
 /*
         case clang::BuiltinType::NullPtr:    *node = SageBuilder::build(); break;
 */
+        // TODO ROSE type ?
+        case clang::BuiltinType::UInt128:    *node = SageBuilder::buildUnsignedLongLongType(); break;
+        case clang::BuiltinType::Int128:     *node = SageBuilder::buildLongLongType();         break;
  
         case clang::BuiltinType::Char_U:    std::cerr << "Char_U    -> "; break;
         case clang::BuiltinType::WChar_U:   std::cerr << "WChar_U   -> "; break;
@@ -2780,8 +2840,6 @@ bool ClangToSageTranslator::VisitBuiltinType(clang::BuiltinType * builtin_type, 
         case clang::BuiltinType::Char32:    std::cerr << "Char32    -> "; break;
         case clang::BuiltinType::WChar_S:   std::cerr << "WChar_S   -> "; break;
 
-        case clang::BuiltinType::UInt128:   std::cerr << "UInt128   -> "; break;
-        case clang::BuiltinType::Int128:    std::cerr << "Int128    -> "; break;
 
         case clang::BuiltinType::ObjCId:
         case clang::BuiltinType::ObjCClass:
@@ -2938,6 +2996,20 @@ bool ClangToSageTranslator::VisitElaboratedType(clang::ElaboratedType * elaborat
     *node = type;
 
     return VisitType(elaborated_type, node);
+}
+
+bool ClangToSageTranslator::VisitVectorType(clang::VectorType * vector_type, SgNode ** node) {
+    SgType * type = buildTypeFromQualifiedType(vector_type->getElementType());
+
+    SgModifierType * modified_type = new SgModifierType(type);
+    SgTypeModifier & sg_modifer = modified_type->get_typeModifier();
+
+    sg_modifer.setVectorType();
+    sg_modifer.set_vector_size(vector_type->getNumElements());
+
+    *node = SgModifierType::insertModifierTypeIntoTypeTable(modified_type);
+
+    return VisitType(vector_type, node);
 }
 
 std::pair<Sg_File_Info *, PreprocessingInfo *> ClangToSageTranslator::preprocessor_top() {

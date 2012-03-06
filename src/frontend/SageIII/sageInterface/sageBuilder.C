@@ -2335,6 +2335,32 @@ SgAggregateInitializer * SageBuilder::buildAggregateInitializer_nfi(SgExprListEx
   return result;
 }
 
+//! Build a compound initializer, for vector type initialization
+SgCompoundInitializer * SageBuilder::buildCompoundInitializer(SgExprListExp * initializers/* = NULL*/, SgType *type/* = NULL */)
+{
+  SgCompoundInitializer* result = new SgCompoundInitializer(initializers, type);
+  ROSE_ASSERT(result);
+  if (initializers!=NULL)
+  {
+    initializers->set_parent(result);
+  }
+  setOneSourcePositionForTransformation(result);
+  return result;
+}
+
+//! Build a compound initializer, for vector type initialization
+SgCompoundInitializer * SageBuilder::buildCompoundInitializer_nfi(SgExprListExp * initializers/* = NULL*/, SgType *type/* = NULL */)
+{
+  SgCompoundInitializer* result = new SgCompoundInitializer(initializers, type);
+  ROSE_ASSERT(result);
+  if (initializers!=NULL)
+  {
+    initializers->set_parent(result);
+  }
+  setOneSourcePositionNull(result);
+  return result;
+}
+
 // DQ (1/4/2009): Added support for SgConstructorInitializer
 SgConstructorInitializer *
 SageBuilder::buildConstructorInitializer(
