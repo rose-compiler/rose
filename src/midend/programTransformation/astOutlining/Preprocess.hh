@@ -18,6 +18,12 @@ namespace Outliner
 {
   namespace Preprocess
   {
+
+    //! Sanity check and patch up outliner options
+    // Outliner has some options which can be set by users. They have certain dependencies we want
+    // to check and enforce. 
+    void checkAndPatchUpOptions();
+    
     /*!
      *  \brief Preprocesses the outline target and returns an
      *  equivalent SgBasicBlock to outline.
