@@ -148,7 +148,15 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionCompilationUnitDeclarationEnd (JNI
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionTypeDeclaration (JNIEnv *env, jobject xxx, jstring java_string, jboolean java_is_interface, jobject jToken)
+JNIEXPORT void JNICALL Java_JavaParser_cactionTypeDeclaration (JNIEnv *env, jobject xxx, jstring java_string, jboolean java_is_interface,
+                                                                                                              jboolean java_is_abstract,
+                                                                                                              jboolean java_is_final,
+                                                                                                              jboolean java_is_private,
+                                                                                                              jboolean java_is_public,
+                                                                                                              jboolean java_is_protected,
+                                                                                                              jboolean java_is_static,
+                                                                                                              jboolean java_is_strictfp,
+                                                                                                              jobject jToken)
    {
      if (SgProject::get_verbose() > 0)
           printf ("Build a SgClassDeclaration \n");
@@ -156,6 +164,14 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionTypeDeclaration (JNIEnv *env, jobj
   // We could provide a constructor for "SgName" that takes a "jstring".  This might help support a simpler interface.
      SgName name = convertJavaStringToCxxString(env,java_string);
      bool is_interface = java_is_interface;
+
+     bool is_abstract = java_is_abstract;
+     bool is_final = java_is_final;
+     bool is_private = java_is_private;
+     bool is_public = java_is_public;
+     bool is_protected = java_is_protected;
+     bool is_static = java_is_static;
+     bool is_strictfp = java_is_strictfp;
 
      if (SgProject::get_verbose() > 0)
           printf ("Build class type: name = %s \n",name.str());
@@ -176,6 +192,31 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionTypeDeclaration (JNIEnv *env, jobj
      SgClassDeclaration* classDeclaration = classDefinition->get_declaration();
      ROSE_ASSERT(classDeclaration != NULL);
      classDeclaration -> set_explicit_interface(is_interface); // Identify whether or not this is an interface
+
+     if (is_abstract)
+          classDeclaration -> get_declarationModifier().setJavaAbstract();
+     else classDeclaration -> get_declarationModifier().unsetJavaAbstract();
+     if (is_final)
+          classDeclaration -> get_declarationModifier().setFinal();
+     else classDeclaration -> get_declarationModifier().unsetFinal();
+     if (is_strictfp)
+         ; // charles4 - TODO: there is currently no place to hang this information.
+
+     classDeclaration -> get_declarationModifier().get_accessModifier().set_modifier(SgAccessModifier::e_unknown);
+     if (is_private) {
+          classDeclaration -> get_declarationModifier().get_accessModifier().setPrivate();
+     }
+     if (is_public) {
+          classDeclaration -> get_declarationModifier().get_accessModifier().setPublic();
+     }
+     if (is_protected) {
+          classDeclaration -> get_declarationModifier().get_accessModifier().setProtected();
+     }
+
+     classDeclaration -> get_declarationModifier().get_storageModifier().set_modifier(SgStorageModifier::e_unknown);
+     if (is_static) {
+          classDeclaration -> get_declarationModifier().get_storageModifier().setStatic();
+     }
 
      setJavaSourcePosition(classDefinition->get_declaration(),env,jToken);
      astJavaComponentStack.push(classDefinition); // To mark the end of the list of components in this type.
@@ -2670,6 +2711,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionFieldDeclarationEnd(JNIEnv *env, j
      setJavaSourcePosition(variableDeclaration,env,jToken);
 
   // Set the modifiers (shared between PHP and Java)
+
      if (isFinal == true)
           variableDeclaration->get_declarationModifier().setFinal();
 

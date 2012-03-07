@@ -2414,7 +2414,14 @@ class ecjASTVisitor extends ASTVisitor
           String typename = new String(node.name);
           java_parser.cactionTypeDeclaration(typename,
                                              node.kind(node.modifiers) == TypeDeclaration.INTERFACE_DECL,
-        		                             this.createJavaToken(node));
+                                             (node.binding != null && node.binding.isAbstract()),
+                                             (node.binding != null && node.binding.isFinal()),
+                                             (node.binding != null && node.binding.isPrivate()),
+                                             (node.binding != null && node.binding.isPublic()),
+                                             (node.binding != null && node.binding.isProtected()),
+                                             (node.binding != null && node.binding.isStatic() && node.binding.isNestedType()),
+                                             (node.binding != null && node.binding.isStrictfp()),
+                                             this.createJavaToken(node));
 
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving visit (TypeDeclaration,BlockScope)");
@@ -2430,6 +2437,13 @@ class ecjASTVisitor extends ASTVisitor
           String typename = new String(node.name);
           java_parser.cactionTypeDeclaration(typename,
                                              node.kind(node.modifiers) == TypeDeclaration.INTERFACE_DECL,
+                                             (node.binding != null && node.binding.isAbstract()),
+                                             (node.binding != null && node.binding.isFinal()),
+                                             (node.binding != null && node.binding.isPrivate()),
+                                             (node.binding != null && node.binding.isPublic()),
+                                             (node.binding != null && node.binding.isProtected()),
+                                             (node.binding != null && node.binding.isStatic() && node.binding.isNestedType()),
+                                             (node.binding != null && node.binding.isStrictfp()),
         		                             this.createJavaToken(node));
 
           if (java_parser.verboseLevel > 0)
@@ -2447,6 +2461,13 @@ class ecjASTVisitor extends ASTVisitor
           String typename = new String(node.name);
           java_parser.cactionTypeDeclaration(typename,
                                              node.kind(node.modifiers) == TypeDeclaration.INTERFACE_DECL,
+                                             (node.binding != null && node.binding.isAbstract()),
+                                             (node.binding != null && node.binding.isFinal()),
+                                             (node.binding != null && node.binding.isPrivate()),
+                                             (node.binding != null && node.binding.isPublic()),
+                                             (node.binding != null && node.binding.isProtected()),
+                                             (node.binding != null && node.binding.isStatic() && node.binding.isNestedType()),
+                                             (node.binding != null && node.binding.isStrictfp()),
         		                             this.createJavaToken(node));
 
           if (java_parser.verboseLevel > 0)
