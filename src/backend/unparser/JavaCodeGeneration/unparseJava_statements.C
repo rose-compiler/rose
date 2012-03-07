@@ -820,13 +820,9 @@ Unparse_Java::unparseClassDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      SgClassDeclaration *classdecl_stmt = isSgClassDeclaration(stmt);
      ROSE_ASSERT(classdecl_stmt != NULL);
 
-     if (classdecl_stmt -> get_explicit_interface()) {
-         curprint("interface ");
-     }
-     else {
-         unparseDeclarationModifier(classdecl_stmt->get_declarationModifier(), info);
-         curprint("class ");
-     }
+     unparseDeclarationModifier(classdecl_stmt->get_declarationModifier(), info);
+
+     curprint(classdecl_stmt -> get_explicit_interface() ? "interface " : "class ");
 
      unparseName(classdecl_stmt->get_name(), info);
 
