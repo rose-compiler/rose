@@ -7148,7 +7148,12 @@ bool SageInterface::loopTiling(SgForStatement* loopNest, size_t targetLevel, siz
 
   // Add a controlling loop around the top loop nest
   // Ensure the parent can hold more than one children
-  SgLocatedNode* parent = ensureBasicBlockAsParent(loopNest);
+  SgLocatedNode* parent = NULL; //SageInterface::ensureBasicBlockAsParent(loopNest)
+  if (isBodyStatement(loopNest)) // if it is a single body statement (Already a for statement, not a basic block)
+   parent = makeSingleStatementBodyToBlock (loopNest);
+  else
+    parent = isSgLocatedNode(loopNest ->get_parent());
+
   ROSE_ASSERT(parent!= NULL);
      // Now we can prepend a controlling loop index variable: __lt_var_originalIndex
   string ivar2_name = "_lt_var_"+ivar->get_name().getString();
@@ -8018,7 +8023,10 @@ SgAssignInitializer* SageInterface::splitExpression(SgExpression* from, string n
   SgStatement* stmt = getStatementOfExpression(from);
   assert (stmt);
   if (!isSgForInitStatement(stmt->get_parent())) {
-    SageInterface::ensureBasicBlockAsParent(stmt);
+    //SageInterface::ensureBasicBlockAsParent(stmt); 
+    // no return value is accepted. Only the optional transformation matters
+    if (isBodyStatement(stmt) && !isSgBasicBlock(stmt))
+      makeSingleStatementBodyToBlock (stmt);
   }
 
   SgScopeStatement* parent = isSgScopeStatement(stmt->get_parent());
@@ -8426,13 +8434,14 @@ void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStm
           ROSE_ASSERT(parent);
         }
 
+  // Liao 3/2/2012. The semantics of ensureBasicBlockAsParent() are messy. input targetStmt may be
+  // returned as it is if it is already a basic block as a body of if/while/catch/ etc. 
   // We now have single statement true/false body for IfStmt etc
   // However, IfStmt::insert_child() is ambiguous and not implemented
   // So we make SgBasicBlock out of the single statement and
   // essentially call SgBasicBlock::insert_child() instead.
   // TODO: add test cases for If, variable, variable/struct inside if, etc
-
-     parent = ensureBasicBlockAsParent(targetStmt);
+    // parent = ensureBasicBlockAsParent(targetStmt);
 
   // must get the new scope after ensureBasicBlockAsParent ()
      SgScopeStatement* scope= targetStmt->get_scope();
@@ -8452,6 +8461,7 @@ void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStm
      ROSE_ASSERT(targetStmt != NULL);
      AttachedPreprocessingInfoType* comments = targetStmt->getAttachedPreprocessingInfo();
 
+   //TODO refactor this portion of code into a separate function
   // DQ (9/17/2010): Trying to eliminate failing case in OpenMP projects/OpenMP_Translator/tests/npb2.3-omp-c/LU/lu.c
   // I think that special rules apply to inserting a SgBasicBlock so disable comment reloation when inserting a SgBasicBlock.
   // if (comments != NULL && newStmt->getAttachedPreprocessingInfo() == NULL)
@@ -8551,13 +8561,15 @@ void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStm
         {
        // printf ("No attached comments (at %p of type: %s): \n",targetStmt,targetStmt->class_name().c_str());
        // DQ (9/17/2010): Trying to eliminate failing case in OpenMP projects/OpenMP_Translator/tests/npb2.3-omp-c/LU/lu.c
-       // I thnk that special rules apply to inserting a SgBasicBlock so disable comment reloation when inserting a SgBasicBlock.
+       // I think that special rules apply to inserting a SgBasicBlock so disable comment relocation when inserting a SgBasicBlock.
           if (comments != NULL)
              {
                printf ("Warning: special rules appear to apply to the insertion of a SgBasicBlock which has attached comments and/or CPP directives (comment relocation disabled). \n");
              }
         }
      } // end if autoMovePreprocessingInfo
+
+
      if (isSgIfStmt(parent))
         {
           if (isSgIfStmt(parent)->get_conditional()==targetStmt)
@@ -8565,15 +8577,33 @@ void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStm
             else
                if (isSgIfStmt(parent)->get_true_body()==targetStmt)
                   {
-                 // ensureBasicBlockAsParent(targetStmt);
-                    insertStatement(isSgStatement(parent),newStmt,insertBefore);
+                    // Liao 3/2/2012
+                    // We have some choices: 
+                    // 1) if the targeStmt is a basic block, we can append/prepend the new stmt
+                    // within the targetStmt. But this is not the exact semantics of insertStatment. It will break the outliner.
+                    // Since the targetStmt will have new content inside of it, which is not the semantics of
+                    // inserting anything before/or after it. 
+                    // 2) always insert a padding basic block between parent and targetStmt
+                    //   and we can legally insert before/after the target statement within the
+                    //   padding basic block. 
+                    //TODO: this insertion of padding basic block should ideally go into some AST normalization phase 
+                    // so the transformation function (insertStatement) only does what it means to do, no more and no less.
+                    SgBasicBlock* newparent = buildBasicBlock (targetStmt); 
+                    isSgIfStmt(parent)->set_true_body(newparent);
+                    newparent->set_parent(parent);
+                    insertStatement(targetStmt, newStmt,insertBefore);
                   }
                  else
                     if (isSgIfStmt(parent)->get_false_body()==targetStmt)
-                       {
-                           // ensureBasicBlockAsParent(targetStmt);
-                         insertStatement(isSgStatement(parent),newStmt,insertBefore);
-                       }
+                    {
+
+                      // ensureBasicBlockAsParent(targetStmt);
+                      SgBasicBlock* newparent = buildBasicBlock (targetStmt); 
+                      isSgIfStmt(parent)->set_false_body(newparent);
+                      newparent->set_parent(parent);
+                      insertStatement(targetStmt, newStmt,insertBefore);
+                      //insertStatement(isSgStatement(parent),newStmt,insertBefore);
+                    }
         }
        else
           if (isSgWhileStmt(parent))
@@ -8582,10 +8612,14 @@ void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStm
                     insertStatement(isSgStatement(parent),newStmt,insertBefore);
                  else
                     if (isSgWhileStmt(parent)->get_body()==targetStmt)
-                       {
+                    {
+                      SgBasicBlock* newparent = buildBasicBlock (targetStmt); 
+                      isSgWhileStmt(parent)->set_body(newparent);
+                      newparent->set_parent(parent);
+                      insertStatement(targetStmt, newStmt,insertBefore);
                       // ensureBasicBlockAsParent(targetStmt);
-                         insertStatement(isSgStatement(parent),newStmt,insertBefore);
-                       }
+                     // insertStatement(isSgStatement(parent),newStmt,insertBefore);
+                    }
              }
             else
                if (isSgDoWhileStmt(parent))
@@ -8594,19 +8628,28 @@ void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStm
                          insertStatement(isSgStatement(parent),newStmt,insertBefore);
                       else
                          if (isSgDoWhileStmt(parent)->get_body()==targetStmt)
-                            {
+                         {
+
+                           SgBasicBlock* newparent = buildBasicBlock (targetStmt); 
+                           isSgDoWhileStmt(parent)->set_body(newparent);
+                           newparent->set_parent(parent);
+                           insertStatement(targetStmt, newStmt,insertBefore);
                            // ensureBasicBlockAsParent(targetStmt);
-                              insertStatement(isSgStatement(parent),newStmt,insertBefore);
-                            }
+                           //   insertStatement(isSgStatement(parent),newStmt,insertBefore);
+                         }
                   }
                  else
                     if (isSgForStatement(parent))
                        {
                          if (isSgForStatement(parent)->get_loop_body()==targetStmt)
-                            {
+                         {
+                           SgBasicBlock* newparent = buildBasicBlock (targetStmt); 
+                           isSgForStatement(parent)->set_loop_body(newparent);
+                           newparent->set_parent(parent);
+                           insertStatement(targetStmt, newStmt,insertBefore);
                            // ensureBasicBlockAsParent(targetStmt);
-                              insertStatement(isSgStatement(parent),newStmt,insertBefore);
-                            }
+                           //   insertStatement(isSgStatement(parent),newStmt,insertBefore);
+                         }
                            else
                               if (isSgForStatement(parent)->get_test()==targetStmt)
                                  {
@@ -8624,6 +8667,13 @@ void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStm
                           ROSE_ASSERT(stmt_present);
                           insertStatement(p, newStmt, insertBefore);
                         }
+                       else if (SgOmpBodyStatement * p = isSgOmpBodyStatement (parent))
+                       {
+                         SgBasicBlock* newparent = buildBasicBlock (targetStmt); 
+                         isSgOmpBodyStatement(parent)->set_body(newparent);
+                         newparent->set_parent(parent);
+                         insertStatement(targetStmt, newStmt,insertBefore);
+                       }
                         else
                            isSgStatement(parent)->insert_statement(targetStmt,newStmt,insertBefore);
 
@@ -10007,10 +10057,149 @@ SgBasicBlock* SageInterface::ensureBasicBlockAsBodyOfOmpBodyStmt(SgOmpBodyStatem
   return isSgBasicBlock(b);
 }
 
+bool SageInterface::isBodyStatement (SgStatement* s)
+{
+  bool rt = false;
+  ROSE_ASSERT(s);
+  SgLocatedNode* p = isSgLocatedNode(s->get_parent());
+  ROSE_ASSERT(p);
 
+  switch (p->variantT())
+  {
+    case V_SgForStatement:
+      {
+        if (isSgForStatement(p)->get_loop_body() == s)
+          rt = true;
+        break;
+      }
+    case V_SgUpcForAllStatement: // PP
+      {
+        SgUpcForAllStatement& upcforall = *isSgUpcForAllStatement(p);
+        if (upcforall.get_loop_body() == s)
+          rt = true;
+        break;
+      }
+    case V_SgWhileStmt:
+      {
+        if (isSgWhileStmt(p)->get_body() == s)
+          rt = true; 
+        break;
+      }
+    case V_SgDoWhileStmt:
+      {
+        if (isSgDoWhileStmt(p)->get_body() == s)
+          rt = true;
+        break;
+      }
+    case V_SgSwitchStatement:
+      {
+        if (isSgSwitchStatement(p)->get_body() == s)
+          rt = true;
+        break;
+      }
+    case V_SgCatchOptionStmt:
+      {
+        if (isSgCatchOptionStmt(p)->get_body() == s)
+          rt = true; 
+        break;
+      }
+    case V_SgIfStmt:
+      {
+        if (isSgIfStmt(p)->get_true_body() == s)
+          rt = true;
+        else if (isSgIfStmt(p)->get_false_body() == s)
+          rt = true;
+        break;
+      }
+    default:
+      {
+        if (isSgOmpBodyStatement(p))
+          rt = true;
+        break;
+      }
+  }
+  return rt;
+}
+
+//! Make a single statement body to be a basic block. Its parent is if, while, catch, or upc_forall
+//etc.
+SgBasicBlock * SageInterface::makeSingleStatementBodyToBlock(SgStatement* singleStmt)
+{
+  ROSE_ASSERT (singleStmt != NULL); // not NULL
+  ROSE_ASSERT (isSgBasicBlock(singleStmt) == NULL); //not a block 
+  ROSE_ASSERT (isBodyStatement(singleStmt) == true); // is a body statement
+
+  SgBasicBlock* rt = NULL;
+
+
+
+  SgStatement* s = singleStmt;
+  SgLocatedNode* p = isSgLocatedNode(s->get_parent());
+  ROSE_ASSERT(p);
+  switch (p->variantT())
+  {
+    case V_SgForStatement:
+      {
+        if (isSgForStatement(p)->get_loop_body() == s)
+          rt = ensureBasicBlockAsBodyOfFor(isSgForStatement(p));
+        break;
+      }
+    case V_SgUpcForAllStatement: // PP
+      {
+        SgUpcForAllStatement& upcforall = *isSgUpcForAllStatement(p);
+
+        if (upcforall.get_loop_body() == s)
+          rt = ensureBasicBlockAsBodyOfUpcForAll(&upcforall);
+        break;
+      }
+    case V_SgWhileStmt:
+      {
+        if (isSgWhileStmt(p)->get_body() == s)
+          rt = ensureBasicBlockAsBodyOfWhile(isSgWhileStmt(p));
+        break;
+      }
+    case V_SgDoWhileStmt:
+      {
+        if (isSgDoWhileStmt(p)->get_body() == s)
+          rt = ensureBasicBlockAsBodyOfDoWhile(isSgDoWhileStmt(p));
+        break;
+      }
+    case V_SgSwitchStatement:
+      {
+        if (isSgSwitchStatement(p)->get_body() == s)
+          rt = ensureBasicBlockAsBodyOfSwitch(isSgSwitchStatement(p));
+        break;
+      }
+    case V_SgCatchOptionStmt:
+      {
+        if (isSgCatchOptionStmt(p)->get_body() == s)
+          rt = ensureBasicBlockAsBodyOfCatch(isSgCatchOptionStmt(p));
+        break;
+      }
+    case V_SgIfStmt:
+      {
+        if (isSgIfStmt(p)->get_true_body() == s)
+          rt = ensureBasicBlockAsTrueBodyOfIf(isSgIfStmt(p));
+        else if (isSgIfStmt(p)->get_false_body() == s)
+          rt = ensureBasicBlockAsFalseBodyOfIf(isSgIfStmt(p));
+        break;
+      }
+    default:
+      {
+        if (isSgOmpBodyStatement(p))
+        {
+          rt = ensureBasicBlockAsBodyOfOmpBodyStmt(isSgOmpBodyStatement(p));
+        }
+        break;
+      }
+  }
+  ROSE_ASSERT (rt != NULL); // the input statement has been confirmed to be a body statement, it must have being processed to be a basic block at this point.
+  return rt;
+}
+
+#if 0
 SgLocatedNode* SageInterface::ensureBasicBlockAsParent(SgStatement* s)
 {
-        //SgBasicBlock* ensureBasicBlockAsParent(SgStatement* s) {
         ROSE_ASSERT(s);
 
         //Vulov: The parent of a statement is not necessarily a statement. It could be SgStatementExpression
@@ -10032,18 +10221,18 @@ SgLocatedNode* SageInterface::ensureBasicBlockAsParent(SgStatement* s)
                         else ROSE_ASSERT(false);
                         break;
                 }
-    case V_SgUpcForAllStatement: // PP
-    {
-      SgUpcForAllStatement& upcforall = *isSgUpcForAllStatement(p);
+                case V_SgUpcForAllStatement: // PP
+                {
+                  SgUpcForAllStatement& upcforall = *isSgUpcForAllStatement(p);
 
-      if (upcforall.get_loop_body() == s)
-                                return ensureBasicBlockAsBodyOfUpcForAll(&upcforall);
+                  if (upcforall.get_loop_body() == s)
+                    return ensureBasicBlockAsBodyOfUpcForAll(&upcforall);
 
-      ROSE_ASSERT(  (s == upcforall.get_for_init_stmt())
-                 || (s == upcforall.get_test())
-                 );
-      break;
-    }
+                  ROSE_ASSERT(  (s == upcforall.get_for_init_stmt())
+                      || (s == upcforall.get_test())
+                      );
+                  break;
+                }
                 case V_SgWhileStmt:
                 {
                         if (isSgWhileStmt(p)->get_body() == s)
@@ -10112,8 +10301,14 @@ SgLocatedNode* SageInterface::ensureBasicBlockAsParent(SgStatement* s)
         }
         return p;
 }
-
+#endif
   void SageInterface::changeAllLoopBodiesToBlocks(SgNode* top) {
+    cerr<<"Warning: SageInterface::changeAllLoopBodiesToBlocks() is being replaced by SageInterface::changeAllBodiesToBlocks()."<<endl;
+    cerr<<"Please use SageInterface::changeAllBodiesToBlocks() if you can."<<endl;
+        changeAllBodiesToBlocks(top) ;
+  }
+
+  void SageInterface::changeAllBodiesToBlocks(SgNode* top) {
     struct Visitor: public AstSimpleProcessing {
       virtual void visit(SgNode* n) {
         switch (n->variantT()) {
@@ -10129,6 +10324,10 @@ SgLocatedNode* SageInterface::ensureBasicBlockAsParent(SgStatement* s)
             ensureBasicBlockAsBodyOfDoWhile(isSgDoWhileStmt(n));
             break;
           }
+          case V_SgSwitchStatement: {
+            ensureBasicBlockAsBodyOfSwitch(isSgSwitchStatement(n));
+            break;
+          }
           case V_SgIfStmt: {
             ensureBasicBlockAsTrueBodyOfIf(isSgIfStmt(n));
             ensureBasicBlockAsFalseBodyOfIf(isSgIfStmt(n));
@@ -10138,7 +10337,17 @@ SgLocatedNode* SageInterface::ensureBasicBlockAsParent(SgStatement* s)
             ensureBasicBlockAsBodyOfCatch(isSgCatchOptionStmt(n));
             break;
           }
-          default: break;
+          case V_SgUpcForAllStatement: {
+            ensureBasicBlockAsBodyOfUpcForAll(isSgUpcForAllStatement(n));
+            break;
+          }
+ 
+          default: 
+            {
+              if (isSgOmpBodyStatement(n))
+                ensureBasicBlockAsBodyOfOmpBodyStmt(isSgOmpBodyStatement(n));
+              break;
+            }
         }
       }
     };

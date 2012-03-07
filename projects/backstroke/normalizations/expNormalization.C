@@ -537,10 +537,14 @@ void preprocess(SgNode* node)
     /******************************************************************************/
     // To ensure every if, while, etc. has a basic block as its body.
     
+
+    changeAllBodiesToBlocks (getProject());
+#if 0    
     vector<SgStatement*> stmt_list = BackstrokeUtility::querySubTree<SgStatement>(node);
     foreach (SgStatement* stmt, stmt_list)
     {
-        ensureBasicBlockAsParent(stmt);
+        // Liao 3/2/2012, avoid using this function since its messy semantics
+        //ensureBasicBlockAsParent(stmt);
 
         // If the if statement does not have a else body, we will build one for it.
         if (SgIfStmt* if_stmt = isSgIfStmt(stmt))
@@ -553,7 +557,7 @@ void preprocess(SgNode* node)
             }
         }
     }
-
+#endif
     /******************************************************************************/
     // Move all declarations in condition/test/selector part in if/while/for/switch 
     // statements out to a new basic block which also contains that if/while/for/switch statement.
