@@ -39,6 +39,7 @@ include_HEADERS =				\
 	sourceLocationInheritedAttribute.h	\
 	rangemap.h				\
 	roseTranslators.h			\
+	stringify.h				\
 	utility_functions.h			\
 	threadSupport.h				\
 	IncludeDirective.h
