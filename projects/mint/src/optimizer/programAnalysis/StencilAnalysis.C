@@ -55,7 +55,7 @@ int StencilAnalysis::howManyPlanesInSharedMemory(const MintForClauses_t& clauseL
     max_plane_size = max_plane_size * sizeof(double);
   }
   int min_num_planes = SHARED_MEM_SIZE/(min_plane_size);
-  int max_num_planes = SHARED_MEM_SIZE/(max_plane_size);
+  //int max_num_planes = SHARED_MEM_SIZE/(max_plane_size);
   //cout << min_num_planes << " planes " << endl;
   //cout << max_num_planes << " max planes " << endl;
 
@@ -115,9 +115,9 @@ int StencilAnalysis::getSharingCategory(const std::vector<SgExpression*> subscri
   //check if subsrcipts are _gidx, _gidy or _gidz
   std::vector<SgExpression*>::const_iterator it;
   
-  int count = 0;
+  size_t count = 0;
   int indexNo = 0;
-  int category = 0;
+  size_t category = 0;
 
   for(it= subscripts.begin(); it != subscripts.end(); it++)
     {      
@@ -455,7 +455,7 @@ int StencilAnalysis::performHigherOrderAnalysis(SgBasicBlock* basicBlock,
   int maxOrderY = 0;
   int maxOrderZ = 0;
 
-  int dim = MintArrayInterface::getDimension(array);
+  size_t dim = MintArrayInterface::getDimension(array);
 
   string candidateVarName = array->get_name().str();
 
@@ -570,7 +570,7 @@ void StencilAnalysis::performCornerStencilsAnalysis(SgBasicBlock* basicBlock,
   bool cornerYZ = false; 
   bool cornerXZ = false; 
 
-  int dim = MintArrayInterface::getDimension(array);
+  size_t dim = MintArrayInterface::getDimension(array);
 
   string candidateVarName = array->get_name().str();
 
@@ -661,7 +661,7 @@ bool StencilAnalysis::isShareableReference(const std::vector<SgExpression*> subs
   //check if subsrcipts are _gidx, _gidy or _gidz
   std::vector<SgExpression*>::const_iterator it;
   
-  int count = 0;
+  size_t count = 0;
   int indexNo = 0;
 
   for(it= subscripts.begin(); it != subscripts.end(); it++)

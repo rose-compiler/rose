@@ -310,7 +310,7 @@ void GhostCellHandler::loadGhostCellsIntoSharedMemory(SgFunctionDefinition* kern
   SgStatement* varScopeStmt = isSgStatement(varScope);
   ROSE_ASSERT(varScopeStmt);
 
-  SgBasicBlock* kernel_body = kernel->get_body();
+  //SgBasicBlock* kernel_body = kernel->get_body();
 
   int dim = MintArrayInterface::getDimension(candidateVar);
 
@@ -601,7 +601,7 @@ void GhostCellHandler::loadGhostCellsIntoSharedMemory(SgFunctionDefinition* kern
 
   SgBasicBlock* kernel_body = kernel->get_body();
 
-  int dim = MintArrayInterface::getDimension(candidateVar);
+  size_t dim = MintArrayInterface::getDimension(candidateVar);
 
   /*
   if(insertSync && ghostCells.size() > 0 )

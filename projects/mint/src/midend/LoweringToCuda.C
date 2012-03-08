@@ -26,6 +26,7 @@ using namespace SageInterface;
 using namespace SageBuilder;
 using namespace OmpSupport;
 
+#if 0
   //! Create a stride expression from an existing stride 
   //expression based on the loop iteration's order (incremental or decremental)
   // The assumption is orig_stride is just the raw operand of the condition expression of a loop
@@ -42,7 +43,7 @@ using namespace OmpSupport;
       //return buildMultiplyOp(buildIntVal(-1),copyExpression(orig_stride));
     }
   }
-
+#endif
 
 static void convertAndFilter (const SgInitializedNamePtrList input, ASTtools::VarSymSet_t& output)
   {
@@ -295,7 +296,7 @@ void  configureDim3KernelParams(SgNode* node, const MintForClauses_t clauseList,
   string blocksizes = dimBlock + "(" + tmp_x.str() + "," + tmp_y.str() +  "," + tmp_z.str() +  ")";
   //threads();
 
-  SgVarRefExp* thread_exp = buildVarRefExp(blocksizes, p_scope);
+//  SgVarRefExp* thread_exp = buildVarRefExp(blocksizes, p_scope);
 
   thread_decl = buildVariableDeclaration(blocksizes, dim3_type); 
   
@@ -322,7 +323,7 @@ void  configureDim3KernelParams(SgNode* node, const MintForClauses_t clauseList,
       gridsizes = dimGrid + "(" + dim_x.str() + "," + dim_y.str() +  "*" + dim_z.str() +  ")";
     }
 
-  SgVarRefExp* grid_exp = buildVarRefExp(gridsizes, p_scope);
+//  SgVarRefExp* grid_exp = buildVarRefExp(gridsizes, p_scope);
 
   grid_decl = buildVariableDeclaration(gridsizes, dim3_type);  
   
@@ -717,7 +718,7 @@ void LoweringToCuda::unpackCudaPitchedPtrs(SgFunctionDeclaration* func,
 		
 		SgInitializer* initW = buildAssignInitializer(buildDivideOp(buildDotExp(dev_exp, buildVarRefExp("pitch", scope)), 
 									    buildSizeOfOp(baseType)));
-		SgInitializer* initH = buildAssignInitializer(buildDotExp(dev_exp, buildVarRefExp("ysize", scope) )) ;
+//		SgInitializer* initH = buildAssignInitializer(buildDotExp(dev_exp, buildVarRefExp("ysize", scope) )) ;
 		
 		SgVariableDeclaration *width_decl = buildVariableDeclaration(width_str, buildIntType(), initW, scope);
 		//SgVariableDeclaration *height_decl = buildVariableDeclaration(height_str, buildIntType(), initH, scope);
@@ -747,7 +748,7 @@ void LoweringToCuda::unpackCudaPitchedPtrs(SgFunctionDeclaration* func,
 		
 		SgInitializer* initW = buildAssignInitializer(buildDivideOp(buildDotExp(dev_exp, buildVarRefExp("pitch", scope)), 
 									    buildSizeOfOp(baseType)));
-		SgInitializer* initH = buildAssignInitializer(buildDotExp(dev_exp, buildVarRefExp("ysize", scope) )) ;
+//		SgInitializer* initH = buildAssignInitializer(buildDotExp(dev_exp, buildVarRefExp("ysize", scope) )) ;
 		
 		SgVariableDeclaration *width_decl = buildVariableDeclaration(width_str, buildIntType(), initW, scope);
 		//SgVariableDeclaration *height_decl = buildVariableDeclaration(height_str, buildIntType(), initH, scope);
@@ -952,7 +953,7 @@ bool LoweringToCuda::isStencilLoop(SgNode* node)
   MintInitNameMapExpList_t::iterator it;
   for(it = arrRefList.begin(); it != arrRefList.end(); it++)
     {
-      SgInitializedName* array = it->first;
+//      SgInitializedName* array = it->first;
       std::vector<SgExpression*> expList = it->second;
 
       if(MintArrayInterface::isStencilArray(expList))
@@ -973,6 +974,7 @@ SgVariableDeclaration*  LoweringToCuda::threadIndexCalculations(SgBasicBlock* ou
 
   bool is_canonical = isCanonicalForLoop (for_loop, NULL, & orig_lower, NULL, NULL, NULL, NULL);
 
+  ROSE_ASSERT(is_canonical);
   ROSE_ASSERT(orig_lower);
 
   if(loopNo == 1 )

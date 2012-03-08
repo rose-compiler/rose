@@ -461,7 +461,7 @@ void CudaMemoryManagement::freeParallelRegionVars(SgStatement* last_stmt,
 
   for(MintHostSymToDevInitMap_t::iterator it = hostToDevVars.begin(); it!= hostToDevVars.end(); it++)
   {
-    SgVariableSymbol* host_sym = it->first; 
+//    SgVariableSymbol* host_sym = it->first; 
     SgInitializedName* dev_name = it->second; 
     ROSE_ASSERT(dev_name);
 
@@ -821,7 +821,7 @@ void CudaMemoryManagement::generateCudaMemCpyToDeviceParams(SgStatement* target,
 					     extent_var);
 
   //pOld.kind   = cudaMemcpyHostToDevice;
-  SgStatement* kind =    kind = buildAssignStatement(buildDotExp(cpyParam, buildVarRefExp("kind", scope)), 
+  SgStatement* kind =  buildAssignStatement(buildDotExp(cpyParam, buildVarRefExp("kind", scope)), 
 						     buildVarRefExp("cudaMemcpyHostToDevice", scope));
  
   //pOld.dstPtr = dUold;
@@ -1005,9 +1005,9 @@ void CudaMemoryManagement::issueDataTransferToDevice(SgNode* node,
 	  ROSE_ASSERT(stmt);
 	  //we don't use this last_stmt because we do the copy inside the parallel region
 	  //but declare and allocate it outside the parallel region
-	  SgStatement* last_stmt = declareAndAllocateDevicePtr(stmt, dev_decl,
-						  extent_decl, status_decl,
-						  baseType, dst_name, params);
+//	  SgStatement* last_stmt = declareAndAllocateDevicePtr(stmt, dev_decl,
+//						  extent_decl, status_decl,
+//						  baseType, dst_name, params);
 	  
 	  ROSE_ASSERT(dev_decl);      
 	  ROSE_ASSERT(status_decl);      
@@ -1080,7 +1080,7 @@ void CudaMemoryManagement::generateCudaMemCpyFromDeviceParams(SgStatement* targe
 					     extent_var);
 
   //pOld.kind   = cudaMemcpyDeviceToHost;
-  SgStatement* kind =    kind = buildAssignStatement(buildDotExp(cpyParam, buildVarRefExp("kind", scope)), 
+  SgStatement* kind =  buildAssignStatement(buildDotExp(cpyParam, buildVarRefExp("kind", scope)), 
 						     buildVarRefExp("cudaMemcpyDeviceToHost", scope));
  
   //pOld.srcPtr = dUold;
@@ -1243,8 +1243,8 @@ void CudaMemoryManagement::issueDataTransferFromDevice(SgNode* node,
   string targetStr = target->unparseToString();
   SageInterface::attachComment(target, "Mint: Replaced Pragma: " + targetStr);
 
-  SgType* arrType = dest_sym->get_type();
-  SgType* baseType = arrType->findBaseType();
+  //SgType* arrType = dest_sym->get_type();
+  //SgType* baseType = arrType->findBaseType();
 
   SgVarRefExp* status_var = buildVarRefExp("stat_" + src_name, g_scope);
   SgVarRefExp* dev_var = buildVarRefExp(src_name, g_scope);
@@ -1272,11 +1272,11 @@ void CudaMemoryManagement::issueDataTransferFromDevice(SgNode* node,
 
       ROSE_ASSERT(stmtList.size() != 0);
             
-      SgStatement* stmt = isSgStatement(*(stmtList.begin()));
+      //SgStatement* stmt = isSgStatement(*(stmtList.begin()));
 
-      SgStatement* last_stmt = declareAndAllocateDevicePtr(stmt, dev_decl, 
-							   extent_decl, status_decl,
-							   baseType, src_name, params );      
+ //     SgStatement* last_stmt = declareAndAllocateDevicePtr(stmt, dev_decl, 
+//							   extent_decl, status_decl,
+//							   baseType, src_name, params );      
       ROSE_ASSERT(dev_decl);      
       ROSE_ASSERT(status_decl);      
       ROSE_ASSERT(extent_decl);

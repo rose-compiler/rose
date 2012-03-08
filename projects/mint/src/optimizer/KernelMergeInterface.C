@@ -40,7 +40,7 @@ bool KernelMergeInterface::mergeKernels(SgFunctionDeclaration* kernel1,
   SgBasicBlock* func_body = buildBasicBlock();
 
   SgBasicBlock* kernel_body1 = kernel1->get_definition()->get_body();
-  SgBasicBlock* kernel_body2 = kernel2->get_definition()->get_body();
+  //SgBasicBlock* kernel_body2 = kernel2->get_definition()->get_body();
 
   func_body = deepCopy (kernel_body1);
   /*  
