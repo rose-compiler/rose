@@ -829,13 +829,28 @@ Unparse_Java::unparseClassDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      SgClassDefinition* class_def = classdecl_stmt->get_definition();
      ROSE_ASSERT(class_def != NULL);
      SgBaseClassPtrList& bases = class_def->get_inheritances();
-     ROSE_ASSERT(bases.size() <= 1 && "java classes only support single inheritance");
-     if (bases.size() == 1) {
-         curprint(" extends ");
-         unparseBaseClass(bases[0], info);
+     int first_index = 0;
+     if (bases.size() > 0) {
+         SgBaseClass *super_class = isSgBaseClass(bases[0]);
+         ROSE_ASSERT (super_class);
+         if (! super_class -> get_base_class() -> get_explicit_interface()) {
+             first_index++;
+             curprint(" extends ");
+             unparseBaseClass(super_class, info);
+         }
      }
 
-     //todo 'implements <typelist>'
+     if (bases.size() - first_index > 0) {
+         curprint(" implements ");
+         for (int i = first_index; i < bases.size(); i++) {
+             SgBaseClass *interface = isSgBaseClass(bases[i]);
+             ROSE_ASSERT(interface -> get_base_class() -> get_explicit_interface());
+             unparseBaseClass(interface, info);
+             if (i + 1 > bases.size()) {
+                 curprint(", ");
+             }
+         }
+     }
 
      unparseStatement(classdecl_stmt->get_definition(), info);
    }
