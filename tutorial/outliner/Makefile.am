@@ -34,6 +34,7 @@ generatedFiles = inputCode_OutlineLoop$(EXEEXT) \
 	inputCode_Ifs$(EXEEXT) \
 	inputCode_Ifs.out \
 	rose_inputCode_Ifs.cc \
+	rose_inputCode_Ifs2.cc \
 	rose_inputCode_OutlineLoop2.c \
 	rose_inputCode_OutlineLoop2b.c \
 	rose_declarations.c \
@@ -67,6 +68,7 @@ EXTRA_DIST = CMakeLists.txt \
 	inputCode_OutlineLoop2.c \
 	inputCode_OutlineNonLocalJumps.cc \
 	inputCode_Ifs.cc \
+	inputCode_Ifs2.cc \
 	declarations.c \
 	thisExpression.cpp
 
@@ -79,13 +81,17 @@ INDENT_ARGS = -npsl
 INCLUDES = $(ROSE_INCLUDES) $(OUTLINER_INCS)
 # We install a copy
 bin_PROGRAMS = outline
-noinst_PROGRAMS = outlineIfs outlinePreproc
+noinst_PROGRAMS = outlineIfs outlinePreproc outlineIfs2
 
 outline_SOURCES = outline.cc
 outline_LDFLAGS = $(OUTLINER_LIBS)
 
 outlineIfs_SOURCES = outlineIfs.cc
 outlineIfs_LDFLAGS = $(OUTLINER_LIBS)
+
+# A variant using structure wrapper
+outlineIfs2_SOURCES = outlineIfs2.C
+outlineIfs2_LDFLAGS = $(OUTLINER_LIBS)
 
 outlinePreproc_SOURCES = outlinePreproc.cc
 outlinePreproc_LDFLAGS = $(OUTLINER_LIBS)
@@ -150,6 +156,9 @@ inputCode_Ifs$(EXEEXT): rose_inputCode_Ifs.cc
 rose_inputCode_Ifs.cc: outlineIfs$(EXEEXT) \
 		$(srcdir)/inputCode_Ifs.cc
 	./outlineIfs$(EXEEXT) -c $(srcdir)/inputCode_Ifs.cc
+
+rose_inputCode_Ifs2.cc: outlineIfs2$(EXEEXT) $(srcdir)/inputCode_Ifs2.cc
+	./outlineIfs2$(EXEEXT) -c $(srcdir)/inputCode_Ifs2.cc
 
 inputCode_Ifs.out: inputCode_Ifs$(EXEEXT)
 	./$< January February March April May June July \
