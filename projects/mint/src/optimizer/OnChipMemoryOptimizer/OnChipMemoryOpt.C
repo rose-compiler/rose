@@ -124,7 +124,7 @@ bool OnChipMemoryOpt::isRegisterReplaceable(std::vector<SgExpression*> subscript
   //check if subsrcipts are _gidx, _gidy or _gidz
   std::vector<SgExpression*>::iterator it;
   
-  int count = 0;
+  size_t count = 0;
   for(it= subscripts.begin(); it != subscripts.end(); it++)
     {      
       SgExpression* exp = isSgExpression(*it);
@@ -194,8 +194,8 @@ int OnChipMemoryOpt::replaceGlobalMemRefWithRegister(SgBasicBlock* kernel,
   ROSE_ASSERT(candidateVar);
   ROSE_ASSERT(reg);
 
-  int count=0;
-  int dim = MintArrayInterface::getDimension(candidateVar);
+  size_t count=0;
+  size_t dim = MintArrayInterface::getDimension(candidateVar);
 
   string candidateVarName = candidateVar->get_name().str();
 
@@ -218,7 +218,7 @@ int OnChipMemoryOpt::replaceGlobalMemRefWithRegister(SgBasicBlock* kernel,
 
 	  string var_name= arrayName->get_name().str();	
 
-	  bool valid = true;
+	 // bool valid = true;
 	  //check if array name matches
 	  if(var_name == candidateVarName && subscripts.size() == dim && isRegisterReplaceable(subscripts, updown))
 	    {		
@@ -574,7 +574,7 @@ void  OnChipMemoryOpt::sharedMemoryOptimizer(SgFunctionDeclaration* kernel,
   SgStatement* sourcePosOutside = NULL;
   SgFunctionDefinition* func_def = kernel->get_definition();
   SgBasicBlock* kernel_body = func_def->get_body();
-  SgScopeStatement* scope = kernel_body->get_scope();
+  //SgScopeStatement* scope = kernel_body->get_scope();
 
   SgVariableSymbol* index_sym = CudaOptimizerInterface::getSymbolFromName(kernel_body, GIDZ);
 
@@ -613,7 +613,9 @@ void  OnChipMemoryOpt::sharedMemoryOptimizer(SgFunctionDeclaration* kernel,
   order = order > MAX_ORDER ? MAX_ORDER : order ;
   */
 
-  bool corner_xy = false; bool corner_yz = false; bool corner_xz = false;
+  //bool corner_xy = false;  
+  bool corner_yz = false; 
+  //bool corner_xz = false;
 
   //creates a shared memory block __shared__ float sh_block[clauseList.y + order ][ clauseList.x + order];
   if(dimension == 3 ){
@@ -849,7 +851,7 @@ SgPntrArrRefExp* OnChipMemoryOpt::loadAPlaneIntoSharedMemory(SgFunctionDefinitio
     idz = buildVarRefExp(indexstr, outerScope);
   }
   SgVarRefExp* gidz=NULL, *gidy=NULL ;
-  SgVarRefExp* gidx = buildVarRefExp(GIDX, varScope);      
+  //SgVarRefExp* gidx = buildVarRefExp(GIDX, varScope);      
 
   if(dimArray == 3)
     gidz= buildVarRefExp(GIDZ, varScope);
@@ -968,7 +970,7 @@ void OnChipMemoryOpt::findAllShareableReferences(const SgFunctionDefinition* ker
   ROSE_ASSERT(kernel_body);
   ROSE_ASSERT(candidateVar);
 
-  int dim = MintArrayInterface::getDimension(candidateVar);
+  size_t dim = MintArrayInterface::getDimension(candidateVar);
 
   string candidate_name = candidateVar->get_name().str();
 
@@ -1048,7 +1050,7 @@ void OnChipMemoryOpt::replaceGlobalMemRefWithSharedMem(SgFunctionDefinition* ker
 
   SgBasicBlock* kernel_body = kernel->get_body();
 
-  int dim = MintArrayInterface::getDimension(candidateVar);
+  size_t dim = MintArrayInterface::getDimension(candidateVar);
 
   ROSE_ASSERT(dim >= 1);	      
 
@@ -1095,18 +1097,18 @@ void OnChipMemoryOpt::replaceGlobalMemRefWithSharedMem(SgFunctionDefinition* ker
 		ROSE_ASSERT(second);
 
 		if(subscripts.size() >= 3 ) 
-
+                {
 		  if(corner_yz && !unrollWithoutRegisters){
 		    third = copyExpression(*(++it));
 		    third = CudaOptimizerInterface::convertGlobalMemoryIndexIntoLocalIndex(third, IDZ, kernel_body);
 		    ROSE_ASSERT(third);
 		  }
-		
 		  else if(unrollWithoutRegisters){
 		    third = copyExpression(*(++it));
 		    third = CudaOptimizerInterface::convertGlobalMemoryIndexIntoLocalIndex(third, "_ctr", kernel_body);
 		    ROSE_ASSERT(third);
 		  }
+                }
 	      }
 
 	      first  = CudaOptimizerInterface::convertGlobalMemoryIndexIntoLocalIndex(first, IDX, kernel_body);
