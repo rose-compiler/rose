@@ -766,7 +766,9 @@ Unparse_Java::unparseCastOp(SgExpression* expr, SgUnparse_Info& info) {
     curprint("(");
     unparseType(cast->get_type(), info);
     curprint(") ");
+    curprint("(");
     unparseExpression(cast->get_operand(), info);
+    curprint(") ");
 }
 
 void
