@@ -1,0 +1,202 @@
+Skeleton Generator
+------------------
+
+1. API Specification
+--------------------
+
+The skeleton generator skeletonizes programs relative to one or more
+API specifications.  This means that functions that are part of the
+API are required to be preserved in the skeleton, and further code is
+preserved based on their dependencies.  Each function that we would
+like to treat as part of the API is specified by the function name,
+number of parameters, and a list of dependency types for each
+parameter.  The dependency types allow us to categorize code based on
+how it impacts the API functions.  For example, in the case of MPI, we
+will have code related to the data that is sent (the "payload"), and
+code that is related to the destination and topology of the program.
+These are often very different, and the API specification allows the
+tool to tag program elements based on their role.  This information is
+not currently used in any detail, but will be in future versions of
+the skeleton generator.
+
+APIs are specified in a configuration file that uses an s-expression
+format.  For example, here is a subset of the MPI API:
+
+(api-spec MPI
+  ( dep-types payload topology tag other )
+  ( default_deptype other )
+
+  ( 
+    (MPI_Init              2 )
+    (MPI_Finalize          0 )
+    (MPI_Abort             2 )
+
+    (MPI_Comm_rank         2  (topology 1) )
+    (MPI_Comm_size         2  (topology 1) )
+    (MPI_Comm_split        4 )
+
+
+    (MPI_Send              6  (payload 0 1 2) (topology 3) (tag 4) )
+  )
+)
+
+First, we define the API name via the api-spec tag.  This is followed
+by an s-expression that contains a list of dependency types, prefaced
+with the tag "dep-types".  The names of the dependency types are
+user-specified.  Next, we indicate which dependency type should be
+associated with arguments that are not explicitly specified for an API
+function.  This allows the user to group uninteresting arguments in a
+catch-all class, making the API specification a bit briefer.  Finally,
+we have an expression that contains the API calls.  Each API call is a
+sub-expression with the format:
+
+(API_FUNCTION_NAME ARGUMENT_COUNT (deptype argA ..) (deptype argB ..) ...)
+
+For example, on MPI_send above, we see that it has 6 arguments, the
+first three of which are related to payload, the fourth is topology,
+and the fifth is tag.  Note that argument numbering is zero-based.
+The sixth argument is not specified, and therefore takes on the
+default dependency type "other".
+
+Given a set of API specifications, we then provide an API collection
+file that is used by the skeleton generator to know what set of APIs
+to skeletonize relative to, and how to do so.  For example:
+
+(api-spec-collection
+  ( include-api "mpi_api.spec"     (omit-deps payload) )
+  ( include-api "stdio_input.spec" (omit-deps buffer) )
+)
+
+This tells the tool to include API specifications for MPI and a subset
+of C STDIO functions.  In each case, it also specifies a dependency
+type to use for selecting code for elimination.  In the MPI case, code
+that relates to computaton of payload data is eliminated, and in the
+STDIO case, code related to filling IO buffers is eliminated.  This
+allows a user to have relatively fine control over what is and is not
+removed.  The API collection file is specified using the -skel:s
+command line option:
+
+% extractMPISkeleton -skel:s /where/is/the/collection/file
+
+2. Annotations
+--------------
+
+Annotations used by this tool are specified in the following format:
+
+#pragma skel [specific pragma text here]
+
+For example,
+
+#pragma skel loop iterate atmost(10)
+
+Annotations are currently only supported for programs written in C or
+C++.  Fortran is not supported at the current time.
+
+2.1. Loop annotations
+---------------------
+
+It is not uncommon for skeletonized code to no longer have the looping
+behavior of the original.  For example, say we have an iterative
+solver with the following stucture:
+
+do {
+  // some numerical computation
+  for (i=0;i<n;i++) { current[i] = a_big_computation(); }
+
+  // compute delta based on computation 
+  for (i=0;i<n;i++) { delta += fabs(current[i] - prev[i]); }
+
+  // do some message passing
+  MPI_Send(stuff);
+} while (delta > eps);
+
+If the numerical computation is removed, we can be in a situation
+where delta will not ever change and will never drop below the
+threshold for termination - so the loop will iterate forever.  Or, a
+similar situation, we may find that through some choice of initial
+values, the skeleton may cause delta to be zero, so to loop will
+iterate only once (or never, depending on the type of loop used).  In
+both cases, we would see behavior that isn't representative of the
+real program.  The annotation can be added to force the skeleton to
+contain a loop that iterates by having the skeleton generator
+introduce counters and code to increment and test their values.
+
+Three loop annotations are available:
+
+#pragma skel loop iterate exactly(n)
+#pragma skel loop iterate atmost(n)
+#pragma skel loop iterate atleast(n)
+
+These correspond to forcing an exact, upper, and lower bound on the
+iteration count.  The pragma must be placed immediately preceeding the
+loop of interest.  For example, the following will produce a skeleton
+in which the loop iterates exactly 14 times.
+
+#pragma skel loop iterate exactly(14)
+do {
+  // some numerical computation
+  for (i=0;i<n;i++) { current[i] = a_big_computation(); }
+
+  // compute delta based on computation 
+  for (i=0;i<n;i++) { delta += fabs(current[i] - prev[i]); }
+
+  // do some message passing
+  MPI_Send(stuff);
+} while (delta > eps);
+
+2.2. Data declaration annotations
+---------------------------------
+
+If a program contains an array that should be preserved in the
+skeleton, it is useful to have control over how it is initialized
+since often the skeleton will NOT contain the computational code that
+populates the array elements.  The initializer pragma allows these
+element values to be specified.
+
+#pragma skel initializer repeat(42)
+int myArray[14];
+
+This will result in code being generated that iterates over the array
+elements assigning the value 42 to them.  The variable initialization
+annotations are currently only available for initializing arrays of
+static size.  Future versions of the skeletonizer will support
+initialization of non-array variables, static arrays, and dynamically
+allocated arrays.  These annotations will use the same initializer
+pragma tag, but will replace repeat() with a different directive.
+
+Note that ROSE does not currently support floating point constants in
+pragmas.  So, one must encode non-integer values as rational numbers.
+For example, instead of 0.5, one would need to write 1/2.  More
+complicated real numbers, like 0.21376, are easily specified using
+division by an appropriate power of ten (e.g., 21376/100000).
+
+2.3. Conditional statement annotations
+--------------------------------------
+
+Like the loop termination criteria, loop tests will likely have
+different behavior in a skeleton than in real circumstances.  A common
+behavior in a skeleton after computations are removed is to have the
+loop test evaluate always to either true or false.  The conditional
+annotation currently allows programmers to experiment with skeletons
+that will randomly branch one way or the other with a specified
+probability.  This probability could easily be measured in the
+original program.  For example, if we want a conditional where the
+then-clause executes 60% of the time we would say:
+
+#pragma skel condition prob(6/10)  // make true 60% of time.
+  if (x % 2) {
+    x += 5;
+  } else {
+    x = 0;
+  }
+
+The drawback of this approach is that real code very likely will not
+branch randomly, but will exhibit a pattern.  For example: T, T, T, F,
+F, T, T, T, F, F.  Future versions of the skeleton generator will
+provide facilities for supporting conditional branches that preserve
+non-random patterns seen in practice.
+
+3. Command Line Options
+-----------------------
+
+To be written.

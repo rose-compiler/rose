@@ -37,7 +37,7 @@ main(int argc, char * argv[]) {
     dotgen.writeIncidenceGraphToDOTFile(builder.getGraph(), "full_call_graph.dot");
 
 
-    SageInterface::changeAllLoopBodiesToBlocks(project);
+    SageInterface::changeAllBodiesToBlocks(project);
 
     SgFunctionDeclaration *mainDecl = SageInterface::findMain(project);
     if(mainDecl == NULL) {
