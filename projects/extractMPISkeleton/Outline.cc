@@ -100,7 +100,6 @@ void blockifySpansOfFillets (SgBasicBlock *block) {
 
   // if (debug)  std::cout << "blockifySpansOfFillets:" << std::endl;
 
-  /*
   SgStatementPtrList &ss = block->get_statements();
   SgStatementPtrList::iterator i = ss.begin();
 
@@ -140,12 +139,11 @@ void blockifySpansOfFillets (SgBasicBlock *block) {
       }
 
       // Replace/Remove from 'block'/'ss':
-      ss.erase(i,j);
-      ss.insert(i,newblock);
+      i = ss.erase(i,j);
+      i = ss.insert(i,newblock);
     }
-    i++; // i should now point to what j pointed to before erase/insert.
+    i++;
   }
-  */
 }
 
 /******************************************************************************
@@ -233,13 +231,14 @@ void outlineStatementsWithFilletAttrib (SgProject *proj, bool outline) {
 /*******************************************************************************
  skeletonizeCode - the exported function.
 */
-void skeletonizeCode (APISpecs *specs, SgProject *proj, bool outline) {
+void skeletonizeCode (APISpecs *specs, SgProject *proj, bool outline,
+                      bool genPDF) {
   ifNotSkeletonAddFilletAttrib(specs, proj);
   if (debug) AstTests::runAllTests(proj);
 
   // Create report of attributes on AST (before code changes):
   if(debug) std::cout << "Generating PDF report" << std::endl;
-  generatePDF(*proj);
+  if(genPDF) generatePDF(*proj);
 
   moveFilletSpansToNewBasicBlocks(proj);
     // and moves fillet attrib from these spans to the new BasicBlocks

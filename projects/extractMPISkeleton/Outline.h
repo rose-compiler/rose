@@ -10,6 +10,7 @@
    All statements have been properly annotated with their APIDep attributes.
 */
 
-void skeletonizeCode (APISpecs *specs, SgProject *proj, bool outline);
+void skeletonizeCode (APISpecs *specs, SgProject *proj, bool outline,
+                      bool genPDF);
 
 #endif
