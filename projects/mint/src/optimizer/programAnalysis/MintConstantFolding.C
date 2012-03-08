@@ -49,7 +49,8 @@ void MintConstantFolding::constantFoldingOptimization(SgNode* node, bool interna
 
 }
 
-bool canWeFold(SgExpression* index, bool * minusSign=false)
+//bool canWeFold(SgExpression* index, bool minusSign = false)
+bool canWeFold(SgExpression* index, bool * minusSign)
 {
   //we count the (-) signs affecting the index variable 
   //to understand if we should add a minus sign to the variable 
