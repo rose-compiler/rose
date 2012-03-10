@@ -612,6 +612,10 @@ Grammar::setUpStatements ()
 
      DeclarationStatement.setFunctionPrototype( "HEADER_DECLARATION_STATEMENT", "../Grammar/Statement.code" );
 
+  // DQ (3/9/2012): Moved this function to be declared after the SgDeclarationStatement was declared.
+  // It used to be a part of the BASIC_BLOCK_POSTDECLARATION (see that part of the code below for more details).
+     DeclarationStatement.setPostdeclarationString ("HEADER_DECLARATION_STATEMENT_POSTDECLARATION", "../Grammar/Statement.code");
+
   // DQ (4/22/2004): Remove these later when the new modifiers are working
      DeclarationStatement.setDataPrototype    ( "unsigned int","decl_attributes","= 0",
                                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);

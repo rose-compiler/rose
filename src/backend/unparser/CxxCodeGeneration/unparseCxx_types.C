@@ -1015,7 +1015,7 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
 
 #if 0
      printf ("info.SkipClassDefinition() = %s \n",(info.SkipClassDefinition() == true) ? "true" : "false");
-     printf ("cdecl->isForward()         = %s \n",(cdecl->isForward()         == true) ? "true" : "false");
+     printf ("decl->isForward()          = %s \n",(decl->isForward()          == true) ? "true" : "false");
 #endif
 
      if (info.isTypeFirstPart() == true)
@@ -1083,6 +1083,10 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
              }
         }
 //#endif
+
+#if 0
+     printf ("Leaving Unparse_Type::unparseClassType \n");
+#endif
    }
 
 

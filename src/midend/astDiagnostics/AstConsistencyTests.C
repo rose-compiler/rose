@@ -614,11 +614,30 @@ AstTests::runAllTests(SgProject* sageProject)
                          ROSE_ASSERT (cls_decl != NULL);
                          if (cls_decl != NULL)
                             {
-                              if (cls_decl->get_firstNondefiningDeclaration()!= NULL)
+                              if (cls_decl->get_firstNondefiningDeclaration() != NULL)
                                  {
                                 // if (isSgClassDeclaration(cls_decl->get_firstNondefiningDeclaration()) != cls_decl )
                                    if (cls_decl->get_firstNondefiningDeclaration() != cls_decl )
                                       {
+                                        printf ("   Warning: cls_decl = %p = %s \n",cls_decl,cls_decl->class_name().c_str());
+                                        printf ("   Warning: cls_decl->get_firstNondefiningDeclaration() = %p = %s \n",cls_decl->get_firstNondefiningDeclaration(),cls_decl->get_firstNondefiningDeclaration()->class_name().c_str());
+
+                                        SgClassDeclaration* local_cls_decl = isSgClassDeclaration (cls_decl);
+                                        SgClassDeclaration* local_cls_decl_firstNondefining = isSgClassDeclaration (cls_decl->get_firstNondefiningDeclaration());
+                                        SgClassDeclaration* local_cls_decl_defining = isSgClassDeclaration (cls_decl->get_definingDeclaration());
+
+                                        printf ("local_cls_decl->get_name()                  = %s \n",local_cls_decl->get_name().str());
+                                        printf ("local_cls_decl_firstNondefining->get_name() = %s \n",local_cls_decl_firstNondefining->get_name().str());
+
+                                        local_cls_decl->get_startOfConstruct()->display("Error in AST Consistancy tests: cls_decl->get_firstNondefiningDeclaration() != cls_decl");
+                                        local_cls_decl_firstNondefining->get_startOfConstruct()->display("Error in AST Consistancy tests: cls_decl->get_firstNondefiningDeclaration() != cls_decl");
+
+                                        if (local_cls_decl_defining != NULL)
+                                           {
+                                             printf ("local_cls_decl_defining->get_name()         = %s \n",local_cls_decl_defining->get_name().str());
+                                             local_cls_decl_defining->get_startOfConstruct()->display("Error in AST Consistancy tests: cls_decl->get_definingDeclaration() != cls_decl");
+                                           }
+
                                         printf("    Warning: found a SgClassType which is NOT associated with the first nondefining class declaration\n");
                                         printf("    Warning: SgClassType = %p name = %s associated with SgClassDeclaration =%p\n", cls_type, cls_type->get_name().getString().c_str(), cls_decl);
                                         ROSE_ASSERT (false);
@@ -3919,7 +3938,7 @@ TestParentPointersInMemoryPool::visit(SgNode* node)
              }
 
        // DQ (3/3/2012): Commented this out test (for debugging purposes only).
-          printf ("In TestParentPointersInMemoryPool::visit(): Commented test for locatedNode->get_parent() != NULL \n");
+       // printf ("In TestParentPointersInMemoryPool::visit(): Commented test for locatedNode->get_parent() != NULL \n");
        // ROSE_ASSERT(locatedNode->get_parent() != NULL);
         }
 

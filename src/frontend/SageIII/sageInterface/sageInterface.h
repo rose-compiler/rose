@@ -1047,19 +1047,39 @@ std::vector<SgBreakStmt*> findBreakStmts(SgStatement* code, const std::string& f
  *  If @p astNode is the null pointer, then the return value is a null pointer. That is, if there is no node, then there cannot
  *  be an enclosing node of the specified type. */
 template <typename NodeType>
-NodeType* getEnclosingNode(const SgNode* astNode, const bool includingSelf=false)
-{
-  if (NULL==astNode)
-    return NULL;
-  if ((includingSelf)&&(dynamic_cast<const NodeType*>(astNode)))
-    return const_cast<NodeType*>(dynamic_cast<const NodeType*> (astNode));
+NodeType* getEnclosingNode(const SgNode* astNode, const bool includingSelf = false)
+   {
+     if (NULL == astNode)
+        {
+          return NULL;
+        }
 
-  SgNode* parent = astNode->get_parent();
-  while ((parent!=NULL)&&(!dynamic_cast<const NodeType*>(parent)))
-    parent = parent->get_parent();
+     if ( (includingSelf ) && (dynamic_cast<const NodeType*>(astNode)) )
+        {
+          return const_cast<NodeType*>(dynamic_cast<const NodeType*> (astNode));
+        }
 
-  return const_cast<NodeType*>(dynamic_cast<const NodeType*> (parent));
-}
+  // DQ (3/5/2012): Check for reference to self...
+     ROSE_ASSERT(astNode->get_parent() != astNode);
+
+     SgNode* parent = astNode->get_parent();
+
+  // DQ (3/5/2012): Check for loops that will cause infinite loops.
+     SgNode* previouslySeenParent = parent;
+     while ( (parent != NULL) && (!dynamic_cast<const NodeType*>(parent)) )
+        {
+          ROSE_ASSERT(parent->get_parent() != parent);
+
+          printf ("In getEnclosingNode(): parent = %p = %s \n",parent,parent->class_name().c_str());
+
+          parent = parent->get_parent();
+
+       // DQ (3/5/2012): Check for loops that will cause infinite loops.
+          ROSE_ASSERT(parent != previouslySeenParent);
+        }
+
+     return const_cast<NodeType*>(dynamic_cast<const NodeType*> (parent));
+   }
 
 //! Get the closest scope from astNode. Return astNode if it is already a scope.
 SgScopeStatement* getScope(const SgNode* astNode);

@@ -3413,25 +3413,26 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                decl_item = *p;
                ROSE_ASSERT(decl_item != NULL);
                unp->u_exprStmt->unparseAttachedPreprocessingInfo(decl_item, info, PreprocessingInfo::before);
-
-            // printf ("In unparseVarDeclStmt(): cname = decl_item->get_name() = %s \n",decl_item->get_name().str());
-
+#if 0
+               printf ("In unparseVarDeclStmt(): cname = decl_item->get_name() = %s \n",decl_item->get_name().str());
+#endif
                tmp_name = decl_item->get_name();
                tmp_type = decl_item->get_type();
                ROSE_ASSERT(isSgType(tmp_type) != NULL);
 
             // DQ (11/28/2004): Added to support new design
                tmp_init = decl_item->get_initializer();
-
-            // printf ("tmp_type = %p = %s \n",tmp_type,tmp_type->sage_class_name());
-
+#if 0
+               printf ("tmp_type = %p = %s \n",tmp_type,tmp_type->class_name().c_str());
+#endif
                SgNamedType *namedType = isSgNamedType(tmp_type->findBaseType());
             // SgDeclarationStatement* declStmt = (namedType) ? namedType->get_declaration() : NULL;
                SgDeclarationStatement* declStmt = NULL;
 
                ROSE_ASSERT(ninfo.get_declstatement_ptr() != NULL);
-
-            // printf ("Inside of unparseVarDeclStmt: namedType = %p \n",namedType);
+#if 0
+               printf ("Inside of unparseVarDeclStmt: namedType = %p \n",namedType);
+#endif
                if (namedType != NULL)
                   {
                  // DQ (10/5/2004): This controls the unparsing of the class definition
@@ -3530,9 +3531,9 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                SgUnparse_Info ninfo_for_type(ninfo);
 
                ROSE_ASSERT(ninfo_for_type.get_declstatement_ptr() != NULL);
-
-            // printf ("At TOP: ninfo2.SkipClassDefinition() = %s \n",(ninfo2.SkipClassDefinition() == true) ? "true" : "false");
-
+#if 0
+               printf ("At TOP: ninfo2.SkipClassDefinition() = %s \n",(ninfo_for_type.SkipClassDefinition() == true) ? "true" : "false");
+#endif
             // if (vardecl_stmt->skipElaborateType())
                if ( (vardecl_stmt->skipElaborateType()) && (declStmt != NULL) && (isSgTypedefDeclaration(declStmt) == NULL) )
                   {
@@ -3565,11 +3566,11 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
             // ninfo2.set_isTypeFirstPart();
                ninfo_for_type.set_isTypeFirstPart();
-
-            // printf ("ninfo2.SkipClassDefinition() = %s \n",(ninfo2.SkipClassDefinition() == true) ? "true" : "false");
-            // curprint ( string("\n/* START: output using unp->u_type->unparseType (1st part) */ \n"));
-            // printf ("Calling 1st part of unp->u_type->unparseType for %s \n",tmp_type->sage_class_name());
-
+#if 0
+               printf ("ninfo2.SkipClassDefinition() = %s \n",(ninfo_for_type.SkipClassDefinition() == true) ? "true" : "false");
+               curprint ( string("\n/* START: output using unp->u_type->unparseType (1st part) */ \n"));
+               printf ("Calling 1st part of unp->u_type->unparseType for %s \n",tmp_type->class_name().c_str());
+#endif
             // ROSE_ASSERT(ninfo2.get_declstatement_ptr() != NULL);
                ROSE_ASSERT(ninfo_for_type.get_declstatement_ptr() != NULL);
 
@@ -3658,15 +3659,18 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                       // SgName nameQualifier = unp->u_type->unp->u_name->generateNameQualifier(decl_item,ninfo2);
                       // SgName nameQualifier = unp->u_name->generateNameQualifier(decl_item,ninfo_for_variable);
                          SgName nameQualifier = vardecl_stmt->get_qualified_name_prefix();
-
-                      // printf ("variable declaration name = %s nameQualifier = %s \n",tmp_name.str(),(nameQualifier.is_null() == false) ? nameQualifier.str() : "NULL");
+#if 0
+                         printf ("variable declaration name = %s nameQualifier = %s \n",tmp_name.str(),(nameQualifier.is_null() == false) ? nameQualifier.str() : "NULL");
+#endif
                          if (nameQualifier.is_null() == false)
                             {
                               curprint ( nameQualifier.str());
                             }
                        }
-
-                 // printf ("Variable Name: tmp_name = %s \n",tmp_name.str());
+#if 0
+                    printf ("Variable Name: tmp_name = %s \n",tmp_name.str());
+#endif
+                 // Output the name of the variable...
                     curprint ( tmp_name.str());
 
                  // DQ (7/25/2006): Support for asm register naming within variable declarations (should also be explicitly marked as "register")
@@ -3697,7 +3701,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 #if 0
                curprint ( string("\n/* START: output using unp->u_type->unparseType (2nd part) */ \n"));
                printf ("Calling 2nd part of unp->u_type->unparseType for %s \n",tmp_type->sage_class_name());
-               printf ("ninfo2.SkipClassDefinition() = %s \n",(ninfo2.SkipClassDefinition() == true) ? "true" : "false");
+               printf ("ninfo2.SkipClassDefinition() = %s \n",(ninfo_for_type.SkipClassDefinition() == true) ? "true" : "false");
 #endif
 #if 0
             // DQ (9/28/2004): Now that we have defining and non-defining declarations we should be able to simplify this code!
@@ -3833,8 +3837,9 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
                  // DQ (2/26/2012): Added test.
                     ROSE_ASSERT(tmp_init != NULL);
+#if 0
                     printf ("Unparse the initializer = %p = %s \n",tmp_init,tmp_init->class_name().c_str());
-
+#endif
                  // curprint (string("/* Unparse the initializer */ \n"));
                  // unparseExpression(tmp_init, ninfo);
                     unparseExpression(tmp_init, statementInfo);
@@ -5331,7 +5336,9 @@ Unparse_ExprStmt::unparseTemplateDeclStmt(SgStatement* stmt, SgUnparse_Info& inf
   // DQ (11/20/2011): Detect derived classes that should not be used in the new EDG 4.x support in ROSE.
      if (isSgTemplateClassDeclaration(stmt) != NULL)
         {
+#if 0
           printf ("Note: Using the saved template declaration as a string to output the template declaration (AST for the template declaration is also now available in the AST) \n");
+#endif
 #if 0
           printf ("Exiting in unparseTemplateDeclStmt() \n");
           ROSE_ASSERT(false);
@@ -5431,7 +5438,9 @@ Unparse_ExprStmt::unparseTemplateClassDeclStmt(SgStatement* stmt, SgUnparse_Info
      SgTemplateClassDeclaration* template_stmt = isSgTemplateClassDeclaration(stmt);
      ROSE_ASSERT(template_stmt != NULL);
 
+#if 0
      printf ("Note: Using the saved template declaration as a string to output the template declaration (AST for the template declaration is also now available in the AST) \n");
+#endif
 
   // Check to see if this is an object defined within a class
      ROSE_ASSERT (template_stmt->get_parent() != NULL);
@@ -5488,7 +5497,9 @@ Unparse_ExprStmt::unparseTemplateDeclarationStatment_support(SgStatement* stmt, 
      T* template_stmt = dynamic_cast<T*>(stmt);
      ROSE_ASSERT(template_stmt != NULL);
 
+#if 0
      printf ("Note: Using the saved template declaration as a string to output the template declaration (AST for the template declaration is also now available in the AST) \n");
+#endif
 
   // Check to see if this is an object defined within a class
      ROSE_ASSERT (template_stmt->get_parent() != NULL);

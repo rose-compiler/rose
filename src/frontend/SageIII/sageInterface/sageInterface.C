@@ -5751,18 +5751,19 @@ SageInterface::getEnclosingFunctionDeclaration (SgNode * astNode,bool includingS
 
 // #ifndef USE_ROSE
 
- SgGlobal* SageInterface::getGlobalScope( const SgNode* astNode)
- {
-   // should including itself in this case
-    SgNode* temp = getEnclosingNode<SgGlobal>(astNode,true);
-    if (temp)
-      return isSgGlobal(temp);
-    else
-      return NULL;
+SgGlobal*
+SageInterface::getGlobalScope( const SgNode* astNode )
+   {
+  // should including itself in this case
+     SgNode* temp = getEnclosingNode<SgGlobal>(astNode,true);
+     if (temp)
+          return isSgGlobal(temp);
+       else
+          return NULL;
   }
 
-  SgClassDefinition*
-  SageInterface::getEnclosingClassDefinition(SgNode* astNode, const bool includingSelf/* =false*/)
+SgClassDefinition*
+SageInterface::getEnclosingClassDefinition(SgNode* astNode, const bool includingSelf/* =false*/)
   {
     SgNode* temp = getEnclosingNode<SgClassDefinition>(astNode,includingSelf);
     if (temp)
@@ -8377,7 +8378,7 @@ void SageInterface::setPragma(SgPragmaDeclaration* decl, SgPragma *pragma)
 //TODO should we ensureBasicBlockAsScope(scope) ? like ensureBasicBlockAsParent(targetStmt);
 //It might be well legal to append the first and only statement in a scope!
 void SageInterface::appendStatement(SgStatement *stmt, SgScopeStatement* scope)
-  {
+   {
      if (scope == NULL)
           scope = SageBuilder::topScopeStack();
 
@@ -8406,22 +8407,25 @@ void SageInterface::appendStatement(SgStatement *stmt, SgScopeStatement* scope)
       removeStatement(stmt);
     }
 #endif
-    //catch-all for statement fixup
-   // Must fix it before insert it into the scope,
-    fixStatement(stmt,scope);
 
-    //-----------------------
-    // append the statement finally
-    //scope->append_statement (stmt);
-    scope->insertStatementInScope(stmt,false);
-    stmt->set_parent(scope); // needed?
+  // catch-all for statement fixup
+  // Must fix it before insert it into the scope,
+     fixStatement(stmt,scope);
 
-   // update the links after insertion!
-    if (isSgFunctionDeclaration(stmt))
-     updateDefiningNondefiningLinks(isSgFunctionDeclaration(stmt),scope);
-  }
+  //-----------------------
+  // append the statement finally
+  // scope->append_statement (stmt);
+     scope->insertStatementInScope(stmt,false);
+     stmt->set_parent(scope); // needed?
 
-  void SageInterface::appendStatementList(const std::vector<SgStatement*>& stmts, SgScopeStatement* scope) {
+  // update the links after insertion!
+     if (isSgFunctionDeclaration(stmt))
+        {
+          updateDefiningNondefiningLinks(isSgFunctionDeclaration(stmt),scope);
+        }
+   }
+
+void SageInterface::appendStatementList(const std::vector<SgStatement*>& stmts, SgScopeStatement* scope) {
     for (size_t i = 0; i < stmts.size(); ++i) {
       appendStatement(stmts[i], scope);
     }
@@ -9485,12 +9489,21 @@ int  SageInterface::suggestNextNumericLabel(SgFunctionDefinition* func_def)
  */
 void SageInterface::fixFunctionDeclaration(SgFunctionDeclaration* stmt, SgScopeStatement* scope)
    {
+ // DQ (3/5/2012): Added test.
+    ROSE_ASSERT(scope != NULL);
+
  // fix function type table's parent edge
  // Liao 5/4/2010
     SgFunctionTypeTable * fTable = SgNode::get_globalFunctionTypeTable();
-    ROSE_ASSERT(fTable);
+    ROSE_ASSERT(fTable != NULL);
+
     if (fTable->get_parent() == NULL)
+       {
+      // DQ (3/5/2012): This is a problem for test2012_13.C (test code taken from test2004_42.C).
+      // fTable->set_parent(getGlobalScope(scope));
+         printf ("WARNING: Skip setting the scope of the SgFunctionTypeTable scope = %p = %s \n",scope,scope->class_name().c_str());
          fTable->set_parent(getGlobalScope(scope));
+       }
 
   // Liao 4/23/2010,  Fix function symbol
   // This could happen when users copy a function, then rename it (func->set_name()), and finally insert it to a scope
@@ -9758,6 +9771,25 @@ void SageInterface::updateDefiningNondefiningLinks(SgFunctionDeclaration* func, 
           stmtList = scope->getStatementList();
         }
 
+     SgFunctionDeclaration* firstNondefiningFunctionDeclaration = isSgFunctionDeclaration(func->get_firstNondefiningDeclaration());
+     if (firstNondefiningFunctionDeclaration != NULL)
+        {
+       // If there exists a non-NULL reference to a firstNondefiningFunctionDeclaration 
+       // then use it (unless we want to handle where it might be set wrong).
+          printf ("In SageInterface::updateDefiningNondefiningLinks(): func = %p Found a valid pointer to a firstNondefiningFunctionDeclaration = %p \n",func,firstNondefiningFunctionDeclaration);
+        }
+
+  // It would be better to find the first non-defining declaration via the symbol.
+     SgSymbol* functionSymbol = scope->lookup_function_symbol(func->get_name(),func->get_type());
+     if (functionSymbol != NULL)
+        {
+          printf ("In SageInterface::updateDefiningNondefiningLinks(): func = %p Found a valid symbol = %p \n",func,functionSymbol);
+        }
+       else
+        {
+          printf ("In SageInterface::updateDefiningNondefiningLinks(): func = %p functionSymbol == NULL \n",func);
+        }
+
   // Find the same function declaration list, including func itself
      SgStatementPtrList::iterator j;
      for (j=stmtList.begin();j!=stmtList.end();j++)
@@ -9782,13 +9814,26 @@ void SageInterface::updateDefiningNondefiningLinks(SgFunctionDeclaration* func, 
         }
        else
         {
+       // DQ (3/9/2012): Added assertion to avoid empty list that would be an error in both cases below.
+          ROSE_ASSERT(sameFuncList.empty() == false);
+
           if (func==isSgFunctionDeclaration(*(sameFuncList.begin()))) // is first_nondefining declaration
              {
                for (j=sameFuncList.begin();j!=sameFuncList.end();j++)
-                    isSgFunctionDeclaration(*j)->set_firstNondefiningDeclaration(func);
+                  {
+                    printf ("In SageInterface::updateDefiningNondefiningLinks(): (case 1) Calling j = %p set_firstNondefiningDeclaration(%p) \n",*j,func);
+
+                 // DQ (3/9/2012): Avoid setting the function to be it's own firstNondefiningDeclaration.
+                 // isSgFunctionDeclaration(*j)->set_firstNondefiningDeclaration(func);
+                    if (*j != func)
+                       {
+                         isSgFunctionDeclaration(*j)->set_firstNondefiningDeclaration(func);
+                       }
+                  }
              }
             else // is a following nondefining declaration, grab any other's first nondefining link then
              {
+               printf ("In SageInterface::updateDefiningNondefiningLinks(): (case 2) Calling func = %p set_firstNondefiningDeclaration(%p) \n",func,isSgFunctionDeclaration(*(sameFuncList.begin()))->get_firstNondefiningDeclaration());
                func->set_firstNondefiningDeclaration(isSgFunctionDeclaration(*(sameFuncList.begin()))->get_firstNondefiningDeclaration());
              }
         }

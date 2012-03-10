@@ -40,11 +40,17 @@ Unparser_Nameq::lookup_generated_qualified_name ( SgNode* referencedNode )
        // DQ (6/23/2011): This test fails this assertion: tests/roseTests/programAnalysisTests/testCallGraphAnalysis/test3.C
        // but allow it to pass as a test.
        // printf ("WARNING: referencedNode in Unparser_Nameq::lookup_generated_qualified_name() should be a valid pointer! \n");
-
+#if 0
+       // DQ (3/5/2012): Uncommenting this for debugging.
+          printf ("WARNING: referencedNode in Unparser_Nameq::lookup_generated_qualified_name() should be a valid pointer! \n");
+#endif
           return nameQualifier;
         }
      ROSE_ASSERT(referencedNode != NULL);
 
+#if 0
+     printf ("In Unparser_Nameq::lookup_generated_qualified_name(): referencedNode = %p = %s \n",referencedNode,referencedNode->class_name().c_str());
+#endif
      switch (referencedNode->variantT())
         {
           case V_SgInitializedName:
