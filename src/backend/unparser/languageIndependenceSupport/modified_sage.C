@@ -1268,12 +1268,27 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
   // DQ (2/4/2006): Need this case for friend class declarations
      if (decl_stmt->get_declarationModifier().isFriend())
         {
+#if 1
        // This assertion fails in test2004_116.C
        // ROSE_ASSERT(functionDeclaration != NULL);
           if (functionDeclaration == NULL)
-           {
-             curprint( "friend ");
-           }
+             {
+               curprint( "friend ");
+             }
+#else
+       // DQ (3/8/2012): We now handle a new design of templates as class derived from SgFunctionDeclaration, so this is a better implementation now.
+          ROSE_ASSERT(functionDeclaration != NULL);
+          ROSE_ASSERT(functionDeclaration->get_parent() != NULL);
+          ROSE_ASSERT(functionDeclaration->get_scope() != NULL);
+          if (functionDeclaration->get_parent() == functionDeclaration->get_scope())
+             {
+               curprint("friend ");
+             }
+            else
+             {
+               curprint("/* skip output of friend keyword */ ");
+             }
+#endif
         }
 
      if (functionDeclaration != NULL)
@@ -1286,7 +1301,8 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
                (specializationEnumValue == SgDeclarationStatement::e_partial_specialization);
 
        // DQ (2/2/2006): friend can't be output for a Template specialization declaration
-       // curprint( "/* isDeclarationOfTemplateSpecialization = " << (isDeclarationOfTemplateSpecialization ? "true" : "false") << " */ \n ");
+       // curprint((string("/* isDeclarationOfTemplateSpecialization = ") << ((isDeclarationOfTemplateSpecialization == true) ? string("true") : string("false")) << string(" */ \n "));
+          printf ("isDeclarationOfTemplateSpecialization = %s \n",isDeclarationOfTemplateSpecialization == true ? "true" : "false");
           if ( (decl_stmt->get_declarationModifier().isFriend() == true) &&
                (isDeclarationOfTemplateSpecialization == false) )
              {

@@ -764,17 +764,18 @@ HEADER_MEMBER_FUNCTION_TYPE_START
           void setDefaultFunc();
 #endif
       //! const access/set/unset member functions for member function type
-          int isConstFunc() const; // RV (2/1/2006): Made 'const' member
+          bool isConstFunc() const; // RV (2/1/2006): Made 'const' member
           void setConstFunc();
           void unsetConstFunc();
 
       //! volatile access/set/unset member functions for member function type
-          int isVolatileFunc() const; // RV (2/1/2006): Made 'const' member
+          bool isVolatileFunc() const; // RV (2/1/2006): Made 'const' member
           void setVolatileFunc();
           void unsetVolatileFunc();
-#if 0
-      //! volatile access/set/unset member functions for member function type
-          int isRestrictFunc();
+#if 1
+       // DQ (3/8/2012): Enabled the use of rescrict recorded in the function type.
+      //! restrict access/set/unset member functions for member function type
+          bool isRestrictFunc() const;
           void setRestrictFunc();
           void unsetRestrictFunc();
 #endif
@@ -3572,14 +3573,36 @@ SgMemberFunctionType::SgMemberFunctionType ( SgPartialFunctionType* ft )
 void
 SgMemberFunctionType::post_construction_initialization()
    {
-     p_class_type =0;
-     p_mfunc_specifier = 0;
+  // DQ (3/8/2012): We want to avoid resetting the data members (just set in the SgMemberFunctionType constructor).
+     printf ("In SgMemberFunctionType::post_construction_initialization(): avoid resetting the data members. \n");
+  // p_class_type =0;
+
+  // DQ (3/8/2012): We can't assert that this is true (likely because of how SgPartialFunctionType is used to build non-memb4r function types.
+  // ROSE_ASSERT(p_class_type != NULL);
+
+  // p_mfunc_specifier = 0;
+
+  // DQ (3/8/2012): Since we are not including support for restrict in the function type, don't allow it to be set (basic testing).
+  // If we discover that we need this then we will have to re-enable restrict support, else we can eliminate the e_restrict value
+  // in the enum type (either way this will be an improvement).
+  // ROSE_ASSERT((e_restrict && p_mfunc_specifier) == 0);
+
+  // DQ (3/10/2012): If this is non-zero then the SgPartialFunctionType should have somethin set internally.
+     if (p_mfunc_specifier != 0)
+        {
+          printf ("In SgMemberFunctionType::post_construction_initialization(): p_mfunc_specifier = %u isConstFunc()    = %s \n",p_mfunc_specifier,isConstFunc()    ? "true" : "false");
+          printf ("In SgMemberFunctionType::post_construction_initialization(): p_mfunc_specifier = %u isVolatileFunc() = %s \n",p_mfunc_specifier,isVolatileFunc() ? "true" : "false");
+          printf ("In SgMemberFunctionType::post_construction_initialization(): p_mfunc_specifier = %u isRestrictFunc() = %s \n",p_mfunc_specifier,isRestrictFunc() ? "true" : "false");
+       // ROSE_ASSERT(partialFunctionType->isConstFunc() == true || partialFunctionType->isVolatileFunc() == true);
+       // ROSE_ASSERT(isConstFunc() == true || isVolatileFunc() == true || isRestrictFunc() == true);
+          ROSE_ASSERT( (isConstFunc() == true) || (isVolatileFunc() == true) || (isRestrictFunc() == true) );
+        }
    }
 
 // static SgMemberFunctionType* createType(SgPartialFunctionType *);
 
 // RV (2/1/2006): Made a 'const' member function.
-int
+bool
 SgMemberFunctionType::isConstFunc() const
    { return (p_mfunc_specifier & e_const); }
 
@@ -3592,7 +3615,7 @@ SgMemberFunctionType::unsetConstFunc()
    { p_mfunc_specifier &= ~e_const; }
 
 // RV (2/1/2006): Made a 'volatile' member function.
-int
+bool
 SgMemberFunctionType::isVolatileFunc() const
    { return (p_mfunc_specifier & e_volatile); }
 
@@ -3603,6 +3626,22 @@ SgMemberFunctionType::setVolatileFunc()
 void
 SgMemberFunctionType::unsetVolatileFunc()
    { p_mfunc_specifier &= ~e_volatile; }
+
+
+// DQ (3/8/2012): Added support for restict on member function types.
+bool
+SgMemberFunctionType::isRestrictFunc() const
+   { return (p_mfunc_specifier & e_restrict); }
+
+void
+SgMemberFunctionType::setRestrictFunc()
+   { p_mfunc_specifier |= e_restrict; }
+
+void
+SgMemberFunctionType::unsetRestrictFunc()
+   { p_mfunc_specifier &= ~e_restrict; }
+
+
 
 SgName
 SgMemberFunctionType::get_mangled_name (void) const
@@ -3688,10 +3727,14 @@ SgMemberFunctionType::get_mangled (void) const
 
   // DQ (12/3/2011): Because of these member function calls this can't be refactored to be a static function.
   // Append modifiers
-     if (isConstFunc())
+     if (isConstFunc() == true)
           mangled_cls_tag << "_cf";
-     if (isVolatileFunc())
+     if (isVolatileFunc() == true)
           mangled_cls_tag << "_vf";
+
+  // DQ (3/8/2012): Added support for restrict on member function types.
+     if (isRestrictFunc() == true)
+          mangled_cls_tag << "_rf";
 
   // Mangle the function type without qualifiers
      SgName basic_func_type = SgFunctionType::get_mangled();

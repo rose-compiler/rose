@@ -37,7 +37,7 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
    {
   // DQ (6/24/2005): Fixup of defining and non-defining declaration pointers for each SgDeclarationStatement
 #if 0
-     printf ("In FixupAstDefiningAndNondefiningDeclarations::visit(node = %p = %s) \n",node,node->sage_class_name());
+      printf ("In FixupAstDefiningAndNondefiningDeclarations::visit(node = %p = %s) \n",node,node->class_name().c_str());
 #endif
 
   // DQ (2/21/2007): Modified to force SgVariableDeclaration IR nodes to follow the rules.
@@ -529,10 +529,10 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
           case V_SgNamespaceDeclarationStatement:
              {
             // This case is special, since there can be many declarations of the same namespace and 
-            // we one can include a definition, however we don't consider each be be THE defining 
+            // each one can include a definition, however we don't consider each be be THE defining 
             // declaration so we hold the pointer to the one of them (the first one) and return it 
             // using the get_firstNondefiningDeclaration() member function).  The scope of namespace
-            // is not held eplicitly since forward declarations of namespaces are not possible and so
+            // is not held explicitly since forward declarations of namespaces are not possible and so
             // the concept of scope can be computed (structurally via the parent pointer).
             // But the scope of any declaration which has multiple associated declaration (forward references)
             // can be different SgNamespaceDefinitionStatement (scopes).  This make testing a bit more

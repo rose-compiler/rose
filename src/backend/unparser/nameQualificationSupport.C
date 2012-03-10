@@ -2321,8 +2321,12 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
      SgTemplateClassDefinition* templateClassDefinition = isSgTemplateClassDefinition(n);
      if (templateClassDefinition != NULL)
         {
+#if 0
+       // DQ (3/5/2012): I think this is OK, since the SgTemplateClassDefinition is derived from the SgClassDefinition, 
+       // that case below will work well. This example is demonstrated in test2012_10.C.
        // DQ (11/20/2011): Debugging new use of SgTemplateClassDefinition (only used in new version of EDG 4.x support).
-          printf ("Name qualification of SgTemplateClassDefinition = %p not implemented (need and example to debug this case) \n",templateClassDefinition);
+          printf ("Name qualification of SgTemplateClassDefinition = %p not implemented, OK (no special handling is required, we be processed as a SgClassDefinition) (need and example to debug this case) \n",templateClassDefinition);
+#endif
 
        // DQ (11/20/2011): Commented out this assertion.
        // ROSE_ASSERT(false);

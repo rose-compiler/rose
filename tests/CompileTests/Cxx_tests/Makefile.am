@@ -7,6 +7,9 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 if ROSE_USE_EDG_VERSION_4_3
 
+# EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
+# $(TESTCODE_CURRENTLY_FAILING)
+
 EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
 test_CplusplusMacro_Cpp.C \
 test2001_01.C \
@@ -138,6 +141,7 @@ test2004_73.C \
 test2004_74.C \
 test2004_75.C \
 test2004_76.C \
+test2004_77.C \
 test2004_80.C \
 test2004_81.C \
 test2004_83.C \
@@ -659,9 +663,57 @@ test2005_09.C \
  test2012_06.C \
  test2012_07.C \
  test2012_08.C \
-test2006_125.C 
+ test2012_09.C \
+ test2012_10.C \
+ test2012_11.C \
+ test2012_12.C \
+ test2012_13.C \
+ test2012_14.C \
+ test2012_15.C \
+ test2012_16.C \
+ test2012_17.C \
+ test2012_18.C \
+ test2012_19.C \
+ test2012_20.C \
+ test2012_21.C \
+ test2012_22.C \
+ test2012_23.C \
+ test2012_24.C \
+ test2012_25.C \
+ test2012_26.C \
+ test2012_27.C \
+ test2012_28.C \
+ test2012_29.C \
+test2006_125.C \
+$(NEW_PASSING_FILES)
 
-# $(TESTCODE_CURRENTLY_FAILING)
+# DQ (3/5/2012): New passing files
+NEW_PASSING_FILES = \
+test2004_143.C \
+test2005_79.C \
+test2005_89.C \
+test2005_167.C \
+test2005_178.C \
+test2006_74.C \
+test2006_86.C \
+test2006_89.C \
+test2006_92.C \
+test2006_94.C \
+test2006_152.C \
+test2006_153.C \
+test2007_46.C \
+test2007_158.C \
+test2008_08.C \
+test2010_19.C \
+test2011_54.C \
+test2011_55.C \
+test2011_56.C \
+test2011_57.C \
+test2011_64.C \
+test2011_66.C \
+test2011_74.C 
+
+#$(TESTCODE_CURRENTLY_FAILING)
 
 
 # DQ (2/15/2012): These test codes fail on OSX only.
@@ -690,7 +742,6 @@ endif
 #
 if ROSE_USE_EDG_VERSION_4_3
 TESTCODE_CURRENTLY_FAILING = \
-test2004_77.C \
 test2004_78.C \
 test2004_79.C \
 test2004_85.C \
@@ -705,7 +756,6 @@ test2004_128.C \
 test2004_129.C \
 test2004_138.C \
 test2004_141.C \
-test2004_143.C \
 test2004_145.C \
 test2004_149.C \
 test2004_150.C \
@@ -731,8 +781,6 @@ test2005_60.C \
 test2005_63.C \
 test2005_68.C \
 test2005_73.C \
-test2005_79.C \
-test2005_89.C \
 test2005_94.C \
 test2005_95.C \
 test2005_98.C \
@@ -763,9 +811,7 @@ test2005_143.C \
 test2005_150.C \
 test2005_152.C \
 test2005_155.C \
-test2005_167.C \
 test2005_173.C \
-test2005_178.C \
 test2005_181.C \
 test2005_193.C \
 test2006_03.C \
@@ -780,30 +826,23 @@ test2006_54.C \
 test2006_58.C \
 test2006_67.C \
 test2006_73.C \
-test2006_74.C \
 test2006_78.C \
 test2006_79.C \
 test2006_81.C \
 test2006_85.C \
-test2006_89.C \
 test2006_90.C \
-test2006_92.C \
-test2006_94.C \
 test2006_119.C \
 test2006_122.C \
 test2006_124.C \
 test2006_126.C \
 test2006_129.C \
 test2006_141.C \
-test2006_152.C \
-test2006_153.C \
 test2006_185.C \
 test2007_04.C \
 test2007_29.C \
 test2007_38.C \
 test2007_40.C \
 test2007_41.C \
-test2007_46.C \
 test2007_47.C \
 test2007_50.C \
 test2007_83.C \
@@ -812,10 +851,8 @@ test2007_137.C \
 test2007_140.C \
 test2007_141.C \
 test2007_150.C \
-test2007_158.C \
 test2007_165.C \
 test2007_169.C \
-test2008_08.C \
 test2009_19.C \
 test2009_21.C \
 test2009_24.C \
@@ -827,7 +864,6 @@ test2010_03.C \
 test2010_04.C \
 test2010_05.C \
 test2010_06.C \
-test2010_19.C \
 test2011_26.C \
 test2011_27.C \
 test2011_31.C \
@@ -835,19 +871,13 @@ test2011_32.C \
 test2011_35.C \
 test2011_49.C \
 test2011_53.C \
-test2011_54.C \
-test2011_55.C \
-test2011_56.C \
-test2011_57.C \
 test2011_59.C \
 test2011_60.C \
 test2011_61.C \
 test2011_62.C \
-test2011_64.C \
 test2011_70.C \
 test2011_72.C \
 test2011_73.C \
-test2011_74.C \
 test2011_75.C \
 test2011_76.C \
 test2011_77.C \
@@ -864,17 +894,12 @@ test2011_136.C \
 test2011_139.C \
 test2011_141.C \
 test2011_142.C \
- test2012_09.C \
- test2012_10.C \
- test2012_11.C \
- test2012_12.C \
   test2005_112.C \
    test2005_154.C \
    test2005_163.C \
    test2005_179.C \
    test2005_194.C \
    test2006_84.C \
-   test2006_86.C \
    test2006_151.C \
    test2006_159.C \
    test2007_01.C \
@@ -891,7 +916,6 @@ test2010_24.C \
  test2009_37.C \
  test2009_31.C \
  test2011_65.C \
- test2011_66.C \
  test2011_121.C 
 
 # DQ (2/19/2012): These appear to fail only sometimes and were noticed just before going on travel (test with valgrind).

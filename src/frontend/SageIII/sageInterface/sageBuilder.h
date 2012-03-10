@@ -697,7 +697,8 @@ void setTemplateNameInTemplateInstantiations( SgFunctionDeclaration* func, const
 template <class actualFunction>
 actualFunction*
 // buildNondefiningFunctionDeclaration_T (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, bool isMemberFunction, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL, unsigned int functionConstVolatileFlags = 0, bool buildTemplateInstantiation = false);
-buildNondefiningFunctionDeclaration_T (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, bool isMemberFunction, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL, unsigned int functionConstVolatileFlags = 0);
+// buildNondefiningFunctionDeclaration_T (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, bool isMemberFunction, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL, unsigned int functionConstVolatileFlags = 0);
+buildNondefiningFunctionDeclaration_T (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, bool isMemberFunction, SgScopeStatement* scope, SgExprListExp* decoratorList, unsigned int functionConstVolatileFlags);
 
 //! Build a prototype for a function, handle function type, symbol etc transparently
 SgFunctionDeclaration *
@@ -723,11 +724,11 @@ SgMemberFunctionDeclaration *
 buildNondefiningMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL, unsigned int functionConstVolatileFlags = 0, bool buildTemplateInstantiation = false);
 
 SgTemplateMemberFunctionDeclaration*
-buildNondefiningTemplateMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL, unsigned int functionConstVolatileFlags = 0);
+buildNondefiningTemplateMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope = NULL, SgExprListExp* decoratorList = NULL, unsigned int functionConstVolatileFlags = 0);
 
 // DQ (12/1/2011): Adding support for template declarations in the AST.
 SgTemplateMemberFunctionDeclaration*
-buildDefiningTemplateMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL, unsigned int functionConstVolatileFlags = 0 );
+buildDefiningTemplateMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope = NULL, SgExprListExp* decoratorList = NULL, unsigned int functionConstVolatileFlags = 0 );
 
 ////! Build a prototype member function declaration
 //SgMemberFunctionDeclaration*
@@ -735,15 +736,15 @@ buildDefiningTemplateMemberFunctionDeclaration (const SgName & name, SgType* ret
 
 //! Build a defining ( non-prototype) member function declaration
 SgMemberFunctionDeclaration*
-buildDefiningMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL, bool buildTemplateInstantiation = false);
+buildDefiningMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope = NULL, SgExprListExp* decoratorList = NULL, bool buildTemplateInstantiation = false, unsigned int functionConstVolatileFlags = 0);
 
 //! Build a defining ( non-prototype) member function declaration from a SgMemberFunctionType
 SgMemberFunctionDeclaration*
-buildDefiningMemberFunctionDeclaration (const SgName & name, SgMemberFunctionType* func_type, SgFunctionParameterList* paralist, SgScopeStatement* scope, SgExprListExp* decoratorList = NULL);
+buildDefiningMemberFunctionDeclaration (const SgName & name, SgMemberFunctionType* func_type, SgFunctionParameterList* paralist, SgScopeStatement* scope, SgExprListExp* decoratorList = NULL /* , unsigned int functionConstVolatileFlags = 0 */);
 
 //! Build a defining ( non-prototype) member function declaration from a SgMemberFunctionType
 SgMemberFunctionDeclaration*
-buildDefiningMemberFunctionDeclaration (const SgName & name, SgMemberFunctionType* func_type, SgScopeStatement* scope, SgExprListExp* decoratorList = NULL);
+buildDefiningMemberFunctionDeclaration (const SgName & name, SgMemberFunctionType* func_type, SgScopeStatement* scope, SgExprListExp* decoratorList = NULL /* , unsigned int functionConstVolatileFlags = 0 */);
 
 //! Build a prototype for an existing member function declaration (defining or nondefining is fine) 
 // SgMemberFunctionDeclaration*
@@ -754,7 +755,8 @@ buildNondefiningMemberFunctionDeclaration (const SgMemberFunctionDeclaration* fu
 //! A template function for function declaration builders
 template <class actualFunction>
 actualFunction*
-buildDefiningFunctionDeclaration_T (const SgName & name, SgType* return_type, SgFunctionParameterList * parlist, bool isMemberFunction, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL);
+// buildDefiningFunctionDeclaration_T (const SgName & name, SgType* return_type, SgFunctionParameterList * parlist, bool isMemberFunction, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL, unsigned int functionConstVolatileFlags = 0);
+buildDefiningFunctionDeclaration_T (const SgName & name, SgType* return_type, SgFunctionParameterList * parlist, bool isMemberFunction, SgScopeStatement* scope, SgExprListExp* decoratorList, unsigned int functionConstVolatileFlags);
 
 //! Build a function declaration with a function body
 SgFunctionDeclaration*
@@ -910,10 +912,12 @@ SgDeleteExp* buildDeleteExp(SgExpression *target, bool is_array = false, bool ne
 SgDeleteExp* buildDeleteExp_nfi(SgExpression *target, bool is_array = false, bool need_global_specifier = false, SgFunctionDeclaration *deleteOperatorDeclaration = NULL);
 
 //! Build a class definition scope statement
-SgClassDefinition* buildClassDefinition(SgClassDeclaration *d = NULL);
+// SgClassDefinition* buildClassDefinition(SgClassDeclaration *d = NULL);
+SgClassDefinition* buildClassDefinition(SgClassDeclaration *d = NULL, bool buildTemplateInstantiation = false);
 
 //! Build a class definition scope statement
-SgClassDefinition* buildClassDefinition_nfi(SgClassDeclaration *d = NULL);
+// SgClassDefinition* buildClassDefinition_nfi(SgClassDeclaration *d = NULL);
+SgClassDefinition* buildClassDefinition_nfi(SgClassDeclaration *d = NULL, bool buildTemplateInstantiation = false);
 
 // DQ (11/19/2011): Added more template declaration support.
 //! Build a template class definition statement
