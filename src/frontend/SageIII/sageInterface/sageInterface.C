@@ -9505,7 +9505,7 @@ PreprocessingInfo* SageInterface::attachComment(
              }
             else
              {
-               if (is_Cxx_language())
+               if (is_Cxx_language() || is_Java_language())
                   {
                     mytype = PreprocessingInfo::CplusplusStyleComment;
                  // comment = "// "+ content;
