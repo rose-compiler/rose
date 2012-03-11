@@ -11,7 +11,11 @@ LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 OPENCL_NO_BUILT_IN_CODES = 
 
-OPENCL_CODES = 
+OPENCL_CODES = \
+    transpose_kernel.cl \
+    nbody.cl \
+    nbody_cpu.cl \
+    nbody_gpu.cl
 
 TESTCODES = $(OPENCL_NO_BUILT_IN_CODES) $(OPENCL_CODES)
 
