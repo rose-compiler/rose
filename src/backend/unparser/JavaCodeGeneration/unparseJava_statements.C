@@ -546,7 +546,7 @@ Unparse_Java::unparseInitializedName(SgInitializedName* init_name, SgUnparse_Inf
     unparseName(init_name->get_name(), info);
 
     if (init_name->get_initializer() != NULL) {
-        curprint(" ");
+        curprint(" = ");
         unparseExpression(init_name->get_initializer(), info);
     }
 }
@@ -572,8 +572,8 @@ Unparse_Java::unparseForInitStmt (SgStatement* stmt, SgUnparse_Info& info) {
                     unparseName(init_name->get_name(), info);
 
                     if (init_name->get_initializer() != NULL) {
-                        curprint(" ");
-                       unparseExpression(init_name->get_initializer(), info);
+                        curprint(" = ");
+                        unparseExpression(init_name->get_initializer(), info);
                     }
                }
             }
@@ -707,6 +707,9 @@ Unparse_Java::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      SgMemberFunctionDeclaration* mfuncdecl_stmt = isSgMemberFunctionDeclaration(stmt);
      ROSE_ASSERT(mfuncdecl_stmt != NULL);
 
+     // charles4 :  2/29/2012   I don't think this is needed!
+     // REMOVE THIS
+     /*
      //TODO should there be forward declarations or nondefining declarations?
      if (mfuncdecl_stmt->isForward()) {
          //cout << "unparser: skipping forward mfuncdecl: "
@@ -719,6 +722,7 @@ Unparse_Java::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
               << endl;
          return;
      }
+     */
 
      unparseDeclarationModifier(mfuncdecl_stmt->get_declarationModifier(), info);
      unparseFunctionModifier(mfuncdecl_stmt->get_functionModifier(), info);
@@ -755,8 +759,12 @@ Unparse_Java::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
          unparseInitializedName(*name_it, info);
      }
 
-     curprint(") ");
-     SgFunctionDefinition *function_definition = mfuncdecl_stmt->get_definition();
+     if (mfuncdecl_stmt -> isForward()) {
+         curprint(");");
+     }
+     else {
+         curprint(") ");
+         SgFunctionDefinition *function_definition = mfuncdecl_stmt->get_definition();
 //
 // charles4 10/10/2011: For some reason, when either of the 2 entry points below are invoked,
 // the body of the function is not processed for the generated constructor... Why?
@@ -764,7 +772,8 @@ Unparse_Java::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 //     unparseStatement(function_definition, info);
 //     unparseFuncDefnStmt(function_definition, info);
 //
-     unparseBasicBlockStmt(function_definition -> get_body(), info);
+         unparseBasicBlockStmt(function_definition -> get_body(), info);
+     }
 
 #if OUTPUT_DEBUGGING_FUNCTION_NAME
      printf ("Inside of unparseMFuncDeclStmt() name = %s  transformed = %s prototype = %s \n",
@@ -808,24 +817,40 @@ Unparse_Java::initializeDeclarationsFromParent (
 void
 Unparse_Java::unparseClassDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
-     SgClassDeclaration* classdecl_stmt = isSgClassDeclaration(stmt);
+     SgClassDeclaration *classdecl_stmt = isSgClassDeclaration(stmt);
      ROSE_ASSERT(classdecl_stmt != NULL);
 
      unparseDeclarationModifier(classdecl_stmt->get_declarationModifier(), info);
 
-     curprint("class ");
+     curprint(classdecl_stmt -> get_explicit_interface() ? "interface " : "class ");
+
      unparseName(classdecl_stmt->get_name(), info);
 
      SgClassDefinition* class_def = classdecl_stmt->get_definition();
      ROSE_ASSERT(class_def != NULL);
      SgBaseClassPtrList& bases = class_def->get_inheritances();
-     ROSE_ASSERT(bases.size() <= 1 && "java classes only support single inheritance");
-     if (bases.size() == 1) {
-         curprint(" extends ");
-         unparseBaseClass(bases[0], info);
+     int first_index = 0;
+     if (bases.size() > 0) {
+         SgBaseClass *super_class = isSgBaseClass(bases[0]);
+         ROSE_ASSERT (super_class);
+         if (! super_class -> get_base_class() -> get_explicit_interface()) {
+             first_index++;
+             curprint(" extends ");
+             unparseBaseClass(super_class, info);
+         }
      }
 
-     //todo 'implements <typelist>'
+     if (bases.size() - first_index > 0) {
+         curprint(" implements ");
+         for (int i = first_index; i < bases.size(); i++) {
+             SgBaseClass *interface = isSgBaseClass(bases[i]);
+             ROSE_ASSERT(interface -> get_base_class() -> get_explicit_interface());
+             unparseBaseClass(interface, info);
+             if (i + 1 > bases.size()) {
+                 curprint(", ");
+             }
+         }
+     }
 
      unparseStatement(classdecl_stmt->get_definition(), info);
    }
