@@ -1212,12 +1212,16 @@ HEADER_TYPE_MODIFIER_START
                e_gnu_attribute__nonnull__            = 27,/*!< GNU specific attribute for function type (GNU extension) */
                e_gnu_attribute__sentinel__           = 28,/*!< GNU specific attribute for function type (GNU extension) */
 
-            // TV (02/27/2012): Address space modifer and OpenCL related Modifier
+            // TV (02/27/2012): Address space modifer
                e_address_space__                     = 29,/*!< address space modifier, get_address_space_value() give the associated param */
 
+            // TV (02/27/2012): OpenCL related Modifier
                e_ocl_global__                        = 30,/*!< OpenCL specific address space modifier */
                e_ocl_local__                         = 31,/*!< OpenCL specific address space modifier */
                e_ocl_constant__                      = 32,/*!< OpenCL specific address space modifier */
+
+            // TV (03/03/2012): Address space modifer
+               e_vector_type__                       = 33,/*!< GCC vector type attribute and other vector extentions */
 
             // Last attribute enum (used for internal bounds checking)
                e_last_modifier /*!< last value (upper bound on range of values, used in error checking) */
@@ -1457,6 +1461,10 @@ HEADER_TYPE_MODIFIER_START
           bool isOpenclConstant() const;
           void setOpenclConstant();
           void unsetOpenclConstant();
+
+          bool isVectorType() const;
+          void setVectorType();
+          void unsetVectorType();
 
           std::string displayString() const;
           void display ( std::string label ) const;
@@ -3175,6 +3183,10 @@ bool SgTypeModifier::isOpenclConstant() const { return checkBit(e_ocl_constant__
 void SgTypeModifier::setOpenclConstant()      { setBit(e_ocl_constant__,p_modifierVector); }
 void SgTypeModifier::unsetOpenclConstant()    { unsetBit(e_ocl_constant__,p_modifierVector); }
 
+bool SgTypeModifier::isVectorType() const { return checkBit(e_vector_type__,p_modifierVector); }
+void SgTypeModifier::setVectorType()      { setBit(e_vector_type__,p_modifierVector); }
+void SgTypeModifier::unsetVectorType()    { unsetBit(e_vector_type__,p_modifierVector); }
+
 string
 $CLASSNAME::displayString() const
    {
@@ -3245,6 +3257,9 @@ bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs)
                (lhs.isOpenclGlobal()   == rhs.isOpenclGlobal()    ) &&
                (lhs.isOpenclLocal()    == rhs.isOpenclLocal()    ) &&
                (lhs.isOpenclConstant() == rhs.isOpenclConstant() ) &&
+           // Vector Type
+               (lhs.isVectorType()    == rhs.isVectorType()    ) &&
+               (lhs.get_vector_size() == rhs.get_vector_size() ) &&
 		   true;
 }
 
@@ -4101,7 +4116,8 @@ HEADER_INITIALIZED_NAME_START
                e_gnu_attribute__nocommon__               = 4, /*!< GNU specific attribute for (GNU extension) */
                e_gnu_attribute__transparent_union__      = 5, /*!< GNU specific attribute for (GNU extension) */
                e_gnu_attribute__weakref__                = 6,/*!< GNU specific attribute for (GNU extension) */
-               e_gnu_attribute__packed__                 = 6,/*!< GNU specific attribute for (GNU extension) */
+            // Packed was same value than weakref
+               e_gnu_attribute__packed__                 = 7,/*!< GNU specific attribute for (GNU extension) */
                e_last_gnu_variable_attribute /*!< last value (upper bound on range of values, used in error checking) */
              };
 
