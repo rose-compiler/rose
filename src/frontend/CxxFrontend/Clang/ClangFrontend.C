@@ -12,6 +12,8 @@
 #define DEBUG_TRAVERSE_DECL 0
 #define DEBUG_ARGS 0
 
+extern bool roseInstallPrefix(std::string&);
+
 int clang_main(int argc, char ** argv, SgSourceFile& sageFile) {
   // 0 - Analyse Cmd Line
 
@@ -97,21 +99,44 @@ int clang_main(int argc, char ** argv, SgSourceFile& sageFile) {
                                                        c_config_include_dirs_array + sizeof(c_config_include_dirs_array) / sizeof(const char*)
                                                      );
 
+    std::string rose_include_path;
+    bool in_install_tree = roseInstallPrefix(rose_include_path);
+    if (in_install_tree) {
+        rose_include_path += "/include-staging/";
+    }
+    else {
+        rose_include_path = std::string(ROSE_AUTOMAKE_TOP_BUILDDIR) + "/include-staging/";
+    }
+
+    std::vector<std::string>::iterator it;
+    for (it = c_config_include_dirs.begin(); it != c_config_include_dirs.end(); it++)
+        if (it->length() > 0 && (*it)[0] != '/')
+            *it = rose_include_path + *it;
+    for (it = cxx_config_include_dirs.begin(); it != cxx_config_include_dirs.end(); it++)
+        if (it->length() > 0 && (*it)[0] != '/')
+            *it = rose_include_path + *it;
+
+    inc_dirs_list.push_back(rose_include_path + "clang/");
+
+
     // FIXME add ROSE path to gcc headers...
     switch (language) {
         case ClangToSageTranslator::C:
             inc_dirs_list.insert(inc_dirs_list.begin(), c_config_include_dirs.begin(), c_config_include_dirs.end());
+            inc_list.push_back("clang-builtin-c.h");
             break;
         case ClangToSageTranslator::CPLUSPLUS:
             inc_dirs_list.insert(inc_dirs_list.begin(), cxx_config_include_dirs.begin(), cxx_config_include_dirs.end());
+            inc_list.push_back("clang-builtin-cpp.hpp");
             break;
         case ClangToSageTranslator::CUDA:
             inc_dirs_list.insert(inc_dirs_list.begin(), cxx_config_include_dirs.begin(), cxx_config_include_dirs.end());
+            inc_list.push_back("clang-builtin-cuda.hpp");
             break;
         case ClangToSageTranslator::OPENCL:
 //          inc_dirs_list.insert(inc_dirs_list.begin(), c_config_include_dirs.begin(), c_config_include_dirs.end());
             // FIXME get the path right
-            inc_list.push_back("/home/tristan/gradschool/ROSE/build-rose/include-staging/preinclude-opencl.h");
+            inc_list.push_back("clang-builtin-opencl.h");
             break;
         case ClangToSageTranslator::OBJC:
         default:
@@ -498,8 +523,9 @@ SgSymbol * ClangToSageTranslator::GetSymbolFromSymbolTable(clang::NamedDecl * de
         }
         case clang::Decl::Function:
         {
-            SgNode * tmp_type = Traverse(((clang::FunctionDecl *)decl)->getType().getTypePtr());
+            SgType * tmp_type = buildTypeFromQualifiedType(((clang::FunctionDecl *)decl)->getType());
             SgFunctionType * type = isSgFunctionType(tmp_type);
+            ROSE_ASSERT(type);
             it = SageBuilder::ScopeStack.rbegin();
             while (it != SageBuilder::ScopeStack.rend() && sym == NULL) {
                 sym = (*it)->lookup_function_symbol(name, type);
@@ -607,7 +633,9 @@ SgType * ClangToSageTranslator::buildTypeFromQualifiedType(const clang::QualType
         hasObjCGCAttr
         hasObjCLifetime
 */
-        return SgModifierType::insertModifierTypeIntoTypeTable(modified_type);
+        modified_type = SgModifierType::insertModifierTypeIntoTypeTable(modified_type);
+
+        return modified_type;
     }
     else {
         return type;
@@ -1370,6 +1398,13 @@ bool ClangToSageTranslator::VisitFunctionDecl(clang::FunctionDecl * function_dec
 
     ROSE_ASSERT(sg_function_decl->get_firstNondefiningDeclaration() != NULL);
 
+    SgSymbol * symbol = GetSymbolFromSymbolTable(function_decl);
+    if (symbol == NULL) {
+        SgFunctionSymbol * func_sym = new SgFunctionSymbol(isSgFunctionDeclaration(sg_function_decl->get_firstNondefiningDeclaration()));
+        SageBuilder::topScopeStack()->insert_symbol(name, func_sym);        
+    }
+//  ROSE_ASSERT(GetSymbolFromSymbolTable(function_decl) != NULL);
+
     *node = sg_function_decl;
 
     return VisitDecl(function_decl, node) && res;
@@ -1919,6 +1954,12 @@ bool ClangToSageTranslator::VisitDeclRefExpr(clang::DeclRefExpr * decl_ref_expr,
         if (tmp_decl != NULL) {
             sym = GetSymbolFromSymbolTable(decl_ref_expr->getDecl());
         }
+        // FIXME hack Traverse have added the symbol but we cannot find it (probably: problem with type and function lookup)
+        if (sym == NULL && isSgFunctionDeclaration(tmp_decl) != NULL) {
+            sym = new SgFunctionSymbol(isSgFunctionDeclaration(tmp_decl));
+            sym->set_parent(tmp_decl);
+        }
+        
     }
 
     if (sym != NULL) { // Not else if it was NULL we have try to traverse it....
@@ -1941,12 +1982,12 @@ bool ClangToSageTranslator::VisitDeclRefExpr(clang::DeclRefExpr * decl_ref_expr,
         else if (sym != NULL) {
             std::cerr << "Runtime error: Unknown type of symbol for a declaration reference." << std::endl;
             std::cerr << "    sym->class_name() = " << sym->class_name()  << std::endl;
-            res = false;
+            ROSE_ASSERT(false);
         }
     }
     else {
          std::cerr << "Runtime error: Cannot find the symbol for a declaration reference (even after trying to buil th declaration)" << std::endl;
-         res = false;
+         ROSE_ASSERT(false);
     }
 
     return VisitExpr(decl_ref_expr, node) && res;

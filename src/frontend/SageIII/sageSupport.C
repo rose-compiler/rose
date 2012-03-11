@@ -3447,6 +3447,8 @@ static void makeSysIncludeList(const Rose_STL_Container<string>& dirs, Rose_STL_
    }
 
 void SgFile::build_CLANG_CommandLine ( vector<string> & inputCommandLine, vector<string> & argv, int fileNameIndex ) {
+    // It filters Rose and Edg specific parameters and fixes the pathes.
+
     std::vector<std::string> inc_dirs_list;
     std::vector<std::string> define_list;
     std::string input_file;
@@ -3489,9 +3491,6 @@ void SgFile::build_CLANG_CommandLine ( vector<string> & inputCommandLine, vector
             input_file = current_arg;
         }
     }
-
-    // TODO add system include dirs 
-    // TODO add system define 
 
     std::vector<std::string>::iterator it_str;
     for (it_str = define_list.begin(); it_str != define_list.end(); it_str++)
