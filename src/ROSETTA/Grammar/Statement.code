@@ -859,7 +859,9 @@ template <class Elemtype>
 inline bool
 StatementListInsertChild( SgStatement *parent, Rose_STL_Container<Elemtype*>& l,  SgStatement *target, 
                           SgStatement *n, bool inFront, bool extractFromBasicBlock, bool removeCurrent)
-   {
+   { // insert statement n before or after a target statement. The target statement should be one element of the statement list, l
+     // if removeCurrent is true, remove the target statement
+     // if extractFromBasicBlock is true AND n is a basic block, insert statements from n
 #if 0
      printf ("In StatementListInsertChild: l.size() = %zu \n",l.size());
      printf ("In StatementListInsertChild: inFront  = %s \n",inFront ? "true" : "false");
@@ -949,7 +951,7 @@ StatementListInsertChild( SgStatement *parent, Rose_STL_Container<Elemtype*>& l,
                        }
                   }
                  else
-                  {
+                  { // extract statements from n ,which is a basic block
                     SgStatementPtrList& nl = bn->get_statements();
                     for (SgStatementPtrList::iterator pp = nl.begin(); pp != nl.end(); ++pp)
                        {
@@ -3286,8 +3288,8 @@ SgStatement::remove_statement(SgStatement *target)
      bool r = replace_child(target, 0);
      assert(r);
    }
-
-void
+//! Insert newstmt before or after the target statement, which should be a child statement of this statement
+void 
 SgStatement::insert_statement(SgStatement* target, SgStatement* newstmt, bool inFront)
    {
      bool r = insert_child( target, newstmt, inFront, false);
@@ -7697,7 +7699,9 @@ SgBasicBlock::replace_child(SgStatement *target,SgStatement *newstmt, bool extra
    {
      return  StatementListInsertChild( this, p_statements, target, newstmt, true, extractBasicBlock, true);
    }
-
+//! insert newstmt before or after target. If extractBasicBlock is true AND newstmt is a basic
+//block, insert statements from newstmt instead of inserting newstmt.
+//target should be a child statement within this SgBasicBlock.
 bool
 SgBasicBlock::insert_child(SgStatement* target, SgStatement* newstmt, bool inFront, bool extractBasicBlock)
    {

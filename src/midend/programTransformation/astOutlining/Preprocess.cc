@@ -23,9 +23,26 @@ using namespace std;
 // a lookup table to avoid inserting headers more than once for a file
 static std::map<std::string, bool> fileHeaderMap; 
 
+void Outliner::Preprocess::checkAndPatchUpOptions()
+{
+  // useStructureWrapper is a sub option of useParameterWrapper
+  // Setting useStructureWrapper means useParameterWrapper should be true also
+  if (useStructureWrapper && ! useParameterWrapper)
+  {
+    cout<<"Warning: Outliner::useParameterWrapper is automatically set to be true since useStructureWrapper is set."<<endl;
+    useParameterWrapper = true;
+  }
+
+  //TODO  add other checks and patch up  
+  
+}
+
+
 SgBasicBlock *
 Outliner::Preprocess::preprocessOutlineTarget (SgStatement* s)
 {
+  checkAndPatchUpOptions();
+
   // insert a header to support outlining for auto tuning
   if (use_dlopen)
   {

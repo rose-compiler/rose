@@ -174,8 +174,9 @@ CommandlineProcessing::generateArgcArgvFromList ( Rose_STL_Container<string> arg
 #endif
      ROSE_ASSERT (argv == NULL);
      argc = argList.size();
-     argv = (char**) malloc (argc * sizeof(char**));
+     argv = (char**) malloc ((argc+1) * sizeof(char**));
      ROSE_ASSERT (argv != NULL);
+     argv[argc] = NULL;
      for (int i=0; i < argc; i++)
         {
        // DQ (9/25/2007): Moved from std::list to std::vector.

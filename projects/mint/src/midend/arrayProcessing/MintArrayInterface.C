@@ -960,7 +960,8 @@ void MintArrayInterface::getArrayReferenceList(SgNode* kernel_body,
 	    {
 	      string i_name_str = i_name->get_name().str();
 
-	      if(i_name_str.find(SHARED_BLOCK) == - 1) 
+	      //if(i_name_str.find(SHARED_BLOCK) == - 1) 
+	      if(i_name_str.find(SHARED_BLOCK) == string::npos) 
 		 {
 		   //this is the first time the var appears
 		   if(refList.find(i_name) == refList.end())

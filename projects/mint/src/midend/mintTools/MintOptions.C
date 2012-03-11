@@ -5,6 +5,9 @@
 #include <cassert>
 #include <iostream>
 #include <cstdio>
+#include <cassert>
+#include <cstdlib>
+#include <cstring>
 
 using namespace std;
 
@@ -17,18 +20,30 @@ MintOptions* MintOptions::GetInstance()
   return inst;
 }
 
+static void allocAndCopyStr(char** dest, const char* src)
+{
+  *dest = (char*) malloc((strlen(src)+1)*sizeof(char));
+  if (strlen(src)!=0)
+   assert (*dest != NULL);
+  strcpy (*dest, src);
+  assert (strlen(src) == strlen (*dest));
+}
 
 void  MintOptions::setInternalCommandLineArgs(int &argc, char* argv[])
 {
   //for openmp lowering
-  argv[argc]= "-rose:openmp:ast_only";
+//  argv[argc]= "-rose:openmp:ast_only";
+  allocAndCopyStr (& (argv[argc]), "-rose:openmp:ast_only");
   argc++;
 
   //we need to linearize arrays on the device
-  argv[argc]= "-linearize";
+  //argv[argc]= "-linearize";
+  allocAndCopyStr (& (argv[argc]), "-linearize");
+  
   argc++;
 
-  argv[argc]= "-opt:useSameIndex";
+  //argv[argc]= "-opt:useSameIndex";
+  allocAndCopyStr (& (argv[argc]), "-opt:useSameIndex");
   argc++;
 
 }
@@ -79,7 +94,7 @@ int MintOptions::getNumberOfSharedMemPlanes()
 {
   vector<string>::const_iterator config = CmdOptions::GetInstance()->GetOptionPosition("-opt:shared");
 
-  int numplanes=0;
+  size_t numplanes=0;
 
   if (config == CmdOptions::GetInstance()->opts.end())
     return 0;
