@@ -98,25 +98,8 @@ public:
 
 extern ComponentStack astJavaComponentStack;
 
-// Remove this!
-// Global stack of expressions 
-//extern std::list<SgExpression*> astJavaExpressionStack;
-
 // Global stack of types
 extern std::list<SgType*> astJavaTypeStack;
-
-// Remove this!
-// Global stack of statements
-//extern std::list<SgStatement*> astJavaStatementStack;
-
-// Simplifying type for the setSourcePosition() functions
-// typedef std::vector<Token_t*> TokenListType;
-
-// Global stack of IR nodes
-extern std::list<SgNode*> astJavaNodeStack;
-
-// Attribute spec for holding attributes
-// extern std::list<int> astAttributeSpecStack;
 
 // Global list of implicit classes
 extern std::list<SgName> astJavaImplicitClassList;
@@ -124,31 +107,10 @@ extern std::list<SgName> astJavaImplicitClassList;
 // Global stack of SgInitializedName IR nodes (used for processing function parameters)
 extern std::list<SgInitializedName*> astJavaInitializedNameStack;
 
-// Global stack of source code positions. The advantage of a stack is that we could 
-// always reference the top of the stack, and monitor the depth of the stack, and make
-// sure that we never deleted the last entry in the stack until the end of the program.
-extern std::list<JavaSourceCodePosition*> astJavaSourceCodePositionStack;
-
-
 SgGlobal* getGlobalScope();
 
 // Function used by SgType::getCurrentScope()
 bool emptyJavaStateStack();
-
-// *********************************************
-// Support for source code position???
-// *********************************************
-VisitorContext * getCurrentContext();
-void pushContextStack(VisitorContext * ctx);
-VisitorContext * popContextStack();
-
-template <class VisitorContextType>
-VisitorContextType * popContextStack_T() {
-        VisitorContext * ctx_ = popContextStack();
-        ROSE_ASSERT ((dynamic_cast<VisitorContextType*>(ctx_) != NULL) && "ERROR: Should have context on stack");
-        VisitorContextType * ctx = (VisitorContextType*) ctx_;
-        return ctx;
-}
 
 bool isStatementContext(VisitorContext * ctx);
 
@@ -198,7 +160,7 @@ void buildClass (const SgName & className, Token_t* token);
 void buildImplicitClass (const SgName & className);
 void buildClassSupport (const SgName & className, bool implicitClass, Token_t* token);
 
-SgVariableDeclaration* buildSimpleVariableDeclaration(const SgName & name);
+SgVariableDeclaration* buildSimpleVariableDeclaration(const SgName & name, SgType *type);
 
 std::list<SgName> generateQualifierList (const SgName & classNameWithQualification);
 SgName stripQualifiers (const SgName & classNameWithQualification);
@@ -209,15 +171,6 @@ SgClassSymbol* lookupSymbolFromQualifiedName(std::string className);
 SgClassType* lookupTypeFromQualifiedName(std::string className);
 
 
-// Remove this!
-//! Support function handles the complexity of handling append where the current scope is a SgIfStmt.
-//void appendStatement(SgStatement* statement);
-
-// Remove this!
-//! Put the astJavaStatementStack into the current scope.
-// void appendStatementStack();
-//void appendStatementStack(int numberOfStatements);
-
 //! Support to get current class scope.
 SgClassDefinition* getCurrentClassDefinition();
 
@@ -226,6 +179,12 @@ SgName processNameOfRawType(SgName name);
 
 //! Support for identification of symbols using qualified names (used by the import statement).
 SgSymbol* lookupSymbolInParentScopesUsingQualifiedName( SgName qualifiedName, SgScopeStatement* currentScope);
+
+//! charles4: Support for identification of symbols using qualified names (used by the import statement).
+//SgSymbol *FindSymbolInParentScopesUsingQualifiedName(SgName qualifiedName, SgScopeStatement* currentScope);
+
+//! charles4: 02/15/2012 
+//SgSymbol *lookupSymbolInParentScopesUsingSimpleName(SgName name, SgScopeStatement *currentScope);
 
 //! Refactored support to extraction of associated scope from symbol (where possible, i.e. SgClassSymbol, etc.).
 SgScopeStatement* get_scope_from_symbol( SgSymbol* returnSymbol );
@@ -244,23 +203,12 @@ template< class T >
 void
 unaryExpressionSupport()
    {
-// Remove this!
-//     ROSE_ASSERT(astJavaExpressionStack.empty() == false);
-//     ROSE_ASSERT(astJavaExpressionStack.size() >= 1);
-//
-//     SgExpression* operand = astJavaExpressionStack.front();
      SgExpression* operand = astJavaComponentStack.popExpression();
-// Remove this!
-//     ROSE_ASSERT(operand != NULL);
-//     astJavaExpressionStack.pop_front();
 
   // Build the assignment operator and push it onto the stack.
   // SgExpression* assignmentExpression = SageBuilder::buildUnaryExpression<T>(operand);
      SgExpression* resultExpression = SageBuilder::buildUnaryExpression<T>(operand);
      ROSE_ASSERT(resultExpression != NULL);
-// Remove this!
-//     astJavaExpressionStack.push_front(assignmentExpression);
-//     ROSE_ASSERT(astJavaExpressionStack.empty() == false);
      astJavaComponentStack.push(resultExpression);
    }
 
@@ -268,58 +216,19 @@ template< class T >
 void
 binaryExpressionSupport()
    {
-// Remove this!
-//     ROSE_ASSERT(astJavaExpressionStack.empty() == false);
-//     ROSE_ASSERT(astJavaExpressionStack.size() >= 2);
-//
-//     SgExpression* rhs = astJavaExpressionStack.front();
      SgExpression* rhs = astJavaComponentStack.popExpression();
      ROSE_ASSERT(rhs != NULL);
-// Remove this!
-//     astJavaExpressionStack.pop_front();
 
      SgExpression* lhs = astJavaComponentStack.popExpression();
      ROSE_ASSERT(lhs != NULL);
-// Remove this!
-//     astJavaExpressionStack.pop_front();
 
   // Build the assignment operator and push it onto the stack.
   // SgExpression* assignmentExpression = SageBuilder::buildBinaryExpression<T>(lhs,rhs);
-     SgExpression* resultExpression = SageBuilder::buildBinaryExpression<T>(lhs,rhs);
+     SgExpression* resultExpression = SageBuilder::buildBinaryExpression<T>(lhs, rhs);
      ROSE_ASSERT(resultExpression != NULL);
-// Remove this!
-//     astJavaExpressionStack.push_front(assignmentExpression);
-     astJavaComponentStack.push(resultExpression);
-// Remove this!
-//     ROSE_ASSERT(astJavaExpressionStack.empty() == false);
-   }
 
-// charles4 10/14/2011: Remove this
-//template< class T >
-//void
-//binaryAssignmentStatementSupport()
-//   {
-// Remove this!
-//     ROSE_ASSERT(astJavaExpressionStack.empty() == false);
-//     ROSE_ASSERT(astJavaExpressionStack.size() >= 2);
-//
-//     binaryExpressionSupport<T>();
-//
-// Remove this!
-//     SgExpression* exp = astJavaExpressionStack.front();
-//     ROSE_ASSERT(exp != NULL);
-//     astJavaExpressionStack.pop_front();
-//     SgExpression* exp = astJavaComponentStack.popExpression();
-//
-//     SgExprStatement* exprStatement = SageBuilder::buildExprStatement(exp);
-//
-//     ROSE_ASSERT(exprStatement != NULL);
-//     ROSE_ASSERT(exp->get_parent() != NULL);
-//
-// Remove this!
-//     astJavaStatementStack.push_front(exprStatement);
-//     astJavaComponentStack.push(exprStatement);
-//   }
+     astJavaComponentStack.push(resultExpression);
+   }
 
 // endif for ROSE_JAVA_SUPPORT
 #endif

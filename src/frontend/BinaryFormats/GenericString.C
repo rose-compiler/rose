@@ -450,6 +450,6 @@ SgAsmGenericStrtab::dump(FILE *f, const char *prefix, ssize_t idx) const
         p_storage_list[i]->dump(f, p, i);
     }
 
-    fprintf(f, "%s%-*s = %zu free regions\n", p, w, "freelist", get_freelist().size());
+    fprintf(f, "%s%-*s = %"PRIu64" free regions\n", p, w, "freelist", get_freelist().size());
     get_freelist().dump_extents(f, p, "freelist");
 }

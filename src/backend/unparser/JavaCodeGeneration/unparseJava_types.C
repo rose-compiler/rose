@@ -4,7 +4,7 @@
  */
 
 #include "sage3basic.h"
-#include "unparseJava.h"
+#include "unparser.h" //charles4:  I replaced this include:   #include "unparseJava.h"
 
 // DQ (10/14/2010):  This should only be included by source files that require it.
 // This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
@@ -16,8 +16,8 @@ using namespace std;
 //-----------------------------------------------------------------------------------
 //  void Unparse_Java::unparseType
 //
-//  General function that gets called when unparsing a C++ type. Then it routes
-//  to the appropriate function to unparse each C++ type.
+//  General function that gets called when unparsing a Java type. Then it routes
+//  to the appropriate function to unparse each Java type.
 //-----------------------------------------------------------------------------------
 void
 Unparse_Java::unparseType(SgType* type, SgUnparse_Info& info)
@@ -46,6 +46,9 @@ Unparse_Java::unparseType(SgType* type, SgUnparse_Info& info)
           case V_SgJavaParameterizedType:  unparseJavaParameterizedType(isSgJavaParameterizedType(type),info); break;
 
           default:
+cout << "V_SgJavaParameterizedType = " << V_SgJavaParameterizedType << endl
+     << "type->variantT() = " << type->variantT() << endl;
+cout.flush();
                cout << "Unparse_Java::unparseType(" << type->class_name() << "*,info) is unimplemented." << endl;
                ROSE_ASSERT(false);
                break;
@@ -238,7 +241,9 @@ Unparse_Java::unparseArrayType(SgArrayType* type, SgUnparse_Info& info)
      ROSE_ASSERT(array_type != NULL);
 
      unparseType(array_type->get_base_type(), info);
-     curprint("[]");
+     for (int i = array_type -> get_rank(); i >= 1; i--) {
+         curprint("[]");
+     }
    }
 
 void Unparse_Java::unparseTypeSignedChar(SgTypeSignedChar* type, SgUnparse_Info& info) { curprint("byte"); }
