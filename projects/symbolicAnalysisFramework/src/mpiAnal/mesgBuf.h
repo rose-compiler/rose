@@ -3,7 +3,7 @@
 
 #include "mesgExpr.h"
 #include "procSet.h"
-#include "common.h"
+#include "genericDataflowCommon.h"
 #include "cfgUtils.h"
 #include "variables.h"
 #include "lattice.h"

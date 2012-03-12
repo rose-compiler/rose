@@ -230,7 +230,7 @@ void DataTransferSizes::findTransferSizes(SgNode* node,
     ROSE_ASSERT(body != NULL);
 
     // The OpenMP syntax requires that the omp for pragma is immediately followed by the for loop.
-    SgForStatement * for_loops = isSgForStatement(body);
+   // SgForStatement * for_loops = isSgForStatement(body);
     
     MintInitNameExpMap_t index_ranges;
  
@@ -393,7 +393,7 @@ string DataTransferSizes::getSizeExpressionFromIndexExpression(string indexExpSt
 	    	    
 	    //cout << "Before replace: sizeExpStr : " << sizeExpStr << endl ;
 	    
-	    int position = sizeExpStr.find(indexStr); // find first space
+	    size_t position = sizeExpStr.find(indexStr); // find first space
 
 	    while ( position != string::npos ) 
 	      {

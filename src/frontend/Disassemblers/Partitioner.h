@@ -1456,6 +1456,13 @@ public:
      *  mixed up.  This method puts them all back where they belong. */
     virtual void adjust_padding();
 
+    /** Looks for a jump table.  This method looks at the specified basic block and tries to discover if the last instruction
+     *  is an indirect jump through memory.  If it is, then the entries of the jump table are returned by value (i.e., the
+     *  control flow successors of the given basic block), and the addresses of the table are added to the optional extent
+     *  map.  It is possible for the jump table to be discontiguous, but this is not usually the case.  If @p do_create is true
+     *  then data blocks are created for the jump table and added to the basic block. */
+    Disassembler::AddressSet discover_jump_table(BasicBlock *bb, bool do_create=true, ExtentMap *table_addresses=NULL);
+
     /*************************************************************************************************************************
      *                                   IPD Parser for initializing the Partitioner
      *************************************************************************************************************************/

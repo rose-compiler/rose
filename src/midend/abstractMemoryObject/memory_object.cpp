@@ -221,6 +221,20 @@ namespace  AbstractMemoryObject
     return false;  
   }
 */
+   ObjSet * Pointer::getDereference()
+   {
+     cerr<<"Error. Direct call to base class (Pointer)'s getDereference( ) is not allowed."<<endl;
+     assert (false);
+    return 0;
+   }
+
+   bool Pointer::equalPoints( const Pointer & that)
+   {
+     cerr<<"Error. Direct call to base class (Pointer)'s equalPoints( ) is not allowed."<<endl;
+     assert (false);
+    return false;
+   }
+
 
 
 }

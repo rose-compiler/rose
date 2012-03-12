@@ -351,16 +351,6 @@ SgAsmPEFileHeader::parse()
     return this;
 }
 
-SgAsmPEFileHeader::~SgAsmPEFileHeader() 
-{
-    // Delete the pointers to the IR nodes containing the STL lists
-    size_t n = get_rvasize_pairs()->get_pairs().size();
-    for (size_t i=0; i<n; i++)
-        delete get_rvasize_pairs()->get_pairs()[i];
-    delete p_rvasize_pairs;
-    p_rvasize_pairs = NULL;
-}
-
 /* Encode the PE header into disk format */
 void *
 SgAsmPEFileHeader::encode(PEFileHeader_disk *disk) const
@@ -524,6 +514,8 @@ SgAsmPEFileHeader::add_rvasize_pairs()
 void
 SgAsmPEFileHeader::create_table_sections()
 {
+
+    /* First, only create the sections. */
     for (size_t i=0; i<p_rvasize_pairs->get_pairs().size(); i++) {
         SgAsmPERVASizePair *pair = p_rvasize_pairs->get_pairs()[i];
         if (0==pair->get_e_size())
@@ -554,7 +546,7 @@ SgAsmPEFileHeader::create_table_sections()
             case 0: {
                 /* Sometimes export sections are represented by a ".edata" section, and sometimes they're represented by an
                  * RVA/Size pair, and sometimes both point to the same part of the file. We don't want the exports duplicated
-                 * in the AST, so we only parse this table as exports if we haven't already seen some other export section. */
+                 * in the AST, so we only create this table as exports if we haven't already seen some other export section. */
                 SgAsmGenericSectionPtrList &sections = get_sections()->get_sections();
                 bool seen_exports = false;
                 for (SgAsmGenericSectionPtrList::iterator si=sections.begin(); !seen_exports && si!=sections.end(); ++si)
@@ -569,7 +561,7 @@ SgAsmPEFileHeader::create_table_sections()
             case 1: {
                 /* Sometimes import sections are represented by a ".idata" section, and sometimes they're represented by an
                  * RVA/Size pair, and sometimes both point to the same part of the file.  We don't want the imports duplicated
-                 * in the AST, so we only parse this table as imports if we haven't already seen some other import section. */
+                 * in the AST, so we only create this table as imports if we haven't already seen some other import section. */
                 SgAsmGenericSectionPtrList &sections = get_sections()->get_sections();
                 bool seen_imports = false;
                 for (SgAsmGenericSectionPtrList::iterator si=sections.begin(); !seen_imports && si!=sections.end(); ++si)
@@ -601,9 +593,16 @@ SgAsmPEFileHeader::create_table_sections()
         tabsec->set_mapped_rperm(true);
         tabsec->set_mapped_wperm(false);
         tabsec->set_mapped_xperm(false);
-        tabsec->parse();
         pair->set_section(tabsec);
         pair->set_e_rva(pair->get_e_rva().set_section(tabsec));
+    }
+
+    /* Now parse the sections */
+    for (size_t i=0; i<p_rvasize_pairs->get_pairs().size(); i++) {
+        SgAsmPERVASizePair *pair = p_rvasize_pairs->get_pairs()[i];
+        SgAsmGenericSection *tabsec = pair->get_section();
+        if (tabsec)
+            tabsec->parse();
     }
 }
 

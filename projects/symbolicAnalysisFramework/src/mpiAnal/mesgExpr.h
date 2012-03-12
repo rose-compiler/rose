@@ -2,7 +2,7 @@
 #define MESG_EXPR_H
 
 #include "procSet.h"
-#include "common.h"
+#include "genericDataflowCommon.h"
 #include "cfgUtils.h"
 #include "variables.h"
 

@@ -213,7 +213,14 @@ SgType* skip_ReferencesAndTypedefs( SgType* type ) {
 
 SgBasicBlock& requiresParentIsBasicBlock(SgStatement& stmt)
 {
-  SgLocatedNode* block = SI::ensureBasicBlockAsParent(&stmt);
+    // Unfortunately ensureBasicBlockAsParent() does not work as its name suggests. Here is what it
+    // really means
+  //SgLocatedNode* block = SI::ensureBasicBlockAsParent(&stmt);
+  SgLocatedNode* block = NULL; 
+  if (SI::isBodyStatement(&stmt) && !isSgBasicBlock(&stmt))
+      block = SI::makeSingleStatementBodyToBlock(&stmt); // push the stmt into a newly created basic block body
+  else
+      block = isSgLocatedNode(stmt.get_parent());
   SgBasicBlock*  res = isSgBasicBlock(block);
 
   ROSE_ASSERT(res);

@@ -470,6 +470,82 @@ Partitioner::set_map(MemoryMap *map, MemoryMap *ro_map)
     }
 }
 
+/* Looks for a jump table. Documented in header file. */
+Disassembler::AddressSet
+Partitioner::discover_jump_table(BasicBlock *bb, bool do_create, ExtentMap *table_extent)
+{
+    /* Do some cheap up-front checks. */
+    SgAsmx86Instruction *insn_x86 = isSgAsmx86Instruction(bb->last_insn());
+    if (!insn_x86 || (insn_x86->get_kind()!=x86_jmp && insn_x86->get_kind()==x86_farjmp) ||
+        1!=insn_x86->get_operandList()->get_operands().size())
+        return Disassembler::AddressSet();
+    SgAsmExpression *target_expr = insn_x86->get_operandList()->get_operands()[0];
+    SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(target_expr);
+    SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(target_expr);
+    if (!mre && !rre)
+        return Disassembler::AddressSet(); // no indirection
+
+    /* Evaluate the basic block semantically to get an expression for the final EIP. */
+    typedef VirtualMachineSemantics::ValueType<32> RegisterValueType;
+    typedef VirtualMachineSemantics::Policy<VirtualMachineSemantics::State, VirtualMachineSemantics::ValueType> Policy;
+    typedef X86InstructionSemantics<Policy, VirtualMachineSemantics::ValueType> Semantics;
+    Policy policy;
+    policy.set_map(&ro_map);
+    Semantics semantics(policy);
+    try {
+        for (size_t i=0; i<bb->insns.size(); ++i) {
+            insn_x86 = isSgAsmx86Instruction(bb->insns[i]->node);
+            assert(insn_x86); // we know we're in a basic block of x86 instructions already
+            policy.writeRegister(semantics.REG_EIP, policy.number<32>(insn_x86->get_address()));
+            semantics.processInstruction(insn_x86);
+        }
+    } catch (...) {
+        return Disassembler::AddressSet(); // something went wrong, so just give up (e.g., unhandled instruction)
+
+    }
+
+    /* Scan through memory to find from whence the EIP value came.  There's no need to scan for an EIP which is a known value
+     * since such control flow successors would be picked the usual way elsewhere.  It's also quite possible that the EIP value
+     * is also stored at some other memory addresses outside the jump table (e.g., a function pointer argument stored on the
+     * stack), so we also skip over any memory whose address is known. */
+    Disassembler::AddressSet successors;
+    RegisterValueType eip = policy.readRegister<32>(semantics.REG_EIP);
+    size_t entry_size = 4; // FIXME: bytes per jump table entry
+    if (!eip.is_known()) {
+        for (size_t i=0; i<policy.get_state().mem.size(); ++i) {
+            if (policy.get_state().mem[i].get_data()==eip && !policy.get_state().mem[i].get_address().is_known()) {
+                rose_addr_t base_va = policy.get_state().mem[i].get_address().offset;
+                size_t nentries = 0;
+                while (1) {
+                    uint8_t buf[entry_size];
+                    size_t nread = ro_map.read(buf, base_va+nentries*entry_size, entry_size);
+                    if (nread!=entry_size)
+                        break;
+                    rose_addr_t target_va = 0;
+                    for (size_t i=0; i<entry_size; i++)
+                        target_va |= buf[i] << (i*8);
+                    const MemoryMap::MapElement *me = map->find(target_va);
+                    if (!me || 0==(me->get_mapperms() & MemoryMap::MM_PROT_EXEC))
+                        break;
+                    successors.insert(target_va);
+                    ++nentries;
+                }
+                if (nentries>0) {
+                    if (table_extent)
+                        table_extent->insert(Extent(base_va, nentries*entry_size));
+                    if (do_create) {
+                        DataBlock *dblock = find_db_starting(base_va, nentries*entry_size);
+                        append(bb, dblock, SgAsmBlock::BLK_JUMPTABLE);
+                    }
+                    if (debug)
+                        fprintf(debug, "[jump table at 0x%08"PRIx64"+%zu*%zu]", base_va, nentries, entry_size);
+                }
+            }
+        }
+    }
+    return successors;
+}
+
 /** Runs local block analyses if their cached results are invalid and caches the results.  A local analysis is one whose
  *  results only depend on the specified block and which are valid into the future as long as the instructions in the block do
  *  not change. */
@@ -491,62 +567,16 @@ Partitioner::update_analyses(BasicBlock *bb)
      * map. We use a "do" loop so the logic nesting doesn't get so deep: just break when we find that something doesn't match
      * what we expect. */
     if (!bb->cache.sucs_complete && bb->cache.sucs.empty()) {
-        do {
-            SgAsmx86Instruction *insn_x86 = isSgAsmx86Instruction(bb->last_insn());
-            if (!insn_x86 || (insn_x86->get_kind()!=x86_jmp && insn_x86->get_kind()==x86_farjmp) ||
-                1!=insn_x86->get_operandList()->get_operands().size())
-                break;
-            SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(insn_x86->get_operandList()->get_operands()[0]);
-            if (!mre)
-                break;
-            SgAsmBinaryAdd *add = isSgAsmBinaryAdd(mre->get_address());
-            if (!add)
-                break;
-            SgAsmValueExpression *base = isSgAsmValueExpression(add->get_lhs());
-            if (!base)
-                break;
-            SgAsmBinaryMultiply *mult = isSgAsmBinaryMultiply(add->get_rhs());
-            if (!mult)
-                break;
-            SgAsmRegisterReferenceExpression *reg = isSgAsmRegisterReferenceExpression(mult->get_lhs());
-            if (!reg)
-                break;
-            SgAsmValueExpression *step = isSgAsmValueExpression(mult->get_rhs());
-            if (!step)
-                break;
-            rose_addr_t base_va = value_of(base);
-            size_t entry_size = value_of(step);
-            if (! ((entry_size==2 && insn_x86->get_operandSize()==x86_insnsize_16) ||
-                   (entry_size==4 && insn_x86->get_operandSize()==x86_insnsize_32) ||
-                   (entry_size==8 && insn_x86->get_operandSize()==x86_insnsize_64)))
-                break;
-
-            /* How big is the table? */
-            size_t nentries = 0;
-            while (1) {
-                uint8_t buf[8];
-                size_t nread = ro_map.read(buf, base_va+nentries*entry_size, entry_size);
-                if (nread!=entry_size)
-                    break;
-                rose_addr_t target_va = 0;
-                for (size_t i=0; i<entry_size; i++)
-                    target_va |= buf[i] << (i*8);
-                const MemoryMap::MapElement *me = map->find(target_va);
-                if (!me || 0==(me->get_mapperms() & MemoryMap::MM_PROT_EXEC))
-                    break;
-                ++nentries;
-                bb->cache.sucs.insert(target_va);
+        ExtentMap table_extent;
+        Disassembler::AddressSet table_entries = discover_jump_table(bb, true, &table_extent);
+        if (!table_entries.empty()) {
+            bb->cache.sucs.insert(table_entries.begin(), table_entries.end());
+            if (debug) {
+                std::ostringstream ss;
+                ss <<"[jump table at " <<table_extent <<"]";
+                fprintf(debug, "%s", ss.str().c_str());
             }
-            if (0==nentries)
-                break;
-
-            /* Create a data block for the jump table. */
-            DataBlock *dblock = find_db_starting(base_va, nentries*entry_size);
-            append(bb, dblock, SgAsmBlock::BLK_JUMPTABLE);
-
-            if (debug)
-                fprintf(debug, "[jump table at 0x%08"PRIx64"+%zu*%zu]", base_va, nentries, entry_size);
-        } while (0);
+        }
     }
 
     /* Call target analysis. For x86, a function call is any CALL instruction except when the call target is the fall-through
@@ -2729,27 +2759,12 @@ Partitioner::name_import_entries(SgAsmGenericHeader *fhdr)
             traverse(fhdr, preorder);
         }
         void visit(SgNode *node) {
-            SgAsmPEImportDirectory *idir = isSgAsmPEImportDirectory(node);
-            SgAsmPEImportLookupTable *ilt = idir ? idir->get_ilt() : NULL;
-            SgAsmPEImportLookupTable *iat = idir ? idir->get_iat() : NULL;
-            if (ilt && iat) {
-                rose_addr_t iat_base_va = idir->get_iat_rva() + fhdr->get_base_va();
-                size_t nentries = ilt->get_entries()->get_vector().size();
-                if (nentries!=iat->get_entries()->get_vector().size()) {
-                    if (partitioner->debug)
-                        fprintf(partitioner->debug, "Partitioner::name_import_entries: malformed import directory skipped\n");
-                    return;
-                }
-                for (size_t i=0; i<nentries; ++i) {
-                    SgAsmPEImportILTEntry *ilt_entry = ilt->get_entries()->get_vector()[i];
-                    if (NULL!=ilt_entry && NULL!=iat->get_entries()->get_vector()[i]) {
-                        rose_addr_t iat_entry_va = iat_base_va + i*fhdr->get_word_size();
-                        if (ilt_entry->get_entry_type() == SgAsmPEImportILTEntry::ILT_HNT_ENTRY_RVA)
-                            index[iat_entry_va] = ilt_entry->get_hnt_entry()->get_name()->get_string();
-                    } else if (partitioner->debug) {
-                        fprintf(partitioner->debug, "Partitioner::name_import_entries: malformed ILT/IAT entry skipped\n");
-                    }
-                }
+            SgAsmPEImportItem *import = isSgAsmPEImportItem(node);
+            if (import) {
+                std::string name = import->get_name()->get_string();
+                rose_addr_t va = import->get_bound_rva().get_va();
+                if (va!=0 && !name.empty())
+                    index[va] = name;
             }
         }
     } imports(this, fhdr);
@@ -3025,60 +3040,18 @@ Partitioner::analyze_cfg(SgAsmBlock::Reason reason)
         /* Analyze function return characteristics. */
         for (BasicBlocks::iterator bi=basic_blocks.begin(); bi!=basic_blocks.end(); ++bi) {
             BasicBlock *bb = bi->second;
-            rose_addr_t return_va = canonic_block(bb->last_insn()->get_address() + bb->last_insn()->get_size());
-            BasicBlock *return_bb = find_bb_starting(return_va);
+            if (!bb->function)
+                continue;
+
             rose_addr_t target_va = NO_TARGET; /*call target*/
-            BasicBlock *target_bb = NULL;
+            bool iscall = is_function_call(bb, &target_va);
+            rose_addr_t return_va = canonic_block(bb->last_insn()->get_address() + bb->last_insn()->get_size()); // fall through
+            BasicBlock *return_bb = NULL, *target_bb = NULL; /* computed only if needed since they might split basic blocks */
             bool succs_complete;
             Disassembler::AddressSet succs = successors(bb, &succs_complete);
-#if 0 /*DEBUG [RPM 2010-07-30]*/
-            do {
-                static rose_addr_t req_call_block_va   = 0x08048364;
-                static rose_addr_t req_target_va       = 0x0804836e;
-                static rose_addr_t req_return_va       = 0x0804836e;
 
-                if (address(bb)!=req_call_block_va) break;
-                fprintf(stderr, "in pass %zu found block 0x%08"PRIx64"\n", pass, req_call_block_va);
-                fprintf(stderr, "  belongs to function? %s\n", bb->function?"yes":"no");
-                if (!bb->function) break;
-                fprintf(stderr, "    that function is 0x%08"PRIx64"\n", bb->function->entry_va);
-                bool is_call = is_function_call(bb, &target_va);
-                fprintf(stderr, "  is a function call? %s\n", is_call?"yes":"no");
-                if (!is_call) break;
-                fprintf(stderr, "    target va is 0x%08"PRIx64"\n", target_va);
-                if (target_va!=req_target_va) break;
-                target_bb = find_bb_starting(target_va, false);
-                fprintf(stderr, "  target block exists? %s\n", target_bb?"yes":"no");
-                if (!target_bb) break;
-                fprintf(stderr, "  target block belongs to a function? %s\n", target_bb->function?"yes":"no");
-                if (!target_bb->function) break;
-                fprintf(stderr, "    that function is 0x%08"PRIx64"\n", target_bb->function->entry_va);
-                if (target_bb->function->entry_va!=req_target_va) break;
-                fprintf(stderr, "  target function returns? %s\n", target_bb->function->returns?"yes":"no");
-                if (!target_bb->function->returns) break;
-                fprintf(stderr, "  return address is 0x%08"PRIx64"\n", return_va);
-                if (return_va!=req_return_va) break;
-                fprintf(stderr, "  return block exists? %s\n", return_bb?"yes":"no");
-                if (!return_bb) break;
-                fprintf(stderr, "  return block in a function? %s\n", return_bb->function?"yes":"no");
-                if (!return_bb->function) {
-                    fprintf(stderr, "  marking function 0x%08"PRIx64" as pending!\n", bb->function->entry_va);
-                } else if (return_bb->function->entry_va==return_va) {
-                    fprintf(stderr, "    returns to fall-through address\n");
-                    if (!bb->function->returns) {
-                        fprintf(stderr, "    marking calling function as returning\n");
-                        fprintf(stderr, "    NEED ANOTHER PASS!\n");
-                        /* Track the parent now */
-                        req_call_block_va       = 0x080482c8;
-                        req_target_va           = 0x08048364;
-                        req_return_va           = 0x080482d3;
-
-                    }
-                }
-            } while (0);
-#endif
-            if (bb->function && return_bb &&
-                is_function_call(bb, &target_va) && target_va!=NO_TARGET &&
+            if (iscall && target_va!=NO_TARGET &&
+                NULL!=(return_bb=find_bb_starting(return_va)) &&
                 NULL!=(target_bb=find_bb_starting(target_va, false)) &&
                 target_bb->function && target_bb->function->may_return) {
                 if (!return_bb->function) {
@@ -3104,7 +3077,7 @@ Partitioner::analyze_cfg(SgAsmBlock::Reason reason)
                                 bb->function->entry_va, bb->address());
                     }
                 }
-            } else if (bb->function && !bb->function->may_return && !is_function_call(bb, NULL) && succs_complete) {
+            } else if (!bb->function->may_return && !is_function_call(bb, NULL) && succs_complete) {
                 for (Disassembler::AddressSet::iterator si=succs.begin(); si!=succs.end() && !bb->function->may_return; ++si) {
                     if (0!=(target_va=*si) && NULL!=(target_bb=find_bb_starting(target_va, false)) &&
                         target_bb->function && target_bb->function!=bb->function &&

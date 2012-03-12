@@ -283,8 +283,7 @@ Disassembler::disassembleInterpretation(SgAsmInterpretation *interp)
 
     /* Search methods specified with "-rose:disassembler_search" are stored in the SgFile object. Use them rather than the
      * defaults built into the Disassembler class. */
-    SgNode *file = interp;
-    while (file && !isSgFile(file)) file = file->get_parent();
+    SgNode *file = SageInterface::getEnclosingNode<SgFile>(interp);
     ROSE_ASSERT(file);
     disassembler->set_search(isSgFile(file)->get_disassemblerSearchHeuristics());
 

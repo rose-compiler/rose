@@ -1,0 +1,6 @@
+SET
+    typeexpr = snum * str * snum * str
+
+DOMAIN
+    typeexprset = set(typeexpr)
+    tesl = lift(typeexprset)

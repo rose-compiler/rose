@@ -13,7 +13,7 @@ using namespace SageInterface;
 void StringSplit(string str, string delim, vector<string>& results)
 {
 
-  int cutAt;
+  size_t cutAt;
   while( (cutAt = str.find_first_of(delim)) != str.npos )
     {
       if(cutAt > 0)
@@ -267,7 +267,7 @@ bool MintPragmas::isForLoopPragma(SgNode* node, bool verbose)
       ROSE_ABORT();      
     }
 
-  int nestingLevel = 1;
+  size_t nestingLevel = 1;
   string nested = "1";
 
   //processing nested clauses 
@@ -316,7 +316,7 @@ bool MintPragmas::isForLoopPragma(SgNode* node, bool verbose)
   //processing threadblock()
   size_t pos_th = pragmaString.find(MINT_TILE_PRAGMA) ;
 
-  int total = 1; 
+  size_t total = 1; 
 
   if( pos_th != string::npos )
     {
@@ -359,7 +359,7 @@ bool MintPragmas::isForLoopPragma(SgNode* node, bool verbose)
   //chunksize(1, 2, 16) x,y,z
   //processing unroll
   size_t pos = pragmaString.find(MINT_CHUNKSIZE_PRAGMA) ;
-  int totalUnroll = 1;
+  size_t totalUnroll = 1;
 
   if (pos !=string::npos)
    {
@@ -400,7 +400,7 @@ bool MintPragmas::isForLoopPragma(SgNode* node, bool verbose)
        }
    }
 
-  if(total/(totalUnroll) > MAX_NUM_THREADS_PER_BLOCK)
+  if(total/(totalUnroll) > (size_t)MAX_NUM_THREADS_PER_BLOCK)
     {
       cout << "  ERROR:Mint: @ Line "  << decl->get_file_info()->get_line() << endl 
 	   << "  Requested too many threads/block, max can be "<< MAX_NUM_THREADS_PER_BLOCK << " Exiting ..."<< endl; 
@@ -875,7 +875,7 @@ void MintPragmas::processForLoopMintPragmas(SgOmpForStatement* omp_for,
 	  std::vector<SgForStatement* > loopNest= SageInterface::querySubTree<SgForStatement>(omp_for,V_SgForStatement);
 
 	  //check if the number for loops are >= nested	 
-	  if(clauses.nested > loopNest.size()){
+	  if(clauses.nested > (int)loopNest.size()){
 	    cout << "  ERROR:Mint: @ Line "  << prev->get_file_info()->get_line() << endl 
                  << "  Ooops, nested loop level exceeds the actual number of loops!" << endl; 
 	    ROSE_ABORT() ; 

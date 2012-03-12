@@ -1433,30 +1433,50 @@ void changeBreakStatementsToGotos(SgStatement* loopOrSwitch);
 //! Check if the body of a 'for' statement is a SgBasicBlock, create one if not.
 SgBasicBlock* ensureBasicBlockAsBodyOfFor(SgForStatement* fs);
 
-//! Check if the body of a 'for' statement is a SgBasicBlock, create one if not. (10nov17: PP for RTED/upc)
+//! Check if the body of a 'upc_forall' statement is a SgBasicBlock, create one if not. 
 SgBasicBlock* ensureBasicBlockAsBodyOfUpcForAll(SgUpcForAllStatement* fs);
 
 //! Check if the body of a 'while' statement is a SgBasicBlock, create one if not.
 SgBasicBlock* ensureBasicBlockAsBodyOfWhile(SgWhileStmt* ws);
+
 //! Check if the body of a 'do .. while' statement is a SgBasicBlock, create one if not.
 SgBasicBlock* ensureBasicBlockAsBodyOfDoWhile(SgDoWhileStmt* ws);
+
 //! Check if the body of a 'switch' statement is a SgBasicBlock, create one if not.
 SgBasicBlock* ensureBasicBlockAsBodyOfSwitch(SgSwitchStatement* ws);
+
 //! Check if the true body of a 'if' statement is a SgBasicBlock, create one if not.
 SgBasicBlock* ensureBasicBlockAsTrueBodyOfIf(SgIfStmt* ifs);
+
 //! Check if the false body of a 'if' statement is a SgBasicBlock, create one if not.
 SgBasicBlock* ensureBasicBlockAsFalseBodyOfIf(SgIfStmt* ifs);
+
+//! Check if the body of a 'catch' statement is a SgBasicBlock, create one if not.
 SgBasicBlock* ensureBasicBlockAsBodyOfCatch(SgCatchOptionStmt* cos);
+
 //! Check if the body of a SgOmpBodyStatement is a SgBasicBlock, create one if not
 SgBasicBlock* ensureBasicBlockAsBodyOfOmpBodyStmt(SgOmpBodyStatement* ompbodyStmt);
-/** A wrapper of all ensureBasicBlockAs*() above to ensure the parent of s is a scope statement with list of statements as children,
-  * otherwise generate a SgBasicBlock in between. If s is the body of a loop, catch, or if statement and is already
-  * a basic block, s is returned unmodified. Else, the (potentially new) parent of s is returned. */
-SgLocatedNode* ensureBasicBlockAsParent(SgStatement* s);
 
-//! Fix up ifs, loops, etc. to have blocks as all components and add dummy else
-//! clauses to if statements that don't have them
+
+//! Check if a statement is a (true or false) body of a container-like parent, such as For, Upc_forall, Do-while,
+//! switch, If, Catch, OmpBodyStmt, etc
+bool isBodyStatement (SgStatement* s);
+
+//! Fix up ifs, loops, while, switch, Catch, OmpBodyStatement, etc. to have blocks as body components. It also adds an empty else body to if statements that don't have them.
+void changeAllBodiesToBlocks(SgNode* top);
+
+//! The same as changeAllBodiesToBlocks(SgNode* top). To be phased out.
 void changeAllLoopBodiesToBlocks(SgNode* top);
+
+//! Make a single statement body to be a basic block. Its parent is if, while, catch, or upc_forall etc.
+SgBasicBlock * makeSingleStatementBodyToBlock(SgStatement* singleStmt);
+
+#if 0
+/**  If s is the body of a loop, catch, or if statement and is already a basic block,
+ *   s is returned unmodified. Otherwise generate a SgBasicBlock between s and its parent 
+ *   (a loop, catch, or if statement, etc). */
+SgLocatedNode* ensureBasicBlockAsParent(SgStatement* s);
+#endif
 
 //! Get the constant value from a constant integer expression; abort on
 //! everything else.  Note that signed long longs are converted to unsigned.

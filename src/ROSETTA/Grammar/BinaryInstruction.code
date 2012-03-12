@@ -2628,7 +2628,6 @@ HEADER_PE_FILE_HEADER_START
 		explicit SgAsmPEFileHeader(SgAsmGenericFile *f)
 			: SgAsmGenericHeader(f), p_loader_map(NULL), p_section_table(NULL), p_coff_symtab(NULL)
 			{ctor();}
-		virtual ~SgAsmPEFileHeader();
 
 		virtual const char *format_name() const {return "PE";}
 		static bool is_PE (SgAsmGenericFile*);
@@ -2669,6 +2668,35 @@ HEADER_PE_SECTION_END
 
 
 
+HEADER_PE_IMPORT_ITEM_START
+	public:
+		explicit SgAsmPEImportItem(SgAsmPEImportItemList *parent) {
+			ctor(parent);
+		}
+		explicit SgAsmPEImportItem(SgAsmPEImportDirectory *idir) {
+			ctor(idir);
+		}
+		SgAsmPEImportItem(SgAsmPEImportDirectory *idir, const std::string &name, unsigned hint=0) {
+			ctor(idir, name, hint);
+		}
+		SgAsmPEImportItem(SgAsmPEImportDirectory *idir, const unsigned ordinal) {
+			ctor(idir, ordinal);
+		}
+		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+		size_t hintname_required_size() const;
+		rose_addr_t get_iat_entry_va() const;
+	private:
+		void ctor(SgAsmPEImportItemList *parent);
+		void ctor(SgAsmPEImportDirectory*);
+		void ctor(SgAsmPEImportDirectory*, const std::string &name, unsigned hint);
+		void ctor(SgAsmPEImportDirectory*, unsigned ordinal);
+HEADER_PE_IMPORT_ITEM_END
+
+
+
+
+
+
 HEADER_PE_IMPORT_DIRECTORY_START
 	public:
 #ifdef _MSC_VER
@@ -2690,8 +2718,8 @@ HEADER_PE_IMPORT_DIRECTORY_START
 #endif
 
 		explicit SgAsmPEImportDirectory(SgAsmPEImportSection *isec, std::string dll_name="")
-			: p_ilt_rva(0), p_ilt(NULL), p_time(0), p_forwarder_chain(0), p_dll_name_rva(0),
-			p_dll_name(0), p_iat_rva(0), p_iat(NULL) {
+			: p_dll_name(NULL), p_dll_name_rva(0), p_dll_name_nalloc(0), p_time(0), p_forwarder_chain(0),
+			  p_ilt_rva(0), p_ilt_nalloc(0), p_iat_rva(0), p_iat_nalloc(0), p_imports(NULL) {
 			ctor(isec, dll_name);
 		}
 		SgAsmPEImportDirectory *parse(rose_addr_t va);
@@ -2699,86 +2727,14 @@ HEADER_PE_IMPORT_DIRECTORY_START
 		void *encode(SgAsmPEImportDirectory::PEImportDirectory_disk*) const;
 		virtual void unparse(std::ostream&, const SgAsmPEImportSection*, size_t idx) const;
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+		size_t iat_required_size() const;
+		int find_import_item(const SgAsmPEImportItem *item, int hint=0) const;
+		size_t hintname_table_extent(ExtentMap &extent/*in,out*/) const;
 	private:
 		void ctor(SgAsmPEImportSection*, const std::string &dll_name);
+		void parse_ilt_iat(const rose_rva_t &table_start, bool assume_bound);
+		void unparse_ilt_iat(std::ostream&,const rose_rva_t &table_start, bool assume_bound, size_t nalloc) const;
 HEADER_PE_IMPORT_DIRECTORY_END
-
-
-
-HEADER_PE_IMPORT_ILT_ENTRY_START
-	// PE -> Import Table -> Import Lookup or Address Table -> Entry
-	public:
-		enum ILTEntryType {
-			ILT_ORDINAL,			/* Entry is an ordinal */
-			ILT_HNT_ENTRY_RVA,		/* Entry is the RVA of a Hint/Name Pair in the Hint/Name Table */
-			ILT_BOUND_RVA,			/* Entry is the actual memory address of the symbol */
-		};
-
-		explicit SgAsmPEImportILTEntry(SgAsmPEImportLookupTable *ilt)
-			: p_entry_type(ILT_ORDINAL), p_ordinal(0), p_hnt_entry_rva(0), p_hnt_entry(NULL),
-			  p_bound_rva(0), p_extra_bits(0) {
-			ctor(ilt);
-		}
-
-		SgAsmPEImportILTEntry *parse(uint64_t entry_word);
-		void point_to_hnt(SgAsmPEImportHNTEntry*);
-		uint64_t encode(const SgAsmPEFileHeader*) const;
-		void unparse(std::ostream&, const SgAsmPEFileHeader *fhdr, rose_rva_t rva, size_t idx) const;
-		virtual void dump(FILE *f, const char *prefix, ssize_t idx) const;
-	private:
-		void ctor(SgAsmPEImportLookupTable*);
-HEADER_PE_IMPORT_ILT_ENTRY_END
-
-
-
-HEADER_PE_IMPORT_LOOKUP_TABLE_START
-	// PE -> Import Table -> Import Lookup Table   or
-	// PE -> Import Table -> Import Address Table
-	public:
-		/** This class represents import lookup tables or import address tables. */
-		enum TableKind {
-			ILT_LOOKUP_TABLE,
-			ILT_ADDRESS_TABLE
-		};
-
-		explicit SgAsmPEImportLookupTable(SgAsmPEImportDirectory *idir, TableKind tkind)
-			: p_table_kind(tkind), p_entries(NULL) {
-			ctor(idir);
-		}
-
-		SgAsmPEImportLookupTable *parse(rose_rva_t table_rva, size_t idir_idx);
-
-		size_t add_entry(SgAsmPEImportILTEntry*, size_t idx=(size_t)(-1));
-		size_t add_name(const std::string &name, size_t hint=0, size_t idx=(size_t)(-1));
-		size_t add_address(rose_rva_t rva, size_t idx=(size_t)(-1));
-
-		size_t reallocate(rose_rva_t start_rva);
-		virtual void unparse(std::ostream&, const SgAsmPEFileHeader*, rose_rva_t) const;
-		virtual void dump(FILE *f, const char *prefix, ssize_t idx) const;
-	private:
-		void ctor(SgAsmPEImportDirectory*);
-HEADER_PE_IMPORT_LOOKUP_TABLE_END
-
-
-
-HEADER_PE_IMPORT_HNT_ENTRY_START
-	// PE -> Import Table -> Hint/Name Table -> Entry
-	public:
-		explicit SgAsmPEImportHNTEntry(SgAsmPEImportILTEntry *ilt_entry)
-			: p_hint(0), p_name(NULL), p_padding(0) {
-			ctor(ilt_entry, "");
-		}
-		SgAsmPEImportHNTEntry(SgAsmPEImportILTEntry *ilt_entry, const std::string &name, unsigned hint)
-			: p_hint(hint), p_name(NULL), p_padding(0) {
-			ctor(ilt_entry, name);
-		}
-		SgAsmPEImportHNTEntry *parse(rose_rva_t);
-		size_t encoded_size();
-		void unparse(std::ostream&, rose_rva_t rva) const;
-		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
-	private:
-		void ctor(SgAsmPEImportILTEntry*, std::string name="");
-HEADER_PE_IMPORT_HNT_ENTRY_END
 
 
 
@@ -2794,7 +2750,10 @@ HEADER_PE_IMPORT_SECTION_START
 		void add_import_directory(SgAsmPEImportDirectory*);
 		void remove_import_directory(SgAsmPEImportDirectory*);
 		static bool import_mesg(const char *fmt, ...);
+		static void import_mesg_reset() { mesg_nprinted=0; }
+		size_t reallocate_iats(rose_rva_t start_at);
 	private:
+		static size_t mesg_nprinted; //counter for import_mesg()
 		void ctor();
 HEADER_PE_IMPORT_SECTION_END
 
