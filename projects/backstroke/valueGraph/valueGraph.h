@@ -447,7 +447,7 @@ private:
             SgScopeStatement* rvsScope,
             SgScopeStatement* cmtScope);
 
-    void generateCode(
+    bool generateCode(
             int dagIndex,
             const std::vector<ReverseCFG>& rvsCFGs,
             SgScopeStatement* rvsFuncBody,

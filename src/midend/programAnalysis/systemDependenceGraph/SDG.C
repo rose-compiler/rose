@@ -182,11 +182,23 @@ void SystemDependenceGraph::build()
 
                 // Get the associated function declaration.
                 SgFunctionDeclaration* funcDecl = funcCallExpr->getAssociatedFunctionDeclaration();
+                
+                if (funcDecl == NULL) 
+                    continue;
+                    
                 ROSE_ASSERT(funcDecl);
                 const SgInitializedNamePtrList& formalArgs = funcDecl->get_args();
 
                 SgExprListExp* args = funcCallExpr->get_args();
                 const SgExpressionPtrList& actualArgs = args->get_expressions();
+                
+                if (formalArgs.size() != actualArgs.size())
+                {
+                    cout << "The following function has variadic arguments:\n";
+                    cout << funcDecl->get_file_info()->get_filename() << endl;
+                    cout << funcDecl->get_name() << formalArgs.size() << " " << actualArgs.size() << endl;
+                    continue;
+                }
 
                 for (int i = 0, s = actualArgs.size(); i < s; ++i)
                 {
@@ -231,6 +243,7 @@ void SystemDependenceGraph::build()
                     Vertex paraOutVertex = addVertex(paraOutNode);
                     actualOutParameters[funcDecl].push_back(paraOutVertex);
                     callInfo.outPara.push_back(paraOutVertex);
+                    callInfo.isVoid = false;
                     callInfo.returned = paraOutVertex;
 
                     // Add a CD edge from call node to this actual-out node.
@@ -492,6 +505,10 @@ void SystemDependenceGraph::addDataDependenceEdges(
     // Add an edge from returned result of each function call to all uses of this function call.
     foreach (const CallSiteInfo& callInfo, callSiteInfo)
     {
+        // Functions of void type does not return anything.
+        if (callInfo.isVoid)
+            continue;
+            
         SgNode* node = (*this)[callInfo.returned]->astNode;
         if (isSgFunctionCallExp(node))
         {
