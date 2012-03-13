@@ -14,6 +14,7 @@ indexSetTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 C_TESTCODES_REQUIRED_TO_COMPILE =  \
      struct_simplest.c \
      expression.c \
+     function.c \
      array.c \
      arrayDereferencing.c
 
