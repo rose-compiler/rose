@@ -1906,7 +1906,7 @@ Unparse_ExprStmt::unparseUpcMythread(SgExpression* expr, SgUnparse_Info& info)
 void
 Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
    {
-#if 1
+#if 0
      printf ("In Unparse_ExprStmt::unparseFuncCall expr = %p unp->opt.get_overload_opt() = %s \n",expr,(unp->opt.get_overload_opt() == true) ? "true" : "false");
      curprint ( "\n/* In unparseFuncCall */ \n");
 #endif
@@ -2021,7 +2021,7 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
                   {
                     if (lhsClassDeclaration->get_firstNondefiningDeclaration() != functionClassDeclaration->get_firstNondefiningDeclaration())
                        {
-#if 1
+#if 0
                         if (SgProject::get_verbose() > 0)
                         {
                             printf ("Warning: lhs and member function from different classes (linked though class derivation) \n");
@@ -2044,7 +2044,7 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
                          set<SgSymbol*>::iterator hiddenDeclaration = hiddenList.find(memberFunctionSymbol);
                          if ( hiddenDeclaration != hiddenList.end() )
                             {
-#if 1
+#if 0
                               printf ("Warning: lhs class hidding derived class member function call \n");
                               curprint ( "/* Warning: lhs class hidding derived class member function call */\n ");
 #endif
@@ -2083,7 +2083,7 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
          !(isSgDotExp(func_call->get_function())) && !(isSgArrowExp(func_call->get_function())))
         {
           unp->u_debug->printDebugInfo("in FIRST PART of unparseFuncCall", true);
-#if 1
+#if 0
           printf ("output 1st part (without syntax sugar) \n");
           curprint ( " /* output 1st part (without syntax sugar) */ ");
 #endif
@@ -2125,7 +2125,7 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
 
             // printf ("DONE: output function argument (right) \n");
              }
-#if 1
+#if 0
           curprint ( "\n/* Leaving processing first part in unparseFuncCall */ \n");
 #endif
         }
@@ -2143,7 +2143,7 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
 
           if (unp->opt.get_overload_opt())
                info.set_nested_expression();
-#if 1
+#if 0
           printf ("output 2nd part func_call->get_function() = %s \n",func_call->get_function()->sage_class_name());
           curprint ("/* output 2nd part  func_call->get_function() = " + func_call->get_function()->class_name() + " */ \n");
 #endif
@@ -2169,7 +2169,7 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
 
           alt_info.set_reference_node_for_qualification(NULL);
 
-#if 1
+#if 0
           curprint ( " /* after output func_call->get_function() */ ");
 #endif
 
