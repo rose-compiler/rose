@@ -1,16 +1,26 @@
+#define DEFINE_AS_FRIEND_FUNCTION 1
+
 namespace std
    {
      class X
         {
           public:
-               template <typename T>
-               friend bool operator== (X,int);
+#if DEFINE_AS_FRIEND_FUNCTION
+               template <typename T> friend bool operator== (X,int);
+#else
+               template <typename T> bool operator== (int);
+#endif
         };
-
-     template <typename T>
-     bool operator== (X,int)
+#if DEFINE_AS_FRIEND_FUNCTION
+     template <typename T> bool operator== (X,int)
         {
           return false;
         }
+#else
+     template <typename T> bool X::operator== (int)
+        {
+          return false;
+        }
+#endif
 
    }

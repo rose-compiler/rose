@@ -70,7 +70,7 @@ found in the directory ROSE/TESTS/KnownBugs/AttachPreprocessingInfo.
 using namespace std;
 
 // Debug flag
-#define DEBUG_ATTACH_PREPROCESSING_INFO 0
+#define DEBUG_ATTACH_PREPROCESSING_INFO 3
 
 
 //It is needed because otherwise, the default destructor breaks something.
@@ -217,7 +217,7 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
      else
           cout << "-----> There are already PreprocessingInfo objects attached to this AST node" << endl;
 #endif
-     cout << "Traversing current list of attributes of length " << sizeOfCurrentListOfAttributes << endl;
+  // cout << "Traversing current list of attributes of length " << sizeOfCurrentListOfAttributes << endl;
 #endif
 
   // for ( int i = 0; i < sizeOfCurrentListOfAttributes; i++ )
@@ -1448,9 +1448,20 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                             ROSE_ASSERT (locatedNode->get_endOfConstruct() != NULL);
                          // printf ("Found a SgTemplateInstantiationMemberFunctionDecl but only record it as a previousLocNodePtr \n");
 
+                         // DQ (3/11/2012): Added recursive call to insert comments.
+                            bool reset_start_index = false;
+                            iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber
+                              ( locatedNode, lineOfClosingBrace, PreprocessingInfo::inside, reset_start_index,currentListOfAttributes );
+
                          // previousLocNodePtr = locatedNode;
                             previousLocatedNodeMap[currentFileNameId] = locatedNode;
+
+                         // DQ (3/11/2012): Added break statement to prevent fall through, I think this fixes a bug.
+                            break;
                           }
+
+                 // DQ (3/11/2012): Added case.
+                    case V_SgTemplateFunctionDefinition:
 
                  // DQ (12/29/2011): Adding support for template function and member function declarations.
                     case V_SgTemplateFunctionDeclaration:
@@ -1468,14 +1479,23 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                     case V_SgTemplateInstantiationFunctionDecl:
                           {
                             ROSE_ASSERT (locatedNode->get_endOfConstruct() != NULL);
+
+                         // DQ (3/11/2012): Added recursive call to insert comments.
+                            bool reset_start_index = false;
+                            iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber
+                              ( locatedNode, lineOfClosingBrace, PreprocessingInfo::inside, reset_start_index,currentListOfAttributes );
+
                          // previousLocNodePtr = locatedNode;
                             previousLocatedNodeMap[currentFileNameId] = locatedNode;
+
+                         // DQ (3/11/2012): Added break statement to prevent fall through, I think this fixes a bug.
+                            break;
                           }
 
                     default:
                        {
 #if 1
-                         printf ("Skipping any possability of attaching a comment/directive after a %s \n",n->sage_class_name());
+                         printf ("Skipping any possability of attaching a comment/directive after a %s \n",n->class_name().c_str());
                       // ROSE_ASSERT(false);
 #endif
                        }

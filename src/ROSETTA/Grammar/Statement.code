@@ -7565,6 +7565,20 @@ SgDeclarationStatement::get_declaration_associated_with_symbol() const
 #if 1
           printf ("declarationAssociatedWithSymbol != NULL: this = %p = %s \n",declarationAssociatedWithSymbol,this->class_name().c_str());
 #endif
+
+       // DQ (3/13/2012): This should be true and might be a source of errors for declarations in namespaces that are re-entrant.
+          ROSE_ASSERT(this->get_firstNondefiningDeclaration() != NULL);
+          ROSE_ASSERT(this->get_firstNondefiningDeclaration()->get_firstNondefiningDeclaration() != NULL); 
+          if (this->get_firstNondefiningDeclaration() != this->get_firstNondefiningDeclaration()->get_firstNondefiningDeclaration())
+             {
+               printf ("Error: this = %p = %s this->get_firstNondefiningDeclaration() = %p = %s \n",
+                    this,this->class_name().c_str(),this->get_firstNondefiningDeclaration(),this->get_firstNondefiningDeclaration()->class_name().c_str());
+               printf ("Error: this = %p = %s this->get_firstNondefiningDeclaration()->get_firstNondefiningDeclaration() = %p = %s \n",
+                    this,this->class_name().c_str(),this->get_firstNondefiningDeclaration()->get_firstNondefiningDeclaration(),this->get_firstNondefiningDeclaration()->get_firstNondefiningDeclaration()->class_name().c_str());
+             }
+          ROSE_ASSERT(this->get_firstNondefiningDeclaration() == this->get_firstNondefiningDeclaration()->get_firstNondefiningDeclaration()); 
+          ROSE_ASSERT(declarationAssociatedWithSymbol == declarationAssociatedWithSymbol->get_firstNondefiningDeclaration()); 
+
           if (declarationAssociatedWithSymbol->get_symbol_from_symbol_table() == NULL)
              {
 #if 1
@@ -7628,19 +7642,25 @@ SgDeclarationStatement::get_declaration_associated_with_symbol() const
                   {
                     if (declarationAssociatedWithSymbol->get_symbol_from_symbol_table() == NULL)
                        {
-                         printf ("declarationAssociatedWithSymbol = %p = %s = %s \n",
+                         printf ("In get_declaration_associated_with_symbol(): declarationAssociatedWithSymbol = %p = %s = %s \n",
                               declarationAssociatedWithSymbol,declarationAssociatedWithSymbol->class_name().c_str(),
                               SageInterface::get_name(declarationAssociatedWithSymbol).c_str());
                          SgScopeStatement* scope = declarationAssociatedWithSymbol->get_scope();
-                         printf ("declarationAssociatedWithSymbol scope = %p = %s = %s \n",scope,scope->class_name().c_str(),SageInterface::get_name(scope).c_str());
+                         printf ("In get_declaration_associated_with_symbol(): declarationAssociatedWithSymbol scope = %p = %s = %s \n",scope,scope->class_name().c_str(),SageInterface::get_name(scope).c_str());
                          scope->get_symbol_table()->print("declarationAssociatedWithSymbol");
 
                          SgNamespaceDefinitionStatement* namespaceDefinition = isSgNamespaceDefinitionStatement(scope);
                          if (namespaceDefinition != NULL)
                             {
-                              printf ("This is a namespace, so it is more complex \n");
+                              printf ("In get_declaration_associated_with_symbol(): This is a namespace, so it is more complex \n");
 
                               SgNamespaceDeclarationStatement* namespaceDeclaration = namespaceDefinition->get_namespaceDeclaration();
+                              ROSE_ASSERT(namespaceDeclaration != NULL);
+                              printf ("In get_declaration_associated_with_symbol(): namespaceDeclaration->get_name() = %s \n",namespaceDeclaration->get_name().str());
+
+                              printf ("previousDeclarationAssociatedWithSymbol                                    = %p \n",previousDeclarationAssociatedWithSymbol);
+                              printf ("previousDeclarationAssociatedWithSymbol->get_firstNondefiningDeclaration() = %p \n",previousDeclarationAssociatedWithSymbol->get_firstNondefiningDeclaration());
+
                               SgNamespaceDefinitionStatement*  nsdef = namespaceDeclaration->get_definition();
                               while (nsdef != NULL)
                                  {
@@ -7649,7 +7669,7 @@ SgDeclarationStatement::get_declaration_associated_with_symbol() const
 
                                    SgSymbol* symbol = previousDeclarationAssociatedWithSymbol->get_firstNondefiningDeclaration()->get_symbol_from_symbol_table();
 
-                                   printf ("In nsdef = %p found = %s symbol = %p \n",nsdef,found ? "true" : "false",symbol);
+                                   printf ("In nsdef = %p = %s found = %s symbol = %p \n",nsdef,nsdef->get_namespaceDeclaration()->get_name().str(),found ? "true" : "false",symbol);
 
                                 // SgSymbol* s = nsdef->symbol_exists(declarationAssociatedWithSymbol);
                                    nsdef = nsdef->get_nextNamepaceDefinition();
@@ -7659,6 +7679,28 @@ SgDeclarationStatement::get_declaration_associated_with_symbol() const
                               if (declarationAssociatedWithSymbol->get_firstNondefiningDeclaration() != NULL)
                                  {
                                    ROSE_ASSERT(declarationAssociatedWithSymbol->get_scope() == declarationAssociatedWithSymbol->get_firstNondefiningDeclaration()->get_scope());
+
+                                   SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(declarationAssociatedWithSymbol);
+                                   if (functionDeclaration != NULL)
+                                      {
+                                        ROSE_ASSERT(declarationAssociatedWithSymbol->get_firstNondefiningDeclaration()->get_scope()->lookup_function_symbol(functionDeclaration->get_name(),functionDeclaration->get_type()) != NULL);
+                                      }
+
+                                   if (declarationAssociatedWithSymbol->get_firstNondefiningDeclaration()->get_symbol_from_symbol_table() == NULL)
+                                      {
+                                        printf ("declarationAssociatedWithSymbol = %p = %s declarationAssociatedWithSymbol->get_firstNondefiningDeclaration() = %p \n",
+                                           declarationAssociatedWithSymbol,declarationAssociatedWithSymbol->class_name().c_str(),declarationAssociatedWithSymbol->get_firstNondefiningDeclaration());
+                                        SgScopeStatement* scope = isSgScopeStatement(declarationAssociatedWithSymbol->get_parent());
+
+                                        if (functionDeclaration != NULL)
+                                           {
+                                             ROSE_ASSERT(scope != NULL);
+
+                                             ROSE_ASSERT(previousDeclarationAssociatedWithSymbol->get_firstNondefiningDeclaration()->get_symbol_from_symbol_table() != NULL); 
+
+                                             ROSE_ASSERT(scope->lookup_function_symbol(functionDeclaration->get_name(),functionDeclaration->get_type()) != NULL);
+                                           }
+                                      }
                                    ROSE_ASSERT(declarationAssociatedWithSymbol->get_firstNondefiningDeclaration()->get_symbol_from_symbol_table() != NULL);
                                  }
 

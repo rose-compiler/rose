@@ -142,6 +142,8 @@ test2004_74.C \
 test2004_75.C \
 test2004_76.C \
 test2004_77.C \
+test2004_78.C \
+test2004_79.C \
 test2004_80.C \
 test2004_81.C \
 test2004_83.C \
@@ -157,6 +159,7 @@ test2004_96.C \
 test2004_97.C \
 test2004_98.C \
 test2004_99.C \
+test2004_100.C \
 test2004_101.C \
 test2004_102.C \
 test2004_103.C \
@@ -226,6 +229,8 @@ test2005_23.C \
 test2005_25.C \
 test2005_26.C \
 test2005_27.C \
+test2005_28.C \
+test2005_29.C \
 test2005_30.C \
 test2005_31.C \
 test2005_36.C \
@@ -243,6 +248,7 @@ test2005_51.C \
 test2005_52.C \
 test2005_55.C \
 test2005_58.C \
+test2005_59.C \
 test2005_61.C \
 test2005_62.C \
 test2005_64.C \
@@ -268,10 +274,15 @@ test2005_88.C \
 test2005_90.C \
 test2005_91.C \
 test2005_92.C \
+test2005_94.C \
+test2005_95.C \
 test2005_96.C \
 test2005_97.C \
+test2005_98.C \
 test2005_100.C \
 test2005_101.C \
+test2005_104.C \
+test2005_105.C \
 test2005_106.C \
 test2005_107.C \
 test2005_108.C \
@@ -285,6 +296,7 @@ test2005_120.C \
 test2005_124.C \
 test2005_125.C \
 test2005_127.C \
+test2005_135.C \
 test2005_140.C \
 test2005_141.C \
 test2005_144.C \
@@ -293,6 +305,8 @@ test2005_146.C \
 test2005_147.C \
 test2005_148.C \
 test2005_149.C \
+test2005_150.C \
+test2005_152.C \
 test2005_153.C \
 test2005_156.C \
 test2005_157.C \
@@ -312,7 +326,9 @@ test2005_174.C \
 test2005_175.C \
 test2005_176.C \
 test2005_177.C \
+test2005_179.C \
 test2005_180.C \
+test2005_181.C \
 test2005_182.C \
 test2005_184.C \
 test2005_185.C \
@@ -322,13 +338,13 @@ test2005_190.C \
 test2005_191.C \
 test2005_192.C \
 test2005_195.C \
-   test2005_196.C \
+test2005_196.C \
 test2005_197.C \
 test2005_198.C \
 test2005_202.C \
 test2005_203.C \
-   test2005_206.C \
-   test2005_207.C \
+test2005_206.C \
+test2005_207.C \
 test2005_208.C \
 test2005_209.C \
 test2006_01.C \
@@ -349,6 +365,7 @@ test2006_25.C \
 test2006_26.C \
 test2006_34.C \
 test2006_38.C \
+test2006_39.C \
 test2006_40.C \
 test2006_41.C \
 test2006_42.C \
@@ -375,6 +392,8 @@ test2006_72.C \
 test2006_75.C \
 test2006_76.C \
 test2006_77.C \
+test2006_78.C \
+test2006_79.C \
 test2006_80.C \
 test2006_82.C \
 test2006_83.C \
@@ -415,10 +434,10 @@ test2006_148.C \
 test2006_149.C \
 test2006_150.C \
 test2006_154.C \
-   test2006_155.C \
-   test2006_156.C \
-   test2006_157.C \
-   test2006_158.C \
+test2006_155.C \
+test2006_156.C \
+test2006_157.C \
+test2006_158.C \
 test2006_160.C \
 test2006_161.C \
 test2006_162.C \
@@ -442,7 +461,7 @@ test2007_10.C \
 test2007_11.C \
 test2007_12.C \
 test2007_14.C \
-   test2007_15.C \
+test2007_15.C \
 test2007_16.C \
 test2007_21.C \
 test2007_23.C \
@@ -450,10 +469,13 @@ test2007_24.C \
 test2007_25.C \
 test2007_26.C \
 test2007_28.C \
+test2007_29.C \
 test2007_43.C \
 test2007_44.C \
+test2007_47.C \
 test2007_48.C \
 test2007_49.C \
+test2007_50.C \
 test2007_51.C \
 test2007_52.C \
 test2007_53.C \
@@ -475,7 +497,7 @@ test2007_103.C \
 test2007_128.C \
 test2007_133.C \
 test2007_135.C \
-   test2007_142.C \
+test2007_142.C \
 test2007_147.C \
 test2007_151.C \
 test2007_152.C \
@@ -488,6 +510,7 @@ test2007_161.C \
 test2007_162.C \
 test2007_163.C \
 test2007_164.C \
+test2007_165.C \
 test2007_166.C \
 test2007_167.C \
 test2007_170.C \
@@ -523,6 +546,10 @@ test2009_20.C \
 test2009_27.C \
 test2009_28.C \
 test2009_42.C \
+test2010_03.C \
+test2010_04.C \
+test2010_05.C \
+test2010_06.C \
 test2010_18.C \
 test2011_01.C \
 test2011_02.C \
@@ -535,11 +562,14 @@ test2011_22.C \
 test2011_23.C \
 test2011_24.C \
 test2011_25.C \
+test2011_26.C \
+test2011_27.C \
 test2011_28.C \
 test2011_29.C \
 test2011_30.C \
 test2011_33.C \
 test2011_34.C \
+test2011_35.C \
 test2011_36.C \
 test2011_37.C \
 test2011_38.C \
@@ -553,15 +583,18 @@ test2011_45.C \
 test2011_46.C \
 test2011_47.C \
 test2011_48.C \
+test2011_49.C \
 test2011_50.C \
 test2011_51.C \
 test2011_52.C \
 test2011_58.C \
+test2011_61.C \
 test2011_63.C \
 test2011_67.C \
 test2011_68.C \
 test2011_69.C \
 test2011_71.C \
+test2011_78.C \
 test2011_79.C \
 test2011_81.C \
 test2011_82.C \
@@ -572,6 +605,7 @@ test2011_92.C \
 test2011_93.C \
 test2011_94.C \
 test2011_95.C \
+test2011_96.C \
 test2011_97.C \
 test2011_98.C \
 test2011_99.C \
@@ -684,6 +718,10 @@ test2005_09.C \
  test2012_27.C \
  test2012_28.C \
  test2012_29.C \
+ test2012_30.C \
+ test2012_31.C \
+ test2012_32.C \
+ test2012_34.C \
 test2006_125.C \
 $(NEW_PASSING_FILES)
 
@@ -713,7 +751,7 @@ test2011_64.C \
 test2011_66.C \
 test2011_74.C 
 
-#$(TESTCODE_CURRENTLY_FAILING)
+# $(TESTCODE_CURRENTLY_FAILING)
 
 
 # DQ (2/15/2012): These test codes fail on OSX only.
@@ -736,18 +774,14 @@ endif
 
 
 
-
 # Import list of C++ test cases that are known to fail:
 #   TESTCODE_CURRENTLY_FAILING
 #
 if ROSE_USE_EDG_VERSION_4_3
 TESTCODE_CURRENTLY_FAILING = \
-test2004_78.C \
-test2004_79.C \
 test2004_85.C \
 test2004_88.C \
 test2004_89.C \
-test2004_100.C \
 test2004_115.C \
 test2004_116.C \
 test2004_120.C \
@@ -765,8 +799,6 @@ test2005_06.C \
 test2005_10.C \
 test2005_19.C \
 test2005_24.C \
-test2005_28.C \
-test2005_29.C \
 test2005_33.C \
 test2005_34.C \
 test2005_35.C \
@@ -776,18 +808,13 @@ test2005_44.C \
 test2005_49.C \
 test2005_53.C \
 test2005_57.C \
-test2005_59.C \
 test2005_60.C \
 test2005_63.C \
 test2005_68.C \
 test2005_73.C \
-test2005_94.C \
-test2005_95.C \
-test2005_98.C \
 test2005_99.C \
 test2005_102.C \
 test2005_103.C \
-test2005_105.C \
 test2005_114.C \
 test2005_119.C \
 test2005_121.C \
@@ -801,18 +828,14 @@ test2005_131.C \
 test2005_132.C \
 test2005_133.C \
 test2005_134.C \
-test2005_135.C \
 test2005_136.C \
 test2005_137.C \
 test2005_138.C \
 test2005_139.C \
 test2005_142.C \
 test2005_143.C \
-test2005_150.C \
-test2005_152.C \
 test2005_155.C \
 test2005_173.C \
-test2005_181.C \
 test2005_193.C \
 test2006_03.C \
 test2006_04.C \
@@ -821,13 +844,10 @@ test2006_08.C \
 test2006_20.C \
 test2006_28.C \
 test2006_37.C \
-test2006_39.C \
 test2006_54.C \
 test2006_58.C \
 test2006_67.C \
 test2006_73.C \
-test2006_78.C \
-test2006_79.C \
 test2006_81.C \
 test2006_85.C \
 test2006_90.C \
@@ -839,19 +859,15 @@ test2006_129.C \
 test2006_141.C \
 test2006_185.C \
 test2007_04.C \
-test2007_29.C \
 test2007_38.C \
 test2007_40.C \
 test2007_41.C \
-test2007_47.C \
-test2007_50.C \
 test2007_83.C \
 test2007_130.C \
 test2007_137.C \
 test2007_140.C \
 test2007_141.C \
 test2007_150.C \
-test2007_165.C \
 test2007_169.C \
 test2009_19.C \
 test2009_21.C \
@@ -860,20 +876,11 @@ test2009_30.C \
 test2009_39.C \
 test2009_40.C \
 test2009_41.C \
-test2010_03.C \
-test2010_04.C \
-test2010_05.C \
-test2010_06.C \
-test2011_26.C \
-test2011_27.C \
 test2011_31.C \
 test2011_32.C \
-test2011_35.C \
-test2011_49.C \
 test2011_53.C \
 test2011_59.C \
 test2011_60.C \
-test2011_61.C \
 test2011_62.C \
 test2011_70.C \
 test2011_72.C \
@@ -881,14 +888,12 @@ test2011_73.C \
 test2011_75.C \
 test2011_76.C \
 test2011_77.C \
-test2011_78.C \
 test2011_80.C \
 test2011_84.C \
 test2011_85.C \
 test2011_86.C \
 test2011_87.C \
 test2011_91.C \
-test2011_96.C \
 test2011_110.C \
 test2011_136.C \
 test2011_139.C \
@@ -897,7 +902,6 @@ test2011_142.C \
   test2005_112.C \
    test2005_154.C \
    test2005_163.C \
-   test2005_179.C \
    test2005_194.C \
    test2006_84.C \
    test2006_151.C \
@@ -907,7 +911,6 @@ test2011_142.C \
    test2007_55.C \
 inputBug317.C \
 inputBug327.C \
-test2005_104.C \
 test2010_24.C \
  test2004_130.C \
  test2005_32.C \
@@ -916,7 +919,8 @@ test2010_24.C \
  test2009_37.C \
  test2009_31.C \
  test2011_65.C \
- test2011_121.C 
+ test2011_121.C \
+ test2012_33.C 
 
 # DQ (2/19/2012): These appear to fail only sometimes and were noticed just before going on travel (test with valgrind).
 STATISTICALLY_FAILING_TESTS = \

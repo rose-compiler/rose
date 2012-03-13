@@ -9779,6 +9779,11 @@ void SageInterface::updateDefiningNondefiningLinks(SgFunctionDeclaration* func, 
           printf ("In SageInterface::updateDefiningNondefiningLinks(): func = %p Found a valid pointer to a firstNondefiningFunctionDeclaration = %p \n",func,firstNondefiningFunctionDeclaration);
         }
 
+  // DQ (3/12/2012): Added assertion
+  // ROSE_ASSERT(scope == func->get_firstNondefiningDeclaration()->get_scope());
+     ROSE_ASSERT(func->get_firstNondefiningDeclaration()->get_scope() != NULL);
+     ROSE_ASSERT(func->get_firstNondefiningDeclaration()->get_scope()->lookup_function_symbol(func->get_name(),func->get_type()) != NULL);
+
   // It would be better to find the first non-defining declaration via the symbol.
      SgSymbol* functionSymbol = scope->lookup_function_symbol(func->get_name(),func->get_type());
      if (functionSymbol != NULL)
@@ -9792,7 +9797,7 @@ void SageInterface::updateDefiningNondefiningLinks(SgFunctionDeclaration* func, 
 
   // Find the same function declaration list, including func itself
      SgStatementPtrList::iterator j;
-     for (j=stmtList.begin();j!=stmtList.end();j++)
+     for (j = stmtList.begin(); j != stmtList.end(); j++)
         {
           SgFunctionDeclaration* func_decl = isSgFunctionDeclaration(*j);
           if (func_decl)
@@ -9809,7 +9814,7 @@ void SageInterface::updateDefiningNondefiningLinks(SgFunctionDeclaration* func, 
 
      if (func->get_definingDeclaration()==func)
         {
-          for (j=sameFuncList.begin();j!=sameFuncList.end();j++)
+          for (j = sameFuncList.begin(); j != sameFuncList.end(); j++)
                isSgFunctionDeclaration(*j)->set_definingDeclaration(func);
         }
        else
@@ -9817,9 +9822,9 @@ void SageInterface::updateDefiningNondefiningLinks(SgFunctionDeclaration* func, 
        // DQ (3/9/2012): Added assertion to avoid empty list that would be an error in both cases below.
           ROSE_ASSERT(sameFuncList.empty() == false);
 
-          if (func==isSgFunctionDeclaration(*(sameFuncList.begin()))) // is first_nondefining declaration
+          if (func == isSgFunctionDeclaration(*(sameFuncList.begin()))) // is first_nondefining declaration
              {
-               for (j=sameFuncList.begin();j!=sameFuncList.end();j++)
+               for (j = sameFuncList.begin(); j != sameFuncList.end(); j++)
                   {
                     printf ("In SageInterface::updateDefiningNondefiningLinks(): (case 1) Calling j = %p set_firstNondefiningDeclaration(%p) \n",*j,func);
 

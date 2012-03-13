@@ -438,8 +438,25 @@ FixupAstSymbolTablesToSupportAliasedSymbols::visit ( SgNode* node )
                ROSE_ASSERT(list.size() == 1);
 
                list[0] = namespaceDefinition;
+#if 0
+            // DQ (3/11/2012): New code, but maybe we should instead put the implicit "std" namespace into the global scope more directly.
+               if (mangledNamespaceName == "std" && false)
+                  {
+                 // This case has to be handled special since the implicit "std" namespace primary declaration was 
+                 // constructed but not added to the global scope.  But maybe it should be.
+                  }
+                 else
+                  {
+                 // DQ (7/24/2011): get_nextNamepaceDefinition() == NULL is false in the case of the AST copy tests 
+                 // (see tests/CompileTests/copyAST_tests/copytest2007_30.C). Only  get_nextNamepaceDefinition() 
+                 // appears to sometimes be non-null, so we reset them both to NULL just to make sure.
+                    namespaceDefinition->set_nextNamepaceDefinition(NULL);
+                    namespaceDefinition->set_previousNamepaceDefinition(NULL);
 
-
+                    ROSE_ASSERT(namespaceDefinition->get_nextNamepaceDefinition()     == NULL);
+                    ROSE_ASSERT(namespaceDefinition->get_previousNamepaceDefinition() == NULL);
+                  }
+#else
             // DQ (7/24/2011): get_nextNamepaceDefinition() == NULL is false in the case of the AST copy tests 
             // (see tests/CompileTests/copyAST_tests/copytest2007_30.C). Only  get_nextNamepaceDefinition() 
             // appears to sometimes be non-null, so we reset them both to NULL just to make sure.
@@ -448,7 +465,7 @@ FixupAstSymbolTablesToSupportAliasedSymbols::visit ( SgNode* node )
 
                ROSE_ASSERT(namespaceDefinition->get_nextNamepaceDefinition()     == NULL);
                ROSE_ASSERT(namespaceDefinition->get_previousNamepaceDefinition() == NULL);
-
+#endif
                namespaceMap.insert(std::pair<SgName,std::vector<SgNamespaceDefinitionStatement*> >(mangledNamespaceName,list));
              }
         }

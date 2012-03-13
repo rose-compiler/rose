@@ -88,6 +88,22 @@ SgScopeStatement* SageBuilder::topScopeStack()
   return tempScope;
 }
 
+
+SgScopeStatement*
+SageBuilder::getGlobalScopeFromScopeStack()
+   {
+  // This function adds new support within the internal scope stack mechanism.
+  // DQ (3/11/2012): Test if this is an empty stack, and if so return NULL (ScopeStack.back() should be undefined for this case).
+     if (ScopeStack.empty() == true)
+          return NULL;
+
+  // The SgGlobal scope should be the first (front) element in the list (the current scope at the end (back) of the list).
+     SgScopeStatement* tempScope = ScopeStack.front();
+     ROSE_ASSERT(isSgGlobal(tempScope) != NULL);
+
+     return tempScope;
+   }
+
 bool SageBuilder::emptyScopeStack()
 {
   return ScopeStack.empty();
