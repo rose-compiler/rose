@@ -376,7 +376,7 @@ struct hash_nodeptr
     /** Generate a name that is unique in the current scope and any parent and children scopes.
     * @param baseName the word to be included in the variable names. */
     std::string generateUniqueVariableName(SgScopeStatement* scope, std::string baseName = "temp");
-    
+
   // DQ (8/10/2010): Added const to first parameter.
   // DQ (3/10/2007):
   //! Generate a unique string from the source file position information
@@ -673,7 +673,7 @@ bool isAssignable(SgType* type);
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 //! Check if a class type is a pure virtual class. True means that there is at least
-//! one pure virtual function that has not been overridden. 
+//! one pure virtual function that has not been overridden.
 //! In the case of an incomplete class type (forward declaration), this function returns false.
 bool isPureVirtualClass(SgType* type, const ClassHierarchyWrapper& classHierarchy);
 #endif
@@ -748,7 +748,7 @@ SgType* getArrayElementType(SgType* t);
 //! Get the element type of an array, pointer or string, or NULL if not applicable
 SgType* getElementType(SgType* t);
 
-//! Check if an expression is an array access (SgPntrArrRefExp). If so, return its name expression and subscripts if requested. Users can use convertRefToInitializedName() to get the possible name. It does not check if the expression is a top level SgPntrArrRefExp. 
+//! Check if an expression is an array access (SgPntrArrRefExp). If so, return its name expression and subscripts if requested. Users can use convertRefToInitializedName() to get the possible name. It does not check if the expression is a top level SgPntrArrRefExp.
 bool isArrayReference(SgExpression* ref, SgExpression** arrayNameExp=NULL, std::vector<SgExpression*>** subscripts=NULL);
 
 
@@ -826,7 +826,7 @@ void changeContinuesToGotos(SgStatement* stmt, SgLabelStatement* label);
 SgInitializedName* getLoopIndexVariable(SgNode* loop);
 
 //!Check if a SgInitializedName is used as a loop index within a AST subtree
-//! This function will use a bottom-up traverse starting from the subtree_root to find all enclosing loops and check if ivar is used as an index for either of them. 
+//! This function will use a bottom-up traverse starting from the subtree_root to find all enclosing loops and check if ivar is used as an index for either of them.
 bool isLoopIndexVariable(SgInitializedName* ivar, SgNode* subtree_root);
 
 //! Routines to get and set the body of a loop
@@ -864,7 +864,7 @@ bool normalizeForLoopInitDeclaration(SgForStatement* loop);
 //! Normalize a for loop, return true if successful
 //!
 //! Translations are :
-//!    For the init statement: for (int i=0;... ) becomes int i; for (i=0;..)   
+//!    For the init statement: for (int i=0;... ) becomes int i; for (i=0;..)
 //!    For test expression:
 //!           i<x is normalized to i<= (x-1) and
 //!           i>x is normalized to i>= (x+1)
@@ -1486,11 +1486,58 @@ unsigned long long getIntegerConstantValue(SgValueExp* expr);
 std::vector<SgDeclarationStatement*> getDependentDeclarations (SgStatement* stmt );
 
 
-//! Insert an expression (new_exp )before another expression (anchor_exp) has possible side effects, without changing the original semantics. This is achieved by using a comma operator: (new_exp, anchor_exp). The comma operator is returned. 
+//! Insert an expression (new_exp )before another expression (anchor_exp) has possible side effects, without changing the original semantics. This is achieved by using a comma operator: (new_exp, anchor_exp). The comma operator is returned.
 SgCommaOpExp *insertBeforeUsingCommaOp (SgExpression* new_exp, SgExpression* anchor_exp);
 
-//! Insert an expression (new_exp ) after another expression (anchor_exp) has possible side effects, without changing the original semantics. This is done by using two comma operators:  type T1; ... ((T1 = anchor_exp, new_exp),T1) )... , where T1 is a temp variable saving the possible side effect of anchor_exp. The top level comma op exp is returned. The reference to T1 in T1 = anchor_exp is saved in temp_ref.  
+//! Insert an expression (new_exp ) after another expression (anchor_exp) has possible side effects, without changing the original semantics. This is done by using two comma operators:  type T1; ... ((T1 = anchor_exp, new_exp),T1) )... , where T1 is a temp variable saving the possible side effect of anchor_exp. The top level comma op exp is returned. The reference to T1 in T1 = anchor_exp is saved in temp_ref.
 SgCommaOpExp *insertAfterUsingCommaOp (SgExpression* new_exp, SgExpression* anchor_exp, SgStatement** temp_decl = NULL, SgVarRefExp** temp_ref = NULL);
+
+
+/// \brief   moves the body of a function f to a new function f`;
+///          f's body is replaced with code that forwards the call to f`.
+/// \return  a pair indicating the statement containing the call of f`
+///          and an initialized name refering to the temporary variable
+///          holding the result of f`. In case f returns void
+///          the initialized name is NULL.
+/// \param   definingDeclaration the defining function declaration of f
+/// \param   newName the name of function f`
+/// \pre     definingDeclaration must be a defining declaration of a
+///          free standing function.
+///          typeid(SgFunctionDeclaration) == typeid(definingDeclaration)
+///          i.e., this function is NOT implemented for class member functions,
+///          template functions, procedures, etc.
+/// \details f's new body becomes { f`(...); } and { int res = f`(...); return res; }
+///          for functions returning void and a value, respectively.
+///          two function declarations are inserted in f's enclosing scope
+///          result_type f`(...);                       <--- (1)
+///          result_type f (...) { forward call to f` }
+///          result_type f`(...) { original code }      <--- (2)
+///          Calls to f are not updated, thus in the transformed code all
+///          calls will continue calling f (this is also true for
+///          recursive function calls from within the body of f`).
+///          After the function has created the wrapper,
+///          definingDeclaration becomes the wrapper function
+///          The definition of f` is the next entry in the
+///          statement list; the forward declaration of f` is the previous
+///          entry in the statement list.
+std::pair<SgStatement*, SgInitializedName*>
+wrapFunction(SgFunctionDeclaration& definingDeclaration, SgName newName);
+
+/// \overload
+/// \tparam  NameGen, functor that generates a new name based on the old name.
+///          interface: SgName @nameGen(const SgName&)
+/// \param   nameGen name generator
+/// \brief   see wrapFunction for details
+template <class NameGen>
+std::pair<SgStatement*, SgInitializedName*>
+wrapFunction(SgFunctionDeclaration& definingDeclaration, NameGen nameGen)
+{
+  return wrapFunction(definingDeclaration, nameGen(definingDeclaration.get_name()));
+}
+
+/// \brief convenience function that returns the first initialized name in a
+///        list of variable declarations.
+SgInitializedName& getFirstVariable(SgVariableDeclaration& vardecl);
 
 
 //@}

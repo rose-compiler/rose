@@ -201,13 +201,13 @@ void EventReverser::generateCode()
 
     string pathNumName = "__num0";
     
-    // If the number of path is 1, we don't have to use path numbers.
-    //if (pathNum > 1)
-    buildPathNumDeclForRvsCmtFunc(pathNumName, rvsFuncDef_->get_body(), cmtFuncDef_->get_body());
     
     // Build all three functions.
-    generateCode(0, rvsCFGs, rvsFuncDef_->get_body(), cmtFuncDef_->get_body(), pathNumName);
+    bool pathNumNeeded = 
+        generateCode(0, rvsCFGs, rvsFuncDef_->get_body(), cmtFuncDef_->get_body(), pathNumName);
 
+    if (pathNumNeeded)
+        buildPathNumDeclForRvsCmtFunc(pathNumName, rvsFuncDef_->get_body(), cmtFuncDef_->get_body());
     
     // If the number of path is 1, we don't have to use path numbers.
     //if (pathNum > 1)
@@ -223,7 +223,8 @@ void EventReverser::generateCode()
     
     
     pathNumManager_->insertLoopCounterToFwdFunc(loopHeaders);
-    pathNumManager_->insertPathNumToFwdFunc();
+    if (pathNumNeeded)
+        pathNumManager_->insertPathNumToFwdFunc();
 
     // Replace expressions in replaceTable_.
     typedef pair<SgExpression*, SgExpression*> ExprPair;
@@ -1545,7 +1546,7 @@ namespace
     }
 }
 
-void EventReverser::generateCode(
+bool EventReverser::generateCode(
         int dagIndex,
         const vector<ReverseCFG>& rvsCFGs,
         SgScopeStatement* rvsFuncBody,
@@ -1555,6 +1556,7 @@ void EventReverser::generateCode(
     using namespace SageBuilder;
     using namespace SageInterface;
     
+    bool pathNumNeeded = false;
     //  int counter = 0;
     
 //    // Build an anonymous namespace.
@@ -1726,6 +1728,9 @@ void EventReverser::generateCode(
                 SgExpression* condExpr = NULL;
                 foreach (const IntPair& cond, conds)
                 {
+                    // Set pathNumNeeded to true to let fwd function be instrumented 
+                    // by path num.
+                    pathNumNeeded = true;
                     SgVarRefExp* numVar = buildVarRefExp(pathNumName);
                     SgExpression* bitAndExpr = buildBitAndOp(numVar, buildIntVal(cond.first));
                     SgExpression* compExpr = buildEqualityOp(bitAndExpr, buildIntVal(cond.second));
@@ -1785,6 +1790,7 @@ void EventReverser::generateCode(
         }
     }
 
+    return pathNumNeeded;
 }
 
 
