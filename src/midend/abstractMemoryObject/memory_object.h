@@ -137,6 +137,7 @@ namespace AbstractMemoryObject
       virtual std::string toString();
       // equal operator
       virtual bool operator == (const IndexVector & other) const;
+      virtual bool operator != (const IndexVector & other) const;
     
   };
 
