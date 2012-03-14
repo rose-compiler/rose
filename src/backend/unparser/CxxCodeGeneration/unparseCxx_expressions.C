@@ -3708,17 +3708,29 @@ Unparse_ExprStmt::unparsePseudoDtorRef(SgExpression* expr, SgUnparse_Info & info
    {
      SgPseudoDestructorRefExp* pdre = isSgPseudoDestructorRefExp(expr);
      ROSE_ASSERT(pdre != NULL);
+
      SgType *objt = pdre->get_object_type();
 
-     curprint ( "~" );
-     if (SgNamedType *nt = isSgNamedType(objt))
+  // printf ("In unparsePseudoDtorRef(): pdre->get_object_type() = %p = %s \n",objt,objt->class_name().c_str());
+
+     curprint("~");
+
+  // if (SgNamedType *nt = isSgNamedType(objt))
+     SgNamedType* namedType = isSgNamedType(objt);
+     if (namedType != NULL)
         {
-          curprint ( nt->get_name().str() );
+       // printf ("Unparser will output SgPseudoDestructorRefExp using the class name only \n");
+          curprint(namedType->get_name().str());
+
+       // DQ (3/14/2012): Note that I had to add this for the case of EDG 4.3, but it was not required previously for EDG 3.3, something in ROSE has likely changes.
+          curprint("()");
         }
-     else
+       else
         {
+       // DQ (3/14/2012): This is the case of of a primative type (e.g. "~int"), which is allowed.
        // PC: I do not think this case will ever occur in practice.  If it does, the resulting
        // code will be invalid.  It may, however, appear in an implicit template instantiation.
+       // printf ("WARNING: This case of unparsing in unparsePseudoDtorRef() using unparseType() may not work \n");
           unp->u_type->unparseType(objt, info);
         }
    }
