@@ -8,7 +8,7 @@
 // Previous to the fix, without the default constructor explicitly defined 
 // a symbol would not be generated and the use of the function would fail.
 // The fix was to detect the use of compiler generated functions and allow
-// the symbol to be constructed upon first use (allows to template cases as well).
+// the symbol to be constructed upon first use (applies to template cases as well).
 
 class use_count_is_zero // : public std::exception
    {

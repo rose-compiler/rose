@@ -151,6 +151,8 @@ test2004_84.C \
 test2004_85.C \
 test2004_86.C \
 test2004_87.C \
+test2004_88.C \
+test2004_89.C \
 test2004_90.C \
 test2004_91.C \
 test2004_93.C \
@@ -223,6 +225,7 @@ test2005_14.C \
 test2005_15.C \
 test2005_16.C \
 test2005_17.C \
+test2005_19.C \
 test2005_20.C \
 test2005_21.C \
 test2005_22.C \
@@ -297,6 +300,7 @@ test2005_120.C \
 test2005_124.C \
 test2005_125.C \
 test2005_127.C \
+test2005_134.C \
 test2005_135.C \
 test2005_140.C \
 test2005_141.C \
@@ -396,6 +400,7 @@ test2006_77.C \
 test2006_78.C \
 test2006_79.C \
 test2006_80.C \
+test2006_81.C \
 test2006_82.C \
 test2006_83.C \
 test2006_87.C \
@@ -780,14 +785,13 @@ endif
 #
 if ROSE_USE_EDG_VERSION_4_3
 TESTCODE_CURRENTLY_FAILING = \
-test2004_88.C \
-test2004_89.C \
 test2004_115.C \
 test2004_116.C \
 test2004_120.C \
 test2004_127.C \
 test2004_128.C \
 test2004_129.C \
+ test2004_130.C \
 test2004_138.C \
 test2004_141.C \
 test2004_145.C \
@@ -797,8 +801,8 @@ test2004_162.C \
 test2005_02.C \
 test2005_06.C \
 test2005_10.C \
-test2005_19.C \
 test2005_24.C \
+ test2005_32.C \
 test2005_33.C \
 test2005_34.C \
 test2005_35.C \
@@ -815,6 +819,7 @@ test2005_73.C \
 test2005_99.C \
 test2005_102.C \
 test2005_103.C \
+ test2005_112.C \
 test2005_114.C \
 test2005_119.C \
 test2005_121.C \
@@ -827,16 +832,19 @@ test2005_130.C \
 test2005_131.C \
 test2005_132.C \
 test2005_133.C \
-test2005_134.C \
 test2005_136.C \
 test2005_137.C \
 test2005_138.C \
 test2005_139.C \
 test2005_142.C \
 test2005_143.C \
+ test2005_154.C \
 test2005_155.C \
+ test2005_161.C \
+ test2005_163.C \
 test2005_173.C \
 test2005_193.C \
+ test2005_194.C \
 test2006_03.C \
 test2006_04.C \
 test2006_05.C \
@@ -848,7 +856,7 @@ test2006_54.C \
 test2006_58.C \
 test2006_67.C \
 test2006_73.C \
-test2006_81.C \
+ test2006_84.C \
 test2006_85.C \
 test2006_90.C \
 test2006_119.C \
@@ -857,11 +865,17 @@ test2006_124.C \
 test2006_126.C \
 test2006_129.C \
 test2006_141.C \
+ test2006_151.C \
+ test2006_159.C \
 test2006_185.C \
+ test2007_01.C \
 test2007_04.C \
+ test2007_05.C \
+ test2007_17.C \
 test2007_38.C \
 test2007_40.C \
 test2007_41.C \
+ test2007_55.C \
 test2007_83.C \
 test2007_130.C \
 test2007_137.C \
@@ -873,15 +887,19 @@ test2009_19.C \
 test2009_21.C \
 test2009_24.C \
 test2009_30.C \
+ test2009_31.C \
+ test2009_37.C \
 test2009_39.C \
 test2009_40.C \
 test2009_41.C \
+test2010_24.C \
 test2011_31.C \
 test2011_32.C \
 test2011_53.C \
 test2011_59.C \
 test2011_60.C \
 test2011_62.C \
+ test2011_65.C \
 test2011_70.C \
 test2011_72.C \
 test2011_73.C \
@@ -895,32 +913,15 @@ test2011_86.C \
 test2011_87.C \
 test2011_91.C \
 test2011_110.C \
+ test2011_121.C \
 test2011_136.C \
 test2011_139.C \
 test2011_141.C \
 test2011_142.C \
-  test2005_112.C \
-   test2005_154.C \
-   test2005_163.C \
-   test2005_194.C \
-   test2006_84.C \
-   test2006_151.C \
-   test2006_159.C \
-   test2007_01.C \
-   test2007_17.C \
-   test2007_55.C \
+ test2012_33.C \
 inputBug317.C \
-inputBug327.C \
-test2010_24.C \
- test2004_130.C \
- test2005_32.C \
- test2005_161.C \
- test2007_05.C \
- test2009_37.C \
- test2009_31.C \
- test2011_65.C \
- test2011_121.C \
- test2012_33.C 
+inputBug327.C 
+
 
 # DQ (2/19/2012): These appear to fail only sometimes and were noticed just before going on travel (test with valgrind).
 STATISTICALLY_FAILING_TESTS = \
