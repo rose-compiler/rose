@@ -7,13 +7,13 @@
 #include <rose_config.h>
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-#include "roseAdapter.h"
-#include "markLhsValues.h"
-#include "sageBuilder.h"
-#include <fstream>
-#include <boost/algorithm/string/trim.hpp>
-#include <boost/foreach.hpp>
-#include "Outliner.hh"
+   #include "roseAdapter.h"
+   #include "markLhsValues.h"
+   #include "sageBuilder.h"
+   #include <fstream>
+   #include <boost/algorithm/string/trim.hpp>
+   #include <boost/foreach.hpp>
+   #include "Outliner.hh"
 #else
    #include "sageBuilder.h"
    #include <fstream>
@@ -40,6 +40,92 @@ std::list<SgScopeStatement*> SageBuilder::ScopeStack(0);
 // DQ (11/30/2010): Added support for building Fortran case insensitive symbol table handling.
 //! Support for construction of case sensitive/insensitive symbol table handling in scopes.
 bool SageBuilder::symbol_table_case_insensitive_semantics = false;
+
+
+
+
+// DQ (3/13/2012): Added support for organizing how we match function declarations with function symbols.
+template<class T>
+SgFunctionSymbol*
+SgSymbolTable::find_symbol_by_type_of_function (const SgName & name, const SgType* func_type)
+   {
+  // DQ (3/13/2012): This is to address the fact that there are 6 different types of functions in ROSE:
+  //    1) SgFunctionDeclaration
+  //    2) SgMemberFunctionDeclaration
+  //    3) SgTemplateFunctionDeclaration
+  //    4) SgTemplateMemberFunctionDeclaration
+  //    5) SgTemplateFunctionInstntiationDeclaration
+  //    6) SgTemplateMemberFunctionInstntiationDeclaration
+  // And 4 different types of function symbols:
+  //    1) SgFunctionSymbol
+  //    2) SgMemberFunctionSymbol
+  //    3) SgTemplateFunctionSymbol
+  //    4) SgTemplateMemberFunctionSymbol
+  // Note that both:
+  //    SgTemplateFunctionInstntiationDeclaration
+  //    SgTemplateMemberFunctionInstntiationDeclaration
+  // map to 
+  //    SgFunctionSymbol
+  //    SgMemberFunctionSymbol
+  // respectively.
+
+  // Check if there is a function symbol of any kind, then narrow the selection.
+  // SgFunctionSymbol* func_symbol = lookup_function_symbol(name,func_type);
+     SgFunctionSymbol* func_symbol = NULL;
+
+  // if (func_symbol == NULL)
+        {
+       // Use the static variant as a selector.
+          switch((VariantT)T::static_variant)
+             {
+               case V_SgFunctionDeclaration:
+               case V_SgTemplateInstantiationFunctionDecl:
+                  {
+                    printf ("In SgSymbolTable::find_symbol_by_type_of_function(): This is a SgFunctionDeclaration function \n");
+                 // func_symbol = this->find_function(name,func_type);
+                    func_symbol = find_nontemplate_function(name,func_type);
+                    break;
+                  }
+
+               case V_SgMemberFunctionDeclaration:
+               case V_SgTemplateInstantiationMemberFunctionDecl:
+                  {
+                    printf ("In SgSymbolTable::find_symbol_by_type_of_function(): This is a SgMemberFunctionDeclaration function \n");
+                    func_symbol = find_nontemplate_member_function(name,func_type);
+                    break;
+                  }
+
+               case V_SgTemplateFunctionDeclaration:
+                  {
+                    printf ("In SgSymbolTable::find_symbol_by_type_of_function(): This is a SgTemplateFunctionDeclaration function \n");
+                    func_symbol = find_template_function(name,func_type);
+                    break;
+                  }
+
+               case V_SgTemplateMemberFunctionDeclaration:
+                  {
+                    printf ("In SgSymbolTable::find_symbol_by_type_of_function(): This is a SgTemplateMemberFunctionDeclaration function \n");
+                    func_symbol = find_template_member_function(name,func_type);
+                    break;
+                  }
+
+               default:
+                  {
+                 // printf ("default reach in buildNondefiningFunctionDeclaration_T(): variantT(T::static_variant) = %d = %s \n",T::static_variant,T::class_name().c_str());
+                    printf ("In SgSymbolTable::find_symbol_by_type_of_function(): default reached --- variantT(T::static_variant) = %d \n",T::static_variant);
+                    ROSE_ASSERT(false);
+                  }
+             }
+        }
+
+     if (func_symbol != NULL)
+          printf ("In SgSymbolTable::find_symbol_by_type_of_function(): func_symbol = %p = %s \n",func_symbol,func_symbol->class_name().c_str());
+       else
+          printf ("In SgSymbolTable::find_symbol_by_type_of_function(): func_symbol = %p \n",func_symbol);
+
+  // return isSgFunctionSymbol(func_symbol);
+     return func_symbol;
+   }
 
 
 void SageBuilder::pushScopeStack (SgScopeStatement* stmt)
@@ -968,11 +1054,17 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & name, SgType*
   // or a SgTemplateSymbol.
   // SgFunctionSymbol *func_symbol = NULL;
   // SgSymbol *func_symbol = NULL;
-     SgFunctionSymbol *func_symbol = NULL;
+     SgFunctionSymbol* func_symbol = NULL;
 
      if (scope != NULL)
         {
-          func_symbol = scope->lookup_function_symbol(name,func_type);
+       // DQ (3/13/2012): Experiment with new function to support only associating the right type of symbol with the 
+       // function being built.  I don't think I like the design of this interface, but we might change that later.
+       // func_symbol = scope->lookup_function_symbol(name,func_type);
+       // SgSymbol* symbol = scope->get_symbol_table()->find_symbol_by_type_of_function<actualFunction>(name,func_type);
+       // func_symbol = symbol;
+          func_symbol = scope->get_symbol_table()->find_symbol_by_type_of_function<actualFunction>(name,func_type);
+
 #if 1
           printf ("In buildNondefiningFunctionDeclaration_T(): func_symbol from scope->lookup_function_symbol(name = %s) = %p \n",name.str(),func_symbol);
 #endif
@@ -997,8 +1089,60 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & name, SgType*
              }
         }
 
+#if 1
+  // DQ (3/13/2012): I want to introduce error checking on the symbol matching the template parameter.
+     if (func_symbol != NULL)
+        {
+          printf ("In SageBuilder::buildNondefiningFunctionDeclaration_T(): scope = %p func_symbol = %p = %s \n",scope,func_symbol,func_symbol->class_name().c_str());
 #if 0
-     printf ("In SageBuilder::buildNondefiningFunctionDeclaration_T(): scope = %p func_symbol = %p \n",scope,func_symbol);
+       // if (actualFunction::get_variantT() == V_SgFunctionDeclaration)
+       // if (actualFunction::variantT() == V_SgFunctionDeclaration)
+       // if (SgNode::variantT(actualFunction::static_variant) == V_SgTemplateMemberFunctionDeclaration)
+          if ((VariantT)actualFunction::static_variant == V_SgTemplateMemberFunctionDeclaration)
+             {
+               printf ("This is a SgTemplateMemberFunctionDeclaration function \n");
+             }
+            else
+             {
+               printf ("variantT(actualFunction::static_variant) = %d \n",actualFunction::static_variant);
+             }
+#endif
+          switch((VariantT)actualFunction::static_variant)
+             {
+               case V_SgFunctionDeclaration:
+               case V_SgTemplateInstantiationFunctionDecl:
+                  {
+                    printf ("This is a SgFunctionDeclaration function \n");
+                    ROSE_ASSERT(isSgFunctionSymbol(func_symbol) != NULL);
+                    break;
+                  }
+               case V_SgMemberFunctionDeclaration:
+               case V_SgTemplateInstantiationMemberFunctionDecl:
+                  {
+                    printf ("This is a SgMemberFunctionDeclaration function \n");
+                    ROSE_ASSERT(isSgMemberFunctionSymbol(func_symbol) != NULL);
+                    break;
+                  }
+               case V_SgTemplateFunctionDeclaration:
+                  {
+                    printf ("This is a SgTemplateFunctionDeclaration function \n");
+                    ROSE_ASSERT(isSgTemplateFunctionSymbol(func_symbol) != NULL);
+                    break;
+                  }
+               case V_SgTemplateMemberFunctionDeclaration:
+                  {
+                    printf ("This is a SgTemplateMemberFunctionDeclaration function \n");
+                    ROSE_ASSERT(isSgTemplateMemberFunctionSymbol(func_symbol) != NULL);
+                    break;
+                  }
+
+               default:
+                  {
+                    printf ("default reach in buildNondefiningFunctionDeclaration_T(): variantT(actualFunction::static_variant) = %d \n",actualFunction::static_variant);
+                    ROSE_ASSERT(false);
+                  }
+             }
+        }
 #endif
 
      if (func_symbol == NULL)
@@ -1766,6 +1910,12 @@ SageBuilder::buildNondefiningTemplateMemberFunctionDeclaration (const SgName & n
 
      printf ("In buildNondefiningTemplateMemberFunctionDeclaration(): Looking up name = %s in scope = %p = %s \n",name.str(),scope,scope->class_name().c_str());
   // ROSE_ASSERT(scope->lookup_template_symbol(name) != NULL);
+     if (scope->lookup_template_member_function_symbol(name,result->get_type()) == NULL)
+        {
+          printf ("Error: scope->lookup_template_member_function_symbol(name,result->get_type()) == NULL (investigate this) \n");
+          printf ("--- function name = %s in scope = %p = %s result->get_type() = %p = %s \n",name.str(),scope,scope->class_name().c_str(),result->get_type(),result->get_type()->class_name().c_str());
+          scope->get_symbol_table()->print("Error: scope->lookup_template_member_function_symbol(name,result->get_type()) == NULL (investigate this)");
+        }
      ROSE_ASSERT(scope->lookup_template_member_function_symbol(name,result->get_type()) != NULL);
 
      return result;
@@ -1936,8 +2086,7 @@ SageBuilder::buildDefiningMemberFunctionDeclaration (const SgName & name, SgMemb
   SgMemberFunctionDeclaration * func;
 
  //  symbol table and non-defining 
-  SgMemberFunctionSymbol *func_symbol = 
-      isSgMemberFunctionSymbol(scope->lookup_function_symbol(name,func_type));
+  SgMemberFunctionSymbol *func_symbol = isSgMemberFunctionSymbol(scope->lookup_function_symbol(name,func_type));
   if (func_symbol ==NULL)
   {
     // new defining declaration
@@ -2133,7 +2282,13 @@ SageBuilder::buildDefiningFunctionDeclaration_T(const SgName & name, SgType* ret
 
   // symbol table and non-defining 
   // SgFunctionSymbol *func_symbol = scope->lookup_function_symbol(name,func_type);
-     SgSymbol* func_symbol = scope->lookup_function_symbol(name,func_type);
+  // SgSymbol* func_symbol = scope->lookup_function_symbol(name,func_type);
+
+     ROSE_ASSERT(scope != NULL); 
+     ROSE_ASSERT(scope->get_symbol_table() != NULL); 
+     SgSymbol* func_symbol = scope->get_symbol_table()->find_symbol_by_type_of_function<actualFunction>(name,func_type);
+
+#if 0
      if (func_symbol == NULL)
         {
           printf ("In buildDefiningFunctionDeclaration_T(): could not find function symbol for name = %s \n",name.str());
@@ -2152,6 +2307,10 @@ SageBuilder::buildDefiningFunctionDeclaration_T(const SgName & name, SgType* ret
              }
           ROSE_ASSERT(func_symbol != NULL);
         }
+#else
+  // DQ (3/13/2012): Note that this function building a defining declaration can enforce that the non-defining declaration has already build a proper symbol.
+     ROSE_ASSERT(func_symbol != NULL);
+#endif
 
      printf ("In buildDefiningFunctionDeclaration_T(): func_symbol = %p \n",func_symbol);
 

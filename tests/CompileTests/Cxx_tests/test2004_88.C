@@ -7,6 +7,7 @@ class X {};
 
 void destroy ( X* x_ptr )
    {
+  // This should unparse to: "x_ptr->~X();"
      x_ptr->~X();
    }
 #endif

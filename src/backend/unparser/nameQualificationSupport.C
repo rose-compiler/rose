@@ -1125,6 +1125,9 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                          break;
                        }
 
+                 // DQ (3/13/2012): Added support for SgTemplateVariableDeclaration (I think it can just leverage the SgVariableDeclaration case).
+                    case V_SgTemplateVariableDeclaration:
+
                     case V_SgVariableDeclaration:
                        {
                          SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(declaration);

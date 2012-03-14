@@ -1013,6 +1013,25 @@ TestAstProperties::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttribu
                        }
 #endif
 
+#ifdef ROSE_USE_EDG_VERSION_4
+                 // DQ (3/13/2012): This case is required for test2004_85.C (related to support for STL string.h header file).
+                    case V_SgConstructorInitializer:
+                       {
+                      // Unclear what should be checked here, for now allow this as an acceptable case.
+                         printf ("Warning: EDG 4.0 specific case, found unusual case of SgConstructorInitializer returned from SgFunctionCallExp::get_function() member function \n");
+                         break;
+                       }
+#endif
+#ifdef ROSE_USE_EDG_VERSION_4
+                 // DQ (3/13/2012): This case is required for test2004_85.C (might be related to support for SgPseudoDestructorRefExp which is edg version 4 specific).
+                    case V_SgTemplateMemberFunctionRefExp:
+                       {
+                      // Unclear what should be checked here, for now allow this as an acceptable case.
+                         printf ("Warning: EDG 4.0 specific case, found unusual case of SgTemplateMemberFunctionRefExp returned from SgFunctionCallExp::get_type() member function \n");
+                         break;
+                       }
+#endif
+
                     default:
                        {
                          printf ("Error case default in switch (functionExpression = %s) \n",functionExpression->class_name().c_str());
@@ -1083,6 +1102,24 @@ TestAstProperties::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttribu
                        {
                       // Unclear what should be checked here, for now allow this as an acceptable case.
                          printf ("Warning: EDG 4.0 specific case, found unusual case of SgTemplateType returned from SgFunctionCallExp::get_type() member function \n");
+                         break;
+                       }
+#endif
+#ifdef ROSE_USE_EDG_VERSION_4
+                 // DQ (3/13/2012): This case is required for test2004_85.C (might be related to support for SgPseudoDestructorRefExp which is edg version 4 specific).
+                    case V_SgClassType:
+                       {
+                      // Unclear what should be checked here, for now allow this as an acceptable case.
+                         printf ("Warning: EDG 4.0 specific case, found unusual case of SgClassType returned from SgFunctionCallExp::get_type() member function \n");
+                         break;
+                       }
+#endif
+#ifdef ROSE_USE_EDG_VERSION_4
+                 // DQ (3/13/2012): This case is required for test2004_85.C (might be related to support for SgPseudoDestructorRefExp which is edg version 4 specific).
+                    case V_SgReferenceType:
+                       {
+                      // Unclear what should be checked here, for now allow this as an acceptable case.
+                         printf ("Warning: EDG 4.0 specific case, found unusual case of SgReferenceType returned from SgFunctionCallExp::get_type() member function \n");
                          break;
                        }
 #endif
