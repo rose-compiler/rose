@@ -3970,7 +3970,20 @@ HEADER_SYMBOL_TABLE_START
           template<class ReturnType> ReturnType* find_symbol_support (const SgName & nm);
      public:
 
+       // DQ (3/13/2012): Added support for organizing how we match function declarations with function symbols.
+          template<class T>
+          SgFunctionSymbol* find_symbol_by_type_of_function (const SgName & name, const SgType* func_type);
+
 HEADER_SYMBOL_TABLE_END
+
+
+HEADER_SYMBOL_TABLE_POSTDECLARATION_START
+
+HEADER_SYMBOL_TABLE_POSTDECLARATION_END
+
+
+// HEADER SYMBOL_TABLE_POSTDECLARATION_START
+// HEADER SYMBOL_TABLE_POSTDECLARATION_END
 
 
 HEADER_BASECLASS_START
@@ -4021,9 +4034,6 @@ HEADER_EXP_BASE_CLASS_START
           void post_construction_initialization();
 HEADER_EXP_BASE_CLASS_END
 
-
-HEADER_SYMBOL_TABLE_POSTDECLARATION_START
-HEADER_SYMBOL_TABLE_POSTDECLARATION_END
 
 HEADER_INITIALIZED_NAME_START
 
@@ -7401,6 +7411,7 @@ SgSymbolTable::findfunc(const SgName & nm, const SgType* t)
    }
 #endif
 
+
 SgFunctionSymbol*
 SgSymbolTable::find_function (const SgName & nm, const SgType* t)
    {
@@ -7627,22 +7638,38 @@ SgSymbolTable::find_template_member_function(const SgName& nm, const SgType* t)
   // Find the sublist that match the name.
      std::pair<hash_iterator, hash_iterator> range = p_table->equal_range(nm);
 
+#if 1
+     if (range.first == range.second)
+        {
+          printf ("In SgSymbolTable::find_template_member_function(): WARNING no symbols found with name = %s \n",nm.str());
+        }
+#endif
+
   // Iterate through the list that match the name to find the one that is a SgTemplateSymbol and has a matching SgType pointer.
      for (hash_iterator i = range.first; i != range.second; ++i)
         {
+          printf ("Found a possible matching symbol (matching name only: nm = %s) i->second = %p = %s \n",nm.str(),i->second,i->second->class_name().c_str());
+
           SgTemplateMemberFunctionSymbol * sym = isSgTemplateMemberFunctionSymbol(i->second);
 
           if (sym != NULL)
              {
-            // printf ("In SgSymbolTable::find_template_function(): Found a symbol with correct name: symbol = %p = %s (looking for type = %p = %s) \n",i->second,i->second->class_name().c_str(),t,t->class_name().c_str());
+#if 1
+               printf ("In SgSymbolTable::find_template_member_function(): Found a symbol with correct name: symbol = %p = %s (looking for type = %p = %s) \n",i->second,i->second->class_name().c_str(),t,t->class_name().c_str());
+#endif
                ROSE_ASSERT(sym->get_declaration() != NULL);
                ROSE_ASSERT(sym->get_declaration()->get_type() != NULL);
-            // printf ("In SgSymbolTable::find_template_function(): Found a symbol with correct name: sym->get_declaration() = %p = %s (looking for sym->get_declaration()->get_type() = %p = %s) \n",
-            //           sym->get_declaration(),sym->get_declaration()->class_name().c_str(),sym->get_declaration()->get_type(),sym->get_declaration()->get_type()->class_name().c_str());
+#if 1
+               printf ("In SgSymbolTable::find_template_member_function(): Found a symbol with correct name: sym->get_declaration() = %p = %s (looking for sym->get_declaration()->get_type() = %p = %s) \n",
+                         sym->get_declaration(),sym->get_declaration()->class_name().c_str(),sym->get_declaration()->get_type(),sym->get_declaration()->get_type()->class_name().c_str());
+#endif
              }
 
           if ( (sym != NULL) && (sym->get_declaration()->get_type() == t) && get_table()->key_eq()(sym->get_name(),nm))
              {
+#if 1
+               printf ("In SgSymbolTable::find_template_member_function(): Found the matching symbol: symbol = %p = %s \n",i->second,i->second->class_name().c_str());
+#endif
                p_name    = nm;
                p_no_name = false;
                s         = sym;
@@ -7656,11 +7683,11 @@ SgSymbolTable::find_template_member_function(const SgName& nm, const SgType* t)
           ROSE_ASSERT(s->get_declaration()->get_type() == t);
         }
 #else
-     printf ("ERROR: SgSymbolTable::find_template_function(nm = %s,SgType*) is not implemented yet! \n",nm.str());
+     printf ("ERROR: SgSymbolTable::find_template_member_function(nm = %s,SgType*) is not implemented yet! \n",nm.str());
      ROSE_ASSERT(false);
 #endif
 
-  // printf ("In SgSymbolTable::find_template_function(): returning symbol = %p = %s \n",s,(s != NULL) ? s->class_name().c_str() : "null");
+     printf ("In SgSymbolTable::find_template_member_function(): returning symbol = %p = %s \n",s,(s != NULL) ? s->class_name().c_str() : "null");
 
      return s;
    }
