@@ -69,7 +69,7 @@ int clang_main(int argc, char ** argv, SgSourceFile& sageFile) {
     size_t last_period = input_file.find_last_of(".");
     std::string extention(input_file.substr(last_period + 1));
 
-    if (extention == "c") {
+    if (extention == "c" || extention == "cc") {
         language = ClangToSageTranslator::C;
     }
     else if (extention == "C" || extention == "cxx" || extention == "cpp") {
