@@ -1397,12 +1397,13 @@ bool ClangToSageTranslator::VisitFunctionDecl(clang::FunctionDecl * function_dec
     }
 
     ROSE_ASSERT(sg_function_decl->get_firstNondefiningDeclaration() != NULL);
-
+/* // TODO Fix problem with function symbols...
     SgSymbol * symbol = GetSymbolFromSymbolTable(function_decl);
     if (symbol == NULL) {
         SgFunctionSymbol * func_sym = new SgFunctionSymbol(isSgFunctionDeclaration(sg_function_decl->get_firstNondefiningDeclaration()));
         SageBuilder::topScopeStack()->insert_symbol(name, func_sym);        
     }
+*/
 //  ROSE_ASSERT(GetSymbolFromSymbolTable(function_decl) != NULL);
 
     *node = sg_function_decl;
