@@ -521,8 +521,17 @@ namespace AbstractMemoryObject {
     NamedObj o1 = *this;
     if (o1.anchor_symbol == o2.anchor_symbol) // same symbol
       if (o1.parent == o2.parent)   // same parent
-        if (o1.array_index_vector == o2. array_index_vector) // same array index
-        rt = true ;
+      {
+        if ( (o1.array_index_vector) != NULL && (o2.array_index_vector) != NULL)
+        {
+            // same array index, must use *pointer == *pointer to get the right comparison!!
+          if ((*(o1.array_index_vector)) == (*(o2.array_index_vector))) 
+            rt = true; // semantically equivalent index vectors
+        }
+        else
+          if ( o1.array_index_vector == o2.array_index_vector) // both are NULL
+            rt = true ;
+      }
     return rt;
   }
 
@@ -563,6 +572,11 @@ namespace AbstractMemoryObject {
      }
      return rt;
    }
+
+  bool IndexVector_Impl:: operator != (const IndexVector & other) const
+  {
+    return !(*this == other) ;
+  }
 
   bool IndexVector_Impl:: operator == (const IndexVector & other) const
   {
@@ -1165,7 +1179,7 @@ namespace AbstractMemoryObject {
     }
     bool assert_flag = true; 
 
-    if (named_objset_map[parent][anchor_symbol][iv] == NULL)
+    if (named_objset_map[parent][anchor_symbol][iv] == NULL) // TODO: Here is buggy, index vector is not uniquely generated now!
     { // None found, create a new one depending on its type and update the map
       if (SageInterface::isScalarType(t))
         // We define the following SgType as scalar types: 

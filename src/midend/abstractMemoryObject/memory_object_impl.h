@@ -144,6 +144,7 @@ namespace AbstractMemoryObject
       std::vector<IndexSet *> index_vector; // a vector of memory objects of named objects or temp expression objects
       std::string toString();
       bool operator == (const IndexVector & other) const ;
+      bool operator != (const IndexVector & other) const ;
   };
 
   class NamedObj; 
