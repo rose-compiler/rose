@@ -94,7 +94,7 @@ class ecjASTVisitor extends ExtendedASTVisitor
      // *************************************************
      public boolean preVisit(ASTNode node) {
          if (TypeHeaderDelimiters.containsKey(node)) {
-System.out.println("At the end of a Type Header !");
+// System.out.println("At the end of a Type Header !");
              TypeDeclaration type = TypeHeaderDelimiters.get(node);
              java_parser.cactionTypeDeclarationHeader(type.superclass != null,
                                                       type.superInterfaces == null ? 0 : type.superInterfaces.length,
@@ -102,7 +102,7 @@ System.out.println("At the end of a Type Header !");
                                                       this.createJavaToken(node));
          }
          else if (MethodHeaderDelimiters.containsKey(node)) {
-System.out.println("At the end of a Method or Constructor Header !");
+// System.out.println("At the end of a Method or Constructor Header !");
              // Do Something !!!
          }
 
@@ -142,7 +142,7 @@ System.out.println("At the end of a Method or Constructor Header !");
      public void exitTypeDeclaration(TypeDeclaration node) {
     	 String typename = new String(node.name);
          if (TypesWithNoBody.contains(node)) {
-System.out.println("Type " + typename + " does not have a body!"); 
+// System.out.println("Type " + typename + " does not have a body!"); 
              java_parser.cactionTypeDeclarationHeader(node.superclass != null,
                                                       node.superInterfaces == null ? 0 : node.superInterfaces.length,
                                                       node.typeParameters == null  ? 0 : node.typeParameters.length,
@@ -2973,7 +2973,7 @@ System.out.println("Type " + typename + " does not have a body!");
              }
           
           if (MethodsWithNoBody.contains(node)) {
-System.out.println("Constructor with no body");      	  
+// System.out.println("Constructor < body");      	  
           }
 //        else
           java_parser.cactionConstructorDeclarationEnd(node.arguments == null ? 0 : node.arguments.length,

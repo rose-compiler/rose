@@ -192,24 +192,6 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionTypeDeclaration (JNIEnv *env, jobj
      SgClassDeclaration* classDeclaration = classDefinition->get_declaration();
      ROSE_ASSERT(classDeclaration != NULL);
      classDeclaration -> set_explicit_interface(is_interface); // Identify whether or not this is an interface
-/*
-if (is_interface) {
-cout << "The type " << classDeclaration -> get_qualified_name().getString() << "(" << ((unsigned long) classDeclaration) << ")" << " is an interface and get_explicit_interface is "
-     << (classDeclaration -> get_explicit_interface() ? "true" : "false")
-     << (classDeclaration -> get_definingDeclaration() ? " with defining declaration " : " without defining declaration ")
-     << " (" << ((unsigned long) classDeclaration -> get_definingDeclaration()) << ")"
-     << endl;
-cout.flush();
-}
-else {
-cout << "The type " << classDeclaration -> get_qualified_name().getString() << "(" << ((unsigned long) classDeclaration) << ")" << " is NOT an interface and get_explicit_interface is "
-     << (classDeclaration -> get_explicit_interface() ? "true" : "false")
-     << (classDeclaration -> get_definingDeclaration() ? " with defining declaration " : " without defining declaration ")
-     << " (" << ((unsigned long) classDeclaration -> get_definingDeclaration()) << ")"
-     << endl;
-cout.flush();
-}
-*/
 
      if (is_abstract)
           classDeclaration -> get_declarationModifier().setJavaAbstract();
@@ -343,87 +325,6 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionTypeDeclarationEnd (JNIEnv *env, j
          }
          classDefinition -> prepend_statement(statement);
      }
-
-     /*
-     //
-     // Process the interfaces for this type, if any.
-     //
-     for (int i = 0; i < number_of_interfaces; i++) {
-         SgType *type = astJavaComponentStack.popType();
-         SgClassType *interface_type = isSgClassType(type);
-         SgDeclarationStatement *declaration = interface_type -> get_declaration();
-         SgClassDeclaration *interface_declaration = isSgClassDeclaration(declaration -> get_definingDeclaration());
-     */
-/*
-         //
-         // There is currently a bug in Java-Rose... This class type does not point to the same Object
-         // that was allocated to construct the real Type Declaration.
-         //
-if (interface_declaration -> get_explicit_interface()) {
-cout << "***The type " << interface_declaration -> get_qualified_name().getString() << "(" << ((unsigned long) interface_declaration) << ")" << " is an interface and get_explicit_interface is "
-     << (interface_declaration -> get_explicit_interface() ? "true" : "false")
-     << (interface_declaration -> get_definingDeclaration() ? " with defining declaration " : " without defining declaration ")
-     << " (" << ((unsigned long) interface_declaration -> get_definingDeclaration()) << ")"
-     << endl;
-cout.flush();
-}
-else {
-cout << "***The type " << interface_declaration -> get_qualified_name().getString() << "(" << ((unsigned long) interface_declaration) << ")" << " is NOT an interface and get_explicit_interface is "
-     << (interface_declaration -> get_explicit_interface() ? "true" : "false")
-     << (interface_declaration -> get_definingDeclaration() ? " with defining declaration " : " without defining declaration ")
-     << " (" << ((unsigned long) interface_declaration -> get_definingDeclaration()) << ")"
-     << endl;
-cout.flush();
-}
-         interface_declaration -> set_explicit_interface(true); // must be an interface
-*/
-/*
-         ROSE_ASSERT(interface_declaration -> get_explicit_interface()); // must be an interface
-
-         SgBaseClass *base = new SgBaseClass(interface_declaration);
-         base -> set_parent(classDefinition);
-         classDefinition -> prepend_inheritance(base);
-     }
-
-     //
-     // Add Super class to the current Class definition.
-     //
-     if (has_super_class) {
-         SgType *type = astJavaComponentStack.popType();
-         SgClassType *class_type = isSgClassType(type);
-         SgDeclarationStatement *declaration = class_type -> get_declaration();
-         SgClassDeclaration *class_declaration = isSgClassDeclaration(declaration -> get_definingDeclaration());
-*/
-/*
-         //
-         // There is currently a bug in Java-Rose... This class type does not point to the same Object
-         // that was allocated to construct the real Type Declaration.
-         //
-if (class_declaration -> get_explicit_interface()) {
-cout << "***The type " << class_declaration -> get_qualified_name().getString() << "(" << ((unsigned long) class_declaration) << ")" << " is an interface and get_explicit_interface is "
-     << (class_declaration -> get_explicit_interface() ? "true" : "false")
-     << (class_declaration -> get_definingDeclaration() ? " with defining declaration " : " without defining declaration ")
-     << " (" << ((unsigned long) class_declaration -> get_definingDeclaration()) << ")"
-     << endl;
-cout.flush();
-}
-else {
-cout << "***The type " << class_declaration -> get_qualified_name().getString() << " is NOT an interface"
-     << (class_declaration -> get_definingDeclaration() ? " with defining declaration " : " without defining declaration ")
-     << " (" << ((unsigned long) class_declaration -> get_definingDeclaration()) << ")"
-     << endl;
-cout.flush();
-}
-         class_declaration -> set_explicit_interface(false); // must be a class
-*/
-/*
-         ROSE_ASSERT(! class_declaration -> get_explicit_interface()); // must be a class
-
-         SgBaseClass *base = new SgBaseClass(class_declaration);
-         base -> set_parent(classDefinition);
-         classDefinition -> prepend_inheritance(base);
-     }
-*/
 
      ROSE_ASSERT(classDefinition == astJavaComponentStack.top());
      astJavaComponentStack.pop(); // remove the class definition from the stack
