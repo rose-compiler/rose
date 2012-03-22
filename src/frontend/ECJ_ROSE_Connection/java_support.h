@@ -177,6 +177,12 @@ SgClassDefinition* getCurrentClassDefinition();
 //! Strips off "#RAW" suffix from raw types (support for Java 1.5 and greater).
 SgName processNameOfRawType(SgName name);
 
+//! Support for identification of symbols using simple names in a given scope.
+SgSymbol *lookupSimpleNameInClassScope(const SgName& name, SgClassDefinition *classDefinition);
+
+//! Support for identification of symbols using simple names.
+SgVariableSymbol *lookupVariableByName(const SgName& name);
+
 //! Support for identification of symbols using qualified names (used by the import statement).
 SgSymbol* lookupSymbolInParentScopesUsingQualifiedName( SgName qualifiedName, SgScopeStatement* currentScope);
 
