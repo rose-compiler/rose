@@ -219,6 +219,7 @@ createInitName (const string& name, SgType* type,
 //! Stores a new outlined-function parameter.
 typedef std::pair<string, SgType *> OutlinedFuncParam_t;
 
+#if 0
 //! Returns 'true' if the base type is a primitive type.
 static
 bool
@@ -254,7 +255,7 @@ isBaseTypePrimitive (const SgType* type)
       }
   return false;
 }
-
+#endif
 /*!
  *  \brief Creates a new outlined-function parameter for a given
  *  variable. The requirement is to preserve data read/write semantics.
@@ -719,7 +720,7 @@ void CudaOutliner::functionParameterHandling(ASTtools::VarSymSet_t& syms, // reg
   // For each variable symbol, create an equivalent function parameter. 
   // Also create unpacking and repacking statements.
   int counter=0;
-  SgInitializedName* parameter1=NULL; // the wrapper parameter
+//  SgInitializedName* parameter1=NULL; // the wrapper parameter
   SgVariableDeclaration*  local_var_decl  =  NULL;
 
   // handle OpenMP private variables/ or those which are neither live-in or live-out
@@ -763,7 +764,7 @@ void CudaOutliner::functionParameterHandling(ASTtools::VarSymSet_t& syms, // reg
     }
     // step 2. Create unpacking/unwrapping statements, also record variables to be replaced
     // ----------------------------------------
-    bool isPointerDeref = false; 
+   // bool isPointerDeref = false; 
 
     if (Outliner::enable_classic) 
       {  // classic methods use parameters directly, no unpacking is needed

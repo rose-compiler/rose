@@ -37,7 +37,7 @@ void visitorTraversal::visit(SgNode* node)
 //! Create a stride expression from an existing stride expression based on the loop iteration's order (incremental or decremental) 
 // The assumption is orig_stride is just the raw operand of the condition expression of a loop                      
 // so it has to be adjusted to reflect the real stride: *(-1) if decremental                         
-                                                                   
+#if 0                                                                   
 static SgExpression* createAdjustedStride(SgExpression* orig_stride, bool isIncremental)
 {
   ROSE_ASSERT(orig_stride);
@@ -57,7 +57,7 @@ static SgExpression* createAdjustedStride(SgExpression* orig_stride, bool isIncr
     }
 }
 
-
+#endif
 
 void MintCudaMidend::processLoopsInParallelRegion(SgNode* parallelRegionNode, 
 						 MintHostSymToDevInitMap_t hostToDevVars,
@@ -81,7 +81,7 @@ void MintCudaMidend::processLoopsInParallelRegion(SgNode* parallelRegionNode,
 #ifdef VERBOSE_2
 	    cout << "  INFO:Mint: @ Line " << node->get_file_info()->get_line()  << endl;
             cout << "  Processing Omp For Statement" << endl << endl;
-#endif VERBOSE_2
+#endif
 	    //DataTransferSizes::findTransferSizes(node, trfSizes);
 	
 	    bool isBoundaryCond = LoweringToCuda::isBoundaryConditionLoop(node);
@@ -311,6 +311,8 @@ void MintCudaMidend::mintPragmasFrontendProcessing(SgSourceFile* file)
 	    MintPragmas::isMintPragma(node);
 	    break;
 	  }
+        default:
+          break;
 	}
     }
 }
@@ -358,7 +360,7 @@ void MintCudaMidend::processDataTransferPragmas(SgNode* parallel_reg,
 #ifdef VERBOSE_2
 	  cout << "  INFO:Mint: @ Line "  << pragma->get_file_info()->get_line() << endl
 	       << "  Issue Data Transfers to Device " << "(dest: "<< params.dst << " ,src: "<< params.src << ")"<< endl << endl;
-#endif VERBOSE_2
+#endif
       }
       /*
       else 
@@ -393,14 +395,14 @@ void MintCudaMidend::processDataTransferPragmas(SgNode* parallel_reg,
 #ifdef VERBOSE_2
 	  cout << "  INFO:Mint: @ Line "  << node->get_file_info()->get_line() << endl
 	       << "  Issue Data Transfers to Device " << "(dest: "<< params.dst << " ,src: "<< params.src << ")"<< endl << endl;
-#endif VERBOSE_2
+#endif
 	}
 	else if (params.trfType == MINT_DATA_TRF_FROM_DEV_PRAGMA){
 	  CudaMemoryManagement::issueDataTransferFromDevice(node, params, hostToDevVars, inside);
 #ifdef VERBOSE_2
 	  cout << "  INFO:Mint: @ Line "  << node->get_file_info()->get_line() << endl
 	       << "  Issue Data Transfers to Host " << "(dest: "<< params.dst << " ,src: "<< params.src << ")"<< endl << endl;
-#endif VERBOSE_2
+#endif
 	}
 	else 
 	  {
@@ -458,7 +460,7 @@ void MintCudaMidend::processDataTransferPragmas(SgNode* parallel_reg,
 #ifdef VERBOSE_2
 	  cout << "  INFO:Mint: @ Line "  << pragma->get_file_info()->get_line() << endl
 	       << "  Issue Data Transfers form Device " << "(dest: "<< params.dst << " ,src: "<< params.src << ")"<< endl << endl;
-#endif VERBOSE_2
+#endif
       }
       /*      else 
 	{
@@ -616,7 +618,7 @@ void MintCudaMidend::transOmpSingle(SgNode * node)
     SgIfStmt* if_stmt = buildIfStmt(buildIntVal(1), body, NULL);
 
     replaceStatement(target, if_stmt,true);
-    SgBasicBlock* true_body = ensureBasicBlockAsTrueBodyOfIf (if_stmt);
+    //SgBasicBlock* true_body = ensureBasicBlockAsTrueBodyOfIf (if_stmt);
 
     //transOmpVariables(target, true_body, func_exp);
     // handle nowait 
@@ -741,7 +743,7 @@ void MintCudaMidend::lowerMinttoCuda(SgSourceFile* file)
 #ifdef VERBOSE_2
 	    cout << "  INFO:Mint: @ Line " << node->get_file_info()->get_line()  << endl;
 	    cout << "  Processing Mint Parallel Statement" << endl << endl;
-#endif VERBOSE_2
+#endif
 	    MintCudaMidend::transOmpParallel(node, hostToDevVars);
             break;
           }
@@ -762,7 +764,7 @@ void MintCudaMidend::lowerMinttoCuda(SgSourceFile* file)
 #ifdef VERBOSE_2
 	    cout << "  INFO:Mint: @ Line " << node->get_file_info()->get_line()  << endl;
 	    cout << "  Processing Omp Barrier Statement" << endl;
-#endif VERBOSE_2
+#endif
             transOmpBarrierToCudaBarrier(node);
             break;
           }

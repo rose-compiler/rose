@@ -98,15 +98,17 @@ int CudaOptimizer::getNonStencilArrayRefCount(std::vector<SgExpression*> expList
 
 SgType* getArrayElementType(const MintInitNameMapExpList_t &arrRefList)
 {
+  SgType* rt = NULL ;
   MintInitNameMapExpList_t::const_iterator it; 
-
-  for(it = arrRefList.begin(); it != arrRefList.end(); it++)
-    {
-      const SgInitializedName* array = it->first;
-      ROSE_ASSERT(array);
-      
-      return array->get_type()->findBaseType();
-    }
+  it = arrRefList.begin();
+ // for(it = arrRefList.begin(); it != arrRefList.end(); it++)
+ // {
+    const SgInitializedName* array = it->first;
+    ROSE_ASSERT(array != NULL);
+    rt =array->get_type()->findBaseType();
+  //}
+  ROSE_ASSERT (rt != NULL);
+  return rt;  
 }
  
 void CudaOptimizer::findCandidateVarForSharedMem(MintInitNameMapExpList_t arrRefList,
@@ -442,7 +444,7 @@ void CudaOptimizer::optimize(SgFunctionDeclaration* kernel, MintForClauses_t cla
   bool optUnroll = MintOptions::GetInstance()->isUnrollOpt();
   if(optUnroll) //call unroll loop and constant folding if command line option is set
     {
-      bool loop_unrolled = LoopUnrollOptimizer::unrollShortLoops(kernel);
+      //bool loop_unrolled = LoopUnrollOptimizer::unrollShortLoops(kernel);
       //We have added a wrapper around the ROSE's constant folding opt
       //because ROSE's doesn't work properly
       MintConstantFolding::constantFoldingOptimization(kernel,false);
@@ -467,7 +469,7 @@ void CudaOptimizer::optimize(SgFunctionDeclaration* kernel, MintForClauses_t cla
     }
 
   bool optUnrollZ = clauseList.chunksize.z == 1 ? false : true ; 
-  bool optUnrollY = clauseList.chunksize.y == 1 ? false : true ;  //not implemented yet
+  //bool optUnrollY = clauseList.chunksize.y == 1 ? false : true ;  //not implemented yet
   
   /*************end of Step 1 **************************************************************/
 
@@ -614,7 +616,7 @@ void CudaOptimizer::swapLoopAndIf(SgFunctionDeclaration* kernel,
     //case 1: two loops, 1 if 
     if(clauseList.chunksize.z != 1 && clauseList.chunksize.y != 1 )
     {
-      int swappable =  2 ; 
+      //int swappable =  2 ; 
       //there has to be a for loop with gidz iterator
       Rose_STL_Container<SgNode*> forloops = NodeQuery::querySubTree(kernel_body, V_SgForStatement);      
       

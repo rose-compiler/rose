@@ -49,7 +49,8 @@ void MintConstantFolding::constantFoldingOptimization(SgNode* node, bool interna
 
 }
 
-bool canWeFold(SgExpression* index, bool minusSign=false)
+//bool canWeFold(SgExpression* index, bool minusSign = false)
+bool canWeFold(SgExpression* index, bool * minusSign)
 {
   //we count the (-) signs affecting the index variable 
   //to understand if we should add a minus sign to the variable 
@@ -124,7 +125,7 @@ bool canWeFold(SgExpression* index, bool minusSign=false)
     }
 
   if(sign % 2 != 0)
-    minusSign = true; 
+    *minusSign = true; 
 
   return folding;
 
@@ -175,7 +176,7 @@ void MintConstantFolding::constantFoldingOnArrayIndexExpressions(SgNode* node)
 		{		  
 		  subNo--;
 
-		  SgExpression* orig_index = *sub;
+		  //SgExpression* orig_index = *sub;
 		  SgExpression* index = *sub;
 
 		  bool minusSign = false; 

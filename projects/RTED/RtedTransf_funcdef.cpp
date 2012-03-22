@@ -141,7 +141,7 @@ RtedTransformation::handleFunctionDefinition( FunctionDefContainer::value_type e
   }
 
   // create a function wrapper
-  WrapperDesc            funpair = wrapFunction(*fndecl, gen_wrapper_name);
+  WrapperDesc            funpair = SI::wrapFunction(*fndecl, gen_wrapper_name);
   ROSE_ASSERT(funpair.second);
 
   // add checks to the wrapper that guarantee that the object pointed to by

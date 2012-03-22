@@ -296,7 +296,7 @@ int LoopUnrollOptimizer::findUnrollingFactor(SgForStatement* target_loop)
  */
 
 
-bool LoopUnrollOptimizer::unrollShortLoop(SgForStatement* target_loop, int unrolling_factor)
+bool LoopUnrollOptimizer::unrollShortLoop(SgForStatement* target_loop, size_t unrolling_factor)
 {
   //unrolls short range loops with no fringe
 
@@ -304,7 +304,7 @@ bool LoopUnrollOptimizer::unrollShortLoop(SgForStatement* target_loop, int unrol
 
   //Handle 0 and 1, which means no unrolling at all
   //we have a upper bound as well
-  if (unrolling_factor <= 1 || unrolling_factor > SHORT_LOOP_UNROLL_FACTOR)
+  if (unrolling_factor <= 1 || unrolling_factor > (size_t) SHORT_LOOP_UNROLL_FACTOR)
     return false;
 
   // normalize the target loop first
@@ -317,7 +317,7 @@ bool LoopUnrollOptimizer::unrollShortLoop(SgForStatement* target_loop, int unrol
 
   cout << "  INFO:Mint: Unrolling a short loop (unrolling factor: "<<unrolling_factor << ")"<< endl;
 
-   SgScopeStatement* scope = target_loop->get_scope();
+   //SgScopeStatement* scope = target_loop->get_scope();
   // grab the target loop's essential header information
   SgInitializedName* ivar = NULL;
   SgExpression* lb = NULL;

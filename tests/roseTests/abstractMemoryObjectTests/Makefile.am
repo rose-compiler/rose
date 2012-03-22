@@ -6,15 +6,18 @@ SUBDIRS= .
 #endif
 
 # Default header file search path
-INCLUDES = $(ROSE_INCLUDES)
+INCLUDES = $(ROSE_INCLUDES) -I$(srcdir)
 memObjectGenerator_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 indexSetTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+ObjSetTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) # contributed by Sriram
 
 # Put test codes without main() entry here
 C_TESTCODES_REQUIRED_TO_COMPILE =  \
      struct_simplest.c \
      expression.c \
+     function.c \
      array.c \
+     array2.c \
      arrayDereferencing.c
 
 CXX_TESTCODES_REQUIRED_TO_COMPILE = \
@@ -33,9 +36,11 @@ ALL_TESTCODES = \
 #TEST_DIR = $(top_srcdir)/tests/CompileTests/OpenMP_tests
 #TEST_INCLUDES = -I$(top_srcdir)/src/frontend/SageIII -I$(top_srcdir)/src/midend/programTransformation/ompLowering
 
-noinst_PROGRAMS = memObjectGenerator indexSetTest
+noinst_PROGRAMS = memObjectGenerator indexSetTest ObjSetTest
 memObjectGenerator_SOURCES = memObjectGenerator.C
 indexSetTest_SOURCES = indexSetTest.C
+ObjSetTest_SOURCES = ObjSetTest.C ObjSetPtr.h
+
 # this flag is used for the long list of CXX test files
 TEST_FLAGS = $(TEST_INCLUDES) -g --edg:no_warnings #-rose:verbose 2 #--edg:restrict #-rose:wave 
 
@@ -51,7 +56,7 @@ $(PASSING_CXX_TEST_Objects): %.o: %.cpp memObjectGenerator
 	./memObjectGenerator$(EXEEXT) ${TEST_FLAGS} -c $< &>$(@:.o=.out)
 
 
-check-local: memObjectGenerator indexSetTest
+check-local: memObjectGenerator indexSetTest ObjSetTest
 	@echo "Test for Abstrace Memory Object Interface."
 	@echo "***************** Testing C input *******************"
 	$(MAKE) $(PASSING_C_TEST_Objects)
@@ -59,6 +64,8 @@ check-local: memObjectGenerator indexSetTest
 	$(MAKE) $(PASSING_CXX_TEST_Objects)
 	@echo "***************** Testing IndexSet  ******************"
 	./indexSetTest
+	@echo "***************** Testing wrapper set******************"
+	./ObjSetTest -c $(srcdir)/array2.c 
 	@echo "***********************************************************************************************************"
 	@echo "****** ROSE/tests/roseTests/abstractMemoryObjectTests: make check rule complete (terminated normally) ******"
 	@echo "***********************************************************************************************************"

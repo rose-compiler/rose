@@ -24,7 +24,7 @@ public:
 
 private:
 
-  static bool unrollShortLoop(SgForStatement* loop, int unrolling_factor);
+  static bool unrollShortLoop(SgForStatement* loop, size_t unrolling_factor);
 
   static int findUnrollingFactor(SgForStatement* target_loop);
 };
