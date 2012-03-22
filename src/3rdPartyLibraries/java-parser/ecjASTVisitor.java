@@ -3501,7 +3501,7 @@ class ecjASTVisitor extends ExtendedASTVisitor
                System.out.println("Leaving exit (MethodDeclaration,ClassScope)");
 
         if (MethodsWithNoBody.contains(node)) {
-System.out.println("Method " + new String(node.selector) + " has no body");      	  
+// System.out.println("Method " + new String(node.selector) + " has no body");      	  
         }
 //        else
           java_parser.cactionMethodDeclarationEnd(node.arguments == null  ? 0 : node.arguments.length,
