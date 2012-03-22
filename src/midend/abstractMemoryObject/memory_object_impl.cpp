@@ -13,6 +13,11 @@ namespace AbstractMemoryObject {
     return (this < &other);
   }
 
+  bool Function_Impl::operator < (const ObjSet& other) const
+  {
+    return (this < &other);
+  }
+
   bool LabeledAggregate_Impl::operator < (const ObjSet& other) const
   {
     return (this < &other);
@@ -276,16 +281,19 @@ namespace AbstractMemoryObject {
 
   // They are all single object
   size_t Scalar_Impl::objCount() {return 1;}
+  size_t Function_Impl::objCount() {return 1;}
   size_t LabeledAggregate_Impl::objCount() {return 1;}
   size_t Array_Impl::objCount() {return 1;}
   size_t Pointer_Impl::objCount() {return 1;}
 
   bool Scalar_Impl::maySet() { return false; }
+  bool Function_Impl::maySet() { return false; }
   bool LabeledAggregate_Impl::maySet() { return false; }
   bool Array_Impl::maySet() { return false; }
   bool Pointer_Impl::maySet() { return false; }
 
   bool Scalar_Impl::mustSet() { return true; }
+  bool Function_Impl::mustSet() { return true; }
   bool LabeledAggregate_Impl::mustSet() { return true; }
   bool Array_Impl::mustSet() { return true; }
   bool Pointer_Impl::mustSet() { return true; }
@@ -378,6 +386,26 @@ namespace AbstractMemoryObject {
     string rt = "ScalarExprObj @" + StringUtility::numberToString(this)+ " "+ ExprObj::toString();
     return rt;
   }
+  //------------------
+  std::set<SgType*> FunctionExprObj::getType() const
+  {
+    std::set<SgType*> rt;
+    rt.insert (ExprObj::getType());
+    return rt;
+  }
+
+  bool FunctionExprObj::operator == (const ObjSet& o2) const
+  {
+   const ExprObj& o1 = dynamic_cast<const ExprObj&> (*this);
+   return (o1==o2);
+  } 
+
+  std::string FunctionExprObj::toString()
+  {
+    string rt = "FunctionExprObj @" + StringUtility::numberToString(this)+ " "+ ExprObj::toString();
+    return rt;
+  }
+
 
   //------------------
    std::set<SgType*> ArrayExprObj::getType()
@@ -415,7 +443,7 @@ namespace AbstractMemoryObject {
     SgType* t = ExprObj::getType();
     SgPointerType* p_t = isSgPointerType(t);
     assert (p_t != NULL);
-    return createAliasedObjSet (p_t);
+    return createAliasedObjSet (p_t->get_base_type());
   }
 
   ObjSet* PointerExprObj::getElements() // in case it is a pointer to array
@@ -493,8 +521,17 @@ namespace AbstractMemoryObject {
     NamedObj o1 = *this;
     if (o1.anchor_symbol == o2.anchor_symbol) // same symbol
       if (o1.parent == o2.parent)   // same parent
-        if (o1.array_index_vector == o2. array_index_vector) // same array index
-        rt = true ;
+      {
+        if ( (o1.array_index_vector) != NULL && (o2.array_index_vector) != NULL)
+        {
+            // same array index, must use *pointer == *pointer to get the right comparison!!
+          if ((*(o1.array_index_vector)) == (*(o2.array_index_vector))) 
+            rt = true; // semantically equivalent index vectors
+        }
+        else
+          if ( o1.array_index_vector == o2.array_index_vector) // both are NULL
+            rt = true ;
+      }
     return rt;
   }
 
@@ -535,6 +572,11 @@ namespace AbstractMemoryObject {
      }
      return rt;
    }
+
+  bool IndexVector_Impl:: operator != (const IndexVector & other) const
+  {
+    return !(*this == other) ;
+  }
 
   bool IndexVector_Impl:: operator == (const IndexVector & other) const
   {
@@ -619,6 +661,27 @@ namespace AbstractMemoryObject {
     string rt = "ScalarNamedObj @" + StringUtility::numberToString(this)+ " "+ NamedObj::toString();
     return rt;
   }
+  //------------------
+  std::set<SgType*> FunctionNamedObj::getType()
+  {
+    std::set<SgType*> rt;
+    rt.insert (NamedObj::getType());
+    return rt;
+  }
+
+  // This is a confusing part:  operator == of ObjSet side is implemented through the operator== () of the NamedObj
+  bool FunctionNamedObj::operator == (const ObjSet& o2) const
+  {
+    const NamedObj& o1 = dynamic_cast<const NamedObj&> (*this);
+    return (o1==o2);
+  } 
+
+  std::string FunctionNamedObj::toString()
+  {
+    string rt = "FunctionNamedObj @" + StringUtility::numberToString(this)+ " "+ NamedObj::toString();
+    return rt;
+  }
+
 
   //------------------
   std::set<SgType*> PointerNamedObj::getType() const
@@ -634,7 +697,7 @@ namespace AbstractMemoryObject {
     SgType* t = NamedObj::getType();
     SgPointerType* p_t = isSgPointerType(t);
     assert (p_t != NULL);
-    return createAliasedObjSet (p_t);
+    return createAliasedObjSet (p_t->get_base_type());
   }
 
   ObjSet* PointerNamedObj::getElements() // in case it is a pointer to array
@@ -835,15 +898,37 @@ namespace AbstractMemoryObject {
     return rt;
   } 
 
+  // Simplest alias analysis: same type ==> aliased
   bool isAliased (const SgType *t1, const SgType* t2) 
   {
-     // Simplest alias analysis: same type ==> aliased
     // TODO : consider subtype, if type1 is a subtype of type2, they are aliased to each other also
     if (t1 == t2)
       return true;
-    else
-      return false;
-    
+    else if (isSgFunctionType(t1) && isSgFunctionType(t2)) // function type, check return and argument types
+    {
+      const SgFunctionType * ft1 = isSgFunctionType(t1);
+      const SgFunctionType * ft2 = isSgFunctionType(t2);
+      if (isAliased (ft1->get_return_type(), ft2->get_return_type())) // CHECK return type
+      {
+        SgFunctionParameterTypeList* ptl1 = ft1->get_argument_list();
+        SgFunctionParameterTypeList* ptl2 = ft2->get_argument_list();
+        SgTypePtrList tpl1 = ptl1->get_arguments();
+        SgTypePtrList tpl2 = ptl2->get_arguments();
+        if (tpl1.size() == tpl2.size())
+        {
+          size_t equal_count = 0;
+          for (size_t i =0; i< tpl1.size(); i++) // check each argument type
+          {
+            if ( isAliased (tpl1[i], tpl2[i]) )
+              equal_count ++;
+          }
+          if (equal_count == tpl1.size())
+            return true;
+        }
+      }
+    }
+
+    return false;
   }
 
   bool AliasedObj::operator == ( const AliasedObj & o2)  const
@@ -888,6 +973,23 @@ namespace AbstractMemoryObject {
     return (o1==o2);
   }
 
+  ObjSet* PointerAliasedObj::getDereference()
+  {
+    // simplest type-based implementation
+    SgType* t = AliasedObj::getType();
+    SgPointerType* p_t = isSgPointerType(t);
+    assert (p_t != NULL);
+    return createAliasedObjSet (p_t->get_base_type());
+  }
+
+
+  bool FunctionAliasedObj::operator == (const ObjSet& o2) const
+  {
+    const AliasedObj& o1 = dynamic_cast<const AliasedObj&> (*this);
+    return (o1==o2);
+  }
+
+
   bool LabeledAggregateAliasedObj::operator == (const ObjSet& o2) const
   {
     const AliasedObj& o1 = dynamic_cast<const AliasedObj&> (*this);
@@ -908,6 +1010,13 @@ namespace AbstractMemoryObject {
   }
 
   std::set<SgType*> ScalarAliasedObj::getType()
+  {
+    std::set<SgType*> rt;
+    rt.insert (AliasedObj::getType());
+    return rt;
+  }
+
+  std::set<SgType*> FunctionAliasedObj::getType()
   {
     std::set<SgType*> rt;
     rt.insert (AliasedObj::getType());
@@ -941,6 +1050,14 @@ namespace AbstractMemoryObject {
     string rt = "ScalarAliasedObj @ " + StringUtility::numberToString(this)+ " "+ AliasedObj::toString();
     return rt;
   }
+
+  string FunctionAliasedObj::toString()
+  {
+    string rt = "FunctionAliasedObj @ " + StringUtility::numberToString(this)+ " "+ AliasedObj::toString();
+    return rt;
+  }
+
+
   string LabeledAggregateAliasedObj::toString()
   {
     string rt = "LabeledAggregateAliasedObj @ " + StringUtility::numberToString(this)+ " "+ AliasedObj::toString();
@@ -974,8 +1091,9 @@ namespace AbstractMemoryObject {
     assert (false);
 
   }
-  // builder for different objects
-  ObjSet* createAliasedObjSet(SgType*t)  // One object per type, Type based alias analysis
+  // creator for different objects
+  // ------------------------------------------------------------------
+  ObjSet* createAliasedObjSet(SgType*t)  // One object per type, Type based alias analysis. A type of the object pointed to by a pointer
   {
     bool assert_flag = true; 
     assert (t!= NULL);
@@ -1008,6 +1126,11 @@ namespace AbstractMemoryObject {
         rt = new   LabeledAggregateAliasedObj (t);
         assert (rt != NULL); 
       }  
+      else if (isSgFunctionType(t))
+      {  
+        rt = new FunctionAliasedObj (t);
+        assert (rt != NULL); 
+      }  
       else
       {
         cerr<<"Warning: createAliasedObjSet(): unhandled type:"<<t->class_name()<<endl;
@@ -1035,12 +1158,14 @@ namespace AbstractMemoryObject {
   //  Labeled aggregate
   //  Pointer
   //  Array
+  // ------------------------------------------------------------------
   ObjSet* createNamedObjSet(SgSymbol* anchor_symbol, SgType* t, ObjSet* parent, IndexVector * iv)
   {
     ObjSet* rt = NULL;
-    if (!isSgVariableSymbol(anchor_symbol))
+
+    if (!isSgVariableSymbol(anchor_symbol) && !isSgFunctionSymbol(anchor_symbol))
     {
-      cerr<<"Warning. createNamedObjSet() skips non-variable symbol:"<< anchor_symbol->class_name() <<endl;
+      cerr<<"Warning. createNamedObjSet() skips non-variable and non-function symbol:"<< anchor_symbol->class_name() <<endl;
       return NULL;
     }
     
@@ -1054,7 +1179,7 @@ namespace AbstractMemoryObject {
     }
     bool assert_flag = true; 
 
-    if (named_objset_map[parent][anchor_symbol][iv] == NULL)
+    if (named_objset_map[parent][anchor_symbol][iv] == NULL) // TODO: Here is buggy, index vector is not uniquely generated now!
     { // None found, create a new one depending on its type and update the map
       if (SageInterface::isScalarType(t))
         // We define the following SgType as scalar types: 
@@ -1063,6 +1188,12 @@ namespace AbstractMemoryObject {
         rt = new ScalarNamedObj(anchor_symbol, t, parent, iv);
         assert (rt != NULL);
       }
+      else if (isSgFunctionType(t))
+      {
+        rt = new FunctionNamedObj(anchor_symbol,t, parent, iv);
+        assert (rt != NULL);
+      }
+ 
       else if (isSgPointerType(t))
       {
         rt = new PointerNamedObj(anchor_symbol,t, parent, iv);
@@ -1248,6 +1379,8 @@ namespace AbstractMemoryObject {
   // SgExpression here excludes SgVarRef, which should be associated with a named memory object
   map<SgExpression*, ObjSet*> expr_objset_map; 
 
+  // ------------------------------------------------------------------
+  // Creator for expression ObjSet
   ObjSet* createExpressionObjSet(SgExpression* anchor_exp, SgType*t)
   {
     ObjSet* rt = NULL;
@@ -1273,6 +1406,12 @@ namespace AbstractMemoryObject {
         rt = new ScalarExprObj(anchor_exp, t);
         assert (rt != NULL);
       }
+      else if (isSgFunctionType(t))
+      {
+        rt = new FunctionExprObj(anchor_exp,t);
+        assert (rt != NULL);
+      }
+ 
       else if (isSgPointerType(t))
       {
         rt = new PointerExprObj(anchor_exp,t);
@@ -1283,13 +1422,11 @@ namespace AbstractMemoryObject {
         rt = new LabeledAggregateExprObj (anchor_exp,t);
         assert (rt != NULL);
       }
-/* //TODO
       else if (isSgArrayType(t))
       {
-        rt = new ArrayNamedObj (t);
+        rt = new ArrayExprObj (anchor_exp, t);
         assert (rt != NULL);
       }
-*/
       else
       {
         cerr<<"Warning: createExprObjSet(): unhandled expression:"<<anchor_exp->class_name() << 
