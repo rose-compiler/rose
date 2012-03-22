@@ -17,7 +17,8 @@ noinst_HEADERS = APIDepAttrib.h APIDepFinder.h APIReader.h APISpec.h \
   DangerousOperationFinder.h GenericDepAttrib.h Outline.h \
   Utils.h ssexpr.h processPragmas.h
 
-EXTRA_DIST=mpi_api.spec stdio_input.spec
+EXTRA_DIST=mpi_api.spec stdio_input.spec apis.coll \
+           examples test-sources mpi-fakeheader
 
 EXAMPLES=$(shell find $(srcdir)/examples -name "*.c")
 SOURCES=${EXAMPLES} $(shell find $(srcdir)/test-sources -name "*.c")
