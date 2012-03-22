@@ -53,7 +53,8 @@ class JavaParser  implements Callable<Boolean>
      public native void cactionCompilationUnitDeclaration(String filename, JavaToken jToken);
      public native void cactionCompilationUnitDeclarationEnd(int java_numberOfStatements, JavaToken jToken);
      public native void cactionTypeDeclaration(String filename, boolean is_interface, boolean is_abstract, boolean is_final, boolean is_private, boolean is_public, boolean is_protected, boolean is_static, boolean is_strictfp, JavaToken jToken);
-     public native void cactionTypeDeclarationEnd(String filename, boolean is_interface, boolean java_has_super_class, int java_numberOfinterfaces, int java_numberofTypeParameters, JavaToken jToken);
+     public native void cactionTypeDeclarationHeader(boolean java_has_super_class, int java_numberOfinterfaces, int java_numberofTypeParameters, JavaToken jToken);
+     public native void cactionTypeDeclarationEnd(JavaToken jToken);
 
   // Need to change the names of the function parameters (should not all be "filename").
      public native void cactionConstructorDeclaration(String filename, int java_numberOfArguments, boolean java_is_native, JavaToken jToken);
