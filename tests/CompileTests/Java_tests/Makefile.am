@@ -64,6 +64,8 @@ TESTCODES_REQUIRED_TO_PASS = \
      pgc_test2011_14.java \
      pgc_test2011_15.java \
      pgc_test2011_16.java \
+     pgc_test2011_17.java \
+     pgc_test2011_18.java \
      \
      cave3_IntLit0.java \
      cave3_DoubleLit0.java \
