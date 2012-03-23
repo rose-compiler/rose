@@ -176,6 +176,13 @@ namespace  AbstractMemoryObject
     assert (false);
     return false;  
    }
+   bool IndexVector::operator !=( const IndexVector & other) const
+   {
+    cerr<<"Error. Direct call to base class (IndexVector)'s operator!=() is not allowed."<<endl;
+    assert (false);
+    return false;  
+   }
+
 
    ObjSet* Array::getElements()
    {
