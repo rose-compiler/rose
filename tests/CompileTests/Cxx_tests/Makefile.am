@@ -5,10 +5,13 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 #   EXAMPLE_TESTCODES_REQUIRED_TO_PASS_SHORT
 #
 
+
+
 if ROSE_USE_EDG_VERSION_4_3
 
 # EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
 # $(TESTCODE_CURRENTLY_FAILING)
+
 
 EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
 test_CplusplusMacro_Cpp.C \
@@ -756,15 +759,20 @@ test_simple_int.C \
 test_wchars.C \
 lexPhase2003_01.C \
 inputForLoopLocator.C \
-X.C
+X.C \
+$(NEW_PASSING_FILES)
 
-# $(NEW_PASSING_FILES)
-
-# DQ (3/5/2012): New passing files
-NEW_PASSING_FILES = 
+# DQ (3/23/2012): New passing files
+NEW_PASSING_FILES = \
+test2005_128.C \
+test2005_142.C \
+test2005_49.C \
+test2006_124.C \
+test2006_141.C \
+test2006_58.C \
+test2006_84.C
 
 # $(TESTCODE_CURRENTLY_FAILING)
-
 
 # DQ (2/15/2012): These test codes fail on OSX only.
 TESTCODE_CURRENTLY_FAILING_ON_OSX = \
@@ -777,12 +785,6 @@ test2004_35.C
 else
 include $(srcdir)/Makefile-pass.inc
 endif
-
-
-
-
-
-
 
 # Import list of C++ test cases that are known to fail:
 #   TESTCODE_CURRENTLY_FAILING
@@ -812,7 +814,6 @@ test2005_35.C \
 test2005_39.C \
 test2005_42.C \
 test2005_44.C \
-test2005_49.C \
 test2005_53.C \
 test2005_57.C \
 test2005_60.C \
@@ -829,7 +830,6 @@ test2005_121.C \
 test2005_122.C \
 test2005_123.C \
 test2005_126.C \
-test2005_128.C \
 test2005_129.C \
 test2005_130.C \
 test2005_131.C \
@@ -839,7 +839,6 @@ test2005_136.C \
 test2005_137.C \
 test2005_138.C \
 test2005_139.C \
-test2005_142.C \
 test2005_143.C \
  test2005_154.C \
 test2005_155.C \
@@ -856,18 +855,14 @@ test2006_20.C \
 test2006_28.C \
 test2006_37.C \
 test2006_54.C \
-test2006_58.C \
 test2006_67.C \
 test2006_73.C \
- test2006_84.C \
 test2006_85.C \
 test2006_90.C \
 test2006_119.C \
 test2006_122.C \
-test2006_124.C \
 test2006_126.C \
 test2006_129.C \
-test2006_141.C \
  test2006_151.C \
  test2006_159.C \
 test2006_185.C \
