@@ -323,7 +323,8 @@ SageBuilder::buildVariableDeclaration (const SgName & name, SgType* type, SgInit
 
        // DQ (1/25/2011): Deleting these causes problems if I use this function in the Fortran support...
        // delete (default_initName->get_declptr()); // delete the var definition
-          // delete (default_initName->get_declptr()); // relink the var definition
+       // delete (default_initName->get_declptr()); // relink the var definition
+
           SgVariableDefinition * var_def = isSgVariableDefinition(default_initName->get_declptr()) ;
           ROSE_ASSERT (var_def != NULL);
           var_def->set_parent(new_initName);
@@ -506,62 +507,149 @@ SageBuilder::buildTypedefDeclaration(const std::string& name, SgType* base_type,
 // The side effects include: creating SgTypedefType, SgTypedefSymbol, and add SgTypedefType to the base type
 SgTypedefDeclaration* 
 SageBuilder::buildTypedefDeclaration_nfi(const std::string& name, SgType* base_type,  SgScopeStatement* scope /*= NULL*/)
-{
-  ROSE_ASSERT (base_type != NULL);
-  if (scope == NULL )
-    scope = SageBuilder::topScopeStack();
+   {
+     ROSE_ASSERT (base_type != NULL);
+
+     printf ("In buildTypedefDeclaration_nfi(): base_type = %p = %s \n",base_type,base_type->class_name().c_str());
+
+     if (scope == NULL )
+          scope = SageBuilder::topScopeStack();
 
   // We don't yet support bottom up construction for this node yet    
-  ROSE_ASSERT(scope!=NULL);
+     ROSE_ASSERT(scope!=NULL);
 
-  SgDeclarationStatement * base_decl= NULL;
-  if (isSgNamedType(base_type))
-  {
-    isSgNamedType(base_type)->get_declaration();
-  }
+     SgDeclarationStatement* base_decl = NULL;
+
+  // Handle the case where this is a pointer, reference, or typedef to another type.
+  // if (isSgNamedType(base_type))
+     SgNamedType* namedType = isSgNamedType(base_type->stripType());
+     if (namedType != NULL)
+        {
+       // DQ (3/20/2012): Use this to set the value of base_decl (which was previously unset).
+       // isSgNamedType(base_type)->get_declaration();
+       // base_decl = isSgNamedType(base_type)->get_declaration();
+          base_decl = namedType->get_declaration();
+
+       // DQ (3/20/2012): All named types should have a valid declaration!
+          ROSE_ASSERT(base_decl != NULL);
+          printf ("In buildTypedefDeclaration_nfi(): base_decl = %p = %s \n",base_decl,base_decl->class_name().c_str());
+
+          if (base_decl->get_definingDeclaration() != NULL)
+             {
+               printf ("base_decl->get_definingDeclaration() = %p parent = %p \n",base_decl->get_definingDeclaration(),base_decl->get_definingDeclaration()->get_parent());
+             }
+          if (base_decl == base_decl->get_definingDeclaration())
+             {
+               printf ("base_decl matches the defining declaration = %p parent = %p \n",base_decl,base_decl->get_parent());
+             }
+
+          if (base_decl->get_firstNondefiningDeclaration() != NULL)
+             {
+               printf ("base_decl->get_firstNondefiningDeclaration() = %p parent = %p \n",base_decl->get_firstNondefiningDeclaration(),base_decl->get_firstNondefiningDeclaration()->get_parent());
+             }
+          if (base_decl == base_decl->get_firstNondefiningDeclaration())
+             {
+               printf ("base_decl matches the firstNondefining declaration = %p parent = %p \n",base_decl,base_decl->get_parent());
+             }
+        }
+
+     printf ("In buildTypedefDeclaration_nfi(): base_decl = %p \n",base_decl);
+
+  // DQ (3/20/2012): I don't remember why we need to provide the symbol for the scope of the 
+  // parent rather then the scope. But as I recall there was a special corner of C++ that 
+  // required this sort of support.
+     SgSymbol* parent_scope = NULL;
+     if (scope != NULL)
+        {
+          printf ("In buildTypedefDeclaration_nfi(): scope = %p = %s calling get_symbol_from_symbol_table() \n",scope,scope->class_name().c_str());
+
+          ROSE_ASSERT(scope->get_parent() != NULL);
+          SgDeclarationStatement* declaration = isSgDeclarationStatement(scope->get_parent());
+          printf ("declaration = %p \n",declaration);
+          if (declaration != NULL)
+             {
+               printf ("Found a valid declaration = %p = %s \n",declaration,declaration->class_name().c_str());
+               ROSE_ASSERT(declaration->get_firstNondefiningDeclaration() != NULL);
+            // parent_scope = declaration->get_firstNondefiningDeclaration()->get_symbol_from_symbol_table();
+               parent_scope = declaration->search_for_symbol_from_symbol_table();
+
+               ROSE_ASSERT(parent_scope != NULL);
+             }
+        }
+
+     printf ("In buildTypedefDeclaration_nfi(): parent_scope = %p \n",parent_scope);
+
   // SgTypedefDeclaration (Sg_File_Info *startOfConstruct, SgName name="", SgType *base_type=NULL, SgTypedefType *type=NULL, SgDeclarationStatement *declaration=NULL, SgSymbol *parent_scope=NULL)
   // SgTypedefDeclaration (SgName name="", SgType *base_type=NULL, SgTypedefType *type=NULL, SgDeclarationStatement *declaration=NULL, SgSymbol *parent_scope=NULL)
   //
-  // Create the first nondefining declaration
-  SgTypedefDeclaration* type_decl = new SgTypedefDeclaration(SgName(name),base_type,NULL, NULL, NULL);
-  ROSE_ASSERT(type_decl);
-  type_decl->set_firstNondefiningDeclaration (type_decl);
-  type_decl->set_definingDeclaration(NULL);
-  setOneSourcePositionNull(type_decl);
+  // Create the first nondefining declaration (note that the typedef type is always a NULL input value).
+  // SgTypedefDeclaration* type_decl = new SgTypedefDeclaration(SgName(name),base_type,NULL, NULL, NULL);
+     SgTypedefDeclaration* type_decl = new SgTypedefDeclaration(SgName(name), base_type, NULL, base_decl, parent_scope);
+     ROSE_ASSERT(type_decl != NULL);
+
+     printf ("In buildTypedefDeclaration_nfi(): After SgTypedefDeclaration constructor: type_decl->get_scope() = %p \n",type_decl->get_scope());
+
+  // DQ (3/20/2012): Comment ouly, these are always set this way. first defining is a self reference, and defining is always NULL (required for AST consistancy)).
+     type_decl->set_firstNondefiningDeclaration (type_decl);
+     type_decl->set_definingDeclaration(NULL);
+
+  // Set the source code position information.
+     setOneSourcePositionNull(type_decl);
 
   // Symbol and SgTypedefType should be associated with the first nondefining declaration
   // Create SgTypedefType
   // This is already included in the constructor
   // SgTypedefType::createType (type_decl);
-  if (scope != NULL)
-  {
-    SgTypedefSymbol* typedef_symbol = new SgTypedefSymbol(type_decl);
-    ROSE_ASSERT(typedef_symbol);
-    scope->insert_symbol(SgName(name),typedef_symbol);
-    type_decl->set_scope(scope);
-    type_decl->set_parent(scope);
-  }
+     if (scope != NULL)
+        {
+          SgTypedefSymbol* typedef_symbol = new SgTypedefSymbol(type_decl);
+          ROSE_ASSERT(typedef_symbol);
+          scope->insert_symbol(SgName(name),typedef_symbol);
+          type_decl->set_scope(scope);
 
-  //TODO double check when to create defining declaration
-  //I tried two cases so far and the simplest typedef int MYINT will not have defining typedef declaration
-  // the complex typedef struct frame {} frame; has a defining typedef declaration
-  // base declaration should be associated with defining typedef declaration
-  if (base_decl) 
-  {
-    SgTypedefDeclaration* def_type_decl = new SgTypedefDeclaration(SgName(name),base_type,type_decl->get_type(), base_decl, NULL);
-    def_type_decl->set_firstNondefiningDeclaration(type_decl);
-    type_decl->set_definingDeclaration(def_type_decl);
-    setOneSourcePositionNull(def_type_decl);
-  }
+       // DQ (3/20/2012): Commented added only: The parent is always the scope in this case, I think.
+          type_decl->set_parent(scope);
+        }
 
 #if 0
-// DQ (1/2/2010): Set the defining declaration to itself.
-  if (type_decl->get_definingDeclaration() == NULL)
-       type_decl->set_definingDeclaration(type_decl);
+  // DQ (3/20/2012): This is always false...since base_decl is never reset from NULL (above).
+
+  // TODO double check when to create defining declaration
+  // I tried two cases so far and the simplest typedef int MYINT will not have defining typedef declaration
+  // the complex typedef struct frame {} frame; has a defining typedef declaration
+  // base declaration should be associated with defining typedef declaration
+     if (base_decl != NULL) 
+        {
+          SgTypedefDeclaration* def_type_decl = new SgTypedefDeclaration(SgName(name),base_type,type_decl->get_type(), base_decl, NULL);
+          def_type_decl->set_firstNondefiningDeclaration(type_decl);
+          type_decl->set_definingDeclaration(def_type_decl);
+          setOneSourcePositionNull(def_type_decl);
+        }
 #endif
 
-  return type_decl;
-}
+  // DQ (3/20/2012): Test the base_decl.
+     if (base_decl != NULL)
+        {
+          printf ("In buildTypedefDeclaration_nfi(): base_decl->get_definingDeclaration()         = %p \n",base_decl->get_definingDeclaration());
+          if (base_decl->get_definingDeclaration() != NULL)
+             {
+               printf ("In buildTypedefDeclaration_nfi(): base_decl->get_definingDeclaration()->get_parent()         = %p \n",base_decl->get_definingDeclaration()->get_parent());
+             }
+          printf ("In buildTypedefDeclaration_nfi(): base_decl->get_firstNondefiningDeclaration() = %p \n",base_decl->get_firstNondefiningDeclaration());
+          if (base_decl->get_firstNondefiningDeclaration() != NULL)
+             {
+               printf ("In buildTypedefDeclaration_nfi(): base_decl->get_firstNondefiningDeclaration()->get_parent() = %p \n",base_decl->get_firstNondefiningDeclaration()->get_parent());
+             }
+        }
+
+#if 0
+  // DQ (1/2/2010): Set the defining declaration to itself. (BAD IDEA).
+     if (type_decl->get_definingDeclaration() == NULL)
+          type_decl->set_definingDeclaration(type_decl);
+#endif
+
+     return type_decl;
+   }
 
 //-----------------------------------------------
 // Assertion `definingDeclaration != __null || firstNondefiningDeclaration != __null' 
@@ -666,18 +754,28 @@ SageBuilder::buildFunctionParameterTypeList(SgType* type0, SgType* type1, SgType
 // 
 // insert into symbol table when not duplicated
 SgFunctionType * 
-SageBuilder::buildFunctionType(SgType* return_type, SgFunctionParameterTypeList * typeList)
+SageBuilder::buildFunctionType(SgType* return_type, SgFunctionParameterTypeList* typeList)
    {
      ROSE_ASSERT(return_type);
-  
+
+     printf ("Inside of SageBuilder::buildFunctionType(SgType,SgFunctionParameterTypeList) \n");
+     printf ("Inside of SageBuilder::buildFunctionType() return_type = %s \n",return_type->get_mangled().str());
+
      SgFunctionTypeTable * fTable = SgNode::get_globalFunctionTypeTable();
      ROSE_ASSERT(fTable);
 
   // This function make clever use of a static member function which can't be built
   // for the case of a SgMemberFunctionType (or at least not without more work).
      SgName typeName = SgFunctionType::get_mangled(return_type, typeList);
-  
-     SgFunctionType * funcType = isSgFunctionType(fTable->lookup_function_type(typeName));
+
+     SgFunctionType* funcType = isSgFunctionType(fTable->lookup_function_type(typeName));
+
+     printf ("In SageBuilder::buildFunctionType(): typeName = %s funcType = %p \n",typeName.str(),funcType);
+     if (funcType != NULL)
+        {
+          printf ("In SageBuilder::buildFunctionType(): funcType->get_mangled_type() = %s \n",funcType->get_mangled_type().str());
+        }
+
      if (funcType == NULL) 
         {
        // Only build the new type if it can't be found in the global type table.
@@ -825,6 +923,9 @@ SageBuilder::buildMemberFunctionType(SgType* return_type, SgFunctionParameterTyp
 
           printf ("Deleting funcType = %p = %s \n",funcType,funcType->class_name().c_str());
 
+       // DQ (3/22/2012): Added assertion.
+          ROSE_ASSERT(typeInTable != funcType);
+
           delete funcType;
           funcType = NULL;
 #if 0
@@ -909,6 +1010,8 @@ SageBuilder::buildMemberFunctionType(SgType* return_type, SgFunctionParameterTyp
 SgFunctionType*
 SageBuilder::buildFunctionType(SgType* return_type, SgFunctionParameterList * argList)
    {
+     printf ("Inside of SageBuilder::buildFunctionType(SgType,SgFunctionParameterList) \n");
+
      SgFunctionParameterTypeList * typeList = buildFunctionParameterTypeList(argList);
      SgFunctionType * func_type = buildFunctionType(return_type, typeList);
      return  func_type;
@@ -1036,7 +1139,7 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & name, SgType*
         }
 
      ROSE_ASSERT(func_type != NULL);
-#if 0
+#if 1
      printf ("In buildNondefiningFunctionDeclaration_T(): func_type = %p = %s \n",func_type,func_type->class_name().c_str());
 #endif
 
@@ -1066,7 +1169,7 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & name, SgType*
           func_symbol = scope->get_symbol_table()->find_symbol_by_type_of_function<actualFunction>(name,func_type);
 
 #if 1
-          printf ("In buildNondefiningFunctionDeclaration_T(): func_symbol from scope->lookup_function_symbol(name = %s) = %p \n",name.str(),func_symbol);
+          printf ("In buildNondefiningFunctionDeclaration_T(): func_symbol from scope->find_symbol_by_type_of_function<actualFunction>(name = %s) = %p \n",name.str(),func_symbol);
 #endif
        // If not a proper function (or instantiated template function), then check for a template function declaration.
           if (func_symbol == NULL)
@@ -5966,16 +6069,20 @@ SgModifierType* SageBuilder::buildModifierType(SgType* base_type /* = NULL*/)
    {
   // DQ (7/28/2010): New (similar) approach using type table support.
      SgModifierType *result = new SgModifierType(base_type);
-     ROSE_ASSERT(result!=NULL);
+     ROSE_ASSERT(result != NULL);
 
   // DQ (7/28/2010): Insert result type into type table and return it, or 
   // replace the result type, if already available in the type table, with 
   // the type from type table.
-      SgModifierType *result2 = SgModifierType::insertModifierTypeIntoTypeTable(result);
+     SgModifierType *result2 = SgModifierType::insertModifierTypeIntoTypeTable(result);
+
      if (result != result2)
-       delete result;
+        {
+          delete result;
+        }
+
      return result2;
- }
+   }
 
   //! Build a constant type.
 SgModifierType* SageBuilder::buildConstType(SgType* base_type /*=NULL*/)
@@ -6307,6 +6414,14 @@ SgClassDeclaration* SageBuilder::buildNondefiningClassDeclaration_nfi(const SgNa
        // SgTemplateInstantiationDecl (SgName name, SgClassDeclaration::class_types class_type, SgClassType *type, SgClassDefinition *definition, SgTemplateDeclaration *templateDeclaration, SgTemplateArgumentPtrList templateArguments)
           SgTemplateArgumentPtrList emptyList;
           nondefdecl = new SgTemplateInstantiationDecl(name,kind,NULL,NULL,NULL,emptyList);
+
+       // DQ (3/22/2012): Set the template name before we generate the type.
+          isSgTemplateInstantiationDecl(nondefdecl)->set_templateName(name);
+
+          ROSE_ASSERT(isSgTemplateInstantiationDecl(nondefdecl)->get_templateName().is_null() == false);
+
+       // DQ (3/22/2012): Make sure there is template syntax present.
+          ROSE_ASSERT(isSgTemplateInstantiationDecl(nondefdecl)->get_templateName().getString().find('>') != string::npos);
         }
        else
         {
@@ -6315,9 +6430,18 @@ SgClassDeclaration* SageBuilder::buildNondefiningClassDeclaration_nfi(const SgNa
 
      ROSE_ASSERT(nondefdecl != NULL);
 
+  // DQ (3/22/2012): I think we can assert this! No, in fact we can assert that it is not built yet.
+  // ROSE_ASSERT(nondefdecl->get_type() != NULL);
+     ROSE_ASSERT(nondefdecl->get_type() == NULL);
+
+#if 0
+  // DQ (3/22/2012): I think this may be too early.
   // Liao, we ask for explicit creation of SgClassType to avoid duplicated type nodes
      if (nondefdecl->get_type() == NULL)
+        {
           nondefdecl->set_type(SgClassType::createType(nondefdecl));
+        }
+#endif
 
      printf ("SageBuilder::buildNondefiningClassDeclaration_nfi(): (and setting source position) nondefdecl = %p \n",nondefdecl);
 
@@ -6375,6 +6499,16 @@ SgClassDeclaration* SageBuilder::buildNondefiningClassDeclaration_nfi(const SgNa
                firstNondefdecl = isSgClassDeclaration(mysymbol->get_declaration());
                ROSE_ASSERT(firstNondefdecl != NULL);
 
+            // DQ (3/22/2012): Now we can built the type and have it use the same nondefining declaration as from the symbol (required to match).
+               ROSE_ASSERT(nondefdecl->get_type() == NULL);
+
+               if (nondefdecl->get_type() == NULL)
+                  {
+                 // DQ (3/22/2012): Be careful to use the same declaration as from the symbol.
+                 // nondefdecl->set_type(SgClassType::createType(nondefdecl));
+                    nondefdecl->set_type(SgClassType::createType(firstNondefdecl));
+                  }
+
 #if (REUSE_CLASS_DECLARATION_FROM_SYMBOL == 0)
                ROSE_ASSERT(nondefdecl != NULL);
                ROSE_ASSERT(nondefdecl->get_parent() != NULL);
@@ -6384,12 +6518,18 @@ SgClassDeclaration* SageBuilder::buildNondefiningClassDeclaration_nfi(const SgNa
             // This might be NULL if the defining declaration has not been seen yet!
                nondefdecl->set_definingDeclaration(firstNondefdecl->get_definingDeclaration());
 
+            // DQ (3/22/2012): New assertions.
+               ROSE_ASSERT(firstNondefdecl != NULL);
+               ROSE_ASSERT(firstNondefdecl->get_type() != NULL);
+
             // Share the type!
                if (nondefdecl->get_type() != firstNondefdecl->get_type())
                   {
                  // Remove the type from the new SgClassDeclaration and set the reference to the type in the firstNondefiningDeclaration.
                     printf ("Deleting type in associated non-defining declaration (sharing type) nondefdecl->get_type() = %p = %s \n",nondefdecl->get_type(),nondefdecl->get_type()->class_name().c_str());
-                    delete nondefdecl->get_type();
+                    printf ("Skipping delete of %p so we can maintain unique type pointers \n",nondefdecl->get_type());
+                 // delete nondefdecl->get_type();
+                    printf ("Setting the new type to be from firstNondefdecl = %p (sharing type) firstNondefdecl->get_type() = %p = %s \n",firstNondefdecl,firstNondefdecl->get_type(),firstNondefdecl->get_type()->class_name().c_str());
                     nondefdecl->set_type(firstNondefdecl->get_type());
 #if 0
                  // DQ (12/13/2011): Is this executed!
@@ -6434,6 +6574,13 @@ SgClassDeclaration* SageBuilder::buildNondefiningClassDeclaration_nfi(const SgNa
                firstNondefdecl = nondefdecl;
 
                scope->insert_symbol(name, mysymbol);
+
+            // DQ (3/22/2012): Now we can built the type and have it use the same nondefining declaration as from the symbol (required to match).
+               ROSE_ASSERT(nondefdecl->get_type() == NULL);
+               if (nondefdecl->get_type() == NULL)
+                  {
+                    nondefdecl->set_type(SgClassType::createType(nondefdecl));
+                  }
 
             // DQ (12/27/2011): Added new test.
                ROSE_ASSERT(scope->lookup_nontemplate_class_symbol(name) != NULL);
@@ -6985,20 +7132,30 @@ SageBuilder::buildClassDeclaration ( SgName name, SgScopeStatement* scope )
 SgClassDeclaration*
 SageBuilder::buildClassDeclaration_nfi(const SgName& name, SgClassDeclaration::class_types kind, SgScopeStatement* scope, SgClassDeclaration* nonDefiningDecl , bool buildTemplateInstantiation )
    {
+  // DQ (3/15/2012): Added function to build C++ class (builds both the non-defining and defining declarations; in that order).
+  // The implementation of this function could be simplified to directly call both:
+  //    SgClassDeclaration* buildNondefiningClassDeclaration ( SgName name, SgScopeStatement* scope );
+  // and
+  //    SgClassDeclaration* buildDefiningClassDeclaration    ( SgName name, SgScopeStatement* scope );
+  // This might refactor the implementation nicely.
+
+
   // Note that the nonDefiningDecl pointer does not appear to be used.
      printf ("WARNING: In SageBuilder::buildClassDeclaration_nfi(): the nonDefiningDecl pointer (input parameter) does not appear to be used. \n");
 
      if (scope == NULL)
           scope = SageBuilder::topScopeStack();
 
+     printf ("Building a SgClassDeclaration: buildClassDeclaration_nfi() buildTemplateInstantiation = %s \n",buildTemplateInstantiation ? "true" : "false");
+
+#if 0
   // step 1. Build defining declaration
   // SgClassDefinition* classDef = buildClassDefinition();
      SgClassDefinition* classDef = buildClassDefinition(NULL,buildTemplateInstantiation);
 
   // DQ (11/26/2011): Debugging EDG 3.3 use of templateArguments.
-     printf ("Building a SgClassDeclaration: buildClassDeclaration_nfi() buildTemplateInstantiation = %s \n",buildTemplateInstantiation ? "true:" : "false");
+     printf ("Building a SgClassDeclaration: buildClassDeclaration_nfi() buildTemplateInstantiation = %s \n",buildTemplateInstantiation ? "true" : "false");
 
-#if 1
   // SgClassDeclaration* defdecl = new SgClassDeclaration (name,kind,NULL,classDef);
      SgClassDeclaration* defdecl = NULL;
      if (buildTemplateInstantiation == true)
@@ -7037,7 +7194,7 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& name, SgClassDeclaration::c
      defdecl->set_definingDeclaration(defdecl);
 #endif
 
-  // Step 2. build the nondefining declaration, 
+  // Step 2 (now step 1). build the nondefining declaration, 
   // but only if the input nonDefiningDecl pointer was NULL and it does not exist
 #if 0
   // SgClassDeclaration* nondefdecl = new SgClassDeclaration (name,kind,NULL,NULL);
@@ -7060,6 +7217,7 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& name, SgClassDeclaration::c
      SgClassSymbol* mysymbol = NULL;
      if (scope != NULL)
         {
+          printf ("Looking up the SgClassSymbol in scope = %p = %s name = %s \n",scope,scope->class_name().c_str(),name.str());
           mysymbol = scope->lookup_class_symbol(name);
         }
        else
@@ -7070,22 +7228,27 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& name, SgClassDeclaration::c
        // printf ("Warning: In SageBuilder::buildClassDeclaration_nfi(): scope == NULL \n");
         }
 
-  //   printf ("In SageBuilder::buildClassDeclaration_nfi(): mysymbol = %p \n",mysymbol);
+     printf ("In SageBuilder::buildClassDeclaration_nfi(): mysymbol = %p \n",mysymbol);
      if (mysymbol != NULL) // set links if nondefining declaration already exists.
         {
           nondefdecl = isSgClassDeclaration(mysymbol->get_declaration());
 
           ROSE_ASSERT(nondefdecl != NULL);
+
+       // DQ (3/22/2012): I think we can assert this.
+          ROSE_ASSERT(nondefdecl->get_type() != NULL);
+
        // ROSE_ASSERT(nondefdecl->get_parent() != NULL);
           if (nondefdecl->get_parent() == NULL)
              {
                printf ("In SageBuilder::buildClassDeclaration_nfi(): Note that nondefdecl->get_parent() == NULL, this might be OK. \n");
              }
-
+#if 0
           nondefdecl->set_definingDeclaration(defdecl);
 
           ROSE_ASSERT(nondefdecl->get_definingDeclaration() == defdecl);
           ROSE_ASSERT(nondefdecl->get_firstNondefiningDeclaration() != defdecl);
+#endif
         }
        else // build a nondefnining declaration if it does not exist
         {
@@ -7101,10 +7264,16 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& name, SgClassDeclaration::c
             // DQ (1/1/2012): Added support for setting the template name (I think this should be fixed in the constructor).
             // It can't be fixed in the constructor since it has to be set after construction (or passed in explicitly).
                ROSE_ASSERT(isSgTemplateInstantiationDecl(nondefdecl)->get_templateName().is_null() == true);
+
                printf ("Warning: In buildClassDeclaration_nfi(): calling set_templateName(name = %s) for nondefining declaration \n",name.str());
             // isSgTemplateInstantiationDecl(nondefdecl)->set_templateName(name);
-               isSgTemplateInstantiationDecl(nondefdecl)->set_templateName("SETME_NONDEFINING_DECL<>");
+            // isSgTemplateInstantiationDecl(nondefdecl)->set_templateName("SETME_NONDEFINING_DECL<>");
+               isSgTemplateInstantiationDecl(nondefdecl)->set_templateName(name);
+
                ROSE_ASSERT(isSgTemplateInstantiationDecl(nondefdecl)->get_templateName().is_null() == false);
+
+            // DQ (3/22/2012): Make sure there is template syntax present.
+               ROSE_ASSERT(isSgTemplateInstantiationDecl(nondefdecl)->get_templateName().getString().find('>') != string::npos);
              }
             else
              {
@@ -7112,9 +7281,34 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& name, SgClassDeclaration::c
                ROSE_ASSERT(nondefdecl != NULL);
              }
 
+       // DQ (3/14/2012): For C++ we need the scope set so that types will have proper locations to revolve them 
+       // from being ambigiuos or not properly defined.  Basically, we need a handle from which to generate something
+       // that amounts to a kind of name qualification internally (maybe even exactly name qualification, but I would
+       // have to think about that a bit more).
+          ROSE_ASSERT(scope != NULL);
+          printf ("In SageBuilder::buildClassDeclaration_nfi(): Set the scope of the new non-defining declaration to %p = %s \n",scope,scope->class_name().c_str());
+          nondefdecl->set_scope(scope);
+          ROSE_ASSERT(nondefdecl->get_scope() != NULL);
+
           ROSE_ASSERT(nondefdecl != NULL);
+
+       // DQ (3/22/2012): I think we can assert this.
+       // ROSE_ASSERT(nondefdecl->get_type() != NULL);
+          ROSE_ASSERT(nondefdecl->get_type() == NULL);
+
           if (nondefdecl->get_type() == NULL)
-            nondefdecl->set_type(SgClassType::createType(nondefdecl));
+             {
+               nondefdecl->set_type(SgClassType::createType(nondefdecl));
+             }
+
+       // DQ (3/22/2012): Added assertions.
+          ROSE_ASSERT(nondefdecl->get_type() != NULL);
+          if (nondefdecl->get_type()->get_declaration() != nondefdecl)
+             {
+               printf ("nondefdecl->get_type() = %p = %s \n",nondefdecl->get_type(),nondefdecl->get_type()->class_name().c_str());
+               printf ("nondefdecl = %p = %s nondefdecl->get_type()->get_declaration() = %p = %s \n",nondefdecl,nondefdecl->class_name().c_str(),nondefdecl->get_type()->get_declaration(),nondefdecl->get_type()->get_declaration()->class_name().c_str());
+             }
+          ROSE_ASSERT(nondefdecl->get_type()->get_declaration() == nondefdecl);
 
        // printf ("SageBuilder::buildClassDeclaration_nfi(): nondefdecl = %p \n",nondefdecl);
 
@@ -7127,14 +7321,15 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& name, SgClassDeclaration::c
           ROSE_ASSERT (nondefdecl->get_startOfConstruct() != __null);
 
           nondefdecl->set_firstNondefiningDeclaration(nondefdecl);
-          nondefdecl->set_definingDeclaration(defdecl);
+       // DQ (3/15/2012): This is now set below.
+       // nondefdecl->set_definingDeclaration(defdecl);
           nondefdecl->setForward();
 
        // DQ (2/27/2012): I don't like that this is setting the parent to be a scope (not a bad default, but must be reset later if required).
        // Liao, 9/2/2009. scope stack is optional, it can be empty
        // nondefdecl->set_parent(topScopeStack());
 
-          printf ("WARNING: In buildClassDeclaration_nfi(): Setting the parent to be the same as the scope \n");
+          printf ("WARNING: In buildClassDeclaration_nfi(): Skipping the setting of the parents (for both defining and nondefining declaration) to be the same as the scope \n");
        // nondefdecl->set_parent(scope);
        // defdecl->set_parent(scope);
 
@@ -7145,16 +7340,83 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& name, SgClassDeclaration::c
              }
             else
              {
-       // Liao 9/2/2009: This is not an error. We support bottomup AST construction and scope can be unkown.   
+            // Liao 9/2/2009: This is not an error. We support bottomup AST construction and scope can be unkown.   
             // DQ (1/26/2009): I think this should be an error, but that appears it would
             // break the existing interface. Need to discuss this with Liao.
-            //   printf ("Warning: no scope provided to support symbol table entry! \n");
+            // printf ("Warning: no scope provided to support symbol table entry! \n");
              }
         }
 #endif
 #endif
 
 //     printf ("SageBuilder::buildClassDeclaration_nfi(): nondefdecl = %p \n",nondefdecl);
+
+#if 1
+  // DQ (3/15/2012): I hhava moved construction of defining declaration to be AFTER the nondefining declaration!
+  // This is a better organization ans also should make sure that the declaration in the SgClassType will
+  // properly reference the firstNondefiningDeclaration (instead of the defining declaration).
+
+  // step 1 (now step 2). Build defining declaration
+  // SgClassDefinition* classDef = buildClassDefinition();
+     SgClassDefinition* classDef = buildClassDefinition(NULL,buildTemplateInstantiation);
+
+  // DQ (11/26/2011): Debugging EDG 3.3 use of templateArguments.
+     printf ("Building a SgClassDeclaration: buildClassDeclaration_nfi() buildTemplateInstantiation = %s \n",buildTemplateInstantiation ? "true:" : "false");
+
+  // SgClassDeclaration* defdecl = new SgClassDeclaration (name,kind,NULL,classDef);
+     SgClassDeclaration* defdecl = NULL;
+     if (buildTemplateInstantiation == true)
+        {
+       // This adds: SgTemplateDeclaration *templateDeclaration and SgTemplateArgumentPtrList templateArguments
+          SgTemplateArgumentPtrList emptyList;
+          defdecl = new SgTemplateInstantiationDecl (name,kind,NULL,classDef,NULL,emptyList);
+
+       // DQ (1/1/2012): Added support for setting the template name (I think this should be fixed in the constructor).
+       // It can't be fixed in the constructor since it has to be set after construction (or passed in explicitly).
+          ROSE_ASSERT(isSgTemplateInstantiationDecl(defdecl)->get_templateName().is_null() == true);
+          printf ("Warning: In buildClassDeclaration_nfi(): calling set_templateName(name = %s) for defining declaration \n",name.str());
+
+       // isSgTemplateInstantiationDecl(defdecl)->set_templateName(name);
+       // isSgTemplateInstantiationDecl(defdecl)->set_templateName("SETME_DEFINING_DECL<>");
+          isSgTemplateInstantiationDecl(defdecl)->set_templateName(name);
+
+          ROSE_ASSERT(isSgTemplateInstantiationDecl(defdecl)->get_templateName().is_null() == false);
+
+       // DQ (3/22/2012): Make sure there is template syntax present.
+          ROSE_ASSERT(isSgTemplateInstantiationDecl(defdecl)->get_templateName().getString().find('>') != string::npos);
+#if 0
+          printf ("Should we have set the template instantiation name at this point? \n");
+          ROSE_ASSERT(false);
+#endif
+       // DQ (3/5/2012): Check that the SgClassDefinition is properly matching.
+          ROSE_ASSERT(defdecl->get_definition() != NULL);
+          ROSE_ASSERT(isSgTemplateInstantiationDefn(defdecl->get_definition()) != NULL);
+        }
+       else
+        {
+          defdecl = new SgClassDeclaration (name,kind,NULL,classDef);
+
+       // DQ (3/5/2012): Check that the SgClassDefinition is properly matching.
+          ROSE_ASSERT(defdecl->get_definition() != NULL);
+          ROSE_ASSERT(isSgTemplateInstantiationDefn(defdecl->get_definition()) == NULL);
+        }
+     ROSE_ASSERT(defdecl != NULL);
+
+#if 1
+  // DQ (3/15/2012): Moved from original location above...
+     nondefdecl->set_definingDeclaration(defdecl);
+
+     ROSE_ASSERT(nondefdecl->get_definingDeclaration() == defdecl);
+     ROSE_ASSERT(nondefdecl->get_firstNondefiningDeclaration() != defdecl);
+#endif
+
+  // printf ("SageBuilder::buildClassDeclaration_nfi(): defdecl = %p \n",defdecl);
+
+     setOneSourcePositionForTransformation(defdecl);
+  // constructor is side-effect free
+     classDef->set_declaration(defdecl);
+     defdecl->set_definingDeclaration(defdecl);
+#endif
 
   // setOneSourcePositionForTransformation(nondefdecl);
   //
@@ -7167,29 +7429,81 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& name, SgClassDeclaration::c
   // nondefdecl->set_definingDeclaration(defdecl);
      defdecl->set_firstNondefiningDeclaration(nondefdecl);
 
-     // Liao, 10/30/2009
-     // The SgClassDeclaration constructor will automatically generate a SgClassType internally if NULL is passed for SgClassType
-     // This is not desired when building a defining declaration and an inefficience in the constructor
-     // Ideally, only the first nondefining class declaration should have a dedicated SgClassType and 
-     // the defining class declaration (and other nondefining declaration) just shared that SgClassType.
-     if (defdecl->get_type () != NULL) 
-     {
+  // DQ (3/22/2012): I think we can assert this.
+     ROSE_ASSERT(defdecl->get_type() == NULL);
+
+  // Liao, 10/30/2009
+  // The SgClassDeclaration constructor will automatically generate a SgClassType internally if NULL is passed for SgClassType
+  // This is not desired when building a defining declaration and an inefficience in the constructor
+  // Ideally, only the first nondefining class declaration should have a dedicated SgClassType and 
+  // the defining class declaration (and other nondefining declaration) just shared that SgClassType.
+     if (defdecl->get_type() != NULL) 
+        {
        // if a defining class declaration's type is associated with a defining class.
        // This is a wrong SgClassType and has to be reset
-       if (defdecl->get_type()->get_declaration() == isSgDeclarationStatement(defdecl) )
-       {
-         printf ("Deleting defdecl->get_type() = %p = %s \n",defdecl->get_type(),defdecl->get_type()->class_name().c_str());
-         delete (defdecl->get_type ());
+          if (defdecl->get_type()->get_declaration() == isSgDeclarationStatement(defdecl))
+             {
+            // DQ (3/21/2012): Added this test.
+               ROSE_ASSERT (nondefdecl->get_type() != NULL);
+
+            // DQ (3/15/2012): Make this conditional upon the types not already being equal.
+               if (nondefdecl->get_type() != defdecl->get_type())
+                  {
+                    printf ("Deleting defdecl->get_type() = %p = %s (using type from nondefdecl = %p) \n",defdecl->get_type(),defdecl->get_type()->class_name().c_str(),nondefdecl);
+                    printf ("Skipping delete of %p to maintain unique type pointers \n",defdecl->get_type());
+                 // delete (defdecl->get_type());
+
+                 // DQ (3/15/2012): This will be reset below.
+                    defdecl->set_type(NULL);
 #if 0
-      // DQ (12/13/2011): Is this executed...
-         printf ("Is this executed! \n");
-         ROSE_ASSERT(false);
+                 // DQ (12/13/2011): Is this executed...
+                    printf ("Is this executed! \n");
+                    ROSE_ASSERT(false);
 #endif
-       }
-     }
-     // patch up the SgClassType for the defining class declaration
-     ROSE_ASSERT (nondefdecl->get_type() != NULL); 
-     ROSE_ASSERT (nondefdecl->get_type()->get_declaration() == isSgDeclarationStatement(nondefdecl)); 
+                 // DQ (3/21/2012): set the types to be the same type.
+                    ROSE_ASSERT (nondefdecl->get_type() != NULL);
+                    defdecl->set_type(nondefdecl->get_type());
+
+                 // DQ (3/21/2012): Added these checks...
+                    SgClassType* classType = nondefdecl->get_type();
+                    ROSE_ASSERT(classType != NULL);
+                    SgClassDeclaration* local_classDeclaration = isSgClassDeclaration(classType->get_declaration());
+                    ROSE_ASSERT (local_classDeclaration != NULL);
+                    printf ("In buildClassDeclaration_nfi(): classType = %p local_classDeclaration = %p \n",classType,local_classDeclaration);
+                    ROSE_ASSERT (local_classDeclaration->get_firstNondefiningDeclaration() != NULL);
+                    ROSE_ASSERT (local_classDeclaration->get_firstNondefiningDeclaration() == local_classDeclaration);
+                  }
+             }
+        }
+       else
+        {
+       // DQ (3/15/2012): Make sure that both the defining and non-defining declarations use the same type.
+          ROSE_ASSERT (nondefdecl->get_type() != NULL);
+          defdecl->set_type(nondefdecl->get_type());
+
+          ROSE_ASSERT (nondefdecl->get_firstNondefiningDeclaration() != NULL);
+          ROSE_ASSERT (nondefdecl->get_type()->get_declaration() == isSgDeclarationStatement(nondefdecl->get_firstNondefiningDeclaration()));
+        }
+
+  // patch up the SgClassType for the defining class declaration
+     ROSE_ASSERT (nondefdecl->get_type() != NULL);
+  // ROSE_ASSERT (nondefdecl->get_type()->get_declaration() == isSgDeclarationStatement(nondefdecl)); 
+     if (nondefdecl->get_type()->get_declaration() != isSgDeclarationStatement(nondefdecl))
+        {
+          printf ("nondefdecl                                    = %p = %s \n",nondefdecl,nondefdecl->class_name().c_str());
+          printf ("nondefdecl->get_type()                        = %p = %s \n",nondefdecl->get_type(),nondefdecl->get_type()->class_name().c_str());
+          printf ("nondefdecl->get_type()->get_declaration()     = %p = %s \n",nondefdecl->get_type()->get_declaration(),nondefdecl->get_type()->get_declaration()->class_name().c_str());
+          printf ("nondefdecl->get_firstNondefiningDeclaration() = %p = %s \n",nondefdecl->get_firstNondefiningDeclaration(),nondefdecl->get_firstNondefiningDeclaration()->class_name().c_str());
+        }
+  // ROSE_ASSERT (defdecl->get_type()->get_declaration() == isSgDeclarationStatement(defdecl));
+     ROSE_ASSERT (defdecl->get_type() != NULL);
+     ROSE_ASSERT (defdecl->get_type()->get_declaration() != NULL);
+     ROSE_ASSERT (defdecl->get_type()->get_declaration() != isSgDeclarationStatement(defdecl));
+     ROSE_ASSERT (nondefdecl->get_firstNondefiningDeclaration() != NULL);
+     ROSE_ASSERT (nondefdecl->get_firstNondefiningDeclaration() == nondefdecl);
+     ROSE_ASSERT (nondefdecl->get_type()->get_declaration() == isSgDeclarationStatement(nondefdecl->get_firstNondefiningDeclaration()));
+     ROSE_ASSERT (nondefdecl->get_type()->get_declaration() == isSgDeclarationStatement(nondefdecl));
+
      defdecl->set_type(nondefdecl->get_type());
 
   // I don't think this is always a forward declaration (e.g. if it is not used in a prototype).

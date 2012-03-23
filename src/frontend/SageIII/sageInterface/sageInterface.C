@@ -3945,7 +3945,7 @@ SageInterface::addMangledNameToCache( SgNode* astNode, const std::string & oldMa
 
      std::string mangledName;
 
-#define USE_SHORT_MANGLED_NAMES 1
+#define USE_SHORT_MANGLED_NAMES 0
 #if USE_SHORT_MANGLED_NAMES
   // This bound was 40 previously!
      if (oldMangledName.size() > 40) {
@@ -3967,6 +3967,7 @@ SageInterface::addMangledNameToCache( SgNode* astNode, const std::string & oldMa
        mangledName = oldMangledName;
      }
 #else
+     printf ("WARNING: In SageInterface::addMangledNameToCache(): Using longer forms of mangled names \n");
      mangledName = oldMangledName;
 #endif
 
@@ -8972,7 +8973,7 @@ void SageInterface::fixStructDeclaration(SgClassDeclaration* structDecl, SgScope
      if (nondefdecl->get_scope() == NULL)
           nondefdecl->set_scope(scope);
 
-     printf ("*** WARNING: In SageInterface::fixStructDeclaration(): Commented out the setting of the parent to be the same as the scope \n");
+     printf ("*** WARNING: In SageInterface::fixStructDeclaration(): Commented out the setting of the parent (of input class declaration and the nondefining declaration) to be the same as the scope (set only if NULL) \n");
 #if 0
      if (structDecl->get_parent() == NULL)
           structDecl->set_parent(scope);

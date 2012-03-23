@@ -211,92 +211,120 @@ mangleLocalScopeToString (const SgScopeStatement* scope)
 
 string
 mangleQualifiersToString (const SgScopeStatement* scope)
-{
-// DQ (3/19/2011): Make this a valid string.
-// string mangled_name = "";
-  string mangled_name = "";
-  if (scope != NULL)
-    {
-      switch (scope->variantT ())
+   {
+#if 1
+     printf ("In manglingSupport.C: mangleQualifiersToString(const SgScopeStatement*): scope = %p = %s \n",scope,scope->class_name().c_str());
+#endif
+
+  // DQ (3/14/2012): I would like to make this assertion (part of required C++ support).
+     ROSE_ASSERT(scope != NULL);
+
+  // DQ (3/19/2011): Make this a valid string.
+  // string mangled_name = "";
+     string mangled_name = "";
+     if (scope != NULL)
         {
-        case V_SgClassDefinition:
-        case V_SgTemplateInstantiationDefn:
-          {
-            const SgClassDefinition* def = isSgClassDefinition (scope);
-            mangled_name = def->get_mangled_name ().getString ();
-          }
-          break;
-        case V_SgNamespaceDefinitionStatement:
-          {
-            const SgNamespaceDefinitionStatement* def
-              = isSgNamespaceDefinitionStatement (scope);
-            mangled_name = def->get_mangled_name ().getString ();
-          }
-          break;
-        case V_SgFunctionDefinition:
-          // 'scope' is part of scope for locally defined classes
-          {
-            const SgFunctionDefinition* def = isSgFunctionDefinition (scope);
-            ROSE_ASSERT (def);
-            mangled_name = def->get_mangled_name ().getString ();
-          }
-          break;
-        case V_SgCatchOptionStmt:
-        case V_SgDoWhileStmt:
-        case V_SgForStatement:
-        case V_SgIfStmt:
-        case V_SgSwitchStatement:
-        case V_SgWhileStmt:
-        case V_SgBasicBlock:
-          {
-         // printf ("In mangleQualifiersToString(scope = %p = %s) \n",scope,scope->class_name().c_str());
+          switch (scope->variantT ())
+             {
+               case V_SgClassDefinition:
+               case V_SgTemplateInstantiationDefn:
+                  {
+                    const SgClassDefinition* def = isSgClassDefinition (scope);
+                    mangled_name = def->get_mangled_name().getString();
+#if 1
+                    printf ("In manglingSupport.C: mangleQualifiersToString(): mangled name for scope = %p = %s is: %s \n",scope,scope->class_name().c_str(),mangled_name.c_str());
+#endif
+                    break;
+                  }
 
-            const SgScopeStatement* stmt = isSgScopeStatement (scope);
-            ROSE_ASSERT (stmt);
-            string stmt_name = mangleLocalScopeToString (stmt);
-            string par_scope_name =
-              mangleQualifiersToString (scope->get_scope ());
-            mangled_name = joinMangledQualifiersToString (par_scope_name,
-                                                          stmt_name);
-          }
-          break;
+               case V_SgNamespaceDefinitionStatement:
+                  {
+                    const SgNamespaceDefinitionStatement* def = isSgNamespaceDefinitionStatement (scope);
+                    mangled_name = def->get_mangled_name().getString();
+#if 1
+                    printf ("In manglingSupport.C: mangleQualifiersToString(): mangled name for scope = %p = %s is: %s \n",scope,scope->class_name().c_str(),mangled_name.c_str());
+#endif
+                    break;
+                  }
 
-     // DQ (2/22/2007): I'm not sure this is best, but we can leave it for now.
-     // I expect that global scope should contribute to the mangled name to avoid
-     // confusion with name of declarations in un-name namespaces for example.
-        case V_SgGlobal: // Global scope has an 'empty' name
-          break;
+               case V_SgFunctionDefinition:
+                  {
+                 // 'scope' is part of scope for locally defined classes
+                    const SgFunctionDefinition* def = isSgFunctionDefinition (scope);
+                    ROSE_ASSERT (def);
+                    mangled_name = def->get_mangled_name().getString();
+                    break;
+                  }
 
-        default: // Embed the class name for subsequent debugging.
-          {
-            // Surrounding scope name
-            string par_scope_name =
-              mangleQualifiersToString (scope->get_scope ());
+               case V_SgCatchOptionStmt:
+               case V_SgDoWhileStmt:
+               case V_SgForStatement:
+               case V_SgIfStmt:
+               case V_SgSwitchStatement:
+               case V_SgWhileStmt:
+               case V_SgBasicBlock:
+                  {
+                 // printf ("In mangleQualifiersToString(scope = %p = %s) \n",scope,scope->class_name().c_str());
 
-            // Compute a local scope name
-            //! \todo Compute local scope names correctly (consistently).
-            ostringstream scope_name;
-            scope_name << scope->class_name ();
+                    const SgScopeStatement* stmt = isSgScopeStatement(scope);
+                    ROSE_ASSERT (stmt != NULL);
+                    string stmt_name      = mangleLocalScopeToString (stmt);
+                    string par_scope_name = mangleQualifiersToString (scope->get_scope());
 
-            // Build full name
-            mangled_name = joinMangledQualifiersToString (par_scope_name,
-                                                          scope_name.str ());
-          }
-          break;
+                    mangled_name = joinMangledQualifiersToString (par_scope_name,stmt_name);
+                    break;
+                  }
+
+           // DQ (2/22/2007): I'm not sure this is best, but we can leave it for now.
+           // I expect that global scope should contribute to the mangled name to avoid
+           // confusion with name of declarations in un-name namespaces for example.
+               case V_SgGlobal: // Global scope has an 'empty' name
+                  {
+                 // I think there is nothing to do for this case.
+                    break;
+                  }
+
+            // DQ (3/14/2012): I think that defaults should be resurced for errors, and not proper handling of unexpected cases.
+               default: // Embed the class name for subsequent debugging.
+                  {
+                    printf ("WARNING: In mangleQualifiersToString(const SgScopeStatement*): case of scope = %s not handled (default reached) \n",scope->class_name().c_str());
+
+                 // Surrounding scope name
+                    string par_scope_name = mangleQualifiersToString (scope->get_scope ());
+
+                 // Compute a local scope name
+                 //! \todo Compute local scope names correctly (consistently).
+                    ostringstream scope_name;
+                    scope_name << scope->class_name ();
+
+                 // Build full name
+                    mangled_name = joinMangledQualifiersToString (par_scope_name,scope_name.str ());
+                    break;
+                  }
+             }
         }
-    }
-  return mangled_name;
-}
+
+     return mangled_name;
+   }
 
 
 SgName
 mangleQualifiers( const SgScopeStatement* scope )
    {
+  // DQ (3/14/2012): I think we have top assert this here, though it appears to have been commented out.
+  // This may become a part of a future set of language dependent assertions in the AST Build Interface
+  // since it is more relevant for C++ than for other languges.
   // DQ (3/19/2011): I think that we want a valid scope else there is no proper pointer to the generated string.
   // ROSE_ASSERT(scope != NULL);
+     ROSE_ASSERT(scope != NULL);
 
      string s = mangleQualifiersToString(scope);
-     return SgName (s.c_str ());
+
+#if 1
+     printf ("In manglingSupport.C: mangleQualifiers(const SgScopeStatement*): returning s = %s \n",s.c_str());
+#endif
+
+     return SgName(s.c_str());
    }
 
 string
