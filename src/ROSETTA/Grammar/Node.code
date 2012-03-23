@@ -2559,6 +2559,15 @@ SgNode::set_parent ( SgNode* parent )
         }
   // ROSE_ASSERT( ( variantT() != V_SgClassDeclaration ) || ( parent->variantT() != V_SgGlobal ) );
 
+     if ( ( variantT() == V_SgTemplateInstantiationDecl ) && ( parent != NULL && parent->variantT() == V_SgClassType ) )
+        {
+          printf ("Warning: Found case in set_parent() where this is a SgTemplateInstantiationDecl and parent is a SgClassType \n");
+       // get_file_info()->display("Warning: Found case in set_parent() where this is aSgTemplateInstantiationDecl and parent is a SgClassType");
+
+          printf ("Exiting in this case! \n");
+          ROSE_ASSERT(false);
+        }
+
   // DQ (7/26/2010): Make the pointer a valid pointer by defining that it 
   // should point to its associated SgSymbol as used in the type table.
   // OLD COMMENT: We should not be setting the parent on SgType IR nodes

@@ -1951,14 +1951,39 @@ SgType::handledUsingLocalTable(SgType* t)
 SgScopeStatement*
 SgType::getCurrentScope()
    {
-     // Liao 8/3/2010, pass fortran only test
+  // This function is used to provide the global type table support with a common
+  // mechanism to know the scope when generating types.  So types have to know their
+  // declaration's scope and it is taken from the current scope that is kept track
+  // of using either of a few (two) mechanisms durring the construction of the AST
+  // from the frontend.  The mechanism is language dependent, or always returning 
+  // a NULL pointer (in the case of the AST Builder if the stack is not used, and we
+  // are not using the EDG 3.3 connection to ROSE...).
+
+  // Note that this function is an alternative to the specification of the scope directly
+  // in the construction of each IR node.  Though I like the direct specification better,
+  // such an approach would force us to change the ROSETTA generated API for a moderate
+  // number of SgStatement IR nodes and it would likely break some user code.  So we need
+  // to schedule this for a later date.  It should not be an issue for anyone using the 
+  // AST Build Interface.
+
+  // Liao 8/3/2010, pass fortran only test
+// #ifdef ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 #ifdef ROSE_BUILD_CXX_LANGUAGE_SUPPORT
+#ifdef ROSE_USE_NEW_EDG_INTERFACE
+  // DQ (3/15/2012): Adding support for specification of scope for new C++ support (new EDG 4.x support).
+  // extern SgScopeStatement* SageBuilder::topScopeStack();
+
+  // This is what is used to test when we can use the AST Builder function (above).
+  // extern bool SageBuilder::emptyScopeStack();
+#else
   // DQ (7/23/2010): This is defined in the EDG/Sage connection.
      extern SgScopeStatement* curr_sg_scope;
+#endif
 #endif
 
 // Liao 8/4/2010, support enable-only-c
 #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
+// #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT || ROSE_USE_NEW_EDG_INTERFACE
   // This is what is used in the Open Fortran Parser connection.
      extern SgScopeStatement* getTopOfScopeStack();
 
@@ -1967,10 +1992,10 @@ SgType::getCurrentScope()
 #endif
 
 #ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
-  // This is what is used in the Open Fortran Parser connection.
+  // This is what is used in the Java connection to ECJ.
      extern SgScopeStatement* getTopOfJavaScopeStack();
 
-  // This is what is used to test when we can use the fortran specific function (above).
+  // This is what is used to test when we can use the Java specific function (above).
      extern bool emptyJavaStateStack();
 #endif
 
@@ -1978,6 +2003,15 @@ SgType::getCurrentScope()
   // SgScopeStatement* currentScope = (curr_sg_scope != NULL) ? curr_sg_scope : getTopOfScopeStack();
      SgScopeStatement* currentScope = NULL;
 #ifdef ROSE_BUILD_CXX_LANGUAGE_SUPPORT
+#ifdef ROSE_USE_NEW_EDG_INTERFACE
+     if (SageBuilder::emptyScopeStack() == false)
+        {
+       // C/C++ AST being generated (using new connection to EDG 4.x).
+          currentScope = SageBuilder::topScopeStack();
+          ROSE_ASSERT(isSgScopeStatement(currentScope) != NULL);
+        }
+       else
+#else
      if (curr_sg_scope != NULL)
         {
        // C/C++ AST being generated
@@ -1985,6 +2019,7 @@ SgType::getCurrentScope()
           ROSE_ASSERT(isSgScopeStatement(currentScope) != NULL);
         }
        else
+#endif
 #endif
         {
 #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT // Liao 8/4/2010, support enable-only-c
@@ -2638,23 +2673,28 @@ SgName
 $CLASSNAME::get_mangled(void) const
    {
      ROSE_ASSERT(this != NULL);
-
-  // printf ("In $CLASSNAME::get_mangled(): get_name() = %s \n",get_name().str());
-
+#if 1
+     printf ("In $CLASSNAME::get_mangled(): get_name() = %s \n",get_name().str());
+#endif
      SgName mangled_name;
   // if (get_name().get_length() != 0) // not anonymous
      if (get_name().is_null() == false) // not anonymous
         {
           const SgClassDeclaration* class_decl = isSgClassDeclaration(get_declaration());
-       // printf ("In $CLASSNAME::get_mangled(): class_decl = %p = %s \n",class_decl, ((class_decl == NULL) ? "NULL" : class_decl->class_name().c_str()) );
+#if 1
+          printf ("In $CLASSNAME::get_mangled(): class_decl = %p = %s \n",class_decl, ((class_decl == NULL) ? "NULL" : class_decl->class_name().c_str()) );
+#endif
           if (class_decl != NULL)
              {
+            // DQ (3/14/2012): We need to have a valid scope or else the name qualification will be empty.
+               ROSE_ASSERT(class_decl->get_scope() != NULL);
+
             // DQ (7/29/2010): Template instantiation declarations can differ on template parameters so we have to dig a little farther.
                const SgTemplateInstantiationDecl* template_class_decl = isSgTemplateInstantiationDecl(get_declaration());
                if (template_class_decl != NULL)
                   {
                     mangled_name = template_class_decl->get_mangled_name();
-#if 0
+#if 1
                     printf ("In $CLASSNAME::get_mangled(): SgTemplateInstantiationDecl mangled_name = %s \n",mangled_name.str());
 #endif
 #if 0
@@ -2664,9 +2704,14 @@ $CLASSNAME::get_mangled(void) const
                   }
                  else
                   {
+                 // DQ (3/14/2012): We need to have a valid scope or else the name qualification will be empty.
+                    ROSE_ASSERT(class_decl->get_scope() != NULL);
+
                  // This is for just a simple SgClassDeclaration.
                     mangled_name = class_decl->get_mangled_name();
-                 // printf ("In $CLASSNAME::get_mangled(): SgClassDeclaration mangled_name = %s \n",mangled_name.str());
+#if 1
+                    printf ("In $CLASSNAME::get_mangled(): SgClassDeclaration calling class_decl->get_mangled_name() --- mangled_name = %s \n",mangled_name.str());
+#endif
                   }
              }
         }
@@ -4326,9 +4371,13 @@ SgTypedefType::createType(SgTypedefDeclaration *decl, SgExpression* optional_for
                SgTypedefType *tptr= isSgTypedefType(*i);
                ROSE_ASSERT(tptr != NULL);
 
+            // DQ (3/21/2012): No, test2004_48.C fails this test.
             // DQ (3/3/2012): I think this is always NULL pointer to a SgSymbol.
-               ROSE_ASSERT(decl->get_parent_scope() == NULL);
-               ROSE_ASSERT(tptr->get_parent_scope() == NULL);
+            // ROSE_ASSERT(decl->get_parent_scope() == NULL);
+
+            // DQ (3/21/2012): No, test2003_08.C fails this test.
+            // DQ (3/3/2012): I think this is always NULL pointer to a SgSymbol. 
+            // ROSE_ASSERT(tptr->get_parent_scope() == NULL);
 
                if( (decl->get_name() == tptr->get_name()) &&
                    (decl->get_parent_scope() == tptr->get_parent_scope()) )
@@ -4839,18 +4888,22 @@ SgClassType::createType(SgDeclarationStatement* cd, SgExpression* optional_fortr
      ROSE_ASSERT(classDeclaration != NULL || templateClassDeclaration != NULL);
 
      SgType* type_from_declaration = NULL;
-     if (classDeclaration != NULL)
+  // if (classDeclaration != NULL)
+     if (templateClassDeclaration == NULL)
         {
+          ROSE_ASSERT(classDeclaration != NULL);
           type_from_declaration = classDeclaration->get_type();
        // ROSE_ASSERT(type_from_declaration != NULL);
         }
        else
         {
+          ROSE_ASSERT(templateClassDeclaration != NULL);
           type_from_declaration = templateClassDeclaration->get_type();
        // ROSE_ASSERT(type_from_declaration != NULL);
         }
 
   // ROSE_ASSERT(type_from_declaration != NULL);
+     printf ("Inside of SgClassType::createType(): cd = %p = %s type_from_declaration = %p \n",cd,cd->class_name().c_str(),type_from_declaration);
 
   // if (!cd->get_type())
      if (type_from_declaration == NULL)
@@ -4864,14 +4917,32 @@ SgClassType::createType(SgDeclarationStatement* cd, SgExpression* optional_fortr
        // DQ (7/22/2010): Use the global type table to get the type.
           $CLASSNAME* newType = new $CLASSNAME(cd);
           ROSE_ASSERT(newType != NULL);
-
-#if 0
-          printf ("Inside of $CLASSNAME::createType(): cd = %p = %s = %s \n",cd,cd->class_name().c_str(),cd->get_name().str());
+#if 1
+       // DQ (3/14/2012): Note that the new template support allows that classDeclaration is non-null (since template classes are derived from non-template classes).
+          ROSE_ASSERT(classDeclaration != NULL);
+          printf ("Inside of SgClassType::createType(): cd = %p = %s = %s newType = %p \n",cd,cd->class_name().c_str(),classDeclaration->get_name().str(),newType);
 #endif
+          SgScopeStatement* currentScope = getCurrentScope();
+#if 1
+          printf ("Inside of SgClassType::createType(): currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
+#endif
+       // DQ (3/14/2012): Make sure that this is a valid pointer else it might explain why qualification is not being use to generate the mangled names.
+       // ROSE_ASSERT(cd->get_scope() != NULL);
+          if (cd->get_scope() == NULL && currentScope != NULL)
+             {
+               printf ("Inside of SgClassType::createType(): Setting scope for cd = %p = %s to currentScope = %p = %s \n",cd,cd->class_name().c_str(),currentScope,currentScope->class_name().c_str());
+               cd->set_scope(currentScope);
+             }
+          ROSE_ASSERT(cd->get_scope() != NULL);
+
        // We have to build the type before we can generate a mangle name for it.
           SgName name = newType->get_mangled();
+
+          printf ("Inside of SgClassType::createType(): type name (newType->get_mangled()) = %s \n",name.str());
+
           if (name.is_null() == true)
              {
+               printf ("Need to handle special case of SgClassDeclaration of un-named class cd = %p = %s \n",cd,cd->class_name().c_str());
 #if 0
                printf ("Need to handle special case of SgClassDeclaration of un-named class cd = %p = %s \n",cd,cd->class_name().c_str());
                ROSE_ASSERT(cd->get_file_info() != NULL);
@@ -4879,7 +4950,7 @@ SgClassType::createType(SgDeclarationStatement* cd, SgExpression* optional_fortr
 #endif
             // name = SageInterface::generateUniqueName(cd,/* ignoreDifferenceBetweenDefiningAndNondefiningDeclarations = */ true);
                name = SageInterface::generateUniqueName(newType,/* ignoreDifferenceBetweenDefiningAndNondefiningDeclarations = */ true);
-#if 0
+#if 1
                printf ("Generated a unique name (using SageInterface::generateUniqueName())= %s \n",name.str());
 #endif
             // name = SageInterface::get_name(newType);
@@ -4888,22 +4959,23 @@ SgClassType::createType(SgDeclarationStatement* cd, SgExpression* optional_fortr
              }
           ROSE_ASSERT(name.is_null() == false);
 
-          SgScopeStatement* currentScope = getCurrentScope();
+       // SgScopeStatement* currentScope = getCurrentScope();
 
           if (currentScope != NULL)
              {
             // DQ (7/30/2010): If valid pointer then we are in the process of building the C/C++/Fortran AST.
+            // SgType* t = currentScope->get_type_table()->lookup_type(name);
                SgType* t = currentScope->get_type_table()->lookup_type(name);
                if (t == NULL)
                   {
                  // If the type is not in the type table then insert it so that we can reuse it.
-#if 0
-                    printf ("Mangled type name for $CLASSNAME = %s (not available in type table) \n",name.str());
+#if 1
+                    printf ("Mangled type name for SgClassType = %s (not available in type table) \n",name.str());
 #endif
                  // get_globalTypeTable()->insert_type(name,newType);
                     currentScope->get_type_table()->insert_type(name,newType);
-#if 0
-                    printf ("This $CLASSNAME::createType() function also sets the type in the SgClassDeclaration = %p \n",cd);
+#if 1
+                    printf ("This SgClassType::createType() function also sets the type in the SgClassDeclaration = %p \n",cd);
 #endif
 
                  // DQ (12/4/2011): Modified to support template declarations in the AST.
@@ -4916,17 +4988,37 @@ SgClassType::createType(SgDeclarationStatement* cd, SgExpression* optional_fortr
                  else
                   {
                  // If it is already present in the type table then delete the type (so that it will remain unique).
-#if 0
-                    printf ("Mangled type name for $CLASSNAME = %s (already exists in type table) \n",name.str());
+                    SgClassType* classType = isSgClassType(t);
+                    ROSE_ASSERT(classType != NULL);
+#if 1
+                    ROSE_ASSERT(classType->get_declaration() != NULL);
+                    printf ("Mangled type classType = %p (classType->get_declaration() = %p = %s) name for SgClassType name = %s (already exists in type table) \n",t,classType->get_declaration(),classType->get_declaration()->class_name().c_str(),name.str());
 #endif
-                    ROSE_ASSERT(t != newType);
 
-                    delete newType;
-                    newType = NULL;
-#if 0
-                    printf ("This $CLASSNAME::createType() function also sets the type in the SgClassDeclaration = %p \n",cd);
+                 // DQ (3/21/2012): New test.
+                 // ROSE_ASSERT(t != newType);
+                 // delete newType;
+                 // newType = NULL;
+
+                 // DQ (3/21/2012): New conditional test for t != newType (and delete new type only then).
+                    if (t != newType)
+                       {
+                         printf ("Deleting the just built exploritory type = %p (case of t != newType) t = %p = %s \n",newType,t,t->class_name().c_str());
+
+                         delete newType;
+                         newType = NULL;
+                       }
+                      else
+                       {
+                         printf ("WARNING: In SgClassType::createType(): Found a case of t == newType \n");
+                       }
+#if 1
+                    printf ("This SgClassType::createType() function also sets the type in the SgClassDeclaration = %p \n",cd);
 #endif
                     $CLASSNAME* typeFromTypeTable = is$CLASSNAME(t);
+
+                 // DQ (3/21/2012): New test.
+                    ROSE_ASSERT(typeFromTypeTable != NULL);
 
                  // DQ (12/4/2011): Modified to support template declarations in the AST.
                  // cd->set_type(typeFromTypeTable);
@@ -4944,10 +5036,17 @@ SgClassType::createType(SgDeclarationStatement* cd, SgExpression* optional_fortr
 
             // DQ (12/4/2011): Modified to support template declarations in the AST.
             // cd->set_type(newType);
-               if (classDeclaration != NULL)
-                   classDeclaration->set_type(newType);
-                else
-                   templateClassDeclaration->set_type(newType);
+            // if (classDeclaration != NULL)
+               if (templateClassDeclaration == NULL)
+                  {
+                    ROSE_ASSERT(classDeclaration != NULL);
+                    classDeclaration->set_type(newType);
+                  }
+                 else
+                  {
+                    ROSE_ASSERT(templateClassDeclaration != NULL);
+                    templateClassDeclaration->set_type(newType);
+                  }
 
              }
 #endif
@@ -4958,20 +5057,32 @@ SgClassType::createType(SgDeclarationStatement* cd, SgExpression* optional_fortr
   // ROSE_ASSERT(type_from_declaration != NULL);
   // return ($CLASSNAME*) type_from_declaration;
 
-     SgType* returnType = NULL;
+     SgClassType* returnType = NULL;
      if (classDeclaration != NULL)
         {
-          returnType = classDeclaration->get_type();
+          returnType = isSgClassType(classDeclaration->get_type());
           ROSE_ASSERT(returnType != NULL);
         }
        else
         {
-          returnType = templateClassDeclaration->get_type();
+          returnType = isSgClassType(templateClassDeclaration->get_type());
           ROSE_ASSERT(returnType != NULL);
         }
 
      ROSE_ASSERT(returnType != NULL);
-     return ($CLASSNAME*) returnType;
+
+  // DQ (3/22/2012): Added assertions.
+     if (returnType->get_declaration() != cd)
+        {
+          printf ("returnType = %p = %s \n",returnType,returnType->class_name().c_str());
+          printf ("returnType->get_declaration() = %p = %s cd = %p = %s \n",returnType->get_declaration(),returnType->get_declaration()->class_name().c_str(),cd,cd->class_name().c_str());
+        }
+     ROSE_ASSERT(returnType->get_declaration() == cd);
+
+     printf ("Leaving SgClassType::createType(): returnType = %p = %s \n",returnType,returnType->class_name().c_str());
+
+  // return ($CLASSNAME*) returnType;
+     return returnType;
    }
 
 SOURCE_CREATE_TYPE_FOR_CLASS_TYPE_END

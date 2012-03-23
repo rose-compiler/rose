@@ -493,4 +493,34 @@ class TestForReferencesToDeletedNodes : public ROSE_VisitTraversal
    };
 
 
+
+class TestForParentsMatchingASTStructure: public AstPrePostProcessing
+   {
+  // DQ (3/19/2012): This is a test from Robb that I want to use uniformally in the AST.
+  // This has been used to catch several location in the AST where parents were not set
+  // as they are defined to be set in the AST (based on a traversal).  So this test is
+  // an important addition to the EDG 4.3 work to fix a number of the bugs in the EDG 3.3
+  // work and define a cleaner representation of the AST.
+
+  // Check that all nodes have the correct parent.  This code is not thread safe. 
+
+     public:
+          std::vector<SgNode*> stack;                 // current path within the AST
+          std::ostream &output;                       // where to emit warning/error messages
+          size_t nproblems;                           // number of problems detected
+          size_t limit;                               // number of errors to allow before exit
+          std::string prefix;                         // line prefix
+
+     public:
+          explicit TestForParentsMatchingASTStructure(std::ostream &output, const std::string & prefix = "");
+          bool check(SgNode *ast, size_t limit = 0);
+          void preOrderVisit(SgNode *node);
+          void postOrderVisit(SgNode *node);
+          void show_details_and_maybe_fail(SgNode *node);
+
+       // Simple funtion to call to get the traversal started...
+          static void test( SgProject* project );
+   };
+
+
 #endif

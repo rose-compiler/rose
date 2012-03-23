@@ -1066,7 +1066,8 @@ NodeType* getEnclosingNode(const SgNode* astNode, const bool includingSelf = fal
 
   // DQ (3/5/2012): Check for loops that will cause infinite loops.
      SgNode* previouslySeenParent = parent;
-     while ( (parent != NULL) && (!dynamic_cast<const NodeType*>(parent)) )
+     bool foundCycle = false;
+     while ( (foundCycle == false) && (parent != NULL) && (!dynamic_cast<const NodeType*>(parent)) )
         {
           ROSE_ASSERT(parent->get_parent() != parent);
 
@@ -1075,7 +1076,77 @@ NodeType* getEnclosingNode(const SgNode* astNode, const bool includingSelf = fal
           parent = parent->get_parent();
 
        // DQ (3/5/2012): Check for loops that will cause infinite loops.
-          ROSE_ASSERT(parent != previouslySeenParent);
+       // ROSE_ASSERT(parent != previouslySeenParent);
+          if (parent == previouslySeenParent)
+             {
+               foundCycle = true;
+             }
+        }
+
+     printf ("previouslySeenParent = %p = %s \n",previouslySeenParent,previouslySeenParent->class_name().c_str());
+
+     parent = previouslySeenParent;
+
+     SgDeclarationStatement* declarationStatement = isSgDeclarationStatement(parent);
+     if (declarationStatement != NULL)
+        {
+          printf ("Found a SgDeclarationStatement \n");
+          SgDeclarationStatement* definingDeclaration         = declarationStatement->get_definingDeclaration();
+          SgDeclarationStatement* firstNondefiningDeclaration = declarationStatement->get_firstNondefiningDeclaration();
+
+          printf (" --- declarationStatement         = %p \n",declarationStatement);
+          printf (" --- definingDeclaration          = %p \n",definingDeclaration);
+          if (definingDeclaration != NULL && definingDeclaration->get_parent() != NULL)
+               printf (" --- definingDeclaration ->get_parent()         = %p = %s \n",definingDeclaration->get_parent(),definingDeclaration->get_parent()->class_name().c_str());
+          printf (" --- firstNondefiningDeclaration  = %p \n",firstNondefiningDeclaration);
+          if (firstNondefiningDeclaration != NULL && firstNondefiningDeclaration->get_parent() != NULL)
+               printf (" --- firstNondefiningDeclaration ->get_parent() = %p = %s \n",firstNondefiningDeclaration->get_parent(),firstNondefiningDeclaration->get_parent()->class_name().c_str());
+
+          if (definingDeclaration != NULL && declarationStatement != firstNondefiningDeclaration)
+             {
+               printf ("Found a nondefining declaration so use the non-defining declaration instead \n");
+               parent = firstNondefiningDeclaration;
+             }
+        }
+
+     printf ("reset: previouslySeenParent = %p = %s \n",previouslySeenParent,previouslySeenParent->class_name().c_str());
+
+     if (foundCycle == true)
+        {
+          while ( (parent != NULL) && (!dynamic_cast<const NodeType*>(parent)) )
+             {
+               ROSE_ASSERT(parent->get_parent() != parent);
+
+               printf ("In getEnclosingNode() (2nd try): parent = %p = %s \n",parent,parent->class_name().c_str());
+
+               SgDeclarationStatement* declarationStatement = isSgDeclarationStatement(parent);
+               if (declarationStatement != NULL)
+                  {
+                    printf ("Found a SgDeclarationStatement \n");
+                    SgDeclarationStatement* definingDeclaration         = declarationStatement->get_definingDeclaration();
+                    SgDeclarationStatement* firstNondefiningDeclaration = declarationStatement->get_firstNondefiningDeclaration();
+
+                    printf (" --- declarationStatement                       = %p \n",declarationStatement);
+
+                    printf (" --- definingDeclaration                        = %p \n",definingDeclaration);
+                    if (definingDeclaration != NULL && definingDeclaration->get_parent() != NULL)
+                         printf (" --- definingDeclaration ->get_parent()         = %p = %s \n",definingDeclaration->get_parent(),definingDeclaration->get_parent()->class_name().c_str());
+
+                    printf (" --- firstNondefiningDeclaration                = %p \n",firstNondefiningDeclaration);
+                    if (firstNondefiningDeclaration != NULL && firstNondefiningDeclaration->get_parent() != NULL)
+                         printf (" --- firstNondefiningDeclaration ->get_parent() = %p = %s \n",firstNondefiningDeclaration->get_parent(),firstNondefiningDeclaration->get_parent()->class_name().c_str());
+
+                    if (definingDeclaration != NULL && declarationStatement != firstNondefiningDeclaration)
+                       {
+                         printf ("Found a nondefining declaration so use the firstNondefining declaration instead \n");
+                         parent = firstNondefiningDeclaration;
+                       }
+                  }
+               parent = parent->get_parent();
+
+            // DQ (3/5/2012): Check for loops that will cause infinite loops.
+               ROSE_ASSERT(parent != previouslySeenParent);
+             }
         }
 
      return const_cast<NodeType*>(dynamic_cast<const NodeType*> (parent));

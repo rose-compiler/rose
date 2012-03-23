@@ -8,6 +8,7 @@ class DOTSubgraphRepresentation
           typedef struct
              {
              } EdgeStorageType;
+
    };
 
 void test()

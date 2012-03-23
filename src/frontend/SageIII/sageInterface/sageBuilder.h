@@ -938,7 +938,7 @@ SgTemplateClassDeclaration* buildNondefiningTemplateClassDeclaration_nfi(const S
 SgClassDeclaration* buildNondefiningClassDeclaration ( SgName name, SgScopeStatement* scope );
 SgClassDeclaration* buildDefiningClassDeclaration    ( SgName name, SgScopeStatement* scope );
 
-// DQ (11/7/2009): Added function to build C++ class (builts both the definig and non-defining declarations).
+// DQ (11/7/2009): Added function to build C++ class (builds both the non-defining and defining declarations; in that order).
 SgClassDeclaration* buildClassDeclaration    ( SgName name, SgScopeStatement* scope );
 
 //! Build an enum first nondefining declaration, without file info

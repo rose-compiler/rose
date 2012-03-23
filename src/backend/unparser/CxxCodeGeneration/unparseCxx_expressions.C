@@ -1081,7 +1081,9 @@ Unparse_ExprStmt::unparseFuncRef(SgExpression* expr, SgUnparse_Info& info)
         }
 #endif
 
+#if 0
      printf ("In unparseFuncRef(): usingGeneratedNameQualifiedFunctionNameString = %s \n",usingGeneratedNameQualifiedFunctionNameString ? "true" : "false");
+#endif
 
      if (usingGeneratedNameQualifiedFunctionNameString == true)
         {
@@ -1105,7 +1107,9 @@ Unparse_ExprStmt::unparseFuncRef(SgExpression* expr, SgUnparse_Info& info)
      string func_name = func_ref->get_symbol()->get_name().str();
      int diff = 0; // the length difference between "operator" and function
 
+#if 0
      printf ("Inside of Unparse_ExprStmt::unparseFuncRef(): func_name = %s \n",func_name.c_str());
+#endif
 
      ROSE_ASSERT(func_ref->get_symbol() != NULL);
      ROSE_ASSERT(func_ref->get_symbol()->get_declaration() != NULL);
@@ -2164,9 +2168,9 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
           ROSE_ASSERT(alt_info.get_reference_node_for_qualification() != NULL);
 
           unparseExpression(func_call->get_function(), alt_info);
-
+#if 0
           func_call->get_function()->get_file_info()->display("In unparse function call: debug");
-
+#endif
           alt_info.set_reference_node_for_qualification(NULL);
 
 #if 0

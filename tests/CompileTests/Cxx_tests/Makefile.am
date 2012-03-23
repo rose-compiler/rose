@@ -177,6 +177,7 @@ test2004_111.C \
 test2004_112.C \
 test2004_113.C \
 test2004_114.C \
+test2004_115.C \
 test2004_117.C \
 test2004_118.C \
 test2004_119.C \
@@ -195,6 +196,7 @@ test2004_137.C \
 test2004_139.C \
 test2004_140.C \
 test2004_142.C \
+test2004_143.C \
 test2004_144.C \
 test2004_146.C \
 test2004_147.C \
@@ -218,6 +220,7 @@ test2005_04.C \
 test2005_05.C \
 test2005_07.C \
 test2005_08.C \
+test2005_09.C \
 test2005_11.C \
 test2005_12.C \
 test2005_13.C \
@@ -268,16 +271,20 @@ test2005_75b.C \
 test2005_76.C \
 test2005_77.C \
 test2005_78.C \
+test2005_79.C \
 test2005_80.C \
 test2005_81.C \
+test2005_82.C \
 test2005_83.C \
 test2005_84.C \
 test2005_86.C \
 test2005_87.C \
 test2005_88.C \
+test2005_89.C \
 test2005_90.C \
 test2005_91.C \
 test2005_92.C \
+test2005_93.C \
 test2005_94.C \
 test2005_95.C \
 test2005_96.C \
@@ -295,6 +302,7 @@ test2005_110.C \
 test2005_111.C \
 test2005_113.C \
 test2005_116.C \
+test2005_117.C \
 test2005_118.C \
 test2005_120.C \
 test2005_124.C \
@@ -322,6 +330,7 @@ test2005_162.C \
 test2005_164.C \
 test2005_165.C \
 test2005_166.C \
+test2005_167.C \
 test2005_168.C \
 test2005_169.C \
 test2005_170.C \
@@ -331,10 +340,12 @@ test2005_174.C \
 test2005_175.C \
 test2005_176.C \
 test2005_177.C \
+test2005_178.C \
 test2005_179.C \
 test2005_180.C \
 test2005_181.C \
 test2005_182.C \
+test2005_183.C \
 test2005_184.C \
 test2005_185.C \
 test2005_187.C \
@@ -346,6 +357,7 @@ test2005_195.C \
 test2005_196.C \
 test2005_197.C \
 test2005_198.C \
+test2005_199.C \
 test2005_202.C \
 test2005_203.C \
 test2005_206.C \
@@ -394,6 +406,7 @@ test2006_69.C \
 test2006_70.C \
 test2006_71.C \
 test2006_72.C \
+test2006_74.C \
 test2006_75.C \
 test2006_76.C \
 test2006_77.C \
@@ -403,10 +416,14 @@ test2006_80.C \
 test2006_81.C \
 test2006_82.C \
 test2006_83.C \
+test2006_86.C \
 test2006_87.C \
 test2006_88.C \
+test2006_89.C \
 test2006_91.C \
+test2006_92.C \
 test2006_93.C \
+test2006_94.C \
 test2006_95.C \
 test2006_96.C \
 test2006_97.C \
@@ -429,16 +446,22 @@ test2006_116.C \
 test2006_117.C \
 test2006_118.C \
 test2006_120.C \
+test2006_121.C \
 test2006_123.C \
+test2006_125.C \
+test2006_139.C \
 test2006_140.C \
 test2006_142.C \
 test2006_143.C \
 test2006_144.C \
 test2006_145.C \
 test2006_146.C \
+test2006_147.C \
 test2006_148.C \
 test2006_149.C \
 test2006_150.C \
+test2006_152.C \
+test2006_153.C \
 test2006_154.C \
 test2006_155.C \
 test2006_156.C \
@@ -466,6 +489,7 @@ test2007_09.C \
 test2007_10.C \
 test2007_11.C \
 test2007_12.C \
+test2007_13.C \
 test2007_14.C \
 test2007_15.C \
 test2007_16.C \
@@ -478,6 +502,7 @@ test2007_28.C \
 test2007_29.C \
 test2007_43.C \
 test2007_44.C \
+test2007_46.C \
 test2007_47.C \
 test2007_48.C \
 test2007_49.C \
@@ -491,6 +516,7 @@ test2007_70.C \
 test2007_72.C \
 test2007_75.C \
 test2007_77.C \
+test2007_78.C \
 test2007_81.C \
 test2007_82.C \
 test2007_84.C \
@@ -510,6 +536,7 @@ test2007_152.C \
 test2007_154.C \
 test2007_155.C \
 test2007_157.C \
+test2007_158.C \
 test2007_159.C \
 test2007_160.C \
 test2007_161.C \
@@ -525,8 +552,10 @@ test2007_172.C \
 test2007_173.C \
 test2008_01.C \
 test2008_03.C \
+test2008_04.C \
 test2008_05.C \
 test2008_06.C \
+test2008_08.C \
 test2008_09.C \
 test2008_10.C \
 test2008_11.C \
@@ -557,6 +586,7 @@ test2010_04.C \
 test2010_05.C \
 test2010_06.C \
 test2010_18.C \
+test2010_19.C \
 test2011_01.C \
 test2011_02.C \
 test2011_05.C \
@@ -593,19 +623,27 @@ test2011_49.C \
 test2011_50.C \
 test2011_51.C \
 test2011_52.C \
+test2011_54.C \
+test2011_55.C \
+test2011_56.C \
+test2011_57.C \
 test2011_58.C \
 test2011_61.C \
 test2011_63.C \
+test2011_64.C \
+test2011_66.C \
 test2011_67.C \
 test2011_68.C \
 test2011_69.C \
 test2011_71.C \
+test2011_74.C \
 test2011_78.C \
 test2011_79.C \
 test2011_81.C \
 test2011_82.C \
 test2011_83.C \
 test2011_88.C \
+test2011_89.C \
 test2011_90.C \
 test2011_92.C \
 test2011_93.C \
@@ -677,93 +715,59 @@ test2011_192.C \
 test2011_193.C \
 test2011_194.C \
 test2011_195.C \
-   test2005_117.C \
-   test2005_183.C \
-   test2005_199.C \
-   test2006_121.C \
-   test2006_139.C \
-   test2006_147.C \
-   test2007_13.C \
-   test2007_78.C \
-   test2008_04.C \
+test2012_01.C \
+test2012_02.C \
+test2012_03.C \
+test2012_04.C \
+test2012_05.C \
+test2012_06.C \
+test2012_07.C \
+test2012_08.C \
+test2012_09.C \
+test2012_10.C \
+test2012_11.C \
+test2012_12.C \
+test2012_13.C \
+test2012_14.C \
+test2012_15.C \
+test2012_16.C \
+test2012_17.C \
+test2012_18.C \
+test2012_19.C \
+test2012_20.C \
+test2012_21.C \
+test2012_22.C \
+test2012_23.C \
+test2012_24.C \
+test2012_25.C \
+test2012_26.C \
+test2012_27.C \
+test2012_28.C \
+test2012_29.C \
+test2012_30.C \
+test2012_31.C \
+test2012_32.C \
+test2012_34.C \
+test2012_36.C \
+test2012_37.C \
 test_int_lexemes.C \
 test_int_lexemes_donot_pass.C \
 test_simple_int.C \
 test_wchars.C \
 lexPhase2003_01.C \
 inputForLoopLocator.C \
-X.C \
-test2005_09.C \
- test2011_89.C \
- test2012_01.C \
- test2012_02.C \
- test2012_03.C \
- test2012_04.C \
- test2012_05.C \
- test2012_06.C \
- test2012_07.C \
- test2012_08.C \
- test2012_09.C \
- test2012_10.C \
- test2012_11.C \
- test2012_12.C \
- test2012_13.C \
- test2012_14.C \
- test2012_15.C \
- test2012_16.C \
- test2012_17.C \
- test2012_18.C \
- test2012_19.C \
- test2012_20.C \
- test2012_21.C \
- test2012_22.C \
- test2012_23.C \
- test2012_24.C \
- test2012_25.C \
- test2012_26.C \
- test2012_27.C \
- test2012_28.C \
- test2012_29.C \
- test2012_30.C \
- test2012_31.C \
- test2012_32.C \
- test2012_34.C \
-test2006_125.C \
-$(NEW_PASSING_FILES)
+X.C
+
+# $(NEW_PASSING_FILES)
 
 # DQ (3/5/2012): New passing files
-NEW_PASSING_FILES = \
-test2004_143.C \
-test2005_79.C \
-test2005_89.C \
-test2005_167.C \
-test2005_178.C \
-test2006_74.C \
-test2006_86.C \
-test2006_89.C \
-test2006_92.C \
-test2006_94.C \
-test2006_152.C \
-test2006_153.C \
-test2007_46.C \
-test2007_158.C \
-test2008_08.C \
-test2010_19.C \
-test2011_54.C \
-test2011_55.C \
-test2011_56.C \
-test2011_57.C \
-test2011_64.C \
-test2011_66.C \
-test2011_74.C 
+NEW_PASSING_FILES = 
 
 # $(TESTCODE_CURRENTLY_FAILING)
 
 
 # DQ (2/15/2012): These test codes fail on OSX only.
 TESTCODE_CURRENTLY_FAILING_ON_OSX = \
-test2005_82.C \
-test2005_93.C \
 test2011_06.C \
 test2004_35.C 
 
@@ -785,7 +789,6 @@ endif
 #
 if ROSE_USE_EDG_VERSION_4_3
 TESTCODE_CURRENTLY_FAILING = \
-test2004_115.C \
 test2004_116.C \
 test2004_120.C \
 test2004_127.C \

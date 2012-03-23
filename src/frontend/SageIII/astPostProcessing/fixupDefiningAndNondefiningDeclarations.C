@@ -310,11 +310,27 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                            // This is a SgTemplateInstantiationDecl that was built to support creation of a type (could be a template parameter).
                            // As a result it may not exist in the child list of its parent which has been set to a scope where it was used.
                            // reset the parent to be the SgClassType.
-#if PRINT_DEVELOPER_WARNINGS
+// #if PRINT_DEVELOPER_WARNINGS
+#if 0
                               printf ("Resetting the parent of the templateClassInstantiation = %p = %s to its SgClassType \n",
                                    templateClassInstantiation,templateClassInstantiation->get_name().str());
 #endif
-                              templateClassInstantiation->set_parent(classType);
+                              printf ("In FixupAstDefiningAndNondefiningDeclarations::visit() templateClassInstantiation->get_parent() = %p \n",templateClassInstantiation->get_parent());
+                              if (templateClassInstantiation->get_parent() != NULL)
+                                   printf ("In FixupAstDefiningAndNondefiningDeclarations::visit() templateClassInstantiation->get_parent() = %s \n",templateClassInstantiation->get_parent()->class_name().c_str());
+
+                           // templateClassInstantiation->set_parent(classType);
+                              if (templateClassInstantiation->get_parent() == NULL)
+                                 {
+                                   printf ("Resetting the parent of the templateClassInstantiation = %p = %s to its SgClassType \n",
+                                        templateClassInstantiation,templateClassInstantiation->get_name().str());
+                                   templateClassInstantiation->set_parent(classType);
+                                 }
+                                else
+                                 {
+                                   printf ("templateClassInstantiation parent is already set, skip resetting it to SgClassType \n");
+                                 }
+
                               lookForDeclarationInAssociatedScope = false;
                             }
                        }

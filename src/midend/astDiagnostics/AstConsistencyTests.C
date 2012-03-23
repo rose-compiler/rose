@@ -32,6 +32,9 @@
 // This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
 #include "rose_config.h"
 
+// DQ (3/19/2012): We need this for a function in calss: TestForParentsMatchingASTStructure
+#include "stringify.h"
+
 
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
@@ -717,7 +720,11 @@ AstTests::runAllTests(SgProject* sageProject)
      if ( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
           printf ("Skipping test of query on types \n");
 #endif
+
+  // DQ (3/19/2012): Added test from Robb for parents of the IR nodes in the AST.
+     TestForParentsMatchingASTStructure::test(sageProject);
    }
+
 
 /*! \page AstProperties AST Properties (Consistency Tests)
 
@@ -5466,3 +5473,127 @@ TestForReferencesToDeletedNodes::test( SgProject* project )
 
      traversal.traverseMemoryPool();
    }
+
+
+// explicit
+TestForParentsMatchingASTStructure::
+TestForParentsMatchingASTStructure(std::ostream &output, const std::string &prefix)
+   : output(output), nproblems(0), limit(0), prefix(prefix)
+   {
+   }
+
+bool
+TestForParentsMatchingASTStructure::check(SgNode *ast, size_t limit)
+   {
+     this->limit = limit;
+     nproblems = 0;
+     try 
+        {
+          traverse(ast);
+        }
+     catch (const TestForParentsMatchingASTStructure*) 
+        {
+          return false;
+        }
+
+     return 0 == nproblems;
+   }
+
+void
+TestForParentsMatchingASTStructure::preOrderVisit(SgNode *node)
+   {
+     if (!stack.empty())
+        {
+          if (NULL == node->get_parent())
+             {
+               output << prefix << "node has null parent property but was reached by AST traversal\n";
+               show_details_and_maybe_fail(node);
+             } 
+            else 
+             {
+               if (node->get_parent() != stack.back())
+                  {
+                    output << prefix << "node's parent property does not match traversal parent\n";
+
+                    printf ("traversal parent = %p = %s \n",stack.back(),stack.back()->class_name().c_str());
+                    SgNamespaceDefinitionStatement* namespaceDefinition = isSgNamespaceDefinitionStatement(stack.back());
+
+                    if (namespaceDefinition != NULL)
+                       {
+                         printf ("node = %p = %s node->get_parent() = %p = %s \n",node,node->class_name().c_str(),node->get_parent(),node->get_parent()->class_name().c_str());
+
+                         SgNamespaceDeclarationStatement* namespaceDeclaration = namespaceDefinition->get_namespaceDeclaration();
+                         printf ("Found a namespaceDefinition = %p = %s \n",namespaceDefinition,namespaceDeclaration->get_name().str());
+
+                         SgNamespaceDefinitionStatement* previousNamepaceDefinition = namespaceDefinition;
+                         while (previousNamepaceDefinition != NULL)
+                            {
+                              printf ("previousNamepaceDefinition = %p \n",previousNamepaceDefinition);
+                              previousNamepaceDefinition = previousNamepaceDefinition->get_previousNamepaceDefinition();
+                            }
+                       }
+
+                    show_details_and_maybe_fail(node);
+                  }
+             }
+        }
+
+     stack.push_back(node);
+   }
+
+void
+TestForParentsMatchingASTStructure::postOrderVisit(SgNode *node)
+   {
+     assert(!stack.empty());
+     assert(node==stack.back());
+     stack.pop_back();
+   }
+
+void
+TestForParentsMatchingASTStructure::show_details_and_maybe_fail(SgNode *node) 
+   {
+     output <<prefix <<"AST path (including node) when inconsistency was detected:\n";
+     for (size_t i=0; i<stack.size(); ++i)
+        {
+          output << prefix
+                   << "    #" << std::setw(4) << std::left << i << " " << stringifyVariantT(stack[i]->variantT(), "V_")
+                   << " " << stack[i] << "; parent=" << stack[i]->get_parent()
+                   << "\n";
+
+          printf ("   stack[i]->get_parent() = %p \n",stack[i]->get_parent());
+          if (stack[i]->get_parent() != NULL)
+             {
+               printf ("   stack[i]->get_parent() = %p = %s \n",stack[i]->get_parent(),stack[i]->get_parent()->class_name().c_str());
+             }
+        }
+
+     output << prefix
+            << "    #" << std::setw(4) << std::left << stack.size() << " " << stringifyVariantT(node->variantT(), "V_")
+            << " " << node << "; parent=" << node->get_parent()
+            << "\n";
+
+     if (++nproblems >= limit)
+        {
+          throw this;
+        }
+   }
+
+void
+TestForParentsMatchingASTStructure::test( SgProject* project )
+   {
+  // See documentation in the header file for this test.
+
+  // End in an error if any are detected.
+     std::ostringstream ss;
+     if (!TestForParentsMatchingASTStructure(ss, "    ").check(project, 10))
+        {
+          std::cerr <<"Detected AST parent/child relationship problems after AST post processing:\n" <<ss.str();
+#if 0
+          ROSE_ASSERT(false);
+#endif
+        }
+
+  // TestForParentsMatchingASTStructure traversal(project);
+  // traversal.traverse();
+   }
+
