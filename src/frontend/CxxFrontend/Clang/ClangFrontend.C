@@ -69,10 +69,10 @@ int clang_main(int argc, char ** argv, SgSourceFile& sageFile) {
     size_t last_period = input_file.find_last_of(".");
     std::string extention(input_file.substr(last_period + 1));
 
-    if (extention == "c" || extention == "cc") {
+    if (extention == "c") {
         language = ClangToSageTranslator::C;
     }
-    else if (extention == "C" || extention == "cxx" || extention == "cpp") {
+    else if (extention == "C" || extention == "cxx" || extention == "cpp" || extention == "cc") {
         language = ClangToSageTranslator::CPLUSPLUS;
     }
     else if (extention == "objc") {
@@ -550,6 +550,7 @@ SgSymbol * ClangToSageTranslator::GetSymbolFromSymbolTable(clang::NamedDecl * de
             }
             break;
         }
+        case clang::Decl::CXXRecord:
         case clang::Decl::Record:
         {
             it = SageBuilder::ScopeStack.rbegin();
@@ -685,6 +686,8 @@ SgNode * ClangToSageTranslator::Traverse(clang::Decl * decl) {
         case clang::Decl::ParmVar:
             ret_status = VisitParmVarDecl((clang::ParmVarDecl *)decl, &result);
             break;
+        case clang::Decl::CXXRecord:
+            std::cout << "Using C level for C++ construct: CXXRecord" << std::endl;
         case clang::Decl::Record:
             ret_status = VisitRecordDecl((clang::RecordDecl *)decl, &result);
             break;
