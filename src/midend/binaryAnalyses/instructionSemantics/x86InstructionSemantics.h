@@ -306,69 +306,105 @@ struct X86InstructionSemantics {
                                  policy.ite(readRegister<1>(REG_DF), number<32>(-N), number<32>(N))));
     }
 
-    /** Implements the SHR and SAR instructions for various operand sizes.  The shift amount is always 8 bits wide in the
-     *  instruction, but the semantics mask off all but the low-order bits, keeping 5 bits in 32-bit mode and 7 bits
-     *  in 64-bit mode (indicated by the shiftSignificantBits template argument). */
+    /** Implements the SHR, SAR, SHL, and SAL instructions for various operand sizes.  The shift amount is always 8 bits wide
+     *  in the instruction, but the semantics mask off all but the low-order bits, keeping 5 bits in 32-bit mode and 7 bits in
+     *  64-bit mode (indicated by the shiftSignificantBits template argument).   The semantics of SHL and SAL are identical (in
+     *  fact, ROSE doesn't even define x86_sal). */
     template<size_t operandBits, size_t shiftSignificantBits>
-    WordType<operandBits> shift_right_semantics(X86InstructionKind kind, const WordType<operandBits> &operand,
-                                                const WordType<8> &total_shift) {
+    WordType<operandBits> shift_semantics(X86InstructionKind kind, const WordType<operandBits> &operand,
+                                          const WordType<8> &total_shift) {
+        assert(x86_shr==kind || x86_sar==kind || x86_shl==kind);
+
         // The 8086 does not mask the shift count; processors starting with the 80286 (including virtual-8086 mode) do
         // mask.  The effect (other than timing) is the same either way.
         WordType<shiftSignificantBits> maskedShiftCount = extract<0, shiftSignificantBits>(total_shift);
         WordType<1> isZeroShiftCount = policy.equalToZero(maskedShiftCount);
 
         // Do the actual shift, according to instruction kind.
-        assert(x86_shr==kind || x86_sar==kind);
-        WordType<operandBits> output = x86_shr==kind ?
-                                       policy.shiftRight(operand, maskedShiftCount) :
-                                       policy.shiftRightArithmetic(operand, maskedShiftCount);
+        WordType<operandBits> retval;
+        switch (kind) {
+            case x86_shr:
+                retval = policy.shiftRight(operand, maskedShiftCount);
+                break;
+            case x86_sar:
+                retval = policy.shiftRightArithmetic(operand, maskedShiftCount);
+                break;
+            case x86_shl:
+                retval = policy.shiftLeft(operand, maskedShiftCount);
+                break;
+            default:
+                abort();
+        }
 
         // AF is undefined if the shift count is non-zero, otherwise unchanged.  The Intel manual is not clear
         // whether the determination is by original count or masked count.  We assume the latter.
         writeRegister(REG_AF, policy.ite(isZeroShiftCount, readRegister<1>(REG_AF), policy.undefined_()));
 
+        // What is the last bit shifted off the operand?  If we're right shifting by N bits, then the original operand N-1 bit
+        // is what should make it into the final CF; if we're left shifting by N bits then we need bit operandBits-N.
+        uintmax_t m = ((uintmax_t)1 << shiftSignificantBits) - 1;
+        WordType<shiftSignificantBits> mask = number<shiftSignificantBits>(m); // -1 in modulo arithmetic
+        WordType<shiftSignificantBits> bitPosition;
+        if (x86_shr==kind || x86_sar==kind) {
+            bitPosition = policy.add(maskedShiftCount, mask);
+        } else {
+            bitPosition = policy.add(number<shiftSignificantBits>(operandBits & m), // probably zero in modulo arithmetic
+                                     policy.add(policy.invert(maskedShiftCount),
+                                                number<shiftSignificantBits>(1)));
+        }
+        WordType<1> shifted_off = extract<0, 1>(policy.shiftRight(operand, bitPosition));
+
         // isLargeShift is true if the (unmasked) amount by which to shift is greater than or equal to the size in
         // bits of the destination operand.
+        assert(shiftSignificantBits<8);
         WordType<1> isLargeShift = policy.invert(policy.equalToZero(extract<shiftSignificantBits, 8>(total_shift)));
 
-        // What is the last bit shifted off the operand?  If we're right shifting by N bits, then the original
-        // N-1 bit is what should make it into the final CF. The policy.add() is actually subtracting one from
-        // the shift count due to modulo arithmetic.
-        uintmax_t m = ((uintmax_t)1 << shiftSignificantBits) - 1;
-        WordType<shiftSignificantBits> mask = number<shiftSignificantBits>(m);
-        WordType<1> shifted_off = extract<0, 1>(policy.shiftRight(operand, policy.add(maskedShiftCount, mask)));
+        // isOneBitShift is true if the (masked) amount by which to shift is equal to one.
+        WordType<1> isOneBitShift = policy.equalToZero(policy.add(maskedShiftCount, mask));
 
-        // New carry flag value.  From the Intel manual, the CF flag is "undefined for SHL and SHR instructions
-        // where the count is greater than or equal to the size (in bits) of the destination operand", and "if
-        // the count is 0, the flags are not affected."
+        // New carry flag value.  From the Intel manual, the CF flag is "undefined for SHL and SHR [and SAL] instructions where
+        // the count is greater than or equal to the size (in bits) of the destination operand", and "if the count is 0, the
+        // flags are not affected."  The manual is silent about the value of CF for large SAR shifts, so we use the original
+        // sign bit, matching the pseudo-code in the manual.
         WordType<1> newCF = policy.ite(isZeroShiftCount,
                                         readRegister<1>(REG_CF), // preserve current value
                                         policy.ite(isLargeShift,
-                                                   policy.undefined_(), // see Intel manual
+                                                   (x86_sar==kind ?
+                                                    extract<operandBits-1, operandBits>(operand) : // original sign bit
+                                                    policy.undefined_()),
                                                    shifted_off));
         writeRegister(REG_CF, newCF);
 
-        // Adjust the overflow flag. From the Intel manual, "The OF flag is affected only for 1-bit shifts; otherwise, it is
-        // undefined", and "for the SHR instruction, the OF flag is set to the most-significant bit of the original operand"
-        // and "for the SAR instruction, the OF flag is cleared for all 1-bit shifts."
-        WordType<1> isOneBitShift = policy.equalToZero(policy.add(maskedShiftCount, mask));
+        // Ajust the overflow flag.  From the Intel manual, "The OF flag is affected only on 1-bit shifts.  For left shifts,
+        // the OF flag is set to 0 if the most-significant bit of the result is the same as the CF flag (that is, the top two
+        // bits of the original operand were the same); otherwise, it is set to 1.  For the SAR instruction, the OF flag is
+        // cleared for all 1-bit shifts.  For the SHR instruction, the OF flag is set to the most-significant bit of the
+        // original operand.
         WordType<1> newOF;
-        if (x86_shr==kind) {
-            newOF = policy.ite(isOneBitShift,
-                               extract<operandBits-1, operandBits>(operand),
-                               readRegister<1>(REG_OF));
-        } else {
-            assert(x86_sar==kind);
-            newOF = policy.ite(isOneBitShift,
-                               policy.false_(),
-                               readRegister<1>(REG_OF));
+        switch (kind) {
+            case x86_shr:
+                newOF = policy.ite(isOneBitShift,
+                                   extract<operandBits-1, operandBits>(operand),
+                                   readRegister<1>(REG_OF));
+                break;
+            case x86_sar:
+                newOF = policy.ite(isOneBitShift,
+                                   policy.false_(),
+                                   readRegister<1>(REG_OF));
+                break;
+            case x86_shl:
+                newOF = policy.ite(isOneBitShift,
+                                   policy.xor_(newCF, extract<operandBits-1, operandBits>(retval)),
+                                   readRegister<1>(REG_OF));
+                break;
+            default: // to shut up compiler warnings even though we would have aborted by now.
+                abort();
         }
         writeRegister(REG_OF, newOF);
 
-        // Result flags SF, ZF, and PF are set according to the result, but are unchanged if the shift count is
-        // zero.
-        setFlagsForResult<operandBits>(output, policy.invert(isZeroShiftCount));
-        return output;
+        // Result flags SF, ZF, and PF are set according to the result, but are unchanged if the shift count is zero.
+        setFlagsForResult<operandBits>(retval, policy.invert(isZeroShiftCount));
+        return retval;
     }
 
     template <size_t Len>
@@ -1246,74 +1282,22 @@ struct X86InstructionSemantics {
                 break;
             }
 
-            case x86_shl: {
-                Word(5) shiftCount = extract<0, 5>(read8(operands[1]));
-                Word(1) shiftCountZero = policy.equalToZero(shiftCount);
-                writeRegister(REG_AF, policy.ite(shiftCountZero, readRegister<1>(REG_AF), policy.undefined_()));
-                switch (numBytesInAsmType(operands[0]->get_type())) {
-                    case 1: {
-                        Word(8) op = read8(operands[0]);
-                        Word(8) output = policy.shiftLeft(op, shiftCount);
-                        Word(1) newCf = policy.ite(shiftCountZero,
-                                                   readRegister<1>(REG_CF),
-                                                   extract<7, 8>(policy.shiftLeft(op, policy.add(shiftCount, number<5>(7)))));
-                        writeRegister(REG_CF, newCf);
-                        writeRegister(REG_OF, policy.ite(shiftCountZero,
-                                                       readRegister<1>(REG_OF),
-                                                       policy.xor_(extract<7, 8>(output), newCf)));
-                        write8(operands[0], output);
-                        setFlagsForResult<8>(output, policy.invert(shiftCountZero));
-                        break;
-                    }
-                    case 2: {
-                        Word(16) op = read16(operands[0]);
-                        Word(16) output = policy.shiftLeft(op, shiftCount);
-                        Word(1) newCf = policy.ite(shiftCountZero,
-                                                   readRegister<1>(REG_CF),
-                                                   extract<15, 16>(policy.shiftLeft(op, policy.add(shiftCount, number<5>(15)))));
-                        writeRegister(REG_CF, newCf);
-                        writeRegister(REG_OF, policy.ite(shiftCountZero,
-                                                       readRegister<1>(REG_OF),
-                                                       policy.xor_(extract<15, 16>(output), newCf)));
-                        write16(operands[0], output);
-                        setFlagsForResult<16>(output, policy.invert(shiftCountZero));
-                        break;
-                    }
-                    case 4: {
-                        Word(32) op = read32(operands[0]);
-                        Word(32) output = policy.shiftLeft(op, shiftCount);
-                        Word(1) newCf = policy.ite(shiftCountZero,
-                                                   readRegister<1>(REG_CF),
-                                                   extract<31, 32>(policy.shiftLeft(op, policy.add(shiftCount, number<5>(31)))));
-                        writeRegister(REG_CF, newCf);
-                        writeRegister(REG_OF, policy.ite(shiftCountZero,
-                                                       readRegister<1>(REG_OF),
-                                                       policy.xor_(extract<31, 32>(output), newCf)));
-                        write32(operands[0], output);
-                        setFlagsForResult<32>(output, policy.invert(shiftCountZero));
-                        break;
-                    }
-                    default:
-                        throw Exception("size not implemented", insn);
-                }
-                break;
-            }
-
+            case x86_shl:       // fall through
             case x86_sar:       // fall through
             case x86_shr: {
                 switch (numBytesInAsmType(operands[0]->get_type())) {
                     case 1: {
-                        WordType<8> output = shift_right_semantics<8, 5>(kind, read8(operands[0]), read8(operands[1]));
+                        WordType<8> output = shift_semantics<8, 5>(kind, read8(operands[0]), read8(operands[1]));
                         write8(operands[0], output);
                         break;
                     }
                     case 2: {
-                        WordType<16> output = shift_right_semantics<16, 5>(kind, read16(operands[0]), read8(operands[1]));
+                        WordType<16> output = shift_semantics<16, 5>(kind, read16(operands[0]), read8(operands[1]));
                         write16(operands[0], output);
                         break;
                     }
                     case 4: {
-                        WordType<32> output = shift_right_semantics<32, 5>(kind, read32(operands[0]), read8(operands[1]));
+                        WordType<32> output = shift_semantics<32, 5>(kind, read32(operands[0]), read8(operands[1]));
                         write32(operands[0], output);
                         break;
                     }
