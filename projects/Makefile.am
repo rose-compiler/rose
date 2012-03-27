@@ -47,10 +47,11 @@ SUBDIRS = \
 SUBDIRS += symbolicAnalysisFramework
 
 # DQ (4/8/2011): Directories of tests are a current problem for Insure++.
-if !ROSE_USE_INSURE
-   SUBDIRS += SemanticSignatureVectors \
-              assemblyToSourceAst
-endif
+# RPM (3/27/2012): Disabling per Andreas 2011-12-20; assemblyToSourceAst is almost an exact copy of SemanticSignatureVectors
+#if !ROSE_USE_INSURE
+#   SUBDIRS += SemanticSignatureVectors \
+#              assemblyToSourceAst
+#endif
 
 # TOO (2/16/2011): Errors with Tensilica's Xtensa compilers as alternative backend compilers. We can
 # gradually enable these tests at a later stage if necessary.
