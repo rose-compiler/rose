@@ -729,8 +729,10 @@ struct FindConstantsPolicy {
     XVariablePtr<1> true_() {
         return number<1>(1);
     }
-    XVariablePtr<1> undefined_() {
-        return new XVariable<1>();
+
+    template<size_t Len>
+    XVariablePtr<Len> undefined_() {
+        return new XVariable<Len>();
     }
 
     template <size_t Len>

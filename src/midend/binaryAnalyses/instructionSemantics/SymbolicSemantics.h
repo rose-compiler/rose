@@ -939,8 +939,9 @@ namespace BinaryAnalysis {              // documented elsewhere
                 }
 
                 /** See NullSemantics::Policy::undefined_() */
-                ValueType<1> undefined_() const {
-                    return ValueType<1>().defined_by(cur_insn);
+                template <size_t Len>
+                ValueType<Len> undefined_() const {
+                    return ValueType<Len>().defined_by(cur_insn);
                 }
 
                 /** See NullSemantics::Policy::number() */

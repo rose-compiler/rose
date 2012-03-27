@@ -531,8 +531,9 @@ namespace BinaryAnalysis {                      // documented elsewhere
                 }
 
                 /** See NullSemantics::Policy::undefined_() */
-                ValueType<1> undefined_() const {
-                    return ValueType<1>();
+                template <size_t Len>
+                ValueType<Len> undefined_() const {
+                    return ValueType<Len>();
                 }
 
                 /** See NullSemantics::Policy::number() */
@@ -660,7 +661,7 @@ namespace BinaryAnalysis {                      // documented elsewhere
                 /** See NullSemantics::Policy::equalToZero() */
                 template <size_t Len>
                 ValueType<1> equalToZero(const ValueType<Len> &a) const {
-                    if (a.name) return undefined_();
+                    if (a.name) return undefined_<1>();
                     return a.offset ? false_() : true_();
                 }
 

@@ -622,10 +622,11 @@ namespace BinaryAnalysis {                      // documented elsewhere
                 }
 
                 /** See NullSemantics::Policy::false_() */
-                ValueType<1> undefined_() {
-                    ValueType<1> retval;
+                template<size_t nBits>
+                ValueType<nBits> undefined_() {
+                    ValueType<nBits> retval;
                     before();
-                    CALL_SUBS_0(undefined_, retval);
+                    CALL_SUBS_0(undefined_<nBits>, retval);
                     after();
                     return retval;
                 }

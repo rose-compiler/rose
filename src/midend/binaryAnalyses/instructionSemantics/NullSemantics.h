@@ -82,8 +82,9 @@ namespace BinaryAnalysis { // documented elsewhere
                 }
 
                 /** Returns an undefined single-bit value. The value is undefined, unknown, and/or unconstrained. */
-                ValueType<1> undefined_() {
-                    return ValueType<1>();
+                template<size_t nBits>
+                ValueType<nBits> undefined_() {
+                    return ValueType<nBits>();
                 }
 
                 /** Returns a number of the specified bit width.  This method converts an unsigned integer to a value in the

@@ -373,8 +373,9 @@ namespace BinaryAnalysis {              // documented elsewhere
                 }
 
                 /** See NullSemantics::Policy::undefined_() */
-                ValueType<1> undefined_() const {
-                    return ValueType<1>(0, 1);
+                template<size_t nBits>
+                ValueType<nBits> undefined_() const {
+                    return ValueType<nBits>();
                 }
 
                 template<size_t nBits>
@@ -465,7 +466,7 @@ namespace BinaryAnalysis {              // documented elsewhere
                         return 0==a.known_value() ? true_() : false_();
                     if (!a.get_intervals().contains(Interval(0)))
                         return false_();
-                    return undefined_();
+                    return undefined_<1>();
                 }
 
                 /** See NullSemantics::Policy::invert() */
