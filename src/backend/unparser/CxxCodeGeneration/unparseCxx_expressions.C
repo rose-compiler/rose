@@ -2928,16 +2928,20 @@ Unparse_ExprStmt::unparseNewOp(SgExpression* expr, SgUnparse_Info& info)
           curprint ( "::");
         }
 
-     curprint ( "new ");
+     curprint ("new ");
 
-  // curprint ( "\n /* Output any placement arguments */ \n";
+#if 0
+     curprint ("\n /* Output any placement arguments */ \n");
+#endif
+
      SgUnparse_Info newinfo(info);
      newinfo.unset_inVarDecl();
      if (new_op->get_placement_args() != NULL)
         {
+#if 0
        // printf ("Output placement arguments for new operator \n");
           curprint ( "\n/* Output placement arguments for new operator */\n");
-
+#endif
        // DQ (1/5/2006): The placement arguments require "() " (add a space to make it look nice)
           curprint ( "(");
           unparseExpression(new_op->get_placement_args(), newinfo);
@@ -2960,45 +2964,60 @@ Unparse_ExprStmt::unparseNewOp(SgExpression* expr, SgUnparse_Info& info)
      newinfo.set_reference_node_for_qualification(new_op);
      ROSE_ASSERT(newinfo.get_reference_node_for_qualification() != NULL);
 
-  // curprint ( "\n /* Output type name for new operator */ \n";
+#if 0
+     curprint ("\n /* Output type name for new operator */ \n");
+#endif
 
-  // printf ("In Unparse_ExprStmt::unparseNewOp: new_op->get_type()->sage_class_name() = %s \n",new_op->get_type()->sage_class_name());
+  // printf ("In Unparse_ExprStmt::unparseNewOp: new_op->get_type()->class_name() = %s \n",new_op->get_type()->class_name().c_str());
 
+#if 1
+  // DQ (3/26/2012): I think this is required because the type might be the only public way refer to the 
+  // class (via a public typedef to a private class, so we can't use the constructor; except for it's args)
+
+  // DQ (3/26/2012): Turn this OFF to avoid output fo the class name twice (if the constructor is available).
   // DQ (1/17/2006): The the type specified explicitly in the new expressions syntax, 
   // get_type() has been modified to return a pointer to new_op->get_specified_type().
   // unp->u_type->unparseType(new_op->get_type(), newinfo);
      unp->u_type->unparseType(new_op->get_specified_type(), newinfo);
+#endif
 
-  // printf ("DONE: new_op->get_type()->sage_class_name() = %s \n",new_op->get_type()->sage_class_name());
+  // printf ("DONE: new_op->get_type()->class_name() = %s \n",new_op->get_type()->class_name().c_str());
 
-  // curprint ( "\n /* Output constructor args */ \n";
+#if 0
+     curprint ("\n /* Output constructor args */ \n");
+#endif
 
      if (new_op->get_constructor_args() != NULL)
         {
        // printf ("In Unparse_ExprStmt::unparseNewOp: Now unparse new_op->get_constructor_args() \n");
           unparseExpression(new_op->get_constructor_args(), newinfo);
         }
-
 #if 0
+    // DQ (3/26/2012): See not above about why we can't use the constructor's class name.
+    // DQ (3/26/2012): Turn this ON to avoid skipping output for the class name (if the constructor is available).
        else
         {
        // printf ("In Unparse_ExprStmt::unparseNewOp: Call unparse type \n");
-          unp->u_type->unparseType(new_op->get_type(), newinfo);
+       // unp->u_type->unparseType(new_op->get_type(), newinfo);
+          unp->u_type->unparseType(new_op->get_specified_type(), newinfo);
         }
 #endif
-
-  // curprint ( "\n /* Output builtin args */ \n";
+#if 0
+     curprint ("\n /* Output builtin args */ \n");
+#endif
 
      if (new_op->get_builtin_args() != NULL)
         {
        // printf ("In Unparse_ExprStmt::unparseNewOp: Now unparse new_op->get_builtin_args() \n");
           unparseExpression(new_op->get_builtin_args(), newinfo);
         }
-
-  // curprint ( "\n /* Leaving Unparse_ExprStmt::unparseNewOp */ \n";
-  // printf ("Leaving Unparse_ExprStmt::unparseNewOp \n");
+#if 0
+     curprint ("\n /* Leaving Unparse_ExprStmt::unparseNewOp */ \n");
+     printf ("Leaving Unparse_ExprStmt::unparseNewOp \n");
+#endif
 #endif
    }
+
 
 void
 Unparse_ExprStmt::unparseDeleteOp(SgExpression* expr, SgUnparse_Info& info)
@@ -3019,6 +3038,7 @@ Unparse_ExprStmt::unparseDeleteOp(SgExpression* expr, SgUnparse_Info& info)
         }
      unparseExpression(delete_op->get_variable(), newinfo);
    }
+
 
 void
 Unparse_ExprStmt::unparseThisNode(SgExpression* expr, SgUnparse_Info& info) 
@@ -3235,8 +3255,8 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
 #if 0
      printf ("In unparseConInit(): con_init->get_need_name()        = %s \n",(con_init->get_need_name() == true) ? "true" : "false");
      printf ("In unparseConInit(): con_init->get_is_explicit_cast() = %s \n",(con_init->get_is_explicit_cast() == true) ? "true" : "false");
-     curprint ( string("\n /* con_init->get_need_name()        = ") + (con_init->get_need_name() ? "true" : "false") + " */ \n");
-     curprint ( string("\n /* con_init->get_is_explicit_cast() = ") + (con_init->get_is_explicit_cast() ? "true" : "false") + " */ \n");
+  // curprint ( string("\n /* con_init->get_need_name()        = ") + (con_init->get_need_name() ? "true" : "false") + " */ \n");
+  // curprint ( string("\n /* con_init->get_is_explicit_cast() = ") + (con_init->get_is_explicit_cast() ? "true" : "false") + " */ \n");
 #endif
 
      SgNode* nodeReferenceToType = newinfo.get_reference_node_for_qualification();
@@ -3726,7 +3746,7 @@ Unparse_ExprStmt::unparsePseudoDtorRef(SgExpression* expr, SgUnparse_Info & info
        // printf ("Unparser will output SgPseudoDestructorRefExp using the class name only \n");
           curprint(namedType->get_name().str());
 
-       // DQ (3/14/2012): Note that I had to add this for the case of EDG 4.3, but it was not required previously for EDG 3.3, something in ROSE has likely changes.
+       // DQ (3/14/2012): Note that I had to add this for the case of EDG 4.3, but it was not required previously for EDG 3.3, something in ROSE has likely changed.
           curprint("()");
         }
        else

@@ -123,7 +123,7 @@ findRootFunc (const SgScopeStatement* scope)
                  else
                   {
                  // DQ (12/13/2011): Adding test for improperly set scope.
-                    printf ("scope = %p = %s \n",scope,scope->class_name().c_str());
+                 // printf ("In findRootFunc(): scope = %p = %s \n",scope,scope->class_name().c_str());
 
                     SgScopeStatement* nextOuterScope = scope->get_scope();
                  // printf ("nextOuterScope = %p = %s \n",nextOuterScope,nextOuterScope->class_name().c_str());
@@ -212,7 +212,7 @@ mangleLocalScopeToString (const SgScopeStatement* scope)
 string
 mangleQualifiersToString (const SgScopeStatement* scope)
    {
-#if 1
+#if 0
      printf ("In manglingSupport.C: mangleQualifiersToString(const SgScopeStatement*): scope = %p = %s \n",scope,scope->class_name().c_str());
 #endif
 
@@ -231,7 +231,7 @@ mangleQualifiersToString (const SgScopeStatement* scope)
                   {
                     const SgClassDefinition* def = isSgClassDefinition (scope);
                     mangled_name = def->get_mangled_name().getString();
-#if 1
+#if 0
                     printf ("In manglingSupport.C: mangleQualifiersToString(): mangled name for scope = %p = %s is: %s \n",scope,scope->class_name().c_str(),mangled_name.c_str());
 #endif
                     break;
@@ -241,7 +241,7 @@ mangleQualifiersToString (const SgScopeStatement* scope)
                   {
                     const SgNamespaceDefinitionStatement* def = isSgNamespaceDefinitionStatement (scope);
                     mangled_name = def->get_mangled_name().getString();
-#if 1
+#if 0
                     printf ("In manglingSupport.C: mangleQualifiersToString(): mangled name for scope = %p = %s is: %s \n",scope,scope->class_name().c_str(),mangled_name.c_str());
 #endif
                     break;
@@ -320,7 +320,7 @@ mangleQualifiers( const SgScopeStatement* scope )
 
      string s = mangleQualifiersToString(scope);
 
-#if 1
+#if 0
      printf ("In manglingSupport.C: mangleQualifiers(const SgScopeStatement*): returning s = %s \n",s.c_str());
 #endif
 

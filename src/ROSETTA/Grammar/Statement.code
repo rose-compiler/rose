@@ -923,7 +923,7 @@ StatementListInsertChild( SgStatement *parent, Rose_STL_Container<Elemtype*>& l,
             // DQ (12/5/2004): There should be a valid scope (set before passing the statement to this function!)
                ROSE_ASSERT(n == NULL || n->get_scope() != NULL);
 #endif
-#if 1
+#if 0
             // DQ (3/9/2012): Added debugging code for testing test2004_77.C.
                SgDeclarationStatement* declarationStatement = isSgDeclarationStatement(n);
                if (declarationStatement != NULL)

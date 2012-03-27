@@ -13,6 +13,10 @@ if ROSE_USE_EDG_VERSION_4_3
 # $(TESTCODE_CURRENTLY_FAILING)
 
 
+
+
+
+
 EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
 test_CplusplusMacro_Cpp.C \
 test2001_01.C \
@@ -181,14 +185,18 @@ test2004_112.C \
 test2004_113.C \
 test2004_114.C \
 test2004_115.C \
+test2004_116.C \
 test2004_117.C \
 test2004_118.C \
 test2004_119.C \
+test2004_120.C \
 test2004_121.C \
 test2004_122.C \
 test2004_123.C \
 test2004_124.C \
 test2004_125.C \
+test2004_127.C \
+test2004_130.C \
 test2004_131.C \
 test2004_132.C \
 test2004_133.C \
@@ -246,6 +254,7 @@ test2005_31.C \
 test2005_36.C \
 test2005_37.C \
 test2005_38.C \
+test2005_39.C \
 test2005_40.C \
 test2005_41.C \
 test2005_43.C \
@@ -753,12 +762,24 @@ test2012_32.C \
 test2012_34.C \
 test2012_36.C \
 test2012_37.C \
+test2012_38.C \
+test2012_39.C \
+test2012_40.C \
+test2012_41.C \
+test2012_42.C \
+test2012_43.C \
+test2012_44.C \
+test2012_45.C \
+test2012_46.C \
+test2012_47.C \
+test2012_48.C \
 test_int_lexemes.C \
 test_int_lexemes_donot_pass.C \
 test_simple_int.C \
 test_wchars.C \
 lexPhase2003_01.C \
 inputForLoopLocator.C \
+inputBug317.C \
 X.C \
 $(NEW_PASSING_FILES)
 
@@ -770,7 +791,17 @@ test2005_49.C \
 test2006_124.C \
 test2006_141.C \
 test2006_58.C \
-test2006_84.C
+test2006_84.C \
+test2004_129.C \
+test2005_193.C \
+test2005_34.C \
+test2005_42.C \
+test2006_126.C  \
+test2006_129.C \
+test2006_185.C \
+test2007_40.C \
+test2009_40.C \
+test2009_41.C
 
 # $(TESTCODE_CURRENTLY_FAILING)
 
@@ -786,17 +817,21 @@ else
 include $(srcdir)/Makefile-pass.inc
 endif
 
+
+
+
+
+
+
+
+
+
 # Import list of C++ test cases that are known to fail:
 #   TESTCODE_CURRENTLY_FAILING
 #
 if ROSE_USE_EDG_VERSION_4_3
 TESTCODE_CURRENTLY_FAILING = \
-test2004_116.C \
-test2004_120.C \
-test2004_127.C \
 test2004_128.C \
-test2004_129.C \
- test2004_130.C \
 test2004_138.C \
 test2004_141.C \
 test2004_145.C \
@@ -809,10 +844,7 @@ test2005_10.C \
 test2005_24.C \
  test2005_32.C \
 test2005_33.C \
-test2005_34.C \
 test2005_35.C \
-test2005_39.C \
-test2005_42.C \
 test2005_44.C \
 test2005_53.C \
 test2005_57.C \
@@ -845,7 +877,6 @@ test2005_155.C \
  test2005_161.C \
  test2005_163.C \
 test2005_173.C \
-test2005_193.C \
  test2005_194.C \
 test2006_03.C \
 test2006_04.C \
@@ -861,17 +892,13 @@ test2006_85.C \
 test2006_90.C \
 test2006_119.C \
 test2006_122.C \
-test2006_126.C \
-test2006_129.C \
  test2006_151.C \
  test2006_159.C \
-test2006_185.C \
  test2007_01.C \
 test2007_04.C \
  test2007_05.C \
  test2007_17.C \
 test2007_38.C \
-test2007_40.C \
 test2007_41.C \
  test2007_55.C \
 test2007_83.C \
@@ -888,8 +915,6 @@ test2009_30.C \
  test2009_31.C \
  test2009_37.C \
 test2009_39.C \
-test2009_40.C \
-test2009_41.C \
 test2010_24.C \
 test2011_31.C \
 test2011_32.C \
@@ -917,7 +942,6 @@ test2011_139.C \
 test2011_141.C \
 test2011_142.C \
  test2012_33.C \
-inputBug317.C \
 inputBug327.C 
 
 
