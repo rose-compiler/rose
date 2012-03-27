@@ -3703,7 +3703,7 @@ SgVariantExpression * SageBuilder::buildVariantExpression()
 
 SgNullExpression* SageBuilder::buildNullExpression_nfi()
 {
-  SgNullExpression* ne= new SgNullExpression();
+  SgNullExpression* ne = new SgNullExpression();
   ROSE_ASSERT(ne);
   setOneSourcePositionNull(ne);
   return ne;
@@ -3718,7 +3718,7 @@ SgNullExpression* SageBuilder::buildNullExpression() {
 SgAssignInitializer * SageBuilder::buildAssignInitializer(SgExpression * operand_i /*= NULL*/, SgType * expression_type /* = NULL */)
 {
   SgAssignInitializer* result = new SgAssignInitializer(operand_i, expression_type);
-  ROSE_ASSERT(result);   
+  ROSE_ASSERT(result);
   if (operand_i!=NULL) 
   { 
     operand_i->set_parent(result);

@@ -1302,7 +1302,7 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
 
        // DQ (2/2/2006): friend can't be output for a Template specialization declaration
        // curprint((string("/* isDeclarationOfTemplateSpecialization = ") << ((isDeclarationOfTemplateSpecialization == true) ? string("true") : string("false")) << string(" */ \n "));
-          printf ("isDeclarationOfTemplateSpecialization = %s \n",isDeclarationOfTemplateSpecialization == true ? "true" : "false");
+       // printf ("isDeclarationOfTemplateSpecialization = %s \n",isDeclarationOfTemplateSpecialization == true ? "true" : "false");
           if ( (decl_stmt->get_declarationModifier().isFriend() == true) &&
                (isDeclarationOfTemplateSpecialization == false) )
              {

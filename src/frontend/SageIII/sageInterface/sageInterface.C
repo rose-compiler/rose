@@ -3912,6 +3912,9 @@ SageInterface::getMangledNameFromCache( SgNode* astNode )
 std::string
 SageInterface::addMangledNameToCache( SgNode* astNode, const std::string & oldMangledName)
    {
+  // DQ (3/27/2012): Use this as a mechanism to limit the I/O but still output a warning infrequently.
+     static unsigned long counter = 0;
+
 #if 0
      SgGlobal* globalScope = isSgGlobal(astNode);
 
@@ -3967,7 +3970,12 @@ SageInterface::addMangledNameToCache( SgNode* astNode, const std::string & oldMa
        mangledName = oldMangledName;
      }
 #else
-     printf ("WARNING: In SageInterface::addMangledNameToCache(): Using longer forms of mangled names \n");
+  // DQ (3/27/2012): Use this as a mechanism to limit the I/O but still output a warning infrequently.
+  // This supports debugging the new EDG 4.x interface...
+     if (counter++ % 500 == 0)
+        {
+          printf ("WARNING: In SageInterface::addMangledNameToCache(): Using longer forms of mangled names \n");
+        }
      mangledName = oldMangledName;
 #endif
 

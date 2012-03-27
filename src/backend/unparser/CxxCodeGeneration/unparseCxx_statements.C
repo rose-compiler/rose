@@ -65,15 +65,21 @@ Unparse_ExprStmt::unparseOneElemConInit(SgConstructorInitializer* con_init, SgUn
      curprint( "\n /* Inside of Unparse_MOD_SAGE::unparseOneElemConInit */ \n");
 #endif
 
+#if 1
+     printf ("\n\nInside of Unparse_MOD_SAGE::unparseOneElemConInit (%p) \n",con_init);
+     curprint("\n /* Inside of Unparse_MOD_SAGE::unparseOneElemConInit */ \n");
+#endif
+
   // taken from unparseConInit
      SgUnparse_Info newinfo(info);
 
-#if 0
-  // printf ("con_init->get_need_name()      = %s \n",(con_init->get_need_name() == true) ? "true" : "false");
-  // printf ("con_init->get_need_qualifier() = %s \n",(con_init->get_need_qualifier() == true) ? "true" : "false");
-  // printf ("con_init->get_declaration()    = %p \n",con_init->get_declaration());
-     curprint( "\n /* con_init->get_need_name()        = %s " << (con_init->get_need_name() ? "true" : "false") << " */ \n");
-     curprint( "\n /* con_init->get_is_explicit_cast() = %s " << (con_init->get_is_explicit_cast() ? "true" : "false") << " */ \n");
+#if 1
+     printf ("con_init->get_need_name()      = %s \n",(con_init->get_need_name() == true) ? "true" : "false");
+     printf ("con_init->get_need_qualifier() = %s \n",(con_init->get_need_qualifier() == true) ? "true" : "false");
+     printf ("con_init->get_declaration()    = %p \n",con_init->get_declaration());
+
+  // curprint(string("\n /* con_init->get_need_name()        = ") << string((con_init->get_need_name()        ? "true" : "false")) << string(" */ \n"));
+  // curprint("\n /* con_init->get_is_explicit_cast() = " << (con_init->get_is_explicit_cast() ? "true" : "false") << " */ \n");
 #endif
 
   // DQ (3/24/2005): added checking for is_explicit_cast flag
@@ -3742,7 +3748,9 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
             // if(tmp_init)
                if ( (tmp_init != NULL) && !ninfo.SkipInitializer())
                   {
-                 // printf ("Initializer tmp_init = %s \n",tmp_init->class_name().c_str());
+#if 0
+                    printf ("Initializer tmp_init = %s \n",tmp_init->class_name().c_str());
+#endif
 #if 0
                     if ( tmp_init->variant() == ASSIGN_INIT || tmp_init->variant() == AGGREGATE_INIT )
                        {
@@ -3784,7 +3792,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                             }
                        }
 
-                    curprint(" /* unparseVarDeclStmt (initializer): " + tmp_init->class_name() + " */ ");
+                 // curprint(" /* unparseVarDeclStmt (initializer): " + tmp_init->class_name() + " */ ");
 #endif
                     if ( (tmp_init->variant() == ASSIGN_INIT) ||
                          (tmp_init->variant() == AGGREGATE_INIT) ||
@@ -3804,6 +3812,9 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                       // curprint ( string(" = "));
                          if ( constructor != NULL && isSgForInitStatement(stmt->get_parent()) != NULL )
                             {
+#if 0
+                              printf ("This is the special case of a constructor call \n");
+#endif
                            // DQ (2/9/2010): Previous code had this commented out to fix test2009_40.C.
                            // curprint (" = ");
 
@@ -3811,18 +3822,33 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                               if (constructor->get_need_name() == true && constructor->get_is_explicit_cast() == true )
                                  {
                                 // This is the syntax: class X = X(arg)
+#if 0
+                                   printf ("Output the = syntax \n");
+#endif
                                    curprint (" = ");
                                  }
                                 else
                                  {
                                 // This is the alternative syntax: class X(arg)
                                 // So don't output a "="
+#if 0
+                                   printf ("Skip output of the = syntax \n");
+#endif
                                  }
                             }
                            else
                             {
+#if 0
+                              printf ("This is the MORE general case of a constructor call \n");
+#endif
                               curprint (" = ");
                             }
+                       }
+                      else
+                       {
+#if 0
+                         printf ("This is the MOST general case of not using an initializer \n");
+#endif
                        }
 #endif
 
@@ -3843,8 +3869,10 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                  // curprint (string("/* Unparse the initializer */ \n"));
                  // unparseExpression(tmp_init, ninfo);
                     unparseExpression(tmp_init, statementInfo);
-                 // printf ("DONE: Unparse the initializer \n");
+#if 0
+                    printf ("DONE: Unparse the initializer \n");
                  // curprint (string("/* DONE: Unparse the initializer */ \n"));
+#endif
                   }
              }
 
@@ -4797,6 +4825,12 @@ Unparse_ExprStmt::unparseReturnStmt(SgStatement* stmt, SgUnparse_Info& info)
 
      curprint ( string("return "));
      SgUnparse_Info ninfo(info);
+
+  // DQ (3/26/2012): Added assertion.
+     ROSE_ASSERT(return_stmt->get_expression() != NULL);
+#if 0
+     printf ("In unparseReturnStmt(): return_stmt->get_expression() = %p = %s \n",return_stmt->get_expression(),return_stmt->get_expression()->class_name().c_str());
+#endif
 
   // DQ (6/4/2011): Set this in case the initializer is an expression that requires name 
   // qualification (e.g. SgConstructorInitializer).  See test2005_42.C for an example.

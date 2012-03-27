@@ -70,7 +70,7 @@ found in the directory ROSE/TESTS/KnownBugs/AttachPreprocessingInfo.
 using namespace std;
 
 // Debug flag
-#define DEBUG_ATTACH_PREPROCESSING_INFO 3
+#define DEBUG_ATTACH_PREPROCESSING_INFO 0
 
 
 //It is needed because otherwise, the default destructor breaks something.
@@ -1027,8 +1027,8 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
           currentFileNameId = n->get_file_info()->get_file_id();
 #endif
 
-#if 1
-          printf ("n = %p = %s currentFileNameId = %d \n",n,n->class_name().c_str(),currentFileNameId);
+#if 0
+          printf ("In AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(): n = %p = %s currentFileNameId = %d \n",n,n->class_name().c_str(),currentFileNameId);
 #endif
        // DQ (10/27/2007): This is a valgrind error: use of uninitialized variable below!
        // Initialized with a value that could not match a valid file_id.
