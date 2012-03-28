@@ -6656,7 +6656,7 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
                     SgTemplateInstantiationMemberFunctionDecl* node = isSgTemplateInstantiationMemberFunctionDecl(this);
                     ROSE_ASSERT(node != NULL);
 
-                 // printf ("node = %p = (templateName) %s = (name) %s \n",node,node->get_templateName().str(),node->get_name().str());
+                    printf ("node = %p = (templateName) %s = (name) %s \n",node,node->get_templateName().str(),node->get_name().str());
 
                     returnName         = node->get_templateName().str();
                     templateArgListPtr = &node->get_templateArguments();
@@ -6666,11 +6666,12 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
 
                  // DQ (2/17/2005): We can't translate "operator+" into "operator+<int>" since it will become "+<int>" 
                  // in the unparser so make sure that this is not a name of an overloaded operator function.
-                 // printf ("member function name = %s \n",returnName.c_str());
+                    printf ("member function name = %s \n",returnName.c_str());
+
                  // if (TransformationSupport::classifyOverloadedOperator(returnName) != TransformationSupport::FUNCTION_CALL_OPERATOR_CODE)
                     if (node->get_specialFunctionModifier().isOperator() == true)
                        {
-                      // printf ("Skipping appending the templates arguments to this overloaded operator \n");
+                         printf ("Skipping appending the templates arguments to this overloaded operator \n");
                          appendTemplateArguments = false;
                        }
 
