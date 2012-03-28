@@ -583,7 +583,8 @@ RECURSIVE              = NO
 # excluded from the INPUT source files. This way you can easily exclude a 
 # subdirectory from a directory tree whose root is specified with the INPUT tag.
 
-EXCLUDE                = @top_srcdir@/AST_RewriteMechanism/testRewrite.h \
+EXCLUDE                = @top_srcdir@/src/frontend/CxxFrontend/EDG \
+			 @top_srcdir@/AST_RewriteMechanism/testRewrite.h \
                          @top_srcdir@/AST_RewriteMechanism/testRewrite.C \
                          @top_srcdir@/AST_RewriteMechanism/testNewRewrite.h \
                          @top_srcdir@/AST_RewriteMechanism/testNewRewrite.C \
@@ -671,7 +672,7 @@ FILTER_SOURCE_FILES    = NO
 # Note: To get rid of all source code in the generated output, make sure also 
 # VERBATIM_HEADERS is set to NO.
 
-SOURCE_BROWSER         = NO
+SOURCE_BROWSER         = YES
 
 # Setting the INLINE_SOURCES tag to YES will include the body 
 # of functions and classes directly in the documentation.
