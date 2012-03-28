@@ -1734,6 +1734,12 @@ Specifiers that can have only one value (implemented with a protected enum varia
      TypeModifier.setDataPrototype("long", "gnu_attribute_sentinel", "= -1",
                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+     TypeModifier.setDataPrototype("unsigned", "address_space_value", "= 0",
+                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     TypeModifier.setDataPrototype("unsigned", "vector_size", "= 1",
+                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      ElaboratedTypeModifier.setDataPrototype("SgElaboratedTypeModifier::elaborated_type_modifier_enum", "modifier",
                 "= SgElaboratedTypeModifier::e_unknown",
                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
