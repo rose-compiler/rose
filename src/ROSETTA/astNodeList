@@ -171,6 +171,7 @@ SgAsmGenericStrtab
 SgAsmGenericSymbol
 SgAsmGenericSymbolList
 SgAsmInstruction
+SgAsmIntegerValueExpression
 SgAsmInterpretation
 SgAsmInterpretationList
 SgAsmLEEntryPoint
