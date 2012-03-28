@@ -436,6 +436,7 @@ INPUT                  = \
 			 @top_srcdir@/src/frontend/Disassemblers/Disassembler.C \
 			 @top_srcdir@/src/frontend/Disassemblers/DisassemblerArm.C \
 			 @top_srcdir@/src/frontend/Disassemblers/DisassemblerX86.C \
+			 @top_srcdir@/src/frontend/Disassemblers/Expressions.C \
 			 @top_srcdir@/src/frontend/Disassemblers/Partitioner.C \
 			 @top_srcdir@/src/frontend/Disassemblers/Registers.C \
 			 @top_srcdir@/src/frontend/BinaryFormats/DataConversion.C \
