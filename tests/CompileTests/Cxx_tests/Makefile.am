@@ -196,6 +196,7 @@ test2004_123.C \
 test2004_124.C \
 test2004_125.C \
 test2004_127.C \
+test2004_128.C \
 test2004_130.C \
 test2004_131.C \
 test2004_132.C \
@@ -204,8 +205,10 @@ test2004_134.C \
 test2004_135.C \
 test2004_136.C \
 test2004_137.C \
+test2004_138.C \
 test2004_139.C \
 test2004_140.C \
+test2004_141.C \
 test2004_142.C \
 test2004_143.C \
 test2004_144.C \
@@ -831,9 +834,6 @@ endif
 #
 if ROSE_USE_EDG_VERSION_4_3
 TESTCODE_CURRENTLY_FAILING = \
-test2004_128.C \
-test2004_138.C \
-test2004_141.C \
 test2004_145.C \
 test2004_149.C \
 test2004_150.C \

@@ -490,21 +490,21 @@ ResetParentPointers::resetParentPointersInTemplateArgumentList ( const SgTemplat
                  // printf ("### In resetParentPointersInTemplateArgumentList(): namedType = %p \n",namedType);
                     if (namedType != NULL)
                        {
-#if 0
+#if 1
                          printf ("### namedType = %p = %s name = %s \n",namedType,namedType->sage_class_name(),namedType->get_name().str());
 #endif
                          SgDeclarationStatement* declaration = namedType->get_declaration();
                          ROSE_ASSERT(declaration != NULL);
-#if 0
+#if 1
                          printf ("declaration = %p = %s parent = %p = %s \n",
-                              declaration,declaration->sage_class_name(),declaration->get_parent(),
-                              (declaration->get_parent() != NULL) ? declaration->get_parent()->sage_class_name() : "NULL_PARENT");
+                                 declaration,declaration->class_name().c_str(),declaration->get_parent(),
+                                 (declaration->get_parent() != NULL) ? declaration->get_parent()->class_name().c_str() : "NULL_PARENT");
 #endif
-#if 0
+#if 1
                          printf ("### namedType = %p = %s name = %s declaration = %p = %s parent = %p = %s \n",
-                              namedType,namedType->sage_class_name(),namedType->get_name().str(),
-                              declaration,declaration->sage_class_name(),declaration->get_parent(),
-                              (declaration->get_parent() != NULL) ? declaration->get_parent()->sage_class_name() : "NULL_PARENT");
+                                 namedType,namedType->class_name().c_str(),namedType->get_name().str(),
+                                 declaration,declaration->class_name().c_str(),declaration->get_parent(),
+                                 (declaration->get_parent() != NULL) ? declaration->get_parent()->class_name().c_str() : "NULL_PARENT");
 #endif
                          if (declaration->get_parent() == NULL)
                             {
@@ -572,23 +572,32 @@ ResetParentPointers::resetParentPointersInTemplateArgumentList ( const SgTemplat
 
                               if (existingParent == NULL)
                                  {
-                                   printf ("namedType   = %p = %s \n",namedType,namedType->sage_class_name());
-                                   printf ("declaration = %p = %s \n",declaration,declaration->sage_class_name());
+                                   printf ("namedType   = %p = %s \n",namedType,namedType->class_name().c_str());
+                                   printf ("declaration = %p = %s \n",declaration,declaration->class_name().c_str());
                                  }
-                              ROSE_ASSERT(existingParent != NULL);
-#if DEBUG_PARENT_INITIALIZATION
-                              printf ("Setting parent of %p = %s to %p = %s \n",
-                                   declaration,declaration->class_name().c_str(),
-                                   existingParent,existingParent->class_name().c_str());
-#endif
-                              declaration->set_parent(existingParent);
 
-                           // DQ (10/17/2004): Added assertions
-                              SgClassDeclaration* classDeclaration = isSgClassDeclaration(declaration);
-                              if (classDeclaration != NULL)
+                           // DQ (3/27/2012): I think we wqant to allow declarations built to support types and hidden behind types to have NULL parents.
+                           // ROSE_ASSERT(existingParent != NULL);
+                              if (existingParent != NULL)
                                  {
-                                   ROSE_ASSERT(classDeclaration->get_definition() != NULL);
-                                   ROSE_ASSERT(classDeclaration->get_definition()->get_parent() != NULL);
+#if DEBUG_PARENT_INITIALIZATION
+                                   printf ("Setting parent of %p = %s to %p = %s \n",
+                                        declaration,declaration->class_name().c_str(),
+                                        existingParent,existingParent->class_name().c_str());
+#endif
+                                   declaration->set_parent(existingParent);
+
+                                // DQ (10/17/2004): Added assertions
+                                   SgClassDeclaration* classDeclaration = isSgClassDeclaration(declaration);
+                                   if (classDeclaration != NULL)
+                                      {
+                                        ROSE_ASSERT(classDeclaration->get_definition() != NULL);
+                                        ROSE_ASSERT(classDeclaration->get_definition()->get_parent() != NULL);
+                                      }
+                                 }
+                                else
+                                 {
+                                   printf ("WARNING: In new EDG 4.x support I want to allow some paraents to be NULL. \n");
                                  }
                             }
 
