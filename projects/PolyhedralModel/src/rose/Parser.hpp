@@ -19,7 +19,7 @@ namespace PolyhedricAnnotation {
 
 
 template <class TplStatement>
-size_t Parse(TplStatement * attach_to, SgStatement * stmt) throw (Exception::ExceptionBase);
+void Parse(TplStatement * attach_to, SgStatement * stmt) throw (Exception::ExceptionBase);
 
 /**
  * \brief Traverse a stmt to generate a ScopTree

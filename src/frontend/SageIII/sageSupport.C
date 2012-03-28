@@ -41,6 +41,10 @@
 #include <libgen.h>
 #endif
 
+#ifdef ROSE_USE_CLANG_FRONTEND
+#include "ClangFrontend.h"
+#endif
+
 // DQ (10/14/2010):  This should only be included by source files that require it.
 // This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
 // Interestingly it must be at the top of the list of include files.
@@ -3442,6 +3446,66 @@ static void makeSysIncludeList(const Rose_STL_Container<string>& dirs, Rose_STL_
         }
    }
 
+void SgFile::build_CLANG_CommandLine ( vector<string> & inputCommandLine, vector<string> & argv, int fileNameIndex ) {
+    // It filters Rose and Edg specific parameters and fixes the pathes.
+
+    std::vector<std::string> inc_dirs_list;
+    std::vector<std::string> define_list;
+    std::string input_file;
+
+    for (int i = 0; i < argv.size(); i++) {
+        std::string current_arg(argv[i]);
+        if (current_arg.find("-I") == 0) {
+            if (current_arg.length() > 2) {
+                inc_dirs_list.push_back(current_arg.substr(2));
+            }
+            else {
+                i++;
+                if (i < argv.size())
+                    inc_dirs_list.push_back(current_arg);
+                else
+                    break;
+            }
+        }
+        else if (current_arg.find("-D") == 0) {
+            if (current_arg.length() > 2) {
+                define_list.push_back(current_arg.substr(2));
+            }
+            else {
+                i++;
+                if (i < argv.size())
+                    define_list.push_back(current_arg);
+                else
+                    break;
+            }
+        }
+        else if (current_arg.find("-c") == 0) {}
+        else if (current_arg.find("-o") == 0) {
+            if (current_arg.length() == 2) {
+                i++;
+                if (i >= argv.size()) break;
+            }
+        }
+        else if (current_arg.find("-rose") == 0) {}
+        else {
+            input_file = current_arg;
+        }
+    }
+
+    std::vector<std::string>::iterator it_str;
+    for (it_str = define_list.begin(); it_str != define_list.end(); it_str++)
+        inputCommandLine.push_back("-D" + *it_str);
+    for (it_str = inc_dirs_list.begin(); it_str != inc_dirs_list.end(); it_str++)
+        inputCommandLine.push_back("-I" + StringUtility::getAbsolutePathFromRelativePath(*it_str));
+
+    std::string input_file_path = StringUtility::getPathFromFileName(input_file);
+    input_file = StringUtility::stripPathFromFileName(input_file);
+    if (input_file_path == "" ) input_file_path = "./";
+    input_file_path = StringUtility::getAbsolutePathFromRelativePath(input_file_path);
+    input_file = input_file_path + "/" + input_file;
+    inputCommandLine.push_back(input_file);
+
+}
 
 void
 SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string> & argv, int fileNameIndex )
@@ -4670,10 +4734,12 @@ SgProject::parse()
   // calling the backend on them. (If only the backend is used, this was
   // never called by SgFile::callFrontEnd either.)
   // if ( !get_fileList().empty() && !get_useBackendOnly() )
+#ifndef ROSE_USE_CLANG_FRONTEND
      if ( (get_fileList().empty() == false) && (get_useBackendOnly() == false) )
         {
           AstPostProcessing(this);
         }
+#endif
 #if 0
        else
         {
@@ -4714,7 +4780,9 @@ SgProject::parse()
         {
           SgFile *file = *fIterator;
           ROSE_ASSERT(file != NULL);
+//#ifndef ROSE_USE_CLANG_FRONTEND
           file->secondaryPassOverSourceFile();
+//#endif
         }
 
      // negara1 (06/23/2011): Collect information about the included files to support unparsing of those that are modified.
@@ -5393,7 +5461,11 @@ SgFile::callFrontEnd()
 
   // Build the commandline for EDG
   // printf ("Inside of SgFile::callFrontEnd(): Calling build_EDG_CommandLine (fileNameIndex = %d) \n",fileNameIndex);
+  #ifndef ROSE_USE_CLANG_FRONTEND
      build_EDG_CommandLine (inputCommandLine,localCopy_argv,fileNameIndex );
+  #else
+     build_CLANG_CommandLine (inputCommandLine,localCopy_argv,fileNameIndex );
+  #endif
   // printf ("DONE: Inside of SgFile::callFrontEnd(): Calling build_EDG_CommandLine (fileNameIndex = %d) \n",fileNameIndex);
 
   // DQ (10/15/2005): This is now a single C++ string (and not a list)
@@ -5562,7 +5634,7 @@ SgFile::callFrontEnd()
 
                     default:
                        {
-                         printf ("Error: default reached in unparser: class name = %s \n",this->class_name().c_str());
+                         printf ("Error: default reached in Rose parser/IR translation processing: class name = %s \n",this->class_name().c_str());
                          ROSE_ASSERT(false);
                        }
                   }
@@ -7098,9 +7170,9 @@ SgSourceFile::build_C_and_Cxx_AST( vector<string> argv, vector<string> inputComm
      if ( get_verbose() > 1 )
           printf ("Before calling edg_main: frontEndCommandLineString = %s \n",frontEndCommandLineString.c_str());
 
-     int edg_argc = 0;
-     char **edg_argv = NULL;
-     CommandlineProcessing::generateArgcArgvFromList(inputCommandLine, edg_argc, edg_argv);
+     int c_cxx_argc = 0;
+     char **c_cxx_argv = NULL;
+     CommandlineProcessing::generateArgcArgvFromList(inputCommandLine, c_cxx_argc, c_cxx_argv);
 
 #ifdef ROSE_BUILD_CXX_LANGUAGE_SUPPORT
   // This is the function call to the EDG front-end (modified in ROSE to pass a SgFile)
@@ -7115,8 +7187,13 @@ SgSourceFile::build_C_and_Cxx_AST( vector<string> argv, vector<string> inputComm
              }
 #endif
 
+#ifdef ROSE_USE_CLANG_FRONTEND
+     int frontendErrorLevel = clang_main (c_cxx_argc, c_cxx_argv, *this);
+#else /* default to EDG */
      int edg_main(int, char *[], SgSourceFile & sageFile );
-     int frontendErrorLevel = edg_main (edg_argc, edg_argv, *this);
+     int frontendErrorLevel = edg_main (c_cxx_argc, c_cxx_argv, *this);
+#endif /* clang or edg */
+
 #else
      int frontendErrorLevel = 0;
 #endif

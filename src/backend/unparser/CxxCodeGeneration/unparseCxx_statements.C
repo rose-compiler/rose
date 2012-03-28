@@ -249,6 +249,28 @@ Unparse_ExprStmt::unparseFunctionParameterDeclaration (
           curprint( "asm ");
         }
 
+  // TV (05/06/2010): CUDA storage modifiers
+
+     if (storage.isCudaGlobal())
+        {
+          curprint( "__device__ ");
+        }
+
+     if (storage.isCudaConstant())
+        {
+          curprint( "__device__ __constant__ ");
+        }
+
+     if (storage.isCudaShared())
+        {
+          curprint( "__device__ __shared__ ");
+        }
+
+     if (storage.isCudaDynamicShared())
+        {
+          curprint( "extern __device__ __shared__ ");
+        }
+
   // Error checking, if we are using old style C function parameters, then I hope this is not C++ code!
      if (funcdecl_stmt->get_oldStyleDefinition() == true)
         {

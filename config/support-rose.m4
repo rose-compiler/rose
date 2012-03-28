@@ -328,6 +328,14 @@ AM_CONDITIONAL(ROSE_USE_NEW_EDG_INTERFACE, [test "x$enable_new_edg_interface" = 
 AM_CONDITIONAL(ROSE_USE_EDG_VERSION_4, [test "x$enable_edg_version4" = xyes])
 AM_CONDITIONAL(ROSE_USE_EDG_VERSION_4_3, [test "x$enable_edg_version43" = xyes])
 
+AC_ARG_ENABLE(clang-frontend, AS_HELP_STRING([--enable-clang-frontend], [Use Clang frontend instead of EDG]))
+AM_CONDITIONAL(ROSE_USE_CLANG_FRONTEND, [test "x$enable_clang_frontend" = xyes])
+if test "x$enable_clang_frontend" = "xyes"; then
+  ROSE_SUPPORT_CLANG
+else
+  AC_MSG_NOTICE([Clang frontend support disabled])
+fi
+
 # DQ (1/4/2009) Added support for optional GNU language extensions in new EDG/ROSE interface.
 # This value will be substituted into EDG/4.0/src/rose_lang_feat.h in the future (not used at present!)
 AC_ARG_ENABLE(gnu-extensions, AS_HELP_STRING([--enable-gnu-extensions], [Enable internal support in ROSE for GNU language extensions]))
@@ -581,8 +589,12 @@ if test x$enable_new_edg_interface = xyes; then
   GENERATE_BACKEND_C_COMPILER_SPECIFIC_HEADERS
   GENERATE_BACKEND_CXX_COMPILER_SPECIFIC_HEADERS
 else
-  GENERATE_BACKEND_C_COMPILER_SPECIFIC_HEADERS
-  GENERATE_BACKEND_CXX_COMPILER_SPECIFIC_HEADERS
+  if test x$enable_clang_frontend = xyes; then
+    INSTALL_CLANG_SPECIFIC_HEADERS
+  else
+    GENERATE_BACKEND_C_COMPILER_SPECIFIC_HEADERS
+    GENERATE_BACKEND_CXX_COMPILER_SPECIFIC_HEADERS
+  fi
 fi
 
 # End macro ROSE_SUPPORT_ROSE_BUILD_INCLUDE_FILES.
@@ -1900,6 +1912,7 @@ src/frontend/SageIII/GENERATED_CODE_DIRECTORY_Cxx_Grammar/Makefile
 src/frontend/SageIII/astFromString/Makefile
 src/frontend/SageIII/includeDirectivesProcessing/Makefile
 src/frontend/CxxFrontend/Makefile
+src/frontend/CxxFrontend/Clang/Makefile
 src/frontend/OpenFortranParser_SAGE_Connection/Makefile
 src/frontend/ECJ_ROSE_Connection/Makefile
 src/frontend/PHPFrontend/Makefile
@@ -2141,6 +2154,8 @@ projects/PolyhedralModel/docs/Makefile
 projects/PolyhedralModel/tests/Makefile
 projects/PolyhedralModel/tests/rose-pragma/Makefile
 projects/PolyhedralModel/tests/rose-max-cover/Makefile
+projects/PolyhedralModel/tests/cuda-kernel/Makefile
+projects/PolyhedralModel/tests/kernel-func/Makefile
 tests/Makefile
 tests/RunTests/Makefile
 tests/RunTests/A++Tests/Makefile

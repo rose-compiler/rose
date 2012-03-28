@@ -2,7 +2,7 @@
 namespace PolyhedricAnnotation {
 
 template <class TplStatement>
-size_t Parse(TplStatement * attach_to, SgStatement * stmt) throw (Exception::ExceptionBase) {
+void Parse(TplStatement * attach_to, SgStatement * stmt) throw (Exception::ExceptionBase) {
 	ScopTree_::ScopTree<TplStatement, SgExprStatement, RoseVariable> * root =
 		new ScopTree_::ScopRoot<TplStatement, SgExprStatement, RoseVariable>(attach_to);
 
@@ -116,6 +116,7 @@ size_t Traverse(
 			return 1;
 		}
 		case V_SgVariableDeclaration:
+                        return 0;
 		case V_SgPragmaDeclaration:
 		case V_SgReturnStmt:
 			throw Exception::MisplacedNode(stmt);
