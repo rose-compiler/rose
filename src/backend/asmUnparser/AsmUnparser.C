@@ -530,9 +530,9 @@ AsmUnparser::BasicBlockSuccessors::operator()(bool enabled, const BasicBlockArgs
 {
     if (enabled) {
         args.output <<"            (successors:";
-        const SgAsmTargetPtrList &successors = args.block->get_successors();
-        for (SgAsmTargetPtrList::const_iterator si=successors.begin(); si!=successors.end(); ++si)
-            args.output <<" " <<StringUtility::addrToString((*si)->get_address());
+        const SgAsmIntegerValuePtrList &successors = args.block->get_successors();
+        for (SgAsmIntegerValuePtrList::const_iterator si=successors.begin(); si!=successors.end(); ++si)
+            args.output <<" " <<StringUtility::addrToString((*si)->get_absolute_value());
         if (!args.block->get_successors_complete())
             args.output <<"...";
         args.output <<")\n";
