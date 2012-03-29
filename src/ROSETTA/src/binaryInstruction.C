@@ -459,7 +459,7 @@ Grammar::setUpBinaryInstructions()
                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmBlock.setDataPrototype("SgAsmStatementPtrList", "statementList", "", //in order of execution
                                NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-     AsmBlock.setDataPrototype("SgAsmTargetPtrList", "successors", "",
+     AsmBlock.setDataPrototype("SgAsmIntegerValuePtrList", "successors", "",
                                NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmBlock.setDataPrototype("bool", "successors_complete", "= false",
                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -469,25 +469,6 @@ Grammar::setUpBinaryInstructions()
                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmBlock.setDataPrototype("double", "code_likelihood", "= 0.0",
                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-
-
-     // Basic block control flow successors are represented by address rather than links to other parts of the AST.  This
-     // allows a basic block to point to instructions that have never been disassembled.
-     NEW_TERMINAL_MACRO(AsmTargetList, "AsmTargetList", "AsmTargetListTag");
-     AsmTargetList.setFunctionPrototype("HEADER_BINARY_TARGET_LIST", "../Grammar/BinaryInstruction.code");
-     AsmTargetList.setDataPrototype("SgAsmTargetPtrList", "targets", "",
-                                    NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-
-
-
-     NEW_TERMINAL_MACRO(AsmTarget, "AsmTarget", "AsmTargetTag");
-     AsmTarget.setFunctionPrototype("HEADER_BINARY_TARGET", "../Grammar/BinaryInstruction.code");
-     AsmTarget.setFunctionSource("SOURCE_BINARY_TARGET", "../Grammar/BinaryInstruction.code");
-     AsmTarget.setDataPrototype("rose_addr_t", "address", "= 0",        // DOXYGEN
-                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmTarget.setDataPrototype("SgAsmBlock*", "block", "= NULL",       // DOXYGEN
-                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
 
@@ -2645,7 +2626,7 @@ Grammar::setUpBinaryInstructions()
 
      NEW_NONTERMINAL_MACRO(AsmNode,
                            AsmStatement | AsmExpression | AsmInterpretation | AsmOperandList | AsmType |
-                           AsmExecutableFileFormat | AsmInterpretationList | AsmGenericFileList | AsmTarget | AsmTargetList,
+                           AsmExecutableFileFormat | AsmInterpretationList | AsmGenericFileList,
                            "AsmNode", "AsmNodeTag", false);
      AsmNode.setFunctionPrototype("HEADER_BINARY", "../Grammar/BinaryInstruction.code");
      AsmNode.setFunctionSource("SOURCE_BINARY", "../Grammar/BinaryInstruction.code");

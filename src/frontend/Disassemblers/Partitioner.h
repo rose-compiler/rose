@@ -552,9 +552,9 @@ public:
      * turned on (see set_search()) then uncategorized blocks will not appear in the AST. */
     virtual SgAsmBlock* build_ast();
 
-    /** Update SgAsmTarget block pointers.  This method traverses the specified AST and updates any SgAsmTarget nodes so their
-     *  block pointers point to actual blocks.  The update only happens for SgAsmTarget objects that don't already have a node
-     *  pointer. */
+    /** Update control flow graph edge nodes.  This method traverses the specified AST and updates any edge nodes so their
+     *  block pointers point to actual blocks rather than just containing virtual addresses.  The update only happens for
+     *  edges that don't already have a node pointer. */
     virtual void update_targets(SgNode *ast);
 
     /**************************************************************************************************************************

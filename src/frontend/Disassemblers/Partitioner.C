@@ -3567,7 +3567,7 @@ Partitioner::is_contiguous(Function *func, bool strict)
     return true;
 }
 
-/* Update SgAsmTarget nodes. */
+/* Update CFG edge nodes. */
 void
 Partitioner::update_targets(SgNode *ast)
 {
@@ -3600,11 +3600,11 @@ Partitioner::update_targets(SgNode *ast)
             SgAsmBlock *block = isSgAsmBlock(node);
             if (block) {
                 for (size_t i=0; i<block->get_successors().size(); i++) {
-                    SgAsmTarget *target = block->get_successors()[i];
-                    if (target && NULL==target->get_block()) {
-                        BlockMap::const_iterator bi=block_map.find(target->get_address());
+                    SgAsmIntegerValueExpression *target = block->get_successors()[i];
+                    if (target && NULL==target->get_base_node()) {
+                        BlockMap::const_iterator bi=block_map.find(target->get_absolute_value());
                         if (bi!=block_map.end())
-                            target->set_block(bi->second);
+                            target->make_relative_to(bi->second);
                     }
                 }
             }
@@ -3762,13 +3762,16 @@ Partitioner::build_ast(BasicBlock* block)
         insn->node->set_parent(retval);
     }
 
-    /* Cache block successors so other layers don't have to constantly compute them.  We fill in the successor SgAsmTarget
-     * objects with only the address and not pointers to blocks since we don't have all the blocks yet.  The pointers will be
-     * initialized in the no-argument version build_ast() higher up on the stack. */
+    /* Cache block successors so other layers don't have to constantly compute them.  We fill in the successor
+     * SgAsmIntegerValueExpression objects with only the address and not pointers to blocks since we don't have all the blocks
+     * yet.  The pointers will be initialized in the no-argument version build_ast() higher up on the stack. */
     bool complete;
     Disassembler::AddressSet successor_addrs = successors(block, &complete);
-    for (Disassembler::AddressSet::iterator si=successor_addrs.begin(); si!=successor_addrs.end(); ++si)
-        retval->get_successors().push_back(new SgAsmTarget(retval, NULL, *si));
+    for (Disassembler::AddressSet::iterator si=successor_addrs.begin(); si!=successor_addrs.end(); ++si) {
+        SgAsmIntegerValueExpression *value = new SgAsmIntegerValueExpression(*si);
+        value->set_parent(retval);
+        retval->get_successors().push_back(value);
+    }
     retval->set_successors_complete(complete);
     return retval;
 }
