@@ -197,6 +197,7 @@ test2004_124.C \
 test2004_125.C \
 test2004_127.C \
 test2004_128.C \
+test2004_129.C \
 test2004_130.C \
 test2004_131.C \
 test2004_132.C \
@@ -212,6 +213,7 @@ test2004_141.C \
 test2004_142.C \
 test2004_143.C \
 test2004_144.C \
+test2004_145.C \
 test2004_146.C \
 test2004_147.C \
 test2004_148.C \
@@ -254,17 +256,20 @@ test2005_28.C \
 test2005_29.C \
 test2005_30.C \
 test2005_31.C \
+test2005_34.C \
 test2005_36.C \
 test2005_37.C \
 test2005_38.C \
 test2005_39.C \
 test2005_40.C \
 test2005_41.C \
+test2005_42.C \
 test2005_43.C \
 test2005_45.C \
 test2005_46.C \
 test2005_47.C \
 test2005_48.C \
+test2005_49.C \
 test2005_50.C \
 test2005_51.C \
 test2005_52.C \
@@ -323,10 +328,12 @@ test2005_120.C \
 test2005_124.C \
 test2005_125.C \
 test2005_127.C \
+test2005_128.C \
 test2005_134.C \
 test2005_135.C \
 test2005_140.C \
 test2005_141.C \
+test2005_142.C \
 test2005_144.C \
 test2005_145.C \
 test2005_146.C \
@@ -368,6 +375,7 @@ test2005_189.C \
 test2005_190.C \
 test2005_191.C \
 test2005_192.C \
+test2005_193.C \
 test2005_195.C \
 test2005_196.C \
 test2005_197.C \
@@ -410,6 +418,7 @@ test2006_53.C \
 test2006_55.C \
 test2006_56.C \
 test2006_57.C \
+test2006_58.C \
 test2006_59.C \
 test2006_61.C \
 test2006_62.C \
@@ -431,6 +440,7 @@ test2006_80.C \
 test2006_81.C \
 test2006_82.C \
 test2006_83.C \
+test2006_84.C \
 test2006_86.C \
 test2006_87.C \
 test2006_88.C \
@@ -463,9 +473,13 @@ test2006_118.C \
 test2006_120.C \
 test2006_121.C \
 test2006_123.C \
+test2006_124.C \
 test2006_125.C \
+test2006_126.C  \
+test2006_129.C \
 test2006_139.C \
 test2006_140.C \
+test2006_141.C \
 test2006_142.C \
 test2006_143.C \
 test2006_144.C \
@@ -494,6 +508,7 @@ test2006_178.C \
 test2006_179.C \
 test2006_181.C \
 test2006_183.C \
+test2006_185.C \
 test2006_189.C \
 test2007_02.C \
 test2007_03.C \
@@ -515,6 +530,7 @@ test2007_25.C \
 test2007_26.C \
 test2007_28.C \
 test2007_29.C \
+test2007_40.C \
 test2007_43.C \
 test2007_44.C \
 test2007_46.C \
@@ -595,6 +611,8 @@ test2009_18.C \
 test2009_20.C \
 test2009_27.C \
 test2009_28.C \
+test2009_40.C \
+test2009_41.C \
 test2009_42.C \
 test2010_03.C \
 test2010_04.C \
@@ -638,11 +656,14 @@ test2011_49.C \
 test2011_50.C \
 test2011_51.C \
 test2011_52.C \
+test2011_53.C \
 test2011_54.C \
 test2011_55.C \
 test2011_56.C \
 test2011_57.C \
 test2011_58.C \
+test2011_59.C \
+test2011_60.C \
 test2011_61.C \
 test2011_63.C \
 test2011_64.C \
@@ -776,6 +797,9 @@ test2012_45.C \
 test2012_46.C \
 test2012_47.C \
 test2012_48.C \
+test2012_49.C \
+test2012_50.C \
+test2012_51.C \
 test_int_lexemes.C \
 test_int_lexemes_donot_pass.C \
 test_simple_int.C \
@@ -787,24 +811,7 @@ X.C \
 $(NEW_PASSING_FILES)
 
 # DQ (3/23/2012): New passing files
-NEW_PASSING_FILES = \
-test2005_128.C \
-test2005_142.C \
-test2005_49.C \
-test2006_124.C \
-test2006_141.C \
-test2006_58.C \
-test2006_84.C \
-test2004_129.C \
-test2005_193.C \
-test2005_34.C \
-test2005_42.C \
-test2006_126.C  \
-test2006_129.C \
-test2006_185.C \
-test2007_40.C \
-test2009_40.C \
-test2009_41.C
+NEW_PASSING_FILES = 
 
 # $(TESTCODE_CURRENTLY_FAILING)
 
@@ -826,15 +833,11 @@ endif
 
 
 
-
-
-
 # Import list of C++ test cases that are known to fail:
 #   TESTCODE_CURRENTLY_FAILING
 #
 if ROSE_USE_EDG_VERSION_4_3
 TESTCODE_CURRENTLY_FAILING = \
-test2004_145.C \
 test2004_149.C \
 test2004_150.C \
 test2004_162.C \
@@ -918,9 +921,6 @@ test2009_39.C \
 test2010_24.C \
 test2011_31.C \
 test2011_32.C \
-test2011_53.C \
-test2011_59.C \
-test2011_60.C \
 test2011_62.C \
  test2011_65.C \
 test2011_70.C \

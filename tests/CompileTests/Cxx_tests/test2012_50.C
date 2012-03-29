@@ -3,10 +3,13 @@ class X
    {
      public:
           static void foo();
+       // void foo();
    };
 
 void foobar()
    {
+  // X a;
+  // a.foo();
      X::foo();
    }
 

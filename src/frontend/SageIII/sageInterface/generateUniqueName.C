@@ -550,11 +550,29 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                     break;
                   }
 
-            // DQ (6/11/2011): Added support for new template IR nodes.
+            // DQ (3/28/2012): Added support for new template IR nodes.
                case V_SgTemplateClassDeclaration:
+                  {
+                 // This used to share an implementation with the case V_SgTemplateDeclaration, but that is 
+                 // not appropriate with the newer IR design for template support in the EDG 4.x interface.
+                    printf ("In SageInterface::generateUniqueName(): case V_SgTemplateClassDeclaration: Sorry, not implemented! \n");
+                    ROSE_ASSERT(false);
+
+                 // DQ (3/28/2012): I think that we can assert this here!
+                    ROSE_ASSERT (key.empty() == false);
+                    break;
+                  }
+                
+            // DQ (3/28/2012): We have a new design for the EDG 4.x support and the IR design no longer 
+            // derives a SgTemplateClassDeclaration from a SgTemplateDeclaration, so this code does not work.
+            // DQ (6/11/2011): Added support for new template IR nodes.
+            // case V_SgTemplateClassDeclaration:
                case V_SgTemplateDeclaration:
                   {
                     const SgTemplateDeclaration* declaration = isSgTemplateDeclaration(statement);
+
+                 // DQ (3/28/2012): Added assertion test.
+                    ROSE_ASSERT(declaration != NULL);
 
                  // DQ (2/18/2007): Note that for template declarations built for member functions of a templated 
                  // class (EDG kind: templk_member_function) the declaration only has the template name (or the member 

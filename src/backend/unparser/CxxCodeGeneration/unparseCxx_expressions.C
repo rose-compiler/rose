@@ -1298,10 +1298,20 @@ Unparse_ExprStmt::unparseMFuncRef ( SgExpression* expr, SgUnparse_Info& info )
      ROSE_ASSERT(decl->get_parent() != NULL);
 
      bool print_colons = false;
-  // printf ("mfunc_ref->get_need_qualifier() = %s \n",(mfunc_ref->get_need_qualifier() == true) ? "true" : "false");
-     if (mfunc_ref->get_need_qualifier() == true)
+#if 1
+     printf ("mfunc_ref->get_need_qualifier() = %s \n",(mfunc_ref->get_need_qualifier() == true) ? "true" : "false");
+#endif
+
+  // DQ (3/28/2012): I think this is a bug left over from the previous implementation of support for name qualification.
+  // if (mfunc_ref->get_need_qualifier() == true)
+
+     SgFunctionCallExp* functionCall = isSgFunctionCallExp(mfunc_ref->get_parent());
+     if (functionCall != NULL)
         {
        // check if this is a iostream operator function and the value of the overload opt is false
+
+          printf ("unp->opt.get_overload_opt()        = %s \n",unp->opt.get_overload_opt() ? "true" : "false");
+          printf ("unp->u_sage->isOperator(mfunc_ref) = %s \n",unp->u_sage->isOperator(mfunc_ref) ? "true" : "false");
 
        // DQ (12/28/2005): Changed to check for more general overloaded operators (e.g. operator[])
        // if (!unp->opt.get_overload_opt() && isIOStreamOperator(mfunc_ref));
@@ -1311,7 +1321,7 @@ Unparse_ExprStmt::unparseMFuncRef ( SgExpression* expr, SgUnparse_Info& info )
              }
             else
              {
-            // curprint ( "\n /* Output the qualified class name */ \n";
+               curprint("\n /* Output the qualified class name */ \n");
 
             // printf ("In unparseMFuncRef(): Qualified names of member function reference expressions are not handled yet! \n");
 #if 0
@@ -1323,10 +1333,15 @@ Unparse_ExprStmt::unparseMFuncRef ( SgExpression* expr, SgUnparse_Info& info )
             // DQ (6/1/2011): Use the newly generated qualified names.
                SgName nameQualifier = mfunc_ref->get_qualified_name_prefix();
                curprint (nameQualifier);
-            // printf ("Output name qualification for SgMemberFunctionDeclaration: nameQualifier = %s \n",nameQualifier.str());
+               printf ("Output name qualification for SgMemberFunctionDeclaration: nameQualifier = %s \n",nameQualifier.str());
 #endif
                print_colons = true;
              }
+        }
+       else
+        {
+       // See test2012_51.C for an example of this.
+          printf ("Inside of unparseMFuncRef(): This case of name qualification where the parent is not a SgFunctionCallExp is not yet supported. \n");
         }
 
   // comments about the logic below can be found above in the unparseFuncRef function.
