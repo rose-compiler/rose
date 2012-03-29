@@ -555,7 +555,12 @@ public:
     /** Update control flow graph edge nodes.  This method traverses the specified AST and updates any edge nodes so their
      *  block pointers point to actual blocks rather than just containing virtual addresses.  The update only happens for
      *  edges that don't already have a node pointer. */
-    virtual void update_targets(SgNode *ast);
+    virtual void fixup_cfg_edges(SgNode *ast);
+
+    /** Update branch targets.  This method traverses the specified AST and updates any branch instructions so their operand
+     *  points to an instruction rather than just containing a virtual address.  The update only happens for operands that
+     *  don't already point to some node. */
+    virtual void fixup_branch_targets(SgNode *ast);
 
     /**************************************************************************************************************************
      *                                  Range maps relating address ranges to objects

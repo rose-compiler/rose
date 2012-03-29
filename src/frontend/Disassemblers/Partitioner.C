@@ -3569,7 +3569,7 @@ Partitioner::is_contiguous(Function *func, bool strict)
 
 /* Update CFG edge nodes. */
 void
-Partitioner::update_targets(SgNode *ast)
+Partitioner::fixup_cfg_edges(SgNode *ast)
 {
     typedef std::map<rose_addr_t, SgAsmBlock*> BlockMap;
 
@@ -3614,6 +3614,45 @@ Partitioner::update_targets(SgNode *ast)
     BlockMap block_map;
     BlockMapBuilder(ast, &block_map);
     TargetPopulator(ast, block_map);
+}
+
+/* Make branch targets point to instructions. */
+void
+Partitioner::fixup_branch_targets(SgNode *ast)
+{
+    struct BranchTargetPopulator: public AstPrePostProcessing {
+        Partitioner *p;
+        bool in_branch_insn; // true when we're inside any instruction with non-local control transfer
+
+        BranchTargetPopulator(Partitioner *p): p(p), in_branch_insn(false) {}
+
+        void preOrderVisit(SgNode *node) {
+            if (in_branch_insn) {
+                SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(node);
+                if (ival && !ival->get_base_node()) {
+                    Instruction *target_insn = p->find_instruction(ival->get_absolute_value(), false/*don't create one*/);
+                    if (target_insn) {
+#if 1 /* DEBUGGING [RPM 2012-03-29] */
+                        SgAsmInstruction *isrc = SageInterface::getEnclosingNode<SgAsmInstruction>(node);
+                        assert(isrc);
+                        std::cerr <<"ROBB: " <<unparseInstructionWithAddress(isrc) <<"\n";
+#endif
+                        ival->make_relative_to(target_insn->node);
+                    }
+                }
+            } else {
+                SgAsmx86Instruction *insn_x86 = isSgAsmx86Instruction(node);
+                in_branch_insn = insn_x86 && x86InstructionIsControlTransfer(insn_x86);
+            }
+        }
+
+        void postOrderVisit(SgNode *node) {
+            if (in_branch_insn && isSgAsmInstruction(node))
+                in_branch_insn = false;
+        }
+    };
+
+    BranchTargetPopulator(this).traverse(ast);
 }
 
 /* Build the global block containing all functions. */
@@ -3673,7 +3712,8 @@ Partitioner::build_ast()
         delete catchall;
     }
 
-    update_targets(retval);
+    fixup_cfg_edges(retval);
+    fixup_branch_targets(retval);
     return retval;
 }
 
