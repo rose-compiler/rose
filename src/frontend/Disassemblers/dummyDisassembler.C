@@ -1,4 +1,9 @@
-// empty to avoid
-// LINK    libroseDisassemblers.la
-// ar: no archive members specified
-// On Mac OS X
+// ROSETTA has no way to exclude certain IR node definitions based on the user's choice of languages.  Therefore, we need to
+// provide (stub) definitions for those nodes' virtual methods in order to get things to compile when those nodes aren't
+// actually being used anywhere.
+
+SgAsmType *SgAsmIntegerValueExpression::get_type() { abort(); }
+SgAsmType *SgAsmByteValueExpression::get_type() { abort(); }
+SgAsmType *SgAsmWordValueExpression::get_type() { abort(); }
+SgAsmType *SgAsmDoubleWordValueExpression::get_type() { abort(); }
+SgAsmType *SgAsmQuadWordValueExpression::get_type() { abort(); }
