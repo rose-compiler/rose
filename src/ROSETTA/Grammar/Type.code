@@ -2673,7 +2673,7 @@ SgName
 $CLASSNAME::get_mangled(void) const
    {
      ROSE_ASSERT(this != NULL);
-#if 1
+#if 0
      printf ("In $CLASSNAME::get_mangled(): get_name() = %s \n",get_name().str());
 #endif
      SgName mangled_name;
@@ -2681,7 +2681,7 @@ $CLASSNAME::get_mangled(void) const
      if (get_name().is_null() == false) // not anonymous
         {
           const SgClassDeclaration* class_decl = isSgClassDeclaration(get_declaration());
-#if 1
+#if 0
           printf ("In $CLASSNAME::get_mangled(): class_decl = %p = %s \n",class_decl, ((class_decl == NULL) ? "NULL" : class_decl->class_name().c_str()) );
 #endif
           if (class_decl != NULL)
@@ -2694,7 +2694,7 @@ $CLASSNAME::get_mangled(void) const
                if (template_class_decl != NULL)
                   {
                     mangled_name = template_class_decl->get_mangled_name();
-#if 1
+#if 0
                     printf ("In $CLASSNAME::get_mangled(): SgTemplateInstantiationDecl mangled_name = %s \n",mangled_name.str());
 #endif
 #if 0
@@ -2709,7 +2709,7 @@ $CLASSNAME::get_mangled(void) const
 
                  // This is for just a simple SgClassDeclaration.
                     mangled_name = class_decl->get_mangled_name();
-#if 1
+#if 0
                     printf ("In $CLASSNAME::get_mangled(): SgClassDeclaration calling class_decl->get_mangled_name() --- mangled_name = %s \n",mangled_name.str());
 #endif
                   }
@@ -3619,7 +3619,9 @@ void
 SgMemberFunctionType::post_construction_initialization()
    {
   // DQ (3/8/2012): We want to avoid resetting the data members (just set in the SgMemberFunctionType constructor).
+#if 0
      printf ("In SgMemberFunctionType::post_construction_initialization(): avoid resetting the data members. \n");
+#endif
   // p_class_type =0;
 
   // DQ (3/8/2012): We can't assert that this is true (likely because of how SgPartialFunctionType is used to build non-memb4r function types.
@@ -3635,9 +3637,11 @@ SgMemberFunctionType::post_construction_initialization()
   // DQ (3/10/2012): If this is non-zero then the SgPartialFunctionType should have somethin set internally.
      if (p_mfunc_specifier != 0)
         {
+#if 0
           printf ("In SgMemberFunctionType::post_construction_initialization(): p_mfunc_specifier = %u isConstFunc()    = %s \n",p_mfunc_specifier,isConstFunc()    ? "true" : "false");
           printf ("In SgMemberFunctionType::post_construction_initialization(): p_mfunc_specifier = %u isVolatileFunc() = %s \n",p_mfunc_specifier,isVolatileFunc() ? "true" : "false");
           printf ("In SgMemberFunctionType::post_construction_initialization(): p_mfunc_specifier = %u isRestrictFunc() = %s \n",p_mfunc_specifier,isRestrictFunc() ? "true" : "false");
+#endif
        // ROSE_ASSERT(partialFunctionType->isConstFunc() == true || partialFunctionType->isVolatileFunc() == true);
        // ROSE_ASSERT(isConstFunc() == true || isVolatileFunc() == true || isRestrictFunc() == true);
           ROSE_ASSERT( (isConstFunc() == true) || (isVolatileFunc() == true) || (isRestrictFunc() == true) );
