@@ -1298,7 +1298,7 @@ Unparse_ExprStmt::unparseMFuncRef ( SgExpression* expr, SgUnparse_Info& info )
      ROSE_ASSERT(decl->get_parent() != NULL);
 
      bool print_colons = false;
-#if 1
+#if 0
      printf ("mfunc_ref->get_need_qualifier() = %s \n",(mfunc_ref->get_need_qualifier() == true) ? "true" : "false");
 #endif
 
@@ -1341,7 +1341,9 @@ Unparse_ExprStmt::unparseMFuncRef ( SgExpression* expr, SgUnparse_Info& info )
        else
         {
        // See test2012_51.C for an example of this.
+#if 0
           printf ("Inside of unparseMFuncRef(): This case of name qualification where the parent is not a SgFunctionCallExp is not yet supported. \n");
+#endif
         }
 
   // comments about the logic below can be found above in the unparseFuncRef function.
@@ -3329,8 +3331,10 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
                nm = con_init->get_declaration()->get_qualified_name();
              }
 #else
-       // printf ("con_init->get_declaration() = %s \n",con_init->get_declaration() ? "true" : "false");
+#if 0
+          printf ("con_init->get_declaration() = %s \n",con_init->get_declaration() ? "true" : "false");
        // curprint ( "\n /* con_init->get_declaration() = " + string(con_init->get_declaration() ? "valid" : "null") + " pointer */ \n");
+#endif
           if (con_init->get_declaration() != NULL)
              {
 #if 0
@@ -3348,7 +3352,9 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
              }
             else
              {
-            // printf ("con_init->get_class_decl() = %s \n",con_init->get_class_decl() ? "true" : "false");
+#if 0
+               printf ("con_init->get_class_decl() = %s \n",con_init->get_class_decl() ? "true" : "false");
+#endif
                if (con_init->get_class_decl() != NULL)
                   {
 #if 0
@@ -3362,16 +3368,28 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
                  // nm = con_init->get_class_decl()->get_qualified_name();
 
                     SgName nameQualifier = con_init->get_qualified_name_prefix();
-                 // printf ("In Unparse_ExprStmt::unparseConInit(): con_init->get_declaration() == NULL -- nameQualifier = %s \n",nameQualifier.str());
-
+#if 0
+                    printf ("In Unparse_ExprStmt::unparseConInit(): con_init->get_declaration() == NULL -- nameQualifier = %s \n",nameQualifier.str());
+#endif
                     nm = nameQualifier + con_init->get_class_decl()->get_name();
 #endif
                   }
+#if 0
+              // DQ (3/29/2012): For EDG 4.x it appear we need a bit more since both con_init->get_declaration() and con_init->get_class_decl() can be NULL (see test2012_52.C).
+                 else
+                  {
+                    printf ("Need to handle new case for where both con_init->get_declaration() and con_init->get_class_decl() can be NULL \n");
+                    printf ("Get name of type = %p = %s name = %s \n",con_init->get_type(),con_init->get_type()->class_name().c_str(),"NOT EVALUATED YET");
+
+                    ROSE_ASSERT ( nm.is_null() == false );
+                  }
+#endif
              }
 #endif
 
-       // printf ("In Unparse_ExprStmt::unparseConInit(): nm = %s \n",nm.str());
-
+#if 0
+          printf ("In Unparse_ExprStmt::unparseConInit(): nm = %s \n",nm.str());
+#endif
           ROSE_ASSERT ( nm.is_null() == false );
        // printf ("In Unparse_ExprStmt::unparseConInit: info.PrintName() = %s nm = %s \n",info.PrintName() ? "true" : "false",nm.str());
        // curprint ( "\n /* Debugging In Unparse_ExprStmt::unparseConInit: nm = " + nm.str() + " */ \n";
