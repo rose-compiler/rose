@@ -92,7 +92,7 @@ int main(int argc, char *argv[]) {
             vis->pths = 0;
             vis->paths.clear();
             vis->constructPathAnalyzer(cfg,false, nfurcations[i], nfurcations[i+1]);
-            cout << "from: " << vis->vertintmap[nfurcations[i]] << " to: " << vis->vertintmap[nfurcations[i+1]] << " " << vis->pths << " paths" << std::endl; 
+            //cout << "from: " << vis->vertintmap[nfurcations[i]] << " to: " << vis->vertintmap[nfurcations[i+1]] << " " << vis->pths << " paths" << std::endl; 
         }
         //vis->constructPathAnalyzer(cfg);
         //std::cout << "pths: " << vis->pths << std::endl;

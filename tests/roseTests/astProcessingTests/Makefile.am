@@ -1,9 +1,9 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-EXTRA_DIST = tf1.C tf2.C tf3.C tfif1.C tfif2.C tfif3.C tfif4.C mf1.C mf3.C mf4.C mf5.C eif.C eif2.C eif3.C eif4.C efor2.C efor3.C input1.C test11.C test12.C test13.C test14.C createTest.C t1 t2 t3 t4
+EXTRA_DIST = tf1.C tf2.C tf3.C tfif1.C tfif2.C tfif3.C tfif4.C mf1.C mf3.C mf4.C mf5.C mf8.C mf9.C mf10.C mf11.C mf12.C mf13.Ceif.C eif2.C eif3.C eif4.C efor2.C efor3.C input1.C test11.C test12.C test13.C test14.C createTest.C t1 t2 t3 t4 mfEx.C mfEx2.C mfEx3.C mfEx4.C mfEx5.C mfEx6.C mfEx7.C mfEx8.C mfEx9.C mfEx12.C mfEx13.C mfEx14.C mfEx15.C whiletest.C whiletest2.C whiletest3.C
 
 # To keep compile commands tidy, please ONLY put required include flags here.
-INCLUDES = $(ROSE_INCLUDES)  -fopenmp -O3
+INCLUDES = $(ROSE_INCLUDES)
 
 ## Don't use the repository in ../src
 CXX_TEMPLATE_REPOSITORY_PATH = .
@@ -23,52 +23,52 @@ ROSE_DEVELOPMENT_LIBS = $(ROSE_SEPARATE_LIBS)
 
 e0_SOURCES = efor2.C.maintest.C
 e0_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-e0_LDFLAGS = -fopenmp -O3 
+#e0_LDFLAGS = -fopenmp -O3 
 
 e1_SOURCES = efor3.C.maintest.C
 e1_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-e1_LDFLAGS = -fopenmp -O3 
+#e1_LDFLAGS = -fopenmp -O3 
 
 f1_SOURCES = tfif1.C.maintest.C
 f1_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-f1_LDFLAGS = -fopenmp -O3 
+#f1_LDFLAGS = -fopenmp -O3 
 
 f2_SOURCES = tfif2.C.maintest.C
 f2_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-f2_LDFLAGS = -fopenmp -O3 
+#f2_LDFLAGS = -fopenmp -O3 
 
 f3_SOURCES = tfif3.C.maintest.C
 f3_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-f3_LDFLAGS = -fopenmp -O3 
+#f3_LDFLAGS = -fopenmp -O3 
 
 f4_SOURCES = tfif4.C.maintest.C
 f4_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-f4_LDFLAGS = -fopenmp -O3 
+#f4_LDFLAGS = -fopenmp -O3 
 
 ff1_SOURCES = tf1.C.maintest.C
 ff1_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-ff1_LDFLAGS = -fopenmp -O3 
+#ff1_LDFLAGS = -fopenmp -O3 
 
 ff2_SOURCES = tf2.C.maintest.C
 ff2_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-ff2_LDFLAGS = -fopenmp -O3 
+#ff2_LDFLAGS = -fopenmp -O3 
 
 ff3_SOURCES = tf3.C.maintest.C
 ff3_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-ff3_LDFLAGS = -fopenmp -O3 
+#ff3_LDFLAGS = -fopenmp -O3 
 
 interproceduralCFG_SOURCES = interproceduralCFG.C
 interproceduralCFG_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-interproceduralCFG_LDFLAGS = -fopenmp -O3 
+#interproceduralCFG_LDFLAGS = -fopenmp -O3 
 
 astTraversalTest_SOURCES      = astTraversalTest.C
 astTraversalTest_LDADD        = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-astTraversalTest_LDFLAGS = -fopenmp -O3 
+#astTraversalTest_LDFLAGS = -fopenmp -O3 
 
 
 proFunSIG_SOURCES = proFunSIG.C
 proFunSIG_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-proFunSIG_LDFLAGS = -fopenmp -O3 
+#proFunSIG_LDFLAGS = -fopenmp -O3 
 #t14tt_SOURCES = test14.C.maintest.C
 #t14tt_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
  
@@ -87,49 +87,49 @@ proFunSIG_LDFLAGS = -fopenmp -O3
 
 createTest_SOURCES = createTest.C
 createTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-createTest_LDFLAGS = -fopenmp -O3 
+#createTest_LDFLAGS = -fopenmp -O3 
 
 bPTP_SOURCES = bPTP.C
 bPTP_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-bPTP_LDFLAGS = -fopenmp -O3 
+#bPTP_LDFLAGS = -fopenmp -O3 
 
 processnew3Down4SgIncGraph2_SOURCES      = processnew3Down4SgIncGraph2.C
 processnew3Down4SgIncGraph2_LDADD        = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-processnew3Down4SgIncGraph2_LDFLAGS = -fopenmp -O3 
+#processnew3Down4SgIncGraph2_LDFLAGS = -fopenmp -O3 
 
 processnew3Down4SgIncGraph3_SOURCES      = processnew3Down4SgIncGraph3.C
 processnew3Down4SgIncGraph3_LDADD        = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-processnew3Down4SgIncGraph3_LDFLAGS = -fopenmp -O3 
+#processnew3Down4SgIncGraph3_LDFLAGS = -fopenmp -O3 
  #
 
 
 binaryPaths_SOURCES = binaryPaths.C
 binaryPaths_LDADD        = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-binaryPaths_LDFLAGS =  -fopenmp -O3 
+#binaryPaths_LDFLAGS =  -fopenmp -O3 
 
 strictGraphTest_SOURCES = strictGraphTest.C
 strictGraphTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-strictGraphTest_LDFLAGS =  -fopenmp -O3
+#strictGraphTest_LDFLAGS =  -fopenmp -O3
 
 strictGraphTest2_SOURCES = strictGraphTest2.C
 strictGraphTest2_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-strictGraphTest2_LDFLAGS =  -fopenmp -O3
+#strictGraphTest2_LDFLAGS =  -fopenmp -O3
 
 smtlibParser_SOURCES = smtlibParser.C
 smtlibParser_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-smtlibParser_LDFLAGS =  -fopenmp -O3
+#smtlibParser_LDFLAGS =  -fopenmp -O3
 
 sourcePTP_SOURCES = sourcePTP.C
 sourcePTP_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-sourcePTP_LDFLAGS = -fopenmp -O3 
+#sourcePTP_LDFLAGS = -fopenmp -O3 
 
 
-#if HAVE_YICES
+if HAVE_YICES
 yicesParser_SOURCES = yicesParser.C
 yicesParser_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-yicesParser_LDFLAGS  =  -fopenmp -O3 -I/home/hoffman34/yices/yices-1.0.292/include -L/home/hoffman34/yices/yices-1.0.292/lib -lyices
-#endif
-
+#yicesParser_LDFLAGS  =  -fopenmp -O3 -L/home/hoffman34/yices/yices-1.0.292/lib -lyices
+endif
+#
 #yicesMultiParser_SOURCES = yicesMultiParser.C
 #yicesMultiParser_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
 #= -O0 -I/home/hoffman34/yices/yices-1.0.292/include -L/home/hoffman34/yices/yices-1.0.292/lib -lyices
@@ -221,11 +221,44 @@ sourcePTPTest: sourcePTP
 	./sourcePTP $(srcdir)/test14.C
 if HAVE_YICES
 yicesParserTest: yicesParser
-	./yicesParser $(srcdir)/test14.C 
+	./yicesParser $(srcdir)/mfEx.C
+	./yicesParser $(srcdir)/mfEx2.C
+	./yicesParser $(srcdir)/mfEx3.C
+	./yicesParser $(srcdir)/mfEx4.C
+	./yicesParser $(srcdir)/mfEx6.C
+	./yicesParser $(srcdir)/mfEx7.C
+	./yicesParser $(srcdir)/mfEx8.C
+	./yicesParser $(srcdir)/mfEx82.C
+	./yicesParser $(srcdir)/eif.C
+	./yicesParser $(srcdir)/eif2.C
+	./yicesParser $(srcdir)/eif3.C
+	./yicesParser $(srcdir)/efor1.C
+	./yicesParser $(srcdir)/efor2.C
+	./yicesParser $(srcdir)/efor3.C
+	./yicesParser $(srcdir)/mf1.C
+	./yicesParser $(srcdir)/mf2.C
+	./yicesParser $(srcdir)/mf3.C
+	./yicesParser $(srcdir)/mf5.C
+	./yicesParser $(srcdir)/mf7.C
+	./yicesParser $(srcdir)/mf8.C
+	./yicesParser $(srcdir)/mf9.C
+	./yicesParser $(srcdir)/mf10.C
+	./yicesParser $(srcdir)/mf11.C
+	./yicesParser $(srcdir)/mf12.C
+	./yicesParser $(srcdir)/tf1.C
+	./yicesParser $(srcdir)/tf2.C
+	./yicesParser $(srcdir)/tf3.C
+	./yicesParser $(srcdir)/mf13.C
+	./yicesParser $(srcdir)/whiletest.C
+	./yicesParser $(srcdir)/whiletest2.C
+	./yicesParser $(srcdir)/whiletest3.C
+	./yicesParser $(srcdir)/tfif1.C
+	./yicesParser $(srcdir)/tfif2.C
+	./yicesParser $(srcdir)/tfif3.C
+	./yicesParser $(srcdir)/tfif4.C
+	
 endif
 check-local:
-	@$(MAKE) strongCheckFive
-	@$(MAKE) strongCheckSix
 	@$(MAKE) testTraversals
 	@$(MAKE) testRunExamples2
 	@$(MAKE) testRunExamples3

@@ -8,7 +8,7 @@ FINISH TEMPFLATPATH CODE
 
 
 #define LP 1
-#define PERFDEBUG 1
+#define PERFDEBUG 0
 //#define FULLDEBUG 1
 #ifdef _OPENMP
 #include <omp.h>
@@ -215,7 +215,7 @@ SgGraphTraversal<CFG>::
     Gets the source of an edge
     SgGraphTraversal::getSource
     Input:
-    @param[edge] int& integer representation of edge in quesution
+    @param[edge] int& integer representation of edge in question
     @param[g] CFG*& the CFG used
 */
 template<class CFG>
@@ -294,6 +294,15 @@ getOutEdges(int &node, CFG*& g)
     }
     return outedges;
 }
+
+/**
+Condenses paths, currently deprecated...
+Input:
+@param[pth] std::vector<int> the original path
+@param[g] CFG*, the ambient graph
+Output:
+zipped path
+*/
 
 template<class CFG>
 inline
@@ -431,6 +440,7 @@ template<class CFG>
 std::vector<std::vector<int> >
 SgGraphTraversal<CFG>::
 bfsTraversePath(int begin, int end, CFG*& g, bool loop) {
+//perfdebug allows for examining the speed of traversal
     #ifdef PERFDEBUG
     timeval tim;
     gettimeofday(&tim, NULL);
@@ -440,7 +450,7 @@ bfsTraversePath(int begin, int end, CFG*& g, bool loop) {
     std::map<int, std::vector<std::vector<int> > > PtP;
     std::set<int> nodes;
     std::vector<std::vector<int> > pathContainer;
-    std::vector<std::vector<int> > oldPaths;
+    //std::vector<std::vector<int> > oldPaths;
     std::vector<int> completedLoops;
     std::vector<std::vector<int> > npc;
     std::vector<int> bgpath;
@@ -450,8 +460,9 @@ bfsTraversePath(int begin, int end, CFG*& g, bool loop) {
     std::vector<std::vector<int> > paths;
     std::vector<int> localLoops;
     std::map<int, std::vector<std::vector<int> > > globalLoopPaths;
-     std::cout << "at the while" << std::endl;
-     while (pathContainer.size() != 0 || oldPaths.size() != 0) {
+     //std::cout << "at the while" << std::endl;
+//To keep
+     while (pathContainer.size() != 0 /*|| oldPaths.size() != 0*/) {
 /*
        unsigned int mpc = 50000;
        if (pathContainer.size() == 0) {
@@ -479,6 +490,8 @@ bfsTraversePath(int begin, int end, CFG*& g, bool loop) {
            npc.clear();
        }
 */
+
+//iterating through the currently discovered subpaths to build them up
        for (unsigned int i = 0; i < pathContainer.size(); i++) {
        std::vector<int> npth = pathContainer[i];
         std::vector<int> oeds = getOutEdges(npth.back(), g);
@@ -514,6 +527,8 @@ int tg = getTarget(oeds[j], g);
             
 
             std::vector<int> newpath = (pathContainer[i]);
+           //we split up paths into pieces so that they don't take up a lot of memory, basically this is when we run into a path
+           //more than once, so we attach all paths that go to that path to that particular node via PtP
             if (nodes.find(tg) != nodes.end() && find(newpath.begin(), newpath.end(), tg) == newpath.end() && tg != end) {
                 if (PtP.find(tg) == PtP.end()) {
                     std::vector<int> nv;
@@ -556,7 +571,7 @@ int tg = getTarget(oeds[j], g);
         pathContainer = newPathContainer;
         newPathContainer.clear();
         }
-        std::cout << "done while" << std::endl;
+       // std::cout << "done while" << std::endl;
         pathContainer.clear();
     std::vector<std::vector<int> > finnpts;
     std::vector<std::vector<int> > npts;
@@ -694,11 +709,11 @@ int tg = getTarget(oeds[j], g);
     //}
     #ifdef PERFDEBUG
  //   timeval tim; 
-    std::cout << "begin: " << begin << " end: " << end << std::endl;
+    //std::cout << "begin: " << begin << " end: " << end << std::endl;
     gettimeofday(&tim, NULL);
     double tim2 = tim.tv_sec+(tim.tv_usec/1000000);
     double timeRet = tim2 - tim1;
-    std::cout << "bfs time elapsed: " << timeRet << std::endl;
+    //std::cout << "bfs time elapsed: " << timeRet << std::endl;
     #endif
     return lps2;
     
@@ -720,7 +735,7 @@ template<class CFG>
 std::set<std::vector<int> >
 SgGraphTraversal<CFG>::
 uTraversePath(int begin, int end, CFG*& g, bool loop, std::map<int, std::vector<std::vector<int> > >& globalLoopPaths) {
-    std::cout << "uTraverse" << std::endl;
+    //std::cout << "uTraverse" << std::endl;
     int doubledpaths = 0;
     int newmil = 1;
     //#ifdef LP
@@ -762,7 +777,7 @@ uTraversePath(int begin, int end, CFG*& g, bool loop, std::map<int, std::vector<
                     paths = pathStore;
                     pathStore.clear(); 
                 }   
-                std::cout << "paths.size(): " << paths.size() << std::endl; 
+                //std::cout << "paths.size(): " << paths.size() << std::endl; 
                 if (paths.size() != 0) {
                 }
                 else {
@@ -958,7 +973,7 @@ uTraversePath(int begin, int end, CFG*& g, bool loop, std::map<int, std::vector<
                         
                        evaledpaths += boxpaths.size();
                       if (evaledpaths > newmil*100000) {
-                       std::cout << "evaledpaths: " << evaledpaths << std::endl;
+                       //std::cout << "evaledpaths: " << evaledpaths << std::endl;
                        newmil++;
                         }
                        // #pragma omp critical
@@ -1045,16 +1060,16 @@ uTraversePath(int begin, int end, CFG*& g, bool loop, std::map<int, std::vector<
                    // double t2 = tim.tv_sec+(tim.tv_usec/1000000.0);
                    // double tperm = t2 - t1perm
                     //double tX = t2 - t1;
-                    std::cout << "begin: " << begin << " end: " << end << std::endl;
+                    //std::cout << "begin: " << begin << " end: " << end << std::endl;
                    // std::cout << "uTraverse time: " << tX << std::endl;
                    // std::cout << "tperms: " << tperms << std::endl;
                    // std::cout << "ttfors: " << ttfors << std::endl;
-                    std::cout << "doubledpaths: " << doubledpaths << std::endl;
+                   // std::cout << "doubledpaths: " << doubledpaths << std::endl;
                     #endif
                     #ifdef LP
                     if (loop) {
                    #ifdef PERFDEBUG
-                     std::cout << "loopPaths: " << loopPaths.size() << std::endl;
+                   //  std::cout << "loopPaths: " << loopPaths.size() << std::endl;
                    #endif
                     loopStore[begin] = loopPaths;
                     }
@@ -1105,10 +1120,10 @@ constructPathAnalyzer(CFG* g, bool unbounded, Vertex begin, Vertex end, bool ns)
     prepareGraph(g);
     workingthread = false;
     workingthreadnum = -1;
-    std::cout << "markers: " << markers.size() << std::endl;
-    std::cout << "closures: " << closures.size() << std::endl;
-    std::cout << "sources: " << sources.size() << std::endl;
-    std::cout << "sinks" << sinks.size() << std::endl;
+    //std::cout << "markers: " << markers.size() << std::endl;
+    //std::cout << "closures: " << closures.size() << std::endl;
+    //std::cout << "sources: " << sources.size() << std::endl;
+    //std::cout << "sinks" << sinks.size() << std::endl;
 //    printHotness(g);
     bool subgraph = false;
     if (!subgraph) {
@@ -1117,7 +1132,7 @@ constructPathAnalyzer(CFG* g, bool unbounded, Vertex begin, Vertex end, bool ns)
                 recursiveLoops.clear();
                 recurses.clear();
                 std::vector<std::vector<int> > spaths = bfsTraversePath(vertintmap[begin], vertintmap[end], g);
-                std::cout << "spaths: " << spaths.size() << std::endl;
+      //          std::cout << "spaths: " << spaths.size() << std::endl;
             }
             else {
                 std::set<int> usedsources;
@@ -1133,7 +1148,7 @@ constructPathAnalyzer(CFG* g, bool unbounded, Vertex begin, Vertex end, bool ns)
                 }
            }
     }
-    std::cout << "checkedfound: " << checkedfound << std::endl;
+    //std::cout << "checkedfound: " << checkedfound << std::endl;
     printHotness(g);
 }
 
