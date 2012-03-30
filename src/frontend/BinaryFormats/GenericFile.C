@@ -567,27 +567,35 @@ SgAsmGenericFile::get_best_section_by_va(rose_addr_t va, size_t *nfound/*optiona
     return best_section_by_va(candidates, va);
 }
 
-/** Definition for "best" as used by
- *  SgAsmGenericFile::get_best_section_by_va() and
- *  SgAsmGenericHeader::get_best_section_by_va() */
+/** Definition for "best" as used by SgAsmGenericFile::get_best_section_by_va() and
+ *  SgAsmGenericHeader::get_best_section_by_va().  The specified list of sections is scanned and the best one containing the
+ *  specified virtual address is returned.  The operation is equivalent to the successive elimination of bad sections: first
+ *  eliminate all sections that do not contain the virtual address.  If more than one remains, eliminate all but the smallest.
+ *  If two or more are tied in size and at least one has a name, eliminate those that don't have names.  If more than one
+ *  section remains, return the section that is earliest in the specified list of sections.  Return the null pointer if no
+ *  section contains the specified virtual address, or if any two sections that contain the virtual address map it to different
+ *  parts of the underlying binary file. */
 SgAsmGenericSection *
 SgAsmGenericFile::best_section_by_va(const SgAsmGenericSectionPtrList &sections, rose_addr_t va)
 {
-    if (0==sections.size())
-        return NULL;
-    if (1==sections.size()) 
-        return sections[0];
-    SgAsmGenericSection *best = sections[0];
-    rose_addr_t fo0 = sections[0]->get_va_offset(va);
-    for (size_t i=1; i<sections.size(); i++) {
-        if (fo0 != sections[i]->get_va_offset(va))
-            return NULL; /* all sections must map the VA to the same file offset */
-        if (best->get_mapped_size() > sections[i]->get_mapped_size()) {
-            best = sections[i]; /*prefer sections with a smaller mapped size*/
-        } else if (best->get_name()->get_string().size()==0 && sections[i]->get_name()->get_string().size()>0) {
-            best = sections[i]; /*prefer sections having a name*/
+    SgAsmGenericSection *best = NULL;
+    rose_addr_t file_offset = 0;
+    for (SgAsmGenericSectionPtrList::const_iterator si=sections.begin(); si!=sections.end(); ++si) {
+        SgAsmGenericSection *section = *si;
+        if (!section->is_mapped() || va<section->get_mapped_actual_va() ||
+            va>=section->get_mapped_actual_va()+section->get_mapped_size()) {
+            // section does not contain virtual address
+        } else if (!best) {
+            best = section;
+            file_offset = section->get_va_offset(va);
+        } else if (file_offset!=section->get_va_offset(va)) {
+            return NULL; // error
+        } else if (best->get_mapped_size() > section->get_mapped_size()) {
+            best = section;
+        } else if (best->get_name()->get_string().empty() && !section->get_name()->get_string().empty()) {
+            best = section;
         } else {
-            /*prefer section defined earlier*/
+            // prefer section defined earlier
         }
     }
     return best;
