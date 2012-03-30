@@ -544,23 +544,38 @@ public:
     /** Looks up a function by address.  Returns the function pointer if found, the null pointer if not found. */
     virtual Function* find_function(rose_addr_t entry_va);
 
-    /** Builds the AST describing all the functions. The return value is an SgAsmBlock node that points to a list of
-     *  SgAsmFunction nodes (the functions), each of which points to a list of SgAsmBlock nodes (the basic
-     *  blocks). Any basic blocks that were not assigned to a function by the Partitioner will be added to a function named
-     *  "***uncategorized blocks***" whose entry address will be the address of the lowest instruction, and whose reasons for
-     * existence will include the SgAsmFunction::FUNC_LEFTOVERS bit.  However, if the FUNC_LEFTOVERS bit is not
-     * turned on (see set_search()) then uncategorized blocks will not appear in the AST. */
-    virtual SgAsmBlock* build_ast();
+    /** Builds the AST describing all the functions.
+     *
+     *  The return value is an SgAsmBlock node that points to a list of SgAsmFunction nodes (the functions), each of which
+     *  points to a list of SgAsmBlock nodes (the basic blocks). Any basic blocks that were not assigned to a function by the
+     *  Partitioner will be added to a function named "***uncategorized blocks***" whose entry address will be the address of
+     *  the lowest instruction, and whose reasons for existence will include the SgAsmFunction::FUNC_LEFTOVERS bit.  However,
+     *  if the FUNC_LEFTOVERS bit is not turned on (see set_search()) then uncategorized blocks will not appear in the AST.
+     *
+     *  If an interpretation is supplied, then it will be used to obtain information about where various file sections are
+     *  mapped into memory.  This mapping is used to fix-up various kinds of pointers in the instructions to make them relative
+     *  to a file section.  For instance, a pointer into the ".bss" section will be made relative to the beginning of that
+     *  section. */
+    virtual SgAsmBlock* build_ast(SgAsmInterpretation *interp=NULL);
 
     /** Update control flow graph edge nodes.  This method traverses the specified AST and updates any edge nodes so their
      *  block pointers point to actual blocks rather than just containing virtual addresses.  The update only happens for
      *  edges that don't already have a node pointer. */
     virtual void fixup_cfg_edges(SgNode *ast);
 
-    /** Update branch targets.  This method traverses the specified AST and updates any branch instructions so their operand
-     *  points to an instruction rather than just containing a virtual address.  The update only happens for operands that
-     *  don't already point to some node. */
-    virtual void fixup_branch_targets(SgNode *ast);
+    /** Updates pointers inside instructions.  This method traverses each instruction in the specified AST and looks for
+     *  integer value expressions that that have no base node (i.e., those that have only an absolute value).  For each such
+     *  value it finds, it tries to determine if that value points to code or data.  Code pointers are made relative to the
+     *  instruction or function (for function calls) to which they point; data pointers are made relative to the data to which
+     *  they point.
+     *
+     *  The specified interpretation is only used to obtain a list of all mapped sections.  The sections are used to determine
+     *  whether a value is a data pointer even if it doesn't point to any specific data that was discovered during
+     *  disassembly.
+     *
+     *  This method is called by build_ast(), but can also be called explicitly. Only pointers that are not already relative to
+     *  some object are affected. */
+    virtual void fixup_pointers(SgNode *ast, SgAsmInterpretation *interp=NULL);
 
     /**************************************************************************************************************************
      *                                  Range maps relating address ranges to objects
