@@ -128,6 +128,87 @@ SgAsmIntegerValueExpression::virtual_address(SgNode *node)
     abort(); // if asserts are disabled
 }
 
+/** Returns a label for the value.  The label consists of the base object name (if available) or address, followed by a plus
+ *  sign or minus sign, followed by the offset from that object.  The empty string is returned if this integer value expression
+ *  has no base object (i.e., it's absolute). */
+std::string
+SgAsmIntegerValueExpression::get_label() const
+{
+    SgNode *node = get_base_node();
+    if (!node)
+        return "";
+
+    // Get the name of the base object if possible.
+    std::string retval;
+    if (isSgAsmFunction(node)) {
+        retval = isSgAsmFunction(node)->get_name();
+    } else if (isSgAsmGenericSymbol(node)) {
+        retval = isSgAsmGenericSymbol(node)->get_name()->get_string();
+    } else if (isSgAsmPEImportItem(node)) {
+        retval = isSgAsmPEImportItem(node)->get_name()->get_string();
+    } else if (isSgAsmGenericSection(node)) {
+        retval = isSgAsmGenericSection(node)->get_name()->get_string();
+    }
+
+    // If the base object has no name, then use its address instead.  But don't return a label if it would be redundant with
+    // the absolute value (e.g. "0+0x0400" or "0x0400+0").
+    int64_t offset = (int64_t)get_relative_value();
+    if (retval.empty()) {
+        if (0==get_base_address() || 0==offset)
+            return "";
+        retval = StringUtility::addrToString(virtual_address(node), 32, false/*unsigned*/);
+        assert(!retval.empty());
+    }
+
+    // Append the offset, but consider it to be signed.  Disregard the number of significant bits in the absolute value and use
+    // a smaller bit width if possible.  But don't use the minimum bit width since this makes it hard to tell how many bits
+    // there are at a glance (use only 8, 16, 32, or 64).
+    size_t nbits = 0;
+    if (offset > 0xffffffffll) {
+        nbits = 64;
+        retval += "+";
+    } else if (offset > 0xffffll) {
+        nbits = 32;
+        retval += "+";
+    } else if (offset > 0xffll) {
+        nbits = 16;
+        retval += "+";
+    } else if (offset > 9) {
+        nbits = 8;
+        retval += "+";
+    } else if (offset > 0) {
+        char buf[64];
+        snprintf(buf, sizeof buf, "+%"PRId64, offset);
+        retval += buf;
+    } else if (offset==0) {
+        /*void*/
+    } else if (-offset > 0xffffffffll) {
+        nbits = 64;
+        offset = -offset;
+        retval += "-";
+    } else if (-offset > 0xffffll) {
+        nbits = 32;
+        offset = -offset;
+        retval += "-";
+    } else if (-offset > 0xffll) {
+        nbits = 16;
+        offset = -offset;
+        retval += "-";
+    } else if (-offset > 9) {
+        nbits = 8;
+        offset = -offset;
+        retval += "-";
+    } else {
+        char buf[64];
+        snprintf(buf, sizeof buf, "%"PRId64, offset);
+        retval += buf;
+    }
+    if (nbits!=0)
+        retval += StringUtility::addrToString(offset, nbits, false/*unsigned*/);
+
+    return retval;
+}
+
 /** Set the number of significant bits to return by default for get_absolute_value(). */
 void
 SgAsmIntegerValueExpression::set_significant_bits(size_t nbits)
