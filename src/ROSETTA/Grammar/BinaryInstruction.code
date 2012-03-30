@@ -425,7 +425,7 @@ HEADER_INTEGER_VALUE_EXPRESSION_START
                 explicit SgAsmIntegerValueExpression(uint64_t n, size_t nbits=64)
                         : p_base_node(NULL), p_relative_value(n), p_significant_bits(nbits) {}
                 static uint64_t virtual_address(SgNode*);
-                std::string get_label() const;
+                std::string get_label(bool quiet=false) const;
                 void set_significant_bits(size_t nbits);
                 size_t get_significant_bits() const;
                 void make_relative_to(SgNode *base_node);
@@ -923,15 +923,15 @@ HEADER_GENERIC_SECTION_START
                 virtual void unparse(std::ostream&) const;
                 void unparse(std::ostream&, const ExtentMap&) const;
                 void unparse_holes(std::ostream&) const;
-                SgAsmGenericHeader *is_file_header();   /** true if section represents a top level file header */
+                SgAsmGenericHeader *is_file_header();   /**< true if section represents a top level file header */
 
                 /* Functions for section extent within the file */
                 rose_addr_t   get_size() const;
                 virtual void  set_size(rose_addr_t);            /* Resize a section w/o regard to other sections or mapping */
                 rose_addr_t   get_offset() const;
-                virtual void  set_offset(rose_addr_t);          /** Move a section w/o regard to other sections or mapping */
-                rose_addr_t   get_end_offset() const;           /** file offset for end of section */
-                void          extend(rose_addr_t nbytes);       /** make section larger by extending the end */
+                virtual void  set_offset(rose_addr_t);          /**< Move a section w/o regard to other sections or mapping */
+                rose_addr_t   get_end_offset() const;           /**< file offset for end of section */
+                void          extend(rose_addr_t nbytes);       /**< make section larger by extending the end */
                 rose_addr_t   write(std::ostream&, rose_addr_t offset, size_t bufsize, const void *buf) const;
                 rose_addr_t   write(std::ostream&, rose_addr_t offset, const std::string &str) const;
                 rose_addr_t   write(std::ostream&, rose_addr_t offset, char c) const;
@@ -965,8 +965,8 @@ HEADER_GENERIC_SECTION_START
                 ExtentMap get_unreferenced_extents() const;     /* Returns parts of file that have not been referenced */
 
                 /* Functions related to mapping of sections into executable memory */
-                bool          is_mapped() const;                /** True iff non-zero mapped address and size */
-                void          clear_mapped();                   /** Set mapped address and size to zero (unmapped)*/
+                bool          is_mapped() const;                /**< True iff non-zero mapped address and size */
+                void          clear_mapped();                   /**< Set mapped address and size to zero (unmapped)*/
                 rose_addr_t   get_mapped_size() const;
                 virtual void  set_mapped_size(rose_addr_t);     /* Set mapped size w/o regard to other section mappings */
                 rose_addr_t   get_mapped_preferred_rva() const; /* The virtual address indicated in the binary file */
@@ -977,8 +977,10 @@ HEADER_GENERIC_SECTION_START
                 rose_addr_t   get_rva_offset(rose_addr_t rva) const;/* Return file offset for specified relative virtual address */
 
                 /* Accessors for private members */
-                SgAsmGenericString *get_name() const;           /** Same as standard ROSETTA accessor */
-                void set_name(SgAsmGenericString *s);           /** Like std accessor but sets parent of 's' */
+                SgAsmGenericString *get_name() const;           /* Same as standard ROSETTA accessor */
+                void set_name(SgAsmGenericString *s);           /* Like std accessor but sets parent of 's' */
+		std::string get_short_name() const;		/* Get the abbreviated name, or the real name */
+		void set_short_name(const std::string&);	/* Set the abbreviated name. */
 
                 /* Convenience functions */
                 Extent get_file_extent() const;                 /* Returns get_offset() and get_size() */
@@ -1347,16 +1349,16 @@ HEADER_ELF_HEADER_START
         public:
                 /** enum used for e_type */ 
                 enum ObjectType { 
-                         ET_NONE         = 0            /** No file type */
-                        ,ET_REL          = 1            /** Relocatable file */
-                        ,ET_EXEC         = 2            /** Executable file */
-                        ,ET_DYN          = 3            /** Shared object file */
-                        ,ET_CORE         = 4            /** Core file */
+                         ET_NONE         = 0            /**< No file type */
+                        ,ET_REL          = 1            /**< Relocatable file */
+                        ,ET_EXEC         = 2            /**< Executable file */
+                        ,ET_DYN          = 3            /**< Shared object file */
+                        ,ET_CORE         = 4            /**< Core file */
 
-                        ,ET_LOOS         = 0xfe00       /** OS-specific range start */
-                        ,ET_HIOS         = 0xfeff       /** OS-specific range end */
-                        ,ET_LOPROC       = 0xff00       /** Processor-specific range start */
-                        ,ET_HIPROC       = 0xffff       /** Processor-specific range end */
+                        ,ET_LOOS         = 0xfe00       /**< OS-specific range start */
+                        ,ET_HIOS         = 0xfeff       /**< OS-specific range end */
+                        ,ET_LOPROC       = 0xff00       /**< Processor-specific range start */
+                        ,ET_HIPROC       = 0xffff       /**< Processor-specific range end */
                 };
 
 
@@ -1501,19 +1503,19 @@ HEADER_ELF_SECTION_TABLE_ENTRY_START
 
                 /** Section Flags (host order).  All other values are reserved. */
                 enum SectionFlags {
-                        SHF_NULL=                  0,   /** Invalid section flag (added for rose) */
-                        SHF_WRITE=           (1 << 0),  /** Writable */
-                        SHF_ALLOC=           (1 << 1),  /** Occupies memory during execution */
-                        SHF_EXECINSTR=       (1 << 2),  /** Executable */
-                        SHF_MERGE=           (1 << 4),  /** Might be merged */
-                        SHF_STRINGS=         (1 << 5),  /** Contains nul-terminated strings */
-                        SHF_INFO_LINK=       (1 << 6),  /** `sh_info' contains SHT index */
-                        SHF_LINK_ORDER=      (1 << 7),  /** Preserve order after combining */
-                        SHF_OS_NONCONFORMING=(1 << 8),  /** Non-standard OS specific handling required */
-                        SHF_GROUP=           (1 << 9),  /** Section is member of a group.  */
-                        SHF_TLS=             (1 << 10), /** Section hold thread-local data.  */
-                        SHF_MASKOS=          0x0ff00000,/** OS-specific.  */
-                        SHF_MASKPROC=        0xf0000000 /** Processor-specific */
+                        SHF_NULL=                  0,   /**< Invalid section flag (added for rose) */
+                        SHF_WRITE=           (1 << 0),  /**< Writable */
+                        SHF_ALLOC=           (1 << 1),  /**< Occupies memory during execution */
+                        SHF_EXECINSTR=       (1 << 2),  /**< Executable */
+                        SHF_MERGE=           (1 << 4),  /**< Might be merged */
+                        SHF_STRINGS=         (1 << 5),  /**< Contains nul-terminated strings */
+                        SHF_INFO_LINK=       (1 << 6),  /**< `sh_info' contains SHT index */
+                        SHF_LINK_ORDER=      (1 << 7),  /**< Preserve order after combining */
+                        SHF_OS_NONCONFORMING=(1 << 8),  /**< Non-standard OS specific handling required */
+                        SHF_GROUP=           (1 << 9),  /**< Section is member of a group.  */
+                        SHF_TLS=             (1 << 10), /**< Section hold thread-local data.  */
+                        SHF_MASKOS=          0x0ff00000,/**< OS-specific.  */
+                        SHF_MASKPROC=        0xf0000000 /**< Processor-specific */
                 };
 
                 /** File format of an ELF Section header. Byte order of members depends on e_ident value in file header. This code
@@ -2655,7 +2657,7 @@ HEADER_PE_FILE_HEADER_START
 
                 virtual const char *format_name() const {return "PE";}
                 static bool is_PE (SgAsmGenericFile*);
-                std::string rvasize_pair_name(PairPurpose);
+                std::string rvasize_pair_name(PairPurpose, const char **short_name);
                 void set_rvasize_pair(PairPurpose, SgAsmPESection*);
                 void update_rvasize_pairs();
                 void add_rvasize_pairs();

@@ -2490,6 +2490,8 @@ Grammar::setUpBinaryInstructions()
      // destructor will need to explicitly delete the name.
      AsmGenericSection.setDataPrototype("SgAsmGenericString*", "name", "= NULL",
                                         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmGenericSection.setDataPrototype("std::string", "short_name", "",
+                                        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmGenericSection.setDataPrototype("rose_addr_t", "mapped_preferred_rva", "= 0", // DOXYGEN
                                         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmGenericSection.setDataPrototype("rose_addr_t", "mapped_size", "= 0",

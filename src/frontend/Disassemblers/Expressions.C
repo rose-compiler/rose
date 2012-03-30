@@ -130,9 +130,24 @@ SgAsmIntegerValueExpression::virtual_address(SgNode *node)
 
 /** Returns a label for the value.  The label consists of the base object name (if available) or address, followed by a plus
  *  sign or minus sign, followed by the offset from that object.  The empty string is returned if this integer value expression
- *  has no base object (i.e., it's absolute). */
+ *  has no base object (i.e., it's absolute).
+ *
+ *  If the base object has no name and the integer value points directly at the object (offset=0) then one of two things
+ *  happen: if @p quiet is true, the empty string is returned, otherwise the label is the name of the node type enclosed in an
+ *  extra set of angle brackets.  This is useful to indicate that a value is relative rather than absolute.  For instance, the
+ *  instruction listing "call 0x004126bb" is ambiguous as to whether 0x004126bb points to a known, unnamed function, a non-entry
+ *  instruction within a function, or some memory location we didn't disassemble.  But when labeled with @p quiet being false,
+ *  the output will be:
+ *
+ *  <ul>
+ *    <li>call 0x004126bb<main>; points to a function with a name</li>
+ *    <li>call 0x004126bb<<Func>>; points to a function without a name</li>
+ *    <li>call 0x004126bb<<Insn>>; points to an instruction that's not a function entry point</li>
+ *    <li>call 0x004126bb; points to something that's not been disassembled</li>
+ *  </ul>
+ */
 std::string
-SgAsmIntegerValueExpression::get_label() const
+SgAsmIntegerValueExpression::get_label(bool quiet/*=false*/) const
 {
     SgNode *node = get_base_node();
     if (!node)
@@ -140,24 +155,43 @@ SgAsmIntegerValueExpression::get_label() const
 
     // Get the name of the base object if possible.
     std::string retval;
+    std::string refkind;
     if (isSgAsmFunction(node)) {
         retval = isSgAsmFunction(node)->get_name();
+        refkind = "Func";
     } else if (isSgAsmGenericSymbol(node)) {
         retval = isSgAsmGenericSymbol(node)->get_name()->get_string();
+        refkind = "Sym";
     } else if (isSgAsmPEImportItem(node)) {
         retval = isSgAsmPEImportItem(node)->get_name()->get_string();
+        refkind = "Import";
     } else if (isSgAsmGenericSection(node)) {
-        retval = isSgAsmGenericSection(node)->get_name()->get_string();
+        retval = isSgAsmGenericSection(node)->get_short_name();
+        refkind = "Section";
+    } else if (isSgAsmInstruction(node)) {
+        refkind = "Insn";
+    } else if (isSgAsmStaticData(node)) {
+        SgAsmBlock *blk = SageInterface::getEnclosingNode<SgAsmBlock>(node);
+        if (blk && 0!=(blk->get_reason() & SgAsmBlock::BLK_JUMPTABLE)) {
+            refkind = "JumpTable";
+        } else {
+            refkind = "StaticData";
+        }
+    } else if (isSgAsmBlock(node)) {
+        refkind = "BBlock";
+    } else if (isSgAsmPERVASizePair(node)) {
+        refkind = "Rva/Size";
+    } else {
+        refkind = "Reference";
     }
 
-    // If the base object has no name, then use its address instead.  But don't return a label if it would be redundant with
-    // the absolute value (e.g. "0+0x0400" or "0x0400+0").
+    // If it has no name, then use something fairly generic.  That way we can at least indicate that the value is relative.
     int64_t offset = (int64_t)get_relative_value();
     if (retval.empty()) {
-        if (0==get_base_address() || 0==offset)
-            return "";
-        retval = StringUtility::addrToString(virtual_address(node), 32, false/*unsigned*/);
-        assert(!retval.empty());
+        retval = "<" + refkind; // extra level of brackets to indicate that it's not a real name
+        if (offset)
+            retval += "@" + StringUtility::addrToString(virtual_address(node), 32, false/*unsigned*/);
+        retval += ">";
     }
 
     // Append the offset, but consider it to be signed.  Disregard the number of significant bits in the absolute value and use
