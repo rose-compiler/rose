@@ -340,8 +340,10 @@ SgAsmGenericFile::get_sections(bool include_holes) const
 
     /* Add sections pointed to by headers. */
     for (SgAsmGenericHeaderPtrList::iterator i=p_headers->get_headers().begin(); i!=p_headers->get_headers().end(); ++i) {
-        const SgAsmGenericSectionPtrList &recurse = (*i)->get_sections()->get_sections();
-        retval.insert(retval.end(), recurse.begin(), recurse.end());
+        if ((*i)->get_sections()!=NULL) {
+            const SgAsmGenericSectionPtrList &recurse = (*i)->get_sections()->get_sections();
+            retval.insert(retval.end(), recurse.begin(), recurse.end());
+        }
     }
     return retval;
 }
