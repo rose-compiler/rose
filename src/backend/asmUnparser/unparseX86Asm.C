@@ -134,10 +134,8 @@ std::string unparseX86Expression(SgAsmExpression *expr, const AsmUnparser::Label
             // Optional label.  Prefer a label supplied by the caller's LabelMap, but not for single-byte constants.  If
             // there's no caller-supplied label, then consider whether the value expression is relative to some other IR node.
             std::string label;
-#if 0 /* Commented out for DEBUGGING to check that SgAsmIntegerValueExpression::get_label() workds [RPM 2012-03-29] */
             if (ival->get_significant_bits()>8)
                 label =x86ValToLabel(value, labels);
-#endif
             if (label.empty())
                 label = ival->get_label();
             if (!label.empty())
