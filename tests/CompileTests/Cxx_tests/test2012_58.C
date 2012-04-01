@@ -1,0 +1,28 @@
+// This code is similar to test2012_57.C.
+template <typename T>
+class X
+   {
+     public:
+          friend void foo( X<T> & i )
+             {
+               int a;
+             }
+   };
+
+#if 1
+template <typename T>
+void foo( T & j )
+   {
+     int b;
+   }
+#endif
+
+#if 1
+void foobar()
+   {
+     X<int> x;
+
+  // This causes the EDG/ROSE connection to fail (this will cause the foo explicitly defined in the global scope to be referenced).
+     ::foo(x);
+   }
+#endif
