@@ -1726,6 +1726,10 @@ SgType::stripType(unsigned char bit_array) const
   // Cast away const of "this" pointer
      SgType* currentType = (SgType*) this;
 
+#if 0
+     printf ("Inside of SgType::stripType(bit_array = %u) this = %p = %s \n",bit_array,currentType,currentType->class_name().c_str());
+#endif
+
      SgModifierType*  modType     = NULL;
      SgPointerType*   pointType   = NULL;
      SgReferenceType* refType     = NULL;

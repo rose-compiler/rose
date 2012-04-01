@@ -23,6 +23,7 @@
    #include "transformationSupport.h"
 #endif
 
+// DQ (3/31/2012): Is this going to be an issue fo C++11 use with ROSE?
 #define foreach BOOST_FOREACH
 
 using namespace std;
@@ -81,7 +82,9 @@ SgSymbolTable::find_symbol_by_type_of_function (const SgName & name, const SgTyp
                case V_SgFunctionDeclaration:
                case V_SgTemplateInstantiationFunctionDecl:
                   {
+#if 0
                     printf ("In SgSymbolTable::find_symbol_by_type_of_function(): This is a SgFunctionDeclaration function \n");
+#endif
                  // func_symbol = this->find_function(name,func_type);
                     func_symbol = find_nontemplate_function(name,func_type);
                     break;
@@ -90,21 +93,27 @@ SgSymbolTable::find_symbol_by_type_of_function (const SgName & name, const SgTyp
                case V_SgMemberFunctionDeclaration:
                case V_SgTemplateInstantiationMemberFunctionDecl:
                   {
+#if 0
                     printf ("In SgSymbolTable::find_symbol_by_type_of_function(): This is a SgMemberFunctionDeclaration function \n");
+#endif
                     func_symbol = find_nontemplate_member_function(name,func_type);
                     break;
                   }
 
                case V_SgTemplateFunctionDeclaration:
                   {
+#if 0
                     printf ("In SgSymbolTable::find_symbol_by_type_of_function(): This is a SgTemplateFunctionDeclaration function \n");
+#endif
                     func_symbol = find_template_function(name,func_type);
                     break;
                   }
 
                case V_SgTemplateMemberFunctionDeclaration:
                   {
+#if 0
                     printf ("In SgSymbolTable::find_symbol_by_type_of_function(): This is a SgTemplateMemberFunctionDeclaration function \n");
+#endif
                     func_symbol = find_template_member_function(name,func_type);
                     break;
                   }
@@ -118,10 +127,12 @@ SgSymbolTable::find_symbol_by_type_of_function (const SgName & name, const SgTyp
              }
         }
 
+#if 0
      if (func_symbol != NULL)
           printf ("In SgSymbolTable::find_symbol_by_type_of_function(): func_symbol = %p = %s \n",func_symbol,func_symbol->class_name().c_str());
        else
           printf ("In SgSymbolTable::find_symbol_by_type_of_function(): func_symbol = %p \n",func_symbol);
+#endif
 
   // return isSgFunctionSymbol(func_symbol);
      return func_symbol;
@@ -756,10 +767,12 @@ SageBuilder::buildFunctionParameterTypeList(SgType* type0, SgType* type1, SgType
 SgFunctionType * 
 SageBuilder::buildFunctionType(SgType* return_type, SgFunctionParameterTypeList* typeList)
    {
-     ROSE_ASSERT(return_type);
+     ROSE_ASSERT(return_type != NULL);
 
+#if 0
      printf ("Inside of SageBuilder::buildFunctionType(SgType,SgFunctionParameterTypeList) \n");
      printf ("Inside of SageBuilder::buildFunctionType() return_type = %s \n",return_type->get_mangled().str());
+#endif
 
      SgFunctionTypeTable * fTable = SgNode::get_globalFunctionTypeTable();
      ROSE_ASSERT(fTable);
@@ -770,11 +783,13 @@ SageBuilder::buildFunctionType(SgType* return_type, SgFunctionParameterTypeList*
 
      SgFunctionType* funcType = isSgFunctionType(fTable->lookup_function_type(typeName));
 
+#if 0
      printf ("In SageBuilder::buildFunctionType(): typeName = %s funcType = %p \n",typeName.str(),funcType);
      if (funcType != NULL)
         {
           printf ("In SageBuilder::buildFunctionType(): funcType->get_mangled_type() = %s \n",funcType->get_mangled_type().str());
         }
+#endif
 
      if (funcType == NULL) 
         {
@@ -955,9 +970,9 @@ SageBuilder::buildMemberFunctionType(SgType* return_type, SgFunctionParameterTyp
   // or restrict (assert that none are set for now).
   // ROSE_ASSERT(mfunc_specifier == 0);
   // funcType->set_mfunc_specifier(mfunc_specifier);
-
+#if 0
      printf ("In buildMemberFunctionType(): returning funcType = %p = %s mfunc_specifier = %u \n",funcType,funcType->class_name().c_str(),mfunc_specifier);
-
+#endif
   // DQ (3/8/2012): This should be non-zero for a const member function type.
   // ROSE_ASSERT(mfunc_specifier == 0);
 
@@ -1010,7 +1025,9 @@ SageBuilder::buildMemberFunctionType(SgType* return_type, SgFunctionParameterTyp
 SgFunctionType*
 SageBuilder::buildFunctionType(SgType* return_type, SgFunctionParameterList * argList)
    {
+#if 0
      printf ("Inside of SageBuilder::buildFunctionType(SgType,SgFunctionParameterList) \n");
+#endif
 
      SgFunctionParameterTypeList * typeList = buildFunctionParameterTypeList(argList);
      SgFunctionType * func_type = buildFunctionType(return_type, typeList);
@@ -1139,7 +1156,7 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & name, SgType*
         }
 
      ROSE_ASSERT(func_type != NULL);
-#if 1
+#if 0
      printf ("In buildNondefiningFunctionDeclaration_T(): func_type = %p = %s \n",func_type,func_type->class_name().c_str());
 #endif
 
@@ -1168,7 +1185,7 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & name, SgType*
        // func_symbol = symbol;
           func_symbol = scope->get_symbol_table()->find_symbol_by_type_of_function<actualFunction>(name,func_type);
 
-#if 1
+#if 0
           printf ("In buildNondefiningFunctionDeclaration_T(): func_symbol from scope->find_symbol_by_type_of_function<actualFunction>(name = %s) = %p \n",name.str(),func_symbol);
 #endif
        // If not a proper function (or instantiated template function), then check for a template function declaration.
@@ -1473,9 +1490,9 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & name, SgType*
           ROSE_ASSERT(associatedDeclaration != NULL);
           SgFunctionDeclaration*         functionDeclaration         = isSgFunctionDeclaration(associatedDeclaration);
           SgTemplateFunctionDeclaration* templateFunctionDeclaration = isSgTemplateFunctionDeclaration(associatedDeclaration);
-
+#if 0
           printf ("In buildNondefiningFunctionDeclaration_T(): associatedDeclaration = %p functionDeclaration = %p templateFunctionDeclaration = %p \n",associatedDeclaration,functionDeclaration,templateFunctionDeclaration);
-
+#endif
           if (functionDeclaration != NULL)
              {
                func_type = functionDeclaration->get_type();
@@ -1591,9 +1608,9 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & name, SgType*
        // func->set_firstNondefiningDeclaration(prevDecl->get_firstNondefiningDeclaration());
           func->set_firstNondefiningDeclaration(nondefiningDeclaration);
           func->set_definingDeclaration(prevDecl->get_definingDeclaration());
-
+#if 0
           printf ("In buildNondefiningFunctionDeclaration_T(): Setting new function (func = %p) to have firstNondefiningDeclaration = %p definingDeclaration = %p \n",func,func->get_firstNondefiningDeclaration(),func->get_definingDeclaration());
-
+#endif
        // DQ (3/8/2012): Added assertion.
           ROSE_ASSERT(nondefiningDeclaration->get_symbol_from_symbol_table() != NULL);
 
@@ -1750,7 +1767,7 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & name, SgType*
   // DQ (2/11/2012): If this is a template instantiation then we have to set the template name (seperate from the name of the function which can include template parameters)).
      setTemplateNameInTemplateInstantiations(func,name);
 
-#if 1
+#if 0
      printf ("Leaving buildNondefiningFunctionDeclaration_T(): function name = %s in scope = %p = %s func = %p func->get_firstNondefiningDeclaration() = %p \n",name.str(),scope,scope->class_name().c_str(),func,func->get_firstNondefiningDeclaration());
 #endif
 
@@ -2362,10 +2379,14 @@ SageBuilder::buildDefiningFunctionDeclaration_T(const SgName & name, SgType* ret
   // build function type, manage function type symbol internally
   // SgFunctionType* func_type = buildFunctionType(return_type,paralist);
      SgFunctionType* func_type = NULL;
+#if 0
      printf ("In buildDefiningFunctionDeclaration_T(): isMemberFunction = %s \n",isMemberFunction ? "true" : "false");
+#endif
      if (isMemberFunction == true)
         {
+#if 0
           printf ("return_type = %p = %s \n",return_type,return_type->class_name().c_str());
+#endif
           ROSE_ASSERT(isSgClassDefinition(scope) != NULL);
        // func_type = buildMemberFunctionType(return_type,paralist,isSgClassDefinition(scope),0);
           func_type = buildMemberFunctionType(return_type,paralist,isSgClassDefinition(scope),functionConstVolatileFlags);
@@ -2378,10 +2399,11 @@ SageBuilder::buildDefiningFunctionDeclaration_T(const SgName & name, SgType* ret
 
      SgDeclarationStatement* firstNondefiningFunctionDeclaration = NULL;
 
+#if 0
      printf ("In buildDefiningFunctionDeclaration_T(): scope     = %p = %s \n",scope,scope->class_name().c_str());
      printf ("In buildDefiningFunctionDeclaration_T(): func_type = %p = %s \n",func_type,func_type->class_name().c_str());
-
      printf ("In buildDefiningFunctionDeclaration_T(): Looking for function in symbol table with name = %s \n",name.str());
+#endif
 
   // symbol table and non-defining 
   // SgFunctionSymbol *func_symbol = scope->lookup_function_symbol(name,func_type);
@@ -2415,7 +2437,9 @@ SageBuilder::buildDefiningFunctionDeclaration_T(const SgName & name, SgType* ret
      ROSE_ASSERT(func_symbol != NULL);
 #endif
 
+#if 0
      printf ("In buildDefiningFunctionDeclaration_T(): func_symbol = %p \n",func_symbol);
+#endif
 
 #if 0
   // Not ready for member functions yet, need to generate SgMemberFucntionType instead of SgFunctionType.
@@ -2545,15 +2569,16 @@ SageBuilder::buildDefiningFunctionDeclaration_T(const SgName & name, SgType* ret
 #endif
         }
 
-#if 1
      defining_func = new actualFunction(name,func_type,NULL);
      ROSE_ASSERT(defining_func);
 
+#if 0
      printf ("In buildDefiningFunctionDeclaration_T(): constructor called to build func = %p = %s \n",defining_func,defining_func->class_name().c_str());
      if (isSgMemberFunctionDeclaration(defining_func) != NULL)
         {
           printf ("In buildDefiningFunctionDeclaration_T(): SgCtorInitializerList = %p \n",isSgMemberFunctionDeclaration(defining_func)->get_CtorInitializerList());
         }
+#endif
 
   // func->set_firstNondefiningDeclaration(func_symbol->get_declaration()->get_firstNondefiningDeclaration());
      ROSE_ASSERT(firstNondefiningFunctionDeclaration != NULL);
@@ -2561,7 +2586,6 @@ SageBuilder::buildDefiningFunctionDeclaration_T(const SgName & name, SgType* ret
 
   // fix up defining declarations before current statement
      firstNondefiningFunctionDeclaration->set_definingDeclaration(defining_func);
-#endif
 
   // Handle decorators (Python specific)
      if (decoratorList != NULL)
@@ -2667,10 +2691,11 @@ SageBuilder::setTemplateNameInTemplateInstantiations( SgFunctionDeclaration* fun
      if (isTemplateInstantition == true)
         {
        // If this is a template instnatiation then we need to take care of a few more issues.
-          printf ("In buildDefiningFunctionDeclaration_T(): detected construction of template instantiation func->get_name() = %s \n",func->get_name().str());
-          printf ("templateInstantiationFunctionDecl       = %p \n",templateInstantiationFunctionDecl);
-          printf ("templateInstantiationMemberFunctionDecl = %p \n",templateInstantiationMemberFunctionDecl);
-
+#if 0
+          printf ("In setTemplateNameInTemplateInstantiations(): detected construction of template instantiation func->get_name() = %s \n",func->get_name().str());
+          printf ("In setTemplateNameInTemplateInstantiations(): templateInstantiationFunctionDecl       = %p \n",templateInstantiationFunctionDecl);
+          printf ("In setTemplateNameInTemplateInstantiations(): templateInstantiationMemberFunctionDecl = %p \n",templateInstantiationMemberFunctionDecl);
+#endif
           bool isMemberFunction = (templateInstantiationMemberFunctionDecl != NULL);
           if (isMemberFunction == true)
              {
@@ -2682,8 +2707,9 @@ SageBuilder::setTemplateNameInTemplateInstantiations( SgFunctionDeclaration* fun
                  // Set the template name for the member function template instantiation.
                     templateInstantiationMemberFunctionDecl->set_templateName(name);
                   }
-
+#if 0
                printf ("templateInstantiationMemberFunctionDecl->get_templateName() = %s \n",templateInstantiationMemberFunctionDecl->get_templateName().str());
+#endif
                ROSE_ASSERT(templateInstantiationMemberFunctionDecl->get_templateName().is_null() == false);
              }
             else
@@ -2696,8 +2722,9 @@ SageBuilder::setTemplateNameInTemplateInstantiations( SgFunctionDeclaration* fun
                  // Set the template name for the function template instantiation.
                     templateInstantiationFunctionDecl->set_templateName(name);
                   }
-
+#if 0
                printf ("templateInstantiationFunctionDecl->get_templateName() = %s \n",templateInstantiationFunctionDecl->get_templateName().str());
+#endif
                ROSE_ASSERT(templateInstantiationFunctionDecl->get_templateName().is_null() == false);
              }
 #if 0
@@ -2720,9 +2747,9 @@ SageBuilder::buildDefiningFunctionDeclaration(const SgName& name, SgType* return
         {
            func = buildDefiningFunctionDeclaration_T<SgTemplateInstantiationFunctionDecl>(name,return_type,paralist,/* isMemberFunction = */ false,scope,decoratorList,0);
           ROSE_ASSERT(isSgTemplateInstantiationFunctionDecl(func) != NULL);
-
+#if 0
           printf ("In SageBuilder::buildDefiningFunctionDeclaration(): isSgTemplateInstantiationFunctionDecl(func)->get_templateName() = %s \n",isSgTemplateInstantiationFunctionDecl(func)->get_templateName().str());
-
+#endif
           ROSE_ASSERT(isSgTemplateInstantiationFunctionDecl(func) != NULL);
           ROSE_ASSERT(isSgTemplateInstantiationFunctionDecl(func)->get_templateName().is_null() == false);
         }

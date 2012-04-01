@@ -3958,6 +3958,25 @@ NameQualificationTraversal::setNameQualification ( SgFunctionDeclaration* functi
 
      string qualifier = setNameQualificationSupport(functionDeclaration->get_scope(),amountOfNameQualificationRequired, outputNameQualificationLength, outputGlobalQualification, outputTypeEvaluation);
 
+     printf ("In NameQualificationTraversal::setNameQualification(): functionDeclaration->get_declarationModifier().isFriend() = %s \n",functionDeclaration->get_declarationModifier().isFriend() ? "true" : "false");
+     printf ("In NameQualificationTraversal::setNameQualification(): outputNameQualificationLength                             = %d \n",outputNameQualificationLength);
+     printf ("In NameQualificationTraversal::setNameQualification(): outputGlobalQualification                                 = %s \n",outputGlobalQualification ? "true" : "false");
+
+  // DQ (3/31/2012): I don't think that global qualification is allowed for friend functions (so test for this).
+  // test2012_57.C is an example of this issue.
+     if (outputGlobalQualification == true && functionDeclaration->get_declarationModifier().isFriend() == true)
+        {
+          printf ("WARNING: We can't specify global qualification of friend function (qualifier reset to be empty string) \n");
+
+       // Note that I think this might only be an issue where outputNameQualificationLength == 0.
+          ROSE_ASSERT (outputNameQualificationLength == 0);
+
+       // Reset the values (and the qualifier string).
+       // outputNameQualificationLength = 0;
+          outputGlobalQualification = false;
+          qualifier = "";
+        }
+
 #if 1
      functionDeclaration->set_global_qualification_required(outputGlobalQualification);
      functionDeclaration->set_name_qualification_length(outputNameQualificationLength);
@@ -4000,8 +4019,12 @@ NameQualificationTraversal::setNameQualification ( SgFunctionDeclaration* functi
                i->second = qualifier;
 
 #if 1
+            // DQ (3/31/2012): Commented out this assertion.
                printf ("Error: name in qualifiedNameMapForNames already exists and is different... \n");
                ROSE_ASSERT(false);
+#else
+            // DQ (3/31/2012): I think this is OK, but I'm not certain (see test2012_57.C).
+               printf ("WARNING: name in qualifiedNameMapForNames already exists and is different... (reset) \n");
 #endif
              }
         }

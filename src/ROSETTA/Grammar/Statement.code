@@ -971,7 +971,9 @@ StatementListInsertChild( SgStatement *parent, Rose_STL_Container<Elemtype*>& l,
 
                          if (n->get_parent() == NULL)
                             {
+#if 0
                               printf ("In Cxx_Grammar.h StatementListInsertChild(): n->get_parent() == NULL for statement = %p = %s it will be set to parent = %p = %s \n",n,n->class_name().c_str(),parent,parent->class_name().c_str());
+#endif
                             }
                            else
                             {
