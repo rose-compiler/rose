@@ -340,6 +340,7 @@ SgAsmByteValueExpression::get_value() const
 void
 SgAsmByteValueExpression::set_value(uint8_t n_)
 {
+    set_significant_bits(8);
     uint64_t n = (int64_t)(int8_t)n_; // sign extend
     SgAsmIntegerValueExpression::set_absolute_value(n);
 }
@@ -355,6 +356,7 @@ SgAsmWordValueExpression::get_value() const
 void
 SgAsmWordValueExpression::set_value(uint16_t n_)
 {
+    set_significant_bits(16);
     uint64_t n = (int64_t)(int16_t)n_; // sign extend
     SgAsmIntegerValueExpression::set_absolute_value(n);
 }
@@ -370,6 +372,7 @@ SgAsmDoubleWordValueExpression::get_value() const
 void
 SgAsmDoubleWordValueExpression::set_value(uint32_t n_)
 {
+    set_significant_bits(32);
     uint64_t n = (int64_t)(int32_t)n_; // sign extend
     SgAsmIntegerValueExpression::set_absolute_value(n);
 }
@@ -385,6 +388,7 @@ SgAsmQuadWordValueExpression::get_value() const
 void
 SgAsmQuadWordValueExpression::set_value(uint64_t n_)
 {
+    set_significant_bits(64);
     SgAsmIntegerValueExpression::set_absolute_value(n_);
 }
     
