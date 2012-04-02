@@ -301,6 +301,12 @@ class DataAccess {
 		 const std::vector<std::pair<size_t, std::vector<LinearExpression_ppl> > > & getRead() const;
 		 const std::vector<std::pair<size_t, std::vector<LinearExpression_ppl> > > & getWrite() const;
 		
+		/**
+                 * \brief Regenerate implementation dependant accesses
+                 */
+                 std::vector<std::pair<VariableLBL, std::vector<std::vector<std::pair<VariableLBL, int> > > > > * regenRead() const;
+                 std::vector<std::pair<VariableLBL, std::vector<std::vector<std::pair<VariableLBL, int> > > > > * regenWrite() const;
+
 	friend class DataDependencies<Function, Expression, VariableLBL>;
 	
 	template <class Function_, class Expression_, class VariableLBL_>

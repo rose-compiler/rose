@@ -116,8 +116,8 @@ size_t Traverse(
 			return 1;
 		}
 		case V_SgVariableDeclaration:
-                        return 0;
 		case V_SgPragmaDeclaration:
+                        return 0;
 		case V_SgReturnStmt:
 			throw Exception::MisplacedNode(stmt);
 		default:

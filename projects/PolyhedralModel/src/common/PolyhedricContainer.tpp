@@ -555,6 +555,64 @@ template <class Function, class Expression, class VariableLBL>
 const std::vector<std::pair<size_t, std::vector<LinearExpression_ppl> > > & DataAccess<Function, Expression, VariableLBL>::getWrite() const { return p_write; }
 
 template <class Function, class Expression, class VariableLBL>
+std::vector<std::pair<VariableLBL, std::vector<std::vector<std::pair<VariableLBL, int> > > > > *
+        DataAccess<Function, Expression, VariableLBL>::regenRead() const
+{
+  size_t dim_max = p_nbr_surr_loop + p_polyhedral_program.getNumberOfGlobals();
+  std::vector<std::pair<VariableLBL, std::vector<std::vector<std::pair<VariableLBL, int> > > > > * res =
+          new std::vector<std::pair<VariableLBL, std::vector<std::vector<std::pair<VariableLBL, int> > > > >();
+  std::vector<std::pair<size_t, std::vector<LinearExpression_ppl> > >::const_iterator it_0;
+  std::vector<LinearExpression_ppl>::const_iterator it_1;
+  for (it_0 = p_read.begin(); it_0 != p_read.end(); it_0++) {
+    VariableLBL var = p_polyhedral_program.getVariableByID(it_0->first);
+    std::vector<std::vector<std::pair<VariableLBL, int> > > dims;
+    for (it_1 = it_0->second.begin(); it_1 != it_0->second.end(); it_1++) {
+      std::vector<std::pair<VariableLBL, int> > access;
+      access.push_back(std::pair<VariableLBL, int>(NULL, it_1->inhomogeneous_term().get_si()));
+      for (int i = 0; i < dim_max; i++)
+        access.push_back(std::pair<VariableLBL, int>(
+                     i < p_nbr_surr_loop ?
+                           p_polyhedral_program.getIteratorById(p_expression, i) :
+                           p_polyhedral_program.getGlobalById(i - p_nbr_surr_loop),
+                     it_1->coefficient(VariableID(i)).get_si()
+        ));
+      dims.push_back(access);
+    }
+    res->push_back(std::pair<VariableLBL, std::vector<std::vector<std::pair<VariableLBL, int> > > >(var, dims));
+  }
+  return res;
+}
+
+template <class Function, class Expression, class VariableLBL>
+std::vector<std::pair<VariableLBL, std::vector<std::vector<std::pair<VariableLBL, int> > > > > *
+        DataAccess<Function, Expression, VariableLBL>::regenWrite() const
+{
+  size_t dim_max = p_nbr_surr_loop + p_polyhedral_program.getNumberOfGlobals();
+  std::vector<std::pair<VariableLBL, std::vector<std::vector<std::pair<VariableLBL, int> > > > > * res =
+          new std::vector<std::pair<VariableLBL, std::vector<std::vector<std::pair<VariableLBL, int> > > > >();
+  std::vector<std::pair<size_t, std::vector<LinearExpression_ppl> > >::const_iterator it_0;
+  std::vector<LinearExpression_ppl>::const_iterator it_1;
+  for (it_0 = p_write.begin(); it_0 != p_write.end(); it_0++) {
+    VariableLBL var = p_polyhedral_program.getVariableByID(it_0->first);
+    std::vector<std::vector<std::pair<VariableLBL, int> > > dims;
+    for (it_1 = it_0->second.begin(); it_1 != it_0->second.end(); it_1++) {
+      std::vector<std::pair<VariableLBL, int> > access;
+      access.push_back(std::pair<VariableLBL, int>(NULL, it_1->inhomogeneous_term().get_si()));
+      for (int i = 0; i < dim_max; i++)
+        access.push_back(std::pair<VariableLBL, int>(
+                     i < p_nbr_surr_loop ?
+                           p_polyhedral_program.getIteratorById(p_expression, i) :
+                           p_polyhedral_program.getGlobalById(i - p_nbr_surr_loop),
+                     it_1->coefficient(VariableID(i)).get_si()
+        ));
+      dims.push_back(access);
+    }
+    res->push_back(std::pair<VariableLBL, std::vector<std::vector<std::pair<VariableLBL, int> > > >(var, dims));
+  }
+  return res;
+}
+
+template <class Function, class Expression, class VariableLBL>
 std::ostream & operator << (std::ostream & out, DataAccess<Function, Expression, VariableLBL> & data_access) {
 	data_access.print(out);
 	return out;

@@ -19,10 +19,12 @@ libPolyModel_la_LIBADD          = libPolyModelCommon.la libPolyModelRosePragma.l
 libPolyModel_la_includedir      = $(includedir)/polyhedral-model/utils
 libPolyModel_la_include_HEADERS = utils/ChainedList.hpp
 
+CXXFLAGS=-g
+
 # COMMON directory
 
 libPolyModelCommon_la_SOURCES         = common/Exception.cpp common/ScheduleSpace.cpp
-libPolyModelCommon_la_CXXFLAGS        = -I$(PPL_PATH)/include/
+libPolyModelCommon_la_CXXFLAGS        = $(CXXFLAGS) -I$(PPL_PATH)/include/
 libPolyModelCommon_la_LIBADD          = libPolyModelMaths.la
 libPolyModelCommon_la_includedir      = $(includedir)/polyhedral-model/common
 libPolyModelCommon_la_include_HEADERS = \
@@ -37,7 +39,7 @@ libPolyModelCommon_la_include_HEADERS = \
 # MATHS directory
 
 libPolyModelMaths_la_SOURCES         = maths/Exception-maths.cpp maths/PolyhedronExploration.cpp maths/Quast.cpp maths/biLinear.cpp maths/Farkas.cpp
-libPolyModelMaths_la_CXXFLAGS        = -I$(PPL_PATH)/include/
+libPolyModelMaths_la_CXXFLAGS        = $(CXXFLAGS) -I$(PPL_PATH)/include/
 libPolyModelMaths_la_LIBADD          = libPolyModelSystem.la -L$(PPL_PATH)/lib/ -lppl
 libPolyModelMaths_la_includedir      = $(includedir)/polyhedral-model/maths
 libPolyModelMaths_la_include_HEADERS = \
@@ -51,7 +53,7 @@ libPolyModelMaths_la_include_HEADERS = \
 # SYSTEM directory
 
 libPolyModelSystem_la_SOURCES         = system/Utils.cpp
-libPolyModelSystem_la_CXXFLAGS        = 
+libPolyModelSystem_la_CXXFLAGS        = $(CXXFLAGS) 
 libPolyModelSystem_la_LIBADD          = 
 libPolyModelSystem_la_includedir      = $(includedir)/polyhedral-model/system
 libPolyModelSystem_la_include_HEADERS = system/Utils.hpp
@@ -59,7 +61,7 @@ libPolyModelSystem_la_include_HEADERS = system/Utils.hpp
 # ROSE directory
 
 libPolyModelRose_la_SOURCES         = rose/rose-utils.cpp rose/Exception-rose.cpp rose/Variable.cpp rose/Parser.cpp rose/Quast-rose.cpp
-libPolyModelRose_la_CXXFLAGS        = \
+libPolyModelRose_la_CXXFLAGS        = $(CXXFLAGS) \
   -I$(PPL_PATH)/include/ \
   $(ROSE_INCLUDES)
 libPolyModelRose_la_LIBADD          =
@@ -78,7 +80,7 @@ libPolyModelRose_la_include_HEADERS = \
 # ROSE-PRAGMA directory
 
 libPolyModelRosePragma_la_SOURCES         = rose-pragma/PolyhedricPragmaParser.cpp rose-pragma/Exception-rose-pragma.cpp rose-pragma/PolyhedricPragma.cpp
-libPolyModelRosePragma_la_CXXFLAGS        = \
+libPolyModelRosePragma_la_CXXFLAGS        = $(CXXFLAGS) \
   -I $(srcdir)/../../pragmaParsing \
   -I$(PPL_PATH)/include \
   $(ROSE_INCLUDES)
@@ -99,7 +101,7 @@ libPolyModelRosePragma_la_include_HEADERS = \
 # ROSE-MAX-COVER directory
 
 libPolyModelRoseMaxCover_la_SOURCES         = rose-max-cover/TDBUtraversal.cpp
-libPolyModelRoseMaxCover_la_CXXFLAGS        =  \
+libPolyModelRoseMaxCover_la_CXXFLAGS        =  $(CXXFLAGS) \
   -I$(PPL_PATH)/include/ \
   $(ROSE_INCLUDES)
 libPolyModelRoseMaxCover_la_LIBADD          = 
@@ -112,7 +114,7 @@ libPolyModelRoseMaxCover_la_include_HEADERS = \
 # ROSE-FROM-POLY-DESC directory
 
 #libPolyModelRoseFromPolyDesc_la_SOURCES         = 
-#libPolyModelRoseFromPolyDesc_la_CXXFLAGS        =  \
+#libPolyModelRoseFromPolyDesc_la_CXXFLAGS        =  $(CXXFLAGS) \
 #  -I$(PPL_PATH)/include/ \
 #  $(ROSE_INCLUDES)
 #if ROSE_USE_CLOOG
@@ -128,7 +130,7 @@ libPolyModelRoseMaxCover_la_include_HEADERS = \
 # SCOPLIB directory
 
 libPolyModelScopLib_la_SOURCES         = scoplib/Exception-ScopLib.cpp
-libPolyModelScopLib_la_CXXFLAGS        = -I scoplib/ -I common/ -I maths/ -I$(PPL_PATH)/include/
+libPolyModelScopLib_la_CXXFLAGS        = $(CXXFLAGS) -I scoplib/ -I common/ -I maths/ -I$(PPL_PATH)/include/
 libPolyModelScopLib_la_LIBADD          = 
 libPolyModelScopLib_la_includedir      = $(includedir)/polyhedral-model/scoplib
 libPolyModelScopLib_la_include_HEADERS = \
@@ -139,6 +141,15 @@ libPolyModelScopLib_la_include_HEADERS = \
   scoplib/ScopLib.tpp \
   scoplib/Candl.hpp \
   scoplib/Candl.tpp
+
+include_header = \
+$(libPolyModel_la_include_HEADERS) \
+$(libPolyModelCommon_la_include_HEADERS) \
+$(libPolyModelSystem_la_include_HEADERS) \
+$(libPolyModelRose_la_include_HEADERS) \
+$(libPolyModelRosePragma_la_include_HEADERS) \
+$(libPolyModelRoseMaxCover_la_include_HEADERS) \
+$(libPolyModelScopLib_la_include_HEADER)
 
 ../../pragmaParsing/libStringParser.la:
 	make -C ../../pragmaParsing libStringParser.la
