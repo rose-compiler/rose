@@ -7,6 +7,7 @@ distributedScripts =				\
      buildExampleRoseWorkspaceScript.sh		\
      check-dist-file dotgenLetter		\
      configure_with_SQL				\
+     check_boost_linkage.sh \
      dotgen					\
      dotgen2					\
      dotgenLetterPDF				\
@@ -34,6 +35,7 @@ distributedScripts =				\
      rth_stats.pl                               \
      runscript					\
      sample_binary_rules.pl			\
+     shtool \
      stringify.pl
 
 # scripts put into the distribution
