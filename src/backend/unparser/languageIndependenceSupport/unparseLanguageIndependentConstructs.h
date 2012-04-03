@@ -203,6 +203,7 @@ class UnparseLanguageIndependentConstructs
           virtual void unparseNewOp                   (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseDeleteOp                (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseThisNode                (SgExpression* expr, SgUnparse_Info& info);  
+          virtual void unparseSuperNode               (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseScopeOp                 (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseAssnOp                  (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparsePlusAssnOp              (SgExpression* expr, SgUnparse_Info& info);  
