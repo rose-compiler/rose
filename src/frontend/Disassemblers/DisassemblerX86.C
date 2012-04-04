@@ -181,6 +181,7 @@ SgAsmx86Instruction::get_successors(bool *complete) {
 Disassembler::AddressSet
 SgAsmx86Instruction::get_successors(const std::vector<SgAsmInstruction*>& insns, bool *complete, MemoryMap *initial_memory)
 {
+    using namespace BinaryAnalysis::InstructionSemantics;
     static const bool debug = false;
 
     if (debug) {
@@ -424,6 +425,8 @@ bool
 SgAsmx86Instruction::has_effect(const std::vector<SgAsmInstruction*>& insns, bool allow_branch/*false*/, 
                                 bool relax_stack_semantics/*false*/)
 {
+    using namespace BinaryAnalysis::InstructionSemantics;
+
     if (insns.empty()) return false;
 
     typedef VirtualMachineSemantics::Policy<VirtualMachineSemantics::State, VirtualMachineSemantics::ValueType> Policy;
@@ -472,6 +475,8 @@ std::vector< std::pair< size_t, size_t > >
 SgAsmx86Instruction::find_noop_subsequences(const std::vector<SgAsmInstruction*>& insns, bool allow_branch/*false*/, 
                                             bool relax_stack_semantics/*false*/)
 {
+    using namespace BinaryAnalysis::InstructionSemantics;
+
     static const bool verbose = false;
 
     if (verbose) std::cerr <<"find_noop_subsequences:\n";

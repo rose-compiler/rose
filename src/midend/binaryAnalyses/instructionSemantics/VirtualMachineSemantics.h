@@ -17,7 +17,10 @@
 #endif
 
 #include "x86InstructionSemantics.h"
-#include "SemanticState.h"
+#include "BaseSemantics.h"
+
+namespace BinaryAnalysis {                      // documented elsewhere
+    namespace InstructionSemantics {            // documented elsewhere
 
 
 /** A policy for x86InstructionSemantics.
@@ -120,7 +123,7 @@ struct ValueType {
                 o <<" (-0x" <<std::hex <<negative <<")";
         }
     }
-    void print(std::ostream &o, SEMANTIC_NO_PRINT_HELPER *unused=NULL) const {
+    void print(std::ostream &o, BaseSemantics::SEMANTIC_NO_PRINT_HELPER *unused=NULL) const {
         print(o, (RenameMap*)0);
     }
 
@@ -150,13 +153,13 @@ std::ostream& operator<<(std::ostream &o, const ValueType<Len> &e) {
 /** Memory cell with partially symbolic address and data.  The ValueType template argument should be a subclass of
  * VirtualMachineSemantics::ValueType. */
 template <template <size_t> class ValueType=VirtualMachineSemantics::ValueType>
-class MemoryCell: public SemanticMemoryCell<ValueType> {
+class MemoryCell: public BaseSemantics::MemoryCell<ValueType> {
 public:
 
     /** Constructor same as super class. */
     template <size_t Len>
     MemoryCell(const ValueType<32> &address, const ValueType<Len> data, size_t nbytes)
-        : SemanticMemoryCell<ValueType>(address, data, nbytes) {}
+        : BaseSemantics::MemoryCell<ValueType>(address, data, nbytes) {}
 
     /** Returns true if this memory value could possibly overlap with the @p other memory value.  In other words, returns false
      *  only if this memory location cannot overlap with @p other memory location. Two addresses that are identical alias one
@@ -183,8 +186,8 @@ public:
 
 /** Represents the entire state of the machine. */
 template <template <size_t> class ValueType=VirtualMachineSemantics::ValueType>
-struct State: public SemanticStateX86<MemoryCell, ValueType> {
-    typedef typename SemanticStateX86<MemoryCell, ValueType>::Memory Memory;
+struct State: public BaseSemantics::StateX86<MemoryCell, ValueType> {
+    typedef typename BaseSemantics::StateX86<MemoryCell, ValueType>::Memory Memory;
 
     /** Print info about how registers differ.  If a rename map is specified then named values will be renamed to have a
      *  shorter name.  See the ValueType<>::rename() method for details. */
@@ -248,6 +251,7 @@ public:
 
     Policy(): cur_insn(NULL), p_discard_popped_memory(false), ninsns(0), map(NULL), regdict(NULL) {
         /* So that named values are identical in both; reinitialized by first call to startInstruction(). */
+        set_register_dictionary(RegisterDictionary::dictionary_pentium4());
         orig_state = cur_state;
     }
 
@@ -1168,7 +1172,9 @@ Policy<State, ValueType>::SHA1() const
     return digest_str;
 }
     
-}; /*namespace*/
+} /*namespace*/
+} /*namespace*/
+} /*namespace*/
 
 
 #endif

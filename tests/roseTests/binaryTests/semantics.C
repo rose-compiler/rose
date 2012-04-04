@@ -12,6 +12,8 @@
 #include <set>
 #include <inttypes.h>
 
+using namespace BinaryAnalysis::InstructionSemantics;
+
 #if 1==POLICY_SELECTOR
 #   define TestValueTemplate XVariablePtr
     struct TestPolicy: public FindConstantsPolicy {
@@ -72,7 +74,7 @@
         }
         void dump(SgAsmInstruction *insn) {
             std::cout <<unparseInstructionWithAddress(insn) <<"\n";
-            get_state().print<SEMANTIC_NO_PRINT_HELPER>(std::cout, "    ");
+            get_state().print<BaseSemantics::SEMANTIC_NO_PRINT_HELPER>(std::cout, "    ");
             std::cout <<"    ip = ";
             std::cout <<get_ip();
             std::cout <<"\n";
@@ -192,4 +194,5 @@ int main(int argc, char *argv[]) {
     } else {
         std::cout <<"analyzed headers: " <<analysis.ninterps<< "\n";
     }
+    return 0;
 }

@@ -8,12 +8,14 @@
 #include <inttypes.h>
 
 #include "x86InstructionSemantics.h"
-#include "SemanticState.h"
+#include "BaseSemantics.h"
 #include "SMTSolver.h"
 
 #include <map>
 #include <vector>
 
+namespace BinaryAnalysis {              // documented elsewhere
+    namespace InstructionSemantics {    // documented elsewhere
 
 /** A policy for x86InstructionSemantics.
  *
@@ -127,7 +129,7 @@ namespace SymbolicSemantics {
             o <<"} expr=";
             expr->print(o, rmap);
         }
-        void print(std::ostream &o, SEMANTIC_NO_PRINT_HELPER *unused=NULL) const {
+        void print(std::ostream &o, BaseSemantics::SEMANTIC_NO_PRINT_HELPER *unused=NULL) const {
             print(o, (RenameMap*)0);
         }
         friend std::ostream& operator<<(std::ostream &o, const ValueType &e) {
@@ -234,14 +236,14 @@ namespace SymbolicSemantics {
     /** Memory cell with symbolic address and data.  The ValueType template argument should be a subclass of
      *  SymbolicSemantics::ValueType. */
     template<template<size_t> class ValueType=SymbolicSemantics::ValueType>
-    class MemoryCell: public SemanticMemoryCell<ValueType> {
+    class MemoryCell: public BaseSemantics::MemoryCell<ValueType> {
     public:
 
         /** Constructor that sets the defining instruction.  This is just like the base class, except we also add an optional
          *  defining instruction. */
         template <size_t Len>
         MemoryCell(const ValueType<32> &address, const ValueType<Len> &data, size_t nbytes, SgAsmInstruction *insn=NULL)
-            : SemanticMemoryCell<ValueType>(address, data, nbytes) {
+            : BaseSemantics::MemoryCell<ValueType>(address, data, nbytes) {
             this->get_data().add_defining_instructions(insn);
         }
 
@@ -302,7 +304,7 @@ namespace SymbolicSemantics {
 
     /** Represents the entire state of the machine. */
     template <template <size_t> class ValueType=SymbolicSemantics::ValueType>
-    struct State: public SemanticStateX86<MemoryCell, ValueType> {
+    struct State: public BaseSemantics::StateX86<MemoryCell, ValueType> {
         /** Print info about how registers differ.  If a rename map is specified then named values will be renamed to have a
          *  shorter name.  See the ValueType<>::rename() method for details. */
         void print_diff_registers(std::ostream &o, const State&, RenameMap *rmap=NULL) const;
@@ -321,7 +323,7 @@ namespace SymbolicSemantics {
     template <
         template <template <size_t> class ValueType> class State,
         template <size_t> class ValueType>
-    class Policy {
+    class Policy: public BaseSemantics::Policy {
     protected:
         typedef typename State<ValueType>::Memory Memory;
 
@@ -348,24 +350,8 @@ namespace SymbolicSemantics {
                                              * startInstruction(), which is the first thing called by
                                              * X86InstructionSemantics::processInstruction(). */
         SMTSolver *solver;                  /**< The solver to use for Satisfiability Modulo Theory, or NULL. */
-        const RegisterDictionary *regdict;  /**< Registers stored in the various State objects for this Policy.  This
-                                             *   dictionary is used by the X86InstructionSemantics class to translate register
-                                             *   names to register descriptors.  For instance, to read from the "eax" register,
-                                             *   the semantics will look up "eax" in the policy's register dictionary and then
-                                             *   pass that descriptor to the policy's readRegister() method.  Register
-                                             *   descriptors are also stored in instructions then the instruction is
-                                             *   disassembled, so the disassembler and policy should probably be using the same
-                                             *   dictionary. */
 
     public:
-        struct Exception {
-            Exception(const std::string &mesg): mesg(mesg) {}
-            friend std::ostream& operator<<(std::ostream &o, const Exception &e) {
-                o <<"VirtualMachineSemantics exception: " <<e.mesg;
-                return o;
-            }
-            std::string mesg;
-        };
 
         /** Constructs a new policy without an SMT solver. */
         Policy() {
@@ -384,11 +370,11 @@ namespace SymbolicSemantics {
 
         /** Initialize undefined policy. Used by constructors so initialization is in one location. */
         void init() {
+            set_register_dictionary(RegisterDictionary::dictionary_pentium4());
             cur_insn = NULL;
             p_discard_popped_memory = false;
             ninsns = 0;
             solver = NULL;
-            regdict = NULL;
         }
 
         /** Sets the satisfiability modulo theory (SMT) solver to use for certain operations. */
@@ -621,23 +607,6 @@ namespace SymbolicSemantics {
             }
             if (!saved)
                 state.mem.push_back(new_cell);
-        }
-
-
-        /**********************************************************************************************************************
-         * The registers defined for this policy.  Most policies have at least one State object that contains (among other
-         * things) values for each of the registers.  The organization of those values is Policy-specific and possibly based on
-         * information from a register dictionary.
-         **********************************************************************************************************************/
-
-        /** Returns the register dictionary. */
-        const RegisterDictionary *get_register_dictionary() const {
-            return regdict ? regdict : RegisterDictionary::dictionary_pentium4();
-        }
-
-        /** Sets the register dictionary. */
-        void set_register_dictionary(const RegisterDictionary *regdict) {
-            this->regdict = regdict;
         }
 
 
@@ -1061,23 +1030,6 @@ namespace SymbolicSemantics {
          *************************************************************************************************************************/
 
 
-        /** Finds a register by name. */
-        const RegisterDescriptor& findRegister(const std::string &regname, size_t nbits=0) {
-            const RegisterDescriptor *reg = get_register_dictionary()->lookup(regname);
-            if (!reg) {
-                std::ostringstream ss;
-                ss <<"Invalid register: \"" <<regname <<"\"";
-                throw Exception(ss.str());
-            }
-            if (nbits>0 && reg->get_nbits()!=nbits) {
-                std::ostringstream ss;
-                ss <<"Invalid " <<nbits <<"-bit register: \"" <<regname <<"\" is "
-                   <<reg->get_nbits() <<" " <<(1==reg->get_nbits()?"byte":"bytes");
-                throw Exception(ss.str());
-            }
-            return *reg;
-        }
-
         /** Reads from a named register. */
         template<size_t Len/*bits*/>
         ValueType<Len> readRegister(const char *regname) {
@@ -1355,7 +1307,9 @@ namespace SymbolicSemantics {
     };
 
 
-}; /*namespace*/
+} /*namespace*/
+} /*namespace*/
+} /*namespace*/
 
 
 #endif

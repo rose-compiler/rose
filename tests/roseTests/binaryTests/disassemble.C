@@ -188,6 +188,8 @@ these switches can be obtained by specifying the \"--rose-help\" switch.\n\
 /*FIXME: Rose cannot parse this file.*/
 #ifndef CXX_IS_ROSE_ANALYSIS
 
+using namespace BinaryAnalysis::InstructionSemantics;
+
 /* Convert a SHA1 digest to a string. */
 std::string
 digest_to_str(const unsigned char digest[20])

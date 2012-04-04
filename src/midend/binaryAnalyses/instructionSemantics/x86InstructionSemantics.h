@@ -27,6 +27,8 @@ static inline X86SegmentRegister getSegregFromMemoryReference(SgAsmMemoryReferen
     return segreg;
 }
 
+/** Translation class.  Translates x86 instructions to RISC-like operations and invokes those operations in the supplied
+ *  semantic policy (a template argument).  See the BinaryAnalysis::InstructionSemantics name space for details. */
 template <typename Policy, template <size_t> class WordType>
 struct X86InstructionSemantics {
 #   ifdef Word
