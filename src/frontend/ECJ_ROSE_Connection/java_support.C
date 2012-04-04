@@ -1314,6 +1314,54 @@ stripQualifiers (const SgName & classNameWithQualification)
    }
 
 
+//
+//
+//
+//
+SgSymbol *lookupSimpleNameInClassScope(const SgName& name, SgClassDefinition *classDefinition) {
+    ROSE_ASSERT(classDefinition -> get_declaration());
+
+    SgSymbol *symbol = classDefinition -> lookup_symbol(name);
+    vector<SgBaseClass *> &inheritances = classDefinition -> get_inheritances();
+    for (int k = 0; symbol == NULL && k < inheritances.size(); k++) {
+        SgClassDeclaration *super_declaration = inheritances[k] -> get_base_class();
+        classDefinition = super_declaration -> get_definition(); // get the super class definition
+        symbol = lookupSimpleNameInClassScope(name, classDefinition);
+    }
+
+    if (symbol == NULL) {
+        // TODO: Search for the symbol in Object!
+    }
+
+    return symbol;
+}
+
+
+//
+// Search the scope stack for a variable declaration for the name in question.
+//
+SgVariableSymbol *lookupVariableByName(const SgName& name) {
+    ROSE_ASSERT(astJavaScopeStack.size());
+
+    SgSymbol *symbol = NULL;
+
+    //
+    // Iterate over the scope stack... At each point, look to see if the variable is there.
+    // Note that in the case of a class, we recursively search the class as well as its
+    // super class and interfaces.
+    //
+    for (std::list<SgScopeStatement*>::reverse_iterator i = astJavaScopeStack.rbegin(); symbol == NULL && i != astJavaScopeStack.rend(); i++)  {
+        symbol = (isSgClassDefinition(*i)
+                      ? lookupSimpleNameInClassScope(name, (SgClassDefinition *) (*i))
+                      : (*i) -> lookup_symbol(name));
+    }
+
+    SgVariableSymbol *variable_symbol = isSgVariableSymbol(symbol);
+    ROSE_ASSERT(variable_symbol);
+    return variable_symbol;
+}
+
+
 SgClassSymbol* 
 lookupSymbolFromQualifiedName(string className)
    {
@@ -1653,16 +1701,6 @@ generateGenericTypeNameList (const SgName & parameterizedTypeName)
 
      size_t starting_position = original_classNameString.find('<',0);
      size_t ending_position   = original_classNameString.find('>',lastPosition);
-
-
-
-
-
-
-
-
-
-
 
      while (position != string::npos)
         {
