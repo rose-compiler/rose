@@ -59,6 +59,7 @@ include_HEADERS = \
    instructionSemantics/InsnSemanticsExpr.h \
    instructionSemantics/BaseSemantics.h \
    instructionSemantics/NullSemantics.h \
+   instructionSemantics/MultiSemantics.h \
    instructionSemantics/SMTSolver.h \
    instructionSemantics/SymbolicSemantics.h \
    instructionSemantics/VirtualMachineSemantics.h \

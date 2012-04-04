@@ -328,6 +328,24 @@ namespace BinaryAnalysis { // documented elsewhere
                 template<size_t nBits>
                 void writeMemory(X86SegmentRegister, const ValueType<32> &addr, const ValueType<nBits> &data,
                                  const ValueType<1> &cond) {}
+
+                /**************************************************************************************************************
+                 *                                      Additional methods, etc.
+                 *
+                 * These are not part of the semantic API but are useful nonetheless.
+                 **************************************************************************************************************/
+            public:
+
+                /** Print the current state of the policy.  A NullSemantic policy has no state, so we just print the string
+                 * "null state". Policy states are normally multi-line output that includes a final line terminator. */
+                void print(std::ostream &o) const {
+                    o <<"null state\n";
+                }
+
+                friend std::ostream& operator<<(std::ostream &o, const Policy &policy) {
+                    policy.print(o);
+                    return o;
+                }
             };
         } /*namespace*/
     } /*namespace*/

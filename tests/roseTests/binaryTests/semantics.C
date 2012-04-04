@@ -9,6 +9,7 @@
 #include "SymbolicSemantics.h"
 #include "YicesSolver.h"
 #include "NullSemantics.h"
+#include "MultiSemantics.h"
 #include <set>
 #include <inttypes.h>
 
@@ -50,6 +51,7 @@ using namespace BinaryAnalysis::InstructionSemantics;
         }
     };
 #elif  3==POLICY_SELECTOR
+#   define TestSemanticsScope VirtualMachineSemantics
 #   define TestValueTemplate VirtualMachineSemantics::ValueType
     struct TestPolicy: public VirtualMachineSemantics::Policy<> {
         void dump(SgAsmInstruction *insn) {
@@ -59,6 +61,7 @@ using namespace BinaryAnalysis::InstructionSemantics;
         }
     };
 #elif  4==POLICY_SELECTOR
+#   define TestSemanticsScope SymbolicSemantics
 #   define TestValueTemplate SymbolicSemantics::ValueType
     struct TestPolicy: public SymbolicSemantics::Policy<> {
         TestPolicy() {
@@ -81,11 +84,24 @@ using namespace BinaryAnalysis::InstructionSemantics;
         }
     };
 #elif 5==POLICY_SELECTOR
+#   define TestSemanticsScope NullSemantics
 #   define TestValueTemplate NullSemantics::ValueType
     struct TestPolicy: public NullSemantics::Policy<> {
         void dump(SgAsmInstruction *insn) {
             std::cout <<unparseInstructionWithAddress(insn) <<"\n"
                       <<"    null state\n";
+        }
+    };
+#elif 6==POLICY_SELECTOR
+#   define TestSemanticsScope MultiSemantics<                                                                                  \
+        VirtualMachineSemantics::ValueType, VirtualMachineSemantics::State, VirtualMachineSemantics::Policy,                   \
+        SymbolicSemantics::ValueType, SymbolicSemantics::State, SymbolicSemantics::Policy                                      \
+        >
+#   define TestValueTemplate TestSemanticsScope::ValueType
+    struct TestPolicy: public TestSemanticsScope::Policy {
+        void dump(SgAsmInstruction *insn) {
+            std::cout <<unparseInstructionWithAddress(insn) <<"\n"
+                      <<*this;
         }
     };
 #else
@@ -148,11 +164,17 @@ analyze_interp(SgAsmInterpretation *interp)
 
             /* Get next instruction of this block */
 #if 3==POLICY_SELECTOR || 4==POLICY_SELECTOR
-            if (!policy.get_ip().is_known()) break;
-            rose_addr_t next_addr = policy.get_ip().known_value();
+            TestValueTemplate<32> ip = policy.get_ip();
+            if (!ip.is_known()) break;
+            rose_addr_t next_addr = ip.known_value();
 #elif 5==POLICY_SELECTOR
-            if (!policy.readRegister<32>(semantics.REG_EIP).is_known()) break;
-            rose_addr_t next_addr = policy.readRegister<32>(semantics.REG_EIP).known_value();
+            TestValueTemplate<32> ip = policy.readRegister<32>(semantics.REG_EIP);
+            if (!ip.is_known()) break;
+            rose_addr_t next_addr = ip.known_value();
+#elif 6==POLICY_SELECTOR
+            TestValueTemplate<32> ip = policy.readRegister<32>(semantics.REG_EIP);
+            if (!ip.get_subvalue(TestSemanticsScope::SP0()).is_known()) break;
+            rose_addr_t next_addr = ip.get_subvalue(TestSemanticsScope::SP0()).known_value();
 #else
             if (policy.newIp->get().name) break;
             rose_addr_t next_addr = policy.newIp->get().offset;

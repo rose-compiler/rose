@@ -1043,7 +1043,7 @@ namespace BinaryAnalysis {                      // documented elsewhere
             void
             Policy<State, ValueType>::print(std::ostream &o, RenameMap *rmap/*=NULL*/) const
             {
-                cur_state.print(o, rmap);
+                cur_state.print(o, "", rmap);
             }
 
             template<
