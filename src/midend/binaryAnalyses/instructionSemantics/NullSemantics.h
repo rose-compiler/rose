@@ -46,7 +46,7 @@ namespace BinaryAnalysis { // documented elsewhere
              *  Policies generally take template arguments to define the data types for the machine state and value types,
              *  although they default to reasonable types. */
             template<
-                template <template <size_t> class ValueType> class State = NullSemantics::State<NullSemantics::ValueType>,
+                template <template <size_t> class ValueType> class State = NullSemantics::State,
                 template <size_t nBits> class ValueType = NullSemantics::ValueType
             >
             class Policy: public BaseSemantics::Policy {

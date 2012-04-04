@@ -325,8 +325,9 @@ namespace BinaryAnalysis {              // documented elsewhere
              *  namespace.  The RISC-like operations are documented in the
              *  BinaryAnalysis::InstructionSemantics::NullSemantics::Policy class. */
             template <
-                template <template <size_t> class ValueType> class State,
-                template <size_t> class ValueType>
+                template <template <size_t> class ValueType> class State = SymbolicSemantics::State,
+                template <size_t> class ValueType = SymbolicSemantics::ValueType
+                >
             class Policy: public BaseSemantics::Policy {
             protected:
                 typedef typename State<ValueType>::Memory Memory;

@@ -51,7 +51,7 @@ using namespace BinaryAnalysis::InstructionSemantics;
     };
 #elif  3==POLICY_SELECTOR
 #   define TestValueTemplate VirtualMachineSemantics::ValueType
-    struct TestPolicy: public VirtualMachineSemantics::Policy<VirtualMachineSemantics::State, VirtualMachineSemantics::ValueType> {
+    struct TestPolicy: public VirtualMachineSemantics::Policy<> {
         void dump(SgAsmInstruction *insn) {
             std::cout <<unparseInstructionWithAddress(insn) <<"\n"
                       <<get_state()
@@ -60,7 +60,7 @@ using namespace BinaryAnalysis::InstructionSemantics;
     };
 #elif  4==POLICY_SELECTOR
 #   define TestValueTemplate SymbolicSemantics::ValueType
-    struct TestPolicy: public SymbolicSemantics::Policy<SymbolicSemantics::State, SymbolicSemantics::ValueType> {
+    struct TestPolicy: public SymbolicSemantics::Policy<> {
         TestPolicy() {
 #           if 1==SOLVER_SELECTOR
                 YicesSolver *solver = new YicesSolver;
@@ -82,7 +82,7 @@ using namespace BinaryAnalysis::InstructionSemantics;
     };
 #elif 5==POLICY_SELECTOR
 #   define TestValueTemplate NullSemantics::ValueType
-    struct TestPolicy: public NullSemantics::Policy<NullSemantics::State, NullSemantics::ValueType> {
+    struct TestPolicy: public NullSemantics::Policy<> {
         void dump(SgAsmInstruction *insn) {
             std::cout <<unparseInstructionWithAddress(insn) <<"\n"
                       <<"    null state\n";

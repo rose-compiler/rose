@@ -208,8 +208,9 @@ namespace BinaryAnalysis {                      // documented elsewhere
 
             /** A policy that is supplied to the semantic analysis constructor. */
             template<
-                template <template <size_t> class ValueType> class State,
-                template <size_t nBits> class ValueType>
+                template <template <size_t> class ValueType> class State = VirtualMachineSemantics::State,
+                template <size_t nBits> class ValueType = VirtualMachineSemantics::ValueType
+                >
             class Policy: public BaseSemantics::Policy {
             protected:
                 typedef typename State<ValueType>::Memory Memory;
@@ -243,15 +244,6 @@ namespace BinaryAnalysis {                      // documented elsewhere
                 MemoryMap *map;                     /**< Initial known memory values for known addresses. */
 
             public:
-                struct Exception {
-                    Exception(const std::string &mesg): mesg(mesg) {}
-                    friend std::ostream& operator<<(std::ostream &o, const Exception &e) {
-                        o <<"VirtualMachineSemantics exception: " <<e.mesg;
-                        return o;
-                    }
-                    std::string mesg;
-                };
-
                 Policy(): cur_insn(NULL), p_discard_popped_memory(false), ninsns(0), map(NULL) {
                     /* So that named values are identical in both; reinitialized by first call to startInstruction(). */
                     set_register_dictionary(RegisterDictionary::dictionary_pentium4());
