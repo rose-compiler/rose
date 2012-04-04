@@ -252,7 +252,7 @@ namespace BinaryAnalysis {                      // documented elsewhere
                     std::string mesg;
                 };
 
-                Policy(): cur_insn(NULL), p_discard_popped_memory(false), ninsns(0), map(NULL), regdict(NULL) {
+                Policy(): cur_insn(NULL), p_discard_popped_memory(false), ninsns(0), map(NULL) {
                     /* So that named values are identical in both; reinitialized by first call to startInstruction(). */
                     set_register_dictionary(RegisterDictionary::dictionary_pentium4());
                     orig_state = cur_state;
