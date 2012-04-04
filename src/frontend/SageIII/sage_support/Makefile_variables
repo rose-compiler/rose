@@ -1,7 +1,8 @@
 # Non-recursive Makefile
 
 fSageSupport_la_sources=\
-	$(fSageSupportPath)/sage_support.cpp
+	$(fSageSupportPath)/sage_support.cpp \
+	$(fSageSupportPath)/cmdline.cpp
 
 fSageSupport_includeHeaders=\
 	$(fSageSupportPath)/sage_support.h
