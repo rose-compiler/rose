@@ -55,6 +55,8 @@ public:
 
     /* The actual analysis, triggered when we reach the specified execution address... */
     virtual bool operator()(bool enabled, const Args &args) {
+        using namespace BinaryAnalysis::InstructionSemantics;
+
         if (enabled && args.insn->get_address()==trigger_addr) {
             /* Create the symbolic analysis to drive the sign analysis. */
             SymbolicSemantics::Policy<SymbolicSemantics::State, SymbolicSemantics::ValueType> symbolic_policy;

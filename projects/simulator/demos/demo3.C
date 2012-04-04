@@ -44,6 +44,8 @@ public:
 
     /* The actual analysis, triggered when we reach the specified execution address... */
     virtual bool operator()(bool enabled, const Args &args) {
+        using namespace BinaryAnalysis::InstructionSemantics;
+
         if (enabled && args.insn->get_address()==trigger_addr) {
 
             /* An SMT solver is necessary for this example to work correctly. ROSE uses the SMT solver to try to figure out

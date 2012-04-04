@@ -53,6 +53,8 @@ public:
 
     // The actual analysis, triggered when we reach the specified execution address...
     virtual bool operator()(bool enabled, const Args &args) try {
+        using namespace BinaryAnalysis::InstructionSemantics;
+
         static const char *name = "Analysis";
         using namespace InsnSemanticsExpr;
         if (enabled && args.insn->get_address()==trigger_addr) {
