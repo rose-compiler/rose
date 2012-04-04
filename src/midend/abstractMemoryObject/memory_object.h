@@ -87,6 +87,14 @@ namespace AbstractMemoryObject
       //virtual bool operator < (const Scalar& that) const; 
   };
 
+  
+  // memory object to model function objects in memory
+  class Function: public ObjSet
+  {
+  public:  
+    
+  };
+
   class LabeledAggregate;
   class LabeledAggregateField
   {
@@ -129,6 +137,7 @@ namespace AbstractMemoryObject
       virtual std::string toString();
       // equal operator
       virtual bool operator == (const IndexVector & other) const;
+      virtual bool operator != (const IndexVector & other) const;
     
   };
 
@@ -209,10 +218,20 @@ namespace AbstractMemoryObject
   };
 
 
-  // Used to store the union of ObjSet
+  // TODO Used to store the union of ObjSet
+  // Basically we use the composite design pattern to hold ObjSet and MultiObjSet, both are derived
+  // class from ObjSet
   class MultiObjSet: public ObjSet
   {
-    
+  private:  
+    // Do we want to dictate the implementation of the internal container?
+    // vector <ObjSet* > elements;
+   public:
+  //    void add (ObjSet* );
+  //    MultiObjSet & union (const MultiObjSet& other);
+  //    MultiObjSet & operator+(const MultiObjSet& other); // same as union
+  //    MultiObjSet & intersection(const MultiObjSet& other);
+  //    MultiObjSet & operator-(const MultiObjSet& other); // difference
   };
 
 } // end namespace
