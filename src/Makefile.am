@@ -51,15 +51,16 @@ else
 endif
 
 if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
-   libroseBinaryLibraries = \
-      $(top_builddir)/src/frontend/BinaryDisassembly/libbinaryFrontend.la \
-      $(top_builddir)/src/midend/binaryAnalyses/libbinaryMidend.la \
-      $(top_builddir)/src/frontend/Disassemblers/libroseDisassemblers.la \
-      $(top_builddir)/src/frontend/BinaryFormats/libroseBinaryFormats.la \
-      $(top_builddir)/src/frontend/BinaryLoader/libroseBinaryLoader.la 
+   libroseBinaryLibraries =						    \
+	$(top_builddir)/src/frontend/BinaryDisassembly/libbinaryFrontend.la \
+	$(top_builddir)/src/frontend/BinaryFormats/libroseBinaryFormats.la  \
+	$(top_builddir)/src/frontend/BinaryLoader/libroseBinaryLoader.la    \
+	$(top_builddir)/src/frontend/Disassemblers/libroseDisassemblers.la  \
+	$(top_builddir)/src/midend/binaryAnalyses/libbinaryMidend.la
 else
-   libroseBinaryLibraries = \
-      $(top_builddir)/src/frontend/BinaryFormats/libroseBinaryFormats.la
+   libroseBinaryLibraries =						   \
+	$(top_builddir)/src/frontend/BinaryFormats/libroseBinaryFormats.la \
+	$(top_builddir)/src/frontend/Disassemblers/libroseDisassemblers.la
 endif
 
 if ROSE_USE_MYSQL

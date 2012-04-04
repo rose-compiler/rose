@@ -97,6 +97,7 @@ Grammar::setUpBinaryInstructions()
 
     /**************************************************************************************************************************
      *                                  Instruction Expressions
+     * Related functions and documentation can be found in src/frontend/Disassemblers/Expressions.C
      **************************************************************************************************************************/
 
     NEW_TERMINAL_MACRO(AsmOperandList, "AsmOperandList",  "AsmOperandListTag");
@@ -193,43 +194,33 @@ Grammar::setUpBinaryInstructions()
 
 
 
-    // Constants
+    // Integer Constants
     NEW_TERMINAL_MACRO(AsmByteValueExpression, "AsmByteValueExpression", "AsmByteValueExpressionTag");
-    AsmByteValueExpression.setFunctionPrototype("HEADER_BINARY_BYTE_VALUE_EXPRESSION", "../Grammar/BinaryInstruction.code");
-    AsmByteValueExpression.setFunctionSource("SOURCE_BINARY_BYTE_VALUE_EXPRESSION", "../Grammar/BinaryInstruction.code");
-    AsmByteValueExpression.setDataPrototype("uint8_t", "value", "= 0x0",
-                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-
+    AsmByteValueExpression.setFunctionPrototype("HEADER_BYTE_VALUE_EXPRESSION", "../Grammar/BinaryInstruction.code");
 
     NEW_TERMINAL_MACRO(AsmWordValueExpression, "AsmWordValueExpression", "AsmWordValueExpressionTag");
-    AsmWordValueExpression.setFunctionPrototype("HEADER_BINARY_WORD_VALUE_EXPRESSION", "../Grammar/BinaryInstruction.code");
-    AsmWordValueExpression.setFunctionSource("SOURCE_BINARY_WORD_VALUE_EXPRESSION", "../Grammar/BinaryInstruction.code");
-    AsmWordValueExpression.setDataPrototype("uint16_t", "value", "= 0x0",
-                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-
+    AsmWordValueExpression.setFunctionPrototype("HEADER_WORD_VALUE_EXPRESSION", "../Grammar/BinaryInstruction.code");
 
     NEW_TERMINAL_MACRO(AsmDoubleWordValueExpression, "AsmDoubleWordValueExpression", "AsmDoubleWordValueExpressionTag");
-    AsmDoubleWordValueExpression.setFunctionPrototype("HEADER_BINARY_DOUBLE_WORD_VALUE_EXPRESSION",
-                                                      "../Grammar/BinaryInstruction.code");
-    AsmDoubleWordValueExpression.setFunctionSource("SOURCE_BINARY_DOUBLE_WORD_VALUE_EXPRESSION",
-                                                   "../Grammar/BinaryInstruction.code");
-    AsmDoubleWordValueExpression.setDataPrototype("uint32_t", "value", "= 0x0",
-                                                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-
+    AsmDoubleWordValueExpression.setFunctionPrototype("HEADER_DOUBLE_WORD_VALUE_EXPRESSION", "../Grammar/BinaryInstruction.code");
 
     NEW_TERMINAL_MACRO(AsmQuadWordValueExpression, "AsmQuadWordValueExpression", "AsmQuadWordValueExpressionTag");
-    AsmQuadWordValueExpression.setFunctionPrototype("HEADER_BINARY_QUAD_WORD_VALUE_EXPRESSION",
-                                                    "../Grammar/BinaryInstruction.code");
-    AsmQuadWordValueExpression.setFunctionSource("SOURCE_BINARY_QUAD_WORD_VALUE_EXPRESSION",
-                                                 "../Grammar/BinaryInstruction.code");
-    AsmQuadWordValueExpression.setDataPrototype("uint64_t", "value", "= 0x0",
-                                                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+    AsmQuadWordValueExpression.setFunctionPrototype("HEADER_QUAD_WORD_VALUE_EXPRESSION", "../Grammar/BinaryInstruction.code");
+
+    NEW_NONTERMINAL_MACRO(AsmIntegerValueExpression,
+                          AsmByteValueExpression | AsmWordValueExpression | AsmDoubleWordValueExpression |
+                          AsmQuadWordValueExpression,
+                          "AsmIntegerValueExpression", "AsmIntegerValueExpressionTag", false);
+    AsmIntegerValueExpression.setFunctionPrototype("HEADER_INTEGER_VALUE_EXPRESSION", "../Grammar/BinaryInstruction.code");
+    AsmIntegerValueExpression.setDataPrototype("SgNode*", "base_node", "=NULL",
+                                               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+    AsmIntegerValueExpression.setDataPrototype("uint64_t", "relative_value", "=NULL",
+                                               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+    AsmIntegerValueExpression.setDataPrototype("size_t", "significant_bits", "=0",
+                                               NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
-
+    // Floating point constants
     NEW_TERMINAL_MACRO(AsmSingleFloatValueExpression, "AsmSingleFloatValueExpression", "AsmSingleFloatValueExpressionTag");
     AsmSingleFloatValueExpression.setFunctionPrototype("HEADER_BINARY_SINGLE_FLOAT_VALUE_EXPRESSION",
                                                        "../Grammar/BinaryInstruction.code");
@@ -250,6 +241,7 @@ Grammar::setUpBinaryInstructions()
 
 
 
+    // Vector constants
     NEW_TERMINAL_MACRO(AsmVectorValueExpression, "AsmVectorValueExpression", "AsmVectorValueExpressionTag");
     AsmVectorValueExpression.setFunctionPrototype("HEADER_BINARY_VECTOR_VALUE_EXPRESSION", "../Grammar/BinaryInstruction.code");
     AsmVectorValueExpression.setFunctionSource("SOURCE_BINARY_VECTOR_VALUE_EXPRESSION", "../Grammar/BinaryInstruction.code");
@@ -263,10 +255,10 @@ Grammar::setUpBinaryInstructions()
     // Values that are addresses or references to data will have symbols in a function symbol table.  All other
     // values are assumed to be literals and will not have associated symbols.
     NEW_NONTERMINAL_MACRO(AsmValueExpression,
-                          AsmByteValueExpression     | AsmWordValueExpression        | AsmDoubleWordValueExpression  |
-                          AsmQuadWordValueExpression | AsmSingleFloatValueExpression | AsmDoubleFloatValueExpression |
+                          AsmIntegerValueExpression | AsmSingleFloatValueExpression | AsmDoubleFloatValueExpression |
                           AsmVectorValueExpression,
                           "AsmValueExpression", "AsmValueExpressionTag", false);
+    AsmValueExpression.setFunctionPrototype("HEADER_BINARY_VALUE_EXPRESSION", "../Grammar/BinaryInstruction.code");
     AsmValueExpression.setDataPrototype("SgAsmValueExpression*", "unfolded_expression_tree", "= NULL",
                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
     AsmValueExpression.setDataPrototype("unsigned short", "bit_offset", "= 0",         // DOXYGEN
@@ -467,7 +459,7 @@ Grammar::setUpBinaryInstructions()
                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmBlock.setDataPrototype("SgAsmStatementPtrList", "statementList", "", //in order of execution
                                NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-     AsmBlock.setDataPrototype("SgAsmTargetPtrList", "successors", "",
+     AsmBlock.setDataPrototype("SgAsmIntegerValuePtrList", "successors", "",
                                NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmBlock.setDataPrototype("bool", "successors_complete", "= false",
                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -477,25 +469,6 @@ Grammar::setUpBinaryInstructions()
                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmBlock.setDataPrototype("double", "code_likelihood", "= 0.0",
                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-
-
-     // Basic block control flow successors are represented by address rather than links to other parts of the AST.  This
-     // allows a basic block to point to instructions that have never been disassembled.
-     NEW_TERMINAL_MACRO(AsmTargetList, "AsmTargetList", "AsmTargetListTag");
-     AsmTargetList.setFunctionPrototype("HEADER_BINARY_TARGET_LIST", "../Grammar/BinaryInstruction.code");
-     AsmTargetList.setDataPrototype("SgAsmTargetPtrList", "targets", "",
-                                    NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-
-
-
-     NEW_TERMINAL_MACRO(AsmTarget, "AsmTarget", "AsmTargetTag");
-     AsmTarget.setFunctionPrototype("HEADER_BINARY_TARGET", "../Grammar/BinaryInstruction.code");
-     AsmTarget.setFunctionSource("SOURCE_BINARY_TARGET", "../Grammar/BinaryInstruction.code");
-     AsmTarget.setDataPrototype("rose_addr_t", "address", "= 0",        // DOXYGEN
-                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmTarget.setDataPrototype("SgAsmBlock*", "block", "= NULL",       // DOXYGEN
-                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
 
@@ -2517,6 +2490,8 @@ Grammar::setUpBinaryInstructions()
      // destructor will need to explicitly delete the name.
      AsmGenericSection.setDataPrototype("SgAsmGenericString*", "name", "= NULL",
                                         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmGenericSection.setDataPrototype("std::string", "short_name", "",
+                                        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmGenericSection.setDataPrototype("rose_addr_t", "mapped_preferred_rva", "= 0", // DOXYGEN
                                         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmGenericSection.setDataPrototype("rose_addr_t", "mapped_size", "= 0",
@@ -2653,7 +2628,7 @@ Grammar::setUpBinaryInstructions()
 
      NEW_NONTERMINAL_MACRO(AsmNode,
                            AsmStatement | AsmExpression | AsmInterpretation | AsmOperandList | AsmType |
-                           AsmExecutableFileFormat | AsmInterpretationList | AsmGenericFileList | AsmTarget | AsmTargetList,
+                           AsmExecutableFileFormat | AsmInterpretationList | AsmGenericFileList,
                            "AsmNode", "AsmNodeTag", false);
      AsmNode.setFunctionPrototype("HEADER_BINARY", "../Grammar/BinaryInstruction.code");
      AsmNode.setFunctionSource("SOURCE_BINARY", "../Grammar/BinaryInstruction.code");

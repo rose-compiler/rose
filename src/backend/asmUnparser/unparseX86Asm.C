@@ -94,14 +94,17 @@ std::string unparseX86Expression(SgAsmExpression *expr, const AsmUnparser::Label
             result = unparseX86Expression(isSgAsmBinaryExpression(expr)->get_lhs(), labels, false) + " + " +
                      unparseX86Expression(isSgAsmBinaryExpression(expr)->get_rhs(), labels, false);
             break;
+
         case V_SgAsmBinarySubtract:
             result = unparseX86Expression(isSgAsmBinaryExpression(expr)->get_lhs(), labels, false) + " - " +
                      unparseX86Expression(isSgAsmBinaryExpression(expr)->get_rhs(), labels, false);
             break;
+
         case V_SgAsmBinaryMultiply:
             result = unparseX86Expression(isSgAsmBinaryExpression(expr)->get_lhs(), labels, false) + "*" +
                      unparseX86Expression(isSgAsmBinaryExpression(expr)->get_rhs(), labels, false);
             break;
+
         case V_SgAsmMemoryReferenceExpression: {
             SgAsmMemoryReferenceExpression* mr = isSgAsmMemoryReferenceExpression(expr);
             if (!leaMode) {
@@ -111,55 +114,35 @@ std::string unparseX86Expression(SgAsmExpression *expr, const AsmUnparser::Label
             result += "[" + unparseX86Expression(mr->get_address(), labels, false) + "]";
             break;
         }
+
         case V_SgAsmx86RegisterReferenceExpression: {
             SgAsmx86RegisterReferenceExpression* rr = isSgAsmx86RegisterReferenceExpression(expr);
             result = unparseX86Register(rr->get_descriptor());
             break;
         }
-        case V_SgAsmByteValueExpression: {
-            char buf[64];
-            uint64_t v = SageInterface::getAsmConstant(isSgAsmValueExpression(expr));
-            sprintf(buf, "0x%02"PRIx64, v);
-            if ((v & 0x80) && (v & 0x7f))
-                sprintf(buf+strlen(buf), "<-0x%02"PRIx64">", (~v+1) & 0xff);
-            result = buf;
+
+        case V_SgAsmByteValueExpression:
+        case V_SgAsmWordValueExpression:
+        case V_SgAsmDoubleWordValueExpression:
+        case V_SgAsmQuadWordValueExpression:
+        case V_SgAsmIntegerValueExpression: {
+            SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(expr);
+            assert(ival!=NULL);
+            uint64_t value = ival->get_absolute_value(); // not sign extended
+            result = StringUtility::addrToString(value, ival->get_significant_bits(), true/*signed*/);
+
+            // Optional label.  Prefer a label supplied by the caller's LabelMap, but not for single-byte constants.  If
+            // there's no caller-supplied label, then consider whether the value expression is relative to some other IR node.
+            std::string label;
+            if (ival->get_significant_bits()>8)
+                label =x86ValToLabel(value, labels);
+            if (label.empty())
+                label = ival->get_label();
+            if (!label.empty())
+                result += "<" + label + ">";
             break;
         }
-        case V_SgAsmWordValueExpression: {
-            char buf[64];
-            uint64_t v = SageInterface::getAsmConstant(isSgAsmValueExpression(expr));
-            sprintf(buf, "0x%04"PRIx64, v);
-            if ((v & 0x8000) && (v & 0x7fff))
-                sprintf(buf+strlen(buf), "<-0x%04"PRIx64">", (~v+1) & 0xffff);
-            result = buf;
-            break;
-        }
-        case V_SgAsmDoubleWordValueExpression: {
-            char buf[64];
-            uint64_t v = SageInterface::getAsmConstant(isSgAsmValueExpression(expr));
-            std::string label = x86ValToLabel(v, labels);
-            sprintf(buf, "0x%08"PRIx64, v);
-            if (!label.empty()) {
-                sprintf(buf+strlen(buf), "<%s>", label.c_str());
-            } else if ((v & 0x80000000) && (v & 0x7fffffff)) {
-                sprintf(buf+strlen(buf), "<-0x%08"PRIx64">", (~v+1) & 0xffffffff);
-            }
-            result = buf;
-            break;
-        }
-        case V_SgAsmQuadWordValueExpression: {
-            char buf[64];
-            uint64_t v = SageInterface::getAsmConstant(isSgAsmValueExpression(expr));
-            std::string label = x86ValToLabel(v, labels);
-            sprintf(buf, "0x%016"PRIx64, v);
-            if (!label.empty()) {
-                sprintf(buf+strlen(buf), "<%s>", label.c_str());
-            } else if ((v & ((uint64_t)1<<63)) && (v & (((uint64_t)1<<63)-1))) {
-                sprintf(buf+strlen(buf), "<-0x%016"PRIx64">", (~v+1));
-            }
-            result = buf;
-            break;
-        }
+
         default: {
             std::cerr << "Unhandled expression kind " << expr->class_name() << std::endl;
             ROSE_ASSERT (false);

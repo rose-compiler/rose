@@ -81,8 +81,7 @@
    ElfFileHeader.Header.Section.header                            = not associated
    ElfFileHeader.Header.Section.purpose                           = SP_HEADER
    ElfFileHeader.Header.Section.mapped                            = <not mapped>
-@@ -58,23 +58,23 @@
-   ElfFileHeader.Header.Format.purpose                            = executable program
+@@ -59,21 +59,21 @@
    ElfFileHeader.Header.Format.sex                                = little-endian
    ElfFileHeader.Header.Format.version                            = 1 (current)
    ElfFileHeader.Header.Format.ABI                                = unspecified
@@ -92,11 +91,10 @@
    ElfFileHeader.Header.magic                                     = "\177ELF"
    ElfFileHeader.Header.base_va                                   = 0x00000000 (0)
    ElfFileHeader.Header.entry_rva.size                            = 1 entry points
--  ElfFileHeader.Header.entry_rva[0]                              = 0x000084b0 (33968)
-+  ElfFileHeader.Header.entry_rva[0]                              = 0x000084b4 (33972)
-   ElfFileHeader.Header.entry_rva[0]                                is 0x00000000 (0) bytes into section [12] ".text"
--  ElfFileHeader.Header.entry_rva[0]                                is 0x000004b0 (1200) bytes into section [-1] "LOAD#2"
-+  ElfFileHeader.Header.entry_rva[0]                                is 0x000004b4 (1204) bytes into section [-1] "LOAD#2"
+   ElfFileHeader.Header.entry_rva[0]                              = 0x000084b0 (33968)
+-  ElfFileHeader.Header.entry_rva[0]                                is 0x00000000 (0) bytes into section [12] ".text"
++  ElfFileHeader.Header.entry_rva[0]                                is 0x000000cc (204) bytes into section [11] ".plt"
+   ElfFileHeader.Header.entry_rva[0]                                is 0x000004b0 (1200) bytes into section [-1] "LOAD#2"
    ElfFileHeader.Header.section                                   = 30 sections
    ElfFileHeader.Header.section[0]                                = [-1] "ELF Section Table"
    ElfFileHeader.Header.section[1]                                = [24] ".shstrtab"
@@ -106,7 +104,6 @@
    ElfFileHeader.Header.section[5]                                = [5] ".dynstr"
    ElfFileHeader.Header.section[6]                                = [7] ".gnu.version_r"
    ElfFileHeader.Header.section[7]                                = [10] ".init"
-   ElfFileHeader.Header.section[8]                                = [11] ".plt"
 @@ -119,48 +119,48 @@
    ElfFileHeader.phextrasz                                        = 0x00000000 (0) bytes
    ElfFileHeader.e_phnum                                          = 6
