@@ -55,7 +55,7 @@ class dbgBuf: public std::streambuf
 
 public:
         
-        virtual ~dbgBuf();
+        virtual ~dbgBuf() {};
         // Construct a streambuf which tees output to both input
         // streambufs.
         dbgBuf();
