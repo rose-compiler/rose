@@ -544,18 +544,38 @@ public:
     /** Looks up a function by address.  Returns the function pointer if found, the null pointer if not found. */
     virtual Function* find_function(rose_addr_t entry_va);
 
-    /** Builds the AST describing all the functions. The return value is an SgAsmBlock node that points to a list of
-     *  SgAsmFunction nodes (the functions), each of which points to a list of SgAsmBlock nodes (the basic
-     *  blocks). Any basic blocks that were not assigned to a function by the Partitioner will be added to a function named
-     *  "***uncategorized blocks***" whose entry address will be the address of the lowest instruction, and whose reasons for
-     * existence will include the SgAsmFunction::FUNC_LEFTOVERS bit.  However, if the FUNC_LEFTOVERS bit is not
-     * turned on (see set_search()) then uncategorized blocks will not appear in the AST. */
-    virtual SgAsmBlock* build_ast();
+    /** Builds the AST describing all the functions.
+     *
+     *  The return value is an SgAsmBlock node that points to a list of SgAsmFunction nodes (the functions), each of which
+     *  points to a list of SgAsmBlock nodes (the basic blocks). Any basic blocks that were not assigned to a function by the
+     *  Partitioner will be added to a function named "***uncategorized blocks***" whose entry address will be the address of
+     *  the lowest instruction, and whose reasons for existence will include the SgAsmFunction::FUNC_LEFTOVERS bit.  However,
+     *  if the FUNC_LEFTOVERS bit is not turned on (see set_search()) then uncategorized blocks will not appear in the AST.
+     *
+     *  If an interpretation is supplied, then it will be used to obtain information about where various file sections are
+     *  mapped into memory.  This mapping is used to fix-up various kinds of pointers in the instructions to make them relative
+     *  to a file section.  For instance, a pointer into the ".bss" section will be made relative to the beginning of that
+     *  section. */
+    virtual SgAsmBlock* build_ast(SgAsmInterpretation *interp=NULL);
 
-    /** Update SgAsmTarget block pointers.  This method traverses the specified AST and updates any SgAsmTarget nodes so their
-     *  block pointers point to actual blocks.  The update only happens for SgAsmTarget objects that don't already have a node
-     *  pointer. */
-    virtual void update_targets(SgNode *ast);
+    /** Update control flow graph edge nodes.  This method traverses the specified AST and updates any edge nodes so their
+     *  block pointers point to actual blocks rather than just containing virtual addresses.  The update only happens for
+     *  edges that don't already have a node pointer. */
+    virtual void fixup_cfg_edges(SgNode *ast);
+
+    /** Updates pointers inside instructions.  This method traverses each instruction in the specified AST and looks for
+     *  integer value expressions that that have no base node (i.e., those that have only an absolute value).  For each such
+     *  value it finds, it tries to determine if that value points to code or data.  Code pointers are made relative to the
+     *  instruction or function (for function calls) to which they point; data pointers are made relative to the data to which
+     *  they point.
+     *
+     *  The specified interpretation is only used to obtain a list of all mapped sections.  The sections are used to determine
+     *  whether a value is a data pointer even if it doesn't point to any specific data that was discovered during
+     *  disassembly.
+     *
+     *  This method is called by build_ast(), but can also be called explicitly. Only pointers that are not already relative to
+     *  some object are affected. */
+    virtual void fixup_pointers(SgNode *ast, SgAsmInterpretation *interp=NULL);
 
     /**************************************************************************************************************************
      *                                  Range maps relating address ranges to objects
@@ -1455,6 +1475,13 @@ public:
      *  space.  This is normally the case, but when functions are moved around, split, etc., the padding data blocks can get
      *  mixed up.  This method puts them all back where they belong. */
     virtual void adjust_padding();
+
+    /** Looks for a jump table.  This method looks at the specified basic block and tries to discover if the last instruction
+     *  is an indirect jump through memory.  If it is, then the entries of the jump table are returned by value (i.e., the
+     *  control flow successors of the given basic block), and the addresses of the table are added to the optional extent
+     *  map.  It is possible for the jump table to be discontiguous, but this is not usually the case.  If @p do_create is true
+     *  then data blocks are created for the jump table and added to the basic block. */
+    Disassembler::AddressSet discover_jump_table(BasicBlock *bb, bool do_create=true, ExtentMap *table_addresses=NULL);
 
     /*************************************************************************************************************************
      *                                   IPD Parser for initializing the Partitioner

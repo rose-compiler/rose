@@ -238,6 +238,7 @@ set(rose_support_src
 
 set(roseDisassemblers_SRC
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/InstructionEnumsX86.h
+   ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/Expressions.C
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/Partitioner.C 
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/PStatistics.C 
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/IPDParser.C 

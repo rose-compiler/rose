@@ -17,8 +17,11 @@ bin_PROGRAMS  = proFunSIG interproceduralCFG e0 e1 ff1 ff2 ff3 f1 f2 f3 f4 creat
 if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 bin_PROGRAMS += binaryPaths bPTP
 endif
-##if HAVE_YICES
+if HAVE_YICES
 bin_PROGRAMS += yicesParser
+endif
+#if HAVE_YICES
+#bin_PROGRAMS += yicesParser
 #endif
 # Allow development using -lrose -ledg (simpler) or using 
 # long list of separate libraries (for faster development)
@@ -145,15 +148,10 @@ sourcePTP_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
 #sourcePTP_LDFLAGS = -fopenmp -O3 
 
 
-#if HAVE_YICES
+if HAVE_YICES
 yicesParser_SOURCES = yicesParser.C
 yicesParser_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-yicesParser_LDFLAGS  =  -fopenmp -O3 -L/home/hoffman34/yices/yices-1.0.292/lib -lyices
-#endif
-#
-#yicesMultiParser_SOURCES = yicesMultiParser.C
-#yicesMultiParser_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-#= -O0 -I/home/hoffman34/yices/yices-1.0.292/include -L/home/hoffman34/yices/yices-1.0.292/lib -lyices
+endif
 
 
 strictGraphTest3_SOURCES = strictGraphTest3.C
@@ -240,7 +238,7 @@ smtParse: smtlibParser
 
 sourcePTPTest: sourcePTP
 	./sourcePTP $(srcdir)/test14.C
-#if HAVE_YICES
+if HAVE_YICES
 yicesParserTest: yicesParser
 	./yicesParser $(srcdir)/mfEx.C
 	./yicesParser $(srcdir)/mfEx2.C
@@ -278,7 +276,7 @@ yicesParserTest: yicesParser
 	./yicesParser $(srcdir)/tfif3.C
 	./yicesParser $(srcdir)/tfif4.C
 	
-#endif
+endif
 check-local:
 	@$(MAKE) testTraversals
 	@$(MAKE) testRunExamples2
@@ -297,8 +295,9 @@ check-local:
 	@$(MAKE) f2Check
 	@$(MAKE) f3Check
 	@$(MAKE) f4Check
-#if HAVE_YICES
+if HAVE_YICES
 	@$(MAKE) yicesParserTest
+endif
 #endif
 if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 	@$(MAKE) testRunExamplesbPTP

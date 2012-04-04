@@ -931,6 +931,15 @@ HEADER_THIS_EXPRESSION_START
 
 HEADER_THIS_EXPRESSION_END
 
+HEADER_SUPER_EXPRESSION_START
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+          virtual unsigned int cfgIndexForEnd() const;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
+
+HEADER_SUPER_EXPRESSION_END
+
 HEADER_TUPLE_EXP_START
 HEADER_TUPLE_EXP_END
 
@@ -4432,6 +4441,9 @@ SOURCE_DELETE_OPERATOR_EXPRESSION_END
 SOURCE_THIS_EXPRESSION_START
 SOURCE_THIS_EXPRESSION_END
 
+SOURCE_SUPER_EXPRESSION_START
+SOURCE_SUPER_EXPRESSION_END
+
 SOURCE_TUPLE_EXP_START
 SOURCE_TUPLE_EXP_END
 
@@ -5270,6 +5282,18 @@ $CLASSNAME::get_type() const
    }
 
 SOURCE_GET_TYPE_THIS_EXPRESSION_END
+
+SOURCE_GET_TYPE_SUPER_EXPRESSION_START
+
+SgType*
+$CLASSNAME::get_type() const 
+   {
+     ROSE_ASSERT(get_class_symbol() != NULL);
+     ROSE_ASSERT(get_class_symbol()->get_type() != NULL);
+     return SgPointerType::createType(get_class_symbol()->get_type());
+   }
+
+SOURCE_GET_TYPE_SUPER_EXPRESSION_END
 
 SOURCE_NULL_EXPRESSION_START
 SOURCE_NULL_EXPRESSION_END

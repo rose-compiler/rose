@@ -61,6 +61,7 @@ Unparse_Java::unparseLanguageSpecificExpression(SgExpression* expr, SgUnparse_In
           case NEW_OP:                  { unparseNewOp(expr, info); break; }
           case DELETE_OP:               { unparseDeleteOp(expr, info); break; }
           case THIS_NODE:               { unparseThisNode(expr, info); break; }
+          case SUPER_NODE:              { unparseSuperNode(expr, info); break; }
 
           case TYPE_REF:                { unparseTypeRef(expr, info); break; }
           case EXPR_INIT:               { unparseExprInit(expr, info); break; }
@@ -280,7 +281,7 @@ Unparse_Java::unparseVarRef(SgExpression* expr, SgUnparse_Info& info) {
      ROSE_ASSERT(var_ref != NULL);
 
      //
-     // An SgVarRefExp may contain a Type prefix stored in the prefix attribute.
+     // An SgVarRefExp may contain a Type prefix stored in the "prefix" attribute.
      //
      if (var_ref -> attributeExists("prefix")) {
          AstRegExAttribute *attribute = (AstRegExAttribute *) var_ref -> getAttribute("prefix");
@@ -289,6 +290,15 @@ Unparse_Java::unparseVarRef(SgExpression* expr, SgUnparse_Info& info) {
      }
 
      unparseName(var_ref->get_symbol()->get_name(), info);
+
+     //
+     // An SgVarRefExp may contain a name suffix stored in the "suffix" attribute.
+     //
+     if (var_ref -> attributeExists("suffix")) {
+         curprint(".");
+         AstRegExAttribute *attribute = (AstRegExAttribute *) var_ref -> getAttribute("suffix");
+         curprint(attribute -> expression);
+     }
 }
 
 void
@@ -757,14 +767,21 @@ Unparse_Java::unparseCastOp(SgExpression* expr, SgUnparse_Info& info) {
     curprint("(");
     unparseType(cast->get_type(), info);
     curprint(") ");
+    curprint("(");
     unparseExpression(cast->get_operand(), info);
+    curprint(") ");
 }
 
 void
 Unparse_Java::unparseArrayOp(SgExpression* expr, SgUnparse_Info& info)
    { 
-     //unparseBinaryOperator(expr, "[]", info); 
-     ROSE_ASSERT(!"unimplemented");
+    SgPntrArrRefExp *array_ref = isSgPntrArrRefExp(expr);
+    ROSE_ASSERT(array_ref != NULL);
+
+    unparseExpression(array_ref -> get_lhs_operand(), info);
+    curprint("[");
+    unparseExpression(array_ref -> get_rhs_operand(), info);
+    curprint("]");
    }
 
 void
@@ -948,6 +965,14 @@ Unparse_Java::unparseThisNode(SgExpression* expr, SgUnparse_Info& info)
    }
 
 void
+Unparse_Java::unparseSuperNode(SgExpression* expr, SgUnparse_Info& info) {
+    SgSuperExp* super_node = isSgSuperExp(expr);
+
+    ROSE_ASSERT(super_node != NULL);
+    curprint ("super"); 
+}
+
+void
 Unparse_Java::unparseScopeOp(SgExpression* expr, SgUnparse_Info& info)
    {
      SgScopeOp* scope_op = isSgScopeOp(expr);
@@ -1081,9 +1106,7 @@ Unparse_Java::unparseAssnInit(SgExpression* expr, SgUnparse_Info& info)
    {
      SgAssignInitializer* assn_init = isSgAssignInitializer(expr);
      ROSE_ASSERT(assn_init != NULL);
-
-     curprint("= ");
-     unparseExpression(assn_init->get_operand_i(), info);
+     unparseExpression(assn_init->get_operand(), info);
    }
 
 void
@@ -1153,13 +1176,22 @@ Unparse_Java::unparseBinaryOp(SgBinaryOp* op,
                               SgUnparse_Info & info) {
 
     //
-    // An SgDotExp may contain a Type prefix stored in the prefix attribute.
+    // An SgDotExp may contain a Type prefix stored in the "prefix" attribute.
     //
     if (op -> attributeExists("prefix")) {
         AstRegExAttribute *attribute = (AstRegExAttribute *) op -> getAttribute("prefix");
         curprint(attribute -> expression);
         curprint(".");
     }
+
+     //
+     // An SgDotExp may contain a name suffix stored in the "suffix" attribute.
+     //
+     if (op -> attributeExists("suffix")) {
+         curprint(".");
+         AstRegExAttribute *attribute = (AstRegExAttribute *) op -> getAttribute("suffix");
+         curprint(attribute -> expression);
+     }
 
     unparseExpression(op->get_lhs_operand(), info);
     switch (op->variantT()) {

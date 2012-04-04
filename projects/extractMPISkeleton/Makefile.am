@@ -6,7 +6,7 @@ EXEC=extractMPISkeleton
 bin_PROGRAMS=${EXEC}
 
 extractMPISkeleton_SOURCES = APIDepFinder.cc APIReader.cc APISpec.cc \
-  Outline.cc Utils.cc extractMPISkeleton.cc ssexpr.cc
+  Outline.cc Utils.cc extractMPISkeleton.cc ssexpr.cc processPragmas.cc
 
 LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
@@ -15,9 +15,10 @@ clean-local:
 
 noinst_HEADERS = APIDepAttrib.h APIDepFinder.h APIReader.h APISpec.h \
   DangerousOperationFinder.h GenericDepAttrib.h Outline.h \
-  Utils.h ssexpr.h 
+  Utils.h ssexpr.h processPragmas.h
 
-EXTRA_DIST=mpi_api.spec stdio_input.spec
+EXTRA_DIST=mpi_api.spec stdio_input.spec apis.coll \
+           examples test-sources mpi-fakeheader
 
 EXAMPLES=$(shell find $(srcdir)/examples -name "*.c")
 SOURCES=${EXAMPLES} $(shell find $(srcdir)/test-sources -name "*.c")

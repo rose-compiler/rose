@@ -470,6 +470,82 @@ Partitioner::set_map(MemoryMap *map, MemoryMap *ro_map)
     }
 }
 
+/* Looks for a jump table. Documented in header file. */
+Disassembler::AddressSet
+Partitioner::discover_jump_table(BasicBlock *bb, bool do_create, ExtentMap *table_extent)
+{
+    /* Do some cheap up-front checks. */
+    SgAsmx86Instruction *insn_x86 = isSgAsmx86Instruction(bb->last_insn());
+    if (!insn_x86 || (insn_x86->get_kind()!=x86_jmp && insn_x86->get_kind()==x86_farjmp) ||
+        1!=insn_x86->get_operandList()->get_operands().size())
+        return Disassembler::AddressSet();
+    SgAsmExpression *target_expr = insn_x86->get_operandList()->get_operands()[0];
+    SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(target_expr);
+    SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(target_expr);
+    if (!mre && !rre)
+        return Disassembler::AddressSet(); // no indirection
+
+    /* Evaluate the basic block semantically to get an expression for the final EIP. */
+    typedef VirtualMachineSemantics::ValueType<32> RegisterValueType;
+    typedef VirtualMachineSemantics::Policy<VirtualMachineSemantics::State, VirtualMachineSemantics::ValueType> Policy;
+    typedef X86InstructionSemantics<Policy, VirtualMachineSemantics::ValueType> Semantics;
+    Policy policy;
+    policy.set_map(&ro_map);
+    Semantics semantics(policy);
+    try {
+        for (size_t i=0; i<bb->insns.size(); ++i) {
+            insn_x86 = isSgAsmx86Instruction(bb->insns[i]->node);
+            assert(insn_x86); // we know we're in a basic block of x86 instructions already
+            policy.writeRegister(semantics.REG_EIP, policy.number<32>(insn_x86->get_address()));
+            semantics.processInstruction(insn_x86);
+        }
+    } catch (...) {
+        return Disassembler::AddressSet(); // something went wrong, so just give up (e.g., unhandled instruction)
+
+    }
+
+    /* Scan through memory to find from whence the EIP value came.  There's no need to scan for an EIP which is a known value
+     * since such control flow successors would be picked the usual way elsewhere.  It's also quite possible that the EIP value
+     * is also stored at some other memory addresses outside the jump table (e.g., a function pointer argument stored on the
+     * stack), so we also skip over any memory whose address is known. */
+    Disassembler::AddressSet successors;
+    RegisterValueType eip = policy.readRegister<32>(semantics.REG_EIP);
+    size_t entry_size = 4; // FIXME: bytes per jump table entry
+    if (!eip.is_known()) {
+        for (size_t i=0; i<policy.get_state().mem.size(); ++i) {
+            if (policy.get_state().mem[i].get_data()==eip && !policy.get_state().mem[i].get_address().is_known()) {
+                rose_addr_t base_va = policy.get_state().mem[i].get_address().offset;
+                size_t nentries = 0;
+                while (1) {
+                    uint8_t buf[entry_size];
+                    size_t nread = ro_map.read(buf, base_va+nentries*entry_size, entry_size);
+                    if (nread!=entry_size)
+                        break;
+                    rose_addr_t target_va = 0;
+                    for (size_t i=0; i<entry_size; i++)
+                        target_va |= buf[i] << (i*8);
+                    const MemoryMap::MapElement *me = map->find(target_va);
+                    if (!me || 0==(me->get_mapperms() & MemoryMap::MM_PROT_EXEC))
+                        break;
+                    successors.insert(target_va);
+                    ++nentries;
+                }
+                if (nentries>0) {
+                    if (table_extent)
+                        table_extent->insert(Extent(base_va, nentries*entry_size));
+                    if (do_create) {
+                        DataBlock *dblock = find_db_starting(base_va, nentries*entry_size);
+                        append(bb, dblock, SgAsmBlock::BLK_JUMPTABLE);
+                    }
+                    if (debug)
+                        fprintf(debug, "[jump table at 0x%08"PRIx64"+%zu*%zu]", base_va, nentries, entry_size);
+                }
+            }
+        }
+    }
+    return successors;
+}
+
 /** Runs local block analyses if their cached results are invalid and caches the results.  A local analysis is one whose
  *  results only depend on the specified block and which are valid into the future as long as the instructions in the block do
  *  not change. */
@@ -491,62 +567,16 @@ Partitioner::update_analyses(BasicBlock *bb)
      * map. We use a "do" loop so the logic nesting doesn't get so deep: just break when we find that something doesn't match
      * what we expect. */
     if (!bb->cache.sucs_complete && bb->cache.sucs.empty()) {
-        do {
-            SgAsmx86Instruction *insn_x86 = isSgAsmx86Instruction(bb->last_insn());
-            if (!insn_x86 || (insn_x86->get_kind()!=x86_jmp && insn_x86->get_kind()==x86_farjmp) ||
-                1!=insn_x86->get_operandList()->get_operands().size())
-                break;
-            SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(insn_x86->get_operandList()->get_operands()[0]);
-            if (!mre)
-                break;
-            SgAsmBinaryAdd *add = isSgAsmBinaryAdd(mre->get_address());
-            if (!add)
-                break;
-            SgAsmValueExpression *base = isSgAsmValueExpression(add->get_lhs());
-            if (!base)
-                break;
-            SgAsmBinaryMultiply *mult = isSgAsmBinaryMultiply(add->get_rhs());
-            if (!mult)
-                break;
-            SgAsmRegisterReferenceExpression *reg = isSgAsmRegisterReferenceExpression(mult->get_lhs());
-            if (!reg)
-                break;
-            SgAsmValueExpression *step = isSgAsmValueExpression(mult->get_rhs());
-            if (!step)
-                break;
-            rose_addr_t base_va = value_of(base);
-            size_t entry_size = value_of(step);
-            if (! ((entry_size==2 && insn_x86->get_operandSize()==x86_insnsize_16) ||
-                   (entry_size==4 && insn_x86->get_operandSize()==x86_insnsize_32) ||
-                   (entry_size==8 && insn_x86->get_operandSize()==x86_insnsize_64)))
-                break;
-
-            /* How big is the table? */
-            size_t nentries = 0;
-            while (1) {
-                uint8_t buf[8];
-                size_t nread = ro_map.read(buf, base_va+nentries*entry_size, entry_size);
-                if (nread!=entry_size)
-                    break;
-                rose_addr_t target_va = 0;
-                for (size_t i=0; i<entry_size; i++)
-                    target_va |= buf[i] << (i*8);
-                const MemoryMap::MapElement *me = map->find(target_va);
-                if (!me || 0==(me->get_mapperms() & MemoryMap::MM_PROT_EXEC))
-                    break;
-                ++nentries;
-                bb->cache.sucs.insert(target_va);
+        ExtentMap table_extent;
+        Disassembler::AddressSet table_entries = discover_jump_table(bb, true, &table_extent);
+        if (!table_entries.empty()) {
+            bb->cache.sucs.insert(table_entries.begin(), table_entries.end());
+            if (debug) {
+                std::ostringstream ss;
+                ss <<"[jump table at " <<table_extent <<"]";
+                fprintf(debug, "%s", ss.str().c_str());
             }
-            if (0==nentries)
-                break;
-
-            /* Create a data block for the jump table. */
-            DataBlock *dblock = find_db_starting(base_va, nentries*entry_size);
-            append(bb, dblock, SgAsmBlock::BLK_JUMPTABLE);
-
-            if (debug)
-                fprintf(debug, "[jump table at 0x%08"PRIx64"+%zu*%zu]", base_va, nentries, entry_size);
-        } while (0);
+        }
     }
 
     /* Call target analysis. For x86, a function call is any CALL instruction except when the call target is the fall-through
@@ -3537,9 +3567,9 @@ Partitioner::is_contiguous(Function *func, bool strict)
     return true;
 }
 
-/* Update SgAsmTarget nodes. */
+/* Update CFG edge nodes. */
 void
-Partitioner::update_targets(SgNode *ast)
+Partitioner::fixup_cfg_edges(SgNode *ast)
 {
     typedef std::map<rose_addr_t, SgAsmBlock*> BlockMap;
 
@@ -3570,11 +3600,11 @@ Partitioner::update_targets(SgNode *ast)
             SgAsmBlock *block = isSgAsmBlock(node);
             if (block) {
                 for (size_t i=0; i<block->get_successors().size(); i++) {
-                    SgAsmTarget *target = block->get_successors()[i];
-                    if (target && NULL==target->get_block()) {
-                        BlockMap::const_iterator bi=block_map.find(target->get_address());
+                    SgAsmIntegerValueExpression *target = block->get_successors()[i];
+                    if (target && NULL==target->get_base_node()) {
+                        BlockMap::const_iterator bi=block_map.find(target->get_absolute_value());
                         if (bi!=block_map.end())
-                            target->set_block(bi->second);
+                            target->make_relative_to(bi->second);
                     }
                 }
             }
@@ -3586,9 +3616,101 @@ Partitioner::update_targets(SgNode *ast)
     TargetPopulator(ast, block_map);
 }
 
+/* Make pointers relative to what they point into. */
+void
+Partitioner::fixup_pointers(SgNode *ast, SgAsmInterpretation *interp/*=NULL*/)
+{
+
+    struct FixerUpper: public AstPrePostProcessing {
+        Partitioner *p;
+        SgAsmInterpretation *interp;
+        SgAsmInstruction *insn;
+        SgAsmGenericSectionPtrList mapped_sections;
+        DataRangeMap static_data;
+
+        FixerUpper(Partitioner *p, SgAsmInterpretation *interp)
+            : p(p), interp(interp), insn(NULL) {}
+
+        void atTraversalStart() {
+            /* Get a list of all memory-mapped sections in the interpretation. */
+            if (interp) {
+                const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
+                for (SgAsmGenericHeaderPtrList::const_iterator hi=headers.begin(); hi!=headers.end(); ++hi) {
+                    if ((*hi)->is_mapped())
+                        mapped_sections.push_back(*hi);
+                    SgAsmGenericSectionPtrList file_sections = (*hi)->get_mapped_sections();
+                    mapped_sections.insert(mapped_sections.end(), file_sections.begin(), file_sections.end());
+                }
+            }
+
+            /* Get a list of all static data blocks */
+            p->datablock_extent(&static_data);
+        }
+
+        void preOrderVisit(SgNode *node) {
+            if (!insn) {
+                insn = isSgAsmInstruction(node);
+            } else if (isSgAsmIntegerValueExpression(node)) {
+                SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(node);
+
+                /* Don't monkey with constants that are already relative to some other node.  These are things that have been
+                 * already fixed up by other methods. */
+                if (ival->get_base_node()!=NULL)
+                    return;
+                rose_addr_t va = ival->get_absolute_value();
+
+                /* If this constant is a code pointer, then make the pointer relative to the instruction it points to.  If that
+                 * instruction is the entry instruction of a function, then point to the function instead.  A value is
+                 * considered a code pointer only if it points to an existing instruction that's contained in a basic block,
+                 * and that basic block is part of a valid function.  This constraint weeds out pointers to code that was
+                 * disassembled but later discarded. */
+                Instruction *target_insn = p->find_instruction(va, false/*do not create*/);
+                if (target_insn && target_insn->bblock && target_insn->bblock->function &&
+                    0==(target_insn->bblock->function->reason & SgAsmFunction::FUNC_LEFTOVERS)) {
+                    SgAsmFunction *target_func = SageInterface::getEnclosingNode<SgAsmFunction>(target_insn->node);
+                    if (target_func && target_func->get_entry_va()==target_insn->get_address()) {
+                        ival->make_relative_to(target_func);
+                    } else {
+                        ival->make_relative_to(target_insn->node);
+                    }
+                    return;
+                }
+
+                /* If this constant points into a static data block, then make it relative to that block. */
+                DataRangeMap::iterator dbi = static_data.find(va);
+                if (dbi!=static_data.end()) {
+                    DataBlock *dblock = dbi->second.get();
+                    for (size_t i=0; i<dblock->nodes.size(); ++i) {
+                        SgAsmStaticData *sd = dblock->nodes[i];
+                        if (va>=sd->get_address() && va<sd->get_address()+sd->get_size()) {
+                            ival->make_relative_to(sd);
+                            return;
+                        }
+                    }
+                }
+                
+                /* If this constant points into a non-executable data segment, then make the pointer relative to that data
+                 * segment. */
+                SgAsmGenericSection *section = SgAsmGenericFile::best_section_by_va(mapped_sections, ival->get_absolute_value());
+                if (section && !section->get_mapped_xperm()) {
+                    ival->make_relative_to(section);
+                    return;
+                }
+            }
+        }
+
+        void postOrderVisit(SgNode *node) {
+            if (isSgAsmInstruction(node))
+                insn = NULL;
+        }
+    };
+
+    FixerUpper(this, interp).traverse(ast);
+}
+
 /* Build the global block containing all functions. */
 SgAsmBlock *
-Partitioner::build_ast()
+Partitioner::build_ast(SgAsmInterpretation *interp/*=NULL*/)
 {
     /* Build a function to hold all the unassigned instructions.  Update documentation if changing the name of
      * this generated function!  We do this by traversing the instructions and obtaining a basic block for each one.  If the
@@ -3643,7 +3765,9 @@ Partitioner::build_ast()
         delete catchall;
     }
 
-    update_targets(retval);
+    /* Make pointers relative to the thing into which they point. */
+    fixup_cfg_edges(retval);
+    fixup_pointers(retval, interp);
     return retval;
 }
 
@@ -3732,13 +3856,16 @@ Partitioner::build_ast(BasicBlock* block)
         insn->node->set_parent(retval);
     }
 
-    /* Cache block successors so other layers don't have to constantly compute them.  We fill in the successor SgAsmTarget
-     * objects with only the address and not pointers to blocks since we don't have all the blocks yet.  The pointers will be
-     * initialized in the no-argument version build_ast() higher up on the stack. */
+    /* Cache block successors so other layers don't have to constantly compute them.  We fill in the successor
+     * SgAsmIntegerValueExpression objects with only the address and not pointers to blocks since we don't have all the blocks
+     * yet.  The pointers will be initialized in the no-argument version build_ast() higher up on the stack. */
     bool complete;
     Disassembler::AddressSet successor_addrs = successors(block, &complete);
-    for (Disassembler::AddressSet::iterator si=successor_addrs.begin(); si!=successor_addrs.end(); ++si)
-        retval->get_successors().push_back(new SgAsmTarget(retval, NULL, *si));
+    for (Disassembler::AddressSet::iterator si=successor_addrs.begin(); si!=successor_addrs.end(); ++si) {
+        SgAsmIntegerValueExpression *value = new SgAsmIntegerValueExpression(*si);
+        value->set_parent(retval);
+        retval->get_successors().push_back(value);
+    }
     retval->set_successors_complete(complete);
     return retval;
 }
@@ -3779,7 +3906,7 @@ Partitioner::partition(SgAsmInterpretation* interp/*=NULL*/, const Disassembler:
         pre_cfg(interp);
         analyze_cfg(SgAsmBlock::BLK_GRAPH1);
         post_cfg(interp);
-        retval = build_ast();
+        retval = build_ast(interp);
         set_map(old_map, &old_ro_map);
     } catch (...) {
         set_map(old_map, &old_ro_map);
@@ -3800,7 +3927,7 @@ Partitioner::partition(SgAsmInterpretation* interp/*=NULL*/, Disassembler *d, Me
     pre_cfg(interp);
     analyze_cfg(SgAsmBlock::BLK_GRAPH1);
     post_cfg(interp);
-    return build_ast();
+    return build_ast(interp);
 }
 
 void

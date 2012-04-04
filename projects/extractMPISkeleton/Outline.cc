@@ -231,13 +231,14 @@ void outlineStatementsWithFilletAttrib (SgProject *proj, bool outline) {
 /*******************************************************************************
  skeletonizeCode - the exported function.
 */
-void skeletonizeCode (APISpecs *specs, SgProject *proj, bool outline) {
+void skeletonizeCode (APISpecs *specs, SgProject *proj, bool outline,
+                      bool genPDF) {
   ifNotSkeletonAddFilletAttrib(specs, proj);
   if (debug) AstTests::runAllTests(proj);
 
   // Create report of attributes on AST (before code changes):
   if(debug) std::cout << "Generating PDF report" << std::endl;
-  generatePDF(*proj);
+  if(genPDF) generatePDF(*proj);
 
   moveFilletSpansToNewBasicBlocks(proj);
     // and moves fillet attrib from these spans to the new BasicBlocks
