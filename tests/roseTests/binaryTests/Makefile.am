@@ -232,6 +232,16 @@ EXTRA_DIST += semantics.conf symbolicSemantics.ans
 symbolicSemantics.passed: semantics.conf symbolicSemantics
 	@$(RTH_RUN) CMD=symbolicSemantics INPUT=i686-test1.O3.bin $< $@
 
+# Null semantics do nothing, but we test that they compile and run
+noinst_PROGRAMS += nullSemantics
+nullSemantics_SOURCES = semantics.C
+nullSemantics_CPPFLAGS = -DPOLICY_SELECTOR=5
+nullSemantics_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+STATIC_TEST_TARGETS += nullSemantics.passed
+EXTRA_DIST += semantics.conf nullSemantics.ans
+nullSemantics.passed: semantics.conf nullSemantics
+	@$(RTH_RUN) CMD=nullSemantics INPUT=i686-test1.O3.bin $< $@
+
 
 # Use SymbolicSemantics with YicesSolver policy, invoking "yices" executable. We should be able
 # to compile this test even when the "yices" command is not available. However, we won't be able

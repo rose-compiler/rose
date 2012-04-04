@@ -8,6 +8,7 @@
 #include "VirtualMachineSemantics.h"
 #include "SymbolicSemantics.h"
 #include "YicesSolver.h"
+#include "NullSemantics.h"
 #include <set>
 #include <inttypes.h>
 
@@ -77,6 +78,14 @@
             std::cout <<"\n";
         }
     };
+#elif 5==POLICY_SELECTOR
+#   define TestValueTemplate NullSemantics::ValueType
+    struct TestPolicy: public NullSemantics::Policy<NullSemantics::State, NullSemantics::ValueType> {
+        void dump(SgAsmInstruction *insn) {
+            std::cout <<unparseInstructionWithAddress(insn) <<"\n"
+                      <<"    null state\n";
+        }
+    };
 #else
 #error "Invalid policy selector"
 #endif
@@ -139,6 +148,9 @@ analyze_interp(SgAsmInterpretation *interp)
 #if 3==POLICY_SELECTOR || 4==POLICY_SELECTOR
             if (!policy.get_ip().is_known()) break;
             rose_addr_t next_addr = policy.get_ip().known_value();
+#elif 5==POLICY_SELECTOR
+            if (!policy.readRegister<32>(semantics.REG_EIP).is_known()) break;
+            rose_addr_t next_addr = policy.readRegister<32>(semantics.REG_EIP).known_value();
 #else
             if (policy.newIp->get().name) break;
             rose_addr_t next_addr = policy.newIp->get().offset;
