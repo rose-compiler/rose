@@ -9,7 +9,7 @@ asmUnparser_la_sources=\
 	$(asmUnparserPath)/unparseArmAsm.C \
 	$(asmUnparserPath)/unparsePowerpcAsm.C
 else
-asmUnparser_la_sources=# 
+asmUnparser_la_sources=$(asmUnparserPath)/dummyAsmUnparser.C
 endif
 
 
@@ -20,4 +20,5 @@ asmUnparser_distIncludeHeaders=\
 
 
 asmUnparser_extraDist=\
-	$(asmUnparserPath)/CMakeLists.txt
+	$(asmUnparserPath)/CMakeLists.txt \
+	$(asmUnparserPath)/dummyAsmUnparser.C

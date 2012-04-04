@@ -196,7 +196,7 @@ SgAsmPEImportDirectory::parse_ilt_iat(const rose_rva_t &table_start, bool assume
             if (idx<imports.size()) {
                 SgAsmPEImportSection::import_mesg("SgAsmPEImportDirectory: IAT entry #%zu at rva 0x%08"PRIx64
                                                   ": IAT zero termination occurs before end of corresponding ILT;"
-                                                  " %scontinuing to read IAT entries.", idx, entry_rva,
+                                                  " %scontinuing to read IAT entries.\n", idx, entry_rva,
                                                   (assume_bound?"":"assuming this is a bound null address and "));
                 assert(idx<imports.size());
                 imports[idx]->set_bound_rva(rose_rva_t(entry_word).bind(fhdr));
@@ -207,7 +207,7 @@ SgAsmPEImportDirectory::parse_ilt_iat(const rose_rva_t &table_start, bool assume
         } else if (processing_iat && idx>=imports.size()) {
             SgAsmPEImportSection::import_mesg("SgAsmPEImportDirectory: IAT entry #%zu at rva 0x%08"PRIx64
                                               ": IAT extends beyond end of corresponding ILT (it is not zero terminated)"
-                                              "; forcibly terminating here", idx, entry_rva);
+                                              "; forcibly terminating here\n", idx, entry_rva);
             break;
         }
 
@@ -358,7 +358,7 @@ SgAsmPEImportDirectory::unparse_ilt_iat(std::ostream &f, const rose_rva_t &table
     size_t nelmts = std::min(tablesize/entry_size, imports.size()+1);
     if (nelmts<imports.size()+1) {
         SgAsmPEImportSection::import_mesg("SgAsmPEImportDirectory: ILT/IAT: table at 0x%08"PRIx64" is truncated from %zu to"
-                                          " %zu entries (inc. zero terminator) due to allocation constraints.",
+                                          " %zu entries (inc. zero terminator) due to allocation constraints.\n",
                                           table_start.to_string().c_str(), imports.size()+1, nelmts);
     }
 
@@ -511,7 +511,7 @@ SgAsmPEImportDirectory::unparse(std::ostream &f, const SgAsmPEImportSection *sec
                                           " any file section\n", p_dll_name_rva.to_string().c_str());
     } else if (p_dll_name->get_string().size()+1 > p_dll_name_nalloc) {
         SgAsmPEImportSection::import_mesg("SgAsmPEImportDirectory: insufficient space allocated (%zu byte%s) for DLL name"
-                                          " (need %zu byte%s)", p_dll_name_nalloc, 1==p_dll_name_nalloc?"":"s",
+                                          " (need %zu byte%s)\n", p_dll_name_nalloc, 1==p_dll_name_nalloc?"":"s",
                                           p_dll_name->get_string().size()+1, 1==p_dll_name->get_string().size()?"":"s");
     } else {
         uint8_t *buf = new uint8_t[p_dll_name_nalloc];
