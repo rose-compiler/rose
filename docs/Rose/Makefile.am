@@ -196,6 +196,7 @@ make-web-pages: $(RoseDoxygenDocumentation) $(PACKAGE_NAME)-$(PACKAGE_VERSION)-U
 	cp -f $(srcdir)/projects.html ROSE_WebPages/projects.html
 	cp -f $(srcdir)/FAQ.html ROSE_WebPages/FAQ.html
 	cp -f $(srcdir)/documents.html ROSE_WebPages/documents.html
+	cp -f $(srcdir)/highlights.html ROSE_WebPages/highlights.html
 	cp -f $(srcdir)/news.html ROSE_WebPages/news.html
 	cp -f $(srcdir)/regressionTest.html ROSE_WebPages/regressionTest.html
 	cp -f $(COMPASS_MANUAL) ROSE_WebPages/
@@ -205,6 +206,7 @@ make-web-pages: $(RoseDoxygenDocumentation) $(PACKAGE_NAME)-$(PACKAGE_VERSION)-U
 	cp -fr $(HASKELLPORT_APIDOCS)/* ROSE_WebPages/ROSE_HaskellAPI/
 #	cp -r $(top_srcdir)/ROSE_ResearchPapers ROSE_WebPages/ROSE_ResearchPapers
 	cp -fr $(top_srcdir)/ROSE_ResearchPapers ROSE_WebPages/
+	cp -fr $(srcdir)/powerpoints ROSE_WebPages/
 	cp -f ROSE_InstallationInstructions.pdf ROSE_WebPages/ROSE_InstallationInstructions.pdf
 	cp -f ROSE_Exam.pdf ROSE_WebPages/ROSE_Exam.pdf
 	cp -f ROSE_DeveloperInstructions.pdf ROSE_WebPages/ROSE_DeveloperInstructions.pdf
