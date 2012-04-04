@@ -559,7 +559,6 @@
 ./frontend/SageIII/sage3.h
 ./frontend/SageIII/sla.h
 ./frontend/SageIII/sageInterface.h
-./frontend/SageIII/sageSupport.h
 ./frontend/SageIII/astMerge/AstFixParentTraversal.h
 ./frontend/SageIII/astMerge/AstMerge.h
 ./frontend/SageIII/astMerge/AstMergeTraversals.h

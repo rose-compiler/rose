@@ -55,7 +55,7 @@ all-local: roseh sage.docs
 # INCLUDES = $(ROSE_INCLUDES) # -I$(top_srcdir)/src/frontend/EDG_SAGE_Connection -I$(top_srcdir)/src/frontend/EDG/EDG_3.3/src
 INCLUDES = $(ROSE_INCLUDES)
 
-# DQ (3/13/2010): sageSupport.C requires the OFP fortran source files to be made available.
+# DQ (3/13/2010): sage_support.cpp requires the OFP fortran source files to be made available.
 # if ROSE_USE_OPEN_FORTRAN_PARSER
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
    INCLUDES += -I${top_builddir}/src/3rdPartyLibraries/fortran-parser
@@ -149,7 +149,7 @@ libsage3Sources = \
    attachPreprocessingInfoTraversal.C \
    attributeListMap.C \
    manglingSupport.C \
-   sageSupport.C \
+   sage_support/sage_support.cpp \
    fixupCopy_scopes.C \
    fixupCopy_symbols.C \
    fixupCopy_references.C \
@@ -161,7 +161,7 @@ libsage3Sources = \
    attachPreprocessingInfoTraversal.C \
    attributeListMap.C \
    manglingSupport.C \
-   sageSupport.C \
+   sage_support/sage_support.cpp \
    fixupCopy_scopes.C \
    fixupCopy_symbols.C \
    fixupCopy_references.C \
@@ -307,10 +307,10 @@ else
 BUILT_SOURCES = $(GENERATED_SOURCE) ompparser.cc ompparser.h omplexer.cc
 endif
 
-# DQ (3/13/2010): Extract the required OFP source files needed for ROSE Fortran support (in sageSupport.C).
+# DQ (3/13/2010): Extract the required OFP source files needed for ROSE Fortran support (in sage_support/sage_support.cpp).
 # if ROSE_USE_OPEN_FORTRAN_PARSER
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
-sageSupport.C: extract_rose_required_ofp_source_files
+sage_support/sage_support.cpp: extract_rose_required_ofp_source_files
 endif
 
 # DQ (10/9/2010): We are now trying to properly represent the dependences so avoid redundant
@@ -332,7 +332,6 @@ endif
 # AstAttributeDOT.h
 # astGraph.h
 # astGraphTemplate.C
-# sageSupport.h
 # C++_include_files.h
 
 clean-local:
