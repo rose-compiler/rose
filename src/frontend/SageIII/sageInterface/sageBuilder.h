@@ -307,6 +307,10 @@ SgUpcMythread* buildUpcMythread_nfi();
 SgThisExp* buildThisExp(SgClassSymbol* sym);
 SgThisExp* buildThisExp_nfi(SgClassSymbol* sym);
 
+//! Build super pointer
+SgSuperExp* buildSuperExp(SgClassSymbol* sym);
+SgSuperExp* buildSuperExp_nfi(SgClassSymbol* sym);
+
 //! Build lambda expression
 SgLambdaRefExp* buildLambdaRefExp(SgType* return_type, SgFunctionParameterList* params, SgScopeStatement* scope);
 

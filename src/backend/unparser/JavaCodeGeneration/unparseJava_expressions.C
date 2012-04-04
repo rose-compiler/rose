@@ -61,6 +61,7 @@ Unparse_Java::unparseLanguageSpecificExpression(SgExpression* expr, SgUnparse_In
           case NEW_OP:                  { unparseNewOp(expr, info); break; }
           case DELETE_OP:               { unparseDeleteOp(expr, info); break; }
           case THIS_NODE:               { unparseThisNode(expr, info); break; }
+          case SUPER_NODE:              { unparseSuperNode(expr, info); break; }
 
           case TYPE_REF:                { unparseTypeRef(expr, info); break; }
           case EXPR_INIT:               { unparseExprInit(expr, info); break; }
@@ -964,6 +965,14 @@ Unparse_Java::unparseThisNode(SgExpression* expr, SgUnparse_Info& info)
    }
 
 void
+Unparse_Java::unparseSuperNode(SgExpression* expr, SgUnparse_Info& info) {
+    SgSuperExp* super_node = isSgSuperExp(expr);
+
+    ROSE_ASSERT(super_node != NULL);
+    curprint ("super"); 
+}
+
+void
 Unparse_Java::unparseScopeOp(SgExpression* expr, SgUnparse_Info& info)
    {
      SgScopeOp* scope_op = isSgScopeOp(expr);
@@ -1097,8 +1106,7 @@ Unparse_Java::unparseAssnInit(SgExpression* expr, SgUnparse_Info& info)
    {
      SgAssignInitializer* assn_init = isSgAssignInitializer(expr);
      ROSE_ASSERT(assn_init != NULL);
-
-     unparseExpression(assn_init->get_operand_i(), info);
+     unparseExpression(assn_init->get_operand(), info);
    }
 
 void
