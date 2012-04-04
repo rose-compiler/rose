@@ -1,12 +1,13 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-EXTRA_DIST = tf1.C tf2.C tf3.C tfif1.C tfif2.C tfif3.C tfif4.C mf1.C mf3.C mf4.C mf5.C mf8.C mf9.C mf10.C mf11.C mf12.C mf13.Ceif.C eif2.C eif3.C eif4.C efor2.C efor3.C input1.C test11.C test12.C test13.C test14.C createTest.C t1 t2 t3 t4 mfEx.C mfEx2.C mfEx3.C mfEx4.C mfEx5.C mfEx6.C mfEx7.C mfEx8.C mfEx9.C mfEx12.C mfEx13.C mfEx14.C mfEx15.C whiletest.C whiletest2.C whiletest3.C
+EXTRA_DIST = yicesParserLib.C tf1.C tf2.C tf3.C tfif1.C tfif2.C tfif3.C tfif4.C mf1.C mf3.C mf4.C mf5.C mf8.C mf9.C mf10.C mf11.C mf12.C mf13.C eif.C eif2.C eif3.C eif4.C efor2.C efor3.C input1.C test11.C test12.C test13.C test14.C createTest.C t1 t2 t3 t4 mfEx.C mfEx2.C mfEx3.C mfEx4.C mfEx5.C mfEx6.C mfEx7.C mfEx8.C mfEx9.C mfEx12.C mfEx13.C mfEx14.C mfEx15.C whiletest.C whiletest2.C whiletest3.C
 
 # To keep compile commands tidy, please ONLY put required include flags here.
 INCLUDES = $(ROSE_INCLUDES)
 
 ## Don't use the repository in ../src
 CXX_TEMPLATE_REPOSITORY_PATH = .
+
 
 # This test program does not require the rest of ROSE so it can be handled locally
 
@@ -16,10 +17,30 @@ bin_PROGRAMS  = proFunSIG interproceduralCFG e0 e1 ff1 ff2 ff3 f1 f2 f3 f4 creat
 if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 bin_PROGRAMS += binaryPaths bPTP
 endif
+##if HAVE_YICES
 bin_PROGRAMS += yicesParser
+#endif
 # Allow development using -lrose -ledg (simpler) or using 
 # long list of separate libraries (for faster development)
 ROSE_DEVELOPMENT_LIBS = $(ROSE_SEPARATE_LIBS)
+
+
+
+
+#icesLib.h: yicesParserLib.C
+#yicesLib.la: yicesLib.h
+
+
+libyicesLibSources = yicesParserLib.C
+
+noinst_LTLIBRARIES = libyicesParserLib.la
+libyicesParserLib_la_SOURCES = $(libyicesLibSources)
+libyicesParserLib_la_LIBADD = $(CXX_TEMPLATE_OBJECTS)
+libyicesParserLib_la_DEPENDENCIES = $(libyicesLib_a_SOURCES)
+
+
+
+#include_HEADERS = yicesLib.h
 
 e0_SOURCES = efor2.C.maintest.C
 e0_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
@@ -124,11 +145,11 @@ sourcePTP_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
 #sourcePTP_LDFLAGS = -fopenmp -O3 
 
 
-if HAVE_YICES
+#if HAVE_YICES
 yicesParser_SOURCES = yicesParser.C
 yicesParser_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-#yicesParser_LDFLAGS  =  -fopenmp -O3 -L/home/hoffman34/yices/yices-1.0.292/lib -lyices
-endif
+yicesParser_LDFLAGS  =  -fopenmp -O3 -L/home/hoffman34/yices/yices-1.0.292/lib -lyices
+#endif
 #
 #yicesMultiParser_SOURCES = yicesMultiParser.C
 #yicesMultiParser_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
@@ -219,7 +240,7 @@ smtParse: smtlibParser
 
 sourcePTPTest: sourcePTP
 	./sourcePTP $(srcdir)/test14.C
-if HAVE_YICES
+#if HAVE_YICES
 yicesParserTest: yicesParser
 	./yicesParser $(srcdir)/mfEx.C
 	./yicesParser $(srcdir)/mfEx2.C
@@ -257,7 +278,7 @@ yicesParserTest: yicesParser
 	./yicesParser $(srcdir)/tfif3.C
 	./yicesParser $(srcdir)/tfif4.C
 	
-endif
+#endif
 check-local:
 	@$(MAKE) testTraversals
 	@$(MAKE) testRunExamples2
@@ -276,9 +297,9 @@ check-local:
 	@$(MAKE) f2Check
 	@$(MAKE) f3Check
 	@$(MAKE) f4Check
-if HAVE_YICES
+#if HAVE_YICES
 	@$(MAKE) yicesParserTest
-endif
+#endif
 if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 	@$(MAKE) testRunExamplesbPTP
 	@$(MAKE) testRunExamplesBin
