@@ -7118,7 +7118,9 @@ SgSourceFile::build_C_and_Cxx_AST( vector<string> argv, vector<string> inputComm
      int edg_main(int, char *[], SgSourceFile & sageFile );
      int frontendErrorLevel = edg_main (edg_argc, edg_argv, *this);
 #else
-     int frontendErrorLevel = 0;
+     int frontendErrorLevel = 99;
+     ROSE_ASSERT (! "[FATAL] [ROSE] [frontend] [C/C++] "
+                    "ROSE was not configured to support the C/C++ frontend.");
 #endif
 
      return frontendErrorLevel;
@@ -7138,7 +7140,9 @@ SgSourceFile::build_PHP_AST()
 #ifdef ROSE_BUILD_PHP_LANGUAGE_SUPPORT
      int frontendErrorLevel = php_main(phpFileName, this);
 #else
-     int frontendErrorLevel = 0;
+     int frontendErrorLevel = 99;
+     ROSE_ASSERT (! "[FATAL] [ROSE] [frontend] [PHP] "
+                    "ROSE was not configured to support the PHP frontend.");
 #endif
 #endif
      return frontendErrorLevel;
@@ -7151,7 +7155,9 @@ SgSourceFile::build_Python_AST()
 #ifdef ROSE_BUILD_PYTHON_LANGUAGE_SUPPORT
      int frontendErrorLevel = python_main(pythonFileName, this);
 #else
-     int frontendErrorLevel = 0;
+     int frontendErrorLevel = 99;
+     ROSE_ASSERT (! "[FATAL] [ROSE] [frontend] [Python] "
+                    "ROSE was not configured to support the Python frontend.");
 #endif
      return frontendErrorLevel;
    }
@@ -7195,8 +7201,8 @@ SgBinaryComposite::buildAsmAST(string executableFileName)
      SgProject* project = isSgProject(this->get_parent());
      ROSE_ASSERT(project != NULL);
 #else
-     printf ("Binary analysis not supported in this distribution (turned off in this restricted distribution) \n");
-     ROSE_ASSERT(false);
+     ROSE_ASSERT (! "[FATAL] [ROSE] [frontend] [Binary analysis] "
+                    "ROSE was not configured to support the binary analysis frontend.");
 #endif
 
 #if 0
@@ -7252,8 +7258,8 @@ SgBinaryComposite::buildAST(vector<string> /*argv*/, vector<string> /*inputComma
     // Generate the ELF executable format structure into the AST
     // generateBinaryExecutableFileInformation(executableFileName,asmFile);
 #else
-     printf ("Binary analysis not supported in this distribution (turned off in this restricted distribution) \n");
-     ROSE_ASSERT(false);
+     ROSE_ASSERT (! "[FATAL] [ROSE] [frontend] [Binary analysis] "
+                    "ROSE was not configured to support the binary analysis frontend.");
 #endif
 
      int frontendErrorLevel = 0;
@@ -7325,8 +7331,8 @@ SgSourceFile::buildAST( vector<string> argv, vector<string> inputCommandLine )
           frontendErrorLevel = build_Fortran_AST(argv,inputCommandLine);
           frontend_failed = (frontendErrorLevel > 1);  // DXN (01/18/2011): needed to pass make check.  TODO: need fixing up
 #else
-          fprintf(stderr, "ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT is not defined. Trying to parse a Fortran file when Fortran is not supported (ROSE must be configured using with Java (default)) \n");
-          ROSE_ASSERT(false);
+          ROSE_ASSERT (! "[FATAL] [ROSE] [frontend] [Fortran] "
+                         "ROSE was not configured to support the Fortran frontend.");
 #endif
         }
        else
@@ -7344,8 +7350,8 @@ SgSourceFile::buildAST( vector<string> argv, vector<string> inputCommandLine )
                     frontendErrorLevel = build_Java_AST(argv,inputCommandLine);
                     frontend_failed = (frontendErrorLevel > 0);
 #else
-                    fprintf(stderr, "ROSE_BUILD_JAVA_LANGUAGE_SUPPORT is not defined. Trying to parse a Java file when Java is not supported (ROSE must be configured using --with-java (default)) \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ASSERT (! "[FATAL] [ROSE] [frontend] [Java] "
+                                   "ROSE was not configured to support the Java frontend.");
 #endif
                   }
                  else
@@ -7356,8 +7362,8 @@ SgSourceFile::buildAST( vector<string> argv, vector<string> inputCommandLine )
                              frontendErrorLevel = build_Python_AST();
                              frontend_failed = (frontendErrorLevel > 0);
 #else
-                             fprintf(stderr, "ROSE_BUILD_PYTHON_LANGUAGE_SUPPORT is not defined. Trying to parse a Python file when Python is not supported (ROSE must be configured using --with-python (default)) \n");
-                             ROSE_ASSERT(false);
+                             ROSE_ASSERT (! "[FATAL] [ROSE] [frontend] [Python] "
+                                            "ROSE was not configured to support the Python frontend.");
 #endif
 
                          }
