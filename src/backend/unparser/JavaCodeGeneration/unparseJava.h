@@ -52,7 +52,7 @@ class Unparse_Java : public UnparseLanguageIndependentConstructs
           virtual void unparseFunctionParameterList(SgStatement* stmt, SgUnparse_Info& info);
 
        // DQ (9/6/2010): Mark the derived class to support debugging.
-          virtual std::string languageName() const { return "C++ Unparser"; }
+          virtual std::string languageName() const { return "Java Unparser"; }
 
           virtual void unparseUnaryOperator           (SgExpression* expr, const char* op, SgUnparse_Info& info);
           virtual void unparseAssnExpr                (SgExpression* expr, SgUnparse_Info& info);   
@@ -93,6 +93,7 @@ class Unparse_Java : public UnparseLanguageIndependentConstructs
           virtual void unparseNewOp                   (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseDeleteOp                (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseThisNode                (SgExpression* expr, SgUnparse_Info& info);  
+          virtual void unparseSuperNode               (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseScopeOp                 (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseForDeclOp               (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseTypeRef                 (SgExpression* expr, SgUnparse_Info& info);  
