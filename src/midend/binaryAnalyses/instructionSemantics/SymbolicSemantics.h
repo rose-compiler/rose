@@ -17,11 +17,11 @@
 namespace BinaryAnalysis {              // documented elsewhere
     namespace InstructionSemantics {    // documented elsewhere
 
-        /** A policy for x86InstructionSemantics.
+        /** A fully symbolic semantic domain.
          *
-         *  This policy can be used to emulate the execution of a single basic block of instructions.  It is similar in nature
-         *  to VirtualMachineSemantics, but with a different type of ValueType: instead of values being a constant or variable
-         *  with offset, values here are expression trees.
+         *  This semantic domain can be used to emulate the execution of a single basic block of instructions.  It is similar
+         *  in nature to VirtualMachineSemantics, but with a different type of ValueType: instead of values being a constant or
+         *  variable with offset, values here are expression trees.
          *
          *  <ul>
          *    <li>Policy: the policy class used to instantiate X86InstructionSemantic instances.</li>
@@ -322,7 +322,8 @@ namespace BinaryAnalysis {              // documented elsewhere
             };
 
             /** A policy that is supplied to the semantic analysis constructor. See documentation for the SymbolicSemantics
-             * namespace. */
+             *  namespace.  The RISC-like operations are documented in the
+             *  BinaryAnalysis::InstructionSemantics::NullSemantics::Policy class. */
             template <
                 template <template <size_t> class ValueType> class State,
                 template <size_t> class ValueType>
@@ -629,7 +630,7 @@ namespace BinaryAnalysis {              // documented elsewhere
                  * Functions invoked by the X86InstructionSemantics class for every processed instructions
                  *************************************************************************************************************/
 
-                /* Called at the beginning of X86InstructionSemantics::processInstruction() */
+                /** See NullSemantics::Policy::startInstruction() */
                 void startInstruction(SgAsmInstruction *insn) {
                     if (!cur_state.ip.is_known()) {
                         cur_state.ip = ValueType<32>(insn->get_address()); // semantics user should have probably initialized EIP
@@ -655,7 +656,7 @@ namespace BinaryAnalysis {              // documented elsewhere
                     cur_insn = insn;
                 }
 
-                /* Called at the end of X86InstructionSemantics::processInstruction() */
+                /** See NullSemantics::Policy::finishInstruction() */
                 void finishInstruction(SgAsmInstruction*) {
                     if (p_discard_popped_memory)
                         cur_state.discard_popped_memory();
@@ -668,22 +669,22 @@ namespace BinaryAnalysis {              // documented elsewhere
                  * Functions invoked by the X86InstructionSemantics class to construct values
                  *****************************************************************************************************************/
 
-                /** True value */
+                /** See NullSemantics::Policy::true_() */
                 ValueType<1> true_() const {
                     return ValueType<1>(1).defined_by(cur_insn);
                 }
 
-                /** False value */
+                /** See NullSemantics::Policy::false_() */
                 ValueType<1> false_() const {
                     return ValueType<1>((uint64_t)0).defined_by(cur_insn);
                 }
 
-                /** Undefined Boolean */
+                /** See NullSemantics::Policy::undefined_() */
                 ValueType<1> undefined_() const {
                     return ValueType<1>().defined_by(cur_insn);
                 }
 
-                /** Used to build a known constant. */
+                /** See NullSemantics::Policy::number() */
                 template <size_t Len>
                 ValueType<Len> number(uint64_t n) const {
                     return ValueType<Len>(n).defined_by(cur_insn);
@@ -695,38 +696,38 @@ namespace BinaryAnalysis {              // documented elsewhere
                  * Functions invoked by the X86InstructionSemantics class for individual instructions
                  *****************************************************************************************************************/
 
-                /** Called only for CALL instructions before assigning new value to IP register. */
+                /** See NullSemantics::Policy::filterCallTarget() */
                 ValueType<32> filterCallTarget(const ValueType<32> &a) const {
                     return a;
                 }
 
-                /** Called only for RET instructions before adjusting the IP register. */
+                /** See NullSemantics::Policy::filterReturnTarget() */
                 ValueType<32> filterReturnTarget(const ValueType<32> &a) const {
                     return a;
                 }
 
-                /** Called only for JMP instructions before adjusting the IP register. */
+                /** See NullSemantics::Policy::filterIndirectJumpTarget() */
                 ValueType<32> filterIndirectJumpTarget(const ValueType<32> &a) const {
                     return a;
                 }
 
-                /** Called only for the HLT instruction. */
+                /** See NullSemantics::Policy::hlt() */
                 void hlt() {} // FIXME
 
-                /** Called only for the CPUID instruction. */
+                /** See NullSemantics::Policy::cpuid() */
                 void cpuid() {} // FIXME
 
-                /** Called only for the RDTSC instruction. */
+                /** See NullSemantics::Policy::rdtsc() */
                 ValueType<64> rdtsc() {
                     return ValueType<64>((uint64_t)0);
                 }
 
-                /** Called only for the INT instruction. */
+                /** See NullSemantics::Policy::interrupt() */
                 void interrupt(uint8_t num) {
                     cur_state = State<ValueType>(); /*reset entire machine state*/
                 }
 
-                /** Called for SYSENTER instruction. */
+                /** See NullSemantics::Policy::sysenter() */
                 void sysenter() {
                     cur_state = State<ValueType>(); /*reset entire machine state*/
                 }
@@ -737,7 +738,7 @@ namespace BinaryAnalysis {              // documented elsewhere
                  * Functions invoked by the X86InstructionSemantics class for arithmetic operations
                  *****************************************************************************************************************/
 
-                /** Adds two values. */
+                /** See NullSemantics::Policy::add() */
                 template <size_t Len>
                 ValueType<Len> add(const ValueType<Len> &a, const ValueType<Len> &b) const {
                     if (a.is_known()) {
@@ -754,21 +755,7 @@ namespace BinaryAnalysis {              // documented elsewhere
                         .defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
                 }
 
-                /** Add two values of equal size and a carry bit.  Carry information is returned via carry_out argument.  The
-                 *  carry_out value is the tick marks that are written above the first addend when doing long arithmetic like a
-                 *  2nd grader would do (of course, they'd probably be adding two base-10 numbers).  For instance, when adding
-                 *  00110110 and 11100100:
-                 *
-                 *  \code
-                 *    '''..'..         <-- carry tick marks: '=carry .=no carry
-                 *     00110110
-                 *   + 11100100
-                 *   ----------
-                 *    100011010
-                 *  \endcode
-                 *
-                 *  The carry_out value is 11100100.
-                 */
+                /** See NullSemantics::Policy::addWithCarries() */
                 template <size_t Len>
                 ValueType<Len> addWithCarries(const ValueType<Len> &a, const ValueType<Len> &b, const ValueType<1> &c,
                                               ValueType<Len> &carry_out) const {
@@ -780,7 +767,7 @@ namespace BinaryAnalysis {              // documented elsewhere
                     return add<Len>(a, add<Len>(b, unsignedExtend<1, Len>(c)));
                 }
 
-                /** Computes bit-wise AND of two values. */
+                /** See NullSemantics::Policy::and_() */
                 template <size_t Len>
                 ValueType<Len> and_(const ValueType<Len> &a, const ValueType<Len> &b) const {
                     if (a.is_known() && b.is_known())
@@ -791,7 +778,7 @@ namespace BinaryAnalysis {              // documented elsewhere
                         .defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
                 }
 
-                /** Returns true_, false_, or undefined_ depending on whether argument is zero. */
+                /** See NullSemantics::Policy::equalToZero() */
                 template <size_t Len>
                 ValueType<1> equalToZero(const ValueType<Len> &a) const {
                     if (a.is_known()) {
@@ -802,7 +789,7 @@ namespace BinaryAnalysis {              // documented elsewhere
                         .defined_by(cur_insn, a.get_defining_instructions());
                 }
 
-                /** One's complement */
+                /** See NullSemantics::Policy::invert() */
                 template <size_t Len>
                 ValueType<Len> invert(const ValueType<Len> &a) const {
                     if (a.is_known())
@@ -812,8 +799,7 @@ namespace BinaryAnalysis {              // documented elsewhere
                         .defined_by(cur_insn, a.get_defining_instructions());
                 }
 
-                /** Concatenate the values of @p a and @p b so that the result has @p b in the high-order bits and @p a in the
-                 *  low order bits. */
+                /** See NullSemantics::Policy::concat() */
                 template<size_t Len1, size_t Len2>
                 ValueType<Len1+Len2> concat(const ValueType<Len1> &a, const ValueType<Len2> &b) const {
                     if (a.is_known() && b.is_known())
@@ -824,7 +810,7 @@ namespace BinaryAnalysis {              // documented elsewhere
                         .defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
                 }
 
-                /** Returns second or third arg depending on value of first arg. "ite" means "if-then-else". */
+                /** See NullSemantics::Policy::ite() */
                 template <size_t Len>
                 ValueType<Len> ite(const ValueType<1> &sel, const ValueType<Len> &ifTrue, const ValueType<Len> &ifFalse) const {
                     if (sel.is_known()) {
@@ -858,7 +844,7 @@ namespace BinaryAnalysis {              // documented elsewhere
                                     ifTrue.get_defining_instructions(), ifFalse.get_defining_instructions());
                 }
 
-                /** Returns position of least significant set bit; zero when no bits are set. */
+                /** See NullSemantics::Policy::leastSignificantSetBit() */
                 template <size_t Len>
                 ValueType<Len> leastSignificantSetBit(const ValueType<Len> &a) const {
                     if (a.is_known()) {
@@ -873,7 +859,7 @@ namespace BinaryAnalysis {              // documented elsewhere
                         .defined_by(cur_insn, a.get_defining_instructions());
                 }
 
-                /** Returns position of most significant set bit; zero when no bits are set. */
+                /** See NullSemantics::Policy::mostSignificantSetBit() */
                 template <size_t Len>
                 ValueType<Len> mostSignificantSetBit(const ValueType<Len> &a) const {
                     if (a.is_known()) {
@@ -888,7 +874,7 @@ namespace BinaryAnalysis {              // documented elsewhere
                         .defined_by(cur_insn, a.get_defining_instructions());
                 }
 
-                /** Two's complement. */
+                /** See NullSemantics::Policy::negate() */
                 template <size_t Len>
                 ValueType<Len> negate(const ValueType<Len> &a) const {
                     if (a.is_known())
@@ -897,7 +883,7 @@ namespace BinaryAnalysis {              // documented elsewhere
                         .defined_by(cur_insn, a.get_defining_instructions());
                 }
 
-                /** Computes bit-wise OR of two values. */
+                /** See NullSemantics::Policy::or_() */
                 template <size_t Len>
                 ValueType<Len> or_(const ValueType<Len> &a, const ValueType<Len> &b) const {
                     if (a.is_known() && b.is_known())
@@ -908,7 +894,7 @@ namespace BinaryAnalysis {              // documented elsewhere
                         .defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
                 }
 
-                /** Rotate bits to the left. */
+                /** See NullSemantics::Policy::rotateLeft() */
                 template <size_t Len, size_t SALen>
                 ValueType<Len> rotateLeft(const ValueType<Len> &a, const ValueType<SALen> &sa) const {
                     if (a.is_known() && sa.is_known())
@@ -919,7 +905,7 @@ namespace BinaryAnalysis {              // documented elsewhere
                         .defined_by(cur_insn, a.get_defining_instructions(), sa.get_defining_instructions());
                 }
 
-                /** Rotate bits to the right. */
+                /** See NullSemantics::Policy::rotateRight() */
                 template <size_t Len, size_t SALen>
                 ValueType<Len> rotateRight(const ValueType<Len> &a, const ValueType<SALen> &sa) const {
                     if (a.is_known() && sa.is_known())
@@ -930,7 +916,7 @@ namespace BinaryAnalysis {              // documented elsewhere
                         .defined_by(cur_insn, a.get_defining_instructions(), sa.get_defining_instructions());
                 }
 
-                /** Returns arg shifted left. */
+                /** See NullSemantics::Policy::shiftLeft() */
                 template <size_t Len, size_t SALen>
                 ValueType<Len> shiftLeft(const ValueType<Len> &a, const ValueType<SALen> &sa) const {
                     if (a.is_known() && sa.is_known())
@@ -941,7 +927,7 @@ namespace BinaryAnalysis {              // documented elsewhere
                         .defined_by(cur_insn, a.get_defining_instructions(), sa.get_defining_instructions());
                 }
 
-                /** Returns arg shifted right logically (no sign bit). */
+                /** See NullSemantics::Policy::shiftRight() */
                 template <size_t Len, size_t SALen>
                 ValueType<Len> shiftRight(const ValueType<Len> &a, const ValueType<SALen> &sa) const {
                     if (a.is_known() && sa.is_known())
@@ -952,7 +938,7 @@ namespace BinaryAnalysis {              // documented elsewhere
                         .defined_by(cur_insn, a.get_defining_instructions(), sa.get_defining_instructions());
                 }
 
-                /** Returns arg shifted right arithmetically (with sign bit). */
+                /** See NullSemantics::Policy::shiftRightArithmetic() */
                 template <size_t Len, size_t SALen>
                 ValueType<Len> shiftRightArithmetic(const ValueType<Len> &a, const ValueType<SALen> &sa) const {
                     if (a.is_known() && sa.is_known())
@@ -963,13 +949,13 @@ namespace BinaryAnalysis {              // documented elsewhere
                         .defined_by(cur_insn, a.get_defining_instructions(), sa.get_defining_instructions());
                 }
 
-                /** Sign extends a value. */
+                /** See NullSemantics::Policy::signExtend() */
                 template <size_t From, size_t To>
                 ValueType<To> signExtend(const ValueType<From> &a) {
                     return signedExtend<From, To>(a);
                 }
 
-                /** Divides two signed values. */
+                /** See NullSemantics::Policy::signedDivide() */
                 template <size_t Len1, size_t Len2>
                 ValueType<Len1> signedDivide(const ValueType<Len1> &a, const ValueType<Len2> &b) const {
                     if (a.is_known() && b.is_known() && 0!=b.known_value())
@@ -981,7 +967,7 @@ namespace BinaryAnalysis {              // documented elsewhere
                         .defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
                 }
 
-                /** Calculates modulo with signed values. */
+                /** See NullSemantics::Policy::signedModulo() */
                 template <size_t Len1, size_t Len2>
                 ValueType<Len2> signedModulo(const ValueType<Len1> &a, const ValueType<Len2> &b) const {
                     if (a.is_known() && b.is_known() && 0!=b.known_value())
@@ -993,7 +979,7 @@ namespace BinaryAnalysis {              // documented elsewhere
                         .defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
                 }
 
-                /** Multiplies two signed values. */
+                /** See NullSemantics::Policy::signedMultiply() */
                 template <size_t Len1, size_t Len2>
                 ValueType<Len1+Len2> signedMultiply(const ValueType<Len1> &a, const ValueType<Len2> &b) const {
                     if (a.is_known() && b.is_known())
@@ -1005,7 +991,7 @@ namespace BinaryAnalysis {              // documented elsewhere
                         .defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
                 }
 
-                /** Divides two unsigned values. */
+                /** See NullSemantics::Policy::unsignedDivide() */
                 template <size_t Len1, size_t Len2>
                 ValueType<Len1> unsignedDivide(const ValueType<Len1> &a, const ValueType<Len2> &b) const {
                     if (a.is_known() && b.is_known() && 0!=b.known_value())
@@ -1016,7 +1002,7 @@ namespace BinaryAnalysis {              // documented elsewhere
                         .defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
                 }
 
-                /** Calculates modulo with unsigned values. */
+                /** See NullSemantics::Policy::unsignedModulo() */
                 template <size_t Len1, size_t Len2>
                 ValueType<Len2> unsignedModulo(const ValueType<Len1> &a, const ValueType<Len2> &b) const {
                     if (a.is_known() && b.is_known() && 0!=b.known_value())
@@ -1027,7 +1013,7 @@ namespace BinaryAnalysis {              // documented elsewhere
                         .defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
                 }
 
-                /** Multiply two unsigned values. */
+                /** See NullSemantics::Policy::unsignedMultiply() */
                 template <size_t Len1, size_t Len2>
                 ValueType<Len1+Len2> unsignedMultiply(const ValueType<Len1> &a, const ValueType<Len2> &b) const {
                     if (a.is_known() && b.is_known())
@@ -1038,7 +1024,7 @@ namespace BinaryAnalysis {              // documented elsewhere
                         .defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
                 }
 
-                /** Computes bit-wise XOR of two values. */
+                /** See NullSemantics::Policy::xor_() */
                 template <size_t Len>
                 ValueType<Len> xor_(const ValueType<Len> &a, const ValueType<Len> &b) const {
                     if (a.is_known() && b.is_known())
@@ -1058,19 +1044,19 @@ namespace BinaryAnalysis {              // documented elsewhere
                  *****************************************************************************************************************/
 
 
-                /** Reads from a named register. */
+                /** See NullSemantics::Policy::readRegister() */
                 template<size_t Len/*bits*/>
                 ValueType<Len> readRegister(const char *regname) {
                     return readRegister<Len>(findRegister(regname, Len));
                 }
 
-                /** Writes to a named register. */
+                /** See NullSemantics::Policy::writeRegister() */
                 template<size_t Len/*bits*/>
                 void writeRegister(const char *regname, const ValueType<Len> &value) {
                     writeRegister<Len>(findRegister(regname, Len), value);
                 }
 
-                /** Generic register read. */
+                /** See NullSemantics::Policy::readRegister() */
                 template<size_t Len>
                 ValueType<Len> readRegister(const RegisterDescriptor &reg) {
                     switch (Len) {
@@ -1188,7 +1174,7 @@ namespace BinaryAnalysis {              // documented elsewhere
                     }
                 }
 
-                /** Generic register write. */
+                /** See NullSemantics::Policy::writeRegister() */
                 template<size_t Len>
                 void writeRegister(const RegisterDescriptor &reg, const ValueType<Len> &value) {
                     switch (Len) {
@@ -1325,13 +1311,13 @@ namespace BinaryAnalysis {              // documented elsewhere
                     }
                 }
 
-                /** Reads a value from memory. */
+                /** See NullSemantics::Policy::readMemory() */
                 template <size_t Len> ValueType<Len>
                 readMemory(X86SegmentRegister segreg, const ValueType<32> &addr, const ValueType<1> &cond) const {
                     return mem_read<Len>(cur_state, addr, ValueType<Len>());
                 }
 
-                /** Writes a value to memory. */
+                /** See NullSemantics::Policy::writeMemory() */
                 template <size_t Len> void
                 writeMemory(X86SegmentRegister segreg, const ValueType<32> &addr, const ValueType<Len> &data,
                             const ValueType<1> &cond) {

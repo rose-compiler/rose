@@ -3,6 +3,8 @@
 #include "BinaryControlFlow.h"
 #include "FindRegisterDefs.h"
 
+using namespace BinaryAnalysis::InstructionSemantics;
+
 typedef BinaryAnalysis::ControlFlow::Graph CFG;
 typedef boost::graph_traits<CFG>::vertex_descriptor CFGVertex;
 typedef FindRegisterDefs::Policy Policy;

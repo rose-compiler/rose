@@ -16,8 +16,8 @@ namespace BinaryAnalysis {
      *  consists of at least a register set and memory. */
     namespace InstructionSemantics {
 
-        /** Base classes, utilities etc. for instruction semantics.  Basically, anything that is common to two or more
-         *  instruction semantic domains will be factored out and placed in this name space. */
+        /** Base classes for instruction semantics.  Basically, anything that is common to two or more instruction semantic
+         *  domains will be factored out and placed in this name space. */
         namespace BaseSemantics {
             
 
@@ -135,7 +135,7 @@ namespace BinaryAnalysis {
             };
 
 
-            /** State of a semantic analysis.
+            /** Base class for x86 virtual machine states.
              *
              *  Binary semantic analysis usually progresses one instruction at a time--one starts with an initial state and the
              *  act of processing an instruction modifies the state.  The StateX86 is the base class class for the semantic
@@ -261,7 +261,10 @@ namespace BinaryAnalysis {
             };
 
             /** Base class for most instruction semantics policies.  Policies can be derived from the base class or they may
-             *  implement the same interface. */
+             *  implement the same interface.   The policy is responsible for defining the semantics of the RISC-like
+             *  operations invoked by the translation object (e.g., X86InstructionSemantics).  We omit the declarations and
+             *  definitions of the RISC operations from the base class so that failure to implement them in a subclass is an
+             *  error.  Their documentation can be found in the NullSemantics::Policy class. */
             class Policy {
             protected:
                 const RegisterDictionary *regdict;                  /**< See set_register_dictionary(). */

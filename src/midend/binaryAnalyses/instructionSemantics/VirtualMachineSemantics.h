@@ -23,7 +23,7 @@ namespace BinaryAnalysis {                      // documented elsewhere
     namespace InstructionSemantics {            // documented elsewhere
 
 
-        /** A policy for x86InstructionSemantics.
+        /** A fast, partially symbolic semantic domain.
          *
          *  This policy can be used to emulate the execution of a single basic block of instructions.  It is similar in nature
          *  to the FindConstantsPolicy except much simpler, much faster, and much more memory-lean.  The main classes are:
@@ -210,7 +210,7 @@ namespace BinaryAnalysis {                      // documented elsewhere
             template<
                 template <template <size_t> class ValueType> class State,
                 template <size_t nBits> class ValueType>
-            class Policy {
+            class Policy: public BaseSemantics::Policy {
             protected:
                 typedef typename State<ValueType>::Memory Memory;
 
@@ -241,14 +241,6 @@ namespace BinaryAnalysis {                      // documented elsewhere
                                                      *   startInstruction(), which is the first thing called by
                                                      *   X86InstructionSemantics::processInstruction(). */
                 MemoryMap *map;                     /**< Initial known memory values for known addresses. */
-                const RegisterDictionary *regdict;  /**< Registers stored in the various State objects for this Policy.  This
-                                                     *   dictionary is used by the X86InstructionSemantics class to translate
-                                                     *   register names to register descriptors.  For instance, to read from
-                                                     *   the "eax" register, the semantics will look up "eax" in the policy's
-                                                     *   register dictionary and then pass that descriptor to the policy's
-                                                     *   readRegister() method.  Register descriptors are also stored in
-                                                     *   instructions then the instruction is disassembled, so the disassembler
-                                                     *   and policy should probably be using the same dictionary. */
 
             public:
                 struct Exception {
@@ -376,9 +368,7 @@ namespace BinaryAnalysis {                      // documented elsewhere
                     return IntegerOps::signExtend<FromLen, ToLen>(a.offset);
                 }
 
-                /** Extracts certain bits from the specified value and shifts them to the low-order positions in the result.
-                 *  The bits of the result include bits from BeginAt (inclusive) through EndAt (exclusive).  The lsb is number
-                 *  zero. */
+                /** See NullSemantics::Policy::extract() */
                 template <size_t BeginAt, size_t EndAt, size_t Len>
                 ValueType<EndAt-BeginAt> extract(const ValueType<Len> &a) const {
                     if (0==BeginAt) return ValueType<EndAt-BeginAt>(a);
@@ -508,27 +498,11 @@ namespace BinaryAnalysis {                      // documented elsewhere
                     }
                 }
 
-                /**************************************************************************************************************
-                 * The registers defined for this policy.  Most policies have at least one State object that contains (among
-                 * other things) values for each of the registers.  The organization of those values is Policy-specific and
-                 * possibly based on information from a register dictionary.
-                 **************************************************************************************************************/
-
-                /** Returns the register dictionary. */
-                const RegisterDictionary *get_register_dictionary() const {
-                    return regdict ? regdict : RegisterDictionary::dictionary_pentium4();
-                }
-
-                /** Sets the register dictionary. */
-                void set_register_dictionary(const RegisterDictionary *regdict) {
-                    this->regdict = regdict;
-                }
-
                 /*************************************************************************************************************
                  * Functions invoked by the X86InstructionSemantics class for every processed instruction or block
                  *************************************************************************************************************/
 
-                /* Called at the beginning of X86InstructionSemantics::processInstruction() */
+                /** See NullSemantics::Policy::startInstruction() */
                 void startInstruction(SgAsmInstruction *insn) {
                     cur_state.ip = ValueType<32>(insn->get_address());
                     if (0==ninsns++)
@@ -536,7 +510,7 @@ namespace BinaryAnalysis {                      // documented elsewhere
                     cur_insn = insn;
                 }
 
-                /* Called at the end of X86InstructionSemantics::processInstruction() */
+                /** See NullSemantics::Policy::finishInstruction() */
                 void finishInstruction(SgAsmInstruction*) {
                     if (p_discard_popped_memory)
                         cur_state.discard_popped_memory();
@@ -553,22 +527,22 @@ namespace BinaryAnalysis {                      // documented elsewhere
                  * Functions invoked by the X86InstructionSemantics class to construct values
                  *************************************************************************************************************/
 
-                /** True value */
+                /** See NullSemantics::Policy::true_() */
                 ValueType<1> true_() const {
                     return 1;
                 }
 
-                /** False value */
+                /** See NullSemantics::Policy::false_() */
                 ValueType<1> false_() const {
                     return 0;
                 }
 
-                /** Undefined Boolean */
+                /** See NullSemantics::Policy::undefined_() */
                 ValueType<1> undefined_() const {
                     return ValueType<1>();
                 }
 
-                /** Used to build a known constant. */
+                /** See NullSemantics::Policy::number() */
                 template <size_t Len>
                 ValueType<Len> number(uint64_t n) const {
                     return n;
@@ -580,38 +554,38 @@ namespace BinaryAnalysis {                      // documented elsewhere
                  * Functions invoked by the X86InstructionSemantics class for individual instructions
                  *************************************************************************************************************/
 
-                /** Called only for CALL instructions before assigning new value to IP register. */
+                /** See NullSemantics::Policy::filterCallTarget() */
                 ValueType<32> filterCallTarget(const ValueType<32> &a) const {
                     return a;
                 }
 
-                /** Called only for RET instructions before adjusting the IP register. */
+                /** See NullSemantics::Policy::filterReturnTarget() */
                 ValueType<32> filterReturnTarget(const ValueType<32> &a) const {
                     return a;
                 }
 
-                /** Called only for JMP instructions before adjusting the IP register. */
+                /** See NullSemantics::Policy::filterIndirectJumpTarget() */
                 ValueType<32> filterIndirectJumpTarget(const ValueType<32> &a) const {
                     return a;
                 }
 
-                /** Called only for the HLT instruction. */
+                /** See NullSemantics::Policy::hlt() */
                 void hlt() {} // FIXME
 
-                /** Called only for the CPUID instruction. */
+                /** See NullSemantics::Policy::cpuid() */
                 void cpuid() {} // FIXME
 
-                /** Called only for the RDTSC instruction. */
+                /** See NullSemantics::Policy::rdtsc() */
                 ValueType<64> rdtsc() {
                     return 0;
                 }
 
-                /** Called only for the INT instruction. */
+                /** See NullSemantics::Policy::interrupt() */
                 void interrupt(uint8_t num) {
                     cur_state = State<ValueType>(); /*reset entire machine state*/
                 }
 
-                /** Called only for the SYSENTER instruction. */
+                /** See NullSemantics::Policy::sysenter() */
                 void sysenter() {
                     cur_state = State<ValueType>(); /*reset entire machine state*/
                 }
@@ -622,15 +596,15 @@ namespace BinaryAnalysis {                      // documented elsewhere
                  * Functions invoked by the X86InstructionSemantics class for data access operations
                  *************************************************************************************************************/
 
-    #include "ReadWriteRegisterFragment.h"
+#include "ReadWriteRegisterFragment.h"
 
-                /** Reads a value from memory. */
+                /** See NullSemantics::Policy::readMemory() */
                 template <size_t Len> ValueType<Len>
                 readMemory(X86SegmentRegister segreg, const ValueType<32> &addr, const ValueType<1> &cond) const {
                     return mem_read<Len>(cur_state, addr);
                 }
 
-                /** Writes a value to memory. */
+                /** See NullSemantics::Policy::writeMemory() */
                 template <size_t Len> void
                 writeMemory(X86SegmentRegister segreg, const ValueType<32> &addr, const ValueType<Len> &data,
                             const ValueType<1> &cond) {
@@ -643,7 +617,7 @@ namespace BinaryAnalysis {                      // documented elsewhere
                  * Functions invoked by the X86InstructionSemantics class for arithmetic operations
                  *************************************************************************************************************/
 
-                /** Adds two values. */
+                /** See NullSemantics::Policy::add() */
                 template <size_t Len>
                 ValueType<Len> add(const ValueType<Len> &a, const ValueType<Len> &b) const {
                     if (a.name==b.name && (!a.name || a.negate!=b.negate)) {
@@ -661,21 +635,7 @@ namespace BinaryAnalysis {                      // documented elsewhere
                     }
                 }
 
-                /** Add two values of equal size and a carry bit.  Carry information is returned via carry_out argument.  The
-                 *  carry_out value is the tick marks that are written above the first addend when doing long arithmetic like a
-                 *  2nd grader would do (of course, they'd probably be adding two base-10 numbers).  For instance, when adding
-                 *  00110110 and 11100100:
-                 *
-                 *  \code
-                 *    '''..'..         <-- carry tick marks: '=carry .=no carry
-                 *     00110110
-                 *   + 11100100
-                 *   ----------
-                 *    100011010
-                 *  \endcode
-                 *
-                 *  The carry_out value is 11100100.
-                 */
+                /** See NullSemantics::Policy::addWithCarries() */
                 template <size_t Len>
                 ValueType<Len> addWithCarries(const ValueType<Len> &a, const ValueType<Len> &b, const ValueType<1> &c,
                                               ValueType<Len> &carry_out) const {
@@ -696,7 +656,7 @@ namespace BinaryAnalysis {                      // documented elsewhere
                     }
                 }
 
-                /** Computes bit-wise AND of two values. */
+                /** See NullSemantics::Policy::and_() */
                 template <size_t Len>
                 ValueType<Len> and_(const ValueType<Len> &a, const ValueType<Len> &b) const {
                     if ((!a.name && 0==a.offset) || (!b.name && 0==b.offset)) return 0;
@@ -704,29 +664,28 @@ namespace BinaryAnalysis {                      // documented elsewhere
                     return a.offset & b.offset;
                 }
 
-                /** Returns true_, false_, or undefined_ depending on whether argument is zero. */
+                /** See NullSemantics::Policy::equalToZero() */
                 template <size_t Len>
                 ValueType<1> equalToZero(const ValueType<Len> &a) const {
                     if (a.name) return undefined_();
                     return a.offset ? false_() : true_();
                 }
 
-                /** One's complement */
+                /** See NullSemantics::Policy::invert() */
                 template <size_t Len>
                 ValueType<Len> invert(const ValueType<Len> &a) const {
                     if (a.name) return ValueType<Len>(a.name, ~a.offset, !a.negate);
                     return ~a.offset;
                 }
 
-                /** Concatenate the values of @p a and @p b so that the result has @p b in the high-order bits and @p a in the
-                 *  low order bits. */
+                /** See NullSemantics::Policy::concat() */
                 template<size_t Len1, size_t Len2>
                 ValueType<Len1+Len2> concat(const ValueType<Len1> &a, const ValueType<Len2> &b) const {
                     if (a.name || b.name) return ValueType<Len1+Len2>();
                     return a.offset | (b.offset << Len1);
                 }
 
-                /** Returns second or third arg depending on value of first arg. */
+                /** See NullSemantics::Policy::ite() */
                 template <size_t Len>
                 ValueType<Len> ite(const ValueType<1> &sel, const ValueType<Len> &ifTrue, const ValueType<Len> &ifFalse) const {
                     if (ifTrue==ifFalse) return ifTrue;
@@ -734,7 +693,7 @@ namespace BinaryAnalysis {                      // documented elsewhere
                     return sel.offset ? ifTrue : ifFalse;
                 }
 
-                /** Returns position of least significant set bit; zero when no bits are set. */
+                /** See NullSemantics::Policy::leastSignificantSetBit() */
                 template <size_t Len>
                 ValueType<Len> leastSignificantSetBit(const ValueType<Len> &a) const {
                     if (a.name) return ValueType<Len>();
@@ -745,7 +704,7 @@ namespace BinaryAnalysis {                      // documented elsewhere
                     return 0;
                 }
 
-                /** Returns position of most significant set bit; zero when no bits are set. */
+                /** See NullSemantics::Policy::mostSignificantSetBit() */
                 template <size_t Len>
                 ValueType<Len> mostSignificantSetBit(const ValueType<Len> &a) const {
                     if (a.name) return ValueType<Len>();
@@ -756,14 +715,14 @@ namespace BinaryAnalysis {                      // documented elsewhere
                     return 0;
                 }
 
-                /** Two's complement. */
+                /** See NullSemantics::Policy::negate() */
                 template <size_t Len>
                 ValueType<Len> negate(const ValueType<Len> &a) const {
                     if (a.name) return ValueType<Len>(a.name, -a.offset, !a.negate);
                     return -a.offset;
                 }
 
-                /** Computes bit-wise OR of two values. */
+                /** See NullSemantics::Policy::or_() */
                 template <size_t Len>
                 ValueType<Len> or_(const ValueType<Len> &a, const ValueType<Len> &b) const {
                     if (a==b) return a;
@@ -773,7 +732,7 @@ namespace BinaryAnalysis {                      // documented elsewhere
                     return ValueType<Len>();
                 }
 
-                /** Rotate bits to the left. */
+                /** See NullSemantics::Policy::rotateLeft() */
                 template <size_t Len, size_t SALen>
                 ValueType<Len> rotateLeft(const ValueType<Len> &a, const ValueType<SALen> &sa) const {
                     if (!a.name && !sa.name) return IntegerOps::rotateLeft<Len>(a.offset, sa.offset);
@@ -781,7 +740,7 @@ namespace BinaryAnalysis {                      // documented elsewhere
                     return ValueType<Len>();
                 }
 
-                /** Rotate bits to the right. */
+                /** See NullSemantics::Policy::rotateRight() */
                 template <size_t Len, size_t SALen>
                 ValueType<Len> rotateRight(const ValueType<Len> &a, const ValueType<SALen> &sa) const {
                     if (!a.name && !sa.name) return IntegerOps::rotateRight<Len>(a.offset, sa.offset);
@@ -789,7 +748,7 @@ namespace BinaryAnalysis {                      // documented elsewhere
                     return ValueType<Len>();
                 }
 
-                /** Returns arg shifted left. */
+                /** See NullSemantics::Policy::shiftLeft() */
                 template <size_t Len, size_t SALen>
                 ValueType<Len> shiftLeft(const ValueType<Len> &a, const ValueType<SALen> &sa) const {
                     if (!a.name && !sa.name) return IntegerOps::shiftLeft<Len>(a.offset, sa.offset);
@@ -800,7 +759,7 @@ namespace BinaryAnalysis {                      // documented elsewhere
                     return ValueType<Len>();
                 }
 
-                /** Returns arg shifted right logically (no sign bit). */
+                /** See NullSemantics::Policy::shiftRight() */
                 template <size_t Len, size_t SALen>
                 ValueType<Len> shiftRight(const ValueType<Len> &a, const ValueType<SALen> &sa) const {
                     if (!a.name && !sa.name) return IntegerOps::shiftRightLogical<Len>(a.offset, sa.offset);
@@ -811,7 +770,7 @@ namespace BinaryAnalysis {                      // documented elsewhere
                     return ValueType<Len>();
                 }
 
-                /** Returns arg shifted right arithmetically (with sign bit). */
+                /** See NullSemantics::Policy::shiftRightArithmetic() */
                 template <size_t Len, size_t SALen>
                 ValueType<Len> shiftRightArithmetic(const ValueType<Len> &a, const ValueType<SALen> &sa) const {
                     if (!a.name && !sa.name) return IntegerOps::shiftRightArithmetic<Len>(a.offset, sa.offset);
@@ -819,7 +778,7 @@ namespace BinaryAnalysis {                      // documented elsewhere
                     return ValueType<Len>();
                 }
 
-                /** Divides two signed values. */
+                /** See NullSemantics::Policy::signedDivide() */
                 template <size_t Len1, size_t Len2>
                 ValueType<Len1> signedDivide(const ValueType<Len1> &a, const ValueType<Len2> &b) const {
                     if (!b.name) {
@@ -833,7 +792,7 @@ namespace BinaryAnalysis {                      // documented elsewhere
                     return ValueType<Len1>();
                 }
 
-                /** Calculates modulo with signed values. */
+                /** See NullSemantics::Policy::signedModulo() */
                 template <size_t Len1, size_t Len2>
                 ValueType<Len2> signedModulo(const ValueType<Len1> &a, const ValueType<Len2> &b) const {
                     if (a.name || b.name) return ValueType<Len2>();
@@ -843,7 +802,7 @@ namespace BinaryAnalysis {                      // documented elsewhere
                      * 'b'. */
                 }
 
-                /** Multiplies two signed values. */
+                /** See NullSemantics::Policy::signedMultiply() */
                 template <size_t Len1, size_t Len2>
                 ValueType<Len1+Len2> signedMultiply(const ValueType<Len1> &a, const ValueType<Len2> &b) const {
                     if (!a.name && !b.name)
@@ -861,7 +820,7 @@ namespace BinaryAnalysis {                      // documented elsewhere
                     return ValueType<Len1+Len2>();
                 }
 
-                /** Divides two unsigned values. */
+                /** See NullSemantics::Policy::unsignedDivide() */
                 template <size_t Len1, size_t Len2>
                 ValueType<Len1> unsignedDivide(const ValueType<Len1> &a, const ValueType<Len2> &b) const {
                     if (!b.name) {
@@ -873,7 +832,7 @@ namespace BinaryAnalysis {                      // documented elsewhere
                     return ValueType<Len1>();
                 }
 
-                /** Calculates modulo with unsigned values. */
+                /** See NullSemantics::Policy::unsignedModulo() */
                 template <size_t Len1, size_t Len2>
                 ValueType<Len2> unsignedModulo(const ValueType<Len1> &a, const ValueType<Len2> &b) const {
                     if (!b.name) {
@@ -886,7 +845,7 @@ namespace BinaryAnalysis {                      // documented elsewhere
                     return ValueType<Len2>();
                 }
 
-                /** Multiply two unsigned values. */
+                /** See NullSemantics::Policy::unsignedMultiply() */
                 template <size_t Len1, size_t Len2>
                 ValueType<Len1+Len2> unsignedMultiply(const ValueType<Len1> &a, const ValueType<Len2> &b) const {
                     if (!a.name && !b.name)
@@ -902,7 +861,7 @@ namespace BinaryAnalysis {                      // documented elsewhere
                     return ValueType<Len1+Len2>();
                 }
 
-                /** Computes bit-wise XOR of two values. */
+                /** See NullSemantics::Policy::xor_() */
                 template <size_t Len>
                 ValueType<Len> xor_(const ValueType<Len> &a, const ValueType<Len> &b) const {
                     if (!a.name && !b.name)

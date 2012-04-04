@@ -30,7 +30,9 @@ namespace BinaryAnalysis {
     namespace InstructionSemantics {
 
 /** Translation class.  Translates x86 instructions to RISC-like operations and invokes those operations in the supplied
- *  semantic policy (a template argument).  See the BinaryAnalysis::InstructionSemantics name space for details. */
+ *  semantic policy (a template argument).  See the BinaryAnalysis::InstructionSemantics name space for details. Apologies for
+ *  the lack of documentation for this class.  You can at least find some examples in the semantics.C file of the
+ *  tests/roseTests/binaryTests directory, among others. */
 template <typename Policy, template <size_t> class WordType>
 struct X86InstructionSemantics {
 #   ifdef Word
