@@ -9,7 +9,7 @@ asmUnparser_la_sources=\
 	$(asmUnparserPath)/unparseArmAsm.C \
 	$(asmUnparserPath)/unparsePowerpcAsm.C
 else
-asmUnparser_la_sources=dummyAsmUnparser.C
+asmUnparser_la_sources=$(asmUnparserPath)/dummyAsmUnparser.C
 endif
 
 
