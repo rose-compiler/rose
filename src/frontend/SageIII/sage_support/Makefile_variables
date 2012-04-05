@@ -5,7 +5,8 @@ fSageSupport_la_sources=\
 	$(fSageSupportPath)/cmdline.cpp
 
 fSageSupport_includeHeaders=\
-	$(fSageSupportPath)/sage_support.h
+	$(fSageSupportPath)/sage_support.h \
+	$(fSageSupportPath)/cmdline.h
 
 # DQ (3/13/2010):
 #
