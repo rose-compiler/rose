@@ -30,6 +30,7 @@ bool gfilter (CFGNode cfgn)
 
   switch (node->variantT())
   {
+#if 0    
     //For function calls, we only keep the last node. The function is actually called after all its parameters
     //are evaluated.
 //    case V_SgFunctionCallExp:
@@ -59,7 +60,7 @@ bool gfilter (CFGNode cfgn)
 //    case V_SgAndOp:
 //    case V_SgOrOp:
 //      return (cfgn == node->cfgForEnd());
-
+#endif
     default:
       return cfgn.isInteresting();
   }
