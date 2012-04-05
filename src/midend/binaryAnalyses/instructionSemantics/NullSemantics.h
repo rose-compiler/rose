@@ -128,7 +128,7 @@ namespace BinaryAnalysis { // documented elsewhere
                 /** Invoked for the x86 SYSENTER instruction. */
                 void sysenter() {}
 
-                /** Adds to integers. */
+                /** Adds two integers. */
                 template<size_t nBits>
                 ValueType<nBits> add(const ValueType<nBits> &a, const ValueType<nBits> &b) const {
                     return ValueType<nBits>();
@@ -312,9 +312,7 @@ namespace BinaryAnalysis { // documented elsewhere
 
                 /** Writes to a named register. */
                 template<size_t nBits>
-                void writeRegister(const char *regname, const ValueType<nBits> &a) {
-                    return ValueType<nBits>();
-                }
+                void writeRegister(const char *regname, const ValueType<nBits> &a) {}
 
                 /** Generic register write. */
                 template<size_t nBits>
