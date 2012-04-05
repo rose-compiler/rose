@@ -691,7 +691,8 @@ public:
 
     /** Adds function labels to the label map.  This method traverses the specified AST looking for function symbols, and adds
      *  their address and name to the label map for the unparser.  The map is used by some callbacks to convert numeric values
-     *  to more human friendly labels. */
+     *  to more human friendly labels.   If integer values are relative to other AST nodes, then one doesn't need to populate
+     *  the LabelMap (see documentation for the AsmUnparser::labels data member. */
     void add_function_labels(SgNode *ast);
 
 protected:
@@ -716,7 +717,24 @@ protected:
     CallbackLists interp_callbacks;                     /**< Callbacks for interpretation unparsing. */
 
     /** This map is consulted whenever a constant is encountered. If the constant is defined as a key of the map, then that
-     *  element's string is used as a label. */
+     *  element's string is used as a label.  Populating this map is not as important as it once was, because now integers can
+     *  be associated with other addressable AST nodes and labels are generated from them.  For example, if 0x08042000 is the
+     *  entry address of a function named "init", then it can be added to the LabelMap and the unparser will generate this
+     *  assembly code:
+     *
+     * @code
+     *  call 0x08042000<init>
+     * @endcode
+     *
+     * If the SgAsmDoubleWordValueExpression that represents the 0x08042000 is associated with the SgAsmFunction node for the
+     * "init" function, then the same output is generated when the LabelMap is not populated.  In fact, the new method can also
+     * generate code like this, where the integer is an offset from the entry point:
+     *
+     * @code
+     *  je 0x08042080<init+0x80>
+     * @endcode
+     *
+     * which isn't possible in general with the LabelMap mechanism. */
     LabelMap labels;
 
     /** How output will be organized. */

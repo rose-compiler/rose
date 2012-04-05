@@ -440,8 +440,8 @@ typedef SgAsmStatementPtrList*              SgAsmStatementPtrListPtr;
 typedef Rose_STL_Container<SgAsmExpression*> SgAsmExpressionPtrList;
 typedef SgAsmExpressionPtrList*              SgAsmExpressionPtrListPtr;
 
-typedef Rose_STL_Container<SgAsmTarget*> SgAsmTargetPtrList;
-typedef SgAsmTargetPtrList* 		 SgAsmTargetPtrListPtr;
+typedef Rose_STL_Container<SgAsmIntegerValueExpression*> SgAsmIntegerValuePtrList;
+typedef SgAsmIntegerValuePtrList* 		 SgAsmIntegerValuePtrListPtr;
 
 // JJW (3/19/2008): Added support for containers of x86 instructions
 typedef Rose_STL_Container<SgAsmx86Instruction*> SgAsmx86InstructionPtrList;

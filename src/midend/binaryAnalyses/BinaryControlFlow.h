@@ -15,7 +15,7 @@ namespace BinaryAnalysis {
      *  This class serves mostly to organize the functions that operate on control flow, but also provides a container for
      *  various settings that influence the control flow analyses, such as the vertex and edge filters.
      *
-     *  Control flow is represented in the AST as successor pointers (SgAsmTarget) attached to each basic block
+     *  Control flow is represented in the AST as successor pointers (SgAsmIntegerValueExpression) attached to each basic block
      *  (SgAsmBlock). The successor information is initialized by the Partitioner class when the AST is built (see
      *  Partitioner::build_ast()) and are available with SgAsmBlock::get_successors().  The
      *  SgAsmBlock::get_successors_complete() returns a Boolean indicating whether the set of successors is completely
@@ -261,7 +261,7 @@ namespace BinaryAnalysis {
          *
          *  Builds a control flow graph for the part of the abstract syntax tree rooted at @p root by traversing the AST to
          *  find all basic blocks and using the successors of those blocks to define the edges of the control flow graph.
-         *  Successors are retrieved via SgAsmBlock::get_successors() and are of type SgAsmTarget.
+         *  Successors are retrieved via SgAsmBlock::get_successors() and are of type SgAsmIntegerValueExpression.
          *
          *  The current vertex and edge filters are used to determine which blocks and flow edges are added to the
          *  graph. However, the following types of successors are never added (and don't trigger a call to the filter):
@@ -415,8 +415,8 @@ BinaryAnalysis::ControlFlow::apply_to_ast(const ControlFlowGraph &cfg)
             continue;
 
         /* Delete old targets */
-        const SgAsmTargetPtrList &targets = block->get_successors();
-        for (SgAsmTargetPtrList::const_iterator ti=targets.begin(); ti!=targets.end(); ++ti)
+        const SgAsmIntegerValuePtrList &targets = block->get_successors();
+        for (SgAsmIntegerValuePtrList::const_iterator ti=targets.begin(); ti!=targets.end(); ++ti)
             delete *ti;
 
         /* Add new targets */
@@ -426,9 +426,10 @@ BinaryAnalysis::ControlFlow::apply_to_ast(const ControlFlowGraph &cfg)
         for (boost::tie(ei, ei_end)=out_edges(*vi, cfg); ei!=ei_end; ++ei) {
             SgAsmBlock *target_block = get(boost::vertex_name, cfg, target(*ei, cfg));
             if (target_block && !is_edge_filtered(block, target_block)) {
-                SgAsmTarget *target = new SgAsmTarget();
-                target->set_address(target_block->get_address());
-                target->set_block(target_block);
+                SgAsmIntegerValueExpression *target = new SgAsmIntegerValueExpression(target_block->get_address());
+                target->make_relative_to(target_block);
+                target->set_parent(block);
+                block->get_successors().push_back(target);
             }
         }
     }
@@ -479,9 +480,9 @@ BinaryAnalysis::ControlFlow::build_cfg_from_ast(SgNode *root, ControlFlowGraph &
     typename boost::graph_traits<ControlFlowGraph>::vertex_iterator vi, vi_end;
     for (boost::tie(vi, vi_end)=vertices(cfg); vi!=vi_end; ++vi) {
         SgAsmBlock *source = boost::get(boost::vertex_name, cfg, *vi);
-        const SgAsmTargetPtrList &succs = source->get_successors();
-        for (SgAsmTargetPtrList::const_iterator si=succs.begin(); si!=succs.end(); ++si) {
-            SgAsmBlock *target = (*si)->get_block(); // might be null
+        const SgAsmIntegerValuePtrList &succs = source->get_successors();
+        for (SgAsmIntegerValuePtrList::const_iterator si=succs.begin(); si!=succs.end(); ++si) {
+            SgAsmBlock *target = isSgAsmBlock((*si)->get_base_node()); // might be null
             if (target && !is_edge_filtered(source, target)) {
                 typename BlockVertexMap::iterator bvmi=bv_map.find(target);
                 if (bvmi!=bv_map.end())
