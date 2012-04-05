@@ -1,4 +1,5 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
+include $(top_srcdir)/tests/input_codes/Makefile.for.input.codes
 
 # DQ (2/6/2010): I don't understand why this is required in every Makefile.am through out ROSE.
 include $(top_srcdir)/projects/compass/src/compassSupport/compass_dirs.inc
@@ -128,8 +129,7 @@ roseCommandline.txt:
 # Generate an example of the output from running a test program
 roseExecutionOutput.txt:
 	if (test -x $(top_builddir)/src/testSharedRoseLib); then \
-	  echo "int main() { int x=0; return x; }" > roseTestProgram.C; \
-	  $(SET_ROSE_IN_BUILD_TREE) $(top_builddir)/src/testSharedRoseLib roseTestProgram.C >& roseExecutionOutput.txt; \
+	  $(SET_ROSE_IN_BUILD_TREE) $(top_builddir)/src/testSharedRoseLib $(__minimal_input_code) >& roseExecutionOutput.txt; \
 	else \
 	  echo "Execution output is not available (build ROSE, then rebuild documentation)." > roseExecutionOutput.txt; \
 	fi;
