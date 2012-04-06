@@ -11,7 +11,86 @@ of supporting the use of high-level abstractions will be clear together with
 our attempts to address the performance issues required for the use of
 high-level abstractions within scientific computing.
 
+\section Label12 2012
+- Hongyi Ma, Qichang Chen, and Liqiang Wang, Chunhua Liao and Daniel Quinlan,
+"OpenMP-Checker: Detecting Concurrency Errors of OpenMP Programs Using Hybrid Program Analysis",
+submitted to ICPP'12, The 41st International Conference on Parallel Processing, Pittsburgh, PA, September 10-13, 2012.
+	<br/><br/>
+	<i>
+	This paper presents a novel technique to detect data races and deadlocks of OpenMP programs, using hybrid program analysis. Specifically, we use an
+	SMT-solver based static analysis to analyze
+	OpenMP source code. Then we use a dynamic analysis to confirm, or rule out, the potential errors. The static analysis narrows down the code regions and
+	events that need to be monitored, significantly reducing the overhead of the dynamic analysis. Our experiments show that OpenMP-Checker is more scalable and accurate
+	at pinpointing concurrency errors within a set of chosen benchmarks, compared to the two commercial tools, Sun Thread Analyzer and Intel Thread Checker.
+	</i>
+
+- Jacob Lidman, Daniel J. Quinlan, Chunhua Liao, Sally A. McKee,
+"ROSE::FTTransform – A Source-to-Source Translation Framework for Exascale Fault-Tolerance Research",
+submitted to Fault-Tolerance for HPC at Extreme Scale (FTXS 2012), Boston, June 25-28, 2012.
+	<br/><br/>
+	<i>
+	This paper presents a compiler based transformation released in ROSE and demonstrates 
+	the use of Triple Modular Redundancy as an approach to provide HPC software with fault tolerance against 
+	transient faults, as we expect them to manifest themselves on future Exascale architectures.  The paper presents
+	performance results showing that for a randomly selected subset of benchmarks the overhead of this extra
+	layer of support is about 20%.  We expect that may be competitive with future approaches to fault tolerance
+	using check-point restart that may be much more expensive or maybe even intractable for Exascale.  This work is
+	released as a framework within ROSE to support research work in this area by ourselves and collaborators.
+	</i>
+
+- Sara Royuela, Alejandro Duran, Chunhua Liao, Daniel J. Quinlan,
+"Auto-scoping for OpenMP tasks",
+accepted by the 8th International Workshop on OpenMP, IWOMP 2012, Rome, June 11-13, 2012.
+	<br/><br/>
+	<i>	
+	This paper presents an auto-scoping algorithm to work with OpenMP tasks. (Auto-scoping is the process of automatically determining the data sharing dependencies
+	of variables in OpenMP programs). This is a much more complex challenge due to the uncertainty of when a task
+	will be executed, which makes it harder to determine what parts of the program will run concurrently. We also introduce an implementation of the algorithm and
+	results with several benchmarks showing that the algorithm is able to correctly scope a large percentage of the variables appearing in them.
+	</i>
+
+- Shah Mohammad Faizur Rahman, Jichi Guo, Akshatha Bhat, Carlos Garcia, Majedul Haque Sujon, Qingy Yi, Chunhua Liao, Daniel J. Quinlan,
+"Studying The Impact Of Application-level Optimizations On The Power Consumption Of Multi-Core Architectures",
+accepted by <a href="http://www.computingfrontiers.org/2012">The ACM International Conference on Computing Frontiers 2012 (CF'12)</a>, May 15th-17th, 2012, Cagliari, Italy.
+	<br/><br/>
+	<i>
+	This paper presents an extensive study of the impact of application level optimizations on both the performance and power efficiencies of applications from a wide range
+	of scientific and embedded systems domains. We observe that application-level optimizations often have a much larger impact on performance than on power consumption. However,
+	optimizing for performance does not necessarily lead to better power consumption, and vice versa. Compared to sequential applications, multithreaded applications give more
+	room for performance and power improvements. Additionally, a number of optimizations, including loop and thread affinity optimizations, have shown great potential in
+	supporting collective enhancement of both performance and power efficiency. Our experimental results provide several insights to help exploit these optimizations effectively.
+	</i>
+
 \section Label11 2011
+- Shalf, J. and Quinlan, D. and Janssen, C.,
+"Rethinking Hardware-Software Codesign for Exascale Systems", Computer, Vol. 44, issue 11, pages 22-30; November 2011.
+	<br/><br/>
+	<i>
+	This paper presents work combining the LBL node-simulator, the SNL, network simulator, and the ROSE compiler to 
+	demonstrate analysis of software and the workflow required for such tools to analyze the power requirements of HPC code using autotuning
+	to define optimial points in the design space.  The paper lays out an approach to co-design at the start of work that is a part of the CoDEX 
+	project lead by LBL and including both SNL and LLNL.
+	</i>
+
+- M.J. Sottile, C. Rasmussen, W.N. Weseloh, R.W. Robey, D. Quinlan, J. Overbey (2011).
+"ForOpenCL: Transformations Exploiting Array Syntax in Fortran for Accelerator Programming." Proceedings of the 2nd International Workshop on GPUs and Scientific Applications (GPUScA), Galveston Island, Texas. October, 2011.
+	<br/><br/>
+	<i>
+	This paper presents an OpenCL code generator leveraging the semantics of the F90 array constructs.  Such GPU work is expected
+	to be an important part of future Exascale programming environments, this work demonstrates how ROSE is used to support the analysis of the input
+	code, and the translation and code generation required to generate OpenCL code for GPUs.  
+	</i>
+
+- Peter Pirkelbauer, Chunhua Liao, Thomas Panas, Daniel Quinlan,
+"Runtime Detection of C-style Errors in UPC code", 5th Conference on Partitioned Global Address Space Programming Models. October 2011.
+	<br/><br/>
+	<i>
+	This paper present work to define a dynamic analysis for correctness of UPC usage and leverages the RTED test suite from Iowa State University.
+	This work is released in ROSE and shows how to build a dynamic analysis level of support to catch errors as represented by test codes in the RTED 
+	test suit for UPC.  The correctness of using programming models is an important aspect of the design of future programming models for Exascale.
+	This paper shows how to design dynamic analysis-based tools to evaluate correctness of the UPC languages programming model.
+	</i>
+
 - Peter Pirkelbauer, Chunhua Liao, Thomas Panas, and Daniel J. Quinlan,
 Runtime Detection of C-Style Errors in UPC Code, Fifth Conference on Partitioned Global Address Space Programming Models (PGAS'11),
 Galveston, TX, October 2011. LLNL-CONF-502592.
