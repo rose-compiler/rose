@@ -11127,8 +11127,8 @@ ROSEAttributesListPtr getPreprocessorDirectives( char *fileName);
 // #include "sageCommonSourceHeader.h"
 // extern an_il_header il_header;
 
-// Moved to sageSupport.C: void SgFile::setupSourceFilename ( const vector<string>& argv )
-// Moved to sageSupport.C: void SgFile::doSetupForConstructor(const vector<string>& argv, int& errorCode, int fileNameIndex, SgProject* project)
+// Moved to sage_support.cpp: void SgFile::setupSourceFilename ( const vector<string>& argv )
+// Moved to sage_support.cpp: void SgFile::doSetupForConstructor(const vector<string>& argv, int& errorCode, int fileNameIndex, SgProject* project)
 
 SgFile::SgFile ( int & argc, char** & argv , SgProject* project )
 // : p_numberOfCommandLineArguments(argc) , p_commandLineArgumentList(NULL)
@@ -11693,12 +11693,12 @@ roseDisplayMechanism( SgFile *file )
    }
 #endif
 
-// Moved to sageSupport.C: int  SgFile::callFrontEnd ()
-// Moved to sageSupport.C: void SgFile::stripRoseCommandLineOptions ( vector<string>& argv )
-// Moved to sageSupport.C: void SgFile::processRoseCommandLineOptions ( vector<string> & argv )
-// Moved to sageSupport.C: void SgFile::stripEdgCommandLineOptions ( vector<string> & argv )
-// Moved to sageSupport.C: void SgFile::processBackendSpecificCommandLineOptions ( const vector<string>& argvOrig )
-// Moved to sageSupport.C: bool SgFile::isPrelinkPhase() const
+// Moved to sage_support.cpp: int  SgFile::callFrontEnd ()
+// Moved to sage_support.cpp: void SgFile::stripRoseCommandLineOptions ( vector<string>& argv )
+// Moved to sage_support.cpp: void SgFile::processRoseCommandLineOptions ( vector<string> & argv )
+// Moved to sage_support.cpp: void SgFile::stripEdgCommandLineOptions ( vector<string> & argv )
+// Moved to sage_support.cpp: void SgFile::processBackendSpecificCommandLineOptions ( const vector<string>& argvOrig )
+// Moved to sage_support.cpp: bool SgFile::isPrelinkPhase() const
 
 SgProject*
 SgFile::get_project()
@@ -11729,8 +11729,8 @@ SgFile::get_project()
      return project;
    }
 
-// Moved to sageSupport.C: void SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string> & argv, int fileNameIndex )
-// Moved to sageSupport.C: void SgFile::usage ( int status )
+// Moved to sage_support.cpp: void SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string> & argv, int fileNameIndex )
+// Moved to sage_support.cpp: void SgFile::usage ( int status )
 
 #ifdef _MSC_VER
 #include <direct.h> 	// getcwd()
@@ -11862,7 +11862,7 @@ SgFile::generateOutputFileName() const
    }
 
 
-// Moved to sageSupport.C: string SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameIndex, const string& compilerName )
+// Moved to sage_support.cpp: string SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameIndex, const string& compilerName )
 
 
 // Forward declarations of classes used to control and tailor the code generation.
@@ -11896,7 +11896,7 @@ SgFile::unparse ( UnparseFormatHelp *unparseFormatHelp, UnparseDelegate* unparse
      unparseFile ( this, unparseFormatHelp, unparseDelegate, NULL );
    }
 
-// Moved to sageSupport.C: int SgFile::compileOutput ( vector<string>& argv, int fileNameIndex, const string& compilerNameOrig )
+// Moved to sage_support.cpp: int SgFile::compileOutput ( vector<string>& argv, int fileNameIndex, const string& compilerNameOrig )
 
 
 // DQ (5/8/2010): Added support to reset the Sg_File_Info (source code position information) 
@@ -12478,8 +12478,8 @@ SgProject::operator[]( unsigned int i )
 #endif
    }
 
-// Moved to sageSupport.C: int SgProject::parse(const vector<string>& argv)
-// Moved to sageSupport.C: void SgProject::processCommandLine(const vector<string>& input_argv)
+// Moved to sage_support.cpp: int SgProject::parse(const vector<string>& argv)
+// Moved to sage_support.cpp: void SgProject::processCommandLine(const vector<string>& input_argv)
 
 std::ostream & operator<< ( std::ostream & os, const Rose_STL_Container<string> & l )
    {
@@ -12492,7 +12492,7 @@ std::ostream & operator<< ( std::ostream & os, const Rose_STL_Container<string> 
 // void buildHiddenTypeAndDeclarationLists( SgProject* project );
 
 #if 0
-// Moved the sageSupport.C
+// Moved the sage_support.cpp
 int 
 SgProject::parse()
    {
@@ -12619,7 +12619,7 @@ SgProject::unparse ( UnparseFormatHelp *unparseFormatHelp, UnparseDelegate* unpa
 #endif
    }
 
-// Moved to sageSupport.C: int SgProject::compileOutput( const std::string& compilerName )
+// Moved to sage_support.cpp: int SgProject::compileOutput( const std::string& compilerName )
 
 void
 SgProject::resetSourcePositionToGeneratedCode ( UnparseFormatHelp *unparseFormatHelp )
@@ -13062,8 +13062,8 @@ SgProject::display ( const std::string & label ) const
         }
    }
 
-// Moved to sageSupport.C: int SgProject::link ( std::string linkerName )
-// Moved to sageSupport.C: int SgProject::link ( const std::vector<std::string>& argv, std::string linkerName )
+// Moved to sage_support.cpp: int SgProject::link ( std::string linkerName )
+// Moved to sage_support.cpp: int SgProject::link ( const std::vector<std::string>& argv, std::string linkerName )
 
 const SgStringList &
 SgProject::get_includePathList () const

@@ -1,5 +1,19 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
+## Place generated object files (.o) into the same directory as their source
+## files, in order to avoid collisions when non-recursive make is used.
+AUTOMAKE_OPTIONS = subdir-objects
+
+include $(srcdir)/sage_support/Makefile_variables
+
+#
+# Don't use $(srcdir) in conjunction with [subdir-objects], otherwise
+# object files will be built in the source tree. Therefore, we need to
+# use relative paths.
+#
+#mptPartialRedundancyEliminationPath=$(srcdir)/partialRedundancyElimination#
+fSageSupportPath=sage_support#
+
 # DQ (6/25/2011): Readded this directory so that we can support the older behavior as a default
 # although this will likely fail at least some of the nearly one hundred new name qualification tests.
 # DQ (6/22/2011): I think that the astHiddenTypeAndDeclarationLists directory is no longer required in ROSE.
@@ -55,7 +69,7 @@ all-local: roseh sage.docs
 # INCLUDES = $(ROSE_INCLUDES) # -I$(top_srcdir)/src/frontend/EDG_SAGE_Connection -I$(top_srcdir)/src/frontend/EDG/EDG_3.3/src
 INCLUDES = $(ROSE_INCLUDES)
 
-# DQ (3/13/2010): sageSupport.C requires the OFP fortran source files to be made available.
+# DQ (3/13/2010): sage_support.cpp requires the OFP fortran source files to be made available.
 # if ROSE_USE_OPEN_FORTRAN_PARSER
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
    INCLUDES += -I${top_builddir}/src/3rdPartyLibraries/fortran-parser
@@ -149,11 +163,11 @@ libsage3Sources = \
    attachPreprocessingInfoTraversal.C \
    attributeListMap.C \
    manglingSupport.C \
-   sageSupport.C \
    fixupCopy_scopes.C \
    fixupCopy_symbols.C \
    fixupCopy_references.C \
-   rose_graph_support.C
+   rose_graph_support.C \
+   $(fSageSupport_la_sources)
 else
 libsage3Sources = \
    rose_attributes_list.C \
@@ -161,7 +175,6 @@ libsage3Sources = \
    attachPreprocessingInfoTraversal.C \
    attributeListMap.C \
    manglingSupport.C \
-   sageSupport.C \
    fixupCopy_scopes.C \
    fixupCopy_symbols.C \
    fixupCopy_references.C \
@@ -170,7 +183,8 @@ libsage3Sources = \
    ompFortranParser.C \
    ompAstConstruction.cpp \
    dwarfSupport.C \
-   rose_graph_support.C
+   rose_graph_support.C \
+   $(fSageSupport_la_sources)
 endif
 
 # DQ (2/15/2010): This fails in Hudson tests of ROSE compiling ROSE for code generation, but I can't 
@@ -290,7 +304,8 @@ include_HEADERS = \
    fixupCopy.h \
    general_token_defs.h rtiHelpers.h \
    OmpAttribute.h omp.h dwarfSupport.h \
-   omp_lib_kinds.h omp_lib.h sage3basic.hhh rosedefs.h  fileoffsetbits.h rosedll.h
+   omp_lib_kinds.h omp_lib.h sage3basic.hhh rosedefs.h  fileoffsetbits.h rosedll.h \
+   $(fSageSupport_includeHeaders)
 
 # DQ (4/5/2009): Moved rose_paths.h to src/util (where the source file is located).
 nodist_include_HEADERS = \
@@ -307,23 +322,6 @@ else
 BUILT_SOURCES = $(GENERATED_SOURCE) ompparser.cc ompparser.h omplexer.cc
 endif
 
-# DQ (3/13/2010): Extract the required OFP source files needed for ROSE Fortran support (in sageSupport.C).
-# if ROSE_USE_OPEN_FORTRAN_PARSER
-if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
-sageSupport.C: extract_rose_required_ofp_source_files
-endif
-
-# DQ (10/9/2010): We are now trying to properly represent the dependences so avoid redundant
-# extraction of the OFP source files used within ROSE. Using token.c as a representative file.
-extract_rose_required_ofp_source_files:
-if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
-	cd ${top_builddir}/src/3rdPartyLibraries/fortran-parser; $(MAKE) extract_rose_required_ofp_source_files
-endif
-if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
-	cd ${top_builddir}/src/3rdPartyLibraries/java-parser; $(MAKE) extract_rose_required_ecj_source_files
-endif
-
-
 # DQ (9/9/2007): Put C++_include_files.h back into place
 # since it is a convinient mechanism to handle included headers 
 # in the Cxx_Grammar.C file (a ROSETTA generated file).
@@ -332,7 +330,6 @@ endif
 # AstAttributeDOT.h
 # astGraph.h
 # astGraphTemplate.C
-# sageSupport.h
 # C++_include_files.h
 
 clean-local:
