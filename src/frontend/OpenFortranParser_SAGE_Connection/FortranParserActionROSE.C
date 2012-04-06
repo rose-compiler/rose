@@ -5241,9 +5241,9 @@ void c_action_label(Token_t * lbl)
         // (see test2007_147.f, the original Fortran I code from the IBM 704 Fortran Manual).
         build_implicit_program_statement_if_required();
 
-        buildAttributeSpecificationStatement(
-                SgAttributeSpecificationStatement::e_optionalStatement, label,
-                keyword);
+        SgAttributeSpecificationStatement* optionalStmt
+        = buildAttributeSpecificationStatement(SgAttributeSpecificationStatement::e_optionalStatement, label, keyword);
+        optionalStmt->get_declarationModifier().get_typeModifier().setOptional();
 
 #if 0
         // Output debugging information about saved state (stack) information.

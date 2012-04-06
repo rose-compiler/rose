@@ -53,19 +53,18 @@ main (int argc, char* argv[])
 	       << RoseHPCT::XMLQuery::getVersion (p.getDoc ())
 	       << endl;
 
+      cout << "\nMetric Table:" << endl;
 	  map<string, string> mettab =
 	    RoseHPCT::XMLQuery::getMetricTable (p.getDoc ());
-	  cout << "Metric 0 = " << mettab["0"] << endl;
+      map<string, string>::iterator it;
+	  for (it = mettab.begin(); it != mettab.end(); it++)
+	      cout << "Metric[" << (*it).first << "] = " << (*it).second << endl;
 
+      cout << "\nStatements:" << endl;
 	  vector<XMLElem> stmts =
 	    RoseHPCT::XMLQuery::getStatements (p.getDoc ());
-	  cout << "Statements:" << endl;
-	  for (vector<XMLElem>::const_iterator i = stmts.begin ();
-	       i != stmts.end ();
-	       ++i)
-	    {
+	  for (vector<XMLElem>::const_iterator i = stmts.begin (); i != stmts.end (); ++i)
 	      cout << tabs (1) << (*i) << endl;
-	    }
 	}
       else
 	cout << "(Not OK.)" << endl;

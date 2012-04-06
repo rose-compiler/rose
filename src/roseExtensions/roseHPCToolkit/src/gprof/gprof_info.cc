@@ -179,7 +179,7 @@ namespace RoseHPCT
 #endif      
       if (func_node == NULL)
       { // assume the end line is equal to the beginning line
-        Procedure * p= new Procedure(func_name,info.line_number(),info.line_number());
+        Procedure * p= new Procedure(info.line_number(), func_name, info.line_number());
         ROSE_ASSERT(p!=NULL);
         p->setFileNode(dynamic_cast<File*>(file_node->value));
         //insert it under a corresponding file node
