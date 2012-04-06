@@ -357,7 +357,7 @@ Grammar::writeFile ( const StringUtility::FileWithLineNumbers & outputString,
           printf ("outputFilename = %s could not be opened, likely the directory is missing...\n",outputFilename.c_str());
           string command = "mkdir -p " + target_directory + sourceCodeDirectoryName();
 
-       // DQ (12/28/2009): As I recall there is a more secure way to do this...see sageSupport.C for an example.
+       // DQ (12/28/2009): As I recall there is a more secure way to do this...see sage_support.cpp for an example.
           printf ("Calling system(%s): making a new directory in the build tree...\n",command.c_str());
           system(command.c_str());
 
@@ -397,7 +397,7 @@ Grammar::appendFile ( const StringUtility::FileWithLineNumbers & outputString,
           printf ("outputFilename = %s could not be opened, likely the directory is missing...\n",outputFilename.c_str());
           string command = "mkdir -p " + target_directory + sourceCodeDirectoryName();
 
-       // DQ (12/28/2009): As I recall there is a more secure way to do this...see sageSupport.C for an example.
+       // DQ (12/28/2009): As I recall there is a more secure way to do this...see sage_support.cpp for an example.
           printf ("Calling system(%s): making a new directory in the build tree...\n",command.c_str());
           system(command.c_str());
 

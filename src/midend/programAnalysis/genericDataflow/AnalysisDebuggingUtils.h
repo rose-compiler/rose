@@ -10,13 +10,14 @@
 class printable
 {
         public:
-        virtual std::string str(std::string indent="")=0;
         virtual ~printable() {}
+        virtual std::string str(std::string indent="")=0;
 };
 
 class dottable
 {
         public:
+        virtual ~dottable() {}
         // Returns a string that containts the representation of the object as a graph in the DOT language
         // that has the given name
         virtual std::string toDOT(std::string graphName)=0;
@@ -54,6 +55,7 @@ class dbgBuf: public std::streambuf
 
 public:
         
+        virtual ~dbgBuf() {};
         // Construct a streambuf which tees output to both input
         // streambufs.
         dbgBuf();

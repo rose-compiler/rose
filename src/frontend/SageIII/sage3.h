@@ -20,7 +20,6 @@
 // DQ (12/9/2004): The name of this file has been changed to be the new location
 // of many future Sage III AST manipulation functions in the future.  A namespace
 // (SageInterface) is defined in sageInterface.h.
-// #include "sageSupport.h"
 #include "sageInterface.h"
 
 #include "AstProcessing.h"

@@ -1,11 +1,12 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
+include $(top_srcdir)/tests/input_codes/Makefile.for.input.codes
 
 # Forward declarations
 noinst_PROGRAMS =
 TEST_TARGETS =
 
 INCLUDES = $(ROSE_INCLUDES)
-EXTRA_DIST = input_directorySupport.C tests.conf
+EXTRA_DIST = tests.conf
 
 ## Don't use the repository in ../src
 CXX_TEMPLATE_REPOSITORY_PATH = .
@@ -51,9 +52,8 @@ noinst_PROGRAMS += directorySupport
 directorySupport_SOURCES = directorySupport.C
 directorySupport_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 TEST_TARGETS += directorySupport.passed
-directorySupport.passed: tests.conf directorySupport $(srcdir)/input_directorySupport.C
-	@$(RTH_RUN) CMD=./directorySupport ARGS="-c -rose:verbose 0 $(srcdir)/input_directorySupport.C" $< $@
-
+directorySupport.passed: tests.conf directorySupport $(__minimal_input_code)
+	@$(RTH_RUN) CMD=./directorySupport ARGS="-c -rose:verbose 0 $(__minimal_input_code)" $< $@
 
 check-local: $(TEST_TARGETS)
 
