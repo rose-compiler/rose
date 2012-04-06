@@ -3,6 +3,7 @@
         <tr>
           <td width="221" class="Header3"><p>&nbsp;</p>
             <p class="style3"><a href="index.html" target="_blank">Home</a></p>
+            <p class="style3"><a href="highlights.html" target="_blank">Highlights</a></p>
             <p class="style3"><a href="news.html" target="_blank">News</a></p>
             <p class="style3"><a href="https://outreach.scidac.gov/projects/rose/" target="_blank">Download Software</p>
             <!--            
@@ -20,6 +21,7 @@
             <p class="style3"><a href="regressionTest.html" target="_blank">Regression Tests</p>
             <p class="style3"><a href="https://outreach.scidac.gov/tracker/?group_id=24" target="_blank">Report Bugs</p>
             <p class="style3"><a href="ROSE_HTML_Reference/ProjectPublications.html" target="_blank">Publications</p>
+            <p class="style3"><a href="ROSE_HTML_Reference/ProjectTalks.html" target="_blank">Talks</p>
             <p class="style3"><a href="https://mailman.nersc.gov/pipermail/rose-public/" target="_blank">ROSE Mailing List</p>
 <!--    <p class="style3"><a href="https://mailman.nersc.gov/mailman/listinfo/" target="_blank">NERSC Mailing Lists</p>  -->
             <p class="style3"><a href="http://nmi-web.cs.wisc.edu/nmi/index.php?page=results%2Foverview&rows=100&MetronomeSessID=lks8idlh7c4tsoe0jfadtof5e1&opt_user=OPTION_SHOW_ALL&opt_type=OPTION_SHOW_ALL&opt_project=rose+compiler&opt_result=OPTION_SHOW_ALL&opt_component=OPTION_SHOW_ALL&opt_month=0&opt_day=0&opt_year=0&opt_platform=OPTION_SHOW_ALL&opt_build_id=&opt_submit=OPTION_SHOW_ALL&opt_keyword=&searchSubmit=Search" target="_blank">Nightly External NMI Tests</p>

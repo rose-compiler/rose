@@ -4,7 +4,7 @@
 
 // Global Declarations
 
-// DQ (10/19/2010): Moved the body of this function to src/frontend/SageIII/sageSupport.C.
+// DQ (10/19/2010): Moved the body of this function to src/frontend/SageIII/sage_support/sage_support.cpp.
 void preventConstructionOnStack(SgNode* n);
 
 // JH (11/28/2005): This turns on/off many asserts concerimng the manipulation and remanipulation of the
