@@ -7,5 +7,16 @@ int foo()
   return b * a; //  IN={b,a}, OUT = {}
 
 }
+int bar(int flag)
+{
+
+  int a =1,b,c;
+  
+  if (flag == 0)
+    c = a;
+  else  
+    c = b;
+  return c;  
+}
 
 
