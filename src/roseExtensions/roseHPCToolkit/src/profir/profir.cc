@@ -8,6 +8,7 @@
  */
 
 #include "rosehpct/profir/profir.hh"
+#include <boost/lexical_cast.hpp> // DXN: converting int to string
 
 using namespace std;
 using namespace RoseHPCT;
@@ -288,49 +289,105 @@ std::string IRNode::toString() const
 std::string Program::toString() const
 {
   std::string result;
-  result = "Program"+IRNode::toString();
+  result = "Program "+IRNode::toString();
   return result;
 }
+
+std::string SecHeader::toString() const
+{
+  std::string result;
+  result = "SecHeader " + IRNode::toString();
+  return result;
+}
+
+std::string MetricTable::toString() const
+{
+  std::string result;
+  result = "MetricTable " + IRNode::toString();
+  return result;
+}
+
+std::string MetricElement::toString() const
+{
+  std::string result;
+  result = "MetricElement " + IRNode::toString();
+  return result;
+}
+
+std::string SecFlatProfileData::toString() const
+{
+  std::string result;
+  result = "SecFlatProfileData " + IRNode::toString();
+  return result;
+}
+
 std::string Group::toString() const
 {
   std::string result;
-  result = "Group "+IRNode::toString();
+  result = "Group "+ IRNode::toString();
   return result;
 }
 std::string Module::toString() const
 {
   std::string result;
-  result = "Module "+IRNode::toString();
+  result = "Module "+ IRNode::toString();
   return result;
 }
 std::string File::toString() const
 {
   std::string result;
-  result = "File "+IRNode::toString();
+  result = "File "+ IRNode::toString();
   return result;
 }
 
-
-
+Procedure::Procedure (long int i, const std::string& name, long int l) :
+    IRNode (name), Located(l, l)
+{
+  id = i;
+  // line = l;
+}
 
 std::string Procedure::toString() const
 {
   std::string result;
-  result = "Procedure "+IRNode::toString() +"@"+Located::toString();
+  result = "Procedure "+IRNode::toString() + " @ " + Located::toString();
+  // result = "Procedure "+ IRNode::toString() + " @ line "+ boost::lexical_cast<std::string>(line);
   return result;
+}
+
+std::string CallSite::toString() const
+{
+  std::string result;
+  result = "CallSite " + IRNode::toString()  + " @ line " + boost::lexical_cast<std::string>(line);
+  return result;
+}
+
+std::string ProcFrame::toString() const
+{
+  std::string result;
+  result = "ProcFrame " + IRNode::toString()  + " @ line " + boost::lexical_cast<std::string>(line);
+  return result;
+}
+
+Loop::Loop (const std::string& name, long int i, long int l) :
+        IRNode (name), Located(l, l)
+{
+    id = i;
 }
 
 std::string Loop::toString() const
 {
   std::string result;
-  result = "Loop " +IRNode::toString() +"@"+Located::toString();
+  result = "Loop " +IRNode::toString() +" @ " + Located::toString();
+  // result = "Loop " + IRNode::toString() + " @ line" + boost::lexical_cast<std::string>(line);
   return result;
 }
 
 std::string Statement::toString() const
 {
   std::string result;
-  result = "Statement "+ IRNode::toString() +"@"+Located::toString();
+  result = "Statement "+ IRNode::toString() + "@"+ Located::toString();
+  // result = "Statement "+ IRNode::toString() + " @ line " + boost::lexical_cast<std::string>(line);
   return result;
 }
 
@@ -343,6 +400,13 @@ Statement::Statement (const Statement& s)
   : Located (s)
 {
   setId (s.getId ());
+}
+
+Statement::Statement (const std::string& name, long int i, long int l) :
+        IRNode (name), Located(l, l)
+{
+    id = i;
+    // line = l;
 }
 
 Statement::~Statement (void)

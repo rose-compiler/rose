@@ -40,7 +40,8 @@ MetricAttr::MetricAttr (void)
 
 MetricAttr::MetricAttr (const std::string& name, double value,
                         bool is_derived)
-  : MetricAttribute(value,false), name_ (name)
+//  : MetricAttribute(value,false), name_ (name)
+  : MetricAttribute(value, is_derived), name_ (name)  // DXN
 {
 }
 

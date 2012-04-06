@@ -190,6 +190,41 @@ namespace RoseHPCT
     virtual std::string toString() const;
   };
 
+  //! Section Header node ("SecHeader")
+  class SecHeader : public IRNode
+  {
+  public:
+    virtual std::string toString() const;
+  };
+
+  //! Metric Table node ("MetricTable")
+  class MetricTable : public IRNode
+  {
+  public:
+    virtual std::string toString() const;
+  };
+
+  //! Metric Element node ("MetricElement")
+  class MetricElement : public IRNode
+  {
+      std::string id;
+      std::string val_type;
+      std::string type;
+      std::string show;
+  public:
+    MetricElement(const std::string& i, const std::string& n, std::string v,
+            const std::string& t, const std::string& s):
+        IRNode(n), id(i), val_type(v), type(t), show(s) {}
+    virtual std::string toString() const;
+  };
+
+  //! Section Flat Profile Data node ("SecFlatProfileData")
+  class SecFlatProfileData : public IRNode
+  {
+  public:
+    virtual std::string toString() const;
+  };
+
   //! Group node ("G")
   class Group : public IRNode
   {
@@ -217,39 +252,59 @@ namespace RoseHPCT
   //! Procedure node ("P")
   class Procedure : public IRNode, public Located
   {
+    long int id;
   public:
-    Procedure (const std::string& name, size_t b, size_t e)
-      : IRNode (name), Located(b, e) {}
+    Procedure (long int i, const std::string& name, long int l);
     virtual std::string toString() const;  
   };
 
-  //! Loop node ("L")
-  class Loop : public IRNode, public Located
+  //! Call site ("C")
+  class CallSite: public IRNode
   {
+      long int id;
+      long int line;
   public:
-    Loop (const std::string& name, size_t b, size_t e)
-      : IRNode (name), Located(b, e) {}
+    CallSite (long int i, long int l): id(i), line(l) {}
+    virtual std::string toString() const;
+  };
+
+  //! Procedure frame ("PF")
+  class ProcFrame: public IRNode
+  {
+      long int id;
+      std::string name;
+      long int line;
+  public:
+      ProcFrame (long int i, const std::string& n, long int l): id(i), name(n), line(l) {}
+    virtual std::string toString() const;
+  };
+
+  //! Loop node ("L")
+  class Loop : public IRNode  , public Located
+  {
+    long int id;
+  public:
+    Loop (const std::string& name, long int i, long int l);
     virtual std::string toString() const;  
   };
 
   //! Statement node ("S")
   class Statement : public IRNode, public Located
   {
+    long int id;
   public:
-    typedef unsigned id_t;
+    // typedef unsigned id_t;
+    typedef long int id_t;
 
     Statement (void);
     Statement (const Statement& s);
-    Statement (const std::string& name, size_t b, size_t e)
-      : IRNode (name), Located(b, e) {}
+    Statement (const std::string& name, long int i, long int l);
+
     ~Statement (void);
 
     id_t getId (void) const;
     void setId (id_t new_id);
     virtual std::string toString() const;  
-
-  private:
-    id_t id;
   };
 
   //! IR tree representation
