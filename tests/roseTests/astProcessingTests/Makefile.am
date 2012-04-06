@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-EXTRA_DIST = yicesParserLib.C tf1.C tf2.C tf3.C tfif1.C tfif2.C tfif3.C tfif4.C mf1.C mf3.C mf4.C mf5.C mf8.C mf9.C mf10.C mf11.C mf12.C mf13.C eif.C eif2.C eif3.C eif4.C efor2.C efor3.C input1.C test11.C test12.C test13.C test14.C createTest.C t1 t2 t3 t4 mfEx.C mfEx2.C mfEx3.C mfEx4.C mfEx5.C mfEx6.C mfEx7.C mfEx8.C mfEx9.C mfEx12.C mfEx13.C mfEx14.C mfEx15.C whiletest.C whiletest2.C whiletest3.C
+EXTRA_DIST = tf1.C tf2.C tf3.C tfif1.C tfif2.C tfif3.C tfif4.C mf1.C mf3.C mf4.C mf5.C mf8.C mf9.C mf10.C mf11.C mf12.C mf13.C eif.C eif2.C eif3.C eif4.C efor2.C efor3.C input1.C test11.C test12.C test13.C test14.C createTest.C t1 t2 t3 t4 mfEx.C mfEx2.C mfEx3.C mfEx4.C mfEx5.C mfEx6.C mfEx7.C mfEx8.C mfEx9.C mfEx12.C mfEx13.C mfEx14.C mfEx15.C whiletest.C whiletest2.C whiletest3.C
 
 # To keep compile commands tidy, please ONLY put required include flags here.
 INCLUDES = $(ROSE_INCLUDES)
@@ -29,17 +29,6 @@ ROSE_DEVELOPMENT_LIBS = $(ROSE_SEPARATE_LIBS)
 
 
 
-
-#icesLib.h: yicesParserLib.C
-#yicesLib.la: yicesLib.h
-
-
-libyicesLibSources = yicesParserLib.C
-
-noinst_LTLIBRARIES = libyicesParserLib.la
-libyicesParserLib_la_SOURCES = $(libyicesLibSources)
-libyicesParserLib_la_LIBADD = $(CXX_TEMPLATE_OBJECTS)
-libyicesParserLib_la_DEPENDENCIES = $(libyicesLib_a_SOURCES)
 
 
 
@@ -247,7 +236,6 @@ yicesParserTest: yicesParser
 	./yicesParser $(srcdir)/mfEx6.C
 	./yicesParser $(srcdir)/mfEx7.C
 	./yicesParser $(srcdir)/mfEx8.C
-	./yicesParser $(srcdir)/mfEx82.C
 	./yicesParser $(srcdir)/eif.C
 	./yicesParser $(srcdir)/eif2.C
 	./yicesParser $(srcdir)/eif3.C
@@ -257,8 +245,6 @@ yicesParserTest: yicesParser
 	./yicesParser $(srcdir)/mf1.C
 	./yicesParser $(srcdir)/mf2.C
 	./yicesParser $(srcdir)/mf3.C
-	./yicesParser $(srcdir)/mf5.C
-	./yicesParser $(srcdir)/mf7.C
 	./yicesParser $(srcdir)/mf8.C
 	./yicesParser $(srcdir)/mf9.C
 	./yicesParser $(srcdir)/mf10.C

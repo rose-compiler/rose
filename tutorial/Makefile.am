@@ -1,6 +1,5 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-EXTRA_DIST = yicesParserLib.C
 # Add Projects that are associated with capabilities that belong to ROSE here
 SUBDIRS = outliner intelPin binaryAnalysis
 
@@ -133,8 +132,7 @@ NOINST_TUTORIAL_EXAMPLES = \
    volatileTypeModifier \
    wholeASTGraphGenerator \
    wholeGraphAST \
-   wholeGraphFilterOnPersistantAttributes \
-   yicesTutorialExample
+   wholeGraphFilterOnPersistantAttributes
 
 # DQ (3/21/2009): Separate those that compile under Cygwin from those that don't.
 if ROSE_BUILD_OS_IS_CYGWIN
@@ -1435,7 +1433,9 @@ inputCode_dwarfAnalysis.out: dwarfInstructionAddressToSourceLineAnalysis inputCo
 
 # Note that we have made multiple copies of "inputCode_ExampleTraversals.C"
 # so that the processing could be done in parallel with out collisions.
-EXTRA_DIST = CMakeLists.txt \
+EXTRA_DIST = \
+   yicesParserLib.C \
+   CMakeLists.txt \
    inputCode_1.C \
    inputCode_BuildCFG.C \
    inputCode_InstrumentationTranslator.C \
