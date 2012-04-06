@@ -25,6 +25,11 @@ libastprocessingSources = \
    AstSharedMemoryParallelSimpleProcessing.C
 endif
 
+if HAVE_YICES
+libastprocessingSources += \
+yicesParserLib.C
+endif
+
 # Removed AstTests.C AstStatistics.C 
 
 # lib_LTLIBRARIES = libastprocessing.a
