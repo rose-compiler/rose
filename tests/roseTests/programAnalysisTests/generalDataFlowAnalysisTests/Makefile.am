@@ -74,7 +74,8 @@ LDADD = $(ROSE_LIBS)
 # Liao 12/6/2011
 CXX_LOCAL_LIVENESS_PASS = \
     test1.C \
-    test4.C
+    test4.C \
+    test5.C
 
 # DQ (/14/2011): Use the tests directly so that we can isolate the fialing tests.
 # include $(srcdir)/../../../CompileTests/Cxx_tests/Makefile-pass.inc
