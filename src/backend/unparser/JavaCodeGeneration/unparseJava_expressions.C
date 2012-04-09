@@ -637,48 +637,29 @@ Unparse_Java::unparseComplexVal(SgExpression* expr, SgUnparse_Info& info)
 //  is done for non-operator function calls, or when the operator overloading option
 //  is turned on. 
 //-----------------------------------------------------------------------------------
-void
-Unparse_Java::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
-   {
-     SgFunctionCallExp* func_call = isSgFunctionCallExp(expr);
-     ROSE_ASSERT(func_call != NULL);
+void Unparse_Java::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info) {
+    SgFunctionCallExp* func_call = isSgFunctionCallExp(expr);
+    ROSE_ASSERT(func_call != NULL);
 
-     if (func_call -> attributeExists("prefix")) {
-         AstRegExAttribute *attribute = (AstRegExAttribute *) func_call -> getAttribute("prefix");
-         curprint(attribute -> expression);
-         curprint(".");
-     /*
-         SgFunctionDeclaration *declaration = func_call -> getAssociatedFunctionDeclaration();
-         SgMemberFunctionDeclaration *functionDeclaration = isSgMemberFunctionDeclaration(declaration);
-         ROSE_ASSERT(functionDeclaration);
-         SgClassDeclaration *classDeclaration = functionDeclaration -> get_associatedClassDeclaration();
-         ROSE_ASSERT(classDeclaration);
-         SgClassType *classType = classDeclatation -> get_type();
-         ROSE_ASSERT (classType != NUL);
-         curprint(classType -> get_qualified_name().getString());
-         curprint(".");
-     */
-     }
-     /*
-     if (isSgMemberFunctionType(func_call -> get_type())) {
-         SgFunctionDeclaration *declaration = func_call -> getAssociatedFunctionDeclaration();
-         SgMemberFunctionDeclaration *functionDeclaration = isSgMemberFunctionDeclaration(declaration);
-         ROSE_ASSERT(functionDeclaration);
+    //
+    // If the attribute points to the null string, it identifies an implicit Super call.
+    // We ignore implicit super calls.
+    //
+    if (func_call -> attributeExists("prefix")) {
+        AstRegExAttribute *prefix_attribute = (AstRegExAttribute *) func_call -> getAttribute("prefix");
+        curprint(prefix_attribute -> expression);
+        curprint(".");
+    }
 
-         if (functionDeclaration -> get_declarationModifier().get_storageModifier().isStatic()) {
-             SgType *type = isSgMemberFunctionType(func_call -> get_type()) -> get_class_type();
-             ROSE_ASSERT (type != NULL && isSgNamedType(type));
-             curprint(isSgNamedType(type) -> get_qualified_name().getString());
-             curprint(".");
-         }
-     }
-     */
-
-     unparseExpression(func_call->get_function(), info);
-     curprint("(");
-     unparseExpression(func_call->get_args(), info);
-     curprint(")");
-   }
+    if (func_call -> attributeExists("<init>")) {
+        AstRegExAttribute *constructor_attribute = (AstRegExAttribute *) func_call -> getAttribute("<init>");
+        curprint(constructor_attribute -> expression);
+    }
+    else unparseExpression(func_call->get_function(), info);
+    curprint("(");
+    unparseExpression(func_call->get_args(), info);
+    curprint(")");
+}
 
 void Unparse_Java::unparseUnaryMinusOp(SgExpression* expr, SgUnparse_Info& info) { unparseUnaryOperator(expr, "-", info); }
 void Unparse_Java::unparseUnaryAddOp(SgExpression* expr, SgUnparse_Info& info) { unparseUnaryOperator(expr, "+", info); }
