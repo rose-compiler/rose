@@ -148,7 +148,8 @@ set( sage3_SRC
    ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/attachPreprocessingInfoTraversal.C 
    ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/attributeListMap.C 
    ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/manglingSupport.C 
-   ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/sageSupport.C 
+   ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/sage_support/sage_support.cpp
+   ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/sage_support/cmdline.cpp
    ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/fixupCopy_scopes.C 
    ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/fixupCopy_symbols.C 
    ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/fixupCopy_references.C 
@@ -238,6 +239,7 @@ set(rose_support_src
 
 set(roseDisassemblers_SRC
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/InstructionEnumsX86.h
+   ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/Expressions.C
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/Partitioner.C 
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/PStatistics.C 
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/IPDParser.C 
