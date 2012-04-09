@@ -117,7 +117,9 @@ one million lines of code in size).
 \subsection RosePublications ROSE Publications
     ROSE is a research project which emphasises publication about the new technologies
     that we are developing, every often as part of external collaborations.  Publications
-    specific to the ROSE project can be found at the main ROSE web page.
+    specific to the ROSE project can be found at the main ROSE web page.\n\n
+    <a href="../ROSE_HTML_Reference/ProjectPublications.html">Project Publications</a>\n
+    <a href="../ROSE_HTML_Reference/ProjectTalks.html">Project Talks</a>\n
 
 \section DownLoadInstructions ROSE Download Instructions
 

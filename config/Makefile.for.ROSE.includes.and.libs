@@ -205,6 +205,7 @@ ROSE_INCLUDES = \
      -I$(top_srcdir)/src/frontend/SageIII/astVisualization \
      -I$(top_srcdir)/src/frontend/SageIII/sageInterface \
      -I$(top_srcdir)/src/frontend/SageIII/includeDirectivesProcessing \
+     -I$(top_srcdir)/src/frontend/SageIII/sage_support \
      -I$(top_srcdir)/src/frontend/OpenFortranParser_SAGE_Connection \
      -I$(top_srcdir)/src/frontend/ECJ_ROSE_Connection \
      -I$(top_srcdir)/src/frontend/BinaryDisassembly \
@@ -253,6 +254,7 @@ ROSE_INCLUDES = \
      -I$(top_builddir)/src/frontend/SageIII/astFileIO \
      -I$(top_srcdir)/src/frontend/SageIII/astFromString \
      -I$(top_srcdir)/src/frontend/SageIII/includeDirectivesProcessing \
+     -I$(top_srcdir)/src/frontend/SageIII/sage_support \
      -I$(top_srcdir)/src/frontend/OpenFortranParser_SAGE_Connection \
      -I$(top_srcdir)/src/frontend/ECJ_ROSE_Connection \
      -I$(top_srcdir)/src/frontend/PHPFrontend \

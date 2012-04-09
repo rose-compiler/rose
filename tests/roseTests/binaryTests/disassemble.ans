@@ -51,7 +51,7 @@ Basic block: graph-1
 
 0x080482f0: ================================== Function (function call, import) <signal@plt>
 Basic block: entry point, graph-1
-0x080482f0: ff 25 b4 96 04 08       |.%....  |   jmp    DWORD PTR ds:[0x080496b4]
+0x080482f0: ff 25 b4 96 04 08       |.%....  |   jmp    DWORD PTR ds:[0x080496b4<.got.plt+0x0c>]
             (successors:...)
 
 0x080482f6: 68 00 00 00 00 e9 e0 ff |h.......|
@@ -59,7 +59,7 @@ Basic block: entry point, graph-1
 
 0x08048300: ================================== Function (function call, import) <puts@plt>
 Basic block: entry point, graph-1
-0x08048300: ff 25 b8 96 04 08       |.%....  |   jmp    DWORD PTR ds:[0x080496b8]
+0x08048300: ff 25 b8 96 04 08       |.%....  |   jmp    DWORD PTR ds:[0x080496b8<.got.plt+0x10>]
             (successors:...)
 
 0x08048306: 68 08 00 00 00 e9 d0 ff |h.......|
@@ -67,7 +67,7 @@ Basic block: entry point, graph-1
 
 0x08048310: ================================== Function (function call, import) <__libc_start_main@plt>
 Basic block: entry point, graph-1
-0x08048310: ff 25 bc 96 04 08       |.%....  |   jmp    DWORD PTR ds:[0x080496bc]
+0x08048310: ff 25 bc 96 04 08       |.%....  |   jmp    DWORD PTR ds:[0x080496bc<.got.plt+0x14>]
             (successors:...)
 
 0x08048316: 68 10 00 00 00 e9 c0 ff |h.......|
@@ -76,7 +76,7 @@ Basic block: entry point, graph-1
 0x08048320: ================================== Function (function call, import) <_exit@plt>
 0x08048320: Function does not return to caller.
 Basic block: entry point, graph-1
-0x08048320: ff 25 c0 96 04 08       |.%....  |   jmp    DWORD PTR ds:[0x080496c0]
+0x08048320: ff 25 c0 96 04 08       |.%....  |   jmp    DWORD PTR ds:[0x080496c0<.got.plt+0x18>]
             (successors:...)
 
 0x08048326: 68 18 00 00 00 e9 b0 ff |h.......|
@@ -84,7 +84,7 @@ Basic block: entry point, graph-1
 
 0x08048330: ================================== Function (function call, import) <__gmon_start__@plt>
 Basic block: entry point, graph-1
-0x08048330: ff 25 c4 96 04 08       |.%....  |   jmp    DWORD PTR ds:[0x080496c4]
+0x08048330: ff 25 c4 96 04 08       |.%....  |   jmp    DWORD PTR ds:[0x080496c4<.got.plt+0x1c>]
             (successors:...)
 
 0x08048336: 68 20 00 00 00 e9 a0 ff |h ......|
@@ -121,12 +121,12 @@ Basic block: entry point, graph-1
 0x08048365: 89 e5                   |..      |   mov    ebp, esp
 0x08048367: 53                      |S       |   push   ebx
 0x08048368: 51                      |Q       |   push   ecx
-0x08048369: e8 00 00 00 00          |.....   |   call   0x0804836e
+0x08048369: e8 00 00 00 00          |.....   |   call   0x0804836e<<Insn>>
 0x0804836e: 5b                      |[       |   pop    ebx
 0x0804836f: 81 c3 3a 13 00 00       |..:...  |   add    ebx, 0x0000133a
 0x08048375: 8b 93 fc ff ff ff       |......  |   mov    edx, DWORD PTR ds:[ebx + 0xfffffffc<-0x00000004>]
 0x0804837b: 85 d2                   |..      |   test   edx, edx
-0x0804837d: 74 05                   |t.      |   je     0x08048384
+0x0804837d: 74 05                   |t.      |   je     0x08048384<<Insn>>
             (successors: 0x0804837f 0x08048384)
 
 Basic block: graph-1
@@ -149,15 +149,15 @@ Basic block: entry point, graph-1
 0x08048390: 55                      |U       |   push   ebp
 0x08048391: 89 e5                   |..      |   mov    ebp, esp
 0x08048393: 83 ec 08                |...     |   sub    esp, 0x08
-0x08048396: 80 3d d4 96 04 08 00    |.=..... |   cmp    BYTE PTR ds:[0x080496d4], 0x00
-0x0804839d: 75 2d                   |u-      |   jne    0x080483cc
+0x08048396: 80 3d d4 96 04 08 00    |.=..... |   cmp    BYTE PTR ds:[0x080496d4<.bss>], 0x00
+0x0804839d: 75 2d                   |u-      |   jne    0x080483cc<<Insn>>
             (successors: 0x0804839f 0x080483cc)
 
 Basic block: graph-1
-0x0804839f: a1 d0 96 04 08          |.....   |   mov    eax, DWORD PTR ds:[0x080496d0]
+0x0804839f: a1 d0 96 04 08          |.....   |   mov    eax, DWORD PTR ds:[0x080496d0<.data+8>]
 0x080483a4: 8b 10                   |..      |   mov    edx, DWORD PTR ds:[eax]
 0x080483a6: 85 d2                   |..      |   test   edx, edx
-0x080483a8: 74 1b                   |t.      |   je     0x080483c5
+0x080483a8: 74 1b                   |t.      |   je     0x080483c5<<Insn>>
             (dominator 0x08048390)
             (successors: 0x080483aa 0x080483c5)
 
@@ -168,21 +168,21 @@ Basic block: graph-1
 
 Basic block: graph-1
 0x080483b0: 83 c0 04                |...     |   add    eax, 0x04
-0x080483b3: a3 d0 96 04 08          |.....   |   mov    DWORD PTR ds:[0x080496d0], eax
+0x080483b3: a3 d0 96 04 08          |.....   |   mov    DWORD PTR ds:[0x080496d0<.data+8>], eax
 0x080483b8: ff d2                   |..      |   call   edx
             (dominator 0x080483aa)
             (successors: 0x080483ba...)
 
 Basic block: graph-1
-0x080483ba: a1 d0 96 04 08          |.....   |   mov    eax, DWORD PTR ds:[0x080496d0]
+0x080483ba: a1 d0 96 04 08          |.....   |   mov    eax, DWORD PTR ds:[0x080496d0<.data+8>]
 0x080483bf: 8b 10                   |..      |   mov    edx, DWORD PTR ds:[eax]
 0x080483c1: 85 d2                   |..      |   test   edx, edx
-0x080483c3: 75 eb                   |u.      |   jne    0x080483b0
+0x080483c3: 75 eb                   |u.      |   jne    0x080483b0<<Insn>>
             (dominator 0x080483b0)
             (successors: 0x080483b0 0x080483c5)
 
 Basic block: graph-1
-0x080483c5: c6 05 d4 96 04 08 01    |....... |   mov    BYTE PTR ds:[0x080496d4], 0x01
+0x080483c5: c6 05 d4 96 04 08 01    |....... |   mov    BYTE PTR ds:[0x080496d4<.bss>], 0x01
             (dominator 0x0804839f)
             (successors: 0x080483cc)
 
@@ -199,20 +199,20 @@ Basic block: entry point, graph-1
 0x080483d0: 55                      |U       |   push   ebp
 0x080483d1: 89 e5                   |..      |   mov    ebp, esp
 0x080483d3: 83 ec 08                |...     |   sub    esp, 0x08
-0x080483d6: a1 d8 95 04 08          |.....   |   mov    eax, DWORD PTR ds:[0x080495d8]
+0x080483d6: a1 d8 95 04 08          |.....   |   mov    eax, DWORD PTR ds:[0x080495d8<.jcr>]
 0x080483db: 85 c0                   |..      |   test   eax, eax
-0x080483dd: 74 21                   |t!      |   je     0x08048400
+0x080483dd: 74 21                   |t!      |   je     0x08048400<<Insn>>
             (successors: 0x080483df 0x08048400)
 
 Basic block: graph-1
 0x080483df: b8 00 00 00 00          |.....   |   mov    eax, 0x00000000
 0x080483e4: 85 c0                   |..      |   test   eax, eax
-0x080483e6: 74 18                   |t.      |   je     0x08048400
+0x080483e6: 74 18                   |t.      |   je     0x08048400<<Insn>>
             (dominator 0x080483d0)
             (successors: 0x08048400)
 
 Basic block: fragment, CFG head; 57% code likelihood
-0x080483e8: c7 04 24 d8 95 04 08    |..$.... |   mov    DWORD PTR ss:[esp], 0x080495d8
+0x080483e8: c7 04 24 d8 95 04 08    |..$.... |   mov    DWORD PTR ss:[esp], 0x080495d8<.jcr>
 0x080483ef: e8 0c 7c fb f7          |..|..   |   call   0x00000000
             (successors: 0x00000000)
 
@@ -233,7 +233,7 @@ Basic block: entry point, graph-1
 0x08048404: 55                      |U       |   push   ebp
 0x08048405: 89 e5                   |..      |   mov    ebp, esp
 0x08048407: 83 ec 08                |...     |   sub    esp, 0x08
-0x0804840a: c7 04 24 b4 85 04 08    |..$.... |   mov    DWORD PTR ss:[esp], 0x080485b4
+0x0804840a: c7 04 24 b4 85 04 08    |..$.... |   mov    DWORD PTR ss:[esp], 0x080485b4<<StaticData@0x080485aa>+0x0a>
 0x08048411: e8 ea fe ff ff          |.....   |   call   0x08048300<puts@plt>
             (successors: 0x08048300 0x08048416)
 
@@ -264,7 +264,7 @@ Basic block: entry point, graph-1
 0x0804842f: 55                      |U       |   push   ebp
 0x08048430: 89 e5                   |..      |   mov    ebp, esp
 0x08048432: 83 ec 08                |...     |   sub    esp, 0x08
-0x08048435: ff 05 d8 96 04 08       |......  |   inc    DWORD PTR ds:[0x080496d8]
+0x08048435: ff 05 d8 96 04 08       |......  |   inc    DWORD PTR ds:[0x080496d8<.bss+4>]
 0x0804843b: e8 d8 ff ff ff          |.....   |   call   0x08048418<foo>
             (successors: 0x08048418)
 
@@ -304,7 +304,7 @@ Basic block: entry point, graph-1
 0x08048494: 56                      |V       |   push   esi
 0x08048495: 53                      |S       |   push   ebx
 0x08048496: 83 ec 0c                |...     |   sub    esp, 0x0c
-0x08048499: e8 00 00 00 00          |.....   |   call   0x0804849e
+0x08048499: e8 00 00 00 00          |.....   |   call   0x0804849e<<Insn>>
 0x0804849e: 5b                      |[       |   pop    ebx
 0x0804849f: 81 c3 0a 12 00 00       |......  |   add    ebx, 0x0000120a
 0x080484a5: e8 1e fe ff ff          |.....   |   call   0x080482c8<_init>
@@ -316,7 +316,7 @@ Basic block: graph-1
 0x080484b6: 29 d0                   |).      |   sub    eax, edx
 0x080484b8: c1 f8 02                |...     |   sar    eax, 0x02
 0x080484bb: 89 45 f0                |.E.     |   mov    DWORD PTR ss:[ebp + 0xf0<-0x10>], eax
-0x080484be: 75 10                   |u.      |   jne    0x080484d0
+0x080484be: 75 10                   |u.      |   jne    0x080484d0<<StaticData@0x080484c8>+8>
 0x080484c0: 83 c4 0c                |...     |   add    esp, 0x0c
 0x080484c3: 5b                      |[       |   pop    ebx
 0x080484c4: 5e                      |^       |   pop    esi
@@ -342,7 +342,7 @@ Basic block: entry point, graph-1
 0x08048504: 56                      |V       |   push   esi
 0x08048505: 53                      |S       |   push   ebx
 0x08048506: 83 ec 0c                |...     |   sub    esp, 0x0c
-0x08048509: e8 00 00 00 00          |.....   |   call   0x0804850e
+0x08048509: e8 00 00 00 00          |.....   |   call   0x0804850e<<Insn>>
 0x0804850e: 5b                      |[       |   pop    ebx
 0x0804850f: 81 c3 9a 11 00 00       |......  |   add    ebx, 0x0000119a
 0x08048515: 8d 83 20 ff ff ff       |.. ...  |   lea    eax, [ebx + 0xffffff20<-0x000000e0>]
@@ -352,7 +352,7 @@ Basic block: entry point, graph-1
 0x08048526: 89 45 f0                |.E.     |   mov    DWORD PTR ss:[ebp + 0xf0<-0x10>], eax
 0x08048529: 48                      |H       |   dec    eax
 0x0804852a: 83 f8 ff                |...     |   cmp    eax, 0xff<-0x01>
-0x0804852d: 74 1c                   |t.      |   je     0x0804854b
+0x0804852d: 74 1c                   |t.      |   je     0x0804854b<<Insn>>
 0x0804854b: e8 40 00 00 00          |.@...   |   call   0x08048590<_fini>
             (successors: 0x08048550 0x08048590)
 
@@ -368,7 +368,7 @@ Basic block: fragment, CFG head; 67% code likelihood
 0x08048542: 47                      |G       |   inc    edi
 0x08048543: 83 ee 04                |...     |   sub    esi, 0x04
 0x08048546: 39 7d f0                |9}.     |   cmp    DWORD PTR ss:[ebp + 0xf0<-0x10>], edi
-0x08048549: 75 f5                   |u.      |   jne    0x08048540
+0x08048549: 75 f5                   |u.      |   jne    0x08048540<<Insn>>
             (successors: 0x08048540 0x0804854b)
 
 Basic block: graph-1
@@ -389,10 +389,10 @@ Basic block: entry point, graph-1
 0x08048561: 89 e5                   |..      |   mov    ebp, esp
 0x08048563: 53                      |S       |   push   ebx
 0x08048564: 83 ec 04                |...     |   sub    esp, 0x04
-0x08048567: bb c8 95 04 08          |.....   |   mov    ebx, 0x080495c8
-0x0804856c: a1 c8 95 04 08          |.....   |   mov    eax, DWORD PTR ds:[0x080495c8]
+0x08048567: bb c8 95 04 08          |.....   |   mov    ebx, 0x080495c8<.ctors>
+0x0804856c: a1 c8 95 04 08          |.....   |   mov    eax, DWORD PTR ds:[0x080495c8<.ctors>]
 0x08048571: 83 f8 ff                |...     |   cmp    eax, 0xff<-0x01>
-0x08048574: 74 16                   |t.      |   je     0x0804858c
+0x08048574: 74 16                   |t.      |   je     0x0804858c<<Insn>>
             (successors: 0x08048576 0x0804858c)
 
 Basic block: graph-1
@@ -410,7 +410,7 @@ Basic block: graph-1
 Basic block: graph-1
 0x08048585: 8b 03                   |..      |   mov    eax, DWORD PTR ds:[ebx]
 0x08048587: 83 f8 ff                |...     |   cmp    eax, 0xff<-0x01>
-0x0804858a: 75 f4                   |u.      |   jne    0x08048580
+0x0804858a: 75 f4                   |u.      |   jne    0x08048580<<Insn>>
             (dominator 0x08048580)
             (successors: 0x08048580 0x0804858c)
 
@@ -428,7 +428,7 @@ Basic block: entry point, graph-1
 0x08048591: 89 e5                   |..      |   mov    ebp, esp
 0x08048593: 53                      |S       |   push   ebx
 0x08048594: 50                      |P       |   push   eax
-0x08048595: e8 00 00 00 00          |.....   |   call   0x0804859a
+0x08048595: e8 00 00 00 00          |.....   |   call   0x0804859a<<Insn>>
 0x0804859a: 5b                      |[       |   pop    ebx
 0x0804859b: 81 c3 0e 11 00 00       |......  |   add    ebx, 0x0000110e
 0x080485a1: e8 ea fd ff ff          |.....   |   call   0x08048390<__do_global_dtors_aux>

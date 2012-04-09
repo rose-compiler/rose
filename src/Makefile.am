@@ -51,15 +51,16 @@ else
 endif
 
 if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
-   libroseBinaryLibraries = \
-      $(top_builddir)/src/frontend/BinaryDisassembly/libbinaryFrontend.la \
-      $(top_builddir)/src/midend/binaryAnalyses/libbinaryMidend.la \
-      $(top_builddir)/src/frontend/Disassemblers/libroseDisassemblers.la \
-      $(top_builddir)/src/frontend/BinaryFormats/libroseBinaryFormats.la \
-      $(top_builddir)/src/frontend/BinaryLoader/libroseBinaryLoader.la 
+   libroseBinaryLibraries =						    \
+	$(top_builddir)/src/frontend/BinaryDisassembly/libbinaryFrontend.la \
+	$(top_builddir)/src/frontend/BinaryFormats/libroseBinaryFormats.la  \
+	$(top_builddir)/src/frontend/BinaryLoader/libroseBinaryLoader.la    \
+	$(top_builddir)/src/frontend/Disassemblers/libroseDisassemblers.la  \
+	$(top_builddir)/src/midend/binaryAnalyses/libbinaryMidend.la
 else
-   libroseBinaryLibraries = \
-      $(top_builddir)/src/frontend/BinaryFormats/libroseBinaryFormats.la
+   libroseBinaryLibraries =						   \
+	$(top_builddir)/src/frontend/BinaryFormats/libroseBinaryFormats.la \
+	$(top_builddir)/src/frontend/Disassemblers/libroseDisassemblers.la
 endif
 
 if ROSE_USE_MYSQL
@@ -151,17 +152,10 @@ include_HEADERS = \
 # bin_PROGRAMS = testSharedRoseLib # testMultiRoseLib
 noinst_PROGRAMS = testSharedRoseLib 
 all-local: testSharedRoseLib$(EXEEXT) 
-	@boostlibdirs=$$(ldd .libs/testSharedRoseLib |							    \
-                        sed -n --posix '/libboost/s%.*=> /\(\([^ \t/]*/\)*\).*%/\1%p' |			    \
-                        sort |uniq);									    \
-	 if test $$(echo "$$boostlibdirs" |wc -l) -gt 1; then						    \
-	     echo "Boost libraries are being drawn from multiple directories.  This is probably an error:"; \
-	     ldd .libs/testSharedRoseLib |sed -n --posix '/libboost/p';					    \
-	     false;											    \
-	 fi
-	@echo "Testing whether a simple program linked against ROSE can be run:" >&2
-	@echo "The translator will be run without any input files, and will print a warning about that; the warning is normal." >&2
-	@./testSharedRoseLib$(EXEEXT) || (echo "You cannot run a program linked against ROSE.  Please be sure that your LD_LIBRARY_PATH (Linux) or DYLD_LIBRARY_PATH (Mac OSX) contains the correct libraries (JVM, Boost, librose.so, etc.)." >&2; exit 1)
+	@$(top_srcdir)/scripts/check_boost_linkage.sh .libs/testSharedRoseLib >&2
+	@echo "[INFO] Testing whether a simple program linked with ROSE can be run (a warning will be issued because the translator is being run without an input file):" >&2
+	@./testSharedRoseLib$(EXEEXT) || (echo "[ERROR] You cannot run a program linked with ROSE. Please be sure that your LD_LIBRARY_PATH (Linux) or DYLD_LIBRARY_PATH (Mac OSX) contains the correct libraries (JVM, Boost, librose.so, etc.)." >&2; exit 1)
+	@echo "[INFO] Success!"
 
 # PC (9/15/2006): force the use of the C++ linker
 LINK = $(CXXLINK)

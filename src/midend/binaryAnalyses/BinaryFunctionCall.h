@@ -345,9 +345,9 @@ BinaryAnalysis::FunctionCall::build_cg_from_ast(SgNode *root, FunctionCallGraph 
             SgAsmFunction *func_a = function_of(block_a); /* the calling function */
             if (!func_a)
                 return;
-            const SgAsmTargetPtrList &succs = block_a->get_successors();
-            for (SgAsmTargetPtrList::const_iterator si=succs.begin(); si!=succs.end(); ++si) {
-                SgAsmBlock *block_b = (*si)->get_block(); /* the called block */
+            const SgAsmIntegerValuePtrList &succs = block_a->get_successors();
+            for (SgAsmIntegerValuePtrList::const_iterator si=succs.begin(); si!=succs.end(); ++si) {
+                SgAsmBlock *block_b = isSgAsmBlock((*si)->get_base_node()); /* the called block */
                 SgAsmFunction *func_b = function_of(block_b); /* the called function */
                 if (func_b && block_b==func_b->get_entry_block() && !analyzer->is_edge_filtered(func_a, func_b)) {
                     typename FunctionVertexMap::iterator fi_b = fv_map.find(func_b); /* find vertex for called function */
