@@ -4,6 +4,7 @@
 #include <iostream>
 #include <fstream>
 #include <string.h>
+#include <assert.h>
 using namespace std;
 
 #include "genericDataflowCommon.h"
@@ -28,11 +29,11 @@ class evaluateAnalysisStates : public UnstructuredPassIntraAnalysis
         {}
         
         void visit(const Function& func, const DataflowNode& n, NodeState& state)
-        {
+        { // check the live variables before each call site
                 if(isSgFunctionCallExp(n.getNode()) && isSgFunctionCallExp(n.getNode())->getAssociatedFunctionSymbol()) {
                         string funcName = isSgFunctionCallExp(n.getNode())->getAssociatedFunctionSymbol()->get_name().getString();
                         if(funcName.find("testFunc")!=string::npos) {
-                                set<varID> liveVars = getAllLiveVarsAt(ldva, state, "    ");
+                                set<varID> liveVars = getAllLiveVarsAt(ldva, state, "    "); //union of live_in and live_out
                                 if(liveDeadAnalysisDebugLevel>=1) {
                                         cout << funcName<<"(): liveVars=";
                                         for(set<varID>::iterator v=liveVars.begin(); v!=liveVars.end(); v++)
@@ -44,60 +45,52 @@ class evaluateAnalysisStates : public UnstructuredPassIntraAnalysis
                                 if(funcName == "testFunc0") {
                                         set<varID>::iterator v = liveVars.begin();
                                         int i=0;
-                                        if(funcCallVar!=*v) { cout << indent << "ERROR at "<<funcName<<"(): Live Var "<<i<<" should be \""<<funcCallVar<<"\"!\n"; numFails++; cout.flush(); return;  } v++; i++;
-                                        if(v!=liveVars.end()) { numFails++;  cout << indent << "ERROR at "<<funcName<<"(): Too many live variables : #"<<i<<"!"; }
+                                        if(funcCallVar!=*v) { cout << indent << "ERROR at "<<funcName<<"(): Live Var "<<i<<" should be \""<<funcCallVar<<"\"!\n"; numFails++; cout.flush(); assert(false);return;  } v++; i++;
+                                        if(v!=liveVars.end()) { numFails++;  cout << indent << "ERROR at "<<funcName<<"(): Too many live variables : #"<<i<<"!"; assert(false); }
                                 } else if(funcName == "testFunc1") {
                                         set<varID>::iterator v = liveVars.begin();
                                         int i=0;
-                                        if(funcCallVar!=*v) { cout << indent << "ERROR at "<<funcName<<"(): Live Var "<<i<<" should be \""<<funcCallVar<<"\"!\n"; numFails++; cout.flush(); return;  } v++; i++;
-                                        if((*v).str()!="a") { cout << indent << "ERROR at "<<funcName<<"(): Live Var "<<i<<" should be \"a\"!\n"; numFails++; cout.flush(); return;  } v++; i++;
-                                        if((*v).str()!="b") { cout << indent << "ERROR at "<<funcName<<"(): Live Var "<<i<<" should be \"b\"!\n"; numFails++; cout.flush(); return;  } v++; i++;
-                                        if((*v).str()!="c") { cout << indent << "ERROR at "<<funcName<<"(): Live Var "<<i<<" should be \"c\"!\n"; numFails++; cout.flush(); return;  } v++; i++;
-                                        if(v!=liveVars.end()) { numFails++;  cout << indent << "ERROR at "<<funcName<<"(): Too many live variables : #"<<i<<"!"; }
+                                        if(funcCallVar!=*v) { cout << indent << "ERROR at "<<funcName<<"(): Live Var "<<i<<" should be \""<<funcCallVar<<"\"!\n"; numFails++; cout.flush(); assert(false); return;  } v++; i++;
+                                        if((*v).str()!="a") { cout << indent << "ERROR at "<<funcName<<"(): Live Var "<<i<<" should be \"a\"!\n"; numFails++; cout.flush(); assert(false); return;  } v++; i++;
+                                        if((*v).str()!="b") { cout << indent << "ERROR at "<<funcName<<"(): Live Var "<<i<<" should be \"b\"!\n"; numFails++; cout.flush(); assert(false); return;  } v++; i++;
+                                        if((*v).str()!="c") { cout << indent << "ERROR at "<<funcName<<"(): Live Var "<<i<<" should be \"c\"!\n"; numFails++; cout.flush(); assert(false); return;  } v++; i++;
+                                        if(v!=liveVars.end()) { numFails++;  cout << indent << "ERROR at "<<funcName<<"(): Too many live variables : #"<<i<<"!"; assert(false); }
                                 } else if(funcName == "testFunc2") {
                                         set<varID>::iterator v = liveVars.begin();
                                         int i=0;
-                                        if(funcCallVar!=*v) { cout << indent << "ERROR at "<<funcName<<"(): Live Var "<<i<<" should be \""<<funcCallVar<<"\"!\n"; numFails++; cout.flush(); return;  } v++; i++;
-                                        if((*v).str()!="a") { cout << indent << "ERROR at "<<funcName<<"(): Live Var "<<i<<" should be \"a\"!\n"; numFails++; cout.flush(); return;  } v++; i++;
-                                        if((*v).str()!="b") { cout << indent << "ERROR at "<<funcName<<"(): Live Var "<<i<<" should be \"b\"!\n"; numFails++; cout.flush(); return;  } v++; i++;
-                                        if((*v).str()!="c") { cout << indent << "ERROR at "<<funcName<<"(): Live Var "<<i<<" should be \"c\"!\n"; numFails++; cout.flush(); return;  } v++; i++;
-                                        if((*v).str()!="d") { cout << indent << "ERROR at "<<funcName<<"(): Live Var "<<i<<" should be \"d\"!\n"; numFails++; cout.flush(); return;  } v++; i++;
-                                        if((*v).str()!="e") { cout << indent << "ERROR at "<<funcName<<"(): Live Var "<<i<<" should be \"e\"!\n"; numFails++; cout.flush(); return;  } v++; i++;
-                                        if(v!=liveVars.end()) { numFails++;  cout << indent << "ERROR at "<<funcName<<"(): Too many live variables : #"<<i<<"!"; }
+                                        if(funcCallVar!=*v) { cout << indent << "ERROR at "<<funcName<<"(): Live Var "<<i<<" should be \""<<funcCallVar<<"\"!\n"; numFails++; cout.flush(); assert(false); return;  } v++; i++;
+                                        if((*v).str()!="a") { cout << indent << "ERROR at "<<funcName<<"(): Live Var "<<i<<" should be \"a\"!\n"; numFails++; cout.flush(); assert(false); return;  } v++; i++;
+                                        if((*v).str()!="b") { cout << indent << "ERROR at "<<funcName<<"(): Live Var "<<i<<" should be \"b\"!\n"; numFails++; cout.flush(); assert(false); return;  } v++; i++;
+                                        if((*v).str()!="c") { cout << indent << "ERROR at "<<funcName<<"(): Live Var "<<i<<" should be \"c\"!\n"; numFails++; cout.flush(); assert(false); return;  } v++; i++;
+                                        if((*v).str()!="e") { cout << indent << "ERROR at "<<funcName<<"(): Live Var "<<i<<" should be \"e\"!\n"; numFails++; cout.flush(); assert(false);return;  } v++; i++;
+                                        if(v!=liveVars.end()) { numFails++;  cout << indent << "ERROR at "<<funcName<<"(): Too many live variables : #"<<i<<"!"; assert(false); }
                                 } else if(funcName == "testFunc3") {
                                         set<varID>::iterator v = liveVars.begin();
                                         int i=0;
-                                        if(funcCallVar!=*v) { cout << indent << "ERROR at "<<funcName<<"(): Live Var "<<i<<" should be \""<<funcCallVar<<"\"!\n"; numFails++; cout.flush(); return;  } v++; i++;
-                                        if((*v).str()!="c") { cout << indent << "ERROR at "<<funcName<<"(): Live Var "<<i<<" should be \"c\"!\n"; numFails++; cout.flush(); return;  } v++; i++;
-                                        if((*v).str()!="d") { cout << indent << "ERROR at "<<funcName<<"(): Live Var "<<i<<" should be \"d\"!\n"; numFails++; cout.flush(); return;  } v++; i++;
-                                        if(v!=liveVars.end()) { numFails++;  cout << indent << "ERROR at "<<funcName<<"(): Too many live variables : #"<<i<<"!"; }
+                                        if(funcCallVar!=*v) { cout << indent << "ERROR at "<<funcName<<"(): Live Var "<<i<<" should be \""<<funcCallVar<<"\"!\n"; numFails++; cout.flush(); assert(false); return;  } v++; i++;
+                                        if((*v).str()!="c") { cout << indent << "ERROR at "<<funcName<<"(): Live Var "<<i<<" should be \"c\"!\n"; numFails++; cout.flush(); assert(false); return;  } v++; i++;
+                                        if(v!=liveVars.end()) { numFails++;  cout << indent << "ERROR at "<<funcName<<"(): Too many live variables : #"<<i<<"!"; assert(false);}
                                 } else if(funcName == "testFunc4") {
                                         set<varID>::iterator v = liveVars.begin();
                                         int i=0;
-                                        if(funcCallVar!=*v) { cout << indent << "ERROR at "<<funcName<<"(): Live Var "<<i<<" should be \""<<funcCallVar<<"\"!\n"; numFails++; cout.flush(); return;  } v++; i++;
-                                        if((*v).str()!="c") { cout << indent << "ERROR at "<<funcName<<"(): Live Var "<<i<<" should be \"c\"!\n"; numFails++; cout.flush(); return;  } v++; i++;
-                                        if((*v).str()!="d") { cout << indent << "ERROR at "<<funcName<<"(): Live Var "<<i<<" should be \"d\"!\n"; numFails++; cout.flush(); return;  } v++; i++;
-                                        if(v!=liveVars.end()) { numFails++;  cout << indent << "ERROR at "<<funcName<<"(): Too many live variables : #"<<i<<"!"; }
+                                        if(funcCallVar!=*v) { cout << indent << "ERROR at "<<funcName<<"(): Live Var "<<i<<" should be \""<<funcCallVar<<"\"!\n"; numFails++; cout.flush(); assert(false); return;  } v++; i++;
+                                        if(v!=liveVars.end()) { numFails++;  cout << indent << "ERROR at "<<funcName<<"(): Too many live variables : #"<<i<<"!"; assert(false); }
                                 } else if(funcName == "testFunc5") {
                                         set<varID>::iterator v = liveVars.begin();
                                         int i=0;
-                                        if(funcCallVar!=*v) { cout << indent << "ERROR at "<<funcName<<"(): Live Var "<<i<<" should be \""<<funcCallVar<<"\"!\n"; numFails++; cout.flush(); return;  } v++; i++;
-                                        if((*v).str()!="c") { cout << indent << "ERROR at "<<funcName<<"(): Live Var "<<i<<" should be \"c\"!\n"; numFails++; cout.flush(); return;  } v++; i++;
-                                        if((*v).str()!="d") { cout << indent << "ERROR at "<<funcName<<"(): Live Var "<<i<<" should be \"d\"!\n"; numFails++; cout.flush(); return;  } v++; i++;
-                                        if((*v).str()!="arr") { cout << indent << "ERROR at "<<funcName<<"(): Live Var "<<i<<" should be \"arr\"!\n"; numFails++; cout.flush(); return;  } v++; i++;
-                                        if(v!=liveVars.end()) { numFails++;  cout << indent << "ERROR at "<<funcName<<"(): Too many live variables : #"<<i<<"!"; }
+                                        if(funcCallVar!=*v) { cout << indent << "ERROR at "<<funcName<<"(): Live Var "<<i<<" should be \""<<funcCallVar<<"\"!\n"; numFails++; cout.flush(); assert(false); return;  } v++; i++;
+                                        if((*v).str()!="arr") { cout << indent << "ERROR at "<<funcName<<"(): Live Var "<<i<<" should be \"arr\"!\n"; numFails++; cout.flush(); assert(false); return;  } v++; i++;
+                                        if(v!=liveVars.end()) { numFails++;  cout << indent << "ERROR at "<<funcName<<"(): Too many live variables : #"<<i<<"!"; assert(false); }
                                 } else if(funcName == "testFunc6") {
                                         set<varID>::iterator v = liveVars.begin();
                                         int i=0;
-                                        if(funcCallVar!=*v) { cout << indent << "ERROR at "<<funcName<<"(): Live Var "<<i<<" should be \""<<funcCallVar<<"\"!\n"; numFails++; cout.flush(); return;  } v++; i++;
-                                        if((*v).str()!="c") { cout << indent << "ERROR at "<<funcName<<"(): Live Var "<<i<<" should be \"c\"!\n"; numFails++; cout.flush(); return;  } v++; i++;
-                                        if((*v).str()!="d") { cout << indent << "ERROR at "<<funcName<<"(): Live Var "<<i<<" should be \"d\"!\n"; numFails++; cout.flush(); return;  } v++; i++;
-                                        if(v!=liveVars.end()) { numFails++;  cout << indent << "ERROR at "<<funcName<<"(): Too many live variables : #"<<i<<"!"; }
+                                        if(funcCallVar!=*v) { cout << indent << "ERROR at "<<funcName<<"(): Live Var "<<i<<" should be \""<<funcCallVar<<"\"!\n"; numFails++; cout.flush(); assert(false); return;  } v++; i++;
+                                        if(v!=liveVars.end()) { numFails++;  cout << indent << "ERROR at "<<funcName<<"(): Too many live variables : #"<<i<<"!"; assert(false); }
                                 } else if(funcName == "testFunc7") {
                                         set<varID>::iterator v = liveVars.begin();
                                         int i=0;
-                                        if(funcCallVar!=*v) { cout << indent << "ERROR at "<<funcName<<"(): Live Var "<<i<<" should be \""<<funcCallVar<<"\"!\n"; numFails++; cout.flush(); return;  } v++; i++;
-                                        if(v!=liveVars.end()) { numFails++;  cout << indent << "ERROR at "<<funcName<<"(): Too many live variables : #"<<i<<"!"; }
+                                        if(funcCallVar!=*v) { cout << indent << "ERROR at "<<funcName<<"(): Live Var "<<i<<" should be \""<<funcCallVar<<"\"!\n"; numFails++; cout.flush(); assert(false); return;  } v++; i++;
+                                        if(v!=liveVars.end()) { numFails++;  cout << indent << "ERROR at "<<funcName<<"(): Too many live variables : #"<<i<<"!"; assert(false); }
                                 }
                         }
                 }
