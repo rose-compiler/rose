@@ -249,6 +249,7 @@ bool IntraUniDirectionalDataflow::runAnalysis(const Function& func, NodeState* f
                         // reset the modified state, since only the last NodeState's change matters
                         //modified = false; 
 
+                        // =================== Copy incoming lattices to outgoing lattices ===================
                         const vector<Lattice*> dfInfoAnte = getLatticeAnte(state);
                         const vector<Lattice*> dfInfoPost = getLatticePost(state);
                                                 
@@ -264,8 +265,9 @@ bool IntraUniDirectionalDataflow::runAnalysis(const Function& func, NodeState* f
                             itA++, itP++, j++)
                         {
                                 if(analysisDebugLevel>=1){
-                                        Dbg::dbg << "    Meet Before: Lattice "<<j<<": \n        "<<(*itA)->str("            ")<<endl;
-                                        Dbg::dbg << "    Meet After: Lattice "<<j<<": \n        "<<(*itP)->str("            ")<<endl;
+                                        Dbg::dbg << " ==================================  "<<endl;
+                                        Dbg::dbg << "  Copying incoming Lattice "<<j<<": \n        "<<(*itA)->str("            ")<<endl;
+                                        Dbg::dbg << "  To outgoing Lattice "<<j<<": \n        "<<(*itP)->str("            ")<<endl;
                                 }
                                 (*itP)->copy(*itA);
                                 /*if(analysisDebugLevel>=1){
@@ -274,7 +276,11 @@ bool IntraUniDirectionalDataflow::runAnalysis(const Function& func, NodeState* f
                         }
                         
                         // =================== TRANSFER FUNCTION ===================
-                        
+                       
+                        if(analysisDebugLevel>=1){
+                          Dbg::dbg << " ==================================  "<<endl;
+                          Dbg::dbg << "  Transferring the outgoing  Lattice ... "<<endl;
+                        }
                         if (isSgFunctionCallExp(sgn))
                           transferFunctionCall(func, n, state);
 
@@ -289,7 +295,7 @@ bool IntraUniDirectionalDataflow::runAnalysis(const Function& func, NodeState* f
                                 for(itP = dfInfoPost.begin();
                                     itP != dfInfoPost.end(); itP++, j++)
                                 {
-                                        Dbg::dbg << "    Transferred: Lattice "<<j<<": \n        "<<(*itP)->str("            ")<<endl;
+                                        Dbg::dbg << "    Transferred: outgoing Lattice "<<j<<": \n        "<<(*itP)->str("            ")<<endl;
                                 }
                                 Dbg::dbg << "    transferred, modified="<<modified<<endl;
                         }
@@ -328,16 +334,21 @@ bool IntraUniDirectionalDataflow::runAnalysis(const Function& func, NodeState* f
                                  nextState->getLatticeBelow((Analysis*)this), n) || modified;
                         }
 #endif
-                        if(analysisDebugLevel>=1){
-                                Dbg::dbg << "    ------------------"<<endl;
-                        }
+                //        if(analysisDebugLevel>=1){
+                 //               Dbg::dbg << "    ------------------"<<endl;
+                  //      }
                 }
                 ROSE_ASSERT(state);
                 
+                // =================== Populate the generated outgoing lattice to descendants (meetUpdate) ===================
 /*                      // if there has been a change in the dataflow state immediately below this node AND*/
                 // If this is not the last node in the function
                 if(/*modified && */*it != getUltimate(func))
                 {
+                        if(analysisDebugLevel>=1){
+                          Dbg::dbg << " ==================================  "<<endl;
+                          Dbg::dbg << " Propagating/Merging the outgoing  Lattice to all descendant nodes ... "<<endl;
+                        }
                         // iterate over all descendants
                         vector<DataflowNode> descendants = getDescendants(n);
                         if(analysisDebugLevel>=1) {
@@ -360,7 +371,7 @@ bool IntraUniDirectionalDataflow::runAnalysis(const Function& func, NodeState* f
                                 // Propagate the Lattices below this node to its descendant
                                 modified = propagateStateToNextNode(getLatticePost(state), n, numStates-1, getLatticeAnte(nextState), nextNode);
                                 if(analysisDebugLevel>=1){
-                                        Dbg::dbg << "    propagated, modified="<<modified<<endl;
+                                        Dbg::dbg << "    propagated/merged, modified="<<modified<<endl;
                                         Dbg::dbg << "    ^^^^^^^^^^^^^^^^^^"<<endl;
                                 }
                                 // If the next node's state gets modified as a result of the propagation, 
