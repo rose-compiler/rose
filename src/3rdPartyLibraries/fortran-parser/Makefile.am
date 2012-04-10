@@ -113,7 +113,7 @@ check-local:
 # The files (token.c token.h ActionEnums.h jni_token_funcs.h jni_token_funcs.c) are copied 
 # by the "make dist" rule into ${distdir}.  I don't know why!  But because they are in the
 # source directory of the distribution they are not extracted from the OpenFortranParser-${OFP_DIST_VERSION}.jar
-# file and thus are not in the build tree for use in compiling sageSupport.C in the src/frontend/SageIII
+# file and thus are not in the build tree for use in compiling sage_support.cpp in the src/frontend/SageIII/sage_support
 # directory.
 dist-hook:
 	@echo "calling ls -l ${distdir}"
