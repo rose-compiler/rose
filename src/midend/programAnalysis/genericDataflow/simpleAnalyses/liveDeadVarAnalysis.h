@@ -183,6 +183,12 @@ void getAllLiveVarsAt(LiveDeadVarsAnalysis* ldva, const NodeState& state, std::s
 //std::set<varID> getAllLiveVarsAt(LiveDeadVarsAnalysis* ldva, const DataflowNode& n, const NodeState& state, std::string indent="");
 std::set<varID> getAllLiveVarsAt(LiveDeadVarsAnalysis* ldva, const NodeState& state, std::string indent="");
 
+// get Live-In lattice for a control flow graph node generated from a SgNode with an index
+LiveVarsLattice* getLiveInVarsAt(LiveDeadVarsAnalysis* ldva, SgNode* n, unsigned int index = 0);
+
+// get Live-Out lattice for a control flow graph node generated from a SgNode with an index
+LiveVarsLattice* getLiveOutVarsAt(LiveDeadVarsAnalysis* ldva, SgNode* n, unsigned int index = 0);
+
 class VarsExprsProductLattice: public virtual ProductLattice
 {
         protected:
