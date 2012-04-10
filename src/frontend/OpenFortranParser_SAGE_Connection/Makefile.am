@@ -50,7 +50,7 @@ include_HEADERS = rose_fortran_token_maps.h  rose_token_defs.h fortran_support.h
 OFP_SOURCE_FILES =
 
 
-# DQ (3/13/2010): The OFP files are extracted when we build the sageSupport.C file
+# DQ (3/13/2010): The OFP files are extracted when we build the sage_support.cpp file
 # (well before buildign the files here).  We don't want to specify the rules twice 
 # since that is a problem for the "make distcheck" rule.
 

@@ -14,9 +14,6 @@
 #include "collectAssociateNodes.h"
 #include "requiredNodes.h"
 
-// DQ (5/27/2007): Commented out since this header file has been removed.
-// #include "sageSupport.h"
-
 // Global variable that functions can use to make sure that there IR nodes were not deleted!
 extern std::set<SgNode*> finalDeleteSet;
 
