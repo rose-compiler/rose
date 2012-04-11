@@ -25,10 +25,6 @@ libastprocessingSources = \
    AstSharedMemoryParallelSimpleProcessing.C
 endif
 
-if HAVE_YICES
-libastprocessingSources += \
-yicesParserLib.C
-endif
 
 # Removed AstTests.C AstStatistics.C 
 
@@ -62,6 +58,9 @@ include_HEADERS = \
    AstSharedMemoryParallelProcessingImpl.h AstSharedMemoryParallelSimpleProcessing.h graphProcessing.h \
    graphTemplate.h SgGraphTemplate.h 
 
+if HAVE_YICES
+include_HEADERS += yicesParserLib.h
+endif
 # Removed AstTests.h AstStatistics.h 
 
 EXTRA_DIST = CMakeLists.txt AstProcessing.docs

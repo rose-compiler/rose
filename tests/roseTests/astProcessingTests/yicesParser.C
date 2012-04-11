@@ -1,4 +1,4 @@
-#include "yicesParserLib.C"
+#include "yicesParserLib.h"
 //#include <yicesParserLib.h>
 //#include <stdio.h>
 //#include <rose.h>
