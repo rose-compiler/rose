@@ -283,6 +283,11 @@ class NodeState
         // index is used when multiple NodeState objects are associated with a given node
         // (ex: SgFunctionCallExp has 3 NodeStates: entry, function body, exit)
         static NodeState* getNodeState(const DataflowNode& n, int index=0);
+
+
+        //returns the NodeState object associated with a given SgNode
+        //index is used when multiple Control flow nodes (and consequently multiple NodeStates) are associated with a given node
+        static NodeState* getNodeState(SgNode * n, int index=0);
         
         // returns a vector of NodeState objects associated with the given dataflow node.
         static const std::vector<NodeState*> getNodeStates(const DataflowNode& n);
