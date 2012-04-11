@@ -547,7 +547,7 @@ testLoopOptimization: loopProcessor $(loopOptimizationOutputFiles)
 
 if HAVE_YICES
 yicesTutorialExampleOutputFiles = \
-    yicesInput.C
+    yicesInputExample.C
 endif
 testInheritedAttributeTraversal: inheritedAttributeTraversal
 	$(VALGRIND) ./inheritedAttributeTraversal -c $(srcdir)/inputCode_ExampleTraversals_1.C
@@ -616,7 +616,7 @@ testCollectComments: collectComments
 
 if HAVE_YICES
 testYicesTutorialExample: yicesTutorialExample
-	./yicesTutorialExample -I$(srcdir) -c $(srcdir)/yicesInput.C
+	./yicesTutorialExample -I$(srcdir) -c $(srcdir)/yicesInputExample.C
 endif
 testCollectCommentsSkipHeaders: collectComments
 	./collectComments -I$(srcdir) -c $(srcdir)/inputCode_collectComments.C
@@ -1434,7 +1434,6 @@ inputCode_dwarfAnalysis.out: dwarfInstructionAddressToSourceLineAnalysis inputCo
 # Note that we have made multiple copies of "inputCode_ExampleTraversals.C"
 # so that the processing could be done in parallel with out collisions.
 EXTRA_DIST = \
-   yicesParserLib.C \
    CMakeLists.txt \
    inputCode_1.C \
    inputCode_BuildCFG.C \
@@ -1533,7 +1532,7 @@ EXTRA_DIST = \
    livenessAnalysis-2.C
 
 if HAVE_YICES
-    EXTRA_DIST += yicesInput.C
+    EXTRA_DIST += yicesInputExample.C
 endif
 
 # disabled this one due to problem with copy mechanism, Liao
