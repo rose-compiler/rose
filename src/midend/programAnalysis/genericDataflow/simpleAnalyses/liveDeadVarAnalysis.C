@@ -542,6 +542,31 @@ set<varID> getAllLiveVarsAt(LiveDeadVarsAnalysis* ldva, const NodeState& state, 
         return vars;
 }
 
+// get Live-In variable lattice for a control flow graph node generated from a SgNode with an index
+LiveVarsLattice* getLiveInVarsAt(LiveDeadVarsAnalysis* ldva, SgNode* n, unsigned int index /*= 0 */)
+{
+
+  assert (ldva != NULL); 
+  assert (n != NULL); 
+
+  NodeState *state =  NodeState::getNodeState(n, index);
+  assert (state != NULL);
+  LiveVarsLattice* liveLAbove = dynamic_cast<LiveVarsLattice*>(*(state->getLatticeAbove(ldva).begin()));
+  return liveLAbove;
+}
+
+// get Live-Out variable lattice for a control flow graph node generated from a SgNode with an index
+LiveVarsLattice* getLiveOutVarsAt(LiveDeadVarsAnalysis* ldva, SgNode* n, unsigned int index /* = 0 */)
+{
+  assert (ldva != NULL); 
+  assert (n != NULL); 
+
+  NodeState *state =  NodeState::getNodeState(n, index);
+  assert (state != NULL);
+  LiveVarsLattice* liveLBelow = dynamic_cast<LiveVarsLattice*>(*(state->getLatticeBelow(ldva).begin()));
+  return liveLBelow;
+}
+
 // ###################################
 // ##### VarsExprsProductLattice #####
 // ###################################
