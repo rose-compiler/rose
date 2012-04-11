@@ -24,7 +24,7 @@ namespace BinaryAnalysis {                      // documented elsewhere
          *  #include "SymbolicSemantics.h"
          *  #include "VirtualMachineSemantics.h"
          *
-         *  typedef MultiSemantics::Policy<
+         *  typedef MultiSemantics<
          *      SymbolicSemantics::ValueType,           // first data type
          *      SymbolicSemantics::State,               // first state
          *      SymbolicSemantics::Policy,              // first policy
@@ -32,8 +32,13 @@ namespace BinaryAnalysis {                      // documented elsewhere
          *      VirtualMachineSemantics::State,         // second state
          *      VirtualMachineSemantics::Policy         // second policy
          *      // etc.
-         *                                 > Policy;
+         *                         >::Policy Policy;
          * @endcode
+         *
+         * Note that MultiSemantics is a class while many of the other semantic domains are implemented as name spaces. We used
+         * a class here so that template arguments could be specified for the MultiSemantics as a whole rather than specifying
+         * them repeatedly for the Policy, State, and ValueType classes.  Those inner classes also take template arguments
+         * similar to their counterparts in other semantic domains.
          *
          * The sub-policies are identified by the tag types SP0, SP1, etc.:
          *
@@ -131,13 +136,13 @@ namespace BinaryAnalysis {                      // documented elsewhere
 
             /** A tag to identify a certain sub-policy or sub-value.  Type type or value of type SP<i>n</i> corresponds to
              *  sub-policy <i>n</i>.  The numbering is zero-origin.  Even if a multi-policy declaration secifies only two
-             *  sub-policies, all other sub-policy slots are initialized to the NullSemantics policy.
-             * @{ */
+             *  sub-policies, all other sub-policy slots are initialized to the NullSemantics policy. */
+            // "@{" grouping doesn't work here
             struct SP0 { enum { n=0, mask=0x01 }; };
-            struct SP1 { enum { n=1, mask=0x02 }; };
-            struct SP2 { enum { n=2, mask=0x04 }; };
-            struct SP3 { enum { n=3, mask=0x08 }; };
-            /** @} */
+            struct SP1 /**< See SP0. */ { enum { n=1, mask=0x02 }; };
+            struct SP2 /**< See SP0. */ { enum { n=2, mask=0x04 }; };
+            struct SP3 /**< See SP0. */ { enum { n=3, mask=0x08 }; };
+            // @}
 
             /******************************************************************************************************************
              *                                  ValueType
