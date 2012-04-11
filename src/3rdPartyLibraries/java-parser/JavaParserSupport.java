@@ -1,4 +1,5 @@
 import org.eclipse.jdt.internal.compiler.batch.*;
+import org.eclipse.jdt.internal.compiler.classfmt.ClassFileConstants;
 
 import java.io.*;
 import java.text.*;
@@ -21,8 +22,7 @@ import java.lang.reflect.*;
 
 
 // DQ (11/1/2010): This improved design separates out the parsing support, from the ECJ AST traversal, and the parser.
-class JavaParserSupport
-   {
+class JavaParserSupport {
   // DQ (8/20/2011): Added a simple way to control the number of data members, constructors, and member functions built.
   // 0: No significant limits applied to number of constructs in the AST.
   // 1: Limits the number to be built into the enerated AST
@@ -113,8 +113,61 @@ class JavaParserSupport
         }
 
 
-     public static void processType( Class typeClass)
-        {
+    public static void processConstructorDeclarationHeader(ConstructorDeclaration constructor, JavaToken jToken) {
+        String name = new String(constructor.selector);
+        boolean is_native = constructor.isNative();
+   	    boolean is_private = (constructor.binding != null) && (! constructor.binding.isPrivate());
+   	    JavaParser.cactionConstructorDeclarationHeader(name,
+   		                                               is_native,
+                                                       is_private,
+                                                       constructor.typeParameters == null ? 0 : constructor.typeParameters.length, 
+                                                       constructor.arguments == null ? 0 : constructor.arguments.length,
+                                                       constructor.thrownExceptions == null ? 0 : constructor.thrownExceptions.length,
+                                                       jToken
+                                                      );
+    	 
+    	 
+    }
+	 
+    public static void processMethodDeclarationHeader(MethodDeclaration method, JavaToken jToken) {
+        String name = new String(method.selector);
+
+        // Setup the function modifiers
+        boolean is_abstract = method.isAbstract();
+        boolean is_native   = method.isNative();
+        boolean is_static   = method.isStatic();
+        boolean is_final    = method.binding != null && method.binding.isFinal();
+        boolean is_private  = method.binding != null && method.binding.isPrivate();
+
+        // These is no simple function for theses cases.
+        boolean is_synchronized = ((method.modifiers & ClassFileConstants.AccSynchronized) != 0);
+        boolean is_public       = ((method.modifiers & ClassFileConstants.AccPublic)       != 0);
+        boolean is_protected    = ((method.modifiers & ClassFileConstants.AccProtected)    != 0);
+
+        boolean is_strictfp     = method.binding != null && method.binding.isStrictfp();
+
+        // These are always false for member functions.
+        boolean is_volatile     = false;
+        boolean is_transient    = false;
+        
+   	    JavaParser.cactionMethodDeclarationHeader(name,
+   	    		                                  is_abstract,
+   	    		                                  is_native,
+   	    		                                  is_static,
+   	    		                                  is_final,
+   	    		                                  is_synchronized,
+   	    		                                  is_public,
+   	    		                                  is_protected,
+   	    		                                  is_private,
+   	    		                                  is_strictfp, 
+   	    		                                  method.typeParameters == null ? 0 : method.typeParameters.length,
+                                                  method.arguments == null ? 0 : method.arguments.length,
+                                                  method.thrownExceptions == null ? 0 : method.thrownExceptions.length,
+                                                  jToken
+                                                 );
+    }
+	     
+    public static void processType(Class typeClass) {
        // This function processes all the references to types found in data members, function 
        // return types, function argument types, etc.  With each type it is included into a set
        // (if it is not a primative type) and then an SgClassType is generated in the ROSE AST
@@ -232,8 +285,7 @@ class JavaParserSupport
 
 
 
-     public static void buildImplicitClassSupport( String className)
-        {
+     public static void buildImplicitClassSupport( String className) {
        // DQ (12/15/2010): Implicit class support seems to be unavailable via Java reflection...(working on solution to this).
 
        // There is a lot of information that we need about any implicitly included class.
@@ -432,8 +484,8 @@ class JavaParserSupport
                     if (dataMemberCounter < dataMemberCounterBound)
                        {
                       // System.out.println("#############################################################################################");
-                      // System.out.println("This call to JavaParserSupport.generateType() appears to be a problem: nestedClassName = " + nestedClassName);
-                         JavaParserSupport.generateType(typeClass);
+                      // System.out.println("This call to JavaParserSupport.<() appears to be a problem: nestedClassName = " + nestedClassName);
+                         JavaParserSupport.generateAndPushType(typeClass);
                       // System.out.println("DONE: This call to JavaParserSupport.generateType() appears to be a problem: nestedClassName = " + nestedClassName);
 
                          if (verboseLevel > 2)
@@ -513,28 +565,29 @@ class JavaParserSupport
                       // This mechanism is one way to simplify the generated AST for debugging (restricting 
                       // the number of functions built).
 
+                        if (verboseLevel > 2)
+                            System.out.println("Push void as a return type for now (ignored because this is a constructor)");
+
+                    // Push a type to serve as the return type which will be ignored for the case of a constructor
+                    // (this allows us to reuse the general member function support).
+                       JavaParser.cactionTypeReference("void", new JavaToken("Dummy JavaToken (see createJavaToken)", new JavaSourcePositionInformation(0)));
+
+                       if (verboseLevel > 2)
+                            System.out.println("DONE: Push void as a return type for now (ignored because this is a constructor)");
+
                       // System.out.println("constructor name = " + ct.getName());
                          for (int j = 0; j < pvec.length; j++)
                             {
                            // If we push all the types onto the stack then we have to build every constructor.
                               if (verboseLevel > 2)
                                    System.out.println("This call to JavaParserSupport.generateType() pushes a type onto the astJavaTypeStack (constructor): type = " + pvec[j].getName());
-                              JavaParserSupport.generateType(pvec[j]);
+                              JavaParserSupport.generateAndPushType(pvec[j]);
+                              JavaParser.cactionArgumentEnd(ct.getName() + j, false /* not a Catch argument */, new JavaToken("Dummy JavaToken (see createJavaToken)", new JavaSourcePositionInformation(0)));
                               if (verboseLevel > 2)
                                    System.out.println("DONE: This call to JavaParserSupport.generateType() pushes a type onto the astJavaTypeStack (constructor): type = " + pvec[j].getName());
                             }
 
-                         if (verboseLevel > 2)
-                              System.out.println("Push void as a return type for now (ignored because this is a constructor)");
-
-                      // Push a type to serve as the return type which will be ignored for the case of a constructor
-                      // (this allows us to reuse the general member function support).
-                         JavaParser.cactionGenerateType("void", 0);
-
-                         if (verboseLevel > 2)
-                              System.out.println("DONE: Push void as a return type for now (ignored because this is a constructor)");
-
-                         JavaParser.cactionBuildImplicitMethodSupport(ct.getName());
+                         JavaParser.cactionBuildImplicitMethodSupport(ct.getName(), pvec == null ? 0 : pvec.length);
                        }
                       else
                        {
@@ -599,25 +652,26 @@ class JavaParserSupport
 
                     if (methodCounter < methodCounterBound)
                        {
+                        // DQ (4/10/11): Fix this to use the proper return type now (pushed onto stack last and interpreted at the return type).
+                        // Push a type to serve as the return type which will be ignored for the case of a method
+                        // (this allows us to reuse the general member function support).
+                        // System.out.println("Testing with made up return type");
+                        // JavaParser.cactionGenerateType("void");
+                           JavaParserSupport.generateAndPushType(m.getReturnType());
+
                       // System.out.println("method name = " + m.getName());
                          for (int j = 0; j < pvec.length; j++)
                             {
                            // If we push all the types onto the stack then we have to build every method.
                               if (verboseLevel > 2)
                                    System.out.println("This call to JavaParserSupport.generateType() pushes a type onto the astJavaTypeStack (method): type = " + pvec[j].getName());
-                              JavaParserSupport.generateType(pvec[j]);
+                              JavaParserSupport.generateAndPushType(pvec[j]);
+                              JavaParser.cactionArgumentEnd(m.getName(), false /* not a Catch argument */, new JavaToken("Dummy JavaToken (see createJavaToken)", new JavaSourcePositionInformation(0)));
                               if (verboseLevel > 2)
                                    System.out.println("DONE: This call to JavaParserSupport.generateType() pushes a type onto the astJavaTypeStack (method): type = " + pvec[j].getName());
                             }
 
-                      // DQ (4/10/11): Fix this to use the proper return type now (pushed onto stack last and interpreted at the return type).
-                      // Push a type to serve as the return type which will be ignored for the case of a method
-                      // (this allows us to reuse the general member function support).
-                      // System.out.println("Testing with made up return type");
-                      // JavaParser.cactionGenerateType("void");
-                         JavaParserSupport.generateType(m.getReturnType());
-
-                         JavaParser.cactionBuildImplicitMethodSupport(m.getName());
+                         JavaParser.cactionBuildImplicitMethodSupport(m.getName(), pvec == null ? 0 : pvec.length);
                        }
                       else
                        {
@@ -670,8 +724,7 @@ class JavaParserSupport
         }
 
 
-     public static boolean isPrimativeType ( TypeBinding typeBinding ) 
-        {
+     public static boolean isPrimativeType ( TypeBinding typeBinding ) {
           switch (typeBinding.id) 
              {
                case TypeIds.T_void:
@@ -690,70 +743,65 @@ class JavaParserSupport
                default:
             		return false;
              }
-   }
+    }
 
 
-     public static void generateType(TypeReference node)
-        {
-       // This function traverses the type and calls JNI functions to 
-       // at the end of the function define a type built in the ROSE 
-       // AST and left of the top of the astJavaTypeStack.
-       // This is designed as a recursive function.
+    public static void generateType(TypeReference node) {
+        // This function traverses the type and calls JNI functions to 
+        // at the end of the function define a type built in the ROSE 
+        // AST and left of the top of the astJavaTypeStack.
+        // This is designed as a recursive function.
 
-          if (verboseLevel > 0)
-               System.out.println("Inside of generateType(TypeReference)");
+        if (verboseLevel > 0)
+            System.out.println("Inside of generateType(TypeReference)");
 
-          assert(node != null);
+        assert(node != null);
 
-          if (verboseLevel > 1)
-             {
-               System.out.println("Inside of generateType(TypeReference) TypeReference node                               = " + node);
-               System.out.println("Inside of generateType(TypeReference) TypeReference node.implicitConversion            = " + node.implicitConversion);
+        if (verboseLevel > 1) {
+            System.out.println("Inside of generateType(TypeReference) TypeReference node                               = " + node);
+            System.out.println("Inside of generateType(TypeReference) TypeReference node.implicitConversion            = " + node.implicitConversion);
 
             // DQ (9/3/2011): This causes too much output.
             // System.out.println("Inside of generateType(TypeReference) TypeReference node.resolvedType                  = " + node.resolvedType);
 
-               System.out.println("Inside of generateType(TypeReference) TypeReference node.resolvedType.isArrayType()    = " + node.resolvedType.isArrayType());
-               System.out.println("Inside of generateType(TypeReference) TypeReference node.resolvedType.isGenericType()  = " + node.resolvedType.isGenericType());
-               System.out.println("Inside of generateType(TypeReference) TypeReference node.resolvedType.isClass()        = " + node.resolvedType.isClass());
-               System.out.println("Inside of generateType(TypeReference) TypeReference isPrimativeType(node.resolvedType) = " + isPrimativeType(node.resolvedType));
+            System.out.println("Inside of generateType(TypeReference) TypeReference node.resolvedType.isArrayType()    = " + node.resolvedType.isArrayType());
+            System.out.println("Inside of generateType(TypeReference) TypeReference node.resolvedType.isGenericType()  = " + node.resolvedType.isGenericType());
+            System.out.println("Inside of generateType(TypeReference) TypeReference node.resolvedType.isClass()        = " + node.resolvedType.isClass());
+            System.out.println("Inside of generateType(TypeReference) TypeReference isPrimativeType(node.resolvedType) = " + isPrimativeType(node.resolvedType));
 
-               System.out.println("Inside of generateType(TypeReference) TypeReference node.getTypeName()                 = " + node.getTypeName());
-               System.out.println("Inside of generateType(TypeReference) TypeReference node.resolvedType.isClass()        = " + (node.resolvedType.isClass() ? "true" : "false"));
-             }
+            System.out.println("Inside of generateType(TypeReference) TypeReference node.getTypeName()                 = " + node.getTypeName());
+            System.out.println("Inside of generateType(TypeReference) TypeReference node.resolvedType.isClass()        = " + (node.resolvedType.isClass() ? "true" : "false"));
+        }
 
-          if (node.resolvedType.isArrayType() == true)
-             {
+        if (node.resolvedType.isArrayType() == true) {
             // TypeBinding baseType = ((ArrayBinding) node.resolvedType).leafComponentType;
-               ArrayBinding arrayType = (ArrayBinding) node.resolvedType;
-               if (verboseLevel > 1)
-                    System.out.println("Inside of generateType(TypeReference) ArrayBinding dimensions = " + arrayType.dimensions);
-               TypeBinding baseType = arrayType.leafComponentType;
+            ArrayBinding arrayType = (ArrayBinding) node.resolvedType;
+            if (verboseLevel > 1)
+                System.out.println("Inside of generateType(TypeReference) ArrayBinding dimensions = " + arrayType.dimensions);
+            TypeBinding baseType = arrayType.leafComponentType;
 
             // This outputs the declartion for the whole class.
             // System.out.println("Inside of generateType(TypeReference) ArrayBinding baseType   = " + baseType);
-               if (verboseLevel > 1)
-                  {
-                    System.out.println("Inside of generateType(TypeReference) ArrayBinding baseType (debugName) = " + baseType.debugName());
-                    System.out.println("Inside of generateType(TypeReference) recursive call to generateType()");
-                  }
+            if (verboseLevel > 1) {
+                System.out.println("Inside of generateType(TypeReference) ArrayBinding baseType (debugName) = " + baseType.debugName());
+                System.out.println("Inside of generateType(TypeReference) recursive call to generateType()");
+            }
 // charles4: 02/24/2012 12:57AM   -- Replace this call by the one below it.               
 //               generateType(baseType);
-                 JavaParser.cactionGenerateType(baseType.debugName(), arrayType.dimensions());
-             }
-            else
-             {
+            JavaParser.cactionGenerateType(baseType.debugName(), arrayType.dimensions());
+        }
+        else {
             // NOTE: It would be more elegant to not depend upon the debugName() function.
-               String name = node.resolvedType.debugName();
+            String name = node.resolvedType.debugName();
 
-               if (verboseLevel > 1)
-                    System.out.println("Inside of generateType(TypeReference): NOT an array type so build SgIntType -- TypeReference node = " + name);
+            if (verboseLevel > 1)
+                System.out.println("Inside of generateType(TypeReference): NOT an array type so build SgIntType -- TypeReference node = " + name);
 
             // DQ (8/20/2011): Moved to be after buildImplicitClassSupport().
             // JavaParser.cactionGenerateType(name);
 
-               if (verboseLevel > 1)
-                    System.out.println("After building the class we have to build the data members and member functions (built type name " + name + " by default) in generateType(TypeReference)");
+            if (verboseLevel > 1)
+                System.out.println("After building the class we have to build the data members and member functions (built type name " + name + " by default) in generateType(TypeReference)");
 
             // System.out.println("Calling processType() to recursively build the class structure with member declarations.");
             // This does not work...
@@ -774,32 +822,30 @@ class JavaParserSupport
             // names that we can't identify because they lack name qualification!!!
 
             // If this is a generic type then the "<name>" has to be separated so we can use only the base name of the class (the raw type name).
-               String rawTypeName = name;
+            String rawTypeName = name;
 
-               int firstAngleBracket = rawTypeName.indexOf("<",0);
-               int lastAngleBracket = rawTypeName.lastIndexOf(">",rawTypeName.length()-1);
+            int firstAngleBracket = rawTypeName.indexOf("<",0);
+            int lastAngleBracket = rawTypeName.lastIndexOf(">",rawTypeName.length()-1);
 
             // System.out.println("In generateType(TypeReference): firstAngleBracket = " + firstAngleBracket + " lastAngleBracket = " + lastAngleBracket);
-               if (firstAngleBracket > 0 && firstAngleBracket < lastAngleBracket)
-                  {
+            if (firstAngleBracket > 0 && firstAngleBracket < lastAngleBracket) {
                     rawTypeName = rawTypeName.substring(0,firstAngleBracket);
 
                     name = rawTypeName;
-                  }
+            }
 
             // System.out.println("In generateType(TypeReference): rawTypeName = " + rawTypeName);
 
             // We don't really want to handl this as a special case, but from the Java side I don't know how to generate the qualified name.
-               if (rawTypeName.startsWith("List") == true)
-                    name = "java.util.List";
+            if (rawTypeName.startsWith("List") == true)
+                name = "java.util.List";
 
             // System.out.println("In generateType(TypeReference): After reset (for List) name = " + name);
 
             // buildImplicitClassSupport("java.util.List");
 
             // DQ (8/23/2011): Note that implicit classes will evaluate to "node.resolvedType.isClass() == false" while classes define in the file will be true.
-               if (isPrimativeType(node.resolvedType) == false && node.resolvedType.isClass() == false)
-                  {
+            if (isPrimativeType(node.resolvedType) == false && node.resolvedType.isClass() == false) {
                  // System.out.println("In generateType(TypeReference): Calling buildImplicitClassSupport() to recursively build the class structure with member declarations: name = " + name);
                  // buildImplicitClassSupport(name);
 
@@ -824,26 +870,24 @@ class JavaParserSupport
                   // DQ (9/5/2011): Fixed this to use containsKey() member function.
                   // DQ (9/4/2011): This code is a problem, I think that the set types are inconsistant so this predicate is always false.
                   // if (hashmapOfQualifiedNamesOfClasses.entrySet().contains(rawTypeName) == false)
-                     if (hashmapOfQualifiedNamesOfClasses.containsKey(rawTypeName) == false)
-                       {
-                         System.out.println("In generateType(TypeReference): This class has not been seen previously: name = " + name);
-                         buildImplicitClassSupport(name);
-                         System.out.println("DONE: In generateType(TypeReference): This class has not been seen previously: name = " + name);
-                       }
-                      else
-                       {
-                         System.out.println("In generateType(TypeReference): This class already been handled: name = " + name);
-                       }
+                if (hashmapOfQualifiedNamesOfClasses.containsKey(rawTypeName) == false) {
+                    System.out.println("In generateType(TypeReference): This class has not been seen previously: name = " + name);
+                    buildImplicitClassSupport(name);
+                    System.out.println("DONE: In generateType(TypeReference): This class has not been seen previously: name = " + name);
+                }
+                else {
+                    System.out.println("In generateType(TypeReference): This class already been handled: name = " + name);
+                }
 
-                 // System.out.println("DONE: In generateType(TypeReference): Calling buildImplicitClassSupport() to recursively build the class structure with member declarations: name = " + name);
-                  }
+                // System.out.println("DONE: In generateType(TypeReference): Calling buildImplicitClassSupport() to recursively build the class structure with member declarations: name = " + name);
+            }
 
             // DQ (8/20/2011): Moved to be after buildImplicitClassSupport().
-               JavaParser.cactionGenerateType(name, 0);
+            JavaParser.cactionGenerateType(name, 0);
 
             // System.out.println("Exiting as a test (built type name " + name + " by default) in generateType(TypeReference)");
             // System.exit(1);
-            }
+        }
 
        // JavaParser.cactionGenerateType("int");
 
@@ -937,7 +981,7 @@ class JavaParserSupport
 
        // System.out.println("Exiting as a test in generateType(TypeReference)");
        // System.exit(1);
-        }
+    }
 
 /*
      public static int typeCode(String className)
@@ -989,82 +1033,83 @@ class JavaParserSupport
         }
 */
 
-     public static void generateType(Class node)
-        {
-       // This function is used to build types that are classes (implicit classes 
-       // that already exist (have been built) and thus just need be found and a 
-       // reference put onto the astJavaTypeStack).
+    public static void generateAndPushType(Class node) {
+        // This function is used to build types that are classes (implicit classes 
+        // that already exist (have been built) and thus just need be found and a 
+        // reference put onto the astJavaTypeStack).
 
-          if (verboseLevel > 0)
-               System.out.println("Inside of generateType(Class) (sorry, not implemented) class = " + node);
+        if (verboseLevel > 0)
+            System.out.println("Inside of generateAndPushType(Class) (sorry, not implemented) class = " + node);
 
-          if (node.isPrimitive() == false)
-             {
+        if (node.isPrimitive() == false) {
             // Investigate any new type.
-               if (node.isArray() == true)
-                  {
-                 // DQ (3/21/2011): If this is an array of some type then we have to query the base type and for now I will skip this.
-                 // System.out.println("Skipping case of array of type for now (sorry not implemented)... " + node.getComponentType());
+            if (node.isArray() == true) {
+                // DQ (3/21/2011): If this is an array of some type then we have to query the base type and for now I will skip this.
+                // System.out.println("Skipping case of array of type for now (sorry not implemented)... " + node.getComponentType());
 
-                 // Build an integer type instead of an array of the proper type (temporary fix so that I can focus on proper class support).
-                 // JavaParser.cactionGenerateType("int");
+                // Build an integer type instead of an array of the proper type (temporary fix so that I can focus on proper class support).
+                // JavaParser.cactionGenerateType("int");
 //charles4: 02/24/2012 12:57AM   -- Replace this call by the one below it.
 /*
                     generateType(node.getComponentType());
 
-                 // System.out.println("Calling JavaParser.cactionGenerateArrayType()");
+                // System.out.println("Calling JavaParser.cactionGenerateArrayType()");
 //                    JavaParser.cactionGenerateArrayType();
 */
-                    int num_dimensions = 0;
-                    Class n = node;
-                    while (n.isArray()) {
-                        num_dimensions++;
-                        n = n.getComponentType();
-                    }
+                int num_dimensions = 0;
+                Class n = node;
+                while (n.isArray()) {
+                     num_dimensions++;
+                     n = n.getComponentType();
+                }
 //                    JavaParser.cactionGenerateClassType(n.getName(), num_dimensions);
-                    JavaParser.cactionGenerateType(n.getName(), num_dimensions);
+                JavaParser.cactionGenerateType(n.getName(), num_dimensions);
+                JavaParser.cactionArrayTypeReference(n.getName(), num_dimensions, new JavaToken("Dummy JavaToken (see createJavaToken)", new JavaSourcePositionInformation(0)));
 
-                 // System.out.println("Exiting as a test in generateType(Class) (case of array type class)");
-                 // System.exit(1);
-                  }
-                 else
-                  {
-                 // Note that "toString()" inserts "class" into the generated name of the type (so use "getName()").
-                    String className = node.getName();
+                // System.out.println("Exiting as a test in generateType(Class) (case of array type class)");
+                // System.exit(1);
+            }
+            else {
+                // Note that "toString()" inserts "class" into the generated name of the type (so use "getName()").
+                String className = node.getName();
 
-                 // If this is a class type (e.g. in the C++ sense) then we want to build a proper SgClassType IR node.
-                 // System.out.println("Build a proper class for this type = " + node);
-                 // System.out.println("Build a proper class for this type = " + className);
+                // If this is a class type (e.g. in the C++ sense) then we want to build a proper SgClassType IR node.
+                // System.out.println("Build a proper class for this type = " + node);
+                // System.out.println("Build a proper class for this type = " + className);
 
-                 // We know that this name should be interpreted as a proper class so we need to call a specific JNI function to cause it to be generated on the C++ side.
-                 // JavaParser.cactionGenerateType(className);
+                // We know that this name should be interpreted as a proper class so we need to call a specific JNI function to cause it to be generated on the C++ side.
+                // JavaParser.cactionGenerateType(className);
 //                    JavaParser.cactionGenerateClassType(className, 0);
-                    JavaParser.cactionGenerateType(className, 0);
-                 // System.out.println("Exiting as a test in generateType(Class) (case of proper class)");
-                 // System.exit(1);
-                  }
-             }
-            else
-             {
-               if (verboseLevel > 0)
-                    System.out.println("Build a primative type: int ");
+                JavaParser.cactionGenerateType(className, 0);
+                JavaParser.cactionTypeReference(className, new JavaToken("Dummy JavaToken (see createJavaToken)", new JavaSourcePositionInformation(0)));
+                // System.out.println("Exiting as a test in generateType(Class) (case of proper class)");
+                // System.exit(1);
+            }
+        }
+        else {
+            if (verboseLevel > 0)
+                System.out.println("Build a primative type: int ");
 
-               String className = node.getName();
+            String className = node.getName();
 
             // For now just build the type to be SgTypeInt.
             // JavaParser.cactionGenerateType("int");
-               JavaParser.cactionGenerateType(className, 0);
+            JavaParser.cactionGenerateType(className, 0);
+            JavaParser.cactionTypeReference(className, new JavaToken("Dummy JavaToken (see createJavaToken)", new JavaSourcePositionInformation(0)));
 
             // buildType(className);
-             }
-
-          if (verboseLevel > 0)
-               System.out.println("Leaving generateType(Class) (case of proper class)");
-
-       // System.out.println("Exiting as a test at bottom of generateType(Class) (case of proper class)");
-       // System.exit(1);
         }
 
+        if (verboseLevel > 0)
+            System.out.println("Leaving generateType(Class) (case of proper class)");
+
+        // System.out.println("Exiting as a test at bottom of generateType(Class) (case of proper class)");
+        // System.exit(1);
+    }
+
+// REMOVE THIS !!! ???
+// This function appears to be useless!
+/*    
      public static void generateType(TypeBinding node)
         {
        // TypeBindings are used in variable declarations (I think that these are the primative types).
@@ -1194,8 +1239,10 @@ class JavaParserSupport
 
 
         }
+*/
 
 
+// REMOVE THIS !!! ???
   /**
    * Return a list of all fields (whatever access status, and on whatever
    * superclass they were defined) that can be found on this class.
@@ -1205,18 +1252,23 @@ class JavaParserSupport
    * @param clazz The class to introspect
    * @return The complete list of fields
    */
-  public static Field[] getAllFields(Class<?> clazz)
+ /*
+ public static Field[] getAllFields(Class<?> clazz)
   {
       List<Class<?>> classes = getAllSuperclasses(clazz);
       classes.add(clazz);
       return getAllFields(classes);
   }
+ */
+
+// REMOVE THIS !!! ???
   /**
    * As {@link #getAllFields(Class)} but acts on a list of {@link Class}s and
    * uses only {@link Class#getDeclaredFields()}.
    * @param classes The list of classes to reflect on
    * @return The complete list of fields
    */
+/*
   private static Field[] getAllFields(List<Class<?>> classes)
   {
       Set<Field> fields = new HashSet<Field>();
@@ -1227,11 +1279,16 @@ class JavaParserSupport
 
       return fields.toArray(new Field[fields.size()]);
   }
+*/
+    
+
+// REMOVE THIS !!! ???
   /**
    * Return a List of super-classes for the given class.
    * @param clazz the class to look up
    * @return the List of super-classes in order going up from this one
    */
+/*    
   public static List<Class<?>> getAllSuperclasses(Class<?> clazz)
   {
       List<Class<?>> classes = new ArrayList<Class<?>>();
@@ -1245,7 +1302,6 @@ class JavaParserSupport
 
       return classes;
   }
-
-
-
-   }
+*/
+    
+}

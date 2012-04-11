@@ -23,8 +23,8 @@ extract_rose_required_ecj_source_files: JavaTraversal.class
 
 # buildJavaSupport: ${srcdir}/JavaTraversal.java
 # JavaTraversal.class:
-JavaTraversal.class: ${srcdir}/JavaTraversal.java ${srcdir}/JavaParser.java ${srcdir}/JavaParserSupport.java ${srcdir}/ecjASTVisitor.java ${srcdir}/JavaToken.java 
-	$(JAVAC) -d . -cp ${srcdir}/ecjROSE.jar:${srcdir}:. ${srcdir}/JavaTraversal.java ${srcdir}/JavaParser.java ${srcdir}/JavaParserSupport.java ${srcdir}/ecjASTVisitor.java ${srcdir}/JavaToken.java ${srcdir}/JavaSourcePositionInformation.java  ${srcdir}/JavaSourcePositionInformationFactory.java 
+JavaTraversal.class: ${srcdir}/JavaTraversal.java ${srcdir}/JavaParser.java ${srcdir}/JavaParserSupport.java ${srcdir}/ExtendedASTVisitor.java ${srcdir}/ecjASTVisitor.java ${srcdir}/JavaToken.java 
+	$(JAVAC) -d . -cp ${srcdir}/ecjROSE.jar:${srcdir}:. ${srcdir}/JavaTraversal.java ${srcdir}/JavaParser.java ${srcdir}/JavaParserSupport.java ${srcdir}/ExtendedASTVisitor.java ${srcdir}/ecjASTVisitor.java ${srcdir}/JavaToken.java ${srcdir}/JavaSourcePositionInformation.java  ${srcdir}/JavaSourcePositionInformationFactory.java 
 #	DQ (11/23/2010): javah only requires the class file which are in the build directory.
 	$(JAVAH) -jni -classpath ${srcdir}/ecjROSE.jar:. JavaTraversal
 	$(JAVAH) -jni -classpath ${srcdir}/ecjROSE.jar:. JavaParser
@@ -35,42 +35,43 @@ JavaTraversal.class: ${srcdir}/JavaTraversal.java ${srcdir}/JavaParser.java ${sr
 
 # I assume this is needed the same as for the JavaParserSupport.class rule
 JavaParser.class: ${srcdir}/JavaParser.java
-	$(JAVAC) -cp ${srcdir}/ecjROSE.jar:${srcdir}:. JavaParser.java
+	$(JAVAC) -cp ${srcdir}/ecjROSE.jar:${srcdir}:. ${srcdir}/JavaParser.java
+	$(JAVAH) -jni -classpath ${srcdir}/ecjROSE.jar:. JavaParser
+
+JavaParser.h: ${srcdir}/JavaParser.java
+	$(JAVAC) -cp ${srcdir}/ecjROSE.jar:${srcdir}:. ${srcdir}/JavaParser.java
 	$(JAVAH) -jni -classpath ${srcdir}/ecjROSE.jar:. JavaParser
 
 # This is needed when distcheck compiles the code, I don't know why.
 JavaParserSupport.class: ${srcdir}/JavaParserSupport.java
-	$(JAVAC) -cp ${srcdir}/ecjROSE.jar:${srcdir}:. JavaParserSupport.java
+	$(JAVAC) -cp ${srcdir}/ecjROSE.jar:${srcdir}:. ${srcdir}/JavaParserSupport.java
 
 # I assume this is needed the same as for the JavaParserSupport.class rule
-ecjASTVisitor.class: ${srcdir}/ecjASTVisitor.java
-	$(JAVAC) -cp ${srcdir}/ecjROSE.jar:${srcdir}:. ecjASTVisitor.java
+ecjASTVisitor.class:  ${srcdir}/ExtendedASTVisitor.java ${srcdir}/ecjASTVisitor.java
+	$(JAVAC) -cp ${srcdir}/ecjROSE.jar:${srcdir}:. ${srcdir}/ExtendedASTVisitor.java ${srcdir}/ecjASTVisitor.java
 
 # These are the commands to generate the files we need (in the build tree).
 # JavaTraversal.class JavaTraversal.h: ${srcdir}/JavaTraversal.java
-testJavaTraversal: ${srcdir}/JavaTraversal.java
+JavaTraversal.h: ${srcdir}/JavaTraversal.java
 	javac -cp ${srcdir}/ecjROSE.jar ${srcdir}/JavaTraversal.java
 	javah -jni JavaTraversal
 
 # DQ (4/16/2011): Added support for Java specific tokens (to support source position information in ROSE).
 JavaToken.class: ${srcdir}/JavaToken.java
-	$(JAVAC) -cp ${srcdir}/ecjROSE.jar:${srcdir}:. JavaToken.java
+	$(JAVAC) -cp ${srcdir}/ecjROSE.jar:${srcdir}:. ${srcdir}/JavaToken.java
 
 # DQ (4/16/2011): Added support for Java specific tokens (to support source position information in ROSE).
 JavaSourcePositionInformation.class: ${srcdir}/JavaSourcePositionInformation.java
-	$(JAVAC) -cp ${srcdir}/ecjROSE.jar:${srcdir}:. JavaSourcePositionInformation.java
+	$(JAVAC) -cp ${srcdir}/ecjROSE.jar:${srcdir}:. ${srcdir}/JavaSourcePositionInformation.java
 
 # charles4: (2/23/2012): 
 JavaSourcePositionInformationFactory.class: ${srcdir}/JavaSourcePositionInformationFactory.java
-	$(JAVAC) -cp ${srcdir}/ecjROSE.jar:${srcdir}:. JavaSourcePositionInformationFactory.java
+	$(JAVAC) -cp ${srcdir}/ecjROSE.jar:${srcdir}:. ${srcdir}/JavaSourcePositionInformationFactory.java
 
 
-EXTRA_DIST = CMakeLists.txt ecjROSE.jar JavaTraversal.java JavaParser.java JavaParserSupport.java ecjASTVisitor.java JavaToken.java JavaSourcePositionInformation.java JavaSourcePositionInformationFactory.java
+EXTRA_DIST = CMakeLists.txt ecjROSE.jar JavaTraversal.java JavaParser.java JavaParserSupport.java ExtendedASTVisitor.java ecjASTVisitor.java JavaToken.java JavaSourcePositionInformation.java JavaSourcePositionInformationFactory.java
 
 clean-local:
 	rm -f *.dot ecjROSE.jar *.class *.java *.h
 
-# JavaParser* JavaTraversal* JavaParserSupport* ecjASTVisitor* 
-
-
-
+# JavaParser* JavaTraversal* JavaParserSupport* ecjASTVisitor* ExtendedASTVisitor*

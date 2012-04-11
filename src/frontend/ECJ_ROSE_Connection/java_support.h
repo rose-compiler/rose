@@ -1,6 +1,10 @@
 #ifndef ROSE_JAVA_SUPPORT
 #define ROSE_JAVA_SUPPORT
 
+extern SgGlobal *getGlobalScope();
+extern SgClassType *ObjectClassType;
+extern SgClassDefinition *ObjectClassDefinition;
+
 // This is used for both Fortran and Java support to point to the current SgSourceFile.
 extern SgSourceFile* OpenFortranParser_globalFilePointer;
 
@@ -13,9 +17,6 @@ extern SgSourceFile* OpenFortranParser_globalFilePointer;
 #define DEBUG_RULE_COMMENT_LEVEL 1
 #define DEBUG_COMMENT_LEVEL 2
 
-// Global stack of scopes
-extern std::list<SgScopeStatement*> astJavaScopeStack;
-
 // Global stack of expressions and statements
 class ComponentStack : private std::list<SgNode *> {
 public:
@@ -26,6 +27,7 @@ public:
         }
         push_front(n);
     }
+
     SgNode *pop() {
         ROSE_ASSERT(size() > 0);
         SgNode *n = front();
@@ -36,24 +38,16 @@ public:
         pop_front();
         return n;
     }
+
     SgNode *top() { ROSE_ASSERT(size() > 0); return front(); }
+
     bool empty() { return (size() == 0); }
+
+    size_type size() { return std::list<SgNode*>::size(); }
 
     SgExpression *popExpression() {
         SgNode *n = pop();
         if (! isSgExpression(n)) {
-            //
-            // TODO: REMOVE ME WHEN QualifiedNameReference is supported
-            //
-            if (isSgTypeDefault(n)) { // charles4 11/10/2011 TODO: Remove this when QualifiedNameReference is supported
-            std::cerr << "*** No support yet for a QualifiedNameReference dereferencing a field in an expression"
-                      << std::endl;
-            std::cerr.flush();
-            } else
-            //
-            // TODO: END REMOVE ME WHEN QualifiedNameReference is supported...
-            //
-
             std::cerr << "Invalid attempt to pop a node of type "
                      << n -> class_name()
                      << " as an SgExpression"
@@ -62,6 +56,7 @@ public:
         }
         return (SgExpression *) n;
     }
+
     SgStatement *popStatement() {
         SgNode *n = pop();
         if (isSgExpression(n)) {
@@ -83,6 +78,7 @@ public:
         }
         return (SgStatement *) n;
     }
+
     SgType *popType() {
         SgNode *n = pop();
         if (! isSgType(n)) {
@@ -94,30 +90,35 @@ public:
         }
         return (SgType *) n;
     }
+
+    SgScopeStatement *popScope() {
+        SgNode *n = pop();
+        if (! isSgScopeStatement(n)) {
+            std::cerr << "Invalid attempt to pop a node of type "
+                     << n -> class_name()
+                     << " as an SgScopeStatement"
+                     << std::endl;
+            ROSE_ASSERT(false);
+        }
+        return (SgScopeStatement *) n;
+    }
 };
 
+// Global stack of AST components: Expressions, statements, types, etc...
 extern ComponentStack astJavaComponentStack;
 
-// Global stack of types
-extern std::list<SgType*> astJavaTypeStack;
+// Global stack of scopes
+extern std::list<SgScopeStatement*> astJavaScopeStack;
 
 // Global list of implicit classes
 extern std::list<SgName> astJavaImplicitClassList;
-
-// Global stack of SgInitializedName IR nodes (used for processing function parameters)
-extern std::list<SgInitializedName*> astJavaInitializedNameStack;
-
-SgGlobal* getGlobalScope();
-
-// Function used by SgType::getCurrentScope()
-bool emptyJavaStateStack();
 
 bool isStatementContext(VisitorContext * ctx);
 
 std::list<SgStatement*> pop_from_stack_and_reverse(std::list<SgStatement*> &l, int nb_pop);
 
 /* Create a token from a JavaToken jni object. Also converts JavaSourceCodeInformation to C */
-Token_t * create_token(JNIEnv * env, jobject jToken);
+Token_t *create_token(JNIEnv * env, jobject jToken);
 
 void pushAndSetSourceCodePosition(JavaSourceCodePosition * pos, SgLocatedNode * sgnode);
 
@@ -139,9 +140,9 @@ void setJavaFrontendSpecific( SgLocatedNode* locatedNode );
 
 // *********************************************
 
-
+// REMOVE  THIS!!!
 // Debug function to inspect the stacks used to support AST translation.
-void outputJavaState( const std::string label );
+// void outputJavaState( const std::string label );
 
 std::string convertJavaStringToCxxString  (JNIEnv *env, const jstring & java_string);
 int         convertJavaIntegerToCxxInteger(JNIEnv *env, const jint    & java_integer);
@@ -152,8 +153,8 @@ bool        convertJavaBooleanToCxxBoolean(JNIEnv *env, const jboolean & java_bo
 // SgMemberFunctionDeclaration* buildSimpleMemberFunction(const SgName & name, SgClassDefinition* classDefinition);
 
 // DQ (3/25/2011): These will replace buildSimpleMemberFunction shortly.
-SgMemberFunctionDeclaration* buildNonDefiningMemberFunction(const SgName & inputName, SgClassDefinition* classDefinition);
-SgMemberFunctionDeclaration* buildDefiningMemberFunction   (const SgName & inputName, SgClassDefinition* classDefinition);
+SgMemberFunctionDeclaration *buildNonDefiningMemberFunction(const SgName &inputName, SgClassDefinition *classDefinition, int num_arguments);
+SgMemberFunctionDeclaration *buildDefiningMemberFunction   (const SgName &inputName, SgClassDefinition *classDefinition, int num_arguments);
 
 // Build a simple class in the current scope and set the scope to be the class definition.
 void buildClass (const SgName & className, Token_t* token);
@@ -176,6 +177,12 @@ SgClassDefinition* getCurrentClassDefinition();
 
 //! Strips off "#RAW" suffix from raw types (support for Java 1.5 and greater).
 SgName processNameOfRawType(SgName name);
+
+//! Support for identification of symbols using simple names in a given scope.
+SgSymbol *lookupSimpleNameInClassScope(const SgName& name, SgClassDefinition *classDefinition);
+
+//! Support for identification of symbols using simple names.
+SgVariableSymbol *lookupVariableByName(const SgName& name);
 
 //! Support for identification of symbols using qualified names (used by the import statement).
 SgSymbol* lookupSymbolInParentScopesUsingQualifiedName( SgName qualifiedName, SgScopeStatement* currentScope);

@@ -457,12 +457,27 @@ StringUtility::numberToString ( double x )
    }
 
 string
-StringUtility::addrToString( uint64_t x )
-   {
-     char numberString[128];
-     sprintf(numberString, "0x%08"PRIx64, x);
-     return string(numberString);
-   }
+StringUtility::addrToString(uint64_t value, size_t nbits, bool is_signed)
+{
+    std::string retval;
+
+    assert(nbits>0 && nbits<=128);
+    int nnibbles = (nbits+3)/4;
+    char buf[64];
+    snprintf(buf, sizeof buf, "0x%0*"PRIx64, nnibbles, value);
+    buf[sizeof(buf)-1] = '\0';
+    retval = buf;
+
+    if (nbits>=2 && is_signed && nbits<=(8*sizeof(value))) {
+        uint64_t signbit = (uint64_t)1 << (nbits-1);
+        uint64_t mask_lo = signbit - 1;                     // bits less significant than the sign bit
+        uint64_t mask_hi = ~(signbit | mask_lo);            // bits more significant than the sign bit
+        if (0!=(value & signbit) && 0!=(value & mask_lo) && 0==(value & mask_hi))
+            retval += "<-" + addrToString((~value+1) & mask_lo, nbits, false) + ">";
+    }
+
+    return retval;
+}
 
 string
 StringUtility::removeRedundentSubstrings ( string X )

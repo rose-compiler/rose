@@ -360,7 +360,12 @@ public:
   }
   // Variable Reference (we know this expression is live)
   void visit(SgVarRefExp *sgn) {
-    ldva.used(sgn);
+//  Liao, 4/5/2012. We cannot decide if a SgVarRefExp is read or written
+//    without its context information: for example, in  a = b; both a and b are represented as
+//    SgVarRefExp. But a is written and b is read.
+//    We should let the ancestor node (like SgAssignOp) decide on the READ/Written of SgVarRefExp.
+//    This is already done.   
+//    ldva.used(sgn); 
   }
 
   LDVAExpressionTransfer(LiveDeadVarsTransfer &base)
@@ -385,8 +390,11 @@ void LiveDeadVarsTransfer::visit(SgExpression *sgn)
   }
 
   // Remove the expression itself since it has no uses above itself
-  if(liveDeadAnalysisDebugLevel>=1) Dbg::dbg << indent << "   Removing "<<SgExpr2Var(sgn)<<endl;
-  modified = liveLat->remVar(SgExpr2Var(sgn)) || modified;
+  if (!isSgVarRefExp(sgn)) // Liao 4/5/2012, we should not remove SgVarRef since it may have uses above itself
+  {
+    if(liveDeadAnalysisDebugLevel>=1) Dbg::dbg << indent << "   Removing the expression itself"<<SgExpr2Var(sgn)<<endl;
+    modified = liveLat->remVar(SgExpr2Var(sgn)) || modified;
+  }
 }
 
 void LiveDeadVarsTransfer::visit(SgInitializedName *sgn) {
@@ -449,17 +457,38 @@ bool LiveDeadVarsTransfer::finish()
                 for(set<varID>::iterator var=assignedVars.begin(); var!=assignedVars.end(); var++)
                         Dbg::dbg << var << ", ";
                 Dbg::dbg << ">"<<endl;
+                Dbg::dbg << indent << "    assignedExprs=<";
+                for(set<SgExpression*>::iterator exp=assignedExprs.begin(); exp!=assignedExprs.end(); exp++)
+                        Dbg::dbg << (*exp)->class_name() <<":"<< (*exp)->unparseToString() << ", ";
+                Dbg::dbg << ">"<<endl;
         }
-        
+         /* Live-In (node) = Used(node) + (Live-Out (node) - Assigned (b))  
+          * Live-Out (node) is the lattice after merging ???
+          * */ 
         // Record for each assigned expression:
         //    If the expression corresponds to a variable, record that the variable is dead.
         //    Otherwise, record that the expression that computes the assigned memory location is live
         for(set<SgExpression*>::iterator asgn=assignedExprs.begin(); asgn!=assignedExprs.end(); asgn++) {
                 // If the lhs is a variable reference, remove it from live variables unless we also use this variable
                 if(isVarExpr(*asgn))
-                { if(usedVars.find(SgExpr2Var(*asgn)) != usedVars.end()) modified = liveLat->remVar(SgExpr2Var(*asgn)) || modified; }
+                { 
+                  // if(usedVars.find(SgExpr2Var(*asgn)) != usedVars.end()) // found in use?  Wrong condition!!
+                  if(usedVars.find(SgExpr2Var(*asgn)) == usedVars.end()) // if not found in use, then remove it, Liao 4/5/2012
+                  {
+                    modified = liveLat->remVar(SgExpr2Var(*asgn)) || modified; 
+                    if(liveDeadAnalysisDebugLevel>=1) {
+                      Dbg::dbg << indent << "    removing assigned expr <" << (*asgn)->class_name() <<":"<<(*asgn)->unparseToString();
+                      Dbg::dbg << ">"<<endl;
+                    }
+                  }
+                }
                 else
-                        modified = liveLat->addVar(SgExpr2Var(*asgn)) || modified;
+                {
+                  modified = liveLat->addVar(SgExpr2Var(*asgn)) || modified;
+                  if(liveDeadAnalysisDebugLevel>=1) {
+                    Dbg::dbg << indent << "    add assigned expr as live <" << (*asgn)->class_name() <<":"<<(*asgn)->unparseToString();
+                  }
+                }
         }
         for(set<varID>::iterator asgn=assignedVars.begin(); asgn!=assignedVars.end(); asgn++) {
                 // Remove this variable from live variables unless we also use this variable
@@ -511,6 +540,31 @@ set<varID> getAllLiveVarsAt(LiveDeadVarsAnalysis* ldva, const NodeState& state, 
         //getAllLiveVarsAt(ldva, n, state, vars, indent);
         getAllLiveVarsAt(ldva, state, vars, indent);
         return vars;
+}
+
+// get Live-In variable lattice for a control flow graph node generated from a SgNode with an index
+LiveVarsLattice* getLiveInVarsAt(LiveDeadVarsAnalysis* ldva, SgNode* n, unsigned int index /*= 0 */)
+{
+
+  assert (ldva != NULL); 
+  assert (n != NULL); 
+
+  NodeState *state =  NodeState::getNodeState(n, index);
+  assert (state != NULL);
+  LiveVarsLattice* liveLAbove = dynamic_cast<LiveVarsLattice*>(*(state->getLatticeAbove(ldva).begin()));
+  return liveLAbove;
+}
+
+// get Live-Out variable lattice for a control flow graph node generated from a SgNode with an index
+LiveVarsLattice* getLiveOutVarsAt(LiveDeadVarsAnalysis* ldva, SgNode* n, unsigned int index /* = 0 */)
+{
+  assert (ldva != NULL); 
+  assert (n != NULL); 
+
+  NodeState *state =  NodeState::getNodeState(n, index);
+  assert (state != NULL);
+  LiveVarsLattice* liveLBelow = dynamic_cast<LiveVarsLattice*>(*(state->getLatticeBelow(ldva).begin()));
+  return liveLBelow;
 }
 
 // ###################################

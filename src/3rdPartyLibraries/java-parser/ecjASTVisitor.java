@@ -29,14 +29,8 @@ import java.lang.reflect.*;
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFileConstants;
 
 
-class ecjASTVisitor extends ASTVisitor
-   {
-  // This class contains the visitor functions required to support a traversal over the high-level ECJ AST and 
-  // call the JNI functions that will execute as C++ functions and construct the ROSE AST.
-
-     final JavaParser java_parser;
-
-     private final JavaSourcePositionInformationFactory posFactory;
+class ecjASTVisitor extends ExtendedASTVisitor {
+    private final JavaSourcePositionInformationFactory posFactory;
      
      //
      // Keep track of the set of Catch block arguments.
@@ -44,30 +38,19 @@ class ecjASTVisitor extends ASTVisitor
      //
      HashSet<Argument> catchArguments = new HashSet<Argument>();
      HashSet<Block> catchBlocks = new HashSet<Block>();
-     
+
      //
      // Keep track of Argument(s) that were already processed in a different context.
      //
-     HashSet<Argument> processedArguments = new HashSet<Argument>();
+     HashSet<TypeDeclaration> TypesWithNoBody = new HashSet<TypeDeclaration>();
+     HashMap<ASTNode, TypeDeclaration> TypeHeaderDelimiters = new HashMap<ASTNode, TypeDeclaration>();
+     HashSet<AbstractMethodDeclaration> MethodsWithNoBody = new HashSet<AbstractMethodDeclaration>();
+     HashMap<ASTNode, AbstractMethodDeclaration> MethodHeaderDelimiters = new HashMap<ASTNode, AbstractMethodDeclaration>();
 
-     //
-     //
-     //
-     ArrayList<String> importOnDemand = new ArrayList<String>();
-
-  // This is the older version oc the constructor, before Vincent's work
-  // to support the source code position.
-  /* ecjASTVisitor (JavaParser x)
-        {
-          java_parser = x;
-        }
-  */
- 
   // *************************************************
   // Support for source code position (from Vincent).
   // *************************************************
-     public ecjASTVisitor(JavaParser javaParser, CompilationUnitDeclaration unit) {
-        this.java_parser = javaParser;
+     public ecjASTVisitor(CompilationUnitDeclaration unit) {
         this.posFactory = new JavaSourcePositionInformationFactory(unit);
      }
      
@@ -88,60 +71,137 @@ class ecjASTVisitor extends ASTVisitor
          return this.posFactory;
      }
 
-  // *************************************************
+     // *************************************************
+     public boolean preVisit(ASTNode node) {
+         if (TypeHeaderDelimiters.containsKey(node)) {
+             TypeDeclaration type = TypeHeaderDelimiters.get(node);
+             if (JavaParser.verboseLevel > 1)
+            	 System.out.println("    Side-visiting Type Declaration Header for " + type.getClass().getName());
+             JavaParser.cactionTypeDeclarationHeader(type.superclass != null,
+                                                      type.superInterfaces == null ? 0 : type.superInterfaces.length,
+                                                      type.typeParameters == null  ? 0 : type.typeParameters.length,
+                                                      createJavaToken(type));
+         }
+         else if (MethodHeaderDelimiters.containsKey(node)) {
+             AbstractMethodDeclaration method = MethodHeaderDelimiters.get(node);
+             if (method instanceof ConstructorDeclaration) {
+                 if (JavaParser.verboseLevel > 1)
+                	 System.out.println("    Side-visiting Constructor Declaration Header for " + method.getClass().getName());
+            	 JavaParserSupport.processConstructorDeclarationHeader((ConstructorDeclaration) method, createJavaToken(method)); 
+             }
+             else {
+                 if (JavaParser.verboseLevel > 1)
+                	 System.out.println("    Side-visiting Method Declaration Header for " + method.getClass().getName());
+            	 JavaParserSupport.processMethodDeclarationHeader((MethodDeclaration) method, createJavaToken(method)); 
+             }
+         }
+
+         if (JavaParser.verboseLevel > 1)
+        	 System.out.println("Pre-visiting " + node.getClass().getName());
+
+         return true;
+     }
+
+     public void postVisit(ASTNode node) {
+         if (JavaParser.verboseLevel > 1)
+        	 System.out.println("Post-visiting " + node.getClass().getName());    	 
+
+         // Do Something at the end, ... if needed ...
+
+         return;
+     }
+     // *************************************************
+     public void enterTypeDeclaration(TypeDeclaration node) {
+            if (node.memberTypes != null && node.memberTypes.length > 0) {
+            	TypeHeaderDelimiters.put(node.memberTypes[0], node);
+            }
+            else if (node.fields != null && node.fields.length > 0) {
+            	TypeHeaderDelimiters.put(node.fields[0], node); 
+            }
+            else if (node.methods != null && node.methods.length > 0) {
+            	TypeHeaderDelimiters.put(node.methods[0], node); 
+            }
+            else TypesWithNoBody.add(node);
+            
+	        String typename = new String(node.name);
+	        JavaParser.cactionTypeDeclaration(typename,
+	                                           node.kind(node.modifiers) == TypeDeclaration.INTERFACE_DECL,
+	                                           (node.binding != null && node.binding.isAbstract()),
+	                                           (node.binding != null && node.binding.isFinal()),
+	                                           (node.binding != null && node.binding.isPrivate()),
+	                                           (node.binding != null && node.binding.isPublic()),
+	                                           (node.binding != null && node.binding.isProtected()),
+	                                           (node.binding != null && node.binding.isStatic() && node.binding.isNestedType()),
+	                                           (node.binding != null && node.binding.isStrictfp()),
+	                                           createJavaToken(node));
+     }
+
+    public void exitTypeDeclaration(TypeDeclaration node) {
+        String typename = new String(node.name);
+        if (TypesWithNoBody.contains(node)) {
+            if (JavaParser.verboseLevel > 1)
+                System.out.println("    Side-visiting Type Declaration Header for " + node.getClass().getName());
+            JavaParser.cactionTypeDeclarationHeader(node.superclass != null,
+                                                     node.superInterfaces == null ? 0 : node.superInterfaces.length,
+                                                     node.typeParameters == null  ? 0 : node.typeParameters.length,
+                                                     createJavaToken(node));
+        }
+        JavaParser.cactionTypeDeclarationEnd(createJavaToken(node));
+    }
+
 
   // visitor = new ASTVisitor()
-     public boolean visit(AllocationExpression node,BlockScope scope)
+     public boolean enter(AllocationExpression node,BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (AllocationExpression,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (AllocationExpression,BlockScope)");
 
        // Call the Java side of the JNI function.
-          java_parser.cactionAllocationExpression(this.createJavaToken(node));
+          JavaParser.cactionAllocationExpression(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (AllocationExpression,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (AllocationExpression,BlockScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(AND_AND_Expression  node, BlockScope scope)
+     public boolean enter(AND_AND_Expression  node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (AND_AND_Expression,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (AND_AND_Expression,BlockScope)");
 
        // Call the Java side of the JNI function.
-          java_parser.cactionANDANDExpression(this.createJavaToken(node));
+          JavaParser.cactionANDANDExpression(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (AND_AND_Expression,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (AND_AND_Expression,BlockScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(AnnotationMethodDeclaration node,ClassScope classScope)
+     public boolean enter(AnnotationMethodDeclaration node,ClassScope classScope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (AnnotationMethodDeclaration,ClassScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (AnnotationMethodDeclaration,ClassScope)");
 
        // Call the Java side of the JNI function.
-          java_parser.cactionAnnotationMethodDeclaration(this.createJavaToken(node));
+          JavaParser.cactionAnnotationMethodDeclaration(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (AnnotationMethodDeclaration,ClassScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (AnnotationMethodDeclaration,ClassScope)");
 
           return true; // do nothing by default, keep traversing
         }
 
-     public boolean visit(Argument node, BlockScope scope)
+     public boolean enter(Argument node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (Argument,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (Argument,BlockScope)");
 
        // Printing out the char[] type directly does not work, convert it to a string first and output the string.
        // System.out.println(" name      = " + node.name);
           String nameString = new String(node.name);
-          if (java_parser.verboseLevel > 0)
+          if (JavaParser.verboseLevel > 0)
              {
                System.out.println(" name      = " + nameString);
                System.out.println(" type      = " + node.type);
@@ -158,11 +218,11 @@ class ecjASTVisitor extends ASTVisitor
 
        // Divide up the work to define an argument, the name and modifiers are simple but the type has to
        // be constructed via recursive calls that will cause it to be generated on the astJavaTypeStack.
-       // java_parser.cactionArgument("Argument_block_abc");
-       // java_parser.cactionArgumentName(nameString);
+       // JavaParser.cactionArgument("Argument_block_abc");
+       // JavaParser.cactionArgumentName(nameString);
        // JavaParserSupport.generateType(node.type);
-       // java_parser.cactionArgumentModifiers(node.modifiers);
-       // java_parser.cactionArgumentEnd();
+       // JavaParser.cactionArgumentModifiers(node.modifiers);
+       // JavaParser.cactionArgumentEnd();
 
        // JavaParserSupport.generateType(node.type);
 
@@ -170,105 +230,100 @@ class ecjASTVisitor extends ASTVisitor
        // In general we want to have rules that are specific to IR nodes and pass any constructed
        // IR nodes via the stack (rules called should have generated the constructed IR nodes on 
        // the stack within ROSE).
-       // java_parser.cactionArgument(nameString, node.modifiers, this.createJavaToken(node));
-          if (processedArguments.contains(node)) {
-              return false;
-          }
-          else {
-              JavaParserSupport.generateType(node.type);
-              if (! catchArguments.contains(node)) {
-                  java_parser.cactionArgument(nameString, node.modifiers, this.createJavaToken(node));
-              }
-          }
+       // JavaParser.cactionArgument(nameString, node.modifiers, createJavaToken(node));
+
+          boolean is_catch_argument = catchArguments.contains(node);
+          JavaParserSupport.generateType(node.type);
+          JavaParser.cactionArgument(nameString, is_catch_argument, createJavaToken(node));
         
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (Argument,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (Argument,BlockScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(Argument node, ClassScope scope)
+     public boolean enter(Argument node, ClassScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (Argument,ClassScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (Argument,ClassScope)");
 
-          java_parser.cactionArgumentClassScope("Argument_class_abc", this.createJavaToken(node));
+          JavaParser.cactionArgumentClassScope("Argument_class_abc", createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (Argument,ClassScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (Argument,ClassScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(ArrayAllocationExpression node,BlockScope scope)
+     public boolean enter(ArrayAllocationExpression node,BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (ArrayAllocationExpression,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (ArrayAllocationExpression,BlockScope)");
 
           JavaParserSupport.generateType(node.type);
-          java_parser.cactionArrayAllocationExpression(this.createJavaToken(node));
+          JavaParser.cactionArrayAllocationExpression(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (ArrayAllocationExpression,BlockScope)");
-
-          return true; // do nothing by  node, keep traversing
-        }
-
-     public boolean visit(ArrayInitializer  node, BlockScope scope)
-        {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (ArrayInitializer,BlockScope)");
-
-          java_parser.cactionArrayInitializer(this.createJavaToken(node));
-
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (ArrayInitializer,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (ArrayAllocationExpression,BlockScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(ArrayQualifiedTypeReference node, BlockScope scope)
+     public boolean enter(ArrayInitializer  node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (ArrayQualifiedTypeReference,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (ArrayInitializer,BlockScope)");
 
-          java_parser.cactionArrayQualifiedTypeReference(this.createJavaToken(node));
+          JavaParser.cactionArrayInitializer(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (ArrayQualifiedTypeReference,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (ArrayInitializer,BlockScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(ArrayQualifiedTypeReference node, ClassScope scope)
+     public boolean enter(ArrayQualifiedTypeReference node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (ArrayQualifiedTypeReference,ClassScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (ArrayQualifiedTypeReference,BlockScope)");
 
-          java_parser.cactionArrayQualifiedTypeReferenceClassScope(this.createJavaToken(node));
+          JavaParser.cactionArrayQualifiedTypeReference(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (ArrayQualifiedTypeReference,ClassScope)");
-
-          return true; // do nothing by  node, keep traversing
-        }
-     public boolean visit(ArrayReference  node, BlockScope scope)
-        {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (ArrayReference,BlockScope)");
-
-          java_parser.cactionArrayReference(this.createJavaToken(node));
-
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (ArrayReference,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (ArrayQualifiedTypeReference,BlockScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(ArrayTypeReference  node, BlockScope scope)
+     public boolean enter(ArrayQualifiedTypeReference node, ClassScope scope)
         {
-         if (java_parser.verboseLevel > 0)
-             System.out.println("Inside of visit (ArrayTypeReference,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (ArrayQualifiedTypeReference,ClassScope)");
+
+          JavaParser.cactionArrayQualifiedTypeReferenceClassScope(createJavaToken(node));
+
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (ArrayQualifiedTypeReference,ClassScope)");
+
+          return true; // do nothing by  node, keep traversing
+        }
+     public boolean enter(ArrayReference  node, BlockScope scope)
+        {
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (ArrayReference,BlockScope)");
+
+          JavaParser.cactionArrayReference(createJavaToken(node));
+
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (ArrayReference,BlockScope)");
+
+          return true; // do nothing by  node, keep traversing
+        }
+
+     public boolean enter(ArrayTypeReference  node, BlockScope scope)
+        {
+         if (JavaParser.verboseLevel > 0)
+             System.out.println("Inside of enter (ArrayTypeReference,BlockScope)");
 
           if (node.resolvedType != null) {
               JavaParserSupport.generateType(node);
@@ -277,18 +332,20 @@ class ecjASTVisitor extends ASTVisitor
               System.out.println("Sorry, not implemented SingleTypeReference: node.resolvedType == NULL");
           }
 
-          java_parser.cactionArrayTypeReference(new String(node.token) /* node.resolvedType.debugName()*/, node.dimensions(), this.createJavaToken(node));
+          ArrayBinding arrayType = (ArrayBinding) node.resolvedType;
+          TypeBinding baseType = arrayType.leafComponentType;
+          JavaParser.cactionArrayTypeReference(/* new String(node.token) */ /* node.resolvedType.debugName() */ baseType.debugName(), node.dimensions(), createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-              System.out.println("Leaving visit (ArrayTypeReference,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+              System.out.println("Leaving enter (ArrayTypeReference,BlockScope)");
 
          return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(ArrayTypeReference  node, ClassScope scope)
+     public boolean enter(ArrayTypeReference  node, ClassScope scope)
         {
-         if (java_parser.verboseLevel > 0)
-             System.out.println("Inside of visit (ArrayTypeReference,ClassScope)");
+         if (JavaParser.verboseLevel > 0)
+             System.out.println("Inside of enter (ArrayTypeReference,ClassScope)");
 
          if (node.resolvedType != null) {
              JavaParserSupport.generateType(node);
@@ -297,153 +354,153 @@ class ecjASTVisitor extends ASTVisitor
              System.out.println("Sorry, not implemented SingleTypeReference: node.resolvedType == NULL");
          }
 
-         java_parser.cactionArrayTypeReference(new String(node.token) /* node.resolvedType.debugName()*/, node.dimensions(), this.createJavaToken(node));
+         JavaParser.cactionArrayTypeReference(/* new String(node.token) */ node.resolvedType.debugName(), node.dimensions(), createJavaToken(node));
 
-         if (java_parser.verboseLevel > 0)
-             System.out.println("Leaving visit (ArrayTypeReference, ClassScope)");
+         if (JavaParser.verboseLevel > 0)
+             System.out.println("Leaving enter (ArrayTypeReference, ClassScope)");
 
         return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(AssertStatement  node, BlockScope scope)
+     public boolean enter(AssertStatement  node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (AssertStatement,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (AssertStatement,BlockScope)");
 
-          java_parser.cactionAssertStatement(this.createJavaToken(node));
+          JavaParser.cactionAssertStatement(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (AssertStatement,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (AssertStatement,BlockScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(Assignment  node, BlockScope scope)
+     public boolean enter(Assignment  node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (Assignment,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (Assignment,BlockScope)");
 
-          java_parser.cactionAssignment(this.createJavaToken(node));
+          JavaParser.cactionAssignment(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (Assignment,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (Assignment,BlockScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(BinaryExpression  node, BlockScope scope)
+     public boolean enter(BinaryExpression  node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (BinaryExpression,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (BinaryExpression,BlockScope)");
 
-          java_parser.cactionBinaryExpression(this.createJavaToken(node));
+          JavaParser.cactionBinaryExpression(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (BinaryExpression,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (BinaryExpression,BlockScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(Block  node, BlockScope scope)
+     public boolean enter(Block  node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (Block,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (Block,BlockScope)");
 
-          java_parser.cactionBlock(this.createJavaToken(node));
+          JavaParser.cactionBlock(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (Block,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (Block,BlockScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(BreakStatement  node, BlockScope scope)
+     public boolean enter(BreakStatement  node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (BreakStatement,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (BreakStatement,BlockScope)");
 
-          java_parser.cactionBreakStatement((node.label == null ? "" : new String(node.label)),
-                                            this.createJavaToken(node));
+          JavaParser.cactionBreakStatement((node.label == null ? "" : new String(node.label)),
+                                            createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (BreakStatement,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (BreakStatement,BlockScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(CaseStatement  node, BlockScope scope)
+     public boolean enter(CaseStatement  node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (CaseStatement,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (CaseStatement,BlockScope)");
 
-          java_parser.cactionCaseStatement(node.constantExpression != null, this.createJavaToken(node));
+          JavaParser.cactionCaseStatement(node.constantExpression != null, createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (CaseStatement,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (CaseStatement,BlockScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(CastExpression  node, BlockScope scope)
+     public boolean enter(CastExpression  node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (CastExpression,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (CastExpression,BlockScope)");
 
-          java_parser.cactionCastExpression(this.createJavaToken(node));
+          JavaParser.cactionCastExpression(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (CastExpression,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (CastExpression,BlockScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(CharLiteral  node, BlockScope scope)
+     public boolean enter(CharLiteral  node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (CharLiteral,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (CharLiteral,BlockScope)");
 
-          java_parser.cactionCharLiteral(node.constant.charValue(), this.createJavaToken(node));
+          JavaParser.cactionCharLiteral(node.constant.charValue(), createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (CharLiteral,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (CharLiteral,BlockScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(ClassLiteralAccess  node, BlockScope scope)
+     public boolean enter(ClassLiteralAccess  node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (ClassLiteralAccess,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (ClassLiteralAccess,BlockScope)");
 
-          java_parser.cactionClassLiteralAccess(this.createJavaToken(node));
+          JavaParser.cactionClassLiteralAccess(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (ClassLiteralAccess,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (ClassLiteralAccess,BlockScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(Clinit  node, ClassScope scope)
+     public boolean enter(Clinit  node, ClassScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (Clinit,ClassScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (Clinit,ClassScope)");
 
-          java_parser.cactionClinit(this.createJavaToken(node));
+          JavaParser.cactionClinit(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (Clinit,ClassScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (Clinit,ClassScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit( CompilationUnitDeclaration node, CompilationUnitScope scope)
+     public boolean enter( CompilationUnitDeclaration node, CompilationUnitScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (CompilationUnitDeclaration,CompilationUnitScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (CompilationUnitDeclaration,CompilationUnitScope)");
 
        // Except for out here for debugging, the filename string is not used (even on the C++ side of the JNI function.
           String s = new String(node.getFileName());
-          if (java_parser.verboseLevel > 0)
+          if (JavaParser.verboseLevel > 0)
              {
                System.out.println("Compiling file = " + s);
              }
@@ -467,18 +524,18 @@ class ecjASTVisitor extends ASTVisitor
                packageReference.append(tokenString);
              }
 
-          if (java_parser.verboseLevel > 0)
+          if (JavaParser.verboseLevel > 0)
              System.out.println("Package name = " + packageReference.toString());
 
        // Call the Java side of the JNI function.
        // This function only does a few tests on the C++ side to make sure that it is ready to construct the ROSE AST.
-          java_parser.cactionCompilationUnitDeclaration(s, this.createJavaToken(node));
+          JavaParser.cactionCompilationUnitDeclaration(s, createJavaToken(node));
 
        // Build the default implicit classes that will be required to process Java functions.
        // The symbol for these classes need to be added to the global scope and the then
        // we need to add the required name qualification support for data member and member 
        // function lookup.
-          if (java_parser.verboseLevel > 1)
+          if (JavaParser.verboseLevel > 1)
                System.out.println("Calling buildImplicitClassSupport for java.lang.System");
 
        // We now read in classes on demand as they are references, if there are references.  All classes are read as 
@@ -488,349 +545,198 @@ class ecjASTVisitor extends ASTVisitor
        // This triggers the building of a recursively identified set of classes required to define all types in the problem.
        // JavaParserSupport.buildImplicitClassSupport("java.lang.System");
 
-          if (java_parser.verboseLevel > 1)
+          if (JavaParser.verboseLevel > 1)
                System.out.println("DONE: Calling buildImplicitClassSupport for java.lang.System");
 
        // System.out.println("Exiting as a test in visit (CompilationUnitDeclaration,CompilationUnitScope)...");
        // System.exit(1);
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (CompilationUnitDeclaration,CompilationUnitScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (CompilationUnitDeclaration,CompilationUnitScope)");
 
           return true; // do nothing by default, keep traversing
         }
 
-     public boolean visit(CompoundAssignment  node, BlockScope scope)
+     public boolean enter(CompoundAssignment  node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (CompoundAssignment,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (CompoundAssignment,BlockScope)");
 
-          java_parser.cactionCompoundAssignment(this.createJavaToken(node));
+          JavaParser.cactionCompoundAssignment(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (CompoundAssignment,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (CompoundAssignment,BlockScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(ConditionalExpression node,BlockScope scope)
+     public boolean enter(ConditionalExpression node,BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (ConditionalExpression,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (ConditionalExpression,BlockScope)");
 
-          java_parser.cactionConditionalExpression(this.createJavaToken(node));
+          JavaParser.cactionConditionalExpression(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (ConditionalExpression,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (ConditionalExpression,BlockScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(ConstructorDeclaration node, ClassScope scope)
-        {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (ConstructorDeclaration,ClassScope)");
+    public boolean enter(ConstructorDeclaration node, ClassScope scope) {
+        if (JavaParser.verboseLevel > 0)
+            System.out.println("Inside of enter (ConstructorDeclaration,ClassScope)");
 
-       // char [] name = node.selector;
-       // System.out.println("Inside of visit (ConstructorDeclaration,ClassScope) method name = " + node.selector);
-          String name = new String(node.selector);
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (ConstructorDeclaration,ClassScope) method name = " + name);
+        // char [] name = node.selector;
+        // System.out.println("Inside of enter (ConstructorDeclaration,ClassScope) method name = " + node.selector);
+        String name = new String(node.selector);
+        if (JavaParser.verboseLevel > 0)
+            System.out.println("Inside of enter (ConstructorDeclaration,ClassScope) method name = " + name);
 
-       // argument types
-          if (node.typeParameters != null)
-             {
-               for (int i = 0, typeArgumentsLength = node.typeParameters.length; i < typeArgumentsLength; i++)
-                  {
-                    System.out.println("     --- constructor typeParameters = " + node.typeParameters[i]);
-                  }
-             }
-            else
-             {
+        //
+        //
+        //
+        if (node.constructorCall != null) {
+            MethodHeaderDelimiters.put(node.constructorCall, node);
+        }
+        else if (node.statements != null && node.statements.length > 0) {
+            MethodHeaderDelimiters.put(node.statements[0], node);
+        }
+        
+        // argument types
+        if (node.typeParameters != null) {
+            for (int i = 0, typeArgumentsLength = node.typeParameters.length; i < typeArgumentsLength; i++) {
+                System.out.println("     --- constructor typeParameters = " + node.typeParameters[i]);
+            }
+            // TODO: What TO DO?
+        }
+        else {
             // For a function defined in the input program, the typeParameters array is empty, but the ECJ
             // specific AST traversal will visit the type parameters. Not clear why this is organized like this.
             // System.out.println("     --- method typeParameters (empty) = " + node.typeParameters);
-             }
-
-       // Looking here for arguments (want the arguments) since they are not always in the node.typeParameters
-          if (node.arguments != null)
-             {
-               for (int i = 0, typeArgumentsLength = node.arguments.length; i < typeArgumentsLength; i++)
-                  {
-                 // System.out.println("     --- constructor arguments = " + node.arguments[i].type);
-                 // System.out.println("     --- constructor arguments (type = " + node.arguments[i].type + ", name = " + node.arguments[i].name);
-                    if (java_parser.verboseLevel > 0)
-                         System.out.println("     --- constructor arguments (type = " + node.arguments[i].type + ", name = " + node.arguments[i].name.toString() + ")");
-
-                    String nameString = new String(node.arguments[i].name);
-
-                 // System.out.println("This call to JavaParserSupport.generateType() pushes a type onto the astJavaTypeStack (visit (ConstructorDeclaration,ClassScope)): type = " + node.arguments[i].type + " nameString = " + nameString);
-
-                    JavaParserSupport.generateType(node.arguments[i].type);
-
-                 // This rule assumes that the type will be made available on the stack (astJavaTypeStack).
-                 // In general we want to have rules that are specific to IR nodes and pass any constructed
-                 // IR nodes via the stack (rules called should have generated the constructed IR nodes on 
-                 // the stack within ROSE).
-                    java_parser.cactionArgument(nameString,node.modifiers, this.createJavaToken(node));
-                    processedArguments.add(node.arguments[i]);
-
-                 // System.out.println("DONE: This call to JavaParserSupport.generateType() pushes a type onto the astJavaTypeStack (visit (ConstructorDeclaration,ClassScope)): type = " + node.arguments[i].type + " nameString = " + nameString);
-                  }
-             }
-            else
-             {
-            // For a function defined in the input program, the typeParameters array is empty, but the ECJ
-            // specific AST traversal will visit the type parameters. Not clear why this is organized like this.
-               if (java_parser.verboseLevel > 0)
-                    System.out.println("     --- method arguments (empty) = " + node.arguments);
-             }
-
-          if (java_parser.verboseLevel > 2)
-               System.out.println("Push void as a return type for now (will be ignored because this is a constructor)");
-
-       // Push a type to serve as the return type which will be ignored for the case of a constructor
-       // (this allows us to reuse the general member function support).
-          JavaParser.cactionGenerateType("void", 0);
-
-          if (java_parser.verboseLevel > 2)
-               System.out.println("DONE: Push void as a return type for now (will be ignored because this is a constructor)");
-
-          boolean isNative = node.isNative();
-          boolean isPrivate = (node.binding != null && !node.binding.isPrivate()) ? true : false;
-
-          boolean isStatic = node.isNative();
-
-          java_parser.cactionConstructorDeclaration(name,
-                                                    node.arguments == null ? 0 : node.arguments.length,
-                                                    isNative, this.createJavaToken(node));
-
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (ConstructorDeclaration,ClassScope)");
-
-          return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(ContinueStatement  node, BlockScope scope)
+        if (JavaParser.verboseLevel > 2)
+            System.out.println("Push void as a return type for now (will be ignored because this is a constructor)");
+
+        if (JavaParser.verboseLevel > 2)
+            System.out.println("DONE: Push void as a return type for now (will be ignored because this is a constructor)");
+
+        JavaParser.cactionConstructorDeclaration(name, createJavaToken(node));
+
+        if (JavaParser.verboseLevel > 0)
+            System.out.println("Leaving enter (ConstructorDeclaration,ClassScope)");
+
+        return true; // do nothing by  node, keep traversing
+    }
+
+     public boolean enter(ContinueStatement  node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (ContinueStatement,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (ContinueStatement,BlockScope)");
 
-          java_parser.cactionContinueStatement((node.label == null ? "" : new String(node.label)),
-                                               this.createJavaToken(node));
+          JavaParser.cactionContinueStatement((node.label == null ? "" : new String(node.label)),
+                                               createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (ContinueStatement,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (ContinueStatement,BlockScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(DoStatement  node, BlockScope scope)
+     public boolean enter(DoStatement  node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (DoStatement,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (DoStatement,BlockScope)");
 
-          java_parser.cactionDoStatement(this.createJavaToken(node));
+          JavaParser.cactionDoStatement(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (DoStatement,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (DoStatement,BlockScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(DoubleLiteral  node, BlockScope scope)
+     public boolean enter(DoubleLiteral  node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (DoubleLiteral,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (DoubleLiteral,BlockScope)");
 
-          java_parser.cactionDoubleLiteral(node.constant.doubleValue(), new String(node.source()), this.createJavaToken(node));
+          JavaParser.cactionDoubleLiteral(node.constant.doubleValue(), new String(node.source()), createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (DoubleLiteral,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (DoubleLiteral,BlockScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(EmptyStatement  node, BlockScope scope)
+     public boolean enter(EmptyStatement  node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (EmptyStatement,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (EmptyStatement,BlockScope)");
 
-          java_parser.cactionEmptyStatement(this.createJavaToken(node));
+          JavaParser.cactionEmptyStatement(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (EmptyStatement,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (EmptyStatement,BlockScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(EqualExpression  node, BlockScope scope)
+     public boolean enter(EqualExpression  node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (EqualExpression,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (EqualExpression,BlockScope)");
 
-          java_parser.cactionEqualExpression(this.createJavaToken(node));
+          JavaParser.cactionEqualExpression(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (EqualExpression,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (EqualExpression,BlockScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(ExplicitConstructorCall node, BlockScope scope)
+    public boolean enter(ExplicitConstructorCall node, BlockScope scope) {
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (ExplicitConstructorCall,BlockScope)");
+
+          JavaParser.cactionExplicitConstructorCall(createJavaToken(node));
+          
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (ExplicitConstructorCall,BlockScope)");
+
+          return true; // do nothing by  node, keep traversing
+        }
+
+     public boolean enter(ExtendedStringLiteral node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (ExplicitConstructorCall,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (ExtendedStringLiteral,BlockScope)");
 
-       // java_parser.cactionExplicitConstructorCall("abc");
-          if (node.qualification != null)
-             {
-            // Name qualification not implemented.
-            // this.qualification.printExpression(0, output).append('.');
-               System.out.println("Sorry, not implemented in support for ExplicitConstructorCall: Name qualification");
-             }
+          JavaParser.cactionExtendedStringLiteral(node.constant.stringValue(), createJavaToken(node));
 
-          if (node.typeArguments != null)
-             {
-            // output.append('<');
-               System.out.println("Sorry, not implemented in support for ExplicitConstructorCall: typeArguments");
-               int max = node.typeArguments.length - 1;
-               for (int j = 0; j < max; j++)
-                  {
-                 // node.typeArguments[j].print(0, output);
-                 // output.append(", ");//$NON-NLS-1$
-                  }
-            // node.typeArguments[max].print(0, output);
-            // output.append('>');
-             }
-
-          if (java_parser.verboseLevel > 0)
-               System.out.println("In visit (ExplicitConstructorCall,BlockScope): node.accessMode = " + node.accessMode);
-
-          if (node.accessMode == ExplicitConstructorCall.This)
-             {
-            // output.append("this("); //$NON-NLS-1$
-               System.out.println("Sorry, not implemented in support for ExplicitConstructorCall: this");
-             }
-            else
-             {
-               String name = "super";
-               if (node.accessMode == ExplicitConstructorCall.ImplicitSuper)
-                  {
-                 // System.out.println("Sorry, not implemented in support for ExplicitConstructorCall: implicit super()");
-                 // java_parser.cactionExplicitConstructorCall("ImplicitSuper");
-
-                 // We have to implement the support for an impleicit super() call, even if it is marked explicitly 
-                 // as implicit and not generated in the output source code.  It should still be explicit in the AST
-                 // as a way to simplify analysis.
-                 // String name = new String("super");
-                 // System.out.println("super function name = " + name);
-
-                    String associatedClassName = node.binding.toString();
-                 // System.out.println("super function associatedClassName = " + associatedClassName);
-
-                    java_parser.cactionMessageSend(name,associatedClassName, this.createJavaToken(node));
-                  }
-                 else
-                  {
-                    if (node.accessMode == ExplicitConstructorCall.Super)
-                       {
-                      // System.out.println("Sorry, not implemented in support for ExplicitConstructorCall: super()");
-                      // java_parser.cactionExplicitConstructorCall("super");
-
-                      // String name = new String("super");
-                      // String name = "super";
-
-                         if (java_parser.verboseLevel > 0)
-                            {
-                              System.out.println("super function name = " + name);
-
-                              System.out.println("super function node = " + node);
-                              System.out.println("super function node.isSuperAccess() = " + node.isSuperAccess());
-                              System.out.println("super function node.isTypeAccess()  = " + node.isTypeAccess());
-                              System.out.println("super function node.binding = " + node.binding);
-                              System.out.println("super function node.binding = xxx" + node.binding.toString() + "xxx");
-                              if (node.binding.toString() == "public void <init>() ")
-                                 {
-                                   System.out.println("super() in class without base class ...");
-                                 }
-                                else
-                                 {
-                                   System.out.println("Proper super() call to class with base class ...");
-                                 }
-                            }
-
-                      // System.out.println("super function node.binding.declaringClass = " + node.binding.declaringClass);
-                      // System.out.println("super function node.binding.declaringClass.toString() = " + node.binding.declaringClass.toString());
-
-                      // String associatedClassName = node.binding.toString();
-                      // String associatedClassName = node.binding.declaringClass.toString();
-                         String associatedClassName = node.binding.toString();
-
-                         if (java_parser.verboseLevel > 0)
-                            {
-                              System.out.println("super function associatedClassName = " + associatedClassName);
-                              System.out.println("super function cactionMessageSend() associatedClassName = " + associatedClassName);
-                            }
-
-                         java_parser.cactionMessageSend(name,associatedClassName, this.createJavaToken(node));
-
-                      // System.out.println("DONE: super function cactionMessageSend() associatedClassName = " + associatedClassName);
-                       }
-                      else
-                       {
-                         System.out.println("This is neither This, ImplicitSuper, or Super ...");
-                         System.exit(1);
-                       }
-                  }
-             }
-
-          if (node.arguments != null)
-             {
-               System.out.println("Sorry, not implemented in support for ExplicitConstructorCall: arguments");
-               for (int i = 0; i < node.arguments.length; i++)
-                  {
-                 // if (i > 0)
-                 //      output.append(", "); //$NON-NLS-1$
-                 // node.arguments[i].printExpression(0, output);
-                  }
-             }
-
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (ExplicitConstructorCall,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (ExtendedStringLiteral,BlockScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(ExtendedStringLiteral node, BlockScope scope)
+     public boolean enter(FalseLiteral  node, BlockScope scope) {
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (FalseLiteral,BlockScope)");
+
+          JavaParser.cactionFalseLiteral(createJavaToken(node));
+
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (FalseLiteral,BlockScope)");
+
+          return true; // do nothing by  node, keep traversing
+        }
+
+     public boolean enter(FieldDeclaration node, MethodScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (ExtendedStringLiteral,BlockScope)");
-
-          java_parser.cactionExtendedStringLiteral(node.constant.stringValue(), this.createJavaToken(node));
-
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (ExtendedStringLiteral,BlockScope)");
-
-          return true; // do nothing by  node, keep traversing
-        }
-
-     public boolean visit(FalseLiteral  node, BlockScope scope) {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (FalseLiteral,BlockScope)");
-
-          java_parser.cactionFalseLiteral(this.createJavaToken(node));
-
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (FalseLiteral,BlockScope)");
-
-          return true; // do nothing by  node, keep traversing
-        }
-
-     public boolean visit(FieldDeclaration node, MethodScope scope)
-        {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (FieldDeclaration,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (FieldDeclaration,BlockScope)");
 /*
        // DQ (9/5/2011): Old code from before this was processed bottom up.
 
@@ -853,7 +759,7 @@ class ecjASTVisitor extends ASTVisitor
        // String selectorName = new String5      // System.out.println("node.name = " + selectorName);
        // System.out.println("node.modfiers = " + node.modfiers);
 
-          if (java_parser.verboseLevel > 0)
+          if (JavaParser.verboseLevel > 0)
              {
                System.out.println("node.name                     = " + name);
                System.out.println("node.binding                  = " + node.binding);
@@ -882,101 +788,104 @@ class ecjASTVisitor extends ASTVisitor
 
        // Build the variable declaration using the type from the astJavaTypeStack.
        // Note that this may have to handle an array of names or be even more complex in the future.
-       // java_parser.cactionLocalDeclaration(name,isFinal);
+       // JavaParser.cactionLocalDeclaration(name,isFinal);
 
-          java_parser.cactionFieldDeclaration(name,hasInitializer,isFinal,isPrivate,isProtected,isPublic,isVolatile,isSynthetic,isStatic,isTransient, this.createJavaToken(node));
+          JavaParser.cactionFieldDeclaration(name,hasInitializer,isFinal,isPrivate,isProtected,isPublic,isVolatile,isSynthetic,isStatic,isTransient, createJavaToken(node));
 */
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (FieldDeclaration,BlockScope)");
+
+          // DO NOTHING !!!
+          
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (FieldDeclaration,BlockScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-          public boolean visit(FieldReference node, BlockScope scope) 
+          public boolean enter(FieldReference node, BlockScope scope) 
              {
             // System.out.println("Sorry, not implemented in support for FieldReference(BlockScope): xxx");
-               if (java_parser.verboseLevel > 0)
-                    System.out.println("Inside of visit (FieldReference,BlockScope)");
+               if (JavaParser.verboseLevel > 0)
+                    System.out.println("Inside of enter (FieldReference,BlockScope)");
 
                String fieldRefName = new String(node.token);
                
-               java_parser.cactionFieldReference(fieldRefName, this.createJavaToken(node));
+               JavaParser.cactionFieldReference(fieldRefName, createJavaToken(node));
 
-               if (java_parser.verboseLevel > 0)
-                    System.out.println("Leaving visit (FieldReference,BlockScope)");
+               if (JavaParser.verboseLevel > 0)
+                    System.out.println("Leaving enter (FieldReference,BlockScope)");
 
                return true; // do nothing by  node, keep traversing
              }
 
-          public boolean visit(FieldReference  node, ClassScope scope)
+          public boolean enter(FieldReference  node, ClassScope scope)
              {
             // System.out.println("Sorry, not implemented in support for FieldReference(ClassScope): xxx");
-               if (java_parser.verboseLevel > 0)
-                    System.out.println("Inside of visit (FieldReference,ClassScope)");
+               if (JavaParser.verboseLevel > 0)
+                    System.out.println("Inside of enter (FieldReference,ClassScope)");
 
 
                String fieldRefName = new String(node.token);
 
-               java_parser.cactionFieldReferenceClassScope(fieldRefName, this.createJavaToken(node));
+               JavaParser.cactionFieldReferenceClassScope(fieldRefName, createJavaToken(node));
 
-               if (java_parser.verboseLevel > 0)
-                    System.out.println("Leaving visit (FieldReference,ClassScope)");
+               if (JavaParser.verboseLevel > 0)
+                    System.out.println("Leaving enter (FieldReference,ClassScope)");
 
                return true; // do nothing by  node, keep traversing
              }
 
-     public boolean visit(FloatLiteral  node, BlockScope scope) {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (FloatLiteral,BlockScope)");
+     public boolean enter(FloatLiteral  node, BlockScope scope) {
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (FloatLiteral,BlockScope)");
 
-          java_parser.cactionFloatLiteral(node.constant.floatValue(), new String(node.source()), this.createJavaToken(node));
+          JavaParser.cactionFloatLiteral(node.constant.floatValue(), new String(node.source()), createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (FloatLiteral,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (FloatLiteral,BlockScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(ForeachStatement  node, BlockScope scope)
+     public boolean enter(ForeachStatement  node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (ForeachStatement,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (ForeachStatement,BlockScope)");
 
-          java_parser.cactionForeachStatement(this.createJavaToken(node));
+          JavaParser.cactionForeachStatement(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (ForeachStatement,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (ForeachStatement,BlockScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(ForStatement  node, BlockScope scope)
+     public boolean enter(ForStatement  node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (ForStatement,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (ForStatement,BlockScope)");
 
-          java_parser.cactionForStatement(this.createJavaToken(node));
+          JavaParser.cactionForStatement(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (ForStatement,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (ForStatement,BlockScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(IfStatement  node, BlockScope scope)
+     public boolean enter(IfStatement  node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (IfStatement,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (IfStatement,BlockScope)");
 
-          java_parser.cactionIfStatement(this.createJavaToken(node));
+          JavaParser.cactionIfStatement(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (IfStatement,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (IfStatement,BlockScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(ImportReference  node, CompilationUnitScope scope)
+     public boolean enter(ImportReference node, CompilationUnitScope scope)
         {
        // This is the support for the Java "import" statement (declaration).
        // We can basically strify this step, since this is frontend handling that
@@ -986,8 +895,8 @@ class ecjASTVisitor extends ASTVisitor
        // we have not yet read in the classes that would be a part of those
        // implicitly read as a consequence of the "import" statements.
 
-          if (java_parser.verboseLevel > 1)
-               System.out.println("Inside of visit (ImportReference,CompilationUnitScope)");
+          if (JavaParser.verboseLevel > 1)
+               System.out.println("Inside of enter (ImportReference,CompilationUnitScope)");
 
        // DQ (9/11/2011): Static analysis tools suggest using StringBuffer instead of String.
        // String importReference = "";
@@ -1012,7 +921,7 @@ class ecjASTVisitor extends ASTVisitor
                importReference.append(".*");
              }
 
-          if (java_parser.verboseLevel > 1)
+          if (JavaParser.verboseLevel > 1)
              System.out.println("importReference (string) = " + importReference.toString());
 
        // DQ (8/22/2011): Read the referenced class or set of classes defined by the import statement.
@@ -1022,391 +931,390 @@ class ecjASTVisitor extends ASTVisitor
           }
           else { // just prime the system for an "import ... .*;"
 	      //              JavaParser.cactionLookupClassType(importReferenceWithoutWildcard);
-        	  importOnDemand.add(importReferenceWithoutWildcard);
-              java_parser.cactionBuildImplicitClassSupportStart(importReferenceWithoutWildcard);
-              java_parser.cactionBuildImplicitClassSupportEnd(0, importReferenceWithoutWildcard);
+              JavaParser.cactionBuildImplicitClassSupportStart(importReferenceWithoutWildcard);
+              JavaParser.cactionBuildImplicitClassSupportEnd(0, importReferenceWithoutWildcard);
           }
 
        // System.out.println("DONE: In visit (ImportReference,CompilationUnitScope): Calling buildImplicitClassSupport() to recursively build the class structure with member declarations: name = " + importReferenceWithoutWildcard);
 
        // DQ (4/15/2011): I could not get the passing of a boolean to work, so I am just passing an integer.
-          java_parser.cactionImportReference(importReferenceWithoutWildcard, containsWildcard, this.createJavaToken(node));
+          JavaParser.cactionImportReference(importReferenceWithoutWildcard, containsWildcard, createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (ImportReference,CompilationUnitScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (ImportReference,CompilationUnitScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(Initializer  node, MethodScope scope)
+     public boolean enter(Initializer  node, MethodScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (Initializer,MethodScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (Initializer,MethodScope)");
 
-          java_parser.cactionInitializer(this.createJavaToken(node));
+          JavaParser.cactionInitializer(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (Initializer,MethodScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (Initializer,MethodScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit( InstanceOfExpression node, BlockScope scope)
+     public boolean enter( InstanceOfExpression node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (InstanceOfExpression,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (InstanceOfExpression,BlockScope)");
 
-          java_parser.cactionInstanceOfExpression(this.createJavaToken(node));
+          JavaParser.cactionInstanceOfExpression(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (InstanceOfExpression,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (InstanceOfExpression,BlockScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(IntLiteral node, BlockScope scope)
+     public boolean enter(IntLiteral node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-             System.out.println("Inside of visit (IntLiteral,BlockScope) value = " + node.toString());
+          if (JavaParser.verboseLevel > 0)
+             System.out.println("Inside of enter (IntLiteral,BlockScope) value = " + node.toString());
 
-          java_parser.cactionIntLiteral(node.constant.intValue(), new String(node.source()), this.createJavaToken(node));
+          JavaParser.cactionIntLiteral(node.constant.intValue(), new String(node.source()), createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (IntLiteral,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (IntLiteral,BlockScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(Javadoc  node, BlockScope scope)
+     public boolean enter(Javadoc  node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (Javadoc,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (Javadoc,BlockScope)");
 
-          java_parser.cactionJavadoc(this.createJavaToken(node));
+          JavaParser.cactionJavadoc(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (Javadoc,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (Javadoc,BlockScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(Javadoc  node, ClassScope scope)
+     public boolean enter(Javadoc  node, ClassScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (Javadoc,ClassScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (Javadoc,ClassScope)");
 
-          java_parser.cactionJavadocClassScope(this.createJavaToken(node));
+          JavaParser.cactionJavadocClassScope(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (Javadoc,ClassScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (Javadoc,ClassScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(JavadocAllocationExpression  node, BlockScope scope)
+     public boolean enter(JavadocAllocationExpression  node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (JavadocAllocationExpression,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (JavadocAllocationExpression,BlockScope)");
 
-          java_parser.cactionJavadocAllocationExpression(this.createJavaToken(node));
+          JavaParser.cactionJavadocAllocationExpression(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (JavadocAllocationExpression,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (JavadocAllocationExpression,BlockScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(JavadocAllocationExpression  node, ClassScope scope)
+     public boolean enter(JavadocAllocationExpression  node, ClassScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (JavadocAllocationExpression,ClassScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (JavadocAllocationExpression,ClassScope)");
 
-          java_parser.cactionJavadocAllocationExpressionClassScope(this.createJavaToken(node));
+          JavaParser.cactionJavadocAllocationExpressionClassScope(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (JavadocAllocationExpression,ClassScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (JavadocAllocationExpression,ClassScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(JavadocArgumentExpression  node, BlockScope scope)
+     public boolean enter(JavadocArgumentExpression  node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit JavadocArgumentExpression(,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter JavadocArgumentExpression(,BlockScope)");
 
-          java_parser.cactionJavadocArgumentExpression(this.createJavaToken(node));
+          JavaParser.cactionJavadocArgumentExpression(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (JavadocArgumentExpression,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (JavadocArgumentExpression,BlockScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(JavadocArgumentExpression  node, ClassScope scope)
+     public boolean enter(JavadocArgumentExpression  node, ClassScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (JavadocArgumentExpression,ClassScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (JavadocArgumentExpression,ClassScope)");
 
-          java_parser.cactionJavadocArgumentExpressionClassScope(this.createJavaToken(node));
+          JavaParser.cactionJavadocArgumentExpressionClassScope(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (JavadocArgumentExpression,ClassScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (JavadocArgumentExpression,ClassScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(JavadocArrayQualifiedTypeReference  node, BlockScope scope)
+     public boolean enter(JavadocArrayQualifiedTypeReference  node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (JavadocArrayQualifiedTypeReference,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (JavadocArrayQualifiedTypeReference,BlockScope)");
 
-          java_parser.cactionJavadocArrayQualifiedTypeReference(this.createJavaToken(node));
+          JavaParser.cactionJavadocArrayQualifiedTypeReference(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (JavadocArrayQualifiedTypeReference,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (JavadocArrayQualifiedTypeReference,BlockScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(JavadocArrayQualifiedTypeReference  node, ClassScope scope)
+     public boolean enter(JavadocArrayQualifiedTypeReference  node, ClassScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (JavadocArrayQualifiedTypeReference,ClassScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (JavadocArrayQualifiedTypeReference,ClassScope)");
 
-          java_parser.cactionJavadocArrayQualifiedTypeReferenceClassScope(this.createJavaToken(node));
+          JavaParser.cactionJavadocArrayQualifiedTypeReferenceClassScope(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (JavadocArrayQualifiedTypeReference,ClassScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (JavadocArrayQualifiedTypeReference,ClassScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(JavadocArraySingleTypeReference  node, BlockScope scope)
+     public boolean enter(JavadocArraySingleTypeReference  node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (JavadocArraySingleTypeReference,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (JavadocArraySingleTypeReference,BlockScope)");
 
-          java_parser.cactionJavadocArraySingleTypeReference(this.createJavaToken(node));
+          JavaParser.cactionJavadocArraySingleTypeReference(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (JavadocArraySingleTypeReference,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (JavadocArraySingleTypeReference,BlockScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(JavadocArraySingleTypeReference  node, ClassScope scope)
+     public boolean enter(JavadocArraySingleTypeReference  node, ClassScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (JavadocArraySingleTypeReference,ClassScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (JavadocArraySingleTypeReference,ClassScope)");
 
-          java_parser.cactionJavadocArraySingleTypeReferenceClassScope(this.createJavaToken(node));
+          JavaParser.cactionJavadocArraySingleTypeReferenceClassScope(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (JavadocArraySingleTypeReference,ClassScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (JavadocArraySingleTypeReference,ClassScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(JavadocFieldReference  node, BlockScope scope)
+     public boolean enter(JavadocFieldReference  node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (JavadocFieldReference,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (JavadocFieldReference,BlockScope)");
 
-          java_parser.cactionJavadocFieldReference(this.createJavaToken(node));
+          JavaParser.cactionJavadocFieldReference(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (JavadocFieldReference,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (JavadocFieldReference,BlockScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(JavadocFieldReference  node, ClassScope scope)
+     public boolean enter(JavadocFieldReference  node, ClassScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (JavadocFieldReference,ClassScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (JavadocFieldReference,ClassScope)");
 
-          java_parser.cactionJavadocFieldReferenceClassScope(this.createJavaToken(node));
+          JavaParser.cactionJavadocFieldReferenceClassScope(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (JavadocFieldReference,ClassScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (JavadocFieldReference,ClassScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(JavadocImplicitTypeReference  node, BlockScope scope)
+     public boolean enter(JavadocImplicitTypeReference  node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (JavadocImplicitTypeReference,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (JavadocImplicitTypeReference,BlockScope)");
 
-          java_parser.cactionJavadocImplicitTypeReference(this.createJavaToken(node));
+          JavaParser.cactionJavadocImplicitTypeReference(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (JavadocImplicitTypeReference,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (JavadocImplicitTypeReference,BlockScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(JavadocImplicitTypeReference  node, ClassScope scope)
+     public boolean enter(JavadocImplicitTypeReference  node, ClassScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (JavadocImplicitTypeReference,ClassScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (JavadocImplicitTypeReference,ClassScope)");
 
-          java_parser.cactionJavadocImplicitTypeReferenceClassScope(this.createJavaToken(node));
+          JavaParser.cactionJavadocImplicitTypeReferenceClassScope(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (JavadocImplicitTypeReference,ClassScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (JavadocImplicitTypeReference,ClassScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(JavadocMessageSend  node, BlockScope scope)
+     public boolean enter(JavadocMessageSend  node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (JavadocMessageSend,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (JavadocMessageSend,BlockScope)");
 
-          java_parser.cactionJavadocMessageSend(this.createJavaToken(node));
+          JavaParser.cactionJavadocMessageSend(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (JavadocMessageSend,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (JavadocMessageSend,BlockScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(JavadocMessageSend  node, ClassScope scope)
+     public boolean enter(JavadocMessageSend  node, ClassScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (JavadocMessageSend,ClassScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (JavadocMessageSend,ClassScope)");
 
-          java_parser.cactionJavadocMessageSendClassScope(this.createJavaToken(node));
+          JavaParser.cactionJavadocMessageSendClassScope(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (JavadocMessageSend,ClassScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (JavadocMessageSend,ClassScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(JavadocQualifiedTypeReference  node, BlockScope scope)
+     public boolean enter(JavadocQualifiedTypeReference  node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (JavadocQualifiedTypeReference,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (JavadocQualifiedTypeReference,BlockScope)");
 
-          java_parser.cactionJavadocQualifiedTypeReference(this.createJavaToken(node));
+          JavaParser.cactionJavadocQualifiedTypeReference(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (JavadocQualifiedTypeReference,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (JavadocQualifiedTypeReference,BlockScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(JavadocQualifiedTypeReference  node, ClassScope scope)
+     public boolean enter(JavadocQualifiedTypeReference  node, ClassScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (JavadocQualifiedTypeReference,ClassScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (JavadocQualifiedTypeReference,ClassScope)");
 
-          java_parser.cactionJavadocQualifiedTypeReferenceClassScope(this.createJavaToken(node));
+          JavaParser.cactionJavadocQualifiedTypeReferenceClassScope(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (JavadocQualifiedTypeReference,ClassScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (JavadocQualifiedTypeReference,ClassScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(JavadocReturnStatement  node, BlockScope scope)
+     public boolean enter(JavadocReturnStatement  node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (JavadocReturnStatement,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (JavadocReturnStatement,BlockScope)");
 
-          java_parser.cactionJavadocReturnStatement(this.createJavaToken(node));
+          JavaParser.cactionJavadocReturnStatement(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (JavadocReturnStatement,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (JavadocReturnStatement,BlockScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(JavadocReturnStatement  node, ClassScope scope)
+     public boolean enter(JavadocReturnStatement  node, ClassScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (JavadocReturnStatement,ClassScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (JavadocReturnStatement,ClassScope)");
 
-          java_parser.cactionJavadocReturnStatementClassScope(this.createJavaToken(node));
+          JavaParser.cactionJavadocReturnStatementClassScope(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (JavadocReturnStatement,ClassScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (JavadocReturnStatement,ClassScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(JavadocSingleNameReference  node, BlockScope scope)
+     public boolean enter(JavadocSingleNameReference  node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (JavadocSingleNameReference,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (JavadocSingleNameReference,BlockScope)");
 
-          java_parser.cactionJavadocSingleNameReference(this.createJavaToken(node));
+          JavaParser.cactionJavadocSingleNameReference(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (JavadocSingleNameReference,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (JavadocSingleNameReference,BlockScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(JavadocSingleNameReference  node, ClassScope scope)
+     public boolean enter(JavadocSingleNameReference  node, ClassScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (JavadocSingleNameReference,ClassScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (JavadocSingleNameReference,ClassScope)");
 
-          java_parser.cactionJavadocSingleNameReferenceClassScope(this.createJavaToken(node));
+          JavaParser.cactionJavadocSingleNameReferenceClassScope(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (JavadocSingleNameReference,ClassScope)");
-
-          return true; // do nothing by  node, keep traversing
-        }
-
-     public boolean visit(JavadocSingleTypeReference  node, BlockScope scope) {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (JavadocSingleTypeReference,BlockScope)");
-
-          java_parser.cactionJavadocSingleTypeReference(this.createJavaToken(node));
-
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (JavadocSingleTypeReference,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (JavadocSingleNameReference,ClassScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(JavadocSingleTypeReference  node, ClassScope scope)
+     public boolean enter(JavadocSingleTypeReference  node, BlockScope scope) {
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (JavadocSingleTypeReference,BlockScope)");
+
+          JavaParser.cactionJavadocSingleTypeReference(createJavaToken(node));
+
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (JavadocSingleTypeReference,BlockScope)");
+
+          return true; // do nothing by  node, keep traversing
+        }
+
+     public boolean enter(JavadocSingleTypeReference  node, ClassScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (JavadocSingleTypeReference,ClassScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (JavadocSingleTypeReference,ClassScope)");
 
-          java_parser.cactionJavadocSingleTypeReferenceClassScope(this.createJavaToken(node));
+          JavaParser.cactionJavadocSingleTypeReferenceClassScope(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (JavadocSingleTypeReference,ClassScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (JavadocSingleTypeReference,ClassScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(LabeledStatement  node, BlockScope scope)
+     public boolean enter(LabeledStatement  node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (LabeledStatement,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (LabeledStatement,BlockScope)");
 
-          java_parser.cactionLabeledStatement(new String(node.label), this.createJavaToken(node));
+          JavaParser.cactionLabeledStatement(new String(node.label), createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (LabeledStatement,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (LabeledStatement,BlockScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(LocalDeclaration  node, BlockScope scope)
+     public boolean enter(LocalDeclaration  node, BlockScope scope)
         {
        // LocalDeclarations is derived from AbstractVariableDeclaration
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (LocalDeclaration,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (LocalDeclaration,BlockScope)");
 
 /*
           String name = new String(node.name);
@@ -1415,7 +1323,7 @@ class ecjASTVisitor extends ASTVisitor
        // System.out.println("node.name = " + selectorName);
        // System.out.println("node.modfiers = " + node.modfiers);
 
-          if (java_parser.verboseLevel > 0)
+          if (JavaParser.verboseLevel > 0)
              {
                System.out.println("node.name                     = " + name);
                System.out.println("node.binding                  = " + node.binding);
@@ -1438,59 +1346,59 @@ class ecjASTVisitor extends ASTVisitor
 
        // Build the variable declaration using the type from the astJavaTypeStack.
        // Note that this may have to handle an array of names or be even more complex in the future.
-          java_parser.cactionLocalDeclaration(name,isFinal, this.createJavaToken(node));
+          JavaParser.cactionLocalDeclaration(name,isFinal, createJavaToken(node));
 */
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (LocalDeclaration,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (LocalDeclaration,BlockScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(LongLiteral node, BlockScope scope)
+     public boolean enter(LongLiteral node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (LongLiteral,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (LongLiteral,BlockScope)");
 
-          java_parser.cactionLongLiteral(node.constant.longValue(), new String(node.source()), this.createJavaToken(node));
+          JavaParser.cactionLongLiteral(node.constant.longValue(), new String(node.source()), createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (LongLiteral,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (LongLiteral,BlockScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(MarkerAnnotation  node, BlockScope scope)
+     public boolean enter(MarkerAnnotation  node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (MarkerAnnotation,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (MarkerAnnotation,BlockScope)");
 
-          java_parser.cactionMarkerAnnotation(this.createJavaToken(node));
+          JavaParser.cactionMarkerAnnotation(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (MarkerAnnotation,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (MarkerAnnotation,BlockScope)");
 
           return true;
         }
 
-     public boolean visit(MemberValuePair  node, BlockScope scope)
+     public boolean enter(MemberValuePair  node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (MemberValuePair,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (MemberValuePair,BlockScope)");
 
-          java_parser.cactionMemberValuePair(this.createJavaToken(node));
+          JavaParser.cactionMemberValuePair(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (MemberValuePair,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (MemberValuePair,BlockScope)");
 
           return true;
         }
 
-     public boolean visit(MessageSend  node, BlockScope scope)
+     public boolean enter(MessageSend  node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (MessageSend,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (MessageSend,BlockScope)");
 
-       // java_parser.cactionMessageSend("abc");
+       // JavaParser.cactionMessageSend("abc");
           JavaParserSupport.sourcePosition(node);
 
        /* Debugging code.
@@ -1511,7 +1419,7 @@ class ecjASTVisitor extends ASTVisitor
        // String associatedClassName = node.actualReceiverType.toString();
           String associatedClassName = node.actualReceiverType.debugName();
 
-          if (java_parser.verboseLevel > 0)
+          if (JavaParser.verboseLevel > 0)
              {
                System.out.println("MessageSend node = " + node);
 
@@ -1564,14 +1472,13 @@ class ecjASTVisitor extends ASTVisitor
        // System.out.println("Exiting after test...");
        // System.exit(1);
 
-       // java_parser.cactionExplicitConstructorCall("super");
-       // java_parser.cactionMessageSend(name,associatedClassVariableName, this.createJavaToken(node));
+       // JavaParser.cactionMessageSend(name,associatedClassVariableName, createJavaToken(node));
 //System.out.println(node.receiver instanceof ThisReference ? "The receiver is a \"this\"" : "The receiver is NOT a \"this\" !!!");
 
-          java_parser.cactionMessageSend(name,associatedClassName, this.createJavaToken(node));
+          JavaParser.cactionMessageSend(name,associatedClassName, createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (MessageSend,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (MessageSend,BlockScope)");
 
        // System.out.println("Exiting as a test in visit (MessageSend,BlockScope)...");
        // System.exit(1);
@@ -1579,17 +1486,24 @@ class ecjASTVisitor extends ASTVisitor
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(MethodDeclaration  node, ClassScope scope)
+     public boolean enter(MethodDeclaration  node, ClassScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (MethodDeclaration,ClassScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (MethodDeclaration,ClassScope)");
 
-       // char [] name = node.selector;
-       // System.out.println("Inside of visit (MethodDeclaration,ClassScope) method name = " + name);
+          //
+          //
+          //
+          if (node.statements != null && node.statements.length > 0) {
+               MethodHeaderDelimiters.put(node.statements[0], node);
+          }
+
+          // char [] name = node.selector;
+       // System.out.println("Inside of enter (MethodDeclaration,ClassScope) method name = " + name);
           String name = new String(node.selector);
-          if (java_parser.verboseLevel > 0)
+          if (JavaParser.verboseLevel > 0)
              {
-               System.out.println("Inside of visit (MethodDeclaration,ClassScope) method name = " + name);
+               System.out.println("Inside of enter (MethodDeclaration,ClassScope) method name = " + name);
 
             // Return type
                System.out.println("     --- method returnType = " + node.returnType);
@@ -1621,14 +1535,14 @@ class ecjASTVisitor extends ASTVisitor
                        }
                   }
              }
-
+/*
        // Looking here for arguments (want the arguments) since they are not always in the node.typeParameters
           if (node.arguments != null)
              {
                for (int i = 0, typeArgumentsLength = node.arguments.length; i < typeArgumentsLength; i++)
                   {
                  // System.out.println("     --- method arguments = " + node.arguments[i].type);
-                    if (java_parser.verboseLevel > 0)
+                    if (JavaParser.verboseLevel > 0)
                          System.out.println("     --- method arguments (type = " + node.arguments[i].type + ", name = " + new String(node.arguments[i].name) + ")");
 
                     String nameString = new String(node.arguments[i].name);
@@ -1639,8 +1553,7 @@ class ecjASTVisitor extends ASTVisitor
                  // In general we want to have rules that are specific to IR nodes and pass any constructed
                  // IR nodes via the stack (rules called should have generated the constructed IR nodes on 
                  // the stack within ROSE).
-                    java_parser.cactionArgument(nameString,node.modifiers, this.createJavaToken(node));
-                    processedArguments.add(node.arguments[i]);
+                    JavaParser.cactionArgument(nameString, node.modifiers, createJavaToken(node));
 
                  // System.out.println("DONE: This call to JavaParserSupport.generateType() pushes a type onto the astJavaTypeStack (visit (MethodDeclaration,ClassScope)): type = " + node.arguments[i].type + " nameString = " + nameString);
                   }
@@ -1650,11 +1563,11 @@ class ecjASTVisitor extends ASTVisitor
             // For a function defined in the input program, the typeParameters array is empty, but the ECJ
             // specific AST traversal will visit the type parameters. Not clear why this is organized like this.
 
-               if (java_parser.verboseLevel > 0)
+               if (JavaParser.verboseLevel > 0)
                     System.out.println("     --- method arguments (empty) = " + node.arguments);
              }
-
-          if (java_parser.verboseLevel > 2)
+*/
+          if (JavaParser.verboseLevel > 2)
                System.out.println("Process the return type = " + node.returnType);
 /*
           if (node.returnType == null)
@@ -1666,7 +1579,7 @@ class ecjASTVisitor extends ASTVisitor
        // Build the return type in ROSE and push it onto the stack (astJavaTypeStack).
           JavaParserSupport.generateType(node.returnType);
 
-          if (java_parser.verboseLevel > 2)
+          if (JavaParser.verboseLevel > 2)
                System.out.println("DONE: Process the return type = " + node.returnType);
 
        // System.out.println("Exiting to test error handling! \n");
@@ -1692,7 +1605,7 @@ class ecjASTVisitor extends ASTVisitor
           boolean isVolatile     = false;
           boolean isTransient    = false;
 
-          if (java_parser.verboseLevel > 2)
+          if (JavaParser.verboseLevel > 2)
              {
                System.out.println("In visit (MethodDeclaration,ClassScope): isPrivate      = " + (isPrivate      ? "true" : "false"));
                System.out.println("In visit (MethodDeclaration,ClassScope): isSynchronized = " + (isSynchronized ? "true" : "false"));
@@ -1727,161 +1640,160 @@ class ecjASTVisitor extends ASTVisitor
        // We can build this here but we can't put the symbol into the symbol tabel until 
        // we have gathered the function parameter types so that the correct function type 
        // can be computed.
-          java_parser.cactionMethodDeclaration(name,
-        		                               isAbstract,isNative,isStatic,isFinal,isSynchronized,isPublic,isProtected,isPrivate,isStrictfp, this.createJavaToken(node));
+          JavaParser.cactionMethodDeclaration(name, createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (MethodDeclaration,ClassScope)");
-
-          return true; // do nothing by  node, keep traversing
-        }
-
-     public boolean visit( StringLiteralConcatenation node, BlockScope scope)
-        {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (StringLiteralConcatenation,BlockScope)");
-
-          java_parser.cactionStringLiteralConcatenation(this.createJavaToken(node));
-
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (StringLiteralConcatenation,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (MethodDeclaration,ClassScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(NormalAnnotation  node, BlockScope scope)
+     public boolean enter( StringLiteralConcatenation node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (NormalAnnotation,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (StringLiteralConcatenation,BlockScope)");
 
-          java_parser.cactionNormalAnnotation(this.createJavaToken(node));
+          JavaParser.cactionStringLiteralConcatenation(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (NormalAnnotation,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (StringLiteralConcatenation,BlockScope)");
+
+          return true; // do nothing by  node, keep traversing
+        }
+
+     public boolean enter(NormalAnnotation  node, BlockScope scope)
+        {
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (NormalAnnotation,BlockScope)");
+
+          JavaParser.cactionNormalAnnotation(createJavaToken(node));
+
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (NormalAnnotation,BlockScope)");
 
           return true;
         }
 
-     public boolean visit(NullLiteral  node, BlockScope scope)
+     public boolean enter(NullLiteral  node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (NullLiteral,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (NullLiteral,BlockScope)");
 
-          java_parser.cactionNullLiteral(this.createJavaToken(node));
+          JavaParser.cactionNullLiteral(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (NullLiteral,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (NullLiteral,BlockScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(OR_OR_Expression  node, BlockScope scope)
+     public boolean enter(OR_OR_Expression  node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (OR_OR_Expression,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (OR_OR_Expression,BlockScope)");
 
-          java_parser.cactionORORExpression(this.createJavaToken(node));
+          JavaParser.cactionORORExpression(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (OR_OR_Expression,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (OR_OR_Expression,BlockScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(ParameterizedQualifiedTypeReference  node, BlockScope scope)
+     public boolean enter(ParameterizedQualifiedTypeReference  node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (ParameterizedQualifiedTypeReference,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (ParameterizedQualifiedTypeReference,BlockScope)");
 
-          java_parser.cactionParameterizedQualifiedTypeReference(this.createJavaToken(node));
+          JavaParser.cactionParameterizedSingleTypeReference(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (ParameterizedQualifiedTypeReference,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (ParameterizedQualifiedTypeReference,BlockScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(ParameterizedQualifiedTypeReference  node, ClassScope scope)
+     public boolean enter(ParameterizedQualifiedTypeReference node, ClassScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (ParameterizedQualifiedTypeReference,ClassScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (ParameterizedQualifiedTypeReference,ClassScope)");
 
-          java_parser.cactionParameterizedQualifiedTypeReferenceClassScope(this.createJavaToken(node));
+          JavaParser.cactionParameterizedSingleTypeReferenceClassScope(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (ParameterizedQualifiedTypeReference,ClassScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (ParameterizedQualifiedTypeReference,ClassScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(ParameterizedSingleTypeReference  node, BlockScope scope)
+     public boolean enter(ParameterizedSingleTypeReference  node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (ParameterizedSingleTypeReference,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (ParameterizedSingleTypeReference,BlockScope)");
 
-          java_parser.cactionParameterizedSingleTypeReference(this.createJavaToken(node));
+          JavaParser.cactionParameterizedSingleTypeReference(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (ParameterizedSingleTypeReference,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (ParameterizedSingleTypeReference,BlockScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(ParameterizedSingleTypeReference  node, ClassScope scope)
+     public boolean enter(ParameterizedSingleTypeReference  node, ClassScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (ParameterizedSingleTypeReference,ClassScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (ParameterizedSingleTypeReference,ClassScope)");
 
-          java_parser.cactionParameterizedSingleTypeReferenceClassScope(this.createJavaToken(node));
+          JavaParser.cactionParameterizedSingleTypeReferenceClassScope(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (ParameterizedSingleTypeReference,ClassScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (ParameterizedSingleTypeReference,ClassScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(PostfixExpression  node, BlockScope scope)
+     public boolean enter(PostfixExpression  node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (PostfixExpression,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (PostfixExpression,BlockScope)");
 
-          java_parser.cactionPostfixExpression(this.createJavaToken(node));
+          JavaParser.cactionPostfixExpression(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (PostfixExpression,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (PostfixExpression,BlockScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(PrefixExpression  node, BlockScope scope)
+     public boolean enter(PrefixExpression  node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (PrefixExpression,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (PrefixExpression,BlockScope)");
 
-          java_parser.cactionPrefixExpression(this.createJavaToken(node));
+          JavaParser.cactionPrefixExpression(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (PrefixExpression,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (PrefixExpression,BlockScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(QualifiedAllocationExpression node, BlockScope scope)
+     public boolean enter(QualifiedAllocationExpression node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (QualifiedAllocationExpression,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (QualifiedAllocationExpression,BlockScope)");
 
-          java_parser.cactionQualifiedAllocationExpression(this.createJavaToken(node));
+          JavaParser.cactionQualifiedAllocationExpression(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (QualifiedAllocationExpression,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (QualifiedAllocationExpression,BlockScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(QualifiedNameReference node, BlockScope scope)
+     public boolean enter(QualifiedNameReference node, BlockScope scope)
         {
-       // Note that if we want to traverse this object in more detail then the QualifiedNameReference::traverse() functions can/should be modified.
+       // Note that if we want to traverse this object in more detail than the QualifiedNameReference::traverse() functions can/should be modified.
           String components[] = new String[node.tokens.length];
           StringBuffer strbuf = new StringBuffer();
           int typePrefixLength = node.indexOfFirstFieldBinding - 1;
@@ -1912,7 +1824,7 @@ class ecjASTVisitor extends ASTVisitor
           }
           String name = new String(strbuf);
 
-          java_parser.cactionQualifiedNameReference(package_name, type_prefix, type_name, name, this.createJavaToken(node));
+          JavaParser.cactionQualifiedNameReference(package_name, type_prefix, type_name, name, createJavaToken(node));
 /*
        // This is a reference to a variable (non data member)...? Is this correct?
           System.out.println("Sorry, not implemented in support for QualifiedNameReference(BlockScope): variable");
@@ -2010,7 +1922,7 @@ class ecjASTVisitor extends ASTVisitor
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(QualifiedNameReference node, ClassScope scope)
+     public boolean enter(QualifiedNameReference node, ClassScope scope)
         {
        // This is a reference to a data member.
           System.out.println("Sorry, not implemented in support for QualifiedNameReference(ClassScope): data member");
@@ -2048,7 +1960,7 @@ class ecjASTVisitor extends ASTVisitor
           }
           String name = new String(strbuf);
 
-          java_parser.cactionQualifiedNameReference(package_name, type_prefix, type_name, name, this.createJavaToken(node));
+          JavaParser.cactionQualifiedNameReference(package_name, type_prefix, type_name, name, createJavaToken(node));
 
 
 /*
@@ -2068,148 +1980,62 @@ class ecjASTVisitor extends ASTVisitor
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(QualifiedSuperReference node, BlockScope scope)
+     public boolean enter(QualifiedSuperReference node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (QualifiedSuperReference,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (QualifiedSuperReference,BlockScope)");
 
-          java_parser.cactionQualifiedSuperReference(this.createJavaToken(node));
+          JavaParser.cactionQualifiedSuperReference(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (QualifiedSuperReference,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (QualifiedSuperReference,BlockScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit( QualifiedSuperReference node, ClassScope scope)
+     public boolean enter( QualifiedSuperReference node, ClassScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (QualifiedSuperReference,ClassScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (QualifiedSuperReference,ClassScope)");
 
-          java_parser.cactionQualifiedSuperReferenceClassScope(this.createJavaToken(node));
+          JavaParser.cactionQualifiedSuperReferenceClassScope(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (QualifiedSuperReference,ClassScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (QualifiedSuperReference,ClassScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(QualifiedThisReference node, BlockScope scope)
+     public boolean enter(QualifiedThisReference node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (QualifiedThisReference,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (QualifiedThisReference,BlockScope)");
 
-          java_parser.cactionQualifiedThisReference(this.createJavaToken(node));
+          JavaParser.cactionQualifiedThisReference(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (QualifiedThisReference,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (QualifiedThisReference,BlockScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit( QualifiedThisReference node, ClassScope scope)
+     public boolean enter( QualifiedThisReference node, ClassScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (QualifiedThisReference,ClassScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (QualifiedThisReference,ClassScope)");
 
-          java_parser.cactionQualifiedThisReferenceClassScope(this.createJavaToken(node));
+          JavaParser.cactionQualifiedThisReferenceClassScope(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (QualifiedThisReference,ClassScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (QualifiedThisReference,ClassScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(QualifiedTypeReference node, BlockScope scope)
+     public boolean enter(QualifiedTypeReference node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (QualifiedTypeReference,BlockScope)");
-
-          java_parser.cactionQualifiedTypeReference(this.createJavaToken(node));
-
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (QualifiedTypeReference,BlockScope)");
-
-          return true; // do nothing by  node, keep traversing
-        }
-
-     public boolean visit(QualifiedTypeReference node, ClassScope scope)
-        {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (QualifiedTypeReference,ClassScope)");
-
-          java_parser.cactionQualifiedTypeReferenceClassScope(this.createJavaToken(node));
-
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (QualifiedTypeReference,ClassScope)");
-
-          return true; // do nothing by  node, keep traversing
-        }
-
-     public boolean visit(ReturnStatement  node, BlockScope scope)
-        {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (ReturnStatement,BlockScope)");
-
-          java_parser.cactionReturnStatement(this.createJavaToken(node));
-
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (ReturnStatement,BlockScope)");
-
-          return true; // do nothing by  node, keep traversing
-        }
-
-     public boolean visit(SingleMemberAnnotation  node, BlockScope scope)
-        {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (SingleMemberAnnotation,BlockScope)");
-
-          java_parser.cactionSingleMemberAnnotation(this.createJavaToken(node));
-
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (SingleMemberAnnotation,BlockScope)");
-
-          return true;
-        }
-
-     public boolean visit(SingleNameReference node, BlockScope scope)
-        {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (SingleNameReference,BlockScope)");
-
-          String varRefName = node.toString();
-          if (java_parser.verboseLevel > 0)
-             {
-               System.out.println("Building a variable reference for name = " + varRefName);
-
-               System.out.println("node.genericCast = " + node.genericCast);
-             }
-
-          java_parser.cactionSingleNameReference(varRefName, this.createJavaToken(node));
-
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (SingleNameReference,BlockScope)");
-
-          return true; // do nothing by  node, keep traversing
-        }
-
-     public boolean visit(SingleNameReference node, ClassScope scope)
-        {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (SingleNameReference,ClassScope)");
-
-          java_parser.cactionSingleNameReferenceClassScope(this.createJavaToken(node));
-
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (SingleNameReference,ClassScope)");
-
-          return true; // do nothing by  node, keep traversing
-        }
-
-     public boolean visit(SingleTypeReference node, BlockScope scope)
-        {
-          if (java_parser.verboseLevel > 0)
-              System.out.println("Inside of visit (SingleTypeReference,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (QualifiedTypeReference,BlockScope)");
 
           if (node.resolvedType != null) {
               JavaParserSupport.generateType(node);
@@ -2218,19 +2044,119 @@ class ecjASTVisitor extends ASTVisitor
               System.out.println("Sorry, not implemented SingleTypeReference: node.resolvedType == NULL");
           }
 
-          java_parser.cactionSingleTypeReference(node.resolvedType.debugName(), this.createJavaToken(node));
-          
-          if (java_parser.verboseLevel > 0)
-              System.out.println("Leaving visit (SingleTypeReference,BlockScope)");
+          JavaParser.cactionTypeReference(node.resolvedType.debugName(), createJavaToken(node));
 
-       // java_parser.cactionSingleTypeReference("abc");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (QualifiedTypeReference,BlockScope)");
+
+          return true; // do nothing by  node, keep traversing
+        }
+
+     public boolean enter(QualifiedTypeReference node, ClassScope scope)
+        {
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (QualifiedTypeReference,ClassScope)");
+
+          if (node.resolvedType != null) {
+              JavaParserSupport.generateType(node);
+          }
+          else {
+              System.out.println("Sorry, not implemented SingleTypeReference: node.resolvedType == NULL");
+          }
+
+          JavaParser.cactionTypeReference(node.resolvedType.debugName(), createJavaToken(node));
+
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (QualifiedTypeReference,ClassScope)");
+
+          return true; // do nothing by  node, keep traversing
+        }
+
+     public boolean enter(ReturnStatement  node, BlockScope scope)
+        {
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (ReturnStatement,BlockScope)");
+
+          JavaParser.cactionReturnStatement(createJavaToken(node));
+
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (ReturnStatement,BlockScope)");
+
+          return true; // do nothing by  node, keep traversing
+        }
+
+     public boolean enter(SingleMemberAnnotation  node, BlockScope scope)
+        {
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (SingleMemberAnnotation,BlockScope)");
+
+          JavaParser.cactionSingleMemberAnnotation(createJavaToken(node));
+
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (SingleMemberAnnotation,BlockScope)");
+
+          return true;
+        }
+
+     public boolean enter(SingleNameReference node, BlockScope scope)
+        {
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (SingleNameReference,BlockScope)");
+
+          String varRefName = node.toString();
+          if (JavaParser.verboseLevel > 0)
+             {
+               System.out.println("Building a variable reference for name = " + varRefName);
+
+               System.out.println("node.genericCast = " + node.genericCast);
+             }
+
+          JavaParser.cactionSingleNameReference(varRefName, createJavaToken(node));
+
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (SingleNameReference,BlockScope)");
+
+          return true; // do nothing by  node, keep traversing
+        }
+
+     public boolean enter(SingleNameReference node, ClassScope scope)
+        {
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (SingleNameReference,ClassScope)");
+
+          JavaParser.cactionSingleNameReferenceClassScope(createJavaToken(node));
+
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (SingleNameReference,ClassScope)");
+
+          return true; // do nothing by  node, keep traversing
+        }
+
+     public boolean enter(SingleTypeReference node, BlockScope scope)
+        {
+          if (JavaParser.verboseLevel > 0)
+              System.out.println("Inside of enter (SingleTypeReference,BlockScope)");
+
+          if (node.resolvedType != null) {
+              JavaParserSupport.generateType(node);
+          }
+          else {
+              System.out.println("Sorry, not implemented SingleTypeReference: node.resolvedType == NULL");
+          }
+
+          JavaParser.cactionTypeReference(node.resolvedType.debugName(), createJavaToken(node));
+
+          if (JavaParser.verboseLevel > 0)
+              System.out.println("Leaving enter (SingleTypeReference,BlockScope)");
+
+       // JavaParser.cactionSingleTypeReference("abc");
 
 /*
-          Moved to the endVisit() function.
+          Moved to the exit() function.
 
           if (node.resolvedType != null)
              {
-               java_parser.cactionSingleTypeReference("SingleTypeReference_block_abc", this.createJavaToken(node));
+               JavaParser.cactionSingleTypeReference("SingleTypeReference_block_abc", createJavaToken(node));
             // char[][] char_string = node.getTypeName();
             // System.out.println(char_string);
             // String typename = new String(node.getTypeName().toString());
@@ -2251,10 +2177,10 @@ class ecjASTVisitor extends ASTVisitor
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(SingleTypeReference node, ClassScope scope)
+     public boolean enter(SingleTypeReference node, ClassScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-              System.out.println("Inside of visit (SingleTypeReference,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+              System.out.println("Inside of enter (SingleTypeReference,BlockScope)");
          
           if (node.resolvedType != null) {
               JavaParserSupport.generateType(node);
@@ -2263,27 +2189,27 @@ class ecjASTVisitor extends ASTVisitor
               System.out.println("Sorry, not implemented SingleTypeReference: node.resolvedType == NULL");
           }
 
-          java_parser.cactionSingleTypeReference(node.resolvedType.debugName(), this.createJavaToken(node));
+          JavaParser.cactionTypeReference(node.resolvedType.debugName(), createJavaToken(node));
           
-          if (java_parser.verboseLevel > 0)
-              System.out.println("Leaving visit (SingleTypeReference,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+              System.out.println("Leaving enter (SingleTypeReference,BlockScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(StringLiteral  node, BlockScope scope)
+     public boolean enter(StringLiteral  node, BlockScope scope)
         {
-         if (java_parser.verboseLevel > 0)
-             System.out.println("Inside of visit (StringLiteral,BlockScope)");
+         if (JavaParser.verboseLevel > 0)
+             System.out.println("Inside of enter (StringLiteral,BlockScope)");
 
-       // System.out.println("Inside of visit (StringLiteral,BlockScope): node = " + node);
+       // System.out.println("Inside of enter (StringLiteral,BlockScope): node = " + node);
           String literal = new String(node.source());
-          System.out.println("Inside of visit (StringLiteral,BlockScope): node = " + literal);
+          System.out.println("Inside of enter (StringLiteral,BlockScope): node = " + literal);
 
-          java_parser.cactionStringLiteral(literal, this.createJavaToken(node));
+          JavaParser.cactionStringLiteral(literal, createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-              System.out.println("Leaving visit (StringLiteral,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+              System.out.println("Leaving enter (StringLiteral,BlockScope)");
 
        // System.out.println("Exiting at base of visit (StringLiteral,BlockScope)");
        // System.exit(1);
@@ -2291,101 +2217,101 @@ class ecjASTVisitor extends ASTVisitor
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(SuperReference  node, BlockScope scope)
+     public boolean enter(SuperReference  node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (SuperReference,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (SuperReference,BlockScope)");
 
-          java_parser.cactionSuperReference(this.createJavaToken(node));
+          JavaParser.cactionSuperReference(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (SuperReference,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (SuperReference,BlockScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(SwitchStatement  node, BlockScope scope)
+     public boolean enter(SwitchStatement  node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (SwitchStatement,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (SwitchStatement,BlockScope)");
 
-          java_parser.cactionSwitchStatement(this.createJavaToken(node));
+          JavaParser.cactionSwitchStatement(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (SwitchStatement,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (SwitchStatement,BlockScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(SynchronizedStatement node, BlockScope scope)
+     public boolean enter(SynchronizedStatement node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (SynchronizedStatement,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (SynchronizedStatement,BlockScope)");
 
-          java_parser.cactionSynchronizedStatement(this.createJavaToken(node));
+          JavaParser.cactionSynchronizedStatement(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (SynchronizedStatement,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (SynchronizedStatement,BlockScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(ThisReference  node, BlockScope scope)
+     public boolean enter(ThisReference  node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (ThisReference,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (ThisReference,BlockScope)");
 
-          java_parser.cactionThisReference(this.createJavaToken(node));
+          JavaParser.cactionThisReference(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (ThisReference,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (ThisReference,BlockScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(ThisReference  node, ClassScope scope)
+     public boolean enter(ThisReference  node, ClassScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (ThisReference,ClassScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (ThisReference,ClassScope)");
 
-          java_parser.cactionThisReferenceClassScope(this.createJavaToken(node));
+          JavaParser.cactionThisReferenceClassScope(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (ThisReference,ClassScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (ThisReference,ClassScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(ThrowStatement  node, BlockScope scope)
+     public boolean enter(ThrowStatement  node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (ThrowStatement,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (ThrowStatement,BlockScope)");
 
-          java_parser.cactionThrowStatement(this.createJavaToken(node));
+          JavaParser.cactionThrowStatement(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (ThrowStatement,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (ThrowStatement,BlockScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(TrueLiteral  node, BlockScope scope)
+     public boolean enter(TrueLiteral  node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (TrueLiteral,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (TrueLiteral,BlockScope)");
 
-          java_parser.cactionTrueLiteral(this.createJavaToken(node));
+          JavaParser.cactionTrueLiteral(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (TrueLiteral,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (TrueLiteral,BlockScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(TryStatement node, BlockScope scope)
+     public boolean enter(TryStatement node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (TryStatement,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (TryStatement,BlockScope)");
 
           //
           // charles4 (09/26/2011): Keep track of the set of Arguments and the set of Blocks that 
@@ -2398,156 +2324,123 @@ class ecjASTVisitor extends ASTVisitor
               }
           }
           
-          java_parser.cactionTryStatement(node.catchArguments == null ? 0 : node.catchBlocks.length, node.finallyBlock != null, this.createJavaToken(node));
+          JavaParser.cactionTryStatement(node.catchArguments == null ? 0 : node.catchBlocks.length, node.finallyBlock != null, createJavaToken(node));
           
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (TryStatement,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (TryStatement,BlockScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(TypeDeclaration node,BlockScope scope)
-        {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("visit TypeDeclaration -- BlockScope");
+    public boolean enter(TypeDeclaration node, BlockScope scope) {
+        if (JavaParser.verboseLevel > 0)
+            System.out.println("visit TypeDeclaration -- BlockScope");
 
-          String typename = new String(node.name);
-          java_parser.cactionTypeDeclaration(typename,
-                                             node.kind(node.modifiers) == TypeDeclaration.INTERFACE_DECL,
-                                             (node.binding != null && node.binding.isAbstract()),
-                                             (node.binding != null && node.binding.isFinal()),
-                                             (node.binding != null && node.binding.isPrivate()),
-                                             (node.binding != null && node.binding.isPublic()),
-                                             (node.binding != null && node.binding.isProtected()),
-                                             (node.binding != null && node.binding.isStatic() && node.binding.isNestedType()),
-                                             (node.binding != null && node.binding.isStrictfp()),
-                                             this.createJavaToken(node));
+        enterTypeDeclaration(node);
+        
+        if (JavaParser.verboseLevel > 0)
+            System.out.println("Leaving enter(TypeDeclaration,BlockScope)");
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (TypeDeclaration,BlockScope)");
+        return true; // do nothing by  node, keep traversing
+    }
 
-          return true; // do nothing by  node, keep traversing
-        }
+    public boolean enter(TypeDeclaration node, ClassScope scope) {
+        if (JavaParser.verboseLevel > 0)
+            System.out.println("visit TypeDeclaration -- ClassScope");
 
-     public boolean visit(TypeDeclaration node,ClassScope scope)
-        {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("visit TypeDeclaration -- ClassScope");
+        enterTypeDeclaration(node);
 
-          String typename = new String(node.name);
-          java_parser.cactionTypeDeclaration(typename,
-                                             node.kind(node.modifiers) == TypeDeclaration.INTERFACE_DECL,
-                                             (node.binding != null && node.binding.isAbstract()),
-                                             (node.binding != null && node.binding.isFinal()),
-                                             (node.binding != null && node.binding.isPrivate()),
-                                             (node.binding != null && node.binding.isPublic()),
-                                             (node.binding != null && node.binding.isProtected()),
-                                             (node.binding != null && node.binding.isStatic() && node.binding.isNestedType()),
-                                             (node.binding != null && node.binding.isStrictfp()),
-        		                             this.createJavaToken(node));
+        if (JavaParser.verboseLevel > 0)
+            System.out.println("Leaving enter(TypeDeclaration,ClassScope)");
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (TypeDeclaration,ClassScope)");
+        return true; // do nothing by  node, keep traversing
+    }
 
-          return true; // do nothing by  node, keep traversing
-        }
-
-     public boolean visit(TypeDeclaration node,CompilationUnitScope scope)
-        {
+    public boolean enter(TypeDeclaration node, CompilationUnitScope scope) {
        // System.out.println("visit TypeDeclaration -- CompilationUnitScope");
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (TypeDeclaration,CompilationUnitScope)");
+        if (JavaParser.verboseLevel > 0)
+            System.out.println("Inside of enter(TypeDeclaration, CompilationUnitScope)");
 
-          String typename = new String(node.name);
-          java_parser.cactionTypeDeclaration(typename,
-                                             node.kind(node.modifiers) == TypeDeclaration.INTERFACE_DECL,
-                                             (node.binding != null && node.binding.isAbstract()),
-                                             (node.binding != null && node.binding.isFinal()),
-                                             (node.binding != null && node.binding.isPrivate()),
-                                             (node.binding != null && node.binding.isPublic()),
-                                             (node.binding != null && node.binding.isProtected()),
-                                             (node.binding != null && node.binding.isStatic() && node.binding.isNestedType()),
-                                             (node.binding != null && node.binding.isStrictfp()),
-        		                             this.createJavaToken(node));
+        enterTypeDeclaration(node);
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (TypeDeclaration,CompilationUnitScope)");
+        if (JavaParser.verboseLevel > 0)
+            System.out.println("Leaving enter(TypeDeclaration, CompilationUnitScope)");
 
-          return true; // do nothing by  node, keep traversing
-        }
+        return true; // do nothing by  node, keep traversing
+    }
 
-     public boolean visit(TypeParameter  node, BlockScope scope) {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (TypeParameter,BlockScope)");
+     public boolean enter(TypeParameter  node, BlockScope scope) {
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (TypeParameter,BlockScope)");
 
-          java_parser.cactionTypeParameter(this.createJavaToken(node));
+          JavaParser.cactionTypeParameter(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (TypeParameter,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (TypeParameter,BlockScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(TypeParameter  node, ClassScope scope) {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (TypeParameter,ClassScope)");
+     public boolean enter(TypeParameter  node, ClassScope scope) {
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (TypeParameter,ClassScope)");
 
-          java_parser.cactionTypeParameterClassScope(this.createJavaToken(node));
+          JavaParser.cactionTypeParameterClassScope(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (TypeParameter,ClassScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (TypeParameter,ClassScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(UnaryExpression  node, BlockScope scope)
+     public boolean enter(UnaryExpression  node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (UnaryExpression,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (UnaryExpression,BlockScope)");
 
-          java_parser.cactionUnaryExpression(this.createJavaToken(node));
+          JavaParser.cactionUnaryExpression(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (UnaryExpression,BlockScope)");
-
-          return true; // do nothing by  node, keep traversing
-        }
-
-     public boolean visit(WhileStatement  node, BlockScope scope)
-        {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (WhileStatement,BlockScope)");
-
-          java_parser.cactionWhileStatement(this.createJavaToken(node));
-
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (UnaryExpression,BlockScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(Wildcard  node, BlockScope scope)
+     public boolean enter(WhileStatement  node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (Wildcard,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (WhileStatement,BlockScope)");
 
-          java_parser.cactionWildcard(this.createJavaToken(node));
+          JavaParser.cactionWhileStatement(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (Wildcard,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (,BlockScope)");
 
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(Wildcard  node, ClassScope scope)
+     public boolean enter(Wildcard  node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (Wildcard,ClassScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (Wildcard,BlockScope)");
 
-          java_parser.cactionWildcardClassScope(this.createJavaToken(node));
+          JavaParser.cactionWildcard(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (Wildcard,ClassScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (Wildcard,BlockScope)");
+
+          return true; // do nothing by  node, keep traversing
+        }
+
+     public boolean enter(Wildcard  node, ClassScope scope)
+        {
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of enter (Wildcard,ClassScope)");
+
+          JavaParser.cactionWildcardClassScope(createJavaToken(node));
+
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving enter (Wildcard,ClassScope)");
 
           return true; // do nothing by  node, keep traversing
         }
@@ -2555,14 +2448,14 @@ class ecjASTVisitor extends ASTVisitor
 
   // DQ (3/18/2011): Not clear if I need this yet.
   // DQ (3/25/2011): I think we do need them.
-     public void endVisit(AllocationExpression node, BlockScope scope)
+     public void exit(AllocationExpression node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of endVisit (AllocationExpression,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of exit (AllocationExpression,BlockScope)");
 
        // String nameString = new String(node.type);
           String nameString = node.type.toString();
-          if (java_parser.verboseLevel > 0)
+          if (JavaParser.verboseLevel > 0)
              {
                System.out.println(" name      = " + nameString);
                System.out.println(" type      = " + node.type);
@@ -2580,130 +2473,122 @@ class ecjASTVisitor extends ASTVisitor
           JavaParserSupport.generateType(node.type);
 
        // Call the Java side of the JNI function.
-          java_parser.cactionAllocationExpressionEnd(nameString,
+          JavaParser.cactionAllocationExpressionEnd(nameString,
         		                                     node.arguments == null ? 0 : node.arguments.length,
-        				                             this.createJavaToken(node));
+        				                             createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (AllocationExpression,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (AllocationExpression,BlockScope)");
 
         }
 
-     public void endVisit(AND_AND_Expression  node, BlockScope scope)
+     public void exit(AND_AND_Expression  node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of endVisit (AND_AND_Expression,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of exit (AND_AND_Expression,BlockScope)");
 
        // Call the Java side of the JNI function.
-          java_parser.cactionANDANDExpressionEnd(this.createJavaToken(node));
+          JavaParser.cactionANDANDExpressionEnd(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-              System.out.println("Leaving endVisit (AND_AND_Expression,BlockScope)");
-
-        }
-
-     public void endVisit(AnnotationMethodDeclaration node, ClassScope classScope)
-        {
-       // do nothing by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (AnnotationMethodDeclaration,ClassScope)");
-        }
-
-     public void endVisit(Argument node, BlockScope scope)
-        {
-       // do nothing by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (Argument,BlockScope)");
-
-          if (! processedArguments.contains(node)) { // If argument was already processed, skip it!
-              String nameString = new String(node.name);
-          
-              java_parser.cactionArgumentEnd(nameString, node.modifiers, this.createJavaToken(node));
-
-              //
-              // charles4 (09/26/2011): If this Argument declaration belongs to a Catch statement,
-              // initiate processing of the Catch statement.
-              //
-              if (catchArguments.contains(node)) {
-                  java_parser.cactionCatchBlock(this.createJavaToken(node)); // Set up Catch Block environment
-              }
-          }
-          
-          if (java_parser.verboseLevel > 0)
-              System.out.println("Leaving endVisit (Argument,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+              System.out.println("Leaving exit (AND_AND_Expression,BlockScope)");
 
         }
 
-     public void endVisit(Argument node,ClassScope scope)
+     public void exit(AnnotationMethodDeclaration node, ClassScope classScope)
         {
        // do nothing by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (Argument,ClassScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (AnnotationMethodDeclaration,ClassScope)");
         }
 
-     public void endVisit(ArrayAllocationExpression node, BlockScope scope)
+    public void exit(Argument node, BlockScope scope) {
+        if (JavaParser.verboseLevel > 0)
+            System.out.println("Leaving exit (Argument,BlockScope)");
+
+        String nameString = new String(node.name);
+              
+        boolean is_catch_argument = catchArguments.contains(node);
+        JavaParser.cactionArgumentEnd(nameString, is_catch_argument, createJavaToken(node));
+
+        if (JavaParser.verboseLevel > 0)
+            System.out.println("Leaving exit (Argument,BlockScope)");
+    }
+
+     public void exit(Argument node,ClassScope scope)
         {
        // do nothing by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (ArrayAllocationExpression,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (Argument,ClassScope)");
+        }
 
-          java_parser.cactionArrayAllocationExpressionEnd(node.type.toString(),
+     public void exit(ArrayAllocationExpression node, BlockScope scope)
+        {
+       // do nothing by default
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (ArrayAllocationExpression,BlockScope)");
+
+          JavaParser.cactionArrayAllocationExpressionEnd(node.type.toString(),
         		                                          node.dimensions == null ? 0 : node.dimensions.length,
         		                                          node.initializer != null,
-        		                                          this.createJavaToken(node));
+        		                                          createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-              System.out.println("Leaving endVisit (ArrayAllocationExpression,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+              System.out.println("Leaving exit (ArrayAllocationExpression,BlockScope)");
         }
 
-     public void endVisit(ArrayInitializer  node, BlockScope scope)
+     public void exit(ArrayInitializer  node, BlockScope scope)
         {
        // do nothing by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (ArrayInitializer, BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (ArrayInitializer, BlockScope)");
           
-          java_parser.cactionArrayInitializerEnd(node.expressions == null ? 0 : node.expressions.length,
-                                                 this.createJavaToken(node));
+          JavaParser.cactionArrayInitializerEnd(node.expressions == null ? 0 : node.expressions.length,
+                                                 createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-              System.out.println("Leaving endVisit (ArrayInitializer, BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+              System.out.println("Leaving exit (ArrayInitializer, BlockScope)");
         }
 
-     public void endVisit(ArrayQualifiedTypeReference node, BlockScope scope)
+     public void exit(ArrayQualifiedTypeReference node, BlockScope scope)
         {
        // do nothing by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (ArrayQualifiedTypeReference,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (ArrayQualifiedTypeReference,BlockScope)");
         }
 
-     public void endVisit(ArrayQualifiedTypeReference node, ClassScope scope)
+     public void exit(ArrayQualifiedTypeReference node, ClassScope scope)
         {
        // do nothing by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (ArrayQualifiedTypeReference,ClassScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (ArrayQualifiedTypeReference,ClassScope)");
         }
 
-     public void endVisit(ArrayReference  node, BlockScope scope)
+     public void exit(ArrayReference  node, BlockScope scope)
         {
        // do nothing by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (ArrayReference,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (ArrayReference,BlockScope)");
 
-         java_parser.cactionArrayReferenceEnd(this.createJavaToken(node));
+         JavaParser.cactionArrayReferenceEnd(createJavaToken(node));
 
-         if (java_parser.verboseLevel > 0)
-              System.out.println("Leaving endVisit (ArrayReference,BlockScope)");
+         if (JavaParser.verboseLevel > 0)
+              System.out.println("Leaving exit (ArrayReference,BlockScope)");
         }
 
-     public void endVisit(ArrayTypeReference  node, BlockScope scope)
+     public void exit(ArrayTypeReference node, BlockScope scope)
         {
-         if (java_parser.verboseLevel > 0)
-             System.out.println("Inside of endVisit (ArrayTypeReference,BlockScope)");
+         if (JavaParser.verboseLevel > 0)
+             System.out.println("Inside of exit (ArrayTypeReference,BlockScope)");
+
+         // do nothing by default
+
+// Remove this !!!
 /*
           String type_name = new String(node.token);
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of endVisit (ArrayTypeReference,BlockScope): type name = " + type_name);
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of exit (ArrayTypeReference,BlockScope): type name = " + type_name);
 
        // This will generate the base type
           JavaParserSupport.generateType(node);
@@ -2711,304 +2596,314 @@ class ecjASTVisitor extends ASTVisitor
        // This will use the base type from the stack and implement the array type.
        // TODO: Currently no dimenion information is passed, this should likely be fixed.
        //       Also, the name of the base type is passed, but not used except for debugging.
-          java_parser.cactionArrayTypeReferenceEnd(type_name, this.createJavaToken(node));
+          JavaParser.cactionArrayTypeReferenceEnd(type_name, createJavaToken(node));
 */
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (ArrayTypeReference,BlockScope)");
+
+         if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (ArrayTypeReference,BlockScope)");
         }
 
-     public void endVisit(ArrayTypeReference  node, ClassScope scope)
+     public void exit(ArrayTypeReference node, ClassScope scope)
         {
-         if (java_parser.verboseLevel > 0)
-             System.out.println("Inside of endVisit (ArrayTypeReference,ClassScope)");
+         if (JavaParser.verboseLevel > 0)
+             System.out.println("Inside of exit (ArrayTypeReference,ClassScope)");
+         // do nothing by default
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (ArrayTypeReference,ClassScope)");
+        }
+
+     public void exit(AssertStatement  node, BlockScope scope)
+        {
        // do nothing by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (ArrayTypeReference,ClassScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (AssertStatement,BlockScope)");
+
+          JavaParser.cactionAssertStatementEnd(node.exceptionArgument != null, createJavaToken(node));
+
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (AssertStatement,BlockScope)");
         }
 
-     public void endVisit(AssertStatement  node, BlockScope scope)
+     public void exit(Assignment  node, BlockScope scope)
         {
-       // do nothing by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (AssertStatement,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of exit (Assignment,BlockScope)");
 
-          java_parser.cactionAssertStatementEnd(node.exceptionArgument != null, this.createJavaToken(node));
+          JavaParser.cactionAssignmentEnd(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (AssertStatement,BlockScope)");
-        }
-
-     public void endVisit(Assignment  node, BlockScope scope)
-        {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of endVisit (Assignment,BlockScope)");
-
-          java_parser.cactionAssignmentEnd(this.createJavaToken(node));
-
-          if (java_parser.verboseLevel > 0)
-              System.out.println("Leaving visit (Assignment,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+              System.out.println("Leaving enter (Assignment,BlockScope)");
         }
 
 
-     public void endVisit(BinaryExpression  node, BlockScope scope)
+     public void exit(BinaryExpression  node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of endVisit (BinaryExpression,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of exit (BinaryExpression,BlockScope)");
 
           int operatorKind = (node.bits & ASTNode.OperatorMASK) >> ASTNode.OperatorSHIFT;
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of endVisit (BinaryExpression,BlockScope): operatorKind = " + operatorKind);
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of exit (BinaryExpression,BlockScope): operatorKind = " + operatorKind);
 
-          java_parser.cactionBinaryExpressionEnd(operatorKind, this.createJavaToken(node));
+          JavaParser.cactionBinaryExpressionEnd(operatorKind, createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (BinaryExpression,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (BinaryExpression,BlockScope)");
 
         }
 
-     public void endVisit(Block  node, BlockScope scope) 
+     public void exit(Block  node, BlockScope scope) 
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of endVisit (Block,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of exit (Block,BlockScope)");
 
-          if (java_parser.verboseLevel > 1)
+          if (JavaParser.verboseLevel > 1)
                System.out.println("node.explicitDeclarations = " + node.explicitDeclarations);
 
           int numberOfStatements = 0;
           if (node.statements != null)
                numberOfStatements = node.statements.length;
 
-          if (java_parser.verboseLevel > 0)
+          if (JavaParser.verboseLevel > 0)
                System.out.println("numberOfStatements = " + numberOfStatements);
 
        // DQ (9/30/2011): We need to pass the number of statments so that we can pop 
        // a precise number of statements off of the stack (and not the whole stack).
-          java_parser.cactionBlockEnd(numberOfStatements, this.createJavaToken(node));
+          JavaParser.cactionBlockEnd(numberOfStatements, createJavaToken(node));
+
           //
           // charles4 (09/26/2011): If this block belongs to a Catch statement,
           // close the catch statement.
           //
           if (catchBlocks.contains(node)) {
-              java_parser.cactionCatchBlockEnd(this.createJavaToken(node));
+              JavaParser.cactionCatchBlockEnd(createJavaToken(node));
           }
 
-          if (java_parser.verboseLevel > 0)
-              System.out.println("Leaving endVisit (Block,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+              System.out.println("Leaving exit (Block,BlockScope)");
         }
 
-     public void endVisit(BreakStatement  node, BlockScope scope)
+     public void exit(BreakStatement  node, BlockScope scope)
         {
        // do nothing  by default
-         if (java_parser.verboseLevel > 0)
-             System.out.println("Leaving endVisit (BreakStatement,BlockScope)");
+         if (JavaParser.verboseLevel > 0)
+             System.out.println("Leaving exit (BreakStatement,BlockScope)");
         }
 
-     public void endVisit(CaseStatement  node, BlockScope scope)
+     public void exit(CaseStatement  node, BlockScope scope)
         {
        // do nothing  by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (CaseStatement,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (CaseStatement,BlockScope)");
 
-          java_parser.cactionCaseStatementEnd(node.constantExpression != null, this.createJavaToken(node));
+          JavaParser.cactionCaseStatementEnd(node.constantExpression != null, createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (CaseStatement,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (CaseStatement,BlockScope)");
         }
 
-     public void endVisit(CastExpression  node, BlockScope scope)
+     public void exit(CastExpression  node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of endVisit (CastExpression,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of exit (CastExpression,BlockScope)");
 
-          java_parser.cactionCastExpressionEnd(this.createJavaToken(node));
+          JavaParser.cactionCastExpressionEnd(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (CastExpression,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (CastExpression,BlockScope)");
         }
 
-     public void endVisit(CharLiteral  node, BlockScope scope)
-        {
-       // do nothing  by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (CharLiteral,BlockScope)");
-        }
-
-     public void endVisit(ClassLiteralAccess  node, BlockScope scope)
+     public void exit(CharLiteral  node, BlockScope scope)
         {
        // do nothing  by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (ClassLiteralAccess,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (CharLiteral,BlockScope)");
         }
 
-     public void endVisit(Clinit  node, ClassScope scope)
+     public void exit(ClassLiteralAccess  node, BlockScope scope)
         {
        // do nothing  by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (Clinit,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (ClassLiteralAccess,BlockScope)");
         }
 
-     public void endVisit(CompilationUnitDeclaration node, CompilationUnitScope scope)
+     public void exit(Clinit  node, ClassScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of endVisit (CompilationUnitDeclaration,CompilationUnitScope)");
+       // do nothing  by default
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (Clinit,BlockScope)");
+        }
+
+     public void exit(CompilationUnitDeclaration node, CompilationUnitScope scope)
+        {
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of exit (CompilationUnitDeclaration,CompilationUnitScope)");
 
           int numberOfStatements = 0;
           if (node.types != null)
              {
                numberOfStatements += node.types.length;
-               if (java_parser.verboseLevel > 0)
+               if (JavaParser.verboseLevel > 0)
                     System.out.println("node.types.length = " + node.types.length);
              }
 
           if (node.imports != null)
              {
                numberOfStatements += node.imports.length;
-               if (java_parser.verboseLevel > 0)
+               if (JavaParser.verboseLevel > 0)
                     System.out.println("node.imports.length = " + node.imports.length);
              }
 
-          if (java_parser.verboseLevel > 0)
+          if (JavaParser.verboseLevel > 0)
                System.out.println("numberOfStatements = " + numberOfStatements);
 
-          java_parser.cactionCompilationUnitDeclarationEnd(numberOfStatements, this.createJavaToken(node));
+          JavaParser.cactionCompilationUnitDeclarationEnd(numberOfStatements, createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (CompilationUnitDeclaration,CompilationUnitScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (CompilationUnitDeclaration,CompilationUnitScope)");
         }
 
-     public void endVisit(CompoundAssignment  node, BlockScope scope)
+     public void exit(CompoundAssignment  node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of endVisit (CompoundAssignment,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of exit (CompoundAssignment,BlockScope)");
 
-          if (java_parser.verboseLevel > 0)
-             System.out.println("Inside of endVisit (CompoundAssignment,BlockScope): operator_kind" + node.toString());
+          if (JavaParser.verboseLevel > 0)
+             System.out.println("Inside of exit (CompoundAssignment,BlockScope): operator_kind" + node.toString());
 
           int operator_kind = node.operator;
 
-          java_parser.cactionCompoundAssignmentEnd(operator_kind, this.createJavaToken(node));
+          JavaParser.cactionCompoundAssignmentEnd(operator_kind, createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (CompoundAssignment,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (CompoundAssignment,BlockScope)");
         }
 
-     public void endVisit(ConditionalExpression node, BlockScope scope)
+     public void exit(ConditionalExpression node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of endVisit (ConditionalExpression,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of exit (ConditionalExpression,BlockScope)");
 
-          java_parser.cactionConditionalExpressionEnd(this.createJavaToken(node));
+          JavaParser.cactionConditionalExpressionEnd(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (ConditionalExpression,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (ConditionalExpression,BlockScope)");
         }
 
-     public void endVisit(ConstructorDeclaration node, ClassScope scope)
-        {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of endVisit (ConstructorDeclaration,ClassScope)");
+    public void exit(ConstructorDeclaration node, ClassScope scope) {
+        if (JavaParser.verboseLevel > 0)
+            System.out.println("Inside of exit (ConstructorDeclaration,ClassScope)");
 
-       // DQ (7/31/2011): Added more precise handling of statements to be collected from the statement stack.
-          int numberOfStatements = 0;
-          if (node.statements != null)
-             {
-               numberOfStatements = node.statements.length;
+        // DQ (7/31/2011): Added more precise handling of statements to be collected from the statement stack.
+        int numberOfStatements = 0;
+        if (node.statements != null) {
+            numberOfStatements = node.statements.length;
+            if (JavaParser.verboseLevel > 0)
+                System.out.println("Inside of exit (ConstructorDeclaration,ClassScope): numberOfStatements = " + numberOfStatements);
+        }
 
-               if (java_parser.verboseLevel > 0)
-                    System.out.println("Inside of endVisit (ConstructorDeclaration,ClassScope): numberOfStatements = " + numberOfStatements);
-             }
-
-       // DQ (7/31/2011): I don't know if there is just one of these (super()) or if there could be many.
-          if (node.constructorCall != null)
-             {
+        // DQ (7/31/2011): I don't know if there is just one of these (super()) or if there could be many.
+        if (node.constructorCall != null) {
                numberOfStatements++;
-            // System.out.println("Inside of endVisit (ConstructorDeclaration,ClassScope): increment the numberOfStatements = " + numberOfStatements);
-             }
-
-          java_parser.cactionConstructorDeclarationEnd(node.arguments == null ? 0 : node.arguments.length,
-                                                       numberOfStatements,
-                                                       this.createJavaToken(node));
+            // System.out.println("Inside of exit (ConstructorDeclaration,ClassScope): increment the numberOfStatements = " + numberOfStatements);
+        }
+          
+        if (node.constructorCall == null && (node.statements == null || node.statements.length == 0)) {
+            if (JavaParser.verboseLevel > 1)
+                System.out.println("    Side-visiting Constructor Declaration Header for " + node.getClass().getName());
+            JavaParserSupport.processConstructorDeclarationHeader(node, createJavaToken(node));
         }
 
-     public void endVisit(ContinueStatement  node, BlockScope scope)
+        JavaParser.cactionConstructorDeclarationEnd(numberOfStatements, createJavaToken(node));
+    }
+
+     public void exit(ContinueStatement  node, BlockScope scope)
         {
        // do nothing  by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (ContinueStatement,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (ContinueStatement,BlockScope)");
         }
 
-     public void endVisit(DoStatement  node, BlockScope scope)
+     public void exit(DoStatement  node, BlockScope scope)
         {
        // do nothing  by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of endVisit (DoStatement,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of exit (DoStatement,BlockScope)");
 
-          java_parser.cactionDoStatementEnd(this.createJavaToken(node));
+          JavaParser.cactionDoStatementEnd(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (DoStatement,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (DoStatement,BlockScope)");
         }
 
-     public void endVisit(DoubleLiteral  node, BlockScope scope)
+     public void exit(DoubleLiteral  node, BlockScope scope)
         {
        // do nothing  by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (DoubleLiteral,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (DoubleLiteral,BlockScope)");
         }
 
-     public void endVisit(EmptyStatement  node, BlockScope scope)
+     public void exit(EmptyStatement  node, BlockScope scope)
         {
        // do nothing  by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (EmptyStatement,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (EmptyStatement,BlockScope)");
 
-          java_parser.cactionEmptyStatementEnd(this.createJavaToken(node));
+          JavaParser.cactionEmptyStatementEnd(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (EmptyStatement,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (EmptyStatement,BlockScope)");
         }
 
-     public void endVisit(EqualExpression  node, BlockScope scope)
+     public void exit(EqualExpression  node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of endVisit (EqualExpression,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of exit (EqualExpression,BlockScope)");
 
           int operator_kind = (node.bits & ASTNode.OperatorMASK) >> ASTNode.OperatorSHIFT; // EQUAL_EQUAL or NOT_EQUAL
 
-          java_parser.cactionEqualExpressionEnd(operator_kind, this.createJavaToken(node));
+          JavaParser.cactionEqualExpressionEnd(operator_kind, createJavaToken(node));
         }
 
-     public void endVisit(ExplicitConstructorCall node, BlockScope scope)
+     public void exit(ExplicitConstructorCall node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of endVisit (ExplicitConstructorCall,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of exit (ExplicitConstructorCall,BlockScope)");
 
-          java_parser.cactionExplicitConstructorCallEnd("abc", this.createJavaToken(node));
+          if (JavaParser.verboseLevel > 0)
+              System.out.println("In visit (ExplicitConstructorCall,BlockScope): node.accessMode = " + node.accessMode);
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (ExplicitConstructorCall,BlockScope)");
+          JavaParser.cactionExplicitConstructorCallEnd(node.isImplicitSuper(),
+        		                                       node.isSuperAccess(),
+        		                                       node.qualification != null,
+        		                                       node.typeArguments == null ? 0 : node.typeArguments.length,
+        		                                       node.arguments == null ? 0 : node.arguments.length,
+        		                                       createJavaToken(node));
+
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (ExplicitConstructorCall,BlockScope)");
         }
 
-     public void endVisit(ExtendedStringLiteral node, BlockScope scope)
-        {
-       // do nothing  by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (ExtendedStringLiteral,BlockScope)");
-        }
-
-     public void endVisit(FalseLiteral  node, BlockScope scope)
-        {
-       // do nothing  by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (FalseLiteral,BlockScope)");
-        }
-
-     public void endVisit(FieldDeclaration  node, MethodScope scope)
+     public void exit(ExtendedStringLiteral node, BlockScope scope)
         {
        // do nothing  by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of endVisit (FieldDeclaration,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (ExtendedStringLiteral,BlockScope)");
+        }
+
+     public void exit(FalseLiteral  node, BlockScope scope)
+        {
+       // do nothing  by default
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (FalseLiteral,BlockScope)");
+        }
+
+     public void exit(FieldDeclaration  node, MethodScope scope)
+        {
+       // do nothing  by default
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of exit (FieldDeclaration,BlockScope)");
 /*
        // DQ (9/5/2011): Old code from before this was processed bottom up.
 
@@ -3017,7 +2912,7 @@ class ecjASTVisitor extends ASTVisitor
 
           boolean hasInitializer = (node.initialization != null) ? true : false;
 
-          java_parser.cactionFieldDeclarationEnd(name,hasInitializer, this.createJavaToken(node));
+          JavaParser.cactionFieldDeclarationEnd(name,hasInitializer, createJavaToken(node));
 */
 
        // I think that it is enough that this is set via the LocalDeclaration.
@@ -3040,7 +2935,7 @@ class ecjASTVisitor extends ASTVisitor
        // System.out.println("node.name = " + selectorName);
        // System.out.println("node.modfiers = " + node.modfiers);
 
-          if (java_parser.verboseLevel > 0)
+          if (JavaParser.verboseLevel > 0)
              {
                System.out.println("node.name                     = " + name);
                System.out.println("node.binding                  = " + node.binding);
@@ -3070,303 +2965,303 @@ class ecjASTVisitor extends ASTVisitor
 
        // Build the variable declaration using the type from the astJavaTypeStack.
        // Note that this may have to handle an array of names or be even more complex in the future.
-       // java_parser.cactionLocalDeclaration(name,isFinal);
+       // JavaParser.cactionLocalDeclaration(name,isFinal);
 
-          java_parser.cactionFieldDeclarationEnd(name,hasInitializer,isFinal,isPrivate,isProtected,isPublic,isVolatile,isSynthetic,isStatic,isTransient, this.createJavaToken(node));
+          JavaParser.cactionFieldDeclarationEnd(name,hasInitializer,isFinal,isPrivate,isProtected,isPublic,isVolatile,isSynthetic,isStatic,isTransient, createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (FieldDeclaration,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (FieldDeclaration,BlockScope)");
         }
 
-     public void endVisit(FieldReference  node, BlockScope scope)
+     public void exit(FieldReference  node, BlockScope scope)
         {
        // do nothing  by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (FieldReference,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (FieldReference,BlockScope)");
 
           String fieldRefName = new String(node.token);
           
-          java_parser.cactionFieldReferenceEnd(fieldRefName, this.createJavaToken(node));
+          JavaParser.cactionFieldReferenceEnd(fieldRefName, createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (FieldReference,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (FieldReference,BlockScope)");
         }
 
-     public void endVisit(FieldReference  node, ClassScope scope)
+     public void exit(FieldReference  node, ClassScope scope)
         {
        // do nothing  by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (FieldReference,ClassScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (FieldReference,ClassScope)");
 
           String fieldRefName = new String(node.token);
           
-          java_parser.cactionFieldReferenceClassScopeEnd(fieldRefName, this.createJavaToken(node));
+          JavaParser.cactionFieldReferenceClassScopeEnd(fieldRefName, createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (FieldReference,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (FieldReference,BlockScope)");
         }
 
-     public void endVisit(FloatLiteral  node, BlockScope scope)
+     public void exit(FloatLiteral  node, BlockScope scope)
         {
        // do nothing  by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (FloatLiteral,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (FloatLiteral,BlockScope)");
         }
 
-     public void endVisit(ForeachStatement  node, BlockScope scope)
+     public void exit(ForeachStatement  node, BlockScope scope)
         {
        // do nothing  by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (ForeachStatement,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (ForeachStatement,BlockScope)");
 
-          java_parser.cactionForeachStatementEnd(this.createJavaToken(node));
+          JavaParser.cactionForeachStatementEnd(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (ForeachStatement,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (ForeachStatement,BlockScope)");
         }
 
-     public void endVisit(ForStatement  node, BlockScope scope)
+     public void exit(ForStatement  node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of endVisit (ForStatement,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of exit (ForStatement,BlockScope)");
 
-          java_parser.cactionForStatementEnd(node.initializations == null ? 0 : node.initializations.length,
+          JavaParser.cactionForStatementEnd(node.initializations == null ? 0 : node.initializations.length,
                                              node.condition != null,
                                              node.increments == null ? 0 : node.increments.length,
-                                             this.createJavaToken(node));
+                                             createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (ForStatement,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (ForStatement,BlockScope)");
         }
 
-     public void endVisit(IfStatement  node, BlockScope scope)
+     public void exit(IfStatement  node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of endVisit (IfStatement,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of exit (IfStatement,BlockScope)");
 
-          java_parser.cactionIfStatementEnd(node.elseStatement != null, this.createJavaToken(node));
+          JavaParser.cactionIfStatementEnd(node.elseStatement != null, createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (IfStatement,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (IfStatement,BlockScope)");
         }
 
-     public void endVisit(ImportReference  node, CompilationUnitScope scope)
-        {
-       // do nothing  by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (ImportReference,CompilationUnitScope)");
-        }
-
-     public void endVisit(Initializer  node, MethodScope scope)
+     public void exit(ImportReference  node, CompilationUnitScope scope)
         {
        // do nothing  by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (Initializer,MethodScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (ImportReference,CompilationUnitScope)");
         }
 
-     public void endVisit(InstanceOfExpression node, BlockScope scope)
-        {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of endVisit (InstanceOfExpression,BlockScope)");
-
-          java_parser.cactionInstanceOfExpressionEnd(this.createJavaToken(node));
-
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (InstanceOfExpression,BlockScope)");
-        }
-
-     public void endVisit(IntLiteral node, BlockScope scope)
+     public void exit(Initializer  node, MethodScope scope)
         {
        // do nothing  by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (IntLiteral,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (Initializer,MethodScope)");
         }
 
-     public void endVisit(Javadoc  node, BlockScope scope)
+     public void exit(InstanceOfExpression node, BlockScope scope)
+        {
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of exit (InstanceOfExpression,BlockScope)");
+
+          JavaParser.cactionInstanceOfExpressionEnd(createJavaToken(node));
+
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (InstanceOfExpression,BlockScope)");
+        }
+
+     public void exit(IntLiteral node, BlockScope scope)
         {
        // do nothing  by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (Javadoc,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (IntLiteral,BlockScope)");
         }
 
-     public void endVisit(Javadoc  node, ClassScope scope)
+     public void exit(Javadoc  node, BlockScope scope)
         {
        // do nothing  by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (Javadoc,ClassScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (Javadoc,BlockScope)");
         }
 
-     public void endVisit(JavadocAllocationExpression  node, BlockScope scope)
+     public void exit(Javadoc  node, ClassScope scope)
         {
        // do nothing  by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (JavadocAllocationExpression,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (Javadoc,ClassScope)");
         }
 
-     public void endVisit(JavadocAllocationExpression  node, ClassScope scope)
+     public void exit(JavadocAllocationExpression  node, BlockScope scope)
         {
        // do nothing  by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (JavadocAllocationExpression,ClassScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (JavadocAllocationExpression,BlockScope)");
         }
 
-     public void endVisit(JavadocArgumentExpression  node, BlockScope scope)
+     public void exit(JavadocAllocationExpression  node, ClassScope scope)
         {
        // do nothing  by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (JavadocArgumentExpression,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (JavadocAllocationExpression,ClassScope)");
         }
 
-     public void endVisit(JavadocArgumentExpression  node, ClassScope scope)
+     public void exit(JavadocArgumentExpression  node, BlockScope scope)
         {
        // do nothing  by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (JavadocArgumentExpression,ClassScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (JavadocArgumentExpression,BlockScope)");
         }
 
-     public void endVisit(JavadocArrayQualifiedTypeReference  node, BlockScope scope)
+     public void exit(JavadocArgumentExpression  node, ClassScope scope)
         {
        // do nothing  by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (JavadocArrayQualifiedTypeReference,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (JavadocArgumentExpression,ClassScope)");
         }
 
-     public void endVisit(JavadocArrayQualifiedTypeReference  node, ClassScope scope)
+     public void exit(JavadocArrayQualifiedTypeReference  node, BlockScope scope)
         {
        // do nothing  by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (JavadocArrayQualifiedTypeReference,ClassScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (JavadocArrayQualifiedTypeReference,BlockScope)");
         }
 
-     public void endVisit(JavadocArraySingleTypeReference  node, BlockScope scope)
+     public void exit(JavadocArrayQualifiedTypeReference  node, ClassScope scope)
         {
        // do nothing  by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (JavadocArraySingleTypeReference,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (JavadocArrayQualifiedTypeReference,ClassScope)");
         }
 
-     public void endVisit(JavadocArraySingleTypeReference  node, ClassScope scope)
+     public void exit(JavadocArraySingleTypeReference  node, BlockScope scope)
         {
        // do nothing  by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (JavadocArraySingleTypeReference,ClassScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (JavadocArraySingleTypeReference,BlockScope)");
         }
 
-     public void endVisit(JavadocFieldReference  node, BlockScope scope)
+     public void exit(JavadocArraySingleTypeReference  node, ClassScope scope)
         {
        // do nothing  by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (JavadocFieldReference,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (JavadocArraySingleTypeReference,ClassScope)");
         }
 
-     public void endVisit(JavadocFieldReference  node, ClassScope scope)
+     public void exit(JavadocFieldReference  node, BlockScope scope)
         {
        // do nothing  by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (JavadocFieldReference,ClassScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (JavadocFieldReference,BlockScope)");
         }
 
-     public void endVisit(JavadocImplicitTypeReference  node, BlockScope scope)
+     public void exit(JavadocFieldReference  node, ClassScope scope)
         {
        // do nothing  by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (JavadocImplicitTypeReference,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (JavadocFieldReference,ClassScope)");
         }
 
-     public void endVisit(JavadocImplicitTypeReference  node, ClassScope scope)
+     public void exit(JavadocImplicitTypeReference  node, BlockScope scope)
         {
        // do nothing  by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (JavadocImplicitTypeReference,ClassScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (JavadocImplicitTypeReference,BlockScope)");
         }
 
-     public void endVisit(JavadocMessageSend  node, BlockScope scope)
+     public void exit(JavadocImplicitTypeReference  node, ClassScope scope)
         {
        // do nothing  by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (JavadocMessageSend,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (JavadocImplicitTypeReference,ClassScope)");
         }
 
-     public void endVisit(JavadocMessageSend  node, ClassScope scope)
+     public void exit(JavadocMessageSend  node, BlockScope scope)
         {
        // do nothing  by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (JavadocMessageSend,ClassScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (JavadocMessageSend,BlockScope)");
         }
 
-     public void endVisit(JavadocQualifiedTypeReference  node, BlockScope scope)
+     public void exit(JavadocMessageSend  node, ClassScope scope)
         {
        // do nothing  by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (JavadocQualifiedTypeReference,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (JavadocMessageSend,ClassScope)");
         }
 
-     public void endVisit(JavadocQualifiedTypeReference  node, ClassScope scope)
+     public void exit(JavadocQualifiedTypeReference  node, BlockScope scope)
         {
        // do nothing  by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (JavadocQualifiedTypeReference,ClassScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (JavadocQualifiedTypeReference,BlockScope)");
         }
 
-     public void endVisit(JavadocReturnStatement  node, BlockScope scope)
+     public void exit(JavadocQualifiedTypeReference  node, ClassScope scope)
         {
        // do nothing  by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (JavadocReturnStatement,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (JavadocQualifiedTypeReference,ClassScope)");
         }
 
-     public void endVisit(JavadocReturnStatement  node, ClassScope scope)
+     public void exit(JavadocReturnStatement  node, BlockScope scope)
         {
        // do nothing  by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (JavadocReturnStatement,ClassScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (JavadocReturnStatement,BlockScope)");
         }
 
-     public void endVisit(JavadocSingleNameReference  node, BlockScope scope)
+     public void exit(JavadocReturnStatement  node, ClassScope scope)
         {
        // do nothing  by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (JavadocSingleNameReference,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (JavadocReturnStatement,ClassScope)");
         }
 
-     public void endVisit(JavadocSingleNameReference  node, ClassScope scope)
+     public void exit(JavadocSingleNameReference  node, BlockScope scope)
         {
        // do nothing  by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (JavadocSingleNameReference,ClassScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (JavadocSingleNameReference,BlockScope)");
         }
 
-     public void endVisit(JavadocSingleTypeReference  node, BlockScope scope)
+     public void exit(JavadocSingleNameReference  node, ClassScope scope)
         {
        // do nothing  by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (JavadocSingleTypeReference,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (JavadocSingleNameReference,ClassScope)");
         }
 
-     public void endVisit(JavadocSingleTypeReference  node, ClassScope scope)
+     public void exit(JavadocSingleTypeReference  node, BlockScope scope)
         {
        // do nothing  by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (JavadocSingleTypeReference,ClassScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (JavadocSingleTypeReference,BlockScope)");
         }
 
-     public void endVisit(LabeledStatement  node, BlockScope scope)
+     public void exit(JavadocSingleTypeReference  node, ClassScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (LabeledStatement,BlockScope)");
-
-          java_parser.cactionLabeledStatementEnd(this.createJavaToken(node));
-
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (LabeledStatement,BlockScope)");
+       // do nothing  by default
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (JavadocSingleTypeReference,ClassScope)");
         }
 
-     public void endVisit(LocalDeclaration  node, BlockScope scope)
+     public void exit(LabeledStatement  node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (LocalDeclaration,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (LabeledStatement,BlockScope)");
 
-          if (java_parser.verboseLevel > 0)
+          JavaParser.cactionLabeledStatementEnd(createJavaToken(node));
+
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (LabeledStatement,BlockScope)");
+        }
+
+     public void exit(LocalDeclaration  node, BlockScope scope)
+        {
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (LocalDeclaration,BlockScope)");
+
+          if (JavaParser.verboseLevel > 0)
                System.out.println("If there is an expression on the stack it is the initializer...");
 
           String name = new String(node.name);
@@ -3375,7 +3270,7 @@ class ecjASTVisitor extends ASTVisitor
        // System.out.println("node.name = " + selectorName);
        // System.out.println("node.modfiers = " + node.modfiers);
 
-          if (java_parser.verboseLevel > 0)
+          if (JavaParser.verboseLevel > 0)
              {
                System.out.println("node.name                     = " + name);
                System.out.println("node.binding                  = " + node.binding);
@@ -3398,282 +3293,303 @@ class ecjASTVisitor extends ASTVisitor
 
        // Build the variable declaration using the type from the astJavaTypeStack.
        // Note that this may have to handle an array of names or be even more complex in the future.
-          java_parser.cactionLocalDeclarationEnd(name, node.initialization != null, isFinal, this.createJavaToken(node));
+          JavaParser.cactionLocalDeclarationEnd(name, node.initialization != null, isFinal, createJavaToken(node));
 // charles4 10/12/2011: Remove this!
 //
 //          if (node.initialization != null)
 //             {
-//               if (java_parser.verboseLevel > 0)
+//               if (JavaParser.verboseLevel > 0)
 //                    System.out.println("Process the initializer expression...");
 //
-//               java_parser.cactionLocalDeclarationInitialization(this.createJavaToken(node));
+//               JavaParser.cactionLocalDeclarationInitialization(createJavaToken(node));
 //             }
         }
 
-     public void endVisit(LongLiteral  node, BlockScope scope)
+     public void exit(LongLiteral  node, BlockScope scope)
         {
        // do nothing  by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (LongLiteral,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (LongLiteral,BlockScope)");
         }
 
-     public void endVisit(MarkerAnnotation  node, BlockScope scope)
+     public void exit(MarkerAnnotation  node, BlockScope scope)
         {
        // do nothing  by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (MarkerAnnotation,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (MarkerAnnotation,BlockScope)");
         }
 
-     public void endVisit(MemberValuePair  node, BlockScope scope)
+     public void exit(MemberValuePair  node, BlockScope scope)
         {
        // do nothing  by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (MemberValuePair,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (MemberValuePair,BlockScope)");
         }
 
-     public void endVisit(MessageSend  node, BlockScope scope)
+     public void exit(MessageSend  node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of endVisit (MessageSend,BlockScope)");
-
-          java_parser.cactionMessageSendEnd(node.typeArguments == null ? 0 : node.typeArguments.length,
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of exit (MessageSend,BlockScope)");
+          JavaParser.cactionMessageSendEnd(node.typeArguments == null ? 0 : node.typeArguments.length,
                                             node.arguments == null ? 0 : node.arguments.length,
-                                            this.createJavaToken(node));
+                                            createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (MessageSend,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (MessageSend,BlockScope)");
         }
 
-     public void endVisit(MethodDeclaration  node, ClassScope scope)
+     public void exit(MethodDeclaration  node, ClassScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (MethodDeclaration,ClassScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (MethodDeclaration,ClassScope)");
 
-          java_parser.cactionMethodDeclarationEnd(node.arguments == null  ? 0 : node.arguments.length,
-                                                  node.thrownExceptions == null ? 0 : node.thrownExceptions.length,
-                		                          node.statements == null ? 0 : node.statements.length,
-        		                                  this.createJavaToken(node));
+        if (node.statements == null || node.statements.length == 0) {
+            if (JavaParser.verboseLevel > 1)
+                System.out.println("    Side-visiting Method Declaration Header for " + node.getClass().getName());
+        	JavaParserSupport.processMethodDeclarationHeader(node, createJavaToken(node));
         }
 
-     public void endVisit(StringLiteralConcatenation  node, BlockScope scope)
-        {
-       // do nothing  by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (StringLiteralConcatenation,BlockScope)");
-        }
+        JavaParser.cactionMethodDeclarationEnd(node.statements == null ? 0 : node.statements.length,
+                                                createJavaToken(node));
+    }
 
-     public void endVisit(NormalAnnotation  node, BlockScope scope)
+     public void exit(StringLiteralConcatenation  node, BlockScope scope)
         {
        // do nothing  by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (NormalAnnotation,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (StringLiteralConcatenation,BlockScope)");
         }
 
-     public void endVisit(NullLiteral  node, BlockScope scope)
+     public void exit(NormalAnnotation  node, BlockScope scope)
         {
        // do nothing  by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (NullLiteral,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (NormalAnnotation,BlockScope)");
         }
 
-     public void endVisit(OR_OR_Expression  node, BlockScope scope)
-        {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of endVisit (OR_OR_Expression,BlockScope)");
-
-          java_parser.cactionORORExpressionEnd(this.createJavaToken(node));
-
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (OR_OR_Expression,BlockScope)");
-        }
-
-     public void endVisit(ParameterizedQualifiedTypeReference  node, BlockScope scope)
+     public void exit(NullLiteral  node, BlockScope scope)
         {
        // do nothing  by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (ParameterizedQualifiedTypeReference,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (NullLiteral,BlockScope)");
         }
 
-     public void endVisit(ParameterizedQualifiedTypeReference  node, ClassScope scope)
+     public void exit(OR_OR_Expression  node, BlockScope scope)
         {
-       // do nothing  by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (ParameterizedQualifiedTypeReference,ClassScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of exit (OR_OR_Expression,BlockScope)");
+
+          JavaParser.cactionORORExpressionEnd(createJavaToken(node));
+
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (OR_OR_Expression,BlockScope)");
         }
 
-     public void endVisit(ParameterizedSingleTypeReference  node, BlockScope scope)
+    public void exit(ParameterizedQualifiedTypeReference node, BlockScope scope) {
+        if (JavaParser.verboseLevel > 0)
+            System.out.println("Leaving exit (ParameterizedQualifiedTypeReference,BlockScope)");
+
+        StringBuffer strbuf = new StringBuffer();
+        for (int i = 0; i < node.tokens.length; i++) {
+            strbuf.append(node.tokens[i]);
+            if (i + 1 < node.tokens.length)
+                strbuf.append(".");
+        }
+        String qualifiedTypeName = new String(strbuf);
+
+        if (JavaParser.verboseLevel > 0)
+             System.out.println("At top of exit (ParameterizedSingleTypeReference,BlockScope) name = " + qualifiedTypeName);
+        
+        //
+        // TODO: Do this right !!!  This is a temporary patch !!!
+        //
+        int num_type_arguments = 0;
+        for (int i = 0; i < (node.typeArguments == null ? 0 : node.typeArguments.length); i++) {
+        	if (node.typeArguments[i] != null)
+        		num_type_arguments++;
+        }
+
+        JavaParser.cactionParameterizedSingleTypeReferenceEnd(qualifiedTypeName,
+                                                              num_type_arguments,
+                                                              createJavaToken(node));
+
+        // TODO: if this type is an array, take care of the dimensions !!!
+
+        if (JavaParser.verboseLevel > 0)
+            System.out.println("Leaving exit (ParameterizedQualifiedTypeReference, BlockScope)");
+    }
+
+    public void exit(ParameterizedQualifiedTypeReference node, ClassScope scope) {
+        if (JavaParser.verboseLevel > 0)
+            System.out.println("Leaving exit (ParameterizedQualifiedTypeReference,ClassScope)");
+    }
+
+     public void exit(ParameterizedSingleTypeReference  node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("At top of endVisit (ParameterizedSingleTypeReference,BlockScope)");
-
-          int numberOfTypeArguments = 0;
-          if (node.typeArguments != null)
-             {
-               numberOfTypeArguments = node.typeArguments.length;
-             }
-
-          int numberOfDimensions = node.dimensions;
-
-          if (java_parser.verboseLevel > 0)
-               System.out.println("At top of endVisit (ParameterizedSingleTypeReference,BlockScope) numberOfDimensions = " + numberOfDimensions);
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("At top of exit (ParameterizedSingleTypeReference,BlockScope)");
 
           String name = new String(node.token);
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("At top of endVisit (ParameterizedSingleTypeReference,BlockScope) name = " + name);
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("At top of exit (ParameterizedSingleTypeReference,BlockScope) name = " + name);
 
        // We need to find the qualified name for the associated type name (it should be unique).
        // This has to be handled on the Java side...
 
           String qualifiedTypeName = JavaParserSupport.hashmapOfQualifiedNamesOfClasses.get(name);
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("At top of endVisit (ParameterizedSingleTypeReference,BlockScope) qualifiedTypeName = " + qualifiedTypeName);
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("At top of exit (ParameterizedSingleTypeReference,BlockScope) qualifiedTypeName = " + qualifiedTypeName);
 
-          java_parser.cactionParameterizedSingleTypeReferenceEnd(qualifiedTypeName,numberOfTypeArguments,this.createJavaToken(node));
+          JavaParser.cactionParameterizedSingleTypeReferenceEnd(qualifiedTypeName,
+                                                                node.typeArguments == null ? 0 : node.typeArguments.length,
+                                                                createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (ParameterizedSingleTypeReference,BlockScope)");
+          // TODO: if this type is an array, take care of the dimensions !!!
+
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (ParameterizedSingleTypeReference,BlockScope)");
         }
 
-     public void endVisit(ParameterizedSingleTypeReference  node, ClassScope scope)
+     public void exit(ParameterizedSingleTypeReference  node, ClassScope scope)
         {
        // do nothing  by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (ParameterizedSingleTypeReference,ClassScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (ParameterizedSingleTypeReference,ClassScope)");
         }
 
-     public void endVisit(PostfixExpression  node, BlockScope scope)
+     public void exit(PostfixExpression  node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of endVisit (PostfixExpression,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of exit (PostfixExpression,BlockScope)");
 
           int operator_kind = node.operator;
 
-          java_parser.cactionPostfixExpressionEnd(operator_kind, this.createJavaToken(node));
+          JavaParser.cactionPostfixExpressionEnd(operator_kind, createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (PostfixExpression,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (PostfixExpression,BlockScope)");
         }
 
-     public void endVisit(PrefixExpression  node, BlockScope scope)
+     public void exit(PrefixExpression  node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of endVisit (PrefixExpression,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of exit (PrefixExpression,BlockScope)");
 
           int operator_kind = node.operator;
 
-          java_parser.cactionPrefixExpressionEnd(operator_kind, this.createJavaToken(node));
+          JavaParser.cactionPrefixExpressionEnd(operator_kind, createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (PrefixExpression,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (PrefixExpression,BlockScope)");
         }
 
-     public void endVisit(QualifiedAllocationExpression node, BlockScope scope)
+     public void exit(QualifiedAllocationExpression node, BlockScope scope)
         {
        // do nothing  by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (QualifiedAllocationExpression,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (QualifiedAllocationExpression,BlockScope)");
         }
 
-     public void endVisit(QualifiedNameReference node, BlockScope scope)
+     public void exit(QualifiedNameReference node, BlockScope scope)
         {
        // do nothing  by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (QualifiedNameReference,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (QualifiedNameReference,BlockScope)");
         }
 
-     public void endVisit(QualifiedNameReference node, ClassScope scope)
+     public void exit(QualifiedNameReference node, ClassScope scope)
         {
        // do nothing  by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (QualifiedNameReference,ClassScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (QualifiedNameReference,ClassScope)");
         }
 
-     public void endVisit(QualifiedSuperReference node, BlockScope scope)
+     public void exit(QualifiedSuperReference node, BlockScope scope)
         {
        // do nothing  by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (QualifiedSuperReference,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (QualifiedSuperReference,BlockScope)");
         }
 
-     public void endVisit(QualifiedSuperReference node, ClassScope scope)
+     public void exit(QualifiedSuperReference node, ClassScope scope)
         {
        // do nothing  by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (QualifiedSuperReference,ClassScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (QualifiedSuperReference,ClassScope)");
         }
 
-     public void endVisit(QualifiedThisReference node, BlockScope scope)
+     public void exit(QualifiedThisReference node, BlockScope scope)
         {
        // do nothing  by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (QualifiedThisReference,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (QualifiedThisReference,BlockScope)");
         }
 
-     public void endVisit(QualifiedThisReference node, ClassScope scope)
+     public void exit(QualifiedThisReference node, ClassScope scope)
         {
        // do nothing  by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (QualifiedThisReference,ClassScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (QualifiedThisReference,ClassScope)");
         }
 
-     public void endVisit(QualifiedTypeReference node, BlockScope scope)
+     public void exit(QualifiedTypeReference node, BlockScope scope)
         {
        // do nothing  by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (QualifiedTypeReference,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (QualifiedTypeReference,BlockScope)");
         }
 
-     public void endVisit(QualifiedTypeReference node, ClassScope scope)
+     public void exit(QualifiedTypeReference node, ClassScope scope)
         {
        // do nothing  by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (QualifiedTypeReference,ClassScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (QualifiedTypeReference,ClassScope)");
         }
 
-     public void endVisit(ReturnStatement  node, BlockScope scope)
+     public void exit(ReturnStatement  node, BlockScope scope)
         {
        // do nothing  by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (ReturnStatement,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (ReturnStatement,BlockScope)");
 
-          java_parser.cactionReturnStatementEnd(node.expression != null, this.createJavaToken(node));
+          JavaParser.cactionReturnStatementEnd(node.expression != null, createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (ReturnStatement,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (ReturnStatement,BlockScope)");
         }
 
-     public void endVisit(SingleMemberAnnotation  node, BlockScope scope)
+     public void exit(SingleMemberAnnotation  node, BlockScope scope)
         {
        // do nothing  by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (SingleMemberAnnotation,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (SingleMemberAnnotation,BlockScope)");
         }
 
-     public void endVisit(SingleNameReference node, BlockScope scope)
+     public void exit(SingleNameReference node, BlockScope scope)
         {
        // do nothing  by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (SingleNameReference,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (SingleNameReference,BlockScope)");
         }
 
-     public void endVisit(SingleNameReference node, ClassScope scope)
+     public void exit(SingleNameReference node, ClassScope scope)
         {
        // do nothing  by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (SingleNameReference,ClassScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (SingleNameReference,ClassScope)");
         }
 
-     public void endVisit(SingleTypeReference node, BlockScope scope)
+     public void exit(SingleTypeReference node, BlockScope scope)
         {
        // do nothing  by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (SingleTypeReference,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (SingleTypeReference,BlockScope)");
 /*
           if (node.resolvedType != null)
              {
-               java_parser.cactionSingleTypeReference("SingleTypeReference_block_abc", this.createJavaToken(node));
+               JavaParser.cactionSingleTypeReference("SingleTypeReference_block_abc", createJavaToken(node));
             // char[][] char_string = node.getTypeName();
             // System.out.println(char_string);
             // String typename = new String(node.getTypeName().toString());
@@ -3693,225 +3609,177 @@ class ecjASTVisitor extends ASTVisitor
 */
         }
 
-     public void endVisit(SingleTypeReference node, ClassScope scope)
+     public void exit(SingleTypeReference node, ClassScope scope)
         {
        // do nothing  by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (SingleTypeReference,ClassScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (SingleTypeReference,ClassScope)");
         }
 
-     public void endVisit(StringLiteral  node, BlockScope scope)
+     public void exit(StringLiteral  node, BlockScope scope)
         {
        // do nothing  by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (StringLiteral,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (StringLiteral,BlockScope)");
         }
 
-     public void endVisit(SuperReference  node, BlockScope scope)
+     public void exit(SuperReference  node, BlockScope scope)
         {
        // do nothing  by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (SuperReference,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (SuperReference,BlockScope)");
         }
 
-     public void endVisit(SwitchStatement  node, BlockScope scope)
+     public void exit(SwitchStatement  node, BlockScope scope)
         {
        // do nothing  by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (SwitchStatement,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (SwitchStatement,BlockScope)");
 
-          java_parser.cactionSwitchStatementEnd(node.caseCount, node.defaultCase != null, this.createJavaToken(node));
+          JavaParser.cactionSwitchStatementEnd(node.caseCount, node.defaultCase != null, createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (SwitchStatement,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (SwitchStatement,BlockScope)");
         }
 
-     public void endVisit(SynchronizedStatement node, BlockScope scope)
+     public void exit(SynchronizedStatement node, BlockScope scope)
         {
        // do nothing  by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (SynchronizedStatement,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (SynchronizedStatement,BlockScope)");
 
-          java_parser.cactionSynchronizedStatementEnd(this.createJavaToken(node));
+          JavaParser.cactionSynchronizedStatementEnd(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (SynchronizedStatement,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (SynchronizedStatement,BlockScope)");
         }
 
-     public void endVisit(ThisReference  node, BlockScope scope)
+     public void exit(ThisReference  node, BlockScope scope)
         {
        // do nothing  by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (ThisReference,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (ThisReference,BlockScope)");
         }
 
-     public void endVisit(ThisReference  node, ClassScope scope)
+     public void exit(ThisReference  node, ClassScope scope)
         {
        // do nothing  by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (ThisReference,ClassScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (ThisReference,ClassScope)");
         }
 
-     public void endVisit(ThrowStatement node, BlockScope scope)
+     public void exit(ThrowStatement node, BlockScope scope)
         {
        // do nothing  by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (ThrowStatement,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (ThrowStatement,BlockScope)");
 
-          java_parser.cactionThrowStatementEnd(this.createJavaToken(node));
+          JavaParser.cactionThrowStatementEnd(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (ThrowStatement,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (ThrowStatement,BlockScope)");
 }
 
-     public void endVisit(TrueLiteral  node, BlockScope scope)
+     public void exit(TrueLiteral  node, BlockScope scope)
         {
        // do nothing  by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (TrueLiteral,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (TrueLiteral,BlockScope)");
         }
 
-     public void endVisit(TryStatement  node, BlockScope scope)
+     public void exit(TryStatement  node, BlockScope scope)
         {
        // do nothing  by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("endVisit TryStatement -- BlockScope");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("exit TryStatement -- BlockScope");
 
-          java_parser.cactionTryStatementEnd(node.catchArguments == null ? 0 : node.catchBlocks.length, node.finallyBlock != null, this.createJavaToken(node));
+          JavaParser.cactionTryStatementEnd(node.catchArguments == null ? 0 : node.catchBlocks.length, node.finallyBlock != null, createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (TryStatement,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (TryStatement,BlockScope)");
         }
 
-     public void endVisit(TypeDeclaration node, BlockScope scope)
+     public void exit(TypeDeclaration node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("endVisit TypeDeclaration -- BlockScope");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("exit TypeDeclaration -- BlockScope");
 
-          String typename = new String(node.name);
-          java_parser.cactionTypeDeclarationEnd(typename,
-                  node.kind(node.modifiers) == TypeDeclaration.INTERFACE_DECL,
-                                                node.superclass != null,
-                                                node.superInterfaces == null ? 0 : node.superInterfaces.length,
-                                                node.typeParameters == null  ? 0 : node.typeParameters.length,
-                                                this.createJavaToken(node));
+          exitTypeDeclaration(node);
 
-          System.out.println("Leaving endVisit (TypeDeclaration,BlockScope)");
+          System.out.println("Leaving exit (TypeDeclaration,BlockScope)");
         }
 
-     public void endVisit(TypeDeclaration node, ClassScope scope)
+     public void exit(TypeDeclaration node, ClassScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("endVisit TypeDeclaration -- ClassScope");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("exit TypeDeclaration -- ClassScope");
 
-          String typename = new String(node.name);
-          java_parser.cactionTypeDeclarationEnd(typename,
-                                                node.kind(node.modifiers) == TypeDeclaration.INTERFACE_DECL,        		  
-                                                node.superclass != null,
-                                                node.superInterfaces == null ? 0 : node.superInterfaces.length,
-                                                node.typeParameters == null  ? 0 : node.typeParameters.length,
-        		                                this.createJavaToken(node));
+          exitTypeDeclaration(node);
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (TypeDeclaration,ClassScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (TypeDeclaration,ClassScope)");
         }
 
-     public void endVisit(TypeDeclaration node, CompilationUnitScope scope)
+     public void exit(TypeDeclaration node, CompilationUnitScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of endVisit (TypeDeclaration,CompilationUnitScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of exit (TypeDeclaration,CompilationUnitScope)");
 
-          String typename = new String(node.name);
-/*
-          int numberOfMethods     = 0;
-          int numberOfMemberTypes = 0;
-          int numberOfFields      = 0;
+          exitTypeDeclaration(node);
 
-          if (node.methods != null)
-             {
-            // System.out.println("Inside of endVisit (TypeDeclaration,CompilationUnitScope): node.methods.length     = " + node.methods.length);
-               numberOfMethods = node.methods.length;
-             }
-
-          if (node.memberTypes != null)
-             {
-            // System.out.println("Inside of endVisit (TypeDeclaration,CompilationUnitScope): node.memberTypes.length = " + node.memberTypes.length);
-               numberOfMemberTypes = node.memberTypes.length;
-             }
-
-          if (node.fields != null)
-             {
-            // System.out.println("Inside of endVisit (TypeDeclaration,CompilationUnitScope): node.fields.length      = " + node.fields.length);
-               numberOfFields = node.fields.length;
-             }
-
-          int numberOfStatements = numberOfMethods + numberOfMemberTypes + numberOfFields;
-
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of endVisit (TypeDeclaration,CompilationUnitScope): numberOfStatements      = " + numberOfStatements);
-*/
-          java_parser.cactionTypeDeclarationEnd(typename,
-                                                node.kind(node.modifiers) == TypeDeclaration.INTERFACE_DECL,        		  
-                                                node.superclass != null,
-                                                node.superInterfaces == null ? 0 : node.superInterfaces.length,
-                                                node.typeParameters == null  ? 0 : node.typeParameters.length,
-        		                                this.createJavaToken(node));
-
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (TypeDeclaration,CompilationUnitScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (TypeDeclaration,CompilationUnitScope)");
         }
 
-     public void endVisit(TypeParameter  node, BlockScope scope)
+     public void exit(TypeParameter  node, BlockScope scope)
         {
        // do nothing  by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (TypeParameter,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (TypeParameter,BlockScope)");
         }
 
-     public void endVisit(TypeParameter  node, ClassScope scope)
+     public void exit(TypeParameter  node, ClassScope scope)
         {
        // do nothing  by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (TypeParameter,ClassScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (TypeParameter,ClassScope)");
         }
 
-     public void endVisit(UnaryExpression  node, BlockScope scope)
+     public void exit(UnaryExpression  node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of endVisit (UnaryExpression,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of exit (UnaryExpression,BlockScope)");
 
        // Not clear what the valueRequired filed means.
           int operator_kind = (node.bits & ASTNode.OperatorMASK) >> ASTNode.OperatorSHIFT;
 
-          java_parser.cactionUnaryExpressionEnd(operator_kind, this.createJavaToken(node));
+          JavaParser.cactionUnaryExpressionEnd(operator_kind, createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (UnaryExpression,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (UnaryExpression,BlockScope)");
         }
 
-     public void endVisit(WhileStatement  node, BlockScope scope)
+     public void exit(WhileStatement  node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of endVisit (WhileStatement,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of exit (WhileStatement,BlockScope)");
 
-          java_parser.cactionWhileStatementEnd(this.createJavaToken(node));
+          JavaParser.cactionWhileStatementEnd(createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Leaving exit (,BlockScope)");
         }
 
-     public void endVisit(Wildcard  node, BlockScope scope)
+     public void exit(Wildcard  node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of endVisit (Wildcard,BlockScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of exit (Wildcard,BlockScope)");
         }
 
-     public void endVisit(Wildcard  node, ClassScope scope)
+     public void exit(Wildcard  node, ClassScope scope)
         {
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of endVisit (Wildcard,ClassScope)");
+          if (JavaParser.verboseLevel > 0)
+               System.out.println("Inside of exit (Wildcard,ClassScope)");
         }
 
    }
-
-

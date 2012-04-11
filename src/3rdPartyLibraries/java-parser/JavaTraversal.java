@@ -1240,67 +1240,60 @@ class JavaTraversal  implements Callable<Boolean>
                System.out.println("test 6 ...");
 
        // Calling the parser to build the ROSE AST from a traversal of the ECJ AST.
-          try
-             {
-            // Added support for verbose levels to be set to control debugginf I/O from Java code in ECJ/ROSE translation.
-               JavaParser java_parser = new JavaParser(verboseLevel);
-
+          try {
                if (verboseLevel > 2)
                     System.out.println("test 7 ...");
 
-               java_parser.cactionCompilationUnitList(main.batchCompiler.totalUnits,args);
+               JavaParser.cactionCompilationUnitList(main.batchCompiler.totalUnits, args);
+               JavaParser.cactionGenerateType("java.lang.Object", 0);
+               JavaParser.cactionTypeReference("java.lang.Object", new JavaToken("Dummy JavaToken (see createJavaToken)", new JavaSourcePositionInformation(0)));
+               JavaParser.cactionProcessObject();
 
                if (verboseLevel > 2)
                     System.out.println("test 8 ...");
 
-	            for (int i = 0; i < main.batchCompiler.totalUnits; i++)
-                  {
-                    CompilationUnitDeclaration unit = main.batchCompiler.unitsToProcess[i];
+	           for (int i = 0; i < main.batchCompiler.totalUnits; i++) {
+                   CompilationUnitDeclaration unit = main.batchCompiler.unitsToProcess[i];
 
-                    try
-                       {
-                         assert(unit != null);
+                   try {
+                       assert(unit != null);
 
-                         if (verboseLevel > 2)
-                              System.out.println("calling main.batchCompiler.process(unit, i) ...");
+                       if (verboseLevel > 2)
+                           System.out.println("calling main.batchCompiler.process(unit, i) ...");
 
-                         main.batchCompiler.process(unit, i);
+                       main.batchCompiler.process(unit, i);
 
-                         if (verboseLevel > 2)
-                              System.out.println("calling jt.traverseAST(unit) ...");
+                       if (verboseLevel > 2)
+                           System.out.println("calling jt.traverseAST(unit) ...");
 
-                         jt.traverseAST(unit); /*tps this is a better place for the traversal */
+                       jt.traverseAST(unit); /*tps this is a better place for the traversal */
 
-                         if (verboseLevel > 2)
-                              System.out.println("test 9 ...");
+                       if (verboseLevel > 2)
+                           System.out.println("test 9 ...");
 
-                      // **************************************************
-                      // This is where the traveral of the ECJ AST is done.
-                      // **************************************************
-                         java_parser.startParsingAST(unit);
+                       // **************************************************
+                       // This is where the traveral of the ECJ AST is done.
+                       // **************************************************
+                       JavaParser.startParsingAST(unit, verboseLevel);
 
-                         if (verboseLevel > 2)
-                              System.out.println("test 10 ...");
-                       }
+                       if (verboseLevel > 2)
+                           System.out.println("test 10 ...");
+                   }
+                   catch (Exception e) {
+                       System.err.println("Error in JavaTraversal::main() (nested catch before finally): " + e.getMessage());
 
-                    catch (Exception e)
-                       {
-                         System.err.println("Error in JavaTraversal::main() (nested catch before finally): " + e.getMessage());
-
-                      // This should output the call stack.
-                         System.err.println("Error in JavaTraversal::main() (nested catch before finally): " + e);
-                       }
-
-                    finally
-                       {
-                      // cleanup compilation unit result
-                         unit.cleanUp();
-                       }
-                    main.batchCompiler.unitsToProcess[i] = null; // release reference to processed unit declaration
-                    main.batchCompiler.stats.lineCount += unit.compilationResult.lineSeparatorPositions.length;
-                    main.batchCompiler.requestor.acceptResult(unit.compilationResult.tagAsAccepted());
-                  }
-             }
+                       // This should output the call stack.
+                       System.err.println("Error in JavaTraversal::main() (nested catch before finally): " + e);
+                   }
+                   finally {
+                       // cleanup compilation unit result
+                       unit.cleanUp();
+                   }
+                   main.batchCompiler.unitsToProcess[i] = null; // release reference to processed unit declaration
+                   main.batchCompiler.stats.lineCount += unit.compilationResult.lineSeparatorPositions.length;
+                   main.batchCompiler.requestor.acceptResult(unit.compilationResult.tagAsAccepted());
+              }
+          }
 
           catch (Exception e)
              {
@@ -1324,9 +1317,9 @@ class JavaTraversal  implements Callable<Boolean>
                System.err.println("Error: " + e.getMessage());
              }
 
-          if (verboseLevel > 2)
-               System.out.println("Done compiling");
-        }
+             if (verboseLevel > 2)
+                 System.out.println("Done compiling");
+     }
 
 
   // DQ (10/12/2010): Implemented abstract baseclass "call()" member function (similar to OFP).

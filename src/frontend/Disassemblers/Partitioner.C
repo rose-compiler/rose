@@ -3573,9 +3573,9 @@ Partitioner::is_contiguous(Function *func, bool strict)
     return true;
 }
 
-/* Update SgAsmTarget nodes. */
+/* Update CFG edge nodes. */
 void
-Partitioner::update_targets(SgNode *ast)
+Partitioner::fixup_cfg_edges(SgNode *ast)
 {
     typedef std::map<rose_addr_t, SgAsmBlock*> BlockMap;
 
@@ -3606,11 +3606,11 @@ Partitioner::update_targets(SgNode *ast)
             SgAsmBlock *block = isSgAsmBlock(node);
             if (block) {
                 for (size_t i=0; i<block->get_successors().size(); i++) {
-                    SgAsmTarget *target = block->get_successors()[i];
-                    if (target && NULL==target->get_block()) {
-                        BlockMap::const_iterator bi=block_map.find(target->get_address());
+                    SgAsmIntegerValueExpression *target = block->get_successors()[i];
+                    if (target && NULL==target->get_base_node()) {
+                        BlockMap::const_iterator bi=block_map.find(target->get_absolute_value());
                         if (bi!=block_map.end())
-                            target->set_block(bi->second);
+                            target->make_relative_to(bi->second);
                     }
                 }
             }
@@ -3622,9 +3622,101 @@ Partitioner::update_targets(SgNode *ast)
     TargetPopulator(ast, block_map);
 }
 
+/* Make pointers relative to what they point into. */
+void
+Partitioner::fixup_pointers(SgNode *ast, SgAsmInterpretation *interp/*=NULL*/)
+{
+
+    struct FixerUpper: public AstPrePostProcessing {
+        Partitioner *p;
+        SgAsmInterpretation *interp;
+        SgAsmInstruction *insn;
+        SgAsmGenericSectionPtrList mapped_sections;
+        DataRangeMap static_data;
+
+        FixerUpper(Partitioner *p, SgAsmInterpretation *interp)
+            : p(p), interp(interp), insn(NULL) {}
+
+        void atTraversalStart() {
+            /* Get a list of all memory-mapped sections in the interpretation. */
+            if (interp) {
+                const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
+                for (SgAsmGenericHeaderPtrList::const_iterator hi=headers.begin(); hi!=headers.end(); ++hi) {
+                    if ((*hi)->is_mapped())
+                        mapped_sections.push_back(*hi);
+                    SgAsmGenericSectionPtrList file_sections = (*hi)->get_mapped_sections();
+                    mapped_sections.insert(mapped_sections.end(), file_sections.begin(), file_sections.end());
+                }
+            }
+
+            /* Get a list of all static data blocks */
+            p->datablock_extent(&static_data);
+        }
+
+        void preOrderVisit(SgNode *node) {
+            if (!insn) {
+                insn = isSgAsmInstruction(node);
+            } else if (isSgAsmIntegerValueExpression(node)) {
+                SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(node);
+
+                /* Don't monkey with constants that are already relative to some other node.  These are things that have been
+                 * already fixed up by other methods. */
+                if (ival->get_base_node()!=NULL)
+                    return;
+                rose_addr_t va = ival->get_absolute_value();
+
+                /* If this constant is a code pointer, then make the pointer relative to the instruction it points to.  If that
+                 * instruction is the entry instruction of a function, then point to the function instead.  A value is
+                 * considered a code pointer only if it points to an existing instruction that's contained in a basic block,
+                 * and that basic block is part of a valid function.  This constraint weeds out pointers to code that was
+                 * disassembled but later discarded. */
+                Instruction *target_insn = p->find_instruction(va, false/*do not create*/);
+                if (target_insn && target_insn->bblock && target_insn->bblock->function &&
+                    0==(target_insn->bblock->function->reason & SgAsmFunction::FUNC_LEFTOVERS)) {
+                    SgAsmFunction *target_func = SageInterface::getEnclosingNode<SgAsmFunction>(target_insn->node);
+                    if (target_func && target_func->get_entry_va()==target_insn->get_address()) {
+                        ival->make_relative_to(target_func);
+                    } else {
+                        ival->make_relative_to(target_insn->node);
+                    }
+                    return;
+                }
+
+                /* If this constant points into a static data block, then make it relative to that block. */
+                DataRangeMap::iterator dbi = static_data.find(va);
+                if (dbi!=static_data.end()) {
+                    DataBlock *dblock = dbi->second.get();
+                    for (size_t i=0; i<dblock->nodes.size(); ++i) {
+                        SgAsmStaticData *sd = dblock->nodes[i];
+                        if (va>=sd->get_address() && va<sd->get_address()+sd->get_size()) {
+                            ival->make_relative_to(sd);
+                            return;
+                        }
+                    }
+                }
+                
+                /* If this constant points into a non-executable data segment, then make the pointer relative to that data
+                 * segment. */
+                SgAsmGenericSection *section = SgAsmGenericFile::best_section_by_va(mapped_sections, ival->get_absolute_value());
+                if (section && !section->get_mapped_xperm()) {
+                    ival->make_relative_to(section);
+                    return;
+                }
+            }
+        }
+
+        void postOrderVisit(SgNode *node) {
+            if (isSgAsmInstruction(node))
+                insn = NULL;
+        }
+    };
+
+    FixerUpper(this, interp).traverse(ast);
+}
+
 /* Build the global block containing all functions. */
 SgAsmBlock *
-Partitioner::build_ast()
+Partitioner::build_ast(SgAsmInterpretation *interp/*=NULL*/)
 {
     /* Build a function to hold all the unassigned instructions.  Update documentation if changing the name of
      * this generated function!  We do this by traversing the instructions and obtaining a basic block for each one.  If the
@@ -3679,7 +3771,9 @@ Partitioner::build_ast()
         delete catchall;
     }
 
-    update_targets(retval);
+    /* Make pointers relative to the thing into which they point. */
+    fixup_cfg_edges(retval);
+    fixup_pointers(retval, interp);
     return retval;
 }
 
@@ -3768,13 +3862,16 @@ Partitioner::build_ast(BasicBlock* block)
         insn->node->set_parent(retval);
     }
 
-    /* Cache block successors so other layers don't have to constantly compute them.  We fill in the successor SgAsmTarget
-     * objects with only the address and not pointers to blocks since we don't have all the blocks yet.  The pointers will be
-     * initialized in the no-argument version build_ast() higher up on the stack. */
+    /* Cache block successors so other layers don't have to constantly compute them.  We fill in the successor
+     * SgAsmIntegerValueExpression objects with only the address and not pointers to blocks since we don't have all the blocks
+     * yet.  The pointers will be initialized in the no-argument version build_ast() higher up on the stack. */
     bool complete;
     Disassembler::AddressSet successor_addrs = successors(block, &complete);
-    for (Disassembler::AddressSet::iterator si=successor_addrs.begin(); si!=successor_addrs.end(); ++si)
-        retval->get_successors().push_back(new SgAsmTarget(retval, NULL, *si));
+    for (Disassembler::AddressSet::iterator si=successor_addrs.begin(); si!=successor_addrs.end(); ++si) {
+        SgAsmIntegerValueExpression *value = new SgAsmIntegerValueExpression(*si);
+        value->set_parent(retval);
+        retval->get_successors().push_back(value);
+    }
     retval->set_successors_complete(complete);
     return retval;
 }
@@ -3815,7 +3912,7 @@ Partitioner::partition(SgAsmInterpretation* interp/*=NULL*/, const Disassembler:
         pre_cfg(interp);
         analyze_cfg(SgAsmBlock::BLK_GRAPH1);
         post_cfg(interp);
-        retval = build_ast();
+        retval = build_ast(interp);
         set_map(old_map, &old_ro_map);
     } catch (...) {
         set_map(old_map, &old_ro_map);
@@ -3836,7 +3933,7 @@ Partitioner::partition(SgAsmInterpretation* interp/*=NULL*/, Disassembler *d, Me
     pre_cfg(interp);
     analyze_cfg(SgAsmBlock::BLK_GRAPH1);
     post_cfg(interp);
-    return build_ast();
+    return build_ast(interp);
 }
 
 void

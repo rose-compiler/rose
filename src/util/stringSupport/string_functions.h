@@ -136,8 +136,11 @@ namespace StringUtility
 
        //! Convert a number to a string
            std::string numberToString ( double x );
-       //! Convert an address to a string, preferring a hexadecimal representation with at least 8 digits.
-           std::string addrToString( uint64_t x );
+
+       //! Convert an address to a string, preferring a hexadecimal representation with at least 8 digits.  The second argument
+       //  indicates the number of significant bits.  The third argument indicates whether the value is considered to be
+       //  signed, in which case a negative value is also output, as in "0xff<-1>".
+           std::string addrToString(uint64_t x, size_t nbits=32, bool is_signed=false);
 
        //! Formatting support for generated code strings
            std::string indentMultilineString ( const std::string& inputString, int statementColumnNumber );
