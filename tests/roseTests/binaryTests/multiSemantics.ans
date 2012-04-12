@@ -322,7 +322,7 @@ memory:
       flags = { size=4 }
 null state
 null state
-0x80482ce:call   0x08048364
+0x80482ce:call   0x08048364<call_gmon_start>
 registers:
     ax      = { v31305 }
     cx      = { v31306 }
@@ -438,7 +438,7 @@ null state
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
-0x80482d3:call   0x080483d0
+0x80482d3:call   0x080483d0<frame_dummy>
 registers:
     ax      = { v31483 }
     cx      = { v31484 }
@@ -548,7 +548,7 @@ null state
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
-0x80482d8:call   0x08048580
+0x80482d8:call   0x08048580<__do_global_ctors_aux>
 registers:
     ax      = { v31588 }
     cx      = { v31589 }
@@ -881,7 +881,7 @@ null state
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
-0x80482f0:jmp    DWORD PTR ds:[0x080496d4]
+0x80482f0:jmp    DWORD PTR ds:[0x080496d4<.got.plt+0x0c>]
 registers:
     ax      = { v31812 }
     cx      = { v31813 }
@@ -991,7 +991,7 @@ null state
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
-0x8048300:jmp    DWORD PTR ds:[0x080496d8]
+0x8048300:jmp    DWORD PTR ds:[0x080496d8<.got.plt+0x10>]
 registers:
     ax      = { v31916 }
     cx      = { v31917 }
@@ -1101,7 +1101,7 @@ null state
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
-0x8048310:jmp    DWORD PTR ds:[0x080496dc]
+0x8048310:jmp    DWORD PTR ds:[0x080496dc<.got.plt+0x14>]
 registers:
     ax      = { v32020 }
     cx      = { v32021 }
@@ -1211,7 +1211,7 @@ null state
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
-0x8048320:jmp    DWORD PTR ds:[0x080496e0]
+0x8048320:jmp    DWORD PTR ds:[0x080496e0<.got.plt+0x18>]
 registers:
     ax      = { v32124 }
     cx      = { v32125 }
@@ -1321,7 +1321,7 @@ null state
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
-0x8048330:jmp    DWORD PTR ds:[0x080496e4]
+0x8048330:jmp    DWORD PTR ds:[0x080496e4<.got.plt+0x1c>]
 registers:
     ax      = { v32228 }
     cx      = { v32229 }
@@ -2212,7 +2212,7 @@ memory:
       flags = { size=4 }
 null state
 null state
-0x804834b:push   0x08048520
+0x804834b:push   0x08048520<__libc_csu_fini>
 registers:
     ax      = { v32332 }
     cx      = { v32336+0x4 }
@@ -2343,7 +2343,7 @@ memory:
       flags = { size=4 }
 null state
 null state
-0x8048350:push   0x080484b0
+0x8048350:push   0x080484b0<__libc_csu_init>
 registers:
     ax      = { v32332 }
     cx      = { v32336+0x4 }
@@ -2772,7 +2772,7 @@ memory:
       flags = { size=4 }
 null state
 null state
-0x8048357:push   0x08048410
+0x8048357:push   0x08048410<main>
 registers:
     ax      = { v32332 }
     cx      = { v32336+0x4 }
@@ -2927,7 +2927,7 @@ memory:
       flags = { size=4 }
 null state
 null state
-0x804835c:call   0x08048310
+0x804835c:call   0x08048310<__libc_start_main@plt>
 registers:
     ax      = { v32332 }
     cx      = { v32336+0x4 }
@@ -3643,7 +3643,7 @@ memory:
       flags = { size=4 }
 null state
 null state
-0x8048369:call   0x0804836e
+0x8048369:call   0x0804836e<<Insn>>
 registers:
     ax      = { v32700 }
     cx      = { v32701 }
@@ -4211,7 +4211,7 @@ memory:
       flags = { size=4; read-only }
 null state
 null state
-0x804837d:je     0x08048384
+0x804837d:je     0x08048384<<Insn>>
 registers:
     ax      = { v32837 }
     cx      = { v32838 }
@@ -4327,7 +4327,7 @@ null state
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
-0x804837f:call   0x08048330
+0x804837f:call   0x08048330<__gmon_start__@plt>
 registers:
     ax      = { v33063 }
     cx      = { v33064 }
@@ -5225,7 +5225,7 @@ memory:
       flags = { size=4 }
 null state
 null state
-0x8048396:cmp    BYTE PTR ds:[0x080496f4], 0x00
+0x8048396:cmp    BYTE PTR ds:[0x080496f4<.bss>], 0x00
 registers:
     ax      = { v33307 }
     cx      = { v33308 }
@@ -5338,7 +5338,7 @@ memory:
       flags = { size=1; read-only }
 null state
 null state
-0x804839d:jne    0x080483cc
+0x804839d:jne    0x080483cc<<Insn>>
 registers:
     ax      = { v33307 }
     cx      = { v33308 }
@@ -5454,7 +5454,7 @@ null state
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
-0x804839f:mov    eax, DWORD PTR ds:[0x080496f0]
+0x804839f:mov    eax, DWORD PTR ds:[0x080496f0<.data+8>]
 registers:
     ax      = { v33600 }
     cx      = { v33548 }
@@ -5787,7 +5787,7 @@ memory:
       flags = { size=4; read-only }
 null state
 null state
-0x80483a8:je     0x080483c5
+0x80483a8:je     0x080483c5<<Insn>>
 registers:
     ax      = { v33600 }
     cx      = { v33548 }
@@ -6109,7 +6109,7 @@ memory:
     (empty)
 null state
 null state
-0x80483b3:mov    DWORD PTR ds:[0x080496f0], eax
+0x80483b3:mov    DWORD PTR ds:[0x080496f0<.data+8>], eax
 registers:
     ax      = { v33714+0x4 }
     cx      = { v33715 }
@@ -6332,7 +6332,7 @@ null state
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
-0x80483ba:mov    eax, DWORD PTR ds:[0x080496f0]
+0x80483ba:mov    eax, DWORD PTR ds:[0x080496f0<.data+8>]
 registers:
     ax      = { v33941 }
     cx      = { v33889 }
@@ -6665,7 +6665,7 @@ memory:
       flags = { size=4; read-only }
 null state
 null state
-0x80483c3:jne    0x080483b0
+0x80483c3:jne    0x080483b0<<Insn>>
 registers:
     ax      = { v33941 }
     cx      = { v33889 }
@@ -6781,7 +6781,7 @@ null state
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
-0x80483c5:mov    BYTE PTR ds:[0x080496f4], 0x01
+0x80483c5:mov    BYTE PTR ds:[0x080496f4<.bss>], 0x01
 registers:
     ax      = { v34056 }
     cx      = { v34057 }
@@ -7444,7 +7444,7 @@ memory:
       flags = { size=4 }
 null state
 null state
-0x80483d6:mov    eax, DWORD PTR ds:[0x080495f8]
+0x80483d6:mov    eax, DWORD PTR ds:[0x080495f8<.jcr>]
 registers:
     ax      = { v34308 }
     cx      = { v34183 }
@@ -7670,7 +7670,7 @@ memory:
       flags = { size=4; read-only }
 null state
 null state
-0x80483dd:je     0x08048400
+0x80483dd:je     0x08048400<<Insn>>
 registers:
     ax      = { v34308 }
     cx      = { v34183 }
@@ -7992,7 +7992,7 @@ memory:
     (empty)
 null state
 null state
-0x80483e6:je     0x08048400
+0x80483e6:je     0x08048400<<Insn>>
 registers:
     ax      = { 0x0 }
     cx      = { v34415 }
@@ -8421,7 +8421,7 @@ null state
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
-0x80483e8:mov    DWORD PTR ss:[esp], 0x080495f8
+0x80483e8:mov    DWORD PTR ss:[esp], 0x080495f8<.jcr>
 registers:
     ax      = { v34580 }
     cx      = { v34581 }
@@ -8960,7 +8960,7 @@ memory:
       flags = { size=4 }
 null state
 null state
-0x8048411:mov    edx, 0x08048480
+0x8048411:mov    edx, 0x08048480<handler>
 registers:
     ax      = { v34801 }
     cx      = { v34802 }
@@ -9620,7 +9620,7 @@ memory:
       flags = { size=4 }
 null state
 null state
-0x8048429:call   0x080482f0
+0x8048429:call   0x080482f0<signal@plt>
 registers:
     ax      = { v34801 }
     cx      = { v34802 }
@@ -10498,7 +10498,7 @@ memory:
       flags = { size=4 }
 null state
 null state
-0x8048446:mov    DWORD PTR ss:[esp], 0x080485d4
+0x8048446:mov    DWORD PTR ss:[esp], 0x080485d4<<StaticData@0x080485ca>+0x0a>
 registers:
     ax      = { v35200 }
     cx      = { v35201 }
@@ -10611,7 +10611,7 @@ memory:
       flags = { size=4 }
 null state
 null state
-0x804844d:call   0x08048300
+0x804844d:call   0x08048300<puts@plt>
 registers:
     ax      = { v35200 }
     cx      = { v35201 }
@@ -11380,7 +11380,7 @@ memory:
       flags = { size=4 }
 null state
 null state
-0x8048466:mov    DWORD PTR ss:[esp], 0x080485d4
+0x8048466:mov    DWORD PTR ss:[esp], 0x080485d4<<StaticData@0x080485ca>+0x0a>
 registers:
     ax      = { v35508 }
     cx      = { v35509 }
@@ -11493,7 +11493,7 @@ memory:
       flags = { size=4 }
 null state
 null state
-0x804846d:call   0x08048300
+0x804846d:call   0x08048300<puts@plt>
 registers:
     ax      = { v35508 }
     cx      = { v35509 }
@@ -11722,7 +11722,7 @@ memory:
       flags = { size=4 }
 null state
 null state
-0x8048479:call   0x08048320
+0x8048479:call   0x08048320<_exit@plt>
 registers:
     ax      = { v35693 }
     cx      = { v35694 }
@@ -12159,7 +12159,7 @@ memory:
       flags = { size=4 }
 null state
 null state
-0x8048486:inc    DWORD PTR ds:[0x080496f8]
+0x8048486:inc    DWORD PTR ds:[0x080496f8<.bss+4>]
 registers:
     ax      = { v35805 }
     cx      = { v35806 }
@@ -12272,7 +12272,7 @@ memory:
       flags = { size=4 }
 null state
 null state
-0x804848c:mov    DWORD PTR ss:[esp], 0x080485d4
+0x804848c:mov    DWORD PTR ss:[esp], 0x080485d4<<StaticData@0x080485ca>+0x0a>
 registers:
     ax      = { v35805 }
     cx      = { v35806 }
@@ -12391,7 +12391,7 @@ memory:
       flags = { size=4 }
 null state
 null state
-0x8048493:call   0x08048300
+0x8048493:call   0x08048300<puts@plt>
 registers:
     ax      = { v35805 }
     cx      = { v35806 }
@@ -12626,7 +12626,7 @@ memory:
       flags = { size=4 }
 null state
 null state
-0x804849f:call   0x08048320
+0x804849f:call   0x08048320<_exit@plt>
 registers:
     ax      = { v36048 }
     cx      = { v36049 }
@@ -13438,7 +13438,7 @@ memory:
       flags = { size=4 }
 null state
 null state
-0x80484b9:call   0x080484be
+0x80484b9:call   0x080484be<<Insn>>
 registers:
     ax      = { v36160 }
     cx      = { v36161 }
@@ -13786,7 +13786,7 @@ memory:
       flags = { size=4; read-only }
 null state
 null state
-0x80484c5:call   0x080482c8
+0x80484c5:call   0x080482c8<_init>
 registers:
     ax      = { v36365 }
     cx      = { v36366 }
@@ -14418,7 +14418,7 @@ memory:
       flags = { size=4 }
 null state
 null state
-0x80484de:jne    0x080484f0
+0x80484de:jne    0x080484f0<<StaticData@0x080484e8>+8>
 registers:
     ax      = { 0x0 }
     cx      = { v36536 }
@@ -15956,7 +15956,7 @@ memory:
       flags = { size=4 }
 null state
 null state
-0x8048529:call   0x0804852e
+0x8048529:call   0x0804852e<<Insn>>
 registers:
     ax      = { v36865 }
     cx      = { v36866 }
@@ -17071,7 +17071,7 @@ memory:
       flags = { size=4 }
 null state
 null state
-0x804854d:je     0x0804856b
+0x804854d:je     0x0804856b<<Insn>>
 registers:
     ax      = { 0xffffffff (-0x1) }
     cx      = { v37071 }
@@ -17184,7 +17184,7 @@ memory:
       flags = { size=4 }
 null state
 null state
-0x804856b:call   0x080485b0
+0x804856b:call   0x080485b0<_fini>
 registers:
     ax      = { 0xffffffff (-0x1) }
     cx      = { v37071 }
@@ -18144,7 +18144,7 @@ memory:
       flags = { size=4; read-only }
 null state
 null state
-0x8048569:jne    0x08048560
+0x8048569:jne    0x08048560<<Insn>>
 registers:
     ax      = { v37600 }
     cx      = { v37601 }
@@ -19395,7 +19395,7 @@ memory:
       flags = { size=4 }
 null state
 null state
-0x8048587:mov    ebx, 0x080495e8
+0x8048587:mov    ebx, 0x080495e8<.ctors>
 registers:
     ax      = { v38085 }
     cx      = { v38086 }
@@ -19508,7 +19508,7 @@ memory:
       flags = { size=4 }
 null state
 null state
-0x804858c:mov    eax, DWORD PTR ds:[0x080495e8]
+0x804858c:mov    eax, DWORD PTR ds:[0x080495e8<.ctors>]
 registers:
     ax      = { v38225 }
     cx      = { v38086 }
@@ -19746,7 +19746,7 @@ memory:
       flags = { size=4; read-only }
 null state
 null state
-0x8048594:je     0x080485ac
+0x8048594:je     0x080485ac<<Insn>>
 registers:
     ax      = { v38225 }
     cx      = { v38086 }
@@ -20501,7 +20501,7 @@ memory:
       flags = { size=4; read-only }
 null state
 null state
-0x80485aa:jne    0x080485a0
+0x80485aa:jne    0x080485a0<<Insn>>
 registers:
     ax      = { v38574 }
     cx      = { v38522 }
@@ -21524,7 +21524,7 @@ memory:
       flags = { size=4 }
 null state
 null state
-0x80485b5:call   0x080485ba
+0x80485b5:call   0x080485ba<<Insn>>
 registers:
     ax      = { v38831 }
     cx      = { v38832 }
@@ -21866,7 +21866,7 @@ memory:
       flags = { size=4; read-only }
 null state
 null state
-0x80485c1:call   0x08048390
+0x80485c1:call   0x08048390<__do_global_dtors_aux>
 registers:
     ax      = { v38968 }
     cx      = { v38969 }
