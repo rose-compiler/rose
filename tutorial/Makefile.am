@@ -15,9 +15,12 @@ INCLUDES = $(ROSE_INCLUDES)
 
 ROSE_FLAGS = --edg:no_warnings -w
 
+
+
 noinst_HEADERS = \
    coverage_funcsC.h \
    inputCode_collectComments.h
+   #yices_c.h
 
 # Liao 5/7/2010  We want to have a few installable programs as tools for users
 bin_PROGRAMS = \
@@ -25,7 +28,12 @@ bin_PROGRAMS = \
    defuseAnalysis \
    livenessAnalysis \
    interproceduralCFG \
-   virtualCFG \
+   virtualCFG
+
+if HAVE_YICES
+bin_PROGRAMS += \
+   yicesTutorialExample
+endif
    #traverseBinCFG \
    #traverseSourceCFG 
 
@@ -152,6 +160,9 @@ wholeASTGraphGenerator_SOURCES = wholeASTGraphGenerator.C
 
 identityTranslator_SOURCES = identityTranslator.C
 
+if HAVE_YICES
+yicesTutorialExample_SOURCES = yicesTutorialExample.C
+endif
 lineReplacement_SOURCES = lineReplacement.C
 
 queryLibraryExample_SOURCES = queryLibraryExample.C
@@ -534,6 +545,10 @@ loopOptimizationOutputFiles = \
 
 testLoopOptimization: loopProcessor $(loopOptimizationOutputFiles)
 
+if HAVE_YICES
+yicesTutorialExampleOutputFiles = \
+    yicesInputExample.C
+endif
 testInheritedAttributeTraversal: inheritedAttributeTraversal
 	$(VALGRIND) ./inheritedAttributeTraversal -c $(srcdir)/inputCode_ExampleTraversals_1.C
 
@@ -599,6 +614,10 @@ testAddArbitraryTextForUnparser:
 testCollectComments: collectComments
 	./collectComments -rose:collectAllCommentsAndDirectives -I$(srcdir) -c $(srcdir)/inputCode_collectComments.C
 
+if HAVE_YICES
+testYicesTutorialExample: yicesTutorialExample
+	./yicesTutorialExample -I$(srcdir) -c $(srcdir)/yicesInputExample.C
+endif
 testCollectCommentsSkipHeaders: collectComments
 	./collectComments -I$(srcdir) -c $(srcdir)/inputCode_collectComments.C
 
@@ -1414,7 +1433,8 @@ inputCode_dwarfAnalysis.out: dwarfInstructionAddressToSourceLineAnalysis inputCo
 
 # Note that we have made multiple copies of "inputCode_ExampleTraversals.C"
 # so that the processing could be done in parallel with out collisions.
-EXTRA_DIST = CMakeLists.txt \
+EXTRA_DIST = \
+   CMakeLists.txt \
    inputCode_1.C \
    inputCode_BuildCFG.C \
    inputCode_InstrumentationTranslator.C \
@@ -1510,6 +1530,10 @@ EXTRA_DIST = CMakeLists.txt \
    inputCode_dwarfAnalysis.C \
    inputCode_reductionRecognition.C \
    livenessAnalysis-2.C
+
+if HAVE_YICES
+    EXTRA_DIST += yicesInputExample.C
+endif
 
 # disabled this one due to problem with copy mechanism, Liao
 #   inputCode_varSubstCopy.C 
