@@ -47,7 +47,8 @@ private:
 
     /* The policy is attached to an instruction semantics class.  When the instruction semantics class "executes" an
      * instruction it calls methods in the policy, resulting in updates to the policy state. */
-    X86InstructionSemantics<SignAnalysisExample::Policy, SignAnalysisExample::ValueType> semantics;
+    BinaryAnalysis::InstructionSemantics::X86InstructionSemantics<SignAnalysisExample::Policy,
+                                                                  SignAnalysisExample::ValueType> semantics;
 
 public:
     SynchronousSignAnalysis(): semantics(policy) {}

@@ -474,6 +474,8 @@ Partitioner::set_map(MemoryMap *map, MemoryMap *ro_map)
 Disassembler::AddressSet
 Partitioner::discover_jump_table(BasicBlock *bb, bool do_create, ExtentMap *table_extent)
 {
+    using namespace BinaryAnalysis::InstructionSemantics;
+
     /* Do some cheap up-front checks. */
     SgAsmx86Instruction *insn_x86 = isSgAsmx86Instruction(bb->last_insn());
     if (!insn_x86 || (insn_x86->get_kind()!=x86_jmp && insn_x86->get_kind()==x86_farjmp) ||
@@ -487,7 +489,7 @@ Partitioner::discover_jump_table(BasicBlock *bb, bool do_create, ExtentMap *tabl
 
     /* Evaluate the basic block semantically to get an expression for the final EIP. */
     typedef VirtualMachineSemantics::ValueType<32> RegisterValueType;
-    typedef VirtualMachineSemantics::Policy<VirtualMachineSemantics::State, VirtualMachineSemantics::ValueType> Policy;
+    typedef VirtualMachineSemantics::Policy<> Policy;
     typedef X86InstructionSemantics<Policy, VirtualMachineSemantics::ValueType> Semantics;
     Policy policy;
     policy.set_map(&ro_map);
@@ -675,6 +677,8 @@ Partitioner::call_target(BasicBlock *bb)
 bool
 Partitioner::pops_return_address(rose_addr_t va)
 {
+    using namespace BinaryAnalysis::InstructionSemantics;
+
     bool on_stack = true; /*assume return value stays on stack; prove otherwise*/
 
     /* Create the basic block if possible, but if we created it here then we should clear it below. */
@@ -686,7 +690,7 @@ Partitioner::pops_return_address(rose_addr_t va)
 
         SgAsmx86Instruction *last_insn = isSgAsmx86Instruction(bb->last_insn());
 
-        typedef VirtualMachineSemantics::Policy<VirtualMachineSemantics::State, VirtualMachineSemantics::ValueType> Policy;
+        typedef VirtualMachineSemantics::Policy<> Policy;
         typedef X86InstructionSemantics<Policy, VirtualMachineSemantics::ValueType> Semantics;
         Policy policy;
         policy.set_map(get_map());
@@ -1257,6 +1261,8 @@ Partitioner::add_function(rose_addr_t entry_va, unsigned reasons, std::string na
 void
 Partitioner::mark_ipd_configuration()
 {
+    using namespace BinaryAnalysis::InstructionSemantics;
+
     for (BlockConfigMap::iterator bci=block_config.begin(); bci!=block_config.end(); ++bci) {
         rose_addr_t va = bci->first;
         BlockConfig *bconf = bci->second;
@@ -1290,7 +1296,7 @@ Partitioner::mark_ipd_configuration()
 
             MemoryMap *map = get_map();
             assert(map!=NULL);
-            typedef VirtualMachineSemantics::Policy<VirtualMachineSemantics::State, VirtualMachineSemantics::ValueType> Policy;
+            typedef VirtualMachineSemantics::Policy<> Policy;
             typedef X86InstructionSemantics<Policy, VirtualMachineSemantics::ValueType> Semantics;
             Policy policy;
             policy.set_map(map);

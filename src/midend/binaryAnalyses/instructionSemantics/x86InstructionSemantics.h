@@ -5,7 +5,6 @@
  * run automatically because it depends on setting up a slave machine who's architecture is what is being simulated by the
  * instruction semantics (not necessarily the same architecture that's running ROSE). */
 
-//#include "rose.h"
 #include "semanticsModule.h"
 #include <cassert>
 #include <cstdio>
@@ -27,6 +26,13 @@ static inline X86SegmentRegister getSegregFromMemoryReference(SgAsmMemoryReferen
     return segreg;
 }
 
+namespace BinaryAnalysis {
+    namespace InstructionSemantics {
+
+/** Translation class.  Translates x86 instructions to RISC-like operations and invokes those operations in the supplied
+ *  semantic policy (a template argument).  See the BinaryAnalysis::InstructionSemantics name space for details. Apologies for
+ *  the lack of documentation for this class.  You can at least find some examples in the semantics.C file of the
+ *  tests/roseTests/binaryTests directory, among others. */
 template <typename Policy, template <size_t> class WordType>
 struct X86InstructionSemantics {
 #   ifdef Word
@@ -2536,5 +2542,7 @@ struct X86InstructionSemantics {
 };
 
 #undef Word
-
-#endif // ROSE_X86INSTRUCTIONSEMANTICS_H
+        
+    } /*namespace*/
+} /*namespace*/
+#endif /* ROSE_X86INSTRUCTIONSEMANTICS_H */
