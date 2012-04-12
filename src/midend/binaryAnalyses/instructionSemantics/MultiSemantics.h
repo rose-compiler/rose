@@ -255,7 +255,7 @@ namespace BinaryAnalysis {                      // documented elsewhere
         public:
             /** Represents the entire state of the machine.  A multi-policy state is the union of states of the sub-policies.
              *  The sub-states are identified with tags such as SP0, SP1, etc., the same as for sub-values and sub-policies. */
-            template<template<size_t> class ValueType=MultiSemantics::ValueType>
+            template<template<size_t> class ValueType/*=MultiSemantics::ValueType (doesn't work in GCC<4.4.x)*/>
             class State {
             protected:
                 State0<ValueType0> state0;
