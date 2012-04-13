@@ -42,7 +42,8 @@ bool doFilenamesMatch(const SgLocatedNode* node, const std::string& filename)
     using std::string;
 #if 1
     string sg_fullpath = RoseHPCT::getFilename(node);
-    string suffix = sg_fullpath.substr(sg_fullpath.length() - filename.length());
+    int suffixLength = sg_fullpath.length() - filename.length();
+    string suffix = suffixLength >= 0? sg_fullpath.substr(suffixLength): "";
     return suffix == filename;
 
 #else
@@ -78,7 +79,8 @@ bool doLinesOverlap(const SgLocatedNode* node, const RoseHPCT::Located * plnode)
 #if 1
         std::string plnodeFileName = plnode->getFileNode()->getName();
         std::string info_startFileName = info_start->get_filenameString();
-        std::string suffix = info_startFileName.substr(info_startFileName.length() - plnodeFileName.length());
+        int suffixLength = info_startFileName.length() - plnodeFileName.length();
+        std::string suffix = suffixLength >= 0? info_startFileName.substr(suffixLength): "";
         if (plnodeFileName != suffix)
             return false;
 #else
@@ -447,8 +449,8 @@ void
 MetricFinder::visit (const File* f)
 #endif
 {
-    if (f)
-    {
+//    if (f)
+//    {
 #if 0  // moved to pathFinder traversal   
         //take advantage of this traversal to accumulate file nodes
         RoseHPCT::profFileNodes_.insert(f);
@@ -461,7 +463,7 @@ MetricFinder::visit (const File* f)
                 matches_.insert(f);
                 prune_branch_ = true;
         }
-    }
+//    }
 }
 
 #if 1
@@ -515,6 +517,7 @@ MetricFinder::visit (const Statement* s)
                 // We only consider shadow SgNodes for statement profile results for now
                 {
                     matches_.insert(s);
+                    s->setHasMatchingSgNode(true);
                     prune_branch_ = true;
 
                 }

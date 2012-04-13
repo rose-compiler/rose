@@ -391,22 +391,17 @@ std::string Statement::toString() const
   return result;
 }
 
-Statement::Statement (void)
+Statement::Statement (void): id(0), hasMatchedSgNode(false)
 {
-  setId (0);
 }
 
-Statement::Statement (const Statement& s)
-  : Located (s)
+Statement::Statement (const Statement& s): id(s.getId()), hasMatchedSgNode(s.hasMatchingSgNode()), Located (s)
 {
-  setId (s.getId ());
 }
 
-Statement::Statement (const std::string& name, long int i, long int l) :
-        IRNode (name), Located(l, l)
+Statement::Statement (const std::string& name, id_t i, size_t l):
+        id(i), hasMatchedSgNode(false), IRNode (name), Located(l, l)
 {
-    id = i;
-    // line = l;
 }
 
 Statement::~Statement (void)
