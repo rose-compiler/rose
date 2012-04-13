@@ -30,6 +30,8 @@ class RoseVariable {
 		SgExpression * generate(SgScopeStatement * stmt) const;
 	
 		RoseVariable & operator = (const RoseVariable & v);
+
+		SgInitializedName * getInitializedName() const;
 		
 	friend bool operator == (const RoseVariable & v1, const RoseVariable & v2);
 	friend bool operator != (const RoseVariable & v1, const RoseVariable & v2);

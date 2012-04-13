@@ -384,6 +384,10 @@ void setRead(SgExpression * exp, DataAccess<TplStatement, SgExprStatement, RoseV
 		case V_SgBitXorOp:
 		case V_SgLshiftOp:
 		case V_SgRshiftOp:
+	        case V_SgLessOrEqualOp:
+                case V_SgGreaterOrEqualOp:
+                case V_SgLessThanOp:
+                case V_SgGreaterThanOp:
 			setRead(isSgBinaryOp(exp)->get_lhs_operand_i(), data_access);
 			setRead(isSgBinaryOp(exp)->get_rhs_operand_i(), data_access);
 			break;
@@ -392,6 +396,11 @@ void setRead(SgExpression * exp, DataAccess<TplStatement, SgExprStatement, RoseV
 		case V_SgNotOp:
 			setRead(isSgUnaryOp(exp)->get_operand_i(), data_access);
 			break;
+                case V_SgConditionalExp:
+                        setRead(isSgConditionalExp(exp)->get_conditional_exp(), data_access);
+                        setRead(isSgConditionalExp(exp)->get_true_exp(), data_access);
+                        setRead(isSgConditionalExp(exp)->get_false_exp(), data_access);
+                        break;
 		case V_SgFunctionCallExp:
 		{
 			SgFunctionCallExp * func_call = isSgFunctionCallExp(exp);

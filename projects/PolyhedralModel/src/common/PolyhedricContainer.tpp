@@ -138,6 +138,17 @@ VariableLBL PolyhedralProgram<Function, Expression, VariableLBL>::getIteratorByI
 }
 
 template <class Function, class Expression, class VariableLBL>
+size_t PolyhedralProgram<Function, Expression, VariableLBL>::getIteratorID(Expression * e, VariableLBL it) const {
+  typename std::map<Expression *, std::pair<size_t, std::map<VariableLBL, size_t> > >::const_iterator exp_map = p_var_map.find(e);
+  if (exp_map == p_var_map.end())
+    throw Exception::UnknownExpression<Function, Expression>(p_function, e);
+  typename std::map<VariableLBL, size_t>::const_iterator it_id = exp_map->second.second.find(it);
+  if (it_id == exp_map->second.second.end())
+    throw Exception::UnknownVariable();
+  return it_id->second;
+}
+
+template <class Function, class Expression, class VariableLBL>
 VariableLBL PolyhedralProgram<Function, Expression, VariableLBL>::getGlobalById(size_t id) const {
 	typename std::map<Expression *, std::pair<size_t, std::map<VariableLBL, size_t> > >::const_iterator exp_map = p_var_map.find(NULL);
 	if (exp_map == p_var_map.end())

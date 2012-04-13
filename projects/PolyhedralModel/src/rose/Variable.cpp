@@ -70,6 +70,10 @@ SgExpression * RoseVariable::generate(SgScopeStatement * stmt) const {
 
 }
 
+SgInitializedName * RoseVariable::getInitializedName() const {
+  return p_var;
+}
+
 bool operator == (const RoseVariable & v1, const RoseVariable & v2) {
 	return v1.p_var == v2.p_var && ((v1.p_base == NULL && v2.p_base == NULL) || *(v1.p_base) == *(v2.p_base));
 }

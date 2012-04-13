@@ -85,7 +85,7 @@ class PolyhedralProgram {
 		
 		/**
 		 * \param v VariableLBL pointer.
-		 * \param e Expression pointer.
+		 * \param e Expressitmtn pointer.
 		 * \return ID of the variable in the scope of the expression.
 		 */
 		const size_t getVariableID(Expression * e, VariableLBL v);
@@ -114,6 +114,7 @@ class PolyhedralProgram {
 		size_t getNumberOfVariables() const;
 		
 		VariableLBL getIteratorById(Expression * e, size_t id) const;
+                size_t getIteratorID(Expression * e, VariableLBL it) const;
 		
 		VariableLBL getGlobalById(size_t id) const;
 		size_t getNumberOfGlobals() const;

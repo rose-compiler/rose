@@ -1,4 +1,7 @@
 
+#ifndef __POLYHEDRAL_KERNEL_HPP__
+#  define __POLYHEDRAL_KERNEL_HPP__
+
 #include "rose/rose-utils.hpp"
 #include "common/PolyhedricContainer.hpp"
 #include "common/PolyhedricDependency.hpp"
@@ -93,4 +96,6 @@ const std::vector<LinearExpression_ppl> & getScattering(const std::pair<SgExprSt
 size_t getDimension(const std::pair<SgExprStatement *, size_t> obj);
 
 size_t getExtraDimension(const std::pair<SgExprStatement *, size_t> obj);
+
+#endif /* __POLYHEDRAL_KERNEL_HPP__ */
 

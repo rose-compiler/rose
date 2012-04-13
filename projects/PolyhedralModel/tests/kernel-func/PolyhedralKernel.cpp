@@ -57,8 +57,9 @@ void setPolyhedralProgram<SgFunctionDeclaration, SgExprStatement, RoseVariable>(
 template <>
 FunctionDomain & getDomain<SgFunctionDeclaration, SgExprStatement, RoseVariable>(const SgExprStatement * arg) {
   FunctionDomain * res = dynamic_cast<DomainAttribute<SgFunctionDeclaration> *>(arg->getAttribute("PolyhedricAnnotation::Domain"));
-  if (!res)
+  if (!res) {
     throw  Exception::RoseAttributeMissing("PolyhedricAnnotation::Domain", arg);
+  }
   return *res;
 }
 
@@ -76,8 +77,9 @@ void setDomain<SgFunctionDeclaration, SgExprStatement, RoseVariable>(
 template <>
 FunctionScattering & getScattering<SgFunctionDeclaration, SgExprStatement, RoseVariable>(const SgExprStatement * arg) {
   FunctionScattering * res = dynamic_cast<ScatteringAttribute<SgFunctionDeclaration> *>(arg->getAttribute("PolyhedricAnnotation::Scattering"));
-  if (!res)
+  if (!res) {
     throw  Exception::RoseAttributeMissing("PolyhedricAnnotation::Scattering", arg);
+  }
   return *res;
 }
 
@@ -95,8 +97,9 @@ void setScattering<SgFunctionDeclaration, SgExprStatement, RoseVariable>(
 template <>
 FunctionDataAccess & getDataAccess<SgFunctionDeclaration, SgExprStatement, RoseVariable>(const SgExprStatement * arg) {
   FunctionDataAccess * res = dynamic_cast<DataAccessAttribute<SgFunctionDeclaration> *>(arg->getAttribute("PolyhedricAnnotation::DataAccess"));
-  if (!res)
+  if (!res) {
     throw  Exception::RoseAttributeMissing("PolyhedricAnnotation::DataAccess", arg);
+  }
   return *res;
 }
 
