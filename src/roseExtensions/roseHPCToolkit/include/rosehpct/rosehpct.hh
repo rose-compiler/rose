@@ -43,7 +43,7 @@ namespace RoseHPCT
   //! A set of predefined metric names, 
   //  please use them instead of hard coded values in the code
   //  All other PAPI event names are standardized. 
-  const std::string m_wallclock="WALLCLOCK (us).[0] (E)";  // DXN
+  const std::string m_wallclock="WALLCLOCK (us).[0,0] (E)";  // DXN: Laksono changed from [0] to [0,0]!
   const std::string m_percentage="WALLCLOCK_EXCLUSIVE_%";  // DXN
   const std::string m_totalcycle="PAPI_TOT_CYC";
 
