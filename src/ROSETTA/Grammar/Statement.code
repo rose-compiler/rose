@@ -878,6 +878,9 @@ inline bool
 StatementListInsertChild( SgStatement *parent, Rose_STL_Container<Elemtype*>& l,  SgStatement *target, 
                           SgStatement *n, bool inFront, bool extractFromBasicBlock, bool removeCurrent)
    {
+  // DQ (4/3/2012): Simple globally visible function to call (used for debugging in ROSE).
+  // void testAstForUniqueNodes ( SgNode* node );
+
 #if 0
      printf ("In StatementListInsertChild: l.size() = %zu \n",l.size());
      printf ("In StatementListInsertChild: inFront  = %s \n",inFront ? "true" : "false");
@@ -1014,6 +1017,9 @@ StatementListInsertChild( SgStatement *parent, Rose_STL_Container<Elemtype*>& l,
 
                          l.insert(l.begin() + p, static_cast<Elemtype*>(n));
                          parent->set_isModified(true);
+
+                      // DQ (4/3/2012): Added test to make sure that the pointers are unique.
+                      // testAstForUniqueNodes(parentScope);
                        }
                   }
                  else
@@ -1043,6 +1049,9 @@ StatementListInsertChild( SgStatement *parent, Rose_STL_Container<Elemtype*>& l,
 
                          l.insert(l.begin() + p, static_cast<Elemtype*>(stmt));
                          parent->set_isModified(true);
+
+                      // DQ (4/3/2012): Added test to make sure that the pointers are unique.
+                      // testAstForUniqueNodes(parentScope);
                        }
                   }
 

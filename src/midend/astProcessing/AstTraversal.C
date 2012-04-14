@@ -42,18 +42,31 @@ void AstPrePostOrderTraversal::setChildrenContainer(SgNode* node, std::vector<Sg
 
 //! Determines whether the given sequence l of nodes extended by node creates a cycle.
 //! The found cycle is returned. If no cycle is found, the returned list is empty.
-list<SgNode*> AstCycleTest::determineCycle(list<SgNode*>& l, SgNode* node) {
-  list<SgNode*> noCycle;
-  list<SgNode*> cycle;
-  cycle.push_front(node);
-  for(list<SgNode*>::reverse_iterator i=l.rbegin(); i!=l.rend(); i++) {
-    cycle.push_front(*i);
-    if(node==*i) {
-      return cycle;
-    }
-  }
-  return noCycle;
-}
+list<SgNode*> AstCycleTest::determineCycle(list<SgNode*>& l, SgNode* node)
+   {
+     list<SgNode*> noCycle;
+     list<SgNode*> cycle;
+     cycle.push_front(node);
+#if 0
+     printf ("In AstCycleTest::determineCycle(l,node = %p = %s) l.size() = %zu \n",node,node->class_name().c_str(),l.size());
+#endif
+     for (list<SgNode*>::reverse_iterator i = l.rbegin(); i != l.rend(); i++)
+        {
+#if 0
+          printf ("node = %p = %s *i = %p = %s \n",node,node->class_name().c_str(),*i,(*i)->class_name().c_str());
+#endif
+          cycle.push_front(*i);
+          if (node == *i)
+             {
+#if 0
+               printf ("Found a match, return the cycle \n");
+#endif
+               return cycle;
+             }
+        }
+
+     return noCycle;
+   }
 
 void AstCycleTest::preOrderVisit(SgNode* node) {
   activeNodes.push_back(node);
@@ -94,12 +107,18 @@ AstCycleTest::setChildrenContainer(SgNode* node, std::vector<SgNode*>& c)
         }
 #endif
   
-     for(std::vector<SgNode*>::iterator i=c.begin();i!=c.end();i++)
+     for (std::vector<SgNode*>::iterator i=c.begin();i!=c.end();i++)
         {
-          if(*i != NULL)
+#if 0
+          printf ("for node = %p = %s list c.size() = %zu \n",node,node->class_name().c_str(),c.size());
+#endif
+          if (*i != NULL)
              {
+#if 0
+               printf ("Calling determineCycle(activeNodes = %zu, *i = %p = %s) \n",activeNodes.size(),*i,(*i)->class_name().c_str());
+#endif
                list<SgNode*> cycle = determineCycle(activeNodes,*i);
-               if(cycle.size() > 0)
+               if (cycle.size() > 0)
                   {
                  // cycle found
                     cout << "CYCLE FOUND:";

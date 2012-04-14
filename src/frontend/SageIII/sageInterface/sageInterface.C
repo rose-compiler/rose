@@ -3944,12 +3944,13 @@ SageInterface::addMangledNameToCache( SgNode* astNode, const std::string & oldMa
   // std::map<SgNode*,std::string> & mangledNameCache = globalScope->get_mangledNameCache();
   // std::map<std::string, int> & shortMangledNameCache = globalScope->get_shortMangledNameCache();
      std::map<SgNode*,std::string> & mangledNameCache   = SgNode::get_globalMangledNameMap();
-     std::map<std::string, int> & shortMangledNameCache = SgNode::get_shortMangledNameCache();
 
      std::string mangledName;
 
 #define USE_SHORT_MANGLED_NAMES 0
 #if USE_SHORT_MANGLED_NAMES
+     std::map<std::string, int> & shortMangledNameCache = SgNode::get_shortMangledNameCache();
+
   // This bound was 40 previously!
      if (oldMangledName.size() > 40) {
        std::map<std::string, int>::const_iterator shortMNIter = shortMangledNameCache.find(oldMangledName);
@@ -8388,6 +8389,9 @@ void SageInterface::setPragma(SgPragmaDeclaration* decl, SgPragma *pragma)
 //It might be well legal to append the first and only statement in a scope!
 void SageInterface::appendStatement(SgStatement *stmt, SgScopeStatement* scope)
    {
+  // DQ (4/3/2012): Simple globally visible function to call (used for debugging in ROSE).
+     void testAstForUniqueNodes ( SgNode* node );
+
      if (scope == NULL)
           scope = SageBuilder::topScopeStack();
 
@@ -8432,6 +8436,9 @@ void SageInterface::appendStatement(SgStatement *stmt, SgScopeStatement* scope)
         {
           updateDefiningNondefiningLinks(isSgFunctionDeclaration(stmt),scope);
         }
+
+  // DQ (4/3/2012): Added test to make sure that the pointers are unique.
+     testAstForUniqueNodes(scope);
    }
 
 void SageInterface::appendStatementList(const std::vector<SgStatement*>& stmts, SgScopeStatement* scope) {

@@ -142,6 +142,29 @@ class TestAstForUniqueStatementsInScopes : public AstSimpleProcessing
           void visit ( SgNode* node );
    };
 
+// DQ (4/2/2012): This appears to be a test that we have not got into palce yet.
+// the test code: test2012_59.C demonstrates an example where a IR node is shared
+// between the global scope and a class definition scope.  This causes an error 
+// in the generated code, so we want to detect this case.
+class TestAstForUniqueNodesInAST : public AstSimpleProcessing
+   {
+  // This class uses a traversal to test properties of AST.
+  // We look for redundent entries anywhere in the AST.
+  // This test has to save a pointer to ever AST IR node 
+  // that is traversed so it is a bit expensive in memory.
+
+     std::set<SgNode*> astNodeSet;
+
+     public:
+          void visit ( SgNode* node );
+
+          static void test ( SgNode* node );
+   };
+
+// DQ (4/3/2012): Simple globally visible function to call (used for debugging elsewhee in ROSE).
+void testAstForUniqueNodes ( SgNode* node );
+
+
 class TestAstCompilerGeneratedNodes : public AstSimpleProcessing
    {
   // This class uses a traversal to test properties of compiler generated IR nodes.

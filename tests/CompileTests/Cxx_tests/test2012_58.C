@@ -3,10 +3,12 @@ template <typename T>
 class X
    {
      public:
+#if 1
           friend void foo( X<T> & i )
              {
                int a;
              }
+#endif
    };
 
 #if 1

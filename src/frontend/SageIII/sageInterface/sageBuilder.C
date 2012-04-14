@@ -23,6 +23,9 @@
    #include "transformationSupport.h"
 #endif
 
+// DQ (4/3/2012): Addes so that I can enforce some rules as the AST is constructed.
+#include "AstConsistencyTests.h"
+
 // DQ (3/31/2012): Is this going to be an issue fo C++11 use with ROSE?
 #define foreach BOOST_FOREACH
 
@@ -3967,6 +3970,9 @@ SgExprListExp * SageBuilder::buildExprListExp(SgExpression * expr1, SgExpression
 {
   SgExprListExp* expList = new SgExprListExp();
   ROSE_ASSERT(expList);
+
+  printf ("In SageBuilder::buildExprListExp(SgExpression * expr1, SgExpression* expr2, ...): SgExprListExp* expList = %p \n",expList);
+
   setOneSourcePositionForTransformation(expList);
   if (expr1) appendExpression(expList, expr1);
   if (expr2) appendExpression(expList, expr2);
@@ -3986,6 +3992,9 @@ SgExprListExp * SageBuilder::buildExprListExp(const std::vector<SgExpression*>& 
 {
   SgExprListExp* expList = new SgExprListExp();
   ROSE_ASSERT(expList);
+
+  printf ("In SageBuilder::buildExprListExp(const std::vector<SgExpression*>& exprs): SgExprListExp* expList = %p \n",expList);
+
   setOneSourcePositionForTransformation(expList);
   for (size_t i = 0; i < exprs.size(); ++i) {
     appendExpression(expList, exprs[i]);
@@ -3997,46 +4006,62 @@ SgExprListExp * SageBuilder::buildExprListExp_nfi()
 {
   SgExprListExp* expList = new SgExprListExp();
   ROSE_ASSERT(expList);
+
+  printf ("In SageBuilder::buildExprListExp_nfi(): SgExprListExp* expList = %p \n",expList);
+
   setOneSourcePositionNull(expList);
   return expList;
 }
 
 SgExprListExp * SageBuilder::buildExprListExp_nfi(const std::vector<SgExpression*>& exprs)
-{
-  SgExprListExp* expList = new SgExprListExp();
-  ROSE_ASSERT(expList);
-  setOneSourcePositionNull(expList);
-  for (size_t i = 0; i < exprs.size(); ++i) {
-    appendExpression(expList, exprs[i]);
-  }
-  return expList;
-}
+   {
+     SgExprListExp* expList = new SgExprListExp();
+     ROSE_ASSERT(expList != NULL);
 
-SgVarRefExp *
+     printf ("In SageBuilder::buildExprListExp_nfi(const std::vector<SgExpression*>& exprs): SgExprListExp* expList = %p expList->get_expressions().size() = %zu \n",expList,expList->get_expressions().size());
+
+     setOneSourcePositionNull(expList);
+     for (size_t i = 0; i < exprs.size(); ++i)
+        {
+          appendExpression(expList, exprs[i]);
+        }
+
+  // DQ (4/3/2012): Added test to make sure that the pointers are unique.
+     testAstForUniqueNodes(expList);
+
+     return expList;
+   }
+
+SgVarRefExp*
 SageBuilder::buildVarRefExp(SgInitializedName* initname, SgScopeStatement* scope)
-{
-  ROSE_ASSERT(initname);
-  if (scope == NULL)
-    scope = SageBuilder::topScopeStack();
+   {
+     ROSE_ASSERT(initname);
+     if (scope == NULL)
+          scope = SageBuilder::topScopeStack();
   // ROSE_ASSERT(scope != NULL); // we allow to build a dangling ref without symbol
 
-  SgVarRefExp *varRef = NULL;
+     SgVarRefExp *varRef = NULL;
   // there is assertion for get_scope() != NULL in get_symbol_from_symbol_table()
-  SgSymbol* symbol = NULL;
-  if (initname->get_scope()!=NULL)
-    symbol = initname->get_symbol_from_symbol_table ();
+     SgSymbol* symbol = NULL;
+     if (initname->get_scope()!=NULL)
+          symbol = initname->get_symbol_from_symbol_table ();
   
-  if (symbol)
-  {
-    varRef = new SgVarRefExp(isSgVariableSymbol(symbol));
-    setOneSourcePositionForTransformation(varRef);
-    ROSE_ASSERT(varRef);
-  }
-  else
-   varRef = buildVarRefExp(initname->get_name(), scope);
+     if (symbol != NULL)
+        {
+          varRef = new SgVarRefExp(isSgVariableSymbol(symbol));
+          setOneSourcePositionForTransformation(varRef);
+          ROSE_ASSERT(varRef);
+        }
+       else
+        {
+          printf ("In SageBuilder::buildVarRefExp(): we might be reusing an existing SgVarRefExp \n");
+          varRef = buildVarRefExp(initname->get_name(), scope);
+        }
 
- return varRef;
-}
+     printf ("In SageBuilder::buildVarRefExp(): Returning SgVarRefExp = %p \n",varRef);
+
+     return varRef;
+   }
 
 SgVarRefExp *
 SageBuilder::buildVarRefExp(const char* varName, SgScopeStatement* scope) 
@@ -4065,7 +4090,7 @@ SageBuilder::buildVarRefExp(const SgName& name, SgScopeStatement* scope/*=NULL*/
 
      if (scope != NULL)
         {
-       // DQ (12/30/2011): This is a bad idea for C++ since qualified names might inticate different scopes.
+       // DQ (12/30/2011): This is a bad idea for C++ since qualified names might indicate different scopes.
        // If the scope has been provided then is should be the correct scope.
 #if 1
           symbol = lookupSymbolInParentScopes(name,scope);
@@ -4087,8 +4112,11 @@ SageBuilder::buildVarRefExp(const SgName& name, SgScopeStatement* scope/*=NULL*/
        // waiting for a postProcessing phase to clean it up
        // two features: no scope and unknown type for initializedName
           SgInitializedName * name1 = buildInitializedName(name,SgTypeUnknown::createType());
-          name1->set_scope(scope); //buildInitializedName() does not set scope for various reasons
+          name1->set_scope(scope);  // buildInitializedName() does not set scope for various reasons
           varSymbol = new SgVariableSymbol(name1);
+
+       // DQ (4/2/2012): Output a warning:
+          printf ("WARNING: In SageBuilder::buildVarRefExp(): symbol not found so we built a SgVariableSymbol = %p (but not put into symbol table) \n",varSymbol);
         }
 
      if (varSymbol == NULL)
@@ -4099,69 +4127,86 @@ SageBuilder::buildVarRefExp(const SgName& name, SgScopeStatement* scope/*=NULL*/
 
      SgVarRefExp *varRef = new SgVarRefExp(varSymbol);
      setOneSourcePositionForTransformation(varRef);
-     ROSE_ASSERT(varRef);
+     ROSE_ASSERT(varRef != NULL);
+
+     printf ("In SageBuilder::buildVarRefExp(const SgName& name, SgScopeStatement* scope = %p): varRef = %p \n",scope,varRef);
+
      return varRef; 
    }
 
 //! Build a variable reference from an existing variable declaration. The assumption is a SgVariableDeclartion only declares one variable in the ROSE AST.
 SgVarRefExp *
 SageBuilder::buildVarRefExp(SgVariableDeclaration* vardecl)
-{
-  SgVariableSymbol* symbol = getFirstVarSym(vardecl);
-  ROSE_ASSERT(symbol);
-  return buildVarRefExp(symbol);
-}
+   {
+     SgVariableSymbol* symbol = getFirstVarSym(vardecl);
+     ROSE_ASSERT(symbol);
+
+     return buildVarRefExp(symbol);
+   }
 
 
 SgVarRefExp *
 SageBuilder::buildVarRefExp(SgVariableSymbol* sym)
-{
-  SgVarRefExp *varRef = new SgVarRefExp(sym);
-  setOneSourcePositionForTransformation(varRef);
-  ROSE_ASSERT(varRef);
-  return varRef; 
-}
+   {
+     SgVarRefExp *varRef = new SgVarRefExp(sym);
+     setOneSourcePositionForTransformation(varRef);
+     ROSE_ASSERT(varRef);
+
+     printf ("In SageBuilder::buildVarRefExp(SgVariableSymbol* sym): Returning SgVarRefExp = %p \n",varRef);
+
+     return varRef; 
+   }
 
 SgVarRefExp *
 SageBuilder::buildVarRefExp_nfi(SgVariableSymbol* sym)
-{
-  SgVarRefExp *varRef = new SgVarRefExp(sym);
-  setOneSourcePositionNull(varRef);
-  ROSE_ASSERT(varRef);
-  return varRef; 
-}
+   {
+     SgVarRefExp *varRef = new SgVarRefExp(sym);
+     setOneSourcePositionNull(varRef);
+     ROSE_ASSERT(varRef);
+
+     printf ("In SageBuilder::buildVarRefExp_nfi(SgVariableSymbol* sym): Returning SgVarRefExp = %p \n",varRef);
+
+     return varRef; 
+   }
 
 //!Build a variable reference expression at scope to an opaque variable which has unknown information except for its name.  Used when referring to an internal variable defined in some headers of runtime libraries.(The headers are not yet inserted into the file during translation). Similar to buildOpaqueType(); 
 /*! It will declare a hidden int varName  at the specified scope to cheat the AST consistence tests.
  */
 SgVarRefExp*
 SageBuilder::buildOpaqueVarRefExp(const std::string& name,SgScopeStatement* scope/* =NULL */)
-{
-  SgVarRefExp *result = NULL;
+   {
+     SgVarRefExp *result = NULL;
 
-  if (scope == NULL)
-    scope = SageBuilder::topScopeStack();
-  ROSE_ASSERT(scope != NULL);
+     if (scope == NULL)
+          scope = SageBuilder::topScopeStack();
+     ROSE_ASSERT(scope != NULL);
 
-  SgSymbol * symbol = lookupSymbolInParentScopes(name,scope); 
-  if (symbol)
-  {
-    // Can be the same opaque var ref built before
-  //  cerr<<"Error: trying to build an opaque var ref when the variable is actual explicit!"<<endl;
-   //    ROSE_ASSERT(false);
-     ROSE_ASSERT(isSgVariableSymbol(symbol));
-     result = buildVarRefExp(isSgVariableSymbol(symbol));  
-  }
-  else
-  {
-    SgVariableDeclaration* fakeVar = buildVariableDeclaration(name, buildIntType(),NULL, scope);
-    Sg_File_Info* file_info = fakeVar->get_file_info();
-    file_info->unsetOutputInCodeGeneration ();
-    SgVariableSymbol *  fakeSymbol = getFirstVarSym (fakeVar);   
-    result = buildVarRefExp(fakeSymbol);
-  } // if
-  return result;
-} // buildOpaqueVarRefExp()
+     SgSymbol * symbol = lookupSymbolInParentScopes(name,scope); 
+     if (symbol)
+        {
+       // Can be the same opaque var ref built before
+       // cerr<<"Error: trying to build an opaque var ref when the variable is actual explicit!"<<endl;
+       // ROSE_ASSERT(false);
+          ROSE_ASSERT(isSgVariableSymbol(symbol));
+          result = buildVarRefExp(isSgVariableSymbol(symbol));  
+
+       // DQ (4/2/2012): Output a warning:
+          printf ("WARNING: In SageBuilder::buildOpaqueVarRefExp(): proper symbol used to build SgVarRefExp = %p \n",result);
+        }
+       else
+        {
+         SgVariableDeclaration* fakeVar = buildVariableDeclaration(name, buildIntType(),NULL, scope);
+         Sg_File_Info* file_info = fakeVar->get_file_info();
+         file_info->unsetOutputInCodeGeneration ();
+         SgVariableSymbol* fakeSymbol = getFirstVarSym (fakeVar);   
+         result = buildVarRefExp(fakeSymbol);
+
+       // DQ (4/2/2012): Output a warning:
+          printf ("WARNING: In SageBuilder::buildOpaqueVarRefExp(): fake symbol generated to build SgVarRefExp = %p (but not put into symbol table) \n",result);
+        }
+
+     return result;
+   } // buildOpaqueVarRefExp()
 
 //! Build a Fortran numeric label ref exp
 SgLabelRefExp * SageBuilder::buildLabelRefExp(SgLabelSymbol * s)
