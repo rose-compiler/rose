@@ -1,9 +1,0 @@
- /*!
-     \defgroup ROSE_ProgramAnalysisGroup ROSE Program Analysis
-     \ingroup ROSE_MidEndGroup
-
-     \brief This is the location of numerous program analysies that operate on the
-            AST and may be called within the mid-end.
-
-  */
-

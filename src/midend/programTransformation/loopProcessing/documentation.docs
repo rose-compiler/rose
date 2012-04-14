@@ -1,9 +1,0 @@
- /*!
-     \defgroup ROSE_LoopProcessingGroup ROSE Loop Optimization
-     \ingroup ROSE_MidEndGroup
-
-     \brief This is the location of numerous loop optimizations that operate on the
-            AST and may be called within the mid-end by the user.
-
-  */
-
