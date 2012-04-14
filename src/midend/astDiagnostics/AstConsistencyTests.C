@@ -267,6 +267,20 @@ AstTests::runAllTests(SgProject* sageProject)
      if ( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
           cout << "Redundent Statement Test finished." << endl;
 
+  // DQ (4/2/2012): Added test for unique IR nodes in the AST.
+     if ( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
+          cout << "Unique IR nodes in AST Test started (tests IR nodes uniqueness over whole of AST)." << endl;
+
+        {
+          TimingPerformance timer ("AST check for unique IR nodes in whole of AST (must excludes IR nodes marked explicitly as shared by AST merge):");
+
+          TestAstForUniqueNodesInAST redundentNodeTest;
+          redundentNodeTest.traverse(sageProject,preorder);
+        }
+
+     if ( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
+          cout << "Unique IR nodes in AST Test finished." << endl;
+
 #if 0
   // DQ (10/11/2006): Debugging name qualification, so skip these tests which call the unparser!
      printf ("WARNING: In AstConsistencyTests.C, while debugging code generation, mangled name testing (which includes tests of unparseToString() mechanism) is skipped \n");
@@ -348,15 +362,19 @@ AstTests::runAllTests(SgProject* sageProject)
           cout << "Testing default abstract C++ grammar finished." << endl;
 #endif
 
-  // if (sageProject->get_useBackendOnly() == false) 
+  // DQ (4/2/2012): debugging why we have a cycle in the AST (test2012_59.C).
+  // if (sageProject->get_useBackendOnly() == false)
+  // if ( SgProject::get_verbose() >= 0 ) // DIAGNOSTICS_VERBOSE_LEVEL )
      if ( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
           cout << "Cycle test started." << endl;
+
         {
           TimingPerformance timer ("AST cycle test:");
 
           AstCycleTest cycTest;
           cycTest.traverse(sageProject);
         }
+
   // if (sageProject->get_useBackendOnly() == false) 
      if ( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
         cout << "Cycle test finished. No cycle found." << endl;
@@ -2114,6 +2132,63 @@ TestAstForUniqueStatementsInScopes::visit ( SgNode* node )
 
           ROSE_ASSERT(pass);
         }
+   }
+
+/*! \page AstProperties AST Properties (Consistency Tests)
+
+\section section2 Unique IR nodes in the AST
+
+     This test verifies each IR nodes visited in the AST is only visited once.
+This is a more robust version of the previous test which checked for shared 
+IR nodes in the same scope (which is a more common problem).  This test is 
+more expensive in memory since it has to save a reference to ever IR node
+and test if it has been previously seen.
+*/
+
+void
+TestAstForUniqueNodesInAST::visit ( SgNode* node )
+   {
+  // DQ (4/2/2012): This is a more robust (and expensive) test to check for shared IR nodes in the AST (there should be none).
+
+      ROSE_ASSERT(node != NULL);
+
+      if (astNodeSet.find(node) != astNodeSet.end())
+         {
+           printf ("Error: found a shared IR node = %p = %s in the AST. \n",node,node->class_name().c_str());
+           SgLocatedNode* locatedNode = isSgLocatedNode(node);
+           if (locatedNode != NULL)
+              {
+             // Note that we must exclude IR nodes marked explicitly as shared by AST merge.
+
+                ROSE_ASSERT(locatedNode->get_file_info() != NULL);
+                locatedNode->get_file_info()->display("Error: found a shared IR node (might be marked as shared after AST merge; not handled yet)");
+              }
+
+           printf ("Error: found a shared IR node = %p = %s in the AST. \n",node,node->class_name().c_str());
+#if 1
+           ROSE_ASSERT(false);
+#endif
+         }
+#if 0
+      printf ("In TestAstForUniqueNodesInAST::visit(): astNodeSet.insert(node = %p = %s) \n",node,node->class_name().c_str());
+#endif
+      astNodeSet.insert(node);
+   }
+
+
+void
+TestAstForUniqueNodesInAST::test ( SgNode* node )
+   {
+  // DQ (4/3/2012): Added test to make sure that the pointers are unique.
+     TestAstForUniqueNodesInAST redundentNodeTest;
+     redundentNodeTest.traverse(node,preorder);
+   }
+
+void
+testAstForUniqueNodes ( SgNode* node )
+   {
+  // DQ (4/3/2012): Added test to make sure that the pointers are unique.
+     TestAstForUniqueNodesInAST::test(node);
    }
 
 
