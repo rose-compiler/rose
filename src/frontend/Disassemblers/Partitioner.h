@@ -271,13 +271,41 @@ protected:
     typedef std::map<rose_addr_t, DataBlock*> DataBlocks;
 
     /** Represents a function within the Partitioner. Each non-empty function will become an SgAsmFunction in the AST. */
-    struct Function {
-        Function(rose_addr_t entry_va): reason(0), pending(true), entry_va(entry_va), may_return(false) {}
-        Function(rose_addr_t entry_va, unsigned r): reason(r), pending(true), entry_va(entry_va), may_return(false) {}
+    class Function {
+    public:
+        Function(rose_addr_t entry_va)
+            : reason(0), pending(true), entry_va(entry_va), may_return_cur(false), may_return_old(false) {}
+        Function(rose_addr_t entry_va, unsigned r)
+            : reason(r), pending(true), entry_va(entry_va), may_return_cur(false), may_return_old(false) {}
         Function(rose_addr_t entry_va, unsigned r, const std::string& name)
-            : reason(r), name(name), pending(true), entry_va(entry_va), may_return(false) {}
-        void clear_basic_blocks();              /**< Remove all basic blocks from this function w/out deleting the blocks. */
-        void clear_data_blocks();               /**< Remove all data blocks from this function w/out deleting the blocks. */
+            : reason(r), name(name), pending(true), entry_va(entry_va), may_return_cur(false), may_return_old(false) {}
+
+        /** Remove all basic blocks from this function w/out deleting the blocks. */
+        void clear_basic_blocks();
+
+        /** Remove all data blocks from this function w/out deleting the blocks. */
+        void clear_data_blocks();
+
+        /** Returns true if it's possible for this function to return to its caller. */
+        bool may_return() const { return may_return_cur; }
+
+        /** Marks the function as possible to return. */
+        void set_may_return(bool b=true) { may_return_cur = b; }
+
+        /** Returns true if the may-return property recently changed. */
+        bool may_return_has_changed() const { return may_return_cur != may_return_old; }
+
+        /** Marks the may-return property as resolved.  After calling this method, may_return_changed() will return false (at
+         *  least until the may-return property is modified with may_return(). */
+        void may_return_clear_changed() { may_return_old = may_return_cur; }
+
+        /** Initialize properties from another function.  This causes the properties of the @p other function to be copied into
+         *  this function without changing this function's list of blocks or entry address.  The @p pending status of this
+         *  function may be set if set in @p other, but it will never be cleared.  Returns @p this. */
+        Function *init_properties(const Function &other);
+
+    public:
+        /* If you add more data members, also update detach_thunk() and/or init_properties() */
         unsigned reason;                        /**< SgAsmFunction::FunctionReason bit flags */
         std::string name;                       /**< Name of function if known */
         BasicBlocks basic_blocks;               /**< Basic blocks belonging to this function */
@@ -285,8 +313,11 @@ protected:
         bool pending;                           /**< True if we need to (re)discover the basic blocks */
         rose_addr_t entry_va;                   /**< Entry virtual address */
         Disassembler::AddressSet heads;         /**< CFG heads, excluding func entry: addresses of additional blocks */
-        bool may_return;                        /**< Is it possible for this function to return? */
-        /* If you add more here, also update split_attached_thunks() */
+
+    private:
+        /* If you add more data members, also update detach_thunk() and/or init_properties() */
+        bool may_return_cur;                    /**< Is it possible for this function to return? Current value of property. */
+        bool may_return_old;                    /**< Is it possible for this function to return? Previous value of property. */
     };
     typedef std::map<rose_addr_t, Function*> Functions;
 
@@ -1467,8 +1498,8 @@ public:
     /** Splits one thunk off the start of a function if possible.  Since the partitioner constructs functions according to the
      *  control flow graph, thunks (JMP to start of function) often become part of the function to which they jump.  This can
      *  happen if the real function has no direct callers and was not detected as a function entry point due to any pattern or
-     *  symbol.  The split_attached_thunks() function traverses all defined functions and looks for cases where the thunk is
-     *  attached to the jumped-to function, and splits them into two functions. */
+     *  symbol.  The detach_thunks() function traverses all defined functions and looks for cases where the thunk is attached
+     *  to the jumped-to function, and splits them into two functions. */
     virtual bool detach_thunk(Function*);
 
     /** Adjusts ownership of padding data blocks.  Each padding data block should be owned by the prior function in the address
