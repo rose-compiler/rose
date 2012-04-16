@@ -273,12 +273,23 @@ protected:
     /** Represents a function within the Partitioner. Each non-empty function will become an SgAsmFunction in the AST. */
     class Function {
     public:
+        /** Function return property.  This enum describes whether a function returns to its caller. */
+        enum MayReturn {
+            RET_UNKNOWN,                        /**< It is unknown whether this function returns or not. */
+            RET_NEVER,                          /**< This function is known to never return. */
+            RET_SOMETIMES,                      /**< This function may return (but is not required to return). */
+            RET_ALWAYS,                         /**< This function returns every time it's called. */
+        };
+
         Function(rose_addr_t entry_va)
-            : reason(0), pending(true), entry_va(entry_va), may_return_cur(false), may_return_old(false) {}
+            : reason(0), pending(true), entry_va(entry_va),
+              may_return_cur(RET_UNKNOWN), may_return_old(RET_UNKNOWN) {}
         Function(rose_addr_t entry_va, unsigned r)
-            : reason(r), pending(true), entry_va(entry_va), may_return_cur(false), may_return_old(false) {}
+            : reason(r), pending(true), entry_va(entry_va),
+              may_return_cur(RET_UNKNOWN), may_return_old(RET_UNKNOWN) {}
         Function(rose_addr_t entry_va, unsigned r, const std::string& name)
-            : reason(r), name(name), pending(true), entry_va(entry_va), may_return_cur(false), may_return_old(false) {}
+            : reason(r), name(name), pending(true), entry_va(entry_va),
+              may_return_cur(RET_UNKNOWN), may_return_old(RET_UNKNOWN) {}
 
         /** Remove all basic blocks from this function w/out deleting the blocks. */
         void clear_basic_blocks();
@@ -286,23 +297,35 @@ protected:
         /** Remove all data blocks from this function w/out deleting the blocks. */
         void clear_data_blocks();
 
-        /** Returns true if it's possible for this function to return to its caller. */
-        bool may_return() const { return may_return_cur; }
+        /** Accessor for the may-return property.  The may-return property indicates whether this function returns to its
+         *  caller.  This is a two-part property storing both the current value and the previous value; this enables us to
+         *  detect transitions after the fact, when it is more efficient to process them than when they actually occur.
+         *  Setting the current value does not update the old value; the old value is updated only by the commit_may_return()
+         *  method.
+         * @{ */
+        MayReturn get_may_return() const { return may_return_cur; }
+        void set_may_return(MayReturn may_return) { may_return_cur = may_return; }
+        bool changed_may_return() const { return may_return_cur != may_return_old; }
+        void commit_may_return() { may_return_old = may_return_cur; }
+        /** @} */
 
-        /** Marks the function as possible to return. */
-        void set_may_return(bool b=true) { may_return_cur = b; }
+        /** Can this function return?  Returns true if it is known that this function can return to its caller. */
+        bool possible_may_return() const {
+            return RET_SOMETIMES==get_may_return() || RET_ALWAYS==get_may_return();
+        }
 
-        /** Returns true if the may-return property recently changed. */
-        bool may_return_has_changed() const { return may_return_cur != may_return_old; }
-
-        /** Marks the may-return property as resolved.  After calling this method, may_return_changed() will return false (at
-         *  least until the may-return property is modified with may_return(). */
-        void may_return_clear_changed() { may_return_old = may_return_cur; }
+        /** Increase knowledge about the returnability of this function.  A current value of RET_UNKNOWN is always changed to
+         * the @p new_value.  A current value of RET_SOMETIMES can be changed to RET_ALWAYS or RET_NEVER.  A current value of
+         * RET_ALWAYS or RET_NEVER is not modified (not even to change RET_ALWAYS to RET_NEVER or vice versa). */
+        void promote_may_return(MayReturn new_value);
 
         /** Initialize properties from another function.  This causes the properties of the @p other function to be copied into
          *  this function without changing this function's list of blocks or entry address.  The @p pending status of this
          *  function may be set if set in @p other, but it will never be cleared.  Returns @p this. */
         Function *init_properties(const Function &other);
+
+        /** Emit function property values. This is mostly for debugging.  If the file handle is null then nothing happens. */
+        void show_properties(FILE*) const;
 
     public:
         /* If you add more data members, also update detach_thunk() and/or init_properties() */
@@ -316,8 +339,8 @@ protected:
 
     private:
         /* If you add more data members, also update detach_thunk() and/or init_properties() */
-        bool may_return_cur;                    /**< Is it possible for this function to return? Current value of property. */
-        bool may_return_old;                    /**< Is it possible for this function to return? Previous value of property. */
+        MayReturn may_return_cur;               /**< Is it possible for this function to return? Current value of property. */
+        MayReturn may_return_old;               /**< Is it possible for this function to return? Previous value of property. */
     };
     typedef std::map<rose_addr_t, Function*> Functions;
 

@@ -644,7 +644,7 @@ Partitioner::successors(BasicBlock *bb, bool *complete)
         rose_addr_t call_target_va = call_target(bb);
         if (call_target_va!=NO_TARGET) {
             BasicBlock *target_bb = find_bb_starting(call_target_va, false);
-            if (target_bb && target_bb->function && target_bb->function->may_return())
+            if (target_bb && target_bb->function && target_bb->function->possible_may_return())
                 retval.insert(fall_through_va);
         } else {
             retval.insert(fall_through_va); /*true 99% of the time*/
@@ -797,6 +797,35 @@ Partitioner::Function::clear_data_blocks()
     for (DataBlocks::iterator bi=data_blocks.begin(); bi!=data_blocks.end(); ++bi)
         bi->second->function = NULL;
     data_blocks.clear();
+}
+
+/* Increase knowledge about may-return property. */
+void
+Partitioner::Function::promote_may_return(MayReturn new_value) {
+    switch (get_may_return()) {
+        case RET_UNKNOWN:
+            set_may_return(new_value);
+            break;
+        case RET_SOMETIMES:
+            if (RET_ALWAYS==new_value || RET_NEVER==new_value)
+                set_may_return(new_value);
+            break;
+        case RET_ALWAYS:
+        case RET_NEVER:
+            break;
+    }
+}
+
+void
+Partitioner::Function::show_properties(FILE *debug) const
+{
+    if (debug) {
+        std::string may_return_str = stringifyPartitionerFunctionMayReturn(get_may_return(), "RET_");
+        for (size_t i=0; i<may_return_str.size(); ++i)
+            may_return_str[i] = tolower(may_return_str[i]);
+        fprintf(debug, "{nbblocks=%zu, ndblocks=%zu, may-return=%s}",
+                basic_blocks.size(), data_blocks.size(), may_return_str.c_str());
+    }
 }
 
 /* Return partitioner to initial state */
@@ -963,31 +992,12 @@ Partitioner::append(Function* f, BasicBlock *bb, unsigned reason, bool keep/*=fa
     /* If the block is a function return then mark the function as returning.  On a transition from a non-returning function
      * to a returning function, we must mark all calling functions as pending so that the fall-through address of their
      * function calls to this function are eventually discovered.  This includes recursive calls since we may have already
-     * discovered the recursive call but not followed the fall-through address.
-     *
-     * FIXME: It's probably no longer necessary to go back and mark calling functions as pending because we do that in the
-     *        analyze_cfg() loop.  Doing it in analyze_cfg() is probably more efficient than running these nested loops each
-     *        time we have a transition. [RPM 2010-07-30] */
+     * discovered the recursive call but not followed the fall-through address.  Marking callers as "pending" happens in the
+     * analyze_cfg() method, were we can handle all the calls at the same time (more efficient than doing one at a time right
+     * here). */
     update_analyses(bb);
-    if (bb->cache.function_return && !f->may_return()) {
-        f->set_may_return(true);
-#if 0
-        if (debug) fprintf(debug, "[returns-to");
-        for (BasicBlocks::iterator bbi=basic_blocks.begin(); bbi!=basic_blocks.end(); ++bbi) {
-            if (bbi->second->function!=NULL) {
-                const Disassembler::AddressSet &sucs = successors(bbi->second, NULL);
-                for (Disassembler::AddressSet::const_iterator si=sucs.begin(); si!=sucs.end(); ++si) {
-                    if (*si==f->entry_va) {
-                        if (debug) fprintf(debug, " F%08"PRIx64, bbi->second->function->entry_va);
-                        bbi->second->function->pending = true;
-                        break;
-                    }
-                }
-            }
-        }
-        if (debug) fprintf(debug, "]");
-#endif
-    }
+    if (bb->cache.function_return)
+        f->promote_may_return(Function::RET_SOMETIMES);
 }
 
 /** Append data region to function.  This method is a bit of a misnomer because the order that the data blocks are appended to
@@ -1530,8 +1540,11 @@ Partitioner::mark_elf_plt_entries(SgAsmGenericHeader *fhdr)
          *        [RPM 2010-05-11] */
         if ("abort@plt"!=name && "execl@plt"!=name && "execlp@plt"!=name && "execv@plt"!=name && "execvp@plt"!=name &&
             "exit@plt"!=name && "_exit@plt"!=name && "fexecve@plt"!=name &&
-            "longjmp@plt"!=name && "__longjmp@plt"!=name && "siglongjmp@plt"!=name)
-            plt_func->set_may_return(true);
+            "longjmp@plt"!=name && "__longjmp@plt"!=name && "siglongjmp@plt"!=name) {
+            plt_func->set_may_return(Function::RET_ALWAYS);
+        } else {
+            plt_func->set_may_return(Function::RET_NEVER);
+        }
     }
 }
 
@@ -2889,9 +2902,14 @@ Partitioner::discover_first_block(Function *func)
 
     if (bb) {
         append(func, bb, SgAsmBlock::BLK_ENTRY_POINT);
-        if (debug) fprintf(debug, "added %zu instruction%s\n", bb->insns.size(), 1==bb->insns.size()?"":"s");
+        if (debug)
+            fprintf(debug, "#%zu ", bb->insns.size());
     } else if (debug) {
-        fprintf(debug, "no instruction at function entry address\n");
+        fprintf(debug, "no instruction at function entry address ");
+    }
+    if (debug) {
+        func->show_properties(debug);
+        fputc('\n', debug);
     }
 }
 
@@ -3054,27 +3072,29 @@ Partitioner::analyze_cfg(SgAsmBlock::Reason reason)
             if (iscall && target_va!=NO_TARGET &&
                 NULL!=(return_bb=find_bb_starting(return_va)) &&
                 NULL!=(target_bb=find_bb_starting(target_va, false)) &&
-                target_bb->function && target_bb->function->may_return()) {
-                if (return_bb->function && return_va==target_bb->function->entry_va && !bb->function->may_return()) {
+                target_bb->function && target_bb->function->possible_may_return()) {
+                if (return_bb->function && return_va==target_bb->function->entry_va && !bb->function->possible_may_return()) {
                     /* This handles the case when function A's return from B falls through into B. In this case, since B
-                     * returns then A also returns.  We mark A as returning and we'll catch A's callers on the next pass.
+                     * returns then A also returns.  We mark A as returning.
                      *    function_A:
                      *        ...
                      *        CALL function_B
                      *    function_B:
                      *        RET
                      */
-                    bb->function->set_may_return(true);
+                    bb->function->promote_may_return(Function::RET_SOMETIMES);
                     if (debug) {
                         fprintf(debug, "  Function F%08"PRIx64" may return by virtue of call fall-through at B%08"PRIx64"\n",
                                 bb->function->entry_va, bb->address());
                     }
                 }
-            } else if (!bb->function->may_return() && !is_function_call(bb, NULL) && succs_complete) {
-                for (Disassembler::AddressSet::iterator si=succs.begin(); si!=succs.end() && !bb->function->may_return(); ++si) {
+            } else if (!bb->function->possible_may_return() && !is_function_call(bb, NULL) && succs_complete) {
+                for (Disassembler::AddressSet::iterator si=succs.begin();
+                     si!=succs.end() && !bb->function->possible_may_return();
+                     ++si) {
                     if (0!=(target_va=*si) && NULL!=(target_bb=find_bb_starting(target_va, false)) &&
                         target_bb->function && target_bb->function!=bb->function &&
-                        target_va==target_bb->function->entry_va && target_bb->function->may_return()) {
+                        target_va==target_bb->function->entry_va && target_bb->function->possible_may_return()) {
                         /* The block bb isn't a function call, but branches to the entry point of another function.  If that
                          * function returns then so does this one.  This handles situations like:
                          *      function_A:
@@ -3086,17 +3106,17 @@ Partitioner::analyze_cfg(SgAsmBlock::Reason reason)
                          * We don't need to set function_A->pending because the reachability of the instruction after its JMP
                          * won't change regardless of whether the "called" function returns (i.e., the return is to the caller
                          * of function_A, not to function_A itself. */
-                        bb->function->set_may_return(true);
+                        bb->function->promote_may_return(Function::RET_SOMETIMES);
                         if (debug) {
                             fprintf(debug, "  F%08"PRIx64" may return by virtue of branching to function F%08"PRIx64
                                     " which may return\n", bb->function->entry_va, target_bb->function->entry_va);
                         }
                     }
                 }
-            } else if (!bb->function->may_return() && !is_function_call(bb, NULL) && !succs_complete) {
+            } else if (!bb->function->possible_may_return() && !is_function_call(bb, NULL) && !succs_complete) {
                 /* If the basic block's successor is not known, then we must assume that it branches to something that could
                  * return. */
-                bb->function->set_may_return(true);
+                bb->function->promote_may_return(Function::RET_SOMETIMES);
                 if (debug) {
                     fprintf(debug, "  F%08"PRIx64" may return by virtue of incomplete successors\n",
                             bb->function->entry_va);
@@ -3108,11 +3128,11 @@ Partitioner::analyze_cfg(SgAsmBlock::Reason reason)
         Disassembler::AddressSet might_now_return;
         for (Functions::iterator fi=functions.begin(); fi!=functions.end(); ++fi) {
             Function *func = fi->second;
-            if (func->may_return_has_changed()) {
+            if (func->changed_may_return() && func->possible_may_return()) {
                 if (debug)
                     fprintf(debug, "%s F%08"PRIx64, might_now_return.empty()?"newly returning functions:":"", func->entry_va);
                 might_now_return.insert(func->entry_va);
-                func->may_return_clear_changed();
+                func->commit_may_return();
             }
         }
         if (debug && !might_now_return.empty())
@@ -3187,9 +3207,9 @@ Partitioner::analyze_cfg(SgAsmBlock::Reason reason)
                 /* thrown when discover_blocks() decides it needs to start over on a function */
             }
             if (debug) {
-                fprintf(debug, " <nbb=%zu, ndata=%zu, may-return=%s>\n",
-                        pending[i]->basic_blocks.size(), pending[i]->data_blocks.size(),
-                        pending[i]->may_return()?"yes":"no");
+                fputc(' ', debug);
+                pending[i]->show_properties(debug);
+                fputc('\n', debug);
             }
         }
     }
@@ -3250,7 +3270,7 @@ Partitioner::detach_thunk(Function *func)
                 func->entry_va, second_va);
     Function *new_func = add_function(second_va, func->reason);
     new_func->name = func->name;
-    new_func->set_may_return(func->may_return());
+    new_func->set_may_return(func->get_may_return());
 
     /* Adjust the old function, which now represents the thunk. */
     func->reason |= SgAsmFunction::FUNC_THUNK;
@@ -3889,7 +3909,10 @@ Partitioner::build_ast(Function* f)
     retval->set_entry_va(f->entry_va);
     retval->set_name(f->name);
     retval->set_address(first_basic_block->address());
-    retval->set_can_return(f->may_return());
+
+    /* Set the SgAsmFunction::can_return property.  If we've never indicated that a function might return then assume it
+     * doesn't return.  We're all done with analysis now, so it must not return. */
+    retval->set_can_return(Function::RET_SOMETIMES==f->get_may_return() || Function::RET_ALWAYS==f->get_may_return());
 
     for (NodeMap::iterator ni=nodes.begin(); ni!=nodes.end(); ++ni) {
         retval->get_statementList().push_back(ni->second);
