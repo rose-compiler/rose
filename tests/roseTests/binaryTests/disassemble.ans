@@ -214,7 +214,7 @@ Basic block: graph-1
 Basic block: fragment, CFG head; 57% code likelihood
 0x080483e8: c7 04 24 d8 95 04 08    |..$.... |   mov    DWORD PTR ss:[esp], 0x080495d8<.jcr>
 0x080483ef: e8 0c 7c fb f7          |..|..   |   call   0x00000000
-            (successors: 0x00000000)
+            (successors: 0x00000000 0x080483f4)
 
 Basic block: fragment, CFG head; 57% code likelihood
 0x080483f4: 8d b6 00 00 00 00       |......  |   lea    esi, [esi + 0x00000000]
