@@ -81,7 +81,8 @@ AsmUnparser::init()
     basicblock_callbacks.pre
         //.append(&basicBlockNoopUpdater)       /* Disabled by default for speed. */
         //.append(&basicBlockNoopWarning)       /* No-op if basicBlockNoopUpdater isn't used. */
-        .append(&basicBlockReasons);
+        .append(&basicBlockReasons)
+        .append(&basicBlockPredecessors);
     basicblock_callbacks.unparse
         .append(&basicBlockBody);               /* used only for ORGANIZED_BY_AST */
     basicblock_callbacks.post
@@ -136,6 +137,20 @@ AsmUnparser::add_function_labels(SgNode *node)
     } traversal(this);
     traversal.traverse(node, preorder);
 };
+
+void
+AsmUnparser::add_control_flow_graph(const BinaryAnalysis::ControlFlow::Graph &cfg)
+{
+    this->cfg = cfg;
+    cfg_blockmap.clear();
+    boost::graph_traits<CFG>::vertex_iterator vi, vi_end;
+    for (boost::tie(vi, vi_end)=vertices(cfg); vi!=vi_end; ++vi) {
+        SgAsmBlock *blk = get(boost::vertex_name, cfg, *vi);
+        if (blk)
+            cfg_blockmap[blk] = *vi;
+    }
+}
+    
 
 bool
 AsmUnparser::is_unparsable_node(SgNode *node)
@@ -487,6 +502,30 @@ AsmUnparser::BasicBlockNoopUpdater::operator()(bool enabled, const BasicBlockArg
 }
 
 bool
+AsmUnparser::BasicBlockPredecessors::operator()(bool enabled, const BasicBlockArgs &args)
+{
+    if (enabled) {
+        CFG_BlockMap::const_iterator bmi=args.unparser->cfg_blockmap.find(args.block);
+        if (bmi!=args.unparser->cfg_blockmap.end()) {
+            CFG_Vertex vertex = bmi->second;
+            size_t npreds = 0;
+            boost::graph_traits<CFG>::in_edge_iterator ei, ei_end;
+            for (boost::tie(ei, ei_end)=in_edges(vertex, args.unparser->cfg); ei!=ei_end; ++ei) {
+                SgAsmBlock *pred = get(boost::vertex_name, args.unparser->cfg, source(*ei, args.unparser->cfg));
+                if (pred) {
+                    char buf[64];
+                    snprintf(buf, sizeof buf, " B%08"PRIx64, pred->get_address());
+                    args.output <<(0==npreds++ ? "Predecessors:":"") <<buf;
+                }
+            }
+            if (npreds>0)
+                args.output <<"\n";
+        }
+    }
+    return enabled;
+}
+
+bool
 AsmUnparser::BasicBlockNoopWarning::operator()(bool enabled, const BasicBlockArgs &args)
 {
     if (enabled && !args.unparser->insn_is_noop.empty()) {
@@ -530,9 +569,44 @@ AsmUnparser::BasicBlockSuccessors::operator()(bool enabled, const BasicBlockArgs
 {
     if (enabled) {
         args.output <<"            (successors:";
-        const SgAsmIntegerValuePtrList &successors = args.block->get_successors();
-        for (SgAsmIntegerValuePtrList::const_iterator si=successors.begin(); si!=successors.end(); ++si)
-            args.output <<" " <<StringUtility::addrToString((*si)->get_absolute_value());
+
+        CFG_BlockMap::const_iterator bmi = args.unparser->cfg_blockmap.find(args.block);
+        if (bmi!=args.unparser->cfg_blockmap.end()) {
+            // Use the unparser's CFG if it contains infor for this block.
+            CFG_Vertex vertex = bmi->second;
+            boost::graph_traits<CFG>::out_edge_iterator ei, ei_end;
+            for (boost::tie(ei, ei_end)=out_edges(vertex, args.unparser->cfg); ei!=ei_end; ++ei) {
+                SgAsmBlock *suc = get(boost::vertex_name, args.unparser->cfg, target(*ei, args.unparser->cfg));
+                SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(suc);
+                if (suc) {
+                    char buf[64];
+                    snprintf(buf, sizeof buf, "%08"PRIx64, suc->get_address());
+                    args.output <<" "
+                                <<(func && func->get_entry_va()==suc->get_address() ? "F" : "B")
+                                <<buf;
+                }
+            }
+        } else {
+            // Use the successors cached in the AST. We print them as absolute virtual addresses rather than using
+            // SgAsmIntegerValueExpression::get_label() because the value would probably have already been printed using
+            // get_label() in the previous disassembled instruction.
+            const SgAsmIntegerValuePtrList &successors = args.block->get_successors();
+            for (SgAsmIntegerValuePtrList::const_iterator si=successors.begin(); si!=successors.end(); ++si) {
+                char buf[64];
+                SgNode *base_node = (*si)->get_base_node();
+                if (isSgAsmBlock(base_node)) {
+                    snprintf(buf, sizeof buf, "B%08"PRIx64, (*si)->get_absolute_value());
+                } else if (isSgAsmFunction(base_node)) {
+                    snprintf(buf, sizeof buf, "F%08"PRIx64, (*si)->get_absolute_value());
+                } else {
+                    snprintf(buf, sizeof buf, "0x%08"PRIx64, (*si)->get_absolute_value());
+                }
+                args.output <<" " <<buf;
+            }
+        }
+
+        // The control flow graph doesn't store whether successor information is complete or not.  We have no choice but to get
+        // that tidbit from the AST.
         if (!args.block->get_successors_complete())
             args.output <<"...";
         args.output <<")\n";
