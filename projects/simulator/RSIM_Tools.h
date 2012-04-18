@@ -840,7 +840,7 @@ public:
 class UnhandledInstruction: public RSIM_Callbacks::InsnCallback {
 public:
     struct MmxValue {
-        VirtualMachineSemantics::ValueType<32> lo, hi;
+        RSIM_SEMANTIC_VTYPE<32> lo, hi;
     };
 
     MmxValue mmx[8];                    // MMX registers 0-7
@@ -853,7 +853,7 @@ public:
             RTS_Message *m = args.thread->tracing(TRACE_MISC);
             const SgAsmExpressionPtrList &operands = insn->get_operandList()->get_operands();
             uint32_t newip_va = insn->get_address() + insn->get_size();
-            VirtualMachineSemantics::ValueType<32> newip = args.thread->policy.number<32>(newip_va);
+            RSIM_SEMANTIC_VTYPE<32> newip = args.thread->policy.number<32>(newip_va);
             switch (insn->get_kind()) {
                 case x86_movd: {
                     assert(2==operands.size());
@@ -875,7 +875,7 @@ public:
                     if (mre && mre->get_descriptor().get_major()==x86_regclass_xmm) {
                         int mmx_number = mre->get_descriptor().get_minor();
                         m->mesg(fmt, unparseInstruction(insn).c_str());
-                        VirtualMachineSemantics::ValueType<32> addr = args.thread->semantics.readEffectiveAddress(operands[0]);
+                        RSIM_SEMANTIC_VTYPE<32> addr = args.thread->semantics.readEffectiveAddress(operands[0]);
                         args.thread->policy.writeMemory(x86_segreg_ss, addr, mmx[mmx_number].lo, args.thread->policy.true_());
                         addr = args.thread->policy.add<32>(addr, args.thread->policy.number<32>(4));
                         args.thread->policy.writeMemory(x86_segreg_ss, addr, mmx[mmx_number].hi, args.thread->policy.true_());
@@ -899,8 +899,8 @@ public:
                      * the mxcsr register. */
                     m->mesg(fmt, unparseInstruction(insn).c_str());
                     assert(1==operands.size());
-                    VirtualMachineSemantics::ValueType<32> value = args.thread->policy.number<32>(0x1f80); // from GDB
-                    VirtualMachineSemantics::ValueType<32> addr = args.thread->semantics.readEffectiveAddress(operands[0]);
+                    RSIM_SEMANTIC_VTYPE<32> value = args.thread->policy.number<32>(0x1f80); // from GDB
+                    RSIM_SEMANTIC_VTYPE<32> addr = args.thread->semantics.readEffectiveAddress(operands[0]);
                     args.thread->policy.writeMemory(x86_segreg_ss, addr, value, args.thread->policy.true_());
                     args.thread->policy.writeRegister(args.thread->policy.reg_eip, newip);
                     enabled = false;
@@ -912,7 +912,7 @@ public:
                      * (for possible side effects) but then just throw away the value. */
                     m->mesg(fmt, unparseInstruction(insn).c_str());
                     assert(1==operands.size());
-                    VirtualMachineSemantics::ValueType<32> addr = args.thread->semantics.readEffectiveAddress(operands[0]);
+                    RSIM_SEMANTIC_VTYPE<32> addr = args.thread->semantics.readEffectiveAddress(operands[0]);
                     (void)args.thread->policy.readMemory<32>(x86_segreg_ss, addr, args.thread->policy.true_());
                     args.thread->policy.writeRegister(args.thread->policy.reg_eip, newip);
                     enabled = false;

@@ -44,6 +44,8 @@ public:
 
     // The actual analysis, triggered when we reach the specified execution address...
     virtual bool operator()(bool enabled, const Args &args) {
+        using namespace BinaryAnalysis::InstructionSemantics;
+
         if (enabled && args.insn->get_address()==trigger_addr) {
             RTS_Message *trace = args.thread->tracing(TRACE_MISC);
             trace->mesg("Analysis triggered: analyzing function at 0x%08"PRIx64, analysis_addr);

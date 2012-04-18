@@ -5,8 +5,8 @@
 #include "VirtualMachineSemantics.h"
 
 
-#define RSIM_SEMANTIC_POLICY    VirtualMachineSemantics::Policy<VirtualMachineSemantics::State, VirtualMachineSemantics::ValueType>
-#define RSIM_SEMANTIC_VTYPE     VirtualMachineSemantics::ValueType
+#define RSIM_SEMANTIC_POLICY    BinaryAnalysis::InstructionSemantics::VirtualMachineSemantics::Policy<>
+#define RSIM_SEMANTIC_VTYPE     BinaryAnalysis::InstructionSemantics::VirtualMachineSemantics::ValueType
 
 
 
@@ -131,6 +131,6 @@ public:
 
 
 
-typedef X86InstructionSemantics<RSIM_SemanticPolicy, RSIM_SEMANTIC_VTYPE> RSIM_Semantics;
+typedef BinaryAnalysis::InstructionSemantics::X86InstructionSemantics<RSIM_SemanticPolicy, RSIM_SEMANTIC_VTYPE> RSIM_Semantics;
 
 #endif /* ROSE_RSIM_SemanticPolicy_H */

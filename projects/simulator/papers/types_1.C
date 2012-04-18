@@ -7,6 +7,8 @@
 #include "SymbolicSemantics.h"
 #include "YicesSolver.h"
 
+using namespace BinaryAnalysis::InstructionSemantics;
+
 // If this symbol is undefined then the simulator will not forward its own signals to the specimen, making it easier to kill
 // the specimen in some cases.  See its use in main().
 #undef PRODUCTION
