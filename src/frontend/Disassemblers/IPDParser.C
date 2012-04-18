@@ -243,12 +243,12 @@ Partitioner::IPDParser::parse_ReturnSpec()
 {
     if (is_symbol("return") || is_symbol("returns")) {
         match_symbol();
-        cur_func->may_return = true;
+        cur_func->set_may_return(Function::RET_ALWAYS); // or perhaps RET_SOMETIMES?
         return true;
     }
     if (is_symbol("noreturn")) {
         match_symbol("noreturn");
-        cur_func->may_return = false;
+        cur_func->set_may_return(Function::RET_NEVER);
         return true;
     }
     return false;

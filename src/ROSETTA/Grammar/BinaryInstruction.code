@@ -4082,7 +4082,9 @@ HEADER_BINARY_FUNCTION_DECLARATION_START
                                                  *   thunk's instructions will be subsumed by the called function.  The
                                                  *   partitioner only sets this flag for functions that are created due to
                                                  *   the thunk recognition pass; other functions that don't have this bit set
-                                                 *   might also be thunks. */
+                                                 *   might also be thunks, and functions that have this bit set might not
+                                                 *   be a thunk.  The Partitioner::is_thunk() method will return true for
+                                                 *   functions whose content looks like a thunk. */
                 FUNC_DEFAULT     = 0x6fff00ff,  /**< Default value for Partitioner class. */
 
                 /*========= Miscellaneous Reasons ===========================================================================
