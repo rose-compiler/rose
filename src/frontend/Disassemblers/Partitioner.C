@@ -645,9 +645,16 @@ Partitioner::successors(BasicBlock *bb, bool *complete)
         rose_addr_t fall_through_va = canonic_block(bb->last_insn()->get_address() + bb->last_insn()->get_size());
         rose_addr_t call_target_va = call_target(bb);
         if (call_target_va!=NO_TARGET) {
-            BasicBlock *target_bb = find_bb_starting(call_target_va, false);
-            if (target_bb && target_bb->function && target_bb->function->possible_may_return())
+            Instruction *target_insn = find_instruction(call_target_va, true);
+            BasicBlock *target_bb = target_insn ? find_bb_starting(call_target_va, false) : NULL;
+            if (!target_insn) {
+                /* We know the call target, but could not obtain an instruction there.  The target might be a dynamically
+                 * linked function that isn't mapped yet.  Assume it returns. */
                 retval.insert(fall_through_va);
+            } else if (target_bb && target_bb->function && target_bb->function->possible_may_return()) {
+                /* There's a function at the call target and that function might return. */
+                retval.insert(fall_through_va);
+            }
         } else {
             retval.insert(fall_through_va); /*true 99% of the time*/
         }

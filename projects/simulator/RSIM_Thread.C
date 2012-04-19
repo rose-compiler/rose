@@ -744,10 +744,18 @@ RSIM_Thread::main()
             if (signal_dequeue(&info)>0)
                 signal_deliver(info);
 
+            /* Find the instruction.  Callbacks might change the value of the EIP register, in which case we should re-fetch
+             * the instruction. The pre-instruction callbacks will be invoked for each re-fetched instruction, but the
+             * post-instruction callback is only invoked for the final instruction. */
+            SgAsmx86Instruction *insn = NULL;
+            bool cb_status;
+            do {
+                insn = current_insn();
+                cb_status = callbacks.call_insn_callbacks(RSIM_Callbacks::BEFORE, this, insn, true);
+            } while (insn->get_address()!=policy.readRegister<32>(policy.reg_eip).known_value());
+
             /* Simulate an instruction.  In order to make our simulated instructions atomic (at least among the simulators) we
              * use a shared semaphore that was created in RSIM_Thread::ctor(). */
-            SgAsmx86Instruction *insn = current_insn();
-            bool cb_status = callbacks.call_insn_callbacks(RSIM_Callbacks::BEFORE, this, insn, true);
             if (cb_status) {
                 process->binary_trace_add(this, insn);
                 int status = TEMP_FAILURE_RETRY(sem_wait(process->get_simulator()->get_semaphore()));
