@@ -1,5 +1,5 @@
 
-#include "PolyhedralKernel.hpp"
+#include "rose-kernel/PolyhedralKernel.hpp"
 #include "opencl-from-loops.hpp"
 #include "rose-utils.hpp"
 
@@ -63,6 +63,8 @@ int main(int argc, char ** argv) {
               PolyhedricAnnotation::FunctionPolyhedralProgram & polyhedral_model = 
                   PolyhedricAnnotation::getPolyhedralProgram<SgFunctionDeclaration, SgExprStatement, RoseVariable>(func_decl);
 
+              polyhedral_model.print(std::cout);
+
               if (polyhedral_model.getNumberOfGlobals() > 0) {
                 std::cerr << "Find a polyhedral modeling but it is parametric..." << std::endl;
                 analysis.polyhedral_analysis_success = false;
@@ -70,12 +72,15 @@ int main(int argc, char ** argv) {
               else {
                 analysis.dependencies = new std::vector<PolyhedricDependency::FunctionDependency *>();
                 std::vector<PolyhedricDependency::FunctionDependency *> * tmp;
-                tmp = PolyhedricDependency::ComputeRaW<SgFunctionDeclaration, SgExprStatement, RoseVariable>(polyhedral_model, true);
+		std::cerr << "RaW" << std::endl;
+                tmp = PolyhedricDependency::ComputeRaW<SgFunctionDeclaration, SgExprStatement, RoseVariable>(polyhedral_model, false);
                 analysis.dependencies->insert(analysis.dependencies->end(), tmp->begin(), tmp->end());
                 delete tmp;
-                tmp = PolyhedricDependency::ComputeWaW<SgFunctionDeclaration, SgExprStatement, RoseVariable>(polyhedral_model, true);
+		std::cerr << "WaW" << std::endl;
+                tmp = PolyhedricDependency::ComputeWaW<SgFunctionDeclaration, SgExprStatement, RoseVariable>(polyhedral_model, false);
                 analysis.dependencies->insert(analysis.dependencies->end(), tmp->begin(), tmp->end());
                 delete tmp;
+		std::cerr << "WaR" << std::endl;
                 tmp = PolyhedricDependency::ComputeWaR<SgFunctionDeclaration, SgExprStatement, RoseVariable>(polyhedral_model, false);
                 analysis.dependencies->insert(analysis.dependencies->end(), tmp->begin(), tmp->end());
                 delete tmp;
@@ -89,6 +94,7 @@ int main(int argc, char ** argv) {
           if (!analysis.polyhedral_analysis_success) {
              std::cerr << "Polyhedral modeling failed: Fine communication optimizations and accurate loop dependencies disable..." << std::endl;
           }
+          else  std::cerr << "Success of Polyhedral modeling" << std::endl;
         }
 #endif /* APPLY_POLY_ANALYSIS */
 

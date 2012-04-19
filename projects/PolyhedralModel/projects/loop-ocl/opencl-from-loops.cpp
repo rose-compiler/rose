@@ -1,5 +1,5 @@
 
-#include "PolyhedralKernel.hpp"
+#include "rose-kernel/PolyhedralKernel.hpp"
 #include "rose/Exception-rose.hpp"
 #include "opencl-from-loops.hpp"
 #include "rose-utils.hpp"
@@ -15,7 +15,7 @@
  * param loop_nest: loops to be added
  * param res: list of (iterator, upper-bound), can contain elements from previous loops
  *
- * It currently considers: (and some others cases but none is insured to be correct)\n
+ * I+t currently considers: (and some others cases but none is insured to be correct)\n
  * \t 1 - "for (i = 0; i <= cst; i++)" and insert cst\n
  * \t 2 - "for (i = 0; i <= j op cst; i++)" and insert N op cst where N is 'j' upper bound(imply branch in kernel)\n
  * \t 3 - "for (i = j; i <= cst; i++)" and insert cst (imply branch in kernel)\n
@@ -23,51 +23,69 @@
  * TODO Add check to verify that it is one of the three cases
  */
 void getIteratorAndBounds(
-                           std::vector<SgForStatement *> & loop_nest,
+                           std::vector<SgStatement *> & loop_nest,
                            std::map<SgVariableSymbol *, std::pair<int, int> > & iterators_bounds,
                            std::map<SgVariableSymbol *, std::pair<SgExpression *, SgExpression *> > & iterators_bounds_expression,
                            std::vector<SgVariableSymbol *> & ordered_iterators
 ) {
 
-  std::vector<SgForStatement *>::iterator it;
+  std::vector<SgStatement *>::iterator it;
   for (it = loop_nest.begin(); it != loop_nest.end(); it++) {
-    // Get iterator:
-    SgVariableSymbol * symbol = NULL;
-    SgExpression * init_exp = NULL;
-    {
-      SgForInitStatement * for_init = (*it)->get_for_init_stmt();
-      std::vector<SgStatement *> for_init_vect = for_init->get_init_stmt();
-      ROSE_ASSERT(for_init_vect.size() == 1);
-      SgExprStatement * init_stmt = isSgExprStatement(for_init_vect[0]);
-      ROSE_ASSERT(init_stmt != NULL);
-      SgAssignOp * assign_init = isSgAssignOp(init_stmt->get_expression());
-      ROSE_ASSERT(assign_init != NULL);
-      SgVarRefExp * iterator = isSgVarRefExp(assign_init->get_lhs_operand_i());
-      init_exp = assign_init->get_rhs_operand_i();
-      ROSE_ASSERT(iterator != NULL);
-      symbol = iterator->get_symbol();
-    }
-    ROSE_ASSERT(symbol != NULL && init_exp != NULL);
-    ordered_iterators.push_back(symbol);
-
-    // Get bounds:
-    {
-      SgExprStatement * test_stmt = isSgExprStatement((*it)->get_test());
-      ROSE_ASSERT(test_stmt != NULL);
-      SgBinaryOp * bin_op = isSgBinaryOp(test_stmt->get_expression());
-      ROSE_ASSERT(bin_op != NULL);
-      { // TODO other case
-        ROSE_ASSERT(bin_op->variantT() == V_SgLessOrEqualOp || bin_op->variantT() == V_SgLessThanOp);
-        iterators_bounds.insert(std::pair<SgVariableSymbol *, std::pair<int, int> >(symbol, std::pair<int, int>(
-                      evalExpressionBounds(init_exp, iterators_bounds).first,
-                      evalExpressionBounds(bin_op->get_rhs_operand_i(), iterators_bounds).second - 1
-                  )));
-        iterators_bounds_expression.insert(std::pair<SgVariableSymbol *, std::pair<SgExpression *, SgExpression *> >(
-                      symbol, std::pair<SgExpression *, SgExpression *>(
-                           init_exp, SageBuilder::buildSubtractOp(bin_op->get_rhs_operand_i(), SageBuilder::buildIntVal(1))
-                      )
-                  ));
+    SgForStatement * for_stmt = isSgForStatement(*it);
+    if (for_stmt != NULL) {
+      // Get iterator:
+      SgVariableSymbol * symbol = NULL;
+      SgExpression * init_exp = NULL;
+      {
+        SgForInitStatement * for_init = for_stmt->get_for_init_stmt();
+        std::vector<SgStatement *> for_init_vect = for_init->get_init_stmt();
+        ROSE_ASSERT(for_init_vect.size() == 1);
+        SgExprStatement * init_stmt = isSgExprStatement(for_init_vect[0]);
+        ROSE_ASSERT(init_stmt != NULL);
+        SgAssignOp * assign_init = isSgAssignOp(init_stmt->get_expression());
+        ROSE_ASSERT(assign_init != NULL);
+        SgVarRefExp * iterator = isSgVarRefExp(assign_init->get_lhs_operand_i());
+        init_exp = assign_init->get_rhs_operand_i();
+        ROSE_ASSERT(iterator != NULL);
+        symbol = iterator->get_symbol();
       }
+      ROSE_ASSERT(symbol != NULL && init_exp != NULL);
+      ordered_iterators.push_back(symbol);
+
+      // Get bounds:
+      {
+        SgExprStatement * test_stmt = isSgExprStatement(for_stmt->get_test());
+        ROSE_ASSERT(test_stmt != NULL);
+        SgBinaryOp * bin_op = isSgBinaryOp(test_stmt->get_expression());
+        ROSE_ASSERT(bin_op != NULL);
+        if (bin_op->variantT() == V_SgLessOrEqualOp) {
+          iterators_bounds.insert(std::pair<SgVariableSymbol *, std::pair<int, int> >(symbol, std::pair<int, int>(
+                        evalExpressionBounds(init_exp, iterators_bounds).first,
+                        evalExpressionBounds(bin_op->get_rhs_operand_i(), iterators_bounds).second
+                    )));
+          iterators_bounds_expression.insert(std::pair<SgVariableSymbol *, std::pair<SgExpression *, SgExpression *> >(
+                        symbol, std::pair<SgExpression *, SgExpression *>(
+                             init_exp, bin_op->get_rhs_operand_i()
+                        )
+                    ));
+        }
+        else if (bin_op->variantT() == V_SgLessThanOp) {
+          iterators_bounds.insert(std::pair<SgVariableSymbol *, std::pair<int, int> >(symbol, std::pair<int, int>(
+                        evalExpressionBounds(init_exp, iterators_bounds).first,
+                        evalExpressionBounds(bin_op->get_rhs_operand_i(), iterators_bounds).second - 1
+                    )));
+          iterators_bounds_expression.insert(std::pair<SgVariableSymbol *, std::pair<SgExpression *, SgExpression *> >(
+                        symbol, std::pair<SgExpression *, SgExpression *>(
+                             init_exp, SageBuilder::buildSubtractOp(bin_op->get_rhs_operand_i(), SageBuilder::buildIntVal(1))
+                        )
+                    ));
+        }
+        else ROSE_ASSERT(false);
+      }
+    }
+    SgIfStmt * if_stmt = isSgIfStmt(*it);
+    if (if_stmt != NULL) {
+      // TODO
     }
   }
 }
@@ -194,7 +212,8 @@ Kernel::Kernel(
   std::ostringstream str;
   str << "kernel_" << id;
   kernel_name = str.str();
-#ifdef ARRAY_ACCESS_ANALYSIS
+#define ARRAY_ACCESS_ANALYSIS 0
+#if ARRAY_ACCESS_ANALYSIS
   std::cout << "In kernel: " << kernel_name << std::endl;
 
   if (analysis.polyhedral_analysis_success) {
@@ -845,7 +864,7 @@ void GenerateKernel(
 void genKernel(
                 SgStatement * stmt,
                 unsigned dim_used,
-                std::vector<SgForStatement *> for_list,
+                std::vector<SgStatement *> stmt_list,
                 std::vector<Kernel *> & generated_kernel,
                 std::map<SgVariableSymbol *, std::pair<int, int> > iterators_bounds,
                 std::map<SgVariableSymbol *, std::pair<SgExpression *, SgExpression *> > iterators_bounds_expression,
@@ -854,8 +873,10 @@ void genKernel(
 ) {
   // We have reach the limit of dimension for 'work_dim' so we generate a kernel
   if (dim_used == 0) {
-    getIteratorAndBounds(for_list, iterators_bounds, iterators_bounds_expression, ordered_iterator);
-    generated_kernel.push_back(new Kernel(stmt, for_list.size(), iterators_bounds, iterators_bounds_expression, ordered_iterator, analysis));
+    getIteratorAndBounds(stmt_list, iterators_bounds, iterators_bounds_expression, ordered_iterator);
+    unsigned nbr_for = 0;
+    for (std::vector<SgStatement *>::iterator it = stmt_list.begin(); it != stmt_list.end(); it++) if (isSgForStatement(*it)) nbr_for++;
+    generated_kernel.push_back(new Kernel(stmt, nbr_for, iterators_bounds, iterators_bounds_expression, ordered_iterator, analysis));
   }
   else {
     switch (stmt->variantT()) {
@@ -868,7 +889,7 @@ void genKernel(
         std::vector<std::pair<SgStatement *, SgStatement *> > to_be_sync;
         for (it = bb->get_statements().begin(); it != bb->get_statements().end(); it++) {
           unsigned number_of_kernel = generated_kernel.size();
-          genKernel(*it, dim_used, for_list, generated_kernel, iterators_bounds, iterators_bounds_expression, ordered_iterator, analysis);
+          genKernel(*it, dim_used, stmt_list, generated_kernel, iterators_bounds, iterators_bounds_expression, ordered_iterator, analysis);
           if (number_of_kernel == generated_kernel.size()) {
             if (first_stmt_for_sync == NULL) last_stmt_for_sync = first_stmt_for_sync = *it;
             else last_stmt_for_sync = *it;
@@ -946,16 +967,18 @@ void genKernel(
              if (no_dep == false) break;
           }
         }
-        if (!no_dep && for_list.size() > 0) {
-          getIteratorAndBounds(for_list, iterators_bounds, iterators_bounds_expression, ordered_iterator);
-          generated_kernel.push_back(new Kernel(stmt, for_list.size(), iterators_bounds, iterators_bounds_expression, ordered_iterator, analysis));
+        if (!no_dep && stmt_list.size() > 0) {
+          getIteratorAndBounds(stmt_list, iterators_bounds, iterators_bounds_expression, ordered_iterator);
+          unsigned nbr_for = 0;
+          for (std::vector<SgStatement *>::iterator it = stmt_list.begin(); it != stmt_list.end(); it++) if (isSgForStatement(*it)) nbr_for++;
+          generated_kernel.push_back(new Kernel(stmt, nbr_for, iterators_bounds, iterators_bounds_expression, ordered_iterator, analysis));
         }
         else {
-          if (no_dep) for_list.push_back(for_stmt);
+          if (no_dep) stmt_list.push_back(for_stmt);
           genKernel(
                      for_stmt->get_loop_body(),
                      no_dep ? dim_used-1 : dim_used,
-                     for_list,
+                     stmt_list,
                      generated_kernel,
                      iterators_bounds,
                      iterators_bounds_expression,
@@ -967,9 +990,11 @@ void genKernel(
       }
       case V_SgExprStatement:
       {
-        if (for_list.size() > 0) {
-          getIteratorAndBounds(for_list, iterators_bounds, iterators_bounds_expression, ordered_iterator);
-          generated_kernel.push_back(new Kernel(stmt, for_list.size(), iterators_bounds, iterators_bounds_expression, ordered_iterator, analysis));
+        if (stmt_list.size() > 0) {
+          getIteratorAndBounds(stmt, iterators_bounds, iterators_bounds_expression, ordered_iterator);
+          unsigned nbr_for = 0;
+          for (std::vector<SgStatement *>::iterator it = stmt_list.begin(); it != stmt_list.end(); it++) if (isSgForStatement(*it)) nbr_for++;
+          generated_kernel.push_back(new Kernel(stmt, nbr_for, iterators_bounds, iterators_bounds_expression, ordered_iterator, analysis));
         }
         break;
       }
@@ -987,7 +1012,7 @@ SgStatement * traverseLeftOutLoop(
                              SgStatement * stmt,
                              unsigned dim_out,
                              unsigned dim_used,
-                             std::vector<SgForStatement *> for_list,
+                             std::vector<SgStatement *> stmt_list,
                              std::vector<Kernel *> & generated_kernel_,
                              AnalysisContainer & analysis
 ) {
@@ -998,8 +1023,8 @@ SgStatement * traverseLeftOutLoop(
       std::map<SgVariableSymbol *, std::pair<int, int> > iterators_bounds;
       std::map<SgVariableSymbol *, std::pair<SgExpression *, SgExpression *> > iterators_bounds_expression;
       std::vector<SgVariableSymbol *> ordered_iterator;
-      getIteratorAndBounds(for_list, iterators_bounds, iterators_bounds_expression, ordered_iterator);
-      genKernel(stmt, dim_used, std::vector<SgForStatement *>(), generated_kernel, iterators_bounds, iterators_bounds_expression, ordered_iterator, analysis);
+      getIteratorAndBounds(stmt_list, iterators_bounds, iterators_bounds_expression, ordered_iterator);
+      genKernel(stmt, dim_used, std::vector<SgStatement *>(), generated_kernel, iterators_bounds, iterators_bounds_expression, ordered_iterator, analysis);
     }
 
     if (generated_kernel.size() > 0) {
@@ -1037,7 +1062,7 @@ SgStatement * traverseLeftOutLoop(
       std::vector<std::pair<SgStatement *, SgStatement *> > to_be_sync;
       for (it = bb->get_statements().begin(); it != bb->get_statements().end(); it++) {
         unsigned number_of_kernel = generated_kernel_.size();
-        *it = traverseLeftOutLoop(*it, dim_out, dim_used, for_list, generated_kernel_, analysis);
+        *it = traverseLeftOutLoop(*it, dim_out, dim_used, stmt_list, generated_kernel_, analysis);
         if (number_of_kernel == generated_kernel_.size()) {
           if (first_stmt_for_sync == NULL) last_stmt_for_sync = first_stmt_for_sync = *it;
           else last_stmt_for_sync = *it;
@@ -1058,8 +1083,8 @@ SgStatement * traverseLeftOutLoop(
     case V_SgForStatement:
     {
       SgForStatement * for_stmt = isSgForStatement(stmt);
-      for_list.push_back(for_stmt);
-      for_stmt->set_loop_body(traverseLeftOutLoop(for_stmt->get_loop_body(), dim_out-1, dim_used, for_list, generated_kernel_, analysis));
+      stmt_list.push_back(for_stmt);
+      for_stmt->set_loop_body(traverseLeftOutLoop(for_stmt->get_loop_body(), dim_out-1, dim_used, stmt_list, generated_kernel_, analysis));
       return for_stmt;
     }
     case V_SgExprStatement:

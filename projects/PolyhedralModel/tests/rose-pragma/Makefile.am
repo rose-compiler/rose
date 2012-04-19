@@ -16,7 +16,7 @@ if ROSE_USE_CLOOG
 bin_PROGRAMS += code-generation generate-all-schedules
 endif
 
-LDADD = ../../src/libPolyModel.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+LDADD = ../../src/libPolyModel.la ../../src/libPolyModelPragma.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 polyhedral_annotation_SOURCES         = polyhedral-annotation.cpp
 polyhedral_annotation_CXXFLAGS        = \

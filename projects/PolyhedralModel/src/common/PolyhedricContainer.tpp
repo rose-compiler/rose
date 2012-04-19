@@ -456,6 +456,7 @@ void DataAccess<Function, Expression, VariableLBL>::addRead(VariableLBL v, const
 		makeLinExp(p_polyhedral_program, p_expression, *it, &lin_exp, p_nbr_surr_loop);
 		vect.push_back(lin_exp);
 	}
+	if (vect.size() == 0) vect.push_back(LinearExpression_ppl(0));
 	p_read.push_back(std::pair<size_t, std::vector<LinearExpression_ppl> >(p_polyhedral_program.getVariableID(v), vect));
 }
 
@@ -481,6 +482,7 @@ void DataAccess<Function, Expression, VariableLBL>::addWrite(VariableLBL v, cons
 		makeLinExp(p_polyhedral_program, p_expression, *it, &lin_exp, p_nbr_surr_loop);
 		vect.push_back(lin_exp);
 	}
+	if (vect.size() == 0) vect.push_back(LinearExpression_ppl(0));
 	p_write.push_back(std::pair<size_t, std::vector<LinearExpression_ppl> >(p_polyhedral_program.getVariableID(v), vect));
 }
 

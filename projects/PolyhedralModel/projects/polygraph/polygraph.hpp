@@ -2,7 +2,7 @@
 #ifndef __POLYGRAPH_HPP__
 #  define __POLYGRAPH_HPP__
 
-#include "PolyhedralKernel.hpp"
+#include "rose-kernel/PolyhedralKernel.hpp"
 
 #include <iostream>
 #include <string>

@@ -2,7 +2,7 @@
 #ifndef __PARSE_TREE_HPP__
 #  define __PARSE_TREE_HPP__
 
-#include "PolyhedralKernel.hpp"
+#include "rose-kernel/PolyhedralKernel.hpp"
 
 #include <iostream>
 #include <string>

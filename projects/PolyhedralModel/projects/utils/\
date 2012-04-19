@@ -41,6 +41,24 @@ bool getIntFromConstExpression(SgExpression * exp, int * res) {
           case V_SgSubtractOp:
             *res = lhs - rhs;
             return true;
+          case V_SgLessThanOp:
+            *res = lhs < rhs;
+            return true;
+          case V_SgLessOrEqualOp:
+            *res = lhs <= rhs;
+            return true;
+          case V_SgGreaterThanOp:
+            *res = lhs > rhs;
+            return true;
+          case V_SgGreaterOrEqualOp:
+            *res = lhs >= rhs;
+            return true;
+          case V_SgAndOp:
+            *res = lhs && rhs;
+            return true;
+          case V_SgOrOp:
+            *res = lhs || rhs;
+            return true;
           default:
             std::cout << "In getIntFromConstExpression() unrecognized binary operator: " << exp->class_name() << std::endl;
             return false;
@@ -48,6 +66,11 @@ bool getIntFromConstExpression(SgExpression * exp, int * res) {
     }
     else if (isSgCastExp(exp)) {
         return getIntFromConstExpression(isSgCastExp(exp)->get_operand_i(), res);
+    }
+    else if (isSgMinusOp(exp)) {
+      bool success = getIntFromConstExpression(isSgMinusOp(exp)->get_operand_i(), res);
+      *res = -(*res);
+      return success;
     }
     else if (isSgUnaryOp(exp)) {
         std::cout << "In getIntFromConstExpression() unrecognized unary operator: " << exp->class_name() << std::endl;
@@ -264,9 +287,7 @@ SgExpression * simplify(SgExpression * exp) {
         }
         else {
           SgExpression * arg = simplify(func_call->get_args()->get_expressions()[0]);
-          arg->set_parent(func_call->get_args());
-          func_call->get_args()->get_expressions()[0] = arg;
-          return func_call;
+          return arg;
         }
       }
       if (func_name == "ceil") {
@@ -278,9 +299,7 @@ SgExpression * simplify(SgExpression * exp) {
         }
         else {
           SgExpression * arg = simplify(func_call->get_args()->get_expressions()[0]);
-          arg->set_parent(func_call->get_args());
-          func_call->get_args()->get_expressions()[0] = arg;
-          return func_call;
+          return SageBuilder::buildAddOp(arg, SageBuilder::buildIntVal(1));
         }
       }
     }
@@ -306,19 +325,62 @@ std::pair<int,int> getVariableBounds(SgVariableSymbol * symbol, SgScopeStatement
       bool direct = isSgPlusPlusOp(for_stmt->get_increment());
       {
         SgForInitStatement * for_init = for_stmt->get_for_init_stmt();
-        ROSE_ASSERT(for_init->get_init_stmt().size() == 1);
-        SgExprStatement * init_stmt = isSgExprStatement(for_init->get_init_stmt()[0]);
-        ROSE_ASSERT(init_stmt != NULL);
-        SgAssignOp * assign_init = isSgAssignOp(init_stmt->get_expression());
-        if (assign_init != NULL) {
-          SgVarRefExp * it = isSgVarRefExp(assign_init->get_lhs_operand_i());
+        if (for_init->get_init_stmt().size() != 1) {
+          ROSE_ASSERT(for_init->get_init_stmt().size() == 0);
+          SgForStatement * prev = isSgForStatement(SageInterface::getPreviousStatement(for_stmt));
+          ROSE_ASSERT(prev != NULL);
+          SgExprStatement * test_stmt = isSgExprStatement(prev->get_test());
+          ROSE_ASSERT(test_stmt != NULL);
+          SgBinaryOp * bin_op = isSgBinaryOp(test_stmt->get_expression());
+          ROSE_ASSERT(bin_op != NULL);
+          SgVarRefExp * it = NULL;
+          SgCastExp * cast = isSgCastExp(bin_op->get_lhs_operand_i());
+          if (cast != NULL) {
+            it = isSgVarRefExp(cast->get_operand_i());
+          }
+          else {
+            it = isSgVarRefExp(bin_op->get_lhs_operand_i());
+          }
           ROSE_ASSERT(it != NULL);
           if (symbol == it->get_symbol()) {
-            if (getIntFromConstExpression(assign_init->get_rhs_operand_i(), &value))
-              if (direct)
-                lb = value > lb ? value : lb;
-              else
-                ub = value < lb ? value : ub;
+            if (getIntFromConstExpression(bin_op->get_rhs_operand_i(), &value)) {
+              switch (bin_op->variantT()) {
+                case V_SgLessOrEqualOp:
+                  value++;
+                case V_SgLessThanOp:
+                  if (direct)
+                    lb = value < lb ? value : lb;
+                  else
+                    ROSE_ASSERT(false);
+                  break;
+                case V_SgGreaterOrEqualOp:
+                  value--;
+                case V_SgGreaterThanOp:
+                  if (direct)
+                    ROSE_ASSERT(false);
+                  else
+                    ub = value > ub ? value : ub;
+                  break;
+                default:
+                  ROSE_ASSERT(false);
+              }
+            }
+          }
+        }
+        else {
+          SgExprStatement * init_stmt = isSgExprStatement(for_init->get_init_stmt()[0]);
+          ROSE_ASSERT(init_stmt != NULL);
+          SgAssignOp * assign_init = isSgAssignOp(init_stmt->get_expression());
+          if (assign_init != NULL) {
+            SgVarRefExp * it = isSgVarRefExp(assign_init->get_lhs_operand_i());
+            ROSE_ASSERT(it != NULL);
+            if (symbol == it->get_symbol()) {
+              if (getIntFromConstExpression(assign_init->get_rhs_operand_i(), &value))
+                if (direct)
+                  lb = value > lb ? value : lb;
+                else
+                  ub = value < lb ? value : ub;
+            }
           }
         }
       }
@@ -365,36 +427,76 @@ std::pair<int,int> getVariableBounds(SgVariableSymbol * symbol, SgScopeStatement
     if (if_stmt != NULL) {
       SgExprStatement * cond_stmt = isSgExprStatement(if_stmt->get_conditional());
       ROSE_ASSERT(cond_stmt != NULL);
-      SgBinaryOp * bin_op = isSgBinaryOp(cond_stmt->get_expression());
-      ROSE_ASSERT(bin_op != NULL);
-      SgVarRefExp * it = NULL;
-      SgCastExp * cast = isSgCastExp(bin_op->get_lhs_operand_i());
-      if (cast != NULL) {
-        it = isSgVarRefExp(cast->get_operand_i());
-        if (it == NULL) std::cout << "From cast -> " << cast->get_operand_i()->class_name() << std::endl;
+      SgExpression * tmp_exp = cond_stmt->get_expression();
+
+      std::vector<SgExpression *> cond_list;
+      if (isSgAndOp(tmp_exp)) {
+        std::queue<SgAndOp *> and_queue;
+        and_queue.push_back(isSgAndOp(tmp_exp));
+        while (!and_queue.empty()) {
+          tmp_exp = and_queue.front().get_lhs_operand_i();
+          if (isSgAndOp(tmp_exp)) and_queue.push_back(isSgAndOp(tmp_exp));
+          else if (!isSgIntVal(tmp_exp)) cond_list.push_back(tmp_exp);
+          else ROSE_ASSERT(isSgIntVal(tmp_exp)->get_value() != 0);
+          tmp_exp = and_queue.front().get_rhs_operand_i();
+          if (isSgAndOp(tmp_exp)) and_queue.push_back(isSgAndOp(tmp_exp));
+          else if (!isSgIntVal(tmp_exp)) cond_list.push_back(tmp_exp);
+          and_queue.pop_front();
+        }
       }
-      else {
-        it = isSgVarRefExp(bin_op->get_lhs_operand_i());
-        if (it == NULL) std::cout << "From bin_op -> " << bin_op->get_lhs_operand_i()->class_name() << std::endl;
-      }
-      ROSE_ASSERT(it != NULL); // FIXME only valid because it is generated code (also for cleanly writted code !)
-      if (symbol == it->get_symbol()) {
-        if (getIntFromConstExpression(bin_op->get_rhs_operand_i(), &value)) {
-          switch (bin_op->variantT()) {
-            case V_SgLessThanOp:
-              value--;
-            case V_SgLessOrEqualOp:
-              ub = value < ub ? value : ub;
-              break;
-            case V_SgGreaterThanOp:
-               value++;
-            case V_SgGreaterOrEqualOp:
-              lb = value > lb ? value : lb;
-              break;
-            case V_SgEqualityOp:
-              ub = lb = value;
-            default:
-              ROSE_ASSERT(false);
+      else cond_list.push_back(tmp_exp);
+
+      if (!isSgIntVal(tmp_exp)) {
+        SgBinaryOp * bin_op = isSgBinaryOp(tmp_exp);
+        if (isSgAndOp(bin_op)) {
+          std::cerr << bin_op->get_lhs_operand_i()->class_name() << std::endl;
+          std::cerr << bin_op->get_rhs_operand_i()->class_name() << std::endl;
+          int value;
+          if (getIntFromConstExpression(bin_op->get_rhs_operand_i(), &value)) {
+            ROSE_ASSERT(value == 1);
+            tmp_exp = bin_op->get_lhs_operand_i();
+          }
+          else if (getIntFromConstExpression(bin_op->get_lhs_operand_i(), &value)) {
+            ROSE_ASSERT(value == 1);
+            tmp_exp = bin_op->get_rhs_operand_i();
+          }
+          else ROSE_ASSERT(false);
+
+          bin_op = isSgBinaryOp(tmp_exp);
+          if (bin_op == NULL) {
+            std::cerr << tmp_exp->class_name() << std::endl;
+          }
+        }
+        ROSE_ASSERT(bin_op != NULL);
+        SgVarRefExp * it = NULL;
+        SgCastExp * cast = isSgCastExp(bin_op->get_lhs_operand_i());
+        if (cast != NULL) {
+          it = isSgVarRefExp(cast->get_operand_i());
+          if (it == NULL) std::cout << "From cast -> " << cast->get_operand_i()->class_name() << std::endl;
+        }
+        else {
+          it = isSgVarRefExp(bin_op->get_lhs_operand_i());
+          if (it == NULL) std::cout << "From bin_op -> " << bin_op->get_lhs_operand_i()->class_name() << std::endl;
+        }
+        ROSE_ASSERT(it != NULL); // FIXME only valid because it is generated code (also for cleanly writted code !)
+        if (symbol == it->get_symbol()) {
+          if (getIntFromConstExpression(bin_op->get_rhs_operand_i(), &value)) {
+            switch (bin_op->variantT()) {
+              case V_SgLessThanOp:
+                value--;
+              case V_SgLessOrEqualOp:
+                ub = value < ub ? value : ub;
+                break;
+              case V_SgGreaterThanOp:
+                value++;
+              case V_SgGreaterOrEqualOp:
+                lb = value > lb ? value : lb;
+                break;
+              case V_SgEqualityOp:
+                ub = lb = value;
+              default:
+                ROSE_ASSERT(false);
+            }
           }
         }
       }
@@ -483,7 +585,29 @@ std::pair<int,int> evalExpressionBounds(SgExpression * exp, std::map<SgVariableS
       ROSE_ASSERT(it != bounds.end());
       return it->second;
     }
-    else ROSE_ASSERT(false);
+    else if (isSgConditionalExp(exp)) {
+      SgConditionalExp * cond_exp = isSgConditionalExp(exp);
+
+      std::pair<int,int> true_bounds = evalExpressionBounds(cond_exp->get_true_exp(), bounds);
+      std::pair<int,int> false_bounds = evalExpressionBounds(cond_exp->get_false_exp(), bounds);
+
+      switch (eval(cond_exp->get_conditional_exp())) {
+        case faux:
+          return false_bounds;
+        case vrai:
+          return true_bounds;
+        case undefined:
+          lb = true_bounds.first < false_bounds.first ? true_bounds.first : false_bounds.first;
+          ub = true_bounds.second > false_bounds.second ? true_bounds.second : false_bounds.second;
+      }
+    }
+    else if (isSgIntVal(exp)) {
+      ub = lb = isSgIntVal(exp)->get_value();
+    }
+    else {
+      std::cerr << exp->class_name() << std::endl;
+      ROSE_ASSERT(false);
+    }
   }
 
   return std::pair<int,int>(lb, ub);
@@ -521,6 +645,7 @@ bool areEquivalent(SgExpression * e1, SgExpression * e2) {
     return ref1->get_symbol() == ref2->get_symbol();
   }
 
+  return false;
   std::cout << e1->class_name() << std::endl;
   ROSE_ASSERT(false);
 }
@@ -596,7 +721,13 @@ SgBasicBlock * cleanPoCC(SgBasicBlock * bb) {
   // TODO remove unused declaration and the register storage qualifiers...
 
   std::vector<SgNode*>::iterator it;
-
+/*
+  std::vector<SgFunctionCallExp *> func_call = SageInterface::querySubTree<SgFunctionCallExp>(bb);
+  std::vector<SgFunctionCallExp *>::iterator func_call_it;
+  for (func_call_it = func_call.begin(); func_call_it != func_call.end(); func_call_it++) {
+    
+  }
+*/
   std::vector<SgNode*> cond_ops;
   {
     std::vector<SgNode*> tmp = NodeQuery::querySubTree(bb, V_SgLessThanOp);
@@ -629,6 +760,42 @@ SgBasicBlock * cleanPoCC(SgBasicBlock * bb) {
         SageInterface::replaceExpression(cond_exp, cond_exp->get_false_exp(), true);
       else
         SageInterface::replaceExpression(cond_exp, cond_exp->get_true_exp(), true);
+    }
+  }
+  cond_exps  = NodeQuery::querySubTree(bb, V_SgConditionalExp);
+  for (it = cond_exps.begin(); it != cond_exps.end(); it++) {
+    SgConditionalExp * cond_exp = isSgConditionalExp(*it);
+    int cond_value;
+    if (getIntFromConstExpression(cond_exp->get_conditional_exp(), &cond_value)) {
+      if (cond_value == 0)
+        SageInterface::replaceExpression(cond_exp, cond_exp->get_false_exp(), true);
+      else
+        SageInterface::replaceExpression(cond_exp, cond_exp->get_true_exp(), true);
+    }
+  }
+
+  { // FIXME cause random failure
+    std::vector<SgAndOp *> and_ops = SageInterface::querySubTree<SgAndOp>(bb);
+    std::vector<SgAndOp *>::iterator it_and;
+    for (it_and = and_ops.begin(); it_and != and_ops.end(); it_and++) {
+      if (isSgIfStmt((*it_and)->get_parent()->get_parent())) { // TODO check multi-level
+        SgExpression * lhs = (*it_and)->get_lhs_operand_i();
+        SgExpression * rhs = (*it_and)->get_rhs_operand_i();
+        int lhs_value;
+        int rhs_value;
+        bool lhs_bool = getIntFromConstExpression(lhs, &lhs_value);
+        bool rhs_bool = getIntFromConstExpression(rhs, &rhs_value);
+        if (lhs_bool && rhs_bool && (lhs_value == 0 || rhs_value == 0))
+          SageInterface::replaceExpression(*it_and, SageBuilder::buildIntVal(0), true);
+        else if (lhs_bool && lhs_value == 0)
+          SageInterface::replaceExpression(*it_and, SageBuilder::buildIntVal(0), true);
+        else if (lhs_bool && lhs_value == 1)
+          SageInterface::replaceExpression(*it_and, rhs, true);
+        else if (rhs_bool && rhs_value == 0)
+          SageInterface::replaceExpression(*it_and, SageBuilder::buildIntVal(0), true);
+        else if (rhs_bool && rhs_value == 1)
+          SageInterface::replaceExpression(*it_and, lhs, true);
+      }
     }
   }
 

@@ -3,6 +3,7 @@
 #define __ROSE_UTILS_HPP__
 
 #include <map>
+#include <string>
 #include <utility>
 
 class SgExpression;

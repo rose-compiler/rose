@@ -6,16 +6,18 @@ noinst_LTLIBRARIES = \
   libPolyModelMaths.la \
   libPolyModelSystem.la \
   libPolyModelRose.la \
-  libPolyModelRosePragma.la \
-  libPolyModelScopLib.la \
-  libPolyModelRoseMaxCover.la
+  libPolyModelScopLib.la
 
 #  libPolyModelRoseFromPolyDesc.la
 
-lib_LTLIBRARIES = libPolyModel.la
+lib_LTLIBRARIES = \
+  libPolyModel.la \
+  libPolyModelRosePragma.la \
+  libPolyModelRoseKernel.la \
+  libPolyModelRoseMaxCover.la
 
 libPolyModel_la_SOURCES         = libPolyModelDummyFile.cpp
-libPolyModel_la_LIBADD          = libPolyModelCommon.la libPolyModelRosePragma.la libPolyModelScopLib.la libPolyModelRoseMaxCover.la
+libPolyModel_la_LIBADD          = libPolyModelCommon.la libPolyModelRosePragma.la libPolyModelScopLib.la
 libPolyModel_la_includedir      = $(includedir)/polyhedral-model/utils
 libPolyModel_la_include_HEADERS = utils/ChainedList.hpp
 
@@ -97,6 +99,19 @@ libPolyModelRosePragma_la_include_HEADERS = \
   rose-pragma/Exception-rose-pragma.hpp \
   rose-pragma/PolyhedricPragmaParser.hpp \
   rose-pragma/PolyhedricPragma.hpp
+
+# ROSE-KERNEL directory
+
+libPolyModelRoseKernel_la_SOURCES         = rose-kernel/PolyhedralKernel.cpp
+libPolyModelRoseKernel_la_CXXFLAGS        = $(CXXFLAGS) \
+  -I $(srcdir)/../../pragmaParsing \
+  -I$(PPL_PATH)/include \
+  $(ROSE_INCLUDES)
+libPolyModelRoseKernel_la_LIBADD          = \
+  libPolyModelRose.la
+libPolyModelRoseKernel_la_includedir      = $(includedir)/polyhedral-model/rose-kernel
+libPolyModelRoseKernel_la_include_HEADERS = \
+  rose-kernel/PolyhedralKernel.hpp
 
 # ROSE-MAX-COVER directory
 

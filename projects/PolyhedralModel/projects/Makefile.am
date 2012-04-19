@@ -1,8 +1,5 @@
 
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-SUBDIRS= 
+SUBDIRS = polygraph loop-ocl spmd-generator utils
 
-if ROSE_USE_PPL
-SUBDIRS+= src projects tests docs
-endif

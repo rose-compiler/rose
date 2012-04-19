@@ -1,5 +1,5 @@
 
-#include "PolyhedralKernel.hpp"
+#include "rose-kernel/PolyhedralKernel.hpp"
 #include "polygraph.hpp"
 
 void usage(char * name) {

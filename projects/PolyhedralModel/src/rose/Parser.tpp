@@ -1,6 +1,8 @@
 
 namespace PolyhedricAnnotation {
 
+void separateMinMax(SgExpression * exp, std::vector<std::pair<SgExpression *, int> > & conj);
+
 template <class TplStatement>
 void Parse(TplStatement * attach_to, SgStatement * stmt) throw (Exception::ExceptionBase) {
 	ScopTree_::ScopTree<TplStatement, SgExprStatement, RoseVariable> * root =
@@ -134,9 +136,9 @@ void setBounds(
 	const RoseVariable & iterator
 ) {
 	std::vector<std::pair<RoseVariable, int> >::iterator it;
-	std::vector<std::pair<RoseVariable, int> > lb;
-	std::vector<std::pair<RoseVariable, int> > ub;
-	
+	std::vector<std::pair<SgExpression *, int> > conj;
+	std::vector<std::pair<SgExpression *, int> >::iterator it_conj;
+
 	SgForInitStatement * init_stmt;
 	SgStatement * cond_stmt;
 	SgExprStatement * exp_stmt;
@@ -153,11 +155,14 @@ void setBounds(
 	if (assign_op == NULL)
 		throw Exception::ExceptionForLoopTranslation(for_stmt, "Initialisation expression is not an assignation.");
 	exp = assign_op->get_rhs_operand_i();
-
-	translateLinearExpression(exp, lb);
-	for (it = lb.begin(); it != lb.end(); it++)
-		loop_node->addLowerBoundTerm(it->first, it->second);
-	
+	separateMinMax(exp, conj);
+	std::cerr << "lb" << std::endl;
+	for (it_conj = conj.begin(); it_conj != conj.end(); it_conj++) {
+		std::cerr << it_conj->first->unparseToString() << " / " << it_conj->second << std::endl;
+		std::map<RoseVariable, int> map;
+		translateLinearExpression(it_conj->first, map, 1);
+		loop_node->addLowerBound(map, it_conj->second);
+	}
 	// Upper Bound
 	cond_stmt = for_stmt->get_test();
 	exp_stmt = isSgExprStatement(cond_stmt);
@@ -169,13 +174,22 @@ void setBounds(
 	if (!isSgVarRefExp(bin_op->get_lhs_operand_i()) || !iterator.is(isSgVarRefExp(bin_op->get_lhs_operand_i())->get_symbol()->get_declaration()))
 		throw Exception::ExceptionForLoopTranslation(for_stmt, "Left operand of the condition need to be the loop iterator.");
 	exp = bin_op->get_rhs_operand_i();
-	
-	translateLinearExpression(exp, ub);
-	for (it = ub.begin(); it != ub.end(); it++)
-		loop_node->addUpperBoundTerm(it->first, it->second);
-	
-	if (isSgLessThanOp(bin_op)) {
-		loop_node->addUpperBoundTerm(RoseVariable(), -1);
+        conj.clear();
+        separateMinMax(exp, conj);
+	std::cerr << "ub" << std::endl;
+	for (it_conj = conj.begin(); it_conj != conj.end(); it_conj++) {
+		std::cerr << it_conj->first->unparseToString() << " / " << it_conj->second << std::endl;
+		std::map<RoseVariable, int> map;
+		translateLinearExpression(it_conj->first, map, 1);
+		if (isSgLessThanOp(bin_op)) {
+			std::map<RoseVariable, int>::iterator it_map = map.find(constantLBL());
+			if (it_map == map.end())
+				map.insert(std::pair<RoseVariable, int>(constantLBL(), -1));
+			else
+				it_map->second -= 1;
+
+		}
+		loop_node->addUpperBound(map, it_conj->second);
 	}
 }
 

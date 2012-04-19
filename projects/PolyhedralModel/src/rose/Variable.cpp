@@ -6,6 +6,7 @@
  */
 
 #include "rose/Variable.hpp"
+#include "rose.h"
 
 RoseVariable::RoseVariable(SgInitializedName * var, RoseVariable * base, bool is_arrow) :
 	p_var(var),

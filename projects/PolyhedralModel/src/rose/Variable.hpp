@@ -8,9 +8,11 @@
 #ifndef _VARIABLE_HPP_
 #define _VARIABLE_HPP_
 
-#include "rose.h"
-
 #include <string>
+
+class SgInitializedName;
+class SgExpression;
+class SgScopeStatement;
 
 class RoseVariable {
 	protected:
