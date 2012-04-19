@@ -2155,7 +2155,11 @@ projects/PolyhedralModel/tests/Makefile
 projects/PolyhedralModel/tests/rose-pragma/Makefile
 projects/PolyhedralModel/tests/rose-max-cover/Makefile
 projects/PolyhedralModel/tests/cuda-kernel/Makefile
-projects/PolyhedralModel/tests/kernel-func/Makefile
+projects/PolyhedralModel/projects/Makefile
+projects/PolyhedralModel/projects/loop-ocl/Makefile
+projects/PolyhedralModel/projects/spmd-generator/Makefile
+projects/PolyhedralModel/projects/polygraph/Makefile
+projects/PolyhedralModel/projects/utils/Makefile
 tests/Makefile
 tests/RunTests/Makefile
 tests/RunTests/A++Tests/Makefile
