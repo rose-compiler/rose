@@ -297,6 +297,12 @@ protected:
         /** Remove all data blocks from this function w/out deleting the blocks. */
         void clear_data_blocks();
 
+        /** Move all basic blocks from the other function to this one. */
+        void move_basic_blocks_from(Function *other);
+
+        /** Move all data blocks from the other function to this one. */
+        void move_data_blocks_from(Function *other);
+
         /** Accessor for the may-return property.  The may-return property indicates whether this function returns to its
          *  caller.  This is a two-part property storing both the current value and the previous value; this enables us to
          *  detect transitions after the fact, when it is more efficient to process them than when they actually occur.
@@ -1529,6 +1535,15 @@ public:
      *  space.  This is normally the case, but when functions are moved around, split, etc., the padding data blocks can get
      *  mixed up.  This method puts them all back where they belong. */
     virtual void adjust_padding();
+
+    /** Merge function fragments.  The partitioner sometimes goes crazy breaking functions into smaller and smaller parts.
+     *  This method attempts to merge all those parts after the partitioner's function detection has completed.  A function
+     *  fragment is any function whose only reason code is one of the GRAPH codes (function detected by graph analysis and the
+     *  rule that every function has only one entry point). */
+    virtual void merge_function_fragments();
+
+    /** Merge two functions.  The @p other function is merged into @p parent and then @p other is deleted. */
+    virtual void merge_functions(Function *parent, Function *other);
 
     /** Looks for a jump table.  This method looks at the specified basic block and tries to discover if the last instruction
      *  is an indirect jump through memory.  If it is, then the entries of the jump table are returned by value (i.e., the

@@ -810,6 +810,31 @@ Partitioner::Function::clear_data_blocks()
     data_blocks.clear();
 }
 
+/* Move basic blocks from the other function to this one. */
+void
+Partitioner::Function::move_basic_blocks_from(Function *other)
+{
+    for (BasicBlocks::iterator bbi=other->basic_blocks.begin(); bbi!=other->basic_blocks.end(); ++bbi) {
+        basic_blocks[bbi->first] = bbi->second;
+        bbi->second->function = this;
+    }
+    other->basic_blocks.clear();
+
+    heads.insert(other->heads.begin(), other->heads.end());
+    other->heads.clear();
+}
+
+/* Move data blocks from the other function to this one. */
+void
+Partitioner::Function::move_data_blocks_from(Function *other)
+{
+    for (DataBlocks::iterator dbi=other->data_blocks.begin(); dbi!=other->data_blocks.end(); ++dbi) {
+        data_blocks[dbi->first] = dbi->second;
+        dbi->second->function = this;
+    }
+    other->data_blocks.clear();
+}
+
 /* Increase knowledge about may-return property. */
 void
 Partitioner::Function::promote_may_return(MayReturn new_value) {
@@ -3353,6 +3378,148 @@ Partitioner::adjust_padding()
     }
 }
 
+/* Merge function fragments when possible. */
+void
+Partitioner::merge_function_fragments()
+{
+    // Find connected components of the control flow graph, but only considering function fragments.  We do this in a single
+    // pass, and at the end of this loop each function fragment, F, will have group number group_number[traversal_number[F]].
+    typedef std::map<Function*, size_t> TravNumMap;
+    TravNumMap traversal_number;       // which DFS traversal first visited the function?
+    std::vector<size_t> group_number;  // group number for each traversal (indexed by traversal number)
+    for (Functions::iterator fi=functions.begin(); fi!=functions.end(); ++fi) {
+        if (SgAsmFunction::FUNC_GRAPH!=fi->second->reason)
+            continue; // only consider functions that are strictly fragments
+        if (traversal_number.find(fi->second)!=traversal_number.end())
+            continue; // we already visited this function
+
+        size_t tnum = group_number.size();
+        group_number.push_back(tnum);
+        traversal_number[fi->second] = tnum;
+
+        // Depth first search considering only function fragments
+        std::vector<Function*> dfs_functions;
+        dfs_functions.push_back(fi->second);
+        while (!dfs_functions.empty()) {
+            Function *source_func = dfs_functions.back(); dfs_functions.pop_back();
+            for (BasicBlocks::iterator bi=source_func->basic_blocks.begin(); bi!=source_func->basic_blocks.end(); ++bi) {
+                BasicBlock *source_bb = bi->second;
+                Disassembler::AddressSet succs = successors(source_bb);
+                for (Disassembler::AddressSet::iterator si=succs.begin(); si!=succs.end(); ++si) {
+                    BasicBlock *target_bb = find_bb_starting(*si, false); // do not create the block
+                    Function *target_func = target_bb ? target_bb->function : NULL;
+                    if (target_func && target_func!=source_func && SgAsmFunction::FUNC_GRAPH==target_func->reason) {
+                        bool inserted = traversal_number.insert(std::make_pair(target_func, tnum)).second;
+                        if (inserted) {
+                            dfs_functions.push_back(target_func);
+                        } else {
+                            group_number[traversal_number[target_func]] = tnum;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /* Reorganize so that we have lists of function fragments by group number. */
+    typedef std::vector<std::vector<Function*> > FragmentIndex;
+    FragmentIndex fragment_index(group_number.size(), std::vector<Function*>());
+    for (Functions::iterator fi=functions.begin(); fi!=functions.end(); ++fi) {
+        TravNumMap::iterator tn_found = traversal_number.find(fi->second);
+        if (tn_found!=traversal_number.end()) {
+            size_t gnum = group_number[tn_found->second];
+            fragment_index[gnum].push_back(fi->second);
+        }
+    }
+#if 0 /* DEBUGGING [RPM 2012-04-18] */
+    fprintf(stderr, "Partitioner::merge_function_fragments: fragment index: \n");
+    for (size_t gnum=0; gnum<fragment_index.size(); gnum++) {
+        fprintf(stderr, "  group-%zu:", gnum);
+        for (std::vector<Function*>::iterator fi=fragment_index[gnum].begin(); fi!=fragment_index[gnum].end(); ++fi)
+            fprintf(stderr, " F%08"PRIx64, (*fi)->entry_va);
+        fprintf(stderr, "\n");
+    }
+#endif
+            
+    /* Find the non-fragment predecessors of each fragment group. A fragment group can be merged into another function only if
+     * the fragment group has a single predecessor. */
+    std::vector<Function*> parent(fragment_index.size(), NULL);
+    for (Functions::iterator fi=functions.begin(); fi!=functions.end(); ++fi) {
+        Function *source_func = fi->second;
+        if (SgAsmFunction::FUNC_GRAPH!=source_func->reason) {
+            bool multi_parents = false;
+            for (BasicBlocks::iterator bi=source_func->basic_blocks.begin();
+                 bi!=source_func->basic_blocks.end() && !multi_parents;
+                 ++bi) {
+                Disassembler::AddressSet succs = successors(bi->second);
+                for (Disassembler::AddressSet::iterator si=succs.begin(); si!=succs.end() && !multi_parents; ++si) {
+                    BasicBlock *target_bb = find_bb_starting(*si, false/*do not create*/);
+                    Function *target_func = target_bb ? target_bb->function : NULL;
+                    TravNumMap::iterator tn_found = target_func ? traversal_number.find(target_func) : traversal_number.end();
+                    size_t gnum = tn_found!=traversal_number.end() ? group_number[tn_found->second] : (size_t)(-1);
+                    if (gnum!=(size_t)(-1)) {
+                        /* source_func (non-fragment) branches to fragment group number <gnum> */
+                        if (parent[gnum]) {
+                            parent[gnum] = NULL;
+                            fragment_index[gnum].clear(); // multiple non-fragment predecessors of this group; discard group
+                            multi_parents = true;
+                        } else {
+                            parent[gnum] = source_func;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /* Merge functions */
+    if (debug)
+        fprintf(debug, "Partitioner::merge_function_fragments...\n");
+    for (size_t gnum=0; gnum<fragment_index.size(); ++gnum) {
+        if (parent[gnum]!=NULL && !fragment_index[gnum].empty()) {
+            if (debug) {
+                fprintf(debug, "fragments %s F%08"PRIx64" \"%s\" merging",
+                        SgAsmFunction::reason_str(true, parent[gnum]->reason).c_str(),
+                        parent[gnum]->entry_va, parent[gnum]->name.c_str());
+            }
+            for (std::vector<Function*>::iterator fi=fragment_index[gnum].begin(); fi!=fragment_index[gnum].end(); ++fi) {
+                if (debug)
+                    fprintf(debug, " F0x%08"PRIx64, (*fi)->entry_va);
+                merge_functions(parent[gnum], *fi); *fi = NULL;
+                parent[gnum]->reason &= ~SgAsmFunction::FUNC_GRAPH;
+            }
+            if (debug) {
+                fputc(' ', debug);
+                parent[gnum]->show_properties(debug);
+                fputc('\n', debug);
+            }
+        }
+    }
+}
+
+void
+Partitioner::merge_functions(Function *parent, Function *other)
+{
+    parent->reason |= other->reason;
+
+    if (parent->name.empty()) {
+        parent->name = other->name;
+    } else if (!other->name.empty() && 0!=parent->name.compare(other->name)) {
+        parent->name += "+" + other->name;
+    }
+
+    parent->move_basic_blocks_from(other);
+    parent->move_data_blocks_from(other);
+
+    if (other->pending)
+        parent->pending = true;
+
+    parent->promote_may_return(other->get_may_return());
+
+    functions.erase(other->entry_va);
+    delete other;
+}
+
 void
 Partitioner::post_cfg(SgAsmInterpretation *interp/*=NULL*/)
 {
@@ -3435,7 +3602,7 @@ Partitioner::post_cfg(SgAsmInterpretation *interp/*=NULL*/)
         scan_unassigned_bytes(&fff, &exe_map);
     }
 
-    /* Run one last analysis of the CFG because we may need to fix some things up after having added more blocks from the
+    /* Run another analysis of the CFG because we may need to fix some things up after having added more blocks from the
      * post-cfg analyses we did above. If nothing happened above, then analyze_cfg() should be fast. */
     analyze_cfg(SgAsmBlock::BLK_GRAPH2);
 
@@ -3462,6 +3629,10 @@ Partitioner::post_cfg(SgAsmInterpretation *interp/*=NULL*/)
 
     /* Make sure padding is back where it belongs. */
     adjust_padding();
+
+    /* Merge extra functions that we might have created.  Sometimes it's possible that we break a function into too many parts,
+     * and we can recombine those parts now. */
+    merge_function_fragments();
 
     /* Give existing functions names from symbol tables. Don't create more functions. */
     if (interp && 0!=(func_heuristics & SgAsmFunction::FUNC_IMPORT)) {
