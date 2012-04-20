@@ -619,4 +619,44 @@ RSIM_Simulator::get_semaphore(bool *unlinked/*=NULL*/)
     return global_semaphore;
 }
 
+/* Install callback in the simulator and optionally in the existing process and threads. */
+#define RSIM_SIMULATOR_DEFINE_INSTALL_CALLBACK(CALLBACK_CLASS, INSERTION_FUNCTION)                                             \
+    void                                                                                                                       \
+    RSIM_Simulator::install_callback(CALLBACK_CLASS *cb, RSIM_Callbacks::When when, bool everywhere)                           \
+    {                                                                                                                          \
+        if (cb) {                                                                                                              \
+            callbacks.INSERTION_FUNCTION(when, cb);                                                                            \
+            if (everywhere && get_process())                                                                                   \
+                get_process()->install_callback(dynamic_cast<CALLBACK_CLASS*>(cb->clone()), when, everywhere);                 \
+        }                                                                                                                      \
+    }
+RSIM_SIMULATOR_DEFINE_INSTALL_CALLBACK(RSIM_Callbacks::InsnCallback,    add_insn_callback);
+RSIM_SIMULATOR_DEFINE_INSTALL_CALLBACK(RSIM_Callbacks::MemoryCallback,  add_memory_callback);
+RSIM_SIMULATOR_DEFINE_INSTALL_CALLBACK(RSIM_Callbacks::SyscallCallback, add_syscall_callback);
+RSIM_SIMULATOR_DEFINE_INSTALL_CALLBACK(RSIM_Callbacks::SignalCallback,  add_signal_callback);
+RSIM_SIMULATOR_DEFINE_INSTALL_CALLBACK(RSIM_Callbacks::ThreadCallback,  add_thread_callback);
+RSIM_SIMULATOR_DEFINE_INSTALL_CALLBACK(RSIM_Callbacks::ProcessCallback, add_process_callback);
+#undef RSIM_SIMULATOR_DEFINE_INSTALL_CALLBACK
+
+/* Remove callback in the simulator and optionally in the existing process and threads. */
+#define RSIM_SIMULATOR_DEFINE_REMOVE_CALLBACK(CALLBACK_CLASS, REMOVAL_FUNCTION)                                                \
+    void                                                                                                                       \
+    RSIM_Simulator::remove_callback(CALLBACK_CLASS *cb, RSIM_Callbacks::When when, bool everywhere)                            \
+    {                                                                                                                          \
+        if (cb) {                                                                                                              \
+            callbacks.REMOVAL_FUNCTION(when, cb);                                                                              \
+            if (everywhere && get_process())                                                                                   \
+                get_process()->remove_callback(cb, when, everywhere);                                                          \
+        }                                                                                                                      \
+    }
+RSIM_SIMULATOR_DEFINE_REMOVE_CALLBACK(RSIM_Callbacks::InsnCallback,    remove_insn_callback);
+RSIM_SIMULATOR_DEFINE_REMOVE_CALLBACK(RSIM_Callbacks::MemoryCallback,  remove_memory_callback);
+RSIM_SIMULATOR_DEFINE_REMOVE_CALLBACK(RSIM_Callbacks::SyscallCallback, remove_syscall_callback);
+RSIM_SIMULATOR_DEFINE_REMOVE_CALLBACK(RSIM_Callbacks::SignalCallback,  remove_signal_callback);
+RSIM_SIMULATOR_DEFINE_REMOVE_CALLBACK(RSIM_Callbacks::ThreadCallback,  remove_thread_callback);
+RSIM_SIMULATOR_DEFINE_REMOVE_CALLBACK(RSIM_Callbacks::ProcessCallback, remove_process_callback);
+#undef RSIM_SIMULATOR_DEFINE_REMOVE_CALLBACK
+
+        
+
 #endif /* ROSE_ENABLE_SIMULATOR */
