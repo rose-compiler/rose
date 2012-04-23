@@ -2096,6 +2096,7 @@ projects/compass/tools/compassVerifier/Makefile
 projects/compass/tools/sampleCompassSubset/Makefile
 projects/dataStructureGraphing/Makefile
 projects/extractMPISkeleton/Makefile
+projects/extractMPISkeleton/tests/Makefile
 projects/haskellport/Makefile
 projects/haskellport/Setup.hs
 projects/haskellport/rose.cabal.in
