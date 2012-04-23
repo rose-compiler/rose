@@ -15,7 +15,7 @@ operator<<(std::ostream &o, const SMTSolver::Exception &e)
 size_t SMTSolver::total_calls;
 
 bool
-SMTSolver::satisfiable(const std::vector<const InsnSemanticsExpr::TreeNode*> &exprs)
+SMTSolver::satisfiable(const std::vector<boost::shared_ptr<const InsnSemanticsExpr::TreeNode> > &exprs)
 {
     bool retval = false;
 
@@ -93,9 +93,9 @@ SMTSolver::satisfiable(const std::vector<const InsnSemanticsExpr::TreeNode*> &ex
     
 
 bool
-SMTSolver::satisfiable(const InsnSemanticsExpr::TreeNode *tn)
+SMTSolver::satisfiable(const boost::shared_ptr<const InsnSemanticsExpr::TreeNode> &tn)
 {
-    std::vector<const InsnSemanticsExpr::TreeNode*> exprs;
+    std::vector<boost::shared_ptr<const InsnSemanticsExpr::TreeNode> > exprs;
     exprs.push_back(tn);
     return satisfiable(exprs);
 }

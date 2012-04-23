@@ -50,7 +50,7 @@ namespace BinaryAnalysis {              // documented elsewhere
             template<size_t nBits>
             class ValueType {
             protected:
-                TreeNode *expr; /* reference counted, thus protected */
+                boost::shared_ptr<const TreeNode> expr;
 
                 /** Instructions defining this value.  Any instruction that saves the value to a register or memory location
                  *  adds itself to the saved value. */
@@ -61,37 +61,22 @@ namespace BinaryAnalysis {              // documented elsewhere
                 /** Construct a value that is unknown and unique. */
                 ValueType(std::string comment="") {
                     expr = LeafNode::create_variable(nBits, comment);
-                    expr->inc_nrefs();
                 }
 
                 ValueType(const ValueType &other) {
                     expr = other.expr;
-                    expr->inc_nrefs();
                     defs = other.defs;
-                }
-
-                ValueType& operator=(const ValueType &other) {
-                    set_expression(other.expr);
-                    set_defining_instructions(other.defs);
-                    return *this;
                 }
 
                 /** Construct a ValueType with a known value. */
                 explicit ValueType(uint64_t n, std::string comment="") {
                     expr = LeafNode::create_integer(nBits, n, comment);
-                    expr->inc_nrefs();
                 }
 
                 /** Construct a ValueType from a TreeNode. */
-                explicit ValueType(TreeNode *node) {
+                explicit ValueType(const boost::shared_ptr<const TreeNode> &node) {
                     assert(node->get_nbits()==nBits);
                     expr = node;
-                    expr->inc_nrefs();
-                }
-
-                ~ValueType() {
-                    expr->dec_nrefs();
-                    expr->deleteDeeply();
                 }
 
                 /** Adds instructions to the list of defining instructions.  Adds the specified instruction and defining sets
@@ -144,27 +129,21 @@ namespace BinaryAnalysis {              // documented elsewhere
 
                 /** Returns the value of a known constant. Assumes this value is a known constant. */
                 uint64_t known_value() const {
-                    LeafNode *leaf = dynamic_cast<LeafNode*>(expr);
-                    assert(leaf);
+                    boost::shared_ptr<const LeafNode> leaf = boost::dynamic_pointer_cast<const LeafNode>(expr);
+                    assert(leaf!=NULL);
                     return leaf->get_value();
                 }
 
                 /** Returns the expression stored in this value.  Expressions are reference counted; the reference count of the
                  *  returned expression is not incremented. */
-                TreeNode *get_expression() const {
+                const boost::shared_ptr<const TreeNode>& get_expression() const {
                     return expr;
                 }
 
-                /** Changes the expression stored in the value.  This is the safe way to change the expression tree that's
-                 *  referenced by this value.  Expressions are reference counted, and this method will properly decrement the
-                 *  ref count on the old expression, delete it if appropriate, and increment the ref count on the new
-                 *  expression.
+                /** Changes the expression stored in the value.
                  * @{ */
-                void set_expression(TreeNode *new_expr) {
-                    expr->dec_nrefs();
-                    expr->deleteDeeply();
+                void set_expression(const boost::shared_ptr<const TreeNode> &new_expr) {
                     expr = new_expr;
-                    expr->inc_nrefs();
                 }
                 void set_expression(const ValueType &source) {
                     set_expression(source.get_expression());
@@ -274,24 +253,27 @@ namespace BinaryAnalysis {              // documented elsewhere
                     if (retval)
                         return retval;
                     if (solver) {
-                        TreeNode *x_addr   = this->address.get_expression();
-                        TreeNode *x_nbytes = LeafNode::create_integer(32, this->nbytes);
-                        TreeNode *y_addr   = other.address.get_expression();
-                        TreeNode *y_nbytes = LeafNode::create_integer(32, other.nbytes);
+                        boost::shared_ptr<const TreeNode> x_addr   = this->address.get_expression();
+                        boost::shared_ptr<const TreeNode> x_nbytes = LeafNode::create_integer(32, this->nbytes);
+                        boost::shared_ptr<const TreeNode> y_addr   = other.address.get_expression();
+                        boost::shared_ptr<const TreeNode> y_nbytes = LeafNode::create_integer(32, other.nbytes);
 
-                        TreeNode *x_end = new InternalNode(32, InsnSemanticsExpr::OP_ADD, x_addr, x_nbytes);
-                        TreeNode *y_end = new InternalNode(32, InsnSemanticsExpr::OP_ADD, y_addr, y_nbytes);
+                        boost::shared_ptr<const TreeNode> x_end =
+                            InternalNode::create(32, InsnSemanticsExpr::OP_ADD, x_addr, x_nbytes);
+                        boost::shared_ptr<const TreeNode> y_end =
+                            InternalNode::create(32, InsnSemanticsExpr::OP_ADD, y_addr, y_nbytes);
 
-                        TreeNode *and1 = new InternalNode(1, InsnSemanticsExpr::OP_AND,
-                                                          new InternalNode(1, InsnSemanticsExpr::OP_UGT, x_end, y_addr),
-                                                          new InternalNode(1, InsnSemanticsExpr::OP_ULT, x_addr, y_end));
-                        TreeNode *and2 = new InternalNode(1, InsnSemanticsExpr::OP_AND,
-                                                          new InternalNode(1, InsnSemanticsExpr::OP_UGT, y_end, x_addr),
-                                                          new InternalNode(1, InsnSemanticsExpr::OP_ULT, y_addr, x_end));
-
-                        TreeNode *assertion = new InternalNode(1, InsnSemanticsExpr::OP_OR, and1, and2);
+                        boost::shared_ptr<const TreeNode> and1 =
+                            InternalNode::create(1, InsnSemanticsExpr::OP_AND,
+                                                 InternalNode::create(1, InsnSemanticsExpr::OP_UGT, x_end, y_addr),
+                                                 InternalNode::create(1, InsnSemanticsExpr::OP_ULT, x_addr, y_end));
+                        boost::shared_ptr<const TreeNode> and2 =
+                            InternalNode::create(1, InsnSemanticsExpr::OP_AND,
+                                                 InternalNode::create(1, InsnSemanticsExpr::OP_UGT, y_end, x_addr),
+                                                 InternalNode::create(1, InsnSemanticsExpr::OP_ULT, y_addr, x_end));
+                        boost::shared_ptr<const TreeNode> assertion =
+                            InternalNode::create(1, InsnSemanticsExpr::OP_OR, and1, and2);
                         retval = solver->satisfiable(assertion);
-                        assertion->deleteDeeply();
                     }
                     return retval;
                 }
@@ -477,13 +459,13 @@ namespace BinaryAnalysis {              // documented elsewhere
                         return ValueType<ToLen>(a.get_expression()).defined_by(NULL, a.get_defining_instructions());
                     }
                     if (FromLen>ToLen)
-                        return ValueType<ToLen>(new InternalNode(ToLen, InsnSemanticsExpr::OP_EXTRACT,
-                                                                 LeafNode::create_integer(32, 0),
-                                                                 LeafNode::create_integer(32, ToLen),
-                                                                 a.get_expression()))
+                        return ValueType<ToLen>(InternalNode::create(ToLen, InsnSemanticsExpr::OP_EXTRACT,
+                                                                     LeafNode::create_integer(32, 0),
+                                                                     LeafNode::create_integer(32, ToLen),
+                                                                     a.get_expression()))
                             .defined_by(cur_insn, a.get_defining_instructions());
-                    return ValueType<ToLen>(new InternalNode(ToLen, InsnSemanticsExpr::OP_UEXTEND,
-                                                             LeafNode::create_integer(32, ToLen), a.get_expression()))
+                    return ValueType<ToLen>(InternalNode::create(ToLen, InsnSemanticsExpr::OP_UEXTEND,
+                                                                 LeafNode::create_integer(32, ToLen), a.get_expression()))
                         .defined_by(cur_insn, a.get_defining_instructions());
                 }
 
@@ -498,13 +480,13 @@ namespace BinaryAnalysis {              // documented elsewhere
                         return ValueType<ToLen>(a.get_expression()).defined_by(NULL, a.get_defining_instructions());
                     }
                     if (FromLen > ToLen)
-                        return ValueType<ToLen>(new InternalNode(ToLen, InsnSemanticsExpr::OP_EXTRACT,
-                                                                 LeafNode::create_integer(32, 0),
-                                                                 LeafNode::create_integer(32, ToLen),
-                                                                 a.get_expression()))
+                        return ValueType<ToLen>(InternalNode::create(ToLen, InsnSemanticsExpr::OP_EXTRACT,
+                                                                     LeafNode::create_integer(32, 0),
+                                                                     LeafNode::create_integer(32, ToLen),
+                                                                     a.get_expression()))
                             .defined_by(cur_insn, a.get_defining_instructions());
-                    return ValueType<ToLen>(new InternalNode(ToLen, InsnSemanticsExpr::OP_SEXTEND,
-                                                             LeafNode::create_integer(32, ToLen), a.get_expression()))
+                    return ValueType<ToLen>(InternalNode::create(ToLen, InsnSemanticsExpr::OP_SEXTEND,
+                                                                 LeafNode::create_integer(32, ToLen), a.get_expression()))
                         .defined_by(cur_insn, a.get_defining_instructions());
                 }
 
@@ -518,10 +500,10 @@ namespace BinaryAnalysis {              // documented elsewhere
                     if (a.is_known())
                         return ValueType<EndAt-BeginAt>((a.known_value()>>BeginAt) & IntegerOps::genMask<uint64_t>(EndAt-BeginAt))
                             .defined_by(cur_insn, a.get_defining_instructions());
-                    return ValueType<EndAt-BeginAt>(new InternalNode(EndAt-BeginAt, InsnSemanticsExpr::OP_EXTRACT,
-                                                                     LeafNode::create_integer(32, BeginAt),
-                                                                     LeafNode::create_integer(32, EndAt),
-                                                                     a.get_expression()))
+                    return ValueType<EndAt-BeginAt>(InternalNode::create(EndAt-BeginAt, InsnSemanticsExpr::OP_EXTRACT,
+                                                                         LeafNode::create_integer(32, BeginAt),
+                                                                         LeafNode::create_integer(32, EndAt),
+                                                                         a.get_expression()))
                         .defined_by(cur_insn, a.get_defining_instructions());
                 }
 
@@ -637,18 +619,18 @@ namespace BinaryAnalysis {              // documented elsewhere
                         cur_state.ip = ValueType<32>(insn->get_address()); // semantics user should have probably initialized EIP
                     } else if (cur_state.ip.known_value()!=insn->get_address()) {
                         fprintf(stderr, "SymbolicSemantics::Policy::startInstruction: invalid EIP value for current instruction\n\
-            startInstruction() is being called for an instruction with a concrete\n\
-            address stored in the SgAsmx86Instruction object, but the current value of\n\
-            this policy's EIP register does not match the instruction.  This might\n\
-            happen if you're processing instructions in an order that's different than\n\
-            the order the policy thinks they would be executed.  If this is truly your\n\
-            intent, then you need to set the policy's EIP register to the instruction\n\
-            address before you translate the instruction--and you might want to make\n\
-            sure the other state information is also appropriate for this instruction\n\
-            rather than use the final state from the previously translated\n\
-            instruction.  x86 \"REP\" instructions might be the culprit: ROSE\n\
-            instruction semantics treat them as a tiny loop, updating the policy's EIP\n\
-            depending on whether the loop is to be taken again, or not.\n");
+    startInstruction() is being called for an instruction with a concrete\n\
+    address stored in the SgAsmx86Instruction object, but the current value of\n\
+    this policy's EIP register does not match the instruction.  This might\n\
+    happen if you're processing instructions in an order that's different than\n\
+    the order the policy thinks they would be executed.  If this is truly your\n\
+    intent, then you need to set the policy's EIP register to the instruction\n\
+    address before you translate the instruction--and you might want to make\n\
+    sure the other state information is also appropriate for this instruction\n\
+    rather than use the final state from the previously translated\n\
+    instruction.  x86 \"REP\" instructions might be the culprit: ROSE\n\
+    instruction semantics treat them as a tiny loop, updating the policy's EIP\n\
+    depending on whether the loop is to be taken again, or not.\n");
                         assert(cur_state.ip.known_value()==insn->get_address()); // redundant, used for error mesg
                         abort(); // we must fail even when optimized
                     }
@@ -752,7 +734,9 @@ namespace BinaryAnalysis {              // documented elsewhere
                     } else if (b.is_known() && 0==b.known_value()) {
                         return a;
                     }
-                    return ValueType<Len>(new InternalNode(Len, InsnSemanticsExpr::OP_ADD, a.get_expression(), b.get_expression()))
+                    return ValueType<Len>(InternalNode::create(Len, InsnSemanticsExpr::OP_ADD,
+                                                               a.get_expression(),
+                                                               b.get_expression()))
                         .defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
                 }
 
@@ -774,8 +758,8 @@ namespace BinaryAnalysis {              // documented elsewhere
                     if (a.is_known() && b.is_known())
                         return ValueType<Len>(a.known_value() & b.known_value())
                             .defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
-                    return ValueType<Len>(new InternalNode(Len, InsnSemanticsExpr::OP_BV_AND, a.get_expression(),
-                                                           b.get_expression()))
+                    return ValueType<Len>(InternalNode::create(Len, InsnSemanticsExpr::OP_BV_AND,
+                                                               a.get_expression(), b.get_expression()))
                         .defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
                 }
 
@@ -786,7 +770,7 @@ namespace BinaryAnalysis {              // documented elsewhere
                         ValueType<1> retval = a.known_value() ? false_() : true_();
                         return retval.defined_by(cur_insn, a.get_defining_instructions());
                     }
-                    return ValueType<1>(new InternalNode(1, InsnSemanticsExpr::OP_ZEROP, a.get_expression()))
+                    return ValueType<1>(InternalNode::create(1, InsnSemanticsExpr::OP_ZEROP, a.get_expression()))
                         .defined_by(cur_insn, a.get_defining_instructions());
                 }
 
@@ -796,7 +780,7 @@ namespace BinaryAnalysis {              // documented elsewhere
                     if (a.is_known())
                         return ValueType<Len>(LeafNode::create_integer(Len, ~a.known_value()))
                             .defined_by(cur_insn, a.get_defining_instructions());
-                    return ValueType<Len>(new InternalNode(Len, InsnSemanticsExpr::OP_INVERT, a.get_expression()))
+                    return ValueType<Len>(InternalNode::create(Len, InsnSemanticsExpr::OP_INVERT, a.get_expression()))
                         .defined_by(cur_insn, a.get_defining_instructions());
                 }
 
@@ -806,8 +790,8 @@ namespace BinaryAnalysis {              // documented elsewhere
                     if (a.is_known() && b.is_known())
                         return ValueType<Len1+Len2>(a.known_value() | (b.known_value() << Len1))
                             .defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
-                    return ValueType<Len1+Len2>(new InternalNode(Len1+Len2, InsnSemanticsExpr::OP_CONCAT,
-                                                                 b.get_expression(), a.get_expression()))
+                    return ValueType<Len1+Len2>(InternalNode::create(Len1+Len2, InsnSemanticsExpr::OP_CONCAT,
+                                                                     b.get_expression(), a.get_expression()))
                         .defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
                 }
 
@@ -820,27 +804,26 @@ namespace BinaryAnalysis {              // documented elsewhere
                     }
                     if (solver) {
                         /* If the selection expression cannot be true, then return ifFalse */
-                        TreeNode *assertion = new InternalNode(1, InsnSemanticsExpr::OP_EQ,
-                                                               sel.get_expression(), LeafNode::create_integer(1, 1));
+                        boost::shared_ptr<const TreeNode> assertion = InternalNode::create(1, InsnSemanticsExpr::OP_EQ,
+                                                                                           sel.get_expression(),
+                                                                                           LeafNode::create_integer(1, 1));
                         bool can_be_true = solver->satisfiable(assertion);
-                        assertion->deleteDeeply(); assertion=NULL;
                         if (!can_be_true) {
                             ValueType<Len> retval = ifFalse;
                             return retval.defined_by(cur_insn, sel.get_defining_instructions());
                         }
 
                         /* If the selection expression cannot be false, then return ifTrue */
-                        assertion = new InternalNode(1, InsnSemanticsExpr::OP_EQ,
-                                                     sel.get_expression(), LeafNode::create_integer(1, 0));
+                        assertion = InternalNode::create(1, InsnSemanticsExpr::OP_EQ,
+                                                         sel.get_expression(), LeafNode::create_integer(1, 0));
                         bool can_be_false = solver->satisfiable(assertion);
-                        assertion->deleteDeeply(); assertion=NULL;
                         if (!can_be_false) {
                             ValueType<Len> retval = ifTrue;
                             return retval.defined_by(cur_insn, sel.get_defining_instructions());
                         }
                     }
-                    return ValueType<Len>(new InternalNode(Len, InsnSemanticsExpr::OP_ITE, sel.get_expression(),
-                                                           ifTrue.get_expression(), ifFalse.get_expression()))
+                    return ValueType<Len>(InternalNode::create(Len, InsnSemanticsExpr::OP_ITE, sel.get_expression(),
+                                                               ifTrue.get_expression(), ifFalse.get_expression()))
                         .defined_by(cur_insn, sel.get_defining_instructions(),
                                     ifTrue.get_defining_instructions(), ifFalse.get_defining_instructions());
                 }
@@ -856,7 +839,7 @@ namespace BinaryAnalysis {              // documented elsewhere
                         }
                         return number<Len>(0).defined_by(cur_insn, a.get_defining_instructions());
                     }
-                    return ValueType<Len>(new InternalNode(Len, InsnSemanticsExpr::OP_LSSB, a.get_expression()))
+                    return ValueType<Len>(InternalNode::create(Len, InsnSemanticsExpr::OP_LSSB, a.get_expression()))
                         .defined_by(cur_insn, a.get_defining_instructions());
                 }
 
@@ -871,7 +854,7 @@ namespace BinaryAnalysis {              // documented elsewhere
                         }
                         return number<Len>(0);
                     }
-                    return ValueType<Len>(new InternalNode(Len, InsnSemanticsExpr::OP_MSSB, a.get_expression()))
+                    return ValueType<Len>(InternalNode::create(Len, InsnSemanticsExpr::OP_MSSB, a.get_expression()))
                         .defined_by(cur_insn, a.get_defining_instructions());
                 }
 
@@ -880,7 +863,7 @@ namespace BinaryAnalysis {              // documented elsewhere
                 ValueType<Len> negate(const ValueType<Len> &a) const {
                     if (a.is_known())
                         return ValueType<Len>(-a.known_value()).defined_by(cur_insn, a.get_defining_instructions());
-                    return ValueType<Len>(new InternalNode(Len, InsnSemanticsExpr::OP_NEGATE, a.get_expression()))
+                    return ValueType<Len>(InternalNode::create(Len, InsnSemanticsExpr::OP_NEGATE, a.get_expression()))
                         .defined_by(cur_insn, a.get_defining_instructions());
                 }
 
@@ -890,8 +873,8 @@ namespace BinaryAnalysis {              // documented elsewhere
                     if (a.is_known() && b.is_known())
                         return ValueType<Len>(a.known_value() | b.known_value())
                             .defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
-                    return ValueType<Len>(new InternalNode(Len, InsnSemanticsExpr::OP_BV_OR,
-                                                           a.get_expression(), b.get_expression()))
+                    return ValueType<Len>(InternalNode::create(Len, InsnSemanticsExpr::OP_BV_OR,
+                                                               a.get_expression(), b.get_expression()))
                         .defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
                 }
 
@@ -901,8 +884,8 @@ namespace BinaryAnalysis {              // documented elsewhere
                     if (a.is_known() && sa.is_known())
                         return ValueType<Len>(IntegerOps::rotateLeft<Len>(a.known_value(), sa.known_value()))
                             .defined_by(cur_insn, a.get_defining_instructions(), sa.get_defining_instructions());
-                    return ValueType<Len>(new InternalNode(Len, InsnSemanticsExpr::OP_ROL,
-                                                           sa.get_expression(), a.get_expression()))
+                    return ValueType<Len>(InternalNode::create(Len, InsnSemanticsExpr::OP_ROL,
+                                                               sa.get_expression(), a.get_expression()))
                         .defined_by(cur_insn, a.get_defining_instructions(), sa.get_defining_instructions());
                 }
 
@@ -912,8 +895,8 @@ namespace BinaryAnalysis {              // documented elsewhere
                     if (a.is_known() && sa.is_known())
                         return ValueType<Len>(IntegerOps::rotateRight<Len>(a.known_value(), sa.known_value()))
                             .defined_by(cur_insn, a.get_defining_instructions(), sa.get_defining_instructions());
-                    return ValueType<Len>(new InternalNode(Len, InsnSemanticsExpr::OP_ROR,
-                                                           sa.get_expression(), a.get_expression()))
+                    return ValueType<Len>(InternalNode::create(Len, InsnSemanticsExpr::OP_ROR,
+                                                               sa.get_expression(), a.get_expression()))
                         .defined_by(cur_insn, a.get_defining_instructions(), sa.get_defining_instructions());
                 }
 
@@ -923,8 +906,8 @@ namespace BinaryAnalysis {              // documented elsewhere
                     if (a.is_known() && sa.is_known())
                         return ValueType<Len>(IntegerOps::shiftLeft<Len>(a.known_value(), sa.known_value()))
                             .defined_by(cur_insn, a.get_defining_instructions(), sa.get_defining_instructions());
-                    return ValueType<Len>(new InternalNode(Len, InsnSemanticsExpr::OP_SHL0,
-                                                           sa.get_expression(), a.get_expression()))
+                    return ValueType<Len>(InternalNode::create(Len, InsnSemanticsExpr::OP_SHL0,
+                                                               sa.get_expression(), a.get_expression()))
                         .defined_by(cur_insn, a.get_defining_instructions(), sa.get_defining_instructions());
                 }
 
@@ -934,8 +917,8 @@ namespace BinaryAnalysis {              // documented elsewhere
                     if (a.is_known() && sa.is_known())
                         return ValueType<Len>(IntegerOps::shiftRightLogical<Len>(a.known_value(), sa.known_value()))
                             .defined_by(cur_insn, a.get_defining_instructions(), sa.get_defining_instructions());
-                    return ValueType<Len>(new InternalNode(Len, InsnSemanticsExpr::OP_SHR0,
-                                                           sa.get_expression(), a.get_expression()))
+                    return ValueType<Len>(InternalNode::create(Len, InsnSemanticsExpr::OP_SHR0,
+                                                               sa.get_expression(), a.get_expression()))
                         .defined_by(cur_insn, a.get_defining_instructions(), sa.get_defining_instructions());
                 }
 
@@ -945,8 +928,8 @@ namespace BinaryAnalysis {              // documented elsewhere
                     if (a.is_known() && sa.is_known())
                         return ValueType<Len>(IntegerOps::shiftRightArithmetic<Len>(a.known_value(), sa.known_value()))
                             .defined_by(cur_insn, a.get_defining_instructions(), sa.get_defining_instructions());
-                    return ValueType<Len>(new InternalNode(Len, InsnSemanticsExpr::OP_ASR,
-                                                           sa.get_expression(), a.get_expression()))
+                    return ValueType<Len>(InternalNode::create(Len, InsnSemanticsExpr::OP_ASR,
+                                                               sa.get_expression(), a.get_expression()))
                         .defined_by(cur_insn, a.get_defining_instructions(), sa.get_defining_instructions());
                 }
 
@@ -963,8 +946,8 @@ namespace BinaryAnalysis {              // documented elsewhere
                         return ValueType<Len1>(IntegerOps::signExtend<Len1, 64>(a.known_value()) /
                                                IntegerOps::signExtend<Len2, 64>(b.known_value()))
                             .defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
-                    return ValueType<Len1>(new InternalNode(Len1, InsnSemanticsExpr::OP_SDIV,
-                                                            a.get_expression(), b.get_expression()))
+                    return ValueType<Len1>(InternalNode::create(Len1, InsnSemanticsExpr::OP_SDIV,
+                                                                a.get_expression(), b.get_expression()))
                         .defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
                 }
 
@@ -975,8 +958,8 @@ namespace BinaryAnalysis {              // documented elsewhere
                         return ValueType<Len2>(IntegerOps::signExtend<Len1, 64>(a.known_value()) %
                                                IntegerOps::signExtend<Len2, 64>(b.known_value()))
                             .defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
-                    return ValueType<Len2>(new InternalNode(Len2, InsnSemanticsExpr::OP_SMOD,
-                                                            a.get_expression(), b.get_expression()))
+                    return ValueType<Len2>(InternalNode::create(Len2, InsnSemanticsExpr::OP_SMOD,
+                                                                a.get_expression(), b.get_expression()))
                         .defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
                 }
 
@@ -987,8 +970,8 @@ namespace BinaryAnalysis {              // documented elsewhere
                         return ValueType<Len1+Len2>(IntegerOps::signExtend<Len1, 64>(a.known_value()) *
                                                     IntegerOps::signExtend<Len2, 64>(b.known_value()))
                             .defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
-                    return ValueType<Len1+Len2>(new InternalNode(Len1+Len2, InsnSemanticsExpr::OP_SMUL,
-                                                                 a.get_expression(), b.get_expression()))
+                    return ValueType<Len1+Len2>(InternalNode::create(Len1+Len2, InsnSemanticsExpr::OP_SMUL,
+                                                                     a.get_expression(), b.get_expression()))
                         .defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
                 }
 
@@ -998,8 +981,8 @@ namespace BinaryAnalysis {              // documented elsewhere
                     if (a.is_known() && b.is_known() && 0!=b.known_value())
                         return ValueType<Len1>(a.known_value() / b.known_value())
                             .defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
-                    return ValueType<Len1>(new InternalNode(Len1, InsnSemanticsExpr::OP_UDIV,
-                                                            a.get_expression(), b.get_expression()))
+                    return ValueType<Len1>(InternalNode::create(Len1, InsnSemanticsExpr::OP_UDIV,
+                                                                a.get_expression(), b.get_expression()))
                         .defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
                 }
 
@@ -1009,8 +992,8 @@ namespace BinaryAnalysis {              // documented elsewhere
                     if (a.is_known() && b.is_known() && 0!=b.known_value())
                         return ValueType<Len2>(a.known_value() % b.known_value())
                             .defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
-                    return ValueType<Len2>(new InternalNode(Len2, InsnSemanticsExpr::OP_UMOD,
-                                                            a.get_expression(), b.get_expression()))
+                    return ValueType<Len2>(InternalNode::create(Len2, InsnSemanticsExpr::OP_UMOD,
+                                                                a.get_expression(), b.get_expression()))
                         .defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
                 }
 
@@ -1020,8 +1003,8 @@ namespace BinaryAnalysis {              // documented elsewhere
                     if (a.is_known() && b.is_known())
                         return ValueType<Len1+Len2>(a.known_value()*b.known_value())
                             .defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
-                    return ValueType<Len1+Len2>(new InternalNode(Len1+Len2, InsnSemanticsExpr::OP_UMUL,
-                                                                 a.get_expression(), b.get_expression()))
+                    return ValueType<Len1+Len2>(InternalNode::create(Len1+Len2, InsnSemanticsExpr::OP_UMUL,
+                                                                     a.get_expression(), b.get_expression()))
                         .defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
                 }
 
@@ -1033,8 +1016,8 @@ namespace BinaryAnalysis {              // documented elsewhere
                             .defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
                     if (a.get_expression()->equal_to(b.get_expression(), solver))
                         return number<Len>(0).defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
-                    return ValueType<Len>(new InternalNode(Len, InsnSemanticsExpr::OP_BV_XOR,
-                                                           a.get_expression(), b.get_expression()))
+                    return ValueType<Len>(InternalNode::create(Len, InsnSemanticsExpr::OP_BV_XOR,
+                                                               a.get_expression(), b.get_expression()))
                         .defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
                 }
 
