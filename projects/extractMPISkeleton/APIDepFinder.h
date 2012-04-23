@@ -18,8 +18,13 @@
 class APIDepFinder : public AstBottomUpProcessing<bool> {
   public:
 
-    APIDepFinder(StaticSingleAssignment *ssaParam, APISpecs *specs) {
+    APIDepFinder(StaticSingleAssignment *ssaParam,
+                 std::map<SgSymbol *, SgFunctionDefinition *> defs,
+                 ClassHierarchyWrapper *ch,
+                 APISpecs *specs) {
         ssa = ssaParam;
+        defTable = defs;
+        chw = ch;
         apiSpecs = specs;
         cType = new GenericDepAttribute(&callTable, 0);
         cType->setDepForm(APIDepAttribute::CONTROL);
@@ -38,10 +43,8 @@ class APIDepFinder : public AstBottomUpProcessing<bool> {
     virtual bool evaluateSynthesizedAttribute(SgNode *n,
         SynthesizedAttributesList childAttrs);
 
-    /** Add nodes to the keep set not included in the initial
-     * traversal. This includes calls to functions that make API
-     * calls, and parent nodes of nodes already in the keep set. */
-    void finalize(SgNode *n);
+    std::map< SgSymbol *, std::vector<APIDepAttribute *> * > getArgTable() { return argTable; }
+    void setArgTable(std::map< SgSymbol *, std::vector<APIDepAttribute *> * > at) { argTable = at; }
 
   private:
 
@@ -49,14 +52,12 @@ class APIDepFinder : public AstBottomUpProcessing<bool> {
     APISpecs *apiSpecs;
     name_table callTable;
     APIDepAttribute *cType;
-
-    // Used internally for bookkeeping.
-    std::set<SgName> users;
+    ClassHierarchyWrapper *chw;
+    std::map< SgSymbol *, SgFunctionDefinition * > defTable;
+    std::map< SgSymbol *, std::vector<APIDepAttribute *> * > argTable;
 
     /** Mark a statement with an API dependency attribute. */
     void mark(SgNode *n, const APIDepAttribute *attr);
-    /** Is the given node already marked with an API dependency
-     * attribute? */
 
     /** Add all ancestors of the given node to the set of nodes to
      * keep, along with necessary children of those ancestors.
@@ -72,6 +73,8 @@ class APIDepFinder : public AstBottomUpProcessing<bool> {
     void markNeededChildren(SgNode *n, const APIDepAttribute *attr);
 
     void recordDefStmts(int indent, const APIDepAttribute *t, SgNode *n);
+    bool handleOtherCall(SgFunctionCallExp *fc);
+    void followCall(SgSymbol *sym);
     void recordFuncDefStmts(int indent, const APIDepAttribute *t,
                             SgFunctionCallExp *fc);
 };

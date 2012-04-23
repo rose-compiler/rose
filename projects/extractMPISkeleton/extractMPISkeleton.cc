@@ -1,9 +1,14 @@
+#include <boost/foreach.hpp>
+#define foreach BOOST_FOREACH
+
 #include "APIReader.h"
 #include "APIDepFinder.h"
 #include "DangerousOperationFinder.h"
 #include "GenericDepAttrib.h"
 #include "Outline.h"
 #include "processPragmas.h"
+#include "annotatePragmas.h"
+#include "Utils.h"
 
 #include <Outliner.hh>
 #include <staticSingleAssignment.h>
@@ -86,7 +91,8 @@ int main(int argc, char **argv) {
                                                       "(s|spec)",
                                                       spec_fname,
                                                       true) ) {
-        std::cout << "Using API specification: " << spec_fname << std::endl;
+        if(debug)
+            std::cout << "Using API specification: " << spec_fname << std::endl;
         apiSpecs = readAPISpecCollection(spec_fname);
     } else {
         std::cout << "Warning: no API specification given." << std::endl;
@@ -94,17 +100,38 @@ int main(int argc, char **argv) {
 
     SgProject* project = frontend(l);
 
-    // Run the Backstroke Def-Use analysis
-    if(debug) std::cout << "Running backstroke def-use analysis" << std::endl;
+    // Run the SSA analysis
+    if(debug) std::cout << "Running SSA analysis" << std::endl;
     StaticSingleAssignment ssa(project);
     ssa.run(true, true);
+
+    ClassHierarchyWrapper chw(project);
+
+    // Store all known function definitions, indexed by mangled name,
+    // because declarations don't reliably link to them.
+    NodeQuerySynthesizedAttributeType defs =
+        NodeQuery::querySubTree(project, V_SgFunctionDefinition);
+    std::map <SgSymbol *, SgFunctionDefinition *> defTable;
+    foreach(SgNode *n, defs) {
+        SgFunctionDefinition *def = isSgFunctionDefinition(n);
+        SgFunctionDeclaration *decl = def->get_declaration();
+        SgSymbol *sym = decl->search_for_symbol_from_symbol_table();
+        if(defTable[sym] == NULL) {
+            defTable[sym] = def;
+            if(debug)
+                std::cout << "Added definition for "
+                          << sym->get_name().getString() << std::endl;
+        } else if(debug) {
+            std::cout << "Duplicate definition for "
+                      << sym->get_name().getString() << std::endl;
+        }
+    }
 
     // Find the dependencies of API calls:
     if(debug) std::cout << "Running dependency finder" << std::endl;
 
-    APIDepFinder *df = new APIDepFinder(&ssa, &apiSpecs);
+    APIDepFinder *df = new APIDepFinder(&ssa, defTable, &chw, &apiSpecs);
     df->traverse(project);
-    df->finalize(project);
 
     // Print warnings for dangerous operators:
     // (dangerous = operator may crash program [/0, segfault] on some inputs)
@@ -115,13 +142,18 @@ int main(int argc, char **argv) {
         new DangerousOperationFinder(&ssa, checker);
     dof->traverse(project);
 
+    // Annotate Pragmas: add attributes to AST so that skeletonizing plays
+    // well with pragmas; must be done before skeletonization.
+    if(debug) std::cout << "PreProcessing Pragmas" << std::endl;
+    annotatePragmas(project);
+
     // Create skeletons from the code (& generates report):
     if(debug) std::cout << "Create Skeleton" << std::endl;
     skeletonizeCode(&apiSpecs, project, outline, genPDF);
 
     // Process Pragmas
     if(debug) std::cout << "Processing Pragmas" << std::endl;
-    processPragmas(project);
+    processPragmas(project, outline);
 
     // Generating modified code:
     if(debug) std::cout << "Generating modified code" << std::endl;

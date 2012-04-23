@@ -3,7 +3,7 @@
 
 #include "rose.h"
 
-void processPragmas (SgProject *project);
+void processPragmas (SgProject *project, bool outline);
 
 #endif
 

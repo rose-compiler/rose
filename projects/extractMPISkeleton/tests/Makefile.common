@@ -1,0 +1,74 @@
+asrcdir=$(realpath $(srcdir))
+DIRS = \
+	bcast \
+	collect \
+	diffusion2 \
+	exchange \
+	gausselim_par \
+	hellow \
+	jacobi \
+	jacobi2 \
+	jacobicmpl \
+	master-slave \
+	mpi-ex1 \
+	ring \
+	sample1 \
+	sample2 \
+	sample3 \
+	sample4 \
+	sample5 \
+	sample7 \
+	sample8 \
+	sample9 \
+	sampleA \
+	scatterv \
+	t1 \
+	t2 \
+	t3 \
+	t4 \
+	t5 \
+	t6 \
+	t7 \
+	t8 \
+	t9 \
+	t10 \
+	t11 \
+	t12 \
+	t13 \
+	t14 \
+	t16 \
+	t17
+
+# expect to fail:
+#    t15 \
+# TODO: We need to add more like this.
+
+MARKS=$(addsuffix /testmark, ${DIRS})
+LISTS=$(shell find . -name files)
+ALL_OUTS=$(foreach list, ${LISTS}, $(addprefix $(dir ${list}), $(addprefix rose_, $(shell cat ${list}))))
+ALL_OBJS=$(addsuffix .o, $(basename ${ALL_OUTS}))
+ALL_EXPECTED=$(shell find . -name "*.expected")
+ALL_TI=$(shell find . -name "*.ti")
+
+SKFLAGS=-I$(asrcdir)/../mpi-fakeheader -skel:spec $(asrcdir)/../apis.coll
+
+%/testmark: %/files
+	(cd $* && ${EXEC} ${SKFLAGS} `cat files` && touch $(@F))
+
+%/testmark-outline: %/files
+	(cd $* && ${EXEC} ${SKFLAGS} -skel:o `cat files` && touch $(@F))
+
+%.o: %.c
+	${CC} -I$(asrcdir)/../mpi-fakeheader -c -o $@ $<
+
+%.o: %.cc
+	${CXX} -I$(asrcdir)/../mpi-fakeheader -c -o $@ $<
+
+%.comp: % %.expected
+	- diff -w $?
+
+clean:
+	rm -f ${ALL_OUTS} ${ALL_OBJS} ${MARKS} ${ALL_TI}
+
+show:
+	@echo $($(VALUE))              # note: this expands!

@@ -1,0 +1,11 @@
+srcdir=.
+EXEC=../../extractMPISkeleton
+
+all: test
+
+include Makefile.common
+
+test:
+	${MAKE} -f Makefile.manual ${MARKS}
+	${MAKE} -f Makefile.manual ${ALL_OBJS}
+	${MAKE} -f Makefile.manual ${ALL_EXPECTED:.expected=.comp}

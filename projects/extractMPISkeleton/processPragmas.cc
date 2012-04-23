@@ -10,7 +10,7 @@ using namespace SageInterface;
 
 typedef enum {i_max, i_min, i_const} IterationType;
 
-static bool debug = 0;
+static bool debug = false;
 
 // Utilities ///////////////////////////////////////////////////////////////////
 
@@ -50,11 +50,18 @@ SgExpression *modifyTestExpr (SgStatement *stmt,
     case i_min   : return buildOrOp (origtest,testk);       break;
     case i_max   : return buildAndOp (origtest,testk);      break;
     case i_const : return buildCommaOpExp (origtest,testk); break;
-    default      : return NULL;                             break;
+    default      : assert(0);                               break;
   }
 }
 
-void loopIterate (SgStatement *statement, SgExpression *count, IterationType it) {
+
+
+void loopIterate (SgPragmaDeclaration *p, const char *s,
+                  SgStatement *statement, SgExpression *count, IterationType it)
+{
+  if (!statement)
+    exitWithMsg(p, s, "pragma must be followed by a statement");
+
   SgForStatement  *stmt_for   = isSgForStatement(statement);
   SgDoWhileStmt   *stmt_do    = isSgDoWhileStmt(statement);
   SgWhileStmt     *stmt_while = isSgWhileStmt(statement);
@@ -108,11 +115,12 @@ void loopIterate (SgStatement *statement, SgExpression *count, IterationType it)
       buildWhileStmt( modifyTestExpr(statement, cond, count, it, kref),
                       buildBasicBlock(body, buildExprStatement(incrementk)));
   }
-  else
+  else {
+    stmtNew = NULL;  // to remove warning.
     exitWithMsg (statement,
                  "loop",
                  "must be followed by for(;;){},  do{}while(),  or while(){}");
-
+  }
   // Common code for for/do-while/while:
 
   replaceStatement(statement,
@@ -130,15 +138,29 @@ void loopIterate (SgStatement *statement, SgExpression *count, IterationType it)
 // condition pragma ////////////////////////////////////////////////////////////
 
 void addStdlibH (const SgNode *n) {
-  insertHeader ( "stdlib.h",
+  // For each global scope, only insert header one time.
+  // FIXME: may add an extraneous "include <stdlib.h>" if one exists.
+
+  static SgScopeStatement *gs = NULL;
+
+  SgScopeStatement *current_gs = getGlobalScope(n);
+
+  if (current_gs != gs) {
+    gs = current_gs;
+    insertHeader ( "stdlib.h",
                    // to include RAND_MAX and rand() declaration.
-                 PreprocessingInfo::after,
-                 true,
-                 getGlobalScope(n));
+                   PreprocessingInfo::after,
+                   true,
+                   current_gs);
+  }
 }
 
-void conditionProbability (SgStatement *statement, SgExpression *x) {
+void conditionProbability (SgPragmaDeclaration *p, const char *s,
+                           SgStatement *statement, SgExpression *x) {
   // ISSUES: Q. if stdlib.h not included?
+
+  if (!statement)
+    exitWithMsg(p, s, "pragma must be followed by a statement");
 
   SgIfStmt *stmt = isSgIfStmt(statement);
   if (!stmt)
@@ -185,7 +207,10 @@ void conditionProbability (SgStatement *statement, SgExpression *x) {
 
 // initializer pragma //////////////////////////////////////////////////////////
 
-void arrayInitializer (SgStatement *statement, SgExpression *x) {
+void arrayInitializer (SgPragmaDeclaration *p, const char *s,
+                       SgStatement *statement, SgExpression *x) {
+  if (!statement)
+    exitWithMsg(p, s, "pragma must be followed by a statement");
 
   SgVariableDeclaration *stmt = isSgVariableDeclaration(statement);
   if (!stmt)
@@ -277,12 +302,12 @@ int match (const char *input, const char *prefix) {
 }
 
 bool supportedFileType (SgFile *f) {
-
   const string s = f->getFileName();
   bool cfile = s.find(".c", s.length() - 2) != string::npos;
   return (cfile || f->get_sourceFileUsesCppFileExtension());
 
   // FIXME: Ad hoc!  What's the recommended way to test for C?
+  //   - appears to be recursing over the whole structure!
 }
 
 // parseExpr - parse an expression surrounded by parentheses.
@@ -315,64 +340,99 @@ SgExpression *parseExpr (SgStatement *context, const char *s) {
   return e;
 }
 
+void processRemovePragma (SgStatement *s, bool outline) {
+  if (debug) printf ("processRemovePragma\n");
+
+  if (outline) {
+    const string comment("pragma applied:\n * #pragma skel remove\n");
+
+    (void) buildComment(s,
+                        comment,
+                        PreprocessingInfo::before,
+                        PreprocessingInfo::C_StyleComment);
+    removeStatement(s);
+
+  } else {
+    const string comment("-code removed here-");
+
+    SgNullStatement *ns = buildNullStatement();
+    (void) buildComment(ns, comment,
+                        PreprocessingInfo::after,
+                        PreprocessingInfo::C_StyleComment);
+
+    if (debug) printf ("processRemovePragma-1 %p %p\n", s, ns);
+    insertStatementAfter (s, ns);
+    if (debug) printf ("processRemovePragma-2\n");
+  }
+}
+
+
 // pragma parse & process //////////////////////////////////////////////////////
 
-void process1pragma(SgPragmaDeclaration *p) {
+void process1pragma(SgPragmaDeclaration *p, bool outline) {
+  static const char parseErrorMsg[] = "error in parsing expression";
+
   string pragmaText = p->get_pragma()->get_pragma();
   SgStatement *stmt = SageInterface::getNextStatement((SgStatement*) p);
 
   const char *s = pragmaText.c_str();
-
   if (debug) printf("visit: %s\n", s);
 
-  int i = 0;
-  sscanf (s, "skel %n", &i);
-  if (i > 0) { // i.e., sscanf made progress.
-    static const char parseErrorMsg[] = "error in parsing expression";
-
+  // Move past 'skel' in pragma:
+  {
+    int i = 0;
+    sscanf (s, "skel %n", &i);
+    if (i == 0)
+      return;  // i.e., sscanf made no progress, ignore pragma.
     s += i;    // point past "skel"
-    if (debug)
-      cout << "#pragma skel:\n"
-           << "  parameter:\n"
-           << "   " << s << endl
-           << "  target:\n"
-           << "    " << stmt->unparseToString()
-           << endl;
+  }
 
-    int j;     // store result of match.
-    if ((j = match(s,"loop iterate atmost")) != 0) {
-      SgExpression *e = parseExpr (p, s+j);
-      if (!e)
-        exitWithMsg(stmt, s, parseErrorMsg);
-      else
-        loopIterate (stmt, e, i_max);
-    } else if ((j = match(s,"loop iterate atleast")) != 0) {
-      SgExpression *e = parseExpr (p, s+j);
-      if (!e)
-        exitWithMsg(stmt, s, parseErrorMsg);
-      else
-        loopIterate (stmt, e, i_min);
-    } else if ((j = match(s,"loop iterate exactly")) != 0) {
-      SgExpression *e = parseExpr (p, s+j);
-      if (!e)
-        exitWithMsg(stmt, s, parseErrorMsg);
-      else
-        loopIterate (stmt, e, i_const);
-    } else if ((j = match(s,"condition prob")) != 0) {
-      SgExpression *e = parseExpr (p, s+j);
-      if (!e)
-        exitWithMsg(stmt, s, parseErrorMsg);
-      else
-        conditionProbability (stmt, e);
-    } else if ((j = match(s,"initializer repeat")) != 0) {
-      SgExpression *e = parseExpr (p, s+j);
-      if (!e)
-        exitWithMsg(stmt, s, parseErrorMsg);
-      else
-        arrayInitializer (stmt, e);
-    } else {
-        exitWithMsg (stmt, s, "unrecognized arguments");
-    }
+  if (debug)
+    cout << "#pragma skel:\n"
+         << "  parameter:\n"
+         << "   " << s << endl
+         << "  target:\n"
+         << "    " << stmt->unparseToString()
+         << endl;
+
+  int j;     // store result of match.
+  if ((j = match(s,"loop iterate atmost")) != 0) {
+    SgExpression *e = parseExpr (p, s+j);
+    if (!e)
+      exitWithMsg(stmt, s, parseErrorMsg);
+    else
+      loopIterate (p,s, stmt, e, i_max);
+  } else if ((j = match(s,"loop iterate atleast")) != 0) {
+    SgExpression *e = parseExpr (p, s+j);
+    if (!e)
+      exitWithMsg(stmt, s, parseErrorMsg);
+    else
+      loopIterate (p, s, stmt, e, i_min);
+  } else if ((j = match(s,"loop iterate exactly")) != 0) {
+    SgExpression *e = parseExpr (p, s+j);
+    if (!e)
+      exitWithMsg(stmt, s, parseErrorMsg);
+    else
+      loopIterate (p, s, stmt, e, i_const);
+  } else if ((j = match(s,"condition prob")) != 0) {
+    SgExpression *e = parseExpr (p, s+j);
+    if (!e)
+      exitWithMsg(stmt, s, parseErrorMsg);
+    else
+      conditionProbability (p, s, stmt, e);
+  } else if ((j = match(s,"preserve")) != 0) {
+    /* do nothing here */;
+  } else if ((j = match(s,"remove")) != 0) {
+    /* the following statement has been removed in previous transformation */
+    processRemovePragma(p, outline);
+  } else if ((j = match(s,"initializer repeat")) != 0) {
+    SgExpression *e = parseExpr (p, s+j);
+    if (!e)
+      exitWithMsg(stmt, s, parseErrorMsg);
+    else
+      arrayInitializer (p, s, stmt, e);
+  } else {
+      exitWithMsg (stmt, s, "unrecognized arguments");
   }
 }
 
@@ -406,7 +466,7 @@ private:
 
 // Main entry point ////////////////////////////////////////////////////////////
 
-void processPragmas (SgProject *project) {
+void processPragmas (SgProject *project, bool outline) {
 
   // Check that file types are supported:
   for (int i=0; i < project->numberOfFiles(); i++)
@@ -423,5 +483,5 @@ void processPragmas (SgProject *project) {
   for (CollectPragmaTargets::TgtList_t::iterator i = ts.begin ();
        i != ts.end ();
        ++i)
-    process1pragma(*i);
+    process1pragma(*i, outline);
 }

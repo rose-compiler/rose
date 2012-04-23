@@ -1,4 +1,6 @@
 #include <numeric>
+#include <boost/foreach.hpp>
+#define foreach BOOST_FOREACH
 
 #include "Utils.h"
 #include "APIDepFinder.h"
@@ -17,7 +19,7 @@ static APIDepAttribute *copyDep(const APIDepAttribute *attr,
     APIDepAttribute *tCopy = (APIDepAttribute *) attr;
     if(tCopy->getDepForm() != depForm) {
         // NB: throwing away 'const' info to work w/ copy.
-        tData = (APIDepAttribute*)tCopy->copy();
+        tData = (APIDepAttribute *)tCopy->copy();
         tData->joinForm(depForm);
     } else {
         tData = tCopy;
@@ -42,7 +44,7 @@ static APIDepAttribute *ctrlDep(const APIDepAttribute *attr) {
  * along with the parents of @n@, to approximate control
  * dependencies. */
 void APIDepFinder::mark(SgNode *n, const APIDepAttribute *attr) {
-    APIDepAttribute *oldAttr = (APIDepAttribute*)n->getAttribute("APIDep");
+    APIDepAttribute *oldAttr = (APIDepAttribute *)n->getAttribute("APIDep");
     APIDepAttribute *newAttr;
     if(oldAttr) {
         if(oldAttr->matches(attr)) return;
@@ -109,7 +111,6 @@ void APIDepFinder::markParents(SgNode *n, const APIDepAttribute *attr) {
     if(stmt && !marked(stmt, attr)) {
         if (debug)
             std::cout << "Adding "
-                //<< stmt->get_file_info()->get_line()
                       << stmt->unparseToString()
                       << std::endl;
         mark(stmt, attr);
@@ -136,23 +137,91 @@ APISpec *APIDepFinder::isAPICall(SgNode *n) {
  * calculating a synthesized attribute that indicates whether the
  * current node contains any API calls. Along the way, mark all data
  * and control dependencies of each API call encountered. */
+/* TODO: replace this with something that just looks for
+ * calls and propagates attributes from them? */
 bool APIDepFinder::evaluateSynthesizedAttribute(SgNode *n,
     SynthesizedAttributesList childAttrs)
 {
     bool localResult =
         std::accumulate(childAttrs.begin(), childAttrs.end(),
                         false, std::logical_or<bool>());
-    APISpec *spec = isAPICall(n);
-    if(spec) {
-        recordFuncDefStmts(0, spec->callType(), isSgFunctionCallExp(n));
-        localResult = true;
-    }
-    SgFunctionDeclaration *fd = isSgFunctionDeclaration(n);
-    if(fd && localResult) {
-        if (debug) std::cout << "User: " << fd->get_name().str() << std::endl;
-        users.insert(fd->get_name());
+    SgFunctionCallExp *fc = isSgFunctionCallExp(n);
+    /* If this is a function call and we haven't already processed it,
+     * then go ahead and process it. */
+    if(fc && argTable.find(getEnclosingSym(fc)) == argTable.end()) {
+        APISpec *spec = isAPICall(n);
+        if(spec) {
+            recordFuncDefStmts(0, spec->callType(), isSgFunctionCallExp(n));
+            localResult = true;
+        } else {
+            localResult = handleOtherCall(fc);
+        }
     }
     return localResult;
+}
+
+bool APIDepFinder::handleOtherCall(SgFunctionCallExp *fc) {
+    Rose_STL_Container<SgFunctionDeclaration *> decls;
+    CallTargetSet::getPropertiesForExpression(isSgExpression(fc), chw, decls);
+    bool hasAPICalls = false;
+    foreach(SgFunctionDeclaration *decl, decls) {
+        SgSymbol *sym = decl->search_for_symbol_from_symbol_table();
+        if(debug)
+            std::cout << "Found declaration for call to "
+                      << sym->get_name().getString() << std::endl;
+        std::vector<APIDepAttribute *> *argAttrs = NULL;
+        SgExprListExp *args = fc->get_args();
+        SgExpressionPtrList exps = args->get_expressions();
+        if(defTable.find(sym) == defTable.end()) {
+            if(debug)
+                std::cout << "No def for "
+                          << sym->get_name().getString()
+                          << std::endl;
+            continue;
+        } else if(argTable.find(sym) == argTable.end()) {
+            followCall(sym);
+        }
+        argAttrs = argTable[sym];
+        /* TODO: better sharing with recordFuncDefStmts */
+        /* TODO: check that argAttrs and exps are the same size? */
+        for (size_t j = 0; j < argAttrs->size(); j++) {
+            APIDepAttribute *at = (*argAttrs)[j];
+            if(at) {
+                if(debug)
+                    std::cout << "Marking argument "
+                              << exps[j]->unparseToString()
+                              << std::endl;
+                mark(exps[j], at);
+                APIDepAttribute *tData = dataDep(at);
+                recordDefStmts(2, tData, exps[j]);
+                APIDepAttribute *tCtrl = ctrlDep(at);
+                mark(fc, tCtrl);
+                hasAPICalls = true;
+            }
+        }
+    }
+    return hasAPICalls;
+}
+
+void APIDepFinder::followCall(SgSymbol *sym) {
+    SgFunctionDefinition *def = defTable[sym];
+    SgFunctionDeclaration *decl = def->get_declaration();
+    std::vector<APIDepAttribute *> *attrs = new std::vector<APIDepAttribute *>;
+    APIDepFinder *subFinder = new APIDepFinder(ssa, defTable, chw, apiSpecs);
+    subFinder->setArgTable(argTable);
+    if(debug)
+        std::cout << "Following call to "
+                  << sym->get_name().getString()
+                  << std::endl;
+    subFinder->traverse(def);
+    foreach(SgInitializedName *n, decl->get_args()) {
+        APIDepAttribute *t = (APIDepAttribute *)n->getAttribute("APIDep");
+        attrs->push_back(t);
+    }
+    std::map<SgSymbol *, std::vector<APIDepAttribute *> *> args = subFinder->getArgTable();
+    argTable.insert(args.begin(), args.end());
+    argTable[sym] = attrs;
+    delete subFinder;
 }
 
 /** Record data and control dependencies for a function call. */
@@ -187,7 +256,7 @@ void APIDepFinder::recordFuncDefStmts( int indent
                               << exps[j]->unparseToString()
                               << std::endl;
                 }
-                APIDepAttribute *at = (APIDepAttribute*)(*treatments)[j];
+                APIDepAttribute *at = (APIDepAttribute *)(*treatments)[j];
                 mark(exps[j], at);
                 APIDepAttribute *tData = dataDep(at);
                 recordDefStmts(indent + 2, tData, exps[j]);
@@ -213,8 +282,8 @@ void APIDepFinder::recordDefStmts( int indent
         return;
     }
 
-    std::set<SgNode*> defs = getNodeVarDefsSSA(ssa, n);
-    std::set<SgNode*>::iterator di = defs.begin();
+    std::set<SgNode *> defs = getNodeVarDefsSSA(ssa, n);
+    std::set<SgNode *>::iterator di = defs.begin();
     if (debug) {
         for (int c = 0; c < indent; c++) std::cout << " ";
         std::cout << "Recording defining statements for "
@@ -236,41 +305,6 @@ void APIDepFinder::recordDefStmts( int indent
                 APIDepAttribute *tData = dataDep(t);
                 recordDefStmts(indent + 2, tData, *di);
             }
-        }
-    }
-}
-
-/* Finalize the analysis by searching for calls to functions marked as
- * making API calls themselves, and marking them as control
- * dependencies of the API calls. */
-void APIDepFinder::finalize(SgNode *n) {
-    NodeQuerySynthesizedAttributeType calls =
-        NodeQuery::querySubTree(n, V_SgFunctionCallExp);
-    std::vector<SgNode*>::iterator ci = calls.begin();
-    /* FIXME: this only handles one level of indirection. If f calls
-     * g, g calls h, and h makes an API call, then the call from f to
-     * g will not be marked (though the call from g to h will be). */
-    for(; ci != calls.end(); ci++) {
-        SgFunctionCallExp *fc = isSgFunctionCallExp(*ci);
-        SgFunctionRefExp *f =
-            fc ? isSgFunctionRefExp(fc->get_function()) : NULL;
-
-        /* skip if f is null, since we are looking just for
-         * SgFunctionRefExp instances.  This prohibits us from
-         * working with APIs that are based on member functions of
-         * classes (e.g., class.foo()) for the time being, and
-         * restricts us to C-like APIs.
-         */
-        if (f == NULL) {
-          continue;
-        }
-
-        std::string n = f->get_symbol_i()->get_name();
-        if(f && users.find(n) != users.end()) {
-            if (debug) std::cout << "Adding call to "
-                                 << f->get_symbol_i()->get_name().str()
-                                 << std::endl;
-            recordFuncDefStmts(0, cType, fc);
         }
     }
 }

@@ -40,3 +40,13 @@ void getNodeVarDefsTransSSA(StaticSingleAssignment *ssa,
         }
     }
 }
+
+SgSymbol *getEnclosingSym(SgNode *n) {
+    SgFunctionDefinition *def;
+    if(n == NULL) return NULL;
+    def = isSgFunctionDefinition(n);
+    if(def)
+        return def->get_declaration()->
+            search_for_symbol_from_symbol_table();
+    return getEnclosingSym(n->get_parent());
+}

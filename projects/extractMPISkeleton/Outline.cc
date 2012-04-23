@@ -1,13 +1,20 @@
+#include <string>
+#include <iostream>
+
 #include <rose.h>
 #include <Outliner.hh>
 
 #include "Outline.h"
 #include "GenericDepAttrib.h"
 #include "Utils.h"
+#include "annotatePragmas.h"
 
-
+using namespace std;
 using namespace Outliner;
 using namespace SageBuilder;
+using namespace SageInterface;
+
+static const string filletAttrib = "FILLET";
 
 /******************************************************************************
  A FILLET attribute and unitary class.
@@ -16,7 +23,7 @@ using namespace SageBuilder;
    Fillet = the 'flesh' of the program; the program without the skeleton.
 
  Attributes used here:
-   "FILLET" -- unit attribute: non-skeleton code.
+   filletAttrib -- unit attribute: non-skeleton code.
      Invariants of this attribute:
        if set on node, none of its children/ancestors have it set!
 */
@@ -34,16 +41,19 @@ class FilletAttribute : public AstAttribute {
 FilletAttribute fillet = FilletAttribute();
 
 bool isFillet(SgNode *s) {
-  return s->getAttribute("FILLET") == (AstAttribute*) &fillet;
+  return s->getAttribute(filletAttrib) == (AstAttribute*) &fillet;
 }
 
 /******************************************************************************
  shouldOmit - determine if attributes consider this statement skeleton or not
  */
-bool shouldOmit(APISpec *spec, SgStatement *s) {
+bool shouldOmitGivenAPI(APISpec *spec, SgStatement *s) {
     AstAttribute *attr = s->getAttribute("APIDep");
     return attr ? spec->shouldOmit((GenericDepAttribute*)attr) : true;
 }
+
+// FIXME: ADHOC: For debugging!
+string ppPresRemUnd (PresRemUnd x);
 
 /******************************************************************************
   SPECIFICATION:
@@ -52,7 +62,7 @@ bool shouldOmit(APISpec *spec, SgStatement *s) {
       let toremove = ...
       foreach s in toremove:
         if s->get_parent `notElem` toremove && ... then
-          s->setAttribute("FILLET",fillet)
+          s->setAttribute(filletAttrib,fillet)
 */
 void ifNotSkeletonAddFilletAttrib (APISpecs *specs, SgProject *proj) {
   std::set< SgStatement* > toremove;
@@ -61,17 +71,37 @@ void ifNotSkeletonAddFilletAttrib (APISpecs *specs, SgProject *proj) {
   NodeQuerySynthesizedAttributeType stmts =
       NodeQuery::querySubTree(proj, V_SgStatement);
 
-  for(size_t i = 0; i < stmts.size(); i++) {
+  bool debug = false;
+
+  for (size_t i = 0; i < stmts.size(); i++) {
       SgStatement *s = isSgStatement(stmts[i]);
-      bool omit = false;
+      if (debug) cout << "O: stmt: " << s->unparseToString() << endl;
+      if (debug) printf ("%p\n", s);
+      if (debug) cout << "O: attr: " << ppPresRemUnd (getPresRemUnd(s)) << endl;
+
+      bool stdOmit = false;
       APISpecs::iterator it;
       for(it = specs->begin(); it != specs->end(); it++) {
-          if(shouldOmit(*it, s)) {
-              omit = true;
+          if(shouldOmitGivenAPI(*it, s)) {
+              stdOmit = true;
           }
       }
-      if(omit)
+
+      // pragmas override 'stdOmit' status:
+      bool omit;
+      switch (getPresRemUnd(s))
+        {
+        case pragma_undef   : omit = stdOmit; break;
+        case pragma_preserve: omit = false;   break;
+        case pragma_remove  : omit = true;    break;
+        default             : assert(0);
+        }
+
+      if (omit)
         toremove.insert(s);
+
+      if (debug) printf ("O: omit = %i\n", omit);
+      if (debug) printf ("O: stdOmit = %i\n", stdOmit);
   }
 
   std::set< SgStatement* >::iterator si = toremove.begin();
@@ -85,7 +115,7 @@ void ifNotSkeletonAddFilletAttrib (APISpecs *specs, SgProject *proj) {
             || isSgReturnStmt(s)
             || isSgClassDefinition(s)
             || isSgFunctionDefinition(s)))
-        s->setAttribute("FILLET",&fillet);
+        s->setAttribute(filletAttrib,&fillet);
   }
 }
 
@@ -128,14 +158,14 @@ void blockifySpansOfFillets (SgBasicBlock *block) {
       SgBasicBlock *newblock = new SgBasicBlock(srcLoc);
       SgStatementPtrList &newss = newblock->get_statements();
       newblock->set_parent(block);
-      newblock->setAttribute("FILLET",&fillet);
+      newblock->setAttribute(filletAttrib,&fillet);
 
       // Add the statements to it, updated accordingly:
       newss.assign (i,j);
       for (SgStatementPtrList::iterator k = newss.begin(); k < newss.end(); k++)
       {
         (*k)->set_parent(newblock);
-        (*k)->removeAttribute("FILLET");
+        (*k)->removeAttribute(filletAttrib);
       }
 
       // Replace/Remove from 'block'/'ss':
@@ -152,7 +182,7 @@ void blockifySpansOfFillets (SgBasicBlock *block) {
    foreach basicblock b that's not contained in a FILLET:
      do
      ss <- statements b
-     if any (\s-> s->getAttribute("FILLET") == fillet) ss then
+     if any (\s-> s->getAttribute(filletAttrib) == fillet) ss then
        do
        ss' <- blockifySpansOfFillets ss
      b.statements := ss'
@@ -204,27 +234,26 @@ void outlineStatementsWithFilletAttrib (SgProject *proj, bool outline) {
 
   for(size_t i = 0; i < stmts.size(); i++) {
     SgStatement *s = isSgStatement(stmts[i]);
-    if (isFillet(s))
-      if (outline)
-        if (! Outliner::isOutlineable (s))
+    if (isFillet(s)) {
+      if (outline) {
+        if (! Outliner::isOutlineable(s))
           std::cout << "statement isn't outlineable: "
                     << "(" << s->unparseToString() << ")@"
                     << std::endl;
         else
           Outliner::outline(s);
-      else if (isSgStatement(s->get_parent()))
-        if(LowLevelRewrite::isRemovableStatement(s))
-          LowLevelRewrite::remove(s);
-        else {
-          SgStatement *emptyStmt = new SgNullStatement(s->get_file_info());
-          if(debug)
-              std::cout << "Replacing "
-                        << s->class_name() << " "
-                        << "(" << s->unparseToString() << ")@"
-                        << s->getFilenameString()
-                        << std::endl;
-          LowLevelRewrite::replace(s, emptyStmt);
-        }
+      } else if (isSgStatement(s->get_parent())) {
+          // FIXME: above condition needed, but not sure if there's
+          //        a more elegant way?
+        removeStatement(s);
+        if(debug)
+          std::cout << "Replacing "
+                    << s->class_name() << " "
+                    << "(" << s->unparseToString() << ")@"
+                    << s->getFilenameString()
+                    << std::endl;
+      }
+    }
   }
 }
 
