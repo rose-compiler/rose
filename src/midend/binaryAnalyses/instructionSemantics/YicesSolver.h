@@ -30,8 +30,7 @@ public:
     }
     virtual ~YicesSolver();
 
-    virtual void generate_file(std::ostream&, const std::vector<boost::shared_ptr<const InsnSemanticsExpr::TreeNode> > &exprs,
-                               Definitions*);
+    virtual void generate_file(std::ostream&, const std::vector<InsnSemanticsExpr::TreeNodePtr> &exprs, Definitions*);
     virtual std::string get_command(const std::string &config_name);
 
     /** Returns a bit vector indicating what calling modes are available.  The bits are defined by the LinkMode enum. */
@@ -53,9 +52,9 @@ public:
      *  output containing "sat" or "unsat". However, Yices provides a library that can optionally be linked into ROSE, and
      *  uses this library if the link mode is LM_LIBRARY.
      *  @{ */
-    virtual bool satisfiable(const std::vector<boost::shared_ptr<const InsnSemanticsExpr::TreeNode> > &exprs);
-    virtual bool satisfiable(const boost::shared_ptr<const InsnSemanticsExpr::TreeNode> &tn) {
-        std::vector<boost::shared_ptr<const InsnSemanticsExpr::TreeNode> > exprs;
+    virtual bool satisfiable(const std::vector<InsnSemanticsExpr::TreeNodePtr> &exprs);
+    virtual bool satisfiable(const InsnSemanticsExpr::TreeNodePtr &tn) {
+        std::vector<InsnSemanticsExpr::TreeNodePtr> exprs;
         exprs.push_back(tn);
         return satisfiable(exprs);
     }
@@ -63,11 +62,9 @@ public:
 
     /** See SMTSolver::get_definition().
      *  @{ */
-    virtual boost::shared_ptr<const InsnSemanticsExpr::TreeNode>
-    get_definition(uint64_t varno);
+    virtual InsnSemanticsExpr::TreeNodePtr get_definition(uint64_t varno);
 
-    virtual boost::shared_ptr<const InsnSemanticsExpr::TreeNode>
-    get_definition(const boost::shared_ptr<const InsnSemanticsExpr::LeafNode> &var) {
+    virtual InsnSemanticsExpr::TreeNodePtr get_definition(const InsnSemanticsExpr::LeafNodePtr &var) {
         assert(var!=NULL && !var->is_known());
         return get_definition(var->get_name());
     }
@@ -83,24 +80,22 @@ private:
 
     /* These out_*() functions convert a InsnSemanticsExpr expression into text which is suitable as input to "yices"
      * executable. */
-    void out_define(std::ostream&, const boost::shared_ptr<const InsnSemanticsExpr::TreeNode>&, Definitions*);
-    void out_assert(std::ostream&, const boost::shared_ptr<const InsnSemanticsExpr::TreeNode>&);
-    void out_number(std::ostream&, const boost::shared_ptr<const InsnSemanticsExpr::TreeNode>&);
-    void out_expr(std::ostream&, const boost::shared_ptr<const InsnSemanticsExpr::TreeNode>&);
-    void out_unary(std::ostream&, const char *opname, const boost::shared_ptr<const InsnSemanticsExpr::InternalNode>&);
-    void out_binary(std::ostream&, const char *opname, const boost::shared_ptr<const InsnSemanticsExpr::InternalNode>&);
-    void out_ite(std::ostream&, const boost::shared_ptr<const InsnSemanticsExpr::InternalNode>&);
-    void out_la(std::ostream&, const char *opname, const boost::shared_ptr<const InsnSemanticsExpr::InternalNode>&,
-                bool identity_elmt);
-    void out_la(std::ostream&, const char *opname, const boost::shared_ptr<const InsnSemanticsExpr::InternalNode>&);
-    void out_extract(std::ostream&, const boost::shared_ptr<const InsnSemanticsExpr::InternalNode>&);
-    void out_sext(std::ostream&, const boost::shared_ptr<const InsnSemanticsExpr::InternalNode>&);
-    void out_uext(std::ostream&, const boost::shared_ptr<const InsnSemanticsExpr::InternalNode>&);
-    void out_shift(std::ostream&, const char *opname, const boost::shared_ptr<const InsnSemanticsExpr::InternalNode>&,
-                   bool newbits);
-    void out_asr(std::ostream&, const boost::shared_ptr<const InsnSemanticsExpr::InternalNode>&);
-    void out_zerop(std::ostream&, const boost::shared_ptr<const InsnSemanticsExpr::InternalNode>&);
-    void out_mult(std::ostream &o, const boost::shared_ptr<const InsnSemanticsExpr::InternalNode>&);
+    void out_define(std::ostream&, const InsnSemanticsExpr::TreeNodePtr&, Definitions*);
+    void out_assert(std::ostream&, const InsnSemanticsExpr::TreeNodePtr&);
+    void out_number(std::ostream&, const InsnSemanticsExpr::TreeNodePtr&);
+    void out_expr(std::ostream&, const InsnSemanticsExpr::TreeNodePtr&);
+    void out_unary(std::ostream&, const char *opname, const InsnSemanticsExpr::InternalNodePtr&);
+    void out_binary(std::ostream&, const char *opname, const InsnSemanticsExpr::InternalNodePtr&);
+    void out_ite(std::ostream&, const InsnSemanticsExpr::InternalNodePtr&);
+    void out_la(std::ostream&, const char *opname, const InsnSemanticsExpr::InternalNodePtr&, bool identity_elmt);
+    void out_la(std::ostream&, const char *opname, const InsnSemanticsExpr::InternalNodePtr&);
+    void out_extract(std::ostream&, const InsnSemanticsExpr::InternalNodePtr&);
+    void out_sext(std::ostream&, const InsnSemanticsExpr::InternalNodePtr&);
+    void out_uext(std::ostream&, const InsnSemanticsExpr::InternalNodePtr&);
+    void out_shift(std::ostream&, const char *opname, const InsnSemanticsExpr::InternalNodePtr&, bool newbits);
+    void out_asr(std::ostream&, const InsnSemanticsExpr::InternalNodePtr&);
+    void out_zerop(std::ostream&, const InsnSemanticsExpr::InternalNodePtr&);
+    void out_mult(std::ostream &o, const InsnSemanticsExpr::InternalNodePtr&);
 
 #ifdef HAVE_LIBYICES
     /* These ctx_*() functions build a Yices context object if Yices is linked into this executable. */
@@ -110,22 +105,22 @@ private:
     typedef yices_expr (*ShiftAPI)(yices_context, yices_expr, unsigned amount);
 
     yices_context context;
-    void ctx_define(const boost::shared_ptr<const InsnSemanticsExpr::TreeNode>&, Definitions*);
-    void ctx_assert(const boost::shared_ptr<const InsnSemanticsExpr::TreeNode>&);
-    yices_expr ctx_expr(const boost::shared_ptr<const InsnSemanticsExpr::TreeNode>&);
-    yices_expr ctx_unary(UnaryAPI, const boost::shared_ptr<const InsnSemanticsExpr::InternalNode>&);
-    yices_expr ctx_binary(BinaryAPI, const boost::shared_ptr<const InsnSemanticsExpr::InternalNode>&);
-    yices_expr ctx_ite(const boost::shared_ptr<const InsnSemanticsExpr::InternalNode>&);
-    yices_expr ctx_la(BinaryAPI, const boost::shared_ptr<const InsnSemanticsExpr::InternalNode>&, bool identity_elmt);
-    yices_expr ctx_la(NaryAPI, const boost::shared_ptr<const InsnSemanticsExpr::InternalNode>&, bool identity_elmt);
-    yices_expr ctx_la(BinaryAPI, const boost::shared_ptr<const InsnSemanticsExpr::InternalNode>&);
-    yices_expr ctx_extract(const boost::shared_ptr<const InsnSemanticsExpr::InternalNode>&);
-    yices_expr ctx_sext(const boost::shared_ptr<const InsnSemanticsExpr::InternalNode>&);
-    yices_expr ctx_uext(const boost::shared_ptr<const InsnSemanticsExpr::InternalNode>&);
-    yices_expr ctx_shift(ShiftAPI, const boost::shared_ptr<const InsnSemanticsExpr::InternalNode>&);
-    yices_expr ctx_asr(const boost::shared_ptr<const InsnSemanticsExpr::InternalNode>&);
-    yices_expr ctx_zerop(const boost::shared_ptr<const InsnSemanticsExpr::InternalNode>&);
-    yices_expr ctx_mult(const boost::shared_ptr<const InsnSemanticsExpr::InternalNode>&);
+    void ctx_define(const InsnSemanticsExpr::TreeNodePtr&, Definitions*);
+    void ctx_assert(const InsnSemanticsExpr::TreeNodePtr&);
+    yices_expr ctx_expr(const InsnSemanticsExpr::TreeNodePtr&);
+    yices_expr ctx_unary(UnaryAPI, const InsnSemanticsExpr::InternalNodePtr&);
+    yices_expr ctx_binary(BinaryAPI, const InsnSemanticsExpr::InternalNodePtr&);
+    yices_expr ctx_ite(const InsnSemanticsExpr::InternalNodePtr&);
+    yices_expr ctx_la(BinaryAPI, const InsnSemanticsExpr::InternalNodePtr&, bool identity_elmt);
+    yices_expr ctx_la(NaryAPI, const InsnSemanticsExpr::InternalNodePtr&, bool identity_elmt);
+    yices_expr ctx_la(BinaryAPI, const InsnSemanticsExpr::InternalNodePtr&);
+    yices_expr ctx_extract(const InsnSemanticsExpr::InternalNodePtr&);
+    yices_expr ctx_sext(const InsnSemanticsExpr::InternalNodePtr&);
+    yices_expr ctx_uext(const InsnSemanticsExpr::InternalNodePtr&);
+    yices_expr ctx_shift(ShiftAPI, const InsnSemanticsExpr::InternalNodePtr&);
+    yices_expr ctx_asr(const InsnSemanticsExpr::InternalNodePtr&);
+    yices_expr ctx_zerop(const InsnSemanticsExpr::InternalNodePtr&);
+    yices_expr ctx_mult(const InsnSemanticsExpr::InternalNodePtr&);
 #else
     void *context; /*unused for now*/
 #endif

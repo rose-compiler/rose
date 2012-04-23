@@ -93,16 +93,13 @@ public:
             /* Is there some way this function can be called in order to generate a particular value? */
             if (!arg1.is_known()) {
                 using namespace InsnSemanticsExpr;
-                boost::shared_ptr<const LeafNode> target = LeafNode::create_integer(32, 2067789406);
-                boost::shared_ptr<const LeafNode> arg1_leaf = boost::dynamic_pointer_cast<const LeafNode>(arg1.get_expression());
+                LeafNodePtr target = LeafNode::create_integer(32, 2067789406);
+                LeafNodePtr arg1_leaf = arg1.get_expression()->isLeafNode();
                 uint64_t arg1_varno = arg1_leaf->get_name();
-                boost::shared_ptr<const InternalNode> expr = InternalNode::create(32, OP_EQ,
-                                                                                  policy.readRegister<32>("eax").get_expression(),
-                                                                                  target);
+                InternalNodePtr expr = InternalNode::create(32, OP_EQ, policy.readRegister<32>("eax").get_expression(), target);
                 std::cout <<"using an SMT solver to find a solution to f(x) = " <<target <<"...\n";
                 if (smt_solver.satisfiable(expr)) {
-                    boost::shared_ptr<const LeafNode> arg1_value =
-                        boost::dynamic_pointer_cast<const LeafNode>(smt_solver.get_definition(arg1_varno));
+                    LeafNodePtr arg1_value = smt_solver.get_definition(arg1_varno)->isLeafNode();
                     if (arg1_value) {
                         std::cout <<"  solution is x = " <<arg1_value <<"\n";
                     } else {

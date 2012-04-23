@@ -60,7 +60,7 @@ public:
         : SymbolicSemantics::ValueType<nBits>(other) {}
     ValueType(uint64_t n, std::string comment="")
         : SymbolicSemantics::ValueType<nBits>(n, comment) {}
-    explicit ValueType(const boost::shared_ptr<const SymbolicSemantics::TreeNode> &node)
+    explicit ValueType(const SymbolicSemantics::TreeNodePtr &node)
         : SymbolicSemantics::ValueType<nBits>(node) {}
     ValueType(const VirtualMachineSemantics::ValueType<nBits> &other, std::string comment="") {
         set_expression(other.is_known() ?
@@ -384,8 +384,7 @@ public:
     template<size_t Len>
     void writeRegister(const RegisterDescriptor &reg, const T<Len> &value) {
         if (0==info->pass && !value.is_known() && reg.equal(this->findRegister("eip", 32))) {
-            boost::shared_ptr<const InsnSemanticsExpr::InternalNode> inode =
-                boost::dynamic_pointer_cast<const InsnSemanticsExpr::InternalNode>(value.get_expression());
+            InsnSemanticsExpr::InternalNodePtr inode = value.get_expression()->isInternalNode();
             if (inode!=NULL && InsnSemanticsExpr::OP_ITE==inode->get_operator() &&
                 inode->child(1)->is_known() && inode->child(2)->is_known()) {
                 // We must have processed a branch instruction.  Both directions of the branch are concrete addresses, so there
@@ -522,8 +521,7 @@ public:
                 // Find control flow successors
                 std::set<rose_addr_t> successors;
                 ValueType<32> eip_value = policy.readRegister<32>(semantics.REG_EIP);
-                boost::shared_ptr<const InsnSemanticsExpr::InternalNode> inode =
-                    boost::dynamic_pointer_cast<const InsnSemanticsExpr::InternalNode>(eip_value.get_expression());
+                InsnSemanticsExpr::InternalNodePtr inode = eip_value.get_expression()->isInternalNode();
                 if (eip_value.is_known()) {
                     successors.insert(eip_value.known_value());
                     // assume all CALLs return since we might not actually traverse the called function.  If we had done a full

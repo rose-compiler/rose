@@ -36,8 +36,11 @@ namespace BinaryAnalysis {              // documented elsewhere
 
             typedef InsnSemanticsExpr::RenameMap RenameMap;
             typedef InsnSemanticsExpr::LeafNode LeafNode;
+            typedef InsnSemanticsExpr::LeafNodePtr LeafNodePtr;
             typedef InsnSemanticsExpr::InternalNode InternalNode;
+            typedef InsnSemanticsExpr::InternalNodePtr InternalNodePtr;
             typedef InsnSemanticsExpr::TreeNode TreeNode;
+            typedef InsnSemanticsExpr::TreeNodePtr TreeNodePtr;
             typedef std::set<SgAsmInstruction*> InsnSet;
 
             /******************************************************************************************************************
@@ -50,7 +53,7 @@ namespace BinaryAnalysis {              // documented elsewhere
             template<size_t nBits>
             class ValueType {
             protected:
-                boost::shared_ptr<const TreeNode> expr;
+                TreeNodePtr expr;
 
                 /** Instructions defining this value.  Any instruction that saves the value to a register or memory location
                  *  adds itself to the saved value. */
@@ -74,7 +77,7 @@ namespace BinaryAnalysis {              // documented elsewhere
                 }
 
                 /** Construct a ValueType from a TreeNode. */
-                explicit ValueType(const boost::shared_ptr<const TreeNode> &node) {
+                explicit ValueType(const TreeNodePtr &node) {
                     assert(node->get_nbits()==nBits);
                     expr = node;
                 }
@@ -129,20 +132,20 @@ namespace BinaryAnalysis {              // documented elsewhere
 
                 /** Returns the value of a known constant. Assumes this value is a known constant. */
                 uint64_t known_value() const {
-                    boost::shared_ptr<const LeafNode> leaf = boost::dynamic_pointer_cast<const LeafNode>(expr);
+                    LeafNodePtr leaf = expr->isLeafNode();
                     assert(leaf!=NULL);
                     return leaf->get_value();
                 }
 
                 /** Returns the expression stored in this value.  Expressions are reference counted; the reference count of the
                  *  returned expression is not incremented. */
-                const boost::shared_ptr<const TreeNode>& get_expression() const {
+                const TreeNodePtr& get_expression() const {
                     return expr;
                 }
 
                 /** Changes the expression stored in the value.
                  * @{ */
-                void set_expression(const boost::shared_ptr<const TreeNode> &new_expr) {
+                void set_expression(const TreeNodePtr &new_expr) {
                     expr = new_expr;
                 }
                 void set_expression(const ValueType &source) {
@@ -253,25 +256,25 @@ namespace BinaryAnalysis {              // documented elsewhere
                     if (retval)
                         return retval;
                     if (solver) {
-                        boost::shared_ptr<const TreeNode> x_addr   = this->address.get_expression();
-                        boost::shared_ptr<const TreeNode> x_nbytes = LeafNode::create_integer(32, this->nbytes);
-                        boost::shared_ptr<const TreeNode> y_addr   = other.address.get_expression();
-                        boost::shared_ptr<const TreeNode> y_nbytes = LeafNode::create_integer(32, other.nbytes);
+                        TreeNodePtr x_addr   = this->address.get_expression();
+                        TreeNodePtr x_nbytes = LeafNode::create_integer(32, this->nbytes);
+                        TreeNodePtr y_addr   = other.address.get_expression();
+                        TreeNodePtr y_nbytes = LeafNode::create_integer(32, other.nbytes);
 
-                        boost::shared_ptr<const TreeNode> x_end =
+                        TreeNodePtr x_end =
                             InternalNode::create(32, InsnSemanticsExpr::OP_ADD, x_addr, x_nbytes);
-                        boost::shared_ptr<const TreeNode> y_end =
+                        TreeNodePtr y_end =
                             InternalNode::create(32, InsnSemanticsExpr::OP_ADD, y_addr, y_nbytes);
 
-                        boost::shared_ptr<const TreeNode> and1 =
+                        TreeNodePtr and1 =
                             InternalNode::create(1, InsnSemanticsExpr::OP_AND,
                                                  InternalNode::create(1, InsnSemanticsExpr::OP_UGT, x_end, y_addr),
                                                  InternalNode::create(1, InsnSemanticsExpr::OP_ULT, x_addr, y_end));
-                        boost::shared_ptr<const TreeNode> and2 =
+                        TreeNodePtr and2 =
                             InternalNode::create(1, InsnSemanticsExpr::OP_AND,
                                                  InternalNode::create(1, InsnSemanticsExpr::OP_UGT, y_end, x_addr),
                                                  InternalNode::create(1, InsnSemanticsExpr::OP_ULT, y_addr, x_end));
-                        boost::shared_ptr<const TreeNode> assertion =
+                        TreeNodePtr assertion =
                             InternalNode::create(1, InsnSemanticsExpr::OP_OR, and1, and2);
                         retval = solver->satisfiable(assertion);
                     }
@@ -804,9 +807,9 @@ namespace BinaryAnalysis {              // documented elsewhere
                     }
                     if (solver) {
                         /* If the selection expression cannot be true, then return ifFalse */
-                        boost::shared_ptr<const TreeNode> assertion = InternalNode::create(1, InsnSemanticsExpr::OP_EQ,
-                                                                                           sel.get_expression(),
-                                                                                           LeafNode::create_integer(1, 1));
+                        TreeNodePtr assertion = InternalNode::create(1, InsnSemanticsExpr::OP_EQ,
+                                                                     sel.get_expression(),
+                                                                     LeafNode::create_integer(1, 1));
                         bool can_be_true = solver->satisfiable(assertion);
                         if (!can_be_true) {
                             ValueType<Len> retval = ifFalse;

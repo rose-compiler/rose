@@ -66,18 +66,24 @@ namespace InsnSemanticsExpr {
     class InternalNode;
     class LeafNode;
 
+    typedef boost::shared_ptr<const TreeNode> TreeNodePtr;
+    typedef boost::shared_ptr<const InternalNode> InternalNodePtr;
+    typedef boost::shared_ptr<const LeafNode> LeafNodePtr;
+
     class Visitor {
     public:
         virtual ~Visitor() {}
-        virtual void operator()(const boost::shared_ptr<const TreeNode>&) = 0;
+        virtual void operator()(const TreeNodePtr&) = 0;
     };
 
     /** Any node of an expression tree for instruction semantics, from which the InternalNode and LeafNode classes are
      *  derived.  Every node has a specified number of significant bits that is constant over the life of the node.
      *
      *  In order that subtrees can be freely assigned as children of other nodes (provided the structure as a whole remains a
-     *  lattice and not a graph with cycles), tree nodes are always referenced through boost::shared_ptr<>.  The shared_ptr
-     *  owns the pointer to the tree node and thus the tree node pointer should never be deleted explicitly. */
+     *  lattice and not a graph with cycles), tree nodes are always referenced through boost::shared_ptr<const T> where T is
+     *  one of the tree node types: TreeNode, InternalNode, or LeafNode.  For convenience, we define TreeNodePtr,
+     *  InternalNodePtr, and LeafNodePtr typedefs.  The shared_ptr owns the pointer to the tree node and thus the tree node
+     *  pointer should never be deleted explicitly. */
     class TreeNode: public boost::enable_shared_from_this<TreeNode> {
     protected:
         size_t nbits;           /**< Number of significant bits. Constant over the life of the node. */
@@ -92,7 +98,7 @@ namespace InsnSemanticsExpr {
 
         /** Tests two expressions for equality using an optional satisfiability modulo theory (SMT) solver. Returns true if
          *  the inequality is not satisfiable. */
-        virtual bool equal_to(const boost::shared_ptr<const TreeNode>& other, SMTSolver*) const = 0;
+        virtual bool equal_to(const TreeNodePtr& other, SMTSolver*) const = 0;
 
         /** Returns true if the expression is a known value.
          *
@@ -119,7 +125,17 @@ namespace InsnSemanticsExpr {
         virtual void depth_first_visit(Visitor*) const = 0;
 
         /** Returns the variables appearing in the expression. */
-        std::set<boost::shared_ptr<const LeafNode> > get_variables() const;
+        std::set<LeafNodePtr> get_variables() const;
+
+        /** Dynamic cast of this object to an internal node. */
+        InternalNodePtr isInternalNode() const {
+            return boost::dynamic_pointer_cast<const InternalNode>(shared_from_this());
+        }
+
+        /** Dynamic cast of this object to a leaf node. */
+        LeafNodePtr isLeafNode() const {
+            return boost::dynamic_pointer_cast<const LeafNode>(shared_from_this());
+        }
     };
 
     /** Internal node of an expression tree for instruction semantics. Each internal node has an operator (constant for the
@@ -129,30 +145,22 @@ namespace InsnSemanticsExpr {
     class InternalNode: public TreeNode {
     private:
         Operator op;
-        std::vector<boost::shared_ptr<const TreeNode> > children;
+        std::vector<TreeNodePtr> children;
 
         // Constructors should not be called directly.  Use the create() class method instead. This is to help prevent
         // accidently using pointers to these objects -- all access should be through boost::shared_ptr<>.
         InternalNode(size_t nbits, Operator op, const std::string comment="")
             : TreeNode(nbits, comment), op(op) {}
-        InternalNode(size_t nbits, Operator op,
-                     const boost::shared_ptr<const TreeNode> &a,
-                     std::string comment="")
+        InternalNode(size_t nbits, Operator op, const TreeNodePtr &a, std::string comment="")
             : TreeNode(nbits, comment), op(op) {
             add_child(a);
         }
-        InternalNode(size_t nbits, Operator op,
-                     const boost::shared_ptr<const TreeNode> &a,
-                     const boost::shared_ptr<const TreeNode> &b,
-                     std::string comment="")
+        InternalNode(size_t nbits, Operator op, const TreeNodePtr &a, const TreeNodePtr &b, std::string comment="")
             : TreeNode(nbits, comment), op(op) {
             add_child(a);
             add_child(b);
         }
-        InternalNode(size_t nbits, Operator op,
-                     const boost::shared_ptr<const TreeNode> &a,
-                     const boost::shared_ptr<const TreeNode> &b,
-                     const boost::shared_ptr<const TreeNode> &c,
+        InternalNode(size_t nbits, Operator op, const TreeNodePtr &a, const TreeNodePtr &b, const TreeNodePtr &c,
                      std::string comment="")
             : TreeNode(nbits, comment), op(op) {
             add_child(a);
@@ -162,29 +170,22 @@ namespace InsnSemanticsExpr {
 
     public:
         /** Create a new expression node. Use these class methods instead of c'tors. */
-        static boost::shared_ptr<const InternalNode> create(size_t nbits, Operator op, const std::string comment="") {
-            boost::shared_ptr<const InternalNode> retval(new InternalNode(nbits, op, comment));
+        static InternalNodePtr create(size_t nbits, Operator op, const std::string comment="") {
+            InternalNodePtr retval(new InternalNode(nbits, op, comment));
             return retval;
         }
-        static boost::shared_ptr<const InternalNode> create(size_t nbits, Operator op,
-                                                            const boost::shared_ptr<const TreeNode> &a,
-                                                            const std::string comment="") {
-            boost::shared_ptr<const InternalNode> retval(new InternalNode(nbits, op, a, comment));
+        static InternalNodePtr create(size_t nbits, Operator op, const TreeNodePtr &a, const std::string comment="") {
+            InternalNodePtr retval(new InternalNode(nbits, op, a, comment));
             return retval;
         }
-        static boost::shared_ptr<const InternalNode> create(size_t nbits, Operator op,
-                                                            const boost::shared_ptr<const TreeNode> &a,
-                                                            const boost::shared_ptr<const TreeNode> &b,
-                                                            const std::string comment="") {
-            boost::shared_ptr<const InternalNode> retval(new InternalNode(nbits, op, a, b, comment));
+        static InternalNodePtr create(size_t nbits, Operator op, const TreeNodePtr &a, const TreeNodePtr &b,
+                                      const std::string comment="") {
+            InternalNodePtr retval(new InternalNode(nbits, op, a, b, comment));
             return retval;
         }
-        static boost::shared_ptr<const InternalNode> create(size_t nbits, Operator op,
-                                                            const boost::shared_ptr<const TreeNode> &a,
-                                                            const boost::shared_ptr<const TreeNode> &b,
-                                                            const boost::shared_ptr<const TreeNode> &c,
-                                                            const std::string comment="") {
-            boost::shared_ptr<const InternalNode> retval(new InternalNode(nbits, op, a, b, c, comment));
+        static InternalNodePtr create(size_t nbits, Operator op, const TreeNodePtr &a, const TreeNodePtr &b, const TreeNodePtr &c,
+                                      const std::string comment="") {
+            InternalNodePtr retval(new InternalNode(nbits, op, a, b, c, comment));
             return retval;
         }
         /** @} */
@@ -193,7 +194,7 @@ namespace InsnSemanticsExpr {
         virtual void print(std::ostream &o, RenameMap *rmap=NULL) const;
 
         /* see superclass, where this is pure virtual */
-        virtual bool equal_to(const boost::shared_ptr<const TreeNode> &other, SMTSolver*) const;
+        virtual bool equal_to(const TreeNodePtr &other, SMTSolver*) const;
 
         /* see superclass, where this is pure virtual */
         virtual bool is_known() const {
@@ -210,14 +211,14 @@ namespace InsnSemanticsExpr {
         size_t size() const { return children.size(); }
 
         /** Returns the specified child. */
-        boost::shared_ptr<const TreeNode> child(size_t idx) const { return children[idx]; }
+        TreeNodePtr child(size_t idx) const { return children[idx]; }
 
         /** Returns the operator. */
         Operator get_operator() const { return op; }
 
         /** Appends @p child as a new child of this node. The reference count for the root of the child is incremented; the
          *  child expression is not copied. */
-        void add_child(const boost::shared_ptr<const TreeNode> &child);
+        void add_child(const TreeNodePtr &child);
     };
 
     /** Leaf node of an expression tree for instruction semantics. A leaf node is either a known value or a free variable. */
@@ -234,11 +235,11 @@ namespace InsnSemanticsExpr {
 
     public:
         /** Construct a new free variable with a specified number of significant bits. */
-        static boost::shared_ptr<const LeafNode> create_variable(size_t nbits, std::string comment="");
+        static LeafNodePtr create_variable(size_t nbits, std::string comment="");
 
         /** Construct a new integer with the specified number of significant bits. Any high-order bits beyond the specified
          *  size will be zeroed. */
-        static boost::shared_ptr<const LeafNode> create_integer(size_t nbits, uint64_t n, std::string comment="");
+        static LeafNodePtr create_integer(size_t nbits, uint64_t n, std::string comment="");
 
         /* see superclass, where this is pure virtual */
         virtual bool is_known() const;
@@ -254,7 +255,7 @@ namespace InsnSemanticsExpr {
         virtual void print(std::ostream &o, RenameMap *rmap=NULL) const;
 
         /* see superclass, where this is pure virtual */
-        virtual bool equal_to(const boost::shared_ptr<const TreeNode> &other, SMTSolver*) const;
+        virtual bool equal_to(const TreeNodePtr &other, SMTSolver*) const;
 
         /* see superclass, where this is pure virtual */
         virtual void depth_first_visit(Visitor*) const;

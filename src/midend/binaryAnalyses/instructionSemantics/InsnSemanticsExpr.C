@@ -20,13 +20,13 @@ InsnSemanticsExpr::to_str(Operator o)
     return buf;
 }
 
-std::set<boost::shared_ptr<const InsnSemanticsExpr::LeafNode> >
+std::set<InsnSemanticsExpr::LeafNodePtr>
 InsnSemanticsExpr::TreeNode::get_variables() const
 {
     struct T1: public Visitor {
-        std::set<boost::shared_ptr<const LeafNode> > vars;
-        void operator()(const boost::shared_ptr<const TreeNode> &node) {
-            boost::shared_ptr<const LeafNode> l_node = boost::dynamic_pointer_cast<const LeafNode>(node);
+        std::set<LeafNodePtr> vars;
+        void operator()(const TreeNodePtr &node) {
+            LeafNodePtr l_node = node->isLeafNode();
             if (l_node && !l_node->is_known())
                 vars.insert(l_node);
         }
@@ -36,7 +36,7 @@ InsnSemanticsExpr::TreeNode::get_variables() const
 }
 
 void
-InsnSemanticsExpr::InternalNode::add_child(const boost::shared_ptr<const TreeNode> &child)
+InsnSemanticsExpr::InternalNode::add_child(const TreeNodePtr &child)
 {
     ROSE_ASSERT(child!=0);
     children.push_back(child);
@@ -57,15 +57,15 @@ InsnSemanticsExpr::InternalNode::print(std::ostream &o, RenameMap *rmap/*NULL*/)
 }
 
 bool
-InsnSemanticsExpr::InternalNode::equal_to(const boost::shared_ptr<const TreeNode> &other_, SMTSolver *solver/*NULL*/) const
+InsnSemanticsExpr::InternalNode::equal_to(const TreeNodePtr &other_, SMTSolver *solver/*NULL*/) const
 {
     bool retval = false;
     if (solver) {
-        boost::shared_ptr<const InternalNode> assertion = InternalNode::create(1, OP_NE, shared_from_this(), other_);
+        InternalNodePtr assertion = InternalNode::create(1, OP_NE, shared_from_this(), other_);
         retval = !solver->satisfiable(assertion); /*equal if we cannot find a solution for inequality*/
     } else {
         /* The naive approach uses structural equality */
-        boost::shared_ptr<const InternalNode> other = boost::dynamic_pointer_cast<const InternalNode>(other_);
+        InternalNodePtr other = other_->isInternalNode();
         if (this==other.get()) {
             retval = true;
         } else if (other && op==other->op && children.size()==other->children.size()) {
@@ -81,7 +81,7 @@ void
 InsnSemanticsExpr::InternalNode::depth_first_visit(Visitor *v) const
 {
     assert(v!=NULL);
-    for (std::vector<boost::shared_ptr<const TreeNode> >::const_iterator ci=children.begin(); ci!=children.end(); ++ci)
+    for (std::vector<TreeNodePtr>::const_iterator ci=children.begin(); ci!=children.end(); ++ci)
         (*ci)->depth_first_visit(v);
     (*v)(shared_from_this());
 }
@@ -90,7 +90,7 @@ InsnSemanticsExpr::InternalNode::depth_first_visit(Visitor *v) const
 
 
 /* class method */
-boost::shared_ptr<const InsnSemanticsExpr::LeafNode>
+InsnSemanticsExpr::LeafNodePtr
 InsnSemanticsExpr::LeafNode::create_variable(size_t nbits, std::string comment)
 {
     static uint64_t name_counter = 0;
@@ -99,19 +99,19 @@ InsnSemanticsExpr::LeafNode::create_variable(size_t nbits, std::string comment)
     node->nbits = nbits;
     node->known = false;
     node->name = name_counter++;
-    boost::shared_ptr<const LeafNode> retval(node);
+    LeafNodePtr retval(node);
     return retval;
 }
 
 /* class method */
-boost::shared_ptr<const InsnSemanticsExpr::LeafNode>
+InsnSemanticsExpr::LeafNodePtr
 InsnSemanticsExpr::LeafNode::create_integer(size_t nbits, uint64_t n, std::string comment)
 {
     LeafNode *node = new LeafNode(comment);
     node->nbits = nbits;
     node->known = true;
     node->ival = n & (((uint64_t)1<<nbits)-1);
-    boost::shared_ptr<const LeafNode> retval(node);
+    LeafNodePtr retval(node);
     return retval;
 }
 
@@ -169,14 +169,14 @@ InsnSemanticsExpr::LeafNode::print(std::ostream &o, RenameMap *rmap/*NULL*/) con
 }
 
 bool
-InsnSemanticsExpr::LeafNode::equal_to(const boost::shared_ptr<const TreeNode> &other_, SMTSolver *solver) const
+InsnSemanticsExpr::LeafNode::equal_to(const TreeNodePtr &other_, SMTSolver *solver) const
 {
     bool retval = false;
     if (solver) {
-        boost::shared_ptr<const InternalNode> assertion = InternalNode::create(1, OP_NE, shared_from_this(), other_);
+        InternalNodePtr assertion = InternalNode::create(1, OP_NE, shared_from_this(), other_);
         retval = !solver->satisfiable(assertion); /*equal if we cannot find a solution for inequality*/
     } else {
-        boost::shared_ptr<const LeafNode> other = boost::dynamic_pointer_cast<const LeafNode>(other_);
+        LeafNodePtr other = other_->isLeafNode();
         if (this==other.get()) {
             retval = true;
         } else if (other) {
