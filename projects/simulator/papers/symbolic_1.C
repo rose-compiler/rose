@@ -95,12 +95,14 @@ public:
             // Show the value of the EAX register since this is where GCC puts the function's return value.  If we did things
             // right, the return value should depend only on the unknown bytes from the beginning of the buffer.
             SymbolicSemantics::ValueType<32> result = policy.readRegister<32>("eax");
-            std::set<const InsnSemanticsExpr::LeafNode*> vars = result.get_expression()->get_variables();
+            std::set<boost::shared_ptr<const InsnSemanticsExpr::LeafNode> > vars = result.get_expression()->get_variables();
             {
                 std::ostringstream s;
                 s <<"Analysis: symbolic return value is " <<result <<"\n"
                   <<"Analysis: return value has " <<vars.size() <<" variables:";
-                for (std::set<const InsnSemanticsExpr::LeafNode*>::iterator vi=vars.begin(); vi!=vars.end(); ++vi)
+                for (std::set<boost::shared_ptr<const InsnSemanticsExpr::LeafNode> >::iterator vi=vars.begin();
+                     vi!=vars.end();
+                     ++vi)
                     s <<" " <<*vi;
                 trace->mesg("%s", s.str().c_str());
             }
@@ -109,16 +111,17 @@ public:
             if (!result.is_known()) {
                 trace->mesg("Analysis: setting variables (buffer bytes) to 'x' and evaluating the function symbolically...");
                 using namespace InsnSemanticsExpr;
-                std::vector<const TreeNode*> exprs;
-                LeafNode *result_var = LeafNode::create_variable(32);
-                InternalNode *expr = new InternalNode(32, OP_EQ, result.get_expression(), result_var);
+                std::vector<boost::shared_ptr<const TreeNode> > exprs;
+                boost::shared_ptr<const LeafNode> result_var = LeafNode::create_variable(32);
+                boost::shared_ptr<const InternalNode> expr = InternalNode::create(32, OP_EQ, result.get_expression(), result_var);
                 exprs.push_back(expr);
-                for (std::set<const LeafNode*>::iterator vi=vars.begin(); vi!=vars.end(); ++vi) {
-                    expr = new InternalNode(32, OP_EQ, *vi, LeafNode::create_integer(32, (int)'x'));
+                for (std::set<boost::shared_ptr<const LeafNode> >::iterator vi=vars.begin(); vi!=vars.end(); ++vi) {
+                    expr = InternalNode::create(32, OP_EQ, *vi, LeafNode::create_integer(32, (int)'x'));
                     exprs.push_back(expr);
                 }
                 if (smt_solver.satisfiable(exprs)) {
-                    LeafNode *result_value = dynamic_cast<LeafNode*>(smt_solver.get_definition(result_var));
+                    boost::shared_ptr<const LeafNode> result_value =
+                        boost::dynamic_pointer_cast<const LeafNode>(smt_solver.get_definition(result_var));
                     if (!result_value) {
                         trace->mesg("Analysis: evaluation result could not be determined. ERROR!");
                     } else if (!result_value->is_known()) {
@@ -136,11 +139,12 @@ public:
             if (!result.is_known()) {
                 trace->mesg("Analysis: setting result equal to 0xff015e7c and trying to find inputs...");
                 using namespace InsnSemanticsExpr;
-                InternalNode *expr = new InternalNode(32, OP_EQ, result.get_expression(),
-                                                      LeafNode::create_integer(32, 0xff015e7c));
+                boost::shared_ptr<const InternalNode> expr = InternalNode::create(32, OP_EQ, result.get_expression(),
+                                                                                  LeafNode::create_integer(32, 0xff015e7c));
                 if (smt_solver.satisfiable(expr)) {
-                    for (std::set<const LeafNode*>::iterator vi=vars.begin(); vi!=vars.end(); ++vi) {
-                        LeafNode *var_val = dynamic_cast<LeafNode*>(smt_solver.get_definition(*vi));
+                    for (std::set<boost::shared_ptr<const LeafNode> >::iterator vi=vars.begin(); vi!=vars.end(); ++vi) {
+                        boost::shared_ptr<const LeafNode> var_val =
+                            boost::dynamic_pointer_cast<const LeafNode>(smt_solver.get_definition(*vi));
                         if (var_val && var_val->is_known())
                             trace->mesg("Analysis:   v%"PRIu64" = %"PRIu64" %c",
                                         (*vi)->get_name(), var_val->get_value(),

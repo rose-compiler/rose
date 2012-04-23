@@ -112,7 +112,7 @@ public:
             // Run the analysis until we can't figure out what instruction is next.  If we set things up correctly, the
             // simulation will stop when we hit the RET instruction to return from this function.
             size_t nbranches = 0;
-            std::vector<const TreeNode*> constraints; // path constraints for the SMT solver
+            std::vector<boost::shared_ptr<const TreeNode> > constraints; // path constraints for the SMT solver
             while (policy.readRegister<32>("eip").is_known()) {
                 uint64_t va = policy.readRegister<32>("eip").known_value();
                 SgAsmx86Instruction *insn = isSgAsmx86Instruction(args.thread->get_process()->get_instruction(va));
@@ -144,8 +144,9 @@ public:
                     trace->mesg("%s: branch %staken; target=0x%08"PRIx64, name, take?"":"not ", target);
 
                     // Is this path feasible?  We don't really need to check it now; we could wait until the end.
-                    InternalNode *c = new InternalNode(32, OP_EQ, policy.readRegister<32>("eip").get_expression(),
-                                                       LeafNode::create_integer(32, target));
+                    boost::shared_ptr<const InternalNode> c =
+                        InternalNode::create(32, OP_EQ, policy.readRegister<32>("eip").get_expression(),
+                                             LeafNode::create_integer(32, target));
                     constraints.push_back(c); // shouldn't really have to do this again if we could save some state
                     if (smt_solver.satisfiable(constraints)) {
                         policy.writeRegister("eip", SymbolicSemantics::ValueType<32>(target));
@@ -159,17 +160,21 @@ public:
             // Show the value of the EAX register since this is where GCC puts the function's return value.  If we did things
             // right, the return value should depend only on the unknown bytes from the beginning of the buffer.
             SymbolicSemantics::ValueType<32> result = policy.readRegister<32>("eax");
-            std::set<const InsnSemanticsExpr::LeafNode*> vars = result.get_expression()->get_variables();
+            std::set<boost::shared_ptr<const InsnSemanticsExpr::LeafNode> > vars = result.get_expression()->get_variables();
             {
                 std::ostringstream s;
                 s <<name <<": symbolic return value is " <<result <<"\n"
                   <<name <<": return value has " <<vars.size() <<" variables:";
-                for (std::set<const InsnSemanticsExpr::LeafNode*>::iterator vi=vars.begin(); vi!=vars.end(); ++vi)
+                for (std::set<boost::shared_ptr<const InsnSemanticsExpr::LeafNode> >::iterator vi=vars.begin();
+                     vi!=vars.end();
+                     ++vi)
                     s <<" " <<*vi;
                 s <<"\n";
                 if (!constraints.empty()) {
                     s <<name <<": path constraints:\n";
-                    for (std::vector<const TreeNode*>::iterator ci=constraints.begin(); ci!=constraints.end(); ++ci)
+                    for (std::vector<boost::shared_ptr<const TreeNode> >::iterator ci=constraints.begin();
+                         ci!=constraints.end();
+                         ++ci)
                         s <<name <<":   " <<*ci <<"\n";
                 }
                 trace->mesg("%s", s.str().c_str());
@@ -178,16 +183,17 @@ public:
             // Now give values to those bytes and solve the equation for the result using an SMT solver.
             if (!result.is_known()) {
                 trace->mesg("%s: setting variables (buffer bytes) to 'x' and evaluating the function symbolically...", name);
-                std::vector<const TreeNode*> exprs = constraints;
-                LeafNode *result_var = LeafNode::create_variable(32);
-                InternalNode *expr = new InternalNode(32, OP_EQ, result.get_expression(), result_var);
+                std::vector<boost::shared_ptr<const TreeNode> > exprs = constraints;
+                boost::shared_ptr<const LeafNode> result_var = LeafNode::create_variable(32);
+                boost::shared_ptr<const InternalNode> expr = InternalNode::create(32, OP_EQ, result.get_expression(), result_var);
                 exprs.push_back(expr);
-                for (std::set<const LeafNode*>::iterator vi=vars.begin(); vi!=vars.end(); ++vi) {
-                    expr = new InternalNode(32, OP_EQ, *vi, LeafNode::create_integer(32, (int)'x'));
+                for (std::set<boost::shared_ptr<const LeafNode> >::iterator vi=vars.begin(); vi!=vars.end(); ++vi) {
+                    expr = InternalNode::create(32, OP_EQ, *vi, LeafNode::create_integer(32, (int)'x'));
                     exprs.push_back(expr);
                 }
                 if (smt_solver.satisfiable(exprs)) {
-                    LeafNode *result_value = dynamic_cast<LeafNode*>(smt_solver.get_definition(result_var));
+                    boost::shared_ptr<const LeafNode> result_value =
+                        boost::dynamic_pointer_cast<const LeafNode>(smt_solver.get_definition(result_var));
                     if (!result_value) {
                         trace->mesg("%s: evaluation result could not be determined. ERROR!", name);
                     } else if (!result_value->is_known()) {
@@ -204,13 +210,14 @@ public:
             // would satisfy the equation.
             if (!result.is_known()) {
                 trace->mesg("%s: setting result equal to 0xff015e7c and trying to find inputs...", name);
-                std::vector<const TreeNode*> exprs = constraints;
-                InternalNode *expr = new InternalNode(32, OP_EQ, result.get_expression(),
-                                                      LeafNode::create_integer(32, 0xff015e7c));
+                std::vector<boost::shared_ptr<const TreeNode> > exprs = constraints;
+                boost::shared_ptr<const InternalNode> expr = InternalNode::create(32, OP_EQ, result.get_expression(),
+                                                                                  LeafNode::create_integer(32, 0xff015e7c));
                 exprs.push_back(expr);
                 if (smt_solver.satisfiable(exprs)) {
-                    for (std::set<const LeafNode*>::iterator vi=vars.begin(); vi!=vars.end(); ++vi) {
-                        LeafNode *var_val = dynamic_cast<LeafNode*>(smt_solver.get_definition(*vi));
+                    for (std::set<boost::shared_ptr<const LeafNode> >::iterator vi=vars.begin(); vi!=vars.end(); ++vi) {
+                        boost::shared_ptr<const LeafNode> var_val =
+                            boost::dynamic_pointer_cast<const LeafNode>(smt_solver.get_definition(*vi));
                         if (var_val && var_val->is_known())
                             trace->mesg("%s:   v%"PRIu64" = %"PRIu64" %c",
                                         name, (*vi)->get_name(), var_val->get_value(),
