@@ -4234,6 +4234,7 @@ HEADER_BINARY_X86_REGISTER_REFERENCE_EXPRESSION_START
 
        // DQ (10/28/2009): Added enum values to replace magin number vlues where will confusing in the source code.
       /*! \brief Register names for lower byte registers. 
+       *  \deprecated Use dynamic values from the RegisterDictionary instead.
        */
           enum regnames8l_enum
              {
@@ -4258,6 +4259,7 @@ HEADER_BINARY_X86_REGISTER_REFERENCE_EXPRESSION_START
              };
 
       /*! \brief Register names for high byte registers. 
+       *  \deprecated Use dynamic values from the RegisterDictionary instead.
        */
           enum regnames8h_enum
              {
@@ -4270,6 +4272,7 @@ HEADER_BINARY_X86_REGISTER_REFERENCE_EXPRESSION_START
              };
 
       /*! \brief Register names for 16 bit width registers. 
+       *  \deprecated Use dynamic values from the RegisterDictionary instead.
        */
           enum regnames16_enum
              {
@@ -4294,6 +4297,7 @@ HEADER_BINARY_X86_REGISTER_REFERENCE_EXPRESSION_START
              };
 
       /*! \brief Register names for 32 bit width registers. 
+       *  \deprecated Use dynamic values from the RegisterDictionary instead.
        */
           enum regnames32_enum
              {
@@ -4318,6 +4322,7 @@ HEADER_BINARY_X86_REGISTER_REFERENCE_EXPRESSION_START
              };
 
       /*! \brief Register names for 64 bit width registers. 
+       *  \deprecated Use dynamic values from the RegisterDictionary instead.
        */
           enum regnames64_enum
              {
@@ -4342,6 +4347,7 @@ HEADER_BINARY_X86_REGISTER_REFERENCE_EXPRESSION_START
              };
 
       /*! \brief Segment register names.
+       *  \deprecated Use dynamic values from the RegisterDictionary instead.
        */
           enum segregnames_enum
              {
@@ -4356,26 +4362,32 @@ HEADER_BINARY_X86_REGISTER_REFERENCE_EXPRESSION_START
              };
 
       /*! Function to generate register string names for low byte registers.
+       *  \deprecated Use RegisterDictionary::lookup() instead.
        */
           std::string get_regnames8l(regnames8l_enum n);
 
       /*! Function to generate register string names for high byte registers.
+       *  \deprecated Use RegisterDictionary::lookup() instead.
        */
           std::string get_regnames8h(regnames8h_enum n);
 
       /*! Function to generate register string names for 16 bit width registers.
+       *  \deprecated Use RegisterDictionary::lookup() instead.
        */
           std::string get_regnames16(regnames16_enum n);
 
       /*! Function to generate register string names for 32 bit width registers.
+       *  \deprecated Use RegisterDictionary::lookup() instead.
        */
           std::string get_regnames32(regnames32_enum n);
 
       /*! Function to generate register string names for 64 bit width registers.
+       *  \deprecated Use RegisterDictionary::lookup() instead.
        */
           std::string get_regnames64(regnames64_enum n);
 
       /*! Function to generate segment register string names registers.
+       *  \deprecated Use RegisterDictionary::lookup() instead.
        */
           std::string get_segregnames(segregnames_enum n);
 
