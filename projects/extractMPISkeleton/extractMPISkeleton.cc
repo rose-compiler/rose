@@ -114,16 +114,18 @@ int main(int argc, char **argv) {
     std::map <SgSymbol *, SgFunctionDefinition *> defTable;
     foreach(SgNode *n, defs) {
         SgFunctionDefinition *def = isSgFunctionDefinition(n);
-        SgFunctionDeclaration *decl = def->get_declaration();
-        SgSymbol *sym = decl->search_for_symbol_from_symbol_table();
-        if(defTable[sym] == NULL) {
-            defTable[sym] = def;
-            if(debug)
-                std::cout << "Added definition for "
+        if(def) {
+            SgFunctionDeclaration *decl = def->get_declaration();
+            SgSymbol *sym = decl->search_for_symbol_from_symbol_table();
+            if(defTable[sym] == NULL) {
+                defTable[sym] = def;
+                if(debug)
+                    std::cout << "Added definition for "
+                              << sym->get_name().getString() << std::endl;
+            } else if(debug) {
+                std::cout << "Duplicate definition for "
                           << sym->get_name().getString() << std::endl;
-        } else if(debug) {
-            std::cout << "Duplicate definition for "
-                      << sym->get_name().getString() << std::endl;
+            }
         }
     }
 
