@@ -6,9 +6,10 @@ Skeleton Generator
 
 The tool is invoked as follows:
 
-  extractMPISkeleton [options] filename.ext
+  extractMPISkeleton [options] file...
 
-The filename is skeletonized and the output is written to 'rose_filename.ext'.
+The filenames are skeletonized and the output is written to files with 'rose_'
+prepended to the filenames.
 
 The command line options are these:
 
@@ -24,9 +25,11 @@ The last two are only needed for debugging.
 Current limitations:
 
   - The skeleton generator only supports C and C++.
+    Fortran is not supported at the current time.
 
-  - The skeleton generator only processes a single source file at a time.
-    <FIXME: TRUE?>
+  - When extractMPISkeleton is applied to multiple files, the analysis it
+    performs is not guaranteed to be complete.  A workaround for this is to
+    simple catenate all the input files before processing.
 
 2. API Specification
 --------------------
@@ -124,14 +127,11 @@ code into separate functions.
 
 Annotations used by this tool are specified in the following format:
 
-#pragma skel [specific pragma text here]
+  #pragma skel [specific pragma text here]
 
 For example,
 
-#pragma skel loop iterate atmost(10)
-
-Annotations are currently only supported for programs written in C or
-C++.  Fortran is not supported at the current time.
+  #pragma skel loop iterate atmost(10)
 
 4.1. Loop annotations
 ---------------------
@@ -165,11 +165,21 @@ test their values).
 
 Three loop annotations are available:
 
-#pragma skel loop iterate exactly(n)
-#pragma skel loop iterate atmost(n)
-#pragma skel loop iterate atleast(n)
+  #pragma skel loop iterate exactly(n)
+  #pragma skel loop iterate atmost(n)
+  #pragma skel loop iterate atleast(n)
 
-In these annotations, 'n' is a C expression that is interpreted in the
+These correspond to forcing an exact, upper, and lower bound on the
+iteration count.  The pragma must be placed immediately preceeding the
+loop of interest.  Loops constructed with 'for', 'while', or 'do while'
+are all supported as well as loops containing break and continue statements.
+
+Note however, how we handle breaks in the new loops: we treat the break as an
+exception that overrides the 'exactly' or 'atleast' annotations.  So, if a break
+is reached in a loop before the n-th iteration, the loop is exited but a warning
+is printed to stderr.
+
+In the above annotations, 'n' is a C expression that is interpreted in the
 current scope of the program.
 Note that ROSE does not currently support floating point constants in
 such expressions in pragmas.
@@ -178,9 +188,7 @@ For example, instead of 0.5, one would need to write 1/2.  More
 complicated real numbers, like 0.21376, are easily specified using
 division by an appropriate power of ten (e.g., 21376/100000).
 
-These correspond to forcing an exact, upper, and lower bound on the
-iteration count.  The pragma must be placed immediately preceeding the
-loop of interest.  For example, the following will produce a skeleton
+For example, the following will produce a skeleton
 in which the loop iterates exactly 14 times.
 
 #pragma skel loop iterate exactly(14)
@@ -194,6 +202,8 @@ do {
   // do some message passing
   MPI_Send(stuff);
 } while (delta > eps);
+
+
 
 4.2. Data declaration annotations
 ---------------------------------
@@ -286,3 +296,142 @@ code skeleton.  In other words, preserve and remove give finer control over
 what's in or not in the skeleton while the outlining option indicates that
 instead of removing all non-skeleton code, it should be outlined.
 
+4.4.1 The Interactions of Preserve and Remove with Other Annotations
+--------------------------------------------------------------------
+
+The preserve and remove annotations cannot be used before another '#pragma
+skel', they must be used immediately before a normal C statement or declaration.
+This restriction shouldn't be too onerous because
+
+ - The initializer, loop, and condition pragmas imply "preserve".
+ - One could always use add a basic block if one wanted to have, for instance,
+   a remove and a loop pragma:
+
+     #pragma skel remove
+     {
+       #pragma skel loop iterate exactly(n)
+       for(;;) s;
+     }
+
+
+APPENDIX A: Quick Reference for Pragma Annotations
+--------------------------------------------------
+
+#pragma skel loop iterate ...
+for (;;) s; / while (p) s; / do {...} while (p)
+
+#pragma skel loop iterate exactly(n)
+#pragma skel loop iterate atmost(n)
+#pragma skel loop iterate atleast(n)
+
+  - 'n' is a C expression interpreted in the current scope of the program.
+
+
+#pragma skel remove
+#pragma skel preserve
+
+
+#pragma skel initializer repeat(x)
+int myArray[14];
+
+  - 'x' is a C expression interpreted in the current scope of the program.
+
+
+#pragma skel condition prob(p)
+if (test) ...
+
+  - 'p' is a C expression interpreted in the current scope of the program,
+  - 'p' should evaluate to a floating point number between 0 and 1.0.
+
+
+NOTE LIMITATION:
+
+  - C expressions embedded in the pragmas ('n', 'x', and 'p' above) cannot
+    contain floating point constants (ROSE limitation).
+
+
+APPENDIX B: Specifications for pragma based transformations
+-----------------------------------------------------------
+
+These 'specifications' are written somewhat informally in the following form:
+   forall v1,v2,... :
+     <ORIGINAL-CODE>
+   =>
+     <TRANSFORMED-CODE>
+
+#pragma skel initializer
+------------------------
+
+* #pragma skel initializer (static allocation)
+
+  forall i, a, n:        // 'n' must eval to int statically.
+    // in static scope:
+    #pragma skel initializer repeat(i)
+    int a[n];
+  =>
+    int a[n] = {i,i,...};       // i repeated n times.
+
+* #pragma skel initializer (automatic allocation)
+
+  forall i, a, e:        // 'e' a
+    // in non-static scope:
+    #pragma skel initializer repeat(i)
+    int a[e];
+  =>
+    int a[e];
+    for (k = 0; k < e; k++)
+      a[k] = i;
+
+
+#pragma skel loop iterate
+-------------------------
+
+exactly:
+
+  forall count:
+    #pragma skel loop iterate exactly(count)
+    for (init;pred;incr)
+      body;
+  =>
+    int k = 0;                                           k fresh!
+    for (init; pred, k<count; k++)
+       {body; incr;}
+
+atmost:
+
+  forall count:
+    #pragma skel loop iterate atmost(count)
+    for (init;pred;incr)
+      body;
+  =>
+    int k = 0;                                           k fresh!
+     for (init; pred && k<count; k++)
+       {body; incr;}
+
+atleast:
+
+  forall count:
+    #pragma skel loop iterate atleast(count)
+    for (init;pred;incr)
+      body;
+  =>
+    int k = 0;                                           k fresh!
+     for (init; pred || k<count; k++)
+       {body; incr;}
+
+
+  NOTE: on atleast, we could have some surprises if pred doesn't "stay false" on
+      successive iterations, e.g., we have loop sequences such that we have
+      pred, !pred, !pred, pred
+
+#pragma skel condition
+----------------------
+
+  forall f:
+      #pragma skel condition prob(f)
+      if (t)
+        s;
+  =>
+      #pragma skel condition prob(f)
+      if (t, ((double)rand()/RAND_MAX) < f)
+        s;
