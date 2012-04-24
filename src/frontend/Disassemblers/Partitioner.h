@@ -273,23 +273,15 @@ protected:
     /** Represents a function within the Partitioner. Each non-empty function will become an SgAsmFunction in the AST. */
     class Function {
     public:
-        /** Function return property.  This enum describes whether a function returns to its caller. */
-        enum MayReturn {
-            RET_UNKNOWN,                        /**< It is unknown whether this function returns or not. */
-            RET_NEVER,                          /**< This function is known to never return. */
-            RET_SOMETIMES,                      /**< This function may return (but is not required to return). */
-            RET_ALWAYS,                         /**< This function returns every time it's called. */
-        };
-
         Function(rose_addr_t entry_va)
             : reason(0), pending(true), entry_va(entry_va),
-              may_return_cur(RET_UNKNOWN), may_return_old(RET_UNKNOWN) {}
+              may_return_cur(SgAsmFunction::RET_UNKNOWN), may_return_old(SgAsmFunction::RET_UNKNOWN) {}
         Function(rose_addr_t entry_va, unsigned r)
             : reason(r), pending(true), entry_va(entry_va),
-              may_return_cur(RET_UNKNOWN), may_return_old(RET_UNKNOWN) {}
+              may_return_cur(SgAsmFunction::RET_UNKNOWN), may_return_old(SgAsmFunction::RET_UNKNOWN) {}
         Function(rose_addr_t entry_va, unsigned r, const std::string& name)
             : reason(r), name(name), pending(true), entry_va(entry_va),
-              may_return_cur(RET_UNKNOWN), may_return_old(RET_UNKNOWN) {}
+              may_return_cur(SgAsmFunction::RET_UNKNOWN), may_return_old(SgAsmFunction::RET_UNKNOWN) {}
 
         /** Remove all basic blocks from this function w/out deleting the blocks. */
         void clear_basic_blocks();
@@ -309,21 +301,21 @@ protected:
          *  Setting the current value does not update the old value; the old value is updated only by the commit_may_return()
          *  method.
          * @{ */
-        MayReturn get_may_return() const { return may_return_cur; }
-        void set_may_return(MayReturn may_return) { may_return_cur = may_return; }
+        SgAsmFunction::MayReturn get_may_return() const { return may_return_cur; }
+        void set_may_return(SgAsmFunction::MayReturn may_return) { may_return_cur = may_return; }
         bool changed_may_return() const { return may_return_cur != may_return_old; }
         void commit_may_return() { may_return_old = may_return_cur; }
         /** @} */
 
         /** Can this function return?  Returns true if it is known that this function can return to its caller. */
         bool possible_may_return() const {
-            return RET_SOMETIMES==get_may_return() || RET_ALWAYS==get_may_return();
+            return SgAsmFunction::RET_SOMETIMES==get_may_return() || SgAsmFunction::RET_ALWAYS==get_may_return();
         }
 
         /** Increase knowledge about the returnability of this function.  A current value of RET_UNKNOWN is always changed to
          * the @p new_value.  A current value of RET_SOMETIMES can be changed to RET_ALWAYS or RET_NEVER.  A current value of
          * RET_ALWAYS or RET_NEVER is not modified (not even to change RET_ALWAYS to RET_NEVER or vice versa). */
-        void promote_may_return(MayReturn new_value);
+        void promote_may_return(SgAsmFunction::MayReturn new_value);
 
         /** Initialize properties from another function.  This causes the properties of the @p other function to be copied into
          *  this function without changing this function's list of blocks or entry address.  The @p pending status of this
@@ -345,8 +337,8 @@ protected:
 
     private:
         /* If you add more data members, also update detach_thunk() and/or init_properties() */
-        MayReturn may_return_cur;               /**< Is it possible for this function to return? Current value of property. */
-        MayReturn may_return_old;               /**< Is it possible for this function to return? Previous value of property. */
+        SgAsmFunction::MayReturn may_return_cur; /**< Is it possible for this function to return? Current value of property. */
+        SgAsmFunction::MayReturn may_return_old; /**< Is it possible for this function to return? Previous value of property. */
     };
     typedef std::map<rose_addr_t, Function*> Functions;
 

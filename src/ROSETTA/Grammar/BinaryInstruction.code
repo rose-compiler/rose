@@ -4022,6 +4022,14 @@ HEADER_BINARY_FUNCTION_DECLARATION_START
         void remove_children();
         SgAsmBlock *get_entry_block() const;
 
+	/** Whether a function returns. */
+	enum MayReturn {
+		RET_UNKNOWN,			/**< It is unknown whether this function ever returns or not. */
+		RET_NEVER,			/**< This function is known to never return. */
+		RET_SOMETIMES,			/**< This function may return or not, depending on how it is called. */
+		RET_ALWAYS,			/**< This function returns each time it is called. */
+	};
+
         /** Reasons why an instruction might be considered the beginning of a function. These bit flags are also used by
          *  the instruction partitioner (Partitioner class) to determine what heuristics are used when partitioning
          *  instructions into functions. */
