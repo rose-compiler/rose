@@ -110,7 +110,7 @@ show:
 	@echo $($(VALUE))              # note: this expands!
 
 check-local:
-	cp -rf --copy-contents $(srcdir)/tests/* tests
+	cp -fR $(srcdir)/tests/* tests
 	(cd tests && ${MAKE} test)
 	@echo "***********************************************************************************************"
 	@echo "*** ROSE/projects/extractMPISkeleton: make check rule complete (terminated normally)"
