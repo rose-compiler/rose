@@ -838,12 +838,20 @@ bool
 AsmUnparser::FunctionAttributes::operator()(bool enabled, const FunctionArgs &args)
 {
     if (enabled) {
-        if (!args.func->get_can_return()) {
-            char buf[256];
-            int nprint = snprintf(buf, sizeof buf, prefix.c_str(), args.func->get_entry_va());
-            if ((size_t)nprint>=sizeof buf)
-                sprintf(buf, "0x%08"PRIx64" <OVERFLOW>: ", args.func->get_entry_va());
-            args.output <<buf <<"Function does not return to caller." <<std::endl;
+        switch (args.func->get_may_return()) {
+            case SgAsmFunction::RET_ALWAYS:
+            case SgAsmFunction::RET_SOMETIMES:
+            case SgAsmFunction::RET_UNKNOWN:
+                // the usual cases, don't say anything, assume function might return
+                break;
+            case SgAsmFunction::RET_NEVER: {
+                char buf[256];
+                int nprint = snprintf(buf, sizeof buf, prefix.c_str(), args.func->get_entry_va());
+                if ((size_t)nprint>=sizeof buf)
+                    sprintf(buf, "0x%08"PRIx64" <OVERFLOW>: ", args.func->get_entry_va());
+                args.output <<buf <<"Function does not return to caller." <<std::endl;
+                break;
+            }
         }
     }
     return enabled;
