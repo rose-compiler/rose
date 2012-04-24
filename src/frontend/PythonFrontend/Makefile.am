@@ -17,7 +17,7 @@ librosePythonFrontend_la_SOURCES = \
 include_HEADERS = \
 	PythonFrontend.h \
 	SagePythonInterface.h \
-	SagePythonSupport.C
+	SagePythonSupport.h
 
 sageTranslator_PYTHON = sageTranslator.py
 sageTranslatordir = $(libdir)/python
