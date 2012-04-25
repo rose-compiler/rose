@@ -57,7 +57,7 @@
  */
 class AsmFunctionIndex {
     /**************************************************************************************************************************
-     *                                  Constructors, etc.
+     *                                  The main public members
      **************************************************************************************************************************/
 public:
 
@@ -82,7 +82,20 @@ public:
      *  exist. */
     virtual void add_functions(SgNode *ast);
 
+    /** Clears the index.  Removes all functions from the index, but does not change any callback lists. */
+    virtual void clear() {
+        functions.clear();
+    }
 
+    /** Determines if an index is empty. Returns true if the index contains no functions, false otherwise. */
+    virtual bool empty() const {
+        return functions.empty();
+    }
+
+    /** Returns the number of functions in the index. */
+    virtual size_t size() const {
+        return functions.size();
+    }
 
     /**************************************************************************************************************************
      *                                  Functors for sorting
@@ -216,9 +229,16 @@ public:
 
     /** Base class for printing table cells.
      *
-     *  Two callbacks are defined: one to print the table headings and separators, and one to print the data content.
-     *  Subclasses usually don't override the former since it knows how to print a properly formatted column heading, but they
-     *  do override the second. */
+     *  Three kinds of callback are defined:
+     *  <ol>
+     *    <li>A callback to print the table heading and separator</li>
+     *    <li>A callback to print the data content</li>
+     *    <li>A callback invoked before and after the entire table</li>
+     *  </ol>
+     *
+     *  Subclasses almost always override the data content callback, but seldom override the others.  The default heading and
+     *  separator callback knows how to print a properly formatted column heading, and the default before and after callback
+     *  does nothing, but could be used to print keys, footnotes, etc. */
     class OutputCallback {
     public:
         /** Base class for callback arguments. */
@@ -227,6 +247,13 @@ public:
                 : index(index), output(output) {}
             const AsmFunctionIndex *index;              /**< Index object being printed. */
             std::ostream &output;                       /**< Stream to which index is being printed. */
+        };
+
+        /** Arguments for before-and after. */
+        struct BeforeAfterArgs: public GeneralArgs {
+            BeforeAfterArgs(const AsmFunctionIndex *index, std::ostream &output, int when)
+                : GeneralArgs(index, output), when(when) {}
+            int when;                                  /**< Zero implies before table, one implies after table. */
         };
 
         /** Arguments for column heading callbacks.  If @p set is non-NUL then instead of printing the column name it should
@@ -250,10 +277,15 @@ public:
             : name(name), width(width), header_prefix(" "), separator_prefix(" "), data_prefix(" ") {
             assert(width>0);
         }
+
         virtual ~OutputCallback() {}
 
         /** Set prefix characters. */
         void set_prefix(const std::string &header, const std::string &separator=" ", const std::string &data=" ");
+
+        /** Callback for before and after the table.  The default does nothing, but subclasses can override this to do things
+         *  like print descriptions, footnotes, etc. */
+        virtual bool operator()(bool enabled, const BeforeAfterArgs&);
 
         /** Callback to print a column heading. The base class implementation prints the column name using the specified column
          * width.  Subclasses probably don't need to override this method. */
@@ -324,12 +356,17 @@ public:
         virtual bool operator()(bool enabled, const DataArgs&);
     } sizeBytesCallback;
 
-    /** Print function reason bits. */
+    /** Print function reason bits. The show_key data member indicates when a key should be displayed.  The show_key values are
+     *  the same as the @p when member of the OutputCallback::GeneralArgs struct: zero means display before the table, one
+     *  means display after the table, any other value prevents display.  The key is not shown if there are no functions in the
+     *  index. The key is generated with SgAsmFunction::reason_key(). */
     class ReasonCallback: public OutputCallback {
     public:
-        ReasonCallback(): OutputCallback("Reason", 1) {} // width will be overridden in the callback
+        ReasonCallback(): OutputCallback("Reason", 1), key_when(0) {} // width will be overridden in the callback
+        virtual bool operator()(bool enabled, const BeforeAfterArgs&);
         virtual bool operator()(bool enabled, const HeadingArgs&);
         virtual bool operator()(bool enabled, const DataArgs&);
+        int key_when;   /**< When to show the key. Zero means before (default), one means after, other means never. */
     } reasonCallback;
 
     /** Print calling convention. */

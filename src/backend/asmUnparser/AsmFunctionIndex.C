@@ -58,6 +58,8 @@ AsmFunctionIndex::add_functions(SgNode *ast)
 void
 AsmFunctionIndex::print(std::ostream &out) const
 {
+    output_callbacks.apply(true, OutputCallback::BeforeAfterArgs(this, out, 0/*before*/));
+
     output_callbacks.apply(true, OutputCallback::HeadingArgs(this, out));
     out <<std::endl;
     output_callbacks.apply(true, OutputCallback::HeadingArgs(this, out, '-'));
@@ -70,6 +72,8 @@ AsmFunctionIndex::print(std::ostream &out) const
 
     output_callbacks.apply(true, OutputCallback::HeadingArgs(this, out, '-'));
     out <<std::endl;
+
+    output_callbacks.apply(true, OutputCallback::BeforeAfterArgs(this, out, 1/*after*/));
 }
 
 std::string
@@ -80,6 +84,12 @@ AsmFunctionIndex::OutputCallback::center(const std::string &s, size_t width)
     size_t rtsz = (width - s.size()) / 2;
     size_t ltsz = width - (s.size() + rtsz);
     return std::string(ltsz, ' ') + s + std::string(rtsz, ' ');
+}
+
+bool
+AsmFunctionIndex::OutputCallback::operator()(bool enabled, const BeforeAfterArgs &args)
+{
+    return enabled;
 }
 
 bool
@@ -174,6 +184,14 @@ AsmFunctionIndex::SizeBytesCallback::operator()(bool enabled, const DataArgs &ar
         args.output <<data_prefix <<std::setw(width) <<std::left <<nbytes;
         args.output.flags(oflags);
     }
+    return enabled;
+}
+
+bool
+AsmFunctionIndex::ReasonCallback::operator()(bool enabled, const BeforeAfterArgs &args)
+{
+    if (enabled && key_when==args.when && !args.index->empty())
+        args.output <<"Values for the \"Reason\" column:\n" <<SgAsmFunction::reason_key("  ");
     return enabled;
 }
 
