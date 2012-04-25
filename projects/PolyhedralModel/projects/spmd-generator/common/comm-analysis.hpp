@@ -42,7 +42,6 @@ enum SyncRequired {
 
 class CommDescriptor {
   protected:
-    CommDirection direction;
     ComputeSystem * source;
     ComputeSystem * destination;
 
@@ -52,7 +51,6 @@ class CommDescriptor {
 
   public:
     CommDescriptor(
-      CommDirection direction_,
       ComputeSystem * source_,
       ComputeSystem * destination_,
       ArrayPartition * data_,

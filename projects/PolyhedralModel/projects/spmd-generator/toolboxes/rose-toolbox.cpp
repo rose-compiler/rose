@@ -8,20 +8,29 @@ SgExpression * vecToExp(std::vector<std::pair<RoseVariable, int> > & vec) {
     return SageBuilder::buildIntVal(0);
 
   SgScopeStatement * scope = SageBuilder::topScopeStack();
-  SgExpression * res = SageBuilder::buildMultiplyOp(
-    SageBuilder::buildIntVal(vec[0].second),
-    vec[0].first.generate(scope)
-  );
+  SgExpression * res = NULL;
+  if (isConstant(vec[0].first))
+    res = SageBuilder::buildIntVal(vec[0].second);
+  else
+    res = SageBuilder::buildMultiplyOp(
+      SageBuilder::buildIntVal(vec[0].second),
+      vec[0].first.generate(scope)
+    );
 
   if (vec.size() == 1)
     return res;
 
   std::vector<std::pair<RoseVariable, int> >::iterator it;
   for (it = vec.begin()+1; it != vec.end(); it++) {
-    res = SageBuilder::buildAddOp(SageBuilder::buildMultiplyOp(
-      SageBuilder::buildIntVal(it->second),
-      it->first.generate(scope)
-    ));
+    SgExpression * tmp = NULL;
+    if (isConstant(it->first))
+      tmp = SageBuilder::buildIntVal(it->second);
+    else
+      tmp = SageBuilder::buildMultiplyOp(
+        SageBuilder::buildIntVal(it->second),
+        it->first.generate(scope)
+      );
+    res = SageBuilder::buildAddOp(res, tmp);
   }
 }
 

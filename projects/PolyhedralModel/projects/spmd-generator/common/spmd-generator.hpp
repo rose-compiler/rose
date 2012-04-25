@@ -3,9 +3,12 @@
 #define __SPMD_GENERATOR_HPP__
 
 #include <set>
+#include <map>
 #include <string>
 
 class SgStatement;
+class SgScopeStatement;
+class SgSourceFile;
 
 class SPMD_Driver;
 
@@ -19,10 +22,15 @@ class SPMD_Sync;
 class SPMD_Root;
 
 class ArrayPartition;
+class ComputeSystem;
+class ArrayAlias;
 
 class SPMD_Generator {
   protected:
     SPMD_Driver & driver;
+    SgScopeStatement * top_scope;
+
+    std::map<ComputeSystem *, std::map<ArrayPartition *, ArrayAlias *> > array_aliases;
 
   protected:
     SgStatement * codeGeneration(SPMD_Tree * tree);
@@ -32,22 +40,34 @@ class SPMD_Generator {
     SgStatement * codeGeneration(SPMD_DomainRestriction * tree);
 
   // Target model dependent methods
+    virtual SgSourceFile * buildKernelFile(std::string kernel_file_name) = 0;
+
+    virtual ArrayAlias * genAlias(ArrayPartition * array_partition, ComputeSystem * compute_system) = 0;
+
     virtual SgStatement * codeGeneration(SPMD_KernelCall * tree) = 0;
     virtual SgStatement * codeGeneration(SPMD_Comm * tree) = 0;
     virtual SgStatement * codeGeneration(SPMD_Sync * tree) = 0;
-    virtual void insertInit(SPMD_Tree * root_tree, std::set<ArrayPartition *> & init_comm, SgStatement * insert_init_after) = 0;
-    virtual void insertFinal(SPMD_Tree * root_tree, std::set<ArrayPartition *> & final_comm, SgStatement * insert_final_after) = 0;
-    virtual void generateKernel(SPMD_Tree * root_tree, std::string filename) = 0;
+
+    virtual void insertInit(
+      SPMD_Tree * root_tree,
+      std::map<ComputeSystem *, std::set<ArrayPartition *> > & to_be_aliased,
+      SgStatement * insert_init_after,
+      std::string kernel_file_name
+    ) = 0;
+    virtual void insertFinal(SPMD_Tree * root_tree, SgStatement * insert_final_after) = 0;
+    virtual void generateKernel(SPMD_Tree * root_tree, SgSourceFile * kernel_file) = 0;
 
   public:
     SPMD_Generator(SPMD_Driver & driver_);
+    virtual ~SPMD_Generator();
 
     SgStatement * generate(
       SgStatement * insert_init_after,
       SgStatement * insert_final_after,
       SgStatement * first,
       SgStatement * last,
-      std::string filename_for_kernels
+      SgScopeStatement * top_scope_ = NULL,
+      std::string kernel_file_name = std::string()
     );
 };
 

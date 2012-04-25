@@ -4,12 +4,13 @@
 #include "common/spmd-tree.hpp"
 #include "common/compute-system.hpp"
 
-NodePlacement::NodePlacement(System * system_) :
+NodePlacement::NodePlacement(ComputeSystem * system_) :
   system(system_)
 {}
 
 NodePlacement::~NodePlacement() {
-  delete system;
+  if (system != NULL)
+    delete system;
 }
 
 void NodePlacement::clear() {}

@@ -3,6 +3,7 @@
 #define __SPMD_DRIVER_HPP__
 
 #include <set>
+#include <map>
 
 class SgStatement;
 
@@ -12,21 +13,28 @@ class ArrayPartition;
 class ArrayAnalysis;
 class NodePlacement;
 
+class ComputeSystem;
+
 class SPMD_Driver {
   protected:
-    NodePlacement & placement;
-    ArrayAnalysis & array_analysis;
+    NodePlacement * placement;
+    ArrayAnalysis * array_analysis;
 
   public:
-    SPMD_Driver(NodePlacement & placement_, ArrayAnalysis & array_analysis_);
+    SPMD_Driver(NodePlacement * placement_, ArrayAnalysis * array_analysis_);
     virtual ~SPMD_Driver();
 
     SPMD_Root * generateTree(
       SgStatement * first,
       SgStatement * last,
-      std::set<ArrayPartition *> & init_comm,
-      std::set<ArrayPartition *> & final_comm
+      std::map<ComputeSystem *, std::set<ArrayPartition *> > & to_be_aliased
     );
+
+    const NodePlacement & getPlacement() const;
+    const ArrayAnalysis & getArrayAnalysis() const;
+
+    bool hasPlacement() const;
+    bool hasArrayAnalysis() const;
 
     virtual SPMD_Root * parse(SgStatement * first, SgStatement * last) = 0;
     virtual SPMD_Root * transform(SPMD_Root * tree) = 0;

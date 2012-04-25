@@ -24,6 +24,10 @@ SgLessOrEqualOp * Expression::genLessOrEqualToZero() const {
   return SageBuilder::buildLessOrEqualOp(generate(), SageBuilder::buildIntVal(0));
 }
 
+SgEqualityOp * Expression::genEqualToZero() const {
+  return SageBuilder::buildEqualityOp(generate(), SageBuilder::buildIntVal(0));
+}
+
 LinearExpression::LinearExpression() :
   map()
 {}
@@ -31,6 +35,19 @@ LinearExpression::LinearExpression() :
 LinearExpression::LinearExpression(const std::map<RoseVariable, int> & map_) :
   map(map_)
 {}
+
+LinearExpression::LinearExpression(const std::vector<std::pair<RoseVariable, int> > & vect) :
+  map()
+{
+  std::vector<std::pair<RoseVariable, int> >::const_iterator it;
+  for (it = vect.begin(); it != vect.end(); it++) {
+    std::map<RoseVariable, int>::iterator it_map = map.find(it->first);
+    if (it_map == map.end())
+      map.insert(*it);
+    else
+      it_map->second += it->second;
+  }
+}
 
 LinearExpression::~LinearExpression() {}
 

@@ -327,6 +327,11 @@ void ScopStatement<Function, Expression, VariableLBL>::Traverse(std::vector<Scop
 }
 
 template <class Function, class Expression, class VariableLBL>
+Expression * ScopStatement<Function, Expression, VariableLBL>::getExpression() {
+  return p_expression;
+}
+
+template <class Function, class Expression, class VariableLBL>
 bool ScopStatement<Function, Expression, VariableLBL>::isRoot() const { return false; }
 
 template <class Function, class Expression, class VariableLBL>

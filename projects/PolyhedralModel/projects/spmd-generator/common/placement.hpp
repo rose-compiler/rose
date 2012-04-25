@@ -2,6 +2,9 @@
 #ifndef __PLACEMENT_HPP_
 #define __PLACEMENT_HPP_
 
+#include <map>
+#include <set>
+#include <vector>
 #include <utility>
 
 class SPMD_Tree;
@@ -12,18 +15,19 @@ class System;
 class Domain;
 
 class ArrayAnalysis;
+class ArrayPartition;;
 
 class NodePlacement {
   protected:
-    System * system;
+    ComputeSystem * system;
 
   public:
-    NodePlacement(System * system_);
+    NodePlacement(ComputeSystem * system_);
     virtual ~NodePlacement();
 
-    virtual void place(SPMD_Root * root, ArrayAnalysis & array_analysis) = 0;
-    virtual Domain * onSameComputeSystem(SPMD_Tree * t1, SPMD_Tree * t2) = 0;
-    virtual std::pair<ComputeSystem *, Domain *> assigned(SPMD_Tree * tree) = 0;
+    virtual void place(SPMD_Root * root, ArrayAnalysis & array_analysis, std::map<ComputeSystem *, std::set<ArrayPartition *> > & to_be_aliased) = 0;
+    virtual Domain * onSameComputeSystem(SPMD_Tree * t1, SPMD_Tree * t2) const = 0;
+    virtual std::vector<std::pair<ComputeSystem *, Domain *> > * assigned(SPMD_Tree * tree) const = 0;
 
     virtual void clear();
 };

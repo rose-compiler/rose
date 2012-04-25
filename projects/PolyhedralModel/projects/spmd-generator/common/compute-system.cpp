@@ -3,13 +3,22 @@
 
 unsigned ComputeSystem::id_cnt = 0;
 
-ComputeSystem::ComputeSystem() :
-  id(id_cnt++)
+ComputeSystem::ComputeSystem(ComputeSystem * parent_) :
+  id(id_cnt++),
+  parent(parent_)
+{}
+
+ComputeSystem::ComputeSystem(const ComputeSystem & arg) :
+  id(id_cnt++),
+  parent(NULL)
 {}
 
 ComputeSystem::~ComputeSystem() {}
 
 unsigned ComputeSystem::getID() const { return id; }
+
+ComputeSystem * ComputeSystem::getParent() const { return parent; }
+void ComputeSystem::setParent(ComputeSystem * parent_) { parent = parent_; }
 
 unsigned Link::id_cnt = 0;
 
@@ -20,15 +29,4 @@ Link::Link() :
 Link::~Link() {}
 
 unsigned Link::getID() const { return id; }
-
-System::System() :
-  ComputeSystem(),
-  elements()
-{}
-
-System::~System() {
-  std::vector<ComputeSystem *>::iterator it;
-  for (it = elements.begin(); it != elements.end(); it++)
-    delete *it;
-}
 

@@ -11,6 +11,7 @@ class SgExpression;
 class SgAssignOp;
 class SgLessOrEqualOp;
 class SgGreaterOrEqualOp;
+class SgEqualityOp;
 class SgExprStatement;
 
 class Expression {
@@ -21,10 +22,18 @@ class Expression {
 
     SgGreaterOrEqualOp * genGreaterOrEqualToZero() const;
     SgLessOrEqualOp * genLessOrEqualToZero() const;
+    SgEqualityOp * genEqualToZero() const;
 
     virtual SgExpression * generate() const = 0;
 
     virtual Expression * copy() const = 0;
+
+/*
+    virtual Expression & operator + (const Expression & rhs) = 0;
+    virtual Expression & operator - (const Expression & rhs) = 0;
+    virtual Expression & operator * (int mul) = 0;
+    virtual Expression & operator / (int div) = 0;
+*/
 };
 
 class LinearExpression : public Expression {
@@ -34,6 +43,7 @@ class LinearExpression : public Expression {
   public:
     LinearExpression();
     LinearExpression(const std::map<RoseVariable, int> & map_);
+    LinearExpression(const std::vector<std::pair<RoseVariable, int> > & vect);
     ~LinearExpression();
 
     void set(RoseVariable & var, int value);

@@ -4,6 +4,7 @@
 #include "common/spmd-tree.hpp"
 #include "common/comm-analysis.hpp"
 #include "common/array-analysis.hpp"
+#include "common/placement.hpp"
 
 #include "toolboxes/rose-toolbox.hpp"
 #include "toolboxes/algebra-container.hpp"
@@ -19,26 +20,37 @@ SgStatement * SPMD_Generator::codeGeneration(SPMD_Tree * tree) {
   SPMD_Sync * sync = dynamic_cast<SPMD_Sync *>(tree);
   SPMD_Root * root = dynamic_cast<SPMD_Root *>(tree);
 
-  if (nat != NULL) codeGeneration(nat);
-  if (loop != NULL) codeGeneration(loop);
-  if (dr != NULL) codeGeneration(dr);
-  if (kc != NULL) codeGeneration(kc);
-  if (comm != NULL) codeGeneration(comm);
-  if (sync != NULL) codeGeneration(sync);
-  if (root != NULL) codeGeneration(root);
+  if (nat != NULL)  return codeGeneration(nat);
+  if (loop != NULL) return codeGeneration(loop);
+  if (dr != NULL)   return codeGeneration(dr);
+  if (kc != NULL)   return codeGeneration(kc);
+  if (comm != NULL) return codeGeneration(comm);
+  if (sync != NULL) return codeGeneration(sync);
+  if (root != NULL) return codeGeneration(root);
 }
 
 SgStatement * SPMD_Generator::codeGeneration(SPMD_NativeStmt * tree) {
-  return tree->getStatement();
+  SgExprStatement * expr_stmt = isSgExprStatement(tree->getStatement());
+  SgExpression * exp = SageInterface::copyExpression(expr_stmt->get_expression());
+
+  std::vector<std::pair<ComputeSystem *, Domain *> > * placement = driver.getPlacement().assigned(tree);
+  assert(placement != NULL && placement->size() == 1 && (*placement)[0].second == NULL);
+
+  std::map<ComputeSystem *, std::map<ArrayPartition *, ArrayAlias *> >::iterator it_cs = array_aliases.find((*placement)[0].first);
+  assert(it_cs != array_aliases.end());
+
+  std::map<ArrayPartition *, ArrayAlias *>::iterator it_alias;
+  for (it_alias = it_cs->second.begin(); it_alias != it_cs->second.end(); it_alias++)
+    exp = it_alias->second->propagate(exp);
+
+  return SageBuilder::buildExprStatement(exp);
 }
 
 SgStatement * SPMD_Generator::codeGeneration(SPMD_Loop * tree) {
   SgForStatement * for_stmt = NULL;
 
   RoseVariable & iterator = tree->getIterator();
-  Bounds * bounds = tree->getBounds();
-  int increment = tree->getIncrement();
-
+  Bounds * bounds = tree->getDomain();
 
   SgExprStatement * lb_stmt = bounds->genInit();
   SgExprStatement * ub_stmt = bounds->genTest();
@@ -73,12 +85,15 @@ SgStatement * SPMD_Generator::codeGeneration(SPMD_Loop * tree) {
 SgStatement * SPMD_Generator::codeGeneration(SPMD_DomainRestriction * tree) {
   SgIfStmt * if_stmt = NULL;
   
-  std::vector<Expression *> & restriction = tree->getRestriction();
+  const std::vector<std::pair<Expression *, bool> > & restriction = tree->getRestriction();
 
   std::vector<SgExpression *> sg_restriction;
-  std::vector<Expression *>::iterator it;
+  std::vector<std::pair<Expression *, bool> >::const_iterator it;
   for (it = restriction.begin(); it != restriction.end(); it++)
-    sg_restriction.push_back((*it)->genGreaterOrEqualToZero());
+    if (it->second)
+      sg_restriction.push_back(it->first->genEqualToZero());
+    else
+      sg_restriction.push_back(it->first->genGreaterOrEqualToZero());
 
   SgExpression * condition = genAnd(sg_restriction);
 
@@ -122,23 +137,34 @@ SgStatement * SPMD_Generator::codeGeneration(SPMD_Root * tree) {
 }
 
 SPMD_Generator::SPMD_Generator(SPMD_Driver & driver_) :
-  driver(driver_)
+  driver(driver_),
+  top_scope(NULL),
+  array_aliases()
 {}
+
+SPMD_Generator::~SPMD_Generator() {}
 
 SgStatement * SPMD_Generator::generate(
   SgStatement * insert_init_after,
   SgStatement * insert_final_after,
   SgStatement * first,
   SgStatement * last,
-  std::string filename_for_kernels
+  SgScopeStatement * top_scope_, 
+  std::string kernel_file_name
 ) {
-  std::set<ArrayPartition *> init_comm;
-  std::set<ArrayPartition *> final_comm;
-  SPMD_Tree * spmd_tree = driver.generateTree(first, last, init_comm, final_comm);
+  if (top_scope_ == NULL)
+    top_scope = SageBuilder::topScopeStack();
+  else
+    top_scope = top_scope_;
 
+  std::map<ComputeSystem *, std::set<ArrayPartition *> > to_be_aliased;
+  SPMD_Tree * spmd_tree = driver.generateTree(first, last, to_be_aliased);
+
+  insertInit(spmd_tree, to_be_aliased, insert_init_after, kernel_file_name);
   SgStatement * body = codeGeneration(spmd_tree);
-  insertInit(spmd_tree, init_comm, insert_init_after);
-  insertFinal(spmd_tree, final_comm, insert_final_after);
-  generateKernel(spmd_tree, filename_for_kernels);
+  insertFinal(spmd_tree, insert_final_after);
+  generateKernel(spmd_tree, buildKernelFile(kernel_file_name));
+
+  return body;
 }
 

@@ -261,7 +261,9 @@ class ScopStatement : public ScopTree<Function, Expression, VariableLBL> {
 		 * This function create, from reading of param 'vect', PolyhedricAnnotation::Domain and PolyhedricAnnotation::Scattering of 'p_expression'.
 		 */
 		virtual void Traverse(std::vector<ScopTree<Function, Expression, VariableLBL> *> * vect, size_t nbr_surr_loop);
-		
+
+		Expression * getExpression();
+
 		virtual bool isRoot() const;
 		virtual bool isLoop() const;
 		virtual bool isConditinnal() const;

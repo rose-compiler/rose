@@ -15,6 +15,8 @@ class SyncDescriptor;
 class Bounds;
 class Expression;
 
+class ComputeSystem;
+
 class SPMD_Tree {
   protected:
     SPMD_Tree * parent;
@@ -62,31 +64,29 @@ class SPMD_NativeStmt : public SPMD_Tree {
 class SPMD_Loop : public SPMD_Tree {
   protected:
     RoseVariable iterator;
-    Bounds * bounds;
-    int increment;
+    Bounds * domain;
 
   public:
-    SPMD_Loop(SPMD_Tree * parent_, RoseVariable iterator_, Bounds * bounds_, int increment_);
+    SPMD_Loop(SPMD_Tree * parent_, RoseVariable iterator_, Bounds * domain_);
     virtual ~SPMD_Loop();
 
     RoseVariable & getIterator();
-    Bounds * getBounds();
-    int getIncrement();
+    Bounds * getDomain();
 
   friend class SPMD_KernelCall;
 };
 
 class SPMD_DomainRestriction : public SPMD_Tree {
   protected:
-    std::vector<Expression *> restrictions;
+    std::vector<std::pair<Expression *, bool> > restrictions;
 
   public:
     SPMD_DomainRestriction(SPMD_Tree * parent_);
     virtual ~SPMD_DomainRestriction();
 
-    void addRestriction(Expression * restriction);
+    void addRestriction(Expression * restriction, bool is_equality);
 
-    std::vector<Expression *> & getRestriction();
+    std::vector<std::pair<Expression *, bool> > & getRestriction();
 
   friend class SPMD_KernelCall;
 };
@@ -94,11 +94,21 @@ class SPMD_DomainRestriction : public SPMD_Tree {
 class SPMD_KernelCall : public SPMD_Tree {
   protected:
     std::map<RoseVariable, Bounds *> iterators;
-    std::vector<Expression *> restrictions;
+    std::vector<std::pair<Expression *, bool> > restrictions;
+    unsigned id;
+
+  static unsigned id_cnt;
 
   public:
-    SPMD_KernelCall(SPMD_Tree * parent_, SPMD_Loop * first, SPMD_Loop * last);
+    SPMD_KernelCall(SPMD_Tree * parent_, SPMD_Tree * first, SPMD_Tree * last);
     virtual ~SPMD_KernelCall();
+
+    unsigned getID() const;
+
+    std::vector<SgExpression *> * generateDimensionSizes() const;
+
+    const std::map<RoseVariable, Bounds *> & getIterators() const;
+    const std::vector<std::pair<Expression *, bool> >  & getRestrictions() const;
 };
 
 class SPMD_Comm : public SPMD_Tree {
@@ -107,7 +117,7 @@ class SPMD_Comm : public SPMD_Tree {
 
   public:
     SPMD_Comm(SPMD_Tree * parent_, CommDescriptor * comm_descriptor_);
-    ~SPMD_Comm();
+    virtual ~SPMD_Comm();
 };
 
 class SPMD_Sync :  public SPMD_Tree {
@@ -116,7 +126,7 @@ class SPMD_Sync :  public SPMD_Tree {
 
   public:
     SPMD_Sync(SPMD_Tree * parent_, SyncDescriptor * sync_descriptor_);
-    ~SPMD_Sync();
+    virtual ~SPMD_Sync();
 };
 
 #endif /* __SPMD_TREE_HPP__ */

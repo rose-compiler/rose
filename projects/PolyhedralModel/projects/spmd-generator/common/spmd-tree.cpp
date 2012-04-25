@@ -48,59 +48,64 @@ SPMD_NativeStmt::~SPMD_NativeStmt() {}
 
 SgStatement * SPMD_NativeStmt::getStatement() { return stmt; }
 
-SPMD_Loop::SPMD_Loop(SPMD_Tree * parent_, RoseVariable iterator_, Bounds * bounds_, int increment_) :
+SPMD_Loop::SPMD_Loop(SPMD_Tree * parent_, RoseVariable iterator_, Bounds * domain_) :
   SPMD_Tree(parent_),
   iterator(iterator_),
-  bounds(bounds_),
-  increment(increment_)
+  domain(domain_)
 {}
 
 SPMD_Loop::~SPMD_Loop() {
-  delete bounds;
+  delete domain;
 }
 
 RoseVariable & SPMD_Loop::getIterator() { return iterator; }
 
-Bounds * SPMD_Loop::getBounds() { return bounds; }
-
-int SPMD_Loop::getIncrement() { return increment; }
+Bounds * SPMD_Loop::getDomain() { return domain; }
 
 SPMD_DomainRestriction::SPMD_DomainRestriction(SPMD_Tree * parent_) :
   SPMD_Tree(parent_),
   restrictions()
 {}
 
-SPMD_DomainRestriction::~SPMD_DomainRestriction() {}
-
-void SPMD_DomainRestriction::addRestriction(Expression * restriction) {
-  restrictions.push_back(restriction);
+SPMD_DomainRestriction::~SPMD_DomainRestriction() {
+  std::vector<std::pair<Expression *, bool> >::iterator it;
+  for (it = restrictions.begin(); it != restrictions.end(); it++)
+    delete it->first;
 }
 
-std::vector<Expression *> & SPMD_DomainRestriction::getRestriction() { return restrictions; }
+void SPMD_DomainRestriction::addRestriction(Expression * restriction, bool is_equality) {
+  restrictions.push_back(std::pair<Expression *, bool>(restriction, is_equality));
+}
 
-// first always survive...
-SPMD_KernelCall::SPMD_KernelCall(SPMD_Tree * parent_, SPMD_Loop * first, SPMD_Loop * last) :
+std::vector<std::pair<Expression *, bool> > & SPMD_DomainRestriction::getRestriction() { return restrictions; }
+
+unsigned SPMD_KernelCall::id_cnt = 0;
+
+SPMD_KernelCall::SPMD_KernelCall(SPMD_Tree * parent_, SPMD_Tree * first, SPMD_Tree * last) :
   SPMD_Tree(parent_),
   iterators(),
-  restrictions()
+  restrictions(),
+  id(id_cnt++)
 {
-  iterators.insert(std::pair<RoseVariable, Bounds *>(first->iterator, first->bounds->copy()));
+  bool contains_loop = false;
   if (first != last) {
-    iterators.insert(std::pair<RoseVariable, Bounds *>(last->iterator, last->bounds->copy()));
-    SPMD_Tree * current = last->parent;
-    while (current != first) {
+    SPMD_Tree * current = last;
+    while (current != first->parent) {
+      assert(current != NULL);
       SPMD_Loop * loop = dynamic_cast<SPMD_Loop *>(current);
       SPMD_DomainRestriction * restriction = dynamic_cast<SPMD_DomainRestriction *>(current);
       if (loop != NULL) {
-        iterators.insert(std::pair<RoseVariable, Bounds *>(loop->iterator, loop->bounds->copy()));
+        iterators.insert(std::pair<RoseVariable, Bounds *>(loop->iterator, loop->domain->copy()));
+        contains_loop = true;
       }
       else if (restriction != NULL) {
-        std::vector<Expression *>::iterator it_restrict;
+        std::vector<std::pair<Expression *, bool> >::iterator it_restrict;
         for (it_restrict = restriction->restrictions.begin(); it_restrict != restriction->restrictions.end(); it_restrict++)
-          restrictions.push_back((*it_restrict)->copy());
+          restrictions.push_back(std::pair<Expression *, bool>(it_restrict->first->copy(), it_restrict->second));
       }
     }
   }
+  assert(contains_loop);
 
   std::vector<SPMD_Tree *>::iterator it = last->children.begin();
   while (it != children.end()) {
@@ -123,7 +128,29 @@ SPMD_KernelCall::SPMD_KernelCall(SPMD_Tree * parent_, SPMD_Loop * first, SPMD_Lo
   }
 }
 
-SPMD_KernelCall::~SPMD_KernelCall() {}
+SPMD_KernelCall::~SPMD_KernelCall() {
+  std::map<RoseVariable, Bounds *>::iterator it0;
+  for (it0 = iterators.begin(); it0 != iterators.end(); it0++)
+    delete it0->second;
+
+  std::vector<std::pair<Expression *, bool> >::iterator it;
+  for (it = restrictions.begin(); it != restrictions.end(); it++)
+    delete it->first;
+}
+
+unsigned SPMD_KernelCall::getID() const { return id; }
+
+std::vector<SgExpression *> * SPMD_KernelCall::generateDimensionSizes() const {
+  std::vector<SgExpression *> * res = new std::vector<SgExpression *>();
+
+  // TODO
+
+  return res;
+}
+
+const std::map<RoseVariable, Bounds *> & SPMD_KernelCall::getIterators() const { return iterators; }
+
+const std::vector<std::pair<Expression *, bool> >  & SPMD_KernelCall::getRestrictions() const { return restrictions; }
 
 SPMD_Comm::SPMD_Comm(SPMD_Tree * parent_, CommDescriptor * comm_descriptor_) :
   SPMD_Tree(parent_),

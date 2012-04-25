@@ -18,13 +18,11 @@ void SyncDescriptor::addWaitee(ComputeSystem * cs) {
 }
 
 CommDescriptor::CommDescriptor(
-  CommDirection direction_,
   ComputeSystem * source_,
   ComputeSystem * destination_,
   ArrayPartition * data_,
   SyncRequired sync_
 ) :
-  direction(direction_),
   source(source_),
   destination(destination_),
   data(data_),

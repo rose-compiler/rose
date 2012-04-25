@@ -7,6 +7,7 @@
 #include <utility>
 #include <vector>
 #include <map>
+#include <set>
 
 class SPMD_Tree;
 class SPMD_Root;
@@ -16,10 +17,12 @@ class SyncDescriptor;
 class NodePlacement;
 
 class SgType;
+class SgExpression;
+class SgPntrArrRefExp;
+class SgVarRefExp;
 
 // Base type for Array analysis
 // it doesn't consider actual partition
-// it does however consider the aliases for each "ComputeSystem"
 class ArrayPartition {
   protected:
     RoseVariable original_array;
@@ -31,12 +34,31 @@ class ArrayPartition {
     ArrayPartition(RoseVariable & array_, std::vector<unsigned> & dimensions_, SgType * type_);
     virtual ~ArrayPartition();
 
+    virtual std::string getUniqueName() const = 0;
+
+    const std::vector<unsigned> & getDimensions() const;
+    SgType * getType() const;
+
   static ArrayPartition * merge(ArrayPartition * p1, ArrayPartition * p2);
+};
+
+class ArrayAlias {
+  protected:
+    ArrayPartition * original_array;
+
+  public:
+    ArrayAlias(ArrayPartition * original_array_);
+    virtual ~ArrayAlias();
+
+    SgExpression * propagate(SgExpression * exp) const;
+
+    virtual SgPntrArrRefExp * propagate(SgPntrArrRefExp * arr_ref) const = 0;
+    virtual SgVarRefExp * propagate(SgVarRefExp * var_ref) const = 0;
 };
 
 class ArrayAnalysis {
   protected:
-    std::map<SPMD_Tree *, std::pair<std::vector<ArrayPartition *>, std::vector<ArrayPartition *> > > accesses_map;
+    std::map<SPMD_Tree *, std::pair<std::set<ArrayPartition *>, std::set<ArrayPartition *> > > accesses_map;
 
   public:
     ArrayAnalysis();
@@ -44,10 +66,14 @@ class ArrayAnalysis {
 
     virtual void process(SPMD_Root * tree) = 0;
 
-    virtual std::vector<CommDescriptor *> genComm(SPMD_Tree * t1, SPMD_Tree * t2, NodePlacement & placement) = 0;
-    virtual std::vector<SyncDescriptor *> genSync(SPMD_Tree * t1, SPMD_Tree * t2, NodePlacement & placement) = 0;
+    virtual std::set<CommDescriptor *> genComm(SPMD_Tree * t1, SPMD_Tree * t2, NodePlacement & placement) = 0;
+    virtual std::set<SyncDescriptor *> genSync(SPMD_Tree * t1, SPMD_Tree * t2, NodePlacement & placement) = 0;
 
-    const std::pair<std::vector<ArrayPartition *>, std::vector<ArrayPartition *> > & get(SPMD_Tree * tree) const;
+    const std::pair<std::set<ArrayPartition *>, std::set<ArrayPartition *> > & get(SPMD_Tree * tree) const;
+
+    std::set<ArrayPartition *> * get_in(SPMD_Tree * tree) const;
+    std::set<ArrayPartition *> * get_out(SPMD_Tree * tree) const;
+    std::set<ArrayPartition *> * get_inout(SPMD_Tree * tree) const;
 
     virtual void clear();
 };
