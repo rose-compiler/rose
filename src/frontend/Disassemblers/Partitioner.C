@@ -2852,6 +2852,11 @@ Partitioner::name_import_entries(SgAsmGenericHeader *fhdr)
 void
 Partitioner::pre_cfg(SgAsmInterpretation *interp/*=NULL*/)
 {
+    if (debug) {
+        fprintf(debug, "Function reasons referenced by Partitioner debugging output:\n%s",
+                SgAsmFunction::reason_key("  ").c_str());
+    }
+
     mark_ipd_configuration();   /*seed partitioner based on IPD configuration information*/
 
     if (interp) {
