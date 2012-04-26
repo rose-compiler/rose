@@ -116,6 +116,17 @@ RSIM_Process::get_thread(pid_t tid) const
     return retval;
 }
 
+std::vector<RSIM_Thread*>
+RSIM_Process::get_all_threads() const
+{
+    std::vector<RSIM_Thread*> retval;
+    RTS_READ(rwlock()) {
+        for (std::map<pid_t, RSIM_Thread*>::const_iterator ti=threads.begin(); ti!=threads.end(); ++ti)
+            retval.push_back(ti->second);
+    } RTS_READ_END;
+    return retval;
+}
+
 size_t
 RSIM_Process::mem_write(const void *buf, rose_addr_t va, size_t size, unsigned req_perms/*=MM_PROT_WRITE*/)
 {
@@ -1800,5 +1811,49 @@ RSIM_Process::set_callbacks(const RSIM_Callbacks &cb)
         callbacks = cb; // overloaded, thread safe
     } RTS_WRITE_END;
 }
+
+/* Install callback in process and optionally in all existing threads. */
+#define RSIM_PROCESS_DEFINE_INSTALL_CALLBACK(CALLBACK_CLASS, INSERTION_FUNCTION)                                               \
+    void                                                                                                                       \
+    RSIM_Process::install_callback(CALLBACK_CLASS *cb, RSIM_Callbacks::When when, bool everywhere)                             \
+    {                                                                                                                          \
+        if (cb) {                                                                                                              \
+            callbacks.INSERTION_FUNCTION(when, cb);                                                                            \
+            if (everywhere) {                                                                                                  \
+                std::vector<RSIM_Thread*> thds = get_all_threads();                                                            \
+                for (std::vector<RSIM_Thread*>::iterator ti=thds.begin(); ti!=thds.end(); ++ti)                                \
+                    (*ti)->install_callback(dynamic_cast<CALLBACK_CLASS*>(cb->clone()), when);                                 \
+            }                                                                                                                  \
+        }                                                                                                                      \
+    }
+RSIM_PROCESS_DEFINE_INSTALL_CALLBACK(RSIM_Callbacks::InsnCallback,    add_insn_callback);
+RSIM_PROCESS_DEFINE_INSTALL_CALLBACK(RSIM_Callbacks::MemoryCallback,  add_memory_callback);
+RSIM_PROCESS_DEFINE_INSTALL_CALLBACK(RSIM_Callbacks::SyscallCallback, add_syscall_callback);
+RSIM_PROCESS_DEFINE_INSTALL_CALLBACK(RSIM_Callbacks::SignalCallback,  add_signal_callback);
+RSIM_PROCESS_DEFINE_INSTALL_CALLBACK(RSIM_Callbacks::ThreadCallback,  add_thread_callback);
+RSIM_PROCESS_DEFINE_INSTALL_CALLBACK(RSIM_Callbacks::ProcessCallback, add_process_callback);
+#undef RSIM_PROCESS_DEFINE_INSTALL_CALLBACK
+
+/* Remove callback in process and optionally in all existing threads. */
+#define RSIM_PROCESS_DEFINE_REMOVE_CALLBACK(CALLBACK_CLASS, REMOVAL_FUNCTION)                                                  \
+    void                                                                                                                       \
+    RSIM_Process::remove_callback(CALLBACK_CLASS *cb, RSIM_Callbacks::When when, bool everywhere)                              \
+    {                                                                                                                          \
+        if (cb) {                                                                                                              \
+            callbacks.REMOVAL_FUNCTION(when, cb);                                                                              \
+            if (everywhere) {                                                                                                  \
+                std::vector<RSIM_Thread*> thds = get_all_threads();                                                            \
+                for (std::vector<RSIM_Thread*>::iterator ti=thds.begin(); ti!=thds.end(); ++ti)                                \
+                    (*ti)->remove_callback(cb, when);                                                                          \
+            }                                                                                                                  \
+        }                                                                                                                      \
+    }
+RSIM_PROCESS_DEFINE_REMOVE_CALLBACK(RSIM_Callbacks::InsnCallback,    remove_insn_callback);
+RSIM_PROCESS_DEFINE_REMOVE_CALLBACK(RSIM_Callbacks::MemoryCallback,  remove_memory_callback);
+RSIM_PROCESS_DEFINE_REMOVE_CALLBACK(RSIM_Callbacks::SyscallCallback, remove_syscall_callback);
+RSIM_PROCESS_DEFINE_REMOVE_CALLBACK(RSIM_Callbacks::SignalCallback,  remove_signal_callback);
+RSIM_PROCESS_DEFINE_REMOVE_CALLBACK(RSIM_Callbacks::ThreadCallback,  remove_thread_callback);
+RSIM_PROCESS_DEFINE_REMOVE_CALLBACK(RSIM_Callbacks::ProcessCallback, remove_process_callback);
+#undef RSIM_PROCESS_DEFINE_REMOVE_CALLBACK
 
 #endif /* ROSE_ENABLE_SIMULATOR */

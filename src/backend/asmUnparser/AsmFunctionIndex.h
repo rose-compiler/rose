@@ -57,7 +57,7 @@
  */
 class AsmFunctionIndex {
     /**************************************************************************************************************************
-     *                                  Constructors, etc.
+     *                                  The main public members
      **************************************************************************************************************************/
 public:
 
@@ -82,7 +82,20 @@ public:
      *  exist. */
     virtual void add_functions(SgNode *ast);
 
+    /** Clears the index.  Removes all functions from the index, but does not change any callback lists. */
+    virtual void clear() {
+        functions.clear();
+    }
 
+    /** Determines if an index is empty. Returns true if the index contains no functions, false otherwise. */
+    virtual bool empty() const {
+        return functions.empty();
+    }
+
+    /** Returns the number of functions in the index. */
+    virtual size_t size() const {
+        return functions.size();
+    }
 
     /**************************************************************************************************************************
      *                                  Functors for sorting
@@ -197,8 +210,70 @@ public:
         return *this;
     }
 
+    /**************************************************************************************************************************
+     *                                  Footnotes
+     **************************************************************************************************************************/
+public:
+    class Footnotes {
+    public:
+        Footnotes() {
+            set_footnote_title("== Footnotes ==");
+        }
 
+        /** Adds a footnote to the table.  Footnotes are printed at the end of the table by the ShowFootnotes callback
+         *  class. Footnotes are numbered starting at one rather than zero, and this function returns the footnote number.
+         *  Calling this function with an empty @p text argument will reserve a footnote number but will not print the footnote
+         *  in the final output.
+         *
+         *  The first line of the footnote is prefixed by the string "Footnote *N: " and subsequent lines are indented by the
+         *  length of the prefix. */
+        size_t add_footnote(const std::string &text);
 
+        /** Change the text associated with a footnote.  The footnote must already exist, and the footnote @p idx is the value
+         *  returned by a previous call to add_footnote().  Setting @p text to the empty string causes the footnote to not
+         *  appear in the final output, but other footnotes are not renumbered to close the gap (because their references might
+         *  have already been printed.  See also, add_footnote(). */
+        void change_footnote(size_t idx, const std::string &text);
+
+        /** Get the string for a footnote.  The footnote must already exist and @p idx is a footnote number returned by a previous
+         *  call to add_footnote(). */
+        const std::string& get_footnote(size_t idx) const;
+
+        /** Returns the number of footnotes.  Footnotes are numbered starting at one.  The return value includes empty footnotes
+         *  that won't be printed by the final output. */
+        size_t size() const { return footnotes.size(); }
+
+        /** Change the footnote title string.  The title string is printed before the first footnote if there are any footnotes
+         *  with a non-empty string. */
+        void set_footnote_title(const std::string &title);
+
+        /** Get the footnote title.  The default title is "== Footnotes ==". */
+        const std::string& get_footnote_title() const;
+
+        /** Set the footnote prefix string.  This string is printed before every line of the footnote area. The default is the
+         *  empty string. */
+        void set_footnote_prefix(const std::string &prefix) { footnote_prefix = prefix; }
+
+        /** Get the footnote prefix string.  This string is printed before every line of the footnote area. */
+        const std::string& get_footnote_prefix() const { return footnote_prefix; }
+
+        /** Generates a footnote name from a footnote index.  The default is to return the index prefixed by an asterisk. */
+        std::string get_footnote_name(size_t idx) const;
+
+        /** Print non-empty footnotes. */
+        void print(std::ostream&) const;
+
+        /** Print non-empty footnotes. */
+        friend std::ostream& operator<<(std::ostream &o, const Footnotes *footnotes) {
+            footnotes->print(o);
+            return o;
+        }
+
+    protected:
+        std::vector<std::string> footnotes;     /**< List of footnotes. Elmt zero is an optional  footnote title string.*/
+        std::string footnote_prefix;            /**< String to emit before every footnote line. */
+    };
+    
     /**************************************************************************************************************************
      *                                  Output methods
      **************************************************************************************************************************/
@@ -216,44 +291,69 @@ public:
 
     /** Base class for printing table cells.
      *
-     *  Two callbacks are defined: one to print the table headings and separators, and one to print the data content.
-     *  Subclasses usually don't override the former since it knows how to print a properly formatted column heading, but they
-     *  do override the second. */
+     *  Three kinds of callback are defined:
+     *  <ol>
+     *    <li>A callback to print the table heading and separator</li>
+     *    <li>A callback to print the data content</li>
+     *    <li>A callback invoked before and after the entire table</li>
+     *  </ol>
+     *
+     *  Subclasses almost always override the data content callback, but seldom override the others.  The default heading and
+     *  separator callback knows how to print a properly formatted column heading, and the default before and after callback
+     *  does nothing, but could be used to print keys, footnotes, etc.
+     *
+     *  If a callback has no column name and zero width, then its header and content callback is not invoked; its content
+     *  callback is still invoked but should not produce any output. */
     class OutputCallback {
     public:
         /** Base class for callback arguments. */
         struct GeneralArgs {
-            GeneralArgs(const AsmFunctionIndex *index, std::ostream &output)
-                : index(index), output(output) {}
+            GeneralArgs(const AsmFunctionIndex *index, std::ostream &output, Footnotes *footnotes)
+                : index(index), output(output), footnotes(footnotes) {}
             const AsmFunctionIndex *index;              /**< Index object being printed. */
             std::ostream &output;                       /**< Stream to which index is being printed. */
+            Footnotes *footnotes;                       /**< Footnotes (newly created for each index output). */
+        };
+
+        /** Arguments for before-and after. */
+        struct BeforeAfterArgs: public GeneralArgs {
+            BeforeAfterArgs(const AsmFunctionIndex *index, std::ostream &output, Footnotes *footnotes, int when)
+                : GeneralArgs(index, output, footnotes), when(when) {}
+            int when;                                  /**< Zero implies before table, one implies after table. */
         };
 
         /** Arguments for column heading callbacks.  If @p set is non-NUL then instead of printing the column name it should
          *  print a separator line using the @p sep character. */
         struct HeadingArgs: public GeneralArgs {
-            HeadingArgs(const AsmFunctionIndex *index, std::ostream &output, char sep='\0')
-                : GeneralArgs(index, output), sep(sep) {}
+            HeadingArgs(const AsmFunctionIndex *index, std::ostream &output, Footnotes *footnotes, char sep='\0')
+                : GeneralArgs(index, output, footnotes), sep(sep) {}
             char sep;                                   /**< If non-NUL, then print a line of these characters. */
         };
 
         /** Arguments for column cells. */
         struct DataArgs: public GeneralArgs {
-            DataArgs(const AsmFunctionIndex *index, std::ostream &output, SgAsmFunction *func, size_t rowid)
-                : GeneralArgs(index, output), func(func), rowid(rowid) {}
+            DataArgs(const AsmFunctionIndex *index, std::ostream &output, Footnotes *footnotes, SgAsmFunction *func, size_t rowid)
+                : GeneralArgs(index, output, footnotes), func(func), rowid(rowid) {}
             SgAsmFunction *func;
             size_t rowid;
         };
 
-        /** Constructor.  Every column must have a name and non-zero width. */
-        OutputCallback(const std::string &name, size_t width)
-            : name(name), width(width), header_prefix(" "), separator_prefix(" "), data_prefix(" ") {
-            assert(width>0);
+        /** Constructor.  Every column must have a name and non-zero width.  If a column is given a description then the column
+         *  name will reference a footnote containing the description.  The footnote is added by the default HeadingArgs
+         *  callback, so subclasses should take care to add their own footnote if necessary. */
+        OutputCallback(const std::string &name, size_t width, const std::string description="")
+            : name(name), desc(description), width(width), header_prefix(" "), separator_prefix(" "), data_prefix(" ") {
+            assert(width>0 || name.empty());
         }
+
         virtual ~OutputCallback() {}
 
         /** Set prefix characters. */
         void set_prefix(const std::string &header, const std::string &separator=" ", const std::string &data=" ");
+
+        /** Callback for before and after the table.  The default does nothing, but subclasses can override this to do things
+         *  like print descriptions, footnotes, etc. */
+        virtual bool operator()(bool enabled, const BeforeAfterArgs&);
 
         /** Callback to print a column heading. The base class implementation prints the column name using the specified column
          * width.  Subclasses probably don't need to override this method. */
@@ -267,6 +367,7 @@ public:
         std::string center(const std::string&, size_t width); /**< Center @p s in a string of length @p width. */
 
         std::string name;                               /**< Column name used when printing table headers. */
+        std::string desc;                               /**< Optional description to appear in footnote. */
         size_t width;                                   /**< Minimum width of column header or data. */
         std::string header_prefix;                      /**< Character(s) to print before headings. */
         std::string separator_prefix;                   /**< Character(s) to print before line separators. */
@@ -345,6 +446,13 @@ public:
         NameCallback(): OutputCallback("Name", 32) {}
         virtual bool operator()(bool enabled, const DataArgs&);
     } nameCallback;
+
+    /** Footnotes at the end of the table. */
+    class FootnotesCallback: public OutputCallback {
+    public:
+        FootnotesCallback(): OutputCallback("", 0) {}   // not a table column
+        virtual bool operator()(bool enabled, const BeforeAfterArgs&);
+    } footnotesCallback;
 
 
 

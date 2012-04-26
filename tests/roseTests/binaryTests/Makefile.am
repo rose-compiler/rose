@@ -414,6 +414,16 @@ EXTRA_DIST += testPeImports.conf testPeImports.ans
 testPeImports.passed: testPeImports.conf testPeImports
 	@$(RTH_RUN) INPUT=proxycfg.exe $< $@
 
+# Symbolic semantics test from Cory Cohen that triggers a reference-counting bug.
+noinst_PROGRAMS += cory001
+cory001_SOURCES = cory001.C
+cory001_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+STATIC_TEST_TARGETS += cory001.passed
+EXTRA_DIST += cory001.conf
+cory001.passed: cory001.conf cory001
+	@$(RTH_RUN) $< $@
+
+
 ###############################################################################################################################
 # DEMOS
 #

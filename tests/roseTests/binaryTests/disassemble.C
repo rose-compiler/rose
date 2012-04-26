@@ -284,7 +284,7 @@ function_hash(SgAsmFunction *func, unsigned char digest[20])
 class ShowFunctions: public AsmFunctionIndex {
 public:
     struct HashCallback: public OutputCallback {
-        HashCallback(): OutputCallback("Hash", 16) {}
+        HashCallback(): OutputCallback("Hash", 16, "Experimental semantic hash of the entire function.") {}
         virtual bool operator()(bool enabled, const DataArgs &args) {
             if (enabled) {
                 unsigned char sha1[20];
@@ -301,6 +301,19 @@ public:
     ShowFunctions(SgNode *ast): AsmFunctionIndex(ast) {
         sort_by_entry_addr();
         output_callbacks.before(&nameCallback, &hashCallback, 1);
+    }
+
+    virtual void print(std::ostream &o) const {
+        static const size_t width = 130;
+        std::string sep_line(width, '=');
+        std::string title("Function Index");
+        std::string title_line(width, ' ');
+        title_line.replace(0, 3, "===");
+        title_line.replace(width-3, 3, "===");
+        title_line.replace((std::max(width, title.size())-title.size())/2, title.size(), title);
+        o <<"\n\n" <<sep_line <<"\n" <<title_line <<"\n" <<sep_line <<"\n";
+        AsmFunctionIndex::print(o);
+        o <<sep_line <<"\n\n";
     }
 };
 
@@ -1285,6 +1298,7 @@ main(int argc, char *argv[])
         unparser.add_function_labels(block);
         unparser.set_organization(do_linear ? AsmUnparser::ORGANIZED_BY_ADDRESS : AsmUnparser::ORGANIZED_BY_AST);
         unparser.add_control_flow_graph(cfg);
+        fputs("\n\n", stdout);
         unparser.unparse(std::cout, block);
         fputs("\n\n", stdout);
     }

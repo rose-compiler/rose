@@ -214,27 +214,53 @@ public:
 
     /** Install a callback object.
      *
-     *  This is just a convenient way of installing a callback object.  It appends it to the BEFORE slot of the appropriate
-     *  queue.
+     *  This is just a convenient way of installing a callback object.  It appends it to the BEFORE slot (by default) of the
+     *  appropriate queue.
      *
      *  @{ */  // ******* Similar functions in RSIM_Simulator and RSIM_Process ******
-    void install_callback(RSIM_Callbacks::InsnCallback *cb) {
-        callbacks.add_insn_callback(RSIM_Callbacks::BEFORE, cb);
+    void install_callback(RSIM_Callbacks::InsnCallback *cb, RSIM_Callbacks::When when=RSIM_Callbacks::BEFORE) {
+        callbacks.add_insn_callback(when, cb);
     }
-    void install_callback(RSIM_Callbacks::MemoryCallback *cb) {
-        callbacks.add_memory_callback(RSIM_Callbacks::BEFORE, cb);
+    void install_callback(RSIM_Callbacks::MemoryCallback *cb, RSIM_Callbacks::When when=RSIM_Callbacks::BEFORE) {
+        callbacks.add_memory_callback(when, cb);
     }
-    void install_callback(RSIM_Callbacks::SyscallCallback *cb) {
-        callbacks.add_syscall_callback(RSIM_Callbacks::BEFORE, cb);
+    void install_callback(RSIM_Callbacks::SyscallCallback *cb, RSIM_Callbacks::When when=RSIM_Callbacks::BEFORE) {
+        callbacks.add_syscall_callback(when, cb);
     }
-    void install_callback(RSIM_Callbacks::SignalCallback *cb) {
-        callbacks.add_signal_callback(RSIM_Callbacks::BEFORE, cb);
+    void install_callback(RSIM_Callbacks::SignalCallback *cb, RSIM_Callbacks::When when=RSIM_Callbacks::BEFORE) {
+        callbacks.add_signal_callback(when, cb);
     }
-    void install_callback(RSIM_Callbacks::ThreadCallback *cb) {
-        callbacks.add_thread_callback(RSIM_Callbacks::BEFORE, cb);
+    void install_callback(RSIM_Callbacks::ThreadCallback *cb, RSIM_Callbacks::When when=RSIM_Callbacks::BEFORE) {
+        callbacks.add_thread_callback(when, cb);
     }
-    void install_callback(RSIM_Callbacks::ProcessCallback *cb) {
-        callbacks.add_process_callback(RSIM_Callbacks::BEFORE, cb);
+    void install_callback(RSIM_Callbacks::ProcessCallback *cb, RSIM_Callbacks::When when=RSIM_Callbacks::BEFORE) {
+        callbacks.add_process_callback(when, cb);
+    }
+    /** @} */
+
+    /** Remove a callback object.
+     *
+     *  This is just a convenient way of removing callback objects.  It removes up to one instance of the callback from the
+     *  thread.  The comparison to find a callback object is by callback address.
+     *
+     * @{ */
+    void remove_callback(RSIM_Callbacks::InsnCallback *cb, RSIM_Callbacks::When when=RSIM_Callbacks::BEFORE) {
+        callbacks.remove_insn_callback(when, cb);
+    }
+    void remove_callback(RSIM_Callbacks::MemoryCallback *cb, RSIM_Callbacks::When when=RSIM_Callbacks::BEFORE) {
+        callbacks.remove_memory_callback(when, cb);
+    }
+    void remove_callback(RSIM_Callbacks::SyscallCallback *cb, RSIM_Callbacks::When when=RSIM_Callbacks::BEFORE) {
+        callbacks.remove_syscall_callback(when, cb);
+    }
+    void remove_callback(RSIM_Callbacks::SignalCallback *cb, RSIM_Callbacks::When when=RSIM_Callbacks::BEFORE) {
+        callbacks.remove_signal_callback(when, cb);
+    }
+    void remove_callback(RSIM_Callbacks::ThreadCallback *cb, RSIM_Callbacks::When when=RSIM_Callbacks::BEFORE) {
+        callbacks.remove_thread_callback(when, cb);
+    }
+    void remove_callback(RSIM_Callbacks::ProcessCallback *cb, RSIM_Callbacks::When when=RSIM_Callbacks::BEFORE) {
+        callbacks.remove_process_callback(when, cb);
     }
     /** @} */
 

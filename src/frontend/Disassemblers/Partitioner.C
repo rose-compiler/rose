@@ -837,17 +837,17 @@ Partitioner::Function::move_data_blocks_from(Function *other)
 
 /* Increase knowledge about may-return property. */
 void
-Partitioner::Function::promote_may_return(MayReturn new_value) {
+Partitioner::Function::promote_may_return(SgAsmFunction::MayReturn new_value) {
     switch (get_may_return()) {
-        case RET_UNKNOWN:
+        case SgAsmFunction::RET_UNKNOWN:
             set_may_return(new_value);
             break;
-        case RET_SOMETIMES:
-            if (RET_ALWAYS==new_value || RET_NEVER==new_value)
+        case SgAsmFunction::RET_SOMETIMES:
+            if (SgAsmFunction::RET_ALWAYS==new_value || SgAsmFunction::RET_NEVER==new_value)
                 set_may_return(new_value);
             break;
-        case RET_ALWAYS:
-        case RET_NEVER:
+        case SgAsmFunction::RET_ALWAYS:
+        case SgAsmFunction::RET_NEVER:
             break;
     }
 }
@@ -856,7 +856,7 @@ void
 Partitioner::Function::show_properties(FILE *debug) const
 {
     if (debug) {
-        std::string may_return_str = stringifyPartitionerFunctionMayReturn(get_may_return(), "RET_");
+        std::string may_return_str = stringifySgAsmFunctionMayReturn(get_may_return(), "RET_");
         for (size_t i=0; i<may_return_str.size(); ++i)
             may_return_str[i] = tolower(may_return_str[i]);
         fprintf(debug, "{nbblocks=%zu, ndblocks=%zu, may-return=%s}",
@@ -1033,7 +1033,7 @@ Partitioner::append(Function* f, BasicBlock *bb, unsigned reason, bool keep/*=fa
      * here). */
     update_analyses(bb);
     if (bb->cache.function_return)
-        f->promote_may_return(Function::RET_SOMETIMES);
+        f->promote_may_return(SgAsmFunction::RET_SOMETIMES);
 }
 
 /** Append data region to function.  This method is a bit of a misnomer because the order that the data blocks are appended to
@@ -1579,9 +1579,9 @@ Partitioner::mark_elf_plt_entries(SgAsmGenericHeader *fhdr)
         if ("abort@plt"!=name && "execl@plt"!=name && "execlp@plt"!=name && "execv@plt"!=name && "execvp@plt"!=name &&
             "exit@plt"!=name && "_exit@plt"!=name && "fexecve@plt"!=name &&
             "longjmp@plt"!=name && "__longjmp@plt"!=name && "siglongjmp@plt"!=name) {
-            plt_func->set_may_return(Function::RET_ALWAYS);
+            plt_func->set_may_return(SgAsmFunction::RET_ALWAYS);
         } else {
-            plt_func->set_may_return(Function::RET_NEVER);
+            plt_func->set_may_return(SgAsmFunction::RET_NEVER);
         }
     }
 }
@@ -2852,6 +2852,11 @@ Partitioner::name_import_entries(SgAsmGenericHeader *fhdr)
 void
 Partitioner::pre_cfg(SgAsmInterpretation *interp/*=NULL*/)
 {
+    if (debug) {
+        fprintf(debug, "Function reasons referenced by Partitioner debugging output:\n%s",
+                SgAsmFunction::reason_key("  ").c_str());
+    }
+
     mark_ipd_configuration();   /*seed partitioner based on IPD configuration information*/
 
     if (interp) {
@@ -3120,7 +3125,7 @@ Partitioner::analyze_cfg(SgAsmBlock::Reason reason)
                      *    function_B:
                      *        RET
                      */
-                    bb->function->promote_may_return(Function::RET_SOMETIMES);
+                    bb->function->promote_may_return(SgAsmFunction::RET_SOMETIMES);
                     if (debug) {
                         fprintf(debug, "  Function F%08"PRIx64" may return by virtue of call fall-through at B%08"PRIx64"\n",
                                 bb->function->entry_va, bb->address());
@@ -3144,7 +3149,7 @@ Partitioner::analyze_cfg(SgAsmBlock::Reason reason)
                          * We don't need to set function_A->pending because the reachability of the instruction after its JMP
                          * won't change regardless of whether the "called" function returns (i.e., the return is to the caller
                          * of function_A, not to function_A itself. */
-                        bb->function->promote_may_return(Function::RET_SOMETIMES);
+                        bb->function->promote_may_return(SgAsmFunction::RET_SOMETIMES);
                         if (debug) {
                             fprintf(debug, "  F%08"PRIx64" may return by virtue of branching to function F%08"PRIx64
                                     " which may return\n", bb->function->entry_va, target_bb->function->entry_va);
@@ -3154,7 +3159,7 @@ Partitioner::analyze_cfg(SgAsmBlock::Reason reason)
             } else if (!bb->function->possible_may_return() && !is_function_call(bb, NULL) && !succs_complete) {
                 /* If the basic block's successor is not known, then we must assume that it branches to something that could
                  * return. */
-                bb->function->promote_may_return(Function::RET_SOMETIMES);
+                bb->function->promote_may_return(SgAsmFunction::RET_SOMETIMES);
                 if (debug) {
                     fprintf(debug, "  F%08"PRIx64" may return by virtue of incomplete successors\n",
                             bb->function->entry_va);
@@ -4096,7 +4101,11 @@ Partitioner::build_ast(Function* f)
 
     /* Set the SgAsmFunction::can_return property.  If we've never indicated that a function might return then assume it
      * doesn't return.  We're all done with analysis now, so it must not return. */
-    retval->set_can_return(Function::RET_SOMETIMES==f->get_may_return() || Function::RET_ALWAYS==f->get_may_return());
+    if (SgAsmFunction::RET_UNKNOWN==f->get_may_return()) {
+        retval->set_may_return(SgAsmFunction::RET_NEVER);
+    } else {
+        retval->set_may_return(f->get_may_return());
+    }
 
     for (NodeMap::iterator ni=nodes.begin(); ni!=nodes.end(); ++ni) {
         retval->get_statementList().push_back(ni->second);

@@ -21,6 +21,8 @@ using this memory map for disassembly:
     va 0x080496a4 + 0x00000030 = 0x080496d4 rw-- at base aae  + 0x000006a4 i686-test1.O0.bin(.data+.got+.got.plt)
     va 0x080496d4 + 0x0000092c = 0x0804a000 rw-p at anon null + 0x00000000 i686-test1.O0.bin(.bss+LOAD#3)
 disassembled 3195 instructions and 22 failures (use --show-bad to see errors)
+
+
 0x080482c8: ================================== Function (function call, symbol) <_init>
 Basic block: entry point, graph-1
 Predecessors: B08048490

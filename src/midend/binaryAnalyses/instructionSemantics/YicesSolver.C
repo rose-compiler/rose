@@ -8,6 +8,8 @@
 
 #include "YicesSolver.h"
 
+using namespace InsnSemanticsExpr;
+
 void
 YicesSolver::init()
 {
@@ -46,7 +48,7 @@ YicesSolver::available_linkage() const
 
 /* See YicesSolver.h */
 bool
-YicesSolver::satisfiable(const std::vector<const InsnSemanticsExpr::TreeNode*> &exprs)
+YicesSolver::satisfiable(const std::vector<TreeNodePtr> &exprs)
 {
 #ifdef HAVE_LIBYICES
     if (get_linkage() & LM_LIBRARY) {
@@ -64,9 +66,9 @@ YicesSolver::satisfiable(const std::vector<const InsnSemanticsExpr::TreeNode*> &
 #endif
 
         Definitions defns;
-        for (std::vector<const InsnSemanticsExpr::TreeNode*>::const_iterator ei=exprs.begin(); ei!=exprs.end(); ++ei)
+        for (std::vector<TreeNodePtr>::const_iterator ei=exprs.begin(); ei!=exprs.end(); ++ei)
             ctx_define(*ei, &defns);
-        for (std::vector<const InsnSemanticsExpr::TreeNode*>::const_iterator ei=exprs.begin(); ei!=exprs.end(); ++ei)
+        for (std::vector<TreeNodePtr>::const_iterator ei=exprs.begin(); ei!=exprs.end(); ++ei)
             ctx_assert(*ei);
         switch (yices_check(context)) {
             case l_false: return false;
@@ -95,16 +97,16 @@ YicesSolver::get_command(const std::string &config_name)
 
 /* See SMTSolver::generate_file() */
 void
-YicesSolver::generate_file(std::ostream &o, const std::vector<const InsnSemanticsExpr::TreeNode*> &exprs, Definitions *defns)
+YicesSolver::generate_file(std::ostream &o, const std::vector<TreeNodePtr> &exprs, Definitions *defns)
 {
     ROSE_ASSERT(get_linkage() & LM_EXECUTABLE);
     Definitions *allocated = NULL;
     if (!defns)
         defns = allocated = new Definitions;
 
-    for (std::vector<const InsnSemanticsExpr::TreeNode*>::const_iterator ei=exprs.begin(); ei!=exprs.end(); ++ei)
+    for (std::vector<TreeNodePtr>::const_iterator ei=exprs.begin(); ei!=exprs.end(); ++ei)
         out_define(o, *ei, defns);
-    for (std::vector<const InsnSemanticsExpr::TreeNode*>::const_iterator ei=exprs.begin(); ei!=exprs.end(); ++ei)
+    for (std::vector<TreeNodePtr>::const_iterator ei=exprs.begin(); ei!=exprs.end(); ++ei)
         out_assert(o, *ei);
     o <<"\n(check)\n";
 
@@ -136,21 +138,21 @@ YicesSolver::parse_evidence()
 }
 
 /* See SMTSolver::get_definition() */
-InsnSemanticsExpr::TreeNode *
+TreeNodePtr
 YicesSolver::get_definition(uint64_t varno)
 {
     if (evidence.find(varno)==evidence.end())
-        return NULL;
-    return InsnSemanticsExpr::LeafNode::create_integer(evidence[varno].first, evidence[varno].second);
+        return TreeNodePtr(); // null
+    return LeafNode::create_integer(evidence[varno].first, evidence[varno].second);
 }
 
 /** Traverse an expression and produce Yices "define" statements for variables. */
 void
-YicesSolver::out_define(std::ostream &o, const InsnSemanticsExpr::TreeNode *tn, Definitions *defns)
+YicesSolver::out_define(std::ostream &o, const TreeNodePtr &tn, Definitions *defns)
 {
     assert(defns);
-    const InsnSemanticsExpr::LeafNode *ln = dynamic_cast<const InsnSemanticsExpr::LeafNode*>(tn);
-    const InsnSemanticsExpr::InternalNode *in = dynamic_cast<const InsnSemanticsExpr::InternalNode*>(tn);
+    LeafNodePtr ln = tn->isLeafNode();
+    InternalNodePtr in = tn->isInternalNode();
 
     if (ln) {
         if (!ln->is_known() && defns->find(ln->get_name())==defns->end()) {
@@ -166,7 +168,7 @@ YicesSolver::out_define(std::ostream &o, const InsnSemanticsExpr::TreeNode *tn, 
 
 /** Generate a Yices "assert" statement for an expression. */
 void
-YicesSolver::out_assert(std::ostream &o, const InsnSemanticsExpr::TreeNode *tn)
+YicesSolver::out_assert(std::ostream &o, const TreeNodePtr &tn)
 {
     o <<"(assert ";
     out_expr(o, tn);
@@ -175,20 +177,20 @@ YicesSolver::out_assert(std::ostream &o, const InsnSemanticsExpr::TreeNode *tn)
 
 /** Output a decimal number. */
 void
-YicesSolver::out_number(std::ostream &o, const InsnSemanticsExpr::TreeNode *tn)
+YicesSolver::out_number(std::ostream &o, const TreeNodePtr &tn)
 {
-    const InsnSemanticsExpr::LeafNode *ln = dynamic_cast<const InsnSemanticsExpr::LeafNode*>(tn);
+    LeafNodePtr ln = tn->isLeafNode();
     assert(ln && ln->is_known());
     o <<ln->get_value();
 }
 
 /** Output for one expression. */
 void
-YicesSolver::out_expr(std::ostream &o, const InsnSemanticsExpr::TreeNode *tn)
+YicesSolver::out_expr(std::ostream &o, const TreeNodePtr &tn)
 {
     using namespace InsnSemanticsExpr;
-    const LeafNode *ln = dynamic_cast<const LeafNode*>(tn);
-    const InternalNode *in = dynamic_cast<const InternalNode*>(tn);
+    LeafNodePtr ln = tn->isLeafNode();
+    InternalNodePtr in = tn->isInternalNode();
     if (ln) {
         if (ln->is_known()) {
             o <<"(mk-bv " <<ln->get_nbits() <<" " <<ln->get_value() <<")";
@@ -244,7 +246,7 @@ YicesSolver::out_expr(std::ostream &o, const InsnSemanticsExpr::TreeNode *tn)
 
 /** Output for unary operators. */
 void
-YicesSolver::out_unary(std::ostream &o, const char *opname, const InsnSemanticsExpr::InternalNode *in)
+YicesSolver::out_unary(std::ostream &o, const char *opname, const InternalNodePtr &in)
 {
     assert(opname && *opname);
     assert(in && 1==in->size());
@@ -256,7 +258,7 @@ YicesSolver::out_unary(std::ostream &o, const char *opname, const InsnSemanticsE
 
 /** Output for binary operators. */
 void
-YicesSolver::out_binary(std::ostream &o, const char *opname, const InsnSemanticsExpr::InternalNode *in)
+YicesSolver::out_binary(std::ostream &o, const char *opname, const InternalNodePtr &in)
 {
     assert(opname && *opname);
     assert(in && 2==in->size());
@@ -279,7 +281,7 @@ YicesSolver::out_binary(std::ostream &o, const char *opname, const InsnSemantics
  *  \code
  */
 void
-YicesSolver::out_ite(std::ostream &o, const InsnSemanticsExpr::InternalNode *in)
+YicesSolver::out_ite(std::ostream &o, const InternalNodePtr &in)
 {
     assert(in && 3==in->size());
     assert(in->child(0)->get_nbits()==1);
@@ -296,7 +298,7 @@ YicesSolver::out_ite(std::ostream &o, const InsnSemanticsExpr::InternalNode *in)
 /** Output for left-associative, binary operators. The identity_element is sign-extended and used as the second operand
  *  if only one operand is supplied. */
 void
-YicesSolver::out_la(std::ostream &o, const char *opname, const InsnSemanticsExpr::InternalNode *in, bool identity_element)
+YicesSolver::out_la(std::ostream &o, const char *opname, const InternalNodePtr &in, bool identity_element)
 {
     assert(opname && *opname);
     assert(in && in->size()>=1);
@@ -312,8 +314,7 @@ YicesSolver::out_la(std::ostream &o, const char *opname, const InsnSemanticsExpr
             o <<")";
         }
     } else {
-        InsnSemanticsExpr::LeafNode *ident = InsnSemanticsExpr::LeafNode::create_integer(in->child(0)->get_nbits(),
-                                                                                         identity_element ? (uint64_t)(-1) : 0);
+        LeafNodePtr ident = LeafNode::create_integer(in->child(0)->get_nbits(), identity_element ? (uint64_t)(-1) : 0);
         out_expr(o, ident);
         o <<")";
     }
@@ -321,7 +322,7 @@ YicesSolver::out_la(std::ostream &o, const char *opname, const InsnSemanticsExpr
 
 /** Output for left-associative operators. */
 void
-YicesSolver::out_la(std::ostream &o, const char *opname, const InsnSemanticsExpr::InternalNode *in)
+YicesSolver::out_la(std::ostream &o, const char *opname, const InternalNodePtr &in)
 {
     if (in->size()==1) {
         out_unary(o, opname, in);
@@ -332,7 +333,7 @@ YicesSolver::out_la(std::ostream &o, const char *opname, const InsnSemanticsExpr
 
 /** Output for extract. Yices bv-extract first two arguments must be constants. */
 void
-YicesSolver::out_extract(std::ostream &o, const InsnSemanticsExpr::InternalNode *in)
+YicesSolver::out_extract(std::ostream &o, const InternalNodePtr &in)
 {
     assert(in && 3==in->size());
     assert(in->child(0)->is_known());
@@ -349,7 +350,7 @@ YicesSolver::out_extract(std::ostream &o, const InsnSemanticsExpr::InternalNode 
  *  argument should be extended.  We compute that from the first argument of the OP_SEXTEND operator (the new size) and the
  *  size of the second operand (the bit vector to be extended). */
 void
-YicesSolver::out_sext(std::ostream &o, const InsnSemanticsExpr::InternalNode *in)
+YicesSolver::out_sext(std::ostream &o, const InternalNodePtr &in)
 {
     assert(in && 2==in->size());
     assert(in->child(0)->is_known()); /*Yices bv-sign-extend needs a number for the second operand*/
@@ -365,7 +366,7 @@ YicesSolver::out_sext(std::ostream &o, const InsnSemanticsExpr::InternalNode *in
  *  (bv-concat (mk-bv [NewSize-OldSize] 0) Vector)
  */
 void
-YicesSolver::out_uext(std::ostream &o, const InsnSemanticsExpr::InternalNode *in)
+YicesSolver::out_uext(std::ostream &o, const InternalNodePtr &in)
 {
     using namespace InsnSemanticsExpr;
     assert(in && 2==in->size());
@@ -380,7 +381,8 @@ YicesSolver::out_uext(std::ostream &o, const InsnSemanticsExpr::InternalNode *in
 
 /** Output for shift operators. */
 void
-YicesSolver::out_shift(std::ostream &o, const char *opname, const InsnSemanticsExpr::InternalNode *in, bool newbits)
+YicesSolver::out_shift(std::ostream &o, const char *opname, const InternalNodePtr &in,
+                       bool newbits)
 {
     assert(opname && *opname);
     assert(in && 2==in->size());
@@ -401,10 +403,10 @@ YicesSolver::out_shift(std::ostream &o, const char *opname, const InsnSemanticsE
  * where [VectorSize], [VectorSize-1], and [ShiftAmount] are numeric constants.
  */
 void
-YicesSolver::out_asr(std::ostream &o, const InsnSemanticsExpr::InternalNode *in)
+YicesSolver::out_asr(std::ostream &o, const InternalNodePtr &in)
 {
     assert(in && 2==in->size());
-    const InsnSemanticsExpr::TreeNode *vector = in->child(1);
+    TreeNodePtr vector = in->child(1);
     uint64_t vector_size = vector->get_nbits();
     assert(in->child(0)->is_known());
     uint64_t shift_amount = in->child(0)->get_value();
@@ -429,7 +431,7 @@ YicesSolver::out_asr(std::ostream &o, const InsnSemanticsExpr::InternalNode *in)
  *  \endcode
  */
 void
-YicesSolver::out_zerop(std::ostream &o, const InsnSemanticsExpr::InternalNode *in)
+YicesSolver::out_zerop(std::ostream &o, const InternalNodePtr &in)
 {
     assert(in && 1==in->size());
     o <<"(ite (= (mk-bv " <<in->child(0)->get_nbits() <<" 0) ";
@@ -445,7 +447,7 @@ YicesSolver::out_zerop(std::ostream &o, const InsnSemanticsExpr::InternalNode *i
  *  \endcode
  */
 void
-YicesSolver::out_mult(std::ostream &o, const InsnSemanticsExpr::InternalNode *in)
+YicesSolver::out_mult(std::ostream &o, const InternalNodePtr &in)
 {
     o <<"(bv-mul (bv-sign-extend ";
     out_expr(o, in->child(0));
@@ -457,11 +459,11 @@ YicesSolver::out_mult(std::ostream &o, const InsnSemanticsExpr::InternalNode *in
 #ifdef HAVE_LIBYICES
 /** Traverse an expression and define Yices variables. */
 void
-YicesSolver::ctx_define(const InsnSemanticsExpr::TreeNode *tn, Definitions *defns)
+YicesSolver::ctx_define(const TreeNodePtr &tn, Definitions *defns)
 {
     assert(defns);
-    const InsnSemanticsExpr::LeafNode *ln = dynamic_cast<const InsnSemanticsExpr::LeafNode*>(tn);
-    const InsnSemanticsExpr::InternalNode *in = dynamic_cast<const InsnSemanticsExpr::InternalNode*>(tn);
+    LeafNodePtr ln = tn->isLeafNode();
+    InternalNodePtr in = tn->isInternalNode();
 
     if (ln) {
         if (!ln->is_known() && defns->find(ln->get_name())==defns->end()) {
@@ -484,7 +486,7 @@ YicesSolver::ctx_define(const InsnSemanticsExpr::TreeNode *tn, Definitions *defn
 #ifdef HAVE_LIBYICES
 /** Assert a constraint in the logical context. */
 void
-YicesSolver::ctx_assert(const InsnSemanticsExpr::TreeNode *tn)
+YicesSolver::ctx_assert(const TreeNodePtr &tn)
 {
     yices_expr e = ctx_expr(tn);
     assert(e);
@@ -495,12 +497,12 @@ YicesSolver::ctx_assert(const InsnSemanticsExpr::TreeNode *tn)
 #ifdef HAVE_LIBYICES
 /** Builds a Yices expression from a ROSE expression. */
 yices_expr
-YicesSolver::ctx_expr(const InsnSemanticsExpr::TreeNode *tn)
+YicesSolver::ctx_expr(const TreeNodePtr &tn)
 {
     yices_expr retval = 0;
     using namespace InsnSemanticsExpr;
-    const LeafNode *ln = dynamic_cast<const LeafNode*>(tn);
-    const InternalNode *in = dynamic_cast<const InternalNode*>(tn);
+    LeafNodePtr ln = tn->isLeafNode();
+    InternalNodePtr in = tn->isInternalNode();
     if (ln) {
         if (ln->is_known()) {
             retval = yices_mk_bv_constant(context, ln->get_nbits(), ln->get_value());
@@ -564,7 +566,7 @@ YicesSolver::ctx_expr(const InsnSemanticsExpr::TreeNode *tn)
 #ifdef HAVE_LIBYICES
 /* Create Yices expression from unary ROSE expression. */
 yices_expr
-YicesSolver::ctx_unary(UnaryAPI f, const InsnSemanticsExpr::InternalNode *in)
+YicesSolver::ctx_unary(UnaryAPI f, const InternalNodePtr &in)
 {
     assert(f);
     assert(in && 1==in->size());
@@ -577,7 +579,7 @@ YicesSolver::ctx_unary(UnaryAPI f, const InsnSemanticsExpr::InternalNode *in)
 #ifdef HAVE_LIBYICES
 /* Create Yices epxression from binary ROSE expression. */
 yices_expr
-YicesSolver::ctx_binary(BinaryAPI f, const InsnSemanticsExpr::InternalNode *in)
+YicesSolver::ctx_binary(BinaryAPI f, const InternalNodePtr &in)
 {
     assert(f);
     assert(in && 2==in->size());
@@ -590,7 +592,7 @@ YicesSolver::ctx_binary(BinaryAPI f, const InsnSemanticsExpr::InternalNode *in)
 #ifdef HAVE_LIBYICES
 /* Create Yices expression for if-then-else operator. */
 yices_expr
-YicesSolver::ctx_ite(const InsnSemanticsExpr::InternalNode *in)
+YicesSolver::ctx_ite(const InternalNodePtr &in)
 {
     assert(in && 3==in->size());
     assert(in->child(0)->get_nbits()==1);
@@ -605,7 +607,7 @@ YicesSolver::ctx_ite(const InsnSemanticsExpr::InternalNode *in)
 /* Create Yices expression for left-associative, binary operators. The @p identity is sign-extended and used as the
  * second operand if only one operand is supplied. */
 yices_expr
-YicesSolver::ctx_la(BinaryAPI f, const InsnSemanticsExpr::InternalNode *in, bool identity)
+YicesSolver::ctx_la(BinaryAPI f, const InternalNodePtr &in, bool identity)
 {
     assert(f);
     assert(in && in->size()>=1);
@@ -618,8 +620,7 @@ YicesSolver::ctx_la(BinaryAPI f, const InsnSemanticsExpr::InternalNode *in, bool
     }
     
     if (1==in->size()) {
-        InsnSemanticsExpr::LeafNode *ident = InsnSemanticsExpr::LeafNode::create_integer(in->child(0)->get_nbits(),
-                                                                                         identity ? (uint64_t)(-1) : 0);
+        yices_expr ident = yices_mk_bv_constant(context, 1, identity ? (uint64_t)(-1) : 0);
         retval = (f)(context, retval, ident);
         assert(retval);
     }
@@ -630,7 +631,7 @@ YicesSolver::ctx_la(BinaryAPI f, const InsnSemanticsExpr::InternalNode *in, bool
 
 #ifdef HAVE_LIBYICES
 yices_expr
-YicesSolver::ctx_la(NaryAPI f, const InsnSemanticsExpr::InternalNode *in, bool identity)
+YicesSolver::ctx_la(NaryAPI f, const InternalNodePtr &in, bool identity)
 {
     assert(f);
     assert(in && in->size()>=1);
@@ -648,7 +649,7 @@ YicesSolver::ctx_la(NaryAPI f, const InsnSemanticsExpr::InternalNode *in, bool i
 
 #ifdef HAVE_LIBYICES
 yices_expr
-YicesSolver::ctx_la(BinaryAPI f, const InsnSemanticsExpr::InternalNode *in)
+YicesSolver::ctx_la(BinaryAPI f, const InternalNodePtr &in)
 {
     assert(in->size()>1);
     return ctx_la(f, in, false);
@@ -658,7 +659,7 @@ YicesSolver::ctx_la(BinaryAPI f, const InsnSemanticsExpr::InternalNode *in)
 #ifdef HAVE_LIBYICES
 /** Generate a Yices expression for extract. The yices_mk_bv_extract() second two arguments must be constants. */
 yices_expr
-YicesSolver::ctx_extract(const InsnSemanticsExpr::InternalNode *in)
+YicesSolver::ctx_extract(const InternalNodePtr &in)
 {
     assert(in && 3==in->size());
     assert(in->child(0)->is_known());
@@ -677,7 +678,7 @@ YicesSolver::ctx_extract(const InsnSemanticsExpr::InternalNode *in)
  *  the second argument should be extended.  We compute that from the first argument of the OP_SEXTEND operator (the new size)
  *  and the size of the second operand (the bit vector to be extended). */
 yices_expr
-YicesSolver::ctx_sext(const InsnSemanticsExpr::InternalNode *in)
+YicesSolver::ctx_sext(const InternalNodePtr &in)
 {
     assert(in && 2==in->size());
     assert(in->child(0)->is_known());
@@ -695,7 +696,7 @@ YicesSolver::ctx_sext(const InsnSemanticsExpr::InternalNode *in)
  *  (bv-concat (mk-bv [NewSize-OldSize] 0) Vector)
  */
 yices_expr
-YicesSolver::ctx_uext(const InsnSemanticsExpr::InternalNode *in)
+YicesSolver::ctx_uext(const InternalNodePtr &in)
 {
     assert(in && 2==in->size());
     assert(in->child(0)->is_known()); /*Yices mk-bv needs a number for the size operand*/
@@ -712,7 +713,7 @@ YicesSolver::ctx_uext(const InsnSemanticsExpr::InternalNode *in)
 #ifdef HAVE_LIBYICES
 /** Generates a Yices expression for shift operators. */
 yices_expr
-YicesSolver::ctx_shift(ShiftAPI f, const InsnSemanticsExpr::InternalNode *in)
+YicesSolver::ctx_shift(ShiftAPI f, const InternalNodePtr &in)
 {
     assert(in && 2==in->size());
     assert(in->child(0)->is_known()); /*Yices' bv-shift-* operators need a constant for the shift amount*/
@@ -734,10 +735,10 @@ YicesSolver::ctx_shift(ShiftAPI f, const InsnSemanticsExpr::InternalNode *in)
  * where [VectorSize], [VectorSize-1], and [ShiftAmount] are numeric constants.
  */
 yices_expr
-YicesSolver::ctx_asr(const InsnSemanticsExpr::InternalNode *in)
+YicesSolver::ctx_asr(const InternalNodePtr &in)
 {
     assert(in && 2==in->size());
-    const InsnSemanticsExpr::TreeNode *vector = in->child(1);
+    TreeNodePtr vector = in->child(1);
     unsigned vector_size = vector->get_nbits();
     assert(in->child(0)->is_known());
     unsigned shift_amount = in->child(0)->get_value();
@@ -764,7 +765,7 @@ YicesSolver::ctx_asr(const InsnSemanticsExpr::InternalNode *in)
  *  \endcode
  */
 yices_expr
-YicesSolver::ctx_zerop(const InsnSemanticsExpr::InternalNode *in)
+YicesSolver::ctx_zerop(const InternalNodePtr &in)
 {
     assert(in && 1==in->size());
     yices_expr retval = yices_mk_ite(context,
@@ -787,7 +788,7 @@ YicesSolver::ctx_zerop(const InsnSemanticsExpr::InternalNode *in)
  *  \endcode
  */
 yices_expr
-YicesSolver::ctx_mult(const InsnSemanticsExpr::InternalNode *in)
+YicesSolver::ctx_mult(const InternalNodePtr &in)
 {
     yices_expr retval = yices_mk_bv_mul(context, 
                                         yices_mk_bv_sign_extend(context, ctx_expr(in->child(0)), in->child(1)->get_nbits()-1), 
