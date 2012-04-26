@@ -86,7 +86,6 @@ EXTRA_DIST = \
 include Makefile.common
 
 check-local: ../src/extractMPISkeleton
-	cp -fR $(srcdir)/* .
 	${MAKE} ${MARKS}
 	${MAKE} ${ALL_OBJS}
 	${MAKE} ${ALL_EXPECTED:.expected=.comp}
