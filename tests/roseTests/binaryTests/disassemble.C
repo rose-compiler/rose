@@ -284,7 +284,7 @@ function_hash(SgAsmFunction *func, unsigned char digest[20])
 class ShowFunctions: public AsmFunctionIndex {
 public:
     struct HashCallback: public OutputCallback {
-        HashCallback(): OutputCallback("Hash", 16) {}
+        HashCallback(): OutputCallback("Hash", 16, "Experimental semantic hash of the entire function.") {}
         virtual bool operator()(bool enabled, const DataArgs &args) {
             if (enabled) {
                 unsigned char sha1[20];
@@ -1298,6 +1298,7 @@ main(int argc, char *argv[])
         unparser.add_function_labels(block);
         unparser.set_organization(do_linear ? AsmUnparser::ORGANIZED_BY_ADDRESS : AsmUnparser::ORGANIZED_BY_AST);
         unparser.add_control_flow_graph(cfg);
+        fputs("\n\n", stdout);
         unparser.unparse(std::cout, block);
         fputs("\n\n", stdout);
     }
