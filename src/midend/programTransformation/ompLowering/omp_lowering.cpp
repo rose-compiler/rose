@@ -1134,6 +1134,50 @@ SgFunctionDeclaration* generateOutlinedTask(SgNode* node, std::string& wrapper_n
  
   // lastprivate and reduction variables cannot be excluded  since write access to their shared copies
 
+  // Sara Royuela 24/04/2012
+  // When unpacking array variables in the outlined function, it is needed to have access to the size of the array.
+  // When this size is a variable (or a operation containing variables), this variable must be added to the arguments of the outlined function.
+  // Example:
+  //    Input snippet:                      Outlined function:
+  //        int N = 1;                          static void OUT__1__5493__(void *__out_argv) {
+  //        int a[N];                               int (*a)[N] = (int (*)[N])(((struct OUT__1__5493___data *)__out_argv) -> a_p);
+  //        #pragma omp task shared(a)              ( *a)[0] = 1;
+  //            a[0] = 1;                       }
+  ASTtools::VarSymSet_t new_syms;
+  for (ASTtools::VarSymSet_t::const_iterator i = syms.begin (); i != syms.end (); ++i)
+  {
+    SgType* i_type = (*i)->get_declaration()->get_type();
+
+    while (isSgArrayType(i_type))
+    {
+      // Get most significant dimension
+      SgExpression* index = ((SgArrayType*) i_type)->get_index();
+
+      // Get the variables used to compute the dimension
+      // FIXME We insert a new statement and delete it afterwards in order to use "collectVars" function
+      //       Think about implementing an specific function for expressions
+      ASTtools::VarSymSet_t a_syms, a_pSyms;
+      SgExprStatement* index_stmt = buildExprStatement(index);
+      appendStatement(index_stmt, body_block);
+      Outliner::collectVars(index_stmt, a_syms, a_pSyms);
+      SageInterface::removeStatement(index_stmt);
+      for(ASTtools::VarSymSet_t::iterator j = a_syms.begin(); j != a_syms.end(); ++j)
+      {
+        const SgVariableSymbol* s = *j;
+        new_syms.insert(s);   // If the symbol is not in the symbol list, it is added
+      }
+      
+      // Advance over the type
+      i_type = ((SgArrayType*) i_type)->get_base_type();
+    }
+  }
+  for (ASTtools::VarSymSet_t::const_iterator i = new_syms.begin (); i != new_syms.end (); ++i)
+  {
+    const SgVariableSymbol* s = *i;
+    syms.insert(s);
+  }
+
+  
   // a data structure used to wrap parameters
   SgClassDeclaration* struct_decl = NULL; 
   if (SageInterface::is_Fortran_language())
