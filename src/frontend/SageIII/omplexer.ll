@@ -119,6 +119,10 @@ copyin          { return cond_return ( COPYIN ); }
 "|"             { return ('|'); }
 "&&"            { return (LOGAND); }
 "||"            { return (LOGOR); }
+"<<"            { return (SHLEFT); }
+">>"            { return (SHRIGHT); }
+"++"            { return (PLUSPLUS); }
+"--"            { return (MINUSMINUS); }
 
 ">>="            {return(RIGHT_ASSIGN2); }
 "<<="            {return(LEFT_ASSIGN2); }
@@ -137,7 +141,10 @@ copyin          { return cond_return ( COPYIN ); }
 ">="            { return (GE_OP2);}
 "=="            { return (EQ_OP2);}
 "!="            { return (NE_OP2);}
-"\\"          { /*printf("found a backslash\n"); This does not work properly but can be ignored*/}
+"\\"            { /*printf("found a backslash\n"); This does not work properly but can be ignored*/}
+
+"->"            { return (PTR_TO); }
+"."             { return ('.'); }
 
 {newline}       { /* printf("found a new line\n"); */ /* return (NEWLINE); We ignore NEWLINE since we only care about the pragma string , We relax the syntax check by allowing it as part of line continuation */ }
 
