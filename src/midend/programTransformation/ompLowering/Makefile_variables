@@ -6,6 +6,9 @@ mptOmpLowering_la_sources=\
 mptOmpLowering_lib_ltlibraries=\
 	libxomp.la
 
+# only generate .libs/libxomp.a
+libxomp_la_LDFLAGS = -static
+
 libxomp_la_SOURCES=\
 	$(mptOmpLoweringPath)/xomp.c \
 	$(mptOmpLoweringPath)/run_me_callers.inc \
