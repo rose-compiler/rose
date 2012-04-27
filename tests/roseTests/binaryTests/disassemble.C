@@ -70,6 +70,12 @@ Description:\n\
     Convenience switch that is equivalent to --ast-dot and --cfg-dot (or\n\
     --no-ast-dot and --no-cfg-dot).\n\
 \n\
+  --ipd=FILENAME\n\
+  --no-ipd\n\
+    Generate an IPD file from the disassembly results.  The IPD file can be\n\
+    modified by hand and then fed back into another disassembly with the\n\
+    \"-rose:partitioner_config FILENAME\" switch.\n\
+\n\
   --linear\n\
     Organized the output by address rather than hierarchically.  The output\n\
     will be more like traditional disassemblers.\n\
@@ -778,6 +784,7 @@ main(int argc, char *argv[])
     bool do_omit_anon = true;                   /* see large_anonymous_region_limit global for actual limit */
     bool do_syscall_names = true;
     bool do_linear = false;                     /* organized output linearly rather than hierarchically */
+    std::string do_generate_ipd;
 
     Disassembler::AddressSet raw_entries;
     MemoryMap raw_map;
@@ -815,6 +822,10 @@ main(int argc, char *argv[])
         } else if (!strcmp(argv[i], "--no-dot")) {
             do_ast_dot = false;
             do_cfg_dot = false;
+        } else if (!strncmp(argv[i], "--ipd=", 6)) {
+            do_generate_ipd = argv[i]+6;
+        } else if (!strcmp(argv[i], "--no-ipd")) {
+            do_generate_ipd = "";
         } else if (!strcmp(argv[i], "--dos")) {                 /* use MS-DOS header in preference to PE when both exist */
             do_dos = true;
         } else if (!strcmp(argv[i], "--no-dos")) {
@@ -1273,7 +1284,6 @@ main(int argc, char *argv[])
     /*------------------------------------------------------------------------------------------------------------------------
      * Show the results
      *------------------------------------------------------------------------------------------------------------------------*/
-
     printf("disassembled %zu instruction%s and %zu failure%s",
            insns.size(), 1==insns.size()?"":"s", bad.size(), 1==bad.size()?"":"s");
     if (!bad.empty()) {
@@ -1337,6 +1347,11 @@ main(int argc, char *argv[])
             }
             printf("Disassembled coverage: %0.1f%%\n", disassembled_coverage);
         }
+    }
+
+    if (!do_generate_ipd.empty()) {
+        std::ofstream ipdfile(do_generate_ipd.c_str());
+        Partitioner::IPDParser::unparse(ipdfile, block);
     }
 
     /*------------------------------------------------------------------------------------------------------------------------

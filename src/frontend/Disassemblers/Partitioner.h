@@ -1585,7 +1585,7 @@ public:
      *     BlockStmt := ( Empty | Alias | Successors ) ';'
      *     Alias := 'alias' Address
      *     Successors := ('successor' | 'successors') [SuccessorAddrList|AssemblyCode]
-     *     SuccessorAddrList := AddressList | AddressList '...' | '...'
+     *     SuccessorAddrList := '{' (AddressList | AddressList '...' | '...') '}'
      *
      *     AddressList := Address ( ',' AddressList )*
      *     Address: Integer
@@ -1742,6 +1742,7 @@ public:
         };
 
         void parse();                           /**< Top-level parsing function. */
+        static void unparse(std::ostream&, SgNode *ast); /**< Unparse an AST into an IPD file. */
 
 
         /*************************************************************************************************************************
