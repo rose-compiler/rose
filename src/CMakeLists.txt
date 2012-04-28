@@ -243,6 +243,7 @@ set(roseDisassemblers_SRC
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/Partitioner.C 
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/PStatistics.C 
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/IPDParser.C 
+   ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/IPDUnparser.C 
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/Registers.C
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/Disassembler.C 
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/DisassemblerArm.C 
