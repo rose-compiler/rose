@@ -325,7 +325,8 @@ Partitioner::IPDParser::parse_Successors()
             throw Exception(std::string("successor program assembly failed: ") + e.mesg);
         }
     } else {
-        /* Successors specified as a list of addresses */
+        /* Successors specified as a list of addresses in curly braces */
+        match_terminal("{");
         cur_block->sucs_specified = true;
         cur_block->sucs.clear();
         cur_block->sucs_complete = true;
@@ -339,6 +340,7 @@ Partitioner::IPDParser::parse_Successors()
             match_terminal("...");
             cur_block->sucs_complete = false;
         }
+        match_terminal("}");
     }
 
     return true;
