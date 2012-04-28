@@ -7655,13 +7655,16 @@ SgSymbolTable::find_template_member_function(const SgName& nm, const SgType* t)
           if (sym != NULL)
              {
 #if 1
-               printf ("In SgSymbolTable::find_template_member_function(): Found a symbol with correct name: symbol = %p = %s (looking for type = %p = %s) \n",i->second,i->second->class_name().c_str(),t,t->class_name().c_str());
+            // printf ("In SgSymbolTable::find_template_member_function(): Found a symbol with correct name: symbol = %p = %s (looking for type = %p = %s) \n",i->second,i->second->class_name().c_str(),t,t->class_name().c_str());
+               printf ("In SgSymbolTable::find_template_member_function(): Found a symbol with correct name: symbol = %p = %s (looking for type = %p = %s = %s) \n",i->second,i->second->class_name().c_str(),t,t->class_name().c_str(),t->get_mangled().str());
 #endif
                ROSE_ASSERT(sym->get_declaration() != NULL);
                ROSE_ASSERT(sym->get_declaration()->get_type() != NULL);
 #if 1
-               printf ("In SgSymbolTable::find_template_member_function(): Found a symbol with correct name: sym->get_declaration() = %p = %s (looking for sym->get_declaration()->get_type() = %p = %s) \n",
-                         sym->get_declaration(),sym->get_declaration()->class_name().c_str(),sym->get_declaration()->get_type(),sym->get_declaration()->get_type()->class_name().c_str());
+            // printf ("In SgSymbolTable::find_template_member_function(): Found a symbol with correct name: sym->get_declaration() = %p = %s (having sym->get_declaration()->get_type() = %p = %s) \n",
+            //           sym->get_declaration(),sym->get_declaration()->class_name().c_str(),sym->get_declaration()->get_type(),sym->get_declaration()->get_type()->class_name().c_str());
+               printf ("In SgSymbolTable::find_template_member_function(): Found a symbol with correct name: sym->get_declaration() = %p = %s (having sym->get_declaration()->get_type() = %p = %s = %s) \n",
+                         sym->get_declaration(),sym->get_declaration()->class_name().c_str(),sym->get_declaration()->get_type(),sym->get_declaration()->get_type()->class_name().c_str(),sym->get_declaration()->get_type()->get_mangled().str());
 #endif
              }
 

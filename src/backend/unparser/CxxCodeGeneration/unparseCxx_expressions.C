@@ -156,18 +156,41 @@ Unparse_ExprStmt::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpars
    }
 
 
+#if 1
+// DQ (4/25/2012): Added support for new template IR nodes.
+void
+Unparse_ExprStmt::unparseTemplateFuncRef(SgExpression* expr, SgUnparse_Info& info)
+   {
+     SgTemplateFunctionRefExp* func_ref = isSgTemplateFunctionRefExp(expr);
+     ROSE_ASSERT(func_ref != NULL);
+
+  // Calling the template function unparseFuncRef<SgFunctionRefExp>(func_ref);
+  // unparseFuncRefSupport(func_ref,info);
+     unparseFuncRefSupport<SgTemplateFunctionRefExp>(expr,info);
+   }
+#else
 void
 Unparse_ExprStmt::unparseTemplateFuncRef(SgExpression* expr, SgUnparse_Info& info)
    {
      unp->u_exprStmt->curprint ("Output TemplateFunctionRefExp");
    }
+#endif
 
+#if 1
+// DQ (4/25/2012): Added support for new template IR nodes.
+void
+Unparse_ExprStmt::unparseTemplateMFuncRef ( SgExpression* expr, SgUnparse_Info& info )
+   {
+     unparseMFuncRefSupport<SgTemplateMemberFunctionRefExp>(expr,info);
+   }
+
+#else
 void
 Unparse_ExprStmt::unparseTemplateMFuncRef(SgExpression* expr, SgUnparse_Info& info)
    {
      unp->u_exprStmt->curprint ("Output TemplateMemberFunctionRefExp");
    }
-
+#endif
 
 // DQ (2/16/2005): This function has been moved to this file from unparse_type.C
 void
@@ -1044,6 +1067,20 @@ Unparse_ExprStmt::unparseFuncRef(SgExpression* expr, SgUnparse_Info& info)
      SgFunctionRefExp* func_ref = isSgFunctionRefExp(expr);
      ROSE_ASSERT(func_ref != NULL);
 
+  // Calling the template function unparseFuncRef<SgFunctionRefExp>(func_ref);
+     unparseFuncRefSupport<SgFunctionRefExp>(expr,info);
+   }
+
+template <class T>
+void
+Unparse_ExprStmt::unparseFuncRefSupport(SgExpression* expr, SgUnparse_Info& info)
+   {
+  // DQ (4/25/2012): since these IR nodes have the same API, we can use a templated function to avoid the dublication of code.
+
+  // SgFunctionRefExp* func_ref = isSgFunctionRefExp(expr);
+     T* func_ref = dynamic_cast<T*>(expr);
+     ROSE_ASSERT(func_ref != NULL);
+
   // If we have previously computed a name for this function (because it was a templated function 
   // with template arguments that required name qualification) then output the name directly.
 
@@ -1249,6 +1286,13 @@ Unparse_ExprStmt::unparseFuncRef(SgExpression* expr, SgUnparse_Info& info)
 void
 Unparse_ExprStmt::unparseMFuncRef ( SgExpression* expr, SgUnparse_Info& info )
    {
+     unparseMFuncRefSupport<SgMemberFunctionRefExp>(expr,info);
+   }
+
+template <class T>
+void
+Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& info )
+   {
   // CH (4/7/2010): This issue is because of using a MSVC keyword 'cdecl' as a variable name
 
 //#ifndef _MSCx_VER
@@ -1256,7 +1300,10 @@ Unparse_ExprStmt::unparseMFuncRef ( SgExpression* expr, SgUnparse_Info& info )
 //         printf ("Error: Commented out body of unparseMFuncRef() \n");
 //         ROSE_ASSERT(false);
 //#else
-     SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(expr);
+
+  // SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(expr);
+  // T* mfunc_ref = isSgMemberFunctionRefExp(expr);
+     T* mfunc_ref = dynamic_cast<T*>(expr);
      ROSE_ASSERT(mfunc_ref != NULL);
 
   // info.display("Inside of unparseMFuncRef");
@@ -1295,6 +1342,10 @@ Unparse_ExprStmt::unparseMFuncRef ( SgExpression* expr, SgUnparse_Info& info )
 
   // DQ (9/17/2004): Added assertion
      ROSE_ASSERT(decl != NULL);
+     if (decl->get_parent() == NULL)
+        {
+          printf ("Error: decl->get_parent() == NULL for decl = %p = %s (name = %s::%s) \n",decl,decl->class_name().c_str(),decl->get_name().str(),mfd->get_name().str());
+        }
      ROSE_ASSERT(decl->get_parent() != NULL);
 
      bool print_colons = false;

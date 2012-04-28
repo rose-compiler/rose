@@ -812,7 +812,7 @@ SageBuilder::buildFunctionType(SgType* return_type, SgFunctionParameterTypeList*
      return funcType;
    }
 
-#if 1
+
 // DQ (1/4/2009): Need to finish this!!!
 //-----------------------------------------------
 // build member function type, 
@@ -928,7 +928,11 @@ SageBuilder::buildMemberFunctionType(SgType* return_type, SgFunctionParameterTyp
   // fTable->get_function_type_table()->print("In buildMemberFunctionType(): globalFunctionTypeTable BEFORE");
 
      SgType* typeInTable = fTable->lookup_function_type(typeName);
-  // printf ("########### In buildMemberFunctionType(): Looking in global function type table for member function type = %p name = %s \n",funcType,typeName.str());
+
+#if 1
+     printf ("########### In buildMemberFunctionType(): Looking in global function type table for member function type = %p name = %s \n",funcType,typeName.str());
+#endif
+
      if (typeInTable == NULL)
         {
        // printf ("########### In buildMemberFunctionType(): Adding funcType = %p = %s to global function type table \n",funcType,typeName.str());
@@ -944,7 +948,12 @@ SageBuilder::buildMemberFunctionType(SgType* return_type, SgFunctionParameterTyp
        // DQ (3/22/2012): Added assertion.
           ROSE_ASSERT(typeInTable != funcType);
 
+#if 1
+       // DQ (4/25/2012): While debugging let's skip calling delete so that the slot in the memory pool will not be reused.
+          printf ("(debugging) Skipping delete of funcType = %p = %s \n",funcType,funcType->class_name().c_str());
+#else
           delete funcType;
+#endif
           funcType = NULL;
 #if 0
        // DQ (12/13/2011): Is this executed!
@@ -981,7 +990,7 @@ SageBuilder::buildMemberFunctionType(SgType* return_type, SgFunctionParameterTyp
 
      return funcType;
    }
-#endif
+
 
  //----------------------------------------------------
  //! Build an opaque type with a name, useful when a type's details are unknown during transformation, especially for a runtime library's internal type.
@@ -1113,6 +1122,9 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & name, SgType*
      if (scope == NULL)
         {
           scope = SageBuilder::topScopeStack();
+#if 1
+          printf ("In buildNondefiningFunctionDeclaration_T(): isMemberFunction = %s scope == NULL resetting the scope = %p = %s \n",isMemberFunction ? "true" : "false",scope,scope->class_name().c_str());
+#endif
         }
 
   // printf ("Building non-defining function for scope = %p in file = %s \n",scope,TransformationSupport::getSourceFile(scope)->getFileName().c_str());
@@ -1280,7 +1292,9 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & name, SgType*
                printf ("In buildNondefiningFunctionDeclaration_T(): SgCtorInitializerList = %p \n",isSgMemberFunctionDeclaration(func)->get_CtorInitializerList());
              }
 #endif
-
+#if 1
+          printf ("In buildNondefiningFunctionDeclaration_T(): scope = %p = %s \n",scope,scope->class_name().c_str());
+#endif
        // DQ (12/14/2011): Moved this from lower in this function.
           func->set_scope(scope);
 
@@ -6414,7 +6428,8 @@ SageBuilder::buildNamespaceDefinition(SgNamespaceDeclarationStatement* d)
 
 
 
-SgClassDefinition* SageBuilder::buildClassDefinition(SgClassDeclaration *d/*= NULL*/, bool buildTemplateInstantiation )
+SgClassDefinition*
+SageBuilder::buildClassDefinition(SgClassDeclaration *d/*= NULL*/, bool buildTemplateInstantiation )
    {
      SgClassDefinition* result = NULL;
      if (d != NULL) // the constructor does not check for NULL d, causing segmentation fault
@@ -6443,7 +6458,8 @@ SgClassDefinition* SageBuilder::buildClassDefinition(SgClassDeclaration *d/*= NU
      return result;
    }
 
-SgClassDefinition* SageBuilder::buildClassDefinition_nfi(SgClassDeclaration *d/*= NULL*/, bool buildTemplateInstantiation )
+SgClassDefinition*
+SageBuilder::buildClassDefinition_nfi(SgClassDeclaration *d/*= NULL*/, bool buildTemplateInstantiation )
    {
      SgClassDefinition* result = NULL;
      if (d!=NULL) // the constructor does not check for NULL d, causing segmentation fault
@@ -6469,7 +6485,8 @@ SgClassDefinition* SageBuilder::buildClassDefinition_nfi(SgClassDeclaration *d/*
      return result;
    }
 
-SgClassDeclaration* SageBuilder::buildNondefiningClassDeclaration_nfi(const SgName& name, SgClassDeclaration::class_types kind, SgScopeStatement* scope, bool buildTemplateInstantiation)
+SgClassDeclaration*
+SageBuilder::buildNondefiningClassDeclaration_nfi(const SgName& name, SgClassDeclaration::class_types kind, SgScopeStatement* scope, bool buildTemplateInstantiation)
    {
 #define REUSE_CLASS_DECLARATION_FROM_SYMBOL 0
 
@@ -7345,7 +7362,11 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& name, SgClassDeclaration::c
                ROSE_ASSERT(isSgTemplateInstantiationDecl(nondefdecl)->get_templateName().is_null() == false);
 
             // DQ (3/22/2012): Make sure there is template syntax present.
-               ROSE_ASSERT(isSgTemplateInstantiationDecl(nondefdecl)->get_templateName().getString().find('>') != string::npos);
+               if (isSgTemplateInstantiationDecl(nondefdecl)->get_templateName().getString().find('>') == string::npos)
+                  {
+                    printf ("WARNING: No template syntax present in name of template class instantiation (nondefdecl) \n");
+                  }
+            // ROSE_ASSERT(isSgTemplateInstantiationDecl(nondefdecl)->get_templateName().getString().find('>') != string::npos);
              }
             else
              {
@@ -7455,7 +7476,11 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& name, SgClassDeclaration::c
           ROSE_ASSERT(isSgTemplateInstantiationDecl(defdecl)->get_templateName().is_null() == false);
 
        // DQ (3/22/2012): Make sure there is template syntax present.
-          ROSE_ASSERT(isSgTemplateInstantiationDecl(defdecl)->get_templateName().getString().find('>') != string::npos);
+          if (isSgTemplateInstantiationDecl(defdecl)->get_templateName().getString().find('>') == string::npos)
+             {
+               printf ("WARNING: No template syntax present in name of template class instantiation (defdecl) \n");
+             }
+       // ROSE_ASSERT(isSgTemplateInstantiationDecl(defdecl)->get_templateName().getString().find('>') != string::npos);
 #if 0
           printf ("Should we have set the template instantiation name at this point? \n");
           ROSE_ASSERT(false);

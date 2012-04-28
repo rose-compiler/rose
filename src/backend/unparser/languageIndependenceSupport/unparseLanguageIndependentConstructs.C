@@ -3974,6 +3974,11 @@ UnparseLanguageIndependentConstructs::requiresParentheses(SgExpression* expr, Sg
           case CLASSNAME_REF:
           case FUNCTION_REF:
           case MEMBER_FUNCTION_REF:
+
+       // DQ (4/25/2012): Added template support (avoids output of extra "()" see test2012_51.C).
+          case TEMPLATE_FUNCTION_REF:
+          case TEMPLATE_MEMBER_FUNCTION_REF:
+
           case PSEUDO_DESTRUCTOR_REF:
           case BOOL_VAL:
           case SHORT_VAL:
