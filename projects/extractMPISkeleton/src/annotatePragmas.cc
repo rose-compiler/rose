@@ -73,6 +73,10 @@ class Processing_PresRemUnd : public AstTopDownProcessing<PRUAttribute*> {
                  << endl;
           else
             a = &attr_preserve;
+        } else if (pragmaText.compare(0,4,"skel") == 0) {
+          // all other skel pragmas imply preserve.
+          if (debug) cout << "A: skel-pragma: ";
+          a = &attr_preserve;
         }
       }
     }

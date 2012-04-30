@@ -1,4 +1,8 @@
+#include "rose.h"
 #include "Utils.h"
+
+using namespace SageBuilder;
+using namespace SageInterface;
 
 bool debug = false;
 
@@ -50,3 +54,38 @@ SgSymbol *getEnclosingSym(SgNode *n) {
             search_for_symbol_from_symbol_table();
     return getEnclosingSym(n->get_parent());
 }
+
+void addStdioH (const SgNode *n) {
+  // For each global scope, only insert header one time.
+  // FIXME: may add an extraneous "include <stdio.h>" if one exists.
+
+  static SgScopeStatement *gs = NULL;
+
+  SgScopeStatement *current_gs = getGlobalScope(n);
+
+  if (current_gs != gs) {
+    gs = current_gs;
+    insertHeader ( "stdio.h",
+                   PreprocessingInfo::after,
+                   true,
+                   current_gs);
+  }
+}
+
+void addStdlibH (const SgNode *n) {
+  // For each global scope, only insert header one time.
+  // FIXME: may add an extraneous "include <stdlib.h>" if one exists.
+
+  static SgScopeStatement *gs = NULL;
+
+  SgScopeStatement *current_gs = getGlobalScope(n);
+
+  if (current_gs != gs) {
+    gs = current_gs;
+    insertHeader ( "stdlib.h",
+                   PreprocessingInfo::after,
+                   true,
+                   current_gs);
+  }
+}
+

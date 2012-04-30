@@ -14,4 +14,7 @@ void getNodeVarDefsTransSSA(StaticSingleAssignment *ssa,
                             SgNode *n, std::set<SgNode*> *defs);
 SgSymbol *getEnclosingSym(SgNode *n);
 
+void addStdioH (const SgNode *n);
+void addStdlibH (const SgNode *n);
+
 #endif

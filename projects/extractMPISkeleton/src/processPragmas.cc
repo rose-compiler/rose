@@ -1,6 +1,7 @@
 #include <string>
 #include <iostream>
 #include "rose.h"
+#include "Utils.h"
 
 using namespace std;
 using namespace SageBuilder;
@@ -10,7 +11,7 @@ using namespace SageInterface;
 
 typedef enum {i_max, i_min, i_const} IterationType;
 
-static bool debug = false;
+static bool debugpp = false;
 
 // Utilities ///////////////////////////////////////////////////////////////////
 
@@ -117,17 +118,60 @@ void loopIterate (SgPragmaDeclaration *p, const char *s,
   }
   else {
     stmtNew = NULL;  // to remove warning.
+    if (debugpp)
+      cout << "pp: FOLLOWS: " << statement->unparseToString() << endl;
     exitWithMsg (statement,
                  "loop",
                  "must be followed by for(;;){},  do{}while(),  or while(){}");
   }
   // Common code for for/do-while/while:
 
+  /*
+  // Transform all the breaks in the loop:
+
+  static const char warn_msg []=
+    "warning: break out of loop before full number of iterations\n";
+  if (it == i_min || it == i_const) {
+    vector<SgBreakStmt*> bs = findBreakStmts(stmtNew);
+
+    if (!bs.empty()) {
+      // create code to replace break:
+      SgName fprintfNm("fprintf");
+      SgVarRefExp *stderrExp = buildOpaqueVarRefExp("stderr");
+      SgBasicBlock* newBreak =
+        // {if k < count then fprintf(stderr, "break before ...") ; break;}
+        buildBasicBlock(
+          buildIfStmt(
+            buildExprStatement(buildLessThanOp(kref,count)),
+            buildFunctionCallStmt(
+              fprintfNm,
+              buildIntType(),
+              buildExprListExp(stderrExp,
+                               buildStringVal(warn_msg))),
+            buildNullStatement()),
+          buildBreakStmt());
+
+      // add include neeeded by above code:
+      addStdioH(statement);
+
+      // replace all breaks with 'newBreak' code:
+      vector<SgBreakStmt*>::iterator it;
+      for ( it=bs.begin() ; it < bs.end(); it++ ) {
+        SgBreakStmt* b = *it;
+        replaceStatement(
+           b,
+           newBreak,
+           1);
+      }
+    }
+  }
+  */
+
   replaceStatement(statement,
                    buildBasicBlock(kDecl,stmtNew),
                    1);
 
-  if (debug)
+  if (debugpp)
     cout << "  target (transformed):\n"
          << "    " << kDecl->unparseToString() << endl
          << "    " << stmtNew->unparseToString() << endl << endl;
@@ -137,28 +181,8 @@ void loopIterate (SgPragmaDeclaration *p, const char *s,
 
 // condition pragma ////////////////////////////////////////////////////////////
 
-void addStdlibH (const SgNode *n) {
-  // For each global scope, only insert header one time.
-  // FIXME: may add an extraneous "include <stdlib.h>" if one exists.
-
-  static SgScopeStatement *gs = NULL;
-
-  SgScopeStatement *current_gs = getGlobalScope(n);
-
-  if (current_gs != gs) {
-    gs = current_gs;
-    insertHeader ( "stdlib.h",
-                   // to include RAND_MAX and rand() declaration.
-                   PreprocessingInfo::after,
-                   true,
-                   current_gs);
-  }
-}
-
 void conditionProbability (SgPragmaDeclaration *p, const char *s,
                            SgStatement *statement, SgExpression *x) {
-  // ISSUES: Q. if stdlib.h not included?
-
   if (!statement)
     exitWithMsg(p, s, "pragma must be followed by a statement");
 
@@ -200,7 +224,7 @@ void conditionProbability (SgPragmaDeclaration *p, const char *s,
   addStdlibH(stmtNew);
   popScopeStack();
 
-  if (debug)
+  if (debugpp)
     cout << "  target (transformed):\n"
          << "    " << stmt->unparseToString() << endl << endl;
 }
@@ -280,7 +304,7 @@ void arrayInitializer (SgPragmaDeclaration *p, const char *s,
   insertStatementAfter (kDecl, forStmt);
 
   popScopeStack();
-  if (debug)
+  if (debugpp)
     cout << "  target (transformed):\n"
          << "    " << stmt->unparseToString() << endl << endl;
 }
@@ -316,7 +340,7 @@ bool supportedFileType (SgFile *f) {
 
 SgExpression *parseExpr (SgStatement *context, const char *s) {
 
-  if (debug) printf ("parseExpr: %s \n", s);
+  if (debugpp) printf ("parseExpr: %s \n", s);
 
   AstFromString::c_char = s;       // parse this
   AstFromString::c_sgnode = context;  // sets up scope & such
@@ -335,13 +359,13 @@ SgExpression *parseExpr (SgStatement *context, const char *s) {
   }
 
   SgExpression *e = isSgExpression(AstFromString::c_parsed_node);
-  if (debug && e)
+  if (debugpp && e)
     cout << "expr= " << e->unparseToString() << endl;
   return e;
 }
 
 void processRemovePragma (SgStatement *s, bool outline) {
-  if (debug) printf ("processRemovePragma\n");
+  if (debugpp) printf ("processRemovePragma\n");
 
   if (outline) {
     const string comment("pragma applied:\n * #pragma skel remove\n");
@@ -360,9 +384,9 @@ void processRemovePragma (SgStatement *s, bool outline) {
                         PreprocessingInfo::after,
                         PreprocessingInfo::C_StyleComment);
 
-    if (debug) printf ("processRemovePragma-1 %p %p\n", s, ns);
+    if (debugpp) printf ("processRemovePragma-1 %p %p\n", s, ns);
     insertStatementAfter (s, ns);
-    if (debug) printf ("processRemovePragma-2\n");
+    if (debugpp) printf ("processRemovePragma-2\n");
   }
 }
 
@@ -376,7 +400,7 @@ void process1pragma(SgPragmaDeclaration *p, bool outline) {
   SgStatement *stmt = SageInterface::getNextStatement((SgStatement*) p);
 
   const char *s = pragmaText.c_str();
-  if (debug) printf("visit: %s\n", s);
+  if (debugpp) printf("visit: %s\n", s);
 
   // Move past 'skel' in pragma:
   {
@@ -387,7 +411,7 @@ void process1pragma(SgPragmaDeclaration *p, bool outline) {
     s += i;    // point past "skel"
   }
 
-  if (debug)
+  if (debugpp)
     cout << "#pragma skel:\n"
          << "  parameter:\n"
          << "   " << s << endl
