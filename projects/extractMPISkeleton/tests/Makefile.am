@@ -67,7 +67,7 @@ EXTRA_DIST = \
 	t8/files \
 	t8/t8.c \
 	t9/files \
-	t9/t9.c
+	t9/t9.c \
 	t10/files \
 	t10/t10.c \
 	t11/files \
