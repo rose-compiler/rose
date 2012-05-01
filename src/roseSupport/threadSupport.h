@@ -92,7 +92,7 @@ enum RTS_Layer {
     RTS_LAYER_RTS_MESSAGE_CLASS         = 105,          /**< RTS_Message */
     RTS_LAYER_DISASSEMBLER_CLASS        = 110,          /**< Disassembler */
 
-    /* Simulator layers (see projects/simulator), 200-299
+    /* Simulator layers (see projects/simulator), 200-220
      *
      * Constraints:
      *     RSIM_PROCESS_OBJ        < RSIM_PROCESS_CLONE_OBJ
@@ -107,6 +107,11 @@ enum RTS_Layer {
     RTS_LAYER_RSIM_TRACEIO_OBJ          = 206,          /**< RSIM_Adapter::TraceIO */
     RTS_LAYER_RSIM_SIMULATOR_CLASS      = 207,          /**< RSIM_Simulator */
     RTS_LAYER_RSIM_SIMULATOR_OBJ        = 208,          /**< RSIM_Simulator */
+
+    /* User layers.  These are for people that might want to use the ROSE Thread Support outside ROSE, such as in ROSE
+     * projects.   We leave it up to them to organize how they'll use the available layers. */
+    RTS_LAYER_USER_MIN                  = 250,          /**< Minimum layer for end-user usage. */
+    RTS_LAYER_USER_MAX                  = 299,          /**< Maximum layer for end-user usage. */
 
     /* Max number of layers (i.e., 0 through N-1) */
     RTS_LAYER_NLAYERS                   = 300
