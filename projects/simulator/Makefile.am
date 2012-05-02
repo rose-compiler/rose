@@ -205,6 +205,13 @@ demo8_SOURCES = demos/demo8.C
 demo8_CPPFLAGS = $(ROSE_INCLUDES)
 demo8_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
+#------------------------------------------------------------------------------------------------------------------------------
+# Example of running a multi-domain semantic analysis to find places where symbolic semantics becomes too complex.
+noinst_PROGRAMS += SymbolicBomb
+SymbolicBomb_SOURCES = demos/SymbolicBomb.C
+SymbolicBomb_CPPFLAGS = $(ROSE_INCLUDES)
+SymbolicBomb_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
 
 
 ###############################################################################################################################
