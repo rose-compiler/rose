@@ -17,8 +17,8 @@ mptOmpLoweringPath=$(mProgramTransformationPath)/ompLowering#
 #  Library: programTransformation.la
 # ------------------------------------------------------------------------------
 
-mProgramTransformation_libLibraries=\
-	$(mptOmpLowering_lib_libraries)
+mProgramTransformation_lib_ltlibraries=\
+	$(mptOmpLowering_lib_ltlibraries)
 
 mProgramTransformation_la_sources=\
 	$(mptPartialRedundancyElimination_la_sources) \

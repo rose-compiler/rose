@@ -11,8 +11,8 @@ int bar(int flag)
 {
 
   int a =1,b,c;
-  
-  if (flag == 0)
+#pragma rose [LiveVarsLattice: liveVars=[flag, a, b]]
+  if (flag == 0) // flag is only read here, not written! 
     c = a;
   else  
     c = b;

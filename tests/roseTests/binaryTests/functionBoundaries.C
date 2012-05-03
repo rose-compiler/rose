@@ -68,7 +68,6 @@ main(int argc, char *argv[])
     SgProject *project = frontend(argc, argv);
 
     std::cout <<"Functions detected from binary executable:\n"
-              <<AsmFunctionIndex(project).sort_by_entry_addr()
-              <<SgAsmFunction::reason_key("   ");
+              <<AsmFunctionIndex(project).sort_by_entry_addr();
     return 0;
 }

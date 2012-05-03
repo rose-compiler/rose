@@ -4,11 +4,11 @@ int main() {
         for (int j = 0; j < 5; j++) {
             for (int k = 0; k < 5; k++) {
                 for (int l = 0; l < 5; l++) {
-                    for (int q = 0; q < 6; q++) {
-                        for (int r = 0; r < 6; r++) {
+//                    for (int q = 0; q < 6; q++) {
+//                        for (int r = 0; r < 6; r++) {
                             m++;
-                        }
-                    }
+//                        }
+//                    }
                 }
             }
         }

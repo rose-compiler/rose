@@ -478,7 +478,6 @@ INPUT                  = \
 			 @top_srcdir@/src/frontend/BinaryFormats/PeSymbolTable.C \
 			 @top_srcdir@/src/frontend/BinaryFormats/Rva.C \
 			 @top_srcdir@/src/frontend/BinaryLoader \
-                         @top_srcdir@/src/frontend/Open64/documentation.docs \
                          @top_srcdir@/src/frontend/SageIII/ \
                          @top_srcdir@/src/frontend/SageIII/docs \
 			 @top_srcdir@/src/frontend/SageIII/astPostProcessing/checkIsModifiedFlag.C \
@@ -496,16 +495,11 @@ INPUT                  = \
                          @top_srcdir@/src/midend/programTransformation/ompLowering \
                          @top_srcdir@/src/midend/midend.docs \
                          @top_srcdir@/src/midend/astDiagnostics/AstDiagnostics.docs \
-                         @top_srcdir@/src/midend/programTransformation/astInlining/documentation.docs \
-                         @top_srcdir@/src/midend/programTransformation/astOutlining/documentation.docs \
-                         @top_srcdir@/src/midend/programTransformation/loopProcessing/documentation.docs \
-                         @top_srcdir@/src/midend/programAnalysis/documentation.docs \
                          @top_srcdir@/src/midend/programAnalysis/staticSingleAssignment/ \
                          @top_srcdir@/src/midend/programAnalysis/ssaUnfilteredCfg/ \
                          @top_srcdir@/src/midend/programAnalysis/CallGraphAnalysis \
                          @top_srcdir@/src/midend/programTransformation/documentation.docs \
                          @top_srcdir@/src/midend/programTransformation/extractFunctionArgumentsNormalization \
-                         @top_srcdir@/src/midend/astRewriteMechanism/ASTRewrite.docs \
                          @top_srcdir@/src/midend/astProcessing \
                          @top_srcdir@/src/midend/astQuery/QueryLib.docs \
                          @top_srcdir@/src/backend/backend.docs \
@@ -528,7 +522,14 @@ INPUT                  = \
                          @top_srcdir@/src/3rdPartyLibraries/MSTL/MSTL.docs \
                          @top_srcdir@/src/extra.docs \
                          @top_srcdir@/projects/projects.docs
-
+# Liao 4/13/2012 commenting out outdated docs, We expect documentation in Manual/Tutorial pdfs, not
+#   in Doxygen documents (maintaining two copies is a pain and confusing to users). 
+#                         @top_srcdir@/src/midend/programTransformation/astOutlining/documentation.docs 
+#                         @top_srcdir@/src/midend/programTransformation/astInlining/documentation.docs 
+#                         @top_srcdir@/src/midend/astRewriteMechanism/ASTRewrite.docs 
+#                         @top_srcdir@/src/frontend/Open64/documentation.docs 
+#                         @top_srcdir@/src/midend/programTransformation/loopProcessing/documentation.docs 
+#                         @top_srcdir@/src/midend/programAnalysis/documentation.docs 
 # DQ (4/13/2010): Added @top_srcdir@/src/midend/astProcessing directory in place of:
 #                         @top_srcdir@/src/midend/astProcessing/AstProcessing.docs 
 

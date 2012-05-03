@@ -79,8 +79,8 @@ INCLUDES=\
 noinst_LTLIBRARIES=\
 	libmidend.la
 
-lib_LIBRARIES=\
-	$(mProgramTransformation_libLibraries)
+lib_LTLIBRARIES=\
+	$(mProgramTransformation_lib_ltlibraries)
 
 libmidend_la_SOURCES=\
 	$(mAbstractHandle_la_sources) \

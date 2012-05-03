@@ -3,25 +3,26 @@ int foo(int a, int b) {
 }
 
 int bar(int c, int d, int x) {
-    c++;
-    d++;
-    x++;
-    if (x > 2) {
-    if (x - c > d) {
-       x++;
+    int cp = c+1;
+    int dp = d+1;
+    int xp = x+1;
+    if (xp > 2) {
+    if (xp > dp) {
+       xp = xp+1;;
     }
     else {
-       x--;
+       xp = xp-1;
     }
     }
     else {
-       x += 2;
+       xp = 2;
     }
-    if (x == 0) {
-       x++;
+    if (xp == 0) {
+       xp++;
     }
+    int y = xp;
     //x += c + d;
-    return x;
+    return y;
 }
 
 int barfoo(int y, int z) {
@@ -68,8 +69,9 @@ int main() {
     int z = x + y;
     int k = 1;
     k = k + z;
-    foo(x, y);
-    foo(foo(x, y), y);
-    foo(bar(x, y, k), foo(x, k));
-    barfoo(foo(bar(x,y,k),foo(x,y)), k);
+    //int x1 = foo(x, y);
+    int x2 = bar(x, y, z);
+    //foo(bar(x, y, k), foo(x, k));
+    //barfoo(foo(bar(x,y,k),foo(x,y)), k);
+    return 0;
 }

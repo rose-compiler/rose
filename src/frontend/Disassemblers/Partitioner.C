@@ -474,6 +474,8 @@ Partitioner::set_map(MemoryMap *map, MemoryMap *ro_map)
 Disassembler::AddressSet
 Partitioner::discover_jump_table(BasicBlock *bb, bool do_create, ExtentMap *table_extent)
 {
+    using namespace BinaryAnalysis::InstructionSemantics;
+
     /* Do some cheap up-front checks. */
     SgAsmx86Instruction *insn_x86 = isSgAsmx86Instruction(bb->last_insn());
     if (!insn_x86 || (insn_x86->get_kind()!=x86_jmp && insn_x86->get_kind()==x86_farjmp) ||
@@ -487,7 +489,7 @@ Partitioner::discover_jump_table(BasicBlock *bb, bool do_create, ExtentMap *tabl
 
     /* Evaluate the basic block semantically to get an expression for the final EIP. */
     typedef VirtualMachineSemantics::ValueType<32> RegisterValueType;
-    typedef VirtualMachineSemantics::Policy<VirtualMachineSemantics::State, VirtualMachineSemantics::ValueType> Policy;
+    typedef VirtualMachineSemantics::Policy<> Policy;
     typedef X86InstructionSemantics<Policy, VirtualMachineSemantics::ValueType> Semantics;
     Policy policy;
     policy.set_map(&ro_map);
@@ -643,9 +645,16 @@ Partitioner::successors(BasicBlock *bb, bool *complete)
         rose_addr_t fall_through_va = canonic_block(bb->last_insn()->get_address() + bb->last_insn()->get_size());
         rose_addr_t call_target_va = call_target(bb);
         if (call_target_va!=NO_TARGET) {
-            BasicBlock *target_bb = find_bb_starting(call_target_va, false);
-            if (target_bb && target_bb->function && target_bb->function->may_return)
+            Instruction *target_insn = find_instruction(call_target_va, true);
+            BasicBlock *target_bb = target_insn ? find_bb_starting(call_target_va, false) : NULL;
+            if (!target_insn) {
+                /* We know the call target, but could not obtain an instruction there.  The target might be a dynamically
+                 * linked function that isn't mapped yet.  Assume it returns. */
                 retval.insert(fall_through_va);
+            } else if (target_bb && target_bb->function && target_bb->function->possible_may_return()) {
+                /* There's a function at the call target and that function might return. */
+                retval.insert(fall_through_va);
+            }
         } else {
             retval.insert(fall_through_va); /*true 99% of the time*/
         }
@@ -675,6 +684,8 @@ Partitioner::call_target(BasicBlock *bb)
 bool
 Partitioner::pops_return_address(rose_addr_t va)
 {
+    using namespace BinaryAnalysis::InstructionSemantics;
+
     bool on_stack = true; /*assume return value stays on stack; prove otherwise*/
 
     /* Create the basic block if possible, but if we created it here then we should clear it below. */
@@ -686,7 +697,7 @@ Partitioner::pops_return_address(rose_addr_t va)
 
         SgAsmx86Instruction *last_insn = isSgAsmx86Instruction(bb->last_insn());
 
-        typedef VirtualMachineSemantics::Policy<VirtualMachineSemantics::State, VirtualMachineSemantics::ValueType> Policy;
+        typedef VirtualMachineSemantics::Policy<> Policy;
         typedef X86InstructionSemantics<Policy, VirtualMachineSemantics::ValueType> Semantics;
         Policy policy;
         policy.set_map(get_map());
@@ -712,7 +723,7 @@ Partitioner::pops_return_address(rose_addr_t va)
             }
             on_stack = policy.on_stack(orig_retaddr);
             if (!on_stack && debug)
-                fprintf(debug, "[B%08"PRIx64" discards return address]", va);
+                fprintf(debug, "[B%08"PRIx64"#%zu discards return address]", va, bb->insns.size());
         } catch (const Semantics::Exception&) {
             /*void*/
         } catch (const Policy::Exception&) {
@@ -797,6 +808,60 @@ Partitioner::Function::clear_data_blocks()
     for (DataBlocks::iterator bi=data_blocks.begin(); bi!=data_blocks.end(); ++bi)
         bi->second->function = NULL;
     data_blocks.clear();
+}
+
+/* Move basic blocks from the other function to this one. */
+void
+Partitioner::Function::move_basic_blocks_from(Function *other)
+{
+    for (BasicBlocks::iterator bbi=other->basic_blocks.begin(); bbi!=other->basic_blocks.end(); ++bbi) {
+        basic_blocks[bbi->first] = bbi->second;
+        bbi->second->function = this;
+    }
+    other->basic_blocks.clear();
+
+    heads.insert(other->heads.begin(), other->heads.end());
+    other->heads.clear();
+}
+
+/* Move data blocks from the other function to this one. */
+void
+Partitioner::Function::move_data_blocks_from(Function *other)
+{
+    for (DataBlocks::iterator dbi=other->data_blocks.begin(); dbi!=other->data_blocks.end(); ++dbi) {
+        data_blocks[dbi->first] = dbi->second;
+        dbi->second->function = this;
+    }
+    other->data_blocks.clear();
+}
+
+/* Increase knowledge about may-return property. */
+void
+Partitioner::Function::promote_may_return(SgAsmFunction::MayReturn new_value) {
+    switch (get_may_return()) {
+        case SgAsmFunction::RET_UNKNOWN:
+            set_may_return(new_value);
+            break;
+        case SgAsmFunction::RET_SOMETIMES:
+            if (SgAsmFunction::RET_ALWAYS==new_value || SgAsmFunction::RET_NEVER==new_value)
+                set_may_return(new_value);
+            break;
+        case SgAsmFunction::RET_ALWAYS:
+        case SgAsmFunction::RET_NEVER:
+            break;
+    }
+}
+
+void
+Partitioner::Function::show_properties(FILE *debug) const
+{
+    if (debug) {
+        std::string may_return_str = stringifySgAsmFunctionMayReturn(get_may_return(), "RET_");
+        for (size_t i=0; i<may_return_str.size(); ++i)
+            may_return_str[i] = tolower(may_return_str[i]);
+        fprintf(debug, "{nbblocks=%zu, ndblocks=%zu, may-return=%s}",
+                basic_blocks.size(), data_blocks.size(), may_return_str.c_str());
+    }
 }
 
 /* Return partitioner to initial state */
@@ -963,31 +1028,12 @@ Partitioner::append(Function* f, BasicBlock *bb, unsigned reason, bool keep/*=fa
     /* If the block is a function return then mark the function as returning.  On a transition from a non-returning function
      * to a returning function, we must mark all calling functions as pending so that the fall-through address of their
      * function calls to this function are eventually discovered.  This includes recursive calls since we may have already
-     * discovered the recursive call but not followed the fall-through address.
-     *
-     * FIXME: It's probably no longer necessary to go back and mark calling functions as pending because we do that in the
-     *        analyze_cfg() loop.  Doing it in analyze_cfg() is probably more efficient than running these nested loops each
-     *        time we have a transition. [RPM 2010-07-30] */
+     * discovered the recursive call but not followed the fall-through address.  Marking callers as "pending" happens in the
+     * analyze_cfg() method, were we can handle all the calls at the same time (more efficient than doing one at a time right
+     * here). */
     update_analyses(bb);
-    if (bb->cache.function_return && !f->may_return) {
-        f->may_return = true;
-#if 0
-        if (debug) fprintf(debug, "[returns-to");
-        for (BasicBlocks::iterator bbi=basic_blocks.begin(); bbi!=basic_blocks.end(); ++bbi) {
-            if (bbi->second->function!=NULL) {
-                const Disassembler::AddressSet &sucs = successors(bbi->second, NULL);
-                for (Disassembler::AddressSet::const_iterator si=sucs.begin(); si!=sucs.end(); ++si) {
-                    if (*si==f->entry_va) {
-                        if (debug) fprintf(debug, " F%08"PRIx64, bbi->second->function->entry_va);
-                        bbi->second->function->pending = true;
-                        break;
-                    }
-                }
-            }
-        }
-        if (debug) fprintf(debug, "]");
-#endif
-    }
+    if (bb->cache.function_return)
+        f->promote_may_return(SgAsmFunction::RET_SOMETIMES);
 }
 
 /** Append data region to function.  This method is a bit of a misnomer because the order that the data blocks are appended to
@@ -1198,7 +1244,7 @@ Partitioner::find_bb_starting(rose_addr_t va, bool create/*true*/)
     if (!create)
         return NULL;
     if (debug)
-        fprintf(debug, "[split from B%08"PRIx64"]", bb->address());
+        fprintf(debug, "[split from B%08"PRIx64"#%zu]", bb->address(), bb->insns.size());
     if (bb->function!=NULL)
         bb->function->pending = true;
     truncate(bb, va);
@@ -1257,6 +1303,8 @@ Partitioner::add_function(rose_addr_t entry_va, unsigned reasons, std::string na
 void
 Partitioner::mark_ipd_configuration()
 {
+    using namespace BinaryAnalysis::InstructionSemantics;
+
     for (BlockConfigMap::iterator bci=block_config.begin(); bci!=block_config.end(); ++bci) {
         rose_addr_t va = bci->first;
         BlockConfig *bconf = bci->second;
@@ -1290,7 +1338,7 @@ Partitioner::mark_ipd_configuration()
 
             MemoryMap *map = get_map();
             assert(map!=NULL);
-            typedef VirtualMachineSemantics::Policy<VirtualMachineSemantics::State, VirtualMachineSemantics::ValueType> Policy;
+            typedef VirtualMachineSemantics::Policy<> Policy;
             typedef X86InstructionSemantics<Policy, VirtualMachineSemantics::ValueType> Semantics;
             Policy policy;
             policy.set_map(map);
@@ -1530,8 +1578,11 @@ Partitioner::mark_elf_plt_entries(SgAsmGenericHeader *fhdr)
          *        [RPM 2010-05-11] */
         if ("abort@plt"!=name && "execl@plt"!=name && "execlp@plt"!=name && "execv@plt"!=name && "execvp@plt"!=name &&
             "exit@plt"!=name && "_exit@plt"!=name && "fexecve@plt"!=name &&
-            "longjmp@plt"!=name && "__longjmp@plt"!=name && "siglongjmp@plt"!=name)
-            plt_func->may_return = true;
+            "longjmp@plt"!=name && "__longjmp@plt"!=name && "siglongjmp@plt"!=name) {
+            plt_func->set_may_return(SgAsmFunction::RET_ALWAYS);
+        } else {
+            plt_func->set_may_return(SgAsmFunction::RET_NEVER);
+        }
     }
 }
 
@@ -2209,7 +2260,7 @@ Partitioner::FindInsnPadding::operator()(bool enabled, const Args &args)
                 if (bb && !bb->function) {
                     p->append(new_func, bb, SgAsmBlock::BLK_PADDING, true/*head of CFG subgraph*/);
                     if (p->debug)
-                        fprintf(p->debug, " B%08"PRIx64, bb->address());
+                        fprintf(p->debug, " B%08"PRIx64"#%zu", bb->address(), bb->insns.size());
                 }
             }
             if (p->debug)
@@ -2588,7 +2639,7 @@ Partitioner::FindPostFunctionInsns::operator()(bool enabled, const Args &args)
             if (p->debug) {
                 if (0==nadded)
                     fprintf(p->debug, "Partitioner::PostFunctionBlocks: for F%08"PRIx64": added", func->entry_va);
-                fprintf(p->debug, " B%08"PRIx64, bb->address());
+                fprintf(p->debug, " B%08"PRIx64"#%zu", bb->address(), bb->insns.size());
             }
             p->append(func, bb, SgAsmBlock::BLK_POSTFUNC, true/*head of CFG subgraph*/);
             func->pending = true;
@@ -2801,6 +2852,11 @@ Partitioner::name_import_entries(SgAsmGenericHeader *fhdr)
 void
 Partitioner::pre_cfg(SgAsmInterpretation *interp/*=NULL*/)
 {
+    if (debug) {
+        fprintf(debug, "Function reasons referenced by Partitioner debugging output:\n%s",
+                SgAsmFunction::reason_key("  ").c_str());
+    }
+
     mark_ipd_configuration();   /*seed partitioner based on IPD configuration information*/
 
     if (interp) {
@@ -2889,9 +2945,14 @@ Partitioner::discover_first_block(Function *func)
 
     if (bb) {
         append(func, bb, SgAsmBlock::BLK_ENTRY_POINT);
-        if (debug) fprintf(debug, "added %zu instruction%s\n", bb->insns.size(), 1==bb->insns.size()?"":"s");
+        if (debug)
+            fprintf(debug, "#%zu ", bb->insns.size());
     } else if (debug) {
-        fprintf(debug, "no instruction at function entry address\n");
+        fprintf(debug, "no instruction at function entry address ");
+    }
+    if (debug) {
+        func->show_properties(debug);
+        fputc('\n', debug);
     }
 }
 
@@ -2919,6 +2980,7 @@ Partitioner::discover_blocks(Function *f, rose_addr_t va, unsigned reason)
     /* Find basic block at address, creating it if necessary. */
     BasicBlock *bb = find_bb_starting(va);
     assert(bb!=NULL);
+    if (debug) fprintf(debug, "#%zu", bb->insns.size());
 
     /* If the current function has been somehow marked as pending then we might as well give up discovering its blocks because
      * some of its blocks' successors may have changed.  This can happen, for instance, if the create_bb() called above had to
@@ -3053,35 +3115,29 @@ Partitioner::analyze_cfg(SgAsmBlock::Reason reason)
             if (iscall && target_va!=NO_TARGET &&
                 NULL!=(return_bb=find_bb_starting(return_va)) &&
                 NULL!=(target_bb=find_bb_starting(target_va, false)) &&
-                target_bb->function && target_bb->function->may_return) {
-                if (!return_bb->function) {
-                    /* Function A makes a call to function B and we know that function B could return but the return address is
-                     * not part of any function.  Mark function A as pending so that we rediscover its blocks. */
-                    bb->function->pending = true;
-                    if (debug) {
-                        fprintf(debug, "  F%08"PRIx64" may return to B%08"PRIx64" in F%08"PRIx64"\n",
-                                target_bb->function->entry_va, return_va, bb->function->entry_va);
-                    }
-                } else if (return_va==target_bb->function->entry_va && !bb->function->may_return) {
+                target_bb->function && target_bb->function->possible_may_return()) {
+                if (return_bb->function && return_va==target_bb->function->entry_va && !bb->function->possible_may_return()) {
                     /* This handles the case when function A's return from B falls through into B. In this case, since B
-                     * returns then A also returns.  We mark A as returning and we'll catch A's callers on the next pass.
+                     * returns then A also returns.  We mark A as returning.
                      *    function_A:
                      *        ...
                      *        CALL function_B
                      *    function_B:
                      *        RET
                      */
-                    bb->function->may_return = true;
+                    bb->function->promote_may_return(SgAsmFunction::RET_SOMETIMES);
                     if (debug) {
                         fprintf(debug, "  Function F%08"PRIx64" may return by virtue of call fall-through at B%08"PRIx64"\n",
                                 bb->function->entry_va, bb->address());
                     }
                 }
-            } else if (!bb->function->may_return && !is_function_call(bb, NULL) && succs_complete) {
-                for (Disassembler::AddressSet::iterator si=succs.begin(); si!=succs.end() && !bb->function->may_return; ++si) {
+            } else if (!bb->function->possible_may_return() && !is_function_call(bb, NULL) && succs_complete) {
+                for (Disassembler::AddressSet::iterator si=succs.begin();
+                     si!=succs.end() && !bb->function->possible_may_return();
+                     ++si) {
                     if (0!=(target_va=*si) && NULL!=(target_bb=find_bb_starting(target_va, false)) &&
                         target_bb->function && target_bb->function!=bb->function &&
-                        target_va==target_bb->function->entry_va && target_bb->function->may_return) {
+                        target_va==target_bb->function->entry_va && target_bb->function->possible_may_return()) {
                         /* The block bb isn't a function call, but branches to the entry point of another function.  If that
                          * function returns then so does this one.  This handles situations like:
                          *      function_A:
@@ -3093,10 +3149,67 @@ Partitioner::analyze_cfg(SgAsmBlock::Reason reason)
                          * We don't need to set function_A->pending because the reachability of the instruction after its JMP
                          * won't change regardless of whether the "called" function returns (i.e., the return is to the caller
                          * of function_A, not to function_A itself. */
-                        bb->function->may_return = true;
+                        bb->function->promote_may_return(SgAsmFunction::RET_SOMETIMES);
                         if (debug) {
                             fprintf(debug, "  F%08"PRIx64" may return by virtue of branching to function F%08"PRIx64
                                     " which may return\n", bb->function->entry_va, target_bb->function->entry_va);
+                        }
+                    }
+                }
+            } else if (!bb->function->possible_may_return() && !is_function_call(bb, NULL) && !succs_complete) {
+                /* If the basic block's successor is not known, then we must assume that it branches to something that could
+                 * return. */
+                bb->function->promote_may_return(SgAsmFunction::RET_SOMETIMES);
+                if (debug) {
+                    fprintf(debug, "  F%08"PRIx64" may return by virtue of incomplete successors\n",
+                            bb->function->entry_va);
+                }
+            }
+        }
+
+        /* Which functions did we think didn't return but now think they might return? */
+        Disassembler::AddressSet might_now_return;
+        for (Functions::iterator fi=functions.begin(); fi!=functions.end(); ++fi) {
+            Function *func = fi->second;
+            if (func->changed_may_return() && func->possible_may_return()) {
+                if (debug)
+                    fprintf(debug, "%s F%08"PRIx64, might_now_return.empty()?"newly returning functions:":"", func->entry_va);
+                might_now_return.insert(func->entry_va);
+                func->commit_may_return();
+            }
+        }
+        if (debug && !might_now_return.empty())
+            fprintf(debug, "\n");
+
+        /* If we previously thought a function didn't return, but now we think it might return, we need to mark as pending all
+         * callers if the return address in that caller isn't already part of the caller function.   There's no need to do this
+         * fairly expensive loop of we didn't transition any functions from does-not-return to may-return.  We use the
+         * might_now_return set rather than looking up functions with find_function() because the former is probably faster,
+         * especially if we have lots of functions but only a few transitioned from does-not-return to may-return, which is the
+         * common case. */
+        if (!might_now_return.empty()) {
+            for (BasicBlocks::iterator bi=basic_blocks.begin(); bi!=basic_blocks.end(); ++bi) {
+                BasicBlock *bb = bi->second;
+                if (bb->function && !bb->function->pending) {
+                    Disassembler::AddressSet succs = successors(bb, NULL);
+                    for (Disassembler::AddressSet::iterator si=succs.begin(); si!=succs.end(); ++si) {
+                        if (might_now_return.find(*si)!=might_now_return.end()) {
+                            // This is a call from a basic block (bb) to a function that we now think might return.  If the
+                            // return-to block is not already part of the calling function, then we should mark the calling
+                            // function as pending.
+                            rose_addr_t return_va = canonic_block(bb->last_insn()->get_address() + bb->last_insn()->get_size());
+                            BasicBlock *return_bb = find_bb_starting(return_va, false); // do not create the block
+                            if (return_bb && return_bb->function!=bb->function) {
+                                bb->function->pending = true;
+                                if (debug) {
+                                    Function *called_func = find_function(*si); // don't call this unless debugging (performance)
+                                    assert(called_func!=NULL);
+                                    fprintf(debug,
+                                            "newreturn %s F%08"PRIx64" \"%s\" returns to B%08"PRIx64" in F%08"PRIx64"\n",
+                                            SgAsmFunction::reason_str(true, called_func->reason).c_str(), called_func->entry_va,
+                                            called_func->name.c_str(), return_bb->address(), bb->function->entry_va);
+                                }
+                            }
                         }
                     }
                 }
@@ -3114,8 +3227,11 @@ Partitioner::analyze_cfg(SgAsmBlock::Reason reason)
             }
         }
 
-        if (pending.size()==0)
+        if (pending.size()==0) {
+            if (debug)
+                fprintf(debug, "finished for %s", stringifySgAsmBlockReason(reason, "BLK_").c_str());
             break;
+        }
 
         /* Make sure all functions have an initial basic block if possible. */
         for (size_t i=0; i<pending.size(); ++i)
@@ -3133,7 +3249,11 @@ Partitioner::analyze_cfg(SgAsmBlock::Reason reason)
             } catch (const AbandonFunctionDiscovery&) {
                 /* thrown when discover_blocks() decides it needs to start over on a function */
             }
-            if (debug) fprintf(debug, "\n");
+            if (debug) {
+                fputc(' ', debug);
+                pending[i]->show_properties(debug);
+                fputc('\n', debug);
+            }
         }
     }
 }
@@ -3187,15 +3307,24 @@ Partitioner::detach_thunk(Function *func)
             return false;
     }
 
-    /* Create a new function and transfer everything but the first instruction to the new function. */
+    /* Create a new function to hold everything but the entry instruction */
     if (debug)
         fprintf(debug, "Partitioner::detach_thunk: detaching thunk F%08"PRIx64" from body F%08"PRIx64"\n",
                 func->entry_va, second_va);
     Function *new_func = add_function(second_va, func->reason);
-    func->reason |= SgAsmFunction::FUNC_THUNK;
-    new_func->heads = func->heads; func->heads.clear(); new_func->heads.erase(func->entry_va);
-    new_func->may_return = func->may_return;
+    new_func->name = func->name;
+    new_func->set_may_return(func->get_may_return());
 
+    /* Adjust the old function, which now represents the thunk. */
+    func->reason |= SgAsmFunction::FUNC_THUNK;
+    func->pending = false;
+    if (!func->name.empty() && std::string::npos==func->name.find("-thunk"))
+        func->name += "-thunk";
+    
+    /* Transfer all instructions (except the thunk itself) to new_func. */
+    new_func->heads = func->heads;
+    func->heads.clear();
+    new_func->heads.erase(func->entry_va);
     BasicBlocks bblocks = func->basic_blocks;
     for (BasicBlocks::iterator bi=bblocks.begin(); bi!=bblocks.end(); ++bi) {
         if (bi->first==func->entry_va) {
@@ -3220,6 +3349,7 @@ Partitioner::detach_thunk(Function *func)
         }
     }
 
+    /* Transfer all data blocks to new_func. */
     DataBlocks dblocks = func->data_blocks;
     for (DataBlocks::iterator di=dblocks.begin(); di!=dblocks.end(); ++di) {
         DataBlock *dblock = di->second;
@@ -3251,6 +3381,148 @@ Partitioner::adjust_padding()
         if (func!=effective_function(padding))
             append(func, padding, padding->reason, true/*force*/);
     }
+}
+
+/* Merge function fragments when possible. */
+void
+Partitioner::merge_function_fragments()
+{
+    // Find connected components of the control flow graph, but only considering function fragments.  We do this in a single
+    // pass, and at the end of this loop each function fragment, F, will have group number group_number[traversal_number[F]].
+    typedef std::map<Function*, size_t> TravNumMap;
+    TravNumMap traversal_number;       // which DFS traversal first visited the function?
+    std::vector<size_t> group_number;  // group number for each traversal (indexed by traversal number)
+    for (Functions::iterator fi=functions.begin(); fi!=functions.end(); ++fi) {
+        if (SgAsmFunction::FUNC_GRAPH!=fi->second->reason)
+            continue; // only consider functions that are strictly fragments
+        if (traversal_number.find(fi->second)!=traversal_number.end())
+            continue; // we already visited this function
+
+        size_t tnum = group_number.size();
+        group_number.push_back(tnum);
+        traversal_number[fi->second] = tnum;
+
+        // Depth first search considering only function fragments
+        std::vector<Function*> dfs_functions;
+        dfs_functions.push_back(fi->second);
+        while (!dfs_functions.empty()) {
+            Function *source_func = dfs_functions.back(); dfs_functions.pop_back();
+            for (BasicBlocks::iterator bi=source_func->basic_blocks.begin(); bi!=source_func->basic_blocks.end(); ++bi) {
+                BasicBlock *source_bb = bi->second;
+                Disassembler::AddressSet succs = successors(source_bb);
+                for (Disassembler::AddressSet::iterator si=succs.begin(); si!=succs.end(); ++si) {
+                    BasicBlock *target_bb = find_bb_starting(*si, false); // do not create the block
+                    Function *target_func = target_bb ? target_bb->function : NULL;
+                    if (target_func && target_func!=source_func && SgAsmFunction::FUNC_GRAPH==target_func->reason) {
+                        bool inserted = traversal_number.insert(std::make_pair(target_func, tnum)).second;
+                        if (inserted) {
+                            dfs_functions.push_back(target_func);
+                        } else {
+                            group_number[traversal_number[target_func]] = tnum;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /* Reorganize so that we have lists of function fragments by group number. */
+    typedef std::vector<std::vector<Function*> > FragmentIndex;
+    FragmentIndex fragment_index(group_number.size(), std::vector<Function*>());
+    for (Functions::iterator fi=functions.begin(); fi!=functions.end(); ++fi) {
+        TravNumMap::iterator tn_found = traversal_number.find(fi->second);
+        if (tn_found!=traversal_number.end()) {
+            size_t gnum = group_number[tn_found->second];
+            fragment_index[gnum].push_back(fi->second);
+        }
+    }
+#if 0 /* DEBUGGING [RPM 2012-04-18] */
+    fprintf(stderr, "Partitioner::merge_function_fragments: fragment index: \n");
+    for (size_t gnum=0; gnum<fragment_index.size(); gnum++) {
+        fprintf(stderr, "  group-%zu:", gnum);
+        for (std::vector<Function*>::iterator fi=fragment_index[gnum].begin(); fi!=fragment_index[gnum].end(); ++fi)
+            fprintf(stderr, " F%08"PRIx64, (*fi)->entry_va);
+        fprintf(stderr, "\n");
+    }
+#endif
+            
+    /* Find the non-fragment predecessors of each fragment group. A fragment group can be merged into another function only if
+     * the fragment group has a single predecessor. */
+    std::vector<Function*> parent(fragment_index.size(), NULL);
+    for (Functions::iterator fi=functions.begin(); fi!=functions.end(); ++fi) {
+        Function *source_func = fi->second;
+        if (SgAsmFunction::FUNC_GRAPH!=source_func->reason) {
+            bool multi_parents = false;
+            for (BasicBlocks::iterator bi=source_func->basic_blocks.begin();
+                 bi!=source_func->basic_blocks.end() && !multi_parents;
+                 ++bi) {
+                Disassembler::AddressSet succs = successors(bi->second);
+                for (Disassembler::AddressSet::iterator si=succs.begin(); si!=succs.end() && !multi_parents; ++si) {
+                    BasicBlock *target_bb = find_bb_starting(*si, false/*do not create*/);
+                    Function *target_func = target_bb ? target_bb->function : NULL;
+                    TravNumMap::iterator tn_found = target_func ? traversal_number.find(target_func) : traversal_number.end();
+                    size_t gnum = tn_found!=traversal_number.end() ? group_number[tn_found->second] : (size_t)(-1);
+                    if (gnum!=(size_t)(-1)) {
+                        /* source_func (non-fragment) branches to fragment group number <gnum> */
+                        if (parent[gnum]) {
+                            parent[gnum] = NULL;
+                            fragment_index[gnum].clear(); // multiple non-fragment predecessors of this group; discard group
+                            multi_parents = true;
+                        } else {
+                            parent[gnum] = source_func;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /* Merge functions */
+    if (debug)
+        fprintf(debug, "Partitioner::merge_function_fragments...\n");
+    for (size_t gnum=0; gnum<fragment_index.size(); ++gnum) {
+        if (parent[gnum]!=NULL && !fragment_index[gnum].empty()) {
+            if (debug) {
+                fprintf(debug, "fragments %s F%08"PRIx64" \"%s\" merging",
+                        SgAsmFunction::reason_str(true, parent[gnum]->reason).c_str(),
+                        parent[gnum]->entry_va, parent[gnum]->name.c_str());
+            }
+            for (std::vector<Function*>::iterator fi=fragment_index[gnum].begin(); fi!=fragment_index[gnum].end(); ++fi) {
+                if (debug)
+                    fprintf(debug, " F0x%08"PRIx64, (*fi)->entry_va);
+                merge_functions(parent[gnum], *fi); *fi = NULL;
+                parent[gnum]->reason &= ~SgAsmFunction::FUNC_GRAPH;
+            }
+            if (debug) {
+                fputc(' ', debug);
+                parent[gnum]->show_properties(debug);
+                fputc('\n', debug);
+            }
+        }
+    }
+}
+
+void
+Partitioner::merge_functions(Function *parent, Function *other)
+{
+    parent->reason |= other->reason;
+
+    if (parent->name.empty()) {
+        parent->name = other->name;
+    } else if (!other->name.empty() && 0!=parent->name.compare(other->name)) {
+        parent->name += "+" + other->name;
+    }
+
+    parent->move_basic_blocks_from(other);
+    parent->move_data_blocks_from(other);
+
+    if (other->pending)
+        parent->pending = true;
+
+    parent->promote_may_return(other->get_may_return());
+
+    functions.erase(other->entry_va);
+    delete other;
 }
 
 void
@@ -3335,7 +3607,7 @@ Partitioner::post_cfg(SgAsmInterpretation *interp/*=NULL*/)
         scan_unassigned_bytes(&fff, &exe_map);
     }
 
-    /* Run one last analysis of the CFG because we may need to fix some things up after having added more blocks from the
+    /* Run another analysis of the CFG because we may need to fix some things up after having added more blocks from the
      * post-cfg analyses we did above. If nothing happened above, then analyze_cfg() should be fast. */
     analyze_cfg(SgAsmBlock::BLK_GRAPH2);
 
@@ -3362,6 +3634,10 @@ Partitioner::post_cfg(SgAsmInterpretation *interp/*=NULL*/)
 
     /* Make sure padding is back where it belongs. */
     adjust_padding();
+
+    /* Merge extra functions that we might have created.  Sometimes it's possible that we break a function into too many parts,
+     * and we can recombine those parts now. */
+    merge_function_fragments();
 
     /* Give existing functions names from symbol tables. Don't create more functions. */
     if (interp && 0!=(func_heuristics & SgAsmFunction::FUNC_IMPORT)) {
@@ -3822,7 +4098,14 @@ Partitioner::build_ast(Function* f)
     retval->set_entry_va(f->entry_va);
     retval->set_name(f->name);
     retval->set_address(first_basic_block->address());
-    retval->set_can_return(f->may_return);
+
+    /* Set the SgAsmFunction::can_return property.  If we've never indicated that a function might return then assume it
+     * doesn't return.  We're all done with analysis now, so it must not return. */
+    if (SgAsmFunction::RET_UNKNOWN==f->get_may_return()) {
+        retval->set_may_return(SgAsmFunction::RET_NEVER);
+    } else {
+        retval->set_may_return(f->get_may_return());
+    }
 
     for (NodeMap::iterator ni=nodes.begin(); ni!=nodes.end(); ++ni) {
         retval->get_statementList().push_back(ni->second);

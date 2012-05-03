@@ -271,13 +271,62 @@ protected:
     typedef std::map<rose_addr_t, DataBlock*> DataBlocks;
 
     /** Represents a function within the Partitioner. Each non-empty function will become an SgAsmFunction in the AST. */
-    struct Function {
-        Function(rose_addr_t entry_va): reason(0), pending(true), entry_va(entry_va), may_return(false) {}
-        Function(rose_addr_t entry_va, unsigned r): reason(r), pending(true), entry_va(entry_va), may_return(false) {}
+    class Function {
+    public:
+        Function(rose_addr_t entry_va)
+            : reason(0), pending(true), entry_va(entry_va),
+              may_return_cur(SgAsmFunction::RET_UNKNOWN), may_return_old(SgAsmFunction::RET_UNKNOWN) {}
+        Function(rose_addr_t entry_va, unsigned r)
+            : reason(r), pending(true), entry_va(entry_va),
+              may_return_cur(SgAsmFunction::RET_UNKNOWN), may_return_old(SgAsmFunction::RET_UNKNOWN) {}
         Function(rose_addr_t entry_va, unsigned r, const std::string& name)
-            : reason(r), name(name), pending(true), entry_va(entry_va), may_return(false) {}
-        void clear_basic_blocks();              /**< Remove all basic blocks from this function w/out deleting the blocks. */
-        void clear_data_blocks();               /**< Remove all data blocks from this function w/out deleting the blocks. */
+            : reason(r), name(name), pending(true), entry_va(entry_va),
+              may_return_cur(SgAsmFunction::RET_UNKNOWN), may_return_old(SgAsmFunction::RET_UNKNOWN) {}
+
+        /** Remove all basic blocks from this function w/out deleting the blocks. */
+        void clear_basic_blocks();
+
+        /** Remove all data blocks from this function w/out deleting the blocks. */
+        void clear_data_blocks();
+
+        /** Move all basic blocks from the other function to this one. */
+        void move_basic_blocks_from(Function *other);
+
+        /** Move all data blocks from the other function to this one. */
+        void move_data_blocks_from(Function *other);
+
+        /** Accessor for the may-return property.  The may-return property indicates whether this function returns to its
+         *  caller.  This is a two-part property storing both the current value and the previous value; this enables us to
+         *  detect transitions after the fact, when it is more efficient to process them than when they actually occur.
+         *  Setting the current value does not update the old value; the old value is updated only by the commit_may_return()
+         *  method.
+         * @{ */
+        SgAsmFunction::MayReturn get_may_return() const { return may_return_cur; }
+        void set_may_return(SgAsmFunction::MayReturn may_return) { may_return_cur = may_return; }
+        bool changed_may_return() const { return may_return_cur != may_return_old; }
+        void commit_may_return() { may_return_old = may_return_cur; }
+        /** @} */
+
+        /** Can this function return?  Returns true if it is known that this function can return to its caller. */
+        bool possible_may_return() const {
+            return SgAsmFunction::RET_SOMETIMES==get_may_return() || SgAsmFunction::RET_ALWAYS==get_may_return();
+        }
+
+        /** Increase knowledge about the returnability of this function.  A current value of RET_UNKNOWN is always changed to
+         * the @p new_value.  A current value of RET_SOMETIMES can be changed to RET_ALWAYS or RET_NEVER.  A current value of
+         * RET_ALWAYS or RET_NEVER is not modified (not even to change RET_ALWAYS to RET_NEVER or vice versa). */
+        void promote_may_return(SgAsmFunction::MayReturn new_value);
+
+        /** Initialize properties from another function.  This causes the properties of the @p other function to be copied into
+         *  this function without changing this function's list of blocks or entry address.  The @p pending status of this
+         *  function may be set if set in @p other, but it will never be cleared.  Returns @p this. */
+        Function *init_properties(const Function &other);
+
+        /** Emit function property values. This is mostly for debugging.  If the file handle is null then nothing happens. */
+        void show_properties(FILE*) const;
+
+    public:
+        /* If you add more data members, also update detach_thunk() and/or init_properties() */
         unsigned reason;                        /**< SgAsmFunction::FunctionReason bit flags */
         std::string name;                       /**< Name of function if known */
         BasicBlocks basic_blocks;               /**< Basic blocks belonging to this function */
@@ -285,8 +334,11 @@ protected:
         bool pending;                           /**< True if we need to (re)discover the basic blocks */
         rose_addr_t entry_va;                   /**< Entry virtual address */
         Disassembler::AddressSet heads;         /**< CFG heads, excluding func entry: addresses of additional blocks */
-        bool may_return;                        /**< Is it possible for this function to return? */
-        /* If you add more here, also update split_attached_thunks() */
+
+    private:
+        /* If you add more data members, also update detach_thunk() and/or init_properties() */
+        SgAsmFunction::MayReturn may_return_cur; /**< Is it possible for this function to return? Current value of property. */
+        SgAsmFunction::MayReturn may_return_old; /**< Is it possible for this function to return? Previous value of property. */
     };
     typedef std::map<rose_addr_t, Function*> Functions;
 
@@ -1467,14 +1519,23 @@ public:
     /** Splits one thunk off the start of a function if possible.  Since the partitioner constructs functions according to the
      *  control flow graph, thunks (JMP to start of function) often become part of the function to which they jump.  This can
      *  happen if the real function has no direct callers and was not detected as a function entry point due to any pattern or
-     *  symbol.  The split_attached_thunks() function traverses all defined functions and looks for cases where the thunk is
-     *  attached to the jumped-to function, and splits them into two functions. */
+     *  symbol.  The detach_thunks() function traverses all defined functions and looks for cases where the thunk is attached
+     *  to the jumped-to function, and splits them into two functions. */
     virtual bool detach_thunk(Function*);
 
     /** Adjusts ownership of padding data blocks.  Each padding data block should be owned by the prior function in the address
      *  space.  This is normally the case, but when functions are moved around, split, etc., the padding data blocks can get
      *  mixed up.  This method puts them all back where they belong. */
     virtual void adjust_padding();
+
+    /** Merge function fragments.  The partitioner sometimes goes crazy breaking functions into smaller and smaller parts.
+     *  This method attempts to merge all those parts after the partitioner's function detection has completed.  A function
+     *  fragment is any function whose only reason code is one of the GRAPH codes (function detected by graph analysis and the
+     *  rule that every function has only one entry point). */
+    virtual void merge_function_fragments();
+
+    /** Merge two functions.  The @p other function is merged into @p parent and then @p other is deleted. */
+    virtual void merge_functions(Function *parent, Function *other);
 
     /** Looks for a jump table.  This method looks at the specified basic block and tries to discover if the last instruction
      *  is an indirect jump through memory.  If it is, then the entries of the jump table are returned by value (i.e., the
@@ -1524,7 +1585,7 @@ public:
      *     BlockStmt := ( Empty | Alias | Successors ) ';'
      *     Alias := 'alias' Address
      *     Successors := ('successor' | 'successors') [SuccessorAddrList|AssemblyCode]
-     *     SuccessorAddrList := AddressList | AddressList '...' | '...'
+     *     SuccessorAddrList := '{' (AddressList | AddressList '...' | '...') '}'
      *
      *     AddressList := Address ( ',' AddressList )*
      *     Address: Integer
@@ -1681,6 +1742,7 @@ public:
         };
 
         void parse();                           /**< Top-level parsing function. */
+        static void unparse(std::ostream&, SgNode *ast); /**< Unparse an AST into an IPD file. */
 
 
         /*************************************************************************************************************************

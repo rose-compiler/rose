@@ -181,6 +181,7 @@ SgAsmx86Instruction::get_successors(bool *complete) {
 Disassembler::AddressSet
 SgAsmx86Instruction::get_successors(const std::vector<SgAsmInstruction*>& insns, bool *complete, MemoryMap *initial_memory)
 {
+    using namespace BinaryAnalysis::InstructionSemantics;
     static const bool debug = false;
 
     if (debug) {
@@ -212,12 +213,12 @@ SgAsmx86Instruction::get_successors(const std::vector<SgAsmInstruction*>& insns,
 # endif
         if (debug && solver)
             solver->set_debug(stderr);
-        typedef SymbolicSemantics::Policy<SymbolicSemantics::State, SymbolicSemantics::ValueType> Policy;
+        typedef SymbolicSemantics::Policy<> Policy;
         typedef SymbolicSemantics::ValueType<32> RegisterType;
         typedef X86InstructionSemantics<Policy, SymbolicSemantics::ValueType> Semantics;
         Policy policy(solver);
 #else
-        typedef VirtualMachineSemantics::Policy<VirtualMachineSemantics::State, VirtualMachineSemantics::ValueType> Policy;
+        typedef VirtualMachineSemantics::Policy<> Policy;
         typedef VirtualMachineSemantics::ValueType<32> RegisterType;
         typedef X86InstructionSemantics<Policy, VirtualMachineSemantics::ValueType> Semantics;
         Policy policy;
@@ -424,9 +425,11 @@ bool
 SgAsmx86Instruction::has_effect(const std::vector<SgAsmInstruction*>& insns, bool allow_branch/*false*/, 
                                 bool relax_stack_semantics/*false*/)
 {
+    using namespace BinaryAnalysis::InstructionSemantics;
+
     if (insns.empty()) return false;
 
-    typedef VirtualMachineSemantics::Policy<VirtualMachineSemantics::State, VirtualMachineSemantics::ValueType> Policy;
+    typedef VirtualMachineSemantics::Policy<> Policy;
     typedef X86InstructionSemantics<Policy, VirtualMachineSemantics::ValueType> Semantics;
     Policy policy;
     Semantics semantics(policy);
@@ -472,12 +475,14 @@ std::vector< std::pair< size_t, size_t > >
 SgAsmx86Instruction::find_noop_subsequences(const std::vector<SgAsmInstruction*>& insns, bool allow_branch/*false*/, 
                                             bool relax_stack_semantics/*false*/)
 {
+    using namespace BinaryAnalysis::InstructionSemantics;
+
     static const bool verbose = false;
 
     if (verbose) std::cerr <<"find_noop_subsequences:\n";
     std::vector< std::pair <size_t/*starting insn index*/, size_t/*num. insns*/> > retval;
 
-    typedef VirtualMachineSemantics::Policy<VirtualMachineSemantics::State, VirtualMachineSemantics::ValueType> Policy;
+    typedef VirtualMachineSemantics::Policy<> Policy;
     typedef X86InstructionSemantics<Policy, VirtualMachineSemantics::ValueType> Semantics;
     Policy policy;
     if (relax_stack_semantics) policy.set_discard_popped_memory(true);
