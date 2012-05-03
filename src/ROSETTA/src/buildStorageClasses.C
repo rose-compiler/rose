@@ -879,6 +879,7 @@ Terminal::evaluateType(std::string& varTypeString)
                  ( varTypeString == "SgAsmElfSectionTableEntry::SectionType") ||
                  ( varTypeString == "SgAsmElfSectionTableEntry::SectionFlags") ||
                  ( varTypeString == "SgOpenclAccessModeModifier::access_mode_modifier_enum") ||
+                 ( varTypeString == "SgAsmFunction::MayReturn") ||
                  false 
               )
        {

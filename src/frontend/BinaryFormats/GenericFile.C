@@ -589,8 +589,8 @@ SgAsmGenericFile::best_section_by_va(const SgAsmGenericSectionPtrList &sections,
             // section does not contain virtual address
         } else if (!best) {
             best = section;
-            file_offset = section->get_va_offset(va);
-        } else if (file_offset!=section->get_va_offset(va)) {
+            file_offset = section->get_offset() + (va - section->get_mapped_actual_va());
+        } else if (file_offset != section->get_offset() + (va - section->get_mapped_actual_va())) {
             return NULL; // error
         } else if (best->get_mapped_size() > section->get_mapped_size()) {
             best = section;
