@@ -174,11 +174,15 @@ namespace RoseHPCT
    */
   class IRNode : public Named, public Observable
   {
+    // DXN: not all IRNodes (e.g. Statement) produced by HPCToolkit profiler have matching SgNode.
+    bool hasMatchedSgNode;
   public:
+    bool hasMatchingSgNode() const { return hasMatchedSgNode; }
+    void setHasMatchingSgNode(bool flag) { hasMatchedSgNode = flag; }
     virtual std::string toString() const;
-  protected:
-    IRNode (void) {}
-    IRNode (const std::string& name) : Named (name) {}
+   protected:
+    IRNode (void): hasMatchedSgNode(false) {}
+    IRNode (const std::string& name) : hasMatchedSgNode (false), Named (name)  { }
     virtual ~IRNode (void) {}
   };
 
@@ -292,8 +296,7 @@ namespace RoseHPCT
   class Statement : public IRNode, public Located
   {
     long int id;
-    bool hasMatchedSgNode; // DXN: not all statements produced by HPCToolkit profiler make sense.
-  public:
+   public:
     // typedef unsigned id_t;
     typedef long int id_t;
 
@@ -305,8 +308,6 @@ namespace RoseHPCT
 
     id_t getId (void) const;
     void setId (id_t new_id);
-    bool hasMatchingSgNode() const { return hasMatchedSgNode; }
-    void setHasMatchingSgNode(bool flag) { hasMatchedSgNode = flag; }
     virtual std::string toString() const;  
   };
 
