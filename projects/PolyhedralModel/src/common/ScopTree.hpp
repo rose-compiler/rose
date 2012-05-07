@@ -128,6 +128,8 @@ class ScopLoop : public ScopTree<Function, Expression, VariableLBL> {
 		std::vector<std::pair<std::map<VariableLBL, int>, int> > p_ub; //!< Conjunction of Upper bound of the iteration domain. ("i <= ub")
 		int p_inc; //!< Increment used to traverse the domain. ("i += inc")
 
+		void * original_loop;
+
 	public:
 		/**
 		 * \brief Constructor
@@ -135,7 +137,12 @@ class ScopLoop : public ScopTree<Function, Expression, VariableLBL> {
 		 * \param parent   Pointer on parent node.
 		 * \param iterator Induction variable of the loop.
 		 */
-		ScopLoop(size_t position, ScopTree<Function, Expression, VariableLBL> * parent, VariableLBL iterator);
+		ScopLoop(
+			size_t position,
+			ScopTree<Function, Expression, VariableLBL> * parent,
+			VariableLBL iterator,
+			void * original_loop_ = NULL
+		);
 		
 		/**
 		 * \brief ScopLoop specialization of ScopTree::Traverse
@@ -176,7 +183,9 @@ class ScopLoop : public ScopTree<Function, Expression, VariableLBL> {
 		 * \return increment.
 		 */
 		int getIncrement();
-		
+
+		void * getOriginalLoop() const;
+
 		virtual bool isRoot() const;
 		virtual bool isLoop() const;
 		virtual bool isConditinnal() const;

@@ -57,6 +57,13 @@ class CommDescriptor {
       SyncRequired sync_ = none
     );
     virtual ~CommDescriptor();
+
+    ComputeSystem * getSource() const;
+    ComputeSystem * getDestination() const;
+
+    ArrayPartition * getArrayPartition() const;
+
+    SyncRequired getSyncRequired() const;
 };
 
 #endif /* __COMM_ANALYSIS_HPP__ */

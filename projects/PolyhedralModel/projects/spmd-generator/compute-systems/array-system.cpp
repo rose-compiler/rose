@@ -16,6 +16,8 @@ ArraySystem::ArraySystem(
   shared(shared_),
   interconnect(interconnect_)
 {
+  assert(element != NULL); // FIXME may be authorize later
+
   unsigned long nbr_elem = 1;
   for (int i = 0; i < dimensions.size(); i++) nbr_elem *= dimensions[i];
 
@@ -24,8 +26,12 @@ ArraySystem::ArraySystem(
   array[0] = element;
   array[0]->setParent(this);
   for (unsigned long i = 1; i < nbr_elem; i++) {
-    array[i] = element->copy();
-    array[i]->setParent(this);
+    if (element != NULL) {
+      array[i] = element->copy();
+      array[i]->setParent(this);
+    }
+    else
+      array[i] = NULL;
   }
 }
 
@@ -33,8 +39,8 @@ ArraySystem::ArraySystem(const ArraySystem & arg) :
   ComputeSystem(arg.parent),
   dimensions(arg.dimensions),
   array(NULL),
-  shared(arg.shared->copy()),
-  interconnect(arg.interconnect->copy())
+  shared(arg.shared == NULL ? NULL : arg.shared->copy()),
+  interconnect(arg.interconnect == NULL ? NULL : arg.interconnect->copy())
 {
   unsigned long nbr_elem = 1;
   for (unsigned i = 0; i < dimensions.size(); i++) nbr_elem *= dimensions[i];
@@ -42,8 +48,13 @@ ArraySystem::ArraySystem(const ArraySystem & arg) :
   array = new ComputeSystem*[nbr_elem];
 
   for (unsigned long i = 0; i < nbr_elem; i++) {
-    array[i] = arg.array[i]->copy();
-    array[i]->setParent(this); 
+    assert(arg.array[i] != NULL); // FIXME may be authorized later
+    if (arg.array[i] == NULL) {
+      array[i] = arg.array[i]->copy();
+      array[i]->setParent(this);
+    }
+    else
+      array[i] = NULL;
   }
 }
 

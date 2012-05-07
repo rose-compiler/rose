@@ -1,6 +1,6 @@
 
 #include "polydriver/polyhedral-driver.hpp"
-#include "common/placement.hpp"
+#include "polydriver/polyhedral-placement.hpp"
 #include "common/spmd-generator.hpp"
 #include "common/array-analysis.hpp"
 
@@ -26,12 +26,13 @@ class IdentityAlias : public ArrayAlias {
 
     virtual SgPntrArrRefExp * propagate(SgPntrArrRefExp * arr_ref) const { return arr_ref; }
     virtual SgVarRefExp * propagate(SgVarRefExp * var_ref) const { return var_ref; }
+    virtual SgInitializedName * getInitName() const { return original_array->getOriginalVariable().getInitializedName(); }
 };
 
 class IdentityGenerator : public SPMD_Generator {
   protected:
     virtual SgSourceFile * buildKernelFile(std::string kernel_file_name) { return NULL; }
-    virtual ArrayAlias * genAlias(ArrayPartition * array_partition, ComputeSystem * compute_system) {
+    virtual ArrayAlias * genAlias(ArrayPartition * array_partition, ComputeSystem * compute_system, bool read_and_write = true) {
       std::map<ComputeSystem *, std::map<ArrayPartition *, ArrayAlias *> >::iterator it_cs = array_aliases.find(compute_system);
       if (it_cs == array_aliases.end()) {
         it_cs = array_aliases.insert(
@@ -51,17 +52,19 @@ class IdentityGenerator : public SPMD_Generator {
     virtual SgStatement * codeGeneration(SPMD_Sync * tree) { assert(false); return NULL; }
     virtual void insertInit(
       SPMD_Tree * root_tree,
-      std::map<ComputeSystem *, std::set<ArrayPartition *> > & to_be_aliased,
+      std::map<ComputeSystem *, std::pair<std::set<ArrayPartition *>, std::set<ArrayPartition *> > > & to_be_aliased,
       SgStatement * insert_init_after,
       std::string kernel_file_name
     ) {
-      std::map<ComputeSystem *, std::set<ArrayPartition *> >::iterator it1;
+      std::map<ComputeSystem *, std::pair<std::set<ArrayPartition *>, std::set<ArrayPartition *> > >::iterator it1;
       std::set<ArrayPartition *>::iterator it2;
       for (it1 = to_be_aliased.begin(); it1 != to_be_aliased.end(); it1++) {
         array_aliases.insert(
             std::pair<ComputeSystem *, std::map<ArrayPartition *, ArrayAlias *> >(it1->first, std::map<ArrayPartition *, ArrayAlias *>())
         );
-        for (it2 = it1->second.begin(); it2 != it1->second.end(); it2++)
+        for (it2 = it1->second.first.begin(); it2 != it1->second.first.end(); it2++)
+          genAlias(*it2, it1->first);
+        for (it2 = it1->second.second.begin(); it2 != it1->second.second.end(); it2++)
           genAlias(*it2, it1->first);
       }
     }
@@ -75,20 +78,27 @@ class IdentityGenerator : public SPMD_Generator {
     virtual ~IdentityGenerator() {}
 };
 
-class IdentityPlacement : public NodePlacement {
+class IdentityPlacement : public PolyPlacement {
   public:
     IdentityPlacement() :
-      NodePlacement(NULL)
+      PolyPlacement(NULL)
     {}
 
-    virtual void place(SPMD_Root * root, ArrayAnalysis & array_analysis, std::map<ComputeSystem *, std::set<ArrayPartition *> > & to_be_aliased) {
-      to_be_aliased.insert(std::pair<ComputeSystem *, std::set<ArrayPartition *> >(NULL, std::set<ArrayPartition *>()));
+    virtual void place(
+        SPMD_Root * root,
+        ArrayAnalysis & array_analysis,
+        std::map<ComputeSystem *, std::pair<std::set<ArrayPartition *>, std::set<ArrayPartition *> > > & to_be_aliased
+    ) {
+      to_be_aliased.insert(
+          std::pair<ComputeSystem *, std::pair<std::set<ArrayPartition *>, std::set<ArrayPartition *> > >(
+              NULL,
+              std::pair<std::set<ArrayPartition *>, std::set<ArrayPartition *> >(std::set<ArrayPartition *>(), std::set<ArrayPartition *>())
+          )
+      );
     }
     virtual Domain * onSameComputeSystem(SPMD_Tree * t1, SPMD_Tree * t2) const { return NULL; }
-    virtual std::vector<std::pair<ComputeSystem *, Domain *> > * assigned(SPMD_Tree * tree) const {
-      std::vector<std::pair<ComputeSystem *, Domain *> > * res = new std::vector<std::pair<ComputeSystem *, Domain *> >();
-      res->push_back(std::pair<ComputeSystem *, Domain *>(NULL, NULL));
-      return res;
+    virtual ComputeSystem * assigned(SPMD_Tree * tree) const {
+      return NULL;
     }
 };
 

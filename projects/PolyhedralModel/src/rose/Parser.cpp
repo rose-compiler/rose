@@ -312,6 +312,9 @@ void translateLinearExpression(SgExpression * lin_exp, std::map<RoseVariable, in
                 case V_SgCastExp:
                         translateLinearExpression(isSgCastExp(lin_exp)->get_operand_i(), res, coef_);
                         break;
+		case V_SgMinusOp:
+			translateLinearExpression(isSgMinusOp(lin_exp)->get_operand_i(), res, -coef_);
+			break;
 		case V_SgIntVal:
 			coef = isSgIntVal(lin_exp)->get_value();
 			res.insert(std::pair<RoseVariable, int>(RoseVariable(), coef_ * coef));

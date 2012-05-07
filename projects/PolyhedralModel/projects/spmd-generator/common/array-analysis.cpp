@@ -1,5 +1,8 @@
 
 #include "common/array-analysis.hpp"
+#include "common/spmd-tree.hpp"
+
+#include "toolboxes/rose-toolbox.hpp"
 
 #include "rose.h"
 
@@ -40,33 +43,57 @@ SgExpression * ArrayAlias::propagate(SgExpression * exp) const {
 ArrayPartition::ArrayPartition(RoseVariable & array_) :
   original_array(array_),
   dimensions(),
-  type(NULL)
+  type(NULL),
+  size(NULL)
 {
   type = original_array.getInitializedName()->get_type();
   while (isSgArrayType(type)) {
     SgArrayType * array_type = isSgArrayType(type);
-    SgExpression * dim = array_type->get_index();
+    SgExpression * dim = simplify(array_type->get_index());
     assert(dim != NULL);
 
-    SgUnsignedLongVal * dim_size = isSgUnsignedLongVal(dim);
-    assert(dim_size != NULL);
+    unsigned long dim_size = 0;
+    switch (dim->variantT()) {
+      case V_SgIntVal:           dim_size = isSgIntVal(dim)->get_value();          break;
+      case V_SgUnsignedIntVal:   dim_size = isSgUnsignedIntVal(dim)->get_value();  break;
+      case V_SgLongIntVal:       dim_size = isSgLongIntVal(dim)->get_value();      break;
+      case V_SgUnsignedLongVal:  dim_size = isSgUnsignedLongVal(dim)->get_value(); break;
+      default:
+        assert(false);
+    }
 
-    dimensions.insert(dimensions.begin(), dim_size->get_value());
+    dimensions.insert(dimensions.begin(), dim_size);
 
     type = array_type->get_base_type();
   }
+
+  size = SageBuilder::buildSizeOfOp(type);
+  for (int i = 0; i < dimensions.size(); i++)
+    size = SageBuilder::buildMultiplyOp(SageBuilder::buildIntVal(dimensions[i]), size);
 }
 
 ArrayPartition::ArrayPartition(RoseVariable & array_, std::vector<unsigned> & dimensions_, SgType * type_) :
   original_array(array_),
   dimensions(dimensions_),
-  type(type_)
-{}
+  type(type_),
+  size(NULL)
+{
+  size = SageBuilder::buildSizeOfOp(type);
+  for (int i = 0; i < dimensions.size(); i++)
+    size = SageBuilder::buildMultiplyOp(SageBuilder::buildIntVal(dimensions[i]), size);
+}
 
 ArrayPartition::~ArrayPartition() {}
 
+std::string ArrayPartition::getUniqueName() const {
+  return original_array.getInitializedName()->get_name().getString();
+}
+
+const RoseVariable & ArrayPartition::getOriginalVariable() const { return original_array; }
 const std::vector<unsigned> & ArrayPartition::getDimensions() const { return dimensions; }
 SgType * ArrayPartition::getType() const { return type; }
+
+SgExpression * ArrayPartition::getSize() const { return SageInterface::copyExpression(size); }
 
 ArrayPartition * ArrayPartition::merge(ArrayPartition * p1, ArrayPartition * p2) {
   // TODO
@@ -84,6 +111,17 @@ const std::pair<std::set<ArrayPartition *>, std::set<ArrayPartition *> > & Array
   std::map<SPMD_Tree *, std::pair<std::set<ArrayPartition *>, std::set<ArrayPartition *> > >::const_iterator it = accesses_map.find(tree);
   assert(it != accesses_map.end());
   return it->second;
+}
+
+void ArrayAnalysis::update(SPMD_KernelCall * new_node, const std::vector<SPMD_Tree *> & create_from) {
+  std::map<SPMD_Tree *, std::pair<std::set<ArrayPartition *>, std::set<ArrayPartition *> > >::iterator it = accesses_map.find(new_node);
+  assert(it == accesses_map.end());
+  it = accesses_map.insert(std::pair<SPMD_Tree *, std::pair<std::set<ArrayPartition *>, std::set<ArrayPartition *> > >(
+    new_node,
+    accesses_map[create_from.back()]
+  )).first;
+
+  // TODO Extand with the knowledge of Domain assigned, will require to pass domains along 
 }
 
 std::set<ArrayPartition *> * ArrayAnalysis::get_in(SPMD_Tree * tree) const {
@@ -150,7 +188,19 @@ std::set<ArrayPartition *> * ArrayAnalysis::get_inout(SPMD_Tree * tree) const {
 
   return res;
 }
-   
+
+std::set<ArrayPartition *> * ArrayAnalysis::get_partitions(SPMD_Tree * tree) const {
+  std::map<SPMD_Tree *, std::pair<std::set<ArrayPartition *>, std::set<ArrayPartition *> > >::const_iterator it = accesses_map.find(tree);
+  assert(it != accesses_map.end());
+
+  std::set<ArrayPartition *> * res = new std::set<ArrayPartition *>();
+
+  res->insert(it->second.first.begin(), it->second.first.end());
+  res->insert(it->second.second.begin(), it->second.second.end());
+
+  return res;
+}
+ 
 void ArrayAnalysis::clear() {
   accesses_map.clear();
 }

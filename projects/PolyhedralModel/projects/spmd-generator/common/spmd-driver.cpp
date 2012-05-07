@@ -15,19 +15,14 @@ SPMD_Driver::~SPMD_Driver() {}
 SPMD_Root * SPMD_Driver::generateTree(
   SgStatement * first,
   SgStatement * last,
-  std::map<ComputeSystem *, std::set<ArrayPartition *> > & to_be_aliased
+  std::map<ComputeSystem *, std::pair<std::set<ArrayPartition *>, std::set<ArrayPartition *> > > & to_be_aliased
 ) {
-  SPMD_Root * original_tree = parse(first, last);
+  SPMD_Root * tree = parse(first, last);
 
-  array_analysis->process(original_tree);
-  placement->place(original_tree, *array_analysis, to_be_aliased);
+  array_analysis->process(tree);
+  placement->place(tree, *array_analysis, to_be_aliased);
 
-  SPMD_Root * res = transform(original_tree);
-
-  placement->clear();
-  array_analysis->clear();
-
-  return res;
+  return tree;
 }
 
 const NodePlacement & SPMD_Driver::getPlacement() const { return *placement; }

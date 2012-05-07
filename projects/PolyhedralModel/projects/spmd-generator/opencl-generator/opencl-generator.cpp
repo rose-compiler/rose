@@ -3,6 +3,7 @@
 #include "common/spmd-driver.hpp"
 #include "common/spmd-tree.hpp"
 #include "common/placement.hpp"
+#include "common/comm-analysis.hpp"
 #include "compute-systems/gpu-system.hpp"
 
 #include <iostream>
@@ -10,29 +11,54 @@
 
 #include "rose.h"
 
+#define DEBUG 1
+
 class Domain;
 
-OpenCL_Alias::OpenCL_Alias(ArrayPartition * original_array_, GPU * gpu) :
+SgType * OpenCL_Alias::buffer_type = NULL;
+
+OpenCL_Alias::OpenCL_Alias(ArrayPartition * original_array_, GPU * gpu, SgScopeStatement * scope, bool read_and_write) :
   ArrayAlias(original_array_),
   init_name(NULL)
 {
+  assert(scope != NULL);
+
   ComputeNode * compute_node = dynamic_cast<ComputeNode *>(gpu->getParent());
   assert(compute_node != NULL);
 
   std::ostringstream oss;
   oss << "dev_" << original_array->getUniqueName() << "_" << compute_node->getAcceleratorID(gpu);
 
-  init_name = SageBuilder::buildInitializedName(oss.str(), original_array->getType());
+  if (buffer_type == NULL) {
+    SgTypedefDeclaration * buffer_type_decl = SageBuilder::buildTypedefDeclaration("cl_mem", SageBuilder::buildIntType(), scope);
+    buffer_type = SgTypedefType::createType(buffer_type_decl);
+  }
+
+  SgName ro_buf = "createROBuffer";
+  SgName rw_buf = "createRWBuffer";
+
+  // FIXME if multiple context, find the one assiciate to 'compute_node->getAcceleratorID(gpu)'
+  SgExprListExp * params = SageBuilder::buildExprListExp(SageBuilder::buildVarRefExp("context", scope), original_array->getSize());
+  SgFunctionCallExp * create_buffer_call = NULL;
+  if (!read_and_write)
+    create_buffer_call = SageBuilder::buildFunctionCallExp(ro_buf, buffer_type, params, scope);
+  else
+    create_buffer_call = SageBuilder::buildFunctionCallExp(rw_buf, buffer_type, params, scope);
+  SgInitializer * init = SageBuilder::buildAssignInitializer(create_buffer_call);
+
+  init_name = SageBuilder::buildInitializedName(oss.str(), buffer_type, init);
 }
 
 OpenCL_Alias::~OpenCL_Alias() {}
 
 SgPntrArrRefExp * OpenCL_Alias::propagate(SgPntrArrRefExp * arr_ref) const {
   // TODO
+  return arr_ref;
 }
 
 SgVarRefExp * OpenCL_Alias::propagate(SgVarRefExp * var_ref) const {
   // TODO
+  return var_ref;
 }
 
 SgInitializedName * OpenCL_Alias::getInitName() const { return init_name; }
@@ -45,6 +71,7 @@ IdentityAlias::~IdentityAlias() {}
 
 SgPntrArrRefExp * IdentityAlias::propagate(SgPntrArrRefExp * arr_ref) const { return arr_ref; }
 SgVarRefExp * IdentityAlias::propagate(SgVarRefExp * var_ref) const { return var_ref; }
+SgInitializedName * IdentityAlias::getInitName() const { return original_array->getOriginalVariable().getInitializedName(); }
 
 SgStatement * OpenCL_Generator::codeGeneration(SPMD_KernelCall * tree) {
   // Kernel name
@@ -53,22 +80,20 @@ SgStatement * OpenCL_Generator::codeGeneration(SPMD_KernelCall * tree) {
   std::string kernel_name = oss_kernel_name.str();  
 
   // Data to passed as argument
-  std::set<ArrayPartition *> * data_in    = driver.getArrayAnalysis().get_in(tree);
-  std::set<ArrayPartition *> * data_out   = driver.getArrayAnalysis().get_out(tree);
-  std::set<ArrayPartition *> * data_inout = driver.getArrayAnalysis().get_inout(tree);
-  assert(data_in != NULL && data_out != NULL && data_inout != NULL);
-  std::set<ArrayPartition *> datas;
-    datas.insert(data_in->begin(), data_in->end());
-    datas.insert(data_out->begin(), data_out->end());
-    datas.insert(data_inout->begin(), data_inout->end());
-  delete data_in;
-  delete data_out;
-  delete data_inout;
+//  std::set<ArrayPartition *> * data_in    = driver.getArrayAnalysis().get_in(tree);
+//  std::set<ArrayPartition *> * data_out   = driver.getArrayAnalysis().get_out(tree);
+//  std::set<ArrayPartition *> * data_inout = driver.getArrayAnalysis().get_inout(tree);
+//  assert(data_in != NULL && data_out != NULL && data_inout != NULL);
+  std::set<ArrayPartition *> * datas = driver.getArrayAnalysis().get_partitions(tree);
+//    datas.insert(data_in->begin(), data_in->end());
+//    datas.insert(data_out->begin(), data_out->end());
+//    datas.insert(data_inout->begin(), data_inout->end());
+//  delete data_in;
+//  delete data_out;
+//  delete data_inout;
 
   // Placement which part of the kernel on which GPU (FIXME extremely restrictive now: only one global placement)
-  std::vector<std::pair<ComputeSystem *, Domain *> > * placement = driver.getPlacement().assigned(tree);
-  assert(placement != NULL && placement->size() == 1 && (*placement)[0].second == NULL);
-  ComputeSystem * compute_system = (*placement)[0].first;
+  ComputeSystem * compute_system = driver.getPlacement().assigned(tree);
   GPU * gpu = dynamic_cast<GPU *>(compute_system);
   assert(gpu != NULL);
   ComputeNode * compute_node = dynamic_cast<ComputeNode *>(gpu->getParent());
@@ -87,13 +112,24 @@ SgStatement * OpenCL_Generator::codeGeneration(SPMD_KernelCall * tree) {
 
   SgName size_t_name = "size_t";
   SgTypedefSymbol * size_type_symbol = SageInterface::lookupTypedefSymbolInParentScopes(size_t_name, top_scope);
-  ROSE_ASSERT(size_type_symbol != NULL);
-  SgType * size_type = size_type_symbol->get_type();
+  SgType * size_type = NULL;
+  if (size_type_symbol == NULL) {
+    SgTypedefDeclaration * size_type_decl = SageBuilder::buildTypedefDeclaration("size_t", SageBuilder::buildIntType(), top_scope);
+    size_type = SgTypedefType::createType(size_type_decl);
+  }
+  else
+    size_type = size_type_symbol->get_type();
   ROSE_ASSERT(size_type != NULL);
 
   // surrounding iterators
-  std::vector<SgInitializedName *> ordered_iterators;
-  // TODO
+  std::vector<RoseVariable> ordered_iterators;
+  SPMD_Tree * parent = tree->getParent();
+  while (dynamic_cast<SPMD_Root *>(parent) == NULL) {
+    SPMD_Loop * loop = dynamic_cast<SPMD_Loop *>(parent);
+    if (loop != NULL)
+      ordered_iterators.insert(ordered_iterators.begin(), loop->getIterator());
+    parent = parent->getParent();
+  }
 
   // work size
   SgVariableDeclaration * work_size_decl = NULL;
@@ -143,7 +179,10 @@ SgStatement * OpenCL_Generator::codeGeneration(SPMD_KernelCall * tree) {
         SgExpression * size = SageBuilder::buildSizeOfOp(SageBuilder::buildIntType());
         for (int i = 0; i < ordered_iterators.size(); i++) {
           SgExprListExp * params = SageBuilder::buildExprListExp(
-              kernel_obj, SageBuilder::buildIntVal(arg_cnt), SageBuilder::buildAddressOfOp(SageBuilder::buildVarRefExp(ordered_iterators[i])), size
+              kernel_obj,
+              SageBuilder::buildIntVal(arg_cnt),
+              SageBuilder::buildAddressOfOp(SageBuilder::buildVarRefExp(ordered_iterators[i].getInitializedName())),
+              size
           );
           SgFunctionCallExp * set_kernel_arg_value_call = SageBuilder::buildFunctionCallExp(
               set_kernel_arg_value, SageBuilder::buildVoidType(), params, top_scope
@@ -154,18 +193,16 @@ SgStatement * OpenCL_Generator::codeGeneration(SPMD_KernelCall * tree) {
 
         // Data
         std::set<ArrayPartition *>::iterator it_data;
-        for (it_data = datas.begin(); it_data != datas.end(); it_data++) {
+        for (it_data = datas->begin(); it_data != datas->end(); it_data++) {
           ArrayPartition * array_partition = *it_data;
-          ArrayAlias * alias = genAlias(array_partition, gpu);
-          OpenCL_Alias * ocl_alias = dynamic_cast<OpenCL_Alias *>(alias);
-          assert(ocl_alias != NULL);
 
           const std::vector<unsigned> & dimensions = array_partition->getDimensions();
           if (dimensions.size() == 0) { // scalar
             SgExprListExp * params = SageBuilder::buildExprListExp(
                 kernel_obj,
                 SageBuilder::buildIntVal(arg_cnt),
-                SageBuilder::buildAddressOfOp(SageBuilder::buildVarRefExp(ocl_alias->getInitName(), top_scope)),
+//                SageBuilder::buildAddressOfOp(SageBuilder::buildVarRefExp(array_partition->getOriginalVariable().getInitializedName(), top_scope)),
+                SageBuilder::buildAddressOfOp(array_partition->getOriginalVariable().generate(top_scope)),
                 SageBuilder::buildSizeOfOp(array_partition->getType())
             );
             SgFunctionCallExp * set_kernel_arg_value_call = SageBuilder::buildFunctionCallExp(
@@ -175,6 +212,9 @@ SgStatement * OpenCL_Generator::codeGeneration(SPMD_KernelCall * tree) {
             arg_cnt++;
           }
           else { // array
+            ArrayAlias * alias = genAlias(array_partition, gpu);
+            OpenCL_Alias * ocl_alias = dynamic_cast<OpenCL_Alias *>(alias);
+            assert(ocl_alias != NULL);
             SgExprListExp * params = SageBuilder::buildExprListExp(
                 kernel_obj, SageBuilder::buildIntVal(arg_cnt), SageBuilder::buildVarRefExp(ocl_alias->getInitName())
             );
@@ -205,40 +245,120 @@ SgStatement * OpenCL_Generator::codeGeneration(SPMD_KernelCall * tree) {
     SgFunctionCallExp * nd_range_call = SageBuilder::buildFunctionCallExp(nd_range, SageBuilder::buildVoidType(), params, top_scope);
     call_stmt = SageBuilder::buildExprStatement(nd_range_call);
   }
+  bb->append_statement(call_stmt);
+
+  delete datas;
 
   return bb;
 }
 
 SgStatement * OpenCL_Generator::codeGeneration(SPMD_Comm * tree) {
+  // Scopes and Block
+  assert(top_scope != NULL);
+  SgScopeStatement * scope = SageBuilder::topScopeStack();
   SgBasicBlock * bb = SageBuilder::buildBasicBlock();
 
-  // TODO
+  SgStatement * res = NULL;
 
-  return bb;
+  // Conditions
+  const std::vector<Conditions *> & conditions = tree->getConditons();
+  if (conditions.size() == 0) return bb;
+  else if (conditions.size() == 1 && conditions[0]->isTrue()) res = bb;
+  else {
+    std::vector<Conditions *>::const_iterator it_cond;
+    SgExpression * or_cond = conditions[0]->generate();
+    for (it_cond = conditions.begin()+1; it_cond != conditions.end(); it_cond++)
+      or_cond = SageBuilder::buildOrOp(or_cond, (*it_cond)->generate());
+    res = SageBuilder::buildIfStmt(or_cond, bb, NULL);
+  }
+  
+
+  // Retrieve communication description
+  CommDescriptor * comm_desc = tree->getCommDescriptor();
+  ComputeSystem * source = comm_desc->getSource();
+  ComputeSystem * destination = comm_desc->getDestination();
+  ArrayPartition * array_partition = comm_desc->getArrayPartition();
+  SyncRequired sync = comm_desc->getSyncRequired();
+
+  // Find out the type of communication
+  Core * core_source = dynamic_cast<Core *>(source);
+  GPU * gpu_source = dynamic_cast<GPU *>(source);
+  Core * core_destination = dynamic_cast<Core *>(destination);
+  GPU * gpu_destination = dynamic_cast<GPU *>(destination);
+
+  bool ocl_read = gpu_source != NULL && core_destination != NULL;
+  bool ocl_write = core_source != NULL && gpu_destination != NULL;
+
+  assert(ocl_read || ocl_write); // FIXME comm GPU <-> GPU
+  assert(!(ocl_read && ocl_write)); // Cannot be both!
+
+  if (array_partition->getDimensions().size() == 0) return bb; // No explicit transfert of scalar from CPU to GPU (kernel arg)
+
+  if (sync == before) {
+    // TODO
+  }
+
+  if (ocl_read) {
+    // TODO multi-gpu queues through arrays
+    std::ostringstream oss_queue;
+    ComputeNode * compute_node = dynamic_cast<ComputeNode *>(gpu_source->getParent());
+    assert(compute_node != NULL);
+    oss_queue << "ocl_queue_" << compute_node->getAcceleratorID(gpu_source);
+
+    SgName func_name = "readBuffer";
+    SgExprListExp * params = SageBuilder::buildExprListExp(
+        SageBuilder::buildVarRefExp(oss_queue.str(), top_scope),
+        SageBuilder::buildVarRefExp(genAlias(array_partition, gpu_source)->getInitName()),
+        array_partition->getSize(),
+        SageBuilder::buildVarRefExp(genAlias(array_partition, core_destination)->getInitName())
+    );
+    SgFunctionCallExp * call = SageBuilder::buildFunctionCallExp(func_name, SageBuilder::buildVoidType(), params, top_scope);
+    bb->append_statement(SageBuilder::buildExprStatement(call));
+  }
+
+  if (ocl_write) {
+    // TODO multi-gpu queues through arrays
+    std::ostringstream oss_queue;
+    ComputeNode * compute_node = dynamic_cast<ComputeNode *>(gpu_destination->getParent());
+    assert(compute_node != NULL);
+    oss_queue << "ocl_queue_" << compute_node->getAcceleratorID(gpu_destination);
+
+    SgName func_name = "writeBuffer";
+    SgExprListExp * params = SageBuilder::buildExprListExp(
+        SageBuilder::buildVarRefExp(oss_queue.str(), top_scope),
+        SageBuilder::buildVarRefExp(genAlias(array_partition, gpu_destination)->getInitName()),
+        array_partition->getSize(),
+        SageBuilder::buildVarRefExp(genAlias(array_partition, core_source)->getInitName())
+    );
+    SgFunctionCallExp * call = SageBuilder::buildFunctionCallExp(func_name, SageBuilder::buildVoidType(), params, top_scope);
+    bb->append_statement(SageBuilder::buildExprStatement(call));
+  }
+
+  if (sync == after) {
+    // TODO
+  }
+
+  return res;
 }
 
 SgStatement * OpenCL_Generator::codeGeneration(SPMD_Sync * tree) {
   SgBasicBlock * bb = SageBuilder::buildBasicBlock();
 
-  // TODO
+  assert(false); // FIXME right now there is no explicit sync for OpenCL
 
   return bb;
 }
 
-ArrayAlias * OpenCL_Generator::genAlias(ArrayPartition * array_partition, ComputeSystem * compute_system) {
+ArrayAlias * OpenCL_Generator::genAlias(ArrayPartition * array_partition, ComputeSystem * compute_system, bool read_and_write) {
   SageBuilder::pushScopeStack(top_scope);
   std::map<ComputeSystem *, std::map<ArrayPartition *, ArrayAlias *> >::iterator it_cs = array_aliases.find(compute_system);
-  if (it_cs == array_aliases.end()) {
-    it_cs = array_aliases.insert(
-      std::pair<ComputeSystem *, std::map<ArrayPartition *, ArrayAlias *> >(compute_system, std::map<ArrayPartition *, ArrayAlias *>())
-    ).first;
-  }
+  assert(it_cs != array_aliases.end());
   std::map<ArrayPartition *, ArrayAlias *>::iterator it_ap = it_cs->second.find(array_partition);
   if (it_ap == it_cs->second.end()) {
     GPU * gpu = dynamic_cast<GPU *>(compute_system);
     if (gpu != NULL)
       it_ap = it_cs->second.insert(
-        std::pair<ArrayPartition *, ArrayAlias *>(array_partition, new OpenCL_Alias(array_partition, gpu))
+        std::pair<ArrayPartition *, ArrayAlias *>(array_partition, new OpenCL_Alias(array_partition, gpu, top_scope, read_and_write))
       ).first;
     else
       it_ap = it_cs->second.insert(
@@ -251,22 +371,42 @@ ArrayAlias * OpenCL_Generator::genAlias(ArrayPartition * array_partition, Comput
 
 void OpenCL_Generator::insertInit(
   SPMD_Tree * root_tree,
-  std::map<ComputeSystem *, std::set<ArrayPartition *> > & to_be_aliased,
+  std::map<ComputeSystem *, std::pair<std::set<ArrayPartition *>, std::set<ArrayPartition *> > > & to_be_aliased,
   SgStatement * insert_init_after,
   std::string kernel_file_name
 ) {
   SgScopeStatement * scope = top_scope;
 
+#if DEBUG
+  std::cerr << "[OpenCL_Generator::insertInit] Start" << std::endl;
+#endif
+
   unsigned nbr_gpu = 0;
   {
-    std::map<ComputeSystem *, std::set<ArrayPartition *> >::iterator it;
-    for (it = to_be_aliased.begin(); it != to_be_aliased.end(); it++)
-      if (dynamic_cast<GPU *>(it->first) != NULL)
+    std::map<ComputeSystem *, std::pair<std::set<ArrayPartition *>, std::set<ArrayPartition *> > >::iterator it_map;
+    std::set<ArrayPartition *>::iterator it_set;
+    for (it_map = to_be_aliased.begin(); it_map != to_be_aliased.end(); it_map++) {
+      std::map<ComputeSystem *, std::map<ArrayPartition *, ArrayAlias *> >::iterator it_cs = array_aliases.find(it_map->first);
+      if (it_cs == array_aliases.end()) {
+        array_aliases.insert(
+          std::pair<ComputeSystem *, std::map<ArrayPartition *, ArrayAlias *> >(it_map->first, std::map<ArrayPartition *, ArrayAlias *>())
+        );
+      }
+      for (it_set = it_map->second.first.begin(); it_set != it_map->second.first.end(); it_set++)
+        genAlias(*it_set, it_map->first, false);
+      for (it_set = it_map->second.second.begin(); it_set != it_map->second.second.end(); it_set++)
+        genAlias(*it_set, it_map->first, true);
+      if (dynamic_cast<GPU *>(it_map->first) != NULL)
         nbr_gpu++;
+    }
     assert(nbr_gpu == 1); // FIXME will have to modify OpenCL wrapper for this...
   }
 
   SageInterface::attachComment(insert_init_after, "Declaration and instantiation of basic OpenCL objects", PreprocessingInfo::after);
+
+#if DEBUG
+    std::cerr << "[OpenCL_Generator::insertInit] OpenCL init generation" << std::endl;
+#endif
 
   SgVariableDeclaration * context_decl = NULL;
   {
@@ -312,22 +452,35 @@ void OpenCL_Generator::insertInit(
   SageInterface::attachComment(insert_init_after, "Creation of the buffers on the device.", PreprocessingInfo::after);
 
   {
-    std::map<ComputeSystem *, std::set<ArrayPartition *> >::iterator it1;
+    std::map<ComputeSystem *, std::pair<std::set<ArrayPartition *>, std::set<ArrayPartition *> > >::iterator it1;
     std::set<ArrayPartition *>::iterator it2;
-    for (it1 = to_be_aliased.begin(); it1 != to_be_aliased.end(); it1++)
-      for (it2 = it1->second.begin(); it2 != it1->second.end(); it2++) {
+#if DEBUG
+    std::cerr << "[OpenCL_Generator::insertInit] Buffers generation" << std::endl;
+#endif
+    for (it1 = to_be_aliased.begin(); it1 != to_be_aliased.end(); it1++) {
+      for (it2 = it1->second.first.begin(); it2 != it1->second.first.end(); it2++) {
         OpenCL_Alias * ocl_alias = dynamic_cast<OpenCL_Alias *>(genAlias(*it2, it1->first));
         if (ocl_alias != NULL) {
           SgInitializedName * init_name = ocl_alias->getInitName();
-
-          // TODO build initialization
-
           SgVariableDeclaration * var_decl = new SgVariableDeclaration(Sg_File_Info::generateDefaultFileInfoForTransformationNode());
           var_decl->get_variables().push_back(init_name);
+          init_name->set_parent(var_decl);
           SageInterface::insertStatementAfter(insert_init_after, var_decl);
           insert_init_after = var_decl;
         }
       }
+      for (it2 = it1->second.second.begin(); it2 != it1->second.second.end(); it2++) {
+        OpenCL_Alias * ocl_alias = dynamic_cast<OpenCL_Alias *>(genAlias(*it2, it1->first));
+        if (ocl_alias != NULL) {
+          SgInitializedName * init_name = ocl_alias->getInitName();
+          SgVariableDeclaration * var_decl = new SgVariableDeclaration(Sg_File_Info::generateDefaultFileInfoForTransformationNode());
+          var_decl->get_variables().push_back(init_name);
+          init_name->set_parent(var_decl);
+          SageInterface::insertStatementAfter(insert_init_after, var_decl);
+          insert_init_after = var_decl;
+        }
+      }
+    }
   }
 
   SageInterface::attachComment(insert_init_after, "Declaration of the kernels objects", PreprocessingInfo::after);
@@ -338,6 +491,9 @@ void OpenCL_Generator::insertInit(
   {
     SgTypedefDeclaration * kernel_type_decl = SageBuilder::buildTypedefDeclaration("cl_kernel", SageBuilder::buildIntType(), scope);
   }
+#if DEBUG
+    std::cerr << "[OpenCL_Generator::insertInit] Done" << std::endl;
+#endif
 }
 
 void OpenCL_Generator::insertFinal(SPMD_Tree * root_tree, SgStatement * insert_final_after) {
@@ -357,7 +513,21 @@ OpenCL_Generator::OpenCL_Generator(SPMD_Driver & driver_) :
 OpenCL_Generator::~OpenCL_Generator() {}
 
 SgSourceFile * OpenCL_Generator::buildKernelFile(std::string kernel_file_name) {
-  assert(false); // TODO
-  return NULL;
+  SgSourceFile * kernel_file = new SgSourceFile();
+  {
+    kernel_file->set_unparse_output_filename(kernel_file_name);
+    kernel_file->set_file_info(new Sg_File_Info(kernel_file_name));
+
+    SageInterface::getProject()->get_fileList_ptr()->get_listOfFiles().push_back(kernel_file);
+
+    SgGlobal * gs = new SgGlobal();
+    gs->set_file_info(new Sg_File_Info(kernel_file_name));
+    kernel_file->set_globalScope(gs);
+
+    kernel_file->set_OpenCL_only(true);
+    kernel_file->set_outputLanguage(SgFile::e_C_output_language); // FIXME could be remove with older version of rose
+  }
+  ROSE_ASSERT(kernel_file != NULL);
+  return kernel_file;
 }
 

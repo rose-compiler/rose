@@ -85,11 +85,17 @@ bool ScopRoot<Function, Expression, VariableLBL>::isStatement() const { return f
 /************/
 
 template <class Function, class Expression, class VariableLBL>
-ScopLoop<Function, Expression, VariableLBL>::ScopLoop(size_t position, ScopTree<Function, Expression, VariableLBL> * parent, VariableLBL iterator) :
+ScopLoop<Function, Expression, VariableLBL>::ScopLoop(
+	size_t position,
+	ScopTree<Function, Expression, VariableLBL> * parent,
+	VariableLBL iterator,
+	void * original_loop_ 
+) :
 	ScopTree<Function, Expression, VariableLBL>(position, parent),
 	p_iterator(iterator),
 	p_lb(),
-	p_ub()
+	p_ub(),
+	original_loop(original_loop_)
 {}
 
 template <class Function, class Expression, class VariableLBL>
@@ -109,15 +115,6 @@ VariableLBL ScopLoop<Function, Expression, VariableLBL>::getIterator() { return 
 
 template <class Function, class Expression, class VariableLBL>
 void ScopLoop<Function, Expression, VariableLBL>::addLowerBound(std::map<VariableLBL, int> & lb, int div) {
-	std::cerr << "\taddLowerBound" << std::endl;
-	std::cerr << "\t\tdiv = " << div << std::endl;
-        typename std::map<VariableLBL, int>::iterator it;
-        for (it = lb.begin(); it != lb.end(); it++) {
-		if (isConstant(it->first))
-			std::cerr << "\t\t" << it->second << std::endl;
-		else
-			std::cerr << "\t\t" << toString(it->first) << " * " << it->second << std::endl;
-	}
 	p_lb.push_back(std::pair<std::map<VariableLBL, int>, int>(lb, div));
 }
 
@@ -126,15 +123,6 @@ std::vector<std::pair<std::map<VariableLBL, int>, int> > & ScopLoop<Function, Ex
 
 template <class Function, class Expression, class VariableLBL>
 void ScopLoop<Function, Expression, VariableLBL>::addUpperBound(std::map<VariableLBL, int> & ub, int div) {
-	std::cerr << "\taddUpperBound" << std::endl;
-	std::cerr << "\t\tdiv = " << div << std::endl;
-        typename std::map<VariableLBL, int>::iterator it;
-        for (it = ub.begin(); it != ub.end(); it++) {
-		if (isConstant(it->first))
-			std::cerr << "\t\t" << it->second << std::endl;
-		else
-			std::cerr << "\t\t" << toString(it->first) << " * " << it->second << std::endl;
-	}	
 	p_ub.push_back(std::pair<std::map<VariableLBL, int>, int>(ub, div));
 }
 
@@ -146,6 +134,9 @@ void ScopLoop<Function, Expression, VariableLBL>::setIncrement(int inc) { p_inc 
 
 template <class Function, class Expression, class VariableLBL>
 int ScopLoop<Function, Expression, VariableLBL>::getIncrement() { return p_inc; }
+
+template <class Function, class Expression, class VariableLBL>
+void * ScopLoop<Function, Expression, VariableLBL>::getOriginalLoop() const { return original_loop; }
 
 template <class Function, class Expression, class VariableLBL>
 bool ScopLoop<Function, Expression, VariableLBL>::isRoot() const { return false; }
@@ -322,8 +313,6 @@ void ScopStatement<Function, Expression, VariableLBL>::Traverse(std::vector<Scop
 	equation->push_back(std::pair<VariableLBL, int>(constantLBL(), this->getPosition()));
 	scattering.addEquation(*equation);
 	delete equation;
-
-	domain.print(std::cerr);
 }
 
 template <class Function, class Expression, class VariableLBL>

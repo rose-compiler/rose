@@ -12,10 +12,12 @@ class SgStatement;
 class CommDescriptor;
 class SyncDescriptor;
 
-class Bounds;
+class Domain;
 class Expression;
 
 class ComputeSystem;
+
+class Conditions;
 
 class SPMD_Tree {
   protected:
@@ -34,6 +36,9 @@ class SPMD_Tree {
     void deepDelete();
 
     std::vector<SPMD_Tree *> & getChildren();
+    SPMD_Tree * getParent() const;
+
+    virtual void print(std::ostream & out) const = 0;
 
   friend class SPMD_NativeStmt;
   friend class SPMD_Loop;
@@ -48,6 +53,8 @@ class SPMD_Root : public SPMD_Tree {
   public:
     SPMD_Root(SPMD_Tree * parent_);
     ~SPMD_Root();
+
+    virtual void print(std::ostream & out) const;
 };
 
 class SPMD_NativeStmt : public SPMD_Tree {
@@ -59,19 +66,23 @@ class SPMD_NativeStmt : public SPMD_Tree {
     virtual ~SPMD_NativeStmt();
 
     SgStatement * getStatement();
+
+    virtual void print(std::ostream & out) const;
 };
 
 class SPMD_Loop : public SPMD_Tree {
   protected:
     RoseVariable iterator;
-    Bounds * domain;
+    Domain * domain;
 
   public:
-    SPMD_Loop(SPMD_Tree * parent_, RoseVariable iterator_, Bounds * domain_);
+    SPMD_Loop(SPMD_Tree * parent_, RoseVariable iterator_, Domain * domain_);
     virtual ~SPMD_Loop();
 
     RoseVariable & getIterator();
-    Bounds * getDomain();
+    Domain * getDomain();
+
+    virtual void print(std::ostream & out) const;
 
   friend class SPMD_KernelCall;
 };
@@ -88,13 +99,16 @@ class SPMD_DomainRestriction : public SPMD_Tree {
 
     std::vector<std::pair<Expression *, bool> > & getRestriction();
 
+    virtual void print(std::ostream & out) const;
+
   friend class SPMD_KernelCall;
 };
 
 class SPMD_KernelCall : public SPMD_Tree {
   protected:
-    std::map<RoseVariable, Bounds *> iterators;
+    std::map<RoseVariable, Domain *> iterators;
     std::vector<std::pair<Expression *, bool> > restrictions;
+    std::vector<RoseVariable> ordered_iterators;
     unsigned id;
 
   static unsigned id_cnt;
@@ -107,17 +121,25 @@ class SPMD_KernelCall : public SPMD_Tree {
 
     std::vector<SgExpression *> * generateDimensionSizes() const;
 
-    const std::map<RoseVariable, Bounds *> & getIterators() const;
+    const std::map<RoseVariable, Domain *> & getIterators() const;
     const std::vector<std::pair<Expression *, bool> >  & getRestrictions() const;
+
+    virtual void print(std::ostream & out) const;
 };
 
 class SPMD_Comm : public SPMD_Tree {
   protected:
     CommDescriptor * comm_descriptor;
+    std::vector<Conditions *> conditions;
 
   public:
-    SPMD_Comm(SPMD_Tree * parent_, CommDescriptor * comm_descriptor_);
+    SPMD_Comm(SPMD_Tree * parent_, CommDescriptor * comm_descriptor_, std::vector<Conditions *> & conditons_);
     virtual ~SPMD_Comm();
+
+    CommDescriptor * getCommDescriptor() const;
+    const std::vector<Conditions *> & getConditons() const;
+
+    virtual void print(std::ostream & out) const;
 };
 
 class SPMD_Sync :  public SPMD_Tree {
@@ -127,6 +149,8 @@ class SPMD_Sync :  public SPMD_Tree {
   public:
     SPMD_Sync(SPMD_Tree * parent_, SyncDescriptor * sync_descriptor_);
     virtual ~SPMD_Sync();
+
+    virtual void print(std::ostream & out) const;
 };
 
 #endif /* __SPMD_TREE_HPP__ */

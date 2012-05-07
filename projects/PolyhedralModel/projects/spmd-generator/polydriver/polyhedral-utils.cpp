@@ -106,4 +106,19 @@ std::ostream & operator << (std::ostream & out, const SgStatement & arg) {
         return out;
 }
 
+const Polyhedron & getDomain(const std::pair<SgExprStatement *, size_t> obj) {
+  return PolyhedricAnnotation::getDomain<SgStatement, SgExprStatement, RoseVariable>(obj.first).getDomainPolyhedron();
+}
+
+const std::vector<LinearExpression_ppl> & getScattering(const std::pair<SgExprStatement *, size_t> obj) {
+  return PolyhedricAnnotation::getScattering<SgStatement, SgExprStatement, RoseVariable>(obj.first).getScattering();
+}
+
+size_t getDimension(const std::pair<SgExprStatement *, size_t> obj) {
+  return PolyhedricAnnotation::getDomain<SgStatement, SgExprStatement, RoseVariable>(obj.first).getNumberOfIterators();
+}
+
+size_t getExtraDimension(const std::pair<SgExprStatement *, size_t> obj) {
+  return PolyhedricAnnotation::getDomain<SgStatement, SgExprStatement, RoseVariable>(obj.first).getNumberOfGlobals();
+}
 

@@ -42,7 +42,7 @@ class SPMD_Generator {
   // Target model dependent methods
     virtual SgSourceFile * buildKernelFile(std::string kernel_file_name) = 0;
 
-    virtual ArrayAlias * genAlias(ArrayPartition * array_partition, ComputeSystem * compute_system) = 0;
+    virtual ArrayAlias * genAlias(ArrayPartition * array_partition, ComputeSystem * compute_system, bool read_and_write) = 0;
 
     virtual SgStatement * codeGeneration(SPMD_KernelCall * tree) = 0;
     virtual SgStatement * codeGeneration(SPMD_Comm * tree) = 0;
@@ -50,7 +50,7 @@ class SPMD_Generator {
 
     virtual void insertInit(
       SPMD_Tree * root_tree,
-      std::map<ComputeSystem *, std::set<ArrayPartition *> > & to_be_aliased,
+      std::map<ComputeSystem *, std::pair<std::set<ArrayPartition *>, std::set<ArrayPartition *> > > & to_be_aliased,
       SgStatement * insert_init_after,
       std::string kernel_file_name
     ) = 0;

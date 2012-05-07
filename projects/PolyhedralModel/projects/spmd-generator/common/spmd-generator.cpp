@@ -33,10 +33,10 @@ SgStatement * SPMD_Generator::codeGeneration(SPMD_NativeStmt * tree) {
   SgExprStatement * expr_stmt = isSgExprStatement(tree->getStatement());
   SgExpression * exp = SageInterface::copyExpression(expr_stmt->get_expression());
 
-  std::vector<std::pair<ComputeSystem *, Domain *> > * placement = driver.getPlacement().assigned(tree);
-  assert(placement != NULL && placement->size() == 1 && (*placement)[0].second == NULL);
+  ComputeSystem * placement = driver.getPlacement().assigned(tree);
+  assert(placement != NULL);
 
-  std::map<ComputeSystem *, std::map<ArrayPartition *, ArrayAlias *> >::iterator it_cs = array_aliases.find((*placement)[0].first);
+  std::map<ComputeSystem *, std::map<ArrayPartition *, ArrayAlias *> >::iterator it_cs = array_aliases.find(placement);
   assert(it_cs != array_aliases.end());
 
   std::map<ArrayPartition *, ArrayAlias *>::iterator it_alias;
@@ -50,11 +50,11 @@ SgStatement * SPMD_Generator::codeGeneration(SPMD_Loop * tree) {
   SgForStatement * for_stmt = NULL;
 
   RoseVariable & iterator = tree->getIterator();
-  Bounds * bounds = tree->getDomain();
+  Domain * domain = tree->getDomain();
 
-  SgExprStatement * lb_stmt = bounds->genInit();
-  SgExprStatement * ub_stmt = bounds->genTest();
-  SgExpression * inc = bounds->genIncrement();
+  SgExprStatement * lb_stmt = domain->genInit();
+  SgExprStatement * ub_stmt = domain->genTest();
+  SgExpression * inc = domain->genIncrement();
 
   for_stmt = SageBuilder::buildForStatement(lb_stmt, ub_stmt, inc, NULL);
 
@@ -69,8 +69,17 @@ SgStatement * SPMD_Generator::codeGeneration(SPMD_Loop * tree) {
     SageBuilder::pushScopeStack(bb);
 
     std::vector<SPMD_Tree *>::iterator it;
-    for (it = children.begin(); it != children.end(); it++)
-      bb->append_statement(codeGeneration(*it));
+    for (it = children.begin(); it != children.end(); it++) {
+      SgStatement * child_res = codeGeneration(*it);
+      SgBasicBlock * child_bb = isSgBasicBlock(child_res);
+      if (child_bb != NULL) {
+        std::vector<SgStatement *>::iterator it_child_bb;
+        for (it_child_bb = child_bb->get_statements().begin(); it_child_bb != child_bb->get_statements().end(); it_child_bb++)
+          bb->append_statement(*it_child_bb);
+      }
+      else
+        bb->append_statement(child_res);
+    }
 
     SageBuilder::popScopeStack();
     for_stmt->set_loop_body(bb);
@@ -97,7 +106,9 @@ SgStatement * SPMD_Generator::codeGeneration(SPMD_DomainRestriction * tree) {
 
   SgExpression * condition = genAnd(sg_restriction);
 
-  if_stmt = SageBuilder::buildIfStmt(condition, NULL, NULL);
+  SgStatement * dummy_null_stmt = SageBuilder::buildNullStatement();
+
+  if_stmt = SageBuilder::buildIfStmt(condition, dummy_null_stmt, NULL);
 
   SageBuilder::pushScopeStack(if_stmt);
 
@@ -110,8 +121,17 @@ SgStatement * SPMD_Generator::codeGeneration(SPMD_DomainRestriction * tree) {
     SageBuilder::pushScopeStack(bb);
 
     std::vector<SPMD_Tree *>::iterator it;
-    for (it = children.begin(); it != children.end(); it++)
-      bb->append_statement(codeGeneration(*it));
+    for (it = children.begin(); it != children.end(); it++) {
+      SgStatement * child_res = codeGeneration(*it);
+      SgBasicBlock * child_bb = isSgBasicBlock(child_res);
+      if (child_bb != NULL) {
+        std::vector<SgStatement *>::iterator it_child_bb;
+        for (it_child_bb = child_bb->get_statements().begin(); it_child_bb != child_bb->get_statements().end(); it_child_bb++)
+          bb->append_statement(*it_child_bb);
+      }
+      else
+        bb->append_statement(child_res);
+    }
 
     SageBuilder::popScopeStack();
     if_stmt->set_true_body(bb);
@@ -129,8 +149,17 @@ SgStatement * SPMD_Generator::codeGeneration(SPMD_Root * tree) {
 
   std::vector<SPMD_Tree *> & children = tree->getChildren();
   std::vector<SPMD_Tree *>::iterator it;
-  for (it = children.begin(); it != children.end(); it++)
-    bb->append_statement(codeGeneration(*it));
+  for (it = children.begin(); it != children.end(); it++) {
+    SgStatement * child_res = codeGeneration(*it);
+    SgBasicBlock * child_bb = isSgBasicBlock(child_res);
+    if (child_bb != NULL) {
+      std::vector<SgStatement *>::iterator it_child_bb;
+      for (it_child_bb = child_bb->get_statements().begin(); it_child_bb != child_bb->get_statements().end(); it_child_bb++)
+        bb->append_statement(*it_child_bb);
+    }
+    else
+      bb->append_statement(child_res);
+  }
 
   SageBuilder::popScopeStack();
   return bb;
@@ -157,7 +186,7 @@ SgStatement * SPMD_Generator::generate(
   else
     top_scope = top_scope_;
 
-  std::map<ComputeSystem *, std::set<ArrayPartition *> > to_be_aliased;
+  std::map<ComputeSystem *, std::pair<std::set<ArrayPartition *>, std::set<ArrayPartition *> > > to_be_aliased;
   SPMD_Tree * spmd_tree = driver.generateTree(first, last, to_be_aliased);
 
   insertInit(spmd_tree, to_be_aliased, insert_init_after, kernel_file_name);

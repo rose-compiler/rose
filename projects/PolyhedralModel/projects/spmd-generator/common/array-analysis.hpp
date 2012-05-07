@@ -11,6 +11,7 @@
 
 class SPMD_Tree;
 class SPMD_Root;
+class SPMD_KernelCall;
 
 class CommDescriptor;
 class SyncDescriptor;
@@ -29,15 +30,20 @@ class ArrayPartition {
     std::vector<unsigned> dimensions;
     SgType * type;
 
+    SgExpression * size;
+
   public:
     ArrayPartition(RoseVariable & array_);
     ArrayPartition(RoseVariable & array_, std::vector<unsigned> & dimensions_, SgType * type_);
     virtual ~ArrayPartition();
 
-    virtual std::string getUniqueName() const = 0;
+    virtual std::string getUniqueName() const;
 
+    const RoseVariable & getOriginalVariable() const;
     const std::vector<unsigned> & getDimensions() const;
     SgType * getType() const;
+
+    SgExpression * getSize() const;
 
   static ArrayPartition * merge(ArrayPartition * p1, ArrayPartition * p2);
 };
@@ -54,6 +60,7 @@ class ArrayAlias {
 
     virtual SgPntrArrRefExp * propagate(SgPntrArrRefExp * arr_ref) const = 0;
     virtual SgVarRefExp * propagate(SgVarRefExp * var_ref) const = 0;
+    virtual SgInitializedName * getInitName() const = 0;
 };
 
 class ArrayAnalysis {
@@ -66,6 +73,8 @@ class ArrayAnalysis {
 
     virtual void process(SPMD_Root * tree) = 0;
 
+    void update(SPMD_KernelCall * new_node, const std::vector<SPMD_Tree *> & create_from);
+
     virtual std::set<CommDescriptor *> genComm(SPMD_Tree * t1, SPMD_Tree * t2, NodePlacement & placement) = 0;
     virtual std::set<SyncDescriptor *> genSync(SPMD_Tree * t1, SPMD_Tree * t2, NodePlacement & placement) = 0;
 
@@ -74,6 +83,7 @@ class ArrayAnalysis {
     std::set<ArrayPartition *> * get_in(SPMD_Tree * tree) const;
     std::set<ArrayPartition *> * get_out(SPMD_Tree * tree) const;
     std::set<ArrayPartition *> * get_inout(SPMD_Tree * tree) const;
+    std::set<ArrayPartition *> * get_partitions(SPMD_Tree * tree) const;
 
     virtual void clear();
 };

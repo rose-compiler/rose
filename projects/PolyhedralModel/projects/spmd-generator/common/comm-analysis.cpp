@@ -33,3 +33,11 @@ CommDescriptor::~CommDescriptor() {
   delete data;
 }
 
+ComputeSystem * CommDescriptor::getSource() const { return source; }
+
+ComputeSystem * CommDescriptor::getDestination() const { return destination; }
+
+ArrayPartition * CommDescriptor::getArrayPartition() const { return data; }
+
+SyncRequired CommDescriptor::getSyncRequired() const { return sync; }
+

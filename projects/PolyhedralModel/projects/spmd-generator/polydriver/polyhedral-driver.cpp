@@ -1,5 +1,6 @@
 
 #include "polydriver/polyhedral-driver.hpp"
+#include "polydriver/polyhedral-placement.hpp"
 #include "polydriver/polyhedral-array-analysis.hpp"
 
 #include "common/spmd-tree.hpp"
@@ -10,6 +11,15 @@
 
 #include "polydriver/polyhedral-utils.hpp"
 
+#define NEED_POLYDEPS 0
+
+ScopTree * PolyDriver::getScopTree(SPMD_Tree * tree) const {
+  std::map<SPMD_Tree *, ScopTree *>::const_iterator it_trees_map = trees_map.find(tree);
+  assert(it_trees_map != trees_map.end());
+  ScopTree * scoptree = it_trees_map->second;
+  return scoptree;
+}
+
 SPMD_Tree * PolyDriver::convertScopToSPMD(ScopTree * scoptree, SPMD_Tree * parent) {
   SPMD_Tree * res = NULL;
   if (scoptree->isRoot()) {
@@ -19,7 +29,7 @@ SPMD_Tree * PolyDriver::convertScopToSPMD(ScopTree * scoptree, SPMD_Tree * paren
     ScopLoop * scoploop = (ScopLoop *)scoptree;
     int stride = scoploop->getIncrement();
     const RoseVariable & iterator = scoploop->getIterator();
-    LinearBounds * domain = new LinearBounds(iterator, stride);
+    LinearDomain * domain = new LinearDomain(iterator, stride);
 
     std::vector<std::pair<std::map<RoseVariable, int>, int> > & lb = scoploop->getLowerBound();
     std::vector<std::pair<std::map<RoseVariable, int>, int> > & ub = scoploop->getUpperBound();
@@ -70,22 +80,53 @@ SPMD_Tree * PolyDriver::convertScopToSPMD(ScopTree * scoptree, SPMD_Tree * paren
   return res;
 }
 
-PolyDriver::PolyDriver(NodePlacement * placement_) :
-  SPMD_Driver(placement_, new PolyArrayAnalysis()),
-  trees_map()
-{}
+PolyDriver::PolyDriver(PolyPlacement * placement_) :
+  SPMD_Driver(placement_, new PolyArrayAnalysis(this)),
+  trees_map(),
+  dependencies(),
+  dymmy_stmt(SageBuilder::buildNullStatement())
+{
+  placement_->setPolyDriver(this);
+}
 
 PolyDriver::~PolyDriver() {}
 
 SPMD_Root * PolyDriver::parse(SgStatement * first, SgStatement * last) {
-  ScopTree * root = new ScopRoot(NULL);
+  ScopTree * root = new ScopRoot(dymmy_stmt);
   try {
     int cnt = 0;
     SgStatement * current = first;
     while (current != NULL) {
-      cnt += PolyhedricAnnotation::Traverse<SgStatement>(current, root, cnt, first);
+      cnt += PolyhedricAnnotation::Traverse<SgStatement>(current, root, cnt, dymmy_stmt);
       current = current != last ? SageInterface::getNextStatement(current) : NULL;
     }
+
+    root->Traverse();
+
+    PolyhedricAnnotation::PolyhedralProgram<SgStatement, SgExprStatement, RoseVariable> & polyhedral_program =
+        PolyhedricAnnotation::getPolyhedralProgram<SgStatement, SgExprStatement, RoseVariable>(dymmy_stmt);
+
+    polyhedral_program.finalize();
+
+    const std::vector<SgExprStatement *> & exps = polyhedral_program.getExpressions();
+    std::vector<SgExprStatement *>::const_iterator it;
+    for (it = exps.begin(); it != exps.end(); it++) {
+      PolyhedricAnnotation::DataAccess<SgStatement, SgExprStatement, RoseVariable> & data_access =
+          PolyhedricAnnotation::getDataAccess<SgStatement, SgExprStatement, RoseVariable>(*it);
+      PolyhedricAnnotation::makeAccessAnnotation<SgStatement, SgExprStatement, RoseVariable>(*it, data_access);
+    }
+#if NEED_POLYDEPS
+    std::vector<Dependency *> * deps;
+    deps = PolyhedricDependency::ComputeWaR<SgStatement, SgExprStatement, RoseVariable>(polyhedral_program, false);
+    dependencies.insert(dependencies.begin(), deps->begin(), deps->end());
+    delete deps;
+    deps = PolyhedricDependency::ComputeRaW<SgStatement, SgExprStatement, RoseVariable>(polyhedral_program, true);
+    dependencies.insert(dependencies.begin(), deps->begin(), deps->end());
+    delete deps;
+    deps = PolyhedricDependency::ComputeWaW<SgStatement, SgExprStatement, RoseVariable>(polyhedral_program, true);
+    dependencies.insert(dependencies.begin(), deps->begin(), deps->end());
+    delete deps;
+#endif
   }
   catch (Exception::ExceptionBase & e) {
     e.print(std::cerr);
@@ -101,8 +142,14 @@ SPMD_Root * PolyDriver::parse(SgStatement * first, SgStatement * last) {
   return res;
 }
 
-SPMD_Root * PolyDriver::transform(SPMD_Root * tree) {
-  // TODO use the placement to generate KernelCall nodes and the array analysis for comm/sync
-  return tree;
+std::vector<Dependency *> * PolyDriver::getDependenciesBetween(SPMD_Tree * first, SPMD_Tree * last) const {
+  PolyhedricAnnotation::PolyhedralProgram<SgStatement, SgExprStatement, RoseVariable> & polyhedral_program =
+      PolyhedricAnnotation::getPolyhedralProgram<SgStatement, SgExprStatement, RoseVariable>(dymmy_stmt);
+
+  std::vector<Dependency *> * res = new std::vector<Dependency *>();
+
+  assert(false); // TODO
+
+  return res;
 }
 

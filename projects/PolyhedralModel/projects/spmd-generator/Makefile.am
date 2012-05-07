@@ -41,6 +41,7 @@ libSPMDizeCommon_la_include_HEADERS = \
 
 libSPMDizePolyDriver_la_SOURCES = \
   polydriver/polyhedral-driver.cpp \
+  polydriver/polyhedral-placement.cpp \
   polydriver/polyhedral-array-analysis.cpp \
   polydriver/polyhedral-utils.cpp
 libSPMDizePolyDriver_la_CXXFLAGS = \
@@ -97,6 +98,7 @@ identity_LDADD = \
 
 single_gpu_SOURCES = \
   single-gpu/single-gpu.cpp \
+  single-gpu/depth-placement.cpp \
   single-gpu/test.cpp
 single_gpu_CXXFLAGS = \
   $(CXXFLAGS) \

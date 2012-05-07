@@ -53,6 +53,11 @@ class ComputeNode : public ComputeSystem {
 
     unsigned getAcceleratorID(ComputeSystem * acc) const;
 
+    ComputeSystem * getAcceleratorByID(unsigned id) const;
+    Accelerator_Interconnect * getLinkByAccID(unsigned id) const;
+
+    ComputeSystem * getCPU() const;
+
     virtual Link * getLink(ComputeSystem * cs1, ComputeSystem * cs2) const;
 
     virtual ComputeNode * copy() const = 0;

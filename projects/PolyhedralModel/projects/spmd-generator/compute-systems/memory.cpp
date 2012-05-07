@@ -39,6 +39,7 @@ MemoryHierarchy::MemoryHierarchy(const MemoryHierarchy & arg) :
   levels()
 {
   for (unsigned i = 0; i < arg.levels.size(); i++) {
+    assert(arg.levels[i] != NULL);
     levels.push_back(arg.levels[i]->copy());
   }
 }

@@ -31,7 +31,7 @@ ComputeNode::ComputeNode(ComputeSystem * cpu_, ComputeSystem * parent_) :
 
 ComputeNode::ComputeNode(const ComputeNode & arg) :
   ComputeSystem(arg),
-  cpu(arg.cpu),
+  cpu(arg.cpu == NULL ? NULL : arg.cpu->copy()),
   accelerators(),
   internal_links()
 {
@@ -71,6 +71,20 @@ unsigned ComputeNode::getAcceleratorID(ComputeSystem * acc) const {
   assert(false);
 }
 
+ComputeSystem * ComputeNode::getAcceleratorByID(unsigned id) const {
+  if (id >= accelerators.size()) return NULL;
+  else return accelerators[id].first;
+}
+
+Accelerator_Interconnect * ComputeNode::getLinkByAccID(unsigned id) const {
+  if (id >= accelerators.size()) return NULL;
+  else return accelerators[id].second;
+}
+
+ComputeSystem * ComputeNode::getCPU() const {
+  return cpu;
+}
+
 Link * ComputeNode::getLink(ComputeSystem * cs1, ComputeSystem * cs2) const {
   assert(false); // TODO
   return NULL;
@@ -81,9 +95,10 @@ Core::Core(ComputeSystem * parent, MemoryHierarchy * memory_, unsigned nbr_threa
   memory(memory_),
   nbr_threads(nbr_threads_)
 {}
+
 Core::Core(const Core & arg) :
   ComputeSystem(arg),
-  memory(arg.memory->copy()),
+  memory(arg.memory == NULL ? NULL : arg.memory->copy()),
   nbr_threads(arg.nbr_threads)
 {}
 

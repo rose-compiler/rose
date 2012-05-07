@@ -14,4 +14,6 @@ SgExpression * genAnd(std::vector<SgExpression *> & terms);
 SgExpression * genMin(std::vector<SgExpression *> & terms);
 SgExpression * genMax(std::vector<SgExpression *> & terms);
 
+SgExpression * simplify(SgExpression * exp);
+
 #endif /* __ROSE_TOOLBOX_HPP__ */

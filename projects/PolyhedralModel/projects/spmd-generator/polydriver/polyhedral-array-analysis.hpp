@@ -4,12 +4,18 @@
 
 #include "common/array-analysis.hpp"
 
+class PolyDriver;
+
 class PolyArrayAnalysis : public ArrayAnalysis {
   protected:
-    
+    PolyDriver * polydriver;
+    std::map<RoseVariable, ArrayPartition *> whole_array_partition;
+
+  protected:
+    void collectAccess(SPMD_Tree * tree);
 
   public:
-    PolyArrayAnalysis();
+    PolyArrayAnalysis(PolyDriver * polydriver_);
     virtual ~PolyArrayAnalysis();
 
     virtual void process(SPMD_Root * tree);

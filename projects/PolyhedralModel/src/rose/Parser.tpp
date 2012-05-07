@@ -74,7 +74,7 @@ size_t Traverse(
 			RoseVariable iterator = getIterator(for_stmt);
 
 			ScopTree_::ScopLoop<TplStatement, SgExprStatement, RoseVariable> * loop_node =
-				new ScopTree_::ScopLoop<TplStatement, SgExprStatement, RoseVariable>(pos, tree, iterator);
+				new ScopTree_::ScopLoop<TplStatement, SgExprStatement, RoseVariable>(pos, tree, iterator, for_stmt);
 
 			setBounds<TplStatement>(for_stmt, loop_node, iterator);
 
@@ -156,9 +156,7 @@ void setBounds(
 		throw Exception::ExceptionForLoopTranslation(for_stmt, "Initialisation expression is not an assignation.");
 	exp = assign_op->get_rhs_operand_i();
 	separateMinMax(exp, conj);
-	std::cerr << "lb" << std::endl;
 	for (it_conj = conj.begin(); it_conj != conj.end(); it_conj++) {
-		std::cerr << it_conj->first->unparseToString() << " / " << it_conj->second << std::endl;
 		std::map<RoseVariable, int> map;
 		translateLinearExpression(it_conj->first, map, 1);
 		loop_node->addLowerBound(map, it_conj->second);
@@ -176,9 +174,7 @@ void setBounds(
 	exp = bin_op->get_rhs_operand_i();
         conj.clear();
         separateMinMax(exp, conj);
-	std::cerr << "ub" << std::endl;
 	for (it_conj = conj.begin(); it_conj != conj.end(); it_conj++) {
-		std::cerr << it_conj->first->unparseToString() << " / " << it_conj->second << std::endl;
 		std::map<RoseVariable, int> map;
 		translateLinearExpression(it_conj->first, map, 1);
 		if (isSgLessThanOp(bin_op)) {

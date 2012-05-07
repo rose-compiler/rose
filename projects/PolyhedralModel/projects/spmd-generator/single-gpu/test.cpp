@@ -4,13 +4,17 @@
 #include "single-gpu/single-gpu.hpp"
 #include "opencl-generator/opencl-generator.hpp"
 
+#define DEBUG 1
+
 void usage(char * name) {
-  std::cout << "usage: " << name << " input.c" << std::endl;
+  std::cout << "usage: " << name << " input.c dim_out dim_used" << std::endl;
+  std::cout << "          dim_out >= 0" << std::endl;
+  std::cout << "          dim_used = [1,3]" << std::endl;
 }
 
 void help(char * name) {
   usage(name);
-  std::cout << "This application copy the SCoP contains in a kernel." << std::endl;
+  std::cout << "This application transform the SCoP in kernel to a set of OpenCL kernel to be run on a GPU." << std::endl;
   std::cout << "Kernel function name need to have the prefix \"kernel_\" and contains pragma \"scop\" and \"endscop\"" << std::endl;
   std::cout << std::endl;
   std::cout << "Author: Tristan Vanderbruggen (vanderbruggentristan@gmail.com)" << std::endl;
@@ -18,7 +22,7 @@ void help(char * name) {
 
 int main(int argc, char ** argv) {
 
-  if (argc != 2) {
+  if (argc != 4) {
     if (argc == 2) {
       if (strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--help") == 0)
         help(argv[0]);
@@ -30,10 +34,27 @@ int main(int argc, char ** argv) {
     return 1;
   }
 
+  unsigned dim_out = atoi(argv[2]);
+  unsigned dim_used = atoi(argv[3]);
+
+  if (dim_used == 0 || dim_used > 3) {
+    usage(argv[0]);
+    return 1;
+  }
+
   char * args[3] = {argv[0], (char *)"-DPARAMETRIC", argv[1]};
   SgProject * project = frontend ( 3 , args );
 
-  PolyDriver poly_driver(new DepthPlacement(new SingleGPU_SingleCPU()));
+  std::string ocl_file_name = "rose_" + isSgSourceFile((*project)[0])->get_sourceFileNameWithoutPath() + "l";
+
+  // Insert OpenCL-wrapper header
+  SgGlobal * global_scope = isSgSourceFile((*project)[0])->get_globalScope();
+  SageInterface::insertHeader("opencl-wrapper.h", PreprocessingInfo::after, true, global_scope);
+
+  // Objet to be used for OpenCL generation (architecture/placement will be delete automatically)
+  ComputeNode * architecture = new SingleGPU_SingleCPU();
+  PolyPlacement * placement = new DepthPlacement(architecture, dim_out, dim_used);
+  PolyDriver poly_driver(placement);
   OpenCL_Generator ocl_generator(poly_driver);
 
   std::vector<SgNode*> func_decls = NodeQuery::querySubTree(project, V_SgFunctionDeclaration);
@@ -84,7 +105,13 @@ int main(int argc, char ** argv) {
 
     SgStatement * insert_final_after = *(func_body->get_statements().end() - 1);
 
-    SgStatement * res = ocl_generator.generate(insert_init_after, insert_final_after, first, last, NULL);
+#if DEBUG
+    std::cerr << "Begin of Code Generation" << std::endl;
+#endif
+    SgStatement * res = ocl_generator.generate(insert_init_after, insert_final_after, first, last, func_body, ocl_file_name);
+#if DEBUG
+    std::cerr << "End of Code Generation" << std::endl;
+#endif
 
     SgStatement * current = first;
     while (current != last) {

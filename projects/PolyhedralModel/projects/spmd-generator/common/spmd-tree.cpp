@@ -33,11 +33,17 @@ std::vector<SPMD_Tree *> & SPMD_Tree::getChildren() {
   return children;
 }
 
+SPMD_Tree * SPMD_Tree::getParent() const { return parent; }
+
 SPMD_Root::SPMD_Root(SPMD_Tree * parent_) :
   SPMD_Tree(parent_)
 {}
 
 SPMD_Root::~SPMD_Root() {}
+
+void SPMD_Root::print(std::ostream & out) const {
+  out << "SPMD_Root";
+}
 
 SPMD_NativeStmt::SPMD_NativeStmt(SPMD_Tree * parent_, SgStatement * stmt_) :
   SPMD_Tree(parent_),
@@ -48,7 +54,11 @@ SPMD_NativeStmt::~SPMD_NativeStmt() {}
 
 SgStatement * SPMD_NativeStmt::getStatement() { return stmt; }
 
-SPMD_Loop::SPMD_Loop(SPMD_Tree * parent_, RoseVariable iterator_, Bounds * domain_) :
+void SPMD_NativeStmt::print(std::ostream & out) const {
+  out << "SPMD_NativeStmt";
+}
+
+SPMD_Loop::SPMD_Loop(SPMD_Tree * parent_, RoseVariable iterator_, Domain * domain_) :
   SPMD_Tree(parent_),
   iterator(iterator_),
   domain(domain_)
@@ -60,7 +70,11 @@ SPMD_Loop::~SPMD_Loop() {
 
 RoseVariable & SPMD_Loop::getIterator() { return iterator; }
 
-Bounds * SPMD_Loop::getDomain() { return domain; }
+Domain * SPMD_Loop::getDomain() { return domain; }
+
+void SPMD_Loop::print(std::ostream & out) const {
+  out << "SPMD_Loop";
+}
 
 SPMD_DomainRestriction::SPMD_DomainRestriction(SPMD_Tree * parent_) :
   SPMD_Tree(parent_),
@@ -79,12 +93,17 @@ void SPMD_DomainRestriction::addRestriction(Expression * restriction, bool is_eq
 
 std::vector<std::pair<Expression *, bool> > & SPMD_DomainRestriction::getRestriction() { return restrictions; }
 
+void SPMD_DomainRestriction::print(std::ostream & out) const {
+  out << "SPMD_DomainRestriction";
+}
+
 unsigned SPMD_KernelCall::id_cnt = 0;
 
 SPMD_KernelCall::SPMD_KernelCall(SPMD_Tree * parent_, SPMD_Tree * first, SPMD_Tree * last) :
   SPMD_Tree(parent_),
   iterators(),
   restrictions(),
+  ordered_iterators(),
   id(id_cnt++)
 {
   bool contains_loop = false;
@@ -95,41 +114,40 @@ SPMD_KernelCall::SPMD_KernelCall(SPMD_Tree * parent_, SPMD_Tree * first, SPMD_Tr
       SPMD_Loop * loop = dynamic_cast<SPMD_Loop *>(current);
       SPMD_DomainRestriction * restriction = dynamic_cast<SPMD_DomainRestriction *>(current);
       if (loop != NULL) {
-        iterators.insert(std::pair<RoseVariable, Bounds *>(loop->iterator, loop->domain->copy()));
+        assert(loop->domain != NULL);
+        iterators.insert(std::pair<RoseVariable, Domain *>(loop->iterator, loop->domain->copy()));
+        ordered_iterators.insert(ordered_iterators.begin(), loop->iterator);
         contains_loop = true;
       }
       else if (restriction != NULL) {
         std::vector<std::pair<Expression *, bool> >::iterator it_restrict;
-        for (it_restrict = restriction->restrictions.begin(); it_restrict != restriction->restrictions.end(); it_restrict++)
+        for (it_restrict = restriction->restrictions.begin(); it_restrict != restriction->restrictions.end(); it_restrict++) {
+          assert(it_restrict->first != NULL);
           restrictions.push_back(std::pair<Expression *, bool>(it_restrict->first->copy(), it_restrict->second));
+        }
       }
+      current = current->parent;
     }
+  }
+  else {
+    SPMD_Loop * loop = dynamic_cast<SPMD_Loop *>(first);
+    assert(loop != NULL);
+    assert(loop->domain != NULL);
+    iterators.insert(std::pair<RoseVariable, Domain *>(loop->iterator, loop->domain->copy()));
+    ordered_iterators.insert(ordered_iterators.begin(), loop->iterator);
+    contains_loop = true;
   }
   assert(contains_loop);
-
+ 
   std::vector<SPMD_Tree *>::iterator it = last->children.begin();
-  while (it != children.end()) {
+  while (it != last->children.end()) {
     appendChild(*it);
     it = last->children.erase(it);
-  }
-  SPMD_Tree * current = last;
-  while (current != first) {
-    if (current->children.size() == 0 && current->parent != NULL) {
-      it = current->parent->children.begin();
-      while (it != current->parent->children.end()) {
-        if (*it == current) it = current->parent->children.erase(it);
-        else it++;
-      }
-      SPMD_Tree * next = current->parent;
-      delete current;
-      current = next;
-    }
-    else break;
   }
 }
 
 SPMD_KernelCall::~SPMD_KernelCall() {
-  std::map<RoseVariable, Bounds *>::iterator it0;
+  std::map<RoseVariable, Domain *>::iterator it0;
   for (it0 = iterators.begin(); it0 != iterators.end(); it0++)
     delete it0->second;
 
@@ -143,22 +161,38 @@ unsigned SPMD_KernelCall::getID() const { return id; }
 std::vector<SgExpression *> * SPMD_KernelCall::generateDimensionSizes() const {
   std::vector<SgExpression *> * res = new std::vector<SgExpression *>();
 
-  // TODO
+  std::vector<RoseVariable>::const_iterator it0;
+  for (it0 = ordered_iterators.begin(); it0 != ordered_iterators.end(); it0++) {
+    std::map<RoseVariable, Domain *>::const_iterator it1 = iterators.find(*it0);
+    res->push_back(it1->second->genNumberOfPoints());
+  }
 
   return res;
 }
 
-const std::map<RoseVariable, Bounds *> & SPMD_KernelCall::getIterators() const { return iterators; }
+const std::map<RoseVariable, Domain *> & SPMD_KernelCall::getIterators() const { return iterators; }
 
 const std::vector<std::pair<Expression *, bool> >  & SPMD_KernelCall::getRestrictions() const { return restrictions; }
 
-SPMD_Comm::SPMD_Comm(SPMD_Tree * parent_, CommDescriptor * comm_descriptor_) :
+void SPMD_KernelCall::print(std::ostream & out) const {
+  out << "SPMD_KernelCall";
+}
+
+SPMD_Comm::SPMD_Comm(SPMD_Tree * parent_, CommDescriptor * comm_descriptor_, std::vector<Conditions *> & conditions_) :
   SPMD_Tree(parent_),
-  comm_descriptor(comm_descriptor_)
+  comm_descriptor(comm_descriptor_),
+  conditions(conditions_)
 {}
 
 SPMD_Comm::~SPMD_Comm() {
   delete comm_descriptor;
+}
+
+CommDescriptor * SPMD_Comm::getCommDescriptor() const { return comm_descriptor; }
+const std::vector<Conditions *> & SPMD_Comm::getConditons() const { return conditions; }
+
+void SPMD_Comm::print(std::ostream & out) const {
+  out << "SPMD_Comm";
 }
 
 SPMD_Sync::SPMD_Sync(SPMD_Tree * parent_, SyncDescriptor * sync_descriptor_) :
@@ -168,5 +202,9 @@ SPMD_Sync::SPMD_Sync(SPMD_Tree * parent_, SyncDescriptor * sync_descriptor_) :
 
 SPMD_Sync::~SPMD_Sync() {
   delete sync_descriptor;
+}
+
+void SPMD_Sync::print(std::ostream & out) const {
+  out << "SPMD_Sync";
 }
 

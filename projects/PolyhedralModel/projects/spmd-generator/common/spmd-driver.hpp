@@ -27,7 +27,7 @@ class SPMD_Driver {
     SPMD_Root * generateTree(
       SgStatement * first,
       SgStatement * last,
-      std::map<ComputeSystem *, std::set<ArrayPartition *> > & to_be_aliased
+      std::map<ComputeSystem *, std::pair<std::set<ArrayPartition *>, std::set<ArrayPartition *> > > & to_be_aliased
     );
 
     const NodePlacement & getPlacement() const;
@@ -37,7 +37,6 @@ class SPMD_Driver {
     bool hasArrayAnalysis() const;
 
     virtual SPMD_Root * parse(SgStatement * first, SgStatement * last) = 0;
-    virtual SPMD_Root * transform(SPMD_Root * tree) = 0;
 };
 
 #endif /* __SPMD_DRIVER_HPP__ */

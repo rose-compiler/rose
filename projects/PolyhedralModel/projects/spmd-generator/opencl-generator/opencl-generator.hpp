@@ -13,13 +13,14 @@ class OpenCL_Alias : public ArrayAlias {
     SgInitializedName * init_name;
 
   public:
-    OpenCL_Alias(ArrayPartition * original_array_, GPU * gpu);
+    OpenCL_Alias(ArrayPartition * original_array_, GPU * gpu, SgScopeStatement * scope, bool read_and_write);
     virtual ~OpenCL_Alias();
 
     virtual SgPntrArrRefExp * propagate(SgPntrArrRefExp * arr_ref) const;
     virtual SgVarRefExp * propagate(SgVarRefExp * var_ref) const;
+    virtual SgInitializedName * getInitName() const;
 
-    SgInitializedName * getInitName() const;
+  static SgType * buffer_type;
 };
 
 class IdentityAlias : public ArrayAlias {
@@ -29,6 +30,7 @@ class IdentityAlias : public ArrayAlias {
 
     virtual SgPntrArrRefExp * propagate(SgPntrArrRefExp * arr_ref) const;
     virtual SgVarRefExp * propagate(SgVarRefExp * var_ref) const;
+    virtual SgInitializedName * getInitName() const;
 };
 
 class OpenCL_Generator : public SPMD_Generator {
@@ -37,13 +39,13 @@ class OpenCL_Generator : public SPMD_Generator {
 
   protected:
     virtual SgSourceFile * buildKernelFile(std::string);
-    virtual ArrayAlias * genAlias(ArrayPartition * array_partition, ComputeSystem * compute_system);
+    virtual ArrayAlias * genAlias(ArrayPartition * array_partition, ComputeSystem * compute_system, bool read_and_write = true);
     virtual SgStatement * codeGeneration(SPMD_KernelCall * tree);
     virtual SgStatement * codeGeneration(SPMD_Comm * tree);
     virtual SgStatement * codeGeneration(SPMD_Sync * tree);
     virtual void insertInit(
       SPMD_Tree * root_tree,
-      std::map<ComputeSystem *, std::set<ArrayPartition *> > & to_be_aliased,
+      std::map<ComputeSystem *, std::pair<std::set<ArrayPartition *>, std::set<ArrayPartition *> > > & to_be_aliased,
       SgStatement * insert_init_after,
       std::string kernel_file_name
     );
