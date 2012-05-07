@@ -1,0 +1,85 @@
+@ [/home/dxnguyen/git-rose/rose-zung/tests/roseTests/roseHPCToolkitTests/data/01/example.c (SgGlobal)]
+     PAPI_FP_OPS.[0,0] (E) = 8.5e+06
+     PAPI_FP_OPS.[0,0] (I) = 4.5e+06
+     PAPI_TOT_CYC.[0,0] (E) = 1.2885e+09
+     PAPI_TOT_CYC.[0,0] (I) = 2.7655e+09
+@ [/home/dxnguyen/git-rose/rose-zung/tests/roseTests/roseHPCToolkitTests/data/01/example.c:7-8 (SgFunctionDefinition)]
+     PAPI_FP_OPS.[0,0] (E) = 7.5e+06
+     PAPI_FP_OPS.[0,0] (I) = 3.5e+06
+     PAPI_TOT_CYC.[0,0] (E) = 1.118e+09
+     PAPI_TOT_CYC.[0,0] (I) = 1.118e+09
+@ [/home/dxnguyen/git-rose/rose-zung/tests/roseTests/roseHPCToolkitTests/data/01/example.c:14-15 (SgForStatement)]
+     PAPI_FP_OPS.[0,0] (E) = 7.5e+06
+     PAPI_FP_OPS.[0,0] (I) = 3.5e+06
+     PAPI_TOT_CYC.[0,0] (E) = 1.118e+09
+     PAPI_TOT_CYC.[0,0] (I) = 1.118e+09
+@ [/home/dxnguyen/git-rose/rose-zung/tests/roseTests/roseHPCToolkitTests/data/01/example.c:14-15 (SgForInitStatement)]
+     PAPI_FP_OPS.[0,0] (E) = 250000
+     PAPI_TOT_CYC.[0,0] (E) = 1.035e+08
+     PAPI_TOT_CYC.[0,0] (I) = 1.035e+08
+@ [/home/dxnguyen/git-rose/rose-zung/tests/roseTests/roseHPCToolkitTests/data/01/example.c:14-15 (SgExprStatement)]
+     PAPI_FP_OPS.[0,0] (E) = 250000
+     PAPI_TOT_CYC.[0,0] (E) = 1.035e+08
+     PAPI_TOT_CYC.[0,0] (I) = 1.035e+08
+@ [/home/dxnguyen/git-rose/rose-zung/tests/roseTests/roseHPCToolkitTests/data/01/example.c:15 (SgExprStatement)]
+     PAPI_FP_OPS.[0,0] (E) = 7e+06
+     PAPI_FP_OPS.[0,0] (I) = 3.5e+06
+     PAPI_TOT_CYC.[0,0] (E) = 9.11e+08
+     PAPI_TOT_CYC.[0,0] (I) = 9.11e+08
+@ [/home/dxnguyen/git-rose/rose-zung/tests/roseTests/roseHPCToolkitTests/data/01/example.c:20-21 (SgFunctionDefinition)]
+     PAPI_FP_OPS.[0,0] (E) = 500000
+     PAPI_FP_OPS.[0,0] (I) = 500000
+     PAPI_TOT_CYC.[0,0] (E) = 8.45e+07
+     PAPI_TOT_CYC.[0,0] (I) = 8.69e+08
+@ [/home/dxnguyen/git-rose/rose-zung/tests/roseTests/roseHPCToolkitTests/data/01/example.c:25-26 (SgForStatement)]
+     PAPI_FP_OPS.[0,0] (E) = 500000
+     PAPI_FP_OPS.[0,0] (I) = 500000
+     PAPI_TOT_CYC.[0,0] (E) = 8.45e+07
+     PAPI_TOT_CYC.[0,0] (I) = 8.69e+08
+@ [/home/dxnguyen/git-rose/rose-zung/tests/roseTests/roseHPCToolkitTests/data/01/example.c:25-26 (SgForInitStatement)]
+     PAPI_TOT_CYC.[0,0] (E) = 9.25e+06
+     PAPI_TOT_CYC.[0,0] (I) = 8.95e+07
+@ [/home/dxnguyen/git-rose/rose-zung/tests/roseTests/roseHPCToolkitTests/data/01/example.c:25-26 (SgExprStatement)]
+     PAPI_TOT_CYC.[0,0] (E) = 9.25e+06
+     PAPI_TOT_CYC.[0,0] (I) = 8.95e+07
+@ [/home/dxnguyen/git-rose/rose-zung/tests/roseTests/roseHPCToolkitTests/data/01/example.c:26 (SgExprStatement)]
+     PAPI_FP_OPS.[0,0] (E) = 500000
+     PAPI_FP_OPS.[0,0] (I) = 500000
+     PAPI_TOT_CYC.[0,0] (E) = 6.6e+07
+     PAPI_TOT_CYC.[0,0] (I) = 6.9e+08
+@ [/home/dxnguyen/git-rose/rose-zung/tests/roseTests/roseHPCToolkitTests/data/01/example.c:51-52 (SgFunctionDefinition)]
+     PAPI_FP_OPS.[0,0] (E) = 500000
+     PAPI_FP_OPS.[0,0] (I) = 500000
+     PAPI_TOT_CYC.[0,0] (E) = 8.5e+07
+     PAPI_TOT_CYC.[0,0] (I) = 7.775e+08
+@ [/home/dxnguyen/git-rose/rose-zung/tests/roseTests/roseHPCToolkitTests/data/01/example.c:56-63 (SgForStatement)]
+     PAPI_FP_OPS.[0,0] (I) = 500000
+     PAPI_TOT_CYC.[0,0] (E) = 500000
+     PAPI_TOT_CYC.[0,0] (I) = 7.775e+08
+@ [/home/dxnguyen/git-rose/rose-zung/tests/roseTests/roseHPCToolkitTests/data/01/example.c:61-62 (SgForStatement)]
+     PAPI_FP_OPS.[0,0] (E) = 500000
+     PAPI_FP_OPS.[0,0] (I) = 500000
+     PAPI_TOT_CYC.[0,0] (E) = 8.45e+07
+     PAPI_TOT_CYC.[0,0] (I) = 7.77e+08
+@ [/home/dxnguyen/git-rose/rose-zung/tests/roseTests/roseHPCToolkitTests/data/01/example.c:61-62 (SgForInitStatement)]
+     PAPI_TOT_CYC.[0,0] (E) = 4.5e+06
+     PAPI_TOT_CYC.[0,0] (I) = 1.1575e+08
+@ [/home/dxnguyen/git-rose/rose-zung/tests/roseTests/roseHPCToolkitTests/data/01/example.c:61-62 (SgExprStatement)]
+     PAPI_TOT_CYC.[0,0] (E) = 4.5e+06
+     PAPI_TOT_CYC.[0,0] (I) = 1.1575e+08
+@ [/home/dxnguyen/git-rose/rose-zung/tests/roseTests/roseHPCToolkitTests/data/01/example.c:62 (SgExprStatement)]
+     PAPI_FP_OPS.[0,0] (E) = 500000
+     PAPI_FP_OPS.[0,0] (I) = 500000
+     PAPI_TOT_CYC.[0,0] (E) = 7.55e+07
+     PAPI_TOT_CYC.[0,0] (I) = 5.455e+08
+@ [/home/dxnguyen/git-rose/rose-zung/tests/roseTests/roseHPCToolkitTests/data/01/example.c:66-67 (SgFunctionDefinition)]
+     PAPI_FP_OPS.[0,0] (I) = 4.5e+06
+     PAPI_TOT_CYC.[0,0] (E) = 1e+06
+     PAPI_TOT_CYC.[0,0] (I) = 2.7655e+09
+@ [/home/dxnguyen/git-rose/rose-zung/tests/roseTests/roseHPCToolkitTests/data/01/example.c:100-101 (SgForStatement)]
+     PAPI_FP_OPS.[0,0] (I) = 500000
+     PAPI_TOT_CYC.[0,0] (E) = 1e+06
+     PAPI_TOT_CYC.[0,0] (I) = 8.7e+08
+@ [/home/dxnguyen/git-rose/rose-zung/tests/roseTests/roseHPCToolkitTests/data/01/example.c:101 (SgExprStatement)]
+     PAPI_TOT_CYC.[0,0] (E) = 1e+06
+     PAPI_TOT_CYC.[0,0] (I) = 1e+06

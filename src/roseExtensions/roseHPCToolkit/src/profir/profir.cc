@@ -341,10 +341,8 @@ std::string File::toString() const
 }
 
 Procedure::Procedure (long int i, const std::string& name, long int l) :
-    IRNode (name), Located(l, l)
+    id(i), IRNode (name), Located(l, l)
 {
-  id = i;
-  // line = l;
 }
 
 std::string Procedure::toString() const
@@ -391,16 +389,20 @@ std::string Statement::toString() const
   return result;
 }
 
-Statement::Statement (void): id(0), hasMatchedSgNode(false)
+// Statement::Statement (void): id(0), hasMatchedSgNode(false)
+Statement::Statement (void): id(0)
 {
 }
 
-Statement::Statement (const Statement& s): id(s.getId()), hasMatchedSgNode(s.hasMatchingSgNode()), Located (s)
+// Statement::Statement (const Statement& s): id(s.getId()), hasMatchedSgNode(s.hasMatchingSgNode()), Located (s)
+Statement::Statement (const Statement& s): id(s.getId()), Located (s)
 {
+    setHasMatchingSgNode(s.hasMatchingSgNode());
 }
 
-Statement::Statement (const std::string& name, id_t i, size_t l):
-        id(i), hasMatchedSgNode(false), IRNode (name), Located(l, l)
+// Statement::Statement (const std::string& name, id_t i, size_t l):
+//         id(i), hasMatchedSgNode(false), IRNode (name), Located(l, l)
+Statement::Statement (const std::string& name, id_t i, size_t l): id(i), IRNode (name), Located(l, l)
 {
 }
 

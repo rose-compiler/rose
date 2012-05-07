@@ -334,8 +334,9 @@ namespace autoTuning
     for (;piter!=RoseHPCT::profStmtNodes_.end();piter++)
     {
 #if 1
-        const Statement* s = dynamic_cast<const Statement*> (*piter);
-        ROSE_ASSERT(s);
+        // const Statement* s = dynamic_cast<const Statement*> (*piter);
+        // ROSE_ASSERT(s);
+        const RoseHPCT::IRNode * s = *piter;
         if (s->hasMatchingSgNode())  // DXN: only consider Statements with matching SgNode
             nodeVec.push_back(s);
 #else

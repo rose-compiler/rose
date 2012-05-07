@@ -26,7 +26,7 @@
 #include <rosehpct/xml2profir/xml2profir.hh>
 #include <rosehpct/profir2sage/profir2sage.hh>
 #include <rosehpct/rosehpct.hh>
-
+#include <rosehpct/sage/collectors.hh>
 
 using namespace std;
 
@@ -54,6 +54,11 @@ main (int argc, char* argv[])
       RoseHPCT::postProcessingProfIR(*hpctree, eqpaths);
       RoseHPCT::attachMetrics (*hpctree, proj, true);
     }
+
+  // Traverse the project tree and print all the attached MetricAtt.
+  RoseHPCT::Vis_PrintMetricInfo vis(cout);
+  RoseHPCT::Vis_PreOrder preVis(&vis);
+  proj->accept(preVis);
 
   cerr << "[Dumping to PDF...]" << endl;
   AstPDFGeneration pdf;
