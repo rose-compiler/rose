@@ -508,10 +508,12 @@ public:
      *  value to be merged into this one.
      *
      *  Merging is optional.  If two values cannot be merged then they will be represented as distinct elements in the
-     *  RangeMap.  However, merging can significantly reduce the size of large RangeMap objects.  The RangeMap's insert method
-     *  typically calls this method with @p other_range being to the left of @p my_range (for std::map efficiency reasons).
+     *  RangeMap.  However, merging can significantly reduce the size of large RangeMap objects.
      *
-     *  If a merge occurs, then the removing() method of @p other_value is not invoked.
+     *  If a merge occurs, then the removing() method of @p other_value is not invoked, but other_value will nonetheless be
+     *  removed from the memory map.  Therefore, if its removing() method needs to do anything it should be called explicitly.
+     *  It must be done this way in order to allow the merge operation the possibility doing something more efficient than
+     *  copying and then deleting other_value.
      *
      *  Returns true if merging occurred, false otherwise. */
     bool merge(const Range &my_range, const Range &other_range, const RangeMapVoid &other_value) {
