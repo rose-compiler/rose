@@ -3,6 +3,7 @@
 
 #include "x86InstructionSemantics.h"
 #include "BaseSemantics.h"
+#include "NullSemantics.h"
 
 namespace BinaryAnalysis {                      // documented elsewhere
     namespace InstructionSemantics {            // documented elsewhere
@@ -236,6 +237,18 @@ namespace BinaryAnalysis {                      // documented elsewhere
                 }
                 /** @} */
 
+                /** Print the value. Prints subvalues that are marked as valid. */
+                void print(std::ostream &o) const {
+                    if (is_valid(SP0()))
+                        o <<get_subvalue(SP0());
+                    if (is_valid(SP1()))
+                        o <<get_subvalue(SP1());
+                    if (is_valid(SP2()))
+                        o <<get_subvalue(SP2());
+                    if (is_valid(SP3()))
+                        o <<get_subvalue(SP3());
+                }
+
             protected:
                 // Internal function to help set sub-value validity.
                 void set_valid(unsigned mask, bool valid) {
@@ -246,6 +259,13 @@ namespace BinaryAnalysis {                      // documented elsewhere
                     }
                 }
             };
+
+            /** Print the value. Prints subvalues that are marked as valid. */
+            template<template <size_t X> class ValueType, size_t nBits>
+            friend std::ostream& operator<<(std::ostream &o, const ValueType<nBits> &v) {
+                v.print(o);
+                return o;
+            }
 
 
 
