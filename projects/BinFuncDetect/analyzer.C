@@ -260,10 +260,9 @@ class MyUnparser: public AsmUnparser {
                 0==(block->get_reason() & SgAsmBlock::BLK_JUMPTABLE)) {
                 SgUnsignedCharList data = args.data->get_raw_bytes();
                 MemoryMap map;
-                MemoryMap::MapElement me(args.data->get_address(), data.size(), &data[0], 0,
-                                         MemoryMap::MM_PROT_READ|MemoryMap::MM_PROT_EXEC);
-                me.set_name("static data block");
-                map.insert(me);
+                map.insert(Extent(args.data->get_address(), data.size()),
+                           MemoryMap::Segment(MemoryMap::ExternBuffer::create(&data[0], data.size()), 0,
+                                              MemoryMap::MM_PROT_RX, "static data block"));
                 Disassembler::AddressSet worklist;
                 worklist.insert(args.data->get_address());
                 Disassembler::InstructionMap insns = disassembler->disassembleBuffer(&map, worklist);
@@ -651,23 +650,24 @@ statistics(SgAsmInterpretation *interp, const Disassembler::InstructionMap &insn
         fprintf(stderr, "Notes (\"[#]\") referenced above can be found at the end of stdout.\n");
 }
 
-static bool
-writable_region(const MemoryMap::MapElement &me) {
-    return 0 != (me.get_mapperms() & MemoryMap::MM_PROT_WRITE);
-}
+struct WritableRegion: public MemoryMap::Visitor {
+    virtual bool operator()(const MemoryMap*, const Extent&, const MemoryMap::Segment &segment) {
+        return 0 != (segment.get_mapperms() & MemoryMap::MM_PROT_WRITE);
+    }
+} writable_region;
 
 /* Returns true for any anonymous memory region containing more than a certain size. */
 static rose_addr_t large_anonymous_region_limit = 8192;
-static bool
-large_anonymous_region(const MemoryMap::MapElement &me)
-{
-    if (me.is_anonymous() && me.get_size()>large_anonymous_region_limit) {
-        fprintf(stderr, "ignoring zero-mapped memory at va 0x%08"PRIx64" + 0x%08"PRIx64" = 0x%08"PRIx64"\n",
-                me.get_va(), me.get_size(), me.get_va()+me.get_size());
-        return true;
+struct LargeAnonymousRegion: public MemoryMap::Visitor {
+    virtual bool operator()(const MemoryMap*, const Extent &range, const MemoryMap::Segment &segment) {
+        if (range.size()>large_anonymous_region_limit && segment.get_buffer()->is_zero()) {
+            fprintf(stderr, "ignoring zero-mapped memory at va 0x%08"PRIx64" + 0x%08"PRIx64" = 0x%08"PRIx64"\n",
+                    range.first(), range.size(), range.last()+1);
+            return true;
+        }
+        return false;
     }
-    return false;
-}
+} large_anonymous_region;
 
 /* Label the graphviz vertices with function entry addresses rather than vertex numbers. */
 template<class FunctionCallGraph>
@@ -740,16 +740,14 @@ main(int argc, char *argv[])
             if (isec) {
                 rose_addr_t addr = isec->get_mapped_actual_va();
                 size_t size = isec->get_mapped_size();
-                MemoryMap::MapElement me(addr, size, MemoryMap::MM_PROT_READ);
-                map->mprotect(me, true/*relax*/);
+                map->mprotect(Extent(addr, size), MemoryMap::MM_PROT_READ, true/*relax*/);
             }
 
             SgAsmPEImportDirectory *idir = isSgAsmPEImportDirectory(node);
             if (idir && idir->get_iat_rva().get_rva()!=0) {
                 rose_addr_t iat_va = idir->get_iat_rva().get_va();
                 size_t iat_sz = idir->get_iat_nalloc();
-                MemoryMap::MapElement me(iat_va, iat_sz, MemoryMap::MM_PROT_READ);
-                map->mprotect(me, true/*relax*/);
+                map->mprotect(Extent(iat_va, iat_sz), MemoryMap::MM_PROT_READ, true/*relax*/);
             }
         }
     };
