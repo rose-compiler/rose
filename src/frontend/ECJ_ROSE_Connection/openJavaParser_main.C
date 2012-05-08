@@ -51,58 +51,53 @@ int runECJ (int argc, char **argv);
 // use only one pointer so that we can simplify how the JVM support 
 // is used for either Fortran or Java language support.
 #ifndef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
-SgSourceFile* OpenFortranParser_globalFilePointer = NULL;
+SgSourceFile *OpenFortranParser_globalFilePointer = NULL;
 #endif
 
 // DQ (8/15/2011): These functions were moved to openJavaParser_main.C to
 // separate the work on Java from the rest of ROSE and support the ROSE
 // configuration language only options.
-list<SgScopeStatement*> astJavaScopeStack;
+list<SgScopeStatement *> astJavaScopeStack;
 
-bool
-emptyJavaStateStack()
-   {
-  // Use the scope stack to indicate if we have a value scope available as part of Java lanaguage processing.
-     return astJavaScopeStack.empty();
-   }
+bool emptyJavaStateStack() {
+    // Use the scope stack to indicate if we have a value scope available as part of Java lanaguage processing.
+    return astJavaScopeStack.empty();
+}
 
 
-SgScopeStatement*
-getTopOfJavaScopeStack()
-   {
-     ROSE_ASSERT(astJavaScopeStack.empty() == false);
-     SgScopeStatement* topOfStack = astJavaScopeStack.front();
+SgScopeStatement *getTopOfJavaScopeStack() {
+    ROSE_ASSERT(astJavaScopeStack.empty() == false);
+    SgScopeStatement* topOfStack = astJavaScopeStack.front();
 
-     return topOfStack;
-   }
+    return topOfStack;
+}
 
 
 
 /* DQ (8/16/2007): This is what we want ROSE to call so that we can run the Java based OpenJavaParser from C++. */
-int openJavaParser_main(int argc, char **argv)
-  {
- /* Call the function that will start a JVM and call the OFP.  */
+int openJavaParser_main(int argc, char **argv) {
+    /* Call the function that will start a JVM and call the OFP.  */
 
- /* To use different versions of the LD_LIBRARY_PATH, get the value, 
-    change it to the path in the build tree, and then reset it to the 
-    old value after the call to JVM.  We need to do this because the
-    libparser_java_FortranParserActionJNI.so that we need is in the 
-    build tree and it is specific to the configuration of ROSE (else 
-    V_<class name> enum values will be different as a result of 
-    configuration options that might trigger different numbers of IR 
-    nodes to be use.
-  */
+    /* To use different versions of the LD_LIBRARY_PATH, get the value, 
+       change it to the path in the build tree, and then reset it to the 
+       old value after the call to JVM.  We need to do this because the
+       libparser_java_FortranParserActionJNI.so that we need is in the 
+       build tree and it is specific to the configuration of ROSE (else 
+       V_<class name> enum values will be different as a result of 
+       configuration options that might trigger different numbers of IR 
+       nodes to be use.
+    */
 
- /* Overwite to a new value. It is not clear when to use the install path and when to use the build path! */
- // string new_value = findRoseSupportPathFromBuild("src/frontend/OpenFortranParser_SAGE_Connection/.libs", "lib");
+    /* Overwite to a new value. It is not clear when to use the install path and when to use the build path! */
+    // string new_value = findRoseSupportPathFromBuild("src/frontend/OpenFortranParser_SAGE_Connection/.libs", "lib");
     string new_value = findRoseSupportPathFromBuild("src/frontend/ECJ_ROSE_Connection/.libs", "lib");
 
- // This does not help or hurt.
- // new_value += ":" + findRoseSupportPathFromBuild("src/3rdPartyLibraries/java-parser", "lib");
+    // This does not help or hurt.
+    // new_value += ":" + findRoseSupportPathFromBuild("src/3rdPartyLibraries/java-parser", "lib");
 
- /* Save the old value */
+    /* Save the old value */
     const char* old_value = getenv(ROSE_SHLIBPATH_VAR); // Might be null
- // assert(old_value != NULL);
+    // assert(old_value != NULL);
 
 #if OVERWRITE_LD_LIBRARY_PATH
     int overwrite = 1;
@@ -110,15 +105,14 @@ int openJavaParser_main(int argc, char **argv)
     assert(env_status == 0);
 #endif
 
-    if (SgProject::get_verbose() > 0)
-       {
-         printf ("Call the function that will start a JVM and call the ECJ \n\n");
+    if (SgProject::get_verbose() > 0) {
+        printf ("Call the function that will start a JVM and call the ECJ \n\n");
 
-      // DQ (10/12/2010): Added debugging support...
-         string JVM_command_line = CommandlineProcessing::generateStringFromArgList(CommandlineProcessing::generateArgListFromArgcArgv(argc, argv));
-         printf ("Java JVM commandline = %s \n",JVM_command_line.c_str());
-         printf ("ROSE modified %s = %s \n",ROSE_SHLIBPATH_VAR,new_value.c_str());
-       }
+        // DQ (10/12/2010): Added debugging support...
+        string JVM_command_line = CommandlineProcessing::generateStringFromArgList(CommandlineProcessing::generateArgListFromArgcArgv(argc, argv));
+        printf ("Java JVM commandline = %s \n",JVM_command_line.c_str());
+        printf ("ROSE modified %s = %s \n",ROSE_SHLIBPATH_VAR,new_value.c_str());
+    }
 
 #ifdef ENABLE_FORTRAN_ERROR_HANDLER
     fortran_error_handler_begin();
@@ -130,34 +124,32 @@ int openJavaParser_main(int argc, char **argv)
     fortran_error_handler_end();
 #endif
 
-    if (SgProject::get_verbose() > 0)
-       {
-         printf ("JVM processing done.\n\n");
-       }
+    if (SgProject::get_verbose() > 0) {
+        printf ("JVM processing done.\n\n");
+    }
 
- /* Reset to the saved value */
+    /* Reset to the saved value */
 #if OVERWRITE_LD_LIBRARY_PATH
- // DQ (9/9/2011): Note that old_value can be NULL and if so then we don't want it to be dereferenced.
- // env_status = setenv(ROSE_SHLIBPATH_VAR,old_value,overwrite);
+    // DQ (9/9/2011): Note that old_value can be NULL and if so then we don't want it to be dereferenced.
+    // env_status = setenv(ROSE_SHLIBPATH_VAR,old_value,overwrite);
     if (old_value != NULL)
-         env_status = setenv(ROSE_SHLIBPATH_VAR,old_value,overwrite);
+        env_status = setenv(ROSE_SHLIBPATH_VAR,old_value,overwrite);
 
     assert(env_status == 0);
 #endif
 
-         return status;
-  }
+    return status;
+}
 
 #include "jserver.h"
 #include "ecj.h"
 
-int runECJ (int argc, char **argv)
-   {
-     int retval= 0;
-  /* start/find the Java VM with ofp method loaded,run ofp on the args */
-     retval = jvm_ecj_processing(argc, argv);
+int runECJ (int argc, char **argv) {
+    int retval= 0;
+    /* start/find the Java VM with ofp method loaded,run ofp on the args */
+    retval = jvm_ecj_processing(argc, argv);
   
-     return retval;
-   }
+    return retval;
+}
 
 
