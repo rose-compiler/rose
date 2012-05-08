@@ -162,7 +162,7 @@ RSIM_Process::mem_is_mapped(rose_addr_t va) const
 {
     bool retval;
     RTS_READ(rwlock()) {
-        retval = (map->find(va) != NULL);
+        retval = map->exists(va);
     } RTS_READ_END;
     return retval;
 }
@@ -254,10 +254,7 @@ public:
         struct stat sb;
         if (stat(vdso_name.c_str(), &sb)<0 || !S_ISREG(sb.st_mode))
             return false;
-        int fd = open(vdso_name.c_str(), O_RDONLY);
-        if (fd<0)
-            return false;
-        
+
         SgBinaryComposite *composite = SageInterface::getEnclosingNode<SgBinaryComposite>(interpretation);
         ROSE_ASSERT(composite!=NULL);
         SgAsmGenericFile *file = createAsmAST(composite, vdso_name);
@@ -266,22 +263,20 @@ public:
         ROSE_ASSERT(isSgAsmElfFileHeader(fhdr)!=NULL);
         rose_addr_t entry_rva = fhdr->get_entry_rva();
 
-        uint8_t *buf = new uint8_t[sb.st_size];
-        ssize_t nread = read(fd, buf, sb.st_size);
-        ROSE_ASSERT(nread==sb.st_size);
-        close(fd); fd=-1;
-
         vdso_mapped_va = ALIGN_UP(map->find_last_free(), PAGE_SIZE);
         vdso_mapped_va = std::max(vdso_mapped_va, (rose_addr_t)0x40000000); /* value used on hudson-rose-07 */
-        MemoryMap::MapElement me(vdso_mapped_va, sb.st_size, buf, 0, MemoryMap::MM_PROT_READ|MemoryMap::MM_PROT_EXEC);
-        me.set_name("[vdso]");
-        map->insert(me);
 
-        if ((size_t)sb.st_size!=ALIGN_UP((size_t)sb.st_size, PAGE_SIZE)) {
-            MemoryMap::MapElement me2(vdso_mapped_va+sb.st_size, ALIGN_UP(sb.st_size, PAGE_SIZE)-sb.st_size,
-                                      MemoryMap::MM_PROT_READ|MemoryMap::MM_PROT_EXEC);
-            me2.set_name(me.get_name());
-            map->insert(me2);
+        MemoryMap::BufferPtr vdso_buffer = MemoryMap::ByteBuffer::create_from_file(vdso_name);
+        assert(vdso_buffer->size()==(size_t)sb.st_size);
+        MemoryMap::Segment vdso_segment(vdso_buffer, 0, MemoryMap::MM_PROT_RX, "[vdso]");
+        map->insert(Extent(vdso_mapped_va, vdso_buffer->size()), vdso_segment);
+
+        if (vdso_buffer->size()!=ALIGN_UP(vdso_buffer->size(), PAGE_SIZE)) {
+            rose_addr_t anon_va = vdso_mapped_va + vdso_buffer->size();
+            rose_addr_t anon_size = ALIGN_UP(vdso_buffer->size(), PAGE_SIZE) - vdso_buffer->size();
+            map->insert(Extent(anon_va, anon_size),
+                        MemoryMap::Segment(MemoryMap::AnonymousBuffer::create(anon_size), 0,
+                                           MemoryMap::MM_PROT_RX, vdso_segment.get_name()));
         }
 
         vdso_entry_va = vdso_mapped_va + entry_rva;
@@ -943,16 +938,14 @@ RSIM_Process::my_addr(uint32_t va, size_t nbytes)
 
     RTS_READ(rwlock()) {
         /* Obtain mapping information and check that the specified number of bytes are mapped. */
-        const MemoryMap::MapElement *me = map->find(va);
-        if (!me)
+        if (!map->exists(va))
             break;
-        size_t offset = 0;
-        try {
-            offset = me->get_va_offset(va, nbytes);
-        } catch (const MemoryMap::NotMapped) {
+        std::pair<Extent, MemoryMap::Segment> me = map->at(va);
+        size_t offset = me.second.get_buffer_offset(me.first, va);
+        uint8_t *base = (uint8_t*)me.second.get_buffer()->get_data_ptr();
+        if (!base)
             break;
-        }
-        retval = (uint8_t*)me->get_base() + offset;
+        retval = base + offset;
     } RTS_READ_END;
     return retval;
 }
@@ -962,13 +955,15 @@ RSIM_Process::guest_va(void *addr, size_t nbytes)
 {
     uint32_t retval = 0;
     RTS_READ(rwlock()) {
-        const std::vector<MemoryMap::MapElement> elmts = map->get_elements();
-        for (std::vector<MemoryMap::MapElement>::const_iterator ei=elmts.begin(); ei!=elmts.end(); ++ei) {
-            uint8_t *base = (uint8_t*)ei->get_base(false);
-            rose_addr_t offset = ei->get_offset();
-            size_t size = ei->get_size();
+        const MemoryMap::Segments &segments = map->segments();
+        for (MemoryMap::Segments::const_iterator si=segments.begin(); si!=segments.end(); ++si) {
+            const Extent &range = si->first;
+            const MemoryMap::Segment &segment = si->second;
+            uint8_t *base = (uint8_t*)segment.get_buffer()->get_data_ptr();
+            rose_addr_t offset = segment.get_buffer_offset();
+            size_t size = range.size();
             if (base && addr>=base+offset && (uint8_t*)addr+nbytes<=base+offset+size) {
-                retval = ei->get_va() + ((uint8_t*)addr - (base+offset));
+                retval = range.first() + ((uint8_t*)addr - (base+offset));
                 break;
             }
         }
@@ -1043,12 +1038,12 @@ RSIM_Process::mem_setbrk(rose_addr_t newbrk, RTS_Message *mesg)
 
     RTS_WRITE(rwlock()) {
         if (newbrk > brk_va) {
-            MemoryMap::MapElement melmt(brk_va, newbrk-brk_va, MemoryMap::MM_PROT_READ|MemoryMap::MM_PROT_WRITE);
-            melmt.set_name("[heap]");
-            map->insert(melmt);
+            size_t size = newbrk - brk_va;
+            map->insert(Extent(brk_va, size),
+                        MemoryMap::Segment(MemoryMap::AnonymousBuffer::create(size), 0, MemoryMap::MM_PROT_RW, "[heap]"));
             brk_va = newbrk;
         } else if (newbrk>0 && newbrk<brk_va) {
-            map->erase(MemoryMap::MapElement(newbrk, brk_va-newbrk));
+            map->erase(Extent(newbrk, brk_va-newbrk));
             brk_va = newbrk;
         }
         retval= brk_va;
@@ -1082,16 +1077,16 @@ RSIM_Process::mem_unmap(rose_addr_t va, size_t sz, RTS_Message *mesg)
          * unlinked, and we're on NFS, an NFS temp file is created in place of the unlinked file. */
         uint8_t *ptr = NULL;
         try {
-            const MemoryMap::MapElement *me = map->find(va);
-            size_t offset = me->get_va_offset(va, sz);
-            ptr = (uint8_t*)me->get_base() + offset;
+            std::pair<Extent, MemoryMap::Segment> me = map->at(va);
+            size_t offset = me.second.get_buffer_offset(me.first, va);
+            ptr = (uint8_t*)me.second.get_buffer()->get_data_ptr() + offset;
             if (0==(uint64_t)ptr % (uint64_t)PAGE_SIZE && 0==(uint64_t)sz % (uint64_t)PAGE_SIZE)
                 (void)munmap(ptr, sz);
         } catch (const MemoryMap::NotMapped) {
         }
 
         /* Erase the mapping from the simulation */
-        map->erase(MemoryMap::MapElement(va, sz));
+        map->erase(Extent(va, sz));
 
         /* Tracing */
         if (mesg && mesg->get_file()) {
@@ -1150,7 +1145,7 @@ RSIM_Process::mem_protect(rose_addr_t va, size_t sz, unsigned rose_perms, unsign
             break;
         } else {
             try {
-                map->mprotect(MemoryMap::MapElement(va, aligned_sz, rose_perms));
+                map->mprotect(Extent(va, aligned_sz), rose_perms);
                 retval = 0;
             } catch (const MemoryMap::NotMapped &e) {
                 retval = -ENOMEM;
@@ -1212,11 +1207,10 @@ RSIM_Process::mem_map(rose_addr_t start, size_t size, unsigned rose_perms, unsig
                     melmt_name = "fd=" + StringUtility::numberToString(fd);
                 }
             }
-
-            MemoryMap::MapElement melmt(start, aligned_size, buf, 0, rose_perms);
-            melmt.set_name("mmap("+melmt_name+")");
-            map->erase(melmt); /*clear space space first to avoid MemoryMap::Inconsistent exception*/
-            map->insert(melmt);
+            
+            map->insert(Extent(start, aligned_size),
+                        MemoryMap::Segment(MemoryMap::ExternBuffer::create(buf, aligned_size), 0, rose_perms,
+                                           "mmap("+melmt_name+")"));
         }
     } RTS_WRITE_END;
     return start;
@@ -1262,9 +1256,8 @@ RSIM_Process::initialize_stack(SgAsmGenericHeader *_fhdr, int argc, char *argv[]
         static const size_t stack_size = 0x00015000;
         size_t sp = main_thread->policy.readRegister<32>(main_thread->policy.reg_esp).known_value();
         size_t stack_addr = sp - stack_size;
-        MemoryMap::MapElement melmt(stack_addr, stack_size, MemoryMap::MM_PROT_READ|MemoryMap::MM_PROT_WRITE);
-        melmt.set_name("[stack]");
-        map->insert(melmt);
+        map->insert(Extent(stack_addr, stack_size),
+                    MemoryMap::Segment(MemoryMap::AnonymousBuffer::create(stack_size), 0, MemoryMap::MM_PROT_RW, "[stack]"));
 
         /* Save specimen arguments in RSIM_Process object. The executable name is already there. */
         assert(exeargs.size()==1);
