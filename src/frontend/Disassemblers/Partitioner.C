@@ -526,8 +526,7 @@ Partitioner::discover_jump_table(BasicBlock *bb, bool do_create, ExtentMap *tabl
                     rose_addr_t target_va = 0;
                     for (size_t i=0; i<entry_size; i++)
                         target_va |= buf[i] << (i*8);
-                    const MemoryMap::MapElement *me = map->find(target_va);
-                    if (!me || 0==(me->get_mapperms() & MemoryMap::MM_PROT_EXEC))
+                    if (!map->exists(target_va, MemoryMap::MM_PROT_EXEC))
                         break;
                     successors.insert(target_va);
                     ++nentries;
@@ -1336,6 +1335,8 @@ Partitioner::mark_ipd_configuration()
             std::string block_name = block_name_str;
             if (debug) fprintf(stderr, "running successors program for %s\n", block_name_str);
 
+            // FIXME: Use a copy (COW) version of the map so we don't need to modify the real map and so that the simulated
+            // program can't accidentally modify the stuff being disassembled. [RPM 2012-05-07]
             MemoryMap *map = get_map();
             assert(map!=NULL);
             typedef VirtualMachineSemantics::Policy<> Policy;
@@ -1357,25 +1358,24 @@ Partitioner::mark_ipd_configuration()
 
             /* Load the instructions to execute */
             rose_addr_t text_va = map->find_free(0, bconf->sucs_program.size(), 4096);
-            MemoryMap::MapElement text_me(text_va, bconf->sucs_program.size(), &(bconf->sucs_program[0]), 0,
-                                          MemoryMap::MM_PROT_READ|MemoryMap::MM_PROT_EXEC);
-            text_me.set_name(block_name + " successors program text");
-            map->insert(text_me);
+            MemoryMap::Segment text_sgmt(MemoryMap::ExternBuffer::create(&(bconf->sucs_program[0]), bconf->sucs_program.size()),
+                                         0, MemoryMap::MM_PROT_RX, block_name + " successors program text");
+            map->insert(Extent(text_va, bconf->sucs_program.size()), text_sgmt);
 
             /* Create a stack */
             static const size_t stack_size = 8192;
             rose_addr_t stack_va = map->find_free(text_va+bconf->sucs_program.size()+1, stack_size, 4096);
-            MemoryMap::MapElement stack_me(stack_va, stack_size, MemoryMap::MM_PROT_READ|MemoryMap::MM_PROT_WRITE);
-            stack_me.set_name(block_name + " successors stack");
-            map->insert(stack_me);
+            MemoryMap::Segment stack_sgmt(MemoryMap::AnonymousBuffer::create(stack_size), 0,
+                                          MemoryMap::MM_PROT_RW, block_name + " successors stack");
+            map->insert(Extent(stack_va, stack_size), stack_sgmt);
             rose_addr_t stack_ptr = stack_va + stack_size;
 
             /* Create an area for the returned vector of successors */
             static const size_t svec_size = 8192;
             rose_addr_t svec_va = map->find_free(stack_va+stack_size+1, svec_size, 4096);
-            MemoryMap::MapElement svec_me(svec_va, svec_size, MemoryMap::MM_PROT_READ|MemoryMap::MM_PROT_WRITE);
-            svec_me.set_name(block_name + " successors vector");
-            map->insert(svec_me);
+            MemoryMap::Segment svec_sgmt(MemoryMap::AnonymousBuffer::create(svec_size), 0,
+                                         MemoryMap::MM_PROT_RW, block_name + " successors vector");
+            map->insert(Extent(svec_va, svec_size), svec_sgmt);
 
             /* What is the "return" address. Eventually the successors program will execute a "RET" instruction that will
              * return to this address.  We can choose something arbitrary as long as it doesn't conflict with anything else.
@@ -1462,9 +1462,9 @@ Partitioner::mark_ipd_configuration()
 
             /* Unmap the program */
             if (debug) fprintf(stderr, "  unmapping the program...\n");
-            map->erase(text_me);
-            map->erase(stack_me);
-            map->erase(svec_me);
+            map->erase(text_sgmt);
+            map->erase(stack_sgmt);
+            map->erase(svec_sgmt);
 
             if (debug) fprintf(stderr, "  done.\n");
         }
