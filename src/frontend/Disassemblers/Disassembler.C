@@ -932,7 +932,7 @@ Disassembler::mark_referenced_instructions(SgAsmInterpretation *interp, const Me
 
                 /* Read the file for its reference tracking side effect. */
                 size_t sgmt_offset = va - si->first.first();
-                size_t n = std::min(nbytes, si->first.size()-sgmt_offset);
+                size_t n = std::min(nbytes, (size_t)si->first.size()-sgmt_offset);
                 if (file) {
                     size_t file_offset = si->second.get_buffer_offset() + sgmt_offset;
                     file->read_content(file_offset, buf, n, false);
