@@ -210,11 +210,11 @@ string get_type_name(SgType* t)
                     unparse_base = false;
                 }
                 if (mod_type->get_typeModifier().isOpenclGlobal())
-                    res = res + "__global ";
+                    res = "__global " + res;
                 if (mod_type->get_typeModifier().isOpenclLocal())
-                    res = res + "__local ";
+                    res = "__local " + res;
                 if (mod_type->get_typeModifier().isOpenclConstant())
-                    res = res + "__constant ";
+                    res = "__constant " + res;
                 if (mod_type->get_typeModifier().haveAddressSpace()) {
                     std::ostringstream outstr;
                     outstr << mod_type->get_typeModifier().get_address_space_value(); 
