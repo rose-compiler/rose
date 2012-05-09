@@ -71,6 +71,7 @@ class NodePlacement {
     ) const; 
     virtual void setFirstIt(std::map<ArrayPartition *, std::map<ComputeSystem *, std::vector<Conditions *> > > & map, SPMD_Loop * loop) const;
     virtual void setLastIt(std::map<ArrayPartition *, std::map<ComputeSystem *, std::vector<Conditions *> > > & map, SPMD_Loop * loop) const;
+    virtual void setNextIt(std::map<ArrayPartition *, std::map<ComputeSystem *, std::vector<Conditions *> > > & map, SPMD_Loop * loop) const;
 
     virtual void restrictToFirstIt(std::vector<Conditions *> conds, SPMD_Loop * loop) const;
     virtual void restrictToNext(std::vector<Conditions *> conds, SPMD_Loop * loop) const;

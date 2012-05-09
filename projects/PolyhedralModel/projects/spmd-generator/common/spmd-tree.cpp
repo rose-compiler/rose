@@ -138,12 +138,6 @@ SPMD_KernelCall::SPMD_KernelCall(SPMD_Tree * parent_, SPMD_Tree * first, SPMD_Tr
     contains_loop = true;
   }
   assert(contains_loop);
- 
-  std::vector<SPMD_Tree *>::iterator it = last->children.begin();
-  while (it != last->children.end()) {
-    appendChild(*it);
-    it = last->children.erase(it);
-  }
 }
 
 SPMD_KernelCall::~SPMD_KernelCall() {
@@ -173,6 +167,8 @@ std::vector<SgExpression *> * SPMD_KernelCall::generateDimensionSizes() const {
 const std::map<RoseVariable, Domain *> & SPMD_KernelCall::getIterators() const { return iterators; }
 
 const std::vector<std::pair<Expression *, bool> >  & SPMD_KernelCall::getRestrictions() const { return restrictions; }
+
+const std::vector<RoseVariable> & SPMD_KernelCall::getOrderedIterators() const { return ordered_iterators; }
 
 void SPMD_KernelCall::print(std::ostream & out) const {
   out << "SPMD_KernelCall";

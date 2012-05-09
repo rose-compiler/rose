@@ -191,8 +191,24 @@ void NodePlacement::findSources(
 #if DEBUG
   std::cerr << "\tStart findSources:" << std::endl;
   std::cerr << "\t|\t\tdestination = " << destination->getID() << std::endl;
-#endif
 
+  std::map<ComputeSystem *, std::vector<Conditions *> >::const_iterator it_cs_map;
+  std::vector<Conditions *>::const_iterator it_cond;
+
+  for (it_cs_map = current_position.begin(); it_cs_map != current_position.end(); it_cs_map++) {
+    std::cerr << "\t>\t\t" << it_cs_map->first->getID() << " if:" << std::endl;
+    for (it_cond = it_cs_map->second.begin(); it_cond != it_cs_map->second.end(); it_cond++) {
+      if (*it_cond != NULL) {
+        std::cerr << "\t>\t\t\t";
+        (*it_cond)->print(std::cerr);
+        std::cerr << std::endl;
+      }
+      else {
+        std::cerr << "\t>\t\t\tTRUE" << std::endl;
+      }
+    }
+  }
+#endif
   std::vector<std::pair<ComputeSystem *, std::vector<Conditions *> > > vect_current_position(current_position.begin(), current_position.end());
   assert(vect_current_position.size() == 1 || vect_current_position.size() == 2); // FIXME
   // TODO sort 'vect_current_position' by distance to 'destination' (could depend on the array...)
@@ -208,7 +224,6 @@ void NodePlacement::findSources(
 
 #if DEBUG
   std::cerr << "\t|\t\tTransfert needed for:" << std::endl; 
-  std::vector<Conditions *>::iterator it_cond;
   for (it_cond = need_transfert.begin(); it_cond != need_transfert.end(); it_cond++) {
     if (*it_cond != NULL) {
       std::cerr << "\t|\t\t|\t";
@@ -237,19 +252,6 @@ void NodePlacement::findSources(
 }
 
 void NodePlacement::removeFromCondSet(std::vector<Conditions *> & cond_set_1, const std::vector<Conditions *> & cond_set_2) const {
-/*
-  if (cond_set_2.size() == 0) return;
-  std::vector<Conditions *> res;
-  std::vector<Conditions *> tmp_res;
-  std::vector<Conditions *>::const_iterator it;
-  for (it = cond_set_2.begin(); it != cond_set_2.end(); it++) {
-    tmp_res.insert(tmp_res.begin(), cond_set_1.begin(), cond_set_1.end());
-    removeFromCondSet(tmp_res, *it);
-    res.insert(res.begin(), tmp_res.begin(), tmp_res.end());
-    tmp_res.clear();
-  }
-  cond_set_1 = res;
-*/
   std::vector<Conditions *>::const_iterator it;
   for (it = cond_set_2.begin(); it != cond_set_2.end(); it++)
     removeFromCondSet(cond_set_1, *it);
@@ -308,7 +310,7 @@ void NodePlacement::placeCommSync(
           std::map<ArrayPartition *, std::map<ComputeSystem *, std::vector<Conditions *> > >::iterator it_array_original_position =
               original_position.find(*it_array);
           std::vector<std::pair<std::vector<Conditions *>, ComputeSystem *> > sources;
-          if (loop != NULL) {
+          if (loop != NULL && child == children[0]) {
             std::vector<std::pair<std::vector<Conditions *>, ComputeSystem *> > tmp_sources;
             std::vector<std::pair<std::vector<Conditions *>, ComputeSystem *> >::iterator it_tmp_sources;
 
@@ -360,7 +362,7 @@ void NodePlacement::placeCommSync(
       std::map<SPMD_Tree *, std::map<ArrayPartition *, std::map<ComputeSystem *, std::vector<Conditions *> > > >::const_iterator it_valid_data = 
           valid_data.find(child);
       assert(it_valid_data != valid_data.end());
-      original_position = it_valid_data->second;
+      merge(original_position, it_valid_data->second); // merge because transfert may have been done by parents
       while (*it_child != child) it_child++; // FIXME is that necessary?
       it_child++;
     }
@@ -584,6 +586,26 @@ void NodePlacement::setLastIt(
   }
 }
 
+void NodePlacement::setNextIt(
+  std::map<ArrayPartition *, std::map<ComputeSystem *, std::vector<Conditions *> > > & map,
+  SPMD_Loop * loop
+) const {
+  std::map<ArrayPartition *, std::map<ComputeSystem *, std::vector<Conditions *> > >::iterator it_arr_map;
+  std::map<ComputeSystem *, std::vector<Conditions *> >::iterator it_cs_map;
+  std::vector<Conditions *>::iterator it_cond;
+
+  for (it_arr_map = map.begin(); it_arr_map != map.end(); it_arr_map++) {
+    for (it_cs_map = it_arr_map->second.begin(); it_cs_map != it_arr_map->second.end(); it_cs_map++) {
+      for (it_cond = it_cs_map->second.begin(); it_cond != it_cs_map->second.end(); it_cond++) {
+        Conditions * cond = (*it_cond)->new_without_first_it(loop);
+        //delete *it_cond;
+        *it_cond = cond;
+      }
+      simplify(it_cs_map->second);
+    }
+  }
+}
+
 void NodePlacement::addIterator(
   std::map<ArrayPartition *, std::map<ComputeSystem *, std::vector<Conditions *> > > & map,
   SPMD_Loop * loop
@@ -676,10 +698,11 @@ void NodePlacement::positionValidData(
 
 // Current node setup
   it_tree_map = valid_datas.find(tree);
-  assert(it_tree_map == valid_datas.end());
-  it_tree_map = valid_datas.insert(std::pair<SPMD_Tree *, std::map<ArrayPartition *, std::map<ComputeSystem *, std::vector<Conditions *> > > >(
-    tree, std::map<ArrayPartition *, std::map<ComputeSystem *, std::vector<Conditions *> > >()
-  )).first;
+  if (it_tree_map == valid_datas.end()) {
+    it_tree_map = valid_datas.insert(std::pair<SPMD_Tree *, std::map<ArrayPartition *, std::map<ComputeSystem *, std::vector<Conditions *> > > >(
+        tree, std::map<ArrayPartition *, std::map<ComputeSystem *, std::vector<Conditions *> > >()
+    )).first;
+  }
 
   std::map<ArrayPartition *, std::map<ComputeSystem *, std::vector<Conditions *> > > & current_valid_data_map = it_tree_map->second;
 
@@ -765,12 +788,30 @@ void NodePlacement::positionValidData(
     std::vector<SPMD_Tree *>::iterator it_child;
     condition_to_reach_this_node = condition_to_reach_this_node->new_extended_by(loop);
     addIterator(previous_position, loop);
+    setFirstIt(previous_position, loop);
     for (it_child = children.begin(); it_child != children.end(); it_child++) {
-      positionValidData(*it_child, array_analysis, valid_datas, previous_position, condition_to_reach_this_node);
+      positionValidData(*it_child, array_analysis, valid_datas, previous_position, condition_to_reach_this_node->new_restricted_by(loop, true));
       it_tree_map = valid_datas.find(*it_child);
       assert(it_tree_map != valid_datas.end());
       previous_position = it_tree_map->second;
     }
+
+    std::map<ArrayPartition *, std::map<ComputeSystem *, std::vector<Conditions *> > > copy;
+    deepCopy(copy, previous_position);
+
+    removeIterator(previous_position, loop);
+    addIterator(previous_position, loop);
+    setNextIt(previous_position, loop);
+
+    for (it_child = children.begin(); it_child != children.end(); it_child++) {
+//    flush(*it_child, valid_datas);
+      positionValidData(*it_child, array_analysis, valid_datas, previous_position, condition_to_reach_this_node->new_without_first_it(loop));
+      it_tree_map = valid_datas.find(*it_child);
+      assert(it_tree_map != valid_datas.end());
+      previous_position = it_tree_map->second;
+    }
+
+    merge(previous_position, copy);
 
     // If this node have not write an array then its current positions are extended
     for (it_arr_map = previous_position.begin(); it_arr_map != previous_position.end(); it_arr_map++) {
@@ -787,7 +828,10 @@ void NodePlacement::positionValidData(
 
     removeIterator(previous_position, loop);
 
-    deepCopy(current_valid_data_map, previous_position);
+    if (current_valid_data_map.size() == 0)
+      deepCopy(current_valid_data_map, previous_position);
+    else
+      merge(current_valid_data_map, previous_position);
   }
 
 // DomainRestriction tree (almost the sam than Root, just restrict 'condition_to_reach_this_node')
@@ -850,7 +894,10 @@ void NodePlacement::positionValidData(
 
     merge(previous_position, copy);
 
-    deepCopy(current_valid_data_map, previous_position);
+    if (current_valid_data_map.size() == 0)
+      deepCopy(current_valid_data_map, previous_position);
+    else
+      merge(current_valid_data_map, previous_position);
   }
 
 // KernelCall tree (same as Root)
@@ -895,11 +942,19 @@ void NodePlacement::positionValidData(
 
     removeIterator(previous_position, kernel_call);
 
-    deepCopy(current_valid_data_map, previous_position);
+    if (current_valid_data_map.size() == 0)
+      deepCopy(current_valid_data_map, previous_position);
+    else
+      merge(current_valid_data_map, previous_position);
   }
 
 // NativeStmt tree
   if (native_stmt != NULL) {
+    std::map<ArrayPartition *, std::map<ComputeSystem *, std::vector<Conditions *> > > copy;
+    deepCopy(copy, current_valid_data_map);
+
+    current_valid_data_map.clear();
+
     // update 'current_valid_data_map'
     for (it_arr_map = previous_position.begin(); it_arr_map != previous_position.end(); it_arr_map++) {
       it_arr_map_local = current_valid_data_map.insert(std::pair<ArrayPartition *, std::map<ComputeSystem *, std::vector<Conditions *> > >(
@@ -967,6 +1022,9 @@ void NodePlacement::positionValidData(
         }
       }
     }
+
+    if (copy.size() != 0)
+      merge(current_valid_data_map, copy);
   }
 
   simplify(current_valid_data_map);

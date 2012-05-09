@@ -11,14 +11,17 @@
 class OpenCL_Alias : public ArrayAlias {
   protected:
     SgInitializedName * init_name;
+    SgInitializedName * kernel_param;
 
   public:
     OpenCL_Alias(ArrayPartition * original_array_, GPU * gpu, SgScopeStatement * scope, bool read_and_write);
     virtual ~OpenCL_Alias();
 
-    virtual SgPntrArrRefExp * propagate(SgPntrArrRefExp * arr_ref) const;
-    virtual SgVarRefExp * propagate(SgVarRefExp * var_ref) const;
+    virtual SgPntrArrRefExp * propagateArr(SgPntrArrRefExp * arr_ref) const;
+    virtual SgVarRefExp * propagateVar(SgVarRefExp * var_ref) const;
     virtual SgInitializedName * getInitName() const;
+
+    SgInitializedName * getKernelParam() const;
 
   static SgType * buffer_type;
 };
@@ -28,14 +31,15 @@ class IdentityAlias : public ArrayAlias {
     IdentityAlias(ArrayPartition * original_array_);
     virtual ~IdentityAlias();
 
-    virtual SgPntrArrRefExp * propagate(SgPntrArrRefExp * arr_ref) const;
-    virtual SgVarRefExp * propagate(SgVarRefExp * var_ref) const;
+    virtual SgPntrArrRefExp * propagateArr(SgPntrArrRefExp * arr_ref) const;
+    virtual SgVarRefExp * propagateVar(SgVarRefExp * var_ref) const;
     virtual SgInitializedName * getInitName() const;
 };
 
 class OpenCL_Generator : public SPMD_Generator {
   protected:
     std::string ocl_file_name;
+    std::map<SPMD_KernelCall *, std::vector<ArrayPartition *> > kernel_data_param;
 
   protected:
     virtual SgSourceFile * buildKernelFile(std::string);

@@ -59,113 +59,96 @@ void DepthPlacement::preplace(SPMD_Tree * tree, unsigned depth) {
   }
 }
 
-void DepthPlacement::extractBranch(
-  SPMD_Tree * tree,
-  std::vector<SPMD_Tree *> branch,
+void DepthPlacement::generateKernels(
+  SPMD_Tree * parent,
+  std::vector<SPMD_Tree *> & branch,
   unsigned length,
-  std::vector<std::vector<SPMD_Tree *> > & res
+  std::vector<SPMD_KernelCall *> & res,
+  ArrayAnalysis & array_analysis
 ) {
-  if (dynamic_cast<SPMD_Loop *>(tree) != NULL && isParallel((SPMD_Loop *)tree)) {
-    branch.push_back(tree);
-    length++;
-  }
-  else if (dynamic_cast<SPMD_Loop *>(tree) != NULL) { // => !isParallel((SPMD_Loop *)tree)
-    res.push_back(branch);
-    return;
-  }
-  else if (dynamic_cast<SPMD_DomainRestriction *>(tree) != NULL) {
-    branch.push_back(tree);
+  std::vector<SPMD_Tree *> & children = branch.back()->getChildren();
+  std::vector<SPMD_Tree *>::iterator it;
+  if (length == used) {
+    SPMD_KernelCall * kernel_call = new SPMD_KernelCall(parent, branch.front(), branch.back());
+    placement.insert(std::pair<SPMD_Tree *, ComputeSystem *>(kernel_call, placement[branch.front()]));
+    array_analysis.update(kernel_call, branch);
+    it = children.begin();
+    while (it != children.end()) {
+      kernel_call->appendChild(*it);
+      it = children.erase(it);
+    }
+    res.push_back(kernel_call);
   }
   else {
-    assert(dynamic_cast<SPMD_KernelCall *>(tree) == NULL); // FIXME it should be authorized later
-    res.push_back(branch);
-    return;
+    std::vector<SPMD_Tree *> tmp_children;
+    it = children.begin();
+    while (it != children.end() || tmp_children.size() > 0) {
+      while (
+              it != children.end() && 
+              (dynamic_cast<SPMD_Loop *>(*it) == NULL || !isParallel((SPMD_Loop *)(*it))) &&
+              dynamic_cast<SPMD_DomainRestriction *>(*it) == NULL
+      ) {
+        tmp_children.push_back(*it);
+        it = children.erase(it);
+      }
+      bool use_tmp_children = false;
+      if (tmp_children.size() > 0) {
+        SPMD_KernelCall * kernel_call = new SPMD_KernelCall(parent, branch.front(), branch.back());
+        placement.insert(std::pair<SPMD_Tree *, ComputeSystem *>(kernel_call, placement[branch.front()]));
+        array_analysis.update(kernel_call, branch);
+        for (std::vector<SPMD_Tree *>::iterator it_ = tmp_children.begin(); it_ != tmp_children.end(); it_++)
+          kernel_call->appendChild(*it_);
+        res.push_back(kernel_call);
+        tmp_children.clear();
+        use_tmp_children = true;
+      }
+      if (it != children.end()) {
+        unsigned nbr_kernel = res.size();
+        branch.push_back(*it);
+        if (dynamic_cast<SPMD_Loop *>(*it) != NULL)
+          generateKernels(parent, branch, length+1, res, array_analysis);
+        else
+          generateKernels(parent, branch, length, res, array_analysis);
+        branch.erase(branch.end()-1);
+        if (dynamic_cast<SPMD_DomainRestriction *>(*it) != NULL && nbr_kernel == res.size() - 1) {
+          (*it)->getChildren().insert((*it)->getChildren().begin(), res.back()->getChildren().begin(), res.back()->getChildren().end());
+          delete res.back();
+          res.erase(res.end()-1);
+          if (use_tmp_children) {
+            tmp_children.insert(tmp_children.begin(), res.back()->getChildren().begin(), res.back()->getChildren().end());
+            delete res.back();
+            res.erase(res.end()-1);
+          }
+          tmp_children.push_back(*it);
+        }
+        it = children.erase(it);
+      } 
+    }
+    assert(it == children.end());
+    assert(tmp_children.size() == 0);
   }
-
-  if (length == used) {
-    res.push_back(branch);
-    return;
-  }
-
-  std::vector<SPMD_Tree *>::iterator it;
-  for (it = tree->getChildren().begin(); it != tree->getChildren().end(); it++)
-    extractBranch(*it, branch, length, res);
 }
 
 void DepthPlacement::makeKernel(
   SPMD_Loop * first_loop,
   ArrayAnalysis & array_analysis
 ) {
+  SPMD_Tree * parent = first_loop->getParent();
+
 #if DEBUG
   std::cerr << "[DepthPlacement::makeKernel] Start: " << first_loop << std::endl;
 #endif
 
-#if DEBUG
-  std::cerr << "[DepthPlacement::makeKernel] Extract branches" << std::endl;
-#endif
-
-  // Extract branches
-  std::vector<std::vector<SPMD_Tree *> > branches_tmp;
-  extractBranch(first_loop, std::vector<SPMD_Tree *>(), 0, branches_tmp); // deep first => branch are in text order.
-
-  assert(branches_tmp.size() > 0);
-
-#if DEBUG
-  std::cerr << "[DepthPlacement::makeKernel] Merge branches" << std::endl;
-#endif
-
-  // Merge branches
-  std::vector<std::vector<SPMD_Tree *> > branches;
-  branches.push_back(branches_tmp[0]);
-  std::vector<std::vector<SPMD_Tree *> >::iterator it_branch;
-  std::vector<SPMD_Tree *>::iterator itb1;
-  std::vector<SPMD_Tree *>::iterator itb2;
-  for (it_branch = branches_tmp.begin()+1; it_branch != branches_tmp.end(); it_branch++) {
-    bool equal = true;
-    itb1 = branches.back().begin();
-    itb2 = it_branch->begin();
-    while (itb1 != branches.back().end() && itb2 != it_branch->end()) {
-      equal = *itb1 == *itb2;
-      if (!equal) break;
-      itb1++; itb2++;
-    }
-    if (equal) {
-      assert(itb1 == branches.back().end() || itb2 == it_branch->end());
-      while (itb1 != branches.back().end()) {
-        equal = dynamic_cast<SPMD_Loop *>(*itb1) == NULL;
-        itb1++;
-      }
-      while (itb2 != it_branch->end()) {
-        equal = dynamic_cast<SPMD_Loop *>(*itb2) == NULL;
-        itb2++;
-      }
-    }
-    if (!equal)
-      branches.push_back(*it_branch);
-  }
-
-#if DEBUG
-  std::cerr << "[DepthPlacement::makeKernel] Build Kernel calls" << std::endl;
-#endif
-
-  // Build Kernel calls (it moves the childs)
   std::vector<SPMD_KernelCall *> kernel_calls;
-  for (it_branch = branches.begin(); it_branch != branches.end(); it_branch++) {
-    assert(it_branch->size() > 0);
-    assert((*it_branch)[0] == first_loop);
-    SPMD_KernelCall * kernel_call = new SPMD_KernelCall(first_loop->getParent(), (*it_branch)[0], (*it_branch)[it_branch->size()-1]);
-    kernel_calls.push_back(kernel_call);
-    array_analysis.update(kernel_call, *it_branch);
-    placement.insert(std::pair<SPMD_Tree *, ComputeSystem *>(kernel_call, placement[first_loop]));
-  }
-  assert(branches.size() == kernel_calls.size());  
+  std::vector<SPMD_Tree *> branch;
+  branch.push_back(first_loop);
+  generateKernels(parent, branch, 1, kernel_calls, array_analysis);
 
 #if DEBUG
   std::cerr << "[DepthPlacement::makeKernel] Remove the loops" << std::endl;
 #endif
 
   // Remove the loops
-  SPMD_Tree * parent = first_loop->getParent();
   first_loop->deepDelete();
 
 #if DEBUG

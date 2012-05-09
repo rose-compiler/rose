@@ -5,6 +5,7 @@
 #include "common/placement.hpp"
 #include "common/comm-analysis.hpp"
 #include "compute-systems/gpu-system.hpp"
+#include "toolboxes/algebra-container.hpp"
 
 #include <iostream>
 #include <sstream>
@@ -19,7 +20,8 @@ SgType * OpenCL_Alias::buffer_type = NULL;
 
 OpenCL_Alias::OpenCL_Alias(ArrayPartition * original_array_, GPU * gpu, SgScopeStatement * scope, bool read_and_write) :
   ArrayAlias(original_array_),
-  init_name(NULL)
+  init_name(NULL),
+  kernel_param(NULL)
 {
   assert(scope != NULL);
 
@@ -47,18 +49,53 @@ OpenCL_Alias::OpenCL_Alias(ArrayPartition * original_array_, GPU * gpu, SgScopeS
   SgInitializer * init = SageBuilder::buildAssignInitializer(create_buffer_call);
 
   init_name = SageBuilder::buildInitializedName(oss.str(), buffer_type, init);
+
+  kernel_param = SageBuilder::buildInitializedName(
+      oss.str(),
+      original_array->getDimensions().size() == 0 ? original_array->getType() : SageBuilder::buildPointerType(original_array->getType())
+  );
 }
 
 OpenCL_Alias::~OpenCL_Alias() {}
 
-SgPntrArrRefExp * OpenCL_Alias::propagate(SgPntrArrRefExp * arr_ref) const {
-  // TODO
-  return arr_ref;
+SgInitializedName * OpenCL_Alias::getKernelParam() const { return kernel_param; }
+
+SgPntrArrRefExp * OpenCL_Alias::propagateArr(SgPntrArrRefExp * arr_ref) const {
+  std::vector<SgExpression *> subscripts;
+  SgVarRefExp * var_ref_ = NULL;
+  SgPntrArrRefExp * arr_ref_ = arr_ref;
+  while (arr_ref_ != NULL) {
+    subscripts.insert(subscripts.begin(), arr_ref_->get_rhs_operand_i());
+    var_ref_ = isSgVarRefExp(arr_ref_->get_lhs_operand_i());
+    arr_ref_ = isSgPntrArrRefExp(arr_ref_->get_lhs_operand_i());
+  }
+  assert(var_ref_ != NULL);
+
+  if (var_ref_->get_symbol()->get_name() != original_array->getUniqueName())
+    return arr_ref;
+
+  assert(original_array->getDimensions().size() > 0);
+  assert(subscripts.size() == original_array->getDimensions().size());
+
+  SgVarRefExp * var_ref = SageBuilder::buildVarRefExp(kernel_param, SageBuilder::topScopeStack());
+  SgExpression * subscript = SageInterface::copyExpression(subscripts[0]);
+  for (unsigned i = 1; i < subscripts.size(); i++) {
+    subscript = SageBuilder::buildAddOp(
+        SageBuilder::buildMultiplyOp(
+            SageInterface::copyExpression(subscript),
+            SageBuilder::buildIntVal(original_array->getDimensions()[i])
+        ),
+        subscripts[i]
+    );
+  }
+  return SageBuilder::buildPntrArrRefExp(var_ref, subscript);
 }
 
-SgVarRefExp * OpenCL_Alias::propagate(SgVarRefExp * var_ref) const {
-  // TODO
-  return var_ref;
+SgVarRefExp * OpenCL_Alias::propagateVar(SgVarRefExp * var_ref) const {
+  if (var_ref->get_symbol()->get_name() == original_array->getUniqueName())
+    return SageBuilder::buildVarRefExp(kernel_param, SageBuilder::topScopeStack());
+  else
+    return var_ref;
 }
 
 SgInitializedName * OpenCL_Alias::getInitName() const { return init_name; }
@@ -69,8 +106,8 @@ IdentityAlias::IdentityAlias(ArrayPartition * original_array_) :
 
 IdentityAlias::~IdentityAlias() {}
 
-SgPntrArrRefExp * IdentityAlias::propagate(SgPntrArrRefExp * arr_ref) const { return arr_ref; }
-SgVarRefExp * IdentityAlias::propagate(SgVarRefExp * var_ref) const { return var_ref; }
+SgPntrArrRefExp * IdentityAlias::propagateArr(SgPntrArrRefExp * arr_ref) const { return arr_ref; }
+SgVarRefExp * IdentityAlias::propagateVar(SgVarRefExp * var_ref) const { return var_ref; }
 SgInitializedName * IdentityAlias::getInitName() const { return original_array->getOriginalVariable().getInitializedName(); }
 
 SgStatement * OpenCL_Generator::codeGeneration(SPMD_KernelCall * tree) {
@@ -80,17 +117,7 @@ SgStatement * OpenCL_Generator::codeGeneration(SPMD_KernelCall * tree) {
   std::string kernel_name = oss_kernel_name.str();  
 
   // Data to passed as argument
-//  std::set<ArrayPartition *> * data_in    = driver.getArrayAnalysis().get_in(tree);
-//  std::set<ArrayPartition *> * data_out   = driver.getArrayAnalysis().get_out(tree);
-//  std::set<ArrayPartition *> * data_inout = driver.getArrayAnalysis().get_inout(tree);
-//  assert(data_in != NULL && data_out != NULL && data_inout != NULL);
   std::set<ArrayPartition *> * datas = driver.getArrayAnalysis().get_partitions(tree);
-//    datas.insert(data_in->begin(), data_in->end());
-//    datas.insert(data_out->begin(), data_out->end());
-//    datas.insert(data_inout->begin(), data_inout->end());
-//  delete data_in;
-//  delete data_out;
-//  delete data_inout;
 
   // Placement which part of the kernel on which GPU (FIXME extremely restrictive now: only one global placement)
   ComputeSystem * compute_system = driver.getPlacement().assigned(tree);
@@ -192,9 +219,16 @@ SgStatement * OpenCL_Generator::codeGeneration(SPMD_KernelCall * tree) {
         }
 
         // Data
+        std::map<SPMD_KernelCall *, std::vector<ArrayPartition *> >::iterator it_kernel_data_param = 
+            kernel_data_param.insert(std::pair<SPMD_KernelCall *, std::vector<ArrayPartition *> >(
+                tree, std::vector<ArrayPartition *>()
+            )).first;
+        std::vector<ArrayPartition *> & kernel_params = it_kernel_data_param->second;
         std::set<ArrayPartition *>::iterator it_data;
         for (it_data = datas->begin(); it_data != datas->end(); it_data++) {
           ArrayPartition * array_partition = *it_data;
+
+          kernel_params.push_back(array_partition);
 
           const std::vector<unsigned> & dimensions = array_partition->getDimensions();
           if (dimensions.size() == 0) { // scalar
@@ -314,6 +348,14 @@ SgStatement * OpenCL_Generator::codeGeneration(SPMD_Comm * tree) {
     );
     SgFunctionCallExp * call = SageBuilder::buildFunctionCallExp(func_name, SageBuilder::buildVoidType(), params, top_scope);
     bb->append_statement(SageBuilder::buildExprStatement(call));
+
+    // FIXME should be automated (and coalesced)
+    {
+      SgName sync = "clFinish";
+      SgExprListExp * params = SageBuilder::buildExprListExp(SageBuilder::buildVarRefExp(oss_queue.str(), top_scope));
+      SgFunctionCallExp * sync_call = SageBuilder::buildFunctionCallExp(sync, SageBuilder::buildVoidType(), params, scope);
+      bb->append_statement(SageBuilder::buildExprStatement(sync_call));
+    }
   }
 
   if (ocl_write) {
@@ -501,11 +543,192 @@ void OpenCL_Generator::insertFinal(SPMD_Tree * root_tree, SgStatement * insert_f
 }
 
 void OpenCL_Generator::generateKernel(SPMD_Tree * root_tree, SgSourceFile * kernel_file) {
-  // TODO
+  SgGlobal * ocl_scope = kernel_file->get_globalScope();
+  assert(ocl_scope != NULL);
+  SageBuilder::pushScopeStack(ocl_scope);
+
+  std::vector<SPMD_KernelCall *> kernels;
+  {
+    std::queue<SPMD_Tree *> tree_queue;
+    tree_queue.push(root_tree);
+    while (tree_queue.size() > 0) {
+      SPMD_Tree * tree = tree_queue.front();
+      tree_queue.pop();
+      SPMD_KernelCall * kernel = dynamic_cast<SPMD_KernelCall *>(tree);
+      if (kernel != NULL) kernels.push_back(kernel);
+      else {
+        std::vector<SPMD_Tree *> & children = tree->getChildren();
+        std::vector<SPMD_Tree *>::iterator it_child;
+        for (it_child = children.begin(); it_child != children.end(); it_child++)
+          tree_queue.push(*it_child);
+      }
+    }
+  }
+
+  std::vector<SPMD_KernelCall *>::iterator it_kernel;
+  for (it_kernel = kernels.begin(); it_kernel != kernels.end(); it_kernel++) {
+    SPMD_KernelCall * kernel_call = *it_kernel;
+
+    // Kernel name
+    std::ostringstream oss_kernel_name;
+    oss_kernel_name << "ocl_kernel_" << kernel_call->getID();
+    std::string kernel_name = oss_kernel_name.str();
+
+    // Data to passed as argument
+    // TODO use it 
+    const std::pair<std::set<ArrayPartition *>, std::set<ArrayPartition *> > & datas = driver.getArrayAnalysis().get(kernel_call);
+
+    // Placement
+    ComputeSystem * compute_system = driver.getPlacement().assigned(kernel_call);
+    GPU * gpu = dynamic_cast<GPU *>(compute_system);
+    assert(gpu != NULL);
+
+    // surrounding iterators
+    std::vector<RoseVariable> ordered_iterators;
+    SPMD_Tree * parent = kernel_call->getParent();
+    while (dynamic_cast<SPMD_Root *>(parent) == NULL) {
+      SPMD_Loop * loop = dynamic_cast<SPMD_Loop *>(parent);
+      if (loop != NULL)
+        ordered_iterators.insert(ordered_iterators.begin(), loop->getIterator());
+      parent = parent->getParent();
+    }
+
+    std::map<SPMD_KernelCall *, std::vector<ArrayPartition *> >::iterator it_kernel_data_param =
+            kernel_data_param.find(kernel_call);
+    assert(it_kernel_data_param != kernel_data_param.end());
+    std::vector<ArrayPartition *>::iterator it_params;
+
+    SgFunctionParameterList * param_list = SageBuilder::buildFunctionParameterList();
+    for (int i = 0; i < ordered_iterators.size(); i++) {
+      SgInitializedName * init_name = SageBuilder::buildInitializedName(
+          ordered_iterators[i].getString(), SageBuilder::buildIntType()
+      );
+      param_list->append_arg(init_name);
+    }
+    for (it_params = it_kernel_data_param->second.begin(); it_params != it_kernel_data_param->second.end(); it_params++) {
+      ArrayAlias * alias = genAlias(*it_params, gpu);
+      OpenCL_Alias * ocl_alias = dynamic_cast<OpenCL_Alias *>(alias);
+      assert(ocl_alias != NULL);
+
+      param_list->append_arg(ocl_alias->getKernelParam());
+    }
+
+    SgFunctionDeclaration * kernel_decl = SageBuilder::buildDefiningFunctionDeclaration(
+        SgName(kernel_name), SageBuilder::buildVoidType(), param_list
+    );
+    kernel_decl->get_functionModifier().setOpenclKernel();
+    SgFunctionDefinition * kernel_def = kernel_decl->get_definition();
+    ROSE_ASSERT(kernel_def != NULL);
+    ocl_scope->append_statement(kernel_decl);
+    SageBuilder::pushScopeStack(kernel_def);
+
+    SgBasicBlock * kernel_body = kernel_def->get_body();
+    ROSE_ASSERT(kernel_body != NULL);
+    SageBuilder::pushScopeStack(kernel_body);
+
+    SgName global_id = "get_global_id";
+    const std::vector<RoseVariable> & iterators = kernel_call->getOrderedIterators();
+    std::vector<RoseVariable>::const_iterator it_iterator;
+    const std::map<RoseVariable, Domain *> & iterators_map = kernel_call->getIterators();
+    std::map<RoseVariable, Domain *>::const_iterator it_iterator_map;
+    unsigned cnt_dim = 0;
+    for (it_iterator = iterators.begin(); it_iterator != iterators.end(); it_iterator++) {
+      SgExprListExp * params = SageBuilder::buildExprListExp(SageBuilder::buildUnsignedIntVal(cnt_dim++));
+      SgFunctionCallExp * get_global_id_call = SageBuilder::buildFunctionCallExp(global_id, SageBuilder::buildUnsignedIntType(), params, kernel_def);
+
+      it_iterator_map = iterators_map.find(*it_iterator);
+      assert(it_iterator_map != iterators_map.end());
+      int stride = it_iterator_map->second->getStride();
+      SgExpression * loc_it = SageBuilder::buildMultiplyOp(get_global_id_call, SageBuilder::buildIntVal(stride > 0 ? stride : -stride));
+      loc_it = SageBuilder::buildAddOp(loc_it, it_iterator_map->second->genLowerBound());
+      SgInitializer * init = SageBuilder::buildAssignInitializer(loc_it, SageBuilder::buildIntType());
+
+      SgVariableDeclaration * var_decl = SageBuilder::buildVariableDeclaration(
+          it_iterator->getString(),
+          SageBuilder::buildIntType(),
+          init,
+          kernel_def
+      );
+
+      kernel_body->append_statement(var_decl);
+    }
+
+
+    std::set<RoseVariable> inside_iterators;
+    {
+      std::vector<SPMD_Tree *>::iterator it_child;
+      std::queue<SPMD_Tree *> tree_queue;
+      tree_queue.push(kernel_call);
+      while (tree_queue.size() > 0) {
+        SPMD_Tree * tree = tree_queue.front();
+        tree_queue.pop();
+        SPMD_Loop * loop = dynamic_cast<SPMD_Loop *>(tree);
+        if (loop != NULL)
+          inside_iterators.insert(loop->getIterator());
+        std::vector<SPMD_Tree *> & children = tree->getChildren();
+        for (it_child = children.begin(); it_child != children.end(); it_child++)
+          tree_queue.push(*it_child);
+      }
+    }
+    std::set<RoseVariable>::iterator it_inside_iterator;
+    for (it_inside_iterator = inside_iterators.begin(); it_inside_iterator != inside_iterators.end(); it_inside_iterator++) {
+      SgVariableDeclaration * var_decl = SageBuilder::buildVariableDeclaration(
+          it_inside_iterator->getString(),
+          SageBuilder::buildIntType(),
+          NULL,
+          kernel_def
+      );
+      kernel_body->append_statement(var_decl);
+    }
+
+    const std::vector<std::pair<Expression *, bool> > & restrictions = kernel_call->getRestrictions();
+    std::vector<std::pair<Expression *, bool> >::const_iterator it_restriction;
+    SgExpression * bounds_control_exp = SageBuilder::buildBoolValExp(true);
+    for (it_iterator_map = iterators_map.begin(); it_iterator_map != iterators_map.end(); it_iterator_map++) {
+      bounds_control_exp = SageBuilder::buildAndOp(bounds_control_exp, SageBuilder::buildAndOp(
+        SageBuilder::buildGreaterOrEqualOp(
+          SageBuilder::buildVarRefExp(it_iterator_map->first.getString()),
+          it_iterator_map->second->genLowerBound()
+        ),
+        SageBuilder::buildLessOrEqualOp(
+          SageBuilder::buildVarRefExp(it_iterator_map->first.getString()),
+          it_iterator_map->second->genUpperBound()
+        )
+      ));
+    }
+    for (it_restriction = restrictions.begin(); it_restriction != restrictions.end(); it_restriction++) {
+      SgExpression * tmp = it_restriction->first->generate();
+      bounds_control_exp = SageBuilder::buildAndOp(bounds_control_exp, it_restriction->second ?
+          (SgExpression *) SageBuilder::buildGreaterOrEqualOp(tmp, SageBuilder::buildIntVal(0)) :
+          (SgExpression *) SageBuilder::buildEqualityOp(tmp, SageBuilder::buildIntVal(0)) 
+      );
+    }
+
+    SgBasicBlock * bb = SageBuilder::buildBasicBlock(); // FIXME should be cond body
+
+    SgIfStmt * if_stmt = SageBuilder::buildIfStmt(bounds_control_exp, bb, NULL);
+    kernel_body->append_statement(if_stmt);
+
+    SageBuilder::pushScopeStack(bb);
+
+    std::vector<SPMD_Tree *> & children = kernel_call->getChildren();
+    std::vector<SPMD_Tree *>::iterator it_child;
+    for (it_child = children.begin(); it_child != children.end(); it_child++) {
+      bb->append_statement(SPMD_Generator::codeGeneration(*it_child));
+    }
+
+    SageBuilder::popScopeStack();
+    SageBuilder::popScopeStack();
+    SageBuilder::popScopeStack();
+  }
+
+  SageBuilder::popScopeStack();
 }
 
 OpenCL_Generator::OpenCL_Generator(SPMD_Driver & driver_) :
-  SPMD_Generator(driver_)
+  SPMD_Generator(driver_),
+  ocl_file_name(),
+  kernel_data_param()
 {
   assert(driver.hasArrayAnalysis() && driver.hasPlacement());
 }

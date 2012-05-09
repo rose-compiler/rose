@@ -24,8 +24,8 @@ class IdentityAlias : public ArrayAlias {
 
     virtual ~IdentityAlias() {}
 
-    virtual SgPntrArrRefExp * propagate(SgPntrArrRefExp * arr_ref) const { return arr_ref; }
-    virtual SgVarRefExp * propagate(SgVarRefExp * var_ref) const { return var_ref; }
+    virtual SgPntrArrRefExp * propagateArr(SgPntrArrRefExp * arr_ref) const { return arr_ref; }
+    virtual SgVarRefExp * propagateVar(SgVarRefExp * var_ref) const { return var_ref; }
     virtual SgInitializedName * getInitName() const { return original_array->getOriginalVariable().getInitializedName(); }
 };
 

@@ -58,8 +58,8 @@ class ArrayAlias {
 
     SgExpression * propagate(SgExpression * exp) const;
 
-    virtual SgPntrArrRefExp * propagate(SgPntrArrRefExp * arr_ref) const = 0;
-    virtual SgVarRefExp * propagate(SgVarRefExp * var_ref) const = 0;
+    virtual SgPntrArrRefExp * propagateArr(SgPntrArrRefExp * arr_ref) const = 0;
+    virtual SgVarRefExp * propagateVar(SgVarRefExp * var_ref) const = 0;
     virtual SgInitializedName * getInitName() const = 0;
 };
 

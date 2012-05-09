@@ -124,6 +124,8 @@ class SPMD_KernelCall : public SPMD_Tree {
     const std::map<RoseVariable, Domain *> & getIterators() const;
     const std::vector<std::pair<Expression *, bool> >  & getRestrictions() const;
 
+    const std::vector<RoseVariable> & getOrderedIterators() const;
+
     virtual void print(std::ostream & out) const;
 };
 

@@ -19,8 +19,8 @@ SgExpression * ArrayAlias::propagate(SgExpression * exp) const {
   SgUnaryOp * una_op = isSgUnaryOp(exp);
   SgFunctionCallExp * func_call = isSgFunctionCallExp(exp);
 
-  if (arr_ref != NULL) return propagate(arr_ref);
-  if (var_ref != NULL) return propagate(var_ref);
+  if (arr_ref != NULL) return propagateArr(arr_ref);
+  if (var_ref != NULL) return propagateVar(var_ref);
 
   if (bin_op != NULL) {
     bin_op->set_lhs_operand_i(propagate(bin_op->get_lhs_operand_i()));

@@ -22,11 +22,12 @@ class DepthPlacement : public PolyPlacement {
     std::map<SPMD_Tree *, ComputeSystem *> placement;
 
   protected:
-    void extractBranch(
-      SPMD_Tree * tree,
-      std::vector<SPMD_Tree *> branch,
+    void generateKernels(
+      SPMD_Tree * parent,
+      std::vector<SPMD_Tree *> & branch,
       unsigned length,
-      std::vector<std::vector<SPMD_Tree *> > & res
+      std::vector<SPMD_KernelCall *> & res,
+      ArrayAnalysis & array_analysis
     );
     void preplace(SPMD_Tree * tree, unsigned depth);
     void makeKernel(
