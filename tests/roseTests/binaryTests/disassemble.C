@@ -756,7 +756,7 @@ dump_CFG_CG(SgNode *ast)
 static rose_addr_t large_anonymous_region_limit = 8192;
 static struct LargeAnonymousRegion: public MemoryMap::Visitor {
     virtual bool operator()(const MemoryMap*, const Extent &range, const MemoryMap::Segment &segment) {
-        if (range.size()>large_anonymous_region_limit && segment->get_buffer()->is_zero()) {
+        if (range.size()>large_anonymous_region_limit && segment.get_buffer()->is_zero()) {
             fprintf(stderr, "ignoring zero-mapped memory at va 0x%08"PRIx64" + 0x%08"PRIx64" = 0x%08"PRIx64"\n",
                     range.first(), range.size(), range.last()+1);
             return true;
