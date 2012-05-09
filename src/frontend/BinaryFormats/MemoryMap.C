@@ -145,6 +145,16 @@ MemoryMap::ExternBuffer::create(const void *data, size_t size)
     return BufferPtr(new ExternBuffer((const uint8_t*)data, size));
 }
 
+MemoryMap::BufferPtr
+MemoryMap::ExternBuffer::clone() const
+{
+    if (!p_data)
+        return ByteBuffer::create(NULL, size());
+    uint8_t *d = new uint8_t[size()];
+    memcpy(d, p_data, size());
+    return ByteBuffer::create(d, size());
+}
+
 void
 MemoryMap::ExternBuffer::resize(size_t n)
 {
@@ -540,6 +550,29 @@ MemoryMap::clear()
     p_segments.clear();
 }
 
+MemoryMap&
+MemoryMap::init(const MemoryMap &other, CopyLevel copy_level)
+{
+    p_segments = other.p_segments;
+
+    switch (copy_level) {
+        case COPY_SHALLOW:
+            // nothing more to do
+            break;
+        case COPY_DEEP:
+            for (Segments::iterator si=p_segments.begin(); si!=p_segments.end(); ++si) {
+                si->second.clear_cow();
+                si->second.set_buffer(si->second.get_buffer()->clone());
+            }
+            break;
+        case COPY_ON_WRITE:
+            for (Segments::iterator si=p_segments.begin(); si!=p_segments.end(); ++si)
+                si->second.set_cow();
+            break;
+    }
+    return *this;
+}
+
 void
 MemoryMap::insert(const Extent &range, const Segment &segment, bool erase_prior)
 {
@@ -724,9 +757,14 @@ MemoryMap::write1(const void *src_buf/*=NULL*/, rose_addr_t start_va, size_t des
     const Extent &range = found->first;
     assert(range.contains(Extent(start_va)));
 
-    const Segment &segment = found->second;
+    Segment segment = found->second;
     if ((segment.get_mapperms() & req_perms) != req_perms || !segment.check(range))
         return 0;
+
+    if (segment.is_cow()) {
+        segment.set_buffer(segment.get_buffer()->clone());
+        segment.clear_cow();
+    }
 
     rose_addr_t buffer_offset = segment.get_buffer_offset(range, start_va);
     return segment.get_buffer()->write(src_buf, buffer_offset, desired);

@@ -91,10 +91,20 @@ public:
         MM_PROT_PRIVATE = 0x00000010,   /**< Pages are not shared between mapped regions. */
     };
 
+    /** Map copying. */
+    enum CopyLevel {
+        COPY_SHALLOW,                   /**< Copy segments, but not the buffers to which they point. */
+        COPY_DEEP,                      /**< Copy segments and their buffers.  This copies buffer data. */
+        COPY_ON_WRITE                   /**< Copy segments and mark them so they copy buffers on write. */
+    };
+
     /**************************************************************************************************************************
      *                                  Buffers
      **************************************************************************************************************************/
 public:
+    class Buffer;
+    typedef boost::shared_ptr<Buffer> BufferPtr;
+
     /** Base class for data associated with a memory segment.  Memory map buffers are reference counted and managed by
      *  boost::shared_ptr.  Use the class' create methods to allocate new Buffer objects.  A Buffer object usually (but not
      *  necessarily) points to an array of bytes, and it is up to the Buffer subclass as to how to manage that array.  The
@@ -102,6 +112,12 @@ public:
     class Buffer {
     public:
         virtual ~Buffer() {}
+
+        /** Create a new buffer from an existing buffer.  The new buffer will point to a different copy of the data so that
+         *  writing data into one buffer will not cause it to appear when reading from the other buffer.  The type of the new
+         *  buffer might not be the same as this buffer because not all buffers are able to copy their data.  For instance,
+         *  cloning an ExternBuffer or a MmapBuffer will create a ByteBuffer. */
+        virtual BufferPtr clone() const = 0;
 
         /** Property indicating whether buffer is read-only.  The "modifiability" of a buffer is orthogonal to whether segments
          *  pointing to this buffer have the MemoryMap::MM_PROT_WRITE bit set.  For instance, the storage for the buffer can be
@@ -160,8 +176,6 @@ public:
         size_t p_size;                          /**< Size of buffer in bytes. */
     };
 
-    typedef boost::shared_ptr<Buffer> BufferPtr;
-
     /** Buffer that has no data.  This can be useful to reserve areas of the virtual memory address space without actually
      *  storing any data at them.  All reads and writes using such a buffer will fail (return zero). */
     class NullBuffer: public Buffer {
@@ -172,6 +186,7 @@ public:
         /** Always returns the null pointer. */
         virtual const void *get_data_ptr() const /*overrides*/ { return NULL; }
 
+        virtual BufferPtr clone() const { return create(size()); }
         virtual size_t read(void*, size_t offset, size_t nbytes) const /*overrides*/ { return 0; }
         virtual size_t write(const void*, size_t offset, size_t nbytes) /*overrides*/ { return 0; }
 
@@ -191,6 +206,7 @@ public:
         static BufferPtr create(const void *data, size_t size);
         /** @} */
 
+        virtual BufferPtr clone() const;
         virtual void resize(size_t n) /*overrides*/;
         virtual const void *get_data_ptr() const /*overrides*/ { return p_data; }
         virtual size_t read(void*, size_t offset, size_t nbytes) const /*overrides*/;
@@ -279,7 +295,7 @@ public:
      *  Segments reference count the MemoryMap::Buffer objects to which they point. */
     class Segment {
     public:
-        Segment(): buffer_offset(0), mapperms(0) {}
+        Segment(): buffer_offset(0), mapperms(0), copy_on_write(false) {}
 
         /** Constructor.  Constructs a segment that points to a particular offset in a buffer.  The segment also has certain
          *  access permissions. */
@@ -332,6 +348,15 @@ public:
         void set_buffer_offset(rose_addr_t n);
         /** @} */
 
+        /** Copy on write property.  If the copy-on-write property is set then the next write operation on this segment will
+         *  cause its buffer to be copied first.  Once the buffer is copied the copy-on-write property is cleared. Doing a deep
+         *  copy of a memory map will also clear the copy-on-write property in the new segments.
+         * @{ */
+        bool is_cow() const { return copy_on_write; }
+        void set_cow(bool b=true) { copy_on_write = b; }
+        void clear_cow() { set_cow(false); }
+        /** @} */
+
         /** Segment equality.  Segments are equal if they point to the same buffer, have the same buffer offset, and have the
          *  same permissions.  Segment names are not used in the equality test. */
         bool operator==(const Segment &other) const;
@@ -364,6 +389,7 @@ public:
         rose_addr_t buffer_offset;      /**< Starting byte offset into the buffer. */
         unsigned mapperms;              /**< Permissions for this segment. */
         std::string name;               /**< Name used for debugging purposes. */
+        bool copy_on_write;             /**< Does the buffer need to be copied on the next write operation? */
     };
 
     /**************************************************************************************************************************
@@ -454,6 +480,20 @@ public:
     /**************************************************************************************************************************
      *                                  Public Methods for MemoryMap
      **************************************************************************************************************************/
+
+    /** Constructs an empty memory map. */
+    MemoryMap() {}
+
+    /** Shallow copy constructor.  The new memory map describes the same mapping and points to shared copies of the underlying
+     *  data.  In other words, changing the mapping of one map (clear(), insert(), erase()) does not change the mapping of the
+     *  other, but changing the data (write()) in one map changes it in the other.  See also init(), which takes an argument
+     *  describing how to copy. */
+    MemoryMap(const MemoryMap &other) { init(other, COPY_SHALLOW); }
+
+    /** Initialize this memory map with info from another.  This map is first cleared and then initialized with a copy of the
+     *  @p source map.  A reference to this map is returned for convenience since init is often used in conjunction with
+     *  constructors. */
+    MemoryMap& init(const MemoryMap &source, CopyLevel copy_level=COPY_SHALLOW);
 
     /** Clear the entire memory map by erasing all addresses that are defined. */
     void clear();
