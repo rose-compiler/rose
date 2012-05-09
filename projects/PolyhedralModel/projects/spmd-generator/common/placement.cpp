@@ -297,6 +297,7 @@ void NodePlacement::placeCommSync(
   std::vector<SPMD_Tree *> & children = tree->getChildren();
   std::set<ArrayPartition *>::const_iterator it_array;
   if (children.size() > 0) {
+    SPMD_Tree * first_child = children[0];
     std::vector<SPMD_Tree *>::iterator it_child = children.begin();
     while (it_child != children.end()) {
       SPMD_Tree * child = *it_child;
@@ -310,13 +311,11 @@ void NodePlacement::placeCommSync(
           std::map<ArrayPartition *, std::map<ComputeSystem *, std::vector<Conditions *> > >::iterator it_array_original_position =
               original_position.find(*it_array);
           std::vector<std::pair<std::vector<Conditions *>, ComputeSystem *> > sources;
-          if (loop != NULL && child == children[0]) {
+          if (loop != NULL && child == first_child) {
             std::vector<std::pair<std::vector<Conditions *>, ComputeSystem *> > tmp_sources;
             std::vector<std::pair<std::vector<Conditions *>, ComputeSystem *> >::iterator it_tmp_sources;
 
             findSources(placement, it_array_original_position->second, tmp_sources, condition_to_reach_this_node->new_restricted_by(loop, true));
-//            for (it_tmp_sources = tmp_sources.begin(); it_tmp_sources != tmp_sources.end(); it_tmp_sources++)
-//              restrictToFirstIt(it_tmp_sources->first, loop);
             sources.insert(sources.end(), tmp_sources.begin(), tmp_sources.end());
 
             tmp_sources.clear();
@@ -327,8 +326,6 @@ void NodePlacement::placeCommSync(
             it_arr_tmp = it_vd_tmp->second.find(*it_array);
             const std::map<ComputeSystem *, std::vector<Conditions *> > & pos_after_last_in_loop = it_arr_tmp->second;
             findSources(placement, pos_after_last_in_loop, tmp_sources, condition_to_reach_this_node->new_without_first_it(loop));
-//            for (it_tmp_sources = tmp_sources.begin(); it_tmp_sources != tmp_sources.end(); it_tmp_sources++)
-//              restrictToNext(it_tmp_sources->first, loop);
             sources.insert(sources.end(), tmp_sources.begin(), tmp_sources.end());
           }
           else {
@@ -354,11 +351,12 @@ void NodePlacement::placeCommSync(
           }
 
           std::vector<Conditions *> & cond_before_comm = it_array_original_position->second[placement]; // FIXME unsafe
-          cond_before_comm.push_back(condition_to_reach_this_node);
+          cond_before_comm.push_back(condition_to_reach_this_node->copy());
           simplify(cond_before_comm);
         }
       }
-      placeCommSync(child, array_analysis, valid_data, original_position, condition_to_reach_this_node);
+      if (dynamic_cast<SPMD_KernelCall *>(child) == NULL) // FIXME hack because there is problem passing position to child (ok because only 1 lvl)
+        placeCommSync(child, array_analysis, valid_data, original_position, condition_to_reach_this_node);
       std::map<SPMD_Tree *, std::map<ArrayPartition *, std::map<ComputeSystem *, std::vector<Conditions *> > > >::const_iterator it_valid_data = 
           valid_data.find(child);
       assert(it_valid_data != valid_data.end());

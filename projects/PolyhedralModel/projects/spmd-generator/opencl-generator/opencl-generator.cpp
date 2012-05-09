@@ -40,7 +40,7 @@ OpenCL_Alias::OpenCL_Alias(ArrayPartition * original_array_, GPU * gpu, SgScopeS
   SgName rw_buf = "createRWBuffer";
 
   // FIXME if multiple context, find the one assiciate to 'compute_node->getAcceleratorID(gpu)'
-  SgExprListExp * params = SageBuilder::buildExprListExp(SageBuilder::buildVarRefExp("context", scope), original_array->getSize());
+  SgExprListExp * params = SageBuilder::buildExprListExp(SageBuilder::buildVarRefExp("ocl_context", scope), original_array->getSize());
   SgFunctionCallExp * create_buffer_call = NULL;
   if (!read_and_write)
     create_buffer_call = SageBuilder::buildFunctionCallExp(ro_buf, buffer_type, params, scope);
@@ -50,10 +50,16 @@ OpenCL_Alias::OpenCL_Alias(ArrayPartition * original_array_, GPU * gpu, SgScopeS
 
   init_name = SageBuilder::buildInitializedName(oss.str(), buffer_type, init);
 
-  kernel_param = SageBuilder::buildInitializedName(
-      oss.str(),
-      original_array->getDimensions().size() == 0 ? original_array->getType() : SageBuilder::buildPointerType(original_array->getType())
-  );
+  SgType * param_type = NULL;
+  if (original_array->getDimensions().size() == 0)
+    param_type = original_array->getType();
+  else {
+    param_type = SageBuilder::buildPointerType(original_array->getType());
+    param_type = SageBuilder::buildModifierType(param_type);
+    ((SgModifierType *)param_type)->get_typeModifier().setOpenclGlobal();
+  }
+
+  kernel_param = SageBuilder::buildInitializedName(oss.str(), param_type);
 }
 
 OpenCL_Alias::~OpenCL_Alias() {}
@@ -166,7 +172,7 @@ SgStatement * OpenCL_Generator::codeGeneration(SPMD_KernelCall * tree) {
     SgType * type = SageBuilder::buildArrayType(size_type, SageBuilder::buildIntVal(expr_vect->size()));
     SgExprListExp * expr_list = SageBuilder::buildExprListExp(*expr_vect);
     SgAggregateInitializer * init = SageBuilder::buildAggregateInitializer(expr_list, type);
-    work_size_decl = SageBuilder::buildVariableDeclaration("work_size", type, init, scope);
+    work_size_decl = SageBuilder::buildVariableDeclaration(kernel_name + "_work_size", type, init, scope);
     nbr_work_dim = expr_vect->size();
     delete expr_vect;
   }
@@ -187,7 +193,7 @@ SgStatement * OpenCL_Generator::codeGeneration(SPMD_KernelCall * tree) {
       SgName create_kernel = "createKernel";
       std::vector<SgExpression *> param_list;
       {
-        param_list.push_back(SageBuilder::buildVarRefExp("program", top_scope)); // FIXME isn't the program associate to one GPU?
+        param_list.push_back(SageBuilder::buildVarRefExp("ocl_program", top_scope)); // FIXME isn't the program associate to one GPU?
         param_list.push_back(SageBuilder::buildStringVal(kernel_name));
       }
       SgExprListExp * params = SageBuilder::buildExprListExp(param_list);
@@ -454,7 +460,7 @@ void OpenCL_Generator::insertInit(
   {
     SgTypedefDeclaration * context_type_decl = SageBuilder::buildTypedefDeclaration("cl_context", SageBuilder::buildIntType(), scope);
     SgType * context_type = SgTypedefType::createType(context_type_decl);
-    context_decl = SageBuilder::buildVariableDeclaration("context", context_type, NULL, scope);
+    context_decl = SageBuilder::buildVariableDeclaration("ocl_context", context_type, NULL, scope);
     SageInterface::insertStatementAfter(insert_init_after, context_decl, false);
     insert_init_after = context_decl;
   }
@@ -463,7 +469,7 @@ void OpenCL_Generator::insertInit(
   {
     SgTypedefDeclaration * program_type_decl = SageBuilder::buildTypedefDeclaration("cl_program", SageBuilder::buildIntType(), scope);
     SgType * program_type = SgTypedefType::createType(program_type_decl);
-    program_decl = SageBuilder::buildVariableDeclaration("program", program_type, NULL, scope);
+    program_decl = SageBuilder::buildVariableDeclaration("ocl_program", program_type, NULL, scope);
     SageInterface::insertStatementAfter(insert_init_after, program_decl, false);
     insert_init_after = program_decl;
   }
@@ -472,7 +478,7 @@ void OpenCL_Generator::insertInit(
   {
     SgTypedefDeclaration * queue_type_decl = SageBuilder::buildTypedefDeclaration("cl_command_queue", SageBuilder::buildIntType(), scope);
     SgType * queue_type = SgTypedefType::createType(queue_type_decl);
-    queue_decl = SageBuilder::buildVariableDeclaration("queue_0", queue_type, NULL, scope);
+    queue_decl = SageBuilder::buildVariableDeclaration("ocl_queue_0", queue_type, NULL, scope);
     SageInterface::insertStatementAfter(insert_init_after, queue_decl, false);
     insert_init_after = queue_decl;
   }
@@ -527,7 +533,43 @@ void OpenCL_Generator::insertInit(
 
   SageInterface::attachComment(insert_init_after, "Declaration of the kernels objects", PreprocessingInfo::after);
 
-  // TODO kernels objects
+  {
+    SgTypedefDeclaration * kernel_type_decl = SageBuilder::buildTypedefDeclaration("cl_kernel", SageBuilder::buildIntType(), scope);
+    SgType * kernel_type = SgTypedefType::createType(kernel_type_decl);
+
+    std::vector<SPMD_KernelCall *> kernels;
+    {
+      std::queue<SPMD_Tree *> tree_queue;
+      tree_queue.push(root_tree);
+      while (tree_queue.size() > 0) {
+        SPMD_Tree * tree = tree_queue.front();
+        tree_queue.pop();
+        SPMD_KernelCall * kernel = dynamic_cast<SPMD_KernelCall *>(tree);
+        if (kernel != NULL) kernels.push_back(kernel);
+        else {
+          std::vector<SPMD_Tree *> & children = tree->getChildren();
+          std::vector<SPMD_Tree *>::iterator it_child;
+          for (it_child = children.begin(); it_child != children.end(); it_child++)
+            tree_queue.push(*it_child);
+        }
+      }
+    }
+
+    std::vector<SPMD_KernelCall *>::iterator it_kernel;
+    for (it_kernel = kernels.begin(); it_kernel != kernels.end(); it_kernel++) {
+      SPMD_KernelCall * kernel_call = *it_kernel;
+
+      // Kernel name
+      std::ostringstream oss_kernel_name;
+      oss_kernel_name << "ocl_kernel_" << kernel_call->getID();
+      std::string kernel_name = oss_kernel_name.str();
+
+      //
+      SgVariableDeclaration * kernel_decl = SageBuilder::buildVariableDeclaration(kernel_name, kernel_type, NULL, scope);
+      SageInterface::insertStatementAfter(insert_init_after, kernel_decl, false);
+      insert_init_after = kernel_decl;
+    }
+  }
 
   // Build additionnal OpenCL API types
   {

@@ -70,6 +70,42 @@ int main(int argc, char ** argv) {
     SgBasicBlock * func_body = func_def->get_body();
     if (func_body == NULL) continue;
 
+    // some cleanning
+    {
+      std::vector<SgVarRefExp *> var_refs = SageInterface::querySubTree<SgVarRefExp>(func_body);
+      std::set<SgInitializedName *> init_names;
+      std::vector<SgVarRefExp *>::iterator it_refs;
+      for (it_refs = var_refs.begin(); it_refs != var_refs.end(); it_refs++) {
+        init_names.insert((*it_refs)->get_symbol()->get_declaration());
+      }
+      std::vector<SgVariableDeclaration *> var_decls = SageInterface::querySubTree<SgVariableDeclaration>(func_body);
+      std::vector<SgVariableDeclaration *>::iterator it_var;
+      for (it_var = var_decls.begin(); it_var != var_decls.end(); it_var++) {
+        assert((*it_var)->get_variables().size() == 1);
+        SgInitializedName * init_name = (*it_var)->get_variables()[0];
+        if (init_name->get_type() == SageBuilder::buildIntType()) {
+          SageInterface::removeStatement(*it_var);
+        }
+      }
+      std::set<SgInitializedName *>::iterator it_init_name;
+      std::map<SgInitializedName *, SgInitializedName *> init_name_map;
+      for (it_init_name = init_names.begin(); it_init_name != init_names.end(); it_init_name++) {
+        if ((*it_init_name)->get_type() == SageBuilder::buildIntType()) {
+          SgInitializedName * init_name = SageBuilder::buildInitializedName((*it_init_name)->get_name(), (*it_init_name)->get_type());
+          init_name_map.insert(std::pair<SgInitializedName *, SgInitializedName *>(*it_init_name, init_name));
+          func_body->prepend_statement(SageBuilder::buildVariableDeclaration(
+              (*it_init_name)->get_name(), (*it_init_name)->get_type(), NULL, func_body
+          ));
+        }
+      }
+      for (it_refs = var_refs.begin(); it_refs != var_refs.end(); it_refs++) {
+        std::map<SgInitializedName *, SgInitializedName *>::iterator it_map = init_name_map.find((*it_refs)->get_symbol()->get_declaration());
+        if (it_map != init_name_map.end()) {
+          (*it_refs)->get_symbol()->set_declaration(it_map->second);
+        }
+      }
+    }
+
     SageBuilder::pushScopeStack(func_body);
 
     SgStatement * insert_init_after = NULL;
