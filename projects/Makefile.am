@@ -39,6 +39,10 @@ SUBDIRS = \
 	extractMPISkeleton \
 	$(OPTIONAL_PROJECTS)
 
+if ROSE_WITH_ISL
+  SUBDIRS += RosePolly
+endif
+
 # DQ (9/26/2011): Directory removed for failing new AST consistancy test for references to deleted IR nodes.
 # UpcTranslation (fails only a single test code shared_2.upc)
 

@@ -162,6 +162,8 @@ fi
 
   ROSE_SUPPORT_UPC
   ROSE_SUPPORT_COMPASS2
+  ROSE_SUPPORT_GMP
+  ROSE_SUPPORT_ISL
 
 ##
 #########################################################################################
@@ -2112,6 +2114,7 @@ projects/roseToLLVM/Makefile
 projects/roseToLLVM/src/Makefile
 projects/roseToLLVM/src/rosetollvm/Makefile
 projects/roseToLLVM/tests/Makefile
+projects/RosePolly/Makefile
 projects/simulator/Makefile
 projects/symbolicAnalysisFramework/Makefile
 projects/symbolicAnalysisFramework/src/chkptRangeAnalysis/Makefile
