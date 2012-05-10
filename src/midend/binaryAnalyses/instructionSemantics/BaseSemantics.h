@@ -1,6 +1,8 @@
 #ifndef Rose_SemanticState_H
 #define Rose_SemanticState_H
 
+#include "Registers.h"
+
 // Documented elsewhere
 namespace BinaryAnalysis {
 

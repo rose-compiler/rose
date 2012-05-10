@@ -4,6 +4,7 @@
 //#include "fileoffsetbits.h"
 #include "sage3basic.h"
 #include "AsmUnparser_compat.h"
+#include "MemoryMap.h"
 
 #include <boost/math/common_factor.hpp>
 #include <errno.h>

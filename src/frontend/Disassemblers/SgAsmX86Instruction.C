@@ -5,6 +5,7 @@
 #include "SymbolicSemantics.h"
 #include "VirtualMachineSemantics.h"
 #include "YicesSolver.h"
+#include "Disassembler.h"
 
 /** Determines whether this instruction can terminate a basic block. See base class for full documentation. */
 bool

@@ -2,6 +2,7 @@
  * because then they won't get indexed/formatted/etc. by C-aware tools. */
 
 #include "sage3basic.h"
+#include "Disassembler.h"
 
 /* Returns true if the instruction modifies the instruction pointer (r15). */
 static bool modifies_ip(SgAsmArmInstruction *insn) 

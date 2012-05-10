@@ -7,6 +7,7 @@
 #include "BinaryLoader.h"
 #include "BinaryLoaderElf.h"
 #include "BinaryLoaderPe.h"
+#include "Disassembler.h"
 
 std::vector<BinaryLoader*> BinaryLoader::loaders;
 

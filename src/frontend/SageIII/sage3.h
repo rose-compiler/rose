@@ -78,9 +78,6 @@
 #endif
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-/* The SgFile node needs default settings defined in Disassembler::SEARCH_DEFAULT */
-#include "Disassembler.h"
-
 // TV (05/23/2011): Add headers for the AstFromString library
 #include "AstFromString.h"
 #include "ParserBuilder.hpp"

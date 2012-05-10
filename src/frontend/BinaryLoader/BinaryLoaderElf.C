@@ -1,6 +1,7 @@
 #include "sage3basic.h"
 #include "BinaryLoaderElf.h"
 #include "integerOps.h"                 /* needed for signExtend() */
+#include "MemoryMap.h"
 
 #include <fstream>
 #include <boost/regex.hpp>
