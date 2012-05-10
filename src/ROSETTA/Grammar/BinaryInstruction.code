@@ -3998,6 +3998,7 @@ HEADER_BINARY_BLOCK_START
         void remove_children (  );
         rose_addr_t get_fallthrough_va(); /*implemented in Disassembler.C*/
         SgAsmFunction *get_enclosing_function() const;
+	bool has_instructions() const;
 
         /** Returns a very short string describing the reason mask. */
         static std::string reason_key(const std::string &prefix="");

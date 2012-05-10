@@ -558,6 +558,7 @@ dump_function_node(std::ostream &sout, SgAsmFunction *func, BinaryAnalysis::Cont
                 .clear();
 
             basicblock_callbacks.pre
+                .clear()
                 .append(&basicBlockNoopUpdater)         /* calculate no-op subsequences needed by insns */
                 .append(&basicBlockGraphvizNodeStart);  /* beginning of GraphViz node */
             basicblock_callbacks.unparse
@@ -565,6 +566,20 @@ dump_function_node(std::ostream &sout, SgAsmFunction *func, BinaryAnalysis::Cont
             basicblock_callbacks.post
                 .clear()
                 .append(&basicBlockGraphvizNodeEnd);    /* end of GraphViz node */
+
+            datablock_callbacks.pre
+                .clear();
+            datablock_callbacks.unparse
+                .clear();
+            datablock_callbacks.post
+                .clear();
+
+            staticdata_callbacks.pre
+                .clear();
+            staticdata_callbacks.unparse
+                .clear();
+            staticdata_callbacks.post
+                .clear();
 
             function_callbacks.pre
                 .clear();
