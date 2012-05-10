@@ -7,6 +7,7 @@
  *  Table, (2) an entry in the Import Address Table, and (3) an optional Hint/Name pair in the (implicit) Hint/Name Table. */
 
 #include "sage3basic.h"
+#include "MemoryMap.h"
 
 void
 SgAsmPEImportItem::ctor(SgAsmPEImportItemList *parent)

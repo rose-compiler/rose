@@ -1,6 +1,7 @@
 /* Windows PE Export Sections (SgAsmPEExportSection and related classes) */
 
 #include "sage3basic.h"
+#include "MemoryMap.h"
 
 /* Constructor */
 void

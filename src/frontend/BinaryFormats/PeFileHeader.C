@@ -1,6 +1,6 @@
 /* Windows PE file header (SgAsmPEFileHeader and related classes) */
 #include "sage3basic.h"
-
+#include "MemoryMap.h"
 
 /** Convert an RVA/Size Pair index number into a section name. This is different than stringifySgAsmPEFileHeaderPairPurpose()
  * because it returns a section name rather than an enum name. */
