@@ -769,16 +769,16 @@ dump_CFG_CG(SgNode *ast)
 
 /* Returns true for any anonymous memory region containing more than a certain size. */
 static rose_addr_t large_anonymous_region_limit = 8192;
-static bool
-large_anonymous_region_p(const MemoryMap::MapElement &me)
-{
-    if (me.is_anonymous() && me.get_size()>large_anonymous_region_limit) {
-        fprintf(stderr, "ignoring zero-mapped memory at va 0x%08"PRIx64" + 0x%08"PRIx64" = 0x%08"PRIx64"\n",
-                me.get_va(), me.get_size(), me.get_va()+me.get_size());
-        return true;
+static struct LargeAnonymousRegion: public MemoryMap::Visitor {
+    virtual bool operator()(const MemoryMap*, const Extent &range, const MemoryMap::Segment &segment) {
+        if (range.size()>large_anonymous_region_limit && segment.get_buffer()->is_zero()) {
+            fprintf(stderr, "ignoring zero-mapped memory at va 0x%08"PRIx64" + 0x%08"PRIx64" = 0x%08"PRIx64"\n",
+                    range.first(), range.size(), range.last()+1);
+            return true;
+        }
+        return false;
     }
-    return false;
-}
+} large_anonymous_region_p;
 
 int
 main(int argc, char *argv[]) 
@@ -1036,24 +1036,11 @@ main(int argc, char *argv[])
                         default: fprintf(stderr, "%s: invalid map permissions: %s\n", arg0, suffix-1); exit(1);
                     }
                 }
-                if (!perm) perm = MemoryMap::MM_PROT_READ|MemoryMap::MM_PROT_EXEC;
-                int fd = open(raw_filename, O_RDONLY);
-                if (fd<0) {
-                    fprintf(stderr, "%s: cannot open %s: %s\n", arg0, raw_filename, strerror(errno));
-                    exit(1);
-                }
-                struct stat sb;
-                if (fstat(fd, &sb)<0) {
-                    fprintf(stderr, "%s: cannot stat %s: %s\n", arg0, raw_filename, strerror(errno));
-                    exit(1);
-                }
-                uint8_t *buffer = new uint8_t[sb.st_size];
-                ssize_t nread = read(fd, buffer, sb.st_size);
-                ROSE_ASSERT(nread==sb.st_size);
-                close(fd);
-                MemoryMap::MapElement melmt(start_va, sb.st_size, buffer, 0, perm);
-                melmt.set_name(strrchr(raw_filename, '/')?strrchr(raw_filename, '/')+1:raw_filename);
-                raw_map.insert(melmt);
+                if (!perm) perm = MemoryMap::MM_PROT_RX;
+
+                MemoryMap::BufferPtr buffer = MemoryMap::ByteBuffer::create_from_file(raw_filename);
+                raw_map.insert(Extent(start_va, buffer->size()),
+                               MemoryMap::Segment(buffer, 0, perm, raw_filename));
             }
         } else {
             nposargs++;

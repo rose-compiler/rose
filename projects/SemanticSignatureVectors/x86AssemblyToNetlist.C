@@ -127,6 +127,11 @@ struct NetlistTranslationPolicy {
     return ::number<Len>(n);
   }
 
+  template<size_t Len>
+  LitList(Len) undefined() {
+      return problem.newVars<Len>();
+  }
+
   template <size_t Len1, size_t Len2>
   LitList(Len1 + Len2) concat(const LitList(Len1)& a, const LitList(Len2)& b) {
     return ::concat(a, b);
@@ -139,7 +144,6 @@ struct NetlistTranslationPolicy {
 
   LitList(1) true_() {return single(TRUE);}
   LitList(1) false_() {return single(FALSE);}
-  LitList(1) undefined_() {return problem.newVars<1>();}
 
   template <size_t Len>
   LitList(Len) invert(const LitList(Len)& a) {

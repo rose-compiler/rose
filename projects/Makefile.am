@@ -1,6 +1,10 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-# Add Projects that are associated with capabilities that belong to ROSE here
+# Add Projects that are associated with capabilities that belong to ROSE here. Or better yet, just add a "rose.config" file to
+# your project directory and then you don't have to change any of the ROSE build system -- your project will be found
+# automatically by the "build" script, your rose.config will be incorporated into the configuration system, and your project
+# will become part of the recursive "make" commands.   To disable your project, just rename its rose.config file and rerun
+# "build" and "configure". [RPM 2012-03-29]
 SUBDIRS = \
 	AstEquivalence \
 	BabelPreprocessor \
@@ -49,12 +53,6 @@ endif
 
 # DQ (6/25/2011): Removed from being tested (failing symbolicAnalysisFramework/tests/test_examples/dominator_example.cpp)
 SUBDIRS += symbolicAnalysisFramework
-
-# DQ (4/8/2011): Directories of tests are a current problem for Insure++.
-if !ROSE_USE_INSURE
-   SUBDIRS += SemanticSignatureVectors \
-              assemblyToSourceAst
-endif
 
 # TOO (2/16/2011): Errors with Tensilica's Xtensa compilers as alternative backend compilers. We can
 # gradually enable these tests at a later stage if necessary.

@@ -8,6 +8,7 @@
 // tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
 #include "RoseBin_buildTree.h"
+#include "Registers.h"
 
 using namespace std;
 

@@ -132,6 +132,11 @@ struct ReadAndWriteSetPolicy {
     return W<Len>();
   }
 
+  template<size_t Len>
+  W<Len> undefined() {
+      return W<Len>();
+  }
+
   template <size_t Len1, size_t Len2>
   W<Len1 + Len2> concat(const W<Len1>& a, const W<Len2>& b) {
     return W<Len1 + Len2>();
@@ -144,7 +149,6 @@ struct ReadAndWriteSetPolicy {
 
   W<1> true_() {return W<1>();}
   W<1> false_() {return W<1>();}
-  W<1> undefined_() {return W<1>();}
 
   template <size_t Len>
   W<Len> invert(const W<Len>& a) {

@@ -3523,19 +3523,25 @@ sys_shmdt(RSIM_Thread *t, uint32_t shmaddr_va)
     int result = -ENOSYS;
 
     RTS_WRITE(t->get_process()->rwlock()) {
-        const MemoryMap::MapElement *me = t->get_process()->get_memory()->find(shmaddr_va);
-        if (!me || me->get_va()!=shmaddr_va || me->get_offset()!=0 || me->is_anonymous()) {
+        if (!t->get_process()->get_memory()->exists(shmaddr_va)) {
+            result = -EINVAL;
+            break;
+        }
+        std::pair<Extent, MemoryMap::Segment> me = t->get_process()->get_memory()->at(shmaddr_va);
+        if (me.first.first()!=shmaddr_va ||
+            me.second.get_buffer_offset()!=0 ||
+            dynamic_cast<MemoryMap::AnonymousBuffer*>(me.second.get_buffer().get())) {
             result = -EINVAL;
             break;
         }
 
-        result = shmdt(me->get_base());
+        result = shmdt(me.second.get_buffer()->get_data_ptr());
         if (-1==result) {
             result = -errno;
             break;
         }
 
-        t->get_process()->mem_unmap(me->get_va(), me->get_size(), t->tracing(TRACE_MMAP));
+        t->get_process()->mem_unmap(me.first.first(), me.first.size(), t->tracing(TRACE_MMAP));
         result = 0;
     } RTS_WRITE_END;
     t->syscall_return(result);
@@ -3754,9 +3760,10 @@ sys_shmat(RSIM_Thread *t, uint32_t shmid, uint32_t shmflg, uint32_t result_va, u
         ROSE_ASSERT(status>=0);
         ROSE_ASSERT(ds.shm_segsz>0);
         unsigned perms = MemoryMap::MM_PROT_READ | ((shmflg & SHM_RDONLY) ? 0 : MemoryMap::MM_PROT_WRITE);
-        MemoryMap::MapElement shm(shmaddr, ds.shm_segsz, buf, 0, perms);
-        shm.set_name("shmat("+StringUtility::numberToString(shmid)+")");
-        t->get_process()->get_memory()->insert(shm);
+
+        MemoryMap::BufferPtr buffer = MemoryMap::ExternBuffer::create(buf, ds.shm_segsz);
+        MemoryMap::Segment sgmt(buffer, 0, perms, "shmat("+StringUtility::numberToString(shmid)+")");
+        t->get_process()->get_memory()->insert(Extent(shmaddr, ds.shm_segsz), sgmt);
 
         /* Return values */
         if (4!=t->get_process()->mem_write(&shmaddr, result_va, 4)) {

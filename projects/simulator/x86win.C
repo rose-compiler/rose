@@ -44,7 +44,7 @@ public:
     }
 };
 
-/** wine-pthread tries to open /proc/self/maps.  This won't work because that file describes the simulator rather than the
+/* wine-pthread tries to open /proc/self/maps.  This won't work because that file describes the simulator rather than the
  * specimen.  Therefore, when this occurs, we create a temporary file and initialize it with information from the specimen's
  * MemoryMap and open that instead.  NOTE: This appears to only happen during error reporting. */
 class ProcMapsOpen: public RSIM_Simulator::SystemCall::Callback {
@@ -64,15 +64,18 @@ public:
                 RTS_WRITE(t->get_process()->rwlock()) {
                     FILE *f = fopen("x-maps", "w");
                     assert(f);
-                    const std::vector<MemoryMap::MapElement> &me = t->get_process()->get_memory()->get_elements();
-                    for (size_t i=0; i<me.size(); i++) {
-                        unsigned p = me[i].get_mapperms();
+
+                    const MemoryMap::Segments &segments = t->get_process()->get_memory()->segments();
+                    for (MemoryMap::Segments::const_iterator si=segments.begin(); si!=segments.end(); ++si) {
+                        const Extent &range = si->first;
+                        const MemoryMap::Segment &segment = si->second;
+                        unsigned p = segment.get_mapperms();
                         fprintf(f, "%08"PRIx64"-%08"PRIx64" %c%c%cp 00000000 00:00 0 %s\n",
-                                me[i].get_va(), me[i].get_va()+me[i].get_size(),
+                                range.first(), range.last()+1,
                                 (p & MemoryMap::MM_PROT_READ)  ? 'r' : '-',
                                 (p & MemoryMap::MM_PROT_WRITE) ? 'w' : '-',
                                 (p & MemoryMap::MM_PROT_EXEC)  ? 'x' : '-',
-                                me[i].get_name().c_str());
+                                segment.get_name().c_str());
                     }
                     fclose(f);
                     filename = "x-maps";

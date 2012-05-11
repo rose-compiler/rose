@@ -108,6 +108,11 @@ struct BtorTranslationPolicy {
     return problem.build_constant(Len, (n & (IntegerOps::GenMask<uint64_t, Len>::value)));
   }
 
+  template<size_t Len>
+  BtorWordType<Len> undefined() {
+      return problem.build_var(Len);
+  }
+
   Comp concat(const Comp& a, const Comp& b);
 
   template <size_t Len1, size_t Len2>
@@ -125,7 +130,6 @@ struct BtorTranslationPolicy {
 
   BtorWordType<1> true_() {return ones(1);}
   BtorWordType<1> false_() {return zero(1);}
-  BtorWordType<1> undefined_() {return problem.build_var(1);}
 
   template <size_t Len>
   BtorWordType<Len> invert(const BtorWordType<Len>& a) {

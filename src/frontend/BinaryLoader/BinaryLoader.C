@@ -7,6 +7,7 @@
 #include "BinaryLoader.h"
 #include "BinaryLoaderElf.h"
 #include "BinaryLoaderPe.h"
+#include "Disassembler.h"
 
 std::vector<BinaryLoader*> BinaryLoader::loaders;
 
@@ -420,18 +421,18 @@ BinaryLoader::remap(MemoryMap *map, SgAsmGenericHeader *header)
             if (CONTRIBUTE_SUB==contrib) {
                 if (debug)
                     fprintf(debug, "    Subtracting contribution\n");
-                map->erase(MemoryMap::MapElement(va, mem_size));
+                map->erase(Extent(va, mem_size));
                 continue;
             }
 
             /* Resolve mapping conflicts.  The new mapping may have multiple parts, so we test whether all those parts can be
-             * mapped by first mapping an anonymous region and then removing it.  In this way we can perform the test atomically
-             * rather than trying to undo the parts that had been successful. Allocating a large anonymous region does not
-             * actually allocate any memory. */
+             * mapped by first mapping a region and then removing it.  In this way we can perform the test atomically rather
+             * than trying to undo the parts that had been successful. Allocating a large region does not actually allocate any
+             * memory. */
             try {
-                MemoryMap::MapElement test(va, mem_size);
-                map->insert(test);
-                map->erase(test);
+                map->insert(Extent(va, mem_size),
+                            MemoryMap::Segment(MemoryMap::NullBuffer::create(mem_size), 0, MemoryMap::MM_PROT_NONE));
+                map->erase(Extent(va, mem_size));
             } catch (const MemoryMap::Exception&) {
                 switch (resolve) {
                     case RESOLVE_THROW:
@@ -439,7 +440,7 @@ BinaryLoader::remap(MemoryMap *map, SgAsmGenericHeader *header)
                     case RESOLVE_OVERMAP:
                         if (debug)
                             fprintf(debug, "    Conflict: resolved by making a hole\n");
-                        map->erase(MemoryMap::MapElement(va, mem_size));
+                        map->erase(Extent(va, mem_size));
                         break;
                     case RESOLVE_REMAP:
                     case RESOLVE_REMAP_ABOVE: {
@@ -470,7 +471,7 @@ BinaryLoader::remap(MemoryMap *map, SgAsmGenericHeader *header)
             if (section->get_mapped_xperm())
                 mapperms |= MemoryMap::MM_PROT_EXEC;
 
-            /* MapElement name for debugging. This is the file base name and section name concatenated. */
+            /* Segment name for debugging. This is the file base name and section name concatenated. */
             std::string::size_type file_basename_pos = file->get_name().find_last_of("/");
             file_basename_pos = file_basename_pos==file->get_name().npos ? 0 : file_basename_pos+1;
             std::string melmt_name = file->get_name().substr(file_basename_pos) + "(" + section->get_name()->get_string() + ")";
@@ -496,9 +497,9 @@ BinaryLoader::remap(MemoryMap *map, SgAsmGenericHeader *header)
                             "va=0x%08"PRIx64" + 0x%08"PRIx64" = 0x%08"PRIx64"\n",
                             total, a, n, a+n);
                 }
-                MemoryMap::MapElement me(a, n, mapperms|MemoryMap::MM_PROT_PRIVATE);
-                me.set_name(melmt_name);
-                map->insert(me);
+                map->insert(Extent(a, n),
+                            MemoryMap::Segment(MemoryMap::AnonymousBuffer::create(n), 0,
+                                               mapperms|MemoryMap::MM_PROT_PRIVATE, melmt_name));
                 mem_size -= n;
                 file_size = std::min(file_size, mem_size);
             }
@@ -511,9 +512,9 @@ BinaryLoader::remap(MemoryMap *map, SgAsmGenericHeader *header)
                     fprintf(debug, "    %-41s va=0x%08"PRIx64" + 0x%08"PRIx64" = 0x%08"PRIx64"\n",
                             "Mapping part beyond end of section:", a, n, a+n);
                 }
-                MemoryMap::MapElement me(a, n, mapperms|MemoryMap::MM_PROT_PRIVATE);
-                me.set_name(melmt_name);
-                map->insert(me);
+                map->insert(Extent(a, n),
+                            MemoryMap::Segment(MemoryMap::AnonymousBuffer::create(n), 0,
+                                               mapperms|MemoryMap::MM_PROT_PRIVATE, melmt_name));
                 mem_size -= n;
             }
 
@@ -525,9 +526,9 @@ BinaryLoader::remap(MemoryMap *map, SgAsmGenericHeader *header)
                     fprintf(debug, "    %-41s va=0x%08"PRIx64" + 0x%08"PRIx64" = 0x%08"PRIx64"\n",
                             "Mapping part before beginning of section:", a, n, a+n);
                 }
-                MemoryMap::MapElement me(a, n, mapperms|MemoryMap::MM_PROT_PRIVATE);
-                me.set_name(melmt_name);
-                map->insert(me);
+                map->insert(Extent(a, n),
+                            MemoryMap::Segment(MemoryMap::AnonymousBuffer::create(n), 0,
+                                               mapperms|MemoryMap::MM_PROT_PRIVATE, melmt_name));
                 mem_size -= n;
                 file_size -= n;
                 va += n;
@@ -544,13 +545,14 @@ BinaryLoader::remap(MemoryMap *map, SgAsmGenericHeader *header)
                 if (map_private) {
                     uint8_t *storage = new uint8_t[mem_size];
                     memcpy(storage, &(file->get_data()[offset]), mem_size);
-                    MemoryMap::MapElement me(va, mem_size, storage, 0, mapperms|MemoryMap::MM_PROT_PRIVATE);
-                    me.set_name(melmt_name);
-                    map->insert(me);
+                    MemoryMap::BufferPtr buffer = MemoryMap::ByteBuffer::create(storage, mem_size);
+                    map->insert(Extent(va, mem_size),
+                                MemoryMap::Segment(buffer, 0, mapperms|MemoryMap::MM_PROT_PRIVATE, melmt_name));
                 } else {
-                    MemoryMap::MapElement me(va, mem_size, &(file->get_data()[0]), offset, mapperms);
-                    me.set_name(melmt_name);
-                    map->insert(me);
+                    // Create the buffer, but the buffer should not take ownership of data from the file.
+                    MemoryMap::BufferPtr buffer = MemoryMap::ExternBuffer::create(&(file->get_data())[0],
+                                                                                  file->get_data().size());
+                    map->insert(Extent(va, mem_size), MemoryMap::Segment(buffer, offset, mapperms, melmt_name));
                 }
             }
 

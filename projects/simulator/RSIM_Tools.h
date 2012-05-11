@@ -234,9 +234,11 @@ public:
                         std::string name = defn->get_name();
                         if (name.empty()) {
                             RTS_READ(process->rwlock()) {
-                                const MemoryMap::MapElement *me = process->get_memory()->find(defn->get_entry_va());
-                                if (me && !me->get_name().empty())
-                                    name = "in " + me->get_name();
+                                if (process->get_memory()->exists(defn->get_entry_va())) {
+                                    const MemoryMap::Segment &sgmt = process->get_memory()->at(defn->get_entry_va()).second;
+                                    if (!sgmt.get_name().empty())
+                                        name = "in " + sgmt.get_name();
+                                }
                             } RTS_READ_END;
                         }
                         if (defn->get_entry_va()!=func_start)

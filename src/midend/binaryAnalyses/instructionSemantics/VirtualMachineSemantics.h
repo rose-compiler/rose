@@ -18,6 +18,7 @@
 
 #include "x86InstructionSemantics.h"
 #include "BaseSemantics.h"
+#include "MemoryMap.h"
 
 namespace BinaryAnalysis {                      // documented elsewhere
     namespace InstructionSemantics {            // documented elsewhere

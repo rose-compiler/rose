@@ -3,6 +3,7 @@
 
 #include "threadSupport.h"      /* needed for RTS_mutex_t in this header */
 #include "Registers.h"
+#include "MemoryMap.h"
 
 /** Virtual base class for instruction disassemblers.
  *
