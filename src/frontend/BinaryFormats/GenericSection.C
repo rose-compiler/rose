@@ -3,7 +3,7 @@
 
 #include "sage3basic.h"
 #include "stringify.h"
-
+#include "MemoryMap.h"
 
 /** Section constructors set the optional section header relationship--a bidirectional link between this new section and its
  *  optional, single header.  This new section points to its header and the header contains a list that points to this new

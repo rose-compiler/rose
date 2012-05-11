@@ -1,5 +1,6 @@
 /* PE Import Directory. A PE Import Section is a list of PE Import Directories. */
 #include "sage3basic.h"
+#include "MemoryMap.h"
 
 /** @class SgAsmPEImportDirectory
  *

@@ -2,6 +2,7 @@
  * file) because then they won't get indexed/formatted/etc. by C-aware tools. */
 
 #include "sage3basic.h"
+#include "Disassembler.h"
 
 /** Return control flow successors. See base class for full documentation. */
 Disassembler::AddressSet

@@ -2033,14 +2033,10 @@ projects/RTED/Makefile
 projects/RoseQt/AstViewer/Makefile
 projects/RoseQt/Makefile
 projects/SatSolver/Makefile
-projects/SemanticSignatureVectors/Makefile
-projects/SemanticSignatureVectors/tests/Makefile
 projects/UpcTranslation/Makefile
 projects/UpcTranslation/tests/Makefile
 projects/arrayOptimization/Makefile
 projects/arrayOptimization/test/Makefile
-projects/assemblyToSourceAst/Makefile
-projects/assemblyToSourceAst/tests/Makefile
 projects/autoParallelization/Makefile
 projects/autoParallelization/tests/Makefile
 projects/autoTuning/Makefile
