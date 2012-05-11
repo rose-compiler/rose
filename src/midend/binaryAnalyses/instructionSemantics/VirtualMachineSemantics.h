@@ -213,8 +213,6 @@ namespace BinaryAnalysis {                      // documented elsewhere
                 >
             class Policy: public BaseSemantics::Policy {
             protected:
-                typedef typename State<ValueType>::Memory Memory;
-
                 SgAsmInstruction *cur_insn;         /**< Set by startInstruction(), cleared by finishInstruction() */
                 mutable State<ValueType> orig_state;/**< Original machine state, initialized by constructor and mem_write. This
                                                      *   data member is mutable because a mem_read() operation, although
@@ -291,11 +289,11 @@ namespace BinaryAnalysis {                      // documented elsewhere
                 const ValueType<32>& get_orig_ip() const { return orig_state.ip; }
 
                 /** Returns a copy of the state after removing memory that is not pertinent to an equal_states() comparison. */
-                Memory memory_for_equality(const State<ValueType>&) const;
+                typename State<ValueType>::Memory memory_for_equality(const State<ValueType>&) const;
 
                 /** Returns a copy of the current state after removing memory that is not pertinent to an equal_states()
                  *  comparison. */
-                Memory memory_for_equality() const { return memory_for_equality(cur_state); }
+                typename State<ValueType>::Memory memory_for_equality() const { return memory_for_equality(cur_state); }
 
                 /** Compares two states for equality. The comarison looks at all register values and the memory locations that
                  *  are different than their original value (but excluding differences due to clobbering). It does not compare
@@ -388,7 +386,7 @@ namespace BinaryAnalysis {                      // documented elsewhere
                     MemoryCell<ValueType> new_cell(addr, ValueType<32>(), Len/8);
                     bool aliased = false; /*is new_cell aliased by any existing writes?*/
 
-                    for (typename Memory::iterator mi=state.mem.begin(); mi!=state.mem.end(); ++mi) {
+                    for (typename State<ValueType>::Memory::iterator mi=state.mem.begin(); mi!=state.mem.end(); ++mi) {
                         if (new_cell.must_alias(*mi)) {
                             if ((*mi).is_clobbered()) {
                                 (*mi).set_clobbered(false);
@@ -405,7 +403,9 @@ namespace BinaryAnalysis {                      // documented elsewhere
                     if (!aliased && &state!=&orig_state) {
                         /* We didn't find the memory cell in the specified state and it's not aliased to any writes in that
                          * state. Therefore use the value from the initial memory state (creating it if necessary). */
-                        for (typename Memory::iterator mi=orig_state.mem.begin(); mi!=orig_state.mem.end(); ++mi) {
+                        for (typename State<ValueType>::Memory::iterator mi=orig_state.mem.begin();
+                             mi!=orig_state.mem.end();
+                             ++mi) {
                             if (new_cell.must_alias(*mi)) {
                                 ROSE_ASSERT(!(*mi).is_clobbered());
                                 ROSE_ASSERT(!(*mi).is_written());
@@ -471,7 +471,7 @@ namespace BinaryAnalysis {                      // documented elsewhere
                     MemRefType new_mrt = memory_reference_type(state, addr);
 
                     /* Overwrite and/or clobber existing memory locations. */
-                    for (typename Memory::iterator mi=state.mem.begin(); mi!=state.mem.end(); ++mi) {
+                    for (typename State<ValueType>::Memory::iterator mi=state.mem.begin(); mi!=state.mem.end(); ++mi) {
                         if (new_cell.must_alias(*mi)) {
                             *mi = new_cell;
                             saved = true;
@@ -1004,7 +1004,7 @@ namespace BinaryAnalysis {                      // documented elsewhere
             Policy<State, ValueType>::memory_for_equality(const State<ValueType> &state) const
             {
                 State<ValueType> tmp_state = state;
-                Memory retval;
+                typename State<ValueType>::Memory retval;
 #ifndef CXX_IS_ROSE_ANALYSIS
                 for (typename State<ValueType>::Memory::const_iterator mi=state.mem.begin(); mi!=state.mem.end(); ++mi) {
                     if ((*mi).is_written() && (*mi).get_data()!=mem_read<32>(orig_state, (*mi).get_address()))
@@ -1023,8 +1023,8 @@ namespace BinaryAnalysis {                      // documented elsewhere
 #ifndef CXX_IS_ROSE_ANALYSIS
                 if (!s1.equal_registers(s2))
                     return false;
-                Memory m1 = memory_for_equality(s1);
-                Memory m2 = memory_for_equality(s2);
+                typename State<ValueType>::Memory m1 = memory_for_equality(s1);
+                typename State<ValueType>::Memory m2 = memory_for_equality(s2);
                 if (m1.size()!=m2.size())
                     return false;
                 for (size_t i=0; i<m1.size(); ++i) {
@@ -1058,11 +1058,11 @@ namespace BinaryAnalysis {                      // documented elsewhere
 
                 /* Get all addresses that have been written and are not currently clobbered. */
                 std::set<ValueType<32> > addresses;
-                for (typename Memory::const_iterator mi=s1.mem.begin(); mi!=s1.mem.end(); ++mi) {
+                for (typename State<ValueType>::Memory::const_iterator mi=s1.mem.begin(); mi!=s1.mem.end(); ++mi) {
                     if (!(*mi).is_clobbered() && (*mi).is_written())
                         addresses.insert((*mi).get_address());
                 }
-                for (typename Memory::const_iterator mi=s2.mem.begin(); mi!=s2.mem.end(); ++mi) {
+                for (typename State<ValueType>::Memory::const_iterator mi=s2.mem.begin(); mi!=s2.mem.end(); ++mi) {
                     if (!(*mi).is_clobbered() && (*mi).is_written())
                         addresses.insert((*mi).get_address());
                 }
@@ -1089,7 +1089,7 @@ namespace BinaryAnalysis {                      // documented elsewhere
             {
 #ifndef CXX_IS_ROSE_ANALYSIS
                 const ValueType<32> sp_inverted = invert(cur_state.gpr[x86_gpr_sp]);
-                for (typename Memory::const_iterator mi=cur_state.mem.begin(); mi!=cur_state.mem.end(); ++mi) {
+                for (typename State<ValueType>::Memory::const_iterator mi=cur_state.mem.begin(); mi!=cur_state.mem.end(); ++mi) {
                     if ((*mi).get_nbytes()!=4 || !((*mi).get_data()==value)) continue;
                     const ValueType<32> &addr = (*mi).get_address();
 
