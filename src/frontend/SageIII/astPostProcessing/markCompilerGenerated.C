@@ -122,6 +122,9 @@ MarkAsCompilerGenerated::visit(SgNode* node)
           Sg_File_Info* fileInfo = node->get_file_info();
           if (fileInfo != NULL)
              {
+#if 0
+               printf ("MarkAsCompilerGenerated::visit(): Marking node = %p = %s as compiler generated \n",node,node->class_name().c_str());
+#endif
             // Mark the file info object as being compiler generated instead of part of a transformation. If
             // it were part of a transformation the the unparser would be forced to output the associated code.
             // if (markAsCompilerGenerated == true)

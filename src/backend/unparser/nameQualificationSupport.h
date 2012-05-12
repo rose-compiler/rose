@@ -52,6 +52,7 @@ class NameQualificationTraversal : public AstTopDownBottomUpProcessing<NameQuali
 
        // Data
        // DQ (6/21/2011): since this is used recursively we can't have this be a new set each time.
+       // Build the local set to use to record when declaration that might required qualified references have been seen.
           std::set<SgNode*> & referencedNameSet;
 
        // We keep the qualified names as a map of strings with keys defined by the SgNode pointer values.

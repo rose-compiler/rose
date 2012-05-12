@@ -2231,19 +2231,42 @@ NameQualificationTraversal::skipNameQualificationIfNotProperlyDeclaredWhereDecla
      SgDeclarationStatement* declarationToSearchForInReferencedNameSet = declaration->get_firstNondefiningDeclaration() != NULL ? declaration->get_firstNondefiningDeclaration() : declaration;
      ROSE_ASSERT(declarationToSearchForInReferencedNameSet != NULL);
 
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+     printf ("In skipNameQualificationIfNotProperlyDeclaredWhereDeclarationIsDefinable(): declaration->get_firstNondefiningDeclaration() = %p \n",declaration->get_firstNondefiningDeclaration());
+     printf ("   --- declarationToSearchForInReferencedNameSet->get_parent() = %p = %s \n",declarationToSearchForInReferencedNameSet->get_parent(),declarationToSearchForInReferencedNameSet->get_parent()->class_name().c_str());
+
+     printf ("   --- declaration                                             = %p = %s \n",declaration,declaration->class_name().c_str());
+     printf ("   --- declaration->get_parent()                               = %p = %s \n",declaration->get_parent(),declaration->get_parent()->class_name().c_str());
+     if (declaration->get_firstNondefiningDeclaration() != NULL)
+        {
+          printf ("   --- declaration ->get_firstNondefiningDeclaration()              = %p = %s \n",declaration->get_firstNondefiningDeclaration(),declaration->get_firstNondefiningDeclaration()->class_name().c_str());
+          printf ("   --- declaration->get_firstNondefiningDeclaration()->get_parent() = %p = %s \n",declaration->get_firstNondefiningDeclaration()->get_parent(),declaration->get_firstNondefiningDeclaration()->get_parent()->class_name().c_str());
+        }
+     if (declaration->get_definingDeclaration() != NULL)
+        {
+          printf ("   --- declaration ->get_definingDeclaration()                      = %p = %s \n",declaration->get_definingDeclaration(),declaration->get_definingDeclaration()->class_name().c_str());
+          printf ("   --- declaration->get_definingDeclaration()->get_parent()         = %p = %s \n",declaration->get_definingDeclaration()->get_parent(),declaration->get_definingDeclaration()->get_parent()->class_name().c_str());
+        }
+
+     for (std::set<SgNode*>::iterator i = referencedNameSet.begin(); i != referencedNameSet.end(); i++)
+        {
+          printf ("   --- *** referencedNameSet member *i = %p = %s \n",*i,(*i)->class_name().c_str());
+        }
+#endif
+
   // DQ (6/22/2011): This fixes test2011_97.C which only has a defining declaration so that the declaration->get_firstNondefiningDeclaration() was NULL.
   // if (referencedNameSet.find(declaration->get_firstNondefiningDeclaration()) == referencedNameSet.end())
      if (referencedNameSet.find(declarationToSearchForInReferencedNameSet) == referencedNameSet.end())
         {
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-          printf ("$$$$$$$$$$ NOT Found: declaration %p = %s in referencedNameSet referencedNameSet.size() = %zu \n",declaration,declaration->class_name().c_str(),referencedNameSet.size());
+          printf ("   --- $$$$$$$$$$ NOT Found: declaration %p = %s in referencedNameSet referencedNameSet.size() = %zu \n",declaration,declaration->class_name().c_str(),referencedNameSet.size());
 #endif
           skipNameQualification = true;
         }
        else
         {
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-          printf ("$$$$$$$$$$ FOUND: declaration %p = %s in referencedNameSet \n",declaration,declaration->class_name().c_str());
+          printf ("   --- $$$$$$$$$$ FOUND: declaration %p = %s in referencedNameSet \n",declaration,declaration->class_name().c_str());
 #endif
         }
 
@@ -2256,7 +2279,12 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
    {
      ROSE_ASSERT(n != NULL);
 
-  // printf ("Inside of NameQualificationTraversal::evaluateInheritedAttribute(): node = %p = %s \n",n,n->class_name().c_str());
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+     printf ("\n\n****************************************************** \n");
+     printf ("****************************************************** \n");
+     printf ("Inside of NameQualificationTraversal::evaluateInheritedAttribute(): node = %p = %s \n",n,n->class_name().c_str());
+     printf ("****************************************************** \n");
+#endif
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
   // Extra information about the location of the current node.
@@ -3521,8 +3549,17 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
              }
         }
 
-#if 0
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+     printf ("****************************************************** \n");
      printf ("Leaving NameQualificationTraversal::evaluateInheritedAttribute(): node = %p = %s \n",n,n->class_name().c_str());
+     printf ("******************************************************\n\n\n");
+     SgLocatedNode* locatedNode = isSgLocatedNode(n);
+     if (locatedNode != NULL)
+        {
+          locatedNode->get_file_info()->display("Leaving NameQualificationTraversal::evaluateInheritedAttribute()");
+        }
+     printf ("******************************************************\n\n\n");
+     printf ("******************************************************\n\n\n");
 #endif
 
      return NameQualificationInheritedAttribute(inheritedAttribute);
@@ -3688,6 +3725,43 @@ NameQualificationTraversal::setNameQualification(SgFunctionRefExp* functionRefEx
      printf ("In NameQualificationTraversal::setNameQualification(): functionRefExp->get_type_elaboration_required()     = %s \n",functionRefExp->get_type_elaboration_required() ? "true" : "false");
      printf ("In NameQualificationTraversal::setNameQualification(): functionRefExp->get_global_qualification_required() = %s \n",functionRefExp->get_global_qualification_required() ? "true" : "false");
 #endif
+
+  // DQ (5/2/2012): I don't think that global qualification is allowed for friend functions (so test for this).
+  // test2012_59.C is an example of this issue.
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+     printf ("In NameQualificationTraversal::setNameQualification(): functionDeclaration->get_declarationModifier().isFriend() = %s \n",functionDeclaration->get_declarationModifier().isFriend() ? "true" : "false");
+     if (functionDeclaration->get_firstNondefiningDeclaration() != NULL)
+          printf ("In NameQualificationTraversal::setNameQualification(): functionDeclaration->get_firstNondefiningDeclaration()->get_declarationModifier().isFriend() = %s \n",functionDeclaration->get_firstNondefiningDeclaration()->get_declarationModifier().isFriend() ? "true" : "false");
+     if (functionDeclaration->get_definingDeclaration() != NULL)
+          printf ("In NameQualificationTraversal::setNameQualification(): functionDeclaration->get_definingDeclaration()->get_declarationModifier().isFriend()         = %s \n",functionDeclaration->get_definingDeclaration()->get_declarationModifier().isFriend() ? "true" : "false");
+#endif
+
+  // Look for friend declaration on both declaration (defining and non-defining).
+     bool isFriend = false;
+     if (functionDeclaration->get_firstNondefiningDeclaration() != NULL)
+        {
+          isFriend = isFriend || functionDeclaration->get_firstNondefiningDeclaration()->get_declarationModifier().isFriend();
+        }
+     if (functionDeclaration->get_definingDeclaration() != NULL)
+        {
+          isFriend = isFriend || functionDeclaration->get_definingDeclaration()->get_declarationModifier().isFriend();
+        }
+
+     if (outputGlobalQualification == true && isFriend == true)
+        {
+       // printf ("WARNING: We can't specify global qualification of friend function (qualifier reset to be empty string) \n");
+
+       // Note that I think this might only be an issue where outputNameQualificationLength == 0.
+          ROSE_ASSERT (outputNameQualificationLength == 0);
+
+       // Reset the values (and the qualifier string).
+       // outputNameQualificationLength = 0;
+          outputGlobalQualification = false;
+          qualifier = "";
+        }
+
+  // printf ("In NameQualificationTraversal::setNameQualification(): qualifier = %s \n",qualifier.c_str());
+
      if (qualifiedNameMapForNames.find(functionRefExp) == qualifiedNameMapForNames.end())
         {
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
@@ -3956,11 +4030,15 @@ NameQualificationTraversal::setNameQualification ( SgFunctionDeclaration* functi
      bool outputGlobalQualification     = false;
      bool outputTypeEvaluation          = false;
 
+  // printf ("\n************************************************ \n");
+
      string qualifier = setNameQualificationSupport(functionDeclaration->get_scope(),amountOfNameQualificationRequired, outputNameQualificationLength, outputGlobalQualification, outputTypeEvaluation);
 
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
      printf ("In NameQualificationTraversal::setNameQualification(): functionDeclaration->get_declarationModifier().isFriend() = %s \n",functionDeclaration->get_declarationModifier().isFriend() ? "true" : "false");
      printf ("In NameQualificationTraversal::setNameQualification(): outputNameQualificationLength                             = %d \n",outputNameQualificationLength);
      printf ("In NameQualificationTraversal::setNameQualification(): outputGlobalQualification                                 = %s \n",outputGlobalQualification ? "true" : "false");
+#endif
 
   // DQ (3/31/2012): I don't think that global qualification is allowed for friend functions (so test for this).
   // test2012_57.C is an example of this issue.
@@ -4028,6 +4106,8 @@ NameQualificationTraversal::setNameQualification ( SgFunctionDeclaration* functi
 #endif
              }
         }
+
+  // printf ("****************** DONE ******************** \n\n");
    }
 
 // void NameQualificationTraversal::setNameQualificationReturnType ( SgFunctionDeclaration* functionDeclaration, int amountOfNameQualificationRequired )

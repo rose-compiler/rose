@@ -1239,7 +1239,7 @@ Unparse_ExprStmt::unparseFuncRefSupport(SgExpression* expr, SgUnparse_Info& info
                   }
              }
 
-          curprint ("\n /* unparseFuncRef func_name = " + func_name + " */ \n");
+       // curprint ("\n /* unparseFuncRef func_name = " + func_name + " */ \n");
 #if 0
        // DQ (12/2/2004): Put a little extra space after the function name (avoids i !=0)
           curprint (func_name);

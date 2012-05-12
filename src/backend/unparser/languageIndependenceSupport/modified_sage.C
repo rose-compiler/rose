@@ -1221,7 +1221,19 @@ Unparse_MOD_SAGE::outputTemplateSpecializationSpecifier ( SgDeclarationStatement
             else
              {
             // Normal case for output of template instantiations (which ROSE puts out as specializations)
-               curprint( "template<> ");
+            // curprint( "template<> ");
+
+            // DQ (5/2/2012): If this is a function template instantiation in a class template instantiation then 
+            // we don't want the "template<>" (error in g++, at least).  See test2012_59.C.
+               SgTemplateInstantiationDefn* templateClassInstatiationDefn = isSgTemplateInstantiationDefn(decl_stmt->get_parent());
+               if (templateClassInstatiationDefn != NULL)
+                  {
+                    printf ("This is a declaration defined in a templated class (suppress the output of template specialization syntax) \n");
+                  }
+                 else
+                  {
+                    curprint("template<> ");
+                  }
              }
         }
 #endif

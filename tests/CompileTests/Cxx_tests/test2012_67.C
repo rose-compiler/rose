@@ -1,17 +1,17 @@
 template <typename T>
-class A 
+class foobar 
    {
      public:
-          A() {};
+          foobar() {};
        // A();
    };
 
 // This is a special case of building multiple defining declarations (of different functions from ROSE's perspective but using the same function pointer from EDG's perspective)
 // A<int> SgTemplateMemberFunctionDeclaration constructor (defining declaration) is referenced twice.
-class B : public A<int>
+class B : public foobar<int>
    {
      public:
-       // B() : A<int>() {};
+       // B() : foobar<int>() {};
           B() {};
    };
 

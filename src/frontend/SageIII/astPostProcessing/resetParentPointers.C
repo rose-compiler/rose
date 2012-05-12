@@ -934,9 +934,10 @@ ResetParentPointers::evaluateInheritedAttribute (
 #endif
                     if (templateDeclaration == NULL)
                        {
-                         printf ("templateInstantiation->get_templateDeclaration() == NULL templateInstantiation = %p = %s \n",templateInstantiation,templateInstantiation->class_name().c_str());
+                         printf ("WARNING: templateInstantiation->get_templateDeclaration() == NULL templateInstantiation = %p = %s \n",templateInstantiation,templateInstantiation->class_name().c_str());
                        }
-                    ROSE_ASSERT(templateDeclaration != NULL);
+                 // DQ (5/3/2012): commented out for the new EDG 4.3 support.
+                 // ROSE_ASSERT(templateDeclaration != NULL);
 
 #if 0
                  // DQ (8/18/2005): There is too much variablity in how this is set, 

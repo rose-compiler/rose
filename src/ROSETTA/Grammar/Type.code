@@ -3285,18 +3285,27 @@ SgFunctionType::insert_argument(const SgTypePtrList::iterator& where, SgType* wh
      p_argument_list->insert_argument(where,what);
    }
 
-SgName SgFunctionType::get_mangled(SgType* ret_type, SgFunctionParameterTypeList * typeList) 
+SgName
+SgFunctionType::get_mangled(SgType* ret_type, SgFunctionParameterTypeList * typeList) 
    {
   // process argument type
      SgName arg_names;
-     if (typeList != NULL) {
-       const SgTypePtrList& args = typeList->get_arguments ();
-       arg_names = mangleTypes (args.begin (), args.end ());
-     }
+     if (typeList != NULL)
+        {
+          const SgTypePtrList & args = typeList->get_arguments ();
+          arg_names = mangleTypes (args.begin (), args.end ());
+        }
+#if 0
+     printf ("In SgFunctionType::get_mangled(SgType*,SgFunctionParameterTypeList*): arg_names = %s \n",arg_names.str());
+#endif
 
   // process return type
-     ROSE_ASSERT (ret_type);
-     SgName ret_name = ret_type->get_mangled ();
+     ROSE_ASSERT (ret_type != NULL);
+     SgName ret_name = ret_type->get_mangled();
+
+#if 0
+     printf ("In SgFunctionType::get_mangled(SgType*,SgFunctionParameterTypeList*): ret_name = %s \n",ret_name.str());
+#endif
 
   // Build complete mangled name
      SgName mangled_name;
@@ -3304,9 +3313,12 @@ SgName SgFunctionType::get_mangled(SgType* ret_type, SgFunctionParameterTypeList
                   << ret_name.str () // return type
                   << "_Gb_" // argument list begin
                   << arg_names.str () // argument types
-                  << "_Fe_" // end function signature
-       ;
-       
+                  << "_Fe_"; // end function signature
+
+#if 0
+     printf ("Leaving SgFunctionType::get_mangled(SgType*,SgFunctionParameterTypeList*): mangled_name = %s \n",mangled_name.str());
+#endif
+
      return mangled_name;
    }
 
@@ -3315,10 +3327,19 @@ SgName
 SgFunctionType::get_mangled (void) const
    {
      ROSE_ASSERT(this != NULL);
-   // TV (04/19/2011): I outlined the mangling of function type in a static function to avoid
-   //		building of a function type in 'SageBuilder::buildFunctionType' (This was used
-   //		to do a search in 'globalFunctionTypeTable')
-     return get_mangled(get_return_type(), get_argument_list()); 
+
+  // TV (04/19/2011): I outlined the mangling of function type in a static function to avoid
+  // building of a function type in 'SageBuilder::buildFunctionType' (This was used
+  // to do a search in 'globalFunctionTypeTable')
+  // return get_mangled(get_return_type(), get_argument_list());
+
+     SgName name = get_mangled(get_return_type(), get_argument_list());
+
+#if 0
+     printf ("In SgFunctionType::get_mangled(void): name = %s \n",name.str());
+#endif
+
+     return name;
    }
 
 
@@ -3777,6 +3798,9 @@ SgMemberFunctionType::get_mangled (void) const
           SgName class_scope = cls_type->get_mangled ();
           mangled_cls_tag += class_scope;
         }
+#if 0
+     printf ("In SgMemberFunctionType::get_mangled(): after class scope evaluation: mangled_cls_tag = %s \n",mangled_cls_tag.str());
+#endif
 
   // DQ (12/3/2011): Because of these member function calls this can't be refactored to be a static function.
   // Append modifiers
@@ -3789,14 +3813,34 @@ SgMemberFunctionType::get_mangled (void) const
      if (isRestrictFunc() == true)
           mangled_cls_tag << "_rf";
 
+#if 0
+     printf ("In SgMemberFunctionType::get_mangled(): after function modifier evaluation: mangled_cls_tag = %s \n",mangled_cls_tag.str());
+#endif
+
   // Mangle the function type without qualifiers
      SgName basic_func_type = SgFunctionType::get_mangled();
+
+#if 0
+     printf ("In SgMemberFunctionType::get_mangled(): after call to SgFunctionType::get_mangled(): basic_func_type = %s \n",basic_func_type.str());
+#endif
 
   // Compute mangled member function pointer type
      SgName mangled_name;
      if (mangled_cls_tag.get_length () > 0)
-       mangled_name << "__MFb_" << mangled_cls_tag.str (); // really is a member function
+        {
+          mangled_name << "__MFb_" << mangled_cls_tag.str(); // really is a member function
+        }
+
+#if 0
+     printf ("In SgMemberFunctionType::get_mangled(): after mangled member function pointer type evaluation: mangled_cls_tag = %s \n",mangled_name.str());
+#endif
+
      mangled_name << "_" << basic_func_type.str (); // Append standard argument signature.
+
+#if 0
+     printf ("In SgMemberFunctionType::get_mangled(): returning: mangled_name = %s \n",mangled_name.str());
+#endif
+
 #else
   // DQ (12/3/2011): Not sure how to construct this case...leaving the older code (unrefactored).
      SgMemberFunctionType::get_mangled(get_return_type(),get_argument_list(),get_class_type());
@@ -4911,7 +4955,9 @@ SgClassType::createType(SgDeclarationStatement* cd, SgExpression* optional_fortr
         }
 
   // ROSE_ASSERT(type_from_declaration != NULL);
+#if 0
      printf ("Inside of SgClassType::createType(): cd = %p = %s type_from_declaration = %p \n",cd,cd->class_name().c_str(),type_from_declaration);
+#endif
 
   // if (!cd->get_type())
      if (type_from_declaration == NULL)
@@ -4928,17 +4974,21 @@ SgClassType::createType(SgDeclarationStatement* cd, SgExpression* optional_fortr
 #if 1
        // DQ (3/14/2012): Note that the new template support allows that classDeclaration is non-null (since template classes are derived from non-template classes).
           ROSE_ASSERT(classDeclaration != NULL);
+#if 0
           printf ("Inside of SgClassType::createType(): cd = %p = %s = %s newType = %p \n",cd,cd->class_name().c_str(),classDeclaration->get_name().str(),newType);
 #endif
+#endif
           SgScopeStatement* currentScope = getCurrentScope();
-#if 1
+#if 0
           printf ("Inside of SgClassType::createType(): currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
 #endif
        // DQ (3/14/2012): Make sure that this is a valid pointer else it might explain why qualification is not being use to generate the mangled names.
        // ROSE_ASSERT(cd->get_scope() != NULL);
           if (cd->get_scope() == NULL && currentScope != NULL)
              {
+#if 0
                printf ("Inside of SgClassType::createType(): Setting scope for cd = %p = %s to currentScope = %p = %s \n",cd,cd->class_name().c_str(),currentScope,currentScope->class_name().c_str());
+#endif
                cd->set_scope(currentScope);
              }
           ROSE_ASSERT(cd->get_scope() != NULL);
@@ -4946,11 +4996,14 @@ SgClassType::createType(SgDeclarationStatement* cd, SgExpression* optional_fortr
        // We have to build the type before we can generate a mangle name for it.
           SgName name = newType->get_mangled();
 
+#if 0
           printf ("Inside of SgClassType::createType(): type name (newType->get_mangled()) = %s \n",name.str());
-
+#endif
           if (name.is_null() == true)
              {
+#if 0
                printf ("Need to handle special case of SgClassDeclaration of un-named class cd = %p = %s \n",cd,cd->class_name().c_str());
+#endif
 #if 0
                printf ("Need to handle special case of SgClassDeclaration of un-named class cd = %p = %s \n",cd,cd->class_name().c_str());
                ROSE_ASSERT(cd->get_file_info() != NULL);
@@ -4958,7 +5011,7 @@ SgClassType::createType(SgDeclarationStatement* cd, SgExpression* optional_fortr
 #endif
             // name = SageInterface::generateUniqueName(cd,/* ignoreDifferenceBetweenDefiningAndNondefiningDeclarations = */ true);
                name = SageInterface::generateUniqueName(newType,/* ignoreDifferenceBetweenDefiningAndNondefiningDeclarations = */ true);
-#if 1
+#if 0
                printf ("Generated a unique name (using SageInterface::generateUniqueName())= %s \n",name.str());
 #endif
             // name = SageInterface::get_name(newType);
@@ -4977,12 +5030,12 @@ SgClassType::createType(SgDeclarationStatement* cd, SgExpression* optional_fortr
                if (t == NULL)
                   {
                  // If the type is not in the type table then insert it so that we can reuse it.
-#if 1
+#if 0
                     printf ("Mangled type name for SgClassType = %s (not available in type table) \n",name.str());
 #endif
                  // get_globalTypeTable()->insert_type(name,newType);
                     currentScope->get_type_table()->insert_type(name,newType);
-#if 1
+#if 0
                     printf ("This SgClassType::createType() function also sets the type in the SgClassDeclaration = %p \n",cd);
 #endif
 
@@ -5000,7 +5053,9 @@ SgClassType::createType(SgDeclarationStatement* cd, SgExpression* optional_fortr
                     ROSE_ASSERT(classType != NULL);
 #if 1
                     ROSE_ASSERT(classType->get_declaration() != NULL);
+#if 0
                     printf ("Mangled type classType = %p (classType->get_declaration() = %p = %s) name for SgClassType name = %s (already exists in type table) \n",t,classType->get_declaration(),classType->get_declaration()->class_name().c_str(),name.str());
+#endif
 #endif
 
                  // DQ (3/21/2012): New test.
@@ -5020,7 +5075,7 @@ SgClassType::createType(SgDeclarationStatement* cd, SgExpression* optional_fortr
                        {
                          printf ("WARNING: In SgClassType::createType(): Found a case of t == newType \n");
                        }
-#if 1
+#if 0
                     printf ("This SgClassType::createType() function also sets the type in the SgClassDeclaration = %p \n",cd);
 #endif
                     $CLASSNAME* typeFromTypeTable = is$CLASSNAME(t);
@@ -5087,7 +5142,9 @@ SgClassType::createType(SgDeclarationStatement* cd, SgExpression* optional_fortr
         }
      ROSE_ASSERT(returnType->get_declaration() == cd);
 
+#if 0
      printf ("Leaving SgClassType::createType(): returnType = %p = %s \n",returnType,returnType->class_name().c_str());
+#endif
 
   // return ($CLASSNAME*) returnType;
      return returnType;

@@ -8,6 +8,7 @@ class X
              }
    };
 
+// This template is not unparsed in the generated code (but it is present in the ROSE AST).
 template <typename T>
 T & operator+( T & i, T & j)
    {

@@ -4,6 +4,8 @@ class X
    {
      public:
 #if 1
+       // This function is not called so it will be listed internally in EDG as not "defined" 
+       // and this causes some problems for the EDG/ROSE translation.
           friend void foo( X<T> & i )
              {
                int a;
