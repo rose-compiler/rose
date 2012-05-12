@@ -632,6 +632,45 @@ void replaceMacroCallsWithExpandedStrings(SgPragmaDeclaration* target);
   void addTextForUnparser ( SgNode* astNode, std::string s, AstUnparseAttribute::RelativePositionType inputlocation );
 
 
+
+// ************************************************************************
+//              Newer versions of now depricated functions
+// ************************************************************************
+
+// DQ (5/1/2012): This function queries the SageBuilder::SourcePositionClassification mode (stored in the SageBuilder 
+// interface) and used the specified mode to initialize the source position data (Sg_File_Info objects).  This 
+// function is the only function that should be called directly (though in a namespace we can't define permissions).
+//! Set the source code positon for the current (input) node.
+  void setSourcePosition(SgNode* node);
+
+// A better name might be "setSourcePositionForSubTree"
+//! Set the source code positon for the subtree (including the root).
+  void setSourcePositionAtRootAndAllChildren(SgNode *root);
+
+// DQ (5/1/2012): New function with improved name (still preserving the previous interface).
+// This function is not required once the new mechanism defining a source position mode is complete (shortly).
+//! Set subtree as a transformation.
+// void setSourcePositionAtRootAndAllChildrenAsTransformation(SgNode *root);
+// void setSourcePositionAtRootAndAllChildrenAsDefault(SgNode *root);
+
+// Removed to force use of the API and permit flexability in the lower level implementation.
+//! DQ (5/1/2012): New function with improved name.
+// void setSourcePositionToDefault( SgLocatedNode* locatedNode );
+  template<class T> void setSourcePositionToDefault( T* node );
+
+//! DQ (5/1/2012): New function with improved name.
+void setSourcePositionAsTransformation(SgNode *node);
+
+// DQ (5/1/2012): Newly renamed function (previous name preserved for backward compatability).
+void setSourcePositionPointersToNull(SgNode *node);
+
+// ************************************************************************
+
+
+
+// ************************************************************************
+//                  Older deprecated functions
+// ************************************************************************
   // Liao, 1/8/2007, set file info. for a whole subtree as transformation generated
 //! Set current node's source position as transformation generated
   void setOneSourcePositionForTransformation(SgNode *node);
@@ -646,7 +685,8 @@ void replaceMacroCallsWithExpandedStrings(SgPragmaDeclaration* target);
   void setSourcePositionForTransformation_memoryPool();
 
 //! Set the source position of SgLocatedNode to Sg_File_Info::generateDefaultFileInfo(). These nodes WILL be unparsed. Not for transformation usage.
-  void setSourcePosition (SgLocatedNode * locatedNode);
+// void setSourcePosition (SgLocatedNode * locatedNode);
+// ************************************************************************
 
 //@}
 

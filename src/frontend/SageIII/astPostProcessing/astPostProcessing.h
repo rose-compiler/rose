@@ -50,6 +50,10 @@
 // original expression trees.
 #include "fixupConstantFoldedValues.h"
 
+// DQ (5/1/2012): Added testing for marked transformations in the AST (should be none after EDG/ROSE translation).
+#include "detectTransformations.h"
+
+
 /*! \brief Postprocessing that is not likely to be handled in the EDG/Sage III translation.
  */
 void postProcessingSupport (SgNode* node);

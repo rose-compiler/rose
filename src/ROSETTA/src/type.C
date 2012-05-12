@@ -763,6 +763,12 @@ Grammar::setUpTypes ()
   // ArrayType.editSubstitute( "MANGLED_ID_STRING", "A_" );
      TypeEllipse.editSubstitute( "MANGLED_ID_STRING", "e" );
 
+  // DQ (5/11/2012): We need to define this.
+     TemplateType.editSubstitute( "MANGLED_ID_STRING", "TemplateType" );
+
+  // DQ (5/11/2012): This should not be used, bu we should define this for all types.
+     PartialFunctionModifierType.editSubstitute( "MANGLED_ID_STRING", "PartialFunctionType" );
+
      PartialFunctionType.setFunctionSource ( "SOURCE_PARTIAL_FUNCTION_TYPE", "../Grammar/Type.code");
      TypedefType.setFunctionSource         ( "SOURCE_TYPEDEF_TYPE", "../Grammar/Type.code");
      MemberFunctionType.setFunctionSource  ( "SOURCE_MEMBER_FUNCTION_TYPE", "../Grammar/Type.code");

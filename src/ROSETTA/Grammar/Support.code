@@ -7634,6 +7634,11 @@ SgSymbolTable::find_template_member_function(const SgName& nm, const SgType* t)
      SgTemplateMemberFunctionSymbol *s = NULL;
      ROSE_ASSERT(p_table != NULL);
 
+#if 0
+     printf ("---------------------------------------------------------------------------------- \n");
+     printf ("In SgSymbolTable::find_template_member_function(): name = %s type = %p = %s \n",nm.str(),t,t->class_name().c_str());
+#endif
+
 #if 1
   // Find the sublist that match the name.
      std::pair<hash_iterator, hash_iterator> range = p_table->equal_range(nm);
@@ -7648,19 +7653,20 @@ SgSymbolTable::find_template_member_function(const SgName& nm, const SgType* t)
   // Iterate through the list that match the name to find the one that is a SgTemplateSymbol and has a matching SgType pointer.
      for (hash_iterator i = range.first; i != range.second; ++i)
         {
+#if 0
           printf ("Found a possible matching symbol (matching name only: nm = %s) i->second = %p = %s \n",nm.str(),i->second,i->second->class_name().c_str());
-
+#endif
           SgTemplateMemberFunctionSymbol * sym = isSgTemplateMemberFunctionSymbol(i->second);
 
           if (sym != NULL)
              {
-#if 1
+#if 0
             // printf ("In SgSymbolTable::find_template_member_function(): Found a symbol with correct name: symbol = %p = %s (looking for type = %p = %s) \n",i->second,i->second->class_name().c_str(),t,t->class_name().c_str());
                printf ("In SgSymbolTable::find_template_member_function(): Found a symbol with correct name: symbol = %p = %s (looking for type = %p = %s = %s) \n",i->second,i->second->class_name().c_str(),t,t->class_name().c_str(),t->get_mangled().str());
 #endif
                ROSE_ASSERT(sym->get_declaration() != NULL);
                ROSE_ASSERT(sym->get_declaration()->get_type() != NULL);
-#if 1
+#if 0
             // printf ("In SgSymbolTable::find_template_member_function(): Found a symbol with correct name: sym->get_declaration() = %p = %s (having sym->get_declaration()->get_type() = %p = %s) \n",
             //           sym->get_declaration(),sym->get_declaration()->class_name().c_str(),sym->get_declaration()->get_type(),sym->get_declaration()->get_type()->class_name().c_str());
                printf ("In SgSymbolTable::find_template_member_function(): Found a symbol with correct name: sym->get_declaration() = %p = %s (having sym->get_declaration()->get_type() = %p = %s = %s) \n",
@@ -7668,15 +7674,34 @@ SgSymbolTable::find_template_member_function(const SgName& nm, const SgType* t)
 #endif
              }
 
+#if 0
+          if (sym != NULL)
+             {
+               printf ("In SgSymbolTable::find_template_member_function(): name match = %s \n",get_table()->key_eq()(sym->get_name(),nm) ? "true" : "false");
+             }
+            else
+             {
+               printf ("In SgSymbolTable::find_template_member_function(): sym = NULL \n");
+             }
+#endif
+
           if ( (sym != NULL) && (sym->get_declaration()->get_type() == t) && get_table()->key_eq()(sym->get_name(),nm))
              {
-#if 1
+#if 0
                printf ("In SgSymbolTable::find_template_member_function(): Found the matching symbol: symbol = %p = %s \n",i->second,i->second->class_name().c_str());
 #endif
                p_name    = nm;
                p_no_name = false;
                s         = sym;
+
+            // Break out of the enclosing for loop (I would like to clean up this control flow later).
                break;
+             }
+            else
+             {
+#if 0
+               printf ("In SgSymbolTable::find_template_member_function(): not an exact match for symbol (type and name match) \n");
+#endif
              }
         }
 
@@ -7690,7 +7715,10 @@ SgSymbolTable::find_template_member_function(const SgName& nm, const SgType* t)
      ROSE_ASSERT(false);
 #endif
 
+#if 0
      printf ("In SgSymbolTable::find_template_member_function(): returning symbol = %p = %s \n",s,(s != NULL) ? s->class_name().c_str() : "null");
+     printf ("---------------------------------------------------------------------------------- \n");
+#endif
 
      return s;
    }

@@ -34,7 +34,8 @@ libastPostProcessing_la_SOURCES      = \
      buildStatementNumbering.C \
      fixupCxxSymbolTablesToSupportAliasingSymbols.C \
      normalizeTypedefSequenceLists.C \
-     fixupConstantFoldedValues.C
+     fixupConstantFoldedValues.C \
+     detectTransformations.C
 
 libastPostProcessing_la_LIBADD       = 
 libastPostProcessing_la_DEPENDENCIES = 
@@ -68,7 +69,8 @@ include_HEADERS = \
      fixupUseAndUsingDeclarations.h \
      fixupCxxSymbolTablesToSupportAliasingSymbols.h \
      normalizeTypedefSequenceLists.h \
-     fixupConstantFoldedValues.h
+     fixupConstantFoldedValues.h \
+     detectTransformations.h
 
 EXTRA_DIST = CMakeLists.txt
 

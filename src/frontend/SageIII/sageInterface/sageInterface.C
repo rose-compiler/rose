@@ -48,6 +48,10 @@
    #include "transformationSupport.h"
 #endif
 
+//! C++ SageBuilder namespace specific state for storage of the source code position state (used to control how the source code positon is defined for IR nodes built within the SageBuilder interface).
+extern SageBuilder::SourcePositionClassification SageBuilder::SourcePositionClassificationMode;
+
+
 typedef std::set<SgLabelStatement*> SgLabelStatementPtrSet;
 
 // DQ (12/31/2005): This is OK if not declared in a header file
@@ -4793,11 +4797,23 @@ SageInterface::lookupNamespaceSymbolInParentScopes (const SgName &  name, SgScop
      return symbol;
    }
 
-
+#if 0
+// DQ (5/2/2012): This is redundant with the more general function using the same name.
 void
 SageInterface::setSourcePosition( SgLocatedNode* locatedNode )
    {
-  // DQ (1/24/2009): It might be thst this function is only called from the Fortran support.
+  // DQ (5/1/2012): Older depricated function.
+     printf ("+++++ Depricated function setSourcePosition() (use setSourcePositionToDefault() instead) \n");
+     setSourcePositionToDefault(locatedNode);
+   }
+#endif
+
+#if 0
+// DQ (5/3/2012): This version does not handle SgPragma and so is not used (a templaed version is implemented below).
+void
+SageInterface::setSourcePositionToDefault( SgLocatedNode* locatedNode )
+   {
+  // DQ (1/24/2009): It might be that this function is only called from the Fortran support.
 
   // This function sets the source position to be marked as not
   // available (since we often don't have token information)
@@ -4806,30 +4822,137 @@ SageInterface::setSourcePosition( SgLocatedNode* locatedNode )
   // The SgLocatedNode has both a startOfConstruct and endOfConstruct source position.
      ROSE_ASSERT(locatedNode != NULL);
 
-  // Check the endOfConstruct forst since it is most likely NULL (helpful in debugging)
-     ROSE_ASSERT(locatedNode->get_endOfConstruct()   == NULL);
-     ROSE_ASSERT(locatedNode->get_startOfConstruct() == NULL);
+  // We have to support this being called where the Sg_File_Info have previously been set.
+     if (locatedNode->get_endOfConstruct() == NULL && locatedNode->get_startOfConstruct() == NULL)
+        {
+       // Check the endOfConstruct first since it is most likely NULL (helpful in debugging)
+          ROSE_ASSERT(locatedNode->get_endOfConstruct()   == NULL);
+          ROSE_ASSERT(locatedNode->get_startOfConstruct() == NULL);
 
-     Sg_File_Info* start_fileInfo = Sg_File_Info::generateDefaultFileInfo();
-     Sg_File_Info* end_fileInfo   = Sg_File_Info::generateDefaultFileInfo();
+          Sg_File_Info* start_fileInfo = Sg_File_Info::generateDefaultFileInfo();
+          Sg_File_Info* end_fileInfo   = Sg_File_Info::generateDefaultFileInfo();
 
-     start_fileInfo->setSourcePositionUnavailableInFrontend();
-     end_fileInfo->setSourcePositionUnavailableInFrontend();
+       // DQ (5/2/2012): I think we don't want to do this.
+          printf ("In SageInterface::setSourcePositionToDefault(): Calling setSourcePositionUnavailableInFrontend() \n");
+          start_fileInfo->setSourcePositionUnavailableInFrontend();
+          end_fileInfo->setSourcePositionUnavailableInFrontend();
 
-  // This is required for the unparser to output the code from the AST.
-     start_fileInfo->setOutputInCodeGeneration();
-     end_fileInfo->setOutputInCodeGeneration();
+       // DQ (5/2/2012): I think we don't want to do this.
+          printf ("In SageInterface::setSourcePositionToDefault(): Calling setOutputInCodeGeneration() \n");
 
-     locatedNode->set_startOfConstruct(start_fileInfo);
-     locatedNode->set_endOfConstruct  (end_fileInfo);
+       // This is required for the unparser to output the code from the AST.
+          start_fileInfo->setOutputInCodeGeneration();
+          end_fileInfo->setOutputInCodeGeneration();
 
-     locatedNode->get_startOfConstruct()->set_parent(locatedNode);
-     locatedNode->get_endOfConstruct  ()->set_parent(locatedNode);
+          locatedNode->set_startOfConstruct(start_fileInfo);
+          locatedNode->set_endOfConstruct  (end_fileInfo);
+
+          locatedNode->get_startOfConstruct()->set_parent(locatedNode);
+          locatedNode->get_endOfConstruct  ()->set_parent(locatedNode);
+        }
+       else
+        {
+       // If both the starting  and ending Sg_File_Info pointers are not NULL then both must be valid.
+       // We don't want to support partially completed source code position information.
+
+          if (locatedNode->get_startOfConstruct() == NULL)
+             {
+               printf ("ERROR: startOfConstruct not set for locatedNode = %p = %s \n",locatedNode,locatedNode->class_name().c_str());
+             }
+          if (locatedNode->get_endOfConstruct() == NULL)
+             {
+               printf ("ERROR: endOfConstruct not set for locatedNode = %p = %s \n",locatedNode,locatedNode->class_name().c_str());
+             }
+
+          ROSE_ASSERT(locatedNode->get_endOfConstruct()   != NULL);
+          ROSE_ASSERT(locatedNode->get_startOfConstruct() != NULL);
+          ROSE_ASSERT(locatedNode->get_endOfConstruct() != NULL && locatedNode->get_startOfConstruct() != NULL);
+        }
    }
+#endif
+
+template<class T>
+void
+SageInterface::setSourcePositionToDefault( T* node )
+   {
+  // This is a templated function because SgPragma is not yet derived from SgLocatedNode.
+
+  // DQ (1/24/2009): It might be that this function is only called from the Fortran support.
+
+  // This function sets the source position to be marked as not
+  // available (since we often don't have token information)
+  // These nodes WILL be unparsed in the conde generation phase.
+
+  // The SgLocatedNode has both a startOfConstruct and endOfConstruct source position.
+     ROSE_ASSERT(node != NULL);
+
+  // We have to support this being called where the Sg_File_Info have previously been set.
+     if (node->get_endOfConstruct() == NULL && node->get_startOfConstruct() == NULL)
+        {
+       // Check the endOfConstruct first since it is most likely NULL (helpful in debugging)
+          ROSE_ASSERT(node->get_endOfConstruct()   == NULL);
+          ROSE_ASSERT(node->get_startOfConstruct() == NULL);
+
+          Sg_File_Info* start_fileInfo = Sg_File_Info::generateDefaultFileInfo();
+          Sg_File_Info* end_fileInfo   = Sg_File_Info::generateDefaultFileInfo();
+
+       // DQ (5/2/2012): I think we don't want to do this.
+#if 0
+          printf ("In SageInterface::setSourcePositionToDefault(): Calling setSourcePositionUnavailableInFrontend() \n");
+#endif
+          start_fileInfo->setSourcePositionUnavailableInFrontend();
+          end_fileInfo->setSourcePositionUnavailableInFrontend();
+
+       // DQ (5/2/2012): I think we don't want to do this.
+#if 0
+          printf ("In SageInterface::setSourcePositionToDefault(): Calling setOutputInCodeGeneration() \n");
+#endif
+       // This is required for the unparser to output the code from the AST.
+          start_fileInfo->setOutputInCodeGeneration();
+          end_fileInfo->setOutputInCodeGeneration();
+
+          node->set_startOfConstruct(start_fileInfo);
+          node->set_endOfConstruct  (end_fileInfo);
+
+          node->get_startOfConstruct()->set_parent(node);
+          node->get_endOfConstruct  ()->set_parent(node);
+        }
+       else
+        {
+       // If both the starting  and ending Sg_File_Info pointers are not NULL then both must be valid.
+       // We don't want to support partially completed source code position information.
+
+          if (node->get_startOfConstruct() == NULL)
+             {
+               printf ("ERROR: startOfConstruct not set for locatedNode = %p = %s \n",node,node->class_name().c_str());
+             }
+          if (node->get_endOfConstruct() == NULL)
+             {
+               printf ("ERROR: endOfConstruct not set for locatedNode = %p = %s \n",node,node->class_name().c_str());
+             }
+
+          ROSE_ASSERT(node->get_endOfConstruct()   != NULL);
+          ROSE_ASSERT(node->get_startOfConstruct() != NULL);
+          ROSE_ASSERT(node->get_endOfConstruct() != NULL && node->get_startOfConstruct() != NULL);
+        }
+   }
+
 
 void
 SageInterface::setOneSourcePositionForTransformation(SgNode *node)
    {
+  // DQ (5/1/2012): Older depricated function.
+     printf ("+++++ Depricated function (use setSourcePositionAsTransformation() instead) (no using internal source position mode) \n");
+  // setSourcePositionAsTransformation(node);
+     setSourcePosition(node);
+   }
+
+
+void
+SageInterface::setSourcePositionAsTransformation(SgNode *node)
+   {
+  // DQ (5/1/2012): Newer function to support specification of IR nodes being a part of a transformation.
+
   // DQ (1/24/2009): I think this should be renamed to be "setSourcePositionAsTransformation(SgNode *node)"
   // The logic should be make more independent of if (locatedNode->get_startOfConstruct() == NULL)
   // Since that make understanding where the function is applied too complex.
@@ -4838,9 +4961,12 @@ SageInterface::setOneSourcePositionForTransformation(SgNode *node)
 
      ROSE_ASSERT(node != NULL);
 
+     printf ("In SageInterface::setSourcePositionAsTransformation() for node = %p = %s (make this an error while debugging AST construction) \n",node,node->class_name().c_str());
+     ROSE_ASSERT(false);
+
      SgLocatedNode*     locatedNode = isSgLocatedNode(node);
      SgExpression*      expression  = isSgExpression(node);
-//     SgInitializedName* initName    = isSgInitializedName(node);
+  // SgInitializedName* initName    = isSgInitializedName(node);
      SgPragma*          pragma      = isSgPragma(node); // missed this one!! Liao, 1/30/2008
      SgGlobal*          global      = isSgGlobal(node); // SgGlobal should have NULL endOfConstruct()
 
@@ -4849,8 +4975,9 @@ SageInterface::setOneSourcePositionForTransformation(SgNode *node)
      if (v_d )
        printf ("Debug, Found a variable definition: %p\n", v_d);
 #endif
+
   // if ((locatedNode) && (locatedNode->get_endOfConstruct() == NULL))
-  //   if ( (locatedNode != NULL) && (locatedNode->get_startOfConstruct() == NULL) )
+  // if ( (locatedNode != NULL) && (locatedNode->get_startOfConstruct() == NULL) )
      if (locatedNode != NULL)
         {
           locatedNode->set_startOfConstruct(Sg_File_Info::generateDefaultFileInfoForTransformationNode());
@@ -4870,8 +4997,8 @@ SageInterface::setOneSourcePositionForTransformation(SgNode *node)
              }
         }
        else // special non-located node with file info
-       {
-//         if ( (initName != NULL) && (initName->get_startOfConstruct() == NULL) )
+        {
+//        if ( (initName != NULL) && (initName->get_startOfConstruct() == NULL) )
 //         {
 //           locatedNode->set_startOfConstruct(Sg_File_Info::generateDefaultFileInfoForTransformationNode());
 //           locatedNode->get_startOfConstruct()->set_parent(locatedNode);
@@ -4881,17 +5008,32 @@ SageInterface::setOneSourcePositionForTransformation(SgNode *node)
 //
 //         }
 //         else
-           if ( (pragma != NULL) && (pragma->get_startOfConstruct() == NULL) )
-         {
-           pragma->set_startOfConstruct(Sg_File_Info::generateDefaultFileInfoForTransformationNode());
-           pragma->get_startOfConstruct()->set_parent(pragma);
-         }
-       }
+
+          if ( (pragma != NULL) && (pragma->get_startOfConstruct() == NULL) )
+             {
+               pragma->set_startOfConstruct(Sg_File_Info::generateDefaultFileInfoForTransformationNode());
+               pragma->get_startOfConstruct()->set_parent(pragma);
+             }
+        }
    }
 
 
 void
 SageInterface::setOneSourcePositionNull(SgNode *node)
+   {
+  // DQ (5/1/2012): Older depricated function (use setSourcePositionPointersToNull() instead).
+#if 0
+     printf ("+++++ Depricated name setOneSourcePositionNull() (use setSourcePositionPointersToNull() instead) (no using internal source position mode) \n");
+#endif
+
+  // setSourcePositionPointersToNull(node);
+     setSourcePosition(node);
+   }
+
+
+// DQ (5/1/2012): Newly renamed function (previous name preserved for backward compatability).
+void
+SageInterface::setSourcePositionPointersToNull(SgNode *node)
    {
   // DQ (1/24/2009): I think this should be renamed to be "setSourcePositionToNULL(SgNode *node)"
   // However, if this is doen then the logic should be that it asserts that: (locatedNode->get_startOfConstruct() == NULL)
@@ -4905,7 +5047,6 @@ SageInterface::setOneSourcePositionNull(SgNode *node)
 
      SgLocatedNode *    locatedNode = isSgLocatedNode(node);
      SgExpression*      expression  = isSgExpression(node);
-//     SgInitializedName* initName    = isSgInitializedName(node);
      SgPragma*          pragma      = isSgPragma(node); // missed this one!! Liao, 1/30/2008
      SgGlobal*          global      = isSgGlobal(node); // SgGlobal should have NULL endOfConstruct()
 
@@ -4914,34 +5055,41 @@ SageInterface::setOneSourcePositionNull(SgNode *node)
   // (i.e. when the start source postion is already NULL).
 
   // if ((locatedNode) && (locatedNode->get_endOfConstruct() == NULL))
-  //   if ( (locatedNode != NULL) && (locatedNode->get_startOfConstruct() == NULL) )
-     if  (locatedNode != NULL)
+  // if ( (locatedNode != NULL) && (locatedNode->get_startOfConstruct() == NULL) )
+     if (locatedNode != NULL)
         {
+          if (locatedNode->get_startOfConstruct() != NULL)
+               printf ("WARNING: In SageInterface::setSourcePositionPointersToNull(): Memory leak of startOfConstruct Sg_File_Info object (setting Sg_File_Info pointers to NULL) \n");
+
           locatedNode->set_startOfConstruct(NULL);
 
        // Note that SgGlobal should have NULL endOfConstruct()
           if (global == NULL)
              {
+               if (locatedNode->get_endOfConstruct() != NULL)
+                    printf ("WARNING: In SageInterface::setSourcePositionPointersToNull(): Memory leak of endOfConstruct Sg_File_Info object (setting Sg_File_Info pointers to NULL) \n");
+
                locatedNode->set_endOfConstruct(NULL);
              }
 
        // Only SgExpression IR nodes have a 3rd source position data structure.
           if (expression != NULL)
              {
+               if (expression->get_operatorPosition() != NULL)
+                    printf ("WARNING: In SageInterface::setSourcePositionPointersToNull(): Memory leak of operatorPosition Sg_File_Info object (setting Sg_File_Info pointers to NULL) \n");
+
                expression->set_operatorPosition(NULL);
              }
         }
        else
         {
-//          if ( (initName != NULL) && (initName->get_startOfConstruct() == NULL) )
-//             { //  no endOfConstruct for SgInitializedName
-//               initName->set_startOfConstruct(NULL);
-//             }
-//            else
-               if ( (pragma != NULL) && (pragma->get_startOfConstruct() == NULL) )
-                  {
-                    pragma->set_startOfConstruct(NULL);
-                  }
+       // if ( (pragma != NULL) && (pragma->get_startOfConstruct() == NULL) )
+          if ( (pragma != NULL) && (pragma->get_startOfConstruct() != NULL) )
+             {
+               printf ("WARNING: In SageInterface::setSourcePositionPointersToNull(): Memory leak of Sg_File_Info object (setting Sg_File_Info pointers to NULL) \n");
+
+               pragma->set_startOfConstruct(NULL);
+             }
         }
    }
 
@@ -4950,10 +5098,194 @@ SageInterface::setOneSourcePositionNull(SgNode *node)
 void
 SageInterface::setSourcePositionForTransformation(SgNode *root)
    {
+#if 1
+#if 0
+     printf ("+++++ Depricated name setSourcePositionForTransformation() (use setSourcePositionAtRootAndAllChildrenAsTransformation() instead) \n");
+#endif
+
+  // This is the semantically correct function to call.
+  // setSourcePositionAtRootAndAllChildrenAsTransformation(root);
+
+  // DQ (5/2/2012): This is a test to replace the support we have to mark every thing as a transofmraiton with the new mechanism using source position modes.
+  // setSourcePosition(root);
+     setSourcePositionAtRootAndAllChildren(root);
+#else
      Rose_STL_Container <SgNode*> nodeList= NodeQuery::querySubTree(root,V_SgNode);
      for (Rose_STL_Container<SgNode *>::iterator i = nodeList.begin(); i!=nodeList.end(); i++ )
         {
           setOneSourcePositionForTransformation(*i);
+        }
+#endif
+   }
+
+
+#if 0
+// DQ (5/1/2012): New function with improved name (still preserving the previous interface).
+void
+SageInterface::setSourcePositionAtRootAndAllChildrenAsTransformation(SgNode *root)
+   {
+     Rose_STL_Container <SgNode*> nodeList= NodeQuery::querySubTree(root,V_SgNode);
+     for (Rose_STL_Container<SgNode *>::iterator i = nodeList.begin(); i!=nodeList.end(); i++ )
+        {
+          setOneSourcePositionForTransformation(*i);
+        }
+   }
+#endif
+
+#if 0
+void
+SageInterface::setSourcePositionAtRootAndAllChildrenAsDefault(SgNode *root)
+   {
+     Rose_STL_Container <SgNode*> nodeList= NodeQuery::querySubTree(root,V_SgNode);
+     for (Rose_STL_Container<SgNode *>::iterator i = nodeList.begin(); i!=nodeList.end(); i++ )
+        {
+          setSourcePositionAsDefault(*i);
+        }
+   }
+#endif
+
+void
+SageInterface::setSourcePositionAtRootAndAllChildren(SgNode *root)
+   {
+     Rose_STL_Container <SgNode*> nodeList= NodeQuery::querySubTree(root,V_SgNode);
+     for (Rose_STL_Container<SgNode *>::iterator i = nodeList.begin(); i!=nodeList.end(); i++ )
+        {
+#if 0
+          printf ("In setSourcePositionAtRootAndAllChildren(): *i = %p = %s \n",*i,(*i)->class_name().c_str());
+#endif
+          setSourcePosition(*i);
+        }
+   }
+
+// DQ (5/1/2012): This function queries the SageBuilder::SourcePositionClassification mode (stored in the SageBuilder 
+// interface) and used the specified mode to initialize the source position data (Sg_File_Info objects).  This 
+// function is the only function that should be called directly (though in a namespace we can't define permissions).
+void
+SageInterface::setSourcePosition(SgNode* node)
+   {
+  // Check the mode and build the correct type of source code position.
+     SourcePositionClassification scp = getSourcePositionClassificationMode();
+     switch(scp)
+        {
+          case e_sourcePositionError: // Error value for enum.
+             {
+               printf ("Error: error value e_sourcePositionError in SageInterface::setSourcePosition() \n");
+               ROSE_ASSERT(false);
+               break;
+             }
+
+          case e_sourcePositionDefault: // Default source position.
+             {
+#if 1
+               printf ("e_sourcePositionDefault in SageInterface::setSourcePosition() \n");
+#endif
+               SgLocatedNode* locatedNode = isSgLocatedNode(node);
+               if (locatedNode != NULL)
+                  {
+                    setSourcePositionToDefault(locatedNode);
+                 // setSourcePositionAtRootAndAllChildrenAsDefault(locatedNode);
+                  }
+                 else
+                  {
+                 // This is not supported (not clear if it need be).
+                    printf ("Error: can't call setSourcePosition() in mode e_sourcePositionDefault with non SgLocatedNode (node = %p = %s) \n",node,node->class_name().c_str());
+                    ROSE_ASSERT(false);
+                  }
+               break;
+             }
+
+          case e_sourcePositionTransformation:       // Classify as a transformation.
+             {
+#if 1
+               printf ("e_sourcePositionTransformation in SageInterface::setSourcePosition() \n");
+#endif
+            // setSourcePositionAtRootAndAllChildrenAsTransformation(node);
+               setSourcePositionAsTransformation(node);
+               break;
+             }
+
+          case e_sourcePositionCompilerGenerated:    // Classify as compiler generated code (e.g. template instantiation).
+             {
+               printf ("e_sourcePositionCompilerGenerated in SageInterface::setSourcePosition() \n");
+
+               printf ("Sorry, not implemented \n");
+               ROSE_ASSERT(false);
+
+               break;
+             }
+
+          case e_sourcePositionNullPointers:         // Set pointers to Sg_File_Info objects to NULL.
+             {
+#if 1
+               printf ("e_sourcePositionNullPointers in SageInterface::setSourcePosition() \n");
+#endif
+               setSourcePositionPointersToNull(node);
+               break;
+             }
+
+          case e_sourcePositionFrontendConstruction: // Specify as source position to be filled in as part of AST construction in the front-end.
+             {
+            // This function builds an empty Sg_File_Info entry (valid object but filled with defailt values; must be reset in front-end processing).
+            // printf ("e_sourcePositionFrontendConstruction in SageInterface::setSourcePosition() \n");
+
+               SgLocatedNode* locatedNode = isSgLocatedNode(node);
+               if (locatedNode != NULL)
+                  {
+                 // setSourcePositionAtRootAndAllChildrenAsDefault(locatedNode);
+                    setSourcePositionToDefault(locatedNode);
+                  }
+                 else
+                  {
+                 // This is not supported (not clear if it need be).
+                    SgPragma* pragma = isSgPragma(node);
+                    if (pragma != NULL)
+                       {
+                         setSourcePositionToDefault(pragma);
+                       }
+                      else
+                       {
+                      // printf ("Error: can't call setSourcePosition() in mode e_sourcePositionFrontendConstruction with non SgLocatedNode (node = %p = %s) \n",node,node->class_name().c_str());
+                      // ROSE_ASSERT(false);
+                         SgType* type = isSgType(node);
+                         if (type != NULL)
+                            {
+                           // Ignore this case, OK.
+                            }
+                           else
+                            {
+                              SgFunctionParameterTypeList* functionParameterTypeList = isSgFunctionParameterTypeList(node);
+                              if (functionParameterTypeList != NULL)
+                                 {
+                                // Ignore this case, OK.
+                                 }
+                                else
+                                 {
+                                   printf ("Error: can't call setSourcePosition() in mode e_sourcePositionFrontendConstruction with non SgLocatedNode (node = %p = %s) \n",node,node->class_name().c_str());
+                                   ROSE_ASSERT(false);
+                                 }
+                            }
+                       }
+                  }
+#if 0
+               printf ("Sorry, not implemented \n");
+               ROSE_ASSERT(false);
+#endif
+               break;
+             }
+
+
+          case e_sourcePosition_last:
+             {
+               printf ("Error: error value e_sourcePositionError in SageInterface::setSourcePosition() \n");
+               ROSE_ASSERT(false);
+               break;
+             }
+
+          default:
+             {
+               printf ("Error: default reached in SageInterface::setSourcePosition() \n");
+               break;
+             }
         }
    }
 
@@ -4962,6 +5294,10 @@ void
 SageInterface::setSourcePositionForTransformation_memoryPool()
    {
   // DQ (1/24/2009): This seems like a very dangerous function to have, is it required!
+ 
+  // DQ (5/1/2012): Make it an error to call this function.
+     printf ("ERROR: In setSourcePositionForTransformation_memoryPool(): This seems like a very dangerous function to have, is it required? \n");
+     ROSE_ASSERT(false);
 
      VariantVector vv(V_SgNode);
      Rose_STL_Container<SgNode*> nodeList = NodeQuery::queryMemoryPool(vv);
@@ -8436,9 +8772,12 @@ void SageInterface::appendStatement(SgStatement *stmt, SgScopeStatement* scope)
         {
           updateDefiningNondefiningLinks(isSgFunctionDeclaration(stmt),scope);
         }
-
+#if 1
   // DQ (4/3/2012): Added test to make sure that the pointers are unique.
      testAstForUniqueNodes(scope);
+#else
+     printf ("In SageInterface::appendStatement(): Skipping test for unique statements in subtree \n");
+#endif
    }
 
 void SageInterface::appendStatementList(const std::vector<SgStatement*>& stmts, SgScopeStatement* scope) {
@@ -9792,7 +10131,9 @@ void SageInterface::updateDefiningNondefiningLinks(SgFunctionDeclaration* func, 
         {
        // If there exists a non-NULL reference to a firstNondefiningFunctionDeclaration 
        // then use it (unless we want to handle where it might be set wrong).
+#if 0
           printf ("In SageInterface::updateDefiningNondefiningLinks(): func = %p Found a valid pointer to a firstNondefiningFunctionDeclaration = %p \n",func,firstNondefiningFunctionDeclaration);
+#endif
         }
 
   // DQ (3/12/2012): Added assertion
@@ -9800,6 +10141,7 @@ void SageInterface::updateDefiningNondefiningLinks(SgFunctionDeclaration* func, 
      ROSE_ASSERT(func->get_firstNondefiningDeclaration()->get_scope() != NULL);
      ROSE_ASSERT(func->get_firstNondefiningDeclaration()->get_scope()->lookup_function_symbol(func->get_name(),func->get_type()) != NULL);
 
+#if 0
   // It would be better to find the first non-defining declaration via the symbol.
      SgSymbol* functionSymbol = scope->lookup_function_symbol(func->get_name(),func->get_type());
      if (functionSymbol != NULL)
@@ -9810,6 +10152,7 @@ void SageInterface::updateDefiningNondefiningLinks(SgFunctionDeclaration* func, 
         {
           printf ("In SageInterface::updateDefiningNondefiningLinks(): func = %p functionSymbol == NULL \n",func);
         }
+#endif
 
   // Find the same function declaration list, including func itself
      SgStatementPtrList::iterator j;
@@ -9842,8 +10185,9 @@ void SageInterface::updateDefiningNondefiningLinks(SgFunctionDeclaration* func, 
              {
                for (j = sameFuncList.begin(); j != sameFuncList.end(); j++)
                   {
+#if 0
                     printf ("In SageInterface::updateDefiningNondefiningLinks(): (case 1) Calling j = %p set_firstNondefiningDeclaration(%p) \n",*j,func);
-
+#endif
                  // DQ (3/9/2012): Avoid setting the function to be it's own firstNondefiningDeclaration.
                  // isSgFunctionDeclaration(*j)->set_firstNondefiningDeclaration(func);
                     if (*j != func)
@@ -9854,7 +10198,9 @@ void SageInterface::updateDefiningNondefiningLinks(SgFunctionDeclaration* func, 
              }
             else // is a following nondefining declaration, grab any other's first nondefining link then
              {
+#if 0
                printf ("In SageInterface::updateDefiningNondefiningLinks(): (case 2) Calling func = %p set_firstNondefiningDeclaration(%p) \n",func,isSgFunctionDeclaration(*(sameFuncList.begin()))->get_firstNondefiningDeclaration());
+#endif
                func->set_firstNondefiningDeclaration(isSgFunctionDeclaration(*(sameFuncList.begin()))->get_firstNondefiningDeclaration());
              }
         }

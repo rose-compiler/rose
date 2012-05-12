@@ -79,6 +79,35 @@ SgScopeStatement* getGlobalScopeFromScopeStack();
    
 //@} 
 
+// *************************************************************************************************************
+// DQ (5/1/2012): This is another possible interface: supporting how we set the source code position and mark is 
+// as either a transformation or as actual code to be assigned a source position as part of the AST construction.
+// *************************************************************************************************************
+
+enum SourcePositionClassification
+   {
+     e_sourcePositionError,                //! Error value for enum.
+     e_sourcePositionDefault,              //! Default source position.
+     e_sourcePositionTransformation,       //! Classify as a transformation.
+     e_sourcePositionCompilerGenerated,    //! Classify as compiler generated code (e.g. template instantiation).
+     e_sourcePositionNullPointers,         //! Set pointers to Sg_File_Info objects to NULL.
+     e_sourcePositionFrontendConstruction, //! Specify as source position to be filled in as part of AST construction in the front-end.
+     e_sourcePosition_last                 //! Last entry in enum.
+   };
+
+//! C++ SageBuilder namespace specific state for storage of the source code position state (used to control how the source code positon is defined for IR nodes built within the SageBuilder interface).
+extern SourcePositionClassification SourcePositionClassificationMode;
+
+//! Get the current source position classification (defines how IR nodes built by the SageBuilder interface will be classified).
+SourcePositionClassification getSourcePositionClassificationMode();
+
+//! Set the current source position classification (defines how IR nodes built by the SageBuilder interface will be classified).
+void setSourcePositionClassificationMode(SourcePositionClassification X);
+
+// *************************************************************************************************************
+
+
+
 //--------------------------------------------------------------
 //@{
 /*! @name Builders for SgType
@@ -712,8 +741,8 @@ SgTemplateFunctionDeclaration *
 buildNondefiningTemplateFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL);
 
 // DQ (12/1/2011): Adding support for template declarations into the AST.
-SgTemplateFunctionDeclaration *
-buildDefiningTemplateFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL);
+SgTemplateFunctionDeclaration*
+buildDefiningTemplateFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope, SgExprListExp* decoratorList, SgTemplateFunctionDeclaration* first_nondefinng_declaration);
 
 //! Build a prototype for an existing function declaration (defining or nondefining is fine) 
 SgFunctionDeclaration *
@@ -732,7 +761,7 @@ buildNondefiningTemplateMemberFunctionDeclaration (const SgName & name, SgType* 
 
 // DQ (12/1/2011): Adding support for template declarations in the AST.
 SgTemplateMemberFunctionDeclaration*
-buildDefiningTemplateMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope = NULL, SgExprListExp* decoratorList = NULL, unsigned int functionConstVolatileFlags = 0 );
+buildDefiningTemplateMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope, SgExprListExp* decoratorList, unsigned int functionConstVolatileFlags, SgTemplateMemberFunctionDeclaration* first_nondefinng_declaration );
 
 ////! Build a prototype member function declaration
 //SgMemberFunctionDeclaration*
@@ -740,15 +769,16 @@ buildDefiningTemplateMemberFunctionDeclaration (const SgName & name, SgType* ret
 
 //! Build a defining ( non-prototype) member function declaration
 SgMemberFunctionDeclaration*
-buildDefiningMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope = NULL, SgExprListExp* decoratorList = NULL, bool buildTemplateInstantiation = false, unsigned int functionConstVolatileFlags = 0);
+buildDefiningMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope, SgExprListExp* decoratorList, bool buildTemplateInstantiation, unsigned int functionConstVolatileFlags, SgMemberFunctionDeclaration* first_nondefinng_declaration);
+
+// DQ (5/12/2012): This is a problem once we remove the default parameters for function arguments (to simplify debugging).
+//! Build a defining ( non-prototype) member function declaration from a SgMemberFunctionType
+SgMemberFunctionDeclaration*
+buildDefiningMemberFunctionDeclaration (const SgName & name, SgMemberFunctionType* func_type, SgFunctionParameterList* paralist, SgScopeStatement* scope, SgExprListExp* decoratorList /* , unsigned int functionConstVolatileFlags = 0 */, SgMemberFunctionDeclaration* first_nondefinng_declaration);
 
 //! Build a defining ( non-prototype) member function declaration from a SgMemberFunctionType
 SgMemberFunctionDeclaration*
-buildDefiningMemberFunctionDeclaration (const SgName & name, SgMemberFunctionType* func_type, SgFunctionParameterList* paralist, SgScopeStatement* scope, SgExprListExp* decoratorList = NULL /* , unsigned int functionConstVolatileFlags = 0 */);
-
-//! Build a defining ( non-prototype) member function declaration from a SgMemberFunctionType
-SgMemberFunctionDeclaration*
-buildDefiningMemberFunctionDeclaration (const SgName & name, SgMemberFunctionType* func_type, SgScopeStatement* scope, SgExprListExp* decoratorList = NULL /* , unsigned int functionConstVolatileFlags = 0 */);
+buildDefiningMemberFunctionDeclaration (const SgName & name, SgMemberFunctionType* func_type, SgScopeStatement* scope, SgExprListExp* decoratorList /* , unsigned int functionConstVolatileFlags = 0 */, SgMemberFunctionDeclaration* first_nondefinng_declaration);
 
 //! Build a prototype for an existing member function declaration (defining or nondefining is fine) 
 // SgMemberFunctionDeclaration*
@@ -760,21 +790,21 @@ buildNondefiningMemberFunctionDeclaration (const SgMemberFunctionDeclaration* fu
 template <class actualFunction>
 actualFunction*
 // buildDefiningFunctionDeclaration_T (const SgName & name, SgType* return_type, SgFunctionParameterList * parlist, bool isMemberFunction, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL, unsigned int functionConstVolatileFlags = 0);
-buildDefiningFunctionDeclaration_T (const SgName & name, SgType* return_type, SgFunctionParameterList * parlist, bool isMemberFunction, SgScopeStatement* scope, SgExprListExp* decoratorList, unsigned int functionConstVolatileFlags);
+buildDefiningFunctionDeclaration_T (const SgName & name, SgType* return_type, SgFunctionParameterList * parlist, bool isMemberFunction, SgScopeStatement* scope, SgExprListExp* decoratorList, unsigned int functionConstVolatileFlags, actualFunction* first_nondefinng_declaration);
 
 //! Build a function declaration with a function body
 SgFunctionDeclaration*
-buildDefiningFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList * parlist, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL, bool buildTemplateInstantiation = false);
+buildDefiningFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList * parlist, SgScopeStatement* scope, SgExprListExp* decoratorList, bool buildTemplateInstantiation, SgFunctionDeclaration* first_nondefinng_declaration);
 
 SgFunctionDeclaration*
-buildDefiningFunctionDeclaration (const std::string & name, SgType* return_type, SgFunctionParameterList * parlist, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL);
+buildDefiningFunctionDeclaration (const std::string & name, SgType* return_type, SgFunctionParameterList * parlist, SgScopeStatement* scope, SgExprListExp* decoratorList, SgFunctionDeclaration* first_nondefinng_declaration);
 
 SgFunctionDeclaration*
-buildDefiningFunctionDeclaration (const char* name, SgType* return_type, SgFunctionParameterList * parlist, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL);
+buildDefiningFunctionDeclaration (const char* name, SgType* return_type, SgFunctionParameterList * parlist, SgScopeStatement* scope, SgExprListExp* decoratorList, SgFunctionDeclaration* first_nondefinng_declaration);
 
 //! Build a Fortran subroutine or procedure
-SgProcedureHeaderStatement* 
-buildProcedureHeaderStatement(const char* name, SgType* return_type, SgFunctionParameterList * parlist, SgProcedureHeaderStatement::subprogram_kind_enum, SgScopeStatement* scope=NULL);
+SgProcedureHeaderStatement*
+buildProcedureHeaderStatement(const char* name, SgType* return_type, SgFunctionParameterList * parlist, SgProcedureHeaderStatement::subprogram_kind_enum, SgScopeStatement* scope, SgProcedureHeaderStatement* first_nondefining_declaration );
 
 //! Build a regular function call statement
 SgExprStatement*

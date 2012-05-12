@@ -284,6 +284,13 @@ mangleQualifiersToString (const SgScopeStatement* scope)
                     break;
                   }
 
+            // DQ (5/12/2012): Implement this case later, but it does not cause anything to fail presently (I think).
+               case V_SgTemplateClassDefinition:
+                  {
+                    printf ("WARNING: In mangleQualifiersToString(const SgScopeStatement*): Case SgTemplateClassDefinition not implemented \n");
+                    break;
+                  }
+
             // DQ (3/14/2012): I think that defaults should be resurced for errors, and not proper handling of unexpected cases.
                default: // Embed the class name for subsequent debugging.
                   {
@@ -336,10 +343,15 @@ mangleTypesToString (const SgTypePtrList::const_iterator b,
      for (SgTypePtrList::const_iterator p = b; p != e; ++p)
         {
           const SgType* type_p = *p;
-          ROSE_ASSERT (type_p);
-          if (is_first)
+          ROSE_ASSERT (type_p != NULL);
+
+       // if (is_first)
+          if (is_first == true)
              {
                is_first = false;
+
+            // DQ (5/11/2012): Make the mangled names a little more clear.
+               mangled_name += "_";
              }
             else
              {
@@ -351,7 +363,12 @@ mangleTypesToString (const SgTypePtrList::const_iterator b,
           SgName mangled_p = (const_cast<SgType *>(type_p))->get_mangled();
 
           mangled_name += string (mangled_p.str());
+
         }
+
+  // DQ (5/11/2012): Make the mangled names a little more clear.
+     mangled_name += "_";
+
      return mangled_name;
    }
 
@@ -769,14 +786,36 @@ declarationHasTranslationUnitScope (const SgDeclarationStatement* decl)
 string
 mangleTranslationUnitQualifiers (const SgDeclarationStatement* decl)
    {
+  // DQ (4/30/2012): I think there is a problem with this code.  Declarations can be the same even when they 
+  // appear in different files or in different locations in the same file (or translation unit) and the inclusion 
+  // of this information in the mangled name will prevent them from beeing seen as the same.  I am not sure
+  // why this code is required and so we need to discuss this point.  
+  // Additionally, when the file_id() is a negative number (e.g. for compiler generated code) then the name
+  // mangling also fails the test (for mangled names to be useable as identifiers) since "-" appears in the name.
+
      if (declarationHasTranslationUnitScope(decl))
         {
-          // TV (04/22/11): I think 'decl' will refer to the same file_id than is enclosing file.
-          //         And as in EDGrose file and global scope are linked after the building of the global scope...
-          return "_file_id_" + StringUtility::numberToString(decl->get_file_info()->get_file_id()) + "_";
-          //return "_file_id_" + StringUtility::numberToString(SageInterface::getEnclosingFileNode(const_cast<SgDeclarationStatement *>(decl))->get_file_info()->get_file_id()) + "_";
+       // TV (04/22/11): I think 'decl' will refer to the same file_id than is enclosing file.
+       //         And as in EDGrose file and global scope are linked after the building of the global scope...
+       // return "_file_id_" + StringUtility::numberToString(SageInterface::getEnclosingFileNode(const_cast<SgDeclarationStatement *>(decl))->get_file_info()->get_file_id()) + "_";
+       // return "_file_id_" + StringUtility::numberToString(decl->get_file_info()->get_file_id()) + "_";
+
+       // DQ (4/30/2012): Modified this code, but I would like to better understand why it is required.
+          string returnString = "";
+          int fileIdNumber = decl->get_file_info()->get_file_id();
+          if (fileIdNumber >= 0)
+             {
+               returnString = "_file_id_" + StringUtility::numberToString(fileIdNumber) + "_";
+             }
+            else
+             {
+            // Put "_minus" into the generated name.
+               returnString = "_file_id_minus_" + StringUtility::numberToString(abs(fileIdNumber)) + "_";
+             }
+
+          return returnString;
         }
-     else
+       else
         {
           return "";
         }

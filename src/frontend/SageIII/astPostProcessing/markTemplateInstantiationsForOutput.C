@@ -45,18 +45,18 @@ MarkTemplateInstantiationsForOutput::BuildSetOfRequiredTemplateDeclarations ( Sg
   // First call to traverse is a traversal of the whole AST
      declarationFixupTraversal.traverse(node,inheritedAttribute);
 #if 0
-     printf ("Declarations collected form first phase of processing: \n");
+     printf ("Declarations collected form first phase of processing (size = %zu): \n",declarationFixupTraversal.listOfTemplateDeclarationsToOutput.size());
      list<SgDeclarationStatement*>::iterator i = declarationFixupTraversal.listOfTemplateDeclarationsToOutput.begin();
      while ( i != declarationFixupTraversal.listOfTemplateDeclarationsToOutput.end())
         {
-          printf ("declaration = %p = %s \n",*i,(*i)->class_name().c_str());
+          printf ("  -- declaration = %p = %s \n",*i,(*i)->class_name().c_str());
           i++;
         }
 #endif
 
 #if 0
      printf ("Through with first call to traverse AST! \n");
-     printf ("declarationFixupTraversal.listOfTemplateDeclarationsToOutput.size() = %d \n",
+     printf ("declarationFixupTraversal.listOfTemplateDeclarationsToOutput.size() = %zu \n",
           declarationFixupTraversal.listOfTemplateDeclarationsToOutput.size());
 #endif
      int prelinkIterationCounter = 0;
@@ -72,7 +72,7 @@ MarkTemplateInstantiationsForOutput::BuildSetOfRequiredTemplateDeclarations ( Sg
           printf ("Number of lists of required declarations = %zu \n",listOfListsOfDeclarations.size());
           for (unsigned int n = 0; n < listOfListsOfDeclarations.size(); n++)
              {
-               printf ("     Size of listOfListsOfDeclarations[%u] = %zu \n",n,listOfListsOfDeclarations[n].size());
+               printf (" -- Size of listOfListsOfDeclarations[%u] = %zu \n",n,listOfListsOfDeclarations[n].size());
              }
 #endif
 
@@ -83,7 +83,7 @@ MarkTemplateInstantiationsForOutput::BuildSetOfRequiredTemplateDeclarations ( Sg
           printf ("After erase of currentList: Number of lists of required declarations = %zu \n",listOfListsOfDeclarations.size());
           for (unsigned int n = 0; n < listOfListsOfDeclarations.size(); n++)
              {
-               printf ("     Size of listOfListsOfDeclarations[%u] = %zu \n",n,listOfListsOfDeclarations[n].size());
+               printf ("  -- Size of listOfListsOfDeclarations[%u] = %zu \n",n,listOfListsOfDeclarations[n].size());
              }
 #endif
 
@@ -98,7 +98,7 @@ MarkTemplateInstantiationsForOutput::BuildSetOfRequiredTemplateDeclarations ( Sg
                  // Look into this subtrees for any required declarations (which would not have been caught last iteration!
                     declarationFixupTraversal.traverse ( *i , inheritedAttribute );
 #if 0
-                    printf ("In nested traversal: declarationFixupTraversal.listOfTemplateDeclarationsToOutput.size() = %d \n",
+                    printf ("  -- In nested traversal: declarationFixupTraversal.listOfTemplateDeclarationsToOutput.size() = %zu \n",
                          declarationFixupTraversal.listOfTemplateDeclarationsToOutput.size());
 #endif
                   }
@@ -117,7 +117,7 @@ MarkTemplateInstantiationsForOutput::BuildSetOfRequiredTemplateDeclarations ( Sg
         }
 
 #if 0
-     printf ("Number of lists of required declarations = %d \n",listOfListsOfDeclarations.size());
+     printf ("Number of lists of required declarations = %zu \n",listOfListsOfDeclarations.size());
 #endif
 
   // Convert the vector of lists to a set!
@@ -125,7 +125,7 @@ MarkTemplateInstantiationsForOutput::BuildSetOfRequiredTemplateDeclarations ( Sg
      for (unsigned int n = 0; n < listOfListsOfDeclarations.size(); n++)
         {
 #if 0
-          printf ("   Size of listOfListsOfDeclarations[%d] = %d \n",n,listOfListsOfDeclarations[n].size());
+          printf (" -- Size of listOfListsOfDeclarations[%d] = %zu \n",n,listOfListsOfDeclarations[n].size());
 #endif
           list<SgDeclarationStatement*>::iterator i = listOfListsOfDeclarations[n].begin();
           while ( i != listOfListsOfDeclarations[n].end() )
@@ -159,6 +159,8 @@ ProcessMemberFunctionTemplateDeclarations ( set<SgDeclarationStatement*> setOfRe
           bool isfirstNondefiningDeclaration = firstNondefiningDeclaration == NULL ? false : (*i == firstNondefiningDeclaration);
        // first debug the member functions!
 
+          printf ("In ProcessMemberFunctionTemplateDeclarations() set element = %p = %s \n",*i,(*i)->class_name().c_str());
+
        // We only have to worry about member functions (since that is what this function is handling).
           SgTemplateInstantiationMemberFunctionDecl* memberFunctionInstantiation = isSgTemplateInstantiationMemberFunctionDecl(*i);
           if (memberFunctionInstantiation != NULL)
@@ -170,7 +172,8 @@ ProcessMemberFunctionTemplateDeclarations ( set<SgDeclarationStatement*> setOfRe
                                    *i,(*i)->sage_class_name(),SageInterface::get_name(*i).c_str(),
                                    isDefiningDeclaration ? "true" : "false", 
                                    isfirstNondefiningDeclaration ? "true" : "false");
-               (*i)->get_file_info()->display("required declaration");
+               printf ("(*i)->get_file_info() = %p \n",(*i)->get_file_info());
+               (*i)->get_file_info()->display("required declaration: debug");
 #endif
             // At least one of these should be true!
                ROSE_ASSERT ( isfirstNondefiningDeclaration == true || isDefiningDeclaration == true );
@@ -183,7 +186,8 @@ ProcessMemberFunctionTemplateDeclarations ( set<SgDeclarationStatement*> setOfRe
 #endif
                ROSE_ASSERT(templateDeclaration != NULL);
 #if 0
-               printf ("templateDeclaration = %p = %s \n",templateDeclaration,templateDeclaration->get_name().str());
+            // printf ("templateDeclaration = %p = %s \n",templateDeclaration,templateDeclaration->get_name().str());
+               printf ("templateDeclaration = %p = %s \n",templateDeclaration,templateDeclaration->class_name().c_str());
                printf ("templateDeclaration->get_firstNondefiningDeclaration() = %p \n",templateDeclaration->get_firstNondefiningDeclaration());
                printf ("templateDeclaration->get_definingDeclaration()         = %p \n",templateDeclaration->get_definingDeclaration());
 #endif
@@ -216,6 +220,7 @@ ProcessMemberFunctionTemplateDeclarations ( set<SgDeclarationStatement*> setOfRe
                   }
 
 #if 0
+               templateDeclaration->get_file_info()->display("templateDeclaration file name problem: debug");
                printf ("currentFilename               = %s \n",currentFilename.c_str());
                printf ("filenameOfTemplateDeclaration = %s \n",filenameOfTemplateDeclaration.c_str());
 #endif
@@ -230,10 +235,15 @@ ProcessMemberFunctionTemplateDeclarations ( set<SgDeclarationStatement*> setOfRe
                  //       EDG will not list the source for the member function in the class template
                  //       declaration (independent of the setting og TEMPLATES_IN_IL within EDG.
                     bool isSpecialization = memberFunctionInstantiation->isSpecialization();
-#if 0
+
+                 // DQ (5/2/2012): Although I included that case for handling "isDefinedInClass"
+                 // below, I think it should always be false for this handling of specializations.
+                 // bool isDefinedInClass = memberFunctionInstantiation->isDefinedInClass();
+                 // bool isDefinedInClass = false;
                     bool isDefinedInClass = memberFunctionInstantiation->isDefinedInClass();
-                    printf ("isSpecialization = %s \n",isSpecialization ? "true" : "false");
-                    printf ("isDefinedInClass = %s \n",isDefinedInClass ? "true" : "false");
+#if 0
+                    printf ("MarkTemplateInstantiationsForOutput::ProcessMemberFunctionTemplateDeclarations(): isSpecialization = %s \n",isSpecialization ? "true" : "false");
+                    printf ("MarkTemplateInstantiationsForOutput::ProcessMemberFunctionTemplateDeclarations(): isDefinedInClass = %s \n",isDefinedInClass ? "true" : "false");
 #endif
 #ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
                     SgDeclarationStatement* templateDeclaration = memberFunctionInstantiation->get_templateDeclaration();
@@ -252,8 +262,9 @@ ProcessMemberFunctionTemplateDeclarations ( set<SgDeclarationStatement*> setOfRe
                     printf ("templateDeclaration->get_scope()     = %p = %s \n",
                               templateDeclaration->get_scope(),templateDeclaration->get_scope()->class_name().c_str());
                     printf ("templateDeclarationIsDeclaredInClass = %s \n",templateDeclarationIsDeclaredInClass ? "true" : "false");
-                    printf ("templateDeclaration: get_name() = %s get_string() = %s \n",
-                              templateDeclaration->get_name().str(),templateDeclaration->get_string().str());
+                 // printf ("templateDeclaration: get_name() = %s get_string() = %s \n",
+                 //           templateDeclaration->get_name().str(),templateDeclaration->get_string().str());
+                 // printf ("templateDeclaration: get_string() = %s \n",templateDeclaration->get_string().str());
 
                     printf ("memberFunctionInstantiation->get_definition() = %p \n",
                               memberFunctionInstantiation->get_definition());
@@ -262,9 +273,13 @@ ProcessMemberFunctionTemplateDeclarations ( set<SgDeclarationStatement*> setOfRe
                  // printf ("memberFunctionInstantiation->get_scope()      = %p = %s \n",
                  //      memberFunctionInstantiation->get_scope(),memberFunctionInstantiation->get_scope()->class_name().c_str());
 #endif
+
+                 // DQ (5/2/2012): We have to check if it is defined in the class since then the template 
+                 // string (still used for unparsing) will not have the function definitions.
                  // Check if this is a specialization in which case we have to put it out!
                  // if ( (isSpecialization == true) || (isDefinedInClass == true) )
-                    if ( isSpecialization == true )
+                 // if ( isSpecialization == true )
+                    if ( (isSpecialization == true) || (isDefinedInClass == true) )
                        {
 #if 0
                          printf ("Found a specialization in the current file, mark the specialization for output (on line = %d) \n",
@@ -278,7 +293,7 @@ ProcessMemberFunctionTemplateDeclarations ( set<SgDeclarationStatement*> setOfRe
                        }
                       else
                        {
-                      // printf ("templateDeclarationIsDeclaredInClass = %s \n",templateDeclarationIsDeclaredInClass ? "true" : "false");
+                         printf ("templateDeclarationIsDeclaredInClass = %s \n",templateDeclarationIsDeclaredInClass ? "true" : "false");
 
                          if (templateDeclarationIsDeclaredInClass == true)
                             {
@@ -666,6 +681,8 @@ MarkTemplateInstantiationsForOutput::ProcessFunctionTemplateDeclarations ( set<S
           bool isfirstNondefiningDeclaration = firstNondefiningDeclaration == NULL ? false : (*i == firstNondefiningDeclaration);
        // first debug the member functions!
 
+          printf ("In ProcessFunctionTemplateDeclarations() set element = %p = %s \n",*i,(*i)->class_name().c_str());
+
           SgTemplateInstantiationFunctionDecl* functionInstantiation = isSgTemplateInstantiationFunctionDecl(*i);
           if (functionInstantiation != NULL)
              {
@@ -676,7 +693,8 @@ MarkTemplateInstantiationsForOutput::ProcessFunctionTemplateDeclarations ( set<S
                                    *i,(*i)->sage_class_name(),SageInterface::get_name(*i).c_str(),
                                    isDefiningDeclaration ? "true" : "false", 
                                    isfirstNondefiningDeclaration ? "true" : "false");
-               (*i)->get_file_info()->display("required declaration");
+               printf ("(*i)->get_file_info() = %p \n",(*i)->get_file_info());
+               (*i)->get_file_info()->display("required declaration: debug");
 #endif
             // At least one of these should be true!
                ROSE_ASSERT ( isfirstNondefiningDeclaration == true || isDefiningDeclaration == true );
@@ -689,20 +707,22 @@ MarkTemplateInstantiationsForOutput::ProcessFunctionTemplateDeclarations ( set<S
 #endif
                ROSE_ASSERT(templateDeclaration != NULL);
 #if 0
-               printf ("templateDeclaration = %p = %s \n",templateDeclaration,templateDeclaration->get_name().str());
+            // printf ("templateDeclaration = %p = %s \n",templateDeclaration,templateDeclaration->get_name().str());
+               printf ("templateDeclaration = %p = %s \n",templateDeclaration,templateDeclaration->class_name().c_str());
                printf ("templateDeclaration->get_firstNondefiningDeclaration() = %p \n",templateDeclaration->get_firstNondefiningDeclaration());
                printf ("templateDeclaration->get_definingDeclaration()         = %p \n",templateDeclaration->get_definingDeclaration());
 #endif
                string currentFilename = (file != NULL) ? file->getFileName() : "";
                string filenameOfTemplateDeclaration = templateDeclaration->get_file_info()->get_filename();
 #if 0
+               templateDeclaration->get_file_info()->display("templateDeclaration file name problem: debug");
                printf ("currentFilename               = %s \n",currentFilename.c_str());
                printf ("filenameOfTemplateDeclaration = %s \n",filenameOfTemplateDeclaration.c_str());
 #endif
                if (filenameOfTemplateDeclaration == currentFilename)
                   {
                     bool isSpecialization = functionInstantiation->isSpecialization();
-                 // printf ("isSpecialization = %s \n",isSpecialization ? "true" : "false");
+                    printf ("In MarkTemplateInstantiationsForOutput::ProcessFunctionTemplateDeclarations(): isSpecialization = %s \n",isSpecialization ? "true" : "false");
                     if (isSpecialization == true)
                        {
 #if 0
@@ -735,6 +755,8 @@ MarkTemplateInstantiationsForOutput::ProcessClassTemplateDeclarations ( set<SgDe
           bool isfirstNondefiningDeclaration = firstNondefiningDeclaration == NULL ? false : (*i == firstNondefiningDeclaration);
        // first debug the member functions!
 
+          printf ("In ProcessClassTemplateDeclarations() set element = %p = %s \n",*i,(*i)->class_name().c_str());
+
           SgTemplateInstantiationDecl* classInstantiation = isSgTemplateInstantiationDecl(*i);
           if (classInstantiation != NULL)
              {
@@ -745,7 +767,8 @@ MarkTemplateInstantiationsForOutput::ProcessClassTemplateDeclarations ( set<SgDe
                                    *i,(*i)->sage_class_name(),SageInterface::get_name(*i).c_str(),
                                    isDefiningDeclaration ? "true" : "false", 
                                    isfirstNondefiningDeclaration ? "true" : "false");
-               (*i)->get_file_info()->display("required declaration");
+               printf ("(*i)->get_file_info() = %p \n",(*i)->get_file_info());
+               (*i)->get_file_info()->display("required declaration: debug");
 #endif
             // At least one of these should be true!
                ROSE_ASSERT ( isfirstNondefiningDeclaration == true || isDefiningDeclaration == true );
@@ -758,20 +781,28 @@ MarkTemplateInstantiationsForOutput::ProcessClassTemplateDeclarations ( set<SgDe
 #endif
                ROSE_ASSERT(templateDeclaration != NULL);
 #if 0
-               printf ("templateDeclaration = %p = %s \n",templateDeclaration,templateDeclaration->get_name().str());
+            // printf ("templateDeclaration = %p = %s \n",templateDeclaration,templateDeclaration->get_name().str());
+               printf ("templateDeclaration = %p = %s \n",templateDeclaration,templateDeclaration->class_name().c_str());
                printf ("templateDeclaration->get_firstNondefiningDeclaration() = %p \n",templateDeclaration->get_firstNondefiningDeclaration());
                printf ("templateDeclaration->get_definingDeclaration()         = %p \n",templateDeclaration->get_definingDeclaration());
 #endif
                string currentFilename = (file != NULL) ? file->getFileName() : "";
                string filenameOfTemplateDeclaration = templateDeclaration->get_file_info()->get_filename();
 #if 0
+               templateDeclaration->get_file_info()->display("templateDeclaration file name problem: debug");
                printf ("currentFilename               = %s \n",currentFilename.c_str());
                printf ("filenameOfTemplateDeclaration = %s \n",filenameOfTemplateDeclaration.c_str());
 #endif
                if (filenameOfTemplateDeclaration == currentFilename)
                   {
                     bool isSpecialization = classInstantiation->isSpecialization();
-                 // printf ("isSpecialization = %s \n",isSpecialization ? "true" : "false");
+                    printf ("MarkTemplateInstantiationsForOutput::ProcessClassTemplateDeclarations(): isSpecialization = %s \n",isSpecialization ? "true" : "false");
+#if 0
+                 // DQ (5/2/2012): Force this to be a specialization since it is used (the declaration was in the class but is not output that way in the template string).
+                    printf ("Forcing this template instantiation to be treated as a specialization (and output in the generated code). \n");
+                    classInstantiation->set_specialization(SgDeclarationStatement::e_specialization);
+                    isSpecialization = classInstantiation->isSpecialization();
+#endif
                     if (isSpecialization == true)
                        {
 #if 0
@@ -856,7 +887,7 @@ markTemplateInstantiationsForOutput( SgNode* node )
           set<SgDeclarationStatement*> setOfRequiredDeclarations = MarkTemplateInstantiationsForOutput::BuildSetOfRequiredTemplateDeclarations(node,file);
 
 #if 0
-          printf ("setOfRequiredDeclarations.size() = %d \n",setOfRequiredDeclarations.size());
+          printf ("In markTemplateInstantiationsForOutput(): ProcessMemberFunctionTemplateDeclarations(): setOfRequiredDeclarations.size() = %zu \n",setOfRequiredDeclarations.size());
 #endif
 
        // ***************************************************************************************
@@ -864,11 +895,19 @@ markTemplateInstantiationsForOutput( SgNode* node )
        // ***************************************************************************************
           MarkTemplateInstantiationsForOutput::ProcessMemberFunctionTemplateDeclarations(setOfRequiredDeclarations,file);
 
+#if 0
+          printf ("In markTemplateInstantiationsForOutput(): ProcessFunctionTemplateDeclarations(): setOfRequiredDeclarations.size() = %zu \n",setOfRequiredDeclarations.size());
+#endif
+
        // ********************************************************************************
        // Iterate over function template instantiations and figure out which ones to output
        // ********************************************************************************
 
           MarkTemplateInstantiationsForOutput::ProcessFunctionTemplateDeclarations(setOfRequiredDeclarations,file);
+
+#if 0
+          printf ("In markTemplateInstantiationsForOutput(): ProcessClassTemplateDeclarations(): setOfRequiredDeclarations.size() = %zu \n",setOfRequiredDeclarations.size());
+#endif
 
        // *****************************************************************************
        // Iterate over class template instantiations and figure out which ones to output
@@ -877,19 +916,22 @@ markTemplateInstantiationsForOutput( SgNode* node )
           MarkTemplateInstantiationsForOutput::ProcessClassTemplateDeclarations(setOfRequiredDeclarations,file);
 
         } // end of if (file != NULL)
-     else if (project != NULL)
+       else 
         {
-       // GB (9/4/2009): Added this case for handling SgProject nodes. We do
-       // this simply by iterating over the list of files in the project and
-       // calling this function recursively. This is only one level of
-       // recursion since files are not nested.
-          SgFilePtrList &files = project->get_fileList();
-          SgFilePtrList::iterator fIterator;
-          for (fIterator = files.begin(); fIterator != files.end(); ++fIterator)
+          if (project != NULL)
              {
-               SgFile *file = *fIterator;
-               ROSE_ASSERT(file != NULL);
-               markTemplateInstantiationsForOutput(file);
+            // GB (9/4/2009): Added this case for handling SgProject nodes. We do
+            // this simply by iterating over the list of files in the project and
+            // calling this function recursively. This is only one level of
+            // recursion since files are not nested.
+               SgFilePtrList &files = project->get_fileList();
+               SgFilePtrList::iterator fIterator;
+               for (fIterator = files.begin(); fIterator != files.end(); ++fIterator)
+                  {
+                    SgFile *file = *fIterator;
+                    ROSE_ASSERT(file != NULL);
+                    markTemplateInstantiationsForOutput(file);
+                  }
              }
         }
 
@@ -1284,6 +1326,11 @@ MarkTemplateInstantiationsForOutputSupport::evaluateSynthesizedAttribute (
                                    SgMemberFunctionDeclaration* destructor = SageInterface::getDefaultDestructor(classDeclaration);
                                    if (destructor != NULL)
                                       {
+                                        if (isSgTemplateInstantiationMemberFunctionDecl(destructor) == NULL)
+                                           {
+                                             printf ("ERROR: destructor = %p = %s \n",destructor,destructor->class_name().c_str());
+                                             destructor->get_file_info()->display("Error: isSgTemplateInstantiationMemberFunctionDecl(destructor) == NULL: debug");
+                                           }
                                         ROSE_ASSERT(isSgTemplateInstantiationMemberFunctionDecl(destructor) != NULL);
                                         saveDeclaration(destructor);
                                       }

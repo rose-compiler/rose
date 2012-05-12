@@ -228,6 +228,10 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
 #if 0
      printf ("statementInFile = %p = %s = %s = %s \n",stmt,stmt->class_name().c_str(),SageInterface::get_name(stmt).c_str(),(statementInFile == true) ? "true" : "false");
   // stmt->get_file_info()->display("debug why false");
+  // if (statementInFile == false)
+        {
+          stmt->get_file_info()->display("debug why false");
+        }
 #endif
 
 #if 0

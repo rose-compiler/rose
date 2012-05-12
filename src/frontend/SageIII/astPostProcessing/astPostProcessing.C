@@ -158,9 +158,12 @@ void postProcessingSupport (SgNode* node)
         {
           printf ("Postprocessing AST build using new EDG/Sage Translation Interface. \n");
 
+       // DQ (5/1/2012): After EDG/ROSE translation, there should be no IR nodes marked as transformations.
+          detectTransformations(node);
+
        // Reset and test and parent pointers so that it matches our definition 
        // of the AST (as defined by the AST traversal mechanism).
-          topLevelResetParentPointer (node);
+          topLevelResetParentPointer(node);
 
        // Another 2nd step to make sure that parents of even IR nodes not traversed 
        // can be set properly.
@@ -186,6 +189,33 @@ void postProcessingSupport (SgNode* node)
        // DQ (2/12/2012): Added support for this, since AST_consistancy expects get_nameResetFromMangledForm() == true.
           resetTemplateNames(node);
 
+       // **********************************************************************
+       // DQ (4/29/2012): Added some of the template fixup support for EDG 4.3 work.
+       // DQ (6/21/2005): This function now only marks the subtrees of all appropriate declarations as compiler generated.
+       // DQ (5/27/2005): mark all template instantiations (which we generate as template specializations) as compiler generated.
+       // This is required to make them pass the unparser and the phase where comments are attached.  Some fixup of filenames
+       // and line numbers might also be required.
+          fixupTemplateInstantiations(node);
+
+       // DQ (8/19/2005): Mark any template specialization (C++ specializations are template instantiations 
+       // that are explicit in the source code).  Such template specializations are marked for output only
+       // if they are present in the source file.  This detail could effect handling of header files later on.
+       // Have this phase preceed the markTemplateInstantiationsForOutput() since all specializations should 
+       // be searched for uses of (references to) instantiated template functions and member functions.
+          markTemplateSpecializationsForOutput(node);
+
+       // DQ (6/21/2005): This function marks template declarations for output by the unparser (it is part of a 
+       // fixed point iteration over the AST to force find all templates that are required (EDG at the moment 
+       // outputs only though template functions that are required, but this function solves the more general 
+       // problem of instantiation of both function and member function templates (and static data, later)).
+          markTemplateInstantiationsForOutput(node);
+
+       // DQ (10/21/2007): Friend template functions were previously not properly marked which caused their generated template 
+       // symbols to be added to the wrong symbol tables.  This is a cause of numerous symbol table problems.
+          fixupFriendTemplateDeclarations();
+       // DQ (4/29/2012): End of new template fixup support for EDG 4.3 work.
+       // **********************************************************************
+
        // DQ (2/12/2012): This is a problem for test2004_35.C (debugging this issue).
        // printf ("Exiting after calling resetTemplateNames() \n");
        // ROSE_ASSERT(false);
@@ -195,6 +225,9 @@ void postProcessingSupport (SgNode* node)
        // the AST are done, even just building it, this step should be the final
        // step.
           checkIsModifiedFlag(node);
+
+       // DQ (5/2/2012): After EDG/ROSE translation, there should be no IR nodes marked as transformations.
+          detectTransformations(node);
 
           printf ("DONE: Postprocessing AST build using new EDG/Sage Translation Interface. \n");
 

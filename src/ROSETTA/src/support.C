@@ -573,6 +573,9 @@ Grammar::setUpSupport ()
   //        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
      Pragma.setDataPrototype  ( "Sg_File_Info*", "startOfConstruct", "= NULL",
                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
+  // DQ (5/3/2012): Added endOfConstruct to be uniform and prepare SgPragma API to movement of SgPragma to be derived from SgLocatedNode in the future.
+     Pragma.setDataPrototype  ( "Sg_File_Info*", "endOfConstruct", "= NULL",
+                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
      Pragma.setDataPrototype ( "short" , "printed", "= 0",
                  NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 

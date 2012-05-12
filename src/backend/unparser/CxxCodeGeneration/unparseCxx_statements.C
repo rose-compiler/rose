@@ -1265,7 +1265,7 @@ Unparse_ExprStmt::unparseTemplateInstantiationDeclStmt (SgStatement* stmt, SgUnp
      SgClassDeclaration* classDeclaration = isSgClassDeclaration(templateInstantiationDeclaration);
      ROSE_ASSERT(classDeclaration != NULL);
 
-  // curprint("Output in curprint in Unparse_ExprStmt::unparseTemplateInstantiationDeclStmt()");
+  // curprint("/* Output in curprint in Unparse_ExprStmt::unparseTemplateInstantiationDeclStmt() */");
 
 #if OUTPUT_DEBUGGING_CLASS_NAME || true
      printf ("Inside of unparseTemplateInstantiationDeclStmt() stmt = %p/%p name = %s  templateName = %s transformed = %s/%s prototype = %s compiler-generated = %s compiler-generated and marked for output = %s \n",
@@ -1461,6 +1461,8 @@ Unparse_ExprStmt::unparseTemplateInstantiationFunctionDeclStmt (SgStatement* stm
 
      ROSE_ASSERT(functionDeclaration != NULL);
 
+  // curprint("/* Output in curprint in Unparse_ExprStmt::unparseTemplateInstantiationFunctionDeclStmt() */");
+
 #if OUTPUT_DEBUGGING_FUNCTION_NAME
      printf ("Inside of unparseTemplateInstantiationFunctionDeclStmt() name = %s  transformed = %s prototype = %s static = %s compiler generated = %s transformed = %s output = %s \n",
        // templateInstantiationFunctionDeclaration->get_name().str(),
@@ -1514,33 +1516,47 @@ Unparse_ExprStmt::unparseTemplateInstantiationFunctionDeclStmt (SgStatement* stm
         {
        // Also output the template member function declaration the template declaration appears in the source file.
           string currentFileName = getFileName();
-          ROSE_ASSERT(templateInstantiationFunctionDeclaration->get_templateDeclaration() != NULL);
-          ROSE_ASSERT(templateInstantiationFunctionDeclaration->get_templateDeclaration()->get_file_info() != NULL);
-          ROSE_ASSERT(templateInstantiationFunctionDeclaration->get_templateDeclaration()->get_file_info()->get_filename() != NULL);
-          string declarationFileName = templateInstantiationFunctionDeclaration->get_templateDeclaration()->get_file_info()->get_filename();
-#if 0
-          printf ("In unparseTemplateInstantiationFunctionDeclStmt(): currentFileName     = %s \n",currentFileName.c_str());
-          printf ("In unparseTemplateInstantiationFunctionDeclStmt(): declarationFileName = %s \n",declarationFileName.c_str());
-          printf ("templateInstantiationFunctionDeclaration source position information: \n");
-          templateInstantiationFunctionDeclaration->get_file_info()->display("debug");
-#endif
-       // if ( declarationFileName == currentFileName )
-       // if ( declarationFileName == currentFileName && templateInstantiationMemberFunctionDeclaration->get_file_info()->isOutputInCodeGeneration() == true)
-          if ( templateInstantiationFunctionDeclaration->get_file_info()->isOutputInCodeGeneration() == true )
+
+       // DQ (5/2/2012): If the template declearation is not available then it is likely that is does not exist and so we will need to output the instantiation.
+       // The problem with this is that we actually build a template declaration in this case but it is not represented by a string (so until we
+       // abandon the string use of the template declaration in the unparsing we can't take advantage of this).
+
+       // ROSE_ASSERT(templateInstantiationFunctionDeclaration->get_templateDeclaration() != NULL);
+          if (templateInstantiationFunctionDeclaration->get_templateDeclaration() != NULL)
              {
-            // printf ("Declaration appears in the current source file. \n");
-#if PRINT_DEVELOPER_WARNINGS
-               curprint ( string("\n/* In unparseTemplateInstantiationFunctionDeclStmt(): output the template function declaration */ \n "));
+               ROSE_ASSERT(templateInstantiationFunctionDeclaration->get_templateDeclaration()->get_file_info() != NULL);
+               ROSE_ASSERT(templateInstantiationFunctionDeclaration->get_templateDeclaration()->get_file_info()->get_filename() != NULL);
+               string declarationFileName = templateInstantiationFunctionDeclaration->get_templateDeclaration()->get_file_info()->get_filename();
+#if 0
+               printf ("In unparseTemplateInstantiationFunctionDeclStmt(): currentFileName     = %s \n",currentFileName.c_str());
+               printf ("In unparseTemplateInstantiationFunctionDeclStmt(): declarationFileName = %s \n",declarationFileName.c_str());
+               printf ("templateInstantiationFunctionDeclaration source position information: \n");
+               templateInstantiationFunctionDeclaration->get_file_info()->display("debug");
 #endif
-               outputInstantiatedTemplateFunction = true;
+            // if ( declarationFileName == currentFileName )
+            // if ( declarationFileName == currentFileName && templateInstantiationMemberFunctionDeclaration->get_file_info()->isOutputInCodeGeneration() == true)
+               if ( templateInstantiationFunctionDeclaration->get_file_info()->isOutputInCodeGeneration() == true )
+                  {
+                 // printf ("Declaration appears in the current source file. \n");
+#if PRINT_DEVELOPER_WARNINGS
+                    curprint ( string("\n/* In unparseTemplateInstantiationFunctionDeclStmt(): output the template function declaration */ \n "));
+#endif
+                    outputInstantiatedTemplateFunction = true;
+                  }
+                 else
+                  {
+                 // printf ("Declaration does NOT appear in the current source file. \n");
+                 // curprint ( string("\n/* In unparseTemplateInstantiationFunctionDeclStmt(): skip output of template function declaration */ \n ";
+#if PRINT_DEVELOPER_WARNINGS
+                    curprint ( string("/* Skipped output of template function declaration (name = " ) + templateInstantiationFunctionDeclaration->get_qualified_name().str() + ") */ \n");
+#endif
+                  }
              }
             else
              {
-            // printf ("Declaration does NOT appear in the current source file. \n");
-            // curprint ( string("\n/* In unparseTemplateInstantiationFunctionDeclStmt(): skip output of template function declaration */ \n ";
-#if PRINT_DEVELOPER_WARNINGS
-               curprint ( string("/* Skipped output of template function declaration (name = " ) + templateInstantiationFunctionDeclaration->get_qualified_name().str() + ") */ \n");
-#endif
+            // DQ (5/2/2012): We need to output the template instantiation in some cases (see documentation above).
+               printf ("Note: the template function declaration is not available (this happens for declarations in templated classes): so output the template instantiation. stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+               outputInstantiatedTemplateFunction = true;
              }
         }
 
@@ -1566,7 +1582,7 @@ Unparse_ExprStmt::unparseTemplateInstantiationFunctionDeclStmt (SgStatement* stm
 #endif
 
        // Now output the function declaration
-       // curprint ( string("/* Now output the function declaration */\n ";
+       // curprint ("/* Now output the function declaration */\n ");
           unparseFuncDeclStmt(functionDeclaration,info);
         }
    }
@@ -2286,18 +2302,18 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
   // Liao, 9/25/2009, skip the compiler generated forward declaration for a SgTemplateInstantiationFunctionDecl
   // see bug 369: https://outreach.scidac.gov/tracker/index.php?func=detail&aid=369&group_id=24&atid=185
-    if (funcdecl_stmt->isForward()) 
-    {
-      SgFunctionDeclaration* def_decl = isSgFunctionDeclaration(funcdecl_stmt->get_definingDeclaration());
-      if (def_decl)
-      {
-        if (isSgTemplateInstantiationFunctionDecl(def_decl))
+     if (funcdecl_stmt->isForward() == true) 
         {
-         // cout<<"Skipping a forward declaration of a template instantiation function declaration..."<<endl;
-          return;
+          SgFunctionDeclaration* def_decl = isSgFunctionDeclaration(funcdecl_stmt->get_definingDeclaration());
+          if (def_decl)
+             {
+               if (isSgTemplateInstantiationFunctionDecl(def_decl))
+                  {
+                 // cout<<"Skipping a forward declaration of a template instantiation function declaration..."<<endl;
+                    return;
+                  }
+             }
         }
-      }
-    }
 
 #if 0
      printf ("funcdecl_stmt = %p = %s \n",funcdecl_stmt,funcdecl_stmt->get_name().str());
@@ -2370,7 +2386,7 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
         {
 #if 0
        // printf ("Not a forward function (normal function) \n");
-          curprint ( string("\n/* Not a forward function (normal function) */ \n");
+          curprint("\n/* Not a forward function (normal function) */ \n ");
 #endif
 
        // DQ (12/5/2007): This call to unparse the definition can change the scope in info, so save it and restore it
@@ -2423,7 +2439,9 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                curprint( "asm ");
              }
 
+       // curprint( "\n/* Calling printSpecifier() */ ");
           unp->u_sage->printSpecifier(funcdecl_stmt, ninfo);
+       // curprint( "\n/* DONE: Calling printSpecifier() */ ");
 
           ninfo.unset_CheckAccess();
 
@@ -2661,7 +2679,7 @@ Unparse_ExprStmt::unparseFuncDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
 #if 0
      printf ("Inside of unparseFuncDefnStmt() \n");
-     curprint ( string("/* Inside of Unparse_ExprStmt::unparseFuncDefnStmt */"));
+     curprint("/* Inside of Unparse_ExprStmt::unparseFuncDefnStmt */ ");
 #endif
 
      SgFunctionDefinition* funcdefn_stmt = isSgFunctionDefinition(stmt);
@@ -2674,7 +2692,9 @@ Unparse_ExprStmt::unparseFuncDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
   // Unparse any comments of directives attached to the SgFunctionParameterList
      ROSE_ASSERT (funcdefn_stmt->get_declaration() != NULL);
      if (funcdefn_stmt->get_declaration()->get_parameterList() != NULL)
-         unparseAttachedPreprocessingInfo(funcdefn_stmt->get_declaration()->get_parameterList(), info, PreprocessingInfo::before);
+        {
+          unparseAttachedPreprocessingInfo(funcdefn_stmt->get_declaration()->get_parameterList(), info, PreprocessingInfo::before);
+        }
 
      info.set_SkipFunctionDefinition();
      SgStatement *declstmt = funcdefn_stmt->get_declaration();
@@ -2702,9 +2722,16 @@ Unparse_ExprStmt::unparseFuncDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
      info.set_declstatement_ptr(funcdefn_stmt->get_declaration());
 
      if ( isSgMemberFunctionDeclaration(declstmt) != NULL )
-        unparseMFuncDeclStmt( declstmt, info);
-     else
-        unparseFuncDeclStmt( declstmt, info);
+        {
+          unparseMFuncDeclStmt( declstmt, info);
+        }
+       else
+        {
+       // curprint ("/* Inside of Unparse_ExprStmt::unparseFuncDefnStmt: calling unparseMFuncDeclStmt or unparseFuncDeclStmt */ ");
+          unparseFuncDeclStmt( declstmt, info);
+        }
+
+  // curprint ("/* Inside of Unparse_ExprStmt::unparseFuncDefnStmt: DONE calling unparseMFuncDeclStmt or unparseFuncDeclStmt */ ");
 
   // DQ (10/15/2006): Also un-mark that we are unparsing a function declaration (or member function declaration)
      info.set_declstatement_ptr(NULL);

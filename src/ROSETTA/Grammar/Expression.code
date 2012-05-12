@@ -3175,13 +3175,13 @@ SgFunctionCallExp::get_type() const
      SgFunctionType* functionType = isSgFunctionType(likelyFunctionType);
      if (functionType == NULL)
         {
-          printf ("Error: unexpected type found for likelyFunctionType = %p = %s \n",likelyFunctionType,likelyFunctionType->class_name().c_str());
+          printf ("Warning: unexpected type found for likelyFunctionType = %p = %s \n",likelyFunctionType,likelyFunctionType->class_name().c_str());
        // get_file_info()->display("Location of call to SgFunctionCallExp::get_type(): debug");
 
        // DQ (7/15/2007): Handle case of typedef of function type
           likelyFunctionType = likelyFunctionType->stripType(SgType::STRIP_TYPEDEF_TYPE);
 
-          printf ("After calling stripType(SgType::STRIP_TYPEDEF_TYPE): likelyFunctionType = %p = %s \n",likelyFunctionType,likelyFunctionType->class_name().c_str());
+       // printf ("After calling stripType(SgType::STRIP_TYPEDEF_TYPE): likelyFunctionType = %p = %s \n",likelyFunctionType,likelyFunctionType->class_name().c_str());
 
           functionType = isSgFunctionType(likelyFunctionType);
 

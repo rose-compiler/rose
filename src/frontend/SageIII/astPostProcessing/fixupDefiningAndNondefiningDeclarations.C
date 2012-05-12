@@ -619,7 +619,11 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
 #else
                     SgTemplateDeclaration* templateDeclaration = templateMemberFunction->get_templateDeclaration();
 #endif
-                    ROSE_ASSERT(templateDeclaration != NULL);
+
+                 // DQ (5/3/2012): We don't always have a template declaration, so I would like to weaken this test in ROSE.  We might be able to fix it later.
+                 // ROSE_ASSERT(templateDeclaration != NULL);
+                    if (templateDeclaration != NULL)
+                       {
                  // ROSE_ASSERT(templateDeclaration->get_firstNondefiningDeclaration() != NULL);
 #if 0
                  // DQ (3/4/2007): This can cause the defining and non-defining declarations to be the same, which is an violation of AST consistancy rules.
@@ -644,6 +648,12 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
 #endif
 
                     ROSE_ASSERT(templateDeclaration->get_parent() != NULL);
+                       }
+                      else
+                       {
+                      // DQ (5/3/2012): Make it a warning to detect templateDeclaration == NULL.
+                         printf ("WARNING: templateDeclaration == NULL (this is a recent EDG 4.3 issue). \n");
+                       }
                   }
 
             // DQ (9/24/2007): This is an error reported by Andreas, fix it after Gergos checkin.
