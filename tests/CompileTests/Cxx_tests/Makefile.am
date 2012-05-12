@@ -10,11 +10,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 if ROSE_USE_EDG_VERSION_4_3
 
 # EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
-# $(TESTCODE_CURRENTLY_FAILING)
-
-
-
-
+#  $(TESTCODE_CURRENTLY_FAILING)
 
 
 EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
@@ -137,6 +133,7 @@ test2004_60.C \
 test2004_61.C \
 test2004_62.C \
 test2004_63.C \
+test2004_64.C \
 test2004_65.C \
 test2004_67.C \
 test2004_68.C \
@@ -277,6 +274,7 @@ test2005_49.C \
 test2005_50.C \
 test2005_51.C \
 test2005_52.C \
+test2005_53.C \
 test2005_55.C \
 test2005_58.C \
 test2005_59.C \
@@ -314,6 +312,7 @@ test2005_95.C \
 test2005_96.C \
 test2005_97.C \
 test2005_98.C \
+test2005_99.C \
 test2005_100.C \
 test2005_101.C \
 test2005_104.C \
@@ -334,8 +333,12 @@ test2005_125.C \
 test2005_126.C \
 test2005_127.C \
 test2005_128.C \
+test2005_133.C \
 test2005_134.C \
 test2005_135.C \
+test2005_136.C \
+test2005_138.C \
+test2005_139.C \
 test2005_140.C \
 test2005_141.C \
 test2005_142.C \
@@ -353,7 +356,9 @@ test2005_157.C \
 test2005_158.C \
 test2005_159.C \
 test2005_160.C \
+test2005_161.C \
 test2005_162.C \
+test2005_163.C \
 test2005_164.C \
 test2005_165.C \
 test2005_166.C \
@@ -363,6 +368,7 @@ test2005_169.C \
 test2005_170.C \
 test2005_171.C \
 test2005_172.C \
+test2005_173.C \
 test2005_174.C \
 test2005_175.C \
 test2005_176.C \
@@ -381,6 +387,7 @@ test2005_190.C \
 test2005_191.C \
 test2005_192.C \
 test2005_193.C \
+test2005_194.C \
 test2005_195.C \
 test2005_196.C \
 test2005_197.C \
@@ -428,7 +435,6 @@ test2006_59.C \
 test2006_61.C \
 test2006_62.C \
 test2006_63.C \
-test2004_64.C \
 test2006_66.C \
 test2006_68.C \
 test2006_69.C \
@@ -475,6 +481,7 @@ test2006_115.C \
 test2006_116.C \
 test2006_117.C \
 test2006_118.C \
+test2006_119.C \
 test2006_120.C \
 test2006_121.C \
 test2006_123.C \
@@ -613,6 +620,7 @@ test2009_12.C \
 test2009_14.C \
 test2009_15.C \
 test2009_18.C \
+test2009_19.C \
 test2009_20.C \
 test2009_27.C \
 test2009_28.C \
@@ -678,6 +686,8 @@ test2011_68.C \
 test2011_69.C \
 test2011_71.C \
 test2011_74.C \
+test2011_76.C \
+test2011_77.C \
 test2011_78.C \
 test2011_79.C \
 test2011_81.C \
@@ -826,6 +836,8 @@ test2012_69.C \
 test2012_70.C \
 test2012_71.C \
 test2012_72.C \
+test2012_73.C \
+test2012_74.C \
 test_int_lexemes.C \
 test_int_lexemes_donot_pass.C \
 test_simple_int.C \
@@ -859,6 +871,8 @@ endif
 
 
 
+
+
 # Import list of C++ test cases that are known to fail:
 #   TESTCODE_CURRENTLY_FAILING
 #
@@ -871,13 +885,11 @@ test2005_24.C \
 test2005_33.C \
 test2005_35.C \
 test2005_44.C \
-test2005_53.C \
 test2005_57.C \
 test2005_60.C \
 test2005_63.C \
 test2005_68.C \
 test2005_73.C \
-test2005_99.C \
 test2005_102.C \
 test2005_103.C \
  test2005_112.C \
@@ -890,18 +902,10 @@ test2005_129.C \
 test2005_130.C \
 test2005_131.C \
 test2005_132.C \
-test2005_133.C \
-test2005_136.C \
 test2005_137.C \
-test2005_138.C \
-test2005_139.C \
 test2005_143.C \
  test2005_154.C \
 test2005_155.C \
- test2005_161.C \
- test2005_163.C \
-test2005_173.C \
- test2005_194.C \
 test2006_03.C \
 test2006_04.C \
 test2006_05.C \
@@ -914,7 +918,6 @@ test2006_67.C \
 test2006_73.C \
 test2006_85.C \
 test2006_90.C \
-test2006_119.C \
 test2006_122.C \
  test2006_151.C \
  test2006_159.C \
@@ -932,7 +935,6 @@ test2007_140.C \
 test2007_141.C \
 test2007_150.C \
 test2007_169.C \
-test2009_19.C \
 test2009_21.C \
 test2009_24.C \
 test2009_30.C \
@@ -948,8 +950,6 @@ test2011_70.C \
 test2011_72.C \
 test2011_73.C \
 test2011_75.C \
-test2011_76.C \
-test2011_77.C \
 test2011_80.C \
 test2011_84.C \
 test2011_85.C \

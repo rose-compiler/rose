@@ -11,20 +11,17 @@
 
 using namespace std;
 
-#if 1
 class A
    {
      public:
           void foo();
    };
-#endif
 
 int main()
    {
   // DQ (11/19/2004): Temporarily commented out since this is a demonstrated bug now that we qualify everything!
      std::vector<int> integerVector;
 
-#if 1
      std::vector<int>::iterator i = integerVector.begin();
 
      bool b = i != integerVector.end();
@@ -52,7 +49,6 @@ int main()
           i.operator->()->foo();
           (*i.operator->()).foo();
         }
-#endif
 
      return 0;
    }
