@@ -156,7 +156,9 @@ sub find_canonical_ref {
 The remote tracking ref $canon_ref does not exist in this repository.
 Please ensure that your remotes are up to date (use "git fetch $remote").
 ERROR
-				exit 1;
+#				exit 1;
+# Liao, 5/14/2012. We simply skip some dangling remote branches if they are not checked out at all.
+                                next;
 			}
 			push @canon_ref_candidates, $canon_ref;
 		}
