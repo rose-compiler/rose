@@ -8203,6 +8203,8 @@ SageBuilder::buildTemplateClassDeclaration_nfi(const SgName& name, SgClassDeclar
      if (scope == NULL)
           scope = SageBuilder::topScopeStack();
 
+     printf ("In buildTemplateClassDeclaration_nfi(): nonDefiningDecl = %p \n",nonDefiningDecl);
+
   // DQ (11/20/2011): This is for initial debugging only.
      ROSE_ASSERT(scope != NULL);
 
@@ -8289,7 +8291,7 @@ SageBuilder::buildTemplateClassDeclaration_nfi(const SgName& name, SgClassDeclar
           printf ("Warning: In SageBuilder::buildTemplateClassDeclaration_nfi(): scope == NULL \n");
         }
 
-     printf ("In SageBuilder::buildTemplateClassDeclaration_nfi(): mysymbol = %p \n",mysymbol);
+     printf ("In buildTemplateClassDeclaration_nfi(): mysymbol = %p \n",mysymbol);
      if (mysymbol != NULL) // set links if nondefining declaration already exists.
         {
           nondefdecl = isSgTemplateClassDeclaration(mysymbol->get_declaration());
@@ -8397,6 +8399,7 @@ SageBuilder::buildTemplateClassDeclaration_nfi(const SgName& name, SgClassDeclar
              }
         }
 
+     printf ("In buildTemplateClassDeclaration_nfi(): Setting the firstNondefiningDeclaration to be nondefdecl = %p \n",nondefdecl);
      defdecl->set_firstNondefiningDeclaration(nondefdecl);
 
 #if 1
