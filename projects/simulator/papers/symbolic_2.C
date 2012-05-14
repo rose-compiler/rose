@@ -100,7 +100,8 @@ public:
                     X86InstructionSemantics<VirtualMachineSemantics::Policy<VirtualMachineSemantics::State,
                                                                             VirtualMachineSemantics::ValueType>,
                                             VirtualMachineSemantics::ValueType> sem(p);
-                    p.set_map(args.thread->get_process()->get_memory()); // won't be thread safe
+                    MemoryMap p_map(args.thread->get_process()->get_memory(), MemoryMap::COPY_ON_WRITE);
+                    p.set_map(&p_map); // won't be thread safe
                     sem.processInstruction(insn);
                     policy.writeRegister("eip", SymbolicSemantics::ValueType<32>(p.readRegister<32>("eip").known_value()));
                     trace->mesg("%s: dynamic linker thunk kludge triggered: changed eip from 0x%08"PRIx64" to 0x%08"PRIx64,

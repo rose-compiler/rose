@@ -295,7 +295,7 @@ RSIM_Simulator::exec(int argc, char **argv)
 
     if ((process->get_tracing_flags() & tracingFacilityBit(TRACE_MMAP))) {
         fprintf(process->get_tracing_file(), "memory map after program load:\n");
-        process->get_memory()->dump(process->get_tracing_file(), "  ");
+        process->get_memory().dump(process->get_tracing_file(), "  ");
     }
 
     main_thread->tracing(TRACE_STATE)->mesg("Initial state:\n");

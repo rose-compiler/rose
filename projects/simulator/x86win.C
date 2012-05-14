@@ -65,7 +65,7 @@ public:
                     FILE *f = fopen("x-maps", "w");
                     assert(f);
 
-                    const MemoryMap::Segments &segments = t->get_process()->get_memory()->segments();
+                    const MemoryMap::Segments &segments = t->get_process()->get_memory().segments();
                     for (MemoryMap::Segments::const_iterator si=segments.begin(); si!=segments.end(); ++si) {
                         const Extent &range = si->first;
                         const MemoryMap::Segment &segment = si->second;
