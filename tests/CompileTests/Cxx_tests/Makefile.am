@@ -10,7 +10,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 if ROSE_USE_EDG_VERSION_4_3
 
 # EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
-#  $(TESTCODE_CURRENTLY_FAILING)
+# $(TESTCODE_CURRENTLY_FAILING)
 
 
 EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
@@ -543,6 +543,7 @@ test2007_26.C \
 test2007_28.C \
 test2007_29.C \
 test2007_40.C \
+test2007_41.C \
 test2007_43.C \
 test2007_44.C \
 test2007_46.C \
@@ -841,6 +842,8 @@ test2012_74.C \
 test2012_75.C \
 test2012_76.C \
 test2012_77.C \
+test2012_78.C \
+test2012_80.C \
 test_int_lexemes.C \
 test_int_lexemes_donot_pass.C \
 test_simple_int.C \
@@ -863,6 +866,9 @@ test2004_35.C
 
 # DQ (12/29/2011): This passes but I had to handle a template constant parameter incorrectly in the AST to get past a problem in EDG (or my lack of understanding of an aspect of EDG).
 # test2011_191.C 
+
+# test2012_79.C 
+# test2012_81.C 
 
 else
 include $(srcdir)/Makefile-pass.inc
@@ -929,7 +935,6 @@ test2007_04.C \
  test2007_05.C \
  test2007_17.C \
 test2007_38.C \
-test2007_41.C \
  test2007_55.C \
 test2007_83.C \
 test2007_130.C \
