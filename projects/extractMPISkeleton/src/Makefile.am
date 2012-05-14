@@ -25,7 +25,6 @@ show:
 	@echo $($(VALUE))              # note: this expands!
 
 check-local:
-	cp -fR $(srcdir)/../tests/* ../tests
 	@echo "***********************************************************************************************"
 	@echo "*** ROSE/projects/extractMPISkeleton/src: make check rule complete (terminated normally)"
 	@echo "***********************************************************************************************"

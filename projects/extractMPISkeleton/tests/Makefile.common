@@ -1,76 +1,165 @@
 asrcdir=$(realpath $(srcdir))
-DIRS = \
-	bcast \
-	collect \
-	diffusion2 \
-	exchange \
-	gausselim_par \
-	hellow \
-	jacobi \
-	jacobi2 \
-	jacobicmpl \
-	master-slave \
-	mpi-ex1 \
-	ring \
-	sample1 \
-	sample2 \
-	sample3 \
-	sample4 \
-	sample5 \
-	sample7 \
-	sample8 \
-	sample9 \
-	sampleA \
-	scatterv \
-	t1 \
-	t2 \
-	t3 \
-	t4 \
-	t5 \
-	t6 \
-	t7 \
-	t8 \
-	t9 \
-	t10 \
-	t11 \
-	t12 \
-	t13 \
-	t14 \
-	t16 \
-	t17 \
-        t19 \
-        t20 \
-        t21 \
-        t22 \
-        t25 \
-        t26 \
-        t27 \
-        t28 \
-        t29 \
-        t30 \
-        t31 \
-        t32 \
-        t33 \
-        t34 \
-        t35 \
-        t36 \
-        t37 \
-        t38 \
-        t39
-#       t23 \      # Failing now
-#       t24 \      # Failing now
+
+EXTRA_DIST = \
+	bcast/bcast.c \
+	bcast/files \
+	bcast/rose_bcast.c.expected \
+	collect/collect.c \
+	collect/files \
+	diffusion2/diffusion2.c \
+	diffusion2/files \
+	exchange/exchng.c \
+	exchange/files \
+	exchange/rose_exchng.c.expected \
+	gausselim_par/files \
+	gausselim_par/gausselim_par.c \
+	hellow/files \
+	hellow/helloworld.c \
+	hellow/rose_helloworld.c.expected \
+	jacobi2/files \
+	jacobi2/jacobi2.c \
+	jacobicmpl/files \
+	jacobicmpl/jacobicmpl.c \
+	jacobi/files \
+	jacobi/jacobi.c \
+	master-slave/files \
+	master-slave/io.c \
+	master-slave/rose_io.c.expected \
+	mpi-ex1/files \
+	mpi-ex1/mpi-ex1.c \
+	ring/files \
+	ring/ring.c \
+	ring/rose_ring.c.expected \
+	sample1/files \
+	sample1/sample1.cc \
+	sample2/files \
+	sample2/sample2.cc \
+	sample3/files \
+	sample3/sample3.c \
+	sample4/files \
+	sample4/sample4.cc \
+	sample5/files \
+	sample5/sample5.c \
+	sample7/files \
+	sample7/rose_sample7.c.expected \
+	sample7/sample7.c \
+	sample8/files \
+	sample8/sample8.c \
+	sample9/files \
+	sample9/rose_sample9.c.expected \
+	sample9/sample9.c \
+	sampleA/files \
+	sampleA/sampleA.c \
+	scatterv/files \
+	scatterv/scatterv.c \
+	t1/files \
+	t1/t1.c \
+	t2/files \
+	t2/rose_t2.c.expected \
+	t2/t2.c \
+	t3/files \
+	t3/rose_t3.c.expected \
+	t3/t3.c \
+	t4/files \
+	t4/rose_t4.c.expected \
+	t4/t4.c \
+	t5/files \
+	t5/rose_t5.c.expected \
+	t5/t5.c \
+	t6/files \
+	t6/t6.c \
+	t7/files \
+	t7/t7.c \
+	t8/files \
+	t8/t8.c \
+	t9/files \
+	t9/t9.c \
+	t10/files \
+	t10/t10.c \
+	t11/files \
+	t11/t11.c \
+	t12/files \
+	t12/t12.c \
+	t13/files \
+	t13/rose_t13.c.expected \
+	t13/t13.c \
+	t14/files \
+	t14/rose_t14.c.expected \
+	t14/t14.c \
+	t16/files \
+	t16/test.c \
+	t17/files \
+	t17/rose_test.c.expected \
+	t17/test.c \
+	t19/files \
+	t19/test.c \
+	t20/files \
+	t20/rose_test.c.expected \
+	t20/test.c \
+	t21/files \
+	t21/rose_test.c.expected \
+	t21/test.c \
+	t22/files \
+	t22/rose_test.c.expected \
+	t22/test.c \
+	t25/files \
+	t25/rose_test.c.expected \
+	t25/test.c \
+	t26/files \
+	t26/rose_test.c.expected \
+	t26/test.c \
+	t27/files \
+	t27/rose_test.c.expected \
+	t27/test.c \
+	t28/files \
+	t28/rose_test.c.expected \
+	t28/test.c \
+	t29/files \
+	t29/rose_test.c.expected \
+	t29/test.c \
+	t30/files \
+	t30/rose_test.c.expected \
+	t30/test.c \
+	t31/files \
+	t31/rose_test.c.expected \
+	t31/test.c \
+	t32/files \
+	t32/rose_test.c.expected \
+	t32/test.c \
+	t33/files \
+	t33/rose_test.c.expected \
+	t33/test.c \
+	t34/files \
+	t34/rose_test.c.expected \
+	t34/test.c \
+	t35/files \
+	t35/rose_test.c.expected \
+	t35/test.c \
+	t36/files \
+	t36/rose_test.c.expected \
+	t36/test.c \
+	t37/files \
+	t37/rose_test.c.expected \
+	t37/test.c \
+	t38/files \
+	t38/rose_test.c.expected \
+	t38/test.c \
+	t39/files \
+	t39/rose_test.c.expected \
+	t39/test.c
+
+DIRS=$(foreach file, ${EXTRA_DIST}, $(dir ${file}))
 
 # These, we expect to fail, in anti-tests/ for now:
 #    t15 \
 #    t18 \
 # TODO: We need to add more like this.
 
-MARKS=$(addsuffix /testmark, ${DIRS})
-LISTS=$(addsuffix /files, ${DIRS})
+MARKS=$(addsuffix testmark, ${DIRS})
+LISTS=$(filter %files, ${EXTRA_DIST})
 ALL_OUTS=$(foreach list, ${LISTS}, $(addprefix $(dir ${list}), $(addprefix rose_, $(shell cat ${list}))))
 ALL_OBJS=$(addsuffix .o, $(basename ${ALL_OUTS}))
-ALL_EXPECTED=$(wildcard $(addsuffix /*.expected, ${DIRS}))
-ALL_TI=$(shell find . -name "*.ti")
+ALL_EXPECTED=$(filter %.expected, ${EXTRA_DIST})
 
 SKFLAGS=-I$(asrcdir)/../mpi-fakeheader -skel:spec $(asrcdir)/../apis.coll
 
@@ -90,7 +179,7 @@ SKFLAGS=-I$(asrcdir)/../mpi-fakeheader -skel:spec $(asrcdir)/../apis.coll
 	- diff -w $?
 
 clean:
-	rm -f ${ALL_OUTS} ${ALL_OBJS} ${MARKS} ${ALL_TI}
+	rm -f ${ALL_OUTS} ${ALL_OBJS} ${MARKS} */*.ti
 
 show:
 	@echo $($(VALUE))              # note: this expands!
