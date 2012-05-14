@@ -216,6 +216,10 @@ void postProcessingSupport (SgNode* node)
        // DQ (4/29/2012): End of new template fixup support for EDG 4.3 work.
        // **********************************************************************
 
+       // DQ (5/14/2012): Fixup source code position information for the end of functions to match the largest values in their subtree.
+       // DQ (10/27/2007): Setup any endOfConstruct Sg_File_Info objects (report on where they occur)
+          fixupSourcePositionConstructs();
+
        // DQ (2/12/2012): This is a problem for test2004_35.C (debugging this issue).
        // printf ("Exiting after calling resetTemplateNames() \n");
        // ROSE_ASSERT(false);

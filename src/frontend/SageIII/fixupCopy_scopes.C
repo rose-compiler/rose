@@ -38,6 +38,9 @@ resetVariableDefinitionSupport ( const SgInitializedName* originalInitializedNam
    {
   // DQ (10/8/2007): This is s supporting function to the SgInitializedName::fixupCopy_scopes() member function.
 
+  // DQ (5/14/2012): Added simple test.
+     ROSE_ASSERT(copyInitializedName != NULL);
+
   // Where the scope is reset, also build a new SgVariableDefinition (I forget why).
      ROSE_ASSERT(copyInitializedName->get_declptr() != NULL);
 
@@ -181,6 +184,12 @@ SgInitializedName::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
                       // The parent of the SgFunctionParameterList might not have been set yet, so allow for this!
                          if (functionDeclaration != NULL)
                             {
+                           // DQ (5/14/2012): Added simple test.
+                              ROSE_ASSERT(initializedName_copy != NULL);
+
+                           // DQ (5/14/2012): Added simple test, required in resetVariableDefinitionSupport().
+                              ROSE_ASSERT(initializedName_copy->get_declptr() != NULL);
+
                               resetVariableDefinitionSupport(this,initializedName_copy,functionDeclaration);
                             }
                          break;
