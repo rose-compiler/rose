@@ -93,6 +93,7 @@ identity_CXXFLAGS = \
 identity_LDADD = \
   libSPMDizeCommon.la \
   libSPMDizePolyDriver.la \
+  -L$(PPL_PATH)/lib -lppl -lgmp \
   $(LIBS_WITH_RPATH) \
   $(ROSE_LIBS)
 
@@ -110,6 +111,7 @@ single_gpu_LDADD = \
   libSPMDizePolyDriver.la \
   libComputeSystem.la \
   libSPMDizeOpenCLgen.la \
+  -L$(PPL_PATH)/lib -lppl -lgmp \
   $(LIBS_WITH_RPATH) \
   $(ROSE_LIBS)
 
