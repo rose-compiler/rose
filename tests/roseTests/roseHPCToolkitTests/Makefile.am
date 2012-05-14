@@ -87,7 +87,7 @@ test_attach01a:attach_metrics
 test_prop01:propagate_metrics
 	./propagate_metrics$(EXEEXT) $(TEST1_FLAGS) -c  $(srcdir)/data/01/example.c
 
-.PHONY: test_attach01 test_attach01a test_prop01
+.PHONY: test_attach01 test_attach01a test_prop01 update_xml
 
 # DQ (3/21/2009): These tests don't appear to run under Cygwin.
 if ROSE_BUILD_OS_IS_CYGWIN
@@ -124,6 +124,9 @@ clean-local:
 
 distclean-local:
 	rm -rf Templates.DB
+	
+update_xml:
+	env SRC_DIR_PREFIX=$(srcdir)/ $(srcdir)/data/01/updateXML.sh $(CC)
 
 else  #  !ROSE_BUILD_ROSEHPCT
 

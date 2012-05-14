@@ -10,7 +10,7 @@ COUNTERS = TOT_CYC FP_OPS L1_DCM L2_TCM
 TARGET = example
 
 #--------------------------------------------------------------
-# HPCToolkit variables pointing to the supported version of HPCTOOLKIT
+# HPCToolkit variables
 HPCT_ROOT = $(HOME)/hpctoolkit/INSTALL
 HPCT_RUN = $(HPCT_ROOT)/bin/hpcrun
 HPCT_PROF = $(HPCT_ROOT)/bin/hpcprof
@@ -50,6 +50,8 @@ $(OUT_PROFILE): $(TARGET) $(OUT_STRUCT)
 	mkdir -p $(OUT_PROFILE)
 	for c in $(COUNTERS) ; do \
 		$(HPCT_RUN) -o $(OUT_PROFILE)/$$c-measurements -e PAPI_$$c@500000 ./$(TARGET) 6500 ; \
+	done
+	for c in $(COUNTERS) ; do \
 		$(HPCT_PROF) -I . -S $(OUT_STRUCT) $(OUT_PROFILE)/$$c-measurements -o  $(OUT_PROFILE)/$$c-database; \
 		bash $(HPCT_DATA) -o $(OUT_PROFILE)/PAPI_$$c.xml $(OUT_PROFILE)/$$c-database/experiment.xml; \
 		rm -rf $(OUT_PROFILE)/$$c-measurements $(OUT_PROFILE)/$$c-database; \

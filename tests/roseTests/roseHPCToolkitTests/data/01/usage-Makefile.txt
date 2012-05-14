@@ -7,32 +7,24 @@ Valid <action_k> values include:
 
 Build the program, '@TARGET@'.
 
-*  struct
-
-Run the HPCToolkit utility hpcstruct to recover and build the static structure of the @TARGET@ program binary 
-in the form of an xml file: @OUT_STRUCT@
-
-
 *  profile
 
-Run the HPCToolkit utility hpcstruct to recover and build the static structure of the @TARGET@ program binary 
-in the form of an xml file: @OUT_STRUCT@
-For each of these PAPI_[xxx] events, @COUNTERS@, run the following HPCToolkit analyis tools on the @TARGET@ program: 
-(1) hpcrun producing performance measurements to be analyzed by hpcprof
-(2) hpcprof to analyze call path profile performance measurements and attribute them to static source code structure
-(3) hpcdata.sh to generate the corresponding flat xml profile file:  @OUT_PROFILE@/PAPI_[xxx].xml
+Run the HPCToolkit on the sample program and collect
+data for these PAPI_[xxx] counters:
+
+   @COUNTERS@
+
+This data is stored in '@OUT_PROFILE@/PAPI_*.xml'.
 
 *  analysis
 
-Run the following HPCToolkit analysis tools on the @TARGET@ program: 
-(1) hpcstruct to recover and build the static structure of the program binary 
-    in the form of an xml file:  @OUT_STRUCT@
-(2) hpcrun on all PAPI_[xxx] events in @COUNTERS@, producing performance measurements to be analyzed by hpcprof
-(3) hpcprof to analyze call path profile performance measurements and attribute them to static source code structure
-(4) hpcdata.sh to generate the corresponding flat xml profile file:  @OUT_ALL_EVENTS@
+Run the HPCToolkit analysis tools to generate
+(1) an analysis of the program binary,
+    @OUT_BLOOP@
+(2) input for the hpcviewer tool in a file,
+    @OUT_HPCVIEWER@
 
-* all
+*  pdf
 
-make @TARGET@ struct profile analysis
-
+Generate a PDF file, @OUT_PDF@, of the ROSE AST.
 ***************************************************************

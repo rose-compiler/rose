@@ -61,7 +61,7 @@
 	v CDATA #IMPLIED>
 ]>
 <HPCToolkitStructure i="0" version="4.6" n="">
-<LM i="2" n="/home/dxnguyen/git-rose/rose-zung/tests/roseTests/roseHPCToolkitTests/data/01/example" v="{}">
+<LM i="2" n="/home/dxnguyen/git-rose/rose-zung/BUILD/tests/roseTests/roseHPCToolkitTests/example" v="{}">
   <F i="11" n="/home/dxnguyen/git-rose/rose-zung/tests/roseTests/roseHPCToolkitTests/data/01/example.c">
     <P i="12" n="gen" l="8-18" v="{[0x400664-0x4006f6)}">
       <S i="138" l="9" v="{[0x400664-0x400670)}"/>

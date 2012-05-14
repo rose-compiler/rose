@@ -198,31 +198,46 @@
  </MetricTable>
 </SecHeader>
 <SecFlatProfileData>
-<M n="0" v="1.05E7"/><M n="1" v="1.05E7"/>
-<LM i="2" n="Load module /home/dxnguyen/git-rose/rose-zung/tests/roseTests/roseHPCToolkitTests/data/01/example">
-<M n="0" v="1.05E7"/><M n="1" v="1.05E7"/>
+<M n="0" v="9450000.0"/><M n="1" v="9450000.0"/>
+<LM i="2" n="Load module /home/dxnguyen/git-rose/rose-zung/BUILD/tests/roseTests/roseHPCToolkitTests/example">
+<M n="0" v="9450000.0"/><M n="1" v="9450000.0"/>
  <F i="3" n="./src/home/dxnguyen/git-rose/rose-zung/tests/roseTests/roseHPCToolkitTests/data/01/example.c">
- <M n="0" v="1.05E7"/> <M n="1" v="1.05E7"/>
+ <M n="0" v="9450000.0"/> <M n="1" v="9450000.0"/>
   <P i="45" n="main" l="67">
-  <M n="0" v="1.05E7"/>
-   <C i="1053197041" l="89">
+  <M n="0" v="9450000.0"/>
+   <C i="936430121" l="89">
     <PF i="4" n="gen" l="8">
-    <M n="0" v="1.0E7"/>    <M n="1" v="1.0E7"/>
+    <M n="0" v="9225000.0"/>    <M n="1" v="9225000.0"/>
     </PF>
    </C>
-   <C i="-1811838189" l="91">
-    <PF i="4" n="gen" l="8">
-    <M n="0" v="500000.0"/>    <M n="1" v="500000.0"/>
+   <C i="-1029776513" l="102">
+    <PF i="34" n="mv" l="52">
+    <M n="0" v="225000.0"/>    <M n="1" v="225000.0"/>
     </PF>
    </C>
   </P>
   <P i="4" n="gen" l="8">
-  <M n="0" v="1.05E7"/>  <M n="1" v="1.05E7"/>
+  <M n="0" v="9225000.0"/>  <M n="1" v="9225000.0"/>
    <L i="9" l="14">
-   <M n="0" v="1.05E7"/>   <M n="1" v="1.05E7"/>
-    <S i="11" l="15">
-    <M n="0" v="1.05E7"/>    <M n="1" v="1.05E7"/>
+   <M n="0" v="9225000.0"/>   <M n="1" v="9225000.0"/>
+    <S i="10" l="14">
+    <M n="0" v="75000.0"/>    <M n="1" v="75000.0"/>
     </S>
+    <S i="11" l="15">
+    <M n="0" v="9150000.0"/>    <M n="1" v="9150000.0"/>
+    </S>
+   </L>
+  </P>
+  <P i="34" n="mv" l="52">
+  <M n="0" v="225000.0"/>  <M n="1" v="225000.0"/>
+   <L i="38" l="56">
+   <M n="0" v="225000.0"/>
+    <L i="41" l="61">
+    <M n="0" v="225000.0"/>    <M n="1" v="225000.0"/>
+     <S i="43" l="62">
+     <M n="0" v="225000.0"/>     <M n="1" v="225000.0"/>
+     </S>
+    </L>
    </L>
   </P>
  </F>
