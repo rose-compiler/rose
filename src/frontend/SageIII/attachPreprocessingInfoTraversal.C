@@ -121,7 +121,6 @@ AttachPreprocessingInfoTreeTrav::display(const std::string & label) const
   // Output internal information
 
      printf ("Inside of AttachPreprocessingInfoTreeTrav::display(%s) \n",label.c_str());
-
      printf ("   use_Wave                      = %s \n",use_Wave ? "true" : "false");
      printf ("   processAllIncludeFiles        = %s \n",processAllIncludeFiles ? "true" : "false");
 
@@ -186,7 +185,9 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
 #if 0
   // Debugging information...
      printf ("In iterateOverListAndInsertPrev... locatedNode = %s lineNumber = %d location = %s \n",locatedNode->class_name().c_str(),lineNumber,PreprocessingInfo::relativePositionName(location).c_str());
-     if ( dynamic_cast<SgLocatedNode*>(locatedNode) != NULL )
+  // if ( dynamic_cast<SgLocatedNode*>(locatedNode) != NULL )
+  // if ( isSgLocatedNode(locatedNode) != NULL )
+     if ( locatedNode != NULL )
         {
           printf ("starting line number = %d \n",locatedNode->get_startOfConstruct()->get_line());
           if (locatedNode->get_endOfConstruct() != NULL)
@@ -348,9 +349,9 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
                locatedNode->addToAttachedPreprocessingInfo(currentPreprocessingInfoPtr);
                
             // negara1 (08/05/2011): If currentPreprocessingInfoPtr is an include directive, get the included file.
-               //If the included file exists, append all its trailing preprocessor directives to its last node and reset its 
-               //start index to the first preprocessor directive.
-               //Proceed only if header files unparsing is enabled.
+            // If the included file exists, append all its trailing preprocessor directives to its last node and reset its 
+            // start index to the first preprocessor directive.
+            // Proceed only if header files unparsing is enabled.
                if (sourceFile -> get_unparseHeaderFiles()) {
                    if (currentPreprocessingInfoPtr -> getTypeOfDirective() == PreprocessingInfo::CpreprocessorIncludeDeclaration) {
                        string includedFileName = sourceFile -> get_project() -> findIncludedFile(currentPreprocessingInfoPtr);
@@ -791,9 +792,7 @@ AttachPreprocessingInfoTreeTrav::getListOfAttributes ( int currentFileNameId )
 
 // Member function: evaluateInheritedAttribute
 AttachPreprocessingInfoTreeTraversalInheritedAttrribute
-AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute (
-    SgNode *n,
-    AttachPreprocessingInfoTreeTraversalInheritedAttrribute inheritedAttribute)
+AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachPreprocessingInfoTreeTraversalInheritedAttrribute inheritedAttribute)
    {
   // This is this inherited attribute evaluation.  It is executed as a preorder traversal 
   // of the AST.  We don't use anything in the inherited attribute at present, however,
@@ -802,16 +801,25 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute (
   // member function).
 
 #if 0
-     printf ("In AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute(): n->class_name() = %s \n",n->class_name().c_str());
+     printf ("In AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute(): n = %p = %s \n",n,n->class_name().c_str());
+     SgStatement* currentStatement = isSgStatement(n);
+  // if (isSgStatement(n) && (isSgStatement(n)->get_parent() != NULL) )
+     if (currentStatement != NULL && (currentStatement->get_parent() != NULL) )
+        {
+          printf ("     parent = %s \n",currentStatement->get_parent()->class_name().c_str());
+          ROSE_ASSERT(currentStatement->get_file_info() != NULL);
+          currentStatement->get_startOfConstruct()->display("In AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute(): (START) debug");
+          currentStatement->get_endOfConstruct()->display("In AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute(): (END) debug");
+        }
 #endif
        // Check if current AST node is an SgFile object
-       SgFile* currentFilePtr = isSgFile(n);
-       if (currentFilePtr != NULL)
-         {
+     SgFile* currentFilePtr = isSgFile(n);
+     if (currentFilePtr != NULL)
+        {
        // Current AST node is an SgFile object, generate the corresponding list of attributes
 
 #if DEBUG_ATTACH_PREPROCESSING_INFO
-          cout << "=== Visiting SgSourceFile node and building current list of attributes ===" << endl;
+          printf ("=== Visiting SgSourceFile node and building current list of attributes === \n");
 #endif
 
        // This entry should not be present, so generate the list.
@@ -851,7 +859,7 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute (
        // This will cause the CPP directives and comments list to be generated for the source file.
           ROSEAttributesList* currentListOfAttributes = getListOfAttributes(currentFileNameId);
           ROSE_ASSERT(currentListOfAttributes != NULL);
-         };
+         }
 
         // Move attributes from the list of attributes into the collection of the current AST nodes,
        // we only consider statements for the moment, but this needs to be refined further on.
@@ -862,10 +870,10 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute (
        // But we start with statements and initialized names first
           SgInitializedName * i_name = isSgInitializedName (n); 
           SgAggregateInitializer * a_initor = isSgAggregateInitializer (n);
-       if (statement != NULL || i_name != NULL || a_initor != NULL)
-       {
+          if (statement != NULL || i_name != NULL || a_initor != NULL)
+          {
 
-          SgLocatedNode* currentLocNodePtr = NULL;
+           SgLocatedNode* currentLocNodePtr = NULL;
            int line = 0;
            int col  = 0;
 
@@ -930,7 +938,7 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute (
 #endif
              // DQ (5/24/2005): Relaxed to handle compiler generated and transformed IR nodes
                 if ( isCompilerGenerated || isTransformation || currentFileNameId == fileIdForOriginOfCurrentLocatedNode )
-                   {
+                  {
                   // Current node belongs to the file the name of which has been specified
                   // on the command line
                      line = currentLocNodePtr->get_file_info()->get_line();
@@ -954,16 +962,16 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute (
                   // to avoid having comments attached to them since they are not unparsed directly.
                   // printf ("currentLocNodePtr = %p = %s \n",currentLocNodePtr,currentLocNodePtr->class_name().c_str());
                     setupPointerToPreviousNode(currentLocNodePtr);
-                   }
+                  }
 #if 0
              // Debugging output
-                  else
-                   {
-                     cout << "Node belongs to a different file: ";
-                   }
+                 else
+                  {
+                    printf ("Node belongs to a different file: \n");
+                  }
 #endif
-              } // end if current list of attribute is not empty
-       } // end if statement or init name
+             } // end if current list of attribute is not empty
+        } // end if statement or init name
 
      return inheritedAttribute;
    }
@@ -984,12 +992,14 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
      AttachPreprocessingInfoTreeTraversalSynthesizedAttribute returnSynthesizeAttribute;
 
 #if 0
-     printf ("In AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(): n->class_name() = %s \n",n->class_name().c_str());
-     if (isSgStatement(n) && (isSgStatement(n)->get_parent() != NULL) )
+     printf ("In AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(): n = %p = %s \n",n,n->class_name().c_str());
+     SgStatement* currentStatement = isSgStatement(n);
+  // if (isSgStatement(n) && (isSgStatement(n)->get_parent() != NULL) )
+     if (currentStatement != NULL && (currentStatement->get_parent() != NULL) )
         {
-          printf ("     parent = %s \n",isSgStatement(n)->get_parent()->class_name().c_str());
-          ROSE_ASSERT(isSgStatement(n)->get_file_info() != NULL);
-          isSgStatement(n)->get_file_info()->display("In AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute()");
+          printf ("     parent = %s \n",currentStatement->get_parent()->class_name().c_str());
+          ROSE_ASSERT(currentStatement->get_file_info() != NULL);
+          currentStatement->get_file_info()->display("In AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(): debug");
         }
 #endif
 
@@ -998,8 +1008,10 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
      ROSE_ASSERT (isSgClassDeclaration(n) == NULL || isSgClassDeclaration(n)->get_endOfConstruct() != NULL);
 
   // Only process SgLocatedNode object and the SgFile object
-     SgFile* fileNode           = dynamic_cast<SgFile*>(n);
-     SgLocatedNode* locatedNode = dynamic_cast<SgLocatedNode*>(n);
+  // SgFile* fileNode           = dynamic_cast<SgFile*>(n);
+  // SgLocatedNode* locatedNode = dynamic_cast<SgLocatedNode*>(n);
+     SgFile* fileNode           = isSgFile(n);
+     SgLocatedNode* locatedNode = isSgLocatedNode(n);
      if ( (locatedNode != NULL) || (fileNode != NULL) )
         {
 #if 1
@@ -1087,8 +1099,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
           if ( (isCompilerGeneratedOrTransformation == true) || (currentFileNameId == fileIdForOriginOfCurrentLocatedNode) )
              {
 #if 0
-               printf ("In AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(): %p = %s lineOfClosingBrace = %d \n",
-                    n,n->sage_class_name(),lineOfClosingBrace);
+               printf ("In AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(): %p = %s isCompilerGeneratedOrTransformation = %s lineOfClosingBrace = %d \n",n,n->class_name().c_str(),isCompilerGeneratedOrTransformation ? "true" : "false",lineOfClosingBrace);
 #endif
 
 #if 0
@@ -1460,6 +1471,9 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                             break;
                           }
 
+                 // DQ (5/13/2012): Added case.
+                    case V_SgTemplateClassDefinition:
+
                  // DQ (3/11/2012): Added case.
                     case V_SgTemplateFunctionDefinition:
 
@@ -1477,20 +1491,19 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                                  // For preprocessing info appearing after a last init name, we attach it inside the ancestor.
                     case V_SgMemberFunctionDeclaration:
                     case V_SgTemplateInstantiationFunctionDecl:
-                          {
-                            ROSE_ASSERT (locatedNode->get_endOfConstruct() != NULL);
+                       {
+                         ROSE_ASSERT (locatedNode->get_endOfConstruct() != NULL);
 
-                         // DQ (3/11/2012): Added recursive call to insert comments.
-                            bool reset_start_index = false;
-                            iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber
-                              ( locatedNode, lineOfClosingBrace, PreprocessingInfo::inside, reset_start_index,currentListOfAttributes );
+                      // DQ (3/11/2012): Added recursive call to insert comments.
+                         bool reset_start_index = false;
+                         iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber( locatedNode, lineOfClosingBrace, PreprocessingInfo::inside, reset_start_index,currentListOfAttributes );
 
-                         // previousLocNodePtr = locatedNode;
-                            previousLocatedNodeMap[currentFileNameId] = locatedNode;
+                      // previousLocNodePtr = locatedNode;
+                         previousLocatedNodeMap[currentFileNameId] = locatedNode;
 
-                         // DQ (3/11/2012): Added break statement to prevent fall through, I think this fixes a bug.
-                            break;
-                          }
+                      // DQ (3/11/2012): Added break statement to prevent fall through, I think this fixes a bug.
+                         break;
+                       }
 
                     default:
                        {

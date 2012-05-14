@@ -3,7 +3,7 @@
 #include "fixupSourcePositionInformation.h"
 /*
    This file constains the code to fixup the source position information in the AST.
-   By default we store the information that we bather from EDG, however this information
+   By default we store the information that we gather from EDG, however this information
    is incomplete and misses a number of details that are important within ROSE.
    Incomplete aspects include (likely because EDG is not trying to support source-to-source 
    details):
