@@ -7,6 +7,30 @@
 #include "RSIM_Linux32.h"
 #include "RSIM_Adapter.h"
 
+class MemoryTransactionTester: public RSIM_Callbacks::InsnCallback {
+public:
+    rose_addr_t when;           // EIP value at which to trigger the test
+    bool triggered;
+
+    MemoryTransactionTester(rose_addr_t when): when(when), triggered(false) {
+        std::cerr <<"MemoryTransactionTester: will trigger at " <<StringUtility::addrToString(when) <<"\n";
+    }
+
+    virtual MemoryTransactionTester *clone() { return this; }
+
+    virtual bool operator()(bool enabled, const Args &args) {
+        if (enabled && !triggered && args.insn->get_address()==when) {
+            triggered = true;
+            RTS_Message *m = args.thread->tracing(TRACE_MISC);
+            m->mesg("MemoryTransactionTester: triggered\n");
+            RSIM_Process *proc = args.thread->get_process();
+            proc->mem_showmap(m, "before starting transaction:\n");
+            proc->mem_transaction_start("MemoryTransactionTester");
+            proc->mem_showmap(m, "after starting transaction:\n");
+        }
+        return enabled;
+    }
+};
 
 int
 main(int argc, char *argv[], char *envp[])
@@ -28,6 +52,7 @@ main(int argc, char *argv[], char *envp[])
      **************************************************************************************************************************/
 
 
+#if 0
     /* Disassemble when we hit main() */
     rose_addr_t disassemble_va = RSIM_Tools::FunctionFinder().address(project, "main");
     assert(disassemble_va>0);
@@ -46,13 +71,14 @@ main(int argc, char *argv[], char *envp[])
         }
     };
     sim.get_callbacks().add_syscall_callback(RSIM_Callbacks::BEFORE, new SyscallStackTrace);
-    
+#endif
 
     /***************************************************************************************************************************
      *                                  The main program...
      ***************************************************************************************************************************/
     
     sim.exec(argc-n, argv+n);
+    sim.install_callback(new MemoryTransactionTester(sim.get_process()->get_ep_orig_va()), RSIM_Callbacks::BEFORE, true);
 //    sim.activate();
     sim.main_loop();
 //     sim.deactivate();

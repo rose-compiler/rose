@@ -435,11 +435,6 @@ RSIM_Process::dump_core(int signo, std::string base_name)
     if (base_name.empty())
         base_name = core_base_name;
 
-#if 0 /* DEBUGGING */
-    fprintf(stderr, "memory map at time of core dump:\n");
-    map->dump(stderr, "  ");
-#endif
-
 #if 0 /* FIXME: we need to make core dumping thread-aware. [RPM 2011-02-03] */
     if (core_styles & CORE_ROSE)
         map->dump(base_name);
@@ -1033,7 +1028,7 @@ RSIM_Process::mem_transaction_start(const std::string &name)
     MemoryMap new_map;
     if (!map_stack.empty())
         new_map.init(map_stack.back().first, MemoryMap::COPY_ON_WRITE);
-    map_stack.push_back(std::make_pair(MemoryMap(), name));
+    map_stack.push_back(std::make_pair(new_map, name));
     return map_stack.size();
 }
 
@@ -1094,12 +1089,8 @@ RSIM_Process::mem_setbrk(rose_addr_t newbrk, RTS_Message *mesg)
         }
         retval= brk_va;
 
-        if (mesg && mesg->get_file()) {
-            RTS_MESSAGE(*mesg) {
-                mesg->mesg("memory map after brk syscall:\n");
-                get_memory().dump(mesg->get_file(), "    ");
-            } RTS_MESSAGE_END(true);
-        }
+        if (mesg && mesg->get_file())
+            mem_showmap(mesg, "memory map after brk syscall:\n");
     } RTS_WRITE_END;
 
     return retval;
@@ -1135,12 +1126,8 @@ RSIM_Process::mem_unmap(rose_addr_t va, size_t sz, RTS_Message *mesg)
         get_memory().erase(Extent(va, sz));
 
         /* Tracing */
-        if (mesg && mesg->get_file()) {
-            RTS_MESSAGE(*mesg) {
-                mesg->mesg("memory map after munmap syscall:\n");
-                get_memory().dump(mesg->get_file(), "    ");
-            } RTS_MESSAGE_END(true);
-        }
+        if (mesg && mesg->get_file())
+            mem_showmap(mesg, "memory map after munmap syscall:\n");
 
         retval = 0;
     } RTS_WRITE_END;
@@ -1155,10 +1142,10 @@ RSIM_Process::mem_showmap(RTS_Message *mesg, const char *intro, const char *pref
 
     if (mesg && mesg->get_file()) {
         RTS_READ(rwlock()) {
-            RTS_MESSAGE(*mesg) {
-                mesg->mesg("%s", intro);
-                get_memory().dump(mesg->get_file(), prefix);
-            } RTS_MESSAGE_END(true);
+            std::ostringstream ss;
+            get_memory().dump(ss, prefix);
+            mesg->mesg("%s%susing memory transaction %zu \"%s\"\n%s",
+                       intro, prefix, mem_ntransactions(), mem_transaction_name().c_str(), ss.str().c_str());
         } RTS_READ_END;
     }
 }
