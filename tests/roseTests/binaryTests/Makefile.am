@@ -421,8 +421,12 @@ cory001_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 STATIC_TEST_TARGETS += cory001.passed
 EXTRA_DIST += cory001.conf
 cory001.passed: cory001.conf cory001
-	@$(RTH_RUN) $< $@
+	@$(RTH_RUN) CMD=./cory001 $< $@
 
+# Binary CFG test from Cory Cohen that doesn't compile.  This is only a linking test--do not run it.
+noinst_PROGRAMS += cory002
+cory002_SOURCES = cory002.C
+cory002_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 
 ###############################################################################################################################
 # DEMOS
