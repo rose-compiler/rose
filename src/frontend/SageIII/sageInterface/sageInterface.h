@@ -1403,14 +1403,14 @@ void setParameterList(actualFunction *func,SgFunctionParameterList *paralist);
 template <class actualFunction>
 void
 // SageInterface::setParameterList(SgFunctionDeclaration * func,SgFunctionParameterList * paralist)
-setParameterList(actualFunction * func,SgFunctionParameterList * paralist)
+setParameterList(actualFunction* func, SgFunctionParameterList* paralist)
    {
   // DQ (11/25/2011): Modified this to be a templated function so that we can handle both 
   // SgFunctionDeclaration and SgTemplateFunctionDeclaration (and their associated member 
   // function derived classes).
 
-     ROSE_ASSERT(func);
-     ROSE_ASSERT(paralist);
+     ROSE_ASSERT(func != NULL);
+     ROSE_ASSERT(paralist != NULL);
 
 #if 0
   // At this point we don't have cerr and endl defined, so comment this code out.
@@ -1427,11 +1427,24 @@ setParameterList(actualFunction * func,SgFunctionParameterList * paralist)
 
   // Liao,2/5/2008  constructor of SgFunctionDeclaration will automatically generate SgFunctionParameterList, so be cautious when set new paralist!!
      if (func->get_parameterList() != NULL)
+        {
           if (func->get_parameterList() != paralist)
+             {
                delete func->get_parameterList();
+             }
+        }
 
      func->set_parameterList(paralist);
      paralist->set_parent(func);
+
+  // DQ (5/15/2012): Need to set the declptr in each SgInitializedName IR node.
+  // This is needed to support the AST Copy mechanism (at least). The files: test2005_150.C, 
+  // test2012_81.C and testcode2012_82.C demonstrate this problem.
+     SgInitializedNamePtrList & args = paralist->get_args();
+     for (SgInitializedNamePtrList::iterator i = args.begin(); i != args.end(); i++)
+        {
+          (*i)->set_declptr(func);
+        }
    }
 #endif
 

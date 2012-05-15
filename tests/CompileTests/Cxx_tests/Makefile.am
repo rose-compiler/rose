@@ -844,6 +844,8 @@ test2012_76.C \
 test2012_77.C \
 test2012_78.C \
 test2012_80.C \
+test2012_81.C \
+test2012_82.C \
 test_int_lexemes.C \
 test_int_lexemes_donot_pass.C \
 test_simple_int.C \

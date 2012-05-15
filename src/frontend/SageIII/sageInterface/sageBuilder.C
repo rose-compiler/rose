@@ -69,7 +69,7 @@ SageBuilder::setSourcePositionClassificationMode(SageBuilder::SourcePositionClas
 
 
 // DQ (3/13/2012): Added support for organizing how we match function declarations with function symbols.
-template<class T>
+template <class T>
 SgFunctionSymbol*
 SgSymbolTable::find_symbol_by_type_of_function (const SgName & name, const SgType* func_type)
    {

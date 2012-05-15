@@ -1648,7 +1648,7 @@ Unparse_ExprStmt::unparseTemplateInstantiationMemberFunctionDeclStmt (SgStatemen
           ROSE_ASSERT(templateInstantiationMemberFunctionDeclaration->get_templateDeclaration()->get_file_info() != NULL);
           ROSE_ASSERT(templateInstantiationMemberFunctionDeclaration->get_templateDeclaration()->get_file_info()->get_filename() != NULL);
           string declarationFileName = templateInstantiationMemberFunctionDeclaration->get_templateDeclaration()->get_file_info()->get_filename();
-#if 1
+#if 0
           printf ("In unparseTemplateInstantiationMemberFunctionDeclStmt(): currentFileName     = %s \n",currentFileName.c_str());
           printf ("In unparseTemplateInstantiationMemberFunctionDeclStmt(): declarationFileName = %s \n",declarationFileName.c_str());
           printf ("templateInstantiationMemberFunctionDeclaration source position information: \n");
