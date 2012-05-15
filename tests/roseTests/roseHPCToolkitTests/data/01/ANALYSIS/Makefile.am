@@ -1,5 +1,5 @@
 #
 
-EXTRA_DIST = scope_tree.hpcviewer
+EXTRA_DIST = example_all_events.xml
 
 # eof

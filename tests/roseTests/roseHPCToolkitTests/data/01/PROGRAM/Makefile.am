@@ -1,5 +1,5 @@
 #
 
-EXTRA_DIST = example.xml
+EXTRA_DIST = example.hpcstruct
 
 # eof
