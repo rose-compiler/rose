@@ -187,4 +187,48 @@ LoopCollectorByLoc::matches (SgScopeStatement* node) const
     : false;
 }
 
+void Vis_PreOrder::visitDefault(SgNode* pNode)
+{
+   int childNum = pNode->get_numberOfTraversalSuccessors ();
+   pNode->accept(*_vis);  // process the parent node
+   for (int i = 0; i < childNum; i++)
+   {
+      SgNode* pChild = pNode->get_traversalSuccessorByIndex (i);
+      if (pChild)
+      {
+         pChild->accept(*this);  //recursively visit and process the child node
+       }
+   }
+}
+
+void Vis_PrintMetricInfo::printFileLoc(SgLocatedNode* node, bool printFlag)
+{
+    if (printFlag)
+        os_ << "@ [" << toFileLoc(node) << "]" << endl;
+
+}
+
+void Vis_PrintMetricInfo::printAttributes(SgLocatedNode* node)
+{
+      AstAttributeMechanism* astAttributeContainer = node->get_attributeMechanism();
+      bool printFlag = true;
+      if (astAttributeContainer != NULL)
+      {
+        for (AstAttributeMechanism::iterator i = astAttributeContainer->begin(); i != astAttributeContainer->end(); i++)
+        {
+           string name = i->first;
+           RoseHPCT::MetricAttr* attribute = dynamic_cast<RoseHPCT::MetricAttr *>(i->second);
+           // DXN: If an IR node is written to file, its AstAttribute objects somehow lose their type info.
+           // For example, MetricAttr objects are no longer MetricAttr.
+           /// AstAttribute* attribute = i->second;  // may have names like "tree_depth" and "AstUnparseAttribute"
+           if (attribute)
+           {
+               printFileLoc(node, printFlag);
+               printFlag = false;
+               os_   << "     " << name  << " = "<< attribute->toString() << endl;
+           }
+        }
+      }
+}
+
 /* eof */

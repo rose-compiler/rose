@@ -200,7 +200,8 @@ namespace RoseHPCT
         // no chance to have multiple lines of information for a single statement
       {
         // Build the Profile IR node
-        Statement* s = new Statement ("",info.line_number(),0);
+        // Statement* s = new Statement ("",info.line_number(),0);
+        Statement* s = new Statement ("", info.line_number(), info.line_number()); // DXN
         s->setFileNode(dynamic_cast<File*>(file_node->value));
         // insert into a procedure node
         size_t num_kids = func_node->getNumChildren();
