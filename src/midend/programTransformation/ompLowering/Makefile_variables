@@ -3,10 +3,13 @@ mptOmpLowering_la_sources=\
 	$(mptOmpLoweringPath)/omp_lowering.cpp
 
 # avoid using libtool for libxomp.a since it will be directly linked to executable
-mptOmpLowering_lib_libraries=\
-	libxomp.a
+mptOmpLowering_lib_ltlibraries=\
+	libxomp.la
 
-libxomp_a_SOURCES=\
+# only generate .libs/libxomp.a
+libxomp_la_LDFLAGS = -static
+
+libxomp_la_SOURCES=\
 	$(mptOmpLoweringPath)/xomp.c \
 	$(mptOmpLoweringPath)/run_me_callers.inc \
 	$(mptOmpLoweringPath)/run_me_defs.inc \

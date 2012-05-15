@@ -239,18 +239,8 @@ set(rose_support_src
 
 set(roseDisassemblers_SRC
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/InstructionEnumsX86.h
-   ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/Expressions.C
-   ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/Partitioner.C 
-   ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/PStatistics.C 
-   ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/IPDParser.C 
-   ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/Registers.C
-   ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/Disassembler.C 
-   ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/DisassemblerArm.C 
-   ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/DisassemblerPowerpc.C 
-   ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/DisassemblerX86.C
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/Assembler.C 
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/AssemblerX86.C 
-   ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/AssemblerX86Init.C
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/AssemblerX86Init1.C
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/AssemblerX86Init2.C
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/AssemblerX86Init3.C
@@ -260,6 +250,23 @@ set(roseDisassemblers_SRC
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/AssemblerX86Init7.C
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/AssemblerX86Init8.C
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/AssemblerX86Init9.C
+   ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/AssemblerX86Init.C
+   ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/DisassemblerArm.C 
+   ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/Disassembler.C 
+   ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/DisassemblerPowerpc.C 
+   ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/DisassemblerX86.C
+   ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/Expressions.C
+   ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/IPDParser.C 
+   ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/IPDUnparser.C 
+   ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/Partitioner.C 
+   ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/PStatistics.C 
+   ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/Registers.C
+   ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/SgAsmArmInstruction.C
+   ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/SgAsmBlock.C
+   ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/SgAsmFunction.C
+   ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/SgAsmInstruction.C
+   ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/SgAsmPowerpcInstruction.C
+   ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/SgAsmX86Instruction.C
    )
 
 set (unparser_SRC

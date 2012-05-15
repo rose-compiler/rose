@@ -749,6 +749,16 @@ NodeState* NodeState::getNodeState(const DataflowNode& n, int index)
         return nodeStateMap[n][index];
 }
 
+NodeState* NodeState::getNodeState(SgNode * n, int index/*=0 */)
+{
+  assert (n != NULL);
+  assert (index >= 0);
+
+  CFGNode cfgn(n, (unsigned int)index);
+  DataflowNode dfn(cfgn, defaultFilter);
+  return getNodeState (dfn, index);
+}
+
 // returns a vector of NodeState objects associated with the given dataflow node.
 const vector<NodeState*> NodeState::getNodeStates(const DataflowNode& n)
 {

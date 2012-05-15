@@ -3532,7 +3532,6 @@ void c_action_label(Token_t * lbl)
             functionType->set_return_type(entityType);
             functionType->set_orig_return_type(entityType);
         }
-        ROSE_ASSERT(classSymbol == NULL);
         SgInitializedName* initializedName = NULL;
         if (variableSymbol != NULL)
         {
