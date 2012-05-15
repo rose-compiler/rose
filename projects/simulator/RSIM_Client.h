@@ -8,15 +8,34 @@ extern "C" {
 #ifndef ROSE_RSIM_Client_H
 #define ROSE_RSIM_Client_H
 
-#include <sys/syscall.h>
-#include <unistd.h>
-
 /******************************************************************************************************************************
  *                                      Transactions
  ******************************************************************************************************************************/
 
-/* Size must match pt_regs_32 defined in RSIM_Common.h */
-typedef struct { unsigned char x[17*4]; } RSIM_Transaction;
+/** Determine if we're running under the simulator.
+ *
+ *  Returns -1 with errno set to ENOSYS if we're running natively, but returns zero if run under the simulator.  All of the
+ *  simulator-specific system calls will return -1 with errno set to ENOSYS when running natively, but this function provides a
+ *  nice, clean way to check. */
+int RSIM_is_present();
+
+/** Show a message in the syscall tracing output.
+ *
+ *  This system call does nothing except return zero. However, since its argument is a NUL-terminated string, the string will
+ *  show up in the simulators syscall trace.  Thus, this provides a clean way to get a message into the log files. */
+int RSIM_message(const char *mesg);
+
+/** Pause for time.
+ *
+ *  This function triggers a nanosleep in the simulator.  It is useful as a simple way to pause the calling thread without
+ *  generating specimen-level signals that would complicate the analysis output. */
+int RSIM_delay(unsigned seconds, unsigned nanoseconds);
+
+/** Data type for transactions.
+ *
+ *  This is intended to be an opaque type.  Its contents will change in the future if RSIM supports more sophisticated forms of
+ *  transactions. */
+typedef struct { unsigned char x[17*4]; } RSIM_Transaction; /* Size must match pt_regs_32 defined in RSIM_Common.h */
 
 /** Begin a new transaction.
  *
