@@ -480,9 +480,9 @@ StringUtility::addrToString(uint64_t value, size_t nbits, bool is_signed)
 }
 
 string
-StringUtility::removeRedundentSubstrings ( string X )
+StringUtility::removeRedundentSubstrings ( string X ) // sic
    {
-  // Convert the string into a list of strings and separate out the redundent entries
+  // Convert the string into a list of strings and separate out the redundant entries
      list<string> XStringList = StringUtility::stringToList(X);
      XStringList.sort();
      XStringList.unique();
@@ -518,9 +518,9 @@ isMarker ( char c )
    }
 
 string
-StringUtility::removePseudoRedundentSubstrings ( string X )
+StringUtility::removePseudoRedundentSubstrings ( string X ) // sic
    {
-  // Convert the string into a list of strings and separate out the redundent entries
+  // Convert the string into a list of strings and separate out the redundant entries
      list<string> XStringList = StringUtility::stringToList(X);
 
 #if 0
@@ -1481,6 +1481,47 @@ StringUtility::convertToLowerCase( const string & inputString )
      return returnString;
    }
 
+std::string
+StringUtility::prefixLines(const std::string &lines, const std::string &prefix, bool prefixAtFront, bool prefixAtBack)
+{
+    if (lines.empty())
+        return "";
 
+    std::string retval = prefixAtFront ? prefix : "";
+    size_t at=0;
+    while (at<lines.size()) {
+        size_t lfpos = lines.find_first_of("\r\n", at);
+        lfpos = lines.find_first_not_of("\r\n", lfpos);
+        retval += lines.substr(at, lfpos-at);
+        if (lfpos<lines.size())
+            retval += prefix;
+        at = lfpos;
+    }
 
+    if (prefixAtBack && isLineTerminated(lines))
+        retval += prefix;
+    return retval;
+}
 
+bool
+StringUtility::isLineTerminated(const std::string &s)
+{
+    return !s.empty() && ('\n'==s[s.size()-1] || '\r'==s[s.size()-1]);
+}
+
+void
+StringUtility::add_to_reason_string(std::string &result, bool isset, bool do_pad,
+                                    const std::string &abbr, const std::string &full)
+{
+    if (isset) {
+        if (do_pad) {
+            result += abbr;
+        } else {
+            if (result.size()>0) result += ", ";
+            result += full;
+        }
+    } else if (do_pad) {
+        for (size_t i=0; i<abbr.size(); ++i)
+            result += ".";
+    }
+}

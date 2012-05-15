@@ -38,6 +38,10 @@ JavaParser.class: ${srcdir}/JavaParser.java
 	$(JAVAC) -cp ${srcdir}/ecjROSE.jar:${srcdir}:. ${srcdir}/JavaParser.java
 	$(JAVAH) -jni -classpath ${srcdir}/ecjROSE.jar:. JavaParser
 
+JavaParser.h: ${srcdir}/JavaParser.java
+	$(JAVAC) -cp ${srcdir}/ecjROSE.jar:${srcdir}:. ${srcdir}/JavaParser.java
+	$(JAVAH) -jni -classpath ${srcdir}/ecjROSE.jar:. JavaParser
+
 # This is needed when distcheck compiles the code, I don't know why.
 JavaParserSupport.class: ${srcdir}/JavaParserSupport.java
 	$(JAVAC) -cp ${srcdir}/ecjROSE.jar:${srcdir}:. ${srcdir}/JavaParserSupport.java
@@ -48,7 +52,7 @@ ecjASTVisitor.class:  ${srcdir}/ExtendedASTVisitor.java ${srcdir}/ecjASTVisitor.
 
 # These are the commands to generate the files we need (in the build tree).
 # JavaTraversal.class JavaTraversal.h: ${srcdir}/JavaTraversal.java
-testJavaTraversal: ${srcdir}/JavaTraversal.java
+JavaTraversal.h: ${srcdir}/JavaTraversal.java
 	javac -cp ${srcdir}/ecjROSE.jar ${srcdir}/JavaTraversal.java
 	javah -jni JavaTraversal
 
@@ -71,6 +75,3 @@ clean-local:
 	rm -f *.dot ecjROSE.jar *.class *.java *.h
 
 # JavaParser* JavaTraversal* JavaParserSupport* ecjASTVisitor* ExtendedASTVisitor*
-
-
-

@@ -457,7 +457,7 @@ BinaryAnalysis::ControlFlow::build_cfg_from_ast(SgNode *root, ControlFlowGraph &
 
     cfg.clear();
 
-    /* Define the vertices. */
+    /* Define the vertices. Vertices are any SgAsmBlock that contains at least one SgAsmInstruction. */
     struct T1: public AstSimpleProcessing {
         ControlFlow *analyzer;
         ControlFlowGraph &cfg;
@@ -467,7 +467,7 @@ BinaryAnalysis::ControlFlow::build_cfg_from_ast(SgNode *root, ControlFlowGraph &
             {}
         void visit(SgNode *node) {
             SgAsmBlock *block = isSgAsmBlock(node);
-            if (block && !analyzer->is_vertex_filtered(block)) {
+            if (block && block->has_instructions() && !analyzer->is_vertex_filtered(block)) {
                 Vertex vertex = add_vertex(cfg);
                 bv_map[block] = vertex;
                 put(boost::vertex_name, cfg, vertex, block);

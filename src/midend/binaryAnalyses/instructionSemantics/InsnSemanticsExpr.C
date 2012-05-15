@@ -20,13 +20,13 @@ InsnSemanticsExpr::to_str(Operator o)
     return buf;
 }
 
-std::set<const InsnSemanticsExpr::LeafNode*>
+std::set<InsnSemanticsExpr::LeafNodePtr>
 InsnSemanticsExpr::TreeNode::get_variables() const
 {
     struct T1: public Visitor {
-        std::set<const LeafNode*> vars;
-        void operator()(const TreeNode *node) {
-            const LeafNode *l_node = dynamic_cast<const LeafNode*>(node);
+        std::set<LeafNodePtr> vars;
+        void operator()(const TreeNodePtr &node) {
+            LeafNodePtr l_node = node->isLeafNode();
             if (l_node && !l_node->is_known())
                 vars.insert(l_node);
         }
@@ -35,45 +35,10 @@ InsnSemanticsExpr::TreeNode::get_variables() const
     return t1.vars;
 }
 
-/* Shallow delete: delete this node if it has no parents, but not its children */
-InsnSemanticsExpr::InternalNode::~InternalNode()
-{
-    ROSE_ASSERT(0==get_nrefs());
-    for (std::vector<const TreeNode*>::iterator ci=children.begin(); ci!=children.end(); ++ci)
-        (*ci)->dec_nrefs();
-    children.clear();
-}
-
 void
-InsnSemanticsExpr::TreeNode::deleteDeeply()
-{
-    if (0==nrefs)
-        delete this;
-}
-
-/* Delete this node and its children if this node has no parents. The children of a node are pointers to const objects, but we
- * can delete them if their reference counts are zero since it is only ever the user that calls this method. The user
- * presumably knows when its safe to delete a whole expression tree. */
-void
-InsnSemanticsExpr::InternalNode::deleteDeeply()
-{
-    if (0==get_nrefs()) {
-        for (std::vector<const TreeNode*>::iterator ci=children.begin(); ci!=children.end(); ++ci) {
-            if (0==(*ci)->dec_nrefs()) {
-                TreeNode *child = const_cast<TreeNode*>(*ci);
-                child->deleteDeeply();
-            }
-        }
-        children.clear();
-        delete this;
-    }
-}
-
-void
-InsnSemanticsExpr::InternalNode::add_child(const TreeNode *child)
+InsnSemanticsExpr::InternalNode::add_child(const TreeNodePtr &child)
 {
     ROSE_ASSERT(child!=0);
-    child->inc_nrefs();
     children.push_back(child);
 }
 
@@ -92,17 +57,16 @@ InsnSemanticsExpr::InternalNode::print(std::ostream &o, RenameMap *rmap/*NULL*/)
 }
 
 bool
-InsnSemanticsExpr::InternalNode::equal_to(const TreeNode *other_, SMTSolver *solver/*NULL*/) const
+InsnSemanticsExpr::InternalNode::equal_to(const TreeNodePtr &other_, SMTSolver *solver/*NULL*/) const
 {
     bool retval = false;
     if (solver) {
-        InternalNode *assertion = new InternalNode(1, OP_NE, this, other_);
+        InternalNodePtr assertion = InternalNode::create(1, OP_NE, shared_from_this(), other_);
         retval = !solver->satisfiable(assertion); /*equal if we cannot find a solution for inequality*/
-        assertion->deleteDeeply();
     } else {
         /* The naive approach uses structural equality */
-        const InternalNode *other = dynamic_cast<const InternalNode*>(other_);
-        if (this==other) {
+        InternalNodePtr other = other_->isInternalNode();
+        if (this==other.get()) {
             retval = true;
         } else if (other && op==other->op && children.size()==other->children.size()) {
             retval = true;
@@ -117,35 +81,37 @@ void
 InsnSemanticsExpr::InternalNode::depth_first_visit(Visitor *v) const
 {
     assert(v!=NULL);
-    for (std::vector<const TreeNode*>::const_iterator ci=children.begin(); ci!=children.end(); ++ci)
+    for (std::vector<TreeNodePtr>::const_iterator ci=children.begin(); ci!=children.end(); ++ci)
         (*ci)->depth_first_visit(v);
-    (*v)(this);
+    (*v)(shared_from_this());
 }
 
         
 
 
 /* class method */
-InsnSemanticsExpr::LeafNode *
+InsnSemanticsExpr::LeafNodePtr
 InsnSemanticsExpr::LeafNode::create_variable(size_t nbits, std::string comment)
 {
     static uint64_t name_counter = 0;
 
-    LeafNode *retval = new LeafNode(comment);
-    retval->nbits = nbits;
-    retval->known = false;
-    retval->name = name_counter++;
+    LeafNode *node = new LeafNode(comment);
+    node->nbits = nbits;
+    node->known = false;
+    node->name = name_counter++;
+    LeafNodePtr retval(node);
     return retval;
 }
 
 /* class method */
-InsnSemanticsExpr::LeafNode *
+InsnSemanticsExpr::LeafNodePtr
 InsnSemanticsExpr::LeafNode::create_integer(size_t nbits, uint64_t n, std::string comment)
 {
-    LeafNode *retval = new LeafNode(comment);
-    retval->nbits = nbits;
-    retval->known = true;
-    retval->ival = n & (((uint64_t)1<<nbits)-1);
+    LeafNode *node = new LeafNode(comment);
+    node->nbits = nbits;
+    node->known = true;
+    node->ival = n & (((uint64_t)1<<nbits)-1);
+    LeafNodePtr retval(node);
     return retval;
 }
 
@@ -203,16 +169,15 @@ InsnSemanticsExpr::LeafNode::print(std::ostream &o, RenameMap *rmap/*NULL*/) con
 }
 
 bool
-InsnSemanticsExpr::LeafNode::equal_to(const TreeNode *other_, SMTSolver *solver) const
+InsnSemanticsExpr::LeafNode::equal_to(const TreeNodePtr &other_, SMTSolver *solver) const
 {
     bool retval = false;
     if (solver) {
-        InternalNode *assertion = new InternalNode(1, OP_NE, this, other_);
+        InternalNodePtr assertion = InternalNode::create(1, OP_NE, shared_from_this(), other_);
         retval = !solver->satisfiable(assertion); /*equal if we cannot find a solution for inequality*/
-        assertion->deleteDeeply();
     } else {
-        const LeafNode *other = dynamic_cast<const LeafNode*>(other_);
-        if (this==other) {
+        LeafNodePtr other = other_->isLeafNode();
+        if (this==other.get()) {
             retval = true;
         } else if (other) {
             if (known) {
@@ -229,12 +194,12 @@ void
 InsnSemanticsExpr::LeafNode::depth_first_visit(Visitor *v) const
 {
     assert(v!=NULL);
-    (*v)(this);
+    (*v)(shared_from_this());
 }
 
 std::ostream&
-operator<<(std::ostream &o, const InsnSemanticsExpr::TreeNode *node) {
-    node->print(o);
+operator<<(std::ostream &o, const InsnSemanticsExpr::TreeNode &node) {
+    node.print(o);
     return o;
 }
 

@@ -1,5 +1,5 @@
 #include "DataflowCFG.h"
-
+#include <cassert>
 using namespace std;
 
 #define SgNULL_FILE Sg_File_Info::generateDefaultFileInfoForTransformationNode()
@@ -9,7 +9,16 @@ namespace VirtualCFG
       // the default interesting filter
       bool defaultFilter (CFGNode cfgn)
       {
-          return (cfgn.isInteresting());
+         SgNode * node = cfgn.getNode();
+          assert (node != NULL) ;
+          //Keep the last index for initialized names. This way the definition of the variable doesn't
+          //propagate to its assign initializer.
+          if (isSgInitializedName(node))
+          { 
+            return (cfgn == node->cfgForEnd());
+          }
+          else
+            return (cfgn.isInteresting());
       }
 
         

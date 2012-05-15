@@ -142,6 +142,10 @@ int main(int argc, char *argv[]) {
         std::cout << "fun: " << vis->defstr[i] << std::endl;
         visps[i]->constructPathAnalyzer(mgs[i], true, 0, 0, true);
         std::cout << "paths: " << visps[i]->paths << std::endl;
+    string dotFileName1=vis->defs[i]->get_declaration()->get_name() +".dot";
+
+    cfgToDot(vis->defs[i],dotFileName1);
+
    }
    delete vis;
 }

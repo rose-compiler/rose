@@ -1,77 +1,311 @@
+// Test code for string utility library
 #include <rose_config.h>
 
 #include "string_functions.h"
 
-using namespace std;
+static bool
+test_isLineTerminated()
+{
+    using namespace StringUtility;
+
+    bool batch1 = (true == isLineTerminated("hello world\n") &&
+                   true == isLineTerminated("hello world\r") &&
+                   true == isLineTerminated("hello world\r\n") &&
+                   true == isLineTerminated("hello world\n\r"));
+    assert(batch1);
+
+    bool batch2 = (true == isLineTerminated("\n") &&
+                   true == isLineTerminated("\r") &&
+                   true == isLineTerminated("\r\n") &&
+                   true == isLineTerminated("\n\r"));
+    assert(batch2);
+
+    bool batch3 = (false== isLineTerminated("\nhello world") &&
+                   false== isLineTerminated("\rhello world") &&
+                   false== isLineTerminated("\r\nhello world") &&
+                   false== isLineTerminated("\n\rhello world"));
+    assert(batch3);
+
+    bool batch4 = (false== isLineTerminated("hello\nworld") &&
+                   false== isLineTerminated("hello\rworld") &&
+                   false== isLineTerminated("hello\r\nworld") &&
+                   false== isLineTerminated("hello\n\rworld"));
+    assert(batch4);
+
+    bool batch5 = (false== isLineTerminated("") &&
+                   false== isLineTerminated(std::string("")+'\0') &&
+                   false== isLineTerminated(std::string("\n")+'\0') &&
+                   false== isLineTerminated(std::string("\r")+'\0') &&
+                   false== isLineTerminated(std::string("\r\n")+'\0') &&
+                   false== isLineTerminated(std::string("\n\r")+'\0'));
+    assert(batch5);
+
+    bool batch6 = (true == isLineTerminated('\0'+std::string("\n")) &&
+                   true == isLineTerminated('\0'+std::string("\r")) &&
+                   true == isLineTerminated('\0'+std::string("\r\n")) &&
+                   true == isLineTerminated('\0'+std::string("\n\r")));
+    assert(batch6);
+
+    return batch1 && batch2 && batch3 && batch4 && batch5 && batch6;
+}
+
+static bool
+test_prefixLines()
+{
+    using namespace StringUtility;
+    bool retval = false;
+
+    // Tests using an empty string as input. Empty lines are never modified.
+    bool test00 = 0 == (prefixLines("", "L", false, false)
+                        .compare(""));
+    assert(test00);
+    bool test01 = 0 == (prefixLines("", "L", true, false)
+                        .compare(""));
+    assert(test01);
+    bool test02 = 0 == (prefixLines("", "L", false, true)
+                        .compare(""));
+    assert(test02);
+    bool test03 = 0 == (prefixLines("", "L", true, true)
+                        .compare(""));
+    assert(test03);
+    retval = retval && test00 && test01 && test02 && test03;
 
 
-void stringTest ( string s )
-   {
-     string s_filename = StringUtility::stripPathFromFileName(s);
-     string s_path     = StringUtility::getPathFromFileName(s);
-     string s_nosuffix = StringUtility::stripFileSuffixFromFileName(s);
-     printf ("s = %s s_filename = %s \n",s.c_str(),s_filename.c_str());
-     printf ("s = %s s_path     = %s \n",s.c_str(),s_path.c_str());
-     printf ("s = %s s_nosuffix = %s \n",s.c_str(),s_nosuffix.c_str());
-     printf ("\n");
-   }
+    // Tests without internal line termination.
+    bool test10 = 0 == (prefixLines("aaa", "L", false, false)
+                        .compare("aaa"));
+    assert(test10);
+    bool test11 = 0 == (prefixLines("aaa", "L", true, false)
+                        .compare("Laaa"));
+    assert(test11);
+    bool test12 = 0 == (prefixLines("aaa", "L", false, true)
+                        .compare("aaa"));
+    assert(test12);
+    bool test13 = 0 == (prefixLines("aaa", "L", true, true)
+                        .compare("Laaa"));
+    assert(test13);
+    retval = retval && test10 && test11 && test12 && test13;
+
+
+    // Tests with trailing line termination.
+    bool test20 = 0 == (prefixLines("aaa\n", "L", false, false)                 // LF (unix)
+                        .compare("aaa\n"));
+    assert(test20);
+    bool test21 = 0 == (prefixLines("aaa\n", "L", true, false)
+                        .compare("Laaa\n"));
+    assert(test21);
+    bool test22 = 0 == (prefixLines("aaa\n", "L", false, true)
+                        .compare("aaa\nL"));
+    assert(test22);
+    bool test23 = 0 == (prefixLines("aaa\n", "L", true, true)
+                        .compare("Laaa\nL"));
+    assert(test23);
+    retval = retval && test20 && test21 && test22 && test23;
+
+    bool test24 = 0 == (prefixLines("aaa\r", "L", false, false)                 // CR only
+                        .compare("aaa\r"));
+    assert(test24);
+    bool test25 = 0 == (prefixLines("aaa\r", "L", true, false)
+                        .compare("Laaa\r"));
+    assert(test25);
+    bool test26 = 0 == (prefixLines("aaa\r", "L", false, true)
+                        .compare("aaa\rL"));
+    assert(test26);
+    bool test27 = 0 == (prefixLines("aaa\r", "L", true, true)
+                        .compare("Laaa\rL"));
+    assert(test27);
+
+    bool test28 = 0 == (prefixLines("aaa\r\n", "L", false, false)               // CR-LF (DOS/Windows)
+                        .compare("aaa\r\n"));
+    assert(test28);
+    bool test29 = 0 == (prefixLines("aaa\r\n", "L", true, false)
+                        .compare("Laaa\r\n"));
+    assert(test29);
+    bool test2a = 0 == (prefixLines("aaa\r\n", "L", false, true)
+                        .compare("aaa\r\nL"));
+    assert(test2a);
+    bool test2b = 0 == (prefixLines("aaa\r\n", "L", true, true)
+                        .compare("Laaa\r\nL"));
+    assert(test2b);
+    retval = retval &&
+             test20 && test21 && test22 && test23 &&
+             test24 && test25 && test26 && test27 &&
+             test28 && test29 && test2a && test2b;
+
+
+    // Tests with internal line termination.
+    bool test30 = 0 == (prefixLines("aaa\nbbb", "L", false, false)              // LF (unix)
+                        .compare("aaa\nLbbb"));
+    assert(test30);
+    bool test31 = 0 == (prefixLines("aaa\nbbb", "L", true, false)
+                        .compare("Laaa\nLbbb"));
+    assert(test31);
+    bool test32 = 0 == (prefixLines("aaa\nbbb", "L", false, true)
+                        .compare("aaa\nLbbb"));
+    assert(test32);
+    bool test33 = 0 == (prefixLines("aaa\nbbb", "L", true, true)
+                        .compare("Laaa\nLbbb"));
+    assert(test33);
+
+    bool test34 = 0 == (prefixLines("aaa\rbbb", "L", false, false)              // CR only
+                        .compare("aaa\rLbbb"));
+    assert(test34);
+    bool test35 = 0 == (prefixLines("aaa\rbbb", "L", true, false)
+                        .compare("Laaa\rLbbb"));
+    assert(test35);
+    bool test36 = 0 == (prefixLines("aaa\rbbb", "L", false, true)
+                        .compare("aaa\rLbbb"));
+    assert(test36);
+    bool test37 = 0 == (prefixLines("aaa\rbbb", "L", true, true)
+                        .compare("Laaa\rLbbb"));
+    assert(test37);
+
+    bool test38 = 0 == (prefixLines("aaa\r\nbbb", "L", false, false)            // CR-LF (DOS/Windows)
+                        .compare("aaa\r\nLbbb"));
+    assert(test38);
+    bool test39 = 0 == (prefixLines("aaa\r\nbbb", "L", true, false)
+                        .compare("Laaa\r\nLbbb"));
+    assert(test39);
+    bool test3a = 0 == (prefixLines("aaa\r\nbbb", "L", false, true)
+                        .compare("aaa\r\nLbbb"));
+    assert(test3a);
+    bool test3b = 0 == (prefixLines("aaa\r\nbbb", "L", true, true)
+                        .compare("Laaa\r\nLbbb"));
+    assert(test3b);
+    retval = retval &&
+             test30 && test31 && test32 && test33 &&
+             test34 && test35 && test36 && test37 &&
+             test38 && test39 && test3a && test3b;
+
+
+    // Tests for multiple lines
+    bool test40 = 0 == (prefixLines("aaa\nbbb\nccc\n", "L", false, false)       // LF (unix)
+                        .compare("aaa\nLbbb\nLccc\n"));
+    assert(test40);
+    bool test41 = 0 == (prefixLines("aaa\nbbb\nccc\n", "L", true, false)
+                        .compare("Laaa\nLbbb\nLccc\n"));
+    assert(test41);
+    bool test42 = 0 == (prefixLines("aaa\nbbb\nccc\n", "L", false, true)
+                        .compare("aaa\nLbbb\nLccc\nL"));
+    assert(test42);
+    bool test43 = 0 == (prefixLines("aaa\nbbb\nccc\n", "L", true, true)
+                        .compare("Laaa\nLbbb\nLccc\nL"));
+    assert(test43);
+
+    bool test44 = 0 == (prefixLines("aaa\rbbb\rccc\r", "L", false, false)       // CR only
+                        .compare("aaa\rLbbb\rLccc\r"));
+    assert(test44);
+    bool test45 = 0 == (prefixLines("aaa\rbbb\rccc\r", "L", true, false)
+                        .compare("Laaa\rLbbb\rLccc\r"));
+    assert(test45);
+    bool test46 = 0 == (prefixLines("aaa\rbbb\rccc\r", "L", false, true)
+                        .compare("aaa\rLbbb\rLccc\rL"));
+    assert(test46);
+    bool test47 = 0 == (prefixLines("aaa\rbbb\rccc\r", "L", true, true)
+                        .compare("Laaa\rLbbb\rLccc\rL"));
+    assert(test47);
+
+    bool test48 = 0 == (prefixLines("aaa\r\nbbb\r\nccc\r\n", "L", false, false) // CR-LF (DOS/Windows)
+                        .compare("aaa\r\nLbbb\r\nLccc\r\n"));
+    assert(test48);
+    bool test49 = 0 == (prefixLines("aaa\r\nbbb\r\nccc\r\n", "L", true, false)
+                        .compare("Laaa\r\nLbbb\r\nLccc\r\n"));
+    assert(test49);
+    bool test4a = 0 == (prefixLines("aaa\r\nbbb\r\nccc\r\n", "L", false, true)
+                        .compare("aaa\r\nLbbb\r\nLccc\r\nL"));
+    assert(test4a);
+    bool test4b = 0 == (prefixLines("aaa\r\nbbb\r\nccc\r\n", "L", true, true)
+                        .compare("Laaa\r\nLbbb\r\nLccc\r\nL"));
+    assert(test4b);
+    retval = retval &&
+             test40 && test41 && test42 && test43 &&
+             test44 && test45 && test46 && test47 &&
+             test48 && test49 && test4a && test4b;
+
+
+    // Tests for default arguments
+    bool test50 = 0 == (prefixLines("aaa\n", "L")
+                        .compare("Laaa\n"));
+    assert(test50);
+    bool test51 = 0 == (prefixLines("aaa\nbbb\nccc\n", "L")
+                        .compare("Laaa\nLbbb\nLccc\n"));
+    assert(test51);
+    retval = retval && test50 && test51;
+
+    // Test longer prefixes
+    bool test60 = 0 == (prefixLines("line1\nline2\nline3\n", "___", false, false)
+                        .compare("line1\n___line2\n___line3\n"));
+    assert(test60);
+    bool test61 = 0 == (prefixLines("line1\nline2\nline3\n", "___", false, true)
+                        .compare("line1\n___line2\n___line3\n___"));
+    assert(test61);
+    bool test62 = 0 == (prefixLines("line1\nline2\nline3\n", "___", true, false)
+                        .compare("___line1\n___line2\n___line3\n"));
+    assert(test62);
+    bool test63 = 0 == (prefixLines("line1\nline2\nline3\n", "___", true, true)
+                        .compare("___line1\n___line2\n___line3\n___"));
+    assert(test63);
+    retval = retval && test60 && test61 && test62 && test63;
+
+    return retval;
+}
+
+// WARNING: This "test" doesn't really test anything. It just calls the functions and spits out results without checking that
+//          the results are valid.
+static bool
+stringTest(std::string s)
+{
+    std::string s_filename = StringUtility::stripPathFromFileName(s);
+    std::string s_path     = StringUtility::getPathFromFileName(s);
+    std::string s_nosuffix = StringUtility::stripFileSuffixFromFileName(s);
+    printf("s = %s s_filename = %s \n",s.c_str(),s_filename.c_str());
+    printf("s = %s s_path     = %s \n",s.c_str(),s_path.c_str());
+    printf("s = %s s_nosuffix = %s \n",s.c_str(),s_nosuffix.c_str());
+    printf("\n");
+    return true;
+}
+
+// WARNING: This "test" doesn't really test anything. It just calls the functions and spits out results without checking that
+//          the results are valid.
+static bool
+test_removePseudoRedundentSubstrings() // sic
+{
+    std::string X = "ARRAY_OPERAND_UNIFORM_SIZE_INITIALIZATION_MACRO_D6(A);";
+    printf("X = \n%s\n",X.c_str());
+    std::string Y = StringUtility::removePseudoRedundentSubstrings ( X );
+    printf("Y = \n%s\n",Y.c_str());
+    return true;
+}
+
+
 
 int
 main()
-   {
-  // Test code for string utility library
+{
+    size_t nfailures = 0;
 
-  // string X = "XXX1Y XXX1Y XXX2Y XXX1Y";
-  // string X = "\nXXX1Y\nXXX1Y\nXXX2Y\nXXX1Y";
-  // string X = "XXX1Y\nXXX1Y\nXXX2Y\nXXX1Y\n";
-#if 0
-     string X = "\
-ARRAY_OPERAND_VARIABLE_SIZE_DECLARATION_MACRO_D1(_A)\n\
-ARRAY_OPERAND_VARIABLE_SIZE_DECLARATION_MACRO_D6(_A)\n\
-ARRAY_OPERAND_VARIABLE_STRIDE_DECLARATION_MACRO_D1(_A)\n\
-ARRAY_OPERAND_VARIABLE_STRIDE_DECLARATION_MACRO_D1(_A_I)\n\
-ARRAY_OPERAND_VARIABLE_STRIDE_DECLARATION_MACRO_D6(_A)\n\
-LOOP_INDEX_VARIABLES_DECLARATION_MACRO_D1();\n\
-LOOP_INDEX_VARIABLES_DECLARATION_MACRO_D6();\n\
-";
-#else
+    nfailures += test_removePseudoRedundentSubstrings() ? 0 : 1;
 
-#if 0
-     string X = "\
-   ARRAY_OPERAND_UNIFORM_SIZE_INITIALIZATION_MACRO_D6(A); \
-ARRAY_TRANSFORMATION_LENGTH_INITIALIZATION_MACRO_D6(A); \
-   _A_pointer = A.getAdjustedDataPointer(); \
-   \"ROSE-TRANSFORMATION-MACRO:#define SC(x1,x2,x3,x4,x5,x6) /* case UniformSizeUnitStride */ (x1)+(x2)*_size1+(x3)*_size2+(x4)*_size3+(x5)*_size4+(x6)*_size5\"; \
-";
-#else
-     string X = "ARRAY_OPERAND_UNIFORM_SIZE_INITIALIZATION_MACRO_D6(A);";
-#endif
-#endif
+    nfailures += stringTest("foo.h") ? 0 : 1;
+    nfailures += stringTest("/foo.h") ? 0 : 1;
+    nfailures += stringTest("//foo.h") ? 0 : 1;
+    nfailures += stringTest("///foo.h") ? 0 : 1;
+    nfailures += stringTest("////foo.h") ? 0 : 1;
+    nfailures += stringTest("./foo.h") ? 0 : 1;
+    nfailures += stringTest("../foo.h") ? 0 : 1;
+    nfailures += stringTest("//foo.h") ? 0 : 1;
+    nfailures += stringTest("path/foo.h") ? 0 : 1;
+    nfailures += stringTest("/path/foo.h") ? 0 : 1;
+    nfailures += stringTest("/pathA/pathB/foo.h") ? 0 : 1;
+    nfailures += stringTest("foo") ? 0 : 1;
+    nfailures += stringTest("/path/foo") ? 0 : 1;
 
-     printf ("X = \n%s\n",X.c_str());
+    nfailures += test_isLineTerminated() ? 0 : 1;
 
-     string Y = StringUtility::removePseudoRedundentSubstrings ( X );
+    nfailures += test_prefixLines() ? 0 : 1;
 
-     printf ("Y = \n%s\n",Y.c_str());
-
-     
-     stringTest ("foo.h");
-     stringTest ("/foo.h");
-     stringTest ("//foo.h");
-     stringTest ("///foo.h");
-     stringTest ("////foo.h");
-     stringTest ("./foo.h");
-     stringTest ("../foo.h");
-     stringTest ("//foo.h");
-     stringTest ("path/foo.h");
-     stringTest ("/path/foo.h");
-     stringTest ("/pathA/pathB/foo.h");
-     stringTest ("foo");
-     stringTest ("/path/foo");
-
-     printf ("Program Terminated Normally! \n");
-     return 0;
-   }
+    return 0==nfailures;
+}
 
 
 

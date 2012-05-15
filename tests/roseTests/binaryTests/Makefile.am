@@ -232,7 +232,6 @@ EXTRA_DIST += semantics.conf symbolicSemantics.ans
 symbolicSemantics.passed: semantics.conf symbolicSemantics
 	@$(RTH_RUN) CMD=symbolicSemantics INPUT=i686-test1.O3.bin $< $@
 
-
 # Use SymbolicSemantics with YicesSolver policy, invoking "yices" executable. We should be able
 # to compile this test even when the "yices" command is not available. However, we won't be able
 # to test it if we don't have it.
@@ -262,6 +261,25 @@ yicesSemanticsLib.passed: semantics.conf yicesSemanticsLib
 	@$(RTH_RUN) CMD=yicesSemanticsLib INPUT=i686-test1.O3.bin $< $@
 endif
 
+# Null semantics do nothing, but we test that they compile and run
+noinst_PROGRAMS += nullSemantics
+nullSemantics_SOURCES = semantics.C
+nullSemantics_CPPFLAGS = -DPOLICY_SELECTOR=5
+nullSemantics_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+STATIC_TEST_TARGETS += nullSemantics.passed
+EXTRA_DIST += semantics.conf nullSemantics.ans
+nullSemantics.passed: semantics.conf nullSemantics
+	@$(RTH_RUN) CMD=nullSemantics INPUT=i686-test1.O3.bin $< $@
+
+# Multi-domain semantics
+noinst_PROGRAMS += multiSemantics
+multiSemantics_SOURCES = semantics.C
+multiSemantics_CPPFLAGS = -DPOLICY_SELECTOR=6
+multiSemantics_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+STATIC_TEST_TARGETS += multiSemantics.passed
+EXTRA_DIST += semantics.conf multiSemantics.ans
+multiSemantics.passed: semantics.conf multiSemantics
+	@$(RTH_RUN) CMD=multiSemantics INPUT=i686-test1.O3.bin $< $@
 
 # Disassembles an executable according to various command-line switches.
 noinst_PROGRAMS += disassemble
@@ -395,6 +413,20 @@ STATIC_TEST_TARGETS += testPeImports.passed
 EXTRA_DIST += testPeImports.conf testPeImports.ans
 testPeImports.passed: testPeImports.conf testPeImports
 	@$(RTH_RUN) INPUT=proxycfg.exe $< $@
+
+# Symbolic semantics test from Cory Cohen that triggers a reference-counting bug.
+noinst_PROGRAMS += cory001
+cory001_SOURCES = cory001.C
+cory001_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+STATIC_TEST_TARGETS += cory001.passed
+EXTRA_DIST += cory001.conf
+cory001.passed: cory001.conf cory001
+	@$(RTH_RUN) CMD=./cory001 $< $@
+
+# Binary CFG test from Cory Cohen that doesn't compile.  This is only a linking test--do not run it.
+noinst_PROGRAMS += cory002
+cory002_SOURCES = cory002.C
+cory002_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 
 ###############################################################################################################################
 # DEMOS

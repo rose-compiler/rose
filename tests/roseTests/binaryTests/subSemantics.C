@@ -3,6 +3,8 @@
 #include "rose.h"
 #include "SymbolicSemantics.h"
 
+using namespace BinaryAnalysis::InstructionSemantics;
+
 class MyPolicy: public SymbolicSemantics::Policy<SymbolicSemantics::State, SymbolicSemantics::ValueType> {
     typedef            SymbolicSemantics::Policy<SymbolicSemantics::State, SymbolicSemantics::ValueType> super;
 public:

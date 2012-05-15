@@ -85,15 +85,15 @@ if WITH_GOMP_OPENMP_LIB
 #-------------compile and run using GCC's runtime library--------------------------------       
 PASSING_F77_TEST_Executables = ${F77_TEST_OBJECT_REQUIRED_TO_RUN:.o=.out}
 PASSING_F90_TEST_Executables = ${F90_TEST_OBJECT_REQUIRED_TO_RUN:.o=.out}
-MY_FINAL_LINK = $(top_builddir)/src/midend/libxomp.a $(GOMP_PATH)/libgomp.a -lpthread -lm -lrt
+MY_FINAL_LINK = -L$(top_builddir)/src/midend -lxomp $(GOMP_PATH)/libgomp.a -lpthread -lm -lrt
 
 F_LINK_FLAGS= #-fno-underscoring
 # $(F77) will be expanded to g77, which has different libfortran expectation
 # $(F90) is not defined?
 $(PASSING_F77_TEST_Executables): %.out: %.o
-	$(GFORTRAN_PATH) $(F_LINK_FLAGS) $< -o $@ $(MY_FINAL_LINK)
+	$(LIBTOOL) --mode=link --tag=FC $(GFORTRAN_PATH) $(F_LINK_FLAGS) $< -o $@ $(MY_FINAL_LINK)
 $(PASSING_F90_TEST_Executables): %.out: %.o
-	$(GFORTRAN_PATH) $(F_LINK_FLAGS) $< -o $@ $(MY_FINAL_LINK)
+	$(LIBTOOL) --mode=link --tag=FC $(GFORTRAN_PATH) $(F_LINK_FLAGS) $< -o $@ $(MY_FINAL_LINK)
 check_PROGRAM = $(PASSING_F77_TEST_Executables) $(PASSING_F90_TEST_Executables)
 # Executables depend on objects
 # check-TESTS happens before check-local

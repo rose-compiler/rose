@@ -139,31 +139,48 @@ public:
 
     /** Install a callback object.
      *
-     *  This is just a convenient way of installing a callback object.  It appends it to the BEFORE slot of the appropriate
-     *  queue.
+     *  This is just a convenient way of installing a callback object.  It appends it to the BEFORE slot (by default) of the
+     *  appropriate queue.  If @p everwhere is true (not the default) then it also appends the callback to the appropriate
+     *  callback list of all existing threads.  Regardless of whether a callback is applied to existing  threads, whenever a new
+     *  thread is created it gets a clone of all its process callbacks.
      *
      *  @{ */  // ******* Similar functions in RSIM_Simulator and RSIM_Thread ******
-    void install_callback(RSIM_Callbacks::InsnCallback *cb) {
-        callbacks.add_insn_callback(RSIM_Callbacks::BEFORE, cb);
-    }
-    void install_callback(RSIM_Callbacks::MemoryCallback *cb) {
-        callbacks.add_memory_callback(RSIM_Callbacks::BEFORE, cb);
-    }
-    void install_callback(RSIM_Callbacks::SyscallCallback *cb) {
-        callbacks.add_syscall_callback(RSIM_Callbacks::BEFORE, cb);
-    }
-    void install_callback(RSIM_Callbacks::SignalCallback *cb) {
-        callbacks.add_signal_callback(RSIM_Callbacks::BEFORE, cb);
-    }
-    void install_callback(RSIM_Callbacks::ThreadCallback *cb) {
-        callbacks.add_thread_callback(RSIM_Callbacks::BEFORE, cb);
-    }
-    void install_callback(RSIM_Callbacks::ProcessCallback *cb) {
-        callbacks.add_process_callback(RSIM_Callbacks::BEFORE, cb);
-    }
+    void install_callback(RSIM_Callbacks::InsnCallback *cb,
+                          RSIM_Callbacks::When when=RSIM_Callbacks::BEFORE, bool everywhere=false);
+    void install_callback(RSIM_Callbacks::MemoryCallback *cb,
+                          RSIM_Callbacks::When when=RSIM_Callbacks::BEFORE, bool everywhere=false);
+    void install_callback(RSIM_Callbacks::SyscallCallback *cb,
+                          RSIM_Callbacks::When when=RSIM_Callbacks::BEFORE, bool everywhere=false);
+    void install_callback(RSIM_Callbacks::SignalCallback *cb,
+                          RSIM_Callbacks::When when=RSIM_Callbacks::BEFORE, bool everywhere=false);
+    void install_callback(RSIM_Callbacks::ThreadCallback *cb,
+                          RSIM_Callbacks::When when=RSIM_Callbacks::BEFORE, bool everywhere=false);
+    void install_callback(RSIM_Callbacks::ProcessCallback *cb,
+                          RSIM_Callbacks::When when=RSIM_Callbacks::BEFORE, bool everywhere=false);
     /** @} */
 
-
+    /** Remove a callback object.
+     *
+     *  This is just a convenient way of removing callback objects.  It removes up to one instance of the callback from the
+     *  process and, if @p everwhere is true (not the default) it recursively calls the removal methods for all threads of the
+     *  process.  The comparison to find a callback object is by callback address.  If the callback has a @p clone() method
+     *  that allocates a new callback object, then the callback specified as an argument probably won't be found in any of the
+     *  threads.
+     *
+     * @{ */
+    void remove_callback(RSIM_Callbacks::InsnCallback *cb,
+                         RSIM_Callbacks::When when=RSIM_Callbacks::BEFORE, bool everywhere=false);
+    void remove_callback(RSIM_Callbacks::MemoryCallback *cb,
+                         RSIM_Callbacks::When when=RSIM_Callbacks::BEFORE, bool everywhere=false);
+    void remove_callback(RSIM_Callbacks::SyscallCallback *cb,
+                         RSIM_Callbacks::When when=RSIM_Callbacks::BEFORE, bool everywhere=false);
+    void remove_callback(RSIM_Callbacks::SignalCallback *cb,
+                         RSIM_Callbacks::When when=RSIM_Callbacks::BEFORE, bool everywhere=false);
+    void remove_callback(RSIM_Callbacks::ThreadCallback *cb,
+                         RSIM_Callbacks::When when=RSIM_Callbacks::BEFORE, bool everywhere=false);
+    void remove_callback(RSIM_Callbacks::ProcessCallback *cb,
+                         RSIM_Callbacks::When when=RSIM_Callbacks::BEFORE, bool everywhere=false);
+    /** @} */
 
     /**************************************************************************************************************************
      *                                  Process memory
@@ -497,6 +514,14 @@ public:
      *
      *  Thread safety:  This method is thread safe; it can be invoked on a single object by multiple threads concurrently. */
     RSIM_Thread *get_thread(pid_t tid) const;
+
+    /** Returns a vector of current threads.  These are all the threads that currently belong to the process.
+     *
+     *  Thread safety:  This method is thread safe; it can be invoked on a single object by multiple threads
+     *  concurrently. However, by time the vector is returned to the caller, the list of active threads may have changed.
+     *  Fortunately, RSIM doesn't delete RSIM_Thread objects when a thread exits, so at least all the returned pointers will
+     *  still be valid. */
+    std::vector<RSIM_Thread*> get_all_threads() const;
 
     /** Remove a thread from this process.  This is normally called by the specified thread when that thread exits.  Calling
      *  this method twice for the same thread will result in a failed assertion.

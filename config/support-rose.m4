@@ -162,6 +162,8 @@ fi
 
   ROSE_SUPPORT_UPC
   ROSE_SUPPORT_COMPASS2
+  ROSE_SUPPORT_GMP
+  ROSE_SUPPORT_ISL
 
 ##
 #########################################################################################
@@ -2031,14 +2033,10 @@ projects/RTED/Makefile
 projects/RoseQt/AstViewer/Makefile
 projects/RoseQt/Makefile
 projects/SatSolver/Makefile
-projects/SemanticSignatureVectors/Makefile
-projects/SemanticSignatureVectors/tests/Makefile
 projects/UpcTranslation/Makefile
 projects/UpcTranslation/tests/Makefile
 projects/arrayOptimization/Makefile
 projects/arrayOptimization/test/Makefile
-projects/assemblyToSourceAst/Makefile
-projects/assemblyToSourceAst/tests/Makefile
 projects/autoParallelization/Makefile
 projects/autoParallelization/tests/Makefile
 projects/autoTuning/Makefile
@@ -2112,6 +2110,7 @@ projects/roseToLLVM/Makefile
 projects/roseToLLVM/src/Makefile
 projects/roseToLLVM/src/rosetollvm/Makefile
 projects/roseToLLVM/tests/Makefile
+projects/RosePolly/Makefile
 projects/simulator/Makefile
 projects/symbolicAnalysisFramework/Makefile
 projects/symbolicAnalysisFramework/src/chkptRangeAnalysis/Makefile

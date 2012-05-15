@@ -3,6 +3,7 @@
 
 #include "x86InstructionSemantics.h"
 #include "integerOps.h"
+#include "Registers.h"
 
 /** A policy for x86InstructionSemantics.
  *

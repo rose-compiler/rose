@@ -126,6 +126,13 @@ struct powerpcCTranslationPolicy: public CTranslationPolicy {
     return constantOfLength(Len, n);
   }
 
+  template<size_t Len>
+  WordWithExpression<Len> undefined() {
+      if (1==Len)
+          return buildBoolValExp(false);
+      return constantOfLength(Len, 0);
+  }
+
   template <size_t From, size_t To, size_t Len>
   WordWithExpression<To - From> extract(WordWithExpression<Len> a) {
     return (From == 0) ? a.expr() : buildRshiftOp(a.expr(), buildIntVal(From)); // Other bits will automatically be masked off
@@ -139,7 +146,6 @@ struct powerpcCTranslationPolicy: public CTranslationPolicy {
 
   WordWithExpression<1> true_() {return buildBoolValExp(true);}
   WordWithExpression<1> false_() {return buildBoolValExp(false);}
-  WordWithExpression<1> undefined_() {return buildBoolValExp(false);}
 
   template <size_t Len>
   WordWithExpression<Len> and_(WordWithExpression<Len> a, WordWithExpression<Len> b) {

@@ -214,12 +214,12 @@ if WITH_GOMP_OPENMP_LIB
 PASSING_C_TEST_Executables = ${C_TEST_OBJECT_REQUIRED_TO_RUN:.o=.out}
 PASSING_CXX_TEST_Executables = ${CXX_TEST_OBJECT_REQUIRED_TO_RUN:.o=.out}
 # TODO this might have problem with CXX objects!!
-MY_FINAL_LINK = $(top_builddir)/src/midend/libxomp.a $(GOMP_PATH)/libgomp.a -lpthread -lm
+MY_FINAL_LINK = -L$(top_builddir)/src/midend -lxomp $(GOMP_PATH)/libgomp.a -lpthread -lm
 
 $(PASSING_C_TEST_Executables): %.out: %.o
-	$(CC) $< -o $@ $(MY_FINAL_LINK)
+	$(LIBTOOL) --mode=link $(CC) $< -o $@ $(MY_FINAL_LINK)
 $(PASSING_CXX_TEST_Executables): %.out: %.o 
-	$(CXX) $< -o $@ $(MY_FINAL_LINK)
+	$(LIBTOOL) --mode=link $(CXX) $< -o $@ $(MY_FINAL_LINK)
 check_PROGRAM = $(PASSING_C_TEST_Executables) $(PASSING_CXX_TEST_Executables)
 # Executables depend on objects
 # check-TESTS happens before check-local
@@ -255,13 +255,13 @@ if ROSE_USE_OMNI_OPENMP
 PASSING_C_TEST_Executables = ${C_TEST_OBJECT_REQUIRED_TO_RUN:.o=.out}
 PASSING_CXX_TEST_Executables = ${CXX_TEST_OBJECT_REQUIRED_TO_RUN:.o=.out}
 # TODO this might have problem with CXX objects!!
-MY_FINAL_LINK = $(top_builddir)/src/midend/libxomp.a $(OMNI_PATH)/libompc.a -lpthread -lm
+MY_FINAL_LINK = -L$(top_builddir)/src/midend -lxomp $(OMNI_PATH)/libompc.a -lpthread -lm
 #MY_FINAL_LINK = $(top_builddir)/src/midend/programTransformation/ompLowering/libxomp.a $(OMNI_PATH)/libtlog.a  $(OMNI_PATH)/libompc.a -lpthread -lm
 
 $(PASSING_C_TEST_Executables): %.out: %.o
-	$(CC) $< -o $@ $(MY_FINAL_LINK)
+	$(LIBTOOL) --mode=link $(CC) $< -o $@ $(MY_FINAL_LINK)
 $(PASSING_CXX_TEST_Executables): %.out: %.o 
-	$(CXX) $< -o $@ $(MY_FINAL_LINK)
+	$(LIBTOOL) --mode=link $(CXX) $< -o $@ $(MY_FINAL_LINK)
 check_PROGRAM = $(PASSING_C_TEST_Executables) $(PASSING_CXX_TEST_Executables)
 # Executables depend on objects
 # check-TESTS happens before check-local

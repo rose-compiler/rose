@@ -18,7 +18,6 @@ digraph G {
 1[ label="0x08048283" ];
 2[ label="0x08048288" ];
 3[ label="0x0804828d" ];
-4[ label="0x0804828f" ];
 1->0 ;
 2->1 ;
 3->2 ;
@@ -27,20 +26,17 @@ digraph G {
 === testDominance-D2.dot ===
 digraph G {
 0[ label="0x080482a0" ];
-1[ label="0x080482a6" ];
 }
 
 === testDominance-D3.dot ===
 digraph G {
 0[ label="0x080482b0" ];
-1[ label="0x080482b6" ];
 }
 
 === testDominance-D4.dot ===
 digraph G {
 0[ label="0x080482c0" ];
 1[ label="0x080482e1" ];
-2[ label="0x080482e2" ];
 1->0 ;
 }
 
@@ -49,7 +45,6 @@ digraph G {
 0[ label="0x080482e4" ];
 1[ label="0x080482ff" ];
 2[ label="0x08048301" ];
-3[ label="0x08048305" ];
 2->0 ;
 2->1 ;
 }
@@ -62,7 +57,6 @@ digraph G {
 3[ label="0x0804832b" ];
 4[ label="0x08048336" ];
 5[ label="0x0804833d" ];
-6[ label="0x0804833f" ];
 5->0 ;
 5->1 ;
 3->2 ;
@@ -76,7 +70,6 @@ digraph G {
 1[ label="0x0804834f" ];
 2[ label="0x08048358" ];
 3[ label="0x08048361" ];
-4[ label="0x08048363" ];
 3->0 ;
 3->1 ;
 3->2 ;
@@ -106,7 +99,6 @@ digraph G {
 1[ label="0x080483da" ];
 2[ label="0x080483f4" ];
 3[ label="0x080483fb" ];
-4[ label="0x08048412" ];
 1->0 ;
 }
 
@@ -116,7 +108,6 @@ digraph G {
 1[ label="0x0804843f" ];
 2[ label="0x08048443" ];
 3[ label="0x0804844e" ];
-4[ label="0x08048456" ];
 3->0 ;
 }
 
@@ -127,7 +118,6 @@ digraph G {
 2[ label="0x08048480" ];
 3[ label="0x08048485" ];
 4[ label="0x0804848c" ];
-5[ label="0x08048491" ];
 4->0 ;
 2->1 ;
 3->2 ;
@@ -138,6 +128,5 @@ digraph G {
 digraph G {
 0[ label="0x08048494" ];
 1[ label="0x080484aa" ];
-2[ label="0x080484ae" ];
 1->0 ;
 }

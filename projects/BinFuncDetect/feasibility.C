@@ -7,9 +7,11 @@
 #include <unistd.h>
 #include <cmath>
 
-static bool is_unexecutable(const MemoryMap::MapElement &me) {
-    return 0 == (me.get_mapperms() & MemoryMap::MM_PROT_EXEC);
-}
+struct UnexecutableSegments: public MemoryMap::Visitor {
+    virtual bool operator()(const MemoryMap*, const Extent&, const MemoryMap::Segment &segment) {
+        return 0 == (segment.get_mapperms() & MemoryMap::MM_PROT_EXEC);
+    }
+} is_unexecutable;
 
 static double sigma(double variance) { return variance*variance; }
 
@@ -73,22 +75,12 @@ int
 main(int argc, char *argv[])
 {
     assert(argc>1);
-    char *filename = argv[1];
-
-    int fd = open(filename, O_RDONLY);
-    assert(fd>=0);
-    struct stat sb;
-    int status = fstat(fd, &sb);
-    assert(status>=0);
-    const void *content = mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
-    assert(content);
-    close(fd); fd = -1;
+    std::string filename = argv[1];
 
     rose_addr_t start_va = 0;
-    MemoryMap::MapElement me(start_va, sb.st_size, content, 0, MemoryMap::MM_PROT_READ|MemoryMap::MM_PROT_EXEC);
-    me.set_name(filename);
     MemoryMap map;
-    map.insert(me);
+    MemoryMap::BufferPtr buffer = MemoryMap::MmapBuffer::create(filename, O_RDONLY, PROT_READ, MAP_PRIVATE);
+    map.insert(Extent(start_va, buffer->size()), MemoryMap::Segment(buffer, 0, MemoryMap::MM_PROT_RX, filename));
 
     SgAsmGenericHeader *fake_header = new SgAsmPEFileHeader(new SgAsmGenericFile());
     Disassembler *disassembler = Disassembler::lookup(fake_header)->clone();

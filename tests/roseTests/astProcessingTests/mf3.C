@@ -40,10 +40,10 @@ int barfoo(int y, int z) {
            }
        }
        else if (y == z) {
-          z++;
+          z = z + 1;
        }
        else if (y > z) {
-          y++;
+          y = y + 1;
        }
        else {
           z += y;
@@ -69,7 +69,8 @@ int main() {
     int k = 1;
     k = k + z;
     //foo(x, y);
-    foo(foo(x, y), y);
+    //foo(foo(x, y), y);
+    k = barfoo(x, y);
     //foo(bar(x, y, k), foo(x, k));
     //barfoo(foo(bar(x,y,k),foo(x,y)), k);
 }
