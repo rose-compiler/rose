@@ -800,7 +800,7 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
   // executed as we last vist an IR node (post-order; see the evaluateSynthezidedAttribute()
   // member function).
 
-#if 1
+#if 0
      printf ("In AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute(): n = %p = %s \n",n,n->class_name().c_str());
      SgStatement* currentStatement = isSgStatement(n);
   // if (isSgStatement(n) && (isSgStatement(n)->get_parent() != NULL) )
