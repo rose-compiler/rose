@@ -61,6 +61,7 @@ $(libRSIM_la_SOURCES:.C=.lo): %.lo: %.h
 # CLIENT LIBRARY
 ###############################################################################################################################
 
+EXTRA_DIST += RSIM_Client.c RSIM_Client.h
 MOSTLYCLEANFILES += librsim_client.a
 librsim_client.a: RSIM_Client.o
 	@echo "  LINK32  $@"
