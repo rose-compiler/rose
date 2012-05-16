@@ -277,10 +277,12 @@ test2005_51.C \
 test2005_52.C \
 test2005_53.C \
 test2005_55.C \
+test2005_57.C \
 test2005_58.C \
 test2005_59.C \
 test2005_61.C \
 test2005_62.C \
+test2005_63.C \
 test2005_64.C \
 test2005_65.C \
 test2005_66.C \
@@ -288,6 +290,7 @@ test2005_67.C \
 test2005_70.C \
 test2005_71.C \
 test2005_72.C \
+test2005_73.C \
 test2005_74.C \
 test2005_75a.C \
 test2005_75b.C \
@@ -352,6 +355,7 @@ test2005_149.C \
 test2005_150.C \
 test2005_152.C \
 test2005_153.C \
+test2005_155.C \
 test2005_156.C \
 test2005_157.C \
 test2005_158.C \
@@ -404,6 +408,7 @@ test2006_01.C \
 test2006_02.C \
 test2006_06.C \
 test2006_07.C \
+test2006_08.C \
 test2006_10.C \
 test2006_12.C \
 test2006_13.C \
@@ -412,11 +417,13 @@ test2006_16.C \
 test2006_17.C \
 test2006_18.C \
 test2006_19.C \
+test2006_20.C \
 test2006_22.C \
 test2006_23.C \
 test2006_25.C \
 test2006_26.C \
 test2006_34.C \
+test2006_37.C \
 test2006_38.C \
 test2006_39.C \
 test2006_40.C \
@@ -848,6 +855,7 @@ test2012_80.C \
 test2012_81.C \
 test2012_82.C \
 test2012_83.C \
+test2012_84.C \
 test_int_lexemes.C \
 test_int_lexemes_donot_pass.C \
 test_simple_int.C \
@@ -883,6 +891,8 @@ endif
 
 
 
+
+
 # Import list of C++ test cases that are known to fail:
 #   TESTCODE_CURRENTLY_FAILING
 #
@@ -894,11 +904,8 @@ test2005_24.C \
 test2005_33.C \
 test2005_35.C \
 test2005_44.C \
-test2005_57.C \
 test2005_60.C \
-test2005_63.C \
 test2005_68.C \
-test2005_73.C \
 test2005_102.C \
 test2005_103.C \
  test2005_112.C \
@@ -914,14 +921,10 @@ test2005_132.C \
 test2005_137.C \
 test2005_143.C \
  test2005_154.C \
-test2005_155.C \
 test2006_03.C \
 test2006_04.C \
 test2006_05.C \
-test2006_08.C \
-test2006_20.C \
 test2006_28.C \
-test2006_37.C \
 test2006_54.C \
 test2006_67.C \
 test2006_73.C \
