@@ -9,3 +9,6 @@ test:
 	${MAKE} -f Makefile.manual ${MARKS}
 	${MAKE} -f Makefile.manual ${ALL_OBJS}
 	${MAKE} -f Makefile.manual ${ALL_EXPECTED:.expected=.comp}
+
+clean:
+	rm -f ${ALL_OUTS} ${ALL_OBJS} ${MARKS} */*.ti

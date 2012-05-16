@@ -178,8 +178,5 @@ SKFLAGS=-I$(asrcdir)/../mpi-fakeheader -skel:spec $(asrcdir)/../apis.coll
 %.comp: % %.expected
 	- diff -w $?
 
-clean:
-	rm -f ${ALL_OUTS} ${ALL_OBJS} ${MARKS} */*.ti
-
 show:
 	@echo $($(VALUE))              # note: this expands!
