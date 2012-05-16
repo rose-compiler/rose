@@ -798,6 +798,7 @@ MarkTemplateInstantiationsForOutput::ProcessClassTemplateDeclarations ( set<SgDe
                     bool isSpecialization = classInstantiation->isSpecialization();
                     printf ("MarkTemplateInstantiationsForOutput::ProcessClassTemplateDeclarations(): isSpecialization = %s \n",isSpecialization ? "true" : "false");
 #if 0
+                 // DQ (5/15/2012): Need to be careful about forcing this to be treated as a specialization if it is not explicitly a specialization in the source code (comment out).
                  // DQ (5/2/2012): Force this to be a specialization since it is used (the declaration was in the class but is not output that way in the template string).
                     printf ("Forcing this template instantiation to be treated as a specialization (and output in the generated code). \n");
                     classInstantiation->set_specialization(SgDeclarationStatement::e_specialization);
@@ -806,8 +807,7 @@ MarkTemplateInstantiationsForOutput::ProcessClassTemplateDeclarations ( set<SgDe
                     if (isSpecialization == true)
                        {
 #if 0
-                         printf ("Calling markForOutputInCodeGeneration on classInstantiation = %p = %s \n",
-                              classInstantiation,classInstantiation->class_name().c_str());
+                         printf ("Calling markForOutputInCodeGeneration on classInstantiation = %p = %s \n",classInstantiation,classInstantiation->class_name().c_str());
 #endif
                          markForOutputInCodeGeneration (classInstantiation);
                        }
@@ -886,6 +886,13 @@ markTemplateInstantiationsForOutput( SgNode* node )
        // those templates that are required.
           set<SgDeclarationStatement*> setOfRequiredDeclarations = MarkTemplateInstantiationsForOutput::BuildSetOfRequiredTemplateDeclarations(node,file);
 
+#if 0
+          printf ("In markTemplateInstantiationsForOutput(): setOfRequiredDeclarations: \n");
+          for (set<SgDeclarationStatement*>::iterator i = setOfRequiredDeclarations.begin(); i != setOfRequiredDeclarations.end(); i++)
+             {
+               printf ("   --- set element = %p = %s \n",*i,(*i)->class_name().c_str());
+             }
+#endif
 #if 0
           printf ("In markTemplateInstantiationsForOutput(): ProcessMemberFunctionTemplateDeclarations(): setOfRequiredDeclarations.size() = %zu \n",setOfRequiredDeclarations.size());
 #endif

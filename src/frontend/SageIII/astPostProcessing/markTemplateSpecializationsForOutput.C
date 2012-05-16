@@ -14,7 +14,9 @@ markTemplateSpecializationsForOutput( SgNode* node )
 
      ROSE_ASSERT(node != NULL);
 
-  // printf ("In markTemplateSpecializationsForOutput(): This function marks template specialization to be output node = %p = %s \n",node,node->class_name().c_str());
+#if 1
+     printf ("In markTemplateSpecializationsForOutput(): This function marks template specialization to be output node = %p = %s \n",node,node->class_name().c_str());
+#endif
 
   // DQ (7/7/2005): Introduce tracking of performance of ROSE.
      TimingPerformance timer ("Mark template specializations for output:");
@@ -25,7 +27,7 @@ markTemplateSpecializationsForOutput( SgNode* node )
 
      if (node->get_parent() == NULL)
         {
-#if 0
+#if 1
           printf ("In markTemplateSpecializationsForOutput(): Detected AST fragement not associated with primary AST, ignore template handling ... \n");
 #endif
           SgProject *project = isSgProject(node);
@@ -41,13 +43,16 @@ markTemplateSpecializationsForOutput( SgNode* node )
                   {
                     SgFile *file = *fIterator;
                     ROSE_ASSERT(file != NULL);
+
+                    printf ("Calling markTemplateInstantiationsForOutput() for file = %p = %s \n",file,file->class_name().c_str());
                     markTemplateInstantiationsForOutput(file);
+                    printf ("DONE: Calling markTemplateInstantiationsForOutput() for file = %p = %s \n",file,file->class_name().c_str());
                   }
              }
         }
        else
         {
-#if 0
+#if 1
           printf ("In markTemplateSpecializationsForOutput(): Getting the SgFile from the AST node \n");
 #endif
           file = TransformationSupport::getSourceFile(node);
@@ -94,6 +99,8 @@ MarkTemplateSpecializationsForOutput::evaluateInheritedAttribute (
      static int staticCounter = 0;
      MarkTemplateSpecializationsForOutputInheritedAttribute returnAttribute = inheritedAttribute;
 
+     printf ("In MarkTemplateSpecializationsForOutput::evaluateInheritedAttribute() node = %p = %s \n",node,node->class_name().c_str());
+
   // Mark this explicitly as false to turn off effect of SgGlobal turning it on
      returnAttribute.insideDeclarationToOutput = false;
 
@@ -107,27 +114,27 @@ MarkTemplateSpecializationsForOutput::evaluateInheritedAttribute (
        // If this is marked for output then record this in the inherited attribute to be returned
           if ( fileInfo->isOutputInCodeGeneration() == true )
              {
-            // printf ("Skipping nodes already marked to be unparsed = %p = %s \n",node,node->class_name().c_str());
+               printf ("Skipping nodes already marked to be unparsed = %p = %s \n",node,node->class_name().c_str());
             // returnAttribute.insideDeclarationToOutput = true;
             // printf ("Found compiler generated IR node to be unparsed = %s \n",node->sage_class_name());
              }
             else
              {
+               printf ("Evaluate nodes for if then need be marked to be unparsed = %p = %s \n",node,node->class_name().c_str());
+
             // Maybe SgGlobal should return false for hasPositionInSource()?
                if (fileInfo->hasPositionInSource() == true)
                   {
                  // This node has a position is some source code so we can check if it is part of the current file!
-#if 0
-                    printf ("In evaluateInheritedAttribute(): currentFile = %s IR node from %s at line %d \n",
-                         currentFile->getFileName(),fileInfo->get_filename(),fileInfo->get_line());
+#if 1
+                    printf ("In evaluateInheritedAttribute(): currentFile = %s IR node from %s at line %d \n",currentFile->getFileName(),fileInfo->get_filename(),fileInfo->get_line());
 #endif
                     if ( (fileInfo->isSameFile(currentFile) == true) && (isSgGlobal(node) == NULL) )
                        {
                       // This is a node from the current file!
                          returnAttribute.insideDeclarationToOutput = true;
-#if 0
-                         printf ("Found IR node %s from source file = %s at %d \n",
-                              node->sage_class_name(),fileInfo->get_filename(),fileInfo->get_line());
+#if 1
+                         printf ("Found IR node %s from source file = %s at %d \n",node->sage_class_name(),fileInfo->get_filename(),fileInfo->get_line());
 #endif
 #if 0
                          if (staticCounter > 1)
@@ -139,19 +146,21 @@ MarkTemplateSpecializationsForOutput::evaluateInheritedAttribute (
                          staticCounter++;
                        }
                   }
+                 else
+                  {
+                    printf ("In MarkTemplateSpecializationsForOutput evaluation fileInfo->hasPositionInSource() == false \n");
+                  }
              }
         }
 
   // This marks the SgTemplateInstantiationMemberFunctionDecl objects
-     SgTemplateInstantiationMemberFunctionDecl* templateInstantiationMemberFunctionDeclaration = 
-          isSgTemplateInstantiationMemberFunctionDecl(node);
-     if ( templateInstantiationMemberFunctionDeclaration != NULL && 
-          templateInstantiationMemberFunctionDeclaration->isSpecialization() == true )
+     SgTemplateInstantiationMemberFunctionDecl* templateInstantiationMemberFunctionDeclaration = isSgTemplateInstantiationMemberFunctionDecl(node);
+     if ( templateInstantiationMemberFunctionDeclaration != NULL && templateInstantiationMemberFunctionDeclaration->isSpecialization() == true )
         {
           if (returnAttribute.insideDeclarationToOutput == true)
              {
-#if 0
-                printf ("Marking to be output in code generation: templateInstantiationMemberFunctionDeclaration = %p = %s \n",
+#if 1
+               printf ("Marking to be output in code generation: templateInstantiationMemberFunctionDeclaration = %p = %s \n",
                     templateInstantiationMemberFunctionDeclaration,
                     templateInstantiationMemberFunctionDeclaration->get_qualified_name().str());
 #endif
