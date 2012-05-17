@@ -4,6 +4,7 @@
 //#include "fileoffsetbits.h"
 #include "sage3basic.h"
 #include "AsmUnparser_compat.h"
+#include "MemoryMap.h"
 
 #include <boost/math/common_factor.hpp>
 #include <errno.h>
@@ -170,16 +171,17 @@ SgAsmGenericFile::read_content(const MemoryMap *map, rose_addr_t start_va, void 
     size_t ncopied = 0;
     while (ncopied < size) {
         rose_addr_t va = start_va + ncopied;
-        const MemoryMap::MapElement *me = NULL;
-        size_t nread = map->read1((uint8_t*)dst_buf+ncopied, va, size-ncopied, MemoryMap::MM_PROT_NONE, &me);
-        if (!nread) break;
-        assert(me!=NULL);
+        size_t nread = map->read1((uint8_t*)dst_buf+ncopied, va, size-ncopied, MemoryMap::MM_PROT_NONE);
+        if (0==nread) break;
 
-        if (get_tracking_references() && &(get_data()[0])==me->get_base()) {
-            /* We are tracking file reads and this map element does, indeed, point into the file. */
-            size_t me_offset = va - me->get_va();                       /* virtual offset within this map element */
-            size_t file_offset = me->get_offset() + me_offset;          /* offset from beginning of the file */
-            mark_referenced_extent(file_offset, nread);
+        if (get_tracking_references()) {
+            assert(map->exists(va));
+            std::pair<Extent, MemoryMap::Segment> me = map->at(va);
+            if (me.second.get_buffer()->get_data_ptr()==&(get_data()[0])) {
+                /* We are tracking file reads and this segment does, indeed, point into the file. */
+                size_t file_offset = me.second.get_buffer_offset(me.first, va);
+                mark_referenced_extent(file_offset, nread);
+            }
         }
 
         ncopied += nread;
@@ -187,7 +189,7 @@ SgAsmGenericFile::read_content(const MemoryMap *map, rose_addr_t start_va, void 
 
     if (ncopied<size) {
         if (strict)
-            throw MemoryMap::NotMapped(map, start_va+ncopied);
+            throw MemoryMap::NotMapped("SgAsmGenericFile::read_content() no mapping", map, start_va+ncopied);
         memset((char*)dst_buf+ncopied, 0, size-ncopied);                /*zero pad result if necessary*/
     }
     return ncopied;

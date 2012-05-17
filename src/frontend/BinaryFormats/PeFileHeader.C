@@ -1,6 +1,6 @@
 /* Windows PE file header (SgAsmPEFileHeader and related classes) */
 #include "sage3basic.h"
-
+#include "MemoryMap.h"
 
 /** Convert an RVA/Size Pair index number into a section name. This is different than stringifySgAsmPEFileHeaderPairPurpose()
  * because it returns a section name rather than an enum name. */
@@ -537,16 +537,17 @@ SgAsmPEFileHeader::create_table_sections()
          *        from an RVA/Size pair is not necessarily contiguous in the file.  Normally such sections are in fact
          *        contiguous and we'll just ignore this for now.  In any case, as long as these sections only ever read their
          *        data via the same MemoryMap that we use here, everything should be fine. [RPM 2009-08-17] */
+        rose_addr_t pair_va = get_base_va() + pair->get_e_rva();
         MemoryMap *map = get_loader_map();
         ROSE_ASSERT(map!=NULL);
-        const MemoryMap::MapElement *elmt = map->find(get_base_va() + pair->get_e_rva());
-        if (!elmt) {
+        if (!map->exists(Extent(pair_va, pair->get_e_size()))) {
             fprintf(stderr, "SgAsmPEFileHeader::create_table_sections: warning: pair-%zu, rva=0x%08"PRIx64", size=%"PRIu64
                     " bytes \"%s\": unable to find a mapping for the virtual address (skipping)\n",
                     i, pair->get_e_rva().get_rva(), pair->get_e_size(), tabname.c_str());
             continue;
         }
-        rose_addr_t file_offset = elmt->is_anonymous() ? 0 : elmt->get_va_offset(get_base_va() + pair->get_e_rva(), 1);
+        std::pair<Extent, MemoryMap::Segment> me = map->at(pair_va);
+        rose_addr_t file_offset = me.second.get_buffer_offset(me.first, pair_va);
 
         /* Create the new section */
         SgAsmGenericSection *tabsec = NULL;

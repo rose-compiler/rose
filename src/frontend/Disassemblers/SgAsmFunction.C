@@ -1,0 +1,187 @@
+/* SgAsmFunction member definitions.  Do not move them to src/ROSETTA/Grammar/BinaryInstruction.code (or any *.code file)
+ * because then they won't get indexed/formatted/etc. by C-aware tools. */
+
+#include "sage3basic.h"
+#include "stringify.h"
+
+/** Returns a multi-line string describing the letters used for function reasons.  The letters are returned by the padding
+ *  version of reason_str(). */
+std::string
+SgAsmFunction::reason_key(const std::string &prefix)
+{
+    return (prefix + "E = entry address         H = CFG head             C = function call(*)\n" +
+            prefix + "X = exception frame       T = thunk                I = imported/dyn-linked\n" +
+            prefix + "S = function symbol       P = instruction pattern  G = CFG graph analysis\n" +
+            prefix + "U = user-def detection    N = NOP/zero padding     D = discontiguous blocks\n" +
+            prefix + "V = intra-function block  L = leftover blocks" +
+            prefix + "Mxxx are miscellaneous reasons (at most one misc reason per function):\n" +
+            prefix + "      M001 = code between function padding bytes\n" +
+            prefix + "Note: \"c\" means this is the target of a call-like instruction or instruction\n" +
+            prefix + "      sequence but the call is not present in the global control flow graph, while\n" +
+            prefix + "      \"C\" means the call is in the CFG.\n");
+}
+
+/** Returns reason string for this function. */
+std::string
+SgAsmFunction::reason_str(bool do_pad) const
+{
+    return reason_str(do_pad, get_reason());
+}
+
+/** Class method that converts a reason bit vector to a human-friendly string. The second argument is the bit vector of
+ *  SgAsmFunction::FunctionReason bits. */
+std::string
+SgAsmFunction::reason_str(bool do_pad, unsigned r)
+{
+    using namespace StringUtility; // for add_to_reason_string()
+    std::string result;
+
+    /* entry point and instruction heads are mutually exclusive, so we use the same column for both when padding. */
+    if (r & FUNC_ENTRY_POINT) {
+        add_to_reason_string(result, true, do_pad, "E", "entry point");
+    } else {
+        add_to_reason_string(result, (r & FUNC_INSNHEAD), do_pad, "H", "insn head");
+    }
+
+    /* Function call:
+     *   "C" means the function was detected because we saw a call-like instructon (such as x86 CALL or FARCALL) or instruction
+     *       sequence (such as pushing the return value and then branching) in code that was determined to be reachable by
+     *       analyzing the control flow graph.
+     *
+     *   "c" means this function is the target of some call-like instruction (such as x86 CALL or FARCALL) but could not
+     *       determine whether the instruction is actually executed.
+     */
+    if (r & FUNC_CALL_TARGET) {
+        add_to_reason_string(result, true, do_pad, "C", "function call");
+    } else {
+        add_to_reason_string(result, (r & FUNC_CALL_INSN), do_pad, "c", "call instruction");
+    }
+
+    if (r & FUNC_EH_FRAME) {
+        add_to_reason_string(result, true,                 do_pad, "X", "exception frame");
+    } else {
+        add_to_reason_string(result, (r & FUNC_THUNK),     do_pad, "T", "thunk");
+    }
+    add_to_reason_string(result, (r & FUNC_IMPORT),        do_pad, "I", "import");
+    add_to_reason_string(result, (r & FUNC_SYMBOL),        do_pad, "S", "symbol");
+    add_to_reason_string(result, (r & FUNC_PATTERN),       do_pad, "P", "pattern");
+    add_to_reason_string(result, (r & FUNC_GRAPH),         do_pad, "G", "graph");
+    add_to_reason_string(result, (r & FUNC_USERDEF),       do_pad, "U", "user defined");
+    add_to_reason_string(result, (r & FUNC_PADDING),       do_pad, "N", "padding");
+    add_to_reason_string(result, (r & FUNC_DISCONT),       do_pad, "D", "discontiguous");
+    add_to_reason_string(result, (r & FUNC_LEFTOVERS),     do_pad, "L", "leftovers");
+    add_to_reason_string(result, (r & FUNC_INTRABLOCK),    do_pad, "V", "intrablock");
+
+    /* The miscellaneous marker is special. It's a single letter like the others, but is followed by a fixed width
+     * integer indicating the (user-defined) algorithm that added the function. */
+    {
+        char abbr[32], full[64];
+        int width = snprintf(abbr, sizeof abbr, "%u", FUNC_MISCMASK);
+        snprintf(abbr, sizeof abbr, "M%0*u", width, (r & FUNC_MISCMASK));
+        abbr[sizeof(abbr)-1] = '\0';
+        if (!do_pad) {
+            std::string miscname = stringifySgAsmFunctionFunctionReason((r & FUNC_MISCMASK), "FUNC_");
+            if (miscname.empty() || miscname[0]=='(') {
+                snprintf(full, sizeof full, "misc-%u", (r & FUNC_MISCMASK));
+            } else {
+                for (size_t i=0; i<miscname.size(); ++i)
+                    miscname[i] = tolower(miscname[i]);
+                strncpy(full, miscname.c_str(), sizeof full);
+            }
+            full[sizeof(full)-1] = '\0';
+        } else {
+            full[0] = '\0';
+        }
+        add_to_reason_string(result, (r & FUNC_MISCMASK), do_pad, abbr, full);
+    }
+
+    return result;
+}
+
+/** Returns information about the function addresses.  Every non-empty function has a minimum (inclusive) and maximum
+ *  (exclusive) address which are returned by reference, but not all functions own all the bytes within that range of
+ *  addresses. Therefore, the exact bytes are returned by adding them to the optional ExtentMap argument.  This function
+ *  returns the number of nodes (instructions and static data items) in the function.  If the function contains no nodes then
+ *  the extent map is not modified and the low and high addresses are both set to zero.
+ *
+ *  If an @p exclude functor is provided, then any node for which it returns true is not considered part of the function.  This
+ *  can be used for such things as filtering out data blocks that are marked as padding.  For example:
+ *
+ *  @code
+ *  class NotPadding: public SgAsmFunction::NodeSelector {
+ *  public:
+ *      virtual bool operator()(SgNode *node) {
+ *          SgAsmStaticData *data = isSgAsmStaticData(node);
+ *          SgAsmBlock *block = SageInterface::getEnclosingNode<SgAsmBlock>(data);
+ *          return !data || !block || block->get_reason()!=SgAsmBlock::BLK_PADDING;
+ *      }
+ *  } notPadding;
+ *
+ *  ExtentMap extents;
+ *  function->get_extent(&extents, NULL, NULL, &notPadding);
+ *  @endcode
+ *
+ *  Here's another example that calculates the extent of only the padding data, based on the negation of the filter in the
+ *  previous example:
+ *
+ *  @code
+ *  class OnlyPadding: public NotPadding {
+ *  public:
+ *      virtual bool operator()(SgNode *node) {
+ *          return !NotPadding::operator()(node);
+ *      }
+ *  } onlyPadding;
+ *
+ *  ExtentMap extents;
+ *  function->get_extent(&extents, NULL, NULL, &onlyPadding);
+ *  @endcode
+ */
+size_t
+SgAsmFunction::get_extent(ExtentMap *extents, rose_addr_t *lo_addr, rose_addr_t *hi_addr, NodeSelector *selector)
+{
+    struct T1: public AstSimpleProcessing {
+        ExtentMap *extents;
+        rose_addr_t *lo_addr, *hi_addr;
+        NodeSelector *selector;
+        size_t nnodes;
+        T1(ExtentMap *extents, rose_addr_t *lo_addr, rose_addr_t *hi_addr, NodeSelector *selector)
+            : extents(extents), lo_addr(lo_addr), hi_addr(hi_addr), selector(selector), nnodes(0) {
+            if (lo_addr)
+                *lo_addr = 0;
+            if (hi_addr)
+                *hi_addr = 0;
+        }
+        void visit(SgNode *node) {
+            if (selector && !(*selector)(node))
+                return;
+            SgAsmInstruction *insn = isSgAsmInstruction(node);
+            SgAsmStaticData *data = isSgAsmStaticData(node);
+            rose_addr_t lo, hi;
+            if (insn) {
+                lo = insn->get_address();
+                hi = lo + insn->get_size();
+            } else if (data) {
+                lo = data->get_address();
+                hi = lo + data->get_size();
+            } else {
+                return;
+            }
+
+            if (0==nnodes++) {
+                if (lo_addr)
+                    *lo_addr = lo;
+                if (hi_addr)
+                    *hi_addr = hi;
+            } else {
+                if (lo_addr)
+                    *lo_addr = std::min(*lo_addr, lo);
+                if (hi_addr)
+                    *hi_addr = std::max(*hi_addr, hi);
+            }
+            if (extents && hi>lo)
+                extents->insert(Extent(lo, hi-lo));
+        }
+    } t1(extents, lo_addr, hi_addr, selector);
+    t1.traverse(this, preorder);
+    return t1.nnodes;
+}
