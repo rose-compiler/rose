@@ -1509,5 +1509,19 @@ StringUtility::isLineTerminated(const std::string &s)
     return !s.empty() && ('\n'==s[s.size()-1] || '\r'==s[s.size()-1]);
 }
 
-
-
+void
+StringUtility::add_to_reason_string(std::string &result, bool isset, bool do_pad,
+                                    const std::string &abbr, const std::string &full)
+{
+    if (isset) {
+        if (do_pad) {
+            result += abbr;
+        } else {
+            if (result.size()>0) result += ", ";
+            result += full;
+        }
+    } else if (do_pad) {
+        for (size_t i=0; i<abbr.size(); ++i)
+            result += ".";
+    }
+}

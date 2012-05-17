@@ -1,13 +1,9 @@
 #!/bin/bash -e
-#
-#  TODO: add more summary info
-#	- List of durations for each step in the job
-#
-#
+
 source scripts/hudson/runBuildStep.sh
 source scripts/hudson/roseUtilities.sh
 #########################################################################################
-( echo ) |filter "Starting ${ROSE_TEST_BUILD_STYLE}..."
+echo | filter "Starting ${ROSE_TEST_BUILD_STYLE}..."
 
 machine=`uname -m`
 machine_os=`uname -s`
@@ -26,12 +22,12 @@ HEAD_REV="$(git rev-parse HEAD)"
 #########################################################################################
 echo "Setting up the [DY]LD_LIBRARY_PATH"
 
-	if test "x$label" = "x64bit-macos-10.6" ; then
-		export DYLD_LIBRARY_PATH="$ROSE_TEST_BOOST_PATH/lib:$DYLD_LIBRARY_PATH"
-	else
-		# tps : 04/26/2010 - Added support for OpenGL for 64bit
-		export LD_LIBRARY_PATH="${ROSE_TEST_BOOST_PATH}/lib:${ROSE_TEST_OPENGL_PATH}/lib:$LD_LIBRARY_PATH"
-	fi
+  if test "x$label" = "x64bit-macos-10.6" ; then
+    export DYLD_LIBRARY_PATH="$ROSE_TEST_BOOST_PATH/lib:$DYLD_LIBRARY_PATH"
+  else
+    # tps : 04/26/2010 - Added support for OpenGL for 64bit
+    export LD_LIBRARY_PATH="${ROSE_TEST_BOOST_PATH}/lib:${ROSE_TEST_OPENGL_PATH}/lib:$LD_LIBRARY_PATH"
+  fi
 
 #########################################################################################
 #
@@ -44,24 +40,24 @@ echo "Setting up the [DY]LD_LIBRARY_PATH"
 #########################################################################################
 echo "Setting up the UPC environment" 
 
-	UPC_TEST_MACHINE=`uname -m`
-	if test "x$UPC_TEST_MACHINE" = "xi686" ; then
-		echo "UPC is not currently tested on 32-bit machines."
-	elif test "x$label" = "x64bit-macos-10.6" ; then
-		echo "UPC is not currently tested on 64-bit Mac OS X 10.6"
-	else
-	# Turn off bash error checking to run source with file that uses "grep" (will return error code if target is not found).
-		set +e
-		# This causes "symbol lookup error: /usr/libexec/gcc/x86_64-redhat-linux/4.1.2/f951: undefined symbol: __gmpn_sqr_n"
-		# on all 4.1.2 compilers (only effects 64 bit tests since we only use this script on 64 bit machines).
-		# This UPC support must be thought out more carefully.
-		if test "x$ROSE_TEST_GCC_VERSION" != "x4.1.2" ; then
-	        	source /nfs/apps/upc/4.5.1.2/setup.sh
-	        else
-	       		echo "UPC not tested 64-bit machines using gnu 4.1.2 for now."
-	  	fi
-	  	set -e
-	fi
+  UPC_TEST_MACHINE=`uname -m`
+  if test "x$UPC_TEST_MACHINE" = "xi686" ; then
+    echo "UPC is not currently tested on 32-bit machines."
+  elif test "x$label" = "x64bit-macos-10.6" ; then
+    echo "UPC is not currently tested on 64-bit Mac OS X 10.6"
+  else
+  # Turn off bash error checking to run source with file that uses "grep" (will return error code if target is not found).
+    set +e
+    # This causes "symbol lookup error: /usr/libexec/gcc/x86_64-redhat-linux/4.1.2/f951: undefined symbol: __gmpn_sqr_n"
+    # on all 4.1.2 compilers (only effects 64 bit tests since we only use this script on 64 bit machines).
+    # This UPC support must be thought out more carefully.
+    if test "x$ROSE_TEST_GCC_VERSION" != "x4.1.2" ; then
+            source /nfs/apps/upc/4.5.1.2/setup.sh
+          else
+             echo "UPC not tested 64-bit machines using gnu 4.1.2 for now."
+      fi
+      set -e
+  fi
 
 #########################################################################################
 #
@@ -70,26 +66,26 @@ echo "Setting up the UPC environment"
 #########################################################################################
 echo "Setting up the GCC environment" 
 
-	if test "x$ROSE_TEST_GCC_VERSION" != "x4.1.2" ; then
-		GCCROOT=/usr/apps/gcc/$ROSE_TEST_GCC_VERSION
-		if test -e $GCCROOT/setup.sh ; then
-			set +e
-			. $GCCROOT/setup.sh
-			set -e
-	    	else
-	    	# This is the case for g++ 3.4.6 (since there is no uniform existence of a setup.sh file).
-	      		echo "Handling case of no $GCCROOT/setup.sh file."
-			export PATH="$GCCROOT/bin:$PATH"
+  if test "x$ROSE_TEST_GCC_VERSION" != "x4.1.2" ; then
+    GCCROOT=/usr/apps/gcc/$ROSE_TEST_GCC_VERSION
+    if test -e $GCCROOT/setup.sh ; then
+      set +e
+      . $GCCROOT/setup.sh
+      set -e
+        else
+        # This is the case for g++ 3.4.6 (since there is no uniform existence of a setup.sh file).
+            echo "Handling case of no $GCCROOT/setup.sh file."
+      export PATH="$GCCROOT/bin:$PATH"
 
-	    		# DQ (2/15/2010): For 64-bit this has to be setup to use lib64 explicitly
-	    		# export LD_LIBRARY_PATH="$GCCROOT/lib:$LD_LIBRARY_PATH"
-	      		if test "$MACHINE" = "i686" ; then
-		 		export LD_LIBRARY_PATH="$GCCROOT/lib:$LD_LIBRARY_PATH"
-	      		else
-		 		export LD_LIBRARY_PATH="$GCCROOT/lib64:$GCCROOT/lib:$LD_LIBRARY_PATH"
-	      		fi
-	    	fi
-	fi
+          # DQ (2/15/2010): For 64-bit this has to be setup to use lib64 explicitly
+          # export LD_LIBRARY_PATH="$GCCROOT/lib:$LD_LIBRARY_PATH"
+            if test "$MACHINE" = "i686" ; then
+         export LD_LIBRARY_PATH="$GCCROOT/lib:$LD_LIBRARY_PATH"
+            else
+         export LD_LIBRARY_PATH="$GCCROOT/lib64:$GCCROOT/lib:$LD_LIBRARY_PATH"
+            fi
+        fi
+  fi
 
 #########################################################################################
 #
@@ -101,14 +97,14 @@ echo "Setting up the GCC environment"
 echo "Setting up the ROSE configuration flags" 
 
 CONFIGURE_FLAGS="\
-	$CONFIGURE_FLAGS \
-	--with-boost=${ROSE_TEST_BOOST_PATH} \
-	--with-boost-libdir=${ROSE_TEST_BOOST_PATH}/lib \
-	--with-java=${ROSE_TEST_JAVA_PATH} \
-	--with-ROSE_LONG_MAKE_CHECK_RULE=yes \
-	--with-C_DEBUG=-g \
-	--with-CXX_WARNINGS=-Wall
-	--without-haskell" #cov-build hangs with haskell
+  $CONFIGURE_FLAGS \
+  --with-boost=${ROSE_TEST_BOOST_PATH} \
+  --with-boost-libdir=${ROSE_TEST_BOOST_PATH}/lib \
+  --with-java=${ROSE_TEST_JAVA_PATH} \
+  --with-ROSE_LONG_MAKE_CHECK_RULE=yes \
+  --with-C_DEBUG=-g \
+  --with-CXX_WARNINGS=-Wall
+  --without-haskell" #cov-build hangs with haskell
 #########################################################################################
 #  i386 
 # 
@@ -140,11 +136,11 @@ CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-i386"
 #
 #########################################################################################
 if test "x$ROSE_TEST_BUILD_STYLE" = "xmake/check/install-full" ; then
-	CONFIGURE_FLAGS="\
-		${CONFIGURE_FLAGS} \
-		--with-qt=${ROSE_TEST_QT_PATH} \
-		--with-roseQt \
-		--with-sqlite3=${ROSE_TEST_SQLITE_PATH}"
+  CONFIGURE_FLAGS="\
+    ${CONFIGURE_FLAGS} \
+    --with-qt=${ROSE_TEST_QT_PATH} \
+    --with-roseQt \
+    --with-sqlite3=${ROSE_TEST_SQLITE_PATH}"
 
   ########################################################################################
   #  OpenGL
@@ -153,17 +149,17 @@ if test "x$ROSE_TEST_BUILD_STYLE" = "xmake/check/install-full" ; then
   #  tps : It seems opengl is not properly installed on the hudson-rose node. Skip the test on this node for now.
   #######################################################################################
   if test \! \( "$MACHINE" = "i686" -o \
-	      "$machine_name" = "hudson-rose.llnl.gov" -o \
-	      "$machine_name" = "hudson-rose-07.llnl.gov" -o \
-	      "$machine_name" = "hudson-rose-08.llnl.gov" -o \
-	      "$machine_name" = "hudson-rose-13.llnl.gov" -o \
-	      "$machine_name" = "hudson-rose-14.llnl.gov" -o \
-	      "$machine_name" = "hudson-rose-15.llnl.gov" -o \
-	      "$machine_name" = "hudson-rose-16.llnl.gov" \)
+        "$machine_name" = "hudson-rose.llnl.gov" -o \
+        "$machine_name" = "hudson-rose-07.llnl.gov" -o \
+        "$machine_name" = "hudson-rose-08.llnl.gov" -o \
+        "$machine_name" = "hudson-rose-13.llnl.gov" -o \
+        "$machine_name" = "hudson-rose-14.llnl.gov" -o \
+        "$machine_name" = "hudson-rose-15.llnl.gov" -o \
+        "$machine_name" = "hudson-rose-16.llnl.gov" \)
   then
-	echo "Skipping OpenGL..."
-	# admins are troubleshooting the libGL.la
-	CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --enable-rose-openGL"
+  echo "Skipping OpenGL..."
+  # admins are troubleshooting the libGL.la
+  CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --enable-rose-openGL"
   fi
   #######################################################################################
   #  PCH
@@ -180,51 +176,45 @@ if test "x$ROSE_TEST_BUILD_STYLE" = "xmake/check/install-full" ; then
   #  following error: C_G_4_3_a_d.cpp:48: error: 'cout' was not declared in this scope
   #######################################################################################
   if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" -o \
-		"x$ROSE_TEST_GCC_VERSION" = "x4.4.1" \)
+    "x$ROSE_TEST_GCC_VERSION" = "x4.4.1" \)
   then
-  	CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --with-rted=${ROSE_TEST_RTED_PATH}"
+    CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --with-rted=${ROSE_TEST_RTED_PATH}"
   fi
 
 fi
 
-#######################################################################################
-# OpenMP GOMP 
+################################################################################
+# OpenMP GOMP
 #   Only when on 64-bit Linux and gcc 4.4.1 is used.
 #  Liao : 3/22/11 - Link with GOMP and run OpenMP tests
-#######################################################################################
+################################################################################
 if test "x$ROSE_TEST_GCC_VERSION" = "x4.4.1" ; then
-	if test "x$ROSE_MACHINE_OS_LABEL" = "xamd64-linux" ; then
-    		if [ -a /usr/apps/gcc/4.4.1/lib64/libgomp.a ]; then
-      			CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --with-gomp_omp_runtime_library=/usr/apps/gcc/4.4.1/lib64"
-    		fi
-  	fi
+  if test "x$ROSE_MACHINE_OS_LABEL" = "xamd64-linux" ; then
+        if [ -a /usr/apps/gcc/4.4.1/lib64/libgomp.a ]; then
+            CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --with-gomp_omp_runtime_library=/usr/apps/gcc/4.4.1/lib64"
+        fi
+    fi
 fi
 
-#########################################################################################
+################################################################################
 #
-##
-   dumpHudsonEnvironment "${LOG_LOCATION}/HudsonEnvironment-before-tests.log"
-##
-#
-#########################################################################################
+dumpHudsonEnvironment "${LOG_LOCATION}/HudsonEnvironment-before-tests.log"
 
 set -e
-#########################################################################################
+################################################################################
 #
 #  ROSE/build
 #
-#########################################################################################
 (
 
    ./build
 
 ) 2>&1 |filterStep "./build" 
 [ ${PIPESTATUS[0]} -ne 0 ] && killStep "./build"
-#########################################################################################
+################################################################################
 #
-#  Setup Build & Install trees 
+#  Setup Build & Install trees
 #
-#########################################################################################
 for DIR in "ROSE-install" "ROSE-build" ; do
   (
 
@@ -236,59 +226,55 @@ for DIR in "ROSE-install" "ROSE-build" ; do
 done
 ROSE_CONFIGURE_PREFIX="$(pwd)/ROSE-install"
 cd ROSE-build
-#########################################################################################
+################################################################################
 #
 #  ROSE/configure
 #
-#########################################################################################
 (
 
     ../configure --prefix=${ROSE_CONFIGURE_PREFIX} ${CONFIGURE_FLAGS}
 
 ) 2>&1 |filterStep "configure" 
 [ ${PIPESTATUS[0]} -ne 0 ] && killStep "configure"
-#########################################################################################
+################################################################################
 #
-#  Hudson Build Steps 
+#  Hudson Build Steps
 #
+
+  ##############################################################################
+  # MAKE
+  #
+  ( cov-build --dir $(pwd) make -j${NUM_PROCESS}
+  ) 2>&1 |filterStep "cov-build"
+  [ ${PIPESTATUS[0]} -ne 0 ] && killStep "cov-build"
+
+  tail $(pwd)/build-log.txt
+
+  ##############################################################################
+  # ANALYZE
+  #
+  #   Max parallelism with our license is 8 cores.
+  #
+  (cov-analyze -j 8 --dir $(pwd) --enable-callgraph-metrics
+  ) 2>&1 |filterStep "cov-analyze"
+  [ ${PIPESTATUS[0]} -ne 0 ] && killStep "cov-analyze"
+
+  cat $(pwd)/c/output/summary.txt
+
+  (cov-commit-defects \
+      --description "$HEAD_REV" \
+      --version "$HEAD_REV" \
+      --config /export/apps/coverity-integrity-center/config/coverity_config.xml \
+      --dir "$(pwd)" \
+      --strip-path "$TOP_LEVEL_ROSE_DIRECTORY" \
+      --host hudson-rose-25 --port 8080 \
+      --stream ROSE \
+      --cva
+  ) 2>&1 |filterStep "cov-commit-defects"
+  [ ${PIPESTATUS[0]} -ne 0 ] && killStep "cov-commit-defects"
+
+
+################################################################################
+# SUMMARY
 #
-#########################################################################################
-
-    ################################################################################
-    # MAKE
-    #
-	( cov-build --dir $(pwd) make -j${NUM_PROCESS}
-	) 2>&1 |filterStep "cov-build"
-	[ ${PIPESTATUS[0]} -ne 0 ] && killStep "cov-build"
-
-	tail $(pwd)/build-log.txt
-
-    ################################################################################
-    # ANALYZE
-    #
-	(cov-analyze --dir $(pwd) --enable-callgraph-metrics
-	) 2>&1 |filterStep "cov-analyze"
-	[ ${PIPESTATUS[0]} -ne 0 ] && killStep "cov-analyze"
-
-	cat $(pwd)/c/output/summary.txt
-
-    ################################################################################
-    # TODO: COMMIT DEFECTS
-    #
-	(cov-commit-defects --description "$HEAD_REV" --config /export/apps/coverity-integrity-center/config/coverity_config.xml --dir "$(pwd)" --host hudson-rose-25 --port 8080 --stream ROSE --cva
-	) 2>&1 |filterStep "cov-commit-defects"
-	[ ${PIPESTATUS[0]} -ne 0 ] && killStep "cov-commit-defects"
-
-
-####################################################################################
-# SUMMARY 
-#
-#########################################################################################
-#
-##
-
-   dumpHudsonEnvironment "${LOG_LOCATION}/HudsonEnvironment-after-tests.log"
-
-##
-#
-#########################################################################################
+dumpHudsonEnvironment "${LOG_LOCATION}/HudsonEnvironment-after-tests.log"

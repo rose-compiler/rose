@@ -170,9 +170,9 @@ public:
             RTS_WRITE(process->rwlock()) {
                 buf_va = process->get_memory()->find_free(0x40000000, sizeof buf, 0x1000);
                 if (buf_va) {
-                    MemoryMap::MapElement me(buf_va, sizeof buf, buf, 0, MemoryMap::MM_PROT_RWX);
-                    me.set_name("Debugging page");
-                    process->get_memory()->insert(me);
+                    MemoryMap::BufferPtr segment_buffer = MemoryMap::ExternBuffer::create(buf, sizeof buf);
+                    MemoryMap::Segment segment(segment_buffer, 0, MemoryMap::MM_PROT_RWX, "Debugging page");
+                    process->get_memory()->insert(Extent(buf_va, sizeof buf), segment);
                 }
             } RTS_WRITE_END;
             if (!buf_va) {
@@ -220,7 +220,7 @@ public:
 
             // Unmap our debugging page of memory
             RTS_WRITE(process->rwlock()) {
-                process->get_memory()->erase(MemoryMap::MapElement(buf_va, sizeof buf));
+                process->get_memory()->erase(Extent(buf_va, sizeof buf));
             } RTS_WRITE_END;
 
             // Restore registers

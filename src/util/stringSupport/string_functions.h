@@ -159,6 +159,9 @@ namespace StringUtility
            std::string removeRedundentSubstrings ( std::string X ); // sic
       //! Remove redundant lines containing special substrings of form string#. FIXME (spelling)
            std::string removePseudoRedundentSubstrings ( std::string X ); // sic
+       //! Append an abbreviation or full name to a string.
+           void add_to_reason_string(std::string &result, bool isset, bool do_pad,
+                                     const std::string &abbr, const std::string &full);
        /*! @} */
 
        /*! @{ */

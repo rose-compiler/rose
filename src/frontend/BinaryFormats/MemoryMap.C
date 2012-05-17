@@ -1,146 +1,382 @@
-// tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
-#include <errno.h>
-#include <fcntl.h>
-#ifndef _MSC_VER
-#include <sys/mman.h>
-#else
-#include <io.h>
-#endif
+#include "MemoryMap.h"
 #include "rose_getline.h"
-/* See header file for full documentation */
 
-/************************************************************************************************************************
- * Output functions for MemoryMap exceptions
- ************************************************************************************************************************/
+#include <cerrno>
+#include <fstream>
 
-std::ostream&
-operator<<(std::ostream &o, const MemoryMap::Exception &e)
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/mman.h>
+
+std::ostream& operator<<(std::ostream &o, const MemoryMap               &x) { x.print(o); return o; }
+std::ostream& operator<<(std::ostream &o, const MemoryMap::Exception    &x) { x.print(o); return o; }
+std::ostream& operator<<(std::ostream &o, const MemoryMap::Inconsistent &x) { x.print(o); return o; }
+std::ostream& operator<<(std::ostream &o, const MemoryMap::NotMapped    &x) { x.print(o); return o; }
+std::ostream& operator<<(std::ostream &o, const MemoryMap::NoFreeSpace  &x) { x.print(o); return o; }
+std::ostream& operator<<(std::ostream &o, const MemoryMap::SyntaxError  &x) { x.print(o); return o; }
+std::ostream& operator<<(std::ostream &o, const MemoryMap::Segment      &x) { x.print(o); return o; }
+
+/******************************************************************************************************************************
+ *                                      Exceptions
+ ******************************************************************************************************************************/
+
+std::string
+MemoryMap::Exception::leader(std::string dflt) const
 {
-    e.print(o);
-    return o;
-}
-
-std::ostream&
-operator<<(std::ostream &o, const MemoryMap::Inconsistent &e)
-{
-    e.print(o);
-    return o;
-}
-
-std::ostream&
-operator<<(std::ostream &o, const MemoryMap::NotMapped &e)
-{
-    e.print(o);
-    return o;
-}
-
-std::ostream&
-operator<<(std::ostream &o, const MemoryMap::NoFreeSpace &e)
-{
-    e.print(o);
-    return o;
-}
-
-std::ostream&
-operator<<(std::ostream &o, const MemoryMap::Syntax &e)
-{
-    e.print(o);
-    return o;
-}
-
-void
-MemoryMap::Exception::print(std::ostream &o) const
-{
-    o <<"error in memory map";
-}
-
-void
-MemoryMap::Inconsistent::print(std::ostream &o) const
-{
-    using namespace StringUtility;
-    o <<"inconsistent mapping between elements"
-      <<" (" <<addrToString(a.get_va()) <<"+" <<addrToString(a.get_size()) <<"=" <<addrToString(a.get_va()+a.get_size()) <<")"
-      <<" and"
-      <<" (" <<addrToString(b.get_va()) <<"+" <<addrToString(b.get_size()) <<"=" <<addrToString(b.get_va()+b.get_size()) <<")";
-}
-
-void
-MemoryMap::NotMapped::print(std::ostream &o) const
-{
-    o <<"address " <<StringUtility::addrToString(va) <<" is not present in the memory map";
-}
-
-void
-MemoryMap::NoFreeSpace::print(std::ostream &o) const
-{
-    o <<"memory map does not have " <<StringUtility::addrToString(size) <<" bytes of free space";
-}
-
-void
-MemoryMap::Syntax::print(std::ostream &o) const
-{
-    o <<(filename.empty()?"at ":(filename+":"));
-    o <<linenum;
-    if (colnum>=0)
-        o <<"." <<colnum;
-    o <<": " <<(mesg.empty()?"syntax error":mesg);
-}
-
-/************************************************************************************************************************
- * End of exception output functions
- ************************************************************************************************************************/
-
-
-void *
-MemoryMap::MapElement::get_base(bool allocate_anonymous/*=true*/) const
-{
-    if (anonymous && allocate_anonymous) {
-        if (NULL==anonymous->base) {
-            ROSE_ASSERT(NULL==base);
-            base = anonymous->base = new uint8_t[get_size()];
-            memset(anonymous->base, 0, get_size());
-        } else {
-            ROSE_ASSERT(base==anonymous->base);
-        }
-    }
-    return base;
-}
-
-rose_addr_t
-MemoryMap::MapElement::get_va_offset(rose_addr_t va, size_t nbytes) const
-{
-    if (va<get_va() || va+nbytes>get_va()+get_size())
-        throw NotMapped(NULL, va);
-    return get_offset() + (va - get_va());
-}
-
-bool
-MemoryMap::MapElement::consistent(const MapElement &other) const
-{
-    if (is_read_only()!=other.is_read_only()) {
-        return false;
-    } else if (get_mapperms()!=other.get_mapperms()) {
-        return false;
-    } else if (is_anonymous() && other.is_anonymous()) {
-        if (anonymous==other.anonymous)
-            return true;
-        if (NULL==get_base(false) && NULL==other.get_base(false))
-            return true;
-        return false;
-    } else if (is_anonymous() || other.is_anonymous()) {
-        return false;
-    } else if (get_base()!=other.get_base()) { /*neither is anonymous*/
-        return false;
-    } else {
-        return va - other.va == offset - other.offset;
-    }
+    return mesg.empty() ? dflt : mesg;
 }
 
 std::string
-MemoryMap::MapElement::get_name_pairings(NamePairings *pairings) const
+MemoryMap::Exception::details(bool verbose) const
 {
-    ROSE_ASSERT(pairings!=NULL);
+    std::ostringstream ss;
+    if (verbose) {
+        ss <<"\n";
+        if (map)
+            map->dump(ss, "  ");
+    }
+    return ss.str();
+}
+
+void
+MemoryMap::Exception::print(std::ostream &o, bool verbose) const
+{
+    o <<leader("problem") <<details(verbose);
+}
+
+void
+MemoryMap::Inconsistent::print(std::ostream &o, bool verbose) const
+{
+    o <<leader("inconsistent mapping") <<" for " <<new_range <<" vs. " <<old_range <<details(verbose);
+        
+}
+
+void
+MemoryMap::NotMapped::print(std::ostream &o, bool verbose) const
+{
+    o <<leader("no mapping") <<" at va " <<StringUtility::addrToString(va) <<details(verbose);
+}
+
+void
+MemoryMap::NoFreeSpace::print(std::ostream &o, bool verbose) const
+{
+    o <<leader("no free space") <<" (nbytes=" <<size <<")" <<details(verbose);
+}
+
+void
+MemoryMap::SyntaxError::print(std::ostream &o, bool verbose) const
+{
+    o <<leader("syntax error");
+    if (!filename.empty()) {
+        o <<" at " <<filename <<":" <<linenum;
+        if (colnum>0)
+            o <<"." <<colnum;
+    }
+    o <<details(verbose);
+}
+
+/******************************************************************************************************************************
+ *                                      Buffer methods
+ ******************************************************************************************************************************/
+
+std::string
+MemoryMap::Buffer::new_name()
+{
+    std::string retval;
+    static size_t ncalls = 0;
+
+    retval += 'a' + (ncalls/(26*26))%26;
+    retval += 'a' + (ncalls/26)%26;
+    retval += 'a' + (ncalls%26);
+    ++ncalls;
+    return retval;
+}
+
+void
+MemoryMap::Buffer::save(const std::string &filename) const
+{
+    std::ofstream file(filename.c_str(), std::ofstream::binary);
+
+    rose_addr_t offset=0;
+    char buf[8192];
+
+    while (true) {
+        size_t n = read(buf, offset, sizeof buf);
+        file.write(buf, n);
+        if (file.bad() || n<sizeof buf)
+            break;
+    }
+}
+
+bool
+MemoryMap::Buffer::is_zero() const
+{
+    uint8_t buf[8192];
+    size_t at = 0;
+    while (at<size()) {
+        size_t n = std::min(size()-at, sizeof buf);
+        size_t nread = read(buf, at, n);
+        assert(nread==n);
+        for (size_t i=0; i<nread; ++i) {
+            if (buf[i]!=0)
+                return false;
+        }
+        at += nread;
+    }
+    return true;
+}
+
+MemoryMap::BufferPtr
+MemoryMap::NullBuffer::create(size_t size)
+{
+    return BufferPtr(new NullBuffer(size));
+}
+
+MemoryMap::BufferPtr
+MemoryMap::ExternBuffer::create(void *data, size_t size)
+{
+    return BufferPtr(new ExternBuffer((uint8_t*)data, size));
+}
+
+MemoryMap::BufferPtr
+MemoryMap::ExternBuffer::create(const void *data, size_t size)
+{
+    return BufferPtr(new ExternBuffer((const uint8_t*)data, size));
+}
+
+MemoryMap::BufferPtr
+MemoryMap::ExternBuffer::clone() const
+{
+    if (!p_data)
+        return ByteBuffer::create(NULL, size());
+    uint8_t *d = new uint8_t[size()];
+    memcpy(d, p_data, size());
+    return ByteBuffer::create(d, size());
+}
+
+void
+MemoryMap::ExternBuffer::resize(size_t n)
+{
+    assert(!"not implemented");
+    abort();
+}
+
+size_t
+MemoryMap::ExternBuffer::read(void *buf, size_t offset, size_t nbytes) const
+{
+    if (!p_data || offset>=size())
+        return 0;
+    size_t n = std::min(nbytes, size()-offset);
+    if (buf)
+        memcpy(buf, (uint8_t*)p_data+offset, n);
+    return n;
+}
+
+size_t
+MemoryMap::ExternBuffer::write(const void *buf, size_t offset, size_t nbytes)
+{
+    if (!p_data || is_read_only() || offset>=size())
+        return 0;
+    size_t n = std::min(nbytes, size()-offset);
+    if (buf)
+        memcpy((uint8_t*)p_data+offset, buf, n);
+    return n;
+}
+
+MemoryMap::BufferPtr
+MemoryMap::ByteBuffer::create(void *data, size_t size)
+{
+    return BufferPtr(new ByteBuffer((uint8_t*)data, size));
+}
+
+MemoryMap::BufferPtr
+MemoryMap::ByteBuffer::create_from_file(const std::string &filename, size_t offset)
+{
+    // Open file and seek to starting offset
+    int fd = open(filename.c_str(), O_RDONLY);
+    if (fd<0)
+        return BufferPtr();
+    struct stat sb;
+    if (fstat(fd, &sb)<0) {
+        close(fd);
+        return BufferPtr();
+    }
+    off_t position = lseek(fd, offset, SEEK_SET);
+    if (-1==position || (rose_addr_t)position!=offset) {
+        close(fd);
+        return BufferPtr();
+    }
+
+    // Read data from file until EOF
+    rose_addr_t size = offset > (size_t)sb.st_size ? 0 : sb.st_size-offset;
+    uint8_t *data = new uint8_t[size];
+#ifndef _MSC_VER
+    ssize_t n = TEMP_FAILURE_RETRY(::read(fd, data, size));
+#else
+    ROSE_ASSERT(!"lacking Windows support");
+#endif
+    if (-1==n || n!=sb.st_size) {
+        delete[] data;
+        close(fd);
+        return BufferPtr();
+    }
+    close(fd);
+
+    // Create the buffer
+    return create(data, size);
+}
+
+MemoryMap::BufferPtr
+MemoryMap::AnonymousBuffer::create(size_t size)
+{
+    AnonymousBuffer *buf = new AnonymousBuffer(size);
+    buf->set_name("anon " + buf->get_name());
+    return BufferPtr(buf);
+}
+
+size_t
+MemoryMap::AnonymousBuffer::read(void *buf, size_t offset, size_t nbytes) const
+{
+    if (offset>=size())
+        return 0;
+    size_t n = std::min(nbytes, size()-offset);
+    if (buf) {
+        if (p_data) {
+            memcpy(buf, (uint8_t*)p_data+offset, n);
+        } else {
+            memset(buf, 0, n);
+        }
+    }
+    return n;
+}
+
+size_t
+MemoryMap::AnonymousBuffer::write(const void *buf, size_t offset, size_t nbytes)
+{
+    if (offset>=size())
+        return 0;
+    size_t n = std::min(nbytes, size()-offset);
+    if (buf) {
+        if (!p_data) {
+            bool all_zero = true;
+            for (size_t i=0; i<n && all_zero; ++i)
+                all_zero = ((uint8_t*)buf)[i] == '\0';
+            if (all_zero)
+                return n;
+            p_data = new uint8_t[size()];
+            memset(p_data, 0, size());
+        }
+        memcpy((uint8_t*)p_data+offset, buf, n);
+    }
+    return n;
+}
+
+const void *
+MemoryMap::AnonymousBuffer::get_data_ptr() const
+{
+    if (!p_data) {
+        p_data = new uint8_t[size()];
+        memset(p_data, 0, size());
+    }
+    return ExternBuffer::get_data_ptr();
+}
+
+bool
+MemoryMap::AnonymousBuffer::is_zero() const
+{
+    return !p_data || ExternBuffer::is_zero();
+}
+
+MemoryMap::BufferPtr
+MemoryMap::MmapBuffer::create(const std::string &filename, int oflags, int mprot, int mflags)
+{
+    int fd = open(filename.c_str(), oflags, 0666);
+    if (fd<0)
+        throw Exception(filename + ": " + strerror(errno), NULL);
+    struct stat sb;
+    int status = fstat(fd, &sb);
+    if (status<0)
+        throw Exception(filename + ": " + strerror(errno), NULL);
+    BufferPtr buffer;
+    try {
+        buffer = create(sb.st_size, mprot, mflags, fd, 0);
+    } catch (...) {
+        close(fd);
+        return BufferPtr();
+    }
+    close(fd);
+    return buffer;
+}
+
+MemoryMap::BufferPtr
+MemoryMap::MmapBuffer::create(size_t length, int prot, int flags, int fd, off_t offset)
+{
+    void *buf = mmap(NULL, length, prot, flags, fd, 0);
+    if (MAP_FAILED==buf)
+        throw Exception(strerror(errno), NULL);
+    return BufferPtr(new MmapBuffer((uint8_t*)buf, length, 0==(flags & PROT_WRITE)));
+}
+
+MemoryMap::MmapBuffer::~MmapBuffer()
+{
+    if (p_data) {
+        munmap(p_data, p_size);
+        p_data = NULL;
+    }
+}
+
+void
+MemoryMap::MmapBuffer::resize(size_t)
+{
+    assert(!"cannot resize");
+    abort();
+}
+
+/******************************************************************************************************************************
+ *                                      Segment methods
+ ******************************************************************************************************************************/
+
+bool
+MemoryMap::Segment::check(const Extent &range, rose_addr_t *first_bad_va/*=NULL=*/) const
+{
+    if (range.empty()) {
+        if (first_bad_va)
+            *first_bad_va = 0;
+        return false;
+    }
+    if (!get_buffer() || 0==get_buffer()->size() || get_buffer_offset() >= get_buffer()->size()) {
+        if (first_bad_va)
+            *first_bad_va = range.first();
+        return false;
+    }
+    if (get_buffer_offset() + range.size() > get_buffer()->size()) {
+        if (first_bad_va)
+            *first_bad_va = range.first() + (get_buffer()->size() - get_buffer_offset());
+        return false;
+    }
+
+    return true;
+}
+
+rose_addr_t
+MemoryMap::Segment::get_buffer_offset(const Extent &my_range, rose_addr_t va) const
+{
+    assert(my_range.contains(Extent(va)));
+    return get_buffer_offset() + va - my_range.first();
+}
+
+void
+MemoryMap::Segment::set_buffer_offset(rose_addr_t n)
+{
+    assert(!buffer || n<buffer->size());
+    buffer_offset = n;
+}
+
+std::string
+MemoryMap::Segment::get_name_pairings(NamePairings *pairings) const
+{
+    assert(pairings!=NULL);
     std::string retval;
     std::string::size_type i = 0;
     while (i<name.size()) {
@@ -183,8 +419,8 @@ MemoryMap::MapElement::get_name_pairings(NamePairings *pairings) const
     return retval;
 }
 
-MemoryMap::MapElement&
-MemoryMap::MapElement::set_name(const NamePairings &pairings, const std::string &s1, const std::string &s2)
+void
+MemoryMap::Segment::set_name(const NamePairings &pairings, const std::string &s1, const std::string &s2)
 {
     std::string s;
     for (NamePairings::const_iterator pi=pairings.begin(); pi!=pairings.end(); ++pi) {
@@ -200,22 +436,14 @@ MemoryMap::MapElement::set_name(const NamePairings &pairings, const std::string 
     if (!s2.empty())
         s += (s.empty()?"":"+") + s2;
     set_name(s);
-    return *this;
-}
-
-MemoryMap::MapElement &
-MemoryMap::MapElement::set_name(const std::string &s)
-{
-    name = s;
-    return *this;
 }
 
 void
-MemoryMap::MapElement::merge_names(const MapElement &other)
+MemoryMap::Segment::merge_names(const Segment &other)
 {
-    if (name.empty()) {
+    if (get_name().empty()) {
         set_name(other.get_name());
-    } else if (other.name.empty() || get_name()==other.get_name()) {
+    } else if (other.get_name().empty() || 0==get_name().compare(other.get_name())) {
         /*void*/
     } else {
         NamePairings pairings;
@@ -225,558 +453,434 @@ MemoryMap::MapElement::merge_names(const MapElement &other)
     }
 }
 
-bool
-MemoryMap::MapElement::merge(const MapElement &other)
+// RangeMap API
+void
+MemoryMap::Segment::removing(const Extent &my_range)
 {
-    if (va+size < other.va || va > other.va+other.size) {
-        /* Other element is left or right of this one and not contiguous with it. */
+    assert(!my_range.empty());
+}
+
+// RangeMap API
+void
+MemoryMap::Segment::truncate(const Extent &my_range, rose_addr_t new_end)
+{
+    assert(new_end>my_range.first() && new_end<=my_range.last());
+}
+
+// RangeMap API
+bool
+MemoryMap::Segment::merge(const Extent &my_range, const Extent &other_range, const Segment &other)
+{
+    assert(!my_range.empty() && !other_range.empty());
+
+#if 1 // Relaxed version: segments are compatible if they point to the same underlying "char*" buffer
+    if (get_buffer()==NULL || other.get_buffer()==NULL)
         return false;
-    } else if (other.va >= va && other.va+other.size <= va+size) {
-        /* Other element is contained within (or congruent to) this element. */
-        if (!consistent(other))
-            throw Inconsistent(NULL, *this, other);
-    } else if (va >= other.va && va+size <= other.va+other.size) {
-        /* Other element encloses this element. */
-        if (!consistent(other))
-            throw Inconsistent(NULL, *this, other);
-        offset = other.offset;
-        va = other.va;
-        base = other.base;
-        size = other.size;
-        merge_names(other);
-    } else if (other.va + other.size == va) {
-        /* Other element is left contiguous with this element. */
-        if (!consistent(other))
-            return false; /*no exception since they don't overlap*/
-        size += other.size;
-        va = other.va;
-        base = other.base;
-        offset = other.offset;
-        merge_names(other);
-    } else if (va + size == other.va) {
-        /* Other element is right contiguous with this element. */
-        if (!consistent(other))
-            return false; /*no exception since they don't overlap*/
-        size += other.size;
-        merge_names(other);
-    } else if (other.va < va) {
-        /* Other element overlaps left part of this element. */
-        if (!consistent(other))
-            throw Inconsistent(NULL, *this, other);
-        size += va - other.va;
-        va = other.va;
-        base = other.base;
-        offset = other.offset;
-        merge_names(other);
+    if (get_buffer()->get_data_ptr()==NULL ||
+        get_buffer()->get_data_ptr()!=other.get_buffer()->get_data_ptr())
+        return false;
+#else // Strict version: compatible only if segments point to the same MemoryMap::Buffer (this is what we eventually want)
+    if (get_buffer()!=other.get_buffer())
+        return false;
+#endif
+    if (get_mapperms()!=other.get_mapperms())
+        return false;
+
+    if (other_range.abuts_lt(my_range)) {
+        if (other.get_buffer_offset(other_range, other_range.last()) + 1 != get_buffer_offset(my_range, my_range.first()))
+            return false;
+        set_buffer_offset(other.get_buffer_offset());
     } else {
-        /* Other element overlaps right part of this element. */
-        if (!consistent(other))
-            throw Inconsistent(NULL, *this, other);
-        size = (other.va + other.size) - va;
-        merge_names(other);
+        assert(other_range.abuts_gt(my_range));
+        if (get_buffer_offset(my_range, my_range.last()) + 1 != other.get_buffer_offset(other_range, other_range.first()))
+            return false;
     }
 
-    return true;
+    merge_names(other);
+    return true; // "other" is now a duplicate and will be removed from the map
 }
+
+MemoryMap::Segment
+MemoryMap::Segment::split(const Extent &range, rose_addr_t new_end)
+{
+    Segment right = *this;
+    right.set_buffer_offset(get_buffer_offset() + new_end-range.first());
+    return right;
+}
+
+// does not compare segment names
+bool
+MemoryMap::Segment::operator==(const Segment &other) const
+{
+    return (get_buffer()        == other.get_buffer() &&
+            get_buffer_offset() == other.get_buffer_offset() &&
+            get_mapperms()      == other.get_mapperms());
+}
+
+void
+MemoryMap::Segment::print(std::ostream &o) const
+{
+    std::string bufname = buffer->get_name();
+    if (bufname.find_first_of(" \t\n()")==std::string::npos)
+        bufname = "buffer " + bufname;
+
+    o <<(0==(get_mapperms() & MM_PROT_READ)    ? "-" : "r")
+      <<(0==(get_mapperms() & MM_PROT_WRITE)   ? "-" : "w")
+      <<(0==(get_mapperms() & MM_PROT_EXEC)    ? "-" : "x")
+      <<(0==(get_mapperms() & MM_PROT_PRIVATE) ? "-" : "p")
+      <<" at " <<(bufname+std::string(12, ' ')).substr(0, 12)
+      <<" + " <<StringUtility::addrToString(get_buffer_offset());
+
+    if (!get_name().empty()) {
+        static const size_t limit = 55;
+        std::string name = escapeString(get_name());
+        if (name.size()>limit)
+            name = name.substr(0, limit-3) + "...";
+        o <<" " <<name;
+    }
+}
+
+/******************************************************************************************************************************
+ *                                      MemoryMap methods
+ ******************************************************************************************************************************/
 
 void
 MemoryMap::clear()
 {
-    elements.clear();
+    p_segments.clear();
+}
+
+MemoryMap&
+MemoryMap::init(const MemoryMap &other, CopyLevel copy_level)
+{
+    p_segments = other.p_segments;
+
+    switch (copy_level) {
+        case COPY_SHALLOW:
+            // nothing more to do
+            break;
+        case COPY_DEEP:
+            for (Segments::iterator si=p_segments.begin(); si!=p_segments.end(); ++si) {
+                si->second.clear_cow();
+                si->second.set_buffer(si->second.get_buffer()->clone());
+            }
+            break;
+        case COPY_ON_WRITE:
+            for (Segments::iterator si=p_segments.begin(); si!=p_segments.end(); ++si)
+                si->second.set_cow();
+            break;
+    }
+    return *this;
 }
 
 void
-MemoryMap::insert(MapElement add)
+MemoryMap::insert(const Extent &range, const Segment &segment, bool erase_prior)
 {
-    if (add.size==0)
-        return;
-
-    try {
-        /* Remove existing elements that are contiguous with or overlap with the new element, extending the new element to cover
-         * the removed element. We also check the consistency of the mapping and throw an exception if the new element overlaps
-         * inconsistently with an existing element. */
-        std::vector<MapElement>::iterator i=elements.begin();
-        while (i!=elements.end()) {
-            MapElement &old = *i;
-            if (add.merge(old)) {
-                i = elements.erase(i);
-            } else {
-                ++i;
-            }
-        }
-
-        /* Insert the new element */
-        assert(NULL==find(add.va));
-        elements.push_back(add);
-
-        /* Keep elements sorted */
-        std::sort(elements.begin(), elements.end());
-    } catch (Exception &e) {
-        e.map = this;
-        throw e;
+    Segments::iterator inserted = p_segments.insert(range, segment, erase_prior);
+    if (inserted==p_segments.end()) {
+        // If the insertion failed, then we need to throw an exception.  The exception should indicate the lowest address at
+        // which there was a conflict.  I.e., the first mapped address above range.first().
+        Segments::iterator found = p_segments.lower_bound(range.first());
+        assert(found!=p_segments.end());
+        assert(range.overlaps(found->first));
+        throw Inconsistent("insertion failed", this, range, segment, found->first, found->second);
     }
 }
-    
+
+bool
+MemoryMap::exists(Extent range, unsigned required_perms) const
+{
+    if (!p_segments.contains(range))
+        return false;
+    if (0==required_perms)
+        return true;
+
+    while (!range.empty()) {
+        Segments::const_iterator found = p_segments.find(range.first());
+        assert(found!=p_segments.end()); // because p_segments.contains(range)
+        const Extent &found_range = found->first;
+        const Segment &found_segment = found->second;
+        assert(!range.begins_before(found_range)); // ditto
+        if ((found_segment.get_mapperms() & required_perms) != required_perms)
+            return false;
+        if (found_range.last() >= range.last())
+            return true;
+        range = Extent::inin(found_range.last()+1, range.last());
+    }
+    return true;
+}
+
 void
-MemoryMap::erase(MapElement me)
+MemoryMap::erase(const Extent &range)
 {
-    if (me.size==0)
-        return;
+    p_segments.erase(range);
+}
 
-    try {
-        /* Remove existing elements that overlap with the erasure area, reducing their size to the part that doesn't overlap, and
-         * then add the non-overlapping parts back at the end. */
-        std::vector<MapElement>::iterator i=elements.begin();
-        std::vector<MapElement> saved;
-        while (i!=elements.end()) {
-            MapElement &old = *i;
-            if (me.va+me.size <= old.va || old.va+old.size <= me.va) {
-                /* Non overlapping */
-                ++i;
-                continue;
-            }
-
-            if (me.va > old.va) {
-                /* Erasure begins right of existing element. */
-                MapElement tosave = old;
-                tosave.size = me.va-old.va;
-                saved.push_back(tosave);
-            }
-            if (me.va+me.size < old.va+old.size) {
-                /* Erasure ends left of existing element. */
-                MapElement tosave = old;
-                tosave.va = me.va+me.size;
-                tosave.size = (old.va+old.size) - (me.va+me.size);
-                tosave.offset += (me.va+me.size) - old.va;
-                saved.push_back(tosave);
-            }
-            i = elements.erase(i);
+void
+MemoryMap::erase(const Segment &segment)
+{
+    for (Segments::iterator si=p_segments.begin(); si!=p_segments.end(); ++si) {
+        if (segment==si->second) {
+            erase(si->first);
+            return;
         }
-
-        /* Now add saved elements back in. */
-        for (i=saved.begin(); i!=saved.end(); ++i)
-            insert(*i);
-    } catch(Exception &e) {
-        e.map = this;
-        throw e;
     }
 }
 
-const MemoryMap::MapElement *
-MemoryMap::find(rose_addr_t va) const
+std::pair<Extent, MemoryMap::Segment>
+MemoryMap::at(rose_addr_t va) const
 {
-    size_t lo=0, hi=elements.size();
-    while (lo<hi) {
-        size_t mid=(lo+hi)/2;
-        const MapElement &elmt = elements[mid];
-        if (va < elmt.va) {
-            hi = mid;
-        } else if (va >= elmt.va+elmt.size) {
-            lo = mid+1;
-        } else {
-            return &elmt;
-        }
-    }
-    return NULL;
+    Segments::const_iterator found = p_segments.find(va);
+    if (found==p_segments.end())
+        throw NotMapped("", this, va);
+    return *found;
 }
 
 rose_addr_t
 MemoryMap::find_free(rose_addr_t start_va, size_t size, rose_addr_t alignment) const
 {
-    start_va = ALIGN_UP(start_va, alignment);
-    for (size_t i=0; i<elements.size(); i++) {
-        const MapElement &me = elements[i];
-        if (me.va + me.size <= start_va)
-            continue;
-        if (me.va > start_va &&  me.va - start_va >= size)
-            break;
-        rose_addr_t x = start_va;
-        start_va = ALIGN_UP(me.va + me.size, alignment);
-        if (start_va<x)
-            throw NoFreeSpace(this, size);
+    ExtentMap free_map = p_segments.invert<ExtentMap>();
+    ExtentMap::iterator fmi = free_map.lower_bound(start_va);
+    while ((fmi=free_map.first_fit(size, fmi)) != free_map.end()) {
+        Extent free_range = fmi->first;
+        rose_addr_t free_va = ALIGN_UP(free_range.first(), alignment);
+        rose_addr_t free_sz = free_va > free_range.last() ? 0 : free_range.last()+1-free_va;
+        if (free_sz > size)
+            return free_va;
+        ++fmi;
     }
-
-    if (start_va+size < start_va)
-        throw NoFreeSpace(this, size);
-
-    return start_va;
+    throw NoFreeSpace("find_free() failed", this, size);
 }
 
 rose_addr_t
 MemoryMap::find_last_free(rose_addr_t max) const
 {
-    bool found = false;
-    rose_addr_t retval = 0;
-
-    /* Is the null address free? */
-    if (elements.empty() || elements[0].get_va()>0) {
-        retval = 0;
-        found = true;
-    }
-
-    /* Try to find a higher free region */
-    for (size_t i=0; i<elements.size(); i++) {
-        rose_addr_t end = elements[i].get_va() + elements[i].get_size();
-        if (end > max) break;
-        if (i+1>=elements.size() || elements[i+1].get_va()>end) {
-            retval = end;
-            found = true;
-        }
-    }
-    
-    if (!found)
-        throw NoFreeSpace(this, 1);
-    return retval;
-}
-
-const std::vector<MemoryMap::MapElement> &
-MemoryMap::get_elements() const {
-    return elements;
+    ExtentMap free_map = p_segments.invert<ExtentMap>();
+    ExtentMap::iterator fmi = free_map.find_prior(max);
+    if (fmi==free_map.end())
+        throw NoFreeSpace("find_last_free() failed", this, 1);
+    return fmi->first.first();
 }
 
 void
-MemoryMap::prune(bool(*predicate)(const MapElement&))
+MemoryMap::traverse(Visitor &visitor) const
 {
-    std::vector<MapElement> keep;
-    for (size_t i=0; i<elements.size(); i++) {
-        if (!predicate(elements[i]))
-            keep.push_back(elements[i]);
+    for (Segments::const_iterator si=p_segments.begin(); si!=p_segments.end(); ++si)
+        (void) visitor(this, si->first, si->second);
+}
+
+void
+MemoryMap::prune(Visitor &predicate)
+{
+    ExtentMap matches;
+    for (Segments::iterator si=p_segments.begin(); si!=p_segments.end(); ++si) {
+        if (predicate(this, si->first, si->second))
+            matches.insert(si->first);
     }
-    elements = keep;
+
+    for (ExtentMap::iterator mi=matches.begin(); mi!=matches.end(); ++mi)
+        p_segments.erase(mi->first);
 }
 
 void
 MemoryMap::prune(unsigned required, unsigned prohibited)
 {
-    std::vector<MapElement> keep;
-    for (size_t i=0; i<elements.size(); ++i) {
-        if ((0==required || 0!=(elements[i].get_mapperms() & required)) &&
-            0==(elements[i].get_mapperms() & prohibited))
-            keep.push_back(elements[i]);
-    }
-    elements = keep;
-}
-
-size_t
-MemoryMap::read1(void *dst_buf, rose_addr_t va, size_t desired, unsigned req_perms/*=MM_PROT_READ*/,
-                 const MapElement **mep/*=NULL*/) const
-{
-    const MemoryMap::MapElement *m = find(va);
-    if (mep) *mep = m;
-    if (!m || (m->get_mapperms() & req_perms)!=req_perms)
-        return 0;
-    ROSE_ASSERT(va >= m->get_va());
-    size_t m_offset = va - m->get_va();
-    ROSE_ASSERT(m_offset < m->get_size());
-    size_t n = std::min(desired, m->get_size()-m_offset);
-
-    /* If there have been no writes to an anonymous element and no base has been allocated, then just fill
-     * the return value with zeros */
-    if (dst_buf!=NULL) {
-        if (m->is_anonymous() && NULL==m->get_base(false)) {
-            memset(dst_buf, 0, n);
-        } else {
-            memcpy(dst_buf, (uint8_t*)m->get_base()+m->get_offset()+m_offset, n);
+    struct T1: public Visitor {
+        unsigned required, prohibited;
+        T1(unsigned required, unsigned prohibited): required(required), prohibited(prohibited) {}
+        bool operator()(const MemoryMap*, const Extent &range, const Segment &segment) {
+            return ((0!=required && 0==(segment.get_mapperms() & required)) ||
+                    0!=(segment.get_mapperms() & prohibited));
         }
-    }
-    return n;
+    } predicate(required, prohibited);
+    prune(predicate);
 }
 
 size_t
-MemoryMap::read(void *dst_buf, rose_addr_t start_va, size_t desired, unsigned req_perms/*=MM_PROT_READ*/) const
+MemoryMap::read1(void *dst_buf/*=NULL*/, rose_addr_t start_va, size_t desired, unsigned req_perms) const
 {
-    size_t total_copied=0;
+    Segments::const_iterator found = p_segments.find(start_va);
+    if (found==p_segments.end())
+        return 0;
+
+    const Extent &range = found->first;
+    assert(range.contains(Extent(start_va)));
+
+    const Segment &segment = found->second;
+    if ((segment.get_mapperms() & req_perms) != req_perms || !segment.check(range))
+        return 0;
+
+    rose_addr_t buffer_offset = segment.get_buffer_offset(range, start_va);
+    return segment.get_buffer()->read(dst_buf, buffer_offset, desired);
+}
+
+size_t
+MemoryMap::read(void *dst_buf/*=NULL*/, rose_addr_t start_va, size_t desired, unsigned req_perms) const
+{
+    size_t total_copied = 0;
     while (total_copied < desired) {
-        size_t n = read1((uint8_t*)dst_buf+total_copied, start_va+total_copied, desired-total_copied, req_perms, NULL);
-        if (!n) break;
+        uint8_t *ptr = dst_buf ? (uint8_t*)dst_buf + total_copied : NULL;
+        size_t n = read1(ptr, start_va+total_copied, desired-total_copied, req_perms);
+        if (0==n) break;
         total_copied += n;
     }
-
     memset((uint8_t*)dst_buf+total_copied, 0, desired-total_copied);
     return total_copied;
 }
 
 SgUnsignedCharList
-MemoryMap::read(rose_addr_t va, size_t desired, unsigned req_perms/*=MM_PROT_READ*/) const
+MemoryMap::read(rose_addr_t va, size_t desired, unsigned req_perms) const
 {
     SgUnsignedCharList retval;
     while (desired>0) {
-        const MemoryMap::MapElement *m=NULL;
-        size_t can_read = read1(NULL, va, desired, req_perms, &m);
+        size_t can_read = read1(NULL, va, desired, req_perms);
         if (0==can_read)
             break;
-        assert(m!=NULL && va>=m->get_va());
-        size_t m_offset = va - m->get_va();
-        assert(m_offset+can_read<=m->get_size());
+        size_t n = retval.size();
+        retval.resize(retval.size()+can_read);
+        size_t did_read = read1(&retval[n], va, desired, req_perms);
+        assert(did_read==can_read);
 
-        size_t retval_offset = retval.size();
-        retval.resize(retval.size()+can_read, 0);
-        if (!m->is_anonymous() || NULL!=m->get_base(false))
-            memcpy(&retval[retval_offset], (uint8_t*)m->get_base()+m->get_offset()+m_offset, can_read);
-
-        va += can_read;
+        va += did_read;
         desired -= can_read;
     }
     return retval;
 }
 
 size_t
-MemoryMap::write1(const void *src_buf, rose_addr_t va, size_t nbytes, unsigned req_perms/*=MM_PROT_WRITE*/,
-                  const MapElement **mep/*=NULL*/) const
+MemoryMap::write1(const void *src_buf/*=NULL*/, rose_addr_t start_va, size_t desired, unsigned req_perms)
 {
-    const MemoryMap::MapElement *m = find(va);
-    if (mep) *mep = m;
-    if (!m || m->is_read_only() || (m->get_mapperms() & req_perms)!=req_perms)
+    Segments::const_iterator found = p_segments.find(start_va);
+    if (found==p_segments.end())
         return 0;
-    ROSE_ASSERT(va >= m->get_va());
-    size_t m_offset = va - m->get_va();
-    ROSE_ASSERT(m_offset < m->get_size());
-    size_t n = std::min(nbytes, m->get_size()-m_offset);
-    memcpy((uint8_t*)m->get_base()+m->get_offset()+m_offset, src_buf, n);
-    return n;
+
+    const Extent &range = found->first;
+    assert(range.contains(Extent(start_va)));
+
+    Segment segment = found->second;
+    if ((segment.get_mapperms() & req_perms) != req_perms || !segment.check(range))
+        return 0;
+
+    if (segment.is_cow()) {
+        segment.set_buffer(segment.get_buffer()->clone());
+        segment.clear_cow();
+    }
+
+    rose_addr_t buffer_offset = segment.get_buffer_offset(range, start_va);
+    return segment.get_buffer()->write(src_buf, buffer_offset, desired);
 }
 
 size_t
-MemoryMap::write(const void *src_buf, rose_addr_t start_va, size_t nbytes, unsigned req_perms/*=MM_PROT_WRITE*/) const
+MemoryMap::write(const void *src_buf/*=NULL*/, rose_addr_t start_va, size_t desired, unsigned req_perms)
 {
     size_t total_copied = 0;
-    while (total_copied < nbytes) {
-        size_t n = write1((uint8_t*)src_buf+total_copied, start_va+total_copied, nbytes-total_copied, req_perms, NULL);
-        if (!n) break;
+    while (total_copied < desired) {
+        uint8_t *ptr = src_buf ? (uint8_t*)src_buf + total_copied : NULL;
+        size_t n = write1(ptr, start_va+total_copied, desired-total_copied, req_perms);
+        if (0==n) break;
         total_copied += n;
     }
     return total_copied;
 }
 
-void
-MemoryMap::mprotect(const MapElement &region, bool relax/*=false*/)
-{
-    /* Check whether the region refers to addresses not in the memory map. */
-    if (!relax) {
-        ExtentMap e;
-        e.insert(Extent(region.get_va(), region.get_size()));
-        e.erase_ranges(va_extents());
-        if (!e.empty())
-            throw NotMapped(this, e.begin()->first.first());
-    }
-
-    std::vector<MapElement> created;
-    std::vector<MapElement>::iterator i=elements.begin();
-    while (i!=elements.end()) {
-        MapElement &other = *i;
-        if (other.get_mapperms()==region.get_mapperms()) {
-            /* no change */
-            i++;
-        } else if (other.get_va() >= region.get_va()) {
-            if (other.get_va()+other.get_size() <= region.get_va()+region.get_size()) {
-                /* other is fully contained in (or congruent to) region; change other's permissions */
-                other.set_mapperms(region.get_mapperms());
-                i++;
-            } else if (other.get_va() < region.get_va()+region.get_size()) {
-                /* left part of other is contained in region; split other into two parts */
-                size_t left_sz = region.get_va() + region.get_size() - other.get_va();
-                ROSE_ASSERT(left_sz>0);
-                MapElement left = other;
-                left.set_size(left_sz);
-                left.set_mapperms(region.get_mapperms());
-                created.push_back(left);
-
-                size_t right_sz = other.get_size() - left_sz;
-                MapElement right = other;
-                ROSE_ASSERT(right_sz>0);
-                right.set_va(other.get_va() + left_sz);
-                right.set_offset(right.get_offset() + left_sz);
-                right.set_size(right_sz);
-                created.push_back(right);
-
-                i = elements.erase(i);
-            } else {
-                /* other is right of region; skip it */
-                i++;
-            }
-        } else if (other.get_va()+other.get_size() <= region.get_va()) {
-            /* other is left of desired region; skip it */
-            i++;
-        } else if (other.get_va()+other.get_size() <= region.get_va() + region.get_size()) {
-            /* right part of other is contained in region; split other into two parts */
-            size_t left_sz = region.get_va() - other.get_va();
-            ROSE_ASSERT(left_sz>0);
-            MapElement left = other;
-            left.set_size(left_sz);
-            created.push_back(left);
-
-            size_t right_sz = other.get_size() - left_sz;
-            MapElement right = other;
-            right.set_va(other.get_va() + left_sz);
-            right.set_offset(right.get_offset() + left_sz);
-            right.set_size(right_sz);
-            right.set_mapperms(region.get_mapperms());
-            created.push_back(right);
-
-            i = elements.erase(i);
-        } else {
-            /* other contains entire region and extends left and right; split into three parts */
-            size_t left_sz = region.get_va() - other.get_va();
-            ROSE_ASSERT(left_sz>0);
-            MapElement left = other;
-            left.set_size(left_sz);
-            created.push_back(left);
-            
-            size_t mid_sz = region.get_size();
-            ROSE_ASSERT(mid_sz>0);
-            MapElement mid = other;
-            mid.set_va(region.get_va());
-            mid.set_offset(mid.get_offset() + left_sz);
-            mid.set_size(region.get_size());
-            mid.set_mapperms(region.get_mapperms());
-            created.push_back(mid);
-            
-            size_t right_sz = other.get_size() - (left_sz + mid_sz);
-            ROSE_ASSERT(right_sz>0);
-            MapElement right = other;
-            right.set_va(region.get_va()+region.get_size());
-            right.set_offset(mid.get_offset() + mid_sz);
-            right.set_size(right_sz);
-            created.push_back(right);
-            
-            i = elements.erase(i);
-        }
-    }
-
-    elements.insert(elements.end(), created.begin(), created.end());
-    if (!created.empty())
-        std::sort(elements.begin(), elements.end());
-}
-
 ExtentMap
 MemoryMap::va_extents() const
 {
-    ExtentMap retval;
-    for (size_t i=0; i<elements.size(); i++) {
-        const MapElement& me = elements[i];
-        retval.insert(Extent(me.get_va(), me.get_size()));
+    return ExtentMap(p_segments);
+}
+
+void
+MemoryMap::mprotect(Extent range, unsigned perms, bool relax)
+{
+    while (!range.empty()) {
+        Segments::iterator found = p_segments.lower_bound(range.first());
+
+        // Skip over leading part of range that's not mapped
+        if (found==p_segments.end() || found->first.right_of(range)) {
+            if (!relax)
+                throw NotMapped("", this, range.first());
+            return;
+        }
+        if (found->first.begins_after(range)) {
+            if (!relax)
+                throw NotMapped("", this, range.first());
+            range = Extent::inin(found->first.first(), range.last());
+        }
+
+        Segment &segment = found->second;
+        const Extent &segment_range = found->first;
+        if (found->second.get_mapperms()!=perms) {
+            if (range.contains(segment_range)) {
+                // we can just change the segment in place
+                segment.set_mapperms(perms);
+            } else {
+                // make a hole and insert a new segment
+                assert(segment_range.begins_before(range, false/*non-strict*/));
+                Extent new_range = Extent::inin(range.first(), std::min(range.last(), segment_range.last()));
+                Segment new_segment = segment;
+                new_segment.set_mapperms(perms);
+                new_segment.set_buffer_offset(segment.get_buffer_offset(segment_range, new_range.first()));
+                p_segments.insert(new_range, new_segment, true/*make hole*/);
+            }
+        }
+
+        if (segment_range.last() >= range.last())
+            break;
+        range = Extent::inin(segment_range.last()+1, range.last());
     }
-    return retval;
 }
 
 void
 MemoryMap::dump(FILE *f, const char *prefix) const
 {
-    if (0==elements.size())
-        fprintf(f, "%sempty\n", prefix);
+    std::ostringstream ss;
+    dump(ss, prefix);
+    fputs(ss.str().c_str(), f);
+}
 
-    std::map<void*,std::string> bases;
-    for (size_t i=0; i<elements.size(); i++) {
-        const MapElement &me = elements[i];
-        std::string basename;
+void
+MemoryMap::dump(std::ostream &out, std::string prefix) const
+{
+    if (0==p_segments.size()) {
+        out <<prefix <<"empty\n";
+        return;
+    }
 
-        /* Convert the base address to a unique name like "aaa", "aab", "aac", etc. This makes it easier to compare outputs
-         * from different runs since the base addresses are likely to be different between runs but the names aren't. */
-        if (me.is_anonymous()) {
-            basename = "anon ";
-        } else {
-            basename = "base ";
-        }
+    for (Segments::const_iterator si=p_segments.begin(); si!=p_segments.end(); ++si) {
+        const Extent &range = si->first;
+        const Segment &segment = si->second;
 
-        if (NULL==me.get_base(false)) {
-            basename += "null";
-        } else {
-            std::map<void*,std::string>::iterator found = bases.find(me.get_base());
-            if (found==bases.end()) {
-                size_t j = bases.size();
-                ROSE_ASSERT(j<26*26*26);
-                basename += 'a'+(j/(26*26))%26;
-                basename += 'a'+(j/26)%26;
-                basename += 'a'+(j%26);
-                bases.insert(std::make_pair(me.get_base(), basename));
-            } else {
-                basename = found->second;
-            }
-        }
+        assert(segment.get_buffer());
+        std::string basename = segment.get_buffer()->get_name();
 
-        fprintf(f, "%sva 0x%08"PRIx64" + 0x%08zx = 0x%08"PRIx64" %c%c%c%c at %-9s + 0x%08"PRIx64,
-                prefix, me.get_va(), me.get_size(), me.get_va()+me.get_size(),
-                0==(me.get_mapperms()&MM_PROT_READ) ?'-':'r',
-                0==(me.get_mapperms()&MM_PROT_WRITE)?'-':'w',
-                0==(me.get_mapperms()&MM_PROT_EXEC) ?'-':'x',
-                0==(me.get_mapperms()&MM_PROT_PRIVATE)?'-':'p',
-                basename.c_str(), elements[i].get_offset());
-
-        if (!me.name.empty()) {
-            static const size_t limit = 55;
-            std::string name = escapeString(me.get_name());
-            if (name.size()>limit)
-                name = name.substr(0, limit-3) + "...";
-            fprintf(f, " %s", name.c_str());
-        }
-
-        fputc('\n', f);
+        out <<prefix
+            <<"va " <<StringUtility::addrToString(range.first())
+            <<" + " <<StringUtility::addrToString(range.size())
+            <<" = " <<StringUtility::addrToString(range.last()+1) <<" "
+            <<segment
+            <<"\n";
     }
 }
 
 void
 MemoryMap::dump(const std::string &basename) const
 {
-    FILE *f = fopen((basename+".index").c_str(), "w");
-    ROSE_ASSERT(f!=NULL);
-    dump(f);
-    fclose(f);
+    std::ofstream index((basename+".index").c_str());
+    index <<*this;
 
-    for (size_t i=0; i<elements.size(); i++) {
-        const MapElement &me = elements[i];
+    for (Segments::const_iterator si=p_segments.begin(); si!=p_segments.end(); ++si) {
+        const Extent &range = si->first;
+        const Segment &segment = si->second;
 
-        char ext[256];
-        sprintf(ext, "-%08"PRIx64".data", me.get_va());
-#ifdef _MSC_VER
-        int fd = _open((basename+ext).c_str(), O_CREAT|O_TRUNC|O_RDWR, 0666);
-#else
-        int fd = open((basename+ext).c_str(), O_CREAT|O_TRUNC|O_RDWR, 0666);
-#endif
-        ROSE_ASSERT(fd>0);
-        if (me.is_anonymous() && NULL==me.get_base(false)) {
-            /* anonymous and no memory allocated. Zero-fill the file */
-            ROSE_ASSERT(me.get_size()>0);
-#ifdef _MSC_VER
-            off_t offset = _lseek(fd, me.get_size()-1, SEEK_SET);
-#else
-            off_t offset = lseek(fd, me.get_size()-1, SEEK_SET);
-#endif
-            ROSE_ASSERT((size_t)offset==me.get_size()-1);
-            const int zero = 0;
-#ifdef _MSC_VER
-            ssize_t n = _write(fd, &zero, 1);
-#else
-            ssize_t n = ::write(fd, &zero, 1);
-#endif
-            ROSE_ASSERT(1==n);
-        } else {
-            const char *ptr = (const char*)me.get_base() + me.get_offset();
-            size_t nremain = me.get_size();
-            while (nremain>0) {
-#ifdef _MSC_VER
-                ssize_t n = 0; 
-                // todo
-                ROSE_ASSERT(false);
-#else
-                ssize_t n = TEMP_FAILURE_RETRY(::write(fd, ptr, nremain));
-#endif
-                if (n<0) perror("MemoryMap::dump: write() failed");
-                ROSE_ASSERT(n>0);
-                ptr += n;
-                nremain -= n;
-            }
-        }
-#ifdef _MSC_VER
-        close(fd);
-#else
-        close(fd);
-#endif
+        std::string dataname = basename + "-" + StringUtility::addrToString(range.first()).substr(2) + ".data";
+        segment.get_buffer()->save(dataname);
     }
 }
 
 bool
 MemoryMap::load(const std::string &basename)
 {
+    clear();
     std::string indexname = basename + ".index";
     FILE *f = fopen(indexname.c_str(), "r");
     if (!f) return false;
@@ -785,193 +889,134 @@ MemoryMap::load(const std::string &basename)
     size_t line_nalloc = 0;
     ssize_t nread;
     unsigned nlines=0;
-    try {
-        while (
+    std::map<std::string, BufferPtr> buffers;
+
+    while (0<(nread=rose_getline(&line, &line_nalloc, f))) {
+        char *rest, *s=line;
+        nlines++;
+
+        /* Check for empty lines and comments */
+        while (isspace(*s)) s++;
+        if (!*s || '#'==*s) continue;
+
+        /* Starting virtual address with optional "va " prefix */
+        if (!strncmp(s, "va ", 3)) s += 3;
+        errno = 0;
 #ifndef _MSC_VER
-               0<(nread=rose_getline(&line, &line_nalloc, f))
+        rose_addr_t segment_va = strtoull(s, &rest, 0);
 #else
-               // error LNK2019: unresolved external symbol "long __cdecl rose_getline(char * *,unsigned int *,struct _iobuf *)"
-               ROSE_ASSERT(false), true
+        rose_addr_t segment_va = 0;
+        ROSE_ASSERT(!"lacking Windows support");
 #endif
-               ) {
-            char *rest, *s=line;
-            nlines++;
+        if (rest==s || errno)
+            throw SyntaxError("starting virtual address expected", this, indexname, nlines, s-line);
+        s = rest;
 
-            /* Check for empty lines and comments */
-            while (isspace(*s)) s++;
-            if (!*s || '#'==*s) continue;
+        /* Size, prefixed with optional "+" or "," */
+        while (isspace(*s)) s++;
+        if ('+'==*s || ','==*s) s++;
+        while (isspace(*s)) s++;
+        errno = 0;
+#ifndef _MSC_VER
+        rose_addr_t segment_sz = strtoull(s, &rest, 0);
+#else
+        rose_addr_t segment_sz = 0;
+        ROSE_ASSERT(!"lacking Windows support");
+#endif
+        if (rest==s || errno)
+            throw SyntaxError("virtual size expected", this, indexname, nlines, s-line);
+        s = rest;
 
-            /* Starting virtual address with optional "va " prefix */
-            if (!strncmp(s, "va ", 3)) s += 3;
+        /* Optional ending virtual address prefixed with "=" */
+        while (isspace(*s)) s++;
+        if ('='==*s) {
+            s++;
             errno = 0;
 #ifndef _MSC_VER
-            rose_addr_t va = strtoull(s, &rest, 0);
+            (void)strtoull(s, &rest, 0);
 #else
-            rose_addr_t va = 0;
-            ROSE_ASSERT(false);
+            ROSE_ASSERT(!"lacking Windows support");
 #endif
             if (rest==s || errno)
-                throw Syntax(this, "starting virtual address expected", indexname, nlines, s-line);
+                throw SyntaxError("ending virtual address expected after '='", this, indexname, nlines, s-line);
             s = rest;
+        }
 
-            /* Size, prefixed with optional "+" or "," */
-            while (isspace(*s)) s++;
-            if ('+'==*s || ','==*s) s++;
-            while (isspace(*s)) s++;
-            errno = 0;
-#ifndef _MSC_VER
-            rose_addr_t sz = strtoull(s, &rest, 0);
-#else
-            rose_addr_t sz = 0;
-            ROSE_ASSERT(false);
-#endif
-            if (rest==s || errno)
-                throw Syntax(this, "virtual size expected", indexname, nlines, s-line);
-            s = rest;
-
-            /* Optional ending virtual address prefixed with "=" */
-            while (isspace(*s)) s++;
-            if ('='==*s) {
-                s++;
-                errno = 0;
-#ifndef _MSC_VER
-                (void)strtoull(s, &rest, 0);
-#else
-                ROSE_ASSERT(false);
-#endif
-                if (rest==s || errno)
-                    throw Syntax(this, "ending virtual address expected after '='", indexname, nlines, s-line);
-                s = rest;
-            }
-
-            /* Permissions with optional ',' prefix. Permissions are the letters 'r', 'w', and/or 'x'. Hyphens can appear in the
-             * r/w/x string at any position and are ignored. */
-            while (isspace(*s)) s++;
-            if (','==*s) s++;
-            while (isspace(*s)) s++;
-            unsigned perm = 0;
-            while (strchr("rwxp-", *s)) {
-                switch (*s++) {
-                    case 'r': perm |= MM_PROT_READ; break;
-                    case 'w': perm |= MM_PROT_WRITE; break;
-                    case 'x': perm |= MM_PROT_EXEC; break;
-                    case 'p': perm |= MM_PROT_PRIVATE; break;
-                    case '-': break;
-                    default: break; /*to suppress a compiler warning*/
-                }
-            }
-
-            /* Base address, "anonymous", or file name.  Base address is introduced with the word "base", file names are
-             * anything up the the next space character. An optional "at" prefix is allowed. */
-            while (isspace(*s)) s++;
-            if (','==*s) s++;
-            while (isspace(*s)) s++;
-            if (!strncmp(s, "at", 2) && isspace(s[2])) s+= 3;
-            while (isspace(*s)) s++;
-            bool is_base=false;
-            if (!strncmp(s, "base", 4) && isspace(s[4])) {
-                s += 5;
-                is_base = true;
-            }
-            while (isspace(*s)) s++;
-            char *s2=s;
-            while (*s2 && !isspace(*s2)) s2++;
-            if (s2==s)
-                throw Syntax(this, "data source name expected", indexname, nlines, s-line);
-            std::string region_name(s, s2-s);
-            s = s2;
-
-            /* Offset from base address; optional prefix of "," or "+". */
-            while (isspace(*s)) s++;
-            if (','==*s || '+'==*s) s++;
-            while (isspace(*s)) s++;
-            errno = 0;
-#ifndef _MSC_VER
-            rose_addr_t offset = strtoull(s, &rest, 0);
-#else
-            rose_addr_t offset = 0;
-            ROSE_ASSERT(false);
-#endif
-            if (rest==s || errno)
-                throw Syntax(this, "file offset expected", indexname, nlines, s-line);
-            s = rest;
-
-            /* Comment (optional) */
-            while (isspace(*s)) s++;
-            if (','==*s) s++;
-            while (isspace(*s)) s++;
-            char *end = s + strlen(s);
-            while (end>s && isspace(end[-1])) --end;
-            std::string comment(s, end-s);
-
-            /* Create the map element */
-            MapElement me;
-            uint8_t *buf = NULL;
-            size_t nread=0;
-            if (region_name == "anonymous") {
-                me = MapElement(va, sz, perm);
-                nread = sz;
-            } else {
-                std::string filename;
-                if (is_base) {
-                    char ext[256];
-                    sprintf(ext, "-%08"PRIx64".data", va);
-                    filename = basename+ext;
-                } else if ('/'==region_name[0]) {
-                    filename = region_name;
-                } else {
-                    std::string::size_type slash = basename.find_last_of("/");
-                    filename = slash==basename.npos ? "." : basename.substr(0, slash);
-                    filename += "/" + region_name;
-                }
-                
-
-                buf = new uint8_t[sz];
-                int fd = open(filename.c_str(), O_RDONLY);
-                if (fd<0)
-                    throw Syntax(this, "cannot open "+filename+": "+strerror(errno), indexname, nlines);
-                off_t position = lseek(fd, offset, SEEK_SET);
-                ROSE_ASSERT(position!=-1 && position==(off_t)offset);
-                while (nread<sz) {
-#ifndef _MSC_VER
-                    ssize_t n = TEMP_FAILURE_RETRY(::read(fd, buf+nread, sz-nread));
-#else
-                    ssize_t n= 0;
-                    ROSE_ASSERT(false);
-#endif
-
-                    if (n<0) {
-                        close(fd);
-                        throw Syntax(this, "read failed from "+filename+": "+strerror(errno), indexname, nlines);
-                    }
-                    if (0==n) break;
-                    nread += n;
-                }
-                close(fd);
-                me = MapElement(va, nread, buf, 0, perm);
-            }
-            me.set_name(comment);
-
-            /* Add map element to this memory map. */
-            try {
-                insert(me);
-            } catch (const Exception&) {
-                delete[] buf;
-                throw;
-            }
-            if (sz>nread) {
-                MapElement me2(va+nread, sz-nread, perm);
-                me2.set_name(comment);
-                insert(me2);
+        /* Permissions with optional ',' prefix. Permissions are the letters 'r', 'w', and/or 'x'. Hyphens can appear in the
+         * r/w/x string at any position and are ignored. */
+        while (isspace(*s)) s++;
+        if (','==*s) s++;
+        while (isspace(*s)) s++;
+        unsigned perm = 0;
+        while (strchr("rwxp-", *s)) {
+            switch (*s++) {
+                case 'r': perm |= MM_PROT_READ; break;
+                case 'w': perm |= MM_PROT_WRITE; break;
+                case 'x': perm |= MM_PROT_EXEC; break;
+                case 'p': perm |= MM_PROT_PRIVATE; break;
+                case '-': break;
+                default: break; /*to suppress a compiler warning*/
             }
         }
-    } catch (...) {
-        fclose(f);
-        if (line) free(line);
-        throw;
+
+        /* File or buffer name terminated by ',' or '0x' and then strip trailing space. */
+        while (isspace(*s)) s++;
+        if (','==*s) s++;
+        while (isspace(*s)) s++;
+        if (!strncmp(s, "at", 2) && isspace(s[2])) s+= 3;
+        while (isspace(*s)) s++;
+        int buffer_name_col = s-line;
+        std::string buffer_name;
+        while (*s && ','!=*s && 0!=strncmp(s, "0x", 2))
+            buffer_name += *s++;
+        size_t bnsz = buffer_name.size();
+        while (bnsz>0 && isspace(buffer_name[bnsz-1])) --bnsz;
+        buffer_name = buffer_name.substr(0, bnsz);
+        if (buffer_name.empty())
+            throw SyntaxError("file/buffer name expected", this, indexname, nlines, buffer_name_col);
+
+        /* Offset from base address; optional prefix of "," or "+". */
+        while (isspace(*s)) s++;
+        if (','==*s || '+'==*s) s++;
+        while (isspace(*s)) s++;
+        errno = 0;
+#ifndef _MSC_VER
+        rose_addr_t offset = strtoull(s, &rest, 0);
+#else
+        rose_addr_t offset = 0;
+        ROSE_ASSERT(!"lacking Windows support");
+#endif
+        if (rest==s || errno)
+            throw SyntaxError("file/buffer offset expected", this, indexname, nlines, s-line);
+        s = rest;
+
+        /* Comment (optional) */
+        while (isspace(*s)) s++;
+        if (','==*s) s++;
+        while (isspace(*s)) s++;
+        char *end = s + strlen(s);
+        while (end>s && isspace(end[-1])) --end;
+        std::string comment(s, end-s);
+
+        /* Create the buffer or use one we already created. */
+        BufferPtr buffer;
+        std::map<std::string, BufferPtr>::iterator bi = buffers.find(buffer_name);
+        if (bi!=buffers.end() && 0==(perm & MM_PROT_PRIVATE)) {
+            buffer = bi->second;
+        } else if (0==access(buffer_name.c_str(), F_OK)) {
+            buffer = ByteBuffer::create_from_file(buffer_name);
+            buffers.insert(std::make_pair(buffer_name, buffer));
+        } else {
+            ROSE_ASSERT(!"not implemented yet");
+        }
+
+        Extent range(segment_va, segment_sz);
+        Segment segment(buffer, offset, perm, comment);
+        insert(range, segment);
     }
 
     fclose(f);
     if (line) free(line);
     return nread<=0;
 }
+    

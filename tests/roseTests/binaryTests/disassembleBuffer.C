@@ -19,34 +19,6 @@
 #include <sys/stat.h>
 
 
-/* Read our example file into a memory buffer.  The file contains only the instructions and no PE file header or other
- * container information. */
-static const unsigned char*
-read_file(const char* filename, size_t *file_sz)
-{
-    int fd = open(filename, O_RDONLY);
-    if (fd<0) {
-        perror(filename);
-        exit(1);
-    }
-
-    struct stat sb;
-    if (fstat(fd, &sb)<0) {
-        perror("fstat");
-        exit(1);
-    }
-
-    const unsigned char* buf = (const unsigned char*)mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
-    if (!buf) {
-        perror("mmap");
-        exit(1);
-    }
-
-    close(fd);
-    *file_sz = sb.st_size;
-    return buf;
-}
-
 /* Define our own partitioner that doesn't do any real function detection analysis. It just takes all the instructions and
  * stuffs them into a single function. */
 class MyPartitioner: public Partitioner {
@@ -76,12 +48,10 @@ main(int argc, char* argv[])
     /* Read the supplied file into our memory, and then tell ROSE how that memory would have been mapped into
      * the process' memory by the loader. In this case, we just map the entire buffer to a contiguous region
      * of the process starting at the address specified on the command line. */
-    size_t buf_sz;
-    const unsigned char *buf = read_file(filename, &buf_sz);
-    MemoryMap::MapElement melmt(start_va, buf_sz, buf, 0, MemoryMap::MM_PROT_READ|MemoryMap::MM_PROT_EXEC);
-    melmt.set_name(filename);
+    MemoryMap::BufferPtr buffer = MemoryMap::ByteBuffer::create_from_file(filename);
     MemoryMap mm;
-    mm.insert(melmt);
+    mm.insert(Extent(start_va, buffer->size()),
+              MemoryMap::Segment(buffer, 0, MemoryMap::MM_PROT_RX, filename));
 
     /* Create the SgAsmGenericFile object that will be needed later. We could have used its parse() method to read the
      * contents of our file, but this example's purpose is to clearly demonstrate how to disassemble a buffer that might not

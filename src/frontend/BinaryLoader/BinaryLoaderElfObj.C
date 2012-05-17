@@ -1,5 +1,6 @@
 #include "sage3basic.h"
 #include "BinaryLoaderElfObj.h"
+#include "MemoryMap.h"
 
 /* This binary loader can handle ELF object files. */
 bool

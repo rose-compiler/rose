@@ -19,20 +19,20 @@ HEADER_BINARY_POWERPC_INSTRUCTION_PREDECLARATION_START
 HEADER_BINARY_POWERPC_INSTRUCTION_PREDECLARATION_END
 
 HEADER_GENERIC_SECTION_PREDECLARATION_START
-#include "MemoryMap.h"
+class MemoryMap;
 HEADER_GENERIC_SECTION_PREDECLARATION_END
 
 HEADER_GENERIC_FILE_PREDECLARATION_START
-#include "MemoryMap.h"
+class MemoryMap;
 #include "DataConversion.h"
 HEADER_GENERIC_FILE_PREDECLARATION_END
 
 HEADER_INTERPRETATION_PREDECLARATION_START
-#include "MemoryMap.h"
+class MemoryMap;
 HEADER_INTERPRETATION_PREDECLARATION_END
 
 HEADER_BINARY_INSTRUCTION_PREDECLARATION_START
-#include "MemoryMap.h"
+class MemoryMap;
 HEADER_BINARY_INSTRUCTION_PREDECLARATION_END
 
 HEADER_BINARY_START
@@ -3998,6 +3998,7 @@ HEADER_BINARY_BLOCK_START
         void remove_children (  );
         rose_addr_t get_fallthrough_va(); /*implemented in Disassembler.C*/
         SgAsmFunction *get_enclosing_function() const;
+	bool has_instructions() const;
 
         /** Returns a very short string describing the reason mask. */
         static std::string reason_key(const std::string &prefix="");
