@@ -287,6 +287,7 @@ test2005_64.C \
 test2005_65.C \
 test2005_66.C \
 test2005_67.C \
+test2005_68.C \
 test2005_70.C \
 test2005_71.C \
 test2005_72.C \
@@ -331,6 +332,7 @@ test2005_113.C \
 test2005_116.C \
 test2005_117.C \
 test2005_118.C \
+test2005_119.C \
 test2005_120.C \
 test2005_124.C \
 test2005_125.C \
@@ -355,6 +357,7 @@ test2005_149.C \
 test2005_150.C \
 test2005_152.C \
 test2005_153.C \
+test2005_154.C \
 test2005_155.C \
 test2005_156.C \
 test2005_157.C \
@@ -406,6 +409,7 @@ test2005_208.C \
 test2005_209.C \
 test2006_01.C \
 test2006_02.C \
+test2006_03.C \
 test2006_06.C \
 test2006_07.C \
 test2006_08.C \
@@ -444,11 +448,13 @@ test2006_61.C \
 test2006_62.C \
 test2006_63.C \
 test2006_66.C \
+test2006_67.C \
 test2006_68.C \
 test2006_69.C \
 test2006_70.C \
 test2006_71.C \
 test2006_72.C \
+test2006_73.C \
 test2006_74.C \
 test2006_75.C \
 test2006_76.C \
@@ -579,6 +585,7 @@ test2007_98.C \
 test2007_102.C \
 test2007_103.C \
 test2007_128.C \
+test2007_130.C \
 test2007_133.C \
 test2007_135.C \
 test2007_142.C \
@@ -693,8 +700,10 @@ test2011_66.C \
 test2011_67.C \
 test2011_68.C \
 test2011_69.C \
+test2011_70.C \
 test2011_71.C \
 test2011_74.C \
+test2011_75.C \
 test2011_76.C \
 test2011_77.C \
 test2011_78.C \
@@ -856,6 +865,7 @@ test2012_81.C \
 test2012_82.C \
 test2012_83.C \
 test2012_84.C \
+test2012_85.C \
 test_int_lexemes.C \
 test_int_lexemes_donot_pass.C \
 test_simple_int.C \
@@ -892,7 +902,6 @@ endif
 
 
 
-
 # Import list of C++ test cases that are known to fail:
 #   TESTCODE_CURRENTLY_FAILING
 #
@@ -905,12 +914,10 @@ test2005_33.C \
 test2005_35.C \
 test2005_44.C \
 test2005_60.C \
-test2005_68.C \
 test2005_102.C \
 test2005_103.C \
  test2005_112.C \
 test2005_114.C \
-test2005_119.C \
 test2005_121.C \
 test2005_122.C \
 test2005_123.C \
@@ -920,14 +927,10 @@ test2005_131.C \
 test2005_132.C \
 test2005_137.C \
 test2005_143.C \
- test2005_154.C \
-test2006_03.C \
 test2006_04.C \
 test2006_05.C \
 test2006_28.C \
 test2006_54.C \
-test2006_67.C \
-test2006_73.C \
 test2006_85.C \
 test2006_90.C \
 test2006_122.C \
@@ -940,7 +943,6 @@ test2007_04.C \
 test2007_38.C \
  test2007_55.C \
 test2007_83.C \
-test2007_130.C \
 test2007_137.C \
 test2007_140.C \
 test2007_141.C \
@@ -957,10 +959,8 @@ test2011_31.C \
 test2011_32.C \
 test2011_62.C \
  test2011_65.C \
-test2011_70.C \
 test2011_72.C \
 test2011_73.C \
-test2011_75.C \
 test2011_80.C \
 test2011_84.C \
 test2011_85.C \
