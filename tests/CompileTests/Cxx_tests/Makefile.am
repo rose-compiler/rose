@@ -269,6 +269,7 @@ test2005_40.C \
 test2005_41.C \
 test2005_42.C \
 test2005_43.C \
+test2005_44.C \
 test2005_45.C \
 test2005_46.C \
 test2005_47.C \
@@ -337,6 +338,7 @@ test2005_118.C \
 test2005_119.C \
 test2005_120.C \
 test2005_121.C \
+test2005_122.C \
 test2005_124.C \
 test2005_125.C \
 test2005_126.C \
@@ -413,6 +415,7 @@ test2005_209.C \
 test2006_01.C \
 test2006_02.C \
 test2006_03.C \
+test2006_05.C \
 test2006_06.C \
 test2006_07.C \
 test2006_08.C \
@@ -429,6 +432,7 @@ test2006_22.C \
 test2006_23.C \
 test2006_25.C \
 test2006_26.C \
+test2006_28.C \
 test2006_34.C \
 test2006_37.C \
 test2006_38.C \
@@ -916,13 +920,11 @@ TESTCODE_CURRENTLY_FAILING = \
  test2005_32.C \
 test2005_33.C \
 test2005_35.C \
-test2005_44.C \
 test2005_60.C \
 test2005_102.C \
 test2005_103.C \
  test2005_112.C \
 test2005_114.C \
-test2005_122.C \
 test2005_123.C \
 test2005_129.C \
 test2005_130.C \
@@ -931,8 +933,6 @@ test2005_132.C \
 test2005_137.C \
 test2005_143.C \
 test2006_04.C \
-test2006_05.C \
-test2006_28.C \
 test2006_54.C \
 test2006_85.C \
 test2006_90.C \
