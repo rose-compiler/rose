@@ -9,6 +9,8 @@ class X
           typedef void (ObjectType::*AccessorFunctionType)();
 
          ObjectType *object;
+
+       // Member function pointer
           AccessorFunctionType mFieldAccessorMethod;
 
           void getRemapField();
@@ -17,7 +19,13 @@ class X
 template<typename ObjectType>
 void X<ObjectType>::getRemapField()
    {
+  // Set ObjectType pointer.
+     object = 0;
+
+  // Set member function pointer to NULL.
      mFieldAccessorMethod = 0;
+
+  // Call member function using member function pointer.
      (object->*(mFieldAccessorMethod))();
    }
 
