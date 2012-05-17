@@ -1294,11 +1294,11 @@ bool VariableRenaming::mergeDefs(cfgNode curNode, bool *memberRefInserted, NodeV
     }
 
     //We have the definitions stored as follows:
-    //defTable contans the definitions as propogated by the CFG analysis
+    //defTable contains the definitions as propagated by the CFG analysis
     //originalDefTable contains the original definitions that are part of the
     //given statement.
 
-    //When we want to propogate the defs from the previous node(s) to this one,
+    //When we want to propagate the defs from the previous node(s) to this one,
     //We perform a few steps. This is dependent on the number of incoming edges.
 
     /*1 Edge: When we have linear control flow, we do the following:
@@ -1370,7 +1370,7 @@ bool VariableRenaming::mergeDefs(cfgNode curNode, bool *memberRefInserted, NodeV
             {
                 continue;
             }
-            //If the original def is a prefix of the propogated def, add a def at this node
+            //If the original def is a prefix of the propagated def, add a def at this node
             //Compare sizes to guard against inserting original def in expanded table
             if (isPrefixOfName(propEntry.first, entry.first) && (propEntry.first.size() > entry.first.size()))
             {
@@ -2038,13 +2038,13 @@ VariableRenaming::NumNodeRenameEntry VariableRenaming::getReachingDefsAtNodeForN
                 }
                 else
                 {
-                    cout << "Error: Same def propogated twice to same node." << endl;
+                    cout << "Error: Same def propagated twice to same node." << endl;
                     ROSE_ASSERT(false);
                 }
             }
             else
             {
-                cout << "Error: Found propogated def with no entry in rename table." << endl;
+                cout << "Error: Found propagated def with no entry in rename table." << endl;
                 ROSE_ASSERT(false);
             }
         }
