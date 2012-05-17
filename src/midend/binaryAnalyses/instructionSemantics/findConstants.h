@@ -645,7 +645,7 @@ struct FindConstantsPolicy {
     struct Exception {
         Exception(const std::string &mesg): mesg(mesg) {}
         friend std::ostream& operator<<(std::ostream &o, const Exception &e) {
-            o <<"VirtualMachineSemantics exception: " <<e.mesg;
+            o <<"FindConstantsPolicy exception: " <<e.mesg;
             return o;
         }
         std::string mesg;

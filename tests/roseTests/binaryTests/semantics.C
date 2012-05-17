@@ -5,7 +5,7 @@
 #define __STDC_FORMAT_MACROS
 #include "rose.h"
 #include "findConstants.h"
-#include "VirtualMachineSemantics.h"
+#include "PartialSymbolicSemantics.h"
 #include "SymbolicSemantics.h"
 #include "YicesSolver.h"
 #include "NullSemantics.h"
@@ -51,9 +51,9 @@ using namespace BinaryAnalysis::InstructionSemantics;
         }
     };
 #elif  3==POLICY_SELECTOR
-#   define TestSemanticsScope VirtualMachineSemantics
-#   define TestValueTemplate VirtualMachineSemantics::ValueType
-    struct TestPolicy: public VirtualMachineSemantics::Policy<> {
+#   define TestSemanticsScope PartialSymbolicSemantics
+#   define TestValueTemplate PartialSymbolicSemantics::ValueType
+    struct TestPolicy: public PartialSymbolicSemantics::Policy<> {
         void dump(SgAsmInstruction *insn) {
             std::cout <<unparseInstructionWithAddress(insn) <<"\n"
                       <<get_state()
@@ -94,7 +94,7 @@ using namespace BinaryAnalysis::InstructionSemantics;
     };
 #elif 6==POLICY_SELECTOR
 #   define TestSemanticsScope MultiSemantics<                                                                                  \
-        VirtualMachineSemantics::ValueType, VirtualMachineSemantics::State, VirtualMachineSemantics::Policy,                   \
+        PartialSymbolicSemantics::ValueType, PartialSymbolicSemantics::State, PartialSymbolicSemantics::Policy,                \
         SymbolicSemantics::ValueType, SymbolicSemantics::State, SymbolicSemantics::Policy                                      \
         >
 #   define TestValueTemplate TestSemanticsScope::ValueType

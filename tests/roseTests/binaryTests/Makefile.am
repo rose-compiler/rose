@@ -211,15 +211,15 @@ findConstantsABI.passed: semantics.conf findConstantsABI
 	@$(RTH_RUN) CMD=findConstantsABI INPUT=i686-test1.O3.bin $< $@
 
 
-# Uses VirtualMachineSemantics semantic analysis policy
-noinst_PROGRAMS += virtualMachineSemantics
-virtualMachineSemantics_SOURCES = semantics.C
-virtualMachineSemantics_CPPFLAGS = -DPOLICY_SELECTOR=3
-virtualMachineSemantics_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-STATIC_TEST_TARGETS += virtualMachineSemantics.passed
-EXTRA_DIST += semantics.conf virtualMachineSemantics.ans
-virtualMachineSemantics.passed: semantics.conf virtualMachineSemantics
-	@$(RTH_RUN) CMD=virtualMachineSemantics INPUT=i686-test1.O3.bin $< $@
+# Uses PartialSymbolicSemantics semantic analysis policy
+noinst_PROGRAMS += partialSymbolicSemantics
+partialSymbolicSemantics_SOURCES = semantics.C
+partialSymbolicSemantics_CPPFLAGS = -DPOLICY_SELECTOR=3
+partialSymbolicSemantics_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+STATIC_TEST_TARGETS += partialSymbolicSemantics.passed
+EXTRA_DIST += semantics.conf partialSymbolicSemantics.ans
+partialSymbolicSemantics.passed: semantics.conf partialSymbolicSemantics
+	@$(RTH_RUN) CMD=partialSymbolicSemantics INPUT=i686-test1.O3.bin $< $@
 
 
 # Use SymbolicSemantics semantic analysis policy
@@ -483,11 +483,11 @@ demo_findConstantsABI: findConstantsABI demo_findConstants
 	@echo; echo; echo "Demo for $<"; echo
 	./findConstantsABI $(BINARY_SAMPLES)/i686-test1.O3.bin
 
-demo_virtualMachineSemantics: virtualMachineSemantics demo_findConstantsABI
+demo_partialSymbolicSemantics: partialSymbolicSemantics demo_findConstantsABI
 	@echo; echo; echo "Demo for $<"; echo
-	./virtualMachineSemantics $(BINARY_SAMPLES)/i686-test1.O3.bin
+	./partialSymbolicSemantics $(BINARY_SAMPLES)/i686-test1.O3.bin
 
-demo_symbolicSemantics: symbolicSemantics demo_virtualMachineSemantics
+demo_symbolicSemantics: symbolicSemantics demo_partialSymbolicSemantics
 	: no demo yet for symbolicSemantics
 
 demo_yicesSemanticsExe: yicesSemanticsExe demo_symbolicSemantics

@@ -96,10 +96,10 @@ public:
                 // linker thunk and execute the instruction concretely to advance the instruction pointer.
                 SgAsmx86Instruction *insn = isSgAsmx86Instruction(args.thread->get_process()->get_instruction(analysis_addr));
                 if (x86_jmp==insn->get_kind()) {
-                    VirtualMachineSemantics::Policy<VirtualMachineSemantics::State, VirtualMachineSemantics::ValueType> p;
-                    X86InstructionSemantics<VirtualMachineSemantics::Policy<VirtualMachineSemantics::State,
-                                                                            VirtualMachineSemantics::ValueType>,
-                                            VirtualMachineSemantics::ValueType> sem(p);
+                    PartialSymbolicSemantics::Policy<PartialSymbolicSemantics::State, PartialSymbolicSemantics::ValueType> p;
+                    X86InstructionSemantics<PartialSymbolicSemantics::Policy<PartialSymbolicSemantics::State,
+                                                                             PartialSymbolicSemantics::ValueType>,
+                                            PartialSymbolicSemantics::ValueType> sem(p);
                     MemoryMap p_map(args.thread->get_process()->get_memory(), MemoryMap::COPY_ON_WRITE);
                     p.set_map(&p_map); // won't be thread safe
                     sem.processInstruction(insn);
