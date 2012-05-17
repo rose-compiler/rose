@@ -334,6 +334,7 @@ test2005_117.C \
 test2005_118.C \
 test2005_119.C \
 test2005_120.C \
+test2005_121.C \
 test2005_124.C \
 test2005_125.C \
 test2005_126.C \
@@ -902,6 +903,7 @@ endif
 
 
 
+
 # Import list of C++ test cases that are known to fail:
 #   TESTCODE_CURRENTLY_FAILING
 #
@@ -918,7 +920,6 @@ test2005_102.C \
 test2005_103.C \
  test2005_112.C \
 test2005_114.C \
-test2005_121.C \
 test2005_122.C \
 test2005_123.C \
 test2005_129.C \
@@ -981,6 +982,16 @@ inputBug327.C
 STATISTICALLY_FAILING_TESTS = \
 test2007_62.C \
 math.C 
+
+# DQ (5/17/2012): These are new tests which I deamed up and which fail.
+# they likely failed in the older version of EDG support, but were not 
+# tested there.  Since the current focus is on the previous level of
+# robustness. These are considered to be NEW failing tests to work on 
+# later (when the previously passing tests are fixed in the newer EDG 
+# support).
+NEW_FAILING_TESTS = \
+test2012_86.C
+
 
 else
 include $(srcdir)/Makefile-fail.inc
