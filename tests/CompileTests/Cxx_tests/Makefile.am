@@ -260,6 +260,8 @@ test2005_28.C \
 test2005_29.C \
 test2005_30.C \
 test2005_31.C \
+test2005_32.C \
+test2005_33.C \
 test2005_34.C \
 test2005_36.C \
 test2005_37.C \
@@ -875,6 +877,10 @@ test2012_84.C \
 test2012_85.C \
 test2012_87.C \
 test2012_88.C \
+test2012_89.C \
+test2012_90.C \
+test2012_91.C \
+test2012_92.C \
 test_int_lexemes.C \
 test_int_lexemes_donot_pass.C \
 test_simple_int.C \
@@ -907,18 +913,11 @@ endif
 
 
 
-
-
-
-
-
 # Import list of C++ test cases that are known to fail:
 #   TESTCODE_CURRENTLY_FAILING
 #
 if ROSE_USE_EDG_VERSION_4_3
 TESTCODE_CURRENTLY_FAILING = \
- test2005_32.C \
-test2005_33.C \
 test2005_35.C \
 test2005_60.C \
 test2005_102.C \
