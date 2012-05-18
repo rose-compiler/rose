@@ -13,5 +13,5 @@ check-local: ../src/extractMPISkeleton
 	@echo "*** ROSE/projects/extractMPISkeleton/tests: make check rule complete (terminated normally)"
 	@echo "***********************************************************************************************"
 
-clean:
+clean-local:
 	rm -rf ${DIRS}

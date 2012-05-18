@@ -157,9 +157,12 @@ DIRS=$(foreach file, ${EXTRA_DIST}, $(dir ${file}))
 
 MARKS=$(addsuffix testmark, ${DIRS})
 LISTS=$(filter %files, ${EXTRA_DIST})
-ALL_OUTS=$(foreach list, ${LISTS}, $(addprefix $(dir ${list}), $(addprefix rose_, $(shell cat ${list}))))
-ALL_OBJS=$(addsuffix .o, $(basename ${ALL_OUTS}))
 ALL_EXPECTED=$(filter %.expected, ${EXTRA_DIST})
+TEST_SRCS_C=$(filter %.c, ${EXTRA_DIST})
+TEST_SRCS_CC=$(filter %.cc, ${EXTRA_DIST})
+TEST_SRCS=${TEST_SRCS_C} ${TEST_SRCS_CC}
+ALL_OUTS=$(foreach file, ${TEST_SRCS}, $(addprefix $(dir ${file}), $(addprefix rose_, $(notdir ${file}))))
+ALL_OBJS=$(addsuffix .o, $(basename ${ALL_OUTS}))
 
 SKFLAGS=-I$(asrcdir)/../mpi-fakeheader -skel:spec $(asrcdir)/../apis.coll
 
