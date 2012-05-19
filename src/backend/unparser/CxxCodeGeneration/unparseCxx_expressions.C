@@ -942,7 +942,7 @@ Unparse_ExprStmt::unparseUnaryOperator(SgExpression* expr, const char* op, SgUnp
      if ( !orig_this_opt )
           unp->opt.set_this_opt(true);
 #if 0
-     curprint ( "\n /* Inside of unparseUnaryOperator(" + expr->sage_class_name() + "," + op <+ ",SgUnparse_Info) */ \n");
+     curprint ("\n /* Inside of unparseUnaryOperator(" + expr->class_name() + "," + op + ",SgUnparse_Info) */ \n");
 #endif
      unparseUnaryExpr(expr, newinfo);
 
@@ -1326,8 +1326,8 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
      decl = cdef->get_declaration();
 
 #if 0
-     printf ("Inside of unparseMFuncRef expr = %p (name = %s::%s) \n",expr,decl->get_name().str(),mfd->get_name().str());
-     curprint ( "\n /* Inside of unparseMFuncRef */ \n");
+     printf ("Inside of unparseMFuncRefSupport expr = %p (name = %s::%s) \n",expr,decl->get_name().str(),mfd->get_name().str());
+     curprint ("\n /* Inside of unparseMFuncRef */ \n");
 #endif
 #if 0
      mfd->get_functionModifier().display("In unparseMFuncRef: functionModifier");
@@ -1337,7 +1337,7 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
   // qualified name is always outputed except when the p_need_qualifier is
   // set to 0 (when the naming class is identical to the selection class, and
   // and when we aren't suppressing the virtual function mechanism).
-  
+
   // if (!get_is_virtual_call()) -- take off because this is not properly set
 
   // DQ (9/17/2004): Added assertion
@@ -1392,9 +1392,18 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
        else
         {
        // See test2012_51.C for an example of this.
-#if 0
-          printf ("Inside of unparseMFuncRef(): This case of name qualification where the parent is not a SgFunctionCallExp is not yet supported. \n");
-#endif
+
+       // printf ("In unparseMFuncRefSupport(): mfunc_ref->get_parent() = %p = %s \n",mfunc_ref->get_parent(),mfunc_ref->get_parent()->class_name().c_str());
+          SgAddressOfOp* addressOperator = isSgAddressOfOp(mfunc_ref->get_parent());
+          if (addressOperator != NULL)
+             {
+            // DQ (5/19/2012): This case also happens for test2005_112.C. This case is now supported.
+            // When the address of a member function is take it must use the qualified name.
+               SgName nameQualifier = mfunc_ref->get_qualified_name_prefix();
+               curprint (nameQualifier);
+            // printf ("Output name qualification for SgMemberFunctionDeclaration: nameQualifier = %s \n",nameQualifier.str());
+               print_colons = true;
+             }
         }
 
   // comments about the logic below can be found above in the unparseFuncRef function.
@@ -1427,7 +1436,7 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
      printf ("func_name after processing to extract operator substring = %s \n",func_name.c_str());
 #endif
 
-     if( func_name == "[]" ) 
+     if (func_name == "[]")
         {
        // DQ (12/28/2005): This case now appears to be just dead code!
 
@@ -1438,7 +1447,7 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
        //      May want to handle overloaded operator() the same way.
 #if 0
           printf ("Case of unparsing \"operator[]\" \n");
-          curprint ( "\n /* Case of unparsing \"operator[]\" */ \n");
+          curprint ("\n /* Case of unparsing \"operator[]\" */ \n");
 #endif
        // This is a special case, while the input code may be either expressed as "a[i]" or "a.operator[i]"
        // (we can't tell which from the EDG AST, I think).
@@ -1464,8 +1473,9 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
         }
        else
         {
-       // printf ("Case of unparsing a member function which is NOT short form of \"operator[]\" (i.e. \"[]\") funct_name = %s \n",func_name);
-
+#if 0
+          printf ("Case of unparsing a member function which is NOT short form of \"operator[]\" (i.e. \"[]\") funct_name = %s \n",func_name.c_str());
+#endif
        // Make sure that the member function name does not include "()" (this prevents "operator()()" from being output)
           if (func_name != "()")
              {
@@ -1507,9 +1517,9 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
                          curprint ( "\n /* Output special case of .operator->() or ->operator->() */ \n");
 #endif
                          if (dotExpression != NULL)
-                              curprint ( ".operator->()");
+                              curprint (".operator->()");
                            else
-                              curprint ( "->operator->()");
+                              curprint ("->operator->()");
                        }
                       else
                        {
@@ -1524,7 +1534,6 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
                  // curprint (func_name);
                     curprint (string(" ") + func_name + " ");
                   }
-
 #if 0
                if (arrowExpression != NULL)
                   {
@@ -1538,14 +1547,16 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
              {
             // printf ("Case of unparsing a member function which is \"operator()\" \n");
              }
-
+#if 0
        // curprint ( mfunc_ref->get_symbol()->get_name();
-          unp->u_debug->printDebugInfo("unparseMFuncRef, Function Name: ", false); unp->u_debug->printDebugInfo(func_name.c_str(), true);
+          unp->u_debug->printDebugInfo("unparseMFuncRef, Function Name: ", false);
+          unp->u_debug->printDebugInfo(func_name.c_str(), true);
+#endif
         }
 
 #if 0
-     printf ("Leaving unparseMFuncRef \n");
-     curprint ( "\n/* leaving unparseMFuncRef */ \n");
+     printf ("Leaving unparseMFuncRefSupport \n");
+     curprint ("\n/* leaving unparseMFuncRefSupport */ \n");
 #endif
 
 //#endif

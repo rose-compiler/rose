@@ -1645,12 +1645,12 @@ UnparseLanguageIndependentConstructs::unparseUnaryExpr(SgExpression* expr, SgUnp
 
 #if 0
      printf ("unary_op->get_mode() != SgUnaryOp::postfix is %s \n",(unary_op->get_mode() != SgUnaryOp::postfix) ? "true" : "false");
-     printf ("In Unparse_ExprStmt::unparseUnaryExpr: arrow_op = %d \n",arrow_op);
-     printf ("isFunctionType = %s \n",(isFunctionType == true) ? "true" : "false");
+     printf ("In Unparse_ExprStmt::unparseUnaryExpr: arrow_op = %s \n",arrow_op ? "true" : "false");
+  // printf ("isFunctionType = %s \n",(isFunctionType == true) ? "true" : "false");
 
-     printf ("unary_op->get_operand()->sage_class_name() = %s \n",unary_op->get_operand()->sage_class_name());
-     printf ("unary_op->get_type()->sage_class_name() = %s \n",unary_op->get_type()->sage_class_name());
-     printf ("info.get_operator_name() = %s \n",info.get_operator_name());
+     printf ("unary_op->get_operand()->class_name() = %s \n",unary_op->get_operand()->class_name().c_str());
+     printf ("unary_op->get_type()->class_name()    = %s \n",unary_op->get_type()->class_name().c_str());
+     printf ("info.get_operator_name()              = %s \n",info.get_operator_name().c_str());
 #endif
 
   // DQ (2/22/2005): Ignoring if this is a SgFunctionType (test ...)
@@ -1669,11 +1669,19 @@ UnparseLanguageIndependentConstructs::unparseUnaryExpr(SgExpression* expr, SgUnp
        // Put in an extra space so that if this happens we only generate "/ *"
        // test2005_09.C demonstrates this bug!
           if (isSgPointerDerefExp(expr) != NULL)
-               curprint (  " ");
+             {
+               curprint (" ");
+             }
           curprint ( info.get_operator_name());
         }
 
+#if 0
+     curprint ("\n /* Calling unparseExpression from unparseUnaryExpr */ \n");
+#endif
      unparseExpression(unary_op->get_operand(), info);
+#if 0
+     curprint ("\n /* DONE: Calling unparseExpression from unparseUnaryExpr */ \n");
+#endif
 
      if (unary_op->get_mode() == SgUnaryOp::postfix && !arrow_op) 
         { 
@@ -1683,7 +1691,7 @@ UnparseLanguageIndependentConstructs::unparseUnaryExpr(SgExpression* expr, SgUnp
      info.unset_nested_expression();
 
 #if 0
-     curprint ( "\n /* Leaving of unparseUnaryExpr */ \n");
+     curprint ("\n /* Leaving of unparseUnaryExpr */ \n");
 #endif
    }
 
