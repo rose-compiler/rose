@@ -18,6 +18,7 @@ SUBDIRS = \
 	DatalogAnalysis \
 	DocumentationGenerator \
 	FiniteStateModelChecker \
+	graphColoring \
 	HeaderFilesInclusion \
 	MPI_Tools \
 	MacroRewrapper \
