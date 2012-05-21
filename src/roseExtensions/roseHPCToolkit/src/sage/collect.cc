@@ -204,7 +204,16 @@ void Vis_PreOrder::visitDefault(SgNode* pNode)
 void Vis_PrintMetricInfo::printFileLoc(SgLocatedNode* node, bool printFlag)
 {
     if (printFlag)
-        os_ << "@ [" << toFileLoc(node) << "]" << endl;
+    {
+        string class_name = string("(") + node->sage_class_name() + string(")");
+        Sg_File_Info* info_start = node->get_startOfConstruct ();
+        Sg_File_Info* info_end = node->get_endOfConstruct ();
+        string full_filename = info_start->get_filenameString();
+        string base_filename = GenUtil::getBaseFilename(full_filename);
+        int line_start = info_start->get_line();
+        int line_end = info_end->get_line();
+        os_ << "@ [" << GenUtil::toFileLoc(base_filename, line_start, line_end) << " "  << class_name << "]" << endl;
+   }
 
 }
 
