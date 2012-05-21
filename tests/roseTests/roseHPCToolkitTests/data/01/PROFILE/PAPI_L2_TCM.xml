@@ -198,16 +198,16 @@
  </MetricTable>
 </SecHeader>
 <SecFlatProfileData>
-<M n="0" v="9450000.0"/><M n="1" v="9450000.0"/>
+<M n="0" v="1.045E7"/><M n="1" v="1.045E7"/>
 <LM i="2" n="Load module /home/dxnguyen/git-rose/rose-zung/BUILD/tests/roseTests/roseHPCToolkitTests/example">
-<M n="0" v="9450000.0"/><M n="1" v="9450000.0"/>
+<M n="0" v="1.045E7"/><M n="1" v="1.045E7"/>
  <F i="3" n="./src/home/dxnguyen/git-rose/rose-zung/tests/roseTests/roseHPCToolkitTests/data/01/example.c">
- <M n="0" v="9450000.0"/> <M n="1" v="9450000.0"/>
+ <M n="0" v="1.045E7"/> <M n="1" v="1.045E7"/>
   <P i="45" n="main" l="67">
-  <M n="0" v="9450000.0"/>
+  <M n="0" v="1.045E7"/>
    <C i="936430121" l="89">
     <PF i="4" n="gen" l="8">
-    <M n="0" v="9225000.0"/>    <M n="1" v="9225000.0"/>
+    <M n="0" v="1.0225E7"/>    <M n="1" v="1.0225E7"/>
     </PF>
    </C>
    <C i="-1029776513" l="102">
@@ -217,14 +217,14 @@
    </C>
   </P>
   <P i="4" n="gen" l="8">
-  <M n="0" v="9225000.0"/>  <M n="1" v="9225000.0"/>
+  <M n="0" v="1.0225E7"/>  <M n="1" v="1.0225E7"/>
    <L i="9" l="14">
-   <M n="0" v="9225000.0"/>   <M n="1" v="9225000.0"/>
+   <M n="0" v="1.0225E7"/>   <M n="1" v="1.0225E7"/>
     <S i="10" l="14">
-    <M n="0" v="75000.0"/>    <M n="1" v="75000.0"/>
+    <M n="0" v="100000.0"/>    <M n="1" v="100000.0"/>
     </S>
     <S i="11" l="15">
-    <M n="0" v="9150000.0"/>    <M n="1" v="9150000.0"/>
+    <M n="0" v="1.0125E7"/>    <M n="1" v="1.0125E7"/>
     </S>
    </L>
   </P>
