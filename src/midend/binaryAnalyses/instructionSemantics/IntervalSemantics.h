@@ -551,8 +551,8 @@ namespace BinaryAnalysis {              // documented elsewhere
                     uint64_t lo=nBits, hi=0;
                     for (size_t i=0; i<nBits; ++i) {
                         if (abits & IntegerOps::shl1<uint64_t>(i)) {
-                            lo = std::min(lo, i);
-                            hi = std::max(hi, i);
+                            lo = std::min(lo, (uint64_t)i);
+                            hi = std::max(hi, (uint64_t)i);
                         }
                     }
                     Intervals result;
@@ -580,8 +580,8 @@ namespace BinaryAnalysis {              // documented elsewhere
                     uint64_t lo=nBits, hi=0;
                     for (size_t i=nBits; i>0; --i) {
                         if (abits & IntegerOps::shl1<uint64_t>(i-1)) {
-                            lo = std::min(lo, i-1);
-                            hi = std::max(hi, i-1);
+                            lo = std::min(lo, (uint64_t)i-1);
+                            hi = std::max(hi, (uint64_t)i-1);
                         }
                     }
                     Intervals result;
