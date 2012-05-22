@@ -42,7 +42,7 @@ check-local:
 EXTRA_DIST = $(ALL_TESTCODES) README 
 
 clean-local:
-	rm -f *.o rose_*.* *.out
+	rm -f *.o rose_*.* *.out *.dot
 	rm -rf QMTest
 
 
