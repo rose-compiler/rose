@@ -227,6 +227,13 @@ SymbolicBomb_SOURCES = demos/SymbolicBomb.C
 SymbolicBomb_CPPFLAGS = $(ROSE_INCLUDES)
 SymbolicBomb_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
+#------------------------------------------------------------------------------------------------------------------------------
+# Example of running an interval analysis in lock step with the simulator
+noinst_PROGRAMS += Intervals
+Intervals_SOURCES = demos/Intervals.C
+Intervals_CPPFLAGS = $(ROSE_INCLUDES)
+Intervals_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
 ###############################################################################################################################
 #  SUPPORT PROGRAMS FOR PAPERS
 ###############################################################################################################################
