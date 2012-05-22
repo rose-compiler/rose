@@ -281,6 +281,16 @@ EXTRA_DIST += semantics.conf multiSemantics.ans
 multiSemantics.passed: semantics.conf multiSemantics
 	@$(RTH_RUN) CMD=multiSemantics INPUT=i686-test1.O3.bin $< $@
 
+# Interval semantics
+noinst_PROGRAMS += intervalSemantics
+intervalSemantics_SOURCES = semantics.C
+intervalSemantics_CPPFLAGS = -DPOLICY_SELECTOR=7
+intervalSemantics_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+STATIC_TEST_TARGETS += intervalSemantics.passed
+EXTRA_DIST += semantics.conf intervalSemantics.ans
+intervalSemantics.passed: semantics.conf intervalSemantics
+	@$(RTH_RUN) CMD=intervalSemantics INPUT=i686-test1.O3.bin $< $@
+
 # Disassembles an executable according to various command-line switches.
 noinst_PROGRAMS += disassemble
 disassemble_SOURCES = disassemble.C linux_syscalls.C

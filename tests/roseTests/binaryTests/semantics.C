@@ -5,6 +5,7 @@
 #define __STDC_FORMAT_MACROS
 #include "rose.h"
 #include "findConstants.h"
+#include "IntervalSemantics.h"
 #include "PartialSymbolicSemantics.h"
 #include "SymbolicSemantics.h"
 #include "YicesSolver.h"
@@ -104,6 +105,15 @@ using namespace BinaryAnalysis::InstructionSemantics;
                       <<*this;
         }
     };
+#elif 7==POLICY_SELECTOR
+#   define TestSemanticsScope IntervalSemantics
+#   define TestValueTemplate IntervalSemantics::ValueType
+    struct TestPolicy: public IntervalSemantics::Policy<> {
+        void dump(SgAsmInstruction *insn) {
+            std::cout <<unparseInstructionWithAddress(insn) <<"\n"
+                      <<get_state();
+        }
+    };
 #else
 #error "Invalid policy selector"
 #endif
@@ -167,7 +177,7 @@ analyze_interp(SgAsmInterpretation *interp)
             TestValueTemplate<32> ip = policy.get_ip();
             if (!ip.is_known()) break;
             rose_addr_t next_addr = ip.known_value();
-#elif 5==POLICY_SELECTOR
+#elif 5==POLICY_SELECTOR || 7==POLICY_SELECTOR
             TestValueTemplate<32> ip = policy.readRegister<32>(semantics.REG_EIP);
             if (!ip.is_known()) break;
             rose_addr_t next_addr = ip.known_value();
