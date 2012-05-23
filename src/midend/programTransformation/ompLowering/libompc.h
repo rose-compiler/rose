@@ -14,17 +14,17 @@ extern void _ompc_do_parallel(void (*func)(void **),void *args);
 //extern unsigned __ompc_output(char [],...);
 extern void _ompc_default_sched(int *lb, int *ub, int *step);
 extern void _ompc_reduction(void *in_p,void *out_p,int type, int op);
-extern void _ompc_barrier();
-extern int _ompc_do_single();
-extern int _ompc_is_master();
+extern void _ompc_barrier(void);
+extern int _ompc_do_single(void);
+extern int _ompc_is_master(void);
 extern void _ompc_flush(char *dst, int nbyte);
 
 //extern void * __ompc_lock_critical;
 extern void _ompc_enter_critical(void **);
 extern void _ompc_exit_critical(void **);
-extern void _ompc_atomic_lock();
-extern void _ompc_atomic_unlock();
-extern int _ompc_is_last();
+extern void _ompc_atomic_lock(void);
+extern void _ompc_atomic_unlock(void);
+extern int _ompc_is_last(void);
 extern void * _ompc_get_thdprv(void ***thdprv_p,int size,void *datap);
 extern void _ompc_copyin_thdprv(void *datap,void *global_datap,int size);
 // scheduling

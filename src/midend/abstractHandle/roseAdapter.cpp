@@ -26,7 +26,7 @@ namespace AbstractHandle{
       i++;
     return (VariantT)i;  
   }
-
+// test LDADD dependency
   roseNode* buildroseNode(SgNode* snode)
   {
     static std::map<SgNode*, roseNode*> sgNodeMap;
