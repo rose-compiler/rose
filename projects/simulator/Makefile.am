@@ -990,6 +990,23 @@ else
 SYS_TEST_TARGETS = warn_no_tests
 endif
 
+# Some of the tests create files name "tfile_%d_%d" where the two numbers are a serial number and a PID. About 5000 of
+# these files are created in total and many of them are not placed in the specified temporary directories. Therefore
+# we have to remove them with a wildcard instead. Sorry if you had your own files with similar names (we tried to be careful).
+MOSTLYCLEANFILES += 						   \
+	rm -f tfile_[0-9]_[0-9][0-9][0-9]			   \
+	rm -f tfile_[0-9]_[0-9][0-9][0-9][0-9]			   \
+	rm -f tfile_[0-9]_[0-9][0-9][0-9][0-9][0-9]		   \
+	rm -f tfile_[0-9][0-9]_[0-9][0-9][0-9]			   \
+	rm -f tfile_[0-9][0-9]_[0-9][0-9][0-9][0-9]		   \
+	rm -f tfile_[0-9][0-9]_[0-9][0-9][0-9][0-9][0-9]	   \
+	rm -f tfile_[0-9][0-9][0-9]_[0-9][0-9][0-9]		   \
+	rm -f tfile_[0-9][0-9][0-9]_[0-9][0-9][0-9][0-9]	   \
+	rm -f tfile_[0-9][0-9][0-9]_[0-9][0-9][0-9][0-9][0-9]	   \
+	rm -f tfile_[0-9][0-9][0-9][0-9]_[0-9][0-9][0-9]	   \
+	rm -f tfile_[0-9][0-9][0-9][0-9]_[0-9][0-9][0-9][0-9]	   \
+	rm -f tfile_[0-9][0-9][0-9][0-9]_[0-9][0-9][0-9][0-9][0-9]
+
 # Cleanup targets. We can't put all the generated files in MOSTLYCLEANFILES because the list gets too long to pass
 # as arguments to "rm" (deficiency in automake).  Therefore we'll create a *.clean target for each test and have
 # clean-local depend on it.
@@ -997,7 +1014,6 @@ SYS_TEST_CLEANUPS = $(addsuffix .clean, $(SYS_TEST_INPUTS))
 .PHONY: $(SYS_TEST_CLEANUPS)
 $(SYS_TEST_CLEANUPS):
 	rm -f $(foreach ext, passed failed err out, $(patsubst %.clean, %, $@).$(ext))
-
 
 # Main syscall testing target, on which "make check" depends.
 check-syscalls:  $(SYS_TEST_TARGETS)
