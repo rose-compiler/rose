@@ -5,7 +5,7 @@ using namespace std;
 namespace  AbstractMemoryObject
 {
   // There should be no implementation code since only abstractions are provided
-  std::set<SgType*> ObjSet::getType()  
+  std::set<SgType*> ObjSet::getType() const 
   {
     std::set<SgType*> rt;
     cerr<<"Error. Direct call to base class's getType() is not allowed."<<endl;
@@ -52,6 +52,21 @@ namespace  AbstractMemoryObject
     return false;  
   }
 
+  bool ObjSet::mayEqual(const ObjSet& o2) const
+  {
+    cerr<<"Error. Direct call to base class's mayEqual () is not allowed."<<endl;
+    assert (false);
+    return false;  
+  }
+
+  bool ObjSet:: mustEqual (const ObjSet& o2) const
+  {
+    cerr<<"Error. Direct call to base class's mustEqual () is not allowed."<<endl;
+    assert (false);
+    return false;  
+  }
+
+
   bool ObjSet::operator < ( const ObjSet& o2) const
   {
     cerr<<"Error. Direct call to base class's operator <() is not allowed."<<endl;
@@ -81,6 +96,15 @@ namespace  AbstractMemoryObject
     return false;  
   }
 */
+/* Greg's desire output: 
+  ostringstream out;
+  out<<"line1\n"<<
+  indent<<"line2\n"<<
+  indent<<"lineLast";
+  return out.str(); 
+  // example use of .str()
+  out << indent << "obj="<<obj.str(indent+"    ")<<" obj2="<<obj2.str(indent+"    ")<<"\n";
+ * */
   std::string ObjSet::toString()
   {
     cerr<<"Error. Direct call to base class's toString() is not allowed."<<endl;
@@ -170,12 +194,28 @@ namespace  AbstractMemoryObject
     assert (false);
     return "";  
    }
+
    bool IndexVector::operator ==( const IndexVector & other) const
    {
     cerr<<"Error. Direct call to base class (IndexVector)'s operator==() is not allowed."<<endl;
     assert (false);
     return false;  
    }
+   bool IndexVector::mayEqual( const IndexVector & other) const
+   {
+    cerr<<"Error. Direct call to base class (IndexVector)'s mayEqual() is not allowed."<<endl;
+    assert (false);
+    return false;  
+   }
+   bool IndexVector::mustEqual( const IndexVector & other) const
+   {
+    cerr<<"Error. Direct call to base class (IndexVector)'s mustEqual() is not allowed."<<endl;
+    assert (false);
+    return false;  
+   }
+
+
+
    bool IndexVector::operator !=( const IndexVector & other) const
    {
     cerr<<"Error. Direct call to base class (IndexVector)'s operator!=() is not allowed."<<endl;
