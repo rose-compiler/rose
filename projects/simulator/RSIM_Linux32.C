@@ -3523,11 +3523,11 @@ sys_shmdt(RSIM_Thread *t, uint32_t shmaddr_va)
     int result = -ENOSYS;
 
     RTS_WRITE(t->get_process()->rwlock()) {
-        if (!t->get_process()->get_memory()->exists(shmaddr_va)) {
+        if (!t->get_process()->get_memory().exists(shmaddr_va)) {
             result = -EINVAL;
             break;
         }
-        std::pair<Extent, MemoryMap::Segment> me = t->get_process()->get_memory()->at(shmaddr_va);
+        std::pair<Extent, MemoryMap::Segment> me = t->get_process()->get_memory().at(shmaddr_va);
         if (me.first.first()!=shmaddr_va ||
             me.second.get_buffer_offset()!=0 ||
             dynamic_cast<MemoryMap::AnonymousBuffer*>(me.second.get_buffer().get())) {
@@ -3733,7 +3733,7 @@ sys_shmat(RSIM_Thread *t, uint32_t shmid, uint32_t shmflg, uint32_t result_va, u
 
     RTS_WRITE(t->get_process()->rwlock()) {
         if (0==shmaddr) {
-            shmaddr = t->get_process()->get_memory()->find_last_free();
+            shmaddr = t->get_process()->get_memory().find_last_free();
         } else if (shmflg & SHM_RND) {
             shmaddr = ALIGN_DN(shmaddr, SHMLBA);
         } else if (ALIGN_DN(shmaddr, 4096)!=shmaddr) {
@@ -3763,7 +3763,7 @@ sys_shmat(RSIM_Thread *t, uint32_t shmid, uint32_t shmflg, uint32_t result_va, u
 
         MemoryMap::BufferPtr buffer = MemoryMap::ExternBuffer::create(buf, ds.shm_segsz);
         MemoryMap::Segment sgmt(buffer, 0, perms, "shmat("+StringUtility::numberToString(shmid)+")");
-        t->get_process()->get_memory()->insert(Extent(shmaddr, ds.shm_segsz), sgmt);
+        t->get_process()->get_memory().insert(Extent(shmaddr, ds.shm_segsz), sgmt);
 
         /* Return values */
         if (4!=t->get_process()->mem_write(&shmaddr, result_va, 4)) {
@@ -5300,7 +5300,7 @@ syscall_madvise(RSIM_Thread *t, int callno)
     /* If pages are unmapped, return -ENOMEM */
     ExtentMap mapped_mem;
     RTS_READ(t->get_process()->rwlock()) {
-        mapped_mem = t->get_process()->get_memory()->va_extents();
+        mapped_mem = t->get_process()->get_memory().va_extents();
     } RTS_READ_END;
     ExtentMap unmapped = mapped_mem.subtract_from(Extent(start, size));
     if (unmapped.size()>0) {

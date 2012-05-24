@@ -290,6 +290,7 @@ RSIM_Thread::signal_deliver(const RSIM_SignalHandling::siginfo_32 &_info)
                 case SIGSYS:
                     /* Exit process with core dump */
                     tracing(TRACE_MISC)->mesg("dumping core...\n");
+                    get_process()->mem_showmap(tracing(TRACE_MISC), "map at time of core dump:\n");
                     get_process()->dump_core(signo);
                     report_stack_frames(tracing(TRACE_MISC));
                     throw RSIM_Process::Exit((signo & 0x7f) | __WCOREFLAG, true);
@@ -674,8 +675,8 @@ RSIM_Thread::report_stack_frames(RTS_Message *mesg, const std::string &title/*="
             SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(insn);
             if (func && !func->get_name().empty() && 0==(func->get_reason() & SgAsmFunction::FUNC_LEFTOVERS)) {
                 mesg->more(" in function %s", func->get_name().c_str());
-            } else if (process->get_memory()->exists(ip)) {
-                const MemoryMap::Segment &sgmt = process->get_memory()->at(ip).second;
+            } else if (process->get_memory().exists(ip)) {
+                const MemoryMap::Segment &sgmt = process->get_memory().at(ip).second;
                 if (!sgmt.get_name().empty())
                     mesg->more(" in memory region %s", sgmt.get_name().c_str());
             }

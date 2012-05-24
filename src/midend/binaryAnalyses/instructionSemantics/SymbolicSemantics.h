@@ -20,7 +20,7 @@ namespace BinaryAnalysis {              // documented elsewhere
         /** A fully symbolic semantic domain.
          *
          *  This semantic domain can be used to emulate the execution of a single basic block of instructions.  It is similar
-         *  in nature to VirtualMachineSemantics, but with a different type of ValueType: instead of values being a constant or
+         *  in nature to PartialSymbolicSemantics, but with a different type of ValueType: instead of values being a constant or
          *  variable with offset, values here are expression trees.
          *
          *  <ul>
