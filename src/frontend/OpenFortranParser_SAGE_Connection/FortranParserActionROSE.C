@@ -200,8 +200,6 @@ void c_action_declaration_construct()
         )
         printf("In c_action_declaration_construct() \n");
 
-    // DQ (12/16/2007): This is the end of a declaration, the declaration should have been built already
-    // but if there is any trash on the astLabelSymbolStack then report the problem and clear the stack.
     if (astLabelSymbolStack.empty() == false)
     {
         if (SgProject::get_verbose() > DEBUG_COMMENT_LEVEL
