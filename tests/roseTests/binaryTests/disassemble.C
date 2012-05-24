@@ -185,7 +185,7 @@ these switches can be obtained by specifying the \"--rose-help\" switch.\n\
 #include "AsmFunctionIndex.h"
 #include "AsmUnparser.h"
 #include "BinaryLoader.h"
-#include "VirtualMachineSemantics.h"
+#include "PartialSymbolicSemantics.h"
 #include "SMTSolver.h"
 #include "BinaryControlFlow.h"
 #include "BinaryFunctionCall.h"
@@ -220,8 +220,8 @@ block_hash(SgAsmBlock *blk, unsigned char digest[20])
     }
     const SgAsmStatementPtrList &stmts = blk->get_statementList();
 
-    typedef VirtualMachineSemantics::Policy<VirtualMachineSemantics::State, VirtualMachineSemantics::ValueType> Policy;
-    typedef X86InstructionSemantics<Policy, VirtualMachineSemantics::ValueType> Semantics;
+    typedef PartialSymbolicSemantics::Policy<PartialSymbolicSemantics::State, PartialSymbolicSemantics::ValueType> Policy;
+    typedef X86InstructionSemantics<Policy, PartialSymbolicSemantics::ValueType> Semantics;
     Policy policy;
     policy.set_discard_popped_memory(true);
     Semantics semantics(policy);
@@ -245,7 +245,7 @@ block_hash(SgAsmBlock *blk, unsigned char digest[20])
     bool ignore_final_ip = true;
     SgAsmx86Instruction *last_insn = isSgAsmx86Instruction(stmts.back());
     if (last_insn->get_kind()==x86_call || last_insn->get_kind()==x86_farcall) {
-        VirtualMachineSemantics::RenameMap rmap;
+        PartialSymbolicSemantics::RenameMap rmap;
         policy.writeMemory(x86_segreg_ss, policy.readRegister<32>("esp"), policy.number<32>(0), policy.true_());
         ignore_final_ip = false;
     }
@@ -379,9 +379,9 @@ private:
                         if (isSgAsmInstruction(stmts[int_n])==args.insn)
                             break;
 
-                    typedef VirtualMachineSemantics::Policy<VirtualMachineSemantics::State,
-                                                            VirtualMachineSemantics::ValueType> Policy;
-                    typedef X86InstructionSemantics<Policy, VirtualMachineSemantics::ValueType> Semantics;
+                    typedef PartialSymbolicSemantics::Policy<PartialSymbolicSemantics::State,
+                                                             PartialSymbolicSemantics::ValueType> Policy;
+                    typedef X86InstructionSemantics<Policy, PartialSymbolicSemantics::ValueType> Semantics;
                     Policy policy;
                     Semantics semantics(policy);
 

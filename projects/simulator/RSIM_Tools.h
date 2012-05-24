@@ -234,8 +234,8 @@ public:
                         std::string name = defn->get_name();
                         if (name.empty()) {
                             RTS_READ(process->rwlock()) {
-                                if (process->get_memory()->exists(defn->get_entry_va())) {
-                                    const MemoryMap::Segment &sgmt = process->get_memory()->at(defn->get_entry_va()).second;
+                                if (process->get_memory().exists(defn->get_entry_va())) {
+                                    const MemoryMap::Segment &sgmt = process->get_memory().at(defn->get_entry_va()).second;
                                     if (!sgmt.get_name().empty())
                                         name = "in " + sgmt.get_name();
                                 }

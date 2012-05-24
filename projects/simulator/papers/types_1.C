@@ -62,7 +62,7 @@ public:
         : SymbolicSemantics::ValueType<nBits>(n, comment) {}
     explicit ValueType(const SymbolicSemantics::TreeNodePtr &node)
         : SymbolicSemantics::ValueType<nBits>(node) {}
-    ValueType(const VirtualMachineSemantics::ValueType<nBits> &other, std::string comment="") {
+    ValueType(const PartialSymbolicSemantics::ValueType<nBits> &other, std::string comment="") {
         set_expression(other.is_known() ?
                        InsnSemanticsExpr::LeafNode::create_integer(nBits, other.known_value(), comment) :
                        InsnSemanticsExpr::LeafNode::create_variable(nBits, comment));

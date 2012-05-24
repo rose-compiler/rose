@@ -1,4 +1,4 @@
-/* Generic code to be inserted into policy classes that are similar to VirtualMachineSemantics in how they organized the
+/* Generic code to be inserted into policy classes that are similar to PartialSymbolicSemantics in how they organized the
  * registers in their State classes.   This header should not be protected with #ifdef because we might need to include it more
  * than once, each time into a different class.
  *

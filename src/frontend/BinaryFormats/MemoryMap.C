@@ -235,6 +235,14 @@ MemoryMap::AnonymousBuffer::create(size_t size)
     return BufferPtr(buf);
 }
 
+MemoryMap::BufferPtr
+MemoryMap::AnonymousBuffer::clone() const
+{
+    if (p_data)
+        return ExternBuffer::clone();
+    return AnonymousBuffer::create(size());
+}
+
 size_t
 MemoryMap::AnonymousBuffer::read(void *buf, size_t offset, size_t nbytes) const
 {
@@ -750,20 +758,28 @@ MemoryMap::read(rose_addr_t va, size_t desired, unsigned req_perms) const
 size_t
 MemoryMap::write1(const void *src_buf/*=NULL*/, rose_addr_t start_va, size_t desired, unsigned req_perms)
 {
-    Segments::const_iterator found = p_segments.find(start_va);
+    Segments::iterator found = p_segments.find(start_va);
     if (found==p_segments.end())
         return 0;
 
     const Extent &range = found->first;
     assert(range.contains(Extent(start_va)));
 
-    Segment segment = found->second;
+    Segment &segment = found->second;
     if ((segment.get_mapperms() & req_perms) != req_perms || !segment.check(range))
         return 0;
 
     if (segment.is_cow()) {
-        segment.set_buffer(segment.get_buffer()->clone());
-        segment.clear_cow();
+        BufferPtr old_buf = segment.get_buffer();
+        BufferPtr new_buf = old_buf->clone();
+        for (Segments::iterator si=p_segments.begin(); si!=p_segments.end(); ++si) {
+            if (si->second.get_buffer()==old_buf) {
+                si->second.set_buffer(new_buf);
+                si->second.clear_cow();
+            }
+        }
+        assert(segment.get_buffer()==new_buf);
+        assert(!segment.is_cow());
     }
 
     rose_addr_t buffer_offset = segment.get_buffer_offset(range, start_va);

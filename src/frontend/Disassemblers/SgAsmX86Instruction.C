@@ -3,7 +3,7 @@
 
 #include "sage3basic.h"
 #include "SymbolicSemantics.h"
-#include "VirtualMachineSemantics.h"
+#include "PartialSymbolicSemantics.h"
 #include "YicesSolver.h"
 #include "Disassembler.h"
 
@@ -181,9 +181,9 @@ SgAsmx86Instruction::get_successors(const std::vector<SgAsmInstruction*>& insns,
         typedef X86InstructionSemantics<Policy, SymbolicSemantics::ValueType> Semantics;
         Policy policy(solver);
 #else
-        typedef VirtualMachineSemantics::Policy<> Policy;
-        typedef VirtualMachineSemantics::ValueType<32> RegisterType;
-        typedef X86InstructionSemantics<Policy, VirtualMachineSemantics::ValueType> Semantics;
+        typedef PartialSymbolicSemantics::Policy<> Policy;
+        typedef PartialSymbolicSemantics::ValueType<32> RegisterType;
+        typedef X86InstructionSemantics<Policy, PartialSymbolicSemantics::ValueType> Semantics;
         Policy policy;
         policy.set_map(initial_memory);
 #endif
@@ -392,8 +392,8 @@ SgAsmx86Instruction::has_effect(const std::vector<SgAsmInstruction*>& insns, boo
 
     if (insns.empty()) return false;
 
-    typedef VirtualMachineSemantics::Policy<> Policy;
-    typedef X86InstructionSemantics<Policy, VirtualMachineSemantics::ValueType> Semantics;
+    typedef PartialSymbolicSemantics::Policy<> Policy;
+    typedef X86InstructionSemantics<Policy, PartialSymbolicSemantics::ValueType> Semantics;
     Policy policy;
     Semantics semantics(policy);
     if (relax_stack_semantics) policy.set_discard_popped_memory(true);
@@ -419,7 +419,7 @@ SgAsmx86Instruction::has_effect(const std::vector<SgAsmInstruction*>& insns, boo
 
     /* Instructions have an effect if the state changed.  We want the comparison to be independent of the instruction pointer,
      * so we'll set the IP of both the initial and final states to the same (unknown) value. */ 
-    policy.get_orig_state().ip = policy.get_state().ip = VirtualMachineSemantics::ValueType<32>();
+    policy.get_orig_state().ip = policy.get_state().ip = PartialSymbolicSemantics::ValueType<32>();
     return !policy.equal_states(policy.get_orig_state(), policy.get_state());
 }
 
@@ -445,19 +445,19 @@ SgAsmx86Instruction::find_noop_subsequences(const std::vector<SgAsmInstruction*>
     if (verbose) std::cerr <<"find_noop_subsequences:\n";
     std::vector< std::pair <size_t/*starting insn index*/, size_t/*num. insns*/> > retval;
 
-    typedef VirtualMachineSemantics::Policy<> Policy;
-    typedef X86InstructionSemantics<Policy, VirtualMachineSemantics::ValueType> Semantics;
+    typedef PartialSymbolicSemantics::Policy<> Policy;
+    typedef X86InstructionSemantics<Policy, PartialSymbolicSemantics::ValueType> Semantics;
     Policy policy;
     if (relax_stack_semantics) policy.set_discard_popped_memory(true);
     Semantics semantics(policy);
 
     /* When comparing states, we don't want to compare the instruction pointers. Therefore, we'll change the IP value of
      * each state to be the same. */
-    const VirtualMachineSemantics::ValueType<32> common_ip;
+    const PartialSymbolicSemantics::ValueType<32> common_ip;
     
     /* Save the state before and after each instruction.  states[i] is the state before insn[i] and states[i+1] is the state
      * after insn[i]. */
-    std::vector<VirtualMachineSemantics::State<VirtualMachineSemantics::ValueType> > state;
+    std::vector<PartialSymbolicSemantics::State<PartialSymbolicSemantics::ValueType> > state;
     state.push_back(policy.get_state());
     state.back().ip = common_ip;
     try {
