@@ -11,7 +11,11 @@ LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 OPENCL_NO_BUILT_IN_CODES = 
 
-OPENCL_CODES = 
+OPENCL_CODES = \
+    transpose_kernel.cl \
+    nbody.cl \
+    nbody_cpu.cl \
+    nbody_gpu.cl
 
 TESTCODES = $(OPENCL_NO_BUILT_IN_CODES) $(OPENCL_CODES)
 
@@ -23,17 +27,11 @@ $(TESTCODES_Objects): ./OpenClTests
 	rm -f $(@:.o=.cu)
 
 check-local:
-if ROSE_BUILD_EDG_WITH_OPENCL_SUPPORT
 	@echo "Tests OpenCl support (parsing)"
 	@$(MAKE) $(TESTCODES_Objects)
 	@echo "***********************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests/OpenClTests: make check rule complete (terminated normally) ******"
 	@echo "***********************************************************************************************"
-else
-	@echo "****************************************************************************************************"
-	@echo "****** ROSE/tests/CompileTests/OpenClTests: (ROSE not configured for these tests) ******"
-	@echo "****************************************************************************************************"
-endif
 
 clean-local:
 	rm -f *.o rose_* test_*

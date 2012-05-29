@@ -1056,6 +1056,14 @@ HEADER_LIST_DECLARATIONS
 
 HEADER_AGGREGATE_INITIALIZER_EXPRESSION_END
 
+HEADER_COMPOUND_INITIALIZER_EXPRESSION_START
+HEADER_LIST_DECLARATIONS
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
+
+HEADER_COMPOUND_INITIALIZER_EXPRESSION_END
 
 HEADER_CONSTRUCTOR_INITIALIZER_EXPRESSION_START
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
@@ -2976,7 +2984,7 @@ SgFunctionCallExp::get_type() const
 
           functionType = isSgFunctionType(likelyFunctionType);
 
-#ifdef ROSE_USE_EDG_VERSION_4
+#if defined(ROSE_USE_EDG_VERSION_4) || defined(ROSE_USE_CLANG_FRONTEND)
        // DQ (12/31/2008): EDG version 4.0 has a simpler representation which translates a bit differently.
        // I think this is an improvement to this functionality of this function.
           if (functionType == NULL)
@@ -2986,7 +2994,7 @@ SgFunctionCallExp::get_type() const
 #endif
         }
 
-#ifdef ROSE_USE_EDG_VERSION_4
+#if defined(ROSE_USE_EDG_VERSION_4) || defined(ROSE_USE_CLANG_FRONTEND)
   // if not already set
      if (returnType == NULL)
           returnType = functionType->get_return_type();
@@ -3125,7 +3133,7 @@ SgDotStarOp::get_type() const
              }
           default:
              {
-#ifdef ROSE_USE_EDG_VERSION_4
+#if defined(ROSE_USE_EDG_VERSION_4) || defined(ROSE_USE_CLANG_FRONTEND)
             // DQ (12/31/2008): This appears to be the correct fix for EDG version 4.0, 
             // but it is unclear why this is not an issue for EDG 3.x previously.
             // printf ("Using default case in SgDotStarOp::get_type() differently with EDG version 4.x someType = %s \n",someType->class_name().c_str());
@@ -4625,6 +4633,84 @@ SgAggregateInitializer::get_type() const
 
 SOURCE_AGGREGATE_INITIALIZER_EXPRESSION_END
 
+SOURCE_COMPOUND_INITIALIZER_EXPRESSION_START
+
+void
+SgCompoundInitializer::post_construction_initialization() 
+   {
+     if (get_initializers())
+          get_initializers()->set_parent(this);
+   }
+
+// DQ: trying to remove the nested iterator class
+void
+SgCompoundInitializer::append_initializer(SgExpression* what)
+   {
+     assert(this != NULL);
+
+  // DQ (11/15/2006): avoid setting newArgs this late in the process.
+     ROSE_ASSERT(p_initializers != NULL);
+     if(!p_initializers)
+        {
+       // set_initializers(new SgExprListExp(this->get_file_info()));
+          SgExprListExp* newArgs = new SgExprListExp ( this->get_file_info() );
+          assert(newArgs != NULL);
+          newArgs->set_endOfConstruct( this->get_file_info() );
+          set_initializers(newArgs);
+        }
+
+  // insert_initializer(p_initializers->end(),what);
+     p_initializers->append_expression(what);
+   }
+
+SgExpression*
+SgCompoundInitializer::get_next(int& n) const
+   {
+     if(n==0)
+        {
+          n++;
+          return get_initializers();
+        }
+       else
+          return 0;
+   }
+
+int
+SgCompoundInitializer::replace_expression(SgExpression* o, SgExpression* n)
+   {
+  // DQ (12/17/2006): This function should have the semantics that it will represent a  
+  // structural change to the AST, thus it is free to set the parent of the new expression.
+
+     ROSE_ASSERT(o != NULL);
+     ROSE_ASSERT(n != NULL);
+
+     if (get_initializers() == o)
+        {
+          set_initializers(isSgExprListExp(n));
+          n->set_parent(this);
+          return 1;
+        }
+       else
+        {
+          return 0;
+        }
+   }
+
+SgType*
+SgCompoundInitializer::get_type() const
+   {
+     if (p_expression_type != NULL)
+        {
+          return p_expression_type;
+        }
+       else
+        {
+       // printf ("SgAggregateInitializer::get_type(): default case\n");
+          return SgTypeDefault::createType();
+        }
+   }
+
+SOURCE_COMPOUND_INITIALIZER_EXPRESSION_END
 
 SOURCE_CONSTRUCTOR_INITIALIZER_EXPRESSION_START
 
@@ -6137,7 +6223,7 @@ SgType* SgCudaKernelCallExp::get_type() const
 
           functionType = isSgFunctionType(likelyFunctionType);
 
-#ifdef ROSE_USE_EDG_VERSION_4
+#if defined(ROSE_USE_EDG_VERSION_4) || defined(ROSE_USE_CLANG_FRONTEND)
        // DQ (12/31/2008): EDG version 4.0 has a simpler representation which translates a bit differently.
        // I think this is an improvement to this functionality of this function.
           if (functionType == NULL)
@@ -6147,7 +6233,7 @@ SgType* SgCudaKernelCallExp::get_type() const
 #endif
         }
 
-#ifdef ROSE_USE_EDG_VERSION_4
+#if defined(ROSE_USE_EDG_VERSION_4) || defined(ROSE_USE_CLANG_FRONTEND)
   // if not already set
      if (returnType == NULL)
           returnType = functionType->get_return_type();
