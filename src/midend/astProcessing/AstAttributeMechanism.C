@@ -213,6 +213,15 @@ AstAttributeMechanism::AstAttributeMechanism ()
   // Nothing to do here!
    }
 
+static
+AstAttribute* _clone_attribute(AstAttribute* attr)
+{
+  // \pp not sure if having nullptr as attributes is a bug,
+  //     but since they occur, nullptrs need to be handled.
+  return (attr ? attr->copy() : attr);
+}
+
+
 AstAttributeMechanism::AstAttributeMechanism ( const AstAttributeMechanism & X )
    {
   // This is the copy constructor to support deep copies of AST attribute containers.
@@ -226,7 +235,7 @@ AstAttributeMechanism::AstAttributeMechanism ( const AstAttributeMechanism & X )
      for (const_iterator iter = X.begin(); iter != X.end(); iter++)
         {
        // Call the copy mechanism on the AstAttribute (virtual copy constructor)
-          this->insert(std::pair<std::string,AstAttribute*>( iter->first , iter->second->copy() ) );
+          this->insert(std::make_pair( iter->first , _clone_attribute(iter->second) ));
         }
 #else
   // ((const AttributeMechanism<std::string,AstAttribute*>*) this) = X;
@@ -247,4 +256,3 @@ AstRegExAttribute::AstRegExAttribute(const std::string & s)
    {
      expression = s;
    }
-
