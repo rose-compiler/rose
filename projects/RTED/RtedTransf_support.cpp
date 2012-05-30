@@ -11,7 +11,7 @@
 #include <boost/algorithm/string.hpp>
 
 #include "sageFunctors.h"
-#include "sageGeneric.hpp"
+#include "sageGeneric.h"
 
 #include "RtedSymbols.h"
 #include "DataStructures.h"
@@ -216,7 +216,7 @@ SgBasicBlock& requiresParentIsBasicBlock(SgStatement& stmt)
     // Unfortunately ensureBasicBlockAsParent() does not work as its name suggests. Here is what it
     // really means
   //SgLocatedNode* block = SI::ensureBasicBlockAsParent(&stmt);
-  SgLocatedNode* block = NULL; 
+  SgLocatedNode* block = NULL;
   if (SI::isBodyStatement(&stmt) && !isSgBasicBlock(&stmt))
       block = SI::makeSingleStatementBodyToBlock(&stmt); // push the stmt into a newly created basic block body
   else
@@ -1010,14 +1010,12 @@ RtedTransformation::appendDimensions(SgExprListExp* arg_list, const RtedArray& a
       SgExpression*  noDims = SageBuilder::buildIntVal( arr.getDimension() );
 
       SageInterface::appendExpression(dimargs, noDims);
-      BOOST_FOREACH( SgExpression* expr, arr.getIndices() ) {
-          if ( expr == NULL )
-          {
-              // \pp ???
-              expr = SageBuilder::buildIntVal( -1 );
-          }
-
+      BOOST_FOREACH( SgExpression* expr, arr.getIndices() )
+      {
+          // \pp ??? if ( expr == NULL ) { expr = SageBuilder::buildIntVal( -1 ); }
           ROSE_ASSERT( expr );
+
+          std::cout << "m=" << typeid(*expr).name() << std::endl;
 
           // we add a value 0, otherwise the unparser skips the expressions
           // \pp \todo fix the unparser

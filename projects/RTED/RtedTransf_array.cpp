@@ -10,7 +10,7 @@
 
 #include <boost/foreach.hpp>
 
-#include "sageGeneric.hpp"
+#include "sageGeneric.h"
 
 #include "RtedSymbols.h"
 #include "DataStructures.h"
@@ -515,42 +515,12 @@ void RtedTransformation::insertArrayAccessCall(SgStatement* stmt, SgPntrArrRefEx
               );
 }
 
-
-void populateDimensions(RtedArray& array, SgInitializedName& init, SgArrayType& type_)
+void populateDimensions(RtedArray& array, SgInitializedName& init, SgArrayType& arrtype)
 {
-   std::vector<SgExpression*> indices;
-   bool                       implicit_index = false;
-   SgArrayType*               arrtype = &type_;
-
-   while (arrtype)
-   {
-      SgExpression* index = arrtype -> get_index();
-      if (index)
-         indices.push_back(index);
-      else
-         implicit_index = true;
-
-      arrtype = isSgArrayType(arrtype -> get_base_type());
-   }
-
-   // handle implicit first dimension for array initializers
-   // for something like
-   //      int p[][2][3] = {{{ 1, 2, 3 }, { 4, 5, 6 }}}
-   //  we can calculate the first dimension as
-   //      sizeof( p ) / ( sizeof( int ) * 2 * 3 )
-   if (implicit_index)
-   {
-      SgExpression* mulid = buildIntVal(1);
-      SgExpression* denominator = std::accumulate(indices.begin(), indices.end(), mulid, buildMultiplyOp);
-      SgVarRefExp*  varref = buildVarRefExp(&init, getSurroundingStatement(init)->get_scope());
-      SgExpression* sz = buildDivideOp(buildSizeOfOp(varref), denominator);
-
-      indices.insert(indices.begin(), sz);
-   }
+   std::vector<SgExpression*> indices = get_C_array_dimensions(arrtype, init);
 
    array.getIndices().swap(indices);
 }
-
 
 // obsolete
 void RtedTransformation::visit_sgPointerDerefExp(SgPointerDerefExp& n)

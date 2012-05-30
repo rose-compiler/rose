@@ -1,6 +1,6 @@
-#ifndef _SAGEGENERIC_HPP
+#ifndef _SAGEGENERIC_H
 
-/// \file sageGeneric.hpp
+/// \file sageGeneric.h
 ///       This file implements generic (template) sage query functions
 ///       Currently this includes functions for:
 ///       - dispatching according to the type of a sage node (dispatch)
@@ -8,7 +8,7 @@
 ///       - recovering the type of a sage node assertively (assert_node_type)
 /// \email peter.pirkelbauer@llnl.gov
 
-#define _SAGEGENERIC_HPP
+#define _SAGEGENERIC_H
 
 #include <stdexcept>
 
@@ -2979,4 +2979,4 @@ namespace sg
     swap_parent(lhs_child, rhs_child);
   }
 }
-#endif /* _SAGEGENERIC_HPP */
+#endif /* _SAGEGENERIC_H */

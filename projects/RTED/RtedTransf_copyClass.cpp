@@ -6,7 +6,7 @@
 #include <string>
 #include <set>
 
-#include "sageGeneric.hpp"
+#include "sageGeneric.h"
 
 #include "RtedSymbols.h"
 #include "DataStructures.h"
