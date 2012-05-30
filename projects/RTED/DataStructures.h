@@ -30,21 +30,27 @@ SgExpression* clone_sage_expression(const SgExpression* exp)
  * -----------------------------------------------------------*/
 struct RtedArray
 {
+  private:
     SgInitializedName*         initName;             // not owning
     SgStatement*               surroundingStatement; // not owning
+
+  public:
     AllocKind                  allocKind;
-    SgExpression*              size;                 // not owning
+
+  private:
+    SgExpression*              size;                 // owning
     std::vector<SgExpression*> indices;              // owning
 
+  public:
     RtedArray()
-    : initName(NULL), surroundingStatement(NULL), allocKind(akUndefined), size(0), indices()
+    : initName(0), surroundingStatement(0), allocKind(akUndefined), size(0), indices()
     {
       // \todo remove constructor and use insert for adding elements to the map
     }
 
     RtedArray(const RtedArray& orig)
-    : initName(orig.initName), surroundingStatement(orig.surroundingStatement),
-      allocKind(orig.allocKind), size(orig.size), indices()
+    : initName(orig.initName), surroundingStatement(orig.surroundingStatement), allocKind(orig.allocKind),
+      size(SageInterface::deepCopy(orig.size)), indices()
     {
       std::transform(orig.indices.begin(), orig.indices.end(), std::back_inserter(indices), clone_sage_expression);
     }
@@ -59,6 +65,7 @@ struct RtedArray
     ~RtedArray()
     {
       for_each(indices.begin(), indices.end(), delete_sage_expression);
+      delete_sage_expression(size);
     }
 
     RtedArray& operator=(const RtedArray& orig)
@@ -67,6 +74,24 @@ struct RtedArray
 
       swap(*this, tmp);
       return *this;
+    }
+
+    SgStatement* getStmt() const
+    {
+      ROSE_ASSERT(surroundingStatement);
+      return surroundingStatement;
+    }
+
+    const SgExpression* getSize() const
+    {
+      ROSE_ASSERT(size);
+      return size;
+    }
+
+    SgInitializedName* getName() const
+    {
+      ROSE_ASSERT(initName);
+      return initName;
     }
 
     std::vector<SgExpression*>&       getIndices()       { return indices; }

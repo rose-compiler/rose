@@ -50,7 +50,8 @@
 #include <boost/foreach.hpp>
 #include <sstream>
 #include <iostream>
-#include <algorithm> //for set operations
+#include <algorithm> // for set operations
+#include <numeric>   // for std::accumulate
 
 
 #ifdef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
