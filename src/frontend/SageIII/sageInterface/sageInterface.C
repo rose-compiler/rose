@@ -25,7 +25,8 @@
 #include "sageBuilder.h"
 
 // PP 01/06/2012 : need swap operations for wrapFunction implementation
-#include "sageGeneric.hpp"
+// PP 05/30/2012 : need ancestor function
+#include "sageGeneric.h"
 
 // PP 01/06/2012 : need convenience functors to interface STL
 #include "sageFunctors.h"
@@ -8029,7 +8030,7 @@ SgAssignInitializer* SageInterface::splitExpression(SgExpression* from, string n
   SgStatement* stmt = getStatementOfExpression(from);
   assert (stmt);
   if (!isSgForInitStatement(stmt->get_parent())) {
-    //SageInterface::ensureBasicBlockAsParent(stmt); 
+    //SageInterface::ensureBasicBlockAsParent(stmt);
     // no return value is accepted. Only the optional transformation matters
     if (isBodyStatement(stmt) && !isSgBasicBlock(stmt))
       makeSingleStatementBodyToBlock (stmt);
@@ -8441,7 +8442,7 @@ void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStm
         }
 
   // Liao 3/2/2012. The semantics of ensureBasicBlockAsParent() are messy. input targetStmt may be
-  // returned as it is if it is already a basic block as a body of if/while/catch/ etc. 
+  // returned as it is if it is already a basic block as a body of if/while/catch/ etc.
   // We now have single statement true/false body for IfStmt etc
   // However, IfStmt::insert_child() is ambiguous and not implemented
   // So we make SgBasicBlock out of the single statement and
@@ -8584,17 +8585,17 @@ void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStm
                if (isSgIfStmt(parent)->get_true_body()==targetStmt)
                   {
                     // Liao 3/2/2012
-                    // We have some choices: 
+                    // We have some choices:
                     // 1) if the targeStmt is a basic block, we can append/prepend the new stmt
                     // within the targetStmt. But this is not the exact semantics of insertStatment. It will break the outliner.
                     // Since the targetStmt will have new content inside of it, which is not the semantics of
-                    // inserting anything before/or after it. 
+                    // inserting anything before/or after it.
                     // 2) always insert a padding basic block between parent and targetStmt
                     //   and we can legally insert before/after the target statement within the
-                    //   padding basic block. 
-                    //TODO: this insertion of padding basic block should ideally go into some AST normalization phase 
+                    //   padding basic block.
+                    //TODO: this insertion of padding basic block should ideally go into some AST normalization phase
                     // so the transformation function (insertStatement) only does what it means to do, no more and no less.
-                    SgBasicBlock* newparent = buildBasicBlock (targetStmt); 
+                    SgBasicBlock* newparent = buildBasicBlock (targetStmt);
                     isSgIfStmt(parent)->set_true_body(newparent);
                     newparent->set_parent(parent);
                     insertStatement(targetStmt, newStmt,insertBefore);
@@ -8604,7 +8605,7 @@ void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStm
                     {
 
                       // ensureBasicBlockAsParent(targetStmt);
-                      SgBasicBlock* newparent = buildBasicBlock (targetStmt); 
+                      SgBasicBlock* newparent = buildBasicBlock (targetStmt);
                       isSgIfStmt(parent)->set_false_body(newparent);
                       newparent->set_parent(parent);
                       insertStatement(targetStmt, newStmt,insertBefore);
@@ -8619,7 +8620,7 @@ void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStm
                  else
                     if (isSgWhileStmt(parent)->get_body()==targetStmt)
                     {
-                      SgBasicBlock* newparent = buildBasicBlock (targetStmt); 
+                      SgBasicBlock* newparent = buildBasicBlock (targetStmt);
                       isSgWhileStmt(parent)->set_body(newparent);
                       newparent->set_parent(parent);
                       insertStatement(targetStmt, newStmt,insertBefore);
@@ -8636,7 +8637,7 @@ void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStm
                          if (isSgDoWhileStmt(parent)->get_body()==targetStmt)
                          {
 
-                           SgBasicBlock* newparent = buildBasicBlock (targetStmt); 
+                           SgBasicBlock* newparent = buildBasicBlock (targetStmt);
                            isSgDoWhileStmt(parent)->set_body(newparent);
                            newparent->set_parent(parent);
                            insertStatement(targetStmt, newStmt,insertBefore);
@@ -8649,7 +8650,7 @@ void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStm
                        {
                          if (isSgForStatement(parent)->get_loop_body()==targetStmt)
                          {
-                           SgBasicBlock* newparent = buildBasicBlock (targetStmt); 
+                           SgBasicBlock* newparent = buildBasicBlock (targetStmt);
                            isSgForStatement(parent)->set_loop_body(newparent);
                            newparent->set_parent(parent);
                            insertStatement(targetStmt, newStmt,insertBefore);
@@ -8675,7 +8676,7 @@ void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStm
                         }
                        else if (SgOmpBodyStatement * p = isSgOmpBodyStatement (parent))
                        {
-                         SgBasicBlock* newparent = buildBasicBlock (targetStmt); 
+                         SgBasicBlock* newparent = buildBasicBlock (targetStmt);
                          isSgOmpBodyStatement(parent)->set_body(newparent);
                          newparent->set_parent(parent);
                          insertStatement(targetStmt, newStmt,insertBefore);
@@ -10088,7 +10089,7 @@ bool SageInterface::isBodyStatement (SgStatement* s)
     case V_SgWhileStmt:
       {
         if (isSgWhileStmt(p)->get_body() == s)
-          rt = true; 
+          rt = true;
         break;
       }
     case V_SgDoWhileStmt:
@@ -10106,7 +10107,7 @@ bool SageInterface::isBodyStatement (SgStatement* s)
     case V_SgCatchOptionStmt:
       {
         if (isSgCatchOptionStmt(p)->get_body() == s)
-          rt = true; 
+          rt = true;
         break;
       }
     case V_SgIfStmt:
@@ -10132,7 +10133,7 @@ bool SageInterface::isBodyStatement (SgStatement* s)
 SgBasicBlock * SageInterface::makeSingleStatementBodyToBlock(SgStatement* singleStmt)
 {
   ROSE_ASSERT (singleStmt != NULL); // not NULL
-  ROSE_ASSERT (isSgBasicBlock(singleStmt) == NULL); //not a block 
+  ROSE_ASSERT (isSgBasicBlock(singleStmt) == NULL); //not a block
   ROSE_ASSERT (isBodyStatement(singleStmt) == true); // is a body statement
 
   SgBasicBlock* rt = NULL;
@@ -10347,8 +10348,8 @@ SgLocatedNode* SageInterface::ensureBasicBlockAsParent(SgStatement* s)
             ensureBasicBlockAsBodyOfUpcForAll(isSgUpcForAllStatement(n));
             break;
           }
- 
-          default: 
+
+          default:
             {
               if (isSgOmpBodyStatement(n))
                 ensureBasicBlockAsBodyOfOmpBodyStmt(isSgOmpBodyStatement(n));
@@ -14531,6 +14532,8 @@ void SageInterface::annotateExpressionsWithUniqueNames (SgProject* project)
 #endif
 
 
+  //
+  // wrap free-standing function body in another function
 
   SgInitializedName& SageInterface::getFirstVariable(SgVariableDeclaration& vardecl)
   {
@@ -14575,7 +14578,6 @@ void SageInterface::annotateExpressionsWithUniqueNames (SgProject* project)
   SageInterface::wrapFunction(SgFunctionDeclaration& definingDeclaration, SgName newName)
   {
     namespace SB = SageBuilder;
-    namespace SI = SageInterface;
 
     // handles freestanding functions only
     ROSE_ASSERT(typeid(SgFunctionDeclaration) == typeid(definingDeclaration));
@@ -14587,7 +14589,7 @@ void SageInterface::annotateExpressionsWithUniqueNames (SgProject* project)
     // create new function definition/declaration in the same scope
     SgScopeStatement*         containing_scope = definingDeclaration.get_scope();
     SgType*                   result_type = definingDeclaration.get_type()->get_return_type();
-    SgExprListExp*            decorators = SI::deepCopy( definingDeclaration.get_decoratorList() );
+    SgExprListExp*            decorators = deepCopy( definingDeclaration.get_decoratorList() );
     SgFunctionDeclaration*    wrapperfn = SB::buildDefiningFunctionDeclaration(newName, result_type, &param_list, containing_scope, decorators);
     SgFunctionDefinition*     wrapperdef = wrapperfn->get_definition();
     ROSE_ASSERT(wrapperdef);
@@ -14617,30 +14619,126 @@ void SageInterface::annotateExpressionsWithUniqueNames (SgProject* project)
       SgVariableDeclaration*  res = SB::buildVariableDeclaration( "res", result_type, SB::buildAssignInitializer(callWrapped), body );
       SgVarRefExp*            resref = SB::buildVarRefExp( res );
 
-      SI::appendStatement(res, body);
+      appendStatement(res, body);
 
       // add return statement, returning result
       resultName    = &getFirstVariable(*res);
       callStatement = res;
 
-      SI::appendStatement(SB::buildReturnStmt(resref), body);
+      appendStatement(SB::buildReturnStmt(resref), body);
     }
     else
     {
       // add function call statement to original function
       callStatement = SB::buildExprStatement(callWrapped);
-      SI::appendStatement(callStatement, body);
+      appendStatement(callStatement, body);
     }
 
     ROSE_ASSERT(callStatement);
 
     // create non defining declaration
-    SgExprListExp*            decorator_proto = SI::deepCopy( decorators );
+    SgExprListExp*            decorator_proto = deepCopy( decorators );
     SgFunctionDeclaration*    wrapperfn_proto = SB::buildNondefiningFunctionDeclaration(wrapperfn, containing_scope, decorator_proto);
 
     // add the new functions at the proper location of the surrounding scope
-    SI::insertStatementBefore(&definingDeclaration, wrapperfn_proto);
-    SI::insertStatementAfter (&definingDeclaration, wrapperfn);
+    insertStatementBefore(&definingDeclaration, wrapperfn_proto);
+    insertStatementAfter (&definingDeclaration, wrapperfn);
 
     return std::make_pair(callStatement, resultName);
+  }
+
+  //
+  // flatten C/C++ array dimensions
+
+  static
+  void extract_C_array_dimensions(const SgArrayType& arr_type, std::vector<SgExpression*>& indices, SgType*& undertype)
+  {
+    namespace SI = SageInterface;
+
+    const SgArrayType* arrtype = &arr_type;
+
+    while (arrtype)
+    {
+      indices.push_back(SI::deepCopy(arrtype->get_index()));
+
+      undertype = arrtype->get_base_type();
+      arrtype = isSgArrayType(undertype);
+    }
+
+    ROSE_ASSERT((!indices.empty()) && undertype);
+  }
+
+  std::vector<SgExpression*>
+  SageInterface::get_C_array_dimensions(const SgArrayType& arrtype)
+  {
+    std::vector<SgExpression*> res;
+    SgType*                    undertype;
+
+    extract_C_array_dimensions(arrtype, res, undertype);
+
+    return res;
+  }
+
+  static
+  SgExpression* create_mulop(SgExpression* lhs, const SgExpression* rhs)
+  {
+    namespace SB = SageBuilder;
+    namespace SI = SageInterface;
+
+    // we own the lhs (intermediate result),
+    // but we do not own the rhs (another top-level expression)
+    return SB::buildMultiplyOp(lhs, SI::deepCopy(rhs));
+  }
+
+  static
+  std::vector<SgExpression*>
+  get_C_array_dimensions_aux(const SgArrayType& arrtype, SgVarRefExp& varref)
+  {
+    namespace SB = SageBuilder;
+
+    std::vector<SgExpression*> res;
+    SgType*                    undertype;
+
+    extract_C_array_dimensions(arrtype, res, undertype);
+
+    const std::vector<SgExpression*>::iterator first = res.begin();
+
+    // if the first dimension was open, create the expression for it
+    if (!*first)
+    {
+      // handle implicit first dimension for array initializers
+      // for something like
+      //      int p[][2][3] = {{{ 1, 2, 3 }, { 4, 5, 6 }}}
+      //  we can calculate the first dimension as
+      //      sizeof( p ) / ( sizeof( int ) * 2 * 3 )
+
+      const std::vector<SgExpression*>::iterator aa = first+1;
+      const std::vector<SgExpression*>::iterator zz = res.end();
+
+      SgExpression*     sz_undertype = SB::buildSizeOfOp(undertype); // was: buildIntVal(1);
+      SgExpression*     denominator  = std::accumulate(aa, zz, sz_undertype, create_mulop);
+      SgSizeOfOp*       sz_var       = SB::buildSizeOfOp(&varref);
+      SgExpression*     sz           = SB::buildDivideOp(sz_var, denominator);
+
+      *first = sz;
+    }
+
+    return res;
+  }
+
+  std::vector<SgExpression*>
+  SageInterface::get_C_array_dimensions(const SgArrayType& arrtype, const SgVarRefExp& varref)
+  {
+    return get_C_array_dimensions_aux(arrtype, sg::deref(deepCopy(&varref)));
+  }
+
+  std::vector<SgExpression*>
+  SageInterface::get_C_array_dimensions(const SgArrayType& arrtype, SgInitializedName& initname)
+  {
+    namespace SB = SageBuilder;
+
+    SgScopeStatement* scope  = sg::ancestor<SgStatement>(initname).get_scope();
+    SgVarRefExp*      varref = SB::buildVarRefExp(&initname, scope);
+
+    return get_C_array_dimensions_aux(arrtype, sg::deref(varref));
   }

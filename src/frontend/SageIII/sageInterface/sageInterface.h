@@ -748,6 +748,45 @@ SgType* getArrayElementType(SgType* t);
 //! Get the element type of an array, pointer or string, or NULL if not applicable
 SgType* getElementType(SgType* t);
 
+
+/// \brief  returns the array dimensions in an array as defined for @arrtype
+/// \param  arrtype the type of a C/C++ array
+/// \return an array that contains an expression indicating each dimension size.
+///         OWNERSHIP of the expressions is TRANSFERED TO the CALLEE (which
+///         becomes responsible of freeing the expressions).
+///         note, the first entry of the array can be NULL, if the array
+///         dimension was not specified.
+///         e.g., int x[] = { 1, 2, 3};
+///         note, the expression does not have to be a constant
+///         e.g., int x[i*5];
+/// \post   return-value.empty() == false
+std::vector<SgExpression*>
+get_C_array_dimensions(const SgArrayType& arrtype);
+
+/// \brief  returns the array dimensions in an array as defined for @arrtype
+/// \param  arrtype the type of a C/C++ array
+/// \param  varref  a reference to an array variable (the variable of type @arrtype)
+/// \return an array that contains an expression indicating each dimension size.
+///         OWNERSHIP of the expressions is TRANSFERED TO the CALLEE (which
+///         becomes responsible of freeing the expressions).
+///         If the first array dimension was not specified an expression
+///         that expresses the size in form of the variable declaration
+///         e.g., for int x[][2] = { 1, 2, 3, 4 };
+///         the entry for the first dimension will be:
+///         sizeof(x) / (sizeof(int) * 2 /* 2nd dimension */)
+/// \pre    @arrtype is the type of @varref
+/// \post   return-value.empty() == false
+/// \post   return-value[*] != NULL /* no nullptr in the returned vector */
+std::vector<SgExpression*>
+get_C_array_dimensions(const SgArrayType& arrtype, const SgVarRefExp& varref);
+
+/// \overload
+/// \note     see get_C_array_dimensions for SgVarRefExp for details.
+/// \todo     make initname const
+std::vector<SgExpression*>
+get_C_array_dimensions(const SgArrayType& arrtype, SgInitializedName& initname);
+
+
 //! Check if an expression is an array access (SgPntrArrRefExp). If so, return its name expression and subscripts if requested. Users can use convertRefToInitializedName() to get the possible name. It does not check if the expression is a top level SgPntrArrRefExp.
 bool isArrayReference(SgExpression* ref, SgExpression** arrayNameExp=NULL, std::vector<SgExpression*>** subscripts=NULL);
 
@@ -1433,7 +1472,7 @@ void changeBreakStatementsToGotos(SgStatement* loopOrSwitch);
 //! Check if the body of a 'for' statement is a SgBasicBlock, create one if not.
 SgBasicBlock* ensureBasicBlockAsBodyOfFor(SgForStatement* fs);
 
-//! Check if the body of a 'upc_forall' statement is a SgBasicBlock, create one if not. 
+//! Check if the body of a 'upc_forall' statement is a SgBasicBlock, create one if not.
 SgBasicBlock* ensureBasicBlockAsBodyOfUpcForAll(SgUpcForAllStatement* fs);
 
 //! Check if the body of a 'while' statement is a SgBasicBlock, create one if not.
@@ -1473,7 +1512,7 @@ SgBasicBlock * makeSingleStatementBodyToBlock(SgStatement* singleStmt);
 
 #if 0
 /**  If s is the body of a loop, catch, or if statement and is already a basic block,
- *   s is returned unmodified. Otherwise generate a SgBasicBlock between s and its parent 
+ *   s is returned unmodified. Otherwise generate a SgBasicBlock between s and its parent
  *   (a loop, catch, or if statement, etc). */
 SgLocatedNode* ensureBasicBlockAsParent(SgStatement* s);
 #endif
