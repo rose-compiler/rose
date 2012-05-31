@@ -14626,8 +14626,7 @@ void SageInterface::annotateExpressionsWithUniqueNames (SgProject* project)
       resultName    = &getFirstVariable(*res);
       callStatement = res;
 
-      appendStatement(SB::buildReturnStmt(resre
-      f), body);
+      appendStatement(SB::buildReturnStmt(resref), body);
     }
     else
     {
@@ -14651,93 +14650,125 @@ void SageInterface::annotateExpressionsWithUniqueNames (SgProject* project)
 
   //
   // flatten C/C++ array dimensions
-
-  static
-  std::pair<std::vector<SgExpression*>, SgType*>
-  void get_C_array_dimensions_aux(const SgArrayType& arr_type)
+  namespace
   {
-    namespace SI = SageInterface;
-
-    const SgArrayType*         arrtype = &arr_type;
-    std::vector<SgExpression*> indices;
-    SgType*                    undertype = NULL;
-
-    while (arrtype)
+    struct VarrefBuilder
     {
-      indices.push_back(SI::deepCopy(arrtype->get_index()));
+      virtual SgVarRefExp* get() const = 0;
 
-      undertype = arrtype->get_base_type();
-      arrtype = isSgArrayType(undertype);
+      static
+      SgVarRefExp* build(const SgVarRefExp& n)
+      {
+        return SageInterface::deepCopy(&n);
+      }
+
+      static
+      SgVarRefExp* build(SgInitializedName& n)
+      {
+        SgScopeStatement* scope = sg::ancestor<SgStatement>(n).get_scope();
+
+        return SageBuilder::buildVarRefExp(&n, scope);
+      }
+    };
+
+    template <class AstNode>
+    struct VarrefCreator : VarrefBuilder
+    {
+      AstNode& origin;
+
+      explicit
+      VarrefCreator(AstNode& orig)
+      : origin(orig)
+      {}
+
+      SgVarRefExp* get() const { return VarrefBuilder::build(origin); }
+    };
+
+    template <class AstNode>
+    VarrefCreator<AstNode>
+    varrefCreator(AstNode& n)
+    {
+      return VarrefCreator<AstNode>(n);
     }
 
-    ROSE_ASSERT((!indices.empty()) && undertype);
-    return std::make_pair(indices, undertype);
+    SgExpression* create_mulop(SgExpression* lhs, const SgExpression* rhs)
+    {
+      namespace SB = SageBuilder;
+      namespace SI = SageInterface;
+
+      // we own the lhs (intermediate result),
+      // but we do not own the rhs (another top-level expression)
+      return SB::buildMultiplyOp(lhs, SI::deepCopy(rhs));
+    }
+
+    std::pair<std::vector<SgExpression*>, SgType*>
+    get_C_array_dimensions_aux(const SgArrayType& arr_type)
+    {
+      namespace SI = SageInterface;
+
+      const SgArrayType*         arrtype = &arr_type;
+      std::vector<SgExpression*> indices;
+      SgType*                    undertype = NULL;
+
+      while (arrtype)
+      {
+        indices.push_back(SI::deepCopy(arrtype->get_index()));
+
+        undertype = arrtype->get_base_type();
+        arrtype = isSgArrayType(undertype);
+      }
+
+      ROSE_ASSERT((!indices.empty()) && undertype);
+      return std::make_pair(indices, undertype);
+    }
+
+    /// \param varrefBuilder generates an unowned varref expression when needed
+    std::vector<SgExpression*>
+    get_C_array_dimensions_aux(const SgArrayType& arrtype, const VarrefBuilder& varrefBuilder)
+    {
+      namespace SB = SageBuilder;
+
+      std::pair<std::vector<SgExpression*>, SgType*> res = get_C_array_dimensions_aux(arrtype);
+      const std::vector<SgExpression*>::iterator     first = res.first.begin();
+
+      // if the first dimension was open, create the expression for it
+      if (!*first)
+      {
+        // handle implicit first dimension for array initializers
+        // for something like
+        //      int p[][2][3] = {{{ 1, 2, 3 }, { 4, 5, 6 }}}
+        //  we can calculate the first dimension as
+        //      sizeof( p ) / ( sizeof( int ) * 2 * 3 )
+
+        const std::vector<SgExpression*>::iterator aa = first+1;
+        const std::vector<SgExpression*>::iterator zz = res.first.end();
+
+        SgExpression* sz_undertype = SB::buildSizeOfOp(res.second);
+        SgExpression* denominator  = std::accumulate(aa, zz, sz_undertype, create_mulop);
+        SgSizeOfOp*   sz_var       = SB::buildSizeOfOp(varrefBuilder.get());
+        SgExpression* sz           = SB::buildDivideOp(sz_var, denominator);
+
+        *first = sz;
+      }
+
+      return res.first;
+    }
   }
 
   std::vector<SgExpression*>
   SageInterface::get_C_array_dimensions(const SgArrayType& arrtype)
   {
-    return extract_C_array_dimensions(arrtype).first;
-  }
-
-  static
-  SgExpression* create_mulop(SgExpression* lhs, const SgExpression* rhs)
-  {
-    namespace SB = SageBuilder;
-    namespace SI = SageInterface;
-
-    // we own the lhs (intermediate result),
-    // but we do not own the rhs (another top-level expression)
-    return SB::buildMultiplyOp(lhs, SI::deepCopy(rhs));
-  }
-
-  /// \param varref this function assumes ownership of varref
-  /// \todo  replace auto_ptr with unique_ptr for C++1x
-  static
-  std::vector<SgExpression*>
-  get_C_array_dimensions_aux(const SgArrayType& arrtype, std::auto_ptr<SgVarRefExp> varref)
-  {
-    namespace SB = SageBuilder;
-
-    std::pair<std::vector<SgExpression*>, SgType*> res = get_C_array_dimensions_aux(arrtype);
-    const std::vector<SgExpression*>::iterator     first = res.first.begin();
-
-    // if the first dimension was open, create the expression for it
-    if (!*first)
-    {
-      // handle implicit first dimension for array initializers
-      // for something like
-      //      int p[][2][3] = {{{ 1, 2, 3 }, { 4, 5, 6 }}}
-      //  we can calculate the first dimension as
-      //      sizeof( p ) / ( sizeof( int ) * 2 * 3 )
-
-      const std::vector<SgExpression*>::iterator aa = first+1;
-      const std::vector<SgExpression*>::iterator zz = res.first.end();
-
-      SgExpression* sz_undertype = SB::buildSizeOfOp(res.second);
-      SgExpression* denominator  = std::accumulate(aa, zz, sz_undertype, create_mulop);
-      SgSizeOfOp*   sz_var       = SB::buildSizeOfOp(varref.release());
-      SgExpression* sz           = SB::buildDivideOp(sz_var, denominator);
-
-      *first = sz;
-    }
-
-    return res;
+    return get_C_array_dimensions_aux(arrtype).first;
   }
 
   std::vector<SgExpression*>
   SageInterface::get_C_array_dimensions(const SgArrayType& arrtype, const SgVarRefExp& varref)
   {
-    return get_C_array_dimensions_aux(arrtype, std::auto_ptr<SgVarRefExp>(deepCopy(&varref)));
+    return get_C_array_dimensions_aux(arrtype, varrefCreator(varref));
   }
 
   std::vector<SgExpression*>
   SageInterface::get_C_array_dimensions(const SgArrayType& arrtype, SgInitializedName& initname)
   {
-    namespace SB = SageBuilder;
-
-    SgScopeStatement* scope  = sg::ancestor<SgStatement>(initname).get_scope();
-    SgVarRefExp*      varref = SB::buildVarRefExp(&initname, scope);
-
-    return get_C_array_dimensions_aux(arrtype, std::auto_ptr<SgVarRefExp>(varref));
+    return get_C_array_dimensions_aux(arrtype, varrefCreator(initname));
   }
