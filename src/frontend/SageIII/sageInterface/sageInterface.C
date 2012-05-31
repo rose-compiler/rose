@@ -14626,7 +14626,8 @@ void SageInterface::annotateExpressionsWithUniqueNames (SgProject* project)
       resultName    = &getFirstVariable(*res);
       callStatement = res;
 
-      appendStatement(SB::buildReturnStmt(resref), body);
+      appendStatement(SB::buildReturnStmt(resre
+      f), body);
     }
     else
     {
@@ -14652,11 +14653,14 @@ void SageInterface::annotateExpressionsWithUniqueNames (SgProject* project)
   // flatten C/C++ array dimensions
 
   static
-  void extract_C_array_dimensions(const SgArrayType& arr_type, std::vector<SgExpression*>& indices, SgType*& undertype)
+  std::pair<std::vector<SgExpression*>, SgType*>
+  void get_C_array_dimensions_aux(const SgArrayType& arr_type)
   {
     namespace SI = SageInterface;
 
-    const SgArrayType* arrtype = &arr_type;
+    const SgArrayType*         arrtype = &arr_type;
+    std::vector<SgExpression*> indices;
+    SgType*                    undertype = NULL;
 
     while (arrtype)
     {
@@ -14667,17 +14671,13 @@ void SageInterface::annotateExpressionsWithUniqueNames (SgProject* project)
     }
 
     ROSE_ASSERT((!indices.empty()) && undertype);
+    return std::make_pair(indices, undertype);
   }
 
   std::vector<SgExpression*>
   SageInterface::get_C_array_dimensions(const SgArrayType& arrtype)
   {
-    std::vector<SgExpression*> res;
-    SgType*                    undertype;
-
-    extract_C_array_dimensions(arrtype, res, undertype);
-
-    return res;
+    return extract_C_array_dimensions(arrtype).first;
   }
 
   static
@@ -14691,18 +14691,16 @@ void SageInterface::annotateExpressionsWithUniqueNames (SgProject* project)
     return SB::buildMultiplyOp(lhs, SI::deepCopy(rhs));
   }
 
+  /// \param varref this function assumes ownership of varref
+  /// \todo  replace auto_ptr with unique_ptr for C++1x
   static
   std::vector<SgExpression*>
-  get_C_array_dimensions_aux(const SgArrayType& arrtype, SgVarRefExp& varref)
+  get_C_array_dimensions_aux(const SgArrayType& arrtype, std::auto_ptr<SgVarRefExp> varref)
   {
     namespace SB = SageBuilder;
 
-    std::vector<SgExpression*> res;
-    SgType*                    undertype;
-
-    extract_C_array_dimensions(arrtype, res, undertype);
-
-    const std::vector<SgExpression*>::iterator first = res.begin();
+    std::pair<std::vector<SgExpression*>, SgType*> res = get_C_array_dimensions_aux(arrtype);
+    const std::vector<SgExpression*>::iterator     first = res.first.begin();
 
     // if the first dimension was open, create the expression for it
     if (!*first)
@@ -14714,12 +14712,12 @@ void SageInterface::annotateExpressionsWithUniqueNames (SgProject* project)
       //      sizeof( p ) / ( sizeof( int ) * 2 * 3 )
 
       const std::vector<SgExpression*>::iterator aa = first+1;
-      const std::vector<SgExpression*>::iterator zz = res.end();
+      const std::vector<SgExpression*>::iterator zz = res.first.end();
 
-      SgExpression*     sz_undertype = SB::buildSizeOfOp(undertype); // was: buildIntVal(1);
-      SgExpression*     denominator  = std::accumulate(aa, zz, sz_undertype, create_mulop);
-      SgSizeOfOp*       sz_var       = SB::buildSizeOfOp(&varref);
-      SgExpression*     sz           = SB::buildDivideOp(sz_var, denominator);
+      SgExpression* sz_undertype = SB::buildSizeOfOp(res.second);
+      SgExpression* denominator  = std::accumulate(aa, zz, sz_undertype, create_mulop);
+      SgSizeOfOp*   sz_var       = SB::buildSizeOfOp(varref.release());
+      SgExpression* sz           = SB::buildDivideOp(sz_var, denominator);
 
       *first = sz;
     }
@@ -14730,7 +14728,7 @@ void SageInterface::annotateExpressionsWithUniqueNames (SgProject* project)
   std::vector<SgExpression*>
   SageInterface::get_C_array_dimensions(const SgArrayType& arrtype, const SgVarRefExp& varref)
   {
-    return get_C_array_dimensions_aux(arrtype, sg::deref(deepCopy(&varref)));
+    return get_C_array_dimensions_aux(arrtype, std::auto_ptr<SgVarRefExp>(deepCopy(&varref)));
   }
 
   std::vector<SgExpression*>
@@ -14741,5 +14739,5 @@ void SageInterface::annotateExpressionsWithUniqueNames (SgProject* project)
     SgScopeStatement* scope  = sg::ancestor<SgStatement>(initname).get_scope();
     SgVarRefExp*      varref = SB::buildVarRefExp(&initname, scope);
 
-    return get_C_array_dimensions_aux(arrtype, sg::deref(varref));
+    return get_C_array_dimensions_aux(arrtype, std::auto_ptr<SgVarRefExp>(varref));
   }

@@ -751,8 +751,8 @@ SgType* getElementType(SgType* t);
 
 /// \brief  returns the array dimensions in an array as defined for @arrtype
 /// \param  arrtype the type of a C/C++ array
-/// \return an array that contains an expression indicating each dimension size.
-///         OWNERSHIP of the expressions is TRANSFERED TO the CALLEE (which
+/// \return an array that contains an expression indicating each dimension's size.
+///         OWNERSHIP of the expressions is TRANSFERED TO the CALLER (which
 ///         becomes responsible of freeing the expressions).
 ///         note, the first entry of the array can be NULL, if the array
 ///         dimension was not specified.
@@ -766,15 +766,15 @@ get_C_array_dimensions(const SgArrayType& arrtype);
 /// \brief  returns the array dimensions in an array as defined for @arrtype
 /// \param  arrtype the type of a C/C++ array
 /// \param  varref  a reference to an array variable (the variable of type @arrtype)
-/// \return an array that contains an expression indicating each dimension size.
-///         OWNERSHIP of the expressions is TRANSFERED TO the CALLEE (which
+/// \return an array that contains an expression indicating each dimension's size.
+///         OWNERSHIP of the expressions is TRANSFERED TO the CALLER (which
 ///         becomes responsible of freeing the expressions).
 ///         If the first array dimension was not specified an expression
-///         that expresses the size in form of the variable declaration
+///         that indicates that size is generated.
 ///         e.g., for int x[][2] = { 1, 2, 3, 4 };
 ///         the entry for the first dimension will be:
 ///         sizeof(x) / (sizeof(int) * 2 /* 2nd dimension */)
-/// \pre    @arrtype is the type of @varref
+/// \pre    @arrtype is the array-type of @varref
 /// \post   return-value.empty() == false
 /// \post   return-value[*] != NULL /* no nullptr in the returned vector */
 std::vector<SgExpression*>
