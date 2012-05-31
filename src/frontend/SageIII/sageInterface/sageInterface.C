@@ -14722,7 +14722,7 @@ void SageInterface::annotateExpressionsWithUniqueNames (SgProject* project)
       return std::make_pair(indices, undertype);
     }
 
-    /// \param varrefBuilder generates an unowned varref expression when needed
+    /// \param varrefBuilder generates an unowned varref expression on demand
     std::vector<SgExpression*>
     get_C_array_dimensions_aux(const SgArrayType& arrtype, const VarrefBuilder& varrefBuilder)
     {
