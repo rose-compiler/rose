@@ -26,6 +26,7 @@ OLD_TESTCODES_REQUIRED_TO_PASS = \
      commentTest.c \
      test2003_12.c \
      test2004_20.c \
+     test2004_21.c \
      test2005_172.c \
      test2005_186.c \
      test2006_48.c  \
@@ -58,6 +59,10 @@ OLD_TESTCODES_REQUIRED_TO_PASS = \
      test2010_17.c \
      test2011_05.c \
      test2007_177.c \
+     test2005_168.c \
+     test2006_65.c \
+     test2010_11.c \
+     test2010_14.c \
      math.c \
      complex_01.c \
      constants.c
@@ -111,7 +116,6 @@ if ROSE_USE_CLANG_FRONTEND
      test2006_48.c \
      test2006_132.c \
      test2010_04.c \
-     test2010_12.c \
      test2006_14.c  \
      test2006_100.c \
      test2006_136.c \
@@ -196,7 +200,8 @@ $(TESTCODES_REQUIRED_TO_PASS)
 # QMTest allows both passing and failing tests.
 ALL_TESTCODES = \
 $(TESTCODES_REQUIRED_TO_PASS) \
-$(TESTCODE_CURRENTLY_FAILING)
+$(TESTCODE_CURRENTLY_FAILING) \
+$(OLD_TESTCODES_REQUIRED_TO_PASS)
 
 # File option to accumulate performance information about the compilation
 # PERFORMANCE_REPORT_OPTION = -rose:compilationPerformanceFile $(top_builddir)/C_ROSE_PERFORMANCE_DATA.csv

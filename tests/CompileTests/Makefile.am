@@ -21,6 +21,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 SUBDIRS = 
 if ROSE_USE_CLANG_FRONTEND
    SUBDIRS += C_tests
+   SUBDIRS += C_subset_of_Cxx_tests
    SUBDIRS += CudaTests
    SUBDIRS += OpenClTests
 else

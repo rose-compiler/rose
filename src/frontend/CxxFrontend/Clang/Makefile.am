@@ -17,5 +17,9 @@ include_HEADERS =
 
 endif
 
-EXTRA_DIST =
+EXTRA_DIST = \
+  clang-builtin-c.h \
+  clang-builtin-cpp.hpp \
+  clang-builtin-cuda.hpp \
+  clang-builtin-opencl.h
 

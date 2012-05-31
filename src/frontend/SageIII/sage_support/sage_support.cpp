@@ -3686,6 +3686,7 @@ SgSourceFile::build_C_and_Cxx_AST( vector<string> argv, vector<string> inputComm
 #endif
 
 #ifdef ROSE_USE_CLANG_FRONTEND
+     int clang_main(int, char *[], SgSourceFile & sageFile );
      int frontendErrorLevel = clang_main (c_cxx_argc, c_cxx_argv, *this);
 #else /* default to EDG */
      int edg_main(int, char *[], SgSourceFile & sageFile );

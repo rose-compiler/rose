@@ -37,7 +37,10 @@ libSPMDizeCommon_la_include_HEADERS = \
   common/spmd-generator.hpp \
   common/spmd-tree.hpp \
   common/spmd-driver.hpp \
-  common/comm-analysis.hpp
+  common/comm-analysis.hpp \
+  common/array-analysis.hpp \
+  common/compute-system.hpp \
+  common/placement.hpp
 
 libSPMDizePolyDriver_la_SOURCES = \
   polydriver/polyhedral-driver.cpp \
@@ -55,7 +58,9 @@ libSPMDizePolyDriver_la_LIBADD = \
 libSPMDizePolyDriver_la_includedir = $(includedir)/SPMDize/
 libSPMDizePolyDriver_la_include_HEADERS = \
   polydriver/polyhedral-driver.hpp \
-  polydriver/polyhedral-array-analysis.hpp
+  polydriver/polyhedral-array-analysis.hpp \
+  polydriver/polyhedral-placement.hpp \
+  polydriver/polyhedral-utils.hpp
 
 libSPMDizeOpenCLgen_la_SOURCES = \
   opencl-generator/opencl-generator.cpp
@@ -75,6 +80,10 @@ libToolBoxes_la_CXXFLAGS = \
   $(CXXFLAGS) \
   $(ROSE_INCLUDES) \
   -I$(srcdir)/../../src/
+libToolBoxes_la_includedir = $(includedir)/SPMDize/
+libToolBoxes_la_include_HEADERS = \
+  toolboxes/algebra-container.hpp \
+  toolboxes/rose-toolbox.hpp
 
 libComputeSystem_la_SOURCES = \
   compute-systems/array-system.cpp \
@@ -82,6 +91,13 @@ libComputeSystem_la_SOURCES = \
   compute-systems/compute-node.cpp \
   compute-systems/cluster-system.cpp \
   compute-systems/memory.cpp
+libComputeSystem_la_includedir = $(includedir)/SPMDize/
+libComputeSystem_la_include_HEADERS = \
+  compute-systems/array-system.hpp \
+  compute-systems/cluster-system.hpp \
+  compute-systems/compute-node.hpp \
+  compute-systems/gpu-system.hpp \
+  compute-systems/memory.hpp
 
 identity_SOURCES = \
   dummy-test/identity.cpp
@@ -114,6 +130,10 @@ single_gpu_LDADD = \
   -L$(PPL_PATH)/lib -lppl -lgmp \
   $(LIBS_WITH_RPATH) \
   $(ROSE_LIBS)
+single_gpu_includedir = $(includedir)/SPMDize/
+single_gpu_include_HEADERS = \
+  single-gpu/depth-placement.hpp \
+  single-gpu/single-gpu.hpp
 
 ../../src/libPolyModelRose.la:
 	make -C  ../../src/ libPolyModelRose.la

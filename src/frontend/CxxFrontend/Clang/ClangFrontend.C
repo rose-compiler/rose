@@ -11,6 +11,8 @@
 #define DEBUG_SYMBOL_TABLE_LOOKUP 0
 #define DEBUG_TRAVERSE_DECL 0
 #define DEBUG_ARGS 0
+#define DEBUG_ENUM_DECL 0
+#define DEBUG_VISIT_STMT 0
 
 extern bool roseInstallPrefix(std::string&);
 
@@ -190,7 +192,7 @@ int clang_main(int argc, char ** argv, SgSourceFile& sageFile) {
     compiler_instance->createDiagnostics(argc, argv, diag_printer, true, false);
 
     clang::CompilerInvocation * invocation = new clang::CompilerInvocation();
-    ROSE_ASSERT(clang::CompilerInvocation::CreateFromArgs(*invocation, args, &(args[cnt]), compiler_instance->getDiagnostics()));
+    clang::CompilerInvocation::CreateFromArgs(*invocation, args, &(args[cnt]), compiler_instance->getDiagnostics());
     compiler_instance->setInvocation(invocation);
 
     clang::LangOptions & lang_opts = compiler_instance->getLangOpts();
@@ -220,7 +222,7 @@ int clang_main(int argc, char ** argv, SgSourceFile& sageFile) {
     }
 
     clang::TargetOptions target_options;
-    target_options.Triple = llvm::sys::getDefaultTargetTriple();
+    target_options.Triple = llvm::sys::getHostTriple();
     clang::TargetInfo * target_info = clang::TargetInfo::CreateTargetInfo(compiler_instance->getDiagnostics(), target_options);
     compiler_instance->setTarget(target_info);
 
@@ -263,8 +265,6 @@ int clang_main(int argc, char ** argv, SgSourceFile& sageFile) {
 
     global_scope->set_parent(&sageFile);
 
-    size_t last_slash = input_file.find_last_of("/");
-    //std::string file_name(input_file.substr(last_slash + 1));
     std::string file_name(input_file);
 
     Sg_File_Info * start_fi = new Sg_File_Info(file_name, 0, 0);
@@ -974,7 +974,7 @@ bool ClangToSageTranslator::VisitRecordDecl(clang::RecordDecl * record_decl, SgN
 
   // Find previous declaration
 
-    clang::RecordDecl * prev_record_decl = record_decl->getPreviousDecl();
+    clang::RecordDecl * prev_record_decl = record_decl->getPreviousDeclaration();
     SgClassSymbol * sg_prev_class_sym = isSgClassSymbol(GetSymbolFromSymbolTable(prev_record_decl));
     SgClassDeclaration * sg_prev_class_decl = sg_prev_class_sym == NULL ? NULL : isSgClassDeclaration(sg_prev_class_sym->get_declaration());
 
@@ -1113,19 +1113,44 @@ bool ClangToSageTranslator::VisitEnumDecl(clang::EnumDecl * enum_decl, SgNode **
 
     SgName name(enum_decl->getNameAsString());
 
+
+    clang::EnumDecl * prev_enum_decl = enum_decl->getPreviousDeclaration();
+    SgEnumSymbol * sg_prev_enum_sym = isSgEnumSymbol(GetSymbolFromSymbolTable(prev_enum_decl));
+    SgEnumDeclaration * sg_prev_enum_decl = sg_prev_enum_sym == NULL ? NULL : isSgEnumDeclaration(sg_prev_enum_sym->get_declaration());
+    sg_prev_enum_decl = sg_prev_enum_decl == NULL ? NULL : isSgEnumDeclaration(sg_prev_enum_decl->get_definingDeclaration());
+
     SgEnumDeclaration * sg_enum_decl = SageBuilder::buildEnumDeclaration(name, SageBuilder::topScopeStack());
     *node = sg_enum_decl;
 
-    clang::EnumDecl::enumerator_iterator it;
-    for (it = enum_decl->enumerator_begin(); it != enum_decl->enumerator_end(); it++) {
-        SgNode * tmp_enumerator = Traverse(*it);
-        SgInitializedName * enumerator = isSgInitializedName(tmp_enumerator);
+    if (sg_prev_enum_decl == NULL || sg_prev_enum_decl->get_enumerators().size() == 0) {
+#if DEBUG_ENUM_DECL
+      std::cerr << "ClangToSageTranslator::VisitEnumDecl parse enumerators "
+                << "(prev_enum_decl " << prev_enum_decl
+                << " | sg_prev_enum_decl = " << sg_prev_enum_decl
+                << " | size = " << (sg_prev_enum_decl == NULL ? 0 : sg_prev_enum_decl->get_enumerators().size())
+                << ")" << std::endl;
+#endif
+      clang::EnumDecl::enumerator_iterator it;
+      for (it = enum_decl->enumerator_begin(); it != enum_decl->enumerator_end(); it++) {
+          SgNode * tmp_enumerator = Traverse(*it);
+          SgInitializedName * enumerator = isSgInitializedName(tmp_enumerator);
 
-        ROSE_ASSERT(enumerator);
+          ROSE_ASSERT(enumerator);
 
-        enumerator->set_scope(SageBuilder::topScopeStack());
-        sg_enum_decl->append_enumerator(enumerator);
+          enumerator->set_scope(SageBuilder::topScopeStack());
+          sg_enum_decl->append_enumerator(enumerator);
+      }
     }
+    else {
+      sg_enum_decl->set_definingDeclaration(sg_prev_enum_decl);
+      sg_enum_decl->set_firstNondefiningDeclaration(sg_prev_enum_decl->get_firstNondefiningDeclaration());
+    }
+
+#if DEBUG_ENUM_DECL
+    std::cerr << "ClangToSageTranslator::VisitEnumDecl: "
+              << "create sg_enum_decl = " << sg_enum_decl
+              << " with " <<  sg_enum_decl->get_enumerators().size() << " enumerators" << std::endl;
+#endif
 
     return VisitDecl(enum_decl, node) && res;
 }
@@ -1593,9 +1618,9 @@ bool ClangToSageTranslator::VisitTranslationUnitDecl(clang::TranslationUnitDecl 
         else if (child != NULL) {
             // FIXME This is a hack to avoid autonomous decl of unnamed type to being added to the global scope....
             SgClassDeclaration * class_decl = isSgClassDeclaration(child);
-            if (class_decl != NULL && class_decl->get_name() == "") continue;
+            if (class_decl != NULL && (class_decl->get_name() == "" || class_decl->get_isUnNamed())) continue;
             SgEnumDeclaration * enum_decl = isSgEnumDeclaration(child);
-            if (enum_decl != NULL && enum_decl->get_name() == "") continue;
+            if (enum_decl != NULL && (enum_decl->get_name() == "" || enum_decl->get_isUnNamed())) continue;
 
             p_global_scope->append_declaration(decl_stmt);
         }
@@ -1639,6 +1664,10 @@ bool ClangToSageTranslator::VisitBreakStmt(clang::BreakStmt * break_stmt, SgNode
 }
 
 bool ClangToSageTranslator::VisitCompoundStmt(clang::CompoundStmt * compound_stmt, SgNode ** node) {
+#if DEBUG_VISIT_STMT
+    std::cerr << "ClangToSageTranslator::VisitCompoundStmt" << std::endl;
+#endif
+
     bool res = true;
 
     SgBasicBlock * block = SageBuilder::buildBasicBlock();
@@ -1650,6 +1679,23 @@ bool ClangToSageTranslator::VisitCompoundStmt(clang::CompoundStmt * compound_stm
     clang::CompoundStmt::body_iterator it;
     for (it = compound_stmt->body_begin(); it != compound_stmt->body_end(); it++) {
         SgNode * tmp_node = Traverse(*it);
+
+#if DEBUG_VISIT_STMT
+        if (tmp_node != NULL)
+          std::cerr << "In VisitCompoundStmt : child is " << tmp_node->class_name() << std::endl;
+        else
+          std::cerr << "In VisitCompoundStmt : child is NULL" << std::endl;
+#endif
+
+        SgClassDeclaration * class_decl = isSgClassDeclaration(tmp_node);
+        if (class_decl != NULL && (class_decl->get_name() == "" || class_decl->get_isUnNamed())) continue;
+        SgEnumDeclaration * enum_decl = isSgEnumDeclaration(tmp_node);
+        if (enum_decl != NULL && (enum_decl->get_name() == "" || enum_decl->get_isUnNamed())) continue;
+#if DEBUG_VISIT_STMT
+        else if (enum_decl != NULL)
+          std::cerr << "enum_decl = " << enum_decl << " >> name: " << enum_decl->get_name() << std::endl;
+#endif
+
         SgStatement * stmt  = isSgStatement(tmp_node);
         SgExpression * expr = isSgExpression(tmp_node);
         if (tmp_node != NULL && stmt == NULL && expr == NULL) {
@@ -1698,6 +1744,12 @@ bool ClangToSageTranslator::VisitDeclStmt(clang::DeclStmt * decl_stmt, SgNode **
                 std::cerr << "Runtime error: tmp_decls[i] != NULL && decl == NULL" << std::endl;
                 res = false;
                 continue;
+            }
+            else {
+              SgClassDeclaration * class_decl = isSgClassDeclaration(decl);
+              if (class_decl != NULL && (class_decl->get_name() == "" || class_decl->get_isUnNamed())) continue;
+              SgEnumDeclaration * enum_decl = isSgEnumDeclaration(decl);
+              if (enum_decl != NULL && (enum_decl->get_name() == "" || enum_decl->get_isUnNamed())) continue;
             }
             scope->append_statement(decl);
             decl->set_parent(scope);
