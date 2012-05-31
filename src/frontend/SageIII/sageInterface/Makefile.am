@@ -29,7 +29,7 @@ libsageInterface_la_DEPENDENCIES =
 include_HEADERS = \
      sageInterface.h \
      sageBuilder.h \
-     sageGeneric.hpp \
+     sageGeneric.h \
      sageFunctors.h \
      integerOps.h \
      abiStuff.h
