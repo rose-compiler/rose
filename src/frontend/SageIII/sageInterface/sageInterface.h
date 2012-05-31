@@ -771,9 +771,9 @@ get_C_array_dimensions(const SgArrayType& arrtype);
 ///         becomes responsible of freeing the expressions).
 ///         If the first array dimension was not specified an expression
 ///         that indicates that size is generated.
-///         e.g., for int x[][2] = { 1, 2, 3, 4 };
+///         e.g., for int x[][3] = { 1, 2, 3, 4, 5, 6 };
 ///         the entry for the first dimension will be:
-///         sizeof(x) / (sizeof(int) * 2 /* 2nd dimension */)
+///         sizeof(x) / (sizeof(int) * 3 /* 2nd dimension */)
 /// \pre    @arrtype is the array-type of @varref
 /// \post   return-value.empty() == false
 /// \post   return-value[*] != NULL /* no nullptr in the returned vector */
