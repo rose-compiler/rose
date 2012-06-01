@@ -6,7 +6,6 @@
 ///       - dispatching according to the type of a sage node (dispatch)
 ///       - finding the ancestor with a specific node type (ancestor)
 ///       - recovering the type of a sage node assertively (assert_node_type)
-/// \email peter.pirkelbauer@llnl.gov
 
 #define _SAGEGENERIC_H
 
