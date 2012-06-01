@@ -2861,12 +2861,12 @@ namespace sg
 
   /// \brief   finds an ancestor node with a given type
   /// \details the function family comes in four variants:
-  ///          SgNode*       -> AncestorNode*       ( result can be NULL )
-  ///          const SgNode* -> const AncestorNode* ( result can be NULL )
-  ///          SgNode&       -> AncestorNode&       ( assert(false) when an ancestor of
-  ///                                                 the specified type cannot be found )
-  ///          const SgNode& -> const AncestorNode& ( assert(false) when an ancestor of
-  ///                                                 the specified type cannot be found )
+  ///          - SgNode*       -> AncestorNode*       ( result can be NULL )
+  ///          - const SgNode* -> const AncestorNode* ( result can be NULL )
+  ///          - SgNode&       -> AncestorNode&       ( assert(false) when an ancestor of
+  ///                                                   the specified type cannot be found )
+  ///          - const SgNode& -> const AncestorNode& ( assert(false) when an ancestor of
+  ///                                                   the specified type cannot be found )
   /// \code
   ///   const SgStatement* enclosingStatement(const SgExpression* e)  { return sg::ancestor<SgStatement>(e); }
   /// \endcode

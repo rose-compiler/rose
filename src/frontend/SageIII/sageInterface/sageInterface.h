@@ -753,13 +753,18 @@ SgType* getElementType(SgType* t);
 /// \param  arrtype the type of a C/C++ array
 /// \return an array that contains an expression indicating each dimension's size.
 ///         OWNERSHIP of the expressions is TRANSFERED TO the CALLER (which
-///         becomes responsible of freeing the expressions).
-///         note, the first entry of the array can be NULL, if the array
-///         dimension was not specified.
-///         e.g., int x[] = { 1, 2, 3};
+///         becomes responsible for freeing the expressions).
+///         note, the first entry of the array is a SgNullExpression, iff the
+///         first array dimension was not specified.
+/// \code
+///         int x[] = { 1, 2, 3 };
+/// \endcode
 ///         note, the expression does not have to be a constant
-///         e.g., int x[i*5];
+/// \code
+///         int x[i*5];
+/// \endcode
 /// \post   return-value.empty() == false
+/// \post   return-value[*] != NULL /* no nullptr in the returned vector */
 std::vector<SgExpression*>
 get_C_array_dimensions(const SgArrayType& arrtype);
 
@@ -768,15 +773,20 @@ get_C_array_dimensions(const SgArrayType& arrtype);
 /// \param  varref  a reference to an array variable (the variable of type @arrtype)
 /// \return an array that contains an expression indicating each dimension's size.
 ///         OWNERSHIP of the expressions is TRANSFERED TO the CALLER (which
-///         becomes responsible of freeing the expressions).
+///         becomes responsible for freeing the expressions).
 ///         If the first array dimension was not specified an expression
 ///         that indicates that size is generated.
-///         e.g., for int x[][3] = { 1, 2, 3, 4, 5, 6 };
+/// \code
+///         int x[][3] = { 1, 2, 3, 4, 5, 6 };
+/// \endcode
 ///         the entry for the first dimension will be:
+/// \code
 ///         sizeof(x) / (sizeof(int) * 3 /* 2nd dimension */)
+/// \endcode
 /// \pre    @arrtype is the array-type of @varref
 /// \post   return-value.empty() == false
 /// \post   return-value[*] != NULL /* no nullptr in the returned vector */
+/// \post   !isSgNullExpression(return-value[*])
 std::vector<SgExpression*>
 get_C_array_dimensions(const SgArrayType& arrtype, const SgVarRefExp& varref);
 
