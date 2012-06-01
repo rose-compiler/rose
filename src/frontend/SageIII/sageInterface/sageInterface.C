@@ -14704,6 +14704,7 @@ void SageInterface::annotateExpressionsWithUniqueNames (SgProject* project)
     std::pair<std::vector<SgExpression*>, SgType*>
     get_C_array_dimensions_aux(const SgArrayType& arr_type)
     {
+      namespace SB = SageBuilder;
       namespace SI = SageInterface;
 
       const SgArrayType*         arrtype = &arr_type;
