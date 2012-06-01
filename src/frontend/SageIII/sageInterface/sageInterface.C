@@ -14710,10 +14710,21 @@ void SageInterface::annotateExpressionsWithUniqueNames (SgProject* project)
       std::vector<SgExpression*> indices;
       SgType*                    undertype = NULL;
 
+      // \todo when get_index() does not return a nullptr anymore
+      //       the condition can be removed
+      if (arrtype->get_index() == NULL)
+      {
+        indices.push_back(SB::buildNullExpression());
+        undertype = arrtype->get_base_type();
+        arrtype = isSgArrayType(undertype);
+      }
+
       while (arrtype)
       {
-        indices.push_back(SI::deepCopy(arrtype->get_index()));
+        SgExpression* indexexpr = arrtype->get_index();
+        ROSE_ASSERT(indexexpr);
 
+        indices.push_back(SI::deepCopy(indexexpr));
         undertype = arrtype->get_base_type();
         arrtype = isSgArrayType(undertype);
       }
@@ -14732,7 +14743,7 @@ void SageInterface::annotateExpressionsWithUniqueNames (SgProject* project)
       const std::vector<SgExpression*>::iterator     first = res.first.begin();
 
       // if the first dimension was open, create the expression for it
-      if (!*first)
+      if (isSgNullExpression(*first))
       {
         // handle implicit first dimension for array initializers
         // for something like
@@ -14748,7 +14759,8 @@ void SageInterface::annotateExpressionsWithUniqueNames (SgProject* project)
         SgSizeOfOp*   sz_var       = SB::buildSizeOfOp(varrefBuilder.get());
         SgExpression* sz           = SB::buildDivideOp(sz_var, denominator);
 
-        *first = sz;
+        std::swap(*first, sz);
+        delete sz;
       }
 
       return res.first;
