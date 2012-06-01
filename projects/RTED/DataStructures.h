@@ -3,11 +3,23 @@
 
 #include <string>
 #include <vector>
+#include <algorithm>
 
 #include <rose.h>
 
 #include "CppRuntimeSystem/rted_typedefs.h"
 
+static inline
+void delete_sage_expression(const SgExpression* exp)
+{
+  delete exp;
+}
+
+static inline
+SgExpression* clone_sage_expression(const SgExpression* exp)
+{
+  return SageInterface::deepCopy(exp);
+}
 
 /* -----------------------------------------------------------
  * This class represents a runtime array
@@ -18,27 +30,68 @@
  * -----------------------------------------------------------*/
 struct RtedArray
 {
-    SgInitializedName*         initName;
-    SgStatement*               surroundingStatement;
-    AllocKind                  allocKind;
-    SgExpression*              size;
-    std::vector<SgExpression*> indices;
+  private:
+    SgInitializedName*         initName;             // not owning
+    SgStatement*               surroundingStatement; // not owning
 
+  public:
+    AllocKind                  allocKind;
+
+  private:
+    SgExpression*              size;                 // owning
+    std::vector<SgExpression*> indices;              // owning
+
+  public:
     RtedArray()
-    : initName(NULL), surroundingStatement(NULL), allocKind(akUndefined), size(0), indices()
+    : initName(0), surroundingStatement(0), allocKind(akUndefined), size(0), indices()
     {
       // \todo remove constructor and use insert for adding elements to the map
     }
 
-    RtedArray ( SgInitializedName* init,
-                SgStatement* stmt,
-                AllocKind _allocKind,
-                SgExpression* _size = NULL
-              )
+    RtedArray(const RtedArray& orig)
+    : initName(orig.initName), surroundingStatement(orig.surroundingStatement), allocKind(orig.allocKind),
+      size(SageInterface::deepCopy(orig.size)), indices()
+    {
+      std::transform(orig.indices.begin(), orig.indices.end(), std::back_inserter(indices), clone_sage_expression);
+    }
+
+    RtedArray(SgInitializedName* init, SgStatement* stmt, AllocKind _allocKind, SgExpression* _size = NULL)
     : initName(init), surroundingStatement(stmt), allocKind(_allocKind), size(_size), indices()
     {
       ROSE_ASSERT(initName && surroundingStatement && (allocKind != akUndefined));
       ROSE_ASSERT((allocKind & akNamedMemory) || size);
+    }
+
+    ~RtedArray()
+    {
+      for_each(indices.begin(), indices.end(), delete_sage_expression);
+      delete_sage_expression(size);
+    }
+
+    RtedArray& operator=(const RtedArray& orig)
+    {
+      RtedArray tmp(orig);
+
+      swap(*this, tmp);
+      return *this;
+    }
+
+    SgStatement* getStmt() const
+    {
+      ROSE_ASSERT(surroundingStatement);
+      return surroundingStatement;
+    }
+
+    const SgExpression* getSize() const
+    {
+      ROSE_ASSERT(size);
+      return size;
+    }
+
+    SgInitializedName* getName() const
+    {
+      ROSE_ASSERT(initName);
+      return initName;
     }
 
     std::vector<SgExpression*>&       getIndices()       { return indices; }
@@ -59,6 +112,17 @@ struct RtedArray
       }
 
       return res;
+    }
+
+    friend
+    void swap(RtedArray& lhs, RtedArray& rhs)
+    {
+      std::swap(lhs.initName,             rhs.initName);
+      std::swap(lhs.surroundingStatement, rhs.surroundingStatement);
+      std::swap(lhs.allocKind,            rhs.allocKind);
+      std::swap(lhs.size,                 rhs.size);
+
+      lhs.indices.swap(rhs.indices);
     }
 };
 

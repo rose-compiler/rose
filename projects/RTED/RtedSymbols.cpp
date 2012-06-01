@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "sageGeneric.hpp"
+#include "sageGeneric.h"
 
 #include "RtedSymbols.h"
 
