@@ -20,16 +20,6 @@ using namespace std;
 using namespace SageInterface;
 using namespace SageBuilder;
 
-static inline
-void ROSE_ASSERT_MSG(bool b, const std::string& msg)
-{
-  if (!b)
-  {
-    std::cerr << msg << std::endl;
-    ROSE_ASSERT(false);
-  }
-}
-
 struct InitNameComp
 {
   const SgInitializedName * const obj;
@@ -660,7 +650,6 @@ void RtedTransformation::arrayHeapAlloc2( SgInitializedName* initName,
 
   ROSE_ASSERT( args.size() == 2 );
 
-  // \pp \note where are the nodes freed, that are created here?
   SgExpression* size_to_use = buildMultiplyOp(si::deepCopy(args[0]), si::deepCopy(args[1]));
 
   arrayHeapAlloc(initName, varRef, size_to_use, ak);
