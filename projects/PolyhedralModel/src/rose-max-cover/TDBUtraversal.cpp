@@ -32,6 +32,8 @@
 #  define DEBUG_TRAVERSAL 1
 #endif
 
+#define DEBUG_ATTACHED_RESULT 0
+#define DEBUG_SYMBOL_TABLE 0
 
 SgExpression * develop(SgExpression * e) {
 	if (isSgExpression(e) == NULL)
@@ -147,6 +149,8 @@ SgExpression * develop(SgExpression * e) {
 		case V_SgValueExp:
 		case V_SgVarRefExp:
 		case V_SgFunctionCallExp:
+                case V_SgPntrArrRefExp:
+                case V_SgArrowExp:
 		  return e;
 		case V_SgFunctionRefExp:
 		  ROSE_ASSERT(DEBUG_TODO == 0); // TODO .
@@ -158,6 +162,10 @@ SgExpression * develop(SgExpression * e) {
 				return e;
 #if DEBUG_DEVELOP_EXPR
 			std::cerr << "In develop(SgExpression * e = " << e << "): Non-handle node: " << e->class_name() << std::endl;
+                        Sg_File_Info * fi = e->get_startOfConstruct();
+                        if (fi != NULL) {
+                            std::cerr << "    at " << fi->get_filenameString() << ":" << fi->get_line() << std::endl;
+                        }
 			ROSE_ASSERT(false);
 #else /* DEBUG_DEVELOP_EXPR */
 			return e;
@@ -166,130 +174,136 @@ SgExpression * develop(SgExpression * e) {
 }
 
 Expression<Symbol> * genExpression(SgExpression * sg_expr_, PolyhedralElement * elem, SymbolTable * st) {
-	Expression<Symbol> * expr = NULL;
+    Expression<Symbol> * expr = NULL;
 
-	SgExpression * sg_expr = develop(sg_expr_);
+    SgExpression * sg_expr = develop(sg_expr_);
 
-	// TODO
+    std::vector<SgExpression *> term_exps;
 
-	return expr;
+    std::stack<SgExpression *> stack_exp;
+
+    // Extract terms of the expression
+    {
+        stack_exp.push(sg_expr);
+
+        while (!stack_exp.empty()) {
+            SgExpression * current = stack_exp.top();
+            stack_exp.pop();
+
+            SgAddOp * add_op = isSgAddOp(current);
+
+            if (add_op) {
+                stack_exp.push(add_op->get_lhs_operand_i());
+                stack_exp.push(add_op->get_rhs_operand_i());
+                continue;
+            }
+
+            term_exps.push_back(current);
+        }
+    }
+
+    std::vector<Expression<Symbol>::Term> terms;
+
+    // Generate Expression<Symbol>::Term
+    {
+        std::vector<SgExpression *>::iterator it_term;
+        for (it_term = term_exps.begin(); it_term != term_exps.end(); it_term++) {
+            std::vector<SgExpression *> factor_exps;
+
+            // Extract factors
+            {
+                stack_exp.push(*it_term);
+                while (!stack_exp.empty()) {
+                    SgExpression * current = stack_exp.top();
+                    stack_exp.pop();
+
+                    SgMultiplyOp * mul_op = isSgMultiplyOp(current);
+
+                    if (mul_op) {
+                        stack_exp.push(mul_op->get_lhs_operand_i());
+                        stack_exp.push(mul_op->get_rhs_operand_i());
+                        continue;
+                    }
+
+                    factor_exps.push_back(current);
+                }
+            }
+
+            Expression<Symbol>::Term term;
+
+            // build Term 
+            {
+                int coef = 1;
+                std::vector<SgExpression *>::iterator it_factor;
+                std::map<Symbol *, unsigned> symbols_map;
+                for (it_factor = factor_exps.begin(); it_factor != factor_exps.end(); it_factor++) {
+                    SgExpression * exp = *it_factor;
+
+                    if (isSgMinusOp(exp)) {
+                        coef = -coef;
+                        exp = isSgMinusOp(exp)->get_operand_i();
+                    }
+
+                    if (isSgValueExp(exp)) {
+                        switch (exp->variantT()) {
+                            case V_SgIntVal:                 coef *= isSgIntVal(exp)->get_value();                 break;
+                            case V_SgLongIntVal:             coef *= isSgLongIntVal(exp)->get_value();             break;
+                            case V_SgLongLongIntVal:         coef *= isSgLongLongIntVal(exp)->get_value();         break;
+                            case V_SgShortVal:               coef *= isSgShortVal(exp)->get_value();               break;
+                            case V_SgUnsignedIntVal:         coef *= isSgUnsignedIntVal(exp)->get_value();         break;
+                            case V_SgUnsignedLongLongIntVal: coef *= isSgUnsignedLongLongIntVal(exp)->get_value(); break;
+                            case V_SgUnsignedLongVal:        coef *= isSgUnsignedLongVal(exp)->get_value();        break;
+                            case V_SgUnsignedCharVal:        coef *= isSgUnsignedCharVal(exp)->get_value();        break;
+                            case V_SgCharVal:                coef *= isSgCharVal(exp)->get_value();                break;
+                            case V_SgUnsignedShortVal:       coef *= isSgUnsignedShortVal(exp)->get_value();       break;
+                            default: return false;
+                        }
+                    }
+                    else {
+                        Symbol * sym = st->genSymbol(exp);
+
+                        if (!sym) return false;
+                        else {
+                            std::map<Symbol *, unsigned>::iterator it_sym = symbols_map.find(sym);
+                            if (it_sym == symbols_map.end()) symbols_map.insert(std::pair<Symbol *, unsigned>(sym, 1));
+                            else it_sym->second++;
+                        }
+                    }
+                }
+                term.first = coef;
+                term.second = std::vector<std::pair<Symbol *, unsigned> >(symbols_map.begin(), symbols_map.end());
+            }
+
+            terms.push_back(term);
+        }
+     }
+
+    // Fill 'Expression<Symbol> expr'
+    {
+        expr = new Expression<Symbol>();
+        std::vector<Expression<Symbol>::Term>::iterator it;
+        for (it = terms.begin(); it != terms.end(); it++)
+            expr->addTerm(*it);
+    }
+
+    return expr;
 }
 
 bool genLinearExpression(SgExpression * e, LinearExpression_ppl & le, PolyhedralElement * elem, SymbolTable * st) {
 #if DEBUG_LINEAR_EXPRESSION
-	std::cerr << "ENTER genLinearExpression(e=" << e << ", le=0, elem=" << elem << ", st=" << st << ")" << std::endl;
+    std::cerr << "ENTER genLinearExpression(e=" << e << ", le=0, elem=" << elem << ", st=" << st << ")" << std::endl;
 #endif /* DEBUG_LINEAR_EXPRESSION */
 
-	SgExpression * exp = develop(e);
-	
-	std::vector<SgExpression *> term_exps;
-	
-	std::stack<SgExpression *> stack_exp;
-	stack_exp.push(exp);
-	
-	while (!stack_exp.empty()) {
-		SgExpression * current = stack_exp.top();
-		stack_exp.pop();
-		
-		SgAddOp * add_op = isSgAddOp(current);
-		
-		if (add_op) {
-			stack_exp.push(add_op->get_lhs_operand_i());
-			stack_exp.push(add_op->get_rhs_operand_i());
-			continue;
-		}
-		
-		term_exps.push_back(current);
-	}
-	
-	std::vector<SgExpression *>::iterator it_term;
-	for (it_term = term_exps.begin(); it_term != term_exps.end(); it_term++) {
-		if (isSgMultiplyOp(*it_term)) {
-			std::vector<SgExpression *> factor_exps;
-			stack_exp.push(*it_term);
-			while (!stack_exp.empty()) {
-				SgExpression * current = stack_exp.top();
-				stack_exp.pop();
-		
-				SgMultiplyOp * mul_op = isSgMultiplyOp(current);
-		
-				if (mul_op) {
-					stack_exp.push(mul_op->get_lhs_operand_i());
-					stack_exp.push(mul_op->get_rhs_operand_i());
-					continue;	
-				}
-		
-				factor_exps.push_back(current);
-			}
-			
-			int coef = 1;
-			std::vector<SgExpression *>::iterator it_factor;
-			std::vector<Symbol *> symbols_list;
-			for (it_factor = factor_exps.begin(); it_factor != factor_exps.end(); it_factor++) {
-				if (isSgValueExp(*it_factor)) {
-					switch ((*it_factor)->variantT()) {
-						case V_SgIntVal:                 coef *= isSgIntVal((*it_factor))->get_value();                 break;
-						case V_SgLongIntVal:             coef *= isSgLongIntVal((*it_factor))->get_value();             break;
-						case V_SgLongLongIntVal:         coef *= isSgLongLongIntVal((*it_factor))->get_value();         break;
-						case V_SgShortVal:               coef *= isSgShortVal((*it_factor))->get_value();               break;
-						case V_SgUnsignedIntVal:         coef *= isSgUnsignedIntVal((*it_factor))->get_value();         break;
-						case V_SgUnsignedLongLongIntVal: coef *= isSgUnsignedLongLongIntVal((*it_factor))->get_value(); break;
-						case V_SgUnsignedLongVal:        coef *= isSgUnsignedLongVal((*it_factor))->get_value();        break;
-						case V_SgUnsignedCharVal:        coef *= isSgUnsignedCharVal((*it_factor))->get_value();        break;
-						case V_SgCharVal:                coef *= isSgCharVal((*it_factor))->get_value();                break;
-						case V_SgUnsignedShortVal:       coef *= isSgUnsignedShortVal((*it_factor))->get_value();       break;
-						default: return false;
-					}
-				}
-				else {
-					Symbol * sym = st->genSymbol(exp);
+    Expression<Symbol> * exp = genExpression(e, elem, st);
 
-					if (!sym) return false;
-					else symbols_list.push_back(sym);
-				}
-			}
-			if (symbols_list.size() == 0) {
-				if (coef != 0)
-					le += coef;
-			}
-			else if (symbols_list.size() == 1) {
-				VariableID vid = elem->getID(symbols_list[0]);
-				le += coef * vid;
-			}
-			else {
-				ROSE_ASSERT(DEBUG_TODO == 0); // TODO if only global generate alias of "globals' product", if one iterator do pseudo multidimensional array analysis, if more than one iterator it's false.
-				return false; 
-			}
-		}
-		else if (isSgValueExp(*it_term)) {
-			int coef = 0;
-			switch ((*it_term)->variantT()) {
-				case V_SgIntVal:                 coef = isSgIntVal((*it_term))->get_value();                 break;
-				case V_SgLongIntVal:             coef = isSgLongIntVal((*it_term))->get_value();             break;
-				case V_SgLongLongIntVal:         coef = isSgLongLongIntVal((*it_term))->get_value();         break;
-				case V_SgShortVal:               coef = isSgShortVal((*it_term))->get_value();               break;
-				case V_SgUnsignedIntVal:         coef = isSgUnsignedIntVal((*it_term))->get_value();         break;
-				case V_SgUnsignedLongLongIntVal: coef = isSgUnsignedLongLongIntVal((*it_term))->get_value(); break;
-				case V_SgUnsignedLongVal:        coef = isSgUnsignedLongVal((*it_term))->get_value();        break;
-				case V_SgUnsignedCharVal:        coef = isSgUnsignedCharVal((*it_term))->get_value();        break;
-				case V_SgCharVal:                coef = isSgCharVal((*it_term))->get_value();                break;
-				case V_SgUnsignedShortVal:       coef = isSgUnsignedShortVal((*it_term))->get_value();       break;
-				default: return false;
-			}
-			if (coef != 0)
-				le += coef;
-		}
-		else {
-			Symbol * sym = st->genSymbol(exp);
+    bool res = exp != NULL ? exp->linearForm<PolyhedralElement>(le, elem) : false;
 
-			if (!sym) return false;
-			
-			VariableID vid = elem->getID(sym);
-			le += vid;
-		}
-	}
-	
-	return true;
+#if DEBUG_LINEAR_EXPRESSION
+    std::cerr << "LEAVE genLinearExpression(e=" << e << ", le=0, elem=" << elem << ", st=" << st << ")" << std::endl;
+#endif /* DEBUG_LINEAR_EXPRESSION */
+
+    return res;
+
 }
 
 bool genLinearConstraint(Symbol * iterator, SgExpression * e, std::vector<std::pair<LinearExpression_ppl, bool> > & le_vect, bool inc, bool positive, PolyhedralElement * elem, SymbolTable * st) {
@@ -385,7 +399,11 @@ bool genLinearConstraint(Symbol * iterator, SgExpression * e, std::vector<std::p
 		}
 		else res = false;
 	}
-	
+
+#if DEBUG_LINEAR_EXPRESSION
+        std::cerr << "LEAVE genLinearConstraint(iterator=" << iterator << ", e=" << e << ", le_vect, inc=" << inc << ", positive=" << positive << ", elem=" << elem << ", st=" << st << ")" << std::endl;
+#endif /* DEBUG_LINEAR_EXPRESSION */
+
 	return res;
 }
 
@@ -463,9 +481,10 @@ Access * generateAccess(SgExpression * e, PolyhedralElement * elem, SymbolTable 
 	SgPointerDerefExp * deref_op      = isSgPointerDerefExp(e);
 
 	SgFunctionCallExp * func_call_exp = isSgFunctionCallExp(e);
+        SgCudaKernelCallExp * cuda_kernel_call_exp = isSgCudaKernelCallExp(e);
 
 	if (func_call_exp != NULL) {
-		std::cerr << "Warning: generateAccess(SgExpression * e=" << e << "): function call are not supported yet... (return NULL)" << std::endl;
+		std::cerr << "Warning: generateAccess(SgExpression * e=" << e << "): function call are not fully supported yet (no arguments mapping)." << std::endl;
 
 		SgFunctionRefExp * func_ref_exp = isSgFunctionRefExp(func_call_exp->get_function());
 		if (func_ref_exp != NULL) {
@@ -478,47 +497,50 @@ Access * generateAccess(SgExpression * e, PolyhedralElement * elem, SymbolTable 
 
 			res = new ParametrizedAccess(elem, poly_func);
 
-			// TODO associate parameters to the symbols
+			ROSE_ASSERT(DEBUG_TODO == 0); // TODO associate parameters to the symbols
 		}
 	}
-	else if (var_ref_exp != NULL || arr_ref_exp != NULL || arrow_exp != NULL || dot_exp != NULL || addr_of_op != NULL || deref_op != NULL) {
+        else if (cuda_kernel_call_exp != NULL) {
+            std::cerr << "Warning: generateAccess for CUDA kernl call expressions is not supported." << std::endl;
+            std::cerr << "   It is unlikely to be done soon as unless we want to distribute multiple kernel calls it is useless." << std::endl;
+            std::cerr << "   It requires a new representation of access to enable SPMD style RPC..." << std::endl;
+            std::cerr << "   Usecase: distributing a application which use CUDA across multiple GPU/Computers with MPI. I will not do it right now... ;P" << std::endl;
+        }
+	else if (arr_ref_exp != NULL) {
+		ROSE_ASSERT(DEBUG_TODO == 0); // TODO
+
+                std::vector<Expression<Symbol> *> subscripts;
+
+                do {
+                        SgExpression * subscript_exp = arr_ref_exp->get_rhs_operand_i();
+
+                        subscripts.push_back(genExpression(subscript_exp, elem, st));
+                        e = arr_ref_exp->get_lhs_operand_i();
+                        arr_ref_exp = isSgPntrArrRefExp(e);
+                } while (arr_ref_exp);
+
+                ROSE_ASSERT(DEBUG_TODO == 0); // TODO check 'e' is one of var_ref_exp != NULL || arrow_exp != NULL || dot_exp != NULL || addr_of_op != NULL || deref_op != NULL 
+
+		Symbol * sym = st->genSymbol(e);
+
+		if (sym == NULL) std::cerr << "Error: generateAccess(SgExpression * e=" << e << "(" << e->class_name() << ") ): Cannot find the associated symbol." << std::endl;
+                ROSE_ASSERT(sym != NULL);
+
+		DataAccess * data_access = new DataAccess(elem, assign_lhs ? DataAccess::write : DataAccess::read, sym, subscripts);
+	        res = data_access;
+	}
+	else if (var_ref_exp != NULL || arrow_exp != NULL || dot_exp != NULL || addr_of_op != NULL || deref_op != NULL) {
 		Symbol * sym = st->genSymbol(e);
 		
-		if (sym == NULL) std::cerr << "Error: generateAccess(SgExpression * e=" << e << "(" << e->class_name() << ") ): Cannot find the associated symbol." << std::endl;;
+		if (sym == NULL) {
+                    std::cerr << "Error: generateAccess(SgExpression * e=" << e << "(" << e->class_name() << ") ): Cannot find the associated symbol." << std::endl;
+                }
 		ROSE_ASSERT(sym != NULL);
 		
 		DataAccess * data_access = new DataAccess(elem, assign_lhs ? DataAccess::write : DataAccess::read, sym);
 		res = data_access;
-		
-		if (arrow_exp != NULL || dot_exp != NULL || addr_of_op != NULL || deref_op != NULL) {
-#if DEBUG_DATA_ACCESS_GENERATION
-			std::cerr << "Error: generateAccess(SgExpression * e=" << e << "(" << e->class_name() << ") ) are not supported yet." << std::endl;
-			ROSE_ASSERT(false);
-#endif /* DEBUG_DATA_ACCESS_GENERATION */
-		}
-		else if (var_ref_exp != NULL) {
-			ROSE_ASSERT(DEBUG_TODO == 0); // TODO
-		}
-		else if (arr_ref_exp != NULL) {
-			
-			unsigned int dim_cnt = 0;
-			do {
-				LinearExpression_ppl subscript_le;
-				SgExpression * subscript_exp = arr_ref_exp->get_rhs_operand_i();
 
-				// TODO Expression<Symbol> * genExpression(SgExpression *, PolyhedralElement *, SymbolTable *)
-				if (genLinearExpression(subscript_exp, subscript_le, elem, st)) {
-					data_access->restrainAccessedDomain(subscript_le, dim_cnt, equality);
-				}
-				else {
-					ROSE_ASSERT(DEBUG_TODO == 0); // TODO I am not sure that something have to be done here
-				}
-
-				dim_cnt++;
-				arr_ref_exp = isSgPntrArrRefExp(arr_ref_exp->get_lhs_operand_i());
-			} while (arr_ref_exp);
-		}
-		// no else (all cases are handle)
+	        ROSE_ASSERT(DEBUG_TODO == 0); // TODO figure out if something else is needed, then can it be merge with previous case: 'arr_ref_exp'
 	}
 #if DEBUG_DATA_ACCESS_GENERATION
 	else {
@@ -540,32 +562,37 @@ bool collectAccess(SgExpression * e, std::set<Access *> & access_vect, Polyhedra
 		std::pair<SgExpression *, bool> current = stack_exp.top();
 		stack_exp.pop();
 		
-		SgVarRefExp * var_ref_exp         = isSgVarRefExp(current.first);
-		SgPntrArrRefExp * arr_ref_exp     = isSgPntrArrRefExp(current.first);
-		SgArrowExp * arrow_exp            = isSgArrowExp(current.first);
-		SgDotExp * dot_exp                = isSgDotExp(current.first);
+		SgVarRefExp * var_ref_exp = isSgVarRefExp(current.first);
+		SgPntrArrRefExp * arr_ref_exp = isSgPntrArrRefExp(current.first);
+		SgArrowExp * arrow_exp = isSgArrowExp(current.first);
+		SgDotExp * dot_exp = isSgDotExp(current.first);
 
-		SgAddressOfOp * addr_of_op        = isSgAddressOfOp(current.first);
-		SgPointerDerefExp * deref_op      = isSgPointerDerefExp(current.first);
+		SgAddressOfOp * addr_of_op = isSgAddressOfOp(current.first);
+		SgPointerDerefExp * deref_op = isSgPointerDerefExp(current.first);
 		
 		SgFunctionCallExp * func_call_exp = isSgFunctionCallExp(current.first);
+                SgCudaKernelCallExp * cuda_kernel_call_exp = isSgCudaKernelCallExp(current.first);
 
 		SgValueExp * val_exp              = isSgValueExp(current.first);
 		
-		bool terminal = var_ref_exp   != NULL
-					 || arr_ref_exp   != NULL
-					 || arrow_exp     != NULL
-					 || dot_exp       != NULL
-					 || addr_of_op    != NULL
-					 || deref_op      != NULL
-					 || func_call_exp != NULL
-					;
+		bool terminal =     var_ref_exp          != NULL
+				 || arr_ref_exp          != NULL
+				 || arrow_exp            != NULL
+				 || dot_exp              != NULL
+				 || addr_of_op           != NULL
+				 || deref_op             != NULL
+				 || func_call_exp        != NULL
+                                 || cuda_kernel_call_exp != NULL
+				;
 		
 		bool non_access_terminal = val_exp != NULL;
+
+                if (isSgNullExpression(current.first)) continue;
 		
 		if (!terminal && !non_access_terminal) {
 			SgBinaryOp * bin_op = isSgBinaryOp(current.first);
 			SgUnaryOp * una_op  = isSgUnaryOp(current.first);
+                        SgConditionalExp * conditional_exp = isSgConditionalExp(current.first);
 
 			bool is_reduc_op  = isSgPlusAssignOp   (current.first)
 							 || isSgMinusAssignOp  (current.first)
@@ -604,6 +631,11 @@ bool collectAccess(SgExpression * e, std::set<Access *> & access_vect, Polyhedra
 				if (is_crement_op)
 					stack_exp.push(std::pair<SgExpression *, bool>(una_op->get_operand_i(), true));
 			}
+                        else if (conditional_exp != NULL) {
+                            stack_exp.push(std::pair<SgExpression *, bool>(conditional_exp->get_conditional_exp(), false));
+                            stack_exp.push(std::pair<SgExpression *, bool>(conditional_exp->get_true_exp(), false));
+                            stack_exp.push(std::pair<SgExpression *, bool>(conditional_exp->get_false_exp(), false));
+                        }
 			else {
 #if DEBUG_DATA_ACCESS_COLLECTION
 				std::cerr << "Error: collectAccess(SgExpression * e=" << e << "): unsupported node: " << current.first->class_name() << std::endl;
@@ -651,15 +683,20 @@ PolyhedralFunction::PolyhedralFunction(SgFunctionDeclaration * decl, FunctionTab
 	p_defn(NULL),
 	p_parameters(),
 	p_top_symbol_table(new SymbolTable(this)),
-	p_return_symbol(p_top_symbol_table->genReturnSymbol())
+	p_return_symbol(p_top_symbol_table->genReturnSymbol()),
+        p_polyhedral_element(NULL)
 {
 	ROSE_ASSERT(function_table != NULL);
+
+        p_decls_set.insert(decl);
 
 	p_first_decl = isSgFunctionDeclaration(decl->get_firstNondefiningDeclaration());
 	if (p_first_decl == NULL) p_first_decl = decl;
 	
 	ROSE_ASSERT(p_first_decl != NULL);
-	
+
+	p_decls_set.insert(p_first_decl);
+
 	// Look for definition
 	
 	SgFunctionDeclaration * defn_decl = isSgFunctionDeclaration(p_first_decl->get_definingDeclaration());
@@ -692,6 +729,8 @@ PolyhedralFunction::PolyhedralFunction(SgFunctionDeclaration * decl, FunctionTab
 		
 		p_parameters.push_back(sym);
 	}
+
+        ROSE_ASSERT(DEBUG_TODO == 0); // TODO  attach 'this' to all known decl
 }
 
 bool PolyhedralFunction::isSameFunction(SgFunctionDeclaration * decl) {
@@ -701,6 +740,7 @@ bool PolyhedralFunction::isSameFunction(SgFunctionDeclaration * decl) {
 		return decl == p_first_decl;
 	else if (decl->get_firstNondefiningDeclaration() == p_first_decl) {
 		p_decls_set.insert(decl);
+                ROSE_ASSERT(DEBUG_TODO == 0); // TODO attach 'this' to the decl
 		return true;
 	}
 	else
@@ -726,6 +766,14 @@ SymbolTable * PolyhedralFunction::getSymbolTable() {
 
 Symbol * PolyhedralFunction::getReturnSymbol() {
 	return p_return_symbol;
+}
+
+void PolyhedralFunction::setPolyhedralElement(PolyhedralElement * elem) {
+    p_polyhedral_element = elem;
+}
+
+PolyhedralElement * PolyhedralFunction::getPolyhedralElement() {
+    return p_polyhedral_element;
 }
 
 /*****************/
@@ -777,11 +825,11 @@ Symbol::Symbol(unsigned int vid) :
 	id(vid)
 {}
 
-void Symbol::print(std::ostream & out, std::string indent) {
+void Symbol::print(std::ostream & out) const {
 	std::string name;
 	if (isSgVariableSymbol(sage_symbol))
 		name = isSgVariableSymbol(sage_symbol)->get_declaration()->get_name().getString();
-	out << indent << "[ name=\"" << name << "\", sg-sym=" << sage_symbol << ", id=" << id << ", it=" << (iterator ? "true" : "false") << " ]" << std::endl;
+	out << "[ name=\"" << name << "\", sg-sym=" << sage_symbol << ", id=" << id << ", it=" << (iterator ? "true" : "false") << " ]";
 }
 
 /***************/
@@ -789,49 +837,61 @@ void Symbol::print(std::ostream & out, std::string indent) {
 /***************/
 
 SymbolTable::SymbolTable(PolyhedralFunction * curr_func) :
-	parent_table(NULL),
-	function_table(NULL),
-	current_function(curr_func),
-	nb_child(0),
-	symbol_set()
+    parent_table(NULL),
+    function_table(NULL),
+    current_function(curr_func),
+    nb_child(0),
+    symbol_set(),
+    saved_childrens()
 {
-	ROSE_ASSERT(curr_func != NULL);
-	
-	function_table = current_function->function_table;
+    ROSE_ASSERT(curr_func != NULL);
+
+    function_table = current_function->function_table;
 }
 
 SymbolTable::SymbolTable(SymbolTable * pt) :
-	parent_table(pt),
-	function_table(NULL),
-	current_function(NULL),
-	nb_child(0),
-	symbol_set()
+    parent_table(pt),
+    function_table(NULL),
+    current_function(NULL),
+    nb_child(0),
+    symbol_set(),
+    saved_childrens()
 {
-	ROSE_ASSERT(parent_table != NULL);
-	
-	current_function = parent_table->current_function;
-	function_table   = parent_table->function_table;
+    ROSE_ASSERT(parent_table != NULL);
 
-	parent_table->nb_child++;
+    current_function = parent_table->current_function;
+    function_table   = parent_table->function_table;
+
+    parent_table->nb_child++;
 }
 
 SymbolTable::~SymbolTable() {
-	ROSE_ASSERT(nb_child == 0);
-	if (parent_table != NULL) parent_table->nb_child--;
-	
-	ROSE_ASSERT(DEBUG_TODO == 0); // TODO delete symbol
+    std::set<SymbolTable *>::iterator it_st;
+    for (it_st = saved_childrens.begin(); it_st != saved_childrens.end(); it_st++) {
+        delete *it_st;
+        nb_child--;
+    }
+
+    ROSE_ASSERT(nb_child == 0);
+
+    if (parent_table != NULL) parent_table->nb_child--;
+
+    ROSE_ASSERT(DEBUG_TODO == 0); // TODO delete symbol
 }
 
 Symbol * SymbolTable::genSymbol(SgExpression * e, bool build) {
-	switch (e->variantT()) {
-		case V_SgVarRefExp:       return genSymbol(isSgVarRefExp(e), build);
-		case V_SgArrowExp:        return genSymbol(isSgArrowExp(e), build);
-		case V_SgDotExp:          return genSymbol(isSgDotExp(e), build);
-		case V_SgPntrArrRefExp:   return genSymbol(isSgPntrArrRefExp(e), build);
-		case V_SgPointerDerefExp: return genSymbol(isSgPointerDerefExp(e), build);
-		case V_SgAddressOfOp:     return genSymbol(isSgAddressOfOp(e), build);
-		default:                  return NULL;
-	}
+    switch (e->variantT()) {
+        case V_SgVarRefExp:       return genSymbol(isSgVarRefExp(e), build);
+        case V_SgArrowExp:        return genSymbol(isSgArrowExp(e), build);
+        case V_SgDotExp:          return genSymbol(isSgDotExp(e), build);
+        case V_SgPntrArrRefExp:   return genSymbol(isSgPntrArrRefExp(e), build);
+        case V_SgPointerDerefExp: return genSymbol(isSgPointerDerefExp(e), build);
+        case V_SgAddressOfOp:     return genSymbol(isSgAddressOfOp(e), build);
+        case V_SgThisExp:         ROSE_ASSERT(DEBUG_TODO == 0); return NULL;
+        default:                  
+                                  std::cerr << "Warning: In SymbolTable::genSymbol: Unknown expression type: " << e->class_name() << std::endl;
+                                  return NULL;
+    }
 }
 
 Symbol * SymbolTable::makeSymbol() {
@@ -906,13 +966,19 @@ Symbol * SymbolTable::genSymbol(SgVarRefExp * e, bool build) {
 
 Symbol * SymbolTable::genSymbol(SgArrowExp * e, bool build) {
 	Symbol * lhs = genSymbol(e->get_lhs_operand_i(), build);
-	if (lhs == NULL) return NULL;
+	if (lhs == NULL && !isSgThisExp(e->get_lhs_operand_i())) return NULL;
 
 	Symbol * rhs = genSymbol(e->get_rhs_operand_i(), build);
 	if (rhs == NULL) return NULL;
-	
-	rhs->parent_symbol = lhs;
-	rhs->relation_with_parent = arrow;
+
+        if (lhs != NULL) {
+	    rhs->parent_symbol = lhs;
+	    rhs->relation_with_parent = arrow;
+        }
+        else {
+            rhs->parent_symbol = NULL;
+            rhs->relation_with_parent = this_ref;
+        }
 
 	ROSE_ASSERT(DEBUG_TODO == 0); // TODO res->scope = e->get_declaration()->get_scope();
 	
@@ -934,22 +1000,28 @@ Symbol * SymbolTable::genSymbol(SgDotExp * e, bool build) {
 }
 
 Symbol * SymbolTable::genSymbol(SgPntrArrRefExp * e, bool build) {
-	Symbol * res = NULL;
-	
-	unsigned int dim = 1;
-	SgPntrArrRefExp * lhs = e;
-	while (isSgPntrArrRefExp(lhs->get_lhs_operand_i())) {
-		lhs = isSgPntrArrRefExp(lhs->get_lhs_operand_i());
-		dim++;
-	}
-	
-	res = genSymbol(lhs->get_lhs_operand_i(), build);
-	
-	if (res != NULL) {
-		res->dimension = dim;
-		res->data = true;
-	}
-	return res;
+    Symbol * res = NULL;
+
+    ROSE_ASSERT(DEBUG_TODO == 0); // should not be done like this. In fact it should not be call (at least not in the current use case)
+
+    return res;
+
+  /*
+    unsigned int dim = 1;
+    SgPntrArrRefExp * lhs = e;
+    while (isSgPntrArrRefExp(lhs->get_lhs_operand_i())) {
+        lhs = isSgPntrArrRefExp(lhs->get_lhs_operand_i());
+        dim++;
+    }
+
+    res = genSymbol(lhs->get_lhs_operand_i(), build);
+
+    if (res != NULL) {
+        res->dimension = dim;
+        res->data = true;
+    }
+    return res;
+  */
 }
 
 Symbol * SymbolTable::genSymbol(SgPointerDerefExp * e, bool build) {
@@ -1031,14 +1103,16 @@ VariableID SymbolTable::getID(Symbol * s) const {
 	
 }
 
-void SymbolTable::print(std::ostream & out, std::string indent) {
+void SymbolTable::print(std::ostream & out, std::string indent) const {
 	out << indent << "Symbol Table: " << this << std::endl;
 	out << indent << "\tparent table:    " << parent_table << std::endl;
 	out << indent << "\tnumber children: " << nb_child << std::endl;
 	
-	std::set<Symbol *>::iterator it0;
+	std::set<Symbol *>::const_iterator it0;
 	for (it0 = symbol_set.begin(); it0 != symbol_set.end(); it0++) {
-		(*it0)->print(out, indent + "\t");
+                out << indent << "\t";
+		(*it0)->print(out);
+                out << std::endl;
 	}
 }
 
@@ -1047,6 +1121,16 @@ void SymbolTable::embedSymbolTable(SymbolTable * st) {
 	symbol_set.insert(st->symbol_set.begin(), st->symbol_set.end());
 	nb_child += st->nb_child;
 	delete st;
+}
+
+bool SymbolTable::shouldBeDelete() {
+    if (nb_child == 0) return true;
+
+    if (parent_table) { // else it should be the top symbol table
+        parent_table->saved_childrens.insert(this);
+    }
+
+    return false;
 }
 
 /*********************/
@@ -1088,6 +1172,69 @@ void PolyhedralElement::addPredicate(PolyhedralPredicate * pred, bool value) {
 	predicate_map.insert(std::pair<PolyhedralPredicate *, bool>(pred, value));
 }
 
+bool PolyhedralElement::collectPolyhedralElement(
+        std::set<PolyhedralElement *> & result,
+        bool top_level_only,
+        bool allow_parametrized_accesses,
+        bool allow_non_linear_data_accesses,
+        bool allow_data_dependant_conditionals,
+        bool allow_data_dependant_loops
+) const {
+    bool res = true;
+
+    ROSE_ASSERT(DEBUG_TODO == 0); // TODO use polymorphism idiot !!!
+
+    const PolyhedralControl * control = dynamic_cast<const PolyhedralControl *>(this);
+    const PolyhedralPredicate * predicate = dynamic_cast<const PolyhedralPredicate *>(this);
+    const PolyhedralStatement * statement = dynamic_cast<const PolyhedralStatement *>(this);
+
+    if (control != NULL) {
+        std::vector<PolyhedralElement *>::const_iterator it_child;
+        for (it_child = control->elements_set.begin(); it_child != control->elements_set.end(); it_child++) {
+            std::set<PolyhedralElement *> sub_res;
+            if ((*it_child)->collectPolyhedralElement(sub_res, top_level_only, allow_parametrized_accesses, allow_non_linear_data_accesses, allow_data_dependant_conditionals, allow_data_dependant_loops)) {
+                if (!top_level_only) result.insert(sub_res.begin(), sub_res.end());
+                result.insert(*it_child);
+            }
+            else {
+                res = false;
+                result.insert(sub_res.begin(), sub_res.end());
+            }
+            sub_res.clear();
+            const PolyhedralControl * sub_control = dynamic_cast<const PolyhedralControl *>(*it_child);
+            if (sub_control != NULL && sub_control->false_statement != NULL) {
+                if (sub_control->false_statement->collectPolyhedralElement(
+                                                      sub_res, top_level_only, allow_parametrized_accesses, allow_non_linear_data_accesses, allow_data_dependant_conditionals, allow_data_dependant_loops
+                )) {
+                    if (!top_level_only) result.insert(sub_res.begin(), sub_res.end());
+                    result.insert(sub_control->false_statement);
+                }
+                else {
+                    res = false;
+                    result.insert(sub_res.begin(), sub_res.end());
+                }
+            }
+        }
+    }
+    if (predicate != NULL) {
+        res = res && allow_data_dependant_conditionals && (allow_data_dependant_loops || !predicate->data_dependent_loop);
+    }
+    if (statement != NULL) {
+        std::set<Access *>::const_iterator it_access;
+        for (it_access = statement->p_access_set.begin(); it_access != statement->p_access_set.end(); it_access++) {
+            DataAccess * data_access = dynamic_cast<DataAccess *>(*it_access);
+            if (data_access != NULL) {
+                res = res && (allow_non_linear_data_accesses || data_access->isLinear());
+            }
+            else {
+                res = res && allow_parametrized_accesses;
+            }
+        }
+    }
+
+    return res;
+}
+
 /***********************/
 /* PolyhedralStatement */
 /***********************/
@@ -1120,15 +1267,35 @@ void PolyhedralStatement::addAccess(const std::set<Access *> & access) {
 	p_access_set.insert(access.begin(), access.end());
 }
 
+std::set<Access *> * PolyhedralStatement::getNonLinearAccess() const {
+    std::set<Access *> * res = new std::set<Access *>();
+
+    std::set<Access *>::const_iterator it;
+    for (it = p_access_set.begin(); it != p_access_set.end(); it++) {
+        DataAccess * access = dynamic_cast<DataAccess *>(*it);
+        if (access != NULL) {
+            if (!access->isLinear()) res->insert(*it);
+        }
+        else res->insert(*it);
+    }
+
+    return res;
+}
+
+void PolyhedralStatement::collectAccess(std::set<Access *> & results) const {
+    results.insert(p_access_set.begin(), p_access_set.end());
+}
+
 /***********************/
 /* PolyhedralPredicate */
 /***********************/
 
-PolyhedralPredicate::PolyhedralPredicate(SgStatement * test_stmt, SgScopeStatement * stmt, SymbolTable * st) :
+PolyhedralPredicate::PolyhedralPredicate(SgStatement * test_stmt, SgScopeStatement * stmt, SymbolTable * st, bool data_dependent_loop_) :
 	PolyhedralStatement(test_stmt),
-	predicate(st->genPredicate(stmt))
+	predicate(st->genPredicate(stmt)),
+        data_dependent_loop(data_dependent_loop_)
 {
-	ROSE_ASSERT(DEBUG_TODO == 0); // TODO add write to the predicate var
+        addAccess(new DataAccess(this, Access::write, predicate));
 }
 
 void PolyhedralPredicate::print(std::ostream & out, std::string indent) {
@@ -1170,7 +1337,7 @@ PolyhedralControl::PolyhedralControl(PolyhedralControl * control) :
 {}
 
 PolyhedralControl::~PolyhedralControl() {
-	if (symbol_table)
+	if (symbol_table->shouldBeDelete())
 		delete symbol_table;
 }
 
@@ -1205,6 +1372,146 @@ void PolyhedralControl::print(std::ostream & out, std::string indent) {
 	}
 }
 
+void PolyhedralControl::collectAccess(std::set<Access *> & results) const {
+    std::vector<PolyhedralElement *>::const_iterator it_elem;
+    for (it_elem = elements_set.begin(); it_elem != elements_set.end(); it_elem++)
+        (*it_elem)->collectAccess(results);
+}
+
+void PolyhedralControl::genReport(std::ostream & out, std::string indent) const {
+    SgLocatedNode * node = isSgLocatedNode(associated_node);
+
+    if (node == NULL) {
+        std::cerr << indent << "Error: should have a SgLocatedNode associate to the PolyhedralControl. Have a " << associated_node->class_name() << " instead!" << std::endl;
+        return;
+    }
+
+    Sg_File_Info * fi = node->get_startOfConstruct();
+
+    if (isScop()) {
+        out << indent << "Node " << node << " of type " << node->class_name() << " at " << fi->get_filenameString() << ":" << fi->get_line() << std::endl;
+        out << indent << ">\tDirectly suitable for Polyhedric Optimisation and Automatic Parallelisation !" << std::endl;
+    }
+    else {
+        bool children_controls_are_scop = true;
+        std::vector<PolyhedralElement *>::const_iterator it_elem;
+        for (it_elem = elements_set.begin(); it_elem != elements_set.end(); it_elem++) {
+            PolyhedralControl * control = dynamic_cast<PolyhedralControl *>(*it_elem);
+            if (control != NULL) {
+                children_controls_are_scop = children_controls_are_scop && control->isScop() && (control->false_statement == NULL || control->false_statement->isScop());
+            }
+        }
+        if (children_controls_are_scop) {
+            out << indent << "Node " << node << " of type " << node->class_name() << " at " << fi->get_filenameString() << ":" << fi->get_line() << std::endl;
+            out << indent << ">\tCannot be model in the Polyhedral Model. But all children \"control\" nodes can:" << std::endl;
+            for (it_elem = elements_set.begin(); it_elem != elements_set.end(); it_elem++) {
+                PolyhedralControl * control = dynamic_cast<PolyhedralControl *>(*it_elem);
+                if (control != NULL) {
+                    if (control->false_statement != NULL)
+                        out << indent << "\t|\tTrue part of an IF:" << std::endl;
+                    control->genReport(out, indent + "\t|\t");
+                    if (control->false_statement != NULL) {
+                        out << indent << "\t|\tFalse part of an IF:" << std::endl;
+                        control->false_statement->genReport(out, indent + "\t|\t");
+                    }
+                }
+            }
+            out << indent << ">\tReasons that prevent the modeling:" << std::endl;
+            for (it_elem = elements_set.begin(); it_elem != elements_set.end(); it_elem++) {
+                PolyhedralPredicate * predicate = dynamic_cast<PolyhedralPredicate *>(*it_elem);
+                if (predicate != NULL) {
+                    if (predicate->statement == NULL) {
+                        out << indent << "\t*\tA generated predicate: it probably comes from the surrounding loop which is data-dependent or have non-linear bounds..." << std::endl;
+                    }
+                    else {
+                        fi = predicate->statement->get_startOfConstruct();
+                        out << indent << "\t*\tA predicate: data-dependent or non-linear conditionnal statement. Statement type: " << predicate->statement->class_name() << " at " << fi->get_filenameString() << ":" << fi->get_line()  << std::endl;
+                    }
+                }
+            }
+            for (it_elem = elements_set.begin(); it_elem != elements_set.end(); it_elem++) {
+                PolyhedralStatement * stmt = dynamic_cast<PolyhedralStatement *>(*it_elem);
+                if (stmt != NULL) {
+                    std::set<Access *> * nonlinear_accesses = stmt->getNonLinearAccess();
+                    if (nonlinear_accesses->size() != 0) {
+                        if (stmt->statement != NULL) {
+                            fi = stmt->statement->get_startOfConstruct();
+                            out << indent << "\t*\tA statement (" << stmt->statement->class_name() << ") with non-linear accesses at " << fi->get_filenameString() << ":" << fi->get_line() << std::endl;
+                        }
+                        else {
+                            out << indent << "\t*\tNon-linear accesses in a generated statement (probably a predicate)." << std::endl;
+                        }
+                        std::set<Access *>::iterator it_nl_access;
+                        for (it_nl_access = nonlinear_accesses->begin(); it_nl_access != nonlinear_accesses->end(); it_nl_access++) {
+                            ParametrizedAccess * param_access = dynamic_cast<ParametrizedAccess *>(*it_nl_access);
+                            if (param_access) out << indent << "\t\t-\tA function call" << std::endl;
+                            else out << indent << "\t\t-\tA polynomial subscript to an array (probably a pseudo-multidimensional array)" << std::endl;
+                        }
+                    }
+                    delete nonlinear_accesses;
+                }
+            }
+        }
+        else {
+            for (it_elem = elements_set.begin(); it_elem != elements_set.end(); it_elem++) {
+                PolyhedralControl * control = dynamic_cast<PolyhedralControl *>(*it_elem);
+                if (control != NULL) {
+                    if (control->false_statement != NULL)
+                        out << indent << "True part of an IF:" << std::endl;
+                    control->genReport(out, indent);
+                    if (control->false_statement != NULL) {
+                        out << indent << "False part of an IF:" << std::endl;
+                        control->false_statement->genReport(out, indent);
+                    }
+                }
+            }
+        }
+    }
+
+}
+
+bool PolyhedralControl::isScop() const {
+    std::vector<PolyhedralElement *>::const_iterator it_elem;
+    for (it_elem = elements_set.begin(); it_elem != elements_set.end(); it_elem++) {
+        PolyhedralControl * control = dynamic_cast<PolyhedralControl *>(*it_elem);
+        if (control != NULL) {
+            if (!control->isScop()) return false;
+            if (control->false_statement != NULL && !control->false_statement->isScop()) return false;
+            break;
+        }
+
+        PolyhedralPredicate * predicate = dynamic_cast<PolyhedralPredicate *>(*it_elem);
+        if (predicate != NULL) return false;
+
+        PolyhedralStatement * stmt = dynamic_cast<PolyhedralStatement *>(*it_elem);
+        if (stmt != NULL) {
+            std::set<Access *> * nonlinear_accesses = stmt->getNonLinearAccess();
+            bool have_nonlinear_accesses = (nonlinear_accesses->size() != 0);
+            delete nonlinear_accesses;
+            if (have_nonlinear_accesses) return false;
+        }
+    }
+
+    return true;
+}
+
+bool PolyhedralControl::containsLoop() const {
+    bool res = (stride != 0);
+
+    std::vector<PolyhedralElement *>::const_iterator it_elem;
+    for (it_elem = elements_set.begin(); it_elem != elements_set.end(); it_elem++) {
+        PolyhedralControl * control = dynamic_cast<PolyhedralControl *>(*it_elem);
+        if (control != NULL)
+            res = res || control->containsLoop();
+    }
+
+    return res;
+}
+
+PolyhedralAttribute::PolyhedralAttribute(PolyhedralElement * elem) :
+    polyhedral_element(elem)
+{}
+
 /**********/
 /* Access */
 /**********/
@@ -1219,38 +1526,64 @@ Access::~Access() {}
 /* DataAccess */
 /**************/
 
-DataAccess::DataAccess(PolyhedralElement * elem, AccessType type, Symbol * s) :
+DataAccess::DataAccess(PolyhedralElement * elem, AccessType type, Symbol * s, std::vector<Expression<Symbol> *> & subscripts_) :
 	Access(elem),
 	access_type(type),
 	symbol(s),
-	accessed_domain(),
-	dimension(0)
+	subscripts(subscripts_)
 {
 	ROSE_ASSERT(symbol != NULL);
 
-	dimension = symbol->dimension;
+	symbol->data = true;
 
-	if (type == write) symbol->data = true;
+        ROSE_ASSERT(DEBUG_TODO == 0); // TODO update the array-shape attribute of the symbol
+}
+
+DataAccess::DataAccess(PolyhedralElement * elem, AccessType type, Symbol * s) :
+        Access(elem),
+        access_type(type),
+        symbol(s),
+        subscripts()
+{
+        ROSE_ASSERT(symbol != NULL);
+
+        if (type == write) symbol->data = true;
 }
 
 DataAccess::~DataAccess() {}
+
+bool DataAccess::isLinear() const {
+    bool res = true;
+
+    std::vector<Expression<Symbol> *>::const_iterator it;
+    for (it = subscripts.begin(); it != subscripts.end(); it++) {
+        const Expression<Symbol> * exp = *it;
+        LinearExpression_ppl le;
+        res = res && exp != NULL ? exp->linearForm<PolyhedralElement>(le, associated_element) : false;
+    }
+
+    return res;
+}
 	
-void DataAccess::restrainAccessedDomain(LinearExpression_ppl & le, unsigned int dim, constraint_type_e type) {
-	ROSE_ASSERT(DEBUG_TODO == 0); // TODO DataAccess::restrainAccessedDomain
-}
-
-void DataAccess::addAccessDimension() {
-	ROSE_ASSERT(DEBUG_TODO == 0); // TODO DataAccess::addAccessDimension
-	ROSE_ASSERT(DEBUG_TODO == 0); // TODO update symbol if needed
-	ROSE_ASSERT(DEBUG_TODO == 0); // TODO update polyhedron
-}
-
-unsigned int DataAccess::getAccessDimension() const {
-	return dimension;
-}
-
-void DataAccess::print(std::ostream & out, std::string indent) {
-	ROSE_ASSERT(DEBUG_TODO == 0); // TODO DataAccess::print
+void DataAccess::print(std::ostream & out, std::string indent) const {
+    ROSE_ASSERT(DEBUG_TODO == 0); // TODO DataAccess::print
+    out << indent << "DataAccess on symbol:";
+    symbol->print(out);
+    out << std::endl;
+    out << indent << "\tType: ";
+    switch (access_type) {
+        case Access::read: out << "read"; break;
+        case Access::write: out << "write"; break;
+    }   
+    if (isLinear()) out << " LINEAR"; 
+    out << std::endl;
+    out << indent << "\tSubscripts:" << std::endl;
+    std::vector<Expression<Symbol> *>::const_iterator it;
+    for (it = subscripts.begin(); it != subscripts.end(); it++) {
+        out << indent << "\t\t";
+        (*it)->print(out);
+        out << std::endl;
+    }
 }
 
 /**************************/
@@ -1267,8 +1600,9 @@ ParametrizedAccess::ParametrizedAccess(PolyhedralElement * elem, PolyhedralFunct
 
 ParametrizedAccess::~ParametrizedAccess() {}
 
-void ParametrizedAccess::print(std::ostream & out, std::string indent) {
+void ParametrizedAccess::print(std::ostream & out, std::string indent) const {
 	ROSE_ASSERT(DEBUG_TODO == 0); // TODO ParametrizedAccess::print
+        out << indent << "ParametrizedAccess" << std::endl;
 }
 
 /*************/
@@ -1298,9 +1632,11 @@ FunctionTable * PolyhedralModelisation::traverse(SgProject * project) {
 			PolyhedralElement * elem = evaluate((*it1)->getDefinition(), control);
 			if (elem != NULL) {
 				ROSE_ASSERT(DEBUG_TODO == 0); // TODO finalyse -> refactor PolyhedralElement to use privatized var and id from symbol 
-				ROSE_ASSERT(DEBUG_TODO == 0); // TODO attach PolyhedralElement = elem
 
 				p_results.insert(elem);
+                                (*it1)->getDefinition()->setAttribute("PolyhedralAttribute", new PolyhedralAttribute(elem));
+                                (*it1)->setPolyhedralElement(elem);
+                                
 
 #if DEBUG_ATTACHED_RESULT
 				std::cerr << "Attach:" << std::endl;
@@ -1337,7 +1673,7 @@ PolyhedralElement * PolyhedralModelisation::evaluate(SgNode * n, PolyhedralContr
 	std::cerr << indent << "Traverse (Top-Down ) " << n->class_name() << " " << n << std::endl;
 #endif /* DEBUG_TRAVERSAL */
 
-	std::vector<PolyhedralElement *> syn_attr_list; // Attribute synthetized by the bottom-up traversal
+	std::vector<PolyhedralElement *> syn_attr_list; // Attribute synthetized by the top-down traversal, consumed in bottom-up
 	PolyhedralElement * res = inh_control; // Attribute generated in the bottom-up part, place here for short circuit in function definition case
 
 	switch (n->variantT()) {
@@ -1366,7 +1702,8 @@ PolyhedralElement * PolyhedralModelisation::evaluate(SgNode * n, PolyhedralContr
 			LinearExpression_ppl lower_bound;
 			LinearExpression_ppl upper_bound;
 			int increment;
-			
+
+			// TODO no init can be a SCoP...
 			if (for_init_stmt_list.size() != 1) is_static_control = false;
 			else {
 				LinearExpression_ppl lower_bound;
@@ -1452,7 +1789,7 @@ PolyhedralElement * PolyhedralModelisation::evaluate(SgNode * n, PolyhedralContr
 				}
 
 				Integer it_val = is_static_control ? (increment > 0 ? upper_bound : lower_bound).coefficient(inh_control->getID(iterator)) : 0;
-				is_static_control = is_static_control && it_val != 0 && (increment > 0 xor it_val > 0);
+				is_static_control = is_static_control && it_val != 0 && ((increment > 0) xor (it_val > 0));
 			}
 			
 			SgStatement * body_stmt = for_stmt->get_loop_body();
@@ -1472,7 +1809,7 @@ PolyhedralElement * PolyhedralModelisation::evaluate(SgNode * n, PolyhedralContr
 					inh_control->previous_statements.push_back(evaluate(*it , inh_control->genNext(*it), indent + "|\t"));
 				
 				// Gen predicate stmt and iterator
-				PolyhedralPredicate * predicate = new PolyhedralPredicate(test_stmt, for_stmt, inh_control->symbol_table);
+				PolyhedralPredicate * predicate = new PolyhedralPredicate(test_stmt, for_stmt, inh_control->symbol_table, true);
 				syn_attr_list.push_back(predicate);
 				Symbol * iterator = inh_control->symbol_table->genIteratorSymbol(for_stmt);
 				
@@ -1516,6 +1853,8 @@ PolyhedralElement * PolyhedralModelisation::evaluate(SgNode * n, PolyhedralContr
 			SgExpression * cond_expr = NULL;
 			if (cond_expr_stmt != NULL) cond_expr = cond_expr_stmt->get_expression();
 
+			ROSE_ASSERT(cond_expr != NULL); // TODO make it safer
+
 			std::vector<std::pair<LinearExpression_ppl, bool> > constraint_set;
 			bool is_static_control = cond_expr != NULL && genLinearConstraint(
 						NULL,
@@ -1553,6 +1892,10 @@ PolyhedralElement * PolyhedralModelisation::evaluate(SgNode * n, PolyhedralContr
 					inh_control->false_statement->refineDomain(constraint_set[0].first <= -1);
 					syn_attr_list.push_back(evaluate(false_stmt, inh_control->false_statement->genNext(false_stmt), indent + "|\t"));
 				}
+                                else {
+                                    delete inh_control->false_statement;
+                                    inh_control->false_statement = NULL;
+                                }
 			}
 			else {
 				PolyhedralPredicate * predicate = new PolyhedralPredicate(cond_stmt, if_stmt, inh_control->symbol_table);
@@ -1601,7 +1944,7 @@ PolyhedralElement * PolyhedralModelisation::evaluate(SgNode * n, PolyhedralContr
 							SgExpression * assign_init_expr = isSgExpression(isSgAssignInitializer(init)->get_operand_i());
 
 							if (assign_init_expr) {
-								success = collectAccess(assign_init_expr, access_vect, inh_control, inh_control->symbol_table);
+								success = collectAccess(assign_init_expr, access_vect, res, inh_control->symbol_table);
 							}
 							else {
 								success = true;
@@ -1650,10 +1993,10 @@ PolyhedralElement * PolyhedralModelisation::evaluate(SgNode * n, PolyhedralContr
 			std::set<Access *> access_vect;
 			
 			bool success = false;
-			if (expr) success = collectAccess(expr, access_vect, inh_control, inh_control->symbol_table);
+			if (expr) success = collectAccess(expr, access_vect, res, inh_control->symbol_table);
 			else success = true;// TODO -> empty expression: need to be replace by SgNullStatement (ROSE/EDG lvl)
 			
-			inh_control->collectPredicate(res);
+        		inh_control->collectPredicate(res);
 			
 			if (success) {
 				res->addAccess(access_vect);
@@ -1683,7 +2026,7 @@ PolyhedralElement * PolyhedralModelisation::evaluate(SgNode * n, PolyhedralContr
 			SgExpression * expr = isSgExpression(isSgReturnStmt(n)->get_expression());
 			
 			bool success = false;
-			if (expr) success = collectAccess(expr, access_vect, inh_control, inh_control->symbol_table);
+			if (expr) success = collectAccess(expr, access_vect, res, inh_control->symbol_table);
 			else success = true;
 
 			inh_control->collectPredicate(res);
@@ -1705,6 +2048,7 @@ PolyhedralElement * PolyhedralModelisation::evaluate(SgNode * n, PolyhedralContr
 			return res;
 		}
 		case V_SgNullStatement: 
+                case V_SgPragmaDeclaration:
 		{
 			ROSE_ASSERT(DEBUG_TODO == 0); // TODO Remove during aggregation phase
 		}
@@ -1766,6 +2110,7 @@ PolyhedralElement * PolyhedralModelisation::evaluate(SgNode * n, PolyhedralContr
 				ROSE_ASSERT(DEBUG_TODO == 0); // TODO attach PolyhedralElement = **it
 
 				p_results.insert(*it);
+//                                n->setAttribute("PolyhedralAttribute", new PolyhedralAttribute(*it)); // attach to *it->node
 
 #if DEBUG_ATTACHED_RESULT
 				std::cerr << "Attach:" << std::endl;
@@ -1787,3 +2132,62 @@ PolyhedralElement * PolyhedralModelisation::evaluate(SgNode * n, PolyhedralContr
 
 	return res;
 }
+
+const std::set<PolyhedralElement *> & PolyhedralModelisation::getPolyhedralElement() const {
+    return p_results;
+}
+
+void PolyhedralModelisation::genReport(std::ostream & out) const {
+    out << "*********************************************" << std::endl;
+    out << "* REPORT: Polyhedral Modelisation discovery *" << std::endl;
+    out << "*********************************************" << std::endl;
+
+    out << std::endl << std::endl;
+    
+    out << "Control statements, individual reports:" << std::endl; 
+    
+    out << std::endl;
+
+    std::set<PolyhedralElement *>::const_iterator it;
+    for (it = p_results.begin(); it != p_results.end(); it++) {
+        PolyhedralControl * control = dynamic_cast<PolyhedralControl *>(*it);
+        if (control != NULL) {
+            control->genReport(out, "\t");
+        }
+    }
+}
+
+void PolyhedralModelisation::collectPolyhedralElement(
+    std::set<PolyhedralElement *> & result,
+    bool top_level_only,
+    bool allow_parametrized_accesses,
+    bool allow_non_linear_data_accesses,
+    bool allow_data_dependant_conditionals,
+    bool allow_data_dependant_loops
+) const {
+    std::set<PolyhedralElement *> sub_res;
+
+    std::set<PolyhedralElement *>::const_iterator it;
+    for (it = p_results.begin(); it != p_results.end(); it++) {
+        if ((*it)->collectPolyhedralElement(sub_res, top_level_only, allow_parametrized_accesses, allow_non_linear_data_accesses, allow_data_dependant_conditionals, allow_data_dependant_loops)) {
+            if (!top_level_only) result.insert(sub_res.begin(), sub_res.end());
+            result.insert(*it);
+        }
+        else {
+            result.insert(sub_res.begin(), sub_res.end());
+        }
+        sub_res.clear();
+        const PolyhedralControl * sub_control = dynamic_cast<const PolyhedralControl *>(*it);
+        if (sub_control != NULL && sub_control->false_statement != NULL) {
+            if (sub_control->false_statement->collectPolyhedralElement(
+                                                  sub_res, top_level_only, allow_parametrized_accesses, allow_non_linear_data_accesses, allow_data_dependant_conditionals, allow_data_dependant_loops
+            )) {
+                if (!top_level_only) result.insert(sub_res.begin(), sub_res.end());
+                result.insert(sub_control->false_statement);
+            }
+            else result.insert(sub_res.begin(), sub_res.end());
+        }
+        sub_res.clear();
+    }
+}
+

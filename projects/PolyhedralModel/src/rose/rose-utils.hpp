@@ -15,11 +15,13 @@
 #ifndef _ROSE_UTILS_HPP_
 #define _ROSE_UTILS_HPP_
 
+#include <iostream>
+
 #include "maths/PPLUtils.hpp"
 
 #include "rose/Variable.hpp"
 
-#include <iostream>
+#include "rose.h"
 
 std::ostream & operator << (std::ostream & out, SgExprStatement & arg);
 

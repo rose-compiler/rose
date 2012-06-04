@@ -19,6 +19,12 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # DQ (4/17/2010): These directories are now organized based on what sets of languages 
 # are enabled in ROSE (including binary analysis).
 SUBDIRS = 
+if ROSE_USE_CLANG_FRONTEND
+   SUBDIRS += C_tests
+   SUBDIRS += C_subset_of_Cxx_tests
+   SUBDIRS += CudaTests
+   SUBDIRS += OpenClTests
+else
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 # TOO (2/16/2011): Errors with Tensilica's Xtensa compilers as alternative backend compilers. We can
 # gradually enable these tests at a later stage if necessary.
@@ -67,19 +73,16 @@ endif
 # end of !ROSE_USE_EDG_VERSION_4_3
 endif
 
-if ROSE_BUILD_EDG_WITH_CUDA_SUPPORT
-   SUBDIRS += CudaTests
-endif
-
-if ROSE_BUILD_EDG_WITH_OPENCL_SUPPORT
-   SUBDIRS += OpenClTests
-endif
 
 if ROSE_BUILD_PYTHON_LANGUAGE_SUPPORT
    SUBDIRS += Python_tests
 endif
 
+# Used to check all C and C++ test codes: not really specific to EDG 4.x
 SUBDIRS += EDG_4_x
+
+# end of ROSE_USE_CLANG_FRONTEND
+endif
 
 check-local:
 	@echo "*************************************************************************************"
