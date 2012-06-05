@@ -126,6 +126,7 @@ Unparse_ExprStmt::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpars
           case TYPE_REF:                { unparseTypeRef(expr, info); break; }
           case EXPR_INIT:               { unparseExprInit(expr, info); break; }
           case AGGREGATE_INIT:          { unparseAggrInit(expr, info); break; }
+          case COMPOUND_INIT:           { unparseCompInit(expr, info); break; }
           case CONSTRUCTOR_INIT:        { unparseConInit(expr, info); break; }
           case ASSIGN_INIT:             { unparseAssnInit(expr, info); break; }
           case THROW_OP:                { unparseThrowOp(expr, info); break; }
@@ -3000,6 +3001,38 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
      unparseAttachedPreprocessingInfo(aggr_init, info, PreprocessingInfo::inside);
      if (aggr_init->get_need_explicit_braces())
       curprint ( "}");
+   }
+
+void
+Unparse_ExprStmt::unparseCompInit(SgExpression* expr, SgUnparse_Info& info)
+   {
+    // Skip the entire thing if the initializer is from an included file
+     if (isFromAnotherFile (expr))
+       return;
+     SgCompoundInitializer* comp_init = isSgCompoundInitializer(expr);
+     ROSE_ASSERT(comp_init != NULL);
+  /* code inserted from specification */
+
+     SgUnparse_Info newinfo(info);
+
+     curprint ( "(");
+
+     SgExpressionPtrList& list = comp_init->get_initializers()->get_expressions();
+     size_t last_index = list.size() -1;
+     for (size_t index =0; index < list.size(); index ++)
+     {
+       //bool skipUnparsing = isFromAnotherFile(aggr_init,index);
+       bool skipUnparsing = isFromAnotherFile(list[index]);
+       if (!skipUnparsing)
+       {
+         unparseExpression(list[index], newinfo);
+         if (index!= last_index)
+           curprint ( ", ");
+       }
+     }
+     unparseAttachedPreprocessingInfo(comp_init, info, PreprocessingInfo::inside);
+
+     curprint ( ")");
    }
 
 void

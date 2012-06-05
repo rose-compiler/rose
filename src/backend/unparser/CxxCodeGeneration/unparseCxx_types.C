@@ -209,6 +209,17 @@ string get_type_name(SgType* t)
                     res = get_type_name(mod_type->get_base_type());
                     unparse_base = false;
                 }
+                if (mod_type->get_typeModifier().isOpenclGlobal())
+                    res = "__global " + res;
+                if (mod_type->get_typeModifier().isOpenclLocal())
+                    res = "__local " + res;
+                if (mod_type->get_typeModifier().isOpenclConstant())
+                    res = "__constant " + res;
+                if (mod_type->get_typeModifier().haveAddressSpace()) {
+                    std::ostringstream outstr;
+                    outstr << mod_type->get_typeModifier().get_address_space_value(); 
+                    res = res + "__attribute__((address_space(" + outstr.str() + ")))";
+                }
                 if (mod_type->get_typeModifier().get_constVolatileModifier().isConst())
                     res = res + "const ";
                 if (mod_type->get_typeModifier().get_constVolatileModifier().isVolatile())
@@ -1575,6 +1586,18 @@ void Unparse_Type::unparseModifierType(SgType* type, SgUnparse_Info& info)
        // Print the base type if this has to come first
           if (btype_first)
                unparseType(mod_type->get_base_type(), info);
+
+          if (mod_type->get_typeModifier().isOpenclGlobal())
+              curprint ( "__global ");
+          if (mod_type->get_typeModifier().isOpenclLocal())
+              curprint ( "__local ");
+          if (mod_type->get_typeModifier().isOpenclConstant())
+              curprint ( "__constant ");
+          if (mod_type->get_typeModifier().haveAddressSpace()) {
+              std::ostringstream outstr;
+              outstr << "__attribute__((address_space(" << mod_type->get_typeModifier().get_address_space_value() << ")))";
+              curprint ( outstr.str().c_str() );
+          }
 
           if (mod_type->get_typeModifier().get_constVolatileModifier().isConst())
              { curprint ( "const "); }

@@ -422,12 +422,14 @@ void postProcessingSupport (SgNode* node)
   // DQ (1/19/2008): This can be called at nearly any point in the ast fixup.
      markLhsValues(node);
 
+#ifndef ROSE_USE_CLANG_FRONTEND
   // DQ (2/21/2010): This normalizes an EDG trick (well documented) that replaces "__PRETTY_FUNCTION__" variable 
   // references with variable given the name of the function where the "__PRETTY_FUNCTION__" variable references 
   // was found. This is only seen when compiling ROSE using ROSE and was a mysterious property of ROSE for a long 
   // time until it was identified.  This fixup traversal changes the name back to "__PRETTY_FUNCTION__" to make
   // the code generated using ROSE when compiling ROSE source code the same as if GNU processed it (e.g. using CPP).
      fixupPrettyFunctionVariables(node);
+#endif
 
 #if 0
   // DQ (1/22/2008): Use this for the Fortran code to get more accurate source position information.
