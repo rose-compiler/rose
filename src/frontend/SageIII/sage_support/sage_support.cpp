@@ -1616,10 +1616,12 @@ SgProject::parse()
   // calling the backend on them. (If only the backend is used, this was
   // never called by SgFile::callFrontEnd either.)
   // if ( !get_fileList().empty() && !get_useBackendOnly() )
+#ifndef ROSE_USE_CLANG_FRONTEND
      if ( (get_fileList().empty() == false) && (get_useBackendOnly() == false) )
         {
           AstPostProcessing(this);
         }
+#endif
 #if 0
        else
         {
@@ -1660,7 +1662,9 @@ SgProject::parse()
         {
           SgFile *file = *fIterator;
           ROSE_ASSERT(file != NULL);
+//#ifndef ROSE_USE_CLANG_FRONTEND
           file->secondaryPassOverSourceFile();
+//#endif
         }
 
      // negara1 (06/23/2011): Collect information about the included files to support unparsing of those that are modified.
@@ -1955,7 +1959,11 @@ SgFile::callFrontEnd()
 
   // Build the commandline for EDG
   // printf ("Inside of SgFile::callFrontEnd(): Calling build_EDG_CommandLine (fileNameIndex = %d) \n",fileNameIndex);
+  #ifndef ROSE_USE_CLANG_FRONTEND
      build_EDG_CommandLine (inputCommandLine,localCopy_argv,fileNameIndex );
+  #else
+     build_CLANG_CommandLine (inputCommandLine,localCopy_argv,fileNameIndex );
+  #endif
   // printf ("DONE: Inside of SgFile::callFrontEnd(): Calling build_EDG_CommandLine (fileNameIndex = %d) \n",fileNameIndex);
 
   // DQ (10/15/2005): This is now a single C++ string (and not a list)
@@ -2124,7 +2132,7 @@ SgFile::callFrontEnd()
 
                     default:
                        {
-                         printf ("Error: default reached in unparser: class name = %s \n",this->class_name().c_str());
+                         printf ("Error: default reached in Rose parser/IR translation processing: class name = %s \n",this->class_name().c_str());
                          ROSE_ASSERT(false);
                        }
                   }
@@ -3660,9 +3668,9 @@ SgSourceFile::build_C_and_Cxx_AST( vector<string> argv, vector<string> inputComm
      if ( get_verbose() > 1 )
           printf ("Before calling edg_main: frontEndCommandLineString = %s \n",frontEndCommandLineString.c_str());
 
-     int edg_argc = 0;
-     char **edg_argv = NULL;
-     CommandlineProcessing::generateArgcArgvFromList(inputCommandLine, edg_argc, edg_argv);
+     int c_cxx_argc = 0;
+     char **c_cxx_argv = NULL;
+     CommandlineProcessing::generateArgcArgvFromList(inputCommandLine, c_cxx_argc, c_cxx_argv);
 
 #ifdef ROSE_BUILD_CXX_LANGUAGE_SUPPORT
   // This is the function call to the EDG front-end (modified in ROSE to pass a SgFile)
@@ -3677,8 +3685,14 @@ SgSourceFile::build_C_and_Cxx_AST( vector<string> argv, vector<string> inputComm
              }
 #endif
 
+#ifdef ROSE_USE_CLANG_FRONTEND
+     int clang_main(int, char *[], SgSourceFile & sageFile );
+     int frontendErrorLevel = clang_main (c_cxx_argc, c_cxx_argv, *this);
+#else /* default to EDG */
      int edg_main(int, char *[], SgSourceFile & sageFile );
-     int frontendErrorLevel = edg_main (edg_argc, edg_argv, *this);
+     int frontendErrorLevel = edg_main (c_cxx_argc, c_cxx_argv, *this);
+#endif /* clang or edg */
+
 #else
      int frontendErrorLevel = 99;
      ROSE_ASSERT (! "[FATAL] [ROSE] [frontend] [C/C++] "

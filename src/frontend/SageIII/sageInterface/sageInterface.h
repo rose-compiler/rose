@@ -754,7 +754,7 @@ SgType* getElementType(SgType* t);
 /// \return an array that contains an expression indicating each dimension's size.
 ///         OWNERSHIP of the expressions is TRANSFERED TO the CALLER (which
 ///         becomes responsible for freeing the expressions).
-///         note, the first entry of the array is a SgNullExpression, iff the
+///         Note, the first entry of the array is a SgNullExpression, iff the
 ///         first array dimension was not specified.
 /// \code
 ///         int x[] = { 1, 2, 3 };
@@ -764,7 +764,7 @@ SgType* getElementType(SgType* t);
 ///         int x[i*5];
 /// \endcode
 /// \post   return-value.empty() == false
-/// \post   return-value[*] != NULL /* no nullptr in the returned vector */
+/// \post   return-value[*] != NULL (no nullptr in the returned vector)
 std::vector<SgExpression*>
 get_C_array_dimensions(const SgArrayType& arrtype);
 
@@ -781,11 +781,12 @@ get_C_array_dimensions(const SgArrayType& arrtype);
 /// \endcode
 ///         the entry for the first dimension will be:
 /// \code
-///         sizeof(x) / (sizeof(int) * 3 /* 2nd dimension */)
+///         // 3 ... size of 2nd dimension
+///         sizeof(x) / (sizeof(int) * 3)
 /// \endcode
-/// \pre    @arrtype is the array-type of @varref
+/// \pre    arrtype is the array-type of varref
 /// \post   return-value.empty() == false
-/// \post   return-value[*] != NULL /* no nullptr in the returned vector */
+/// \post   return-value[*] != NULL (no nullptr in the returned vector)
 /// \post   !isSgNullExpression(return-value[*])
 std::vector<SgExpression*>
 get_C_array_dimensions(const SgArrayType& arrtype, const SgVarRefExp& varref);
@@ -1558,9 +1559,11 @@ SgCommaOpExp *insertAfterUsingCommaOp (SgExpression* new_exp, SgExpression* anch
 /// \details f's new body becomes { f`(...); } and { int res = f`(...); return res; }
 ///          for functions returning void and a value, respectively.
 ///          two function declarations are inserted in f's enclosing scope
+/// \code
 ///          result_type f`(...);                       <--- (1)
 ///          result_type f (...) { forward call to f` }
 ///          result_type f`(...) { original code }      <--- (2)
+/// \endcode
 ///          Calls to f are not updated, thus in the transformed code all
 ///          calls will continue calling f (this is also true for
 ///          recursive function calls from within the body of f`).
@@ -1573,7 +1576,7 @@ std::pair<SgStatement*, SgInitializedName*>
 wrapFunction(SgFunctionDeclaration& definingDeclaration, SgName newName);
 
 /// \overload
-/// \tparam  NameGen, functor that generates a new name based on the old name.
+/// \tparam  NameGen functor that generates a new name based on the old name.
 ///          interface: SgName @nameGen(const SgName&)
 /// \param   nameGen name generator
 /// \brief   see wrapFunction for details
