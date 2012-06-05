@@ -2735,7 +2735,7 @@ namespace sg
 
   /// \brief    uncovers the type of SgNode and passes it to an
   ///           overloaded function handle in RoseVisitor.
-  /// \tparam   RoseVisitor, the visitor that will be called back with
+  /// \tparam   RoseVisitor the visitor that will be called back with
   ///           the recovered type information. The handle function with
   ///           the most suitable SgNode type will get invoked.
   /// \param rv an instance of a rose visitor; note that the argument is essentially
