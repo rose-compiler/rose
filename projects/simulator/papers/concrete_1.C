@@ -62,11 +62,11 @@ public:
             // manipulation if this example were multi-threaded.  The buffer should be at or above 0x40000000, at least one
             // page in length, and aligned on a page boundary.
             RTS_WRITE(process->rwlock()) {
-                buf_va = process->get_memory()->find_free(0x40000000, sizeof buf, 0x1000);
+                buf_va = process->get_memory().find_free(0x40000000, sizeof buf, 0x1000);
                 if (buf_va) {
                     MemoryMap::BufferPtr sgmt_buffer = MemoryMap::ExternBuffer::create(buf, sizeof buf);
                     MemoryMap::Segment sgmt(sgmt_buffer, 0, MemoryMap::MM_PROT_RWX, "Debugging page");
-                    process->get_memory()->insert(Extent(buf_va, sizeof buf), sgmt);
+                    process->get_memory().insert(Extent(buf_va, sizeof buf), sgmt);
                 }
             } RTS_WRITE_END;
             if (!buf_va) {
@@ -108,7 +108,7 @@ public:
 
             // Unmap our debugging page of memory
             RTS_WRITE(process->rwlock()) {
-                process->get_memory()->erase(Extent(buf_va, sizeof buf));
+                process->get_memory().erase(Extent(buf_va, sizeof buf));
             } RTS_WRITE_END;
 
             // Restore registers

@@ -14,7 +14,7 @@
 #include "RSIM_Linux32.h"
 #include "MultiSemantics.h"
 #include "SymbolicSemantics.h"
-#include "VirtualMachineSemantics.h"
+#include "PartialSymbolicSemantics.h"
 #include "InsnSemanticsExpr.h"
 #include "threadSupport.h"
 
@@ -38,9 +38,9 @@ protected:
 public:
     // Define a multi-semantics domain incorporating two subdomains.
     typedef BinaryAnalysis::InstructionSemantics::MultiSemantics<
-        BinaryAnalysis::InstructionSemantics::VirtualMachineSemantics::ValueType,
-        BinaryAnalysis::InstructionSemantics::VirtualMachineSemantics::State,
-        BinaryAnalysis::InstructionSemantics::VirtualMachineSemantics::Policy,
+        BinaryAnalysis::InstructionSemantics::PartialSymbolicSemantics::ValueType,
+        BinaryAnalysis::InstructionSemantics::PartialSymbolicSemantics::State,
+        BinaryAnalysis::InstructionSemantics::PartialSymbolicSemantics::Policy,
         BinaryAnalysis::InstructionSemantics::SymbolicSemantics::ValueType,
         BinaryAnalysis::InstructionSemantics::SymbolicSemantics::State,
         BinaryAnalysis::InstructionSemantics::SymbolicSemantics::Policy
@@ -53,7 +53,7 @@ public:
         > DecoderX86;
 
     // More convenient names for our two sub-policies.
-    const MultiSemantics::SP0 SP_VMS;        // the VirtualMachineSemantics sub-policy
+    const MultiSemantics::SP0 SP_VMS;        // the PartialSymbolicSemantics sub-policy
     const MultiSemantics::SP1 SP_SYM;        // the SymbolicSemantics sub-policy
 
 

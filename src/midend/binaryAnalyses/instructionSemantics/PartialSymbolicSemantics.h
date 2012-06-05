@@ -1,5 +1,5 @@
-#ifndef Rose_VirtualMachineSemantics_H
-#define Rose_VirtualMachineSemantics_H
+#ifndef Rose_PartialSymbolicSemantics_H
+#define Rose_PartialSymbolicSemantics_H
 
 
 #ifndef __STDC_FORMAT_MACROS
@@ -37,7 +37,7 @@ namespace BinaryAnalysis {                      // documented elsewhere
          *
          *  Each value is either a known value or an unknown value. An unknown value consists of a base name and offset and
          *  whether the value is negated. */
-        namespace VirtualMachineSemantics {
+        namespace PartialSymbolicSemantics {
 
             extern uint64_t name_counter;
 
@@ -156,8 +156,8 @@ namespace BinaryAnalysis {                      // documented elsewhere
             }
 
             /** Memory cell with partially symbolic address and data.  The ValueType template argument should be a subclass of
-             * VirtualMachineSemantics::ValueType. */
-            template <template <size_t> class ValueType=VirtualMachineSemantics::ValueType>
+             * PartialSymbolicSemantics::ValueType. */
+            template <template <size_t> class ValueType=PartialSymbolicSemantics::ValueType>
             class MemoryCell: public BaseSemantics::MemoryCell<ValueType> {
             public:
 
@@ -191,7 +191,7 @@ namespace BinaryAnalysis {                      // documented elsewhere
             };
 
             /** Represents the entire state of the machine. */
-            template <template <size_t> class ValueType=VirtualMachineSemantics::ValueType>
+            template <template <size_t> class ValueType=PartialSymbolicSemantics::ValueType>
             struct State: public BaseSemantics::StateX86<MemoryCell, ValueType> {
                 typedef typename BaseSemantics::StateX86<MemoryCell, ValueType>::Memory Memory;
 
@@ -209,8 +209,8 @@ namespace BinaryAnalysis {                      // documented elsewhere
 
             /** A policy that is supplied to the semantic analysis constructor. */
             template<
-                template <template <size_t> class ValueType> class State = VirtualMachineSemantics::State,
-                template <size_t nBits> class ValueType = VirtualMachineSemantics::ValueType
+                template <template <size_t> class ValueType> class State = PartialSymbolicSemantics::State,
+                template <size_t nBits> class ValueType = PartialSymbolicSemantics::ValueType
                 >
             class Policy: public BaseSemantics::Policy {
             protected:

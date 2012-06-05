@@ -28,10 +28,8 @@ OLD_TESTCODES_REQUIRED_TO_PASS = \
      test2004_20.c \
      test2004_21.c \
      test2005_172.c \
-     test2005_168.c \
      test2005_186.c \
      test2006_48.c  \
-     test2006_65.c  \
      test2006_110.c \
      test2006_114.c \
      test2006_132.c \
@@ -55,14 +53,16 @@ OLD_TESTCODES_REQUIRED_TO_PASS = \
      test2010_08.c \
      test2010_09.c \
      test2010_10.c \
-     test2010_11.c \
      test2010_12.c \
      test2010_13.c \
-     test2010_14.c \
      test2010_15.c \
      test2010_17.c \
      test2011_05.c \
      test2007_177.c \
+     test2005_168.c \
+     test2006_65.c \
+     test2010_11.c \
+     test2010_14.c \
      math.c \
      complex_01.c \
      constants.c
@@ -76,11 +76,8 @@ TESTCODES_REQUIRED_TO_PASS = \
      commentTest.c \
      test2003_12.c \
      test2004_20.c \
-     test2004_21.c \
      test2005_172.c \
-     test2005_168.c \
      test2005_186.c \
-     test2006_65.c  \
      test2006_110.c \
      test2006_114.c \
      test2006_133.c \
@@ -111,6 +108,43 @@ TESTCODES_REQUIRED_TO_PASS = \
      complex_01.c \
      constants.c
 
+
+
+if ROSE_USE_CLANG_FRONTEND
+   TESTCODES_REQUIRED_TO_PASS += \
+     stdio.c \
+     test2006_48.c \
+     test2006_132.c \
+     test2010_04.c \
+     test2006_14.c  \
+     test2006_100.c \
+     test2006_136.c \
+     test2010_02.c \
+     test2010_03.c \
+     test2011_03.c \
+     test2011_04.c \
+     Yarden_client.c
+# Failling tests for CLANG only:
+#  -  test2004_21.c
+#  -  test2005_168.c
+#  -  test2006_65.c
+#  -  test2010_11.c
+#  -  test2010_14.c
+# Failling tests for CLANG but also in TESTCODE_CURRENTLY_FAILING
+#  -  test2004_126.c
+#  -  test2006_134.c
+#  -  test2009_06.c
+#  -  test2010_05.c     -> Unknown statement kind: CompoundLiteralExpr
+#  -  test2010_16.c     -> Unknown statement kind: CompoundLiteralExpr
+endif
+
+if !ROSE_USE_CLANG_FRONTEND
+if ROSE_USE_EDG_VERSION_4_3
+   TESTCODES_REQUIRED_TO_PASS += \
+     test2004_21.c \
+     test2005_168.c \
+     test2006_65.c
+endif
 if !ROSE_USE_EDG_VERSION_4_3
    TESTCODES_REQUIRED_TO_PASS += \
      stdio.c \
@@ -120,23 +154,27 @@ if !ROSE_USE_EDG_VERSION_4_3
      test2010_11.c \
      test2010_12.c \
      test2010_14.c
+endif
+endif
 
 # DQ (9/26/2009): Conditionally compile this file (fails in OSX due to lack of OSX
 # support for thread local storage). Liao know more about the details of this test.
 # test2009_19.c
-
 if !OS_MACOSX
    TESTCODES_REQUIRED_TO_PASS += test2009_19.c
-endif
 endif
 
 #Liao, 5/16/2009 add a set of self-verifiable test code with main() 
 # and let them run during make check
 TESTCODES_REQUIRED_TO_RUN = \
-     test2009_17.c \
-     test2009_05.c \
      test2009_18.c \
      test2009_20.c
+
+if !ROSE_USE_CLANG_FRONTEND
+   TESTCODES_REQUIRED_TO_RUN += \
+     test2009_05.c \
+     test2009_17.c
+endif
 
 TESTCODE_CURRENTLY_FAILING = \
      test2004_126.c \
@@ -162,12 +200,17 @@ $(TESTCODES_REQUIRED_TO_PASS)
 # QMTest allows both passing and failing tests.
 ALL_TESTCODES = \
 $(TESTCODES_REQUIRED_TO_PASS) \
-$(TESTCODE_CURRENTLY_FAILING)
+$(TESTCODE_CURRENTLY_FAILING) \
+$(OLD_TESTCODES_REQUIRED_TO_PASS)
 
 # File option to accumulate performance information about the compilation
 # PERFORMANCE_REPORT_OPTION = -rose:compilationPerformanceFile $(top_builddir)/C_ROSE_PERFORMANCE_DATA.csv
 
-ROSE_FLAGS = -rose:C --edg:no_warnings --edg:restrict -w 
+ROSE_FLAGS = -rose:C
+if !ROSE_USE_CLANG_FRONTEND
+   ROSE_FLAGS += --edg:no_warnings --edg:restrict
+endif
+ROSE_FLAGS += -w
 
 PASSING_TEST_Objects = ${TESTCODES:.c=.o}
 TEST_Objects = ${ALL_TESTCODES:.c=.o}

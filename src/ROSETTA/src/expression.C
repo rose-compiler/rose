@@ -52,6 +52,7 @@ Grammar::setUpExpressions ()
      NEW_TERMINAL_MACRO (SuperExp,               "SuperExp",               "SUPER_NODE" );
      NEW_TERMINAL_MACRO (RefExp,                 "RefExp",                 "TYPE_REF" );
      NEW_TERMINAL_MACRO (AggregateInitializer,   "AggregateInitializer",   "AGGREGATE_INIT" );
+     NEW_TERMINAL_MACRO (CompoundInitializer,    "CompoundInitializer",    "COMPOUND_INIT" );
      NEW_TERMINAL_MACRO (ConstructorInitializer, "ConstructorInitializer", "CONSTRUCTOR_INIT" );
      NEW_TERMINAL_MACRO (AssignInitializer,      "AssignInitializer",      "ASSIGN_INIT" );
      NEW_TERMINAL_MACRO (ExpressionRoot,         "ExpressionRoot",         "EXPRESSION_ROOT" );
@@ -229,7 +230,7 @@ Grammar::setUpExpressions ()
      NEW_TERMINAL_MACRO (DesignatedInitializer, "DesignatedInitializer", "DESIGNATED_INITIALIZER" );
 
      NEW_NONTERMINAL_MACRO (Initializer,
-                            AggregateInitializer | ConstructorInitializer | AssignInitializer | DesignatedInitializer,
+                            AggregateInitializer | CompoundInitializer | ConstructorInitializer | AssignInitializer | DesignatedInitializer,
                             "Initializer","EXPR_INIT", false);
 
   // User defined operator for Fortran named operators.
@@ -1625,6 +1626,14 @@ Grammar::setUpExpressions ()
      AggregateInitializer.setDataPrototype     ( "bool", "need_explicit_braces", "= true",
                                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // TV (03/04/2012) Compound initializer: for OpenCL (Vector type initializer): float4 a = (float4)(0.0f, 0.0f, 0.0f, 0.0f);
+     CompoundInitializer.setFunctionPrototype ( "HEADER_COMPOUND_INITIALIZER_EXPRESSION", "../Grammar/Expression.code" );
+     CompoundInitializer.editSubstitute       ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_FUNCTIONS", "../Grammar/Expression.code" );
+     CompoundInitializer.editSubstitute       ( "LIST_NAME", "initializer" );
+     CompoundInitializer.setDataPrototype     ( "SgExprListExp*", "initializers", "= NULL",
+                                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     CompoundInitializer.setDataPrototype     ( "SgType*", "expression_type", "= NULL",
+                                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 #if 0
      // AggregateInitializer.editSubstitute       ( "HEADER_EXTRA_LIST_FUNCTIONS", "HEADER_LIST_EXPRESSION_LIST_EXPRESSION", "../Grammar/Expression.code" );
@@ -2111,6 +2120,7 @@ Grammar::setUpExpressions ()
      ThrowOp.setFunctionSource ( "SOURCE_THROW_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
      Initializer.setFunctionSource ( "SOURCE_INITIALIZER_EXPRESSION","../Grammar/Expression.code" );
      AggregateInitializer.setFunctionSource ( "SOURCE_AGGREGATE_INITIALIZER_EXPRESSION","../Grammar/Expression.code" );
+     CompoundInitializer.setFunctionSource ( "SOURCE_COMPOUND_INITIALIZER_EXPRESSION","../Grammar/Expression.code" );
      ConstructorInitializer.setFunctionSource ( "SOURCE_CONSTRUCTOR_INITIALIZER_EXPRESSION","../Grammar/Expression.code" );
      AssignInitializer.setFunctionSource ( "SOURCE_ASSIGNMENT_INITIALIZER_EXPRESSION","../Grammar/Expression.code" );
 

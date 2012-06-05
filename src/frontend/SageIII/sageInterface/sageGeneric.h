@@ -1,14 +1,13 @@
-#ifndef _SAGEGENERIC_HPP
+#ifndef _SAGEGENERIC_H
 
-/// \file sageGeneric.hpp
+/// \file sageGeneric.h
 ///       This file implements generic (template) sage query functions
 ///       Currently this includes functions for:
 ///       - dispatching according to the type of a sage node (dispatch)
 ///       - finding the ancestor with a specific node type (ancestor)
 ///       - recovering the type of a sage node assertively (assert_node_type)
-/// \email peter.pirkelbauer@llnl.gov
 
-#define _SAGEGENERIC_HPP
+#define _SAGEGENERIC_H
 
 #include <stdexcept>
 
@@ -2736,7 +2735,7 @@ namespace sg
 
   /// \brief    uncovers the type of SgNode and passes it to an
   ///           overloaded function handle in RoseVisitor.
-  /// \tparam   RoseVisitor, the visitor that will be called back with
+  /// \tparam   RoseVisitor the visitor that will be called back with
   ///           the recovered type information. The handle function with
   ///           the most suitable SgNode type will get invoked.
   /// \param rv an instance of a rose visitor; note that the argument is essentially
@@ -2861,12 +2860,12 @@ namespace sg
 
   /// \brief   finds an ancestor node with a given type
   /// \details the function family comes in four variants:
-  ///          SgNode*       -> AncestorNode*       ( result can be NULL )
-  ///          const SgNode* -> const AncestorNode* ( result can be NULL )
-  ///          SgNode&       -> AncestorNode&       ( assert(false) when an ancestor of
-  ///                                                 the specified type cannot be found )
-  ///          const SgNode& -> const AncestorNode& ( assert(false) when an ancestor of
-  ///                                                 the specified type cannot be found )
+  ///          - SgNode*       -> AncestorNode*       ( result can be NULL )
+  ///          - const SgNode* -> const AncestorNode* ( result can be NULL )
+  ///          - SgNode&       -> AncestorNode&       ( assert(false) when an ancestor of
+  ///                                                   the specified type cannot be found )
+  ///          - const SgNode& -> const AncestorNode& ( assert(false) when an ancestor of
+  ///                                                   the specified type cannot be found )
   /// \code
   ///   const SgStatement* enclosingStatement(const SgExpression* e)  { return sg::ancestor<SgStatement>(e); }
   /// \endcode
@@ -2979,4 +2978,4 @@ namespace sg
     swap_parent(lhs_child, rhs_child);
   }
 }
-#endif /* _SAGEGENERIC_HPP */
+#endif /* _SAGEGENERIC_H */

@@ -265,6 +265,10 @@ SgVariableDeclaration*
 SageBuilder::buildVariableDeclaration_nfi (const SgName & name, SgType* type, SgInitializer * varInit, SgScopeStatement* scope)
  //(const SgName & name, SgType* type, SgInitializer * varInit= NULL, SgScopeStatement* scope = NULL)
 {
+  if (scope == NULL) {
+      scope = SageBuilder::topScopeStack();
+  }
+
   ROSE_ASSERT (scope != NULL);
    ROSE_ASSERT(type != NULL);
 
@@ -2343,6 +2347,32 @@ SgAggregateInitializer * SageBuilder::buildAggregateInitializer_nfi(SgExprListEx
     initializers->set_parent(result);
   }
   result->set_need_explicit_braces(true);
+  setOneSourcePositionNull(result);
+  return result;
+}
+
+//! Build a compound initializer, for vector type initialization
+SgCompoundInitializer * SageBuilder::buildCompoundInitializer(SgExprListExp * initializers/* = NULL*/, SgType *type/* = NULL */)
+{
+  SgCompoundInitializer* result = new SgCompoundInitializer(initializers, type);
+  ROSE_ASSERT(result);
+  if (initializers!=NULL)
+  {
+    initializers->set_parent(result);
+  }
+  setOneSourcePositionForTransformation(result);
+  return result;
+}
+
+//! Build a compound initializer, for vector type initialization
+SgCompoundInitializer * SageBuilder::buildCompoundInitializer_nfi(SgExprListExp * initializers/* = NULL*/, SgType *type/* = NULL */)
+{
+  SgCompoundInitializer* result = new SgCompoundInitializer(initializers, type);
+  ROSE_ASSERT(result);
+  if (initializers!=NULL)
+  {
+    initializers->set_parent(result);
+  }
   setOneSourcePositionNull(result);
   return result;
 }

@@ -9,7 +9,7 @@
 #include <numeric>
 #include <string>
 
-#include "sageGeneric.hpp"
+#include "sageGeneric.h"
 
 #include "RtedSymbols.h"
 #include "DataStructures.h"
