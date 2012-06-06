@@ -763,6 +763,9 @@ SgNode * ClangToSageTranslator::Traverse(clang::Stmt * stmt) {
         case clang::Stmt::PredefinedExprClass:
             ret_status = VisitPredefinedExpr((clang::PredefinedExpr *)stmt, &result);
             break;
+        case clang::Stmt::StmtExprClass:
+            ret_status = VisitStmtExpr((clang::StmtExpr *)stmt, &result);
+            break;
         case clang::Stmt::StringLiteralClass:
             ret_status = VisitStringLiteral((clang::StringLiteral *)stmt, &result);
             break;
@@ -2310,6 +2313,21 @@ bool ClangToSageTranslator::VisitPredefinedExpr(clang::PredefinedExpr * predefin
     *node = SageBuilder::buildVarRefExp_nfi(symbol);
 
     return true;
+}
+
+bool ClangToSageTranslator::VisitStmtExpr(clang::StmtExpr * stmt_expr, SgNode ** node) {
+    bool res = true;
+
+    SgNode * tmp_substmt = Traverse(stmt_expr->getSubStmt());
+    SgStatement * substmt = isSgStatement(tmp_substmt);
+    if (tmp_substmt != NULL && substmt == NULL) {
+        std::cerr << "Runtime error: tmp_substmt != NULL && substmt == NULL" << std::endl;
+        res = false;
+    }
+
+    *node = new SgStatementExpression(substmt);
+
+    return VisitExpr(stmt_expr, node) && res;
 }
 
 bool ClangToSageTranslator::VisitStringLiteral(clang::StringLiteral * string_literal, SgNode ** node) {
