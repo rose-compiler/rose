@@ -258,6 +258,8 @@ test_testTokenGeneration:
 	@echo "SKIPPING target '$@' because the C/C++ frontend is not enabled."
 endif
 
+if !ROSE_USE_CLANG_FRONTEND
+
 # Rule to run all the example translator tests
 # test: test_testAnalysis test_testCodeGeneration test_testTranslator test_testAstFileIO testSimpleLinkFileTranslator
 test: test_testTokenGeneration test_testAnalysis test_testCodeGeneration test_testTranslator test_testAstFileIO testSimpleLinkFileTranslator testTranslatorFoldedConstants testTranslatorUnfoldedConstants
@@ -266,6 +268,8 @@ check-local: test
 	@echo "************************************************************************"
 	@echo "****** ROSE/tests: make check rule complete (terminated normally) ******"
 	@echo "************************************************************************"
+
+endif
 
 clean-local: myCleanRule
 
