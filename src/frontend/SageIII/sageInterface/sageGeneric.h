@@ -2963,8 +2963,8 @@ namespace sg
   /// \tparam SageChild the child node type
   /// \param  lhs one parent node
   /// \param  rhs another parent node
-  /// \param  getter the getter function to extract the child from @lhs (and @rhs)
-  /// \param  setter the setter function to store the child in @lhs (and @rhs)
+  /// \param  getter the getter function to extract the child from lhs (and rhs)
+  /// \param  setter the setter function to store the child in lhs (and rhs)
   template <class SageNode, class SageChild>
   void swap_child(SageNode& lhs, SageNode& rhs, SageChild* (SageNode::*getter) () const, void (SageNode::*setter) (SageChild*))
   {
