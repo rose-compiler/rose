@@ -749,7 +749,7 @@ SgType* getArrayElementType(SgType* t);
 SgType* getElementType(SgType* t);
 
 
-/// \brief  returns the array dimensions in an array as defined for @arrtype
+/// \brief  returns the array dimensions in an array as defined for arrtype
 /// \param  arrtype the type of a C/C++ array
 /// \return an array that contains an expression indicating each dimension's size.
 ///         OWNERSHIP of the expressions is TRANSFERED TO the CALLER (which
@@ -768,9 +768,9 @@ SgType* getElementType(SgType* t);
 std::vector<SgExpression*>
 get_C_array_dimensions(const SgArrayType& arrtype);
 
-/// \brief  returns the array dimensions in an array as defined for @arrtype
+/// \brief  returns the array dimensions in an array as defined for arrtype
 /// \param  arrtype the type of a C/C++ array
-/// \param  varref  a reference to an array variable (the variable of type @arrtype)
+/// \param  varref  a reference to an array variable (the variable of type arrtype)
 /// \return an array that contains an expression indicating each dimension's size.
 ///         OWNERSHIP of the expressions is TRANSFERED TO the CALLER (which
 ///         becomes responsible for freeing the expressions).
@@ -1577,7 +1577,7 @@ wrapFunction(SgFunctionDeclaration& definingDeclaration, SgName newName);
 
 /// \overload
 /// \tparam  NameGen functor that generates a new name based on the old name.
-///          interface: SgName @nameGen(const SgName&)
+///          interface: SgName nameGen(const SgName&)
 /// \param   nameGen name generator
 /// \brief   see wrapFunction for details
 template <class NameGen>
