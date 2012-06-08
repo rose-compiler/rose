@@ -6,16 +6,67 @@
 // We need this so that ROSE_USE_NEW_EDG_INTERFACE will be seen (set via configure).
 #include <rose_config.h>
 
+#if 1
+
+// DQ (6/1/2012): Note that to use the std::remove_if() STL algorithm, we have to define it before including some of these header files.
+// I worry that this code might be a problem to maintain since it is sensative to these header file orderings.
+
+// These header files are required.
+#include <string>
+#include <algorithm>
+#include <iostream>
+#include <cctype>
+
+// bool isspace (char* c);
+
+// DQ (6/7/2012): Moved this to before the use of SageInterface::hasTemplateSyntax().
+#include "sageBuilder.h"
+
+SgName
+SageBuilder::generateTemplateNameFromTemplateNameWithTemplateArguements(SgName inputNameWithTemplateArguements)
+   {
+  // DQ (6/1/2012): 
+     std::string nameWithTemplateArguements = inputNameWithTemplateArguements;
+
+  // ROSE_ASSERT(nameWithTemplateArguements.find('<') != std::string::npos);
+     ROSE_ASSERT(SageInterface::hasTemplateSyntax(nameWithTemplateArguements) == true);
+
+     printf ("In generateTemplateNameFromTemplateNameWithTemplateArguements(): nameWithTemplateArguements = %s \n",nameWithTemplateArguements.c_str());
+     size_t positionOfTemplateSyntax = nameWithTemplateArguements.find('<');
+     printf ("In generateTemplateNameFromTemplateNameWithTemplateArguements(): positionOfTemplateSyntax = %zu \n",positionOfTemplateSyntax);
+
+  // We might want to strip off trailing white space.
+     std::string templateName = nameWithTemplateArguements.substr(0,positionOfTemplateSyntax);
+
+     std::cout << "In generateTemplateNameFromTemplateNameWithTemplateArguements(): Before:" << templateName << ":End" << std::endl;
+  // std::string::iterator newEnd = std::remove_if( templateName.begin(), templateName.end(), isspace );
+  // std::string::iterator newEnd = std::remove_if( templateName.begin(), templateName.end(), isspace );
+     std::string::iterator newEnd = std::remove_if( templateName.begin(), templateName.end(), isspace );
+     std::cout << "In generateTemplateNameFromTemplateNameWithTemplateArguements(): After:" << std::string(templateName.begin(), newEnd) << ":End" << std::endl;
+
+     templateName = std::string(templateName.begin(), newEnd);
+
+  // ROSE_ASSERT(templateName.find('<') == std::string::npos);
+     ROSE_ASSERT(SageInterface::hasTemplateSyntax(templateName) == false);
+
+  // DQ (6/1/2012): Make sure there is no whaitespace (trailing). 
+  // This will cause different mangled names to be generated.
+     ROSE_ASSERT(templateName.find(' ') == std::string::npos);
+
+     return templateName;
+   }
+#endif
+
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
    #include "roseAdapter.h"
    #include "markLhsValues.h"
-   #include "sageBuilder.h"
+// #include "sageBuilder.h"
    #include <fstream>
    #include <boost/algorithm/string/trim.hpp>
    #include <boost/foreach.hpp>
    #include "Outliner.hh"
 #else
-   #include "sageBuilder.h"
+// #include "sageBuilder.h"
    #include <fstream>
    #include <boost/algorithm/string/trim.hpp>
    #include <boost/foreach.hpp>
@@ -2875,17 +2926,34 @@ SageBuilder::setTemplateNameInTemplateInstantiations( SgFunctionDeclaration* fun
    {
   // DQ (2/11/2012): If this is a template instantiation then we have to set the template name (seperate from the name of the function which can include template parameters)).
 
+     printf ("In setTemplateNameInTemplateInstantiations(): name = %s func->get_name() = %s \n",name.str(),func->get_name().str());
+
      SgTemplateInstantiationFunctionDecl*       templateInstantiationFunctionDecl       = isSgTemplateInstantiationFunctionDecl(func);
      SgTemplateInstantiationMemberFunctionDecl* templateInstantiationMemberFunctionDecl = isSgTemplateInstantiationMemberFunctionDecl(func);
      bool isTemplateInstantition = (templateInstantiationFunctionDecl != NULL) || (templateInstantiationMemberFunctionDecl != NULL);
      if (isTemplateInstantition == true)
         {
        // If this is a template instnatiation then we need to take care of a few more issues.
-#if 0
+
+       // SgName templateNameWithoutArguments = generateTemplateNameFromTemplateNameWithTemplateArguements(name);
+          SgName templateNameWithoutArguments = name;
+       // if (templateNameWithoutArguments.getString().find('<') != string::npos)
+          if (hasTemplateSyntax(templateNameWithoutArguments) == true)
+             {
+               templateNameWithoutArguments = generateTemplateNameFromTemplateNameWithTemplateArguements(name);
+             }
+            else
+             {
+               printf ("WARNING: In setTemplateNameInTemplateInstantiations(): name = %s (does not have any template argument syntax) \n",name.str());
+             }
+
+#if 1
           printf ("In setTemplateNameInTemplateInstantiations(): detected construction of template instantiation func->get_name() = %s \n",func->get_name().str());
+          printf ("In setTemplateNameInTemplateInstantiations(): templateNameWithoutArguments = %s \n",templateNameWithoutArguments.str());
           printf ("In setTemplateNameInTemplateInstantiations(): templateInstantiationFunctionDecl       = %p \n",templateInstantiationFunctionDecl);
           printf ("In setTemplateNameInTemplateInstantiations(): templateInstantiationMemberFunctionDecl = %p \n",templateInstantiationMemberFunctionDecl);
 #endif
+
           bool isMemberFunction = (templateInstantiationMemberFunctionDecl != NULL);
           if (isMemberFunction == true)
              {
@@ -2895,9 +2963,15 @@ SageBuilder::setTemplateNameInTemplateInstantiations( SgFunctionDeclaration* fun
                if (templateInstantiationMemberFunctionDecl->get_templateName().is_null() == true)
                   {
                  // Set the template name for the member function template instantiation.
-                    templateInstantiationMemberFunctionDecl->set_templateName(name);
+                 // templateInstantiationMemberFunctionDecl->set_templateName(name);
+                    templateInstantiationMemberFunctionDecl->set_templateName(templateNameWithoutArguments);
+
+                 // DQ (5/31/2012): Find locations where this is set and include template syntax.
+                 // ROSE_ASSERT(name.getString().find('<') == string::npos);
+                 // ROSE_ASSERT(templateNameWithoutArguments.getString().find('<') == string::npos);
+                    ROSE_ASSERT(hasTemplateSyntax(templateNameWithoutArguments) == false);
                   }
-#if 0
+#if 1
                printf ("templateInstantiationMemberFunctionDecl->get_templateName() = %s \n",templateInstantiationMemberFunctionDecl->get_templateName().str());
 #endif
                ROSE_ASSERT(templateInstantiationMemberFunctionDecl->get_templateName().is_null() == false);
@@ -2910,7 +2984,13 @@ SageBuilder::setTemplateNameInTemplateInstantiations( SgFunctionDeclaration* fun
                if (templateInstantiationFunctionDecl->get_templateName().is_null() == true)
                   {
                  // Set the template name for the function template instantiation.
-                    templateInstantiationFunctionDecl->set_templateName(name);
+                 // templateInstantiationFunctionDecl->set_templateName(name);
+                    templateInstantiationFunctionDecl->set_templateName(templateNameWithoutArguments);
+
+                 // DQ (5/31/2012): Find locations where this is set and include template syntax.
+                 // ROSE_ASSERT(name.getString().find('<') == string::npos);
+                 // ROSE_ASSERT(templateNameWithoutArguments.getString().find('<') == string::npos);
+                    ROSE_ASSERT(hasTemplateSyntax(templateNameWithoutArguments) == false);
                   }
 #if 0
                printf ("templateInstantiationFunctionDecl->get_templateName() = %s \n",templateInstantiationFunctionDecl->get_templateName().str());
@@ -2967,7 +3047,7 @@ SageBuilder::buildProcedureHeaderStatement(const char* name, SgType* return_type
         {
           if (kind != SgProcedureHeaderStatement::e_function_subprogram_kind)
              {
-               cerr<<"unhandled subprogram kind for Fortran function unit:"<<kind<<endl;
+               cerr << "unhandled subprogram kind for Fortran function unit:" << kind << endl;
                ROSE_ASSERT(false);
              }
         }
@@ -6645,6 +6725,49 @@ SageBuilder::buildClassDefinition(SgClassDeclaration *d/*= NULL*/, bool buildTem
      return result;
    }
 
+#if 0
+#include <string>
+#include <algorithm>
+#include <iostream>
+#include <cctype>
+
+// bool isspace (char* c);
+
+SgName
+SageBuilder::generateTemplateNameFromTemplateNameWithTemplateArguements(SgName inputNameWithTemplateArguements)
+   {
+  // DQ (6/1/2012): 
+      std::string nameWithTemplateArguements = inputNameWithTemplateArguements;
+
+     ROSE_ASSERT(nameWithTemplateArguements.find('<') != string::npos);
+
+#error "DEAD CODE!"
+
+     printf ("In generateTemplateNameFromTemplateNameWithTemplateArguements(): nameWithTemplateArguements = %s \n",nameWithTemplateArguements.c_str());
+     size_t positionOfTemplateSyntax = nameWithTemplateArguements.find('<');
+     printf ("In generateTemplateNameFromTemplateNameWithTemplateArguements(): positionOfTemplateSyntax = %zu \n",positionOfTemplateSyntax);
+
+  // We might want to strip off trailing white space.
+     std::string templateName = nameWithTemplateArguements.substr(0,positionOfTemplateSyntax);
+
+  // cout << "Before:" << templateName << ":End" << endl;
+  // std::string::iterator newEnd = std::remove_if( templateName.begin(), templateName.end(), isspace );
+  // std::string::iterator newEnd = std::remove_if( templateName.begin(), templateName.end(), isspace );
+     string::iterator newEnd = remove_if( templateName.begin(), templateName.end(), isspace );
+  // cout << "After:" << string(templateName.begin(), newEnd) << ":End" << endl;
+  // templateName = string(templateName.begin(), newEnd);
+
+     ROSE_ASSERT(templateName.find('<') == string::npos);
+
+  // DQ (6/1/2012): Make sure there is no whaitespace (trailing). 
+  // This will cause different mangled names to be generated.
+     ROSE_ASSERT(templateName.find(' ') == string::npos);
+
+     return templateName;
+   }
+#endif
+
+
 SgClassDefinition*
 SageBuilder::buildClassDefinition_nfi(SgClassDeclaration *d/*= NULL*/, bool buildTemplateInstantiation )
    {
@@ -6673,7 +6796,7 @@ SageBuilder::buildClassDefinition_nfi(SgClassDeclaration *d/*= NULL*/, bool buil
    }
 
 SgClassDeclaration*
-SageBuilder::buildNondefiningClassDeclaration_nfi(const SgName& name, SgClassDeclaration::class_types kind, SgScopeStatement* scope, bool buildTemplateInstantiation)
+SageBuilder::buildNondefiningClassDeclaration_nfi(const SgName& name, SgClassDeclaration::class_types kind, SgScopeStatement* scope, bool buildTemplateInstantiation, SgTemplateArgumentPtrList* templateArgumentsList)
    {
 #define REUSE_CLASS_DECLARATION_FROM_SYMBOL 0
 
@@ -6683,13 +6806,26 @@ SageBuilder::buildNondefiningClassDeclaration_nfi(const SgName& name, SgClassDec
      SgClassDeclaration* nondefdecl = NULL;
 
   // DQ (11/26/2011): Debugging EDG 3.3 use of templateArguments.
-     printf ("Building a SgClassDeclaration: buildNondefiningClassDeclaration_nfi() buildTemplateInstantiation = %s \n",buildTemplateInstantiation ? "true:" : "false");
+     printf ("Building a SgClassDeclaration: buildNondefiningClassDeclaration_nfi() name = %s buildTemplateInstantiation = %s \n",name.str(),buildTemplateInstantiation ? "true:" : "false");
 
      if (buildTemplateInstantiation == true)
         {
        // SgTemplateInstantiationDecl (SgName name, SgClassDeclaration::class_types class_type, SgClassType *type, SgClassDefinition *definition, SgTemplateDeclaration *templateDeclaration, SgTemplateArgumentPtrList templateArguments)
           SgTemplateArgumentPtrList emptyList;
           nondefdecl = new SgTemplateInstantiationDecl(name,kind,NULL,NULL,NULL,emptyList);
+
+       // DQ (6/6/2012): Added support for template arguments so that they can be a part of any generated type.
+          ROSE_ASSERT(templateArgumentsList != NULL);
+          ROSE_ASSERT(templateArgumentsList->size() > 0);
+
+       // Calling the assignment operator for the STL container class.
+          isSgTemplateInstantiationDecl(nondefdecl)->get_templateArguments() = *templateArgumentsList;
+
+#if 0
+       // DQ (5/31/2012): Find locations where this is set and include template syntax.
+          ROSE_ASSERT(name.getString().find('<') == string::npos);
+
+#error "DEAD CODE!"
 
        // DQ (3/22/2012): Set the template name before we generate the type.
           isSgTemplateInstantiationDecl(nondefdecl)->set_templateName(name);
@@ -6698,6 +6834,32 @@ SageBuilder::buildNondefiningClassDeclaration_nfi(const SgName& name, SgClassDec
 
        // DQ (3/22/2012): Make sure there is template syntax present.
           ROSE_ASSERT(isSgTemplateInstantiationDecl(nondefdecl)->get_templateName().getString().find('>') != string::npos);
+#else
+          ROSE_ASSERT(isSgTemplateInstantiationDecl(nondefdecl)->get_templateName().is_null() == true);
+
+#if 0
+          string nameWithTemplateArguements = name;
+
+          printf ("nameWithTemplateArguements = %s \n",nameWithTemplateArguements.c_str());
+          size_t positionOfTemplateSyntax = nameWithTemplateArguements.find('<');
+          printf ("positionOfTemplateSyntax = %zu \n",positionOfTemplateSyntax);
+
+#error "DEAD CODE!"
+
+       // We might want to strip off trailing white space.
+          string templateName = nameWithTemplateArguements.substr(0,positionOfTemplateSyntax);
+          printf ("templateName = %s \n",templateName.c_str());
+#else
+          SgName templateName = generateTemplateNameFromTemplateNameWithTemplateArguements(name);
+          printf ("templateName = %s \n",templateName.str());
+#endif
+
+       // DQ (5/31/2012): We don't have enough information to test the template name (name will include template syntax).
+          printf ("WARNING: SageBuilder::buildNondefiningClassDeclaration_nfi(): The template name is not set before we generate the type \n");
+       // ROSE_ASSERT(false);
+
+          isSgTemplateInstantiationDecl(nondefdecl)->set_templateName(templateName);
+#endif
         }
        else
         {
@@ -6855,6 +7017,8 @@ SageBuilder::buildNondefiningClassDeclaration_nfi(const SgName& name, SgClassDec
                ROSE_ASSERT(nondefdecl->get_type() == NULL);
                if (nondefdecl->get_type() == NULL)
                   {
+                    printf ("In buildNondefiningClassDeclaration_nfi(): nondefdecl = %p \n",nondefdecl);
+                    printf ("In buildNondefiningClassDeclaration_nfi(): nondefdecl->get_firstNondefiningDeclaration() = %p \n",nondefdecl->get_firstNondefiningDeclaration());
                     nondefdecl->set_type(SgClassType::createType(nondefdecl));
                   }
 
@@ -6991,7 +7155,10 @@ SgClassDeclaration * SageBuilder::buildStructDeclaration(const SgName& name, SgS
   // DQ (1/24/2009): Refactored to use the buildStructDeclaration_nfi function.
   // (if this work it needs to be done uniformally for the other nfi functions)
   // Also, "_nfi" is not a great name.
-     SgClassDeclaration* defdecl = buildClassDeclaration_nfi(name,SgClassDeclaration::e_struct,scope,NULL);
+  // SgClassDeclaration* defdecl = buildClassDeclaration_nfi(name,SgClassDeclaration::e_struct,scope,NULL);
+     bool buildTemplateInstantiation = false;
+  // SgClassDeclaration* defdecl = buildClassDeclaration_nfi(name,SgClassDeclaration::e_struct,scope,NULL,buildTemplateInstantiation);
+     SgClassDeclaration* defdecl = buildClassDeclaration_nfi(name,SgClassDeclaration::e_struct,scope,NULL,buildTemplateInstantiation,NULL);
 
      setOneSourcePositionForTransformation(defdecl);
      ROSE_ASSERT(defdecl->get_firstNondefiningDeclaration() != NULL);
@@ -7404,9 +7571,12 @@ SageBuilder::buildClassDeclaration ( SgName name, SgScopeStatement* scope )
      return definingClassDeclaration;
    }
 
+
+// DQ (6/6/2012): Added support for template arguments (so that the type could be computing using the template arguments when building a template instantiation).
 // DQ (1/24/2009): Built this "nfi" version but factored the code.
+// SgClassDeclaration* SageBuilder::buildClassDeclaration_nfi(const SgName& name, SgClassDeclaration::class_types kind, SgScopeStatement* scope, SgClassDeclaration* nonDefiningDecl , bool buildTemplateInstantiation )
 SgClassDeclaration*
-SageBuilder::buildClassDeclaration_nfi(const SgName& name, SgClassDeclaration::class_types kind, SgScopeStatement* scope, SgClassDeclaration* nonDefiningDecl , bool buildTemplateInstantiation )
+SageBuilder::buildClassDeclaration_nfi(const SgName& name, SgClassDeclaration::class_types kind, SgScopeStatement* scope, SgClassDeclaration* nonDefiningDecl , bool buildTemplateInstantiation, SgTemplateArgumentPtrList* templateArgumentsList )
    {
   // DQ (3/15/2012): Added function to build C++ class (builds both the non-defining and defining declarations; in that order).
   // The implementation of this function could be simplified to directly call both:
@@ -7420,9 +7590,11 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& name, SgClassDeclaration::c
      printf ("WARNING: In SageBuilder::buildClassDeclaration_nfi(): the nonDefiningDecl pointer (input parameter) does not appear to be used. \n");
 
      if (scope == NULL)
+        {
           scope = SageBuilder::topScopeStack();
+        }
 
-     printf ("Building a SgClassDeclaration: buildClassDeclaration_nfi() buildTemplateInstantiation = %s \n",buildTemplateInstantiation ? "true" : "false");
+     printf ("Building a SgClassDeclaration: buildClassDeclaration_nfi() name = %s buildTemplateInstantiation = %s \n",name.str(),buildTemplateInstantiation ? "true" : "false");
 
 #if 0
   // step 1. Build defining declaration
@@ -7488,12 +7660,23 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& name, SgClassDeclaration::c
   // then we likely don't need the "SgClassDeclaration* nonDefiningDecl" parameter).
      SgClassDeclaration* nondefdecl = NULL;
 
+  // SgName nameWithTemplateArguments    = name;
+  // SgName nameWithoutTemplateArguments = generateTemplateNameFromTemplateNameWithTemplateArguements(name);
+     SgName nameWithTemplateArguments;
+     SgName nameWithoutTemplateArguments;
+     if (buildTemplateInstantiation == true)
+        {
+          nameWithTemplateArguments    = name;
+          nameWithoutTemplateArguments = generateTemplateNameFromTemplateNameWithTemplateArguements(name);
+        }
+
   // DQ (1/26/2009): It seems that (scope == NULL) can happen in the tests/roseTests/astInterfaceTests test codes.
   // ROSE_ASSERT(scope != NULL);
      SgClassSymbol* mysymbol = NULL;
      if (scope != NULL)
         {
           printf ("Looking up the SgClassSymbol in scope = %p = %s name = %s \n",scope,scope->class_name().c_str(),name.str());
+       // mysymbol = scope->lookup_class_symbol(name);
           mysymbol = scope->lookup_class_symbol(name);
         }
        else
@@ -7504,7 +7687,7 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& name, SgClassDeclaration::c
        // printf ("Warning: In SageBuilder::buildClassDeclaration_nfi(): scope == NULL \n");
         }
 
-#if 0
+#if 1
      printf ("In SageBuilder::buildClassDeclaration_nfi(): mysymbol = %p \n",mysymbol);
 #endif
 
@@ -7546,19 +7729,35 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& name, SgClassDeclaration::c
             // DQ (5/2/2012): After EDG/ROSE translation, there should be no IR nodes marked as transformations.
             // detectTransformations(nondefdecl);
 
+            // DQ (6/6/2012): Set the first non-defining declaration to be itself.
+            // nondefdecl->set_firstNondefiningDeclaration(nondefdecl);
+
             // DQ (1/1/2012): Added support for setting the template name (I think this should be fixed in the constructor).
             // It can't be fixed in the constructor since it has to be set after construction (or passed in explicitly).
                ROSE_ASSERT(isSgTemplateInstantiationDecl(nondefdecl)->get_templateName().is_null() == true);
 
+            // DQ (6/6/2012): Added support for template arguments so that types would be computed with the template arguments.
+               ROSE_ASSERT(templateArgumentsList != NULL);
+               ROSE_ASSERT(templateArgumentsList->size() > 0);
+               isSgTemplateInstantiationDecl(nondefdecl)->get_templateArguments() = *templateArgumentsList;
+
+            // DQ (6/6/2012): Generate the name without the template arguments.
                printf ("Warning: In buildClassDeclaration_nfi(): calling set_templateName(name = %s) for nondefining declaration \n",name.str());
             // isSgTemplateInstantiationDecl(nondefdecl)->set_templateName(name);
             // isSgTemplateInstantiationDecl(nondefdecl)->set_templateName("SETME_NONDEFINING_DECL<>");
-               isSgTemplateInstantiationDecl(nondefdecl)->set_templateName(name);
+            // isSgTemplateInstantiationDecl(nondefdecl)->set_templateName(name);
+               isSgTemplateInstantiationDecl(nondefdecl)->set_templateName(nameWithoutTemplateArguments);
+
+            // DQ (6/6/2012): I don't think we want this test any more (should apply only to the result of get_templateName()).
+            // DQ (5/31/2012): Find locations where this is set and include template syntax.
+            // ROSE_ASSERT(name.getString().find('<') == string::npos);
+               printf ("Commented out test for: name.getString().find('<') == string::npos (should apply only to the result of get_templateName() \n");
 
                ROSE_ASSERT(isSgTemplateInstantiationDecl(nondefdecl)->get_templateName().is_null() == false);
 
             // DQ (3/22/2012): Make sure there is template syntax present.
-               if (isSgTemplateInstantiationDecl(nondefdecl)->get_templateName().getString().find('>') == string::npos)
+            // if (isSgTemplateInstantiationDecl(nondefdecl)->get_templateName().getString().find('>') == string::npos)
+               if (hasTemplateSyntax(isSgTemplateInstantiationDecl(nondefdecl)->get_templateName()) == false);
                   {
                     printf ("WARNING: No template syntax present in name of template class instantiation (nondefdecl) \n");
                   }
@@ -7575,6 +7774,9 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& name, SgClassDeclaration::c
             // DQ (5/2/2012): After EDG/ROSE translation, there should be no IR nodes marked as transformations.
             // detectTransformations(nondefdecl);
              }
+
+       // DQ (6/6/2012): This has to be set before we generate the type.
+          nondefdecl->set_firstNondefiningDeclaration(nondefdecl);
 
        // DQ (3/14/2012): For C++ we need the scope set so that types will have proper locations to revolve them 
        // from being ambigiuos or not properly defined.  Basically, we need a handle from which to generate something
@@ -7620,7 +7822,9 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& name, SgClassDeclaration::c
        // DQ (5/2/2012): After EDG/ROSE translation, there should be no IR nodes marked as transformations.
           detectTransformations(nondefdecl);
 
-          nondefdecl->set_firstNondefiningDeclaration(nondefdecl);
+       // DQ (6/6/2012): This has to be set before we generate the type.
+       // nondefdecl->set_firstNondefiningDeclaration(nondefdecl);
+
        // DQ (3/15/2012): This is now set below.
        // nondefdecl->set_definingDeclaration(defdecl);
           nondefdecl->setForward();
@@ -7676,9 +7880,29 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& name, SgClassDeclaration::c
           ROSE_ASSERT(isSgTemplateInstantiationDecl(defdecl)->get_templateName().is_null() == true);
           printf ("Warning: In buildClassDeclaration_nfi(): calling set_templateName(name = %s) for defining declaration \n",name.str());
 
+#if 0
        // isSgTemplateInstantiationDecl(defdecl)->set_templateName(name);
        // isSgTemplateInstantiationDecl(defdecl)->set_templateName("SETME_DEFINING_DECL<>");
           isSgTemplateInstantiationDecl(defdecl)->set_templateName(name);
+
+#error "DEAD CODE!"
+
+       // DQ (5/31/2012): Find locations where this is set and include template syntax.
+          ROSE_ASSERT(name.getString().find('<') == string::npos);
+#else
+       // DQ (6/1/2012): Make sure that the templateName is set and they it does not include the template syntax.
+          SgName templateName = generateTemplateNameFromTemplateNameWithTemplateArguements(name);
+          printf ("In buildClassDeclaration_nfi(): templateName = %s \n",templateName.str());
+          isSgTemplateInstantiationDecl(defdecl)->set_templateName(templateName);
+
+       // DQ (5/31/2012): Find locations where this is set and include template syntax.
+       // ROSE_ASSERT(templateName.getString().find('<') == string::npos);
+          ROSE_ASSERT(hasTemplateSyntax(templateName) == false);
+
+       // DQ (6/1/2012): Not clear if this is always true (for all template instantations).
+       // ROSE_ASSERT(name.getString().find('<') != string::npos);
+          ROSE_ASSERT(hasTemplateSyntax(name) == true);
+#endif
 
           ROSE_ASSERT(isSgTemplateInstantiationDecl(defdecl)->get_templateName().is_null() == false);
 

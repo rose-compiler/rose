@@ -1663,6 +1663,9 @@ SgCommaOpExp *insertAfterUsingCommaOp (SgExpression* new_exp, SgExpression* anch
 
 //@}
 
+// DQ (6/7/2012): Unclear where this function should go...
+  bool hasTemplateSyntax( const SgName & name );
+
 
 #if 0
 
@@ -1913,7 +1916,6 @@ SgCommaOpExp *insertAfterUsingCommaOp (SgExpression* new_exp, SgExpression* anch
   void setExtern (SgVariableDeclaration*)
   void setPublic()
   void setPrivate()
-
 
 #endif
 }// end of namespace
