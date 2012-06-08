@@ -263,6 +263,7 @@ test2005_31.C \
 test2005_32.C \
 test2005_33.C \
 test2005_34.C \
+test2005_35.C \
 test2005_36.C \
 test2005_37.C \
 test2005_38.C \
@@ -347,6 +348,10 @@ test2005_125.C \
 test2005_126.C \
 test2005_127.C \
 test2005_128.C \
+test2005_129.C \
+test2005_130.C \
+test2005_131.C \
+test2005_132.C \
 test2005_133.C \
 test2005_134.C \
 test2005_135.C \
@@ -885,6 +890,9 @@ test2012_90.C \
 test2012_91.C \
 test2012_92.C \
 test2012_93.C \
+test2012_94.C \
+test2012_95.C \
+test2012_96.C \
 test_int_lexemes.C \
 test_int_lexemes_donot_pass.C \
 test_simple_int.C \
@@ -914,21 +922,25 @@ test2004_35.C
 else
 include $(srcdir)/Makefile-pass.inc
 endif
+
+
+
+
+
+
+
+
+
 # Import list of C++ test cases that are known to fail:
 #   TESTCODE_CURRENTLY_FAILING
 #
 if ROSE_USE_EDG_VERSION_4_3
 TESTCODE_CURRENTLY_FAILING = \
-test2005_35.C \
 test2005_60.C \
 test2005_102.C \
 test2005_103.C \
 test2005_114.C \
 test2005_123.C \
-test2005_129.C \
-test2005_130.C \
-test2005_131.C \
-test2005_132.C \
 test2005_137.C \
 test2005_143.C \
 test2006_54.C \

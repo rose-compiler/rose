@@ -231,8 +231,12 @@ mangleQualifiersToString (const SgScopeStatement* scope)
                   {
                     const SgClassDefinition* def = isSgClassDefinition (scope);
                     mangled_name = def->get_mangled_name().getString();
-#if 0
+
+                    const SgClassDeclaration* classDeclaration = def->get_declaration();
+                    string name = classDeclaration->get_name().str();
+#if 1
                     printf ("In manglingSupport.C: mangleQualifiersToString(): mangled name for scope = %p = %s is: %s \n",scope,scope->class_name().c_str(),mangled_name.c_str());
+                    printf ("In manglingSupport.C: mangleQualifiersToString(): class declaration = %p = %s class name = %s \n",classDeclaration,classDeclaration->class_name().c_str(),name.c_str());
 #endif
                     break;
                   }
@@ -310,6 +314,19 @@ mangleQualifiersToString (const SgScopeStatement* scope)
                   }
              }
         }
+
+  // DQ (5/31/2012): Added test for template brackets that are caught later in AstConsistencyTests.
+  // Make sure that there is no template specific syntax included in the mangled name
+  // if ( mangled_name.find('<') != string::npos )
+     if (SageInterface::hasTemplateSyntax(mangled_name) == true)
+        {
+       // string name = classDeclaration->get_name().str();
+       // printf ("In mangleQualifiersToString(): scope = %p = %s unmangled name = %s check mangled class name = %s \n",scope,scope->class_name().c_str(),name.c_str(),mangled_name.c_str());
+          printf ("In mangleQualifiersToString(): scope = %p = %s check mangled class name = %s \n",scope,scope->class_name().c_str(),mangled_name.c_str());
+        }
+
+  // ROSE_ASSERT(mangled_name.find('<') == string::npos);
+     ROSE_ASSERT(SageInterface::hasTemplateSyntax(mangled_name) == false);
 
      return mangled_name;
    }
@@ -583,6 +600,14 @@ mangleTemplateFunctionToString (const string& templ_name,
   // Compute a mangled name for this function's type
      string type_name;
      string ret_type_name;
+
+  // DQ (5/31/2012): This should be a valid name to be a template.
+     ROSE_ASSERT(templ_name.empty() == false);
+
+  // DQ (5/31/2012): Find locations where this is set and include template syntax.
+  // ROSE_ASSERT(templ_name.find('<') == string::npos);
+     ROSE_ASSERT(SageInterface::hasTemplateSyntax(templ_name) == false);
+
      if (func_type)
         {
           type_name = func_type->get_mangled ().getString ();

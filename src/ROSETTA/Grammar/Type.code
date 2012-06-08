@@ -5120,6 +5120,9 @@ SgClassType::createType(SgDeclarationStatement* cd, SgExpression* optional_fortr
   // ROSE_ASSERT(type_from_declaration != NULL);
   // return ($CLASSNAME*) type_from_declaration;
 
+     printf ("SgClassType::createType(): classDeclaration         = %p \n",classDeclaration);
+     printf ("SgClassType::createType(): templateClassDeclaration = %p \n",templateClassDeclaration);
+
      SgClassType* returnType = NULL;
      if (classDeclaration != NULL)
         {
@@ -5139,6 +5142,9 @@ SgClassType::createType(SgDeclarationStatement* cd, SgExpression* optional_fortr
         {
           printf ("returnType = %p = %s \n",returnType,returnType->class_name().c_str());
           printf ("returnType->get_declaration() = %p = %s cd = %p = %s \n",returnType->get_declaration(),returnType->get_declaration()->class_name().c_str(),cd,cd->class_name().c_str());
+          ROSE_ASSERT(returnType->get_declaration()->get_firstNondefiningDeclaration() != NULL);
+          ROSE_ASSERT(cd->get_firstNondefiningDeclaration() != NULL);
+          printf ("returnType->get_declaration()->get_firstNondefiningDeclaration() = %p = %s cd->get_firstNondefiningDeclaration() = %p = %s \n",returnType->get_declaration()->get_firstNondefiningDeclaration(),returnType->get_declaration()->get_firstNondefiningDeclaration()->class_name().c_str(),cd->get_firstNondefiningDeclaration(),cd->get_firstNondefiningDeclaration()->class_name().c_str());
         }
      ROSE_ASSERT(returnType->get_declaration() == cd);
 

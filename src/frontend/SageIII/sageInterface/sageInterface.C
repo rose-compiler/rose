@@ -84,6 +84,22 @@ string getVariantName ( VariantT v )
      return string(roseGlobalVariantNameList[v]);
    }
 
+bool
+SageInterface::hasTemplateSyntax( const SgName & name )
+   {
+  // DQ (6/7/2012): This refactors the test for template instantation syntax in names used for classes, member functions, and functions
+     bool usingTemplateSyntax = false;
+     string nameString = name.getString();
+
+  // DQ (6/7/2012): We need to avoid the identification of the "operator<()" as valid template syntax.
+     usingTemplateSyntax = (nameString.find('<') != string::npos) && (nameString.find('>') != string::npos);
+
+  // return (name.getString().find('<') == string::npos);
+     return usingTemplateSyntax;
+   }
+
+
+
 void
 SageInterface::whereAmI(SgNode* node)
    {
