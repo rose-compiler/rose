@@ -552,6 +552,7 @@ test2006_181.C \
 test2006_183.C \
 test2006_185.C \
 test2006_189.C \
+test2007_01.C \
 test2007_02.C \
 test2007_03.C \
 test2007_06.C \
@@ -565,6 +566,7 @@ test2007_13.C \
 test2007_14.C \
 test2007_15.C \
 test2007_16.C \
+test2007_17.C \
 test2007_21.C \
 test2007_23.C \
 test2007_24.C \
@@ -728,9 +730,11 @@ test2011_79.C \
 test2011_81.C \
 test2011_82.C \
 test2011_83.C \
+test2011_87.C \
 test2011_88.C \
 test2011_89.C \
 test2011_90.C \
+test2011_91.C \
 test2011_92.C \
 test2011_93.C \
 test2011_94.C \
@@ -893,6 +897,7 @@ test2012_93.C \
 test2012_94.C \
 test2012_95.C \
 test2012_96.C \
+test2012_97.C \
 test_int_lexemes.C \
 test_int_lexemes_donot_pass.C \
 test_simple_int.C \
@@ -931,6 +936,8 @@ endif
 
 
 
+
+
 # Import list of C++ test cases that are known to fail:
 #   TESTCODE_CURRENTLY_FAILING
 #
@@ -949,10 +956,8 @@ test2006_90.C \
 test2006_122.C \
  test2006_151.C \
  test2006_159.C \
- test2007_01.C \
 test2007_04.C \
  test2007_05.C \
- test2007_17.C \
 test2007_38.C \
  test2007_55.C \
 test2007_83.C \
@@ -977,8 +982,6 @@ test2011_80.C \
 test2011_84.C \
 test2011_85.C \
 test2011_86.C \
-test2011_87.C \
-test2011_91.C \
 test2011_110.C \
  test2011_121.C \
 test2011_136.C \
