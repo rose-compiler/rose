@@ -273,7 +273,8 @@ if test "x$label" = "xamd64-ubuntu" ; then
         --with-boost=${ROSE_TEST_BOOST_PATH} \
         --with-boost-lib=${ROSE_TEST_BOOST_PATH}/lib/ \
         --without-java \
-        --with-CXX_DEBUG=-g --with-CXX_WARNINGS=-Wall"
+        --with-CXX_DEBUG=-g --with-CXX_WARNINGS=-Wall \
+        --enable-clang-frontend"
         ;;
 
       *)
