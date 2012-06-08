@@ -5828,32 +5828,37 @@ SageInterface::getScope( const SgNode* astNode )
 static
 const SgVariableSymbol *
 getVarSymFromName_const (const SgInitializedName* name)
-{
-  SgVariableSymbol* v_sym = 0;
-  if (name)
-    {
-      SgScopeStatement* s = name->get_scope ();
-      ROSE_ASSERT (s);
-      v_sym = s->lookup_var_symbol (name->get_name ());
+   {
+     SgVariableSymbol* v_sym = NULL;
 
-      if (!v_sym) // E.g., might be part of an 'extern' declaration.
+     if (name != NULL)
         {
-          // Try the declaration's scope.
-          SgDeclarationStatement* decl = name->get_declaration ();
-          ROSE_ASSERT (decl);
+#if 0
+          printf ("In getVarSymFromName(): name->get_name() = %s \n",name->get_name().str());
+#endif
+          SgScopeStatement* s = name->get_scope();
+          ROSE_ASSERT (s != NULL);
+          v_sym = s->lookup_var_symbol (name->get_name());
 
-          SgScopeStatement* decl_scope = decl->get_scope ();
-          if (decl_scope)
-            v_sym = decl_scope->lookup_var_symbol (name->get_name ());
+          if (!v_sym) // E.g., might be part of an 'extern' declaration.
+            {
+           // Try the declaration's scope.
+              SgDeclarationStatement* decl = name->get_declaration ();
+              ROSE_ASSERT (decl);
 
-          if (!v_sym)
-            cerr << "\t\t*** WARNING: Can't seem to find a symbol for '"
-                 << name->get_name ().str ()
-                 << "' ***" << endl;
+              SgScopeStatement* decl_scope = decl->get_scope ();
+              if (decl_scope != NULL)
+                   v_sym = decl_scope->lookup_var_symbol (name->get_name());
+
+              if (!v_sym)
+                   cerr << "\t\t*** WARNING: Can't seem to find a symbol for '"
+                        << name->get_name ().str ()
+                        << "' ***" << endl;
+             }
         }
-    }
-  return v_sym;
-}
+
+     return v_sym;
+   }
 
 #if 0
 /*!

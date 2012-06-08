@@ -721,6 +721,7 @@ test2011_68.C \
 test2011_69.C \
 test2011_70.C \
 test2011_71.C \
+test2011_73.C \
 test2011_74.C \
 test2011_75.C \
 test2011_76.C \
@@ -898,6 +899,7 @@ test2012_94.C \
 test2012_95.C \
 test2012_96.C \
 test2012_97.C \
+test2012_98.C \
 test_int_lexemes.C \
 test_int_lexemes_donot_pass.C \
 test_simple_int.C \
@@ -927,11 +929,6 @@ test2004_35.C
 else
 include $(srcdir)/Makefile-pass.inc
 endif
-
-
-
-
-
 
 
 
@@ -977,7 +974,6 @@ test2011_32.C \
 test2011_62.C \
  test2011_65.C \
 test2011_72.C \
-test2011_73.C \
 test2011_80.C \
 test2011_84.C \
 test2011_85.C \
