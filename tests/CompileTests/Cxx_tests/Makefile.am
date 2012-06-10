@@ -9,8 +9,8 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 if ROSE_USE_EDG_VERSION_4_3
 
-#EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
-# $(TESTCODE_CURRENTLY_FAILING)
+# EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
+#  $(TESTCODE_CURRENTLY_FAILING)
 
 
 EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
@@ -461,6 +461,7 @@ test2006_56.C \
 test2006_57.C \
 test2006_58.C \
 test2006_59.C \
+test2005_60.C \
 test2006_61.C \
 test2006_62.C \
 test2006_63.C \
@@ -539,6 +540,7 @@ test2006_155.C \
 test2006_156.C \
 test2006_157.C \
 test2006_158.C \
+test2006_159.C \
 test2006_160.C \
 test2006_161.C \
 test2006_162.C \
@@ -624,6 +626,7 @@ test2007_164.C \
 test2007_165.C \
 test2007_166.C \
 test2007_167.C \
+test2007_169.C \
 test2007_170.C \
 test2007_171.C \
 test2007_172.C \
@@ -732,6 +735,9 @@ test2011_79.C \
 test2011_81.C \
 test2011_82.C \
 test2011_83.C \
+test2011_84.C \
+test2011_85.C \
+test2011_86.C \
 test2011_87.C \
 test2011_88.C \
 test2011_89.C \
@@ -902,6 +908,7 @@ test2012_96.C \
 test2012_97.C \
 test2012_98.C \
 test2012_99.C \
+test2012_100.C \
 test_int_lexemes.C \
 test_int_lexemes_donot_pass.C \
 test_simple_int.C \
@@ -935,12 +942,12 @@ endif
 
 
 
+
 # Import list of C++ test cases that are known to fail:
 #   TESTCODE_CURRENTLY_FAILING
 #
 if ROSE_USE_EDG_VERSION_4_3
 TESTCODE_CURRENTLY_FAILING = \
-test2005_60.C \
 test2005_103.C \
 test2005_114.C \
 test2005_123.C \
@@ -951,7 +958,6 @@ test2006_85.C \
 test2006_90.C \
 test2006_122.C \
  test2006_151.C \
- test2006_159.C \
 test2007_04.C \
  test2007_05.C \
 test2007_38.C \
@@ -961,7 +967,6 @@ test2007_137.C \
 test2007_140.C \
 test2007_141.C \
 test2007_150.C \
-test2007_169.C \
 test2009_21.C \
 test2009_24.C \
 test2009_30.C \
@@ -974,9 +979,6 @@ test2011_62.C \
  test2011_65.C \
 test2011_72.C \
 test2011_80.C \
-test2011_84.C \
-test2011_85.C \
-test2011_86.C \
 test2011_110.C \
  test2011_121.C \
 test2011_136.C \
