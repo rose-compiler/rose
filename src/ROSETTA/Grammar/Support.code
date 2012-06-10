@@ -7164,11 +7164,17 @@ SgSymbolTable::find_variable(const SgName & nm)
 
      hash_iterator save_original_iterator = p_iterator;
 
+#if 1
+     printf ("In SgSymbolTable::find_variable(): nm = %s \n",nm.str());
+#endif
+
   // First look through only the local (non-aliased) symbols.
   // while (p_iterator != p_table->end() && (*p_iterator).first == nm)
      while (p_iterator != p_table->end() && get_table()->key_eq()(p_iterator->first,nm))
         {
-       // printf ("Looking for non-aliased symbols: p_iterator->second->class_name() = %s p_iterator->second->get_name() = %s \n",p_iterator->second->class_name().c_str(),p_iterator->second->get_name().str());
+#if 1
+          printf ("Looking for non-aliased symbols: p_iterator->second->class_name() = %s p_iterator->second->get_name() = %s \n",p_iterator->second->class_name().c_str(),p_iterator->second->get_name().str());
+#endif
           if (p_iterator->second->variantT() == V_SgVariableSymbol)
              {
                p_name    = nm;
@@ -7187,7 +7193,9 @@ SgSymbolTable::find_variable(const SgName & nm)
   // while (p_iterator != p_table->end() && (*p_iterator).first == nm)
      while (p_iterator != p_table->end() && get_table()->key_eq()(p_iterator->first,nm))
         {
-       // printf ("Looking for aliased symbols: p_iterator->second->class_name() = %s p_iterator->second->get_name() = %s \n",p_iterator->second->class_name().c_str(),p_iterator->second->get_name().str());
+#if 1
+          printf ("Looking for aliased symbols: p_iterator->second->class_name() = %s p_iterator->second->get_name() = %s \n",p_iterator->second->class_name().c_str(),p_iterator->second->get_name().str());
+#endif
           SgAliasSymbol* aliasedSymbol = isSgAliasSymbol(p_iterator->second);
           if (aliasedSymbol != NULL)
              {
@@ -9333,6 +9341,9 @@ SgInitializedName::post_construction_initialization()
      p_shapeDeferred          = false;
      p_initializationDeferred = false;
      p_protected_declaration = false;
+
+  // DQ (6/10/2012): Testing for test2012_102.C.
+     printf ("In SgInitializedName::post_construction_initialization(): this = %p \n",this);
    }
 
 // This constructor is specific to the creation of SgInitializedName objects used as initializers
