@@ -3311,12 +3311,45 @@ SgLongLongIntVal* SageBuilder::buildLongLongIntVal_nfi(long long value, const st
 }
 
 SgEnumVal* SageBuilder::buildEnumVal_nfi(int value, SgEnumDeclaration* decl, SgName name)
-{
-  SgEnumVal* enumVal= new SgEnumVal(value,decl,name);
-  ROSE_ASSERT(enumVal);
-  setOneSourcePositionNull(enumVal);
-  return enumVal;
-}
+   {
+     SgEnumVal* enumVal= new SgEnumVal(value,decl,name);
+     ROSE_ASSERT(enumVal != NULL);
+
+     setOneSourcePositionNull(enumVal);
+
+#if 0
+  // DQ (6/10/2012): This is moved, but perhaps it really should be here!
+     printf ("In buildEnumVal_nfi(): We need to add the enum value to the symbol table in the scope of the SgEnumDeclaration (name = %s) \n",name.str());
+
+  // DQ (6/10/2012): We need to add the enum field value to the correct symbol table.
+     SgScopeStatement* scope = decl->get_scope();
+     ROSE_ASSERT(scope != NULL);
+
+     SgEnumFieldSymbol* enumFieldSymbol = scope->lookup_enum_field_symbol(name);
+     ROSE_ASSERT(enumFieldSymbol == NULL);
+     if (enumFieldSymbol == NULL)
+        {
+          SgEnumType* enumType = new SgEnumType(decl);
+          ROSE_ASSERT(enumType != NULL);
+
+          printf ("In buildEnumVal_nfi(): Building a SgInitializedName for enum field \n");
+
+          SgInitializedName* initializedName = buildInitializedName(name,enumType);
+          ROSE_ASSERT(initializedName != NULL);
+
+          initializedName->set_declptr(decl);
+          initializedName->set_scope(scope);
+
+          enumFieldSymbol = new SgEnumFieldSymbol(initializedName);
+        }
+
+     ROSE_ASSERT(enumFieldSymbol != NULL);
+
+     scope->insert_symbol(name,enumFieldSymbol);
+#endif
+
+     return enumVal;
+   }
 
 SgLongDoubleVal* SageBuilder::buildLongDoubleVal(long double value /*= 0.0*/)
 {
