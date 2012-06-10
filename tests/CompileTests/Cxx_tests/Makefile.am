@@ -9,11 +9,11 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 if ROSE_USE_EDG_VERSION_4_3
 
-# EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
-#  $(TESTCODE_CURRENTLY_FAILING)
-
-
 EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
+ $(TESTCODE_CURRENTLY_FAILING)
+
+
+XXX_EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
 test_CplusplusMacro_Cpp.C \
 test2001_01.C \
 test2001_02.C \
@@ -762,6 +762,7 @@ test2011_119.C \
 test2011_120.C \
 test2011_133.C \
 test2011_135.C \
+test2011_136.C \
 test2011_137.C \
 test2011_138.C \
 test2011_140.C \
@@ -942,10 +943,6 @@ else
 include $(srcdir)/Makefile-pass.inc
 endif
 
-
-
-
-
 # Import list of C++ test cases that are known to fail:
 #   TESTCODE_CURRENTLY_FAILING
 #
@@ -983,7 +980,6 @@ test2011_72.C \
 test2011_80.C \
 test2011_110.C \
  test2011_121.C \
-test2011_136.C \
 test2011_139.C \
 test2011_141.C \
 test2011_142.C \
