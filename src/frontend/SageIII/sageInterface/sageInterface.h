@@ -1551,11 +1551,6 @@ SgCommaOpExp *insertAfterUsingCommaOp (SgExpression* new_exp, SgExpression* anch
 ///          the initialized name is NULL.
 /// \param   definingDeclaration the defining function declaration of f
 /// \param   newName the name of function f`
-/// \pre     definingDeclaration must be a defining declaration of a
-///          free standing function.
-///          typeid(SgFunctionDeclaration) == typeid(definingDeclaration)
-///          i.e., this function is NOT implemented for class member functions,
-///          template functions, procedures, etc.
 /// \details f's new body becomes { f`(...); } and { int res = f`(...); return res; }
 ///          for functions returning void and a value, respectively.
 ///          two function declarations are inserted in f's enclosing scope
@@ -1572,6 +1567,11 @@ SgCommaOpExp *insertAfterUsingCommaOp (SgExpression* new_exp, SgExpression* anch
 ///          The definition of f` is the next entry in the
 ///          statement list; the forward declaration of f` is the previous
 ///          entry in the statement list.
+/// \pre     definingDeclaration must be a defining declaration of a
+///          free standing function.
+///          typeid(SgFunctionDeclaration) == typeid(definingDeclaration)
+///          i.e., this function is NOT implemented for class member functions,
+///          template functions, procedures, etc.
 std::pair<SgStatement*, SgInitializedName*>
 wrapFunction(SgFunctionDeclaration& definingDeclaration, SgName newName);
 
