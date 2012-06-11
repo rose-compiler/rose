@@ -748,7 +748,10 @@ Unparse_Java::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      curprint("(");
 
 
+#if 0 /* There's no need to call unparseStatement() to unparse the parameter list because that's done in the next
+       * paragraph. [RPM 2012-05-23] */
      unparseStatement(mfuncdecl_stmt->get_parameterList(), info);
+#endif
 
      SgInitializedNamePtrList& names = mfuncdecl_stmt->get_args();
      SgInitializedNamePtrList::iterator name_it;
