@@ -687,7 +687,11 @@ SgNode * ClangToSageTranslator::Traverse(clang::Decl * decl) {
             ret_status = VisitParmVarDecl((clang::ParmVarDecl *)decl, &result);
             break;
         case clang::Decl::CXXRecord:
-            std::cout << "Using C level for C++ construct: CXXRecord" << std::endl;
+//          ret_status = VisitCXXRecordDecl((clang::CXXRecordDecl *)decl, &result);
+//          break;
+        case clang::Decl::ClassTemplateSpecialization:
+        case clang::Decl::ClassTemplatePartialSpecialization:
+            std::cout << "Using C level for C++ construct: " << decl->getDeclKindName() << std::endl;
         case clang::Decl::Record:
             ret_status = VisitRecordDecl((clang::RecordDecl *)decl, &result);
             break;
