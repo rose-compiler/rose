@@ -8,14 +8,43 @@ namespace BinaryAnalysis {
 
     /** Binary instruction semantics.
      *
-     *  Entities in this namespace deal with the semantics of binary instructions.  The basic design is that an instruction
-     *  (such as an x86 "ADD EBX, DWORD PTR DS:[EAX]") is translated to a sequence of RISC-like operations by a translation
-     *  template class which then invokes those operations in a policy supplied as a template argument.  The translation class
-     *  defines the RISC interface in terms of the operation names, the number of arguments, and the relationship between
-     *  argument sizes and return value size.  The semantic policy (which there are many) defines the details/implementation of
-     *  the RISC operations and the data type (semantic domain) of the arguments and return values of those operations.  A
-     *  policy object also contains the virtual machine state on which the RISC operations operate.  The state normally
-     *  consists of at least a register set and memory. */
+     *  Entities in this namespace deal with the semantics of binary instructions. ROSE's binary semantics framework has two
+     *  major components: the dispatchers and the semantic domains.
+     *
+     *  The instruction dispatcher template classes are like an x86 microcontroller: they take a SgAsmInstruction and break it
+     *  down into a series of low-level, RISC-like operations.  ROSE defines a dispatcher template class for each architecture,
+     *  but they all translate their instructions into the same set of low-level, RISC-like operations.  These template classes
+     *  have names like "X86InstructionSemantics" (which we might rename in the future to "X86SemanticDispatcher").  The
+     *  dispatchers define the interface for the RISC-like operations; that is, they define the operation names, numbers and
+     *  possible widths of operands, and the width of the return value. In particular, the dispatchers do not define the
+     *  semantics of the RISC-like operations nor the datatype of the operands and return values.
+     *
+     *  The other major component is the set of semantic domains.  ROSE defines a number of domains (concrete, symbolic,
+     *  partial-symbolic, interval, etc) and allows the user to define their own domains. Each domain defines the semantics of
+     *  the RISC-like operations in terms of a domain-specific datatype and a domain-specific state (registers, memory,
+     *  etc). Since the semantics, state, and value-type are closely tied to one another, they're usually defined together as
+     *  members of a single class or name space.  For instance, the "SymbolicSemantics" name space defines classes "ValueType",
+     *  "State", and "Policy". Each domain knows only about itself and any child domains it might define; you can't get
+     *  lemonade from a rock -- the domain defined over rocks and minerals can't operate on values defined in the fruit domain.
+     *
+     *  When a user wants to perform an analysis in a certain domain for a certain instruction architecture, they combine an
+     *  architecture-specific dispatcher with domain-specific semantics, state, and value-type.  This is done by instantiating,
+     *  for example, an X86InstructionSemantics dispatcher template class having, for example, SymbolicSemantics template
+     *  arguments.
+     *
+     *  @code
+     *   using namespace BinaryAnalysis::InstructionSemantics;
+     *   typedef SymbolicSemantics::Policy<> Policy;
+     *   typedef X86InstructionSemantics<Policy, SymbolicSemantics::ValueType> Dispatcher;
+     *   Policy policy;
+     *   Dispatcher dispatcher(policy);
+     *  @endcode
+     *
+     *  In order to analyze a sequence of instructions, one calls the dispatcher's processInstruction() method one instruction
+     *  at a time.  The dispatcher breaks the instruction down into a sequence of RISC-like operations and invokes those
+     *  operations in the policy.  The policy's operations produce domain-specific result values and/or update the state
+     *  (registers, memory, etc) associated with the policy.  Each policy provides methods by which the user can inspect and/or
+     *  modify the state. */
     namespace InstructionSemantics {
 
         /** Base classes for instruction semantics.  Basically, anything that is common to two or more instruction semantic

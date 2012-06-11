@@ -271,6 +271,7 @@ public:
          *  Reads from unallocated buffers return all zero bytes. */
         static BufferPtr create(size_t size);
 
+        virtual BufferPtr clone() const /*overrides*/;
         virtual const void *get_data_ptr() const /*overrides*/;
         virtual size_t read(void*, size_t offset, size_t nbytes) const /*overrides*/;
         virtual size_t write(const void*, size_t offset, size_t nbytes) /*overrides*/;
@@ -300,7 +301,7 @@ public:
         /** Constructor.  Constructs a segment that points to a particular offset in a buffer.  The segment also has certain
          *  access permissions. */
         Segment(const BufferPtr &buffer, rose_addr_t offset, unsigned perms, std::string name="")
-            : buffer(buffer), buffer_offset(offset), mapperms(perms), name(name) {}
+            : buffer(buffer), buffer_offset(offset), mapperms(perms), name(name), copy_on_write(false) {}
 
         /** Underlying buffer. Every segment must point to some underlying buffer that contains the data for the segment.  The
          *  addresses in the segment correspond 1:1 with the bytes in the buffer, although the segment's addresses can be
@@ -488,7 +489,7 @@ public:
      *  data.  In other words, changing the mapping of one map (clear(), insert(), erase()) does not change the mapping of the
      *  other, but changing the data (write()) in one map changes it in the other.  See also init(), which takes an argument
      *  describing how to copy. */
-    MemoryMap(const MemoryMap &other) { init(other, COPY_SHALLOW); }
+    MemoryMap(const MemoryMap &other, CopyLevel copy_level=COPY_SHALLOW) { init(other, copy_level); }
 
     /** Initialize this memory map with info from another.  This map is first cleared and then initialized with a copy of the
      *  @p source map.  A reference to this map is returned for convenience since init is often used in conjunction with

@@ -1,14 +1,12 @@
-#ifndef _SAGEGENERIC_HPP
+#ifndef _SAGEGENERIC_H
 
-/// \file sageGeneric.hpp
-///       This file implements generic (template) sage query functions
-///       Currently this includes functions for:
-///       - dispatching according to the type of a sage node (dispatch)
-///       - finding the ancestor with a specific node type (ancestor)
-///       - recovering the type of a sage node assertively (assert_node_type)
-/// \email peter.pirkelbauer@llnl.gov
+#define _SAGEGENERIC_H
 
-#define _SAGEGENERIC_HPP
+/// This file implements generic (template) sage query functions
+/// Currently this includes functions for:
+/// - dispatching according to the type of a sage node (dispatch)
+/// - finding the ancestor with a specific node type (ancestor)
+/// - recovering the type of a sage node assertively (assert_node_type)
 
 #include <stdexcept>
 
@@ -2736,15 +2734,23 @@ namespace sg
 
   /// \brief    uncovers the type of SgNode and passes it to an
   ///           overloaded function handle in RoseVisitor.
-  /// \tparam   RoseVisitor, the visitor that will be called back with
+  /// \tparam   RoseVisitor the visitor that will be called back with
   ///           the recovered type information. The handle function with
   ///           the most suitable SgNode type will get invoked.
   /// \param rv an instance of a rose visitor; note that the argument is essentially
   ///           passed by value (similar to STL's for_each).
   /// \param n  a Sage node
   /// \return   a copy of the RoseVisitor object
+  /// \details  The following code has two classes.
+  ///           - Counter counts the number of all expression and statement nodes.
+  ///             It implements handlers for SgNode (not interesting nodes),
+  ///             for SgExpression and SgStatement (to count the nodes).
+  ///           - Traversal inherits from ASTTraversal and contains a counter.
+  ///             The dispatch function is invoked using a Counter object and
+  ///             a pointer to an AST node. Since the counter object is passed
+  ///             by value we need to store back the result (similar to
+  ///             std::for_each).
   /// \code
-  ///   // Counts the number of all expression and statement nodes.
   ///   struct Counter
   ///   {
   ///      size_t expr;
@@ -2752,31 +2758,18 @@ namespace sg
   ///
   ///      Counter() : expr(0), decl(0) {}
   ///
-  ///      // base case (all uninteresting nodes fall into this function)
   ///      void handle(const SgNode&) {}
-  ///
-  ///      // expression specific code
   ///      void handle(const SgExpression&) { ++expr; }
-  ///
-  ///      // statement specific code
   ///      void handle(const SgStatement&)  { ++stmt; }
   ///   };
   ///
-  ///   // Traverses all nodes in the subtree passed to run, and
-  ///   // prints the expression / statement ratio.
   ///   struct Traversal : ASTTraversal
   ///   {
   ///     Counter ctr;
   ///
   ///     void visit(SgNode* n)
   ///     {
-  ///       // Since ctr is copied when passed to dispatch
-  ///       // the changed counter state has to be stored back.
   ///       ctr = sg::dispatch(ctr, n);
-  ///
-  ///       // When the counter object is passed by pointer, the object's data
-  ///       // is manipulated directly.
-  ///       //   sg::dispatch(&ctr, n);
   ///     }
   ///
   ///     void run(SgNode& root)
@@ -2789,6 +2782,16 @@ namespace sg
   ///     static
   ///     float ratio(float a, float b) { return a/b; }
   ///   };
+  /// \endcode
+  ///             Alternatively, the dispatch function takes a pointer to a
+  ///             handler object. In this case the counter object is passed
+  ///             as pointer, and ctr is manipulated
+  ///             directly (no need to store back the result).
+  /// \code
+  ///     void visit(SgNode* n)
+  ///     {
+  ///       sg::dispatch(&ctr, n);
+  ///     }
   /// \endcode
   template <class RoseVisitor>
   inline
@@ -2818,7 +2821,7 @@ namespace sg
   ///          ancestor node with a given type. The search fails
   ///          at SgProject nodes.
   /// \tparam  AncestorNode the type of ancestors to look for
-  /// \tparam  QualSgNode either 'const SgNode*' or 'SgNode*' depending
+  /// \tparam  QualSgNode either const SgNode* or SgNode* depending
   ///          if the search is over constant nodes or not.
   template <class AncestorNode, class QualSgNode>
   struct AncestorTypeFinder : DefaultHandler<const SgProject>
@@ -2861,12 +2864,12 @@ namespace sg
 
   /// \brief   finds an ancestor node with a given type
   /// \details the function family comes in four variants:
-  ///          SgNode*       -> AncestorNode*       ( result can be NULL )
-  ///          const SgNode* -> const AncestorNode* ( result can be NULL )
-  ///          SgNode&       -> AncestorNode&       ( assert(false) when an ancestor of
-  ///                                                 the specified type cannot be found )
-  ///          const SgNode& -> const AncestorNode& ( assert(false) when an ancestor of
-  ///                                                 the specified type cannot be found )
+  ///          - SgNode*       -> AncestorNode*       ( result can be NULL )
+  ///          - const SgNode* -> const AncestorNode* ( result can be NULL )
+  ///          - SgNode&       -> AncestorNode&       ( assert(false) when an ancestor of
+  ///                                                   the specified type cannot be found )
+  ///          - const SgNode& -> const AncestorNode& ( assert(false) when an ancestor of
+  ///                                                   the specified type cannot be found )
   /// \code
   ///   const SgStatement* enclosingStatement(const SgExpression* e)  { return sg::ancestor<SgStatement>(e); }
   /// \endcode
@@ -2924,10 +2927,12 @@ namespace sg
     operator SageNode* () { return res; }
   };
 
-  /// \brief  asserts that n has type SageNode
+  /// \brief   asserts that n has type SageNode
+  /// \details the ROSE assert in the following example holds b/c assert_sage_type
+  ///          aborts if the input node is not a SgStatement
   /// \code
   ///   SgStatement* stmt = assert_sage_type<SgStatement>(expr.get_parent());
-  ///   ROSE_ASSERT(stmt); // holds b/c assert_sage_type aborts if the input node is not a SgStatement
+  ///   ROSE_ASSERT(stmt);
   /// \endcode
   template <class SageNode>
   SageNode* assert_sage_type(SgNode* n)
@@ -2964,8 +2969,8 @@ namespace sg
   /// \tparam SageChild the child node type
   /// \param  lhs one parent node
   /// \param  rhs another parent node
-  /// \param  getter the getter function to extract the child from @lhs (and @rhs)
-  /// \param  setter the setter function to store the child in @lhs (and @rhs)
+  /// \param  getter the getter function to extract the child from lhs (and rhs)
+  /// \param  setter the setter function to store the child in lhs (and rhs)
   template <class SageNode, class SageChild>
   void swap_child(SageNode& lhs, SageNode& rhs, SageChild* (SageNode::*getter) () const, void (SageNode::*setter) (SageChild*))
   {
@@ -2979,4 +2984,4 @@ namespace sg
     swap_parent(lhs_child, rhs_child);
   }
 }
-#endif /* _SAGEGENERIC_HPP */
+#endif /* _SAGEGENERIC_H */

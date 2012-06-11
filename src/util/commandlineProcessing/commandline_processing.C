@@ -989,9 +989,9 @@ CommandlineProcessing::isOpenCLFileNameSuffix ( const std::string & suffix )
   // For now define CASE_SENSITIVE_SYSTEM to be true, as we are currently a UNIXish project.
 
 #if(CASE_SENSITIVE_SYSTEM == 1)
-     if ( suffix == "ocl" )
+     if ( suffix == "ocl" || suffix == "cl" )
 #else//It is a case insensitive system
-     if ( suffix == "ocl" )
+     if ( suffix == "ocl" || suffix == "cl" )
 #endif
         {
           returnValue = true;
@@ -1077,6 +1077,7 @@ CommandlineProcessing::initSourceFileSuffixList ( )
           validSourceFileSuffixes.push_back(".cu");
        // TV (05/17/2010) Support for OpenCL
           validSourceFileSuffixes.push_back(".ocl");
+          validSourceFileSuffixes.push_back(".cl");
 
        // DQ (10/11/2010): Adding support for java.
           validSourceFileSuffixes.push_back(".java");
@@ -1122,6 +1123,7 @@ CommandlineProcessing::initSourceFileSuffixList ( )
           validSourceFileSuffixes.push_back(".cu");
        // TV (05/17/2010) Support for OpenCL
           validSourceFileSuffixes.push_back(".ocl");
+          validSourceFileSuffixes.push_back(".cl");
 
        // DQ (10/11/2010): Adding support for java.
           validSourceFileSuffixes.push_back(".java");

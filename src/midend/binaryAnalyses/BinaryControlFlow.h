@@ -465,16 +465,26 @@ BinaryAnalysis::ControlFlow::build_cfg_from_ast(SgNode *root, ControlFlowGraph &
         T1(ControlFlow *analyzer, ControlFlowGraph &cfg, BlockVertexMap &bv_map)
             : analyzer(analyzer), cfg(cfg), bv_map(bv_map)
             {}
-        void visit(SgNode *node) {
-            SgAsmBlock *block = isSgAsmBlock(node);
-            if (block && block->has_instructions() && !analyzer->is_vertex_filtered(block)) {
+        // Add basic block to graph if it hasn't been added already.
+        void conditionally_add_vertex(SgAsmBlock *block) {
+            if (block && block->has_instructions() && !analyzer->is_vertex_filtered(block) && bv_map.find(block)==bv_map.end()) {
                 Vertex vertex = add_vertex(cfg);
                 bv_map[block] = vertex;
                 put(boost::vertex_name, cfg, vertex, block);
             }
         }
+        void visit(SgNode *node) {
+            if (isSgAsmFunction(node)) {
+                // Add the function entry block before the other blocks of the function.  This ensures that the entry block of
+                // a function has a lower vertex number than the other blocks of the function (the traversal is not guaranteed
+                // to visit the function basic blocks in that order).
+                conditionally_add_vertex(isSgAsmFunction(node)->get_entry_block());
+            } else {
+                conditionally_add_vertex(isSgAsmBlock(node));
+            }
+        }
     };
-    T1(this, cfg, bv_map).traverse(root, preorder); /* preorder guarantees that the highest SgAsmBlock will be vertex zero */
+    T1(this, cfg, bv_map).traverse(root, preorder);
 
     /* Add the edges. */
     typename boost::graph_traits<ControlFlowGraph>::vertex_iterator vi, vi_end;

@@ -4,7 +4,7 @@
 /** Example sign analysis.
  *
  *  This example demonstrates how to write a (very simple, naive) sign analysis and the structure of this file is based on the
- *  VirtualMachineSemantics.h file.  This analysis makes certain assumptions to make a simple example:
+ *  PartialSymbolicSemantics.h file.  This analysis makes certain assumptions to make a simple example:
  *
  *  <ul>
  *    <li>All values are signed integers (except 1-bit flags, which are unsigned).</li>
@@ -127,7 +127,7 @@ namespace SignAnalysisExample {
         struct Exception {
             Exception(const std::string &mesg): mesg(mesg) {}
             friend std::ostream& operator<<(std::ostream &o, const Exception &e) {
-                o <<"VirtualMachineSemantics exception: " <<e.mesg;
+                o <<"SignAnalysisExample exception: " <<e.mesg;
                 return o;
             }
             std::string mesg;
@@ -147,7 +147,7 @@ namespace SignAnalysisExample {
 
         /**********************************************************************************************************************
          * The operator signatures are dictated by the instruction semantics layer (such as x86InstructionSemantics class)
-         * since the policy is "plugged into" an instruction semantics class.  See VirtualMachineSemantics.h for documentation
+         * since the policy is "plugged into" an instruction semantics class.  See PartialSymbolicSemantics.h for documentation
          * of each method.
          **********************************************************************************************************************/
     public:

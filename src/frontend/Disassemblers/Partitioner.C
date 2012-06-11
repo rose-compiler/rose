@@ -6,7 +6,7 @@
 #include "Assembler.h"
 #include "AssemblerX86.h"
 #include "AsmUnparser_compat.h"
-#include "VirtualMachineSemantics.h"
+#include "PartialSymbolicSemantics.h"
 #include "stringify.h"
 
 #include <errno.h>
@@ -204,9 +204,9 @@ Partitioner::discover_jump_table(BasicBlock *bb, bool do_create, ExtentMap *tabl
         return Disassembler::AddressSet(); // no indirection
 
     /* Evaluate the basic block semantically to get an expression for the final EIP. */
-    typedef VirtualMachineSemantics::ValueType<32> RegisterValueType;
-    typedef VirtualMachineSemantics::Policy<> Policy;
-    typedef X86InstructionSemantics<Policy, VirtualMachineSemantics::ValueType> Semantics;
+    typedef PartialSymbolicSemantics::ValueType<32> RegisterValueType;
+    typedef PartialSymbolicSemantics::Policy<> Policy;
+    typedef X86InstructionSemantics<Policy, PartialSymbolicSemantics::ValueType> Semantics;
     Policy policy;
     policy.set_map(&ro_map);
     Semantics semantics(policy);
@@ -412,11 +412,11 @@ Partitioner::pops_return_address(rose_addr_t va)
 
         SgAsmx86Instruction *last_insn = isSgAsmx86Instruction(bb->last_insn());
 
-        typedef VirtualMachineSemantics::Policy<> Policy;
-        typedef X86InstructionSemantics<Policy, VirtualMachineSemantics::ValueType> Semantics;
+        typedef PartialSymbolicSemantics::Policy<> Policy;
+        typedef X86InstructionSemantics<Policy, PartialSymbolicSemantics::ValueType> Semantics;
         Policy policy;
         policy.set_map(get_map());
-        VirtualMachineSemantics::ValueType<32> orig_retaddr;
+        PartialSymbolicSemantics::ValueType<32> orig_retaddr;
         policy.writeMemory(x86_segreg_ss, policy.readRegister<32>("esp"), orig_retaddr, policy.true_());
         Semantics semantics(policy);
 
@@ -1055,8 +1055,8 @@ Partitioner::mark_ipd_configuration()
             // program can't accidentally modify the stuff being disassembled. [RPM 2012-05-07]
             MemoryMap *map = get_map();
             assert(map!=NULL);
-            typedef VirtualMachineSemantics::Policy<> Policy;
-            typedef X86InstructionSemantics<Policy, VirtualMachineSemantics::ValueType> Semantics;
+            typedef PartialSymbolicSemantics::Policy<> Policy;
+            typedef X86InstructionSemantics<Policy, PartialSymbolicSemantics::ValueType> Semantics;
             Policy policy;
             policy.set_map(map);
             Semantics semantics(policy);
@@ -1158,15 +1158,15 @@ Partitioner::mark_ipd_configuration()
 
             /* Extract the list of successors. The number of successors is the first element of the list. */
             if (debug) fprintf(stderr, "  extracting program return values...\n");
-            VirtualMachineSemantics::ValueType<32> nsucs = policy.readMemory<32>(x86_segreg_ss, policy.number<32>(svec_va),
-                                                                                 policy.true_());
+            PartialSymbolicSemantics::ValueType<32> nsucs = policy.readMemory<32>(x86_segreg_ss, policy.number<32>(svec_va),
+                                                                                  policy.true_());
             assert(nsucs.is_known());
             if (debug) fprintf(stderr, "    number of successors: %"PRId64"\n", nsucs.known_value());
             assert(nsucs.known_value()*4 <= svec_size-4); /*first entry is size*/
             for (size_t i=0; i<nsucs.known_value(); i++) {
-                VirtualMachineSemantics::ValueType<32> suc_va = policy.readMemory<32>(x86_segreg_ss,
-                                                                                      policy.number<32>(svec_va+4+i*4),
-                                                                                      policy.true_());
+                PartialSymbolicSemantics::ValueType<32> suc_va = policy.readMemory<32>(x86_segreg_ss,
+                                                                                       policy.number<32>(svec_va+4+i*4),
+                                                                                       policy.true_());
                 if (suc_va.is_known()) {
                     if (debug) fprintf(stderr, "    #%zu: 0x%08"PRIx64"\n", i, suc_va.known_value());
                     bb->cache.sucs.insert(suc_va.known_value());

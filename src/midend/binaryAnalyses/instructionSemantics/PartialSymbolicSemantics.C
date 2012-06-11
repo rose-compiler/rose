@@ -1,9 +1,9 @@
 #include "sage3basic.h"
-#include "VirtualMachineSemantics.h"
+#include "PartialSymbolicSemantics.h"
 
 namespace BinaryAnalysis {
     namespace InstructionSemantics {
-        namespace VirtualMachineSemantics {
+        namespace PartialSymbolicSemantics {
             uint64_t name_counter;
         } /*namespace*/
     } /*namespace*/

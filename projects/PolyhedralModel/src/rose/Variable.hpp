@@ -8,9 +8,11 @@
 #ifndef _VARIABLE_HPP_
 #define _VARIABLE_HPP_
 
-#include "rose.h"
-
 #include <string>
+
+class SgInitializedName;
+class SgExpression;
+class SgScopeStatement;
 
 class RoseVariable {
 	protected:
@@ -30,6 +32,8 @@ class RoseVariable {
 		SgExpression * generate(SgScopeStatement * stmt) const;
 	
 		RoseVariable & operator = (const RoseVariable & v);
+
+		SgInitializedName * getInitializedName() const;
 		
 	friend bool operator == (const RoseVariable & v1, const RoseVariable & v2);
 	friend bool operator != (const RoseVariable & v1, const RoseVariable & v2);
