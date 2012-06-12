@@ -338,7 +338,7 @@ public:
      *  sets the value which will eventually be returned.
      *
      *  @{ */
-    void syscall_return(const RSIM_SEMANTIC_VTYPE<32> &value);
+    void syscall_return(const RSIM_SEMANTICS_VTYPE<32> &value);
     void syscall_return(int value);
     /** @} */
 
@@ -605,8 +605,8 @@ protected:
 public: //FIXME
     template<class guest_dirent_t> int getdents_syscall(int fd, uint32_t dirent_va, size_t sz);
     
-    mutable RSIM_SemanticPolicy policy;         /* Mutable because some policies aren't careful about using const "this" ptrs. */
-    RSIM_Semantics semantics;
+    mutable RSIM_SEMANTICS_POLICY policy;       /* Mutable because some policies aren't careful about using const "this" ptrs. */
+    RSIM_Semantics::Dispatcher semantics;
 
 
     /* Stuff related to threads */

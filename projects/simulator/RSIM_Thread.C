@@ -704,7 +704,7 @@ RSIM_Thread::report_stack_frames(RTS_Message *mesg, const std::string &title/*="
 }
 
 void
-RSIM_Thread::syscall_return(const RSIM_SEMANTIC_VTYPE<32> &retval)
+RSIM_Thread::syscall_return(const RSIM_SEMANTICS_VTYPE<32> &retval)
 {
     policy.writeRegister(policy.reg_eax, retval);
 }
@@ -788,7 +788,7 @@ RSIM_Thread::main()
             process->dump_core(SIGSEGV);
             report_stack_frames(tracing(TRACE_MISC));
             abort();
-        } catch (const RSIM_Semantics::Exception &e) {
+        } catch (const RSIM_Semantics::Dispatcher::Exception &e) {
             /* Thrown for instructions whose semantics are not implemented yet. */
             if (!insn_semaphore_posted) {
                 int status __attribute__((unused)) = sem_post(process->get_simulator()->get_semaphore());
@@ -807,7 +807,7 @@ RSIM_Thread::main()
             report_stack_frames(tracing(TRACE_MISC));
             tracing(TRACE_MISC)->mesg("exception ignored; continuing with a corrupt state...\n");
 #endif
-        } catch (const RSIM_SEMANTIC_POLICY::Exception &e) {
+        } catch (const RSIM_SEMANTICS_POLICY::Exception &e) {
             if (!insn_semaphore_posted) {
                 int status __attribute__((unused)) = sem_post(process->get_simulator()->get_semaphore());
                 assert(0==status);
