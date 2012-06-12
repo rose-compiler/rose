@@ -687,7 +687,11 @@ SgNode * ClangToSageTranslator::Traverse(clang::Decl * decl) {
             ret_status = VisitParmVarDecl((clang::ParmVarDecl *)decl, &result);
             break;
         case clang::Decl::CXXRecord:
-            std::cout << "Using C level for C++ construct: CXXRecord" << std::endl;
+//          ret_status = VisitCXXRecordDecl((clang::CXXRecordDecl *)decl, &result);
+//          break;
+        case clang::Decl::ClassTemplateSpecialization:
+        case clang::Decl::ClassTemplatePartialSpecialization:
+            std::cout << "Using C level for C++ construct: " << decl->getDeclKindName() << std::endl;
         case clang::Decl::Record:
             ret_status = VisitRecordDecl((clang::RecordDecl *)decl, &result);
             break;
@@ -762,6 +766,9 @@ SgNode * ClangToSageTranslator::Traverse(clang::Stmt * stmt) {
             break;
         case clang::Stmt::PredefinedExprClass:
             ret_status = VisitPredefinedExpr((clang::PredefinedExpr *)stmt, &result);
+            break;
+        case clang::Stmt::StmtExprClass:
+            ret_status = VisitStmtExpr((clang::StmtExpr *)stmt, &result);
             break;
         case clang::Stmt::StringLiteralClass:
             ret_status = VisitStringLiteral((clang::StringLiteral *)stmt, &result);
@@ -2310,6 +2317,21 @@ bool ClangToSageTranslator::VisitPredefinedExpr(clang::PredefinedExpr * predefin
     *node = SageBuilder::buildVarRefExp_nfi(symbol);
 
     return true;
+}
+
+bool ClangToSageTranslator::VisitStmtExpr(clang::StmtExpr * stmt_expr, SgNode ** node) {
+    bool res = true;
+
+    SgNode * tmp_substmt = Traverse(stmt_expr->getSubStmt());
+    SgStatement * substmt = isSgStatement(tmp_substmt);
+    if (tmp_substmt != NULL && substmt == NULL) {
+        std::cerr << "Runtime error: tmp_substmt != NULL && substmt == NULL" << std::endl;
+        res = false;
+    }
+
+    *node = new SgStatementExpression(substmt);
+
+    return VisitExpr(stmt_expr, node) && res;
 }
 
 bool ClangToSageTranslator::VisitStringLiteral(clang::StringLiteral * string_literal, SgNode ** node) {
