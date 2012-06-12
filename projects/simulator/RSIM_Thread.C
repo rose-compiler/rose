@@ -731,11 +731,11 @@ RSIM_Thread::main()
             /* Returned from signal handler? This code simulates the sigframe_32 or rt_sigframe_32 "retcode" */
             if (policy.readRegister<32>(policy.reg_eip).known_value()==SIGHANDLER_RETURN) {
                 policy.pop();
-                policy.writeRegister<32>(policy.reg_eax, 119);
+                policy.writeRegister<32>(policy.reg_eax, RSIM_SEMANTICS_VTYPE<32>(119));
                 sys_sigreturn();
                 continue;
             } else if (policy.readRegister<32>(policy.reg_eip).known_value()==SIGHANDLER_RT_RETURN) {
-                policy.writeRegister<32>(policy.reg_eax, 173);
+                policy.writeRegister<32>(policy.reg_eax, RSIM_SEMANTICS_VTYPE<32>(173));
                 sys_rt_sigreturn();
                 continue;
             }
@@ -873,22 +873,22 @@ RSIM_Thread::get_regs() const
 void
 RSIM_Thread::init_regs(const pt_regs_32 &regs)
 {
-    policy.writeRegister<32>(policy.reg_eip, regs.ip);
-    policy.writeRegister<32>(policy.reg_eax, regs.ax);
-    policy.writeRegister<32>(policy.reg_ebx, regs.bx);
-    policy.writeRegister<32>(policy.reg_ecx, regs.cx);
-    policy.writeRegister<32>(policy.reg_edx, regs.dx);
-    policy.writeRegister<32>(policy.reg_esi, regs.si);
-    policy.writeRegister<32>(policy.reg_edi, regs.di);
-    policy.writeRegister<32>(policy.reg_ebp, regs.bp);
-    policy.writeRegister<32>(policy.reg_esp, regs.sp);
-    policy.writeRegister<16>(policy.reg_cs, regs.cs);
-    policy.writeRegister<16>(policy.reg_ds, regs.ds);
-    policy.writeRegister<16>(policy.reg_es, regs.es);
-    policy.writeRegister<16>(policy.reg_fs, regs.fs);
-    policy.writeRegister<16>(policy.reg_gs, regs.gs);
-    policy.writeRegister<16>(policy.reg_ss, regs.ss);
-    policy.writeRegister<32>(policy.reg_eflags, regs.flags);
+    policy.writeRegister(policy.reg_eip,    RSIM_SEMANTICS_VTYPE<32>(regs.ip));
+    policy.writeRegister(policy.reg_eax,    RSIM_SEMANTICS_VTYPE<32>(regs.ax));
+    policy.writeRegister(policy.reg_ebx,    RSIM_SEMANTICS_VTYPE<32>(regs.bx));
+    policy.writeRegister(policy.reg_ecx,    RSIM_SEMANTICS_VTYPE<32>(regs.cx));
+    policy.writeRegister(policy.reg_edx,    RSIM_SEMANTICS_VTYPE<32>(regs.dx));
+    policy.writeRegister(policy.reg_esi,    RSIM_SEMANTICS_VTYPE<32>(regs.si));
+    policy.writeRegister(policy.reg_edi,    RSIM_SEMANTICS_VTYPE<32>(regs.di));
+    policy.writeRegister(policy.reg_ebp,    RSIM_SEMANTICS_VTYPE<32>(regs.bp));
+    policy.writeRegister(policy.reg_esp,    RSIM_SEMANTICS_VTYPE<32>(regs.sp));
+    policy.writeRegister(policy.reg_cs,     RSIM_SEMANTICS_VTYPE<16>(regs.cs));
+    policy.writeRegister(policy.reg_ds,     RSIM_SEMANTICS_VTYPE<16>(regs.ds));
+    policy.writeRegister(policy.reg_es,     RSIM_SEMANTICS_VTYPE<16>(regs.es));
+    policy.writeRegister(policy.reg_fs,     RSIM_SEMANTICS_VTYPE<16>(regs.fs));
+    policy.writeRegister(policy.reg_gs,     RSIM_SEMANTICS_VTYPE<16>(regs.gs));
+    policy.writeRegister(policy.reg_ss,     RSIM_SEMANTICS_VTYPE<16>(regs.ss));
+    policy.writeRegister(policy.reg_eflags, RSIM_SEMANTICS_VTYPE<32>(regs.flags));
 }
 
 int

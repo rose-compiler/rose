@@ -108,9 +108,9 @@ RSIM_Semantics::InnerPolicy<State, ValueType>::readMemory(X86SegmentRegister sr,
                    Len, sr_shadow[sr].base, offset, sr_shadow[sr].base+offset,
                    ValueType<Len>(result).known_value());
 
-        return result;
+        return ValueType<Len>(result);
     } else {
-        return 0;
+        return ValueType<Len>(0);
     }
 }
 
@@ -168,8 +168,11 @@ template<
     template <size_t> class ValueType
     >
 void
-RSIM_Semantics::InnerPolicy<State, ValueType>::ctor()
+RSIM_Semantics::InnerPolicy<State, ValueType>::ctor(RSIM_Thread *thread)
 {
+    assert(thread!=NULL);
+    this->thread = thread;
+
     reg_eax = this->findRegister("eax", 32);
     reg_ebx = this->findRegister("ebx", 32);
     reg_ecx = this->findRegister("ecx", 32);
@@ -191,23 +194,23 @@ RSIM_Semantics::InnerPolicy<State, ValueType>::ctor()
     reg_df  = this->findRegister("df", 1);
     reg_tf  = this->findRegister("tf", 1);
 
-    writeRegister<32>(reg_eip, 0);
-    writeRegister<32>(reg_eax, 0);
-    writeRegister<32>(reg_ebx, 0);
-    writeRegister<32>(reg_ecx, 0);
-    writeRegister<32>(reg_edx, 0);
-    writeRegister<32>(reg_esi, 0);
-    writeRegister<32>(reg_edi, 0);
-    writeRegister<32>(reg_ebp, 0);
-    writeRegister<32>(reg_esp, 0xc0000000ul); /* high end of stack, exclusive */
-    writeRegister<32>(reg_eflags, 0x00000002); // flag bit 1 is set to one, although this is a reserved register
+    this->writeRegister(reg_eip,    ValueType<32>(0));
+    this->writeRegister(reg_eax,    ValueType<32>(0));
+    this->writeRegister(reg_ebx,    ValueType<32>(0));
+    this->writeRegister(reg_ecx,    ValueType<32>(0));
+    this->writeRegister(reg_edx,    ValueType<32>(0));
+    this->writeRegister(reg_esi,    ValueType<32>(0));
+    this->writeRegister(reg_edi,    ValueType<32>(0));
+    this->writeRegister(reg_ebp,    ValueType<32>(0));
+    this->writeRegister(reg_esp,    ValueType<32>(0xc0000000ul)); // high end of stack, exclusive
+    this->writeRegister(reg_eflags, ValueType<32>(0x2)); // flag bit 1 is set to one, although this is a reserved register
 
-    writeRegister<16>(reg_cs, 0x23);
-    writeRegister<16>(reg_ds, 0x2b);
-    writeRegister<16>(reg_es, 0x2b);
-    writeRegister<16>(reg_ss, 0x2b);
-    writeRegister<16>(reg_fs, 0);
-    writeRegister<16>(reg_gs, 0);
+    this->writeRegister(reg_cs,     ValueType<16>(0x23));
+    this->writeRegister(reg_ds,     ValueType<16>(0x2b));
+    this->writeRegister(reg_es,     ValueType<16>(0x2b));
+    this->writeRegister(reg_ss,     ValueType<16>(0x2b));
+    this->writeRegister(reg_fs,     ValueType<16>(0));
+    this->writeRegister(reg_gs,     ValueType<16>(0));
 }
 
 template<
