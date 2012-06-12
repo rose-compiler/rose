@@ -7,7 +7,8 @@
  *  a new real thread to simulate it; when the simulated thread exits, the real thread also exits.  Therefore, the methods
  *  defined for the RSIM_Thread class are intended to be called by only one thread at a time per RSIM_Thread object.
  *
- *  The RSIM_Thread object contains an RSIM_SemanticPolicy object which defines how instructions are executed. */
+ *  The RSIM_Thread object contains an instruction semantics policy object which defines how instructions are executed and
+ *  contains the register state for the thread. */
 
 class RSIM_Thread {
 public:

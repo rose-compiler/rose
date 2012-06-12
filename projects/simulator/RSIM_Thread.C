@@ -427,14 +427,15 @@ RSIM_Thread::signal_deliver(const RSIM_SignalHandling::siginfo_32 &_info)
             policy.writeRegister(policy.reg_df, policy.false_());
             policy.writeRegister(policy.reg_tf, policy.false_());
 
-            /* Set up registers for signal handler */
+            /* Set up registers for signal handler. See RSIM_Semantics::InnerPolicy::ctor() for details about the segment
+             * register values. */
             policy.writeRegister(policy.reg_eax, policy.number<32>(signo));
             policy.writeRegister(policy.reg_edx, policy.number<32>(0));
             policy.writeRegister(policy.reg_ecx, policy.number<32>(0));
-            policy.writeRegister(policy.reg_ds,  policy.number<16>(0x2b));        /* see RSIM_SemanticPolicy::ctor() */
-            policy.writeRegister(policy.reg_es,  policy.number<16>(0x2b));        /* see RSIM_SemanticPolicy::ctor() */
-            policy.writeRegister(policy.reg_ss,  policy.number<16>(0x2b));        /* see RSIM_SemanticPolicy::ctor() */
-            policy.writeRegister(policy.reg_cs,  policy.number<16>(0x23));        /* see RSIM_SemanticPolicy::ctor() */
+            policy.writeRegister(policy.reg_ds,  policy.number<16>(0x2b));
+            policy.writeRegister(policy.reg_es,  policy.number<16>(0x2b));
+            policy.writeRegister(policy.reg_ss,  policy.number<16>(0x2b));
+            policy.writeRegister(policy.reg_cs,  policy.number<16>(0x23));
             policy.writeRegister(policy.reg_esp, policy.number<32>(frame_va));
             policy.writeRegister(policy.reg_eip, policy.number<32>(sa.handler_va)); /* we're now in the signal handler... */
         }
