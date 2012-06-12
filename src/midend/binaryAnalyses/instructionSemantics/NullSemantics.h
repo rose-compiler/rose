@@ -19,6 +19,8 @@ namespace BinaryAnalysis { // documented elsewhere
              *  it should construct a value that has an undefined/unconstrained/unknown value. */
             template<size_t nBits>
             struct ValueType {
+                ValueType() {}
+                explicit ValueType(uint32_t) {}
                 bool is_known() const { return false; }
                 uint64_t known_value() const { abort(); } // values are NEVER known
                 void print(std::ostream &o) const {

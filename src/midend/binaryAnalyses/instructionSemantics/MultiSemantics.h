@@ -248,6 +248,10 @@ namespace BinaryAnalysis {                      // documented elsewhere
                     if (is_valid(SP3()))
                         o <<get_subvalue(SP3());
                 }
+                friend std::ostream& operator<<(std::ostream &o, const ValueType<nBits> &e) {
+                    e.print(o);
+                    return o;
+                }
 
             protected:
                 // Internal function to help set sub-value validity.
@@ -260,42 +264,17 @@ namespace BinaryAnalysis {                      // documented elsewhere
                 }
             };
 
-            /** Print the value. Prints subvalues that are marked as valid. */
-            template<template <size_t X> class ValueType, size_t nBits>
-            friend std::ostream& operator<<(std::ostream &o, const ValueType<nBits> &v) {
-                v.print(o);
-                return o;
-            }
-
-
-
             /******************************************************************************************************************
              *                                  State
              ******************************************************************************************************************/
         public:
-            /** Represents the entire state of the machine.  A multi-policy state is the union of states of the sub-policies.
-             *  The sub-states are identified with tags such as SP0, SP1, etc., the same as for sub-values and sub-policies. */
-            template<template<size_t> class ValueType/*=MultiSemantics::ValueType (doesn't work in GCC<4.4.x)*/>
-            class State {
-            protected:
-                State0<ValueType0> state0;
-                State1<ValueType1> state1;
-                State2<ValueType2> state2;
-                State3<ValueType3> state3;
-            public:
-                /** Returns the specified sub-state.
-                 * @{ */
-                State0<ValueType0>& get_state(const SP0&) { return state0; }
-                State1<ValueType1>& get_state(const SP1&) { return state1; }
-                State2<ValueType2>& get_state(const SP2&) { return state2; }
-                State3<ValueType3>& get_state(const SP3&) { return state3; }
-                const State0<ValueType0>& get_state(const SP0&) const { return state0; }
-                const State1<ValueType1>& get_state(const SP1&) const { return state1; }
-                const State2<ValueType2>& get_state(const SP2&) const { return state2; }
-                const State3<ValueType3>& get_state(const SP3&) const { return state3; }
-                /** @} */
-            };
-
+            /** MultiSemanics global state.
+             *
+             *  The MultiSemantics does not define its own machine state, but rather stores the states in the individual
+             *  sub-policies. However, this class can be replaced/subclassed with something that stores state across all the
+             *  sub-policies. */
+            template <template <size_t> class ValueType>
+            class State {}; // only for documentation
 
 
             /******************************************************************************************************************
@@ -307,6 +286,10 @@ namespace BinaryAnalysis {                      // documented elsewhere
              *  Each sub-policy maintains its own state.  The register dictionary operations are inherited from
              *  BaseSemantics::Policy, which means that they apply only in the base policy (except set_register_dictionary()
              *  also calls the sub-policies.   See NullSemantics::Policy for documentation of the RISC-like API. */
+            template <
+                template <template <size_t> class ValueType> class State, // unused
+                template <size_t nBits> class ValueType
+            >
             class Policy: public BaseSemantics::Policy {
             protected:
                 unsigned active;             /**< Bit vector to indicate which policies are active. */
