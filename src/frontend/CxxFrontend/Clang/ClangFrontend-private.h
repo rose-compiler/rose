@@ -263,7 +263,7 @@ class ClangToSageTranslator : public clang::ASTConsumer {
                         virtual bool VisitPredefinedExpr(clang::PredefinedExpr * predefined_expr, SgNode ** node);
             //          virtual bool VisitShuffleVectorExpr(clang::ShuffleVectorExpr * shuffle_vector_expr);
             //          virtual bool VisitSizeOfPackExpr(clang::SizeOfPackExpr * size_of_pack_expr);
-            //          virtual bool VisitStmtExpr(clang::StmtExpr * stmt_expr);
+                        virtual bool VisitStmtExpr(clang::StmtExpr * stmt_expr, SgNode ** node);
                         virtual bool VisitStringLiteral(clang::StringLiteral * string_literal, SgNode ** node);
             //          virtual bool VisitSubstNonTypeTemplateParmPackExpr(clang::SubstNonTypeTemplateParmPackExpr * subst_non_type_template_parm_pack_expr);
                         virtual bool VisitUnaryExprOrTypeTraitExpr(clang::UnaryExprOrTypeTraitExpr * unary_expr_or_type_trait_expr, SgNode ** node);
