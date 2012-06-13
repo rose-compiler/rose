@@ -10,7 +10,7 @@
 
 #include <boost/foreach.hpp>
 
-#include "sageGeneric.hpp"
+#include "sageGeneric.h"
 
 #include "RtedSymbols.h"
 #include "DataStructures.h"
@@ -19,16 +19,6 @@
 using namespace std;
 using namespace SageInterface;
 using namespace SageBuilder;
-
-static inline
-void ROSE_ASSERT_MSG(bool b, const std::string& msg)
-{
-  if (!b)
-  {
-    std::cerr << msg << std::endl;
-    ROSE_ASSERT(false);
-  }
-}
 
 struct InitNameComp
 {
@@ -41,13 +31,13 @@ struct InitNameComp
 
   bool operator()(const std::map<SgVarRefExp*, RtedArray>::value_type& v) const
   {
-    return v.second.initName == obj;
+    return v.second.getName() == obj;
   }
 };
 
 
 static
-void appendUpcBlocksize(SgExprListExp* arg_list, SgType* arrtype)
+void appendUpcBlocksize(SgExprListExp* arg_list, const SgType* arrtype)
 {
   //               == -2 ... distributed with max blocking (i.e., shared [*] )
   //               == -1 ... block size omitted ( same as blocksize = 1)
@@ -68,7 +58,7 @@ void appendUpcBlocksize(SgExprListExp* arg_list, SgType* arrtype)
 }
 
 static
-void appendUpcBlocksize(SgExprListExp* arg_list, SgInitializedName* initName)
+void appendUpcBlocksize(SgExprListExp* arg_list, const SgInitializedName* initName)
 {
   appendUpcBlocksize(arg_list, initName->get_type());
 }
@@ -76,7 +66,7 @@ void appendUpcBlocksize(SgExprListExp* arg_list, SgInitializedName* initName)
 static
 void appendUpcBlocksize(SgExprListExp* arg_list, const RtedArray& arr)
 {
-  appendUpcBlocksize(arg_list, arr.initName);
+  appendUpcBlocksize(arg_list, arr.getName());
 }
 
 
@@ -111,7 +101,7 @@ void RtedTransformation::insertArrayCreateCall(const RtedArray& arr, SgVarRefExp
 
 void RtedTransformation::insertArrayCreateCall(const RtedArray& arr)
 {
-   SgVarRefExp* var_ref = genVarRef(arr.initName);
+   SgVarRefExp* var_ref = genVarRef(arr.getName());
 
    insertArrayCreateCall(var_ref, arr);
 }
@@ -175,15 +165,15 @@ RtedTransformation::buildArrayCreateCall(SgExpression* const src_exp, const Rted
 
    // build the function call:  rs.createHeapArr(...);
    //                        or rs.createHeapPtr(...);
-   SgInitializedName* initName = array.initName;
-   SgExprListExp*     arg_list = buildExprListExp();
+   SgInitializedName*       initName = array.getName();
+   SgExprListExp*           arg_list = buildExprListExp();
 
    // the type of the node
-   SgType*            src_type = src_exp->get_type();
+   SgType*                  src_type = src_exp->get_type();
 
    // the underlying type, after skipping modifiers (shall we also skip typedefs?)
-   SgType*            under_type = skip_TopLevelTypes(src_type);
-   const bool         isCreateArray = (under_type->class_name() == "SgArrayType");
+   SgType*                  under_type = skip_TopLevelTypes(src_type);
+   const bool               isCreateArray = (under_type->class_name() == "SgArrayType");
 
    // what kind of types do we get?
    // std::cerr << typeid(under_type).name() << "  " << under_type->class_name() << std::endl;
@@ -232,8 +222,7 @@ RtedTransformation::buildArrayCreateCall(SgExpression* const src_exp, const Rted
      // get the blocksize of the allocation?
      appendUpcBlocksize( arg_list, ptrtype->get_base_type() );
 
-     ROSE_ASSERT(array.size);
-     SgExpression*      size = buildCastExp(array.size, buildUnsignedLongType());
+     SgExpression*      size = buildCastExp(SageInterface::deepCopy(array.getSize()), buildUnsignedLongType());
 
      appendExpression(arg_list, size);
 
@@ -254,8 +243,8 @@ void RtedTransformation::insertArrayCreateCall( SgExpression* const srcexp, cons
 {
    ROSE_ASSERT(srcexp);
 
-   SgStatement*               stmt = array.surroundingStatement;
-   SgInitializedName* const   initName = array.initName;
+   SgStatement*               stmt = array.getStmt();
+   SgInitializedName* const   initName = array.getName();
 
    // Skipping extern arrays because they will be handled in the defining
    //   translation unit.
@@ -358,7 +347,7 @@ void RtedTransformation::insertArrayAccessCall(SgPntrArrRefExp* arrayExp, const 
 {
    ROSE_ASSERT( arrayExp );
 
-   insertArrayAccessCall(value.surroundingStatement, arrayExp, value);
+   insertArrayAccessCall(value.getStmt(), arrayExp, value);
 }
 
 
@@ -515,42 +504,12 @@ void RtedTransformation::insertArrayAccessCall(SgStatement* stmt, SgPntrArrRefEx
               );
 }
 
-
-void populateDimensions(RtedArray& array, SgInitializedName& init, SgArrayType& type_)
+void populateDimensions(RtedArray& array, SgInitializedName& init, SgArrayType& arrtype)
 {
-   std::vector<SgExpression*> indices;
-   bool                       implicit_index = false;
-   SgArrayType*               arrtype = &type_;
-
-   while (arrtype)
-   {
-      SgExpression* index = arrtype -> get_index();
-      if (index)
-         indices.push_back(index);
-      else
-         implicit_index = true;
-
-      arrtype = isSgArrayType(arrtype -> get_base_type());
-   }
-
-   // handle implicit first dimension for array initializers
-   // for something like
-   //      int p[][2][3] = {{{ 1, 2, 3 }, { 4, 5, 6 }}}
-   //  we can calculate the first dimension as
-   //      sizeof( p ) / ( sizeof( int ) * 2 * 3 )
-   if (implicit_index)
-   {
-      SgExpression* mulid = buildIntVal(1);
-      SgExpression* denominator = std::accumulate(indices.begin(), indices.end(), mulid, buildMultiplyOp);
-      SgVarRefExp*  varref = buildVarRefExp(&init, getSurroundingStatement(init)->get_scope());
-      SgExpression* sz = buildDivideOp(buildSizeOfOp(varref), denominator);
-
-      indices.insert(indices.begin(), sz);
-   }
+   std::vector<SgExpression*> indices = get_C_array_dimensions(arrtype, init);
 
    array.getIndices().swap(indices);
 }
-
 
 // obsolete
 void RtedTransformation::visit_sgPointerDerefExp(SgPointerDerefExp& n)
@@ -674,9 +633,11 @@ void RtedTransformation::arrayHeapAlloc1( SgInitializedName* initName,
                                           AllocKind ak
                                         )
 {
+  namespace si = SageInterface;
+
   ROSE_ASSERT( args.size() == 1 );
 
-  arrayHeapAlloc(initName, varRef, args[0], ak);
+  arrayHeapAlloc(initName, varRef, si::deepCopy(args[0]), ak);
 }
 
 void RtedTransformation::arrayHeapAlloc2( SgInitializedName* initName,
@@ -685,10 +646,11 @@ void RtedTransformation::arrayHeapAlloc2( SgInitializedName* initName,
                                           AllocKind ak
                                         )
 {
+  namespace si = SageInterface;
+
   ROSE_ASSERT( args.size() == 2 );
 
-  // \pp \note where are the nodes freed, that are created here?
-  SgExpression* size_to_use = buildMultiplyOp(args[0], args[1]);
+  SgExpression* size_to_use = buildMultiplyOp(si::deepCopy(args[0]), si::deepCopy(args[1]));
 
   arrayHeapAlloc(initName, varRef, size_to_use, ak);
 }
@@ -1179,7 +1141,7 @@ void RtedTransformation::addPaddingToAllocatedMemory(SgStatement* stmt, const Rt
     //     str1[i] = ' ';
 
     // we do this only for char*
-    SgInitializedName* initName = array.initName;
+    SgInitializedName* initName = array.getName();
     SgType*            type = initName->get_type();
     ROSE_ASSERT(type);
     std::cerr << " Padding type : " << type->class_name() << std::endl;
@@ -1211,7 +1173,7 @@ void RtedTransformation::addPaddingToAllocatedMemory(SgStatement* stmt, const Rt
       incr_exp = buildPlusPlusOp(buildVarRefExp("i"), SgUnaryOp::postfix);
       // loop body statement
       SgStatement* loop_body = NULL;
-      SgExpression* lhs = buildPntrArrRefExp(buildVarRefExp(array.initName->get_name()), buildVarRefExp("i"));
+      SgExpression* lhs = buildPntrArrRefExp(buildVarRefExp(array.getName()->get_name()), buildVarRefExp("i"));
       SgExpression* rhs = buildCharVal(' ');
       loop_body = buildAssignStatement(lhs, rhs);
       //loop_body = buildExprStatement(stmt2);

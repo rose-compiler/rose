@@ -85,7 +85,7 @@ class PolyhedralProgram {
 		
 		/**
 		 * \param v VariableLBL pointer.
-		 * \param e Expression pointer.
+		 * \param e Expressitmtn pointer.
 		 * \return ID of the variable in the scope of the expression.
 		 */
 		const size_t getVariableID(Expression * e, VariableLBL v);
@@ -114,6 +114,7 @@ class PolyhedralProgram {
 		size_t getNumberOfVariables() const;
 		
 		VariableLBL getIteratorById(Expression * e, size_t id) const;
+                size_t getIteratorID(Expression * e, VariableLBL it) const;
 		
 		VariableLBL getGlobalById(size_t id) const;
 		size_t getNumberOfGlobals() const;
@@ -301,6 +302,12 @@ class DataAccess {
 		 const std::vector<std::pair<size_t, std::vector<LinearExpression_ppl> > > & getRead() const;
 		 const std::vector<std::pair<size_t, std::vector<LinearExpression_ppl> > > & getWrite() const;
 		
+		/**
+                 * \brief Regenerate implementation dependant accesses
+                 */
+                 std::vector<std::pair<VariableLBL, std::vector<std::vector<std::pair<VariableLBL, int> > > > > * regenRead() const;
+                 std::vector<std::pair<VariableLBL, std::vector<std::vector<std::pair<VariableLBL, int> > > > > * regenWrite() const;
+
 	friend class DataDependencies<Function, Expression, VariableLBL>;
 	
 	template <class Function_, class Expression_, class VariableLBL_>

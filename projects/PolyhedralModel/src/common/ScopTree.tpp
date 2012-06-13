@@ -85,11 +85,17 @@ bool ScopRoot<Function, Expression, VariableLBL>::isStatement() const { return f
 /************/
 
 template <class Function, class Expression, class VariableLBL>
-ScopLoop<Function, Expression, VariableLBL>::ScopLoop(size_t position, ScopTree<Function, Expression, VariableLBL> * parent, VariableLBL iterator) :
+ScopLoop<Function, Expression, VariableLBL>::ScopLoop(
+	size_t position,
+	ScopTree<Function, Expression, VariableLBL> * parent,
+	VariableLBL iterator,
+	void * original_loop_ 
+) :
 	ScopTree<Function, Expression, VariableLBL>(position, parent),
 	p_iterator(iterator),
 	p_lb(),
-	p_ub()
+	p_ub(),
+	original_loop(original_loop_)
 {}
 
 template <class Function, class Expression, class VariableLBL>
@@ -108,34 +114,29 @@ template <class Function, class Expression, class VariableLBL>
 VariableLBL ScopLoop<Function, Expression, VariableLBL>::getIterator() { return p_iterator; }
 
 template <class Function, class Expression, class VariableLBL>
-void ScopLoop<Function, Expression, VariableLBL>::addLowerBoundTerm(VariableLBL var, int coef) {
-	typename std::map<VariableLBL, int>::iterator pair = p_lb.find(var);
-	if (pair == p_lb.end())
-		p_lb.insert(std::pair<VariableLBL, int>(var, coef));
-	else
-		pair->second += coef;
+void ScopLoop<Function, Expression, VariableLBL>::addLowerBound(std::map<VariableLBL, int> & lb, int div) {
+	p_lb.push_back(std::pair<std::map<VariableLBL, int>, int>(lb, div));
 }
 
 template <class Function, class Expression, class VariableLBL>
-std::map<VariableLBL, int> & ScopLoop<Function, Expression, VariableLBL>::getLowerBound() { return p_lb; }
+std::vector<std::pair<std::map<VariableLBL, int>, int> > & ScopLoop<Function, Expression, VariableLBL>::getLowerBound() { return p_lb; }
 
 template <class Function, class Expression, class VariableLBL>
-void ScopLoop<Function, Expression, VariableLBL>::addUpperBoundTerm(VariableLBL var, int coef) {
-	typename std::map<VariableLBL, int>::iterator pair = p_ub.find(var);
-	if (pair == p_ub.end())
-		p_ub.insert(std::pair<VariableLBL, int>(var, coef));
-	else
-		pair->second += coef;
+void ScopLoop<Function, Expression, VariableLBL>::addUpperBound(std::map<VariableLBL, int> & ub, int div) {
+	p_ub.push_back(std::pair<std::map<VariableLBL, int>, int>(ub, div));
 }
 
 template <class Function, class Expression, class VariableLBL>
-std::map<VariableLBL, int> & ScopLoop<Function, Expression, VariableLBL>::getUpperBound() { return p_ub; }
+std::vector<std::pair<std::map<VariableLBL, int>, int> > & ScopLoop<Function, Expression, VariableLBL>::getUpperBound() { return p_ub; }
 
 template <class Function, class Expression, class VariableLBL>
 void ScopLoop<Function, Expression, VariableLBL>::setIncrement(int inc) { p_inc = inc; }
 
 template <class Function, class Expression, class VariableLBL>
 int ScopLoop<Function, Expression, VariableLBL>::getIncrement() { return p_inc; }
+
+template <class Function, class Expression, class VariableLBL>
+void * ScopLoop<Function, Expression, VariableLBL>::getOriginalLoop() const { return original_loop; }
 
 template <class Function, class Expression, class VariableLBL>
 bool ScopLoop<Function, Expression, VariableLBL>::isRoot() const { return false; }
@@ -232,59 +233,52 @@ void ScopStatement<Function, Expression, VariableLBL>::Traverse(std::vector<Scop
 		if ((*it1)->isRoot())
 			throw Exception::UnexpectedScopNode("In ScopStatement::Traverse(...)::vect[i] (i > 0) can't be a ScopRoot.");
 		else if ((*it1)->isLoop()) {
-			std::vector<std::pair<VariableLBL, int> > * e1;
-			std::vector<std::pair<VariableLBL, int> > * e2;
-			
-			// domain add bound
-			e1 = new std::vector<std::pair<VariableLBL, int> >(
-				((ScopLoop<Function, Expression, VariableLBL>*)*it1)->getUpperBound().begin(),
-				((ScopLoop<Function, Expression, VariableLBL>*)*it1)->getUpperBound().end()
-			);
-			e1->push_back(std::pair<VariableLBL, int>(((ScopLoop<Function, Expression, VariableLBL>*)*it1)->getIterator(), -1));
-			e2 = new std::vector<std::pair<VariableLBL, int> >(
-				((ScopLoop<Function, Expression, VariableLBL>*)*it1)->getLowerBound().begin(),
-				((ScopLoop<Function, Expression, VariableLBL>*)*it1)->getLowerBound().end()
-			);
-			e2->push_back(std::pair<VariableLBL, int>(((ScopLoop<Function, Expression, VariableLBL>*)*it1)->getIterator(), -1));
-			
 			int inc = ((ScopLoop<Function, Expression, VariableLBL>*)*it1)->getIncrement();
-			if (inc==1) {
-				domain.addInequation(*e1, true);
-				domain.addInequation(*e2, false);
-			}
-			else if (inc==-1) {
-				domain.addInequation(*e1, false);
-				domain.addInequation(*e2, true);
-			}
-			else
+			if (inc != -1 && inc != 1)
 				throw Exception::OutOfScopRestrainedDefinition("Loop definition use an increment different from 1 or -1.");
-			
-			delete e1;
-			delete e2;
-			
+
+			std::vector<std::pair<VariableLBL, int> > * e;
+
+			// domain add bound
+			typename std::vector<std::pair<std::map<VariableLBL, int>, int> >::iterator it_bounds;
+			std::vector<std::pair<std::map<VariableLBL, int>, int> > & lb = 
+                            ((ScopLoop<Function, Expression, VariableLBL>*)*it1)->getLowerBound();
+			std::vector<std::pair<std::map<VariableLBL, int>, int> > & ub =
+                            ((ScopLoop<Function, Expression, VariableLBL>*)*it1)->getUpperBound();
+			for (it_bounds = lb.begin(); it_bounds != lb.end(); it_bounds++) {
+				e = new std::vector<std::pair<VariableLBL, int> >(it_bounds->first.begin(), it_bounds->first.end());
+				e->push_back(std::pair<VariableLBL, int>(((ScopLoop<Function, Expression, VariableLBL>*)*it1)->getIterator(), -1));
+				if (it_bounds->second != 1) {
+					typename std::vector<std::pair<VariableLBL, int> >::iterator it_coef;
+					for (it_coef = e->begin(); it_coef != e->end(); it_coef++)
+						it_coef->second *= it_bounds->second;
+				}
+				domain.addInequation(*e, inc != 1);
+				delete e;
+			}
+			for (it_bounds = ub.begin(); it_bounds != ub.end(); it_bounds++) {
+				e = new std::vector<std::pair<VariableLBL, int> >(it_bounds->first.begin(), it_bounds->first.end());
+				e->push_back(std::pair<VariableLBL, int>(((ScopLoop<Function, Expression, VariableLBL>*)*it1)->getIterator(), -1));
+				if (it_bounds->second != 1) {
+					typename std::vector<std::pair<VariableLBL, int> >::iterator it_coef;
+					for (it_coef = e->begin(); it_coef != e->end(); it_coef++)
+						it_coef->second *= it_bounds->second;
+				}
+				domain.addInequation(*e, inc == 1);
+				delete e;
+			}
+
 			// scattering add position
-			e1 = new std::vector<std::pair<VariableLBL, int> >();
-			e1->push_back(std::pair<VariableLBL, int>(constantLBL(), (*it1)->getPosition()));
-			scattering.addEquation(*e1);
-			delete e1;
+			e = new std::vector<std::pair<VariableLBL, int> >();
+			e->push_back(std::pair<VariableLBL, int>(constantLBL(), (*it1)->getPosition()));
+			scattering.addEquation(*e);
+			delete e;
 			
 			// scattering add iterator
-			/*e1 = new std::vector<std::pair<VariableLBL, int> >();*/
-			e1 = new std::vector<std::pair<VariableLBL, int> >(
-				((ScopLoop<Function, Expression, VariableLBL>*)*it1)->getLowerBound().begin(),
-				((ScopLoop<Function, Expression, VariableLBL>*)*it1)->getLowerBound().end()
-			);
-			if (inc==1) {
-				typename std::vector<std::pair<VariableLBL, int> >::iterator it2;
-				for (it2 = e1->begin(); it2 != e1->end(); it2++)
-					(*it2).second = -(*it2).second;
-				e1->push_back(std::pair<VariableLBL, int>(((ScopLoop<Function, Expression, VariableLBL>*)*it1)->getIterator(), 1));
-			}
-			else if (inc==-1) {
-				e1->push_back(std::pair<VariableLBL, int>(((ScopLoop<Function, Expression, VariableLBL>*)*it1)->getIterator(), -1));
-			}
-			scattering.addEquation(*e1);
-			delete e1;
+			e = new std::vector<std::pair<VariableLBL, int> >();
+			e->push_back(std::pair<VariableLBL, int>(((ScopLoop<Function, Expression, VariableLBL>*)*it1)->getIterator(), inc));
+			scattering.addEquation(*e);
+			delete e;
 		}
 		else if ((*it1)->isConditinnal()) {
 			
@@ -319,6 +313,11 @@ void ScopStatement<Function, Expression, VariableLBL>::Traverse(std::vector<Scop
 	equation->push_back(std::pair<VariableLBL, int>(constantLBL(), this->getPosition()));
 	scattering.addEquation(*equation);
 	delete equation;
+}
+
+template <class Function, class Expression, class VariableLBL>
+Expression * ScopStatement<Function, Expression, VariableLBL>::getExpression() {
+  return p_expression;
 }
 
 template <class Function, class Expression, class VariableLBL>

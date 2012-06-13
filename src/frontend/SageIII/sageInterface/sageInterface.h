@@ -748,6 +748,56 @@ SgType* getArrayElementType(SgType* t);
 //! Get the element type of an array, pointer or string, or NULL if not applicable
 SgType* getElementType(SgType* t);
 
+
+/// \brief  returns the array dimensions in an array as defined for arrtype
+/// \param  arrtype the type of a C/C++ array
+/// \return an array that contains an expression indicating each dimension's size.
+///         OWNERSHIP of the expressions is TRANSFERED TO the CALLER (which
+///         becomes responsible for freeing the expressions).
+///         Note, the first entry of the array is a SgNullExpression, iff the
+///         first array dimension was not specified.
+/// \code
+///         int x[] = { 1, 2, 3 };
+/// \endcode
+///         note, the expression does not have to be a constant
+/// \code
+///         int x[i*5];
+/// \endcode
+/// \post   return-value.empty() == false
+/// \post   return-value[*] != NULL (no nullptr in the returned vector)
+std::vector<SgExpression*>
+get_C_array_dimensions(const SgArrayType& arrtype);
+
+/// \brief  returns the array dimensions in an array as defined for arrtype
+/// \param  arrtype the type of a C/C++ array
+/// \param  varref  a reference to an array variable (the variable of type arrtype)
+/// \return an array that contains an expression indicating each dimension's size.
+///         OWNERSHIP of the expressions is TRANSFERED TO the CALLER (which
+///         becomes responsible for freeing the expressions).
+///         If the first array dimension was not specified an expression
+///         that indicates that size is generated.
+/// \code
+///         int x[][3] = { 1, 2, 3, 4, 5, 6 };
+/// \endcode
+///         the entry for the first dimension will be:
+/// \code
+///         // 3 ... size of 2nd dimension
+///         sizeof(x) / (sizeof(int) * 3)
+/// \endcode
+/// \pre    arrtype is the array-type of varref
+/// \post   return-value.empty() == false
+/// \post   return-value[*] != NULL (no nullptr in the returned vector)
+/// \post   !isSgNullExpression(return-value[*])
+std::vector<SgExpression*>
+get_C_array_dimensions(const SgArrayType& arrtype, const SgVarRefExp& varref);
+
+/// \overload
+/// \note     see get_C_array_dimensions for SgVarRefExp for details.
+/// \todo     make initname const
+std::vector<SgExpression*>
+get_C_array_dimensions(const SgArrayType& arrtype, SgInitializedName& initname);
+
+
 //! Check if an expression is an array access (SgPntrArrRefExp). If so, return its name expression and subscripts if requested. Users can use convertRefToInitializedName() to get the possible name. It does not check if the expression is a top level SgPntrArrRefExp.
 bool isArrayReference(SgExpression* ref, SgExpression** arrayNameExp=NULL, std::vector<SgExpression*>** subscripts=NULL);
 
@@ -1433,7 +1483,7 @@ void changeBreakStatementsToGotos(SgStatement* loopOrSwitch);
 //! Check if the body of a 'for' statement is a SgBasicBlock, create one if not.
 SgBasicBlock* ensureBasicBlockAsBodyOfFor(SgForStatement* fs);
 
-//! Check if the body of a 'upc_forall' statement is a SgBasicBlock, create one if not. 
+//! Check if the body of a 'upc_forall' statement is a SgBasicBlock, create one if not.
 SgBasicBlock* ensureBasicBlockAsBodyOfUpcForAll(SgUpcForAllStatement* fs);
 
 //! Check if the body of a 'while' statement is a SgBasicBlock, create one if not.
@@ -1473,7 +1523,7 @@ SgBasicBlock * makeSingleStatementBodyToBlock(SgStatement* singleStmt);
 
 #if 0
 /**  If s is the body of a loop, catch, or if statement and is already a basic block,
- *   s is returned unmodified. Otherwise generate a SgBasicBlock between s and its parent 
+ *   s is returned unmodified. Otherwise generate a SgBasicBlock between s and its parent
  *   (a loop, catch, or if statement, etc). */
 SgLocatedNode* ensureBasicBlockAsParent(SgStatement* s);
 #endif
@@ -1501,17 +1551,14 @@ SgCommaOpExp *insertAfterUsingCommaOp (SgExpression* new_exp, SgExpression* anch
 ///          the initialized name is NULL.
 /// \param   definingDeclaration the defining function declaration of f
 /// \param   newName the name of function f`
-/// \pre     definingDeclaration must be a defining declaration of a
-///          free standing function.
-///          typeid(SgFunctionDeclaration) == typeid(definingDeclaration)
-///          i.e., this function is NOT implemented for class member functions,
-///          template functions, procedures, etc.
 /// \details f's new body becomes { f`(...); } and { int res = f`(...); return res; }
 ///          for functions returning void and a value, respectively.
 ///          two function declarations are inserted in f's enclosing scope
+/// \code
 ///          result_type f`(...);                       <--- (1)
 ///          result_type f (...) { forward call to f` }
 ///          result_type f`(...) { original code }      <--- (2)
+/// \endcode
 ///          Calls to f are not updated, thus in the transformed code all
 ///          calls will continue calling f (this is also true for
 ///          recursive function calls from within the body of f`).
@@ -1520,12 +1567,17 @@ SgCommaOpExp *insertAfterUsingCommaOp (SgExpression* new_exp, SgExpression* anch
 ///          The definition of f` is the next entry in the
 ///          statement list; the forward declaration of f` is the previous
 ///          entry in the statement list.
+/// \pre     definingDeclaration must be a defining declaration of a
+///          free standing function.
+///          typeid(SgFunctionDeclaration) == typeid(definingDeclaration)
+///          i.e., this function is NOT implemented for class member functions,
+///          template functions, procedures, etc.
 std::pair<SgStatement*, SgInitializedName*>
 wrapFunction(SgFunctionDeclaration& definingDeclaration, SgName newName);
 
 /// \overload
-/// \tparam  NameGen, functor that generates a new name based on the old name.
-///          interface: SgName @nameGen(const SgName&)
+/// \tparam  NameGen functor that generates a new name based on the old name.
+///          interface: SgName nameGen(const SgName&)
 /// \param   nameGen name generator
 /// \brief   see wrapFunction for details
 template <class NameGen>

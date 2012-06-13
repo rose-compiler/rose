@@ -6,7 +6,7 @@
 #include <string>
 #include <boost/algorithm/string/predicate.hpp>
 
-#include "sageGeneric.hpp"
+#include "sageGeneric.h"
 
 #include "RtedTransformation.h"
 

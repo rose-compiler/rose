@@ -122,7 +122,7 @@ void QuastToDependency(
 }
 
 template <class Function, class Expression, class VariableLBL>
-std::vector<Dependency<Function, Expression, VariableLBL> *> * ComputeDependencies(const PolyhedricAnnotation::PolyhedralProgram<Function, Expression, VariableLBL> & polyhedral_program) {
+std::vector<Dependency<Function, Expression, VariableLBL> *> * ComputeDependencies(const PolyhedricAnnotation::PolyhedralProgram<Function, Expression, VariableLBL> & polyhedral_program,  const bool precise) {
 	std::vector<Dependency<Function, Expression, VariableLBL> *> * res = new std::vector<Dependency<Function, Expression, VariableLBL> *>();
 	
 	polyhedral_program.finalize();
@@ -132,10 +132,10 @@ std::vector<Dependency<Function, Expression, VariableLBL> *> * ComputeDependenci
 	std::vector<Dependency<Function, Expression, VariableLBL> *> * war;
 	std::vector<Dependency<Function, Expression, VariableLBL> *> * waw;
 
-	rar = ComputeRaR<Function, Expression, VariableLBL>(polyhedral_program);
-	raw = ComputeRaW<Function, Expression, VariableLBL>(polyhedral_program);
-	war = ComputeWaR<Function, Expression, VariableLBL>(polyhedral_program);
-	waw = ComputeWaW<Function, Expression, VariableLBL>(polyhedral_program);
+	rar = ComputeRaR<Function, Expression, VariableLBL>(polyhedral_program, precise);
+	raw = ComputeRaW<Function, Expression, VariableLBL>(polyhedral_program, precise);
+	war = ComputeWaR<Function, Expression, VariableLBL>(polyhedral_program, precise);
+	waw = ComputeWaW<Function, Expression, VariableLBL>(polyhedral_program, precise);
 	
 //	std::cout << "rar->size() = " << raw->size() << std::endl;
 	res->insert(res->begin(), rar->begin(), rar->end());
@@ -153,7 +153,7 @@ std::vector<Dependency<Function, Expression, VariableLBL> *> * ComputeDependenci
 }
 
 template <class Function, class Expression, class VariableLBL>
-std::vector<Dependency<Function, Expression, VariableLBL> *> * ComputeRaR(const PolyhedricAnnotation::PolyhedralProgram<Function, Expression, VariableLBL> & polyhedral_program) {
+std::vector<Dependency<Function, Expression, VariableLBL> *> * ComputeRaR(const PolyhedricAnnotation::PolyhedralProgram<Function, Expression, VariableLBL> & polyhedral_program, const bool precise) {
 	std::vector<Dependency<Function, Expression, VariableLBL> *> * res = new std::vector<Dependency<Function, Expression, VariableLBL> *>();
 	
 	const std::vector<Expression *> & exp_l = polyhedral_program.getExpressions();
@@ -178,7 +178,8 @@ std::vector<Dependency<Function, Expression, VariableLBL> *> * ComputeRaR(const 
 			from_pos = 0;
 			//! parallel with adding regression on the 'res' vector
 			for (av1 = r_e1->begin(); av1 != r_e1->end(); av1++) {
-				rar = makeEmpty<std::pair<Expression *, size_t> >(std::pair<Expression *, size_t>(*e1, from_pos));
+				if (precise)
+					rar = makeEmpty<std::pair<Expression *, size_t> >(std::pair<Expression *, size_t>(*e1, from_pos));
 				//! parallel with maxQuast regression on 'rar' Quast
 				for (e2 = exp_l.begin(); e2 != exp_l.end(); e2++) {
 					const PolyhedricAnnotation::DataAccess<Function, Expression, VariableLBL> & da_e2 = PolyhedricAnnotation::getDataAccess<Function, Expression, VariableLBL>(*e2);
@@ -187,14 +188,22 @@ std::vector<Dependency<Function, Expression, VariableLBL> *> * ComputeRaR(const 
 					to_pos = 0;
 					//! parallel with maxQuast regression on 'rar' Quast
 					for (av2 = r_e2->begin(); av2 != r_e2->end(); av2++) {
-						rar = maxQuast<std::pair<Expression *, size_t> >(rar, computeMaxLex<std::pair<Expression *, size_t> >(std::pair<Expression *, size_t>(*e1, from_pos), *av1, std::pair<Expression *, size_t>(*e2, to_pos), *av2));
+						if (precise)
+							rar = maxQuast<std::pair<Expression *, size_t> >(rar, computeMaxLex<std::pair<Expression *, size_t> >(std::pair<Expression *, size_t>(*e1, from_pos), *av1, std::pair<Expression *, size_t>(*e2, to_pos), *av2));
+						else {
+							rar = computeMaxLex<std::pair<Expression *, size_t> >(std::pair<Expression *, size_t>(*e1, from_pos), *av1, std::pair<Expression *, size_t>(*e2, to_pos), *av2);
+							QuastToDependency<Function, Expression, VariableLBL>(polyhedral_program, v, RaR, rar, NULL, res); //! here is the regression on 'res'
+							delete rar;
+						}
 						to_pos++;
 					}
 				}
 				
 				delete r_e2;
-				QuastToDependency<Function, Expression, VariableLBL>(polyhedral_program, v, RaR, rar, NULL, res); //! here is the regression on 'res'
-				delete rar;
+				if (precise)
+					QuastToDependency<Function, Expression, VariableLBL>(polyhedral_program, v, RaR, rar, NULL, res); //! here is the regression on 'res'
+				if (precise)
+					delete rar;
 				from_pos++;
 			}
 			delete r_e1;
@@ -204,7 +213,7 @@ std::vector<Dependency<Function, Expression, VariableLBL> *> * ComputeRaR(const 
 }
 
 template <class Function, class Expression, class VariableLBL>
-std::vector<Dependency<Function, Expression, VariableLBL> *> * ComputeRaW(const PolyhedricAnnotation::PolyhedralProgram<Function, Expression, VariableLBL> & polyhedral_program) {
+std::vector<Dependency<Function, Expression, VariableLBL> *> * ComputeRaW(const PolyhedricAnnotation::PolyhedralProgram<Function, Expression, VariableLBL> & polyhedral_program, const bool precise) {
 	std::vector<Dependency<Function, Expression, VariableLBL> *> * res = new std::vector<Dependency<Function, Expression, VariableLBL> *>();
 	
 	const std::vector<Expression *> & exp_l = polyhedral_program.getExpressions();
@@ -229,7 +238,8 @@ std::vector<Dependency<Function, Expression, VariableLBL> *> * ComputeRaW(const 
 			from_pos = 0;
 			//! parallel with adding regression on the 'res' vector
 			for (av1 = r_e1->begin(); av1 != r_e1->end(); av1++) {
-				raw = makeEmpty<std::pair<Expression *, size_t> >(std::pair<Expression *, size_t>(*e1, from_pos));
+				if (precise)
+					raw = makeEmpty<std::pair<Expression *, size_t> >(std::pair<Expression *, size_t>(*e1, from_pos));
 				//! parallel with maxQuast regression on 'raw' Quast
 				for (e2 = exp_l.begin(); e2 != exp_l.end(); e2++) {
 					PolyhedricAnnotation::DataAccess<Function, Expression, VariableLBL> & da_e2 = PolyhedricAnnotation::getDataAccess<Function, Expression, VariableLBL>(*e2);
@@ -238,14 +248,22 @@ std::vector<Dependency<Function, Expression, VariableLBL> *> * ComputeRaW(const 
 					to_pos = 0;
 					//! parallel with maxQuast regression on 'raw' Quast
 					for (av2 = w_e2->begin(); av2 != w_e2->end(); av2++) {
-						raw = maxQuast<std::pair<Expression *, size_t> >(raw, computeMaxLex<std::pair<Expression *, size_t> >(std::pair<Expression *, size_t>(*e1, from_pos), *av1, std::pair<Expression *, size_t>(*e2, to_pos), *av2));
+						if (precise)
+							raw = maxQuast<std::pair<Expression *, size_t> >(raw, computeMaxLex<std::pair<Expression *, size_t> >(std::pair<Expression *, size_t>(*e1, from_pos), *av1, std::pair<Expression *, size_t>(*e2, to_pos), *av2));
+						else {
+							raw = computeMaxLex<std::pair<Expression *, size_t> >(std::pair<Expression *, size_t>(*e1, from_pos), *av1, std::pair<Expression *, size_t>(*e2, to_pos), *av2);
+							QuastToDependency<Function, Expression, VariableLBL>(polyhedral_program, v, RaW, raw, NULL, res); //! here is the regression on 'res'
+							delete raw;
+						}
 						to_pos++;
 					}
 				}
 				
 				delete w_e2;
-				QuastToDependency<Function, Expression, VariableLBL>(polyhedral_program, v, RaW, raw, NULL, res); //! here is the regression on 'res'
-				delete raw;
+				if (precise)
+					QuastToDependency<Function, Expression, VariableLBL>(polyhedral_program, v, RaW, raw, NULL, res); //! here is the regression on 'res'
+				if (precise)
+					delete raw;
 				from_pos++;
 			}
 			delete r_e1;
@@ -256,7 +274,7 @@ std::vector<Dependency<Function, Expression, VariableLBL> *> * ComputeRaW(const 
 }
 
 template <class Function, class Expression, class VariableLBL>
-std::vector<Dependency<Function, Expression, VariableLBL> *> * ComputeWaR(const PolyhedricAnnotation::PolyhedralProgram<Function, Expression, VariableLBL> & polyhedral_program) {
+std::vector<Dependency<Function, Expression, VariableLBL> *> * ComputeWaR(const PolyhedricAnnotation::PolyhedralProgram<Function, Expression, VariableLBL> & polyhedral_program, const bool precise) {
 	std::vector<Dependency<Function, Expression, VariableLBL> *> * res = new std::vector<Dependency<Function, Expression, VariableLBL> *>();
 	
 	const std::vector<Expression *> & exp_l = polyhedral_program.getExpressions();
@@ -281,7 +299,8 @@ std::vector<Dependency<Function, Expression, VariableLBL> *> * ComputeWaR(const 
 			from_pos = 0;
 			//! parallel with adding regression on the 'res' vector
 			for (av1 = w_e1->begin(); av1 != w_e1->end(); av1++) {
-				war = makeEmpty<std::pair<Expression *, size_t> >(std::pair<Expression *, size_t>(*e1, from_pos));
+				if (precise)
+					war = makeEmpty<std::pair<Expression *, size_t> >(std::pair<Expression *, size_t>(*e1, from_pos));
 				//! parallel with maxQuast regression on 'war' Quast
 				for (e2 = exp_l.begin(); e2 != exp_l.end(); e2++) {
 					PolyhedricAnnotation::DataAccess<Function, Expression, VariableLBL> & da_e2 = PolyhedricAnnotation::getDataAccess<Function, Expression, VariableLBL>(*e2);
@@ -290,14 +309,22 @@ std::vector<Dependency<Function, Expression, VariableLBL> *> * ComputeWaR(const 
 					to_pos = 0;
 					//! parallel with maxQuast regression on 'war' Quast
 					for (av2 = r_e2->begin(); av2 != r_e2->end(); av2++) {
-						war = maxQuast<std::pair<Expression *, size_t> >(war, computeMaxLex<std::pair<Expression *, size_t> >(std::pair<Expression *, size_t>(*e1, from_pos), *av1, std::pair<Expression *, size_t>(*e2, to_pos), *av2));
+						if (precise)
+							war = maxQuast<std::pair<Expression *, size_t> >(war, computeMaxLex<std::pair<Expression *, size_t> >(std::pair<Expression *, size_t>(*e1, from_pos), *av1, std::pair<Expression *, size_t>(*e2, to_pos), *av2));
+						else {
+							war = computeMaxLex<std::pair<Expression *, size_t> >(std::pair<Expression *, size_t>(*e1, from_pos), *av1, std::pair<Expression *, size_t>(*e2, to_pos), *av2);
+							QuastToDependency<Function, Expression, VariableLBL>(polyhedral_program, v, WaR, war, NULL, res); //! here is the regression on 'res'
+							delete war;
+						}
 						to_pos++;
 					}
 				}
 				
 				delete r_e2;
-				QuastToDependency<Function, Expression, VariableLBL>(polyhedral_program, v, WaR, war, NULL, res); //! here is the regression on 'res'
-				delete war;
+				if (precise)
+					QuastToDependency<Function, Expression, VariableLBL>(polyhedral_program, v, WaR, war, NULL, res); //! here is the regression on 'res'
+				if (precise)
+					delete war;
 				from_pos++;
 			}
 			delete w_e1;
@@ -308,7 +335,7 @@ std::vector<Dependency<Function, Expression, VariableLBL> *> * ComputeWaR(const 
 }
 
 template <class Function, class Expression, class VariableLBL>
-std::vector<Dependency<Function, Expression, VariableLBL> *> * ComputeWaW(const PolyhedricAnnotation::PolyhedralProgram<Function, Expression, VariableLBL> & polyhedral_program) {
+std::vector<Dependency<Function, Expression, VariableLBL> *> * ComputeWaW(const PolyhedricAnnotation::PolyhedralProgram<Function, Expression, VariableLBL> & polyhedral_program, const bool precise) {
 	std::vector<Dependency<Function, Expression, VariableLBL> *> * res = new std::vector<Dependency<Function, Expression, VariableLBL> *>();
 	
 	const std::vector<Expression *> & exp_l = polyhedral_program.getExpressions();
@@ -333,7 +360,8 @@ std::vector<Dependency<Function, Expression, VariableLBL> *> * ComputeWaW(const 
 			from_pos = 0;
 			//! parallel  with adding regression on the 'res' vector
 			for (av1 = w_e1->begin(); av1 != w_e1->end(); av1++) {
-				waw = makeEmpty<std::pair<Expression *, size_t> >(std::pair<Expression *, size_t>(*e1, from_pos));
+				if (precise)
+					waw = makeEmpty<std::pair<Expression *, size_t> >(std::pair<Expression *, size_t>(*e1, from_pos));
 				//! parallel with maxQuast regression on 'waw' Quast
 				for (e2 = exp_l.begin(); e2 != exp_l.end(); e2++) {
 					PolyhedricAnnotation::DataAccess<Function, Expression, VariableLBL> & da_e2 = PolyhedricAnnotation::getDataAccess<Function, Expression, VariableLBL>(*e2);
@@ -342,14 +370,22 @@ std::vector<Dependency<Function, Expression, VariableLBL> *> * ComputeWaW(const 
 					to_pos = 0;
 					//! parallel with maxQuast regression on 'waw' Quast
 					for (av2 = w_e2->begin(); av2 != w_e2->end(); av2++) {
-						waw = maxQuast<std::pair<Expression *, size_t> >(waw, computeMaxLex<std::pair<Expression *, size_t> >(std::pair<Expression *, size_t>(*e1, from_pos), *av1, std::pair<Expression *, size_t>(*e2, to_pos), *av2));
+						if (precise)
+							waw = maxQuast<std::pair<Expression *, size_t> >(waw, computeMaxLex<std::pair<Expression *, size_t> >(std::pair<Expression *, size_t>(*e1, from_pos), *av1, std::pair<Expression *, size_t>(*e2, to_pos), *av2));
+						else {
+							waw = computeMaxLex<std::pair<Expression *, size_t> >(std::pair<Expression *, size_t>(*e1, from_pos), *av1, std::pair<Expression *, size_t>(*e2, to_pos), *av2);
+							QuastToDependency<Function, Expression, VariableLBL>(polyhedral_program, v, WaW, waw, NULL, res); //! here is the regression on 'res'
+							delete waw;
+						}
 						to_pos++;
 					}
 				}
 				
 				delete w_e2;
-				QuastToDependency<Function, Expression, VariableLBL>(polyhedral_program, v, WaW, waw, NULL, res); //! here is the regression on 'res'
-				delete waw;
+				if (precise)
+					QuastToDependency<Function, Expression, VariableLBL>(polyhedral_program, v, WaW, waw, NULL, res); //! here is the regression on 'res'
+				if (precise)
+					delete waw;
 				from_pos++;
 			}
 			delete w_e1;
@@ -415,7 +451,7 @@ template <class Function, class Expression, class VariableLBL>
 size_t Dependency<Function, Expression, VariableLBL>::getVariable() const { return p_variable; }
 
 template <class Function, class Expression, class VariableLBL>
-Polyhedron Dependency<Function, Expression, VariableLBL>::getPolyhedron() const { return p_dependency; }
+const Polyhedron & Dependency<Function, Expression, VariableLBL>::getPolyhedron() const { return p_dependency; }
 
 template <class Function, class Expression, class VariableLBL>
 void Dependency<Function, Expression, VariableLBL>::print(std::ostream & out) {

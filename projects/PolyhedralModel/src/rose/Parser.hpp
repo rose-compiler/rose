@@ -19,7 +19,7 @@ namespace PolyhedricAnnotation {
 
 
 template <class TplStatement>
-size_t Parse(TplStatement * attach_to, SgStatement * stmt) throw (Exception::ExceptionBase);
+void Parse(TplStatement * attach_to, SgStatement * stmt) throw (Exception::ExceptionBase);
 
 /**
  * \brief Traverse a stmt to generate a ScopTree
@@ -56,6 +56,7 @@ void setWrite(
  * \brief Translate a Sage expression to a vector of term (coef * var)
  */
 void translateLinearExpression(SgExpression * lin_exp, std::vector<std::pair<RoseVariable, int> > & res, bool neg = false);
+void translateLinearExpression(SgExpression * lin_exp, std::map<RoseVariable, int> & res, int = 1);
 
 /**
  * \brief Translate a Sage expression to a RoseVariable

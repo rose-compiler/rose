@@ -1,8 +1,10 @@
 
 namespace PolyhedricAnnotation {
 
+void separateMinMax(SgExpression * exp, std::vector<std::pair<SgExpression *, int> > & conj);
+
 template <class TplStatement>
-size_t Parse(TplStatement * attach_to, SgStatement * stmt) throw (Exception::ExceptionBase) {
+void Parse(TplStatement * attach_to, SgStatement * stmt) throw (Exception::ExceptionBase) {
 	ScopTree_::ScopTree<TplStatement, SgExprStatement, RoseVariable> * root =
 		new ScopTree_::ScopRoot<TplStatement, SgExprStatement, RoseVariable>(attach_to);
 
@@ -72,7 +74,7 @@ size_t Traverse(
 			RoseVariable iterator = getIterator(for_stmt);
 
 			ScopTree_::ScopLoop<TplStatement, SgExprStatement, RoseVariable> * loop_node =
-				new ScopTree_::ScopLoop<TplStatement, SgExprStatement, RoseVariable>(pos, tree, iterator);
+				new ScopTree_::ScopLoop<TplStatement, SgExprStatement, RoseVariable>(pos, tree, iterator, for_stmt);
 
 			setBounds<TplStatement>(for_stmt, loop_node, iterator);
 
@@ -117,6 +119,7 @@ size_t Traverse(
 		}
 		case V_SgVariableDeclaration:
 		case V_SgPragmaDeclaration:
+                        return 0;
 		case V_SgReturnStmt:
 			throw Exception::MisplacedNode(stmt);
 		default:
@@ -133,9 +136,9 @@ void setBounds(
 	const RoseVariable & iterator
 ) {
 	std::vector<std::pair<RoseVariable, int> >::iterator it;
-	std::vector<std::pair<RoseVariable, int> > lb;
-	std::vector<std::pair<RoseVariable, int> > ub;
-	
+	std::vector<std::pair<SgExpression *, int> > conj;
+	std::vector<std::pair<SgExpression *, int> >::iterator it_conj;
+
 	SgForInitStatement * init_stmt;
 	SgStatement * cond_stmt;
 	SgExprStatement * exp_stmt;
@@ -152,11 +155,12 @@ void setBounds(
 	if (assign_op == NULL)
 		throw Exception::ExceptionForLoopTranslation(for_stmt, "Initialisation expression is not an assignation.");
 	exp = assign_op->get_rhs_operand_i();
-
-	translateLinearExpression(exp, lb);
-	for (it = lb.begin(); it != lb.end(); it++)
-		loop_node->addLowerBoundTerm(it->first, it->second);
-	
+	separateMinMax(exp, conj);
+	for (it_conj = conj.begin(); it_conj != conj.end(); it_conj++) {
+		std::map<RoseVariable, int> map;
+		translateLinearExpression(it_conj->first, map, 1);
+		loop_node->addLowerBound(map, it_conj->second);
+	}
 	// Upper Bound
 	cond_stmt = for_stmt->get_test();
 	exp_stmt = isSgExprStatement(cond_stmt);
@@ -168,13 +172,20 @@ void setBounds(
 	if (!isSgVarRefExp(bin_op->get_lhs_operand_i()) || !iterator.is(isSgVarRefExp(bin_op->get_lhs_operand_i())->get_symbol()->get_declaration()))
 		throw Exception::ExceptionForLoopTranslation(for_stmt, "Left operand of the condition need to be the loop iterator.");
 	exp = bin_op->get_rhs_operand_i();
-	
-	translateLinearExpression(exp, ub);
-	for (it = ub.begin(); it != ub.end(); it++)
-		loop_node->addUpperBoundTerm(it->first, it->second);
-	
-	if (isSgLessThanOp(bin_op)) {
-		loop_node->addUpperBoundTerm(RoseVariable(), -1);
+        conj.clear();
+        separateMinMax(exp, conj);
+	for (it_conj = conj.begin(); it_conj != conj.end(); it_conj++) {
+		std::map<RoseVariable, int> map;
+		translateLinearExpression(it_conj->first, map, 1);
+		if (isSgLessThanOp(bin_op)) {
+			std::map<RoseVariable, int>::iterator it_map = map.find(constantLBL());
+			if (it_map == map.end())
+				map.insert(std::pair<RoseVariable, int>(constantLBL(), -1));
+			else
+				it_map->second -= 1;
+
+		}
+		loop_node->addUpperBound(map, it_conj->second);
 	}
 }
 
@@ -383,6 +394,10 @@ void setRead(SgExpression * exp, DataAccess<TplStatement, SgExprStatement, RoseV
 		case V_SgBitXorOp:
 		case V_SgLshiftOp:
 		case V_SgRshiftOp:
+	        case V_SgLessOrEqualOp:
+                case V_SgGreaterOrEqualOp:
+                case V_SgLessThanOp:
+                case V_SgGreaterThanOp:
 			setRead(isSgBinaryOp(exp)->get_lhs_operand_i(), data_access);
 			setRead(isSgBinaryOp(exp)->get_rhs_operand_i(), data_access);
 			break;
@@ -391,6 +406,11 @@ void setRead(SgExpression * exp, DataAccess<TplStatement, SgExprStatement, RoseV
 		case V_SgNotOp:
 			setRead(isSgUnaryOp(exp)->get_operand_i(), data_access);
 			break;
+                case V_SgConditionalExp:
+                        setRead(isSgConditionalExp(exp)->get_conditional_exp(), data_access);
+                        setRead(isSgConditionalExp(exp)->get_true_exp(), data_access);
+                        setRead(isSgConditionalExp(exp)->get_false_exp(), data_access);
+                        break;
 		case V_SgFunctionCallExp:
 		{
 			SgFunctionCallExp * func_call = isSgFunctionCallExp(exp);

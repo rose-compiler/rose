@@ -6,6 +6,7 @@
  */
 
 #include "rose/Variable.hpp"
+#include "rose.h"
 
 RoseVariable::RoseVariable(SgInitializedName * var, RoseVariable * base, bool is_arrow) :
 	p_var(var),
@@ -68,6 +69,10 @@ SgExpression * RoseVariable::generate(SgScopeStatement * stmt) const {
 				SageBuilder::buildVarRefExp(p_var, stmt)
 			);
 
+}
+
+SgInitializedName * RoseVariable::getInitializedName() const {
+  return p_var;
 }
 
 bool operator == (const RoseVariable & v1, const RoseVariable & v2) {

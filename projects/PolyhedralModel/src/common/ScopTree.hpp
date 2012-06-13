@@ -124,9 +124,11 @@ class ScopLoop : public ScopTree<Function, Expression, VariableLBL> {
 	protected:
 		VariableLBL p_iterator; //!< Iterator (induction variable) associated with the loop. ("i")
 				
-		std::map<VariableLBL, int>  p_lb; //!< Lower bound of the iteration domain. ("i >= lb")
-		std::map<VariableLBL, int>  p_ub; //!< Upper bound of the iteration domain. ("i <= ub")
+		std::vector<std::pair<std::map<VariableLBL, int>, int> > p_lb; //!< Conjunction of Lower bound of the iteration domain. ("i >= lb")
+		std::vector<std::pair<std::map<VariableLBL, int>, int> > p_ub; //!< Conjunction of Upper bound of the iteration domain. ("i <= ub")
 		int p_inc; //!< Increment used to traverse the domain. ("i += inc")
+
+		void * original_loop;
 
 	public:
 		/**
@@ -135,7 +137,12 @@ class ScopLoop : public ScopTree<Function, Expression, VariableLBL> {
 		 * \param parent   Pointer on parent node.
 		 * \param iterator Induction variable of the loop.
 		 */
-		ScopLoop(size_t position, ScopTree<Function, Expression, VariableLBL> * parent, VariableLBL iterator);
+		ScopLoop(
+			size_t position,
+			ScopTree<Function, Expression, VariableLBL> * parent,
+			VariableLBL iterator,
+			void * original_loop_ = NULL
+		);
 		
 		/**
 		 * \brief ScopLoop specialization of ScopTree::Traverse
@@ -148,26 +155,24 @@ class ScopLoop : public ScopTree<Function, Expression, VariableLBL> {
 		VariableLBL getIterator();
 		
 		/**
-		 * \brief Add a term in the lower bound linear expression.
-		 * \param var  variable (iterator, global or "constant").
-		 * \param coef integer coefficiant.
+		 * \brief Add a lower bound
+		 * \param lb a map representing a linear expression
 		 */
-		void addLowerBoundTerm(VariableLBL var, int coef);
+		void addLowerBound(std::map<VariableLBL, int> & lb, int div = 1);
 		/**
 		 * \return Linear expression of the lower bound.
 		 */
-		std::map<VariableLBL, int> & getLowerBound();
+		std::vector<std::pair<std::map<VariableLBL, int>, int> > & getLowerBound();
 		
 		/**
-		 * \brief Add a term in the upper bound linear expression.
-		 * \param var  variable (iterator, global or "constant").
-		 * \param coef integer coefficiant.
+		 * \brief Add a upper bound
+		 * \param ub a map representing a linear expression
 		 */
-		void addUpperBoundTerm(VariableLBL var, int coef);
+		void addUpperBound(std::map<VariableLBL, int> & lb, int div = 1);
 		/**
 		 * \return Linear expression of the upper bound.
 		 */
-		std::map<VariableLBL, int> & getUpperBound();
+		std::vector<std::pair<std::map<VariableLBL, int>, int> > & getUpperBound();
 		
 		/**
 		 * \brief Set increment.
@@ -178,7 +183,9 @@ class ScopLoop : public ScopTree<Function, Expression, VariableLBL> {
 		 * \return increment.
 		 */
 		int getIncrement();
-		
+
+		void * getOriginalLoop() const;
+
 		virtual bool isRoot() const;
 		virtual bool isLoop() const;
 		virtual bool isConditinnal() const;
@@ -263,7 +270,9 @@ class ScopStatement : public ScopTree<Function, Expression, VariableLBL> {
 		 * This function create, from reading of param 'vect', PolyhedricAnnotation::Domain and PolyhedricAnnotation::Scattering of 'p_expression'.
 		 */
 		virtual void Traverse(std::vector<ScopTree<Function, Expression, VariableLBL> *> * vect, size_t nbr_surr_loop);
-		
+
+		Expression * getExpression();
+
 		virtual bool isRoot() const;
 		virtual bool isLoop() const;
 		virtual bool isConditinnal() const;
