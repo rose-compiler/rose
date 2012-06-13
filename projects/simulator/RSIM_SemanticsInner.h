@@ -29,6 +29,8 @@ namespace RSIM_Semantics {
      * domain.  We have not tested any semantic layer besides PartialSymbolicSemantics [2012-06-12]. */
 #   define RSIM_SEMANTICS_INNER_BASE BinaryAnalysis::InstructionSemantics::PartialSymbolicSemantics
 
+
+    /** Values manipulated by the simulator's concrete semantics. */
     template<size_t nBits>
     class InnerValueType: public RSIM_SEMANTICS_INNER_BASE::ValueType<nBits> {
     public:
@@ -43,14 +45,19 @@ namespace RSIM_Semantics {
             : RSIM_SEMANTICS_INNER_BASE::ValueType<nBits>(other) {}
     };
 
+    /** Machine state for the simulator's concrete semantics. */
     template <template <size_t> class ValueType = RSIM_Semantics::InnerValueType>
     class InnerState: public RSIM_SEMANTICS_INNER_BASE::State<ValueType> {};
 
-    /* We use the RSIM_SEMANTICS_INNER_BASE policy. That policy is able to handle a certain level of symbolic computation, but
-     * we use it because it also does constant folding, which means that its symbolic aspects are never actually used here. We
-     * only have a few methods to specialize this way.  The RSIM_SEMANTICS_INNER_BASE::Memory is not used -- we use a MemoryMap
-     * instead since we're only operating on known addresses and values, and thus override all superclass methods dealing with
-     * memory. */
+    /** RISC operations for the simulator's concrete semantics.
+     *
+     *  The simulator's concrete semantics are based on the Policy defined in RSIM_SEMANTICS_INNER_BASE (a C preprocessor
+     *  symbol, probably ROSE's PartialSymbolicSemantics). That policy is able to handle a certain level of symbolic
+     *  computation, but we use it because it also does constant folding well, which means that its symbolic aspects are never
+     *  actually used here. By subclassing, we only have a few methods to specialize.  The Memory class of
+     *  RSIM_SEMANTICS_INNER_BASE is not used -- instead, we use the concrete MemoryMap stored in the RSIM_Process, and thus
+     *  override all superclass methods dealing with memory access. See ROSE's
+     *  BinaryAnalysis::InstructionSemantics::NullSemantics class for documentation for most of the methods herein. */
     template<
         template <template <size_t> class ValueType> class State = RSIM_Semantics::InnerState,
         template <size_t> class ValueType = RSIM_Semantics::InnerValueType
@@ -74,6 +81,7 @@ namespace RSIM_Semantics {
             ctor(thread);
         }
 
+        /* Constructor helper. */
         void ctor(RSIM_Thread *thread);
 
         struct SegmentInfo {
@@ -87,16 +95,18 @@ namespace RSIM_Semantics {
             }
         };
 
-        /** Returns the register dictionary. */
+        /* Returns the register dictionary. See ROSE's NullSemantics. */
         const RegisterDictionary *get_register_dictionary() const {
             return regdict ? regdict : RegisterDictionary::dictionary_pentium4();
         }
 
-        /** Sets the register dictionary. */
+        /* Sets the register dictionary. See ROSE's NullSemantics. */
         void set_register_dictionary(const RegisterDictionary *regdict) {
             this->regdict = regdict;
         }
 
+        /** Returns the current state.  This is defined so that the Inner and Outer semantic policies both have the same
+         *  interface for obtaining the concrete state. */
         State<ValueType>& get_concrete_state() {
             return this->get_state();
         }
@@ -107,48 +117,50 @@ namespace RSIM_Semantics {
         /** Loads shadow register with an entry from the GDT. */
         void load_sr_shadow(X86SegmentRegister, unsigned gdt_idx);
 
-        /* Delegates to thread. */
+        /** Return the message object for a tracing facility.  Delegates to the RSIM_Thread. */
         RTS_Message *tracing(TracingFacility what) const;
 
-        /* Return value of EFLAGS register */
+        /** Return concrete value of EFLAGS register */
         uint32_t get_eflags();
 
-        /* Print machine register state for debugging */
+        /** Print machine register state for debugging */
         void dump_registers(RTS_Message*);
 
-        /* Same as the x86_pop instruction */
+        /** Same as the x86_pop instruction.  This is used during signal handling so the simulator can pop a word from the top
+         * of the stack without first generating an x86 POP instruction. */
         ValueType<32> pop();
 
-        /* Called by X86InstructionSemantics. Used by x86_and instruction to set AF flag */
+        /* See ROSE's NullSemantics. Redefined here so that we don't end up with non-concrete values in the simulator
+         * state. This is called by X86InstructionSemantics for the x86 AND instruction to set AF flag. */
         ValueType<1> undefined_() {
             return ValueType<1>(1);
         }
 
-        /* Called by X86InstructionSemantics for the HLT instruction */
+        /* Called by X86InstructionSemantics for the HLT instruction. See ROSE's NullSemantics. */
         void hlt() {
             fprintf(stderr, "hlt\n");
             abort();
         }
 
         /* Called by RDTSC to return time stamp counter.  The simulator doesn't really have a time stamp counter, so we'll just
-         * return the number of instructions simulated (counting the RDTSC itself) instead. */
+         * return the number of instructions simulated (counting the RDTSC itself) instead.  See ROSE's NullSemantics. */
         ValueType<64> rdtsc() {
             return ValueType<64>(this->get_ninsns());
         }
 
-        /* Called by X86InstructionSemantics for the CPUID instruction */
+        /* Called by X86InstructionSemantics for the CPUID instruction. See ROSE's NullSemantics. */
         void cpuid();
 
-        /* Called by X86InstructionSemantics for the INT instruction */
+        /* Called by X86InstructionSemantics for the INT instruction. See ROSE's NullSemantics. */
         void interrupt(uint8_t num);
 
-        /* Called by X86InstructionSemantics for the SYSENTER instruction */
+        /* Called by X86InstructionSemantics for the SYSENTER instruction. See ROSE's NullSemantics. */
         void sysenter();
 
-        /* Called by X86InstructionSemantics */
+        /* Called by X86InstructionSemantics. See ROSE's NullSemantics. */
         void startInstruction(SgAsmInstruction* insn);
 
-        /* Write value to a segment register and its shadow. */
+        /* Write value to a segment register and its shadow. See ROSE's NullSemantics. */
         template<size_t Len>
         void writeRegister(const char *regname, const ValueType<Len> &val) {
             writeRegister<Len>(this->findRegister(regname, Len), val);
@@ -162,11 +174,11 @@ namespace RSIM_Semantics {
             }
         }
 
-        /* Reads memory from the memory map rather than the super class. */
+        /* Reads memory from the memory map rather than the super class. See ROSE's NullSemantics. */
         template <size_t Len>
         ValueType<Len> readMemory(X86SegmentRegister sr, const ValueType<32> &addr, const ValueType<1> &cond);
 
-        /* Writes memory to the memory map rather than the super class. */
+        /* Writes memory to the memory map rather than the super class. See ROSE's NullSemantics. */
         template <size_t Len>
         void writeMemory(X86SegmentRegister sr, const ValueType<32> &addr,
                          const ValueType<Len> &data,  const ValueType<1> &cond);
