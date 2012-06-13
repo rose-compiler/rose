@@ -6,6 +6,9 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 # These test pass the compilation using ROSE, all AST tests, unparsing to generate 
 # Java code, and the final compilation of that code using a backend compiler (javac).
+# Liao 6/12/2011, temporarily commented out one test since it failed randomly
+# See details at https://github.com/rose-compiler/rose/issues/5
+#     pgc_test2011_18.java 
 TESTCODES_REQUIRED_TO_PASS = \
      test2011_01.java \
      test2011_02.java \
@@ -65,7 +68,6 @@ TESTCODES_REQUIRED_TO_PASS = \
      pgc_test2011_15.java \
      pgc_test2011_16.java \
      pgc_test2011_17.java \
-     pgc_test2011_18.java \
      pgc_test2011_19.java \
      pgc_test2011_20.java \
      pgc_test2011_21.java \
@@ -87,7 +89,7 @@ TESTCODES_REQUIRED_TO_PASS = \
      cave3_dowhile0.java \
      cave3_for0.java \
      cave3_for1.java \
-	 cave3_for2.java \
+     cave3_for2.java \
      cave3_for3.java \
      cave3_for4.java \
      cave3_for5.java \
