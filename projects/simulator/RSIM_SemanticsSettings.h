@@ -95,7 +95,6 @@
 /** Include files.
  *
  *  All necessary semantics are included here.  This is where the user-defined semantics headers should be included. */
-
 #include "RSIM_SemanticsInner.h"
 #include "RSIM_SemanticsOuter.h"
 
