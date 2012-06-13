@@ -354,16 +354,6 @@ template<
     template <size_t> class ValueType
     >
 void
-RSIM_Semantics::InnerPolicy<State, ValueType>::set_eflags(uint32_t eflags)
-{
-    writeRegister<32>(reg_eflags, eflags);
-}
-
-template<
-    template <template <size_t> class> class State,
-    template <size_t> class ValueType
-    >
-void
 RSIM_Semantics::InnerPolicy<State, ValueType>::push(ValueType<32> n)
 {
     ValueType<32> new_sp = add(this->template readRegister<32>(reg_esp), ValueType<32>((uint64_t)(int64_t)-4));

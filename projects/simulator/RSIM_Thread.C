@@ -798,7 +798,7 @@ RSIM_Thread::main()
             }
             std::ostringstream s;
             s <<e;
-            tracing(TRACE_MISC)->mesg("caught RSIM_Semantics::Exception: %s\n", s.str().c_str());
+            tracing(TRACE_MISC)->mesg("caught RSIM_Semantics::Dispatcher::Exception: %s\n", s.str().c_str());
 #ifdef X86SIM_STRICT_EMULATION
             tracing(TRACE_MISC)->mesg("dumping core...\n");
             process->dump_core(SIGILL);

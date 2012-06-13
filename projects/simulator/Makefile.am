@@ -34,7 +34,6 @@ libRSIM_la_SOURCES =				\
 	RSIM_Futex.C				\
 	RSIM_Linux32.C				\
 	RSIM_Process.C				\
-	RSIM_Semantics.C			\
 	RSIM_SignalHandling.C			\
 	RSIM_Simulator.C			\
 	RSIM_Thread.C				\
@@ -47,7 +46,9 @@ include_HEADERS +=				\
 	RSIM_Futex.h				\
 	RSIM_Linux32.h				\
 	RSIM_Process.h				\
-	RSIM_Semantics.h			\
+	RSIM_SemanticsSettings.h		\
+	RSIM_SemanticsInner.h			\
+	RSIM_SemanticsOuter.h			\
 	RSIM_SignalHandling.h			\
 	RSIM_Simulator.h			\
 	RSIM_Templates.h			\
