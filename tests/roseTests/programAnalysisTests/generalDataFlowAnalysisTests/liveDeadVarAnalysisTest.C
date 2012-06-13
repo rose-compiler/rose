@@ -111,6 +111,8 @@ main( int argc, char * argv[] )
   ciipd_ldva.runAnalysis();
 
   // grab live-in information from a Pragma Declaration
+  // Sample pragma is
+  // #pragma rose [LiveVarsLattice:liveVars=[mem,j,k,bound]]
   Rose_STL_Container <SgNode*> nodeList = NodeQuery::querySubTree(project, V_SgPragmaDeclaration);
   for (Rose_STL_Container<SgNode *>::iterator i = nodeList.begin(); i != nodeList.end(); i++)
   {
@@ -136,11 +138,11 @@ main( int argc, char * argv[] )
     }
     else
     {
-     cout<<"liveness results are not identical!"<<endl;  
-     assert (false);
+      cout<<"pragma gives reference result:" << pragma_str<<endl; 
+      cout<<"liveness results are not identical!"<<endl;  
+      assert (false);
     }
   }
-
 
   // Output the dot graph
   Dbg::dotGraphGenerator (&ldva);
