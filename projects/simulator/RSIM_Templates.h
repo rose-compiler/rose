@@ -353,18 +353,6 @@ template<
     template <template <size_t> class> class State,
     template <size_t> class ValueType
     >
-void
-RSIM_Semantics::InnerPolicy<State, ValueType>::push(ValueType<32> n)
-{
-    ValueType<32> new_sp = add(this->template readRegister<32>(reg_esp), ValueType<32>((uint64_t)(int64_t)-4));
-    this->writeMemory(x86_segreg_ss, new_sp, n, this->true_());
-    this->writeRegister(reg_esp, new_sp);
-}
-
-template<
-    template <template <size_t> class> class State,
-    template <size_t> class ValueType
-    >
 ValueType<32>
 RSIM_Semantics::InnerPolicy<State, ValueType>::pop()
 {

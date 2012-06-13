@@ -68,9 +68,7 @@
  *
  *  Subdomain 0 must be the simulator concrete domain (or a user-defined version with an identical interface).  The user may
  *  modify subdomains 1 through 3 to be whatever they like.  See the BinaryAnalysis::InstructionSemantics::MultiSemantics class
- *  in ROSE's API Reference Manual for details.  Some of the methods in RSIM_Semantics::OuterPolicy might need to be modified
- *  so they operate in the user defined domains in addition to the simulator's concrete domain (push() is the most likely
- *  one).
+ *  in ROSE's API Reference Manual for details.
  *
  *  There are at least two ways for the user to get control between RISC operations in order to have an opportunity to
  *  manipulate the state of all the sub-domains. One is to provide an implementation for startInstruction() and/or

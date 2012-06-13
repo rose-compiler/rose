@@ -116,9 +116,6 @@ namespace RSIM_Semantics {
         /* Print machine register state for debugging */
         void dump_registers(RTS_Message*);
 
-        /* Same as the x86_push instruction */
-        void push(ValueType<32> n);
-
         /* Same as the x86_pop instruction */
         ValueType<32> pop();
 

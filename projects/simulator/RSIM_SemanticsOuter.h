@@ -102,11 +102,6 @@ namespace RSIM_Semantics {
             return this->policy0.get_eflags();
         }
 
-        /** See InnerPolicy::push() */
-        void push(ValueType<32> n) {
-            this->policy0.push(n.get_subvalue(RSIM_SEMANTICS_OUTER_BASE::SP0()));
-        }
-
         /** See InnerPolicy::pop() */
         ValueType<32> pop() {
             ValueType<32> retval;
