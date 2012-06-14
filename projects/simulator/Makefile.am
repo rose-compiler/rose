@@ -81,7 +81,6 @@ RSIM_Client.o: RSIM_Client.c RSIM_Client.h
 # Do not install RSIM_Private.h -- it is only used during compilation.
 EXTRA_DIST += RSIM_Private.h
 noinst_PROGRAMS += x86sim
-include_HEADERS += x86sim.h
 x86sim_SOURCES = x86sim.C
 x86sim_CPPFLAGS = $(ROSE_INCLUDES) -DX86_VDSO_PATH_1='"$(srcdir)"' -DX86_VDSO_PATH_2='"$(include_dir)"'
 x86sim_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS) 
