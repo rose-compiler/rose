@@ -2787,7 +2787,7 @@ namespace sg
 ///   };
 /// \endcode
 ///             Alternatively, the dispatch function takes a pointer to a
-///             handler object. In this case the counter object is passed
+///             handler object. In this case, the counter object is passed
 ///             as pointer, and ctr is manipulated
 ///             directly (no need to store back the result).
 /// \code
