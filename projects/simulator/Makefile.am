@@ -18,7 +18,8 @@ warn_no_tests:
 #  DOCUMENTATION, CONFIGURATION, ETC
 ###############################################################################################################################
 
-EXTRA_DIST += README test_status.txt internal_tests.conf syscall_tests.conf pthread_tests.conf RSIM.dxy
+EXTRA_DIST += README test_status.txt internal_tests.conf syscall_tests.conf pthread_tests.conf RSIM.dxy \
+	USED_HEADER_FILES.C demos/MultiDomainDemo.h demos/RiscTracingPolicy.h
 
 ###############################################################################################################################
 #  SIMULATOR LIBRARY
