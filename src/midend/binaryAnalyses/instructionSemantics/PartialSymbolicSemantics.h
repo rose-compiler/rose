@@ -356,7 +356,7 @@ namespace BinaryAnalysis {                      // documented elsewhere
                 ValueType<ToLen> signExtend(const ValueType<FromLen> &a) const {
                     if (ToLen==FromLen) return a;
                     if (a.name) return ValueType<ToLen>();
-                    return IntegerOps::signExtend<FromLen, ToLen>(a.offset);
+                    return ValueType<ToLen>(IntegerOps::signExtend<FromLen, ToLen>(a.offset));
                 }
 
                 /** See NullSemantics::Policy::extract() */
@@ -364,7 +364,8 @@ namespace BinaryAnalysis {                      // documented elsewhere
                 ValueType<EndAt-BeginAt> extract(const ValueType<Len> &a) const {
                     if (0==BeginAt) return ValueType<EndAt-BeginAt>(a);
                     if (a.name) return ValueType<EndAt-BeginAt>();
-                    return (a.offset >> BeginAt) & (IntegerOps::SHL1<uint64_t, EndAt-BeginAt>::value - 1);
+                    return ValueType<EndAt-BeginAt>((a.offset >> BeginAt) &
+                                                    (IntegerOps::SHL1<uint64_t, EndAt-BeginAt>::value - 1));
                 }
 
                 /** Return a newly sized value by either truncating the most significant bits or by adding more most significant
@@ -522,12 +523,12 @@ namespace BinaryAnalysis {                      // documented elsewhere
 
                 /** See NullSemantics::Policy::true_() */
                 ValueType<1> true_() const {
-                    return 1;
+                    return ValueType<1>(1);
                 }
 
                 /** See NullSemantics::Policy::false_() */
                 ValueType<1> false_() const {
-                    return 0;
+                    return ValueType<1>(0);
                 }
 
                 /** See NullSemantics::Policy::undefined_() */
@@ -538,7 +539,7 @@ namespace BinaryAnalysis {                      // documented elsewhere
                 /** See NullSemantics::Policy::number() */
                 template <size_t Len>
                 ValueType<Len> number(uint64_t n) const {
-                    return n;
+                    return ValueType<Len>(n);
                 }
 
 
@@ -616,7 +617,7 @@ namespace BinaryAnalysis {                      // documented elsewhere
                     if (a.name==b.name && (!a.name || a.negate!=b.negate)) {
                         /* [V1+x] + [-V1+y] = [x+y]  or
                          * [x] + [y] = [x+y] */
-                        return a.offset + b.offset;
+                        return ValueType<Len>(a.offset + b.offset);
                     } else if (!a.name || !b.name) {
                         /* [V1+x] + [y] = [V1+x+y]   or
                          * [x] + [V2+y] = [V2+x+y]   or
@@ -652,9 +653,9 @@ namespace BinaryAnalysis {                      // documented elsewhere
                 /** See NullSemantics::Policy::and_() */
                 template <size_t Len>
                 ValueType<Len> and_(const ValueType<Len> &a, const ValueType<Len> &b) const {
-                    if ((!a.name && 0==a.offset) || (!b.name && 0==b.offset)) return 0;
+                    if ((!a.name && 0==a.offset) || (!b.name && 0==b.offset)) return ValueType<Len>(0);
                     if (a.name || b.name) return ValueType<Len>();
-                    return a.offset & b.offset;
+                    return ValueType<Len>(a.offset & b.offset);
                 }
 
                 /** See NullSemantics::Policy::equalToZero() */
@@ -668,14 +669,14 @@ namespace BinaryAnalysis {                      // documented elsewhere
                 template <size_t Len>
                 ValueType<Len> invert(const ValueType<Len> &a) const {
                     if (a.name) return ValueType<Len>(a.name, ~a.offset, !a.negate);
-                    return ~a.offset;
+                    return ValueType<Len>(~a.offset);
                 }
 
                 /** See NullSemantics::Policy::concat() */
                 template<size_t Len1, size_t Len2>
                 ValueType<Len1+Len2> concat(const ValueType<Len1> &a, const ValueType<Len2> &b) const {
                     if (a.name || b.name) return ValueType<Len1+Len2>();
-                    return a.offset | (b.offset << Len1);
+                    return ValueType<Len1+Len2>(a.offset | (b.offset << Len1));
                 }
 
                 /** See NullSemantics::Policy::ite() */
@@ -692,9 +693,9 @@ namespace BinaryAnalysis {                      // documented elsewhere
                     if (a.name) return ValueType<Len>();
                     for (size_t i=0; i<Len; ++i) {
                         if (a.offset & ((uint64_t)1 << i))
-                            return i;
+                            return ValueType<Len>(i);
                     }
-                    return 0;
+                    return ValueType<Len>(0);
                 }
 
                 /** See NullSemantics::Policy::mostSignificantSetBit() */
@@ -703,23 +704,23 @@ namespace BinaryAnalysis {                      // documented elsewhere
                     if (a.name) return ValueType<Len>();
                     for (size_t i=Len; i>0; --i) {
                         if (a.offset & ((uint64_t)1 << (i-1)))
-                            return i-1;
+                            return ValueType<Len>(i-1);
                     }
-                    return 0;
+                    return ValueType<Len>(0);
                 }
 
                 /** See NullSemantics::Policy::negate() */
                 template <size_t Len>
                 ValueType<Len> negate(const ValueType<Len> &a) const {
                     if (a.name) return ValueType<Len>(a.name, -a.offset, !a.negate);
-                    return -a.offset;
+                    return ValueType<Len>(-a.offset);
                 }
 
                 /** See NullSemantics::Policy::or_() */
                 template <size_t Len>
                 ValueType<Len> or_(const ValueType<Len> &a, const ValueType<Len> &b) const {
                     if (a==b) return a;
-                    if (!a.name && !b.name) return a.offset | b.offset;
+                    if (!a.name && !b.name) return ValueType<Len>(a.offset | b.offset);
                     if (!a.name && a.offset==IntegerOps::GenMask<uint64_t, Len>::value) return a;
                     if (!b.name && b.offset==IntegerOps::GenMask<uint64_t, Len>::value) return b;
                     return ValueType<Len>();
@@ -728,7 +729,7 @@ namespace BinaryAnalysis {                      // documented elsewhere
                 /** See NullSemantics::Policy::rotateLeft() */
                 template <size_t Len, size_t SALen>
                 ValueType<Len> rotateLeft(const ValueType<Len> &a, const ValueType<SALen> &sa) const {
-                    if (!a.name && !sa.name) return IntegerOps::rotateLeft<Len>(a.offset, sa.offset);
+                    if (!a.name && !sa.name) return ValueType<Len>(IntegerOps::rotateLeft<Len>(a.offset, sa.offset));
                     if (!sa.name && 0==sa.offset % Len) return a;
                     return ValueType<Len>();
                 }
@@ -736,7 +737,7 @@ namespace BinaryAnalysis {                      // documented elsewhere
                 /** See NullSemantics::Policy::rotateRight() */
                 template <size_t Len, size_t SALen>
                 ValueType<Len> rotateRight(const ValueType<Len> &a, const ValueType<SALen> &sa) const {
-                    if (!a.name && !sa.name) return IntegerOps::rotateRight<Len>(a.offset, sa.offset);
+                    if (!a.name && !sa.name) return ValueType<Len>(IntegerOps::rotateRight<Len>(a.offset, sa.offset));
                     if (!sa.name && 0==sa.offset % Len) return a;
                     return ValueType<Len>();
                 }
@@ -744,10 +745,10 @@ namespace BinaryAnalysis {                      // documented elsewhere
                 /** See NullSemantics::Policy::shiftLeft() */
                 template <size_t Len, size_t SALen>
                 ValueType<Len> shiftLeft(const ValueType<Len> &a, const ValueType<SALen> &sa) const {
-                    if (!a.name && !sa.name) return IntegerOps::shiftLeft<Len>(a.offset, sa.offset);
+                    if (!a.name && !sa.name) return ValueType<Len>(IntegerOps::shiftLeft<Len>(a.offset, sa.offset));
                     if (!sa.name) {
                         if (0==sa.offset) return a;
-                        if (sa.offset>=Len) return 0;
+                        if (sa.offset>=Len) return ValueType<Len>(0);
                     }
                     return ValueType<Len>();
                 }
@@ -755,10 +756,10 @@ namespace BinaryAnalysis {                      // documented elsewhere
                 /** See NullSemantics::Policy::shiftRight() */
                 template <size_t Len, size_t SALen>
                 ValueType<Len> shiftRight(const ValueType<Len> &a, const ValueType<SALen> &sa) const {
-                    if (!a.name && !sa.name) return IntegerOps::shiftRightLogical<Len>(a.offset, sa.offset);
+                    if (!a.name && !sa.name) return ValueType<Len>(IntegerOps::shiftRightLogical<Len>(a.offset, sa.offset));
                     if (!sa.name) {
                         if (0==sa.offset) return a;
-                        if (sa.offset>=Len) return 0;
+                        if (sa.offset>=Len) return ValueType<Len>(0);
                     }
                     return ValueType<Len>();
                 }
@@ -766,7 +767,7 @@ namespace BinaryAnalysis {                      // documented elsewhere
                 /** See NullSemantics::Policy::shiftRightArithmetic() */
                 template <size_t Len, size_t SALen>
                 ValueType<Len> shiftRightArithmetic(const ValueType<Len> &a, const ValueType<SALen> &sa) const {
-                    if (!a.name && !sa.name) return IntegerOps::shiftRightArithmetic<Len>(a.offset, sa.offset);
+                    if (!a.name && !sa.name) return ValueType<Len>(IntegerOps::shiftRightArithmetic<Len>(a.offset, sa.offset));
                     if (!sa.name && 0==sa.offset) return a;
                     return ValueType<Len>();
                 }
@@ -777,7 +778,8 @@ namespace BinaryAnalysis {                      // documented elsewhere
                     if (!b.name) {
                         if (0==b.offset) throw Exception("division by zero");
                         if (!a.name)
-                            return IntegerOps::signExtend<Len1, 64>(a.offset) / IntegerOps::signExtend<Len2, 64>(b.offset);
+                            return ValueType<Len1>(IntegerOps::signExtend<Len1, 64>(a.offset) /
+                                                   IntegerOps::signExtend<Len2, 64>(b.offset));
                         if (1==b.offset) return a;
                         if (b.offset==IntegerOps::GenMask<uint64_t,Len2>::value) return negate(a);
                         /*FIXME: also possible to return zero if B is large enough. [RPM 2010-05-18]*/
@@ -790,7 +792,8 @@ namespace BinaryAnalysis {                      // documented elsewhere
                 ValueType<Len2> signedModulo(const ValueType<Len1> &a, const ValueType<Len2> &b) const {
                     if (a.name || b.name) return ValueType<Len2>();
                     if (0==b.offset) throw Exception("division by zero");
-                    return IntegerOps::signExtend<Len1, 64>(a.offset) % IntegerOps::signExtend<Len2, 64>(b.offset);
+                    return ValueType<Len2>(IntegerOps::signExtend<Len1, 64>(a.offset) %
+                                           IntegerOps::signExtend<Len2, 64>(b.offset));
                     /* FIXME: More folding possibilities... if 'b' is a power of two then we can return 'a' with the bitsize of
                      * 'b'. */
                 }
@@ -799,14 +802,15 @@ namespace BinaryAnalysis {                      // documented elsewhere
                 template <size_t Len1, size_t Len2>
                 ValueType<Len1+Len2> signedMultiply(const ValueType<Len1> &a, const ValueType<Len2> &b) const {
                     if (!a.name && !b.name)
-                        return IntegerOps::signExtend<Len1, 64>(a.offset) * IntegerOps::signExtend<Len2, 64>(b.offset);
+                        return ValueType<Len1+Len2>(IntegerOps::signExtend<Len1, 64>(a.offset) *
+                                                    IntegerOps::signExtend<Len2, 64>(b.offset));
                     if (!b.name) {
-                        if (0==b.offset) return 0;
+                        if (0==b.offset) return ValueType<Len1+Len2>(0);
                         if (1==b.offset) return signExtend<Len1, Len1+Len2>(a);
                         if (b.offset==IntegerOps::GenMask<uint64_t,Len2>::value) return signExtend<Len1, Len1+Len2>(negate(a));
                     }
                     if (!a.name) {
-                        if (0==a.offset) return 0;
+                        if (0==a.offset) return ValueType<Len1+Len2>(0);
                         if (1==a.offset) return signExtend<Len2, Len1+Len2>(b);
                         if (a.offset==IntegerOps::GenMask<uint64_t,Len1>::value) return signExtend<Len2, Len1+Len2>(negate(b));
                     }
@@ -818,7 +822,7 @@ namespace BinaryAnalysis {                      // documented elsewhere
                 ValueType<Len1> unsignedDivide(const ValueType<Len1> &a, const ValueType<Len2> &b) const {
                     if (!b.name) {
                         if (0==b.offset) throw Exception("division by zero");
-                        if (!a.name) return a.offset / b.offset;
+                        if (!a.name) return ValueType<Len1>(a.offset / b.offset);
                         if (1==b.offset) return a;
                         /*FIXME: also possible to return zero if B is large enough. [RPM 2010-05-18]*/
                     }
@@ -830,7 +834,7 @@ namespace BinaryAnalysis {                      // documented elsewhere
                 ValueType<Len2> unsignedModulo(const ValueType<Len1> &a, const ValueType<Len2> &b) const {
                     if (!b.name) {
                         if (0==b.offset) throw Exception("division by zero");
-                        if (!a.name) return a.offset % b.offset;
+                        if (!a.name) return ValueType<Len2>(a.offset % b.offset);
                         /* FIXME: More folding possibilities... if 'b' is a power of two then we can return 'a' with the
                          * bitsize of 'b'. */
                     }
@@ -842,13 +846,13 @@ namespace BinaryAnalysis {                      // documented elsewhere
                 template <size_t Len1, size_t Len2>
                 ValueType<Len1+Len2> unsignedMultiply(const ValueType<Len1> &a, const ValueType<Len2> &b) const {
                     if (!a.name && !b.name)
-                        return a.offset * b.offset;
+                        return ValueType<Len1+Len2>(a.offset * b.offset);
                     if (!b.name) {
-                        if (0==b.offset) return 0;
+                        if (0==b.offset) return ValueType<Len1+Len2>(0);
                         if (1==b.offset) return unsignedExtend<Len1, Len1+Len2>(a);
                     }
                     if (!a.name) {
-                        if (0==a.offset) return 0;
+                        if (0==a.offset) return ValueType<Len1+Len2>(0);
                         if (1==a.offset) return unsignedExtend<Len2, Len1+Len2>(b);
                     }
                     return ValueType<Len1+Len2>();
@@ -858,9 +862,9 @@ namespace BinaryAnalysis {                      // documented elsewhere
                 template <size_t Len>
                 ValueType<Len> xor_(const ValueType<Len> &a, const ValueType<Len> &b) const {
                     if (!a.name && !b.name)
-                        return a.offset ^ b.offset;
+                        return ValueType<Len>(a.offset ^ b.offset);
                     if (a==b)
-                        return 0;
+                        return ValueType<Len>(0);
                     if (!b.name) {
                         if (0==b.offset) return a;
                         if (b.offset==IntegerOps::GenMask<uint64_t, Len>::value) return invert(a);

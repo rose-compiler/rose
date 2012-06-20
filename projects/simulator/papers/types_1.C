@@ -863,7 +863,7 @@ public:
                             state.gpr[i] = ValueType<32>((uint64_t)rand() & 0xffffffffull);
                     }
                     for (size_t i=0; i<state.n_segregs; ++i)
-                        state.segreg[i] = args.thread->policy.get_state().segreg[i];
+                        state.segreg[i] = args.thread->policy.get_concrete_state().segreg[i];
                     for (size_t i=0; i<state.n_flags; ++i)
                         state.flag[i] = ValueType<1>((uint64_t)rand() & 1ull);
 
