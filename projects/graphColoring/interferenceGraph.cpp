@@ -142,6 +142,12 @@ namespace graphColoring
     randomPopulateGraph (node_count, edge_complete_rate);
   }
 
+  Graph::~Graph()
+  {
+    assert (adj_matrix!= NULL);
+    delete adj_matrix; 
+  }
+
   void Graph::randomPopulateGraph(size_t node_count, float edge_complete_rate)
   {
     assert (nodes.size() == 0);

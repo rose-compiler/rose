@@ -185,3 +185,16 @@ SgAsmFunction::get_extent(ExtentMap *extents, rose_addr_t *lo_addr, rose_addr_t 
     t1.traverse(this, preorder);
     return t1.nnodes;
 }
+
+/** Function entry basic block.  Returns the basic block that represents the function entry point. Every function must have
+ *  one. */
+SgAsmBlock *
+SgAsmFunction::get_entry_block() const {
+    for (SgAsmStatementPtrList::const_iterator si=p_statementList.begin(); si!=p_statementList.end(); ++si) {
+        SgAsmBlock *bb = isSgAsmBlock(*si);
+        if (bb && bb->get_address()==p_entry_va)
+            return bb;
+    }
+    assert(!"no entry basic block");
+    abort();
+}
