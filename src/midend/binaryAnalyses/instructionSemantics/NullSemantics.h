@@ -19,6 +19,8 @@ namespace BinaryAnalysis { // documented elsewhere
              *  it should construct a value that has an undefined/unconstrained/unknown value. */
             template<size_t nBits>
             struct ValueType {
+                ValueType() {}
+                explicit ValueType(uint64_t) {}
                 bool is_known() const { return false; }
                 uint64_t known_value() const { abort(); } // values are NEVER known
                 void print(std::ostream &o) const {
@@ -87,27 +89,27 @@ namespace BinaryAnalysis { // documented elsewhere
                 /** Returns a number of the specified bit width.  This method converts an unsigned integer to a value in the
                  *  semantic domain. */
                 template<size_t nBits>
-                ValueType<nBits> number(uint64_t) const {
+                ValueType<nBits> number(uint64_t) {
                     return ValueType<nBits>();
                 }
 
                 /** Invoked to filter call targets.  This method is called whenever the translation object is about to invoke a
                  *  function call.  The target address is passed as an argument and a (new) target should be returned. */
-                ValueType<32> filterCallTarget(const ValueType<32> &a) const {
+                ValueType<32> filterCallTarget(const ValueType<32> &a) {
                     return a;
                 }
 
                 /** Invoked to filter return targets.  This method is called whenever the translation object is about to return
                  *  from a function call (such as for the x86 "RET" instruction).  The return address is passed as an argument
                  *  and a (new) return address should be returned. */
-                ValueType<32> filterReturnTarget(const ValueType<32> &a) const {
+                ValueType<32> filterReturnTarget(const ValueType<32> &a) {
                     return a;
                 }
 
                 /** Invoked to filter indirect jumps.  This method is called whenever the translation object is about to
                  *  unconditionally jump to a new address (such as for the x86 "JMP" instruction).  The target address is passed
                  *  as an argument and a (new) target address should be returned. */
-                ValueType<32> filterIndirectJumpTarget(const ValueType<32> &a) const {
+                ValueType<32> filterIndirectJumpTarget(const ValueType<32> &a) {
                     return a;
                 }
 
@@ -130,7 +132,7 @@ namespace BinaryAnalysis { // documented elsewhere
 
                 /** Adds two integers. */
                 template<size_t nBits>
-                ValueType<nBits> add(const ValueType<nBits> &a, const ValueType<nBits> &b) const {
+                ValueType<nBits> add(const ValueType<nBits> &a, const ValueType<nBits> &b) {
                     return ValueType<nBits>();
                 }
 
@@ -151,26 +153,26 @@ namespace BinaryAnalysis { // documented elsewhere
                  */
                 template<size_t nBits>
                 ValueType<nBits> addWithCarries(const ValueType<nBits> &a, const ValueType<nBits> &b, const ValueType<1> &c,
-                                                ValueType<nBits> &carry_out) const {
+                                                ValueType<nBits> &carry_out) {
                     return ValueType<nBits>();
                 }
 
                 /** Computes bit-wise AND of two values. */
                 template<size_t nBits>
-                ValueType<nBits> and_(const ValueType<nBits> &a, const ValueType<nBits> &b) const {
+                ValueType<nBits> and_(const ValueType<nBits> &a, const ValueType<nBits> &b) {
                     return ValueType<nBits>();
                 }
 
                 /** Determines whether a value is equal to zero.  Returns true, false, or undefined (in the semantic domain)
                  *  depending on whether argument is zero. */
                 template<size_t nBits>
-                ValueType<1> equalToZero(const ValueType<nBits> &a) const {
+                ValueType<1> equalToZero(const ValueType<nBits> &a) {
                     return ValueType<1>();
                 }
 
                 /** One's complement */
                 template<size_t nBits>
-                ValueType<nBits> invert(const ValueType<nBits> &a) const {
+                ValueType<nBits> invert(const ValueType<nBits> &a) {
                     return ValueType<nBits>();
                 }
 
@@ -178,75 +180,75 @@ namespace BinaryAnalysis { // documented elsewhere
                  *  copied into the low-order bits of the return value (other bits in the return value are cleared). The least
                  *  significant bit is number zero. */
                 template<size_t BeginBit, size_t EndBit, size_t nBitsA>
-                ValueType<EndBit-BeginBit> extract(const ValueType<nBitsA> &a) const {
+                ValueType<EndBit-BeginBit> extract(const ValueType<nBitsA> &a) {
                     return ValueType<EndBit-BeginBit>();
                 }
 
                 /** Concatenates the bits of two values.  The bits of @p a and @p b are concatenated so that the result has @p
                  *  b in the high-order bits and @p a in the low order bits. */
                 template<size_t nBitsA, size_t nBitsB>
-                ValueType<nBitsA+nBitsB> concat(const ValueType<nBitsA> &a, const ValueType<nBitsB> &b) const {
+                ValueType<nBitsA+nBitsB> concat(const ValueType<nBitsA> &a, const ValueType<nBitsB> &b) {
                     return ValueType<nBitsA+nBitsB>();
                 }
 
                 /** If-then-else.  Returns operand @p a if @p cond is true, operand @p b if @p cond is false, or some other
                  *  value if the condition is unknown. */
                 template<size_t nBits>
-                ValueType<nBits> ite(const ValueType<1> &cond, const ValueType<nBits> &a, const ValueType<nBits> &b) const {
+                ValueType<nBits> ite(const ValueType<1> &cond, const ValueType<nBits> &a, const ValueType<nBits> &b) {
                     return ValueType<nBits>();
                 }
 
                 /** Returns position of least significant set bit; zero when no bits are set. */
                 template<size_t nBits>
-                ValueType<nBits> leastSignificantSetBit(const ValueType<nBits> &a) const {
+                ValueType<nBits> leastSignificantSetBit(const ValueType<nBits> &a) {
                     return ValueType<nBits>();
                 }
 
                 /** Returns position of most significant set bit; zero when no bits are set. */
                 template<size_t nBits>
-                ValueType<nBits> mostSignificantSetBit(const ValueType<nBits> &a) const {
+                ValueType<nBits> mostSignificantSetBit(const ValueType<nBits> &a) {
                     return ValueType<nBits>();
                 }
 
                 /** Two's complement. */
                 template<size_t nBits>
-                ValueType<nBits> negate(const ValueType<nBits> &a) const {
+                ValueType<nBits> negate(const ValueType<nBits> &a) {
                     return ValueType<nBits>();
                 }
 
                 /** Computes bit-wise OR of two values. */
                 template<size_t nBits>
-                ValueType<nBits> or_(const ValueType<nBits> &a, const ValueType<nBits> &b) const {
+                ValueType<nBits> or_(const ValueType<nBits> &a, const ValueType<nBits> &b) {
                     return ValueType<nBits>();
                 }
 
                 /** Rotate bits to the left. */
                 template<size_t nBitsA, size_t nBitsB>
-                ValueType<nBitsA> rotateLeft(const ValueType<nBitsA> &a, const ValueType<nBitsB> &b) const {
+                ValueType<nBitsA> rotateLeft(const ValueType<nBitsA> &a, const ValueType<nBitsB> &b) {
                     return ValueType<nBitsA>();
                 }
 
                 /** Rotate bits to the right. */
                 template<size_t nBitsA, size_t nBitsB>
-                ValueType<nBitsA> rotateRight(const ValueType<nBitsA> &a, const ValueType<nBitsB> &b) const {
+                ValueType<nBitsA> rotateRight(const ValueType<nBitsA> &a, const ValueType<nBitsB> &b) {
                     return ValueType<nBitsA>();
                 }
 
                 /** Returns arg shifted left. */
                 template<size_t nBitsA, size_t nBitsB>
-                ValueType<nBitsA> shiftLeft(const ValueType<nBitsA> &a, const ValueType<nBitsB> &b) const {
+                ValueType<nBitsA> shiftLeft(const ValueType<nBitsA> &a, const ValueType<nBitsB> &b) {
                     return ValueType<nBitsA>();
                 }
 
                 /** Returns arg shifted right logically (no sign bit). */
                 template<size_t nBitsA, size_t nBitsB>
-                ValueType<nBitsA> shiftRight(const ValueType<nBitsA> &a, const ValueType<nBitsB> &b) const {
+                ValueType<nBitsA> shiftRight(const ValueType<nBitsA> &a, const ValueType<nBitsB> &b) {
                     return ValueType<nBitsA>();
                 }
 
                 /** Returns arg shifted right arithmetically (with sign bit). */
                 template<size_t nBitsA, size_t nBitsB>
-                ValueType<nBitsA> shiftRightArithmetic(const ValueType<nBitsA> &a, const ValueType<nBitsB> &b) const {
+                ValueType<nBitsA> shiftRightArithmetic(const ValueType<nBitsA> &a, const ValueType<nBitsB> &b) {
                     return ValueType<nBitsA>();
                 }
 
@@ -258,55 +260,55 @@ namespace BinaryAnalysis { // documented elsewhere
 
                 /** Divides two signed values. */
                 template<size_t nBitsA, size_t nBitsB>
-                ValueType<nBitsA> signedDivide(const ValueType<nBitsA> &a, const ValueType<nBitsB> &b) const {
+                ValueType<nBitsA> signedDivide(const ValueType<nBitsA> &a, const ValueType<nBitsB> &b) {
                     return ValueType<nBitsA>();
                 }
 
                 /** Calculates modulo with signed values. */
                 template<size_t nBitsA, size_t nBitsB>
-                ValueType<nBitsB> signedModulo(const ValueType<nBitsA> &a, const ValueType<nBitsB> &b) const {
+                ValueType<nBitsB> signedModulo(const ValueType<nBitsA> &a, const ValueType<nBitsB> &b) {
                     return ValueType<nBitsB>();
                 }
 
                 /** Multiplies two signed values. */
                 template<size_t nBitsA, size_t nBitsB>
-                ValueType<nBitsA+nBitsB> signedMultiply(const ValueType<nBitsA> &a, const ValueType<nBitsB> &b) const {
+                ValueType<nBitsA+nBitsB> signedMultiply(const ValueType<nBitsA> &a, const ValueType<nBitsB> &b) {
                     return ValueType<nBitsA+nBitsB>();
                 }
 
                 /** Divides two unsigned values. */
                 template<size_t nBitsA, size_t nBitsB>
-                ValueType<nBitsA> unsignedDivide(const ValueType<nBitsA> &a, const ValueType<nBitsB> &b) const {
+                ValueType<nBitsA> unsignedDivide(const ValueType<nBitsA> &a, const ValueType<nBitsB> &b) {
                     return ValueType<nBitsA>();
                 }
 
                 /** Calculates modulo with unsigned values. */
                 template<size_t nBitsA, size_t nBitsB>
-                ValueType<nBitsB> unsignedModulo(const ValueType<nBitsA> &a, const ValueType<nBitsB> &b) const {
+                ValueType<nBitsB> unsignedModulo(const ValueType<nBitsA> &a, const ValueType<nBitsB> &b) {
                     return ValueType<nBitsB>();
                 }
 
                 /** Multiply two unsigned values. */
                 template<size_t nBitsA, size_t nBitsB>
-                ValueType<nBitsA+nBitsB> unsignedMultiply(const ValueType<nBitsA> &a, const ValueType<nBitsB> &b) const {
+                ValueType<nBitsA+nBitsB> unsignedMultiply(const ValueType<nBitsA> &a, const ValueType<nBitsB> &b) {
                     return ValueType<nBitsA+nBitsB>();
                 }
 
                 /** Computes bit-wise XOR of two values. */
                 template<size_t nBits>
-                ValueType<nBits> xor_(const ValueType<nBits> &a, const ValueType<nBits> &b) const {
+                ValueType<nBits> xor_(const ValueType<nBits> &a, const ValueType<nBits> &b) {
                     return ValueType<nBits>();
                 }
 
                 /** Reads from a named register. */
                 template<size_t nBits>
-                ValueType<nBits> readRegister(const char *regname) const {
+                ValueType<nBits> readRegister(const char *regname) {
                     return ValueType<nBits>();
                 }
 
                 /** Generic register read. */
                 template<size_t nBits>
-                ValueType<nBits> readRegister(const RegisterDescriptor &reg) const {
+                ValueType<nBits> readRegister(const RegisterDescriptor &reg) {
                     return ValueType<nBits>();
                 }
 
@@ -320,7 +322,7 @@ namespace BinaryAnalysis { // documented elsewhere
 
                 /** Reads a value from memory. */
                 template<size_t nBits>
-                ValueType<nBits> readMemory(X86SegmentRegister, const ValueType<32> &addr, const ValueType<1> &cond) const {
+                ValueType<nBits> readMemory(X86SegmentRegister, const ValueType<32> &addr, const ValueType<1> &cond) {
                     return ValueType<nBits>();
                 }
 

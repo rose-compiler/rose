@@ -12,7 +12,7 @@
 #include "RSIM_Callbacks.h"
 #include "RSIM_Futex.h"
 #include "RSIM_Process.h"
-#include "RSIM_SemanticPolicy.h"
+#include "RSIM_SemanticsSettings.h"
 #include "RSIM_Thread.h"
 #include "RSIM_Templates.h"
 #include "RSIM_Tools.h"
@@ -53,9 +53,9 @@
  *       the specimen.  This has an impact on performance.</li>
  *
  *   <li>The specimen's instructions are simulated rather than executed directly by the CPU.  The simulation is performed by
- *       the X86InstructionSemantics class defined in ROSE and an RSIM_SemanticPolicy class defined in the simulator.  The
- *       X86InstructionSemantics class defines what basic operations must be performed by each instruction, while the
- *       RSIM_SemanticPolicy class defines the operations themselves.
+ *       the X86InstructionSemantics class defined in ROSE and the RSIM_Semantics name space classes defined in the simulator.
+ *       The X86InstructionSemantics class defines what basic operations must be performed by each instruction, while the
+ *       RSIM_Semantics classes define the operations themselves.  See the RSIM_SemanticsSettings.h file for details.
  *
  *       Simulating each instruction has a number of advantages:
  *       <ol>
