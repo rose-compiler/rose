@@ -341,6 +341,18 @@ StringUtility::listToString ( const list<int> & X, bool separateStrings )
 
      return returnString;
    }
+
+std::list<std::string>
+StringUtility:: tokenize ( std::string X, char delim ) {
+    std::list<std::string> l;
+    std::string token;
+    std::istringstream iss(X);
+    while (getline(iss, token, delim)) {
+        l.push_back(token);
+    }
+    return l;
+}
+
 // DQ (8/31/2009): This now compiles properly (at least for analysis, it might still fail for the code generation).
 // #ifdef USE_ROSE   
 #if 0
