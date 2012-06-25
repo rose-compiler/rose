@@ -7,7 +7,7 @@
 
   <general>
     <parameter name="RuleSelection">
-      /export/tmp.too1/workspace/rose/compass/ROSE/projects/compass2/extensions/checkers/keywordMacro/tests/RULE_SELECTION.in
+      @absolute_path_srcdir@/projects/compass2/tests/checkers/keyword_macro/RULE_SELECTION.in
     </parameter>
     <parameter name="target_directory">
       @absolute_path_srcdir@
