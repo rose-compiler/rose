@@ -59,9 +59,10 @@ public:
             SgAsmx86Instruction *insn = isSgAsmx86Instruction(args.insn);
             if (triggered && insn) {
                 RTS_Message *m = args.thread->tracing(TRACE_MISC);
+                m->mesg("%s: %s", name, unparseInstructionWithAddress(insn).c_str());
                 semantics.processInstruction(insn);
                 std::ostringstream ss; ss <<policy;
-                m->mesg("%s: %s\n%s", name, unparseInstructionWithAddress(insn).c_str(), ss.str().c_str());
+                m->mesg("%s", ss.str().c_str());
             }
         }
         return enabled;
