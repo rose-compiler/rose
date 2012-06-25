@@ -112,6 +112,18 @@ int main (int argc, char** argv)
         }
         else
         {
+            // TODO: enable toggling of checkers
+            // Compass::ParametersMap enabled_checkers =
+            //     params[boost::regex("general::.*")];
+            // // Save keywords in map for faster lookups.
+            // BOOST_FOREACH(const Compass::ParametersMap::value_type& pair, enabled_checkers)
+            // {
+            //     Compass::ParameterValues values = pair.second;
+            //     BOOST_FOREACH(std::string keyword, values)
+            //     {
+            //     }
+            // }
+
             if (SgProject::get_verbose () >= 0)
             {
               std::cout
