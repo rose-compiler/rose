@@ -28,3 +28,21 @@ for source code anywhere under `/Users/too1/development/`.
 ```
 
 **Important**: symbolic links are not handled properly at the moment.
+
+## Add New Checker
+
+For now, adding a checker involves a manual process, i.e. editing `compass_main.cpp`:
+
+```C++
+// compass_main.cpp
+
+extern const Compass::Checker* const functionPointerChecker;
+extern const Compass::Checker* const keywordMacroChecker;
+extern const Compass::Checker* const nonGlobalCppDirectiveChecker;
+
+...
+
+traversals.push_back (functionPointerChecker);
+traversals.push_back (keywordMacroChecker);
+traversals.push_back (nonGlobalCppDirectiveChecker);
+```
