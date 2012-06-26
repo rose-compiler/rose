@@ -23,6 +23,7 @@
 
 extern const Compass::Checker* const functionPointerChecker;
 extern const Compass::Checker* const keywordMacroChecker;
+extern const Compass::Checker* const nonGlobalCppDirectiveChecker;
 
 /*-----------------------------------------------------------------------------
  * Main program
@@ -84,6 +85,7 @@ int main (int argc, char** argv)
 
     traversals.push_back (functionPointerChecker);
     traversals.push_back (keywordMacroChecker);
+    traversals.push_back (nonGlobalCppDirectiveChecker);
 
     Compass::PrintingOutputObject output(std::cerr);
 
