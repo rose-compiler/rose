@@ -3,6 +3,10 @@
 #include "SMTSolver.h"
 #include "stringify.h"
 
+uint64_t
+InsnSemanticsExpr::LeafNode::name_counter = 0;
+
+
 const char *
 InsnSemanticsExpr::to_str(Operator o)
 {
@@ -93,11 +97,9 @@ InsnSemanticsExpr::InternalNode::depth_first_visit(Visitor *v) const
 InsnSemanticsExpr::LeafNodePtr
 InsnSemanticsExpr::LeafNode::create_variable(size_t nbits, std::string comment)
 {
-    static uint64_t name_counter = 0;
-
     LeafNode *node = new LeafNode(comment);
     node->nbits = nbits;
-    node->known = false;
+    node->leaf_type = BITVECTOR;
     node->name = name_counter++;
     LeafNodePtr retval(node);
     return retval;
@@ -109,8 +111,20 @@ InsnSemanticsExpr::LeafNode::create_integer(size_t nbits, uint64_t n, std::strin
 {
     LeafNode *node = new LeafNode(comment);
     node->nbits = nbits;
-    node->known = true;
+    node->leaf_type = CONSTANT;
     node->ival = n & (((uint64_t)1<<nbits)-1);
+    LeafNodePtr retval(node);
+    return retval;
+}
+
+/* class method */
+InsnSemanticsExpr::LeafNodePtr
+InsnSemanticsExpr::LeafNode::create_memory(size_t nbits, std::string comment)
+{
+    LeafNode *node = new LeafNode(comment);
+    node->nbits = nbits;
+    node->leaf_type = MEMORY;
+    node->name = name_counter++;
     LeafNodePtr retval(node);
     return retval;
 }
@@ -118,27 +132,39 @@ InsnSemanticsExpr::LeafNode::create_integer(size_t nbits, uint64_t n, std::strin
 bool
 InsnSemanticsExpr::LeafNode::is_known() const
 {
-    return known;
+    return CONSTANT==leaf_type;
 }
 
 uint64_t
 InsnSemanticsExpr::LeafNode::get_value() const
 {
-    assert(known);
+    assert(is_known());
     return ival;
+}
+
+bool
+InsnSemanticsExpr::LeafNode::is_variable() const
+{
+    return BITVECTOR==leaf_type;
+}
+
+bool
+InsnSemanticsExpr::LeafNode::is_memory() const
+{
+    return MEMORY==leaf_type;
 }
 
 uint64_t
 InsnSemanticsExpr::LeafNode::get_name() const
 {
-    assert(!known);
+    assert(is_variable() || is_memory());
     return name;
 }
 
 void
 InsnSemanticsExpr::LeafNode::print(std::ostream &o, RenameMap *rmap/*NULL*/) const
 {
-    if (known) {
+    if (is_known()) {
         if ((32==nbits || 64==nbits) && 0!=(ival & 0xffff0000) && 0xffff0000!=(ival & 0xffff0000)) {
             // probably an address, so print in hexadecimal.  The comparison with 0 is for positive values, and the comparison
             // with 0xffff0000 is for negative values.
@@ -160,7 +186,18 @@ InsnSemanticsExpr::LeafNode::print(std::ostream &o, RenameMap *rmap/*NULL*/) con
                 renamed = found->second;
             }
         }
-        o <<"v" <<renamed;
+        switch (leaf_type) {
+            case MEMORY:
+                o <<"m";
+                break;
+            case BITVECTOR:
+                o <<"v";
+                break;
+            case CONSTANT:
+                assert(!"handled above");
+                abort();
+        }
+        o <<renamed;
     }
     o <<"[" <<nbits;
     if (!comment.empty())
@@ -180,10 +217,10 @@ InsnSemanticsExpr::LeafNode::equal_to(const TreeNodePtr &other_, SMTSolver *solv
         if (this==other.get()) {
             retval = true;
         } else if (other) {
-            if (known) {
-                retval = other->known && ival==other->ival;
+            if (is_known()) {
+                retval = other->is_known() && ival==other->ival;
             } else {
-                retval = !other->known && name==other->name;
+                retval = !other->is_known() && name==other->name;
             }
         }
     }
