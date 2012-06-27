@@ -17,8 +17,8 @@ public:
     };
 
     /** Satisfiability constants. */
-    enum Satisfiable { SAT_YES,                 /**< Satisfiable and evidence of satisfiability may be available. */
-                       SAT_NO,                  /**< Provably unsatisfiable. */
+    enum Satisfiable { SAT_NO=0,                /**< Provably unsatisfiable. */
+                       SAT_YES,                 /**< Satisfiable and evidence of satisfiability may be available. */
                        SAT_UNKNOWN              /**< Could not be proved satisfiable or unsatisfiable. */
     };
     
