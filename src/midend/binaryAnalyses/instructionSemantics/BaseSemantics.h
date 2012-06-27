@@ -199,7 +199,7 @@ namespace BinaryAnalysis {
                         segreg[i] = ValueType<16>();
                     for (size_t i=0; i<n_flags; ++i)
                         flag[i] = ValueType<1>();
-                    mem.clear();
+                    clear_memory();
                 }
 
                 /** Initialize all registers to zero.  This is done with the ValueType((uint64_t)0) constructor. Memory is not
@@ -276,11 +276,7 @@ namespace BinaryAnalysis {
                     o <<prefix <<"registers:\n";
                     print_registers(o, prefix+"    ", ph);
                     o <<prefix <<"memory:\n";
-                    if (mem.empty()) {
-                        o <<prefix <<"    (empty)\n";
-                    } else {
-                        print_memory(o, prefix+"    ", ph);
-                    }
+                    print_memory(o, prefix+"    ", ph);
                 }
 
                 /** Prints a semantic policy state.  This is the same as calling the StateX86's print() method with an empty
