@@ -7,7 +7,8 @@
  *  a new real thread to simulate it; when the simulated thread exits, the real thread also exits.  Therefore, the methods
  *  defined for the RSIM_Thread class are intended to be called by only one thread at a time per RSIM_Thread object.
  *
- *  The RSIM_Thread object contains an RSIM_SemanticPolicy object which defines how instructions are executed. */
+ *  The RSIM_Thread object contains an instruction semantics policy object which defines how instructions are executed and
+ *  contains the register state for the thread. */
 
 class RSIM_Thread {
 public:
@@ -338,7 +339,7 @@ public:
      *  sets the value which will eventually be returned.
      *
      *  @{ */
-    void syscall_return(const RSIM_SEMANTIC_VTYPE<32> &value);
+    void syscall_return(const RSIM_SEMANTICS_VTYPE<32> &value);
     void syscall_return(int value);
     /** @} */
 
@@ -605,8 +606,8 @@ protected:
 public: //FIXME
     template<class guest_dirent_t> int getdents_syscall(int fd, uint32_t dirent_va, size_t sz);
     
-    mutable RSIM_SemanticPolicy policy;         /* Mutable because some policies aren't careful about using const "this" ptrs. */
-    RSIM_Semantics semantics;
+    mutable RSIM_SEMANTICS_POLICY policy;       /* Mutable because some policies aren't careful about using const "this" ptrs. */
+    RSIM_Semantics::Dispatcher semantics;
 
 
     /* Stuff related to threads */

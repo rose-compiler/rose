@@ -33,7 +33,7 @@ protected:
     // initialize interval semantics registers from partial symbolic semantics
     void initialize_register_intervals(RSIM_Thread *t) {
         IntervalSemantics::State<> &dst = policy.get_state();
-        PartialSymbolicSemantics::State<> &src = t->policy.get_state();
+        RSIM_Semantics::InnerState<> &src = t->policy.get_concrete_state();
         assert(dst.n_gprs==src.n_gprs);
         for (size_t i=0; i<dst.n_gprs; ++i)
             dst.gpr[i] = convert(src.gpr[i]);
