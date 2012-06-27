@@ -786,7 +786,6 @@ registers:
     ?31     = { v32225 }
     ip      = { 0x8048342 }
 memory:
-    (empty)
     ip = 0x8048342
 0x8048342:pop    esi
 registers:
@@ -1624,7 +1623,6 @@ registers:
     ?31     = { v32339 }
     ip      = { 0x8048361 }
 memory:
-    (empty)
     ip = 0x8048361
 =====================================================================================
 === Starting a new basic block                                                    ===
@@ -3053,7 +3051,6 @@ registers:
     ?31     = { v33111 }
     ip      = { 0x80483b0 }
 memory:
-    (empty)
     ip = 0x80483b0
 0x80483b0:add    eax, 0x04
 registers:
@@ -3105,7 +3102,6 @@ registers:
     ?31     = { v33111 }
     ip      = { 0x80483b3 }
 memory:
-    (empty)
     ip = 0x80483b3
 0x80483b3:mov    DWORD PTR ds:[0x080496f0<.data+8>], eax
 registers:
@@ -4009,7 +4005,6 @@ registers:
     ?31     = { v33574 }
     ip      = { 0x80483e4 }
 memory:
-    (empty)
     ip = 0x80483e4
 0x80483e4:test   eax, eax
 registers:
@@ -4061,7 +4056,6 @@ registers:
     ?31     = { v33574 }
     ip      = { 0x80483e6 }
 memory:
-    (empty)
     ip = 0x80483e6
 0x80483e6:je     0x08048400<<Insn>>
 registers:
@@ -4113,7 +4107,6 @@ registers:
     ?31     = { v33574 }
     ip      = { 0x8048400 }
 memory:
-    (empty)
     ip = 0x8048400
 0x8048400:mov    esp, ebp
 registers:
@@ -4165,7 +4158,6 @@ registers:
     ?31     = { v33574 }
     ip      = { 0x8048402 }
 memory:
-    (empty)
     ip = 0x8048402
 0x8048402:pop    ebp
 registers:
@@ -4445,7 +4437,6 @@ registers:
     ?31     = { v33765 }
     ip      = { 0x80483fa }
 memory:
-    (empty)
     ip = 0x80483fa
 0x80483fa:lea    edi, [edi + 0x00000000]
 registers:
@@ -4497,7 +4488,6 @@ registers:
     ?31     = { v33765 }
     ip      = { 0x8048400 }
 memory:
-    (empty)
     ip = 0x8048400
 =====================================================================================
 === Starting a new basic block                                                    ===
@@ -5005,7 +4995,6 @@ registers:
     ?31     = { v33993 }
     ip      = { 0x8048430 }
 memory:
-    (empty)
     ip = 0x8048430
 0x8048430:xor    eax, eax
 registers:
@@ -5057,7 +5046,6 @@ registers:
     ?31     = { v33993 }
     ip      = { 0x8048432 }
 memory:
-    (empty)
     ip = 0x8048432
 0x8048432:pop    ebp
 registers:
@@ -5505,7 +5493,6 @@ registers:
     ?31     = { v34206 }
     ip      = { 0x8048454 }
 memory:
-    (empty)
     ip = 0x8048454
 0x8048454:pop    ebp
 registers:
@@ -7111,7 +7098,6 @@ registers:
     ?31     = { v34977 }
     ip      = { 0x80484d0 }
 memory:
-    (empty)
     ip = 0x80484d0
 0x80484d0:lea    edx, [ebx + 0xffffff20<-0x000000e0>]
 registers:
@@ -7163,7 +7149,6 @@ registers:
     ?31     = { v34977 }
     ip      = { 0x80484d6 }
 memory:
-    (empty)
     ip = 0x80484d6
 0x80484d6:sub    eax, edx
 registers:
@@ -7215,7 +7200,6 @@ registers:
     ?31     = { v34977 }
     ip      = { 0x80484d8 }
 memory:
-    (empty)
     ip = 0x80484d8
 0x80484d8:sar    eax, 0x02
 registers:
@@ -7267,7 +7251,6 @@ registers:
     ?31     = { v34977 }
     ip      = { 0x80484db }
 memory:
-    (empty)
     ip = 0x80484db
 0x80484db:mov    DWORD PTR ss:[ebp + 0xf0<-0x10>], eax
 registers:
@@ -8831,7 +8814,6 @@ registers:
     ?31     = { v35339 }
     ip      = { 0x8048552 }
 memory:
-    (empty)
     ip = 0x8048552
 0x8048552:xor    edi, edi
 registers:
@@ -8883,7 +8865,6 @@ registers:
     ?31     = { v35339 }
     ip      = { 0x8048554 }
 memory:
-    (empty)
     ip = 0x8048554
 0x8048554:lea    esi, [esi + 0x00000000]
 registers:
@@ -8935,7 +8916,6 @@ registers:
     ?31     = { v35339 }
     ip      = { 0x804855a }
 memory:
-    (empty)
     ip = 0x804855a
 0x804855a:lea    edi, [edi + 0x00000000]
 registers:
@@ -8987,7 +8967,6 @@ registers:
     ?31     = { v35339 }
     ip      = { 0x8048560 }
 memory:
-    (empty)
     ip = 0x8048560
 0x8048560:call   DWORD PTR ds:[esi]
 registers:
@@ -9099,7 +9078,6 @@ registers:
     ?31     = { v35437 }
     ip      = { 0x8048563 }
 memory:
-    (empty)
     ip = 0x8048563
 0x8048563:sub    esi, 0x04
 registers:
@@ -9151,7 +9129,6 @@ registers:
     ?31     = { v35437 }
     ip      = { 0x8048566 }
 memory:
-    (empty)
     ip = 0x8048566
 0x8048566:cmp    DWORD PTR ss:[ebp + 0xf0<-0x10>], edi
 registers:
@@ -9314,7 +9291,6 @@ registers:
     ?31     = { v35599 }
     ip      = { 0x8048573 }
 memory:
-    (empty)
     ip = 0x8048573
 0x8048573:pop    ebx
 registers:
@@ -10131,7 +10107,6 @@ registers:
     ?31     = { v35860 }
     ip      = { 0x8048599 }
 memory:
-    (empty)
     ip = 0x8048599
 0x8048599:lea    edi, [edi + 0x00000000]
 registers:
@@ -10183,7 +10158,6 @@ registers:
     ?31     = { v35860 }
     ip      = { 0x80485a0 }
 memory:
-    (empty)
     ip = 0x80485a0
 0x80485a0:sub    ebx, 0x04
 registers:
@@ -10235,7 +10209,6 @@ registers:
     ?31     = { v35860 }
     ip      = { 0x80485a3 }
 memory:
-    (empty)
     ip = 0x80485a3
 0x80485a3:call   eax
 registers:

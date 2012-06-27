@@ -786,7 +786,6 @@
         ?31     = { defs={} expr=v946[1] }
         ip      = { defs={0x08048340} expr=0x08048342[32] }
     memory:
-        (empty)
     ip = defs={0x08048340} expr=0x08048342[32]
 0x8048342:pop    esi
     registers:
@@ -1624,7 +1623,6 @@
         ?31     = { defs={} expr=v1043[1] }
         ip      = { defs={0x08048361} expr=0x08048361[32] }
     memory:
-        (empty)
     ip = defs={0x08048361} expr=0x08048361[32]
 =====================================================================================
 === Starting a new basic block                                                    ===
@@ -3053,7 +3051,6 @@
         ?31     = { defs={} expr=v1712[1] }
         ip      = { defs={0x080483aa} expr=0x080483b0[32] }
     memory:
-        (empty)
     ip = defs={0x080483aa} expr=0x080483b0[32]
 0x80483b0:add    eax, 0x04
     registers:
@@ -3105,7 +3102,6 @@
         ?31     = { defs={} expr=v1712[1] }
         ip      = { defs={0x080483aa,0x080483b0} expr=0x080483b3[32] }
     memory:
-        (empty)
     ip = defs={0x080483aa,0x080483b0} expr=0x080483b3[32]
 0x80483b3:mov    DWORD PTR ds:[0x080496f0<.data+8>], eax
     registers:
@@ -4009,7 +4005,6 @@
         ?31     = { defs={} expr=v2095[1] }
         ip      = { defs={0x080483df} expr=0x080483e4[32] }
     memory:
-        (empty)
     ip = defs={0x080483df} expr=0x080483e4[32]
 0x80483e4:test   eax, eax
     registers:
@@ -4061,7 +4056,6 @@
         ?31     = { defs={} expr=v2095[1] }
         ip      = { defs={0x080483df,0x080483e4} expr=0x080483e6[32] }
     memory:
-        (empty)
     ip = defs={0x080483df,0x080483e4} expr=0x080483e6[32]
 0x80483e6:je     0x08048400<<Insn>>
     registers:
@@ -4113,7 +4107,6 @@
         ?31     = { defs={} expr=v2095[1] }
         ip      = { defs={0x080483df,0x080483e4,0x080483e6} expr=0x08048400[32] }
     memory:
-        (empty)
     ip = defs={0x080483df,0x080483e4,0x080483e6} expr=0x08048400[32]
 0x8048400:mov    esp, ebp
     registers:
@@ -4165,7 +4158,6 @@
         ?31     = { defs={} expr=v2095[1] }
         ip      = { defs={0x080483df,0x080483e4,0x080483e6,0x08048400} expr=0x08048402[32] }
     memory:
-        (empty)
     ip = defs={0x080483df,0x080483e4,0x080483e6,0x08048400} expr=0x08048402[32]
 0x8048402:pop    ebp
     registers:
@@ -4445,7 +4437,6 @@
         ?31     = { defs={} expr=v2286[1] }
         ip      = { defs={0x080483f4} expr=0x080483fa[32] }
     memory:
-        (empty)
     ip = defs={0x080483f4} expr=0x080483fa[32]
 0x80483fa:lea    edi, [edi + 0x00000000]
     registers:
@@ -4497,7 +4488,6 @@
         ?31     = { defs={} expr=v2286[1] }
         ip      = { defs={0x080483f4,0x080483fa} expr=0x08048400[32] }
     memory:
-        (empty)
     ip = defs={0x080483f4,0x080483fa} expr=0x08048400[32]
 =====================================================================================
 === Starting a new basic block                                                    ===
@@ -5005,7 +4995,6 @@
         ?31     = { defs={} expr=v2475[1] }
         ip      = { defs={0x0804842e} expr=0x08048430[32] }
     memory:
-        (empty)
     ip = defs={0x0804842e} expr=0x08048430[32]
 0x8048430:xor    eax, eax
     registers:
@@ -5057,7 +5046,6 @@
         ?31     = { defs={} expr=v2475[1] }
         ip      = { defs={0x0804842e,0x08048430} expr=0x08048432[32] }
     memory:
-        (empty)
     ip = defs={0x0804842e,0x08048430} expr=0x08048432[32]
 0x8048432:pop    ebp
     registers:
@@ -5505,7 +5493,6 @@
         ?31     = { defs={} expr=v2666[1] }
         ip      = { defs={0x08048452} expr=0x08048454[32] }
     memory:
-        (empty)
     ip = defs={0x08048452} expr=0x08048454[32]
 0x8048454:pop    ebp
     registers:
@@ -7111,7 +7098,6 @@
         ?31     = { defs={} expr=v3328[1] }
         ip      = { defs={0x080484ca} expr=0x080484d0[32] }
     memory:
-        (empty)
     ip = defs={0x080484ca} expr=0x080484d0[32]
 0x80484d0:lea    edx, [ebx + 0xffffff20<-0x000000e0>]
     registers:
@@ -7163,7 +7149,6 @@
         ?31     = { defs={} expr=v3328[1] }
         ip      = { defs={0x080484ca,0x080484d0} expr=0x080484d6[32] }
     memory:
-        (empty)
     ip = defs={0x080484ca,0x080484d0} expr=0x080484d6[32]
 0x80484d6:sub    eax, edx
     registers:
@@ -7215,7 +7200,6 @@
         ?31     = { defs={} expr=v3328[1] }
         ip      = { defs={0x080484ca,0x080484d0,0x080484d6} expr=0x080484d8[32] }
     memory:
-        (empty)
     ip = defs={0x080484ca,0x080484d0,0x080484d6} expr=0x080484d8[32]
 0x80484d8:sar    eax, 0x02
     registers:
@@ -7267,7 +7251,6 @@
         ?31     = { defs={} expr=v3328[1] }
         ip      = { defs={0x080484ca,0x080484d0,0x080484d6,0x080484d8} expr=0x080484db[32] }
     memory:
-        (empty)
     ip = defs={0x080484ca,0x080484d0,0x080484d6,0x080484d8} expr=0x080484db[32]
 0x80484db:mov    DWORD PTR ss:[ebp + 0xf0<-0x10>], eax
     registers:
@@ -8831,7 +8814,6 @@
         ?31     = { defs={} expr=v3624[1] }
         ip      = { defs={0x0804854f} expr=0x08048552[32] }
     memory:
-        (empty)
     ip = defs={0x0804854f} expr=0x08048552[32]
 0x8048552:xor    edi, edi
     registers:
@@ -8883,7 +8865,6 @@
         ?31     = { defs={} expr=v3624[1] }
         ip      = { defs={0x0804854f,0x08048552} expr=0x08048554[32] }
     memory:
-        (empty)
     ip = defs={0x0804854f,0x08048552} expr=0x08048554[32]
 0x8048554:lea    esi, [esi + 0x00000000]
     registers:
@@ -8935,7 +8916,6 @@
         ?31     = { defs={} expr=v3624[1] }
         ip      = { defs={0x0804854f,0x08048552,0x08048554} expr=0x0804855a[32] }
     memory:
-        (empty)
     ip = defs={0x0804854f,0x08048552,0x08048554} expr=0x0804855a[32]
 0x804855a:lea    edi, [edi + 0x00000000]
     registers:
@@ -8987,7 +8967,6 @@
         ?31     = { defs={} expr=v3624[1] }
         ip      = { defs={0x0804854f,0x08048552,0x08048554,0x0804855a} expr=0x08048560[32] }
     memory:
-        (empty)
     ip = defs={0x0804854f,0x08048552,0x08048554,0x0804855a} expr=0x08048560[32]
 0x8048560:call   DWORD PTR ds:[esi]
     registers:
@@ -9099,7 +9078,6 @@
         ?31     = { defs={} expr=v3720[1] }
         ip      = { defs={0x08048562} expr=0x08048563[32] }
     memory:
-        (empty)
     ip = defs={0x08048562} expr=0x08048563[32]
 0x8048563:sub    esi, 0x04
     registers:
@@ -9151,7 +9129,6 @@
         ?31     = { defs={} expr=v3720[1] }
         ip      = { defs={0x08048562,0x08048563} expr=0x08048566[32] }
     memory:
-        (empty)
     ip = defs={0x08048562,0x08048563} expr=0x08048566[32]
 0x8048566:cmp    DWORD PTR ss:[ebp + 0xf0<-0x10>], edi
     registers:
@@ -9314,7 +9291,6 @@
         ?31     = { defs={} expr=v3815[1] }
         ip      = { defs={0x08048570} expr=0x08048573[32] }
     memory:
-        (empty)
     ip = defs={0x08048570} expr=0x08048573[32]
 0x8048573:pop    ebx
     registers:
@@ -10131,7 +10107,6 @@
         ?31     = { defs={} expr=v4009[1] }
         ip      = { defs={0x08048596} expr=0x08048599[32] }
     memory:
-        (empty)
     ip = defs={0x08048596} expr=0x08048599[32]
 0x8048599:lea    edi, [edi + 0x00000000]
     registers:
@@ -10183,7 +10158,6 @@
         ?31     = { defs={} expr=v4009[1] }
         ip      = { defs={0x08048596,0x08048599} expr=0x080485a0[32] }
     memory:
-        (empty)
     ip = defs={0x08048596,0x08048599} expr=0x080485a0[32]
 0x80485a0:sub    ebx, 0x04
     registers:
@@ -10235,7 +10209,6 @@
         ?31     = { defs={} expr=v4009[1] }
         ip      = { defs={0x08048596,0x08048599,0x080485a0} expr=0x080485a3[32] }
     memory:
-        (empty)
     ip = defs={0x08048596,0x08048599,0x080485a0} expr=0x080485a3[32]
 0x80485a3:call   eax
     registers:
