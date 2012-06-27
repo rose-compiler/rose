@@ -15,6 +15,12 @@ public:
         friend std::ostream& operator<<(std::ostream&, const SMTSolver::Exception&);
         std::string mesg;
     };
+
+    /** Satisfiability constants. */
+    enum Satisfiable { SAT_YES,                 /**< Satisfiable and evidence of satisfiability may be available. */
+                       SAT_NO,                  /**< Provably unsatisfiable. */
+                       SAT_UNKNOWN              /**< Could not be proved satisfiable or unsatisfiable. */
+    };
     
     typedef std::set<uint64_t> Definitions;     /**< Free variables that have been defined. */
 
@@ -22,24 +28,45 @@ public:
 
     virtual ~SMTSolver() {}
 
-    /** Determines if the specified expression is satisfiable. Throws Exception if satisfiability cannot be determined. */
-    virtual bool satisfiable(const InsnSemanticsExpr::TreeNodePtr &expr);
+    /** Determines if the specified expression is satisfiable, unsatisfiable, or unknown. */
+    virtual Satisfiable satisfiable(const InsnSemanticsExpr::TreeNodePtr &expr);
 
-    /** Determines if the specified collection of expressions is satisfiable.  Throws Exception if satisfiability cannot be
-     *  determined. */
-    virtual bool satisfiable(const std::vector<InsnSemanticsExpr::TreeNodePtr> &exprs);
+    /** Determines if the specified collection of expressions is satisfiable. */
+    virtual Satisfiable satisfiable(const std::vector<InsnSemanticsExpr::TreeNodePtr> &exprs);
 
-    /** Evidence of satisfiability.  If an expression is satisfiable, this function will return information about which values
-     *  should be bound to variables to make the expression satisfiable.  Not all SMT solvers can return this information.
-     *  @{ */
-    virtual InsnSemanticsExpr::TreeNodePtr get_definition(uint64_t varno) {
+    /** Evidence of satisfiability for a bitvector variable.  If an expression is satisfiable, this function will return
+     *  a value for the specified bitvector variable that satisfies the expression in conjunction with the other evidence. Not
+     *  all SMT solvers can return this information.  Returns the null pointer if no evidence is available for the variable. */
+    virtual InsnSemanticsExpr::TreeNodePtr evidence_for_variable(uint64_t varno) {
+        char buf[64];
+        snprintf(buf, sizeof buf, "v%"PRIu64, varno);
+        return evidence_for_name(buf);
+    }
+
+    /** Evidence of satisfiability for a memory address.  If an expression is satisfiable, this function will return
+     *  a value for the specified memory address that satisfies the expression in conjunction with the other evidence. Not
+     *  all SMT solvers can return this information. Returns the null pointer if no evidence is available for the memory
+     *  address. */
+    virtual InsnSemanticsExpr::TreeNodePtr evidence_for_address(uint64_t addr) {
+        return evidence_for_name(StringUtility::addrToString(addr));
+    }
+
+    /** Evidence of satisfiability for a variable or memory address.  If the string starts with the letter 'v' then variable
+     *  evidence is returned, otherwise the string must be an address.  The strings are those values returned by the
+     *  evidence_names() method.  Not all SMT solvers can return this information.  Returns the null pointer if no evidence is
+     *  available for the named item. */
+    virtual InsnSemanticsExpr::TreeNodePtr evidence_for_name(const std::string&) {
         return InsnSemanticsExpr::TreeNodePtr();
     }
-    virtual InsnSemanticsExpr::TreeNodePtr get_definition(const InsnSemanticsExpr::LeafNodePtr &var) {
-        assert(var!=NULL && !var->is_known());
-        return get_definition(var->get_name());
+
+    /** Names of items for which satisfiability evidence exists.  Returns a vector of strings (variable names or memory
+     * addresses) that can be passed to evidence_for_name().  Not all SMT solvers can return this information. */
+    virtual std::vector<std::string> evidence_names() {
+        return std::vector<std::string>();
     }
-    /** @} */
+
+    /** Clears evidence information. */
+    virtual void clear_evidence() {}
 
     /** Turns debugging on or off. */
     void set_debug(FILE *f) { debug = f; }
@@ -67,7 +94,7 @@ protected:
     virtual void parse_evidence() {};
 
     /** Additional output obtained by satisfiable(). */
-    std::vector<std::string> output_text;
+    std::string output_text;
     
     /** Tracks the number of times an SMT solver was called. Actually, the number of calls to satisfiable() */
     static size_t total_calls;

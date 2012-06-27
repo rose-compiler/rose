@@ -236,8 +236,8 @@ namespace BinaryAnalysis {              // documented elsewhere
                  *  in a naive definition).
                  * 
                  *  Address X and Y may alias each other if X+datasize(X)>=Y or X<Y+datasize(Y) where datasize(A) is the number
-                 *  of bytes stored at address A. In other words, if the following expression is satisfiable, then the memory
-                 *  cells might alias one another.
+                 *  of bytes stored at address A. In other words, if the following expression is satisfiable (or satisfiability
+                 *  cannot be determined), then the memory cells might alias one another.
                  *
                  *  \code
                  *     ((X.addr + X.nbytes > Y.addr) && (X.addr < Y.addr + Y.nbytes)) ||
@@ -276,7 +276,7 @@ namespace BinaryAnalysis {              // documented elsewhere
                                                  InternalNode::create(1, InsnSemanticsExpr::OP_ULT, y_addr, x_end));
                         TreeNodePtr assertion =
                             InternalNode::create(1, InsnSemanticsExpr::OP_OR, and1, and2);
-                        retval = solver->satisfiable(assertion);
+                        retval = SMTSolver::SAT_NO != solver->satisfiable(assertion);
                     }
                     return retval;
                 }
@@ -810,7 +810,7 @@ namespace BinaryAnalysis {              // documented elsewhere
                         TreeNodePtr assertion = InternalNode::create(1, InsnSemanticsExpr::OP_EQ,
                                                                      sel.get_expression(),
                                                                      LeafNode::create_integer(1, 1));
-                        bool can_be_true = solver->satisfiable(assertion);
+                        bool can_be_true = SMTSolver::SAT_NO != solver->satisfiable(assertion);
                         if (!can_be_true) {
                             ValueType<Len> retval = ifFalse;
                             return retval.defined_by(cur_insn, sel.get_defining_instructions());
@@ -819,7 +819,7 @@ namespace BinaryAnalysis {              // documented elsewhere
                         /* If the selection expression cannot be false, then return ifTrue */
                         assertion = InternalNode::create(1, InsnSemanticsExpr::OP_EQ,
                                                          sel.get_expression(), LeafNode::create_integer(1, 0));
-                        bool can_be_false = solver->satisfiable(assertion);
+                        bool can_be_false = SMTSolver::SAT_NO != solver->satisfiable(assertion);
                         if (!can_be_false) {
                             ValueType<Len> retval = ifTrue;
                             return retval.defined_by(cur_insn, sel.get_defining_instructions());

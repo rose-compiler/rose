@@ -66,7 +66,7 @@ InsnSemanticsExpr::InternalNode::equal_to(const TreeNodePtr &other_, SMTSolver *
     bool retval = false;
     if (solver) {
         InternalNodePtr assertion = InternalNode::create(1, OP_NE, shared_from_this(), other_);
-        retval = !solver->satisfiable(assertion); /*equal if we cannot find a solution for inequality*/
+        retval = SMTSolver::SAT_NO==solver->satisfiable(assertion); /*equal if there is no solution for inequality*/
     } else {
         /* The naive approach uses structural equality */
         InternalNodePtr other = other_->isInternalNode();
@@ -211,7 +211,7 @@ InsnSemanticsExpr::LeafNode::equal_to(const TreeNodePtr &other_, SMTSolver *solv
     bool retval = false;
     if (solver) {
         InternalNodePtr assertion = InternalNode::create(1, OP_NE, shared_from_this(), other_);
-        retval = !solver->satisfiable(assertion); /*equal if we cannot find a solution for inequality*/
+        retval = SMTSolver::SAT_NO==solver->satisfiable(assertion); /*equal if there is no solution for inequality*/
     } else {
         LeafNodePtr other = other_->isLeafNode();
         if (this==other.get()) {
