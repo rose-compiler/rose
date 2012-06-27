@@ -292,6 +292,10 @@ namespace BinaryAnalysis {              // documented elsewhere
             /** Represents the entire state of the machine. */
             template <template <size_t> class ValueType=SymbolicSemantics::ValueType>
             struct State: public BaseSemantics::StateX86<MemoryCell, ValueType> {
+#if 0 /* DEBUGGING [RPM 2012-06-25] */
+                State() { solver_mem = LeafNode::create_memory(32); }
+#endif
+                
                 /** Print info about how registers differ.  If a rename map is specified then named values will be renamed to
                  *  have a shorter name.  See the ValueType<>::rename() method for details. */
                 void print_diff_registers(std::ostream &o, const State&, RenameMap *rmap=NULL) const;
@@ -303,6 +307,40 @@ namespace BinaryAnalysis {              // documented elsewhere
                  *  after each instruction if the policy's p_discard_popped_memory property is set. */
                 void discard_popped_memory() {
                     /*FIXME: not implemented yet. [RPM 2010-05-24]*/
+                }
+
+#if 0 /* DEBUGGING [RPM 2012-06-25] */
+                /** Memory state when using an SMT solver. When an SMT solver is present use this memory representation instead
+                 *  of the one defined in BaseSemantics::StateX86. */
+                TreeNodePtr solver_mem;
+
+                void clear_memory() /*overrides*/ {
+                    BaseSemantics::StateX86<MemoryCell, ValueType>::clear_memory();
+                    solver_mem = LeafNode::create_memory(32);
+                }
+#endif
+
+                template<typename PrintHelper>
+                void print(std::ostream &o, const std::string prefix="", PrintHelper *ph=NULL) const /*overrides*/ {
+                    o <<prefix <<"registers:\n";
+                    print_registers(o, prefix+"    ", ph);
+                    o <<prefix <<"memory:\n";
+                    print_memory(o, prefix+"    ", ph);
+                }
+
+#if 0 /* DEBUGGING [RPM 2012-06-25] */
+                template<typename PrintHelper>
+                void print_memory(std::ostream &o, const std::string prefix="", PrintHelper *ph=NULL) const /*overrides*/ {
+                    BaseSemantics::StateX86<MemoryCell, ValueType>::print_memory(o, prefix, ph);
+                    o <<prefix;
+                    solver_mem->print(o);
+                    o <<"\n";
+                }
+#endif
+                
+                friend std::ostream& operator <<(std::ostream &o, const State &state) {
+                    state.template print<BaseSemantics::SEMANTIC_NO_PRINT_HELPER>(o);
+                    return o;
                 }
             };
 
@@ -1301,6 +1339,11 @@ namespace BinaryAnalysis {              // documented elsewhere
                 /** See NullSemantics::Policy::readMemory() */
                 template <size_t Len> ValueType<Len>
                 readMemory(X86SegmentRegister segreg, const ValueType<32> &addr, const ValueType<1> &cond) const {
+#if 0 /* DEBUGGING [RPM 2012-06-25] */
+                    if (solver)
+                        return ValueType<Len>(InternalNode::create(Len, InsnSemanticsExpr::OP_READ, cur_state.solver_mem,
+                                                                   addr.get_expression()));
+#endif
                     return mem_read<Len>(cur_state, addr, ValueType<Len>());
                 }
 
@@ -1308,6 +1351,14 @@ namespace BinaryAnalysis {              // documented elsewhere
                 template <size_t Len> void
                 writeMemory(X86SegmentRegister segreg, const ValueType<32> &addr, const ValueType<Len> &data,
                             const ValueType<1> &cond) {
+#if 0 /* DEBUGGING [RPM 2012-06-25] */
+                    if (solver) {
+                        cur_state.solver_mem = InternalNode::create(Len, InsnSemanticsExpr::OP_WRITE,
+                                                                    cur_state.solver_mem, addr.get_expression(),
+                                                                    data.get_expression());
+                        return;
+                    }
+#endif
                     mem_write<Len>(cur_state, addr, data);
                 }
             };
