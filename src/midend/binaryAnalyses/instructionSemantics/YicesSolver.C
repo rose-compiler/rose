@@ -25,7 +25,7 @@ YicesSolver::init()
 
 YicesSolver::~YicesSolver() 
 {
-#ifdef HAVE_LIBYICES
+#ifdef ROSE_HAVE_LIBYICES
     if (context) {
         yices_del_context(context);
         context = NULL;
@@ -37,10 +37,10 @@ unsigned
 YicesSolver::available_linkage() const
 {
     unsigned retval = 0;
-#ifdef HAVE_LIBYICES
+#ifdef ROSE_HAVE_LIBYICES
     retval |= LM_LIBRARY;
 #endif
-#ifdef YICES
+#ifdef ROSE_YICES
     retval |= LM_EXECUTABLE;
 #endif
     return retval;
@@ -50,7 +50,7 @@ YicesSolver::available_linkage() const
 bool
 YicesSolver::satisfiable(const std::vector<TreeNodePtr> &exprs)
 {
-#ifdef HAVE_LIBYICES
+#ifdef ROSE_HAVE_LIBYICES
     if (get_linkage() & LM_LIBRARY) {
         total_calls++;
 
@@ -87,7 +87,7 @@ YicesSolver::satisfiable(const std::vector<TreeNodePtr> &exprs)
 std::string
 YicesSolver::get_command(const std::string &config_name)
 {
-#ifdef YICES
+#ifdef ROSE_YICES
     ROSE_ASSERT(get_linkage() & LM_EXECUTABLE);
     return std::string(YICES) + " --evidence --type-check " + config_name;
 #else
@@ -483,7 +483,7 @@ YicesSolver::ctx_define(const TreeNodePtr &tn, Definitions *defns)
 }
 #endif
 
-#ifdef HAVE_LIBYICES
+#ifdef ROSE_HAVE_LIBYICES
 /** Assert a constraint in the logical context. */
 void
 YicesSolver::ctx_assert(const TreeNodePtr &tn)
@@ -494,7 +494,7 @@ YicesSolver::ctx_assert(const TreeNodePtr &tn)
 }
 #endif
 
-#ifdef HAVE_LIBYICES
+#ifdef ROSE_HAVE_LIBYICES
 /** Builds a Yices expression from a ROSE expression. */
 yices_expr
 YicesSolver::ctx_expr(const TreeNodePtr &tn)
@@ -563,7 +563,7 @@ YicesSolver::ctx_expr(const TreeNodePtr &tn)
 }
 #endif
 
-#ifdef HAVE_LIBYICES
+#ifdef ROSE_HAVE_LIBYICES
 /* Create Yices expression from unary ROSE expression. */
 yices_expr
 YicesSolver::ctx_unary(UnaryAPI f, const InternalNodePtr &in)
@@ -576,7 +576,7 @@ YicesSolver::ctx_unary(UnaryAPI f, const InternalNodePtr &in)
 }
 #endif
 
-#ifdef HAVE_LIBYICES
+#ifdef ROSE_HAVE_LIBYICES
 /* Create Yices epxression from binary ROSE expression. */
 yices_expr
 YicesSolver::ctx_binary(BinaryAPI f, const InternalNodePtr &in)
@@ -589,7 +589,7 @@ YicesSolver::ctx_binary(BinaryAPI f, const InternalNodePtr &in)
 }
 #endif
 
-#ifdef HAVE_LIBYICES
+#ifdef ROSE_HAVE_LIBYICES
 /* Create Yices expression for if-then-else operator. */
 yices_expr
 YicesSolver::ctx_ite(const InternalNodePtr &in)
@@ -603,7 +603,7 @@ YicesSolver::ctx_ite(const InternalNodePtr &in)
 }
 #endif
 
-#ifdef HAVE_LIBYICES
+#ifdef ROSE_HAVE_LIBYICES
 /* Create Yices expression for left-associative, binary operators. The @p identity is sign-extended and used as the
  * second operand if only one operand is supplied. */
 yices_expr
@@ -629,7 +629,7 @@ YicesSolver::ctx_la(BinaryAPI f, const InternalNodePtr &in, bool identity)
 }
 #endif
 
-#ifdef HAVE_LIBYICES
+#ifdef ROSE_HAVE_LIBYICES
 yices_expr
 YicesSolver::ctx_la(NaryAPI f, const InternalNodePtr &in, bool identity)
 {
@@ -647,7 +647,7 @@ YicesSolver::ctx_la(NaryAPI f, const InternalNodePtr &in, bool identity)
 }
 #endif
 
-#ifdef HAVE_LIBYICES
+#ifdef ROSE_HAVE_LIBYICES
 yices_expr
 YicesSolver::ctx_la(BinaryAPI f, const InternalNodePtr &in)
 {
@@ -656,7 +656,7 @@ YicesSolver::ctx_la(BinaryAPI f, const InternalNodePtr &in)
 }
 #endif
 
-#ifdef HAVE_LIBYICES
+#ifdef ROSE_HAVE_LIBYICES
 /** Generate a Yices expression for extract. The yices_mk_bv_extract() second two arguments must be constants. */
 yices_expr
 YicesSolver::ctx_extract(const InternalNodePtr &in)
@@ -673,7 +673,7 @@ YicesSolver::ctx_extract(const InternalNodePtr &in)
 }
 #endif
 
-#ifdef HAVE_LIBYICES
+#ifdef ROSE_HAVE_LIBYICES
 /** Generate a Yices expression for sign-extend. The third argument for yices_mk_bv_sign_extend() is the number of bits by which
  *  the second argument should be extended.  We compute that from the first argument of the OP_SEXTEND operator (the new size)
  *  and the size of the second operand (the bit vector to be extended). */
@@ -690,7 +690,7 @@ YicesSolver::ctx_sext(const InternalNodePtr &in)
 }
 #endif
 
-#ifdef HAVE_LIBYICES
+#ifdef ROSE_HAVE_LIBYICES
 /** Generate a Yices expression for unsigned-extend.  ROSE's (OP_UEXT NewSize Vector) is rewritten to
  *
  *  (bv-concat (mk-bv [NewSize-OldSize] 0) Vector)
@@ -710,7 +710,7 @@ YicesSolver::ctx_uext(const InternalNodePtr &in)
 }
 #endif
 
-#ifdef HAVE_LIBYICES
+#ifdef ROSE_HAVE_LIBYICES
 /** Generates a Yices expression for shift operators. */
 yices_expr
 YicesSolver::ctx_shift(ShiftAPI f, const InternalNodePtr &in)
@@ -724,7 +724,7 @@ YicesSolver::ctx_shift(ShiftAPI f, const InternalNodePtr &in)
 }
 #endif
 
-#ifdef HAVE_LIBYICES
+#ifdef ROSE_HAVE_LIBYICES
 /** Generates a Yices expression for arithmetic right shift.  Yices doesn't have a sign-extending right shift, therefore we
  *  implement it in terms of other operations.  (OP_ASR ShiftAmount Vector) becomes
  *
@@ -753,7 +753,7 @@ YicesSolver::ctx_asr(const InternalNodePtr &in)
 }
 #endif
 
-#ifdef HAVE_LIBYICES
+#ifdef ROSE_HAVE_LIBYICES
 /** Output for zero comparison. Result should be a single bit:
  *  \code
  *      (OP_ZEROP X)
@@ -779,7 +779,7 @@ YicesSolver::ctx_zerop(const InternalNodePtr &in)
 }
 #endif
 
-#ifdef HAVE_LIBYICES
+#ifdef ROSE_HAVE_LIBYICES
 /** Generate a Yices expression for multiply. The OP_SMUL and OP_UMUL nodes of InsnSemanticsExpr define the result width to be
  *  the sum of the input widths. Yices' bv-mul operator requires that both operands are the same size and the result is the
  *  size of each operand. Therefore, we rewrite (OP_SMUL A B) to become, in Yices:

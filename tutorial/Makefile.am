@@ -30,7 +30,7 @@ bin_PROGRAMS = \
    interproceduralCFG \
    virtualCFG
 
-if HAVE_YICES
+if ROSE_HAVE_YICES
 bin_PROGRAMS += \
    yicesTutorialExample
 endif
@@ -160,7 +160,7 @@ wholeASTGraphGenerator_SOURCES = wholeASTGraphGenerator.C
 
 identityTranslator_SOURCES = identityTranslator.C
 
-if HAVE_YICES
+if ROSE_HAVE_YICES
 yicesTutorialExample_SOURCES = yicesTutorialExample.C
 endif
 lineReplacement_SOURCES = lineReplacement.C
@@ -545,7 +545,7 @@ loopOptimizationOutputFiles = \
 
 testLoopOptimization: loopProcessor $(loopOptimizationOutputFiles)
 
-if HAVE_YICES
+if ROSE_HAVE_YICES
 yicesTutorialExampleOutputFiles = \
     yicesInputExample.C
 endif
@@ -614,7 +614,7 @@ testAddArbitraryTextForUnparser:
 testCollectComments: collectComments
 	./collectComments -rose:collectAllCommentsAndDirectives -I$(srcdir) -c $(srcdir)/inputCode_collectComments.C
 
-if HAVE_YICES
+if ROSE_HAVE_YICES
 testYicesTutorialExample: yicesTutorialExample
 	./yicesTutorialExample -I$(srcdir) -c $(srcdir)/yicesInputExample.C
 endif
@@ -1531,7 +1531,7 @@ EXTRA_DIST = \
    inputCode_reductionRecognition.C \
    livenessAnalysis-2.C
 
-if HAVE_YICES
+if ROSE_HAVE_YICES
     EXTRA_DIST += yicesInputExample.C
 endif
 

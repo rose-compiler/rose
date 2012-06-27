@@ -3,7 +3,7 @@
 
 #include "SMTSolver.h"
 
-#ifdef HAVE_LIBYICES
+#ifdef ROSE_HAVE_LIBYICES
 #  include <yices_c.h>
 #endif
 
@@ -97,7 +97,7 @@ private:
     void out_zerop(std::ostream&, const InsnSemanticsExpr::InternalNodePtr&);
     void out_mult(std::ostream &o, const InsnSemanticsExpr::InternalNodePtr&);
 
-#ifdef HAVE_LIBYICES
+#ifdef ROSE_HAVE_LIBYICES
     /* These ctx_*() functions build a Yices context object if Yices is linked into this executable. */
     typedef yices_expr (*UnaryAPI)(yices_context, yices_expr operand);
     typedef yices_expr (*BinaryAPI)(yices_context, yices_expr operand1, yices_expr operand2);
