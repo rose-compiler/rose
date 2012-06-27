@@ -44,15 +44,15 @@ if ENABLE_JAVAPORT
 else
 	@echo "Automake conditional ENABLE_JAVAPORT: NOT defined"
 endif
-if HAVE_LIBYICES
-	@echo "Automake conditional HAVE_LIBYICES: DEFINED"
+if ROSE_HAVE_LIBYICES
+	@echo "Automake conditional ROSE_HAVE_LIBYICES: DEFINED"
 else
-	@echo "Automake conditional HAVE_LIBYICES: NOT defined"
+	@echo "Automake conditional ROSE_HAVE_LIBYICES: NOT defined"
 endif
-if HAVE_YICES
-	@echo "Automake conditional HAVE_YICES: DEFINED"
+if ROSE_HAVE_YICES
+	@echo "Automake conditional ROSE_HAVE_YICES: DEFINED"
 else
-	@echo "Automake conditional HAVE_YICES: NOT defined"
+	@echo "Automake conditional ROSE_HAVE_YICES: NOT defined"
 endif
 if INSTALL_LTDL
 	@echo "Automake conditional INSTALL_LTDL: DEFINED"
