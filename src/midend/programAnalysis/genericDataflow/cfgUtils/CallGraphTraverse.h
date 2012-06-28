@@ -40,6 +40,7 @@ class Function
         Function(const Function *that);
         
         // returns a unique SgFunctionDeclaration* that is the canonical AST node that represents the given function
+        // A canonial declaration means a defining function declaration if available, or the first non-defining declaration
         static SgFunctionDeclaration* getCanonicalDecl(SgFunctionDeclaration* decl);
         
         bool eq(const Function &that) const;
@@ -103,6 +104,10 @@ class CGFunction : public Function
         bool operator >= (const CGFunction &that) const;
         
         // Traverses the callers or callees of this function
+        // A call graph may have multiple nodes for a same function, each node may have multiple in or out edges.
+        // So the iterator actually works on two levels:
+        //    level 1: iterate through all nodes for a given function
+        //    level 2: iterate through all in or out edges for each node, return the source or destination node
         class iterator
         {
                 // direction in which the iterator is going
