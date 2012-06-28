@@ -222,7 +222,65 @@ dummyFilter::operator() (SgFunctionDeclaration* node) const{
   return true;
 };
 
+bool
+builtinFilter::operator() (SgFunctionDeclaration* funcDecl) const
+{
+  bool returnValue = true;
+  ROSE_ASSERT(funcDecl != NULL);
+  string filename = funcDecl->get_file_info()->get_filename();
+  std::string func_name = funcDecl->get_name().getString();
+  string stripped_file_name = StringUtility::stripPathFromFileName(filename);
+  //string::size_type loc;
 
+  //Filter out functions from the ROSE preinclude header file
+  if(filename.find("rose_edg_required_macros_and_functions")!=string::npos)
+    returnValue = false;
+  //Filter out compiler generated functions
+  else if(funcDecl->get_file_info()->isCompilerGenerated()==true)
+    returnValue=false;
+  //Filter out compiler generated functions
+  else if(funcDecl->get_file_info()->isFrontendSpecific()==true)
+    returnValue=false;
+  // filter out other built in functions
+  //      else if( func_name.find ("__",0)== 0);
+  //         returnValue = false;
+  // _IO_getc _IO_putc _IO_feof, etc.       
+  //loc = func_name.find ("_IO_",0);
+  //if (loc == 0 ) returnValue = false;
+
+  // skip functions from standard system headers
+  // TODO Need more rigid check
+  else  if (
+      stripped_file_name==string("assert.h")||
+      stripped_file_name==string("complex.h")||
+      stripped_file_name==string("ctype.h")||
+      stripped_file_name==string("errno.h")||
+      stripped_file_name==string("float.h")||
+
+      stripped_file_name==string("limits.h")||
+      stripped_file_name==string("locale.h")||
+      stripped_file_name==string("math.h")||
+      stripped_file_name==string("setjmp.h")||
+      stripped_file_name==string("signal.h")||
+
+      stripped_file_name==string("stdarg.h")||
+      stripped_file_name==string("stddef.h")||
+
+      stripped_file_name==string("stdio.h")||
+      stripped_file_name==string("stdlib.h")||
+      stripped_file_name==string("string.h")||
+      stripped_file_name==string("time.h")||
+
+// GCC specific ???
+      stripped_file_name==string("libio.h")||
+      stripped_file_name==string("select.h")||
+      stripped_file_name==string("mathcalls.h")
+      )
+    returnValue=false;
+ if ( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
+    cout<<"Debug: CallGraph.C ... "<<func_name << " from file:"<<stripped_file_name<<" predicate function returns: "<<returnValue<<endl;
+  return returnValue;
+}
 
 
   bool 
