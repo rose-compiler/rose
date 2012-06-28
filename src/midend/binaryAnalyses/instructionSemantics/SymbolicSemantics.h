@@ -318,7 +318,6 @@ namespace BinaryAnalysis {              // documented elsewhere
                     BaseSemantics::StateX86<MemoryCell, ValueType>::clear_memory();
                     solver_mem = LeafNode::create_memory(32);
                 }
-#endif
 
                 template<typename PrintHelper>
                 void print(std::ostream &o, const std::string prefix="", PrintHelper *ph=NULL) const /*overrides*/ {
@@ -328,7 +327,6 @@ namespace BinaryAnalysis {              // documented elsewhere
                     print_memory(o, prefix+"    ", ph);
                 }
 
-#if 0 /* DEBUGGING [RPM 2012-06-25] */
                 template<typename PrintHelper>
                 void print_memory(std::ostream &o, const std::string prefix="", PrintHelper *ph=NULL) const /*overrides*/ {
                     BaseSemantics::StateX86<MemoryCell, ValueType>::print_memory(o, prefix, ph);
