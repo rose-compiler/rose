@@ -30,6 +30,8 @@ else
   echo "******* HPCTOOLKIT test_hl01 FAILED *********"
 fi
 
+rm -f test_hl01-out.txt
+
 exit $rc
 
 # eof
