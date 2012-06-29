@@ -304,7 +304,7 @@ MidLevelRewrite<ASTNodeCollection>::fileStringToNodeCollection (
      SgSourceFile* currentFile = TransformationSupport::getSourceFile(astNode);
      ROSE_ASSERT (currentFile != NULL);
      // Keep the suffix to deal differently with C, C++, etc.
-     string currentFileNameWithSuffix = ROSE::stripPathFromFileName(currentFile->getFileName());
+     std::string currentFileNameWithSuffix = ROSE::stripPathFromFileName(currentFile->getFileName());
   // printf ("currentFileNameWithSuffix = %s \n",currentFileNameWithSuffix.c_str());
   // string currentFileName = ROSE::stripFileSuffixFromFileName(currentFileNameWithSuffix.c_str());
   // printf ("currentFileName = %s \n",currentFileName.c_str());
