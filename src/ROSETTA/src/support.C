@@ -1585,6 +1585,10 @@ Grammar::setUpSupport ()
      Project.setDataPrototype ( "bool", "Java_only", "= false",
             NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // Liao 6/29/2012: support using rose translator to act like a linker wrapper if -rose:openmp:lowering is specified
+     Project.setDataPrototype         ( "bool", "openmp_linking", "= false",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      Project.setDataPrototype ("std::list<std::string>", "Java_classpath", "",
             NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      Project.setDataPrototype ("std::list<std::string>", "Java_sourcepath", "",
