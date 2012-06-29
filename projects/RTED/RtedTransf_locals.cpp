@@ -4,7 +4,7 @@
 #ifndef USE_ROSE
 
 #include <string>
-#include <sageGeneric.hpp>
+#include <sageGeneric.h>
 #include "RtedTransformation.h"
 
 namespace SI = SageInterface;

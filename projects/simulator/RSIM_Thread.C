@@ -290,6 +290,7 @@ RSIM_Thread::signal_deliver(const RSIM_SignalHandling::siginfo_32 &_info)
                 case SIGSYS:
                     /* Exit process with core dump */
                     tracing(TRACE_MISC)->mesg("dumping core...\n");
+                    get_process()->mem_showmap(tracing(TRACE_MISC), "map at time of core dump:\n");
                     get_process()->dump_core(signo);
                     report_stack_frames(tracing(TRACE_MISC));
                     throw RSIM_Process::Exit((signo & 0x7f) | __WCOREFLAG, true);
@@ -426,14 +427,15 @@ RSIM_Thread::signal_deliver(const RSIM_SignalHandling::siginfo_32 &_info)
             policy.writeRegister(policy.reg_df, policy.false_());
             policy.writeRegister(policy.reg_tf, policy.false_());
 
-            /* Set up registers for signal handler */
+            /* Set up registers for signal handler. See RSIM_Semantics::InnerPolicy::ctor() for details about the segment
+             * register values. */
             policy.writeRegister(policy.reg_eax, policy.number<32>(signo));
             policy.writeRegister(policy.reg_edx, policy.number<32>(0));
             policy.writeRegister(policy.reg_ecx, policy.number<32>(0));
-            policy.writeRegister(policy.reg_ds,  policy.number<16>(0x2b));        /* see RSIM_SemanticPolicy::ctor() */
-            policy.writeRegister(policy.reg_es,  policy.number<16>(0x2b));        /* see RSIM_SemanticPolicy::ctor() */
-            policy.writeRegister(policy.reg_ss,  policy.number<16>(0x2b));        /* see RSIM_SemanticPolicy::ctor() */
-            policy.writeRegister(policy.reg_cs,  policy.number<16>(0x23));        /* see RSIM_SemanticPolicy::ctor() */
+            policy.writeRegister(policy.reg_ds,  policy.number<16>(0x2b));
+            policy.writeRegister(policy.reg_es,  policy.number<16>(0x2b));
+            policy.writeRegister(policy.reg_ss,  policy.number<16>(0x2b));
+            policy.writeRegister(policy.reg_cs,  policy.number<16>(0x23));
             policy.writeRegister(policy.reg_esp, policy.number<32>(frame_va));
             policy.writeRegister(policy.reg_eip, policy.number<32>(sa.handler_va)); /* we're now in the signal handler... */
         }
@@ -674,8 +676,8 @@ RSIM_Thread::report_stack_frames(RTS_Message *mesg, const std::string &title/*="
             SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(insn);
             if (func && !func->get_name().empty() && 0==(func->get_reason() & SgAsmFunction::FUNC_LEFTOVERS)) {
                 mesg->more(" in function %s", func->get_name().c_str());
-            } else if (process->get_memory()->exists(ip)) {
-                const MemoryMap::Segment &sgmt = process->get_memory()->at(ip).second;
+            } else if (process->get_memory().exists(ip)) {
+                const MemoryMap::Segment &sgmt = process->get_memory().at(ip).second;
                 if (!sgmt.get_name().empty())
                     mesg->more(" in memory region %s", sgmt.get_name().c_str());
             }
@@ -703,7 +705,7 @@ RSIM_Thread::report_stack_frames(RTS_Message *mesg, const std::string &title/*="
 }
 
 void
-RSIM_Thread::syscall_return(const RSIM_SEMANTIC_VTYPE<32> &retval)
+RSIM_Thread::syscall_return(const RSIM_SEMANTICS_VTYPE<32> &retval)
 {
     policy.writeRegister(policy.reg_eax, retval);
 }
@@ -730,11 +732,11 @@ RSIM_Thread::main()
             /* Returned from signal handler? This code simulates the sigframe_32 or rt_sigframe_32 "retcode" */
             if (policy.readRegister<32>(policy.reg_eip).known_value()==SIGHANDLER_RETURN) {
                 policy.pop();
-                policy.writeRegister<32>(policy.reg_eax, 119);
+                policy.writeRegister<32>(policy.reg_eax, RSIM_SEMANTICS_VTYPE<32>(119));
                 sys_sigreturn();
                 continue;
             } else if (policy.readRegister<32>(policy.reg_eip).known_value()==SIGHANDLER_RT_RETURN) {
-                policy.writeRegister<32>(policy.reg_eax, 173);
+                policy.writeRegister<32>(policy.reg_eax, RSIM_SEMANTICS_VTYPE<32>(173));
                 sys_rt_sigreturn();
                 continue;
             }
@@ -787,7 +789,7 @@ RSIM_Thread::main()
             process->dump_core(SIGSEGV);
             report_stack_frames(tracing(TRACE_MISC));
             abort();
-        } catch (const RSIM_Semantics::Exception &e) {
+        } catch (const RSIM_Semantics::Dispatcher::Exception &e) {
             /* Thrown for instructions whose semantics are not implemented yet. */
             if (!insn_semaphore_posted) {
                 int status __attribute__((unused)) = sem_post(process->get_simulator()->get_semaphore());
@@ -796,7 +798,7 @@ RSIM_Thread::main()
             }
             std::ostringstream s;
             s <<e;
-            tracing(TRACE_MISC)->mesg("caught RSIM_Semantics::Exception: %s\n", s.str().c_str());
+            tracing(TRACE_MISC)->mesg("caught RSIM_Semantics::Dispatcher::Exception: %s\n", s.str().c_str());
 #ifdef X86SIM_STRICT_EMULATION
             tracing(TRACE_MISC)->mesg("dumping core...\n");
             process->dump_core(SIGILL);
@@ -806,7 +808,7 @@ RSIM_Thread::main()
             report_stack_frames(tracing(TRACE_MISC));
             tracing(TRACE_MISC)->mesg("exception ignored; continuing with a corrupt state...\n");
 #endif
-        } catch (const RSIM_SEMANTIC_POLICY::Exception &e) {
+        } catch (const RSIM_SEMANTICS_POLICY::Exception &e) {
             if (!insn_semaphore_posted) {
                 int status __attribute__((unused)) = sem_post(process->get_simulator()->get_semaphore());
                 assert(0==status);
@@ -872,22 +874,22 @@ RSIM_Thread::get_regs() const
 void
 RSIM_Thread::init_regs(const pt_regs_32 &regs)
 {
-    policy.writeRegister<32>(policy.reg_eip, regs.ip);
-    policy.writeRegister<32>(policy.reg_eax, regs.ax);
-    policy.writeRegister<32>(policy.reg_ebx, regs.bx);
-    policy.writeRegister<32>(policy.reg_ecx, regs.cx);
-    policy.writeRegister<32>(policy.reg_edx, regs.dx);
-    policy.writeRegister<32>(policy.reg_esi, regs.si);
-    policy.writeRegister<32>(policy.reg_edi, regs.di);
-    policy.writeRegister<32>(policy.reg_ebp, regs.bp);
-    policy.writeRegister<32>(policy.reg_esp, regs.sp);
-    policy.writeRegister<16>(policy.reg_cs, regs.cs);
-    policy.writeRegister<16>(policy.reg_ds, regs.ds);
-    policy.writeRegister<16>(policy.reg_es, regs.es);
-    policy.writeRegister<16>(policy.reg_fs, regs.fs);
-    policy.writeRegister<16>(policy.reg_gs, regs.gs);
-    policy.writeRegister<16>(policy.reg_ss, regs.ss);
-    policy.writeRegister<32>(policy.reg_eflags, regs.flags);
+    policy.writeRegister(policy.reg_eip,    RSIM_SEMANTICS_VTYPE<32>(regs.ip));
+    policy.writeRegister(policy.reg_eax,    RSIM_SEMANTICS_VTYPE<32>(regs.ax));
+    policy.writeRegister(policy.reg_ebx,    RSIM_SEMANTICS_VTYPE<32>(regs.bx));
+    policy.writeRegister(policy.reg_ecx,    RSIM_SEMANTICS_VTYPE<32>(regs.cx));
+    policy.writeRegister(policy.reg_edx,    RSIM_SEMANTICS_VTYPE<32>(regs.dx));
+    policy.writeRegister(policy.reg_esi,    RSIM_SEMANTICS_VTYPE<32>(regs.si));
+    policy.writeRegister(policy.reg_edi,    RSIM_SEMANTICS_VTYPE<32>(regs.di));
+    policy.writeRegister(policy.reg_ebp,    RSIM_SEMANTICS_VTYPE<32>(regs.bp));
+    policy.writeRegister(policy.reg_esp,    RSIM_SEMANTICS_VTYPE<32>(regs.sp));
+    policy.writeRegister(policy.reg_cs,     RSIM_SEMANTICS_VTYPE<16>(regs.cs));
+    policy.writeRegister(policy.reg_ds,     RSIM_SEMANTICS_VTYPE<16>(regs.ds));
+    policy.writeRegister(policy.reg_es,     RSIM_SEMANTICS_VTYPE<16>(regs.es));
+    policy.writeRegister(policy.reg_fs,     RSIM_SEMANTICS_VTYPE<16>(regs.fs));
+    policy.writeRegister(policy.reg_gs,     RSIM_SEMANTICS_VTYPE<16>(regs.gs));
+    policy.writeRegister(policy.reg_ss,     RSIM_SEMANTICS_VTYPE<16>(regs.ss));
+    policy.writeRegister(policy.reg_eflags, RSIM_SEMANTICS_VTYPE<32>(regs.flags));
 }
 
 int

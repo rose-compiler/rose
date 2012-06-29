@@ -78,6 +78,8 @@ namespace graphColoring
 
       // Construct a graph from a span tree
       Graph(size_t node_count, const std::vector <std::pair <Node*, Node*> >& span_tree_edges);
+
+      ~Graph ();
       // depth first travese for the entire tree
       void DFS();
 
@@ -93,7 +95,6 @@ namespace graphColoring
       {
         adj_matrix-> toDotGraph(file_name);
       }
-
   };
 
 

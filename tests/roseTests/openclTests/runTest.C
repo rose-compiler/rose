@@ -33,7 +33,7 @@ int main(int argc, char ** argv) {
 		SgVariableDeclaration * var = isSgVariableDeclaration(*it_decl_list);
 		if (var && var->get_variables()[0]->get_name().getString() == "var") {
 		
-			var->get_declarationModifier().get_storageModifier().setOpenclGlobal();
+//			var->get_declarationModifier().get_storageModifier().setOpenclGlobal();
 			
 		}
 	}

@@ -18,20 +18,20 @@ namespace BinaryAnalysis {                      // documented elsewhere
          *
          * A multi-policy is created by listing all the sub-policy value types, state types, and policy types in the
          * MultiPolicy template class.  For instance, to declare a multi-policy that does both full-symbolic semantics
-         * (SymbolicSemantics) and partial-symbolic semantics (VirtualMachineSemantics) do this:
+         * (SymbolicSemantics) and partial-symbolic semantics (PartialSymbolicSemantics) do this:
          *
          * @code
          *  #include "MultiSemantics.h"
          *  #include "SymbolicSemantics.h"
-         *  #include "VirtualMachineSemantics.h"
+         *  #include "PartialSymbolicSemantics.h"
          *
          *  typedef MultiSemantics<
          *      SymbolicSemantics::ValueType,           // first data type
          *      SymbolicSemantics::State,               // first state
          *      SymbolicSemantics::Policy,              // first policy
-         *      VirtualMachineSemantics::ValueType,     // second data type
-         *      VirtualMachineSemantics::State,         // second state
-         *      VirtualMachineSemantics::Policy         // second policy
+         *      PartialSymbolicSemantics::ValueType,    // second data type
+         *      PartialSymbolicSemantics::State,        // second state
+         *      PartialSymbolicSemantics::Policy        // second policy
          *      // etc.
          *                         >::Policy Policy;
          * @endcode
@@ -44,8 +44,8 @@ namespace BinaryAnalysis {                      // documented elsewhere
          * The sub-policies are identified by the tag types SP0, SP1, etc.:
          *
          * @code
-         *  SymbolicSemantics::Policy<>       &sp0 = get_subpolicy(SP0());
-         *  VirtualMachineSemantics::Policy<> &sp1 = get_subpolicy(SP1());
+         *  SymbolicSemantics::Policy<>        &sp0 = get_subpolicy(SP0());
+         *  PartialSymbolicSemantics::Policy<> &sp1 = get_subpolicy(SP1());
          * @endcode
          *
          * A multi-value has one sub-value for each sub-policy. Like the sub-policies themselves, the sub-values are identified
@@ -53,8 +53,8 @@ namespace BinaryAnalysis {                      // documented elsewhere
          * 
          * @code
          *  ValueType<32> v = ....; // the multi-policy value, or "multi-value"
-         *  SymbolicSemantics::ValueType<32>       v0 = v.get_subvalue(SP0());
-         *  VirtualMachineSemantics::ValueType<32> v1 = v.get_subvalue(SP1());
+         *  SymbolicSemantics::ValueType<32>        v0 = v.get_subvalue(SP0());
+         *  PartialSymbolicSemantics::ValueType<32> v1 = v.get_subvalue(SP1());
          * @endcode
          *
          * Individual sub-values of a multi-value can be marked as invalid.  A sub-value must still necessarily be stored at
@@ -248,6 +248,10 @@ namespace BinaryAnalysis {                      // documented elsewhere
                     if (is_valid(SP3()))
                         o <<get_subvalue(SP3());
                 }
+                friend std::ostream& operator<<(std::ostream &o, const ValueType<nBits> &e) {
+                    e.print(o);
+                    return o;
+                }
 
             protected:
                 // Internal function to help set sub-value validity.
@@ -260,42 +264,17 @@ namespace BinaryAnalysis {                      // documented elsewhere
                 }
             };
 
-            /** Print the value. Prints subvalues that are marked as valid. */
-            template<template <size_t X> class ValueType, size_t nBits>
-            friend std::ostream& operator<<(std::ostream &o, const ValueType<nBits> &v) {
-                v.print(o);
-                return o;
-            }
-
-
-
             /******************************************************************************************************************
              *                                  State
              ******************************************************************************************************************/
         public:
-            /** Represents the entire state of the machine.  A multi-policy state is the union of states of the sub-policies.
-             *  The sub-states are identified with tags such as SP0, SP1, etc., the same as for sub-values and sub-policies. */
-            template<template<size_t> class ValueType/*=MultiSemantics::ValueType (doesn't work in GCC<4.4.x)*/>
-            class State {
-            protected:
-                State0<ValueType0> state0;
-                State1<ValueType1> state1;
-                State2<ValueType2> state2;
-                State3<ValueType3> state3;
-            public:
-                /** Returns the specified sub-state.
-                 * @{ */
-                State0<ValueType0>& get_state(const SP0&) { return state0; }
-                State1<ValueType1>& get_state(const SP1&) { return state1; }
-                State2<ValueType2>& get_state(const SP2&) { return state2; }
-                State3<ValueType3>& get_state(const SP3&) { return state3; }
-                const State0<ValueType0>& get_state(const SP0&) const { return state0; }
-                const State1<ValueType1>& get_state(const SP1&) const { return state1; }
-                const State2<ValueType2>& get_state(const SP2&) const { return state2; }
-                const State3<ValueType3>& get_state(const SP3&) const { return state3; }
-                /** @} */
-            };
-
+            /** MultiSemanics global state.
+             *
+             *  The MultiSemantics does not define its own machine state, but rather stores the states in the individual
+             *  sub-policies. However, this class can be replaced/subclassed with something that stores state across all the
+             *  sub-policies. */
+            template <template <size_t> class ValueType>
+            class State {}; // only for documentation
 
 
             /******************************************************************************************************************
@@ -307,6 +286,10 @@ namespace BinaryAnalysis {                      // documented elsewhere
              *  Each sub-policy maintains its own state.  The register dictionary operations are inherited from
              *  BaseSemantics::Policy, which means that they apply only in the base policy (except set_register_dictionary()
              *  also calls the sub-policies.   See NullSemantics::Policy for documentation of the RISC-like API. */
+            template <
+                template <template <size_t> class ValueType> class State, // unused
+                template <size_t nBits> class ValueType
+            >
             class Policy: public BaseSemantics::Policy {
             protected:
                 unsigned active;             /**< Bit vector to indicate which policies are active. */
@@ -324,6 +307,8 @@ namespace BinaryAnalysis {                      // documented elsewhere
                     const RegisterDictionary *rd = get_policy(SP0()).get_register_dictionary();
                     BaseSemantics::Policy::set_register_dictionary(rd); // don't change the sub-policies
                 }
+
+                virtual ~Policy() {}
 
                 /** Get a sub-policy.  Sub policies are identified with the tags SP0, SP1, etc., just as for sub-values and
                  *  sub-states.
@@ -374,6 +359,12 @@ namespace BinaryAnalysis {                      // documented elsewhere
                  *  representing the SP0 policy.  The policies corresponding to set bits are enabled, and the others are
                  *  disabled.  Bits not corresponding to a policy are ignored.  See also, set_active() and clear_active(). */
                 void set_active_policies(unsigned mask) { active = mask; }
+
+                /** Called before any sub-policy operations.  Subclasses can override this to do something useful. */
+                virtual void before() {};
+
+                /** Called after all sub-policy operations.  Subclasses can override this to do something useful. */
+                virtual void after() {};
 
             protected:
                 // Helper for changing sub-policy activity state.
@@ -584,38 +575,50 @@ namespace BinaryAnalysis {                      // documented elsewhere
                 void set_register_dictionary(const RegisterDictionary *regdict) {
                     unsigned saved_status = get_active_policies();
                     set_active_policies((unsigned)(-1)); // enable all sub policies
+                    before();
                     CALL_SUBS_0xNR(set_register_dictionary, (regdict));
+                    after();
                     set_active_policies(saved_status);
                 }
 
                 /** See NullSemantics::Policy::startInstruction() */
                 void startInstruction(SgAsmInstruction *insn) {
+                    before();
                     CALL_SUBS_0xNR(startInstruction, (insn));
+                    after();
                 }
 
                 /** See NullSemantics::Policy::finishInstruction() */
                 void finishInstruction(SgAsmInstruction *insn) {
+                    before();
                     CALL_SUBS_0xNR(finishInstruction, (insn));
+                    after();
                 }
                 
                 /** See NullSemantics::Policy::true_() */
                 ValueType<1> true_() {
                     ValueType<1> retval;
+                    before();
                     CALL_SUBS_0(true_, retval);
+                    after();
                     return retval;
                 }
 
                 /** See NullSemantics::Policy::false_() */
                 ValueType<1> false_() {
                     ValueType<1> retval;
+                    before();
                     CALL_SUBS_0(false_, retval);
+                    after();
                     return retval;
                 }
 
                 /** See NullSemantics::Policy::false_() */
                 ValueType<1> undefined_() {
                     ValueType<1> retval;
+                    before();
                     CALL_SUBS_0(undefined_, retval);
+                    after();
                     return retval;
                 }
 
@@ -623,63 +626,83 @@ namespace BinaryAnalysis {                      // documented elsewhere
                 template<size_t nBits>
                 ValueType<nBits> number(uint64_t n) {
                     ValueType<nBits> retval;
+                    before();
                     CALL_SUBS_0x(number<nBits>, retval, (n));
+                    after();
                     return retval;
                 }
 
                 /** See NullSemantics::Policy::filterCallTarget() */
                 ValueType<32> filterCallTarget(const ValueType<32> &a) {
                     ValueType<32> retval;
+                    before();
                     CALL_SUBS_1(filterCallTarget, retval, a);
+                    after();
                     return retval;
                 }
 
                 /** See NullSemantics::Policy::filterReturnTarget() */
                 ValueType<32> filterReturnTarget(const ValueType<32> &a) {
                     ValueType<32> retval;
+                    before();
                     CALL_SUBS_1(filterReturnTarget, retval, a);
+                    after();
                     return retval;
                 }
 
                 /** See NullSemantics::Policy::filterIndirectJumpTarget() */
                 ValueType<32> filterIndirectJumpTarget(const ValueType<32> &a) {
                     ValueType<32> retval;
+                    before();
                     CALL_SUBS_1(filterIndirectJumpTarget, retval, a);
+                    after();
                     return retval;
                 }
 
                 /** See NullSemantics::Policy::hlt() */
                 void hlt() {
+                    before();
                     CALL_SUBS_0xNR(hlt, ());
+                    after();
                 }
 
                 /** See NullSemantics::Policy::cpuid() */
                 void cpuid() {
+                    before();
                     CALL_SUBS_0xNR(cpuid, ());
+                    after();
                 }
 
                 /** See NullSemantics::Policy::rdtsc() */
                 ValueType<64> rdtsc() {
                     ValueType<64> retval;
+                    before();
                     CALL_SUBS_0(rdtsc, retval);
+                    after();
                     return retval;
                 }
 
                 /** See NullSemantics::Policy::interrupt() */
                 void interrupt(uint8_t n) {
+                    before();
                     CALL_SUBS_0xNR(interrupt, (n));
+                    after();
                 }
 
                 /** See NullSemantics::Policy::sysenter() */
                 void sysenter() {
+                    before();
                     CALL_SUBS_0xNR(sysenter, ());
+                    after();
                 }
 
                 /** See NullSemantics::Policy::add() */
                 template <size_t nBits>
                 ValueType<nBits> add(const ValueType<nBits> &a, const ValueType<nBits> &b) {
                     ValueType<nBits> retval;
+                    before();
                     CALL_SUBS_2(add, retval, a, b);
+                    after();
                     return retval;
                 }
 
@@ -688,8 +711,10 @@ namespace BinaryAnalysis {                      // documented elsewhere
                 ValueType<nBits> addWithCarries(const ValueType<nBits> &a, const ValueType<nBits> &b, const ValueType<1> &c,
                                                 ValueType<nBits> &carry_out) {
                     ValueType<nBits> retval;
+                    before();
                     CALL_SUBS_3x(addWithCarries, retval, a, b, c,
                                  (a.get_subvalue(tag), b.get_subvalue(tag), c.get_subvalue(tag), carry_out.get_subvalue(tag)));
+                    after();
                     return retval;
                 }
 
@@ -697,7 +722,9 @@ namespace BinaryAnalysis {                      // documented elsewhere
                 template <size_t nBits>
                 ValueType<nBits> and_(const ValueType<nBits> &a, const ValueType<nBits> &b) {
                     ValueType<nBits> retval;
+                    before();
                     CALL_SUBS_2(and_, retval, a, b);
+                    after();
                     return retval;
                 }
 
@@ -705,7 +732,9 @@ namespace BinaryAnalysis {                      // documented elsewhere
                 template<size_t nBits>
                 ValueType<1> equalToZero(const ValueType<nBits> &a) {
                     ValueType<1> retval;
+                    before();
                     CALL_SUBS_1(equalToZero, retval, a);
+                    after();
                     return retval;
                 }
 
@@ -713,7 +742,9 @@ namespace BinaryAnalysis {                      // documented elsewhere
                 template<size_t nBits>
                 ValueType<nBits> invert(const ValueType<nBits> &a) {
                     ValueType<nBits> retval;
+                    before();
                     CALL_SUBS_1(invert, retval, a);
+                    after();
                     return retval;
                 }
 
@@ -721,7 +752,9 @@ namespace BinaryAnalysis {                      // documented elsewhere
                 template<size_t BeginBit, size_t EndBit, size_t nBitsA>
                 ValueType<EndBit-BeginBit> extract(const ValueType<nBitsA> &a) {
                     ValueType<EndBit-BeginBit> retval;
+                    before();
                     CALL_SUBS_1b(extract<BeginBit, EndBit>, retval, a);
+                    after();
                     return retval;
                 }
 
@@ -729,7 +762,9 @@ namespace BinaryAnalysis {                      // documented elsewhere
                 template<size_t nBitsA, size_t nBitsB>
                 ValueType<nBitsA+nBitsB> concat(const ValueType<nBitsA> &a, const ValueType<nBitsB> &b) {
                     ValueType<nBitsA+nBitsB> retval;
+                    before();
                     CALL_SUBS_2(concat, retval, a, b);
+                    after();
                     return retval;
                 }
 
@@ -737,8 +772,10 @@ namespace BinaryAnalysis {                      // documented elsewhere
                 template<size_t nBits>
                 ValueType<nBits> ite(const ValueType<1> &cond, const ValueType<nBits> &a, const ValueType<nBits> &b) {
                     ValueType<nBits> retval;
+                    before();
                     CALL_SUBS_1x(ite, retval, cond,
                                  (cond.get_subvalue(tag), a.get_subvalue(tag), b.get_subvalue(tag)));
+                    after();
                     return retval;
                 }
                 
@@ -746,7 +783,9 @@ namespace BinaryAnalysis {                      // documented elsewhere
                 template<size_t nBits>
                 ValueType<nBits> leastSignificantSetBit(const ValueType<nBits> &a) {
                     ValueType<nBits> retval;
+                    before();
                     CALL_SUBS_1(leastSignificantSetBit, retval, a);
+                    after();
                     return retval;
                 }
 
@@ -754,7 +793,9 @@ namespace BinaryAnalysis {                      // documented elsewhere
                 template<size_t nBits>
                 ValueType<nBits> mostSignificantSetBit(const ValueType<nBits> &a) {
                     ValueType<nBits> retval;
+                    before();
                     CALL_SUBS_1(mostSignificantSetBit, retval, a);
+                    after();
                     return retval;
                 }
 
@@ -762,7 +803,9 @@ namespace BinaryAnalysis {                      // documented elsewhere
                 template<size_t nBits>
                 ValueType<nBits> negate(const ValueType<nBits> &a) {
                     ValueType<nBits> retval;
+                    before();
                     CALL_SUBS_1(negate, retval, a);
+                    after();
                     return retval;
                 }
 
@@ -770,7 +813,9 @@ namespace BinaryAnalysis {                      // documented elsewhere
                 template<size_t nBits>
                 ValueType<nBits> or_(const ValueType<nBits> &a, const ValueType<nBits> &b) {
                     ValueType<nBits> retval;
+                    before();
                     CALL_SUBS_2(or_, retval, a, b);
+                    after();
                     return retval;
                 }
 
@@ -778,7 +823,9 @@ namespace BinaryAnalysis {                      // documented elsewhere
                 template<size_t nBitsA, size_t nBitsB>
                 ValueType<nBitsA> rotateLeft(const ValueType<nBitsA> &a, const ValueType<nBitsB> &b) {
                     ValueType<nBitsA> retval;
+                    before();
                     CALL_SUBS_2(rotateLeft, retval, a, b);
+                    after();
                     return retval;
                 }
 
@@ -786,7 +833,9 @@ namespace BinaryAnalysis {                      // documented elsewhere
                 template<size_t nBitsA, size_t nBitsB>
                 ValueType<nBitsA> rotateRight(const ValueType<nBitsA> &a, const ValueType<nBitsB> &b) {
                     ValueType<nBitsA> retval;
+                    before();
                     CALL_SUBS_2(rotateRight, retval, a, b);
+                    after();
                     return retval;
                 }
 
@@ -794,7 +843,9 @@ namespace BinaryAnalysis {                      // documented elsewhere
                 template<size_t nBitsA, size_t nBitsB>
                 ValueType<nBitsA> shiftLeft(const ValueType<nBitsA> &a, const ValueType<nBitsB> &b) {
                     ValueType<nBitsA> retval;
+                    before();
                     CALL_SUBS_2(shiftLeft, retval, a, b);
+                    after();
                     return retval;
                 }
 
@@ -802,7 +853,9 @@ namespace BinaryAnalysis {                      // documented elsewhere
                 template<size_t nBitsA, size_t nBitsB>
                 ValueType<nBitsA> shiftRight(const ValueType<nBitsA> &a, const ValueType<nBitsB> &b) {
                     ValueType<nBitsA> retval;
+                    before();
                     CALL_SUBS_2(shiftRight, retval, a, b);
+                    after();
                     return retval;
                 }
 
@@ -810,7 +863,9 @@ namespace BinaryAnalysis {                      // documented elsewhere
                 template<size_t nBitsA, size_t nBitsB>
                 ValueType<nBitsA> shiftRightArithmetic(const ValueType<nBitsA> &a, const ValueType<nBitsB> &b) {
                     ValueType<nBitsA> retval;
+                    before();
                     CALL_SUBS_2(shiftRightArithmetic, retval, a, b);
+                    after();
                     return retval;
                 }
 
@@ -818,7 +873,9 @@ namespace BinaryAnalysis {                      // documented elsewhere
                 template<size_t From, size_t To>
                 ValueType<To> signExtend(const ValueType<From> &a) {
                     ValueType<To> retval;
+                    before();
                     CALL_SUBS_1b(signExtend<From, To>, retval, a);
+                    after();
                     return retval;
                 }
 
@@ -826,7 +883,9 @@ namespace BinaryAnalysis {                      // documented elsewhere
                 template<size_t nBitsA, size_t nBitsB>
                 ValueType<nBitsA> signedDivide(const ValueType<nBitsA> &a, const ValueType<nBitsB> &b) {
                     ValueType<nBitsA> retval;
+                    before();
                     CALL_SUBS_2(signedDivide, retval, a, b);
+                    after();
                     return retval;
                 }
 
@@ -834,7 +893,9 @@ namespace BinaryAnalysis {                      // documented elsewhere
                 template<size_t nBitsA, size_t nBitsB>
                 ValueType<nBitsB> signedModulo(const ValueType<nBitsA> &a, const ValueType<nBitsB> &b) {
                     ValueType<nBitsB> retval;
+                    before();
                     CALL_SUBS_2(signedModulo, retval, a, b);
+                    after();
                     return retval;
                 }
 
@@ -842,7 +903,9 @@ namespace BinaryAnalysis {                      // documented elsewhere
                 template<size_t nBitsA, size_t nBitsB>
                 ValueType<nBitsA+nBitsB> signedMultiply(const ValueType<nBitsA> &a, const ValueType<nBitsB> &b) {
                     ValueType<nBitsA+nBitsB> retval;
+                    before();
                     CALL_SUBS_2(signedMultiply, retval, a, b);
+                    after();
                     return retval;
                 }
 
@@ -850,7 +913,9 @@ namespace BinaryAnalysis {                      // documented elsewhere
                 template<size_t nBitsA, size_t nBitsB>
                 ValueType<nBitsA> unsignedDivide(const ValueType<nBitsA> &a, const ValueType<nBitsB> &b) {
                     ValueType<nBitsA> retval;
+                    before();
                     CALL_SUBS_2(unsignedDivide, retval, a, b);
+                    after();
                     return retval;
                 }
 
@@ -858,7 +923,9 @@ namespace BinaryAnalysis {                      // documented elsewhere
                 template<size_t nBitsA, size_t nBitsB>
                 ValueType<nBitsB> unsignedModulo(const ValueType<nBitsA> &a, const ValueType<nBitsB> &b) {
                     ValueType<nBitsB> retval;
+                    before();
                     CALL_SUBS_2(unsignedModulo, retval, a, b);
+                    after();
                     return retval;
                 }
 
@@ -866,7 +933,9 @@ namespace BinaryAnalysis {                      // documented elsewhere
                 template<size_t nBitsA, size_t nBitsB>
                 ValueType<nBitsA+nBitsB> unsignedMultiply(const ValueType<nBitsA> &a, const ValueType<nBitsB> &b) {
                     ValueType<nBitsA+nBitsB> retval;
+                    before();
                     CALL_SUBS_2(unsignedMultiply, retval, a, b);
+                    after();
                     return retval;
                 }
 
@@ -874,7 +943,9 @@ namespace BinaryAnalysis {                      // documented elsewhere
                 template<size_t nBits>
                 ValueType<nBits> xor_(const ValueType<nBits> &a, const ValueType<nBits> &b) {
                     ValueType<nBits> retval;
+                    before();
                     CALL_SUBS_2(xor_, retval, a, b);
+                    after();
                     return retval;
                 }
 
@@ -882,7 +953,9 @@ namespace BinaryAnalysis {                      // documented elsewhere
                 template<size_t nBits>
                 ValueType<nBits> readRegister(const char *regname) {
                     ValueType<nBits> retval;
+                    before();
                     CALL_SUBS_0x(readRegister<nBits>, retval, (regname));
+                    after();
                     return retval;
                 }
 
@@ -890,28 +963,36 @@ namespace BinaryAnalysis {                      // documented elsewhere
                 template<size_t nBits>
                 ValueType<nBits> readRegister(const RegisterDescriptor &reg) {
                     ValueType<nBits> retval;
+                    before();
                     CALL_SUBS_0x(readRegister<nBits>, retval, (reg));
+                    after();
                     return retval;
                 }
 
                 /** See NullSemantics::Policy::writeRegister() */
                 template<size_t nBits>
                 void writeRegister(const char *regname, const ValueType<nBits> &a) {
+                    before();
                     CALL_SUBS_1xNR(writeRegister, a, (regname, a.get_subvalue(tag)));
+                    after();
                 }
 
                 /** See NullSemantics::Policy::writeRegister() */
                 template<size_t nBits>
                 void writeRegister(const RegisterDescriptor &reg, const ValueType<nBits> &a) {
+                    before();
                     CALL_SUBS_1xNR(writeRegister, a, (reg, a.get_subvalue(tag)));
+                    after();
                 }
 
                 /** See NullSemantics::Policy::readMemory() */
                 template<size_t nBits>
                 ValueType<nBits> readMemory(X86SegmentRegister sr, const ValueType<32> &addr, const ValueType<1> &cond) {
                     ValueType<nBits> retval;
+                    before();
                     CALL_SUBS_2x(readMemory<nBits>, retval, addr, cond,
                                  (sr, addr.get_subvalue(tag), cond.get_subvalue(tag)));
+                    after();
                     return retval;
                 }
 
@@ -919,8 +1000,10 @@ namespace BinaryAnalysis {                      // documented elsewhere
                 template<size_t nBits>
                 void writeMemory(X86SegmentRegister sr, const ValueType<32> &addr, const ValueType<nBits> &data,
                                  const ValueType<1> &cond) {
+                    before();
                     CALL_SUBS_3xNR(writeMemory, addr, data, cond,
                                    (sr, addr.get_subvalue(tag), data.get_subvalue(tag), cond.get_subvalue(tag)));
+                    after();
                 }
 
                 /**************************************************************************************************************
@@ -932,7 +1015,9 @@ namespace BinaryAnalysis {                      // documented elsewhere
 
                 /** Print each sub-policy.  The print method of each active sub-policy is called. */
                 void print(std::ostream &o) const {
+                    //before() -- not really a RISC operation
                     CALL_SUBS_0xNR(print, (o));
+                    //after()
                 }
 
                 /** Print each sub-policy.  The print method of each active sub-policy is called. */

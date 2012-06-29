@@ -62,7 +62,7 @@ public:
         : SymbolicSemantics::ValueType<nBits>(n, comment) {}
     explicit ValueType(const SymbolicSemantics::TreeNodePtr &node)
         : SymbolicSemantics::ValueType<nBits>(node) {}
-    ValueType(const VirtualMachineSemantics::ValueType<nBits> &other, std::string comment="") {
+    ValueType(const PartialSymbolicSemantics::ValueType<nBits> &other, std::string comment="") {
         set_expression(other.is_known() ?
                        InsnSemanticsExpr::LeafNode::create_integer(nBits, other.known_value(), comment) :
                        InsnSemanticsExpr::LeafNode::create_variable(nBits, comment));
@@ -863,7 +863,7 @@ public:
                             state.gpr[i] = ValueType<32>((uint64_t)rand() & 0xffffffffull);
                     }
                     for (size_t i=0; i<state.n_segregs; ++i)
-                        state.segreg[i] = args.thread->policy.get_state().segreg[i];
+                        state.segreg[i] = args.thread->policy.get_concrete_state().segreg[i];
                     for (size_t i=0; i<state.n_flags; ++i)
                         state.flag[i] = ValueType<1>((uint64_t)rand() & 1ull);
 

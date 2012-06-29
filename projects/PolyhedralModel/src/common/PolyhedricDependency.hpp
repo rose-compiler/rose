@@ -87,7 +87,7 @@ class Dependency {
 		/**
 		 * \return the dependency polyhedron.
 		 */
-		Polyhedron getPolyhedron() const;
+		const Polyhedron & getPolyhedron() const;
 		
 		void print(std::ostream & out);
 };
@@ -98,31 +98,31 @@ class Dependency {
  * Those are the most time consuming, so have to be compute only if needed.
  */
 template <class Function, class Expression, class VariableLBL>
-std::vector<Dependency<Function, Expression, VariableLBL> *> * ComputeRaR(const PolyhedricAnnotation::PolyhedralProgram<Function, Expression, VariableLBL> & polyhedral_program);
+std::vector<Dependency<Function, Expression, VariableLBL> *> * ComputeRaR(const PolyhedricAnnotation::PolyhedralProgram<Function, Expression, VariableLBL> & polyhedral_program, const bool precise = true);
 
 /**
  * \brief Compute Read-after-Write dependency for a SCoP.
  */
 template <class Function, class Expression, class VariableLBL>
-std::vector<Dependency<Function, Expression, VariableLBL> *> * ComputeRaW(const PolyhedricAnnotation::PolyhedralProgram<Function, Expression, VariableLBL> & polyhedral_program);
+std::vector<Dependency<Function, Expression, VariableLBL> *> * ComputeRaW(const PolyhedricAnnotation::PolyhedralProgram<Function, Expression, VariableLBL> & polyhedral_program, const bool precise = true);
 
 /**
  * \brief Compute Write-after-Read dependency for a SCoP.
  */
 template <class Function, class Expression, class VariableLBL>
-std::vector<Dependency<Function, Expression, VariableLBL> *> * ComputeWaR(const PolyhedricAnnotation::PolyhedralProgram<Function, Expression, VariableLBL> & polyhedral_program);
+std::vector<Dependency<Function, Expression, VariableLBL> *> * ComputeWaR(const PolyhedricAnnotation::PolyhedralProgram<Function, Expression, VariableLBL> & polyhedral_program, const bool precise = true);
 
 /**
  * \brief Compute Write-after-Write dependency for a SCoP.
  */
 template <class Function, class Expression, class VariableLBL>
-std::vector<Dependency<Function, Expression, VariableLBL> *> * ComputeWaW(const PolyhedricAnnotation::PolyhedralProgram<Function, Expression, VariableLBL> & polyhedral_program);
+std::vector<Dependency<Function, Expression, VariableLBL> *> * ComputeWaW(const PolyhedricAnnotation::PolyhedralProgram<Function, Expression, VariableLBL> & polyhedral_program, const bool precise = true);
 
 /**
  * \brief Compute all dependency for a SCoP.
  */
 template <class Function, class Expression, class VariableLBL>
-std::vector<Dependency<Function, Expression, VariableLBL> *> * ComputeDependencies(const PolyhedricAnnotation::PolyhedralProgram<Function, Expression, VariableLBL> & polyhedral_program);
+std::vector<Dependency<Function, Expression, VariableLBL> *> * ComputeDependencies(const PolyhedricAnnotation::PolyhedralProgram<Function, Expression, VariableLBL> & polyhedral_program, const bool precise = true);
 
 #include "common/PolyhedricDependency.tpp"
 

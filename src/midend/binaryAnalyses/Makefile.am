@@ -19,10 +19,11 @@ libbinaryMidend_la_SOURCES = \
      instructionSemantics/findConstants.C \
      instructionSemantics/FindRegisterDefs.C \
      instructionSemantics/InsnSemanticsExpr.C \
+     instructionSemantics/IntervalSemantics.C \
+     instructionSemantics/PartialSymbolicSemantics.C \
      instructionSemantics/SMTSolver.C \
      instructionSemantics/SymbolicSemantics.C \
      instructionSemantics/YicesSolver.C \
-     instructionSemantics/VirtualMachineSemantics.C \
      GraphAlgorithms.C \
      BinaryControlFlow.C \
      BinaryDominance.C \
@@ -58,11 +59,12 @@ include_HEADERS = \
    instructionSemantics/FindRegisterDefs.h \
    instructionSemantics/InsnSemanticsExpr.h \
    instructionSemantics/BaseSemantics.h \
+   instructionSemantics/IntervalSemantics.h \
    instructionSemantics/NullSemantics.h \
    instructionSemantics/MultiSemantics.h \
+   instructionSemantics/PartialSymbolicSemantics.h \
    instructionSemantics/SMTSolver.h \
    instructionSemantics/SymbolicSemantics.h \
-   instructionSemantics/VirtualMachineSemantics.h \
    instructionSemantics/YicesSolver.h \
    instructionSemantics/flowEquations.h \
    instructionSemantics/semanticsModule.h \

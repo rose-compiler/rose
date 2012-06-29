@@ -5,8 +5,6 @@
 
 #include <string>
 
-// #include "sageGeneric.hpp"
-
 #include "RtedSymbols.h"
 #include "DataStructures.h"
 #include "RtedTransformation.h"

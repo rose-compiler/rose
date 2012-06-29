@@ -5,6 +5,9 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # SUBDIRS = CompileTests roseTests RunTests PerformanceTests CompilerOptionsTests translatorTests
 # SUBDIRS = CompileTests roseTests
 SUBDIRS = . CompileTests
+
+if !ROSE_USE_CLANG_FRONTEND
+
 #if !ROSE_USE_INSURE
 # DQ (4/23/2011): Ignoring this whole directory might be over kill. But I have had problems, 
 # only on Hudson, just compiling a number of these subdirectories.
@@ -16,6 +19,7 @@ if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
    SUBDIRS += PerformanceTests CompilerOptionsTests translatorTests
 endif
 
+endif
 
 # Three phases (levels) of test programs:
 #  Phase 1) Analysis only, compiles the original code
@@ -34,7 +38,6 @@ bin_PROGRAMS = \
    parallelASTMerge \
    testGraphGeneration \
    testTokenGeneration
-
 
 # Phase 0 tests code:
 # This is a test of the EDG and OFP parser support. No significant part of ROSE is generated.
@@ -255,6 +258,8 @@ test_testTokenGeneration:
 	@echo "SKIPPING target '$@' because the C/C++ frontend is not enabled."
 endif
 
+if !ROSE_USE_CLANG_FRONTEND
+
 # Rule to run all the example translator tests
 # test: test_testAnalysis test_testCodeGeneration test_testTranslator test_testAstFileIO testSimpleLinkFileTranslator
 test: test_testTokenGeneration test_testAnalysis test_testCodeGeneration test_testTranslator test_testAstFileIO testSimpleLinkFileTranslator testTranslatorFoldedConstants testTranslatorUnfoldedConstants
@@ -263,6 +268,8 @@ check-local: test
 	@echo "************************************************************************"
 	@echo "****** ROSE/tests: make check rule complete (terminated normally) ******"
 	@echo "************************************************************************"
+
+endif
 
 clean-local: myCleanRule
 

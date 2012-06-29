@@ -18,7 +18,7 @@
 #include "DataStructures.h"
 #include "RtedTransformation.h"
 
-#include "sageGeneric.hpp"
+#include "sageGeneric.h"
 
 namespace SI = SageInterface;
 using namespace SageBuilder;

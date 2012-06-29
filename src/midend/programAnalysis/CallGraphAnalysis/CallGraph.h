@@ -104,8 +104,15 @@ class FunctionData
     bool compareFunctionDeclarations( SgFunctionDeclaration *f1, SgFunctionDeclaration *f2 );
 };
 
-//! A function object to be used as a predicate to filter out functions in a call graph
+//! A function object to be used as a predicate to filter out functions in a call graph: it does not filter out anything.
 struct dummyFilter : public std::unary_function<bool,SgFunctionDeclaration*>
+{
+  bool operator() (SgFunctionDeclaration* node) const; // always return true
+}; 
+
+//! A function object to filter out builtin functions in a call graph (only non-builtin functions will be considered)
+// Liao, 6/17/2012
+struct builtinFilter : public std::unary_function<bool,SgFunctionDeclaration*>
 {
   bool operator() (SgFunctionDeclaration* node) const;
 }; 
@@ -133,7 +140,9 @@ class CallGraphBuilder
     boost::unordered_map<SgFunctionDeclaration*, SgGraphNode*> graphNodes;
 
 };
-//! Generate a dot graph named 'fileName' from a call graph
+//! Generate a dot graph named 'fileName' from a call graph 
+//TODO this function is not defined? If so, need to be removed. 
+// AstDOTGeneration::writeIncidenceGraphToDOTFile() is used instead in the tutorial. Liao 6/17/2012
 void GenerateDotGraph ( SgIncidenceDirectedGraph *graph, std::string fileName );
 
 class GetOneFuncDeclarationPerFunction :  public std::unary_function<SgNode*, Rose_STL_Container<SgNode*> >

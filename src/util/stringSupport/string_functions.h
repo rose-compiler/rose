@@ -155,6 +155,8 @@ namespace StringUtility
       //! Generate a string from a vector of strings
            std::string listToString ( const std::vector<std::string> & X, bool separateStrings = false );
 
+           std::list<std::string> tokenize ( std::string X, char delim );
+
        //! Remove redundant lines (substrings must be separated by "\n". FIXME (spelling)
            std::string removeRedundentSubstrings ( std::string X ); // sic
       //! Remove redundant lines containing special substrings of form string#. FIXME (spelling)

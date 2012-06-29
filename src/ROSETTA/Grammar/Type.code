@@ -1949,8 +1949,10 @@ SgType::getCurrentScope()
    {
      // Liao 8/3/2010, pass fortran only test
 #ifdef ROSE_BUILD_CXX_LANGUAGE_SUPPORT
+#ifndef ROSE_USE_CLANG_FRONTEND
   // DQ (7/23/2010): This is defined in the EDG/Sage connection.
      extern SgScopeStatement* curr_sg_scope;
+#endif
 #endif
 
 // Liao 8/4/2010, support enable-only-c
@@ -1974,6 +1976,10 @@ SgType::getCurrentScope()
   // SgScopeStatement* currentScope = (curr_sg_scope != NULL) ? curr_sg_scope : getTopOfScopeStack();
      SgScopeStatement* currentScope = NULL;
 #ifdef ROSE_BUILD_CXX_LANGUAGE_SUPPORT
+#ifdef ROSE_USE_CLANG_FRONTEND
+  // TV (03/01/2012): Clang Frontend use the scope stack from SageBuilder...
+     SgScopeStatement * curr_sg_scope = SageBuilder::topScopeStack();
+#endif
      if (curr_sg_scope != NULL)
         {
        // C/C++ AST being generated
