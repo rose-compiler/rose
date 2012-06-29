@@ -41,6 +41,7 @@ public:
             if (triggered && insn) {
                 RTS_Message *m = args.thread->tracing(TRACE_MISC);
                 m->mesg("%s: %s", name, unparseInstructionWithAddress(insn).c_str());
+                policy.get_state().registers.ip = SymbolicSemantics::ValueType<32>(insn->get_address());
                 semantics.processInstruction(insn);
 #if 0
                 std::ostringstream ss; ss <<policy;
