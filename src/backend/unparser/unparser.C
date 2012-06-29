@@ -381,7 +381,7 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
         }
        else
         {
-          if ( ( ( (file->get_C_only() == true) || (file->get_Cxx_only() == true) || (file->get_Cuda_only() == true) ) && (file->get_outputLanguage() == SgFile::e_default_output_language) ) || 
+          if ( ( ( (file->get_C_only() == true) || (file->get_Cxx_only() == true) || (file->get_Cuda_only() == true) || (file->get_OpenCL_only() == true) ) && (file->get_outputLanguage() == SgFile::e_default_output_language) ) || 
                ( (file->get_outputLanguage() == SgFile::e_C_output_language) || (file->get_outputLanguage() == SgFile::e_Cxx_output_language) ) )
              {
             // Unparse using C/C++ unparser by default

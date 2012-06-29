@@ -574,6 +574,10 @@ SgAssignInitializer * buildAssignInitializer_nfi(SgExpression * operand_i = NULL
 SgAggregateInitializer * buildAggregateInitializer(SgExprListExp * initializers = NULL, SgType * type = NULL);
 SgAggregateInitializer * buildAggregateInitializer_nfi(SgExprListExp * initializers, SgType * type = NULL);
 
+//! Build a compound initializer, for vector type initialization
+SgCompoundInitializer * buildCompoundInitializer(SgExprListExp * initializers = NULL, SgType * type = NULL);
+SgCompoundInitializer * buildCompoundInitializer_nfi(SgExprListExp * initializers, SgType * type = NULL);
+
 // DQ (!/4/2009): Added support for building SgConstructorInitializer
 SgConstructorInitializer * buildConstructorInitializer( SgMemberFunctionDeclaration *declaration,SgExprListExp *args,SgType *expression_type,bool need_name,bool need_qualifier,bool need_parenthesis_after_name,bool associated_class_unknown);
 SgConstructorInitializer * buildConstructorInitializer_nfi( SgMemberFunctionDeclaration *declaration,SgExprListExp *args,SgType *expression_type,bool need_name,bool need_qualifier,bool need_parenthesis_after_name,bool associated_class_unknown);
