@@ -283,7 +283,7 @@ YicesSolver::out_define(std::ostream &o, const TreeNodePtr &tn, Definitions *def
     } else if (ln && ln->is_memory()) {
         if (defns->find(ln->get_name())==defns->end()) {
             defns->insert(ln->get_name());
-            o <<"(define m" <<ln->get_name() <<"::(-> (bitvector " <<ln->get_nbits() <<") (bitvector " <<ln->get_nbits() <<")))\n";
+            o <<"(define m" <<ln->get_name() <<"::(-> (bitvector 32) (bitvector " <<ln->get_nbits() <<")))\n";
         }
     } else if (in) {
         for (size_t i=0; i<in->size(); i++)
@@ -632,7 +632,7 @@ YicesSolver::ctx_define(const TreeNodePtr &tn, Definitions *defns)
     } else if (ln && ln->is_memory()) {
         if (defns->find(ln->get_name())==defns->end()) {
             defns->insert(ln->get_name());
-            yices_type domain = yices_mk_bitvector_type(context, ln->get_nbits());
+            yices_type domain = yices_mk_bitvector_type(context, 32);
             yices_type range = yices_mk_bitvector_type(context, ln->get_nbits());
             yices_type ftype = yices_mk_function_type(context, &domain, 1, range);
             assert(ftype);

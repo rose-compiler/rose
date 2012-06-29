@@ -253,9 +253,9 @@ block_hash(SgAsmBlock *blk, unsigned char digest[20])
     /* Set original IP to a constant value so that hash is never dependent on the true original IP.  If the final IP doesn't
      * matter, then make it the same as the original so that the difference between the original and final does not include the
      * IP (SHA1 is calculated in terms of the difference). */
-    policy.get_orig_state().ip = policy.number<32>(0);
+    policy.get_orig_state().registers.ip = policy.number<32>(0);
     if (ignore_final_ip)
-        policy.get_state().ip = policy.get_orig_state().ip;
+        policy.get_state().registers.ip = policy.get_orig_state().registers.ip;
     return policy.SHA1(digest);
 }
 

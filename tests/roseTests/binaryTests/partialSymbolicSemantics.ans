@@ -213,11 +213,11 @@ registers:
     ?31     = { v31350 }
     ip      = { 0x8048364 }
 memory:
-    address = { v31309-0x10 }
-      value = { 0x80482d3 }
-      flags = { size=4 }
     address = { v31309-0x4 }
       value = { v31310 }
+      flags = { size=4 }
+    address = { v31309-0x10 }
+      value = { 0x80482d3 }
       flags = { size=4 }
     ip = 0x8048364
 =====================================================================================
@@ -1059,11 +1059,11 @@ memory:
     address = { v32184 }
       value = { v32227 }
       flags = { size=4; read-only; clobbered }
-    address = { v32228-0x8 }
-      value = { v32228-0x4 }
-      flags = { size=4 }
     address = { v32228-0x4 }
       value = { v32180 }
+      flags = { size=4 }
+    address = { v32228-0x8 }
+      value = { v32228-0x4 }
       flags = { size=4 }
     ip = 0x804834a
 0x804834a:push   edx
@@ -1119,14 +1119,14 @@ memory:
     address = { v32184 }
       value = { v32227 }
       flags = { size=4; read-only; clobbered }
-    address = { v32228-0xc }
-      value = { v32182 }
+    address = { v32228-0x4 }
+      value = { v32180 }
       flags = { size=4 }
     address = { v32228-0x8 }
       value = { v32228-0x4 }
       flags = { size=4 }
-    address = { v32228-0x4 }
-      value = { v32180 }
+    address = { v32228-0xc }
+      value = { v32182 }
       flags = { size=4 }
     ip = 0x804834b
 0x804834b:push   0x08048520<__libc_csu_fini>
@@ -1182,17 +1182,17 @@ memory:
     address = { v32184 }
       value = { v32227 }
       flags = { size=4; read-only; clobbered }
-    address = { v32228-0x10 }
-      value = { 0x8048520 }
-      flags = { size=4 }
-    address = { v32228-0xc }
-      value = { v32182 }
+    address = { v32228-0x4 }
+      value = { v32180 }
       flags = { size=4 }
     address = { v32228-0x8 }
       value = { v32228-0x4 }
       flags = { size=4 }
-    address = { v32228-0x4 }
-      value = { v32180 }
+    address = { v32228-0xc }
+      value = { v32182 }
+      flags = { size=4 }
+    address = { v32228-0x10 }
+      value = { 0x8048520 }
       flags = { size=4 }
     ip = 0x8048350
 0x8048350:push   0x080484b0<__libc_csu_init>
@@ -1248,20 +1248,20 @@ memory:
     address = { v32184 }
       value = { v32227 }
       flags = { size=4; read-only; clobbered }
-    address = { v32228-0x14 }
-      value = { 0x80484b0 }
-      flags = { size=4 }
-    address = { v32228-0x10 }
-      value = { 0x8048520 }
-      flags = { size=4 }
-    address = { v32228-0xc }
-      value = { v32182 }
+    address = { v32228-0x4 }
+      value = { v32180 }
       flags = { size=4 }
     address = { v32228-0x8 }
       value = { v32228-0x4 }
       flags = { size=4 }
-    address = { v32228-0x4 }
-      value = { v32180 }
+    address = { v32228-0xc }
+      value = { v32182 }
+      flags = { size=4 }
+    address = { v32228-0x10 }
+      value = { 0x8048520 }
+      flags = { size=4 }
+    address = { v32228-0x14 }
+      value = { 0x80484b0 }
       flags = { size=4 }
     ip = 0x8048355
 0x8048355:push   ecx
@@ -1317,23 +1317,23 @@ memory:
     address = { v32184 }
       value = { v32227 }
       flags = { size=4; read-only; clobbered }
-    address = { v32228-0x18 }
-      value = { v32184+0x4 }
-      flags = { size=4 }
-    address = { v32228-0x14 }
-      value = { 0x80484b0 }
-      flags = { size=4 }
-    address = { v32228-0x10 }
-      value = { 0x8048520 }
-      flags = { size=4 }
-    address = { v32228-0xc }
-      value = { v32182 }
+    address = { v32228-0x4 }
+      value = { v32180 }
       flags = { size=4 }
     address = { v32228-0x8 }
       value = { v32228-0x4 }
       flags = { size=4 }
-    address = { v32228-0x4 }
-      value = { v32180 }
+    address = { v32228-0xc }
+      value = { v32182 }
+      flags = { size=4 }
+    address = { v32228-0x10 }
+      value = { 0x8048520 }
+      flags = { size=4 }
+    address = { v32228-0x14 }
+      value = { 0x80484b0 }
+      flags = { size=4 }
+    address = { v32228-0x18 }
+      value = { v32184+0x4 }
       flags = { size=4 }
     ip = 0x8048356
 0x8048356:push   esi
@@ -1389,26 +1389,26 @@ memory:
     address = { v32184 }
       value = { v32227 }
       flags = { size=4; read-only; clobbered }
-    address = { v32228-0x1c }
-      value = { v32227 }
-      flags = { size=4 }
-    address = { v32228-0x18 }
-      value = { v32184+0x4 }
-      flags = { size=4 }
-    address = { v32228-0x14 }
-      value = { 0x80484b0 }
-      flags = { size=4 }
-    address = { v32228-0x10 }
-      value = { 0x8048520 }
-      flags = { size=4 }
-    address = { v32228-0xc }
-      value = { v32182 }
+    address = { v32228-0x4 }
+      value = { v32180 }
       flags = { size=4 }
     address = { v32228-0x8 }
       value = { v32228-0x4 }
       flags = { size=4 }
-    address = { v32228-0x4 }
-      value = { v32180 }
+    address = { v32228-0xc }
+      value = { v32182 }
+      flags = { size=4 }
+    address = { v32228-0x10 }
+      value = { 0x8048520 }
+      flags = { size=4 }
+    address = { v32228-0x14 }
+      value = { 0x80484b0 }
+      flags = { size=4 }
+    address = { v32228-0x18 }
+      value = { v32184+0x4 }
+      flags = { size=4 }
+    address = { v32228-0x1c }
+      value = { v32227 }
       flags = { size=4 }
     ip = 0x8048357
 0x8048357:push   0x08048410<main>
@@ -1464,29 +1464,29 @@ memory:
     address = { v32184 }
       value = { v32227 }
       flags = { size=4; read-only; clobbered }
-    address = { v32228-0x20 }
-      value = { 0x8048410 }
-      flags = { size=4 }
-    address = { v32228-0x1c }
-      value = { v32227 }
-      flags = { size=4 }
-    address = { v32228-0x18 }
-      value = { v32184+0x4 }
-      flags = { size=4 }
-    address = { v32228-0x14 }
-      value = { 0x80484b0 }
-      flags = { size=4 }
-    address = { v32228-0x10 }
-      value = { 0x8048520 }
-      flags = { size=4 }
-    address = { v32228-0xc }
-      value = { v32182 }
+    address = { v32228-0x4 }
+      value = { v32180 }
       flags = { size=4 }
     address = { v32228-0x8 }
       value = { v32228-0x4 }
       flags = { size=4 }
-    address = { v32228-0x4 }
-      value = { v32180 }
+    address = { v32228-0xc }
+      value = { v32182 }
+      flags = { size=4 }
+    address = { v32228-0x10 }
+      value = { 0x8048520 }
+      flags = { size=4 }
+    address = { v32228-0x14 }
+      value = { 0x80484b0 }
+      flags = { size=4 }
+    address = { v32228-0x18 }
+      value = { v32184+0x4 }
+      flags = { size=4 }
+    address = { v32228-0x1c }
+      value = { v32227 }
+      flags = { size=4 }
+    address = { v32228-0x20 }
+      value = { 0x8048410 }
       flags = { size=4 }
     ip = 0x804835c
 0x804835c:call   0x08048310<__libc_start_main@plt>
@@ -1542,32 +1542,32 @@ memory:
     address = { v32184 }
       value = { v32227 }
       flags = { size=4; read-only; clobbered }
-    address = { v32228-0x24 }
-      value = { 0x8048361 }
-      flags = { size=4 }
-    address = { v32228-0x20 }
-      value = { 0x8048410 }
-      flags = { size=4 }
-    address = { v32228-0x1c }
-      value = { v32227 }
-      flags = { size=4 }
-    address = { v32228-0x18 }
-      value = { v32184+0x4 }
-      flags = { size=4 }
-    address = { v32228-0x14 }
-      value = { 0x80484b0 }
-      flags = { size=4 }
-    address = { v32228-0x10 }
-      value = { 0x8048520 }
-      flags = { size=4 }
-    address = { v32228-0xc }
-      value = { v32182 }
+    address = { v32228-0x4 }
+      value = { v32180 }
       flags = { size=4 }
     address = { v32228-0x8 }
       value = { v32228-0x4 }
       flags = { size=4 }
-    address = { v32228-0x4 }
-      value = { v32180 }
+    address = { v32228-0xc }
+      value = { v32182 }
+      flags = { size=4 }
+    address = { v32228-0x10 }
+      value = { 0x8048520 }
+      flags = { size=4 }
+    address = { v32228-0x14 }
+      value = { 0x80484b0 }
+      flags = { size=4 }
+    address = { v32228-0x18 }
+      value = { v32184+0x4 }
+      flags = { size=4 }
+    address = { v32228-0x1c }
+      value = { v32227 }
+      flags = { size=4 }
+    address = { v32228-0x20 }
+      value = { 0x8048410 }
+      flags = { size=4 }
+    address = { v32228-0x24 }
+      value = { 0x8048361 }
       flags = { size=4 }
     ip = 0x8048310
 =====================================================================================
@@ -1785,11 +1785,11 @@ registers:
     ?31     = { v32433 }
     ip      = { 0x8048368 }
 memory:
-    address = { v32392-0x8 }
-      value = { v32391 }
-      flags = { size=4 }
     address = { v32392-0x4 }
       value = { v32393 }
+      flags = { size=4 }
+    address = { v32392-0x8 }
+      value = { v32391 }
       flags = { size=4 }
     ip = 0x8048368
 0x8048368:push   ecx
@@ -1842,14 +1842,14 @@ registers:
     ?31     = { v32433 }
     ip      = { 0x8048369 }
 memory:
-    address = { v32392-0xc }
-      value = { v32389 }
+    address = { v32392-0x4 }
+      value = { v32393 }
       flags = { size=4 }
     address = { v32392-0x8 }
       value = { v32391 }
       flags = { size=4 }
-    address = { v32392-0x4 }
-      value = { v32393 }
+    address = { v32392-0xc }
+      value = { v32389 }
       flags = { size=4 }
     ip = 0x8048369
 0x8048369:call   0x0804836e<<Insn>>
@@ -1902,17 +1902,17 @@ registers:
     ?31     = { v32433 }
     ip      = { 0x804836e }
 memory:
-    address = { v32392-0x10 }
-      value = { 0x804836e }
-      flags = { size=4 }
-    address = { v32392-0xc }
-      value = { v32389 }
+    address = { v32392-0x4 }
+      value = { v32393 }
       flags = { size=4 }
     address = { v32392-0x8 }
       value = { v32391 }
       flags = { size=4 }
-    address = { v32392-0x4 }
-      value = { v32393 }
+    address = { v32392-0xc }
+      value = { v32389 }
+      flags = { size=4 }
+    address = { v32392-0x10 }
+      value = { 0x804836e }
       flags = { size=4 }
     ip = 0x804836e
 =====================================================================================
@@ -2706,12 +2706,12 @@ registers:
     ?31     = { v32856 }
     ip      = { 0x804839d }
 memory:
-    address = { 0x80496f4 }
-      value = { v32879 }
-      flags = { size=1; read-only }
     address = { v32815-0x4 }
       value = { v32816 }
       flags = { size=4 }
+    address = { 0x80496f4 }
+      value = { v32879 }
+      flags = { size=1; read-only }
     ip = 0x804839d
 0x804839d:jne    0x080483cc<<Insn>>
 registers:
@@ -2763,12 +2763,12 @@ registers:
     ?31     = { v32856 }
     ip      = { v32902 }
 memory:
-    address = { 0x80496f4 }
-      value = { v32879 }
-      flags = { size=1; read-only }
     address = { v32815-0x4 }
       value = { v32816 }
       flags = { size=4 }
+    address = { 0x80496f4 }
+      value = { v32879 }
+      flags = { size=1; read-only }
     ip = v32902
 =====================================================================================
 === Starting a new basic block                                                    ===
@@ -3831,12 +3831,12 @@ registers:
     ?31     = { v33438 }
     ip      = { 0x80483db }
 memory:
-    address = { 0x80495f8 }
-      value = { v33461 }
-      flags = { size=4; read-only }
     address = { v33397-0x4 }
       value = { v33398 }
       flags = { size=4 }
+    address = { 0x80495f8 }
+      value = { v33461 }
+      flags = { size=4; read-only }
     ip = 0x80483db
 0x80483db:test   eax, eax
 registers:
@@ -3888,12 +3888,12 @@ registers:
     ?31     = { v33438 }
     ip      = { 0x80483dd }
 memory:
-    address = { 0x80495f8 }
-      value = { v33461 }
-      flags = { size=4; read-only }
     address = { v33397-0x4 }
       value = { v33398 }
       flags = { size=4 }
+    address = { 0x80495f8 }
+      value = { v33461 }
+      flags = { size=4; read-only }
     ip = 0x80483dd
 0x80483dd:je     0x08048400<<Insn>>
 registers:
@@ -3945,12 +3945,12 @@ registers:
     ?31     = { v33438 }
     ip      = { v33480 }
 memory:
-    address = { 0x80495f8 }
-      value = { v33461 }
-      flags = { size=4; read-only }
     address = { v33397-0x4 }
       value = { v33398 }
       flags = { size=4 }
+    address = { 0x80495f8 }
+      value = { v33461 }
+      flags = { size=4; read-only }
     ip = v33480
 =====================================================================================
 === Starting a new basic block                                                    ===
@@ -4872,11 +4872,11 @@ memory:
     address = { v33818-0x4 }
       value = { v33819 }
       flags = { size=4; clobbered }
-    address = { v33882 }
-      value = { 0xa }
-      flags = { size=4 }
     address = { v33882+0x4 }
       value = { 0x8048480 }
+      flags = { size=4 }
+    address = { v33882 }
+      value = { 0xa }
       flags = { size=4 }
     ip = 0x8048429
 0x8048429:call   0x080482f0<signal@plt>
@@ -4932,11 +4932,11 @@ memory:
     address = { v33818-0x4 }
       value = { v33819 }
       flags = { size=4; clobbered }
-    address = { v33882 }
-      value = { 0xa }
-      flags = { size=4 }
     address = { v33882+0x4 }
       value = { 0x8048480 }
+      flags = { size=4 }
+    address = { v33882 }
+      value = { 0xa }
       flags = { size=4 }
     address = { v33882-0x4 }
       value = { 0x804842e }
@@ -5373,11 +5373,11 @@ registers:
     ?31     = { v34090 }
     ip      = { 0x804844d }
 memory:
-    address = { v34049-0xc }
-      value = { 0x80485d4 }
-      flags = { size=4 }
     address = { v34049-0x4 }
       value = { v34050 }
+      flags = { size=4 }
+    address = { v34049-0xc }
+      value = { 0x80485d4 }
       flags = { size=4 }
     ip = 0x804844d
 0x804844d:call   0x08048300<puts@plt>
@@ -5430,14 +5430,14 @@ registers:
     ?31     = { v34090 }
     ip      = { 0x8048300 }
 memory:
-    address = { v34049-0x10 }
-      value = { 0x8048452 }
+    address = { v34049-0x4 }
+      value = { v34050 }
       flags = { size=4 }
     address = { v34049-0xc }
       value = { 0x80485d4 }
       flags = { size=4 }
-    address = { v34049-0x4 }
-      value = { v34050 }
+    address = { v34049-0x10 }
+      value = { 0x8048452 }
       flags = { size=4 }
     ip = 0x8048300
 =====================================================================================
@@ -5820,11 +5820,11 @@ registers:
     ?31     = { v34302 }
     ip      = { 0x804846d }
 memory:
-    address = { v34261-0xc }
-      value = { 0x80485d4 }
-      flags = { size=4 }
     address = { v34261-0x4 }
       value = { v34262 }
+      flags = { size=4 }
+    address = { v34261-0xc }
+      value = { 0x80485d4 }
       flags = { size=4 }
     ip = 0x804846d
 0x804846d:call   0x08048300<puts@plt>
@@ -5877,14 +5877,14 @@ registers:
     ?31     = { v34302 }
     ip      = { 0x8048300 }
 memory:
-    address = { v34261-0x10 }
-      value = { 0x8048472 }
+    address = { v34261-0x4 }
+      value = { v34262 }
       flags = { size=4 }
     address = { v34261-0xc }
       value = { 0x80485d4 }
       flags = { size=4 }
-    address = { v34261-0x4 }
-      value = { v34262 }
+    address = { v34261-0x10 }
+      value = { 0x8048472 }
       flags = { size=4 }
     ip = 0x8048300
 =====================================================================================
@@ -6216,12 +6216,12 @@ registers:
     ?31     = { v34512 }
     ip      = { 0x804848c }
 memory:
-    address = { 0x80496f8 }
-      value = { v34535+0x1 }
-      flags = { size=4 }
     address = { v34471-0x4 }
       value = { v34472 }
       flags = { size=4; clobbered }
+    address = { 0x80496f8 }
+      value = { v34535+0x1 }
+      flags = { size=4 }
     ip = 0x804848c
 0x804848c:mov    DWORD PTR ss:[esp], 0x080485d4<<StaticData@0x080485ca>+0x0a>
 registers:
@@ -6273,15 +6273,15 @@ registers:
     ?31     = { v34512 }
     ip      = { 0x8048493 }
 memory:
+    address = { v34471-0x4 }
+      value = { v34472 }
+      flags = { size=4; clobbered }
     address = { 0x80496f8 }
       value = { v34535+0x1 }
       flags = { size=4; clobbered }
     address = { v34471-0xc }
       value = { 0x80485d4 }
       flags = { size=4 }
-    address = { v34471-0x4 }
-      value = { v34472 }
-      flags = { size=4; clobbered }
     ip = 0x8048493
 0x8048493:call   0x08048300<puts@plt>
 registers:
@@ -6333,18 +6333,18 @@ registers:
     ?31     = { v34512 }
     ip      = { 0x8048300 }
 memory:
-    address = { 0x80496f8 }
-      value = { v34535+0x1 }
-      flags = { size=4; clobbered }
-    address = { v34471-0x10 }
-      value = { 0x8048498 }
-      flags = { size=4 }
-    address = { v34471-0xc }
-      value = { 0x80485d4 }
-      flags = { size=4 }
     address = { v34471-0x4 }
       value = { v34472 }
       flags = { size=4; clobbered }
+    address = { 0x80496f8 }
+      value = { v34535+0x1 }
+      flags = { size=4; clobbered }
+    address = { v34471-0xc }
+      value = { 0x80485d4 }
+      flags = { size=4 }
+    address = { v34471-0x10 }
+      value = { 0x8048498 }
+      flags = { size=4 }
     ip = 0x8048300
 =====================================================================================
 === Starting a new basic block                                                    ===
@@ -6621,11 +6621,11 @@ registers:
     ?31     = { v34744 }
     ip      = { 0x80484b4 }
 memory:
-    address = { v34703-0x8 }
-      value = { v34706 }
-      flags = { size=4 }
     address = { v34703-0x4 }
       value = { v34704 }
+      flags = { size=4 }
+    address = { v34703-0x8 }
+      value = { v34706 }
       flags = { size=4 }
     ip = 0x80484b4
 0x80484b4:push   esi
@@ -6678,14 +6678,14 @@ registers:
     ?31     = { v34744 }
     ip      = { 0x80484b5 }
 memory:
-    address = { v34703-0xc }
-      value = { v34705 }
+    address = { v34703-0x4 }
+      value = { v34704 }
       flags = { size=4 }
     address = { v34703-0x8 }
       value = { v34706 }
       flags = { size=4 }
-    address = { v34703-0x4 }
-      value = { v34704 }
+    address = { v34703-0xc }
+      value = { v34705 }
       flags = { size=4 }
     ip = 0x80484b5
 0x80484b5:push   ebx
@@ -6738,17 +6738,17 @@ registers:
     ?31     = { v34744 }
     ip      = { 0x80484b6 }
 memory:
-    address = { v34703-0x10 }
-      value = { v34702 }
-      flags = { size=4 }
-    address = { v34703-0xc }
-      value = { v34705 }
+    address = { v34703-0x4 }
+      value = { v34704 }
       flags = { size=4 }
     address = { v34703-0x8 }
       value = { v34706 }
       flags = { size=4 }
-    address = { v34703-0x4 }
-      value = { v34704 }
+    address = { v34703-0xc }
+      value = { v34705 }
+      flags = { size=4 }
+    address = { v34703-0x10 }
+      value = { v34702 }
       flags = { size=4 }
     ip = 0x80484b6
 0x80484b6:sub    esp, 0x0c
@@ -6801,17 +6801,17 @@ registers:
     ?31     = { v34744 }
     ip      = { 0x80484b9 }
 memory:
-    address = { v34703-0x10 }
-      value = { v34702 }
-      flags = { size=4 }
-    address = { v34703-0xc }
-      value = { v34705 }
+    address = { v34703-0x4 }
+      value = { v34704 }
       flags = { size=4 }
     address = { v34703-0x8 }
       value = { v34706 }
       flags = { size=4 }
-    address = { v34703-0x4 }
-      value = { v34704 }
+    address = { v34703-0xc }
+      value = { v34705 }
+      flags = { size=4 }
+    address = { v34703-0x10 }
+      value = { v34702 }
       flags = { size=4 }
     ip = 0x80484b9
 0x80484b9:call   0x080484be<<Insn>>
@@ -6864,20 +6864,20 @@ registers:
     ?31     = { v34744 }
     ip      = { 0x80484be }
 memory:
-    address = { v34703-0x20 }
-      value = { 0x80484be }
-      flags = { size=4 }
-    address = { v34703-0x10 }
-      value = { v34702 }
-      flags = { size=4 }
-    address = { v34703-0xc }
-      value = { v34705 }
+    address = { v34703-0x4 }
+      value = { v34704 }
       flags = { size=4 }
     address = { v34703-0x8 }
       value = { v34706 }
       flags = { size=4 }
-    address = { v34703-0x4 }
-      value = { v34704 }
+    address = { v34703-0xc }
+      value = { v34705 }
+      flags = { size=4 }
+    address = { v34703-0x10 }
+      value = { v34702 }
+      flags = { size=4 }
+    address = { v34703-0x20 }
+      value = { 0x80484be }
       flags = { size=4 }
     ip = 0x80484be
 =====================================================================================
@@ -7464,12 +7464,12 @@ registers:
     ?31     = { v34977 }
     ip      = { 0x80484e4 }
 memory:
-    address = { v34936+0xc }
-      value = { v35004 }
-      flags = { size=4; read-only }
     address = { v34937-0x10 }
       value = { 0x0 }
       flags = { size=4 }
+    address = { v34936+0xc }
+      value = { v35004 }
+      flags = { size=4; read-only }
     ip = 0x80484e4
 0x80484e4:pop    esi
 registers:
@@ -7521,15 +7521,15 @@ registers:
     ?31     = { v34977 }
     ip      = { 0x80484e5 }
 memory:
+    address = { v34937-0x10 }
+      value = { 0x0 }
+      flags = { size=4 }
     address = { v34936+0xc }
       value = { v35004 }
       flags = { size=4; read-only }
     address = { v34936+0x10 }
       value = { v35005 }
       flags = { size=4; read-only }
-    address = { v34937-0x10 }
-      value = { 0x0 }
-      flags = { size=4 }
     ip = 0x80484e5
 0x80484e5:pop    edi
 registers:
@@ -7581,6 +7581,9 @@ registers:
     ?31     = { v34977 }
     ip      = { 0x80484e6 }
 memory:
+    address = { v34937-0x10 }
+      value = { 0x0 }
+      flags = { size=4 }
     address = { v34936+0xc }
       value = { v35004 }
       flags = { size=4; read-only }
@@ -7590,9 +7593,6 @@ memory:
     address = { v34936+0x14 }
       value = { v35006 }
       flags = { size=4; read-only }
-    address = { v34937-0x10 }
-      value = { 0x0 }
-      flags = { size=4 }
     ip = 0x80484e6
 0x80484e6:pop    ebp
 registers:
@@ -7644,6 +7644,9 @@ registers:
     ?31     = { v34977 }
     ip      = { 0x80484e7 }
 memory:
+    address = { v34937-0x10 }
+      value = { 0x0 }
+      flags = { size=4 }
     address = { v34936+0xc }
       value = { v35004 }
       flags = { size=4; read-only }
@@ -7656,9 +7659,6 @@ memory:
     address = { v34936+0x18 }
       value = { v35007 }
       flags = { size=4; read-only }
-    address = { v34937-0x10 }
-      value = { 0x0 }
-      flags = { size=4 }
     ip = 0x80484e7
 0x80484e7:ret    
 registers:
@@ -7710,6 +7710,9 @@ registers:
     ?31     = { v34977 }
     ip      = { v35008 }
 memory:
+    address = { v34937-0x10 }
+      value = { 0x0 }
+      flags = { size=4 }
     address = { v34936+0xc }
       value = { v35004 }
       flags = { size=4; read-only }
@@ -7725,9 +7728,6 @@ memory:
     address = { v34936+0x1c }
       value = { v35008 }
       flags = { size=4; read-only }
-    address = { v34937-0x10 }
-      value = { 0x0 }
-      flags = { size=4 }
     ip = v35008
 =====================================================================================
 === Starting a new basic block                                                    ===
@@ -7890,11 +7890,11 @@ registers:
     ?31     = { v35102 }
     ip      = { 0x8048524 }
 memory:
-    address = { v35061-0x8 }
-      value = { v35064 }
-      flags = { size=4 }
     address = { v35061-0x4 }
       value = { v35062 }
+      flags = { size=4 }
+    address = { v35061-0x8 }
+      value = { v35064 }
       flags = { size=4 }
     ip = 0x8048524
 0x8048524:push   esi
@@ -7947,14 +7947,14 @@ registers:
     ?31     = { v35102 }
     ip      = { 0x8048525 }
 memory:
-    address = { v35061-0xc }
-      value = { v35063 }
+    address = { v35061-0x4 }
+      value = { v35062 }
       flags = { size=4 }
     address = { v35061-0x8 }
       value = { v35064 }
       flags = { size=4 }
-    address = { v35061-0x4 }
-      value = { v35062 }
+    address = { v35061-0xc }
+      value = { v35063 }
       flags = { size=4 }
     ip = 0x8048525
 0x8048525:push   ebx
@@ -8007,17 +8007,17 @@ registers:
     ?31     = { v35102 }
     ip      = { 0x8048526 }
 memory:
-    address = { v35061-0x10 }
-      value = { v35060 }
-      flags = { size=4 }
-    address = { v35061-0xc }
-      value = { v35063 }
+    address = { v35061-0x4 }
+      value = { v35062 }
       flags = { size=4 }
     address = { v35061-0x8 }
       value = { v35064 }
       flags = { size=4 }
-    address = { v35061-0x4 }
-      value = { v35062 }
+    address = { v35061-0xc }
+      value = { v35063 }
+      flags = { size=4 }
+    address = { v35061-0x10 }
+      value = { v35060 }
       flags = { size=4 }
     ip = 0x8048526
 0x8048526:sub    esp, 0x0c
@@ -8070,17 +8070,17 @@ registers:
     ?31     = { v35102 }
     ip      = { 0x8048529 }
 memory:
-    address = { v35061-0x10 }
-      value = { v35060 }
-      flags = { size=4 }
-    address = { v35061-0xc }
-      value = { v35063 }
+    address = { v35061-0x4 }
+      value = { v35062 }
       flags = { size=4 }
     address = { v35061-0x8 }
       value = { v35064 }
       flags = { size=4 }
-    address = { v35061-0x4 }
-      value = { v35062 }
+    address = { v35061-0xc }
+      value = { v35063 }
+      flags = { size=4 }
+    address = { v35061-0x10 }
+      value = { v35060 }
       flags = { size=4 }
     ip = 0x8048529
 0x8048529:call   0x0804852e<<Insn>>
@@ -8133,20 +8133,20 @@ registers:
     ?31     = { v35102 }
     ip      = { 0x804852e }
 memory:
-    address = { v35061-0x20 }
-      value = { 0x804852e }
-      flags = { size=4 }
-    address = { v35061-0x10 }
-      value = { v35060 }
-      flags = { size=4 }
-    address = { v35061-0xc }
-      value = { v35063 }
+    address = { v35061-0x4 }
+      value = { v35062 }
       flags = { size=4 }
     address = { v35061-0x8 }
       value = { v35064 }
       flags = { size=4 }
-    address = { v35061-0x4 }
-      value = { v35062 }
+    address = { v35061-0xc }
+      value = { v35063 }
+      flags = { size=4 }
+    address = { v35061-0x10 }
+      value = { v35060 }
+      flags = { size=4 }
+    address = { v35061-0x20 }
+      value = { 0x804852e }
       flags = { size=4 }
     ip = 0x804852e
 =====================================================================================
@@ -9753,11 +9753,11 @@ registers:
     ?31     = { v35720 }
     ip      = { 0x8048584 }
 memory:
-    address = { v35679-0x8 }
-      value = { v35678 }
-      flags = { size=4 }
     address = { v35679-0x4 }
       value = { v35680 }
+      flags = { size=4 }
+    address = { v35679-0x8 }
+      value = { v35678 }
       flags = { size=4 }
     ip = 0x8048584
 0x8048584:sub    esp, 0x04
@@ -9810,11 +9810,11 @@ registers:
     ?31     = { v35720 }
     ip      = { 0x8048587 }
 memory:
-    address = { v35679-0x8 }
-      value = { v35678 }
-      flags = { size=4 }
     address = { v35679-0x4 }
       value = { v35680 }
+      flags = { size=4 }
+    address = { v35679-0x8 }
+      value = { v35678 }
       flags = { size=4 }
     ip = 0x8048587
 0x8048587:mov    ebx, 0x080495e8<.ctors>
@@ -9867,11 +9867,11 @@ registers:
     ?31     = { v35720 }
     ip      = { 0x804858c }
 memory:
-    address = { v35679-0x8 }
-      value = { v35678 }
-      flags = { size=4 }
     address = { v35679-0x4 }
       value = { v35680 }
+      flags = { size=4 }
+    address = { v35679-0x8 }
+      value = { v35678 }
       flags = { size=4 }
     ip = 0x804858c
 0x804858c:mov    eax, DWORD PTR ds:[0x080495e8<.ctors>]
@@ -9924,15 +9924,15 @@ registers:
     ?31     = { v35720 }
     ip      = { 0x8048591 }
 memory:
-    address = { 0x80495e8 }
-      value = { v35743 }
-      flags = { size=4; read-only }
-    address = { v35679-0x8 }
-      value = { v35678 }
-      flags = { size=4 }
     address = { v35679-0x4 }
       value = { v35680 }
       flags = { size=4 }
+    address = { v35679-0x8 }
+      value = { v35678 }
+      flags = { size=4 }
+    address = { 0x80495e8 }
+      value = { v35743 }
+      flags = { size=4; read-only }
     ip = 0x8048591
 0x8048591:cmp    eax, 0xff<-0x01>
 registers:
@@ -9984,15 +9984,15 @@ registers:
     ?31     = { v35720 }
     ip      = { 0x8048594 }
 memory:
-    address = { 0x80495e8 }
-      value = { v35743 }
-      flags = { size=4; read-only }
-    address = { v35679-0x8 }
-      value = { v35678 }
-      flags = { size=4 }
     address = { v35679-0x4 }
       value = { v35680 }
       flags = { size=4 }
+    address = { v35679-0x8 }
+      value = { v35678 }
+      flags = { size=4 }
+    address = { 0x80495e8 }
+      value = { v35743 }
+      flags = { size=4; read-only }
     ip = 0x8048594
 0x8048594:je     0x080485ac<<Insn>>
 registers:
@@ -10044,15 +10044,15 @@ registers:
     ?31     = { v35720 }
     ip      = { v35766 }
 memory:
-    address = { 0x80495e8 }
-      value = { v35743 }
-      flags = { size=4; read-only }
-    address = { v35679-0x8 }
-      value = { v35678 }
-      flags = { size=4 }
     address = { v35679-0x4 }
       value = { v35680 }
       flags = { size=4 }
+    address = { v35679-0x8 }
+      value = { v35678 }
+      flags = { size=4 }
+    address = { 0x80495e8 }
+      value = { v35743 }
+      flags = { size=4; read-only }
     ip = v35766
 =====================================================================================
 === Starting a new basic block                                                    ===
@@ -10827,11 +10827,11 @@ registers:
     ?31     = { v36192 }
     ip      = { 0x80485b4 }
 memory:
-    address = { v36151-0x8 }
-      value = { v36150 }
-      flags = { size=4 }
     address = { v36151-0x4 }
       value = { v36152 }
+      flags = { size=4 }
+    address = { v36151-0x8 }
+      value = { v36150 }
       flags = { size=4 }
     ip = 0x80485b4
 0x80485b4:push   eax
@@ -10884,14 +10884,14 @@ registers:
     ?31     = { v36192 }
     ip      = { 0x80485b5 }
 memory:
-    address = { v36151-0xc }
-      value = { v36147 }
+    address = { v36151-0x4 }
+      value = { v36152 }
       flags = { size=4 }
     address = { v36151-0x8 }
       value = { v36150 }
       flags = { size=4 }
-    address = { v36151-0x4 }
-      value = { v36152 }
+    address = { v36151-0xc }
+      value = { v36147 }
       flags = { size=4 }
     ip = 0x80485b5
 0x80485b5:call   0x080485ba<<Insn>>
@@ -10944,17 +10944,17 @@ registers:
     ?31     = { v36192 }
     ip      = { 0x80485ba }
 memory:
-    address = { v36151-0x10 }
-      value = { 0x80485ba }
-      flags = { size=4 }
-    address = { v36151-0xc }
-      value = { v36147 }
+    address = { v36151-0x4 }
+      value = { v36152 }
       flags = { size=4 }
     address = { v36151-0x8 }
       value = { v36150 }
       flags = { size=4 }
-    address = { v36151-0x4 }
-      value = { v36152 }
+    address = { v36151-0xc }
+      value = { v36147 }
+      flags = { size=4 }
+    address = { v36151-0x10 }
+      value = { 0x80485ba }
       flags = { size=4 }
     ip = 0x80485ba
 =====================================================================================

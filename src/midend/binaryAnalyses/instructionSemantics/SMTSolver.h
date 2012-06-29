@@ -36,12 +36,19 @@ public:
 
     /** Evidence of satisfiability for a bitvector variable.  If an expression is satisfiable, this function will return
      *  a value for the specified bitvector variable that satisfies the expression in conjunction with the other evidence. Not
-     *  all SMT solvers can return this information.  Returns the null pointer if no evidence is available for the variable. */
+     *  all SMT solvers can return this information.  Returns the null pointer if no evidence is available for the variable.
+     * @{ */
     virtual InsnSemanticsExpr::TreeNodePtr evidence_for_variable(uint64_t varno) {
         char buf[64];
         snprintf(buf, sizeof buf, "v%"PRIu64, varno);
         return evidence_for_name(buf);
     }
+    virtual InsnSemanticsExpr::TreeNodePtr evidence_for_variable(const InsnSemanticsExpr::TreeNodePtr &var) {
+        InsnSemanticsExpr::LeafNodePtr ln = var->isLeafNode();
+        assert(ln && !ln->is_known());
+        return evidence_for_variable(ln->get_name());
+    }
+    /** @} */
 
     /** Evidence of satisfiability for a memory address.  If an expression is satisfiable, this function will return
      *  a value for the specified memory address that satisfies the expression in conjunction with the other evidence. Not

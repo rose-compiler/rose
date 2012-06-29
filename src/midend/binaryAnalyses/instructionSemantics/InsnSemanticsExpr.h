@@ -33,7 +33,7 @@ namespace InsnSemanticsExpr {
         OP_NEGATE,              /**< Arithmetic negation. One operand. */
         OP_NOOP,                /**< No operation. Used only by the default constructor. */
         OP_OR,                  /**< Boolean OR. Operands are all Boolean (1-bit) values. See also OP_BV_OR. */
-        OP_READ,                /**< Read a value from memory.  The argument is the address expression. */
+        OP_READ,                /**< Read a value from memory.  Arguments are the memory state and the address expression. */
         OP_ROL,                 /**< Rotate left. Rotate bits of B left by A bits.  0 <= A < width(B). */
         OP_ROR,                 /**< Rotate right. Rotate bits of B right by A bits. 0 <= B < width(B).  */
         OP_SDIV,                /**< Signed division. Two operands, A/B. Result width is width(A). */
@@ -56,7 +56,7 @@ namespace InsnSemanticsExpr {
         OP_ULT,                 /**< Unsigned less-than. Two operands of equal width. Result is Boolean (1-bit vector). */
         OP_UMOD,                /**< Unsigned modulus. Two operands, A%B. Result width is width(B). */
         OP_UMUL,                /**< Unsigned multiplication. Two operands, A*B. Result width is width(A)+width(B). */
-        OP_WRITE,               /**< Write (update) memory with a new value. Arguments are address and value. */
+        OP_WRITE,               /**< Write (update) memory with a new value. Arguments are memory, address and value. */
         OP_ZEROP,               /**< Equal to zero. One operand. Result is a single bit, set iff A is equal to zero. */
     };
 
@@ -169,6 +169,11 @@ namespace InsnSemanticsExpr {
             add_child(b);
             add_child(c);
         }
+        InternalNode(size_t nbits, Operator op, const std::vector<TreeNodePtr> &children, std::string comment="")
+            : TreeNode(nbits, comment), op(op) {
+            for (size_t i=0; i<children.size(); ++i)
+                add_child(children[i]);
+        }
 
     public:
         /** Create a new expression node. Use these class methods instead of c'tors. */
@@ -188,6 +193,11 @@ namespace InsnSemanticsExpr {
         static InternalNodePtr create(size_t nbits, Operator op, const TreeNodePtr &a, const TreeNodePtr &b, const TreeNodePtr &c,
                                       const std::string comment="") {
             InternalNodePtr retval(new InternalNode(nbits, op, a, b, c, comment));
+            return retval;
+        }
+        static InternalNodePtr create(size_t nbits, Operator op, const std::vector<TreeNodePtr> &children,
+                                      const std::string comment="") {
+            InternalNodePtr retval(new InternalNode(nbits, op, children, comment));
             return retval;
         }
         /** @} */
@@ -218,8 +228,10 @@ namespace InsnSemanticsExpr {
         /** Returns the operator. */
         Operator get_operator() const { return op; }
 
-        /** Appends @p child as a new child of this node. The reference count for the root of the child is incremented; the
-         *  child expression is not copied. */
+    protected:
+        /** Appends @p child as a new child of this node. The modification is done in place, so one must be careful that this
+         *  node is not part of other expressions.  It is safe to call add_child() on a node that was just created and not used
+         *  anywhere yet. */
         void add_child(const TreeNodePtr &child);
     };
 

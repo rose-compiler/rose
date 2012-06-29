@@ -351,7 +351,7 @@ namespace BinaryAnalysis {              // documented elsewhere
 
                 /** See NullSemantics::Policy::startInstruction() */
                 void startInstruction(SgAsmInstruction *insn) {
-                    cur_state.ip = ValueType<32>(insn->get_address());
+                    cur_state.registers.ip = ValueType<32>(insn->get_address());
                     if (0==ninsns++)
                         orig_state = cur_state;
                     cur_insn = insn;
