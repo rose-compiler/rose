@@ -1585,6 +1585,16 @@ Grammar::setUpSupport ()
      Project.setDataPrototype ( "bool", "Java_only", "= false",
             NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // Liao 6/29/2012: support using rose translator to act like a linker wrapper if -rose:openmp:lowering is specified
+  // Add a flag to indicate if this is a linking involved in the lowered OpenMP input program.
+  // The openmp_lowering flag at SgFile level won't exist when there are no input source files at the linking stage
+  //
+  // Simply using OpenMP_Only is not sufficient for OpenMP since OpenMP input files can be handled in three different ways in ROSE:
+  // 1) parsing only 2) generating dedicated AST 3) actual OpenMP lowering
+  // Only the one with lowering will need special linking support to connect to libxomp.a and pthreads.
+     Project.setDataPrototype ( "bool", "openmp_linking", "= false",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      Project.setDataPrototype ("std::list<std::string>", "Java_classpath", "",
             NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      Project.setDataPrototype ("std::list<std::string>", "Java_sourcepath", "",
