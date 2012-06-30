@@ -709,7 +709,7 @@ SgProject::processCommandLine(const vector<string>& input_argv)
           set_wave(true);
         }
 
-     // Liao 6/29/2012, support linking flags for OpenMP lowering when no SgFile is available
+     // Liao 6/29/2012: support linking flags for OpenMP lowering when no SgFile is available
      set_openmp_linking(false);
      if ( CommandlineProcessing::isOption(local_commandLineArgumentList,"-rose:OpenMP:","lowering",true) == true
          ||CommandlineProcessing::isOption(local_commandLineArgumentList,"-rose:openmp:","lowering",true) == true)
