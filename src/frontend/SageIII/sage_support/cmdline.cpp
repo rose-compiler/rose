@@ -709,6 +709,17 @@ SgProject::processCommandLine(const vector<string>& input_argv)
           set_wave(true);
         }
 
+     // Liao 6/29/2012: support linking flags for OpenMP lowering when no SgFile is available
+     set_openmp_linking(false);
+     if ( CommandlineProcessing::isOption(local_commandLineArgumentList,"-rose:OpenMP:","lowering",true) == true
+         ||CommandlineProcessing::isOption(local_commandLineArgumentList,"-rose:openmp:","lowering",true) == true)
+     {
+       if ( SgProject::get_verbose() >= 1 )
+         printf ("In SgProject: openmp_linking mode ON \n");
+       set_openmp_linking(true);
+     }
+
+
 #if 1
   // DQ (10/3/2010): Adding support for CPP directives to be optionally a part of the AST as declarations
   // in global scope instead of handled similar to comments.
@@ -2899,7 +2910,7 @@ void SgFile::build_CLANG_CommandLine ( vector<string> & inputCommandLine, vector
     std::vector<std::string> define_list;
     std::string input_file;
 
-    for (int i = 0; i < argv.size(); i++) {
+    for (size_t i = 0; i < argv.size(); i++) {
         std::string current_arg(argv[i]);
         if (current_arg.find("-I") == 0) {
             if (current_arg.length() > 2) {

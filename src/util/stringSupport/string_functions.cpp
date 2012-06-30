@@ -1362,7 +1362,7 @@ StringUtility::stripFileSuffixFromFileName ( const string & fileNameWithSuffix )
 //
 //Rama: I am not sure if this mechanism can deal with files ending with .
 //Like "test."
-//I am not clear about the purpose of the function too. So, not modyfying it.
+//I am not clear about the purpose of the function too. So, not modifying it.
 string
 StringUtility::fileNameSuffix ( const string & fileNameWithSuffix )
    {

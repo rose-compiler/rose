@@ -22,7 +22,7 @@
 \todo Make the "*PtrList" typed objects non-pointer data members (lists) instead of
     pointer to lists.
 
-\todo Implement a "-dumpversion" for compatability with GNU (icc does the same).
+\todo Implement a "-dumpversion" for compatibility with GNU (icc does the same).
 
 \sa
 \ref SgProject_usage  "Example of using a SgProject object"
@@ -38,7 +38,7 @@
 \brief This is the list of files within the project.
 
 \internal  This is an STL list, I think that the get_file() member function should be
-    deprecated so that we acess the list like all other STL lists.
+    deprecated so that we access the list like all other STL lists.
 */
 
 /*!
@@ -50,7 +50,7 @@
 
 /*!
 \var SgProject::project_argv
-\brief This is a copy to the argv (pointer) value (array of poitners to C-style strings
+\brief This is a copy to the argv (pointer) value (array of pointers to C-style strings
     representing command line options specified).
 
 \internal  This is not processed to group multi-argument command line options. This is a static variable.
@@ -91,7 +91,7 @@
 
 /*!
 \var SgProject::p_outputFileName
-\brief Filename specifiec using "-o" option on command line.
+\brief Filename specific using "-o" option on command line.
 
    Set as part of normal command line processing within ROSE.
 
@@ -152,27 +152,27 @@
 
 \internal  This is a simple pass through to the vendor compiler to do the linking.  If no
     transformations occured to instantiated templates, then the vendor compiler handles
-    all prelinking template instatiation as well.
+    all prelinking template instantiation as well.
 */
 
 /*!
 \var SgProject::p_prelink
 \brief This controls if we are to handle the prelink (not implemented).
 
-\internal  We implemented a prelink mechamism, but it was not very robust, so until we
-    have a better one this should be false.  It is use to control teting of the existing
+\internal  We implemented a prelink mechanism, but it was not very robust, so until we
+    have a better one this should be false.  It is use to control testing of the existing
     prelink mechanism (which will be rewritten).
 */
 
 /*!
 \var SgProject::p_template_instantiation_mode
-\brief This controls the degree of template instatiation by ROSE.  No template
-    instatiation is required by ROSE if all template instationation can be handled by the
+\brief This controls the degree of template instantiation by ROSE.  No template
+    instantiation is required by ROSE if all template instantiation can be handled by the
     backend vendor C++ compiler.
 
 \internal  The default is currently to output only transformed instantiated templates and
-    to do so as static teplate functions where they are instatiated template functions
-    because we don't have a sufficently powerful global prelink mehcanism to control the 
+    to do so as static template functions where they are instantiated template functions
+    because we don't have a sufficiently powerful global prelink mechanism to control the 
     assignment of instantiated template functions and member functions to files (to avoid
     multiply defined symbols at link time).
 */
@@ -181,14 +181,14 @@
 \var SgProject::p_astMerge
 \brief This controls the merging of AST when multiple files are being processed.
 
-    "-rose:astMerge" triggeres the use of the file specificed by
+    "-rose:astMerge" triggers the use of the file specified by
 "-rose:astMergeCommandFile <filename>" which stores the working directory and 
 the command line required to compile the target file.  It is an error to specify 
 "-rose:astMerge" without also specifying "-rose:astMergeCommandFile <filename>".
 It is required to specify the "-rose:astMergeCommandFile <filename>" option to
 first build the required "AST Merge Command File" prior to processing of the 
 "AST Merge Command File"using the "-rose:astMerge" option.
-See manual for details of AST merge mechansim.
+See manual for details of AST merge mechanism.
 
 \internal New mechanism (not yet documented).
 */
@@ -197,18 +197,32 @@ See manual for details of AST merge mechansim.
 \var SgProject::p_astMergeCommandFile
 \brief This stores the name of the file where information is collected for the AST Merge mechanism.
 
-    "-rose:astMerge" triggeres the use of the file specificed by
+    "-rose:astMerge" triggers the use of the file specified by
 "-rose:astMergeCommandFile <filename>" which stores the working directory and 
 the command line required to compile the target file.  It is an error to specify 
 "-rose:astMerge" without also specifying "-rose:astMergeCommandFile <filename>".
 It is required to specify the "-rose:astMergeCommandFile <filename>" option to
 first build the required "AST Merge Command File" prior to processing of the 
 "AST Merge Command File"using the "-rose:astMerge" option.
-See manual for details of AST merge mechansim.
+See manual for details of AST merge mechanism.
 
 \internal New mechanism (not yet documented).
 */
 
+/*!
+\var SgProject::p_openmp_linking
+\brief This flag is used to indicate if OpenMP lowering is requested by the command line so linking to ROSE's OpenMP runtime library is needed.
+
+    This flag is set to be false by default.
+    "-rose:openmp:lowering" triggers this flag to be set to true. 
+    SgFile::p_openmp_lowering will not be sufficient since there is no 
+    SgFile in the AST when a ROSE translator is used as a linker wrapper.
+    So we have to have a project level flag to indicate the need.
+    Using a flag like SgProject::p_OpenMP_Only won't be sufficient neither
+    since OpenMP input files can be handled in three different ways in ROSE:
+    1) parsing only 2) generating dedicated AST 3) actual OpenMP lowering
+    Only the one with lowering will need special linking support to connect to libxomp.a and pthreads.
+*/
 
 
 //////////////////////////////////////////////////////////////////////////

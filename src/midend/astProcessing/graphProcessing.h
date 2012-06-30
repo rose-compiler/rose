@@ -789,7 +789,7 @@ uTraversePath(int begin, int end, CFG*& g, bool loop, std::map<int, std::vector<
                 #pragma omp parallel for schedule(guided) 
                 for (unsigned int qqq = 0; qqq < paths.size(); qqq++) {
   //             std::cout << "pathcheck" << std::endl;
-                int pathevals = 0;
+                //int pathevals = 0;
                 //std::vector<int> zpt = zipPath2(paths[qqq], g); 
                 //std::set<std::vector<int> > boxpaths;
                 std::set<std::vector<int> > movepaths;
@@ -849,7 +849,7 @@ uTraversePath(int begin, int end, CFG*& g, bool loop, std::map<int, std::vector<
                     //std::cout << "permnums: " << permnums << std::endl;
                     gettimeofday(&timfor, NULL);
                     double t2for = timfor.tv_sec + (timfor.tv_usec/1000000);
-                    double ttfor = t2for - t1for;
+                    //double ttfor = t2for - t1for;
                     //#pragma omp atomic
                     //ttfors += ttfor;
                     
@@ -857,7 +857,7 @@ uTraversePath(int begin, int end, CFG*& g, bool loop, std::map<int, std::vector<
                     std::set<std::vector<int> > movepathscheck;
                     timeval timperms;
                     gettimeofday(&timperms, NULL);
-                    double t1perm = timperms.tv_sec + (timperms.tv_usec/1000000);
+                   // double t1perm = timperms.tv_sec + (timperms.tv_usec/1000000);
                     std::vector<int> nvec;
                     std::vector<std::vector<int> > boxpaths(permnums, nvec);
                     //#pragma omp parallel for schedule(guided)
