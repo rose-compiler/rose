@@ -19,21 +19,6 @@ using namespace std;
 #include "latticeFull.h"
 #include "printAnalysisStates.h"
 
-#if 0
-#include "common.h"
-#include "variables.h"
-#include "cfgUtils.h"
-#include "analysisCommon.h"
-#include "functionState.h"
-#include "latticeFull.h"
-#include "analysis.h"
-#include "dataflow.h"
-#include "liveDeadVarAnalysis.h"
-#include "saveDotAnalysis.h"
-#endif
-
-// Include the header file specific to our analysis.
-// #include "divAnalysis.h"
 #include "constantPropagation.h"
 
 int numFails = 0, numPass = 0;
@@ -121,12 +106,6 @@ main( int argc, char * argv[] )
      initAnalysis(project);
      Dbg::init("Divisibility Analysis Test", ".", "index.html");
 
-  /* analysisDebugLevel = 0;
-
-     SaveDotAnalysis sda;
-     UnstructuredPassInterAnalysis upia_sda(sda);
-     upia_sda.runAnalysis();
-   */
 	
      liveDeadAnalysisDebugLevel = 1;
      analysisDebugLevel = 1;
@@ -137,25 +116,29 @@ main( int argc, char * argv[] )
           printf("*********************************************************************\n");
         }
 
+    // liveness analysis is used to generate FiniteVarsExprsProductLattice.
      LiveDeadVarsAnalysis ldva(project);
      UnstructuredPassInterDataflow ciipd_ldva(&ldva);
      ciipd_ldva.runAnalysis();
 
+    // prepare call graph
      CallGraphBuilder cgb(project);
      cgb.buildCallGraph();
      SgIncidenceDirectedGraph* graph = cgb.getGraph(); 
 
+    // use constant propagation within the context insensitive interprocedural dataflow driver
      analysisDebugLevel = 1;
-     ConstantPropagationAnalysis divA(&ldva);
-     ContextInsensitiveInterProceduralDataflow divInter(&divA, graph);
-     divInter.runAnalysis();
+     ConstantPropagationAnalysis cpA(&ldva);
+     ContextInsensitiveInterProceduralDataflow cpInter(&cpA, graph);
+     cpInter.runAnalysis();
 
-     evaluateAnalysisStates eas(&divA, "    ");
+    // verify the results
+     evaluateAnalysisStates eas(&cpA, "    ");
      UnstructuredPassInterAnalysis upia_eas(eas);
      upia_eas.runAnalysis();
 
 // Liao 1/6/2012, optionally dump dot graph of the analysis result
-//     Dbg::dotGraphGenerator(&divA);
+//     Dbg::dotGraphGenerator(&cpA);
      if (numFails == 0 && numPass == eas.total_expectations)
           printf("PASS: %d / %d\n", numPass, eas.total_expectations);
        else

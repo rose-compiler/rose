@@ -30,12 +30,8 @@ void LiveVarsLattice::copy(Lattice* that)
         liveVars = dynamic_cast<LiveVarsLattice*>(that)->liveVars;
 }
 
-// Called by analyses to create a copy of this lattice. However, if this lattice maintains any 
-//    information on a per-variable basis, these per-variable mappings must be converted from 
-//    the current set of variables to another set. This may be needed during function calls, 
-//    when dataflow information from the caller/callee needs to be transferred to the callee/calleer.
-// We do not force child classes to define their own versions of this function since not all
-//    Lattices have per-variable information.
+
+// replace variables with a new set of variables
 // varNameMap - maps all variable names that have changed, in each mapping pair, pair->first is the 
 //              old variable and pair->second is the new variable
 // func - the function that the copy Lattice will now be associated with
@@ -69,7 +65,8 @@ void LiveVarsLattice::incorporateVars(Lattice* that_arg)
 // return a lattice for the given expression. Similarly, a lattice that keeps track of constraints
 // on values of variables and expressions will return the portion of the lattice that relates to
 // the given expression. 
-// It it legal for this function to return NULL if no information is available.
+
+// It is legal for this function to return NULL if no information is available.
 // The function's caller is responsible for deallocating the returned object
 Lattice* LiveVarsLattice::project(SgExpression* expr) { 
         varID var = SgExpr2Var(expr);

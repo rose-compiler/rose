@@ -1431,6 +1431,7 @@ $(F77_FILES): $(TEST_TRANSLATOR)
 $(F03_FILES): $(TEST_TRANSLATOR)
 	$(TEST_TRANSLATOR) $(ROSE_FLAGS) -rose:skip_syntax_check -rose:skipfinalCompileStep -rose:f2003 -c $(srcdir)/../../../CompileTests/Fortran_tests/$(@:.F03-o=.f03) && touch $@
 
+# A dedicated rule to just test liveness analysis
 check-liveness:$(CXX_LIVENESS_FILES)
 
 # DQ (9/22/2011): All of the test codes are from other directories, so we don't what them in the EXTRA_DIST rule.
