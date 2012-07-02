@@ -1247,7 +1247,7 @@ callGraph.pdf: buildCallGraph
 	@echo "Generate call graph from processing of input code (callGraph) ..."
 	./buildCallGraph $(ROSE_FLAGS) -c $(srcdir)/inputCode_BuildCG.C
 	$(top_srcdir)/scripts/dotgenLetterPDF inputCode_BuildCG.C_callGraph.dot callGraph.pdf
-# Liao, add a non-trival test input	
+# Liao, add a non-trival test input 
 	./buildCallGraph $(ROSE_FLAGS) -c $(srcdir)/bt_onefile.c
 if ROSE_USE_GRAPHVIZ_DOT
 #	DQ (10/19/2009): Added error checking to (catches lack of "dot" in path).
@@ -1532,7 +1532,13 @@ EXTRA_DIST = \
    inputCode_dwarfAnalysis.C \
    inputCode_reductionRecognition.C \
    livenessAnalysis-2.C \
-   bt_onefile.c
+   bt_onefile.c \
+   dfa_cpa.pdf \
+   dfa_ex.pdf \
+   transformation_cfg.pdf \
+   transformation_srcode.pdf \
+   lattice_cpa.pdf \
+   code_replacement_transformation.pdf
 
 if HAVE_YICES
     EXTRA_DIST += yicesInputExample.C
