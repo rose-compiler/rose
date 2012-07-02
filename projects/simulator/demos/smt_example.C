@@ -55,7 +55,7 @@ public:
 protected:
     // convert a concrete value from the simulator's state to a symbolic value for our own state.
     template<size_t nBits>
-    static SymbolicSemantics::ValueType<nBits> convert(const RSIM_SEMANTICS_VTYPE<nBits> &val) {
+    static SymbolicSemantics::ValueType<nBits> convert(const RSIM_SEMANTICS_OUTER_0_VTYPE<nBits> &val) {
         assert(val.is_known()); // must be concrete
         return SymbolicSemantics::ValueType<nBits>(val.known_value());
     }
@@ -65,7 +65,7 @@ protected:
     // expression would be prohibitively expensive in both space and time.
     void initialize_state(RSIM_Thread *t) {
         SymbolicSemantics::State<> &dst = policy.get_state();
-        RSIM_SEMANTICS_STATE &src = t->policy.get_concrete_state();
+        RSIM_SEMANTICS_OUTER_0_STATE<RSIM_SEMANTICS_OUTER_0_VTYPE> &src = t->policy.get_concrete_state();
         assert(dst.registers.n_gprs==src.registers.n_gprs);
         for (size_t i=0; i<dst.registers.n_gprs; ++i)
             dst.registers.gpr[i] = convert(src.registers.gpr[i]);
