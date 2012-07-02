@@ -11,7 +11,7 @@ latexFiles = \
    traversal.tex loopRecognition.tex typeInfoFromFunctionParameters.tex resolveOverloadedFunction.tex \
    templateParameter.tex \
    buildCFG.tex parallelChecker.tex defuseAnalysis.tex \
-   binaryAnalysis.tex buildCallGraph.tex buildVFA.tex classHierarchyGraph.tex loopOptimization.tex inliner.tex outliner.tex \
+   binaryAnalysis.tex GenericDFA.tex buildCallGraph.tex buildVFA.tex classHierarchyGraph.tex loopOptimization.tex inliner.tex outliner.tex \
    parser-docs.tex codeCoverage.tex scopeInformation.tex sideeffect-docs.tex \
    tauInstrumentation.tex templateSupport.tex dataBaseSupport.tex recognitionOfAbstractions.tex \
    debuggingSupport.tex commandlineProcessing.tex customGraphs.tex tutorialMakefile.tex wrapup.tex \
