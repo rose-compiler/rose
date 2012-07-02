@@ -99,7 +99,7 @@ using namespace BinaryAnalysis::InstructionSemantics;
         SymbolicSemantics::ValueType, SymbolicSemantics::State, SymbolicSemantics::Policy                                      \
         >
 #   define TestValueTemplate TestSemanticsScope::ValueType
-    struct TestPolicy: public TestSemanticsScope::Policy {
+    struct TestPolicy: public TestSemanticsScope::Policy<TestSemanticsScope::State, TestSemanticsScope::ValueType> {
         void dump(SgAsmInstruction *insn) {
             std::cout <<unparseInstructionWithAddress(insn) <<"\n"
                       <<*this;
