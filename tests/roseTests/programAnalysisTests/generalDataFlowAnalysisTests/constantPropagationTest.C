@@ -130,6 +130,7 @@ main( int argc, char * argv[] )
     // use constant propagation within the context insensitive interprocedural dataflow driver
      analysisDebugLevel = 1;
      ConstantPropagationAnalysis cpA(&ldva);
+     //ConstantPropagationAnalysis cpA(NULL);
      ContextInsensitiveInterProceduralDataflow cpInter(&cpA, graph);
      cpInter.runAnalysis();
 
