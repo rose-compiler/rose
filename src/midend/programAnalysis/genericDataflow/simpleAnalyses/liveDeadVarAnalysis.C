@@ -1096,7 +1096,9 @@ string VarsExprsProductLattice::str(string indent)
         
         ostringstream outs;
         //outs << "[VarsExprsProductLattice: n="<<n.getNode()<<" = <"<<Dbg::escape(n.getNode()->unparseToString())<<" | "<<n.getNode()->class_name()<<" | "<<n.getIndex()<<"> level="<<(getLevel()==uninitialized ? "uninitialized" : "initialized")<<endl;
-        outs << "[VarsExprsProductLattice: n="<<n.getNode()<<" level="<<(getLevel()==uninitialized ? "uninitialized" : "initialized")<<endl;
+        //outs << "[VarsExprsProductLattice: n="<<n.getNode()<<" level="<<(getLevel()==uninitialized ? "uninitialized" : "initialized")<<endl;
+	// Liao 7/1/2012, avoid print out changing memory address info. so the string output can be used to verify correctness of analysis
+        outs << "[VarsExprsProductLattice: level="<<(getLevel()==uninitialized ? "uninitialized" : "initialized")<<endl;
         //varIDSet refVars;// = getVisibleVars(func);
         //for(varIDSet::iterator it = refVars.begin(); it!=refVars.end(); it++)
         for(map<varID, int>::iterator varIdx=varLatticeIndex.begin(); varIdx!=varLatticeIndex.end(); varIdx++)
