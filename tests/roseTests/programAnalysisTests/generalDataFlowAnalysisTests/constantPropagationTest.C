@@ -6,7 +6,7 @@
 #include <fstream>
 #include <string.h>
 #include <map>
-
+#include <boost/algorithm/string.hpp>
 using namespace std;
 
 #include "genericDataflowCommon.h"
@@ -137,8 +137,52 @@ main( int argc, char * argv[] )
      UnstructuredPassInterAnalysis upia_eas(eas);
      upia_eas.runAnalysis();
 
+// A better verification method using pragma strings embedded in the input test code
+  // grab live-in information from a Pragma Declaration
+  Rose_STL_Container <SgNode*> nodeList = NodeQuery::querySubTree(project, V_SgPragmaDeclaration);
+  for (Rose_STL_Container<SgNode *>::iterator i = nodeList.begin(); i != nodeList.end(); i++)
+  {
+    SgPragmaDeclaration* pdecl= isSgPragmaDeclaration((*i));
+    ROSE_ASSERT (pdecl != NULL);
+    // skip irrelevant pragmas
+    if (SageInterface::extractPragmaKeyword(pdecl) != "rose")
+      continue;
+   // NOTE: it is not ConstantPropagationLattice here!!
+   // grab the first lattice attached to the pragma statement for this analysis
+    VarsExprsProductLattice* lattice = dynamic_cast <VarsExprsProductLattice *>(NodeState::getLatticeAbove(&cpA, pdecl,0)[0]);
+    ROSE_ASSERT (lattice != NULL);
+    string lattice_str = lattice->str();
+    boost::erase_all(lattice_str, " ");
+    boost::erase_all(lattice_str, "\n");
+//    cout <<lattice_str<<endl;
+    std::string pragma_str = pdecl->get_pragma()->get_pragma ();
+    pragma_str.erase (0,5);
+    boost::erase_all(pragma_str, "\n");
+    // cout <<pragma_str <<endl;
+
+
+    boost::erase_all(pragma_str, " ");
+
+    if (lattice_str == pragma_str)
+    {
+     cout<<"Verified!"<<endl;
+    }
+    else
+    {
+     cout<<"Analysis results are not identical to the reference results from the pragma !"<<endl;
+     cout<<"=======pragma reference results========"<<endl; 
+     cout <<pragma_str <<endl;
+     cout<<"-------analysis results--------"<<endl; 
+     cout <<lattice_str<<endl;
+     assert (false);
+    }
+
+  }
+
+
+
 // Liao 1/6/2012, optionally dump dot graph of the analysis result
-//     Dbg::dotGraphGenerator(&cpA);
+     Dbg::dotGraphGenerator(&cpA);
      if (numFails == 0 && numPass == eas.total_expectations)
           printf("PASS: %d / %d\n", numPass, eas.total_expectations);
        else

@@ -116,6 +116,10 @@ main( int argc, char * argv[] )
   {
     SgPragmaDeclaration* pdecl= isSgPragmaDeclaration((*i));
     ROSE_ASSERT (pdecl != NULL);
+    // skip irrelevant pragmas
+    if (SageInterface::extractPragmaKeyword(pdecl) != "rose")
+      continue;
+
     LiveVarsLattice* lattice = getLiveOutVarsAt(&ldva, pdecl,0);
     string lattice_str = lattice->str();
    boost::erase_all(lattice_str, " ");

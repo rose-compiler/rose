@@ -130,11 +130,11 @@ ConstantPropagationLattice::str(string indent)
    {
      ostringstream outs;
      if(level == bottom)
-       outs << indent << "[level: bottom]";
+       outs << indent << "ConstantPropagationLattice:[level: bottom]";
      else if(level == constantValue)
-       outs << indent << "[level: constantValue, val = "<<value<<"]";
+       outs << indent << "ConstantPropagationLattice:[level: constantValue, val = "<<value<<"]";
      else if(level == top)
-       outs << indent << "[level: top]";
+       outs << indent << "ConstantPropagationLattice:[level: top]";
 
      return outs.str();
    }

@@ -2,6 +2,11 @@
 #define CONSTANT_PROPAGATION_ANALYSIS_H
 // Author: Dan Quinlan, with Phil Miller
 // Date: 9/8/2011
+/*
+TODO: the constant propagation analysis is limited to live variables at a point. 
+     This is not correct behavior.
+ Liao, 7/1/2012
+*/
 
 #include "VariableStateTransfer.h"
 
