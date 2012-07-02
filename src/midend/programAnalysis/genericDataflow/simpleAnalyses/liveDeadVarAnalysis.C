@@ -592,16 +592,17 @@ class collectAllVarRefs: public AstSimpleProcessing {
 //     currently live variables (these correspond to various useful constant variables like zeroVar)
 // allVarLattice - the lattice associated with allVar (the variable that represents all of memory)
 //     if allVarLattice==NULL, no support is provided for allVar
-// func - the current function
+// ldva - liveness analysis result. This can be set to NULL. Or only live variables at a CFG node will be used to initialize the product lattice
 // n - the dataflow node that this lattice will be associated with
 // state - the NodeState at this dataflow node
 VarsExprsProductLattice::VarsExprsProductLattice
-                            (Lattice* perVarLattice, 
+                       (Lattice* perVarLattice, 
                         const map<varID, Lattice*>& constVarLattices, 
                         Lattice* allVarLattice,
                         LiveDeadVarsAnalysis* ldva, 
-                        const DataflowNode& n, const NodeState& state) : 
-                                perVarLattice(perVarLattice), allVarLattice(allVarLattice), constVarLattices(constVarLattices), ldva(ldva), n(n), state(state)
+                        const DataflowNode& n, 
+			const NodeState& state) : 
+                              perVarLattice(perVarLattice), allVarLattice(allVarLattice), constVarLattices(constVarLattices), ldva(ldva), n(n), state(state)
 {
         // If a LiveDeadVarsAnalysis was provided, create a lattice only for each live object
         if(ldva) { 

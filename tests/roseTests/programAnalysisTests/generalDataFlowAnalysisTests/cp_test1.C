@@ -5,19 +5,20 @@ Liao 7/1/2012
 
 void foo()
 {
- int a = 2;
- int b = 3;
+ int a, b, c, d;
+ a = 2;
+ b = 3;
 
  #pragma rose [VarsExprsProductLattice:level=uninitialized \
  a:ConstantPropagationLattice:[level:constantValue,val=2] \
  b:ConstantPropagationLattice:[level:constantValue,val=3] \
  ]
- int c = a+b+4;
+ c = a+b+4;
 
  #pragma rose [VarsExprsProductLattice:level=uninitialized \
  c:ConstantPropagationLattice:[level:constantValue,val=9] \
  ]
- int d =c;
+ d =c;
 
  #pragma rose [VarsExprsProductLattice:level=uninitialized \
  d:ConstantPropagationLattice:[level:constantValue,val=9] \

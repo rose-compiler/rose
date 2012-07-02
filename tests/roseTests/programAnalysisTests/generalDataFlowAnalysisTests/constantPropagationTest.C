@@ -116,7 +116,8 @@ main( int argc, char * argv[] )
           printf("*********************************************************************\n");
         }
 
-    // liveness analysis is used to generate FiniteVarsExprsProductLattice.
+    // liveness analysis is used to generate FiniteVarsExprsProductLattice only for live variables at a CFG point
+    // &ldva can be set to NULL then all visible variables and expressions will be used to generate FiniteVarsExprsProductLattice
      LiveDeadVarsAnalysis ldva(project);
      UnstructuredPassInterDataflow ciipd_ldva(&ldva);
      ciipd_ldva.runAnalysis();

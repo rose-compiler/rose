@@ -249,6 +249,7 @@ ConstantPropagationAnalysisTransfer::transferIncrement(SgUnaryOp *sgn)
      delete arg2Lat; // Allocated by getLattices
    }
 
+//! transfer addition or subtraction operations: isAddition: true for addition, false for subtraction
 void
 ConstantPropagationAnalysisTransfer::transferAdditive(ConstantPropagationLattice *arg1Lat, ConstantPropagationLattice *arg2Lat, ConstantPropagationLattice *resLat, bool isAddition)
    {
@@ -316,6 +317,7 @@ ConstantPropagationAnalysisTransfer::transferDivision(ConstantPropagationLattice
         }
    }
 
+//! transfer the % operation
 void
 ConstantPropagationAnalysisTransfer::transferMod(ConstantPropagationLattice *arg1Lat, ConstantPropagationLattice *arg2Lat, ConstantPropagationLattice *resLat)
    {
@@ -346,6 +348,7 @@ ConstantPropagationAnalysisTransfer::visit(SgLongLongIntVal *sgn)
 void
 ConstantPropagationAnalysisTransfer::visit(SgLongIntVal *sgn)
    {
+   //TODO: similar logic as visit(SgIntVal *sgn)
    }
 
 void
@@ -509,8 +512,11 @@ ConstantPropagationAnalysis::genInitState(const Function& func, const DataflowNo
   // ???
   // vector<Lattice*> initLattices;
 	map<varID, Lattice*> emptyM;
+	// the finite vars exprs product lattice is initialized based on the result of liveness analysis (ldva), but why???
 	FiniteVarsExprsProductLattice* l = new FiniteVarsExprsProductLattice((Lattice*)new ConstantPropagationLattice(), emptyM/*genConstVarLattices()*/, 
 	                                                                     (Lattice*)NULL, ldva, /*func, */n, state);         
+// Liao, 7/1/2012. I don't think constant propagation's lattice initialization should be based on live variables only. So pass NULL to ldva.
+//     	                                                                     (Lattice*)NULL, NULL, /*func, */n, state);         
 	//Dbg::dbg << "DivAnalysis::genInitState, returning l="<<l<<" n=<"<<Dbg::escape(n.getNode()->unparseToString())<<" | "<<n.getNode()->class_name()<<" | "<<n.getIndex()<<">\n";
 	//Dbg::dbg << "    l="<<l->str("    ")<<"\n";
      initLattices.push_back(l);
