@@ -574,6 +574,9 @@ VarsExprsProductLattice::VarsExprsProductLattice(const DataflowNode& n, const No
 { 
 }                       
 
+//Collect all expressions, not just variable reference expression, in the AST
+// The reason is that the temp expressions are often useful to propagate data flow information (lattices)
+// example:  for a+b, the SgAddOp can be used to calculate the addition of two operands.
 class collectAllVarRefs: public AstSimpleProcessing {
         public:
         //set<SgVarRefExp*> refs;
@@ -620,7 +623,10 @@ VarsExprsProductLattice::VarsExprsProductLattice
                 // Get all the variables that were accessed in the function that contains the given DataflowNode
                 set<SgInitializedName *> readVars, writeVars;
                 SgNode* cur = n.getNode();
-                while(cur && !isSgFunctionDefinition(cur)) { /*Dbg::dbg << "    cur=<"<<Dbg::escape(cur->unparseToString()) << " | " << cur->class_name()<<">"<<endl;*/ cur = cur->get_parent(); }
+                while(cur && !isSgFunctionDefinition(cur)) 
+		{ /*Dbg::dbg << "    cur=<"<<Dbg::escape(cur->unparseToString()) << " | " << cur->class_name()<<">"<<endl;*/
+		 cur = cur->get_parent(); 
+		}
                 /*SgFunctionDefinition *func;
                      if(isSgFunctionDefinition(n.getNode()))    func = isSgFunctionDefinition(n.getNode());
                 else if(isSgFunctionParameterList(n.getNode())) func = isSgFunctionDefinition(isSgFunctionDeclaration(n.getNode()->get_parent())->get_definition());
@@ -634,6 +640,10 @@ VarsExprsProductLattice::VarsExprsProductLattice
                         collect.traverse(func, preorder);
                         for(set<SgExpression*>::iterator ref=collect.refs.begin(); ref!=collect.refs.end(); ref++) {
                                 //Dbg::dbg << "        ref="<<Dbg::escape((*ref)->unparseToString()) << " | " << (*ref)->class_name()<<">"<<endl;
+				// Liao 7/1/2012. skip temp expression which is a descendant of the current node
+				// we only need to preserve them in their current scope, not beyond
+				//if (SageInterface::isAncestor(n.getNode(), *ref))
+				//  continue;
                                 varID var = SgExpr2Var(*ref);
                                 if(varLatticeIndex.find(var) == varLatticeIndex.end()) {
                                         varLatticeIndex[var] = lattices.size();
