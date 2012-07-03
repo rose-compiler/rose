@@ -337,7 +337,7 @@ RSIM_Process::load(const char *name)
     SgAsmGenericHeader *fhdr = interpretation->get_headers()->get_headers().front();
     headers.push_back(fhdr);
     ep_orig_va = ep_start_va = fhdr->get_entry_rva() + fhdr->get_base_va();
-    thread->policy.writeRegister<32>(thread->policy.reg_eip, ep_orig_va);
+    thread->policy.writeRegister<32>(thread->policy.reg_eip, RSIM_SEMANTICS_VTYPE<32>(ep_orig_va));
 
     /* Link the interpreter into the AST */
     SimLoader *loader = new SimLoader(interpretation, trace, interpname);
@@ -351,7 +351,7 @@ RSIM_Process::load(const char *name)
         if (load0 && load0->is_mapped() && load0->get_mapped_preferred_rva()==0 && load0->get_mapped_size()>0)
             loader->interpreter->set_base_va(ld_linux_base_va);
         ep_start_va = loader->interpreter->get_entry_rva() + loader->interpreter->get_base_va();
-        thread->policy.writeRegister<32>(thread->policy.reg_eip, ep_start_va);
+        thread->policy.writeRegister<32>(thread->policy.reg_eip, RSIM_SEMANTICS_VTYPE<32>(ep_start_va));
     }
 
     /* Sort the headers so they're in order by entry address. In other words, if the interpreter's entry address is below the
@@ -1570,7 +1570,7 @@ RSIM_Process::initialize_stack(SgAsmGenericHeader *_fhdr, int argc, char *argv[]
         sp &= ~0xf; /*align to 16 bytes*/
         mem_write(&(pointers[0]), sp, 4*pointers.size());
 
-        main_thread->policy.writeRegister<32>(main_thread->policy.reg_esp, sp);
+        main_thread->policy.writeRegister<32>(main_thread->policy.reg_esp, RSIM_SEMANTICS_VTYPE<32>(sp));
     } RTS_WRITE_END;
 }
 
