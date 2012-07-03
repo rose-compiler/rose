@@ -31,6 +31,14 @@ $Id: profir.hh,v 1.1 2008/01/08 02:56:43 dquinlan Exp $
  *  $Id: profir.hh,v 1.1 2008/01/08 02:56:43 dquinlan Exp $
  */
 
+/*
+ * This software was produced with support in part from the Defense Advanced
+ * Research Projects Agency (DARPA) through AFRL Contract FA8650-09-C-1915.
+ * Nothing in this work should be construed as reflecting the official policy
+ * or position of the Defense Department, the United States government,
+ * or Rice University.
+ */
+
 #if !defined(INC_PROFIR_PROFIR_HH)
 //! rosehpct/profir/ir.h included.
 #define INC_PROFIR_PROFIR_HH
@@ -174,11 +182,15 @@ namespace RoseHPCT
    */
   class IRNode : public Named, public Observable
   {
+    // DXN: not all IRNodes (e.g. Statement) produced by HPCToolkit profiler have matching SgNode.
+    bool hasMatchedSgNode;
   public:
+    bool hasMatchingSgNode() const { return hasMatchedSgNode; }
+    void setHasMatchingSgNode(bool flag) { hasMatchedSgNode = flag; }
     virtual std::string toString() const;
-  protected:
-    IRNode (void) {}
-    IRNode (const std::string& name) : Named (name) {}
+   protected:
+    IRNode (void): hasMatchedSgNode(false) {}
+    IRNode (const std::string& name) : hasMatchedSgNode (false), Named (name)  { }
     virtual ~IRNode (void) {}
   };
 
@@ -187,6 +199,41 @@ namespace RoseHPCT
   {
   public:
     Program (const std::string& name) : IRNode (name) {}
+    virtual std::string toString() const;
+  };
+
+  //! Section Header node ("SecHeader")
+  class SecHeader : public IRNode
+  {
+  public:
+    virtual std::string toString() const;
+  };
+
+  //! Metric Table node ("MetricTable")
+  class MetricTable : public IRNode
+  {
+  public:
+    virtual std::string toString() const;
+  };
+
+  //! Metric Element node ("MetricElement")
+  class MetricElement : public IRNode
+  {
+      std::string id;
+      std::string val_type;
+      std::string type;
+      std::string show;
+  public:
+    MetricElement(const std::string& i, const std::string& n, std::string v,
+            const std::string& t, const std::string& s):
+        IRNode(n), id(i), val_type(v), type(t), show(s) {}
+    virtual std::string toString() const;
+  };
+
+  //! Section Flat Profile Data node ("SecFlatProfileData")
+  class SecFlatProfileData : public IRNode
+  {
+  public:
     virtual std::string toString() const;
   };
 
@@ -217,39 +264,59 @@ namespace RoseHPCT
   //! Procedure node ("P")
   class Procedure : public IRNode, public Located
   {
+    long int id;
   public:
-    Procedure (const std::string& name, size_t b, size_t e)
-      : IRNode (name), Located(b, e) {}
+    Procedure (long int i, const std::string& name, long int l);
     virtual std::string toString() const;  
   };
 
-  //! Loop node ("L")
-  class Loop : public IRNode, public Located
+  //! Call site ("C")
+  class CallSite: public IRNode
   {
+      long int id;
+      long int line;
   public:
-    Loop (const std::string& name, size_t b, size_t e)
-      : IRNode (name), Located(b, e) {}
+    CallSite (long int i, long int l): id(i), line(l) {}
+    virtual std::string toString() const;
+  };
+
+  //! Procedure frame ("PF")
+  class ProcFrame: public IRNode
+  {
+      long int id;
+      std::string name;
+      long int line;
+  public:
+      ProcFrame (long int i, const std::string& n, long int l): id(i), name(n), line(l) {}
+    virtual std::string toString() const;
+  };
+
+  //! Loop node ("L")
+  class Loop : public IRNode  , public Located
+  {
+    long int id;
+  public:
+    Loop (const std::string& name, long int i, long int l);
     virtual std::string toString() const;  
   };
 
   //! Statement node ("S")
   class Statement : public IRNode, public Located
   {
-  public:
-    typedef unsigned id_t;
+    long int id;
+   public:
+    // typedef unsigned id_t;
+    typedef long int id_t;
 
     Statement (void);
     Statement (const Statement& s);
-    Statement (const std::string& name, size_t b, size_t e)
-      : IRNode (name), Located(b, e) {}
+    Statement (const std::string& name, id_t i, size_t l);
+
     ~Statement (void);
 
     id_t getId (void) const;
     void setId (id_t new_id);
     virtual std::string toString() const;  
-
-  private:
-    id_t id;
   };
 
   //! IR tree representation

@@ -126,6 +126,7 @@ XMLToProfIRConverter::visit (TreeParamPtr_t tree)
 
   size_t num_kids = parent->getNumChildren ();
   IRTree_t* child = parent->setChildValue (num_kids+1, new_val);
+
   saved_parents_.push (child);
 }
 
