@@ -357,68 +357,43 @@ CommandlineProcessing::generateOptionList ( Rose_STL_Container<string> & argList
    }
 
 Rose_STL_Container<string>
-CommandlineProcessing::generateOptionWithNameParameterList ( Rose_STL_Container<string> & argList, string inputPrefix )
+CommandlineProcessing::generateOptionWithNameParameterList ( Rose_STL_Container<string> & argList, string inputPrefix , string newPrefix )
    {
   // This function returns a list of options using the inputPrefix (with the 
-  // inputPrefix stripped off). It also modified the input argList to remove
-  // those options from the argList returned by reference (modified).
-
-  // printf ("Input argList = \n%s \n",StringUtility::listToString(argList).c_str());
+  // inputPrefix stripped off and replaced if new Prefix is provided.
+  // It also modified the input argList to remove matched options.
 
      Rose_STL_Container<string> optionList;
      Rose_STL_Container<string> deleteList;
      int prefixLength = inputPrefix.length();
-  // for (list<string>::iterator i = argList.begin(); i != argList.end(); i++)
-     Rose_STL_Container<string>::iterator i = argList.begin(); 
-     while (i != argList.end())
+     Rose_STL_Container<string>::iterator it = argList.begin();
+     while (it != argList.end())
         {
-          if ( (*i).substr(0,prefixLength) == inputPrefix )
-             {
-            // printf ("Found an option: %s \n",(*i).c_str());
-            // get the rest of the string as the option
-               optionList.push_back((*i).substr(prefixLength));
-
-            // keep track of elements so that they can be deleted later (after exit from loop over the eleents)
-               deleteList.push_back(*i);
-
-               i++;
-            // This is the name following the option (with out the prefix)
-               if ( (*i).substr(0,prefixLength) != inputPrefix )
-                  {
-                 // printf ("Found associated option: %s \n",(*i).c_str());
-                    string fullOption = optionList.back() + string(" ") + *i;
-                    optionList.pop_back();
-                    optionList.push_back(fullOption);
-                    deleteList.push_back(*i);
-                  }
-                 else
-                  {
-                    printf ("Error: missing parameter in option with parameter \n");
-                    ROSE_ABORT();
-                  }
-               
-             }
-          i++;
+         if ( it->substr(0,prefixLength) == inputPrefix )
+            {
+           // get the rest of the string as the option
+              optionList.push_back( (newPrefix == "") ? it->substr(prefixLength) : newPrefix + it->substr(prefixLength));
+              it = argList.erase(it);
+           // That sounds real buggy as to detect if an option has parameters it
+           // assumes inputPrefix-ed options are consecutive.
+              if ( it->substr(0,prefixLength) != inputPrefix )
+                 {
+                   optionList.push_back(*it);
+                   it = argList.erase(it);
+                 }
+                else
+                 {
+                   printf ("Error: missing parameter in option with parameter \n");
+                   ROSE_ABORT();
+                 }
+            } else {
+                ++it;
+            }
         }
-
-#if 1
-  // remove the elements identified in the previous loop
-     for (Rose_STL_Container<string>::iterator i = deleteList.begin(); i != deleteList.end(); i++)
-        {
-       // DQ (9/25/2007): Moved to use of std::vector instead of std::list
-       // argList.remove(*i);
-          argList.erase(find(argList.begin(),argList.end(),*i));
-        }
-#else
-  // DQ (9/25/2007): Moved to use of std::vector instead of std::list
-  // argList.erase(deleteList.begin(),deleteList.end());
-  // argList.clear();
-#endif
-
-  // printf ("return value: optionList = \n%s \n",StringUtility::listToString(optionList).c_str());
 
      return optionList;
    }
+
 
 bool
 CommandlineProcessing::isOption ( vector<string> & argv, string optionPrefix, string option, bool removeOption )
