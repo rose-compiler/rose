@@ -13,7 +13,7 @@ AC_SUBST(ROSE_USE_CLANG_FRONTEND)
 
 AC_PATH_TOOL([LLVM_CONFIG], [llvm-config])
 
-AC_MSG_CHECKING([for Clang fucking include path])
+AC_MSG_CHECKING([for Clang include path])
     if test -z "$CLANG_CXXFLAGS"; then
         llvm_include_path=`$LLVM_CONFIG --cppflags`
         if test -n "${llvm_include_path}"; then

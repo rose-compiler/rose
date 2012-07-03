@@ -147,7 +147,7 @@ class ClangToSageTranslator : public clang::ASTConsumer {
     //          virtual bool VisitTypeDecl(clang::TypeDecl * type_decl);
     //              virtual bool VisitTagDecl(clang::TagDecl * tag_decl);
                         virtual bool VisitRecordDecl(clang::RecordDecl * record_decl, SgNode ** node);
-    //                      virtual bool VisitCXXRecordDecl(clang::CXXRecordDecl * cxx_record_decl);
+                            virtual bool VisitCXXRecordDecl(clang::CXXRecordDecl * cxx_record_decl, SgNode ** node);
     //                          virtual bool VisitClassTemplateSpecializationDecl(clang::ClassTemplateSpecializationDecl * class_tpl_spec_decl);
     //                              virtual bool VisitClassTemplatePartialSpecializationDecl(clang::ClassTemplatePartialSpecializationDecl * class_tpl_part_spec_decl);
                         virtual bool VisitEnumDecl(clang::EnumDecl * enum_decl, SgNode ** node); 

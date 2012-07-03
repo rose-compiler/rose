@@ -686,15 +686,12 @@ SgNode * ClangToSageTranslator::Traverse(clang::Decl * decl) {
         case clang::Decl::ParmVar:
             ret_status = VisitParmVarDecl((clang::ParmVarDecl *)decl, &result);
             break;
-        case clang::Decl::CXXRecord:
-//          ret_status = VisitCXXRecordDecl((clang::CXXRecordDecl *)decl, &result);
-//          break;
-        case clang::Decl::ClassTemplateSpecialization:
-        case clang::Decl::ClassTemplatePartialSpecialization:
-            std::cout << "Using C level for C++ construct: " << decl->getDeclKindName() << std::endl;
         case clang::Decl::Record:
             ret_status = VisitRecordDecl((clang::RecordDecl *)decl, &result);
             break;
+        case clang::Decl::CXXRecord:
+          ret_status = VisitCXXRecordDecl((clang::CXXRecordDecl *)decl, &result);
+          break;
         case clang::Decl::Field:
             ret_status = VisitFieldDecl((clang::FieldDecl *)decl, &result);
             break;
@@ -1110,6 +1107,38 @@ bool ClangToSageTranslator::VisitRecordDecl(clang::RecordDecl * record_decl, SgN
     *node = sg_class_decl;
 
     return VisitDecl(record_decl, node) && res;
+}
+
+bool ClangToSageTranslator::VisitCXXRecordDecl(clang::CXXRecordDecl * cxx_record_decl, SgNode ** node) {
+#if DEBUG_VISITOR
+    std::cerr << "ClangToSageTranslator::VisitCXXRecordDecl" << std::endl;
+#endif
+    bool res = VisitRecordDecl(cxx_record_decl, node);
+
+    clang::CXXRecordDecl::base_class_iterator it_base;
+    for (it_base = cxx_record_decl->bases_begin(); it_base !=  cxx_record_decl->bases_end(); it_base++) {
+        // TODO add base classes
+    }
+
+    clang::CXXRecordDecl::method_iterator it_method;
+    for (it_method = cxx_record_decl->method_begin(); it_method !=  cxx_record_decl->method_end(); it_method++) {
+        // TODO
+    }
+
+    clang::CXXRecordDecl::ctor_iterator it_ctor;
+    for (it_ctor = cxx_record_decl->ctor_begin(); it_ctor != cxx_record_decl->ctor_end(); it_ctor++) {
+        // TODO if not tranversed as methods
+    }
+
+    clang::CXXRecordDecl::friend_iterator it_friend;
+    for (it_friend = cxx_record_decl->friend_begin(); it_friend != cxx_record_decl->friend_end(); it_friend++) {
+        // TODO
+    }
+
+    CXXDestructorDecl * destructor = cxx_record_decl->getDestructor();
+    // TODO
+
+    return res;
 }
 
 bool ClangToSageTranslator::VisitEnumDecl(clang::EnumDecl * enum_decl, SgNode ** node) {
