@@ -50,7 +50,11 @@ YicesSolver::satisfiable(const std::vector<TreeNodePtr> &exprs)
 {
 #ifdef ROSE_HAVE_LIBYICES
     if (get_linkage() & LM_LIBRARY) {
-        total_calls++;
+
+        ++stats.ncalls;
+        RTS_MUTEX(class_stats_mutex) {
+            ++class_stats.ncalls;
+        } RTS_MUTEX_END;
 
         if (!context) {
             context = yices_mk_context();
@@ -73,6 +77,8 @@ YicesSolver::satisfiable(const std::vector<TreeNodePtr> &exprs)
             case l_true:  return SAT_YES;
             case l_undef: return SAT_UNKNOWN;
         }
+        assert(!"switch statement is incomplete");
+        abort();
     }
 #endif
 

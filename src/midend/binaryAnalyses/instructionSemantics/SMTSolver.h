@@ -2,6 +2,7 @@
 #define Rose_SMTSolver_H
 
 #include "InsnSemanticsExpr.h"
+#include "threadSupport.h"
 
 /** Interface to Satisfiability Modulo Theory (SMT) solvers.
  *
@@ -21,10 +22,18 @@ public:
                        SAT_YES,                 /**< Satisfiable and evidence of satisfiability may be available. */
                        SAT_UNKNOWN              /**< Could not be proved satisfiable or unsatisfiable. */
     };
-    
+
+    /** SMT solver statistics. */
+    struct Stats {
+        Stats(): ncalls(0), input_size(0), output_size(0) {}
+        size_t ncalls;                          /**< Number of times satisfiable() was called. */
+        size_t input_size;                      /**< Bytes of input generated for satisfiable(). */
+        size_t output_size;                     /**< Amount of output produced by the SMT solver. */
+    };
+
     typedef std::set<uint64_t> Definitions;     /**< Free variables that have been defined. */
 
-    SMTSolver(): debug(NULL) {}
+    SMTSolver(): debug(NULL) { init(); }
 
     virtual ~SMTSolver() {}
 
@@ -81,9 +90,15 @@ public:
     /** Obtain current debugging setting. */
     FILE *get_debug() const { return debug; }
 
-    /** Returns the number of times satisfiable() was called.  This is a class method that returns the total number of SMT
-     * solver calls across all SMT solvers. */
-    static size_t get_ncalls() { return total_calls; }
+    /** Returns statistics for this solver. The statistics are not reset by this call, but continue to accumulate. */
+    const Stats& get_stats() const { return stats; }
+    /** Returns statistics for all solvers. The statistics are not reset by this call, but continue to accumulate. */
+    static Stats get_class_stats();
+    /** Resets statistics for this solver. */
+    void reset_stats() { stats = Stats(); }
+    /** Resets statistics for the class.  Statistics are reset to initial values for the class as a whole.  Resetting
+     * statistics for the class does not affect statistics of any particular SMT object. */
+    void reset_class_stats();
 
 protected:
     /** Generates an input file for for the solver. Usually the input file will be SMT-LIB format, but subclasses might
@@ -102,12 +117,15 @@ protected:
 
     /** Additional output obtained by satisfiable(). */
     std::string output_text;
-    
-    /** Tracks the number of times an SMT solver was called. Actually, the number of calls to satisfiable() */
-    static size_t total_calls;
+
+    // Statistics
+    static RTS_mutex_t class_stats_mutex;
+    static Stats class_stats;                   // all access must be protected by class_stats_mutex
+    Stats stats;
 
 private:
     FILE *debug;
+    void init();
 };
 
 #endif

@@ -56,9 +56,14 @@ namespace BinaryAnalysis {
              *  instruction semantics. */
             class SEMANTIC_NO_PRINT_HELPER {};
 
-            /** Represents one location in memory.  Each memory cell has an address, data, and size in bytes.  It also
-             *  maintains two boolean values to track whether a cell has been clobbered by a possibly-aliasing write, and how
-             *  the cell was initialized.
+            /******************************************************************************************************************
+             *                                  MemoryCell
+             ******************************************************************************************************************/
+
+            /** Represents one location in memory.
+             *
+             *  Each memory cell has an address, data, and size in bytes.  It also maintains two boolean values to track
+             *  whether a cell has been clobbered by a possibly-aliasing write, and how the cell was initialized.
              *
              *  When a memory state is created, every memory location will be given a unique value. However, it's not practicle
              *  to store a value for every possible memory address, yet we want the following example to work correctly:
@@ -165,6 +170,11 @@ namespace BinaryAnalysis {
 
             };
 
+            /******************************************************************************************************************
+             *                                  RegisterStateX86
+             ******************************************************************************************************************/
+
+            /** The set of all registers and their values. */
             template <template <size_t> class ValueType>
             class RegisterStateX86 {
             public:
@@ -230,6 +240,10 @@ namespace BinaryAnalysis {
                     o.flags(orig_flags);
                 }
             };
+
+            /******************************************************************************************************************
+             *                                  StateX86
+             ******************************************************************************************************************/
 
             /** Base class for x86 virtual machine states.
              *
@@ -306,6 +320,10 @@ namespace BinaryAnalysis {
                     return o;
                 }
             };
+
+            /******************************************************************************************************************
+             *                                  Policy
+             ******************************************************************************************************************/
 
             /** Base class for most instruction semantics policies.  Policies can be derived from the base class or they may
              *  implement the same interface.   The policy is responsible for defining the semantics of the RISC-like

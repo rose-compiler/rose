@@ -1446,8 +1446,9 @@ main(int argc, char *argv[])
      * Final statistics
      *------------------------------------------------------------------------------------------------------------------------*/
     
-    if (SMTSolver::get_ncalls()>0)
-        printf("SMT solver was called %zu time%s\n", SMTSolver::get_ncalls(), 1==SMTSolver::get_ncalls()?"":"s");
+    size_t solver_ncalls = SMTSolver::get_class_stats().ncalls;
+    if (solver_ncalls>0)
+        printf("SMT solver was called %zu time%s\n", solver_ncalls, 1==solver_ncalls?"":"s");
     return 0;
 }
 

@@ -12,7 +12,32 @@ operator<<(std::ostream &o, const SMTSolver::Exception &e)
     return o <<"SMT solver: " <<e.mesg;
 }
 
-size_t SMTSolver::total_calls;
+SMTSolver::Stats SMTSolver::class_stats;
+RTS_mutex_t SMTSolver::class_stats_mutex = RTS_MUTEX_INITIALIZER(RTS_LAYER_ROSE_SMT_SOLVERS);
+
+void
+SMTSolver::init()
+{}
+
+// class method
+SMTSolver::Stats
+SMTSolver::get_class_stats() 
+{
+    Stats retval;
+    RTS_MUTEX(class_stats_mutex) {
+        retval = class_stats;
+    } RTS_MUTEX_END;
+    return retval;
+}
+
+// class method
+void
+SMTSolver::reset_class_stats()
+{
+    RTS_MUTEX(class_stats_mutex) {
+        class_stats = Stats();
+    } RTS_MUTEX_END;
+}
 
 SMTSolver::Satisfiable
 SMTSolver::satisfiable(const std::vector<InsnSemanticsExpr::TreeNodePtr> &exprs)
@@ -26,7 +51,10 @@ SMTSolver::satisfiable(const std::vector<InsnSemanticsExpr::TreeNodePtr> &exprs)
 #else
 
     clear_evidence();
-    total_calls++;
+    ++stats.ncalls;
+    RTS_MUTEX(class_stats_mutex) {
+        ++class_stats.ncalls;
+    } RTS_MUTEX_END;
     output_text = "";
 
     /* Generate the input file for the solver. */
@@ -43,6 +71,13 @@ SMTSolver::satisfiable(const std::vector<InsnSemanticsExpr::TreeNodePtr> &exprs)
     Definitions defns;
     generate_file(config, exprs, &defns);
     config.close();
+    struct stat sb;
+    int status = stat(config_name, &sb);
+    assert(status>=0);
+    stats.input_size += sb.st_size;
+    RTS_MUTEX(class_stats_mutex) {
+        class_stats.input_size += sb.st_size;
+    } RTS_MUTEX_END;
 
     /* Show solver input */
     if (debug) {
@@ -64,7 +99,12 @@ SMTSolver::satisfiable(const std::vector<InsnSemanticsExpr::TreeNodePtr> &exprs)
         assert(output!=NULL);
         char *line = NULL;
         size_t line_alloc = 0;
-        while (rose_getline(&line, &line_alloc, output)>0) {
+        ssize_t nread;
+        while ((nread=rose_getline(&line, &line_alloc, output))>0) {
+            stats.output_size += nread;
+            RTS_MUTEX(class_stats_mutex) {
+                class_stats.output_size += nread;
+            } RTS_MUTEX_END;
             if (!got_satunsat_line) {
                 if (0==strncmp(line, "sat", 3) && isspace(line[3])) {
                     retval = SAT_YES;

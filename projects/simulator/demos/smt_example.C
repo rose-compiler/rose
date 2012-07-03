@@ -25,7 +25,10 @@ public:
     SymbolicAnalysis(rose_addr_t when)
         : name("SymbolicAnalysis"), when(when), triggered(false), policy(&yices), semantics(policy) {
 #if 0
-        yices.set_debug(stderr);
+        yices.set_linkage(YicesSolver::LM_LIBRARY); // about 7x faster than LM_EXECUTABLE, but limited debugging
+#else
+        yices.set_linkage(YicesSolver::LM_EXECUTABLE);
+        //yices.set_debug(stderr);
 #endif
     }
 
@@ -43,6 +46,13 @@ public:
                 m->mesg("%s: %s", name, unparseInstructionWithAddress(insn).c_str());
                 policy.get_state().registers.ip = SymbolicSemantics::ValueType<32>(insn->get_address());
                 semantics.processInstruction(insn);
+
+                SMTSolver::Stats smt_stats = yices.get_stats();
+                m->mesg("%s: mem-cell list size: %zu elements\n", name, policy.get_state().memory.cell_list.size());
+                m->mesg("%s: SMT stats: ncalls=%zu, input=%zu bytes, output=%zu bytes\n",
+                        name, smt_stats.ncalls, smt_stats.input_size, smt_stats.output_size);
+                yices.reset_stats();
+
 #if 0
                 std::ostringstream ss; ss <<policy;
                 m->mesg("%s", ss.str().c_str());

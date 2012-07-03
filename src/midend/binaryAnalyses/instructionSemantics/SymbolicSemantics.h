@@ -24,9 +24,12 @@ namespace BinaryAnalysis {              // documented elsewhere
          *  variable with offset, values here are expression trees.
          *
          *  <ul>
-         *    <li>Policy: the policy class used to instantiate X86InstructionSemantic instances.</li>
-         *    <li>State: represents the state of the virtual machine, its registers and memory.</li>
          *    <li>ValueType: the values stored in registers and memory and used for memory addresses.</li>
+         *    <li>MemoryCell: an address-expression/value-expression pair for memory.</li>
+         *    <li>MemoryState: the collection of MemoryCells that form a complete memory state.</li>
+         *    <li>RegisterState: the collection of registers that form a complete register state.</li>
+         *    <li>State: represents the state of the virtual machine&mdash;its registers and memory.</li>
+         *    <li>Policy: the policy class used to instantiate X86InstructionSemantic instances.</li>
          *  </ul>
          *
          *  If an SMT solver is supplied as a Policy constructor argument then that SMT solver will be used to answer various
@@ -47,9 +50,19 @@ namespace BinaryAnalysis {              // documented elsewhere
              *                          ValueType
              ******************************************************************************************************************/
 
-            /* ValueType cannot directly be a TreeNode because ValueType's bit size is a template argument while tree node
-             * sizes are stored as a data member.  Therefore, ValueType will always point to a TreeNode.  Most of the methods
-             * that are invoked on ValueType just call the same methods for TreeNode. */
+            /** Symbolic expressions.
+             *
+             *  The ValueType is used whenever a value needs to be stored, such as memory addresses, the values stored at those
+             *  addresses, the values stored in registers, the operands for RISC operations, and the results of those
+             *  operations.
+             *
+             *  A ValueType has an intrinsic size in bits and points to an expression composed of the TreeNode types defined in
+             *  InsnSemanticsExpr.h. ValueType cannot directly be a TreeNode because ValueType's bit size is a template
+             *  argument while tree node sizes are stored as a data member.  Therefore, ValueType will always point to a
+             *  TreeNode.  Most of the methods that are invoked on ValueType just call the same methods for TreeNode.
+             *
+             *  A ValueType also stores the set of instructions that were used in defining the value.  This provides a
+             *  framework for some simple forms of def-use analysis. See get_defining_instructions() for details. */
             template<size_t nBits>
             class ValueType {
             protected:
@@ -66,6 +79,7 @@ namespace BinaryAnalysis {              // documented elsewhere
                     expr = LeafNode::create_variable(nBits, comment);
                 }
 
+                /** Copy constructor. */
                 ValueType(const ValueType &other) {
                     expr = other.expr;
                     defs = other.defs;
@@ -216,8 +230,9 @@ namespace BinaryAnalysis {              // documented elsewhere
              *                          MemoryCell
              ******************************************************************************************************************/
 
-            /** Memory cell with symbolic address and data.  The ValueType template argument should be a subclass of
-             *  SymbolicSemantics::ValueType. */
+            /** Memory cell with symbolic address and data.
+             *
+             *  The ValueType template argument should be a subclass of SymbolicSemantics::ValueType. */
             template<template<size_t> class ValueType=SymbolicSemantics::ValueType>
             class MemoryCell {
             private:
@@ -292,12 +307,34 @@ namespace BinaryAnalysis {              // documented elsewhere
              *                          MemoryState
              ******************************************************************************************************************/
 
-            /** Byte-addressable memory. */
+            /** Byte-addressable memory.
+             *
+             *  This class represents an entire state of memory via a list of memory cells.  The memory cell list is sorted in
+             *  reverse chronological order and addresses that satisfy a "must-alias" predicate are pruned so that only the
+             *  must recent such memory cell is in the table.
+             *
+             *  A memory write operation prunes away any existing memory cell that must-alias the newly written address, then
+             *  adds a new memory cell to the front of the memory cell list.
+             *
+             *  A memory read operation scans the memory cell list and returns a McCarthy expression.  The read operates in two
+             *  modes: a mode that returns a full McCarthy expression based on all memory cells in the cell list, or a mode
+             *  that returns a pruned McCarthy expression consisting only of memory cells that may-alias the reading-from
+             *  address.  The pruning mode is the default, but can be turned off by calling disable_read_pruning(). */
             template<template <size_t> class ValueType=SymbolicSemantics::ValueType>
             class MemoryState {
             public:
                 typedef std::list<MemoryCell<ValueType> > CellList;
                 CellList cell_list;
+                bool read_pruning;                      /**< Prune McCarthy expression for read operations. */
+
+                MemoryState(): read_pruning(true) {}
+
+                /** Enables or disables pruning of the McCarthy expression for read operations.
+                 * @{ */
+                bool get_read_pruning() const { return read_pruning; }
+                void enable_read_pruning(bool b=true) { read_pruning = b; }
+                void disable_read_pruning() { read_pruning = false; }
+                /** @} */
 
                 /** Write a value to memory. Returns the list of cells that were added. The number of cells added is the same
                  *  as the number of bytes in the value being written. */
@@ -317,13 +354,21 @@ namespace BinaryAnalysis {              // documented elsewhere
                 CellList read_byte(const ValueType<32> &addr, bool *found_must_alias/*out*/, SMTSolver *solver) {
                     CellList cells;
                     *found_must_alias = false;
-                    for (typename CellList::iterator cli=may_alias(addr, solver, cell_list.begin());
-                         cli!=cell_list.end();
-                         cli=may_alias(addr, solver, ++cli)) {
-                        cells.push_back(*cli);
-                        if (cli->must_alias(addr, solver)) {
-                            *found_must_alias = true;
-                            break;
+                    if (read_pruning) {
+                        for (typename CellList::iterator cli=may_alias(addr, solver, cell_list.begin());
+                             cli!=cell_list.end();
+                             cli=may_alias(addr, solver, ++cli)) {
+                            cells.push_back(*cli);
+                            if (cli->must_alias(addr, solver)) {
+                                *found_must_alias = true;
+                                break;
+                            }
+                        }
+                    } else {
+                        for (typename CellList::iterator cli=cell_list.begin(); cli!=cell_list.end(); ++cli) {
+                            cells.push_back(*cli);
+                            if (cli->must_alias(addr, solver))
+                                *found_must_alias = true;
                         }
                     }
                     return cells;
@@ -410,6 +455,9 @@ namespace BinaryAnalysis {              // documented elsewhere
              *                          RegisterStateX86
              ******************************************************************************************************************/
 
+            /** X86 register state.
+             *
+             *  The set of registers and their values used by the instruction semantics. */
             template <template <size_t> class ValueType=SymbolicSemantics::ValueType>
             class RegisterStateX86: public BaseSemantics::RegisterStateX86<ValueType> {};
 
@@ -417,6 +465,9 @@ namespace BinaryAnalysis {              // documented elsewhere
              *                          State
              ******************************************************************************************************************/
 
+            /** Entire machine state.
+             *
+             *  The state holds the set of registers, their values, and the list of all memory locations. */
             template <template <size_t> class ValueType=SymbolicSemantics::ValueType>
             class State {
             public:
@@ -444,9 +495,7 @@ namespace BinaryAnalysis {              // documented elsewhere
                     return o;
                 }
 
-#if 1
-                // Normally defined in BaseSemantics::StateX86, so we need to define them here since we'r not inheriting from
-                // that class.
+#if 1   /* These won't be needed once we can start inheriting from BaseSemantics::StateX86 again. [RPM 2012-07-03] */
                 void clear() {
                     registers.clear();
                     memory.clear();
