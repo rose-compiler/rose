@@ -604,7 +604,7 @@ VarsExprsProductLattice::VarsExprsProductLattice
                         Lattice* allVarLattice,
                         LiveDeadVarsAnalysis* ldva, 
                         const DataflowNode& n, 
-			const NodeState& state) : 
+                        const NodeState& state) : 
                               perVarLattice(perVarLattice), allVarLattice(allVarLattice), constVarLattices(constVarLattices), ldva(ldva), n(n), state(state)
 {
         // If a LiveDeadVarsAnalysis was provided, create a lattice only for each live object
@@ -624,9 +624,9 @@ VarsExprsProductLattice::VarsExprsProductLattice
                 set<SgInitializedName *> readVars, writeVars;
                 SgNode* cur = n.getNode();
                 while(cur && !isSgFunctionDefinition(cur)) 
-		{ /*Dbg::dbg << "    cur=<"<<Dbg::escape(cur->unparseToString()) << " | " << cur->class_name()<<">"<<endl;*/
-		 cur = cur->get_parent(); 
-		}
+                { /*Dbg::dbg << "    cur=<"<<Dbg::escape(cur->unparseToString()) << " | " << cur->class_name()<<">"<<endl;*/
+                 cur = cur->get_parent(); 
+                }
                 /*SgFunctionDefinition *func;
                      if(isSgFunctionDefinition(n.getNode()))    func = isSgFunctionDefinition(n.getNode());
                 else if(isSgFunctionParameterList(n.getNode())) func = isSgFunctionDefinition(isSgFunctionDeclaration(n.getNode()->get_parent())->get_definition());
@@ -640,10 +640,10 @@ VarsExprsProductLattice::VarsExprsProductLattice
                         collect.traverse(func, preorder);
                         for(set<SgExpression*>::iterator ref=collect.refs.begin(); ref!=collect.refs.end(); ref++) {
                                 //Dbg::dbg << "        ref="<<Dbg::escape((*ref)->unparseToString()) << " | " << (*ref)->class_name()<<">"<<endl;
-				// Liao 7/1/2012. skip temp expression which is a descendant of the current node
-				// we only need to preserve them in their current scope, not beyond
-				//if (SageInterface::isAncestor(n.getNode(), *ref))
-				//  continue;
+                                // Liao 7/1/2012. skip temp expression which is a descendant of the current node
+                                // we only need to preserve them in their current scope, not beyond
+                                //if (SageInterface::isAncestor(n.getNode(), *ref))
+                                //  continue;
                                 varID var = SgExpr2Var(*ref);
                                 if(varLatticeIndex.find(var) == varLatticeIndex.end()) {
                                         varLatticeIndex[var] = lattices.size();
@@ -1108,7 +1108,7 @@ string VarsExprsProductLattice::str(string indent)
         ostringstream outs;
         //outs << "[VarsExprsProductLattice: n="<<n.getNode()<<" = <"<<Dbg::escape(n.getNode()->unparseToString())<<" | "<<n.getNode()->class_name()<<" | "<<n.getIndex()<<"> level="<<(getLevel()==uninitialized ? "uninitialized" : "initialized")<<endl;
         //outs << "[VarsExprsProductLattice: n="<<n.getNode()<<" level="<<(getLevel()==uninitialized ? "uninitialized" : "initialized")<<endl;
-	// Liao 7/1/2012, avoid print out changing memory address info. so the string output can be used to verify correctness of analysis
+        // Liao 7/1/2012, avoid print out changing memory address info. so the string output can be used to verify correctness of analysis
         outs << "[VarsExprsProductLattice: level="<<(getLevel()==uninitialized ? "uninitialized" : "initialized")<<endl;
         //varIDSet refVars;// = getVisibleVars(func);
         //for(varIDSet::iterator it = refVars.begin(); it!=refVars.end(); it++)

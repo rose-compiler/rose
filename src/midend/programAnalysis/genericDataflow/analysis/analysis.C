@@ -263,11 +263,11 @@ bool IntraUniDirectionalDataflow::propagateStateToNextNode(
                 // Finite Lattices can use the regular meet operator, while infinite Lattices
                 // must also perform widening to ensure convergence.
                 if((*itN)->finiteLattice())
-		{
-		        if(analysisDebugLevel>=1)
+                {
+                        if(analysisDebugLevel>=1)
                            Dbg::dbg << "        Finite lattice: using regular meetUpdate from current'lattic into next node's lattice... "<<endl;
                         modified = (*itN)->meetUpdate(*itC) || modified;
-		}
+                }
                 else
                 {
                         //InfiniteLattice* meetResult = (InfiniteLattice*)itN->second->meet(itC->second);
