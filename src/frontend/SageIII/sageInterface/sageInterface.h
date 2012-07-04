@@ -349,7 +349,7 @@ struct hash_nodeptr
  */
 
    //! Extract a SgPragmaDeclaration's leading keyword . For example "#pragma omp parallel" has a keyword of "omp".
-   std::string extractPragmaKeyword(SgPragmaDeclaration *);
+   std::string extractPragmaKeyword(const SgPragmaDeclaration *);
 
    //! Check if a node is SgOmp*Statement
    bool isOmpStatement(SgNode* );

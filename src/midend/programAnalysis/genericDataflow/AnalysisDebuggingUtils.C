@@ -22,7 +22,7 @@ using namespace std;
   class analysisStatesToDOT : virtual public UnstructuredPassIntraAnalysis
   {
     private:
-      //    LiveDeadVarsAnalysis* lda; // reference to the source analysis
+      //LiveDeadVarsAnalysis* lda; // reference to the source analysis
       Analysis* lda; // reference to the source analysis
       void printEdge(const DataflowEdge& e); // print data flow edge
       void printNode(const DataflowNode& n, std::string state_string); // print date flow node
