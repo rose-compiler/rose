@@ -1,3 +1,11 @@
+/*
+ * This software was produced with support in part from the Defense Advanced
+ * Research Projects Agency (DARPA) through AFRL Contract FA8650-09-C-1915.
+ * Nothing in this work should be construed as reflecting the official policy
+ * or position of the Defense Department, the United States government,
+ * or Rice University.
+ */
+
 #include "rose.h"
 #include "autoTuningSupport.h"
 #include "CommandOptions.h"
@@ -333,8 +341,16 @@ namespace autoTuning
     std::set<const RoseHPCT::IRNode *>:: const_iterator piter= RoseHPCT::profStmtNodes_.begin();
     for (;piter!=RoseHPCT::profStmtNodes_.end();piter++)
     {
+#if 1
+        // const Statement* s = dynamic_cast<const Statement*> (*piter);
+        // ROSE_ASSERT(s);
+        const RoseHPCT::IRNode * s = *piter;
+        if (s->hasMatchingSgNode())  // DXN: only consider Statements with matching SgNode
+            nodeVec.push_back(s);
+#else
       const RoseHPCT::IRNode * node = *piter;
       nodeVec.push_back(node);
+#endif
     }
     // random access iterator is needed
     sort (nodeVec.begin(), nodeVec.end(), compareProfNode);
