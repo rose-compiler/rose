@@ -60,6 +60,14 @@ dnl it depends upon the CHOOSE BACKEND COMPILER macro to have already been calle
    cp ${srcdir}/config/rose_specific_emmintrin.h ./include-staging/${compilerName}_HEADERS/emmintrin.h
    cp ${srcdir}/config/rose_specific_xmmintrin.h ./include-staging/${compilerName}_HEADERS/xmmintrin.h
 
+# Phlin (6/18/2012): Added support for SSE4.1.
+   cp ${srcdir}/config/rose_specific_ammintrin.h ./include-staging/${compilerName}_HEADERS/ammintrin.h
+   cp ${srcdir}/config/rose_specific_nmmintrin.h ./include-staging/${compilerName}_HEADERS/nmmintrin.h
+   cp ${srcdir}/config/rose_specific_pmmintrin.h ./include-staging/${compilerName}_HEADERS/pmmintrin.h
+   cp ${srcdir}/config/rose_specific_smmintrin.h ./include-staging/${compilerName}_HEADERS/smmintrin.h
+   cp ${srcdir}/config/rose_specific_tmmintrin.h ./include-staging/${compilerName}_HEADERS/tmmintrin.h
+   cp ${srcdir}/config/rose_specific_avxintrin.h ./include-staging/${compilerName}_HEADERS/avxintrin.h
+
    error_code=$?
    echo "error_code = $error_code"
    if test $error_code != 0; then
@@ -169,6 +177,14 @@ AC_DEFUN([GENERATE_BACKEND_C_COMPILER_SPECIFIC_HEADERS],
  # Copy alternative SSE and MMX headers to be seen by ROSE ahead of the originals.
    cp ${srcdir}/config/rose_specific_emmintrin.h ./include-staging/${compilerName}_HEADERS/emmintrin.h
    cp ${srcdir}/config/rose_specific_xmmintrin.h ./include-staging/${compilerName}_HEADERS/xmmintrin.h
+
+ # Phlin (6/18/2012): Added support for SSE4.1.
+   cp ${srcdir}/config/rose_specific_ammintrin.h ./include-staging/${compilerName}_HEADERS/ammintrin.h
+   cp ${srcdir}/config/rose_specific_nmmintrin.h ./include-staging/${compilerName}_HEADERS/nmmintrin.h
+   cp ${srcdir}/config/rose_specific_pmmintrin.h ./include-staging/${compilerName}_HEADERS/pmmintrin.h
+   cp ${srcdir}/config/rose_specific_smmintrin.h ./include-staging/${compilerName}_HEADERS/smmintrin.h
+   cp ${srcdir}/config/rose_specific_tmmintrin.h ./include-staging/${compilerName}_HEADERS/tmmintrin.h
+   cp ${srcdir}/config/rose_specific_avxintrin.h ./include-staging/${compilerName}_HEADERS/avxintrin.h
 
    error_code=$?
    echo "error_code = $error_code"

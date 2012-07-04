@@ -2,12 +2,19 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 # DQ (9/3/2006): Reorganized the lists of EXTRA_DIST and include_HEADERS.
 # DQ (9/2/2006): Removed most of these files since I don't think that these are really required
+# Phlin (6/18/2012): Add the header files for SSE 4.1+
 include_HEADERS = \
      rose_stdarg.h \
      rose_varargs.h \
      rose-g++-headerfilefixup.h \
      rose_specific_cdefs.h \
+     rose_specific_ammintrin.h \
      rose_specific_emmintrin.h \
+     rose_specific_nmmintrin.h \
+     rose_specific_pmmintrin.h \
+     rose_specific_smmintrin.h \
+     rose_specific_tmmintrin.h \
+     rose_specific_avxintrin.h \
      rose_specific_xmmintrin.h
 
 # DQ (9/15/2010): Added UPC header files.
