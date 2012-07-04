@@ -2149,6 +2149,8 @@ projects/ManyCoreRuntime/docs/Makefile
 projects/mint/Makefile
 projects/mint/src/Makefile
 projects/mint/tests/Makefile
+projects/Fortran_to_C/Makefile
+projects/Fortran_to_C/src/Makefile
 projects/traceAnalysis/Makefile
 projects/PolyhedralModel/Makefile
 projects/PolyhedralModel/src/Makefile

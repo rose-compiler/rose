@@ -7,7 +7,7 @@ contains
 !-------------------------------------------------------------------------------
 ! result type in type declaration
 !-------------------------------------------------------------------------------
-  integer function number_of_bits8(i) result(num)
+  function number_of_bits8(i) result(num)
     implicit none
     integer :: i, itmp, num 
     num = 0
