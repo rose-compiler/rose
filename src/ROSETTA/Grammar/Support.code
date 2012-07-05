@@ -4257,10 +4257,11 @@ HEADER_INITIALIZED_NAME_START
        //   virtual void set_file_info(Sg_File_Info* X);
 
        // DQ (2/6/2007): Added support to get the symbol from the declaration (via the symbol table in the scope)
-      //! Get the associated SgSymbol from the symbol table located in the scope
+      //! Get the associated SgSymbol from the symbol table located in the scope, without considering possible prev_decl_item. Internal use only. Users should use search_for_symbol_from_symbol_table() instead.
           SgSymbol* get_symbol_from_symbol_table() const;
 
        // PC (10/1/2009): Added support to get the symbol from the correct associated declaration
+       //! User interface for retrieving the associated symbol. It searches through the possible chain of prev_decl_item.
           SgSymbol* search_for_symbol_from_symbol_table() const;
 
 #if ALT_FIXUP_COPY
