@@ -557,61 +557,64 @@ struct MemoryMergeConstraint: public Constraint {
 };
 
 struct RegisterSet {
-    static const size_t n_gprs = 8;             /**< Number of general-purpose registers in this state. */
-    static const size_t n_segregs = 6;          /**< Number of segmentation registers in this state. */
-    static const size_t n_flags = 32;           /**< Number of flag registers in this state. */
+    struct {
+        static const size_t n_gprs = 8;             /**< Number of general-purpose registers in this state. */
+        static const size_t n_segregs = 6;          /**< Number of segmentation registers in this state. */
+        static const size_t n_flags = 32;           /**< Number of flag registers in this state. */
 
-    XVariablePtr<32> gpr[n_gprs];
-    XVariablePtr<16> segreg[n_segregs];
-    XVariablePtr<1> flag[n_flags];
+        XVariablePtr<32> gpr[n_gprs];
+        XVariablePtr<16> segreg[n_segregs];
+        XVariablePtr<1> flag[n_flags];
+    } registers;
+    
     MemoryVariable* memoryWrites; // Undefined elements are bottom, no two elements can satisfy mayAlias
     
     RegisterSet() {
-        for (size_t i = 0; i < n_gprs; ++i)
-            gpr[i] = new XVariable<32>();
-        for (size_t i = 0; i < n_segregs; ++i)
-            segreg[i] = new XVariable<16>();
+        for (size_t i = 0; i < registers.n_gprs; ++i)
+            registers.gpr[i] = new XVariable<32>();
+        for (size_t i = 0; i < registers.n_segregs; ++i)
+            registers.segreg[i] = new XVariable<16>();
         for (size_t i = 0; i < 16; ++i)
-            flag[i] = new XVariable<1>();
+            registers.flag[i] = new XVariable<1>();
         memoryWrites = new MemoryVariable();
     }
 
     void setToBottom() {
-        for (size_t i = 0; i < n_gprs; ++i)
-            gpr[i] = XVariablePtr<32>::bottom();
-        for (size_t i = 0; i < n_segregs; ++i)
-            segreg[i] = XVariablePtr<16>::bottom();
+        for (size_t i = 0; i < registers.n_gprs; ++i)
+            registers.gpr[i] = XVariablePtr<32>::bottom();
+        for (size_t i = 0; i < registers.n_segregs; ++i)
+            registers.segreg[i] = XVariablePtr<16>::bottom();
         for (size_t i = 0; i < 16; ++i)
-            flag[i] = XVariablePtr<1>::bottom();
+            registers.flag[i] = XVariablePtr<1>::bottom();
         memoryWrites->set(MemoryWriteSet::bottom());
     }
 
     void mergeIn(const RegisterSet& rs) {
-        for (size_t i = 0; i < n_gprs; ++i)
-            (new MergeConstraint<32>(gpr[i], rs.gpr[i]))->activate();
-        for (size_t i = 0; i < n_segregs; ++i)
-            (new MergeConstraint<16>(segreg[i], rs.segreg[i]))->activate();
+        for (size_t i = 0; i < registers.n_gprs; ++i)
+            (new MergeConstraint<32>(registers.gpr[i], rs.registers.gpr[i]))->activate();
+        for (size_t i = 0; i < registers.n_segregs; ++i)
+            (new MergeConstraint<16>(registers.segreg[i], rs.registers.segreg[i]))->activate();
         for (size_t i = 0; i < 16; ++i)
-            (new MergeConstraint<1>(flag[i], rs.flag[i]))->activate();
+            (new MergeConstraint<1>(registers.flag[i], rs.registers.flag[i]))->activate();
         (new MemoryMergeConstraint(memoryWrites, rs.memoryWrites))->activate();
     }
 
     /** Show register set, but only the parts that differ from @p base. */
     std::string diff(const RegisterSet &orig, std::string prefix="") {
         std::ostringstream s;
-        for (size_t i=0; i<n_gprs; i++) {
-            if (!(orig.gpr[i]->get()==gpr[i]->get())) {
-                s <<prefix <<gprToString((X86GeneralPurposeRegister)i) <<" = " <<gpr[i] <<"\n";
+        for (size_t i=0; i<registers.n_gprs; i++) {
+            if (!(orig.registers.gpr[i]->get()==registers.gpr[i]->get())) {
+                s <<prefix <<gprToString((X86GeneralPurposeRegister)i) <<" = " <<registers.gpr[i] <<"\n";
             }
         }
-        for (size_t i=0; i<n_segregs; i++) {
-            if (!(orig.segreg[i]->get()==segreg[i]->get())) {
-                s <<prefix <<segregToString((X86SegmentRegister)i) <<" = " <<segreg[i] <<"\n";
+        for (size_t i=0; i<registers.n_segregs; i++) {
+            if (!(orig.registers.segreg[i]->get()==registers.segreg[i]->get())) {
+                s <<prefix <<segregToString((X86SegmentRegister)i) <<" = " <<registers.segreg[i] <<"\n";
             }
         }
         for (size_t i=0; i<16; i++) {
-            if (!(orig.flag[i]->get()==flag[i]->get())) {
-                s <<prefix <<flagToString((X86Flag)i) << " = " <<flag[i] <<"\n";
+            if (!(orig.registers.flag[i]->get()==registers.flag[i]->get())) {
+                s <<prefix <<flagToString((X86Flag)i) << " = " <<registers.flag[i] <<"\n";
             }
         }
         /* Show memory in this register set that is different than the original */
@@ -1129,7 +1132,7 @@ public:
         FindConstantsPolicy::startInstruction(insn);
 
         /* GCC assumes that the direction flag (df) is zero on function entry. See gcc man page for -mcld switch. */
-        LatticeElement<1> df = rsets[insn->get_address()].flag[x86_flag_df]->get();
+        LatticeElement<1> df = rsets[insn->get_address()].registers.flag[x86_flag_df]->get();
         if (df.name!=0)
             writeRegister("df", false_());
 
@@ -1272,11 +1275,11 @@ public:
             RegisterSet rset;
             rset.setToBottom();
             rset.memoryWrites = rsets[call_va].memoryWrites;
-            rset.gpr[x86_gpr_bx] = rsets[call_va].gpr[x86_gpr_bx];
-            rset.gpr[x86_gpr_di] = rsets[call_va].gpr[x86_gpr_di];
-            rset.gpr[x86_gpr_si] = rsets[call_va].gpr[x86_gpr_si];
-            rset.gpr[x86_gpr_sp] = rsets[call_va].gpr[x86_gpr_sp];
-            rset.gpr[x86_gpr_bp] = rsets[call_va].gpr[x86_gpr_bp];
+            rset.registers.gpr[x86_gpr_bx] = rsets[call_va].registers.gpr[x86_gpr_bx];
+            rset.registers.gpr[x86_gpr_di] = rsets[call_va].registers.gpr[x86_gpr_di];
+            rset.registers.gpr[x86_gpr_si] = rsets[call_va].registers.gpr[x86_gpr_si];
+            rset.registers.gpr[x86_gpr_sp] = rsets[call_va].registers.gpr[x86_gpr_sp];
+            rset.registers.gpr[x86_gpr_bp] = rsets[call_va].registers.gpr[x86_gpr_bp];
             rsets[next_va].mergeIn(rset);
         }
         FindConstantsPolicy::finishInstruction(insn);

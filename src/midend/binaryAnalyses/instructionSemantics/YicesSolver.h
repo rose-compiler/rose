@@ -3,7 +3,7 @@
 
 #include "SMTSolver.h"
 
-#ifdef HAVE_LIBYICES
+#ifdef ROSE_HAVE_LIBYICES
 #  include <yices_c.h>
 #endif
 
@@ -52,27 +52,23 @@ public:
      *  output containing "sat" or "unsat". However, Yices provides a library that can optionally be linked into ROSE, and
      *  uses this library if the link mode is LM_LIBRARY.
      *  @{ */
-    virtual bool satisfiable(const std::vector<InsnSemanticsExpr::TreeNodePtr> &exprs);
-    virtual bool satisfiable(const InsnSemanticsExpr::TreeNodePtr &tn) {
+    virtual Satisfiable satisfiable(const std::vector<InsnSemanticsExpr::TreeNodePtr> &exprs);
+    virtual Satisfiable satisfiable(const InsnSemanticsExpr::TreeNodePtr &tn) {
         std::vector<InsnSemanticsExpr::TreeNodePtr> exprs;
         exprs.push_back(tn);
         return satisfiable(exprs);
     }
     /** @} */
 
-    /** See SMTSolver::get_definition().
-     *  @{ */
-    virtual InsnSemanticsExpr::TreeNodePtr get_definition(uint64_t varno);
-
-    virtual InsnSemanticsExpr::TreeNodePtr get_definition(const InsnSemanticsExpr::LeafNodePtr &var) {
-        assert(var!=NULL && !var->is_known());
-        return get_definition(var->get_name());
-    }
-    /** @} */
+    virtual InsnSemanticsExpr::TreeNodePtr evidence_for_name(const std::string&) /*overrides*/;
+    virtual std::vector<std::string> evidence_names() /*overrides*/;
+    virtual void clear_evidence() /*overrides*/;
 
 protected:
+    virtual uint64_t parse_variable(const char *nptr, char **endptr, char first_char);
     virtual void parse_evidence();
-    std::map<uint64_t/*varnum*/, std::pair<size_t/*nbits*/, uint64_t/*value*/> > evidence;
+    typedef std::map<std::string/*name or hex-addr*/, std::pair<size_t/*nbits*/, uint64_t/*value*/> > Evidence;
+    Evidence evidence;
 
 private:
     LinkMode linkage;
@@ -96,8 +92,10 @@ private:
     void out_asr(std::ostream&, const InsnSemanticsExpr::InternalNodePtr&);
     void out_zerop(std::ostream&, const InsnSemanticsExpr::InternalNodePtr&);
     void out_mult(std::ostream &o, const InsnSemanticsExpr::InternalNodePtr&);
+    void out_read(std::ostream &o, const InsnSemanticsExpr::InternalNodePtr&);
+    void out_write(std::ostream &o, const InsnSemanticsExpr::InternalNodePtr&);
 
-#ifdef HAVE_LIBYICES
+#ifdef ROSE_HAVE_LIBYICES
     /* These ctx_*() functions build a Yices context object if Yices is linked into this executable. */
     typedef yices_expr (*UnaryAPI)(yices_context, yices_expr operand);
     typedef yices_expr (*BinaryAPI)(yices_context, yices_expr operand1, yices_expr operand2);
@@ -121,6 +119,9 @@ private:
     yices_expr ctx_asr(const InsnSemanticsExpr::InternalNodePtr&);
     yices_expr ctx_zerop(const InsnSemanticsExpr::InternalNodePtr&);
     yices_expr ctx_mult(const InsnSemanticsExpr::InternalNodePtr&);
+    yices_expr ctx_read(const InsnSemanticsExpr::InternalNodePtr&);
+    yices_expr ctx_write(const InsnSemanticsExpr::InternalNodePtr&);
+    
 #else
     void *context; /*unused for now*/
 #endif

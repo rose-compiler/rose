@@ -24,9 +24,12 @@ namespace BinaryAnalysis {              // documented elsewhere
          *  variable with offset, values here are expression trees.
          *
          *  <ul>
-         *    <li>Policy: the policy class used to instantiate X86InstructionSemantic instances.</li>
-         *    <li>State: represents the state of the virtual machine, its registers and memory.</li>
          *    <li>ValueType: the values stored in registers and memory and used for memory addresses.</li>
+         *    <li>MemoryCell: an address-expression/value-expression pair for memory.</li>
+         *    <li>MemoryState: the collection of MemoryCells that form a complete memory state.</li>
+         *    <li>RegisterState: the collection of registers that form a complete register state.</li>
+         *    <li>State: represents the state of the virtual machine&mdash;its registers and memory.</li>
+         *    <li>Policy: the policy class used to instantiate X86InstructionSemantic instances.</li>
          *  </ul>
          *
          *  If an SMT solver is supplied as a Policy constructor argument then that SMT solver will be used to answer various
@@ -47,9 +50,19 @@ namespace BinaryAnalysis {              // documented elsewhere
              *                          ValueType
              ******************************************************************************************************************/
 
-            /* ValueType cannot directly be a TreeNode because ValueType's bit size is a template argument while tree node
-             * sizes are stored as a data member.  Therefore, ValueType will always point to a TreeNode.  Most of the methods
-             * that are invoked on ValueType just call the same methods for TreeNode. */
+            /** Symbolic expressions.
+             *
+             *  The ValueType is used whenever a value needs to be stored, such as memory addresses, the values stored at those
+             *  addresses, the values stored in registers, the operands for RISC operations, and the results of those
+             *  operations.
+             *
+             *  A ValueType has an intrinsic size in bits and points to an expression composed of the TreeNode types defined in
+             *  InsnSemanticsExpr.h. ValueType cannot directly be a TreeNode because ValueType's bit size is a template
+             *  argument while tree node sizes are stored as a data member.  Therefore, ValueType will always point to a
+             *  TreeNode.  Most of the methods that are invoked on ValueType just call the same methods for TreeNode.
+             *
+             *  A ValueType also stores the set of instructions that were used in defining the value.  This provides a
+             *  framework for some simple forms of def-use analysis. See get_defining_instructions() for details. */
             template<size_t nBits>
             class ValueType {
             protected:
@@ -66,6 +79,7 @@ namespace BinaryAnalysis {              // documented elsewhere
                     expr = LeafNode::create_variable(nBits, comment);
                 }
 
+                /** Copy constructor. */
                 ValueType(const ValueType &other) {
                     expr = other.expr;
                     defs = other.defs;
@@ -216,82 +230,253 @@ namespace BinaryAnalysis {              // documented elsewhere
              *                          MemoryCell
              ******************************************************************************************************************/
 
-            /** Memory cell with symbolic address and data.  The ValueType template argument should be a subclass of
-             *  SymbolicSemantics::ValueType. */
+            /** Memory cell with symbolic address and data.
+             *
+             *  The ValueType template argument should be a subclass of SymbolicSemantics::ValueType. */
             template<template<size_t> class ValueType=SymbolicSemantics::ValueType>
-            class MemoryCell: public BaseSemantics::MemoryCell<ValueType> {
+            class MemoryCell {
+            private:
+                ValueType<32> address_;                 /**< Memory address expression. */
+                ValueType<8> value_;                    /**< Byte value expression stored at the address. */
+                bool written;                           /**< Was the cell created by a write operation? */
+
             public:
-
-                /** Constructor that sets the defining instruction.  This is just like the base class, except we also add an
-                 *  optional defining instruction. */
-                template <size_t Len>
-                MemoryCell(const ValueType<32> &address, const ValueType<Len> &data, size_t nbytes, SgAsmInstruction *insn=NULL)
-                    : BaseSemantics::MemoryCell<ValueType>(address, data, nbytes) {
-                    this->get_data().add_defining_instructions(insn);
+                MemoryCell(const ValueType<32> &address, const ValueType<8> &value, SgAsmInstruction *insn=NULL)
+                    : address_(address), value_(value) {
+                    value_.add_defining_instructions(insn);
                 }
 
-                /** Returns true if this memory value could possibly overlap with the @p other memory value.  In other words,
-                 *  returns false only if this memory location cannot overlap with @p other memory location. Two addresses that
-                 *  are identical alias one another. The @p solver is optional but recommended (absence of a solver will result
-                 *  in a naive definition).
-                 * 
-                 *  Address X and Y may alias each other if X+datasize(X)>=Y or X<Y+datasize(Y) where datasize(A) is the number
-                 *  of bytes stored at address A. In other words, if the following expression is satisfiable, then the memory
-                 *  cells might alias one another.
-                 *
-                 *  \code
-                 *     ((X.addr + X.nbytes > Y.addr) && (X.addr < Y.addr + Y.nbytes)) ||
-                 *     ((Y.addr + Y.nbytes > X.addr) && (Y.addr < X.addr + X.nbytes))
-                 *  \code
-                 *
-                 *  Or, equivalently written in LISP style
-                 *
-                 *  \code
-                 *     (and (or (> (+ X.addr X.nbytes) Y.addr) (< X.addr (+ Y.addr Y.nbytes)))
-                 *          (or (> (+ Y.addr Y.nbytes) X.addr) (< Y.addr (+ X.addr X.nbytes))))
-                 *  \endcode
-                 */
-                bool may_alias(const MemoryCell &other, SMTSolver *solver) const {
-                    bool retval = must_alias(other, solver); /*this might be faster to solve*/
-                    if (retval)
-                        return retval;
-                    if (solver) {
-                        TreeNodePtr x_addr   = this->address.get_expression();
-                        TreeNodePtr x_nbytes = LeafNode::create_integer(32, this->nbytes);
-                        TreeNodePtr y_addr   = other.address.get_expression();
-                        TreeNodePtr y_nbytes = LeafNode::create_integer(32, other.nbytes);
+                /** Memory cell address expression. */
+                ValueType<32> address() const { return address_; }
 
-                        TreeNodePtr x_end =
-                            InternalNode::create(32, InsnSemanticsExpr::OP_ADD, x_addr, x_nbytes);
-                        TreeNodePtr y_end =
-                            InternalNode::create(32, InsnSemanticsExpr::OP_ADD, y_addr, y_nbytes);
+                /** Memory cell value expression. */
+                ValueType<8> value() const { return value_; }
 
-                        TreeNodePtr and1 =
-                            InternalNode::create(1, InsnSemanticsExpr::OP_AND,
-                                                 InternalNode::create(1, InsnSemanticsExpr::OP_UGT, x_end, y_addr),
-                                                 InternalNode::create(1, InsnSemanticsExpr::OP_ULT, x_addr, y_end));
-                        TreeNodePtr and2 =
-                            InternalNode::create(1, InsnSemanticsExpr::OP_AND,
-                                                 InternalNode::create(1, InsnSemanticsExpr::OP_UGT, y_end, x_addr),
-                                                 InternalNode::create(1, InsnSemanticsExpr::OP_ULT, y_addr, x_end));
-                        TreeNodePtr assertion =
-                            InternalNode::create(1, InsnSemanticsExpr::OP_OR, and1, and2);
-                        retval = solver->satisfiable(assertion);
-                    }
-                    return retval;
-                }
+                /** Accessor for whether a cell has been written.  A cell that is written to with writeMemory() should be
+                 *  marked as such.  This is to make a distinction between cells that have sprung insto existence by virtue of
+                 *  reading from a previously unknown cell and cells that have been created as a result of a memoryWrite
+                 *  operation.
+                 * @{ */
+                bool is_written() const { return written; }
+                void set_written(bool b=true) { written=b; }
+                void clear_written() { written=false; }
+                /** @}*/
 
                 /** Returns true if this memory address is the same as the @p other. Note that "same" is more strict than
                  *  "overlap".  The @p solver is optional but recommended (absence of a solver will result in a naive
                  *  definition). */
-                bool must_alias(const MemoryCell &other, SMTSolver *solver) const {
-                    return this->get_address().get_expression()->equal_to(other.get_address().get_expression(), solver);
+                bool must_alias(const ValueType<32> &addr, SMTSolver *solver) const {
+                    return this->address().get_expression()->equal_to(addr.get_expression(), solver);
+                }
+
+                /** Returns true if address can refer to this memory cell. */
+                bool may_alias(const ValueType<32> &addr, SMTSolver *solver) const {
+                    if (must_alias(addr, solver))
+                        return true;
+                    if (!solver)
+                        return false;
+                    TreeNodePtr x_addr = this->address().get_expression();
+                    TreeNodePtr y_addr = addr.get_expression();
+                    TreeNodePtr assertion = InternalNode::create(1, InsnSemanticsExpr::OP_EQ, x_addr, y_addr);
+                    return SMTSolver::SAT_NO != solver->satisfiable(assertion);
+                }
+
+                /** Print a memory cell. */
+                template<typename PrintHelper>
+                void print(std::ostream &o, const std::string prefix="", PrintHelper *ph=NULL) const {
+                    o <<prefix <<"address = { ";
+                    address().print(o, ph);
+                    o <<" }\n";
+
+                    o <<prefix <<"  value = { ";
+                    value().print(o, ph);
+                    o <<" }\n";
+
+                    o <<prefix <<"  flags = {";
+                    if (!written) o <<" rdonly";
+                    o <<" }\n";
+                }
+
+                friend std::ostream& operator<<(std::ostream &o, const MemoryCell &mc) {
+                    mc.print<BaseSemantics::SEMANTIC_NO_PRINT_HELPER>(o);
+                    return o;
                 }
             };
 
-            /** Represents the entire state of the machine. */
+            /******************************************************************************************************************
+             *                          MemoryState
+             ******************************************************************************************************************/
+
+            /** Byte-addressable memory.
+             *
+             *  This class represents an entire state of memory via a list of memory cells.  The memory cell list is sorted in
+             *  reverse chronological order and addresses that satisfy a "must-alias" predicate are pruned so that only the
+             *  must recent such memory cell is in the table.
+             *
+             *  A memory write operation prunes away any existing memory cell that must-alias the newly written address, then
+             *  adds a new memory cell to the front of the memory cell list.
+             *
+             *  A memory read operation scans the memory cell list and returns a McCarthy expression.  The read operates in two
+             *  modes: a mode that returns a full McCarthy expression based on all memory cells in the cell list, or a mode
+             *  that returns a pruned McCarthy expression consisting only of memory cells that may-alias the reading-from
+             *  address.  The pruning mode is the default, but can be turned off by calling disable_read_pruning(). */
+            template<template <size_t> class ValueType=SymbolicSemantics::ValueType>
+            class MemoryState {
+            public:
+                typedef std::list<MemoryCell<ValueType> > CellList;
+                CellList cell_list;
+                bool read_pruning;                      /**< Prune McCarthy expression for read operations. */
+
+                MemoryState(): read_pruning(true) {}
+
+                /** Enables or disables pruning of the McCarthy expression for read operations.
+                 * @{ */
+                bool get_read_pruning() const { return read_pruning; }
+                void enable_read_pruning(bool b=true) { read_pruning = b; }
+                void disable_read_pruning() { read_pruning = false; }
+                /** @} */
+
+                /** Write a value to memory. Returns the list of cells that were added. The number of cells added is the same
+                 *  as the number of bytes in the value being written. */
+                template<size_t nBits>
+                CellList write(const ValueType<32> &addr, const ValueType<nBits> &value, SMTSolver *solver) {
+                    assert(8==nBits || 16==nBits || 32==nBits);
+                    CellList retval;
+                    for (size_t bytenum=0; bytenum<nBits/8; ++bytenum) {
+                        MemoryCell<ValueType> cell = write_byte(add(addr, bytenum), extract_byte(value, bytenum), solver);
+                        retval.push_back(cell);
+                    }
+                    return retval;
+                }
+
+                /** Read a byte from memory.  Returns the list of cells that compose the result.  The cell list can be
+                 *  converted to a value expression via cells_to_value() method. */
+                CellList read_byte(const ValueType<32> &addr, bool *found_must_alias/*out*/, SMTSolver *solver) {
+                    CellList cells;
+                    *found_must_alias = false;
+                    if (read_pruning) {
+                        for (typename CellList::iterator cli=may_alias(addr, solver, cell_list.begin());
+                             cli!=cell_list.end();
+                             cli=may_alias(addr, solver, ++cli)) {
+                            cells.push_back(*cli);
+                            if (cli->must_alias(addr, solver)) {
+                                *found_must_alias = true;
+                                break;
+                            }
+                        }
+                    } else {
+                        for (typename CellList::iterator cli=cell_list.begin(); cli!=cell_list.end(); ++cli) {
+                            cells.push_back(*cli);
+                            if (cli->must_alias(addr, solver))
+                                *found_must_alias = true;
+                        }
+                    }
+                    return cells;
+                }
+                
+                /** Build a value from a list of memory cells. */
+                ValueType<8> value_from_cells(const ValueType<32> &addr, const CellList &cells) {
+                    assert(!cells.empty());
+                    if (1==cells.size())
+                        return cells.front().value();
+                    // FIXME: This makes no attempt to remove duplicate values
+                    TreeNodePtr expr = LeafNode::create_memory(8);
+                    for (typename CellList::const_iterator ci=cells.begin(); ci!=cells.end(); ++ci) {
+                        expr = InternalNode::create(8, InsnSemanticsExpr::OP_WRITE,
+                                                    expr, ci->address().get_expression(), ci->value().get_expression());
+                    }
+                    ValueType<8> retval(InternalNode::create(8, InsnSemanticsExpr::OP_READ, expr, addr.get_expression()));
+                    for (typename CellList::const_iterator ci=cells.begin(); ci!=cells.end(); ++ci)
+                        retval.add_defining_instructions(ci->value().get_defining_instructions());
+                    return retval;
+                }
+ 
+                /** Write a single byte to memory. */
+                MemoryCell<ValueType>& write_byte(const ValueType<32> &addr, const ValueType<8> &value, SMTSolver *solver) {
+                    typename CellList::iterator cli = must_alias(addr, solver, cell_list.begin());
+                    if (cli!=cell_list.end())
+                        cell_list.erase(cli);
+                    MemoryCell<ValueType> new_cell(addr, value);
+                    new_cell.set_written();
+                    cell_list.push_front(new_cell);
+                    return cell_list.front();
+                }
+
+                /** Extract one byte from a 16 or 32 bit value. Byte zero is the little-endian byte. */
+                template<size_t nBits>
+                ValueType<8> extract_byte(const ValueType<nBits> &a, size_t bytenum) {
+                    if (a.is_known())
+                        return ValueType<8>((a.known_value()>>(bytenum*8)) & IntegerOps::GenMask<uint64_t, 8>::value);
+                    return ValueType<8>(InternalNode::create(8, InsnSemanticsExpr::OP_EXTRACT,
+                                                             LeafNode::create_integer(32, 8*bytenum),
+                                                             LeafNode::create_integer(32, 8*bytenum+8),
+                                                             a.get_expression()));
+                }
+
+                /** Add a constant to an address. */
+                ValueType<32> add(const ValueType<32> &a, uint64_t n) {
+                    if (0==n)
+                        return a;
+                    if (a.is_known())
+                        return ValueType<32>(a.known_value()+n);
+                    return ValueType<32>(InternalNode::create(32, InsnSemanticsExpr::OP_ADD,
+                                                              a.get_expression(), LeafNode::create_integer(32, n)));
+                }
+
+                /** Returns the first memory cell that must be aliased by @p addr. */
+                typename CellList::iterator must_alias(const ValueType<32> &addr, SMTSolver *solver,
+                                                       typename CellList::iterator begin) {
+                    for (typename CellList::iterator cli=begin; cli!=cell_list.end(); ++cli) {
+                        if (cli->must_alias(addr, solver))
+                            return cli;
+                    }
+                    return cell_list.end();
+                }
+
+                /** Returns the first memory cell that might be aliased by @p addr. */
+                typename CellList::iterator may_alias(const ValueType<32> &addr, SMTSolver *solver,
+                                                      typename CellList::iterator begin) {
+                    for (typename CellList::iterator cli=begin; cli!=cell_list.end(); ++cli) {
+                        if (cli->may_alias(addr, solver))
+                            return cli;
+                    }
+                    return cell_list.end();
+                }
+
+                /** Print values of all memory. */
+                template<typename PrintHelper>
+                void print(std::ostream &o, const std::string prefix="", PrintHelper *ph=NULL) const {
+                    for (typename CellList::const_iterator cli=cell_list.begin(); cli!=cell_list.end(); ++cli)
+                        cli->print(o, prefix, ph);
+                }
+            };
+
+            /******************************************************************************************************************
+             *                          RegisterStateX86
+             ******************************************************************************************************************/
+
+            /** X86 register state.
+             *
+             *  The set of registers and their values used by the instruction semantics. */
             template <template <size_t> class ValueType=SymbolicSemantics::ValueType>
-            struct State: public BaseSemantics::StateX86<MemoryCell, ValueType> {
+            class RegisterStateX86: public BaseSemantics::RegisterStateX86<ValueType> {};
+
+            /******************************************************************************************************************
+             *                          State
+             ******************************************************************************************************************/
+
+            /** Entire machine state.
+             *
+             *  The state holds the set of registers, their values, and the list of all memory locations. */
+            template <template <size_t> class ValueType=SymbolicSemantics::ValueType>
+            class State {
+            public:
+                typedef RegisterStateX86<ValueType> Registers;
+                typedef MemoryState<ValueType> Memory;
+
+                Registers registers;
+                Memory memory;
+
                 /** Print info about how registers differ.  If a rename map is specified then named values will be renamed to
                  *  have a shorter name.  See the ValueType<>::rename() method for details. */
                 void print_diff_registers(std::ostream &o, const State&, RenameMap *rmap=NULL) const;
@@ -304,7 +489,39 @@ namespace BinaryAnalysis {              // documented elsewhere
                 void discard_popped_memory() {
                     /*FIXME: not implemented yet. [RPM 2010-05-24]*/
                 }
+
+                friend std::ostream& operator <<(std::ostream &o, const State &state) {
+                    state.template print<BaseSemantics::SEMANTIC_NO_PRINT_HELPER>(o);
+                    return o;
+                }
+
+#if 1   /* These won't be needed once we can start inheriting from BaseSemantics::StateX86 again. [RPM 2012-07-03] */
+                void clear() {
+                    registers.clear();
+                    memory.clear();
+                }
+
+                void zero_registers() {
+                    registers.zero();
+                }
+
+                void clear_memory() {
+                    memory.clear();
+                }
+
+                template<typename PrintHelper>
+                void print(std::ostream &o, const std::string prefix="", PrintHelper *ph=NULL) const {
+                    o <<prefix <<"registers:\n";
+                    registers.print(o, prefix+"    ", ph);
+                    o <<prefix <<"memory:\n";
+                    memory.print(o, prefix+"    ", ph);
+                }
+#endif
             };
+
+            /******************************************************************************************************************
+             *                          Policy
+             ******************************************************************************************************************/
 
             /** A policy that is supplied to the semantic analysis constructor. See documentation for the SymbolicSemantics
              *  namespace.  The RISC-like operations are documented in the
@@ -387,10 +604,10 @@ namespace BinaryAnalysis {              // documented elsewhere
                 State<ValueType>& get_orig_state() { return orig_state; }
 
                 /** Returns the current instruction pointer. */
-                const ValueType<32>& get_ip() const { return cur_state.ip; }
+                const ValueType<32>& get_ip() const { return cur_state.registers.ip; }
 
                 /** Returns the original instruction pointer. See also get_orig_state(). */
-                const ValueType<32>& get_orig_ip() const { return orig_state.ip; }
+                const ValueType<32>& get_orig_ip() const { return orig_state.registers.ip; }
 
                 /** Returns a copy of the state after removing memory that is not pertinent to an equal_states() comparison. */
                 Memory memory_for_equality(const State<ValueType>&) const;
@@ -406,8 +623,13 @@ namespace BinaryAnalysis {              // documented elsewhere
 
                 /** Print the current state of this policy.  If a rename map is specified then named values will be renamed to
                  *  have a shorter name.  See the ValueType<>::rename() method for details. */
-                void print(std::ostream &o, RenameMap *rmap=NULL) const {
-                    cur_state.print(o, "", rmap);
+                void print(std::ostream &o, const std::string prefix="", RenameMap *rmap=NULL) const {
+                    o <<prefix <<"registers:\n";
+                    cur_state.registers.print(o, prefix+"    ", rmap);
+                    o <<prefix <<"memory:\n";
+                    cur_state.memory.print(o, prefix+"    ", rmap);
+                    o <<prefix <<"init mem:\n";
+                    orig_state.memory.print(o, prefix+"    ", rmap);
                 }
                 friend std::ostream& operator<<(std::ostream &o, const Policy &p) {
                     p.print(o, NULL);
@@ -510,105 +732,92 @@ namespace BinaryAnalysis {              // documented elsewhere
                         .defined_by(cur_insn, a.get_defining_instructions());
                 }
 
-                /** Reads a value from memory in a way that always returns the same value provided there are not intervening
-                 *  writes that would clobber the value either directly or by aliasing.  Also, if appropriate, the value is
-                 *  added to the original memory state (thus changing the value at that address from an implicit named value to
-                 *  an explicit named value).
+                /** Reads a single-byte value from memory.
                  *
-                 *  The @p dflt is the value to use if the memory address has not been assigned a value yet.
-                 *
-                 *  It is safe to call this function and supply the policy's original state as the state argument.
-                 *
-                 *  The documentation for MemoryCell has an example that demonstrates the desired behavior of mem_read() and
-                 *  mem_write(). */
-                template <size_t Len> ValueType<Len> mem_read(State<ValueType> &state, const ValueType<32> &addr,
-                                                              const ValueType<Len> &dflt) const {
-                    MemoryCell<ValueType> new_cell(addr, unsignedExtend<Len,32>(dflt), Len/8, NULL/*no defining instruction*/);
-                    bool aliased = false; /*is new_cell aliased by any existing writes?*/
-
-                    for (typename Memory::iterator mi=state.mem.begin(); mi!=state.mem.end(); ++mi) {
-                        if (new_cell.must_alias(*mi, solver)) {
-                            if ((*mi).is_clobbered()) {
-                                (*mi).set_clobbered(false);
-                                (*mi).set_data(new_cell.get_data());
-                                return unsignedExtend<32, Len>(new_cell.get_data());
-                            } else {
-                                return unsignedExtend<32, Len>((*mi).get_data());
-                            }
-                        } else if ((*mi).is_written() && new_cell.may_alias(*mi, solver)) {
-                            aliased = true;
-                        }
-                    }
-
-                    if (!aliased && &state!=&orig_state) {
-                        /* We didn't find the memory cell in the specified state and it's not aliased to any writes in that
-                         * state.  Therefore use the value from the initial memory state (creating it if necessary). */
-                        for (typename Memory::iterator mi=orig_state.mem.begin(); mi!=orig_state.mem.end(); ++mi) {
-                            if (new_cell.must_alias(*mi, solver)) {
-                                ROSE_ASSERT(!(*mi).is_clobbered());
-                                ROSE_ASSERT(!(*mi).is_written());
-                                state.mem.push_back(*mi);
-                                return unsignedExtend<32, Len>((*mi).get_data());
+                 *  Reads from the specified memory state and updates the original state if appropriate.  Reading from a memory
+                 *  state might actually create new memory cells in the original state.  The @dflt is the byte value to save to
+                 *  the original state when appropriate. */
+                ValueType<8> mem_read_byte(State<ValueType> &state, const ValueType<32> &addr, const ValueType<8> &dflt) const {
+                    typedef typename State<ValueType>::Memory::CellList CellList;
+                    bool found_must_alias;
+                    CellList cells = state.memory.read_byte(addr, &found_must_alias, solver);
+                    if (!found_must_alias) {
+                        if (&state!=&orig_state) {
+                            /* We didn't find the exact (must-alias) memory cell in the specified state. See if we can find a
+                             * value in the initial state, creating it there if necessary. */
+                            CellList cells_init = orig_state.memory.read_byte(addr, &found_must_alias, solver);
+                            cells.insert(cells.end(), cells_init.begin(), cells_init.end());
+                            if (!found_must_alias) {
+                                MemoryCell<ValueType> &new_cell = orig_state.memory.write_byte(addr, dflt, solver);
+                                new_cell.clear_written();
+                                cells.push_back(new_cell);
                             }
                         }
-
-                        orig_state.mem.push_back(new_cell);
                     }
-
-                    /* Create the cell in the current state. */
-                    state.mem.push_back(new_cell);
-                    return unsignedExtend<32,Len>(new_cell.get_data()); // no defining instruction
+                    return state.memory.value_from_cells(addr, cells);
                 }
 
-                /** See memory_reference_type(). */
-                enum MemRefType { MRT_STACK_PTR, MRT_FRAME_PTR, MRT_OTHER_PTR };
+                /** Reads a multi-byte value from memory.
+                 *
+                 *  Reads a multi-byte, little-endian value from memory and updates the original state if appropriate.  Reading
+                 *  from a memory state might actually create new memory cells in the original state.  The @dflt is the value
+                 *  to save to the original state when appropriate. */
+                template <size_t nBits>
+                ValueType<nBits> mem_read(State<ValueType> &state, const ValueType<32> &addr,
+                                          const ValueType<nBits> *dflt=NULL) const {
+                    assert(8==nBits || 16==nBits || 32==nBits);
+                    typedef typename State<ValueType>::Memory::CellList CellList;
+                    ValueType<nBits> retval, defs;
 
-                /** Determines if the specified address is related to the current stack or frame pointer. This is used by
-                 *  mem_write() when we're operating under the assumption that memory written via stack pointer is different
-                 *  than memory written via frame pointer, and that memory written by either pointer is different than all
-                 *  other memory. */
-                MemRefType memory_reference_type(const State<ValueType> &state, const ValueType<32> &addr) const {
-#if 0 /*FIXME: not implemented yet [RPM 2010-05-24]*/
-                    if (addr.name) {
-                        if (addr.name==state.gpr[x86_gpr_sp].name) return MRT_STACK_PTR;
-                        if (addr.name==state.gpr[x86_gpr_bp].name) return MRT_FRAME_PTR;
-                        return MRT_OTHER_PTR;
-                    }
-                    if (addr==state.gpr[x86_gpr_sp]) return MRT_STACK_PTR;
-                    if (addr==state.gpr[x86_gpr_bp]) return MRT_FRAME_PTR;
-#endif
-                    return MRT_OTHER_PTR;
-                }
+                    for (size_t bytenum=0; bytenum<nBits/8; ++bytenum) { // little endian
+                        // read byte
+                        ValueType<8> dflt_byte = dflt ? state.memory.extract_byte(*dflt, bytenum) : ValueType<8>();
+                        ValueType<8> byte = mem_read_byte(state, state.memory.add(addr, bytenum), dflt_byte);
+                        defs.defined_by(NULL, byte.get_defining_instructions());
 
-                /** Writes a value to memory. If the address written to is an alias for other addresses then the other
-                 *  addresses will be clobbered. Subsequent reads from clobbered addresses will return new values. See also,
-                 *  mem_read(). */
-                template <size_t Len> void mem_write(State<ValueType> &state, const ValueType<32> &addr,
-                                                     const ValueType<Len> &data) {
-                    ROSE_ASSERT(&state!=&orig_state);
-                    MemoryCell<ValueType> new_cell(addr, unsignedExtend<Len, 32>(data), Len/8, cur_insn);
-                    new_cell.set_written();
-                    bool saved = false; /* has new_cell been saved into memory? */
-
-                    /* Is new memory reference through the stack pointer or frame pointer? */
-                    MemRefType new_mrt = memory_reference_type(state, addr);
-
-                    /* Overwrite and/or clobber existing memory locations. */
-                    for (typename Memory::iterator mi=state.mem.begin(); mi!=state.mem.end(); ++mi) {
-                        if (new_cell.must_alias(*mi, solver)) {
-                            *mi = new_cell;
-                            saved = true;
-                        } else if (p_discard_popped_memory && new_mrt!=memory_reference_type(state, (*mi).get_address())) {
-                            /* Assume that memory referenced through the stack pointer does not alias that which is referenced
-                             * through the frame pointer, and neither of them alias memory that is referenced other ways. */
-                        } else if (new_cell.may_alias(*mi, solver)) {
-                            (*mi).set_clobbered();
+                        // extend byte
+                        ValueType<nBits> word;
+                        if (byte.is_known()) {
+                            word = ValueType<nBits>(byte.known_value());
+                        } else if (nBits==8) {
+                            word = ValueType<nBits>(byte.get_expression());
                         } else {
-                            /* memory cell *mi is not aliased to cell being written */
+                            word = ValueType<nBits>(InternalNode::create(nBits, InsnSemanticsExpr::OP_UEXTEND,
+                                                                         LeafNode::create_integer(32, nBits),
+                                                                         byte.get_expression()));
+                        }
+
+                        // left shift
+                        if (0!=bytenum) {
+                            if (word.is_known()) {
+                                word = ValueType<nBits>(word.known_value() << (bytenum*8));
+                            } else {
+                                word = ValueType<nBits>(InternalNode::create(nBits, InsnSemanticsExpr::OP_SHR0,
+                                                                             LeafNode::create_integer(32, bytenum*8),
+                                                                             word.get_expression()));
+                            }
+                        }
+
+                        // bit-wise OR into the return value
+                        if (0==bytenum) {
+                            retval = word;
+                        } else if (retval.is_known() && word.is_known()) {
+                            retval = ValueType<nBits>(retval.known_value() | word.known_value());
+                        } else {
+                            retval = ValueType<nBits>(InternalNode::create(nBits, InsnSemanticsExpr::OP_BV_OR,
+                                                                           retval.get_expression(), word.get_expression()));
                         }
                     }
-                    if (!saved)
-                        state.mem.push_back(new_cell);
+                    retval.defined_by(NULL, defs.get_defining_instructions());
+                    return retval;
+                }
+
+                /** Writes a value to memory. */
+                template <size_t Len>
+                void mem_write(State<ValueType> &state, const ValueType<32> &addr, const ValueType<Len> &data) {
+                    ROSE_ASSERT(&state!=&orig_state);
+                    typedef typename State<ValueType>::Memory::CellList CellList;
+                    state.memory.write(addr, data, solver);
                 }
 
 
@@ -618,9 +827,10 @@ namespace BinaryAnalysis {              // documented elsewhere
 
                 /** See NullSemantics::Policy::startInstruction() */
                 void startInstruction(SgAsmInstruction *insn) {
-                    if (!cur_state.ip.is_known()) {
-                        cur_state.ip = ValueType<32>(insn->get_address()); // semantics user should have probably initialized EIP
-                    } else if (cur_state.ip.known_value()!=insn->get_address()) {
+                    if (!cur_state.registers.ip.is_known()) {
+                        // semantics user should have probably initialized EIP
+                        cur_state.registers.ip = ValueType<32>(insn->get_address());
+                    } else if (cur_state.registers.ip.known_value()!=insn->get_address()) {
                         fprintf(stderr, "SymbolicSemantics::Policy::startInstruction: invalid EIP value for current instruction\n\
     startInstruction() is being called for an instruction with a concrete\n\
     address stored in the SgAsmx86Instruction object, but the current value of\n\
@@ -634,7 +844,7 @@ namespace BinaryAnalysis {              // documented elsewhere
     instruction.  x86 \"REP\" instructions might be the culprit: ROSE\n\
     instruction semantics treat them as a tiny loop, updating the policy's EIP\n\
     depending on whether the loop is to be taken again, or not.\n");
-                        assert(cur_state.ip.known_value()==insn->get_address()); // redundant, used for error mesg
+                        assert(cur_state.registers.ip.known_value()==insn->get_address()); // redundant, used for error mesg
                         abort(); // we must fail even when optimized
                     }
                     if (0==ninsns++)
@@ -810,7 +1020,7 @@ namespace BinaryAnalysis {              // documented elsewhere
                         TreeNodePtr assertion = InternalNode::create(1, InsnSemanticsExpr::OP_EQ,
                                                                      sel.get_expression(),
                                                                      LeafNode::create_integer(1, 1));
-                        bool can_be_true = solver->satisfiable(assertion);
+                        bool can_be_true = SMTSolver::SAT_NO != solver->satisfiable(assertion);
                         if (!can_be_true) {
                             ValueType<Len> retval = ifFalse;
                             return retval.defined_by(cur_insn, sel.get_defining_instructions());
@@ -819,7 +1029,7 @@ namespace BinaryAnalysis {              // documented elsewhere
                         /* If the selection expression cannot be false, then return ifTrue */
                         assertion = InternalNode::create(1, InsnSemanticsExpr::OP_EQ,
                                                          sel.get_expression(), LeafNode::create_integer(1, 0));
-                        bool can_be_false = solver->satisfiable(assertion);
+                        bool can_be_false = SMTSolver::SAT_NO != solver->satisfiable(assertion);
                         if (!can_be_false) {
                             ValueType<Len> retval = ifTrue;
                             return retval.defined_by(cur_insn, sel.get_defining_instructions());
@@ -1052,25 +1262,25 @@ namespace BinaryAnalysis {              // documented elsewhere
                             // granularity.
                             if (reg.get_major()!=x86_regclass_flags)
                                 throw Exception("bit access only valid for FLAGS/EFLAGS register");
-                            if (reg.get_minor()!=0 || reg.get_offset()>=cur_state.n_flags)
+                            if (reg.get_minor()!=0 || reg.get_offset()>=cur_state.registers.n_flags)
                                 throw Exception("register not implemented in semantic policy");
                             if (reg.get_nbits()!=1)
                                 throw Exception("semantic policy supports only single-bit flags");
-                            return unsignedExtend<1, Len>(cur_state.flag[reg.get_offset()]);
+                            return unsignedExtend<1, Len>(cur_state.registers.flag[reg.get_offset()]);
 
                         case 8:
                             // Only general-purpose registers can be accessed at a byte granularity, and we can access only the
                             // low-order byte or the next higher byte.  For instance, "al" and "ah" registers.
                             if (reg.get_major()!=x86_regclass_gpr)
                                 throw Exception("byte access only valid for general purpose registers");
-                            if (reg.get_minor()>=cur_state.n_gprs)
+                            if (reg.get_minor()>=cur_state.registers.n_gprs)
                                 throw Exception("register not implemented in semantic policy");
                             assert(reg.get_nbits()==8); // we had better be asking for a one-byte register (e.g., "ah", not "ax")
                             switch (reg.get_offset()) {
                                 case 0:
-                                    return extract<0, Len>(cur_state.gpr[reg.get_minor()]);
+                                    return extract<0, Len>(cur_state.registers.gpr[reg.get_minor()]);
                                 case 8:
-                                    return extract<8, 8+Len>(cur_state.gpr[reg.get_minor()]);
+                                    return extract<8, 8+Len>(cur_state.registers.gpr[reg.get_minor()]);
                                 default:
                                     throw Exception("invalid one-byte access offset");
                             }
@@ -1082,32 +1292,32 @@ namespace BinaryAnalysis {              // documented elsewhere
                                 throw Exception("policy does not support non-zero offsets for word granularity register access");
                             switch (reg.get_major()) {
                                 case x86_regclass_segment:
-                                    if (reg.get_minor()>=cur_state.n_segregs)
+                                    if (reg.get_minor()>=cur_state.registers.n_segregs)
                                         throw Exception("register not implemented in semantic policy");
-                                    return unsignedExtend<16, Len>(cur_state.segreg[reg.get_minor()]);
+                                    return unsignedExtend<16, Len>(cur_state.registers.segreg[reg.get_minor()]);
                                 case x86_regclass_gpr:
-                                    if (reg.get_minor()>=cur_state.n_gprs)
+                                    if (reg.get_minor()>=cur_state.registers.n_gprs)
                                         throw Exception("register not implemented in semantic policy");
-                                    return extract<0, Len>(cur_state.gpr[reg.get_minor()]);
+                                    return extract<0, Len>(cur_state.registers.gpr[reg.get_minor()]);
                                 case x86_regclass_flags:
-                                    if (reg.get_minor()!=0 || cur_state.n_flags<16)
+                                    if (reg.get_minor()!=0 || cur_state.registers.n_flags<16)
                                         throw Exception("register not implemented in semantic policy");
-                                    return unsignedExtend<16, Len>(concat(cur_state.flag[0],
-                                                                   concat(cur_state.flag[1],
-                                                                   concat(cur_state.flag[2],
-                                                                   concat(cur_state.flag[3],
-                                                                   concat(cur_state.flag[4],
-                                                                   concat(cur_state.flag[5],
-                                                                   concat(cur_state.flag[6],
-                                                                   concat(cur_state.flag[7],
-                                                                   concat(cur_state.flag[8],
-                                                                   concat(cur_state.flag[9],
-                                                                   concat(cur_state.flag[10],
-                                                                   concat(cur_state.flag[11],
-                                                                   concat(cur_state.flag[12],
-                                                                   concat(cur_state.flag[13],
-                                                                   concat(cur_state.flag[14],
-                                                                          cur_state.flag[15]))))))))))))))));
+                                    return unsignedExtend<16, Len>(concat(cur_state.registers.flag[0],
+                                                                   concat(cur_state.registers.flag[1],
+                                                                   concat(cur_state.registers.flag[2],
+                                                                   concat(cur_state.registers.flag[3],
+                                                                   concat(cur_state.registers.flag[4],
+                                                                   concat(cur_state.registers.flag[5],
+                                                                   concat(cur_state.registers.flag[6],
+                                                                   concat(cur_state.registers.flag[7],
+                                                                   concat(cur_state.registers.flag[8],
+                                                                   concat(cur_state.registers.flag[9],
+                                                                   concat(cur_state.registers.flag[10],
+                                                                   concat(cur_state.registers.flag[11],
+                                                                   concat(cur_state.registers.flag[12],
+                                                                   concat(cur_state.registers.flag[13],
+                                                                   concat(cur_state.registers.flag[14],
+                                                                          cur_state.registers.flag[15]))))))))))))))));
                                 default:
                                     throw Exception("word access not valid for this register type");
                             }
@@ -1118,39 +1328,39 @@ namespace BinaryAnalysis {              // documented elsewhere
                                                 " register access");
                             switch (reg.get_major()) {
                                 case x86_regclass_gpr:
-                                    if (reg.get_minor()>=cur_state.n_gprs)
+                                    if (reg.get_minor()>=cur_state.registers.n_gprs)
                                         throw Exception("register not implemented in semantic policy");
-                                    return unsignedExtend<32, Len>(cur_state.gpr[reg.get_minor()]);
+                                    return unsignedExtend<32, Len>(cur_state.registers.gpr[reg.get_minor()]);
                                 case x86_regclass_ip:
                                     if (reg.get_minor()!=0)
                                         throw Exception("register not implemented in semantic policy");
-                                    return unsignedExtend<32, Len>(cur_state.ip);
+                                    return unsignedExtend<32, Len>(cur_state.registers.ip);
                                 case x86_regclass_segment:
-                                    if (reg.get_minor()>=cur_state.n_segregs || reg.get_nbits()!=16)
+                                    if (reg.get_minor()>=cur_state.registers.n_segregs || reg.get_nbits()!=16)
                                         throw Exception("register not implemented in semantic policy");
-                                    return unsignedExtend<16, Len>(cur_state.segreg[reg.get_minor()]);
+                                    return unsignedExtend<16, Len>(cur_state.registers.segreg[reg.get_minor()]);
                                 case x86_regclass_flags: {
-                                    if (reg.get_minor()!=0 || cur_state.n_flags<32)
+                                    if (reg.get_minor()!=0 || cur_state.registers.n_flags<32)
                                         throw Exception("register not implemented in semantic policy");
                                     if (reg.get_nbits()!=32)
                                         throw Exception("register is not 32 bits");
                                     return unsignedExtend<32, Len>(concat(readRegister<16>("flags"), // no-op sign extension
-                                                                   concat(cur_state.flag[16],
-                                                                   concat(cur_state.flag[17],
-                                                                   concat(cur_state.flag[18],
-                                                                   concat(cur_state.flag[19],
-                                                                   concat(cur_state.flag[20],
-                                                                   concat(cur_state.flag[21],
-                                                                   concat(cur_state.flag[22],
-                                                                   concat(cur_state.flag[23],
-                                                                   concat(cur_state.flag[24],
-                                                                   concat(cur_state.flag[25],
-                                                                   concat(cur_state.flag[26],
-                                                                   concat(cur_state.flag[27],
-                                                                   concat(cur_state.flag[28],
-                                                                   concat(cur_state.flag[29],
-                                                                   concat(cur_state.flag[30],
-                                                                          cur_state.flag[31])))))))))))))))));
+                                                                   concat(cur_state.registers.flag[16],
+                                                                   concat(cur_state.registers.flag[17],
+                                                                   concat(cur_state.registers.flag[18],
+                                                                   concat(cur_state.registers.flag[19],
+                                                                   concat(cur_state.registers.flag[20],
+                                                                   concat(cur_state.registers.flag[21],
+                                                                   concat(cur_state.registers.flag[22],
+                                                                   concat(cur_state.registers.flag[23],
+                                                                   concat(cur_state.registers.flag[24],
+                                                                   concat(cur_state.registers.flag[25],
+                                                                   concat(cur_state.registers.flag[26],
+                                                                   concat(cur_state.registers.flag[27],
+                                                                   concat(cur_state.registers.flag[28],
+                                                                   concat(cur_state.registers.flag[29],
+                                                                   concat(cur_state.registers.flag[30],
+                                                                          cur_state.registers.flag[31])))))))))))))))));
                                 }
                                 default:
                                     throw Exception("double word access not valid for this register type");
@@ -1170,33 +1380,34 @@ namespace BinaryAnalysis {              // documented elsewhere
                             // granularity.
                             if (reg.get_major()!=x86_regclass_flags)
                                 throw Exception("bit access only valid for FLAGS/EFLAGS register");
-                            if (reg.get_minor()!=0 || reg.get_offset()>=cur_state.n_flags)
+                            if (reg.get_minor()!=0 || reg.get_offset()>=cur_state.registers.n_flags)
                                 throw Exception("register not implemented in semantic policy");
                             if (reg.get_nbits()!=1)
                                 throw Exception("semantic policy supports only single-bit flags");
-                            cur_state.flag[reg.get_offset()] = unsignedExtend<Len, 1>(value);
-                            cur_state.flag[reg.get_offset()].defined_by(cur_insn);
+                            cur_state.registers.flag[reg.get_offset()] = unsignedExtend<Len, 1>(value);
+                            cur_state.registers.flag[reg.get_offset()].defined_by(cur_insn);
                             break;
 
                         case 8:
                             // Only general purpose registers can be accessed at byte granularity, and only for offsets 0 and 8.
                             if (reg.get_major()!=x86_regclass_gpr)
                                 throw Exception("byte access only valid for general purpose registers.");
-                            if (reg.get_minor()>=cur_state.n_gprs)
+                            if (reg.get_minor()>=cur_state.registers.n_gprs)
                                 throw Exception("register not implemented in semantic policy");
                             assert(reg.get_nbits()==8); // we had better be asking for a one-byte register (e.g., "ah", not "ax")
                             switch (reg.get_offset()) {
                                 case 0:
-                                    cur_state.gpr[reg.get_minor()] =                                    // no-op extend
-                                        concat(signExtend<Len, 8>(value), extract<8, 32>(cur_state.gpr[reg.get_minor()]));
-                                    cur_state.gpr[reg.get_minor()].defined_by(cur_insn);
+                                    cur_state.registers.gpr[reg.get_minor()] =                                    // no-op extend
+                                        concat(signExtend<Len, 8>(value),
+                                               extract<8, 32>(cur_state.registers.gpr[reg.get_minor()]));
+                                    cur_state.registers.gpr[reg.get_minor()].defined_by(cur_insn);
                                     break;
                                 case 8:
-                                    cur_state.gpr[reg.get_minor()] =
-                                        concat(extract<0, 8>(cur_state.gpr[reg.get_minor()]),
+                                    cur_state.registers.gpr[reg.get_minor()] =
+                                        concat(extract<0, 8>(cur_state.registers.gpr[reg.get_minor()]),
                                                concat(unsignedExtend<Len, 8>(value),
-                                                      extract<16, 32>(cur_state.gpr[reg.get_minor()])));
-                                    cur_state.gpr[reg.get_minor()].defined_by(cur_insn);
+                                                      extract<16, 32>(cur_state.registers.gpr[reg.get_minor()])));
+                                    cur_state.registers.gpr[reg.get_minor()].defined_by(cur_insn);
                                     break;
                                 default:
                                     throw Exception("invalid byte access offset");
@@ -1210,38 +1421,54 @@ namespace BinaryAnalysis {              // documented elsewhere
                                 throw Exception("policy does not support non-zero offsets for word granularity register access");
                             switch (reg.get_major()) {
                                 case x86_regclass_segment:
-                                    if (reg.get_minor()>=cur_state.n_segregs)
+                                    if (reg.get_minor()>=cur_state.registers.n_segregs)
                                         throw Exception("register not implemented in semantic policy");
-                                    cur_state.segreg[reg.get_minor()] = unsignedExtend<Len, 16>(value);
-                                    cur_state.segreg[reg.get_minor()].defined_by(cur_insn);
+                                    cur_state.registers.segreg[reg.get_minor()] = unsignedExtend<Len, 16>(value);
+                                    cur_state.registers.segreg[reg.get_minor()].defined_by(cur_insn);
                                     break;
                                 case x86_regclass_gpr:
-                                    if (reg.get_minor()>=cur_state.n_gprs)
+                                    if (reg.get_minor()>=cur_state.registers.n_gprs)
                                         throw Exception("register not implemented in semantic policy");
-                                    cur_state.gpr[reg.get_minor()] =
+                                    cur_state.registers.gpr[reg.get_minor()] =
                                         concat(unsignedExtend<Len, 16>(value),
-                                               extract<16, 32>(cur_state.gpr[reg.get_minor()]));
-                                    cur_state.gpr[reg.get_minor()].defined_by(cur_insn);
+                                               extract<16, 32>(cur_state.registers.gpr[reg.get_minor()]));
+                                    cur_state.registers.gpr[reg.get_minor()].defined_by(cur_insn);
                                     break;
                                 case x86_regclass_flags:
-                                    if (reg.get_minor()!=0 || cur_state.n_flags<16)
+                                    if (reg.get_minor()!=0 || cur_state.registers.n_flags<16)
                                         throw Exception("register not implemented in semantic policy");
-                                    cur_state.flag[0]  = extract<0,  1 >(value); cur_state.flag[0].defined_by(cur_insn);
-                                    cur_state.flag[1]  = extract<1,  2 >(value); cur_state.flag[1].defined_by(cur_insn);
-                                    cur_state.flag[2]  = extract<2,  3 >(value); cur_state.flag[2].defined_by(cur_insn);
-                                    cur_state.flag[3]  = extract<3,  4 >(value); cur_state.flag[3].defined_by(cur_insn);
-                                    cur_state.flag[4]  = extract<4,  5 >(value); cur_state.flag[4].defined_by(cur_insn);
-                                    cur_state.flag[5]  = extract<5,  6 >(value); cur_state.flag[5].defined_by(cur_insn);
-                                    cur_state.flag[6]  = extract<6,  7 >(value); cur_state.flag[6].defined_by(cur_insn);
-                                    cur_state.flag[7]  = extract<7,  8 >(value); cur_state.flag[7].defined_by(cur_insn);
-                                    cur_state.flag[8]  = extract<8,  9 >(value); cur_state.flag[8].defined_by(cur_insn);
-                                    cur_state.flag[9]  = extract<9,  10>(value); cur_state.flag[9].defined_by(cur_insn);
-                                    cur_state.flag[10] = extract<10, 11>(value); cur_state.flag[10].defined_by(cur_insn);
-                                    cur_state.flag[11] = extract<11, 12>(value); cur_state.flag[11].defined_by(cur_insn);
-                                    cur_state.flag[12] = extract<12, 13>(value); cur_state.flag[12].defined_by(cur_insn);
-                                    cur_state.flag[13] = extract<13, 14>(value); cur_state.flag[13].defined_by(cur_insn);
-                                    cur_state.flag[14] = extract<14, 15>(value); cur_state.flag[14].defined_by(cur_insn);
-                                    cur_state.flag[15] = extract<15, 16>(value); cur_state.flag[15].defined_by(cur_insn);
+                                    cur_state.registers.flag[0]  = extract<0,  1 >(value);
+                                    cur_state.registers.flag[0].defined_by(cur_insn);
+                                    cur_state.registers.flag[1]  = extract<1,  2 >(value);
+                                    cur_state.registers.flag[1].defined_by(cur_insn);
+                                    cur_state.registers.flag[2]  = extract<2,  3 >(value);
+                                    cur_state.registers.flag[2].defined_by(cur_insn);
+                                    cur_state.registers.flag[3]  = extract<3,  4 >(value);
+                                    cur_state.registers.flag[3].defined_by(cur_insn);
+                                    cur_state.registers.flag[4]  = extract<4,  5 >(value);
+                                    cur_state.registers.flag[4].defined_by(cur_insn);
+                                    cur_state.registers.flag[5]  = extract<5,  6 >(value);
+                                    cur_state.registers.flag[5].defined_by(cur_insn);
+                                    cur_state.registers.flag[6]  = extract<6,  7 >(value);
+                                    cur_state.registers.flag[6].defined_by(cur_insn);
+                                    cur_state.registers.flag[7]  = extract<7,  8 >(value);
+                                    cur_state.registers.flag[7].defined_by(cur_insn);
+                                    cur_state.registers.flag[8]  = extract<8,  9 >(value);
+                                    cur_state.registers.flag[8].defined_by(cur_insn);
+                                    cur_state.registers.flag[9]  = extract<9,  10>(value);
+                                    cur_state.registers.flag[9].defined_by(cur_insn);
+                                    cur_state.registers.flag[10] = extract<10, 11>(value);
+                                    cur_state.registers.flag[10].defined_by(cur_insn);
+                                    cur_state.registers.flag[11] = extract<11, 12>(value);
+                                    cur_state.registers.flag[11].defined_by(cur_insn);
+                                    cur_state.registers.flag[12] = extract<12, 13>(value);
+                                    cur_state.registers.flag[12].defined_by(cur_insn);
+                                    cur_state.registers.flag[13] = extract<13, 14>(value);
+                                    cur_state.registers.flag[13].defined_by(cur_insn);
+                                    cur_state.registers.flag[14] = extract<14, 15>(value);
+                                    cur_state.registers.flag[14].defined_by(cur_insn);
+                                    cur_state.registers.flag[15] = extract<15, 16>(value);
+                                    cur_state.registers.flag[15].defined_by(cur_insn);
                                     break;
                                 default:
                                     throw Exception("word access not valid for this register type");
@@ -1254,39 +1481,55 @@ namespace BinaryAnalysis {              // documented elsewhere
                                                 " register access");
                             switch (reg.get_major()) {
                                 case x86_regclass_gpr:
-                                    if (reg.get_minor()>=cur_state.n_gprs)
+                                    if (reg.get_minor()>=cur_state.registers.n_gprs)
                                         throw Exception("register not implemented in semantic policy");
-                                    cur_state.gpr[reg.get_minor()] = signExtend<Len, 32>(value);
-                                    cur_state.gpr[reg.get_minor()].defined_by(cur_insn);
+                                    cur_state.registers.gpr[reg.get_minor()] = signExtend<Len, 32>(value);
+                                    cur_state.registers.gpr[reg.get_minor()].defined_by(cur_insn);
                                     break;
                                 case x86_regclass_ip:
                                     if (reg.get_minor()!=0)
                                         throw Exception("register not implemented in semantic policy");
-                                    cur_state.ip = unsignedExtend<Len, 32>(value);
-                                    cur_state.ip.defined_by(cur_insn);
+                                    cur_state.registers.ip = unsignedExtend<Len, 32>(value);
+                                    cur_state.registers.ip.defined_by(cur_insn);
                                     break;
                                 case x86_regclass_flags:
-                                    if (reg.get_minor()!=0 || cur_state.n_flags<32)
+                                    if (reg.get_minor()!=0 || cur_state.registers.n_flags<32)
                                         throw Exception("register not implemented in semantic policy");
                                     if (reg.get_nbits()!=32)
                                         throw Exception("register is not 32 bits");
                                     writeRegister<16>("flags", unsignedExtend<Len, 16>(value));
-                                    cur_state.flag[16] = extract<16, 17>(value); cur_state.flag[16].defined_by(cur_insn);
-                                    cur_state.flag[17] = extract<17, 18>(value); cur_state.flag[17].defined_by(cur_insn);
-                                    cur_state.flag[18] = extract<18, 19>(value); cur_state.flag[18].defined_by(cur_insn);
-                                    cur_state.flag[19] = extract<19, 20>(value); cur_state.flag[19].defined_by(cur_insn);
-                                    cur_state.flag[20] = extract<20, 21>(value); cur_state.flag[20].defined_by(cur_insn);
-                                    cur_state.flag[21] = extract<21, 22>(value); cur_state.flag[21].defined_by(cur_insn);
-                                    cur_state.flag[22] = extract<22, 23>(value); cur_state.flag[22].defined_by(cur_insn);
-                                    cur_state.flag[23] = extract<23, 24>(value); cur_state.flag[23].defined_by(cur_insn);
-                                    cur_state.flag[24] = extract<24, 25>(value); cur_state.flag[24].defined_by(cur_insn);
-                                    cur_state.flag[25] = extract<25, 26>(value); cur_state.flag[25].defined_by(cur_insn);
-                                    cur_state.flag[26] = extract<26, 27>(value); cur_state.flag[26].defined_by(cur_insn);
-                                    cur_state.flag[27] = extract<27, 28>(value); cur_state.flag[27].defined_by(cur_insn);
-                                    cur_state.flag[28] = extract<28, 29>(value); cur_state.flag[28].defined_by(cur_insn);
-                                    cur_state.flag[29] = extract<29, 30>(value); cur_state.flag[29].defined_by(cur_insn);
-                                    cur_state.flag[30] = extract<30, 31>(value); cur_state.flag[30].defined_by(cur_insn);
-                                    cur_state.flag[31] = extract<31, 32>(value); cur_state.flag[31].defined_by(cur_insn);
+                                    cur_state.registers.flag[16] = extract<16, 17>(value);
+                                    cur_state.registers.flag[16].defined_by(cur_insn);
+                                    cur_state.registers.flag[17] = extract<17, 18>(value);
+                                    cur_state.registers.flag[17].defined_by(cur_insn);
+                                    cur_state.registers.flag[18] = extract<18, 19>(value);
+                                    cur_state.registers.flag[18].defined_by(cur_insn);
+                                    cur_state.registers.flag[19] = extract<19, 20>(value);
+                                    cur_state.registers.flag[19].defined_by(cur_insn);
+                                    cur_state.registers.flag[20] = extract<20, 21>(value);
+                                    cur_state.registers.flag[20].defined_by(cur_insn);
+                                    cur_state.registers.flag[21] = extract<21, 22>(value);
+                                    cur_state.registers.flag[21].defined_by(cur_insn);
+                                    cur_state.registers.flag[22] = extract<22, 23>(value);
+                                    cur_state.registers.flag[22].defined_by(cur_insn);
+                                    cur_state.registers.flag[23] = extract<23, 24>(value);
+                                    cur_state.registers.flag[23].defined_by(cur_insn);
+                                    cur_state.registers.flag[24] = extract<24, 25>(value);
+                                    cur_state.registers.flag[24].defined_by(cur_insn);
+                                    cur_state.registers.flag[25] = extract<25, 26>(value);
+                                    cur_state.registers.flag[25].defined_by(cur_insn);
+                                    cur_state.registers.flag[26] = extract<26, 27>(value);
+                                    cur_state.registers.flag[26].defined_by(cur_insn);
+                                    cur_state.registers.flag[27] = extract<27, 28>(value);
+                                    cur_state.registers.flag[27].defined_by(cur_insn);
+                                    cur_state.registers.flag[28] = extract<28, 29>(value);
+                                    cur_state.registers.flag[28].defined_by(cur_insn);
+                                    cur_state.registers.flag[29] = extract<29, 30>(value);
+                                    cur_state.registers.flag[29].defined_by(cur_insn);
+                                    cur_state.registers.flag[30] = extract<30, 31>(value);
+                                    cur_state.registers.flag[30].defined_by(cur_insn);
+                                    cur_state.registers.flag[31] = extract<31, 32>(value);
+                                    cur_state.registers.flag[31].defined_by(cur_insn);
                                     break;
                                 default:
                                     throw Exception("double word access not valid for this register type");
@@ -1301,7 +1544,7 @@ namespace BinaryAnalysis {              // documented elsewhere
                 /** See NullSemantics::Policy::readMemory() */
                 template <size_t Len> ValueType<Len>
                 readMemory(X86SegmentRegister segreg, const ValueType<32> &addr, const ValueType<1> &cond) const {
-                    return mem_read<Len>(cur_state, addr, ValueType<Len>());
+                    return mem_read<Len>(cur_state, addr);
                 }
 
                 /** See NullSemantics::Policy::writeMemory() */

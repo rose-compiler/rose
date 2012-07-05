@@ -1,4 +1,5 @@
 Fortran_to_C
 ====
-This project is to add normalized pragma, i.e. !pragma, !directive,
-into Fortran support. 
+This translator will translate Fortran source code to C output.
+Execution command is:
+Fortran_to_C source.F -rose:C_output_language  

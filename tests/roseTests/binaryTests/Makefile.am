@@ -240,7 +240,7 @@ yicesSemanticsExe_SOURCES = semantics.C
 yicesSemanticsExe_CPPFLAGS = -DPOLICY_SELECTOR=4 -DSOLVER_SELECTOR=1
 yicesSemanticsExe_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 EXTRA_DIST += semantics.conf yicesSemanticsExe.ans
-if HAVE_YICES
+if ROSE_HAVE_YICES
 STATIC_TEST_TARGETS += yicesSemanticsExe.passed
 yicesSemanticsExe.passed: semantics.conf yicesSemanticsExe
 	@$(RTH_RUN) CMD=yicesSemanticsExe INPUT=i686-test1.O3.bin $< $@
@@ -255,7 +255,7 @@ yicesSemanticsLib_SOURCES = semantics.C
 yicesSemanticsLib_CPPFLAGS = -DPOLICY_SELECTOR=4 -DSOLVER_SELECTOR=2
 yicesSemanticsLib_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 EXTRA_DIST += semantics.conf yicesSemanticsLib.ans
-if HAVE_LIBYICES
+if ROSE_HAVE_LIBYICES
 STATIC_TEST_TARGETS += yicesSemanticsLib.passed
 yicesSemanticsLib.passed: semantics.conf yicesSemanticsLib
 	@$(RTH_RUN) CMD=yicesSemanticsLib INPUT=i686-test1.O3.bin $< $@

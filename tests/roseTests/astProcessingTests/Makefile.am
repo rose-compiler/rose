@@ -17,10 +17,10 @@ bin_PROGRAMS  = proFunSIG interproceduralCFG e0 e1 ff1 ff2 ff3 f1 f2 f3 f4 creat
 if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 bin_PROGRAMS += binaryPaths bPTP
 endif
-if HAVE_YICES
+if ROSE_HAVE_YICES
 bin_PROGRAMS += yicesParser
 endif
-#if HAVE_YICES
+#if ROSE_HAVE_YICES
 #bin_PROGRAMS += yicesParser
 #endif
 # Allow development using -lrose -ledg (simpler) or using 
@@ -137,7 +137,7 @@ sourcePTP_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
 #sourcePTP_LDFLAGS = -fopenmp -O3 
 
 
-if HAVE_YICES
+if ROSE_HAVE_YICES
 yicesParser_SOURCES = yicesParser.C
 yicesParser_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
 endif
@@ -227,7 +227,7 @@ smtParse: smtlibParser
 
 sourcePTPTest: sourcePTP
 	./sourcePTP $(srcdir)/test14.C
-if HAVE_YICES
+if ROSE_HAVE_YICES
 yicesParserTest: yicesParser
 	./yicesParser $(srcdir)/mfEx.C
 	./yicesParser $(srcdir)/mfEx2.C
@@ -261,7 +261,6 @@ yicesParserTest: yicesParser
 	./yicesParser $(srcdir)/tfif2.C
 	./yicesParser $(srcdir)/tfif3.C
 	./yicesParser $(srcdir)/tfif4.C
-	
 endif
 check-local:
 	@$(MAKE) testTraversals
@@ -281,7 +280,7 @@ check-local:
 	@$(MAKE) f2Check
 	@$(MAKE) f3Check
 	@$(MAKE) f4Check
-if HAVE_YICES
+if ROSE_HAVE_YICES
 	@$(MAKE) yicesParserTest
 endif
 #endif

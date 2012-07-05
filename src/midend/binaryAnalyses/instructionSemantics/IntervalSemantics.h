@@ -128,6 +128,8 @@ namespace BinaryAnalysis {              // documented elsewhere
                 /** Construct a ValueType from a rangemap. Note that this does not truncate the rangemap to contain only values
                  *  that would be possible for the ValueType size--see unsignedExtend() for that. */
                 explicit ValueType(const Intervals &intervals) {
+                    assert(!intervals.empty());
+                    assert((intervals.max() <= IntegerOps::GenMask<uint64_t, nBits>::value));
                     p_intervals = intervals;
                 }
 
@@ -349,7 +351,7 @@ namespace BinaryAnalysis {              // documented elsewhere
 
                 /** See NullSemantics::Policy::startInstruction() */
                 void startInstruction(SgAsmInstruction *insn) {
-                    cur_state.ip = ValueType<32>(insn->get_address());
+                    cur_state.registers.ip = ValueType<32>(insn->get_address());
                     if (0==ninsns++)
                         orig_state = cur_state;
                     cur_insn = insn;
@@ -459,7 +461,11 @@ namespace BinaryAnalysis {              // documented elsewhere
                 /** See NullSemantics::Policy::equalToZero() */
                 template<size_t nBits>
                 ValueType<1> equalToZero(const ValueType<nBits> &a) const {
-                    return (a.is_known() && 0==a.known_value()) ? true_() : undefined_();
+                    if (a.is_known())
+                        return 0==a.known_value() ? true_() : false_();
+                    if (!a.get_intervals().contains(Interval(0)))
+                        return false_();
+                    return undefined_();
                 }
 
                 /** See NullSemantics::Policy::invert() */
@@ -599,7 +605,17 @@ namespace BinaryAnalysis {              // documented elsewhere
                         const Interval &iv = ai->first;
                         uint64_t lo = -iv.last() & mask;
                         uint64_t hi = -iv.first() & mask;
-                        result.insert(Interval::inin(lo, hi));
+                        if (0==hi) {
+                            assert(0==iv.first());
+                            result.insert(Interval(0));
+                            if (0!=lo) {
+                                assert(0!=iv.last());
+                                result.insert(Interval::inin(lo, IntegerOps::GenMask<uint64_t, nBits>::value));
+                            }
+                        } else {
+                            assert(lo<=hi);
+                            result.insert(Interval::inin(lo, hi));
+                        }
                     }
                     return ValueType<nBits>(result);
                 }
@@ -607,6 +623,10 @@ namespace BinaryAnalysis {              // documented elsewhere
                 /** See NullSemantics::Policy::or_() */
                 template<size_t nBits>
                 ValueType<nBits> or_(const ValueType<nBits> &a, const ValueType<nBits> &b) const {
+                    if (a.is_known() && b.is_known()) {
+                        uint64_t result = a.known_value() | b.known_value();
+                        return ValueType<nBits>(result);
+                    }
                     uint64_t abits = a.possible_bits(), bbits = b.possible_bits();
                     uint64_t rbits = abits | bbits; // bits that could be set in the result
                     return ValueType<nBits>::from_bits(rbits);
@@ -615,88 +635,212 @@ namespace BinaryAnalysis {              // documented elsewhere
                 /** See NullSemantics::Policy::rotateLeft() */
                 template<size_t nBitsA, size_t nBitsB>
                 ValueType<nBitsA> rotateLeft(const ValueType<nBitsA> &a, const ValueType<nBitsB> &b) const {
-                    return ValueType<nBitsA>(); // FIXME
+                    if (a.is_known() && b.is_known()) {
+                        uint64_t bn = b.known_value();
+                        uint64_t result = ((a.known_value() << bn) & IntegerOps::GenMask<uint64_t, nBitsA>::value) |
+                                          ((a.known_value() >> (nBitsA-bn)) & IntegerOps::genMask<uint64_t>(bn));
+                        return ValueType<nBitsA>(result);
+                    }
+                    uint64_t abits = a.possible_bits();
+                    uint64_t rbits = 0, done = IntegerOps::GenMask<uint64_t, nBitsA>::value;
+                    for (uint64_t i=0; i<(uint64_t)nBitsA && rbits!=done; ++i) {
+                        if (b.get_intervals().contains(Interval(i))) {
+                            rbits |= ((abits << i) & IntegerOps::GenMask<uint64_t, nBitsA>::value) |
+                                     ((abits >> (nBitsA-i)) & IntegerOps::genMask<uint64_t>(i));
+                        }
+                    }
+                    return ValueType<nBitsA>::from_bits(rbits);
                 }
 
                 /** See NullSemantics::Policy::rotateRight() */
                 template<size_t nBitsA, size_t nBitsB>
                 ValueType<nBitsA> rotateRight(const ValueType<nBitsA> &a, const ValueType<nBitsB> &b) const {
-                    return ValueType<nBitsA>(); // FIXME
+                    if (a.is_known() && b.is_known()) {
+                        uint64_t bn = b.known_value();
+                        uint64_t result = ((a.known_value() >> bn) & IntegerOps::genMask<uint64_t>(nBitsA-bn)) |
+                                          ((a.known_value() << (nBitsA-bn)) & IntegerOps::GenMask<uint64_t, nBitsA>::value);
+                        return ValueType<nBitsA>(result);
+                    }
+                    uint64_t abits = a.possible_bits();
+                    uint64_t rbits = 0, done = IntegerOps::GenMask<uint64_t, nBitsA>::value;
+                    for (uint64_t i=0; i<(uint64_t)nBitsA && rbits!=done; ++i) {
+                        if (b.get_intervals().contains(Interval(i))) {
+                            rbits |= ((abits >> i) & IntegerOps::genMask<uint64_t>(nBitsA-i)) |
+                                     ((abits << (nBitsA-i)) & IntegerOps::GenMask<uint64_t, nBitsA>::value);
+                        }
+                    }
+                    return ValueType<nBitsA>::from_bits(rbits);
+
                 }
 
                 /** See NullSemantics::Policy::shiftLeft() */
                 template<size_t nBitsA, size_t nBitsB>
                 ValueType<nBitsA> shiftLeft(const ValueType<nBitsA> &a, const ValueType<nBitsB> &b) const {
-                    return ValueType<nBitsA>(); // FIXME
+                    if (a.is_known() && b.is_known()) {
+                        uint64_t result = b.known_value()<nBitsA ? a.known_value() << b.known_value() : (uint64_t)0;
+                        return ValueType<nBitsA>(result);
+                    }
+                    uint64_t abits = a.possible_bits();
+                    uint64_t rbits = 0, done = IntegerOps::GenMask<uint64_t, nBitsA>::value;
+                    for (uint64_t i=0; i<(uint64_t)nBitsA && rbits!=done; ++i) {
+                        if (b.get_intervals().contains(Interval(i)))
+                            rbits |= (abits << i) & IntegerOps::GenMask<uint64_t, nBitsA>::value;
+                    }
+                    return ValueType<nBitsA>::from_bits(rbits);
                 }
 
                 /** See NullSemantics::Policy::shiftRight() */
                 template<size_t nBitsA, size_t nBitsB>
                 ValueType<nBitsA> shiftRight(const ValueType<nBitsA> &a, const ValueType<nBitsB> &b) const {
-                    return ValueType<nBitsA>(); // FIXME
+                    if (b.is_known()) {
+                        uint64_t bn = b.known_value();
+                        if (bn >= nBitsA)
+                            return ValueType<nBitsA>(0);
+                        if (a.is_known())
+                            return ValueType<nBitsA>(a.known_value() >> bn);
+                        Intervals result;
+                        for (Intervals::const_iterator ai=a.get_intervals().begin(); ai!=a.get_intervals().end(); ++ai) {
+                            uint64_t lo = ai->first.first() >> bn;
+                            uint64_t hi = ai->first.last() >> bn;
+                            result.insert(Interval::inin(lo, hi));
+                        }
+                        return ValueType<nBitsA>(result);
+                    }
+                    Intervals result;
+                    for (Intervals::const_iterator ai=a.get_intervals().begin(); ai!=a.get_intervals().end(); ++ai) {
+                        for (uint64_t i=0; i<(uint64_t)nBitsA; ++i) {
+                            if (b.get_intervals().contains(Interval(i))) {
+                                uint64_t lo = ai->first.first() >> i;
+                                uint64_t hi = ai->first.first() >> i;
+                                result.insert(Interval::inin(lo, hi));
+                            }
+                        }
+                    }
+                    return ValueType<nBitsA>(result);
                 }
 
                 /** See NullSemantics::Policy::shiftRightArithmetic() */
                 template<size_t nBitsA, size_t nBitsB>
                 ValueType<nBitsA> shiftRightArithmetic(const ValueType<nBitsA> &a, const ValueType<nBitsB> &b) const {
-                    return ValueType<nBitsA>(); // FIXME
+                    if (a.is_known() && b.is_known()) {
+                        uint64_t bn = b.known_value();
+                        uint64_t result = a.known_value() >> bn;
+                        if (IntegerOps::signBit<nBitsA>(a.is_known()))
+                            result |= IntegerOps::GenMask<uint64_t, nBitsA>::value ^ IntegerOps::genMask<uint64_t>(nBitsA-bn);
+                        return ValueType<nBitsA>(result);
+                    }
+                    uint64_t abits = a.possible_bits();
+                    uint64_t rbits = 0, done = IntegerOps::GenMask<uint64_t, nBitsA>::value;
+                    for (uint64_t i=0; i<(uint64_t)nBitsA && rbits!=done; ++i) {
+                        if (b.get_intervals().contains(Interval(i))) {
+                            rbits |= ((abits >> i) & IntegerOps::genMask<uint64_t>(nBitsA-i)) |
+                                     (IntegerOps::signBit<nBitsA>(abits) ?
+                                      done ^ IntegerOps::genMask<uint64_t>(nBitsA-i) : (uint64_t)0);
+                        }
+                    }
+                    return ValueType<nBitsA>::from_bits(rbits);
                 }
 
                 /** See NullSemantics::Policy::signExtend() */
                 template<size_t From, size_t To>
                 ValueType<To> signExtend(const ValueType<From> &a) {
-                    uint64_t signbit = IntegerOps::SHL1<uint64_t, To-1>::value;
-                    if (To>From && a.get_intervals().contains(Interval(signbit))) {
-                        // sign bit could be set, so the new bits could also be set
-                        uint64_t lo = IntegerOps::SHL1<uint64_t, From>::value;
-                        uint64_t hi = IntegerOps::GenMask<uint64_t, To>::value;
-                        Intervals retval = a.get_intervals();
-                        retval.insert(Interval::inin(lo, hi));
-                        return ValueType<To>(retval);
+                    uint64_t old_signbit = IntegerOps::SHL1<uint64_t, From-1>::value;
+                    uint64_t new_signbit = IntegerOps::SHL1<uint64_t, To-1>::value;
+                    Intervals result;
+                    for (Intervals::const_iterator ai=a.get_intervals().begin(); ai!=a.get_intervals().end(); ++ai) {
+                        uint64_t lo = IntegerOps::signExtend<From, To>(ai->first.first());
+                        uint64_t hi = IntegerOps::signExtend<From, To>(ai->first.last());
+                        if (0==(lo & new_signbit) && 0!=(hi & new_signbit)) {
+                            result.insert(Interval::inin(lo, IntegerOps::GenMask<uint64_t, From-1>::value));
+                            result.insert(Interval::inin(old_signbit, hi));
+                        } else {
+                            result.insert(Interval::inin(lo, hi));
+                        }
                     }
-                    return unsignedExtend<From, To>(a);
+                    return ValueType<To>(result);
                 }
 
                 /** See NullSemantics::Policy::signedDivide() */
                 template<size_t nBitsA, size_t nBitsB>
                 ValueType<nBitsA> signedDivide(const ValueType<nBitsA> &a, const ValueType<nBitsB> &b) const {
-                    return ValueType<nBitsA>(); // FIXME
+                    if (!IntegerOps::signBit<nBitsA>(a.possible_bits()) && !IntegerOps::signBit<nBitsB>(b.possible_bits()))
+                        return unsignedDivide(a, b);
+                    return ValueType<nBitsA>(); // FIXME, we can do better
                 }
 
                 /** See NullSemantics::Policy::signedModulo() */
                 template<size_t nBitsA, size_t nBitsB>
                 ValueType<nBitsB> signedModulo(const ValueType<nBitsA> &a, const ValueType<nBitsB> &b) const {
-                    return ValueType<nBitsB>(); // FIXME
+                    if (!IntegerOps::signBit<nBitsA>(a.possible_bits()) && !IntegerOps::signBit<nBitsB>(b.possible_bits()))
+                        return unsignedModulo(a, b);
+                    return ValueType<nBitsB>(); // FIXME, we can do better
                 }
 
                 /** See NullSemantics::Policy::signedMultiply() */
                 template<size_t nBitsA, size_t nBitsB>
                 ValueType<nBitsA+nBitsB> signedMultiply(const ValueType<nBitsA> &a, const ValueType<nBitsB> &b) const {
-                    return ValueType<nBitsA+nBitsB>(); // FIXME
+                    if (!IntegerOps::signBit<nBitsA>(a.possible_bits()) && !IntegerOps::signBit<nBitsB>(b.possible_bits()))
+                        return unsignedMultiply(a, b);
+                    return ValueType<nBitsA+nBitsB>(); // FIXME, we can do better
                 }
 
                 /** See NullSemantics::Policy::unsignedDivide() */
                 template<size_t nBitsA, size_t nBitsB>
                 ValueType<nBitsA> unsignedDivide(const ValueType<nBitsA> &a, const ValueType<nBitsB> &b) const {
-                    return ValueType<nBitsA>(); // FIXME
+                    Intervals result;
+                    for (Intervals::const_iterator ai=a.get_intervals().begin(); ai!=a.get_intervals().end(); ++ai) {
+                        for (Intervals::const_iterator bi=b.get_intervals().begin(); bi!=b.get_intervals().end(); ++bi) {
+                            uint64_t lo = ai->first.first() / std::max(bi->first.last(),  (uint64_t)1);
+                            uint64_t hi = ai->first.last()  / std::max(bi->first.first(), (uint64_t)1);
+                            assert((lo<=IntegerOps::GenMask<uint64_t, nBitsA>::value));
+                            assert((hi<=IntegerOps::GenMask<uint64_t, nBitsA>::value));
+                            assert(lo<=hi);
+                            result.insert(Interval::inin(lo, hi));
+                        }
+                    }
+                    return ValueType<nBitsA>(result);
                 }
 
                 /** See NullSemantics::Policy::unsignedModulo() */
                 template<size_t nBitsA, size_t nBitsB>
                 ValueType<nBitsB> unsignedModulo(const ValueType<nBitsA> &a, const ValueType<nBitsB> &b) const {
-                    return ValueType<nBitsB>(); // FIXME
+                    if (b.is_known()) {
+                        // If B is a power of two then mask away the high bits of A
+                        uint64_t bn = b.known_value();
+                        for (size_t i=0; i<nBitsB; ++i) {
+                            uint64_t twopow = IntegerOps::shl1<uint64_t>(i);
+                            if (bn==twopow) {
+                                uint64_t limit = IntegerOps::GenMask<uint64_t, nBitsA>::value;
+                                Intervals result = a.get_intervals();
+                                result.erase(Interval::inin(twopow, limit));
+                                return ValueType<nBitsB>(result);
+                            }
+                        }
+                    }
+                    return ValueType<nBitsB>(); // FIXME: can we do better?
                 }
 
                 /** See NullSemantics::Policy::unsignedMultiply() */
                 template<size_t nBitsA, size_t nBitsB>
                 ValueType<nBitsA+nBitsB> unsignedMultiply(const ValueType<nBitsA> &a, const ValueType<nBitsB> &b) const {
-                    return ValueType<nBitsA+nBitsB>(); // FIXME
+                    Intervals result;
+                    for (Intervals::const_iterator ai=a.get_intervals().begin(); ai!=a.get_intervals().end(); ++ai) {
+                        for (Intervals::const_iterator bi=b.get_intervals().begin(); bi!=b.get_intervals().end(); ++bi) {
+                            uint64_t lo = ai->first.first() * bi->first.first();
+                            uint64_t hi = ai->first.last()  * bi->first.last();
+                            assert(lo<=hi);
+                            result.insert(Interval::inin(lo, hi));
+                        }
+                    }
+                    return ValueType<nBitsA+nBitsB>(result);
                 }
 
                 /** See NullSemantics::Policy::xor_() */
                 template<size_t nBits>
                 ValueType<nBits> xor_(const ValueType<nBits> &a, const ValueType<nBits> &b) const {
-                    return ValueType<nBits>();// FIXME
+                    uint64_t abits = a.possible_bits(), bbits = b.possible_bits();
+                    uint64_t rbits = abits | bbits; // yes, OR, not XOR
+                    return ValueType<nBits>::from_bits(rbits);
                 }
 
                 /** See NullSemantics::Policy::readMemory() */
