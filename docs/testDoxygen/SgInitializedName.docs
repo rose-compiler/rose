@@ -359,6 +359,6 @@ detailed variable x
 */
 
 /*! \fn SgInitializedName::search_for_symbol_from_symbol_table() const
-\brief User interface for retrieving the associated symbol.
+\brief User interface for retrieving the associated symbol. It searches through the possible chain of prev_decl_item.
 */
 
