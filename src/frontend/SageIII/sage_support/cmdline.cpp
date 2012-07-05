@@ -260,6 +260,12 @@ CommandlineProcessing::isOptionTakingSecondParameter( string argument )
           argument == "-rose:excludeFile" ||
           argument == "-rose:astMergeCommandFile" ||
 
+          // Support for java options
+          argument == "-rose:java:cp" ||
+          argument == "-rose:java:classpath" ||
+          argument == "-rose:java:sourcepath" ||
+          argument == "-rose:java:d" ||
+
        // negara1 (08/16/2011)
           argument == "-rose:unparseHeaderFilesRootFolder" ||
              
@@ -678,11 +684,41 @@ SgProject::processCommandLine(const vector<string>& input_argv)
           set_compileOnly(true);
         }
 
+     string javaRosePrefix = "-rose:java:";
+     // Java classpath option support
+     string javaTmpParameter;
+     if (CommandlineProcessing::isOptionWithParameter(local_commandLineArgumentList, javaRosePrefix,"(cp|classpath)", javaTmpParameter, true) == true) {
+         // Parse and register the java classpath in the project
+         std::list<std::string> cpList = StringUtility::tokenize(javaTmpParameter, ':');
+         set_Java_classpath(cpList);
+     }
+     // Java sourcepath option support
+     if (CommandlineProcessing::isOptionWithParameter(local_commandLineArgumentList, javaRosePrefix,"(sourcepath)", javaTmpParameter, true) == true) {
+         // Parse and register the java sourcepath in the project
+         std::list<std::string> cpList = StringUtility::tokenize(javaTmpParameter, ':');
+         set_Java_sourcepath(cpList);
+     }
+     // Java destination dir option support
+     if (CommandlineProcessing::isOptionWithParameter(local_commandLineArgumentList, javaRosePrefix,"(d)", javaTmpParameter, true) == true) {
+         set_Java_destdir(javaTmpParameter);
+     }
+
      if ( CommandlineProcessing::isOption(local_commandLineArgumentList,"-rose:","wave",false) == true )
         {
        // printf ("Option -c found (compile only)! \n");
           set_wave(true);
         }
+
+     // Liao 6/29/2012: support linking flags for OpenMP lowering when no SgFile is available
+     set_openmp_linking(false);
+     if ( CommandlineProcessing::isOption(local_commandLineArgumentList,"-rose:OpenMP:","lowering",true) == true
+         ||CommandlineProcessing::isOption(local_commandLineArgumentList,"-rose:openmp:","lowering",true) == true)
+     {
+       if ( SgProject::get_verbose() >= 1 )
+         printf ("In SgProject: openmp_linking mode ON \n");
+       set_openmp_linking(true);
+     }
+
 
 #if 1
   // DQ (10/3/2010): Adding support for CPP directives to be optionally a part of the AST as declarations
@@ -1081,6 +1117,12 @@ SgFile::usage ( int status )
 "                             follow C++ 89 standard\n"
 "     -rose:Java, -rose:java, -rose:J, -rose:j\n"
 "                             compile Java code (work in progress)\n"
+"     -rose:java:cp, -rose:java:classpath\n"
+"                             Classpath to look for java classes\n"
+"     -rose:java:sourcepath\n"
+"                             Sourcepath to look for java sources\n"
+"     -rose:java:d\n"
+"                             Specifies generated classes destination dir\n"
 "     -rose:Python, -rose:python, -rose:py\n"
 "                             compile Python code\n"
 "     -rose:OpenMP, -rose:openmp\n"
@@ -1710,7 +1752,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           set_Java_only(true);
           if (get_sourceFileUsesJavaFileExtension() == false)
              {
-               printf ("Warning, Non Java source file name specificed with explicit -rose:Java Java language option! \n");
+               printf ("Warning, Non Java source file name specified with explicit -rose:Java Java language option! \n");
                set_Java_only(false);
 
             // DQ (4/2/2011): Java code is only compiled, not linked as is C/C++ and Fortran.
@@ -2782,30 +2824,34 @@ SgFile::stripFortranCommandLineOptions ( vector<string> & argv )
 void
 SgFile::stripJavaCommandLineOptions ( vector<string> & argv )
    {
-  // Strip out the ECJ specific commandline options the assume all
+  // Strip out the ECJ specific command line options then assume all
   // other arguments are to be passed onto the vendor Java compiler
-
-#if 0
-     if ( (ROSE_DEBUG >= 0) || (get_verbose() > 1) )
-        {
-          Rose_STL_Container<string> l = CommandlineProcessing::generateArgListFromArgcArgv (argc,argv);
-          printf ("In SgFile::stripJavaCommandLineOptions: argv = \n%s \n",StringUtility::listToString(l).c_str());
-        }
-#endif
-
-  // Split out the ECJ options (ignore the returned Rose_STL_Container<string> object)
      CommandlineProcessing::removeArgs (argv,"-ecj:");
      CommandlineProcessing::removeArgs (argv,"--ecj:");
      CommandlineProcessing::removeArgsWithParameters (argv,"-ecj_parameter:");
      CommandlineProcessing::removeArgsWithParameters (argv,"--ecj_parameter:");
 
-  // Remove this if it is specificed, but it should not be used for Java.
-  // CommandlineProcessing::removeArgs (argv,"-c");
+     string javaRosePrefix = "-rose:java:";
+     // if destination is not provided, insert rose's default one for java.
+     if (!CommandlineProcessing::isOption(argv, javaRosePrefix, "d", false)) {
+         // Put *.class files generated from calling that backend compiler (javac) and the ROSE generated code
+         // into the current directory.  This makes the semantics for Java similar to all other languages in
+         // ROSE but it is different from the default behavior for "javac".  So it is not clear if we really
+         // want this semantics, but another reason for this desired behavior is that it will avoid having
+         // the source-to-source generated code from overwriting the input source code.
+         //
+         // Note: we don't use the get_Java_destdir here because we don't have a handle on the SgProject
+         // Check get_Java_destdir implementation in Support.code
+         argv.push_back("-d");
+         argv.push_back(ROSE::getWorkingDirectory());
+     }
 
-#if 0
-     Rose_STL_Container<string> l = CommandlineProcessing::generateArgListFromArgcArgv (argc,argv);
-     printf ("In SgFile::stripJavaCommandLineOptions: argv = \n%s \n",StringUtility::listToString(l).c_str());
-#endif
+     // Need to rewrite javac options prefix before handing them to the backend.
+     Rose_STL_Container<string> rose_java_options = CommandlineProcessing::generateOptionWithNameParameterList(argv, javaRosePrefix, "-");
+     for (Rose_STL_Container<string>::iterator i = rose_java_options.begin(); i != rose_java_options.end(); ++i)
+       {
+         argv.push_back(*i);
+       }
    }
 
 void
@@ -2864,7 +2910,7 @@ void SgFile::build_CLANG_CommandLine ( vector<string> & inputCommandLine, vector
     std::vector<std::string> define_list;
     std::string input_file;
 
-    for (int i = 0; i < argv.size(); i++) {
+    for (size_t i = 0; i < argv.size(); i++) {
         std::string current_arg(argv[i]);
         if (current_arg.find("-I") == 0) {
             if (current_arg.length() > 2) {
@@ -3766,7 +3812,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 vector<string>
 SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameIndex, const string& compilerName )
    {
-  // This function assembles the commandline that will be passed to the backend (vendor) C++/C, Fortran, of Java compiler 
+  // This function assembles the commandline that will be passed to the backend (vendor) C++/C, Fortran, or Java compiler
   // (using the new generated source code from the ROSE unparser).
 
   // DQ (4/21/2006): I think we can now assert this!
@@ -3870,20 +3916,8 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
              }
             else if (get_Java_only() == true)
              {
-                 // compilerNameString = "java ";
                  // compilerNameString[0] = ROSE_GNU_JAVA_PATH;
                     compilerNameString[0] = BACKEND_JAVA_COMPILER_NAME_WITH_PATH;
-
-                 // Put *.class files generated from calling that backend compiler (javac) on the ROSE generated code 
-                 // into the current directory.  This makes the semantics for Java similar to all other languages in 
-                 // ROSE but it is different from the default behavior for "javac".  So it is not clear if we really
-                 // want this semantics, but another reason for this desired behavior is that it will avoid having
-                 // the source-to-source generated code from overwriting the input source code.
-                 // compilerNameString.push_back("-d .");
-                    std::string currentDirectory = getWorkingDirectory();
-                    compilerNameString.push_back("-d");
-                 // compilerNameString.push_back(".");
-                    compilerNameString.push_back(currentDirectory);
              }
             else if (get_Python_only() == true)
              {
@@ -4223,8 +4257,8 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
        // printf ("In buildCompilerCommandLineOptions: objectNameSpecified = %s objectFileName = %s \n",objectNameSpecified ? "true" : "false",objectFileName.c_str());
 
        // DQ (4/2/2011): Java does not have -o as an accepted option, though the "-d <dir>" can be used to specify where class files are put.
-       // Currently we explicitly output "-d ." so that generated clas files will be put into the current directory (build tree), but this
-       // is not standard semantics for Java (though it makes the Java support in ROSE consistant with other languages supported in ROSE).
+       // Currently we explicitly output "-d ." so that generated class files will be put into the current directory (build tree), but this
+       // is not standard semantics for Java (though it makes the Java support in ROSE consistent with other languages supported in ROSE).
           if (get_Java_only() == false && get_Python_only() == false)
              {
             // DQ (7/14/2004): Suggested fix from Andreas, make the object file name explicit

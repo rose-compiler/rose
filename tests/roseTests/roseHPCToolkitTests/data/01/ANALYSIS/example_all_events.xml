@@ -193,51 +193,105 @@
 <SecFlatProfile  i="0" n="example">
 <SecHeader>
  <MetricTable>
-    <Metric i="0" n="PAPI_L2_TCM.[0,0] (I)" v="final" t="inclusive" show="1" show-percent="1"> </Metric>
-    <Metric i="1" n="PAPI_L2_TCM.[0,0] (E)" v="final" t="exclusive" show="1" show-percent="1"> </Metric>
+    <Metric i="0" n="PAPI_TOT_CYC.[0,0] (I)" v="final" t="inclusive" show="1" show-percent="1"> </Metric>
+    <Metric i="1" n="PAPI_TOT_CYC.[0,0] (E)" v="final" t="exclusive" show="1" show-percent="1"> </Metric>
+    <Metric i="2" n="PAPI_FP_OPS.[0,0] (I)" v="final" t="inclusive" show="1" show-percent="1"> </Metric>
+    <Metric i="3" n="PAPI_FP_OPS.[0,0] (E)" v="final" t="exclusive" show="1" show-percent="1"> </Metric>
+    <Metric i="4" n="PAPI_L1_DCM.[0,0] (I)" v="final" t="inclusive" show="1" show-percent="1"> </Metric>
+    <Metric i="5" n="PAPI_L1_DCM.[0,0] (E)" v="final" t="exclusive" show="1" show-percent="1"> </Metric>
+    <Metric i="6" n="PAPI_L2_TCM.[0,0] (I)" v="final" t="inclusive" show="1" show-percent="1"> </Metric>
+    <Metric i="7" n="PAPI_L2_TCM.[0,0] (E)" v="final" t="exclusive" show="1" show-percent="1"> </Metric>
  </MetricTable>
 </SecHeader>
 <SecFlatProfileData>
-<M n="0" v="1.045E7"/><M n="1" v="1.045E7"/>
+<M n="0" v="2.76849997E9"/><M n="1" v="2.76849997E9"/><M n="2" v="6075000.0"/><M n="3" v="6075000.0"/>
 <LM i="2" n="Load module /home/dxnguyen/git-rose/rose-zung/BUILD/tests/roseTests/roseHPCToolkitTests/example">
-<M n="0" v="1.045E7"/><M n="1" v="1.045E7"/>
+<M n="0" v="2.76849997E9"/><M n="1" v="1.2854999E9"/><M n="2" v="6075000.0"/><M n="3" v="1.125E7"/>
  <F i="3" n="./src/home/dxnguyen/git-rose/rose-zung/tests/roseTests/roseHPCToolkitTests/data/01/example.c">
- <M n="0" v="1.045E7"/> <M n="1" v="1.045E7"/>
+ <M n="0" v="2.76849997E9"/> <M n="1" v="1.2854999E9"/> <M n="2" v="6075000.0"/> <M n="3" v="1.125E7"/>
   <P i="45" n="main" l="67">
-  <M n="0" v="1.045E7"/>
+  <M n="0" v="2.76849997E9"/>  <M n="1" v="500000.0"/>  <M n="2" v="6075000.0"/>
    <C i="936430121" l="89">
     <PF i="4" n="gen" l="8">
-    <M n="0" v="1.0225E7"/>    <M n="1" v="1.0225E7"/>
+    <M n="0" v="1.114E9"/>    <M n="1" v="1.114E9"/>    <M n="2" v="5225000.0"/>    <M n="3" v="1.05E7"/>
     </PF>
    </C>
+   <C i="623551829" l="90">
+    <PF i="4" n="gen" l="8">
+    <M n="0" v="500000.0"/>    <M n="1" v="500000.0"/>
+    </PF>
+   </C>
+   <L i="67" l="100">
+   <M n="0" v="8.6700006E8"/>   <M n="1" v="500000.0"/>   <M n="2" v="425000.0"/>
+    <S i="69" l="101">
+    <M n="0" v="500000.0"/>    <M n="1" v="500000.0"/>
+    </S>
+    <C i="431777218" l="101">
+     <PF i="14" n="dot" l="21">
+     <M n="0" v="8.6650003E8"/>     <M n="1" v="8.45E7"/>     <M n="2" v="425000.0"/>     <M n="3" v="425000.0"/>
+     </PF>
+    </C>
+   </L>
    <C i="-1029776513" l="102">
     <PF i="34" n="mv" l="52">
-    <M n="0" v="225000.0"/>    <M n="1" v="225000.0"/>
+    <M n="0" v="7.8650003E8"/>    <M n="1" v="8.55E7"/>    <M n="2" v="425000.0"/>    <M n="3" v="325000.0"/>
+    </PF>
+   </C>
+   <C i="-132717175" l="103">
+    <PF i="21" n="max" l="31">
+    <M n="0" v="500000.0"/>    <M n="1" v="500000.0"/>
     </PF>
    </C>
   </P>
   <P i="4" n="gen" l="8">
-  <M n="0" v="1.0225E7"/>  <M n="1" v="1.0225E7"/>
+  <M n="0" v="1.11449997E9"/>  <M n="1" v="1.11449997E9"/>  <M n="2" v="5225000.0"/>  <M n="3" v="1.05E7"/>
    <L i="9" l="14">
-   <M n="0" v="1.0225E7"/>   <M n="1" v="1.0225E7"/>
+   <M n="0" v="1.11449997E9"/>   <M n="1" v="1.11449997E9"/>   <M n="2" v="5225000.0"/>   <M n="3" v="1.05E7"/>
     <S i="10" l="14">
-    <M n="0" v="100000.0"/>    <M n="1" v="100000.0"/>
+    <M n="0" v="1.985E8"/>    <M n="1" v="1.985E8"/>    <M n="3" v="50000.0"/>
     </S>
     <S i="11" l="15">
-    <M n="0" v="1.0125E7"/>    <M n="1" v="1.0125E7"/>
+    <M n="0" v="9.16E8"/>    <M n="1" v="9.16E8"/>    <M n="2" v="5225000.0"/>    <M n="3" v="1.045E7"/>
+    </S>
+   </L>
+  </P>
+  <P i="14" n="dot" l="21">
+  <M n="0" v="8.6650003E8"/>  <M n="1" v="8.45E7"/>  <M n="2" v="425000.0"/>  <M n="3" v="425000.0"/>
+   <L i="16" l="25">
+   <M n="0" v="8.6650003E8"/>   <M n="1" v="8.45E7"/>   <M n="2" v="425000.0"/>   <M n="3" v="425000.0"/>
+    <S i="17" l="25">
+    <M n="0" v="1.69E8"/>    <M n="1" v="1.5E7"/>
+    </S>
+    <S i="18" l="26">
+    <M n="0" v="6.9750003E8"/>    <M n="1" v="6.95E7"/>    <M n="2" v="425000.0"/>    <M n="3" v="425000.0"/>
     </S>
    </L>
   </P>
   <P i="34" n="mv" l="52">
-  <M n="0" v="225000.0"/>  <M n="1" v="225000.0"/>
+  <M n="0" v="7.8650003E8"/>  <M n="1" v="8.55E7"/>  <M n="2" v="425000.0"/>  <M n="3" v="325000.0"/>
    <L i="38" l="56">
-   <M n="0" v="225000.0"/>
+   <M n="0" v="7.8650003E8"/>   <M n="1" v="1000000.0"/>   <M n="2" v="425000.0"/>
+    <S i="40" l="59">
+    <M n="0" v="1000000.0"/>    <M n="1" v="1000000.0"/>
+    </S>
     <L i="41" l="61">
-    <M n="0" v="225000.0"/>    <M n="1" v="225000.0"/>
+    <M n="0" v="7.8550003E8"/>    <M n="1" v="8.45E7"/>    <M n="2" v="425000.0"/>    <M n="3" v="325000.0"/>
+     <S i="42" l="61">
+     <M n="0" v="2.18E8"/>     <M n="1" v="5000000.0"/>     <M n="2" v="100000.0"/>     <M n="3" v="100000.0"/>
+     </S>
      <S i="43" l="62">
-     <M n="0" v="225000.0"/>     <M n="1" v="225000.0"/>
+     <M n="0" v="5.6750003E8"/>     <M n="1" v="7.95E7"/>     <M n="2" v="325000.0"/>     <M n="3" v="225000.0"/>
      </S>
     </L>
+   </L>
+  </P>
+  <P i="21" n="max" l="31">
+  <M n="0" v="500000.0"/>  <M n="1" v="500000.0"/>
+   <L i="27" l="42">
+   <M n="0" v="500000.0"/>   <M n="1" v="500000.0"/>
+    <S i="28" l="42">
+    <M n="0" v="500000.0"/>    <M n="1" v="500000.0"/>
+    </S>
    </L>
   </P>
  </F>

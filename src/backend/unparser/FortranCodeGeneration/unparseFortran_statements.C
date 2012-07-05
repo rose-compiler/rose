@@ -2081,15 +2081,14 @@ FortranCodeGeneration_locatedNode::unparseBasicBlockStmt(SgStatement* stmt, SgUn
 
      SgStatementPtrList::iterator p = basic_stmt->get_statements().begin();
      for ( ; p != basic_stmt->get_statements().end(); ++p)
-        { 
+     {
        // cout << "stmt: " << hex << (*p) << dec << endl;
           ROSE_ASSERT((*p) != NULL);
          // FMZ: for module file, only output the variable declarations (not definitions)
-         if (!info.outputFortranModFile() ||
-                        (*p)->variantT()==V_SgVariableDeclaration) {
-          unparseStatement((*p), info);
-        }
-        }
+         if ( !info.outputFortranModFile() || (*p)->variantT()==V_SgVariableDeclaration
+                 || (*p)->variantT()==V_SgAttributeSpecificationStatement )  // DXN (02/07/2012): unparse attribute statements also
+             unparseStatement((*p), info);
+     }
 
   // Liao (10/14/2010): This helps handle cases such as 
   //    c$OMP END PARALLEL

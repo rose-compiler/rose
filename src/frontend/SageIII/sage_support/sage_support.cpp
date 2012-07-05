@@ -4575,7 +4575,10 @@ int SgProject::link ( const std::vector<std::string>& argv, std::string linkerNa
 
   // Additional libraries to be linked with
   // Liao, 9/23/2009, optional linker flags to support OpenMP lowering targeting GOMP
-     if ((numberOfFiles() !=0) && (get_file(0).get_openmp_lowering()))
+//     if ((numberOfFiles() !=0) && (get_file(0).get_openmp_lowering())
+//     Liao 6/29/2012. sometimes rose translator is used as a wrapper for linking
+//     There will be no SgFile at all in this case but we still want to append relevant linking options for OpenMP
+     if( SageInterface::getProject()->get_openmp_linking())
      {
 
 #ifdef USE_ROSE_GOMP_OPENMP_LIBRARY

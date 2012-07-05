@@ -1,0 +1,101 @@
+@ [example.c (SgGlobal)]
+     PAPI_FP_OPS.[0,0] (E) = 1.125e+07
+     PAPI_FP_OPS.[0,0] (I) = 6.075e+06
+     PAPI_TOT_CYC.[0,0] (E) = 1.2855e+09
+     PAPI_TOT_CYC.[0,0] (I) = 2.7685e+09
+@ [example.c:7-8 (SgFunctionDefinition)]
+     PAPI_FP_OPS.[0,0] (E) = 1.05e+07
+     PAPI_FP_OPS.[0,0] (I) = 5.225e+06
+     PAPI_TOT_CYC.[0,0] (E) = 1.1145e+09
+     PAPI_TOT_CYC.[0,0] (I) = 1.1145e+09
+@ [example.c:14-15 (SgForStatement)]
+     PAPI_FP_OPS.[0,0] (E) = 1.05e+07
+     PAPI_FP_OPS.[0,0] (I) = 5.225e+06
+     PAPI_TOT_CYC.[0,0] (E) = 1.1145e+09
+     PAPI_TOT_CYC.[0,0] (I) = 1.1145e+09
+@ [example.c:14-15 (SgForInitStatement)]
+     PAPI_FP_OPS.[0,0] (E) = 25000
+     PAPI_TOT_CYC.[0,0] (E) = 9.925e+07
+     PAPI_TOT_CYC.[0,0] (I) = 9.925e+07
+@ [example.c:14-15 (SgExprStatement)]
+     PAPI_FP_OPS.[0,0] (E) = 25000
+     PAPI_TOT_CYC.[0,0] (E) = 9.925e+07
+     PAPI_TOT_CYC.[0,0] (I) = 9.925e+07
+@ [example.c:15 (SgExprStatement)]
+     PAPI_FP_OPS.[0,0] (E) = 1.045e+07
+     PAPI_FP_OPS.[0,0] (I) = 5.225e+06
+     PAPI_TOT_CYC.[0,0] (E) = 9.16e+08
+     PAPI_TOT_CYC.[0,0] (I) = 9.16e+08
+@ [example.c:20-21 (SgFunctionDefinition)]
+     PAPI_FP_OPS.[0,0] (E) = 425000
+     PAPI_FP_OPS.[0,0] (I) = 425000
+     PAPI_TOT_CYC.[0,0] (E) = 8.45e+07
+     PAPI_TOT_CYC.[0,0] (I) = 8.665e+08
+@ [example.c:25-26 (SgForStatement)]
+     PAPI_FP_OPS.[0,0] (E) = 425000
+     PAPI_FP_OPS.[0,0] (I) = 425000
+     PAPI_TOT_CYC.[0,0] (E) = 8.45e+07
+     PAPI_TOT_CYC.[0,0] (I) = 8.665e+08
+@ [example.c:25-26 (SgForInitStatement)]
+     PAPI_TOT_CYC.[0,0] (E) = 7.5e+06
+     PAPI_TOT_CYC.[0,0] (I) = 8.45e+07
+@ [example.c:25-26 (SgExprStatement)]
+     PAPI_TOT_CYC.[0,0] (E) = 7.5e+06
+     PAPI_TOT_CYC.[0,0] (I) = 8.45e+07
+@ [example.c:26 (SgExprStatement)]
+     PAPI_FP_OPS.[0,0] (E) = 425000
+     PAPI_FP_OPS.[0,0] (I) = 425000
+     PAPI_TOT_CYC.[0,0] (E) = 6.95e+07
+     PAPI_TOT_CYC.[0,0] (I) = 6.975e+08
+@ [example.c:30-31 (SgFunctionDefinition)]
+     PAPI_TOT_CYC.[0,0] (E) = 500000
+     PAPI_TOT_CYC.[0,0] (I) = 500000
+@ [example.c:42-47 (SgForStatement)]
+     PAPI_TOT_CYC.[0,0] (E) = 500000
+     PAPI_TOT_CYC.[0,0] (I) = 500000
+@ [example.c:42-47 (SgForInitStatement)]
+     PAPI_TOT_CYC.[0,0] (E) = 250000
+     PAPI_TOT_CYC.[0,0] (I) = 250000
+@ [example.c:42-47 (SgExprStatement)]
+     PAPI_TOT_CYC.[0,0] (E) = 250000
+     PAPI_TOT_CYC.[0,0] (I) = 250000
+@ [example.c:51-52 (SgFunctionDefinition)]
+     PAPI_FP_OPS.[0,0] (E) = 325000
+     PAPI_FP_OPS.[0,0] (I) = 425000
+     PAPI_TOT_CYC.[0,0] (E) = 8.55e+07
+     PAPI_TOT_CYC.[0,0] (I) = 7.865e+08
+@ [example.c:56-63 (SgForStatement)]
+     PAPI_FP_OPS.[0,0] (I) = 425000
+     PAPI_TOT_CYC.[0,0] (E) = 1e+06
+     PAPI_TOT_CYC.[0,0] (I) = 7.865e+08
+@ [example.c:61-62 (SgForStatement)]
+     PAPI_FP_OPS.[0,0] (E) = 325000
+     PAPI_FP_OPS.[0,0] (I) = 425000
+     PAPI_TOT_CYC.[0,0] (E) = 8.45e+07
+     PAPI_TOT_CYC.[0,0] (I) = 7.855e+08
+@ [example.c:61-62 (SgForInitStatement)]
+     PAPI_FP_OPS.[0,0] (E) = 50000
+     PAPI_FP_OPS.[0,0] (I) = 50000
+     PAPI_TOT_CYC.[0,0] (E) = 2.5e+06
+     PAPI_TOT_CYC.[0,0] (I) = 1.09e+08
+@ [example.c:61-62 (SgExprStatement)]
+     PAPI_FP_OPS.[0,0] (E) = 50000
+     PAPI_FP_OPS.[0,0] (I) = 50000
+     PAPI_TOT_CYC.[0,0] (E) = 2.5e+06
+     PAPI_TOT_CYC.[0,0] (I) = 1.09e+08
+@ [example.c:62 (SgExprStatement)]
+     PAPI_FP_OPS.[0,0] (E) = 225000
+     PAPI_FP_OPS.[0,0] (I) = 325000
+     PAPI_TOT_CYC.[0,0] (E) = 7.95e+07
+     PAPI_TOT_CYC.[0,0] (I) = 5.675e+08
+@ [example.c:66-67 (SgFunctionDefinition)]
+     PAPI_FP_OPS.[0,0] (I) = 6.075e+06
+     PAPI_TOT_CYC.[0,0] (E) = 500000
+     PAPI_TOT_CYC.[0,0] (I) = 2.7685e+09
+@ [example.c:100-101 (SgForStatement)]
+     PAPI_FP_OPS.[0,0] (I) = 425000
+     PAPI_TOT_CYC.[0,0] (E) = 500000
+     PAPI_TOT_CYC.[0,0] (I) = 8.67e+08
+@ [example.c:101 (SgExprStatement)]
+     PAPI_TOT_CYC.[0,0] (E) = 500000
+     PAPI_TOT_CYC.[0,0] (I) = 500000

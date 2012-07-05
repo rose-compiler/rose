@@ -278,7 +278,7 @@ void initialize_global_scope_if_required();
 
 SgFunctionType* generateImplicitFunctionType( std::string functionName);
 
-extern void buildAttributeSpecificationStatement ( SgAttributeSpecificationStatement::attribute_spec_enum kind, Token_t *label, Token_t *sourcePositionToken );
+extern SgAttributeSpecificationStatement* buildAttributeSpecificationStatement ( SgAttributeSpecificationStatement::attribute_spec_enum kind, Token_t *label, Token_t *sourcePositionToken );
 
 // DQ (8/28/2010): This is now generalized to support any SgDeclarationStatement (fix for test2010_34.f90; required for type declarations)
 // void setDeclarationAttributeSpec ( SgVariableDeclaration* variableDeclaration, int astAttributeSpec );

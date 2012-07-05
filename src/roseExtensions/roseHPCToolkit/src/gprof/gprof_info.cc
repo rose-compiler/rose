@@ -1,4 +1,13 @@
 //! read gprof line-by-line performance profiling result text files
+
+/*
+ * This software was produced with support in part from the Defense Advanced
+ * Research Projects Agency (DARPA) through AFRL Contract FA8650-09-C-1915.
+ * Nothing in this work should be construed as reflecting the official policy
+ * or position of the Defense Department, the United States government,
+ * or Rice University.
+ */
+
 #include "sage3basic.h"
 #include <sstream>
 
@@ -179,7 +188,7 @@ namespace RoseHPCT
 #endif      
       if (func_node == NULL)
       { // assume the end line is equal to the beginning line
-        Procedure * p= new Procedure(func_name,info.line_number(),info.line_number());
+        Procedure * p= new Procedure(info.line_number(), func_name, info.line_number());
         ROSE_ASSERT(p!=NULL);
         p->setFileNode(dynamic_cast<File*>(file_node->value));
         //insert it under a corresponding file node
@@ -200,7 +209,8 @@ namespace RoseHPCT
         // no chance to have multiple lines of information for a single statement
       {
         // Build the Profile IR node
-        Statement* s = new Statement ("",info.line_number(),0);
+        // Statement* s = new Statement ("",info.line_number(),0);
+        Statement* s = new Statement ("", info.line_number(), info.line_number()); // DXN
         s->setFileNode(dynamic_cast<File*>(file_node->value));
         // insert into a procedure node
         size_t num_kids = func_node->getNumChildren();
