@@ -1,3 +1,9 @@
+# This software was produced with support in part from the Defense Advanced
+# Research Projects Agency (DARPA) through AFRL Contract FA8650-09-C-1915.
+# Nothing in this work should be construed as reflecting the official policy
+# or position of the Defense Department, the United States government,
+# or Rice University.
+
 # ROSE-HPCT example programs
 
 # Sample data
@@ -32,8 +38,7 @@ EXTRA_DIST = test_attach01a.sh \
 	test_hl01.sh \
 	test_attach01.sh \
 	test_attach03.sh \
-	test_prop01.sh \
-	test_dump01.sh 
+	test_prop01.sh
 
 # DQ (4/23/2011): At least one of the files (process_cmdline.o) in this directory does not seem 
 # to compile with Insure++ (it hangs for Hudson, but I can't reproduce the problem locally)
@@ -43,7 +48,6 @@ noinst_PROGRAMS = convert \
                   process_cmdline \
                   attach_metrics \
                   propagate_metrics \
-                  dump_ast \
                   read_ast \
                   test_highlevel
 
@@ -62,9 +66,6 @@ attach_metrics_LDFLAGS = $(ROSEHPCT_LIBS)
 propagate_metrics_SOURCES = propagate_metrics.cc
 propagate_metrics_LDFLAGS = $(ROSEHPCT_LIBS)
 
-dump_ast_SOURCES = dump_ast.cc
-dump_ast_LDFLAGS = $(ROSEHPCT_LIBS)
-
 read_ast_SOURCES = read_ast.cc
 read_ast_LDFLAGS = $(ROSEHPCT_LIBS)
 
@@ -75,27 +76,24 @@ test_highlevel_LDFLAGS = $(ROSEHPCT_LIBS)
 # test_attach01.sh
 TEST1_FLAGS = -rose:hpct:prof $(srcdir)/data/01/PROFILE/PAPI_TOT_CYC.xml \
               -rose:hpct:prof $(srcdir)/data/01/PROFILE/PAPI_FP_OPS.xml \
-              -rose:hpct:prof $(srcdir)/data/01/PROFILE/PAPI_L1_DCA.xml \
               -rose:hpct:prof $(srcdir)/data/01/PROFILE/PAPI_L1_DCM.xml \
               -rose:hpct:prof $(srcdir)/data/01/PROFILE/PAPI_L2_TCM.xml \
-              -rose:hpct:eqpath .=$(srcdir)/data/01 
+              -rose:hpct:eqpath ./src/home/dxnguyen/git-rose/rose-zung/tests/roseTests/roseHPCToolkitTests/data/01=data/01 
 
 
 test_attach01:attach_metrics
 	./attach_metrics$(EXEEXT) $(TEST1_FLAGS) -c  $(srcdir)/data/01/example.c
 
 # test_attach01a.sh
-TEST2_FLAGS = -rose:hpct:prof $(srcdir)/data/01/ANALYSIS/scope_tree.hpcviewer \
-              -rose:hpct:eqpath .src1=$(srcdir)/data/01 
+TEST2_FLAGS = -rose:hpct:prof $(srcdir)/data/01/ANALYSIS/example_all_events.xml \
+              -rose:hpct:eqpath ./src/home/dxnguyen/git-rose/rose-zung/tests/roseTests/roseHPCToolkitTests/data/01=data/01 
 test_attach01a:attach_metrics
 	./attach_metrics$(EXEEXT) $(TEST2_FLAGS) -c  $(srcdir)/data/01/example.c
 
 test_prop01:propagate_metrics
 	./propagate_metrics$(EXEEXT) $(TEST1_FLAGS) -c  $(srcdir)/data/01/example.c
 
-test_dump01:dump_ast
-	./dump_ast$(EXEEXT) $(TEST1_FLAGS) -c  $(srcdir)/data/01/example.c
-.PHONY: test_attach01 test_attach01a test_prop01 test_dump01
+.PHONY: test_attach01 test_attach01a test_prop01 update_xml
 
 # DQ (3/21/2009): These tests don't appear to run under Cygwin.
 if ROSE_BUILD_OS_IS_CYGWIN
@@ -114,7 +112,6 @@ if ROSE_BUILD_C_LANGUAGE_SUPPORT
 #	$(srcdir)/test_attach03.sh
 	env SRC_DIR_PREFIX=$(srcdir)/ $(srcdir)/test_prop01.sh
 	env SRC_DIR_PREFIX=$(srcdir)/ $(srcdir)/test_hl01.sh
-	env SRC_DIR_PREFIX=$(srcdir)/ $(srcdir)/test_dump01.sh
 	@echo "******************************************************************************************************"
 	@echo "****** ROSE/tests/roseTests/roseHPCToolkitTests: make check rule complete (terminated normally) ******"
 	@echo "******************************************************************************************************"
@@ -133,6 +130,9 @@ clean-local:
 
 distclean-local:
 	rm -rf Templates.DB
+	
+update_xml:
+	env SRC_DIR_PREFIX=$(srcdir)/ $(srcdir)/data/01/updateXML.sh $(CC)
 
 else  #  !ROSE_BUILD_ROSEHPCT
 
@@ -142,13 +142,11 @@ EXTRA_DIST = test_attach01a.sh \
 	test_attach01.sh \
 	test_attach03.sh \
 	test_prop01.sh \
-	test_dump01.sh \
   convert.cc \
   simple_read2.cc \
   process_cmdline.cc \
   attach_metrics.cc \
   propagate_metrics.cc \
-  dump_ast.cc \
   read_ast.cc \
   test_highlevel.cc
 

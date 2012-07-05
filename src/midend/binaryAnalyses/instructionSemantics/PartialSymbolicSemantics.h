@@ -243,6 +243,8 @@ namespace BinaryAnalysis {                      // documented elsewhere
                 MemoryMap *map;                     /**< Initial known memory values for known addresses. */
 
             public:
+                typedef State<ValueType> StateType;
+
                 Policy(): cur_insn(NULL), p_discard_popped_memory(false), ninsns(0), map(NULL) {
                     /* So that named values are identical in both; reinitialized by first call to startInstruction(). */
                     set_register_dictionary(RegisterDictionary::dictionary_pentium4());
@@ -284,7 +286,7 @@ namespace BinaryAnalysis {                      // documented elsewhere
                 State<ValueType>& get_orig_state() { return orig_state; }
 
                 /** Returns the current instruction pointer. */
-                const ValueType<32>& get_ip() const { return cur_state.ip; }
+                const ValueType<32>& get_ip() const { return cur_state.registers.ip; }
 
                 /** Returns the original instruction pointer. See also get_orig_state(). */
                 const ValueType<32>& get_orig_ip() const { return orig_state.ip; }
@@ -388,16 +390,16 @@ namespace BinaryAnalysis {                      // documented elsewhere
                     MemoryCell<ValueType> new_cell(addr, ValueType<32>(), Len/8);
                     bool aliased = false; /*is new_cell aliased by any existing writes?*/
 
-                    for (typename State<ValueType>::Memory::iterator mi=state.mem.begin(); mi!=state.mem.end(); ++mi) {
+                    for (typename State<ValueType>::Memory::iterator mi=state.memory.begin(); mi!=state.memory.end(); ++mi) {
                         if (new_cell.must_alias(*mi)) {
-                            if ((*mi).is_clobbered()) {
-                                (*mi).set_clobbered(false);
-                                (*mi).set_data(new_cell.get_data());
+                            if (mi->is_clobbered()) {
+                                mi->set_clobbered(false);
+                                mi->set_data(new_cell.get_data());
                                 return new_cell.get_data();
                             } else {
-                                return (*mi).get_data();
+                                return mi->get_data();
                             }
-                        } else if (new_cell.may_alias(*mi) && (*mi).is_written()) {
+                        } else if (new_cell.may_alias(*mi) && mi->is_written()) {
                             aliased = true;
                         }
                     }
@@ -405,14 +407,13 @@ namespace BinaryAnalysis {                      // documented elsewhere
                     if (!aliased && &state!=&orig_state) {
                         /* We didn't find the memory cell in the specified state and it's not aliased to any writes in that
                          * state. Therefore use the value from the initial memory state (creating it if necessary). */
-                        for (typename State<ValueType>::Memory::iterator mi=orig_state.mem.begin();
-                             mi!=orig_state.mem.end();
+                        for (typename State<ValueType>::Memory::iterator mi=orig_state.memory.begin();
+                             mi!=orig_state.memory.end();
                              ++mi) {
                             if (new_cell.must_alias(*mi)) {
                                 ROSE_ASSERT(!(*mi).is_clobbered());
                                 ROSE_ASSERT(!(*mi).is_written());
-                                state.mem.push_back(*mi);
-                                std::sort(state.mem.begin(), state.mem.end());
+                                state.memory.push_back(*mi);
                                 return (*mi).get_data();
                             }
                         }
@@ -431,13 +432,11 @@ namespace BinaryAnalysis {                      // documented elsewhere
                             }
                         }
 
-                        orig_state.mem.push_back(new_cell);
-                        std::sort(orig_state.mem.begin(), orig_state.mem.end());
+                        orig_state.memory.push_back(new_cell);
                     }
 
                     /* Create the cell in the current state. */
-                    state.mem.push_back(new_cell);
-                    std::sort(state.mem.begin(), state.mem.end());
+                    state.memory.push_back(new_cell);
                     return new_cell.get_data();
                 }
 
@@ -450,12 +449,12 @@ namespace BinaryAnalysis {                      // documented elsewhere
                  *  other memory. */
                 MemRefType memory_reference_type(const State<ValueType> &state, const ValueType<32> &addr) const {
                     if (addr.name) {
-                        if (addr.name==state.gpr[x86_gpr_sp].name) return MRT_STACK_PTR;
-                        if (addr.name==state.gpr[x86_gpr_bp].name) return MRT_FRAME_PTR;
+                        if (addr.name==state.registers.gpr[x86_gpr_sp].name) return MRT_STACK_PTR;
+                        if (addr.name==state.registers.gpr[x86_gpr_bp].name) return MRT_FRAME_PTR;
                         return MRT_OTHER_PTR;
                     }
-                    if (addr==state.gpr[x86_gpr_sp]) return MRT_STACK_PTR;
-                    if (addr==state.gpr[x86_gpr_bp]) return MRT_FRAME_PTR;
+                    if (addr==state.registers.gpr[x86_gpr_sp]) return MRT_STACK_PTR;
+                    if (addr==state.registers.gpr[x86_gpr_bp]) return MRT_FRAME_PTR;
                     return MRT_OTHER_PTR;
                 }
 
@@ -473,7 +472,7 @@ namespace BinaryAnalysis {                      // documented elsewhere
                     MemRefType new_mrt = memory_reference_type(state, addr);
 
                     /* Overwrite and/or clobber existing memory locations. */
-                    for (typename State<ValueType>::Memory::iterator mi=state.mem.begin(); mi!=state.mem.end(); ++mi) {
+                    for (typename State<ValueType>::Memory::iterator mi=state.memory.begin(); mi!=state.memory.end(); ++mi) {
                         if (new_cell.must_alias(*mi)) {
                             *mi = new_cell;
                             saved = true;
@@ -486,10 +485,8 @@ namespace BinaryAnalysis {                      // documented elsewhere
                             /* memory cell *mi is not aliased to cell being written */
                         }
                     }
-                    if (!saved) {
-                        state.mem.push_back(new_cell);
-                        std::sort(state.mem.begin(), state.mem.end());
-                    }
+                    if (!saved)
+                        state.memory.push_back(new_cell);
                 }
 
                 /*************************************************************************************************************
@@ -498,7 +495,7 @@ namespace BinaryAnalysis {                      // documented elsewhere
 
                 /** See NullSemantics::Policy::startInstruction() */
                 void startInstruction(SgAsmInstruction *insn) {
-                    cur_state.ip = ValueType<32>(insn->get_address());
+                    cur_state.registers.ip = ValueType<32>(insn->get_address());
                     if (0==ninsns++)
                         orig_state = cur_state;
                     cur_insn = insn;
@@ -943,26 +940,26 @@ namespace BinaryAnalysis {                      // documented elsewhere
 
                 std::string prefix = "    ";
 
-                for (size_t i=0; i<this->n_gprs; ++i) {
-                    if (this->gpr[i]!=other.gpr[i]) {
+                for (size_t i=0; i<this->registers.n_gprs; ++i) {
+                    if (this->registers.gpr[i]!=other.registers.gpr[i]) {
                         o <<prefix <<gprToString((X86GeneralPurposeRegister)i) <<": "
-                          <<this->gpr[i].rename(rmap) <<" -> " <<other.gpr[i].rename(rmap) <<"\n";
+                          <<this->registers.gpr[i].rename(rmap) <<" -> " <<other.registers.gpr[i].rename(rmap) <<"\n";
                     }
                 }
-                for (size_t i=0; i<this->n_segregs; ++i) {
-                    if (this->segreg[i]!=other.segreg[i]) {
+                for (size_t i=0; i<this->registers.n_segregs; ++i) {
+                    if (this->registers.segreg[i]!=other.registers.segreg[i]) {
                         o <<prefix <<segregToString((X86SegmentRegister)i) <<": "
-                          <<this->segreg[i].rename(rmap) <<" -> " <<other.segreg[i].rename(rmap) <<"\n";
+                          <<this->registers.segreg[i].rename(rmap) <<" -> " <<other.registers.segreg[i].rename(rmap) <<"\n";
                     }
                 }
-                for (size_t i=0; i<this->n_flags; ++i) {
-                    if (this->flag[i]!=other.flag[i]) {
+                for (size_t i=0; i<this->registers.n_flags; ++i) {
+                    if (this->registers.flag[i]!=other.registers.flag[i]) {
                         o <<prefix <<flagToString((X86Flag)i) <<": "
-                          <<this->flag[i].rename(rmap) <<" -> " <<other.flag[i].rename(rmap) <<"\n";
+                          <<this->registers.flag[i].rename(rmap) <<" -> " <<other.registers.flag[i].rename(rmap) <<"\n";
                     }
                 }
-                if (this->ip!=other.ip) {
-                    o <<prefix <<"ip: " <<this->ip.rename(rmap) <<" -> " <<other.ip.rename(rmap) <<"\n";
+                if (this->registers.ip!=other.registers.ip) {
+                    o <<prefix <<"ip: " <<this->registers.ip.rename(rmap) <<" -> " <<other.registers.ip.rename(rmap) <<"\n";
                 }
 #endif
             }
@@ -972,13 +969,13 @@ namespace BinaryAnalysis {                      // documented elsewhere
             State<ValueType>::equal_registers(const State &other) const
             {
 #ifndef CXX_IS_ROSE_ANALYSIS
-                for (size_t i=0; i<this->n_gprs; ++i)
-                    if (this->gpr[i]!=other.gpr[i]) return false;
-                for (size_t i=0; i<this->n_segregs; ++i)
-                    if (this->segreg[i]!=other.segreg[i]) return false;
-                for (size_t i=0; i<this->n_flags; ++i)
-                    if (this->flag[i]!=other.flag[i]) return false;
-                if (this->ip!=other.ip) return false;
+                for (size_t i=0; i<this->registers.n_gprs; ++i)
+                    if (this->registers.gpr[i]!=other.registers.gpr[i]) return false;
+                for (size_t i=0; i<this->registers.n_segregs; ++i)
+                    if (this->registers.segreg[i]!=other.registers.segreg[i]) return false;
+                for (size_t i=0; i<this->registers.n_flags; ++i)
+                    if (this->registers.flag[i]!=other.registers.flag[i]) return false;
+                if (this->registers.ip!=other.registers.ip) return false;
 #endif
                 return true;
             }
@@ -988,13 +985,13 @@ namespace BinaryAnalysis {                      // documented elsewhere
             State<ValueType>::discard_popped_memory()
             {
                 Memory new_mem;
-                const ValueType<32> &sp = this->gpr[x86_gpr_sp];
-                for (typename Memory::const_iterator mi=this->mem.begin(); mi!=this->mem.end(); ++mi) {
-                    const ValueType<32> &addr = (*mi).get_address();
+                const ValueType<32> &sp = this->registers.gpr[x86_gpr_sp];
+                for (typename Memory::const_iterator mi=this->memory.begin(); mi!=this->memory.end(); ++mi) {
+                    const ValueType<32> &addr = mi->get_address();
                     if (addr.name!=sp.name || addr.negate!=sp.negate || (int32_t)addr.offset>=(int32_t)sp.offset)
                         new_mem.push_back(*mi);
                 }
-                this->mem = new_mem;
+                this->memory = new_mem;
             }
 
             /*****************************************************************************************************************
@@ -1011,8 +1008,8 @@ namespace BinaryAnalysis {                      // documented elsewhere
                 State<ValueType> tmp_state = state;
                 typename State<ValueType>::Memory retval;
 #ifndef CXX_IS_ROSE_ANALYSIS
-                for (typename State<ValueType>::Memory::const_iterator mi=state.mem.begin(); mi!=state.mem.end(); ++mi) {
-                    if ((*mi).is_written() && (*mi).get_data()!=mem_read<32>(orig_state, (*mi).get_address()))
+                for (typename State<ValueType>::Memory::const_iterator mi=state.memory.begin(); mi!=state.memory.end(); ++mi) {
+                    if (mi->is_written() && mi->get_data()!=mem_read<32>(orig_state, mi->get_address()))
                         retval.push_back(*mi);
                 }
 #endif
@@ -1030,12 +1027,16 @@ namespace BinaryAnalysis {                      // documented elsewhere
                     return false;
                 typename State<ValueType>::Memory m1 = memory_for_equality(s1);
                 typename State<ValueType>::Memory m2 = memory_for_equality(s2);
-                if (m1.size()!=m2.size())
+                std::vector<typename State<ValueType>::Memory::value_type> v1(m1.begin(), m1.end());
+                std::vector<typename State<ValueType>::Memory::value_type> v2(m1.begin(), m1.end());
+                if (v1.size()!=v2.size())
                     return false;
-                for (size_t i=0; i<m1.size(); ++i) {
-                    if (m1[i].get_nbytes() != m2[i].get_nbytes() ||
-                        m1[i].get_address()!= m2[i].get_address() ||
-                        m1[i].get_data()   != m2[i].get_data())
+                std::sort(v1.begin(), v1.end());
+                std::sort(v2.begin(), v2.end());
+                for (size_t i=0; i<v1.size(); ++i) {
+                    if (v1[i].get_nbytes() != v2[i].get_nbytes() ||
+                        v1[i].get_address()!= v2[i].get_address() ||
+                        v1[i].get_data()   != v2[i].get_data())
                         return false;
                 }
 #endif
@@ -1063,13 +1064,13 @@ namespace BinaryAnalysis {                      // documented elsewhere
 
                 /* Get all addresses that have been written and are not currently clobbered. */
                 std::set<ValueType<32> > addresses;
-                for (typename State<ValueType>::Memory::const_iterator mi=s1.mem.begin(); mi!=s1.mem.end(); ++mi) {
-                    if (!(*mi).is_clobbered() && (*mi).is_written())
-                        addresses.insert((*mi).get_address());
+                for (typename State<ValueType>::Memory::const_iterator mi=s1.memory.begin(); mi!=s1.memory.end(); ++mi) {
+                    if (!mi->is_clobbered() && mi->is_written())
+                        addresses.insert(mi->get_address());
                 }
-                for (typename State<ValueType>::Memory::const_iterator mi=s2.mem.begin(); mi!=s2.mem.end(); ++mi) {
-                    if (!(*mi).is_clobbered() && (*mi).is_written())
-                        addresses.insert((*mi).get_address());
+                for (typename State<ValueType>::Memory::const_iterator mi=s2.memory.begin(); mi!=s2.memory.end(); ++mi) {
+                    if (!mi->is_clobbered() && mi->is_written())
+                        addresses.insert(mi->get_address());
                 }
 
                 State<ValueType> tmp_s1 = s1;
@@ -1093,10 +1094,12 @@ namespace BinaryAnalysis {                      // documented elsewhere
             Policy<State, ValueType>::on_stack(const ValueType<32> &value) const
             {
 #ifndef CXX_IS_ROSE_ANALYSIS
-                const ValueType<32> sp_inverted = invert(cur_state.gpr[x86_gpr_sp]);
-                for (typename State<ValueType>::Memory::const_iterator mi=cur_state.mem.begin(); mi!=cur_state.mem.end(); ++mi) {
-                    if ((*mi).get_nbytes()!=4 || !((*mi).get_data()==value)) continue;
-                    const ValueType<32> &addr = (*mi).get_address();
+                const ValueType<32> sp_inverted = invert(cur_state.registers.gpr[x86_gpr_sp]);
+                for (typename State<ValueType>::Memory::const_iterator mi=cur_state.memory.begin();
+                     mi!=cur_state.memory.end();
+                     ++mi) {
+                    if (mi->get_nbytes()!=4 || !(mi->get_data()==value)) continue;
+                    const ValueType<32> &addr = mi->get_address();
 
                     /* Is addr >= sp? */
                     ValueType<32> carries = 0;

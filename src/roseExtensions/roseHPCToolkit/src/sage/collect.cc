@@ -7,6 +7,14 @@
  *  $Id: collect.cc,v 1.1 2008/01/08 02:56:43 dquinlan Exp $
  */
 
+/*
+ * This software was produced with support in part from the Defense Advanced
+ * Research Projects Agency (DARPA) through AFRL Contract FA8650-09-C-1915.
+ * Nothing in this work should be construed as reflecting the official policy
+ * or position of the Defense Department, the United States government,
+ * or Rice University.
+ */
+
 #include "sage3basic.h"
 
 #include "rosehpct/sage/sage.hh"
@@ -185,6 +193,59 @@ LoopCollectorByLoc::matches (SgScopeStatement* node) const
           || isSgForStatement (node) != NULL)
     ? matchesLoc (node)
     : false;
+}
+
+void Vis_PreOrder::visitDefault(SgNode* pNode)
+{
+   int childNum = pNode->get_numberOfTraversalSuccessors ();
+   pNode->accept(*_vis);  // process the parent node
+   for (int i = 0; i < childNum; i++)
+   {
+      SgNode* pChild = pNode->get_traversalSuccessorByIndex (i);
+      if (pChild)
+      {
+         pChild->accept(*this);  //recursively visit and process the child node
+       }
+   }
+}
+
+void Vis_PrintMetricInfo::printFileLoc(SgLocatedNode* node, bool printFlag)
+{
+    if (printFlag)
+    {
+        string class_name = string("(") + node->sage_class_name() + string(")");
+        Sg_File_Info* info_start = node->get_startOfConstruct ();
+        Sg_File_Info* info_end = node->get_endOfConstruct ();
+        string full_filename = info_start->get_filenameString();
+        string base_filename = GenUtil::getBaseFilename(full_filename);
+        int line_start = info_start->get_line();
+        int line_end = info_end->get_line();
+        os_ << "@ [" << GenUtil::toFileLoc(base_filename, line_start, line_end) << " "  << class_name << "]" << endl;
+   }
+
+}
+
+void Vis_PrintMetricInfo::printAttributes(SgLocatedNode* node)
+{
+      AstAttributeMechanism* astAttributeContainer = node->get_attributeMechanism();
+      bool printFlag = true;
+      if (astAttributeContainer != NULL)
+      {
+        for (AstAttributeMechanism::iterator i = astAttributeContainer->begin(); i != astAttributeContainer->end(); i++)
+        {
+           string name = i->first;
+           RoseHPCT::MetricAttr* attribute = dynamic_cast<RoseHPCT::MetricAttr *>(i->second);
+           // DXN: If an IR node is written to file, its AstAttribute objects somehow lose their type info.
+           // For example, MetricAttr objects are no longer MetricAttr.
+           /// AstAttribute* attribute = i->second;  // may have names like "tree_depth" and "AstUnparseAttribute"
+           if (attribute)
+           {
+               printFileLoc(node, printFlag);
+               printFlag = false;
+               os_   << "     " << name  << " = "<< attribute->toString() << endl;
+           }
+        }
+      }
 }
 
 /* eof */

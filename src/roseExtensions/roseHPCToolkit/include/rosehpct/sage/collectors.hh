@@ -8,6 +8,14 @@
  *  $Id: collectors.hh,v 1.1 2008/01/08 02:56:43 dquinlan Exp $
  */
 
+/*
+ * This software was produced with support in part from the Defense Advanced
+ * Research Projects Agency (DARPA) through AFRL Contract FA8650-09-C-1915.
+ * Nothing in this work should be construed as reflecting the official policy
+ * or position of the Defense Department, the United States government,
+ * or Rice University.
+ */
+
 #if !defined(INC_SAGE_COLLECTORS_HH)
 //! rosehpct/sage/collectors.hh included.
 #define INC_SAGE_COLLECTORS_HH
@@ -18,6 +26,8 @@
 
 //#include "rose.h"
 #include "rosehpct/util/general.hh"
+
+using namespace std;
 
 namespace RoseHPCT
 {
@@ -30,7 +40,7 @@ namespace RoseHPCT
    *  The template type T should be a child class of SgLocatedNode.
    *
    *  Create a node collector, initializing it to identify nodes that
-   *  of type T whose physical line numers lie between a specified
+   *  of type T whose physical line numbers lie between a specified
    *  interval (b, e) inclusive. Call 'traverse' on a particular root
    *  node to initiate the search. On return, use beginMatch/endMatch
    *  to iterate over matching nodes.
@@ -392,6 +402,102 @@ namespace RoseHPCT
   protected:
     virtual bool matches (SgScopeStatement* node) const;
   };
+
+  /** Traverses an SgNode object structure in pre-order and processes each
+   * visited node with a given visitor.
+   *
+   */
+class Vis_PreOrder : public ROSE_VisitorPattern
+{
+    ROSE_VisitorPattern* _vis; // to process a node upon a pre-order visit.
+
+    public:
+    /** Initializes this Vis_PreOrder with a visitor to be used in processing an SgNode.
+     * @param vis a ROSE_VisitorPattern object used for processing an SgNode upon visitation.
+     */
+    Vis_PreOrder(ROSE_VisitorPattern* vis): _vis(vis)
+    {
+        if (vis == NULL)
+        {
+            std::cerr << "ERROR: Cannot initialize a Vis_PreOrder with a NULL visitor." << std::endl;
+            ROSE_ASSERT(false);
+        }
+    }
+
+    virtual ~Vis_PreOrder()
+    {
+        _vis = NULL;
+    }
+
+    /** Assign this Vis_PreOrder with a visitor to be used in processing an SgNode.
+     * @param vis a ROSE_VisitorPattern object used for processing an SgNode upon visitation.
+     */
+    void setVisitor(ROSE_VisitorPattern* vis)
+    {
+        if (vis == NULL)
+        {
+            std::cerr << "WARNING: Cannot set a Vis_PreOrder with a NULL visitor." << std::endl;
+            std::cerr << "Visitor for pre-order processing not set." << std::endl;
+        }
+        else
+        {
+            _vis = vis;
+        }
+    }
+
+    /** Visit the current SgNode, process it using _vis and recursively visit
+     * and process its children nodes.  The children nodes to be visited are
+     * those that are returned by pNode->get_traversalSuccessorByIndex(i),
+     * where i ranges from 0 to pNode->get_numberOfTraversalSuccessors ().
+     * @param pNode the node that is currently visited.
+     */
+    virtual void visitDefault(SgNode* pNode);
+};
+
+class Vis_PrintMetricInfo: public ROSE_VisitorPattern
+{
+    ostream& os_;
+
+    void printFileLoc(SgLocatedNode* node, bool printFlag);
+    void printAttributes(SgLocatedNode* node);
+
+    public:
+
+    Vis_PrintMetricInfo(ostream& os): os_(os) {}
+
+    virtual void visit(SgGlobal* node)
+    {
+        printAttributes(node);
+    }
+    virtual void visit(SgFunctionDefinition* node)
+    {
+        printAttributes(node);
+    }
+    virtual void visit(SgForStatement* node)
+    {
+        printAttributes(node);
+    }
+    virtual void visit(SgForInitStatement* node)
+    {
+        printAttributes(node);
+    }
+    virtual void visit(SgExprStatement* node)
+    {
+        printAttributes(node);
+    }
+    virtual void visit(SgWhileStmt* node)
+    {
+        printAttributes(node);
+    }
+    virtual void visit(SgDoWhileStmt* node)
+    {
+        printAttributes(node);
+    }
+    virtual void visit(SgReturnStmt* node)
+    {
+        printAttributes(node);
+    }
+};
 
   //@}
 }
