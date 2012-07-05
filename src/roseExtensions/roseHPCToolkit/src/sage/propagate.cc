@@ -198,7 +198,9 @@ MetricScopePropagator::evaluateSynthesizedAttribute
       raw_attr = checkMetricAttribute (node, metric_name_);
   }
   if (raw_attr != NULL)
+  {
     return *raw_attr;
+  }
   else
   {
     MetricAttr empty_attr;
@@ -228,7 +230,7 @@ RoseHPCT::propagateMetrics (SgProject* node,
     {
       string name = prefix + *i;
       if (enable_debug)
-        cerr << "Propagating " << name << "..." << endl;
+          cerr << "Propagating " << name << "..." << endl;
       MetricScopePropagator prop (name);
       prop.traverseInputFiles (node);
     }

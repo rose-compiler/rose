@@ -63,7 +63,9 @@ getRoseOptionValues (vector<string> & argvList, const char* opt_name,
 	       OPTION_PREFIX_ROSE, OPTION_VALUE_SEPARATOR, x,
 	       raw_values);
       for (int i = 0; i < num_matches; i++)
-	values.push_back (string (raw_values[i]));
+      {
+          values.push_back (string (raw_values[i]));
+      }
     }
   return num_matches;
 }

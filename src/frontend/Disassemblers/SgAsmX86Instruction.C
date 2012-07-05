@@ -163,7 +163,7 @@ SgAsmx86Instruction::get_successors(const std::vector<SgAsmInstruction*>& insns,
 #if 0
         /* Use the most robust semantic analysis available.  Warning: this can be very slow, especially when an SMT solver is
          * involved! */
-# if defined(YICES) || defined(HAVE_LIBYICES)
+# if defined(ROSE_YICES) || defined(ROSE_HAVE_LIBYICES)
         YicesSolver yices;
         if (yices.available_linkage() & YicesSolver::LM_LIBRARY) {
             yices.set_linkage(YicesSolver::LM_LIBRARY);
@@ -419,7 +419,7 @@ SgAsmx86Instruction::has_effect(const std::vector<SgAsmInstruction*>& insns, boo
 
     /* Instructions have an effect if the state changed.  We want the comparison to be independent of the instruction pointer,
      * so we'll set the IP of both the initial and final states to the same (unknown) value. */ 
-    policy.get_orig_state().ip = policy.get_state().ip = PartialSymbolicSemantics::ValueType<32>();
+    policy.get_orig_state().registers.ip = policy.get_state().registers.ip = PartialSymbolicSemantics::ValueType<32>();
     return !policy.equal_states(policy.get_orig_state(), policy.get_state());
 }
 
@@ -459,7 +459,7 @@ SgAsmx86Instruction::find_noop_subsequences(const std::vector<SgAsmInstruction*>
      * after insn[i]. */
     std::vector<PartialSymbolicSemantics::State<PartialSymbolicSemantics::ValueType> > state;
     state.push_back(policy.get_state());
-    state.back().ip = common_ip;
+    state.back().registers.ip = common_ip;
     try {
         for (std::vector<SgAsmInstruction*>::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
             SgAsmx86Instruction *insn = isSgAsmx86Instruction(*ii);
@@ -490,7 +490,7 @@ SgAsmx86Instruction::find_noop_subsequences(const std::vector<SgAsmInstruction*>
     /* Change the IP register so its the same for all states so it doesn't contribute to state differences. */
     const size_t nstates = state.size();
     for (size_t i=0; i<nstates; i++)
-        state[i].ip = common_ip;
+        state[i].registers.ip = common_ip;
 
     /* Find pairs of equivalent states. */
     if (verbose) std::cerr <<"  number of states: " <<nstates <<"\n";
