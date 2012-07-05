@@ -42,11 +42,11 @@ operator<<(std::ostream& o, const RegisterSet& rs)
 {
     std::string prefix = "    ";
     for (size_t i = 0; i < 8; ++i)
-        o <<prefix << gprToString((X86GeneralPurposeRegister)i) << " = " << rs.gpr[i] << std::endl;
+        o <<prefix << gprToString((X86GeneralPurposeRegister)i) << " = " << rs.registers.gpr[i] << std::endl;
     for (size_t i = 0; i < 6; ++i)
-        o <<prefix << segregToString((X86SegmentRegister)i) << " = " << rs.segreg[i] << std::endl;
+        o <<prefix << segregToString((X86SegmentRegister)i) << " = " << rs.registers.segreg[i] << std::endl;
     for (size_t i = 0; i < 16; ++i)
-        o <<prefix << flagToString((X86Flag)i) << " = " << rs.flag[i] << std::endl;
+        o <<prefix << flagToString((X86Flag)i) << " = " << rs.registers.flag[i] << std::endl;
     o <<prefix << "memory = ";
     if (rs.memoryWrites->get().isTop) {
         o <<prefix << "<top>\n";

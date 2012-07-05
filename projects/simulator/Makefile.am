@@ -235,6 +235,14 @@ Intervals_SOURCES = demos/Intervals.C
 Intervals_CPPFLAGS = $(ROSE_INCLUDES)
 Intervals_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
+#------------------------------------------------------------------------------------------------------------------------------
+# Example of using an SMT solver in lock step with the simulator
+noinst_PROGRAMS += smt_example
+smt_example_SOURCES = demos/smt_example.C
+smt_example_CPPFLAGS = $(ROSE_INCLUDES)
+smt_example_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+
 ###############################################################################################################################
 #  SUPPORT PROGRAMS FOR PAPERS
 ###############################################################################################################################

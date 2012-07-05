@@ -15,7 +15,7 @@ typedef X86InstructionSemantics<Policy, SymbolicSemantics::ValueType> Semantics;
 // This old method of using hard-coded register numbers, although fast, has some problems.  Two big ones are that it doesn't
 // allow a software layer (SymbolicSemantics::State) to safely and easily implement a subset of all available registers, and it
 // isn't able to easily describe parts of registers (like the x86 OF flag vs. the entire EFLAGS register, or EIP vs. RIP, etc.)
-#define REG_ESP gpr[SgAsmx86RegisterReferenceExpression::e_esp]
+#define REG_ESP registers.gpr[SgAsmx86RegisterReferenceExpression::e_esp]
 
 #elif 1
 
@@ -24,7 +24,7 @@ typedef X86InstructionSemantics<Policy, SymbolicSemantics::ValueType> Semantics;
 // returns a register descriptor (or an exception).  For SymbolicSemantics::State you'd have to know that it uses the register
 // major number as an array index.  You could also cache the major number since it shouldn't change for the life of the
 // SymbolicSemantics::Policy<> object.
-#define REG_ESP gpr[policy.findRegister("esp", 32).get_major()]
+#define REG_ESP registers.gpr[policy.findRegister("esp", 32).get_major()]
 
 #else
 
