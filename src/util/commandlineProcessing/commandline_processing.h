@@ -27,9 +27,10 @@ namespace CommandlineProcessing
 
           Rose_STL_Container<std::string> generateOptionList ( Rose_STL_Container<std::string> & argList, std::string inputPrefix );
 
-       //! Find all options with a form like inputprefixoption from argList, strip off inputprefix: and return a string list for options only.
-       //! All matching inputprefix:option in argList are also removed.   
-          Rose_STL_Container<std::string> generateOptionWithNameParameterList ( Rose_STL_Container<std::string> & argList, std::string inputPrefix );
+       //! Find all options matching 'inputPrefix:optionName' || 'inputPrefix:optionName optionValue' from argList,
+       //! strip off 'inputPrefix:' or replace it by 'newPrefix' if provided. Returns a string list of matched options.
+       //! All matching options and values are removed from argList.
+          Rose_STL_Container<std::string> generateOptionWithNameParameterList ( Rose_STL_Container<std::string> & argList, std::string inputPrefix, std::string newPrefix = "");
 
           extern Rose_STL_Container<std::string> extraCppSourceFileSuffixes;
 

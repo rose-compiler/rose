@@ -7,7 +7,16 @@
  *  $Id: profir.cc,v 1.1 2008/01/08 02:56:43 dquinlan Exp $
  */
 
+/*
+ * This software was produced with support in part from the Defense Advanced
+ * Research Projects Agency (DARPA) through AFRL Contract FA8650-09-C-1915.
+ * Nothing in this work should be construed as reflecting the official policy
+ * or position of the Defense Department, the United States government,
+ * or Rice University.
+ */
+
 #include "rosehpct/profir/profir.hh"
+#include <boost/lexical_cast.hpp> // DXN: converting int to string
 
 using namespace std;
 using namespace RoseHPCT;
@@ -288,61 +297,121 @@ std::string IRNode::toString() const
 std::string Program::toString() const
 {
   std::string result;
-  result = "Program"+IRNode::toString();
+  result = "Program "+IRNode::toString();
   return result;
 }
+
+std::string SecHeader::toString() const
+{
+  std::string result;
+  result = "SecHeader " + IRNode::toString();
+  return result;
+}
+
+std::string MetricTable::toString() const
+{
+  std::string result;
+  result = "MetricTable " + IRNode::toString();
+  return result;
+}
+
+std::string MetricElement::toString() const
+{
+  std::string result;
+  result = "MetricElement " + IRNode::toString();
+  return result;
+}
+
+std::string SecFlatProfileData::toString() const
+{
+  std::string result;
+  result = "SecFlatProfileData " + IRNode::toString();
+  return result;
+}
+
 std::string Group::toString() const
 {
   std::string result;
-  result = "Group "+IRNode::toString();
+  result = "Group "+ IRNode::toString();
   return result;
 }
 std::string Module::toString() const
 {
   std::string result;
-  result = "Module "+IRNode::toString();
+  result = "Module "+ IRNode::toString();
   return result;
 }
 std::string File::toString() const
 {
   std::string result;
-  result = "File "+IRNode::toString();
+  result = "File "+ IRNode::toString();
   return result;
 }
 
-
-
+Procedure::Procedure (long int i, const std::string& name, long int l) :
+    id(i), IRNode (name), Located(l, l)
+{
+}
 
 std::string Procedure::toString() const
 {
   std::string result;
-  result = "Procedure "+IRNode::toString() +"@"+Located::toString();
+  result = "Procedure "+IRNode::toString() + " @ " + Located::toString();
+  // result = "Procedure "+ IRNode::toString() + " @ line "+ boost::lexical_cast<std::string>(line);
   return result;
+}
+
+std::string CallSite::toString() const
+{
+  std::string result;
+  result = "CallSite " + IRNode::toString()  + " @ line " + boost::lexical_cast<std::string>(line);
+  return result;
+}
+
+std::string ProcFrame::toString() const
+{
+  std::string result;
+  result = "ProcFrame " + IRNode::toString()  + " @ line " + boost::lexical_cast<std::string>(line);
+  return result;
+}
+
+Loop::Loop (const std::string& name, long int i, long int l) :
+        IRNode (name), Located(l, l)
+{
+    id = i;
 }
 
 std::string Loop::toString() const
 {
   std::string result;
-  result = "Loop " +IRNode::toString() +"@"+Located::toString();
+  result = "Loop " +IRNode::toString() +" @ " + Located::toString();
+  // result = "Loop " + IRNode::toString() + " @ line" + boost::lexical_cast<std::string>(line);
   return result;
 }
 
 std::string Statement::toString() const
 {
   std::string result;
-  result = "Statement "+ IRNode::toString() +"@"+Located::toString();
+  result = "Statement "+ IRNode::toString() + "@"+ Located::toString();
+  // result = "Statement "+ IRNode::toString() + " @ line " + boost::lexical_cast<std::string>(line);
   return result;
 }
 
-Statement::Statement (void)
+// Statement::Statement (void): id(0), hasMatchedSgNode(false)
+Statement::Statement (void): id(0)
 {
-  setId (0);
 }
 
-Statement::Statement (const Statement& s)
-  : Located (s)
+// Statement::Statement (const Statement& s): id(s.getId()), hasMatchedSgNode(s.hasMatchingSgNode()), Located (s)
+Statement::Statement (const Statement& s): id(s.getId()), Located (s)
 {
-  setId (s.getId ());
+    setHasMatchingSgNode(s.hasMatchingSgNode());
+}
+
+// Statement::Statement (const std::string& name, id_t i, size_t l):
+//         id(i), hasMatchedSgNode(false), IRNode (name), Located(l, l)
+Statement::Statement (const std::string& name, id_t i, size_t l): id(i), IRNode (name), Located(l, l)
+{
 }
 
 Statement::~Statement (void)
