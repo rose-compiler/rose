@@ -691,21 +691,51 @@ namespace AbstractMemoryObject {
 
   bool NamedObj::mayEqual (const NamedObj & o2) const
   {
+    // bool rt = false;
+    // NamedObj o1 = *this;
+    // if (o1.anchor_symbol == o2.anchor_symbol) // same symbol
+    //   if (o1.parent->mayEqual(*(o2.parent)))   // same parent
+    //   {
+    //     if ( (o1.array_index_vector) != NULL && (o2.array_index_vector) != NULL)
+    //     {
+    //         // same array index, must use *pointer == *pointer to get the right comparison!!
+    //       if ((*(o1.array_index_vector)).mayEqual(*(o2.array_index_vector))) 
+    //         rt = true; // semantically equivalent index vectors
+    //     }
+    //     else
+    //       if ( o1.array_index_vector == o2.array_index_vector) // both are NULL
+    //         rt = true ;
+    //   }
+    // return rt;
     bool rt = false;
     NamedObj o1 = *this;
     if (o1.anchor_symbol == o2.anchor_symbol) // same symbol
-      if (o1.parent->mayEqual(*(o2.parent)))   // same parent
+    {
+      // FIX:
+      // Sriram 06/26/2012
+      // compare parents for compound memory objects only if both are not NULL
+      if(o1.parent !=NULL && o2.parent != NULL)
       {
-        if ( (o1.array_index_vector) != NULL && (o2.array_index_vector) != NULL)
+        if (o1.parent->mayEqual(*(o2.parent)))   // same parent
         {
+          if ( (o1.array_index_vector) != NULL && (o2.array_index_vector) != NULL)
+          {
             // same array index, must use *pointer == *pointer to get the right comparison!!
-          if ((*(o1.array_index_vector)).mayEqual(*(o2.array_index_vector))) 
-            rt = true; // semantically equivalent index vectors
+              if ((*(o1.array_index_vector)).mayEqual(*(o2.array_index_vector))) 
+              rt = true; // semantically equivalent index vectors
+          }
+          else
+            if ( o1.array_index_vector == o2.array_index_vector) // both are NULL
+              rt = true ;
         }
-        else
-          if ( o1.array_index_vector == o2.array_index_vector) // both are NULL
-            rt = true ;
       }
+      else 
+      { 
+          // for simple memory objects both parents are NULL
+        if( o1.parent == o2.parent )
+          rt = true;        
+      }
+    }
     return rt;
   }
 
@@ -714,18 +744,32 @@ namespace AbstractMemoryObject {
     bool rt = false;
     NamedObj o1 = *this;
     if (o1.anchor_symbol == o2.anchor_symbol) // same symbol
-      if (o1.parent->mustEqual(*(o2.parent)))   // same parent
+    {
+      // FIX:
+      // Sriram 06/26/2012
+      // compare parents for compound memory objects if both are !NULL
+      if(o1.parent != NULL && o2.parent != NULL)
       {
-        if ( (o1.array_index_vector) != NULL && (o2.array_index_vector) != NULL)
+        if (o1.parent->mustEqual(*(o2.parent)))   // same parent
         {
+          if ( (o1.array_index_vector) != NULL && (o2.array_index_vector) != NULL)
+          {
             // same array index, must use *pointer == *pointer to get the right comparison!!
-          if ((*(o1.array_index_vector)).mustEqual(*(o2.array_index_vector))) 
-            rt = true; // semantically equivalent index vectors
+            if ((*(o1.array_index_vector)).mustEqual(*(o2.array_index_vector))) 
+              rt = true; // semantically equivalent index vectors
+          }
+          else
+            if ( o1.array_index_vector == o2.array_index_vector) // both are NULL
+              rt = true ;
         }
-        else
-          if ( o1.array_index_vector == o2.array_index_vector) // both are NULL
-            rt = true ;
       }
+      else 
+      { 
+          // for simple memory objects both parents are NULL
+        if(o1.parent == NULL && o2.parent == NULL)
+          rt = true;        
+      }
+    }
     return rt;
   }
 
