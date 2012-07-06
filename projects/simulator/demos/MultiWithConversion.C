@@ -48,6 +48,8 @@ public:
 int
 main(int argc, char *argv[], char *envp[])
 {
+    std::ios::sync_with_stdio();
+
     // Our instruction callback.  We can't set it's trigger address until after we load the specimen, but we want to register
     // the callback with the simulator before we create the first thread.
     SemanticController semantic_controller;
