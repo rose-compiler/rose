@@ -20,8 +20,8 @@ MultiDomainDemoPolicy<State, ValueType>::init()
     // always be able to use the SMTSolver class (or YicesSolver subclass) to build your own SMT queries. See ROSE doxygen
     // documentation for the SMTSolver class and example code in SymbolicSemantics.h.
     YicesSolver *yices = new YicesSolver;
-    yices->set_linkage(YicesSolver::LM_LIBRARY); // much faster, but has fewer debugging capabilities
-    //yices->set_debug(stderr); // will show you solver input and output for LM_EXECUTABLE linkage
+    //yices->set_linkage(YicesSolver::LM_LIBRARY); // much faster, but has fewer debugging capabilities
+    yices->set_debug(stderr); // will show you solver input and output for LM_EXECUTABLE linkage
     this->get_policy(SYMBOLIC).set_solver(yices);
 #endif
 
@@ -57,6 +57,10 @@ MultiDomainDemoPolicy<State, ValueType>::startInstruction(SgAsmInstruction *insn
     if (triggered) {
         SgAsmx86Instruction *insn = isSgAsmx86Instruction(insn_);
         assert(insn!=NULL);
+
+        // Print the instruction being executed.  You can also use "--debug=insn", but that prints *every* instruction, not
+        // just the ones after we jump to an arbitrary offset.
+        trace()->mesg("%s: executing: %s", name, unparseInstruction(insn).c_str());
 
         // This shows how you can disable a domain based on some condition.  This example looks at all the register expressions
         // and counts how many nodes are in the expression tree.  If the some is larger than some arbitrary amount, we
