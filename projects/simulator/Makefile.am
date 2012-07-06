@@ -242,6 +242,13 @@ smt_example_SOURCES = demos/smt_example.C
 smt_example_CPPFLAGS = $(ROSE_INCLUDES)
 smt_example_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
+#------------------------------------------------------------------------------------------------------------------------------
+# Multi-domain demo that enables/disables sub-domains and converts values from one sub-domain to another.  This is meant to
+# serve as an example for Andreas and Earl that they can modify to suit their needs.
+noinst_PROGRAMS += MultiWithConversion
+MultiWithConversion_SOURCES = demos/MultiWithConversion.C
+MultiWithConversion_CPPFLAGS = $(ROSE_INCLUDES)
+MultiWithConversion_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 ###############################################################################################################################
 #  SUPPORT PROGRAMS FOR PAPERS
