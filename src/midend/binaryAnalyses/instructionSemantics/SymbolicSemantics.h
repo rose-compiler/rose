@@ -603,6 +603,17 @@ namespace BinaryAnalysis {              // documented elsewhere
                 const State<ValueType>& get_orig_state() const { return orig_state; }
                 State<ValueType>& get_orig_state() { return orig_state; }
 
+                /** Enables or disables pruning of the McCarthy expression for read operations on the current and initial
+                 *  memory states.  This property can also be set on each state individually, which is all this method does
+                 *  anyway.
+                 * @{ */
+                void enable_read_pruning(bool b=true) {
+                    cur_state.memory.enable_read_pruning(b);
+                    orig_state.memory.enable_read_pruning(b);
+                }
+                void disable_read_pruning() { enable_read_pruning(false); }
+                /** @} */
+
                 /** Returns the current instruction pointer. */
                 const ValueType<32>& get_ip() const { return cur_state.registers.ip; }
 
