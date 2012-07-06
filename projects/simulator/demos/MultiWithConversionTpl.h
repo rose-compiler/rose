@@ -125,7 +125,6 @@ MultiDomainDemoPolicy<State, ValueType>::finishInstruction(SgAsmInstruction *ins
 {
     Super::finishInstruction(insn);
     if (triggered) {
-#if 0 /* This is very noisy! */
         // Here's how you could get a trace showing the complete machine state in every semantic domain. The simulator's
         // "--debug=insn,state" does something similar but only shows the concrete domain.  If you want a heading above each
         // domain's state then you should print them individually.
@@ -133,6 +132,7 @@ MultiDomainDemoPolicy<State, ValueType>::finishInstruction(SgAsmInstruction *ins
         trace()->mesg("%s: complete state after %s\n%s",
                       name, unparseInstruction(insn).c_str(), StringUtility::prefixLines(ss.str(), "    ").c_str());
 
+#if 0 /* This is very noisy! */
         // Here's how you can print an individual state.  BTW, printing a policy by default prints the policies state. Most
         // policies implement a get_state() method if you really need the state itself.
         std::ostringstream s2; s2 <<this->get_policy(INTERVAL);
