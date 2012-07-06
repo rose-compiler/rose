@@ -7,11 +7,15 @@ if ROSE_USE_CLANG_FRONTEND
 noinst_LTLIBRARIES = libroseClangFrontend.la
 
 libroseClangFrontend_la_DEPENDENCIES =
-libroseClangFrontend_la_SOURCES      = ClangFrontend.C
+libroseClangFrontend_la_SOURCES      = \
+  clang-frontend.cpp \
+  clang-frontend-decl.cpp \
+  clang-frontend-stmt.cpp \
+  clang-frontend-type.cpp
 libroseClangFrontend_la_LDFLAGS      = $(CLANG_LDFLAGS)
 libroseClangFrontend_la_CXXFLAGS     = $(CLANG_CXXFLAGS)
 
-dist_include_HEADERS = ClangFrontend.h ClangFrontend-private.h
+dist_include_HEADERS = clang-frontend.hpp clang-frontend-private.hpp
 
 include_HEADERS =
 
