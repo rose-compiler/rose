@@ -22,8 +22,8 @@ SUBDIRS =
 if ROSE_USE_CLANG_FRONTEND
    SUBDIRS += C_tests
    SUBDIRS += C_subset_of_Cxx_tests
-   SUBDIRS += CudaTests
-   SUBDIRS += OpenClTests
+#   SUBDIRS += CudaTests
+#   SUBDIRS += OpenClTests
 else
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 # TOO (2/16/2011): Errors with Tensilica's Xtensa compilers as alternative backend compilers. We can
