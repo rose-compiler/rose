@@ -23,7 +23,7 @@
 // end of RSIM_Templates.h. We have to do it this way because some of the simulator's higher-level data structures (like
 // RSIM_Thread) are only partially defined here.
 //
-// The following changes are necessary in order to use the MultiDomainDemoPolicy.
+// The following changes are necessary in order to use the MultiDomainDemoPolicy (see MultiWithConversion.patch for a patch)
 //     In RSIM_SemanticsSettings.h
 //         1. Tell the simulator that we'll be using multi-domain semantics by specifying "Paradigm C".
 //         2. Set the RSIM_SEMANTICS_POLICY to our MultiDomainDemoPolicy class, using the default state and value type.
@@ -31,75 +31,29 @@
 //         4. Include headers for IntervalSemantics, SymbolicSemantics, and this header file.
 //     In RSIM_Templates.h
 //         5. Include our method definitions from MultiWithConverstionTpl.h
-//
-// Here's a diff for the two files:
-//     diff --git a/projects/simulator/RSIM_SemanticsSettings.h b/projects/simulator/RSIM_SemanticsSettings.h
-//     index f959600..fc17504 100644
-//     --- a/projects/simulator/RSIM_SemanticsSettings.h
-//     +++ b/projects/simulator/RSIM_SemanticsSettings.h
-//     @@ -31,7 +31,7 @@
-//      #define RSIM_SEMANTICS_PARADIGM_B       1                       /* Paradigm B: Simulator uses "Inner"(-like) semantics */
-//      #define RSIM_SEMANTICS_PARADIGM_C       2                       /* Paradigm C: Simulator uses "Outer"(-like) semantics */
-//      
-//     -#define RSIM_SEMANTICS_PARADIGM RSIM_SEMANTICS_PARADIGM_A       /* The paradigm we are actually using */
-//     +#define RSIM_SEMANTICS_PARADIGM RSIM_SEMANTICS_PARADIGM_C       /* The paradigm we are actually using */
-//      
-//      
-//      /** ValueType, State, and Semantic Policy used throughout the simulator.
-//     @@ -57,7 +57,7 @@
-//          // Paradigm C:  Use outer semantics (using inner semantics indirectly, along with additional user semantics)
-//      #   define RSIM_SEMANTICS_VTYPE  RSIM_Semantics::OuterValueType
-//      #   define RSIM_SEMANTICS_STATE  RSIM_Semantics::OuterState<>
-//     -#   define RSIM_SEMANTICS_POLICY RSIM_Semantics::OuterPolicy<>
-//     +#   define RSIM_SEMANTICS_POLICY MultiDomainDemoPolicy<RSIM_Semantics::OuterState, RSIM_Semantics::OuterValueType>
-//      #endif
-//      /** @} */
-//      
-//     @@ -78,12 +78,12 @@
-//      #define RSIM_SEMANTICS_OUTER_0_VTYPE    RSIM_Semantics::InnerValueType
-//      #define RSIM_SEMANTICS_OUTER_0_STATE    RSIM_Semantics::InnerState
-//      #define RSIM_SEMANTICS_OUTER_0_POLICY   RSIM_Semantics::InnerPolicy
-//     -#define RSIM_SEMANTICS_OUTER_1_VTYPE    BinaryAnalysis::InstructionSemantics::NullSemantics::ValueType
-//     -#define RSIM_SEMANTICS_OUTER_1_STATE    BinaryAnalysis::InstructionSemantics::NullSemantics::State
-//     -#define RSIM_SEMANTICS_OUTER_1_POLICY   BinaryAnalysis::InstructionSemantics::NullSemantics::Policy
-//     -#define RSIM_SEMANTICS_OUTER_2_VTYPE    BinaryAnalysis::InstructionSemantics::NullSemantics::ValueType
-//     -#define RSIM_SEMANTICS_OUTER_2_STATE    BinaryAnalysis::InstructionSemantics::NullSemantics::State
-//     -#define RSIM_SEMANTICS_OUTER_2_POLICY   BinaryAnalysis::InstructionSemantics::NullSemantics::Policy
-//     +#define RSIM_SEMANTICS_OUTER_1_VTYPE    BinaryAnalysis::InstructionSemantics::IntervalSemantics::ValueType
-//     +#define RSIM_SEMANTICS_OUTER_1_STATE    BinaryAnalysis::InstructionSemantics::IntervalSemantics::State
-//     +#define RSIM_SEMANTICS_OUTER_1_POLICY   BinaryAnalysis::InstructionSemantics::IntervalSemantics::Policy
-//     +#define RSIM_SEMANTICS_OUTER_2_VTYPE    BinaryAnalysis::InstructionSemantics::SymbolicSemantics::ValueType
-//     +#define RSIM_SEMANTICS_OUTER_2_STATE    BinaryAnalysis::InstructionSemantics::SymbolicSemantics::State
-//     +#define RSIM_SEMANTICS_OUTER_2_POLICY   BinaryAnalysis::InstructionSemantics::SymbolicSemantics::Policy
-//      #define RSIM_SEMANTICS_OUTER_3_VTYPE    BinaryAnalysis::InstructionSemantics::NullSemantics::ValueType
-//      #define RSIM_SEMANTICS_OUTER_3_STATE    BinaryAnalysis::InstructionSemantics::NullSemantics::State
-//      #define RSIM_SEMANTICS_OUTER_3_POLICY   BinaryAnalysis::InstructionSemantics::NullSemantics::Policy
-//     @@ -95,8 +95,11 @@
-//      /** Include files.
-//       *
-//       *  All necessary semantics are included here.  This is where the user-defined semantics headers should be included. */
-//     +#include "IntervalSemantics.h"
-//     +#include "SymbolicSemantics.h"
-//      #include "RSIM_SemanticsInner.h"
-//      #include "RSIM_SemanticsOuter.h"
-//     +#include "demos/MultiWithConversion.h"
-//  
-//     diff --git a/projects/simulator/RSIM_Templates.h b/projects/simulator/RSIM_Templates.h
-//     index 47c722f..2e8d7a9 100644
-//     --- a/projects/simulator/RSIM_Templates.h
-//     +++ b/projects/simulator/RSIM_Templates.h
-//     @@ -393,4 +393,6 @@ RSIM_Semantics::InnerPolicy<State, ValueType>::load_sr_shadow(X86SegmentRegister
-//          //ROSE_ASSERT(sr_shadow[sr].present); //checked when used
-//      }
-//      
-//     +#include "demos/MultiWithConversionTpl.h"
-//     +
-//      #endif /* ROSE_RSIM_Templates_H */
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
  
 
+// Make simpler names for sub policy value types.  These are class templates. The rhs is defined in
+// RSIM_SemanticsSettings.h. We have to use #define until c++11.
+#define CONCRETE_VALUE RSIM_SEMANTICS_OUTER_0_VTYPE
+#define INTERVAL_VALUE RSIM_SEMANTICS_OUTER_1_VTYPE
+#define SYMBOLIC_VALUE RSIM_SEMANTICS_OUTER_2_VTYPE
 
+// Mixed-interpretation memory.  Addresses are symbolic expressions and values are value-identifiers.
+template <template <size_t> class ValueType>
+class MultiDomainDemoState: public RSIM_Semantics::OuterState<ValueType> {
+public:
+    typedef std::pair<SYMBOLIC_VALUE<32>, ValueType<8> > MemoryCell; // address/value pair
+    typedef std::list<MemoryCell> CellList;
+    CellList memory;
 
+    // Write a single byte to memory
+    void mem_write_byte(const SYMBOLIC_VALUE<32> &addr, const ValueType<8> &value);
+
+    // Read a single byte from memory
+    ValueType<8> mem_read_byte(const SYMBOLIC_VALUE<32> &addr);
+};
 
 // Define the template portion of the MultiDomainDemoPolicy so we don't have to repeat it over and over in the method
 // defintions found in MultiWithConversionTpl.h.  This also helps XEmac's c++-mode auto indentation engine since it seems to
@@ -120,12 +74,6 @@ public:
     RSIM_SEMANTICS_OUTER_BASE::SP1 INTERVAL;
     RSIM_SEMANTICS_OUTER_BASE::SP2 SYMBOLIC;
 
-    // Make simpler names for sub policy value types.  These are class templates. The rhs is defined in
-    // RSIM_SemanticsSettings.h. We have to use #define until c++11.
-#   define CONCRETE_VALUE RSIM_SEMANTICS_OUTER_0_VTYPE
-#   define INTERVAL_VALUE RSIM_SEMANTICS_OUTER_1_VTYPE
-#   define SYMBOLIC_VALUE RSIM_SEMANTICS_OUTER_2_VTYPE
-
     // Shorter type names for policies
     typedef RSIM_SEMANTICS_OUTER_0_POLICY<RSIM_SEMANTICS_OUTER_0_STATE, RSIM_SEMANTICS_OUTER_0_VTYPE> ConcretePolicy;
     typedef RSIM_SEMANTICS_OUTER_1_POLICY<RSIM_SEMANTICS_OUTER_1_STATE, RSIM_SEMANTICS_OUTER_1_VTYPE> IntervalPolicy;
@@ -134,6 +82,7 @@ public:
     const char *name;                                   // name to use in diagnostic messages
     bool triggered;                                     // Have we turned on any of our domains yet?
     unsigned allowed_policies;                          // domains that we can allow to be active (after we're triggered)
+    MultiDomainDemoState<ValueType> state;              // the mixed-semantic state (symbolic address, multi-value)
 
     // "Inherit" super class' constructors (assuming no c++11)
     MultiDomainDemoPolicy(RSIM_Thread *thread)
@@ -187,5 +136,10 @@ public:
     // most physical registers multiple times.  That's fine, as long as we're consistent.
     size_t symbolic_state_complexity();
 
-
+    // We want to do something special with memory in order to implement mixed semantics.  Therefore, we override the
+    // readMemory() and writeMemory() methods.
+    template<size_t nBits>
+    ValueType<nBits> readMemory(X86SegmentRegister sr, ValueType<32> addr, const ValueType<1> &cond);
+    template<size_t nBits>
+    void writeMemory(X86SegmentRegister sr, ValueType<32> addr, const ValueType<nBits> &data, const ValueType<1> &cond);
 };

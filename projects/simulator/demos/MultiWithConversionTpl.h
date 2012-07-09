@@ -193,3 +193,115 @@ MultiDomainDemoPolicy<State, ValueType>::symbolic_state_complexity()
     }
     return visitor.nnodes;
 }
+
+MULTI_DOMAIN_TEMPLATE
+template<size_t nBits>
+ValueType<nBits>
+MultiDomainDemoPolicy<State, ValueType>::readMemory(X86SegmentRegister sr, ValueType<32> addr, const ValueType<1> &cond)
+{
+    if (!triggered)
+        return  Super::template readMemory<nBits>(sr, addr, cond);
+
+    // We need a symbolic address. If we don't have one, then try to construct one from values we do have. (Andreas, this
+    // is the stuff you guys need to write--how to convert a value from one domain to another; I just stubbed this out for
+    // now. [RPM])
+    if (!addr.is_valid(SYMBOLIC)) {
+        if (addr.is_valid(INTERVAL)) {
+            // FIXME: scan through the possible address intervals and build an expression.  The interval semantics
+            // interface and the symbolic interface should already have the methods necessary.
+        } else if (addr.is_valid(CONCRETE)) {
+            assert(addr.get_subvalue(CONCRETE).is_known());
+            addr.set_subvalue(SYMBOLIC, SYMBOLIC_VALUE<32>(addr.get_subvalue(CONCRETE).known_value()));
+        }
+        assert(addr.is_valid(SYMBOLIC));
+    }
+
+    // Read a multi-byte value from memory in little-endian order.
+    assert(8==nBits || 16==nBits || 32==nBits);
+    SYMBOLIC_VALUE<32> a0 = addr.get_subvalue(SYMBOLIC);
+    ValueType<32> dword = this->concat(ValueType<24>(0), state.mem_read_byte(a0));
+    if (nBits>=16) {
+        SYMBOLIC_VALUE<32> a1 = this->get_policy(SYMBOLIC).add(a0, SYMBOLIC_VALUE<32>(1));
+        dword = this->or_(dword, this->concat(ValueType<16>(0),
+                                              this->concat(state.mem_read_byte(a1), ValueType<8>(0))));
+    }
+    if (nBits>=24) {
+        SYMBOLIC_VALUE<32> a2 = this->get_policy(SYMBOLIC).add(a0, SYMBOLIC_VALUE<32>(2));
+        dword = this->or_(dword, this->concat(ValueType<8>(0),
+                                              this->concat(state.mem_read_byte(a2), ValueType<16>(0))));
+    }
+    if (nBits>=32) {
+        SYMBOLIC_VALUE<32> a3 = this->get_policy(SYMBOLIC).add(a0, SYMBOLIC_VALUE<32>(3));
+        dword = this->or_(dword, this->concat(state.mem_read_byte(a3), ValueType<24>(0)));
+    }
+    return this->template extract<0, nBits>(dword);
+}
+
+MULTI_DOMAIN_TEMPLATE
+template<size_t nBits>
+void
+MultiDomainDemoPolicy<State, ValueType>::writeMemory(X86SegmentRegister sr, ValueType<32> addr,
+                                                     const ValueType<nBits> &data, const ValueType<1> &cond)
+{
+    // The concrete state should always do its own thing.
+    unsigned old_policies = this->get_active_policies();
+    try {
+        this->set_active_policies(CONCRETE.mask);
+        Super::template writeMemory<nBits>(sr, addr, data, cond);
+        this->set_active_policies(old_policies);
+    } catch (...) {
+        this->set_active_policies(old_policies);
+        throw;
+    }
+
+    // Do something special for our own domains
+    if (triggered) {
+        // We need a symbolic address. Cut-n-pasted from readMemory. FIXME
+        if (!addr.is_valid(SYMBOLIC)) {
+            if (addr.is_valid(INTERVAL)) {
+                // FIXME: scan through the possible address intervals and build an expression.  The interval semantics
+                // interface and the symbolic interface should already have the methods necessary.
+            } else if (addr.is_valid(CONCRETE)) {
+                assert(addr.get_subvalue(CONCRETE).is_known());
+                addr.set_subvalue(SYMBOLIC, SYMBOLIC_VALUE<32>(addr.get_subvalue(CONCRETE).known_value()));
+            }
+        }
+
+        // Add the address/value pair to the mixed-semantics memory state, one byte at a time in little-endian order.
+        if (addr.is_valid(SYMBOLIC)) {
+            assert(8==nBits || 16==nBits || 32==nBits);
+            SYMBOLIC_VALUE<32> a0 = addr.get_subvalue(SYMBOLIC);
+            ValueType<8> b0 = this->template extract<0, 8>(data);
+            state.mem_write_byte(a0, b0);
+            if (nBits>=16) {
+                SYMBOLIC_VALUE<32> a1 = this->get_policy(SYMBOLIC).add(a0, SYMBOLIC_VALUE<32>(1));
+                ValueType<8> b1 = this->template extract<8, 16>(data);
+                state.mem_write_byte(a1, b1);
+            }
+            if (nBits>=24) {
+                SYMBOLIC_VALUE<32> a2 = this->get_policy(SYMBOLIC).add(a0, SYMBOLIC_VALUE<32>(2));
+                ValueType<8> b2 = this->template extract<16, 24>(data);
+                state.mem_write_byte(a2, b2);
+            }
+            if (nBits>=32) {
+                SYMBOLIC_VALUE<32> a3 = this->get_policy(SYMBOLIC).add(a0, SYMBOLIC_VALUE<32>(3));
+                ValueType<8> b3 = this->template extract<24, 32>(data);
+                state.mem_write_byte(a3, b3);
+            }
+        }
+    }
+}
+
+template <template <size_t> class ValueType>
+void
+MultiDomainDemoState<ValueType>::mem_write_byte(const SYMBOLIC_VALUE<32> &addr, const ValueType<8> &value)
+{
+    memory.push_front(MemoryCell(addr, value));
+}
+
+template <template <size_t> class ValueType>
+ValueType<8>
+MultiDomainDemoState<ValueType>::mem_read_byte(const SYMBOLIC_VALUE<32> &addr)
+{
+    return ValueType<8>(); // FIXME: should return a McCarthy expression based on the cell list
+}
