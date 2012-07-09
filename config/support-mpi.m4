@@ -43,43 +43,6 @@ AC_DEFUN([ROSE_SUPPORT_MPI],
     MPI_LIBRARY_PATH=
   fi
 
-  dnl --with-mpi-bin=<path>
-  dnl
-  ROSE_ARG_WITH(
-    [mpi-bin],
-    [if the Message Passing Interface (MPI) bin directory was explicitly specified],
-    [use this Message Passing Interface (MPI) bin directory],
-    []
-  )
-  if test "x$CONFIG_HAS_ROSE_WITH_MPI_BIN" != "xno"; then
-      MPI_BIN_PATH="$ROSE_WITH_MPI_BIN"
-  fi
-
-  dnl --with-mpi-include=<path>
-  dnl
-  ROSE_ARG_WITH(
-    [mpi-include],
-    [if the Message Passing Interface (MPI) include directory was explicitly specified],
-    [use this Message Passing Interface (MPI) include directory],
-    []
-  )
-  if test "x$CONFIG_HAS_ROSE_WITH_MPI_INCLUDE" != "xno"; then
-      MPI_INCLUDE_PATH="$ROSE_WITH_MPI_INCLUDE"
-  fi
-
-  dnl --with-mpi-lib=<path>
-  dnl
-  ROSE_ARG_WITH(
-    [mpi-lib],
-    [if the Message Passing Interface (MPI) library directory was explicitly specified],
-    [use this Message Passing Interface (MPI) library directory],
-    []
-  )
-  if test "x$CONFIG_HAS_ROSE_WITH_MPI_LIB" != "xno"; then
-      MPI_LIBRARY_PATH="$ROSE_WITH_MPI_LIB" 
-  fi
-
-
   # Determine C MPI compiler flags
   #
   AC_REQUIRE([AC_PROG_CC])
@@ -122,6 +85,7 @@ AC_DEFUN([ROSE_SUPPORT_MPI],
 ])
 
 #
+# Todd Gamblin's module to detect mpi flags
 # LX_QUERY_MPI_COMPILER([compiler-var-name], [compiler-names], [output-var-prefix])
 #  ------------------------------------------------------------------------
 # AC_SUBST variables:
@@ -189,31 +153,6 @@ AC_DEFUN([LX_QUERY_MPI_COMPILER],
             ROSE_WITH_MPI_$3FLAGS=`  echo "$ROSE_WITH_MPI_$3FLAGS"   | tr '\n' ' ' | sed 's/^[[ \t]]*//;s/[[ \t]]*$//' | sed 's/  +/ /g'`
             ROSE_WITH_MPI_$3LDFLAGS=`echo "$ROSE_WITH_MPI_$3LDFLAGS" | tr '\n' ' ' | sed 's/^[[ \t]]*//;s/[[ \t]]*$//' | sed 's/  +/ /g'`
 
-            # OLD_CPPFLAGS=$CPPFLAGS
-            # OLD_LIBS=$LIBS
-            # CPPFLAGS=$ROSE_WITH_MPI_$3FLAGS
-            # LIBS=$ROSE_WITH_MPI_$3LDFLAGS
-
-            # AC_TRY_LINK([#include <mpi.h>],
-            #          [int rank, size;
-            #           MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-            #           MPI_Comm_size(MPI_COMM_WORLD, &size);],
-            #          [# Add a define for testing at compile time.
-            #           AC_DEFINE([HAVE_MPI], [1], [Define to 1 if you have MPI libs and headers.])
-            #           have_$3_mpi='yes'
-            #           AC_MSG_NOTICE([$3 MPI compiler binary found under $4])],
-            #          [# zero out mpi flags so we don't link against the faulty library.
-            #           ROSE_WITH_MPI_$3FLAGS=""
-            #           ROSE_WITH_MPI_$3LDFLAGS=""
-            #           have_$3_mpi='no'])
-
-            # Substitute in Makefiles
-            # AC_SUBST($1)
-            # AC_SUBST(ROSE_WITH_MPI_$3FLAGS)
-            # AC_SUBST(ROSE_WITH_MPI_$3LDFLAGS)
-
-            # LIBS=$OLD_LIBS
-            # CPPFLAGS=$OLD_CPPFLAGS
          fi
      else
 	AC_MSG_WARN([$3 MPI compiler not found])
