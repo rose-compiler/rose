@@ -260,7 +260,7 @@ namespace InsnSemanticsExpr {
          *  size will be zeroed. */
         static LeafNodePtr create_integer(size_t nbits, uint64_t n, std::string comment="");
 
-        /** Construct a new memory state.  A memory state is a function that maps an address of specified size to a value of
+        /** Construct a new memory state.  A memory state is a function that maps a 32-bit address to a value of
          *  specified size. */
         static LeafNodePtr create_memory(size_t nbits, std::string comment="");
 
