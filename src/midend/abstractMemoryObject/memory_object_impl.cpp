@@ -737,7 +737,8 @@ namespace AbstractMemoryObject {
   }
 
   // FIX:
-  // Sriram 06/26/2012 
+  // Sriram 06/26/2012
+  //
   bool NamedObj::mustEqual (const NamedObj & o2) const
   {    
     bool rt = false;
