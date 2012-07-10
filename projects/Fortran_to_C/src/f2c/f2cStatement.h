@@ -6,9 +6,9 @@
 
 namespace Fortran_to_C 
 {
-    void transFileName(SgFile*);
-    void transProgramHeaderStatement(SgProgramHeaderStatement*);
-    void transProcedureHeaderStatement(SgProcedureHeaderStatement*);
+    void translateFileName(SgProject*);
+    void translateProgramHeaderStatement(SgProject*);
+    void translateProcedureHeaderStatement(SgProject*);
 }
 
 #endif  //_FORTRANTOC_H
