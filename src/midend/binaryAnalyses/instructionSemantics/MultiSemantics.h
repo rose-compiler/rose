@@ -239,14 +239,22 @@ namespace BinaryAnalysis {                      // documented elsewhere
 
                 /** Print the value. Prints subvalues that are marked as valid. */
                 void print(std::ostream &o) const {
-                    if (is_valid(SP0()))
-                        o <<get_subvalue(SP0());
-                    if (is_valid(SP1()))
-                        o <<get_subvalue(SP1());
-                    if (is_valid(SP2()))
-                        o <<get_subvalue(SP2());
-                    if (is_valid(SP3()))
-                        o <<get_subvalue(SP3());
+                    std::string sep="";
+                    if (is_valid(SP0())) {
+                        o <<sep <<"SP0: " <<get_subvalue(SP0());
+                        sep = "; ";
+                    }
+                    if (is_valid(SP1())) {
+                        o <<sep <<"SP1: " <<get_subvalue(SP1());
+                        sep = "; ";
+                    }
+                    if (is_valid(SP2())) {
+                        o <<sep <<"SP2: " <<get_subvalue(SP2());
+                        sep = "; ";
+                    }
+                    if (is_valid(SP3())) {
+                        o <<sep <<"SP3: " <<get_subvalue(SP3());
+                    }
                 }
                 friend std::ostream& operator<<(std::ostream &o, const ValueType<nBits> &e) {
                     e.print(o);
