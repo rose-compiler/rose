@@ -3,7 +3,9 @@
 #include "rose.h"
 #include "RSIM_Private.h"
 
-#ifdef ROSE_ENABLE_SIMULATOR
+// This source file can only be compiled if the simulator is enabled. Furthermore, it only makes sense to compile this file if
+// the simulator is using our code from MultiWithConversion.h (i.e., the patch described in that file has been applied to RSIM).
+#if defined(ROSE_ENABLE_SIMULATOR) && defined(RSIM_MultiWithConversion_H)
 
 #include "RSIM_Linux32.h"
 

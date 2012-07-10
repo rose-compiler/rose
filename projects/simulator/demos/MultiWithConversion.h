@@ -32,7 +32,16 @@
 //     In RSIM_Templates.h
 //         5. Include our method definitions from MultiWithConverstionTpl.h
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
- 
+
+#ifndef RSIM_MultiWithConversion_H
+#define RSIM_MultiWithConversion_H              /* used by MultiWithConversion.C */
+
+namespace MultiDomainDemo {
+
+// Make names for the sub policies.
+static const RSIM_SEMANTICS_OUTER_BASE::SP0 CONCRETE = RSIM_SEMANTICS_OUTER_BASE::SP0();
+static const RSIM_SEMANTICS_OUTER_BASE::SP1 INTERVAL = RSIM_SEMANTICS_OUTER_BASE::SP1();
+static const RSIM_SEMANTICS_OUTER_BASE::SP2 SYMBOLIC = RSIM_SEMANTICS_OUTER_BASE::SP2();
 
 // Make simpler names for sub policy value types.  These are class templates. The rhs is defined in
 // RSIM_SemanticsSettings.h. We have to use #define until c++11.
@@ -40,22 +49,42 @@
 #define INTERVAL_VALUE RSIM_SEMANTICS_OUTER_1_VTYPE
 #define SYMBOLIC_VALUE RSIM_SEMANTICS_OUTER_2_VTYPE
 
+// Shorter type names for policies
+typedef RSIM_SEMANTICS_OUTER_0_POLICY<RSIM_SEMANTICS_OUTER_0_STATE, RSIM_SEMANTICS_OUTER_0_VTYPE> ConcretePolicy;
+typedef RSIM_SEMANTICS_OUTER_1_POLICY<RSIM_SEMANTICS_OUTER_1_STATE, RSIM_SEMANTICS_OUTER_1_VTYPE> IntervalPolicy;
+typedef RSIM_SEMANTICS_OUTER_2_POLICY<RSIM_SEMANTICS_OUTER_2_STATE, RSIM_SEMANTICS_OUTER_2_VTYPE> SymbolicPolicy;
+
 // Mixed-interpretation memory.  Addresses are symbolic expressions and values are value-identifiers.
 template <template <size_t> class ValueType>
-class MultiDomainDemoState: public RSIM_Semantics::OuterState<ValueType> {
+class State: public RSIM_Semantics::OuterState<ValueType> {
 public:
-    typedef std::pair<SYMBOLIC_VALUE<32>, ValueType<8> > MemoryCell; // address/value pair
-    typedef std::list<MemoryCell> CellList;
-    CellList memory;
+    typedef std::pair<uint64_t, ValueType<8> > MemoryCell;      // pair of symbolic variable number and multi-value
+    typedef std::map<uint64_t, ValueType<8> > MemoryCells;
+    MemoryCells memvals;                                        // mapping from symbolic variable number to multi-value
+    InsnSemanticsExpr::TreeNodePtr mccarthy;                    // McCarthy expression for the current memory state
+
+    State() {
+        mccarthy = InsnSemanticsExpr::LeafNode::create_memory(8, "empty memory");
+    }
 
     // Write a single byte to memory
     void mem_write_byte(const SYMBOLIC_VALUE<32> &addr, const ValueType<8> &value);
 
     // Read a single byte from memory
     ValueType<8> mem_read_byte(const SYMBOLIC_VALUE<32> &addr);
+
+    // Given a free memory variable, return the associated multi-value.
+    ValueType<8> get_memval(InsnSemanticsExpr::LeafNodePtr);
+
+    // Printing
+    void print(std::ostream&) const;
+    friend std::ostream& operator<<(std::ostream &o, const State &state) {
+        state.print(o);
+        return o;
+    }
 };
 
-// Define the template portion of the MultiDomainDemoPolicy so we don't have to repeat it over and over in the method
+// Define the template portion of the MultiDomainDemo::Policy so we don't have to repeat it over and over in the method
 // defintions found in MultiWithConversionTpl.h.  This also helps XEmac's c++-mode auto indentation engine since it seems to
 // get confused by complex multi-line templates.
 #define MULTI_DOMAIN_TEMPLATE template <                                                                                       \
@@ -65,27 +94,17 @@ public:
 
 
 MULTI_DOMAIN_TEMPLATE
-class MultiDomainDemoPolicy: public RSIM_Semantics::OuterPolicy<State, ValueType> {
+class Policy: public RSIM_Semantics::OuterPolicy<State, ValueType> {
 public:
     typedef                         RSIM_Semantics::OuterPolicy<State, ValueType> Super;
-
-    // Make names for the sub policies.
-    RSIM_SEMANTICS_OUTER_BASE::SP0 CONCRETE;
-    RSIM_SEMANTICS_OUTER_BASE::SP1 INTERVAL;
-    RSIM_SEMANTICS_OUTER_BASE::SP2 SYMBOLIC;
-
-    // Shorter type names for policies
-    typedef RSIM_SEMANTICS_OUTER_0_POLICY<RSIM_SEMANTICS_OUTER_0_STATE, RSIM_SEMANTICS_OUTER_0_VTYPE> ConcretePolicy;
-    typedef RSIM_SEMANTICS_OUTER_1_POLICY<RSIM_SEMANTICS_OUTER_1_STATE, RSIM_SEMANTICS_OUTER_1_VTYPE> IntervalPolicy;
-    typedef RSIM_SEMANTICS_OUTER_2_POLICY<RSIM_SEMANTICS_OUTER_2_STATE, RSIM_SEMANTICS_OUTER_2_VTYPE> SymbolicPolicy;
 
     const char *name;                                   // name to use in diagnostic messages
     bool triggered;                                     // Have we turned on any of our domains yet?
     unsigned allowed_policies;                          // domains that we can allow to be active (after we're triggered)
-    MultiDomainDemoState<ValueType> state;              // the mixed-semantic state (symbolic address, multi-value)
+    State<ValueType> state;                             // the mixed-semantic state (symbolic address, multi-value)
 
     // "Inherit" super class' constructors (assuming no c++11)
-    MultiDomainDemoPolicy(RSIM_Thread *thread)
+    Policy(RSIM_Thread *thread)
         : Super(thread), name(NULL), triggered(false), allowed_policies(0x07) {
         init();
     }
@@ -142,4 +161,16 @@ public:
     ValueType<nBits> readMemory(X86SegmentRegister sr, ValueType<32> addr, const ValueType<1> &cond);
     template<size_t nBits>
     void writeMemory(X86SegmentRegister sr, ValueType<32> addr, const ValueType<nBits> &data, const ValueType<1> &cond);
+
+    // Print the states for each sub-domain and our own state containing the mixed semantics memory.
+    void print(std::ostream&) const;
+    friend std::ostream& operator<<(std::ostream &o, const Policy &p) {
+        p.print(o);
+        return o;
+    }
+
 };
+    
+} // namespace
+
+#endif

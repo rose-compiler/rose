@@ -3,13 +3,15 @@
 
 #include "YicesSolver.h"
 
+namespace MultiDomainDemo {
+
 MULTI_DOMAIN_TEMPLATE
 void
-MultiDomainDemoPolicy<State, ValueType>::init()
+Policy<State, ValueType>::init()
 {
     // We can't call anything here that uses the policy's RSIM_Thread because the thread is not fully initialized yet.
-    name = "MultiDomainDemoPolicy";
-    std::cerr <<"RSIM is using MultiDomainDemoPolicy (see demos/MultiWithConversion.h)\n";
+    name = "MultiDomainDemo::Policy";
+    std::cerr <<"RSIM is using MultiDomainDemo::Policy (see demos/MultiWithConversion.h)\n";
 
     // By default, disable all our sub-domains.  Only allow the simulator's domain to be active.
     this->set_active_policies(CONCRETE.mask);
@@ -35,14 +37,14 @@ MultiDomainDemoPolicy<State, ValueType>::init()
 
 MULTI_DOMAIN_TEMPLATE
 RTS_Message *
-MultiDomainDemoPolicy<State, ValueType>::trace()
+Policy<State, ValueType>::trace()
 {
     return this->get_policy(CONCRETE).thread->tracing(TRACE_MISC);
 }
 
 MULTI_DOMAIN_TEMPLATE
 void
-MultiDomainDemoPolicy<State, ValueType>::trigger(rose_addr_t target_va)
+Policy<State, ValueType>::trigger(rose_addr_t target_va)
 {
     trace()->mesg("%s: triggered; enabling all sub-domains; branching to 0x%"PRIx64, name, target_va);
     this->set_active_policies(allowed_policies);
@@ -52,7 +54,7 @@ MultiDomainDemoPolicy<State, ValueType>::trigger(rose_addr_t target_va)
 
 MULTI_DOMAIN_TEMPLATE
 void
-MultiDomainDemoPolicy<State, ValueType>::startInstruction(SgAsmInstruction *insn_)
+Policy<State, ValueType>::startInstruction(SgAsmInstruction *insn_)
 {
     if (triggered) {
         SgAsmx86Instruction *insn = isSgAsmx86Instruction(insn_);
@@ -99,7 +101,7 @@ MultiDomainDemoPolicy<State, ValueType>::startInstruction(SgAsmInstruction *insn
         this->writeRegister("eip", RSIM_SEMANTICS_VTYPE<32>(insn->get_address()));
 
         // This paragraph shows how you can get some statistics about how the SMT solver is being used.  The input and output
-        // sizes will always be zero if you're using LM_LIBRARY linkage (see MultiDomainDemoPolicy::init).  You can also get
+        // sizes will always be zero if you're using LM_LIBRARY linkage (see MultiDomainDemo::Policy::init).  You can also get
         // class-wide statistics by using get_class_stats() and reset_class_stats().  See ROSE doxygen documentation for the
         // SMTSolver class.
         static size_t ncalls = 0;
@@ -121,14 +123,14 @@ MultiDomainDemoPolicy<State, ValueType>::startInstruction(SgAsmInstruction *insn
 
 MULTI_DOMAIN_TEMPLATE
 void
-MultiDomainDemoPolicy<State, ValueType>::finishInstruction(SgAsmInstruction *insn)
+Policy<State, ValueType>::finishInstruction(SgAsmInstruction *insn)
 {
     Super::finishInstruction(insn);
     if (triggered) {
         // Here's how you could get a trace showing the complete machine state in every semantic domain. The simulator's
-        // "--debug=insn,state" does something similar but only shows the concrete domain.  If you want a heading above each
-        // domain's state then you should print them individually.
-        std::ostringstream ss; ss <<*this;
+        // "--debug=insn,state" does something similar but only shows the concrete domain.
+        std::ostringstream ss;
+        this->print(ss);
         trace()->mesg("%s: complete state after %s\n%s",
                       name, unparseInstruction(insn).c_str(), StringUtility::prefixLines(ss.str(), "    ").c_str());
 
@@ -145,7 +147,7 @@ MultiDomainDemoPolicy<State, ValueType>::finishInstruction(SgAsmInstruction *ins
 MULTI_DOMAIN_TEMPLATE
 template<size_t nBits>
 ValueType<nBits>
-MultiDomainDemoPolicy<State, ValueType>::xor_(const ValueType<nBits> &a, const ValueType<nBits> &b)
+Policy<State, ValueType>::xor_(const ValueType<nBits> &a, const ValueType<nBits> &b)
 {
     ValueType<nBits> retval = Super::xor_(a, b);
     if (triggered) {
@@ -173,7 +175,7 @@ MultiDomainDemoPolicy<State, ValueType>::xor_(const ValueType<nBits> &a, const V
 
 MULTI_DOMAIN_TEMPLATE
 size_t
-MultiDomainDemoPolicy<State, ValueType>::symbolic_state_complexity()
+Policy<State, ValueType>::symbolic_state_complexity()
 {
     const RegisterDictionary::Entries &regs = this->get_policy(SYMBOLIC).get_register_dictionary()->get_registers();
     ExprNodeCounter visitor;
@@ -197,7 +199,7 @@ MultiDomainDemoPolicy<State, ValueType>::symbolic_state_complexity()
 MULTI_DOMAIN_TEMPLATE
 template<size_t nBits>
 ValueType<nBits>
-MultiDomainDemoPolicy<State, ValueType>::readMemory(X86SegmentRegister sr, ValueType<32> addr, const ValueType<1> &cond)
+Policy<State, ValueType>::readMemory(X86SegmentRegister sr, ValueType<32> addr, const ValueType<1> &cond)
 {
     if (!triggered)
         return  Super::template readMemory<nBits>(sr, addr, cond);
@@ -240,8 +242,8 @@ MultiDomainDemoPolicy<State, ValueType>::readMemory(X86SegmentRegister sr, Value
 MULTI_DOMAIN_TEMPLATE
 template<size_t nBits>
 void
-MultiDomainDemoPolicy<State, ValueType>::writeMemory(X86SegmentRegister sr, ValueType<32> addr,
-                                                     const ValueType<nBits> &data, const ValueType<1> &cond)
+Policy<State, ValueType>::writeMemory(X86SegmentRegister sr, ValueType<32> addr,
+                                      const ValueType<nBits> &data, const ValueType<1> &cond)
 {
     // The concrete state should always do its own thing.
     unsigned old_policies = this->get_active_policies();
@@ -292,16 +294,77 @@ MultiDomainDemoPolicy<State, ValueType>::writeMemory(X86SegmentRegister sr, Valu
     }
 }
 
+MULTI_DOMAIN_TEMPLATE
+void
+Policy<State, ValueType>::print(std::ostream &o) const
+{
+    o <<"== Concrete State ==\n" <<this->get_policy(CONCRETE) <<"\n"
+      <<"== Interval State ==\n" <<this->get_policy(INTERVAL) <<"\n"
+      <<"== Symbolic State ==\n";
+    this->get_policy(SYMBOLIC).print(o); //FIXME: "o<<this->get_policy(SYMBOLIC)" throws std::logic_error
+    o <<"\n"
+      <<"== Multi Memory ==\n" <<state <<"\n";
+}
+
 template <template <size_t> class ValueType>
 void
-MultiDomainDemoState<ValueType>::mem_write_byte(const SYMBOLIC_VALUE<32> &addr, const ValueType<8> &value)
+State<ValueType>::mem_write_byte(const SYMBOLIC_VALUE<32> &addr, const ValueType<8> &value)
 {
-    memory.push_front(MemoryCell(addr, value));
+    using namespace InsnSemanticsExpr;
+    LeafNodePtr memvar = LeafNode::create_variable(8, "MEMVAR");
+    memvals.insert(std::make_pair(memvar->get_name(), value));
+    mccarthy = InternalNode::create(8, OP_WRITE, mccarthy, addr.get_expression(), memvar);
 }
 
 template <template <size_t> class ValueType>
 ValueType<8>
-MultiDomainDemoState<ValueType>::mem_read_byte(const SYMBOLIC_VALUE<32> &addr)
+State<ValueType>::mem_read_byte(const SYMBOLIC_VALUE<32> &addr)
 {
-    return ValueType<8>(); // FIXME: should return a McCarthy expression based on the cell list
+    using namespace InsnSemanticsExpr;
+    SYMBOLIC_VALUE<8> read_op(InternalNode::create(8, OP_READ, mccarthy, addr.get_expression()));
+    ValueType<8> retval;
+    retval.set_subvalue(SYMBOLIC, read_op);
+    return retval;
 }
+
+template <template <size_t> class ValueType>
+ValueType<8>
+State<ValueType>::get_memval(InsnSemanticsExpr::LeafNodePtr memvar)
+{
+    assert(memvar->is_variable());
+    typename MemoryCells::const_iterator found = memvals.find(memvar->get_name());
+    assert(found!=memvals.end()); // perhaps we want to return a fresh ValueType<8>() instead.
+    return found->second;
+}
+
+template <template <size_t> class ValueType>
+void
+State<ValueType>::print(std::ostream &o) const
+{
+    // We could just print the McCarthy expression and the memvals map, but that would be exceptionally difficult for humans to
+    // read.  So instead, we scan through the McCarthy expression and print each 'write' operation individually in
+    // chronological order.
+    using namespace InsnSemanticsExpr;
+    struct T1: public Visitor {
+        std::ostream &o;
+        const State<ValueType> &state;
+        T1(std::ostream &o, const State<ValueType> &state): o(o), state(state) {}
+        virtual void operator()(const TreeNodePtr &node_) /*override*/ {
+            InternalNodePtr node = node_->isInternalNode();
+            if (node && OP_WRITE==node->get_operator() && 3==node->size()) {
+                TreeNodePtr addr = node->child(1);
+                LeafNodePtr memvar = node->child(2)->isLeafNode();
+                if (memvar && memvar->is_variable()) {
+                    typename MemoryCells::const_iterator found = state.memvals.find(memvar->get_name());
+                    if (found!=state.memvals.end()) {
+                        o <<"    address = " <<addr <<"\n"
+                          <<"      value = " <<found->second <<"\n";
+                    }
+                }
+            }
+        }
+    } t1(o, *this);
+    mccarthy->depth_first_visit(&t1);
+}
+
+} // namespace
