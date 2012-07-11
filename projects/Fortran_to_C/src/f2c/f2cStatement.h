@@ -9,6 +9,7 @@ namespace Fortran_to_C
     void translateFileName(SgProject*);
     void translateProgramHeaderStatement(SgProject*);
     void translateProcedureHeaderStatement(SgProject*);
+    void fixFortranSymbolTable(SgNode*, bool);
 }
 
 #endif  //_FORTRANTOC_H

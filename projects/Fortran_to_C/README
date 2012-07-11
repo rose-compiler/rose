@@ -27,9 +27,17 @@ The output file has prefix name "rose_f2c_".
 
 ------------------------------------------------------------------------------------------
 Feasible capabilities:
+  
+  Simple program, function, subroutine declaration.
+  Simple if statement.  
+  
+  Source Node (Fortran)		========>		Target Node (C) 
+  
+  SgProgramHeaderStatement				SgFunctionDeclaration
+  SgProcedureHeaderStatement				SgFunctionDeclaration
 
-	Source Node (Fortran)		========>		Target Node (C) 
-
-	SgProgramHeaderStatement				SgFunctionDeclaration
-	SgProcedureHeaderStatement				SgFunctionDeclaration
-
+------------------------------------------------------------------------------------------
+TODO list:
+  1. Array declaration.
+  2. Fortran do loop.
+  3. Equivalence statement.
