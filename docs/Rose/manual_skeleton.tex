@@ -1,0 +1,89 @@
+% Liao, 7/12/2012
+% This skeleton file is provided to eliminate the number of hoops needed to even fix a typo in a chapter of a manual.
+% The motivation is that most chapters only contain standard LaTeX content without references to any generated files in the ROSE build tree.
+% They should be able to be built without going through the length make, make check in the build tree.
+% 
+% The solution is to have this skeleton file which can be used to test an individual chapter within the source tree.
+
+% To use this file:
+%  1. change \input{developersAppendix} to include the chapter you want to improve
+%  2. type 'pdflatex manual_skeleton.tex' to check the final result
+
+
+\documentclass[10pt]{book}
+\usepackage{verbatim}
+\usepackage[draft]{fixme}
+\usepackage{listings}
+\usepackage{html}
+\usepackage{color}
+\usepackage{multicol}
+\usepackage{multirow}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\hypersetup {
+colorlinks= true,
+urlcolor=blue,
+citecolor=black,
+linkcolor=black,
+}
+
+\lstset{language=C++,basicstyle=\footnotesize }
+
+\newcommand{\mySmallFontSize}{\footnotesize}
+%\newcommand{\mySmallFontSize}{\scriptsize} % scriptsize is too small, 
+% Liao 4/21/2010
+\newcommand{\mySmallestFontSize}{\tiny}
+% Latex trick to allow us to comment out large sections of documentation
+\newcommand{\commentout}[1]{}
+
+% change the title of the Fixme List
+\renewcommand{\listfixmename}{Things to Fix in Documentation of ROSE}
+
+\newcommand{\comm}[2]{\bigskip
+                      \begin{tabular}{|p{11cm}|}\hline
+                      \multicolumn{1}{|c|}{{\bf Comment by #1}}\\ \hline
+                      #2\\ \hline
+                      \end{tabular}
+                      \bigskip
+                     }
+
+\def\verbatimfile#1{\begingroup
+                    \@verbatim \frenchspacing \@vobeyspaces
+                    \input#1 \endgroup
+}
+
+\newcounter{lineno}
+
+% Taken from verbatimfiles.sty on web
+\makeatletter %JCL
+
+\def\verbatimlisting#1{\setcounter{lineno}{0}%
+    \begingroup \@verbatim \frenchspacing \@vobeyspaces \parindent=20pt
+    \everypar{\stepcounter{lineno}\llap{\thelineno\ \ }}\input#1
+    \endgroup
+}
+
+\makeatother %JCL
+
+\addtolength{\oddsidemargin}{-1.0in}
+\addtolength{\evensidemargin}{-1.0in}
+\addtolength{\textwidth}{2.0in}
+
+
+%---------------------------------------------------------------------
+% Begin Document
+%---------------------------------------------------------------------
+
+\begin{document}
+
+\input{developersAppendix}
+
+
+\end{document}
+
+
+
+
+
