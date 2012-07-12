@@ -25,6 +25,7 @@ protected:
     return dynamic_cast<LatticeType *>(prodLat->getVarLattice(var));
   }
 
+  //! create three lattices from a binary operation: lhs, rhs, and result lattices
   bool getLattices(const SgBinaryOp *sgn, LatticeType* &arg1Lat, LatticeType* &arg2Lat, LatticeType* &resLat) {
     arg1Lat = getLattice(sgn->get_lhs_operand());
     arg2Lat = getLattice(sgn->get_rhs_operand());
@@ -38,6 +39,7 @@ protected:
 
     return (arg1Lat && arg2Lat && resLat);
   }
+  
   bool getLattices(const SgUnaryOp *sgn,  LatticeType* &arg1Lat, LatticeType* &arg2Lat, LatticeType* &resLat) {
     arg1Lat = getLattice(sgn->get_operand());
     resLat = getLattice(sgn);
