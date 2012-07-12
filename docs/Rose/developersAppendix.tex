@@ -941,7 +941,15 @@ SOURCE_VARARG_OPERATOR_END
 \end{verbatim} 
 }}
 
-     \item Modify the EDG/SAGE connection code to have the new IR node built in the
+     \item Creating the new IR node at some point, such as somewhere within frontend, midend, or even backend if desired.
+           This step is decided by the purpose of the newly added IR types.
+           If the new types of IR come from their counterparts in EDG, then modifications to the EDG/SAGE connection code are needed.
+           If you are trying to represent some pragma information, you don't need to touch EDG and its connection. 
+           You just parse the pragma string in the original AST and create your own nodes to get a new version of AST. 
+           Then it should be done.
+
+           Here are the instructions if the new IR node is connected to EDG IR node.
+           Modify the EDG/SAGE connection code to have the new IR node built in the
            translation from EDG to SAGE III.  This step often requires a bit of expertise
            in working with the EDG/SAGE connection code. In general, it requires no great
            depth of knowledge of EDG.
