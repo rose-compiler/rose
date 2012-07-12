@@ -357,7 +357,7 @@ Grammar::writeFile ( const StringUtility::FileWithLineNumbers & outputString,
           printf ("outputFilename = %s could not be opened, likely the directory is missing...\n",outputFilename.c_str());
           string command = "mkdir -p " + target_directory + sourceCodeDirectoryName();
 
-       // DQ (12/28/2009): As I recall there is a more secure way to do this...see sageSupport.C for an example.
+       // DQ (12/28/2009): As I recall there is a more secure way to do this...see sage_support.cpp for an example.
           printf ("Calling system(%s): making a new directory in the build tree...\n",command.c_str());
           system(command.c_str());
 
@@ -397,7 +397,7 @@ Grammar::appendFile ( const StringUtility::FileWithLineNumbers & outputString,
           printf ("outputFilename = %s could not be opened, likely the directory is missing...\n",outputFilename.c_str());
           string command = "mkdir -p " + target_directory + sourceCodeDirectoryName();
 
-       // DQ (12/28/2009): As I recall there is a more secure way to do this...see sageSupport.C for an example.
+       // DQ (12/28/2009): As I recall there is a more secure way to do this...see sage_support.cpp for an example.
           printf ("Calling system(%s): making a new directory in the build tree...\n",command.c_str());
           system(command.c_str());
 
@@ -2628,35 +2628,35 @@ Grammar::buildCode ()
      ROSE_ArrayGrammarHeaderFile << buildStorageClassDeclarations();
 
      ROSE_ArrayGrammarHeaderFile << "\n\n";
-     ROSE_ArrayGrammarHeaderFile << "std::ostream& operator<<(std::ostream&, SgName&);\n\n";
+     ROSE_ArrayGrammarHeaderFile << "std::ostream& operator<<(std::ostream&, const SgName&);\n\n";
 
   // DQ (12/6/2003): Added output function for SgBitVector objects
-     ROSE_ArrayGrammarHeaderFile << "std::ostream& operator<<(std::ostream&, std::vector<bool>&);\n\n";
+     ROSE_ArrayGrammarHeaderFile << "std::ostream& operator<<(std::ostream&, const std::vector<bool>&);\n\n";
 
   // DQ (8/3/2005): Added output function for STL set objects
-     ROSE_ArrayGrammarHeaderFile << "std::ostream& operator<<(std::ostream&, std::set<int>&);\n\n";
+     ROSE_ArrayGrammarHeaderFile << "std::ostream& operator<<(std::ostream&, const std::set<int>&);\n\n";
 
   // DQ (10/4/2006): Added output function for STL map objects
-     ROSE_ArrayGrammarHeaderFile << "std::ostream& operator<<(std::ostream&, std::map<SgNode*,int>&);\n\n";
+     ROSE_ArrayGrammarHeaderFile << "std::ostream& operator<<(std::ostream&, const std::map<SgNode*,int>&);\n\n";
 
   // DQ (10/6/2006): Added output function for STL map objects
-     ROSE_ArrayGrammarHeaderFile << "std::ostream& operator<<(std::ostream&, std::map<SgNode*,std::string>&);\n\n";
+     ROSE_ArrayGrammarHeaderFile << "std::ostream& operator<<(std::ostream&, const std::map<SgNode*,std::string>&);\n\n";
 
   // DQ (3/31/2007): Modified to be a list instead of a set (and added case for list of SgAsmExpression),
   //                 though I am not certain these are even required to be specified.
   // DQ (3/15/2007): Added output function for STL list objects
-  // ROSE_ArrayGrammarHeaderFile << "std::ostream& operator<<(std::ostream&, std::set<SgAsmStatement*>&);\n\n";
+  // ROSE_ArrayGrammarHeaderFile << "std::ostream& operator<<(std::ostream&, const std::set<SgAsmStatement*>&);\n\n";
 
-     ROSE_ArrayGrammarHeaderFile << "std::ostream& operator<<(std::ostream&, Rose_STL_Container<SgAsmStatement*>&);\n\n";
-     ROSE_ArrayGrammarHeaderFile << "std::ostream& operator<<(std::ostream&, Rose_STL_Container<SgAsmExpression*>&);\n\n";
+     ROSE_ArrayGrammarHeaderFile << "std::ostream& operator<<(std::ostream&, const Rose_STL_Container<SgAsmStatement*>&);\n\n";
+     ROSE_ArrayGrammarHeaderFile << "std::ostream& operator<<(std::ostream&, const Rose_STL_Container<SgAsmExpression*>&);\n\n";
 
   // DQ (11/20/2007): Part of support for the Fortran data statement
-     ROSE_ArrayGrammarHeaderFile << "std::ostream& operator<<(std::ostream&, Rose_STL_Container<SgDataStatementObject*>&);\n\n";
-     ROSE_ArrayGrammarHeaderFile << "std::ostream& operator<<(std::ostream&, Rose_STL_Container<SgDataStatementValue*>&);\n\n";
-     ROSE_ArrayGrammarHeaderFile << "std::ostream& operator<<(std::ostream&, Rose_STL_Container<SgCommonBlockObject*>&);\n\n";
-     ROSE_ArrayGrammarHeaderFile << "std::ostream& operator<<(std::ostream&, Rose_STL_Container<SgDimensionObject*>&);\n\n";
-     ROSE_ArrayGrammarHeaderFile << "std::ostream& operator<<(std::ostream&, Rose_STL_Container<SgLabelSymbol*>&);\n\n";
-     ROSE_ArrayGrammarHeaderFile << "std::ostream& operator<<(std::ostream&, Rose_STL_Container<SgFormatItem*>&);\n\n";
+     ROSE_ArrayGrammarHeaderFile << "std::ostream& operator<<(std::ostream&, const Rose_STL_Container<SgDataStatementObject*>&);\n\n";
+     ROSE_ArrayGrammarHeaderFile << "std::ostream& operator<<(std::ostream&, const Rose_STL_Container<SgDataStatementValue*>&);\n\n";
+     ROSE_ArrayGrammarHeaderFile << "std::ostream& operator<<(std::ostream&, const Rose_STL_Container<SgCommonBlockObject*>&);\n\n";
+     ROSE_ArrayGrammarHeaderFile << "std::ostream& operator<<(std::ostream&, const Rose_STL_Container<SgDimensionObject*>&);\n\n";
+     ROSE_ArrayGrammarHeaderFile << "std::ostream& operator<<(std::ostream&, const Rose_STL_Container<SgLabelSymbol*>&);\n\n";
+     ROSE_ArrayGrammarHeaderFile << "std::ostream& operator<<(std::ostream&, const Rose_STL_Container<SgFormatItem*>&);\n\n";
 
   // traversal order
   // ROSE_ArrayGrammarHeaderFile << "typedef enum {preorder, postorder} t_traverseOrder;\n\n";
@@ -2744,7 +2744,8 @@ Grammar::buildCode ()
    //  string includeSage3 ="#include \"Cxx_Grammar.h\"\n\n";
    //  includeHeaderString += includeSage3;
 
-     string includeHeaderAstFileIO = "#include \"AST_FILE_IO.h\"\n\n";
+  // string includeHeaderAstFileIO = "#include \"AST_FILE_IO.h\"\n\n";
+     string includeHeaderAstFileIO = "#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT\n   #include \"AST_FILE_IO.h\"\n#endif \n";
      includeHeaderString += includeHeaderAstFileIO;
 
   // DQ (10/14/2010):  This should only be included by source files that require it.

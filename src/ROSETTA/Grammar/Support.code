@@ -1,4 +1,4 @@
-# Support functions for definition of C++ grammar (SAGE 3)
+// Support functions for definition of C++ grammar (SAGE 3)
 
 HEADER_START
   // DQ (4/13/2004): Make the copy constructor parameter a const ref instead of just ref parameter
@@ -357,9 +357,12 @@ HEADER_INCIDENCE_DIRECTED_GRAPH_START
  //! Add support for externally build SgGraphNode objects
      SgDirectedGraphEdge* addDirectedEdge( SgDirectedGraphEdge* edge  );
 
+ //! Remove an edge from graph
+     bool removeDirectedEdge( SgDirectedGraphEdge* edge  );
+     
 	// tps (4/30/2009): Added to support functionality for DirectedGraphs		   
-     void getSuccessors(SgGraphNode* node, std::vector <SgGraphNode*>& vec );
-     void getPredecessors(SgGraphNode* node, std::vector <SgGraphNode*>& vec );
+     void getSuccessors(const SgGraphNode* node, std::vector <SgGraphNode*>& vec ) const;
+     void getPredecessors(const SgGraphNode* node, std::vector <SgGraphNode*>& vec ) const;
      std::set<SgDirectedGraphEdge*> getDirectedEdge(SgGraphNode* src, SgGraphNode* trg);
      bool checkIfDirectedGraphEdgeExists(SgGraphNode* src, SgGraphNode* trg);
 
@@ -430,6 +433,10 @@ HEADER_CV_TYPE_MODIFIER_START
                e_default,      /*!< Default value (default) */
                e_const,        /*!< Const qualifier */
                e_volatile,     /*!< Volatile qualifier */
+
+            // DQ (8/11/2011): Added support for Java "transient" modifier.
+               e_java_transient,    /*!< Java transient qualifier (specifies no serialization of declaration) */
+
                e_last_modifier /*!< last value (unused, serves as upper bound on values) */
              };
 
@@ -461,10 +468,15 @@ HEADER_CV_TYPE_MODIFIER_START
        // DQ (3/21/2005): See comment for unsetConst() above
           void unsetVolatile();
 
+       // DQ (8/11/2011): Java support.
+          bool isJavaTransient() const;
+          void setJavaTransient();
+          void unsetJavaTransient();
+
           std::string displayString() const;
           void display ( std::string label ) const;
-          friend std::ostream & operator<< ( std::ostream & os, SgConstVolatileModifier & m );
-		  friend bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs);
+          friend std::ostream & operator<< ( std::ostream & os, const SgConstVolatileModifier & m );
+          friend bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs);
 
        // DQ (2/4/2006): Added mechamism to clear all bits
           void reset();
@@ -514,12 +526,6 @@ HEADER_STORAGE_MODIFIER_START
                e_cuda_shared         = 17, /*!< CUDA, in device's shared memory */
                e_cuda_dynamic_shared = 18, /*!< CUDA, in device's shared memory, dynamically allocated */
 
-            // TV (05/06/2010): Support for OpenCL storage modifiers
-               e_opencl_global   = 19, /*!< OpenCL, accessible from all the device */
-               e_opencl_local    = 20, /*!< OpenCL, accessible for a work-group only */
-               e_opencl_constant = 21, /*!< OpenCL, read-only variable accessible from all the device */
-               e_opencl_private  = 22, /*!< OpenCL, accessible only from one work-item */
-               
                e_last_modifier  /*!< last value (upper bound on range of values, used in error checking) */
              };
 
@@ -598,23 +604,9 @@ HEADER_STORAGE_MODIFIER_START
           bool isCudaDynamicShared() const;
           void setCudaDynamicShared();
 
-       // TV (05/06/2010): Support for OpenCL storage modifiers
-
-          bool isOpenclGlobal() const;
-          void setOpenclGlobal();
-
-          bool isOpenclLocal() const;
-          void setOpenclLocal();
-
-          bool isOpenclConstant() const;
-          void setOpenclConstant();
-
-          bool isOpenclPrivate() const;
-          void setOpenclPrivate();
-
           std::string displayString() const;
           void display ( std::string label ) const;
-          friend std::ostream & operator<< ( std::ostream & os, SgStorageModifier & m );
+          friend std::ostream & operator<< ( std::ostream & os, const SgStorageModifier & m );
 		  friend bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs);
 
        // DQ (2/4/2006): Added mechamism to clear all bits
@@ -673,7 +665,7 @@ HEADER_ACCESS_MODIFIER_START
 
           std::string displayString() const;
           void display ( std::string label ) const;
-          friend std::ostream & operator<< ( std::ostream & os, SgAccessModifier & m );
+          friend std::ostream & operator<< ( std::ostream & os, const SgAccessModifier & m );
 		  friend bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs);
 
        // DQ (2/4/2006): Added mechamism to clear all bits
@@ -722,17 +714,20 @@ HEADER_FUNCTION_MODIFIER_START
                e_gnu_attribute__weakref__                = 24,/*!< GNU specific attribute for (GNU extension) */
                
             // TV (04/08/2010): Support for CUDA functions modifiers
-             
-               e_cuda_device				 = 25, /*!< CUDA device function */
-               e_cuda_kernel				 = 26, /*!< CUDA kernel */
-               e_cuda_host				 = 27, /*!< CUDA host function */
+               e_cuda_device                 = 25, /*!< CUDA device function */
+               e_cuda_kernel                 = 26, /*!< CUDA kernel */
+               e_cuda_host                   = 27, /*!< CUDA host function */
                
-            // TV (05/03/2010): Support for OpenCL functions modifiers
-             
-               e_opencl_kernel				 = 28, /*!< OpenCL kernel */
-               e_opencl_vec_type_hint			 = 29, /*!< OpenCL */
-               e_opencl_work_group_size_hint		 = 30, /*!< OpenCL */
-               e_opencl_work_group_size_req		 = 31, /*!< OpenCL */
+            // TV (05/03/2010): Support for OpenCL functions modifiers             
+               e_opencl_kernel				   = 28, /*!< OpenCL kernel */
+               e_opencl_vec_type_hint			= 29, /*!< OpenCL */
+               e_opencl_work_group_size_hint	= 30, /*!< OpenCL */
+               e_opencl_work_group_size_req	= 31, /*!< OpenCL */
+
+            // DQ (8/11/2011): Added support for Java specific function modifiers.
+               e_java_native                 = 32, /*!< Java native keyword used for JNI function specification */
+               e_java_synchronized           = 33, /*!< Java synchronized keyword used to only allow one thread at a time into a particular section of code */
+               e_java_strictfp               = 34, /*!< Java strictfp keyword used to specify strict floating point evaluation by JVM */
 
                e_last_modifier     /*!< last value (upper bound on range of values, used in error checking) */
              };
@@ -888,9 +883,23 @@ HEADER_FUNCTION_MODIFIER_START
           void setOpenclWorkGroupSizeReq();
           void unsetOpenclWorkGroupSizeReq();
 
+
+       // DQ (8/11/2011): Added support for Java specific function modifiers.
+          bool isJavaNative() const;
+          void setJavaNative();
+          void unsetJavaNative();
+
+          bool isJavaSynchronized() const;
+          void setJavaSynchronized();
+          void unsetJavaSynchronized();
+
+          bool isJavaStrictfp() const;
+          void setJavaStrictfp();
+          void unsetJavaStrictfp();
+
           std::string displayString() const;
           void display ( std::string label ) const;
-          friend std::ostream & operator<< ( std::ostream & os, SgFunctionModifier & m );
+          friend std::ostream & operator<< ( std::ostream & os, const SgFunctionModifier & m );
 		  friend bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs);
 
        // DQ (2/4/2006): Added mechamism to clear all bits
@@ -946,7 +955,7 @@ HEADER_UPC_ACCESS_MODIFIER_START
 
           std::string displayString() const;
           void display ( std::string label ) const;
-          friend std::ostream & operator<< ( std::ostream & os, SgUPC_AccessModifier & m );
+          friend std::ostream & operator<< ( std::ostream & os, const SgUPC_AccessModifier & m );
           friend bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs);
 
        // DQ (2/4/2006): Added mechanism to clear all bits
@@ -1015,7 +1024,7 @@ HEADER_SPECIAL_FUNCTION_MODIFIER_START
 
           std::string displayString() const;
           void display ( std::string label ) const;
-          friend std::ostream & operator<< ( std::ostream & os, SgSpecialFunctionModifier & m );
+          friend std::ostream & operator<< ( std::ostream & os, const SgSpecialFunctionModifier & m );
 		  friend bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs);
 
        // DQ (2/4/2006): Added mechamism to clear all bits
@@ -1036,15 +1045,19 @@ HEADER_DECLARATION_MODIFIER_START
           enum declaration_modifier_enum
              {
             // Bit values can support multiple values in a single enum type
-               e_unknown = 0,  /*!< Unknown value (error) */
-               e_default = 1,  /*!< Default value */
-               e_friend  = 2,  /*!< Friend qualifier */
-               e_typedef = 3,  /*!< Typedef qualifier (not clear if this is used, I don't think typedef is a modifier) */
-               e_export  = 4,  /*!< Export qualifier */
-               e_throw   = 5,  /*!< Exception handling support (throw) */
-               e_bind    = 6,  /*!< Fortran bind attribute for declarations (functions, variable, and classes) */
-               e_final   = 7,  /*!< PHP support for specification to not be extended (should be useful for Java, if required in the future) */
-               e_last_modifier /*!< last modifier value (upper bound on range of values, used in error checking) */
+               e_unknown       = 0,  /*!< Unknown value (error) */
+               e_default       = 1,  /*!< Default value */
+               e_friend        = 2,  /*!< Friend qualifier */
+               e_typedef       = 3,  /*!< Typedef qualifier (not clear if this is used, I don't think typedef is a modifier) */
+               e_export        = 4,  /*!< Export qualifier */
+               e_throw         = 5,  /*!< Exception handling support (throw) */
+               e_bind          = 6,  /*!< Fortran bind attribute for declarations (functions, variable, and classes) */
+               e_final         = 7,  /*!< PHP support for specification to not be extended (should be useful for Java, if required in the future) */
+
+            // DQ (8/11/2011): Added support for Java "abstract" declaration modifier.
+               e_java_abstract = 8,  /*!< abstract keyword for Java functions, classes and interfaces */
+
+               e_last_modifier       /*!< last modifier value (upper bound on range of values, used in error checking) */
              };
 
       /*! \brief GNU attribute for visability (only one value can be specified)
@@ -1110,14 +1123,19 @@ HEADER_DECLARATION_MODIFIER_START
           void setBind();
           void unsetBind();
 
-       // PHP specific attribute
+       // PHP and Java specific attribute
           bool isFinal() const;
           void setFinal();
           void unsetFinal();
 
+       // DQ (8/11/2011): Added Java specific "abstract" attribute.
+          bool isJavaAbstract() const;
+          void setJavaAbstract();
+          void unsetJavaAbstract();
+
           std::string displayString() const;
           void display ( std::string label ) const;
-          friend std::ostream & operator<< ( std::ostream & os, SgDeclarationModifier & m );
+          friend std::ostream & operator<< ( std::ostream & os, const SgDeclarationModifier & m );
 		  friend bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs);
 
        // DQ (2/4/2006): Added mechamism to clear all bits
@@ -1193,6 +1211,17 @@ HEADER_TYPE_MODIFIER_START
                e_gnu_attribute__warn_unused_result__ = 26,/*!< GNU specific attribute for function type (GNU extension) */
                e_gnu_attribute__nonnull__            = 27,/*!< GNU specific attribute for function type (GNU extension) */
                e_gnu_attribute__sentinel__           = 28,/*!< GNU specific attribute for function type (GNU extension) */
+
+            // TV (02/27/2012): Address space modifer
+               e_address_space__                     = 29,/*!< address space modifier, get_address_space_value() give the associated param */
+
+            // TV (02/27/2012): OpenCL related Modifier
+               e_ocl_global__                        = 30,/*!< OpenCL specific address space modifier */
+               e_ocl_local__                         = 31,/*!< OpenCL specific address space modifier */
+               e_ocl_constant__                      = 32,/*!< OpenCL specific address space modifier */
+
+            // TV (03/03/2012): Address space modifer
+               e_vector_type__                       = 33,/*!< GCC vector type attribute and other vector extentions */
 
             // Last attribute enum (used for internal bounds checking)
                e_last_modifier /*!< last value (upper bound on range of values, used in error checking) */
@@ -1417,9 +1446,29 @@ HEADER_TYPE_MODIFIER_START
           void setGnuAttributeSentinel();
           void unsetGnuAttributeSentinel();
 
+          bool haveAddressSpace() const;
+          void setAddressSpace();
+          void unsetAddressSpace();
+
+          bool isOpenclGlobal() const;
+          void setOpenclGlobal();
+          void unsetOpenclGlobal();
+
+          bool isOpenclLocal() const;
+          void setOpenclLocal();
+          void unsetOpenclLocal();
+
+          bool isOpenclConstant() const;
+          void setOpenclConstant();
+          void unsetOpenclConstant();
+
+          bool isVectorType() const;
+          void setVectorType();
+          void unsetVectorType();
+
           std::string displayString() const;
           void display ( std::string label ) const;
-          friend std::ostream & operator<< ( std::ostream & os, SgTypeModifier & m );
+          friend std::ostream & operator<< ( std::ostream & os, const SgTypeModifier & m );
 		  friend bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs);
 
        // DQ (2/4/2006): Added mechamism to clear all bits
@@ -1481,7 +1530,7 @@ HEADER_ELABORATED_TYPE_MODIFIER_START
 
           std::string displayString() const;
           void display ( std::string label ) const;
-          friend std::ostream & operator<< ( std::ostream & os, SgElaboratedTypeModifier & m );
+          friend std::ostream & operator<< ( std::ostream & os, const SgElaboratedTypeModifier & m );
 		  friend bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs);
 
        // DQ (2/4/2006): Added mechamism to clear all bits
@@ -1536,7 +1585,7 @@ HEADER_LINKAGE_MODIFIER_START
 
           std::string displayString() const;
           void display ( std::string label ) const;
-          friend std::ostream & operator<< ( std::ostream & os, SgLinkageModifier & m );
+          friend std::ostream & operator<< ( std::ostream & os, const SgLinkageModifier & m );
 		  friend bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs);
 
        // DQ (2/4/2006): Added mechamism to clear all bits
@@ -1585,7 +1634,7 @@ HEADER_BASECLASS_MODIFIER_START
 
           std::string displayString() const;
           void display ( std::string label ) const;
-          friend std::ostream & operator<< ( std::ostream & os, SgBaseClassModifier & m );
+          friend std::ostream & operator<< ( std::ostream & os, const SgBaseClassModifier & m );
 		  friend bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs);
 
        // DQ (2/4/2006): Added mechamism to clear all bits
@@ -1964,14 +2013,20 @@ bool $CLASSNAME::isVolatile() const { return p_modifier == e_volatile; }
 void $CLASSNAME::setVolatile()      { p_modifier = e_volatile; }
 void $CLASSNAME::unsetVolatile()    { setDefault(); }
 
+// DQ (8/11/2011): Added support for Java "transient" keyword to disable serialization.
+bool $CLASSNAME::isJavaTransient() const { return p_modifier == e_java_transient; }
+void $CLASSNAME::setJavaTransient()      { p_modifier = e_java_transient; }
+void $CLASSNAME::unsetJavaTransient()    { setDefault(); }
+
 string
 $CLASSNAME::displayString() const
    {
      std::string s = "$CLASSNAME(";
-     s += std::string("isUnknown() = ")  + std::string(isUnknown()  ? "true " : "false ");
-     s += std::string("isDefault() = ")  + std::string(isDefault()  ? "true " : "false ");
-     s += std::string("isConst() = ")    + std::string(isConst()    ? "true " : "false ");
-     s += std::string("isVolatile() = ") + std::string(isVolatile() ? "true"  : "false");
+     s += std::string("isUnknown() = ")       + std::string(isUnknown()  ? "true " : "false ");
+     s += std::string("isDefault() = ")       + std::string(isDefault()  ? "true " : "false ");
+     s += std::string("isConst() = ")         + std::string(isConst()    ? "true " : "false ");
+     s += std::string("isVolatile() = ")      + std::string(isVolatile() ? "true"  : "false");
+     s += std::string("isJavaTransient() = ") + std::string(isJavaTransient() ? "true"  : "false");
      s += ")";
      return s;
    }
@@ -1990,7 +2045,7 @@ $CLASSNAME::display ( std::string label ) const
 #endif
    }
 
-std::ostream & operator<< ( std::ostream & os, SgConstVolatileModifier & m) 
+std::ostream & operator<< ( std::ostream & os, const SgConstVolatileModifier & m) 
    {
       os << m.get_modifier(); 
      return os;
@@ -2100,20 +2155,6 @@ void SgStorageModifier::setCudaShared()      { p_modifier = e_cuda_shared; }
 bool SgStorageModifier::isCudaDynamicShared() const { return p_modifier == e_cuda_dynamic_shared; }
 void SgStorageModifier::setCudaDynamicShared()      { p_modifier = e_cuda_dynamic_shared; }
 
-// TV (05/06/2010): Support for OpenCL storage modifiers
-
-bool SgStorageModifier::isOpenclGlobal() const { return p_modifier == e_opencl_global; }
-void SgStorageModifier::setOpenclGlobal()      { p_modifier = e_opencl_global; }
-
-bool SgStorageModifier::isOpenclLocal() const { return p_modifier == e_opencl_local; }
-void SgStorageModifier::setOpenclLocal()      { p_modifier = e_opencl_local; }
-
-bool SgStorageModifier::isOpenclConstant() const { return p_modifier == e_opencl_constant; }
-void SgStorageModifier::setOpenclConstant()      { p_modifier = e_opencl_constant; }
-
-bool SgStorageModifier::isOpenclPrivate() const { return p_modifier == e_opencl_private; }
-void SgStorageModifier::setOpenclPrivate()      { p_modifier = e_opencl_private; }
-
 string
 $CLASSNAME::displayString() const
    {
@@ -2146,7 +2187,7 @@ $CLASSNAME::display ( std::string label ) const
      printf ("%s \n",displayString().c_str());
    }
 
-std::ostream & operator<< ( std::ostream & os, SgStorageModifier & m) 
+std::ostream & operator<< ( std::ostream & os, const SgStorageModifier & m) 
    {
       os << m.get_modifier(); 
      return os;
@@ -2169,10 +2210,6 @@ bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs)
 	       (lhs.isCudaConstant()   == rhs.isCudaConstant()  ) &&
 	       (lhs.isCudaShared()     == rhs.isCudaShared()  ) &&
 	       (lhs.isCudaDynamicShared() == rhs.isCudaDynamicShared()  ) &&
-	       (lhs.isOpenclGlobal()   == rhs.isOpenclGlobal()  ) &&
-	       (lhs.isOpenclLocal()    == rhs.isOpenclLocal()  ) &&
-	       (lhs.isOpenclConstant() == rhs.isOpenclConstant()  ) &&
-	       (lhs.isOpenclPrivate()  == rhs.isOpenclPrivate()  ) &&
 		   true;
 }
 
@@ -2244,7 +2281,7 @@ SgAccessModifier::display ( std::string label ) const
      printf ("%s \n",displayString().c_str());
    }
 
-std::ostream & operator<< ( std::ostream & os, SgAccessModifier & m) 
+std::ostream & operator<< ( std::ostream & os, const SgAccessModifier & m) 
    {
       os << m.get_modifier(); 
      return os;
@@ -2409,7 +2446,6 @@ void SgFunctionModifier::setGnuAttributeWeakReference()      { setBit(e_gnu_attr
 void SgFunctionModifier::unsetGnuAttributeWeakReference()    { unsetBit(e_gnu_attribute__weakref__,p_modifierVector); }
 
 // TV (04/08/2010): Support for CUDA functions modifiers
-
 bool SgFunctionModifier::isCudaDevice() const { return checkBit(e_cuda_device,p_modifierVector); }
 void SgFunctionModifier::setCudaDevice()      { setBit(e_cuda_device,p_modifierVector); }
 void SgFunctionModifier::unsetCudaDevice()    { unsetBit(e_cuda_device,p_modifierVector); }
@@ -2422,8 +2458,7 @@ bool SgFunctionModifier::isCudaHost() const { return checkBit(e_cuda_host,p_modi
 void SgFunctionModifier::setCudaHost()      { setBit(e_cuda_host,p_modifierVector); }
 void SgFunctionModifier::unsetCudaHost()    { unsetBit(e_cuda_host,p_modifierVector); }
 
-// TV (05/03/2010): Support for OpenCL functions modifiers
-       
+// TV (05/03/2010): Support for OpenCL functions modifiers       
 bool SgFunctionModifier::isOpenclKernel() const { return checkBit(e_opencl_kernel, p_modifierVector); }
 void SgFunctionModifier::setOpenclKernel()      { setBit(e_opencl_kernel, p_modifierVector); }
 void SgFunctionModifier::unsetOpenclKernel()    { unsetBit(e_opencl_kernel, p_modifierVector); }
@@ -2440,19 +2475,36 @@ bool SgFunctionModifier::hasOpenclWorkGroupSizeReq() const { return checkBit(e_o
 void SgFunctionModifier::setOpenclWorkGroupSizeReq()       { setBit(e_opencl_work_group_size_req,p_modifierVector);}
 void SgFunctionModifier::unsetOpenclWorkGroupSizeReq()     { unsetBit(e_opencl_work_group_size_req, p_modifierVector); }
 
+// DQ (8/11/2011): Added support for Java specific function modifiers.
+bool SgFunctionModifier::isJavaNative() const { return checkBit(e_java_native, p_modifierVector); }
+void SgFunctionModifier::setJavaNative()      { setBit(e_java_native, p_modifierVector); }
+void SgFunctionModifier::unsetJavaNative()    { unsetBit(e_java_native, p_modifierVector); }
+
+// DQ (8/11/2011): Added support for Java specific function modifiers.
+bool SgFunctionModifier::isJavaSynchronized() const { return checkBit(e_java_synchronized, p_modifierVector); }
+void SgFunctionModifier::setJavaSynchronized()      { setBit(e_java_synchronized, p_modifierVector); }
+void SgFunctionModifier::unsetJavaSynchronized()    { unsetBit(e_java_synchronized, p_modifierVector); }
+
+// DQ (8/11/2011): Added support for Java specific function modifiers.
+bool SgFunctionModifier::isJavaStrictfp() const { return checkBit(e_java_strictfp, p_modifierVector); }
+void SgFunctionModifier::setJavaStrictfp()      { setBit(e_java_strictfp, p_modifierVector); }
+void SgFunctionModifier::unsetJavaStrictfp()    { unsetBit(e_java_strictfp, p_modifierVector); }
 
 string
 SgFunctionModifier::displayString() const
    {
      std::string s = "SgFunctionModifier(";
-     s += std::string("isUnknown() = ")     + std::string(isUnknown()     ? "true " : "false ");
-     s += std::string("isDefault() = ")     + std::string(isDefault()     ? "true " : "false ");
-     s += std::string("isInline() = ")      + std::string(isInline()      ? "true " : "false ");
-     s += std::string("isVirtual() = ")     + std::string(isVirtual()     ? "true " : "false ");
-     s += std::string("isPureVirtual() = ") + std::string(isPureVirtual() ? "true " : "false ");
-     s += std::string("isExplicit() = ")    + std::string(isExplicit()    ? "true"  : "false");
-  // s += std::string("isBind() = ")        + std::string(isBind()        ? "true " : "false ");
-     s += std::string("isPure() = ")        + std::string(isPure()        ? "true " : "false ");
+     s += std::string("isUnknown() = ")          + std::string(isUnknown()          ? "true " : "false ");
+     s += std::string("isDefault() = ")          + std::string(isDefault()          ? "true " : "false ");
+     s += std::string("isInline() = ")           + std::string(isInline()           ? "true " : "false ");
+     s += std::string("isVirtual() = ")          + std::string(isVirtual()          ? "true " : "false ");
+     s += std::string("isPureVirtual() = ")      + std::string(isPureVirtual()      ? "true " : "false ");
+     s += std::string("isExplicit() = ")         + std::string(isExplicit()         ? "true"  : "false");
+  // s += std::string("isBind() = ")             + std::string(isBind()             ? "true " : "false ");
+     s += std::string("isPure() = ")             + std::string(isPure()             ? "true " : "false ");
+     s += std::string("isJavaNative() = ")       + std::string(isJavaNative()       ? "true " : "false ");
+     s += std::string("isJavaSynchronized() = ") + std::string(isJavaSynchronized() ? "true " : "false ");
+     s += std::string("isJavaStrictfp() = ")     + std::string(isJavaStrictfp()     ? "true " : "false ");
      s += ")";
      return s;
    }
@@ -2464,7 +2516,7 @@ SgFunctionModifier::display ( std::string label ) const
      printf ("%s \n",displayString().c_str());
    }
 
-std::ostream & operator<< ( std::ostream & os, SgFunctionModifier & m) 
+std::ostream & operator<< ( std::ostream & os, const SgFunctionModifier & m) 
    {
       os << m.get_modifierVector(); 
      return os;
@@ -2519,6 +2571,9 @@ bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs)
 	       (lhs.hasOpenclVecTypeHint()       == rhs.hasOpenclVecTypeHint()      ) &&
 	       (lhs.hasOpenclWorkGroupSizeHint() == rhs.hasOpenclWorkGroupSizeHint()) &&
 	       (lhs.hasOpenclWorkGroupSizeReq()  == rhs.hasOpenclWorkGroupSizeReq() ) &&
+	       (lhs.isJavaNative()               == rhs.isJavaNative()              ) &&
+	       (lhs.isJavaSynchronized()         == rhs.isJavaSynchronized()        ) &&
+	       (lhs.isJavaStrictfp()             == rhs.isJavaStrictfp()            ) &&
 		   true;
 }
 
@@ -2533,6 +2588,10 @@ void SgFunctionModifier::reset()
      unsetExplicit();
   // unsetBind();
      unsetPure();
+
+     unsetJavaNative();
+     unsetJavaSynchronized();
+     unsetJavaStrictfp();
 
   // Set this bit to indicate the default value (we want a value of all zero bits to be an error)
      setDefault();
@@ -2601,7 +2660,7 @@ $CLASSNAME::display ( std::string label ) const
      printf ("%s \n",displayString().c_str());
    }
 
-std::ostream & operator<< ( std::ostream & os, SgUPC_AccessModifier & m) 
+std::ostream & operator<< ( std::ostream & os, const SgUPC_AccessModifier & m) 
    {
       os << m.get_modifier(); 
      return os;
@@ -2698,7 +2757,7 @@ $CLASSNAME::display ( std::string label ) const
      printf ("%s \n",displayString().c_str());
    }
 
-std::ostream & operator<< ( std::ostream & os, SgSpecialFunctionModifier & m) 
+std::ostream & operator<< ( std::ostream & os, const SgSpecialFunctionModifier & m) 
    {
       os << m.get_modifierVector(); 
      return os;
@@ -2793,19 +2852,26 @@ bool SgDeclarationModifier::isFinal() const { return checkBit(e_final,p_modifier
 void SgDeclarationModifier::setFinal()      { setBit(e_final,p_modifierVector); }
 void SgDeclarationModifier::unsetFinal()    { unsetBit(e_final,p_modifierVector); }
 
+// DQ (8/11/2011): Added support for Java "abstract" declaration modifier.
+bool SgDeclarationModifier::isJavaAbstract() const { return checkBit(e_java_abstract,p_modifierVector); }
+void SgDeclarationModifier::setJavaAbstract()      { setBit(e_java_abstract,p_modifierVector); }
+void SgDeclarationModifier::unsetJavaAbstract()    { unsetBit(e_java_abstract,p_modifierVector); }
+
+
 string
 SgDeclarationModifier::displayString() const
    {
      std::string s = "SgDeclarationModifier(";
-     s += std::string("isUnknown() = ") + std::string(isUnknown() ? "true " : "false ");
-     s += std::string("isDefault() = ") + std::string(isDefault() ? "true " : "false ");
-     s += std::string("isFriend() = ")  + std::string(isFriend()  ? "true " : "false ");
-     s += std::string("isTypedef() = ") + std::string(isTypedef() ? "true " : "false ");
-     s += std::string("isExport() = ")  + std::string(isExport()  ? "true " : "false ");
-     s += std::string("isThrow() = ")   + std::string(isThrow()   ? "true " : "false ");
-     s += std::string("isBind() = ")    + std::string(isBind()    ? "true " : "false ");
-     s += std::string("isFinal() = ")   + std::string(isFinal()   ? "true " : "false ");
-     s += std::string("\n     ") + get_typeModifier().displayString() + " ";
+     s += std::string("isUnknown() = ")      + std::string(isUnknown()      ? "true " : "false ");
+     s += std::string("isDefault() = ")      + std::string(isDefault()      ? "true " : "false ");
+     s += std::string("isFriend() = ")       + std::string(isFriend()       ? "true " : "false ");
+     s += std::string("isTypedef() = ")      + std::string(isTypedef()      ? "true " : "false ");
+     s += std::string("isExport() = ")       + std::string(isExport()       ? "true " : "false ");
+     s += std::string("isThrow() = ")        + std::string(isThrow()        ? "true " : "false ");
+     s += std::string("isBind() = ")         + std::string(isBind()         ? "true " : "false ");
+     s += std::string("isFinal() = ")        + std::string(isFinal()        ? "true " : "false ");
+     s += std::string("isJavaAbstract() = ") + std::string(isJavaAbstract() ? "true " : "false ");
+     s += std::string("\n     ") + get_typeModifier().displayString()   + " ";
      s += std::string("\n     ") + get_accessModifier().displayString() + " ";
      s += std::string("\n     ") + get_storageModifier().displayString();
      s += ")";
@@ -2819,28 +2885,29 @@ SgDeclarationModifier::display ( std::string label ) const
      printf ("%s \n",displayString().c_str());
    }
 
-std::ostream & operator<< ( std::ostream & os, SgDeclarationModifier & m) 
+std::ostream & operator<< ( std::ostream & os, const SgDeclarationModifier & m) 
    {
       os << m.get_modifierVector(); 
      return os;
    }
 
 bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs)
-{
-	return
-		   (lhs.get_typeModifier()    == rhs.get_typeModifier()   ) &&
-		   (lhs.get_accessModifier()  == rhs.get_accessModifier() ) &&
-		   (lhs.get_storageModifier() == rhs.get_storageModifier()) &&
-	       (lhs.isUnknown() == rhs.isUnknown()) &&
-	       (lhs.isDefault() == rhs.isDefault()) &&
-	       (lhs.isFriend()  == rhs.isFriend() ) &&
-	       (lhs.isTypedef() == rhs.isTypedef()) &&
-	       (lhs.isExport()  == rhs.isExport() ) &&
-	       (lhs.isThrow()   == rhs.isThrow()  ) &&
-	       (lhs.isBind()    == rhs.isBind()   ) &&
-	       (lhs.isFinal()   == rhs.isFinal()  ) &&
-		   true;
-}
+   {
+     return
+          (lhs.get_typeModifier()    == rhs.get_typeModifier()   ) &&
+          (lhs.get_accessModifier()  == rhs.get_accessModifier() ) &&
+          (lhs.get_storageModifier() == rhs.get_storageModifier()) &&
+	       (lhs.isUnknown()           == rhs.isUnknown()) &&
+	       (lhs.isDefault()           == rhs.isDefault()) &&
+	       (lhs.isFriend()            == rhs.isFriend() ) &&
+	       (lhs.isTypedef()           == rhs.isTypedef()) &&
+	       (lhs.isExport()            == rhs.isExport() ) &&
+	       (lhs.isThrow()             == rhs.isThrow()  ) &&
+	       (lhs.isBind()              == rhs.isBind()   ) &&
+	       (lhs.isFinal()             == rhs.isFinal()  ) &&
+	       (lhs.isJavaAbstract()      == rhs.isJavaAbstract() ) &&
+          true;
+   }
 
 SgTypeModifier &
 SgDeclarationModifier::get_typeModifier ()
@@ -3100,6 +3167,26 @@ bool SgTypeModifier::isGnuAttributeSentinel() const  { return checkBit(e_gnu_att
 void SgTypeModifier::setGnuAttributeSentinel()       { setBit(e_gnu_attribute__sentinel__,p_modifierVector); }
 void SgTypeModifier::unsetGnuAttributeSentinel()     { unsetBit(e_gnu_attribute__sentinel__,p_modifierVector); }
 
+bool SgTypeModifier::haveAddressSpace() const { return checkBit(e_address_space__,p_modifierVector); }
+void SgTypeModifier::setAddressSpace()        { setBit(e_address_space__,p_modifierVector); }
+void SgTypeModifier::unsetAddressSpace()      { unsetBit(e_address_space__,p_modifierVector); }
+
+bool SgTypeModifier::isOpenclGlobal() const { return checkBit(e_ocl_global__,p_modifierVector); }
+void SgTypeModifier::setOpenclGlobal()      { setBit(e_ocl_global__,p_modifierVector); }
+void SgTypeModifier::unsetOpenclGlobal()    { unsetBit(e_ocl_global__,p_modifierVector); }
+
+bool SgTypeModifier::isOpenclLocal() const { return checkBit(e_ocl_local__,p_modifierVector); }
+void SgTypeModifier::setOpenclLocal()      { setBit(e_ocl_local__,p_modifierVector); }
+void SgTypeModifier::unsetOpenclLocal()    { unsetBit(e_ocl_local__,p_modifierVector); }
+
+bool SgTypeModifier::isOpenclConstant() const { return checkBit(e_ocl_constant__,p_modifierVector); }
+void SgTypeModifier::setOpenclConstant()      { setBit(e_ocl_constant__,p_modifierVector); }
+void SgTypeModifier::unsetOpenclConstant()    { unsetBit(e_ocl_constant__,p_modifierVector); }
+
+bool SgTypeModifier::isVectorType() const { return checkBit(e_vector_type__,p_modifierVector); }
+void SgTypeModifier::setVectorType()      { setBit(e_vector_type__,p_modifierVector); }
+void SgTypeModifier::unsetVectorType()    { unsetBit(e_vector_type__,p_modifierVector); }
+
 string
 $CLASSNAME::displayString() const
    {
@@ -3121,7 +3208,7 @@ $CLASSNAME::display ( std::string label ) const
      printf ("%s \n",displayString().c_str());
    }
 
-std::ostream& operator<< (std::ostream& os, SgTypeModifier& tm) 
+std::ostream& operator<< (std::ostream& os, const SgTypeModifier& tm) 
    {
       os << tm.get_modifierVector(); 
      return os;
@@ -3163,6 +3250,16 @@ bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs)
 	       (lhs.isGnuAttributeWarnUnusedResult() == rhs.isGnuAttributeWarnUnusedResult()) &&
 	       (lhs.isGnuAttributeNonnull()          == rhs.isGnuAttributeNonnull()         ) &&
 	       (lhs.isGnuAttributeSentinel()         == rhs.isGnuAttributeSentinel()        ) &&
+           // Address Space
+               (lhs.haveAddressSpace()        == rhs.haveAddressSpace()        ) &&
+               (lhs.get_address_space_value() == rhs.get_address_space_value() ) &&
+           // OpenCL specific
+               (lhs.isOpenclGlobal()   == rhs.isOpenclGlobal()    ) &&
+               (lhs.isOpenclLocal()    == rhs.isOpenclLocal()    ) &&
+               (lhs.isOpenclConstant() == rhs.isOpenclConstant() ) &&
+           // Vector Type
+               (lhs.isVectorType()    == rhs.isVectorType()    ) &&
+               (lhs.get_vector_size() == rhs.get_vector_size() ) &&
 		   true;
 }
 
@@ -3292,7 +3389,7 @@ $CLASSNAME::display ( std::string label ) const
      printf ("%s \n",displayString().c_str());
    }
 
-std::ostream & operator<< ( std::ostream & os, SgElaboratedTypeModifier & m) 
+std::ostream & operator<< ( std::ostream & os, const SgElaboratedTypeModifier & m) 
    {
       os << m.get_modifier(); 
      return os;
@@ -3375,7 +3472,7 @@ $CLASSNAME::display ( std::string label ) const
      printf ("%s \n",displayString().c_str());
    }
 
-std::ostream & operator<< ( std::ostream & os, SgLinkageModifier & m) 
+std::ostream & operator<< ( std::ostream & os, const SgLinkageModifier & m) 
    {
       os << m.get_modifier(); 
      return os;
@@ -3451,7 +3548,7 @@ $CLASSNAME::display ( std::string label ) const
      printf ("%s \n",displayString().c_str());
    }
 
-std::ostream & operator<< ( std::ostream & os, SgBaseClassModifier & m) 
+std::ostream & operator<< ( std::ostream & os, const SgBaseClassModifier & m) 
    {
       os << m.get_modifier(); 
      return os;
@@ -3765,6 +3862,8 @@ HEADER_SYMBOL_TABLE_START
           SgEnumSymbol*      find_enum(const SgName & name);       //! Complexity O(log n) for first match against name, then O(n)
           SgEnumFieldSymbol* find_enum_field(const SgName & name); //! Complexity O(log n) for first match against name, then O(n)
           SgLabelSymbol*     find_label(const SgName & name);      //! Complexity O(log n) for first match against name, then O(n)
+          SgJavaLabelSymbol* find_java_label(const SgName & name); //! Complexity O(log n) for first match against name, then O(n)
+                                                                   // charles4: added 09/12/2011 for Java
           SgNamespaceSymbol* find_namespace(const SgName & name);  //! Complexity O(log n) for first match against name, then O(n)
           SgTemplateSymbol*  find_template(const SgName & name);   //! Complexity O(log n) for first match against name, then O(n)
 
@@ -3830,8 +3929,12 @@ HEADER_SYMBOL_TABLE_START
       //! Computes the number of symbols of a specific name
           int count(const SgName &) const;
 
+      //! Computes the number of alias symbols of a specific name (used in name qualification support).
+          int count_aliases(const SgName &) const;
+
       //! Outputs symbol table information (useful for debugging)
           void print( std::string label, VariantT nodeType = V_SgSymbol );
+          void print();
        // void print( std::string label );
 
        // Output to ostream (this function is not implemented)
@@ -3902,8 +4005,16 @@ HEADER_BASECLASS_START
           SgClassDeclaration* p_ptr;
 #endif
 
+       // DQ (5/29/2011): Added to support for new qualified name generation
+      //! This function generates the qualified name prefix to be used with the named declaration (only applied to restricted set of declarations where name qualification can be used).
+          SgName get_qualified_name_prefix() const;
 
 HEADER_BASECLASS_END
+
+HEADER_EXP_BASE_CLASS_START
+     public:
+          void post_construction_initialization();
+HEADER_EXP_BASE_CLASS_END
 
 
 HEADER_SYMBOL_TABLE_POSTDECLARATION_START
@@ -4005,8 +4116,18 @@ HEADER_INITIALIZED_NAME_START
                e_gnu_attribute__nocommon__               = 4, /*!< GNU specific attribute for (GNU extension) */
                e_gnu_attribute__transparent_union__      = 5, /*!< GNU specific attribute for (GNU extension) */
                e_gnu_attribute__weakref__                = 6,/*!< GNU specific attribute for (GNU extension) */
-               e_gnu_attribute__packed__                 = 6,/*!< GNU specific attribute for (GNU extension) */
+            // Packed was same value than weakref
+               e_gnu_attribute__packed__                 = 7,/*!< GNU specific attribute for (GNU extension) */
                e_last_gnu_variable_attribute /*!< last value (upper bound on range of values, used in error checking) */
+             };
+
+        // driscoll6 (8/4/11): support for excess specifiers in python (*args and **kwargs)
+          enum excess_specifier_enum
+             {
+               e_excess_specifier_none = 0,
+               e_excess_specifier_positionals,
+               e_excess_specifier_keywords,
+               e_excess_specifier_last /* sentry */
              };
 
           bool checkBit ( unsigned int bit ) const;
@@ -4042,6 +4163,8 @@ HEADER_INITIALIZED_NAME_START
           void unsetGnuAttributeWeakReference();
 
           void post_construction_initialization();
+
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
        // Overriding SgNode versions of these
           virtual unsigned int cfgIndexForEnd() const;
           virtual bool cfgIsIndexInteresting(unsigned int index) const;
@@ -4049,6 +4172,7 @@ HEADER_INITIALIZED_NAME_START
           virtual unsigned int cfgFindNextChildIndex(SgNode* n);
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 
           SgStorageModifier & get_storageModifier();
 
@@ -4095,7 +4219,7 @@ HEADER_INITIALIZED_NAME_START
        // SgName get_name() const;
 
        // DQ (10/9/2007): Use the ROSETTA generated version to test failure
-       // DQ (10/5/2007): Put back into place afterhaving been removed by accident in 12/??/2004
+       // DQ (10/5/2007): Put back into place afterhaving been removed by accident in 12/xx/2004
        // AJ (10/21/2004): Added function to support changing names of symbols, note that void set_name(SgName name) 
        // would be the automatically generated function.
        // void set_name(SgName name);
@@ -4148,6 +4272,10 @@ HEADER_INITIALIZED_NAME_START
        // DQ (10/5/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
 #endif
+
+       // DQ (5/29/2011): Added to support for new qualified name generation
+      //! This function generates the qualified name prefix to be used with the named declaration (only applied to restricted set of declarations where name qualification can be used).
+          SgName get_qualified_name_prefix_for_type() const;
 
 HEADER_INITIALIZED_NAME_END
 
@@ -4686,6 +4814,7 @@ HEADER_APPLICATION_FILE_START
                e_Java_output_language,    /*!< value used to specify output of Java (for testing Java unparser) */
                e_Promela_output_language, /*!< value used to specify output of Promela for uses with SPIN (unsupported option) */
                e_PHP_output_language,     /*!< value used to specify output of PHP */
+               e_Python_output_language,  /*!< value used to specify output of Python */
                e_last_output_language     /*!< upper bound on the range of values supported for the outputLanguageOption_enum */
              };
 
@@ -4797,6 +4926,9 @@ HEADER_APPLICATION_FILE_START
 
        // BP : 11/13/2001, modified to take compiler name
           void build_EDG_CommandLine ( std::vector<std::string> & inputCommandLine, std::vector<std::string>& argv, int fileNameIndex );
+
+       // TV: 02/15/12, CLANG also need a command line builder
+          void build_CLANG_CommandLine ( std::vector<std::string> & inputCommandLine, std::vector<std::string>& argv, int fileNameIndex );
 
       //! Move this function from ROSE into the AST restructuring tool
       //  friend void pdfPrintAbstractSyntaxTreeEDG  ( SgFile *file, bool writeOutHeaderFiles = false );
@@ -4912,6 +5044,7 @@ HEADER_APPLICATION_SOURCE_FILE_START
 // #endif          
           int build_C_and_Cxx_AST( std::vector<std::string> argv, std::vector<std::string> inputCommandLine );
           int build_PHP_AST();
+          int build_Python_AST();
           virtual void doSetupForConstructor(const std::vector<std::string>& argv, SgProject* project);
 
        // DQ (12/19/2008): Added support for translation source position information using CPP linemarkers.
@@ -5015,9 +5148,9 @@ HEADER_APPLICATION_PROJECT_START
                e_last          /*!< last value (used for error checking) */
              };
 
-      //! The only useful constructors
-          SgProject ( const std::vector<std::string>& argv);
-          SgProject ( int argc, char** argv);
+      //! The only useful constructors (constant folding in the frontend is false by default).
+          SgProject ( const std::vector<std::string>& argv, bool frontendConstantFolding = false);
+          SgProject ( int argc, char** argv, bool frontendConstantFolding = false);
 
 #if 0
       // DQ (10/16/2005): Depreicated a long time ago, removed it now!
@@ -5121,6 +5254,7 @@ HEADER_APPLICATION_PROJECT_START
 
        // DQ: bool values on the SgFile nodes which can be queried on the SgProject
        // nodes (must be the same across all SgFile nodes in the project).
+          bool get_skip_translation_from_edg_ast_to_rose_ast (void) const;
           bool get_skip_transformation (void) const;
           bool get_skip_unparse (void) const;
           bool get_useBackendOnly (void) const;
@@ -5149,8 +5283,16 @@ HEADER_APPLICATION_PROJECT_START
 
           bool get_PHP_only(void) const;
 
+          bool get_Python_only(void) const;
+
           bool get_Java_only (void) const;
           void set_Java_only (bool value);
+          std::list<std::string> get_Java_classpath (void) const;
+          void set_Java_classpath (std::list<std::string> param);
+          std::list<std::string> get_Java_sourcepath (void) const;
+          void set_Java_sourcepath (std::list<std::string> param);
+          std::string get_Java_destdir (void) const;
+          void set_Java_destdir (std::string param);
 
        // DQ (2/4/2009): This is now a data member at the SgProject and so is automatically generated asa member function.
        // bool get_binary_only (void) const;
@@ -5188,6 +5330,11 @@ HEADER_APPLICATION_PROJECT_START
           SgStringList & get_excludeFileList();
           const SgStringList & get_excludeFileList() const;
           void set_excludeFileList(const SgStringList & excludeFileList);
+
+       // negara1 (07/29/2011)
+          std::string findIncludedFile(PreprocessingInfo* preprocessingInfo);
+
+          int get_detect_dangling_pointers(void) const;
 
 #if ROSE_USING_OLD_PROJECT_FILE_LIST_SUPPORT
 #else
@@ -5686,6 +5833,10 @@ HEADER_UNPARSE_INFO_START
           void set_outputFortranModFile();
           void unset_outputFortranModFile();
 
+       // driscoll6 (6/6/2011) Mutators for p_nestingLevel
+          void inc_nestingLevel();
+          void dec_nestingLevel();
+
 HEADER_UNPARSE_INFO_END
 
 
@@ -5757,6 +5908,14 @@ HEADER_TEMPLATE_ARGUMENT_START
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
 #endif
 
+       // DQ (5/29/2011): Added to support for new qualified name generation
+      //! This function generates the qualified name prefix to be used with the template argument type.
+          SgName get_qualified_name_prefix() const;
+
+       // DQ (7/24/2011): Added to support for new qualified name generation
+      //! This function generates the qualified name prefix to be used with the named declaration (only applied to restricted set of declarations where name qualification can be used).
+          SgName get_qualified_name_prefix_for_type() const;
+
 HEADER_TEMPLATE_ARGUMENT_END
 
 
@@ -5806,7 +5965,7 @@ HEADER_OPENCL_ACCESS_MODE_MODIFIER_START
 
           std::string displayString() const;
           void display ( std::string label ) const;
-          friend std::ostream & operator<< ( std::ostream & os, SgStorageModifier & m );
+          friend std::ostream & operator<< ( std::ostream & os, const SgStorageModifier & m );
           
 HEADER_OPENCL_ACCESS_MODE_MODIFIER_END
 
@@ -6003,6 +6162,14 @@ SgSymbolTable::get_name( const SgNode* node) const
                break;
              }
 
+          case V_SgJavaLabelStatement: // charles4: 09/13/2011 added for Java support
+             {
+               const SgJavaLabelStatement* labelStatement = isSgJavaLabelStatement(node); 
+               ROSE_ASSERT (labelStatement->get_label() != NULL);
+               name = labelStatement->get_label();
+               break;
+             }
+
           case V_SgClassDeclaration:
           case V_SgDerivedTypeStatement:
           case V_SgModuleStatement:
@@ -6094,6 +6261,8 @@ SgSymbolTable::get_name( const SgNode* node) const
                break;
              }
 
+       // DQ (6/11/2011): Added support for new template declaration IR nodes.
+          case V_SgTemplateClassDeclaration:
           case V_SgTemplateDeclaration:
              {
                const SgTemplateDeclaration* templateDeclaration = isSgTemplateDeclaration(node); 
@@ -6744,6 +6913,7 @@ SgSymbolTable::exists ( const SgName & nm, SgSymbol *sp ) const
       SgEnumSymbol*      find_enum(const SgName &);
       SgEnumFieldSymbol* find_enum_field(const SgName &);
       SgLabelSymbol*     find_label(const SgName &) const;
+      SgJavaLabelSymbol* find_label(const SgName &) const; // charles4: added 9/12/2011 for Java
       SgNamespaceSymbol* find_namespace(const SgName &);
 */
 
@@ -6782,21 +6952,46 @@ SgTypedefSymbol*
 SgSymbolTable::find_typedef(const SgName & nm)
    {
      assert(p_table != NULL);
-     if(p_table)
+
+     p_iterator = p_table->find(nm);
+
+     hash_iterator save_original_iterator = p_iterator;
+
+     while (p_iterator != p_table->end() && get_table()->key_eq()(p_iterator->first,nm))
         {
-          p_iterator = p_table->find(nm);
-       // while (p_iterator != p_table->end() && p_iterator->first == nm)
-          while (p_iterator != p_table->end() && get_table()->key_eq()(p_iterator->first,nm))
+          if ( p_iterator->second->variantT() == V_SgTypedefSymbol)
              {
-            // if(isSgTypedefSymbol((*p_iterator).second))
-               if ( p_iterator->second->variantT() == V_SgTypedefSymbol)
-                  {
-                    p_name=nm;
-                    p_no_name = false;
-                    return (SgTypedefSymbol *) p_iterator->second;
-                  }
-               p_iterator++;
+               p_name = nm;
+               p_no_name = false;
+               return (SgTypedefSymbol *) p_iterator->second;
              }
+
+          p_iterator++;
+        }
+
+  // DQ (5/14/2011): If we have not found a symbol from the current scope, search for symbols 
+  // injected from other scopes using the Fortran "use" statment (and now also with the C++ 
+  // "using" directive, "using" declaration, and base class declarations).
+     p_iterator = save_original_iterator;
+
+     while (p_iterator != p_table->end() && get_table()->key_eq()(p_iterator->first,nm))
+        {
+       // printf ("Looking for aliased symbols: p_iterator->second->class_name() = %s p_iterator->second->get_name() = %s \n",p_iterator->second->class_name().c_str(),p_iterator->second->get_name().str());
+          SgAliasSymbol* aliasedSymbol = isSgAliasSymbol(p_iterator->second);
+          if (aliasedSymbol != NULL)
+             {
+            // DQ (10/9/2008): Resolve the last link in any chain of alias symbols
+            // SgVariableSymbol* variableSymbol = isSgVariableSymbol(aliasedSymbol->get_alias());
+               SgTypedefSymbol* typedefSymbol = isSgTypedefSymbol(aliasedSymbol->get_base());
+               if ( typedefSymbol != NULL )
+                  {
+                    p_name    = nm;
+                    p_no_name = false;
+                    return typedefSymbol;
+                  }
+             }
+          
+          p_iterator++;
         }
 
      return NULL;
@@ -6890,6 +7085,7 @@ SgSymbolTable::find_variable(const SgName & nm)
   // injected from other scopes using the Fortran "use" statment (or in a future implementation 
   // the C++ "using" directive or "using" declaration).
      p_iterator = save_original_iterator;
+
   // while (p_iterator != p_table->end() && (*p_iterator).first == nm)
      while (p_iterator != p_table->end() && get_table()->key_eq()(p_iterator->first,nm))
         {
@@ -6950,6 +7146,7 @@ SgSymbolTable::find_class(const SgName & nm)
   // injected from other scopes using the Fortran "use" statment (or in a future implementation 
   // the C++ "using" directive or "using" declaration).
      p_iterator = save_original_iterator;
+
   // while (p_iterator != p_table->end() && (*p_iterator).first==nm)
      while (p_iterator != p_table->end() && get_table()->key_eq()(p_iterator->first,nm))
         {
@@ -7024,9 +7221,11 @@ SgSymbolTable::find_label(const SgName & nm)
      return NULL;
    }
 
-// DQ (1/30/2007): Added these back into ROSE.
-SgNamespaceSymbol* 
-SgSymbolTable::find_namespace ( const SgName & nm )
+//
+// charles4: added this function for the Java case...
+//
+SgJavaLabelSymbol*
+SgSymbolTable::find_java_label(const SgName & nm)
    {
      assert(p_table != NULL);
      if (p_table)
@@ -7035,14 +7234,63 @@ SgSymbolTable::find_namespace ( const SgName & nm )
           while (p_iterator != p_table->end() && (*p_iterator).first == nm)
              {
             // if (isSgNamespaceSymbol((*p_iterator).second))
-               if ( p_iterator->second->variantT() == V_SgNamespaceSymbol)
+               if ( p_iterator->second->variantT() == V_SgJavaLabelSymbol)
                   {
                     p_name    = nm;
                     p_no_name = false;
-                    return (SgNamespaceSymbol *) p_iterator->second;
+                    return (SgJavaLabelSymbol *) p_iterator->second;
                   }
                p_iterator++;
              }
+        }
+
+     return NULL;
+   }
+
+// DQ (1/30/2007): Added these back into ROSE.
+SgNamespaceSymbol* 
+SgSymbolTable::find_namespace ( const SgName & nm )
+   {
+     assert(p_table != NULL);
+     p_iterator = p_table->find(nm);
+
+     hash_iterator save_original_iterator = p_iterator;
+
+     while (p_iterator != p_table->end() && (*p_iterator).first == nm)
+        {
+          if ( p_iterator->second->variantT() == V_SgNamespaceSymbol)
+             {
+               p_name    = nm;
+               p_no_name = false;
+               return (SgNamespaceSymbol *) p_iterator->second;
+             }
+
+          p_iterator++;
+        }
+
+  // DQ (6/5/2011): If we have not found a symbol from the current scope, search for symbols 
+  // injected from other scopes using the Fortran "use" statment (and now also with the C++ 
+  // "using" directive, "using" declaration, and base class declarations).
+     p_iterator = save_original_iterator;
+
+     while (p_iterator != p_table->end() && get_table()->key_eq()(p_iterator->first,nm))
+        {
+       // printf ("Looking for aliased symbols: p_iterator->second->class_name() = %s p_iterator->second->get_name() = %s \n",p_iterator->second->class_name().c_str(),p_iterator->second->get_name().str());
+          SgAliasSymbol* aliasedSymbol = isSgAliasSymbol(p_iterator->second);
+          if (aliasedSymbol != NULL)
+             {
+            // DQ (10/9/2008): Resolve the last link in any chain of alias symbols
+            // SgVariableSymbol* variableSymbol = isSgVariableSymbol(aliasedSymbol->get_alias());
+               SgNamespaceSymbol* namespaceSymbol = isSgNamespaceSymbol(aliasedSymbol->get_base());
+               if ( namespaceSymbol != NULL )
+                  {
+                    p_name    = nm;
+                    p_no_name = false;
+                    return namespaceSymbol;
+                  }
+             }
+
+          p_iterator++;
         }
 
      return NULL;
@@ -7062,9 +7310,8 @@ SgSymbolTable::find_function (const SgName & nm, const SgType* t)
    {
      SgFunctionSymbol *s = NULL;
      assert(p_table != NULL);
-     if(p_table)
+     if (p_table)
         {
-
        // AJ (10/21/2004): Adjusted implementation to use new STL hash map interface
        // SgSymbolHashBase::iterator i=p_table->find(nm);
        // JW and AS (08/30/06) changed to use equal range rather than find and
@@ -7085,10 +7332,11 @@ SgSymbolTable::find_function (const SgName & nm, const SgType* t)
             }
          }
 
-	if (s != NULL) {
-		ROSE_ASSERT(s->get_name() == nm);
-		ROSE_ASSERT(s->get_declaration()->get_type() == t);
-	}
+     if (s != NULL)
+        {
+          ROSE_ASSERT(s->get_name() == nm);
+          ROSE_ASSERT(s->get_declaration()->get_type() == t);
+        }
 
      return s;
    }
@@ -7796,13 +8044,43 @@ SgSymbolTable::size() const
 
 // AJ (10/21/2004): Adjusted implementation to use new STL hash map interface
 int
-SgSymbolTable::count(const SgName &nm) const
+SgSymbolTable::count(const SgName & nm) const
    {
   // DQ (1/30/2007): assertion added
      assert(p_table != NULL);
      return p_table->count(nm);
    }
 
+int
+SgSymbolTable::count_aliases(const SgName & nm) const
+   {
+     assert(p_table != NULL);
+
+  // This is the fastest way (that I know of) to iterate over just those entries that match the key.
+     std::pair<hash_iterator,hash_iterator> range = p_table->equal_range(nm);
+
+     hash_iterator start = range.first;
+     hash_iterator last  = range.second;
+
+     int count = 0;
+     hash_iterator i = start;
+     while (i != last)
+        {
+       // Count only the alias symbols.
+           if (isSgAliasSymbol((*i).second) != NULL)
+               count++;
+
+          i++;
+        }
+
+     return count;
+   }
+
+void
+SgSymbolTable::print( ) // Liao 5/5/2011. Added this to support calling this from gdb
+  {
+    print ("default settings", V_SgSymbol);
+  }
 void
 SgSymbolTable::print( std::string label, VariantT nodeType )
    {
@@ -8144,6 +8422,11 @@ SgBaseClass::post_construction_initialization()
   // data member and was forced to handle it as a pointer).
      p_baseClassModifier = new SgBaseClassModifier();
      assert ( p_baseClassModifier != NULL);
+
+  // DQ (5/12/2011): New support for name qualification.
+     p_name_qualification_length     = 0;
+     p_type_elaboration_required     = false;
+     p_global_qualification_required = false;
    }
 
 #if 0
@@ -8169,6 +8452,11 @@ SgBaseClass::SgBaseClass(const SgBaseClass& X)
      assert ( X.p_baseClassModifier != NULL);
      p_baseClassModifier = new SgBaseClassModifier( *(X.p_baseClassModifier) );
      assert ( p_baseClassModifier != NULL);
+
+  // DQ (5/12/2011): New support for name qualification.
+     p_name_qualification_length     = X.p_name_qualification_length;
+     p_type_elaboration_required     = X.p_type_elaboration_required;
+     p_global_qualification_required = X.p_global_qualification_required;
    }
 
 #if 0
@@ -8196,6 +8484,11 @@ SgBaseClass::operator= (const SgBaseClass & X)
      assert (p_baseClassModifier   != NULL);
      assert (X.p_baseClassModifier != NULL);
      *p_baseClassModifier = *X.p_baseClassModifier;
+
+  // DQ (5/12/2011): New support for name qualification.
+     p_name_qualification_length     = X.p_name_qualification_length;
+     p_type_elaboration_required     = X.p_type_elaboration_required;
+     p_global_qualification_required = X.p_global_qualification_required;
 
      return *this;
    }
@@ -8233,9 +8526,42 @@ SgBaseClass::get_baseClassModifier()
      assert ( p_baseClassModifier != NULL);
      return *p_baseClassModifier;
    }
+
+
+SgName
+SgBaseClass::get_qualified_name_prefix() const
+   {
+  // DQ (5/29/2011): Added to support for new qualified name generation.
+  // This only applies to specific SgSupport IR nodes:
+  //    SgBaseClass
+  //    SgTemplateArgument
+
+  // DQ (5/28/2011): We have to handle the name qualification directly since types can be qualified 
+  // different and so it depends upon where the type is referenced.  Thus the qualified name is 
+  // stored in a map to the IR node that references the type.
+     SgName nameQualifier;
+     std::map<SgNode*,std::string>::iterator i = SgNode::get_globalQualifiedNameMapForNames().find(const_cast<SgBaseClass*>(this));
+  // ROSE_ASSERT(i != SgNode::get_globalQualifiedNameMapForNames().end());
+
+     if (i != SgNode::get_globalQualifiedNameMapForNames().end())
+        {
+          nameQualifier = i->second;
+       // printf ("Found a valid name qualification: nameQualifier %s \n",nameQualifier.str());
+        }
+
+  // printf ("nameQualifier for SgBaseClass = %s = %s \n",class_name().c_str(),nameQualifier.str());
+
+     return nameQualifier;
+   }
  
 SOURCE_BASECLASS_END
 
+SOURCE_EXP_BASE_CLASS_START
+void
+SgExpBaseClass::post_construction_initialization()
+   {
+   }
+SOURCE_EXP_BASE_CLASS_END
 
 SOURCE_X_INITIALIZED_NAME_START
 
@@ -8273,8 +8599,12 @@ SgSymbol*
 SgInitializedName::search_for_symbol_from_symbol_table() const
    {
      SgSymbol *symbol;
-     if (p_prev_decl_item)
-          symbol = p_prev_decl_item->get_symbol_from_symbol_table();
+     SgInitializedName* aPrevDeclItem=p_prev_decl_item;
+     while(aPrevDeclItem && aPrevDeclItem->p_prev_decl_item) {
+        aPrevDeclItem=aPrevDeclItem->p_prev_decl_item;
+     }
+     if (aPrevDeclItem)
+          symbol = aPrevDeclItem->get_symbol_from_symbol_table();
      else
           symbol = get_symbol_from_symbol_table();
      assert(symbol != NULL);
@@ -8351,6 +8681,29 @@ SgInitializedName::get_qualified_name() const
      return returnName;
    }
 
+SgName
+SgInitializedName::get_qualified_name_prefix_for_type() const
+   {
+  // DQ (5/29/2011): Added to support for new qualified name generation.
+
+  // DQ (5/28/2011): We have to handle the name qualification directly since types can be qualified 
+  // different and so it depends upon where the type is referenced.  Thus the qualified name is 
+  // stored in a map to the IR node that references the type.
+     SgName nameQualifier;
+     std::map<SgNode*,std::string>::iterator i = SgNode::get_globalQualifiedNameMapForTypes().find(const_cast<SgInitializedName*>(this));
+  // ROSE_ASSERT(i != SgNode::get_globalQualifiedNameMapForNames().end());
+
+     if (i != SgNode::get_globalQualifiedNameMapForTypes().end())
+        {
+          nameQualifier = i->second;
+       // printf ("Found a valid name qualification: nameQualifier %s \n",nameQualifier.str());
+        }
+
+  // printf ("nameQualifier for SgInitializedName = %s = %s \n",class_name().c_str(),nameQualifier.str());
+
+     return nameQualifier;
+   }
+ 
 void
 SgInitializedName::post_construction_initialization()
    {
@@ -9260,15 +9613,21 @@ SgName::assembleQualifiedName(const SgName & scopeQualifiedName, const SgName & 
         }
        else 
         {
+          std::string scopeDelimiter;
+          if (SageInterface::is_Java_language())
+              scopeDelimiter = ".";
+          else
+              scopeDelimiter = "::";
+
        // Trap out the case of global scope to avoid building "::::"
-          if ( scopeQualifiedName == "::" )
+          if ( scopeQualifiedName == scopeDelimiter )
              {
             // Avoid building "::::"
                returnName = scopeQualifiedName.getString() + localName.getString();
              }
             else
              {
-               returnName = scopeQualifiedName.getString() + "::" + localName.getString();
+               returnName = scopeQualifiedName.getString() + scopeDelimiter + localName.getString();
              }
         }
 
@@ -10801,8 +11160,8 @@ ROSEAttributesListPtr getPreprocessorDirectives( char *fileName);
 // #include "sageCommonSourceHeader.h"
 // extern an_il_header il_header;
 
-// Moved to sageSupport.C: void SgFile::setupSourceFilename ( const vector<string>& argv )
-// Moved to sageSupport.C: void SgFile::doSetupForConstructor(const vector<string>& argv, int& errorCode, int fileNameIndex, SgProject* project)
+// Moved to sage_support.cpp: void SgFile::setupSourceFilename ( const vector<string>& argv )
+// Moved to sage_support.cpp: void SgFile::doSetupForConstructor(const vector<string>& argv, int& errorCode, int fileNameIndex, SgProject* project)
 
 SgFile::SgFile ( int & argc, char** & argv , SgProject* project )
 // : p_numberOfCommandLineArguments(argc) , p_commandLineArgumentList(NULL)
@@ -10938,6 +11297,8 @@ SgFile::initialization()
 
      p_PHP_only                = false;
 
+     p_Python_only             = false;
+
      p_requires_C_preprocessor = false;
 
   // DQ (2/5/2009): Putting this back now, so we have one at the SgProject and one at the SgFile.
@@ -10977,6 +11338,9 @@ SgFile::initialization()
      p_skip_transformation     = false;
      p_skip_unparse            = false;
 
+  // DQ (11/1/2011): Added support to skip translation of EDG AST to ROSE AST.
+     p_skip_translation_from_edg_ast_to_rose_ast = false;
+
 #if 1
   // The default should be to act like a C++ compiler
      p_skipfinalCompileStep    = false;
@@ -11014,6 +11378,7 @@ X F90_only
 X F95_only
 X F2003_only
 X PHP_only
+X Python_only
 X requires_C_preprocessor
 X binary_only
 X inputFormat
@@ -11044,6 +11409,7 @@ X no_implicit_templates
 X no_implicit_inline_templates
 X skip_commentsAndDirectives
 X collectAllCommentsAndDirectives
+X unparseHeaderFiles
 X preprocessorDirectivesAndCommentsList
 X attributeMechanism
 X KCC_frontend
@@ -11088,6 +11454,9 @@ X aggressive
 
   // DQ (4/19/2006): Added to control comment and directive handling (takes more time to process header files).
      p_collectAllCommentsAndDirectives = false;
+
+  // negara1 (07/08/2011): Added to control whether header files should be unparsed.
+     p_unparseHeaderFiles = false;
 
   // DQ (4/7/2001) Added support for multiple files (save the preprocessor 
   //               directives and comments into the SgFile)
@@ -11187,6 +11556,14 @@ X aggressive
 
   // DQ (11/20/2010): Support for token handling.
      p_output_tokens = false;
+
+  // DQ (9/26/2011): This was not initialized previosuly so I have added it.
+     p_sourceFileTypeIsUnknown = false;
+
+  // DQ (9/26/2011): New support for option to specify debugging support in ROSE to 
+  // detect dangling pointers to IR nodes as part of the AST Consistancy tests. At 
+  // some point this will default to always being on as an AST consistancy test.
+     p_detect_dangling_pointers = 0;
    }
 
 #if 0
@@ -11267,7 +11644,7 @@ SgFile::compileOutput ( int fileNameIndex )
                   }
                  else
                   {
-                 // This is the case of binary analysis...(nothing to do there)
+                 // This is the case of binary analysis or python...(nothing to do there)
                   }
              }
         }
@@ -11349,12 +11726,12 @@ roseDisplayMechanism( SgFile *file )
    }
 #endif
 
-// Moved to sageSupport.C: int  SgFile::callFrontEnd ()
-// Moved to sageSupport.C: void SgFile::stripRoseCommandLineOptions ( vector<string>& argv )
-// Moved to sageSupport.C: void SgFile::processRoseCommandLineOptions ( vector<string> & argv )
-// Moved to sageSupport.C: void SgFile::stripEdgCommandLineOptions ( vector<string> & argv )
-// Moved to sageSupport.C: void SgFile::processBackendSpecificCommandLineOptions ( const vector<string>& argvOrig )
-// Moved to sageSupport.C: bool SgFile::isPrelinkPhase() const
+// Moved to sage_support.cpp: int  SgFile::callFrontEnd ()
+// Moved to sage_support.cpp: void SgFile::stripRoseCommandLineOptions ( vector<string>& argv )
+// Moved to sage_support.cpp: void SgFile::processRoseCommandLineOptions ( vector<string> & argv )
+// Moved to sage_support.cpp: void SgFile::stripEdgCommandLineOptions ( vector<string> & argv )
+// Moved to sage_support.cpp: void SgFile::processBackendSpecificCommandLineOptions ( const vector<string>& argvOrig )
+// Moved to sage_support.cpp: bool SgFile::isPrelinkPhase() const
 
 SgProject*
 SgFile::get_project()
@@ -11385,8 +11762,8 @@ SgFile::get_project()
      return project;
    }
 
-// Moved to sageSupport.C: void SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string> & argv, int fileNameIndex )
-// Moved to sageSupport.C: void SgFile::usage ( int status )
+// Moved to sage_support.cpp: void SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string> & argv, int fileNameIndex )
+// Moved to sage_support.cpp: void SgFile::usage ( int status )
 
 #ifdef _MSC_VER
 #include <direct.h> 	// getcwd()
@@ -11518,7 +11895,7 @@ SgFile::generateOutputFileName() const
    }
 
 
-// Moved to sageSupport.C: string SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameIndex, const string& compilerName )
+// Moved to sage_support.cpp: string SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameIndex, const string& compilerName )
 
 
 // Forward declarations of classes used to control and tailor the code generation.
@@ -11530,7 +11907,7 @@ SgFile::generateOutputFileName() const
 // DQ (8/20/2005): Removed default parameter from extern function declaration
 // extern void unparseFile( SgFile&, UnparseDelegate* repl = NULL );
 // Liao (2/8/2008): Removed default parameters due to conflicts with src/backend/unparser/unparser.h
-// extern void unparseFile( SgFile* file, UnparseFormatHelp *unparseFormatHelp /* = NULL */, UnparseDelegate* unparseDelegate/* = NULL */);
+// extern void unparseFile( SgFile* file, UnparseFormatHelp *unparseFormatHelp /* = NULL */, UnparseDelegate* unparseDelegate/* = NULL */, SgScopeStatement* unparseScope /* = NULL */);
 
 void
 // SgFile::unparse ()
@@ -11548,11 +11925,11 @@ SgFile::unparse ( UnparseFormatHelp *unparseFormatHelp, UnparseDelegate* unparse
 
   // Call the unparser mechanism
   // DQ (1/24/2010): Moved the extern declaration for unparseFile() to be local to this function (better code design).
-     extern void unparseFile( SgFile* file, UnparseFormatHelp *unparseFormatHelp /* = NULL */, UnparseDelegate* unparseDelegate/* = NULL */);
-     unparseFile ( this, unparseFormatHelp, unparseDelegate );
+     extern void unparseFile( SgFile* file, UnparseFormatHelp *unparseFormatHelp /* = NULL */, UnparseDelegate* unparseDelegate/* = NULL */, SgScopeStatement* unparseScope /* = NULL */);
+     unparseFile ( this, unparseFormatHelp, unparseDelegate, NULL );
    }
 
-// Moved to sageSupport.C: int SgFile::compileOutput ( vector<string>& argv, int fileNameIndex, const string& compilerNameOrig )
+// Moved to sage_support.cpp: int SgFile::compileOutput ( vector<string>& argv, int fileNameIndex, const string& compilerNameOrig )
 
 
 // DQ (5/8/2010): Added support to reset the Sg_File_Info (source code position information) 
@@ -11603,6 +11980,7 @@ SgFile::display ( const std::string & label ) const
      printf ("     p_F2003_only()                         = %s \n",(p_F2003_only == true) ? "true" : "false");
      printf ("     p_CoArrayFortran_only()                = %s \n",(p_CoArrayFortran_only == true) ? "true" : "false");
      printf ("     p_PHP_only()                           = %s \n",(p_PHP_only == true) ? "true" : "false");
+     printf ("     p_Python_only()                        = %s \n",(p_Python_only == true) ? "true" : "false");
 
      printf ("     p_requires_C_preprocessor              = %s \n",(p_requires_C_preprocessor == true) ? "true" : "false");
 
@@ -11665,6 +12043,7 @@ SgFile::display ( const std::string & label ) const
      printf ("     p_exit_after_parser                    = %s \n",(p_exit_after_parser == true) ? "true" : "false");
 
      printf ("     p_skip_syntax_check                    = %s \n",(p_skip_syntax_check      == true) ? "true" : "false");
+     printf ("     p_skip_translation_from_edg_ast_to_rose_ast = %s \n",(p_skip_transformation    == true) ? "true" : "false");
      printf ("     p_skip_transformation                  = %s \n",(p_skip_transformation    == true) ? "true" : "false");
      printf ("     p_skip_unparse                         = %s \n",(p_skip_unparse           == true) ? "true" : "false");
      printf ("     p_skipfinalCompileStep                 = %s \n",(p_skipfinalCompileStep   == true) ? "true" : "false");
@@ -11685,6 +12064,7 @@ SgFile::display ( const std::string & label ) const
           case SgFile::e_Fortran_output_language: outputLanguageName = "Fortran"; break;
           case SgFile::e_Java_output_language:    outputLanguageName = "Java";    break;
           case SgFile::e_PHP_output_language:     outputLanguageName = "PHP";     break;
+          case SgFile::e_Python_output_language:  outputLanguageName = "Python";  break;
           case SgFile::e_Promela_output_language: outputLanguageName = "Promela"; break;
 
           default:
@@ -11709,6 +12089,7 @@ SgFile::display ( const std::string & label ) const
      printf ("     p_no_implicit_inline_templates         = %s \n",(p_no_implicit_inline_templates == true) ? "true" : "false");
      printf ("     p_skip_commentsAndDirectives           = %s \n",(p_skip_commentsAndDirectives == true) ? "true" : "false");
      printf ("     p_collectAllCommentsAndDirectives      = %s \n",(p_collectAllCommentsAndDirectives == true) ? "true" : "false");
+     printf ("     p_unparseHeaderFiles                   = %s \n",(p_unparseHeaderFiles == true) ? "true" : "false");
 
      printf ("     p_preprocessorDirectivesAndCommentsList is %s pointer \n",(p_preprocessorDirectivesAndCommentsList != NULL) ? "VALID" : "NULL");
 
@@ -11746,6 +12127,8 @@ SgFile::display ( const std::string & label ) const
 
      printf ("     p_output_tokens                        = %s \n",(p_output_tokens == true) ? "true" : "false");
 
+     printf ("     p_detect_dangling_pointers             = %d \n",p_detect_dangling_pointers);
+
 #if 0
 // Order of data member entries in support.C, matched against the 
 // initialization to make sure that all data members are initialized.
@@ -11764,6 +12147,7 @@ X F90_only
 X F95_only
 X F2003_only
 X PHP_only
+X Python_only
 X requires_C_preprocessor
 X binary_only
 X inputFormat
@@ -11794,6 +12178,7 @@ X no_implicit_templates
 X no_implicit_inline_templates
 X skip_commentsAndDirectives
 X collectAllCommentsAndDirectives
+X unparseHeaderFiles
 X preprocessorDirectivesAndCommentsList
 X attributeMechanism
 X KCC_frontend
@@ -12002,9 +12387,16 @@ SgProject::SgProject( const SgProject & project )
    }
 
 //! constructor invokes EDG front end and creates AST. Use frontend() instead.
-SgProject::SgProject ( int argc, char** argv)
+SgProject::SgProject ( int argc, char** argv, bool frontendConstantFolding)
    {
      initialization();
+
+  // DQ (9/18/2011): Added support to use frontend specific constnat folding (applies to C/C++ using EDG).
+  // All other languges have no specific constant folding options in there frontends.  We use to support
+  // the original expression tree in the AST, and this provided both the constant folded value and
+  // the original expression tree, but this was a problem for analysis (which tened to mix them together).
+  // printf ("In SgProject(int argc,char** argv): frontendConstantFolding = %s \n",frontendConstantFolding == true ? "true" : "false");
+     p_frontendConstantFolding = frontendConstantFolding;
 
      std::vector<std::string> argvList(argv, argv + argc);
      int errorCode = parse(argvList);
@@ -12012,29 +12404,20 @@ SgProject::SgProject ( int argc, char** argv)
    }
 
 //! constructor invokes EDG front end and creates AST. Use frontend() instead.
-SgProject::SgProject ( const std::vector<std::string>& argv )
+SgProject::SgProject ( const std::vector<std::string>& argv, bool frontendConstantFolding )
    {
      initialization();
+
+  // DQ (9/18/2011): Added support to use frontend specific constnat folding (applies to C/C++ using EDG).
+  // All other languges have no specific constant folding options in there frontends.  We use to support
+  // the original expression tree in the AST, and this provided both the constant folded value and
+  // the original expression tree, but this was a problem for analysis (which tened to mix them together).
+  // printf ("In SgProject(const std::vector<std::string>& argv): frontendConstantFolding = %s \n",frontendConstantFolding == true ? "true" : "false");
+     p_frontendConstantFolding = frontendConstantFolding;
 
      int errorCode = parse(argv);
      set_frontendErrorCode(errorCode);
    }
-
-#if 0
-// DQ (10/16/2005): Depreicated a long time ago, removed it now!
-//! Deprecated, do not use.
-SgProject::SgProject ( int& argc, char** argv, int& refErrorCode)
-   {
-     printf ("This SgProject constructor is deprecated, do not use. \n");
-
-     initialization();
-
-     int errorCode;
-     errorCode = parse(argc,argv);
-     set_frontendErrorCode(errorCode);
-     refErrorCode = errorCode;
-   }
-#endif
 
 void
 SgProject::initialization()
@@ -12106,6 +12489,9 @@ SgProject::initialization()
      p_Cxx_only              = false;
      p_Fortran_only          = false;
      p_addCppDirectivesToAST = false;
+
+  // DQ (9/18/2011): Added support for using more constant AST to select to use or not use frontend specific constant folding.
+     p_frontendConstantFolding = false;
    }
 
 // DQ (2/1/2007): Added new operator so that w could depricate the inconsistant usage of 
@@ -12125,8 +12511,8 @@ SgProject::operator[]( unsigned int i )
 #endif
    }
 
-// Moved to sageSupport.C: int SgProject::parse(const vector<string>& argv)
-// Moved to sageSupport.C: void SgProject::processCommandLine(const vector<string>& input_argv)
+// Moved to sage_support.cpp: int SgProject::parse(const vector<string>& argv)
+// Moved to sage_support.cpp: void SgProject::processCommandLine(const vector<string>& input_argv)
 
 std::ostream & operator<< ( std::ostream & os, const Rose_STL_Container<string> & l )
    {
@@ -12139,7 +12525,7 @@ std::ostream & operator<< ( std::ostream & os, const Rose_STL_Container<string> 
 // void buildHiddenTypeAndDeclarationLists( SgProject* project );
 
 #if 0
-// Moved the sageSupport.C
+// Moved the sage_support.cpp
 int 
 SgProject::parse()
    {
@@ -12266,7 +12652,7 @@ SgProject::unparse ( UnparseFormatHelp *unparseFormatHelp, UnparseDelegate* unpa
 #endif
    }
 
-// Moved to sageSupport.C: int SgProject::compileOutput( const std::string& compilerName )
+// Moved to sage_support.cpp: int SgProject::compileOutput( const std::string& compilerName )
 
 void
 SgProject::resetSourcePositionToGeneratedCode ( UnparseFormatHelp *unparseFormatHelp )
@@ -12328,6 +12714,19 @@ void
 SgProject::set_verbose ( int x )
    {
      p_verbose = x;
+   }
+
+bool
+SgProject::get_skip_translation_from_edg_ast_to_rose_ast (void) const
+   {
+  // look at how the files are set
+     bool returnSkipTranslation = (numberOfFiles() > 0) ? true : false;
+     for (int i = 0; i < numberOfFiles(); i++)
+        {
+          SgFile & file = get_file(i);
+          returnSkipTranslation = returnSkipTranslation && (bool) file.get_skip_translation_from_edg_ast_to_rose_ast();
+        }
+     return returnSkipTranslation;
    }
 
 bool
@@ -12550,6 +12949,19 @@ SgProject::get_PHP_only (void) const
      return result;
    }
 
+bool
+SgProject::get_Python_only (void) const
+   {
+  // look at how the files are set
+     bool result = false;
+     for (int i = 0; i < numberOfFiles(); i++)
+        {
+          SgFile & file = get_file(i);
+          result = result || (bool) file.get_Python_only();
+        }
+     return result;
+   }
+
 void
 SgProject::set_Java_only (bool value)
    {
@@ -12570,6 +12982,45 @@ SgProject::get_Java_only (void) const
      return result;
    }
 
+void
+SgProject::set_Java_classpath (std::list<std::string> param)
+   {
+     p_Java_classpath = param;
+   }
+
+std::list<std::string>
+SgProject::get_Java_classpath (void) const
+   {
+     return p_Java_classpath;
+   }
+   
+void
+SgProject::set_Java_sourcepath (std::list<std::string> param)
+   {
+     p_Java_sourcepath = param;
+   }
+
+std::list<std::string>
+SgProject::get_Java_sourcepath (void) const
+   {
+     return p_Java_sourcepath;
+   }
+   
+void
+SgProject::set_Java_destdir (std::string param)
+   {
+     p_Java_destdir = param;
+   }
+
+std::string
+SgProject::get_Java_destdir (void) const
+   {
+    // If modifying, check stripJavaCommandLineOptions in cmdline.cpp    
+    if (p_Java_destdir == "") {
+      return ROSE::getWorkingDirectory();
+    }
+    return p_Java_destdir;
+   }
 
 #if 0
 // DQ (2/4/2009): This is now a data member at the SgProject and so is automatically generated asa member function.
@@ -12594,6 +13045,21 @@ SgProject::skipfinalCompileStep(bool value)
         {
           get_file(i).set_skipfinalCompileStep(value);
         }
+   }
+
+
+int
+SgProject::get_detect_dangling_pointers(void) const
+   {
+  // look at how the files are set
+     int result = 0;
+     for (int i = 0; i < numberOfFiles(); i++)
+        {
+          SgFile & file = get_file(i);
+          result = result | file.get_detect_dangling_pointers();
+        }
+
+     return result;
    }
 
 
@@ -12668,8 +13134,8 @@ SgProject::display ( const std::string & label ) const
         }
    }
 
-// Moved to sageSupport.C: int SgProject::link ( std::string linkerName )
-// Moved to sageSupport.C: int SgProject::link ( const std::vector<std::string>& argv, std::string linkerName )
+// Moved to sage_support.cpp: int SgProject::link ( std::string linkerName )
+// Moved to sage_support.cpp: int SgProject::link ( const std::vector<std::string>& argv, std::string linkerName )
 
 const SgStringList &
 SgProject::get_includePathList () const
@@ -12840,6 +13306,9 @@ SgUnparse_Info::SgUnparse_Info (  )
 
   // Test the isSgUnparse_Info() function since it has been problematic
      assert(isSgUnparse_Info(this) != NULL);
+
+  // Initialize the nesting level to 0 (for python).
+       p_nestingLevel = 0;
    }
 
 // DQ (1/5/2008): I think this is a redundant function with the one in sageInterface.C
@@ -12862,6 +13331,9 @@ SgUnparse_Info::SgUnparse_Info ( const SgUnparse_Info & X )
 
      assert (p_unparse_attribute.size() == UNPARSE_TYPE_LAST);
   // assert (SgNO_UNPARSE_INFO.p_unparse_attribute.size() == UNPARSE_TYPE_LAST);
+
+     // Copy nesting level (for python).
+     p_nestingLevel = X.p_nestingLevel;
    }
 
 SgUnparse_Info & SgUnparse_Info::operator= ( const SgUnparse_Info & X )
@@ -12895,6 +13367,14 @@ SgUnparse_Info & SgUnparse_Info::operator= ( const SgUnparse_Info & X )
   // DQ (5/22/2007): Added to support name qualification and access to the new hidden 
   // type, declaration and class elaboration lists stored in the scopes.
      p_current_scope = X.p_current_scope;
+
+  // DQ (5/11/2011): New support for name qualification.
+     p_name_qualification_length     = X.p_name_qualification_length;
+     p_type_elaboration_required     = X.p_type_elaboration_required;
+     p_global_qualification_required = X.p_global_qualification_required;
+
+  // DQ (5/21/2011): New support for name qualification.
+     p_reference_node_for_qualification = X.p_reference_node_for_qualification;
 
      return *this;
    }
@@ -12994,6 +13474,14 @@ SgUnparse_Info::post_construction_initialization()
 
   // DQ (6/2/2007): Added initialization of new data member.
      p_current_scope = NULL;
+
+  // DQ (5/11/2011): New support for name qualification.
+     p_name_qualification_length     = 0;
+     p_type_elaboration_required     = false;
+     p_global_qualification_required = false;
+
+  // DQ (5/21/2011): New support for name qualification.
+     p_reference_node_for_qualification = NULL;
    }
 
 bool
@@ -13797,6 +14285,9 @@ SgUnparse_Info::display ( const std::string & label ) const
      printf ("p_outputCodeGenerationFormatDelimiters = %s \n",p_outputCodeGenerationFormatDelimiters ? "true" : "false");
      printf ("p_current_function_call                = %p \n",p_current_function_call);
      printf ("p_current_scope                        = %p = %s \n",p_current_scope,p_current_scope != NULL ? p_current_scope->class_name().c_str() : "EmPtY sTrInG");
+
+  // DQ (5/21/2011): Added support for name qualification...
+     printf ("p_reference_node_for_qualification     = %p = %s \n",p_reference_node_for_qualification,p_reference_node_for_qualification != NULL ? p_reference_node_for_qualification->class_name().c_str() : "EmPtY sTrInG");
    }
 
 string
@@ -13893,6 +14384,19 @@ SgUnparse_Info::getStructureTagList ()
   // Access function for internal STL list
      return p_structureTagProcessingList;
    }
+
+void
+SgUnparse_Info::inc_nestingLevel() {
+    p_nestingLevel += 1;
+}
+
+void
+SgUnparse_Info::dec_nestingLevel() {
+    p_nestingLevel -= 1;
+    if (p_nestingLevel < 0) {
+        cerr << "warning: SgUnparse_Info.p_nestingLevel decremented below zero." << endl;
+    }
+}
 
 SOURCE_UNPARSE_INFO_END
 
@@ -14047,7 +14551,12 @@ void SgTemplateArgument::post_construction_initialization()
      p_type                  = NULL;
      p_expression            = NULL;
   // p_templateInstantiation = NULL;
-     p_templateDeclaration = NULL;
+     p_templateDeclaration   = NULL;
+
+  // DQ (5/14/2011): Added to support name qualification on types referenced by template arguments.
+     p_name_qualification_length     = 0;
+     p_type_elaboration_required     = false;
+     p_global_qualification_required = false;
    }
 
 // Different constructors for use in building the different types of arguments possible
@@ -14258,6 +14767,58 @@ SgTemplateArgument::get_scope () const
      return scope;
    } 
 #endif
+
+SgName
+SgTemplateArgument::get_qualified_name_prefix() const
+   {
+  // DQ (5/29/2011): Added to support for new qualified name generation.
+  // This only applies to specific SgSupport IR nodes:
+  //    SgBaseClass
+  //    SgTemplateArgument
+
+     printf ("This is not called see the function: SgTemplateArgument::get_qualified_name_prefix_for_type() \n");
+
+  // DQ (5/28/2011): We have to handle the name qualification directly since types can be qualified 
+  // different and so it depends upon where the type is referenced.  Thus the qualified name is 
+  // stored in a map to the IR node that references the type.
+     SgName nameQualifier;
+     std::map<SgNode*,std::string>::iterator i = SgNode::get_globalQualifiedNameMapForTypes().find(const_cast<SgTemplateArgument*>(this));
+  // ROSE_ASSERT(i != SgNode::get_globalQualifiedNameMapForNames().end());
+
+     if (i != SgNode::get_globalQualifiedNameMapForTypes().end())
+        {
+          nameQualifier = i->second;
+       // printf ("Found a valid name qualification: nameQualifier %s \n",nameQualifier.str());
+        }
+
+  // printf ("nameQualifier for SgBaseClass = %s = %s \n",class_name().c_str(),nameQualifier.str());
+
+     return nameQualifier;
+   }
+
+SgName
+SgTemplateArgument::get_qualified_name_prefix_for_type() const
+   {
+  // DQ (5/29/2011): Added to support for new qualified name generation.
+
+  // DQ (5/28/2011): We have to handle the name qualification directly since types can be qualified 
+  // different and so it depends upon where the type is referenced.  Thus the qualified name is 
+  // stored in a map to the IR node that references the type.
+     SgName nameQualifier;
+     std::map<SgNode*,std::string>::iterator i = SgNode::get_globalQualifiedNameMapForTypes().find(const_cast<SgTemplateArgument*>(this));
+  // ROSE_ASSERT(i != SgNode::get_globalQualifiedNameMapForNames().end());
+
+     if (i != SgNode::get_globalQualifiedNameMapForTypes().end())
+        {
+          nameQualifier = i->second;
+          printf ("Found a valid name qualification: nameQualifier %s \n",nameQualifier.str());
+        }
+
+     printf ("nameQualifier for SgTemplateArgument = %s = %s \n",class_name().c_str(),nameQualifier.str());
+
+     return nameQualifier;
+   }
+ 
 
 SOURCE_TEMPLATE_ARGUMENT_END
 
@@ -14521,23 +15082,18 @@ SgIncidenceDirectedGraph::post_construction_initialization()
 
 bool
 SgIncidenceDirectedGraph::checkIfGraphEdgeExists(SgGraphNode* src) {
-  //SgGraphEdgeList* gedges = get_edgesOut();
-  rose_graph_integer_edge_hash_multimap edges = get_node_index_to_edge_multimap_edgesOut();
-  bool exists = false;
-  rose_graph_integer_edge_hash_multimap::iterator it = edges.find(src->get_index());
-  if (it!=edges.end()) {
-    exists=true;
-  }
-  return exists;
+  const rose_graph_integer_edge_hash_multimap& edges = get_node_index_to_edge_multimap_edgesOut();
+  rose_graph_integer_edge_hash_multimap::const_iterator it = edges.find(src->get_index());
+  
+  return (it != edges.end());
 }
 
 std::set <SgGraphEdge*>
 SgIncidenceDirectedGraph::getEdge(SgGraphNode* src) {
-  //SgGraphEdgeList* gedges = get_edgesOut();
-  rose_graph_integer_edge_hash_multimap edges = get_node_index_to_edge_multimap_edgesOut();
+  const rose_graph_integer_edge_hash_multimap& edges = get_node_index_to_edge_multimap_edgesOut();
   set<SgGraphEdge*> medges;
-  rose_graph_integer_edge_hash_multimap::iterator it1, it2;
-  pair <rose_graph_integer_edge_hash_multimap::iterator, rose_graph_integer_edge_hash_multimap::iterator> iter =
+  rose_graph_integer_edge_hash_multimap::const_iterator it1, it2;
+  pair <rose_graph_integer_edge_hash_multimap::const_iterator, rose_graph_integer_edge_hash_multimap::const_iterator> iter =
     edges.equal_range(src->get_index());
   it1 = iter.first;
   it2 = iter.second;
@@ -14555,11 +15111,12 @@ SgIncidenceDirectedGraph::getEdge(SgGraphNode* src) {
 
 
 void
-SgIncidenceDirectedGraph::getSuccessors(SgGraphNode* node, std::vector <SgGraphNode*>& vec ) {
+SgIncidenceDirectedGraph::getSuccessors(const SgGraphNode* node, std::vector <SgGraphNode*>& vec ) const
+{
   //SgGraphEdgeList* gedges = get_edgesOut();
-  rose_graph_integer_edge_hash_multimap edges = get_node_index_to_edge_multimap_edgesOut();
-  rose_graph_integer_edge_hash_multimap::iterator it1, it2;
-  pair <rose_graph_integer_edge_hash_multimap::iterator, rose_graph_integer_edge_hash_multimap::iterator> iter =
+  const rose_graph_integer_edge_hash_multimap& edges = get_node_index_to_edge_multimap_edgesOut();
+  rose_graph_integer_edge_hash_multimap::const_iterator it1, it2;
+  pair <rose_graph_integer_edge_hash_multimap::const_iterator, rose_graph_integer_edge_hash_multimap::const_iterator> iter =
     edges.equal_range(node->get_index());
   it1 = iter.first;
   it2 = iter.second;
@@ -14573,9 +15130,9 @@ SgIncidenceDirectedGraph::getSuccessors(SgGraphNode* node, std::vector <SgGraphN
       SgGraphNode* target = isSgGraphNode(edge->get_to());
       assert(target);
       if (target) {
-	    string type_n = getProperty(SgGraph::type, edge);
-	    if (type_n==RoseBin_support::ToString(SgGraph::cfg))
+	    //if (type_n==RoseBin_support::ToString(SgGraph::cfg)) {
 	       vec.push_back(target);
+            //}
 	    //else 
 	    //   printf("Different edge type \n");
       }
@@ -14587,7 +15144,8 @@ SgIncidenceDirectedGraph::getSuccessors(SgGraphNode* node, std::vector <SgGraphN
 }
 
 void
-SgIncidenceDirectedGraph::getPredecessors(SgGraphNode* node, std::vector <SgGraphNode*>& vec ) {
+SgIncidenceDirectedGraph::getPredecessors(const SgGraphNode* node, std::vector <SgGraphNode*>& vec ) const
+{
   //SgGraphEdgeList* gredges = get_edgesIn();
   rose_graph_integer_edge_hash_multimap edges = get_node_index_to_edge_multimap_edgesIn();
   rose_graph_integer_edge_hash_multimap::iterator it1, it2;
@@ -14602,8 +15160,8 @@ SgIncidenceDirectedGraph::getPredecessors(SgGraphNode* node, std::vector <SgGrap
     if (edge) {
       SgGraphNode* source = isSgGraphNode(edge->get_from());
       if (source) {
-	string type_n = getProperty(SgGraph::type, edge);
-	if (type_n==RoseBin_support::ToString(SgGraph::cfg))
+	//string type_n = getProperty(SgGraph::type, edge);
+	//if (type_n==RoseBin_support::ToString(SgGraph::cfg))
 	  vec.push_back(source);
       }
     }
@@ -14615,10 +15173,10 @@ SgIncidenceDirectedGraph::getPredecessors(SgGraphNode* node, std::vector <SgGrap
 set<SgDirectedGraphEdge*>
 SgIncidenceDirectedGraph::getDirectedEdge(SgGraphNode* src, SgGraphNode* trg) {
   //SgGraphEdgeList* gedges = get_edgesOut();
-  rose_graph_integer_edge_hash_multimap edges = get_node_index_to_edge_multimap_edgesOut();
+  const rose_graph_integer_edge_hash_multimap& edges = get_node_index_to_edge_multimap_edgesOut();
   set<SgDirectedGraphEdge*> medges;
-  rose_graph_integer_edge_hash_multimap::iterator it1, it2;
-  pair <rose_graph_integer_edge_hash_multimap::iterator, rose_graph_integer_edge_hash_multimap::iterator> iter =
+  rose_graph_integer_edge_hash_multimap::const_iterator it1, it2;
+  pair <rose_graph_integer_edge_hash_multimap::const_iterator, rose_graph_integer_edge_hash_multimap::const_iterator> iter =
     edges.equal_range(src->get_index());
   it1 = iter.first;
   it2 = iter.second;
@@ -14639,24 +15197,21 @@ SgIncidenceDirectedGraph::checkIfDirectedGraphEdgeExists(SgGraphNode* src, SgGra
     return false;
   if (trg==NULL)
     return false;
-  //  assert(src);
-  //assert(src->get_index());
-    
-  //  SgGraphEdgeList* gedges = get_edgesOut();
-  rose_graph_integer_edge_hash_multimap edges = get_node_index_to_edge_multimap_edgesOut();
-  bool exists = false;
-  rose_graph_integer_edge_hash_multimap::iterator it1, it2;
-  pair <rose_graph_integer_edge_hash_multimap::iterator, rose_graph_integer_edge_hash_multimap::iterator> iter = 
+
+  const rose_graph_integer_edge_hash_multimap& edges = get_node_index_to_edge_multimap_edgesOut();
+
+  rose_graph_integer_edge_hash_multimap::const_iterator it1, it2;
+  pair <rose_graph_integer_edge_hash_multimap::const_iterator, rose_graph_integer_edge_hash_multimap::const_iterator> iter = 
     edges.equal_range(src->get_index());
   it1 = iter.first;
   it2 = iter.second;
   for (;it1!=it2; ++it1) {
     SgDirectedGraphEdge* edge = isSgDirectedGraphEdge(it1->second);
-    SgGraphNode* target = isSgGraphNode(edge->get_to());
+    SgGraphNode* target = edge->get_to();
     if (target==trg)
-      exists=true;
+      return true;
   }
-  return exists;
+  return false;
 }
 
 
@@ -14801,7 +15356,7 @@ void $CLASSNAME::setWriteOnly()      { p_modifier = e_write_only; }
 bool $CLASSNAME::isReadWrite() const { return p_modifier == e_read_write; }
 void $CLASSNAME::setReadWrite()      { p_modifier = e_read_write; }
 
-std::ostream & operator<< ( std::ostream & os, $CLASSNAME & m) 
+std::ostream & operator<< ( std::ostream & os, const $CLASSNAME & m) 
    {
       os << m.get_modifier(); 
      return os;

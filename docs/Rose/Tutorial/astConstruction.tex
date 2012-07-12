@@ -1,0 +1,847 @@
+\clearpage
+\chapter{AST Construction}
+AST construction is a fundamental operation needed for building ROSE
+source-to-source translators. Several levels of interfaces are available in
+ROSE for users to build AST from scratch. 
+High level interfaces are recommended to use whenever possible for their
+simplicity. Low level interfaces can give users the maximum freedom to
+manipulate some details in AST trees.
+
+
+This chapter uses several examples to demonstrate how to 
+create AST fragments for common language
+constructs (such as variable declarations, functions, function calls, etc.)
+  and how to insert them into an existing AST tree.
+More examples of constructing AST using high level interfaces can be found at
+\textit{rose/tests/roseTests/astInterfaceTests}. 
+The source files of the high level interfaces are located in
+\textit{rose/src/frontend/SageIII/sageInterface}.
+
+\section{Variable Declarations}
+
+\paragraph{What To Learn} Two examples are given to show how to construct a SAGE III 
+AST subtree for a variable declaration and its insertion into the existing AST tree.
+\begin{itemize}
+\item Example 1. Building a variable declaration using the high level AST construction and 
+manipulation interfaces defined in namespace SageBuilder and SageInterface. 
+
+Figure~\ref{Tutorial:exampleAddVariableDeclaration2} shows the high level
+construction of an AST fragment (a variable declaration) and its insertion 
+into the AST at the top of each block. buildVariableDeclaration() takes the name and type
+to build a variable declaration node. prependStatement() inserts the declaration at the top
+of a basic block node. Details for parent and scope pointers, symbol
+tables, source file position information 
+and so on are handled transparently.
+
+%------------------- begin figure---------------------
+\begin{figure}[!hbp]
+{\indent
+{\mySmallFontSize
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/addVariableDeclaration2.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/addVariableDeclaration2.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{AST construction and insertion for a variable using the high level interfaces}
+\label{Tutorial:exampleAddVariableDeclaration2}
+\end{figure}
+
+%------------------- end figure---------------------
+
+%\newpage
+\item
+Example 2. Building the variable declaration using low level member functions of SAGE III node classes.
+
+Figure~\ref{Tutorial:exampleAddVariableDeclaration} shows the low level
+construction of the same AST fragment (for the same variable declaration) and its insertion 
+into the AST at the top of each block. SgNode constructors and their member functions are used.
+Side effects for scope, parent pointers and symbol tables have to be handled by programmers explicitly.
+
+%Note that the code does not handle symbol table issues.
+%\fixme{The input code should use the LowLevelRewrite classes instead of the still lower level AST nodes member functions directly.}
+
+%\fixme{Both this section and the next section (adding a function declaration)
+%       and the section(s) specific to the string based rewrite mechanism
+%       could be subsections of a section on AST Rewrite Mechanisms.}
+
+\begin{figure}[!hbp]
+{\indent
+{\mySmallFontSize
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/addVariableDeclaration.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/addVariableDeclaration.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code to read an input program and add a new variable 
+         declaration at the top of each block.}
+\label{Tutorial:exampleAddVariableDeclaration}
+\end{figure}
+\end{itemize}
+
+
+Figure~\ref{Tutorial:exampleInputCode_AddVariableDeclaration} shows the
+input code used to test the translator. 
+Figure~\ref{Tutorial:exampleOutput_AddVariableDeclaration} shows the resulting output.
+
+%-----------------------input code-------------------------
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/inputCode_AddVariableDeclaration.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/inputCode_AddVariableDeclaration.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code used as input to the translators adding new variable.}
+\label{Tutorial:exampleInputCode_AddVariableDeclaration}
+\end{figure}
+
+%-----------------------output code-------------------------
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleBuildDirectory/rose_inputCode_AddVariableDeclaration.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleBuildDirectory/rose_inputCode_AddVariableDeclaration.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Output of input to the translators adding new variable.}
+\label{Tutorial:exampleOutput_AddVariableDeclaration}
+\end{figure}
+
+
+\clearpage
+\section{Expressions}
+Figure~\ref{Tutorial:exampleAddExpression} shows a translator
+using the high level AST builder interface to add an assignment statement right
+before the last statement in a main() function.  
+
+   Figure~\ref{Tutorial:exampleInputCode_AddExpression} shows the
+input code used to test the translator.
+Figure~\ref{Tutorial:exampleOutput_AddExpression} shows the resulting output.
+
+%----------------------- translator--------------------------       
+\begin{figure}[!ht]
+{\indent
+{\mySmallFontSize
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/addExpression.C}
+\end{latexonly}
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/addExpression.C}
+\end{htmlonly}
+}
+}
+\caption{Example translator to add expressions}
+\label{Tutorial:exampleAddExpression}
+\end{figure}
+
+%----------------------- input code--------------------------       
+\begin{figure}[!ht]
+{\indent
+{\mySmallFontSize
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/inputCode_AddExpression.C}
+\end{latexonly}
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/inputCode_AddExpression.C}
+\end{htmlonly}
+}
+}
+\caption{Example source code used as input}
+\label{Tutorial:exampleInputCode_AddExpression}
+\end{figure}
+
+%----------------------- output code--------------------------       
+\begin{figure}[!ht]
+{\indent
+{\mySmallFontSize
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleBuildDirectory/rose_inputCode_AddExpression.C}
+\end{latexonly}
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleBuildDirectory/rose_inputCode_AddExpression.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Output of the input}
+\label{Tutorial:exampleOutput_AddExpression}
+\end{figure}
+
+\clearpage
+\section{Assignment Statements}
+Figure~\ref{Tutorial:exampleAddAssign} shows a translator
+using the high level AST builder interface to add an assignment statement right
+before the last statement in a main() function.  
+
+   Figure~\ref{Tutorial:exampleInputCode_addAssignmentStmt} shows the
+input code used to test the translator.
+Figure~\ref{Tutorial:exampleOutput_addAssignmentStmt} shows the resulting output.
+
+%\fixme{Consider making subsections for this section, so that we can present the high-level
+%       and mid-level AST rewrite mechanisms. Fix input example to work correctly with
+%       functions returning values (this should work).}
+%----------------------- translator--------------------------       
+\begin{figure}[!ht]
+{\indent
+{\mySmallFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/addAssignmentStmt.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/addAssignmentStmt.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code to add an assignment statement}
+\label{Tutorial:exampleAddAssign}
+\end{figure}
+
+%----------------------- input code--------------------------       
+\begin{figure}[!ht]
+{\indent
+{\mySmallFontSize
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/inputCode_AddAssignmentStmt.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/inputCode_AddAssignmentStmt.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code used as input}
+\label{Tutorial:exampleInputCode_addAssignmentStmt}
+\end{figure}
+
+%----------------------- output code--------------------------       
+\begin{figure}[!ht]
+{\indent
+{\mySmallFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleBuildDirectory/rose_inputCode_AddAssignmentStmt.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleBuildDirectory/rose_inputCode_AddAssignmentStmt.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Output of the input}
+\label{Tutorial:exampleOutput_addAssignmentStmt}
+\end{figure}
+
+\clearpage
+\section{Functions}
+This section shows how to add a function at the top of a global scope in a
+file. Again, examples for both high level and low level constructions of AST are given.
+\begin{itemize}
+\item Figure~\ref{Tutorial:exampleAddFunctionDeclaration2} shows the high
+level construction of a defining function (a function  with a function
+    body). Scope information is passed to builder functions explicitly when
+it is needed.
+%---------------------example 2. ----------------------
+\begin{figure}[!h]
+{\indent
+{\mySmallestFontSize
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+  \lstinputlisting{\TutorialExampleDirectory/addFunctionDeclaration2.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/addFunctionDeclaration2.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Addition of function to global scope using high level interfaces}
+\label{Tutorial:exampleAddFunctionDeclaration2}
+\end{figure}
+
+
+\item Figure~\ref{Tutorial:exampleAddFunctionDeclaration3} shows almost the
+same high level construction of the defining function, but with an
+additional scope stack. 
+ Scope information is passed to builder functions implicitly when
+it is needed.
+%---------------------example 3. ----------------------
+\begin{figure}[!h]
+{\indent
+{\mySmallestFontSize
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+  \lstinputlisting{\TutorialExampleDirectory/addFunctionDeclaration3.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/addFunctionDeclaration3.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Addition of function to global scope using high level interfaces
+  and a scope stack}
+\label{Tutorial:exampleAddFunctionDeclaration3}
+\end{figure}
+
+
+\item  The low level construction of the AST fragment of the same function 
+declaration and its insertion 
+is separated into two portions and shown in two figures 
+(Figure~\ref{Tutorial:exampleAddFunctionDeclarationA} and
+Figure~\ref{Tutorial:exampleAddFunctionDeclarationB} ).
+%---------------------example 1. part 1----------------------
+\begin{figure}[!h]
+{\indent
+{\mySmallestFontSize
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+%  \lstinputlisting{\TutorialExampleDirectory/addFunctionDeclaration.C}
+   \lstinputlisting{\TutorialExampleBuildDirectory/addFunctionDeclaration.aa}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/addFunctionDeclaration.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code shows addition of function to global scope (part 1).}
+\label{Tutorial:exampleAddFunctionDeclarationA}
+\end{figure}
+
+%--------------------------example 1. part 2----------------------
+\begin{figure}[!h]
+{\indent
+{\mySmallestFontSize
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+%  \lstinputlisting{\TutorialExampleDirectory/addFunctionDeclaration.C}
+   \lstinputlisting{\TutorialExampleBuildDirectory/addFunctionDeclaration.ab}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/addFunctionDeclaration.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code shows addition of function to global scope (part 2).}
+\label{Tutorial:exampleAddFunctionDeclarationB}
+\end{figure}
+
+
+\end{itemize}
+
+Figure~\ref{Tutorial:exampleInputCode_AddFunctionDeclaration} and 
+Figure~\ref{Tutorial:exampleOutput_AddFunctionDeclaration} 
+give the input code and output result for the
+translators above.
+
+%---------------------- input code--------------------------
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/inputCode_AddFunctionDeclaration.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/inputCode_AddFunctionDeclaration.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code used as input to translator adding new function.}
+\label{Tutorial:exampleInputCode_AddFunctionDeclaration}
+\end{figure}
+
+%-----------------------output code----------------------------------
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleBuildDirectory/rose_inputCode_AddFunctionDeclaration.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleBuildDirectory/rose_inputCode_AddFunctionDeclaration.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Output of input to translator adding new function.}
+\label{Tutorial:exampleOutput_AddFunctionDeclaration}
+\end{figure}
+
+
+\clearpage
+\section{Function Calls}
+Adding functions calls is a typical task for instrumentation translator. 
+\begin{itemize}
+\item Figure~\ref{Tutorial:exampleInstrumentationTranslator} shows the use of
+the AST string based rewrite mechanism to add function calls to the top and bottom of 
+each block within the AST.
+
+\item Figure~\ref{Tutorial:exampleAddFunctionCalls} shows the use of
+the AST builder interface to do the same instrumentation work.
+\end{itemize}
+   Figure~\ref{Tutorial:exampleInputCode_InstrumentationTranslator} shows the
+input code used to get the translator.
+Figure~\ref{Tutorial:exampleOutput_InstrumentationTranslator} shows the resulting output.
+
+Another example shows how to add a function call at the end of each
+function body. A utility function, \textit{instrumentEndOfFunction()}, from SageInterface name space is used. 
+The interface tries to locate all return statements of a target function 
+ and rewriting return expressions with side effects, if there are any. 
+ Figure~\ref{Tutorial:instrumentEndOfFunction} shows the translator code. 
+ Figure~\ref{Tutorial:inputCode_instrumentEndOfFunction} shows the input
+ code. The instrumented code is shown in
+ Figure~\ref{Tutorial:rose_inputCode_instrumentEndOfFunction}.
+
+ 
+%\fixme{Consider making subsections for this section, so that we can present the high-level
+%       and mid-level AST rewrite mechanisms. Fix input example to work correctly with
+%       functions returning values (this should work).}
+%----------------------- translator--------------------------       
+\begin{figure}[!ht]
+{\indent
+{\mySmallFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/instrumentationExample.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/instrumentationExample.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code to instrument any input program.}
+\label{Tutorial:exampleInstrumentationTranslator}
+\end{figure}
+%----------------------- translator 2--------------------------       
+\begin{figure}[!ht]
+{\indent
+{\mySmallFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/addFunctionCalls.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/addFunctionCalls.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code using the high level interfaces}
+\label{Tutorial:exampleAddFunctionCalls}
+\end{figure}
+
+
+%----------------------- input code--------------------------       
+\begin{figure}[!ht]
+{\indent
+{\mySmallFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/inputCode_InstrumentationTranslator.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/inputCode_InstrumentationTranslator.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code used as input to instrumenting translator.}
+\label{Tutorial:exampleInputCode_InstrumentationTranslator}
+\end{figure}
+
+%----------------------- output code--------------------------       
+\begin{figure}[!ht]
+{\indent
+{\mySmallFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleBuildDirectory/rose_inputCode_InstrumentationTranslator.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleBuildDirectory/rose_inputCode_InstrumentationTranslator.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+
+
+\caption{Output of input to instrumenting translator.}
+\label{Tutorial:exampleOutput_InstrumentationTranslator}
+\end{figure}
+
+
+%------------------end of function example
+%----------------------- translator 3--------------------------       
+\begin{figure}[!ht]
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/instrumentEndOfFunction.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/instrumentEndOfFunction.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code instrumenting end of functions}
+\label{Tutorial:instrumentEndOfFunction}
+\end{figure}
+
+
+%----------------------- input code 3--------------------------       
+\begin{figure}[!ht]
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/inputCode_instrumentEndOfFunction.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/inputCode_instrumentEndOfFunction.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example input code of the instrumenting translator for end of
+functions.}
+\label{Tutorial:inputCode_instrumentEndOfFunction}
+\end{figure}
+
+%----------------------- output code--------------------------       
+\begin{figure}[!ht]
+{\indent
+{\mySmallFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleBuildDirectory/rose_inputCode_instrumentEndOfFunction.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleBuildDirectory/rose_inputCode_instrumentEndOfFunction.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+
+\caption{Output of instrumenting translator for end of functions.}
+\label{Tutorial:rose_inputCode_instrumentEndOfFunction}
+\end{figure}
+
+\section{Creating a 'struct' for Global Variables}
+\fixme{TODO: This tutorial uses low level AST manipulation. We should have a more
+concise version using SageInterface and SageBuilder functions.}
+   This is an example written to support the Charm++ tool. This translator
+extracts global variables from the program and builds a structure to hold them.
+The support is part of a number of requirements associated with using Charm++
+and AMPI.
+
+   Figure~\ref{Tutorial:exampleGlobalVariableHandling} shows repackaging of global
+variables within an application into a struct. All reference to the global variables
+are also transformed to reference the original variable indirectly through the structure.
+This processing is part of preprocessing to use Charm++.  
+
+   This example shows the low level handling directly at the level of the IR.
+
+\begin{figure}[!h]
+{\indent
+{\mySmallestFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+%  \lstinputlisting{\TutorialExampleDirectory/addFunctionDeclaration.C}
+   \lstinputlisting{\TutorialExampleBuildDirectory/CharmSupport.aa}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/CharmSupport.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code shows repackaging of global variables to a struct (part 1).}
+\label{Tutorial:exampleGlobalVariableHandling}
+\end{figure}
+
+\begin{figure}[!h]
+{\indent
+{\mySmallestFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleBuildDirectory/CharmSupport.ab}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+%   \verbatiminput{\TutorialExampleDirectory/addFunctionDeclaration.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code shows repackaging of global variables to a struct (part 2).}
+\label{Tutorial:exampleGlobalVariableHandling2}
+\end{figure}
+
+\begin{figure}[!h]
+{\indent
+{\mySmallestFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleBuildDirectory/CharmSupport.ac}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+%   \verbatiminput{\TutorialExampleDirectory/addFunctionDeclaration.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code shows repackaging of global variables to a struct (part 3).}
+\label{Tutorial:exampleGlobalVariableHandling3}
+\end{figure}
+
+\begin{figure}[!h]
+{\indent
+{\mySmallestFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleBuildDirectory/CharmSupport.ad}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+%   \verbatiminput{\TutorialExampleDirectory/addFunctionDeclaration.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code shows repackaging of global variables to a struct (part 4).}
+\label{Tutorial:exampleGlobalVariableHandling4}
+\end{figure}
+
+\begin{figure}[!h]
+{\indent
+{\mySmallestFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleBuildDirectory/CharmSupport.ae}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+%   \verbatiminput{\TutorialExampleDirectory/addFunctionDeclaration.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code shows repackaging of global variables to a struct (part 5).}
+\label{Tutorial:exampleGlobalVariableHandling5}
+\end{figure}
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/inputCode_ExampleCharmSupport.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/inputCode_ExampleCharmSupport.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code used as input to translator adding new function.}
+\label{Tutorial:exampleInputCode_AddFunctionDeclaration}
+\end{figure}
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleBuildDirectory/rose_inputCode_ExampleCharmSupport.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleBuildDirectory/rose_inputCode_ExampleCharmSupport.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Output of input to translator adding new function.}
+\label{Tutorial:exampleOutput_AddFunctionDeclaration}
+\end{figure}
+
+

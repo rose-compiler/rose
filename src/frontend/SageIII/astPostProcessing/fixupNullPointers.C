@@ -110,6 +110,7 @@ FixupNullPointersInAST::visit ( SgNode* node )
         }
 
   // DQ (10/27/2007): Added as a test! (Trying to debug the outliner)
+     ROSE_ASSERT(node != NULL);
      SgLocatedNode* locatedNode = isSgLocatedNode(node);
      if (locatedNode != NULL)
         {

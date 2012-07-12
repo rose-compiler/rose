@@ -3,8 +3,9 @@
 unparser_headers=\
 	$(unparserPath)/unparser.h \
 	$(unparserPath)/unparse_sym.h \
-	$(unparserPath)/astUnparseAttribute.h
-
+	$(unparserPath)/astUnparseAttribute.h \
+	$(unparserPath)/IncludedFilesUnparser.h \
+	$(unparserPath)/nameQualificationSupport.h
 
 unparser_sources=\
 	$(unparser_headers:.h=.C)
@@ -20,7 +21,8 @@ unparser_la_sources=\
 	$(unparseFortran_la_sources) \
 	$(unparseJavaCodeGeneration_la_sources) \
 	$(unparseLanguageIndependenceSupport_la_sources) \
-	$(unparsePHPCodeGeneration_la_sources)
+	$(unparsePHPCodeGeneration_la_sources) \
+	$(unparsePythonCodeGeneration_la_sources)
 
 
 unparser_includeHeaders=\
@@ -30,7 +32,8 @@ unparser_includeHeaders=\
 	$(unparseFortran_includeHeaders) \
 	$(unparseJavaCodeGeneration_includeHeaders) \
 	$(unparseLanguageIndependenceSupport_includeHeaders) \
-	$(unparsePHPCodeGeneration_includeHeaders)
+	$(unparsePHPCodeGeneration_includeHeaders) \
+	$(unparsePythonCodeGeneration_includeHeaders)
 
 
 
@@ -42,7 +45,8 @@ unparser_extraDist=\
 	$(unparseFormatSupport_extraDist) \
 	$(unparseFortran_extraDist) \
 	$(unparseLanguageIndependenceSupport_extraDist) \
-	$(unparsePHPCodeGeneration_extraDist)
+	$(unparsePHPCodeGeneration_extraDist) \
+	$(unparsePythonCodeGeneration_extraDist)
 
 
 unparser_cleanLocal=\
@@ -56,4 +60,5 @@ unparser_cleanLocal=\
 	$(unparseFormatSupport_cleanLocal); \
 	$(unparseFortran_cleanLocal); \
 	$(unparseLanguageIndependenceSupport_cleanLocal); \
-	$(unparsePHPCodeGeneration_cleanLocal)
+	$(unparsePHPCodeGeneration_cleanLocal) \
+	$(unparsePythonCodeGeneration_cleanLocal)

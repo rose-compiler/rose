@@ -1,7 +1,5 @@
 /* Copyright 2008 Lawrence Livermore National Security, LLC */
 #include "sage3basic.h"
-#define __STDC_FORMAT_MACROS
-#include <inttypes.h>
 #include "checkIsModifiedFlag.h"
 #include <algorithm>
 #include <fstream>
@@ -90,7 +88,7 @@ SgAsmExecutableFileFormat::parseBinaryFormat(const char *name)
 #endif
             } else {
                 if (ef) delete ef->get_data_converter();
-                delete ef;
+                SageInterface::deleteAST(ef);      /* ~SgAsmGenericFile() closes ef->p_fd if it was opened. */
                 ef = NULL;
             }
         }
@@ -98,7 +96,7 @@ SgAsmExecutableFileFormat::parseBinaryFormat(const char *name)
         for (size_t ci=0; ci<converters.size(); ci++)
             delete converters[ci];
         if (ef) delete ef->get_data_converter();
-        delete ef;
+        SageInterface::deleteAST(ef);
         ef = NULL;
         throw;
     }
@@ -107,7 +105,6 @@ SgAsmExecutableFileFormat::parseBinaryFormat(const char *name)
      * "file" command does a thorough job of trying to figure out the type of file. If we can't figure out the file name then
      * just throw some generic error. */
     if (!ef) {
-        delete ef; ef=NULL;
         /* Use file(1) to try to figure out the file type to report in the exception */
         int child_stdout[2];
 #ifdef _MSC_VER

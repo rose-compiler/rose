@@ -1,9 +1,7 @@
 /* Windows PE Export Sections (SgAsmPEExportSection and related classes) */
 
-// tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
-#define __STDC_FORMAT_MACROS
-#include <inttypes.h>
+#include "MemoryMap.h"
 
 /* Constructor */
 void
@@ -54,6 +52,7 @@ SgAsmPEExportDirectory::ctor(SgAsmPEExportSection *section)
         memset(&disk, 0, sizeof disk);
     }
     p_name = new SgAsmBasicString(name);
+    p_name->set_parent(this);
 }
 
 /* Print debugging info */
@@ -87,6 +86,9 @@ void
 SgAsmPEExportEntry::ctor(SgAsmGenericString *fname, unsigned ordinal, rose_rva_t expaddr, SgAsmGenericString *forwarder)
 {
     set_name(fname);
+    if (fname)
+        fname->set_parent(this);
+
     set_ordinal(ordinal);
     set_export_rva(expaddr);
     set_forwarder(forwarder);

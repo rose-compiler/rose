@@ -14,6 +14,10 @@ if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
    SUBDIRS += java-parser
 endif
 
-SUBDIRS += MSTL libharu-2.1.0 antlr-jars qrose
+if ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+SUBDIRS += MSTL
+else
+SUBDIRS += MSTL libharu-2.1.0 antlr-jars qrose POET
+endif
 
 EXTRA_DIST = CMakeLists.txt

@@ -18,7 +18,7 @@ class CompSlice
   void SetSliceLoop( LoopTreeNode *s, LoopTreeNode *l,
                      bool loopreversible = false, int align = 0);
   void SetSliceAlign( LoopTreeNode *s, int align);
-  void Notify( const CompSliceObserveInfo &info);
+  void Notify( const CompSliceObserveInfo &info) const;
  protected:
   CompSlice(CompSliceImpl *_impl);
   CompSliceImpl* GetImpl() const { return impl; }
@@ -28,7 +28,7 @@ class CompSlice
   CompSlice( const CompSlice& that);
   ~CompSlice();
 
-  void Dump() const { std::cerr << toString() << std::endl;}
+  virtual void Dump() const { std::cerr << toString() << std::endl;}
   std::string toString() const;
   int QuerySliceLevel() const;
 
@@ -121,14 +121,24 @@ class CompSlice
   void AttachObserver( CompSliceObserver &o) const; 
   void DetachObserver( CompSliceObserver &o) const;
 
-  bool SliceCommonLoop( CompSlice *slice2) const;
-  bool SliceCommonStmt( CompSlice *slice2) const;
+  bool SliceCommonLoop( const CompSlice *slice2) const;
+  bool SliceCommonStmt( const CompSlice *slice2) const;
   bool SliceCodeSegment( LoopTreeNode *root) const;
   bool SliceLoopReversible() const;
 
   void Append( const CompSlice& that);
-  void IncreaseAlign( int align);
+  void IncreaseAlign( int align) const;
+
  friend class DependenceHoisting;
+};
+
+class CompSliceSelect : public SelectObject<LoopTreeNode*>
+{
+  const CompSlice* slice;
+ public:
+  CompSliceSelect(const CompSlice* _slice) : slice(_slice) {}
+  bool operator()(LoopTreeNode* const& cur)  const
+     { return slice->QuerySliceLoop(cur) || slice->QuerySliceStmt(cur); }
 };
 
 SymbolicBound SliceLoopRange(const CompSlice *slice, LoopTreeNode *root);
@@ -143,11 +153,13 @@ class CompSliceNest;
 class DependenceHoisting 
 {
   virtual CompSlice* CreateCompSlice( int level ) { return new CompSlice(level); }
+  
  public:
+  DependenceHoisting() {}
   void Analyze( LoopTreeDepComp& comp, CompSliceNest &result);
   void Analyze( LoopTreeDepComp& comp, LoopTreeTransDepGraphCreate* g, 
                    CompSliceNest& result);
-  virtual LoopTreeNode* Transform( LoopTransformInterface &_fa, LoopTreeDepComp& c,
+  virtual LoopTreeNode* Transform( LoopTreeDepComp& c,
                                    const CompSlice *slice, LoopTreeNode *root);
   virtual ~DependenceHoisting() {}
 };
@@ -161,29 +173,37 @@ class CompSliceNest
   class ObserveImpl;
   ObserveImpl *impl;
 
+  void Reset( unsigned _maxsize);
+  void Notify( const CompSliceNestObserveInfo &info);
+
+ // jichi (9/11/2009): Make @code Append public, which is used by:
+ // @code{class FullNestInfo} in @file{CompSliceDepGraph.h}.
+ public: 
   void Append( CompSlice *slice) 
        { assert(size < maxsize); 
          sliceVec[size]=slice; ++size; }
-  void Reset( unsigned _maxsize);
-  void Notify( const CompSliceNestObserveInfo &info);
  public:
-  CompSliceNest();
+  CompSliceNest(unsigned _maxsize = 0);
   ~CompSliceNest();
   int NumberOfEntries() const { return size; }
-  const CompSlice* Entry(int index) const { return sliceVec[index]; }
-  const CompSlice* operator [] (int index) const { return sliceVec[index]; }
-  void Dump() const  { std::cerr << toString() << std::endl; }
+  const CompSlice* Entry(int index) const 
+            { assert(index < size); return sliceVec[index]; }
+  const CompSlice* operator [] (int index) const 
+            { assert(index < size); return sliceVec[index]; }
+  virtual void Dump() const  { std::cerr << toString() << std::endl; }
   std::string toString() const ;
 
   void AttachObserver( CompSliceNestObserver &o) const ;
   void DetachObserver( CompSliceNestObserver &o) const;
 
   void SwapEntry( int index1, int index2);
-  void DeleteEntry( int index);
+  /* QY: 6/2009: if saveAsInner, the slice entry is removed but its storage is not deleted*/
+  void DeleteEntry( int index, bool saveAsInner = true);
   void DuplicateEntry( int desc,int src);
   void AlignEntry(int index, int align);
   void AppendNest( const CompSliceNest& that);
  friend class DependenceHoisting;
+ friend class CompSliceDepGraphNode;
 };
 
 #endif

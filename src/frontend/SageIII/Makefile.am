@@ -1,8 +1,31 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-# Include the "." to force the current directory to be compiled 
-# before the subdirectories.
-SUBDIRS = astFileIO astMerge astFixup astPostProcessing sageInterface virtualCFG astTokenStream astHiddenTypeAndDeclarationLists astVisualization
+## Place generated object files (.o) into the same directory as their source
+## files, in order to avoid collisions when non-recursive make is used.
+AUTOMAKE_OPTIONS = subdir-objects
+
+include $(srcdir)/sage_support/Makefile_variables
+
+#
+# Don't use $(srcdir) in conjunction with [subdir-objects], otherwise
+# object files will be built in the source tree. Therefore, we need to
+# use relative paths.
+#
+#mptPartialRedundancyEliminationPath=$(srcdir)/partialRedundancyElimination#
+fSageSupportPath=sage_support#
+
+# DQ (6/25/2011): Readded this directory so that we can support the older behavior as a default
+# although this will likely fail at least some of the nearly one hundred new name qualification tests.
+# DQ (6/22/2011): I think that the astHiddenTypeAndDeclarationLists directory is no longer required in ROSE.
+# SUBDIRS = astFileIO astMerge astFixup astPostProcessing sageInterface virtualCFG astTokenStream astHiddenTypeAndDeclarationLists astVisualization astFromString
+# SUBDIRS = astFileIO astMerge astFixup astPostProcessing sageInterface virtualCFG astTokenStream astVisualization astFromString
+# SUBDIRS = astFileIO astMerge astFixup astPostProcessing sageInterface virtualCFG astTokenStream astHiddenTypeAndDeclarationLists astVisualization astFromString includeDirectivesProcessing
+
+if ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+   SUBDIRS = astFixup astPostProcessing sageInterface astVisualization virtualCFG includeDirectivesProcessing
+else
+   SUBDIRS = astFileIO astMerge astFixup astPostProcessing sageInterface virtualCFG astTokenStream astHiddenTypeAndDeclarationLists astVisualization astFromString includeDirectivesProcessing
+endif
 
 # DQ (12/29/2009): This is only used to handle generated code as smaller files.
 SUBDIRS += GENERATED_CODE_DIRECTORY_Cxx_Grammar
@@ -24,6 +47,12 @@ AM_LFLAGS =
 
 CXXFLAGS += $(ROSE_OPTIMIZATION_LEVEL) $(ROSE_VERBOSE)
 
+# DQ (11/14/2011): Add debug support when doing selective frontend development.
+# This cause the link time to incread about 4X.
+if ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+# CXXFLAGS += -g
+endif
+
 # omplexer.cc needs a header generaetd from ompparser.yy
 omplexer.lo: ompparser.h omplexer.cc
 ompparser.h: ompparser.cc
@@ -40,7 +69,7 @@ all-local: roseh sage.docs
 # INCLUDES = $(ROSE_INCLUDES) # -I$(top_srcdir)/src/frontend/EDG_SAGE_Connection -I$(top_srcdir)/src/frontend/EDG/EDG_3.3/src
 INCLUDES = $(ROSE_INCLUDES)
 
-# DQ (3/13/2010): sageSupport.C requires the OFP fortran source files to be made available.
+# DQ (3/13/2010): sage_support.cpp requires the OFP fortran source files to be made available.
 # if ROSE_USE_OPEN_FORTRAN_PARSER
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
    INCLUDES += -I${top_builddir}/src/3rdPartyLibraries/fortran-parser
@@ -69,6 +98,26 @@ CLEANFILES = haveRosettaGeneratedSource
 DISTCLEANFILES = preproc-c.cc ompparser.cc ompparser.h omplexer.cc
 
 # Some source code is generated (call make in ROSE/src/ROSETTA/src to generate these files)
+if ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+GENERATED_SOURCE = \
+	Cxx_Grammar.h \
+	Cxx_Grammar.C \
+	Cxx_GrammarMemoryPoolSupport.C \
+	AstQueryMemoryPool.h \
+	Cxx_GrammarReturnClassHierarchySubTree.C \
+	Cxx_GrammarTreeTraversalSuccessorContainer.C \
+	Cxx_GrammarTreeTraversalAccessEnums.h \
+	Cxx_GrammarVariantEnumNames.C \
+	Cxx_GrammarNewAndDeleteOperators.C \
+	Cxx_GrammarCopyMemberFunctions.C \
+	Cxx_GrammarTraverseMemoryPool.C \
+	Cxx_GrammarCheckingIfDataMembersAreInMemoryPool.C \
+	Cxx_GrammarMemoryPoolSupport.h \
+	Cxx_GrammarReturnDataMemberPointers.C \
+	Cxx_GrammarProcessDataMemberReferenceToPointers.C \
+	Cxx_GrammarNewConstructors.C \
+	Cxx_GrammarGetChildIndex.C
+else
 GENERATED_SOURCE = \
 	Cxx_Grammar.h \
 	Cxx_Grammar.C \
@@ -92,6 +141,7 @@ GENERATED_SOURCE = \
 	Cxx_GrammarProcessDataMemberReferenceToPointers.C \
 	Cxx_GrammarNewConstructors.C \
 	Cxx_GrammarGetChildIndex.C
+endif
 
 # DQ (4/23/2009): This file depends upon other files
 StorageClasses.lo: $(srcdir)/astFileIO/StorageClassMemoryManagement.C astFileIO/SourcesOfIRNodesAstFileIOSupport.C
@@ -106,13 +156,25 @@ force-haveRosettaGeneratedSource:
 
 $(GENERATED_SOURCE): haveRosettaGeneratedSource
 
+if ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 libsage3Sources = \
    rose_attributes_list.C \
    attachPreprocessingInfo.C \
    attachPreprocessingInfoTraversal.C \
    attributeListMap.C \
    manglingSupport.C \
-   sageSupport.C \
+   fixupCopy_scopes.C \
+   fixupCopy_symbols.C \
+   fixupCopy_references.C \
+   rose_graph_support.C \
+   $(fSageSupport_la_sources)
+else
+libsage3Sources = \
+   rose_attributes_list.C \
+   attachPreprocessingInfo.C \
+   attachPreprocessingInfoTraversal.C \
+   attributeListMap.C \
+   manglingSupport.C \
    fixupCopy_scopes.C \
    fixupCopy_symbols.C \
    fixupCopy_references.C \
@@ -121,7 +183,9 @@ libsage3Sources = \
    ompFortranParser.C \
    ompAstConstruction.cpp \
    dwarfSupport.C \
-   rose_graph_support.C
+   rose_graph_support.C \
+   $(fSageSupport_la_sources)
+endif
 
 # DQ (2/15/2010): This fails in Hudson tests of ROSE compiling ROSE for code generation, but I can't 
 # get it to fail in my own tests.  Skip it for now and see if there are more of these cases.
@@ -147,7 +211,11 @@ noinst_LTLIBRARIES = libsage3.la
 
 # libsage3_la_SOURCES = $(libsage3Sources) preproc.ll rose_paths.h omplexer.ll ompparser.yy
 # libsage3_la_SOURCES = $(libsage3Sources) preproc.ll omplexer.ll ompparser.yy
+if ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+libsage3_la_SOURCES = $(libsage3Sources) preproc-c.ll
+else
 libsage3_la_SOURCES = $(libsage3Sources) preproc-c.ll omplexer.ll ompparser.yy
+endif
 
 # DQ (3/8/2009): I think that the dependence upon $(top_builddir)/rose_config.h 
 # is what was forcing a lot of files to be compiled after reruning configure.
@@ -156,6 +224,16 @@ nodist_libsage3_la_SOURCES = $(GENERATED_SOURCE)
 
 
 if ROSE_USE_BOOST_WAVE
+
+if ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+libsage3_la_LIBADD  = \
+	astFixup/libastFixup.la \
+	astPostProcessing/libastPostProcessing.la \
+	sageInterface/libsageInterface.la \
+   astVisualization/libastVisualization.la \
+	virtualCFG/libvirtualCFG.la \
+   includeDirectivesProcessing/libincludeDirectivesProcessing.la
+else
 libsage3_la_LIBADD  = \
 	astFixup/libastFixup.la \
 	astPostProcessing/libastPostProcessing.la \
@@ -163,18 +241,29 @@ libsage3_la_LIBADD  = \
 	sageInterface/libsageInterface.la \
 	astTokenStream/libastTokenStream.la \
 	virtualCFG/libvirtualCFG.la \
-	astHiddenTypeAndDeclarationLists/libastHiddenTypeAndDeclarationLists.la \
-   astVisualization/libastVisualization.la
+        astVisualization/libastVisualization.la \
+        astFromString/libAstFromString.la \
+        astHiddenTypeAndDeclarationLists/libastHiddenTypeAndDeclarationLists.la \
+        includeDirectivesProcessing/libincludeDirectivesProcessing.la
+endif
 else
+
 libsage3_la_LIBADD  = \
 	astFixup/libastFixup.la \
 	astPostProcessing/libastPostProcessing.la \
 	astMerge/libastMerge.la \
 	sageInterface/libsageInterface.la \
 	virtualCFG/libvirtualCFG.la \
-	astHiddenTypeAndDeclarationLists/libastHiddenTypeAndDeclarationLists.la \
-   astVisualization/libastVisualization.la
+        astVisualization/libastVisualization.la \
+        astFromString/libAstFromString.la \
+        astHiddenTypeAndDeclarationLists/libastHiddenTypeAndDeclarationLists.la \
+        includeDirectivesProcessing/libincludeDirectivesProcessing.la
 endif
+
+# DQ (6/25/2011): Readded this directory so that we can support the older behavior as a default
+# although this will likely fail at least some of the nearly one hundred new name qualification tests.
+# DQ (6/24/2011): Removed now the the name qualification support in a part of src/backend/unparser.
+# astHiddenTypeAndDeclarationLists/libastHiddenTypeAndDeclarationLists.la 
 
 if ROSE_USE_SMALLER_GENERATED_FILES
    libsage3_la_LIBADD += GENERATED_CODE_DIRECTORY_Cxx_Grammar/libgeneratedIR.la
@@ -215,7 +304,8 @@ include_HEADERS = \
    fixupCopy.h \
    general_token_defs.h rtiHelpers.h \
    OmpAttribute.h omp.h dwarfSupport.h \
-   omp_lib_kinds.h omp_lib.h sage3basic.hhh rosedefs.h  fileoffsetbits.h rosedll.h
+   omp_lib_kinds.h omp_lib.h sage3basic.hhh rosedefs.h  fileoffsetbits.h rosedll.h \
+   $(fSageSupport_includeHeaders)
 
 # DQ (4/5/2009): Moved rose_paths.h to src/util (where the source file is located).
 nodist_include_HEADERS = \
@@ -226,25 +316,11 @@ nodist_include_HEADERS = \
    AstQueryMemoryPool.h \
    astFileIO/AstSpecificDataManagingClass.h
 
+if ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+BUILT_SOURCES = $(GENERATED_SOURCE)
+else
 BUILT_SOURCES = $(GENERATED_SOURCE) ompparser.cc ompparser.h omplexer.cc
-
-
-# DQ (3/13/2010): Extract the required OFP source files needed for ROSE Fortran support (in sageSupport.C).
-# if ROSE_USE_OPEN_FORTRAN_PARSER
-if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
-sageSupport.C: extract_rose_required_ofp_source_files
 endif
-
-# DQ (10/9/2010): We are now trying to properly represent the dependences so avoid redundant
-# extraction of the OFP source files used within ROSE. Using token.c as a representative file.
-extract_rose_required_ofp_source_files:
-if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
-	cd ${top_builddir}/src/3rdPartyLibraries/fortran-parser; $(MAKE) extract_rose_required_ofp_source_files
-endif
-if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
-	cd ${top_builddir}/src/3rdPartyLibraries/java-parser; $(MAKE) extract_rose_required_ecj_source_files
-endif
-
 
 # DQ (9/9/2007): Put C++_include_files.h back into place
 # since it is a convinient mechanism to handle included headers 
@@ -254,7 +330,6 @@ endif
 # AstAttributeDOT.h
 # astGraph.h
 # astGraphTemplate.C
-# sageSupport.h
 # C++_include_files.h
 
 clean-local:

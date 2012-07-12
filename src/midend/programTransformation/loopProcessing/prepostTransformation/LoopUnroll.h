@@ -6,27 +6,25 @@
 
 class LoopUnrolling : public PrePostTransformation
 {
-  public:
-    // COND_LEFTOVER means: for iterationCount%stride !=0, 
-    // use if-else statement instead of a loop to run the left over iterations
-    // Rarely useful
-    typedef enum{DEFAULT = 0, COND_LEFTOVER = 1, USE_NEWVAR = 2} UnrollOpt;
-  private:
-    int unrollsize;
-    UnrollOpt opt;
-    AstNodePtr enclosingloop;
+ public:
+  typedef enum{DEFAULT = 0, COND_LEFTOVER = 1, USE_NEWVAR = 2, POET_TUNING=4} UnrollOpt;
+ private:
+  static unsigned unrollsize;
+  static UnrollOpt opt;
+  AstNodePtr enclosingloop;
 
-    virtual bool operator()( AstInterface& fa, const AstNodePtr& n,
-        AstNodePtr& result);
-  public:
-    LoopUnrolling( int sz = 0, UnrollOpt _opt = DEFAULT) : unrollsize(sz), opt(_opt) {}
-    AstNodePtr operator()( LoopTransformInterface& _la, const AstNodePtr& root) 
-    {
-      SetLoopTransformInterface(&_la);
-      return TransformAstTraverse(_la, root, *this, AstInterface::PostVisit );
-    }
-    bool cmdline_configure(); 
-    static std::string cmdline_help() ;
+  virtual bool operator()( AstInterface& fa, const AstNodePtr& n,
+                           AstNodePtr& result);
+ public:
+  AstNodePtr operator()(const AstNodePtr& root) 
+  {
+     AstInterface& fa = LoopTransformInterface::getAstInterface();
+     return TransformAstTraverse(fa, root, *this, AstInterface::PostVisit );
+  }
+  static unsigned get_unrollsize() { return unrollsize; }
+  static void cmdline_configure(const std::vector<std::string>& argv,
+                                std::vector<std::string>* unknown_args=0); 
+  static std::string cmdline_help() ;
 };
 
 #endif

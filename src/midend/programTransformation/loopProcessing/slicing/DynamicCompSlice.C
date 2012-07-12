@@ -1,4 +1,3 @@
-
 #include <DynamicCompSlice.h>
 #include <CompSliceImpl.h>
 #include <LoopTreeTransform.h>
@@ -79,10 +78,9 @@ unsigned DynamicCompSlice :: QuerySliceGroupNumber() const
 
 
 LoopTreeNode* DynamicSlicing:: 
-Transform( LoopTransformInterface &la, LoopTreeDepComp& c,
-               const CompSlice *_slice, LoopTreeNode *root)
+Transform( LoopTreeDepComp& c, const CompSlice *_slice, LoopTreeNode *root)
 {
-  AstInterface& fa = la;
+  AstInterface& fa = LoopTransformInterface::getAstInterface();
   const DynamicCompSlice* slice = static_cast<const DynamicCompSlice*>(_slice);
   int num = slice->QuerySliceGroupNumber();
   LoopTreeNode *nr = root;
@@ -94,7 +92,7 @@ Transform( LoopTransformInterface &la, LoopTreeDepComp& c,
     LoopTreeTransform().InsertLoop( nr, root, -1);
 
     AstInterface::AstNodeList args;
-    char buf[10];
+    char buf[11];
     for (int i = 1; i <= num; ++i) {
        sprintf(buf, "%1d", i);
        std::string name = groupVar + buf;
@@ -102,10 +100,10 @@ Transform( LoopTransformInterface &la, LoopTreeDepComp& c,
        args.push_back( fa.CreateVarRef( name) );
     }
     int id;
-    AstNodePtr config = la.CreateDynamicFusionConfig( fa.CreateVarRef(groupVarN), args, id); 
+    AstNodePtr config = LoopTransformInterface::CreateDynamicFusionConfig( fa.CreateVarRef(groupVarN), args, id); 
     LoopTreeNode *configNode = tc->CreateStmtNode(config);
     configNode->Link( nr, LoopTreeNode::AsPrevSibling);
-    AstNodePtr configEnd = la.CreateDynamicFusionEnd( id);
+    AstNodePtr configEnd = LoopTransformInterface::CreateDynamicFusionEnd( id);
     LoopTreeNode *endNode = tc->CreateStmtNode(configEnd);
     endNode->Link( nr, LoopTreeNode::AsNextSibling);
      
@@ -115,10 +113,10 @@ Transform( LoopTransformInterface &la, LoopTreeDepComp& c,
         sprintf(buf, "%1d", slice->QuerySliceStmtGroupIndex(stmt));
         LoopTreeEmbedStmt()( nr, stmt, SymbolicVar(groupVar + buf, AST_NULL) ); 
     }   
-    DependenceHoisting::Transform(la, c, slice, root);
+    DependenceHoisting::Transform(c, slice, root);
   }
   else
-    nr = DependenceHoisting::Transform(la, c, slice, root);
+    nr = DependenceHoisting::Transform(c, slice, root);
   
   return nr;
 }

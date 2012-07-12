@@ -1,15 +1,14 @@
 #ifndef FUNCTIONAL_OBJECT_H
 #define FUNCTIONAL_OBJECT_H
 
-// DQ (11/25/2009): Changed name from SelectObject to SelectObjectBase to avoid SelectObject function ambiguity using Microsoft Visual Studio
-template <class T> class SelectObjectBase
+template <class T> class SelectObject
 {
   public:
    virtual bool operator()(const T& t) const = 0;
-   virtual ~SelectObjectBase() {}
+   virtual ~SelectObject() {}
 };
 
-template <class T> class SelectObject1 : public SelectObjectBase<T>
+template <class T> class SelectObject1 : public SelectObject<T>
 {
    T sel;
   public:
@@ -18,7 +17,7 @@ template <class T> class SelectObject1 : public SelectObjectBase<T>
     { return t == sel; }
 };
 
-template <class T> class SelectObject2 : public SelectObjectBase<T>
+template <class T> class SelectObject2 : public SelectObject<T>
 {
    T sel1, sel2;
   public:
@@ -34,8 +33,7 @@ class Select2Object
    virtual bool operator()(const T1& t1, const T2& t2) const  = 0;
    virtual ~Select2Object() {}
 };
-//!A container interface to add elements only
-// operator() does the adding operation and its implementation should be provided in its sub classes, such as CollectDoublyLinkedList
+
 template <class T> class CollectObject
 {
   public:

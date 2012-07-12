@@ -93,6 +93,8 @@ Grammar::setUpNodes ()
   // DQ (10/6/2008): Support for the Fortran "USE" statement and its rename list option.
      NEW_TERMINAL_MACRO (InterfaceBody,  "InterfaceBody",  "TEMP_Interface_Body" );
 
+  // negara1 (08/10/2011): Support for included files (i.e. headers) bodies.
+     NEW_TERMINAL_MACRO (HeaderFileBody,  "HeaderFileBody",  "TEMP_Header_File_Body" );
 
   // DQ (10/6/2008): Migrate some of the SgSupport derived IR nodes, that truly have a position in the 
   // source code, to SgLocatedNode.  Start with some of the newer IR nodes which are traversed and thus 
@@ -100,7 +102,7 @@ Grammar::setUpNodes ()
   // the SgLocatedNode base class).  Eventually a number of the IR nodes currently derived from SgSupport
   // should be moved to be here (e.g. SgTemplateArgument, SgTemplateParameter, and 
   // a number of the new Fortran specific IRnodes, etc.).
-     NEW_NONTERMINAL_MACRO (LocatedNodeSupport, CommonBlockObject | InitializedName | InterfaceBody | RenamePair | OmpClause , "LocatedNodeSupport", "LocatedNodeSupportTag", false );
+     NEW_NONTERMINAL_MACRO (LocatedNodeSupport, CommonBlockObject | InitializedName | InterfaceBody | HeaderFileBody | RenamePair | OmpClause , "LocatedNodeSupport", "LocatedNodeSupportTag", false );
 
   // DQ (3/24/2007): Added support for tokens in the IR (to support threading of the token stream 
   // onto the AST as part of an alternative, and exact, form of code generation within ROSE.
@@ -245,6 +247,36 @@ Grammar::setUpNodes ()
      Node.setDataPrototype("static std::map<std::string, int>", "shortMangledNameCache", "",
             NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 
+  // DQ (5/28/2011): Added central location for qualified name maps (for names and types).
+  // these maps store the required qualified name for where an IR node is referenced (not
+  // at the IR node which has the qlocal qualifier).  Thus we can support multiple references 
+  // to an IR node which might have different qualified names.  This is critical to the 
+  // qualified name support.
+     Node.setDataPrototype("static std::map<SgNode*,std::string>","globalQualifiedNameMapForNames","",
+            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+     Node.setDataPrototype("static std::map<SgNode*,std::string>","globalQualifiedNameMapForTypes","",
+            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+
+  // DQ (6/3/2011): Names of types that can have embedded qualified names have names that are dependent 
+  // upon the location where they are referenced.  This map stored the generated names of such types
+  // which are then used in the unparsing.  This is relevant only for C++ and is a part of the name 
+  // qualification support in the unparser.
+     Node.setDataPrototype("static std::map<SgNode*,std::string>","globalTypeNameMap","",
+            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+
+#if 0
+  // DQ (6/21/2011): Since this type "std::set<SgNode*>" is not supported by our AST file I/O I will 
+  // implement this in a way that does not require such support.
+  // DQ (6/21/2011): Added support for global handling of list of seen declarations to be used to 
+  // support the name qualification.  Name qualification is used at different locations defferently
+  // depending upon if the declaration has been seen and what  sort of scope it was declared in and
+  // if it was a defining declaration, etc.
+  // Node.setDataPrototype("static std::set<SgNode*>","globalReferencedNameSet","",
+  //        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+     Node.setDataPrototype("static SgNodeSet","globalReferencedNameSet","",
+            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+#endif
+
   // Not clear how to best to this, perhaps ROSETTA should define a function.
   // DQ (11/25/2007): Language classification field.  Now that we are supporting multiple languages
   // it is helpful to have a way to classify the IR nodes as to what language they belong.  Most are
@@ -328,6 +360,9 @@ Grammar::setUpNodes ()
   //              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE, CLONE_PTR);
   // InterfaceBody.setDataPrototype     ( "Sg_File_Info*", "endOfConstruct", "= NULL",
   //              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE, CLONE_PTR);
+
+  // negara1 (08/10/2011): Added to SgLocatedNodeSupport, no need for additional functions.
+     HeaderFileBody.setFunctionPrototype ( "HEADER_HEADER_FILE_BODY", "../Grammar/LocatedNode.code");     
 
      CommonBlockObject.setFunctionPrototype ( "HEADER_COMMON_BLOCK_OBJECT", "../Grammar/Support.code");
      CommonBlockObject.setDataPrototype     ( "std::string", "block_name", "=\"\"",
@@ -457,6 +492,9 @@ Grammar::setUpNodes ()
      InitializedName.setDataPrototype ( "SgInitializedName::asm_register_name_enum", "register_name_code", "= SgInitializedName::e_invalid_register",
                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+     InitializedName.setDataPrototype ( "SgInitializedName::excess_specifier_enum", "excess_specifier", "= SgInitializedName::e_excess_specifier_none",
+               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
   // DQ (8/09/2006): Support for asm register names when defined via strings (more general than the EDG mapping to the GNU supported register names)
   // This requirement comes from an Elsa test case: "int foo asm ("myfoo") = 2;" where the register name is unknown and so held as a string.
      InitializedName.setDataPrototype ( "std::string", "register_name_string", "= \"\"",
@@ -512,6 +550,18 @@ Grammar::setUpNodes ()
      InitializedName.setDataPrototype("bool", "protected_declaration", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (5/12/2011): Added support for name qualification on the type referenced by the InitializedName
+  // (not the SgInitializedName itself since it might be referenced from several places, I think).
+     InitializedName.setDataPrototype ( "int", "name_qualification_length_for_type", "= 0",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (5/12/2011): Added information required for new name qualification support.
+     InitializedName.setDataPrototype("bool","type_elaboration_required_for_type","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (5/12/2011): Added information required for new name qualification support.
+     InitializedName.setDataPrototype("bool","global_qualification_required_for_type","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
   // ***********************************************************************
@@ -554,6 +604,9 @@ Grammar::setUpNodes ()
 
   // DQ (10/6/2008): Moved from SgSupport.
      InterfaceBody.setFunctionSource ( "SOURCE_INTERFACE_BODY", "../Grammar/LocatedNode.code");
+
+  // negara1 (08/10/2011): Added to SgLocatedNodeSupport.
+     HeaderFileBody.setFunctionSource ( "SOURCE_HEADER_FILE_BODY", "../Grammar/LocatedNode.code");     
 
   // DQ (11/21/2007): support for common block statements
      CommonBlockObject.setFunctionSource ( "SOURCE_COMMON_BLOCK_OBJECT", "../Grammar/Support.code");

@@ -1,6 +1,4 @@
 
-
-#include "sage3basic.h"
 #include <iostream>
 #include <sstream>
 
@@ -49,11 +47,8 @@ Local_GetFieldName(AstInterface& fa, const AstNodePtr& field)
        assert(name != "");
        return "d:" + name;
     }
-    std::cerr << "Not field name: " << AstToString(field) << "\n";
+   std::cerr << "Not field name: " << AstToString(field) << "\n";
     assert(false);
-
- /* Avoid MSVC warning */
-    return "error";
 }
 
 static std::string 
@@ -290,14 +285,9 @@ ProcessMod(AstInterface& fa, const std::string& readname,
           std::list<std::string>& fields, const AstNodePtr& mod)
 {
   std::string modname;
-#if 0   // Liao, 8/16/2010, change code based on Qing's suggestion
-  // Stmt first = 0;
-  if (fa.IsVarRef(mod)) {
-#else
-   AstNodePtr p = mod;
-   if (fa.IsVarRef(mod) || fa.IsArrayAccess(mod, &p)) {
-#endif    
-      modname = Get_VarName(fa,mod);
+  AstNodePtr p = mod;
+  if (fa.IsVarRef(mod) || fa.IsArrayAccess(mod, &p)) {
+      modname = Get_VarName(fa,p);
       Stmt stmt_last = fields.size()?
                       field_x_eq_y(modname, fields, readname)
                      : x_eq_y(modname, readname);
@@ -306,7 +296,7 @@ ProcessMod(AstInterface& fa, const std::string& readname,
   }
   else {
      AstInterface::OperatorEnum op;
-     AstNodePtr p, p2;
+     AstNodePtr p2;
      if (fa.IsUnaryOp(mod,&op, &p) && op == AstInterface::UOP_DEREF) {
             std::string lhs = Get_VarName(fa,p); 
             Stmt stmt_last  = deref_x_eq_y(lhs, fields, readname); 
@@ -353,8 +343,8 @@ ProcessAssign( AstInterface& fa, const AstNodePtr& mod, const AstNodePtr& rhs, b
 {
   std::string modname, readname;
   AstNodePtr modscope, readscope;
- 
   readname = Get_VarName(fa, rhs); 
+ 
   if (!fa.IsVarRef(mod, 0, &modname, &modscope) )  {
      if (readlhs)  {
           modname = Get_VarName(fa,mod);
@@ -377,7 +367,6 @@ ProcessAssign( AstInterface& fa, const AstNodePtr& mod, const AstNodePtr& rhs, b
        namemap[mod.get_ptr()] = VarRef(stmt_last,modname);    
   }
   else {
-       std::string cur = Get_VarName(fa,rhs);
        modname = Local_GetVarName(fa, modscope, modname);
        std::list<std::string> opds;
        opds.push_back(modname);

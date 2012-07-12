@@ -18,7 +18,7 @@ namespace VirtualCFG
         FilterFunction filter;
 
       public:
-        FilteredCFGNode(CFGNode n):n(n)
+        FilteredCFGNode(const CFGNode& n):n(n)
         {
         }
 
@@ -26,8 +26,13 @@ namespace VirtualCFG
         FilteredCFGNode() : n()
         {
         }
+        
+        void setFilter(const FilterFunction& f)
+        {
+            filter = f;
+        }
 
-        CFGNode toNode() const
+        const CFGNode& toNode() const
         {
             return n;
         }
@@ -88,6 +93,11 @@ namespace VirtualCFG
         FilteredCFGEdge()
         {
         }
+        
+        void setFilter(const FilterFunction& f)
+        {
+            filter = f;
+        }
 
         std::string toString()const
         {
@@ -136,6 +146,12 @@ namespace VirtualCFG
         bool operator<(const FilteredCFGEdge < FilterFunction > &o)const
         {
             return p < o.p;
+        }
+        
+        //! The underlying path in the full CFG represented by this edge in the filtered CFG.
+        const CFGPath& getPath() const
+        {
+                return p;
         }
     };
 

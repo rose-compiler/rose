@@ -1,4 +1,3 @@
-
 #include "SymbolicVal.h"
 
 #include "SymbolicMultiply.h"
@@ -22,7 +21,7 @@ std::string SymbolicVal::toString() const
 SymbolicVal ::SymbolicVal (int val)
   : CountRefHandle <SymbolicValImpl>( new SymbolicConst(val) ) {}
 
-// arguments are numerator and denominator
+
 SymbolicConst::  SymbolicConst( int _val, int _d)
         : val (""), type(_d == 1? "int" : "fraction"), intval( _val), dval(_d)
      { 
@@ -133,6 +132,9 @@ AstNodePtr SymbolicFunction :: CodeGen( AstInterface &_fa) const
         l.pop_front();
         return _fa.CreateArrayAccess(arr, l);
      }
+  else if (t == AstInterface::OP_ASSIGN && l.size() == 2) {
+        return _fa.CreateAssignment(l.front(), l.back());
+     }
   else if (l.size() == 2) 
       return _fa.CreateBinaryOP( t, l.front(), l.back());
   else {
@@ -191,9 +193,6 @@ std::string RelToString( CompareRel r)
   default:
     assert(false);
   }
-        // tps (12/07/2009) This part is never reached
-        assert(false);
-        return NULL;
 }
 
 
@@ -231,9 +230,6 @@ AstNodePtr  SymbolicCond :: CodeGen(AstInterface &fa) const
   default:
      assert(false);
   }
-        // tps (12/07/2009) This part is never reached
-        assert(false);
-        return fa.CreateBinaryOP(AstInterface::BOP_EQ, val1.CodeGen(fa), val2.CodeGen(fa));
 }
 
 AstNodePtr SymbolicMultiply::
@@ -261,7 +257,32 @@ CodeGenOP( AstInterface &fa, const AstNodePtr& a1, const AstNodePtr& a2) const
     return fa.CreateBinaryOP(AstInterface::BOP_PLUS, a1, a2); 
  }
 
-//! Evaluate a symbolic expression and return the resulting value
+bool SymbolicValGenerator::
+IsFortranLoop(AstInterface& fa, const AstNodePtr& s, SymbolicVar* ivar ,
+        SymbolicVal* lb , SymbolicVal* ub, SymbolicVal* step, AstNodePtr* body)
+{
+  AstNodePtr ivarast, lbast, ubast, stepast, ivarscope;
+  if (!fa.IsFortranLoop(s, &ivarast, &lbast, &ubast, &stepast, body))
+      return false;
+  std::string varname;
+  if (! fa.IsVarRef(ivarast, 0, &varname, &ivarscope)) {
+         return false;
+  }
+  if (ivar != 0)
+     *ivar = SymbolicVar(varname, ivarscope);
+  if (lb != 0)
+     *lb = SymbolicValGenerator::GetSymbolicVal(fa,lbast);
+  if (ub != 0)
+     *ub = SymbolicValGenerator::GetSymbolicVal(fa,ubast);
+  if (step != 0) {
+     if (stepast != AST_NULL)
+       *step = SymbolicValGenerator::GetSymbolicVal(fa,stepast);
+     else
+       *step = SymbolicVal(1);
+  }
+  return true;
+}
+
 SymbolicVal SymbolicValGenerator ::
 GetSymbolicVal( AstInterface &fa, const AstNodePtr& exp)
 {
@@ -271,7 +292,7 @@ GetSymbolicVal( AstInterface &fa, const AstNodePtr& exp)
   AstNodePtr s1, s2;
   AstInterface::AstNodeList l;
   AstInterface::OperatorEnum opr = (AstInterface::OperatorEnum)0;
- if (fa.IsVarRef(exp, 0, &name, &scope)) {
+  if (fa.IsVarRef(exp, 0, &name, &scope)) {
      return new SymbolicVar( name, scope );
   }
   else if (fa.IsConstInt(exp, &val)) {
@@ -321,25 +342,18 @@ GetSymbolicVal( AstInterface &fa, const AstNodePtr& exp)
     case AstInterface::UOP_NOT:
         return new SymbolicFunction( opr, "!", v);
     case AstInterface::UOP_CAST:
-      //  return new SymbolicFunction( opr, "cast", v);
-       // Simplifying the symbolic expression by skipping SgCastExp nodes, 
-       // Many operations on symbolic expressions do not consider type casting operations
-       // Liao, 11/20/2008
-         return v; //GetSymbolicVal(fa,s1);
-    case AstInterface::UOP_INCR1:
+        return new SymbolicFunction( opr, "cast", v);
     case AstInterface::UOP_DECR1:
-        // Liao, 10/27/2009
-        // The value of val++ val-- seems to be ambiguous, 
-        // we return their original values here since the used value in array[val++] is the original.
-        // TODO double check this
-         return v; 
+        return new SymbolicFunction( opr, "--", v);
+    case AstInterface::UOP_INCR1:
+        return new SymbolicFunction( opr, "++", v);
     default:
-       std::cerr << "SymbolicValGenerator::GetSymbolicVal() Cannot handle " << AstToString(exp) << ":" << opr << "\n";
+       std::cerr << "Cannot handle " << AstToString(exp) << ":" << opr << "\n";
        assert(false);
      }
   }
   else if (fa.IsFunctionCall(exp, &s1, &l)) { 
-     bool ismin = fa.IsMin(exp), ismax = fa.IsMax(exp);
+     bool ismin = fa.IsMin(s1), ismax = fa.IsMax(s1);
      AstInterface::AstNodeList::const_iterator p = l.begin();
      if (ismin || ismax) {
        AstNodePtr s = *p;
@@ -362,6 +376,4 @@ GetSymbolicVal( AstInterface &fa, const AstNodePtr& exp)
   } 
   return new SymbolicAstWrap(exp);
 }
-
-
 

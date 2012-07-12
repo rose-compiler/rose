@@ -63,8 +63,10 @@ void CppToCppTranslator::setAstRoot(SgProject* p) {
 /********************************************************/
 
 void CppToPdfTranslator::backend() {
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
   AstPDFGeneration pdf;
   pdf.generateInputFiles(getAstRoot());
+#endif
 }
 
 /********************************************************/

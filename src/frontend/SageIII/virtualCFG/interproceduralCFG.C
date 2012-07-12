@@ -58,6 +58,8 @@ void InterproceduralCFG::buildFullCFG()
   }
 
   buildCFG(start, all_nodes_, explored, &classHierarchy);
+  alNodes = all_nodes_;
+  neededStart = start;
 }
 
 void InterproceduralCFG::buildFilteredCFG()
@@ -72,7 +74,7 @@ void InterproceduralCFG::buildCFG(CFGNode n,
 {
     SgNode* sgnode = n.getNode();
     ROSE_ASSERT(sgnode);
-
+    //alNodes = all_nodes;
     if (explored.count(n) > 0)
         return;
     explored.insert(n);

@@ -6,17 +6,14 @@
 #include <DoublyLinkedList.h>
 #include <assert.h>
 #include <sstream>
-// Using an array of unsigned integers to simulate a bit vector, 
-// Bit index is translated into a block (the memory block for an unsigned integer) index and a block offset.
+
 class BitVectorReprImpl {
   unsigned* impl;
-  unsigned  num; 
+  unsigned  num;
   
   void operator = ( const BitVectorReprImpl& that)
   {}
  public:
-  // Constructor: allocating the integer array of an enough length to hold 'size' bits
-  // initializing all bits to 0
   BitVectorReprImpl( unsigned size)
     { 
       unsigned intsize = sizeof(unsigned);
@@ -26,7 +23,6 @@ class BitVectorReprImpl {
         impl[i] = 0;
       }
     }
-  // Copy constructor  
   BitVectorReprImpl( const BitVectorReprImpl& that)
     : num(that.num)
     {
@@ -90,16 +86,14 @@ class BitVectorReprImpl {
       unsigned mask = 1 << i2;
       return impl[i1] & mask;
     }
-  //Set the index-th bit of the bit vector to 1
   void add_member( unsigned index)  
     {
       unsigned intsize = sizeof(unsigned);
-      int i1 = index / intsize; // block index
-      int i2 = index % intsize; // offset in the block
+      int i1 = index / intsize;
+      int i2 = index % intsize;
       unsigned mask = 1 << i2;
       impl[i1] |= mask;
     }
-   //Set the index-th bit to 0
   void delete_member( unsigned index)
     {
       unsigned intsize = sizeof(unsigned);
@@ -109,7 +103,7 @@ class BitVectorReprImpl {
       impl[i1] &= mask;
     }
 };
-// Bit vector implementation with reference counting for self memory management
+
 class BitVectorRepr : public CountRefHandle<BitVectorReprImpl>
 {
  public:
@@ -148,7 +142,7 @@ class BitVectorRepr : public CountRefHandle<BitVectorReprImpl>
   std::string toString() const
     { return ConstRef().toString();  }
 };
-// Associating a variable's name and information with a (bit vector) index
+
 template <class Name, class Data>
 class BitVectorReprBase 
 {
@@ -160,7 +154,6 @@ class BitVectorReprBase
       : data(d), name(n), index(i) {}
   };
   typedef DoublyLinkedListWrap<DataEntry> DataList;
-  // A map between a named variable and a pointer to its first DataEntry
   typedef std::map<Name, DoublyLinkedEntryWrap<DataEntry>* > DataMap;
   
   DataList datalist;
@@ -192,15 +185,12 @@ class BitVectorReprBase
         DoublyLinkedEntryWrap<DataEntry>* cur = datalist.AppendLast(DataEntry(n,d));
         datamap[n] = cur;
       }
-      else { 
-      // Allowing multiple data entries for the same variable:
-      // such as a variable's definitions appearing in mulitple places in CFG
+      else {
         DoublyLinkedEntryWrap<DataEntry>* lp = (*mp).second;
         assert( lp->GetEntry().name == n);
         datalist.InsertAfter( DataEntry(n,d), lp); 
       }
     }
-  //Set the index for all data entries  
   void finalize() 
     {
       unsigned index = 0;
@@ -226,7 +216,7 @@ class BitVectorReprBase
   int get_index( iterator p) const
     { return (*p).index; }
 };
-// Associating linked data entries with a bit vector
+
 template <class Name, class Data>
 class BitVectorReprGenerator
 {
@@ -234,33 +224,30 @@ class BitVectorReprGenerator
  public:
   BitVectorReprGenerator( const BitVectorReprBase<Name,Data>& b)
     : base(b) {}
-  //Returning an empty bit vector for the linked data entries  
   BitVectorRepr get_empty_set() const
     {  return BitVectorRepr(base.size()); }
-
-  // Returning a bit vector with the corresponding bits turned on for 
-  // the entries in the link for a named variable
   BitVectorRepr get_data_set( const Name& name) const
     {
       BitVectorRepr result(base.size());
-      for (typename BitVectorReprBase<Name,Data>::iterator p = base.find(name);
+      for (typename BitVectorReprBase<Name,Data>::iterator p 
+             = base.find(name);
            p != base.end() && base.get_name(p) == name; ++p) {
         int i = base.get_index( p );
         result.add_member(i);
       }
       return result;
     }
-  // Turn the bit representing entry(name,d) to 1, if the entry is stored in the linked list
+  
   void add_member( BitVectorRepr& repr, const Name& name, const Data& d) const
     {
       typename BitVectorReprBase<Name,Data>::iterator p = base.find(name);
       if (p == base.end()) {
-           std::cerr << "Error: BitVectorReprGenerator<T1,T2>::add_member() cannot find variable " << name << "\n";
+           std::cerr << "Error: cannot find variable " << name << "\n";
            assert(false);
       }
       for ( ;  p != base.end() && base.get_data(p) != d; ++p); 
       if (p == base.end()) {
-           std::cerr << "Error: BitVectorReprGenerator<T1,T2>::add_member() cannot find data " << " for variable " << name << "\n";
+           std::cerr << "Error: cannot find data " << " for variable " << name << "\n";
            assert(false);
       }
       repr.add_member( base.get_index(p));
@@ -274,7 +261,7 @@ class BitVectorReprGenerator
       assert( p != base.end());
       repr.delete_member(base.get_index(p));
     }
-  // Finding all 1-valued bits in a bit vector 'repr', storing their corresponding data into 'collect'
+  
   void collect_member( const BitVectorRepr& repr, 
                        CollectObject<Data>& collect) const
     {

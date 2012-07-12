@@ -26,7 +26,7 @@ namespace AbstractHandle{
       i++;
     return (VariantT)i;  
   }
-
+// test LDADD dependency
   roseNode* buildroseNode(SgNode* snode)
   {
     static std::map<SgNode*, roseNode*> sgNodeMap;
@@ -108,6 +108,7 @@ namespace AbstractHandle{
         case V_SgPragmaDeclaration:
         case V_SgFunctionParameterList:
         case V_SgUsingDirectiveStatement:
+        case V_SgStmtDeclarationStatement:
           {
             break;
           }

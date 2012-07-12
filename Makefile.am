@@ -21,6 +21,7 @@ if ROSE_BUILD_TESTS_DIRECTORY_SUPPORT
    SUBDIRS += tests
 endif
 
+if !ROSE_USE_CLANG_FRONTEND
 if !ROSE_USE_INSURE
 # DQ (4/23/2011): Ignoring all of these whole directories might be over kill.  But I have had problems with 
 # Insure++ compilation specific to Hudson and want to start small and work to grow the number of parts of ROSE
@@ -40,6 +41,7 @@ endif
 SUBDIRS += binaries
 # endif for controling Insure++ usage.
 endif
+endif
 
 ACLOCAL_AMFLAGS = -I ./config -I ./acmacros -I ./libltdl -I /usr/share/aclocal
 
@@ -48,6 +50,22 @@ ACLOCAL_AMFLAGS = -I ./config -I ./acmacros -I ./libltdl -I /usr/share/aclocal
 all-local: rose.docs 
 
 all: enforce_policies remove_sage3basic_h_pch
+
+core:
+	$(MAKE) -C $(top_builddir)/src
+	$(MAKE) -C $(top_builddir)/exampleTranslators
+	$(MAKE) -C $(top_builddir)/tutorial
+
+install-core: core rosePublicConfig.h
+	$(MAKE) install-data-local
+	$(MAKE) install -C $(top_builddir)/src
+	$(MAKE) install -C $(top_builddir)/exampleTranslators
+	$(MAKE) install -C $(top_builddir)/tutorial
+	cp rosePublicConfig.h $(DESTDIR)$(includedir)/
+
+install-compass: install-core
+	$(MAKE) -C $(top_builddir)/projects/compass
+	$(MAKE) install -C $(top_builddir)/projects/compass
 
 # DQ (10/2/10): Of course this will over-rise the "make install" rule, so we can't 
 # allow exactly this (what was I thinking?). Commented out until I get a better fix.
@@ -88,8 +106,7 @@ enforce_policies:
 # EXTRA_DIST = cmake CMakeLists.txt rose_config.h.in.cmake stamp-h.in stamp-h1.in rose.docs.in COPYRIGHT \
 #              LicenseInformation ROSE_ResearchPapers README.OSX README.Cygwin build ChangeLog2 bincompat-sig
 EXTRA_DIST = cmake CMakeLists.txt rose_config.h.in.cmake stamp-h.in stamp-h1.in rose.docs.in COPYRIGHT \
-             LicenseInformation ROSE_ResearchPapers README.OSX README.Cygwin build ChangeLog2 bincompat-sig \
-             rosePublicConfig.h
+             LicenseInformation ROSE_ResearchPapers README.Cygwin build ChangeLog2 bincompat-sig
 
 # Liao, 12/11/2009. we should force this rule to run every time we want to make a distribution
 # otherwise the stale one can go into the distribution package
@@ -144,7 +161,10 @@ install-exec-local:
 
 install-data-local: uninstall-local
 	-mkdir $(DESTDIR)$(includedir)
+#	DQ (11/1/2011): The EDG 4.x support does not require a separate include-staging directory.
+#	if !ROSE_USE_NEW_EDG_INTERFACE
 	cp -R $(top_builddir)/include-staging/* $(DESTDIR)$(includedir)/
+#	endif
 	@echo '*****************************************************************'
 	@echo '***** make install-data rule complete (terminated normally) *****'
 	@echo '*****************************************************************'
@@ -195,7 +215,8 @@ if ENABLE_JAVAPORT
 endif
 
 # DQ (4/5/2010): Use the same version of OFP as specified on the original configure command line.
-DISTCHECK_CONFIGURE_FLAGS += --enable-ofp-version=@ROSE_OFP_MAJOR_VERSION_NUMBER@.@ROSE_OFP_MINOR_VERSION_NUMBER@.@ROSE_OFP_PATCH_VERSION_NUMBER@
+# CER (10/10/2011): No longer needed. A specific OFP version is configured by default and distributed with ROSE.
+#DISTCHECK_CONFIGURE_FLAGS += --enable-ofp-version=@ROSE_OFP_MAJOR_VERSION_NUMBER@.@ROSE_OFP_MINOR_VERSION_NUMBER@.@ROSE_OFP_PATCH_VERSION_NUMBER@
 
 # SRIRAM (8/2/2010): changing distcheck configuration for LLVM translator
 if ROSE_USE_LLVM
@@ -220,6 +241,27 @@ rename_distribution:
 # We don't use subversion anymore
 # We convert the number of git commits to a pseudo revision number instead
 distdir = $(PACKAGE)-$(VERSION)$(DOT_SVNREV)
+
+dist-hook:
+	builddir="$$(pwd)" &&                                                      \
+  (                                                                          \
+  [ -e "$(srcdir)"/.git ] &&                                                 \
+  cd $(srcdir) &&                                                            \
+      git_head="$$(git rev-parse HEAD)" &&                                   \
+      git_head_date="$$(git log -1 --format=%at $$(git rev-parse HEAD))" &&  \
+          echo "$$git_head $$git_head_date" > $${builddir}/VERSION &&        \
+          cp $${builddir}/VERSION $${builddir}/$(distdir)/VERSION            \
+  ) ||                                                                       \
+  (                                                                          \
+  VERSION_FILE="$(srcdir)/VERSION" &&                                        \
+  [ -e "$$VERSION_FILE" ] &&                                                 \
+      cp "$$VERSION_FILE" $${builddir}/$(distdir)/VERSION                    \
+  ) ||                                                                       \
+  (                                                                          \
+      echo "Error: could not determine SCM version information." &&          \
+      exit 1                                                                 \
+  ) ||                                                                       \
+  exit 1
 
 # Automake hook-ish rule to be run after dist rule (but hook runs before gzip so we can't use hook)
 # We could build our own ROSE specific wrapper for dist and distcheck.
@@ -463,4 +505,7 @@ rosePublicConfig.h: rose_config.h
 	@echo "  GEN     $@"
 	@$(top_srcdir)/scripts/publicConfiguration.pl <$^ >$@
 DISTCLEANFILES = rosePublicConfig.h
+
+# This file does not exist until we run the compiler to build it.
+# include $(top_builddir)/src/frontend/SageIII/astPostProcessing/.libs/astPostProcessing.d
 

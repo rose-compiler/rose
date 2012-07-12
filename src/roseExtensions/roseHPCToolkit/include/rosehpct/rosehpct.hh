@@ -19,6 +19,14 @@ $Id: rosehpct.hh,v 1.1 2008/01/08 02:56:43 dquinlan Exp $
  *  $Id: rosehpct.hh,v 1.1 2008/01/08 02:56:43 dquinlan Exp $
  */
 
+/*
+ * This software was produced with support in part from the Defense Advanced
+ * Research Projects Agency (DARPA) through AFRL Contract FA8650-09-C-1915.
+ * Nothing in this work should be construed as reflecting the official policy
+ * or position of the Defense Department, the United States government,
+ * or Rice University.
+ */
+
 #if !defined(INC_ROSEHPCT_HH)
 //! rosehpct.hh included.
 #define INC_ROSEHPCT_HH
@@ -43,8 +51,8 @@ namespace RoseHPCT
   //! A set of predefined metric names, 
   //  please use them instead of hard coded values in the code
   //  All other PAPI event names are standardized. 
-  const std::string m_wallclock="WALLCLK";
-  const std::string m_percentage="WALLCLK_EXCLUSIVE_PERCENTAGE";
+  const std::string m_wallclock="WALLCLOCK (us).[0,0] (E)";  // DXN: Laksono changed from [0] to [0,0]!
+  const std::string m_percentage="WALLCLOCK_EXCLUSIVE_%";  // DXN
   const std::string m_totalcycle="PAPI_TOT_CYC";
 
   //! A quick reference to all file and non-stmt nodes of the original Profile IR trees

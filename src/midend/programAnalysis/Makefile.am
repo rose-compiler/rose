@@ -4,6 +4,8 @@
 
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
+SUBDIRS = staticSingleAssignment ssaUnfilteredCfg systemDependenceGraph
+
 ###############################################################################
 # Subdirectory specifics
 # TOO (01/26/11): relative paths must be updated for each propagation upward
@@ -15,10 +17,12 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 include $(srcdir)/annotationLanguageParser/Makefile_variables
 include $(srcdir)/CallGraphAnalysis/Makefile_variables
 include $(srcdir)/CFG/Makefile_variables
-include $(srcdir)/dataflowAnalysis/Makefile_variables
+include $(srcdir)/bitvectorDataflow/Makefile_variables
+include $(srcdir)/VirtualFunctionAnalysis/Makefile_variables
 include $(srcdir)/defUseAnalysis/Makefile_variables
 include $(srcdir)/distributedMemoryAnalysis/Makefile_variables
 include $(srcdir)/dominanceAnalysis/Makefile_variables
+include $(srcdir)/genericDataflow/Makefile_variables
 include $(srcdir)/graphAnalysis/Makefile_variables
 include $(srcdir)/OAWrap/Makefile_variables
 include $(srcdir)/pointerAnal/Makefile_variables
@@ -31,10 +35,12 @@ include $(srcdir)/variableRenaming/Makefile_variables
 mpaAnnotationLanguageParserPath=$(srcdir)/annotationLanguageParser#
 mpaCallGraphAnalysisPath=$(srcdir)/CallGraphAnalysis#
 mpaCFGPath=$(srcdir)/CFG#
-mpaDataflowAnalysisPath=$(srcdir)/dataflowAnalysis#
+mpaBitvectorDataflowPath=$(srcdir)/bitvectorDataflow#
+mpaVirtualFunctionAnalysisPath=$(srcdir)/VirtualFunctionAnalysis#
 mpaDefUseAnalysisPath=$(srcdir)/defUseAnalysis#
 mpaDistributedMemoryAnalysisPath=$(srcdir)/distributedMemoryAnalysis#
 mpaDominanceAnalysisPath=$(srcdir)/dominanceAnalysis#
+mpaGenericDataflowPath=$(srcdir)/genericDataflow#
 mpaGraphAnalysisPath=$(srcdir)/graphAnalysis#
 mpaOAWrapPath=$(srcdir)/OAWrap#
 mpaPointerAnalPath=$(srcdir)/pointerAnal#
@@ -59,9 +65,11 @@ INCLUDES=\
 	$(ROSE_INCLUDES) \
 	$(mpaCallGraphAnalysis_includes) \
 	$(mpaCFG_includes) \
-	$(mpaDataflowAnalysis_includes) \
+	$(mpaBitvectorDataflow_includes) \
+	$(mpaVirtualFunctionAnalysis_includes) \
 	$(mpaDefUseAnalysis_includes) \
 	$(mpaDistributedMemoryAnalysis_includes) \
+	$(mpaGenericDataflow_includes) \
 	$(mpaOAWrap_includes) \
 	$(mpaPointerAnal_includes) \
 	$(mpaSideEffectAnalysis_includes) \
@@ -85,9 +93,11 @@ noinst_LTLIBRARIES=\
 libprogramAnalysis_la_SOURCES=\
 	$(mpaCallGraphAnalysis_la_sources) \
 	$(mpaCFG_la_sources) \
-	$(mpaDataflowAnalysis_la_sources) \
+	$(mpaBitvectorDataflow_la_sources) \
+	$(mpaVirtualFunctionAnalysis_la_sources) \
 	$(mpaDefUseAnalysis_la_sources) \
 	$(mpaGraphAnalysis_la_sources) \
+	$(mpaGenericDataflow_la_sources) \
 	$(mpaOAWrap_la_sources) \
 	$(mpaPointerAnal_la_sources) \
 	$(mpaSideEffectAnalysis_la_sources) \
@@ -95,14 +105,20 @@ libprogramAnalysis_la_SOURCES=\
 	$(mpaValuePropagation_la_sources) \
 	$(mpaVariableRenaming_la_sources)
 
+libprogramAnalysis_la_LIBADD = \
+	staticSingleAssignment/libSSA.la \
+	ssaUnfilteredCfg/libSSA_UnfilteredCfg.la \
+	systemDependenceGraph/libSDG.la
 
 include_HEADERS=\
 	$(mpaCallGraphAnalysis_includeHeaders) \
 	$(mpaCFG_includeHeaders) \
-	$(mpaDataflowAnalysis_includeHeaders) \
+	$(mpaBitvectorDataflow_includeHeaders) \
+	$(mpaVirtualFunctionAnalysis_includeHeaders) \
 	$(mpaDefUseAnalysis_includeHeaders) \
 	$(mpaDistributedMemoryAnalysis_includeHeaders) \
 	$(mpaDominanceAnalysis_includeHeaders) \
+	$(mpaGenericDataflow_includeHeaders) \
 	$(mpaGraphAnalysis_includeHeaders) \
 	$(mpaOAWrap_includeHeaders) \
 	$(mpaPointerAnal_includeHeaders) \
@@ -123,10 +139,12 @@ EXTRA_DIST=\
 	$(mpaAnnotationLanguageParser_extraDist) \
 	$(mpaCallGraphAnalysis_extraDist) \
 	$(mpaCFG_extraDist) \
-	$(mpaDataflowAnalysis_extraDist) \
+	$(mpaBitvectorDataflow_extraDist) \
+	$(mpaVirtualFunctionAnalysis_extraDist) \
 	$(mpaDefUseAnalysis_extraDist) \
 	$(mpaDistributedMemoryAnalysis_extraDist) \
 	$(mpaDominanceAnalysis_extraDist) \
+	$(mpaGenericDataflow_extraDist) \
 	$(mpaGraphAnalysis_extraDist) \
 	$(mpaOAWrap_extraDist) \
 	$(mpaPointerAnal_extraDist) \
@@ -141,9 +159,11 @@ clean-local:
 	$(mpaAnnotationLanguageParser_cleanLocal)
 	$(mpaCallGraphAnalysis_cleanLocal)
 	$(mpaCFG_cleanLocal)
-	$(mpaDataflowAnalysis_cleanLocal)
+	$(mpaBitvectorDataflow_cleanLocal)
+	$(mpaVirtualFunctionAnalysis_cleanLocal)
 	$(mpaDefUseAnalysis_cleanLocal)
 	$(mpaDominanceAnalysis_cleanLocal)
+	$(mpaGenericDataflow_cleanLocal)
 	$(mpaGraphAnalysis_cleanLocal)
 	$(mpaOAWrap_cleanLocal)
 	$(mpaPointerAnal_cleanLocal)
@@ -156,9 +176,11 @@ distclean-local:
 	rm -rf Templates.DB
 	$(mpaCallGraphAnalysis_distCleanLocal)
 	$(mpaCFG_distCleanLocal)
-	$(mpaDataflowAnalysis_distCleanLocal)
+	$(mpaBitvectorDataflow_distCleanLocal)
+	$(mpaVirtualFunctionAnalysis_distCleanLocal)
 	$(mpaDefUseAnalysis_distCleanLocal)
 	$(mpaDominanceAnalysis_distCleanLocal)
+	$(mpaGenericDataflow_distCleanLocal)
 	$(mpaGraphAnalysis_distCleanLocal)
 	$(mpaOAWrap_distCleanLocal)
 	$(mpaPointerAnal_distCleanLocal)

@@ -11,22 +11,12 @@
 #include <Matrix.h>
 #include <iostream>
 
-typedef enum { 
-  DEPTYPE_NONE = 0,       // B00000000
-  DEPTYPE_TRUE = 1,       // B00000001
-  DEPTYPE_ANTI = 2,       // B00000010   
-  DEPTYPE_OUTPUT = 4,     // B00000100
-  DEPTYPE_SCALAR = 8,     // B00001000
-  DEPTYPE_BACKSCALAR = 16,// B00010000
-  DEPTYPE_INPUT = 32,     // B00100000
-  DEPTYPE_ARRAY = 39,     // B00100111  //union of true, anti, output, input dependencies
-  DEPTYPE_IO = 64,        // B01000000
-  DEPTYPE_DATA = 95,      // B01011111 //union of array, scalar/backscalar,IO,w/o input
-  DEPTYPE_CTRL = 128,     // B10000000
-  DEPTYPE_BACKCTRL = 256, //B1 00000000
-  DEPTYPE_ALL = 479,      //B1 11011111 //All but input dependence
-  DEPTYPE_TRANS = 512    //B10 00000000
-} DepType;
+
+typedef enum { DEPTYPE_NONE = 0, DEPTYPE_TRUE = 1, DEPTYPE_ANTI = 2,
+               DEPTYPE_OUTPUT = 4, DEPTYPE_SCALAR = 8, DEPTYPE_BACKSCALAR = 16,
+               DEPTYPE_INPUT = 32, DEPTYPE_ARRAY = 39, 
+               DEPTYPE_IO = 64, DEPTYPE_DATA = 95, DEPTYPE_CTRL = 128, DEPTYPE_BACKCTRL = 256,
+               DEPTYPE_ALL = 479, DEPTYPE_TRANS = 512} DepType;
 std::string DepType2String( DepType t);
 typedef enum {DEP_SRC = 1, DEP_SINK = 2, DEP_SRC_SINK = 3} DepDirection;
 
@@ -61,10 +51,6 @@ class DepInfoImpl
    virtual DepInfoImpl* Clone() const 
      { return new DepInfoImpl(*this); }
    virtual DepType GetDepType() const { return DEPTYPE_NONE; }
-   // Liao, 11/4/2008. Additional information for SCALAR_DEP and SCALAR_BACK_DEP
-   // Reuse DEPTYPE_TRUE, DEPTYPE_ANTI, DEPTYPE_OUTPUT etc for them
-   virtual DepType GetScalarDepType() const { return DEPTYPE_NONE; }
-   virtual void SetScalarDepType(DepType st) {}
    virtual AstNodePtr SrcRef() const { return AST_NULL; }
    virtual AstNodePtr SnkRef() const { return AST_NULL; }
 
@@ -75,9 +61,7 @@ class DepInfoImpl
 };
 
 inline DepInfoImpl* Clone(const DepInfoImpl& that) { return that.Clone(); }
-//!Extended Dependence Model information
-// DepRel (distance direction)-> EdpEDD (matrix of distance direction)-> DepInfoImpl (extra info)
-// -->DepEDDTypeInfo (dependence type)--> DepInfo (with reference count) 
+
 class DepInfo : protected CountRefHandle <DepInfoImpl>
 {
   DepInfo( DepInfoImpl *impl) : CountRefHandle<DepInfoImpl>(impl) {}
@@ -97,16 +81,6 @@ class DepInfo : protected CountRefHandle <DepInfoImpl>
   int cols() const { return (ConstPtr() == 0)? 0 : ConstRef().cols(); }
   DepType GetDepType() const  
     { return (ConstPtr()==0)? DEPTYPE_NONE: ConstRef().GetDepType(); }
-    
-  DepType GetScalarDepType() const  
-    { return (ConstPtr()==0)? DEPTYPE_NONE: ConstRef().GetScalarDepType(); }
-  void SetScalarDepType(DepType st)
-    { 
-      if (ConstPtr()==0) 
-        return;
-      else 
-        NonConstRef().SetScalarDepType(st); 
-    }
   AstNodePtr SrcRef() const { return (ConstPtr()==0)?AST_NULL:ConstRef().SrcRef(); }
   AstNodePtr SnkRef() const { return (ConstPtr()==0)?AST_NULL:ConstRef().SnkRef(); }
   int CommonLevel() const { return  (ConstPtr()==0)?-1:ConstRef().CommonLevel(); }
@@ -164,7 +138,6 @@ DepInfo operator | ( const DepInfo &d1, const DepInfo &d2);
 DepInfo Reverse( const DepInfo &d);
 DepInfo Closure( const DepInfo &d);
 
-//! A builder for DepInfo
 class DepInfoGenerator
 {
  public:

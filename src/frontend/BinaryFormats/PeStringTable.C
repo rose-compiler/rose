@@ -1,9 +1,6 @@
 /* String Tables (SgAsmPEStringSection and SgAsmCoffStrtab and related classes) */
 
-// tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
-#define __STDC_FORMAT_MACROS
-#include <inttypes.h>
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -59,11 +56,11 @@ SgAsmPEStringSection::set_size(rose_addr_t newsize)
     if (get_size() > orig_size) {
         /* Add new address space to string table free list */
         rose_addr_t n = get_size() - orig_size;
-        strtab->get_freelist().insert(orig_size, n);
+        strtab->get_freelist().insert(Extent(orig_size, n));
     } else if (get_size() < orig_size) {
         /* Remove deleted address space from string table free list */
         rose_addr_t n = orig_size - get_size();
-        strtab->get_freelist().erase(get_size(), n);
+        strtab->get_freelist().erase(Extent(get_size(), n));
     }
 }
 
@@ -190,6 +187,6 @@ SgAsmCoffStrtab::unparse(std::ostream &f) const
     
     /* Fill free areas with zero */
     for (ExtentMap::const_iterator i=get_freelist().begin(); i!=get_freelist().end(); ++i) {
-        container->write(f, i->first, std::string(i->second, '\0'));
+        container->write(f, i->first.first(), std::string(i->first.size(), '\0'));
     }
 }

@@ -4,34 +4,38 @@
 #include <DepCompTransform.h>
 #include <LoopTransformOptions.h>
 
-class CopyArrayOperator
+class CopyArrayOperator : public DepCompCopyArrayToBuffer
 {
-  virtual void ModifyCopyArrayCollect(LoopTransformInterface& li,
-                               DepCompCopyArrayCollect& collect, DepCompAstRefGraphCreate& g) 
-        {}
+ /*QY: modify the collected array copy specifications in (collect)  */
+  virtual void ModifyCopyArrayCollect( DepCompCopyArrayCollect& collect, 
+                DepCompAstRefGraphCreate& g) {}
+  DepCompCopyArrayToBuffer::ApplyXform;
 public:
-
-  int EnforceCopyDimension( DepCompCopyArrayCollect::CopyArrayUnit& unit, 
-                               DepCompAstRefGraphCreate& refDep, int copydim,
-                               DepCompCopyArrayCollect::CopyArrayUnit::NodeSet* cuts = 0);
-  bool SplitDisconnectedUnit( DepCompCopyArrayCollect& collect,
-                              DepCompCopyArrayCollect::CopyArrayUnit& unit,
-                              DepCompAstRefGraphCreate& g,                        
-                               DepCompCopyArrayCollect::CopyArrayUnit::NodeSet& cuts);
-  bool IsRedundantCopy( LoopTransformInterface& li, 
-                             DepCompCopyArrayCollect::CopyArrayUnit& unit, int copydim);
-  int OutmostReuseLevel ( DepCompCopyArrayCollect::CopyArrayUnit& unit, 
-                            DepCompAstRefGraphCreate& refDep);
-
-  virtual LoopTransformOptions::OptType GetOptimizationType()  = 0;
-  virtual void operator()(LoopTransformInterface& la, LoopTreeLocalityAnal& tc, LoopTreeNode* root);
   virtual ~CopyArrayOperator() {}
+  virtual LoopTransformOptions::OptType GetOptimizationType()  = 0;
+
+  /* QY: Modifies (unit.root) to Ensure at most (copydim) loop dimensions are copied for the given (unit) */
+  int EnforceCopyDimension( DepCompCopyArrayCollect::CopyArrayUnit& unit, 
+             DepCompAstRefGraphCreate& refDep, int copydim,
+             DepCompCopyArrayCollect::CopyArrayUnit::NodeSet* cuts = 0);
+  bool SplitDisconnectedUnit( DepCompCopyArrayCollect& collect,
+             DepCompCopyArrayCollect::CopyArrayUnit& unit,
+             DepCompAstRefGraphCreate& g,                        
+             DepCompCopyArrayCollect::CopyArrayUnit::NodeSet& cuts);
+  bool IsRedundantCopy(DepCompCopyArrayCollect::CopyArrayUnit& unit, int copydim);
+  int OutmostReuseLevel ( DepCompCopyArrayCollect::CopyArrayUnit& unit, 
+             DepCompAstRefGraphCreate& refDep);
+
+  void operator()(LoopTreeLocalityAnal& tc, 
+                  LoopTreeNode* root);
 };
 
 class NoCopyArrayOperator : public CopyArrayOperator
 {
+  virtual void ApplyXform( DepCompCopyArrayCollect::CopyArrayUnit& curarray,
+                CopyArrayConfig& config, LoopTreeNode* replRoot,
+                LoopTreeNode* initStmt, LoopTreeNode* saveStmt) {}
  public:
-  void operator()(LoopTransformInterface& la, LoopTreeLocalityAnal& tc) {}
   virtual LoopTransformOptions::OptType GetOptimizationType() 
        { return LoopTransformOptions::NO_OPT; }
 };
@@ -39,11 +43,37 @@ class NoCopyArrayOperator : public CopyArrayOperator
 
 class CopyArrayUnderSizeLimit : public CopyArrayOperator
 {
+  protected:
    unsigned copydim;
   public:
    CopyArrayUnderSizeLimit(unsigned sz) : copydim(sz) {}
-   void ModifyCopyArrayCollect(LoopTransformInterface& li,
-                               DepCompCopyArrayCollect& collect, DepCompAstRefGraphCreate& g);
+   virtual void ModifyCopyArrayCollect( DepCompCopyArrayCollect& collect, DepCompAstRefGraphCreate& g);
+   virtual LoopTransformOptions::OptType GetOptimizationType() 
+       { return LoopTransformOptions::DATA_OPT; }
+};
+
+class ParameterizeCopyArray : public CopyArrayUnderSizeLimit
+{
+/*
+  struct LoopInfo {
+     std::vector<LoopTreeNode*> loops;
+     bool canbeBlocked;
+     LoopInfo() : canbeBlocked(false) {}
+  }
+  std::map<DepCompCopyArrayCollect::CopyArrayUnit*,LoopInfo> copyInfo; 
+*/
+  /* set of copied arrays that can be blocked*/ 
+/*
+  std::set<DepCompCopyArrayCollect::CopyArrayUnit*> blockInfo;
+*/
+
+  virtual void ModifyCopyArrayCollect( DepCompCopyArrayCollect& collect, DepCompAstRefGraphCreate& g); 
+  virtual void ApplyXform( DepCompCopyArrayCollect::CopyArrayUnit& curarray,
+                CopyArrayConfig& config, LoopTreeNode* replRoot,
+                LoopTreeNode* initStmt, LoopTreeNode* saveStmt); 
+  bool CanBeBlocked( DepCompCopyArrayCollect::CopyArrayUnit& unit, int copydim);
+  public:
+  ParameterizeCopyArray(unsigned sz) : CopyArrayUnderSizeLimit(sz) {}
   virtual LoopTransformOptions::OptType GetOptimizationType() 
        { return LoopTransformOptions::DATA_OPT; }
 };

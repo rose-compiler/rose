@@ -19,11 +19,6 @@
 #undef TEMPLATE_IMPLEMENTATIONS
 #include "AstConsistencyTests.h"
 
-// DQ (11/6/2008): Added to support the PRIx64 macro for portable (32/64)-bit address I/O.
-// It might be that this should be added more uniformally in ROSE.
-#define __STDC_FORMAT_MACROS
-#include <inttypes.h>
-
 #ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
    #include "AsmUnparser_compat.h"
 #endif
@@ -317,6 +312,23 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
           nodelabel += string("\\n") + initializedName->get_name();
         }
 
+  // DQ (4/6/2011): Added support for output of the name for SgInitializedName IR nodes.
+     SgIntVal* intValue = isSgIntVal(node);
+     if (intValue != NULL)
+        {
+          nodelabel += string("\\n value = ") + StringUtility::numberToString(intValue->get_value());
+        }
+
+  // DQ (4/6/2011): Added support for output of the name for SgInitializedName IR nodes.
+     SgVarRefExp* varRefExp = isSgVarRefExp(node);
+     if (varRefExp != NULL)
+        {
+          SgVariableSymbol* variableSymbol = varRefExp->get_symbol();
+          ROSE_ASSERT(variableSymbol != NULL);
+          string name = variableSymbol->get_name();
+          nodelabel += string("\\n name = ") + name;
+        }
+
   // DQ (1/19/2009): Added support for output of what specific instrcution this is in the dot graph.
      SgAsmInstruction* genericInstruction = isSgAsmInstruction(node);
      if (genericInstruction != NULL)
@@ -393,10 +405,10 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
                name = genericString->get_string();
              }
 
-          SgAsmPEImportHNTEntry* peImportHNTEntry = isSgAsmPEImportHNTEntry(node);
-          if (peImportHNTEntry != NULL)
+          SgAsmPEImportItem* peImportItem = isSgAsmPEImportItem(node);
+          if (peImportItem != NULL)
              {
-               SgAsmGenericString* genericString = peImportHNTEntry->get_name();
+               SgAsmGenericString* genericString = peImportItem->get_name();
                ROSE_ASSERT(genericString != NULL);
 
                name = genericString->get_string();
@@ -844,5 +856,84 @@ AstDOTGeneration::commentOutNodeInGraph(SgNode* node)
      return resultValue;
    }
 
+
+// DQ (6/25/2011): Put the function definition into the source file (avoid function definitions in header files).
+// std::string operator()(SgNode* node)
+std::string AstDOTGenerationExtended_Defaults::NamedExtraNodeInfo::operator()(SgNode* node)
+   {
+                        std::ostringstream ss;
+
+                        // add namespace name
+                        if (SgNamespaceDeclarationStatement* n = isSgNamespaceDeclarationStatement(node))
+                        {
+                                ss << n->get_qualified_name().str() << "\\n";
+                        }
+                        // add class name
+                        if (SgClassDeclaration* n = isSgClassDeclaration(node))
+                        {
+                                ss << n->get_qualified_name().str() << "\\n";
+                        }
+                        // add function name
+                        if (SgFunctionDeclaration* n = isSgFunctionDeclaration(node))
+                        {
+                                ss << n->get_qualified_name().str() << "\\n";
+                        }
+                        if (SgFunctionRefExp* n = isSgFunctionRefExp(node))
+                        {
+                                SgFunctionDeclaration* decl = n->getAssociatedFunctionDeclaration();
+                                if (decl) // it's null if through a function pointer
+                                {
+                                        ss << decl->get_qualified_name().str() << "\\n";
+                                }
+                        }
+                        // add variable name
+                        if (SgInitializedName* n = isSgInitializedName(node))
+                        {
+                                ss << n->get_qualified_name().str() << "\\n";
+                        }
+                        if (SgVarRefExp* n = isSgVarRefExp(node))
+                        {
+                                SgVariableSymbol* sym = n->get_symbol();
+                                ss << sym->get_name().getString() << "\\n";
+                        }
+                        // add variable name
+                        if (SgVariableSymbol* n = isSgVariableSymbol(node))
+                        {
+                                ss << n->get_name().str() << "\\n";
+                        }
+
+                        return ss.str();
+   }
+
+
+// DQ (6/25/2011): Put the function definition into the source file (avoid function definitions in header files).
+// std::string operator()(SgNode* node)
+std::string AstDOTGenerationExtended_Defaults::TypeExtraNodeInfo::operator()(SgNode* node)
+   {
+                        std::ostringstream ss;
+
+                        if (SgExpression* n = isSgExpression(node))
+                        {
+                                ss << n->get_type()->unparseToString() << "\\n";
+                        }
+
+                        return ss.str();
+   }
+
+
+// DQ (6/25/2011): Put the function definition into the source file (avoid function definitions in header files).
+// std::string operator()(SgNode* node)
+std::string AstDOTGenerationExtended_Defaults::LValueExtraNodeInfo::operator()(SgNode* node)
+   {
+                        std::ostringstream ss;
+
+                        // adds whether or not it is an l-value
+                        if (SgExpression* n = isSgExpression(node))
+                        {
+                                ss << (n->isLValue() ? "L-Value" : "!L-Value") << "\\n";
+                        }
+
+                        return ss.str();
+   }
 
 #endif

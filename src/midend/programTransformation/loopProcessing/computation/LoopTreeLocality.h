@@ -39,10 +39,10 @@ class DepCompAstRefAnal
             int res =  (*p).second; 
             return (res > 0)? res : -res;
        }
-    void Append( LoopTransformInterface& ai, LoopTreeNode* root);
+    void Append( LoopTreeNode* root);
   public:
-    DepCompAstRefAnal(LoopTransformInterface& ai,  LoopTreeNode* _root) 
-         : root(_root) { Append(ai, root); }
+    DepCompAstRefAnal( LoopTreeNode* _root) 
+         : root(_root) { Append(root); }
 
     LoopTreeNode* get_tree_root() const { return root; }
     int get_stmt_size() const { return stmtmap.size(); }
@@ -76,7 +76,6 @@ class LoopTreeLocalityAnal
   LoopTreeDepCompCreate& comp;
   DepInfoAnal& anal;
   LoopTreeDepGraphCreate inputCreate;
-  LoopTransformInterface &fa;
 
   void ComputeInputDep( LoopTreeDepGraph::NodeIterator iter, DepCompAstRefAnal& stmtorder);
   void ComputeInputDep( LoopTreeDepGraph::NodeIterator src,
@@ -85,7 +84,7 @@ class LoopTreeLocalityAnal
                         DepCompAstRefAnal& stmtorder);
  public:
   typedef std::set<AstNodePtr, std::less<AstNodePtr> > AstNodeSet;
-  LoopTreeLocalityAnal( LoopTransformInterface& _fa, LoopTreeDepCompCreate& c);
+  LoopTreeLocalityAnal( LoopTreeDepCompCreate& c);
   ~LoopTreeLocalityAnal();
 
   LoopTreeDepGraph* GetInputGraph() { return &inputCreate; }
@@ -94,7 +93,6 @@ class LoopTreeLocalityAnal
   float SelfSpatialReuses( LoopTreeNode *n, int loop, int linesize);
   int TemporaryReuseRefs(LoopTreeNode *s1, int loop1, LoopTreeNode *s2, int loop2,
                    AstNodeSet &refSet, int reuseDist);
-   LoopTransformInterface& GetLoopTransformInterface() { return fa; }
 };
 
 class DepCompAstRefGraphCreate: public DepInfoGraphCreate<DepCompAstRefGraphNode> 
@@ -107,7 +105,7 @@ class DepCompAstRefGraphCreate: public DepInfoGraphCreate<DepCompAstRefGraphNode
         CreateNode(const AstNodePtr& r, LoopTreeNode* stmt);
   DepInfoEdge* 
       CreateEdge( DepCompAstRefGraphNode* src,  DepCompAstRefGraphNode* snk, const DepInfo& dep);
-  void Build(LoopTransformInterface& la, LoopTreeLocalityAnal& tc, LoopTreeNode* root) ;
+  void Build(LoopTreeLocalityAnal& tc, LoopTreeNode* root) ;
 
   bool SelfReuseLevel( const DepCompAstRefGraphNode* n, int level) const;
 };

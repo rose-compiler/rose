@@ -40,9 +40,15 @@ fi
 AC_CANONICAL_BUILD
 # AC_CANONICAL_HOST
 # AC_CANONICAL_TARGET
-echo "Building ROSE for cpu       = $build_cpu"
-echo "Building ROSE for OS vendor = $build_vendor"
-echo "Building ROSE for OS        = $build_os"
+
+AC_MSG_CHECKING([machine hardware cpu])
+AC_MSG_RESULT([$build_cpu])
+
+AC_MSG_CHECKING([operating system vendor])
+AC_MSG_RESULT([$build_vendor])
+
+AC_MSG_CHECKING([operating system])
+AC_MSG_RESULT([$build_os])
 
 DETERMINE_OS
 
@@ -54,8 +60,6 @@ AM_CONDITIONAL(ROSE_BUILD_OS_IS_CYGWIN, [test "x$build_os" = xcygwin])
 # DQ (9/10/2009): A more agressive attempt to identify the OS vendor
 # This sets up automake conditional variables for each OS vendor name.
 DETERMINE_OS_VENDOR
-
-# exit 1
 
 # This appears to be a problem for Java (and so the Fortran support).
 # CHECK_SSL
@@ -90,20 +94,7 @@ AC_SUBST(configure_date)
 if test "$prefix" = NONE; then
    echo "Setting prefix to default: $PWD"
    prefix="$PWD"
-# else
-#   echo "prefix was exlicitly set to: $prefix"
 fi
-# echo "In configure (after testing prefix): prefix = $prefix"
-# echo "In configure (after testing prefix): prefix = $libdir"
-
-# exit 1
-
-# AC_MSG_WARN([Exiting as a test!])
-# AC_MSG_ERROR([Exiting as a test!])
-# echo "Exiting as a test!"
-# exit 1
-
-
 
 # DQ & PC (11/3/2009): Debugging the Java support.
 if false; then
@@ -112,11 +103,11 @@ if false; then
     if test -f /usr/bin/javaconfig; then # Mac Java
       :
     else
-      while test `readlink "$JAVA"` ; do 
-        JAVA=`readlink "$JAVA"` ; 
+      while test `readlink "$JAVA"` ; do
+        JAVA=`readlink "$JAVA"` ;
      done
 
-     if test $JAVA = "gcj"; then 
+     if test $JAVA = "gcj"; then
         AC_MSG_ERROR( "Error: gcj not supported. Please configure sun java as javac" );
      fi
 
@@ -169,6 +160,10 @@ else
     AC_MSG_RESULT([skipping])
 fi
 
+  ROSE_SUPPORT_UPC
+  ROSE_SUPPORT_COMPASS2
+  ROSE_SUPPORT_GMP
+  ROSE_SUPPORT_ISL
 
 ##
 #########################################################################################
@@ -219,9 +214,6 @@ else
 fi
 AM_CONDITIONAL(ROSE_BUILD_TUTORIAL_DIRECTORY_SUPPORT, [test "x$support_tutorial_directory" = xyes])
 
-# echo "Exiting after handling initial language specification..."
-# exit 1
-
 # ************************************************************
 # Option to control the size of the generated files by ROSETTA
 # ************************************************************
@@ -251,6 +243,18 @@ fi
 #   AC_MSG_WARN([Using newest EDG version 4.x (requires new interface) to translate EDG to ROSE (experimental)!])
 #   AC_DEFINE([ROSE_USE_EDG_VERSION_4], [], [Whether to use the new EDG version 4.x])
 # fi
+
+# DQ (11/14/2011): Added new configure mode to support faster development of langauge specific 
+# frontend support (e.g. for work on new EDG 4.3 front-end integration into ROSE).
+AC_ARG_ENABLE(internalFrontendDevelopment, AS_HELP_STRING([--enable-internalFrontendDevelopment], [Enable development mode to reduce files required to support work on language frontends]))
+AM_CONDITIONAL(ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT, [test "x$enable_internalFrontendDevelopment" = xyes])
+if test "x$enable_internalFrontendDevelopment" = "xyes"; then
+  AC_MSG_WARN([Using reduced set of files to support faster development of language frontend work; e.g. new EDG version 4.3 to translate EDG to ROSE (internal use only)!])
+
+# DQ (11/14/2011): It is not good enough for this to be processed here (added to the rose_config.h file) 
+# since it is seen too late in the process.
+# AC_DEFINE([ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT], [], [Whether to use internal reduced mode to support integration of the new EDG version 4.x])
+fi
 
 # DQ (2/2/2010): New code to control use of different versions of EDG with ROSE.
 AC_ARG_ENABLE(edg-version,
@@ -326,6 +330,14 @@ AM_CONDITIONAL(ROSE_USE_NEW_EDG_INTERFACE, [test "x$enable_new_edg_interface" = 
 AM_CONDITIONAL(ROSE_USE_EDG_VERSION_4, [test "x$enable_edg_version4" = xyes])
 AM_CONDITIONAL(ROSE_USE_EDG_VERSION_4_3, [test "x$enable_edg_version43" = xyes])
 
+AC_ARG_ENABLE(clang-frontend, AS_HELP_STRING([--enable-clang-frontend], [Use Clang frontend instead of EDG]))
+AM_CONDITIONAL(ROSE_USE_CLANG_FRONTEND, [test "x$enable_clang_frontend" = xyes])
+if test "x$enable_clang_frontend" = "xyes"; then
+  ROSE_SUPPORT_CLANG
+else
+  AC_MSG_NOTICE([Clang frontend support disabled])
+fi
+
 # DQ (1/4/2009) Added support for optional GNU language extensions in new EDG/ROSE interface.
 # This value will be substituted into EDG/4.0/src/rose_lang_feat.h in the future (not used at present!)
 AC_ARG_ENABLE(gnu-extensions, AS_HELP_STRING([--enable-gnu-extensions], [Enable internal support in ROSE for GNU language extensions]))
@@ -377,8 +389,6 @@ AC_ARG_ENABLE(dot2gml_translator,
 ])
 AM_CONDITIONAL(DOT_TO_GML_TRANSLATOR,test "$enable_dot2gml_translator" = yes)
 
-# exit 1
-
 # Set the value of srcdir so that it will be an absolute path instead of a relative path
 # srcdir=`dirname "$0"`
 # echo "In ROSE/con figure: srcdir = $srcdir"
@@ -394,6 +404,13 @@ AC_CANONICAL_HOST
 
 ROSE_FLAG_C_OPTIONS
 ROSE_FLAG_CXX_OPTIONS
+
+# DQ (11/14/2011): This is defined here since it must be seen before any processing of the rose_config.h file.
+if test "x$enable_internalFrontendDevelopment" = "xyes"; then
+  AC_MSG_NOTICE([Adding -D to command line to support faster development of language frontend work.])
+  CFLAGS+=" -DROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT"
+  CXXFLAGS+=" -DROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT"
+fi
 
 echo "CFLAGS   = $CFLAGS"
 echo "CXXFLAGS = $CXXFLAGS"
@@ -428,16 +445,9 @@ echo "After processing --enable-advanced-warnings: CXX_ADVANCED_WARNINGS = ${CXX
 echo "After processing --enable-advanced-warnings: CXX_WARNINGS = ${CXX_WARNINGS}"
 echo "After processing --enable-advanced-warnings: C_WARNINGS   = ${C_WARNINGS}"
 
-# exit 1;
-
 echo "CFLAGS   = $CFLAGS"
 echo "CXXFLAGS = $CXXFLAGS"
 echo "CPPFLAGS = $CPPFLAGS"
-
-# AC_MSG_WARN([Exiting as a test!])
-# AC_MSG_ERROR([Exiting as a test!])
-# echo "Exiting as a test!"
-# exit 1
 
 # DQ: added here to see if it would be defined for the template tests and avoid placing 
 # a $(CXX_TEMPLATE_REPOSITORY_PATH) directory in the top level build directory (a minor error)
@@ -466,24 +476,14 @@ echo "Requested minimum boost version: boost_lib_version_req_sub_minor = $boost_
 # Actual boost version (version 1.42 will not set "_version", but version 1.37 will).
 echo "Boost version being used is: $_version"
 
-rose_boost_version=`grep "#define BOOST_VERSION " ${ac_boost_path}/include/boost/version.hpp | cut -d" " -f 3`
+rose_boost_version=`grep "#define BOOST_VERSION " ${ac_boost_path}/include/boost/version.hpp | cut -d" " -f 3 | tr -d '\r'`
 echo "rose_boost_version = $rose_boost_version"
 
 # Define macros for conditional compilation of parts of ROSE based on version of boost
 # (this ONLY happens for the tests in tests/CompilerOptionsTests/testWave)
-# we don't want conditional compilation or code in ROSE based on version numbers of Boost.
-# AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_35,test "x$_version" = "x1.35")
-# AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_36,test "x$_version" = "x1.36")
-# AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_37,test "x$_version" = "x1.37")
-# AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_38,test "x$_version" = "x1.38")
-# AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_39,test "x$_version" = "x1.39")
-# AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_40,test "x$_version" = "x1.40")
-# AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_41,test "x$_version" = "x1.41")
-# AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_42,test "x$_version" = "x1.42")
-# AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_43,test "x$_version" = "x1.43")
-# AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_44,test "x$_version" = "x1.44")
-# AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_45,test "x$_version" = "x1.45")
-# AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_46,test "x$_version" = "x1.46")
+#
+# !! We don't want conditional compilation or code in ROSE based on version numbers of Boost. !!
+#
 
 AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_35,test "x$rose_boost_version" = "x103500" -o "x$_version" = "x1.35")
 AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_36,test "x$rose_boost_version" = "x103600" -o "x$_version" = "x1.36")
@@ -498,6 +498,8 @@ AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_44,test "x$rose_boost_version" = "x104
 AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_45,test "x$rose_boost_version" = "x104500" -o "x$_version" = "x1.45")
 AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_46,test "x$rose_boost_version" = "x104600" -o "x$_version" = "x1.46")
 AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_46,test "x$rose_boost_version" = "x104601" -o "x$_version" = "x1.46")
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_47,test "x$rose_boost_version" = "x104700" -o "x$_version" = "x1.47")
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_48,test "x$rose_boost_version" = "x104800" -o "x$_version" = "x1.48")
 
 # DQ (10/18/2010): Error checking for Boost version.
 if test "x$rose_boost_version" = "x103600" -o "x$_version" = "x1.36" \
@@ -511,16 +513,14 @@ if test "x$rose_boost_version" = "x103600" -o "x$_version" = "x1.36" \
    -o "x$rose_boost_version" = "x104400" -o "x$_version" = "x1.44" \
    -o "x$rose_boost_version" = "x104500" -o "x$_version" = "x1.45" \
    -o "x$rose_boost_version" = "x104600" -o "x$_version" = "x1.46" \
-   -o "x$rose_boost_version" = "x104601" -o "x$_version" = "x1.46"; then
-echo "Reasonable version of Boost found!"
+   -o "x$rose_boost_version" = "x104601" -o "x$_version" = "x1.46" \
+   -o "x$rose_boost_version" = "x104700" -o "x$_version" = "x1.47" \
+   -o "x$rose_boost_version" = "x104800" -o "x$_version" = "x1.48"
+then
+    echo "Reasonable version of Boost found!"
 else
-echo "No identifiable version of boost recognised!"
-exit 1;
+    ROSE_MSG_ERROR([Unsupported version of Boost: '$_version' ('$rose_boost_version')])
 fi
-
-
-# echo "Exiting as a test."
-# exit 1
 
 # DQ (12/22/2008): Fix boost configure to handle OS with older version of Boost that will
 # not work with ROSE, and use the newer version specified by the user on the configure line.
@@ -532,8 +532,6 @@ AC_DEFINE_UNQUOTED([ROSE_WAVE_PATH],"$ac_boost_path/wave",[Location (unquoted) o
 
 # DQ (11/5/2009): Added test for GraphViz's ``dot'' program
 ROSE_SUPPORT_GRAPHVIZ
-# exit 1
-
 AX_BOOST_THREAD
 AX_BOOST_DATE_TIME
 AX_BOOST_REGEX
@@ -587,9 +585,18 @@ AC_DEFUN([ROSE_SUPPORT_ROSE_BUILD_INCLUDE_FILES],
 rm -rf ./include-staging
 if test x$enable_new_edg_interface = xyes; then
   :
-else
+# DQ (11/1/2011): I think that we need these for more complex header file 
+# requirements than we have seen in testing C code to date.  Previously
+# in testing C codes with the EDG 4.x we didn't need as many header files.
   GENERATE_BACKEND_C_COMPILER_SPECIFIC_HEADERS
   GENERATE_BACKEND_CXX_COMPILER_SPECIFIC_HEADERS
+else
+  if test x$enable_clang_frontend = xyes; then
+    INSTALL_CLANG_SPECIFIC_HEADERS
+  else
+    GENERATE_BACKEND_C_COMPILER_SPECIFIC_HEADERS
+    GENERATE_BACKEND_CXX_COMPILER_SPECIFIC_HEADERS
+  fi
 fi
 
 # End macro ROSE_SUPPORT_ROSE_BUILD_INCLUDE_FILES.
@@ -603,31 +610,16 @@ AC_DEFUN([ROSE_SUPPORT_ROSE_PART_2],
 [
 # Begin macro ROSE_SUPPORT_ROSE_PART_2.
 
-# echo "DONE: configure.in ...(after calling: generate backend C compiler specific headers)"
-# echo "Exiting in configure.in ...(after calling: generate backend C compiler specific headers)"
-# exit 1
-
 # AC_REQUIRE([AC_PROG_CXX])
 AC_PROG_CXX
 
 echo "In configure.in ... CXX = $CXX"
-# exit 1
 
 # DQ (9/17/2006): These should be the same for both C and C++ (else we will need separate macros)
 # Setup the -D<xxx> defines required to allow EDG to take the same path through the compiler 
 # specific and system specific header files as for the backend compiler.  These depend
 # upon the selection of the back-end compiler.
 GET_COMPILER_SPECIFIC_DEFINES
-
-# DQ (1/15/2007): These are no longer used, I think!
-# Setup the location of header files after building the 
-# default header files based on the back-end compiler.
-# ROSE_C_HEADER_OPTIONS
-# ROSE_CXX_HEADER_OPTIONS
-
-# echo "DONE: configure.in ...(after calling: rose C and Cxx header options)"
-# echo "Exiting in configure.in ...(after calling: rose C and Cxx header options)"
-# exit 1
 
 # This must go after the setup of the headers options
 # Setup the CXX_INCLUDE_STRING to be used by EDG to find the correct headers
@@ -636,12 +628,6 @@ GET_COMPILER_SPECIFIC_DEFINES
 # but we still need to use the original C++ header directories
 SETUP_BACKEND_C_COMPILER_SPECIFIC_REFERENCES
 SETUP_BACKEND_CXX_COMPILER_SPECIFIC_REFERENCES
-
-# echo "DONE: configure.in ...(after calling: setup backend C and Cxx compiler specific references)"
-# echo "Exiting in configure.in ...(after calling: setup backend C and Cxx compiler specific references)"
-# exit 1
-
-# echo "Before test for LEX: CC (CC = $CC)"
 
 # DQ (1/15/2007): Check if longer internal make check rule is to be used (default is short tests)
 ROSE_SUPPORT_LONG_MAKE_CHECK_RULE
@@ -696,22 +682,6 @@ else
    echo "***** ps2pdf WAS found *****";
 fi
 
-
-# Liao 12/18/2009, we switch to wget instead of curl
-# curl directs error messages to the output file,which is a very bad behavior.
-# wget is also more available than curl.
-# Check for availability of curl (used for downloading the EDG binaries used in ROSE).
-#AC_CHECK_TOOL(ROSE_CURL_PATH, [curl], [no])
-#AM_CONDITIONAL(ROSE_USE_CURL, [test "$ROSE_CURL_PATH" != "no"])
-#if test "$ROSE_CURL_PATH" = "no"; then
-#   echo "ROSE now requires curl to download EDG binaries automatically.";
-#
-#   exit 1;
-#else
-# # Not clear if we really should have ROSE configure automatically do something like this.
-#   echo "ROSE will use curl to automatically download EDG binaries as required during the build...";
-#fi
-
 AC_C_BIGENDIAN
 AC_CHECK_HEADERS([byteswap.h machine/endian.h])
 
@@ -756,8 +726,6 @@ AC_PROG_MAKE_SET
 echo "Testing the value of CC: (CC = $CC)"
 echo "Testing the value of CPPFLAGS: (CPPFLAGS = $CPPFLAGS)"
 
-# exit 1
-
 # Call supporting macro for MAPLE
 ROSE_SUPPORT_MAPLE
 
@@ -789,7 +757,6 @@ ROSE_SUPPORT_SAT
 
 # Setup Automake conditional in --- (not yet ready for use)
 echo "with_sat = $with_sat"
-# exit 1
 AM_CONDITIONAL(ROSE_USE_SAT,test ! "$with_sat" = no)
 
 # Call supporting macro to Intel Pin Dynamic Instrumentation
@@ -803,9 +770,6 @@ ROSE_SUPPORT_DWARF
 
 # Setup Automake conditional in --- (not yet distributed)
 AM_CONDITIONAL(ROSE_USE_DWARF,test ! "$with_dwarf" = no)
-
-# echo "Exiting after test ..."
-# exit 1
 
 # Call supporting macro for libffi (Foreign Function Interface library)
 # This library is used by Peter's work on the Interpreter in ROSE.
@@ -838,9 +802,15 @@ AC_SUBST(TEST_SMT_SOLVER)
 #   AC_MSG_ERROR([Support for both DWARF and Intel Pin fails, these configure options are incompatable!])
 #fi
 
+ROSE_SUPPORT_MINT
+
 ROSE_SUPPORT_PHP
 
 AM_CONDITIONAL(ROSE_USE_PHP,test ! "$with_php" = no)
+
+ROSE_SUPPORT_PYTHON
+
+AM_CONDITIONAL(ROSE_USE_PYTHON,test ! "$with_python" = no)
 
 #ASR
 ROSE_SUPPORT_LLVM
@@ -964,9 +934,6 @@ AC_SUBST(glut_path)
 
 
 
-# Call supporting macro for python
-ROSE_SUPPORT_PYTHON
-
 AC_CHECK_PROGS(PERL, [perl])
 
 # DQ (9/4/2009): Added checking for indent command (common in Linux, but not on some platforms).
@@ -981,154 +948,8 @@ AC_CHECK_PROGS(TCLSH, [tclsh])
 AM_CONDITIONAL(ROSE_USE_TCLSH, [test "x$TCLSH" = "xtclsh"])
 echo "value of TCLSH variable = $TCLSH"
 
-
-# DQ (10/18/2010): If fortran is enabled then OFP must be allowed and this was already check previously.
-# This step is taken to simplify how we handle OFP and Fortran.  Of course OFP is enabled if Fortran is
-# a valid langauge option, else we could not process the Fortran code with out OFP.  So we want to move
-# to having only a single option for Fortran as a language. All reference to conditionals based on OFP can
-# be replaced with reference to Fortran being processed.  The following code is dead (but not deleted yet).
-if false; then
-# DQ (10/18/2010): Only test if we should make OFP active if fortran support is enabled.
-echo "Before testing for gfortran to enable OFP: support_fortran_language = $support_fortran_language"
-ofp_enabled=no
-if test "x$support_fortran_language" = "xyes"; then
-  AC_MSG_CHECKING([for gfortran to test whether Fortran support can be used])
-  if test "x$USE_JAVA" = x1; then
-    CPPFLAGS="$CPPFLAGS $JAVA_JVM_INCLUDE"
-    if test "x$GFORTRAN_PATH" != "x"; then
-    # AC_DEFINE([USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT], [1], [Always enable Fortran support whenever Java and gfortran are present])
-    # AC_DEFINE([USE_ROSE_INTERNAL_JAVA_SUPPORT], [1], [Always enable Fortran support whenever Java and gfortran are present])
-      ofp_enabled=yes
-      AC_MSG_RESULT([yes])
-      AC_DEFINE([USE_GFORTRAN_IN_ROSE], [1], [Mark that GFORTRAN is available])
-
-    # Test that we have correctly evaluated the major and minor versions numbers...
-      if test x$BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER == x; then
-        echo "Error: Could not compute the MAJOR version number of $BACKEND_FORTRAN_COMPILER"
-        exit 1
-      fi
-      if test x$BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER == x; then
-        echo "Error: Could not compute the MINOR version number of $BACKEND_FORTRAN_COMPILER"
-        exit 1
-      fi
-    else
-      AC_MSG_RESULT([no ... gfortran cannot be found (try --with-gfortran=<path>)])
-    fi
-  else
-    AC_MSG_RESULT([no ... Java cannot be found (try --with-java=<path>)])
-  fi
-else
-  echo "Fortran is not enabled so OFG is disabled."
-fi
-fi
-# AM_CONDITIONAL(ROSE_USE_OPEN_FORTRAN_PARSER, [test "x$ofp_enabled" = "xyes"])
-
-
-OPEN_FORTRAN_PARSER_PATH="${ac_top_builddir}/src/3rdPartyLibraries/fortran-parser" # For the one rule that uses it
-AC_SUBST(OPEN_FORTRAN_PARSER_PATH)
-
-
-# DQ (2/2/2010): New code to control use of different versions of OFP within ROSE.
-AC_ARG_ENABLE(ofp-version,
-[  --enable-ofp-version    major.minor.patch version number for OFP (e.g. 0.7.2, 0.8.0, ...).],
-[ echo "Setting up OFP version"
-])
-
-# DQ (7/31/2010): Changed the default version of OFP to 0.8.1 (now distributed with ROSE).
-echo "enable_ofp_version = $enable_ofp_version"
-if test "x$enable_ofp_version" = "x"; then
-   echo "Default version of OFP used (0.8.2)"
-   ofp_major_version_number=0
-   ofp_minor_version_number=8
- # DQ (9/26/2010): Changed default version to 0.8.2
- # ofp_patch_version_number=1
-   ofp_patch_version_number=2
-else
-   ofp_major_version_number=`echo $enable_ofp_version | cut -d\. -f1`
-   ofp_minor_version_number=`echo $enable_ofp_version | cut -d\. -f2`
-   ofp_patch_version_number=`echo $enable_ofp_version | cut -d\. -f3`
-fi
-
-echo "ofp_major_version_number = $ofp_major_version_number"
-echo "ofp_minor_version_number = $ofp_minor_version_number"
-echo "ofp_patch_version_number = $ofp_patch_version_number"
-
-ofp_jar_file_contains_java_file = false
-if test "x$ofp_major_version_number" = "x0"; then
-   echo "Recognized an accepted major version number."
-   if test "x$ofp_minor_version_number" = "x8"; then
-      echo "Recognized an accepted minor version number (any 0.8.x version is allowed)."
-#     echo "Recognized an accepted minor version number."
-      if test "x$ofp_patch_version_number" = "x0"; then
-         echo "Recognized an accepted patch version number (very old version of OFP)."
-      else
-         if test "x$ofp_patch_version_number" = "x1"; then
-            echo "Recognized an olded but accepted patch version number ONLY for testing."
-         else
-            ofp_jar_file_contains_java_file = true
-            if test "x$ofp_patch_version_number" = "x2"; then
-               echo "Recognized an accepted patch version number ONLY for testing."
-            else
-#              echo "ERROR: Could not identify the OFP patch version number."
-               echo "Recognized an accepted patch version number (later than default)."
-               exit 1
-            fi
-         fi
-#       # exit 1
-      fi
-   else
-      if test "x$ofp_minor_version_number" = "x7"; then
-       # We accept any patch level with minor version number 7 releases. 
-         echo "Recognized an accepted minor version number using ofp_patch_version_number = $ofp_patch_version_number."
-      else
-         echo "ERROR: Could not identify the OFP minor version number."
-         exit 1
-      fi
-   fi
-else
-   if test "x$ofp_major_version_number" = "x1"; then
-      echo "Recognized an accepted major version number (but this is not supported yet)."
-      exit 1
-   else
-      echo "ERROR: Could not identify the OFP major version number."
-      exit 1
-   fi
-fi
-
-# DQ (9/28/2010): Newer versions of the OFP jar file contains fortran/ofp/parser/java/IFortranParserAction.java
-# we need this to maintain backward compatability.
-AM_CONDITIONAL(ROSE_OFP_CONTAINS_JAVA_FILE, [test "x$ofp_jar_file_contains_java_file" = true])
-
-AC_DEFINE_UNQUOTED([ROSE_OFP_MAJOR_VERSION_NUMBER], $ofp_major_version_number , [OFP major version number])
-AC_DEFINE_UNQUOTED([ROSE_OFP_MINOR_VERSION_NUMBER], $ofp_minor_version_number , [OFP minor version number])
-AC_DEFINE_UNQUOTED([ROSE_OFP_PATCH_VERSION_NUMBER], $ofp_patch_version_number , [OFP patch version number])
-
-ROSE_OFP_MAJOR_VERSION_NUMBER=$ofp_major_version_number
-ROSE_OFP_MINOR_VERSION_NUMBER=$ofp_minor_version_number
-ROSE_OFP_PATCH_VERSION_NUMBER=$ofp_patch_version_number
-
-AC_SUBST(ROSE_OFP_MAJOR_VERSION_NUMBER)
-AC_SUBST(ROSE_OFP_MINOR_VERSION_NUMBER)
-AC_SUBST(ROSE_OFP_PATCH_VERSION_NUMBER)
-
-# echo "Testing OFP version number specification..."
-# exit 1
-
-# DQ (4/5/2010): Moved the specification of CLASSPATH to after the specification 
-# of OFP version number so that we can use it to set the class path.
-# DQ (3/11/2010): Updating to new Fortran OFP version 0.7.2 with Craig.
-# CLASSPATH=${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/antlr-2.7.7.jar:${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/antlr-3.0.1.jar:${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/antlr-runtime-3.0.1.jar:${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/stringtemplate-3.1b1.jar:.
-# CLASSPATH=${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/antlr-3.2.jar:${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/fortran-parser/lib/OpenFortranParser-0.7.2.jar:.
-# CLASSPATH=${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/antlr-3.2.jar:${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/fortran-parser/OpenFortranParser-0.7.2.jar:.
-# CLASSPATH=${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/antlr-3.2.jar:${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/fortran-parser/OpenFortranParser-${ROSE_OFP_MAJOR_VERSION_NUMBER}.${ROSE_OFP_MINOR_VERSION_NUMBER}.${ROSE_OFP_PATCH_VERSION_NUMBER}.jar:.
-CLASSPATH=${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/antlr-3.2.jar:${ABSOLUTE_SRCDIR}${OPEN_FORTRAN_PARSER_PATH}/OpenFortranParser-${ROSE_OFP_MAJOR_VERSION_NUMBER}.${ROSE_OFP_MINOR_VERSION_NUMBER}.${ROSE_OFP_PATCH_VERSION_NUMBER}.jar:.
-
-export CLASSPATH
-AC_SUBST(CLASSPATH)
-# ROSE_SUPPORT_JAVA # This macro uses JAVA_HOME
-
-AC_DEFINE_UNQUOTED([ROSE_OFP_CLASSPATH], $CLASSPATH , [OFP class path for Jave Virtual Machine])
-# AC_DEFINE([ROSE_OFP_CLASSPATH], $CLASSPATH , [OFP class path for Jave Virtual Machine])
+# Call supporting macro for OFP
+ROSE_SUPPORT_OFP
 
 AC_PROG_SWIG(1.3.31)
 SWIG_ENABLE_CXX
@@ -1220,6 +1041,23 @@ if test "x$enable_opencl" = "xyes"; then
   AC_DEFINE([ROSE_USE_OPENCL_SUPPORT], [], [Whether to use OpenCL language support or not within ROSE])
 fi
 AC_SUBST(ROSE_USE_OPENCL_SUPPORT)
+
+# *******************************************************
+# Option to control building of OpenCL support in EDG 4.0
+# *******************************************************
+
+# TV (05/06/2011): This is part of optional building of OpenCL support in EDG 4.0
+AC_MSG_CHECKING([for building of OpenCL support in EDG 4.0])
+AC_ARG_ENABLE(edg_opencl, AS_HELP_STRING([--enable-edg-opencl], [Build EDG 4.0 with OpenCL support.]), [case "${enableval}" in
+  yes) edg_opencl=true ;;
+  no)  edg_opencl=false ;;
+  *)   edg_opencl=false ;;
+esac])
+AM_CONDITIONAL(ROSE_BUILD_EDG_WITH_OPENCL_SUPPORT, [test x$edg_opencl = xtrue])
+if test x$edg_opencl = xtrue; then
+  AC_MSG_WARN([Add OpenCL specific headers to the include-staging directory.])
+  GENERATE_OPENCL_SPECIFIC_HEADERS
+fi
 
 # *********************************************************************
 # Option to control internal support of PPL (Parma Polyhedron Library)
@@ -1459,8 +1297,6 @@ else
 fi
 AM_CONDITIONAL(USE_ROSE_IN_BUILD_TREE_VAR, [test "x$use_rose_in_build_tree_var" = "xyes"])
 
-# exit 1
-
 # Figure out what version of lex we have available
 # flex works better than lex (this gives a preference to flex (flex is gnu))
 dnl AM_PROG_LEX
@@ -1540,9 +1376,6 @@ dnl echo "DONE: LIBS_ADD_RPATH ROSE_TEST_LIBS  = $ROSE_TEST_LIBS"
 dnl echo "DONE: LIBS_ADD_RPATH LIBS_WITH_RPATH = $LIBS_WITH_RPATH"
 
 AC_SUBST(LIBS_WITH_RPATH)
-
-# DQ (exit to test rpath macro)
-# exit 1
 
 # Determine how to create C++ libraries.
 AC_MSG_CHECKING(how to create C++ libraries)
@@ -1647,6 +1480,8 @@ dnl ])
 with_gcj=no ; # JJW 5-22-2008 The code that was here before broke if gcj was not present, even if the --with-gcj flag was absent
 AM_CONDITIONAL(USE_GCJ,test "$with_gcj" = yes)
 
+ROSE_CONFIGURE_SECTION([Running system checks])
+
 AC_SEARCH_LIBS(clock_gettime, [rt], [
   RT_LIBS="$LIBS"
   LIBS=""
@@ -1741,13 +1576,22 @@ fi
 AM_CONDITIONAL(ROSE_HAS_EDG_SOURCE, [test "x$has_edg_source" = "xyes"])
 AM_CONDITIONAL(BINARY_EDG_TARBALL_ENABLED, [test "x$binary_edg_tarball_enabled" = "xyes"])
 
+ROSE_ARG_ENABLE(
+  [alternate-edg-build-cpu],
+  [for alternate EDG build cpu],
+  [allows you to generate EDG binaries with a different CPU type in the name string]
+)
+
 #The build_triplet_without_redhat variable is used only in src/frontend/CxxFrontend/Makefile.am to determine the binary edg name
 build_triplet_without_redhat=`${srcdir}/config/cleanConfigGuessOutput "$build" "$build_cpu" "$build_vendor"`
+if test "x$CONFIG_HAS_ROSE_ENABLE_ALTERNATE_EDG_BUILD_CPU" = "xyes"; then
+  # Manually modify the build CPU <build_cpu>-<build_vendor>-<build>
+  build_triplet_without_redhat="$(echo "$build_triplet_without_redhat" | sed 's/^[[^-]]*\(.*\)/'$ROSE_ENABLE_ALTERNATE_EDG_BUILD_CPU'\1/')"
+fi
 AC_SUBST(build_triplet_without_redhat) dnl This is done even with EDG source, since it is used to determine the binary to make in roseFreshTest
 
 # End macro ROSE_SUPPORT_ROSE_PART_3.
-]
-)
+])
 
 #-----------------------------------------------------------------------------
 
@@ -1786,6 +1630,11 @@ AC_SUBST(top_pwd)
 
 absolute_path_srcdir="`cd $srcdir; pwd`"
 AC_SUBST(absolute_path_srcdir)
+
+# Liao 6/20/2011, store source path without symbolic links, used to have consistent source and compile paths for ROSE 
+# when call graph analysis tests are used.
+res_top_src=$(cd "$srcdir" && pwd -P)
+AC_DEFINE_UNQUOTED([ROSE_SOURCE_TREE_PATH],"$res_top_src",[Location of ROSE Source Tree.])
 
 # This is silly, but it is done to hide an include command (in
 # projects/compass/Makefile.am, including compass-makefile.inc in the build
@@ -1903,7 +1752,17 @@ AM_CONDITIONAL(ROSE_USE_ETHER,test "$with_ether" != "no")
 
 # libgcrypt is used for computing SHA1 hashes of binary basic block semantics, among other things. [RPM 2010-05-12]
 AC_CHECK_HEADERS(gcrypt.h)
+AC_CHECK_LIB(gpg-error,gpg_strerror) dnl needed by statically linked libgcrypt
 AC_CHECK_LIB(gcrypt,gcry_check_version)
+
+# Added support for detection of libnuma, a NUMA aware memory allocation mechanism for many-core optimizations.
+AC_CHECK_HEADERS(numa.h, [found_libnuma=yes])
+
+if test "x$found_libnuma" = xyes; then
+  AC_DEFINE([HAVE_NUMA_H],[],[Support for libnuma a NUMA memory allocation library for many-core optimizations])
+fi
+
+AM_CONDITIONAL(ROSE_USE_LIBNUMA, [test "x$found_libnuma" = xyes])
 
 # Multi-thread support is needed by the simulator.  This also enables/disables major parts of threadSupport.[Ch] within
 # the ROSE library.
@@ -1920,6 +1779,7 @@ AC_COMPILE_IFELSE([struct S {int a, b;}; static __thread struct S x;],
 AC_CHECK_HEADERS([asm/ldt.h elf.h linux/types.h linux/dirent.h linux/unistd.h])
 AC_CHECK_HEADERS([sys/types.h sys/mman.h sys/stat.h sys/uio.h sys/wait.h sys/utsname.h sys/ioctl.h sys/sysinfo.h sys/socket.h])
 AC_CHECK_HEADERS([termios.h grp.h syscall.h])
+AC_CHECK_FUNCS(pipe2)
 AC_CHECK_TYPE(user_desc,
               AC_DEFINE(HAVE_USER_DESC, [], [Defined if the user_desc type is declared in <asm/ldt.h>]),
               [],
@@ -1998,9 +1858,10 @@ src/frontend/CxxFrontend/EDG/edg43Rose/Makefile
 ])], [])
 
 
-# End macro ROSE_SUPPORT_ROSE_PART_6.
+# End macro ROSE_SUPPORT_ROSE_PART_5.
 ]
 )
+
 
 #-----------------------------------------------------------------------------
 AC_DEFUN([ROSE_SUPPORT_ROSE_PART_6],
@@ -2050,40 +1911,26 @@ src/frontend/SageIII/astTokenStream/Makefile
 src/frontend/SageIII/astHiddenTypeAndDeclarationLists/Makefile
 src/frontend/SageIII/astVisualization/Makefile
 src/frontend/SageIII/GENERATED_CODE_DIRECTORY_Cxx_Grammar/Makefile
+src/frontend/SageIII/astFromString/Makefile
+src/frontend/SageIII/includeDirectivesProcessing/Makefile
 src/frontend/CxxFrontend/Makefile
+src/frontend/CxxFrontend/Clang/Makefile
 src/frontend/OpenFortranParser_SAGE_Connection/Makefile
 src/frontend/ECJ_ROSE_Connection/Makefile
 src/frontend/PHPFrontend/Makefile
+src/frontend/PythonFrontend/Makefile
 src/frontend/BinaryDisassembly/Makefile
 src/frontend/BinaryLoader/Makefile
 src/frontend/BinaryFormats/Makefile
 src/frontend/Disassemblers/Makefile
 src/midend/Makefile
-src/midend/abstractHandle/Makefile
-src/midend/astUtil/Makefile
-src/midend/astQuery/Makefile
-src/midend/astProcessing/Makefile
-src/midend/astRewriteMechanism/Makefile
-src/midend/astDiagnostics/Makefile
 src/midend/binaryAnalyses/Makefile
 src/midend/programAnalysis/Makefile
-src/midend/programTransformation/Makefile
-src/midend/programTransformation/astInlining/Makefile
-src/midend/programTransformation/astOutlining/Makefile
-src/midend/programTransformation/ompLowering/Makefile
-src/midend/programTransformation/partialRedundancyElimination/Makefile
-src/midend/programTransformation/finiteDifferencing/Makefile
-src/midend/programTransformation/functionCallNormalization/Makefile
-src/midend/programTransformation/constantFolding/Makefile
-src/midend/programTransformation/implicitCodeGeneration/Makefile
+src/midend/programAnalysis/staticSingleAssignment/Makefile
+src/midend/programAnalysis/ssaUnfilteredCfg/Makefile
+src/midend/programAnalysis/systemDependenceGraph/Makefile
+src/midend/programTransformation/extractFunctionArgumentsNormalization/Makefile
 src/midend/programTransformation/loopProcessing/Makefile
-src/midend/programTransformation/loopProcessing/prepostTransformation/Makefile
-src/midend/programTransformation/loopProcessing/depInfo/Makefile
-src/midend/programTransformation/loopProcessing/depGraph/Makefile
-src/midend/programTransformation/loopProcessing/computation/Makefile
-src/midend/programTransformation/loopProcessing/slicing/Makefile
-src/midend/programTransformation/loopProcessing/outsideInterface/Makefile
-src/midend/programTransformation/loopProcessing/driver/Makefile
 src/backend/Makefile
 src/roseSupport/Makefile
 src/roseExtensions/Makefile
@@ -2145,12 +1992,20 @@ src/roseIndependentSupport/dot2gml/Makefile
 projects/AstEquivalence/Makefile
 projects/AstEquivalence/gui/Makefile
 projects/BabelPreprocessor/Makefile
+projects/BinFuncDetect/Makefile
 projects/BinQ/Makefile
 projects/BinaryCloneDetection/Makefile
 projects/BinaryCloneDetection/gui/Makefile
 projects/C_to_Promela/Makefile
 projects/CertSecureCodeProject/Makefile
 projects/CloneDetection/Makefile
+projects/DataFaultTolerance/Makefile
+projects/DataFaultTolerance/src/Makefile
+projects/DataFaultTolerance/test/Makefile
+projects/DataFaultTolerance/test/array/Makefile
+projects/DataFaultTolerance/test/array/transformation/Makefile
+projects/DataFaultTolerance/test/array/transformation/tests/Makefile
+projects/DataFaultTolerance/test/array/faultCheck/Makefile
 projects/DatalogAnalysis/Makefile
 projects/DatalogAnalysis/relationTranslatorGenerator/Makefile
 projects/DatalogAnalysis/src/DBFactories/Makefile
@@ -2159,10 +2014,13 @@ projects/DatalogAnalysis/tests/Makefile
 projects/DistributedMemoryAnalysisCompass/Makefile
 projects/DocumentationGenerator/Makefile
 projects/FiniteStateModelChecker/Makefile
+projects/graphColoring/Makefile
 projects/HeaderFilesInclusion/HeaderFilesGraphGenerator/Makefile
 projects/HeaderFilesInclusion/HeaderFilesNotIncludedList/Makefile
 projects/HeaderFilesInclusion/Makefile
-projects/MPICodeMotion/Makefile
+projects/MPI_Tools/Makefile
+projects/MPI_Tools/MPICodeMotion/Makefile
+projects/MPI_Tools/MPIDeterminismAnalysis/Makefile
 projects/MacroRewrapper/Makefile
 projects/Makefile
 projects/OpenMP_Analysis/Makefile
@@ -2189,14 +2047,10 @@ projects/RTED/Makefile
 projects/RoseQt/AstViewer/Makefile
 projects/RoseQt/Makefile
 projects/SatSolver/Makefile
-projects/SemanticSignatureVectors/Makefile
-projects/SemanticSignatureVectors/tests/Makefile
 projects/UpcTranslation/Makefile
 projects/UpcTranslation/tests/Makefile
 projects/arrayOptimization/Makefile
 projects/arrayOptimization/test/Makefile
-projects/assemblyToSourceAst/Makefile
-projects/assemblyToSourceAst/tests/Makefile
 projects/autoParallelization/Makefile
 projects/autoParallelization/tests/Makefile
 projects/autoTuning/Makefile
@@ -2208,20 +2062,20 @@ projects/backstroke/eventDetection/ROSS/Makefile
 projects/backstroke/eventDetection/SPEEDES/Makefile
 projects/backstroke/normalizations/Makefile
 projects/backstroke/slicing/Makefile
-projects/backstroke/ssa/Makefile
 projects/backstroke/valueGraph/Makefile
+projects/backstroke/valueGraph/headerUnparser/Makefile
 projects/backstroke/pluggableReverser/Makefile
 projects/backstroke/testCodeGeneration/Makefile
 projects/backstroke/restrictedLanguage/Makefile
-projects/backstroke/reverseComputation/Makefile
 projects/backstroke/tests/Makefile
 projects/backstroke/tests/cfgReverseCodeGenerator/Makefile
 projects/backstroke/tests/expNormalizationTest/Makefile
-projects/backstroke/tests/extractFunctionArgumentsTest/Makefile
 projects/backstroke/tests/pluggableReverserTest/Makefile
 projects/backstroke/tests/restrictedLanguageTest/Makefile
 projects/backstroke/tests/testCodeBuilderTest/Makefile
+projects/backstroke/tests/incrementalInversionTest/Makefile
 projects/backstroke/utilities/Makefile
+projects/backstroke/sdg/Makefile
 projects/binCompass/Makefile
 projects/binCompass/analyses/Makefile
 projects/binCompass/graphanalyses/Makefile
@@ -2253,6 +2107,9 @@ projects/compass/tools/compass/tests/Makefile
 projects/compass/tools/compassVerifier/Makefile
 projects/compass/tools/sampleCompassSubset/Makefile
 projects/dataStructureGraphing/Makefile
+projects/extractMPISkeleton/Makefile
+projects/extractMPISkeleton/src/Makefile
+projects/extractMPISkeleton/tests/Makefile
 projects/haskellport/Makefile
 projects/haskellport/Setup.hs
 projects/haskellport/rose.cabal.in
@@ -2269,50 +2126,49 @@ projects/roseToLLVM/Makefile
 projects/roseToLLVM/src/Makefile
 projects/roseToLLVM/src/rosetollvm/Makefile
 projects/roseToLLVM/tests/Makefile
+projects/RosePolly/Makefile
 projects/simulator/Makefile
 projects/symbolicAnalysisFramework/Makefile
-projects/symbolicAnalysisFramework/src/analysis/Makefile
-projects/symbolicAnalysisFramework/src/arrIndexLabeler/Makefile
-projects/symbolicAnalysisFramework/src/cfgUtils/Makefile
 projects/symbolicAnalysisFramework/src/chkptRangeAnalysis/Makefile
-projects/symbolicAnalysisFramework/src/common/Makefile
 projects/symbolicAnalysisFramework/src/external/Makefile
-projects/symbolicAnalysisFramework/src/lattice/Makefile
 projects/symbolicAnalysisFramework/src/mpiAnal/Makefile
 projects/symbolicAnalysisFramework/src/ompAnal/Makefile
-projects/symbolicAnalysisFramework/src/rwAccessLabeler/Makefile
-projects/symbolicAnalysisFramework/src/simpleAnalyses/Makefile
-projects/symbolicAnalysisFramework/src/state/Makefile
 projects/symbolicAnalysisFramework/src/unionFind/Makefile
 projects/symbolicAnalysisFramework/src/varBitVector/Makefile
-projects/symbolicAnalysisFramework/src/variables/Makefile
 projects/symbolicAnalysisFramework/src/varLatticeVector/Makefile
+projects/symbolicAnalysisFramework/src/taintAnalysis/Makefile
+projects/symbolicAnalysisFramework/src/parallelCFG/Makefile
 projects/symbolicAnalysisFramework/src/Makefile
 projects/symbolicAnalysisFramework/tests/Makefile
 projects/symbolicAnalysisFramework/include/Makefile
 projects/taintcheck/Makefile
+projects/RTC/Makefile
 projects/PowerAwareCompiler/Makefile
+projects/ManyCoreRuntime/Makefile
+projects/ManyCoreRuntime/docs/Makefile
+projects/mint/Makefile
+projects/mint/src/Makefile
+projects/mint/tests/Makefile
 projects/traceAnalysis/Makefile
 projects/PolyhedralModel/Makefile
 projects/PolyhedralModel/src/Makefile
-projects/PolyhedralModel/src/maths/Makefile
-projects/PolyhedralModel/src/system/Makefile
-projects/PolyhedralModel/src/misc-test/Makefile
-projects/PolyhedralModel/src/common/Makefile
-projects/PolyhedralModel/src/test-common/Makefile
-projects/PolyhedralModel/src/scoplib/Makefile
-projects/PolyhedralModel/src/rose/Makefile
-projects/PolyhedralModel/src/rose-pragma/Makefile
-projects/PolyhedralModel/src/test-rose-pragma/Makefile
 projects/PolyhedralModel/docs/Makefile
 projects/PolyhedralModel/tests/Makefile
 projects/PolyhedralModel/tests/rose-pragma/Makefile
+projects/PolyhedralModel/tests/rose-max-cover/Makefile
+projects/PolyhedralModel/tests/cuda-kernel/Makefile
+projects/PolyhedralModel/projects/Makefile
+projects/PolyhedralModel/projects/loop-ocl/Makefile
+projects/PolyhedralModel/projects/spmd-generator/Makefile
+projects/PolyhedralModel/projects/polygraph/Makefile
+projects/PolyhedralModel/projects/utils/Makefile
 tests/Makefile
 tests/RunTests/Makefile
 tests/RunTests/A++Tests/Makefile
 tests/RunTests/AstDeleteTests/Makefile
 tests/RunTests/FortranTests/Makefile
 tests/RunTests/FortranTests/LANL_POP/Makefile
+tests/RunTests/PythonTests/Makefile
 tests/PerformanceTests/Makefile
 tests/CompilerOptionsTests/Makefile
 tests/CompilerOptionsTests/testCpreprocessorOption/Makefile
@@ -2347,9 +2203,11 @@ tests/CompileTests/Fortran_tests/LANL_POP/Makefile
 tests/CompileTests/Fortran_tests/gfortranTestSuite/Makefile
 tests/CompileTests/Fortran_tests/gfortranTestSuite/gfortran.fortran-torture/Makefile
 tests/CompileTests/Fortran_tests/gfortranTestSuite/gfortran.dg/Makefile
+tests/CompileTests/CAF2_tests/Makefile
 tests/CompileTests/RoseExample_tests/Makefile
 tests/CompileTests/ExpressionTemplateExample_tests/Makefile
 tests/CompileTests/PythonExample_tests/Makefile
+tests/CompileTests/Python_tests/Makefile
 tests/CompileTests/UPC_tests/Makefile
 tests/CompileTests/OpenMP_tests/Makefile
 tests/CompileTests/OpenMP_tests/fortran/Makefile
@@ -2368,12 +2226,15 @@ tests/CompileTests/sizeofOperation_tests/Makefile
 tests/CompileTests/MicrosoftWindows_tests/Makefile
 tests/CompileTests/nameQualificationAndTypeElaboration_tests/Makefile
 tests/CompileTests/NewEDGInterface_C_tests/Makefile
+tests/CompileTests/UnparseHeadersTests/Makefile
 tests/CompileTests/CudaTests/Makefile
+tests/CompileTests/OpenClTests/Makefile
 tests/CompileTests/EDG_4_x/Makefile
 tests/CompilerOptionsTests/collectAllCommentsAndDirectives_tests/Makefile
 tests/CompilerOptionsTests/preinclude_tests/Makefile
 tests/CompilerOptionsTests/tokenStream_tests/Makefile
 tests/roseTests/Makefile
+tests/roseTests/abstractMemoryObjectTests/Makefile
 tests/roseTests/PHPTests/Makefile
 tests/roseTests/astFileIOTests/Makefile
 tests/roseTests/astInliningTests/Makefile
@@ -2403,7 +2264,12 @@ tests/roseTests/programAnalysisTests/staticInterproceduralSlicingTests/Makefile
 tests/roseTests/programAnalysisTests/testCallGraphAnalysis/Makefile
 tests/roseTests/programAnalysisTests/variableLivenessTests/Makefile
 tests/roseTests/programAnalysisTests/variableRenamingTests/Makefile
+tests/roseTests/programAnalysisTests/ssa_UnfilteredCfg_Test/Makefile
+tests/roseTests/programAnalysisTests/staticSingleAssignmentTests/Makefile
+tests/roseTests/programAnalysisTests/generalDataFlowAnalysisTests/Makefile
+tests/roseTests/programAnalysisTests/systemDependenceGraphTests/Makefile
 tests/roseTests/programTransformationTests/Makefile
+tests/roseTests/programTransformationTests/extractFunctionArgumentsTest/Makefile
 tests/roseTests/roseHPCToolkitTests/Makefile
 tests/roseTests/roseHPCToolkitTests/data/01/ANALYSIS/Makefile
 tests/roseTests/roseHPCToolkitTests/data/01/Makefile
@@ -2466,6 +2332,25 @@ binaries/Makefile
 binaries/samples/Makefile
 ])
 
+dnl
+dnl Compass2
+dnl
+AC_CONFIG_FILES([
+projects/compass2/Makefile
+projects/compass2/docs/Makefile
+projects/compass2/docs/asciidoc/Makefile
+projects/compass2/docs/doxygen/doxygen.config
+projects/compass2/docs/doxygen/Makefile
+projects/compass2/tests/Makefile
+projects/compass2/tests/checkers/Makefile
+projects/compass2/tests/checkers/function_pointer/Makefile
+projects/compass2/tests/checkers/function_pointer/compass_parameters.xml
+projects/compass2/tests/checkers/keyword_macro/Makefile
+projects/compass2/tests/checkers/keyword_macro/compass_parameters.xml
+projects/compass2/tests/core/Makefile
+projects/compass2/tests/core/compass_parameters.xml
+])
+
 # DQ (10/27/2010): New Fortran tests (from gfortan test suite).
 # tests/CompileTests/Fortran_tests/gfortranTestSuite/Makefile
 # tests/CompileTests/Fortran_tests/gfortranTestSuite/gfortran.fortran-torture/Makefile
@@ -2473,9 +2358,6 @@ binaries/samples/Makefile
 
 # DQ (8/12/2010): We want to get permission to distribute these files as test codes.
 # tests/CompileTests/Fortran_tests/LANL_POP/Makefile
-
-# DQ (8/4/2010): Removed this directory
-# tests/CompileTests/CAF_tests/Makefile
 
 # DQ (10/24/2009): We don't need to support EDG 3.10 anymore.
 # src/frontend/CxxFrontend/EDG_3.10/Makefile

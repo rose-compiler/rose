@@ -1,8 +1,6 @@
 /* ELF Relocations (SgAsmElfRelocSection and related classes) */
 #include "sage3basic.h"
 #include "stringify.h"
-#define __STDC_FORMAT_MACROS
-#include <inttypes.h>
 
 /** Constructor adds the new entry to the relocation table. */
 void
@@ -169,8 +167,7 @@ SgAsmElfRelocSection::ctor(SgAsmElfSymbolSection *symbols, SgAsmElfSection *targ
 {
     p_entries = new SgAsmElfRelocEntryList;
     p_entries->set_parent(this);
-    ROSE_ASSERT(symbols!=NULL);
-    p_linked_section = symbols;
+    p_linked_section = symbols;         // may be null
     p_target_section = targetsec;
 }
 

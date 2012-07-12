@@ -130,30 +130,18 @@ const char *rose_exception::what() const throw()
      return what_;
    }
 
-// DQ (8/22/2009): Added throw since EDG wants to see that the throw options match when ROSE_ABORT 
-// is a macro to "abort()" in "stdlib.h". Als, attributes are not permitted in a function definition
-// So this definition just uses "__THROW"
-// void ROSE_ABORT()
-// #ifdef __APPLE__
-//#ifdef __GNUC__
-//#  include <features.h>
-//#if __GNUC_PREREQ(4,3)
-//       If gcc_version >= 4.3
-//#else
-
-#ifdef USE_ROSE
-void ROSE_ABORT() __THROW
-#else
-void ROSE_ABORT() throw()
-#endif
-{
-    throw rose_exception( "abort" );
-}
-
-//#endif
-//#endif
-
 void ROSE_ABORT( const char *message )
 {
     throw rose_exception( message );
 }
+
+#if 0
+// DQ (11/3/2011): EDG 4.3 does not require anything special and even 
+// reports the use of __attribute__ in a function definition to be an error.
+#ifdef USE_ROSE
+void ROSE_ABORT() __THROW __attribute__ ((__noreturn__))
+   {
+      throw rose_exception( "abort" );
+   }
+ #endif // USE_ROSE
+#endif

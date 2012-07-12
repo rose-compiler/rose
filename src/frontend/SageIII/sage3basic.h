@@ -6,6 +6,24 @@
 
 #ifndef SAGE3_CLASSES_BASIC__H
 #define SAGE3_CLASSES_BASIC__H
+
+// DQ (11/12/2011): This is support to reduce the size of ROSE so that I can manage development on my laptop.
+// This option defines a subset of ROSE as required to support wotk on the new EDG front-end.
+// This is defined here becasuse it is not enough to define it in the rose_config.h
+// because that can't be read early enough to effect what header files are included.
+// #define ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+
+// Much of ROSE's binary support uses the intX_t and uintX_t types (where X is a bit width), so we need to have the stdc printf
+// format macros defined for portability.  We do that here because it needs to be done before <inttypes.h> is included for the
+// first time, and we know that most source files for the ROSE library include this file (sage3basic.h) at or near the
+// beginning.  We don't want to define __STDC_FORMAT_MACROS in user code that includes "rose.h" (the user may define it), and
+// we need to define it in such a way that we won't get warning's if its already defined.  [RMP 2012-01-29]
+#ifndef __STDC_FORMAT_MACROS
+#define __STDC_FORMAT_MACROS
+#endif
+#include <inttypes.h>
+
+
 #include <semaphore.h>
 #include "fileoffsetbits.h"
 #include "rosedll.h"
@@ -270,7 +288,6 @@ namespace Exec { namespace ELF { class ElfFileHeader; }; };
 // DQ (12/9/2004): The name of this file has been changed to be the new location
 // of many future Sage III AST manipulation functions in the future.  A namespace
 // (SageInterface) is defined in sageInterface.h.
-// #include "sageSupport.h"
 #include "sageInterface.h"
 
 
@@ -315,6 +332,9 @@ namespace Exec { namespace ELF { class ElfFileHeader; }; };
    #endif
 #endif
 
+#ifdef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+   #include "transformationSupport.h"
+#endif
 
 #endif
 

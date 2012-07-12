@@ -5,17 +5,15 @@
 
 class BreakupStatement : public PrePostTransformation
 {
-  size_t breaksize;
+  static size_t breaksize;
   virtual bool operator()( AstInterface& fa, const AstNodePtr& n,
                            AstNodePtr& result);
  public:
-  BreakupStatement(size_t bs = 0) : breaksize(bs) {}
-  AstNodePtr operator()( LoopTransformInterface& _la, const AstNodePtr& root) 
-  {
-     SetLoopTransformInterface(&_la);
-     return TransformAstTraverse(_la, root, *this, AstInterface::PreVisit );
-  }
-  bool cmdline_configure();
+  AstNodePtr operator()(const AstNodePtr& root) 
+  { return PrePostTransformation::operator()(root, AstInterface::PreVisit); }
+  static size_t get_breaksize() { return breaksize; }
+  static void cmdline_configure(const std::vector<std::string>& argv,
+                                std::vector<std::string>* unknown_args=0); 
   static std::string cmdline_help();
 };
 

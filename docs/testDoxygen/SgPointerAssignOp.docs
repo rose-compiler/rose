@@ -1,0 +1,12 @@
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgPointerAssignOp
+//////////////////////////////////////////////////////////////////////////
+
+/*!
+\class SgPointerAssignOp
+
+\brief This class represents a Fortran pointer assignment. It is not
+       some weird compound assignment operator like C's +=.
+
+*/
+

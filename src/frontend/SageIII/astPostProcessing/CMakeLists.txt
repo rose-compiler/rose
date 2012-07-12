@@ -24,6 +24,7 @@ install(FILES  astPostProcessing.h       fixupDefiningAndNondefiningDeclarations
     resolveFortranReferences.h       insertFortranContainsStatement.h
     markLhsValues.h       fixupUseAndUsingDeclarations.h
     fixupCxxSymbolTablesToSupportAliasingSymbols.h normalizeTypedefSequenceLists.h
+    fixupConstantFoldedValues.h
     DESTINATION ${INCLUDE_INSTALL_DIR})
 
 

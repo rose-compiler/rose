@@ -1,6 +1,7 @@
 #ifndef VIRTUAL_CFG_H
 #define VIRTUAL_CFG_H
 
+#include <string>
 #include <vector>
 #include <assert.h>
 
@@ -101,7 +102,11 @@ namespace VirtualCFG {
     CFGNode src, tgt;
     public:
     //! Constructor
-    CFGEdge(CFGNode src, CFGNode tgt): src(src), tgt(tgt) {}
+    CFGEdge(CFGNode src, CFGNode tgt): src(src), tgt(tgt) { assert(src.getNode() != NULL && tgt.getNode() != NULL); }
+    
+    //! Default constructor. Used for compatibility with containers
+    CFGEdge() {}
+    
     //! Pretty string for Dot node labels, etc.
     std::string toString() const;
     //! String for debugging graphs
@@ -220,6 +225,11 @@ namespace VirtualCFG {
       return false;
     }
 
+        //! Returns the edges in the path, starting at the source and ending at the target
+        const std::vector<CFGEdge>& getEdges() const
+        {
+                return edges;
+        }
   }; // end CFGPath
 
   //! \internal Merge two CFG paths
@@ -267,6 +277,7 @@ namespace VirtualCFG {
     std::string toStringForDebugging() const {return n.toStringForDebugging();}
     std::string id() const {return n.id();}
     SgNode* getNode() const {return n.getNode();}
+    const CFGNode& toNode() const { return n; }
     unsigned int getIndex() const {return n.getIndex();}
     std::vector<InterestingEdge> outEdges() const;
     std::vector<InterestingEdge> inEdges() const;

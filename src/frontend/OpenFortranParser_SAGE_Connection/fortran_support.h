@@ -138,20 +138,15 @@ class MultipartReferenceType
           SgName name;
           bool hasSelectionSubscriptList;
           bool hasImageSelector;
+          bool hasCo_deref;  // DXN (04/22/2011): for copointer dereference
 
-          MultipartReferenceType ( const SgName & input_name, const bool & input_hasSelectionSubscriptList, const bool & input_hasImageSelector )
+          MultipartReferenceType ( const SgName & input_name = "", const bool & input_hasSelectionSubscriptList = false, const bool & input_hasImageSelector = false,
+                                   const bool & input_hasCo_deref = false)  // DXN (04/22/2011): add default values to avoid writing a separate default constructor
              {
                name                      = input_name;
                hasSelectionSubscriptList = input_hasSelectionSubscriptList;
                hasImageSelector          = input_hasImageSelector;
-             }
-
-      //  We need a default constructor to support use of this class in STL.
-          MultipartReferenceType ()
-             {
-            // name                      = input_name;
-               hasSelectionSubscriptList = false;
-               hasImageSelector          = false;
+               hasCo_deref               = input_hasCo_deref;
              }
 
        // We need a copy constructor and the operator== to support use of this class in STL.
@@ -160,15 +155,13 @@ class MultipartReferenceType
                name                      = X.name;
                hasSelectionSubscriptList = X.hasSelectionSubscriptList;
                hasImageSelector          = X.hasImageSelector;
+               hasCo_deref               = X.hasCo_deref;
              }
 
        // We need a copy constructor and the operator== to support use of this class in STL.
           bool operator== ( const MultipartReferenceType & X )
              {
-               bool returnValue = false;
-               if (name == X.name && hasSelectionSubscriptList == X.hasSelectionSubscriptList && hasImageSelector == X.hasImageSelector)
-                    returnValue = true;
-               return returnValue;
+               return (name == X.name && hasSelectionSubscriptList == X.hasSelectionSubscriptList && hasImageSelector == X.hasImageSelector && hasCo_deref == X.hasCo_deref);
              }
    };
 
@@ -285,13 +278,13 @@ void initialize_global_scope_if_required();
 
 SgFunctionType* generateImplicitFunctionType( std::string functionName);
 
-extern void buildAttributeSpecificationStatement ( SgAttributeSpecificationStatement::attribute_spec_enum kind, Token_t *label, Token_t *sourcePositionToken );
+extern SgAttributeSpecificationStatement* buildAttributeSpecificationStatement ( SgAttributeSpecificationStatement::attribute_spec_enum kind, Token_t *label, Token_t *sourcePositionToken );
 
 // DQ (8/28/2010): This is now generalized to support any SgDeclarationStatement (fix for test2010_34.f90; required for type declarations)
 // void setDeclarationAttributeSpec ( SgVariableDeclaration* variableDeclaration, int astAttributeSpec );
 void setDeclarationAttributeSpec ( SgDeclarationStatement* variableDeclaration, int astAttributeSpec );
 
-SgArrayType* convertTypeOnStackToArrayType ( int count );
+SgArrayType* convertTypeOnStackToArrayType ( int count = 1 );
 
 void processBindingAttribute( SgDeclarationStatement* declaration);
 
@@ -389,6 +382,7 @@ void convertBaseTypeToArrayWhereAppropriate();
 
 //! Refactored code to support R504.
 SgInitializedName* buildInitializedNameAndPutOntoStack(const SgName & name, SgType* type, SgInitializer* initializer);
+
 
 // endif for ROSE_FORTRAN_SUPPORT
 #endif

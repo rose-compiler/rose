@@ -1,0 +1,77 @@
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgNaryOp
+//////////////////////////////////////////////////////////////////////////
+
+/*!
+\class SgNaryOp
+\brief This class represents the notion of an n-ary operator.
+This node is intended for use with Python.
+
+\internal SgNaryOp represents n-ary operations using two lists: one of SgExpressions (the operands) and another of variant enums that represent operations (V_SgAddOp, etc.). Therefore, the operator at index i in the operator list operates on the operands at indices i and i+1 in the operand list.
+*/
+
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgNaryOp data members
+/////////////////////////////////////////////////////////////////////////
+
+/*!
+\var SgExpressionPtrList SgNaryOp::p_operands
+\brief This is the list of operands associated with this n-ary operator.
+*/
+
+/*!
+\var VariantTList SgNaryOp::p_operators
+\brief This is the list of operators associated with this n-ary operator.
+*/
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgNaryOp member functions
+/////////////////////////////////////////////////////////////////////////
+
+/*!
+\fn SgNaryOp::SgNaryOp ( SgExpression* first_operand )
+\brief This is the constructor.
+
+   This constructor builds the SgNaryOp base class.
+
+\param first_operand The first operand in the n-ary operation.
+*/
+
+/*!
+\fn SgNaryOp::~SgNaryOp()
+\brief This is the destructor.
+*/
+
+/*!
+\fn SgNaryOp::isSgNaryOp (SgNode *s)
+\brief Cast function (from derived class to SgNaryOp pointer).
+
+   This functions returns a SgNaryOp pointer for any input of a
+pointer to an object derived from a SgNaryOp.
+
+\return Returns valid pointer to SgNaryOp if input is derived from a SgNaryOp.
+*/
+
+/*!
+\fn SgNaryOp::isSgNaryOp (const SgNode *s)
+\brief Cast function (from derived class to SgNaryOp pointer).
+
+   This functions returns a SgNaryOp pointer for any input of a
+pointer to an object derived from a SgNaryOp.
+
+\return Returns valid pointer to SgNaryOp if input is derived from a SgNaryOp.
+*/
+
+/*!
+\fn SgNaryOp::append_operation(VariantT operator, SgExpression* operand)
+\brief Adds a new operation to this n-ary operator.
+
+\param operator - the VariantT of the corresponding operation node (V_SgAddOp, V_SgMinusOp, etc)
+\param operand - the next expression after the given operator.
+\return Returns void.
+*/
+
+
+
+
