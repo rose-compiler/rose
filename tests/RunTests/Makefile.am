@@ -8,7 +8,11 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # Comment out P++ tests until they compile properly
 # SUBDIRS = A++Tests P++Tests
 #SUBDIRS = . A++Tests AstDeleteTests
+if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 SUBDIRS = . A++Tests AstDeleteTests
+else
+SUBDIRS =
+endif
 
 INCLUDES =  \
         $(ROSE_INCLUDES) 
@@ -34,6 +38,10 @@ generatedCodeExamples += \
 rose_inputtraverseCommonBlock.f:traverseCommonBlock
 	./traverseCommonBlock -c $(TEST_CXXFLAGS) $(srcdir)/inputtraverseCommonBlock.f
 endif	  
+
+if ROSE_BUILD_PYTHON_LANGUAGE_SUPPORT
+SUBDIRS += PythonTests
+endif
 
 EXTRA_DIST = CMakeLists.txt inputtraverseCommonBlock.f
 check-local:

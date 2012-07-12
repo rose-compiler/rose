@@ -34,6 +34,9 @@ class LoopTreeShadowNode : public LoopTreeNode
   LoopInfo * GetLoopInfo() { return repr->GetLoopInfo(); }
   LoopTreeNode* GetRepr() const { return repr; }
   int IncreaseLoopLevel() const { return repr->IncreaseLoopLevel(); }
+
+  virtual LoopTreeNode* set_preAnnot(const std::string& content) { return 0; }
+  virtual LoopTreeNode* set_postAnnot(const std::string& content) { return 0; }
   
   std::string GetClassName() const { return "LoopTreeShadowNode"; }
   LoopTreeNode *Clone() const { return 0; }
@@ -41,8 +44,8 @@ class LoopTreeShadowNode : public LoopTreeNode
     { return new LoopTreeShadowNode(n, *this); }
   
   void write( std::ostream& out) const { if (repr != NULL) repr->write(out); }
-  AstNodePtr CodeGen( LoopTransformInterface &fa, const AstNodePtr& c) const
-    { return repr->CodeGen(fa, c); }
+  AstNodePtr CodeGen( const AstNodePtr& c) const
+    { return repr->CodeGen(c); }
  friend class LoopTreeShadowCreate;
 };
 

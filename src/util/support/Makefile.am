@@ -19,7 +19,8 @@ include_HEADERS = \
    BitVectorRepr.h   DirectedGraph.h     IteratorTmpl.h      PtrMap.h       union_find.h \
    VectorCommandOptions.h CommandOptions.h  DoublyLinkedList.h  LatticeElemList.h   PtrSet.h \
    const.h           FunctionObject.h    Matrix.h            SinglyLinkedList.h \
-   CountRefHandle.h  general.h           ObserveObject.h     StreamIO.h  
+   CountRefHandle.h  general.h           ObserveObject.h     StreamIO.h \
+   FileHelper.h CollectionHelper.h  
 
 
 EXTRA_DIST = CMakeLists.txt

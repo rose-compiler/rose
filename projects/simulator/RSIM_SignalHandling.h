@@ -192,14 +192,15 @@ public:
     /** Signal to use when notifying a thread that a signal has been added to its queue. */
     static const int SIG_WAKEUP;
 
-    //@{
     /** Class methods to create signal information objects.  The names (after the "mk_" prefix) correspond to the union member
-     *  names in the siginfo_32 struct. */
+     *  names in the siginfo_32 struct.
+     *
+     *  @{ */
     static siginfo_32 mk_kill(int signo, int code);
     static siginfo_32 mk_sigfault(int signo, int code, uint32_t addr);
     static siginfo_32 mk_rt(int signo, int code);
     static siginfo_32 mk(const siginfo_t*);
-    //@}
+    /** @} */
 
     /** Returns a signal set having only the specified signal. Note: this cannot be named "sigmask" since that's a macro in
      *  some versions of "signal.h".
@@ -276,12 +277,13 @@ public:
      *
      *  If a signal's action is SIG_IGN, then the signal is not added to the queue or the pending set (it's just discarded).
      *  The specified process is used to determine if the signal is to be ignored.  Tracing is output to the specified
-     *  RTS_Message, which is normally the signalling thread's TRACE_SIGNAL facility.
+     *  RTS_Message, which is normally the signaled thread's TRACE_SIGNAL facility.
      *
      *  Returns zero on success, negative on failure.  The only recoverable failure that's supported is the generation of a
      *  real-time signal which causes the signal queue to be overflowed, returning -ENOBUFS.
      *
-     *  Thread safety: This method is thread safe. */
+     *  Thread safety: This method is thread safe.  It is normally called by the thread generating the signal, but invoked on
+     *  the RSIM_Thread object for the thread to which the signal is being delivered. */
     int generate(const siginfo_32 &siginfo, RSIM_Process*, RTS_Message*);
 
     /** Removes one unmasked signal from the set of pending signals.  Returns a signal number, or negative on failure.  If no

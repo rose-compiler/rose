@@ -1,2 +1,2 @@
-X::foobar -> X::foo < int > 
 X::foo < int >  ->
+X::foobar -> X::foo < int > 

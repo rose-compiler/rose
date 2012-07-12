@@ -1,4 +1,3 @@
-
 #include <LoopTreeDepComp.h>
 #include <CompSliceLocality.h>
 #include <CompSliceRegistry.h>
@@ -39,18 +38,16 @@ TemporaryReuses( const CompSlice *slice1, const CompSlice *slice2, AstNodeSet &r
 
 class CollectArrayNames : public CollectObject<AstNodePtr>
 {
-  LoopTransformInterface& la;
   typedef std::set <std::string, std::less<std::string> > StringSet;
   StringSet&  result;
  public:
-  CollectArrayNames(LoopTransformInterface& _la, StringSet& r) 
-      : la(_la),result(r) {}
+  CollectArrayNames(StringSet& r) : result(r) {}
    bool operator()(const AstNodePtr& r) 
    {
       AstNodePtr arr;
       std::string arrname;
-      AstInterface& fa = la;
-      if (la.IsArrayAccess(r, &arr)  && fa.IsVarRef(arr,0,&arrname)) {
+      AstInterface& fa = LoopTransformInterface::getAstInterface();
+      if (LoopTransformInterface::IsArrayAccess(r, &arr)  && fa.IsVarRef(arr,0,&arrname)) {
           result.insert(arrname);
           return true;
       }
@@ -60,19 +57,18 @@ class CollectArrayNames : public CollectObject<AstNodePtr>
 
 class CollectRegisteredArrayRefs : public CollectObject<AstNodePtr>
 {
-  LoopTransformInterface& la;
   typedef std::set <std::string, std::less<std::string> > StringSet;
   StringSet&  reg;
   CompSliceLocalityAnal::AstNodeSet& refset;
  public:
-  CollectRegisteredArrayRefs(LoopTransformInterface& _la, StringSet& r, 
+  CollectRegisteredArrayRefs(StringSet& r, 
                             CompSliceLocalityAnal::AstNodeSet& s) 
-      : la(_la), reg(r), refset(s){}
+      : reg(r), refset(s){}
    bool operator()(const AstNodePtr& r) {
       AstNodePtr arr;
       std::string arrname;
-       AstInterface& fa = la;
-      if (la.IsArrayAccess(r, &arr)  && fa.IsVarRef(arr,0,&arrname)
+       AstInterface& fa = LoopTransformInterface::getAstInterface();
+      if (LoopTransformInterface::IsArrayAccess(r, &arr)  && fa.IsVarRef(arr,0,&arrname)
           && reg.find(arrname) != reg.end())  {
          refset.insert(r);
          return true;
@@ -85,16 +81,16 @@ int CompSliceLocalityAnal::
 SpatialReuses( const CompSlice *slice1, const CompSlice *slice2,
                  AstNodeSet &refSet)
 {
+  AstInterface& fa = LoopTransformInterface::getAstInterface();
   typedef std::set<std::string,std::less<std::string> > StringSet;
   StringSet arrnames;
   CompSlice::ConstStmtIterator stmtIter1 = slice1->GetConstStmtIterator();
-  LoopTransformInterface& fa = anal.GetLoopTransformInterface();
-  CollectArrayNames op(fa, arrnames);
+  CollectArrayNames op(arrnames);
   for (LoopTreeNode *n1; (n1 = stmtIter1.Current()); stmtIter1++) {
       AstNodePtr s1 = stmtIter1.Current()->GetOrigStmt();
       ArrayReferences( fa, s1, op);
   }
-  CollectRegisteredArrayRefs op2(fa, arrnames,refSet);
+  CollectRegisteredArrayRefs op2(arrnames,refSet);
   CompSlice::ConstStmtIterator stmtIter2 = slice2->GetConstStmtIterator();
   for (LoopTreeNode *n2; (n2 = stmtIter2.Current()); stmtIter2++) {
       AstNodePtr s2 = stmtIter2.Current()->GetOrigStmt();

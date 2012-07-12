@@ -1,6 +1,6 @@
 #ifndef PTR_ANAL_H
 #define PTR_ANAL_H
-//#include "sage3.h"
+#include <ext/hash_map>
 #include <ProcessAstTree.h>
 #include <AstInterface.h>
 #include <StmtInfoCollect.h>
@@ -52,25 +52,9 @@ private:
    class hash {
     public:
       size_t operator()(void * p) const { return (size_t) p; }
-
-// CH (4/9/2010): Use boost::unordered instead   
-//#ifdef _MSC_VER 
-#if 0
-   public:
-      static const size_t bucket_size = 4;
-      static const size_t min_buckets = 8;
-#endif
    };
-
-// CH (4/9/2010): Use boost::unordered instead   
-//#ifdef _MSC_VER
-#if 0
-  typedef rose_hash::unordered_map<void*, VarRef> NameMap;
-  typedef rose_hash::unordered_map<void*, std::pair<size_t,size_t> > StmtMap;
-#else
-  typedef rose_hash::unordered_map<void*, VarRef, PtrAnal::hash> NameMap;
-  typedef rose_hash::unordered_map<void*, std::pair<size_t,size_t>, PtrAnal::hash> StmtMap;
-#endif
+  typedef __gnu_cxx::hash_map<void*, VarRef, PtrAnal::hash> NameMap;
+  typedef __gnu_cxx::hash_map<void*, std::pair<size_t,size_t>, PtrAnal::hash> StmtMap;
 
   std::list<std::string> fdefined;
   NameMap namemap;

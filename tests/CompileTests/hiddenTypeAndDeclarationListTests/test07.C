@@ -2,27 +2,25 @@
 
 typedef int B;
 
-class A {
+class A
+   {
+     public:
+          int a;
+          A() {}
 
-        public:
+          void foo()
+             {
+               int A;
+               double B;
+            // A* b;  // would cause an error because of overwritten class A by int A !!!! -> so ok, when int A hides constructor & class A
+               class A* b;  // would cause an error because of overwritten class A by int A !!!! -> so ok, when int A hides constructor & class A
+             }
+   };
 
-		int a;
-
-		A() {}
-
-		void foo() {
-                        int A;
-			double B;
-			//A* b;  // would cause an error because of overwritten class A by int A !!!! -> so ok, when int A hides constructor & class A
-                }
-
-};
-
-int main() {
-
-        return 0;
-
-}
+int main()
+   {
+     return 0;
+   }
 
 /*
 NR. OF DIFFERENT HIDDEN SYMBOLS: 2

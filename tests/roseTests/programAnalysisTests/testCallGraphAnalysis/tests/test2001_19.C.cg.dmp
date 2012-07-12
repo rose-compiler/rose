@@ -1,4 +1,4 @@
 A::A ->
-main ->
 A::foo ->
 globalfoo ->
+main ->

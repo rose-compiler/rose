@@ -28,7 +28,7 @@ cbr++; ccl++; ccc++; ccr++; cfl++; cfc++; cfr++; ubl++; ubc++; ubr++; ucl++; \
 ucc++; ucr++; ufl++; ufc++; ufr++; xdbl++; xdbc++; xdbr++; xdcl++; xdcc++; xdcr++; \
 xdfl++; xdfc++; xdfr++; xcbl++; xcbc++; xcbr++; xccl++; xccc++; xccr++; xcfl++; xcfc++; \
 xcfr++; xubl++; xubc++; xubr++; xucl++; xucc++; xucr++; xufl++; xufc++; xufr++; lhs++;
-extern void perfometer();
+void perfometer();
 
 void rmatmult3(int imin,int imax,int jmin,int jmax,int kmin,int kmax,int jp,int kp,double *__restrict__ dbl,double *__restrict__ dbc,double *__restrict__ dbr,double *__restrict__ dcl,double *__restrict__ dcc,double *__restrict__ dcr,double *__restrict__ dfl,double *__restrict__ dfc,double *__restrict__ dfr,double *__restrict__ cbl,double *__restrict__ cbc,double *__restrict__ cbr,double *__restrict__ ccl,double *__restrict__ ccc,double *__restrict__ ccr,double *__restrict__ cfl,double *__restrict__ cfc,double *__restrict__ cfr,double *__restrict__ ubl,double *__restrict__ ubc,double *__restrict__ ubr,double *__restrict__ ucl,double *__restrict__ ucc,double *__restrict__ ucr,double *__restrict__ ufl,double *__restrict__ ufc,double *__restrict__ ufr,double *__restrict__ x,double *__restrict__ b)
 {

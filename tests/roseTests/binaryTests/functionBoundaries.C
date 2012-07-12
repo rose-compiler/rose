@@ -6,59 +6,9 @@
 
 #define __STDC_FORMAT_MACROS
 #include "rose.h"
+#include "AsmFunctionIndex.h"
+
 #include <inttypes.h>
-
-
-class ShowFunctions : public SgSimpleProcessing {
-    public:
-    ShowFunctions()
-        : nfuncs(0)
-        {}
-    size_t nfuncs;
-    void visit(SgNode *node) {
-        SgAsmFunctionDeclaration *defn = isSgAsmFunctionDeclaration(node);
-        if (defn) {
-            /* Scan through the function's instructions to find the range of addresses for the function. */
-            rose_addr_t func_start=~(rose_addr_t)0, func_end=0;
-            size_t ninsns=0, nbytes=0;
-            SgAsmStatementPtrList func_stmts = defn->get_statementList();
-            for (size_t i=0; i<func_stmts.size(); i++) {
-                SgAsmBlock *bb = isSgAsmBlock(func_stmts[i]);
-                if (bb) {
-                    SgAsmStatementPtrList block_stmts = bb->get_statementList();
-                    for (size_t j=0; j<block_stmts.size(); j++) {
-                        SgAsmInstruction *insn = isSgAsmInstruction(block_stmts[j]);
-                        if (insn) {
-                            ninsns++;
-                            func_start = std::min(func_start, insn->get_address());
-                            func_end = std::max(func_end, insn->get_address()+insn->get_raw_bytes().size());
-                            nbytes += insn->get_raw_bytes().size();
-                        }
-                    }
-                }
-            }
-
-            /* Reason that this is a function */
-            printf("    %3zu 0x%08"PRIx64" 0x%08"PRIx64" %5zu/%-6zu ", ++nfuncs, func_start, func_end, ninsns, nbytes);
-            fputs(defn->reason_str(true).c_str(), stdout);
-
-            /* Kind of function */
-            switch (defn->get_function_kind()) {
-              case SgAsmFunctionDeclaration::e_unknown:    fputs("  unknown", stdout); break;
-              case SgAsmFunctionDeclaration::e_standard:   fputs(" standard", stdout); break;
-              case SgAsmFunctionDeclaration::e_library:    fputs("  library", stdout); break;
-              case SgAsmFunctionDeclaration::e_imported:   fputs(" imported", stdout); break;
-              case SgAsmFunctionDeclaration::e_thunk:      fputs("    thunk", stdout); break;
-              default:                                     fputs("    other", stdout); break;
-            }
-
-            /* Function name if known */
-            if (defn->get_name()!="")
-                printf(" %s", defn->get_name().c_str());
-            fputc('\n', stdout);
-        }
-    }
-};
 
 /* Example partitioner that demonstrates how to write a user-defined function detector that uses at least one protected data
  * member (the instruction cache, in this case).  Note that this is a contrived example since the instruction map is also
@@ -66,7 +16,7 @@ class ShowFunctions : public SgSimpleProcessing {
 class MyPartitioner: public Partitioner {
 public:
     MyPartitioner() {
-        set_search(get_search() & ~SgAsmFunctionDeclaration::FUNC_PATTERN);
+        set_search(get_search() & ~SgAsmFunction::FUNC_PATTERN);
         add_function_detector(user_pattern);
     }
 private:
@@ -75,7 +25,7 @@ private:
         if (hdr) return; /*this function doesn't depend on anything in a file header*/
         MyPartitioner *p = dynamic_cast<MyPartitioner*>(p_);
         ROSE_ASSERT(p!=NULL);
-        for (Disassembler::InstructionMap::const_iterator ii=p->insns.begin(); ii!=p->insns.end(); ii++) {
+        for (InstructionMap::const_iterator ii=p->insns.begin(); ii!=p->insns.end(); ii++) {
             rose_addr_t addr = ii->first;
             SgAsmx86Instruction *insn = isSgAsmx86Instruction(ii->second);
             if (!insn || insn->get_kind()!=x86_push) continue;
@@ -87,7 +37,7 @@ private:
                 rre->get_descriptor().get_minor() != x86_gpr_bp)
                 continue;
             printf("Marking 0x%08"PRIx64" as the start of a function.\n", addr);
-            p->add_function(addr, SgAsmFunctionDeclaration::FUNC_USERDEF);
+            p->add_function(addr, SgAsmFunction::FUNC_USERDEF);
         }
     }
 };
@@ -117,16 +67,7 @@ main(int argc, char *argv[])
 
     SgProject *project = frontend(argc, argv);
 
-    printf("Functions detected from binary executable:\n");
-    printf("    Key for reason(s) address is a suspected function:\n");
-    printf("      E = entry address         C = call target           X = exception frame\n");
-    printf("      S = function symbol       P = instruction pattern   G = interblock branch graph\n");
-    printf("      U = user-def detection    N = NOP/Zero padding      D = discontiguous blocks\n");
-    printf("      H = insn sequence head\n");
-    printf("\n");
-    printf("    Num  Low-Addr   End-Addr  Insns/Bytes   Reason        Kind   Name\n");
-    printf("    --- ---------- ---------- ------------ ----------- -------- --------------------------------\n");
-    ShowFunctions().traverseInputFiles(project, preorder);
-    printf("    --- ---------- ---------- ------------ ----------- -------- --------------------------------\n");
+    std::cout <<"Functions detected from binary executable:\n"
+              <<AsmFunctionIndex(project).sort_by_entry_addr();
     return 0;
 }

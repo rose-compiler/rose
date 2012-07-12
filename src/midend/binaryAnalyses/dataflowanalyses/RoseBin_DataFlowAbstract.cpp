@@ -460,15 +460,15 @@ RoseBin_DataFlowAbstract::printDefTableToFile(
 bool
 RoseBin_DataFlowAbstract::sameParents(SgGraphNode* node, SgGraphNode* next) {
   bool same=false;
-  if (isSgAsmFunctionDeclaration(node->get_SgNode())) {
+  if (isSgAsmFunction(node->get_SgNode())) {
     return true;
   }
 
   SgAsmx86Instruction* thisNode = isSgAsmx86Instruction(node->get_SgNode());
   SgAsmx86Instruction* nextNode = isSgAsmx86Instruction(next->get_SgNode());
   if (thisNode && nextNode) {
-    SgAsmFunctionDeclaration* func1 = isSgAsmFunctionDeclaration(thisNode->get_parent());
-    SgAsmFunctionDeclaration* func2 = isSgAsmFunctionDeclaration(nextNode->get_parent());
+    SgAsmFunction* func1 = isSgAsmFunction(thisNode->get_parent());
+    SgAsmFunction* func2 = isSgAsmFunction(nextNode->get_parent());
     if (func1==func2)
       same=true;
   }

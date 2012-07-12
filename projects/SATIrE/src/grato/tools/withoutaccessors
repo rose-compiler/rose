@@ -1,0 +1,1 @@
+sed s/[_a-zA-Z][_a-zA-Z]*://g -

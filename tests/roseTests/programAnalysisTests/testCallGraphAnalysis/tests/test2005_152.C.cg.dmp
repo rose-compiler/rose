@@ -1,3 +1,3 @@
+X < int > ::foobar ->
 foo -> X < int > ::foobar
 main ->
-X < int > ::foobar ->

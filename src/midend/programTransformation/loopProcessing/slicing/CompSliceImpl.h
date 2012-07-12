@@ -1,10 +1,10 @@
-
+#include <stdio.h>
 #include <stdlib.h>
 
 #include <const.h>
 #include <LoopTreeShadow.h>
+
 #include <CompSlice.h>
-#include <cstdio>
 
 class CompSliceLoop : public LoopTreeShadowNode, public LoopTreeObserver
 {
@@ -38,12 +38,12 @@ class CompSliceLoop : public LoopTreeShadowNode, public LoopTreeObserver
   CompSlice::SliceLoopInfo GetSliceInfo() const;
   bool LoopReversible() const { return reversible; }
   LoopTreeNode* GetSliceLoop() const { return GetRepr(); }
-  void Dump() const { std::cerr << toString() << std::endl; }
+  void Dump() const { std::cerr << toString(); }
   virtual std::string toString() const
     { 
-      std::string res =  "slice loop: \n" + GetRepr()->toString();
+      std::string res =  "slice loop: " + GetRepr()->toString();
       if ( LoopReversible())
-         res = res + " loop reversible \n";
+         res = res + " loop reversible ";
       return res;
     }
   virtual std::string GetClassName() const { return "CompSliceLoop"; }
@@ -92,7 +92,7 @@ class CompSliceStmt : public LoopTreeShadowNode, public LoopTreeObserver
     { 
        char buf[20];
        sprintf( buf, "%d", align);
-       return  " stmt: \n" + GetRepr()->toString() + "\nslicing alignment: " + std::string(buf);
+       return  "stmt: " + GetRepr()->toString() + "\nslicing alignment: " + std::string(buf)+"\n";
     }
   virtual std::string GetClassName() const { return "CompSliceStmt"; }
 };
@@ -117,7 +117,7 @@ class CompSliceImpl : public LoopTreeShadowCreate
   virtual LoopTreeShadowNode* CreateShadowNode( LoopTreeNode *n)
    {
      LoopTreeShadowNode *result = 0;
-     if (n->GetOrigStmt() != 0)
+     if (IsSimpleStmt(n))
         result = CreateSliceStmtNode( n);
      else if (n->IncreaseLoopLevel() != 0) 
         result = CreateSliceLoopNode( n );
@@ -138,7 +138,7 @@ class CompSliceImpl : public LoopTreeShadowCreate
   void Dump() const { GetTreeRoot()->DumpTree(); }
   std::string toString() const { return GetTreeRoot()->TreeToString(); }
   CompSliceStmt * QuerySliceStmt( const LoopTreeNode *n) const
-    { return (n->GetOrigStmt() != 0)? 
+    { return (IsSimpleStmt(n))?
                 static_cast <CompSliceStmt*>( QueryShadowNode(n)):0;
     }
   CompSliceLoop* QuerySliceLoop( const LoopTreeNode *n) const
@@ -195,7 +195,7 @@ CompSliceStmt( LoopTreeNode *s, CompSliceImpl *_slice, int a)
 inline void CompSliceLoop:: UpdateDistNode( const DistNodeInfo &info )
 {
  LoopTreeNode * n = info.GetNewNode();
- LoopTreeNode *orig = info.GetObserveNode();
+ const LoopTreeNode *orig = info.GetObserveNode();
 
  CompSliceLoop *that = 0;
  for (LoopTreeNode *s = FirstChild(); s != 0; ) {

@@ -1,4 +1,4 @@
-eq ->
 A::A ->
-main -> eq operator==
+eq ->
+main -> A::A eq operator==
 operator== ->

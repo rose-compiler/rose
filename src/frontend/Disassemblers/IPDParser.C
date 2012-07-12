@@ -203,7 +203,7 @@ Partitioner::IPDParser::parse_FuncDecl()
     rose_addr_t entry_va = match_number();
     std::string name = is_string() ? match_string() : "";
     try {
-        cur_func = partitioner->add_function(entry_va, SgAsmFunctionDeclaration::FUNC_USERDEF, name);
+        cur_func = partitioner->add_function(entry_va, SgAsmFunction::FUNC_USERDEF, name);
         parse_FuncBody();
         cur_func = NULL;
     } catch (const Exception&) {
@@ -243,12 +243,12 @@ Partitioner::IPDParser::parse_ReturnSpec()
 {
     if (is_symbol("return") || is_symbol("returns")) {
         match_symbol();
-        cur_func->returns = true;
+        cur_func->set_may_return(SgAsmFunction::RET_ALWAYS); // or perhaps RET_SOMETIMES?
         return true;
     }
     if (is_symbol("noreturn")) {
         match_symbol("noreturn");
-        cur_func->returns = false;
+        cur_func->set_may_return(SgAsmFunction::RET_NEVER);
         return true;
     }
     return false;
@@ -269,6 +269,8 @@ Partitioner::IPDParser::parse_BlockDecl()
     cur_block = new BlockConfig;
     cur_block->ninsns = ninsns;
     partitioner->block_config.insert(std::make_pair(va, cur_block));
+    if (cur_func)
+        cur_func->heads.insert(va);
     parse_BlockBody();
     return true;
 }
@@ -323,7 +325,8 @@ Partitioner::IPDParser::parse_Successors()
             throw Exception(std::string("successor program assembly failed: ") + e.mesg);
         }
     } else {
-        /* Successors specified as a list of addresses */
+        /* Successors specified as a list of addresses in curly braces */
+        match_terminal("{");
         cur_block->sucs_specified = true;
         cur_block->sucs.clear();
         cur_block->sucs_complete = true;
@@ -337,6 +340,7 @@ Partitioner::IPDParser::parse_Successors()
             match_terminal("...");
             cur_block->sucs_complete = false;
         }
+        match_terminal("}");
     }
 
     return true;

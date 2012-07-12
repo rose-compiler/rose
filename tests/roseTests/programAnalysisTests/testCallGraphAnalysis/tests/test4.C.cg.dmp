@@ -1,6 +1,6 @@
-main -> A::f1 A::f2 A::f3 A::f5
 A::f1 ->
 A::f2 -> A::f3
 A::f3 ->
 A::f4 -> A::f1 A::f2 A::f3 A::f5
 A::f5 ->
+main -> A::f1 A::f2 A::f3 A::f5

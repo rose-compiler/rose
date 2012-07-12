@@ -1,4 +1,5 @@
 #include <rose.h>
+#include "stringify.h"
 #include "sideEffect.h"
 #include "SqliteDatabaseGraph.h"
 #include "string_functions.h"
@@ -444,13 +445,18 @@ class callEdgeRow : public dbRow
 
 
 typedef DatabaseGraph<simpleFuncRow, callEdgeRow,
-                     boost::vecS, boost::vecS, boost::bidirectionalS> CallGraph;
+                     boost::vecS, boost::vecS, boost::bidirectionalS, 
+       boost::property<boost::vertex_attribute_t, std::map<std::string, std::string> >, 
+        boost::property<boost::vertex_attribute_t, std::map<std::string, std::string> >, 
+        boost::property<boost::vertex_attribute_t, std::map<std::string, std::string> > > CallGraph;
 typedef CallGraph::dbgType Graph;
 typedef boost::graph_traits < CallGraph >::vertex_descriptor callVertex;
 typedef boost::property_map<CallGraph, boost::vertex_index_t>::const_type callVertexIndexMap;
 
 typedef DatabaseGraph<varNodeRow, callEdgeRow,
-                     boost::vecS, boost::vecS, boost::bidirectionalS> CallMultiGraph;
+                     boost::vecS, boost::vecS, boost::bidirectionalS, boost::property<boost::vertex_attribute_t, std::map<std::string, std::string> >, 
+        boost::property<boost::vertex_attribute_t, std::map<std::string, std::string> >, 
+        boost::property<boost::vertex_attribute_t, std::map<std::string, std::string> > > CallMultiGraph;
 
 
 // milki (06/16/2010) Redefine for std::string to produce
@@ -777,15 +783,16 @@ SideEffect::getNodeIdentifier(SgNode *node)
   Sg_File_Info* nodeinfo = node->get_file_info();
 
   // milki (07/07/2010) Revert back to name/line/col/variant format
+  // matzke (05/18/2011) Uses variant name rather than a number. Numbers change over time and the test fails.
 
   string fileName = node->get_file_info()->get_filenameString();
   fileName = stripPathFromFileName(fileName);
 
   char tmp[strlen(node->get_file_info()->get_filename()) + 512];
   //sprintf(tmp, "%s-%ld", fileName.c_str(), (long)node);
-  sprintf(tmp, "%s-%d-%d-%d", fileName.c_str(),
-      nodeinfo->get_line(), nodeinfo->get_col(),
-      node->variantT());
+  sprintf(tmp, "%s-%d-%d-%s", fileName.c_str(),
+          nodeinfo->get_line(), nodeinfo->get_col(),
+          stringifyVariantT(node->variantT(), "V_").c_str());
 
   string id = tmp;
 
@@ -2121,17 +2128,7 @@ class MyTraversal
 #if 0
           if (expr->get_is_lvalue()) 
 #endif
-          if ( isSgAssignOp(expr) || 
-               isSgPlusAssignOp(expr) ||
-               isSgMinusAssignOp(expr) ||
-               isSgAndAssignOp(expr) ||
-               isSgIorAssignOp(expr) ||
-               isSgMultAssignOp(expr) ||
-               isSgDivAssignOp(expr) ||
-               isSgModAssignOp(expr) ||
-               isSgXorAssignOp(expr) ||
-               isSgLshiftAssignOp(expr) ||
-               isSgRshiftAssignOp(expr) )
+          if ( isSgAssignOp(expr) || isSgCompoundAssignOp(expr) )
           { 
 
             // this expression is the root of a destructive operation
@@ -2664,6 +2661,10 @@ SideEffect::solveRMOD(CallMultiGraph *multigraph, long projectId,
   
   typedef size_type cg_vertex;
   std::vector < cg_vertex > component_number_vec(num_vertices(*multigraph));
+  
+  if (component_number_vec.empty())
+          return;
+  
   boost::iterator_property_map < cg_vertex *, VertexIndexMap, cg_vertex, cg_vertex& >
     component_number(&component_number_vec[0], index_map);
   

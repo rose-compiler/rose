@@ -1,34 +1,36 @@
 /* Windows PE file header (SgAsmPEFileHeader and related classes) */
 #include "sage3basic.h"
-#define __STDC_FORMAT_MACROS
-#include <inttypes.h>
-
+#include "MemoryMap.h"
 
 /** Convert an RVA/Size Pair index number into a section name. This is different than stringifySgAsmPEFileHeaderPairPurpose()
  * because it returns a section name rather than an enum name. */
 std::string
-SgAsmPEFileHeader::rvasize_pair_name(PairPurpose idx)
+SgAsmPEFileHeader::rvasize_pair_name(PairPurpose idx, const char **short_name)
 {
+    const char *full="", *abbr="";
     switch (idx) {
-        case PAIR_EXPORTS:              return "Export Table";
-        case PAIR_IMPORTS:              return "Import Table";
-        case PAIR_RESOURCES:            return "Resource Table";
-        case PAIR_EXCEPTIONS:           return "Exception Table";
-        case PAIR_CERTIFICATES:         return "Certificate Table";
-        case PAIR_BASERELOCS:           return "Base relocation Table";
-        case PAIR_DEBUG:                return "Debug";
-        case PAIR_ARCHITECTURE:         return "Architecture";
-        case PAIR_GLOBALPTR:            return "Global Ptr";
-        case PAIR_TLS:                  return "TLS Table";
-        case PAIR_LOADCONFIG:           return "Load Config Table";
-        case PAIR_BOUNDIMPORT:          return "Bound Import";
-        case PAIR_IAT:                  return "Import Address Table";
-        case PAIR_DELAYIMPORT:          return "Delay Import Descriptor";
-        case PAIR_CLRRUNTIME:           return "CLR Runtime Header";
-        case PAIR_RESERVED15:           return "Reserved Pair 15";
-        // default:  NOT PRESNT (it would prevent compiler warnings for newly added enum members)
+        case PAIR_EXPORTS:              full="Export Table";            abbr="Exports";   break;
+        case PAIR_IMPORTS:              full="Import Table";            abbr="Imports";   break;
+        case PAIR_RESOURCES:            full="Resource Table";          abbr="Rsrc";      break;
+        case PAIR_EXCEPTIONS:           full="Exception Table";         abbr="Excpns";    break;
+        case PAIR_CERTIFICATES:         full="Certificate Table";       abbr="Certs";     break;
+        case PAIR_BASERELOCS:           full="Base Relocation Table";   abbr="BaseReloc"; break;
+        case PAIR_DEBUG:                full="Debug";                   abbr="Debug";     break;
+        case PAIR_ARCHITECTURE:         full="Architecture";            abbr="Arch";      break;
+        case PAIR_GLOBALPTR:            full="Global Ptr";              abbr="GlobPtr";   break;
+        case PAIR_TLS:                  full="TLS Table";               abbr="TLS";       break;
+        case PAIR_LOADCONFIG:           full="Load Config Table";       abbr="LCT";       break;
+        case PAIR_BOUNDIMPORT:          full="Bound Import Table";      abbr="BIT";       break;
+        case PAIR_IAT:                  full="Import Address Table";    abbr="IAT";       break;
+        case PAIR_DELAYIMPORT:          full="Delay Import Descriptor"; abbr="DID";       break;
+        case PAIR_CLRRUNTIME:           full="CLR Runtime Header";      abbr="CLRHdr";    break;
+        case PAIR_RESERVED15:           full="Reserved Pair 15";        abbr="Pair15";    break;
+        // default:  NOT PRESENT (it would prevent compiler warnings for newly added enum members)
     }
-    return "";
+
+    if (short_name)
+        *short_name = abbr;
+    return full;
 }
 
 /* Construct a new PE File Header with default values. */
@@ -353,16 +355,6 @@ SgAsmPEFileHeader::parse()
     return this;
 }
 
-SgAsmPEFileHeader::~SgAsmPEFileHeader() 
-{
-    // Delete the pointers to the IR nodes containing the STL lists
-    size_t n = get_rvasize_pairs()->get_pairs().size();
-    for (size_t i=0; i<n; i++)
-        delete get_rvasize_pairs()->get_pairs()[i];
-    delete p_rvasize_pairs;
-    p_rvasize_pairs = NULL;
-}
-
 /* Encode the PE header into disk format */
 void *
 SgAsmPEFileHeader::encode(PEFileHeader_disk *disk) const
@@ -482,8 +474,11 @@ SgAsmPEFileHeader::set_rvasize_pair(PairPurpose idx, SgAsmPESection *section)
 
     /* If the section has no name then give it one based on the RVA/Size index. This is mostly for convenience and debugging
      * since the name is never stored in the file. */
-    if (section->get_name()->get_string().empty())
-        section->get_name()->set_string(rvasize_pair_name(idx));
+    if (section->get_name()->get_string().empty()) {
+        const char *short_name;
+        section->get_name()->set_string(rvasize_pair_name(idx, &short_name));
+        section->set_short_name(short_name);
+    }
 }
 
 /** Update all the RVA/Size pair info from the section to which it points. */
@@ -526,29 +521,33 @@ SgAsmPEFileHeader::add_rvasize_pairs()
 void
 SgAsmPEFileHeader::create_table_sections()
 {
+
+    /* First, only create the sections. */
     for (size_t i=0; i<p_rvasize_pairs->get_pairs().size(); i++) {
         SgAsmPERVASizePair *pair = p_rvasize_pairs->get_pairs()[i];
         if (0==pair->get_e_size())
             continue;
 
         /* Table names come from PE file specification and are hard coded by RVA/Size pair index */
-        std::string tabname = rvasize_pair_name((PairPurpose)i);
+        const char *tabname_short;
+        std::string tabname = rvasize_pair_name((PairPurpose)i, &tabname_short);
 
         /* Find the starting offset in the file.
          * FIXME: We have a potential problem here in that ROSE sections are always contiguous in the file but a section created
          *        from an RVA/Size pair is not necessarily contiguous in the file.  Normally such sections are in fact
          *        contiguous and we'll just ignore this for now.  In any case, as long as these sections only ever read their
          *        data via the same MemoryMap that we use here, everything should be fine. [RPM 2009-08-17] */
+        rose_addr_t pair_va = get_base_va() + pair->get_e_rva();
         MemoryMap *map = get_loader_map();
         ROSE_ASSERT(map!=NULL);
-        const MemoryMap::MapElement *elmt = map->find(get_base_va() + pair->get_e_rva());
-        if (!elmt) {
+        if (!map->exists(Extent(pair_va, pair->get_e_size()))) {
             fprintf(stderr, "SgAsmPEFileHeader::create_table_sections: warning: pair-%zu, rva=0x%08"PRIx64", size=%"PRIu64
                     " bytes \"%s\": unable to find a mapping for the virtual address (skipping)\n",
                     i, pair->get_e_rva().get_rva(), pair->get_e_size(), tabname.c_str());
             continue;
         }
-        rose_addr_t file_offset = elmt->is_anonymous() ? 0 : elmt->get_va_offset(get_base_va() + pair->get_e_rva(), 1);
+        std::pair<Extent, MemoryMap::Segment> me = map->at(pair_va);
+        rose_addr_t file_offset = me.second.get_buffer_offset(me.first, pair_va);
 
         /* Create the new section */
         SgAsmGenericSection *tabsec = NULL;
@@ -556,7 +555,7 @@ SgAsmPEFileHeader::create_table_sections()
             case 0: {
                 /* Sometimes export sections are represented by a ".edata" section, and sometimes they're represented by an
                  * RVA/Size pair, and sometimes both point to the same part of the file. We don't want the exports duplicated
-                 * in the AST, so we only parse this table as exports if we haven't already seen some other export section. */
+                 * in the AST, so we only create this table as exports if we haven't already seen some other export section. */
                 SgAsmGenericSectionPtrList &sections = get_sections()->get_sections();
                 bool seen_exports = false;
                 for (SgAsmGenericSectionPtrList::iterator si=sections.begin(); !seen_exports && si!=sections.end(); ++si)
@@ -571,7 +570,7 @@ SgAsmPEFileHeader::create_table_sections()
             case 1: {
                 /* Sometimes import sections are represented by a ".idata" section, and sometimes they're represented by an
                  * RVA/Size pair, and sometimes both point to the same part of the file.  We don't want the imports duplicated
-                 * in the AST, so we only parse this table as imports if we haven't already seen some other import section. */
+                 * in the AST, so we only create this table as imports if we haven't already seen some other import section. */
                 SgAsmGenericSectionPtrList &sections = get_sections()->get_sections();
                 bool seen_imports = false;
                 for (SgAsmGenericSectionPtrList::iterator si=sections.begin(); !seen_imports && si!=sections.end(); ++si)
@@ -589,6 +588,7 @@ SgAsmPEFileHeader::create_table_sections()
             }
         }
         tabsec->set_name(new SgAsmBasicString(tabname));
+        tabsec->set_short_name(tabname_short);
         tabsec->set_synthesized(true);
         tabsec->set_purpose(SP_HEADER);
 
@@ -603,9 +603,16 @@ SgAsmPEFileHeader::create_table_sections()
         tabsec->set_mapped_rperm(true);
         tabsec->set_mapped_wperm(false);
         tabsec->set_mapped_xperm(false);
-        tabsec->parse();
         pair->set_section(tabsec);
         pair->set_e_rva(pair->get_e_rva().set_section(tabsec));
+    }
+
+    /* Now parse the sections */
+    for (size_t i=0; i<p_rvasize_pairs->get_pairs().size(); i++) {
+        SgAsmPERVASizePair *pair = p_rvasize_pairs->get_pairs()[i];
+        SgAsmGenericSection *tabsec = pair->get_section();
+        if (tabsec)
+            tabsec->parse();
     }
 }
 
@@ -661,7 +668,7 @@ SgAsmPEFileHeader::reallocate()
          * it here as being the minimum RVA from all the sections defined in the PE Section Table, but not smaller
          * than the value according to the specification. This alternate value is kept if it's already in the parse tree,
          * otherwise we use the correct value. (RPM 2008-10-21) */
-        rose_addr_t min_offset;
+        rose_addr_t min_offset = 0;
         for (size_t i=0, nfound=0; i<all->get_sections().size(); i++) {
             SgAsmPESection *pesec = dynamic_cast<SgAsmPESection*>(all->get_sections()[i]);
             if (pesec && pesec->get_section_entry()!=NULL) {
@@ -732,6 +739,7 @@ SgAsmPEFileHeader::reallocate()
         encode((PE64OptHeader_disk*)oh);
         rvasize_offset = sizeof(PE64OptHeader_disk);
     } else {
+        delete[] oh;
         throw FormatError("unsupported PE word size");
     }
     while (oh_size>p_e_nt_hdr_size) {
@@ -821,7 +829,12 @@ SgAsmPEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
     int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
     time_t t = p_e_time;
     char time_str[128];
-    strftime(time_str, sizeof time_str, "%c", localtime(&t));
+    struct tm *tm = localtime(&t);
+    if (tm) {
+        strftime(time_str, sizeof time_str, "%c", tm);
+    } else {
+        strcpy(time_str, "INVALID");
+    }
 
     SgAsmGenericHeader::dump(f, p, -1);
     fprintf(f, "%s%-*s = 0x%04x (%u)\n",               p, w, "e_cpu_type",          p_e_cpu_type, p_e_cpu_type);
@@ -865,7 +878,8 @@ SgAsmPEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
     fprintf(f, "%s%-*s = %u\n",                        p, w, "e_num_rvasize_pairs", p_e_num_rvasize_pairs);
     for (unsigned i = 0; i < p_rvasize_pairs->get_pairs().size(); i++) {
         char p2[256];
-        sprintf(p2, "%s.pair[%d].", p, i);
+        int nprint __attribute__((unused)) = snprintf(p2, sizeof p2, "%s.pair[%d].", p, i);
+        assert((size_t)nprint<sizeof p2);
         w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p2));
         fprintf(f, "%s%-*s = rva %s,\tsize 0x%08"PRIx64" (%"PRIu64")\n", p2, w, "..",
                 p_rvasize_pairs->get_pairs()[i]->get_e_rva().to_string().c_str(),

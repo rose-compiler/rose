@@ -1,7 +1,3 @@
-
-#include "MainWindow.h"
-
-
 #include <QSettings>
 #include <QFileDialog>
 #include <QDebug>
@@ -11,9 +7,11 @@
 
 #include <QListWidgetItem>
 
-#include "qcodeedit.h"
-
+#include "MainWindow.h"
 #include "RtedDebug.h"
+#include "../CppRuntimeSystem.h"
+
+#include "qcodeedit.h"
 
 #include "ui_MainWindow.h"
 
@@ -21,14 +19,11 @@
 #include "MemoryTypeDisplay.h"
 #include "VariablesTypeDisplay.h"
 #include "PointerDisplay.h"
-
 #include "ItemTreeModel.h"
-
 #include "ModelRoles.h"
 
 
-DbgMainWindow::DbgMainWindow(RtedDebug * dbgObj_,
-                             QWidget * par)
+DbgMainWindow::DbgMainWindow(RtedDebug * dbgObj_, QWidget * par)
     : QMainWindow(par),
       dbgObj(dbgObj_),
       singleStep(true),
@@ -44,7 +39,7 @@ DbgMainWindow::DbgMainWindow(RtedDebug * dbgObj_,
     ui = new Ui::MainWindow();
     ui->setupUi(this);
 
-    rs = RuntimeSystem::instance();
+    rs = &RuntimeSystem::instance();
 
     ui->editorToolbar->addAction(ui->codeEdit1->action("undo"));
     ui->editorToolbar->addAction(ui->codeEdit1->action("redo"));
@@ -64,7 +59,7 @@ DbgMainWindow::DbgMainWindow(RtedDebug * dbgObj_,
     ui->codeEdit2->enableBreakPointEdit();
 
 
-    rs = RuntimeSystem::instance();
+    rs = &RuntimeSystem::instance();
 
     //restore settings
     QSettings settings;
@@ -140,9 +135,9 @@ void DbgMainWindow::on_actionEditorSettings_triggered()
 
 void DbgMainWindow::on_actionSingleStep_triggered()
 {
-	singleStep=true;
-	breakPoints1[file1] = ui->codeEdit1->getBreakPoints();
-	breakPoints2[file2] = ui->codeEdit2->getBreakPoints();
+  singleStep=true;
+  breakPoints1[file1] = ui->codeEdit1->getBreakPoints();
+  breakPoints2[file2] = ui->codeEdit2->getBreakPoints();
 
     dbgObj->startRtsi();
 }
@@ -153,13 +148,13 @@ void DbgMainWindow::on_actionResume_triggered()
     breakPoints1[file1] = ui->codeEdit1->getBreakPoints();
     breakPoints2[file2] = ui->codeEdit2->getBreakPoints();
 
-    cout << "Saved Breakpoints:" << endl;
+    std::cout << "Saved Breakpoints:" << std::endl;
     foreach(int bp, breakPoints1[file1])
-        cout << bp << " ";
+        std::cout << bp << " ";
 
     qDebug() << "bp2";
     foreach(int bp, breakPoints2[file2])
-        cout << bp << " ";
+        std::cout << bp << " ";
 
 
     dbgObj->startRtsi();
@@ -194,7 +189,7 @@ void DbgMainWindow::updateAllRsData(bool showAlways)
 
     // skip stepping over transformed code
     std::string filename1 = file1.toStdString();
-    //cout << "++++++++++++ file1 :" << filename1 << endl;
+    //std::cout << "++++++++++++ file1 :" << filename1 << std::endl;
     QString text = QString("Looking at: ");
     if (file1=="0") {
       singleStep=false;
@@ -207,7 +202,7 @@ void DbgMainWindow::updateAllRsData(bool showAlways)
       text.append(QString("%1").arg(row2));
     }
     addMessage(text);
-    
+
     if(!singleStep && !showAlways &&
        !breakPoints1[file1].contains(row1) &&
        !breakPoints2[file2].contains(row2))
@@ -243,7 +238,7 @@ void DbgMainWindow::updateAllRsData(bool showAlways)
 }
 void DbgMainWindow::updateTypeDisplay()
 {
-    ItemTreeNode * typeRoot = RsTypeDisplay::build(rs->getTypeSystem());
+    ItemTreeNode * typeRoot = RsTypeDisplay::build(&rs->getTypeSystem());
     typeModel->setRoot(typeRoot);
 
     if(typeProxyModel)
@@ -262,7 +257,7 @@ void DbgMainWindow::updateTypeDisplay()
 void DbgMainWindow::on_treeMemorySystem_clicked(const QModelIndex & ind)
 {
     MemoryType * mt = qvariant_cast<MemoryType*>( ind.model()->data(ind,MemoryTypeRole));
-    ui->memGraphicsView->setMemoryType(mt);
+    ui->memGraphicsView->setMemoryType(*mt);
 }
 
 
@@ -271,7 +266,7 @@ void DbgMainWindow::updateMemoryDisplay()
     bool showHeap = ui->chkShowHeap->isChecked();
     bool showStack = ui->chkShowStack->isChecked();
 
-    ItemTreeNode * memRoot = MemoryTypeDisplay::build(rs->getMemManager(),showHeap,showStack);
+    ItemTreeNode * memRoot = MemoryTypeDisplay::build(&rs->getMemManager(),showHeap,showStack);
     memModel->setRoot(memRoot);
 
     if(memProxyModel)
@@ -287,16 +282,16 @@ void DbgMainWindow::updateMemoryDisplay()
 
 
     // GraphicsView
-    MemoryManager * mm = RuntimeSystem::instance()->getMemManager();
-    if (mm->getAllocationSet().begin() != mm->getAllocationSet().end())
+    MemoryManager& mm = RuntimeSystem::instance().getMemManager();
+    if (!mm.getAllocationSet().empty())
     {
-        ui->memGraphicsView->setMemoryType(*(mm->getAllocationSet().begin()));
+        ui->memGraphicsView->setMemoryType(mm.getAllocationSet().begin()->second);
     }
 }
 
 void DbgMainWindow::updateStackDisplay()
 {
-    ItemTreeNode * stackRoot = VariablesTypeDisplay::build(rs->getStackManager());
+    ItemTreeNode * stackRoot = VariablesTypeDisplay::build(&rs->getStackManager());
     stackModel->setRoot(stackRoot);
 
     if(stackProxyModel)
@@ -314,7 +309,7 @@ void DbgMainWindow::updateStackDisplay()
 
 void DbgMainWindow::updatePointerDisplay()
 {
-    ItemTreeNode * pointerRoot = PointerDisplay::build(rs->getPointerManager());
+    ItemTreeNode * pointerRoot = PointerDisplay::build(&rs->getPointerManager());
     pointerModel->setRoot(pointerRoot);
 
     if(pointerProxyModel)
@@ -328,4 +323,3 @@ void DbgMainWindow::updatePointerDisplay()
 
     ui->treePointer->setModel(pointerProxyModel);
 }
-

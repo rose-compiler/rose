@@ -11,7 +11,9 @@
    #include "AsmUnparser_compat.h"
 #endif
 
-#include "merge.h"
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+   #include "merge.h"
+#endif
 
 // **********************************************************
 // **********************************************************
@@ -1341,6 +1343,22 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                     break;
                   }
 
+               case V_SgNamespaceDeclarationStatement:
+                  {
+                    SgNamespaceDeclarationStatement* namespaceDeclaration = isSgNamespaceDeclarationStatement(node);
+                    additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=2,color=\"blue\",fillcolor=lightgreen,fontname=\"7x13bold\",fontcolor=black,style=filled";
+                    labelWithSourceCode = "\\n  " + namespaceDeclaration->get_name().getString() + 
+                                          "\\n  " +  StringUtility::numberToString(namespaceDeclaration) + "  ";
+                    break;
+                  }
+
+               case V_SgNamespaceDefinitionStatement:
+                  {
+                    additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=2,color=\"blue\",fillcolor=lightgreen,fontname=\"7x13bold\",fontcolor=black,style=filled";
+                    labelWithSourceCode = "\\n  " +  StringUtility::numberToString(node) + "  ";
+                    break;
+                  }
+
                default:
                   {
                  // It appears that we can't unparse one of these (not implemented)
@@ -1391,13 +1409,35 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                        {
                          printf ("Error: unsignedLongVal = %lu \n",unsignedLongVal->get_value());
                        }
+                    SgCharVal* charVal = isSgCharVal(valueExp);
+                    if (charVal != NULL)
+                       {
+                         printf ("Error: charVal = %d \n",charVal->get_value());
+                       }
                   }
                ROSE_ASSERT(valueExp->get_parent() != NULL);
             // labelWithSourceCode = "\\n value = " + valueExp->unparseToString() + "\\n" + StringUtility::numberToString(node) + "  ";
             // labelWithSourceCode = string("\\n value = nnn") + "\\n" + StringUtility::numberToString(node) + "  ";
 
+            // DQ (9/24/2011): Added support to indicate non-printable characters.
+               SgCharVal* charVal = isSgCharVal(valueExp);
+               if (charVal != NULL)
+                  {
+                    char value = charVal->get_value();
+                    labelWithSourceCode += string("\\n alpha/numeric value = ") + (isalnum(value) ? "true" : "false") + "  ";
+                  }
+
             // DQ (10/4/2010): Output the value so that we can provide more information.
                labelWithSourceCode += string("\\n value = ") + valueExp->get_constant_folded_value_as_string() + "  ";
+             }
+
+       // DQ (6/5/2011): Added support to output if this is an implicit or explicit cast.
+          SgCastExp* castExp = isSgCastExp(node);
+          if (castExp != NULL)
+             {
+            // DQ (6/5/2011): Output if this is an implicit (compiler generated) or explicit case (non-compiler generated).
+               ROSE_ASSERT(castExp->get_startOfConstruct() != NULL);
+               labelWithSourceCode += string("\\n cast is: ") + ((castExp->get_startOfConstruct()->isCompilerGenerated() == true) ? "implicit" : "explicit") + "  ";
              }
 
        // DQ (2/2/2011): Added support for fortran...
@@ -1528,6 +1568,14 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                     SgTemplateArgument* templateArgument = isSgTemplateArgument(node);
                     additionalNodeOptions = "shape=circle,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=1,color=\"blue\",fillcolor=yellow,fontname=\"7x13bold\",fontcolor=black,style=filled";
                     labelWithSourceCode = string("\\n  ") + StringUtility::numberToString(templateArgument) + "  ";
+                    break;
+                  }
+
+               case V_SgBaseClass:
+                  {
+                    SgBaseClass* baseClass = isSgBaseClass(node);
+                    additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=8,peripheries=1,color=\"blue\",fillcolor=greenyellow,fontname=\"7x13bold\",fontcolor=black,style=filled";
+                    labelWithSourceCode = string("\\n  ") + StringUtility::numberToString(baseClass) + "  ";
                     break;
                   }
 
@@ -2392,12 +2440,20 @@ generateWholeGraphOfAST_filteredFrontendSpecificNodes( string filename, CustomMe
 
 #if 1
   // Normally we want to skip the frontend IR nodes so avoid cluttering the graphs for users.
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
      set<SgNode*> skippedNodeSet = getSetOfFrontendSpecificNodes();
+#else
+     set<SgNode*> skippedNodeSet;
+     printf ("ROSE configured for internal frontend development \n");
+     ROSE_ASSERT(false);
+#endif
+
 #else
   // DQ (7/26/2010): We want to include the frontend IR nodes so that we can debug the type table.
      printf ("Generating an empty set of Frontend specific IR nodes to skip \n");
      set<SgNode*> skippedNodeSet;
 #endif
+
      SimpleColorMemoryPoolTraversal::generateGraph(filename,skippedNodeSet, flags);
    }
 

@@ -1,0 +1,67 @@
+netcdf test {
+types:
+  compound Simple\ Point.LevelWritten.LevelWritten_t {
+    ubyte LevelWritten__0 ;
+  }; // Simple\ Point.LevelWritten.LevelWritten_t
+  compound Simple\ Point.LevelWritten_record_t {
+    Simple\ Point.LevelWritten.LevelWritten_t LevelWritten ;
+  }; // Simple\ Point.LevelWritten_record_t
+  Simple\ Point.LevelWritten_record_t(*) Simple\ Point.LevelWritten_t ;
+  compound Time_t {
+    double Time__0 ;
+  }; // Time_t
+  compound Concentration_t {
+    double Concentration__0 ;
+    double Concentration__1 ;
+    double Concentration__2 ;
+    double Concentration__3 ;
+  }; // Concentration_t
+  compound Species_t {
+    string Species__0 ;
+  }; // Species_t
+  compound Sensor_record_t {
+    Time_t Time ;
+    Concentration_t Concentration ;
+    Species_t Species ;
+  }; // Sensor_record_t
+  Sensor_record_t(*) Sensor_t ;
+  compound Data\ Vgroup_t {
+    Sensor_t Sensor ;
+  }; // Data\ Vgroup_t
+  compound Simple\ Point_t {
+    Simple\ Point.LevelWritten_t LevelWritten ;
+    Data\ Vgroup_t Data\ Vgroup ;
+  }; // Simple\ Point_t
+  compound FixedBuoy\ Point.LevelWritten.LevelWritten_t {
+    ubyte LevelWritten__0 ;
+  }; // FixedBuoy\ Point.LevelWritten.LevelWritten_t
+  compound FixedBuoy\ Point.LevelWritten_record_t {
+    FixedBuoy\ Point.LevelWritten.LevelWritten_t LevelWritten ;
+  }; // FixedBuoy\ Point.LevelWritten_record_t
+  FixedBuoy\ Point.LevelWritten_record_t(*) FixedBuoy\ Point.LevelWritten_t ;
+  compound FixedBuoy\ Point_t {
+    FixedBuoy\ Point.LevelWritten_t LevelWritten ;
+  }; // FixedBuoy\ Point_t
+  compound LevelWritten.LevelWritten_t {
+    ubyte LevelWritten__0 ;
+  }; // LevelWritten.LevelWritten_t
+  compound LevelWritten_record_t {
+    LevelWritten.LevelWritten_t LevelWritten ;
+  }; // LevelWritten_record_t
+  LevelWritten_record_t(*) LevelWritten_t ;
+  compound FloatBuoy\ Point_t {
+    LevelWritten_t LevelWritten ;
+  }; // FloatBuoy\ Point_t
+variables:
+	Simple\ Point_t Simple\ Point ;
+	FixedBuoy\ Point_t FixedBuoy\ Point ;
+	FloatBuoy\ Point_t FloatBuoy\ Point ;
+data:
+
+ Simple\ Point = 
+    {{{{0}}, {{1}}, {{2}}, {{3}}, {{4}}}, {{{{1000}, {999.950000416665, 999.800006666578, 999.550033748988, 999.200106660978}, {"This is a data test string (pass 0)."}}, {{998.750260394966}, {998.200539935204, 997.55100025328, 996.801706302619, 995.952733011994}, {"This is a data test string (pass 1)."}}, {{995.004165278026}, {993.956097956697, 992.808635853866, 991.561893714788, 990.215996212637}, {"This is a data test string (pass 2)."}}, {{988.771077936042}, {987.227283375627, 985.584766909561, 983.843692788121, 982.00423511727}, {"This is a data test string (pass 3)."}}, {{980.066577841242}, {978.030914724148, 975.897449330605, 973.666395005375, 971.33797485203}, {"This is a data test string (pass 4)."}}}}} ;
+
+ FixedBuoy\ Point = {{{{5}}, {{6}}, {{7}}, {{8}}, {{9}}}} ;
+
+ FloatBuoy\ Point = {{{{10}}, {{11}}, {{12}}, {{13}}, {{14}}}} ;
+}

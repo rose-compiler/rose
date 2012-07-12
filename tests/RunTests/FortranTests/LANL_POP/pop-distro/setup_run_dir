@@ -1,0 +1,84 @@
+#!/bin/csh
+#
+# Filename:  setup_run_dir
+#
+# Usage:
+#            setup_run_dir directory [model]
+# where
+#            directory is the name of a directory that
+#            may or may not exist.
+#
+#            model is the kind of run you want to set up;
+#            current options are "sector", "test", or "192x128x32";
+#            the default is "test".
+#
+if ($1 == "") then
+    echo "Directory name argument must be supplied"
+    echo "Usage:  setup_run_dir directory [model]"
+    echo "directory is the name of a directory that"
+    echo "   may or may not exist."
+    echo "model is the kind of run you want to set up;"
+    echo "   current options are sector, test, or 192x128x32;"
+    echo "   the default is test."
+    exit 1
+else
+    set workdir = $1
+    echo "Directory set to $workdir"
+endif
+
+if ($2 == "") then
+    echo "Model name argument defaulting to test"
+    set model = "test"
+else
+    set model = $2
+    echo "Model set to $model"
+endif
+
+# Make the requested working directory tree
+if (-e $workdir) then
+  echo "Directory $workdir exists"
+else
+  echo "Directory $workdir does not exist; creating"
+  mkdir $workdir
+  chmod 0775 $workdir
+endif
+set subdir = $workdir/compile
+if (-e $subdir) then
+  echo "Directory $subdir exists"
+else
+  echo "Directory $subdir does not exist; creating"
+  mkdir $subdir
+  chmod 0775 $subdir
+endif
+
+# Copy files into the working directory tree
+cd ./input_templates
+echo "Now in directory `pwd`"
+
+if ($?ARCHDIR) then
+  echo "$ARCHDIR environment set; copying $ARCHDIR.gnu"
+  if (-e $ARCHDIR.gnu) then
+    cp $ARCHDIR.gnu ../$workdir/$ARCHDIR.gnu
+  else
+    echo "ERROR: ./input_templates/$ARCHDIR.gnu not found; check ARCHDIR variable"
+  endif
+else
+  echo "Environment not yet specified; copying all makefiles"
+  foreach file ( *.gnu )
+    echo $file
+    cp $file ../$workdir/$file
+  end
+endif
+foreach file ( GNUmakefile *.awk sample_* utilities.gnu )
+  echo $file
+  cp $file ../$workdir/$file
+end
+foreach name ( domain_size.F90 pop_in pop_sgi.log )
+  if (-e $name.$model) then
+    echo "Copying $name"
+    cp $name.$model ../$workdir/$name
+  endif
+end
+echo "Copying GNUmakefile"
+cp GNUmakefile.compile ../$subdir/GNUmakefile
+

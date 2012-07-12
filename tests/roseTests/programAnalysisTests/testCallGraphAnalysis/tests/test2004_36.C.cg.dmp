@@ -1,2 +1,2 @@
-main -> A::foo
-A::foo ->
+A_4_36::foo ->
+main -> A_4_36::foo

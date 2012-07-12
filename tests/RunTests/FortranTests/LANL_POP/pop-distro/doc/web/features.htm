@@ -1,0 +1,243 @@
+<html>
+
+<head>
+<title>POP Requested Features</title>
+</head>
+
+<body vlink="#990000" background="../../../images/bkgd.gif">
+
+<a name="features_top">
+<h2>Features Requested in POP</h2>
+</a>
+
+<p>The following are features that have been requested for POP
+   and that we are working on implementing.  To request a new
+   feature, send e-mail to
+   <a href="mailto:climate@acl.lanl.gov">climate@acl.lanl.gov</a>
+
+<ul>
+<li><a href="#feature3"> units on diagnostic output
+</a></li>
+<li><a href="#feature4"> barotropic/global sum performance
+</a></li>
+<li><a href="#feature1"> Enable optional signal handling
+</a></li>
+<li><a href="#feature2"> Ability to spawn archival system commands
+</a></li>
+<li><a href="#feature7"> addition of age tracer
+</a></li>
+<li><a href="#feature8"> create complete test suite
+</a></li>
+<li><a href="#feature11"> Finish drifter, current_meter, etc. modules
+</a></li>
+<li><a href="#feature13"> run-time problem size
+</a></li>
+<li><a href="#feature14"> MSF, BSF diagnostics
+</a></li>
+<li><a href="#feature15"> bottom boundary layer
+</a></li>
+<li><a href="#feature18"> replace lsqsl2 in state coeff calcs
+</a></li>
+<li><a href="#feature20"> reproducible sums
+</a></li>
+</ul>
+
+<hr>
+
+<h3>Details of each requested feature</h3>
+
+<a name="feature1">
+<h3>Title: Enable optional signal handling
+</h3></a>
+<ul>
+<li>Submitted: 1999/07/28</li>
+<li>Projection: 08/20/1999</li>
+<li>Description: A mechanism for catching kill signals and
+    exiting gracefully (e.g. set stop_now=.true., call
+    output_driver to write restart and then call exit_POP
+    with an appropriate message).  Because system calls
+    like "signal" and "flush" are different on different
+    machines, we will need to find a portable solution</li>
+</ul>
+
+<a href="#features_top">Return to top</a>
+<a href="current_release.htm">Return to Current Release</a>
+
+<hr>
+     	
+<a name="feature2">
+<h3>Title: Ability to spawn archival system process
+</h3></a>
+<ul>
+<li>Submitted: 2000/03/14</li>
+<li>Projection: 06/01/2000</li>
+<li>Description: Implement the ability to spawn a system
+    process for transferring output to archival storage.
+    System calls are not portable so this must be abstracted
+    at some level. 
+</ul>
+
+<a href="#features_top">Return to top</a>
+<a href="current_release.htm">Return to Current Release</a>
+
+<hr>
+     	
+<a name="feature3">
+<h3>Title: Add units to diagnostic output
+</h3></a>
+<ul>
+<li>Submitted: 2000/03/14</li>
+<li>Projection: 06/01/2000</li>
+<li>Description: Add units to diagnostic output, primarily
+    in output written to log file.
+</ul>
+
+<a href="#features_top">Return to top</a>
+<a href="current_release.htm">Return to Current Release</a>
+
+<hr>
+     	
+<a name="feature4">
+<h3>Title: barotropic/global sum performance
+</h3></a>
+<ul>
+<li>Submitted: 1999/03/11</li>
+<li>Projection: 06/01/2000</li>
+<li>Description: Improve scaling of barotropic solver.</li>
+</ul>
+
+<a href="#features_top">Return to top</a>
+<a href="current_release.htm">Return to Current Release</a>
+
+<hr>
+
+<a name="feature7">
+<h3>Title: addition of age tracer
+</h3></a>
+<ul>
+<li>Submitted: 1999/04/29</li>
+<li>Projection: 06/01/2000</li>
+<li>Description: we need to have an age tracer available to monitor 
+    ventilation times.  this is probably the easiest passive tracer 
+    to implement so should be a good template for other tracers (such 
+    as biological fields).</li>
+</ul>
+
+<a href="#features_top">Return to top</a>
+<a href="current_release.htm">Return to Current Release</a>
+
+<hr>
+
+<a name="feature8">
+<h3>Title: create complete test suite
+</h3></a>
+<ul>
+<li>Submitted: 1999/03/11</li>
+<li>Projection: 06/01/2000</li>
+<li>Description: Create a test suite to test various portions of 
+    code for accuracy/consistency.</li>
+</ul>
+
+<a href="#features_top">Return to top</a>
+<a href="current_release.htm">Return to Current Release</a>
+
+<hr>
+
+<a name="feature11">
+<h3>Title: Finish drifter, current_meter, etc. modules
+</h3></a>
+<ul>
+<li>Submitted: 1999/03/11</li>
+<li>Projection: 06/01/2000</li>
+<li>Description: Finish the modules related to data comparisons 
+    (current_meters, hsections, etc.) and add the Lagrangian particle 
+    capability.</li>
+</ul>
+
+<a href="#features_top">Return to top</a>
+<a href="current_release.htm">Return to Current Release</a>
+
+<hr>
+
+<a name="feature13">
+<h3>Title: run-time problem size
+</h3></a>
+<ul>
+<li>Submitted: 1999/04/15</li>
+<li>Projection:</li> 
+<li>Description: determine problem size at run time through namelist 
+    input this applies both to imt_global, jmt_global, km and
+    nproc_x,nproc_y</li>
+</ul>
+
+<a href="#features_top">Return to top</a>
+<a href="current_release.htm">Return to Current Release</a>
+
+<hr>
+
+<a name="feature14">
+<h3>Title: MSF, BSF diagnostics
+</h3></a>
+<ul>
+<li>Submitted: 1999/03/11</li>
+<li>Projection: 06/01/2000</li>
+<li>Description: Add capability for computing meridional 
+    streamfunction, barotropic streamfunction.  Inside POP or 
+    post-process?</li>
+</ul>
+
+<a href="#features_top">Return to top</a>
+<a href="current_release.htm">Return to Current Release</a>
+
+<hr>
+
+<a name="feature15">
+<h3>Title: bottom boundary layer
+</h3></a>
+<ul>
+<li>Submitted: 1999/03/11</li>
+<li>Projection: 06/01/2000</li>
+<li>Description: Add bottom boundary layer parameterization</li>
+</ul>
+
+<a href="#features_top">Return to top</a>
+<a href="current_release.htm">Return to Current Release</a>
+
+<hr>
+
+<a name="feature18">
+<h3>Title: replace lsqsl2 in state coeff calcs
+</h3></a>
+<ul>
+<li>Submitted: 1999/04/06</li>
+<li>Projection:</li>
+<li>Description: state_mod contains a very old (Fortran 66), very 
+    obscure least squares routine that really needs to be updated.  
+    it has been cleaned up somewhat by removing some arithmetic ifs 
+    and gotos, but a modern least squares routine should be used.
+    this of course depends on the earlier feature request for a
+    completely new eos</li>
+</ul>
+
+<a href="#features_top">Return to top</a>
+<a href="current_release.htm">Return to Current Release</a>
+
+<hr>
+
+<a name="feature20">
+<h3>Title: reproducible sums
+</h3></a>
+<ul>
+<li>Submitted: 1999/03/11</li>
+<li>Projection: 06/01/2000</li>
+<li>Description: Create global sum routines that are give identical 
+    answers regardless of processor configuration.</li>
+</ul>
+
+<a href="#features_top">Return to top</a>
+<a href="current_release.htm">Return to Current Release</a>
+
+<hr>
+
+</body>
+</html>

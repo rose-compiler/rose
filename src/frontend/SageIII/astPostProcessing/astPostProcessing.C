@@ -15,6 +15,7 @@
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
 
+
 // DQ (8/20/2005): Make this local so that it can't be called externally!
 void postProcessingSupport (SgNode* node);
 
@@ -147,7 +148,9 @@ void postProcessingSupport (SgNode* node)
 #ifdef ROSE_USE_NEW_EDG_INTERFACE
 
   // Only do AST post-processing for C/C++
-     bool doPostprocessing = (SageInterface::is_Fortran_language() == true) || (SageInterface::is_PHP_language() == true);
+     bool doPostprocessing = (SageInterface::is_Fortran_language() == true) ||
+                             (SageInterface::is_PHP_language() == true) ||
+                             (SageInterface::is_Python_language() == true);
 
   // If this is C or C++ then we are using the new EDG translation and althrough fewer 
   // fixups should be required, some are still required.
@@ -253,6 +256,22 @@ void postProcessingSupport (SgNode* node)
      if ( SgProject::get_verbose() >= AST_POST_PROCESSING_VERBOSE_LEVEL )
           cout << "/* AST Postprocessing reset template names */" << endl;
 
+#if 0
+  // DQ (5/15/2011): I don't feel comfortable with this being called before the AST is finied being post processed.
+  // This used to be called in the unparser, but that is after resetTemplateNames() below and that is a problem
+  // because template names have already been generated.
+     void newBuildHiddenTypeAndDeclarationLists( SgNode* node );
+     printf ("Developing a new implementation of the name qualification support. \n");
+     newBuildHiddenTypeAndDeclarationLists(node);
+     printf ("DONE: new name qualification support built. \n");
+
+     printf ("Calling SgNode::clearGlobalMangledNameMap() \n");
+     SgNode::clearGlobalMangledNameMap();
+#endif
+
+  // DQ (5/15/2011): This causes template names to be computed as strings and and without name qualification 
+  // if we don't call the name qualification before here. Or we reset the template names after we do the 
+  // analysis to support the name qualification.
   // reset the names of template class declarations
      resetTemplateNames(node);
 
@@ -314,7 +333,13 @@ void postProcessingSupport (SgNode* node)
 
   // DQ (3/16/2006): fixup any newly added declarations (see if we can eliminate the first place where this is called, above)
   // fixup all definingDeclaration and NondefiningDeclaration pointers in SgDeclarationStatement IR nodes
-     fixupDeclarations(node);
+  // driscoll6 (6/10/11): this traversal sets p_firstNondefiningDeclaration for defining declarations, which
+  // causes justifiable failures in AstConsistencyTests. Until this is resolved, skip this test for Python.
+     if (SageInterface::is_Python_language()) {
+         //cerr << "warning: python. Skipping fixupDeclarations() in astPostProcessing.C" << endl;
+     } else {
+         fixupDeclarations(node);
+     }
 
   // DQ (3/17/2007): This should be empty
      ROSE_ASSERT(SgNode::get_globalMangledNameMap().size() == 0);
@@ -397,12 +422,14 @@ void postProcessingSupport (SgNode* node)
   // DQ (1/19/2008): This can be called at nearly any point in the ast fixup.
      markLhsValues(node);
 
+#ifndef ROSE_USE_CLANG_FRONTEND
   // DQ (2/21/2010): This normalizes an EDG trick (well documented) that replaces "__PRETTY_FUNCTION__" variable 
   // references with variable given the name of the function where the "__PRETTY_FUNCTION__" variable references 
   // was found. This is only seen when compiling ROSE using ROSE and was a mysterious property of ROSE for a long 
   // time until it was identified.  This fixup traversal changes the name back to "__PRETTY_FUNCTION__" to make
   // the code generated using ROSE when compiling ROSE source code the same as if GNU processed it (e.g. using CPP).
      fixupPrettyFunctionVariables(node);
+#endif
 
 #if 0
   // DQ (1/22/2008): Use this for the Fortran code to get more accurate source position information.
@@ -473,6 +500,13 @@ void postProcessingSupport (SgNode* node)
   // DQ (3/7/2010): Identify the fragments of the AST that are disconnected.
   // Moved from astConsistancy tests (since it deletes nodes not connected to the AST).
   // TestForDisconnectedAST::test(node);
+
+  // DQ (9/14/2011): Process the AST to remove constant folded values held in the expression trees.
+  // This step defines a consistant AST more suitable for analysis since only the constant folded
+  // values will be visited.  However, the default should be to save the original expression trees
+  // and remove the constant folded values since this represents the original code.  This mechanism
+  // will provide a default when it is more fully implemented.
+     resetConstantFoldedValues(node);
 
   // DQ (5/22/2005): Nearly all AST fixup should be done before this closing step
   // QY: check the isModified flag

@@ -182,6 +182,7 @@ HEADER_START
           int remove_user_attribute(char *nm);
 #endif
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 	  // Overriding SgNode versions of these
           virtual unsigned int cfgIndexForEnd() const;
           virtual bool cfgIsIndexInteresting(unsigned int index) const;
@@ -189,6 +190,7 @@ HEADER_START
           virtual unsigned int cfgFindNextChildIndex(SgNode* n);
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 
        // get lvalue
 		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL
@@ -243,6 +245,10 @@ HEADER_SCOPE_STATEMENT_START
       //! (note that it is sometime OK for there to be more than 1).
           size_t count_symbol(const SgName& n);
 
+       // DQ (5/14/2011): Added count for alias symbols (used in name qualification, since alias symbols of a base class are added to the derived class).
+      //! Count for alias symbols of a specific name, used in name qualification support.
+          size_t count_alias_symbol(const SgName& n);
+
        // Single interface for inserting symbol into symbol table
           void insert_symbol(const SgName& n, SgSymbol* s);
 
@@ -276,6 +282,7 @@ HEADER_SCOPE_STATEMENT_START
        // SgEnumFieldSymbol* lookup_enumfield_symbol  (const SgName& n) const ROSE_DEPRECATED_FUNCTION;
           SgEnumFieldSymbol* lookup_enum_field_symbol (const SgName& n) const;
           SgLabelSymbol*     lookup_label_symbol      (const SgName& n) const;
+          SgJavaLabelSymbol* lookup_java_label_symbol (const SgName& n) const; // charles4: added 09/12/2011
           SgNamespaceSymbol* lookup_namespace_symbol  (const SgName& n) const;
           SgTemplateSymbol*  lookup_template_symbol   (const SgName& n) const;
 
@@ -430,6 +437,16 @@ HEADER_SCOPE_STATEMENT_START
       //! Query of scope symbol table behavior (is symbol table behavior case sensitive (C/C++) or case insensitive (Fortran).
           bool isCaseInsensitive() const;
           void setCaseInsensitive(bool b);
+
+       // DQ (5/11/2011): Added support for new name qualification implementation.
+      //! Some scopes have associated names for purposed of name qualification. This returns true if the scope has a name, false if not.
+          bool isNamedScope();
+
+       // DQ (5/11/2011): Added support for new name qualification implementation.
+      //! Some scopes have associated names for purposed of name qualification. This generates the associated name.
+          SgName associatedScopeName();
+
+
 
      public:
 
@@ -694,6 +711,10 @@ HEADER_DECLARATION_STATEMENT_START
        // testing so that we can know when to verify rules about associated symbols.
           bool hasAssociatedSymbol() const;
 
+       // DQ (5/29/2011): Added to support for new qualified name generation
+      //! This function generates the qualified name prefix to be used with the named declaration (only applied to restricted set of declarations where name qualification can be used).
+          SgName get_qualified_name_prefix() const;
+
 HEADER_DECLARATION_STATEMENT_END
 
 HEADER_TEMPLATE_SPECIALIZATION_SUPPORT_START
@@ -707,8 +728,8 @@ HEADER_TEMPLATE_SPECIALIZATION_SUPPORT_END
 
 HEADER_LIST_DECLARATIONS_START
      public:
-          void append_LIST_FUNCTION_NAME  ( LIST_ELEMENT_DATA_TYPE element );
-          void prepend_LIST_FUNCTION_NAME ( LIST_ELEMENT_DATA_TYPE element );
+          virtual void append_LIST_FUNCTION_NAME  ( LIST_ELEMENT_DATA_TYPE element );
+          virtual void prepend_LIST_FUNCTION_NAME ( LIST_ELEMENT_DATA_TYPE element );
 
      public:
        // New functions added
@@ -739,10 +760,12 @@ HEADER_GLOBAL_START
        // std::map<SgNode*,std::string> & get_mangledNameCache();
        // std::map<std::string, int> & get_shortMangledNameCache();
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
           virtual bool cfgIsIndexInteresting(unsigned int idx) const;
           virtual unsigned int cfgIndexForEnd() const;
+#endif
 
 #if 1
        // DQ (10/1/2009): Adding support for new name qualification.
@@ -801,10 +824,12 @@ HEADER_LIST_DECLARATIONS
                                          bool extractListFromBasicBlock = false);
       public:
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const;
           virtual bool cfgIsIndexInteresting(unsigned int) const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 
        // void prepend_statement(const SgStatementPtrList::iterator& where, SgStatement *what);
        // void append_statement(const SgStatementPtrList::iterator& where, SgStatement *what);
@@ -834,7 +859,9 @@ template <class Elemtype>
 inline bool
 StatementListInsertChild( SgStatement *parent, Rose_STL_Container<Elemtype*>& l,  SgStatement *target, 
                           SgStatement *n, bool inFront, bool extractFromBasicBlock, bool removeCurrent)
-   {
+   { // insert statement n before or after a target statement. The target statement should be one element of the statement list, l
+     // if removeCurrent is true, remove the target statement
+     // if extractFromBasicBlock is true AND n is a basic block, insert statements from n
 #if 0
      printf ("In StatementListInsertChild: l.size() = %zu \n",l.size());
      printf ("In StatementListInsertChild: inFront  = %s \n",inFront ? "true" : "false");
@@ -924,7 +951,7 @@ StatementListInsertChild( SgStatement *parent, Rose_STL_Container<Elemtype*>& l,
                        }
                   }
                  else
-                  {
+                  { // extract statements from n ,which is a basic block
                     SgStatementPtrList& nl = bn->get_statements();
                     for (SgStatementPtrList::iterator pp = nl.begin(); pp != nl.end(); ++pp)
                        {
@@ -965,11 +992,13 @@ HEADER_IF_STATEMENT_START
                                          bool extractListFromBasicBlock = false);
       public:
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const;
           virtual bool cfgIsIndexInteresting(unsigned int) const;
           virtual unsigned int cfgFindChildIndex(SgNode* n);
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 
        // DQ (2/22/2007): Added for uniform support of mangled names
           virtual SgName get_mangled_name() const;
@@ -985,7 +1014,6 @@ HEADER_IF_STATEMENT_START
 #endif
 
 HEADER_IF_STATEMENT_END
-
 
 HEADER_FOR_STATEMENT_START
 
@@ -1012,12 +1040,14 @@ HEADER_LIST_DECLARATIONS
 
           int replace_expression(SgExpression * original_expression, SgExpression * new_expression );
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const;
           virtual bool cfgIsIndexInteresting(unsigned int) const;
           virtual unsigned int cfgFindChildIndex(SgNode* n);
           virtual unsigned int cfgFindNextChildIndex(SgNode* n);
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 
        // DQ (2/22/2007): Added for uniform support of mangled names
           virtual SgName get_mangled_name() const;
@@ -1043,9 +1073,11 @@ HEADER_FOR_INIT_STATEMENT_START
                                          bool extractListFromBasicBlock = false);
         public:
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
@@ -1061,22 +1093,25 @@ HEADER_LIST_DECLARATIONS
 HEADER_FOR_INIT_STATEMENT_END
 
 HEADER_FORALL_STATEMENT_START
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const;
           virtual bool cfgIsIndexInteresting(unsigned int) const;
           virtual unsigned int cfgFindChildIndex(SgNode* n);
           virtual unsigned int cfgFindNextChildIndex(SgNode* n);
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 HEADER_FORALL_STATEMENT_END
 
 
 HEADER_CATCH_STATEMENT_SEQ_START
 HEADER_LIST_DECLARATIONS
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const;
           virtual bool cfgIsIndexInteresting(unsigned int) const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
-
+#endif
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
           virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
@@ -1154,9 +1189,15 @@ HEADER_LIST_DECLARATIONS
                                          bool extractListFromBasicBlock = false);
      public:  // (see comment above)
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
+
+       // DQ (5/29/2011): Added support for return type name qualification.
+      //! This function generates the qualified name prefix to be used with the return type.
+          SgName get_qualified_name_prefix_for_return_type() const;
 
 HEADER_FUNCTION_DECLARATION_STATEMENT_END
 
@@ -1166,9 +1207,11 @@ HEADER_LIST_DECLARATIONS
        // DQ (2/18/2006): Added general name mangling for all declarations (and some other IR nodes).
           virtual SgName get_mangled_name(void) const;
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
@@ -1188,11 +1231,12 @@ HEADER_LIST_DECLARATIONS
        // DQ (2/18/2006): Added general name mangling for all declarations (and some other IR nodes).
           virtual SgName get_mangled_name(void) const;
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
        // MD (7/09/2010): Added virtual CFG methods
           virtual unsigned int cfgIndexForEnd() const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
-          
+#endif          
 
 HEADER_CTOR_INITIALIZER_LIST_END
 
@@ -1225,11 +1269,13 @@ HEADER_FUNCTION_DEFINITION_STATEMENT_START
 
           SgName get_qualified_name() const;
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const;
           virtual bool cfgIsIndexInteresting(unsigned int) const;
           virtual unsigned int cfgFindChildIndex(SgNode* n);
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 
        // MD (09/20/2010): Accessor for preinitialization lists associated with 
        // this (constructor) definition. NULL if this has no such list.
@@ -1292,9 +1338,11 @@ HEADER_LIST_DECLARATIONS
 
           virtual SgSymbol* get_symbol_from_symbol_table() const;
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
@@ -1386,10 +1434,12 @@ HEADER_VARIABLE_DECLARATION_STATEMENT_START
           // void insert_variable  ( const SgInitializedNamePtrList::iterator & where, SgInitializedName* what );
 #endif
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const;
           virtual unsigned int cfgFindChildIndex(SgNode* n);
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
@@ -1579,9 +1629,11 @@ HEADER_CLASS_DECLARATION_STATEMENT_START
       //! Support for where the scope is explicitly required
           virtual bool hasExplicitScope() const;
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 
        // DQ (2/10/2007): I think this should have been marked virtual
           virtual SgSymbol* get_symbol_from_symbol_table() const;
@@ -1644,6 +1696,10 @@ HEADER_LIST_DECLARATIONS_2
 
 HEADER_CLASS_DEFINITION_STATEMENT_END
 
+HEADER_STMT_DECLARATION_STATEMENT_START
+          virtual SgName get_mangled_name (void) const;
+HEADER_STMT_DECLARATION_STATEMENT_END
+
 HEADER_TEMPLATE_INSTANTIATION_DEFINITION_STATEMENT_START
 
        // DQ (3/18/2004): Generate template name with arguments
@@ -1685,9 +1741,11 @@ HEADER_LIST_DECLARATIONS
        // DQ (2/6/2007): Get the associated symbol from the symbol table in the stored scope
           virtual SgSymbol* get_symbol_from_symbol_table() const;
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
@@ -1704,9 +1762,11 @@ HEADER_ENUM_DECLARATION_STATEMENT_END
 
 HEADER_EXPRESSION_STATEMENT_START
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 
        // DQ (12/6/2006): Added to support general replace functions.
           int replace_expression(SgExpression *,SgExpression *);
@@ -1731,9 +1791,11 @@ HEADER_LABEL_STATEMENT_START
        // function instead.
           SgName get_name() const ROSE_DEPRECATED_FUNCTION;
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 
        // DQ (2/10/2007): Marked as virtual to be consistent
           virtual SgSymbol* get_symbol_from_symbol_table() const;
@@ -1754,6 +1816,35 @@ HEADER_LABEL_STATEMENT_START
 HEADER_LABEL_STATEMENT_END
 
 
+HEADER_JAVA_LABEL_STATEMENT_START
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+          virtual bool cfgIsIndexInteresting(unsigned int idx) const;
+          virtual unsigned int cfgIndexForEnd() const;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
+
+// CAVE3 (09/30/2011): Not sure what we need to fixup for java label
+/*
+#if ALT_FIXUP_COPY
+       // DQ (11/7/2007): These need to be called separately (see documentation)
+          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
+          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
+          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
+#else
+       // DQ (10/5/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
+          virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
+#endif
+*/
+      // charles4: 09/13/2011 added to support Java (DQ (2/10/2007): Marked as virtual to be consistent)
+          virtual SgSymbol* get_symbol_from_symbol_table() const;
+
+HEADER_JAVA_LABEL_STATEMENT_END
+
+
+HEADER_WITH_STATEMENT_START
+HEADER_WITH_STATEMENT_END
+
 HEADER_WHILE_STATEMENT_START
        // void post_construction_initialization();
 #if 0
@@ -1765,11 +1856,13 @@ HEADER_WHILE_STATEMENT_START
                                          bool extractListFromBasicBlock = false);
         public:
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual bool cfgIsIndexInteresting(unsigned int) const;
           virtual unsigned int cfgIndexForEnd() const;
           virtual unsigned int cfgFindNextChildIndex(SgNode* n);
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 
        // DQ (2/22/2007): Added for uniform support of mangled names
           virtual SgName get_mangled_name() const;
@@ -1793,11 +1886,12 @@ HEADER_DO_WHILE_STATEMENT_START
                                          bool extractListFromBasicBlock = false);
          public:
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const;
           virtual bool cfgIsIndexInteresting(unsigned int) const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
-
+#endif
        // DQ (2/22/2007): Added for uniform support of mangled names
           virtual SgName get_mangled_name() const;
 
@@ -1827,10 +1921,12 @@ HEADER_SWITCH_STATEMENT_START
                                          bool extractListFromBasicBlock = false);
         public:
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const;
           virtual bool cfgIsIndexInteresting(unsigned int) const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 
        // DQ (2/22/2007): Added for uniform support of mangled names
           virtual SgName get_mangled_name() const;
@@ -1853,11 +1949,13 @@ HEADER_CASE_OPTION_STATEMENT_START
           virtual bool replace_child(SgStatement *,SgStatement *,
                                          bool extractListFromBasicBlock = false);
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const;
           virtual bool cfgIsIndexInteresting(unsigned int) const;
           virtual unsigned int cfgFindChildIndex(SgNode* n);
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
@@ -1887,10 +1985,12 @@ HEADER_LIST_DECLARATIONS
           virtual bool replace_child(SgStatement *,SgStatement *,
                                          bool extractListFromBasicBlock = false);
          public:
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const;
           virtual bool cfgIsIndexInteresting(unsigned int) const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
@@ -1920,9 +2020,11 @@ HEADER_CATCH_OPTION_STATEMENT_START
                                          bool extractListFromBasicBlock = false);
 
          public:
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
@@ -1948,10 +2050,12 @@ HEADER_DEFAULT_OPTION_STATEMENT_START
                                          bool extractListFromBasicBlock = false);
         public:
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const;
           virtual bool cfgIsIndexInteresting(unsigned int) const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
@@ -1967,29 +2071,32 @@ HEADER_DEFAULT_OPTION_STATEMENT_END
 
 
 HEADER_BREAK_STATEMENT_START
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const;
           virtual bool cfgIsIndexInteresting(unsigned int) const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
-
+#endif
 HEADER_BREAK_STATEMENT_END
 
 
 HEADER_CONTINUE_STATEMENT_START
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const;
           virtual bool cfgIsIndexInteresting(unsigned int) const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
-
+#endif
 HEADER_CONTINUE_STATEMENT_END
 
 
 HEADER_RETURN_STATEMENT_START
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
-
+#endif
           int replace_expression(SgExpression * original_expression, SgExpression * new_expression );
 
        // get lvalue
@@ -2005,10 +2112,12 @@ HEADER_GOTO_STATEMENT_START
                                          bool extractListFromBasicBlock = false);
         public:
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const;
           virtual bool cfgIsIndexInteresting(unsigned int) const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
@@ -2022,13 +2131,20 @@ HEADER_GOTO_STATEMENT_START
 
 HEADER_GOTO_STATEMENT_END
 
+HEADER_PYTHON_GLOBAL_STMT_START
+HEADER_LIST_DECLARATIONS
+HEADER_PYTHON_GLOBAL_STMT_END
+
+HEADER_PYTHON_PRINT_STMT_START
+HEADER_PYTHON_PRINT_STMT_END
 
 HEADER_ASM_STATEMENT_START
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
-
+#endif
        // DQ (7/26/2006): Need a type for the list of registers used in the clobber list
           typedef std::vector<SgInitializedName::asm_register_name_enum> AsmRegisterNameList;
 
@@ -2051,14 +2167,67 @@ HEADER_SPAWN_STATEMENT_START
 HEADER_SPAWN_STATEMENT_END
 
 
-HEADER_NULL_STATEMENT_START
+HEADER_JAVA_THROW_STATEMENT_START
 
+HEADER_JAVA_THROW_STATEMENT_END
+
+
+HEADER_JAVA_FOREACH_STATEMENT_START
+
+       public:
+       // charles4 (9/07/2011): Added for uniform support of mangled names
+          virtual SgName get_mangled_name() const;
+
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+          virtual bool cfgIsIndexInteresting(unsigned int idx) const;
+          virtual unsigned int cfgFindNextChildIndex(SgNode* n);
           virtual unsigned int cfgIndexForEnd() const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
+
+HEADER_JAVA_FOREACH_STATEMENT_END
+
+
+HEADER_JAVA_SYNCHRONIZED_STATEMENT_START
+
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+          virtual unsigned int cfgFindChildIndex(SgNode* n);
+          virtual unsigned int cfgIndexForEnd() const;
+          virtual bool cfgIsIndexInteresting(unsigned int) const;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
+
+HEADER_JAVA_SYNCHRONIZED_STATEMENT_END
+
+
+HEADER_ASSERT_STMT_START
+
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+          virtual unsigned int cfgIndexForEnd() const;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
+
+HEADER_ASSERT_STMT_END
+
+
+HEADER_NULL_STATEMENT_START
+
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+          virtual unsigned int cfgIndexForEnd() const;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 
 HEADER_NULL_STATEMENT_END
 
+HEADER_PASS_STATEMENT_START
+HEADER_PASS_STATEMENT_END
+
+HEADER_EXEC_STATEMENT_START
+HEADER_EXEC_STATEMENT_END
 
 HEADER_VARIANT_STATEMENT_START
 
@@ -2073,10 +2242,12 @@ HEADER_TYPEDEF_DECLARATION_STATEMENT_START
 
      protected:
           virtual bool replace_child(SgStatement *,SgStatement *,bool extractListFromBasicBlock = false);
+
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
-
+#endif
 
      public:
        // DQ (10/15/2004): added support for qualified names
@@ -2103,6 +2274,10 @@ HEADER_TYPEDEF_DECLARATION_STATEMENT_START
        // DQ (10/14/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
 #endif
+
+       // DQ (5/29/2011): Added to support for new qualified name generation
+      //! This function generates the qualified name prefix to be used with the base type of the typedef declaration.
+          SgName get_qualified_name_prefix_for_base_type() const;
 
      private:
        // GB (09/25/2007): Added this function as part of the traversal island fix.
@@ -2154,6 +2329,34 @@ HEADER_TEMPLATE_DECLARATION_STATEMENT_START
 #endif
 
 HEADER_TEMPLATE_DECLARATION_STATEMENT_END
+
+
+HEADER_TEMPLATE_CLASS_DECLARATION_STATEMENT_START
+HEADER_TEMPLATE_CLASS_DECLARATION_STATEMENT_END
+
+HEADER_TEMPLATE_FUNCTION_DECLARATION_STATEMENT_START
+HEADER_TEMPLATE_FUNCTION_DECLARATION_STATEMENT_END
+
+HEADER_TEMPLATE_MEMBER_FUNCTION_DECLARATION_STATEMENT_START
+HEADER_TEMPLATE_MEMBER_FUNCTION_DECLARATION_STATEMENT_END
+
+HEADER_TEMPLATE_CLASS_DEFINITION_STATEMENT_START
+
+     public:
+          SgTemplateClassDeclaration* get_declaration() const;
+          void set_declaration(SgTemplateClassDeclaration* new_val);
+
+          SgName get_qualified_name() const;
+          SgName get_mangled_name (void) const;
+          SgName get_mangled_qualified_name (int& i);
+
+HEADER_TEMPLATE_CLASS_DEFINITION_STATEMENT_END
+
+HEADER_TEMPLATE_FUNCTION_DEFINITION_STATEMENT_START
+HEADER_TEMPLATE_FUNCTION_DEFINITION_STATEMENT_END
+
+
+
 
 HEADER_TEMPLATE_INSTANTIATION_DECLARATION_STATEMENT_START
 
@@ -2324,9 +2527,11 @@ HEADER_PRAGMA_STATEMENT_START
        // DQ (2/18/2006): Added general name mangling for all declarations (and some other IR nodes).
           virtual SgName get_mangled_name(void) const;
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 
 HEADER_PRAGMA_STATEMENT_END
 
@@ -2414,9 +2619,11 @@ HEADER_NAMESPACE_ALIAS_DECLARATION_STATEMENT_END
 
 HEADER_USING_DIRECTIVE_STATEMENT_START
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 
        // DQ (2/18/2006): Added general name mangling for all declarations (and some other IR nodes).
           virtual SgName get_mangled_name(void) const;
@@ -2425,9 +2632,11 @@ HEADER_USING_DIRECTIVE_STATEMENT_END
 
 HEADER_USING_DECLARATION_STATEMENT_START
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 
 // DQ (7/21/2005): The using declaration can reference either a SgDeclarationStatement or a SgInitializedName
 // object thus we need a single more general function to return whatever it is.  Maybe not!
@@ -2535,14 +2744,17 @@ HEADER_ENTRY_STATEMENT_START
 HEADER_ENTRY_STATEMENT_END
 
 HEADER_FORTRAN_DO_START
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const;
           virtual bool cfgIsIndexInteresting(unsigned int) const;
           virtual unsigned int cfgFindChildIndex(SgNode* n);
           virtual unsigned int cfgFindNextChildIndex(SgNode* n);
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
           // Added for uniform support of mangled names, Liao, 3/11/2009
           virtual SgName get_mangled_name() const;
+
 HEADER_FORTRAN_DO_END
 
 HEADER_FORTRAN_NONBLOCKED_DO_START
@@ -2561,9 +2773,11 @@ HEADER_INTERFACE_STATEMENT_START
                e_last_interface_type       = 6  /*!< last value (upper bound on range of values, used in error checking) */
              };
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 
           virtual SgName get_mangled_name() const;
 HEADER_INTERFACE_STATEMENT_END
@@ -2573,10 +2787,12 @@ HEADER_PARAMETER_STATEMENT_END
 
 HEADER_COMMON_BLOCK_STATEMENT_START
           SgName get_mangled_name() const;
+
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
-
+#endif
 
           const SgCommonBlockObjectPtrList & get_block_list() const;
           SgCommonBlockObjectPtrList & get_block_list();
@@ -2584,9 +2800,12 @@ HEADER_COMMON_BLOCK_STATEMENT_END
 
 HEADER_MODULE_STATEMENT_START
           virtual SgName get_mangled_name() const;
+
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 
           std::vector<SgInterfaceStatement*> get_interfaces() const;
 
@@ -2600,17 +2819,21 @@ HEADER_MODULE_STATEMENT_START
 HEADER_MODULE_STATEMENT_END
 
 HEADER_CONTAINS_STATEMENT_START
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 
           virtual SgName get_mangled_name() const;
 HEADER_CONTAINS_STATEMENT_END
 
 HEADER_USE_STATEMENT_START
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 
           virtual SgName get_mangled_name() const;
 HEADER_USE_STATEMENT_END
@@ -2624,9 +2847,11 @@ HEADER_STOP_OR_PAUSE_STATEMENT_START
                e_pause
              };
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 
 HEADER_STOP_OR_PAUSE_STATEMENT_END
 
@@ -2654,69 +2879,91 @@ HEADER_IO_STATEMENT_START
 HEADER_IO_STATEMENT_END
 
 HEADER_PRINT_STATEMENT_START
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
      virtual unsigned int cfgIndexForEnd() const;
      virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
      virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 HEADER_PRINT_STATEMENT_END
 
 HEADER_READ_STATEMENT_START
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
      virtual unsigned int cfgIndexForEnd() const;
      virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
      virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 HEADER_READ_STATEMENT_END
 
 HEADER_WRITE_STATEMENT_START
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
      virtual unsigned int cfgIndexForEnd() const;
      virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
      virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 HEADER_WRITE_STATEMENT_END
 
 HEADER_OPEN_STATEMENT_START
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
      virtual unsigned int cfgIndexForEnd() const;
      virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
      virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 HEADER_OPEN_STATEMENT_END
 
 HEADER_CLOSE_STATEMENT_START
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
      virtual unsigned int cfgIndexForEnd() const;
      virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
      virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 HEADER_CLOSE_STATEMENT_END
 
 HEADER_INQUIRE_STATEMENT_START
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
      virtual unsigned int cfgIndexForEnd() const;
      virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
      virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 HEADER_INQUIRE_STATEMENT_END
 
 HEADER_FLUSH_STATEMENT_START
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
      virtual unsigned int cfgIndexForEnd() const;
      virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
      virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 HEADER_FLUSH_STATEMENT_END
 
 HEADER_REWIND_STATEMENT_START
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
      virtual unsigned int cfgIndexForEnd() const;
      virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
      virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 HEADER_REWIND_STATEMENT_END
 
 HEADER_BACKSPACE_STATEMENT_START
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
      virtual unsigned int cfgIndexForEnd() const;
      virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
      virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 HEADER_BACKSPACE_STATEMENT_END
 
 HEADER_ENDFILE_STATEMENT_START
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
      virtual unsigned int cfgIndexForEnd() const;
      virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
      virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 HEADER_ENDFILE_STATEMENT_END
 
 HEADER_WAIT_STATEMENT_START
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
      virtual unsigned int cfgIndexForEnd() const;
      virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
      virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 HEADER_WAIT_STATEMENT_END
 
 
@@ -2726,9 +2973,12 @@ HEADER_BLOCK_DATA_STATEMENT_END
 
 HEADER_IMPLICIT_STATEMENT_START
      SgName get_mangled_name() const;
+
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
      virtual unsigned int cfgIndexForEnd() const;
      virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
      virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 
 HEADER_IMPLICIT_STATEMENT_END
 
@@ -2737,16 +2987,20 @@ HEADER_STATEMENT_FUNCTION_STATEMENT_START
 HEADER_STATEMENT_FUNCTION_STATEMENT_END
 
 HEADER_WHERE_STATEMENT_START
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
      virtual unsigned int cfgIndexForEnd() const;
      virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
      virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 
 HEADER_WHERE_STATEMENT_END
 
 HEADER_ELSE_WHERE_STATEMENT_START
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
      virtual unsigned int cfgIndexForEnd() const;
      virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
      virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 
 HEADER_ELSE_WHERE_STATEMENT_END
 
@@ -2755,9 +3009,12 @@ HEADER_NULLIFY_STATEMENT_END
 
 HEADER_EQUIVALENCE_STATEMENT_START
      SgName get_mangled_name() const;
+
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
      virtual unsigned int cfgIndexForEnd() const;
      virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
      virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 
 HEADER_EQUIVALENCE_STATEMENT_END
 
@@ -2766,9 +3023,12 @@ HEADER_DERIVED_TYPE_STATEMENT_START
 HEADER_DERIVED_TYPE_STATEMENT_END
 
 HEADER_ATTRIBUTE_SPECIFICATION_STATEMENT_START
+
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
      virtual unsigned int cfgIndexForEnd() const;
      virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
      virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 
      public:
       //! Fortran specific classification of attribute statements (each corresponds to a declaration attribute).
@@ -2832,9 +3092,11 @@ HEADER_SEQUENCE_STATEMENT_END
 
 
 HEADER_ARITHMETIC_IF_STATEMENT_START
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 
 HEADER_ARITHMETIC_IF_STATEMENT_END
 
@@ -2845,11 +3107,13 @@ HEADER_ASSIGN_STATEMENT_END
 
 HEADER_COMPUTED_GOTO_STATEMENT_START
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const;
           virtual bool cfgIsIndexInteresting(unsigned int) const;
           virtual unsigned int cfgFindChildIndex(SgNode* n);
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 
 #if 0
        // DQ (12/30/2007): This list is no longer requires since we ave build the IR node for a SgLabelRefExp
@@ -2867,9 +3131,11 @@ HEADER_ASSIGNED_GOTO_STATEMENT_END
 
 
 HEADER_NAMELIST_STATEMENT_START
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 
           virtual SgName get_mangled_name() const;
 
@@ -2879,9 +3145,11 @@ HEADER_NAMELIST_STATEMENT_END
 
 
 HEADER_IMPORT_STATEMENT_START
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 
           virtual SgName get_mangled_name() const;
 
@@ -2891,19 +3159,23 @@ HEADER_IMPORT_STATEMENT_END
 
 
 HEADER_ASSOCIATE_STATEMENT_START
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 
           virtual SgName get_mangled_name() const;
 HEADER_ASSOCIATE_STATEMENT_END
 
 
 HEADER_FORMAT_STATEMENT_START
+
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
-
+#endif
           virtual SgName get_mangled_name() const;
 
        // const SgFormatItemPtrList & get_format_item_list() const;
@@ -2953,12 +3225,14 @@ HEADER_LIST_DECLARATIONS
 
           int replace_expression(SgExpression * original_expression, SgExpression * new_expression );
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const;
           virtual bool cfgIsIndexInteresting(unsigned int) const;
           virtual unsigned int cfgFindChildIndex(SgNode* n);
           virtual unsigned int cfgFindNextChildIndex(SgNode* n);
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 
          // DQ (2/22/2007): Added for uniform support of mangled names
           virtual SgName get_mangled_name() const;
@@ -3014,8 +3288,8 @@ SgStatement::remove_statement(SgStatement *target)
      bool r = replace_child(target, 0);
      assert(r);
    }
-
-void
+//! Insert newstmt before or after the target statement, which should be a child statement of this statement
+void 
 SgStatement::insert_statement(SgStatement* target, SgStatement* newstmt, bool inFront)
    {
      bool r = insert_child( target, newstmt, inFront, false);
@@ -3126,7 +3400,7 @@ SgStatement::replace_child(SgStatement *target,SgStatement *newstmt, bool extrac
      printf ("$CLASSNAME::replace_child(): ERROR: virtual function called in base class by mistake in %s (exiting at ...) \n",sage_class_name());
      ROSE_ASSERT(newstmt->get_file_info() != NULL);
      newstmt->get_file_info()->display("called from $CLASSNAME::insert_child()");
-     ROSE_ABORT();
+     ROSE_ASSERT(false);
 
      return false;
    }
@@ -3137,7 +3411,7 @@ SgStatement::insert_child(SgStatement* target, SgStatement* newstmt, bool inFron
      printf ("$CLASSNAME::insert_child(): ERROR: virtual function called in base class by mistake in %s (exiting at ...) \n",sage_class_name());
      ROSE_ASSERT(newstmt->get_file_info() != NULL);
      newstmt->get_file_info()->display("called from $CLASSNAME::insert_child()");
-     ROSE_ABORT();
+     ROSE_ASSERT(false);
 
      return false;
    }
@@ -3212,6 +3486,14 @@ SgStatement::get_scope(void) const
              {
             // Handle case of SgFunctionDeclaration or SgMemberFunctionDeclaration
                ROSE_ASSERT (stmt->get_parent() != NULL);
+
+               if ( SageInterface::is_Python_language() && isSgLambdaRefExp(stmt->get_parent()) ) {
+                   std::cout << "warning: python. Fetching scope of lambda parameters from lambda's scope." << std::endl;
+                   returnScope = SageInterface::getScope(stmt->get_parent());
+                   ROSE_ASSERT( returnScope != NULL );
+                   break;
+               }
+
                SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(stmt->get_parent());
                ROSE_ASSERT (functionDeclaration != NULL);
 #if 0
@@ -3715,6 +3997,14 @@ SgScopeStatement::count_symbol(const SgName& n)
      return p_symbol_table->count(n);
    }
 
+size_t
+SgScopeStatement::count_alias_symbol(const SgName& n)
+   {
+  // DQ (5/14/2011): Added support to count just the alias symbols that match the input name (key).
+     assert (p_symbol_table != NULL);
+     return p_symbol_table->count_aliases(n);
+   }
+
 // DQ (2/10/2007): Added test function for existence of symbols
 bool
 SgScopeStatement::symbol_exists ( const SgName & nm , SgSymbol *sp ) const
@@ -3878,6 +4168,16 @@ SgScopeStatement::lookup_label_symbol(const SgName& n) const
    {
      assert (p_symbol_table != NULL);
      return p_symbol_table->find_label(n);
+   }
+
+//
+// charles4: function added 09/12/2011 identical with the same function for SgLabelSymbol
+//
+SgJavaLabelSymbol*
+SgScopeStatement::lookup_java_label_symbol(const SgName& n) const
+   {
+     assert (p_symbol_table != NULL);
+     return p_symbol_table->find_java_label(n);
    }
 
 // DQ (9/7/2006): Previously removed functionality, restored by request from Beata at ANL.
@@ -4153,6 +4453,11 @@ SgScopeStatement::containsOnlyDeclarations() const
      bool returnValue = false;
      switch ( variantT() )
         {
+       // DQ (9/5/2011): Added support for SgJavaLabelStatement
+          case V_SgJavaLabelStatement:
+       // charles4 (9/7/2011): Added support for SgJavaForEachStatement
+          case V_SgJavaForEachStatement:
+
        // DQ (11/30/2007): Added more Fortran support.
           case V_SgAssociateStatement:
 
@@ -4171,6 +4476,9 @@ SgScopeStatement::containsOnlyDeclarations() const
           case V_SgCAFWithTeamStatement: //FMZ (2/18/2009)
                returnValue = false;
                break;
+
+       // DQ (6/11/2011): Added support for new Template IR nodes.
+          case V_SgTemplateClassDefinition:
 
           case V_SgClassDefinition:
           case V_SgTemplateInstantiationDefn:
@@ -4253,7 +4561,7 @@ SgScopeStatement::insertStatementInScope ( SgStatement* newTransformationStateme
                
 #if 0
                printf ("Exiting after call to insert_statement in $CLASSNAME::insertStatementInScope() \n");
-               ROSE_ABORT();
+               ROSE_ASSERT(false);
 #endif
              }
             else
@@ -4327,7 +4635,7 @@ SgScopeStatement::insertStatementInScope ( SgStatement* newTransformationStateme
                ROSE_ASSERT(newTransformationStatement->get_parent() != NULL);
 #if 0
                printf ("Exiting after call to insert_statement in $CLASSNAME::insertStatementInScope() \n");
-               ROSE_ABORT();
+               ROSE_ASSERT(false);
 #endif
              }
             else
@@ -4378,6 +4686,8 @@ SgScopeStatement::getDeclarationList ()
      SgDeclarationStatementPtrList* currentStatementList = NULL;
      switch ( currentScope->variantT() )
         {
+       // DQ (6/11/2011): Added support for new template IR nodes.
+          case V_SgTemplateClassDefinition:
           case V_SgClassDefinition:
              {
                SgClassDefinition* classDefinitionScope = isSgClassDefinition(currentScope);
@@ -4433,6 +4743,8 @@ SgScopeStatement::getDeclarationList () const
   // SgDeclarationStatementPtrList* currentStatementList = NULL;
      switch ( currentScope->variantT() )
         {
+       // DQ (6/11/2011): Added support for new template IR nodes.
+          case V_SgTemplateClassDefinition:
           case V_SgClassDefinition:
              {
                const SgClassDefinition* classDefinitionScope = isSgClassDefinition(currentScope);
@@ -4580,6 +4892,8 @@ SgScopeStatement::getStatementList ()
                break;
              }
 
+       // DQ (6/11/2011): Added support for new template IR nodes.
+          case V_SgTemplateClassDefinition:
        // DQ (1/30/2007): Added this case!
           case V_SgClassDefinition:
              {
@@ -4654,7 +4968,7 @@ SgScopeStatement::getStatementList ()
 #endif
 
                printf ("getStatementList() return value not defined for SgIfStmt containing true and false bodies (use generateStatementList() to form copy of merges lists) \n");
-               ROSE_ABORT();
+               ROSE_ASSERT(false);
                break;
              }
 
@@ -4697,7 +5011,7 @@ SgScopeStatement::getStatementList ()
           default:
                printf ("ERROR: default reached in switch (getStatementList()) currentScope = %s \n",currentScope->sage_class_name());
                printf ("Note: this function is not defined for all IR nodes derived from SgScopeStatement (use SgScopeStatement::containsOnlyDeclarations() to check)\n");
-               ROSE_ABORT();
+               ROSE_ASSERT(false);
                break;
         }
 
@@ -4741,6 +5055,8 @@ SgScopeStatement::getStatementList () const
                break;
              }
 
+       // DQ (6/11/2011): Added support for new template IR nodes.
+          case V_SgTemplateClassDefinition:
        // DQ (1/30/2007): Added this case!
           case V_SgClassDefinition:
              {
@@ -4772,7 +5088,17 @@ SgScopeStatement::getStatementList () const
                break;
              }
 
-// Liao, 6/17/2008, upc_forall statement             
+          case V_SgJavaForEachStatement:
+             { 
+               const SgJavaForEachStatement* forScope = isSgJavaForEachStatement(currentScope);
+               ROSE_ASSERT (forScope != NULL);
+               ROSE_ASSERT (forScope->get_loop_body() != NULL);
+            // charles4: 9/07/2011
+               return isSgBasicBlock(forScope->get_loop_body()) ? isSgBasicBlock(forScope->get_loop_body())->getStatementList() : emptyStatementList;
+               break;
+             }
+
+       // Liao, 6/17/2008, upc_forall statement             
           case V_SgUpcForAllStatement:
              { 
                const SgUpcForAllStatement* forScope = isSgUpcForAllStatement(currentScope);
@@ -4829,7 +5155,7 @@ SgScopeStatement::getStatementList () const
 #endif
 
                printf ("getStatementList() const return value not defined for SgIfStmt containing true and false bodies (use generateStatementList() const to form copy of merges lists) \n");
-               ROSE_ABORT();
+               ROSE_ASSERT(false);
                break;
              }
 
@@ -4893,7 +5219,7 @@ SgScopeStatement::getStatementList () const
                break;
              }
 
-          // FMZ (CoArray with team)
+       // FMZ (CoArray with team)
           case V_SgCAFWithTeamStatement:
              {
                const SgCAFWithTeamStatement* teamScope = isSgCAFWithTeamStatement(currentScope);
@@ -4903,6 +5229,14 @@ SgScopeStatement::getStatementList () const
                break;
              }
 
+       // DQ (9/5/2011): Added support for SgJavaLabelStatement, but not certain if this is correct implementation.
+          case V_SgJavaLabelStatement:
+             {
+               const SgJavaLabelStatement* javaLabelStatement = isSgJavaLabelStatement(currentScope);
+               ROSE_ASSERT (javaLabelStatement != NULL);
+               return isSgBasicBlock(javaLabelStatement->get_statement()) ? isSgBasicBlock(javaLabelStatement->get_statement())->getStatementList() : emptyStatementList;
+               break;
+             }
 
           default:
                printf ("ERROR: default reached in switch (getStatementList() const) currentScope = %s \n",currentScope->sage_class_name());
@@ -5235,6 +5569,130 @@ SgScopeStatement::setCaseInsensitive(bool b)
    }
 
 
+bool
+SgScopeStatement::isNamedScope()
+   {
+  // DQ (5/11/2011): Added support for new name qualification.  If this is associated with 
+  // a scope that has a name then return true, else false. This is used to support the name 
+  // qualification.
+
+     bool result = false;
+     switch (this->variantT())
+        {
+       // Though it might seem incorrect, since functions have names, the SgFunctionDefinition 
+       // is not a named scope for purposes of name qualification.
+       // case SgFunctionDefinition:
+
+          case V_SgBasicBlock:
+             {
+            // A SgBasicBlock is used inside of a few declarations to define a new scope.
+            // This for this case, the enum can't nest other scopes. But field values can 
+            // be qualified, so this is a named scope when it is used in an SgEnumDeclaration.
+               SgEnumDeclaration* enumDeclaration = isSgEnumDeclaration(this->get_parent());
+               if (enumDeclaration != NULL)
+                  {
+                    result = true;
+                  }
+               break;
+             }
+
+       // case V_SgGlobal:  // global has the name "::" but it does not have an associated declaration.
+          case V_SgClassDefinition:
+          case V_SgTemplateInstantiationDefn:
+          case V_SgNamespaceDefinitionStatement:
+             {
+               result = true;
+               break;
+             }
+
+          default:
+             {
+               printf ("Default reached in SgScopeStatement::isNamedScope(): scope = %s \n",this->class_name().c_str());
+#if 0
+               ROSE_ASSERT(false);
+#endif
+             }
+        }
+      
+     return result;
+   }
+
+// DQ (5/11/2011): Added support for new name qualification implementation.
+//! Some scopes have associated names for purposed of name qualification. This generates the associated name.
+SgName
+SgScopeStatement::associatedScopeName()
+   {
+     SgName name;
+     if (isNamedScope() == true)
+        {
+          SgDeclarationStatement* declaration = isSgDeclarationStatement(this->get_parent());
+          ROSE_ASSERT(declaration != NULL);
+          switch (declaration->variantT())
+             {
+               case V_SgTemplateClassDeclaration:
+                  {
+                 // DQ (6/11/2011): Since we don't handle the case of SgTemplateDeclaration, I don't think we have to handle this case.
+                    printf ("ERROR: I think this should be an error for now at least...\n");
+                    ROSE_ASSERT(false);
+                    break;
+                  }
+                
+               case V_SgClassDeclaration:
+                  {
+                    SgClassDeclaration* namedDeclaration = isSgClassDeclaration(declaration);
+                    name = namedDeclaration->get_name();
+                    break;
+                  }
+
+            // The name stored in a SgTemplateInstantiationDecl is different from that in the SgClassDeclaration base class, as I recall.
+               case V_SgTemplateInstantiationDecl:
+                  {
+                    SgTemplateInstantiationDecl* namedDeclaration = isSgTemplateInstantiationDecl(declaration);
+                    name = namedDeclaration->get_name();
+                    break;
+                  }
+
+               case V_SgNamespaceDeclarationStatement:
+                  {
+                    SgNamespaceDeclarationStatement* namedDeclaration = isSgNamespaceDeclarationStatement(declaration);
+                    name = namedDeclaration->get_name();
+                    break;
+                  }
+
+               case V_SgEnumDeclaration:
+                  {
+                    SgEnumDeclaration* namedDeclaration = isSgEnumDeclaration(declaration);
+                    name = namedDeclaration->get_name();
+                    break;
+                  }
+#if 0
+               case V_SgGlobal:
+                  {
+                 // The name of global scope (as used for name qualification).
+                    name = "::";
+                    break;
+                  }
+#endif
+               default:
+                  {
+                    printf ("Default reached in SgScopeStatement::associatedScopeName(): scope = %s \n",this->class_name().c_str());
+                    ROSE_ASSERT(false);
+                  }
+             }
+        }
+#if 0
+       else
+        {
+          if (isSgGlobal(this) != NULL)
+             {
+               name = "::";
+             }
+        }
+#endif
+
+     return name;
+   }
+
 SOURCE_SCOPE_STATEMENT_END
 
 
@@ -5397,7 +5855,13 @@ SgGlobal::get_qualified_name() const
   // DQ (10/11/2006): Under the new name qualification, we must traverse all the way
   // to global scope, and include global scope to get test2006_157.C correct.
   // return SgName ("");
-     return SgName ("::");
+
+     std::string globalScopeDelimiter;
+     if (SageInterface::is_Java_language())
+         globalScopeDelimiter = "";
+     else
+         globalScopeDelimiter = "::";
+     return SgName (globalScopeDelimiter);
    }
 
 SgName
@@ -5537,7 +6001,7 @@ Sgparse ( $PARENT_GRAMMARS_PREFIX_Global* Xptr )
         {
        // it is an error for isRootGrammar() == true
           printf ("ERROR: isRootGrammar() == true in SgScopeStatement::parse ( $PARENT_GRAMMARS_PREFIX_ScopeStatement* X )! \n");
-          ROSE_ABORT();
+          ROSE_ASSERT(false);
         }
 
      ROSE_ASSERT(Xptr->getGrammar()->isRootGrammar() == false);
@@ -5617,6 +6081,37 @@ void
 SgDeclarationStatement::set_qualifiedNameList( const SgQualifiedNamePtrList & x )
    {
      p_qualifiedNameList = x;
+   }
+
+SgName
+SgDeclarationStatement::get_qualified_name_prefix() const
+   {
+  // DQ (5/29/2011): Added to support for new qualified name generation.
+  // This only applies to specific IR nodes:
+  //    SgFunctionDeclaration (for the function name)
+  //    SgFunctionDeclaration (for the return type)
+  //    SgUsingDeclarationStatement (for references to a declaration (e.g. namespace or class))
+  //    SgUsingDeclarationStatement (for references to a SgInitializedName)
+  //    SgUsingDirectiveStatement
+  //    SgVariableDeclaration 
+  //    SgTypedefDeclaration
+
+  // DQ (5/28/2011): We have to handle the name qualification directly since types can be qualified 
+  // different and so it depends upon where the type is referenced.  Thus the qualified name is 
+  // stored in a map to the IR node that references the type.
+     SgName nameQualifier;
+     std::map<SgNode*,std::string>::iterator i = SgNode::get_globalQualifiedNameMapForNames().find(const_cast<SgDeclarationStatement*>(this));
+  // ROSE_ASSERT(i != SgNode::get_globalQualifiedNameMapForNames().end());
+
+     if (i != SgNode::get_globalQualifiedNameMapForNames().end())
+        {
+          nameQualifier = i->second;
+       // printf ("Found a valid name qualification: nameQualifier %s \n",nameQualifier.str());
+        }
+
+  // printf ("nameQualifier for SgDeclarationStatement = %s = %s \n",class_name().c_str(),nameQualifier.str());
+
+     return nameQualifier;
    }
 
 void
@@ -5818,6 +6313,7 @@ resetTemplateNamesInScope ( SgScopeStatement* scope )
                case V_SgWhileStmt:
                case V_SgDoWhileStmt:
                case V_SgForStatement:
+               case V_SgJavaForEachStatement:
                   {
                  // Nothing to do here, I think, unless we have to reset template function names
                     break;
@@ -6731,6 +7227,13 @@ SgDeclarationStatement::generate_alternative_name_for_unnamed_declaration_in_sco
   // Now generate the unique string for the declaration (use the data/enum members where possible)
      switch(variantT())
         {
+          case V_SgTemplateClassDeclaration:
+             {
+               printf ("ERROR: case not handled for SgTemplateClassDeclaration \n");
+               ROSE_ASSERT(false);
+               break;
+             }
+
           case V_SgClassDeclaration:
              {
             // case of "class { int x; }; in global scope
@@ -7117,7 +7620,7 @@ void
 SgBasicBlock::append_statement(SgStatement * what) 
    {
 //   printf ("In $CLASSNAME::append_statement(): Call to insert_statement() commented out \n");
-//   ROSE_ABORT();
+//   ROSE_ASSERT(false);
 
      get_statements().push_back(what);
      what->set_parent(this);
@@ -7196,7 +7699,9 @@ SgBasicBlock::replace_child(SgStatement *target,SgStatement *newstmt, bool extra
    {
      return  StatementListInsertChild( this, p_statements, target, newstmt, true, extractBasicBlock, true);
    }
-
+//! insert newstmt before or after target. If extractBasicBlock is true AND newstmt is a basic
+//block, insert statements from newstmt instead of inserting newstmt.
+//target should be a child statement within this SgBasicBlock.
 bool
 SgBasicBlock::insert_child(SgStatement* target, SgStatement* newstmt, bool inFront, bool extractBasicBlock)
    {
@@ -7821,6 +8326,23 @@ SgFunctionDeclaration::post_construction_initialization()
   // DQ (7/31/2006): Explicit initialization of this data member is required!
   // JJW (8/6/2008): It probably isn't now that p_exceptionSpecification is a vector
      p_exceptionSpecification.clear();
+
+  // DQ (5/14/2011): Added to support name qualification on types referenced by template arguments.
+     p_name_qualification_length     = 0;
+     p_type_elaboration_required     = false;
+     p_global_qualification_required = false;
+
+  // DQ (5/14/2011): Added to support name qualification on types referenced by template arguments.
+     p_name_qualification_length_for_return_type     = 0;
+     p_type_elaboration_required_for_return_type     = false;
+     p_global_qualification_required_for_return_type = false;
+
+#if 0 // awaiting resolution of abstract handle bug
+  // driscoll6 (6/15/11) Support for python function decorators.
+     SgExprListExp* decorators = SageBuilder::buildExprListExp();
+     set_decoratorList(decorators);
+     decorators->set_parent(this);
+#endif
    }
 
 SgType*
@@ -8424,6 +8946,32 @@ SgFunctionDeclaration::get_symbol_from_symbol_table() const
   // return get_scope()->get_symbol_table()->find(this);
    }
 
+
+SgName
+SgFunctionDeclaration::get_qualified_name_prefix_for_return_type() const
+   {
+  // DQ (5/29/2011): Added to support for new qualified name generation.
+
+  // DQ (5/28/2011): We have to handle the name qualification directly since types can be qualified 
+  // different and so it depends upon where the type is referenced.  Thus the qualified name is 
+  // stored in a map to the IR node that references the type.
+     SgName nameQualifier;
+     std::map<SgNode*,std::string>::iterator i = SgNode::get_globalQualifiedNameMapForTypes().find(const_cast<SgFunctionDeclaration*>(this));
+  // ROSE_ASSERT(i != SgNode::get_globalQualifiedNameMapForNames().end());
+
+     if (i != SgNode::get_globalQualifiedNameMapForTypes().end())
+        {
+          nameQualifier = i->second;
+       // printf ("Found a valid name qualification: nameQualifier %s \n",nameQualifier.str());
+        }
+
+  // printf ("nameQualifier for SgFunctionDeclaration = %s = %s \n",class_name().c_str(),nameQualifier.str());
+
+     return nameQualifier;
+   }
+
+
+
 SOURCE_FUNCTION_DECLARATION_STATEMENT_END
 
 
@@ -8610,7 +9158,7 @@ Sgparse ( $PARENT_GRAMMARS_PREFIX_FunctionDeclaration* Xptr )
         {
        // it is an error for isRootGrammar() == true
           printf ("ERROR: isRootGrammar() == true in SgScopeStatement::parse ( $PARENT_GRAMMARS_PREFIX_ScopeStatement* X )! \n");
-          ROSE_ABORT();
+          ROSE_ASSERT(false);
         }
 
      ROSE_ASSERT(Xptr->getGrammar()->isRootGrammar() == false);
@@ -8891,7 +9439,7 @@ Sgparse ( $PARENT_GRAMMARS_PREFIX_FunctionDefinition* Xptr )
         {
        // it is an error for isRootGrammar() == true
           printf ("ERROR: isRootGrammar() == true in SgScopeStatement::parse ( $PARENT_GRAMMARS_PREFIX_ScopeStatement* X )! \n");
-          ROSE_ABORT();
+          ROSE_ASSERT(false);
         }
 
      ROSE_ASSERT(Xptr->getGrammar()->isRootGrammar() == false);
@@ -10375,6 +10923,15 @@ SgClassDeclaration::compute_classDefinition() const
 
 SOURCE_CLASS_DECLARATION_STATEMENT_END
 
+SOURCE_STMT_DECLARATION_STATEMENT_START
+
+SgName
+SgStmtDeclarationStatement::get_mangled_name (void) const {
+    return SgName("__stmt__decl__stmt__");
+}
+
+SOURCE_STMT_DECLARATION_STATEMENT_END
+
 SOURCE_TEMPLATE_INSTANTIATION_DECLARATION_STATEMENT_START
 void
 SgTemplateInstantiationDecl::post_construction_initialization()
@@ -10781,7 +11338,11 @@ SgClassDefinition::get_declaration() const
    {
   // QY: 10-4-04 removed declaration pointer. use parent pointer instead
      ROSE_ASSERT(this != NULL);
-     SgClassDeclaration *decl= isSgClassDeclaration(get_parent());
+
+     ROSE_ASSERT(get_parent() != NULL);
+  // printf ("In SgClassDefinition::get_declaration(): get_parent() = %p = %s \n",get_parent(),get_parent()->class_name().c_str());
+
+     SgClassDeclaration *decl = isSgClassDeclaration(get_parent());
      assert( get_parent() == NULL || decl != NULL ); 
      return decl;
    }
@@ -11257,6 +11818,30 @@ SgLabelStatement::get_symbol_from_symbol_table() const
 SOURCE_LABEL_STATEMENT_END
 
 
+SOURCE_JAVA_LABEL_STATEMENT_START
+
+void
+SgJavaLabelStatement::post_construction_initialization()
+   {
+   }
+
+// charles4: 09/13/2011 - Adapted from SgLabelStatement to support Java.
+// DQ (2/6/2007): Get the associated symbol from the symbol table in the stored scope
+SgSymbol*
+SgJavaLabelStatement::get_symbol_from_symbol_table() const
+   {
+#if 0
+     ROSE_ASSERT(get_scope() != NULL);
+     ROSE_ASSERT(get_scope()->get_symbol_table() != NULL);
+     return get_scope()->get_symbol_table()->find(this);
+#else
+     return this -> get_symbol_table() -> find(this);
+#endif
+   }
+
+SOURCE_JAVA_LABEL_STATEMENT_END
+
+
 SOURCE_WHILE_STATEMENT_START
 void
 SgWhileStmt::post_construction_initialization()
@@ -11304,6 +11889,8 @@ SgWhileStmt::get_mangled_name(void) const
 
 SOURCE_WHILE_STATEMENT_END
 
+SOURCE_WITH_STATEMENT_START
+SOURCE_WITH_STATEMENT_END
 
 SOURCE_DO_WHILE_STATEMENT_START
 void
@@ -11825,6 +12412,38 @@ SgGotoStatement::replace_child(SgStatement *target,SgStatement *newstmt, bool ex
 
 SOURCE_GOTO_STATEMENT_END
 
+SOURCE_PYTHON_PRINT_STMT_START
+
+void
+SgPythonPrintStmt::post_construction_initialization() {
+    if (get_destination() != NULL)
+        get_destination()->set_parent(this);
+    if (get_values() != NULL)
+        get_values()->set_parent(this);
+}
+
+SOURCE_PYTHON_PRINT_STMT_END
+
+SOURCE_PYTHON_GLOBAL_STMT_START
+
+void
+SgPythonGlobalStmt::post_construction_initialization() {}
+
+void
+SgPythonGlobalStmt::append_name(SgInitializedName* name) {
+    ROSE_ASSERT(name);
+    name->set_parent(this);
+    get_names().push_back(name);
+}
+
+void
+SgPythonGlobalStmt::prepend_name(SgInitializedName* name) {
+    ROSE_ASSERT(name);
+    name->set_parent(this);
+    get_names().insert(get_names().begin(), name);
+}
+
+SOURCE_PYTHON_GLOBAL_STMT_END
 
 SOURCE_ASM_STATEMENT_START
 
@@ -11921,6 +12540,40 @@ SgSpawnStmt::post_construction_initialization()
 SOURCE_SPAWN_STATEMENT_END
 
 
+SOURCE_JAVA_THROW_STATEMENT_START
+
+void
+SgJavaThrowStatement::post_construction_initialization()
+   {}
+
+SOURCE_JAVA_THROW_STATEMENT_END
+
+
+SOURCE_JAVA_FOREACH_STATEMENT_START
+
+void
+SgJavaForEachStatement::post_construction_initialization()
+   {}
+
+// charles4 (9/07/2011): Added to provide uniform support of mangle names for all scopes
+SgName
+SgJavaForEachStatement::get_mangled_name(void) const
+   {
+     return SgName ("");
+   }
+
+SOURCE_JAVA_FOREACH_STATEMENT_END
+
+SOURCE_JAVA_SYNCHRONIZED_STATEMENT_START
+
+void
+SgJavaSynchronizedStatement::post_construction_initialization()
+   {}
+
+SOURCE_JAVA_SYNCHRONIZED_STATEMENT_END
+
+
+
 SOURCE_NULL_STATEMENT_START
 
 void
@@ -11929,6 +12582,24 @@ SgNullStatement::post_construction_initialization()
 
 SOURCE_NULL_STATEMENT_END
 
+SOURCE_PASS_STATEMENT_START
+
+void
+SgPassStatement::post_construction_initialization()
+   {}
+
+SOURCE_PASS_STATEMENT_END
+
+SOURCE_ASSERT_STMT_START
+
+void
+SgAssertStmt::post_construction_initialization()
+   {}
+
+SOURCE_ASSERT_STMT_END
+
+SOURCE_EXEC_STATEMENT_START
+SOURCE_EXEC_STATEMENT_END
 
 SOURCE_VARIANT_STATEMENT_START
 
@@ -12002,6 +12673,36 @@ SgTypedefDeclaration::get_qualified_name() const
 
      return returnName;
    }
+
+SgName
+SgTypedefDeclaration::get_qualified_name_prefix_for_base_type() const
+   {
+  // DQ (5/29/2011): Added to support for new qualified name generation.
+  // this function has a different name from the base class since it requires 
+  // a different definition to support using the SgNode::get_globalQualifiedNameMapForTypes() 
+  // function instead of the SgNode::get_globalQualifiedNameMapForNames() function.
+  // This function generates the qualified name prefix to be used with 
+  // the base type of the typedef declaration. 
+
+  // DQ (5/28/2011): We have to handle the name qualification directly since types can be qualified 
+  // different and so it depends upon where the type is referenced.  Thus the qualified name is 
+  // stored in a map to the IR node that references the type.
+     SgName nameQualifier;
+     std::map<SgNode*,std::string>::iterator i = SgNode::get_globalQualifiedNameMapForTypes().find(const_cast<SgTypedefDeclaration*>(this));
+  // ROSE_ASSERT(i != SgNode::get_globalQualifiedNameMapForNames().end());
+
+     if (i != SgNode::get_globalQualifiedNameMapForTypes().end())
+        {
+          nameQualifier = i->second;
+       // printf ("Found a valid name qualification: nameQualifier %s \n",nameQualifier.str());
+        }
+
+  // printf ("nameQualifier for SgFunctionDeclaration = %s = %s \n",class_name().c_str(),nameQualifier.str());
+
+     return nameQualifier;
+   }
+
+
 
 // RV (1/30/2006): Revised to follow typedef chains to their base types.
 SgName
@@ -12228,6 +12929,98 @@ SgTemplateDeclaration::get_symbol_from_symbol_table() const
    }
 
 SOURCE_TEMPLATE_DECLARATION_STATEMENT_END
+
+
+SOURCE_TEMPLATE_CLASS_DECLARATION_STATEMENT_START
+void
+SgTemplateClassDeclaration::post_construction_initialization()
+   {
+   }
+
+SOURCE_TEMPLATE_CLASS_DECLARATION_STATEMENT_END
+
+SOURCE_TEMPLATE_FUNCTION_DECLARATION_STATEMENT_START
+void
+SgTemplateFunctionDeclaration::post_construction_initialization()
+   {
+   }
+
+SOURCE_TEMPLATE_FUNCTION_DECLARATION_STATEMENT_END
+
+SOURCE_TEMPLATE_MEMBER_FUNCTION_DECLARATION_STATEMENT_START
+void
+SgTemplateMemberFunctionDeclaration::post_construction_initialization()
+   {
+   }
+
+SOURCE_TEMPLATE_MEMBER_FUNCTION_DECLARATION_STATEMENT_END
+
+SOURCE_TEMPLATE_CLASS_DEFINITION_STATEMENT_START
+void
+SgTemplateClassDefinition::post_construction_initialization()
+   {
+   }
+
+// DQ (6/11/2011): Added support for new template IR nodes.
+void
+SgTemplateClassDefinition::set_declaration(SgTemplateClassDeclaration* new_val)
+   {
+  // QY: 10-4-04 removed declaration pointer. use parent pointer instead
+     ROSE_ASSERT(this != NULL);
+     set_parent(new_val);
+   }
+
+// DQ (6/11/2011): Added support for new template IR nodes.
+SgTemplateClassDeclaration*
+SgTemplateClassDefinition::get_declaration() const
+   {
+  // QY: 10-4-04 removed declaration pointer. use parent pointer instead
+     ROSE_ASSERT(this != NULL);
+
+     ROSE_ASSERT(get_parent() != NULL);
+     printf ("In SgTemplateClassDefinition::get_declaration(): get_parent() = %p = %s \n",get_parent(),get_parent()->class_name().c_str());
+
+     SgTemplateClassDeclaration *decl = isSgTemplateClassDeclaration(get_parent());
+     assert( get_parent() == NULL || decl != NULL ); 
+     return decl;
+   }
+
+SgName
+SgTemplateClassDefinition::get_qualified_name() const
+   {
+  // printf ("In SgClassDefinition::get_qualified_name() \n");
+     return get_declaration()->get_qualified_name();
+   }
+
+// DQ (2/7/2006): code added by Rich Vuduc
+SgName
+SgTemplateClassDefinition::get_mangled_name (void) const
+   {
+     return get_declaration()->get_mangled_name ();
+   }
+
+SgName
+SgTemplateClassDefinition::get_mangled_qualified_name (int& i) 
+   {
+  // printf ("In SgClassDefinition::get_mangled_qualified_name(%d): Calling get_declaration()->get_mangled_qualified_name(%d) \n",i,i);
+
+      printf ("Sorry, SgTemplateClassDefinition::get_mangled_qualified_name(int) not implemented! \n");
+      ROSE_ASSERT(false);
+
+      return "error_no_name";
+
+  // return get_declaration()->get_mangled_qualified_name(i);
+   }
+
+SOURCE_TEMPLATE_CLASS_DEFINITION_STATEMENT_END
+
+SOURCE_TEMPLATE_FUNCTION_DEFINITION_STATEMENT_START
+void
+SgTemplateFunctionDefinition::post_construction_initialization()
+   {
+   }
+
+SOURCE_TEMPLATE_FUNCTION_DEFINITION_STATEMENT_END
 
 
 SOURCE_PRAGMA_STATEMENT_START
@@ -13727,9 +14520,11 @@ HEADER_OMP_BODY_STATEMENT_START
                                    bool extractListFromBasicBlock = false);
       public:
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
       virtual unsigned int cfgIndexForEnd() const;
       virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
       virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 
 HEADER_OMP_BODY_STATEMENT_END
 
@@ -13749,9 +14544,11 @@ SOURCE_OMP_BODY_STATEMENT_END
 HEADER_OMP_CLAUSEBODY_STATEMENT_START
       public:
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
       virtual unsigned int cfgIndexForEnd() const;
       virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
       virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 
 HEADER_OMP_CLAUSEBODY_STATEMENT_END
 

@@ -1,0 +1,186 @@
+program p
+
+! SIMPLE COTARGET DECLARATIONS
+
+  integer, cotarget :: i
+  integer, dimension(10), cotarget :: a_a
+  integer, cotarget, dimension(10) :: a_b
+  integer, cotarget :: a_c(10)
+  integer, pointer, cotarget :: pi_a
+  integer, cotarget, pointer :: pi_b
+  integer, pointer, dimension(:), cotarget :: pa_aa
+  integer, dimension(:), pointer, cotarget :: pa_ab
+  integer, dimension(:), cotarget, pointer :: pa_ac
+  integer, pointer, cotarget, dimension(:) :: pa_ba
+  integer, cotarget, pointer, dimension(:) :: pa_bb
+  integer, cotarget, dimension(:), pointer :: pa_bc
+  integer, pointer, cotarget :: pa_ca(:)
+  integer, cotarget, pointer :: pa_cb(:)
+
+
+! COPOINTER COTARGET DECLARATIONS
+
+  integer, copointer, cotarget :: cpi_a
+  integer, cotarget, copointer :: cpi_b
+  
+  integer, copointer, dimension(:), cotarget :: cpa_a_a
+  integer, dimension(:), copointer, cotarget :: cpa_a_b
+  integer, dimension(:), cotarget, copointer :: cpa_a_c
+  
+  integer, copointer, cotarget, dimension(:) :: cpa_b_a
+  integer, cotarget, copointer, dimension(:) :: cpa_b_b
+  integer, cotarget, dimension(:), copointer :: cpa_b_a
+  
+  integer, copointer, cotarget :: cpa_c_a(:)
+  integer, cotarget, copointer :: cpa_c_b(:)
+  
+  integer, copointer, pointer, cotarget :: cppi_a_a
+  integer, pointer, copointer, cotarget :: cppi_a_b
+  integer, pointer, cotarget, copointer :: cppi_a_c
+  
+  integer, copointer, cotarget, pointer :: cppi_b_a
+  integer, cotarget, copointer, pointer :: cppi_b_b
+  integer, cotarget, pointer, copointer :: cppi_b_c
+  
+  integer, copointer, pointer, dimension(:), cotarget :: cppa_aa_a
+  integer, pointer, copointer, dimension(:), cotarget :: cppa_aa_b
+  integer, pointer, dimension(:), copointer, cotarget :: cppa_aa_c
+  integer, pointer, dimension(:), cotarget, copointer :: cppa_aa_d
+  
+  integer, copointer, dimension(:), pointer, cotarget :: cppa_ab_a
+  integer, dimension(:), copointer, pointer, cotarget :: cppa_ab_b
+  integer, dimension(:), pointer, copointer, cotarget :: cppa_ab_c
+  integer, dimension(:), pointer, cotarget, copointer :: cppa_ab_d
+  
+  integer, copointer, dimension(:), cotarget, pointer :: cppa_ac_a
+  integer, dimension(:), copointer, cotarget, pointer :: cppa_ac_b
+  integer, dimension(:), cotarget, copointer, pointer :: cppa_ac_c
+  integer, dimension(:), cotarget, pointer, copointer :: cppa_ac_d
+  
+  integer, copointer, pointer, cotarget, dimension(:) :: cppa_ba_a
+  integer, pointer, copointer, cotarget, dimension(:) :: cppa_ba_b
+  integer, pointer, cotarget, copointer, dimension(:) :: cppa_ba_c
+  integer, pointer, cotarget, dimension(:), copointer :: cppa_ba_d
+  
+  integer, copointer, cotarget, pointer, dimension(:) :: cppa_bb_a
+  integer, cotarget, copointer, pointer, dimension(:) :: cppa_bb_b
+  integer, cotarget, pointer, copointer, dimension(:) :: cppa_bb_c
+  integer, cotarget, pointer, dimension(:), copointer :: cppa_bb_d
+  
+  integer, copointer, cotarget, dimension(:), pointer :: cppa_bc_a
+  integer, cotarget, copointer, dimension(:), pointer :: cppa_bc_b
+  integer, cotarget, dimension(:), copointer, pointer :: cppa_bc_c
+  integer, cotarget, dimension(:), pointer, copointer :: cppa_bc_d
+  
+  integer, copointer, pointer, cotarget :: cppa_ca_a(:)
+  integer, pointer, copointer, cotarget :: cppa_ca_b(:)
+  integer, pointer, cotarget, copointer :: cppa_ca_c(:)
+  
+  integer, copointer, cotarget, pointer :: cppa_cb_a(:)
+  integer, cotarget, copointer, pointer :: cppa_cb_a(:)
+  integer, cotarget, pointer, copointer :: cppa_cb_a(:)
+
+
+! COARRAY COPOINTER COTARGET DECLARATIONS
+
+  integer, copointer, cotarget :: cacpi_aa[*]
+  integer, copointer, cotarget, codimension[*] :: cacpi_ab
+  integer, cotarget, copointer :: cacpi_ba[*]
+  integer, cotarget, copointer, codimension[*] :: cacpi_bb
+  
+  integer, copointer, dimension(:), cotarget :: cacpa_a_aa[*]
+  integer, copointer, dimension(:), cotarget, codimension[*] :: cacpa_a_ab
+  integer, dimension(:), copointer, cotarget :: cacpa_a_ba[*]
+  integer, dimension(:), copointer, cotarget, codimension[*] :: cacpa_a_bb
+  integer, dimension(:), cotarget, copointer :: cacpa_a_ca[*]
+  integer, dimension(:), cotarget, copointer, codimension[*] :: cacpa_a_cb
+  
+  integer, copointer, cotarget, dimension(:) :: cacpa_b_aa[*]
+  integer, copointer, cotarget, dimension(:), codimension[*] :: cacpa_b_ab
+  integer, cotarget, copointer, dimension(:) :: cacpa_b_ba[*]
+  integer, cotarget, copointer, dimension(:), codimension[*] :: cacpa_b_bb
+  
+  integer, copointer, cotarget :: cacpa_c_aa(:)[*]
+  integer, copointer, cotarget, codimension[*] :: cacpa_c_ab(:)
+  integer, cotarget, copointer :: cacpa_c_ba(:)[*]
+  integer, cotarget, copointer, codimension[*] :: cacpa_c_bb(:)
+  
+  integer, copointer, pointer, cotarget :: cacppi_a_aa[*]
+  integer, copointer, pointer, cotarget, codimension[*] :: cacppi_a_ab
+  integer, pointer, copointer, cotarget :: cacppi_a_ba[*]
+  integer, pointer, copointer, cotarget, codimension[*] :: cacppi_a_bb
+  integer, pointer, cotarget, copointer :: cacppi_a_ca[*]
+  integer, pointer, cotarget, copointer, codimension[*] :: cacppi_a_cb
+  
+  integer, copointer, cotarget, pointer :: cacppi_b_aa[*]
+  integer, copointer, cotarget, pointer, codimension[*] :: cacppi_b_ab
+  integer, cotarget, copointer, pointer :: cacppi_b_ba[*]
+  integer, cotarget, copointer, pointer, codimension[*] :: cacppi_b_bb
+  integer, cotarget, pointer, copointer :: cacppi_b_ca[*]
+  integer, cotarget, pointer, copointer, codimension[*] :: cacppi_b_cb
+  
+  integer, copointer, pointer, dimension(:), cotarget :: cacppa_aa_aa[*]
+  integer, copointer, pointer, dimension(:), cotarget, codimension[*] :: cacppa_aa_ab
+  integer, pointer, copointer, dimension(:), cotarget :: cacppa_aa_ba[*]
+  integer, pointer, copointer, dimension(:), cotarget, codimension[*] :: cacppa_aa_bb
+  integer, pointer, dimension(:), copointer, cotarget :: cacppa_aa_ca[*]
+  integer, pointer, dimension(:), copointer, cotarget, codimension[*] :: cacppa_aa_cb
+  integer, pointer, dimension(:), cotarget, copointer :: cacppa_aa_da[*]
+  integer, pointer, dimension(:), cotarget, copointer, codimension[*] :: cacppa_aa_db
+  
+  integer, copointer, dimension(:), pointer, cotarget :: cacppa_ab_aa[*]
+  integer, copointer, dimension(:), pointer, cotarget, codimension[*] :: cacppa_ab_a
+  integer, dimension(:), copointer, pointer, cotarget :: cacppa_ab_ba[*]
+  integer, dimension(:), copointer, pointer, cotarget, codimension[*] :: cacppa_ab_b
+  integer, dimension(:), pointer, copointer, cotarget :: cacppa_ab_ca[*]
+  integer, dimension(:), pointer, copointer, cotarget, codimension[*] :: cacppa_ab_c
+  integer, dimension(:), pointer, cotarget, copointer :: cacppa_ab_da[*]
+  integer, dimension(:), pointer, cotarget, copointer, codimension[*] :: cacppa_ab_d
+  
+  integer, copointer, dimension(:), cotarget, pointer :: cacppa_ac_aa[*]
+  integer, copointer, dimension(:), cotarget, pointer, codimension[*] :: cacppa_ac_ab
+  integer, dimension(:), copointer, cotarget, pointer :: cacppa_ac_ba[*]
+  integer, dimension(:), copointer, cotarget, pointer, codimension[*] :: cacppa_ac_bb
+  integer, dimension(:), cotarget, copointer, pointer :: cacppa_ac_ca[*]
+  integer, dimension(:), cotarget, copointer, pointer, codimension[*] :: cacppa_ac_cb
+  integer, dimension(:), cotarget, pointer, copointer :: cacppa_ac_da[*]
+  integer, dimension(:), cotarget, pointer, copointer, codimension[*] :: cacppa_ac_db
+  
+  integer, copointer, pointer, cotarget, dimension(:) :: cacppa_ba_aa[*]
+  integer, copointer, pointer, cotarget, dimension(:), codimension[*] :: cacppa_ba_ab
+  integer, pointer, copointer, cotarget, dimension(:) :: cacppa_ba_ba[*]
+  integer, pointer, copointer, cotarget, dimension(:), codimension[*] :: cacppa_ba_bb
+  integer, pointer, cotarget, copointer, dimension(:) :: cacppa_ba_ca[*]
+  integer, pointer, cotarget, copointer, dimension(:), codimension[*] :: cacppa_ba_cb
+  integer, pointer, cotarget, dimension(:), copointer :: cacppa_ba_da[*]
+  integer, pointer, cotarget, dimension(:), copointer, codimension[*] :: cacppa_ba_db
+  
+  integer, copointer, cotarget, pointer, dimension(:) :: cacppa_bb_aa[*]
+  integer, copointer, cotarget, pointer, dimension(:), codimension[*] :: cacppa_bb_ab
+  integer, cotarget, copointer, pointer, dimension(:) :: cacppa_bb_ba[*]
+  integer, cotarget, copointer, pointer, dimension(:), codimension[*] :: cacppa_bb_bb
+  integer, cotarget, pointer, copointer, dimension(:) :: cacppa_bb_ca[*]
+  integer, cotarget, pointer, copointer, dimension(:), codimension[*] :: cacppa_bb_cb
+  integer, cotarget, pointer, dimension(:), copointer :: cacppa_bb_da[*]
+  integer, cotarget, pointer, dimension(:), copointer, codimension[*] :: cacppa_bb_db
+  
+  integer, copointer, cotarget, dimension(:), pointer :: cacppa_bc_aa[*]
+  integer, copointer, cotarget, dimension(:), pointer, codimension[*] :: cacppa_bc_ab
+  integer, cotarget, copointer, dimension(:), pointer :: cacppa_bc_ba[*]
+  integer, cotarget, copointer, dimension(:), pointer, codimension[*] :: cacppa_bc_bb
+  integer, cotarget, dimension(:), copointer, pointer :: cacppa_bc_ca[*]
+  integer, cotarget, dimension(:), copointer, pointer, codimension[*] :: cacppa_bc_cb
+  integer, cotarget, dimension(:), pointer, copointer :: cacppa_bc_da[*]
+  integer, cotarget, dimension(:), pointer, copointer, codimension[*] :: cacppa_bc_db
+  
+  integer, copointer, pointer, cotarget :: cacppa_ca_aa(:)[*]
+  integer, copointer, pointer, cotarget, codimension[*] :: cacppa_ca_ab(:)
+  integer, pointer, copointer, cotarget :: cacppa_ca_ba(:)[*]
+  integer, pointer, copointer, cotarget, codimension[*] :: cacppa_ca_bb(:)
+  integer, pointer, cotarget, copointer :: cacppa_ca_ca(:)[*]
+  integer, pointer, cotarget, copointer, codimension[*] :: cacppa_ca_cb(:)
+  
+  integer, copointer, cotarget, pointer :: cacppa_cb_aa(:)[*]
+  integer, copointer, cotarget, pointer, codimension[*] :: cacppa_cb_ab(:)
+
+end program

@@ -1436,10 +1436,7 @@ void CodeAttributesVisitor::preOrderVisit(SgNode *node) {
      //         SgAliasSymbol
      //     SgAsmNode:
      //         SgAsmStatement:
-     //             SgAsmDeclaration:
-     //                 SgAsmDataStructureDeclaration
-     //                 SgAsmFunctionDeclaration
-     //                 SgAsmFieldDeclaration
+     //             SgAsmFunction
      //             SgAsmBlock
      //             SgAsmInstruction:
      //                 SgAsmx86Instruction
@@ -1552,7 +1549,6 @@ void CodeAttributesVisitor::preOrderVisit(SgNode *node) {
      //             SgAsmElfSectionTableEntry
      //             SgAsmElfSegmentTableEntry
      //             SgAsmElfSymbolList
-     //             SgAsmPEImportILTEntry
      //             SgAsmElfRelocEntry
      //             SgAsmElfRelocEntryList
      //             SgAsmPEExportEntry
@@ -1564,16 +1560,12 @@ void CodeAttributesVisitor::preOrderVisit(SgNode *node) {
      //             SgAsmElfNoteEntry
      //             SgAsmElfNoteEntryList
      //             SgAsmPEImportDirectory
-     //             SgAsmPEImportHNTEntry
      //             SgAsmPESectionTableEntry
      //             SgAsmPEExportDirectory
      //             SgAsmPERVASizePair
      //             SgAsmCoffSymbolList
      //             SgAsmPERVASizePairList
      //             SgAsmElfEHFrameEntryCI
-     //             SgAsmPEImportHNTEntryList
-     //             SgAsmPEImportILTEntryList
-     //             SgAsmPEImportLookupTable
      //             SgAsmPEImportDirectoryList
      //             SgAsmNEEntryPoint
      //             SgAsmNERelocEntry
@@ -3405,6 +3397,9 @@ void CodeAttributesVisitor::postOrderVisit(SgNode *node) {
      else if (dynamic_cast<SgNullExpression *>(node)) {
          SgNullExpression *n = isSgNullExpression(node);
      }
+     else if (dynamic_cast<SgNullStatement *>(node)) {
+         SgNullStatement *n = isSgNullStatement(node);
+     }
      //             SgVariantExpression
      //             SgSubscriptExpression
      //             SgColonShapeExp
@@ -3459,10 +3454,7 @@ void CodeAttributesVisitor::postOrderVisit(SgNode *node) {
      //         SgAliasSymbol
      //     SgAsmNode:
      //         SgAsmStatement:
-     //             SgAsmDeclaration:
-     //                 SgAsmDataStructureDeclaration
-     //                 SgAsmFunctionDeclaration
-     //                 SgAsmFieldDeclaration
+     //             SgAsmFunction
      //             SgAsmBlock
      //             SgAsmInstruction:
      //                 SgAsmx86Instruction
@@ -3575,7 +3567,6 @@ void CodeAttributesVisitor::postOrderVisit(SgNode *node) {
      //             SgAsmElfSectionTableEntry
      //             SgAsmElfSegmentTableEntry
      //             SgAsmElfSymbolList
-     //             SgAsmPEImportILTEntry
      //             SgAsmElfRelocEntry
      //             SgAsmElfRelocEntryList
      //             SgAsmPEExportEntry
@@ -3587,16 +3578,12 @@ void CodeAttributesVisitor::postOrderVisit(SgNode *node) {
      //             SgAsmElfNoteEntry
      //             SgAsmElfNoteEntryList
      //             SgAsmPEImportDirectory
-     //             SgAsmPEImportHNTEntry
      //             SgAsmPESectionTableEntry
      //             SgAsmPEExportDirectory
      //             SgAsmPERVASizePair
      //             SgAsmCoffSymbolList
      //             SgAsmPERVASizePairList
      //             SgAsmElfEHFrameEntryCI
-     //             SgAsmPEImportHNTEntryList
-     //             SgAsmPEImportILTEntryList
-     //             SgAsmPEImportLookupTable
      //             SgAsmPEImportDirectoryList
      //             SgAsmNEEntryPoint
      //             SgAsmNERelocEntry

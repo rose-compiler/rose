@@ -390,7 +390,7 @@ namespace NodeQuery
   queryMemoryPool(NodeFunctional nodeFunc , VariantVector* targetVariantVector = NULL)
                 {
         return AstQueryNamespace::queryMemoryPool(nodeFunc,targetVariantVector);
-                };
+                }
 
 
   /********************************************************************************

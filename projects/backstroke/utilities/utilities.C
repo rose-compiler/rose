@@ -1,8 +1,9 @@
 #include "utilities.h"
-#include "cppDefinesAndNamespaces.h"
+#include <boost/foreach.hpp>
 
-#include "rose.h"
-#include <boost/lexical_cast.hpp>
+#define foreach BOOST_FOREACH
+#define reverse_foreach BOOST_REVERSE_FOREACH
+
 #include <boost/algorithm/string.hpp>
 
 namespace BackstrokeUtility
@@ -13,42 +14,9 @@ using namespace boost;
 using namespace SageInterface;
 using namespace SageBuilder;
 
-/** Generate a name that is unique in the current scope and any parent and children scopes.
- * @param baseName the word to be included in the variable names. */
-string GenerateUniqueVariableName(SgScopeStatement* scope, std::string baseName)
-{
-	//This implementation tends to generate numbers that are unnecessarily high.
-	static int counter = 0;
-
-	string name;
-	bool collision = false;
-	do
-	{
-		name = "__" + baseName + lexical_cast<string > (counter++) + "__";
-
-		//Look up the name in the parent scopes
-		SgSymbol* nameSymbol = SageInterface::lookupSymbolInParentScopes(SgName(name), scope);
-		collision = (nameSymbol != NULL);
-
-		//Look up the name in the children scopes
-		Rose_STL_Container<SgNode*> childScopes = NodeQuery::querySubTree(scope, V_SgScopeStatement);
-
-
-		foreach(SgNode* childScope, childScopes)
-		{
-			SgScopeStatement* childScopeStatement = isSgScopeStatement(childScope);
-			nameSymbol = childScopeStatement->lookup_symbol(SgName(name));
-			collision = collision || (nameSymbol != NULL);
-		}
-	} while (collision);
-
-	return name;
-}
-
 
 /** Returns true if the given expression refers to a variable. This could include using the
- * dot and arrow operator to access member variables. A comma op conunts as a variable references
- * if all its members are variable references (not just the last expression in the list). */
+ * dot and arrow operator to access member variables.  */
 bool isVariableReference(SgExpression* expression)
 {
 	if (isSgVarRefExp(expression))
@@ -71,13 +39,9 @@ bool isVariableReference(SgExpression* expression)
 		return isVariableReference(arrowExpression->get_lhs_operand()) &&
 				isVariableReference(arrowExpression->get_rhs_operand());
 	}
-	else if (isSgCommaOpExp(expression))
+	else if (isSgPointerDerefExp(expression) || isSgCastExp(expression) || isSgAddressOfOp(expression))
 	{
-		//Comma op where both the lhs and th rhs are variable references.
-		//The lhs would be semantically meaningless since it doesn't have any side effects
-		SgCommaOpExp* commaOp = isSgCommaOpExp(expression);
-		return isVariableReference(commaOp->get_lhs_operand()) &&
-				isVariableReference(commaOp->get_rhs_operand());
+		return isVariableReference(isSgUnaryOp(expression)->get_operand());
 	}
 	else
 	{
@@ -85,70 +49,10 @@ bool isVariableReference(SgExpression* expression)
 	}
 }
 
-
-/** Given an expression, generates a temporary variable whose initializer optionally evaluates
- * that expression. Then, the var reference expression returned can be used instead of the original
- * expression. The temporary variable created can be reassigned to the expression by the returned SgAssignOp;
- * this can be used when the expression the variable represents needs to be evaluated. NOTE: This handles
- * reference types correctly by using pointer types for the temporary.
- * @param expression Expression which will be replaced by a variable
- * @param scope scope in which the temporary variable will be generated
- * @return declaration of the temporary variable, an assignment op to
- *			reevaluate the expression, and a a variable reference expression to use instead of
- *         the original expression. Delete the results that you don't need! */
-tuple<SgVariableDeclaration*, SgAssignOp*, SgExpression*> CreateTempVariableForExpression(SgExpression* expression, SgScopeStatement* scope, bool initializeInDeclaration)
+SgExpression* buildAssert(SgExpression* check)
 {
-	SgTreeCopy copyHelp;
-	SgType* expressionType = expression->get_type();
-	SgType* variableType = expressionType;
-
-	//If the expression has a reference type, we need to use a pointer type for the temporary variable.
-	//Else, re-assigning the variable is not possible
-	bool isReferenceType = isSgReferenceType(expressionType);
-	if (isReferenceType)
-	{
-		SgType* expressionBaseType = isSgReferenceType(expressionType)->get_base_type();
-		variableType = SageBuilder::buildPointerType(expressionBaseType);
-	}
-
-	//Generate a unique variable name
-	string name = BackstrokeUtility::GenerateUniqueVariableName(scope);
-
-	//Initialize the temporary variable to an evaluation of the expression
-	SgAssignInitializer* initializer = NULL;
-	SgExpression* tempVarInitExpression = isSgExpression(expression->copy(copyHelp));
-	ROSE_ASSERT(tempVarInitExpression != NULL);
-	if (isReferenceType)
-	{
-		//FIXME: the next line is hiding a bug in ROSE. Remove this line and talk to Dan about the resulting assert
-		tempVarInitExpression->set_lvalue(false);
-
-		tempVarInitExpression = SageBuilder::buildAddressOfOp(tempVarInitExpression);
-	}
-
-	//Optionally initialize the variable in its declaration
-	if (initializeInDeclaration)
-	{
-		SgExpression* initExpressionCopy = isSgExpression(tempVarInitExpression->copy(copyHelp));
-		initializer = SageBuilder::buildAssignInitializer(initExpressionCopy);
-	}
-
-	SgVariableDeclaration* tempVarDeclaration = SageBuilder::buildVariableDeclaration(name, variableType, initializer, scope);
-	ROSE_ASSERT(tempVarDeclaration != NULL);
-
-	//Now create the assignment op for reevaluating the expression
-	SgVarRefExp* tempVarReference = SageBuilder::buildVarRefExp(tempVarDeclaration);
-	SgAssignOp* assignment = SageBuilder::buildAssignOp(tempVarReference, tempVarInitExpression);
-
-	//Build the variable reference expression that can be used in place of the original expresion
-	SgExpression* varRefExpression = SageBuilder::buildVarRefExp(tempVarDeclaration);
-	if (isReferenceType)
-	{
-		//The temp variable is a pointer type, so dereference it before usint it
-		varRefExpression = SageBuilder::buildPointerDerefExp(varRefExpression);
-	}
-
-	return make_tuple(tempVarDeclaration, assignment, varRefExpression);
+	string functionName = "assert";
+	return SageBuilder::buildFunctionCallExp(functionName, buildVoidType(), buildExprListExp(check));
 }
 
 
@@ -484,19 +388,23 @@ bool isModifyingExpression(SgExpression* exp)
 {
     if (SageInterface::isAssignmentStatement(exp))
         return true;
-    if (isSgPlusPlusOp(exp) || isSgMinusMinusOp(exp))
+	else if (isSgPlusPlusOp(exp) || isSgMinusMinusOp(exp))
         return true;
-    if (isSgFunctionCallExp(exp))
+	else if (isSgFunctionCallExp(exp))
     {
         // FIXME: This part should be refined.
         return true;
     }
+	else if (isSgNewExp(exp))
+	{
+		return true;
+	}
 
     return false;
 }
 
 // Returns if an expression contains any subexpression which modifies any value.
-bool containsModifyingExpression(SgExpression* exp)
+bool containsModifyingExpression(SgNode* exp)
 {
     Rose_STL_Container<SgNode*> exp_list = NodeQuery::querySubTree(exp, V_SgExpression);
     foreach (SgNode* node, exp_list)
@@ -682,5 +590,140 @@ bool isMemberOf(const VariableRenaming::VarName& var1, const VariableRenaming::V
 	return false;
 }
 
+bool isTrueVariableDeclaration(SgVariableDeclaration* varDecl)
+{
+    SgNode* parentNode = varDecl->get_parent();
+
+    if (SgIfStmt* ifStmt = isSgIfStmt(parentNode))
+        if (ifStmt->get_conditional() == varDecl)
+            return false;
+
+    if (SgForStatement* forStmt = isSgForStatement(parentNode))
+        if (forStmt->get_test() == varDecl)
+            return false;
+
+    if (SgWhileStmt* whileStmt = isSgWhileStmt(parentNode))
+        if (whileStmt->get_condition() == varDecl)
+            return false;
+
+    if (SgSwitchStatement* switchStmt = isSgSwitchStatement(parentNode))
+        if (switchStmt->get_item_selector() == varDecl)
+            return false;
+
+    if (SgCatchOptionStmt* catchStmt = isSgCatchOptionStmt(parentNode))
+        if (catchStmt->get_condition() == varDecl)
+            return false;
+    
+    return true;
+}
+
+
+SgType* cleanModifersAndTypeDefs(SgType* t)
+{
+	while (true)
+	{
+		if (isSgModifierType(t))
+		{
+			t = isSgModifierType(t)->get_base_type();
+			continue;
+		}
+		else if (isSgTypedefType(t))
+		{
+			t = isSgTypedefType(t)->get_base_type();
+			continue;
+		}
+		return t;
+	}
+}
+
+
+SgType* removePointerOrReferenceType(SgType* t)
+{
+	t = cleanModifersAndTypeDefs(t);
+	if (isSgPointerType(t))
+		t = isSgPointerType(t)->get_base_type();
+	else if (isSgReferenceType(t))
+		t = isSgReferenceType(t)->get_base_type();
+	
+	t = cleanModifersAndTypeDefs(t);
+	return t;
+}
+
+bool isLoopStatement(SgStatement* stmt)
+{
+    if (isSgDoWhileStmt(stmt) || isSgForStatement(stmt) || isSgWhileStmt(stmt))
+        return true;
+    return false;
+}
+
+SgSwitchStatement* getEnclosingSwitchStmt(SgBreakStmt* breakStmt)
+{
+    SgNode* parent = breakStmt->get_parent();
+    while (parent)
+    {
+        SgStatement* stmt = isSgStatement(parent);
+        if (!stmt)
+        {
+            parent = parent->get_parent();
+            continue;
+        }
+        
+        if (isLoopStatement(stmt))
+            return NULL;
+        
+        if (SgSwitchStatement* switchStmt = isSgSwitchStatement(parent))
+            return switchStmt;
+
+        parent = parent->get_parent();
+    }
+    
+    return NULL;
+}
+
+vector<SgStatement*> getEarlyExits(SgScopeStatement* scope)
+{
+    vector<SgStatement*> exits;
+    
+    vector<SgStatement*> stmts = querySubTree<SgStatement>(scope);
+    
+    foreach (SgStatement* stmt, stmts)
+    {
+        if (isSgReturnStmt(stmt))
+            exits.push_back(stmt);
+        
+        else if (SgBreakStmt* breakStmt = isSgBreakStmt(stmt))
+        {
+            
+            if (SgStatement* loop = getEnclosingLoopBody(breakStmt))
+            {
+                if (SageInterface::isAncestor(loop, scope) || loop == scope)
+                    exits.push_back(stmt);
+            }
+            
+            else if (SgSwitchStatement* switchStmt = getEnclosingSwitchStmt(breakStmt))
+            {
+                if (SageInterface::isAncestor(switchStmt, scope) || switchStmt == scope)
+                    exits.push_back(stmt);
+            }
+        }
+        
+        else if (isSgContinueStmt(stmt))
+        {
+            if (SgStatement* loop = getEnclosingLoopBody(stmt))
+            {
+                if (SageInterface::isAncestor(loop, scope) || loop == scope)
+                    exits.push_back(stmt);
+            }
+        }
+        
+        else if (SgGotoStatement* gotoStmt = isSgGotoStatement(stmt))
+        {
+            if (!SageInterface::isAncestor(scope, gotoStmt->get_label()))
+                exits.push_back(stmt);
+        }
+    }
+    
+    return exits;
+}
 
 } // namespace backstroke_util

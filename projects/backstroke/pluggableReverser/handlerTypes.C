@@ -1,7 +1,10 @@
 #include "handlerTypes.h"
 #include "eventProcessor.h"
 #include <boost/foreach.hpp>
-#include "utilities/cppDefinesAndNamespaces.h"
+#include <boost/foreach.hpp>
+
+#define foreach BOOST_FOREACH
+#define reverse_foreach BOOST_REVERSE_FOREACH
 
 using namespace std;
 
@@ -81,11 +84,6 @@ StatementReversal EvaluationResult::generateReverseStatement() const
 	return getStatementHandler()->generateReverseAST(getStatementInput(), *this);
 }
 
-SgStatement* EvaluationResult::generateCommitStatement() const
-{
-	return getStatementHandler()->generateCommitAST(*this);
-}
-
 void EvaluationResult::printHandlers() const
 {
 	static int tab_num = 0;
@@ -115,13 +113,23 @@ SgExpression* ReversalHandlerBase::popVal_front(SgType* type)
     return event_handler_->popVal_front(type);
 }
 
-vector<EvaluationResult> ReversalHandlerBase::evaluateExpression(SgExpression* exp,
+SgExpression* ReversalHandlerBase::cloneValueExp(SgExpression* value, SgType* type)
+{
+	return event_handler_->cloneValueExp(value, type);
+}
+
+SgExpression* ReversalHandlerBase::assignPointerExp(SgExpression* lhs, SgExpression* rhs, SgType* lhsType, SgType* rhsType)
+{
+	return event_handler_->assignPointerExp(lhs, rhs, lhsType, rhsType);
+}
+
+EvaluationResult ReversalHandlerBase::evaluateExpression(SgExpression* exp,
 		const VariableVersionTable& var_table, bool is_value_used)
 {
     return event_handler_->evaluateExpression(exp, var_table, is_value_used);
 }
 
-vector<EvaluationResult> ReversalHandlerBase::evaluateStatement(SgStatement* stmt, const VariableVersionTable& var_table)
+EvaluationResult ReversalHandlerBase::evaluateStatement(SgStatement* stmt, const VariableVersionTable& var_table)
 {
     return event_handler_->evaluateStatement(stmt, var_table);
 }
@@ -156,10 +164,4 @@ const StaticSingleAssignment* ReversalHandlerBase::getSsa() const
 const IVariableFilter* ReversalHandlerBase::getVariableFilter() const
 {
 	return event_handler_->variableFilter_;
-}
-
-SgStatement* StatementReversalHandler::generateCommitAST(const EvaluationResult& evaluationResult)
-{
-	fprintf(stderr, "BACKSTROKE WARNING: Generating empty commit AST\n");
-	return SageBuilder::buildBasicBlock();
 }

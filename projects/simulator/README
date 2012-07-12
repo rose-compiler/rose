@@ -149,10 +149,10 @@ x86sim big switch statement is like:
 == Purely Abstract Interpretation ==
 
 Instructions are simulated by processing them through the instruction
-semantics layer, X86InstructionSemantics, using the semantic policy
+semantics layer, X86InstructionSemantics, using the semantic domain
 EmulationPolicy. The EmulationPolicy class is derived from
-VirtualMachineSemantics::Policy and related classes. The
-VirtualMachineSemantics tracks registers and memory, the values of
+PartialSymbolicSemantics and related classes. The
+PartialSymbolicSemantics tracks registers and memory, the values of
 which can be:
   * A known integer
   * An unknown, named value.
@@ -160,19 +160,19 @@ which can be:
   * The negation of an unknown, named value with a signed offset.
 
 A concrete interpretation uses only values that are known
-integers. The VirtualMachineSemantics policy was chosen as the base
+integers. The PartialSymbolicSemantics policy was chosen as the base
 class because of its ability to represent known integers and its
 ability to perform constant folding for operations on those integers.
 
-The EmulationPolicy modifies and extends the VirtualMachineSemantics
+The EmulationPolicy modifies and extends the PartialSymbolicSemantics
 policy in three main ways:
 
-  1. Memory access is simplified. The VirtualMachineSemantics accounts
+  1. Memory access is simplified. The PartialSymbolicSemantics accounts
      for memory I/O operations where the address is not known. The
      EmulationPolicy does not need this feature, and therefore
      overrides the memory I/O methods to make them faster.
 
-  2. The EmulationPolicy extends the VirtualMachineSemantics policy by
+  2. The EmulationPolicy extends the PartialSymbolicSemantics policy by
      adding methods for loading the executable and its optional
      interpreter (for dynamically linked executables) into a simulated
      address space.
@@ -181,11 +181,11 @@ policy in three main ways:
      actually the real meat of the class in terms of number of lines
      of code.
 
-Since EmulationPolicy is derived from VirtualMachineSemantics, it
+Since EmulationPolicy is derived from PartialSymbolicSemantics, it
 should be possible, in theory, to perform abstract analysis with
-unknown values.  VirtualMachineSemantics was designed to be a fast
+unknown values.  PartialSymbolicSemantics was designed to be a fast
 approximation of fully abstract symbolic semantics, and one could
-replace VirtualMachineSemantics with SymbolicSemantics. One should
+replace PartialSymbolicSemantics with SymbolicSemantics. One should
 note that SymbolicSemantics doesn't do any kind of constant folding at
 this time, so the symbolic expressions could become very large.
 

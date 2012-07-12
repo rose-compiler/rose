@@ -246,6 +246,9 @@ MidLevelRewrite<ASTNodeCollection>::generatePrefixAndSuffix (
 #endif
    }
 
+#if 0
+// DQ (8/7/2011): Test where this is required since it leads to linking errors when ROSE is configured using "--enable-static --disable-shared"
+// multiple definition of `MidLevelRewrite<MidLevelInterfaceNodeCollection>::replace(SgStatement*, std::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)'
 template <>
 void
 MidLevelRewrite<MidLevelInterfaceNodeCollection>::replace ( SgStatement* target, const std::string & transformationString )
@@ -258,6 +261,7 @@ MidLevelRewrite<MidLevelInterfaceNodeCollection>::replace ( SgStatement* target,
   // remove(target);
      insert(target,transformationString,MidLevelInterfaceNodeCollection::SurroundingScope,MidLevelInterfaceNodeCollection::ReplaceCurrentPosition);
    }
+#endif
 
 template <class ASTNodeCollection>
 void
@@ -299,17 +303,19 @@ MidLevelRewrite<ASTNodeCollection>::fileStringToNodeCollection (
   // SgFile* currentFile = TransformationSupport::getFile(astNode);
      SgSourceFile* currentFile = TransformationSupport::getSourceFile(astNode);
      ROSE_ASSERT (currentFile != NULL);
-  // string currentFileNameWithSuffix = ROSE::stripPathFromFileName(currentFile->getFileName());
+     // Keep the suffix to deal differently with C, C++, etc.
+     std::string currentFileNameWithSuffix = ROSE::stripPathFromFileName(currentFile->getFileName());
   // printf ("currentFileNameWithSuffix = %s \n",currentFileNameWithSuffix.c_str());
   // string currentFileName = ROSE::stripFileSuffixFromFileName(currentFileNameWithSuffix.c_str());
   // printf ("currentFileName = %s \n",currentFileName.c_str());
   // std::string currentFileName = ROSE::stripFileSuffixFromFileName(ROSE::stripPathFromFileName(currentFile->getFileName()));
-     std::string currentFileName = StringUtility::stripFileSuffixFromFileName(StringUtility::stripPathFromFileName(currentFile->getFileName()));
+  //   std::string currentFileName = StringUtility::stripFileSuffixFromFileName(StringUtility::stripPathFromFileName(currentFile->getFileName()));
 
   // Make the file name different each time a new set of transformation strings are compiled
      static int fileNumber = 1;
      std::string numberString   = StringUtility::numberToString(fileNumber++);
-     std::string fileNameString = "rose_transformation_" + currentFileName + numberString + ".C";
+     //std::string fileNameString = "rose_transformation_" + currentFileName + numberString + ".C";
+     std::string fileNameString = "rose_transformation_" + numberString + "_" + currentFileNameWithSuffix;
 
   // For now - write the string representing the file containing the strings representing the
   // transformation out to a file Later we can try to avoid the intermediate file generation (but

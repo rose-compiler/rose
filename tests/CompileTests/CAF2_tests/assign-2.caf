@@ -1,0 +1,11 @@
+program test_call_in_if_condition
+
+implicit none
+
+if (team_rank() .eq. 0) then
+   write(*, '(A)') "rank 0 print out message."
+else
+   continue
+endif
+
+end program

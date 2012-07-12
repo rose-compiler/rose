@@ -6,9 +6,9 @@
 #include "grammar.h"
 #include "terminal.h"
 #include "grammarString.h"
-#include <sstream>
+#include <string>
 
-using namespace std;
+using std::string;
 
 
 // ################################################################
@@ -29,6 +29,23 @@ string localOutputVisitorSupport ( string name ) {
   // derived classed overload as appropriate
      // DXN (08/27/2010): instead of do nothing, call visitDefault() which does nothing.
      s += ") { visitDefault(variable_" + name +"); }\n";
+
+     return s;
+}
+
+string localOutputVisitorParentSupport ( string name ) {
+     if (name == "SgNode")
+       return localOutputVisitorSupport(name);
+
+     string s;
+     s += string("          void visit(");
+     s += name;
+     s += " *variable_";
+     s += name;
+
+     // If not over-ridden by the child class, call the visit method
+     // as applied to this node's parent class
+     s += ") { visit(static_cast<" + name + "::base_node_type *>(variable_" + name +")); }\n";
 
      return s;
 }
@@ -58,6 +75,13 @@ string Grammar::buildVisitorBaseClass() {
      // DXN (08/27/210): add the default case that does nothing as a catch-all;
      // Let the derived class override if so desired.
      s += "    virtual void visitDefault(SgNode* n) {}\n";
+     s += "};\n\n";
+
+     s += "class ROSE_VisitorPatternDefaultBase : public ROSE_VisitorPattern  {\npublic:\n";
+     for (unsigned int i=0; i < terminalList.size(); i++) {
+          string name = terminalList[i]->name;
+          s += localOutputVisitorParentSupport(name);
+        }
      s += "};\n\n";
 
      // DXN (08/28/2010): add template base class for visitors that return results.

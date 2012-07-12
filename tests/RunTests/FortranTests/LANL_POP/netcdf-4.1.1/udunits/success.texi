@@ -1,0 +1,65 @@
+@multitable {@code{Linux 2.6.18-1.2257.fc5smp}} {@code{/opt/csw/gcc4/bin/gcc}} {@code{--disable-shared}}
+@headitem O/S @tab Compiler @tab @code{configure} Option
+@item @code{AIX 1 5} @tab @code{/opt/gnu/bin/gcc} @tab @code{--disable-shared}
+@item @code{AIX 1 5} @tab @code{/usr/vac/bin/c89} @tab @code{--disable-shared}
+@item @code{AIX 1 5} @tab @code{/usr/vac/bin/cc} @tab @code{--disable-shared}
+@item @code{AIX 1 5} @tab @code{/usr/vac/bin/xlc} @tab @code{--disable-shared}
+@item @code{Darwin 10.0.0} @tab @code{/usr/bin/c89} @tab @code{--disable-shared}
+@item @code{Darwin 10.0.0} @tab @code{/usr/bin/cc} @tab @code{}
+@item @code{Darwin 10.0.0} @tab @code{/usr/bin/cc} @tab @code{--disable-shared}
+@item @code{Darwin 10.0.0} @tab @code{/usr/bin/gcc} @tab @code{}
+@item @code{Darwin 10.0.0} @tab @code{/usr/bin/gcc} @tab @code{--disable-shared}
+@item @code{Darwin 8.11.0} @tab @code{/usr/bin/c89} @tab @code{--disable-shared}
+@item @code{Darwin 8.11.0} @tab @code{/usr/bin/cc} @tab @code{}
+@item @code{Darwin 8.11.0} @tab @code{/usr/bin/cc} @tab @code{--disable-shared}
+@item @code{Darwin 8.11.0} @tab @code{/usr/bin/gcc} @tab @code{}
+@item @code{Darwin 8.11.0} @tab @code{/usr/bin/gcc} @tab @code{--disable-shared}
+@item @code{HP-UX B.11.00} @tab @code{/bin/c89} @tab @code{--disable-shared}
+@item @code{HP-UX B.11.00} @tab @code{/bin/cc} @tab @code{--disable-shared}
+@item @code{HP-UX B.11.00} @tab @code{/opt/gnu/bin/gcc} @tab @code{}
+@item @code{HP-UX B.11.00} @tab @code{/opt/gnu/bin/gcc} @tab @code{--disable-shared}
+@item @code{IRIX64 6.5} @tab @code{/bin/c89} @tab @code{}
+@item @code{IRIX64 6.5} @tab @code{/bin/c89} @tab @code{--disable-shared}
+@item @code{IRIX64 6.5} @tab @code{/bin/cc} @tab @code{}
+@item @code{IRIX64 6.5} @tab @code{/bin/cc} @tab @code{--disable-shared}
+@item @code{IRIX64 6.5} @tab @code{/opt/gnu/bin/gcc} @tab @code{}
+@item @code{IRIX64 6.5} @tab @code{/opt/gnu/bin/gcc} @tab @code{--disable-shared}
+@item @code{Linux 2.6.27.24-78.2.53.fc9.x86_64} @tab @code{/usr/bin/c89} @tab @code{}
+@item @code{Linux 2.6.27.24-78.2.53.fc9.x86_64} @tab @code{/usr/bin/c89} @tab @code{--disable-shared}
+@item @code{Linux 2.6.27.24-78.2.53.fc9.x86_64} @tab @code{/usr/bin/cc} @tab @code{}
+@item @code{Linux 2.6.27.24-78.2.53.fc9.x86_64} @tab @code{/usr/bin/cc} @tab @code{--disable-shared}
+@item @code{Linux 2.6.27.24-78.2.53.fc9.x86_64} @tab @code{/usr/bin/gcc} @tab @code{}
+@item @code{Linux 2.6.27.24-78.2.53.fc9.x86_64} @tab @code{/usr/bin/gcc} @tab @code{--disable-shared}
+@item @code{Linux 2.6.27.25-170.2.72.fc10.x86_64} @tab @code{/usr/bin/c89} @tab @code{}
+@item @code{Linux 2.6.27.25-170.2.72.fc10.x86_64} @tab @code{/usr/bin/c89} @tab @code{--disable-shared}
+@item @code{Linux 2.6.27.25-170.2.72.fc10.x86_64} @tab @code{/usr/bin/cc} @tab @code{}
+@item @code{Linux 2.6.27.25-170.2.72.fc10.x86_64} @tab @code{/usr/bin/cc} @tab @code{--disable-shared}
+@item @code{Linux 2.6.27.25-170.2.72.fc10.x86_64} @tab @code{/usr/bin/gcc} @tab @code{}
+@item @code{Linux 2.6.27.25-170.2.72.fc10.x86_64} @tab @code{/usr/bin/gcc} @tab @code{--disable-shared}
+@item @code{OSF1 V5.1} @tab @code{/bin/c89} @tab @code{}
+@item @code{OSF1 V5.1} @tab @code{/bin/c89} @tab @code{--disable-shared}
+@item @code{OSF1 V5.1} @tab @code{/bin/cc} @tab @code{}
+@item @code{OSF1 V5.1} @tab @code{/bin/cc} @tab @code{--disable-shared}
+@item @code{OSF1 V5.1} @tab @code{/opt/gnu/bin/gcc} @tab @code{}
+@item @code{OSF1 V5.1} @tab @code{/opt/gnu/bin/gcc} @tab @code{--disable-shared}
+@item @code{OSF1 V5.1} @tab @code{/usr/ccs/bin/c89} @tab @code{}
+@item @code{OSF1 V5.1} @tab @code{/usr/ccs/bin/c89} @tab @code{--disable-shared}
+@item @code{OSF1 V5.1} @tab @code{/usr/ccs/bin/cc} @tab @code{}
+@item @code{OSF1 V5.1} @tab @code{/usr/ccs/bin/cc} @tab @code{--disable-shared}
+@item @code{SunOS 5.10} @tab @code{/opt/csw/gcc3/bin/gcc} @tab @code{}
+@item @code{SunOS 5.10} @tab @code{/opt/csw/gcc3/bin/gcc} @tab @code{--disable-shared}
+@item @code{SunOS 5.10} @tab @code{/opt/csw/gcc4/bin/gcc} @tab @code{}
+@item @code{SunOS 5.10} @tab @code{/opt/csw/gcc4/bin/gcc} @tab @code{--disable-shared}
+@item @code{SunOS 5.10} @tab @code{/opt/SUNWspro/bin/c89} @tab @code{}
+@item @code{SunOS 5.10} @tab @code{/opt/SUNWspro/bin/c89} @tab @code{--disable-shared}
+@item @code{SunOS 5.10} @tab @code{/opt/SUNWspro/bin/cc} @tab @code{}
+@item @code{SunOS 5.10} @tab @code{/opt/SUNWspro/bin/cc} @tab @code{--disable-shared}
+@item @code{SunOS 5.9} @tab @code{/opt/csw/gcc3/bin/gcc} @tab @code{}
+@item @code{SunOS 5.9} @tab @code{/opt/csw/gcc3/bin/gcc} @tab @code{--disable-shared}
+@item @code{SunOS 5.9} @tab @code{/opt/csw/gcc4/bin/gcc} @tab @code{}
+@item @code{SunOS 5.9} @tab @code{/opt/csw/gcc4/bin/gcc} @tab @code{--disable-shared}
+@item @code{SunOS 5.9} @tab @code{/opt/SUNWspro/bin/c89} @tab @code{}
+@item @code{SunOS 5.9} @tab @code{/opt/SUNWspro/bin/c89} @tab @code{--disable-shared}
+@item @code{SunOS 5.9} @tab @code{/opt/SUNWspro/bin/cc} @tab @code{}
+@item @code{SunOS 5.9} @tab @code{/opt/SUNWspro/bin/cc} @tab @code{--disable-shared}
+@end multitable

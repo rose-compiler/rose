@@ -1,0 +1,77 @@
+module foo
+contains
+  function rebase(data, lb) result(ptr)
+    integer(8) :: lb
+    integer(8), target :: data(lb:)
+    integer(8), pointer :: ptr(:)
+
+    ptr => data
+  end function rebase
+end module foo
+
+program ptrtest
+use foo
+
+   integer(8), parameter :: n = 8
+
+   integer(8), allocatable, dimension(:,0:1) :: a[*]
+   integer(8), target :: b(0:n-1)
+   integer(8), allocatable, dimension(:) :: c[*]
+   integer(8), target :: d(0:n-1,0:1)
+
+   integer(8), pointer :: aptr (:)
+   integer(8), pointer :: bptr (:)
+   integer(8), pointer :: cptr (:)
+   integer(8), pointer :: dptr (:)
+
+   integer(8) :: rank, i
+   logical :: success
+
+   ! initialization
+   rank = team_rank() + 1
+   allocate(a(0:n-1,0:1)[])
+   allocate(c(0:n-1)[])
+   do i = 0, n-1
+      a(i,0) = -rank * 100000 - i
+      a(i,1) = rank * 1000000 + i
+      b(i) = i
+      c(i) = -i
+      d(i,0) = n - i
+      d(i,1) = i - n
+   end do
+
+   ! assign pointers
+   aptr => rebase(a(:,1),0_8)
+   bptr => rebase(b,0_8)
+   cptr => rebase(c,0_8)
+   dptr => rebase(d(:,1),0_8)
+
+   ! testing
+   success = .true.
+   do i = 0, n-1
+      if (a(i,1) .ne. aptr(i)) then
+         success = .false.
+	 print *, "a mismatch: ", a(i,1), "!= ", aptr(i)
+      endif
+      if (b(i) .ne. bptr(i)) then
+         success = .false.
+	 print *, "b mismatch: ", b(i), "!= ", bptr(i)
+      endif
+      if (c(i) .ne. cptr(i)) then
+         success = .false.
+	 print *, "c mismatch: ", c(i), "!= ", cptr(i)
+      endif
+      if (d(i,1) .ne. dptr(i)) then
+         success = .false.
+	 print *, "d mismatch: ", d(i,1), "!= ", dptr(i)
+      endif
+   end do
+
+   ! report
+   if (success) then
+      write(*, '(A)') "test passed"
+   else
+      write(*, '(A)') "test failed"
+   endif
+
+end program ptrtest

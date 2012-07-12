@@ -4,165 +4,132 @@
 #ifndef USE_ROSE
 
 #include <string>
-#include "RtedSymbols.h"
-#include "DataStructures.h"
+#include <sageGeneric.h>
 #include "RtedTransformation.h"
 
-using namespace std;
-using namespace SageInterface;
-using namespace SageBuilder;
+namespace SI = SageInterface;
+namespace SB = SageBuilder;
+
+namespace
+{
+  /// Determines a nice scope name for @c stmt.  This is only used for convenience
+  /// in the debugger, and does not affect any checks.
+  struct ScopeName : sg::DispatchHandler<std::string>
+  {
+    ScopeName() : Base() {}
+
+    void handle(const SgNode&)               { res = "unknown"; }
+    void handle(const SgWhileStmt&)          { res = "while"; }
+    void handle(const SgIfStmt&)             { res = "if"; }
+    void handle(const SgForStatement&)       { res = "for"; }
+    void handle(const SgUpcForAllStatement&) { res = "upc_forall"; }
+    void handle(const SgDoWhileStmt&)        { res = "do while"; }
+  };
+}
 
 
-void 
-RtedTransformation::bracketWithScopeEnterExit( SgFunctionDefinition* fndef ) {
-    SgBasicBlock* body = fndef -> get_body();
-    ROSE_ASSERT( body );
+SgStatement*
+RtedTransformation::buildEnterScopeGuard(SgScopeStatement& scope)
+{
+  static const bool needname = false;
+  static const bool needqual = false;
+  static const bool needparens = true;
+  static const bool classknown = false;
 
-    bracketWithScopeEnterExit( isSgNode( body ), body -> get_endOfConstruct() );
+  ROSE_ASSERT(symbols.roseScopeGuard);
+
+  SgMemberFunctionDeclaration* ctor = NULL;
+  SgExprListExp*               ctorargs = SB::buildExprListExp();
+
+  SI::appendExpression(ctorargs, SB::buildStringVal("C++-ScopeGuard"));
+  appendFileInfo(ctorargs, &scope, scope.get_endOfConstruct());
+
+  SgConstructorInitializer*    guardinit = SB::buildConstructorInitializer(ctor, ctorargs, symbols.roseScopeGuard, needname, needqual, needparens, classknown);
+
+  return SB::buildVariableDeclaration("scopeguard", symbols.roseScopeGuard, guardinit, &scope);
 }
 
 /// add @c beginScope before @c stmt and @c endScope after @c stmt.
 /// use @c end_of_scope to determine the @c Sg_File_Info to use for reporting
 /// error location.
-void 
-RtedTransformation::bracketWithScopeEnterExit( SgStatement* stmt, SgNode* end_of_scope) {
-    bracketWithScopeEnterExit( isSgNode( stmt ), end_of_scope -> get_endOfConstruct() );
-}
+void
+RtedTransformation::bracketWithScopeEnterExit( ScopeContainer::value_type pseudoscope )
+{
+    SgScopeStatement* const stmt_or_block = pseudoscope.stmt;
+    Sg_File_Info*     const exit_file_info = stmt_or_block->get_endOfConstruct();
 
-void 
-RtedTransformation::bracketWithScopeEnterExit( SgNode* stmt_or_block, Sg_File_Info* exit_file_info ) {
+    ROSE_ASSERT(stmt_or_block && exit_file_info);
 
-    SgStatement* stmt = isSgStatement( stmt_or_block );
-    SgBasicBlock* block = isSgBasicBlock( stmt_or_block );
-    if (!stmt || stmt->get_file_info()->isCompilerGenerated())
-      return;
+    // \pp \todo this works for C/UPC but not for C++ where
+    //           exceptions can lead to scope unwinding.
+    //           Use RAII to guarantee that the Rted scope information
+    //           is properly managed.
+    SgStatement*      guard = pseudoscope.cxx_lang
+                                   ? buildEnterScopeGuard(*stmt_or_block)
+                                   : buildEnterBlockStmt(sg::dispatch(ScopeName(), stmt_or_block))
+                                   ;
 
-    ROSE_ASSERT( stmt );
-    ROSE_ASSERT( exit_file_info );
-    ROSE_ASSERT( symbols->roseEnterScope );
+    SgBasicBlock*     block = isSgBasicBlock( stmt_or_block );
 
-    SgExprListExp* enter_scope_args = buildExprListExp();
-    appendExpression(
-      enter_scope_args,
-      buildString(
-        scope_name( stmt_or_block ) + 
-        ":" 
-        + RoseBin_support::ToString( stmt_or_block -> get_file_info() -> get_line() )
-      )
-    );
-   
-
-    // enterScope( "foo:23");
-    SgExprStatement* fncall_enter 
-        = buildExprStatement(
-            buildFunctionCallExp(
-              buildFunctionRefExp( symbols->roseEnterScope),
-              enter_scope_args
-            )
-          );
     // order is important here... a block is a statement, but a statement is not
     // necessarily a block
+    // \pp \todo since we create a block (at least in some cases), I suggest
+    //           to create the block up front (when needed/desired) and then
+    //           handle these cases with the same code.
     if( block )
-        block -> prepend_statement( fncall_enter );
-    else {
-      
-      cerr << "@@@ inserting scope : " << stmt->unparseToString() << 
-      	"   " << stmt->class_name() << "  " << stmt->get_file_info()->isCompilerGenerated() << endl;
-      // tps : 10/07/2009: what if the statement before is a for loop, then we have to insert a block as well
-      SgStatement* parentStmt = isSgStatement(stmt->get_parent());
-      cerr << "    @@@ parent == " << parentStmt->class_name() << endl;
-      if (parentStmt && (
-                         isSgUpcForAllStatement(parentStmt) ||
-			 isSgForStatement(parentStmt) ||
-			 isSgWhileStmt(parentStmt))) {
-        SgBasicBlock* bb = buildBasicBlock();
-	bb->set_parent(parentStmt);
-	bb->append_statement(fncall_enter);
-	bb->append_statement(stmt);
-	if (isSgForStatement(parentStmt))
-	  isSgForStatement(parentStmt)->set_loop_body(bb);
-	if (isSgUpcForAllStatement(parentStmt))
-	  isSgUpcForAllStatement(parentStmt)->set_loop_body(bb);
-      } else
-      insertStatementBefore( stmt, fncall_enter );
-    }
-
-    // exitScope( (char*) filename, (char*) line, (char*) lineTransformed, (char*) stmtStr);
-    SgExprListExp* exit_scope_args = buildExprListExp();
-    appendExpression(
-      exit_scope_args,
-      buildString( exit_file_info -> get_filename() )
-    );
-    appendExpression(
-      exit_scope_args,
-      buildString( RoseBin_support::ToString( exit_file_info -> get_line() ))
-    );
-    appendExpression(
-      exit_scope_args,
-      buildString( "x%%x" )
-    );
-    appendExpression(
-      exit_scope_args,
-      buildString( removeSpecialChar( stmt->unparseToString()))
-    );
-
-    SgExprStatement* exit_scope_call = 
-        buildExprStatement(
-          buildFunctionCallExp(
-            buildFunctionRefExp( symbols->roseExitScope),
-            exit_scope_args
-          )
-        );
-    // order is important here... a block is a statement, but a statement is not
-    // necessarily a block
-    if( block )
-        block -> append_statement( exit_scope_call );
+        block -> prepend_statement( guard );
     else
-        insertStatementAfter( stmt, exit_scope_call );
+    {
+      std::cerr << "@@@ inserting scope : " << "   " << stmt_or_block->class_name() << std::endl;
 
+      // tps : 10/07/2009: what if the statement before is a for loop, then we have to insert a block as well
+      SgStatement* parentStmt = isSgStatement(stmt_or_block->get_parent());
+      ROSE_ASSERT(parentStmt);
 
-    attachComment(
-        exit_scope_call,
-        "",
-        PreprocessingInfo::before
-    );
-    attachComment(
-        exit_scope_call,
-        "RS : exitScope, parameters : ( filename, line, lineTransformed, error stmt)",
-        PreprocessingInfo::before
-    );
-}
+      std::cerr << "    @@@ parent == " << parentStmt->class_name() << std::endl;
 
+      // this loop handles scope introducing constructs
+      // \pp is the if/switch missing?
+      if (GeneralizdFor::is(parentStmt) || isSgWhileStmt(parentStmt))
+      {
+        SgBasicBlock* bb = SB::buildBasicBlock();
+        bb->set_parent(parentStmt);
+        bb->append_statement(guard);
+        bb->append_statement(stmt_or_block);
 
-/// Determines a nice scope name for @c stmt.  This is only used for convenience
-/// in the debugger, and does not affect any checks.
-std::string
-RtedTransformation::scope_name( SgNode* stmt) {
-
-    if( isSgWhileStmt( stmt)) {
-      return "while";
-    } else if( isSgIfStmt( stmt)) {
-      return "if";
-    } else if( isSgForStatement( stmt)) {
-      return "for";
-    } else if( isSgDoWhileStmt( stmt)) {
-      return "do";
-    } else {
-      //cerr << " Trying to query stmt : " << stmt->class_name() << endl;
-      vector<SgNode*> calls 
-        = NodeQuery::querySubTree( stmt, V_SgFunctionCallExp);
-    
-      if( calls.size() > 0) {
-        SgFunctionCallExp* fncall = isSgFunctionCallExp( calls[0]);
-        ROSE_ASSERT( fncall);
-        return fncall
-                ->getAssociatedFunctionDeclaration()
-                ->get_name().getString();
-      } else {
-        cerr << "Unable to determine scope name." << endl;
-        return "unknown";
+        if (isSgForStatement(parentStmt))
+          isSgForStatement(parentStmt)->set_loop_body(bb);
+        else if (isSgUpcForAllStatement(parentStmt))
+          isSgUpcForAllStatement(parentStmt)->set_loop_body(bb);
+        // \pp \todo else while handling missing?
+      }
+      else
+      {
+        // this handles the do loop
+        SI::insertStatementBefore( stmt_or_block, guard );
       }
     }
+
+    // \todo insert falloff protection when requested (pseudoscope.falloff_protection)
+    //       i.e., to guard against int foo() { /* missing return statement */ }
+
+    // we are done for C++
+    if (pseudoscope.cxx_lang) return;
+
+    SgScopeStatement* scope = stmt_or_block->get_scope();
+    ROSE_ASSERT(scope);
+
+    SgStatement*      close_call = buildExitBlockStmt(1, *scope, exit_file_info);
+
+    // order is important here... a block is a statement, but a statement is not
+    // necessarily a block
+    if( block )
+        block -> append_statement( close_call );
+    else
+        SI::insertStatementAfter( stmt_or_block, close_call );
+
+    SI::attachComment( close_call, "", PreprocessingInfo::before );
+    SI::attachComment( close_call, "RS : exitScope, parameters : (closingBlocks, file_info)", PreprocessingInfo::before);
 }
 
 #endif

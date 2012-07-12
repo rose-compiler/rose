@@ -1,0 +1,53 @@
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgLambdaRefExp
+//////////////////////////////////////////////////////////////////////////
+
+/*!
+\class SgLambdaRefExp
+\brief This class represents a lambda expression.
+
+This class represents a lambda expression in the input language. Currently, this IR node only works with Python input files.
+
+*/
+
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgLambdaRefExp data members
+/////////////////////////////////////////////////////////////////////////
+
+/*! \var SgLambdaRefExp::p_functionDeclaration
+\brief The implicit function referred to by this lambda.
+
+*/
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgLambdaRefExp member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+
+/*!
+\fn SgLambdaRefExp::SgLambdaRefExp ()
+\brief This is the constructor.
+
+   This constructor builds the SgLambdaRefExp base class.
+
+*/
+
+/*!
+\fn SgLambdaRefExp::isSgLambdaRefExp (SgNode *s)
+\brief Cast function (from derived class to SgLambdaRefExp pointer).
+
+   This functions returns a SgLambdaRefExp pointer for any input of a 
+pointer to an object derived from a SgLambdaRefExp.
+
+\return Returns valid pointer to SgLambdaRefExp if input is derived from a SgLambdaRefExp.
+*/
+
+/*!
+\fn SgLambdaRefExp::isSgLambdaRefExp (const SgNode *s)
+\brief Cast function (from derived class to SgLambdaRefExp pointer).
+
+   This functions returns a SgLambdaRefExp pointer for any input of a 
+pointer to an object derived from a SgLambdaRefExp.
+
+\return Returns valid pointer to SgLambdaRefExp if input is derived from a SgLambdaRefExp.
+*/

@@ -1,8 +1,6 @@
 /* ELF Section Tables (SgAsmElfSectionTable and related classes) */
 #include "sage3basic.h"
 #include "stringify.h"
-#define __STDC_FORMAT_MACROS
-#include <inttypes.h>
 
 /** Converts 32-bit disk representation to host representation */
 void
@@ -209,7 +207,6 @@ SgAsmElfSectionTable::parse()
                         break;
                     case SgAsmElfSectionTableEntry::SHT_REL: {
                         SgAsmElfSymbolSection *symbols = dynamic_cast<SgAsmElfSymbolSection*>(linked);
-                        ROSE_ASSERT(symbols);
                         SgAsmElfRelocSection *relocsec = new SgAsmElfRelocSection(fhdr, symbols, info_linked);
                         relocsec->set_uses_addend(false);
                         is_parsed[i] = relocsec;
@@ -217,18 +214,22 @@ SgAsmElfSectionTable::parse()
                     }
                     case SgAsmElfSectionTableEntry::SHT_RELA: {
                         SgAsmElfSymbolSection *symbols = dynamic_cast<SgAsmElfSymbolSection*>(linked);
-                        ROSE_ASSERT(symbols);
                         SgAsmElfRelocSection *relocsec = new SgAsmElfRelocSection(fhdr, symbols, info_linked);
                         relocsec->set_uses_addend(true);
                         is_parsed[i] = relocsec;
                         break;
                     }
                     case SgAsmElfSectionTableEntry::SHT_PROGBITS: {
-                        std::string section_name = section_name_strings->read_content_local_str(entry->get_sh_name());
-                        if (section_name == ".eh_frame") {
-                            is_parsed[i] = new SgAsmElfEHFrameSection(fhdr);
-                        } else {
+                        if (!section_name_strings) {
+                            fprintf(stderr, "SgAsmElfSectionTable::parse(): no string table for section table\n");
                             is_parsed[i] = new SgAsmElfSection(fhdr);
+                        } else {
+                            std::string section_name = section_name_strings->read_content_local_str(entry->get_sh_name());
+                            if (section_name == ".eh_frame") {
+                                is_parsed[i] = new SgAsmElfEHFrameSection(fhdr);
+                            } else {
+                                is_parsed[i] = new SgAsmElfSection(fhdr);
+                            }
                         }
                         break;
                     }
@@ -260,17 +261,16 @@ SgAsmElfSectionTable::parse()
             break;
     }
 
-#if 1 /*This will be going away shortly [RPM 2008-12-12]*/
     /* Initialize links between sections */
     for (size_t i = 0; i < entries.size(); i++) {
         SgAsmElfSectionTableEntry *shdr = entries[i];
         if (shdr->get_sh_link() > 0) {
-            SgAsmElfSection *source = dynamic_cast<SgAsmElfSection*>(fhdr->get_file()->get_section_by_id(i));
-            SgAsmElfSection *target = dynamic_cast<SgAsmElfSection*>(fhdr->get_file()->get_section_by_id(shdr->get_sh_link()));
+            SgAsmElfSection *source = isSgAsmElfSection(fhdr->get_file()->get_section_by_id(i));
+            SgAsmElfSection *target = isSgAsmElfSection(fhdr->get_file()->get_section_by_id(shdr->get_sh_link()));
+            assert(source);     /* because we created it above */
             source->set_linked_section(target);
         }
     }
-#endif
 
     /* Finish parsing sections now that we have basic info for all the sections. */
     for (size_t i=0; i<is_parsed.size(); i++)

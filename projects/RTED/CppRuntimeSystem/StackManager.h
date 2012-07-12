@@ -2,79 +2,70 @@
 #ifndef STACKMANAGER_H
 #define STACKMANAGER_H
 
-#include "Util.h"
-
 #include <map>
 #include <vector>
-#include <iostream>
+#include <iosfwd>
+
+#include "Util.h"
+#include "rted_typedefs.h"
 
 class VariablesType;
+class RsType;
 
-
-class StackManager
+struct ScopeInfo
 {
-    public:
+    ScopeInfo(const char* _name, int index)
+    : name(_name), stackIndex(index)
+    {}
+
+    const char* name;        /// description of scope, either function-name or something like "for-loop"
+    size_t      stackIndex;  /// index in stack-array where this scope starts
+};
+
+
+struct StackManager
+{
+        typedef Address                                      Location;
+        typedef std::vector<VariablesType>                   VariableStack;
+        typedef std::vector<ScopeInfo>                       ScopeStack;
+
+        //~ enum { immediate = false, delay = true };
+
         StackManager();
-        ~StackManager() {}
 
+        void addVariable(Location address, const char* name, const char* mangledName, const RsType& t, long blocksize);
 
-        void addVariable(VariablesType * var);
+        /// \brief Each variable is associated with a scope, use this function to create a new scope
+        /// \param name  string description of scope, may be function name or "for-loop" ...
+        void beginScope(const char* name);
 
-        /// Each variable is associated with a scope, use this function to create a new scope
-        /// @param name  string description of scope, may be function name or "for-loop" ...
-        void beginScope(const std::string & name);
-
-        /// Closes a scope and deletes all variables which where created via registerVariable()
-        /// from the stack, tests for
-        void endScope ();
-
+        /// \brief Closes a scope and deletes all variables which where created
+        ///        via registerVariable() from the stack, testing for memory
+        ///        leaks (@ref registerPointerChange).
+        /// \param scopecount number of scopes to close (e.g., return from inner block)
+        void endScope(size_t scopecount);
 
         // Access to variables/scopes
-        int                 getScopeCount()     const;
-        const std::string & getScopeName(int i) const;
+        int                getScopeCount()     const;
+        std::string        getScopeName(size_t i) const;
 
-        typedef std::vector<VariablesType*>::const_iterator VariableIter;
-        VariableIter variablesBegin(int scopeId) const;
-        VariableIter variablesEnd(int scopeId)   const;
-
+        VariableStack::const_iterator variablesBegin(size_t scopeId) const;
+        VariableStack::const_iterator variablesEnd(size_t scopeId)   const;
 
         /// Returns variable at given memory location, or NULL if no var found
-        VariablesType * getVariable(addr_type);
+        const VariablesType* getVariable(Location) const;
 
         /// Returns Variable by mangledName (which is unique)
         /// much slower thant the version with address!, does linear search in stack
-        VariablesType * getVariable(const std::string & mangledName);
+        const VariablesType* getVariableByMangledName(const std::string& mangledName) const;
 
-        /// Finds all variables with given name, and puts them in a vector
-        /// (only mangled name is unique! )
-        void getVariableByName(const std::string & name, std::vector<VariablesType*> & result);
-
-
-        void print(std::ostream & os) const;
+        void print(std::ostream& os) const;
 
         void clearStatus();
 
     protected:
-
-        struct ScopeInfo
-        {
-            ScopeInfo( const std::string & _name, int index)
-                : name(_name),stackIndex(index)
-            {}
-
-            std::string name;        /// description of scope, either function-name or something like "for-loop"
-            int         stackIndex;  /// index in stack-array where this scope starts
-        };
-        std::vector<ScopeInfo> scope;
-
-        std::vector<VariablesType *> stack;
-
-        typedef std::map<addr_type,VariablesType*> AddrToVarMap;
-        AddrToVarMap addrToVarMap;
-
+        ScopeStack                   scope;
+        VariableStack                stack;
 };
-
-
-
 
 #endif

@@ -1,43 +1,72 @@
 #ifndef RTEDSYM_H
 #define RTEDSYM_H
 
-bool RTEDDEBUG();
+#include "rose.h"
 
-/* -----------------------------------------------------------
- * tps : 6March 2009: This class adds transformations
- * so that runtime errors are caught at runtime before they happen
- * -----------------------------------------------------------*/
-class RtedSymbols: public AstSimpleProcessing {
-private:
+enum SourceFileType
+{
+  ftUnknown = 0,
+  ftHeader  = 1,
+  ftCbase   = 2,
+  ftClang   = 4  | ftCbase,  // C
+  ftCxx     = 8  | ftCbase,  // C++
+  ftUPC     = 16 | ftCbase   // UPC
+};
 
-public:
-	SgFunctionSymbol* roseCreateHeap;
-	SgFunctionSymbol* roseAccessHeap;
-	SgFunctionSymbol* roseCheckpoint;
-	SgFunctionSymbol* roseFunctionCall;
-	SgFunctionSymbol* roseAssertFunctionSignature;
-	SgFunctionSymbol* roseConfirmFunctionSignature;
-	SgFunctionSymbol* roseFreeMemory;
-	SgFunctionSymbol* roseReallocateMemory;
-	SgFunctionSymbol* roseConvertIntToString;
-	SgFunctionSymbol* roseCreateVariable;
-#if NOT_YET_IMPLEMENTED
-	SgFunctionSymbol* roseCreateSharedVariable; // for upc
-#endif /* NOT_YET_IMPLEMENTED */
-	SgFunctionSymbol* roseCreateObject;
-	SgFunctionSymbol* roseInitVariable;
-	SgFunctionSymbol* roseMovePointer;
-	SgFunctionSymbol* roseAccessVariable;
-	SgFunctionSymbol* roseEnterScope;
-	SgFunctionSymbol* roseExitScope;
-	SgFunctionSymbol* roseIOFunctionCall;
-	SgFunctionSymbol* roseRegisterTypeCall;
-	SgFunctionSymbol* roseCheckIfThisNULL;
-	SgType* size_t_member;
+struct RtedSymbols
+{
+  SgFunctionSymbol*   roseCreateArray;
+  SgFunctionSymbol*   roseAllocMem;
+  SgFunctionSymbol*   roseAccessArray;
+  SgFunctionSymbol*   roseCheckpoint;
+  SgFunctionSymbol*   roseFunctionCall;
+  SgFunctionSymbol*   roseAssertFunctionSignature;
+  SgFunctionSymbol*   roseConfirmFunctionSignature;
+  SgFunctionSymbol*   roseFreeMemory;
+  SgFunctionSymbol*   roseReallocateMemory;
+  SgFunctionSymbol*   roseConvertIntToString;
+  SgFunctionSymbol*   roseCreateVariable;
+  SgFunctionSymbol*   roseCreateObject;
+  SgFunctionSymbol*   roseInitVariable;
+  SgFunctionSymbol*   roseMovePointer;
+  SgFunctionSymbol*   roseAccessVariable;
+  SgFunctionSymbol*   roseEnterScope;
+  SgFunctionSymbol*   roseExitScope;
+  SgFunctionSymbol*   roseIOFunctionCall;
+  SgFunctionSymbol*   roseRegisterTypeCall;
+  SgFunctionSymbol*   roseCheckIfThisNULL;
+  SgFunctionSymbol*   roseAddr;
+  SgFunctionSymbol*   roseAddrSh;
+  SgFunctionSymbol*   roseClose;
 
-	RtedSymbols()
-  : roseCreateHeap(NULL),
-    roseAccessHeap(NULL),
+  SgFunctionSymbol*   roseReportViolation;
+
+  // symbols for UPC
+  SgFunctionSymbol*   roseUpcExitWorkzone;
+  SgFunctionSymbol*   roseUpcEnterWorkzone;
+  SgFunctionSymbol*   roseUpcAllInitialize;
+  SgFunctionSymbol*   roseUpcBeginExclusive;
+  SgFunctionSymbol*   roseUpcEndExclusive;
+  SgFunctionSymbol*   roseUpcEnterSharedPtr;
+  SgFunctionSymbol*   roseUpcExitSharedPtr;
+
+  SgFunctionSymbol*   roseCxxTransientPtr;
+  SgFunctionSymbol*   roseCTransientPtr;
+  SgFunctionSymbol*   roseCheckTransientPtr;
+  SgFunctionSymbol*   roseCheckForMemoryLeak;
+
+  SgEnumDeclaration*  roseAllocKind;
+
+  SgClassType*        roseTypeDesc;
+  SgClassType*        roseAddressDesc;
+  SgClassType*        roseSourceInfo;
+  SgClassType*        roseScopeGuard;
+  SgTypedefType*      size_t_member;
+
+  RtedSymbols()
+  : roseCreateArray(NULL),
+    roseAllocMem(NULL),
+    roseAccessArray(NULL),
     roseCheckpoint(NULL),
     roseFunctionCall(NULL),
     roseAssertFunctionSignature(NULL),
@@ -46,26 +75,45 @@ public:
     roseReallocateMemory(NULL),
     roseConvertIntToString(NULL),
     roseCreateVariable(NULL),
-#if NOT_YET_IMPLEMENTED
-    roseCreateSharedVariable(NULL),
-#endif /* NOT_YET_IMPLEMENTED */
     roseCreateObject(NULL),
     roseInitVariable(NULL),
+    roseMovePointer(NULL),
     roseAccessVariable(NULL),
     roseEnterScope(NULL),
     roseExitScope(NULL),
     roseIOFunctionCall(NULL),
     roseRegisterTypeCall(NULL),
     roseCheckIfThisNULL(NULL),
+    roseAddr(NULL),
+    roseAddrSh(NULL),
+    roseClose(NULL),
+
+    roseReportViolation(NULL),
+
+    roseUpcExitWorkzone(NULL),
+    roseUpcEnterWorkzone(NULL),
+    roseUpcAllInitialize(NULL),
+    roseUpcBeginExclusive(NULL),
+    roseUpcEndExclusive(NULL),
+    roseUpcEnterSharedPtr(NULL),
+    roseUpcExitSharedPtr(NULL),
+
+    roseCxxTransientPtr(NULL),
+    roseCTransientPtr(NULL),
+    roseCheckTransientPtr(NULL),
+
+    roseAllocKind(NULL),
+
+    roseTypeDesc(NULL),
+    roseAddressDesc(NULL),
+    roseSourceInfo(NULL),
+    roseScopeGuard(NULL),
     size_t_member(NULL)
-	{}
+  {}
 
-	virtual ~RtedSymbols() {
-	}
+  void initialize(SgGlobal& n, SourceFileType sft);
 
-	// Traverse all nodes and check properties
-	virtual void visit(SgNode* n) ;
-
+  static const std::string prefix;
 };
 
 #endif

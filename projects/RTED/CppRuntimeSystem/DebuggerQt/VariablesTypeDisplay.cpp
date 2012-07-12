@@ -1,3 +1,5 @@
+#include <sstream>
+
 #include "VariablesTypeDisplay.h"
 #include "CppRuntimeSystem.h"
 
@@ -11,24 +13,23 @@
 #include <QIcon>
 
 
-VariablesTypeDisplay::VariablesTypeDisplay(VariablesType * vt_, bool displayMem)
-    : vt(vt_)
+VariablesTypeDisplay::VariablesTypeDisplay(const VariablesType& vt_, bool displayMem)
+    : vt(&vt_)
 {
     typedef PropertyValueNode PVN;
-    QString addrStr = QString("0x%1").arg(vt->getAddress(),0,16);
+
+    std::stringstream out;
+
+    out << vt->getAddress();
 
     addChild( new PVN("Mangled Name",vt->getMangledName().c_str()));
-    addChild( new PVN("Address",addrStr));
+    addChild( new PVN("Address", out.str().c_str()));
     addChild( RsTypeDisplay::build(vt->getType(),-1,"Type:"));
 
-
-
-    PointerInfo * pi = vt->getPointerInfo();
-    if(pi)
+    if (const PointerInfo* pi = vt->getPointerInfo())
     {
         addChild(new PointerDisplay(pi));
     }
-
 }
 
 
@@ -41,7 +42,7 @@ QVariant VariablesTypeDisplay::data(int role, int column) const
             return vt->getName().c_str();
     }
     if(role == VariablesTypeRole)
-        return QVariant::fromValue<VariablesType*>(vt);
+        return QVariant::fromValue<VariablesType*>(const_cast<VariablesType*>(vt));
 
     if(role == Qt::DecorationRole && column ==0)
         return QIcon(":/icons/variable.gif");
@@ -68,7 +69,7 @@ VariablesTypeDisplay * VariablesTypeDisplay::build(StackManager * sm)
         curScope->setIcon(QIcon(":/icons/scope.gif"));
         root->addChild(curScope);
 
-        RuntimeSystem::VariableIter it = sm->variablesBegin(i);
+        StackManager::VariableStack::const_iterator it = sm->variablesBegin(i);
         for(; it != sm->variablesEnd(i); ++it)
             curScope->addChild(new VariablesTypeDisplay(*it));
 

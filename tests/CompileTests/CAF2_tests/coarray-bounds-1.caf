@@ -1,0 +1,48 @@
+program test17
+  integer(4), allocatable :: a(:,:)[*]
+  integer(4) :: partner, rank, isize, error
+
+  allocate(a(3:6,0:9)[])
+
+  rank = team_rank()
+  isize = team_size()
+  if (rank .eq. 1) then
+    partner = 0
+  else
+    partner = 1
+  end if
+
+  do i = 3, 6, 2
+    do j = 0, 9
+      a(i, j) = rank
+      a(i + 1, j) = partner
+    end do
+  end do
+
+  a(partner + 3,0:9)[partner] = a(partner + 3,0:9)
+
+  call team_barrier()
+
+  a(rank + 5,0:9) = a(rank + 5,0:9)[partner]
+
+  call team_barrier()
+
+  error = 0
+  do i = 3, 6
+    do j = 0, 9
+      if (a(i,j) .ne. 1) then
+        error = error + 1
+      end if
+    end do
+  end do
+  
+  if (error .eq. 0) then
+    if (rank .eq. 0) then
+      write(*, '(A)') "PASS"
+    end if
+  else
+    print *, "FAILED"
+    print *, "rank=", rank, "a=", a(3:6,0:9)
+  end if
+
+end program 

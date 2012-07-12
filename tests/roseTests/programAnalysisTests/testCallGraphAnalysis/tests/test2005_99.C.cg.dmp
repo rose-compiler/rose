@@ -1,3 +1,3 @@
-main ->
 Xt < int , int > ::Xt ->
 Xt < int , int > ::Xt ->
+main -> Xt < int , int > ::Xt

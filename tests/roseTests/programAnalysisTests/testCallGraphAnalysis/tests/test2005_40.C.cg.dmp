@@ -1,5 +1,5 @@
-foo ->
 X::X ->
 Y::Y ->
 Z::Z ->
 Z::Z ->
+foo -> X::X Y::Y Z::Z Z::Z

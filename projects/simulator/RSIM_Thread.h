@@ -7,7 +7,8 @@
  *  a new real thread to simulate it; when the simulated thread exits, the real thread also exits.  Therefore, the methods
  *  defined for the RSIM_Thread class are intended to be called by only one thread at a time per RSIM_Thread object.
  *
- *  The RSIM_Thread object contains an RSIM_SemanticPolicy object which defines how instructions are executed. */
+ *  The RSIM_Thread object contains an instruction semantics policy object which defines how instructions are executed and
+ *  contains the register state for the thread. */
 
 class RSIM_Thread {
 public:
@@ -20,6 +21,7 @@ public:
           policy(this), semantics(policy),
           robust_list_head_va(0), clear_child_tid(0) {
         real_thread = pthread_self();
+        memset(trace_mesg, 0, sizeof trace_mesg);
         ctor();
     }
 
@@ -44,10 +46,10 @@ public:
     /** Main loop. This loop simulates a single specimen thread and returns when the simulated thread exits. */
     void *main();
 
-    /** The global mutex for instruction simulation. */
-    static RTS_mutex_t insn_mutex;
-
-
+    /** Indicates whether the instruction semaphore was posted.  If an instruction needs to post the insn_semaphore, then it
+     *  can do so only if insn_semaphore_posted is clear, and it must set insn_semaphore_posted.  The insn_semaphore_posted is
+     *  part of RSIM_Thread because each simulator thread must have its own copy. */
+    bool insn_semaphore_posted;
 
     /**************************************************************************************************************************
      *                                  Thread simulation (specimen threads)
@@ -57,7 +59,8 @@ private:
     pthread_t real_thread;
     
     /** The TID of the real thread that is simulating the specimen thread described by this RSIM_Thread object.  Valid until
-     * the "process" data member is null. */
+     * the "process" data member is null.   This value is updated for the main thread of a child process after a fork (see
+     * RSIM_Process::atfork_child(). */
     pid_t my_tid;
 
     /** Like a TID, but a small sequence number instead. This is more readable in error messages, and is what the id() method
@@ -91,6 +94,14 @@ public:
      *  RSIM_Thread. */
     int get_tid() { return my_tid; }
 
+    /** Initialize the thread ID.  The specimen thread ID is the same as the real simulator thread that "owns" the specimen
+     *  thread.  The thread ID should not be changed except by parts of the RSIM_Process that understand how threads are looked
+     *  up, since the process typically uses an std::map indexed by thread ID.
+     *
+     *  Thread safety: Not thread safe, but this is normally called by initialization functions before the thread is known to
+     *  other parts of the simulator. */
+    void set_tid();
+
     /** Returns the POSIX thread object describing the real thread that's simulating this specimen thread. */
     pthread_t get_real_thread() const { assert(process!=NULL); return real_thread; }
     
@@ -108,9 +119,6 @@ public:
      *  into the RSIM_Threads tls_array, depending on the value of @p idx. */
     user_desc_32 *gdt_entry(int idx);
 
-    /** Wake (signal) a futex. Returns the number of processes woken up on success, negative error number on failure. */
-    int futex_wake(uint32_t va);
-
     /** Traverse the robust futex list and handle futex death for each item on the list. See the Linux version of this function
      *  for details. */
     int exit_robust_list();
@@ -121,6 +129,10 @@ public:
 
     /** Simulate thread exit. Return values is that which would be returned as the status for waitpid. */
     int sys_exit(const RSIM_Process::Exit &e);
+
+    /** Performs the clear_child_tid actions. Namely, writes zero to the specified address and wakes the futex at that
+     *  address.  This should be called when the child exits for any reason, or when the child calls exec. */
+    void do_clear_child_tid();
 
 
 
@@ -142,7 +154,6 @@ private:
     RTS_Message *trace_mesg[TRACE_NFACILITIES];         /**< Array indexed by TraceFacility */
     struct timeval last_report;                         /**< Time of last progress report for TRACE_PROGRESS */
     double report_interval;                             /**< Minimum seconds between progress reports for TRACE_PROGRESS */
-    RSIM_Callbacks callbacks;                           /**< Callbacks per thread */
 
     /** Return a string identifying the thread and time called. */
     std::string id();
@@ -162,18 +173,37 @@ public:
     /** Print a progress report if progress reporting is enabled and enough time has elapsed since the previous report. */
     void report_progress_maybe();
 
-    /** Prints information about stack frames. */
-    void report_stack_frames(RTS_Message*);
+    /** Prints information about stack frames.  The first line of output will include the optional title string (followed by a
+     *  line feed) or the string "stack frames:".  The stack is unwound beginning with the current EIP, and using the EBP
+     *  register to locate both the next EBP and the return address.  If @p bp_not_saved is true, then the return address of
+     *  the inner-most function is assumed to be on the top of the stack (ss:[esp]), as is the case immediately after a CALL
+     *  instruction before the called function has a chance to "PUSH EBP; MOV EBP, ESP". */
+    void report_stack_frames(RTS_Message*, const std::string &title="", bool bp_not_saved=false);
 
-    //@{
-    /** Obtain the set of callbacks for this object. */
+    /** Create, open, or reassign all tracing facilities.  This method is called when a thread is constructed or when a thread
+     *  is reassigned to a new process after a fork.  For each tracing facility, an RTS_Message object is created (if
+     *  necessary) to point to either the specified file or no file, depending on whether the corresponding trace flag is set
+     *  for the containing process.  If an RTS_Message object already exists, then its set_file() method is called to make it
+     *  point to the specified file. */
+    void reopen_trace_facilities(FILE*);
+
+    /**************************************************************************************************************************
+     *                                  Callbacks
+     **************************************************************************************************************************/
+private:
+    RSIM_Callbacks callbacks;                           /**< Callbacks per thread */
+
+public:
+    /** Obtain the set of callbacks for this object.
+     *
+     *  @{ */
     RSIM_Callbacks &get_callbacks() {
         return callbacks;
     }
     const RSIM_Callbacks &get_callbacks() const {
         return callbacks;
     }
-    //@}
+    /** @} */
 
     /** Set all callbacks for this thread.  Note that callbacks can be added or removed individually by invoking methods on the
      *  callback object returned by get_callbacks().
@@ -182,6 +212,60 @@ public:
     void set_callbacks(const RSIM_Callbacks &cb) {
         callbacks = cb;
     }
+
+    /** Install a callback object.
+     *
+     *  This is just a convenient way of installing a callback object.  It appends it to the BEFORE slot (by default) of the
+     *  appropriate queue.
+     *
+     *  @{ */  // ******* Similar functions in RSIM_Simulator and RSIM_Process ******
+    void install_callback(RSIM_Callbacks::InsnCallback *cb, RSIM_Callbacks::When when=RSIM_Callbacks::BEFORE) {
+        callbacks.add_insn_callback(when, cb);
+    }
+    void install_callback(RSIM_Callbacks::MemoryCallback *cb, RSIM_Callbacks::When when=RSIM_Callbacks::BEFORE) {
+        callbacks.add_memory_callback(when, cb);
+    }
+    void install_callback(RSIM_Callbacks::SyscallCallback *cb, RSIM_Callbacks::When when=RSIM_Callbacks::BEFORE) {
+        callbacks.add_syscall_callback(when, cb);
+    }
+    void install_callback(RSIM_Callbacks::SignalCallback *cb, RSIM_Callbacks::When when=RSIM_Callbacks::BEFORE) {
+        callbacks.add_signal_callback(when, cb);
+    }
+    void install_callback(RSIM_Callbacks::ThreadCallback *cb, RSIM_Callbacks::When when=RSIM_Callbacks::BEFORE) {
+        callbacks.add_thread_callback(when, cb);
+    }
+    void install_callback(RSIM_Callbacks::ProcessCallback *cb, RSIM_Callbacks::When when=RSIM_Callbacks::BEFORE) {
+        callbacks.add_process_callback(when, cb);
+    }
+    /** @} */
+
+    /** Remove a callback object.
+     *
+     *  This is just a convenient way of removing callback objects.  It removes up to one instance of the callback from the
+     *  thread.  The comparison to find a callback object is by callback address.
+     *
+     * @{ */
+    void remove_callback(RSIM_Callbacks::InsnCallback *cb, RSIM_Callbacks::When when=RSIM_Callbacks::BEFORE) {
+        callbacks.remove_insn_callback(when, cb);
+    }
+    void remove_callback(RSIM_Callbacks::MemoryCallback *cb, RSIM_Callbacks::When when=RSIM_Callbacks::BEFORE) {
+        callbacks.remove_memory_callback(when, cb);
+    }
+    void remove_callback(RSIM_Callbacks::SyscallCallback *cb, RSIM_Callbacks::When when=RSIM_Callbacks::BEFORE) {
+        callbacks.remove_syscall_callback(when, cb);
+    }
+    void remove_callback(RSIM_Callbacks::SignalCallback *cb, RSIM_Callbacks::When when=RSIM_Callbacks::BEFORE) {
+        callbacks.remove_signal_callback(when, cb);
+    }
+    void remove_callback(RSIM_Callbacks::ThreadCallback *cb, RSIM_Callbacks::When when=RSIM_Callbacks::BEFORE) {
+        callbacks.remove_thread_callback(when, cb);
+    }
+    void remove_callback(RSIM_Callbacks::ProcessCallback *cb, RSIM_Callbacks::When when=RSIM_Callbacks::BEFORE) {
+        callbacks.remove_process_callback(when, cb);
+    }
+    /** @} */
+
+
 
     /**************************************************************************************************************************
      *                                  System call simulation
@@ -251,12 +335,13 @@ public:
      * itself (which might only be valid until syscall_return() is invoked. */
     uint32_t syscall_arg(int idx);
 
-    //@{
     /** Sets the return value for a system call.  The system call does not actually return by calling this function, it only
-     *  sets the value which will eventually be returned. */
-    void syscall_return(const RSIM_SEMANTIC_VTYPE<32> &value);
+     *  sets the value which will eventually be returned.
+     *
+     *  @{ */
+    void syscall_return(const RSIM_SEMANTICS_VTYPE<32> &value);
     void syscall_return(int value);
-    //@}
+    /** @} */
 
     /** Print the return value of a system call in a manner like strace.  The format is the same as for the syscall_enter()
      *  methods except the first letter refers to the system call return value (the remaining letters are the arguments). The
@@ -309,13 +394,19 @@ public:
      *  shut down and the simulator returns to user control. */
     int signal_deliver(const RSIM_SignalHandling::siginfo_32&);
 
-    //@{
+    /** Clears all pending signals.
+     *
+     *  Thread safety:  This method is thread safe. */
+    void signal_clear_pending();
+
     /** Handles return from a signal handler. Returns zero on success, negative errno on failure. The only failure that is
      *  detected at this time is -EFAULT when reading the signal handler stack frame, in which case a message is printed to
-     *  TRACE_SIGNAL and no registers or memory are modified. */
+     *  TRACE_SIGNAL and no registers or memory are modified.
+     *
+     *  @{ */
     int sys_sigreturn();
     int sys_rt_sigreturn();
-    //@}
+    /** @} */
 
     /** Accepts a signal from the process manager for later delivery.  This function is called by RSIM_Process::sys_kill() to
      *  decide to which thread a signal should be delivered.  If the thread can accept the specified signal, then it does so,
@@ -376,6 +467,81 @@ public:
     int sys_sigaltstack(const stack_32 *in, stack_32 *out);
     
 
+    /**************************************************************************************************************************
+     *                                  Process forking
+     **************************************************************************************************************************/
+public:
+
+    /** Fork pre/post processing.
+     *
+     *  Forking a multi-threaded process is fraught with danger.  The entire address space of the parent process is replicated
+     *  in the child, including the states of mutexes, condition variables, and other pthreads objects, but only one thread
+     *  runs in the child--the other threads appear to have simply died.  According to pthread_atfork(3) for Linux 2.6.32, "The
+     *  mutexes are not usable after the fork and must be initialized with pthread_mutex_init in the child process.  This is a
+     *  limitation of the current implementation and might or might not be present in future versions."
+     *
+     *  Since the simulator uses a variety of thread synchronization objects, we must take special care when a multi-threaded
+     *  specimen (and thus multi-threaded simulator) is forked.  All forks within the simulator should be surrounded with calls
+     *  to atfork_prepare(), atfork_parent(), and atfork_child(). (At the time of this writing [2012-01-20] the only fork()
+     *  call is for the emulated fork system call in RSIM_Linux32.C).
+     *
+     *  Only one thread (per process) can be calling fork.  We enforce that through the simulator's global IPC semaphore, the
+     *  same one that ensures that instruction emulation is atomic.  The semaphore is obtained in the atfork_prepare() call and
+     *  released afterward by atfork_parent().  The child need not protect any data structures immediately after the fork since
+     *  it will not share RSIM data structures with the parent, and will be running with only one thread.
+     *
+     * @{ */
+    void atfork_prepare();
+    void atfork_parent();
+    void atfork_child();
+    /** @} */
+
+
+    /**************************************************************************************************************************
+     *                                  Futex interface
+     **************************************************************************************************************************/
+public:
+    
+    /** Wait for a futex.  Verifies that the aligned memory at @p va contains the value @p oldval and sleeps, waiting
+     *  sys_futex_wake on this address.  Returns zero on success; negative error number on failure.  See manpage futex(2) for
+     *  details about the return value, although the return values here are negative error numbers rather than -1 with errno
+     *  set.  May return -EINTR if interrupted by a signal, in which case internal semaphores and the futex table are restored
+     *  to their original states.
+     *
+     *  The @p bitset value is a bit vector added to the wait queue.  When waking threads that are blocked, we wake only those
+     *  threads where the intersection of the wait and wake bitsets is non-empty.
+     *
+     *  Thread safety:  This method is thread safe. */
+    int futex_wait(rose_addr_t va, uint32_t oldval, uint32_t bitset=0xffffffff);
+
+    /** Wakes blocked processes.  Wakes at most @p nprocs processes waiting for the specified address.  Returns the number of
+     *  processes woken up; negative error number on failure.  When returning error, no processes were woken up.
+     *
+     *  The @p bitset value is a bit vector used when waking blocked threads.  Only threads where the intersection of the wait
+     *  bitset with this wake bitset is non-empty are awoken.
+     *
+     *  Thread safety:  This method is thread safe. */
+    int futex_wake(rose_addr_t va, int nprocs, uint32_t bitset=0xffffffff);
+
+private:
+    /** Obtain a key for a futex.  Futex queues are based on real addresses, not process virtual addresses.  In other words,
+     *  the same futex can have two different addresses in two different processes.  In fact, it could even have two or more
+     *  addresses in a single processes.  We can't figure out real addresses, so we map the specimen's futex address into the
+     *  corresponding simulator address.  Then, in order to handle the case where the simulator's address is in shared memory,
+     *  we look up the address in /proc/self/maps, and if we find it belongs to a file, we generate a hash based on the file's
+     *  device and inode numbers and the offset of the futex within the file.
+     *
+     *  Upon successful return, val_ptr will point to the address in simulator memory where the futex value is stored.  This
+     *  means that the specimen futex is required to occupy a single region of memory--it cannot span two different mapped
+     *  regions.
+     *
+     *  Returns zero on failure, non-zero on success.
+     *
+     *  Thread safety:  This method is not thread safe. We are assuming that the calling function has already surrounded this
+     *  call with a mutex that protects this function from being entered concurrently by any other thread of the calling
+     *  process. */
+    rose_addr_t futex_key(rose_addr_t va, uint32_t **val_ptr);
+    
 
     /**************************************************************************************************************************
      *                                  Instruction disassembly
@@ -433,9 +599,6 @@ protected:
      *  and syscall_leave() methods. */
     void syscall_arginfo(char fmt, uint32_t val, ArgInfo *info, va_list *ap);
 
-public:
-    void post_fork();           /**< Kludge for now. */
-
     /**************************************************************************************************************************
      *                                  Data members
      **************************************************************************************************************************/
@@ -443,8 +606,8 @@ public:
 public: //FIXME
     template<class guest_dirent_t> int getdents_syscall(int fd, uint32_t dirent_va, size_t sz);
     
-    RSIM_SemanticPolicy policy;
-    RSIM_Semantics semantics;
+    mutable RSIM_SEMANTICS_POLICY policy;       /* Mutable because some policies aren't careful about using const "this" ptrs. */
+    RSIM_Semantics::Dispatcher semantics;
 
 
     /* Stuff related to threads */

@@ -7,10 +7,11 @@ TESTCODES = \
 13.1d.cc\
 3.4.3a.cc\
 7.3.1.2b.cc\
-7.3.3a.cc\
 7.3.3d.cc\
 7.3.4b.cc
 
+# DQ (6/22/2011): Failing test copied to Cxx_tests (for further testing).
+# 7.3.3a.cc
 
 # DQ (12/5/2006): Many of these tests are expected failures 
 # (e.g. 13.1g.cc, but it only fails for g++ 3.4.x, and passes for g++ 3.3.x)

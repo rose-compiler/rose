@@ -1,5 +1,3 @@
-
-
 #include <BreakupStmt.h>
 #include <DepInfoAnal.h>
 #include <SinglyLinkedList.h>
@@ -7,29 +5,35 @@
 #include <assert.h>
 #include <CommandOptions.h>
 
-using namespace std;
+size_t BreakupStatement::breaksize = 0;
 
 std::string BreakupStatement:: cmdline_help() 
    { 
     return "-bs <stmtsize> : break up statements in loops at <stmtsize>";
    }
 
-bool BreakupStatement:: cmdline_configure()
+void BreakupStatement:: cmdline_configure(const std::vector<std::string>& argv,
+                                std::vector<std::string>* unknown_args)
 {
-        vector<string>::const_iterator config = CmdOptions::GetInstance()->GetOptionPosition("-bs");
-        if (config == CmdOptions::GetInstance()->opts.end())
-            return false;
-        ++config;
-        assert (config != CmdOptions::GetInstance()->opts.end());
-        sscanf( (*config).c_str(), "%zu", &breaksize);
-        if (breaksize <= 0) {
-           std::cerr << "invalid breaking size. Use default (12)\n";
-           breaksize = 12;
-        }
-       return true;
+   unsigned index=0;
+   if (!cmdline_find(argv,index,"-bs", unknown_args)) return;
+   ++index;
+   if (index < argv.size()) 
+       breaksize = atoi( argv[index].c_str());
+   if (breaksize <= 0) {
+         std::cerr << "invalid breaking size. Use default (12)\n";
+         breaksize = 12;
+   }
+   else {
+       ++index;
+       std::cerr << "breaking size = " << breaksize << "\n";
+   }
+   if (unknown_args != 0)
+         append_args(argv,index,*unknown_args);
 }
+
 bool BreakupStatement::operator() ( AstInterface& fa, const AstNodePtr& s, 
-                                    AstNodePtr &r)
+                                    AstNodePtr &res)
 {
     AstNodePtr lhs, rhs;
     AstInterface::OperatorEnum opr;
@@ -43,12 +47,12 @@ bool BreakupStatement::operator() ( AstInterface& fa, const AstNodePtr& s,
            std::list<AstNodePtr> stmtlist;
            while ( fa.IsBinaryOp( exp, &opr, &opd1, &opd2 ) && opr == AstInterface::BOP_PLUS) {
              CollectSinglyLinkedList<AstNodePtr> colref(refList);
-             AnalyzeStmtRefs(*la, opd2, colref, colref);
+             AnalyzeStmtRefs(fa, opd2, colref, colref);
              if (refList.size() >= breaksize) {
                 bool alias = false;
                 for (SinglyLinkedListWrap<AstNodePtr>::Iterator p(refList); !p.ReachEnd(); ++p) {
                     AstNodePtr r = p.Current();
-                    if (la->IsAliasedRef(lhs, r) ) {
+                    if (LoopTransformInterface::IsAliasedRef(lhs, r) ) {
                         alias = true;
                         break;
                     }
@@ -66,7 +70,7 @@ bool BreakupStatement::operator() ( AstInterface& fa, const AstNodePtr& s,
               AstNodePtr cur = *p;
               fa.InsertStmt(s, cur);
            }    
-           r = s;
+           res = s;
            return true;
     }
     return false;

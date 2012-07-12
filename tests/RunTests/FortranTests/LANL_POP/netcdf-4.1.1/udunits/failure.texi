@@ -1,0 +1,17 @@
+@multitable {@code{Linux 2.6.18-1.2257.fc5smp}} {@code{/opt/SUNWspro/bin/c99}} {@code{--disable-shared}}
+@headitem O/S @tab Compiler @tab @code{configure} Option
+@item @code{AIX 1 5} @tab @code{/opt/gnu/bin/gcc} @tab @code{}
+@item @code{AIX 1 5} @tab @code{/usr/vac/bin/c89} @tab @code{}
+@item @code{AIX 1 5} @tab @code{/usr/vac/bin/cc} @tab @code{}
+@item @code{AIX 1 5} @tab @code{/usr/vac/bin/xlc} @tab @code{}
+@item @code{Darwin 10.0.0} @tab @code{/usr/bin/c89} @tab @code{}
+@item @code{Darwin 8.11.0} @tab @code{/usr/bin/c89} @tab @code{}
+@item @code{HP-UX B.11.00} @tab @code{/bin/c89} @tab @code{}
+@item @code{HP-UX B.11.00} @tab @code{/bin/cc} @tab @code{}
+@item @code{HP-UX B.11.00} @tab @code{/usr/ccs/bin/cc} @tab @code{}
+@item @code{HP-UX B.11.00} @tab @code{/usr/ccs/bin/cc} @tab @code{--disable-shared}
+@item @code{SunOS 5.10} @tab @code{/opt/SUNWspro/bin/c99} @tab @code{}
+@item @code{SunOS 5.10} @tab @code{/opt/SUNWspro/bin/c99} @tab @code{--disable-shared}
+@item @code{SunOS 5.9} @tab @code{/opt/SUNWspro/bin/c99} @tab @code{}
+@item @code{SunOS 5.9} @tab @code{/opt/SUNWspro/bin/c99} @tab @code{--disable-shared}
+@end multitable

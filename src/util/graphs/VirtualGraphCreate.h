@@ -46,7 +46,6 @@ class VirtualGraphCreateTemplate
      bool ReachEnd() const { return baseIter.ReachEnd(); }
     friend class VirtualGraphCreateTemplate<NodeImpl,EdgeImpl>;
    };
-   
    class NodeIteratorImpl  : public IteratorImpl<NodeImpl*>
    {  
      const VirtualGraphCreateTemplate<NodeImpl,EdgeImpl> *gc;

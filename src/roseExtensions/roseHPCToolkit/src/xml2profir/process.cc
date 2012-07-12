@@ -8,6 +8,15 @@
  *
  *  $Id: process.cc,v 1.1 2008/01/08 02:56:43 dquinlan Exp $
  */
+
+/*
+ * This software was produced with support in part from the Defense Advanced
+ * Research Projects Agency (DARPA) through AFRL Contract FA8650-09-C-1915.
+ * Nothing in this work should be construed as reflecting the official policy
+ * or position of the Defense Department, the United States government,
+ * or Rice University.
+ */
+
 #include "sage3basic.h"
 //#include "rosehpct/xml2profir/xml2profir.hh"
 #include "sla.h"
@@ -199,7 +208,7 @@ PathTranslator::visitFile (File* node)
   string filename = node->getName ();
   // find a matching entry for the eqpaths
 #if 1 
-  // Liao, 4/28/2009 we extend this function to replace a root dir of a source tree to aonther
+  // Liao, 4/28/2009 we extend this function to replace a root dir of a source tree to another
   // for example: /root1/smg2000/file1 --> /root2/smg2000/file1
   // The original function only deals with full path replacement, not a portion of it(root path),
   // which is less useful in practice.
@@ -270,8 +279,13 @@ RoseHPCT::postProcessingProfIR(IRTree_t* root, const EquivPathMap_t& eqpaths)
     {
       cout<<"RoseHPCT::PostProcessingProfIR() accumulated wallclock is:"<<PathTranslator::wallclk_sum<<endl;
     }
-    PercentageCalculator clator(PathTranslator::wallclk_sum);
-    clator.traverse(root);
+    // DXN: wallclock_sum is 0 if there is no WALLCLOCK metric.
+    //      Only compute percentage if wallclk_sum != 0.
+    if (PathTranslator::wallclk_sum > 0)
+    {
+      PercentageCalculator clator(PathTranslator::wallclk_sum);
+      clator.traverse(root);
+    }
   }
   return xlator.didChange ();
 }
@@ -313,7 +327,7 @@ MetricTranslator::visitObservable (Observable* node)
       RenameMap_t::iterator m = metrics_.find (i->getName ());
       if (m != metrics_.end ())
 	{
-	  i->setName (m->second);
+      i->setName (m->second);
 	  did_change_ = true;
 	}
     }

@@ -1,6 +1,3 @@
-g -> A::f3 A::f4 B::f1 B::f2 D::f2 E::f1 F::f1 F::f2 F::f3 G::f1 H::f1 H::f2 H::f3
-k ->
-main -> g
 A::f1 ->
 A::f2 ->
 A::f3 -> A::f1 A::f3
@@ -18,3 +15,6 @@ G::f1 ->
 H::f1 ->
 H::f2 ->
 H::f3 ->
+g -> A::f3 A::f4 B::f1 B::f2 D::f2 E::f1 F::f1 F::f2 F::f3 G::f1
+k ->
+main -> g

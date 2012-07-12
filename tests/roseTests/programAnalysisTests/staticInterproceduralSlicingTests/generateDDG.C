@@ -28,7 +28,7 @@ int main(int argc, char *argv[])
 	std::string filename;
 
     SgProject *project = frontend(argc, argv);
-		#ifdef NEWDU
+#ifdef NEWDU
     EDefUse *edu=new EDefUse(project);
 		// Create the global def-use analysis
 		if (edu->run(false)==0)

@@ -1,48 +1,67 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-# Add Projects that are associated with capabilities that belong to ROSE here
+# Add Projects that are associated with capabilities that belong to ROSE here. Or better yet, just add a "rose.config" file to
+# your project directory and then you don't have to change any of the ROSE build system -- your project will be found
+# automatically by the "build" script, your rose.config will be incorporated into the configuration system, and your project
+# will become part of the recursive "make" commands.   To disable your project, just rename its rose.config file and rerun
+# "build" and "configure". [RPM 2012-03-29]
 SUBDIRS = \
-     AstEquivalence \
-     BabelPreprocessor \
-     BinQ \
-     BinaryCloneDetection \
-     C_to_Promela \
-     CertSecureCodeProject \
-     CloneDetection \
-     DatalogAnalysis \
-     DocumentationGenerator \
-     FiniteStateModelChecker \
-     HeaderFilesInclusion \
-     MPICodeMotion \
-     MacroRewrapper \
-     OpenMP_Analysis \
-     QtDesignerPlugins \
-     RoseQt \
-     UpcTranslation \
-     arrayOptimization \
-     autoParallelization \
-     binaryVisualization \
-     bugSeeding \
-     checkPointExample \
-     highLevelGrammars \
-     javaport \
-     programModeling \
-     pragmaParsing \
-     roseToLLVM \
-     symbolicAnalysisFramework \
-     taintcheck \
-     PowerAwareCompiler
+	AstEquivalence \
+	BabelPreprocessor \
+	BinFuncDetect \
+	BinQ \
+	BinaryCloneDetection \
+	C_to_Promela \
+	CertSecureCodeProject \
+	CloneDetection \
+	DataFaultTolerance \
+	DatalogAnalysis \
+	DocumentationGenerator \
+	FiniteStateModelChecker \
+	graphColoring \
+	HeaderFilesInclusion \
+	MPI_Tools \
+	MacroRewrapper \
+	OpenMP_Analysis \
+	QtDesignerPlugins \
+	RoseQt \
+	arrayOptimization \
+	UpcTranslation \
+	autoParallelization \
+	binaryVisualization \
+	bugSeeding \
+	checkPointExample \
+	highLevelGrammars \
+	javaport \
+	programModeling \
+	pragmaParsing \
+	roseToLLVM \
+	taintcheck \
+	RTC \
+	PowerAwareCompiler \
+	ManyCoreRuntime \
+	mint \
+	extractMPISkeleton \
+	$(OPTIONAL_PROJECTS)
 
-# DQ (4/8/2011): Directories of tests are a current problem for Insure++.
-if !ROSE_USE_INSURE
-   SUBDIRS += SemanticSignatureVectors \
-              assemblyToSourceAst
+if ROSE_WITH_ISL
+  SUBDIRS += RosePolly
 endif
+
+# DQ (9/26/2011): Directory removed for failing new AST consistancy test for references to deleted IR nodes.
+# UpcTranslation (fails only a single test code shared_2.upc)
+
+
+# DQ (6/25/2011): Removed from being tested (failing symbolicAnalysisFramework/tests/test_examples/dominator_example.cpp)
+SUBDIRS += symbolicAnalysisFramework
 
 # TOO (2/16/2011): Errors with Tensilica's Xtensa compilers as alternative backend compilers. We can
 # gradually enable these tests at a later stage if necessary.
 if !USING_XTENSA_BACKEND_COMPILER
    SUBDIRS += dataStructureGraphing OpenMP_Translator autoTuning
+
+# DQ (9/26/2011): Directory removed for failing new AST consistancy test for references to deleted IR nodes.
+# OpenMP_Translator
 
 # TOO (2/16/2011): Disabled for Thrifty compiler (gcc 3.4.4) due to errors during make check
 if !USING_GCC_3_4_4_BACKEND_COMPILER
@@ -82,15 +101,17 @@ if !ROSE_USING_ROSE_CODE_GENERATION
 
 # DQ (10/17/2010): This seems to be problem for Java, we can fix this later.
 if !ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
-   SUBDIRS += compass binCompass
-endif
-
-# DQ (10/17/2010): Since we can't process Compass with Java we can't compiler palette (which requires Compass).
-if !ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
+if ROSE_BUILD_COMPASS2
+   SUBDIRS += compass2
+else
+   SUBDIRS += compass
+ # DQ (10/17/2010): Since we can't process Compass with Java we can't compiler palette (which requires Compass).
  # DQ (2/13/2010): This appears to have a dependence on compass, but I don't know why.
  # All projects should be independent of each other so that they should be able to be
  # compiled in any order. It was originally listed after "haskellport".
    SUBDIRS += palette
+endif
+   SUBDIRS += binCompass
 endif
 endif
 
@@ -121,9 +142,7 @@ endif
 SUBDIRS += SatSolver
 # endif
 
-if ROSE_USE_SAT
 SUBDIRS += PolyhedralModel
-endif
 
 # DQ (9/12/2009): This was not added to ROSE correctly, please let me help you do this.
 #     StaticDynamicAnalysis/DynamicCPU

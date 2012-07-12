@@ -2,66 +2,56 @@
 #ifndef VARIABLESTYPE_H
 #define VARIABLESTYPE_H
 
-
 #include <string>
-#include <iostream>
+#include <iosfwd>
 #include <cassert>
+
+#include "RsType.h"
 #include "Util.h"
 
+#include "rted_typedefs.h"
+
 class MemoryType;
-class RsType;
 class PointerInfo;
 
-
-class VariablesType
+/// \brief   represents Variables
+/// \details variables are names that have a stack address associated
+struct VariablesType
 {
-    public:
-        VariablesType(const std::string & name,
-                      const std::string & mangledName,
-                      const std::string & typeStr,
-                      addr_type address);
+        typedef Address Location;
 
-        VariablesType(const std::string & name,
-                      const std::string & mangledName,
-                      RsType * type,
-                      addr_type address);
+        VariablesType(Address addr, const char* id, const char* mangledId, const RsType* t)
+        : address(addr), name(id), mangledName(mangledId), type(t)
+        {}
 
-        ~VariablesType();
-
-        const std::string & getName()        const  { return name;        }
-        const std::string & getMangledName() const  { return mangledName; }
-        RsType *            getType()        const  { return type;        }
-
-        addr_type           getAddress()     const  { return address; }
-
-        size_t              getSize()        const;
+        std::string   getName()        const  { return name;                }
+        std::string   getMangledName() const  { return mangledName;         }
+        const RsType* getType()        const  { return type;                }
+        Location      getAddress()     const  { return address;             }
+        size_t        getSize()        const  { return type->getByteSize(); }
 
         /// returns the allocation information for this var
-        MemoryType *        getAllocation()  const;
+        const MemoryType*  getAllocation()  const;
 
-        void print(std::ostream & os) const;
+        void print(std::ostream& os) const;
 
         /// If this variable is registered as a pointer the PointerInfo is return, else NULL
-        PointerInfo * getPointerInfo() const ;
+        const PointerInfo* getPointerInfo() const;
 
     private:
+        /// address of this variable in memory
+        Location address;
+
         /// stack variable name
-        std::string name;
+        const char* name;
 
         /// mangled name
-        std::string mangledName;
+        const char* mangledName;
 
-        /// string with class name of rose-type
-        RsType * type;
-
-        /// address of this variable in memory
-        addr_type address;
+        /// type rep
+        const RsType* type;
 };
 
-
-std::ostream& operator<< (std::ostream &os, const VariablesType & m);
-
-
-
+std::ostream& operator<< (std::ostream& os, const VariablesType& m);
 
 #endif

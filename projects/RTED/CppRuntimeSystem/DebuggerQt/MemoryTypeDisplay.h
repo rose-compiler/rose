@@ -10,21 +10,17 @@ class MemoryManager;
 class MemoryTypeDisplay : public ItemTreeNode
 {
     public:
-        MemoryTypeDisplay(MemoryType * mt_, bool displayPointer=true);
+        MemoryTypeDisplay(const MemoryType& mt_, bool displayPointer=true);
 
         virtual QVariant data(int role, int column=0) const;
         virtual QStringList sectionHeader() const;
 
-
-        static MemoryTypeDisplay * build(MemoryManager * mm,
-                                         bool showHeap=true,
-                                         bool showStack=true);
+        static MemoryTypeDisplay* build(MemoryManager * mm, bool showHeap=true, bool showStack=true);
 
     protected:
         MemoryTypeDisplay() : mt(NULL) {}
 
-        MemoryType * mt;
-
+        const MemoryType * mt;
 };
 
 

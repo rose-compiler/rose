@@ -36,27 +36,37 @@ UnparseLanguageIndependentConstructs::curprint (const std::string & str) const
 
     if( unp->currentFile != NULL && unp->currentFile->get_Fortran_only() )
     {
-        /// determine line wrapping parameters
+        // determine line wrapping parameters -- 'pos' variables are one-based
         bool is_fixed_format = unp->currentFile->get_outputFormat() == SgFile::e_fixed_form_output_format;
         bool is_free_format  = unp->currentFile->get_outputFormat() == SgFile::e_free_form_output_format;
-        int max_pos = ( is_fixed_format ? MAX_F90_LINE_LEN_FIXED
-                      : is_free_format  ? MAX_F90_LINE_LEN_FREE
-                      : unp->cur.get_linewrap() );
+        int usable_cols = ( is_fixed_format ? MAX_F90_LINE_LEN_FIXED
+                          : is_free_format  ? MAX_F90_LINE_LEN_FREE - 1 // reserve a column in free-format for possible trailing '&'
+                          : unp->cur.get_linewrap() );
 
         // check whether line wrapping is needed
-        int cur_pos = unp->cur.current_col();
-        int new_pos = cur_pos + str.size();
-        if( new_pos >= max_pos )
+        int used_cols = unp->cur.current_col();     // 'current_col' is zero-based
+        int free_cols = usable_cols - used_cols;
+        if( str.size() > free_cols )
         {
             if( is_fixed_format )
-                printf("Warning: line too long for Fortran fixed format (fixed format wrapping not implemented)\n");
+            {
+                // only noncomment lines need wrapping
+                if( ! (used_cols == 0 && str[0] != ' ' ) )
+                {
+                    // warn if successful wrapping is impossible
+                    if( 6 + str.size() > usable_cols )
+                        printf("Warning: can't wrap long line in Fortran fixed format (continuation + text is longer than a line)\n");
+
+                    // emit fixed-format line continuation
+                    unp->cur.insert_newline(1);
+                    unp->u_sage->curprint("     &");
+                }
+            }
             else if( is_free_format )
             {
-                // warn if successful wrapping is impossible in the current state
-                if( cur_pos + 1 > max_pos )
-                    printf("Warning: can't wrap long line in Fortran free format (no room for '&')\n");
-                else if( str.size() > (unsigned int) max_pos-1 )
-                    printf("Warning: can't wrap long line in Fortran free format (incoming string too long for a line)\n");
+                // warn if successful wrapping is impossible
+                if( str.size() > usable_cols )
+                    printf("Warning: can't wrap long line in Fortran free format (text is longer than a line)\n");
 
                 // emit free-format line continuation even if result will still be too long
                 unp->u_sage->curprint("&");
@@ -68,7 +78,7 @@ UnparseLanguageIndependentConstructs::curprint (const std::string & str) const
         }
     }
 
-     unp->u_sage->curprint(str);
+    unp->u_sage->curprint(str);
      
 #else  // ! USE_RICE_FORTRAN_WRAPPING
 
@@ -102,8 +112,9 @@ UnparseLanguageIndependentConstructs::markGeneratedFile() const
 // This has been simplified by Markus Kowarschik. We need to introduce the
 // case of statements that have been introduced by transformations.
 // bool Unparser::statementFromFile ( SgStatement* stmt, char* sourceFilename )
+// bool UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, string sourceFilename )
 bool
-UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, string sourceFilename )
+UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, string sourceFilename, SgUnparse_Info& info )
    {
   // If the filename of the statement and the input filename are the same then 
   // the return result is true.  IF not then we have to look to see if there
@@ -158,10 +169,20 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
           ROSE_ASSERT(stmt->get_file_info() != NULL);
           bool isOutputInCodeGeneration = stmt->get_file_info()->isOutputInCodeGeneration();
 
+       // DQ (5/19/2011): Output generated code... (allows unparseToString() to be used with template instantations to support name qualification).
+          bool forceOutputOfGeneratedCode = info.outputCompilerGeneratedStatements();
+
+       // printf ("Inside of statementFromFile(): stmt = %p = %s isOutputInCodeGeneration   = %s \n",stmt,stmt->class_name().c_str(),isOutputInCodeGeneration   ? "true" : "false");
+       // printf ("Inside of statementFromFile(): stmt = %p = %s forceOutputOfGeneratedCode = %s \n",stmt,stmt->class_name().c_str(),forceOutputOfGeneratedCode ? "true" : "false");
+       // info.display("Inside of statementFromFile()");
+
        // DQ (1/11/2006): OutputCodeGeneration is not set to be true where transformations 
        // require it.  Transformation to include header files don't set the OutputCodeGeneration flag.
        // if (isOutputInCodeGeneration || isTransformation)
-          if (isOutputInCodeGeneration == true)
+       // if (isOutputInCodeGeneration == true)
+
+       // DQ (5/19/2011): Output generated code is specified.
+          if (isOutputInCodeGeneration == true || forceOutputOfGeneratedCode == true)
              {
                statementInFile = true;
              }
@@ -182,6 +203,15 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
                   {
                     statementInFile = true;
                   }
+               
+               //negara1 (08/15/2011): Make a special consideration for header file bodies in include directive statements.
+               //TODO: Change when SgIncludeDirectiveStatement is used instead of attached PreprocessingInfo.
+               SgIncludeDirectiveStatement* includeDirectiveStatement = isSgIncludeDirectiveStatement(stmt);
+               if (includeDirectiveStatement != NULL) {
+                   if (includeDirectiveStatement -> get_headerFileBody() -> get_file_info() -> get_filenameString() == sourceFilename) {
+                       statementInFile = true;
+                   }
+               }
              }
 #if 0
           printf ("In Unparser::statementFromFile (statementInFile = %s output = %s stmt = %p = %s = %s in file = %s sourceFilename = %s ) \n",
@@ -396,6 +426,8 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
   // DQ (4/17/2007): Added enforcement for endOfConstruct().
      ROSE_ASSERT (stmt->get_endOfConstruct() != NULL);
 
+#endif
+#if 0
      curprint ( string("\n/* Unparse statement (" ) + StringUtility::numberToString(stmt) 
          + "): class_name() = " + stmt->class_name() 
                 + " raw line (start) = " + tostring(stmt->get_startOfConstruct()->get_raw_line()) 
@@ -479,10 +511,15 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
      ROSE_ASSERT(stmt->get_file_info() != NULL);
 
 #if 1 // FIXME cause conflict in "make check"?
+  // DQ (5/19/2011): Allow unparsing of even compiler generated statements when specified via the SgUnparse_Info object.
   // FMZ : we have ".rmod" file which will not satisfy this condition
   // JJW (6/23/2008): Move check for statement-within-file here rather than in individual procedures
-     if (!statementFromFile(stmt, getFileName()))
+  // if (!statementFromFile(stmt, getFileName()))
+     if (!statementFromFile(stmt, getFileName(), info))
         {
+#if 0
+          printf ("WARNING: Skipping calls to output statements that are not recorded as being in the targer file \n");
+#endif
           return;
         }
 #endif
@@ -778,10 +815,25 @@ UnparseLanguageIndependentConstructs::unparseExpression(SgExpression* expr, SgUn
         {
           printf ("In unparseExpression(%s): Detected error expr->get_file_info()->isCompilerGenerated() != expr->get_startOfConstruct()->isCompilerGenerated() \n",expr->class_name().c_str());
           printf ("     expr->get_file_info() = %p expr->get_operatorPosition() = %p expr->get_startOfConstruct() = %p \n",expr->get_file_info(),expr->get_operatorPosition(),expr->get_startOfConstruct());
-          ROSE_ASSERT(expr->get_file_info()->get_parent() != NULL);
-          printf ("parent of file info = %p = %s \n",expr->get_file_info()->get_parent(),expr->get_file_info()->get_parent()->class_name().c_str());
-          expr->get_file_info()->display("expr->get_file_info(): debug");
-          expr->get_startOfConstruct()->display("expr->get_startOfConstruct(): debug");
+
+       // DQ (9/11/2011): Reorganize to make this better code that can be analyized using static analysis (static analysis tools don't understand access functions).
+       // ROSE_ASSERT(expr->get_file_info()->get_parent() != NULL);
+       // printf ("parent of file info = %p = %s \n",expr->get_file_info()->get_parent(),expr->get_file_info()->get_parent()->class_name().c_str());
+          ROSE_ASSERT(expr != NULL);
+          Sg_File_Info* fileInfo = expr->get_file_info();
+          ROSE_ASSERT(fileInfo != NULL);
+          SgNode* fileInfoParent = fileInfo->get_parent();
+          ROSE_ASSERT(fileInfoParent != NULL);
+          printf ("parent of file info = %p = %s \n",fileInfoParent,fileInfoParent->class_name().c_str());
+
+       // DQ (9/11/2011): Reorganize to make this better code that can be analyized using static analysis (static analysis tools don't understand access functions).
+       // expr->get_file_info()->display("expr->get_file_info(): debug");
+       // expr->get_startOfConstruct()->display("expr->get_startOfConstruct(): debug");
+          fileInfo->display("expr->get_file_info(): debug");
+
+          Sg_File_Info* startOfConstructFileInfo = expr->get_file_info();
+          ROSE_ASSERT(startOfConstructFileInfo != NULL);
+          startOfConstructFileInfo->display("expr->get_startOfConstruct(): debug");
         }
      ROSE_ASSERT(expr->get_file_info()->isCompilerGenerated() == expr->get_startOfConstruct()->isCompilerGenerated());
 
@@ -903,7 +955,7 @@ UnparseLanguageIndependentConstructs::unparseExpression(SgExpression* expr, SgUn
         {
        // DQ (5/21/2004): revised need_paren handling in EDG/SAGE III and within SAGE III IR)
        // QY (7/9/2004): revised to use the new unp->u_sage->PrintStartParen test
-          bool printParen = unp->u_sage->PrintStartParen(expr,info);
+          bool printParen = requiresParentheses(expr,info);
 #if 0
        // DQ (8/21/2005): Suppress comments when unparsing to build type names
           if ( !info.SkipComments() || !info.SkipCPPDirectives() )
@@ -1044,7 +1096,11 @@ UnparseLanguageIndependentConstructs::unparseNullStatement (SgStatement* stmt, S
      ROSE_ASSERT(nullStatement != NULL);
 
   // Not much to do here except output a ";", not really required however.
-  // curprint ( string(";";
+     if (!info.inConditional() && !info.SkipSemiColon())
+       {
+         curprint ( string(";"));
+       }
+
    }
 
 void
@@ -1346,7 +1402,8 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
 
        // DQ (7/19/2008): Allow expressions to have there associated comments unparsed.
        // Liao 11/9/2010: allow SgInitializedName also
-          infoSaysGoAhead = (infoSaysGoAhead == true) || (isSgExpression(stmt) != NULL) || (isSgInitializedName (stmt) != NULL) ;
+       // negara1 (08/15/2011): Allow SgHeaderFileBody as well.
+          infoSaysGoAhead = (infoSaysGoAhead == true) || (isSgExpression(stmt) != NULL) || (isSgInitializedName (stmt) != NULL) || (isSgHeaderFileBody(stmt) != NULL);
 
 #if 0
           printf ("infoSaysGoAhead = %s \n",infoSaysGoAhead ? "true" : "false");
@@ -1832,6 +1889,7 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
                SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(binary_op->get_rhs_operand());
 
             // curprint ( "\n /* mfunc_ref = " + StringUtility::numberToString(mfunc_ref) + " */ \n";
+            // curprint ( "\n /* unparseBinaryExpr(): Test 1  mfunc_ref = " + StringUtility::numberToString(mfunc_ref) + "*/ \n");
 
                unp->u_debug->printDebugInfo("lhs: ", false);
 
@@ -1840,6 +1898,8 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
                ROSE_ASSERT(lhs != NULL);
             // if (isSgBinaryOp(lhs) != NULL || isSgConstructorInitializer(lhs) != NULL )
                SgConstructorInitializer* constructor = isSgConstructorInitializer(lhs);
+
+            // curprint ( "\n /* unparseBinaryExpr(): Test 2  constructor = " + StringUtility::numberToString(constructor) + "*/ \n");
 
             // printf ("############## constructor = %p \n",constructor);
                ROSE_ASSERT( (constructor == NULL) || (constructor != NULL && constructor->get_args() != NULL) );
@@ -1867,8 +1927,13 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
                     curprint ("(");
                   }
 
+            // curprint ( "\n /* unparseBinaryExpr(): Test 3  before unparseExpression() lhs = " + lhs->class_name() + "*/ \n");
+
             // unparseExpression(binary_op->get_lhs_operand(), info);
                unparseExpression(lhs, info);
+
+            // curprint ( "\n /* unparseBinaryExpr(): Test 4  after unparseExpression() lhs = " + lhs->class_name() + "*/ \n");
+
                unp->u_debug->printDebugInfo(getSgVariant(expr->variant()), true);
 
                if (addParensForLhs == true)
@@ -1906,8 +1971,10 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
 //                  if ( (mfunc_ref != NULL) && !isOperator(mfunc_ref) )
                     if ( (mfunc_ref == NULL) || !unp->u_sage->isOperator(mfunc_ref) )
                        {
+                      // curprint ( "\n /* unparseBinaryExpr(): Test 4.4  before output of info.get_operator_name() = " + info.get_operator_name() + "*/ \n");
                       // curprint ( "\n /* Print out the dot in second case */ \n";
                          curprint ( info.get_operator_name());
+                      // curprint ( "\n /* unparseBinaryExpr(): Test 4.5  after output of info.get_operator_name() = " + info.get_operator_name() + "*/ \n");
                          unp->u_debug->printDebugInfo("printed dot because is not operator overloading function", true);
                        }
                   }
@@ -1990,6 +2057,7 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
           ROSE_ASSERT(info.get_nested_expression() != 0);
 #if 0
           printf ("In unparseBinaryExpr() -- before output of RHS: info.get_nested_expression() = %d info.get_operator_name() = %s \n",info.get_nested_expression(),info.get_operator_name().c_str());
+          curprint ( "\n /* unparseBinaryExpr(): Test 4.9  before unparseExpression() info.get_operator_name() = " + info.get_operator_name() + "*/ \n");
 #endif
           SgExpression* rhs = binary_op->get_rhs_operand();
           if (info.get_operator_name() == ",")
@@ -2002,8 +2070,10 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
              }
             else
              {
+            // curprint ( "\n /* unparseBinaryExpr(): Test 5  before unparseExpression() rhs = " + rhs->class_name() + "*/ \n");
             // unparseExpression(binary_op->get_rhs_operand(), info);
                unparseExpression(rhs, info);
+            // curprint ( "\n /* unparseBinaryExpr(): Test 6  after unparseExpression() rhs = " + rhs->class_name() + "*/ \n");
              }
         }
 
@@ -2020,6 +2090,9 @@ UnparseLanguageIndependentConstructs::unparseValue(SgExpression* expr, SgUnparse
    {
   // DQ (11/9/2005): refactored handling of expression trees stemming from the folding of constants.
      SgValueExp* valueExp = isSgValueExp(expr);
+
+  // DQ (9/11/2011): Added error checking pointed out from static analysis.
+     ROSE_ASSERT(valueExp != NULL);
 
 #if 0
      printf ("Inside of unparseValue = %p \n",valueExp);
@@ -2444,7 +2517,10 @@ UnparseLanguageIndependentConstructs::unparseEnumVal(SgExpression* expr, SgUnpar
                          info.set_requiresGlobalNameQualification();
                        }
 #endif
-                    SgName nameQualifier = unp->u_name->generateNameQualifier(enum_val->get_declaration(),info);
+                 // DQ (6/9/2011): Newest refactored support for name qualification.
+                 // SgName nameQualifier = unp->u_name->generateNameQualifier(enum_val->get_declaration(),info);
+                    SgName nameQualifier = enum_val->get_qualified_name_prefix();
+
                  // printf ("variable's nameQualifier = %s \n",(nameQualifier.is_null() == false) ? nameQualifier.str() : "NULL");
                  // ROSE_ASSERT (nameQualifier.is_null() == false);
                     if (nameQualifier.is_null() == false)
@@ -2848,9 +2924,16 @@ UnparseLanguageIndependentConstructs::unparseIncludeDirectiveStatement (SgStatem
    {
      SgIncludeDirectiveStatement* directive = isSgIncludeDirectiveStatement(stmt);
      ROSE_ASSERT(directive != NULL);
-     curprint(directive->get_directiveString());
-  // unp->u_sage->curprint_newline();
-     unp->cur.insert_newline(1);
+     
+     //negara1 (08/15/2011): Do not unparse the directive string as long as there are PreprocessorInfos attached to nodes in order to avoid double unparsing.
+     //Also, note that it might belong to a different file since the code can reach here when the include directive statement's header file body belongs to the unparsed file.     
+     //curprint(directive->get_directiveString());
+     //unp->cur.insert_newline(1);
+     
+     SgHeaderFileBody* headerFileBody = directive -> get_headerFileBody();
+     if (headerFileBody -> get_file_info() -> get_filenameString() == getFileName()) {
+        unparseAttachedPreprocessingInfo(headerFileBody, info, PreprocessingInfo::after); //Its always "after" if attached to a header file body.
+     }
    }
 
 void 
@@ -3606,4 +3689,391 @@ void UnparseLanguageIndependentConstructs::unparseOmpGenericStatement (SgStateme
 
 } // end unparseOmpGenericStatement
 
+PrecedenceSpecifier
+UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr) {
+  // DQ (11/24/2007): This is a redundant mechanism for computing the precedence of expressions
+#if PRINT_DEVELOPER_WARNINGS
+     printf ("This is a redundant mechanism for computing the precedence of expressions \n");
+#endif
 
+     int variant = GetOperatorVariant(expr);
+     switch (variant)
+        {
+          case V_SgExprListExp:
+          case V_SgCommaOpExp:       return 1;
+          case V_SgAssignOp:         return 2;
+       // DQ (2/1/2009): Added precedence for SgPointerAssignOp (Fortran 90)
+          case V_SgPointerAssignOp:  return 2;
+          case V_SgPlusAssignOp:     return 2;
+          case V_SgMinusAssignOp:    return 2;
+          case V_SgAndAssignOp:      return 2;
+          case V_SgIorAssignOp:      return 2;
+          case V_SgMultAssignOp:     return 2;
+          case V_SgDivAssignOp:      return 2;
+          case V_SgModAssignOp:      return 2;
+          case V_SgXorAssignOp:      return 2;
+          case V_SgLshiftAssignOp:   return 2;
+          case V_SgRshiftAssignOp:   return 2;
+          case V_SgConditionalExp:   return 3;
+          case V_SgOrOp:             return 4;
+          case V_SgAndOp:            return 5;
+          case V_SgBitOrOp:          return 6;
+          case V_SgBitXorOp:         return 7;
+          case V_SgBitAndOp:         return 8;
+          case V_SgEqualityOp:       return 9;
+          case V_SgNotEqualOp:       return 9;
+          case V_SgLessThanOp:       return 10;
+          case V_SgGreaterThanOp:    return 10;
+          case V_SgLessOrEqualOp:    return 10;
+          case V_SgGreaterOrEqualOp: return 10;
+          case V_SgLshiftOp:         return 11;
+          case V_SgRshiftOp:         return 11;
+          case V_SgJavaUnsignedRshiftOp: return 11;
+          case V_SgAddOp:            return 12;
+
+       // DQ (2/1/2009): Added operator (which should have been here before)
+          case V_SgMinusOp:          return 15;
+          case V_SgUnaryAddOp:       return 15;
+
+          case V_SgSubtractOp:       return 12;
+          case V_SgMultiplyOp:       return 13;
+          case V_SgIntegerDivideOp:
+          case V_SgDivideOp:         return 13;
+          case V_SgModOp:            return 13;
+          case V_SgDotStarOp:        return 14;
+          case V_SgArrowStarOp:      return 14;
+          case V_SgPlusPlusOp:       return 15;
+          case V_SgMinusMinusOp:     return 15;
+          case V_SgBitComplementOp:  return 15;
+          case V_SgNotOp:            return 15;
+          case V_SgPointerDerefExp:
+          case V_SgAddressOfOp:
+          case V_SgUpcLocalsizeofExpression:   // \pp 03/03/11
+          case V_SgSizeOfOp:         return 15;
+          case V_SgFunctionCallExp:  return 16;
+          case V_SgPntrArrRefExp:    return 16;
+          case V_SgArrowExp:         return 16;
+          case V_SgDotExp:           return 16;
+
+          case V_SgImpliedDo:        return 16;
+
+          case V_SgLabelRefExp:      return 16;
+          case V_SgActualArgumentExpression: return 16;
+
+       // DQ (2/1/2009): Added support for Fortran operator.
+          case V_SgExponentiationOp: return 16;
+          case V_SgConcatenationOp:  return 11;
+          case V_SgSubscriptExpression:  return 16;  // Make the same as for SgPntrArrRefExp
+
+       // DQ (2/1/2009): This was missing from before.
+          case V_SgThisExp:          return 0;
+          case V_SgCastExp:          return 0;
+          case V_SgBoolValExp:       return 0;
+          case V_SgIntVal:           return 0;
+          case V_SgThrowOp:          return 0;
+          case V_SgDoubleVal:        return 0;
+          case V_SgUnsignedIntVal:   return 0;
+          case V_SgAssignInitializer: return 0;
+          case V_SgFloatVal:         return 0;
+          case V_SgVarArgOp:         return 0;
+          case V_SgLongDoubleVal:    return 0;
+          case V_SgLongIntVal:       return 0;
+          case V_SgLongLongIntVal:   return 0;
+          case V_SgVarArgStartOp:    return 0;
+          case V_SgNewExp:           return 0;
+          case V_SgDeleteExp:        return 0;
+          case V_SgStringVal:        return 0;
+          case V_SgCharVal:          return 0;
+          case V_SgUnsignedLongLongIntVal: return 0;
+          case V_SgUnsignedLongVal:  return 0;
+          case V_SgComplexVal:       return 0;
+          case V_SgCAFCoExpression:  return 16;
+
+     // Liao, 7/15/2009, UPC nodes
+          case V_SgUpcThreads:       return 0;
+          case V_SgUpcMythread:       return 0;
+          case V_SgNullExpression:    return 0;
+    // TV (04/26/2010): CUDA nodes
+          case V_SgCudaKernelExecConfig: return 0;
+          case V_SgCudaKernelCallExp:    return 0;
+
+    // TV (04/24/2011): Add FunctionRefExp to avoid the following Warning. It occurs
+    //        after my modification for a more generic support of the original
+    //        expression tree field (especially the case of FunctionRefExp used for
+    //        function pointers initialisation).
+          case V_SgFunctionRefExp:    return 0;
+
+#if 0
+       // Template
+          case V_:              return 0;
+#endif
+
+          default:
+             {
+#if PRINT_DEVELOPER_WARNINGS | 1
+               printf ("Warning: GetPrecedence() in modified_sage.C: Undefined expression variant = %d = %s \n",variant,Cxx_GrammarTerminalNames[variant].name.c_str());
+#endif
+             }
+        }
+
+     return 0;
+}
+
+AssociativitySpecifier
+UnparseLanguageIndependentConstructs::getAssociativity(SgExpression* expr) {
+     int variant = GetOperatorVariant(expr);
+     switch (variant)
+        {
+          case V_SgAssignOp:
+          case V_SgPlusAssignOp:
+          case V_SgMinusAssignOp:
+          case V_SgAndAssignOp:
+          case V_SgIorAssignOp:
+          case V_SgMultAssignOp:
+          case V_SgDivAssignOp:
+          case V_SgModAssignOp:
+          case V_SgXorAssignOp:
+          case V_SgLshiftAssignOp:
+          case V_SgRshiftAssignOp:
+          case V_SgConditionalExp:
+          case V_SgBitComplementOp:
+          case V_SgNotOp:
+          case V_SgPointerDerefExp:
+          case V_SgAddressOfOp:
+          case V_SgSizeOfOp:
+              return e_assoc_left;
+
+          case V_SgCommaOpExp:
+          case V_SgOrOp:
+          case V_SgAndOp:
+          case V_SgBitOrOp:
+          case V_SgBitXorOp:
+          case V_SgBitAndOp:
+          case V_SgEqualityOp:
+          case V_SgNotEqualOp:
+          case V_SgLessThanOp:
+          case V_SgGreaterThanOp:
+          case V_SgLessOrEqualOp:
+          case V_SgGreaterOrEqualOp:
+          case V_SgLshiftOp:
+          case V_SgRshiftOp:
+          case V_SgAddOp:
+          case V_SgSubtractOp:
+          case V_SgMultiplyOp:
+          case V_SgIntegerDivideOp:
+          case V_SgDivideOp:
+          case V_SgModOp:
+          case V_SgDotStarOp:
+          case V_SgArrowStarOp:
+          case V_SgFunctionCallExp:
+          case V_SgPntrArrRefExp:
+          case V_SgArrowExp:
+          case V_SgDotExp:
+              return e_assoc_right;
+
+          default:
+             {
+            // The implementation of this function assumes unhandled cases are not associative.
+#if PRINT_DEVELOPER_WARNINGS
+               printf ("getAssociativity(): Undefined expression variant = %d = %s \n",variant,Cxx_GrammarTerminalNames[variant].name.c_str());
+#endif
+             }
+        }
+
+     return e_assoc_none;
+}
+
+bool
+UnparseLanguageIndependentConstructs::requiresParentheses(SgExpression* expr, SgUnparse_Info& info) {
+     ROSE_ASSERT(expr != NULL);
+
+     if (isSgSubscriptExpression(expr) != NULL || isSgDotExp(expr) || isSgCAFCoExpression(expr) || isSgPntrArrRefExp(expr) )
+        {
+          return false;
+        }
+
+     SgExpression* parentExpr = isSgExpression(expr->get_parent());
+
+#define DEBUG_PARENTHESIS_PLACEMENT 0
+#if DEBUG_PARENTHESIS_PLACEMENT && 1
+     printf ("\n\n***** In PrintStartParen() \n");
+     printf ("In PrintStartParen(): expr = %s need_paren = %s \n",expr->sage_class_name(),expr->get_need_paren() ? "true" : "false");
+     printf ("isOverloadedArrowOperator(expr) = %s \n",(isOverloadedArrowOperator(expr) == true) ? "true" : "false");
+  // curprint( "\n /* expr = " << expr->sage_class_name() << " */ \n");
+  // curprint( "\n /* RECORD_REF = " << RECORD_REF << " expr->variant() = " << expr->variant() << " */ \n");
+
+     if (parentExpr != NULL)
+        {
+          printf ("In PrintStartParen(): parentExpr = %s \n",parentExpr->sage_class_name());
+          printf ("isOverloadedArrowOperator(parentExpr) = %s \n",(isOverloadedArrowOperator(parentExpr) == true) ? "true" : "false");
+       // curprint( "\n /* parentExpr = " << parentExpr->sage_class_name() << " */ \n");
+        }
+       else
+        {
+          printf ("In PrintStartParen(): parentExpr == NULL \n");
+        }
+#endif
+
+     if ( (isSgBinaryOp(expr) != NULL) && (expr->get_need_paren() == true) )
+        {
+#if DEBUG_PARENTHESIS_PLACEMENT
+          printf ("     Special case of expr->get_need_paren(): (return true) \n");
+#endif
+          return true;
+        }
+
+  // DQ (11/9/2009): I think this can no longer be true since we have removed the use of SgExpressionRoot.
+     ROSE_ASSERT(parentExpr == NULL || parentExpr->variantT() != V_SgExpressionRoot);
+
+     if ( parentExpr == NULL || parentExpr->variantT() == V_SgExpressionRoot || expr->variantT() == V_SgExprListExp || expr->variantT() == V_SgConstructorInitializer || expr->variantT() == V_SgDesignatedInitializer)
+        {
+#if DEBUG_PARENTHESIS_PLACEMENT
+          printf ("     Special case of parentExpr == NULL || SgExpressionRoot || SgExprListExp || SgConstructorInitializer || SgDesignatedInitializer (return false) \n");
+#endif
+          return false;
+        }
+
+#if 1
+    // Liao, 8/27/2008, bug 229
+    // A nasty workaround since set_need_paren() has no definite effect
+    //SgExprListExp-> SgAssignInitializer -> SgFunctionCallExp:
+    // no () is needed for SgAssignInitializer
+    // e.g:  int array[] = {func1()}; // int func1();
+     SgAssignInitializer* assign_init = isSgAssignInitializer(expr);
+     if ((assign_init!=NULL) &&(isSgExprListExp(parentExpr)))
+     {
+       SgExpression* operand = assign_init->get_operand();
+       if (isSgFunctionCallExp(operand))
+         return false;
+     }
+#endif
+
+     // TV (04/24/11): As compiler generated cast are not unparsed they don't need additional parenthesis.
+     if (isSgCastExp(expr) && expr->get_startOfConstruct()->isCompilerGenerated())
+       return false;     
+
+  // DQ (8/6/2005): Never output "()" where the parent is a SgAssignInitializer
+     if (parentExpr != NULL && parentExpr->variantT() == V_SgAssignInitializer)
+        {
+#if DEBUG_PARENTHESIS_PLACEMENT
+          printf ("     Special case of parentExpr == SgAssignInitializer (return false) \n");
+#endif
+          return false;
+        }
+
+     switch (expr->variant())
+        {
+       // DQ (11/18/2007): Don't use parens for these cases
+          case TEMP_ColonShapeExp:
+          case TEMP_AsteriskShapeExp:
+
+       // DQ (12/2/2004): Original cases
+          case VAR_REF:
+          case CLASSNAME_REF:
+          case FUNCTION_REF:
+          case MEMBER_FUNCTION_REF:
+          case PSEUDO_DESTRUCTOR_REF:
+          case BOOL_VAL:
+          case SHORT_VAL:
+          case CHAR_VAL:
+          case UNSIGNED_CHAR_VAL:
+          case WCHAR_VAL:
+          case STRING_VAL:
+          case UNSIGNED_SHORT_VAL:
+          case ENUM_VAL:
+          case INT_VAL:
+          case UNSIGNED_INT_VAL:
+          case LONG_INT_VAL:
+          case LONG_LONG_INT_VAL:
+          case UNSIGNED_LONG_LONG_INT_VAL:
+          case UNSIGNED_LONG_INT_VAL:
+          case FLOAT_VAL:
+          case DOUBLE_VAL:
+          case LONG_DOUBLE_VAL:
+          case AGGREGATE_INIT:
+          case SUPER_NODE: // charles4:  This case needed for Java only.
+             {
+#if DEBUG_PARENTHESIS_PLACEMENT
+               printf ("     case statements return false \n");
+#endif
+               return false;
+             }
+
+          default:
+             {
+               int parentVariant = GetOperatorVariant(parentExpr);
+               SgExpression* first = GetFirstOperand(parentExpr);
+               if (parentVariant  == V_SgPntrArrRefExp && first != expr)
+                  {
+                 // This case avoids redundent parenthesis within array substripts.
+#if DEBUG_PARENTHESIS_PLACEMENT
+                    printf ("     parentVariant  == V_SgPntrArrRefExp && first != expr (return false) \n");
+#endif
+                    return false;
+                  }
+
+               PrecedenceSpecifier parentPrecedence = getPrecedence(parentExpr);
+
+#if DEBUG_PARENTHESIS_PLACEMENT
+               printf ("parentVariant = %d  parentPrecedence = %d \n",parentVariant,parentPrecedence);
+#endif
+               if (parentPrecedence == 0)
+                  {
+#if DEBUG_PARENTHESIS_PLACEMENT
+                    printf ("     parentPrecedence == 0 return true \n");
+#endif
+                    return true;
+                  }
+
+               int exprVariant = GetOperatorVariant(expr);
+               PrecedenceSpecifier exprPrecedence = getPrecedence(expr);
+
+#if DEBUG_PARENTHESIS_PLACEMENT
+               printf ("exprVariant = %d  exprPrecedence = %d \n",exprVariant,exprPrecedence);
+#endif
+               if (exprPrecedence > parentPrecedence)
+                  {
+#if DEBUG_PARENTHESIS_PLACEMENT
+                    printf ("     exprPrecedence > parentPrecedence return false \n");
+#endif
+                    return false;
+                  }
+                 else
+                  {
+                    if (exprPrecedence == parentPrecedence)
+                       {
+                         if (first == 0)
+                            {
+#if DEBUG_PARENTHESIS_PLACEMENT
+                              printf ("     exprPrecedence == parentPrecedence return true \n");
+#endif
+                              return true;
+                            }
+                         AssociativitySpecifier assoc =  getAssociativity(parentExpr);
+                         if (assoc == e_assoc_left && first != expr)
+                            {
+#if DEBUG_PARENTHESIS_PLACEMENT
+                              printf ("     assoc > 0 && first != expr return false \n");
+#endif
+                              return false;
+                            }
+                         if (assoc == e_assoc_right && first == expr)
+                            {
+#if DEBUG_PARENTHESIS_PLACEMENT
+                              printf ("     assoc < 0 && first == expr return false \n");
+#endif
+                              return false;
+                            }
+                       }
+                      else
+                       {
+                       }
+                  }
+             }
+        }
+
+#if DEBUG_PARENTHESIS_PLACEMENT
+     printf ("     base of function return true \n");
+#endif
+     return true;
+}

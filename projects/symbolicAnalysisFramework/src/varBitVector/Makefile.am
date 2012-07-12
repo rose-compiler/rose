@@ -11,14 +11,8 @@ include_HEADERS = varBitVector.h
 #.NOTPARALLEL:selfTest
 noinst_PROGRAMS = selfTest
 selfTest_SOURCES = selfTest.C
-selfTest_LDADD = \
-         libSafvarBitVector.la \
-         $(SAF_BUILD_ROOT)/src/variables/libSafvariables.la \
-         $(SAF_BUILD_ROOT)/src/cfgUtils/libSafcfgUtils.la \
-         $(SAF_BUILD_ROOT)/src/arrIndexLabeler/libSafarrIndexLabeler.la \
-         $(SAF_BUILD_ROOT)/src/rwAccessLabeler/libSafrwAccessLabeler.la
-
-selfTest_LDADD += $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+selfTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) \
+         libSafvarBitVector.la
 
 check-local:selfTest
 # Liao assertion failure here

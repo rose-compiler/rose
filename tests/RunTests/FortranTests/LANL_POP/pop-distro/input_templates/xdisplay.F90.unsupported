@@ -1,0 +1,434 @@
+!|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+ module xdisplay
+
+!BOP
+! !MODULE: xdisplay
+! !DESCRIPTION:
+!  This module contains routines for opening an xdisplay and 
+!  viewing a field while the simulation is running.  this version
+!  relies on an unsupported library called fix (fortran interface 
+!  to X).
+!
+! !REVISION HISTORY:
+!
+! !REVISION HISTORY:
+!  CVS:$Id: xdisplay.F90.unsupported,v 1.6 2003/03/04 18:19:11 pwjones Exp $
+!  CVS:$Name: POP_2_0_1 $
+
+! !USES:
+
+   use kinds_mod
+   use blocks, only: nx_block, ny_block, block
+   use domain_size, only: nx_global, ny_global
+   use domain, only: distrb_clinic
+   use constants
+   use communicate, only: my_task, master_task
+   use io_types, only: nml_in, nml_filename, stdin, stdout
+   use broadcast, only: broadcast_scalar
+   use global_reductions, only: global_minval, global_maxval
+   use gather_scatter, only: gather_global
+   use prognostic, only: max_blocks_clinic
+   use grid, only: KMT, KMU, CALCT, CALCU 
+   use exit_mod, only: sigAbort, exit_pop
+
+   implicit none
+   private
+   save
+
+! !PUBLIC MEMBER FUNCTIONS:
+
+   public :: init_xdisplay, &
+             clear_display, &
+             display
+
+! !PUBLIC DATA MEMBERS:
+
+   logical (log_kind), public :: &
+     lxdisplay             ! logical flag to turn on xdisplay
+
+   integer (int_kind), public :: &
+     nstep_xdisplay        ! display image every nstep timesteps
+
+!EOP
+!BOC
+!-----------------------------------------------------------------------
+!
+!  module variables
+!
+!-----------------------------------------------------------------------
+
+   integer (int_kind) :: &
+     nzoom,              &! zoom factor for image
+     nxpix, nypix,       &! image size in pixels
+     xid                  ! id for X window
+
+!EOC
+!***********************************************************************
+
+ contains
+
+!***********************************************************************
+!BOP
+! !IROUTINE: init_xdisplay
+! !INTERFACE:
+
+ subroutine init_xdisplay
+
+! !DESCRIPTION:
+!  This routine initializes an xwindow for displaying a 2-d field
+!
+! !REVISION HISTORY:
+!  same as module
+
+!EOP
+!BOC
+!-----------------------------------------------------------------------
+!
+!  local variables
+!
+!-----------------------------------------------------------------------
+
+   namelist /xdisplay_nml/lxdisplay, nstep_xdisplay
+
+   integer (int_kind), parameter :: &
+     nclrs = 256,                   &! number of colors in colormap
+     nwsclrs = 41,                  &
+     ncmclrs = nclrs - nwsclrs
+
+   integer (int_kind) :: & 
+     i,j,ii,             &! dummy loop counters
+     nml_error            ! namelist i/o error flag
+
+   real (r4), dimension(nclrs) :: & 
+     red, green, blue,            &! colormap values
+     r1,g1,b1,                    &
+     r2,g2,b2
+
+   integer (int_kind), dimension(:,:), allocatable :: IMAGEC 
+
+   integer (int_kind) fixcreatedisplay
+   external fixcreatedisplay
+
+!-----------------------------------------------------------------------
+!
+!  read input namelist to see if xdisplay required
+!
+!-----------------------------------------------------------------------
+
+   lxdisplay = .false.
+   nstep_xdisplay = 1
+
+   if (my_task == master_task) then
+     open (nml_in, file=nml_filename, status='old',iostat=nml_error)
+     if (nml_error /= 0) then
+       nml_error = -1
+     else
+       nml_error =  1
+     endif
+     do while (nml_error > 0)
+       read(nml_in, nml=xdisplay_nml,iostat=nml_error)
+     end do
+     if (nml_error == 0) close(nml_in)
+   endif
+
+   call broadcast_scalar(nml_error, master_task)
+   if (nml_error /= 0) then
+      call exit_POP(sigAbort,'ERROR reading xdisplay_nml')
+   endif
+
+   if (my_task == master_task) then
+     write(stdout,delim_fmt)
+     write(stdout,blank_fmt)
+     write(stdout,'(a17)') ' Xdisplay options'
+     write(stdout,blank_fmt)
+     write(stdout,delim_fmt)
+
+     if (lxdisplay) then
+       write(stdout,'(a17)') ' Xdisplay enabled'
+       write(stdout,'(a23,i6,a7)') ' Display changes every ', &
+                                   nstep_xdisplay, ' steps.'
+     else
+       write(stdout,'(a18)') ' Xdisplay disabled'
+     endif
+   endif
+
+   call broadcast_scalar(lxdisplay, master_task)
+
+   if (.not. lxdisplay) return
+
+   call broadcast_scalar(nstep_xdisplay, master_task)
+
+!-----------------------------------------------------------------------
+!
+!  if xdisplay requested, ask for zoom factor
+!
+!-----------------------------------------------------------------------
+
+   if (my_task == master_task) then
+     write(stdout,blank_fmt)
+     write(stdout,'(a12)') ' enter nzoom'
+     read(stdin,*) nzoom
+   endif
+
+   call broadcast_scalar(nzoom, master_task)
+
+!-----------------------------------------------------------------------
+!
+!  create nxpix by nypix image in window named POP
+!  only the master task creates and plots window
+!
+!-----------------------------------------------------------------------
+
+   nxpix = nzoom*nx_global
+   nypix = nzoom*2*ny_global  !*** 2 fields stacked in window
+
+   if (my_task == master_task) then
+     xid = fixcreatedisplay(nxpix,nypix,100,100)
+     call fixsetwname('POP')
+
+!-----------------------------------------------------------------------
+!
+!    set up rainbow colormap with land in black
+!
+!-----------------------------------------------------------------------
+
+     call fixgetstandardcolors(nwsclrs,r1,g1,b1)
+     call fixgetcolortable('rainbow ',ncmclrs,r2,g2,b2)
+
+     !red  (1) = c0   ! set land color to black
+     !green(1) = c0
+     !blue (1) = c0
+     !red  (2) = c0   ! set land color to black
+     !green(2) = c0
+     !blue (2) = c0
+     !red  (3) = c0   ! set land color to black
+     !green(3) = c0
+     !blue (3) = c0
+
+     i = 1
+     do while (i <= nwsclrs)
+       red(i) = r1(i)
+       green(i) = g1(i)
+       blue(i) = b1(i)
+       i = i + 1
+     end do
+     red  (i) = c1   ! set contour color to white
+     green(i) = c1
+     blue (i) = c1
+     i = i + 1
+     red  (i) = c0   ! set land color to black
+     green(i) = c0
+     blue (i) = c0
+     i = i + 1
+     ii = 1
+     do while (i <= nclrs)
+       red(i) = r2(ii)
+       green(i) = g2(ii)
+       blue(i) = b2(ii)
+       i = i + 1
+       ii = ii + 1
+     end do
+
+     call fixsetcolormap(red,green,blue,nclrs)
+
+!-----------------------------------------------------------------------
+!
+!    The following stuff was put in for those using Exodus for the
+!    Macintosh.  If we stop here, most windows are turned black
+!    until the first call to fixputimage.  By doing this call here
+!    (at essentially no cost), this problem exists only for a
+!    short time.
+!
+!-----------------------------------------------------------------------
+
+     !allocate (IMAGEC(nzoom*nx_global,nzoom*2*ny_global))
+     !IMAGEC = 1
+     !call fixputglobalimage(nxpix,nypix,IMAGEC)
+
+   endif
+
+!-----------------------------------------------------------------------
+!EOC
+
+ end subroutine init_xdisplay
+
+!***********************************************************************
+!BOP
+! !IROUTINE: clear_display
+! !INTERFACE:
+
+ subroutine clear_display
+
+! !DESCRIPTION:
+!  Clears the display and closes the X window
+!
+! !REVISION HISTORY:
+!  same as module
+
+!EOP
+!BOC
+!-----------------------------------------------------------------------
+
+   if (lxdisplay .and. (my_task == master_task)) then
+      call fixcleardisplay()
+   endif
+
+!-----------------------------------------------------------------------
+!EOC
+
+ end subroutine clear_display
+
+!***********************************************************************
+!BOP
+! !IROUTINE: display
+! !INTERFACE:
+
+ subroutine display(FIELD1,field1_loc,FIELD2,field2_loc)
+
+! !DESCRIPTION:
+!  Computes image from two input fields and sends it to the
+!  FIX routine for display. 
+!
+! !REVISION HISTORY:
+!  same as module
+
+! !INPUT PARAMETERS:
+
+   real (r8), dimension(:,:,:), intent(in) :: &
+     FIELD1, FIELD2       ! two fields to stack and display
+
+   integer (int_kind), intent(in) :: &
+     field1_loc, field2_loc   ! location on grid for each field
+
+!EOP
+!BOC
+!-----------------------------------------------------------------------
+!
+!  local variables
+!
+!-----------------------------------------------------------------------
+
+   integer (int_kind) :: i,j,k,l,m,n,depth
+
+   integer (int_kind), dimension(size(FIELD1,dim=1),    &
+                                 size(FIELD1,dim=2),    &
+                                 size(FIELD1,dim=3)) :: & 
+     IMAGE              ! integer array holding distributed image  
+
+   integer (int_kind), dimension(:,:), allocatable :: & 
+     GIMAGE             ! integer array holding global image  
+
+   integer (int_kind), dimension(:,:), allocatable :: &
+     IMAGEC             ! array holding zoomed stack of 2 images
+
+   real (r8) ::  &
+     amin,amax          ! min/max of fields for scaling
+
+!-----------------------------------------------------------------------
+!
+!  scale the fields to (0,255), gather them into a global
+!  integer array
+!
+!-----------------------------------------------------------------------
+
+   if (field1_loc == field_loc_NEcorner) then
+      amax = global_maxval(FIELD1,distrb_clinic,field1_loc,CALCU)
+      amin = global_minval(FIELD1,distrb_clinic,field1_loc,CALCU)
+      if (amax == amin) amax = amin + c1
+
+      where (KMU > 0)
+         IMAGE = nint(210*(FIELD1 - amin)/(amax - amin)) + 43
+      elsewhere
+         IMAGE = 0
+      end where
+   else
+      amax = global_maxval(FIELD1,distrb_clinic,field1_loc,CALCT)
+      amin = global_minval(FIELD1,distrb_clinic,field1_loc,CALCT)
+      if (amax == amin) amax = amin + c1
+
+      where (KMT > 0)
+         IMAGE = nint(210*(FIELD1 - amin)/(amax - amin)) + 43
+      elsewhere
+         IMAGE = 0
+      end where
+   endif
+
+
+
+   if (my_task == master_task) allocate (GIMAGE(nx_global,ny_global))
+
+   call gather_global(GIMAGE,IMAGE,master_task,distrb_clinic)
+   GIMAGE = GIMAGE(:,ny_global:1:-1)
+
+   if (my_task == master_task) then
+
+     allocate (IMAGEC(nzoom*nx_global,nzoom*2*ny_global))
+
+     do j=1,ny_global
+     do i=1,nx_global
+       do l=1,nzoom
+       do k=1,nzoom
+         m = (i-1)*nzoom + k
+         n = (j-1)*nzoom + l
+         IMAGEC(m,n) = GIMAGE(i,j)
+       end do
+       end do
+     end do
+     end do
+   endif
+
+   if (field2_loc == field_loc_NEcorner) then
+      amax = global_maxval(FIELD2,distrb_clinic,field2_loc,CALCU)
+      amin = global_minval(FIELD2,distrb_clinic,field2_loc,CALCU)
+      if (amax == amin) amax = amin + c1
+
+      where (KMU > 0)
+         IMAGE = nint(210*(FIELD2 - amin)/(amax - amin)) + 43
+      elsewhere
+         IMAGE = 0
+      end where
+   else
+      amax = global_maxval(FIELD2,distrb_clinic,field2_loc,CALCT)
+      amin = global_minval(FIELD2,distrb_clinic,field2_loc,CALCT)
+      if (amax == amin) amax = amin + c1
+
+      where (KMT > 0)
+         IMAGE = nint(210*(FIELD2 - amin)/(amax - amin)) + 43
+      elsewhere
+         IMAGE = 0
+      end where
+   endif
+
+   call gather_global(GIMAGE,IMAGE,master_task,distrb_clinic)
+   GIMAGE = GIMAGE(:,ny_global:1:-1)
+
+   if (my_task == master_task) then
+     do j=1,ny_global
+     do i=1,nx_global
+       do l=1,nzoom
+       do k=1,nzoom
+         m = (i-1)*nzoom + k
+         n = (j-1)*nzoom + l + ny_global*nzoom
+         IMAGEC(m,n) = GIMAGE(i,j)
+       end do
+       end do
+     end do
+     end do
+
+     call fixgetgeometry(nxpix,nypix,depth)
+     call fixputimage   (nxpix,nypix,IMAGEC)
+
+     deallocate(IMAGEC, GIMAGE)
+   endif
+
+!-----------------------------------------------------------------------
+!EOC
+
+ end subroutine display
+
+!***********************************************************************
+
+ end module xdisplay
+
+!|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||

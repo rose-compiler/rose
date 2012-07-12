@@ -7,29 +7,14 @@
 
 namespace BackstrokeUtility
 {
-	/** Generate a name that is unique in the current scope and any parent and children scopes.
-	* @param baseName the word to be included in the variable names. */
-	std::string GenerateUniqueVariableName(SgScopeStatement* scope, std::string baseName = "temp");
-
 	/** Returns true if the given expression refers to a variable. This could include using the
-	* dot and arrow operator to access member variables. A comma op conunts as a variable references
-	* if all its members are variable references (not just the last expression in the list).
+	* dot and arrow operator to access member variables.
 	* Note that an expression which is a variable reference necessarily has no side effects. */
 	bool isVariableReference(SgExpression* expression);
 
-	/** Given an expression, generates a temporary variable whose initializer optionally evaluates
-	* that expression. Then, the var reference expression returned can be used instead of the original
-	* expression. The temporary variable created can be reassigned to the expression by the returned SgAssignOp;
-	* this can be used when the expression the variable represents needs to be evaluated. NOTE: This handles
-	* reference types correctly by using pointer types for the temporary.
-	* @param expression Expression which will be replaced by a variable
-	* @param scope scope in which the temporary variable will be generated
-	* @return declaration of the temporary variable, an assignment op to
-	* reevaluate the expression, and a a variable reference expression to use instead of
-	* the original expression. Delete the results that you don't need! */
-	boost::tuple<SgVariableDeclaration*, SgAssignOp*, SgExpression* > CreateTempVariableForExpression(SgExpression* expression,
-			SgScopeStatement* scope, bool initializeInDeclaration);
-
+	//! Returns a call to std::assert, with the specified expression passed as an argument.
+	SgExpression* buildAssert(SgExpression* check);
+	
 	//! Collects all the uses of the given variable in the given subtree. Correctly handles expanded
 	//! variables, such a p.x. All the reference expressions for p.x would be SgDotOp's or SgArrowOp's
 	std::vector<SgExpression*> findVarReferences(VariableRenaming::VarName var, SgNode* root);
@@ -54,7 +39,7 @@ namespace BackstrokeUtility
 	/** Return whether a basic block contains a break statement. */
 	bool hasBreakStmt(SgBasicBlock* body);
 
-	/** If two expressions can be reorderd (in other word, reordering does not change the result). */
+	/** If two expressions can be reordered (in other word, reordering does not change the result). */
 	bool canBeReordered(SgExpression* exp1, SgExpression* exp2);
 
 	/** Tell if a type is a STL container type. */
@@ -99,14 +84,14 @@ namespace BackstrokeUtility
 	/** Remove braces of a basic block in which there is no variable declared. */
 	void removeUselessBraces(SgNode* root);
 
-	/** Remove useless parenthesis of some specific expresssions which will damage the readability. */
+	/** Remove useless parenthesis of some specific expressions which will damage the readability. */
 	void removeUselessParen(SgNode* root);
 
 	/** Returns if an expression modifies any value. */
 	bool isModifyingExpression(SgExpression* exp);
 
 	/** Returns if an expression contains any subexpression which modifies any value. */
-	bool containsModifyingExpression(SgExpression* exp);
+	bool containsModifyingExpression(SgNode* exp);
 
 	/** Given a function declaration, get its definition's body. If it does not have a definition, return NULL. */
 	SgBasicBlock* getFunctionBody(SgFunctionDeclaration* func_decl);
@@ -129,5 +114,24 @@ namespace BackstrokeUtility
 	//! Returns if the first given var is a member of the second one. For example, a.i is a member of a.
 	bool isMemberOf(const VariableRenaming::VarName& var1, const VariableRenaming::VarName& var2);
 
+    //! Returns if a variable declaration is a true one, and not one in if condition, while condition, etc.
+    //! In C++ standard, those declarations in conditions actually are not called declaration.
+    bool isTrueVariableDeclaration(SgVariableDeclaration* varDecl);
+
+	/** Given a type, remove all outer layers of SgModiferType and SgTypeDefType. */
+	SgType* cleanModifersAndTypeDefs(SgType* t);
+
+	/** Given a type, remove one layer of pointers/reference types. 
+	 * If the type is a pointer-to-pointer, this function just removes the first layer. */
+	SgType* removePointerOrReferenceType(SgType* t);
+    
+    //! Given a break statement, get its enclosing switch statement.
+    SgSwitchStatement* getEnclosingSwitchStmt(SgBreakStmt* breakStmt);
+    
+    //! Returns if the given statement is a loop (while, for, do-while).
+    bool isLoopStatement(SgStatement* stmt);
+    
+    //! Given a scope statement, find all its early exits (return, break, continue, goto).
+    std::vector<SgStatement*> getEarlyExits(SgScopeStatement* scope);
 }
 

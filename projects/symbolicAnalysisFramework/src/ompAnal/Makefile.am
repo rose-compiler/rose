@@ -14,7 +14,7 @@ include_HEADERS = ompUtils.h #ompNormalForm.h
 #noinst_PROGRAMS = selfTest errorExample
 #selfTest_SOURCES = selfTest.C
 #errorExample_SOURCES = errorExample.C
-#selfTest_LDADD = \
+#selfTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) \
 #         libSafompAnal.la \
 #         $(SAF_BUILD_ROOT)/src/common/libSafcommon.la \
 #         $(SAF_BUILD_ROOT)/src/cfgUtils/libSafcfgUtils.la \
@@ -23,8 +23,6 @@ include_HEADERS = ompUtils.h #ompNormalForm.h
 #         $(SAF_BUILD_ROOT)/src/varBitVector/libSafvarBitVector.la \
 #         $(SAF_BUILD_ROOT)/src/rwAccessLabeler/libSafrwAccessLabeler.la \
 #         $(SAF_BUILD_ROOT)/src/arrIndexLabeler/libSafarrIndexLabeler.la
-#
-#selfTest_LDADD += $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 #
 #errorExample_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 #

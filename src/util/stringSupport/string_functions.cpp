@@ -341,6 +341,18 @@ StringUtility::listToString ( const list<int> & X, bool separateStrings )
 
      return returnString;
    }
+
+std::list<std::string>
+StringUtility:: tokenize ( std::string X, char delim ) {
+    std::list<std::string> l;
+    std::string token;
+    std::istringstream iss(X);
+    while (getline(iss, token, delim)) {
+        l.push_back(token);
+    }
+    return l;
+}
+
 // DQ (8/31/2009): This now compiles properly (at least for analysis, it might still fail for the code generation).
 // #ifdef USE_ROSE   
 #if 0
@@ -457,17 +469,32 @@ StringUtility::numberToString ( double x )
    }
 
 string
-StringUtility::addrToString( uint64_t x )
-   {
-     char numberString[128];
-     sprintf(numberString, "0x%08"PRIx64, x);
-     return string(numberString);
-   }
+StringUtility::addrToString(uint64_t value, size_t nbits, bool is_signed)
+{
+    std::string retval;
+
+    assert(nbits>0 && nbits<=128);
+    int nnibbles = (nbits+3)/4;
+    char buf[64];
+    snprintf(buf, sizeof buf, "0x%0*"PRIx64, nnibbles, value);
+    buf[sizeof(buf)-1] = '\0';
+    retval = buf;
+
+    if (nbits>=2 && is_signed && nbits<=(8*sizeof(value))) {
+        uint64_t signbit = (uint64_t)1 << (nbits-1);
+        uint64_t mask_lo = signbit - 1;                     // bits less significant than the sign bit
+        uint64_t mask_hi = ~(signbit | mask_lo);            // bits more significant than the sign bit
+        if (0!=(value & signbit) && 0!=(value & mask_lo) && 0==(value & mask_hi))
+            retval += "<-" + addrToString((~value+1) & mask_lo, nbits, false) + ">";
+    }
+
+    return retval;
+}
 
 string
-StringUtility::removeRedundentSubstrings ( string X )
+StringUtility::removeRedundentSubstrings ( string X ) // sic
    {
-  // Convert the string into a list of strings and separate out the redundent entries
+  // Convert the string into a list of strings and separate out the redundant entries
      list<string> XStringList = StringUtility::stringToList(X);
      XStringList.sort();
      XStringList.unique();
@@ -503,9 +530,9 @@ isMarker ( char c )
    }
 
 string
-StringUtility::removePseudoRedundentSubstrings ( string X )
+StringUtility::removePseudoRedundentSubstrings ( string X ) // sic
    {
-  // Convert the string into a list of strings and separate out the redundent entries
+  // Convert the string into a list of strings and separate out the redundant entries
      list<string> XStringList = StringUtility::stringToList(X);
 
 #if 0
@@ -1335,7 +1362,7 @@ StringUtility::stripFileSuffixFromFileName ( const string & fileNameWithSuffix )
 //
 //Rama: I am not sure if this mechanism can deal with files ending with .
 //Like "test."
-//I am not clear about the purpose of the function too. So, not modyfying it.
+//I am not clear about the purpose of the function too. So, not modifying it.
 string
 StringUtility::fileNameSuffix ( const string & fileNameWithSuffix )
    {
@@ -1466,6 +1493,47 @@ StringUtility::convertToLowerCase( const string & inputString )
      return returnString;
    }
 
+std::string
+StringUtility::prefixLines(const std::string &lines, const std::string &prefix, bool prefixAtFront, bool prefixAtBack)
+{
+    if (lines.empty())
+        return "";
 
+    std::string retval = prefixAtFront ? prefix : "";
+    size_t at=0;
+    while (at<lines.size()) {
+        size_t lfpos = lines.find_first_of("\r\n", at);
+        lfpos = lines.find_first_not_of("\r\n", lfpos);
+        retval += lines.substr(at, lfpos-at);
+        if (lfpos<lines.size())
+            retval += prefix;
+        at = lfpos;
+    }
 
+    if (prefixAtBack && isLineTerminated(lines))
+        retval += prefix;
+    return retval;
+}
 
+bool
+StringUtility::isLineTerminated(const std::string &s)
+{
+    return !s.empty() && ('\n'==s[s.size()-1] || '\r'==s[s.size()-1]);
+}
+
+void
+StringUtility::add_to_reason_string(std::string &result, bool isset, bool do_pad,
+                                    const std::string &abbr, const std::string &full)
+{
+    if (isset) {
+        if (do_pad) {
+            result += abbr;
+        } else {
+            if (result.size()>0) result += ", ";
+            result += full;
+        }
+    } else if (do_pad) {
+        for (size_t i=0; i<abbr.size(); ++i)
+            result += ".";
+    }
+}

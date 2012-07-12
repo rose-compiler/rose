@@ -33,21 +33,30 @@ automated tests ({\em make check} makefile rule).  If you want to add a new
 feature to ROSE, show us your tests.
 %}}}
 
-\section{Working with the ROSE GIT repositories}
-This section is mostly useful for internal ROSE developers who have access
-to LLNL's network file system hosting ROSE's git repository or external
-developers who are comfortable with using git. 
-Otherwise, external developers are suggested to use our external SVN repository as
-described in Section~\ref{gettingStarted::svn}.
+%----------------------------------------------------------------------------------------
+%
+%--
 
-We have two git repositories for ROSE: an internal one at LLNL (\textit{/nfs/casc/overture/ROSE/git/ROSE-EDG.git}) and an external
-one hosted at \url{http://www.rosecompiler.org/rose.git}. These two repositories share histories so that
-you can work closely with us as an external developing using our latest work. 
-Some tips for using them are gathered in this section.
+	\section{Working with the ROSE Git repositories}
 
+%--
+%
+%----------------------------------------------------------------------------------------
+This section is most useful for ROSE developers who have access to LLNL's network file
+system (NFS).
+\newline\newline
+We have (2) Git repositories:
+\begin{itemize}
+	\item internal: \textit{/nfs/casc/overture/ROSE/git/ROSE.git}
+	\item external: \url{http://www.rosecompiler.org/rose.git} -- is synced with the internal repository.
+\end{itemize}
 
-\subsection{Continuous Integration in ROSE}
-
+\textit{We also have an external SVN repository (see Section~\ref{gettingStarted::svn})}.
+%----------------------------------------------------------------------------------------
+%--
+	\subsection{Continuous Integration in ROSE}
+%--
+%----------------------------------------------------------------------------------------
 The ROSE project uses a workflow that automates the central principles of
 continuous integration in order to make integrating the work from different
 developers a non-event. Because the integration process only integrates
@@ -92,52 +101,97 @@ an external release based on the master branch will be made available
 outside. 
 
 
-\subsection{The Internal Repository}
+\subsection{The Internal Git Repository}
 
-The ROSE internal repository (the shared git repository shown in
-Fig.~\ref{fig:rose-git-hudson}) is hosted under \textit{/nfs/casc/overture/ROSE/git/ROSE.git}.
-It keeps track of the latest work of each
-internal developer (who have an account with LLNL). Each
-developer will make a complete local copy of the repository which he can use to
-perform his work and he can push his work from this copy to a branch he owns in the 
-central repository when he is ready. 
+The internal ROSE Git repository (Fig.~\ref{fig:rose-git-hudson}) is hosted under
+\textit{/nfs/casc/overture/ROSE/git/ROSE.git}. External collaborators can access
+this NFS path through any of these internal LLNL hosts: \texttt{tuxblue[1-6|9-13]}.
+Your LLNL account must be in the casc, overture, and rose POSIX groups(contact
+4HELP to be added to these groups).
+\begin{verbatim}
+    $ git clone ssh://<user>@tuxblue[1-6|9-13]/nfs/casc/overture/ROSE/git/ROSE.git
+\end{verbatim}
 
-\subsection{Structure of Repositories and Branch Naming Conventions}
+Updates to the "Release Candidate" (*-rc) branches in this internal repository
+trigger our Continuous Integration framework. Although you'll want to make a
+local clone of ROSE for development purposes, you must make sure to push your
+changes to your remote branch for testing and integration purposes.
 
+The \texttt{master} branch always contains the latest work of ROSE and can only
+be updated by our continuous integration framework.
+
+
+\subsection{The External Git Repository}
+
+External users (who don't have an account with LLNL) are recommended to use
+ROSE's external SVN repository, which is described
+in~\ref{gettingStarted::svn}.
+
+For advanced external users who are comfortable with git. 
+We have an external git repository which is cloned and synchronized with our internal shared repository. 
+To clone the external git repository, simply type:
+
+\textit{git clone http://www.rosecompiler.org/rose.git}
+
+\noindent Depending on your network speed, the commandline above may take 3 to 5
+minutes, or even longer.
+
+\subsubsection{How to work with us on ROSE}
+
+\begin{figure}[htbp]  
+  \centering
+    \includegraphics[width=0.8\textwidth]{git_collaboration_diagram.pdf}
+  \caption{How to setup external collaborations with Git}
+  \label{fig:rose-git-collaborations}
+\end{figure}
+
+Figure~\ref{fig:rose-git-collaborations} shows the suggested organization of 
+git repositories to support external collaborations.  LLNL provides 
+external accesss to its public git repository; internal LLNL
+developers work with the internal git repository. Once a feature or 
+bug fix is ready, it is pushed to the external public git 
+repository. 
+
+External collaborators should clone their private repository from
+the LLNL public git repository.  Collaborators should work on their
+private repository and push their features and bug fixes to their
+public git repository (which should be cloned from their private
+repository).
+
+LLNL will accept changes by pulling them from the external collaborator's
+public repository.  All changes will be inspected as part of internal 
+LLNL policies. External collaborators can obtain the latest version of
+the LLNL work by pulling from our external public repository to their
+private git repository as often as they wish.
+
+
+
+\subsection{Our Git Naming Conventions}
 
 Both the internal and the external ROSE repositories are structured according to
-an continuous integration workflow using git best practises. The master branch
+n continuous integration workflow using Git best practices. The master branch
 contains the latest work in ROSE that passes the tests and each developer can
 create any number of branches that he owns. No developer can modify
-a branch owned by another developer, but a group branch can be created that 
-can be modified by groups of users. 
+a branch owned by another developer, but a group branch can be created that
+can be modified by groups of users.
 
-Branches in the ROSE repository is named according to naming convention so that 
+Branches in the ROSE repository is named according to naming convention so that
 it is easy to see who owns a branch and if the developer intends this branch to
 be tested, released or not tested at all. This is done with a prefix and postfix
 scheme.
 
-The prefix of a branch name maps directly to a user name. A prefix enforces 
-ownership of a branch and is unique to each developer. This prefix is chosen
-by the developer and is on the form 'prefix-'. For instance a user 'John Brandy' 
-with username 'john' can choose the prefix 'jb-'. If he is working on a bugfix
-for bug number 1234 he should create a branch 'jb-bug1234' where he works on this.
+The prefix of a branch name maps directly to your LLNL official user name (OUN).
+For example, a developer 'John Brady' has the OUN 'brady1'. If he is working on
+a bugfix for bug number 1234 he should create a branch 'brady1-bug1234'
+where he works on this.
 
-Th postfix of a branch determines if a branch should only be tested or tested and
-considered for integration with master. We currently only do automatic testing on
-our internal git repository due to security concerns. A branch that should only be 
-tested must have the postfix '-test'. We test branches with the '-test' prefix as 
-rigorously as a branch that is considered for integration. If work on a branch has
-reached a stage where a developer deems it ready for integration he should create
-a new branch with a branch with a postfix on the form '-rc'. '-rc' is short for
-release candidate as this work will be integrated with master if it passes all test.
-
-If our developer 'John Brandy' wants his bugfix to be merged with master if it passes
-all tests he should rename his branch to 'jb-bug1234-rc'.
+If work on a branch has reached a stage where a developer deems it ready for
+integration, he should push his changes to a new branch with a '-rc' postfix. RC
+stands for 'Release Candidate' as this work will be integrated with master if it
+passes all the tests.
 
 
 \subsection{Making a Copy of the Internal repository}
-
 
 
 Before starting to work a developer must create a local clone of the central git repository.
@@ -151,8 +205,6 @@ Please configure this copy with your name and email before starting work.
 	  \item Set your email: \textit{git config --global user.email johndoe@example.com}
 	  \item Tell git-branch and git-checkout to setup new branches so that git-pull(1)
     will appropriately merge from that remote branch: \textit{git config branch.autosetupmerge true}
-          \item This setting tells git to convert the newlines to the system’s standard
-	    when checking out files, and to LF newlines when committing in \textit{git config core.autocrlf true}
 %	 \item Tell git to automatically push to the remotely tracked branch: 
 %	 	\textit{git config push.default 'tracking'}
    \end{itemize}       
@@ -189,11 +241,11 @@ Please configure this copy with your name and email before starting work.
           :branch-name } . Again, we have access control so developers can
           only delete their own branches, not others'.
    \end{itemize}     
-\item Adding / Deleting files:
+\item Adding / Deleting files: always be careful not to add/delete wrong files!
    \begin{itemize}
           \item add $<$file$>$ to the project \textit{git add $<$file$>$}
           \item add all files under directory $<$dir$>$ to the project, including subdirectories \textit{git add $<$dir$>$}
-	  \item add all files under the current directory to the project \textit{git add .}
+%	  \item add all files under the current directory to the project \textit{git add .}
 	  \item remove $<$file$>$ from the project \textit{git rm $<$file$>$}
    \end{itemize}     
 \item Committing : intermediate changes can be committed locally. You don't have to have active connection to the shared repository to do your daily work at all. 
@@ -327,21 +379,6 @@ You can create a local branch based on the current content before you modify the
 %}}}
 Git cheat sheet: \htmladdnormallink{http://cheat.errtheblog.com/s/git}{http://cheat.errtheblog.com/s/git}
 
-\subsection{The External Repository}
-
-External users (who don't have account with LLNL) are recommended to use
-ROSE's external SVN repository, which is described
-in~\ref{gettingStarted::svn}.
-
-
-For advanced external users who are comfortable with git. 
-We have an external git repository which is cloned and synchronized with our internal shared repository. 
-To clone the external git repository, simply type:
-
-\textit{git clone http://www.rosecompiler.org/rose.git/}
-
-\noindent Depending on your network speed, the commandline above may take 3 to 5
-minutes or even longer.
 
 
 %Added by Liao 10/17/2008
@@ -3096,7 +3133,7 @@ string getQualifiedFunctionName(SgFunctionDeclaration *astNode);
 			   GraphAlgorithms* algo):RoseBin_FlowAnalysis(global,algo) 
   // run this analysis
   void run(RoseBin_Graph* vg, std::string fileN, bool multiedge) ;
-  void getConnectedComponents(std::map<int,std::set<SgAsmFunctionDeclaration*> >& ret);
+  void getConnectedComponents(std::map<int,std::set<SgAsmFunction*> >& ret);
 
       \end{lstlisting}
 
@@ -4413,7 +4450,7 @@ Other useful utility functions in ROSE
    * resolve for each instruction which type it has
    ****************************************************/
   SgAsmInstruction* createInstruction(int address, 
-					 SgAsmFunctionDeclaration* bb, 
+					 SgAsmFunction* bb, 
 					 std::string mnemonic);
   /****************************************************
    * process all jump instructions and resolve destination
@@ -4916,7 +4953,7 @@ File.setDataPrototype ( "bool", "F77\_only", "= false",
 \end{verbatim} 
 }
 
-The look for the names (e.g. "F77\_only") in "sageSupport.C" in ROSE/src/frontend/SageIII
+The look for the names (e.g. "F77\_only") in "sage\_support.cpp" in ROSE/src/frontend/SageIII/sage\_support
 and put in the command line processing support as in:
 {
 \indent
@@ -4947,7 +4984,7 @@ in src/ROSETTA/Grammar:
 }
 
 If your option takes a parameter, then you have to make this clear by adding it to the
-function (located in sageSupport.C):
+function (located in sage\_support.cpp):
 {
 \indent
 \begin{verbatim}
@@ -4955,7 +4992,7 @@ function (located in sageSupport.C):
 \end{verbatim} 
 }
 
-Also, don't forget to document your option in SgFile::usage() (also in sageSupport.C).
+Also, don't forget to document your option in SgFile::usage() (also in sage\_support/cmdline.cpp).
 
 
 \section{Managing Hudson}

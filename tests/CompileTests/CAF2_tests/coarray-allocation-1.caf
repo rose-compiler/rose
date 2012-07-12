@@ -1,0 +1,6 @@
+! Allocation of a simple coarray on a team.
+
+program p
+  integer, allocatable ::  a(:)[*] 
+  allocate(a(1:20)[@team_world]) 
+end program

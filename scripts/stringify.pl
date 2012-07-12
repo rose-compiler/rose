@@ -29,7 +29,7 @@ This script will emit warnings about enumerations with multiple members having t
 value to member name would be ambiguous.  A member can be omitted from the generated stringify function by placing the word
 "NO_STRINGIFY" anywhere on the same line after the member name (inside a comment so as not to confuse parsing). When
 NO_STRINGIFY appears on a line, it pertains to all the previous enum members on that same line.  When NO_STRINGIFY appears on
-the same line as the enum name (as in "enum foo { /*NO_STRINGIFY*/") then the entire enum definition is skipped an no
+the same line as the enum name (as in "enum foo { /*NO_STRINGIFY*/") then the entire enum definition is skipped and no
 stringify function will be produced for it.
 
 =head1 OUTPUT
@@ -441,7 +441,7 @@ print OUTPUT <<"EOF"
     if (retval.empty()) {
         char buf[@{[length($name)+64]}];
 #ifndef _MSC_VER
-        int nprint = snprintf(buf, sizeof buf, \"(${name})\%d\", n);
+        int nprint __attribute__((unused)) = snprintf(buf, sizeof buf, \"(${name})\%d\", n);
 #else
         int nprint = 0; assert(0);
 #endif

@@ -1,0 +1,57 @@
+!
+program p
+
+! simple copointer declarations
+  integer, copointer :: p0
+  integer, copointer, dimension(:) :: p1, pp1
+  integer, copointer, dimension(:,:) :: p2, pp2
+  integer, copointer, codimension[*] :: cp0
+  integer, copointer, dimension(:), codimension[*] :: cp1, cpp1
+  integer, copointer, dimension(:,:), codimension[*] :: cp2, cpp2
+  integer, copointer :: csp0[*]
+  integer, copointer, dimension(:) :: csp1[*], cspp1[*]
+  integer, copointer, dimension(:,:) :: csp2[*], cspp2[*]
+
+! copointer derived type declarations
+  type:: T1
+    integer :: i
+    real :: r
+  end type
+
+! other declarations for tests
+  integer, dimension(10, 10), cotarget :: a
+  integer, dimension(10, 10), cotarget :: ca[*]
+  integer k
+  
+! copointer creation
+  p2 => a
+  p2 => ca[9]
+  p1 => a(1,:)
+  p1 => ca(1,:)[9]
+  p0 => a(1, 1)
+  p0 => a(1, 1)[9]
+  cp2 => ca
+  cp1 => ca(1,:)
+  cp0 => ca(1, 1)
+
+! copointer assignment
+  pp2 => p2
+  pp1 => p1
+  pp0 => p0
+  pp1 => p2(1,:)
+  pp0 => p2(1,1)
+  pp2 => cp2[9]
+  pp1 => cp1[9]
+  pp0 => cp0[9]
+  pp1 => cp2(1,:)[9]
+  pp0 => cp2(1,1)[9]
+  
+! copointer dereferencing
+  a        = cp2[][9]
+  a(1,:)   = cp1[][9]
+  a(1,1)   = cp0[][9]
+  cp2[][9] = a
+  cp1[][9] = a(1,:)
+  cp0[][9] = a(1,1)
+
+end program

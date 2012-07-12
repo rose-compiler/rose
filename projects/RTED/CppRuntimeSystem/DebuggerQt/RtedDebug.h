@@ -2,18 +2,13 @@
 #ifndef RTEDDEBUG_H
 #define RTEDDEBUG_H
 
+#include <pthread.h>
 
 #include <QApplication>
 #include <QObject>
-
-
-#include "MainWindow.h"
-#include "../CppRuntimeSystem.h"
-
-
-#include <pthread.h>
-
 #include <QDebug>
+
+struct DbgMainWindow;
 
 class RtedDebug
 {
@@ -34,15 +29,15 @@ class RtedDebug
 
         enum MessageType
         {
-        	MESSAGE, WARNING,ERROR
+          MESSAGE, WARNING,ERROR
         };
 
         QList<QPair<MessageType,QString> > messages;
 
 
-        void addMessage(const QString & msg, MessageType type);
-	void addMessage(std::string& msg, MessageType type);
-	void addMessage(std::string& msg);
+        void addMessage(const QString& msg, MessageType type);
+        void addMessage(const std::string& msg, MessageType type);
+        void addMessage(const std::string& msg);
 
         /// Starts debug dialog
         /// runtimeSystem is blocked until singleStep or resume was clicked

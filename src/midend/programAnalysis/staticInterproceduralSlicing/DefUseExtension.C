@@ -29,18 +29,7 @@ namespace DUVariableAnalysisExt
 {
         bool isAssignmentExpr(SgNode*node)
         {
-                if (isSgAssignOp(node)) return true;
-                else if (isSgPlusAssignOp(node)) return true;
-                else if (isSgMinusAssignOp(node)) return true;
-                else if (isSgMultAssignOp(node)) return true;
-                else if (isSgDivAssignOp(node)) return true;
-                else if (isSgModAssignOp(node)) return true;
-                else if (isSgAndAssignOp(node)) return true;
-                else if (isSgXorAssignOp(node)) return true;
-                else if (isSgIorAssignOp(node)) return true;
-                else if (isSgRshiftAssignOp(node)) return true;
-                else if (isSgLshiftAssignOp(node)) return true;
-                return false;
+                return isSgAssignOp(node) || isSgCompoundAssignOp(node);
         }
         bool isFunctionParameter(SgNode*node)
         {
@@ -125,21 +114,14 @@ namespace DUVariableAnalysisExt
         bool isDef(SgNode * node,bool treadFunctionCallAsDef)
         {
                 bool assignCand=false;
+
                 // Straight assignments of a variable
                 //      if (isAssignInitializer(node->get_parent()))   assignCand=true;;
-                if (isSgAssignOp(node->get_parent()))           assignCand=true;;
-                // BINARY-OPERATORS: combined assignment and use
-                if (isSgPlusAssignOp(node->get_parent()))   assignCand=true;;
-                if (isSgAndAssignOp(node->get_parent()))   assignCand=true;;
-                if (isSgDivAssignOp(node->get_parent()))   assignCand=true;;
-                if (isSgIorAssignOp(node->get_parent()))   assignCand=true;;
-                if (isSgLshiftAssignOp(node->get_parent()))   assignCand=true;;
-                if (isSgMinusAssignOp(node->get_parent()))   assignCand=true;;
-                if (isSgModAssignOp(node->get_parent()))   assignCand=true;;
-                if (isSgMultAssignOp(node->get_parent()))   assignCand=true;;
-                if (isSgRshiftAssignOp(node->get_parent()))   assignCand=true;;
-                if (isSgXorAssignOp(node->get_parent()))   assignCand=true;;
-                if (assignCand==true)
+
+                if (isSgAssignOp(node->get_parent()) || isSgCompoundAssignOp(node->get_parent()))
+                        assignCand = true;;
+
+                if (assignCand)
                 {
                         if (isSgBinaryOp(node->get_parent())->get_lhs_operand()==node)
                                 return true;

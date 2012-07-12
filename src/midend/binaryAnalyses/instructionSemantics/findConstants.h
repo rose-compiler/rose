@@ -214,7 +214,7 @@ bool mayAlias(const MemoryWrite&, const MemoryWrite&);
 bool mustAlias(const MemoryWrite&, const MemoryWrite&);
 
 template <size_t From, size_t To>
-XVariablePtr<To> extendByMSB(XVariablePtr<From>);
+XVariablePtr<To> unsignedExtend(XVariablePtr<From>);
 
 template <size_t From, size_t To, size_t Len>
 XVariablePtr<To - From> extract(XVariablePtr<Len>);
@@ -557,57 +557,64 @@ struct MemoryMergeConstraint: public Constraint {
 };
 
 struct RegisterSet {
-    XVariablePtr<32> gpr[8];
-    XVariablePtr<16> segreg[6];
-    XVariablePtr<1> flag[16];
+    struct {
+        static const size_t n_gprs = 8;             /**< Number of general-purpose registers in this state. */
+        static const size_t n_segregs = 6;          /**< Number of segmentation registers in this state. */
+        static const size_t n_flags = 32;           /**< Number of flag registers in this state. */
+
+        XVariablePtr<32> gpr[n_gprs];
+        XVariablePtr<16> segreg[n_segregs];
+        XVariablePtr<1> flag[n_flags];
+    } registers;
+    
     MemoryVariable* memoryWrites; // Undefined elements are bottom, no two elements can satisfy mayAlias
     
     RegisterSet() {
-        for (size_t i = 0; i < 8; ++i)
-            gpr[i] = new XVariable<32>();
-        for (size_t i = 0; i < 6; ++i)
-            segreg[i] = new XVariable<16>();
+        for (size_t i = 0; i < registers.n_gprs; ++i)
+            registers.gpr[i] = new XVariable<32>();
+        for (size_t i = 0; i < registers.n_segregs; ++i)
+            registers.segreg[i] = new XVariable<16>();
         for (size_t i = 0; i < 16; ++i)
-            flag[i] = new XVariable<1>();
+            registers.flag[i] = new XVariable<1>();
         memoryWrites = new MemoryVariable();
     }
 
     void setToBottom() {
-        for (size_t i = 0; i < 8; ++i)
-            gpr[i] = XVariablePtr<32>::bottom();
-        for (size_t i = 0; i < 6; ++i)
-            segreg[i] = XVariablePtr<16>::bottom();
+        for (size_t i = 0; i < registers.n_gprs; ++i)
+            registers.gpr[i] = XVariablePtr<32>::bottom();
+        for (size_t i = 0; i < registers.n_segregs; ++i)
+            registers.segreg[i] = XVariablePtr<16>::bottom();
         for (size_t i = 0; i < 16; ++i)
-            flag[i] = XVariablePtr<1>::bottom();
+            registers.flag[i] = XVariablePtr<1>::bottom();
         memoryWrites->set(MemoryWriteSet::bottom());
     }
 
     void mergeIn(const RegisterSet& rs) {
-        for (size_t i = 0; i < 8; ++i)
-            (new MergeConstraint<32>(gpr[i], rs.gpr[i]))->activate();
-        for (size_t i = 0; i < 6; ++i)
-            (new MergeConstraint<16>(segreg[i], rs.segreg[i]))->activate();
+        for (size_t i = 0; i < registers.n_gprs; ++i)
+            (new MergeConstraint<32>(registers.gpr[i], rs.registers.gpr[i]))->activate();
+        for (size_t i = 0; i < registers.n_segregs; ++i)
+            (new MergeConstraint<16>(registers.segreg[i], rs.registers.segreg[i]))->activate();
         for (size_t i = 0; i < 16; ++i)
-            (new MergeConstraint<1>(flag[i], rs.flag[i]))->activate();
+            (new MergeConstraint<1>(registers.flag[i], rs.registers.flag[i]))->activate();
         (new MemoryMergeConstraint(memoryWrites, rs.memoryWrites))->activate();
     }
 
     /** Show register set, but only the parts that differ from @p base. */
     std::string diff(const RegisterSet &orig, std::string prefix="") {
         std::ostringstream s;
-        for (size_t i=0; i<8; i++) {
-            if (!(orig.gpr[i]->get()==gpr[i]->get())) {
-                s <<prefix <<gprToString((X86GeneralPurposeRegister)i) <<" = " <<gpr[i] <<"\n";
+        for (size_t i=0; i<registers.n_gprs; i++) {
+            if (!(orig.registers.gpr[i]->get()==registers.gpr[i]->get())) {
+                s <<prefix <<gprToString((X86GeneralPurposeRegister)i) <<" = " <<registers.gpr[i] <<"\n";
             }
         }
-        for (size_t i=0; i<6; i++) {
-            if (!(orig.segreg[i]->get()==segreg[i]->get())) {
-                s <<prefix <<segregToString((X86SegmentRegister)i) <<" = " <<segreg[i] <<"\n";
+        for (size_t i=0; i<registers.n_segregs; i++) {
+            if (!(orig.registers.segreg[i]->get()==registers.segreg[i]->get())) {
+                s <<prefix <<segregToString((X86SegmentRegister)i) <<" = " <<registers.segreg[i] <<"\n";
             }
         }
         for (size_t i=0; i<16; i++) {
-            if (!(orig.flag[i]->get()==flag[i]->get())) {
-                s <<prefix <<flagToString((X86Flag)i) << " = " <<flag[i] <<"\n";
+            if (!(orig.registers.flag[i]->get()==registers.flag[i]->get())) {
+                s <<prefix <<flagToString((X86Flag)i) << " = " <<registers.flag[i] <<"\n";
             }
         }
         /* Show memory in this register set that is different than the original */
@@ -633,50 +640,39 @@ operator<<(std::ostream& o, const RegisterSet& rs);
 
 struct FindConstantsPolicy {
     std::map<uint64_t, RegisterSet> rsets;
-    RegisterSet currentRset, *initialRset;
+    RegisterSet cur_state, *orig_state;
     uint32_t addr;
     XVariablePtr<32> newIp; // To determine if it is a constant
+    const RegisterDictionary *regdict;
     
+    struct Exception {
+        Exception(const std::string &mesg): mesg(mesg) {}
+        friend std::ostream& operator<<(std::ostream &o, const Exception &e) {
+            o <<"FindConstantsPolicy exception: " <<e.mesg;
+            return o;
+        }
+        std::string mesg;
+    };
+
     FindConstantsPolicy()
-        : initialRset(NULL), addr(0)
-        {}
+        : orig_state(NULL), addr(0), regdict(NULL)
+        {
+            newIp = number<32>(0);
+        }
 
     /* Use this constructor when performing constant propagation analysis on a function where you want the entry point of the
      * function to use the specified initial values. See FindConstantsPolicy::startInstruction() for how this is used. */
     FindConstantsPolicy(RegisterSet *initial_rs)
-        : initialRset(initial_rs), addr(0) {}
+        : orig_state(initial_rs), addr(0), regdict(NULL) {}
 
-
-    XVariablePtr<32> readGPR(X86GeneralPurposeRegister r) {
-        return currentRset.gpr[r];
+    /** Returns the register dictionary. */
+    const RegisterDictionary *get_register_dictionary() const {
+        return regdict ? regdict : RegisterDictionary::dictionary_pentium4();
     }
 
-    void writeGPR(X86GeneralPurposeRegister r, XVariablePtr<32> value) {
-        currentRset.gpr[r] = value;
-    }
-
-    XVariablePtr<16> readSegreg(X86SegmentRegister sr) {
-        return currentRset.segreg[sr];
-    }
-
-    void writeSegreg(X86SegmentRegister sr, XVariablePtr<16> val) {
-        currentRset.segreg[sr] = val;
-    }
-
-    XVariablePtr<32> readIP() {
-        return newIp;
-    }
-
-    void writeIP(XVariablePtr<32> n) {
-        newIp = n;
-    }
-
-    XVariablePtr<1> readFlag(X86Flag f) {
-        return currentRset.flag[f];
-    }
-
-    void writeFlag(X86Flag f, XVariablePtr<1> value) {
-        currentRset.flag[f] = value;
+    /** Sets the register dictionary. */
+    void set_register_dictionary(const RegisterDictionary *regdict) {
+        this->regdict = regdict;
     }
 
     /* Only used by number<>(uint64_t) below, but gcc-4.0.1 on OSX (Apple Inc. build 5484) does not like this struct to be
@@ -703,7 +699,7 @@ struct FindConstantsPolicy {
     // Only safe when MSBs don't matter (i.e., you can't extract bits from something and then use this to put in zeros -- the
     // original bits will probably appear again)
     template <size_t Len, size_t Len2>
-    static UNARY_COMPUTATION_SPECIAL(extendByMSB, Len, Len2, {
+    static UNARY_COMPUTATION_SPECIAL(unsignedExtend, Len, Len2, {
             result->set(LatticeElement<Len2>(le1.name, le1.definingInstruction, le1.negate, le1.offset));
         })
 
@@ -773,7 +769,7 @@ struct FindConstantsPolicy {
         })
 
     template <size_t From, size_t To>
-    UNARY_COMPUTATION(signExtend, From, To, {return (IntegerOps::signExtend<From, To>(a));})
+    UNARY_COMPUTATION(signExtend, From, To, {return (From==To ? (a) : IntegerOps::signExtend<From, To>(a));})
 
     template <size_t Len>
     XVariablePtr<Len> ite(XVariablePtr<1> sel, XVariablePtr<Len> ifTrue, XVariablePtr<Len> ifFalse) {
@@ -854,8 +850,8 @@ struct FindConstantsPolicy {
     template <size_t Len>
     XVariablePtr<Len> addWithCarries(XVariablePtr<Len> a, XVariablePtr<Len> b, XVariablePtr<1> carryIn,
                                      XVariablePtr<Len>& carries) { // Full case
-        XVariablePtr<Len + 1> aa = extendByMSB<Len, Len + 1>(a);
-        XVariablePtr<Len + 1> bb = extendByMSB<Len, Len + 1>(b);
+        XVariablePtr<Len + 1> aa = unsignedExtend<Len, Len + 1>(a);
+        XVariablePtr<Len + 1> bb = unsignedExtend<Len, Len + 1>(b);
         XVariablePtr<Len + 1> result = add3(aa, bb, carryIn);
         carries = extract<1, Len + 1>(xor3(aa, bb, result));
         return extract<0, Len>(result);
@@ -964,7 +960,7 @@ struct FindConstantsPolicy {
         };
         ReadMemoryConstraint* c = new ReadMemoryConstraint();
         c->result = new XVariable<Len>();
-        c->memory = currentRset.memoryWrites;
+        c->memory = cur_state.memoryWrites;
         c->addr = addr;
         c->activate();
         return c->result;
@@ -979,7 +975,7 @@ struct FindConstantsPolicy {
             MemoryVariable* memoryOut;
             virtual void run() const {
                 MemoryWriteSet mws = memory->get();
-                mws.addWrite(address->get(), extendByMSB<Len, 32>(data)->get(), Len / 8);
+                mws.addWrite(address->get(), unsignedExtend<Len, 32>(data)->get(), Len / 8);
                 memoryOut->set(mws);
             }
             virtual void markDependencies() {addDependency(memory); addDependency(address); addDependency(data);}
@@ -996,7 +992,7 @@ struct FindConstantsPolicy {
     /** Writes @p data at the specified address. */
     template <size_t Len>
     void writeMemory(X86SegmentRegister segreg, XVariablePtr<32> addr, XVariablePtr<Len> data, XVariablePtr<1> cond) {
-        currentRset.memoryWrites = memoryWriteHelper(currentRset.memoryWrites, addr, data);
+        cur_state.memoryWrites = memoryWriteHelper(cur_state.memoryWrites, addr, data);
     }
 
     /** Writes @p data at the specified address and following bytes, repeating @p repeat times. */
@@ -1007,21 +1003,23 @@ struct FindConstantsPolicy {
         if (0==repeat->get().name) {
             for (size_t i=0; i<repeat->get().offset; i++) {
                 XVariablePtr<32> tmp_addr = add(addr, number<32>(i*nbits/8));
-                currentRset.memoryWrites = memoryWriteHelper(currentRset.memoryWrites, tmp_addr, data);
+                cur_state.memoryWrites = memoryWriteHelper(cur_state.memoryWrites, tmp_addr, data);
             }
         } else {
-            currentRset.memoryWrites = memoryWriteHelper(currentRset.memoryWrites, addr, data);
+            cur_state.memoryWrites = memoryWriteHelper(cur_state.memoryWrites, addr, data);
         }
     }
 
     void hlt() {} // FIXME
 
+    void cpuid() {} // FIXME
+
     void interrupt(uint8_t num) {
-        currentRset.setToBottom();
+        cur_state.setToBottom();
     }
 
     void sysenter() {
-        currentRset.setToBottom();
+        cur_state.setToBottom();
     }
 
     XVariablePtr<64> rdtsc() { // FIXME
@@ -1041,18 +1039,18 @@ struct FindConstantsPolicy {
 
     /** Returns true if the specified instruction is the entry point of a function. */
     bool isFunctionEntry(SgAsmInstruction *insn) const {
-        SgAsmFunctionDeclaration *fdefn = containingFunction(insn);
+        SgAsmFunction *fdefn = containingFunction(insn);
         ROSE_ASSERT(fdefn);
         SgAsmBlock *first_bb = isSgAsmBlock(fdefn->get_statementList()[0]);
         return first_bb->get_id()==insn->get_address();
     }
     
     /** Returns the function to which the specified instruction belongs. */
-    SgAsmFunctionDeclaration *
+    SgAsmFunction *
     containingFunction(SgAsmInstruction *insn) const {
         SgAsmBlock *bb = isSgAsmBlock(insn->get_parent());
         ROSE_ASSERT(bb!=NULL);
-        SgAsmFunctionDeclaration *fdefn = isSgAsmFunctionDeclaration(bb->get_parent());
+        SgAsmFunction *fdefn = isSgAsmFunction(bb->get_parent());
         ROSE_ASSERT(fdefn!=NULL);
         return fdefn;
     }
@@ -1062,14 +1060,14 @@ struct FindConstantsPolicy {
         addr = insn->get_address();
         newIp = number<32>(addr);
         if (isInstructionExternallyVisible(insn)) {
-            if (initialRset) {
-                rsets[addr] = *initialRset;
-                initialRset = NULL;
+            if (orig_state) {
+                rsets[addr] = *orig_state;
+                orig_state = NULL;
             } else {
                 rsets[addr].setToBottom();
             }
         }
-        currentRset = rsets[addr];
+        cur_state = rsets[addr];
         currentInstruction = isSgAsmx86Instruction(insn);
     }
 
@@ -1101,9 +1099,15 @@ struct FindConstantsPolicy {
         /* Merge result of processing instruction into register sets for successors */
         for (size_t i = 0; i < succs.size(); ++i) {
             uint64_t s = succs[i];
-            rsets[s].mergeIn(currentRset);
+            rsets[s].mergeIn(cur_state);
         }
     }
+
+#define ValueType XVariablePtr
+#define EIP_LOCATION newIp
+#include "ReadWriteRegisterFragment.h"
+#undef ValueType
+    
 };
 
 /** Augment the findConstants policy to do some special things for some instructions. */
@@ -1128,12 +1132,12 @@ public:
         FindConstantsPolicy::startInstruction(insn);
 
         /* GCC assumes that the direction flag (df) is zero on function entry. See gcc man page for -mcld switch. */
-        LatticeElement<1> df = rsets[insn->get_address()].flag[x86_flag_df]->get();
+        LatticeElement<1> df = rsets[insn->get_address()].registers.flag[x86_flag_df]->get();
         if (df.name!=0)
-            writeFlag(x86_flag_df, false_());
+            writeRegister("df", false_());
 
 #if 0   /*DEBUGGING: Show register set at start of instruction */
-        std::cout <<"Initial RSET for [" <<unparseInstructionWithAddress(insn) <<"]\n" <<currentRset;
+        std::cout <<"Initial RSET for [" <<unparseInstructionWithAddress(insn) <<"]\n" <<cur_state;
 #endif
     }
 
@@ -1216,22 +1220,21 @@ public:
 class FindConstantsABIPolicy: public FindConstantsPolicy {
 public:
     /* Returns the function containing the instruction. */
-    SgAsmFunctionDeclaration* find_function(SgAsmInstruction* insn) {
+    SgAsmFunction* find_function(SgAsmInstruction* insn) {
         SgNode* n=insn;
-        while (n && !isSgAsmFunctionDeclaration(n))
+        while (n && !isSgAsmFunction(n))
             n = n->get_parent();
-        return isSgAsmFunctionDeclaration(n);
+        return isSgAsmFunction(n);
     }
 
     /* Determines if the function contains an instruction at the specified address. */
-    bool function_contains_address(SgAsmFunctionDeclaration* f, rose_addr_t va) {
+    bool function_contains_address(SgAsmFunction* f, rose_addr_t va) {
         for (size_t i=0; i<f->get_statementList().size(); ++i) {
             SgAsmBlock* block = isSgAsmBlock(f->get_statementList()[i]);
             ROSE_ASSERT(block!=NULL);
             for (size_t j=0; j<block->get_statementList().size(); ++j) {
                 SgAsmInstruction* insn = isSgAsmInstruction(block->get_statementList()[j]);
-                ROSE_ASSERT(insn!=NULL);
-                if (insn->get_address()==va)
+                if (insn && insn->get_address()==va)
                     return true;
             }
         }
@@ -1253,7 +1256,7 @@ public:
             return false;
         if (newIp->get().name!=0)
             return true; /*if we don't know the call target then assume it's a function call*/
-        SgAsmFunctionDeclaration *caller = find_function(insn);
+        SgAsmFunction *caller = find_function(insn);
         rose_addr_t callee = newIp->get().offset;
         if (function_contains_address(caller, callee) && caller->get_entry_va()!=callee)
             return false; /*intra-function branch*/
@@ -1272,11 +1275,11 @@ public:
             RegisterSet rset;
             rset.setToBottom();
             rset.memoryWrites = rsets[call_va].memoryWrites;
-            rset.gpr[x86_gpr_bx] = rsets[call_va].gpr[x86_gpr_bx];
-            rset.gpr[x86_gpr_di] = rsets[call_va].gpr[x86_gpr_di];
-            rset.gpr[x86_gpr_si] = rsets[call_va].gpr[x86_gpr_si];
-            rset.gpr[x86_gpr_sp] = rsets[call_va].gpr[x86_gpr_sp];
-            rset.gpr[x86_gpr_bp] = rsets[call_va].gpr[x86_gpr_bp];
+            rset.registers.gpr[x86_gpr_bx] = rsets[call_va].registers.gpr[x86_gpr_bx];
+            rset.registers.gpr[x86_gpr_di] = rsets[call_va].registers.gpr[x86_gpr_di];
+            rset.registers.gpr[x86_gpr_si] = rsets[call_va].registers.gpr[x86_gpr_si];
+            rset.registers.gpr[x86_gpr_sp] = rsets[call_va].registers.gpr[x86_gpr_sp];
+            rset.registers.gpr[x86_gpr_bp] = rsets[call_va].registers.gpr[x86_gpr_bp];
             rsets[next_va].mergeIn(rset);
         }
         FindConstantsPolicy::finishInstruction(insn);

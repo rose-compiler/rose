@@ -44,7 +44,7 @@ void CompSlice :: DetachObserver( CompSliceObserver &o) const
   obImpl->DetachObserver( &o );
 }
 
-void CompSlice :: Notify( const CompSliceObserveInfo &info) 
+void CompSlice :: Notify( const CompSliceObserveInfo &info) const
 {
     obImpl->Notify( info );
 }
@@ -60,15 +60,16 @@ CompSlice ::  ~CompSlice()
 
 std::string CompSliceNest::toString() const
 { 
-  std::string res;
+  std::string res = "<***Slice Nest***>\n";
   for (int i = 0;i<NumberOfEntries();++i)
      res = res + Entry(i)->toString();
+  res = res + "<*** end slice nest ***>\n";
   return res;
 }
 
 std::string CompSlice :: toString() const
 {
-  return impl->toString();
+  return "<***CompSlice***>\n" + impl->toString() + "<*** end CompSlice***>\n";;
 }
 
 void CompSlice::
@@ -133,7 +134,7 @@ void CompSlice :: Append( const CompSlice& that)
   Notify(info);
 }
 
-void CompSlice :: IncreaseAlign( int a)
+void CompSlice :: IncreaseAlign( int a) const
 {
   for (LoopTreeTraverseSelectStmt stmtIter(impl->GetTreeRoot());
        !stmtIter.ReachEnd(); ++stmtIter) {
@@ -145,7 +146,7 @@ void CompSlice :: IncreaseAlign( int a)
   Notify(info);
 }
 
-bool CompSlice :: SliceCommonLoop( CompSlice *slice2) const
+bool CompSlice :: SliceCommonLoop( const CompSlice *slice2) const
 {
   ConstLoopIterator iter = GetConstLoopIterator();
   for (LoopTreeNode *l; (l = iter.Current()); iter++) {
@@ -156,7 +157,7 @@ bool CompSlice :: SliceCommonLoop( CompSlice *slice2) const
   return false;
 }
 
-bool CompSlice :: SliceCommonStmt( CompSlice *slice2) const
+bool CompSlice :: SliceCommonStmt( const CompSlice *slice2) const
 {
   ConstStmtIterator iter = GetConstStmtIterator();
   for (LoopTreeNode *n1; (n1 = iter.Current()); iter.Advance()) {
@@ -205,10 +206,12 @@ void CompSliceNest :: Notify( const CompSliceNestObserveInfo& info)
     impl->Notify( info );
 }
 
-CompSliceNest :: CompSliceNest() 
-  : sliceVec(0), maxsize(0),size(0)
+CompSliceNest :: CompSliceNest(unsigned _maxsize) 
+   : sliceVec(0), maxsize(0),size(0)
 {
   impl = new ObserveImpl();
+  if (_maxsize > 0)
+     Reset(_maxsize);
 }
 
 CompSliceNest ::  ~CompSliceNest()
@@ -218,7 +221,7 @@ CompSliceNest ::  ~CompSliceNest()
 
   delete impl;
   for (size_t i = 0; i < size; ++i) {
-    CompSlice* tmp =  sliceVec[i];
+    const CompSlice* tmp =  sliceVec[i];
     delete tmp;
   }
   delete [] sliceVec;
@@ -241,11 +244,12 @@ void CompSliceNest :: SwapEntry( int index1, int index2)
        }
 
 
-void CompSliceNest :: DeleteEntry( int index)
+void CompSliceNest :: DeleteEntry( int index, bool saveAsInner)
 {
-  CompSliceNestDeleteEntryInfo info(*this, index);
+  CompSliceNestDeleteEntryInfo info(*this, index, saveAsInner);
   Notify(info);
-  delete sliceVec[index];
+  if (!saveAsInner) 
+     delete sliceVec[index];
   for (size_t i = index; i + 1 < size; ++i)
     sliceVec[i] = sliceVec[i+1]; 
   --size;
@@ -324,15 +328,14 @@ SymbolicVar SliceLoopIvar( AstInterface &fa, const CompSlice *slice)
   typedef std::set<std::string, std::less<std::string> > nameset;
   nameset sliceVars, usedVars;
   CompSlice::ConstLoopIterator loopIter = slice->GetConstLoopIterator();
-// tps (12/09/09) : FIX : Changed the name "interface" to interfaces , as interface is a keyword in MSVC.
-  LoopTreeInterface interfaces;
+  LoopTreeInterface interface;
   for (LoopTreeNode *loop; (loop = loopIter.Current()); loopIter.Advance()) {
     std::string name = loop->GetLoopInfo()->GetVar().GetVarName();
     sliceVars.insert( name);
     CompSlice::ConstStmtIterator stmtIter=loopIter.GetConstStmtIterator();
     for (LoopTreeNode *stmt; (stmt=stmtIter.Current()); stmtIter.Advance()) {
-       for (LoopTreeNode *l = GetEnclosingLoop(stmt,interfaces);
-            l != 0; l = GetEnclosingLoop(l, interfaces) ) {
+       for (LoopTreeNode *l = GetEnclosingLoop(stmt,interface);
+            l != 0; l = GetEnclosingLoop(l, interface) ) {
           if (l == loop) continue;
           name = l->GetLoopInfo()->GetVar().GetVarName();
           usedVars.insert( (name) );
@@ -389,7 +392,8 @@ void CompSlice::UpdateStmtIterator::Detach()
 void CompSlice::UpdateStmtIterator::
 UpdateSplitStmt( const SplitStmtInfo &info)
   {
-   LoopTreeNode *o = info.GetObserveNode(), *n = info.GetSplitStmt();
+   const LoopTreeNode *o = info.GetObserveNode();
+   LoopTreeNode *n = info.GetSplitStmt();
    if (n->NextSibling() == o) {
      o->DetachObserver(*this);
      LoopTreeTraverseSelectStmt::Current() = n;
@@ -410,7 +414,8 @@ void CompSlice::UpdateLoopIterator::Detach()
 }
 void CompSlice::UpdateLoopIterator::
 UpdateDistNode(const DistNodeInfo &info)
-   { LoopTreeNode *o = info.GetObserveNode(), *n = info.GetNewNode();
+   { const LoopTreeNode *o = info.GetObserveNode();
+     LoopTreeNode *n = info.GetNewNode();
      if (n->NextSibling() == o) {
        o->DetachObserver(*this);
        LoopTreeTraverseSelectLoop::Current() = n;
@@ -433,4 +438,19 @@ GetUpdateStmtIterator() const
    return CompSlice::UpdateStmtIterator(cur);
 }
 
+/* QY: can be used find common root of two nodes under parent but currently not being used
+class FindCommonInterface {
+  LoopTreeNode* parent;
+ public:
+  FindCommonInterface(LoopTreeNode* p) : parent(p) {}
+  LoopTreeNode* GetParent(LoopTreeNode* n) 
+     { LoopTreeNode* res = n->Parent(); 
+       assert(res != 0);
+       if (res == parent) return 0;
+       return res;
+     }
+  bool IsLoop(LoopTreeNode* n) { return true; }
+  LoopTreeNode* getNULL() { return 0; }
+};
+*/
 

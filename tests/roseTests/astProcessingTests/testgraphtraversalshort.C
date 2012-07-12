@@ -24,7 +24,7 @@ class InheritedAttribute
 */
 
         
-	InheritedAttribute (int p, set<vector<SgGraphNode*> > pa) : pathcount(p), collected_paths(pa) {};
+	InheritedAttribute (int p, set<vector<SgGraphNode*> > pa) : collected_paths(pa), pathcount(p)  {};
         InheritedAttribute () {};
 	~InheritedAttribute () {};
    };
@@ -152,7 +152,7 @@ InheritedAttribute visitorTraversal::evaluateInheritedAttribute(SgGraphNode* chi
         set<vector<SgGraphNode*> > cp = collect_paths(child, newPathList);
         //cout << "Number Of Paths:" << newPathList.size() << endl;
         //cout << "This should match:" << tmppathcount << endl;
-        ROSE_ASSERT(tmppathcount == newPathList.size());
+        ROSE_ASSERT(((size_t)tmppathcount) == newPathList.size());
         graphnodeinheritedmap[child] = InheritedAttribute(tmppathcount, newPathList);
         return InheritedAttribute(tmppathcount, newPathList);
     }

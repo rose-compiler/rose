@@ -241,7 +241,7 @@ main(int argc, char *argv[])
 
         for( unsigned int i = 0 ; i < blocks->get_statementList().size(); i++   )
         {
-          SgAsmFunctionDeclaration* funcDecl = isSgAsmFunctionDeclaration(blocks->get_statementList()[i]);
+          SgAsmFunction* funcDecl = isSgAsmFunction(blocks->get_statementList()[i]);
 
 
           SgIncidenceDirectedGraph* intraProceduralCFG = constructCFG_BB(funcDecl, bb_starts, instMap);

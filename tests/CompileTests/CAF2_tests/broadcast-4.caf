@@ -1,0 +1,50 @@
+!
+! This program tests broadcasting of namelist variables: arrays
+!
+	program broadcast_nml_var
+	namelist /list/ival
+	integer, dimension(10) :: ival, nml_ival
+	integer :: nprocs, me
+	integer :: nml_error
+	integer :: nml_in = 10
+	integer :: i, sum_global, sum_ival
+	character(8) :: nml_filename
+	logical :: test_result
+
+	sum_global = 0
+	ival = 0
+	test_result = .true.
+	nprocs = team_size()
+	me = team_rank()
+
+	if (me .eq. 0) then	
+	  nml_filename = 'test.in'
+	  open(nml_in, file = nml_filename, status = 'old', iostat = nml_error)
+	  read(nml_in, nml = list, iostat = nml_error)
+	end if
+	sum_ival = sum(ival) * nprocs
+	
+	call team_broadcast(ival, 0)
+	nml_ival = ival
+
+	do i = 0, nprocs - 1
+	  if (me .eq. i) then
+	    ival = nml_ival
+	  end if
+	  call team_broadcast(ival, i)
+	  if (me .eq. 0) then
+	    sum_global = sum_global + sum(ival)
+	    ival = 0
+	  end if
+	end do
+
+	if (me .eq. 0) then
+	  if (sum_global .ne. sum_ival) test_result = .false.
+        end if
+
+	if (me .eq. 0) then
+	  if (test_result) write (*, '(A)') 'Test passed.'
+	  if (.not. test_result) write (*, '(A)') 'Test failed.'
+	end if
+
+	end program broadcast_nml_var

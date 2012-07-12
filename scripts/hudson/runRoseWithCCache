@@ -1,0 +1,365 @@
+#!/bin/bash -e
+#
+#  TODO: add more summary info
+#	- List of durations for each step in the job
+#
+#
+source scripts/hudson/runBuildStep.sh
+source scripts/hudson/roseUtilities.sh
+#########################################################################################
+( echo ) |filter "Starting ${ROSE_TEST_BUILD_STYLE}..."
+
+[ ! -n "$ROSE_CONFIGURE_PREFIX" ] && killStep "\$ROSE_CONFIGURE_PREFIX is undefined"
+
+machine=`uname -m`
+machine_os=`uname -s`
+machine_name=`uname -n`
+start_time=`date`
+hudson_start_time_seconds="$(date +%s)"
+TOP_LEVEL_ROSE_DIRECTORY="$PWD"
+LOG_LOCATION="$PWD"
+
+#########################################################################################
+#
+#  BOOST C++ 
+#
+#########################################################################################
+echo "Setting up the [DY]LD_LIBRARY_PATH"
+
+	if test "x$label" = "x64bit-macos-10.6" ; then
+		export DYLD_LIBRARY_PATH="$ROSE_TEST_BOOST_PATH/lib:$DYLD_LIBRARY_PATH"
+	else
+		# tps : 04/26/2010 - Added support for OpenGL for 64bit
+		export LD_LIBRARY_PATH="${ROSE_TEST_BOOST_PATH}/lib:${ROSE_TEST_OPENGL_PATH}/lib:$LD_LIBRARY_PATH"
+	fi
+
+#########################################################################################
+#
+#  UPC
+#
+#  tps : 11/17/2010 Hudson support for UPC - order matters!
+#  tps : 11/16/2010 : Lets add support for UPC
+#  tps : 11/22/2010 : The setup.sh has been updated by admin
+#
+#########################################################################################
+echo "Setting up the UPC environment" 
+
+	UPC_TEST_MACHINE=`uname -m`
+	if test "x$UPC_TEST_MACHINE" = "xi686" ; then
+		echo "UPC is not currently tested on 32-bit machines."
+	elif test "x$label" = "x64bit-macos-10.6" ; then
+		echo "UPC is not currently tested on 64-bit Mac OS X 10.6"
+	else
+	# Turn off bash error checking to run source with file that uses "grep" (will return error code if target is not found).
+		set +e
+		# This causes "symbol lookup error: /usr/libexec/gcc/x86_64-redhat-linux/4.1.2/f951: undefined symbol: __gmpn_sqr_n"
+		# on all 4.1.2 compilers (only effects 64 bit tests since we only use this script on 64 bit machines).
+		# This UPC support must be thought out more carefully.
+		if test "x$ROSE_TEST_GCC_VERSION" != "x4.1.2" ; then
+	        	source /nfs/apps/upc/4.5.1.2/setup.sh
+	        else
+	       		echo "UPC not tested 64-bit machines using gnu 4.1.2 for now."
+	  	fi
+	  	set -e
+	fi
+
+#########################################################################################
+#
+#  GCC
+#
+#########################################################################################
+echo "Setting up the GCC environment" 
+
+	if test "x$ROSE_TEST_GCC_VERSION" != "x4.1.2" ; then
+		GCCROOT=/usr/apps/gcc/$ROSE_TEST_GCC_VERSION
+		if test -e $GCCROOT/setup.sh ; then
+			set +e
+			. $GCCROOT/setup.sh
+			set -e
+	    	else
+	    	# This is the case for g++ 3.4.6 (since there is no uniform existence of a setup.sh file).
+	      		echo "Handling case of no $GCCROOT/setup.sh file."
+			export PATH="$GCCROOT/bin:$PATH"
+
+	    		# DQ (2/15/2010): For 64-bit this has to be setup to use lib64 explicitly
+	    		# export LD_LIBRARY_PATH="$GCCROOT/lib:$LD_LIBRARY_PATH"
+	      		if test "$MACHINE" = "i686" ; then
+		 		export LD_LIBRARY_PATH="$GCCROOT/lib:$LD_LIBRARY_PATH"
+	      		else
+		 		export LD_LIBRARY_PATH="$GCCROOT/lib64:$GCCROOT/lib:$LD_LIBRARY_PATH"
+	      		fi
+	    	fi
+	fi
+
+#########################################################################################
+#
+#  Configure Flags 
+#
+#  Note that Boost 1.39 and greater require using "--with-boost-libdir"
+#
+#########################################################################################
+echo "Setting up the ROSE configuration flags" 
+
+CONFIGURE_FLAGS="\
+	$CONFIGURE_FLAGS \
+	--with-boost=${ROSE_TEST_BOOST_PATH} \
+	--with-boost-libdir=${ROSE_TEST_BOOST_PATH}/lib \
+	--with-java=${ROSE_TEST_JAVA_PATH} \
+	--with-ROSE_LONG_MAKE_CHECK_RULE=yes \
+	--with-C_DEBUG=-g \
+	--with-CXX_WARNINGS=-Wall \
+    --with-CXX_OPTIMIZE=-03"
+#########################################################################################
+#  i386 
+# 
+#  [RPM 2011-02-06]:
+#  The "--enable-i386" configure switch was added in commit f5389299 on 2011-02-06.
+#  If this switch is present, then configure will try to determine how to generate
+#  32-bit x86 executables with the C compiler and will fail if such a capability is not
+#  possible.  This is the same behavior as previously, except previously the failure didn't
+#  occur until we hit a makefile that actually tried to generate an i386 executable. 
+#  If "--disable-i386" switch were specified then tests that require i386 input files will
+#  not run (and will not cause a make failure).  If neither --enable-i386 nor --disable-i386
+#  are specified then configure will try to determine whether generating i386 is possible
+#  and act as if either --enable-i386 or --disable-i386 was specified.
+#
+#  Since we want the a00-ROSE-from-scratch Hudson tests to fail if configure can't figure out 
+#  how to generate i386, we explicitly request that i386 support be present by invoking 
+#  configure with "--enable-i386".
+#########################################################################################
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-i386"
+
+
+#########################################################################################
+#
+#  Full build configurations 
+#
+#  tps (10/19/10) : opengl has not been tested for a year and the binary tests in place 
+#  are failing because the infrastructure has changed. For now I have disabled openGL
+#  testing but the way to turn it on is to specify --enable-openGL
+#
+#########################################################################################
+if test "x$ROSE_TEST_BUILD_STYLE" = "xmake/check/install-full" ; then
+	CONFIGURE_FLAGS="\
+		${CONFIGURE_FLAGS} \
+		--with-qt=${ROSE_TEST_QT_PATH} \
+		--with-roseQt \
+		--with-sqlite3=${ROSE_TEST_SQLITE_PATH}"
+
+  ########################################################################################
+  #  OpenGL
+  #
+  #  tps : 11/12/10 : Admins are installing openGL on hudson machines. Enabled openGL thereafter. Should pass.
+  #  tps : It seems opengl is not properly installed on the hudson-rose node. Skip the test on this node for now.
+  #######################################################################################
+  if test \! \( "$MACHINE" = "i686" -o \
+	      "$machine_name" = "hudson-rose.llnl.gov" -o \
+	      "$machine_name" = "hudson-rose-07.llnl.gov" -o \
+	      "$machine_name" = "hudson-rose-08.llnl.gov" -o \
+	      "$machine_name" = "hudson-rose-13.llnl.gov" -o \
+	      "$machine_name" = "hudson-rose-14.llnl.gov" -o \
+	      "$machine_name" = "hudson-rose-15.llnl.gov" -o \
+	      "$machine_name" = "hudson-rose-16.llnl.gov" \)
+  then
+	echo "Skipping OpenGL..."
+	# admins are troubleshooting the libGL.la
+	CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --enable-rose-openGL"
+  fi
+  #######################################################################################
+  #  PCH
+  #
+  #  tps : 11/12/10 - OpenGL is not installed on all nodes yet. 
+  #######################################################################################
+  CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --with-pch  "
+
+  #######################################################################################
+  #  RTED
+  #
+  #  tps : 11/15/10 - RTED does not work for gcc 4.3.2 and 4.4.1 . This is not a problem of
+  #  our implementation but rather a problem with the test suite. For instance we get the 
+  #  following error: C_G_4_3_a_d.cpp:48: error: 'cout' was not declared in this scope
+  #######################################################################################
+  if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" -o \
+		"x$ROSE_TEST_GCC_VERSION" = "x4.4.1" \)
+  then
+  	CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --with-rted=${ROSE_TEST_RTED_PATH}"
+  fi
+
+fi
+
+#######################################################################################
+# OpenMP GOMP 
+#   Only when on 64-bit Linux and gcc 4.4.1 is used.
+#  Liao : 3/22/11 - Link with GOMP and run OpenMP tests
+#######################################################################################
+if test "x$ROSE_TEST_GCC_VERSION" = "x4.4.1" ; then
+	if test "x$ROSE_MACHINE_OS_LABEL" = "xamd64-linux" ; then
+    		if [ -a /usr/apps/gcc/4.4.1/lib64/libgomp.a ]; then
+      			CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --with-gomp_omp_runtime_library=/usr/apps/gcc/4.4.1/lib64"
+    		fi
+  	fi
+fi
+
+set +e
+source /export/tmp.hudson-rose/opt/ccache/3.1.5/install/setup.sh
+#source /export/tmp.hudson-rose/opt/f90cache/0.93.6/install/setup.sh
+set -e
+export CCACHE_DIR=/export/tmp.hudson-rose/caches/ccache
+#export F90CACHE_DIR=/export/tmp.hudson-rose/caches/f90cache
+
+ccache -M 10G
+#f90cache -M 10G
+df -h -a /export/tmp.hudson-rose
+
+ccache -s
+#f90cache -s
+
+#########################################################################################
+#
+##
+   dumpHudsonEnvironment "${LOG_LOCATION}/HudsonEnvironment-before-tests.log"
+##
+#
+#########################################################################################
+
+set -e
+#########################################################################################
+#
+#  ROSE/build
+#
+#########################################################################################
+(
+
+   ./build
+
+) 2>&1 |filterStep "./build" 
+[ ${PIPESTATUS[0]} -ne 0 ] && killStep "./build"
+#########################################################################################
+#
+#  Setup Build & Install trees 
+#
+#########################################################################################
+for DIR in "ROSE-install" "ROSE-build" ; do
+  (
+
+      [ -d "./$DIR" ] && chmod -R u+xw ./$DIR && safe_rm_rf `pwd`/$DIR
+      mkdir ./$DIR 
+
+  ) 2>&1 |filterStep "$DIR setup" 
+  [ ${PIPESTATUS[0]} -ne 0 ] && killStep "workspace setup"
+done
+cd ROSE-build
+#########################################################################################
+#
+#  ROSE/configure
+#
+#########################################################################################
+(
+
+    ../configure --prefix=${ROSE_CONFIGURE_PREFIX} ${CONFIGURE_FLAGS}
+#    ../configure --prefix=${ROSE_CONFIGURE_PREFIX} ${CONFIGURE_FLAGS} --with-alternate_backend_Cxx_compiler=g++ --with-alternate_backend_C_compiler=gcc CXX="ccache g++" CC="ccache gcc"
+
+) 2>&1 |filterStep "configure" 
+[ ${PIPESTATUS[0]} -ne 0 ] && killStep "configure"
+#########################################################################################
+#
+#  ROSE Translator Version 
+#
+#  TOO (2/24/2011): Requires librose.la
+#  DQ (2/12/2010): Added the ROSE version number to the base of the output
+#
+#########################################################################################
+function printRoseTranslatorVersion {
+  (
+  
+       make PrintRoseTranslatorVersion
+
+  ) 2>&1 |filterStep "ROSE Translator Version" 
+  [ ${PIPESTATUS[0]} -ne 0 ] && killStep "ROSE Translator Version" || echo ""
+}
+#########################################################################################
+#
+#  Hudson Build Steps 
+#
+#
+#########################################################################################
+case "$ROSE_TEST_BUILD_STYLE" in
+"make/check/install-minimal"|"make/check/install-full")
+
+    ################################################################################
+    # MAKE
+    #
+    #runBuildStep make "make_output.txt"
+    ################################################################################
+    # MAKE CHECK
+    #
+    runBuildStep make-check "make_check_output.txt"
+    ################################################################################
+    # MAKE INSTALL & INSTALLCHECK
+    #
+    runBuildStep make-install
+    runBuildStep make-installcheck
+
+    printRoseTranslatorVersion
+ ;;
+
+make-distcheck)
+
+    ################################################################################
+    # MAKE DISTCHECK
+    #
+    # Build pre-requisites: stringify.C
+ #   (
+ #       make -j${NUM_PROCESS} -C src/util/stringSupport/ libRoseStringSupport.la
+ #       make -j${NUM_PROCESS} -C src/util/commandlineProcessing/ libRoseCommandlineUtil.la
+ #       make -j${NUM_PROCESS} -C src/util/ libroseutil.la
+ #       make -j${NUM_PROCESS} -C src/ROSETTA/src/
+ #       make -j${NUM_PROCESS} -C src/roseSupport/ stringify.h
+ #   ) 2>&1 |filterStep "make-distcheck prerequisites" 
+ #   [ ${PIPESTATUS[0]} -ne 0 ] && killStep "make-distcheck prerequisites-"
+
+    runBuildStep make-distcheck
+
+ ;;
+
+make-docs)
+
+    ################################################################################
+    # MAKE DOCS 
+    #
+    # Running with parallelism here does not tend to be very helpful since 
+    # doxygen is what has to run and it does not run in parallel.
+    (
+        make -j${NUM_PROCESS} -C src/
+        make -j${NUM_PROCESS} -C tutorial/
+        make -j${NUM_PROCESS} -C projects/UpcTranslation/
+        make -j${NUM_PROCESS} -C tests/ testAnalysis
+    ) 2>&1 |filterStep "make-docs prerequisites" 
+    [ ${PIPESTATUS[0]} -ne 0 ] && killStep "make-docs prerequisites-"
+
+    runBuildStep make-docs
+
+    printRoseTranslatorVersion
+ ;;
+
+*)
+   echo "ERROR: unrecognized build step = $ROSE_TEST_BUILD_STEP"
+   exit 1;
+ ;;
+esac
+
+
+####################################################################################
+# SUMMARY 
+#
+#########################################################################################
+#
+##
+
+   dumpHudsonEnvironment "${LOG_LOCATION}/HudsonEnvironment-after-tests.log"
+   ccache -s
+   #f90cache -s
+
+##
+#
+#########################################################################################

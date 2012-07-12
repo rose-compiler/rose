@@ -87,6 +87,12 @@ CXX_TESTCODES_REQUIRED_TO_PASS = \
 	moreTest6.cpp \
 	moreTest7.cpp
 
+# DQ (6/23/2011): The test code moreTest3.cpp does not output it's outlined function when we get the name qualification correct.
+# However, if the name qualification on the friend declaration is wrong, then the outlined function will be output.  I don't
+# understand this, but I think it is a bug in the outlining.  This is consistant with the previous version of ROSE before
+# adding the new name qualification support.
+
+
 # triangle.cpp: TODO AST copy does not support class member across files.
 # polygon.cpp: TODO recursively find super classes for a dependent class
 TESTCODE_CURRENTLY_FAILING = \
@@ -102,8 +108,11 @@ $(TESTCODE_CURRENTLY_FAILING)
 # this flag is used for the files listed within this file: C_TESTCODES_REQUIRED_TO_PASS and CXX_TESTCODES_REQUIRED_TO_PASS
 # TODO remove -rose:skipfinalCompileStep when the command line issue is solved
 # OUTLINE_FLAG= --edg:no_warnings -rose:verbose 0 -rose:outline:parameter_wrapper -rose:outline:temp_variable -rose:skipfinalCompileStep
-OUTLINE_FLAG= --edg:no_warnings -rose:verbose 0 -rose:outline:parameter_wrapper 
+# OUTLINE_FLAG= --edg:no_warnings -rose:verbose 0 -rose:outline:parameter_wrapper 
 #-rose:outline:temp_variable
+
+# DQ (/27/2011): Outlining test moreTest3.cpp fails with level 2 testing for dangling pointer detection.
+OUTLINE_FLAG= --edg:no_warnings -rose:verbose 0 -rose:outline:parameter_wrapper -rose:detect_dangling_pointers 1
 
 PASSING_C_TEST_Objects = $(C_TESTCODES_REQUIRED_TO_PASS:.c=.o)
 PASSING_CXX_TEST_Objects = $(CXX_TESTCODES_REQUIRED_TO_PASS:.cpp=.o)

@@ -1,16 +1,141 @@
+# Non-recursive Makefile
+
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-# DQ (10/29/2010): We have to include "binaryAnalyses" directory so that its header files 
-# will be installed by "make install", even with language only options are used.
-SUBDIRS = \
-        abstractHandle \
-        astDiagnostics \
-        astProcessing \
-        astQuery \
-        astRewriteMechanism \
-        astUtil \
-        programAnalysis \
-        programTransformation \
-        binaryAnalyses
+# ------------------------------------------------------------------------------
+#  Subdirectories
+# ------------------------------------------------------------------------------
 
-EXTRA_DIST = CMakeLists.txt
+## Place generated object files (.o) into the same directory as their source
+## files, in order to avoid collisions when non-recursive make is used.
+AUTOMAKE_OPTIONS = subdir-objects
+
+include $(srcdir)/abstractHandle/Makefile_variables
+include $(srcdir)/abstractMemoryObject/Makefile_variables
+include $(srcdir)/astDiagnostics/Makefile_variables
+include $(srcdir)/astProcessing/Makefile_variables
+include $(srcdir)/astRewriteMechanism/Makefile_variables
+include $(srcdir)/astQuery/Makefile_variables
+include $(srcdir)/astUtil/Makefile_variables
+include $(srcdir)/astUtil/annotation/Makefile_variables
+include $(srcdir)/astUtil/astInterface/Makefile_variables
+include $(srcdir)/astUtil/astSupport/Makefile_variables
+include $(srcdir)/astUtil/symbolicVal/Makefile_variables
+include $(srcdir)/programTransformation/Makefile_variables
+include $(srcdir)/programTransformation/partialRedundancyElimination/Makefile_variables
+include $(srcdir)/programTransformation/finiteDifferencing/Makefile_variables
+include $(srcdir)/programTransformation/functionCallNormalization/Makefile_variables
+include $(srcdir)/programTransformation/constantFolding/Makefile_variables
+include $(srcdir)/programTransformation/implicitCodeGeneration/Makefile_variables
+include $(srcdir)/programTransformation/astInlining/Makefile_variables
+include $(srcdir)/programTransformation/astOutlining/Makefile_variables
+include $(srcdir)/programTransformation/ompLowering/Makefile_variables
+
+#
+# Don't use $(srcdir) in conjunction with [subdir-objects], otherwise
+# object files will be built in the source tree. Therefore, we need to
+# use relative paths.
+#
+#mptPartialRedundancyEliminationPath=$(srcdir)/partialRedundancyElimination#
+mAbstractHandlePath=abstractHandle#
+mAbstractMemoryObjectPath=abstractMemoryObject#
+mAstDiagnosticsPath=astDiagnostics#
+mAstProcessingPath=astProcessing#
+mAstRewriteMechanismPath=astRewriteMechanism#
+mAstQueryPath=astQuery#
+mAstUtilPath=astUtil#
+mProgramTransformationPath=programTransformation#
+
+#
+# DQ (10/29/2010): We have to include "binaryAnalyses" directory so that its header files
+# will be installed by "make install", even with language only options are used.
+#
+SUBDIRS = \
+	binaryAnalyses \
+	programTransformation/extractFunctionArgumentsNormalization
+if !ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+SUBDIRS += \
+	programAnalysis \
+	programTransformation/loopProcessing
+endif
+
+# ------------------------------------------------------------------------------
+#  Library: programTransformation.la
+# ------------------------------------------------------------------------------
+
+## The grammar generator (ROSETTA) should use its own template repository
+CXX_TEMPLATE_REPOSITORY_PATH = .
+
+INCLUDES=\
+	$(ROSE_INCLUDES) \
+	-I${top_srcdir}/src/midend/programAnalysis/CFG \
+	-I$(mAstUtilPath) \
+	-I$(mAstUtilPath)/astInterface \
+	-I$(mAstUtilPath)/symbolicVal \
+	-I$(mAstUtilPath)/astSupport \
+	-I$(top_srcdir)/src/util \
+	-I$(top_srcdir)/src/util/support
+
+noinst_LTLIBRARIES=\
+	libmidend.la
+
+lib_LTLIBRARIES=\
+	$(mProgramTransformation_lib_ltlibraries)
+
+libmidend_la_SOURCES=\
+	$(mAbstractHandle_la_sources) \
+	$(mAbstractMemoryObject_la_sources) \
+	$(mAstDiagnostics_la_sources) \
+	$(mAstProcessing_la_sources) \
+	$(mAstRewriteMechanism_la_sources) \
+	$(mAstQuery_la_sources) \
+	$(mAstUtil_la_sources) \
+	$(mProgramTransformation_la_sources)
+
+# astProcessing _la_LIBADD = $(CXX_TEMPLATE_OBJECTS)
+libmidend_la_LIBADD=\
+	$(mAstProcessing_libadd)
+
+libmidend_la_DEPENDENCIES=\
+	$(mAstQuery_la_dependencies)
+
+include_HEADERS = \
+	$(mAbstractHandle_includeHeaders) \
+	$(mAbstractMemoryObject_includeHeaders) \
+	$(mAstDiagnostics_includeHeaders) \
+	$(mAstProcessing_includeHeaders) \
+	$(mAstRewriteMechanism_includeHeaders) \
+	$(mAstQuery_includeHeaders) \
+	$(mAstUtil_includeHeaders) \
+	$(mProgramTransformation_includeHeaders)
+
+# ------------------------------------------------------------------------------
+#
+# ------------------------------------------------------------------------------
+
+EXTRA_DIST = \
+	CMakeLists.txt \
+	$(mAbstractHandle_extraDist) \
+	$(mAbstractMemoryObject_extraDist) \
+	$(mAstDiagnostics_extraDist) \
+	$(mAstProcessing_extraDist) \
+	$(mAstRewriteMechanism_extraDist) \
+	$(mAstQuery_extraDist) \
+	$(mAstUtil_extraDist) \
+	$(mProgramTransformation_extraDist)
+
+clean-local:
+	$(mAbstractHandle_cleanLocal)
+	$(mAbstractMemoryObject_cleanLocal)
+	$(mAstDiagnostics_cleanLocal)
+	$(mAstProcessing_cleanLocal)
+	$(mAstRewriteMechanism_cleanLocal)
+	$(mAstQuery_cleanLocal)
+	$(mAstUtil_cleanLocal)
+	$(mProgramTransformation_cleanLocal)
+
+distclean-local:
+	$(mAstProcessing_distCleanLocal)
+	$(mAstQuery_distCleanLocal)
+	$(mAstUtil_distCleanLocal)
+

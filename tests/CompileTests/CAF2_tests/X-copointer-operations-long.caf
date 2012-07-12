@@ -1,0 +1,263 @@
+ program p
+
+! simple copointer declarations
+  integer, copointer :: p0
+  integer, copointer, dimension(:) :: p1, pp1
+  integer, copointer, dimension(:,:) :: p2, pp2
+  integer, copointer, codimension[*] :: cp0
+  integer, copointer, dimension(:), codimension[*] :: cp1, cpp1
+  integer, copointer, dimension(:,:), codimension[*] :: cp2, cpp2
+  integer, copointer :: csp0[*]
+  integer, copointer, dimension(:) :: csp1[*], cspp1[*]
+  integer, copointer, dimension(:,:) :: csp2[*], cspp2[*]
+
+! copointer derived type declarations
+  type:: T
+      integer :: ic
+      integer, dimension(10,10) :: ac
+      type(T), copointer :: pc
+      type(T), copointer, dimension(10,10) :: pac
+  end type
+  type(T), copointer :: pt0
+  type(T), copointer, dimension(:) :: pt1, ppt1
+  type(T), copointer, dimension(:,:) :: pt2, ppt2
+  type(T), copointer :: cpt0[*]
+  type(T), copointer, dimension(:), codimension[*] :: cpt1, cppt1
+  type(T), copointer, dimension(:,:), codimension[*] :: cpt2, cppt2
+
+! other declarations for tests
+  integer, dimension(10,10), cotarget :: a
+  integer, dimension(10,10), cotarget :: ca[*]
+  type(T), dimension(10,10), cotarget :: at
+  type(T), dimension(10,10), cotarget :: cat[*]
+  integer :: k
+  type(T) :: tRec
+  
+! copointer creation
+
+  p2  => a
+  p2  => ca[9]
+  p1  => a(1,:)
+  p1  => ca(1,:)[9]
+  p0  => a(1,1)
+  p0  => ca(1,1)[9]
+  cp2 => ca
+  cp1 => ca(1,:)
+  cp0 => ca(1,1)
+
+  pt2  => at
+  pt2  => cat[9]
+  pt1  => at(1,:)
+  pt1  => cat(1,:)[9]
+  pt0  => at(1,1)
+  pt0  => cat(1,1)[9]
+  cpt2 => cat
+  cpt1 => cat(1,:)
+  cpt0 => cat(1,1)
+
+! copointer assignment
+
+  pp2 => p2
+  pp1 => p1
+  pp0 => p0
+  pp1 => p2(1,:)
+  pp0 => p2(1,1)
+  pp2 => cp2[9]
+  pp1 => cp1[9]
+  pp0 => cp0[9]
+  pp1 => cp2(1,:)[9]
+  pp0 => cp2(1,1)[9]
+
+  ppt2 => pt2
+  ppt1 => pt1
+  ppt0 => pt0
+  ppt1 => pt2(1,:)
+  ppt0 => pt2(1,1)
+  ppt2 => cpt2[9]
+  ppt1 => cp1[9]
+  ppt0 => cpt0[9]
+  ppt1 => cpt2(1,:)[9]
+  ppt0 => cpt2(1,1)[9]
+  
+! copointer dereferencing
+
+  a         = p2[]
+  a(1,:)    = p1[]
+  a(1,1)    = p0[]
+  p2[]      = a
+  p1[]      = a(1,:)
+  p0[]      = a(1,1)
+  a         = cp2[][9]
+  a(1,:)    = cp1[][9]
+  a(1,1)    = cp0[][9]
+  cp2[][9]  = a
+  cp1[][9]  = a(1,:)
+  cp0[][9]  = a(1,1)
+
+  at        = pt2[]
+  at(1,:)   = pt1[]
+  at(1,1)   = pt0[]
+  pt2[]     = at
+  pt1[]     = at(1,:)
+  pt0[]     = at(1,1)
+  at        = cpt2[][9]
+  at(1,:)   = cpt1[][9]
+  at(1,1)   = cpt0[][9]
+  cpt2[][9] = at
+  cpt1[][9] = at(1,:)
+  cpt0[][9] = at(1,1)
+  
+! copointer dereferencing and indexing
+
+  k              = p2[](1,1)
+  k              = p1[](1)
+  k              = p0[]
+  p2[](1,1)      = k
+  p1[](1)        = k
+  p0[]           = k
+  k              = cp2[](1,1)[9]
+  k              = cp1[](1)[9]
+  k              = cp0[][9]
+  cp2[](1,1)[9]  = k
+  cp1[](1)[9]    = k
+  cp0[][9]       = k
+
+  tRec              = pt2[](1,1)
+  tRec              = pt1[](1)
+  tRec              = pt0[]
+  pt2[](1,1)     = tRec
+  pt1[](1)       = tRec
+  pt0[]          = tRec
+  tRec              = cpt2[](1,1)[9]
+  tRec              = cpt1[](1)[9]
+  tRec              = cpt0[][9]
+  cpt2[](1,1)[9] = tRec
+  cpt1[](1)[9]   = tRec
+  cpt0[][9]      = tRec
+  
+! copointer dereferencing, indexing, and component selection
+
+  k                      = pt2[](1,1)%ic
+  k                      = pt1[](1)%ic
+  k                      = pt0[]%ic
+
+  pt2[](1,1)%ic          = k
+  pt1[](1)%ic            = k
+  pt0[]%ic               = k
+  k                      = cpt2[](1,1)[9]%ic
+  k                      = cpt1[](1)[9]%ic
+  k                      = cpt0[][9]%ic
+  cpt2[](1,1)[9]%ic      = k
+  cpt1[](1)[9]%ic        = k
+  cpt0[][9]%ic           = k
+
+  k                      = pt2[](1,1)%ia(1,1)
+  k                      = pt1[](1)%ia(1,1)
+  k                      = pt0[]%ia(1,1)
+  pt2[](1,1)%ia(1,1)     = k
+  pt1[](1)%ia(1,1)       = k
+  pt0[]%ia(1,1)          = k
+  k                      = cpt2[](1,1)[9]%ia(1,1)
+  k                      = cpt1[](1)[9]%ia(1,1)
+  k                      = cpt0[][9]%ia(1,1)
+  cpt2[](1,1)[9]%ia(1,1) = k
+  cpt1[](1)[9]%ia(1,1)   = k
+  cpt0[][9]%ia(1,1)      = k
+
+  k                      = pt2[](1,1)%ia(1,1)
+  k                      = pt1[](1)%ia(1,1)
+  k                      = pt0[]%ia(1,1)
+  pt2[](1,1)%ia(1,1)     = k
+  pt1[](1)%ia(1,1)       = k
+  pt0[]%ia(1,1)          = k
+  k                      = cpt2[](1,1)[9]%ia(1,1)
+  k                      = cpt1[](1)[9]%ia(1,1)
+  k                      = cpt0[][9]%ia(1,1)
+  cpt2[](1,1)[9]%ia(1,1) = k
+  cpt1[](1)[9]%ia(1,1)   = k
+  cpt0[][9]%ia(1,1)      = k
+
+  k                           = pt2[](1,1)%pc[]%ic
+  k                           = pt1[](1)%pc[]%ic
+  k                           = pt0[]%pc[]%ic
+  pt2[](1,1)%pc[]%ic          = k
+  pt1[](1)%pc[]%ic            = k
+  pt0[]%pc[]%ic               = k
+  k                           = cpt2[](1,1)[9]%pc[]%ic
+  k                           = cpt1[](1)[9]%pc[]%ic
+  k                           = cpt0[][9]%pc[]%ic
+  cpt2[](1,1)[9]%pc[]%ic      = k
+  cpt1[](1)[9]%pc[]%ic        = k
+  cpt0[][9]%pc[]%ic           = k
+
+  k                           = pt2[](1,1)%pc[]%ia(1,1)
+  k                           = pt1[](1)%pc[]%ia(1,1)
+  k                           = pt0[]%pc[]%ia(1,1)
+  pt2[](1,1)%pc[]%ia(1,1)     = k
+  pt1[](1)%pc[]%ia(1,1)       = k
+  pt0[]%pc[]%ia(1,1)          = k
+  k                           = cpt2[](1,1)[9]%pc[]%ia(1,1)
+  k                           = cpt1[](1)[9]%pc[]%ia(1,1)
+  k                           = cpt0[][9]%pc[]%ia(1,1)
+  cpt2[](1,1)[9]%pc[]%ia(1,1) = k
+  cpt1[](1)[9]%pc[]%ia(1,1)   = k
+  cpt0[][9]%pc[]%ia(1,1)      = k
+
+  k                           = pt2[](1,1)%pc[]%ia(1,1)
+  k                           = pt1[](1)%pc[]%ia(1,1)
+  k                           = pt0[]%pc[]%ia(1,1)
+  pt2[](1,1)%pc[]%ia(1,1)     = k
+  pt1[](1)%pc[]%ia(1,1)       = k
+  pt0[]%pc[]%ia(1,1)          = k
+  k                           = cpt2[](1,1)[9]%pc[]%ia(1,1)
+  k                           = cpt1[](1)[9]%pc[]%ia(1,1)
+  k                           = cpt0[][9]%pc[]%ia(1,1)
+  cpt2[](1,1)[9]%pc[]%ia(1,1) = k
+  cpt1[](1)[9]%pc[]%ia(1,1)   = k
+  cpt0[][9]%pc[]%ia(1,1)      = k
+
+  k                                 = pt2[](1,1)%pac[](1,1)%ic
+  k                                 = pt1[](1)%pac[](1,1)%ic
+  k                                 = pt0[]%pac[](1,1)%ic
+  pt2[](1,1)%pac[](1,1)%ic          = k
+  pt1[](1)%pac[](1,1)%ic            = k
+  pt0[]%pac[](1,1)%ic               = k
+  k                                 = cpt2[](1,1)[9]%pac[](1,1)%ic
+  k                                 = cpt1[](1)[9]%pac[](1,1)%ic
+  k                                 = cpt0[][9]%pac[](1,1)%ic
+  cpt2[](1,1)[9]%pac[](1,1)%ic      = k
+  cpt1[](1)[9]%pac[](1,1)%ic        = k
+  cpt0[][9]%pac[](1,1)%ic           = k
+
+  k                                 = pt2[](1,1)%pac[](1,1)%ia(1,1)
+  k                                 = pt1[](1)%pac[](1,1)%ia(1,1)
+  k                                 = pt0[]%pac[](1,1)%ia(1,1)
+  pt2[](1,1)%pac[](1,1)%ia(1,1)     = k
+  pt1[](1)%pac[](1,1)%ia(1,1)       = k
+  pt0[]%pac[](1,1)%ia(1,1)          = k
+  k                                 = cpt2[](1,1)[9]%pac[](1,1)%ia(1,1)
+  k                                 = cpt1[](1)[9]%pac[](1,1)%ia(1,1)
+  k                                 = cpt0[][9]%pac[](1,1)%ia(1,1)
+  cpt2[](1,1)[9]%pac[](1,1)%ia(1,1) = k
+  cpt1[](1)[9]%pac[](1,1)%ia(1,1)   = k
+  cpt0[][9]%pac[](1,1)%ia(1,1)      = k
+
+  k                                 = pt2[](1,1)%pac[](1,1)%ia(1,1)
+  k                                 = pt1[](1)%pac[](1,1)%ia(1,1)
+  k                                 = pt0[]%pac[](1,1)%ia(1,1)
+  pt2[](1,1)%pac[](1,1)%ia(1,1)     = k
+  pt1[](1)%pac[](1,1)%ia(1,1)       = k
+  pt0[]%pac[](1,1)%ia(1,1)          = k
+  k                                 = cpt2[](1,1)[9]%pac[](1,1)%ia(1,1)
+  k                                 = cpt1[](1)[9]%pac[](1,1)%ia(1,1)
+  k                                 = cpt0[][9]%pac[](1,1)%ia(1,1)
+  cpt2[](1,1)[9]%pac[](1,1)%ia(1,1) = k
+  cpt1[](1)[9]%pac[](1,1)%ia(1,1)   = k
+  cpt0[][9]%pac[](1,1)%ia(1,1)      = k
+
+
+
+
+
+
+end program

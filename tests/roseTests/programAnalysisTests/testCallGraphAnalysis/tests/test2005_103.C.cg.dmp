@@ -1,2 +1,3 @@
 X::A ->
-X::getValue -> X::A
+X::getValue -> X::A std::basic_string < char , std::char_traits< char > , std::allocator< char > > ::basic_string
+std::basic_string < char , std::char_traits< char > , std::allocator< char > > ::basic_string ->

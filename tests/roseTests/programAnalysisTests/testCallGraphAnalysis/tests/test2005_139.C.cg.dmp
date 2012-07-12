@@ -1,3 +1,3 @@
-main -> X < int > ::foo
 A::increment ->
 X < int > ::foo ->
+main -> X < int > ::foo

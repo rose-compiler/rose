@@ -1,0 +1,270 @@
+<html>
+
+<head>
+<title>Current Release</title>
+</head>
+
+<body vlink="#990000" background="../../../images/bkgd.gif">
+
+<h3>Current Release of POP and documentation</h3>
+
+<p>The current release of POP is version 2.0 released on 25 Mar 2003:</p>
+
+<p><a HREF="POP_2.0.tar.Z">POP_2.0 (compressed tarfile)</a>. </p>
+
+<p><a href="current_release.htm#changes">Changes</a> made in the source 
+code since the previous version are summarized below. 
+If you find a bug in this version, please check the 
+<a href="bugs.htm">known bugs</a> before submitting a bug report.
+If you would like to request a new feature in POP, please check
+the current <a href="features.htm">list of requested features</a>
+before submitting a feature request.</p>
+
+<hr>
+
+<p>
+Current versions of the User Guide are available in various
+formates. The web version is available for the 1.4.3 release
+only (until the full release of 2.0).  The original TeX files
+and pdf and postscript versions for the 2.0beta release are 
+also part of the distribution and are located in the <tt>doc</tt>
+subdirectory.
+
+<ul>
+  <li>Version 2.0 User Guide which also contains the old installation
+      instructions (<a HREF="UsersGuide.pdf">pdf</a>) 
+                   (<a HREF="UsersGuide.ps">postscript</a>)</li>
+  <li>Reference Manual (<a HREF="POP_Reference.ps">postcript</a>) </li>
+</ul>
+
+<hr>
+
+<a name="changes">
+
+<p>Changes</a> to the source code between versions are summarized here. Version numbers
+can be interpreted as follows: if the version number is <b>n.m.k</b>, then a change in <b>n</b>
+denotes a major revision, in <b>m</b> denotes a significant addition or improvement, and
+in <b>k</b> denotes a bug fix or minor change. </p>
+
+<p><b>Version 2.0 (25 Mar 2003):</b> Changes for this release are: 
+<ul>
+  <li>New domain decomposition strategy for better cache performance
+      and support of hybrid MPI/OpenMP programming.</li>
+  <li>Load balanced distribution and elimination of some land points.</li>
+  <li>Tripole grids.</li>
+  <li>Partial bottom cells for better representation of bottom topography.</li>
+  <li>Choice of netCDF or binary output.</li>
+  <li>New, more efficient equation of state option.</li>
+  <li>Spatially-varying anisotropic viscosity.</li>
+  <li>Bottom heating.</li>
+  <li>Fortran free-form source.</li>
+  <li>proTeX compatible internal documentation.</li>
+  <li>New, more flexible tavg interface and changes to movie,history
+      interfaces as well.</li>
+</ul>
+
+<p><b>Version 1.4.3 (22 May 2001):</b> Changes for this release are: 
+<ul>
+  <li>Added new tmix_opt options for using averaging time steps.
+      'avgbb' replaces the back_to_back flag for using back-to-back
+              averaging steps.
+      'avgfit' computes the proper number of full and half steps
+               to fit exactly into a time interval 
+               'fit_freq' is the number of intervals per day to 
+                fit exactly (eg fit_freq=1 will always end on day 
+                boundaries).</li>
+  <li>Added change to ensure conservation when averaging steps
+      are used with variable thickness surface layer.</li>
+  <li>Fixed a few bugs in time manager affecting the value of
+      tday and properly determining the end of day.</li>
+  <li>Fixed bug in which ghost cells were not being updated for
+      tracers > 2 when using variable thickness surface layer.</li>
+  <li>Changed position of reset_to_freezing to avoid resetting
+      tendencies during predictor/corrector steps.</li>
+</ul>
+
+<p><b>Version 1.4.2 (29 Mar 2001):</b> Changes for this release are: 
+<ul>
+  <li>Fixed bugs in back_to_back averaging time steps. The
+      previous version accumulated time correctly, but didn't
+      actually do any back_to_back averaging. </li>
+  <li>Fixed bugs in restart where some restart namelist items
+      were not initialized before being read. </li>
+</ul>
+
+<p><b>Version 1.4.1 (27 Mar 2001):</b> Changes for this release are: 
+<ul>
+  <li>Fixed bug in Jacket and McDougall equation of state. The 
+      previously released version returned an inaccurate perturbation
+      density.  The full density is now returned. </li>
+  <li>Added back-to-back averaging time step option.  This was
+      added as a short term fix to the problem of being able to
+      take a fixed number of steps per time interval when using
+      averaging as the time mix option. </li>
+  <li>Fixed tday bug in new time manager. </li>
+  <li>Made some additional time manager changes for use in coupled
+      mode. </li>
+</ul>
+
+<p><b>Version 1.4 (24 Feb 2001):</b> Changes for this release are: 
+<ul>
+  <li>Implemented new time manager - removes restrictions on time steps and
+      is generally more flexible. The method for specifying the time
+      step is changed - see user manual for details.</li>
+  <li>Added variable thickness surface layer option
+      to provide conservation of tracers and allows true freshwater
+      flux without converting to virtual salinity flux.  Old surface
+      layer and rigid lid are still supported as options as well.
+      The surface layer option is chosen in the grid namelist.</li>
+  <li>Added new anisotropic viscosity formulation.  See horizontal
+      mixing section of user manual.</li>
+  <li>Changed Gent-McWilliams formulation to allow different
+      diffusivities and tapering for Redi and bolus terms.</li>
+  <li>NOTE: The new time manager and new variable thickness surface
+      layer require changes to the restart files.  The time 
+      manager requires different information in the header and
+      if the variable thickness surface is chosen a new 2-d field
+      is stored in the restart file.</li>
+</ul>
+
+<p><b>Version 1.3 (21 Dec 2000):</b> Changes for this release are: 
+<ul>
+  <li>New Jackett and McDougall equation of state which eliminates
+      need for the polynomial approximations (and their T,S range limits).</li>
+  <li>Reduced multiple forms of state call to a single state routine which 
+      handles all options (through optional arguments).</li>
+  <li>Fixed bugs in potential temperature conversion routine, changed the
+      internal initial T profile to potential temperature, added a
+      pressure vector with pressure as function of depth and changed
+      the pressure-depth conversion function to correspond more closely
+      with Dukowicz paper.</li>
+  <li>Added a depth-dependent background diffusivity and viscosity
+      to the KPP formulation - NOTE: THIS CHANGES THE WAY YOU SPECIFY
+      vdc_bckgrnd, vvc_bckgrnd SEE USERS GUIDE FOR DETAILS.</li>
+  <li>Added a depth-dependent KAPPA to Gent-McWilliams - NOTE: THIS
+      CHANGES THE WAY KAPPA IS INITIALIZED. SEE USERS GUIDE FOR HOW
+      TO SPECIFY KAPPA FOR BACK COMPATIBILITY.</li>
+  <li>Added option of removing bolus component of GM.</li>
+  <li>Moved REGION_MASK to grid module (from forcing_shf) so that
+      it can be used in coupling, river runoff and regional diagnostics.</li>
+  <li>Removed the expansion module - this quantity is more simply computed
+      as a diagnostic and will be added as a diagnostic in future releases.</li>
+  <li>Fixed KPP bug in wscale with small USTAR in convective limit.</li>
+  <li>Fixed KPP bug in double diffusive routine.</li>
+  <li>Fixed some bugs in operator discretization and B.C.s.</li>
+  <li>Fixed MPI reorder flag bug.</li>
+  <li>Fixed tavg bug which was causing a restart read and no 
+      re-initialization when restarting on tavg dump timestep (thus
+      creating a sum of more than one tavg interval).</li>
+  <li>Fixed minor Gent-McWilliams bugs for z grid location and slope
+      computation.</li>
+  <li>Fixed bug in time manager in calculation of number of half steps.</li>
+  <li>Fixed various forcing bugs, mostly in the nhour option.</li>
+  <li>Fixed bug in diagnostics which was causing cfl numbers at all
+      depths to be written from all processors.</li>
+  <li>Changed boussinesq correction to pressure gradient to correspond
+      more closely to Dukowicz paper.</li>
+</ul>
+
+<p><b>Version 1.2 (5 May 2000):</b> Changes for this release are: 
+<ul>
+  <li>New, faster implementation of the Gent-McWilliams parameterization. 
+      NOTE: You will need to use a smaller value of ah for this implementation.
+      For example, in a x3' case, we needed to reduce ah from 0.8e7 to 
+      0.7e7. </li>
+  <li>New ice formation criterion to avoid excessive ice where advective
+      overshoots occur. </li>
+  <li>New form of the velocity scale in KPP to account for the
+      convective limit (where surface momentum forcing is small or zero).</li>
+  <li>Removed addition of .025 to densities in the equation of state
+      (old "specific gravity" form passed down over generations).</li>
+  <li>Coupled routines now send fields averaged over a coupling
+      interval.</li>
+  <li>Changed name of SHGT in tavg routines to SSH </li>
+  <li>Fixed bug in advection where WTKB was not necessarily zero
+      at the bottom boundary.</li>
+  <li>Fixed bug in baroclinic where WORKN was not reset to zero
+      for tracers > 2 so that vertical diffusion could be double-counted.</li>
+  <li>Fixed bug in branch init_ts option where the branch run was
+      taking a forward Euler step rather than a leapfrog on the first step.</li>
+  <li>Fixed bug in time manager that caused the avg_ts_next flag not to
+      be set correctly on the first step of a new day.  This resulted in
+      incorrect weighting of fields in the tavg routines (note that
+      the tavg results were normalized consistently - the results were
+      just weighting the first step in each day incorrectly).</li>
+  <li>Fixed bug in time manager which prevented reading a tavg restart
+      file if the simulation was restarted in the middle of the start year
+      when the nyear start option was specified.</li>
+  <li>mean init_ts option now reads the mean salinity in ppt for 
+      consistency with other init_ts options</li>
+  <li>KPP now uses the FCORT field and uses SMF at T points when
+      available (eg coupled mode) rather than averaging these
+      quantities from U points.</li>
+  <li>moved restart namelist from a module variable to local subroutine
+      variables to prevent problems with some compilers</li>
+  <li>added some new .gnu files for T3E and Linux-Alpha</li>
+  <li>several trivial changes for consistency (re-arranging some
+      vars in forcing, units of reference salinities in ice.F, 
+      adding CVS keywords, etc.)</li>
+</ul>
+
+
+<p><b>Version 1.1.1 (10 Jan 2000):</b> Changes for this release are: 
+<ul>
+  <li>fixed serious bug in new implicit vmix routines</li>
+  <li>added a 'branch' init_ts option to branch a new simulation
+      from an old restart file</li>
+  <li>made some minor changes to coupler interface</li>
+</ul>
+
+<p><b>Version 1.1:</b> Changes for this release are: 
+<ul>
+  <li> Optimized implicit vertical mix solvers
+  <li> Added option for tracer diagnostics at all levels.
+  <li> Changed KPP parameter Riinfty to reflect current recommended value.
+  <li> Added optional LMASK argument to global minval,maxval routines
+       to mask (land) points when computing minval,maxval. 
+  <li> Added option to redirect stdout internally to log file
+  <li> Added option to use 'pointer files' to determine location
+       of last restart file (this is useful for running in production
+       without having to change the pop_in file for every run)
+  <li> Added optional date_separator to use a character to separate
+       yyyymmdd when date used as a suffix.
+  <li> Added record length parameters to be used in place of 32 and
+       64 in open_parallel_file calls. These can be changed for machines
+       which need recl in units other than bytes or for machines in
+       which 32-bit output is not possible.
+  <li> Replaced string concatenation operators with string assignments
+       to avoid concatenation conflicts with some cpp preprocessors.
+  <li> Added TAREA, UAREA reciprocal arrays to avoid slow division
+       operations on some machines.
+  <li> Fixed array initialization problems in forcing routines.
+  <li> Fixed exponent on variable hmix for biharmonic mixing.
+  <li> Moved some bulk-NCEP restoring parameters to namelist input. 
+  <li> Changed some history/tavg field names to be more consistent
+       (e.g. SSF to SFWF).
+  <li> Added on-line documentation.
+  <li> Fixed some documentation bugs.
+  <li> Updated io_psf to allow io with parallel psf library.
+  <li> Fixed some coupled model interface bugs.
+  <li> Added an initial (currently incomplete) version of the 
+       Visbeck et al variable KAPPA in Gent-McWilliams parameterization.
+</ul>
+
+<p><b>Version 1.0.2:</b> Changes for this release are: 
+<ul>
+  <li>added standard benchmark setups and scrips for COWbench suite </li>
+</ul>
+
+<p><b>Version 1.0.1:</b> Changes for this release are: 
+<ul>
+  <li>correct coupler interface for new NCAR flux coupler </li>
+  <li>fixed tavg restart and normalization bugs </li>
+  <li>exits with correct message when K.E. &gt; 100 </li>
+  <li>forcing interp_inc set to zero for 'never' and 'every-timestep' cases </li>
+  <li>explicitly converted Barnier restoring timescale to seconds </li>
+  <ul>
+  </ul>
+</ul>
+</body>
+</html>

@@ -1,0 +1,6 @@
+In order of implementation:
+
+-new/delete
+-Loops
+-Function call
+

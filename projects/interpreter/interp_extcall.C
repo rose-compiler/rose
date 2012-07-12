@@ -282,12 +282,13 @@ class DL
 vector<void *> buildLibraryList(SgProject *prj)
    {
      vector<void *> libs;
+
      void *libc = dlopen("libc.so.6", RTLD_NOW | RTLD_GLOBAL);
-     char *err = dlerror();
-     if (err != NULL)
-        {
-          throw InterpError(string("Couldn't load libc: ") + err);
-        }
+     if (NULL==libc)
+         libc = dlopen("libc.dylib", RTLD_NOW | RTLD_GLOBAL); // Mac OS X
+     if (NULL==libc)
+         throw InterpError(string("Couldn't load libc: ") + dlerror());
+
      libs.push_back(libc);
      // libs.push_back(RTLD_DEFAULT);
      return libs;

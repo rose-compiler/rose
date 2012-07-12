@@ -1,0 +1,15 @@
+program copointer_team1
+  integer :: coI[*]
+  integer, copointer:: cpi
+  integer, copointer:: cpci[*]
+  team team1
+  
+  coI[6@team1] = 77
+  coI[2] = 99
+  coI[6@team_default] = 88
+  cpi => coI[3]
+  cpi[] = 5
+  cpci => coI
+  cpci[][7@team_world] = 5
+end program
+

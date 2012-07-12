@@ -1,0 +1,12 @@
+! copointer to 1-dim and 2-dim arrays
+program copointer_array
+ integer, copointer, dimension(:):: cp1 
+ integer, dimension(:), copointer:: cp2 
+ integer, copointer:: cp3(:)
+ integer, copointer:: cp4(:,:)
+ n = cp4[] (1, 2)  
+ cp1[](3) = 5
+ cp2[](4) = 7
+ cp3[](5) = 6
+end program
+

@@ -1,0 +1,5 @@
+program alloctest
+
+ allocate(a[])
+
+end program

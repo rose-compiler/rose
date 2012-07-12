@@ -1,15 +1,20 @@
-/* For each function (SgAsmFunctionDeclaration) process each instruction (SgAsmInstruction) through the instruction semantics
+/* For each function (SgAsmFunction) process each instruction (SgAsmInstruction) through the instruction semantics
  * layer using the FindConstantsPolicy. Output consists of each instruction followed by the registers and memory locations
  * with constant or pseudo-constant values. */
 
 #define __STDC_FORMAT_MACROS
 #include "rose.h"
 #include "findConstants.h"
-#include "VirtualMachineSemantics.h"
+#include "IntervalSemantics.h"
+#include "PartialSymbolicSemantics.h"
 #include "SymbolicSemantics.h"
 #include "YicesSolver.h"
+#include "NullSemantics.h"
+#include "MultiSemantics.h"
 #include <set>
 #include <inttypes.h>
+
+using namespace BinaryAnalysis::InstructionSemantics;
 
 #if 1==POLICY_SELECTOR
 #   define TestValueTemplate XVariablePtr
@@ -19,12 +24,12 @@
             newIp = number<32>(addr);
             if (rsets.find(addr)==rsets.end())
                 rsets[addr].setToBottom();
-            currentRset = rsets[addr];
+            cur_state = rsets[addr];
             currentInstruction = isSgAsmx86Instruction(insn);
         }
         void dump(SgAsmInstruction *insn) {
             std::cout <<unparseInstructionWithAddress(insn) <<"\n"
-                      <<currentRset
+                      <<cur_state
                       <<"    ip = " <<newIp <<"\n";
         }
     };
@@ -37,18 +42,19 @@
             newIp = number<32>(addr);
             if (rsets.find(addr)==rsets.end())
                 rsets[addr].setToBottom();
-            currentRset = rsets[addr];
+            cur_state = rsets[addr];
             currentInstruction = isSgAsmx86Instruction(insn);
         }
         void dump(SgAsmInstruction *insn) {
             std::cout <<unparseInstructionWithAddress(insn) <<"\n"
-                      <<currentRset
+                      <<cur_state
                       <<"    ip = " <<newIp <<"\n";
         }
     };
 #elif  3==POLICY_SELECTOR
-#   define TestValueTemplate VirtualMachineSemantics::ValueType
-    struct TestPolicy: public VirtualMachineSemantics::Policy {
+#   define TestSemanticsScope PartialSymbolicSemantics
+#   define TestValueTemplate PartialSymbolicSemantics::ValueType
+    struct TestPolicy: public PartialSymbolicSemantics::Policy<> {
         void dump(SgAsmInstruction *insn) {
             std::cout <<unparseInstructionWithAddress(insn) <<"\n"
                       <<get_state()
@@ -56,8 +62,9 @@
         }
     };
 #elif  4==POLICY_SELECTOR
+#   define TestSemanticsScope SymbolicSemantics
 #   define TestValueTemplate SymbolicSemantics::ValueType
-    struct TestPolicy: public SymbolicSemantics::Policy {
+    struct TestPolicy: public SymbolicSemantics::Policy<> {
         TestPolicy() {
 #           if 1==SOLVER_SELECTOR
                 YicesSolver *solver = new YicesSolver;
@@ -68,13 +75,41 @@
                 solver->set_linkage(YicesSolver::LM_LIBRARY);
                 set_solver(solver);
 #           endif
+                //solver->set_debug(stderr);
         }
         void dump(SgAsmInstruction *insn) {
             std::cout <<unparseInstructionWithAddress(insn) <<"\n";
-            get_state().print(std::cout);
-            std::cout <<"    ip = ";
-            std::cout <<get_ip();
-            std::cout <<"\n";
+            print(std::cout, "    ");
+        }
+    };
+#elif 5==POLICY_SELECTOR
+#   define TestSemanticsScope NullSemantics
+#   define TestValueTemplate NullSemantics::ValueType
+    struct TestPolicy: public NullSemantics::Policy<> {
+        void dump(SgAsmInstruction *insn) {
+            std::cout <<unparseInstructionWithAddress(insn) <<"\n"
+                      <<"    null state\n";
+        }
+    };
+#elif 6==POLICY_SELECTOR
+#   define TestSemanticsScope MultiSemantics<                                                                                  \
+        PartialSymbolicSemantics::ValueType, PartialSymbolicSemantics::State, PartialSymbolicSemantics::Policy,                \
+        SymbolicSemantics::ValueType, SymbolicSemantics::State, SymbolicSemantics::Policy                                      \
+        >
+#   define TestValueTemplate TestSemanticsScope::ValueType
+    struct TestPolicy: public TestSemanticsScope::Policy<TestSemanticsScope::State, TestSemanticsScope::ValueType> {
+        void dump(SgAsmInstruction *insn) {
+            std::cout <<unparseInstructionWithAddress(insn) <<"\n"
+                      <<*this;
+        }
+    };
+#elif 7==POLICY_SELECTOR
+#   define TestSemanticsScope IntervalSemantics
+#   define TestValueTemplate IntervalSemantics::ValueType
+    struct TestPolicy: public IntervalSemantics::Policy<> {
+        void dump(SgAsmInstruction *insn) {
+            std::cout <<unparseInstructionWithAddress(insn) <<"\n"
+                      <<get_state();
         }
     };
 #else
@@ -87,11 +122,13 @@ typedef X86InstructionSemantics<TestPolicy, TestValueTemplate> Semantics;
 static void
 analyze_interp(SgAsmInterpretation *interp)
 {
-    /* Get the set of all instructions */
+    /* Get the set of all instructions except instructions that are part of left-over blocks. */
     struct AllInstructions: public SgSimpleProcessing, public std::map<rose_addr_t, SgAsmx86Instruction*> {
         void visit(SgNode *node) {
             SgAsmx86Instruction *insn = isSgAsmx86Instruction(node);
-            if (insn) insert(std::make_pair(insn->get_address(), insn));
+            SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(insn);
+            if (func && 0==(func->get_reason() & SgAsmFunction::FUNC_LEFTOVERS))
+                insert(std::make_pair(insn->get_address(), insn));
         }
     } insns;
     insns.traverse(interp, postorder);
@@ -135,8 +172,17 @@ analyze_interp(SgAsmInterpretation *interp)
 
             /* Get next instruction of this block */
 #if 3==POLICY_SELECTOR || 4==POLICY_SELECTOR
-            if (!policy.get_ip().is_known()) break;
-            rose_addr_t next_addr = policy.get_ip().known_value();
+            TestValueTemplate<32> ip = policy.get_ip();
+            if (!ip.is_known()) break;
+            rose_addr_t next_addr = ip.known_value();
+#elif 5==POLICY_SELECTOR || 7==POLICY_SELECTOR
+            TestValueTemplate<32> ip = policy.readRegister<32>(semantics.REG_EIP);
+            if (!ip.is_known()) break;
+            rose_addr_t next_addr = ip.known_value();
+#elif 6==POLICY_SELECTOR
+            TestValueTemplate<32> ip = policy.readRegister<32>(semantics.REG_EIP);
+            if (!ip.get_subvalue(TestSemanticsScope::SP0()).is_known()) break;
+            rose_addr_t next_addr = ip.get_subvalue(TestSemanticsScope::SP0()).known_value();
 #else
             if (policy.newIp->get().name) break;
             rose_addr_t next_addr = policy.newIp->get().offset;
@@ -178,4 +224,5 @@ int main(int argc, char *argv[]) {
     } else {
         std::cout <<"analyzed headers: " <<analysis.ninterps<< "\n";
     }
+    return 0;
 }

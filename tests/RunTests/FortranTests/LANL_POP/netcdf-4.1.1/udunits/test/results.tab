@@ -1,0 +1,76 @@
+dana:OSF1 V5.1:/usr/bin/posix/make:/bin/c89::1
+dana:OSF1 V5.1:/usr/bin/posix/make:/bin/c89:--disable-shared:1
+dana:OSF1 V5.1:/bin/make:/bin/cc::1
+dana:OSF1 V5.1:/bin/make:/bin/cc:--disable-shared:1
+dana:OSF1 V5.1:/usr/ccs/bin/make:/usr/ccs/bin/c89::1
+dana:OSF1 V5.1:/usr/ccs/bin/make:/usr/ccs/bin/c89:--disable-shared:1
+dana:OSF1 V5.1:/usr/ccs/bin/make:/usr/ccs/bin/cc::1
+dana:OSF1 V5.1:/usr/ccs/bin/make:/usr/ccs/bin/cc:--disable-shared:1
+dana:OSF1 V5.1:/opt/gnu/bin/gmake:/opt/gnu/bin/gcc::1
+dana:OSF1 V5.1:/opt/gnu/bin/gmake:/opt/gnu/bin/gcc:--disable-shared:1
+flip:IRIX64 6.5:/bin/make:/bin/cc::1
+flip:IRIX64 6.5:/bin/make:/bin/cc:--disable-shared:1
+flip:IRIX64 6.5:/bin/make:/bin/c89::1
+flip:IRIX64 6.5:/bin/make:/bin/c89:--disable-shared:1
+flip:IRIX64 6.5:/opt/gnu/bin/make:/opt/gnu/bin/gcc::1
+flip:IRIX64 6.5:/opt/gnu/bin/make:/opt/gnu/bin/gcc:--disable-shared:1
+gilda:Linux 2.6.27.25-170.2.72.fc10.x86_64:/usr/bin/make:/usr/bin/c89::1
+gilda:Linux 2.6.27.25-170.2.72.fc10.x86_64:/usr/bin/make:/usr/bin/c89:--disable-shared:1
+gilda:Linux 2.6.27.25-170.2.72.fc10.x86_64:/usr/bin/make:/usr/bin/cc::1
+gilda:Linux 2.6.27.25-170.2.72.fc10.x86_64:/usr/bin/make:/usr/bin/cc:--disable-shared:1
+gilda:Linux 2.6.27.25-170.2.72.fc10.x86_64:/usr/bin/gmake:/usr/bin/gcc::1
+gilda:Linux 2.6.27.25-170.2.72.fc10.x86_64:/usr/bin/gmake:/usr/bin/gcc:--disable-shared:1
+imogene:Linux 2.6.27.24-78.2.53.fc9.x86_64:/usr/bin/make:/usr/bin/c89::1
+imogene:Linux 2.6.27.24-78.2.53.fc9.x86_64:/usr/bin/make:/usr/bin/c89:--disable-shared:1
+imogene:Linux 2.6.27.24-78.2.53.fc9.x86_64:/usr/bin/make:/usr/bin/cc::1
+imogene:Linux 2.6.27.24-78.2.53.fc9.x86_64:/usr/bin/make:/usr/bin/cc:--disable-shared:1
+imogene:Linux 2.6.27.24-78.2.53.fc9.x86_64:/usr/bin/gmake:/usr/bin/gcc::1
+imogene:Linux 2.6.27.24-78.2.53.fc9.x86_64:/usr/bin/gmake:/usr/bin/gcc:--disable-shared:1
+lenny:SunOS 5.10:/usr/xpg4/bin/make:/opt/SUNWspro/bin/c89::1
+lenny:SunOS 5.10:/usr/xpg4/bin/make:/opt/SUNWspro/bin/c89:--disable-shared:1
+lenny:SunOS 5.10:/usr/xpg4/bin/make:/opt/SUNWspro/bin/c99::0
+lenny:SunOS 5.10:/usr/xpg4/bin/make:/opt/SUNWspro/bin/c99:--disable-shared:0
+lenny:SunOS 5.10:/usr/ccs/bin/make:/opt/SUNWspro/bin/cc::1
+lenny:SunOS 5.10:/usr/ccs/bin/make:/opt/SUNWspro/bin/cc:--disable-shared:1
+lenny:SunOS 5.10:/opt/csw/bin/gmake:/opt/csw/gcc4/bin/gcc::1
+lenny:SunOS 5.10:/opt/csw/bin/gmake:/opt/csw/gcc4/bin/gcc:--disable-shared:1
+lenny:SunOS 5.10:/opt/csw/bin/gmake:/opt/csw/gcc3/bin/gcc::1
+lenny:SunOS 5.10:/opt/csw/bin/gmake:/opt/csw/gcc3/bin/gcc:--disable-shared:1
+mort:Darwin 10.0.0:/usr/bin/make:/usr/bin/c89::0
+mort:Darwin 10.0.0:/usr/bin/make:/usr/bin/c89:--disable-shared:1
+mort:Darwin 10.0.0:/usr/bin/make:/usr/bin/cc::1
+mort:Darwin 10.0.0:/usr/bin/make:/usr/bin/cc:--disable-shared:1
+mort:Darwin 10.0.0:/usr/bin/gnumake:/usr/bin/gcc::1
+mort:Darwin 10.0.0:/usr/bin/gnumake:/usr/bin/gcc:--disable-shared:1
+sid:Darwin 8.11.0:/usr/bin/make:/usr/bin/c89::0
+sid:Darwin 8.11.0:/usr/bin/make:/usr/bin/c89:--disable-shared:1
+sid:Darwin 8.11.0:/usr/bin/make:/usr/bin/cc::1
+sid:Darwin 8.11.0:/usr/bin/make:/usr/bin/cc:--disable-shared:1
+sid:Darwin 8.11.0:/usr/bin/gnumake:/usr/bin/gcc::1
+sid:Darwin 8.11.0:/usr/bin/gnumake:/usr/bin/gcc:--disable-shared:1
+tweety:HP-UX B.11.00:/bin/make:/bin/cc::0
+tweety:HP-UX B.11.00:/bin/make:/bin/cc:--disable-shared:1
+tweety:HP-UX B.11.00:/bin/make:/bin/c89::0
+tweety:HP-UX B.11.00:/bin/make:/bin/c89:--disable-shared:1
+tweety:HP-UX B.11.00:/usr/ccs/bin/make:/usr/ccs/bin/cc::0
+tweety:HP-UX B.11.00:/usr/ccs/bin/make:/usr/ccs/bin/cc:--disable-shared:0
+tweety:HP-UX B.11.00:/opt/gnu/bin/make:/opt/gnu/bin/gcc::1
+tweety:HP-UX B.11.00:/opt/gnu/bin/make:/opt/gnu/bin/gcc:--disable-shared:1
+zasu:AIX 1 5:/bin/make:/usr/vac/bin/cc::0
+zasu:AIX 1 5:/bin/make:/usr/vac/bin/cc:--disable-shared:1
+zasu:AIX 1 5:/usr/ccs/bin/make:/usr/vac/bin/c89::0
+zasu:AIX 1 5:/usr/ccs/bin/make:/usr/vac/bin/c89:--disable-shared:1
+zasu:AIX 1 5:/usr/ccs/bin/make:/usr/vac/bin/xlc::0
+zasu:AIX 1 5:/usr/ccs/bin/make:/usr/vac/bin/xlc:--disable-shared:1
+zasu:AIX 1 5:/opt/gnu/bin/make:/opt/gnu/bin/gcc::0
+zasu:AIX 1 5:/opt/gnu/bin/make:/opt/gnu/bin/gcc:--disable-shared:1
+zero:SunOS 5.9:/usr/ccs/bin/make:/opt/SUNWspro/bin/c89::1
+zero:SunOS 5.9:/usr/ccs/bin/make:/opt/SUNWspro/bin/c89:--disable-shared:1
+zero:SunOS 5.9:/usr/ccs/bin/make:/opt/SUNWspro/bin/c99::0
+zero:SunOS 5.9:/usr/ccs/bin/make:/opt/SUNWspro/bin/c99:--disable-shared:0
+zero:SunOS 5.9:/usr/xpg4/bin/make:/opt/SUNWspro/bin/cc::1
+zero:SunOS 5.9:/usr/xpg4/bin/make:/opt/SUNWspro/bin/cc:--disable-shared:1
+zero:SunOS 5.9:/opt/gnu/bin/gmake:/opt/csw/gcc3/bin/gcc::1
+zero:SunOS 5.9:/opt/gnu/bin/gmake:/opt/csw/gcc3/bin/gcc:--disable-shared:1
+zero:SunOS 5.9:/opt/gnu/bin/gmake:/opt/csw/gcc4/bin/gcc::1
+zero:SunOS 5.9:/opt/gnu/bin/gmake:/opt/csw/gcc4/bin/gcc:--disable-shared:1

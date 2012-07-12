@@ -1,9 +1,6 @@
 /* ELF Error Handling Frames (SgAsmElfEHFrameSection and related classes) */
 
-// tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
-#define __STDC_FORMAT_MACROS
-#include <inttypes.h>
 
 static const size_t WARNING_LIMIT=10;
 static size_t nwarnings=0;
@@ -64,7 +61,7 @@ SgAsmElfEHFrameEntryCI::unparse(const SgAsmElfEHFrameSection *ehframe) const
     /* Augmentation data */
     at = ehframe->write_uleb128(buf, at, get_augmentation_data_length());
     std::string astr = get_augmentation_string();
-    if (astr[0]=='z') {
+    if (!astr.empty() && astr[0]=='z') {
         for (size_t i=1; i<astr.size(); i++) {
             if ('L'==astr[i]) {
                 u8_disk = get_lsda_encoding();
@@ -313,7 +310,7 @@ SgAsmElfEHFrameSection::parse()
 
             /* Augmentation data. The format of the augmentation data in the CIE record is determined by reading the
              * characters of the augmentation string. */ 
-            if (astr[0]=='z') {
+            if (!astr.empty() && astr[0]=='z') {
                 for (size_t i=1; i<astr.size(); i++) {
                     if ('L'==astr[i]) {
                         read_content_local(at++, &u8_disk, 1);

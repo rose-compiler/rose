@@ -1,6 +1,6 @@
 #define N 50
-extern void printmatrix(double x[][50UL]);
-extern void initmatrix(double x[][50UL],double s);
+void printmatrix(double x[][50UL]);
+void initmatrix(double x[][50UL],double s);
 
 int main()
 {

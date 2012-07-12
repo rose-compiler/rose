@@ -1,5 +1,5 @@
-main ->
-noProblem ->
 First::First ->
 Second::first ->
+main -> First::First
+noProblem ->
 noProblemOutsideAlso ->

@@ -1,0 +1,59 @@
+program abartest
+
+implicit none
+
+   integer :: npe, mypid, i, j, pred, succ, tmp
+   integer(8), allocatable, dimension(:) :: buffer[*]
+   integer(4) :: destimage
+   event, allocatable, dimension(:) :: copied[*]
+   logical :: success
+
+   npe = team_size()
+   mypid = team_rank()
+
+   allocate(buffer(0:npe-1)[])
+   allocate(copied(1:npe)[])
+   call event_init(copied, npe)
+
+
+
+   ! initialization
+   buffer = mypid
+   pred = mod(mypid + npe - 1, npe)
+   succ = mod(mypid + 1, npe)
+
+   call team_barrier()
+
+
+
+   ! testing
+   do i = 1, npe
+      buffer(1) = buffer(npe - 1)[pred]
+      buffer(npe - 2) = buffer(0)[succ]
+      destimage = mypid
+      call caf_collectives_async_barrier(team_world, destimage, copied(i))
+
+      tmp = buffer(0)
+      do j = 1, npe -1
+	 if (buffer(j) .gt. tmp) then; tmp = buffer(j); endif
+      end do
+
+      call event_wait(copied(i))
+      buffer(0) = tmp
+      buffer(npe - 1) = tmp
+      call team_barrier()
+   end do   
+
+
+   ! verification
+   success = (buffer(0) .eq. npe - 1) .and. (buffer(npe - 1) .eq. npe - 1)
+
+   if (.not. success) then
+      print *, "test failed for image ", mypid, "output: ", buffer
+   end if
+
+   if (success .and. 0 .eq. mypid) then
+      write(*, '(A)') "test succeeded"
+   endif
+   
+end program abartest

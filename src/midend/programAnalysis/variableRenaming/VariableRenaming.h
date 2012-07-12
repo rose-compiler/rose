@@ -15,8 +15,13 @@
 #include "filteredCFG.h"
 #include <boost/unordered_map.hpp>
 
-/** Class holding a unique name for a variable. Is attached to varRefs as a persistant attribute.
+/** Class holding a unique name for a variable. Is attached to varRefs as a persistent attribute.
  * This is used to assign absolute names to VarRefExp nodes during VariableRenaming.
+ *
+ * It handles complex case like : Additional comments by Liao 5/4/2012
+ *   using this pointer: this->member_x;
+ *   using member of aggregate data: e.g. a.b.c.e  
+ *      how about a->b->c ?
  */
 class VarUniqueName : public AstAttribute
 {
@@ -24,15 +29,18 @@ private:
 
     /** The vector of initializedNames that uniquely identifies this VarRef.
      *  The node which this name is attached to should be the last in the list.
+     *  why a vector?  in order to handle a.b.c ??
      */
     std::vector<SgInitializedName*> key;
 
-    bool usesThis;
+    bool usesThis; // this pointer??
 
 public:
     /** Constructs the attribute with an empty key.
      */
-    VarUniqueName():key(),usesThis(false){}
+    VarUniqueName() : key(), usesThis(false)
+    {
+    }
 
     /** Constructs the attribute with value thisNode.
      *
@@ -63,7 +71,7 @@ public:
      *
      * @param other The attribute to copy from.
      */
-    VarUniqueName(const VarUniqueName& other):usesThis(false)
+    VarUniqueName(const VarUniqueName& other): AstAttribute(other), usesThis(false)
     {
         key.assign(other.key.begin(), other.key.end());
     }
@@ -103,7 +111,7 @@ public:
         {
             if(iter != key.begin())
             {
-                name += ":";
+                name += ":"; // why ":" instead of "." ??
             }
             name += (*iter)->get_name().getString();
         }
@@ -113,6 +121,7 @@ public:
 };
 /** Struct containing a filtering function to determine what CFG nodes
  * are interesting during the DefUse traversal.
+ * This is a functor.
  */
 struct IsDefUseFilter
 {
@@ -140,7 +149,9 @@ struct IsDefUseFilter
                 if (isSgCommaOpExp(node))
                         return (cfgn == node->cfgForBeginning());
 
-                //Remove all non-interesting nodes
+                //Remove all non-interesting nodes 
+                //putting this if-statement here may shadow the rest statements, by Liao
+                //TODO this may be a bug, it should be moved to the end
                 if (!cfgn.isInteresting())
                         return false;
 

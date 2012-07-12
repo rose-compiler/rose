@@ -167,14 +167,14 @@ LibraryIdentification::libraryIdentificationDataBaseSupport( string databaseName
           SgAsmInterpretation* asmInterpretation = isSgAsmInterpretation(*j);
           ROSE_ASSERT(asmInterpretation != NULL);
 
-          printf ("Calling the NodeQuery::querySubTree() on SgAsmFunctionDeclaration \n");
-          Rose_STL_Container<SgNode*> binaryFunctionList = NodeQuery::querySubTree (asmInterpretation,V_SgAsmFunctionDeclaration);
-          printf ("DONE: Calling the NodeQuery::querySubTree() on SgAsmFunctionDeclaration \n");
+          printf ("Calling the NodeQuery::querySubTree() on SgAsmFunction\n");
+          Rose_STL_Container<SgNode*> binaryFunctionList = NodeQuery::querySubTree (asmInterpretation,V_SgAsmFunction);
+          printf ("DONE: Calling the NodeQuery::querySubTree() on SgAsmFunction\n");
 
           for (Rose_STL_Container<SgNode*>::iterator i = binaryFunctionList.begin(); i != binaryFunctionList.end(); i++)
              {
             // Build a pointer to the current type so that we can call the get_name() member function.
-               SgAsmFunctionDeclaration* binaryFunction = isSgAsmFunctionDeclaration(*i);
+               SgAsmFunction* binaryFunction = isSgAsmFunction(*i);
                ROSE_ASSERT(binaryFunction != NULL);
 
                string mangledFunctionName   = binaryFunction->get_name();
@@ -464,12 +464,12 @@ LibraryIdentification::generateOpCodeVector(SgAsmInterpretation* asmInterpretati
 #else
           MemoryMap *map = asmInterpretation->get_map(); /*map that was used durring disassembly*/
           ROSE_ASSERT(map!=NULL);
-          const MemoryMap::MapElement *me = map->find(startAddress);
-          ROSE_ASSERT(me!=NULL);
-          startOffset = me->get_offset();
-          me = map->find(endAddress);
-          ROSE_ASSERT(me!=NULL);
-          endOffset = me->get_offset();
+          ROSE_ASSERT(map->exists(startAddress));
+          std::pair<Extent, MemoryMap::Segment> me = map->at(startAddress);
+          startOffset = me.second.get_buffer_offset(me.first, startAddress);
+          ROSE_ASSERT(map->exists(endAddress));
+          me = map->at(endAddress);
+          endOffset = me.second.get_buffer_offset(me.first, endAddress);
 #endif
 
           printf ("---- function %p addresses: (start = %p, end = %p) file offsets: (start = %zu, end = %zu) \n",node,(void*)startAddress,(void*)endAddress,startOffset,endOffset);

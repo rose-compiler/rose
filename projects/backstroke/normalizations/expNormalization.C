@@ -135,7 +135,7 @@ void getAndReplaceModifyingExpression(SgExpression*& e)
 
             // Get the closest basic block which contains the expression e.
             SgBasicBlock* body = getCurrentBody(e);
-            SgName name = BackstrokeUtility::GenerateUniqueVariableName(body, "t");
+            SgName name = SageInterface::generateUniqueVariableName(body, "t");
             SgVariableDeclaration* temp_decl = buildVariableDeclaration(name, e->get_type(), NULL, getScope(e));
             body->prepend_statement(temp_decl);
 
@@ -200,6 +200,9 @@ void getAndReplaceModifyingExpression(SgExpression*& e)
 
 SgExpression* propagateCommaOpExp(SgExpression* exp)
 {
+    // The normalized result.
+    SgCommaOpExp* new_comma_op = NULL;
+
     if (SgBinaryOp* bin_op = isSgBinaryOp(exp))
     {
         // Ignore comma operator.
@@ -212,22 +215,45 @@ SgExpression* propagateCommaOpExp(SgExpression* exp)
         // (a, b) + c  ==>  (a, b + c)
         if (SgCommaOpExp* comma_op = isSgCommaOpExp(lhs))
         {
-            SgBinaryOp* new_exp = isSgBinaryOp(copyExpression(bin_op));
-            new_exp->set_lhs_operand(copyExpression(comma_op->get_rhs_operand()));
-            new_exp->set_rhs_operand(copyExpression(rhs));
+            // If this binary operation is a dot expression, and it is used to reference
+            // a member function, like (a, b).foo(c), we have to trace up to the function
+            // call expression. The lhs operand of the dot exp above is (a, b) and rhs is
+            // foo, but the whole expression is a function call. So we have to replace this
+            // function call by the comma exp.
+            if (SgDotExp* dot_exp = isSgDotExp(bin_op))
+            {
+                if (SgFunctionCallExp* func_call_exp =
+                        isSgFunctionCallExp(dot_exp->get_parent()))
+                {
+                    SgDotExp* new_dot_exp = isSgDotExp(copyExpression(dot_exp));
+                    new_dot_exp->set_lhs_operand(copyExpression(comma_op->get_rhs_operand()));
+                    new_dot_exp->set_rhs_operand(copyExpression(dot_exp->get_rhs_operand()));
 
-            SgCommaOpExp* new_comma_op = buildBinaryExpression<SgCommaOpExp>(
-                    copyExpression(comma_op->get_lhs_operand()), new_exp);
-            replaceExpression(bin_op, new_comma_op);
+                    SgFunctionCallExp* new_func_call =
+                            isSgFunctionCallExp(copyExpression(func_call_exp));
+                    new_func_call->set_function(new_dot_exp);
+                    new_func_call->set_args(
+                        isSgExprListExp(copyExpression(func_call_exp->get_args())));
 
-            propagateCommaOpAndConditionalExp(new_comma_op->get_lhs_operand());
-            propagateCommaOpAndConditionalExp(new_comma_op->get_rhs_operand());
+                    new_comma_op = buildBinaryExpression<SgCommaOpExp>(
+                            copyExpression(comma_op->get_lhs_operand()), new_func_call);
+                    replaceExpression(func_call_exp, new_comma_op);
+                }
+            }
+            else
+            {
+                SgBinaryOp* new_exp = isSgBinaryOp(copyExpression(bin_op));
+                new_exp->set_lhs_operand(copyExpression(comma_op->get_rhs_operand()));
+                new_exp->set_rhs_operand(copyExpression(rhs));
 
-            return new_comma_op;
+                new_comma_op = buildBinaryExpression<SgCommaOpExp>(
+                        copyExpression(comma_op->get_lhs_operand()), new_exp);
+                replaceExpression(bin_op, new_comma_op);
+            }
         }
 
         // Operator || and && cannot use the following transformation
-        if (!isSgAndOp(bin_op) && !isSgOrOp(bin_op))
+        else if (!isSgAndOp(bin_op) && !isSgOrOp(bin_op))
         {
             // a + (b, c)  ==>  (b, a + c)
             if (SgCommaOpExp* comma_op = isSgCommaOpExp(rhs))
@@ -236,19 +262,14 @@ SgExpression* propagateCommaOpExp(SgExpression* exp)
                 new_exp->set_lhs_operand(copyExpression(lhs));
                 new_exp->set_rhs_operand(copyExpression(comma_op->get_rhs_operand()));
 
-                SgCommaOpExp* new_comma_op = buildBinaryExpression<SgCommaOpExp>(
+                new_comma_op = buildBinaryExpression<SgCommaOpExp>(
                         copyExpression(comma_op->get_lhs_operand()), new_exp);
                 replaceExpression(bin_op, new_comma_op);
-
-                propagateCommaOpAndConditionalExp(new_comma_op->get_lhs_operand());
-                propagateCommaOpAndConditionalExp(new_comma_op->get_rhs_operand());
-
-                return new_comma_op;
             }
         }
     }
 
-    if (SgUnaryOp* unary_op = isSgUnaryOp(exp))
+    else if (SgUnaryOp* unary_op = isSgUnaryOp(exp))
     {
         SgExpression* operand = unary_op->get_operand();
 
@@ -258,18 +279,13 @@ SgExpression* propagateCommaOpExp(SgExpression* exp)
             SgUnaryOp* new_exp = isSgUnaryOp(copyExpression(unary_op));
             new_exp->set_operand(copyExpression(comma_op->get_rhs_operand()));
 
-            SgCommaOpExp* new_comma_op = buildBinaryExpression<SgCommaOpExp>(
+            new_comma_op = buildBinaryExpression<SgCommaOpExp>(
                     copyExpression(comma_op->get_lhs_operand()), new_exp);
             replaceExpression(unary_op, new_comma_op);
-
-            propagateCommaOpAndConditionalExp(new_comma_op->get_lhs_operand());
-            propagateCommaOpAndConditionalExp(new_comma_op->get_rhs_operand());
-
-            return new_comma_op;
         }
     }
 
-    if (SgConditionalExp* cond_exp = isSgConditionalExp(exp))
+    else if (SgConditionalExp* cond_exp = isSgConditionalExp(exp))
     {   
         SgExpression* cond = cond_exp->get_conditional_exp();
 
@@ -278,15 +294,17 @@ SgExpression* propagateCommaOpExp(SgExpression* exp)
         {
             SgConditionalExp* new_cond_exp = isSgConditionalExp(copyExpression(cond_exp));
             new_cond_exp->set_conditional_exp(copyExpression(comma_op->get_rhs_operand()));
-            SgCommaOpExp* new_comma_op = buildBinaryExpression<SgCommaOpExp>(
+            new_comma_op = buildBinaryExpression<SgCommaOpExp>(
                     copyExpression(comma_op->get_lhs_operand()), new_cond_exp);
             replaceExpression(cond_exp, new_comma_op);
-
-            propagateCommaOpAndConditionalExp(new_comma_op->get_lhs_operand());
-            propagateCommaOpAndConditionalExp(new_comma_op->get_rhs_operand());
-
-            return new_comma_op;
         }
+    }
+
+    if (new_comma_op)
+    {
+        propagateCommaOpAndConditionalExp(new_comma_op->get_lhs_operand());
+        propagateCommaOpAndConditionalExp(new_comma_op->get_rhs_operand());
+        return new_comma_op;
     }
     return exp;
 }
@@ -443,24 +461,25 @@ void moveDeclarationsOut(SgNode* node)
             {
                 SgVariableDeclaration* var_decl = isSgVariableDeclaration(decl);
                 ROSE_ASSERT(var_decl);
-                new_block->append_statement(copyStatement(var_decl));
+                //appendStatement(copyStatement(var_decl), new_block);
+                appendStatement(var_decl, new_block);
                 //delete var_decl;
             }
-
+            
             // Since there is no builder function for SgForInitStatement, we build it by ourselves
-            SgForInitStatement* null_for_init = new SgForInitStatement();
-            setOneSourcePositionForTransformation(null_for_init);
+            SgForInitStatement* null_for_init = buildForInitStatement(SgStatementPtrList());
             replaceStatement(for_init_stmt, null_for_init);
 
             // It seems that 'for_init_stmt' should be deleted explicitly.
             //deepDelete(for_init_stmt);
 
-            new_block->append_statement(copyStatement(for_stmt));
+            appendStatement(copyStatement(for_stmt), new_block);
             replaceStatement(for_stmt, new_block);
             //deepDelete(for_stmt);
         }
     }
 
+#if 0
     // Separate variable's definition from its declaration
     // FIXME It is not sure that whether to permit declaration in condition of if (if the varible declared
     // is not of scalar type?).
@@ -503,13 +522,14 @@ void moveDeclarationsOut(SgNode* node)
 
                 replaceStatement(var_decl, buildExprStatement(new_exp));
                 //SgBasicBlock* block = buildBasicBlock(copyStatement(parent));
-                block->append_statement(new_decl);
-                block->append_statement(copyStatement(parent));
+                appendStatement(new_decl, block);
+                appendStatement(copyStatement(parent), block);
 
                 replaceStatement(parent, block);
             }
         }
     }
+#endif
 }
 
 void preprocess(SgNode* node)
@@ -517,10 +537,14 @@ void preprocess(SgNode* node)
     /******************************************************************************/
     // To ensure every if, while, etc. has a basic block as its body.
     
+
+    changeAllBodiesToBlocks (getProject());
+#if 0    
     vector<SgStatement*> stmt_list = BackstrokeUtility::querySubTree<SgStatement>(node);
     foreach (SgStatement* stmt, stmt_list)
     {
-        ensureBasicBlockAsParent(stmt);
+        // Liao 3/2/2012, avoid using this function since its messy semantics
+        //ensureBasicBlockAsParent(stmt);
 
         // If the if statement does not have a else body, we will build one for it.
         if (SgIfStmt* if_stmt = isSgIfStmt(stmt))
@@ -533,7 +557,7 @@ void preprocess(SgNode* node)
             }
         }
     }
-
+#endif
     /******************************************************************************/
     // Move all declarations in condition/test/selector part in if/while/for/switch 
     // statements out to a new basic block which also contains that if/while/for/switch statement.
@@ -633,6 +657,7 @@ void turnCommaOpExpIntoStmt(SgExpression* exp)
 
 			case V_SgWhileStmt:
 			{
+#if 0
 				SgExprStatement* new_stmt = buildExprStatement(copyExpression(lhs));
 				SgExpression* new_exp = copyExpression(rhs);
 				replaceExpression(comma_op, new_exp);
@@ -643,7 +668,7 @@ void turnCommaOpExpIntoStmt(SgExpression* exp)
 
 				// FIXME!: Now it's not clear how to deal with continue in while. If it's transformed into
 				// goto, then we don't have to put the side effect in condition before continue.
-				
+#endif
 				break;
 			}
 			
@@ -766,7 +791,9 @@ void turnConditionalExpIntoStmt(SgExpression* exp)
 			ROSE_ASSERT(var_decl->get_variables().size() == 1);
 
 			SgType* type = var_decl->get_variables().front()->get_type();
-			ROSE_ASSERT(isScalarType(type));
+            //cout << type->class_name() << endl;
+            type = type->stripTypedefsAndModifiers();
+			ROSE_ASSERT(isScalarType(type) || isSgEnumType(type));
 			
 			// Note that a variable declaration can appear in the condition part of if, for, etc.
 			// Here we only deal with those which are exactly in a basic block.

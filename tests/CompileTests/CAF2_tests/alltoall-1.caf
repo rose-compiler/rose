@@ -1,0 +1,37 @@
+program alltoalltest
+
+   integer :: npe, mypid, i, other
+   integer(8), allocatable, dimension(:) :: inbuf[*]
+   integer(8), allocatable, dimension(:) :: outbuf[*]
+
+   logical :: success
+
+   npe = team_size()
+   mypid = team_rank()
+
+   allocate(inbuf(1:npe)[])
+   allocate(outbuf(1:npe)[])
+
+   do i = 0, npe-1
+      inbuf(i+1) = i
+      outbuf(i+1) = 10 * mypid + i + 1000
+   end do
+
+   call team_barrier()
+
+   call team_alltoall(inbuf, outbuf,1_8)
+
+   success = .true.
+   do i = 1, npe
+      success = success .and. outbuf(i) .eq. mypid
+   end do
+
+   if (.not. success) then
+      print *, "test failed for image ", mypid, "output: ", outbuf
+   end if
+
+   if (success .and. 0 .eq. mypid) then
+      write(*, '(A)') "test succeeded"
+   endif
+   
+end program alltoalltest

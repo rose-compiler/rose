@@ -14,7 +14,6 @@ SgSourceFile* OpenFortranParser_globalFilePointer = NULL;
 
 using namespace std;
 
-
 std::list<SgInterfaceStatement*> astInterfaceStack;
 
 #include "token.h"
@@ -23,7 +22,11 @@ Token_t *create_token(int line, int col, int type, const char *text)
   {
          Token_t *tmp_token = NULL;
 
-         tmp_token = (Token_t*) malloc(sizeof(Token_t));
+      // DQ (9/11/2011): We want to use the C++ new and delete memory allocation 
+      // and not mix C's malloc/free with C++'s new/delete mechanisms.
+      // tmp_token = (Token_t*) malloc(sizeof(Token_t));
+         tmp_token = new Token_t();
+
          tmp_token->line = line;
          tmp_token->col = col;
          tmp_token->type = type;
@@ -285,8 +288,16 @@ setSourcePosition  ( SgLocatedNode* locatedNode, Token_t* token )
      ROSE_ASSERT(token != NULL);
 
   // DQ (12/11/2007): Modified to permit tokens to be built (as in R1219)
-     ROSE_ASSERT(token->line > 0);
-  // ROSE_ASSERT(token->line >= 0);
+  //   ROSE_ASSERT(token->line > 0);
+     ROSE_ASSERT(token->line >= 0);  // DXN (08/25/ 2011): FIXME - Workaround OFP bug that incorrectly returns a token with line number = 0, as in the following example:
+     /*       subroutine FOURT()
+      *       DO 125 I1=1, 2
+      *       DO 125 I3= 3, 4
+      * 125   CONTINUE
+      *       END
+      *
+      *  Here the token is the label 125; when this label is parsed the second time around, label->line = 0 and label->col = -1
+      */
 
      if (locatedNode->get_startOfConstruct() != NULL)
         {
@@ -495,8 +506,10 @@ resetEndingSourcePosition( SgLocatedNode* targetLocatedNode, Token_t* token )
        // Also set the ending position of the function declaration.
        // printf ("In resetEndingSourcePosition(): Set the ending position of the related function declaration \n");
           SgDeclarationStatement* functionDeclaration = functionDefinition->get_declaration();
+          ROSE_ASSERT(functionDeclaration != NULL);
           resetEndingSourcePosition(functionDeclaration,token);
         }
+
     // Liao 2/1/2010. The SgBasicBlock of a SgFortranDo has to be adjusted also
     // 1. the begin construct should be the same as the one of its first child statement
     // 2. the end construct should be the same as SgFortranDo's end of construct
@@ -1465,7 +1478,16 @@ buildNumericLabelSymbolAndAssociateWithStatement(SgStatement* stmt, Token_t* lab
   // with "end" for example).
 
      ROSE_ASSERT(label != NULL);
-     ROSE_ASSERT(label->line > 0);
+     // ROSE_ASSERT(label->line > 0);
+     ROSE_ASSERT(label->line >= 0);  // DXN: FIXME - workaround OFP bug where label->line = 0 as in the following example:
+                                     /*       subroutine FOURT()
+                                      *       DO 125 I1=1, 2
+                                      *       DO 125 I3= 3, 4
+                                      * 125   CONTINUE
+                                      *       END
+                                      *
+                                      *  When label is parsed the second time around, label->line = 0 and label->col = -1
+                                      */
      ROSE_ASSERT(label->text != NULL);
 
   // Assumes simple string based representation of integer
@@ -1533,7 +1555,6 @@ buildNumericLabelSymbolAndAssociateWithStatement(SgStatement* stmt, Token_t* lab
                delete tempStatement;
                tempStatement = NULL;
              }
-
           label_symbol->set_fortran_statement(NULL);
           label_symbol->set_fortran_statement(stmt);
         }
@@ -1652,7 +1673,16 @@ setStatementNumericLabel(SgStatement* stmt, Token_t* label)
    {
      if (label != NULL)
         {
-          ROSE_ASSERT(label->line > 0);
+         // ROSE_ASSERT(label->line >= 0);
+         ROSE_ASSERT(label->line >= 0);  // DXN: FIXME - workaround OFP bug where label->line = 0 as in the following example:
+                                          /*       subroutine FOURT()
+                                           *       DO 125 I1=1, 2
+                                           *       DO 125 I3= 3, 4
+                                           * 125   CONTINUE
+                                           *       END
+                                           *
+                                           *  When label is parsed the second time around, label->line = 0 and label->col = -1
+                                           */
           ROSE_ASSERT(label->text != NULL);
 
        // DQ (2/18/2008): There are two mechanisms for setting labels, make sure that if 
@@ -1930,7 +1960,7 @@ trace_back_through_parent_scopes_lookup_variable_symbol_but_do_not_build_variabl
      outputState("At BOTTOM of trace_back_through_parent_scopes_lookup_variable_symbol_but_do_not_build_variable()");
 #endif
 
-#if 1
+#if 0
   // This function could have returned a NULL pointer if there was no symbol found ???
      if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
           printf ("Leaving trace_back_through_parent_scopes_lookup_variable_symbol_but_do_not_build_variable(): variableSymbol = %p functionSymbol = %p \n",variableSymbol,functionSymbol);
@@ -1955,7 +1985,7 @@ trace_back_through_parent_scopes_lookup_variable_symbol(const SgName & variableN
   // symbols that have been imported into the associated scope of the using declarations (or use statement 
   // in fortran).
 
-#if 1
+#if 0
      if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
           printf ("In trace_back_through_parent_scopes_lookup_variable_symbol(): variableName = %s currentScope = %p \n",variableName.str(),currentScope);
 #endif
@@ -2108,8 +2138,73 @@ trace_back_through_parent_scopes_lookup_variable_symbol(const SgName & variableN
      return variableSymbol;
    }
 
+// DXN (08/15/2011)
+// Refactored code to find the scope of a given SgClassType;
+void findClassTypeStructureScope (SgClassType* classType, SgScopeStatement*& structureScope) {
+    SgClassDeclaration* classDeclaration = isSgClassDeclaration(classType->get_declaration());
+    ROSE_ASSERT(classDeclaration != NULL);
+    SgClassDeclaration* definingClassDeclaration = isSgClassDeclaration(classDeclaration->get_definingDeclaration());
+    ROSE_ASSERT(definingClassDeclaration != NULL);
+    SgClassDefinition* classDefinition = definingClassDeclaration->get_definition();
+    ROSE_ASSERT(classDefinition != NULL);
+    structureScope = classDefinition;
+}
 
-// DQ (12/27/2010): We have to maek the return type std::vector<SgSymbol*> so that we have 
+// DXN (08/15/2011)
+// Refactored code to find the scope of a given type;
+// Called by trace_back_through_parent_scopes_lookup_member_variable_symbol.
+void findStructureScope (SgType* type, SgScopeStatement*& structureScope)
+{
+    switch (type->variantT())
+    {
+    // This type will continue the search for multi-type references.
+       case V_SgClassType:
+          {
+            findClassTypeStructureScope(isSgClassType(type), structureScope);
+            break;
+          }
+
+       case V_SgArrayType:
+          {
+            SgArrayType* arrayType = isSgArrayType(type);
+            SgType* baseType = arrayType->get_base_type();
+            ROSE_ASSERT(baseType != NULL);
+            findStructureScope(baseType, structureScope);
+            break;
+          }
+
+       case V_SgPointerType:
+          {
+            SgPointerType* pointerType = isSgPointerType(type);
+            SgType* baseType = pointerType->get_base_type();
+            ROSE_ASSERT(baseType != NULL);
+            findStructureScope(baseType, structureScope);
+            break;
+          }
+
+    // DQ (12/29/2010): Added new types...
+       case V_SgTypeDouble:
+       case V_SgTypeChar:
+
+    // These types will terminate the search for names from multi-part references.
+       case V_SgTypeString:
+       case V_SgTypeFloat:
+       case V_SgTypeBool:
+       case V_SgTypeInt:
+          {
+            structureScope = NULL;
+         // printf ("Set structureScope to NULL (for primative types) \n");
+            break;
+          }
+
+    // All currently unhandled types
+       default:
+          {
+            structureScope = NULL;
+          }
+    }
+}
+// DQ (12/27/2010): We have to maek the return type std::vector<SgSymbol*> so that we have
 // include SgFunctionSymbols to handle function return value initialization for defined types.
 // DQ (12/14/2010): New support for structure members.
 // std::vector<SgVariableSymbol*>
@@ -2150,6 +2245,8 @@ trace_back_through_parent_scopes_lookup_member_variable_symbol(const std::vector
              {
             // name = qualifiedNameList[i];
                name = qualifiedNameList[i].name;
+
+               ROSE_ASSERT(structureScope != NULL);
 #if 0
                printf ("structureScope = %p = %s name = %s \n",structureScope,structureScope->class_name().c_str(),name.c_str());
 #endif
@@ -2161,6 +2258,8 @@ trace_back_through_parent_scopes_lookup_member_variable_symbol(const std::vector
             // variableSymbol = trace_back_through_parent_scopes_lookup_variable_symbol(qualifiedNameList[i],structureScope);
             // trace_back_through_parent_scopes_lookup_variable_symbol_but_do_not_build_variable(qualifiedNameList[i],structureScope,variableSymbol,functionSymbol,classSymbol);
                trace_back_through_parent_scopes_lookup_variable_symbol_but_do_not_build_variable(name,structureScope,variableSymbol,functionSymbol,classSymbol);
+
+               ROSE_ASSERT(structureScope != NULL);
 
 #if 0
                printf ("In trace_back_through_parent_scopes_lookup_member_variable_symbol(): variableSymbol = %p \n",variableSymbol);
@@ -2184,197 +2283,7 @@ trace_back_through_parent_scopes_lookup_member_variable_symbol(const std::vector
 #if 0
                     printf ("associated variable type = %s \n",type->class_name().c_str());
 #endif
-                 // DQ (12/23/2010): I think a better implementation would strip off SgArrayType and SgPointerType as needed to get the the SgClassType
-                 // I am unclear how many cases we will have to handle here.
-
-                 // DQ (12/29/2010): I promise to refactor this code as soon as possible (but maybe after vacation)!
-                 // printf ("Refactor this code!!! \n");
-
-                    switch (type->variantT())
-                       {
-                      // This type will continue the search fo multi-type references.
-                         case V_SgClassType:
-                            {
-                              SgClassType* classType = isSgClassType(type);
-                              ROSE_ASSERT(classType->get_declaration() != NULL);
-                              SgClassDeclaration* classDeclaration = isSgClassDeclaration(classType->get_declaration());
-                              ROSE_ASSERT(classDeclaration != NULL);
-
-                           // Get the defining declaration!
-                              SgClassDeclaration* definingClassDeclaration = isSgClassDeclaration(classDeclaration->get_definingDeclaration());
-                              ROSE_ASSERT(definingClassDeclaration != NULL);
-                              SgClassDefinition* classDefinition = definingClassDeclaration->get_definition();
-                              ROSE_ASSERT(classDefinition != NULL);
-
-                              structureScope = classDefinition;
-                           // printf ("Set structureScope to %p (case of class type) \n",structureScope);
-                              break;
-                            }
-
-                         case V_SgArrayType:
-                            {
-                              SgArrayType* arrayType = isSgArrayType(type);
-                              SgType* baseType = arrayType->get_base_type();
-                              ROSE_ASSERT(baseType != NULL);
-#if 0
-                              printf ("baseType = %p = %s \n",baseType,baseType->class_name().c_str());
-#endif
-                              SgClassType* classType = isSgClassType(baseType);
-                              if (classType != NULL)
-                                 {
-                                   ROSE_ASSERT(classType->get_declaration() != NULL);
-                                   SgClassDeclaration* classDeclaration = isSgClassDeclaration(classType->get_declaration());
-                                   ROSE_ASSERT(classDeclaration != NULL);
-
-                                // Get the defining declaration!
-                                   SgClassDeclaration* definingClassDeclaration = isSgClassDeclaration(classDeclaration->get_definingDeclaration());
-                                   ROSE_ASSERT(definingClassDeclaration != NULL);
-                                   SgClassDefinition* classDefinition = definingClassDeclaration->get_definition();
-                                   ROSE_ASSERT(classDefinition != NULL);
-
-                                   structureScope = classDefinition;
-                                 }
-                                else
-                                 {
-                                   SgPointerType* pointerType = isSgPointerType(baseType);
-                                   if (pointerType != NULL)
-                                      {
-                                     // printf ("Case of array of pointers \n");
-                                     // ROSE_ASSERT(false);
-
-                                        SgType* baseType = pointerType->get_base_type();
-                                        ROSE_ASSERT(baseType != NULL);
-#if 0
-                                        printf ("baseType = %p = %s \n",baseType,baseType->class_name().c_str());
-#endif
-                                        SgClassType* classType = isSgClassType(baseType);
-                                        if (classType != NULL)
-                                           {
-                                             ROSE_ASSERT(classType->get_declaration() != NULL);
-                                             SgClassDeclaration* classDeclaration = isSgClassDeclaration(classType->get_declaration());
-                                             ROSE_ASSERT(classDeclaration != NULL);
-
-                                          // Get the defining declaration!
-                                             SgClassDeclaration* definingClassDeclaration = isSgClassDeclaration(classDeclaration->get_definingDeclaration());
-                                             ROSE_ASSERT(definingClassDeclaration != NULL);
-                                             SgClassDefinition* classDefinition = definingClassDeclaration->get_definition();
-                                             ROSE_ASSERT(classDefinition != NULL);
-
-                                             structureScope = classDefinition;
-                                           }
-                                          else
-                                           {
-                                             structureScope = NULL;
-                                           }
-                                      }
-                                     else
-                                      {
-                                        structureScope = NULL;
-                                      }
-                                 }
-                           // printf ("Set structureScope to %p (case of array type) \n",structureScope);
-                              break;
-                            }
-
-                         case V_SgPointerType:
-                            {
-                              SgPointerType* pointerType = isSgPointerType(type);
-                              SgType* baseType = pointerType->get_base_type();
-                              ROSE_ASSERT(baseType != NULL);
-#if 0
-                              printf ("baseType = %p = %s \n",baseType,baseType->class_name().c_str());
-#endif
-                           // This is the same code for handling the class type as in the "case V_SgArrayType:" above.
-                              SgClassType* classType = isSgClassType(baseType);
-                              if (classType != NULL)
-                                 {
-                                   ROSE_ASSERT(classType->get_declaration() != NULL);
-                                   SgClassDeclaration* classDeclaration = isSgClassDeclaration(classType->get_declaration());
-                                   ROSE_ASSERT(classDeclaration != NULL);
-
-                                // Get the defining declaration!
-                                   SgClassDeclaration* definingClassDeclaration = isSgClassDeclaration(classDeclaration->get_definingDeclaration());
-                                   ROSE_ASSERT(definingClassDeclaration != NULL);
-                                   SgClassDefinition* classDefinition = definingClassDeclaration->get_definition();
-                                   ROSE_ASSERT(classDefinition != NULL);
-
-                                   structureScope = classDefinition;
-                                 }
-                                else
-                                 {
-                                // Note that this could be recursive...
-                                // structureScope = NULL;
-                                   SgArrayType* arrayType = isSgArrayType(baseType);
-                                   if (arrayType != NULL)
-                                      {
-                                        SgType* baseType = arrayType->get_base_type();
-                                        ROSE_ASSERT(baseType != NULL);
-#if 0
-                                        printf ("In the array: baseType = %p = %s \n",baseType,baseType->class_name().c_str());
-#endif
-                                        SgClassType* classType = isSgClassType(baseType);
-                                        if (classType != NULL)
-                                           {
-                                             ROSE_ASSERT(classType->get_declaration() != NULL);
-                                             SgClassDeclaration* classDeclaration = isSgClassDeclaration(classType->get_declaration());
-                                             ROSE_ASSERT(classDeclaration != NULL);
-
-                                          // Get the defining declaration!
-                                             SgClassDeclaration* definingClassDeclaration = isSgClassDeclaration(classDeclaration->get_definingDeclaration());
-                                             ROSE_ASSERT(definingClassDeclaration != NULL);
-                                             SgClassDefinition* classDefinition = definingClassDeclaration->get_definition();
-                                             ROSE_ASSERT(classDefinition != NULL);
-
-                                             structureScope = classDefinition;
-                                           }
-                                          else
-                                           {
-                                          // DQ (1/13/2011): Added checking for possible SgTypeDefault that should have been fixed up by fixup_forward_type_declarations().
-                                             SgTypeDefault* defaultType = isSgTypeDefault(baseType);
-                                             if (defaultType != NULL)
-                                                {
-                                                  printf ("Error: SgTypeDefault identified in array base-type (result of unfixed up reference to type defined after initial reference). \n");
-                                               // ROSE_ASSERT(false);
-                                                }
-                                               else
-                                                {
-                                                  structureScope = NULL;
-                                                }
-                                           }
-                                      }
-                                     else
-                                      {
-                                        structureScope = NULL;
-                                      }
-                                 }
-                           // printf ("Set structureScope to %p (case of pointr type) \n",structureScope);
-                              break;
-                            }
-
-                      // DQ (12/29/2010): Added new types...
-                         case V_SgTypeDouble:
-                         case V_SgTypeChar:
-
-                      // These types will terminate the search for names from multi-part references.
-                         case V_SgTypeString:
-                         case V_SgTypeFloat:
-                         case V_SgTypeBool:
-                         case V_SgTypeInt:
-                            {
-                              structureScope = NULL;
-                           // printf ("Set structureScope to NULL (for primative types) \n");
-                              break;
-                            }
-
-                      // All currently unhandled types
-                         default:
-                            {
-                              structureScope = NULL;
-                           // printf ("Set structureScope to NULL \n");
-                           // printf ("Warning: what is this type, associated variable type = %s \n",type->class_name().c_str());
-                           // ROSE_ASSERT(false);
-                            }
-                       }
+                    findStructureScope(type, structureScope);  // DXN (08/12/2011)
 
                  // Returning an empty list (returnSymbolList) is how we would return the equivalant of "variableSymbol == NULL".
                     if (variableSymbol != NULL)
@@ -2408,17 +2317,7 @@ trace_back_through_parent_scopes_lookup_member_variable_symbol(const std::vector
                          if (classType != NULL)
                             {
                            // printf ("Found a function with SgClassType return type! \n");
-                              ROSE_ASSERT(classType->get_declaration() != NULL);
-                              SgClassDeclaration* classDeclaration = isSgClassDeclaration(classType->get_declaration());
-                              ROSE_ASSERT(classDeclaration != NULL);
-
-                           // Get the defining declaration!
-                              SgClassDeclaration* definingClassDeclaration = isSgClassDeclaration(classDeclaration->get_definingDeclaration());
-                              ROSE_ASSERT(definingClassDeclaration != NULL);
-                              SgClassDefinition* classDefinition = definingClassDeclaration->get_definition();
-                              ROSE_ASSERT(classDefinition != NULL);
-
-                              structureScope = classDefinition;
+                             findClassTypeStructureScope(classType, structureScope);
                            // printf ("Set structureScope to %p \n",structureScope);
 
                               returnSymbolList.push_back(functionSymbol);
@@ -2515,7 +2414,7 @@ trace_back_through_parent_scopes_lookup_member_variable_symbol(const std::vector
      outputState("At BOTTOM of trace_back_through_parent_scopes_lookup_member_variable_symbol(const std::vector<std::string>,SgScopeStatement*)");
 #endif
 
-#if 1
+#if 0
   // This function could have returned a NULL pointer if there was no symbol found ???
      if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
         {
@@ -3140,7 +3039,7 @@ buildVariableDeclaration (Token_t * label, bool buildingImplicitVariable )
      variableDeclaration->get_declarationModifier().get_accessModifier().setUndefined();
 
   // DQ (11/18/2007): Save the attributes used and clear the astAttributeSpecStack for this declaration
-     while (astAttributeSpecStack.empty() == false)
+     while (astAttributeSpecStack.empty() == false)   // DXN: TODO use the global VarAttrSpec instead
         {
        // printf ("In buildVariableDeclaration(): Process attribute spec %d ",astAttributeSpecStack.front());
           setDeclarationAttributeSpec(variableDeclaration,astAttributeSpecStack.front());
@@ -3908,7 +3807,7 @@ SgFunctionType* generateImplicitFunctionType( string functionName)
    }
 
 
-void
+SgAttributeSpecificationStatement*
 buildAttributeSpecificationStatement ( SgAttributeSpecificationStatement::attribute_spec_enum kind, Token_t *label, Token_t *sourcePositionToken )
    {
   // We can't call build_implicit_program_statement_if_required() since it is defined in the c_action_<name> functions.
@@ -4105,11 +4004,13 @@ buildAttributeSpecificationStatement ( SgAttributeSpecificationStatement::attrib
   // Set the numeric label if it exists
      setStatementNumericLabel(attributeSpecificationStatement,label);
 
+     // DXN (02/08/2012): to facilitate the handling of the computed attribute specification statement in FortranParserActionRose
+     return attributeSpecificationStatement;
+
   // printf ("In buildAttributeSpecificationStatement(): attributeSpecificationStatement: start = %d end = %d \n",attributeSpecificationStatement->get_startOfConstruct()->get_line(),attributeSpecificationStatement->get_endOfConstruct()->get_line());
    }
 
 
-// void setDeclarationAttributeSpec ( SgVariableDeclaration* variableDeclaration, int astAttributeSpec )
 void
 setDeclarationAttributeSpec ( SgDeclarationStatement* variableDeclaration, int astAttributeSpec )
    {
@@ -4148,7 +4049,6 @@ setDeclarationAttributeSpec ( SgDeclarationStatement* variableDeclaration, int a
                processBindingAttribute(variableDeclaration);
 
             // printf ("Exiting after processing AttrSpec_language_binding = %d \n",(int)AttrSpec_language_binding);
-            // ROSE_ASSERT(false);
                break;
              }
 
@@ -4164,7 +4064,6 @@ setDeclarationAttributeSpec ( SgDeclarationStatement* variableDeclaration, int a
                outputState("In setDeclarationAttributeSpec()");
 #endif
             // printf ("Exiting after processing AttrSpec_PUBLIC = %d \n",(int)AttrSpec_PUBLIC);
-            // ROSE_ASSERT(false);
                break;
 
           case AttrSpec_PRIVATE:      variableDeclaration->get_declarationModifier().get_accessModifier().setPrivate();   break;
@@ -4193,9 +4092,23 @@ setDeclarationAttributeSpec ( SgDeclarationStatement* variableDeclaration, int a
              }
 
        // These represent special Fortran specific support in ROSE.
-          case AttrSpec_ALLOCATABLE:  variableDeclaration->get_declarationModifier().get_typeModifier().setAllocatable();  break;
+          case AttrSpec_ALLOCATABLE:
+          case ComponentAttrSpec_allocatable:
+              variableDeclaration->get_declarationModifier().get_typeModifier().setAllocatable();
+              break;
           case AttrSpec_ASYNCHRONOUS: variableDeclaration->get_declarationModifier().get_typeModifier().setAsynchronous(); break;
-          case AttrSpec_DIMENSION:    variableDeclaration->get_declarationModifier().get_typeModifier().setDimension();    break;
+          case AttrSpec_DIMENSION:
+          case ComponentAttrSpec_dimension:
+              variableDeclaration->get_declarationModifier().get_typeModifier().setDimension();
+              break;
+          case AttrSpec_CODIMENSION:
+          case ComponentAttrSpec_codimension:
+             {
+               // DXN: TODO - there is no codimension attribute specifier for SgTypeModifier.
+               // setDefault for now.
+               variableDeclaration->get_declarationModifier().get_typeModifier().setDefault();
+               break;
+             }
           case AttrSpec_INTENT:
              {
                ROSE_ASSERT(astIntentSpecStack.empty() == false);
@@ -4219,6 +4132,7 @@ setDeclarationAttributeSpec ( SgDeclarationStatement* variableDeclaration, int a
           case AttrSpec_OPTIONAL:     variableDeclaration->get_declarationModifier().get_typeModifier().setOptional();     break;
           case AttrSpec_SAVE:         variableDeclaration->get_declarationModifier().get_typeModifier().setSave();         break;
           case AttrSpec_TARGET:       variableDeclaration->get_declarationModifier().get_typeModifier().setTarget();       break;
+          case AttrSpec_COTARGET:     break; // DXN (04/11/2011): TODO
           case AttrSpec_VALUE:        variableDeclaration->get_declarationModifier().get_typeModifier().setValue();        break;
 
        // DQ (8/28/2010): Added support required for type-attributes-spec values (TypeAttrSpec_bind does the same as AttrSpec_BINDC).
@@ -4261,7 +4175,9 @@ setDeclarationAttributeSpec ( SgDeclarationStatement* variableDeclaration, int a
                break;
 
           case AttrSpec_POINTER:
-            // printf ("Error: POINTER is an attribute specifier that effects the associated type (no flag is provided) \n");
+          case AttrSpec_COPOINTER:
+          case ComponentAttrSpec_pointer:
+            // POINTER/COPOINTER are attribute specifiers that affect the associated type (no flag is provided);
                break;
 
           case AttrSpec_PASS:
@@ -4271,77 +4187,24 @@ setDeclarationAttributeSpec ( SgDeclarationStatement* variableDeclaration, int a
             // printf ("Error: Are these F08 attribute specs? astAttributeSpec = %d \n",astAttributeSpec);
                break;
 
-          case ComponentAttrSpec_pointer:
-            // DQ (8/29/2010): This should be enabled so that we can at least see that it is not implemented.
-            // FMZ 6/15/2009 : this should be ok
-               if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
-                    printf ("Error: POINTER (ComponentAttrSpec_pointer) is an attribute specifier that effects the associated type (no flag is provided) \n");
-            // ROSE_ASSERT(false);
-               break;
-
-#if ROSE_OFP_MINOR_VERSION_NUMBER == 7
-       // DQ (4/5/2010): These have been removed from OFP 0.8.0
-          case ComponentAttrSpec_dimension_paren:
-#if 0
-            // DQ (8/29/2010): This should be enabled so that we can at least see that it is not implemented.
-            // FMZ 6/15/2009 : this should be ok
-               printf ("Error: ComponentAttrSpec_dimension_paren used as an attribute specifier (unclear how to process this) \n");
-               ROSE_ASSERT(false);
-#endif
-            // Laksono 2009.10.16: This is a Fortran legal syntax to have an array inside a type!
-               variableDeclaration->get_declarationModifier().get_typeModifier().setDimension();
-            // printf ("Error: ComponentAttrSpec_dimension_paren used as an attribute specifier (unclear how to process this) \n");
-            // ROSE_ASSERT(false);
-               break;
-
-          case ComponentAttrSpec_dimension_bracket:
-               printf ("Error: ComponentAttrSpec_dimension_bracket used as an attribute specifier (unclear how to process this) \n");
-               ROSE_ASSERT(false);
-               break;
-#endif
-
-          case ComponentAttrSpec_allocatable:
-               printf ("Error: ComponentAttrSpec_allocatable used as an attribute specifier (unclear how to process this) \n");
-               ROSE_ASSERT(false);
-               break;
-
           case ComponentAttrSpec_access_spec:
                printf ("Error: ComponentAttrSpec_access_spec used as an attribute specifier (unclear how to process this) \n");
-            // ROSE_ASSERT(false);
                break;
 
           case ComponentAttrSpec_kind:
                printf ("Error: ComponentAttrSpec_kind used as an attribute specifier (unclear how to process this) \n");
-            // ROSE_ASSERT(false);
                break;
 
           case ComponentAttrSpec_len:
-#if 1
             // DQ (8/28/2010): Uncommented this out (problems here are likely due to another bug where the ComponentAttrSpec_len is not set properly.
             // FMZ 6/15/2009 : this should be ok
                printf ("Error: ComponentAttrSpec_len used as an attribute specifier (unclear how to process this) \n");
                ROSE_ASSERT(false);
-#endif
                break;
 
-       // DQ (8/29/2010): Added support for new enum values
-          case ComponentAttrSpec_codimension:
-               printf ("Error: ComponentAttrSpec_codimension used as an attribute specifier (unclear how to process this) \n");
-               ROSE_ASSERT(false);
-               break;
-
-       // DQ (8/29/2010): Added support for new enum values
           case ComponentAttrSpec_contiguous:
                printf ("Error: ComponentAttrSpec_contiguous used as an attribute specifier (unclear how to process this) \n");
                ROSE_ASSERT(false);
-               break;
-
-       // DQ (8/29/2010): Added support for new enum values
-          case ComponentAttrSpec_dimension:
-               if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
-                    printf ("Error: ComponentAttrSpec_dimension used as an attribute specifier (unclear how to process this) \n");
-            // ROSE_ASSERT(false);
-               variableDeclaration->get_declarationModifier().get_typeModifier().setDimension();
                break;
 
           default:
@@ -4716,7 +4579,7 @@ generateFunctionRefExp( Token_t* nameToken )
 
           functionDeclaration->set_parent(currentScope);
           functionDeclaration->set_scope(currentScope);
-
+          functionDeclaration->set_subprogram_kind(SgProcedureHeaderStatement::e_function_subprogram_kind); 
           setSourcePosition(functionDeclaration,nameToken);
        // We should not have to set this explicitly!
           setSourcePosition(functionDeclaration->get_parameterList(),nameToken);
@@ -4724,7 +4587,7 @@ generateFunctionRefExp( Token_t* nameToken )
        // Now build the function call and use the arguments from the ExprList on the top of the astExpressionStack!
           SgFunctionSymbol* functionSymbol = new SgFunctionSymbol(functionDeclaration);
 
-       // Insert the function into the global scope so that we can find it later.
+       // Insert the function into the global scope so that we can find it later
           currentScope->insert_symbol(functionName,functionSymbol);
 
           functionRefExp = new SgFunctionRefExp(functionSymbol,NULL);
@@ -5482,9 +5345,12 @@ buildVariableDeclarationAndCleanupTypeStack( Token_t * label )
   // I am trying to have variable built earlier than before since the Fortran "include"
   // mechanism can be called before this R501 rule and that causes problems.  Basically
   // each new include file needs to be started with an empty stack(s).
+
+    //    if (!astNodeStack.empty())
+
      if (astNodeStack.empty() == false && astBaseTypeStack.empty() == false)
         {
-#if 1
+#if 0
        // Output debugging information about saved state (stack) information.
           outputState("At TOP of buildVariableDeclarationAndCleanupTypeStack() (before calling buildVariableDeclaration())");
 #endif
@@ -5499,7 +5365,7 @@ buildVariableDeclarationAndCleanupTypeStack( Token_t * label )
        // remove the conditionaly handling below.  See the note in R504 c_action_entity_decl()
        // for more details.
        // ROSE_ASSERT(astTypeStack.empty() == true);
-#if 1
+#if 0
           outputState("In buildVariableDeclarationAndCleanupTypeStack() (after buildVariableDeclaration())");
 #endif
        // We should have used all the types stored on the stack at this point!
@@ -5550,7 +5416,7 @@ generateAssignmentStatement(Token_t* label, bool isPointerAssignment )
   // This function builds the SgAssignOp and the SgExprStatement and 
   // inserts it into the current scope.
 
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of generateAssignmentStatement()");
 #endif
@@ -5625,7 +5491,7 @@ generateAssignmentStatement(Token_t* label, bool isPointerAssignment )
   // This is needed for test2007_67.f90
      astNodeStack.push_front(expressionStatement);
 
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of generateAssignmentStatement()");
 #endif
@@ -5808,7 +5674,7 @@ buildIntrinsicModule ( const string & name )
    {
      SgClassSymbol*  moduleSymbol = NULL;
 
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of buildIntrinsicModule()");
 #endif
@@ -5891,7 +5757,7 @@ buildIntrinsicModule ( const string & name )
           ROSE_ASSERT(moduleSymbol != NULL);
         }
 
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of buildIntrinsicModule()");
 #endif
@@ -5974,7 +5840,7 @@ fixup_possible_incomplete_function_return_type()
    {
   // DQ (12/26/2010): Factor out the fixup required for where use statements are used (e.g. function return types).
 
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of fixup_possible_incomplete_function_return_type()");
 #endif
@@ -6160,7 +6026,7 @@ processAttributeSpecStack(bool hasArraySpec, bool hasInitialization)
         {
        // Some attributes that are not order dependent (are there any in Fortran) should maybe we saved and put back on the stack.
 
-#if 1
+#if 0
        // Output debugging information about saved state (stack) information.
           outputState("In loop over attributes in processAttributeSpecStack()");
 #endif
@@ -6312,16 +6178,16 @@ processAttributeSpecStack(bool hasArraySpec, bool hasInitialization)
                             }
                          ROSE_ASSERT(astExpressionStack.empty() == false);
                        }
-#if 1
+#if 0
                  // Output debugging information about saved state (stack) information.
                     outputState("In processAttributeSpecStack(): After processing type for AttrSpec_DIMENSION");
 #endif
                  // Increment as many times as required past this dimension case.
-                    while ((*i == AttrSpec_DIMENSION || *i == ComponentAttrSpec_dimension) )
+                    while (i != astAttributeSpecStack.end() && (*i == AttrSpec_DIMENSION || *i == ComponentAttrSpec_dimension) )
                        {
                          i++;
                        }
-#if 1
+#if 0
                  // Output debugging information about saved state (stack) information.
                     outputState("After processing AttrSpec_DIMENSION in loop over attributes in R504 R503-F2008 c_action_entity_decl()");
 #endif
@@ -6357,6 +6223,36 @@ processAttributeSpecStack(bool hasArraySpec, bool hasInitialization)
                     break;
                   }
 
+               case AttrSpec_COPOINTER:
+                  {
+                    if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
+                         printf ("found a COPOINTER spec \n");
+
+                    ROSE_ASSERT(!astBaseTypeStack.empty());
+
+                    // if (!astTypeStack.empty()) astTypeStack.pop_front();  // DXN (06/13/2011)
+
+                    SgPointerType* pointerType = astTypeStack.empty()?
+                            new SgPointerType(astBaseTypeStack.front()):
+                            new SgPointerType(astTypeStack.front());  // use the top of astTypeStack as the base type.
+                    pointerType->set_isCoArray(true);                 // a copointer is a pointer whose isCoArray flag is true.
+
+                    if (astTypeStack.empty())
+                       {
+                         astBaseTypeStack.pop_front();
+                         ROSE_ASSERT(astBaseTypeStack.empty());
+                         astBaseTypeStack.push_front(pointerType);
+                       }
+                      else
+                       {
+                         astTypeStack.pop_front();
+                         ROSE_ASSERT(astTypeStack.empty());
+                         astTypeStack.push_front(pointerType);
+                       }
+                    i++;
+                    break;
+                  }
+
                default:
                   {
                  // This is really an error because it means that we are ignoring all of attributes except 
@@ -6381,7 +6277,7 @@ processAttributeSpecStack(bool hasArraySpec, bool hasInitialization)
 
        // printf ("At bottom of loop over the attrubutes (next attribute = %d = %s ) \n",i != astAttributeSpecStack.end() ? *i : -1,i != astAttributeSpecStack.end() ? "valid" : "end of list");
 
-#if 1
+#if 0
        // Output debugging information about saved state (stack) information.
           outputState("In BOTTOM of loop over attributes in processAttributeSpecStack()");
 #endif
@@ -6405,7 +6301,7 @@ processAttributeSpecStack(bool hasArraySpec, bool hasInitialization)
             // subsequent variables.
             // if ( (*j != AttrSpec_DIMENSION) && (*j != ComponentAttrSpec_dimension) )
                if ( (*j != AttrSpec_DIMENSION) && (*j != ComponentAttrSpec_dimension) &&
-                    (*j != AttrSpec_POINTER)   && (*j != ComponentAttrSpec_pointer) )
+                    (*j != AttrSpec_POINTER)   && (*j != ComponentAttrSpec_pointer) && (*j != AttrSpec_COPOINTER))
                   {
                  // printf ("Save the attribute = %d \n",*j);
                     savedAttributes.push_back(*j);

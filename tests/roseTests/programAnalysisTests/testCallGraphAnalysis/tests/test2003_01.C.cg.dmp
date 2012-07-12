@@ -1,4 +1,4 @@
-main -> A::foo1 A::foo3 B::A::foo2
 A::foo1 ->
 A::foo3 ->
 B::A::foo2 ->
+main -> A::foo1 A::foo3 B::A::foo2

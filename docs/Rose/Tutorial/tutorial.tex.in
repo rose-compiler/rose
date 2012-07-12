@@ -16,6 +16,7 @@
 \usepackage{moreverb}
 
 \usepackage{hyperref}
+
 \hypersetup {
 colorlinks= true,
 urlcolor=blue,
@@ -230,6 +231,7 @@ visualization, traversal, query, and debugging.}
 \input{wholeGraphAST}
 \input{AST_PDF_Generator}
 \input{traversal}
+\input{CFGTraversalTutorial}
 % the chapter talking about scope uses AST traversal
 % So I moved it after the traversal chapter.  Liao 3/3/2010
 \input{scopeInformation}
@@ -267,11 +269,14 @@ ROSE.}
 \normalsize{This part exemplifies the use of existing ROSE analyses and how
 to build customized analyses using ROSE.}
 }
+\input{GenericDFA}
 \input{loopRecognition}
 \input{virtualCFG}
 \input{buildCFG}
+\input{CFGTraversalTutorial}
 \input{defuseAnalysis}
 \input{buildCallGraph}
+\input{buildVFA}
 \input{classHierarchyGraph}
 \input{dataBaseSupport}
 \input{customGraphs} 
@@ -290,16 +295,19 @@ transformations and optimizations.}
 \input{commandlineProcessing}
 \input{codeGenerationFormatControl}
 
+\input{astConstruction.tex}
 %---- begin chapter for AST construction
 % DQ (6/24/2008): Need to combine these into a
 % single file if it is to be a single chapter.
-\input{addVariableDeclaration}
-\input{addExpression}
-\input {addAssignmentStmt}
-\input{addFunctionDeclaration}
-\input{instrumentationExample}
-\input{globalVariableHandling}
+%\input{addVariableDeclaration}
+%\input{addExpression}
+%\input {addAssignmentStmt}
+%\input{addFunctionDeclaration}
+%\input{instrumentationExample}
+%\input{globalVariableHandling}
 %-------end of chapter for AST construction
+
+\input{parserBuildingBlocks}
 
 \input{addingComments}  % handling preprocessing information
 \input{partialRedundancyElimination}

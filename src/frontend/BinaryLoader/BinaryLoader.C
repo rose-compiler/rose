@@ -7,9 +7,7 @@
 #include "BinaryLoader.h"
 #include "BinaryLoaderElf.h"
 #include "BinaryLoaderPe.h"
-
-#define __STDC_FORMAT_MACROS
-#include <inttypes.h>
+#include "Disassembler.h"
 
 std::vector<BinaryLoader*> BinaryLoader::loaders;
 
@@ -270,7 +268,7 @@ BinaryLoader::createAsmAST(SgBinaryComposite* binaryFile, std::string filePath)
   
     // TODO do I need to attach here - or can I do after return
     binaryFile->get_genericFileList()->get_files().push_back(file);
-    file->set_parent(binaryFile);
+    file->set_parent(binaryFile->get_genericFileList());
 
     /* Add a new interpretation to the SgBinaryComposite object for each header of the newly parsed
      * SgAsmGenericFile for which a suitable interpretation does not already exist. */
@@ -290,7 +288,7 @@ BinaryLoader::createAsmAST(SgBinaryComposite* binaryFile, std::string filePath)
         if (!interp) {
             interp = new SgAsmInterpretation();
             interps.push_back(interp);
-            interp->set_parent(binaryFile);
+            interp->set_parent(binaryFile->get_interpretations());
         }
         interp->get_headers()->get_headers().push_back(header);
     }
@@ -365,12 +363,12 @@ BinaryLoader::remap(MemoryMap *map, SgAsmGenericHeader *header)
 
             /* Figure out alignment, etc. */
             rose_addr_t malign_lo=1, malign_hi=1, va=0, mem_size=0, offset=0, file_size=0, va_offset=0;
-            bool anon_lo=true, anon_hi=true;
+            bool anon_lo=true, anon_hi=true, map_private=false;
             ConflictResolution resolve = RESOLVE_THROW;
             MappingContribution contrib = align_values(section, map,                      /* inputs */
                                                        &malign_lo, &malign_hi,            /* alignment outputs */
                                                        &va, &mem_size,                    /* memory location outputs */
-                                                       &offset, &file_size,               /* file location outputs */
+                                                       &offset, &file_size, &map_private, /* file location outputs */
                                                        &va_offset, &anon_lo, &anon_hi,    /* internal location outputs */
                                                        &resolve);                         /* conflict resolution output */
             rose_addr_t falign_lo = std::max(section->get_file_alignment(), (rose_addr_t)1);
@@ -423,18 +421,18 @@ BinaryLoader::remap(MemoryMap *map, SgAsmGenericHeader *header)
             if (CONTRIBUTE_SUB==contrib) {
                 if (debug)
                     fprintf(debug, "    Subtracting contribution\n");
-                map->erase(MemoryMap::MapElement(va, mem_size));
+                map->erase(Extent(va, mem_size));
                 continue;
             }
 
             /* Resolve mapping conflicts.  The new mapping may have multiple parts, so we test whether all those parts can be
-             * mapped by first mapping an anonymous region and then removing it.  In this way we can perform the test atomically
-             * rather than trying to undo the parts that had been successful. Allocating a large anonymous region does not
-             * actually allocate any memory. */
+             * mapped by first mapping a region and then removing it.  In this way we can perform the test atomically rather
+             * than trying to undo the parts that had been successful. Allocating a large region does not actually allocate any
+             * memory. */
             try {
-                MemoryMap::MapElement test(va, mem_size);
-                map->insert(test);
-                map->erase(test);
+                map->insert(Extent(va, mem_size),
+                            MemoryMap::Segment(MemoryMap::NullBuffer::create(mem_size), 0, MemoryMap::MM_PROT_NONE));
+                map->erase(Extent(va, mem_size));
             } catch (const MemoryMap::Exception&) {
                 switch (resolve) {
                     case RESOLVE_THROW:
@@ -442,7 +440,7 @@ BinaryLoader::remap(MemoryMap *map, SgAsmGenericHeader *header)
                     case RESOLVE_OVERMAP:
                         if (debug)
                             fprintf(debug, "    Conflict: resolved by making a hole\n");
-                        map->erase(MemoryMap::MapElement(va, mem_size));
+                        map->erase(Extent(va, mem_size));
                         break;
                     case RESOLVE_REMAP:
                     case RESOLVE_REMAP_ABOVE: {
@@ -473,7 +471,7 @@ BinaryLoader::remap(MemoryMap *map, SgAsmGenericHeader *header)
             if (section->get_mapped_xperm())
                 mapperms |= MemoryMap::MM_PROT_EXEC;
 
-            /* MapElement name for debugging. This is the file base name and section name concatenated. */
+            /* Segment name for debugging. This is the file base name and section name concatenated. */
             std::string::size_type file_basename_pos = file->get_name().find_last_of("/");
             file_basename_pos = file_basename_pos==file->get_name().npos ? 0 : file_basename_pos+1;
             std::string melmt_name = file->get_name().substr(file_basename_pos) + "(" + section->get_name()->get_string() + ")";
@@ -499,9 +497,9 @@ BinaryLoader::remap(MemoryMap *map, SgAsmGenericHeader *header)
                             "va=0x%08"PRIx64" + 0x%08"PRIx64" = 0x%08"PRIx64"\n",
                             total, a, n, a+n);
                 }
-                MemoryMap::MapElement me(a, n, mapperms);
-                me.set_name(melmt_name);
-                map->insert(me);
+                map->insert(Extent(a, n),
+                            MemoryMap::Segment(MemoryMap::AnonymousBuffer::create(n), 0,
+                                               mapperms|MemoryMap::MM_PROT_PRIVATE, melmt_name));
                 mem_size -= n;
                 file_size = std::min(file_size, mem_size);
             }
@@ -514,9 +512,9 @@ BinaryLoader::remap(MemoryMap *map, SgAsmGenericHeader *header)
                     fprintf(debug, "    %-41s va=0x%08"PRIx64" + 0x%08"PRIx64" = 0x%08"PRIx64"\n",
                             "Mapping part beyond end of section:", a, n, a+n);
                 }
-                MemoryMap::MapElement me(a, n, mapperms);
-                me.set_name(melmt_name);
-                map->insert(me);
+                map->insert(Extent(a, n),
+                            MemoryMap::Segment(MemoryMap::AnonymousBuffer::create(n), 0,
+                                               mapperms|MemoryMap::MM_PROT_PRIVATE, melmt_name));
                 mem_size -= n;
             }
 
@@ -528,9 +526,9 @@ BinaryLoader::remap(MemoryMap *map, SgAsmGenericHeader *header)
                     fprintf(debug, "    %-41s va=0x%08"PRIx64" + 0x%08"PRIx64" = 0x%08"PRIx64"\n",
                             "Mapping part before beginning of section:", a, n, a+n);
                 }
-                MemoryMap::MapElement me(a, n, mapperms);
-                me.set_name(melmt_name);
-                map->insert(me);
+                map->insert(Extent(a, n),
+                            MemoryMap::Segment(MemoryMap::AnonymousBuffer::create(n), 0,
+                                               mapperms|MemoryMap::MM_PROT_PRIVATE, melmt_name));
                 mem_size -= n;
                 file_size -= n;
                 va += n;
@@ -540,13 +538,22 @@ BinaryLoader::remap(MemoryMap *map, SgAsmGenericHeader *header)
             /* Map the section. We use the file content as the underlying storage of the map because we might be mapping parts of
              * the file left and right of the actual section. */
             if (mem_size>0) {
-                MemoryMap::MapElement me(va, mem_size, &(file->get_data()[0]), offset, mapperms);
                 if (debug) {
-                    fprintf(debug, "    %-41s va=0x%08"PRIx64" + 0x%08"PRIx64" = 0x%08"PRIx64"\n",
-                            "Mapping section:", va, mem_size, va+mem_size);
+                    fprintf(debug, "    %-41s va=0x%08"PRIx64" + 0x%08"PRIx64" = 0x%08"PRIx64" %s\n",
+                            "Mapping section:", va, mem_size, va+mem_size, map_private?"private":"shared");
                 }
-                me.set_name(melmt_name);
-                map->insert(me);
+                if (map_private) {
+                    uint8_t *storage = new uint8_t[mem_size];
+                    memcpy(storage, &(file->get_data()[offset]), mem_size);
+                    MemoryMap::BufferPtr buffer = MemoryMap::ByteBuffer::create(storage, mem_size);
+                    map->insert(Extent(va, mem_size),
+                                MemoryMap::Segment(buffer, 0, mapperms|MemoryMap::MM_PROT_PRIVATE, melmt_name));
+                } else {
+                    // Create the buffer, but the buffer should not take ownership of data from the file.
+                    MemoryMap::BufferPtr buffer = MemoryMap::ExternBuffer::create(&(file->get_data())[0],
+                                                                                  file->get_data().size());
+                    map->insert(Extent(va, mem_size), MemoryMap::Segment(buffer, offset, mapperms, melmt_name));
+                }
             }
 
             if (debug) {
@@ -587,7 +594,12 @@ int64_t
 BinaryLoader::gcd(int64_t a, int64_t b, int64_t *xout/*=NULL*/, int64_t *yout/*=NULL*/)
 {
     uint64_t x=0, xprev=1, y=1, yprev=0;
-    if (b>a) std::swap(a, b);
+    bool swapped = false;
+    if (b>a) {
+        std::swap(a, b);
+        swapped = true;
+    }
+
     while (b!=0) {
         uint64_t quotient = a / b;
         uint64_t temp;
@@ -608,6 +620,9 @@ BinaryLoader::gcd(int64_t a, int64_t b, int64_t *xout/*=NULL*/, int64_t *yout/*=
             yprev = temp;
         }
     }
+
+    if (swapped)
+        std::swap(xprev, yprev);
     
     if (xout) *xout = xprev;
     if (yout) *yout = yprev;
@@ -620,11 +635,16 @@ BinaryLoader::bialign(rose_addr_t val1, rose_addr_t align1, rose_addr_t val2, ro
     if (0==val1 % align1 && 0==val2 % align2)
         return 0;
 
-    if (debug) fprintf(debug, "    Aligning %"PRIu64" to %"PRIu64" and %"PRIu64" to %"PRIu64"\n", val1, align1, val2, align2);
-
     /* Minimum amount by which the addresses must be adjusted downward to independently meet their alignment constraint. */
     int64_t Ma = val1 - ALIGN_DN(val1, align1);
     int64_t Mb = val2 - ALIGN_DN(val2, align2);
+    if (Ma > Mb) {
+        std::swap(val1, val2);
+        std::swap(align1, align2);
+        std::swap(Ma, Mb);
+    }
+
+    if (debug) fprintf(debug, "    Aligning %"PRIu64" to %"PRIu64" and %"PRIu64" to %"PRIu64"\n", val1, align1, val2, align2);
     if (debug) fprintf(debug, "      Misalignment: Ma=%"PRId64", Mb=%"PRId64"\n", Ma, Mb);
 
     /* Alignment constraints that must both be satisfied. */
@@ -687,7 +707,7 @@ BinaryLoader::MappingContribution
 BinaryLoader::align_values(SgAsmGenericSection *section, MemoryMap *map,
                            rose_addr_t *malign_lo_p, rose_addr_t *malign_hi_p,
                            rose_addr_t *va_p, rose_addr_t *mem_size_p,
-                           rose_addr_t *offset_p, rose_addr_t *file_size_p,
+                           rose_addr_t *offset_p, rose_addr_t *file_size_p, bool *map_private_p,
                            rose_addr_t *va_offset_p, bool *anon_lo_p, bool *anon_hi_p, 
                            ConflictResolution *resolve_p)
 {
@@ -735,6 +755,7 @@ BinaryLoader::align_values(SgAsmGenericSection *section, MemoryMap *map,
     *mem_size_p = mem_size;
     *offset_p = offset;
     *file_size_p = file_size;
+    *map_private_p = false;
     *va_offset_p = va_offset;
     *anon_lo_p = true;
     *anon_hi_p = true;

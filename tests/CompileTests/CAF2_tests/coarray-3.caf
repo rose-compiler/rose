@@ -1,0 +1,19 @@
+module m1
+  integer(4) :: a(10,10)[*]
+end module m1
+program static_test
+use m1
+  integer(4) :: i, j
+  do i = 1, 10
+    do j = 1, 10
+      a(i,j) = i + (j - 1) * 10
+    enddo
+  enddo
+  if (team_rank(team_default) == 0) then
+    do i = 1, 10
+      do j=1,10
+       write(*, '(I10)') a(i,j)
+      end do
+    enddo
+  endif
+end program static_test

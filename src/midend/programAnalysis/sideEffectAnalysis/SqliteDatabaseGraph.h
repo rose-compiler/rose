@@ -17,7 +17,7 @@
 #include "boost/graph/adjacency_list.hpp"
 #include "boost/graph/topological_sort.hpp"
 #include "boost/graph/exception.hpp"
-#include "boost/graph/graphviz.hpp"
+#include <boost/graph/graphviz.hpp>
 
 #include <rose.h>
 #include "sqlite3x.h"
@@ -363,11 +363,17 @@ namespace boost {
         BOOST_INSTALL_PROPERTY( graph, dbg_data );
 };
 
+ //boost::GraphvizVertexProperty p;
+
 //-----------------------------------------------------------------------------
 //! graph database storage class 
 template<class VertexType, class EdgeType, 
-        class BoostVertexList = boost::vecS, class BoostEdgeList = boost::vecS, class BoostDirection = boost::bidirectionalS,
-        class BoostVertexProperty = boost::GraphvizVertexProperty, class BoostEdgeProperty = boost::GraphvizEdgeProperty, class BoostGraphProperty = boost::GraphvizGraphProperty >
+        class BoostVertexList, 
+        class BoostEdgeList, 
+        class BoostDirection,
+        class BoostVertexProperty, 
+        class BoostEdgeProperty, 
+        class BoostGraphProperty>
 class DatabaseGraph : 
         public boost::adjacency_list<
                 BoostVertexList, BoostEdgeList, BoostDirection,

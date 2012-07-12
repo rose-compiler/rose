@@ -4,8 +4,7 @@ SUBDIRS = SemanticVerification libraryIdentification_tests Dwarf_tests Pin_tests
 
 EXTRA_DIST = \
 	runExecFormatsTest testShiftResizeSection.sh \
-        testSampleBinary.sh testSampleBinaries.conf testFunctionDetection.pl \
-	bincfg.h
+        testSampleBinary.sh testSampleBinaries.conf testFunctionDetection.pl
 
 # Forward declarations
 STATIC_TEST_TARGETS=
@@ -21,6 +20,13 @@ INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/src/midend/binaryAnalyses/libraryIde
 # The executables and their test cases...
 ###############################################################################################################################
 
+# Check boost consistency
+noinst_PROGRAMS += testBoost
+testBoost_SOURCES = testBoost.C
+testBoost_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+STATIC_TEST_TARGETS += testBoost.passed
+testBoost.passed: testBoost
+	./testBoost
 
 # Parses an executable to produce a dump file (*.dump), an assembly file (rose_*.s), and a new executable created by unparsing
 # the AST (*.new). The *.new file is typically identical to the original executable.
@@ -43,6 +49,20 @@ MOSTLYCLEANFILES += cfg_x86.dot
 testBinCFG.passed: testBinCFG.conf testBinCFG
 	@$(RTH_RUN) INPUT=libm-2.3.6.so $< $@
 
+# Tests for the newer BinaryAnalysis::ControlFlow class.
+noinst_PROGRAMS += testControlFlow
+testControlFlow_SOURCES = testControlFlow.C
+testControlFlow_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+STATIC_TEST_TARGETS += testControlFlow-A.passed testControlFlow-B.passed testControlFlow-C.passed testControlFlow-D.passed
+EXTRA_DIST += testControlFlow.conf testControlFlow-A.dot testControlFlow-B.dot testControlFlow-C.dot testControlFlow-D.dot
+testControlFlow-A.passed: testControlFlow.conf testControlFlow
+	@$(RTH_RUN) CMD=testControlFlow ALGORITHM=A INPUT=buffer2.bin $< $@
+testControlFlow-B.passed: testControlFlow.conf testControlFlow
+	@$(RTH_RUN) CMD=testControlFlow ALGORITHM=B INPUT=buffer2.bin $< $@
+testControlFlow-C.passed: testControlFlow.conf testControlFlow
+	@$(RTH_RUN) CMD=testControlFlow ALGORITHM=C INPUT=buffer2.bin $< $@
+testControlFlow-D.passed: testControlFlow.conf testControlFlow
+	@$(RTH_RUN) CMD=testControlFlow ALGORITHM=D INPUT=buffer2.bin $< $@
 
 #Test the binary call graph that uses the semantic representation to perform an accurate analysis
 noinst_PROGRAMS += testBinCG
@@ -53,6 +73,33 @@ EXTRA_DIST += testBinCG.conf
 MOSTLYCLEANFILES += cfg_x86.dot
 testBinCG.passed: testBinCG.conf testBinCG testBinCFG.passed
 	@$(RTH_RUN) INPUT=libm-2.3.6.so $< $@
+
+# Tests for the newer BinaryAnalysis::FunctionCall class.
+noinst_PROGRAMS += testFunctionCall
+testFunctionCall_SOURCES = testFunctionCall.C
+testFunctionCall_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+STATIC_TEST_TARGETS += testFunctionCall-A.passed testFunctionCall-B.passed
+EXTRA_DIST += testFunctionCall.conf testFunctionCall-A.dot testFunctionCall-B.dot
+testFunctionCall-A.passed: testFunctionCall.conf testFunctionCall
+	@$(RTH_RUN) CMD=testFunctionCall ALGORITHM=A INPUT=buffer2.bin $< $@
+testFunctionCall-B.passed: testFunctionCall.conf testFunctionCall
+	@$(RTH_RUN) CMD=testFunctionCall ALGORITHM=B INPUT=buffer2.bin $< $@
+
+# Tests for control flow dominance graphs.
+noinst_PROGRAMS += testDominance
+testDominance_SOURCES = testDominance.C
+testDominance_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+STATIC_TEST_TARGETS += testDominance-A.passed testDominance-B.passed testDominance-C.passed testDominance-D.passed
+EXTRA_DIST += testDominance.conf testDominance-A.ans testDominance-B.ans testDominance-C.ans testDominance-D.ans
+MOSTLYCLEANFILES += testDominance-[A-Z]?*.dot
+testDominance-A.passed: testDominance.conf testDominance
+	@$(RTH_RUN) CMD=testDominance ALGORITHM=A INPUT=buffer2.bin $< $@
+testDominance-B.passed: testDominance.conf testDominance
+	@$(RTH_RUN) CMD=testDominance ALGORITHM=B INPUT=buffer2.bin $< $@
+testDominance-C.passed: testDominance.conf testDominance
+	@$(RTH_RUN) CMD=testDominance ALGORITHM=C INPUT=buffer2.bin $< $@
+testDominance-D.passed: testDominance.conf testDominance
+	@$(RTH_RUN) CMD=testDominance ALGORITHM=D INPUT=buffer2.bin $< $@
 
 
 # Tests ELF string table reallocation functions by changing some strings.  At first glance this would appear to be something
@@ -136,6 +183,11 @@ MOSTLYCLEANFILES += arm-ctrlaltdel.dump-1 arm-ctrlaltdel.dump-2 arm-ctrlaltdel.d
 shiftResizeSection.passed: shiftResizeSection.conf shiftResizeSection
 	@$(RTH_RUN) INPUT=arm-ctrlaltdel $< $@
 
+# Check whether the instruction semantics classes can be specialized. This is only a compile test; we never actually
+# run the program since the same classes are exercised by other tests.
+noinst_PROGRAMS += subSemantics
+subSemantics_SOURCES = subSemantics.C
+subSemantics_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 
 # Finds constant values and propagates them across instructions
 noinst_PROGRAMS += findConstants
@@ -159,15 +211,15 @@ findConstantsABI.passed: semantics.conf findConstantsABI
 	@$(RTH_RUN) CMD=findConstantsABI INPUT=i686-test1.O3.bin $< $@
 
 
-# Uses VirtualMachineSemantics semantic analysis policy
-noinst_PROGRAMS += virtualMachineSemantics
-virtualMachineSemantics_SOURCES = semantics.C
-virtualMachineSemantics_CPPFLAGS = -DPOLICY_SELECTOR=3
-virtualMachineSemantics_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-STATIC_TEST_TARGETS += virtualMachineSemantics.passed
-EXTRA_DIST += semantics.conf virtualMachineSemantics.ans
-virtualMachineSemantics.passed: semantics.conf virtualMachineSemantics
-	@$(RTH_RUN) CMD=virtualMachineSemantics INPUT=i686-test1.O3.bin $< $@
+# Uses PartialSymbolicSemantics semantic analysis policy
+noinst_PROGRAMS += partialSymbolicSemantics
+partialSymbolicSemantics_SOURCES = semantics.C
+partialSymbolicSemantics_CPPFLAGS = -DPOLICY_SELECTOR=3
+partialSymbolicSemantics_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+STATIC_TEST_TARGETS += partialSymbolicSemantics.passed
+EXTRA_DIST += semantics.conf partialSymbolicSemantics.ans
+partialSymbolicSemantics.passed: semantics.conf partialSymbolicSemantics
+	@$(RTH_RUN) CMD=partialSymbolicSemantics INPUT=i686-test1.O3.bin $< $@
 
 
 # Use SymbolicSemantics semantic analysis policy
@@ -180,7 +232,6 @@ EXTRA_DIST += semantics.conf symbolicSemantics.ans
 symbolicSemantics.passed: semantics.conf symbolicSemantics
 	@$(RTH_RUN) CMD=symbolicSemantics INPUT=i686-test1.O3.bin $< $@
 
-
 # Use SymbolicSemantics with YicesSolver policy, invoking "yices" executable. We should be able
 # to compile this test even when the "yices" command is not available. However, we won't be able
 # to test it if we don't have it.
@@ -189,7 +240,7 @@ yicesSemanticsExe_SOURCES = semantics.C
 yicesSemanticsExe_CPPFLAGS = -DPOLICY_SELECTOR=4 -DSOLVER_SELECTOR=1
 yicesSemanticsExe_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 EXTRA_DIST += semantics.conf yicesSemanticsExe.ans
-if HAVE_YICES
+if ROSE_HAVE_YICES
 STATIC_TEST_TARGETS += yicesSemanticsExe.passed
 yicesSemanticsExe.passed: semantics.conf yicesSemanticsExe
 	@$(RTH_RUN) CMD=yicesSemanticsExe INPUT=i686-test1.O3.bin $< $@
@@ -204,23 +255,53 @@ yicesSemanticsLib_SOURCES = semantics.C
 yicesSemanticsLib_CPPFLAGS = -DPOLICY_SELECTOR=4 -DSOLVER_SELECTOR=2
 yicesSemanticsLib_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 EXTRA_DIST += semantics.conf yicesSemanticsLib.ans
-if HAVE_LIBYICES
+if ROSE_HAVE_LIBYICES
 STATIC_TEST_TARGETS += yicesSemanticsLib.passed
 yicesSemanticsLib.passed: semantics.conf yicesSemanticsLib
 	@$(RTH_RUN) CMD=yicesSemanticsLib INPUT=i686-test1.O3.bin $< $@
 endif
 
+# Null semantics do nothing, but we test that they compile and run
+noinst_PROGRAMS += nullSemantics
+nullSemantics_SOURCES = semantics.C
+nullSemantics_CPPFLAGS = -DPOLICY_SELECTOR=5
+nullSemantics_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+STATIC_TEST_TARGETS += nullSemantics.passed
+EXTRA_DIST += semantics.conf nullSemantics.ans
+nullSemantics.passed: semantics.conf nullSemantics
+	@$(RTH_RUN) CMD=nullSemantics INPUT=i686-test1.O3.bin $< $@
+
+# Multi-domain semantics
+noinst_PROGRAMS += multiSemantics
+multiSemantics_SOURCES = semantics.C
+multiSemantics_CPPFLAGS = -DPOLICY_SELECTOR=6
+multiSemantics_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+STATIC_TEST_TARGETS += multiSemantics.passed
+EXTRA_DIST += semantics.conf multiSemantics.ans
+multiSemantics.passed: semantics.conf multiSemantics
+	@$(RTH_RUN) CMD=multiSemantics INPUT=i686-test1.O3.bin $< $@
+
+# Interval semantics
+noinst_PROGRAMS += intervalSemantics
+intervalSemantics_SOURCES = semantics.C
+intervalSemantics_CPPFLAGS = -DPOLICY_SELECTOR=7
+intervalSemantics_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+STATIC_TEST_TARGETS += intervalSemantics.passed
+EXTRA_DIST += semantics.conf intervalSemantics.ans
+intervalSemantics.passed: semantics.conf intervalSemantics
+	@$(RTH_RUN) CMD=intervalSemantics INPUT=i686-test1.O3.bin $< $@
 
 # Disassembles an executable according to various command-line switches.
 noinst_PROGRAMS += disassemble
 disassemble_SOURCES = disassemble.C linux_syscalls.C
 disassemble_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-STATIC_TEST_TARGETS += disassemble.passed assembler.passed
+#STATIC_TEST_TARGETS += disassemble.passed assembler.passed
+STATIC_TEST_TARGETS += disassemble.passed
 EXTRA_DIST += disassemble.conf disassemble.ans assembler.conf
 disassemble.passed: disassemble.conf disassemble
 	@$(RTH_RUN) INPUT=i686-test1.O0.bin $< $@
-assembler.passed: assembler.conf disassemble
-	@$(RTH_RUN) $< $@
+#assembler.passed: assembler.conf disassemble
+#	@$(RTH_RUN) $< $@
 
 
 # Disassemble a file containing bare instructions
@@ -334,6 +415,29 @@ testLibraryDb.passed: testLibraryDb.conf testLibraryDb
 	@$(RTH_RUN) $< $@
 endif
 
+# Tests reading import sections from PE files
+noinst_PROGRAMS += testPeImports
+testPeImports_SOURCES = testPeImports.C
+testPeImports_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+STATIC_TEST_TARGETS += testPeImports.passed
+EXTRA_DIST += testPeImports.conf testPeImports.ans
+testPeImports.passed: testPeImports.conf testPeImports
+	@$(RTH_RUN) INPUT=proxycfg.exe $< $@
+
+# Symbolic semantics test from Cory Cohen that triggers a reference-counting bug.
+noinst_PROGRAMS += cory001
+cory001_SOURCES = cory001.C
+cory001_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+STATIC_TEST_TARGETS += cory001.passed
+EXTRA_DIST += cory001.conf
+cory001.passed: cory001.conf cory001
+	@$(RTH_RUN) CMD=./cory001 $< $@
+
+# Binary CFG test from Cory Cohen that doesn't compile.  This is only a linking test--do not run it.
+noinst_PROGRAMS += cory002
+cory002_SOURCES = cory002.C
+cory002_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+
 ###############################################################################################################################
 # DEMOS
 #
@@ -389,11 +493,11 @@ demo_findConstantsABI: findConstantsABI demo_findConstants
 	@echo; echo; echo "Demo for $<"; echo
 	./findConstantsABI $(BINARY_SAMPLES)/i686-test1.O3.bin
 
-demo_virtualMachineSemantics: virtualMachineSemantics demo_findConstantsABI
+demo_partialSymbolicSemantics: partialSymbolicSemantics demo_findConstantsABI
 	@echo; echo; echo "Demo for $<"; echo
-	./virtualMachineSemantics $(BINARY_SAMPLES)/i686-test1.O3.bin
+	./partialSymbolicSemantics $(BINARY_SAMPLES)/i686-test1.O3.bin
 
-demo_symbolicSemantics: symbolicSemantics demo_virtualMachineSemantics
+demo_symbolicSemantics: symbolicSemantics demo_partialSymbolicSemantics
 	: no demo yet for symbolicSemantics
 
 demo_yicesSemanticsExe: yicesSemanticsExe demo_symbolicSemantics

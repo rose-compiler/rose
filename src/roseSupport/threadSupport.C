@@ -297,7 +297,7 @@ RTS_rwlock_unlock(RTS_rwlock_t *lock)
         }
 
         if (0==lock->nlocks) {
-            int status = pthread_rwlock_unlock(&lock->rwlock);
+            int status __attribute__((unused)) = pthread_rwlock_unlock(&lock->rwlock);
             assert(0==status);
             RTS_releasing(lock->layer);
         }
@@ -517,7 +517,7 @@ RTS_Message::brief_begin(const char *fmt, ...)
         *eol = '\0';
 
     /* Obtain lock; to be released by brief_end() */
-    int err = RTS_rwlock_wrlock(&rwlock);
+    int err __attribute((unused)) = RTS_rwlock_wrlock(&rwlock);
     assert(0==err);
 
     fputc('[', f);
@@ -551,7 +551,7 @@ RTS_Message::brief_end(const char *fmt, ...)
     fputc(']', f);
     sol = false;
 
-    int err = RTS_rwlock_unlock(&rwlock);
+    int err __attribute__((unused)) = RTS_rwlock_unlock(&rwlock);
     assert(0==err);
 }
 

@@ -1,0 +1,20 @@
+module test_mod
+   integer :: x(6)[*]
+end module test_mod
+
+program test5
+  use test_mod
+  integer rank
+
+  rank = team_rank()
+  x = 123
+
+  if (rank == 1) then
+       if (x(1) == 123) then 
+          write(*, '(A)') "OK"
+       else 
+         print *,"test5 failed"
+       endif
+  endif
+end 
+

@@ -81,7 +81,7 @@ corresponding C type is union name defaults to YYSTYPE.
         FOR MASTER CRITICAL BARRIER ATOMIC FLUSH 
         THREADPRIVATE PRIVATE COPYPRIVATE FIRSTPRIVATE LASTPRIVATE SHARED DEFAULT NONE REDUCTION COPYIN 
         TASK TASKWAIT UNTIED COLLAPSE AUTO
-        '(' ')' ',' ':' '+' '*' '-' '&' '^' '|' LOGAND LOGOR
+        '(' ')' ',' ':' '+' '*' '-' '&' '^' '|' LOGAND LOGOR SHLEFT SHRIGHT PLUSPLUS MINUSMINUS PTR_TO '.'
         LE_OP2 GE_OP2 EQ_OP2 NE_OP2 RIGHT_ASSIGN2 LEFT_ASSIGN2 ADD_ASSIGN2
         SUB_ASSIGN2 MUL_ASSIGN2 DIV_ASSIGN2 MOD_ASSIGN2 AND_ASSIGN2 
         XOR_ASSIGN2 OR_ASSIGN2
@@ -92,8 +92,13 @@ corresponding C type is union name defaults to YYSTYPE.
 
 /* nonterminals names, types for semantic values
  */
-%type <ptype> expression assignment_expr equality_expr unary_expr 
-              relational_expr  
+%type <ptype> expression assignment_expr conditional_expr 
+              logical_or_expr logical_and_expr
+              inclusive_or_expr exclusive_or_expr and_expr
+              equality_expr relational_expr
+              shift_expr additive_expr multiplicative_expr 
+              primary_expr incr_expr unary_expr
+
 %type <itype> schedule_kind
 
 /* start point for the parsing */
@@ -511,11 +516,14 @@ reduction_operator
    */       
 /* expression: { omp_parse_expr(); } EXPRESSION { if (!addExpression((const char*)$2)) YYABORT; }
 */
+/* Sara Royuela, 04/27/2012
+ * Extending grammar to accept coditional expressions, arithmetic and bitwise expressions and member accesses
+ */
 expression: assignment_expr
 
-/* TODO conditional_expr */
 assignment_expr
-        : equality_expr 
+        : conditional_expr
+        | logical_or_expr 
         | unary_expr '=' assignment_expr 
         {
           current_exp = SageBuilder::buildAssignOp(
@@ -597,6 +605,72 @@ assignment_expr
         }
         ;
 
+conditional_expr
+        : logical_or_expr '?' assignment_expr ':' assignment_expr
+        {
+          current_exp = SageBuilder::buildConditionalExp(
+                      (SgExpression*)($1),
+                      (SgExpression*)($3),
+                      (SgExpression*)($5));
+          $$ = current_exp;
+        }
+        ;
+
+logical_or_expr
+        : logical_and_expr
+        | logical_or_expr LOGOR logical_and_expr
+          {
+            current_exp = SageBuilder::buildOrOp(
+                      (SgExpression*)($1),
+                      (SgExpression*)($3));
+            $$ = current_exp;
+          }
+          ;
+
+logical_and_expr
+        : inclusive_or_expr
+        | logical_and_expr LOGAND inclusive_or_expr
+          {
+            current_exp = SageBuilder::buildAndOp(
+                      (SgExpression*)($1),
+                      (SgExpression*)($3));
+            $$ = current_exp;
+          }
+          ;
+
+inclusive_or_expr
+          : exclusive_or_expr
+          | inclusive_or_expr '|' exclusive_or_expr
+          {
+            current_exp = SageBuilder::buildBitOrOp(
+                      (SgExpression*)($1),
+                      (SgExpression*)($3));
+            $$ = current_exp;
+          }
+          ;
+
+exclusive_or_expr
+          : and_expr
+          | exclusive_or_expr '^' and_expr
+          {
+            current_exp = SageBuilder::buildBitXorOp(
+                      (SgExpression*)($1),
+                      (SgExpression*)($3));
+            $$ = current_exp;
+          }
+          ;  
+
+and_expr
+          : equality_expr
+          | and_expr '&' equality_expr
+          {
+            current_exp = SageBuilder::buildBitAndOp(
+                      (SgExpression*)($1),
+                      (SgExpression*)($3));
+            $$ = current_exp;
+          }
+          ;  
+
 equality_expr
         : relational_expr
         | equality_expr EQ_OP2 relational_expr
@@ -616,30 +690,30 @@ equality_expr
         ;
               
 relational_expr
-                : unary_expr
-                | relational_expr '<' unary_expr 
-                  { 
+                : shift_expr
+                | relational_expr '<' shift_expr 
+                { 
                     current_exp = SageBuilder::buildLessThanOp(
                       (SgExpression*)($1),
                       (SgExpression*)($3)); 
                     $$ = current_exp; 
                   //  std::cout<<"debug: buildLessThanOp():\n"<<current_exp->unparseToString()<<std::endl;
-                  }
-                | relational_expr '>' unary_expr
+                }
+                | relational_expr '>' shift_expr
                 {
                     current_exp = SageBuilder::buildGreaterThanOp(
                       (SgExpression*)($1),
                       (SgExpression*)($3)); 
                     $$ = current_exp; 
                 }
-                | relational_expr LE_OP2 unary_expr
+                | relational_expr LE_OP2 shift_expr
                 {
                     current_exp = SageBuilder::buildLessOrEqualOp(
                       (SgExpression*)($1),
                       (SgExpression*)($3)); 
                     $$ = current_exp; 
                 }
-                | relational_expr GE_OP2 unary_expr
+                | relational_expr GE_OP2 shift_expr
                 {
                     current_exp = SageBuilder::buildGreaterOrEqualOp(
                       (SgExpression*)($1),
@@ -648,16 +722,121 @@ relational_expr
                 }
                 ;
 
-/* simplified unary expression, simplest integer constant here */
+shift_expr
+                : additive_expr
+                | shift_expr SHRIGHT additive_expr
+                {
+                    current_exp = SageBuilder::buildRshiftOp(
+                      (SgExpression*)($1),
+                      (SgExpression*)($3)); 
+                    $$ = current_exp; 
+                }
+                | shift_expr SHLEFT additive_expr
+                {
+                    current_exp = SageBuilder::buildLshiftOp(
+                      (SgExpression*)($1),
+                      (SgExpression*)($3)); 
+                    $$ = current_exp; 
+                };
+
+additive_expr
+                : multiplicative_expr
+                | additive_expr '+' multiplicative_expr
+                {
+                    current_exp = SageBuilder::buildAddOp(
+                      (SgExpression*)($1),
+                      (SgExpression*)($3)); 
+                    $$ = current_exp; 
+                }
+                | additive_expr '-' multiplicative_expr
+                {
+                    current_exp = SageBuilder::buildSubtractOp(
+                      (SgExpression*)($1),
+                      (SgExpression*)($3)); 
+                    $$ = current_exp; 
+                }
+                ;
+
+multiplicative_expr
+                : primary_expr
+                | additive_expr '*' multiplicative_expr
+                {
+                    current_exp = SageBuilder::buildMultiplyOp(
+                      (SgExpression*)($1),
+                      (SgExpression*)($3)); 
+                    $$ = current_exp; 
+                }
+                | additive_expr '/' multiplicative_expr
+                {
+                    current_exp = SageBuilder::buildDivideOp(
+                      (SgExpression*)($1),
+                      (SgExpression*)($3)); 
+                    $$ = current_exp; 
+                }
+                | additive_expr '%' multiplicative_expr
+                {
+                    current_exp = SageBuilder::buildModOp(
+                      (SgExpression*)($1),
+                      (SgExpression*)($3)); 
+                    $$ = current_exp; 
+                }                
+                ;
+
+primary_expr
+                : unary_expr
+                | '(' expression ')'
+                {
+                  $$ = current_exp;
+                } 
+                | incr_expr;
+                ;
+
+incr_expr
+                : PLUSPLUS unary_expr
+                {
+                    current_exp = SageBuilder::buildPlusPlusOp(
+                      (SgExpression*)($2),
+                      SgUnaryOp::prefix); 
+                    $$ = current_exp; 
+                }
+                | unary_expr PLUSPLUS
+                {
+                    current_exp = SageBuilder::buildPlusPlusOp(
+                      (SgExpression*)($1),
+                      SgUnaryOp::postfix); 
+                    $$ = current_exp; 
+                }
+                | MINUSMINUS unary_expr
+                {
+                    current_exp = SageBuilder::buildMinusMinusOp(
+                      (SgExpression*)($2),
+                      SgUnaryOp::prefix); 
+                    $$ = current_exp; 
+                }
+                | unary_expr MINUSMINUS
+                {
+                    current_exp = SageBuilder::buildMinusMinusOp(
+                      (SgExpression*)($1),
+                      SgUnaryOp::postfix); 
+                    $$ = current_exp; 
+                }
+                ;
+  
+
 unary_expr
                 : ICONSTANT 
-                  {current_exp = SageBuilder::buildIntVal($1); 
-                    $$ = current_exp; }
+                {
+                    current_exp = SageBuilder::buildIntVal($1); 
+                    $$ = current_exp; 
+                }
                 | ID_EXPRESSION 
-                  { current_exp = SageBuilder::buildVarRefExp(
+                { 
+                    current_exp = SageBuilder::buildVarRefExp(
                       (const char*)($1),SageInterface::getScope(gNode)); 
-                    $$ = current_exp; }
+                    $$ = current_exp; 
+                }
                 ;
+                
 /* ----------------------end for parsing expressions ------------------*/
 /*  in C
     variable-list: identifier

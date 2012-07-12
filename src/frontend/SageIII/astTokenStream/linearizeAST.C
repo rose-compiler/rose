@@ -58,13 +58,13 @@ class PostAST : public SgBottomUpProcessing<PostSynthesizedAttribute>
 
 
               synthesizedAttributeList.size();
-              for( int i = 0 ; i < synthesizedAttributeList.size(); i++ )
+              for( size_t i = 0 ; i < synthesizedAttributeList.size(); i++ )
               {
                 if( isSgConditionalExp(astNode) != NULL && 
                     i==1 )
                   synAttrib.nodes.push_back(astNode);
 
-                for(int j = 0; j < synthesizedAttributeList[i].nodes.size(); j++)
+                for(size_t j = 0; j < synthesizedAttributeList[i].nodes.size(); j++)
                   synAttrib.nodes.push_back(synthesizedAttributeList[i].nodes[j]);
 
               }
@@ -99,7 +99,7 @@ class PostAST : public SgBottomUpProcessing<PostSynthesizedAttribute>
 
               if( synthesizedAttributeList.size() >= 2 )
               {
-                for(int i = 0; i < synthesizedAttributeList[1].nodes.size();
+                for(size_t i = 0; i < synthesizedAttributeList[1].nodes.size();
                     i++ )
                   synAttrib.nodes.push_back(synthesizedAttributeList[1].nodes[i]);
 
@@ -169,7 +169,7 @@ LinearizeAST::evaluateInheritedAttribute (
             inheritedAttribute.mustBeInherited=true;
             PostAST postAST;
             std::vector<SgNode*> inSubTree = postAST.traversePreorder(astNode);
-            for(int i = 0 ; i < inSubTree.size(); i++)
+            for(size_t i = 0 ; i < inSubTree.size(); i++)
               nodes.push_back(inSubTree[i]);
 
          }else{

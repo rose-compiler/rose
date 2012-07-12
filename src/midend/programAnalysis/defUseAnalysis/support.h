@@ -53,6 +53,11 @@ class Support {
    * must be the same for all retrievals, so that
    * analyses work.
    * *****************************************/
+#if 1
+ // DQ (6/25/2011): Moved function definition to source file (function definitions should not be in the header files).
+    std::string getAppName(SgFunctionDeclaration* functionDeclaration);
+#else
+ // std::string Support::getAppName(SgFunctionDeclaration* functionDeclaration);
   ::std::string getAppName(SgFunctionDeclaration* functionDeclaration) {
     std::string nodeNameApp = "";
     std::vector<SgNode*> children = functionDeclaration->get_parameterList()->get_traversalSuccessorContainer();
@@ -70,12 +75,17 @@ class Support {
     std::string retVal = "("+nodeNameApp+")"; //+"-"+NodeToString(functionDeclaration);
     return retVal;
   }
-
+#endif
 
   std::string getFileNameString(std::string src) {
     return src;
   }
 
+#if 1
+ // DQ (6/25/2011): Moved function definition to source file (function definitions should not be in the header files).
+    std::string getFullName(SgFunctionDefinition* functionDef);
+#else
+// std::string Support::getFullName(SgFunctionDefinition* functionDef);
   std::string getFullName(SgFunctionDefinition* functionDef) {
     SgFunctionDeclaration* functionDeclaration = functionDef->get_declaration();
     ::std::string fullName = functionDeclaration->get_qualified_name().str();
@@ -91,7 +101,7 @@ class Support {
     fullName = fullName+getAppName(functionDeclaration);
     return fullName;
   }
-
+#endif
 };
 
 #endif

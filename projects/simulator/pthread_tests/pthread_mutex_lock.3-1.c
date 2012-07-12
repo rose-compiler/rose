@@ -98,6 +98,7 @@ sem_t semsig2;
 unsigned long count_sig=0;
 #endif
 sem_t semsync;
+sem_t start_of_test;
 
 typedef struct 
 {
@@ -155,6 +156,18 @@ void * threaded(void * arg)
 	pthread_mutex_t m[5];
 	int i;
 	int ret;
+
+#if 0
+        /* Demonstrate race in native code as originally written.  If this thread takes long enough to install signal handlers,
+         * then it's sibling threads will start firing SIGUSR1 and SIGUSR2 at us before we're reading, causing premature death
+         * and failure of the test.   I've added the start_of_test semaphore to remedy this. [RPM 2012-01-24] */
+        struct timespec tv, rem;
+        tv.tv_sec = 4;
+        tv.tv_nsec = 0;
+        while (-1==nanosleep(&tv, &rem) && EINTR==errno)
+            tv = rem;
+#endif
+        
 	
 	/* We need to register the signal handlers */
 	struct sigaction sa;
@@ -166,6 +179,10 @@ void * threaded(void * arg)
 	sa.sa_handler = sighdl2;
 	if ((ret = sigaction (SIGUSR2, &sa, NULL)))
 	{ UNRESOLVED(ret, "Unable to register signal handler2"); }
+
+        /* Tell the main thread that we're ready */
+        if (-1==sem_post(&start_of_test))
+            UNRESOLVED(errno, "start_of_test post");
  	
 	/* Initialize the different mutex */
 	pma[4]=NULL;
@@ -302,13 +319,19 @@ int main (int argc, char * argv[])
 	
 	if ((sem_init(&semsync, 0, 0)))
 	{ UNRESOLVED(errno, "semsync init"); }
+        if (sem_init(&start_of_test, 0, 0))
+            UNRESOLVED(errno, "start_of_test init");
 
 	#if VERBOSE >1
 	output("Starting the worker thread\n");
 	#endif
 	if ((ret = pthread_create(&th_work, NULL, threaded, NULL)))
 	{ UNRESOLVED(ret, "Worker thread creation failed"); }
-	
+
+        /* wait for other thread to indicate that it has installed signal handlers */
+        if (-1==sem_wait(&start_of_test))
+            UNRESOLVED(errno, "start of test wait");
+
 	arg1.thr = &th_work;
 	arg2.thr = &th_work;
 	arg1.sig = SIGUSR1;

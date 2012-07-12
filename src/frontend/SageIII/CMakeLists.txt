@@ -12,6 +12,7 @@ add_subdirectory(virtualCFG)
 add_subdirectory(astTokenStream)
 add_subdirectory(astHiddenTypeAndDeclarationLists)
 add_subdirectory(astVisualization)
+add_subdirectory(includeDirectivesProcessing)
 
 
 ########### next target ###############
@@ -295,7 +296,6 @@ install(FILES  Cxx_Grammar.h  rosedll.h   Cxx_GrammarMemoryPoolSupport.h     Cxx
 ## AstAttributeDOT.h
 ## astGraph.h
 ## astGraphTemplate.C
-## sageSupport.h
 ## C++_include_files.h
 #
 #clean-local:

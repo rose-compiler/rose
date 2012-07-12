@@ -1,0 +1,35 @@
+program test
+
+   type mytype 
+     integer :: i
+   end type mytype
+
+   type (mytype),allocatable:: X[*]
+   integer :: i
+   integer :: rank
+   integer :: partner_0 
+
+   rank = team_rank()
+   partner_0 = team_size() - 1
+
+   allocate(X[])
+
+   X%i = rank
+  
+   call team_barrier()
+
+   if  (rank .eq. partner_0) then 
+        X[0]%i = X%i
+   endif 
+
+   call team_barrier()
+
+   if  (rank .eq. 0) then 
+       if (X%i .eq. partner_0) then
+           write(*, '(A)') "derived type coarray test2 OK."
+       else 
+          write(*, '(A)') "derived type coarray test2 failed"
+       endif 
+   endif
+
+end 

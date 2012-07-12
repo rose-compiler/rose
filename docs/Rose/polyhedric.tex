@@ -1,78 +1,26 @@
-\chapter{Dependence analysis and Polyhedric Model}
+\chapter{Polyhedral Model}
 \label{polyhedric:polyhedric}
 
-	This chapter reffers to the project PolyhedralDependenceAnalysis. We first see the project content
-\ref{polyhedric:insideproject}, then how to enable the different components in Rose \ref{polyhedric:getstarted}, at the point
-we will present the underlying maths \ref{polyhedric:maths} with a simple example \ref{polyhedric:maths:example}, finally we
-will see one purpose of this project: generating affine schedule for Affine Control Loop (ACL) programs \ref{polyhedric:schedule}.
+	This chapter reffers to the project PolyhedralModel.
 
 	\section{What can I find in this project ?}
 	\label{polyhedric:insideproject}
 	
-	Each subsection is related to a subdirectory in the project.
+	The project come with a doxygen documentation:
 	
-		\subsection{RoseToFada}
+	\$ cd projects/PolyhedralModel/docs \\
+	\$ doxygen doxy.conf
 	
-	The project's subdirectory RoseToFada contains a translator from Rose IR (SageIII) to FadaLib IR.\\
-	FADAlib \cite{FADAweb} is an implementation of Fuzzy Array Dependence Analysis \cite{FADA}. FADA is an 
-analysis for non static control programs (or irregular programs).\\
-	Here, we reduce the scope of the transformation to static control programs \cite{Feautrier} to fit with 
-following part. It means that support of conditionals and while-loops is not implement (but can be).\\
-	Also, the translation don't address structure and complex-types.\\
-	
-	So, the subset of C that is address by this analysis contains only:
-\begin{itemize}
-	\item for-loop: for $(i = a; i \leq b; i++)$
-	\item scalar variable
-	\item array reference with index that are affine application: $a[i + 2 \times j][3 \times i + 5]$
-\end{itemize}
-	
-		\subsection{PMDAtoMDA}
-	
-	Pseudo-multidimensional arrays are frequently used, but this representation is out of the scope of FADAlib
-(array index are not an affine application: $a[i \times n + j]$).\\
-
-	The component PMDAtoMDA can traverse a function in Rose IR and add an attribute to all pseudo-multidimensional
-array. This attribute can generate (in Rose IR) each component of the correspondant access vector.\\
-	But, we need $tab[i \times n \times m + j \times n + k]$ instead of 
-$tab[i][j][k]$ for an array of dimension $[X, m, n]$ (i, j, k can be any affine form of the iterators).
-	
-		\subsection{RoseToPPL}
-		
-	Parma Polyhedral Library \cite{PPL} is a C++, object-oriented polyhedron manipulation library.\\
-	This component generate a polyhedral representation of dependences from FadaLib analysis.
-	
-		\subsection{Schedule}
-		
-	It's an experimental implementation of the Farkas Multipliers Method to obtains the space (polyhedron) of 
-valid schedule with respect to the dependances found by the Fuzzy Array Dependence Analysis.
-
 	\section{What I need to compile this project with Rose ?}
 	\label{polyhedric:getstarted}
 
-	Pseudo-multidimensional array related part has no extra-dependences.
+	To enable the Polyhedral Model project, you need PPL (Parma Polyhedra Library) (May 2011: version 0.11.2). The configure options are: \\
+	\emph{--enable-ppl --with-ppl=[path to PPL]}\\
 	
-		\subsection{RoseToFada}
+	Code generation is one of the main future of this project. It needs the library Cloog (Chunky Loop Generator) (May 2011: version 0.16.2). The configure options are: \\
+	\emph{--enable-cloog --with-cloog=[path to Cloog]}\\
 	
-	FadaLib \cite{FADAweb} is needed and depend from PipLib (Parametric Integer Programming Library)
-\cite{PIP}.
-	You need to add following options to configure script:
-\begin{verbatim}
---with-pip=PATH
---with-fada=PATH
---enable-fadalib=yes
-\end{verbatim}
-	
-		\subsection{RoseToPPL and Schedule}
-
-	Theses components depend from RoseToFada.\\
-	Both use Parma Polyhedral Library \cite{PPL} to represent polyhedrons.\\
-	You need to add following options to configure script:
-\begin{verbatim}
---with-ppl=PATH
---enable-ppl=yes
-\end{verbatim}
-		
+	Some other works depend on ScopLib and Candl, they can be enable by the same kind of options.
 
 	\section{And now a few maths !}
 	\label{polyhedric:maths}
@@ -496,17 +444,3 @@ $$\Theta_{S_{2}}(i, j, n) = \alpha_{S_{2}}^{1} \times i + \alpha_{S_{2}}^{2} \ti
 			\subsubsection{Dimension of the Valid Schedule space}
 
 
-
-		\subsection{The Code Generation Problem}
-		
-		
-
-%		\subsection{Reducing the number of Valid Schedule}
-%
-%			\subsubsection{Some heuristics}
-%
-%	Previous work (...) have introduced some heuristic to diminish the number of valid schedule (that may be infinite).
-%
-%			\subsubsection{Architectural Constraints}
-%			
-%	...

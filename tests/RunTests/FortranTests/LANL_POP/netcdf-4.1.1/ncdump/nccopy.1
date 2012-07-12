@@ -1,0 +1,105 @@
+.\" $Header: /upc/share/CVS/netcdf-3/ncdump/nccopy.1,v 1.7 2009/12/09 13:49:31 russ Exp $
+.TH NCCOPY 1 "$Date: 2009/12/09 13:49:31 $" "Printed: \n(yr-\n(mo-\n(dy" "UNIDATA UTILITIES"
+.SH NAME
+nccopy \- Copy a netCDF file to specified variant of netCDF format
+.SH SYNOPSIS
+.ft B
+.HP
+nccopy
+.nh
+\%[-k n]
+\%\fIinfile\fP
+\%\fIoutfile\fP
+.hy
+.ft
+.SH DESCRIPTION
+\fBnccopy\fP
+copies an input netCDF file (in any of the four format variants) to an
+output netCDF file, in any of the four format variants, if possible.
+For example, if built with the netCDF-3 library, a netCDF classic file
+may be copied to a netCDF 64-bit offset file, permitting larger
+variables.
+If built with the netCDF-4 library, a netCDF classic file may be
+copied to a netCDF-4 file or to a netCDF-4 classic 
+model file as well, permitting later efficient schema changes, larger
+variable sizes, adding variables that use compressed or chunked
+storage, and use of other netCDF-4 features in case the output uses
+the enhanced netCDF model.
+.LP
+\fBnccopy\fP also serves as an example of a generic netCDF-4 program,
+with its ability to read any valid netCDF file and handle nested
+groups, strings, and any user-defined types, including arbitrarily
+nested compound types, variable-length types, and data of any valid
+netCDF-4 type.  Other generic utility programs can make use of parts
+of \fBnccopy\fP for more complex operations on netCDF data.
+.LP
+As of NetCDF version 4.1, and if DAP support was enabled when \fBnccopy\fP
+was built, the file name may specify a DAP URL. This allows \fBnccopy\fP
+to convert data on DAP servers to local netCDF files.
+.SH OPTIONS
+.IP "\fB-k \fRfile_format\fP"
+Specifies the kind of file to be created and, by inference,
+the data model (i.e. netcdf-3 (classic) versus
+netcdf-4 (enhanced)).
+The possible arguments are as follows.
+.RS
+.RS
+.IP "'1', 'classic' => netcdf classic file format, netcdf-3 type model."
+.IP "'2', '64-bit-offset', '64-bit offset' => netcdf 64 bit classic file format, netcdf-3 type model."
+.IP "'3', 'hdf5', 'netCDF-4', 'enhanced' => netcdf-4 file format, netcdf-4 type model."
+.IP "'4', 'hdf5-nc3', 'netCDF-4 classic model', 'enhanced-nc3' => netcdf-4 file format, netcdf-3 type model."
+.RE
+.RE
+If no value for -k is specified, then the output will use the same
+format as the input.  Note that attempting some kinds of format
+conversion will result in an error, if the conversion is not
+possible.  For example, an attempt to copy a netCDF-4 file that uses
+features of the enhanced model to any of the other kinds of netCDF
+formats that use the classic model will result an error.
+.IP "\fB-m \fIcopy_buffer_size\fP"
+Specifies the size, in bytes, of the copy buffer used to
+to copy large variables, by copying them in smaller pieces, each no
+larger than \fIcopy_bufer_size\fP.  The default is 5,000,000 bytes,
+but will be increased if necessary to hold at least one chunk of
+netCDF-4 chunked variables.  You may want to make
+it larger than the default for OPeNDAP copies of large files over high
+latency networks. 
+.SH EXAMPLES
+.LP
+Make a copy of foo1.nc, a netCDF file of any type, to foo2.nc, a
+netCDF file of the same type:
+.RS
+.HP
+nccopy foo1.nc foo2.nc
+.RE
+Note that the above copy will not be as fast as use of a
+simple copy utility, because the file is copied structurally, using only the netCDF
+API.  This means, for example, that if the input file has extra bytes
+after the end of the
+netCDF data, those will not be copied, because they are not accessible
+through the netCDF interface.  If the original file was generated in
+`No fill' mode so that fill values are not stored for padding for data
+alignment, the output file may have different padding bytes.
+.LP
+Convert a netCDF-4 classic model file, compressed.nc, that uses compression,
+to a netCDF-3 file classic.nc:
+.RS
+.HP
+nccopy -k classic compressed.nc classic.nc
+.RE
+Note that `1' could be used instead of `classic'.
+.LP
+Download the variable `time_bnds' and it's associated attributes from
+an OPeNDAP server and copy the result to a netCDF file named `tb.nc':
+.RS
+.HP
+nccopy 'http://test.opendap.org/opendap/data/nc/sst.mnmean.nc.gz?time_bnds' tb.nc
+.RE
+Note that URLs that name specific variables as command-line arguments
+should generally be quoted, to avoid the shell interpreting special
+characters such as `?'.
+.SH "SEE ALSO"
+.LP
+.BR ncdump(1), ncgen (1),
+.BR netcdf (3)
+

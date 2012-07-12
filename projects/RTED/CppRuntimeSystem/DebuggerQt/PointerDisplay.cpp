@@ -6,19 +6,34 @@
 
 #include <QIcon>
 
+#include "ptrops_operators.h"
 
 
-PointerDisplay::PointerDisplay(PointerInfo * pi_)
+QVariant as_QVariant(Address addr)
+{
+  std::stringstream out;
+
+  out << addr;
+
+  return QVariant(out.str().c_str());
+}
+
+QVariant as_QVariant(Address addr, std::string prefix)
+{
+  std::stringstream out;
+
+  out << prefix << addr;
+
+  return QVariant(out.str().c_str());
+}
+
+PointerDisplay::PointerDisplay(const PointerInfo* pi_)
     : pi(pi_)
 {
     typedef PropertyValueNode Pvn;
-    QString srcAddr    = QString("0x%1").arg(pi->getSourceAddress(),0,16);
-    QString targetAddr = QString("0x%1").arg(pi->getTargetAddress(),0,16);
 
-
-
-    addChild( new Pvn("Source Address", srcAddr));
-    addChild( new Pvn("Target Address", targetAddr));
+    addChild( new Pvn("Source Address", as_QVariant(pi->getSourceAddress())) );
+    addChild( new Pvn("Target Address", as_QVariant(pi->getTargetAddress())) );
 
     addChild( RsTypeDisplay::build(pi->getBaseType(),-1,"Base Type"));
 }
@@ -30,14 +45,14 @@ QVariant PointerDisplay::data(int role, int column) const
     {
         if(column == 0)
         {
-            VariablesType * vt = pi->getVariable();
+            const VariablesType * vt = pi->getVariable();
             if(vt)
                 return vt->getName().c_str();
             else
-                return "Memory " + QString("0x%1").arg(pi->getSourceAddress(),0,16) ;
+                return as_QVariant(pi->getSourceAddress(), "Memory ");
         }
         if(column ==1)
-            return  QString("Source Addr: 0x%1").arg(pi->getSourceAddress(),0,16);
+            return as_QVariant(pi->getSourceAddress(), "Source Addr: ");
 
     }
     /*
@@ -69,4 +84,3 @@ PointerDisplay * PointerDisplay::build(PointerManager * pm)
     return root;
 
 }
-

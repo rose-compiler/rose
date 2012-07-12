@@ -6,10 +6,8 @@
 #include "AsmUnparser_compat.h"
 #include "rose_getline.h"
 
-#define __STDC_FORMAT_MACROS
 #include <errno.h>
 #include <fcntl.h>
-#include <inttypes.h>
 
 AssemblerX86::InsnDictionary AssemblerX86::defns;
 
@@ -572,9 +570,11 @@ AssemblerX86::matches(OperandDefn od, SgAsmExpression *expr, SgAsmInstruction *i
             throw Exception("operand types ptr16:16, ptr16:32, ptr16:64 not implemented", insn);
 
         case od_m16_16:
+            return mre && isSgAsmTypeWord(mre->get_type());
         case od_m16_32:
+            return mre && isSgAsmTypeDoubleWord(mre->get_type());
         case od_m16_64:
-            throw Exception("operand types m16:16, m16:32, m16:64 not implemented", insn);
+            return mre && isSgAsmTypeQuadWord(mre->get_type());
 
         case od_reg:
             throw Exception("operand type reg not implemented", insn);
@@ -669,10 +669,14 @@ AssemblerX86::matches(OperandDefn od, SgAsmExpression *expr, SgAsmInstruction *i
             throw Exception("m128 not implemented", insn);
 
         case od_m16a16:
-        case od_m16a32:
+            return mre && isSgAsmTypeWord(mre->get_type());
+
         case od_m32a32:
+            return mre && isSgAsmTypeDoubleWord(mre->get_type());
+
+        case od_m16a32:
         case od_m16a64:
-            throw Exception("m16&16, m16&32, m32&32, m16&64 not implemented", insn);
+            throw Exception("operand types m16&32 and m16&64 not implemented", insn);
 
         case od_moffs8:
             if (mre && isSgAsmTypeByte(mre->get_type()) && isSgAsmValueExpression(mre->get_address())) {
@@ -974,6 +978,9 @@ AssemblerX86::build_modrm(const InsnDefn *defn, SgAsmx86Instruction *insn, size_
         case od_m64fp:
         case od_m80fp:
         case od_m2byte:
+        case od_m16_16:
+        case od_m16_32:
+        case od_m16_64:
             break;
         default:
             throw Exception("operand does not affect ModR/M byte", insn);
@@ -1306,7 +1313,8 @@ AssemblerX86::assemble(SgAsmx86Instruction *insn, const InsnDefn *defn)
     uint8_t modrm = 0;                          /* The ModR/M byte */
     bool modrm_defined = false;                 /* True if "modrm" is defined */
     bool reg_defined = false;                   /* True if the "reg" field of the ModR/M byte is defined */
-    uint8_t sib;                                /* SIB byte */
+    bool sib_defined = false;                   /* Is a value assigned to 'sib'? */
+    uint8_t sib = 0;                            /* SIB byte */
     int64_t displacement = 0;                   /* Displacement for ModR/M, as in "DWORD PTR ds:[rip+0x216417]" */
     uint8_t rex_byte = 0;                       /* REX byte; valid only if non-zero */
     uint64_t opcode = defn->opcode;
@@ -1441,9 +1449,13 @@ AssemblerX86::assemble(SgAsmx86Instruction *insn, const InsnDefn *defn)
             case od_m64fp:
             case od_m80fp:
             case od_m2byte:
+            case od_m16_16:
+            case od_m16_32:
+            case od_m16_64:
                 if (modrm_defined)
                     throw Exception("multiple ModR/M-affecting operands", insn);
                 modrm = build_modrm(defn, insn, i, &sib, &displacement, &rex_byte);
+                sib_defined = true;
                 modrm_defined = true;
                 break;
             default:
@@ -1472,6 +1484,7 @@ AssemblerX86::assemble(SgAsmx86Instruction *insn, const InsnDefn *defn)
                         reg_defined = true;
                     } else {
                         modrm = build_modrm(defn, insn, i, &sib, &displacement, &rex_byte);
+                        sib_defined = true;
                         modrm_defined = true;
                     }
                     break;
@@ -1508,13 +1521,16 @@ AssemblerX86::assemble(SgAsmx86Instruction *insn, const InsnDefn *defn)
     /* Output ModR/M and SIB bytes */
     if (modrm_defined)
         retval.push_back(modrm);
-    if (modrm_defined && 4==modrm_rm(modrm) && 3!=modrm_mod(modrm))
+    if (modrm_defined && 4==modrm_rm(modrm) && 3!=modrm_mod(modrm)) {
+        assert(sib_defined);
         retval.push_back(sib);
+    }
 
     /* Output displacement for ModR/M */
     if (modrm_defined) {
-        if (0==modrm_mod(modrm) && 4==modrm_rm(modrm) && 5==sib_base(sib)) {
+        if (0==modrm_mod(modrm) && 4==modrm_rm(modrm) && (!sib_defined || 5==sib_base(sib))) {
             /* [disp32 + reg*scale] */
+            assert(sib_defined); /* sib_base must be 5 */
             retval.push_back(displacement & 0xff);
             retval.push_back((displacement>>8) & 0xff);
             retval.push_back((displacement>>16) & 0xff);
@@ -1704,7 +1720,7 @@ AssemblerX86::assembleOne(SgAsmInstruction *_insn)
         hf.width = 16;
         hf.pad_numeric = hf.show_chars = false;
         SgAsmExecutableFileFormat::hexdump(p_debug, insn->get_address(),  &(insn->get_raw_bytes()[0]),
-                                           insn->get_raw_bytes().size(), hf);
+                                           insn->get_size(), hf);
         fprintf(p_debug, " | %s\n", unparseInstruction(insn).c_str());
 #if 0 /*DEBUGGING*/
         fprintf(p_debug, "  baseSize=%d, operandSize=%d\n", 

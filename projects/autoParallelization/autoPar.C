@@ -103,6 +103,9 @@ main (int argc, char *argv[])
          ArrayInterface array_interface(*annot);
          array_interface.initialize(fa_body, AstNodePtrImpl(defn));
          array_interface.observe(fa_body);
+	
+	//FR(06/07/2011): aliasinfo was not set which caused segfault
+	LoopTransformInterface::set_aliasInfo(&array_interface);
        
         // X. Loop normalization for all loops within body
         NormalizeForLoop(fa_body, AstNodePtrImpl(body));

@@ -1,0 +1,1982 @@
+/home/climate/pwjones/POP/pop/newtest
+------------------------------------------------------------------------
+ 
+ Parallel Ocean Program (POP) 
+    Version 2.0 Released 25 Mar 2003
+ 
+------------------------------------------------------------------------
+------------------------------------------------------------------------
+ 
+Domain Information
+ 
+------------------------------------------------------------------------
+  Horizontal domain: nx =    192
+                     ny =    128
+  Vertical   domain: km =     20
+  Number of tracers: nt =      2
+  Block size:  nx_block =     20
+               ny_block =     20
+  Processors for baroclinic:      4
+  Processors for barotropic:      4
+  Distribution for baroclinic:  balanced
+  Distribution for barotropic: cartesian
+  Number of ghost cells:  2
+------------------------------------------------------------------------
+ 
+ Grid options
+ 
+------------------------------------------------------------------------
+ Creating horizontal grid internally
+ Using variable thickness surface layer
+ Creating vertical grid internally
+ Vertical grid:
+    k    Thickness (cm)    Depth (cm) 
+   ---   --------------   ------------
+     1     2.50000E+03     1.25000E+03
+     2     2.64260E+03     3.82130E+03
+     3     3.09971E+03     6.69245E+03
+     4     4.02127E+03     1.02529E+04
+     5     5.78509E+03     1.51561E+04
+     6     9.25386E+03     2.26756E+04
+     7     1.61941E+04     3.53996E+04
+     8     2.81654E+04     5.75793E+04
+     9     3.83614E+04     9.08427E+04
+    10     3.99766E+04     1.30012E+05
+    11     4.00000E+04     1.70000E+05
+    12     4.00000E+04     2.10000E+05
+    13     4.00000E+04     2.50000E+05
+    14     4.00000E+04     2.90000E+05
+    15     4.00000E+04     3.30000E+05
+    16     4.00000E+04     3.70000E+05
+    17     4.00000E+04     4.10000E+05
+    18     4.00000E+04     4.50000E+05
+    19     4.00000E+04     4.90000E+05
+    20     4.00000E+04     5.30000E+05
+ Generating topography internally
+ Enforcing flat-bottom topography
+ Partial bottom cells disabled
+ 
+ # surface (T,U) points       15378       15012
+ # ocean   (T,U) points      307560      300240
+ T-area,   U-area   (km**2)    3.677900966361282E+08    3.609943788495290E+08
+ T-volume, U-volume (km**3)    2.022845531692538E+09    1.985469083862655E+09
+ No region masks defined
+------------------------------------------------------------------------
+ 
+Equation of state options
+ 
+------------------------------------------------------------------------
+Using McDougall, Wright ,Jackett and Feistel EOS
+EOS computed as if in valid T,S range
+------------------------------------------------------------------------
+ 
+ Topographic stress options
+ 
+------------------------------------------------------------------------
+ Topographic stress disabled
+------------------------------------------------------------------------
+ 
+Horizontal mixing options
+ 
+------------------------------------------------------------------------
+Laplacian horizontal momentum mixing used.
+Laplacian horizontal tracer   mixing chosen.
+ 
+Laplacian momentum mixing options
+ 
+Variable horizontal momentum mixing disabled
+Horizontal viscosity computed automatically:
+   am =   3.75000E+07
+ 
+Laplacian tracer mixing options
+ 
+ Variable horizontal tracer mixing disabled
+Horizontal diffusivity computed automatically:
+   ah =   3.75000E+07
+------------------------------------------------------------------------
+ 
+Advection options
+ 
+------------------------------------------------------------------------
+Using centered leapfrog advection for tracers.
+------------------------------------------------------------------------
+ 
+    Vertical mixing options
+ 
+------------------------------------------------------------------------
+ Implicit vertical mixing enabled
+  Using Richardson number mixing
+  aidif         =   1.00000E+00
+  bottom_drag   =   1.22500E-03
+ Convection simulated by strong diffusion
+   convect_diff =  1.000E+03
+   convect_visc =  1.000E+03
+ Bottom geothermal heat flux disabled
+  bckgrnd_vvc   =   1.00000E+00
+  bckgrnd_vdc   =   1.00000E-01
+  rich_mix      =   5.00000E+01
+------------------------------------------------------------------------
+ 
+ Solver options (barotropic solver)
+ 
+------------------------------------------------------------------------
+ Solver type:
+  Preconditioned Conjugate Gradient
+ Solver converged for err <  1.00000E-12
+ Solver maximum iterations =    200
+  Solver convergence checked every     10 iterations
+ No preconditioner
+------------------------------------------------------------------------
+ 
+ Pressure gradient options
+ 
+------------------------------------------------------------------------
+ Pressure averaging enabled 
+ Density correction enabled 
+------------------------------------------------------------------------
+ 
+Baroclinic options
+ 
+------------------------------------------------------------------------
+Surface temperature reset to freezing on
+------------------------------------------------------------------------
+ 
+Ice options
+ 
+------------------------------------------------------------------------
+Ice formation disabled
+ Initial T,S profile computed internally from 1992 Levitus data
+------------------------------------------------------------------------
+ 
+Time management options
+ 
+------------------------------------------------------------------------
+ 
+Run id: your_id_here
+ 
+This simulation started from
+       date(month-day-year):  01-01-0000
+                      hour:           0
+                    minute:           0
+                    second:           0
+ 
+This run        started from
+       date(month-day-year):  01-01-0000
+                      hour:           0
+                    minute:           0
+                    second:           0
+ 
+This run will terminate 
+at 00:00:00 on
+       date(month-day-year):  01-01-0000
+after      20 timesteps
+unless a stop signal is received from external source (eg, cpl)
+ 
+Starting elapsed time in    
+                     years:             0.000
+                    months:             0.000
+                      days:             0.000
+                     hours:             0.000
+                   seconds:             0.000
+ 
+Automatic time step option (auto_dt)  enabled
+ 
+dt_count = 1.000000E+00
+There are  25 full  steps each day
+There are   2 half  steps each day
+There are  27 total steps each day
+ 
+time_mix_freq =     17
+Time mixing option:
+  avgfit -- time averaging
+  with timestep chosen to fit exactly into one day or coupling interval
+Averaging time steps are at step numbers2,17 each day
+ 
+Averaging time steps at the 2nd and    17th step of every day or coupled interval 
+ 
+Surface tracer     time step = 3.323077E+03 seconds
+Surface momentum   time step = 3.323077E+03 seconds
+Surface barotropic time step = 3.323077E+03 seconds
+ 
+Tracer acceleration disabled
+ 
+Leap years not allowed
+ 
+Implicit treatment of Coriolis terms (impcor):  ON
+ 
+------------------------------------------------------------------------
+ 
+Diagnostic options
+ 
+------------------------------------------------------------------------
+Global    diagnostics computed every        1 steps  
+Global diagnostics written to file: pop_diag.your_id_here.00000101
+CFL       diagnostics computed every        1 steps  
+CFL diagnostics written to file: pop_diag.your_id_here.00000101
+Transport diagnostics not computed
+------------------------------------------------------------------------
+ 
+Forcing options
+ 
+------------------------------------------------------------------------
+Surface Wind Stress:analytic
+Surface Wind Stress data is never interpolated
+ 
+No Surface Heat Flux
+ 
+No Surface Fresh Water Flux
+ 
+No Interior Potential Temperature Forcing
+ 
+No Interior Salinity Forcing
+ 
+No Surface Atmospheric Pressure
+ 
+------------------------------------------------------------------------
+ 
+Model coupling options
+ 
+------------------------------------------------------------------------
+------------------------------------------------------------------------
+ 
+ History output options
+ 
+------------------------------------------------------------------------
+History output disabled
+------------------------------------------------------------------------
+ 
+   Movie output options
+ 
+------------------------------------------------------------------------
+  Movie output disabled
+------------------------------------------------------------------------
+ 
+Tavg options
+ 
+------------------------------------------------------------------------
+tavg diagnostics off
+------------------------------------------------------------------------
+ 
+ Xdisplay options
+ 
+------------------------------------------------------------------------
+ Xdisplay disabled
+------------------------------------------------------------------------
+ 
+ End of initialization
+ 
+------------------------------------------------------------------------
+ 
+Step number  :        1
+Date         : 01 jan 0000
+Hour         :        0
+Minute       :       55
+Second       :       23
+Time(seconds):    3323.076923
+ 
+ max. cfl number for zonal advection          :   0.0000E+00       97   49    1
+ max. cfl number for meridional advection     :   0.0000E+00       97   49    1
+ max. cfl number for vertical advection       :   0.0000E+00       97   49    1
+ max. cfl number for total advection          :   0.0000E+00       97   49    1
+ max. cfl number for horizontal tracer mixing :   1.9701E-02       97   11    1
+ max. cfl number for horiz. momentum mixing   :   1.8165E-02       97   11    1
+ 
+K.E. diagnostics:
+ mean K.E.                     : 1.848425530323821E-03
+ K.E. change from horiz. visc. : 0.000000000000000E+00
+ K.E. change from vert.  visc. : 0.000000000000000E+00
+ K.E. change from wind stress  : 0.000000000000000E+00
+ 
+ advective K.E. balance        : 0.000000000000000E+00
+                               : 0.000000000000000E+00
+ P.E. verses pressure work     : 0.000000000000000E+00
+                               : 0.000000000000000E+00
+ surface-pressure contribution : 0.000000000000000E+00
+                               : 0.000000000000000E+00
+ 
+ Tracer diagnostics:
+ 
+ mean value  of tracer    1                  : 2.898488748196795E+00
+ abs  change in tracer    1                  : 6.488313333841374E-09
+ mean change in tracer    1                  : 5.421072874910433E-21
+ mean change in tracer    1 from advection   : 0.000000000000000E+00
+ mean change in tracer    1 from horiz. diff.: 3.241716760697784E-23
+ mean change in tracer    1 from vert.  diff.: 3.942553354114922E-25
+ mean change in tracer    1 from sources     : 0.000000000000000E+00
+ surface flux of tracer   1                  : 0.000000000000000E+00
+ 
+ mean value  of tracer    2                  : 3.472603352607500E+01
+ abs  change in tracer    2                  : 2.064350410153471E-13
+ mean change in tracer    2                  : 1.295730737017621E-22
+ mean change in tracer    2 from advection   : 0.000000000000000E+00
+ mean change in tracer    2 from horiz. diff.: 3.649995591182910E-25
+ mean change in tracer    2 from vert.  diff.: 0.000000000000000E+00
+ mean change in tracer    2 from sources     : 0.000000000000000E+00
+ surface flux of tracer   2                  : 0.000000000000000E+00
+ 
+Other diagnostics:
+ global mean sea level:  1.995490112383593E-07
+ residual, scans :  7.322399304551264E-13    70
+ 
+Timing information:
+ 
+ Time in timer: HMIX_MOMENTUM_DEL2
+Timer number  1 =       0.03 seconds
+ Time in timer: HMIX_TRACER_DEL2
+Timer number  2 =       0.04 seconds
+ Time in timer: ADVECTION_MOMENTUM
+Timer number  3 =       0.06 seconds
+ Time in timer: ADVECTION_TRACER_CENTERED
+Timer number  4 =       0.05 seconds
+ Time in timer: VMIX_COEFFICIENTS_RICH
+Timer number  5 =       0.12 seconds
+ Time in timer: VMIX_EXPLICIT_TRACER
+Timer number  6 =       0.03 seconds
+ Time in timer: VMIX_EXPLICIT_MOMENTUM
+Timer number  7 =       0.03 seconds
+ Time in timer: VMIX_IMPLICIT_TRACER
+Timer number  8 =       0.03 seconds
+ Time in timer: VMIX_IMPLICIT_MOMENTUM
+Timer number  9 =       0.02 seconds
+ Time in timer: TOTAL
+Timer number 10 =       0.90 seconds
+ Time in timer: STEP
+Timer number 11 =       0.90 seconds
+ Time in timer: BAROCLINIC
+Timer number 12 =       0.65 seconds
+ Time in timer: BAROTROPIC
+Timer number 13 =       0.13 seconds
+ 
+Step number  :        2
+Date         : 01 jan 0000
+Hour         :        1
+Minute       :       23
+Second       :        5
+Time(hours)  :       1.384615
+ 
+ max. cfl number for zonal advection          :   6.0930E-04       75   12    1
+ max. cfl number for meridional advection     :   5.5943E-05       84   11    1
+ max. cfl number for vertical advection       :   4.9926E-04      112  116    1
+ max. cfl number for total advection          :   6.7021E-04       79   12    1
+ max. cfl number for horizontal tracer mixing :   1.9701E-02       97   11    1
+ max. cfl number for horiz. momentum mixing   :   1.8165E-02       97   11    1
+ 
+K.E. diagnostics:
+ mean K.E.                     : 4.104034970159326E-03
+ K.E. change from horiz. visc. : 0.000000000000000E+00
+ K.E. change from vert.  visc. : 1.092679142675283E-06
+ K.E. change from wind stress  : 1.092679142675283E-06
+ 
+ advective K.E. balance        : 5.101024836106856E-13
+                               :-5.101024835770343E-13
+ P.E. verses pressure work     : 5.900064836081917E-08
+                               :-1.687301840792709E-12
+ surface-pressure contribution : 3.656643592213168E-10
+                               :-3.656643585327193E-10
+ 
+ Tracer diagnostics:
+ 
+ mean value  of tracer    1                  : 2.898488748196796E+00
+ abs  change in tracer    1                  : 6.638394620713689E-09
+ mean change in tracer    1                  : 3.215516007323416E-23
+ mean change in tracer    1 from advection   : 9.655334376252638E-28
+ mean change in tracer    1 from horiz. diff.: 3.241716760697784E-23
+ mean change in tracer    1 from vert.  diff.: 3.942553354114922E-25
+ mean change in tracer    1 from sources     : 0.000000000000000E+00
+ surface flux of tracer   1                  : 0.000000000000000E+00
+ 
+ mean value  of tracer    2                  : 3.472603352607500E+01
+ abs  change in tracer    2                  : 4.202878482540168E-13
+ mean change in tracer    2                  :-6.732219609992059E-25
+ mean change in tracer    2 from advection   : 7.543229981447373E-30
+ mean change in tracer    2 from horiz. diff.: 3.649995591182910E-25
+ mean change in tracer    2 from vert.  diff.: 0.000000000000000E+00
+ mean change in tracer    2 from sources     : 0.000000000000000E+00
+ surface flux of tracer   2                  : 0.000000000000000E+00
+ 
+Other diagnostics:
+ global mean sea level:  2.388221897081168E-07
+ residual, scans :  5.234979145220296E-13    80
+ 
+Timing information:
+ 
+ Time in timer: HMIX_MOMENTUM_DEL2
+Timer number  1 =       0.05 seconds
+ Time in timer: HMIX_TRACER_DEL2
+Timer number  2 =       0.07 seconds
+ Time in timer: ADVECTION_MOMENTUM
+Timer number  3 =       0.11 seconds
+ Time in timer: ADVECTION_TRACER_CENTERED
+Timer number  4 =       0.09 seconds
+ Time in timer: VMIX_COEFFICIENTS_RICH
+Timer number  5 =       0.25 seconds
+ Time in timer: VMIX_EXPLICIT_TRACER
+Timer number  6 =       0.05 seconds
+ Time in timer: VMIX_EXPLICIT_MOMENTUM
+Timer number  7 =       0.05 seconds
+ Time in timer: VMIX_IMPLICIT_TRACER
+Timer number  8 =       0.08 seconds
+ Time in timer: VMIX_IMPLICIT_MOMENTUM
+Timer number  9 =       0.03 seconds
+ Time in timer: TOTAL
+Timer number 10 =       2.02 seconds
+ Time in timer: STEP
+Timer number 11 =       2.02 seconds
+ Time in timer: BAROCLINIC
+Timer number 12 =       1.39 seconds
+ Time in timer: BAROTROPIC
+Timer number 13 =       0.28 seconds
+ 
+Step number  :        3
+Date         : 01 jan 0000
+Hour         :        2
+Minute       :       18
+Second       :       28
+Time(hours)  :       2.307692
+ 
+ max. cfl number for zonal advection          :   8.4365E-04       75   12    1
+ max. cfl number for meridional advection     :   1.3108E-04       86   11    1
+ max. cfl number for vertical advection       :   7.2114E-04      112  116    1
+ max. cfl number for total advection          :   9.8052E-04       96   12    1
+ max. cfl number for horizontal tracer mixing :   1.9701E-02       97   11    1
+ max. cfl number for horiz. momentum mixing   :   1.8165E-02       97   11    1
+ 
+K.E. diagnostics:
+ mean K.E.                     : 1.124340385278708E-02
+ K.E. change from horiz. visc. :-1.587035602411170E-11
+ K.E. change from vert.  visc. : 1.614306911322247E-06
+ K.E. change from wind stress  : 1.614726301439236E-06
+ 
+ advective K.E. balance        : 2.308225183281269E-12
+                               :-2.308225183217753E-12
+ P.E. verses pressure work     : 4.111800174660187E-08
+                               :-8.641627549000688E-12
+ surface-pressure contribution : 7.173618411464996E-10
+                               :-7.173616713936401E-10
+ 
+ Tracer diagnostics:
+ 
+ mean value  of tracer    1                  : 2.898488748196796E+00
+ abs  change in tracer    1                  : 6.758776754424834E-09
+ mean change in tracer    1                  : 5.297109545499722E-23
+ mean change in tracer    1 from advection   : 5.793200625751583E-27
+ mean change in tracer    1 from horiz. diff.: 2.718932671278816E-23
+ mean change in tracer    1 from vert.  diff.: 0.000000000000000E+00
+ mean change in tracer    1 from sources     : 0.000000000000000E+00
+ surface flux of tracer   1                  : 0.000000000000000E+00
+ 
+ mean value  of tracer    2                  : 3.472603352607500E+01
+ abs  change in tracer    2                  : 5.380077109143918E-13
+ mean change in tracer    2                  :-2.225969451375213E-25
+ mean change in tracer    2 from advection   : 7.543229981447373E-30
+ mean change in tracer    2 from horiz. diff.: 3.597742918324140E-25
+ mean change in tracer    2 from vert.  diff.: 1.635781034621633E-29
+ mean change in tracer    2 from sources     : 0.000000000000000E+00
+ surface flux of tracer   2                  : 0.000000000000000E+00
+ 
+Other diagnostics:
+ global mean sea level:  3.229419802119074E-08
+ residual, scans :  3.841937443761637E-13    70
+ 
+Timing information:
+ 
+ Time in timer: HMIX_MOMENTUM_DEL2
+Timer number  1 =       0.08 seconds
+ Time in timer: HMIX_TRACER_DEL2
+Timer number  2 =       0.11 seconds
+ Time in timer: ADVECTION_MOMENTUM
+Timer number  3 =       0.17 seconds
+ Time in timer: ADVECTION_TRACER_CENTERED
+Timer number  4 =       0.14 seconds
+ Time in timer: VMIX_COEFFICIENTS_RICH
+Timer number  5 =       0.37 seconds
+ Time in timer: VMIX_EXPLICIT_TRACER
+Timer number  6 =       0.08 seconds
+ Time in timer: VMIX_EXPLICIT_MOMENTUM
+Timer number  7 =       0.07 seconds
+ Time in timer: VMIX_IMPLICIT_TRACER
+Timer number  8 =       0.13 seconds
+ Time in timer: VMIX_IMPLICIT_MOMENTUM
+Timer number  9 =       0.05 seconds
+ Time in timer: TOTAL
+Timer number 10 =       2.99 seconds
+ Time in timer: STEP
+Timer number 11 =       2.99 seconds
+ Time in timer: BAROCLINIC
+Timer number 12 =       2.13 seconds
+ Time in timer: BAROTROPIC
+Timer number 13 =       0.41 seconds
+ 
+Step number  :        4
+Date         : 01 jan 0000
+Hour         :        3
+Minute       :       13
+Second       :       51
+Time(hours)  :       3.230769
+ 
+ max. cfl number for zonal advection          :   1.2149E-03       75   12    1
+ max. cfl number for meridional advection     :   3.1634E-04       88   11    1
+ max. cfl number for vertical advection       :   1.0678E-03      112  116    1
+ max. cfl number for total advection          :   1.5343E-03      107   12    1
+ max. cfl number for horizontal tracer mixing :   1.9701E-02       97   11    1
+ max. cfl number for horiz. momentum mixing   :   1.8165E-02       97   11    1
+ 
+K.E. diagnostics:
+ mean K.E.                     : 2.162911187628029E-02
+ K.E. change from horiz. visc. :-7.617491629303680E-11
+ K.E. change from vert.  visc. : 2.622404656376072E-06
+ K.E. change from wind stress  : 2.624468914886188E-06
+ 
+ advective K.E. balance        : 1.288207946031134E-11
+                               :-1.288207945953530E-11
+ P.E. verses pressure work     :-6.102744856823791E-08
+                               :-4.241040523265129E-11
+ surface-pressure contribution : 1.778967160843455E-09
+                               :-1.778959404914625E-09
+ 
+ Tracer diagnostics:
+ 
+ mean value  of tracer    1                  : 2.898488748196795E+00
+ abs  change in tracer    1                  : 7.014806722635781E-09
+ mean change in tracer    1                  : 1.410451245682985E-23
+ mean change in tracer    1 from advection   :-3.862133750501055E-27
+ mean change in tracer    1 from horiz. diff.: 2.867821326233985E-23
+ mean change in tracer    1 from vert.  diff.: 1.276381977604423E-27
+ mean change in tracer    1 from sources     : 0.000000000000000E+00
+ surface flux of tracer   1                  : 0.000000000000000E+00
+ 
+ mean value  of tracer    2                  : 3.472603352607500E+01
+ abs  change in tracer    2                  : 7.583839465956154E-13
+ mean change in tracer    2                  : 1.171674826558258E-24
+ mean change in tracer    2 from advection   :-3.017291992578949E-29
+ mean change in tracer    2 from horiz. diff.: 3.451051574267490E-25
+ mean change in tracer    2 from vert.  diff.: 6.520936882498628E-31
+ mean change in tracer    2 from sources     : 0.000000000000000E+00
+ surface flux of tracer   2                  : 0.000000000000000E+00
+ 
+Other diagnostics:
+ global mean sea level: -1.096620722213272E-07
+ residual, scans :  2.947539767755675E-13    80
+ 
+Timing information:
+ 
+ Time in timer: HMIX_MOMENTUM_DEL2
+Timer number  1 =       0.10 seconds
+ Time in timer: HMIX_TRACER_DEL2
+Timer number  2 =       0.15 seconds
+ Time in timer: ADVECTION_MOMENTUM
+Timer number  3 =       0.22 seconds
+ Time in timer: ADVECTION_TRACER_CENTERED
+Timer number  4 =       0.19 seconds
+ Time in timer: VMIX_COEFFICIENTS_RICH
+Timer number  5 =       0.49 seconds
+ Time in timer: VMIX_EXPLICIT_TRACER
+Timer number  6 =       0.10 seconds
+ Time in timer: VMIX_EXPLICIT_MOMENTUM
+Timer number  7 =       0.10 seconds
+ Time in timer: VMIX_IMPLICIT_TRACER
+Timer number  8 =       0.18 seconds
+ Time in timer: VMIX_IMPLICIT_MOMENTUM
+Timer number  9 =       0.06 seconds
+ Time in timer: TOTAL
+Timer number 10 =       3.97 seconds
+ Time in timer: STEP
+Timer number 11 =       3.97 seconds
+ Time in timer: BAROCLINIC
+Timer number 12 =       2.86 seconds
+ Time in timer: BAROTROPIC
+Timer number 13 =       0.55 seconds
+ 
+Step number  :        5
+Date         : 01 jan 0000
+Hour         :        4
+Minute       :        9
+Second       :       14
+Time(hours)  :       4.153846
+ 
+ max. cfl number for zonal advection          :   1.3470E-03       75   12    1
+ max. cfl number for meridional advection     :   5.4533E-04       90   11    1
+ max. cfl number for vertical advection       :   1.1945E-03       80  116    1
+ max. cfl number for total advection          :   1.8815E-03      115   12    1
+ max. cfl number for horizontal tracer mixing :   1.9701E-02       97   11    1
+ max. cfl number for horiz. momentum mixing   :   1.8165E-02       97   11    1
+ 
+K.E. diagnostics:
+ mean K.E.                     : 3.492974766104442E-02
+ K.E. change from horiz. visc. :-1.703549572842574E-10
+ K.E. change from vert.  visc. : 3.541267976939032E-06
+ K.E. change from wind stress  : 3.546006271049724E-06
+ 
+ advective K.E. balance        : 3.512208147203218E-11
+                               :-3.512208147276202E-11
+ P.E. verses pressure work     :-4.185066902502025E-08
+                               :-1.232932549571393E-10
+ surface-pressure contribution : 3.127533820647763E-09
+                               :-3.127534143752291E-09
+ 
+ Tracer diagnostics:
+ 
+ mean value  of tracer    1                  : 2.898488748196796E+00
+ abs  change in tracer    1                  : 7.251934535385280E-09
+ mean change in tracer    1                  : 1.887810977244916E-23
+ mean change in tracer    1 from advection   :-3.089707000400844E-26
+ mean change in tracer    1 from horiz. diff.: 2.893081441024702E-23
+ mean change in tracer    1 from vert.  diff.:-2.613517288131561E-27
+ mean change in tracer    1 from sources     : 0.000000000000000E+00
+ surface flux of tracer   1                  : 0.000000000000000E+00
+ 
+ mean value  of tracer    2                  : 3.472603352607500E+01
+ abs  change in tracer    2                  : 9.122634704160445E-13
+ mean change in tracer    2                  :-1.998955945083554E-26
+ mean change in tracer    2 from advection   :-7.543229981447373E-30
+ mean change in tracer    2 from horiz. diff.: 3.444410955645641E-25
+ mean change in tracer    2 from vert.  diff.: 5.871112302593812E-31
+ mean change in tracer    2 from sources     : 0.000000000000000E+00
+ surface flux of tracer   2                  : 0.000000000000000E+00
+ 
+Other diagnostics:
+ global mean sea level: -3.148515731802469E-07
+ residual, scans :  8.104837891583013E-13    70
+ 
+Timing information:
+ 
+ Time in timer: HMIX_MOMENTUM_DEL2
+Timer number  1 =       0.14 seconds
+ Time in timer: HMIX_TRACER_DEL2
+Timer number  2 =       0.18 seconds
+ Time in timer: ADVECTION_MOMENTUM
+Timer number  3 =       0.27 seconds
+ Time in timer: ADVECTION_TRACER_CENTERED
+Timer number  4 =       0.23 seconds
+ Time in timer: VMIX_COEFFICIENTS_RICH
+Timer number  5 =       0.62 seconds
+ Time in timer: VMIX_EXPLICIT_TRACER
+Timer number  6 =       0.12 seconds
+ Time in timer: VMIX_EXPLICIT_MOMENTUM
+Timer number  7 =       0.12 seconds
+ Time in timer: VMIX_IMPLICIT_TRACER
+Timer number  8 =       0.22 seconds
+ Time in timer: VMIX_IMPLICIT_MOMENTUM
+Timer number  9 =       0.08 seconds
+ Time in timer: TOTAL
+Timer number 10 =       4.94 seconds
+ Time in timer: STEP
+Timer number 11 =       4.94 seconds
+ Time in timer: BAROCLINIC
+Timer number 12 =       3.59 seconds
+ Time in timer: BAROTROPIC
+Timer number 13 =       0.68 seconds
+ 
+Step number  :        6
+Date         : 01 jan 0000
+Hour         :        5
+Minute       :        4
+Second       :       37
+Time(hours)  :       5.076923
+ 
+ max. cfl number for zonal advection          :   1.2131E-03       75   12    1
+ max. cfl number for meridional advection     :   7.7305E-04       90   11    1
+ max. cfl number for vertical advection       :   1.0913E-03       80  116    1
+ max. cfl number for total advection          :   1.9600E-03       77   12    1
+ max. cfl number for horizontal tracer mixing :   1.9701E-02       97   11    1
+ max. cfl number for horiz. momentum mixing   :   1.8165E-02       97   11    1
+ 
+K.E. diagnostics:
+ mean K.E.                     : 5.076955871611789E-02
+ K.E. change from horiz. visc. :-2.904304298197782E-10
+ K.E. change from vert.  visc. : 4.351374651404179E-06
+ K.E. change from wind stress  : 4.359732013898489E-06
+ 
+ advective K.E. balance        : 6.457779645476517E-11
+                               :-6.457779645532376E-11
+ P.E. verses pressure work     :-6.040388708785707E-08
+                               :-2.655912702027496E-10
+ surface-pressure contribution : 4.401108797346322E-09
+                               :-4.401119458793913E-09
+ 
+ Tracer diagnostics:
+ 
+ mean value  of tracer    1                  : 2.898488748196796E+00
+ abs  change in tracer    1                  : 7.460816136823074E-09
+ mean change in tracer    1                  : 1.144736443648513E-23
+ mean change in tracer    1 from advection   : 1.544853500200422E-26
+ mean change in tracer    1 from horiz. diff.: 2.860264411993577E-23
+ mean change in tracer    1 from vert.  diff.:-3.950612328161828E-28
+ mean change in tracer    1 from sources     : 0.000000000000000E+00
+ surface flux of tracer   1                  : 0.000000000000000E+00
+ 
+ mean value  of tracer    2                  : 3.472603352607500E+01
+ abs  change in tracer    2                  : 9.852056762440481E-13
+ mean change in tracer    2                  : 3.392718548755585E-25
+ mean change in tracer    2 from advection   : 2.262968994434212E-29
+ mean change in tracer    2 from horiz. diff.: 3.379204540206217E-25
+ mean change in tracer    2 from vert.  diff.: 7.072345314275367E-31
+ mean change in tracer    2 from sources     : 0.000000000000000E+00
+ surface flux of tracer   2                  : 0.000000000000000E+00
+ 
+Other diagnostics:
+ global mean sea level: -7.471156302195226E-07
+ residual, scans :  7.958681930464784E-13    70
+ 
+Timing information:
+ 
+ Time in timer: HMIX_MOMENTUM_DEL2
+Timer number  1 =       0.16 seconds
+ Time in timer: HMIX_TRACER_DEL2
+Timer number  2 =       0.22 seconds
+ Time in timer: ADVECTION_MOMENTUM
+Timer number  3 =       0.33 seconds
+ Time in timer: ADVECTION_TRACER_CENTERED
+Timer number  4 =       0.28 seconds
+ Time in timer: VMIX_COEFFICIENTS_RICH
+Timer number  5 =       0.74 seconds
+ Time in timer: VMIX_EXPLICIT_TRACER
+Timer number  6 =       0.15 seconds
+ Time in timer: VMIX_EXPLICIT_MOMENTUM
+Timer number  7 =       0.14 seconds
+ Time in timer: VMIX_IMPLICIT_TRACER
+Timer number  8 =       0.27 seconds
+ Time in timer: VMIX_IMPLICIT_MOMENTUM
+Timer number  9 =       0.09 seconds
+ Time in timer: TOTAL
+Timer number 10 =       5.91 seconds
+ Time in timer: STEP
+Timer number 11 =       5.91 seconds
+ Time in timer: BAROCLINIC
+Timer number 12 =       4.32 seconds
+ Time in timer: BAROTROPIC
+Timer number 13 =       0.82 seconds
+ 
+Step number  :        7
+Date         : 01 jan 0000
+Hour         :        6
+Minute       :        0
+Second       :        0
+Time(hours)  :       6.000000
+ 
+ max. cfl number for zonal advection          :   1.1622E-03       15   64    1
+ max. cfl number for meridional advection     :   9.5302E-04       86   11    1
+ max. cfl number for vertical advection       :   1.1390E-03      112   65    1
+ max. cfl number for total advection          :   1.7670E-03       77   12    1
+ max. cfl number for horizontal tracer mixing :   1.9701E-02       97   11    1
+ max. cfl number for horiz. momentum mixing   :   1.8165E-02       97   11    1
+ 
+K.E. diagnostics:
+ mean K.E.                     : 6.877348764422214E-02
+ K.E. change from horiz. visc. :-4.276545268558794E-10
+ K.E. change from vert.  visc. : 5.046354080616515E-06
+ K.E. change from wind stress  : 5.059183430028155E-06
+ 
+ advective K.E. balance        : 9.049910621680431E-11
+                               :-9.049910619018145E-11
+ P.E. verses pressure work     :-1.273278506735921E-07
+                               :-4.770442724959719E-10
+ surface-pressure contribution : 5.216601626397338E-09
+                               :-5.216573541574889E-09
+ 
+ Tracer diagnostics:
+ 
+ mean value  of tracer    1                  : 2.898488748196796E+00
+ abs  change in tracer    1                  : 7.652739890925560E-09
+ mean change in tracer    1                  : 1.585792117955733E-23
+ mean change in tracer    1 from advection   :-6.951840750901899E-26
+ mean change in tracer    1 from horiz. diff.: 2.834771851171359E-23
+ mean change in tracer    1 from vert.  diff.:-2.838511519799522E-27
+ mean change in tracer    1 from sources     : 0.000000000000000E+00
+ surface flux of tracer   1                  : 0.000000000000000E+00
+ 
+ mean value  of tracer    2                  : 3.472603352607500E+01
+ abs  change in tracer    2                  : 9.802991180559549E-13
+ mean change in tracer    2                  : 7.046206557969805E-25
+ mean change in tracer    2 from advection   : 1.508645996289475E-29
+ mean change in tracer    2 from horiz. diff.: 3.352519550098170E-25
+ mean change in tracer    2 from vert.  diff.: 8.322745822664820E-31
+ mean change in tracer    2 from sources     : 0.000000000000000E+00
+ surface flux of tracer   2                  : 0.000000000000000E+00
+ 
+Other diagnostics:
+ global mean sea level: -1.206329319942916E-06
+ residual, scans :  4.550182220675762E-13    70
+ 
+Timing information:
+ 
+ Time in timer: HMIX_MOMENTUM_DEL2
+Timer number  1 =       0.19 seconds
+ Time in timer: HMIX_TRACER_DEL2
+Timer number  2 =       0.26 seconds
+ Time in timer: ADVECTION_MOMENTUM
+Timer number  3 =       0.38 seconds
+ Time in timer: ADVECTION_TRACER_CENTERED
+Timer number  4 =       0.33 seconds
+ Time in timer: VMIX_COEFFICIENTS_RICH
+Timer number  5 =       0.86 seconds
+ Time in timer: VMIX_EXPLICIT_TRACER
+Timer number  6 =       0.17 seconds
+ Time in timer: VMIX_EXPLICIT_MOMENTUM
+Timer number  7 =       0.17 seconds
+ Time in timer: VMIX_IMPLICIT_TRACER
+Timer number  8 =       0.32 seconds
+ Time in timer: VMIX_IMPLICIT_MOMENTUM
+Timer number  9 =       0.11 seconds
+ Time in timer: TOTAL
+Timer number 10 =       6.88 seconds
+ Time in timer: STEP
+Timer number 11 =       6.88 seconds
+ Time in timer: BAROCLINIC
+Timer number 12 =       5.05 seconds
+ Time in timer: BAROTROPIC
+Timer number 13 =       0.95 seconds
+ 
+Step number  :        8
+Date         : 01 jan 0000
+Hour         :        6
+Minute       :       55
+Second       :       23
+Time(hours)  :       6.923077
+ 
+ max. cfl number for zonal advection          :   1.3729E-03       14   64    1
+ max. cfl number for meridional advection     :   1.0501E-03       84   11    1
+ max. cfl number for vertical advection       :   1.3693E-03      112   65    1
+ max. cfl number for total advection          :   1.7771E-03      146   73    1
+ max. cfl number for horizontal tracer mixing :   1.9701E-02       97   11    1
+ max. cfl number for horiz. momentum mixing   :   1.8165E-02       97   11    1
+ 
+K.E. diagnostics:
+ mean K.E.                     : 8.859364816379023E-02
+ K.E. change from horiz. visc. :-5.739481274237358E-10
+ K.E. change from vert.  visc. : 5.630696781657213E-06
+ K.E. change from wind stress  : 5.648768352901597E-06
+ 
+ advective K.E. balance        : 1.013225835298509E-10
+                               :-1.013225834752278E-10
+ P.E. verses pressure work     :-1.350097596040662E-07
+                               :-7.529572077864802E-10
+ surface-pressure contribution : 5.498099475799624E-09
+                               :-5.498058407900156E-09
+ 
+ Tracer diagnostics:
+ 
+ mean value  of tracer    1                  : 2.898488748196796E+00
+ abs  change in tracer    1                  : 7.859029676093482E-09
+ mean change in tracer    1                  : 7.038352546913122E-23
+ mean change in tracer    1 from advection   :-1.544853500200422E-26
+ mean change in tracer    1 from horiz. diff.: 2.806496200914614E-23
+ mean change in tracer    1 from vert.  diff.:-2.689066094691178E-28
+ mean change in tracer    1 from sources     : 0.000000000000000E+00
+ surface flux of tracer   1                  : 0.000000000000000E+00
+ 
+ mean value  of tracer    2                  : 3.472603352607500E+01
+ abs  change in tracer    2                  : 9.373902977221761E-13
+ mean change in tracer    2                  : 6.397639644164960E-25
+ mean change in tracer    2 from advection   :-9.051875977736848E-29
+ mean change in tracer    2 from horiz. diff.: 3.416006657613521E-25
+ mean change in tracer    2 from vert.  diff.: 6.606505445615646E-31
+ mean change in tracer    2 from sources     : 0.000000000000000E+00
+ surface flux of tracer   2                  : 0.000000000000000E+00
+ 
+Other diagnostics:
+ global mean sea level: -1.090755233018944E-06
+ residual, scans :  5.078616010094260E-13    70
+ 
+Timing information:
+ 
+ Time in timer: HMIX_MOMENTUM_DEL2
+Timer number  1 =       0.22 seconds
+ Time in timer: HMIX_TRACER_DEL2
+Timer number  2 =       0.29 seconds
+ Time in timer: ADVECTION_MOMENTUM
+Timer number  3 =       0.44 seconds
+ Time in timer: ADVECTION_TRACER_CENTERED
+Timer number  4 =       0.37 seconds
+ Time in timer: VMIX_COEFFICIENTS_RICH
+Timer number  5 =       0.99 seconds
+ Time in timer: VMIX_EXPLICIT_TRACER
+Timer number  6 =       0.19 seconds
+ Time in timer: VMIX_EXPLICIT_MOMENTUM
+Timer number  7 =       0.19 seconds
+ Time in timer: VMIX_IMPLICIT_TRACER
+Timer number  8 =       0.37 seconds
+ Time in timer: VMIX_IMPLICIT_MOMENTUM
+Timer number  9 =       0.12 seconds
+ Time in timer: TOTAL
+Timer number 10 =       7.85 seconds
+ Time in timer: STEP
+Timer number 11 =       7.85 seconds
+ Time in timer: BAROCLINIC
+Timer number 12 =       5.78 seconds
+ Time in timer: BAROTROPIC
+Timer number 13 =       1.08 seconds
+ 
+Step number  :        9
+Date         : 01 jan 0000
+Hour         :        7
+Minute       :       50
+Second       :       46
+Time(hours)  :       7.846154
+ 
+ max. cfl number for zonal advection          :   1.5834E-03       13   64    1
+ max. cfl number for meridional advection     :   1.0446E-03       84   11    1
+ max. cfl number for vertical advection       :   1.6012E-03      112   65    1
+ max. cfl number for total advection          :   2.0930E-03      150   73    1
+ max. cfl number for horizontal tracer mixing :   1.9701E-02       97   11    1
+ max. cfl number for horiz. momentum mixing   :   1.8165E-02       97   11    1
+ 
+K.E. diagnostics:
+ mean K.E.                     : 1.099464089819540E-01
+ K.E. change from horiz. visc. :-7.236742233253072E-10
+ K.E. change from vert.  visc. : 6.119700407228669E-06
+ K.E. change from wind stress  : 6.143732463306860E-06
+ 
+ advective K.E. balance        : 8.852146683562129E-11
+                               :-8.852146687879582E-11
+ P.E. verses pressure work     : 3.527602081833209E-08
+                               :-1.081356022909961E-09
+ surface-pressure contribution : 5.482153422902530E-09
+                               :-5.482154183099036E-09
+ 
+ Tracer diagnostics:
+ 
+ mean value  of tracer    1                  : 2.898488748196796E+00
+ abs  change in tracer    1                  : 8.080448077618442E-09
+ mean change in tracer    1                  : 3.852864629499852E-23
+ mean change in tracer    1 from advection   : 3.089707000400844E-26
+ mean change in tracer    1 from horiz. diff.: 2.824178015229297E-23
+ mean change in tracer    1 from vert.  diff.: 3.355272792502461E-28
+ mean change in tracer    1 from sources     : 0.000000000000000E+00
+ surface flux of tracer   1                  : 0.000000000000000E+00
+ 
+ mean value  of tracer    2                  : 3.472603352607499E+01
+ abs  change in tracer    2                  : 9.092208126988586E-13
+ mean change in tracer    2                  : 8.162906324423274E-25
+ mean change in tracer    2 from advection   : 3.771614990723687E-29
+ mean change in tracer    2 from horiz. diff.: 3.344384126034036E-25
+ mean change in tracer    2 from vert.  diff.: 8.437493734369679E-31
+ mean change in tracer    2 from sources     : 0.000000000000000E+00
+ surface flux of tracer   2                  : 0.000000000000000E+00
+ 
+Other diagnostics:
+ global mean sea level: -8.824149880715412E-07
+ residual, scans :  6.005514718615261E-13    70
+ 
+Timing information:
+ 
+ Time in timer: HMIX_MOMENTUM_DEL2
+Timer number  1 =       0.24 seconds
+ Time in timer: HMIX_TRACER_DEL2
+Timer number  2 =       0.33 seconds
+ Time in timer: ADVECTION_MOMENTUM
+Timer number  3 =       0.49 seconds
+ Time in timer: ADVECTION_TRACER_CENTERED
+Timer number  4 =       0.42 seconds
+ Time in timer: VMIX_COEFFICIENTS_RICH
+Timer number  5 =       1.11 seconds
+ Time in timer: VMIX_EXPLICIT_TRACER
+Timer number  6 =       0.22 seconds
+ Time in timer: VMIX_EXPLICIT_MOMENTUM
+Timer number  7 =       0.21 seconds
+ Time in timer: VMIX_IMPLICIT_TRACER
+Timer number  8 =       0.42 seconds
+ Time in timer: VMIX_IMPLICIT_MOMENTUM
+Timer number  9 =       0.14 seconds
+ Time in timer: TOTAL
+Timer number 10 =       8.82 seconds
+ Time in timer: STEP
+Timer number 11 =       8.82 seconds
+ Time in timer: BAROCLINIC
+Timer number 12 =       6.51 seconds
+ Time in timer: BAROTROPIC
+Timer number 13 =       1.21 seconds
+ 
+Step number  :       10
+Date         : 01 jan 0000
+Hour         :        8
+Minute       :       46
+Second       :        9
+Time(hours)  :       8.769231
+ 
+ max. cfl number for zonal advection          :   1.7936E-03       12   64    1
+ max. cfl number for meridional advection     :   1.0886E-03      135   50    1
+ max. cfl number for vertical advection       :   1.8440E-03      112   65    1
+ max. cfl number for total advection          :   2.4195E-03      154   56    1
+ max. cfl number for horizontal tracer mixing :   1.9701E-02       97   11    1
+ max. cfl number for horiz. momentum mixing   :   1.8165E-02       97   11    1
+ 
+K.E. diagnostics:
+ mean K.E.                     : 1.326099298622804E-01
+ K.E. change from horiz. visc. :-8.743754397526623E-10
+ K.E. change from vert.  visc. : 6.533307603604980E-06
+ K.E. change from wind stress  : 6.564011422348796E-06
+ 
+ advective K.E. balance        : 4.892703693271183E-11
+                               :-4.892703703442758E-11
+ P.E. verses pressure work     : 6.308979490246520E-08
+                               :-1.456111025301711E-09
+ surface-pressure contribution : 5.482792151959383E-09
+                               :-5.482838396859615E-09
+ 
+ Tracer diagnostics:
+ 
+ mean value  of tracer    1                  : 2.898488748196796E+00
+ abs  change in tracer    1                  : 8.323238941735093E-09
+ mean change in tracer    1                  : 7.589865246484673E-23
+ mean change in tracer    1 from advection   : 1.544853500200422E-26
+ mean change in tracer    1 from horiz. diff.: 2.877787697669108E-23
+ mean change in tracer    1 from vert.  diff.: 6.283540987070396E-27
+ mean change in tracer    1 from sources     : 0.000000000000000E+00
+ surface flux of tracer   1                  : 0.000000000000000E+00
+ 
+ mean value  of tracer    2                  : 3.472603352607500E+01
+ abs  change in tracer    2                  : 9.348100684800039E-13
+ mean change in tracer    2                  : 3.523442724334068E-26
+ mean change in tracer    2 from advection   : 0.000000000000000E+00
+ mean change in tracer    2 from horiz. diff.: 3.449901135226667E-25
+ mean change in tracer    2 from vert.  diff.: 8.655608107526565E-31
+ mean change in tracer    2 from sources     : 0.000000000000000E+00
+ surface flux of tracer   2                  : 0.000000000000000E+00
+ 
+Other diagnostics:
+ global mean sea level: -6.063451956180102E-07
+ residual, scans :  6.407335735803616E-13    70
+ 
+Timing information:
+ 
+ Time in timer: HMIX_MOMENTUM_DEL2
+Timer number  1 =       0.27 seconds
+ Time in timer: HMIX_TRACER_DEL2
+Timer number  2 =       0.37 seconds
+ Time in timer: ADVECTION_MOMENTUM
+Timer number  3 =       0.54 seconds
+ Time in timer: ADVECTION_TRACER_CENTERED
+Timer number  4 =       0.47 seconds
+ Time in timer: VMIX_COEFFICIENTS_RICH
+Timer number  5 =       1.24 seconds
+ Time in timer: VMIX_EXPLICIT_TRACER
+Timer number  6 =       0.24 seconds
+ Time in timer: VMIX_EXPLICIT_MOMENTUM
+Timer number  7 =       0.24 seconds
+ Time in timer: VMIX_IMPLICIT_TRACER
+Timer number  8 =       0.47 seconds
+ Time in timer: VMIX_IMPLICIT_MOMENTUM
+Timer number  9 =       0.15 seconds
+ Time in timer: TOTAL
+Timer number 10 =       9.80 seconds
+ Time in timer: STEP
+Timer number 11 =       9.80 seconds
+ Time in timer: BAROCLINIC
+Timer number 12 =       7.25 seconds
+ Time in timer: BAROTROPIC
+Timer number 13 =       1.35 seconds
+ 
+Step number  :       11
+Date         : 01 jan 0000
+Hour         :        9
+Minute       :       41
+Second       :       32
+Time(hours)  :       9.692308
+ 
+ max. cfl number for zonal advection          :   2.0034E-03       11   64    1
+ max. cfl number for meridional advection     :   1.3038E-03      135   50    1
+ max. cfl number for vertical advection       :   2.0830E-03      112   65    1
+ max. cfl number for total advection          :   2.7488E-03      156   57    1
+ max. cfl number for horizontal tracer mixing :   1.9701E-02       97   11    1
+ max. cfl number for horiz. momentum mixing   :   1.8165E-02       97   11    1
+ 
+K.E. diagnostics:
+ mean K.E.                     : 1.564404033285659E-01
+ K.E. change from horiz. visc. :-1.027493205948734E-09
+ K.E. change from vert.  visc. : 6.894421457764143E-06
+ K.E. change from wind stress  : 6.932560306034006E-06
+ 
+ advective K.E. balance        :-1.388021842708735E-11
+                               : 1.388021828761411E-11
+ P.E. verses pressure work     : 8.354568828972413E-08
+                               :-1.871277204329731E-09
+ surface-pressure contribution : 5.766617774845257E-09
+                               :-5.766674551670668E-09
+ 
+ Tracer diagnostics:
+ 
+ mean value  of tracer    1                  : 2.898488748196796E+00
+ abs  change in tracer    1                  : 8.541208723068025E-09
+ mean change in tracer    1                  : 3.516086566456160E-23
+ mean change in tracer    1 from advection   :-3.089707000400844E-26
+ mean change in tracer    1 from horiz. diff.: 2.828074264416019E-23
+ mean change in tracer    1 from vert.  diff.:-3.098517843580205E-27
+ mean change in tracer    1 from sources     : 0.000000000000000E+00
+ surface flux of tracer   1                  : 0.000000000000000E+00
+ 
+ mean value  of tracer    2                  : 3.472603352607500E+01
+ abs  change in tracer    2                  : 9.745712213888617E-13
+ mean change in tracer    2                  : 9.078729876470800E-25
+ mean change in tracer    2 from advection   :-1.508645996289475E-29
+ mean change in tracer    2 from horiz. diff.: 3.429352751933841E-25
+ mean change in tracer    2 from vert.  diff.: 6.522137329598639E-31
+ mean change in tracer    2 from sources     : 0.000000000000000E+00
+ surface flux of tracer   2                  : 0.000000000000000E+00
+ 
+Other diagnostics:
+ global mean sea level: -3.968606613668731E-07
+ residual, scans :  4.642064480237991E-13    70
+ 
+Timing information:
+ 
+ Time in timer: HMIX_MOMENTUM_DEL2
+Timer number  1 =       0.30 seconds
+ Time in timer: HMIX_TRACER_DEL2
+Timer number  2 =       0.40 seconds
+ Time in timer: ADVECTION_MOMENTUM
+Timer number  3 =       0.60 seconds
+ Time in timer: ADVECTION_TRACER_CENTERED
+Timer number  4 =       0.51 seconds
+ Time in timer: VMIX_COEFFICIENTS_RICH
+Timer number  5 =       1.36 seconds
+ Time in timer: VMIX_EXPLICIT_TRACER
+Timer number  6 =       0.26 seconds
+ Time in timer: VMIX_EXPLICIT_MOMENTUM
+Timer number  7 =       0.26 seconds
+ Time in timer: VMIX_IMPLICIT_TRACER
+Timer number  8 =       0.52 seconds
+ Time in timer: VMIX_IMPLICIT_MOMENTUM
+Timer number  9 =       0.17 seconds
+ Time in timer: TOTAL
+Timer number 10 =      10.76 seconds
+ Time in timer: STEP
+Timer number 11 =      10.76 seconds
+ Time in timer: BAROCLINIC
+Timer number 12 =       7.98 seconds
+ Time in timer: BAROTROPIC
+Timer number 13 =       1.47 seconds
+ 
+Step number  :       12
+Date         : 01 jan 0000
+Hour         :       10
+Minute       :       36
+Second       :       55
+Time(hours)  :      10.615385
+ 
+ max. cfl number for zonal advection          :   2.2129E-03        9   65    1
+ max. cfl number for meridional advection     :   1.5222E-03      135   51    1
+ max. cfl number for vertical advection       :   2.3134E-03      112   65    1
+ max. cfl number for total advection          :   3.0807E-03      159   57    1
+ max. cfl number for horizontal tracer mixing :   1.9701E-02       97   11    1
+ max. cfl number for horiz. momentum mixing   :   1.8165E-02       97   11    1
+ 
+K.E. diagnostics:
+ mean K.E.                     : 1.813376878097103E-01
+ K.E. change from horiz. visc. :-1.187788728614121E-09
+ K.E. change from vert.  visc. : 7.221696811376187E-06
+ K.E. change from wind stress  : 7.268147652879605E-06
+ 
+ advective K.E. balance        :-9.068932561364636E-11
+                               : 9.068932547507074E-11
+ P.E. verses pressure work     : 6.433419221608388E-08
+                               :-2.333728801449293E-09
+ surface-pressure contribution : 6.433648483559169E-09
+                               :-6.433698647890821E-09
+ 
+ Tracer diagnostics:
+ 
+ mean value  of tracer    1                  : 2.898488748196796E+00
+ abs  change in tracer    1                  : 8.720398063338289E-09
+ mean change in tracer    1                  : 1.415085806183587E-23
+ mean change in tracer    1 from advection   : 3.089707000400844E-26
+ mean change in tracer    1 from horiz. diff.: 2.892395150741884E-23
+ mean change in tracer    1 from vert.  diff.: 5.160145346353095E-27
+ mean change in tracer    1 from sources     : 0.000000000000000E+00
+ surface flux of tracer   1                  : 0.000000000000000E+00
+ 
+ mean value  of tracer    2                  : 3.472603352607500E+01
+ abs  change in tracer    2                  : 1.005182751479917E-12
+ mean change in tracer    2                  : 6.305838535290746E-25
+ mean change in tracer    2 from advection   :-1.357781396660527E-28
+ mean change in tracer    2 from horiz. diff.: 3.413250343037026E-25
+ mean change in tracer    2 from vert.  diff.: 7.650223257424992E-31
+ mean change in tracer    2 from sources     : 0.000000000000000E+00
+ surface flux of tracer   2                  : 0.000000000000000E+00
+ 
+Other diagnostics:
+ global mean sea level: -1.728293105197113E-07
+ residual, scans :  3.755624501993249E-13    70
+ 
+Timing information:
+ 
+ Time in timer: HMIX_MOMENTUM_DEL2
+Timer number  1 =       0.32 seconds
+ Time in timer: HMIX_TRACER_DEL2
+Timer number  2 =       0.44 seconds
+ Time in timer: ADVECTION_MOMENTUM
+Timer number  3 =       0.65 seconds
+ Time in timer: ADVECTION_TRACER_CENTERED
+Timer number  4 =       0.56 seconds
+ Time in timer: VMIX_COEFFICIENTS_RICH
+Timer number  5 =       1.48 seconds
+ Time in timer: VMIX_EXPLICIT_TRACER
+Timer number  6 =       0.29 seconds
+ Time in timer: VMIX_EXPLICIT_MOMENTUM
+Timer number  7 =       0.28 seconds
+ Time in timer: VMIX_IMPLICIT_TRACER
+Timer number  8 =       0.57 seconds
+ Time in timer: VMIX_IMPLICIT_MOMENTUM
+Timer number  9 =       0.19 seconds
+ Time in timer: TOTAL
+Timer number 10 =      11.73 seconds
+ Time in timer: STEP
+Timer number 11 =      11.73 seconds
+ Time in timer: BAROCLINIC
+Timer number 12 =       8.71 seconds
+ Time in timer: BAROTROPIC
+Timer number 13 =       1.60 seconds
+ 
+Step number  :       13
+Date         : 01 jan 0000
+Hour         :       11
+Minute       :       32
+Second       :       18
+Time(hours)  :      11.538462
+ 
+ max. cfl number for zonal advection          :   2.4221E-03        6   65    1
+ max. cfl number for meridional advection     :   1.7462E-03      135   51    1
+ max. cfl number for vertical advection       :   2.5399E-03      112   65    1
+ max. cfl number for total advection          :   3.4105E-03      162   57    1
+ max. cfl number for horizontal tracer mixing :   1.9701E-02       97   11    1
+ max. cfl number for horiz. momentum mixing   :   1.8165E-02       97   11    1
+ 
+K.E. diagnostics:
+ mean K.E.                     : 2.072421587326972E-01
+ K.E. change from horiz. visc. :-1.362677706091073E-09
+ K.E. change from vert.  visc. : 7.529013233642685E-06
+ K.E. change from wind stress  : 7.584829052624059E-06
+ 
+ advective K.E. balance        :-1.703965476157331E-10
+                               : 1.703965474952563E-10
+ P.E. verses pressure work     : 6.918345746185094E-08
+                               :-2.866948966367207E-09
+ surface-pressure contribution : 7.459145692608350E-09
+                               :-7.459197936206633E-09
+ 
+ Tracer diagnostics:
+ 
+ mean value  of tracer    1                  : 2.898488748196796E+00
+ abs  change in tracer    1                  : 1.158406531992149E-08
+ mean change in tracer    1                  : 1.434859930986152E-22
+ mean change in tracer    1 from advection   : 3.089707000400844E-26
+ mean change in tracer    1 from horiz. diff.: 2.834842733960591E-23
+ mean change in tracer    1 from vert.  diff.: 1.579283155702508E-26
+ mean change in tracer    1 from sources     : 0.000000000000000E+00
+ surface flux of tracer   1                  : 0.000000000000000E+00
+ 
+ mean value  of tracer    2                  : 3.472603352607500E+01
+ abs  change in tracer    2                  : 1.578310703136035E-12
+ mean change in tracer    2                  : 1.255661149171693E-24
+ mean change in tracer    2 from advection   :-1.357781396660527E-28
+ mean change in tracer    2 from horiz. diff.: 3.403501276235946E-25
+ mean change in tracer    2 from vert.  diff.: 2.599611750903343E-30
+ mean change in tracer    2 from sources     : 0.000000000000000E+00
+ surface flux of tracer   2                  : 0.000000000000000E+00
+ 
+Other diagnostics:
+ global mean sea level: -8.284388843385459E-07
+ residual, scans :  9.417289410034529E-13    60
+ 
+Timing information:
+ 
+ Time in timer: HMIX_MOMENTUM_DEL2
+Timer number  1 =       0.35 seconds
+ Time in timer: HMIX_TRACER_DEL2
+Timer number  2 =       0.48 seconds
+ Time in timer: ADVECTION_MOMENTUM
+Timer number  3 =       0.71 seconds
+ Time in timer: ADVECTION_TRACER_CENTERED
+Timer number  4 =       0.61 seconds
+ Time in timer: VMIX_COEFFICIENTS_RICH
+Timer number  5 =       1.60 seconds
+ Time in timer: VMIX_EXPLICIT_TRACER
+Timer number  6 =       0.31 seconds
+ Time in timer: VMIX_EXPLICIT_MOMENTUM
+Timer number  7 =       0.31 seconds
+ Time in timer: VMIX_IMPLICIT_TRACER
+Timer number  8 =       0.61 seconds
+ Time in timer: VMIX_IMPLICIT_MOMENTUM
+Timer number  9 =       0.20 seconds
+ Time in timer: TOTAL
+Timer number 10 =      12.70 seconds
+ Time in timer: STEP
+Timer number 11 =      12.70 seconds
+ Time in timer: BAROCLINIC
+Timer number 12 =       9.45 seconds
+ Time in timer: BAROTROPIC
+Timer number 13 =       1.72 seconds
+ 
+Step number  :       14
+Date         : 01 jan 0000
+Hour         :       12
+Minute       :       27
+Second       :       42
+Time(hours)  :      12.461538
+ 
+ max. cfl number for zonal advection          :   2.6307E-03        5   65    1
+ max. cfl number for meridional advection     :   1.9706E-03      135   52    1
+ max. cfl number for vertical advection       :   2.7556E-03      112   65    1
+ max. cfl number for total advection          :   3.7405E-03      166   58    1
+ max. cfl number for horizontal tracer mixing :   1.9701E-02       97   11    1
+ max. cfl number for horiz. momentum mixing   :   1.8165E-02       97   11    1
+ 
+K.E. diagnostics:
+ mean K.E.                     : 2.340867386260281E-01
+ K.E. change from horiz. visc. :-1.560673672437583E-09
+ K.E. change from vert.  visc. : 7.820437452377663E-06
+ K.E. change from wind stress  : 7.886900177144217E-06
+ 
+ advective K.E. balance        :-2.430450210223510E-10
+                               : 2.430450214178297E-10
+ P.E. verses pressure work     :-1.902608919974057E-07
+                               :-3.489440322759968E-09
+ surface-pressure contribution : 8.733251502531985E-09
+                               :-8.733121019967169E-09
+ 
+ Tracer diagnostics:
+ 
+ mean value  of tracer    1                  : 2.898488748196795E+00
+ abs  change in tracer    1                  : 1.172648482702224E-08
+ mean change in tracer    1                  : 4.819942920625317E-24
+ mean change in tracer    1 from advection   : 0.000000000000000E+00
+ mean change in tracer    1 from horiz. diff.: 2.877136516554662E-23
+ mean change in tracer    1 from vert.  diff.: 3.149619962346862E-26
+ mean change in tracer    1 from sources     : 0.000000000000000E+00
+ surface flux of tracer   1                  : 0.000000000000000E+00
+ 
+ mean value  of tracer    2                  : 3.472603352607500E+01
+ abs  change in tracer    2                  : 1.597637576365708E-12
+ mean change in tracer    2                  :-4.927992146879568E-25
+ mean change in tracer    2 from advection   : 1.508645996289475E-29
+ mean change in tracer    2 from horiz. diff.: 3.449528244965320E-25
+ mean change in tracer    2 from vert.  diff.: 2.749621985264105E-30
+ mean change in tracer    2 from sources     : 0.000000000000000E+00
+ surface flux of tracer   2                  : 0.000000000000000E+00
+ 
+Other diagnostics:
+ global mean sea level: -8.642379490692809E-07
+ residual, scans :  3.288334970735061E-13    70
+ 
+Timing information:
+ 
+ Time in timer: HMIX_MOMENTUM_DEL2
+Timer number  1 =       0.38 seconds
+ Time in timer: HMIX_TRACER_DEL2
+Timer number  2 =       0.51 seconds
+ Time in timer: ADVECTION_MOMENTUM
+Timer number  3 =       0.76 seconds
+ Time in timer: ADVECTION_TRACER_CENTERED
+Timer number  4 =       0.65 seconds
+ Time in timer: VMIX_COEFFICIENTS_RICH
+Timer number  5 =       1.73 seconds
+ Time in timer: VMIX_EXPLICIT_TRACER
+Timer number  6 =       0.34 seconds
+ Time in timer: VMIX_EXPLICIT_MOMENTUM
+Timer number  7 =       0.33 seconds
+ Time in timer: VMIX_IMPLICIT_TRACER
+Timer number  8 =       0.66 seconds
+ Time in timer: VMIX_IMPLICIT_MOMENTUM
+Timer number  9 =       0.22 seconds
+ Time in timer: TOTAL
+Timer number 10 =      13.67 seconds
+ Time in timer: STEP
+Timer number 11 =      13.67 seconds
+ Time in timer: BAROCLINIC
+Timer number 12 =      10.18 seconds
+ Time in timer: BAROTROPIC
+Timer number 13 =       1.85 seconds
+ 
+Step number  :       15
+Date         : 01 jan 0000
+Hour         :       13
+Minute       :       23
+Second       :        5
+Time(hours)  :      13.384615
+ 
+ max. cfl number for zonal advection          :   2.8389E-03        6   65    1
+ max. cfl number for meridional advection     :   2.1963E-03      135   52    1
+ max. cfl number for vertical advection       :   2.9622E-03      112   65    1
+ max. cfl number for total advection          :   4.0778E-03      169   58    1
+ max. cfl number for horizontal tracer mixing :   1.9701E-02       97   11    1
+ max. cfl number for horiz. momentum mixing   :   1.8165E-02       97   11    1
+ 
+K.E. diagnostics:
+ mean K.E.                     : 2.617892141066859E-01
+ K.E. change from horiz. visc. :-1.789993239427695E-09
+ K.E. change from vert.  visc. : 8.092953682240895E-06
+ K.E. change from wind stress  : 8.171617243925366E-06
+ 
+ advective K.E. balance        :-3.028300851549770E-10
+                               : 3.028300852026824E-10
+ P.E. verses pressure work     :-6.246761810077843E-09
+                               :-4.221588115503409E-09
+ surface-pressure contribution : 1.009907625333306E-08
+                               :-1.009908391751996E-08
+ 
+ Tracer diagnostics:
+ 
+ mean value  of tracer    1                  : 2.898488748196795E+00
+ abs  change in tracer    1                  : 1.186632862997116E-08
+ mean change in tracer    1                  :-1.007244482130675E-23
+ mean change in tracer    1 from advection   : 6.179414000801688E-26
+ mean change in tracer    1 from horiz. diff.: 2.876910738252280E-23
+ mean change in tracer    1 from vert.  diff.: 1.565501903290662E-26
+ mean change in tracer    1 from sources     : 0.000000000000000E+00
+ surface flux of tracer   1                  : 0.000000000000000E+00
+ 
+ mean value  of tracer    2                  : 3.472603352607500E+01
+ abs  change in tracer    2                  : 1.618833984075116E-12
+ mean change in tracer    2                  : 1.609121819642354E-25
+ mean change in tracer    2 from advection   : 0.000000000000000E+00
+ mean change in tracer    2 from horiz. diff.: 3.423668146365462E-25
+ mean change in tracer    2 from vert.  diff.: 2.716593560645361E-30
+ mean change in tracer    2 from sources     : 0.000000000000000E+00
+ surface flux of tracer   2                  : 0.000000000000000E+00
+ 
+Other diagnostics:
+ global mean sea level: -9.367690359799543E-07
+ residual, scans :  4.209673722440843E-13    70
+ 
+Timing information:
+ 
+ Time in timer: HMIX_MOMENTUM_DEL2
+Timer number  1 =       0.40 seconds
+ Time in timer: HMIX_TRACER_DEL2
+Timer number  2 =       0.55 seconds
+ Time in timer: ADVECTION_MOMENTUM
+Timer number  3 =       0.82 seconds
+ Time in timer: ADVECTION_TRACER_CENTERED
+Timer number  4 =       0.70 seconds
+ Time in timer: VMIX_COEFFICIENTS_RICH
+Timer number  5 =       1.85 seconds
+ Time in timer: VMIX_EXPLICIT_TRACER
+Timer number  6 =       0.36 seconds
+ Time in timer: VMIX_EXPLICIT_MOMENTUM
+Timer number  7 =       0.36 seconds
+ Time in timer: VMIX_IMPLICIT_TRACER
+Timer number  8 =       0.71 seconds
+ Time in timer: VMIX_IMPLICIT_MOMENTUM
+Timer number  9 =       0.23 seconds
+ Time in timer: TOTAL
+Timer number 10 =      14.63 seconds
+ Time in timer: STEP
+Timer number 11 =      14.63 seconds
+ Time in timer: BAROCLINIC
+Timer number 12 =      10.91 seconds
+ Time in timer: BAROTROPIC
+Timer number 13 =       1.98 seconds
+ 
+Step number  :       16
+Date         : 01 jan 0000
+Hour         :       14
+Minute       :       18
+Second       :       28
+Time(hours)  :      14.307692
+ 
+ max. cfl number for zonal advection          :   3.0464E-03        7   65    1
+ max. cfl number for meridional advection     :   2.4218E-03      135   53    1
+ max. cfl number for vertical advection       :   3.1705E-03      112   65    1
+ max. cfl number for total advection          :   4.4118E-03      172   58    1
+ max. cfl number for horizontal tracer mixing :   1.9701E-02       97   11    1
+ max. cfl number for horiz. momentum mixing   :   1.8165E-02       97   11    1
+ 
+K.E. diagnostics:
+ mean K.E.                     : 2.902185910615731E-01
+ K.E. change from horiz. visc. :-2.057036267106882E-09
+ K.E. change from vert.  visc. : 8.335023832439624E-06
+ K.E. change from wind stress  : 8.427742151394360E-06
+ 
+ advective K.E. balance        :-3.481767326901856E-10
+                               : 3.481767327545720E-10
+ P.E. verses pressure work     :-1.621947468777438E-08
+                               :-5.086415136897653E-09
+ surface-pressure contribution : 1.137061550057308E-08
+                               :-1.137061649276619E-08
+ 
+ Tracer diagnostics:
+ 
+ mean value  of tracer    1                  : 2.898488748196796E+00
+ abs  change in tracer    1                  : 1.206246352386765E-08
+ mean change in tracer    1                  : 8.095032341050211E-24
+ mean change in tracer    1 from advection   :-3.089707000400844E-26
+ mean change in tracer    1 from horiz. diff.: 2.882392544915360E-23
+ mean change in tracer    1 from vert.  diff.: 2.995584333350228E-26
+ mean change in tracer    1 from sources     : 0.000000000000000E+00
+ surface flux of tracer   1                  : 0.000000000000000E+00
+ 
+ mean value  of tracer    2                  : 3.472603352607500E+01
+ abs  change in tracer    2                  : 1.636845984742090E-12
+ mean change in tracer    2                  :-6.407521275440656E-25
+ mean change in tracer    2 from advection   : 1.206916797031580E-28
+ mean change in tracer    2 from horiz. diff.: 3.405544339361199E-25
+ mean change in tracer    2 from vert.  diff.: 3.643922288373190E-30
+ mean change in tracer    2 from sources     : 0.000000000000000E+00
+ surface flux of tracer   2                  : 0.000000000000000E+00
+ 
+Other diagnostics:
+ global mean sea level: -1.038003331601667E-06
+ residual, scans :  3.242322916227052E-13    70
+ 
+Timing information:
+ 
+ Time in timer: HMIX_MOMENTUM_DEL2
+Timer number  1 =       0.43 seconds
+ Time in timer: HMIX_TRACER_DEL2
+Timer number  2 =       0.59 seconds
+ Time in timer: ADVECTION_MOMENTUM
+Timer number  3 =       0.87 seconds
+ Time in timer: ADVECTION_TRACER_CENTERED
+Timer number  4 =       0.75 seconds
+ Time in timer: VMIX_COEFFICIENTS_RICH
+Timer number  5 =       1.98 seconds
+ Time in timer: VMIX_EXPLICIT_TRACER
+Timer number  6 =       0.38 seconds
+ Time in timer: VMIX_EXPLICIT_MOMENTUM
+Timer number  7 =       0.38 seconds
+ Time in timer: VMIX_IMPLICIT_TRACER
+Timer number  8 =       0.76 seconds
+ Time in timer: VMIX_IMPLICIT_MOMENTUM
+Timer number  9 =       0.25 seconds
+ Time in timer: TOTAL
+Timer number 10 =      15.60 seconds
+ Time in timer: STEP
+Timer number 11 =      15.60 seconds
+ Time in timer: BAROCLINIC
+Timer number 12 =      11.64 seconds
+ Time in timer: BAROTROPIC
+Timer number 13 =       2.11 seconds
+ 
+Step number  :       17
+Date         : 01 jan 0000
+Hour         :       14
+Minute       :       46
+Second       :        9
+Time(hours)  :      14.769231
+ 
+ max. cfl number for zonal advection          :   3.2533E-03        9   65    1
+ max. cfl number for meridional advection     :   2.6467E-03      135   53    1
+ max. cfl number for vertical advection       :   3.3791E-03      112   65    1
+ max. cfl number for total advection          :   4.7398E-03      177   71    1
+ max. cfl number for horizontal tracer mixing :   1.9701E-02       97   11    1
+ max. cfl number for horiz. momentum mixing   :   1.8165E-02       97   11    1
+ 
+K.E. diagnostics:
+ mean K.E.                     : 3.042649789836042E-01
+ K.E. change from horiz. visc. :-2.365340765496168E-09
+ K.E. change from vert.  visc. : 8.532341173468487E-06
+ K.E. change from wind stress  : 8.641283629012255E-06
+ 
+ advective K.E. balance        :-3.779433076335687E-10
+                               : 3.779433077198252E-10
+ P.E. verses pressure work     :-2.367620555142834E-08
+                               :-6.087593791833964E-09
+ surface-pressure contribution : 1.244167519893241E-08
+                               :-1.244166412857443E-08
+ 
+ Tracer diagnostics:
+ 
+ mean value  of tracer    1                  : 2.898488748196795E+00
+ abs  change in tracer    1                  : 1.226160471517090E-08
+ mean change in tracer    1                  :-3.676751330477005E-24
+ mean change in tracer    1 from advection   :-3.089707000400844E-26
+ mean change in tracer    1 from horiz. diff.: 2.831462636178498E-23
+ mean change in tracer    1 from vert.  diff.:-1.420072372974491E-25
+ mean change in tracer    1 from sources     : 0.000000000000000E+00
+ surface flux of tracer   1                  : 0.000000000000000E+00
+ 
+ mean value  of tracer    2                  : 3.472603352607500E+01
+ abs  change in tracer    2                  : 1.638474616832080E-12
+ mean change in tracer    2                  : 8.229211315960197E-25
+ mean change in tracer    2 from advection   : 1.508645996289475E-29
+ mean change in tracer    2 from horiz. diff.: 3.401439427764904E-25
+ mean change in tracer    2 from vert.  diff.: 2.652000796502638E-30
+ mean change in tracer    2 from sources     : 0.000000000000000E+00
+ surface flux of tracer   2                  : 0.000000000000000E+00
+ 
+Other diagnostics:
+ global mean sea level: -1.091225345727202E-06
+ residual, scans :  2.888697889822011E-13    70
+ 
+Timing information:
+ 
+ Time in timer: HMIX_MOMENTUM_DEL2
+Timer number  1 =       0.45 seconds
+ Time in timer: HMIX_TRACER_DEL2
+Timer number  2 =       0.63 seconds
+ Time in timer: ADVECTION_MOMENTUM
+Timer number  3 =       0.93 seconds
+ Time in timer: ADVECTION_TRACER_CENTERED
+Timer number  4 =       0.79 seconds
+ Time in timer: VMIX_COEFFICIENTS_RICH
+Timer number  5 =       2.10 seconds
+ Time in timer: VMIX_EXPLICIT_TRACER
+Timer number  6 =       0.41 seconds
+ Time in timer: VMIX_EXPLICIT_MOMENTUM
+Timer number  7 =       0.41 seconds
+ Time in timer: VMIX_IMPLICIT_TRACER
+Timer number  8 =       0.81 seconds
+ Time in timer: VMIX_IMPLICIT_MOMENTUM
+Timer number  9 =       0.26 seconds
+ Time in timer: TOTAL
+Timer number 10 =      16.70 seconds
+ Time in timer: STEP
+Timer number 11 =      16.70 seconds
+ Time in timer: BAROCLINIC
+Timer number 12 =      12.37 seconds
+ Time in timer: BAROTROPIC
+Timer number 13 =       2.24 seconds
+ 
+Step number  :       18
+Date         : 01 jan 0000
+Hour         :       15
+Minute       :       41
+Second       :       32
+Time(hours)  :      15.692308
+ 
+ max. cfl number for zonal advection          :   3.3563E-03       10   65    1
+ max. cfl number for meridional advection     :   2.7527E-03      135   53    1
+ max. cfl number for vertical advection       :   3.4833E-03      112   65    1
+ max. cfl number for total advection          :   4.9105E-03      178   70    1
+ max. cfl number for horizontal tracer mixing :   1.9701E-02       97   11    1
+ max. cfl number for horiz. momentum mixing   :   1.8165E-02       97   11    1
+ 
+K.E. diagnostics:
+ mean K.E.                     : 3.334102503744109E-01
+ K.E. change from horiz. visc. :-2.531893978806220E-09
+ K.E. change from vert.  visc. : 8.601128054471928E-06
+ K.E. change from wind stress  : 8.718932964827556E-06
+ 
+ advective K.E. balance        :-3.828982163829200E-10
+                               : 3.828982164734885E-10
+ P.E. verses pressure work     :-2.387581817490721E-08
+                               :-6.642662221068716E-09
+ surface-pressure contribution : 1.285715504586374E-08
+                               :-1.285714321939447E-08
+ 
+ Tracer diagnostics:
+ 
+ mean value  of tracer    1                  : 2.898488748196795E+00
+ abs  change in tracer    1                  : 1.238774651828480E-08
+ mean change in tracer    1                  : 1.163892627050998E-22
+ mean change in tracer    1 from advection   :-1.235882800160338E-25
+ mean change in tracer    1 from horiz. diff.: 2.865009265713490E-23
+ mean change in tracer    1 from vert.  diff.:-1.352648827269058E-25
+ mean change in tracer    1 from sources     : 0.000000000000000E+00
+ surface flux of tracer   1                  : 0.000000000000000E+00
+ 
+ mean value  of tracer    2                  : 3.472603352607500E+01
+ abs  change in tracer    2                  : 1.641291633165548E-12
+ mean change in tracer    2                  : 7.148568188818046E-25
+ mean change in tracer    2 from advection   : 6.034583985157899E-29
+ mean change in tracer    2 from horiz. diff.: 3.430964149994147E-25
+ mean change in tracer    2 from vert.  diff.: 3.099688038340544E-30
+ mean change in tracer    2 from sources     : 0.000000000000000E+00
+ surface flux of tracer   2                  : 0.000000000000000E+00
+ 
+Other diagnostics:
+ global mean sea level: -1.311687302607514E-06
+ residual, scans :  4.696073079426992E-13    60
+ 
+Timing information:
+ 
+ Time in timer: HMIX_MOMENTUM_DEL2
+Timer number  1 =       0.48 seconds
+ Time in timer: HMIX_TRACER_DEL2
+Timer number  2 =       0.66 seconds
+ Time in timer: ADVECTION_MOMENTUM
+Timer number  3 =       0.98 seconds
+ Time in timer: ADVECTION_TRACER_CENTERED
+Timer number  4 =       0.84 seconds
+ Time in timer: VMIX_COEFFICIENTS_RICH
+Timer number  5 =       2.22 seconds
+ Time in timer: VMIX_EXPLICIT_TRACER
+Timer number  6 =       0.43 seconds
+ Time in timer: VMIX_EXPLICIT_MOMENTUM
+Timer number  7 =       0.43 seconds
+ Time in timer: VMIX_IMPLICIT_TRACER
+Timer number  8 =       0.86 seconds
+ Time in timer: VMIX_IMPLICIT_MOMENTUM
+Timer number  9 =       0.28 seconds
+ Time in timer: TOTAL
+Timer number 10 =      17.65 seconds
+ Time in timer: STEP
+Timer number 11 =      17.65 seconds
+ Time in timer: BAROCLINIC
+Timer number 12 =      13.09 seconds
+ Time in timer: BAROTROPIC
+Timer number 13 =       2.35 seconds
+ 
+Step number  :       19
+Date         : 01 jan 0000
+Hour         :       16
+Minute       :       36
+Second       :       55
+Time(hours)  :      16.615385
+ 
+ max. cfl number for zonal advection          :   3.5621E-03       12   65    1
+ max. cfl number for meridional advection     :   2.9822E-03      135   54    1
+ max. cfl number for vertical advection       :   3.6943E-03      112   65    1
+ max. cfl number for total advection          :   5.2514E-03      182   70    1
+ max. cfl number for horizontal tracer mixing :   1.9701E-02       97   11    1
+ max. cfl number for horiz. momentum mixing   :   1.8165E-02       97   11    1
+ 
+K.E. diagnostics:
+ mean K.E.                     : 3.627547356893552E-01
+ K.E. change from horiz. visc. :-2.900706740628764E-09
+ K.E. change from vert.  visc. : 8.701754141993996E-06
+ K.E. change from wind stress  : 8.839609470462786E-06
+ 
+ advective K.E. balance        :-3.802607274570975E-10
+                               : 3.802607276129353E-10
+ P.E. verses pressure work     :-5.712432061095645E-08
+                               :-7.843249316261404E-09
+ surface-pressure contribution : 1.359259230462898E-08
+                               :-1.359254920138412E-08
+ 
+ Tracer diagnostics:
+ 
+ mean value  of tracer    1                  : 2.898488748196796E+00
+ abs  change in tracer    1                  : 1.264049776092915E-08
+ mean change in tracer    1                  :-4.239078004549958E-23
+ mean change in tracer    1 from advection   : 6.179414000801688E-26
+ mean change in tracer    1 from horiz. diff.: 2.836306049859210E-23
+ mean change in tracer    1 from vert.  diff.:-1.295959423726903E-25
+ mean change in tracer    1 from sources     : 0.000000000000000E+00
+ surface flux of tracer   1                  : 0.000000000000000E+00
+ 
+ mean value  of tracer    2                  : 3.472603352607499E+01
+ abs  change in tracer    2                  : 1.663770860921128E-12
+ mean change in tracer    2                  :-5.748092110462527E-25
+ mean change in tracer    2 from advection   :-6.034583985157899E-29
+ mean change in tracer    2 from horiz. diff.: 3.411902794223593E-25
+ mean change in tracer    2 from vert.  diff.: 3.110025582760623E-30
+ mean change in tracer    2 from sources     : 0.000000000000000E+00
+ surface flux of tracer   2                  : 0.000000000000000E+00
+ 
+Other diagnostics:
+ global mean sea level: -1.485998974977059E-06
+ residual, scans :  6.124895593296703E-13    60
+ 
+Timing information:
+ 
+ Time in timer: HMIX_MOMENTUM_DEL2
+Timer number  1 =       0.51 seconds
+ Time in timer: HMIX_TRACER_DEL2
+Timer number  2 =       0.69 seconds
+ Time in timer: ADVECTION_MOMENTUM
+Timer number  3 =       1.04 seconds
+ Time in timer: ADVECTION_TRACER_CENTERED
+Timer number  4 =       0.89 seconds
+ Time in timer: VMIX_COEFFICIENTS_RICH
+Timer number  5 =       2.35 seconds
+ Time in timer: VMIX_EXPLICIT_TRACER
+Timer number  6 =       0.46 seconds
+ Time in timer: VMIX_EXPLICIT_MOMENTUM
+Timer number  7 =       0.46 seconds
+ Time in timer: VMIX_IMPLICIT_TRACER
+Timer number  8 =       0.91 seconds
+ Time in timer: VMIX_IMPLICIT_MOMENTUM
+Timer number  9 =       0.29 seconds
+ Time in timer: TOTAL
+Timer number 10 =      18.59 seconds
+ Time in timer: STEP
+Timer number 11 =      18.59 seconds
+ Time in timer: BAROCLINIC
+Timer number 12 =      13.82 seconds
+ Time in timer: BAROTROPIC
+Timer number 13 =       2.46 seconds
+ 
+Step number  :       20
+Date         : 01 jan 0000
+Hour         :       17
+Minute       :       32
+Second       :       18
+Time(hours)  :      17.538462
+ 
+ max. cfl number for zonal advection          :   3.7668E-03       14   65    1
+ max. cfl number for meridional advection     :   3.2005E-03      135   54    1
+ max. cfl number for vertical advection       :   3.9096E-03      112   64    1
+ max. cfl number for total advection          :   5.5864E-03      186   70    1
+ max. cfl number for horizontal tracer mixing :   1.9701E-02       97   11    1
+ max. cfl number for horiz. momentum mixing   :   1.8165E-02       97   11    1
+ 
+K.E. diagnostics:
+ mean K.E.                     : 3.920482396377311E-01
+ K.E. change from horiz. visc. :-3.305797659913493E-09
+ K.E. change from vert.  visc. : 8.727425261881458E-06
+ K.E. change from wind stress  : 8.888280746382815E-06
+ 
+ advective K.E. balance        :-3.488914942776195E-10
+                               : 3.488914944321694E-10
+ P.E. verses pressure work     :-4.211303703196690E-08
+                               :-9.170859477939817E-09
+ surface-pressure contribution : 1.416142955903498E-08
+                               :-1.416139914629344E-08
+ 
+ Tracer diagnostics:
+ 
+ mean value  of tracer    1                  : 2.898488748196796E+00
+ abs  change in tracer    1                  : 1.288717510466682E-08
+ mean change in tracer    1                  : 1.118473934145105E-23
+ mean change in tracer    1 from advection   : 9.269121001202532E-26
+ mean change in tracer    1 from horiz. diff.: 2.929392807993388E-23
+ mean change in tracer    1 from vert.  diff.:-1.376300216690074E-25
+ mean change in tracer    1 from sources     : 0.000000000000000E+00
+ surface flux of tracer   1                  : 0.000000000000000E+00
+ 
+ mean value  of tracer    2                  : 3.472603352607499E+01
+ abs  change in tracer    2                  : 1.677562166788115E-12
+ mean change in tracer    2                  : 4.860857400044687E-25
+ mean change in tracer    2 from advection   :-4.525937988868424E-29
+ mean change in tracer    2 from horiz. diff.: 3.440852553211005E-25
+ mean change in tracer    2 from vert.  diff.: 3.098191079892601E-30
+ mean change in tracer    2 from sources     : 0.000000000000000E+00
+ surface flux of tracer   2                  : 0.000000000000000E+00
+ 
+Other diagnostics:
+ global mean sea level: -1.199132919908745E-06
+ residual, scans :  5.979578287907923E-13    60
+ 
+Timing information:
+ 
+ Time in timer: HMIX_MOMENTUM_DEL2
+Timer number  1 =       0.54 seconds
+ Time in timer: HMIX_TRACER_DEL2
+Timer number  2 =       0.73 seconds
+ Time in timer: ADVECTION_MOMENTUM
+Timer number  3 =       1.09 seconds
+ Time in timer: ADVECTION_TRACER_CENTERED
+Timer number  4 =       0.94 seconds
+ Time in timer: VMIX_COEFFICIENTS_RICH
+Timer number  5 =       2.47 seconds
+ Time in timer: VMIX_EXPLICIT_TRACER
+Timer number  6 =       0.48 seconds
+ Time in timer: VMIX_EXPLICIT_MOMENTUM
+Timer number  7 =       0.48 seconds
+ Time in timer: VMIX_IMPLICIT_TRACER
+Timer number  8 =       0.95 seconds
+ Time in timer: VMIX_IMPLICIT_MOMENTUM
+Timer number  9 =       0.31 seconds
+ Time in timer: TOTAL
+Timer number 10 =      19.54 seconds
+ Time in timer: STEP
+Timer number 11 =      19.54 seconds
+ Time in timer: BAROCLINIC
+Timer number 12 =      14.55 seconds
+ Time in timer: BAROTROPIC
+Timer number 13 =       2.57 seconds
+  average # scans = 69
+ 
+Timing information:
+ 
+ Time in timer: HMIX_MOMENTUM_DEL2
+Timer number  1 =       0.54 seconds
+  Timer stats (node): min =        0.52 seconds
+                      max =        0.54 seconds
+                      mean=        0.53 seconds
+  Timer stats(block): min =        0.02 seconds
+                      max =        0.03 seconds
+                      mean=        0.02 seconds
+ Time in timer: HMIX_TRACER_DEL2
+Timer number  2 =       0.73 seconds
+  Timer stats (node): min =        0.72 seconds
+                      max =        0.73 seconds
+                      mean=        0.73 seconds
+  Timer stats(block): min =        0.03 seconds
+                      max =        0.04 seconds
+                      mean=        0.03 seconds
+ Time in timer: ADVECTION_MOMENTUM
+Timer number  3 =       1.09 seconds
+  Timer stats (node): min =        1.05 seconds
+                      max =        1.09 seconds
+                      mean=        1.07 seconds
+  Timer stats(block): min =        0.05 seconds
+                      max =        0.05 seconds
+                      mean=        0.05 seconds
+ Time in timer: ADVECTION_TRACER_CENTERED
+Timer number  4 =       0.94 seconds
+  Timer stats (node): min =        0.93 seconds
+                      max =        0.94 seconds
+                      mean=        0.93 seconds
+  Timer stats(block): min =        0.04 seconds
+                      max =        0.04 seconds
+                      mean=        0.04 seconds
+ Time in timer: VMIX_COEFFICIENTS_RICH
+Timer number  5 =       2.47 seconds
+  Timer stats (node): min =        2.31 seconds
+                      max =        2.47 seconds
+                      mean=        2.41 seconds
+  Timer stats(block): min =        0.09 seconds
+                      max =        0.12 seconds
+                      mean=        0.11 seconds
+ Time in timer: VMIX_EXPLICIT_TRACER
+Timer number  6 =       0.48 seconds
+  Timer stats (node): min =        0.47 seconds
+                      max =        0.48 seconds
+                      mean=        0.48 seconds
+  Timer stats(block): min =        0.02 seconds
+                      max =        0.02 seconds
+                      mean=        0.02 seconds
+ Time in timer: VMIX_EXPLICIT_MOMENTUM
+Timer number  7 =       0.48 seconds
+  Timer stats (node): min =        0.46 seconds
+                      max =        0.48 seconds
+                      mean=        0.47 seconds
+  Timer stats(block): min =        0.02 seconds
+                      max =        0.03 seconds
+                      mean=        0.02 seconds
+ Time in timer: VMIX_IMPLICIT_TRACER
+Timer number  8 =       0.95 seconds
+  Timer stats (node): min =        0.80 seconds
+                      max =        0.95 seconds
+                      mean=        0.88 seconds
+  Timer stats(block): min =        0.01 seconds
+                      max =        0.06 seconds
+                      mean=        0.04 seconds
+ Time in timer: VMIX_IMPLICIT_MOMENTUM
+Timer number  9 =       0.31 seconds
+  Timer stats (node): min =        0.25 seconds
+                      max =        0.31 seconds
+                      mean=        0.28 seconds
+  Timer stats(block): min =        0.00 seconds
+                      max =        0.02 seconds
+                      mean=        0.01 seconds
+ Time in timer: TOTAL
+Timer number 10 =      19.54 seconds
+  Timer stats (node): min =       19.54 seconds
+                      max =       19.54 seconds
+                      mean=       19.54 seconds
+  Timer stats(block): min =        0.00 seconds
+                      max =        0.00 seconds
+                      mean=        0.00 seconds
+ Time in timer: STEP
+Timer number 11 =      19.54 seconds
+  Timer stats (node): min =       19.54 seconds
+                      max =       19.54 seconds
+                      mean=       19.54 seconds
+  Timer stats(block): min =        0.00 seconds
+                      max =        0.00 seconds
+                      mean=        0.00 seconds
+ Time in timer: BAROCLINIC
+Timer number 12 =      14.55 seconds
+  Timer stats (node): min =       14.36 seconds
+                      max =       14.55 seconds
+                      mean=       14.45 seconds
+  Timer stats(block): min =        0.00 seconds
+                      max =        0.00 seconds
+                      mean=        0.00 seconds
+ Time in timer: BAROTROPIC
+Timer number 13 =       2.57 seconds
+  Timer stats (node): min =        2.57 seconds
+                      max =        2.57 seconds
+                      mean=        2.57 seconds
+  Timer stats(block): min =        0.00 seconds
+                      max =        0.00 seconds
+                      mean=        0.00 seconds
+------------------------------------------------------------------------
+ 
+POP exiting...
+ Successful completion of POP run
+ 
+------------------------------------------------------------------------

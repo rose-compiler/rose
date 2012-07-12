@@ -1,0 +1,322 @@
+\chapter{Installing and Building POP}\label{ch:install-build}
+
+Now that you've presumably perused the first chapter
+describing all the great features of POP, you're
+understandably anxious to leap in and run some
+simulations yourself.
+The general procedure for unpacking and building a POP executable
+will be described here. Exceptions to this procedure for some
+architectures will be noted.
+
+\section{Supported architectures}\label{sec:architectures}
+
+POP uses standard Fortran and will work on any machine
+with a compliant Fortran compiler (Fortran here denotes
+Fortran 90 or later -- FORTRAN 77, FORTRAN 66, FORTRAN IV
+or other antiquated dialects are only supported to the
+extent that F90 is backward compatible).
+Two levels of parallelism are supported and combinations
+of these two levels can be used on architectures which
+support them.  For shared-memory parallelism, OpenMP
+can be used.  For distributed-memory parallelism, MPI
+or SHMEM can be used.  In clustered SMP architectures,
+OpenMP can be used for multiple processors on a node while
+MPI can be used between nodes.
+
+\section{Obtaining the POP code}\label{sec:obtain}
+
+If you have not done so already, you must first actually
+download a version of the POP code, maybe even the latest
+version.  The preferred place to get the POP code is our
+main web site at Los Alamos:
+
+\noindent
+\htmladdnormallink{http://climate.acl.lanl.gov/models/pop}
+                  {http://climate.acl.lanl.gov/models/pop}
+
+\noindent
+from which you probably downloaded or are viewing
+this manual.
+
+If you are running POP as part of the NCAR Climate
+System Model (CCSM), you should download POP as
+part of the CCSM distribution.
+
+\section{Creating a run directory}\label{sec:create-directory}
+
+The POP distribution you obtained is probably in the
+form of a compressed tar file.  You must first uncompress
+the tar file using
+
+{\em uncompress popXXXX.tar}
+
+\noindent
+where XXXX refers to the version number which appears
+in the file name.  Then the tar archive must be unpacked
+using
+
+{\em tar -xvf popXXXX.tar}.
+
+\noindent
+This process will result in a directory named pop with
+several subdirectories containing source code, templates
+for various input files, utilities and test codes.
+
+In order to build a version of POP to run, a directory
+with the appropriate makefiles and input files must be
+created.  In the main POP directory, a script has been
+provided to create all the necessary structure. Typing
+
+{\em setup\_run\_dir dirname [model]}
+
+\noindent
+will create a directory called {\em dirname} with all
+the necessary makefiles and input files.  A sub-directory
+called {\em compile} will also be created to provide a
+work area for the compilation process.  The optional
+argument {\em model} will copy files that are specific
+to a standard resolution or model setup.  One example
+of such a setup is the
+\hyperref{{\em test} case}
+         {{\em test} case (see Sec. }{ }
+         {sec:testPOP}
+which should be used to test the code for the first
+time.
+
+\section{Building POP}\label{sec:build}
+
+\subsection{Make Procedure}\label{sec:make}
+
+The POP {\em make} procedure consists of several steps that are
+governed by options in an architecture-specific {\em archdir.gnu}
+file. The correct {\em .gnu} file is chosen based on an environment
+variable called ARCHDIR, which is
+a combination of vendor name and communication paradigm. For example,
+if you are compiling for an SGI Origin you will have the choice
+of {\em sgi\_serial}, {\em sgi\_mpi}, {\em sgi\_shmem}, {\em sgi\_omp},
+or {\em sgi\_mpiomp} depending on whether you want to run serially,
+in parallel using message-passing (MPI or SHMEM), in parallel using
+thread-based parallelism (OpenMP) or in parallel using a hybrid of
+threads and message-passing.  The {\em archdir.gnu} file contains
+the proper paths and compiler options for the particular architecture
+chosen. A variety of these {\em .gnu} files have been provided
+with the standard distribution in the {\em input\_templates}
+directory.  If a {\em archdir.gnu} file does not
+exist for your choice, a file {\em generic.gnu} exists with
+comments on how to configure it for your particular machine
+and environment.  Also, if
+your site has an unusual setup for locations of compilers and various
+other tools like netCDF, you may have to edit the {\em archdir.gnu}
+file to reflect the different setup.
+
+POP version 2.0 or later requires version 3.5 or later of the 
+netCDF library.  If not already installed on your system, the 
+netCDF package can be obtained free of charge from
+
+\noindent
+\htmladdnormallink{
+ http://my.unidata.ucar.edu/content/software/netcdf/index.html}
+{http://my.unidata.ucar.edu/content/software/netcdf/index.html}
+\noindent
+
+Once the ARCHDIR environment variable has been set, typing {\em gmake}
+should start the {\em make} process. The {\em make} process includes a
+step which runs scripts to generate dependencies for the {\em makefile}.
+After the dependencies are generated, the source code passes through a
+preprocessor and the resulting routines are finally compiled into an
+executable named {\bf pop}.
+
+If you wish to compile a version of POP suitable for
+debugging or wish to turn all optimizations off, typing
+
+{\em gmake OPTIMIZE=no}
+
+\noindent
+will create an exectutable named {\bf pop\_db} for this
+purpose.
+
+\section{Domain decomposition}\label{sec:domain-decomp}
+
+In order to understand some aspects of compiling and running
+POP, a few words must be said here about how POP breaks up
+a problem to run on different threads and processors.  Note
+that even the serial versions decompose the domain in order
+to achieve better performance on cache-based microprocessors.
+
+In POP, the full horizontal domain size 
+{\em (nx\_global,ny\_global)} is broken up into domains 
+or blocks. The size of these blocks can be chosen to 
+achieve better performance as described below.  Any block 
+size can be chosen, but to avoid padding the domain with 
+extra points, the block size in each direction should be 
+chosen such that it divides the global domain size in that 
+direction evenly.
+
+Once the domain has been decomposed into blocks, the
+blocks are distributed among the processors or nodes, ignoring
+blocks that only contain land points.  The distribution
+of blocks across processors or nodes can be performed using 
+either a load-balanced distribution to try to give all processors
+an equal amount of work or a Cartesian distribution
+which ensures that the block's north, south, east and
+west neighbors remain nearest neighbors.  A
+load-balanced distribution is generally better for
+the baroclinic section of the code; a Cartesian
+distribution is better for the barotropic solver.
+Different distributions can be specified for the baroclinic
+and barotropic parts of the code.
+
+Such a domain decomposition allows some flexibility
+in tuning the model for the best performance.  Generally,
+a smaller block size will improve processor performance
+on cache-based microprocessors and a smaller block
+size should ensure a better load balance and better
+land point elimination.  However,
+smaller block sizes add complexity to the communication
+routines (boundary updates, global reductions) and
+will result in a performance penalty for the barotropic
+solver.  The user will need to experiment
+with a few combinations to find the best configuration
+for the simulation being run.
+
+\section{Compile-time options}\label{sec:compile-opts}
+
+There are a few options for POP that must be determined at
+compile time. Some of these options are set by editing
+modules; one option requires a preprocessor
+directive which is handled by a
+C-language preprocessor ({\em cpp}) or equivalent (if the
+Fortran compiler understands such directives).  The
+options below are the {\em only} options that need to
+be decided at compile time; all other options are set
+at run time through a namelist input file.
+
+\subsection{Domain}\label{sec:compile-domain}
+
+The full model size must be set in the domain\_size module
+(in the file {\em domain\_size.F90} located in the run directory).
+The horizontal extents of the grid {\em nx\_global} and 
+{\em ny\_global} are defined here as well as the number of 
+vertical levels {\em km}.  The number of tracers
+{\em nt} also must be defined here and must be at least two
+to handle potential temperature and salinity which are always
+assumed to be tracer number one and two, respectively.
+
+\subsection{Blocks}\label{sec:compile-blocks}
+
+The size of the blocks for which the domain is
+\hyperref{decomposed}
+         {decomposed (see Sec. }{)}
+         {sec:domain-decomp}
+is set by two parameters in the domain\_size module
+(contained in the file {\em domain\_size.F90} in the run
+directory).  The parameter
+{\em block\_size\_x} determines the number of physical
+grid points in the first horizontal dimension;  the
+parameter {\em block\_size\_y} determines the number
+of physical grid points in the (wait for it...) second
+horizontal dimension.  The two parameters 
+{\em max\_blocks\_clinic} and
+{\em max\_blocks\_tropic} determine the maximum number
+of blocks that can be distributed onto a processor or node.
+An initial guess for these two parameters can be made
+by dividing the total number of blocks by the number
+of processors you plan to run on
+\begin{equation}
+{{(nx\_global/block\_size\_x)
+  (ny\_global/block\_size\_y)}\over{nprocs}}.
+\end{equation}
+Only an initial guess is required; when running the code,
+the actual numbers required will be output so that the
+user can set these parameters correctly.  Also, note that
+these parameters can be set higher than required with
+no penalty other than memory use.  For example, the
+parameters can be set for the lowest processor count
+you plan to use and then the same executable can be used
+to run at higher processor counts with no change other
+than the namelist inputs for number of processors.
+
+As mentioned in previous sections, finding the optimal
+block size and distribution can require experimentation.
+However, a starting point for users who are familiar
+with previous versions of POP is to set the block size such
+that only one block is distributed on each processor.
+In this case, {\em block\_size\_x = nx\_global/NPROCX}
+where {\em NPROCX} is the value found in the old POP
+{\em .gnu} files; values for the y direction are computed
+analogously.  The {\em max\_blocks} parameters
+are then set to one.  After using this configuration,
+users can experiment with reducing the block size to
+improve performance. 
+
+\subsection{Coupled model runs}\label{sec:compile-coupled}
+
+If POP is run in coupled mode, the default interface
+communicates with the NCAR CCSM Flux Coupler.  This requires
+message-passing calls and linking with additional libraries
+(including MPI whether MPI is used internally or not).
+To enable this capability, the coupled option must be
+requested on the makefile command line:
+
+{\em gmake COUPLED=yes}.
+
+\noindent
+This option turns on the COUPLED ifdef flag for the 
+preprocessor so that the code necessary for model
+coupling is included during the preprocessing phase.
+
+\subsection{Debugging}\label{sec:compile-debug}
+
+Similar to the coupling option, if you wish to create
+a non-optimized pop executable for use with a debugging
+tool, you must specify this on the make command line:
+
+{\em gmake OPTIMIZE=no}.
+
+\noindent
+By default, this will create an executable named
+{\bf pop\_db} rather than the usual {\bf pop}.
+
+\section{Testing POP}\label{sec:testPOP}
+
+The POP distribution includes a simple test case that can be used
+for a variety of purposes, including validation, performance 
+tuning and benchmarking.  The key point is that there are no input 
+fields: the model grid, topography, initial state, equation of 
+state coefficients and wind stress (there is no other forcing 
+enabled) are all generated internally.  The only file that is 
+read is {\em pop\_in}.
+
+To run the test problem, type 
+
+{\em ./setup\_run\_dir test test} 
+
+\noindent 
+and a
+directory called {\em test} will be created that contains all of the
+appropriate files.  The default model size is 192x128x20 grid points,
+though this can be changed arbitrarily by the user.  The grid
+generated internally is an equally-spaced latitude-longitude global
+grid with idealized landmasses. Make the executable as described
+\hyperref{earlier.}
+         {in Sec. }{.}
+         {sec:build}
+The {\em pop\_in} file defaults to running 20 steps with
+full diagnostics output every step.  Note that for performance
+benchmarks, the diagnostic frequency should be set to `never' 
+as the global diagnostics are expensive and typically 
+requested relatively infrequently (e.g. every 10 days) in a 
+production simulation.
+
+To use this test case for validation, the user can compare their ouput
+with the file {\em pop/input\_templates/pop\_sgi.log.test} which
+contains the output of a 20 step calculation run on 4 processors of
+an SGI Origin3000.  The results from other computer platforms should
+agree reasonably well -- within roundoff for the first step for
+most of the larger fields (the nearly-zero fields are very sensitive
+and my not agree to that level of precision).
+
+Once the answers have been validated using the 192x128x20 grid,
+performance and scaling can be investigated by varying the grid
+size (in {\em domain\_size.F90}) and the number of processors (in the
+pop\_in file).

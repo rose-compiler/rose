@@ -3,73 +3,82 @@
 
 #include "RtedTransformation.h"
 
-
 // Build an inherited attribute for the tree traversal to test the rewrite mechanism
 
-class InheritedAttribute
-   {
-     public:
-      // Depth in AST
+namespace rted
+{
+  struct InheritedAttribute
+  {
+    bool             isAssignInitializer;
+    bool             isVariableDecl;
+    bool             isArrowExp;
+    bool             isAddressOfOp;
+    bool             isSizeOfOp;
+    bool             functionHasParameters;
+    ReturnInfo::Kind functionReturnType;
+    size_t           openBlocks;
+    SgStatement*     lastGForLoop;
+    SgBinaryOp*      lastBinary;
+    size_t           lastBreakableStmtLevel;
+    size_t           lastContinueableStmtLevel;
 
-         bool function;
-         bool isAssignInitializer;
-         bool isArrowExp;
-         bool isAddressOfOp;
-         bool isForStatement;
-         bool isBinaryOp;
+    InheritedAttribute()
+    : isAssignInitializer(false), isVariableDecl(false), isArrowExp(false),
+      isAddressOfOp(false), isSizeOfOp(false), functionHasParameters(false),
+      functionReturnType(ReturnInfo::rtNone),
+      openBlocks(0), lastGForLoop(NULL), lastBinary(NULL),
+      lastBreakableStmtLevel(0), lastContinueableStmtLevel(0)
+    {}
+  };
 
+#if 0
+  struct EvaluatedAttribute
+  {
+    bool instrument_function_call;
 
- //  InheritedAttributeBools* bools;
-       // Specific constructors are required
+    EvaluatedAttribute()
+    : instrument_function_call(false)
+    {}
 
-	 InheritedAttribute (bool f, bool a, bool ae, bool ao, bool i, bool bo) :
-	                                               function(f),
-	                                               isAssignInitializer(a),
-	                                               isArrowExp(ae),
-	                                               isAddressOfOp(ao),
-	                                               isForStatement(i),
-	                                               isBinaryOp(bo)
-         {};
-	 InheritedAttribute ( const InheritedAttribute & X ) : 
-	                                                       function(X.function),
-	                                                       isAssignInitializer(X.isAssignInitializer),
-	                                                       isArrowExp(X.isArrowExp),
-	                                                       isAddressOfOp(X.isAddressOfOp),
-	                                                       isForStatement(X.isForStatement),
-	                                                       isBinaryOp(X.isBinaryOp)
-	 {};
+    EvaluatedAttribute& operator+=(const EvaluatedAttribute& rhs)
+    {
+      instrument_function_call = instrument_function_call || rhs.instrument_function_call;
+      return *this;
+    }
 
- //  InheritedAttribute (InheritedAttributeBools* b) : bools(b){};
- //  InheritedAttribute ( const InheritedAttribute & X ) : bools(X.bools){};
-   };
+    EvaluatedAttribute operator+(const EvaluatedAttribute& rhs) const
+    {
+      EvaluatedAttribute res(*this);
 
-typedef bool SynthesizedAttribute;
+      res += rhs;
+      return res;
+    }
+  };
+#endif
 
+  struct VariableTraversal : public AstTopDownProcessing<InheritedAttribute>
+  {
+     typedef AstTopDownProcessing<InheritedAttribute> Base;
 
+      explicit
+      VariableTraversal(RtedTransformation* t);
 
-class VariableTraversal : public SgTopDownBottomUpProcessing<InheritedAttribute,SynthesizedAttribute>
-   {
+      // Functions required
+      InheritedAttribute evaluateInheritedAttribute(SgNode* astNode, InheritedAttribute inheritedAttribute);
+      // EvaluatedAttribute evaluateSynthesizedAttribute(SgNode* astNode, InheritedAttribute inh, SynthesizedAttributesList synList);
 
-     RtedTransformation* transf;
-     std::vector<SgExpression*>* rightOfbinaryOp;
-     std::vector<SgForStatement*>* for_stmt;
-     public:
+      friend class InheritedAttributeHandler;
+      // friend class EvaluatedAttributeHandler;
 
-   VariableTraversal(RtedTransformation* t) ;
-     ~VariableTraversal() {};
+    private:
+      RtedTransformation* const transf;
+      SourceFileType      current_file_type;  // could be part of inherited attribute
 
-     // Functions required
-     InheritedAttribute evaluateInheritedAttribute (
-						    SgNode* astNode, 
-						    InheritedAttribute inheritedAttribute );
-     
-     SynthesizedAttribute evaluateSynthesizedAttribute (
-							SgNode* astNode,
-							InheritedAttribute inheritedAttribute,
-							SubTreeSynthesizedAttributes synthesizedAttributeList );
-
-     bool isRightOfBinaryOp(SgNode* node);
-     bool isInitializedNameInForStatement(SgForStatement* for_stmt,SgInitializedName* name);
-   };
+      // should fail when needed
+      VariableTraversal();
+      VariableTraversal(const VariableTraversal&);
+      VariableTraversal& operator=(const VariableTraversal&);
+  };
+}
 
 #endif

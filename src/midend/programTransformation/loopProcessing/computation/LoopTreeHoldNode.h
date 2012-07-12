@@ -57,7 +57,7 @@ class HoldAncesLoopObserver : protected HoldLoopAlignObserver
 
   void UpdateDistNode(const DistNodeInfo &info) 
       {
-        LoopTreeNode *orig = info.GetObserveNode();
+        const LoopTreeNode *orig = info.GetObserveNode();
         LoopTreeNode *nloop = info.GetNewNode();
         LoopTreeNode *n = desc->Parent();
         for ( ;  n != nloop && n != orig; n = n->Parent()) ;

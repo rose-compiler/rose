@@ -1,3 +1,4 @@
+#define BOOST_FILESYSTEM_VERSION 2
 #include "rose.h"
 #include <boost/program_options.hpp>
 #include "boost/filesystem/operations.hpp"
@@ -418,8 +419,8 @@ isEqual(SgNode* A, SgNode* B)
 
   SgAsmInstruction* iA = isSgAsmx86Instruction(A);
   SgAsmInstruction* iB = isSgAsmx86Instruction(B);
-  SgAsmFunctionDeclaration* fA = isSgAsmFunctionDeclaration(A);
-  SgAsmFunctionDeclaration* fB = isSgAsmFunctionDeclaration(B);
+  SgAsmFunction* fA = isSgAsmFunction(A);
+  SgAsmFunction* fB = isSgAsmFunction(B);
   
   bool isTheSame = false;
   if(iA != NULL && iB != NULL)
@@ -703,7 +704,7 @@ int main(int argc, char** argv)
   backend((SgProject*)original);
   backend((SgProject*)patched);
 
-  vector<SgAsmFunctionDeclaration*> funcsOrig, funcsPatched;
+  vector<SgAsmFunction*> funcsOrig, funcsPatched;
   FindAsmFunctionsVisitor funcVis;
   AstQueryNamespace::querySubTree(original, std::bind2nd( funcVis, &funcsOrig ));
   AstQueryNamespace::querySubTree(patched, std::bind2nd( funcVis, &funcsPatched ));
@@ -714,10 +715,10 @@ int main(int argc, char** argv)
 
   vector<std::string> patternsToLookFor;
 
-  for(std::vector<SgAsmFunctionDeclaration*>::iterator fItr = funcsOrig.begin();
+  for(std::vector<SgAsmFunction*>::iterator fItr = funcsOrig.begin();
       fItr != funcsOrig.end(); ++fItr )
   {
-    for(std::vector<SgAsmFunctionDeclaration*>::iterator f2Itr = funcsPatched.begin();
+    for(std::vector<SgAsmFunction*>::iterator f2Itr = funcsPatched.begin();
         f2Itr != funcsPatched.end(); ++f2Itr )
     {
       if((*fItr)->get_name() == (*f2Itr)->get_name())

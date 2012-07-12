@@ -1,0 +1,5 @@
+program locktest 
+
+lockset :: e
+
+end program

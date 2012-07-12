@@ -32,16 +32,16 @@ open(STRESSTESTCMP,">$graphCmpFileName");
 #create the list of function-names, needs only to be writte to the stress-stest-file
 for ($i = 0; $i < $count; ++$i)
 {
-	$function="f$i";
+	$function= sprintf("f%03d", $i);
 	# function declaration
 	print STRESSTEST "void $function();\n";
-	push(@function_list , "f$i");
+	push(@function_list , $function);
 }
 
 
 foreach $function (@function_list)
 {
-	# create a fuynction defintion
+	# create a function defintion
 	print STRESSTEST "void $function(){\n";
 	# create a graph-dump-node
 	print STRESSTESTCMP "$function ->";

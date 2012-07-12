@@ -1,0 +1,51 @@
+program acopytest
+
+   integer(8), allocatable, dimension(:) :: inbuf[*]
+   integer(8), allocatable, dimension(:) :: outbuf[*]
+   event, allocatable, dimension(:) :: copied[*]
+
+   integer :: npe, mypid, i, succ
+   logical :: success
+
+
+   npe = team_size()
+   mypid = team_rank()
+
+   allocate(inbuf(0:npe-1)[])
+   allocate(outbuf(0:npe-1)[])
+   allocate(copied(0:npe-1)[])
+   call event_init(copied, npe)
+
+
+
+   do i = 0, npe-1
+     inbuf(i) = 0
+     outbuf(i) = 1
+   end do
+   succ = mod(mypid + 1, npe)
+   call team_barrier()
+
+   call async_copy(inbuf(mypid)[succ], outbuf(mypid), copied(mypid)[succ])
+
+   do i = 0, npe - 1
+      if (i .ne. mypid) then
+	 call event_wait(copied(i))
+	 outbuf(i) = inbuf(i) + 1
+	 call async_copy(inbuf(i)[succ], outbuf(i), copied(i)[succ])
+      endif
+   end do
+
+   call event_wait(copied(mypid))
+
+
+   success = (inbuf(mypid) .eq. npe)
+
+   if (.not. success) then
+      print *, "test failed for image ", mypid, "output: ", inbuf(mypid)
+   end if
+
+   if (success .and. 0 .eq. mypid) then
+      write(*, '(A)') "test succeeded"
+   endif
+   
+end program acopytest

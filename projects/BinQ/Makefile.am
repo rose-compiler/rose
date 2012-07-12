@@ -47,11 +47,10 @@ moc_%.C: $(srcdir)/%.h
 else
 moc_%.C: $(srcdir)/%.h 
 	 $(MOC) -o $@ $<
-	 sed -i '1i #include "rose.h"' $@
 endif 
 
 
-BinQ_LDADD = $(ROSE_LIBS) $(QT_LDFLAGS) $(QROSE_LDFLAGS) -lrt
+BinQ_LDADD = $(ROSE_LIBS) $(QT_LDFLAGS) $(QROSE_LDFLAGS)
 
 #test_LDADD = $(ROSE_LIBS) $(QT_LDFLAGS) $(QROSE_LDFLAGS) -lrt
 

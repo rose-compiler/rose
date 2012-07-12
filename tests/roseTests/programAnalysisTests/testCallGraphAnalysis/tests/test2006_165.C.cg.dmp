@@ -1,4 +1,4 @@
-foo ->
-fubar -> foo
 A::foo ->
+foo ->
 foobar -> foo
+fubar -> foo

@@ -1,30 +1,47 @@
-c:0 LOC1=>LOC2 (pending  LOC3) 
-c:2 LOC4=>LOC5 (pending  LOC6=>LOC7  LOC6=>LOC7 ) 
-v:foo LOC8=>LOC9 (inparams:  LOC10=>LOC11 ) ->(outparams:  LOC10=>LOC11 ) 
-v:foo-0 LOC12=>LOC10 =>LOC11 
-v:foo-1-2 LOC13=>LOC6 =>LOC7 
-v:foo-1-3 LOC14=>LOC15 =>LOC6 
-v:foo-1-4 LOC16=>LOC6 =>LOC7 
-v:foo-1-5 LOC17=>LOC6 =>LOC7 
-v:foo-1-input LOC18=>LOC10 =>LOC11 
-v:foo-1-m LOC6=>LOC7 
-v:foo-1-p LOC15=>LOC6 =>LOC7 
-v:foo-1-p1 LOC19=>LOC6 =>LOC7 
-v:foo-1-pp LOC20=>LOC15 =>LOC6 
-v:foo-1-q LOC21=>LOC6 =>LOC7 
-v:foo-1-r LOC22=>LOC6 =>LOC7 
-v:goo LOC23=>LOC24 (inparams:  LOC9) ->(outparams:  LOC25) 
-v:goo-0 LOC26=>LOC25 
-v:goo-6-7 LOC27=>LOC10 =>LOC11 
-v:goo-6-8 LOC28=>LOC10 =>LOC11 
-v:goo-6-content LOC29=>LOC10 =>LOC11 
-v:goo-6-f LOC30=>LOC9 (inparams:  LOC10=>LOC11 ) ->(outparams:  LOC10=>LOC11 ) 
-v:main LOC31=>LOC32 (inparams: ) ->(outparams:  LOC3) 
-v:main-0 LOC33=>LOC3 
-v:main-10-11 LOC34=>LOC10 =>LOC11 
-v:main-10-12 LOC35=>LOC36 =>LOC37 
-v:main-10-13 LOC38=>LOC10 =>LOC11 
-v:main-10-9 LOC39=>LOC10 =>LOC11 
-v:main-10-content LOC40=>LOC10 =>LOC11 
-v:main-10-content2 LOC41=>LOC42 =>LOC43 
-v:main-10-output LOC44=>LOC10 =>LOC11 
+c:(((sizeof(int )) *(10))) LOC1=>LOC2 
+c:0 LOC3=>LOC4 (pending  LOC5 LOC6 LOC7 LOC8) 
+c:1 LOC9=>LOC10 (pending  LOC11 LOC12) 
+c:10 LOC13=>LOC14 (pending  LOC15) 
+c:2 LOC16=>LOC17 (pending  LOC18=>LOC19  LOC18=>LOC19 ) 
+c:5 LOC20=>LOC21 (pending  LOC6) 
+v:foo LOC22=>LOC23 (inparams:  LOC24=>LOC25 ) ->(outparams:  LOC24=>LOC25 ) 
+v:foo-0 LOC26=>LOC24 =>LOC25 
+v:foo-1-2 LOC27=>LOC18 =>LOC19 
+v:foo-1-3 LOC28=>LOC29 =>LOC18 
+v:foo-1-4 LOC30=>LOC18 =>LOC19 
+v:foo-1-5 LOC31=>LOC18 =>LOC19 
+v:foo-1-input LOC32=>LOC24 =>LOC25 
+v:foo-1-m LOC18=>LOC19 
+v:foo-1-p LOC29=>LOC18 =>LOC19 
+v:foo-1-p1 LOC33=>LOC18 =>LOC19 
+v:foo-1-pp LOC34=>LOC29 =>LOC18 
+v:foo-1-q LOC35=>LOC18 =>LOC19 
+v:foo-1-r LOC36=>LOC18 =>LOC19 
+v:goo LOC37=>LOC38 (inparams:  LOC23) ->(outparams:  LOC39) 
+v:goo-0 LOC40=>LOC39 
+v:goo-6-10 LOC41=>LOC24 =>LOC25 
+v:goo-6-7 LOC42=>LOC24 =>LOC25 
+v:goo-6-8 LOC43=>LOC24 =>LOC25 
+v:goo-6-9 LOC44=>LOC45 =>LOC46 
+v:goo-6-content LOC47=>LOC24 =>LOC25 
+v:goo-6-content2 LOC48=>LOC49 =>LOC50 
+v:goo-6-f LOC51=>LOC23 (inparams:  LOC24=>LOC25 ) ->(outparams:  LOC24=>LOC25 ) 
+v:goo-6-output LOC52=>LOC24 =>LOC25 
+v:main LOC53=>LOC54 (inparams:  LOC55 LOC56) ->(outparams:  LOC8) 
+v:main-0 LOC57=>LOC8 
+v:main-14-15 LOC58=>LOC15 
+v:main-14-16 LOC59=>LOC60 
+v:main-14-17 LOC61=>LOC62 =>LOC63 
+v:main-14-a LOC64=>LOC5 
+v:main-14-argc LOC65=>LOC55 
+v:main-14-argv LOC66=>LOC56 
+v:main-14-b LOC67=>LOC6 
+v:main-14-i LOC68=>LOC7 (pending  LOC15 LOC60) 
+v:malloc LOC69=>LOC70 (inparams:  LOC2) ->(outparams:  LOC71) 
+v:printf LOC72=>LOC73 (inparams:  LOC62=>LOC63  LOC5 LOC6) ->(outparams:  LOC74) 
+v:test LOC75=>LOC76 (inparams: ) ->(outparams:  LOC77) 
+v:test-0 LOC78=>LOC77 
+v:test-12-11 LOC79=>LOC80 
+v:test-12-13 LOC81=>LOC71 (pending  LOC80 LOC11) 
+v:test-12-intArray LOC82=>LOC12 
+v:test-12-intArray2 LOC83=>LOC11 

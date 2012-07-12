@@ -1,13 +1,11 @@
 #include "sage3basic.h"
 #include "BinaryLoaderElf.h"
 #include "integerOps.h"                 /* needed for signExtend() */
+#include "MemoryMap.h"
 
 #include <fstream>
 #include <boost/regex.hpp>
 #include <boost/filesystem.hpp>
-
-#define __STDC_FORMAT_MACROS
-#include <inttypes.h>
 
 /* This binary loader can handle all ELF files. */
 bool
@@ -73,11 +71,12 @@ BinaryLoader::MappingContribution
 BinaryLoaderElf::align_values(SgAsmGenericSection *_section, MemoryMap *map,
                               rose_addr_t *malign_lo_p, rose_addr_t *malign_hi_p,
                               rose_addr_t *va_p, rose_addr_t *mem_size_p,
-                              rose_addr_t *offset_p, rose_addr_t *file_size_p,
+                              rose_addr_t *offset_p, rose_addr_t *file_size_p, bool *map_private_p,
                               rose_addr_t *va_offset_p, bool *anon_lo_p, bool *anon_hi_p,
                               ConflictResolution *resolve_p)
 {
     SgAsmElfSection *section = isSgAsmElfSection(_section);
+    assert(section); /* This method is only for ELF files. */
 
     /* ELF Segments are aligned using the superclass, but when the section has a low- or high-padding area we'll use file
      * contents for the low area and zeros for the high area. Due to our rebase() method, there should be no conflicts between
@@ -87,11 +86,19 @@ BinaryLoaderElf::align_values(SgAsmGenericSection *_section, MemoryMap *map,
 
 
         MappingContribution retval = BinaryLoader::align_values(section, map, malign_lo_p, malign_hi_p, va_p,
-                                                                mem_size_p, offset_p, file_size_p, va_offset_p,
+                                                                mem_size_p, offset_p, file_size_p, map_private_p, va_offset_p,
                                                                 anon_lo_p, anon_hi_p, resolve_p);
+
         *anon_lo_p = false;
-        *anon_hi_p = true;
+        *map_private_p = true;
         *resolve_p = RESOLVE_OVERMAP;
+
+        if (section->get_mapped_size()==section->get_size()) {
+            *anon_hi_p = false;
+        } else {
+            *anon_hi_p = true;
+        }
+
         return retval;
     }
 
@@ -119,6 +126,7 @@ BinaryLoaderElf::align_values(SgAsmGenericSection *_section, MemoryMap *map,
     *file_size_p = section->get_size();
     *va_offset_p = 0;
     *anon_lo_p = *anon_hi_p = true;
+    *map_private_p = false;
     *resolve_p = RESOLVE_OVERMAP;       /*erase (part of) the previous ELF Segment's memory */
     return CONTRIBUTE_ADD;
 }
@@ -159,7 +167,8 @@ BinaryLoaderElf::add_lib_defaults(SgAsmGenericHeader *hdr/*=NULL*/)
 
     /* Add the DT_RPATH directories to the search path (only if no DT_RUNPATH). Use of DT_RPATH is deprecated. */
     std::string rpath, runpath;
-    get_dynamic_vars(hdr, rpath, runpath);
+    if (hdr)
+        get_dynamic_vars(hdr, rpath, runpath);
     if (!rpath.empty() && runpath.empty()) {
         boost::regex re;
         re.assign("[:;]");
@@ -432,7 +441,8 @@ BinaryLoaderElf::SymbolMapEntry::get_vsymbol(const VersionedSymbol &version) con
         if (def && neededVersion == def->get_entries()->get_entries().front()->get_name()->get_string())
             return p_versions[i];
     }
-    ROSE_ASSERT(false);/* TODO, handle cases where input uses versioning, but definition does not */
+    assert(!"TODO, handle cases where input uses versioning, but definition does not");
+    abort();
 }
 
 void
@@ -893,6 +903,7 @@ BinaryLoaderElf::fixup_apply(rose_addr_t value, SgAsmElfRelocEntry *reloc, Memor
                              rose_addr_t target_va/*=0*/, size_t nbytes/*=0*/)
 {
     SgAsmGenericHeader *header = SageInterface::getEnclosingNode<SgAsmGenericHeader>(reloc);
+    assert(header);
     SgAsmExecutableFileFormat::ByteOrder sex = header->get_sex();
 
     if (0==target_va)

@@ -1,0 +1,5 @@
+program topotest 
+
+topology :: e
+
+end program

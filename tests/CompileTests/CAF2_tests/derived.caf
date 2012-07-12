@@ -1,0 +1,14 @@
+program derived
+
+  type :: D
+    integer :: c
+  end type
+  
+  type(D) :: a[*]
+  integer k
+  team t
+  
+  a[4@t]%c = 0
+  k = a[4]%c
+  
+end program

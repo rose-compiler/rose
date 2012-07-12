@@ -1,9 +1,13 @@
 #include <backstroke.h>
 #include <VariableRenaming.h>
-#include "utilities/cppDefinesAndNamespaces.h"
 #include "normalizations/expNormalization.h"
 #include "pluggableReverser/eventProcessor.h"
 #include "pluggableReverser/expAndStmtHandlers.h"
+
+#include <boost/foreach.hpp>
+
+#define foreach BOOST_FOREACH
+#define reverse_foreach BOOST_REVERSE_FOREACH
 
 using namespace std;
 
@@ -11,25 +15,27 @@ struct IsEvent
 {
 	bool operator() (SgFunctionDeclaration* decl)
 	{
+		string funcName = decl->get_name();
+			
+		//All event handler functions are named "Handle"
+		if (funcName != "Handle")
+			return false;
+		
+		
 		if (SgMemberFunctionDeclaration* memFunc = isSgMemberFunctionDeclaration(decl))
 		{
 			SgClassDefinition* classDef = memFunc->get_class_scope();
 			SgClassDeclaration* classDecl = classDef->get_declaration();
 			string className = classDecl->get_name();
 
-			SgNamespaceDefinitionStatement* namespaceDef = isSgNamespaceDefinitionStatement(classDecl->get_parent());
-			if (namespaceDef != NULL)
+			if (className == "UDPSink" || className == "InterfaceReal" || className == "L2Proto802_11" 
+					|| className == "WirelessLink" || className == "InterfaceReal" || className == "Timer"
+                    || className == "CBRApplication" || className == "LinkReal")
 			{
-				string namespaceName = namespaceDef->get_namespaceDeclaration()->get_name();
-				if (namespaceName == "gas_station" && className == "GasStationEvents")
-				{
-					string funcName = decl->get_name();
-
-					if (funcName == "OnArrival" || funcName == "OnFinishedPumping" || funcName == "OnFinishedPaying")
-						return true;
-				}
+				return true;
 			}
 		}
+		
 		return false;
 	}
 };
@@ -56,8 +62,26 @@ struct VariableReversalFilter : public IVariableFilter
 			type = getPointerBaseType(type);
 
 		string typeName = SageInterface::get_name(type);
+		if (typeName == "Simulator"/* || typeName == "Event"*/)
+			return false;
+		
+		//Don't save event objects
+//		if (SgClassType* classType = isSgClassType(type))
+//		{
+//			SgClassDeclaration* typeDecl = (SgClassDeclaration*)classType->get_declaration()->get_definingDeclaration();
+//			ROSE_ASSERT(typeDecl != NULL);
+//			SgClassDefinition* classDef = typeDecl->get_definition();
+//			ROSE_ASSERT(classDef != NULL);
+//			const ClassHierarchyWrapper::ClassDefSet& superclasses = classHierarchy->getAncestorClasses(classDef);
+//			
+//			foreach (SgClassDefinition* superclass, superclasses)
+//			{
+//				if (SageInterface::get_name(superclass->get_declaration()->get_type()) == "Event")
+//					return false;
+//			}
+//		}
 
-		return (typeName != "DESEngine");
+		return true;
 	}
 };
 
@@ -65,8 +89,8 @@ int main(int argc, char** argv)
 {
 	//Add the preinclude option
 	vector<string> commandArguments(argv, argv + argc);
-	commandArguments.push_back("-include");
-	commandArguments.push_back("rctypes.h");
+	//commandArguments.push_back("-include");
+	//commandArguments.push_back("rctypes.h");
 
 	SgProject* project = frontend(commandArguments);
 	AstTests::runAllTests(project);
@@ -82,10 +106,10 @@ int main(int argc, char** argv)
 	event_processor.addExpressionHandler(new StoreAndRestoreExpressionHandler);
 
 	//Statement handler
-	event_processor.addStatementHandler(new ReturnStatementHandler);
-	event_processor.addStatementHandler(new VariableDeclarationHandler);
-	event_processor.addStatementHandler(new StraightlineStatementHandler);
-	event_processor.addStatementHandler(new NullStatementHandler);
+	event_processor.addStatementHandler(new SgReturnStmt_Handler);
+	event_processor.addStatementHandler(new SgVariableDeclaration_Handler);
+	event_processor.addStatementHandler(new SgBasicBlock_Handler);
+	event_processor.addStatementHandler(new SgNullStatement_Handler);
 
 	//Variable value extraction handlers
 	event_processor.addVariableValueRestorer(new RedefineValueRestorer);

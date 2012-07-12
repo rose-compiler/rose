@@ -1,3 +1,3 @@
+X::setComponent ->
 Y::func1 ->
 Y::func2 -> Y::func1
-X::setComponent ->

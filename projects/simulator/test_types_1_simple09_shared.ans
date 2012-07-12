@@ -1,0 +1,4 @@
+Pointers discovered by PtrAnalysis:
+    data pointer, symbolic address
+    data pointer, symbolic address
+    data pointer, auto variable at 0xaffffff8[32]

@@ -1,8 +1,8 @@
 // This translator acts as a filter to restrict the language used to
 // express events in the discrete event simulation.
 // We only restrict the language constructs used to express events,
-// and impose no restriction of the langauge used to express other 
-// parts of the the descrete event simulation.
+// and impose no restriction of the language used to express other 
+// parts of the the discrete event simulation.
 // Step 1: Identify the event functions (save as a list)
 // Step 2: Enforce language restrictions on the event functions.
 
@@ -12,9 +12,11 @@
 #include <functional>
 #include <numeric>
 #include "LanguageRestrictions.h"
-#include "utilities/cppDefinesAndNamespaces.h"
 #include "utilities/utilities.h"
+#include <boost/foreach.hpp>
 
+#define foreach BOOST_FOREACH
+#define reverse_foreach BOOST_REVERSE_FOREACH
 
 using namespace std;
 using namespace SageBuilder;
@@ -198,7 +200,7 @@ bool LanguageRestrictions::usesArrays(SgFunctionDefinition* functionDefinition)
 {
 	Rose_STL_Container<SgNode*> arrayBracketReferences = NodeQuery::querySubTree(functionDefinition->get_body(), V_SgPntrArrRefExp);
 
-	//TODO: use some sort of analysis to decide wether the array is written to or read to. Only ban writing to arrays;
+	//TODO: use some sort of analysis to decide whether the array is written to or read to. Only ban writing to arrays;
 	//constant lookup tables are Ok.
 	if (arrayBracketReferences.size() > 0)
 	{
@@ -213,6 +215,9 @@ bool LanguageRestrictions::usesArrays(SgFunctionDefinition* functionDefinition)
   * in the function. Note that this refers to the pointer value itself, not to the object it's pointing to. */
 bool LanguageRestrictions::variablesOfPointerTypesAreAssigned(SgFunctionDefinition* functionDefinition)
 {
+	//The side-effect analysis exposed through SageInterface is completely useless. Most of the time we just get
+	//"error in side effect analysis"
+	/*
 	vector<SgNode*> readRefs;
 	vector<SgNode*> writeRefs;
 	SageInterface::collectReadWriteRefs(functionDefinition->get_body(), readRefs, writeRefs);
@@ -232,6 +237,7 @@ bool LanguageRestrictions::variablesOfPointerTypesAreAssigned(SgFunctionDefiniti
 			return true;
 		}
 	}
+	*/
 
 	return false;
 }

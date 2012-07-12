@@ -823,6 +823,7 @@ Terminal::evaluateType(std::string& varTypeString)
                  ( varTypeString == "SgAsmOp::asm_operand_constraint_enum" ) ||
                  ( varTypeString == "SgAsmOp::asm_operand_modifier_enum" ) ||
                  ( varTypeString == "SgInitializedName::asm_register_name_enum" ) ||
+                 ( varTypeString == "SgInitializedName::excess_specifier_enum" ) ||
                  ( varTypeString == "SgTypeComplex::floating_point_precision_enum" ) ||
                  ( varTypeString == "SgTypeImaginary::floating_point_precision_enum" ) ||
                  ( varTypeString == "SgClassDeclaration::class_types" ) ||
@@ -837,7 +838,7 @@ Terminal::evaluateType(std::string& varTypeString)
                  ( varTypeString == "SgOmpClause::omp_reduction_operator_enum" ) ||
                  ( varTypeString == "SgProcedureHeaderStatement::subprogram_kind_enum" ) ||
                  ( varTypeString == "SgLabelSymbol::label_type_enum" ) ||
-                 ( varTypeString == "SgAsmFunctionDeclaration::function_kind_enum" ) ||
+                 ( varTypeString == "SgAsmFunction::function_kind_enum" ) ||
                  ( varTypeString == "SgTypeModifier::gnu_extension_machine_mode_enum" ) ||
                  ( varTypeString == "SgDeclarationStatement::gnu_extension_visability_attribute_enum" ) ||
                  ( varTypeString == "SgVariableDeclaration::gnu_extension_declaration_attributes_enum" ) ||
@@ -875,11 +876,10 @@ Terminal::evaluateType(std::string& varTypeString)
                  ( varTypeString == "SgAsmNERelocEntry::NERelocTgtType" ) ||
                  ( varTypeString == "SgAsmNERelocEntry::NERelocFlags" ) ||
                  ( varTypeString == "SgInterfaceStatement::generic_spec_enum" ) ||
-                 ( varTypeString == "SgAsmPEImportILTEntry::ILTEntryType" ) ||
-                 ( varTypeString == "SgAsmPEImportLookupTable::TableKind" ) ||
                  ( varTypeString == "SgAsmElfSectionTableEntry::SectionType") ||
                  ( varTypeString == "SgAsmElfSectionTableEntry::SectionFlags") ||
                  ( varTypeString == "SgOpenclAccessModeModifier::access_mode_modifier_enum") ||
+                 ( varTypeString == "SgAsmFunction::MayReturn") ||
                  false 
               )
        {

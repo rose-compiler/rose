@@ -1,9 +1,6 @@
 /* Strings. Uniform treatment for strings stored in a binary file and strings generated on the fly. */
 
-// tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
-#define __STDC_FORMAT_MACROS
-#include <inttypes.h>
 
 std::string
 SgAsmGenericString::get_string(bool escape) const
@@ -251,7 +248,7 @@ SgAsmGenericStrtab::free(rose_addr_t offset, rose_addr_t size)
     
     /* Make sure area is not already in free list.  The freelist.insert() handles this gracefully, but if we're freeing
      * something that's already in the list then we have a logic error somewhere. */
-    ROSE_ASSERT(get_freelist().overlap_with(offset, size).size()==0);
+    ROSE_ASSERT(!get_freelist().overlaps(Extent(offset, size)));
 
     /* Preserve anything that's still referenced. The caller should have assigned SgAsmStoredString::unalloced to the "offset"
      * member of the string storage to indicate that it's memory in the string table is no longer in use. */
@@ -259,12 +256,12 @@ SgAsmGenericStrtab::free(rose_addr_t offset, rose_addr_t size)
     for (size_t i=0; i<p_storage_list.size(); i++) {
         SgAsmStringStorage *storage = p_storage_list[i];
         if (storage->get_offset()!=SgAsmGenericString::unallocated)
-            s_extents.insert(storage->get_offset(), get_storage_size(storage));
+            s_extents.insert(Extent(storage->get_offset(), get_storage_size(storage)));
     }
-    ExtentMap to_free = s_extents.subtract_from(offset, size);
+    ExtentMap to_free = s_extents.subtract_from(Extent(offset, size));
 
     /* Add un-refrened extents to free list. */
-    get_freelist().insert(to_free);
+    get_freelist().insert_ranges(to_free);
 }
 
 /** Free all strings so they will be reallocated later. This is more efficient than calling free() for each storage object. If
@@ -298,7 +295,7 @@ SgAsmGenericStrtab::free_all_strings(bool blow_away_holes)
 
     /* Remove the empty string from the free list */
     if (p_dont_free)
-        get_freelist().erase(p_dont_free->get_offset(), p_dont_free->get_string().size()+1);
+        get_freelist().erase(Extent(p_dont_free->get_offset(), p_dont_free->get_string().size()+1));
 }
 
 /** Allocates storage for strings that have been modified but not allocated. We first try to fit unallocated strings into free
@@ -359,10 +356,9 @@ SgAsmGenericStrtab::reallocate(bool shrink)
         
         /* If we couldn't share another string then try to allocate from free space (avoiding holes) */
         if (storage->get_offset()==SgAsmGenericString::unallocated) {
-            ExtentPair e(0, 0);
             try {
-                e = get_freelist().allocate_best_fit(storage->get_string().size()+1);
-                rose_addr_t new_offset = e.first;
+                Extent e = get_freelist().allocate_best_fit(storage->get_string().size()+1);
+                rose_addr_t new_offset = e.first();
                 storage->set_offset(new_offset);
             } catch(std::bad_alloc &x) {
                 /* nothing large enough on the free list */
@@ -398,9 +394,9 @@ SgAsmGenericStrtab::reallocate(bool shrink)
     } else if (shrink && get_freelist().size()>0) {
         /* See if we can release any address space and shrink the containing section. The containing section's "set_size"
          * method will adjust the free list by removing some bytes from it. */
-        ExtentPair hi = *(get_freelist().highest_offset());
-        if (hi.first + hi.second == container->get_size())
-            container->set_size(hi.first);
+        Extent hi = get_freelist().rbegin()->first;
+        if (hi.first() + hi.size() == container->get_size())
+            container->set_size(hi.first());
     }
 
     if (reallocated)
@@ -454,6 +450,6 @@ SgAsmGenericStrtab::dump(FILE *f, const char *prefix, ssize_t idx) const
         p_storage_list[i]->dump(f, p, i);
     }
 
-    fprintf(f, "%s%-*s = %zu free regions\n", p, w, "freelist", get_freelist().size());
+    fprintf(f, "%s%-*s = %"PRIu64" free regions\n", p, w, "freelist", get_freelist().size());
     get_freelist().dump_extents(f, p, "freelist");
 }

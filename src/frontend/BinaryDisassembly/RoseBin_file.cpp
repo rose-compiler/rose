@@ -133,7 +133,7 @@ void RoseBin_FILE::process_functions_query(SgAsmBlock* globalBlock,
         addrhex << hex << setw(8) << address ;
         cout << ">> creating function : " << address << " " << addrhex.str() << " - " << name << " - " << type << endl;
       }
-      SgAsmFunctionDeclaration* fd = new SgAsmFunctionDeclaration();
+      SgAsmFunction* fd = new SgAsmFunction();
       fd->set_address(address);
       fd->set_name(name);
       globalBlock->append_statement(fd);
@@ -173,7 +173,7 @@ void RoseBin_FILE::process_comments_query( ) {
 /****************************************************
  * resolve for each instruction which type it has
  ****************************************************/
-SgAsmInstruction* RoseBin_FILE::createInstruction(int address, SgAsmFunctionDeclaration* bb, 
+SgAsmInstruction* RoseBin_FILE::createInstruction(int address, SgAsmFunction* bb, 
                                                   string mnemonic) {
   SgAsmInstruction* instruction=NULL;
 
@@ -276,8 +276,8 @@ void RoseBin_FILE::process_instruction_query( ) {
       // if it is in the callgraph, one wants to create a BinaryCall instead
 
       // append the instruction to its function
-      rose_hash::unordered_map <int, SgAsmFunctionDeclaration* >::iterator func_it = rememberFunctions.find(i_func);
-      SgAsmFunctionDeclaration* func = NULL;
+      rose_hash::unordered_map <int, SgAsmFunction* >::iterator func_it = rememberFunctions.find(i_func);
+      SgAsmFunction* func = NULL;
       // for (func_it; func_it!=rememberFunctions.end(); ++func_it) {
       if (func_it != rememberFunctions.end()) {
         func = func_it->second;
@@ -447,6 +447,8 @@ void RoseBin_FILE::process_expression_tree_query( ) {
     exprTree.expr_type = atoi(vec_expression_tree_1[i].expr_type.c_str());
     exprTree.symbol = vec_expression_tree_1[i].symbol;
     
+    if (vec_expression_tree_1[i].immediate != "NULL")
+    {
       errno = 0;
       exprTree.immediate = strtol(vec_expression_tree_1[i].immediate.c_str(), NULL, 10);
       if (errno != 0) {
@@ -454,6 +456,11 @@ void RoseBin_FILE::process_expression_tree_query( ) {
         exprTree.immediate = strtoul(vec_expression_tree_1[i].immediate.c_str(), NULL, 10);
         ROSE_ASSERT (errno == 0);
       }
+    }
+    else
+    {
+        exprTree.immediate = 0;
+    }
       if (RoseBin_support::DEBUG_MODE())
         cout << "immediate = (char*)" << exprTree.immediate << endl;
 

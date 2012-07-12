@@ -15,9 +15,12 @@ INCLUDES = $(ROSE_INCLUDES)
 
 ROSE_FLAGS = --edg:no_warnings -w
 
+
+
 noinst_HEADERS = \
    coverage_funcsC.h \
    inputCode_collectComments.h
+   #yices_c.h
 
 # Liao 5/7/2010  We want to have a few installable programs as tools for users
 bin_PROGRAMS = \
@@ -25,7 +28,14 @@ bin_PROGRAMS = \
    defuseAnalysis \
    livenessAnalysis \
    interproceduralCFG \
-   virtualCFG 
+   virtualCFG
+
+if ROSE_HAVE_YICES
+bin_PROGRAMS += \
+   yicesTutorialExample
+endif
+   #traverseBinCFG \
+   #traverseSourceCFG 
 
 #varSubstCopy , disabled this one Liao, and sorted the list
 # tutorial examples which will not be installed to ROSE_INS/bin
@@ -56,6 +66,7 @@ NOINST_TUTORIAL_EXAMPLES = \
    binaryFileWrite \
    sb_callgraphAnalysis \
    buildCFG \
+   buildVFA \
    changeFunction \
    charmSupport \
    classHierarchyGraph \
@@ -131,6 +142,10 @@ else
   sharedMemoryTraversals_SOURCES = sharedMemoryTraversals.C
 endif
 
+#traverseSourceCFG_SOURCES = traverseSourceCFG.C
+
+#traverseBinCFG_SOURCES = traverseBinCFG.C
+
 binaryFileRead_SOURCES = binaryFileRead.C
 
 binaryFileWrite_SOURCES = binaryFileWrite.C
@@ -145,6 +160,9 @@ wholeASTGraphGenerator_SOURCES = wholeASTGraphGenerator.C
 
 identityTranslator_SOURCES = identityTranslator.C
 
+if ROSE_HAVE_YICES
+yicesTutorialExample_SOURCES = yicesTutorialExample.C
+endif
 lineReplacement_SOURCES = lineReplacement.C
 
 queryLibraryExample_SOURCES = queryLibraryExample.C
@@ -231,6 +249,8 @@ binaryAnalysis_symbolTable_SOURCES = binaryAnalysis_symbolTable.C
 bin_example_SOURCES = bin_example.C
 
 buildCallGraph_SOURCES = buildCallGraph.C
+
+buildVFA_SOURCES = buildVFA.C
 
 livenessAnalysis_SOURCES = livenessAnalysis.C
 
@@ -479,6 +499,8 @@ testVirtualCFG: vcfg_testIf_debug.pdf
 
 testBuildCG: callGraph.pdf
 
+testVFA: vfa.pdf vfa_orig.pdf
+
 testClassHierarchyGraph: classHierarchyGraph
 	./classHierarchyGraph $(srcdir)/inputCode_ClassHierarchyGraph.C
 	@echo "Building postscript file from DATABASE.dot ..."
@@ -523,6 +545,10 @@ loopOptimizationOutputFiles = \
 
 testLoopOptimization: loopProcessor $(loopOptimizationOutputFiles)
 
+if ROSE_HAVE_YICES
+yicesTutorialExampleOutputFiles = \
+    yicesInputExample.C
+endif
 testInheritedAttributeTraversal: inheritedAttributeTraversal
 	$(VALGRIND) ./inheritedAttributeTraversal -c $(srcdir)/inputCode_ExampleTraversals_1.C
 
@@ -588,6 +614,10 @@ testAddArbitraryTextForUnparser:
 testCollectComments: collectComments
 	./collectComments -rose:collectAllCommentsAndDirectives -I$(srcdir) -c $(srcdir)/inputCode_collectComments.C
 
+if ROSE_HAVE_YICES
+testYicesTutorialExample: yicesTutorialExample
+	./yicesTutorialExample -I$(srcdir) -c $(srcdir)/yicesInputExample.C
+endif
 testCollectCommentsSkipHeaders: collectComments
 	./collectComments -I$(srcdir) -c $(srcdir)/inputCode_collectComments.C
 
@@ -792,6 +822,8 @@ generatedCodeExamples = \
    commandlineProcessing.out \
    charmSupport.out \
    callGraph.pdf \
+   vfa.pdf \
+   vfa_orig.pdf \
    liveness.pdf \
    classHierarchyGraph.pdf \
    rose_inputCode_templateExample1.C \
@@ -1093,9 +1125,10 @@ rose_inputCode_LoopOptimization_mm.C: loopProcessor
 # DQ (1/2/2008): This used to work, but it is part of what Qing is fixing.
 	$(VALGRIND) ./loopProcessor $(ROSE_FLAGS) -bk1 -fs0 -c $(srcdir)/inputCode_LoopOptimization_mm.C
 
+#FR (6/8/2011) Bug fixed
 rose_inputCode_LoopOptimization_dgemm.C: loopProcessor
 	@echo "Generate executable from compilation of input code (loopOptimization) ..."
-	./loopProcessor $(ROSE_FLAGS) -bk1 -unroll nvar 16 -c $(srcdir)/inputCode_LoopOptimization_dgemm.C
+	./loopProcessor $(ROSE_FLAGS) -bk1 -unroll 16 -c $(srcdir)/inputCode_LoopOptimization_dgemm.C
 
 rose_inputCode_LoopOptimization_lufac.C: loopProcessor
 	@echo "Generate executable from compilation of input code (loopOptimization) ..."
@@ -1214,9 +1247,26 @@ callGraph.pdf: buildCallGraph
 	@echo "Generate call graph from processing of input code (callGraph) ..."
 	./buildCallGraph $(ROSE_FLAGS) -c $(srcdir)/inputCode_BuildCG.C
 	$(top_srcdir)/scripts/dotgenLetterPDF inputCode_BuildCG.C_callGraph.dot callGraph.pdf
+# Liao, add a non-trival test input 
+	./buildCallGraph $(ROSE_FLAGS) -c $(srcdir)/bt_onefile.c
 if ROSE_USE_GRAPHVIZ_DOT
 #	DQ (10/19/2009): Added error checking to (catches lack of "dot" in path).
 	if ! test -e callGraph.pdf; then exit 1; fi
+endif
+
+vfa.pdf: buildVFA
+	@echo "Generate Virtual Function Analysis CallGraph of input code ..."
+	./buildVFA $(ROSE_FLAGS) -c $(srcdir)/inputCode_VFA.C
+	$(top_srcdir)/scripts/dotgenLetterPDF pruned_call_graph.dot vfa.pdf
+if ROSE_USE_GRAPHVIZ_DOT
+	if ! test -e vfa.pdf; then exit 1; fi
+endif
+vfa_orig.pdf: buildVFA
+	@echo "Generate Virtual Function Analysis CallGraph of input code ..."
+	./buildVFA $(ROSE_FLAGS) -c $(srcdir)/inputCode_VFA.C
+	$(top_srcdir)/scripts/dotgenLetterPDF original_call_graph.dot vfa_orig.pdf
+if ROSE_USE_GRAPHVIZ_DOT
+	if ! test -e vfa_orig.pdf; then exit 1; fi
 endif
 
 liveness.pdf: livenessAnalysis
@@ -1385,7 +1435,8 @@ inputCode_dwarfAnalysis.out: dwarfInstructionAddressToSourceLineAnalysis inputCo
 
 # Note that we have made multiple copies of "inputCode_ExampleTraversals.C"
 # so that the processing could be done in parallel with out collisions.
-EXTRA_DIST = CMakeLists.txt \
+EXTRA_DIST = \
+   CMakeLists.txt \
    inputCode_1.C \
    inputCode_BuildCFG.C \
    inputCode_InstrumentationTranslator.C \
@@ -1453,6 +1504,7 @@ EXTRA_DIST = CMakeLists.txt \
    inputCode_generatingUniqueNamesFromDeclaration2.C \
    inputCode_scopeInformation.C \
    inputCode_BuildCG.C \
+   inputCode_VFA.C \
    inputCode_inlineTransformations.C \
    inputCode_livenessAnalysis.c \
    inputCode_NestedQuery.C \
@@ -1479,12 +1531,23 @@ EXTRA_DIST = CMakeLists.txt \
    inputCode_seedBugsExample_arrayIndexing.C \
    inputCode_dwarfAnalysis.C \
    inputCode_reductionRecognition.C \
-   livenessAnalysis-2.C
+   livenessAnalysis-2.C \
+   bt_onefile.c \
+   dfa_cpa.pdf \
+   dfa_ex.pdf \
+   transformation_cfg.pdf \
+   transformation_srcode.pdf \
+   lattice_cpa.pdf \
+   code_replacement_transformation.pdf
+
+if ROSE_HAVE_YICES
+    EXTRA_DIST += yicesInputExample.C
+endif
 
 # disabled this one due to problem with copy mechanism, Liao
 #   inputCode_varSubstCopy.C 
 
-CLEANFILES = rose_bin_example.s callgraph.gml
+CLEANFILES = rose_bin_example.s rose_bin_example.s.* callgraph.gml
 
 docs: $(noinst_PROGRAMS) $(bin_PROGRAMS) $(generatedCodeExamples)
 	@echo ""

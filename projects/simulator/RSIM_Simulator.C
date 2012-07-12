@@ -16,6 +16,7 @@ RSIM_Simulator *RSIM_Simulator::active_sim = NULL;
  * These are extra system calls provided by the simulator.
  ******************************************************************************************************************************/
 
+/*------------------------------------- is_present ---------------------------------------------------------------------------*/
 static void
 syscall_RSIM_is_present_enter(RSIM_Thread *t, int callno)
 {
@@ -34,6 +35,7 @@ syscall_RSIM_is_present_leave(RSIM_Thread *t, int callno)
     t->syscall_leave("d");
 }
 
+/*------------------------------------- message ------------------------------------------------------------------------------*/
 static void
 syscall_RSIM_message_enter(RSIM_Thread *t, int callno)
 {
@@ -52,6 +54,7 @@ syscall_RSIM_message_leave(RSIM_Thread *t, int callno)
     t->syscall_leave("d");
 }
 
+/*------------------------------------- delay --------------------------------------------------------------------------------*/
 static void
 syscall_RSIM_delay_enter(RSIM_Thread *t, int callno)
 {
@@ -77,6 +80,78 @@ syscall_RSIM_delay_leave(RSIM_Thread *t, int callno)
     t->syscall_leave("d");
 }
 
+/*------------------------------------- transaction --------------------------------------------------------------------------*/
+static Translate transaction_flags[] = { TE2(0, start), TE2(1, rollback), TE2(2, commit), T_END };
+
+static void
+syscall_RSIM_transaction_enter(RSIM_Thread *t, int callno)
+{
+    int cmd = t->syscall_arg(0);
+    if (1==cmd) { // rollback
+        t->syscall_enter("RSIM_transaction", "eP", transaction_flags, sizeof(pt_regs_32), print_pt_regs_32);
+    } else {
+        t->syscall_enter("RSIM_transaction", "ep", transaction_flags);
+    }
+}
+
+static void
+syscall_RSIM_transaction(RSIM_Thread *t, int callno)
+{
+    int cmd = t->syscall_arg(0);
+    uint32_t regs_va = t->syscall_arg(1);
+    int result = -ENOSYS;
+    RSIM_Process *proc = t->get_process();
+    std::string transaction_name = "specimen-initiated transaction " + StringUtility::addrToString(regs_va);
+
+    switch (cmd) {
+        case 0: {        // start
+            pt_regs_32 regs = t->get_regs();
+            if (sizeof(regs)!=proc->mem_write(&regs, regs_va, sizeof regs)) {
+                result = -EFAULT;
+            } else {
+                result = proc->mem_transaction_start(transaction_name); // total number of transactions
+                assert(-1==result || result>0);
+            }
+            break;
+        }
+
+        case 1: {       // rollback
+            pt_regs_32 regs;
+            if (sizeof(regs)!=proc->mem_read(&regs, regs_va, sizeof regs)) {
+                result = -EFAULT;
+            } else if (0>=(result = t->get_process()->mem_transaction_rollback(transaction_name))) {
+                // error; don't initialize registers; this syscall will return without doing anything
+                if (0==result)
+                    result = -EINVAL; // no such transaction
+            } else {
+                // success.  The syscall will return as if we had called transaction start, but with zero to distinguish it
+                // from transaction start.
+                result = 0; // 
+                t->init_regs(regs);
+            }
+            break;
+        }
+
+        case 2:
+            // not implemented yet
+            break;
+    }
+    t->syscall_return(result);
+}
+
+static void
+syscall_RSIM_transaction_leave(RSIM_Thread *t, int callno)
+{
+    int cmd = t->syscall_arg(0);
+    int result = t->syscall_arg(-1);
+    if (0==cmd && 0!=result) { // start
+        t->syscall_leave("d-P", sizeof(pt_regs_32), print_pt_regs_32);
+    } else {
+        t->syscall_leave("d");
+    }
+    t->get_process()->mem_showmap(t->tracing(TRACE_MMAP), "  memory map after transaction syscall:\n");
+}
+
 /******************************************************************************************************************************
  *                                      Class methods
  ******************************************************************************************************************************/
@@ -89,15 +164,23 @@ RSIM_Simulator::ctor()
 {
     RTS_rwlock_init(&instance_rwlock, RTS_LAYER_RSIM_SIMULATOR_OBJ, NULL);
 
-    syscall_define(1000000, syscall_RSIM_is_present_enter, syscall_RSIM_is_present, syscall_RSIM_is_present_leave);
-    syscall_define(1000001, syscall_RSIM_message_enter,    syscall_RSIM_message,    syscall_RSIM_message_leave);
-    syscall_define(1000002, syscall_RSIM_delay_enter,      syscall_RSIM_delay,      syscall_RSIM_delay_leave);
+    /* Some special syscalls that are available to specimens when they're being simulated. */
+    syscall_define(1000000, syscall_RSIM_is_present_enter,  syscall_RSIM_is_present,  syscall_RSIM_is_present_leave);
+    syscall_define(1000001, syscall_RSIM_message_enter,     syscall_RSIM_message,     syscall_RSIM_message_leave);
+    syscall_define(1000002, syscall_RSIM_delay_enter,       syscall_RSIM_delay,       syscall_RSIM_delay_leave);
+    syscall_define(1000003, syscall_RSIM_transaction_enter, syscall_RSIM_transaction, syscall_RSIM_transaction_leave);
 }
 
 int
 RSIM_Simulator::configure(int argc, char **argv, char **envp)
 {
     int argno = 1;
+
+    if (argno>=argc) {
+        fprintf(stderr, "usage: %s [SIMULATOR_SWITCHES...] [--] SPECIMEN [SPECIMEN_ARGS...]\n", argv[0]);
+        exit(1);
+    }
+
     while (argno<argc && '-'==argv[argno][0]) {
         if (!strcmp(argv[argno], "--")) {
             argno++;
@@ -142,9 +225,11 @@ RSIM_Simulator::configure(int argc, char **argv, char **envp)
                     tracing_flags |= tracingFacilityBit(TRACE_PROGRESS);
                 } else if (word=="thread") {
                     tracing_flags |= tracingFacilityBit(TRACE_THREAD);
+                } else if (word=="futex") {
+                    tracing_flags |= tracingFacilityBit(TRACE_FUTEX);
                 } else {
                     fprintf(stderr, "%s: debug words must be from the set: "
-                            "all, insn, state, mem, mmap, syscall, signal, loader, progress, thread\n",
+                            "all, insn, state, mem, mmap, syscall, signal, loader, progress, thread, futex\n",
                             argv[0]);
                     exit(1);
                 }
@@ -152,10 +237,7 @@ RSIM_Simulator::configure(int argc, char **argv, char **envp)
             argno++;
 
         } else if (!strcmp(argv[argno], "--debug")) {
-            tracing_flags = tracingFacilityBit(TRACE_MISC)    |
-                            tracingFacilityBit(TRACE_INSN)    |
-                            tracingFacilityBit(TRACE_SYSCALL) |
-                            tracingFacilityBit(TRACE_SIGNAL);
+            tracing_flags = tracingFacilityBit(TRACE_MISC);
             argno++;
 
         } else if (!strncmp(argv[argno], "--core=", 7)) {
@@ -184,6 +266,18 @@ RSIM_Simulator::configure(int argc, char **argv, char **envp)
                 vdso_paths.push_back(std::string(s, colon?colon-s:strlen(s)));
                 s = colon ? colon+1 : NULL;
             }
+            argno++;
+            
+        } else if (!strncmp(argv[argno], "--semaphore=", 12)) {
+            std::string semname = argv[argno]+12;
+            if (semname[0]!='/')
+                semname = "/" + semname;
+            if (semname.find_first_of('/', 1)!=std::string::npos) {
+                fprintf(stderr, "%s: invalid semaphore name: \"%s\" should not contain internal slashes\n",
+                        argv[0], argv[argno]+12);
+                exit(1);
+            }
+            set_semaphore_name(argv[argno]+12);
             argno++;
 
         } else if (!strcmp(argv[argno], "--showauxv")) {
@@ -262,6 +356,8 @@ RSIM_Simulator::configure(int argc, char **argv, char **envp)
 int
 RSIM_Simulator::exec(int argc, char **argv)
 {
+    assert(argc>0);
+
     create_process();
 
     SgAsmGenericHeader *fhdr = process->load(argv[0]);
@@ -275,7 +371,7 @@ RSIM_Simulator::exec(int argc, char **argv)
 
     if ((process->get_tracing_flags() & tracingFacilityBit(TRACE_MMAP))) {
         fprintf(process->get_tracing_file(), "memory map after program load:\n");
-        process->get_memory()->dump(process->get_tracing_file(), "  ");
+        process->get_memory().dump(process->get_tracing_file(), "  ");
     }
 
     main_thread->tracing(TRACE_STATE)->mesg("Initial state:\n");
@@ -459,6 +555,7 @@ RSIM_Simulator::main_loop()
                                                                              RSIM_Callbacks::ProcessCallback::START,
                                                                              true);
     bool cb_thread_status = thread->get_callbacks().call_thread_callbacks(RSIM_Callbacks::BEFORE, thread, true);
+    thread->tracing(TRACE_THREAD)->mesg("main thread is starting");
     thread->main();
     thread->get_callbacks().call_thread_callbacks(RSIM_Callbacks::AFTER, thread, cb_thread_status);
     process->get_callbacks().call_process_callbacks(RSIM_Callbacks::AFTER, process,
@@ -563,5 +660,79 @@ RSIM_Simulator::syscall_define(int callno,
         syscall_implementation(callno)->leave.append(new SystemCall::Function(leave));
 }
 
+bool
+RSIM_Simulator::set_semaphore_name(const std::string &name, bool do_unlink/*=false*/)
+{
+    if (global_semaphore)
+        return false; // can't change the name if we've already created the semaphore
+    global_semaphore_name = name;
+    global_semaphore_unlink = do_unlink;
+    return true;
+}
+
+const std::string &
+RSIM_Simulator::get_semaphore_name() const
+{
+    return global_semaphore_name;
+}
+
+sem_t *
+RSIM_Simulator::get_semaphore(bool *unlinked/*=NULL*/)
+{
+    if (NULL==global_semaphore) {
+        if (global_semaphore_name.empty()) {
+            global_semaphore_name = "/ROSE_simulator-pid=" + StringUtility::numberToString(getpid());
+            global_semaphore_unlink = true;
+        }
+        fprintf(stderr, "RSIM_Simulator::get_semaphore() is using %s\n", global_semaphore_name.c_str());
+        global_semaphore = sem_open(global_semaphore_name.c_str(), O_CREAT, 0666, 1);
+        assert(SEM_FAILED!=global_semaphore);
+        if (global_semaphore_unlink)
+            sem_unlink(global_semaphore_name.c_str()); /* unlink now, destroyed when all closed (at simulator process exit) */
+    }
+    if (unlinked)
+        *unlinked = global_semaphore_unlink;
+    return global_semaphore;
+}
+
+/* Install callback in the simulator and optionally in the existing process and threads. */
+#define RSIM_SIMULATOR_DEFINE_INSTALL_CALLBACK(CALLBACK_CLASS, INSERTION_FUNCTION)                                             \
+    void                                                                                                                       \
+    RSIM_Simulator::install_callback(CALLBACK_CLASS *cb, RSIM_Callbacks::When when, bool everywhere)                           \
+    {                                                                                                                          \
+        if (cb) {                                                                                                              \
+            callbacks.INSERTION_FUNCTION(when, cb);                                                                            \
+            if (everywhere && get_process())                                                                                   \
+                get_process()->install_callback(dynamic_cast<CALLBACK_CLASS*>(cb->clone()), when, everywhere);                 \
+        }                                                                                                                      \
+    }
+RSIM_SIMULATOR_DEFINE_INSTALL_CALLBACK(RSIM_Callbacks::InsnCallback,    add_insn_callback);
+RSIM_SIMULATOR_DEFINE_INSTALL_CALLBACK(RSIM_Callbacks::MemoryCallback,  add_memory_callback);
+RSIM_SIMULATOR_DEFINE_INSTALL_CALLBACK(RSIM_Callbacks::SyscallCallback, add_syscall_callback);
+RSIM_SIMULATOR_DEFINE_INSTALL_CALLBACK(RSIM_Callbacks::SignalCallback,  add_signal_callback);
+RSIM_SIMULATOR_DEFINE_INSTALL_CALLBACK(RSIM_Callbacks::ThreadCallback,  add_thread_callback);
+RSIM_SIMULATOR_DEFINE_INSTALL_CALLBACK(RSIM_Callbacks::ProcessCallback, add_process_callback);
+#undef RSIM_SIMULATOR_DEFINE_INSTALL_CALLBACK
+
+/* Remove callback in the simulator and optionally in the existing process and threads. */
+#define RSIM_SIMULATOR_DEFINE_REMOVE_CALLBACK(CALLBACK_CLASS, REMOVAL_FUNCTION)                                                \
+    void                                                                                                                       \
+    RSIM_Simulator::remove_callback(CALLBACK_CLASS *cb, RSIM_Callbacks::When when, bool everywhere)                            \
+    {                                                                                                                          \
+        if (cb) {                                                                                                              \
+            callbacks.REMOVAL_FUNCTION(when, cb);                                                                              \
+            if (everywhere && get_process())                                                                                   \
+                get_process()->remove_callback(cb, when, everywhere);                                                          \
+        }                                                                                                                      \
+    }
+RSIM_SIMULATOR_DEFINE_REMOVE_CALLBACK(RSIM_Callbacks::InsnCallback,    remove_insn_callback);
+RSIM_SIMULATOR_DEFINE_REMOVE_CALLBACK(RSIM_Callbacks::MemoryCallback,  remove_memory_callback);
+RSIM_SIMULATOR_DEFINE_REMOVE_CALLBACK(RSIM_Callbacks::SyscallCallback, remove_syscall_callback);
+RSIM_SIMULATOR_DEFINE_REMOVE_CALLBACK(RSIM_Callbacks::SignalCallback,  remove_signal_callback);
+RSIM_SIMULATOR_DEFINE_REMOVE_CALLBACK(RSIM_Callbacks::ThreadCallback,  remove_thread_callback);
+RSIM_SIMULATOR_DEFINE_REMOVE_CALLBACK(RSIM_Callbacks::ProcessCallback, remove_process_callback);
+#undef RSIM_SIMULATOR_DEFINE_REMOVE_CALLBACK
+
+        
 
 #endif /* ROSE_ENABLE_SIMULATOR */

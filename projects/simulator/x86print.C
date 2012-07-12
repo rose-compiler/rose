@@ -2,6 +2,7 @@
 
 #include "x86print.h"
 
+#undef __STDC_FORMAT_MACROS
 #define __STDC_FORMAT_MACROS
 #include <assert.h>
 #include <errno.h>
@@ -195,9 +196,10 @@ print_time(RTS_Message *m, uint32_t value)
     localtime_r(&ts, &tm);
     char buf[256];
     strftime(buf, sizeof buf, "%c", &tm);
-    m->more("%s", buf);
+    m->more("%"PRIu32" (%s)", value, buf);
 }
 
+/* letters are documented in RSIM_Thread::syscall_enter() */
 void
 print_single(RTS_Message *m, char fmt, const ArgInfo *info)
 {

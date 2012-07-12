@@ -5,21 +5,18 @@
 #include <DoublyLinkedList.h>
 #include <assert.h>
 #include <iostream>
-// Provide edge direction
+
 class DirectedEdgeInterface
 { public:
    typedef enum {EdgeOut = 0, EdgeIn = 1} EdgeDirection;
 };
 template <class Node, class Edge> class DirectedGraph;
 template <class Node, class Edge> class DirectedGraphEdge;
-
 template <class Node, class Edge>
 class DirectedGraphNode 
-{  // Out and In edges
+{ 
    DoublyLinkedListWrap <Edge*> edges[2];
-   // Pointer to all nodes ??
    DoublyLinkedEntryWrap<Node*> *entry;
-   // Pointer to the owner graph
    DirectedGraph<Node,Edge> *graph;  
  public:
    typedef DirectedEdgeInterface::EdgeDirection EdgeDirection;
@@ -43,7 +40,7 @@ class DirectedGraphNode
 
 template <class Node, class Edge>
 class DirectedGraphEdge
-{ // 'out' and 'in' nodes
+{
   Node* nodes[2];
   DoublyLinkedEntryWrap<Edge*> *entries[2];
  public:

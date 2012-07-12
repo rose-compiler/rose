@@ -30,6 +30,15 @@ AstNodeTraversalStatistics::~AstNodeTraversalStatistics()
      delete &numNodeTypes;
    }
 
+AstNodeTraversalStatistics::AstNodeTraversalStatistics( const AstNodeTraversalStatistics & X)
+   : numNodeTypes(*new StatisticsContainerType(V_SgNumVariants))
+   {
+  // DQ (9/13/2011): This copy constructor was built because static analysis tools 
+  // suggested it would avoid a possible double free error.  I agree.
+     printf ("Error: it is an error to call this copy constructor. \n");
+     ROSE_ASSERT(false);
+   }
+
 string
 AstNodeTraversalStatistics::toString(SgNode* node)
    {
@@ -140,6 +149,9 @@ AstNodeMemoryPoolStatistics::AstNodeMemoryPoolStatistics()
      totalMemoryUsed = memoryUsage();
      printf ("Total memory used = %d \n",totalMemoryUsed);
      printf ("numberOfNodes = %zu \n",numberOfNodes());
+
+  // DQ (5/6/2011): Insure++ reports this as an error in the tests/RunTests/AstDeleteTests
+     counter = 0;
    }
 
 AstNodeMemoryPoolStatistics::~AstNodeMemoryPoolStatistics()
@@ -464,10 +476,7 @@ void AstNodeMemoryPoolStatistics::visit ( SgNode* node)
           IR_NODE_VISIT_CASE(SgAsmx86Instruction)
           IR_NODE_VISIT_CASE(SgAsmPowerpcInstruction)
           IR_NODE_VISIT_CASE(SgAsmInstruction)
-          IR_NODE_VISIT_CASE(SgAsmDataStructureDeclaration)
-          IR_NODE_VISIT_CASE(SgAsmFunctionDeclaration)
-          IR_NODE_VISIT_CASE(SgAsmFieldDeclaration)
-          IR_NODE_VISIT_CASE(SgAsmDeclaration)
+          IR_NODE_VISIT_CASE(SgAsmFunction)
           IR_NODE_VISIT_CASE(SgAsmStatement)
           IR_NODE_VISIT_CASE(SgAsmBinaryAdd)
           IR_NODE_VISIT_CASE(SgAsmBinarySubtract)
@@ -517,8 +526,7 @@ void AstNodeMemoryPoolStatistics::visit ( SgNode* node)
           IR_NODE_VISIT_CASE(SgAsmTypeVector)
           IR_NODE_VISIT_CASE(SgAsmType)
           IR_NODE_VISIT_CASE(SgAsmGenericDLL)
-          IR_NODE_VISIT_CASE(SgAsmPEImportHNTEntryList)
-          IR_NODE_VISIT_CASE(SgAsmPEImportILTEntryList)
+          IR_NODE_VISIT_CASE(SgAsmPEImportItemList)
           IR_NODE_VISIT_CASE(SgAsmPEImportDirectoryList)
           IR_NODE_VISIT_CASE(SgAsmGenericFormat)
           IR_NODE_VISIT_CASE(SgAsmGenericFile)
@@ -594,9 +602,7 @@ void AstNodeMemoryPoolStatistics::visit ( SgNode* node)
           IR_NODE_VISIT_CASE(SgAsmPEExportDirectory)
           IR_NODE_VISIT_CASE(SgAsmPEExportEntry)
           IR_NODE_VISIT_CASE(SgAsmPEImportDirectory)
-          IR_NODE_VISIT_CASE(SgAsmPEImportILTEntry)
-          IR_NODE_VISIT_CASE(SgAsmPEImportHNTEntry)
-          IR_NODE_VISIT_CASE(SgAsmPEImportLookupTable)
+          IR_NODE_VISIT_CASE(SgAsmPEImportItem)
           IR_NODE_VISIT_CASE(SgAsmPESectionTableEntry)
           IR_NODE_VISIT_CASE(SgAsmNEEntryPoint)
           IR_NODE_VISIT_CASE(SgAsmNERelocEntry)

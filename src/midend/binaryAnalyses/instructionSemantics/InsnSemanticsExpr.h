@@ -1,6 +1,9 @@
 #ifndef Rose_InsnSemanticsExpr_H
 #define Rose_InsnSemanticsExpr_H
 
+#include <boost/shared_ptr.hpp>
+#include <boost/enable_shared_from_this.hpp>
+
 class SMTSolver;
 
 /** Namespace supplying types and functions for symbolic expressions. These are used by certain instruction semantics policies
@@ -30,16 +33,17 @@ namespace InsnSemanticsExpr {
         OP_NEGATE,              /**< Arithmetic negation. One operand. */
         OP_NOOP,                /**< No operation. Used only by the default constructor. */
         OP_OR,                  /**< Boolean OR. Operands are all Boolean (1-bit) values. See also OP_BV_OR. */
+        OP_READ,                /**< Read a value from memory.  Arguments are the memory state and the address expression. */
         OP_ROL,                 /**< Rotate left. Rotate bits of B left by A bits.  0 <= A < width(B). */
         OP_ROR,                 /**< Rotate right. Rotate bits of B right by A bits. 0 <= B < width(B).  */
         OP_SDIV,                /**< Signed division. Two operands, A/B. Result width is width(A). */
         OP_SEXTEND,             /**< Signed extension at msb. Extend B to A bits by replicating B's most significant bit. */
         OP_SGE,                 /**< Signed greater-than-or-equal. Two operands of equal width. Result is Boolean. */
         OP_SGT,                 /**< Signed greater-than. Two operands of equal width. Result is Boolean. */
-        OP_SHL0,                /**< Shift left, introducing zeros at lsb. Bits of B are shifted by A, where 0 <= A < width(B). */
-        OP_SHL1,                /**< Shift left, introducing ones at lsb. Bits of B are shifted by A, where 0 <= A < width(B). */
-        OP_SHR0,                /**< Shift right, introducing zeros at msb. Bits of B are shifted by A, where 0 <= A < width(B). */
-        OP_SHR1,                /**< Shift right, introducing ones at msb. Bits of B are shifted by A, where 0 <= A < width(B). */
+        OP_SHL0,                /**< Shift left, introducing zeros at lsb. Bits of B are shifted by A, where 0 <=A < width(B). */
+        OP_SHL1,                /**< Shift left, introducing ones at lsb. Bits of B are shifted by A, where 0 <=A < width(B). */
+        OP_SHR0,                /**< Shift right, introducing zeros at msb. Bits of B are shifted by A, where 0 <=A <width(B). */
+        OP_SHR1,                /**< Shift right, introducing ones at msb. Bits of B are shifted by A, where 0 <=A <width(B). */
         OP_SLE,                 /**< Signed less-than-or-equal. Two operands of equal width. Result is Boolean. */
         OP_SLT,                 /**< Signed less-than. Two operands of equal width. Result is Boolean. */
         OP_SMOD,                /**< Signed modulus. Two operands, A%B. Result width is width(B). */
@@ -52,6 +56,7 @@ namespace InsnSemanticsExpr {
         OP_ULT,                 /**< Unsigned less-than. Two operands of equal width. Result is Boolean (1-bit vector). */
         OP_UMOD,                /**< Unsigned modulus. Two operands, A%B. Result width is width(B). */
         OP_UMUL,                /**< Unsigned multiplication. Two operands, A*B. Result width is width(A)+width(B). */
+        OP_WRITE,               /**< Write (update) memory with a new value. Arguments are memory, address and value. */
         OP_ZEROP,               /**< Equal to zero. One operand. Result is a single bit, set iff A is equal to zero. */
     };
 
@@ -59,28 +64,34 @@ namespace InsnSemanticsExpr {
 
     typedef std::map<uint64_t, uint64_t> RenameMap;
 
+    class TreeNode;
+    class InternalNode;
+    class LeafNode;
+
+    typedef boost::shared_ptr<const TreeNode> TreeNodePtr;
+    typedef boost::shared_ptr<const InternalNode> InternalNodePtr;
+    typedef boost::shared_ptr<const LeafNode> LeafNodePtr;
+
+    class Visitor {
+    public:
+        virtual ~Visitor() {}
+        virtual void operator()(const TreeNodePtr&) = 0;
+    };
+
     /** Any node of an expression tree for instruction semantics, from which the InternalNode and LeafNode classes are
      *  derived.  Every node has a specified number of significant bits that is constant over the life of the node.
      *
      *  In order that subtrees can be freely assigned as children of other nodes (provided the structure as a whole remains a
-     *  lattice and not a graph with cycles), each tree node maintains a counter (nrefs) of the number of times it is
-     *  referenced.  Each time a subtree is added as a child to another node, the reference count for the root node of the
-     *  subtree is incremented. Likewise, when a child is removed the reference count for the root of the child is
-     *  decremented. The delete operator must only be invoked on nodes with a zero reference count. */
-    class TreeNode {
+     *  lattice and not a graph with cycles), tree nodes are always referenced through boost::shared_ptr<const T> where T is
+     *  one of the tree node types: TreeNode, InternalNode, or LeafNode.  For convenience, we define TreeNodePtr,
+     *  InternalNodePtr, and LeafNodePtr typedefs.  The shared_ptr owns the pointer to the tree node and thus the tree node
+     *  pointer should never be deleted explicitly. */
+    class TreeNode: public boost::enable_shared_from_this<TreeNode> {
     protected:
         size_t nbits;           /**< Number of significant bits. Constant over the life of the node. */
-        mutable size_t nrefs;   /**< Number of parent nodes. Zero implies this node can be deleted. */
+        std::string comment;    /**< Optional comment. */
     public:
-        TreeNode(size_t nbits): nbits(nbits), nrefs(0) { assert(nbits>0); }
-
-        /** Shallow delete. Deletes only this node, decrementing reference counts in any children. It is an error to delete a
-         *  node whose reference count is nonzero. */
-        virtual ~TreeNode() { assert(0==nrefs); }
-
-        /** Deletes this node and all children, provided the children aren't also children of other nodes.  If the reference
-         *  count of the root node (@p this) is nonzero then nothing happens. */
-        virtual void deleteDeeply();
+        TreeNode(size_t nbits, std::string comment=""): nbits(nbits), comment(comment) { assert(nbits>0); }
 
         /** Print the expression to a stream.  The output is an S-expression with no line-feeds.  If @p rmap is non-null then
          *  it will be used to rename free variables for readability.  If the expression contains N variables, then the new
@@ -89,7 +100,7 @@ namespace InsnSemanticsExpr {
 
         /** Tests two expressions for equality using an optional satisfiability modulo theory (SMT) solver. Returns true if
          *  the inequality is not satisfiable. */
-        virtual bool equal_to(const TreeNode *other, SMTSolver*) const = 0;
+        virtual bool equal_to(const TreeNodePtr& other, SMTSolver*) const = 0;
 
         /** Returns true if the expression is a known value.
          *
@@ -101,72 +112,101 @@ namespace InsnSemanticsExpr {
          *  number of significant bits returned by get_nbits(), are guaranteed to be zero. */
         virtual uint64_t get_value() const = 0;
 
+        /** Accessors for the comment string associated with a node.
+         * @{ */
+        const std::string& get_comment() const { return comment; }
+        void set_comment(const std::string &s) { comment=s; }
+        /** @} */
+
         /** Returns the number of significant bits.  An expression with a known value is guaranteed to have all higher-order
          *  bits cleared. */
         size_t get_nbits() const { return nbits; }
 
-        /** Returns the number of times this node is referenced.  Reference counting happens automatically when a node is used
-         *  as a child of an internal node, but users may also forcibly increment and decrement the reference counter for
-         *  other reasons. See also, documentation for the class. */
-        size_t get_nrefs() const { return nrefs; }
+        /** Traverse the expression.  The expression is traversed in a depth-first visit, invoking the functor at each node of
+         *  the expression tree. */
+        virtual void depth_first_visit(Visitor*) const = 0;
 
-        /** Increments the reference count by one and returns the new reference count. It is not necessary to increment the
-         *  reference count when a node is used as a child of an InternalNode since this happens automatically.  However, the
-         *  user may want to increment the reference count for other reasons. See also, documentation for the class. */
-        size_t inc_nrefs() const { return ++nrefs; }
+        /** Returns the variables appearing in the expression. */
+        std::set<LeafNodePtr> get_variables() const;
 
-        /** Decrements the reference count by one and returns the new reference count. It is not necessary to decrement the
-         *  reference count when a node is removed as a child of an InternalNode since this happens automatically. However,
-         *  the user may want to decrement the reference count for other reasons.  The dec_nrefs() method should be called the
-         *  same number of times that inc_nrefs() was called. See also, documentation for the class. */
-        size_t dec_nrefs() const { ROSE_ASSERT(nrefs>0); return --nrefs; }
+        /** Dynamic cast of this object to an internal node. */
+        InternalNodePtr isInternalNode() const {
+            return boost::dynamic_pointer_cast<const InternalNode>(shared_from_this());
+        }
+
+        /** Dynamic cast of this object to a leaf node. */
+        LeafNodePtr isLeafNode() const {
+            return boost::dynamic_pointer_cast<const LeafNode>(shared_from_this());
+        }
     };
 
     /** Internal node of an expression tree for instruction semantics. Each internal node has an operator (constant for the
      *  life of the node and obtainable with get_operator()) and zero or more children. Children are added to the internal
      *  node during the construction phase. Once construction is complete, the children should only change in ways that don't
-     *  affect the value of the node as a whole (since this node might be pointed to by any number of expressions). It is safe
-     *  to deleteDeeply() a node that participates in more than one expression since that method is a no-op when the node's
-     *  reference count is nonzero. */
+     *  affect the value of the node as a whole (since this node might be pointed to by any number of expressions). */
     class InternalNode: public TreeNode {
     private:
         Operator op;
-        std::vector<const TreeNode*> children;
-    public:
-        /** Constructs an internal node with no children. It is expected that the appropriate number and bit sized children
-         *  will be added before the node is used. The number and sizes depend on the operator chosen. */
-        InternalNode(size_t nbits, Operator op)
-            : TreeNode(nbits), op(op) {}
-        InternalNode(size_t nbits, Operator op, const TreeNode *a)
-            : TreeNode(nbits), op(op) {
+        std::vector<TreeNodePtr> children;
+
+        // Constructors should not be called directly.  Use the create() class method instead. This is to help prevent
+        // accidently using pointers to these objects -- all access should be through boost::shared_ptr<>.
+        InternalNode(size_t nbits, Operator op, const std::string comment="")
+            : TreeNode(nbits, comment), op(op) {}
+        InternalNode(size_t nbits, Operator op, const TreeNodePtr &a, std::string comment="")
+            : TreeNode(nbits, comment), op(op) {
             add_child(a);
         }
-        InternalNode(size_t nbits, Operator op, const TreeNode *a, const TreeNode *b)
-            : TreeNode(nbits), op(op) {
+        InternalNode(size_t nbits, Operator op, const TreeNodePtr &a, const TreeNodePtr &b, std::string comment="")
+            : TreeNode(nbits, comment), op(op) {
             add_child(a);
             add_child(b);
         }
-        InternalNode(size_t nbits, Operator op, const TreeNode *a, const TreeNode *b, const TreeNode *c)
-            : TreeNode(nbits), op(op) {
+        InternalNode(size_t nbits, Operator op, const TreeNodePtr &a, const TreeNodePtr &b, const TreeNodePtr &c,
+                     std::string comment="")
+            : TreeNode(nbits, comment), op(op) {
             add_child(a);
             add_child(b);
             add_child(c);
         }
+        InternalNode(size_t nbits, Operator op, const std::vector<TreeNodePtr> &children, std::string comment="")
+            : TreeNode(nbits, comment), op(op) {
+            for (size_t i=0; i<children.size(); ++i)
+                add_child(children[i]);
+        }
 
-        /** Shallow delete. Deletes only this node, unlinking all its children (decrementing their reference counts) but not
-         *  deleting them. This node's reference count must be zero. */
-        virtual ~InternalNode();
-
-        /** Deep delete. If the reference count of this node is zero, then this node's children are unlinked (their reference
-         *  counts deleted) and this node is deleted. The deleteDeeply() method is recursively invoked for any former children
-         *  that have zero for their new reference counts. */
-        virtual void deleteDeeply();
+    public:
+        /** Create a new expression node. Use these class methods instead of c'tors. */
+        static InternalNodePtr create(size_t nbits, Operator op, const std::string comment="") {
+            InternalNodePtr retval(new InternalNode(nbits, op, comment));
+            return retval;
+        }
+        static InternalNodePtr create(size_t nbits, Operator op, const TreeNodePtr &a, const std::string comment="") {
+            InternalNodePtr retval(new InternalNode(nbits, op, a, comment));
+            return retval;
+        }
+        static InternalNodePtr create(size_t nbits, Operator op, const TreeNodePtr &a, const TreeNodePtr &b,
+                                      const std::string comment="") {
+            InternalNodePtr retval(new InternalNode(nbits, op, a, b, comment));
+            return retval;
+        }
+        static InternalNodePtr create(size_t nbits, Operator op, const TreeNodePtr &a, const TreeNodePtr &b, const TreeNodePtr &c,
+                                      const std::string comment="") {
+            InternalNodePtr retval(new InternalNode(nbits, op, a, b, c, comment));
+            return retval;
+        }
+        static InternalNodePtr create(size_t nbits, Operator op, const std::vector<TreeNodePtr> &children,
+                                      const std::string comment="") {
+            InternalNodePtr retval(new InternalNode(nbits, op, children, comment));
+            return retval;
+        }
+        /** @} */
 
         /* see superclass, where this is pure virtual */
         virtual void print(std::ostream &o, RenameMap *rmap=NULL) const;
 
         /* see superclass, where this is pure virtual */
-        virtual bool equal_to(const TreeNode *other, SMTSolver*) const;
+        virtual bool equal_to(const TreeNodePtr &other, SMTSolver*) const;
 
         /* see superclass, where this is pure virtual */
         virtual bool is_known() const {
@@ -176,43 +216,65 @@ namespace InsnSemanticsExpr {
         /* see superclass, where this is pure virtual */
         virtual uint64_t get_value() const { ROSE_ASSERT(!"not a constant value"); return 0;}
 
+        /* see superclass, where this is pure virtual */
+        virtual void depth_first_visit(Visitor*) const;
+
         /** Returns the number of children. */
         size_t size() const { return children.size(); }
 
         /** Returns the specified child. */
-        const TreeNode *child(size_t idx) const { return children[idx]; }
+        TreeNodePtr child(size_t idx) const { assert(idx<children.size()); return children[idx]; }
 
         /** Returns the operator. */
         Operator get_operator() const { return op; }
 
-        /** Appends @p child as a new child of this node. The reference count for the root of the child is incremented; the
-         *  child expression is not copied. */
-        void add_child(const TreeNode* child);
+    protected:
+        /** Appends @p child as a new child of this node. The modification is done in place, so one must be careful that this
+         *  node is not part of other expressions.  It is safe to call add_child() on a node that was just created and not used
+         *  anywhere yet. */
+        void add_child(const TreeNodePtr &child);
     };
 
-    /** Leaf node of an expression tree for instruction semantics. A leaf node is either a known value or a free variable. */
+    /** Leaf node of an expression tree for instruction semantics.
+     *
+     *  A leaf node is either a known bit vector value, a free bit vector variable, or a memory state. */
     class LeafNode: public TreeNode {
     private:
-        bool known;                         /**< True if the value is known; false for variables. */
+        enum LeafType { CONSTANT, BITVECTOR, MEMORY };
+        LeafType leaf_type;
         union {
             uint64_t ival;                  /**< Integer (unsigned) value when 'known' is true; unused msb are zero */
             uint64_t name;                  /**< Variable ID number when 'known' is false. */
         };
-    public:
-        LeafNode(): TreeNode(32), known(true), ival(0) {}
 
+        // Private to help prevent creating pointers to leaf nodes.  See create_* methods instead.
+        LeafNode(std::string comment=""): TreeNode(32, comment), leaf_type(CONSTANT), ival(0) {}
+
+        static uint64_t name_counter;
+
+    public:
         /** Construct a new free variable with a specified number of significant bits. */
-        static LeafNode *create_variable(size_t nbits);
+        static LeafNodePtr create_variable(size_t nbits, std::string comment="");
 
         /** Construct a new integer with the specified number of significant bits. Any high-order bits beyond the specified
          *  size will be zeroed. */
-        static LeafNode *create_integer(size_t nbits, uint64_t n);
+        static LeafNodePtr create_integer(size_t nbits, uint64_t n, std::string comment="");
+
+        /** Construct a new memory state.  A memory state is a function that maps an address of specified size to a value of
+         *  specified size. */
+        static LeafNodePtr create_memory(size_t nbits, std::string comment="");
 
         /* see superclass, where this is pure virtual */
         virtual bool is_known() const;
 
         /* see superclass, where this is pure virtual */
         virtual uint64_t get_value() const;
+
+        /** Is the node a bitvector variable? */
+        virtual bool is_variable() const;
+
+        /** Does the node represent memory? */
+        virtual bool is_memory() const;
 
         /** Returns the name of a free variable.  The output functions print variables as "vN" where N is an integer. It is
          *  this N that this method returns.  It should only be invoked on leaf nodes for which is_known() returns false. */
@@ -222,9 +284,14 @@ namespace InsnSemanticsExpr {
         virtual void print(std::ostream &o, RenameMap *rmap=NULL) const;
 
         /* see superclass, where this is pure virtual */
-        virtual bool equal_to(const TreeNode *other, SMTSolver*) const;
-    };
+        virtual bool equal_to(const TreeNodePtr &other, SMTSolver*) const;
 
+        /* see superclass, where this is pure virtual */
+        virtual void depth_first_visit(Visitor*) const;
+    };
 };
+
+
+std::ostream& operator<<(std::ostream &o, const InsnSemanticsExpr::TreeNode &node);
 
 #endif

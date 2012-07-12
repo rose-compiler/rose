@@ -1,6 +1,11 @@
 // tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
 #include "initializeExplicitScopeData.h"
+
+#ifdef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+   #include "transformationSupport.h"
+#endif
+
 // DQ (11/29/2004): initialize any uninitialized explicitly stored scope data.
 void
 initializeExplicitScopes ( SgNode *node)
@@ -112,6 +117,7 @@ InitializeExplicitScopes::visit ( SgNode *node)
                             {
                               SgFunctionParameterList* parameterList = isSgFunctionParameterList(parentNode);
                               ROSE_ASSERT(parameterList != NULL);
+
                               SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(parameterList->get_parent());
                               ROSE_ASSERT(functionDeclaration != NULL);
                            // printf ("functionDeclaration->get_definition() = %p \n",functionDeclaration->get_definition());
@@ -198,8 +204,18 @@ InitializeExplicitScopes::visit ( SgNode *node)
                               break;
                             }
 
+                         case V_SgPythonGlobalStmt:
+                            {
+                                scope = SageInterface::getGlobalScope(parentNode);
+                                break;
+                            }
+
                          default:
                             {
+                           // DQ (9/13/2011): Reported as possible NULL value in static analysis of ROSE code.
+                              ROSE_ASSERT(initializedName != NULL);
+                              ROSE_ASSERT(initializedName->get_parent() != NULL);
+
                               printf ("Error: default reached initializedName->get_parent() = %s \n",
                                    initializedName->get_parent()->sage_class_name());
                               ROSE_ASSERT(false);

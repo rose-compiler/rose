@@ -18,6 +18,8 @@ std::pair< std::string, bool > stringBoolPair;
 void foo()
    {
      int size = 2;
+
+  // Note: this is equivalent to std::vector<int> temp3 = std::vector<int>() in the AST.
      std::vector<int > temp3;
 
   // The optimization fixup (FixupforGnuBackendCompiler) should not go to far in eliminating redundant 

@@ -8,12 +8,14 @@
 
 /* Order matters */
 #include "RSIM_Common.h"
-#include "RSIM_Callbacks.h"
 #include "RSIM_SignalHandling.h"
+#include "RSIM_Callbacks.h"
+#include "RSIM_Futex.h"
 #include "RSIM_Process.h"
-#include "RSIM_SemanticPolicy.h"
+#include "RSIM_SemanticsSettings.h"
 #include "RSIM_Thread.h"
 #include "RSIM_Templates.h"
+#include "RSIM_Tools.h"
 
 #include <signal.h>
 
@@ -51,9 +53,9 @@
  *       the specimen.  This has an impact on performance.</li>
  *
  *   <li>The specimen's instructions are simulated rather than executed directly by the CPU.  The simulation is performed by
- *       the X86InstructionSemantics class defined in ROSE and an RSIM_SemanticPolicy class defined in the simulator.  The
- *       X86InstructionSemantics class defines what basic operations must be performed by each instruction, while the
- *       RSIM_SemanticPolicy class defines the operations themselves.
+ *       the X86InstructionSemantics class defined in ROSE and the RSIM_Semantics name space classes defined in the simulator.
+ *       The X86InstructionSemantics class defines what basic operations must be performed by each instruction, while the
+ *       RSIM_Semantics classes define the operations themselves.  See the RSIM_SemanticsSettings.h file for details.
  *
  *       Simulating each instruction has a number of advantages:
  *       <ol>
@@ -104,6 +106,9 @@
  * The behavior of a simulator can be modified by attaching adapters.  For instance, if you need a simulator that prints
  * hexdumps of all data transfered over a TCP network connection, you would instantiate an RSIM_Adapter::TraceTcpIO adapter and
  * attach it to the simulator.  Documentation can be found in the RSIM_Adapter namespace.
+ *
+ * We provide a number of tools and callbacks that we expect will be useful to end users.  These are contained in the
+ * RSIM_Tools namespace.
  *
  * If you run dynamically linked, 32-bit specimens on an amd64 host, you'll need to use "i386 -LRB3" to run the simulator.
  *
@@ -179,7 +184,8 @@ public:
     /** Default constructor. Construct a new simulator object, initializing its properties to sane values, but do not create an
      *  initial process. */
     RSIM_Simulator()
-        : tracing_flags(0), core_flags(CORE_ELF), btrace_file(NULL), active(0), process(NULL), entry_va(0) {
+        : global_semaphore(NULL),
+          tracing_flags(0), core_flags(CORE_ELF), btrace_file(NULL), active(0), process(NULL), entry_va(0) {
         ctor();
     }
 
@@ -191,6 +197,32 @@ public:
      *  Thread safety: This method is thread safe provided it is not invoked on the same object concurrently. Note, however,
      *  that it may call functions registered with atexit(). */
     int configure(int argc, char **argv,  char **envp=NULL);
+
+    /** Set the name of the global semaphore.
+     *
+     *  A semaphore is needed in order to synchronize certain operations between simulators whose specimens might be
+     *  interacting with each other through SysV or POSIX inter-process communication (IPC) facilities.  These facilities
+     *  assume that certain instructions are atomic, but simulation of those instructions is not. Therefore, the simulator
+     *  needs to wrap those instructions inside a mutual exclusion construct: a named POSIX semaphore.
+     *
+     *  If the specimens communicating with each other have a parent/child relationship, then the simulator will set up a
+     *  semaphore that's used among the various related simulators.  The semaphore will be named "/ROSE-Simulator-#####" where
+     *  ##### is the process ID of the first simulator.  However, if the specimens are not related to one another, and started
+     *  from unrelated simulators, then a different name should be specified, and the name should be the same for all the
+     *  affected simulators.  BTW, POSIX named semaphores are usually created in the /dev/shm directory.  The simulator
+     *  normally unlinks them when it's done, but it might be necessary to manually clean up semaphores from crashed
+     *  simulators.
+     *
+     *  It is not possible to set the semaphore name once the semaphore has been created.  The set_semaphore_name() will return
+     *  true on success, false if the name could not be set.  If do_unlink is true, then the semaphore name is immediately
+     *  unlinked from the file system (you probably don't want to unlink it if it's going to be needed by another simulator).
+     *  When the semaphore is created and no name is specified, the default name is used and immediately unlinked.
+     *
+     *  @{ */
+    bool set_semaphore_name(const std::string &name, bool do_unlink=false);
+    const std::string &get_semaphore_name() const;
+    sem_t *get_semaphore(bool *unlinked=NULL);
+    /** @} */
 
     /** Load program and create process object.  The argument vector, @p argv, should contain the name of the executable and
      *  any arguments to pass to the executable.  The executable file is located by consulting the $PATH environment variable,
@@ -248,15 +280,63 @@ public:
      *                                  Callbacks
      **************************************************************************************************************************/
 
-    //@{
-    /** Obtains the callbacks object associated with the simulator. */
+    /** Obtains the callbacks object associated with the simulator.
+     *
+     *  @{ */
     RSIM_Callbacks &get_callbacks() {
         return callbacks;
     }
     const RSIM_Callbacks get_callbacks() const {
         return callbacks;
     }
-    //@}
+    /** @} */
+
+    /** Install a callback object.
+     *
+     *  This is just a convenient way of installing a callback object.  It appends it to the BEFORE slot (by default) of the
+     *  appropriate queue.  If @p everwhere is true (not the default) then it also appends the callback to the appropriate
+     *  callback list of the process and all existing threads.  Regardless of whether a callback is applied to process and
+     *  threads, whenever a new process is created it gets a clone of all the simulator callbacks, and whenever a new thread is
+     *  created it gets a clone of all its process callbacks.
+     *
+     *  @{ */  // ******* Similar functions in RSIM_Process and RSIM_Thread ******
+    void install_callback(RSIM_Callbacks::InsnCallback *cb,
+                          RSIM_Callbacks::When when=RSIM_Callbacks::BEFORE, bool everywhere=false);
+    void install_callback(RSIM_Callbacks::MemoryCallback *cb,
+                          RSIM_Callbacks::When when=RSIM_Callbacks::BEFORE, bool everywhere=false);
+    void install_callback(RSIM_Callbacks::SyscallCallback *cb,
+                          RSIM_Callbacks::When when=RSIM_Callbacks::BEFORE, bool everywhere=false);
+    void install_callback(RSIM_Callbacks::SignalCallback *cb,
+                          RSIM_Callbacks::When when=RSIM_Callbacks::BEFORE, bool everywhere=false);
+    void install_callback(RSIM_Callbacks::ThreadCallback *cb,
+                          RSIM_Callbacks::When when=RSIM_Callbacks::BEFORE, bool everywhere=false);
+    void install_callback(RSIM_Callbacks::ProcessCallback *cb,
+                          RSIM_Callbacks::When when=RSIM_Callbacks::BEFORE, bool everywhere=false);
+    /** @} */
+
+    /** Remove a callback object.
+     *
+     *  This is just a convenient way of removing callback objects.  It removes up to one instance of the callback from the
+     *  simulator and, if @p everwhere is true (not the default) it recursively calls the removal methods for the process and
+     *  all threads.  The comparison to find a callback object is by callback address.  If the callback has a @p clone() method
+     *  that allocates a new callback object, then the callback specified as an argument probably won't be found in the process
+     *  or threads.
+     *
+     * @{ */
+    void remove_callback(RSIM_Callbacks::InsnCallback *cb,
+                         RSIM_Callbacks::When when=RSIM_Callbacks::BEFORE, bool everywhere=false);
+    void remove_callback(RSIM_Callbacks::MemoryCallback *cb,
+                         RSIM_Callbacks::When when=RSIM_Callbacks::BEFORE, bool everywhere=false);
+    void remove_callback(RSIM_Callbacks::SyscallCallback *cb,
+                         RSIM_Callbacks::When when=RSIM_Callbacks::BEFORE, bool everywhere=false);
+    void remove_callback(RSIM_Callbacks::SignalCallback *cb,
+                         RSIM_Callbacks::When when=RSIM_Callbacks::BEFORE, bool everywhere=false);
+    void remove_callback(RSIM_Callbacks::ThreadCallback *cb,
+                         RSIM_Callbacks::When when=RSIM_Callbacks::BEFORE, bool everywhere=false);
+    void remove_callback(RSIM_Callbacks::ProcessCallback *cb,
+                         RSIM_Callbacks::When when=RSIM_Callbacks::BEFORE, bool everywhere=false);
+    /** @} */
+    
 
     /**************************************************************************************************************************
      *                                  System calls
@@ -329,7 +409,7 @@ public:
      *
      *  @code
      *  RSIM_Linux32 sim;
-     *  IOCounter ioc = new IOCounter;
+     *  IOCounter *ioc = new IOCounter;
      *  ...
      *  sim.syscall_implementation(3)->body.append(ioc);
      *  sim.syscall_implementation(4)->body.append(ioc);
@@ -533,7 +613,8 @@ public:
                 : func(func) {}
             void (*func)(RSIM_Thread*, int callno);
             bool operator()(bool b, const Args &a) {
-                func(a.thread, a.callno);
+                if (b)
+                    func(a.thread, a.callno);
                 return b;
             }
         };
@@ -595,6 +676,9 @@ private:
      * registered by RSIM_Simulator::activate(). */
     static void signal_wakeup(int signo);
 
+    std::string global_semaphore_name;  /**< Name of global simulator semaphore. If empty, a name is created when needed. */
+    bool global_semaphore_unlink;       /**< If set, then immediately unlink the semaphore from the file system. */
+    sem_t *global_semaphore;            /**< The global simulator semaphore. */
 
 private:
     /* Configuration variables */

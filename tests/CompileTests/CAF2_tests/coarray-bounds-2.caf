@@ -1,0 +1,49 @@
+program test
+  integer(kind=8), allocatable :: b(:)[*]
+  integer :: rank, isize, partner, error
+  integer(kind=8), allocatable :: a(:)[*]
+  
+  rank = team_rank()
+  isize = team_size()
+
+  !allocate(b(21:30)[])
+  allocate(b(1:10)[])
+  allocate(a(1:5)[])
+
+  do i = 1, 5
+    a(i) = (rank+1) * 10 + i
+  end do
+
+  partner = mod(rank + 1, isize)
+
+  !b(22:30:2)[partner] = a(1:5)
+  b(2:10:2)[partner] = a(1:5)
+
+  call team_barrier()
+
+  partner = mod(rank - 1 + isize, isize)
+
+  !b(21:30:2) = a(1:5)[partner]
+  b(1:10:2) = a(1:5)[partner]
+
+  call team_barrier()
+
+  error = 0
+  do i = 1, 5
+    !if (b(20+i*2) .ne. ((partner+1)*10+i) .or. b(19+i*2) .ne. ((partner+1)*10+i)) then
+    if (b(i*2) .ne. ((partner+1)*10+i) .or. b(i*2-1) .ne. ((partner+1)*10+i)) then
+      error = error + 1
+    end if
+  end do
+
+  if (error .ne. 0) then
+    print *, "FAILED"
+    !print *, "rank=", rank, "b=", b(21:30)
+    print *, "rank=", rank, "b=", b(1:10)
+  else
+    if (rank .eq. 0) then
+      write(*, '(A)') "PASS"
+    end if
+  end if
+
+end program test

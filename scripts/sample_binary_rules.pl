@@ -25,6 +25,7 @@ sub find_sample_binaries {
       next if $basename =~ /\.(txt|ipd|README|raw)$/;  # not a packaged binary
       next if $basename =~ /~$/;                       # Emacs/Xemacs backup file
       next if $basename =~ /^Makefile/;
+      next if $basename =~ /\.a$/;                     # skip library archives for now
       if (-d $fullname) {
 	unshift @dirs, $fullname;
       } else {
@@ -42,7 +43,7 @@ sub generate_rule {
   my($target) = "test_sample$seq.result";
   my($retval);
   $retval .= "$target: $make_sampledir$sample \$(SAMPLE_TEST_DEPS) $target_for_base->{$basename}\n";
-  $retval .= "\t\@\$(srcdir)/testSampleBinary.sh $make_sampledir$sample $config >\$\@.tmp\n";
+  $retval .= "\t\@\$(srcdir)/testSampleBinary.sh $make_sampledir$sample $config >\$\@.tmp || cat \$\@.tmp\n";
   $retval .= "\t\@mv \$\@.tmp \$\@\n";
   push @targets, $target;
   $target_for_base->{$basename} = $target;

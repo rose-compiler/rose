@@ -1,0 +1,2626 @@
+\chapter{Running POP}\label{ch:running-POP}
+
+This chapter begins with the assumption that the
+user has followed the instructions in the previous
+chapter and has successfully built a {\bf pop} executable.
+A second assumption is that the user might want to
+actually run an ocean simulation with the code, thereby
+impressing friends and colleagues and becoming a
+card-carrying member of the POP user's club.  Given
+these assumptions, the following describes all the
+many options for configuring an ocean simulation with POP.
+
+POP requires some input data to run correctly. The
+first requirement is a file called {\em pop\_in} that contains many
+namelists that determine options and parameter values for the run.
+A sample input file should have been created in the run directory,
+but can also be found in the {\em input\_templates}
+directory. 
+
+In addition to the namelist input file, files will be
+required to initialize grids, preconditioners, fields
+for output and possibly other options.  These will be
+discussed in more detail below and in later chapters.
+
+The namelists and the model features that they control
+are presented below.  Each namelist appears in a table
+whose columns contain:
+\begin{itemize}
+\item The name of the namelist, followed by the names of
+      all parameters.
+\item The range (discrete or continuous) of possible values
+      of the parameter. Square brackets surround the
+      [default value] and numerical ranges will be denoted
+      by (min,max) where the limits are inclusive.
+\item The units, if applicable, and a description of the
+      parameter.
+\end{itemize}
+The namelists are presented in approximately the order in
+which they are called during the initialization of a POP run. 
+However, some regrouping has been done to bring related topics
+together.  The actual order of the namelists within the
+{\em pop\_in} file can be arbitrary; the code will search the
+file for the proper namelist to be read.
+
+\section{Operational control}\label{sec:opcontrol}
+
+This section describes various input options that control
+the operation control (rather than physical parameters)
+of the model, including processor configuration, time
+management and some input/output control.
+
+\subsection{Processor configuration}\label{sec:proc-config}
+
+The first namelist read by the POP model determines
+how many processors it should use and how to distribute
+blocks of the domain across processors
+\hyperref{(see domain decomposition section).}
+         {(see Sec.}{).}
+         {sec:domain-decomp}
+
+The number of processors used by the model is governed
+by the {\tt nprocs\_clinic} parameter.  The parameter
+{\tt nprocs\_tropic} determines whether the barotropic
+solver is run using the same or fewer number of processors;
+specifying a number larger than the clinic value will
+result in an error.
+
+\begin{table}[!h]\caption{Domain namelist}\label{tab:nmldomain}
+\begin{tabular}{|p{1.5in}|p{1in}|p{1.75in}|}
+\hline
+  {\bf \&domain\_nml}                                & &
+  {\bf options for controlling domain decomposition} \\
+\hline
+  nprocs\_clinic                                       &
+  (1,machine maximum)                                  &
+  number of processors to be used for most of the code \\
+\hline
+  nprocs\_tropic                                        &
+  (1,nprocs\_clinic)                                    &
+  number of processors to be used for barotropic solver \\
+\hline
+  clinic\_distribution\_type     &
+  [`balanced'], `cartesian'      &
+  method for distributing blocks across processors for most
+    of the code \\
+\hline
+  tropic\_distribution\_type     &
+  `balanced', [`cartesian']      &
+  method for distributing blocks across processors barotropic
+    solver \\
+\hline
+  ew\_boundary\_type             &
+  [`cyclic'], `closed'           &
+  type of boundary in the logical east-west direction for
+    global domain \\
+\hline
+  ns\_boundary\_type             &
+  [`cyclic'], `closed','tripole' &
+  type of boundary in the logical north-south direction for
+    global domain \\
+\hline
+  / & & \\
+\hline
+\end{tabular}
+\end{table}
+
+The distribution of blocks across processors is determined
+by the parameters {\tt clinic\_distribution\_type} and
+{\tt tropic\_distribution\_type}.  Typically, the
+{\tt `balanced'} choice is best for the baroclinic
+part of the code and {\tt `cartesian'} is best for
+the barotropic solver.
+
+In order to update ``ghost cells'' and implement
+proper boundary conditions, some boundary information
+for the global domain is required.  The parameter
+{\tt ew\_boundary\_type} determines the type of
+boundary for the logical east-west direction 
+(i direction).  Acceptable values are currently
+{\tt 'cyclic'} and {\tt 'closed'} for periodic
+and closed boundaries, respectively.  The 
+parameter for the logical north-south direction
+(j direction) is {\tt ns\_boundary\_type} and
+accepts {\tt 'cyclic','closed'} and {\tt 'tripole'},
+where cyclic and closed have the same meaning as
+the east-west direction and tripole refers to use
+of a tripole grid.
+
+
+\subsection{Input/Output}\label{sec:op-io}
+
+POP supports both binary and netCDF file formats.  The
+formats for each type of file (e.g. restart, history,
+movie) are set in individual namelists for those
+operations.  For binary output format, POP can perform
+parallel input/output in order to speed up IO when
+writing large files.  Because most files read or written
+by POP utilize direct-access IO with a horizontal slice
+written to each binary record, the parallel IO routines
+allow several processors to write individual records to
+the same file.  The user can specify how many processors
+participate in the parallel IO with some restrictions.
+The number of processors obviously cannot exceed the
+total number of processors assigned to the job.
+In addition, it is not productive to assign
+more processors than the number of vertical levels as
+these processors will generally remain idle (or even
+perform unnecessary work).  Lastly, there may be some
+restrictions based on the particular architecture.  Some
+architectures have a limit on the number of effective
+IO units that can be open simultaneously.  Some
+architectures (e.g. loose clusters of workstations) may
+not have a file system accessible to all of the
+participating processors, in which case the user must
+set the number of IO processors appropriately.  Lastly,
+note that netCDF does not support parallel I/O, so any
+netCDF formatted files will be read/written from a
+single processor regardless of the num\_iotasks setting.
+
+The POP model writes a variety of information, including model
+configuration and many diagnostics, to standard output.  Typically
+standard output would be redirected to a log file using a Unix
+redirect $>$ operator.  However, in some cases this is not
+possible, so a namelist flag {\tt lredirect\_stdout} can be
+turned on to redirect standard output to a log file.  The logfile
+will have the name {\tt log\_filename}.{\em date.time} where
+the date and time are the actual wallclock time and not the
+model simulation time.
+
+During production runs, it is not convenient to have to change
+the {\tt pop\_in} file for every run.  Typically, the only
+changes necessary are the names of any restart input files.
+To avoid having to change these filenames in the {\tt pop\_in}
+file for every run, an option {\tt luse\_pointer\_files} exists.
+If this flag is .true., the names of restart output files are written
+to pointer files with the name
+{\tt pointer\_filename}.{\em suffix},
+where {\em suffix} is currently either {\tt restart} or
+{\tt tavg} to handle restart files and tavg restart files.
+When a simulation is started from restart, it will read these
+pointer files to determine the location and name of the actual
+restart files.
+
+\begin{table}\caption{I/O namelist}\label{tab:nmlio}
+\begin{tabular}{|p{1in}|p{1in}|p{2.25in}|}
+\hline
+  {\bf \&io\_nml}                 &  &
+  {\bf options for controlling I/O} \\
+\hline
+  num\_iotasks                                     &
+  (1,min(km, nprocs\_clinic))                      &
+  number of I/O processes for parallel binary I/O  \\
+\hline
+  lredirect\_stdout                &
+  [.false.]                        &
+  flag to write stdout to log file \\
+\hline
+  log\_filename &
+  [`pop.out']   &
+  root filename (with path) of optional output log file \\
+\hline
+  luse\_pointer\_files &
+  [.false.]            &
+  flag to turn on use of pointer files \\
+\hline
+  pointer\_filename &
+  [`pop\_pointer']  &
+  root filename (with path) of pointer files \\
+\hline
+  / &   &  \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Time management}\label{sec:op-timemanager}
+
+The {\tt time\_manager\_nml} namelist controls the timestep,
+the length of the current run, the method used to suppress
+the leapfrog computational mode, and the date on which this
+{\em run-sequence} began.  A {\em run-sequence} consists of
+one or more job submissions, each of which produces a
+{\em restart file} that is used to begin the next job in the
+sequence.  A run-sequence is identified by a {\tt runid} that
+is declared in the first job of the sequence and held fixed
+throughout the sequence; {\tt runid} is used in generating
+default names for the model's output files.  Similarly, the
+start date and time for the run sequence
+({\tt iyear0...,isecond0}), are set in the first
+job and held fixed throughout the sequence.  An additional
+variable called {\tt date\_separator} can be used
+to govern the form of the date that is appended to various output
+files.  The {\tt date\_separator} is a single character used
+to separate yyyy, mm, and dd in a date format.  A blank character
+is the default and is translated to no separator (yyyymmdd); a
+value of '-' would result in the format yyyy-mm-dd.
+
+The timestep is defined using a combination of {\tt dt\_option}
+and {\tt dt\_count}.  If {\tt steps\_per\_(day,year)} is
+chosen, the timestep is computed such that {\tt dt\_count}
+steps are taken each day or year.
+If {\tt hours} or {\tt seconds} is chosen, the timestep
+is {\tt dt\_count} in hours or seconds (note that {\tt dt\_count}
+is an integer).  If {\tt auto\_dt} is chosen, the timestep
+is automatically computed based on the grid size.  The
+time step may be adjusted from these values to accomodate
+averaging time steps.
+
+\begin{table}\caption{Time manager namelist}
+\label{tab:nmltimemanager}
+\begin{tabular}{|p{1.4in}|p{1in}|p{1.85in}|}
+\hline
+  {\bf \&time\_manager\_nml}                  &
+  {\bf  }                                     &
+  {\bf management of time-related quantities} \\
+\hline
+  runid               &
+  must be supplied    &
+  alphanumeric run-sequence identifier \\
+\hline
+  stop\_option                              &
+  [`nstep'], `nday', `nyear', `date'        &
+  units of time for `stop\_count'           \\
+\hline
+  stop\_count   &
+  [20]          &
+  how long in above units to run this segment
+      (use yyyymmdd for date)                       \\
+\hline
+  time\_mix\_opt                                        &
+  [`avgfit'], `avgbb', `avg', `matsuno'                 &
+  Method to suppress leapfrog computational mode.       \\
+\hline
+  fit\_freq   &
+  [1]         &
+   When using `avgfit', the intervals per day into
+       which full and half steps must fit  \\
+\hline
+  time\_mix\_freq  &
+  [17]             &
+  Requested frequency (in steps) for taking mixing steps \\
+\hline
+  dt\_option                                               &
+  [`auto\_dt'], `steps\_per\_day', `steps\_per\_year',
+      `seconds', `hours'                                   &
+  units for determining timestep (combined with dt\_count) \\
+\hline
+  dt\_count &
+  [1]       &
+  number of timesteps in above units to compute timestep \\
+\hline
+  impcor   &
+  [.true.] &
+  If .true., the Coriolis terms treated implicitly \\
+\hline
+  laccel    &
+  [.false.] &
+  if .true., tracer timesteps increase with depth  \\
+\hline
+  accel\_file              &
+  [`unknown\_accel']       &
+  file containing vertical profile of timestep
+     acceleration factor\\
+\hline
+  dtuxcel &
+  1.0     &
+  factor to multiply momentum timestep for different
+      momentum and tracer timesteps \\
+\hline
+  allow\_leapyear &
+  [.false.]       &
+  use leap years in calendar \\
+\hline
+  iyear0 &
+  [0]    &
+  year (yyyy) at start of full run sequence \\
+\hline
+  imonth0 &
+  [1]     &
+  Month at start of sequence \\
+\hline
+  iday0 &
+  [1]   &
+  day at start of sequence \\
+\hline
+  ihour0 &
+  [0]    &
+  hour at start of sequence \\
+\hline
+  iminute0 &
+  [0]      &
+  Minute at start of sequence \\
+\hline
+  isecond0 &
+  [0]      &
+  Seconds at start of sequence \\
+\hline
+  date\_separator &
+  [` ']           &
+  Character to separate yyyy mm dd in date
+      (` ' means {\em no} separator) \\
+\hline
+  / &
+    &
+    \\
+\hline
+\end{tabular}
+\end{table}
+
+In order to control a computational mode resulting from
+the use of a leapfrog time stepping scheme, either a
+time-averaging method (`avg',`avgbb',`avgfit') or a
+Matsuno (`matsuno') time step must be specified through
+the {\tt time\_mix\_opt} parameter.  The frequency (in
+time steps) for applying one of these methods is defined by
+the {\tt time\_mix\_freq} parameter.  If `avg' is selected
+for {\tt time\_mix\_opt}, the averaging results in only a half
+timestep being taken every {\tt time\_mix\_freq} steps.  This
+may result in a non-integral number of steps per day and will
+result in irregular day boundaries. If an integral number of
+steps per day is required, two alternative options are provided.
+Choosing 'avgbb' will enable always taking two half steps
+back-to-back, thus giving a full time step, but with increased
+diffusion. The `avgfit' option will compute a number of full
+and half steps that will fit into a particular time interval.
+The time interval to be fit is governed by the `fit\_freq'
+parameter which sets the number of time intervals per day
+(1=once per day) into which the time steps must fit exactly.
+The Matsuno scheme does not use half steps, but Matsuno is
+generally more diffusive than time averaging and has been
+shown to be unstable in many situations.
+
+The timestep above can be increased for tracers in the deep
+ocean.  If such acceleration is requested ({\tt laccel} = .true.),
+a profile of the acceleration with depth must be read from the file
+{\tt accel\_file}, an ascii file with a single column of numbers
+giving the acceleration factor for each vertical level.  Another
+form of acceleration is to take a longer tracer timestep than
+momentum timestep.  This can be specified by changing
+{\tt dtuxcel} to a factor smaller than 1.0.
+
+
+\section{Grid and bottom-topography definition}\label{sec:grid}
+
+POP can be configured to use a variety of grids, because it
+is written to allow any logically rectangular, orthogonal
+coordinate system on a sphere.  Generation grids and topography
+can be time consuming, but it only needs to be done once for a given
+run-sequence (or even for a set of run-sequences based on the
+same grid).  Consequently, grids and topography are usually
+generated off-line and grid information is stored in files that
+are read in during initialization of each job.  A graphical tool
+for generating and modifying grids and topography will soon be
+released and can be obtained on request.  This tool supports
+almost-global Mercator grids, global displaced-pole grids,
+global tripole grids and regional grids.
+
+When generating the grid off-line, a horizontal grid file
+is created containing arrays of double precision values for:
+\begin{itemize}
+\item latitude (radians) of velocity (U) points
+\item longitude (radians) of velocity (U) points
+\item length (cm) of north side of tracer (T) cell
+\item length (cm) of east side of tracer (T) cell
+\item length (cm) of south side of velocity (U) cell
+\item length (cm) of west side of U velocity (U) cell
+\item angle formed by the south U cell side and latitude
+      circle passing through the soutwest corner of U cell
+\end{itemize}
+where north, south, east and west refer to logical directions,
+not necessarily geographic directions.  The vertical grid
+file is an ASCII file containing the thickness of each
+grid layer on a separate line.
+
+\begin{table}\caption{Grid and topography namelist}
+\label{tab:nmlgrid}
+\begin{tabular}{|p{1.15in}|p{1.7in}|p{1.4in}|}
+\hline
+  {\bf \&grid\_nml} &
+  {\bf  }           &
+  {\bf input/generation of grid and bottom topography} \\
+\hline
+  horiz\_grid\_opt     &
+  `file', [`internal'] &
+  read horizontal grid from a file OR create simple lat/lon grid \\
+\hline
+  horiz\_grid\_file       &
+  [`unknown\_grid\_file'] &
+  filename (with path) of file containing horizontal grid info \\
+\hline
+  sfc\_layer\_opt                  &
+  [`varthick'], `rigid', `oldfree' &
+  surface layer is variable thickness OR rigid lid OR old
+      free surface formulation \\
+\hline
+  vert\_grid\_opt      &
+  `file', [`internal'] &
+  read vertical grid structure from file OR compute vertical
+      grid internally \\
+\hline
+  vert\_grid\_file              &
+  [`unknown\_vert\_grid\_file'] &
+  file containing thickness (cm) of each vertical layer \\
+\hline
+  topography\_opt      &
+  `file', [`internal'] &
+  read discretized bottom topography from file or compute
+      idealized flat-bottom topography internally \\
+\hline
+  topography\_file               &
+  [`unknown\_topography\_file']  &
+  file containing index of deepest level at each gridpoint \\
+\hline
+  region\_mask\_file        &
+  [`unknown\_region\_mask'] &
+  file containing region number at each gridpoint \\
+\hline
+  partial\_bottom\_cells      &
+  [.false.]                 &
+  use partial bottom cells \\
+\hline
+  bottom\_cell\_file        &
+  [`unknown\_bottom\_cell'] &
+  file containing thickness (cm) of partial bottom cell for each
+  column \\
+\hline
+  topo\_smooth &
+  [.false.]    &
+  if .true., smooth topography using 9-point averaging stencil \\
+\hline
+  flat\_bottom &
+  [.false.]    &
+  if .true., flat bottom is used \\
+\hline
+  lremove\_points &
+  [.false.]    &
+  if .true., remove isolated or disconnected ocean points \\
+\hline
+  / &
+    &
+    \\
+\hline
+\end{tabular}
+\end{table}
+
+Options exist to generate both horizontal and vertical
+grids internally (`internal'). Because any grid size can be easily
+produced and IO is unnecessary, this option is used for the
+\hyperref{benchmark test problem.}
+         {benchmark test problem (see Sec.}{).}
+         {sec:testPOP}
+The horizontal grid in this case is a simple latitude-longitude
+grid.  The vertical grid uses an algorithm identical to the
+off-line vertical grid generator located in the tools/grid
+directory; vertical grids are generated which have relatively
+shallow surface layers and increasing thickness with depth.
+
+The bottom topography is defined by a field of integers (KMT)
+which gives the index of the deepest vertical level at
+each horizontal grid point.  This field should also be
+generated off-line because it often requires modification
+for narrow channels and other small-scale features.
+For off-line generated topography, the code expects a binary
+file with the integer KMT field.
+Topography can be generated internally, but this option
+currently only creates an idealized continental outline with a flat
+bottom; it should not be used for serious ocean simulations.
+Bottom topography can be modified to include partial bottom
+cells.  If partial bottom cells are selected, the thickness
+of the bottom cell in each column can be less than the full
+thickness of the bottom model layer, giving a better representation
+of the actual bottom topography.  For this option, an array
+containing the thickness of each bottom cell (in cm) must be
+read from a bottom cell input file.
+
+At present, POP does not support in-flow/out-flow boundary 
+conditions for regional grids.  For such regional simulations,
+closed boudaries are used with buffer zones whose
+thermohaline properties are maintained by
+\hyperref{restoring to climatology.}
+         {restoring to climatology (see Sec. }{).}
+         {sec:forcing-form-interior}
+
+Three options are available for the surface layer.  The
+default is now a variable thickness surface layer (`varthick')
+in which the thickness of the surface layer adjusts to fresh water
+input/export.  Note that in this formulation, an assumption
+remains that the changes in thickness should be much smaller than
+the thickness of the surface layer itself.  A second option
+is the original free surface formulation (`oldfree') where the
+thickness remains constant, but changes in the free surface height
+are used in forcing terms.  In this case, fresh water fluxes are
+treated as virtual salinity fluxes and conservation of
+tracers is not exact (though the residual tracer flux is
+globally very small).  The last option is the rigid lid option
+(`rigid').  As it implies, there is no variation is surface
+height with this option.  Note that when using this option,
+the barotropic solver takes much longer to converge so the
+maximum iteration parameter must be increased to account for
+this slower convergence.  The rigid lid option is not
+recommended for typical ocean simulations.
+
+For some forcing options (and in future versions for regional
+diagnostics and river runoff), a region mask is necessary to
+define various regions.  This mask is a simple two-dimensional
+integer mask that assigns a region number for each horizontal
+grid point.  Negative values of the region number are used to
+indicate marginal seas.  If such a region mask is necessary,
+it is read from the {\tt region\_mask\_file}. If the mask is
+not necessary, {\tt region\_mask\_file} must be set
+to 'unknown\_region\_mask'.
+
+\section{Initializing the model state}\label{sec:initstate}
+
+\subsection{Temperature and salinity distribution}\label{sec:init-TS}
+
+Most jobs are continuations of a run-sequence, so the potential
+temperature and salinity (and other necessary variables) are read
+in from a
+\hyperref{restart file.}
+         {restart file (see Sec. }{).}
+         {sec:init-restart}
+In this case, the {\tt init\_ts\_opt}
+should be set to {\tt `restart'} and the {\tt runid}
+and {\tt iyear0,...,isecond0} parameters in {\tt time\_manager\_nml}
+are reset by the values in the restart file. 
+
+\begin{table}[!h]\caption{Temperature and salinity initialization}
+\label{tab:nmlinitTS}
+\begin{tabular}{|p{1in}|p{1.5in}|p{1.75in}|}
+\hline
+  {\bf \&init\_ts\_nml} &
+  {\bf  }               &
+  {\bf initial temperature and salinity distribution} \\
+\hline
+  init\_ts\_option                                  &
+  `restart', `branch', `file', `mean', [`internal'] &
+  start from {\em restart}
+  OR read initial ocean conditions from a {\em file}
+  OR create conditions from an input {\em mean}
+  ocean profile OR create initial conditions based on
+  1992 Levitus mean ocean profile computed {\em internally} \\
+\hline
+  init\_ts\_file      &
+  `unknown\_ts\_file' &
+  restart file OR file containing 3D potential temperature
+  and salinity at grid points OR file containing depth
+  profile of potential temperature and salinity OR
+  (ignored for `internal' or when luse\_pointer\_files is
+  enabled) \\
+\hline
+  init\_ts\_file\_fmt &
+  [`bin'], `nc'       &
+  data format (binary or netCDF) for input init\_ts\_file
+  (`file' and `restart' options only) \\
+\hline
+  / &
+    &
+    \\
+\hline
+\end{tabular}
+\end{table}
+If you want to start from an old restart file, but also want the
+new run to start from time zero, the {\tt init\_ts\_opt} should be
+set to {\tt `branch'}.  In this case, the time information
+in the restart file is ignored
+(namelist inputs for the various parameters are used instead), but
+the ocean state is initialized with the data in the restart file.
+Note, that this will not give an exact restart because the code
+will start with an Euler forward step as if it were starting from
+scratch.
+
+To begin a run from scratch, any of the other three options can
+be used. The {\tt `file'} option reads a file containing the
+3-d fields for potential temperature and salinity and uses
+those fields for the initial condition.  The {\tt `mean'}
+option reads a mean profile from an ascii input file with
+potential temperature and salinity given in two columns as
+a function of depth. This mean state will be spread across the
+horizontal domain to create horizontally-uniform 3-d fields.
+The final option is {\tt `internal'} which generates a mean vertical
+profile by interpolating from the 1992 Levitus mean ocean profile.
+As in the {\tt `mean'} option, this vertical profile is then spread
+across the horizontal domain to create the full 3-d fields.
+
+
+\subsection{Restart control}\label{sec:init-restart}
+
+As a POP calculation proceeds, restart files are produced at
+intervals of simulated time specified by the parameter
+{\tt restart\_freq} in namelist {\tt restart\_nml}.
+The root of the restart filename is given by the
+{\tt restart\_outfile} variable.  The actual full filename
+will be {\em restart\_outfile.runid.suffix}
+where {\em suffix} is a number that depends on
+{\tt restart\_freq\_opt}.  If this option is `nyear',
+`nmonth' or `nday' {\em suffix} will be the
+calendar day in yyyymmdd.  If the option is `nstep',
+{\em suffix} will be the current step number.  In the
+unlikely case that the user chooses `nhour' or `nsecond',
+{\em suffix} will be yyyymmdd.[hh,sssss] where hh and
+sssss denote the current hour or seconds in the current
+day.  A common
+\hyperref{convention}
+         {convention (see Chapter }{)}
+         {ch:output}
+is to give restart files the simple root name `d' (for dump).
+
+\begin{table}[h]\caption{Restart file namelist}\label{tab:nmlrestart}
+\begin{tabular}{|p{1.25in}|p{1.25in}|p{1.75in}|}
+\hline
+  {\bf \&restart\_nml} &
+  {\bf  }              &
+  {\bf generation of restart files} \\
+\hline
+  restart\_freq\_opt &
+  `nyear', `nmonth', `nday', `nhour', `nsecond', `nstep',[`never'] &
+  units of time for `restart\_freq' \\
+\hline
+  restart\_freq &
+  [100000]      &
+  number of units between output of restart files \\
+\hline
+  restart\_outfile &
+  [`d']            &
+  root filename (with path prepended, if necessary) for
+      restart files (`runid' and suffixes will be added) \\
+\hline
+  restart\_fmt &
+  [`bin'],`nc' &
+  data format (binary or netCDF) for restart output files \\
+\hline
+  leven\_odd\_on &
+  [.false.]      &
+  create alternating even/odd restart outputs which overwrite
+      each other \\
+\hline
+  even\_odd\_freq &
+  [100000]        &
+  frequency (in steps) for even/odd output \\
+\hline
+  pressure\_correction &
+  [.false.]            &
+  if true, corrects surface pressure error due to (possible)
+      different timestep.  use .false. for exact restart \\
+\hline
+  / &
+    &
+    \\
+\hline
+\end{tabular}
+\end{table}
+
+In addition to these named restart files, additional restart
+files may be written using the even/odd convention.
+If {\tt leven\_odd} is set to .true., the model will write restart
+files every {\tt even\_odd\_freq steps}. These files will be named
+{\em restart\_outfile.runid.{even,odd}} where the code alternately
+writes to an even or odd file.  Any previous file of the same name
+will be overwritten.  This capability is particularly useful for
+backup in case the simulation terminates prematurely; it provides
+restart capability without needing to keep many named restart files
+present in the file system.  The model writes alternately to each
+of two such files so that if an error occurs while writing one
+restart file, the other restart file will still (presumably) be
+all right.   
+
+Restart files contain only the minimum information
+required to restart the model exactly, so that the results are
+the same after a restart as would have been the case had no
+restart been done. This means that two time-levels (n-1 and n)
+of the prognostic variables (PT, S, U, V and H) must be saved
+in 64-bit precision.  The restart format is governed by the 
+{\tt restart\_fmt} option.  Note that using netCDF for restarts 
+on machines that do not use the IEEE binary format standard
+will result in restart files that are not exact due to internal
+conversion by the netCDF library.  This will prevent exact
+reproducibility on such machines.  Binary format is therefore
+highly recommended for restart files.
+
+
+\section{Computational options}\label{sec:compoptions}
+
+\subsection{Barotropic mode solver}\label{sec:comp-solver}
+
+As part of the implicit solution of the barotropic mode,
+a two-dimensional elliptic equation for the surface
+pressure is solved.  Three solver methods are available,
+all iterative (preconditioned conjugate gradient,
+conjugate residual and Jacobi).  Convergence of the
+iterative solvers is governed by the two parameters
+{\tt solv\_convrg} and {\tt solv\_max\_iters} as shown in
+the table below. The convergence criterion {\tt solv\_convrg}
+should be chosen small enough such that the pressure balance
+(printed as part of the model global diagnostics) agrees
+to 3-4 digits.  The parameter {\tt solv\_max\_iters} must
+be chosen large enough to allow the solver to converge
+(typically a few hundred), but small enough so that the
+code will terminate in a reasonable time if the solver is
+unable to converge.
+
+\begin{table}[h]\caption{Barotropic solver namelist}
+\label{tab:nmlsolver}
+\begin{tabular}{|p{1in}|p{1.5in}|p{1.75in}|}
+\hline
+  {\bf \&solver\_nml} &
+  {\bf  }             &
+  {\bf control of iterative solver for barotropic mode} \\
+\hline
+  solv\_type            &
+  [`pcg'], `cgr', `jac' &
+  preconditioned conjugate gradient OR conjugate gradient
+      residual OR jacobi \\
+\hline
+  lprecond  &
+  [.false.] &
+  if .true., use preconditioner to reduce number of
+      iterations to convergence \\
+\hline
+  precond\_file               &
+  [`unknown\_precond\_file']  &
+  file containing preconditioner coefficients for solver \\
+\hline
+  solv\_convrg &
+  1.00E-12     &
+  convergence criterion: $|\delta X/X| <  solv\_convrg$ \\
+\hline
+  solv\_max\_iters &
+  1000             &
+  upper limit on number of iterations allowed \\
+\hline
+  solv\_ncheck &
+  10           &
+  check for convergence every solv\_ncheck iterations \\
+\hline
+  / &
+    &
+    \\
+\hline
+\end{tabular}
+\end{table}
+Occasionally, when benchmarking the code, it is useful to
+fix the number of iterations to give a consistent iteration
+count between runs.  In this case, {\tt solv\_convrg} is
+set to exactly zero and the solver will iterate
+{\tt solv\_max\_iters} and continue with the simulation
+without terminating.  This feature should
+only be used for benchmarking and not for actual ocean
+simulations.
+
+The {\tt solv\_ncheck} provides a means to improve performance by
+checking for convergence every {\tt solv\_ncheck} iterations, thus
+eliminating an extra global sum on most iterations.
+Another means for improving performance is to supply a
+preconditioner to improve convergence.  The preconditioner
+must be computed off-line and must be in the form of a
+nine point stencil operator.  The preconditioner is then
+supplied in a file named {\tt precond\_file} containing
+the nine operator weights. The Jacobi method converges very
+slowly; it is not recommended but is provided as an alternative.
+
+\subsection{Advection methods}\label{sec:comp-advection}
+
+Currently, advection of momentum is always done by leapfrog
+centered advection with periodic
+\hyperref{`mixing' steps.}
+         {`mixing' steps (see Sec. }{)}
+         {sec:op-timemanager}
+For tracer advection, two options are available. 
+The first is standard leapfrog centered advection; the
+second is a 3rd-order upwinding \cite{Leonard79}
+which, although not monotone,
+will improve monotonicity at a somewhat increased computational cost.
+
+\begin{table}[h]
+\caption{Advection namelist}\label{tab:nmladvect}
+\begin{tabular}{|p{1in}|p{0.75in}|p{2.5in}|}
+\hline
+  {\bf \&advect\_nml} &
+  {\bf  }             &
+  {\bf advection methods for tracers} \\
+\hline
+  tadvect\_ctype          &
+  [`centered'], `upwind3' &
+  centered differences OR 3rd-order upwinding \\
+\hline
+  / &
+    &
+    \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Pressure gradient options}
+\label{sec:comp-pavg}
+
+The pressure-averaging technique was explained in
+\hyperref{a previous section.}
+         {section }{.}
+         {sec:improve-pressavg}
+Because it increases the timestep, it should always be
+enabled.  The option to turn it off is provided only to
+permit comparisons with and without pressure-averaging or
+between POP and other codes that do not incorporate this
+technique.
+
+The pressure gradient term includes a density factor
+which is assumed to be a constant reference density
+in Boussinesq models.  The depth-dependent pressure
+effects on this density can be corrected for using
+simple depth-dependent factors.
+
+\begin{table}[h]
+\caption{Pressure averaging namelist}\label{tab:nmlpavg}
+\begin{tabular}{|p{1.5in}|p{0.5in}|p{2.25in}|}
+\hline
+  {\bf \&pressure\_grad\_nml} &
+  {\bf  }                     &
+  {\bf averaging of horizontal pressure gradient} \\
+\hline
+  lpressure\_avg &
+  [.true.]       &
+  use pressure averaging to increase time step \\
+\hline
+  lbouss\_correct &
+  [.true.]        &
+  applies depth-dependent factor to correct for
+  assumed constant density \\
+\hline
+  / &
+    &
+    \\
+\hline
+\end{tabular}
+\end{table}
+
+\section{Vertical mixing and convection parameterizations}
+\label{sec:vmix}
+
+Several vertical mixing parameterizations are available
+within the POP model and are described in much more detail
+in the Reference Manual.  The value of {\tt vmix\_choice}
+determines whether a simple constant mixing, a Richardson-number
+dependent mixing or the KPP mixing parameterization is used. 
+Additional mixing parameters for each of these schemes are
+set in individual namelists shown below; only the namelist
+associated with the mixing choice is actually read.
+
+The treatment of convection is also specified in the vertical
+mixing namelist through the {\tt convection\_type} variable.
+Convection can be treated using either convective adjustment
+or by specifying large diffusion coefficients in convectively
+unstable regions.  The KPP vertical mixing parameterization
+{\em must} use the diffusion option. If convective adjustment
+is chosen, the number of passes through the vertical column to
+adjust is determined by the parameter {\tt nconvad}.  The
+treatment of convection by diffusion is governed by the input
+diffusion coefficients {\tt convect\_diff} and {\tt convect\_visc}.
+Note that for constant vertical mixing, you can apply diffusion
+to tracers only by setting {\tt convect\_visc} to zero; this is
+{\em not} true for Richardson number mixing or KPP.
+
+\begin{table}\caption{Vertical mixing namelist}\label{tab:nmlvmix}
+\begin{tabular}{|p{1.25in}|p{0.75in}|p{2.25in}|}
+\hline
+  {\bf \&vertical\_mix\_nml} &
+  {\bf   }                   &
+  {\bf vertical mixing parameterizations} \\
+\hline
+  vmix\_choice            &
+  `const', `kpp',[`rich'] &
+  method of computing vertical diffusion \\
+\hline
+  implicit\_vertical\_mix &
+  [.true.]                &
+  if true, vertical mixing is solved implicitly in time  \\
+\hline
+  aidif          &
+  [1.0]  0.5-1.0 &
+  time-centering parameter for implicit vertical mixing; use
+      of the default value [1.0] is recommended \\
+\hline
+  bottom\_drag &
+  [1.0E-03]    &
+  (dimensionless) coefficient used in quadratic bottom drag formula \\
+\hline
+  convection\_type            &
+  `adjustment', [`diffusion'] &
+  Convection treated by adjustment or by large
+      mixing coefficients \\
+\hline
+  nconvad &
+  2       &
+  number of passes through the convective adjustment algorithm \\
+\hline
+  convect\_diff &
+  [1000.]       &
+  tracer mixing coefficient to use with diffusion option \\
+\hline
+  convect\_visc &
+  [1000.]       &
+  momentum mixing coefficient to use with diffusion option \\
+\hline
+  bottom\_heat\_flx &
+  [0.0]             &
+  constant (geothermal) heat flux ($W/m^2$) to apply to bottom layers \\
+\hline
+  bottom\_heat\_flx\_depth &
+  [100000.]                 &
+  depth (cm) below which to apply bottom heat flux \\
+\hline
+  / &
+    &
+    \\
+\hline
+\end{tabular}
+\end{table}
+
+Some vertical and horizontal mixing parameterizations
+(e.g. KPP and Gent-McWilliams to be discussed later) create large
+vertical mixing coefficients.  In addition, when diffusion is used
+as the method for treating convection, the diffusion coefficients
+are large.  In such cases, implicit vertical mixing must be enabled
+({\tt implicit\_vertical\_mix = .true.}) to avoid severe
+restrictions on the model time step.
+
+If implicit vertical mixing is chosen, the parameter {\tt aidif}
+governs the time-centering of the implicit scheme. The
+{\tt bottom\_drag} coefficient is used to compute bottom drag.
+To simulate geothermal heating at the bottom of the ocean, a
+constant heat flux can be applied below a fixed depth in
+the ocean.  A heat flux of zero turns off this option.
+
+\subsection{Constant coefficients}\label{sec:vmix-const}
+
+Constant vertical mixing simply uses a constant diffusion
+coefficient for mixing everywhere in the domain.
+
+\begin{table}[h]
+\caption{Constant vertical mixing namelist}
+\label{tab:nmlvmix-const}
+\begin{tabular}{|p{1.25in}|p{0.5in}|p{2.5in}|}
+\hline
+  {\bf \&vmix\_const\_nml} &
+  {\bf  }                  &
+  {\bf constant vertical mixing coefficients} \\
+\hline
+  const\_vvc &
+  [0.25]     &
+  vertical viscosity coefficient (momentum mixing) $(cm^2/s)$ \\
+\hline
+  const\_vdc &
+  [0.25]     &
+  vertical diffusivity coefficient (tracer mixing) $(cm^2/s)$ \\
+\hline
+  / &
+    &
+    \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Richardson-number mixing}\label{sec:vmix-rich}
+
+The Pacanowski and Philander \cite{PacanowskiPhilander81}
+mixing scheme was developed primarily for use in tropical
+ocean and, although it is often used elsewhere in the global
+ocean, the user should be aware of the possible need to
+adjust its parameters (\cite{PetersEtal88},\cite{Gent91}).
+
+\begin{table}[h]
+\caption{Richardson-number vertical mixing namelist}
+\label{tab:vmix-rich}
+\begin{tabular}{|p{1.1in}|p{0.5in}|p{2.65in}|}
+\hline
+  {\bf \&vmix\_rich\_nml} &
+  {\bf  }                 &
+  {\bf Richardson-number mixing (Pacanowski-Philander)} \\
+\hline
+  bckgrnd\_vvc  &
+  [1.0]         &
+  background vertical viscosity $(cm^2/s)$ \\
+\hline
+  bckgrnd\_vdc &
+  [0.1]        &
+  background vertical diffusivity $(cm^2/s)$ \\
+\hline
+  rich\_mix &
+  [50.0]    &
+  Coefficient for Richardson-number function \\
+\hline
+  / &
+    &
+    \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{KPP mixing }\label{sec:vmix-kpp}
+
+The k-profile parameterization (KPP) \cite{LargeEtal94}
+is relatively complex and only the parameters that are
+routinely changed are shown here in the namelist.  It is
+possible to change other parameters by editing the KPP
+module, but this should not be necessary and is discouraged.
+As described previously, KPP utilizes enhanced diffusion
+for convection so implicit vertical mixing must be
+enabled and diffusion must be specified as the convection
+method.  Note that the constants {\tt convect\_diff,
+convect\_visc} are used for convection within KPP.
+
+\begin{table}[h]
+\caption{KPP namelist}\label{tab:vmix-kpp}
+\begin{tabular}{|p{1.1in}|p{0.55in}|p{2.6in}|}
+\hline
+  {\bf \&vmix\_kpp\_nml} &
+  {\bf  }                &
+  {\bf KPP mixing}       \\
+\hline
+  bckgrnd\_vdc1 &
+  [0.1]         &
+  base background vertical diffusivity $(cm^2/s)$ \\
+\hline
+  bckgrnd\_vdc2 &
+  [0.0]         &
+  variation in background vertical diffusivity $(cm^2/s)$ \\
+\hline
+  bckgrnd\_vdc\_dpth &
+  [250000.0]         &
+  depth (cm) at which background vertical diffusivity is vdc1 \\
+\hline
+  bckgrnd\_vdc\_linv &
+  [0.000045]         &
+  inverse of the length scale (1/L in $cm^{-1}$) over which
+      diffusivity transition takes place \\
+\hline
+  Prandtl &
+  [10.0]  &
+  (unitless) ratio of background vertical viscosity and diffusivity \\
+\hline
+  rich\_mix &
+  [50.0]    &
+  Coefficient for Richardson-number function \\
+\hline
+  lrich    &
+  [.true.] &
+  use Richardson-number for interior mixing \\
+\hline
+  ldbl\_diff &
+  [.false.]  &
+  add double-diffusive parameterization \\
+\hline
+  lshort\_wave &
+  [.false.]    &
+  use penetrative shortwave forcing \\
+\hline
+  lcheckekmo &
+  [.false.] &
+  check whether boundary layer exceeds Ekman
+     or Monin-Obukhov limit \\
+\hline
+  num\_v\_smooth\_Ri &
+  [1]                &
+  Number of passes to smooth Richardson number \\
+\hline
+  / &
+    &
+    \\
+\hline
+\end{tabular}
+\end{table}
+
+A recent change to the KPP implementation is to allow a
+depth dependent background diffusivity $\kappa$ and
+viscosity $\nu$.  The form of this dependence is
+\begin{eqnarray}
+\kappa & = & \kappa\_1 + \kappa\_2\arctan((z-d)/L) \\
+\nu    & = & ({\rm Pr})\kappa.
+\end{eqnarray}
+where $z$ is the model depth, $d$ is the depth at which
+$\kappa$ reaches $\kappa\_1$, $L$ is a length scale
+over which the transition between $\kappa\_1$ and
+$\kappa\_2$ takes place and Pr is the Prandtl number.
+If a constant diffusivity and viscosity are required,
+simply set vdc2 to zero and vdc1 to the appropriate
+diffusivity.
+
+\section{Horizontal mixing parameterizations}\label{sec:hmix}
+
+Several horizontal mixing options are available for mixing
+tracers and momentum.  With a few exceptions (discussed later),
+the choice of tracer mixing can be made independently of
+the choice of momentum mixing.  As with vertical mixing, the
+main namelist input only selects the choice of mixing options;
+the actual mixing parameters associated with each option
+are read from a namelist specific to that option.
+The {\tt del2} (Laplacian) and {\tt del4} (bi-harmonic)
+mixing options are {\em ad hoc} level-oriented
+parameterizations that mix water-mass properties across
+sloping isopycnic surfaces. The Gent-McWilliams \cite{GM90}
+parameterization remedies this shortcoming by forcing the
+mixing (of tracers only) to take place along isopycnic surfaces.
+The principal drawback of the {\tt gent} option is cost; it
+nearly doubles the running time. For momentum mixing, an
+anisotropic viscosity parameterization ({\tt aniso}) is
+also available which assigns different values of viscosity
+parallel and perpendicular to a given direction,
+where the direction can be specified as described in a later
+section.  Under the {\tt aniso} option, a Smagorinsky
+form of viscosity can be specified.
+
+\begin{table}[h]
+\caption{Horizontal mixing namelist}\label{tab:nmlhmix}
+\begin{tabular}{|p{1.4in}|p{0.8in}|p{2.05in}|}
+\hline
+  {\bf \&hmix\_nml} &
+  {\bf  }           &
+  {\bf horizontal mixing methods} \\
+\hline
+  hmix\_momentum\_choice   &
+  [`del2'], `del4', `anis' &
+  method for horizontal mixing of momentum (Laplacian, biharmonic or
+      anisotropic) \\
+\hline
+  hmix\_tracer\_choice     &
+  [`del2'], `del4', `gent' &
+  method for horizontal mixing of tracers (Laplacian, biharmonic or
+      Gent-McWilliams) \\
+\hline
+  / &
+    &
+    \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Laplacian horizontal mixing.}\label{sec:hmix-del2}
+
+The Laplacian mixing coefficients for tracers {\tt ah} and
+momentum {\tt am} are specified in separate namelists.
+The defaults shown in the namelists are only valid for a
+particular grid size; the user must determine the appropriate
+values for their particular grid size.  The {\tt variable\_hmix}
+option modifies the coefficients {\tt ah} and {\tt am} based on
+functions of the grid cell areas and will reduce the values for smaller
+grid cells ({\tt am} and {\tt ah} thus represent the values at the
+largest grid cells).  Currently, the functional form of this
+scaling can only be changed by editing the modules.  The
+{\tt auto\_hmix} option attempts to compute coefficients
+based on known values for other resolutions.  The result may
+or may not be suitable and the {\tt auto\_hmix} option is
+provided mainly for flexible benchmarking of the code at various
+resolutions.
+
+\begin{table}[h]\caption{Laplacian momemtum mixing namelist}
+\label{tab:nmlhmixdel2u}
+\begin{tabular}{|p{1.2in}|p{0.6in}|p{2.45in}|}
+\hline
+  {\bf \&hmix\_del2u\_nml} &
+  {\bf  }                  &
+  {\bf Laplacian momentum mixing parameters} \\
+\hline
+  lauto\_hmix &
+  [.false.]   &
+  computes mixing coefficient based on resolution \\
+\hline
+  lvariable\_hmix &
+  [.false.]       &
+  scales mixing coeff by grid cell area \\
+\hline
+  am                          &
+  $\sim 2\times 10^7$ &
+  momentum mixing coefficient $(cm^2/s)$\\
+\hline
+  / &
+    &
+    \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{table}[h]\caption{Laplacian tracer mixing namelist}
+\label{tab:nmlhmixdel2t}
+\begin{tabular}{|p{1.2in}|p{0.6in}|p{2.45in}|}
+\hline
+  {\bf \&hmix\_del2t\_nml} &
+  {\bf  }                  &
+  {\bf Laplacian tracer mixing parameters} \\
+\hline
+  lauto\_hmix &
+  [.false.]   &
+  computes mixing coefficient based on resolution \\
+\hline
+  lvariable\_hmix &
+  [.false.]       &
+  scales mixing coeff by grid cell area \\
+\hline
+  ah                          &
+  $\sim2\times 10^7$ &
+  tracer mixing coefficient $(cm^2/s)$ \\
+\hline
+  / &
+    &
+    \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Biharmonic horizontal mixing.}\label{sec:hmix-del4}
+
+The biharmonic mixing coefficients for tracers {\tt ah} and
+momentum {\tt am} are specified in separate namelists.
+The defaults shown in the namelists are only valid for a
+particular grid size; the user must determine the appropriate
+values for their particular grid size.  The {\tt variable\_hmix}
+option modifies the coefficients {\tt ah} and {\tt am} based on
+functions of the grid cell areas and will reduce the values for smaller
+grid cells ({\tt am} and {\tt ah} thus represent the values at the
+largest grid cells).  Currently, the functional form of this
+scaling can only be changed by editing the modules.  The
+{\tt auto\_hmix} option attempts to compute coefficients
+based on known values for other resolutions.  The result may
+or may not be suitable and the {\tt auto\_hmix} option is
+provided mainly for flexible benchmarking of the code at various
+resolutions.
+
+\begin{table}[h]\caption{Biharmonic momentum mixing namelist}
+\label{tab:nmlhmixdel4u}
+\begin{tabular}{|p{1.2in}|p{0.8in}|p{2.25in}|}
+\hline
+  {\bf \&hmix\_del4u\_nml} &
+  {\bf  }                  &
+  {\bf Biharmonic momentum mixing parameters} \\
+\hline
+  lauto\_hmix &
+  [.false.]   &
+  compute mixing coefficient based on resolution \\
+\hline
+  lvariable\_hmix &
+  [.false.]       &
+  scale mixing coeff by grid cell area \\
+\hline
+  am                           &
+  $\sim -0.6\times 10^{20}$ &
+  momentum mixing coeff $(cm^2/s)$ \\
+\hline
+  / &
+    &
+    \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{table}[h]\caption{Biharmonic tracer mixing namelist}
+\label{tab:nmlhmixdel4t}
+\begin{tabular}{|p{1.2in}|p{0.8in}|p{2.25in}|}
+\hline
+  {\bf \&hmix\_del4t\_nml} &
+  {\bf  }                  &
+  {\bf Biharmonic tracer mixing parameters} \\
+\hline
+  lauto\_hmix &
+  [.false.]   &
+  compute mixing coefficient based on resolution \\
+\hline
+  lvariable\_hmix &
+  [.false.]       &
+  scale mixing coeff by grid cell area \\
+\hline
+  ah                        &
+  $\sim -0.2\times 10^{20}$ &
+  tracer mixing coefficient $(cm^2/s)$ \\
+\hline
+  / &
+    &
+    \\
+\hline \end{tabular} \end{table}
+
+
+\subsection{Gent-McWilliams isopycnic tracer diffusion}
+\label{sec:hmix-gent}
+
+Gent-McWilliams ({\tt gent}) mixing operates only on tracer
+species (potential temperature, salinity and other tracers),
+so it should be used in conjunction with a different
+option for {\tt hmix\_momentum\_choice}, typically either
+{\tt del2} or {\tt aniso}.  No bi-harmonic form of {\tt gent}
+has been developed and accepted yet, so it is appropriate to
+use the {\tt del2} values of {\tt ah}.  For vertical
+dependence of the mixing, a profile with the form
+$\kappa_1 + \kappa_2\exp(-z/D)$ can be chosen, where
+$D$ is a depth scale, $z$ is model depth and $\kappa_1$
+and $\kappa_2$ parameters specifiy factors multiplying the
+diffusivity.  Note that this function is multiplied by
+the diffusivity {\tt ah}; for a constant $\kappa$,
+the first parameter should be set to 1 and the second to 0.
+Two diffusivities can be specified for the Redi and bolus
+parts of the GM parameterization; {\tt ah} is used for the
+Redi part, {\tt ah\_bolus} is used for the bolus part.
+Two different maximum slopes can also be specified to
+allow different taperings of the Redi and bolus terms.
+A backgroud horizontal diffusivity {\tt ah\_bkg} can be used
+for bottom cells.  If the {\tt gm\_bolus} flag is set,
+the bolus velocity is explicitly calculated and used as
+part of the velocity field, as opposed to the incorporating
+this process as part of the horizontal mixing.  This last
+option does not currently work with partial bottom cells.
+
+\begin{table}[h]
+\caption{Gent-McWilliams horizontal mixing namelist}
+\label{tab:hmixGM}
+\begin{tabular}{|p{1.2in}|p{0.7in}|p{2.35in}|}
+\hline
+  {\bf \&hmix\_gm\_nml} &
+  {\bf  }               &
+  {\bf Gent-McWilliams isopycnic diffusion} \\
+\hline
+  kappa\_choice            &
+  ['constant'], 'variable' &
+  constant or (horizontally) variable kappa \\
+\hline
+  slope\_control\_choice               &
+  ['notanh'], 'tanh', 'clip', 'gerdes' &
+  control slope using tanh, algebraic approximation to tanh (notanh),
+  clipping or method of Gerdes \\
+\hline
+  kappa\_depth\_1 &
+  [1.0]           &
+  the first term in the function for variation
+      of kappa with depth \\
+\hline
+  kappa\_depth\_2 &
+  [0.0]           &
+  the coefficient of the exponential in the
+      function for variation of kappa with depth \\
+\hline
+  kappa\_depth\_scale &
+  [150000.0]          &
+  the depth scale for the exponential in the
+      function for variation of kappa with depth \\
+\hline
+  ah              &
+  $0.8\times10^7$ &
+  diffusion coeff for Redi part $(cm^2/s)$ \\
+\hline
+  ah\_bolus       &
+  $0.8\times10^7$ &
+  diffusion coeff for bolus part $(cm^2/s)$ \\
+\hline
+  ah\_bkg &
+  0.0     &
+  diffusion coeff for bottom cells $(cm^2/s)$ \\
+\hline
+  slm\_r &
+  0.01   &
+  max slope for Redi terms \\
+\hline
+  slm\_b &
+  0.01   &
+  max slope for bolus terms \\
+\hline
+  gm\_bolus   &
+  [.false.]   &
+  option for explicit calculation of bolus velocity \\
+\hline \end{tabular} \end{table}
+
+
+\subsection{Anisotropic viscosity options}\label{sec:hmix-aniso}
+
+The anisotropic viscosity routine computes the viscous terms in
+the momentum equation as the divergence of a stress tensor, which
+is linearly related to the rate-of-strain tensor with viscous
+coefficents {\tt visc\_para} and {\tt visc\_perp} . These
+coefficients represent energy dissipation in directions parallel
+and perpendicular to a specified alignment direction which breaks
+the isotropy of the dissipation.  There are three options for
+choosing the alignment direction:  1) along the local
+instantaneous flow direction, 2) along the east direction, and
+3) along the coordinate directions (note: the viscous operator
+is invariant under a rotation of the alignment direction by 90
+degrees, so for example, choosing the alignment direction as
+north, south, east or west are all equivalent.).
+A functional approach is used to derived the discrete operator,
+which ensures positive-definite energy dissipation, provided
+{\tt visc\_para} $>$ {\tt visc\_perp}.
+
+\begin{table}[!h]\caption{Anisotropic viscosity namelist}
+\label{tab:nmlhmixaniso}
+\begin{tabular}{|p{1.35in}|p{0.5in}|p{2.4in}|}
+\hline
+  {\bf \&hmix\_aniso\_nml} &
+  {\bf  }                  &
+  {\bf Anisotropic viscosity} \\
+\hline
+  hmix\_alignment\_choice  &
+  ['flow'], 'grid', 'east' &
+  choice for alignment of parallel viscosity component
+      (aligned with local flow, grid lines or east-west direction) \\
+\hline
+  lvariable\_hmix\_aniso &
+  [.false.]              &
+  use spatially-varying viscosity \\
+\hline
+  lsmag\_aniso &
+  [.false.]    &
+  compute viscosities using a Smagorinsky formulation \\
+\hline
+  visc\_para &
+  [0.0]      &
+  parallel viscosity component$(cm^2/s)$ \\
+\hline
+  visc\_perp &
+  [0.0] &
+  perpendicular viscosity component $(cm^2/s)$ \\
+\hline
+  c\_para &
+  [0.0]   &
+  dimensionless parallel Smagorinsky coeff \\
+\hline
+  c\_perp &
+  [0.0]   &
+  dimensionless perpendicular Smagorinsky coeff \\
+\hline
+  u\_para &
+  [0.0]   &
+  velocity (cm/s) for grid Reynolds no. viscous limit in parallel
+      direction \\
+\hline
+  u\_perp &
+  [0.0]   &
+  velocity (cm/s) for grid Reynolds no. viscous limit in perpendicular
+      direction \\
+\hline
+  var\_viscosity\_infile       &
+  'ccsm-internal', 'filename'  &
+  name of file containing variable viscosity factors or internal
+      generation of a ccsm-specific form \\
+\hline
+  var\_viscosity\_infile\_fmt &
+  'bin','nc'                  &
+  viscosity input file format \\
+\hline
+  var\_viscosity\_outfile &
+  'filename'              &
+  output file for writing internally-generated variable viscosity \\
+\hline
+  var\_viscosity\_outfile\_fmt &
+  'bin','nc'   &
+  viscosity output file format \\
+\hline
+  vconst\_1  &
+  1.e7       &
+  CCSM variable viscosity parameter \\
+\hline
+  vconst\_2  &
+  24.5       &
+  CCSM variable viscosity parameter \\
+\hline
+  vconst\_3  &
+  0.2        &
+  CCSM variable viscosity parameter \\
+\hline
+  vconst\_4  &
+  1.e-8      &
+  CCSM variable viscosity parameter \\
+\hline
+  vconst\_5  &
+  3          &
+  CCSM variable viscosity parameter \\
+\hline
+  vconst\_6  &
+  1.e7       &
+  CCSM variable viscosity parameter \\
+\hline
+  smag\_lat  &
+  20.0       &
+  latitude (degrees) for starting variation in Smagorinsky
+      viscosity \\
+\hline
+  smag\_lat\_fact &
+  0.98            &
+  amplitude of Gaussian function for reducing Smagorinsky coefficients \\
+\hline
+  smag\_lat\_gauss &
+  98.0             &
+  width (degrees squared) of Gaussian function for reducing Smagorinsky 
+  coefficients \\
+\hline
+\end{tabular}
+\end{table}
+
+Parallel and perpendicular viscosities can vary in space by 
+setting the flag {\tt lvariable\_hmix\_aniso} to true.  The 
+spatially-varying viscosities in the parallel and perpendicular 
+directions are read from a file ({\tt var\_viscosity\_infile}).
+A specific form of the viscosities useful for CCSM coupled 
+simulations can be internally computed if the input filename is 
+'ccsm-internal'. In such a case, the six viscosity parameters 
+for the form must also be supplied.
+
+The viscosities may optionally ({\tt lsmag\_aniso} = .true.)
+be evaluated with Smagorinsky-like non-linear dependence
+on the deformation rate, which is proportional to the
+norm of the strain tensor.  With the Smagorinsky option,
+the viscosities are evalutated as
+\begin{eqnarray}
+\nu_\parallel  & \rightarrow & \max(c_\parallel|D|ds^2),
+                                    u_\parallel ds) \nonumber \\
+\nu_\perp      & \rightarrow & \max(c_\perp|D|ds^2),
+                                    u_\perp ds)
+\end{eqnarray}
+where $ds = \min(dx,dy)$, $|D|=\sqrt{2}|E|$ is the deformation
+rate, $|E|$ is the norm of the strain tensor,
+$c_\parallel$ and $c_\perp$ are dimensionless
+coefficients of order 1, and $u_\parallel$ and
+$u_\perp$ are velocities associated with the
+grid Reynolds number which determine minimum background
+viscosities in regions where the nonlinear
+viscosities are too small to control grid-point noise.
+Typically $u_\parallel$ and $u_\perp$ are order 1 cm/s.
+Perpendicular Smagorinsky coefficients can be reduced
+using a latitudinally-dependent Gaussian function.  The
+form of this function is governed by the three
+{\tt smag\_lat} parameters.
+
+\newpage
+\section{Physical process options}\label{sec:phys}
+
+\subsection{Equation of state approximation}\label{sec:phys-eos}
+
+Four options for computing the density from salinity and
+potential temperature are available.  The first is an equation
+of state introduced by McDougall, Wright, Jackett and Feistel 
+(MWJF \cite{MWJF01}) which is a faster and more accurate 
+alternative to the UNESCO equation of state. The second is a UNESCO
+equation of state based on potential temperature from
+Jackett and McDougall (JMCD \cite{JMcD95}).  The third is a polynomial
+fit to the full UNESCO equation of state.  The advantage of
+the polynomial form is that it is faster; the disadvantage
+is that the polynomial is only valid over a specified temperature
+and salinity range and exceeding that range will have unpredictable
+results.  This is a particular issue with the KPP vertical
+mixing scheme which often computes buoyancy by displacing
+water near the surface to deep water where the EOS range
+has been restricted.  The last option is a linear eos which
+is supplied for use only in special situations where such an
+approximation is appropriate.
+
+\begin{table}\caption{Equation of state namelist}
+\label{tab:nmlstate}
+\begin{tabular}{|p{1in}|p{0.8in}|p{2.45in}|}
+\hline
+  {\bf \&state\_nml} &
+  {\bf  }            &
+  {\bf equation of state approximation} \\
+\hline
+  state\_choice                   &
+  ['mwjf'], `jmcd', `polynomial', `linear' &
+  McDougall et al. eos OR Jackett and McDougall eos OR 
+  polynomial fit to UNESCO eos OR linear eos \\
+\hline
+  state\_file            &
+  [`internal'], filename &
+  compute polynomial coefficients internally OR
+      read from file filename \\
+\hline
+  state\_range\_opt              &
+  [`ignore'], `check', `enforce' &
+  ignore when T,S outside valid polynomial range
+  OR check and report OR compute eos as if T,S were
+  in valid range (but don't alter T,S) \\
+\hline
+  state\_range\_freq &
+  [1]                &
+  frequency (steps) for checking T,S range \\
+\hline
+  / &
+    &
+    \\
+\hline
+\end{tabular}
+\end{table}
+
+For the polynomial option, there are two methods for determining
+the polynomial coefficients and these are determined by the value
+of {\tt state\_file}.  If this variable is defined as `internal',
+the code will determine the polynomial coefficients internally
+based on the vertical grid.  The internal routines currently use
+hard-wired profiles for the limits of validity of the polynomial
+eos; if the user wishes to change these limits, they can be changed
+in an off-line coefficient generator (in the {\bf tools/eos}
+directory) and the coefficients can be read in from a file.
+The value of {\tt state\_file} will be the name of the coefficient
+input file.  As mentioned above, the polynomial eos has a certain
+temperature and salinity range over which the polynomial is valid. 
+The {\tt state\_range\_opt} variable determines what to do if
+these limits are exceeded during a simulation.  The first option
+is to simply `ignore' when these occur; this is generally not as
+bad as it sounds as the range is valid for nearly all normal cases. 
+The second option is to `check' whether the range is exceeded and
+print a warning if such problems are detected.  The last option,
+`enforce', simply makes sure the polynomial is evaluated within
+the correct range without changing the values of T or S. 
+For example, if the temperature drops below -2C, the code will
+compute a density based on a temperature of -2C without actually
+changing the temperature.  The {\tt state\_range\_freq} can be
+used to perform the checks infrequently to save computational
+time.
+
+\subsection{Baroclinic-mode parameters}\label{sec:clinic}
+
+The {\tt reset\_to\_freezing} option exists to make sure the
+surface temperature does not drop below freezing, a situation
+that can occur with some types of forcing in stand-alone
+mode.  This option should be disabled if
+\hyperref{sea ice formation is enabled.}
+         {sea ice formation is enabled (see Sec.}{).}
+         {sec:ice}
+
+\begin{table}[h]
+\caption{Baroclinic namelist}\label{tab:nmlclinic}
+\begin{tabular}{|p{1.2in}|p{0.5in}|p{2.55in}|}
+\hline
+  {\bf \&baroclinic\_nml} &
+  {\bf  }                 &
+  {\bf parameters used in baroclinic mode calculations} \\
+\hline
+  reset\_to\_freezing &
+  [.true.]            &
+  if .true. and $T_{surf}(i,j) < T_{freezing}$,
+  $T_{surf}(i,j)$ is reset to $T_{freezing}$ \\
+\hline
+  / &
+    &
+    \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Sea-ice emulation parameters}\label{sec:ice}
+
+If {\tt ice\_freq\_opt} is not 'never', the code will create
+ice whenever the ocean temperature drops below freezing at
+levels higher then {\tt kmxice}.  This ice formation
+will be computed at frequencies determined by the {\tt ice\_freq}
+in {\tt ice\_freq\_opt} units.  If the model is being
+run in coupled mode, {\tt ice\_freq\_opt} should be set to
+`coupled' to compute ice formation on coupling timesteps.  In
+coupled mode, the heat and water fluxes associated
+with ice formation are saved and sent to the flux coupler for use
+in the ice model.
+
+\begin{table}[h]
+\caption{Ice formation namelist}\label{tab:nmlice}
+\begin{tabular}{|p{1in}|p{1.25in}|p{2in}|}
+\hline
+  {\bf \&ice\_nml} &
+  {\bf  }          &
+  {\bf parameters used to emulate sea-ice } \\
+\hline
+  ice\_freq\_opt                                   &
+  [`never'], `coupled', `nyear', `nmonth', `nday',
+      `nhour', `nsecond', `nstep'                  &
+  frequency units for computing ice formation   \\
+\hline
+  ice\_freq &
+  1         &
+  frequency in above units for computing ice formation \\
+\hline
+  kmxice    &
+  [1], 1-km &
+  compute ice formation above this vertical level \\
+\hline
+  / &
+    &
+    \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Topographic stress}\label{sec:topostress}
+
+If {\tt ltopostress} is .true., then an implementation of a
+topographic stress parameterization \cite{EbyHolloway94}
+is enabled. In effect, this changes the field acted on by
+the Laplacian operator from (U,V) to (U-U*,V-V*)
+where (U*,V*) are derived based on the topography gradient and a
+specified length scale (note that this {\em only} works
+for Laplacian mixing).  A smoothed topography can be used
+to compute this gradient with the number of smoothing passes
+with a 9-point averaging stencil is governed by
+{\tt nsmooth\_topo}.
+
+\begin{table}\caption{Topographic stress namelist}
+\label{tab:nmltopostress}
+\begin{tabular}{|p{1.1in}|p{0.5in}|p{2.65in}|}
+\hline
+  {\bf \&topostress\_nml} &
+  {\bf  }                 &
+  {\bf Topographic stress parameters} \\
+\hline
+  ltopostress &
+  [.false.]   &
+  true if topographic stress enabled \\
+\hline
+  nsmooth\_topo &
+  [0]           &
+  number of passes to smooth topography \\
+\hline
+  / &
+    &
+    \\
+\hline
+\end{tabular}
+\end{table}
+
+\section{Forcing options (ocean-only mode)}\label{sec:forcing}
+
+Presently, POP includes routines for specifying the surface
+forcing for the velocity, pressure, temperature and salinity
+as well as interior forcing for temperature and salinity. 
+While it is impossible to anticipate every kind of forcing a
+user might want, the routines have been constructed so that it
+should be relatively easy to add new types of forcing by using
+existing types as a template.  In the following sections, these
+abbreviations apply:
+\begin{description}
+\item[ws:]   wind stress; surface forcing for the horizontal
+               velocity field
+\item[shf:]  surface heat flux; surface forcing for the potential
+               temperature equation
+\item[sfwf:] surface fresh water flux; surface forcing for the
+               salinity equation
+\item[ap:]   surface pressure forcing due to variations in the
+               atmospheric pressure
+\item[pt\_interior:] {\em interior} forcing for the potential
+                         temperature equation
+\item[ s\_interior:] {\em interior} forcing for the salinity
+                         equation
+\end{description}
+Sometimes an asterisk (*) will be used as a UNIX-like wildcard.
+
+Each forcing category listed above has a namelist, and a set of
+options must be specified in each namelist.  The options are:
+\begin{itemize}
+\item periodicity
+\item temporal interpolation method and interval
+\item formulation
+\item files containing forcing data
+\item units of forcing variables
+\item updating the forcing values
+\end{itemize}
+Since the options apply to several or all of the forcing
+categories, the options will be explained first, then the
+namelists for the categories will be given.
+
+\subsection{Periodicity of forcing data}\label{sec:forcing-period}
+
+First, the user must decide on the periodicity (or `type')
+of the data that will force the model, for example, an annual
+mean climatology or a re-analysis product available every day. 
+This choice is specified by the namelist variables
+{\tt *\_data\_type} where * denotes each of
+{\tt ws, shf, sfwf,}etc. The options for {\tt data\_type} are:
+\begin{description}
+\item[`none']     no forcing
+\item[`analytic'] a time-invariant analytic form for the forcing
+\item[`annual']   a time-invariant annual mean forcing
+\item[`monthly-equal']  a monthly mean climatology assumed to
+                  consist of 12 values that are separated equally
+                  in time by 365/12 = 30.4166 days. This was
+                  included mostly for backward compatibility.
+\item[`monthly-calendar' ] a monthly mean climatology whose 12
+                  values correspond to the non-leap-year calendar
+\item[`monthly' ] synonymous with  `monthly-calendar'
+\item[`n-hour']   forcing is specified every `n' equally spaced
+                  hours. If this is chosen, the user must also
+                  specify a value for {\tt *\_data\_inc}
+                  which is the increment (in hours) between
+                  consecutive values of the forcing data. For
+                  example, {\tt ws\_data\_inc} =24 denotes daily
+                  wind stress forcing.  The value of {\tt *\_data\_inc}
+                  is disregarded for all of the other
+                  {\tt *\_data\_type} options.
+\end{description}
+
+\subsection{Temporal interpolation of forcing data}
+\label{sec:forcing-interp}
+
+Next, the user must decide how to temporally interpolate the
+forcing data to the appropriate point in time for the model to
+use. If the data type of the forcing is either `none', `analytic',
+or `annual', then the interpolation options are disregarded since
+the forcing is invariant in time.  The type of interpolation is
+specified by the value of {\tt *\_interp\_type} and the options
+are (envelope,please):
+\begin{description}
+\item[`nearest'] use the forcing from the time that is closest to
+                    the current model time
+\item[`linear']  use a linear interpolation to the current model
+                    time using the two nearest forcing times
+\item[`4point']  use a 3rd order polynomial fit using the 4 nearest
+                    forcing times and evaluate it at the current
+                    model time
+\end{description}
+
+How often interpolation is done is specified using the namelist
+variables {\tt *\_interp\_freq} and the options are:
+\begin{description}
+\item[`never']  never perform any temporal interpolation
+\item[`n-hour'] perform temporal interpolation every `n' hours. 
+                If this is chosen, the user must also specify a
+                value for {\tt *\_interp\_inc} which is the
+                increment (in hours) between interpolation
+                calculations.  Note that it is assumed that this
+                value is less than or equal to the data increment.
+\item[`every-timestep']  perform temporal interpolation every timestep
+\end{description}
+
+\subsection{Forcing formulation}\label{sec:forcing-formulation}
+
+For those model forcing terms that typically depend explicitly
+on the model state ({\tt shf, sfwf, pt\_interior, s\_interior})
+there are various ways of formulating the forcing which can be
+specified using the {\tt *\_formulation} namelist variables for
+each case.
+
+\subsubsection{{\tt shf\_formulation} options:}
+\label{sec:forcing-form-shf}
+
+\begin{description}
+\item[ `restoring']  a simple restoring of the top layer
+potential temperature in the model to a data value,
+$dT/dt = (T_{data} - T_{model})/\tau$, where $\tau$
+is a constant time scale. $T_{data}$ represents a space-
+and possibly time-dependent array of values of sea-surface
+temperature (SST) and is the only necessary forcing field. 
+If this option is chosen, then a value for the space- and
+time-{\em in}dependent restoring time-scale variable
+{\tt shf\_restore\_tau} (in days) also needs to be specified.
+
+\item[`Barnier-restoring']  use the ECMWF heat flux analysis
+of \cite{BarnierEtal95} arranged in restoring form. 
+Necessary forcing fields consist of (in order) an effective SST,
+spatially varying restoring time scale, sea ice mask, and net
+downward short-wave radiation.  If this option is
+chosen, then it is also necessary to specify the namelist variable
+{\tt jerlov\_water\_type} to calculate the depth of short-wave
+penetration.
+
+\item['bulk-NCEP']  calculate fluxes based on atmospheric state
+variables and radiation similar to a fully-coupled model (and
+using bulk flux formulations extracted from the NCAR flux coupler). 
+Necessary forcing fields consist of (in order) SST, air temperature,
+air humidity, downward short-wave radiation, cloud fraction, and
+wind speed.  If this option is chosen, then it is also necessary
+to specify the namelist variable {\tt jerlov\_water\_type}
+to calculate the depth of short-wave penetration. This option also
+expects the name of a file used to define different regions of the
+ocean (including marginal seas) specified by the namelist variable
+{\tt region\_mask\_filename} in the
+\hyperref{grid namelist.}
+         {grid namelist (see Sec.}{).}
+         {sec:grid}
+\end{description}
+
+\subsubsection{{\tt sfwf\_formulation} options:}
+\label{sec:forcing-form-sfwf}
+
+\begin{description}
+\item[`restoring']  a simple restoring of the top layer salinity in
+the model to a data value,
+$dS/dt = (S_{data} - S_{model})/\tau$, where $\tau$ is a constant
+time scale. $S_{data}$ represents a space- and possibly
+time-dependent array of values of sea-surface salinity (SSS) and is
+the only necessary forcing field.  If this option is chosen, then a
+value for the space- and time-{\em in}dependent restoring
+time-scale variable {\tt sfwf\_restore\_tau} (in days) also needs
+to be specified.
+
+\item[`bulk-NCEP']  calculate fluxes based on atmospheric state
+variables similar to coupled mode (and using bulk flux formulations
+extracted from the NCAR flux coupler).  Necessary forcing fields
+consist of (in order) SSS and precipitation. If this option is
+chosen, it is necessary to also choose `bulk-NCEP'
+for {\tt shf\_formulation} since the evaporation rate (part of
+the {\tt sfwf-formulation}) must be proportional to the latent
+heat flux (part of the {\tt shf-formulation}).
+\end{description}
+
+\subsubsection{{\tt {pt,s}\_interior\_formulation} options:}
+\label{sec:forcing-form-interior}
+
+\begin{description}
+\item[`restoring']  a simple restoring of the potential
+temperature or salinity below the top level in the model to a
+data value, $d(T,S)/dt = (T,S)_{data} - (T,S)_{model}/\tau$,
+where $\tau$ is a constant time scale.  Values of the potential
+temperature or salinity in the entire volume of the ocean
+($(T,S)_{data}$) are the only necessary forcing fields. 
+If this option is chosen, then a value for the restoring time
+scale namelist variable {\tt {pt,s}\_interior\_restore\_tau}
+(in days) also needs to be specified.  In addition, a value for
+the namelist variable which specifies the maximum level for which
+interior restoring is performed
+({\tt {pt,s}\_interior\_restore\_max\_level}) is necessary. 
+For example, if
+{\tt s\_interior\_restore\_tau=365} and
+{\tt s\_interior\_restore\_max\_level=17},\\
+then salinity will be restored to data with a time scale of
+one year for model levels 2 through 17 everywhere in the ocean.
+\end{description}
+
+Having interior restoring occur everywhere in the ocean as
+described above is more relevant to data-assimilation than to
+prognostic simulations, so there is support for variable interior
+restoring specified by
+
+{\tt {pt,s}\_variable\_interior\_restore = .true.}. 
+
+\noindent If this
+option is selected, the user must supply a file
+
+
+{\tt {pt,s}\_interior\_restore\_filename}
+
+\noindent
+that contains the maximum model depth for which interior restoring
+is performed and the inverse restoring timescale (1/days) for each
+horizontal grid point.  This option can be useful for
+creating graduated `buffer zones' at the boundaries of non-global
+models or to set water mass properties due to outflow from
+unresolved marginal seas. For example, the maximum level for
+restoring can be set to zero everywhere except for north of 75N
+where it takes on a nonzero (though not necessarily constant from
+point to point) value to help create Arctic water masses.  To
+reduce the direct influence of the buffer zone, the inverse
+restoring time-scale can be tapered from zero at 75N to a finite
+value at the northern edge of the grid.  Note that the code expects
+both fields to be double precision, but converts the maximum
+depth-level field to integer internally to the nearest integer.
+
+\subsection{Forcing files}\label{sec:forcing-files}
+
+If any of the options for {\tt *\_data\_type} are chosen to be
+anything besides `none' or `analytic', then the user must supply
+files that contain the appropriate data via the variables
+{\tt *\_filename}.  All data files are currently assumed to be
+double-precision, direct-access files with each record having
+the dimensions of the full horizontal grid.  The data is
+also assumed to be in a specific order that varies depending on
+the forcing formulation to be used.  For `annual' and `n-hour'
+forcing, one occurrence of each forcing field should be in the
+file; for `monthly-calendar' or `monthly-equal'
+forcing, all 12 months of each field should be in the file.
+For example, if the heat flux is `monthly-calendar'
+`Barnier-restoring', and the horizontal grid is 172x128, then
+the forcing file should have data in the following order:
+\begin{enumerate}
+\item effective\_temperature(1:172,1:128,1:12)
+\item time\_scale(1:172,1:128,1:12)
+\item ice\_mask(1:172,1:128,1:12)
+\item net\_shortwave(1:172,1:128,1:12).
+\end{enumerate}
+
+If the forcing is `n-hour' then there needs to be a
+different file for each forcing time in the sequence.  The
+files are assumed to be labeled by the date of the
+{\em middle} of the forcing period; and are of the form
+`{\em root.yyyy.ddd.hh}' where `{\em root}' is specified using
+{\tt *\_filename}, {\em yyyy} is the year (0000-9999),
+{\em ddd} is the day (001-366), and {\em hh} is the hour (01-24).
+Note that the dating convention is relative to year 0000, so
+results may not be what the user expects.
+For example, with wind stress forcing every 2 days
+({\tt ws\_data\_inc} = 48.), even number years will expect files
+dated on even days of the year, and odd days for odd numbered
+years (in the absence of leap years). Thus, the expected sequence
+of files at the end of year 1492 is (with {\tt ws\_filename} = `ws'):
+{\em ... ws.1492.362.00, ws.1492.364.00, ws.1493.001.00, ws.1493.003.00 }...
+because ws.1492.364.00 refers to forcing covering days 363 and 364
+of year 1492, while ws.1493.001.00 refers to forcing covering day
+365 of year 1492 and day 1 of year 1493.  Makes perfect sense,
+doesn't it?  It is possible to change the labeling date from the
+middle of the forcing interval to the beginning by changing a flag
+in the source code.
+
+\subsection{Forcing units}\label{forcing-units}
+
+The code makes assumptions about the units of the fields read in
+from the forcing files as follows:
+
+\begin{tabular}{ll}
+potential temperature:  &  degrees C                          \\
+salinity:               &  g/g                                \\
+wind stress:            &  ${\rm dyne/cm}^2$                  \\
+restoring time scale:   &  days                               \\
+heat flux:              &  $W/m^2$                            \\
+precipitation:          &  $kg/m^2/s$                         \\
+air temperature:        &  degrees K                          \\
+humidity:               &  kg/kg                              \\
+wind speed:             &  m/s                                \\
+cloud fraction:         &  dimensionless, varying from 0 to 1 \\
+ice\_mask:              &  dimensionless, varying from 0 to 1
+\end{tabular}
+
+Any input data that isn't in the correct units can be
+multiplied by a renormalization factor specified by a
+component in the namelist variable vector {\tt *\_data\_renorm}. 
+The components of this vector match up with the order of the
+fields in the forcing file.  For example, salinity
+data sets are often in psu (ppt), while the
+model expects msu(g/g) = (0.001)psu, so the user
+can specify {\tt sfwf\_data\_renorm(1)} = 0.001 in the
+namelist if {\tt sfwf\_formulation =} `restoring' or `bulk-NCEP'.
+
+\subsection{Updating the forcing values}\label{sec:forcing-update}
+
+Forcing values are updated based on the value of {\tt *\_interp\_inc}
+{\em and} whether the value of the forcing term depends explicitly on
+the ocean state, as detailed below.
+
+Wind stress ({\tt ws}) and atmospheric pressure ({\tt ap})
+forcing currently do not depend explicitly on the ocean state so
+the forcing terms in the equations are updated depending on the
+value of {\tt [ws,ap]\_interp\_freq}. For example, with
+{\tt ws\_data\_type} = `monthly-calendar',
+{\tt ws\_interp\_type} = `linear', and \\
+{\tt ws\_interp\_freq} = 24., the code will linearly interpolate
+monthly wind stress values at the beginning of each day and will
+use this interpolated value for one model day.
+
+Potential temperature and salinity forcing typically
+do explicitly depend on the ocean state (for example, restoring
+to climatology depends on the difference between the
+climatological value and the current model value) so the
+forcing terms in the equations are evaluated every timestep.
+However, just like with the wind stress and atmospheric pressure,
+the value of the data used in calculating the forcing
+terms depends on the value of {\tt *\_interp\_freq}.
+For example, with
+{\tt pt\_interior\_data\_type} = `monthly-calendar',
+{\tt pt\_interior\_interp\_type} = `linear',
+{\tt pt\_interior\_interp\_freq} = 48., and
+{\tt pt\_interior\_formulation} = `restoring',
+the code will linearly interpolate monthly potential temperature
+values at the beginning of each 2-day interval and will use this
+interpolated value for two model days when calculating the forcing. 
+Again, the actual forcing term is evaluated every timestep, but the
+value that is being restored to stays constant over the 2 day period.
+
+\subsection{Forcing modules}\label{sec:forcing-modules}
+
+The files
+{\bf forcing\_[ws,shf,sfwf,ap,pt\_interior,s\_interior].F90}
+are the modules that initialize and calculate the forcing terms.
+{\bf forcing.F90} is the driver module and {\bf forcing\_tools.F90}
+contains routines shared by all of the individual forcing modules.
+
+\newpage
+\subsection{Forcing namelists}\label{sec:forcing-namelists}
+
+{\bf Wind stress}
+\begin{table}[h]
+\caption{Windstress forcing namelist}
+\label{tab:nmlforcingws}
+\begin{tabular}{|p{1.25in}|p{1.25in}|p{1.75in}|}
+\hline
+  {\bf \&forcing\_ws\_nml} &
+  {\bf }                   &
+  {\bf surface wind stress forcing} \\
+\hline
+  ws\_data\_type &
+  [`analytic'], `none', `nhour', `annual', `monthly-calendar',
+  `monthly-equal' &
+  type or periodicity of wind stress forcing \\
+\hline
+  ws\_data\_inc &
+  [$10^{20}$]   &
+  increment (in hours) between forcing times if
+  ws\_data\_type=`n-hour' \\
+\hline
+  ws\_interp\_freq                      &
+  [`never'], `n-hour', `every-timestep' &
+  how often to temporally interpolate wind stress data to current
+  time \\
+\hline
+  ws\_interp\_type                &
+  [`nearest'], `linear', `4point' &
+  type of temporal interpolation for wind stress data \\
+\hline
+  ws\_interp\_inc &
+   [$10^{20}$]   &
+  increment (in hours) between interpolation times if
+  ws\_interp\_freq = `n-hour' \\
+\hline
+  ws\_filename   &
+  [`unknown-ws'] &
+  name of file containing wind stress, or root of filenames if
+      ws\_data\_type=`n-hour' \\
+\hline
+  ws\_file\_fmt &
+  [`bin'], `nc' &
+  format of wind stress file \\
+\hline
+  ws\_data\_renorm(20) &
+  [20*1.]              &
+  renormalization constants for the components in the wind
+  stress forcing file \\
+\hline
+  / &
+    &
+    \\
+\hline
+\end{tabular}
+\end{table}
+
+\newpage
+{\bf Surface heat flux}
+\begin{table}[!h]
+\caption{Surface heat flux forcing namelist}
+\label{tab:nmlforcingshf}
+\begin{tabular}{|p{1.25in}|p{1.25in}|p{1.75in}|}
+\hline
+  {\bf \&forcing\_shf\_nml} &
+  {\bf }                    &
+  {\bf surface heat flux (SHF) forcing} \\
+\hline
+  shf\_formulation                                &
+  `bulk-NCEP', `Barnier-restoring', [`restoring'] &
+  surface heat flux formulation                   \\
+\hline
+  shf\_data\_type                                      &
+  [`analytic'], `none', `annual', `n-hour', `monthly-calendar',
+  `monthly-equal'                                      &
+  type or periodicity of surface heat flux forcing     \\
+\hline
+  shf\_data\_inc &
+  [$10^{20}$]   &
+  increment (in hours) between forcing times if
+  shf\_data\_type=`n-hour' \\
+\hline
+  shf\_interp\_freq                     &
+  [`never'], `n-hour', `every-timestep' &
+  how often to temporally interpolate surface heat flux
+  data to current time \\
+\hline
+  shf\_interp\_type               &
+  [`nearest'], `linear', `4point' &
+  type of temporal interpolation for surface heat flux data \\
+\hline
+  shf\_interp\_inc &
+  [$10^{20}$]      &
+  increment (in hours) between interpolation times if
+  shf\_interp\_freq = `n-hour' \\
+\hline
+  shf\_restore\_tau &
+  [$10^{20}$]       &
+  restoring timescale (days) if type restoring \\
+\hline
+  shf\_filename   &
+  [`unknown-shf'] &
+  name of file containing surface heat flux data, or root of
+  filenames if shf\_data\_type=`n-hour' \\
+\hline
+  shf\_file\_fmt  &
+  [`bin'], `nc'   &
+  format (binary or netCDF) of shf file \\
+\hline
+  shf\_data\_renorm(20) &
+  [20*1.]               &
+  renormalization constants for the components in the surface
+      heat flux forcing file \\
+\hline
+  jerlov\_water\_type &
+  [3], 1-5            &
+  Jerlov water type for shortwave penetration \\
+\hline
+  shf\_weak\_restore &
+  [0.0]              &
+  restoring flux for weak restoring in bulk-NCEP \\
+\hline
+  shf\_strong\_restore &
+  [92.64]           &
+  restoring flux for strong restoring in bulk-NCEP \\
+\hline
+  / &
+    &
+    \\
+\hline
+\end{tabular}
+\end{table}
+
+\newpage
+{\bf Surface fresh water flux}
+\begin{table}[!h]
+\caption{Surface fresh water flux forcing namelist}
+\label{tab:nmlforcingsfwf}
+\begin{tabular}{|p{1.25in}|p{1.25in}|p{1.75in}|}
+\hline
+  {\bf \&forcing\_sfwf\_nml} &
+  {\bf }                    &
+  {\bf surface fresh-water flux (SFWF) forcing} \\
+\hline
+  sfwf\_formulation                    &
+  `bulk-NCEP', [`restoring']           &
+  surface fresh water flux formulation \\
+\hline
+  sfwf\_data\_type                                          &
+  [`analytic'], `none', `n-hour, `annual', `monthly-equal',
+  `monthly-calendar'                                        &
+  type or periodicity of surface fresh water flux forcing   \\
+\hline
+  sfwf\_data\_inc &
+  [$10^{20}$]     &
+  increment (hours) between forcing times if
+  sfwf\_data\_type=`n-hour' \\
+\hline
+  sfwf\_interp\_freq                    &
+  [`never'], `n-hour', `every-timestep' &
+  how often to temporally interpolate surface fresh water
+       flux data to current time \\
+\hline
+  sfwf\_interp\_type              &
+  [`nearest'], `linear', `4point' &
+  type of temporal interpolation for surface fresh water flux data \\
+\hline
+  sfwf\_interp\_inc &
+  [$10^{20}$]       &
+  increment (hours) between interpolation times if
+  sfwf\_interp\_freq = `n-hour' \\
+\hline
+  sfwf\_restore\_tau &
+  [$10^{20}$]        &
+  restoring timescale (days) if restoring \\
+\hline
+  sfwf\_filename   &
+  [`unknown-sfwf'] &
+  name of file containing surface fresh water flux data, or
+       root of filenames if sfwf\_data\_type=`n-hour' \\
+\hline
+  sfwf\_file\_fmt &
+  [`bin'], `nc'   &
+  format (binary or netCDF) for sfwf file \\
+\hline
+  sfwf\_data\_renorm(20) &
+  [20*1.]                &
+  renormalization constants for components in sfwf
+      forcing file \\
+\hline
+  ladjust\_precip   &
+  [.false.], .true. &
+  adjust precipitation to balance water budget \\
+\hline
+  lfw\_as\_salt\_flx &
+  [.false.], .true.  &
+  treat fresh water flux as virtual salt flux when
+     using varthick sfc layer \\
+\hline
+  sfwf\_weak\_restore &
+  [0.092]             &
+  restoring flux for weak restoring in bulk-NCEP \\
+\hline
+  sfwf\_strong\_restore &
+  [0.6648]           &
+  restoring flux for strong restoring in bulk-NCEP \\
+\hline
+  / &
+    &
+    \\
+\hline
+\end{tabular}
+\end{table}
+
+\newpage
+{\bf Atmospheric pressure}
+\begin{table}[!h]
+\caption{Atmospheric pressure forcing namelist}
+\label{tab:nmlforcingap}
+\begin{tabular}{|p{1.25in}|p{1.25in}|p{1.75in}|}
+\hline
+  {\bf \&forcing\_ap\_nml} &
+  {\bf }                   &
+  {\bf atmospheric pressure (AP) forcing} \\
+\hline
+  ap\_data\_type &
+  `none', [`analytic'], `annual' , `n-hour', `monthly-calendar',
+  'monthly-equal' &
+  type or periodicity of atmospheric forcing forcing \\
+\hline
+  ap\_data\_inc &
+  [$10^{20}$]   &
+  increment (in hours) between forcing times if
+  ap\_data\_type='n-hour' \\
+\hline
+  ap\_interp\_freq                      &
+  [`never'], `n-hour', `every-timestep' &
+  how often to temporally interpolate atmospheric forcing
+  data to current time \\
+\hline
+  ap\_interp\_type               &
+  [`nearest'],`linear', `4point' &
+  type of temporal interpolation for atmospheric forcing data \\
+\hline
+  ap\_interp\_inc &
+  [$10^{20}$]     &
+  increment (in hours) between interpolation times if
+  ap\_interp\_freq = `n-hour' \\
+\hline
+  ap\_filename   &
+  [`unknown-ap'] &
+  name of file containing atmospheric forcing, or root of filenames if
+      ap\_data\_type=`n-hour' \\
+\hline
+  ap\_file\_fmt &
+  [`bin'], `nc' &
+  format (binary or netCDF) for ap file \\
+\hline
+  ap\_data\_renorm(20) &
+  [20*1.]              &
+  renormalization constants for the components in the
+  atmospheric pressure forcing file \\
+\hline
+  / &
+    &
+    \\
+\hline
+\end{tabular}
+\end{table}
+
+\newpage
+{\bf Interior potential temperature}
+\begin{table}[!h]
+\caption{Interior potential temperature forcing namelist}
+\label{tab:nmlforcingptinterior}
+\begin{tabular}{|p{1.7in}|p{1.5in}|p{1.5in}|}
+\hline
+  {\bf \&forcing\_pt\_interior\_nml} &
+  {\bf }                             &
+  {\bf potential temperature (pt) forcing at interior points} \\
+\hline
+  pt\_interior\_formulation &
+  [`restoring']             &
+  interior pt formulation  \\
+\hline
+  pt\_interior\_data\_type                                          &
+  [`none'], `annual', `monthly-calendar', `monthly-equal', `n-hour' &
+  type or periodicity of interior pt forcing    \\
+\hline
+  pt\_interior\_data\_inc &
+  [$10^{20}$]             &
+  increment (hours) between forcing times if
+  data\_type `n-hour' \\
+\hline
+  pt\_interior\_interp\_freq            &
+  [`never'], `n-hour', `every-timestep' &
+  how often to temporally interpolate interior pt
+  data to current time \\
+\hline
+  pt\_interior\_interp\_type      &
+  [`nearest'], `linear', `4point' &
+  type of temporal interpolation for interior pt data \\
+\hline
+  pt\_interior\_interp\_inc &
+  [$10^{20}$]               &
+  increment (hours) between interpolation times if
+      interp\_freq = `n-hour' \\
+\hline
+  pt\_interior\_restore\_tau &
+  [$10^{20}$]                &
+  restoring timescale (days) if restoring \\
+\hline
+  pt\_interior\_filename   &
+  [`unknown-pt\_interior'] &
+  file containing interior pt
+      data, or root of filenames if
+      data\_type=`n-hour' \\
+\hline
+  pt\_interior\_file\_fmt  &
+  [`bin'], `nc'            &
+  file format (binary or netCDF) \\
+\hline
+  pt\_interior\_data\_renorm(20) &
+  [20*1.]                        &
+  renormalization constants for components in
+      interior pt forcing file \\
+\hline
+  pt\_interior\_restore\_max\_level &
+  [0] 0 – km                        &
+  maximum level for interior pt restoring \\
+\hline
+  pt\_interior\_variable\_restore &
+  [.false.]                       &
+  enable variable interior pt restoring \\
+\hline
+  pt\_interior\_restore\_filename   &
+  [`unknown-pt\_interior\_restore'] &
+  name of file containing variable interior pt
+      restoring data \\
+\hline
+  pt\_interior\_restore\_file\_fmt &
+  [`bin'], `nc'                    &
+  file format (binary or netCDF) \\
+\hline
+  / &
+    &
+    \\
+\hline\end{tabular}\end{table}
+
+\newpage
+{\bf Interior salinity}
+\begin{table}[!h]
+\caption{Interior salinity restoring namelist}
+\label{tab:nmlforcingsinterior}
+\begin{tabular}{|p{1.6in}|p{1.3in}|p{1.5in}|}
+\hline
+  {\bf \&forcing\_s\_interior\_nml} &
+  {\bf }                            &
+  {\bf salinity (S) forcing at interior points} \\
+\hline
+  s\_interior\_formulation &
+  [`restoring']            &
+  forcing formulation      \\
+\hline
+  s\_interior\_data\_type &
+  [`none'], `annual', `monthly-calendar', `monthly-equal', `n-hour' &
+  type or periodicity of interior salinity forcing \\
+\hline
+  s\_interior\_data\_inc &
+  [$10^{20}$]            &
+  increment (hours) between forcing times if
+  data\_type `n-hour' \\
+\hline
+  s\_interior\_interp\_freq             &
+  [`never'], `n-hour', `every-timestep' &
+  how often to temporally interpolate interior S
+  data to current time \\
+\hline
+  s\_interior\_interp\_type        &
+  [`nearest'], `linear',  `4point' &
+  type of temporal interpolation for interior S data \\
+\hline
+  s\_interior\_interp\_inc &
+  [$10^{20}$]              &
+  increment (in hours) between interpolation times if
+      interp\_freq `n-hour' \\
+\hline
+  s\_interior\_restore\_tau &
+  [$10^{20}$]               &
+  restoring timescale (days) if restoring \\
+\hline
+  s\_interior\_filename   &
+  [`unknown-s\_interior'] &
+  name of file containing interior S data, or root of
+      filenames if data\_type `n-hour' \\
+\hline
+  s\_interior\_file\_fmt &
+  [`bin'], `nc'          &
+  format (binary or netCDF) of s interior file \\
+\hline
+  s\_interior\_data\_renorm(20) &
+  [20*1.]                       &
+  renormalization constants for components in
+      interior S forcing file \\
+\hline
+  s\_interior\_restore\_max\_level &
+  [0] 0 – km                       &
+  maximum level for interior S restoring  \\
+\hline
+  s\_interior\_variable\_restore &
+  [.false.]                      &
+  enable variable interior S restoring \\
+\hline
+  s\_interior\_restore\_filename   &
+  [`unknown-s\_interior\_restore'] &
+  name of file containing variable interior S restoring data \\
+\hline
+  s\_interior\_restore\_file\_fmt &
+  [`bin'], `nc'                   &
+  format (binary or netCDF) of variable interior s file \\
+\hline
+  / &
+    &
+    \\
+\hline
+\end{tabular}
+\end{table}
+
+\section{Running POP in coupled mode}\label{sec:coupled}
+
+POP is the ocean component of the Community Climate System
+Model (CCSM2), a community coupled climate model developed
+by NCAR and many other collaborators.  Other coupled
+models are adopting POP and CICE for their ocean and sea
+ice components, including groups at Colorado State
+University and UCLA.  Only the interface to the CCSM2
+model will be outlined here and supported in the model.
+
+In the CCSM2 model, POP runs as a separate executable
+and communicates with other models using messages
+passed to and from a `flux coupler'.  The routines
+for passing these messages are included in the
+forcing\_coupled module.  In addition, this module
+takes care of all the manipulations (unit conversions,
+rotations of vector fields) necessary for the form
+expected by the flux coupler.  POP typically sends
+current state data to the coupler and receives the
+usual surface forcing fluxes (windstress, heat flux,
+water flux, solar short-wave), implying that the
+fluxes were actually computed using ocean state
+variables from the previous coupling interval.  The flux
+coupler performs all the computations and necessary
+averaging and interpolation of these quantities.
+
+To run POP in coupled mode, the coupling interface must be
+activated at compile-time by specifying {\tt -Dcoupled}
+in the
+\hyperref{{\tt makefile}.}
+         {{\tt makefile} (see Sec.}{).}
+         {sec:make}
+Then the following namelist becomes available.  Basically,
+the only quantities under run-time control are the frequency
+at which the model communicates with the coupler.
+
+\begin{table}[h]
+\caption{Coupled namelist}\label{tab:nmlcoupled}
+\begin{tabular}{|p{1in}|p{1.1in}|p{2.15in}|}
+\hline
+  {\bf \&coupled\_nml} &
+  {\bf }               &
+  {\bf activate interface to coupled model} \\
+\hline
+  coupled\_freq\_opt                                      &
+  [`never'], `nyear', `nmonth', `nday', `nhour', `nsecond' &
+  unit of time for coupled\_freq \\
+\hline
+  coupled\_freq  &
+  [1]            &
+  frequency in above units for bi-directional communication
+  with 'flux coupler' \\
+\hline
+  / &
+    &
+    \\
+\hline\end{tabular}\end{table}
+
+\subsection{Real-time X-window display}\label{sec:xdisplay}
+
+A rudimentary X-display can be used to monitor the model's
+behavior as it is running, which can sometimes be useful in
+locating when and where (on the model grid) things start to
+go bad.  This capability relies on an unsupported,
+not-necessarily-portable interface to an X library called
+{\bf fix}.  There are no guarantees that this will work
+on your system or that this will be supported in future
+releases.  Currently, the fields to be viewed in the
+x-window are hard-wired and can only be changed by
+changing the source code.  The default version of this
+module in the source directory is only a stub version
+with no executable code.  If the user wishes to try this
+option, the actual code resides in the {\bf input\_templates}
+directory in a file called {\bf xdisplay.F90.unsupported}
+and this file must be copied into the source directory,
+overwriting the default xdisplay module.
+
+\begin{table}\caption{Xdisplay namelist}\label{tab:nmlxdisplay}
+\begin{tabular}{|p{1in}|p{0.5in}|p{2.75in}|}
+\hline
+  {\bf \&xdisplay\_nml} &
+  {\bf }                &
+  {\bf real-time display via x-window} \\
+\hline
+  lxdisplay &
+  [.false.] &
+  if .true., enable x-display \\
+\hline
+  nstep\_xdisplay &
+  [1]             &
+  frequency (in steps) for updating x-display \\
+\hline
+  / &
+    &
+    \\
+\hline
+\end{tabular}
+\end{table}
+

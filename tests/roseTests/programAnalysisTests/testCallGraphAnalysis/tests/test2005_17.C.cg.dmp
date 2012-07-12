@@ -1,3 +1,2 @@
-main -> destroy < enum values > 
-values::~values() ->
 destroy < enum values >  ->
+main -> destroy < enum values > 

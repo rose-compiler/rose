@@ -44,6 +44,7 @@ template inline void A<int>::f(int x);
 
 // Template instantiation directives (for a function)
 // template inline void A<int>::g<int>(int y,int u);
+// DQ (6/4/2011): This unparses as: "template void g < int > (int y,int u);"
 template inline void A<int>::g<int>(int y,int u);
 
 int foo()

@@ -1,8 +1,10 @@
 #!/bin/bash
 
- runtimesystem=""
- stdlib=""
+ upc="upc"
+
+ extraobjs=""
  rtedlib=""
+ upcflags="-O0 -g -dwarf-2-upc -DWITH_UPC=1 -Wall -Wextra"
 
  for var in "$@"
  do
@@ -11,8 +13,7 @@
       remove=$parameter;
     elif [ "x$parameter" = "x-pthread" ] ; then
      remove=$parameter;
-    elif [ "x$parameter" = "xCppRuntimeSystem/libCppRuntimeSystem.la" ]; then
-#     newOption=$newOption" CppRuntimeSystem/.libs/libCppRuntimeSystem.so";
+    elif [ "x$parameter" = "xCppRuntimeSystem/libUpcRuntimeSystem.la" ]; then
      remove=$parameter
     elif [ "x$parameter" = "x-Winvalid-pch" ]; then
      remove=$parameter;
@@ -20,42 +21,31 @@
      remove=$parameter;
     elif [ "x$parameter" = "x-rose:UPC" ]; then
      remove=$parameter;
-    elif [[ $parameter == *RuntimeSystem.cpp ]]; then
-     runtimesystem=$parameter
+    elif [[ $parameter == *.o ]]; then
+      extraobjs="$extraobjs $parameter"
     elif [[ $parameter == *.upc ]]; then
       filename=`basename $parameter .upc`
       inpfiles="$inpfiles $parameter"
       objfiles="$objfiles $filename.o"
     elif [[ $parameter == *.bin ]]; then
-     executable=$parameter;
+      executable="-o $parameter"
     else
       newOption=$newOption" "$parameter;
     fi
 #    echo "$remove";
 # --------- $parameter";
  done
-#echo "REMOVED :: $remove"
-#echo "KEPT :: $newOption"
-#echo $newOption;
 
-# compiling with C++ and RTED runtime?
-if [ "$runtimesystem" != "" ]; then
-  echo "g++ -c $runtimesystem"
-  g++ -c $runtimesystem
-
-  # find the libstdc++ that the C++ compiler would use
-  stdlibfile=`g++ --print-file-name=libstdc++.so`
-  stdlibdir=`dirname $stdlibfile`
-
-  stdlib="-L$stdlibdir -lstdc++"
-  rtedlib="RuntimeSystem.o -L./CppRuntimeSystem/.libs/ -lCppRuntimeSystem"
+# compiling with RTED runtime?
+if [ "$extraobjs" != "" ]; then
+  rtedlib="-L./CppRuntimeSystem/.libs/ -lUpcRuntimeSystem"
+  objfiles="$objfiles $extraobjs"
 fi
 
-echo "upc $newOption -c $inpfiles"
-upc $newOption -c $inpfiles
+CMD="$upc $upcflags $newOption -c $inpfiles"
+echo "$CMD"
+$CMD
 
-echo "upc -o $executable $objfiles $rtedlib $stdlib"
-exec upc -o $executable $objfiles $rtedlib $stdlib
-
-echo "$objfiles"
-rm $objfiles
+CMD="upc++link -dwarf-2-upc $executable $objfiles $rtedlib"
+echo "$CMD"
+$CMD

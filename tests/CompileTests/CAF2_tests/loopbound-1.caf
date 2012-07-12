@@ -1,0 +1,30 @@
+program loopboundtest
+
+   integer :: npe, mypid, i, sum
+   integer(8), allocatable, dimension(:) :: buffer[*]
+
+   logical :: success
+
+   npe = team_size()
+   mypid = team_rank()
+
+   allocate(buffer(0:npe-1)[])
+   buffer(0) = npe
+   sum = 0
+
+   do i = buffer(0)/npe, buffer(0), buffer(0)/npe
+      sum = sum + buffer(0)
+   end do
+
+
+   success = (sum .eq. npe * npe)
+
+   if (.not. success) then
+      print *, "test failed for image ", mypid, "output: ", outbuf
+   end if
+
+   if (success .and. 0 .eq. mypid) then
+      write(*, '(A)') "test succeeded"
+   endif
+   
+end program loopboundtest

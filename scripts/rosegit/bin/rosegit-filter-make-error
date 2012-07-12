@@ -34,7 +34,7 @@ while (@ARGV) {
 
 while (<STDIN>) {
   if ($show_progress) {
-    if (/^  [A-Z]\w+\s+\S+/) {
+    if (/^  [A-Z][A-Z_0-9]+\s+\S+/) {
       print $_; # print lines like "COMPILE rose_paths.lo" and "LINK librose.la"
     } elsif (/warning:/) {
       print $_; # compiler warnings

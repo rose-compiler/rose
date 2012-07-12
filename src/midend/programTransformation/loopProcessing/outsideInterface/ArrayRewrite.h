@@ -19,8 +19,8 @@ class CreateTmpArray
 class RewriteConstructArrayAccess 
    : public CreateTmpArray, public MapObject<SymbolicVal, SymbolicVal>
 {
-  // rewrite reads of construct_array ops to remove implicit array temporaries 
-  // rewrite reads of unknown array ops by creating explicit temporaries
+  // rewrite reads of construct_array ops to remove implicit array temperaries 
+  // rewrite reads of unknown array ops by creating explicit temperaries
   ArrayInterface& anal;
   CPPAstInterface& fa;
 public:

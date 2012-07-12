@@ -2,7 +2,7 @@
 
 // #include "colorTraversal.h"
 
-#define MAX_NUMBER_OF_IR_NODES_TO_GRAPH 2000
+#define MAX_NUMBER_OF_IR_NODES_TO_GRAPH 8000
 #define DISPLAY_INTERNAL_DATA 0
 
 using namespace std;
@@ -59,7 +59,13 @@ main ( int argc, char** argv )
   // ****************************************************************************
   // **************************      Build the AST    ***************************
   // ****************************************************************************
+#if 1
+  // DQ (9/24/2011): Both mergeTest_90.C and mergeTest_124.C fail using the default (original expression trees).
      SgProject* project = frontend (argc, argv);
+#else
+  // DQ (9/24/2011): The merge passes both mergeTest_90.C and mergeTest_124.C if we use the constant folding option.
+     SgProject* project = frontend (argc, argv,true);
+#endif
      ROSE_ASSERT(project != NULL);
 
 #if 0
@@ -87,7 +93,7 @@ main ( int argc, char** argv )
 
 #if 0
   // DQ (6/14/2007): Added support for simpler function for generation of graph of whole AST.
-     const int MAX_NUMBER_OF_IR_NODES = 1000;
+     const int MAX_NUMBER_OF_IR_NODES = 10000;
      generateAstGraph( project, MAX_NUMBER_OF_IR_NODES, "_beforeMerge" );
 #endif
 

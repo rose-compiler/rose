@@ -1,0 +1,87 @@
+<html>
+
+<head>
+<title>POP Known Bugs</title>
+</head>
+
+<body vlink="#990000" background="../../../images/bkgd.gif">
+
+<a name="bugs_top">
+<h2>Bugs in Current Release of POP</h2>
+</a>
+
+<p>The following are bugs that have been reported and not yet fixed
+in the current release of POP.  If you have encountered a bug
+which does not appear on this list, please send e-mail to
+<a href="mailto:climate@acl.lanl.gov">climate@acl.lanl.gov</a>
+with a detailed description of the bug together with the machine
+and model configuration you were running.
+
+<ul>
+<li><a href="#bug1"> restart failure at small subgrids
+</a></li>
+<li><a href="#bug9"> barotropic failure with zero forcing
+</a></li>
+</ul>
+
+<hr>
+
+<h3>Details of each bug</h3>
+
+<hr>
+
+<p>
+<a name="bug1">
+<h3>Title: restart failure at small subgrids
+</h3>
+</a>
+<ul>
+<li>Submitted: 1999/11/12</li>
+<li>Description: restart I/O causes the code to fail with KE > 100 
+    when running problems with small subgrids (buffers being 
+    overwritten? WORKAROUND: the problem disappears with 
+    num_iotasks=1</li>.  Use of the PSF library will also
+    eliminate this problem and is recommended on machines where
+    this library is available.
+</ul>
+
+<a href="#bugs_top">Return to top</a>
+<a href="current_release.htm">Return to Current Release</a>
+
+<hr>
+
+<p>
+<a name="bug9">
+<h3>Title: barotropic failure with zero forcing
+</h3>
+</a>
+<ul>
+<li>Submitted: 1999/03/11</li>
+<li>Description: The barotropic solver fails with zero forcing.  This 
+    situation is not typically encountered, but creates lots of 
+    problems when it is.</li>
+</ul>
+
+<a href="#bugs_top">Return to top</a>
+<a href="current_release.htm">Return to Current Release</a>
+
+<hr>
+
+<p>
+<a name="bug10">
+<h3>Title: TOOLS: paths in pdiff
+</h3>
+</a>
+<ul>
+<li>Submitted: 1999/11/17</li>
+<li>Description: There is a problem in the pdiff comparison tool
+    related to path specification</li>
+</ul>
+
+<a href="#bugs_top">Return to top</a>
+<a href="current_release.htm">Return to Current Release</a>
+
+<hr>
+
+</body>
+</html>

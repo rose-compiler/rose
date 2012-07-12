@@ -114,6 +114,16 @@ static std::string toStringForRTI(const std::map<K, V>& x) {
   return ss.str();
 }
 
+// negara1 (06/27/2011): Added support for the map of including files (field p_preprocessorDirectivesAndCommentsList)
+template <typename K>
+static std::string toStringForRTI(const std::map<K, std::set<PreprocessingInfo*> >& x) {
+  std::ostringstream ss;
+  ss << "[";
+  for (typename std::map<K, std::set<PreprocessingInfo*> >::const_iterator i = x.begin(); i != x.end(); ++i) {if (i != x.begin()) ss << ", "; ss << i->first << "->" << toStringForRTI(i->second);}
+  ss << "]";
+  return ss.str();
+}
+
 // DQ (4/30/2009): Added new support for std::multimap.
 template <typename K, typename V>
 static std::string toStringForRTI(const std::multimap<K, V>& x) {

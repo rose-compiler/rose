@@ -1,13 +1,12 @@
-
 #include "SymbolicExpr.h"
 #include <iostream>
 #include <sstream>
 #include <stdio.h>
 #include "CommandOptions.h"
-// Add with another term
+
 bool SymbolicTerm::CombineWith( const SymbolicTerm &that)
-         { if (v == that.v) { 
-               if (time2 == that.time2) // Add numerators for terms with the same denominator
+         { if (v == that.v) {
+               if (time2 == that.time2)
                    time1 += that.time1;
                else 
                    assert(false); // QY: a case not yet handled
@@ -19,13 +18,8 @@ bool SymbolicTerm::CombineWith( const SymbolicTerm &that)
 bool SymbolicTerm::operator == (const SymbolicTerm& that) const
      { return time1 == that.time1 && time2 == that.time2 && v == that.v; }
 bool SymbolicTerm::operator == (const SymbolicVal &that) const
-    { 
-      //debug here
-      //std::cout<<"SymbolicExpr.C: debug operator == "<<v.toString()<<std::endl;
-      return time1 == 1 && time2 == 1 && v == that; }
+    { return time1 == 1 && time2 == 1 && v == that; }
 
-//! Liao 2/19/2009 , access function to v directly. Used for debugging mostly       
-  SymbolicVal SymbolicTerm::GetV() { return v; }
 class SymbolicTermMerge : public LatticeElemMerge<SymbolicTerm>
 {
   OPApplicator& op;
@@ -150,6 +144,7 @@ void SymbolicOperands :: AddOpd( const SymbolicTerm& v, OPApplicator *op)
 
 SymbolicVal GetExprVal( SymbolicExpr *r)
    {
+     assert ( r!= NULL);
       int num = r->NumOfOpds();
       if (num == 1) {
          SymbolicVal result = r->Term2Val(r->FirstOpd());
@@ -375,34 +370,32 @@ class OPVisitor  : public SymbolicVisitor
 {
   SymbolicVal v1, v2, result;
   OPApplicator& op;
-
-  void Default()
-  { result = TermVisitor(v1,op).ApplyOP(v2); }
-
+   void Default()
+   { result = TermVisitor(v1,op).ApplyOP(v2); }
   void VisitConst( const SymbolicConst &v)
-  { 
-    int valu, vald;
-    if (v.GetIntVal(valu, vald)) {
-      IntVisitor intOp(v1,valu, vald,op);
-      result = intOp.ApplyOP(v2); 
-    }
-    else
-      Default();
-  }
+      { 
+          int valu, vald;
+          if (v.GetIntVal(valu, vald)) {
+            IntVisitor intOp(v1,valu, vald,op);
+            result = intOp.ApplyOP(v2); 
+          }
+          else
+             Default();
+      }
 
   void VisitExpr( const  SymbolicExpr& v)
-  { if (op.GetOpType() == v.GetOpType())
-    result = CombineVisitor(v1, v,op).ApplyOP(v2);
-    else if (op.GetOpType() < v.GetOpType()) 
-      result = DistributeVisitor(v1,v,op).ApplyOP(v2);
-    else
-      Default();
-  }
-  public:
+      { if (op.GetOpType() == v.GetOpType())
+           result = CombineVisitor(v1, v,op).ApplyOP(v2);
+        else if (op.GetOpType() < v.GetOpType()) 
+           result = DistributeVisitor(v1,v,op).ApplyOP(v2);
+        else
+           Default();
+      }
+ public:
   OPVisitor( OPApplicator& _op) : op(_op) {}
   SymbolicVal operator()( const SymbolicVal &_v1, const SymbolicVal &_v2)
-  { v2 = _v2; v1 = _v1;  result = SymbolicVal();
-    v1.Visit(this); return result; }
+   { v2 = _v2; v1 = _v1;  result = SymbolicVal();
+     v1.Visit(this); return result; }
 };
 
 

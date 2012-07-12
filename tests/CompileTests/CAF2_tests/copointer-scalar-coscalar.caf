@@ -1,0 +1,10 @@
+! copointer to scalar and coscalar
+program copointer_scalar_coscalar
+ integer, copointer:: p1
+ integer, copointer :: cp1 [*]
+ integer, copointer, codimension[*] :: cp0
+ k = cp0[][9]
+ p1[] = 5
+ cp1[][2] = 6
+end program
+

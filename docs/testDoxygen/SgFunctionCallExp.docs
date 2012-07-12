@@ -25,28 +25,6 @@ directly (the function call argument list can be empty).
 // Documentation for class SgFunctionCallExp data members
 /////////////////////////////////////////////////////////////////////////
 
-/*! \var SgFunctionCallExp::p_function
-\brief This pointer points to the expression being assembled with argments for be a
-    function call.
-
-    Note that this is not always a SgFunctionRefExp or a SgMemberFunctionRefExp
-and can be quite complex where pointers are referenced and function calls assembled using
-pointers to functions and member functions.
-
-\internal The list of acceptable types of IR nodes here is listed and tested in the AST
-    consistency tests (see src/midend/astDiagnostics/AstConsistencyTests.C for details).
-
-*/
-
-/*! \var SgFunctionCallExp::p_args
-\brief This is a pointer to a SgExprListExp (list of function arguments)
-
-*/
-
-/*! \var SgFunctionCallExp::p_expression_type
-\brief This is the type of the return value of the function.
-
-*/
 
 //////////////////////////////////////////////////////////////////////////
 // Documentation for class SgFunctionCallExp member functions (methods)

@@ -1,21 +1,21 @@
 A::A ->
 A::A ->
-B::B ->
-B::B ->
-C::C ->
-C::C ->
-D::D ->
-D::D ->
-E::E ->
-E::E ->
-main -> A::operator bool B::operator bool C::operator bool D::operator bool E::operator bool
-A::~A ->
-B::~B ->
-C::~C ->
-D::~D ->
-E::~E ->
 A::operator bool ->
+A::~A ->
+B::B ->
+B::B ->
 B::operator bool ->
+B::~B ->
+C::C ->
+C::C ->
 C::operator bool ->
+C::~C ->
+D::D ->
+D::D ->
 D::operator bool ->
+D::~D ->
+E::E ->
+E::E ->
 E::operator bool ->
+E::~E ->
+main -> A::A A::operator bool B::B B::operator bool C::C C::operator bool D::D D::operator bool E::E E::operator bool

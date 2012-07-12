@@ -56,18 +56,20 @@ assemble_all(SgAsmInterpretation *interp)
                 }
                 assembler->set_debug(false);
             }
-            return;
+            //return;
         }
 
+#if 0   /* Don't worry about writing the instruction back out to the section. [RPM 2011-08-23] */
         /* We don't handle the case where an instruction grows because that could cause us to require that the section
          * containing the instruction grows, which opens a whole can of worms. */
-        ROSE_ASSERT(machine_code.size() <= insn->get_raw_bytes().size());
+        ROSE_ASSERT(machine_code.size() <= insn->get_size());
         
         /* We're using the same memory map as what was used when we loaded the binary and disassembled it. Therefore, the
          * machine code that we're writing back needs to fall within those same areas of the virtual address space: we cannot
          * write past the end of mapped memory, nor can we write to the space (if any) between mapped memory chunks. */
         size_t nwritten = interp->get_map()->write(&(machine_code[0]), new_va, machine_code.size(), MemoryMap::MM_PROT_NONE);
         ROSE_ASSERT(nwritten==machine_code.size());
+#endif
     }
 
     std::cout <<"Assembled " <<nassembled <<" instruction" <<(1==nassembled?"":"s") <<"\n";
@@ -98,7 +100,7 @@ main(int argc, char *argv[])
         T1(rose_addr_t a): removal_addr(a) {}
         void visit(SgNode *node) {
             SgAsmBlock *bb = isSgAsmBlock(node);
-            SgAsmFunctionDeclaration *func = bb ? isSgAsmFunctionDeclaration(bb->get_parent()) : NULL;
+            SgAsmFunction *func = bb ? SageInterface::getEnclosingNode<SgAsmFunction>(bb) : NULL;
             if (func && bb->get_address()==removal_addr) {
                 SgAsmStatementPtrList::iterator found = std::find(func->get_statementList().begin(), 
                                                                   func->get_statementList().end(),
@@ -115,7 +117,13 @@ main(int argc, char *argv[])
     /* Unparse the file using assembled data from above */
     std::vector<SgAsmInterpretation*> interps = SageInterface::querySubTree<SgAsmInterpretation>(project, V_SgAsmInterpretation);
     ROSE_ASSERT(!interps.empty());
-    for (size_t i=0; i<interps.size(); ++i)
+    for (size_t i=0; i<interps.size(); ++i) {
+        std::cout <<"\n\n\n==================== Interpretation Listing ====================\n\n";
+        interps[i]->get_map()->dump(stdout);
+        AsmUnparser unparser;
+        unparser.set_organization(AsmUnparser::ORGANIZED_BY_ADDRESS);
+        unparser.unparse(std::cout, interps[i]);
         assemble_all(interps[i]);
+    }
     backend(project);
 }

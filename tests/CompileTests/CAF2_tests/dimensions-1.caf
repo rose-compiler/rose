@@ -1,0 +1,49 @@
+! Strided read and write between 5D coarray and 3D, 4D coarrays
+program test
+
+  integer, allocatable :: a(:,:,:,:,:)[*]
+  integer :: b(1:3,1:2,1:3,1:2)
+  integer, allocatable :: c(:,:,:)[*]
+  integer :: partner, rank, isize
+
+  allocate(a(1:2,1:3,1:2,1:3,1:2)[])
+  allocate(c(1:2,1:3,1:2)[])
+
+  rank = team_rank()
+  isize = team_size()
+  partner = mod(rank + 1, isize)
+
+  a(:,:,:,:,:) = rank
+  b(:,:,:,:)   = rank
+  c(:,:,:)     = rank
+
+  if (rank .eq. 0) then
+    ! p0 read from p1
+    b(:,:,:,:) = a(1,:,:,:,:)[partner]
+  else
+    ! p1 write to p0
+    c(:,:,:)[partner] = a(1,2,:,:,:)
+  end if
+
+  call team_barrier()
+
+  if (rank .eq. 0) then
+    error = 1
+    if (sum(b(:,:,:,:)) .eq. 36) then
+      if (sum(c(:,:,:)) .eq. 12) then
+        error = 0
+      end if
+    end if
+    
+    if (error .eq. 0) then
+      write(*, '(A)') "dimensions-1 PASS"
+    else
+      write(*, '(A)') "dimensions-1 FAILED"
+      print *, "b="
+      print *, b(:,:,:,:)
+      print *, "c="
+      print *, c(:,:,:)
+    end if
+  end if
+
+end program 

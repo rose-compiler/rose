@@ -1,0 +1,16 @@
+netcdf ref_tst_nans {
+dimensions:
+	dim = 3 ;
+variables:
+	float fvar(dim) ;
+		fvar:_FillValue = 9.96921e+36f ;
+		fvar:att = -9.96921e+36f, 9.96921e+36f, 9.96921e+36f ;
+	double dvar(dim) ;
+		dvar:_FillValue = 9.96920996838687e+36 ;
+		dvar:att = -9.96920996838687e+36, 9.96920996838687e+36, 9.96920996838687e+36 ;
+data:
+
+ fvar = -9.96921e+36, _, _ ;
+
+ dvar = -9.96920996838687e+36, _, _ ;
+}

@@ -7,7 +7,7 @@
 #include "variableVersionTable.h"
 #include "handlerTypes.h"
 #include "utilities/types.h"
-#include "ssa/staticSingleAssignment.h"
+#include <staticSingleAssignment.h>
 
 
 class VariableRenaming;
@@ -58,17 +58,12 @@ class EventProcessor
 private:
 
 	//! Given an expression, return all evaluation results using all expression handlers.
-	std::vector<EvaluationResult> evaluateExpression(SgExpression* exp, const VariableVersionTable& var_table, bool is_value_used);
+	EvaluationResult evaluateExpression(SgExpression* exp, const VariableVersionTable& var_table, bool is_value_used);
 
 	//! Given a statement, return all evaluation results using all statement handlers.
-	std::vector<EvaluationResult> evaluateStatement(SgStatement* stmt, const VariableVersionTable& var_table);
-
-	//! Given a set of results, if two results of them have the same variable table, we remove
-	//! the one which has the higher cost.
-	std::vector<EvaluationResult> filterResults(const std::vector<EvaluationResult>& results);
+	EvaluationResult evaluateStatement(SgStatement* stmt, const VariableVersionTable& var_table);
 
 	//! The following methods are for expression and statement handlers for store and restore.
-	SgVarRefExp* getStackVar(SgType* type);
 	SgExpression* pushVal(SgExpression* exp, SgType* type);
 
 	//! Generate an expression which pops the top of a stack and returns the value
@@ -78,7 +73,10 @@ private:
 	//! This is used for fossil collection
 	SgExpression* popVal_front(SgType* type);
 
+	SgExpression* cloneValueExp(SgExpression* value, SgType* type);
 
+	SgExpression* assignPointerExp(SgExpression* lhs, SgExpression* rhs, SgType* lhsType, SgType* rhsType);
+	
 public:
 
 	EventProcessor(IVariableFilter* varFilter = NULL);
@@ -106,9 +104,6 @@ public:
 	//! Check if every state variable in the given variable version table has the initial version
 	//! which should be 1.
 	bool checkForInitialVersions(const VariableVersionTable& var_table);
-
-	//! Get all declarations of stacks which store values of different types.
-	std::vector<SgVariableDeclaration*> getAllStackDeclarations() const;
 
 	void setVariableRenaming(VariableRenaming* var_renaming)
 	{ var_renaming_ = var_renaming; }

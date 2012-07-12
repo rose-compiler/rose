@@ -1,2 +1,2 @@
 A::A ->
-main ->
+main -> A::A

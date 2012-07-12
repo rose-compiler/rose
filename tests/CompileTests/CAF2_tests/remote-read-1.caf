@@ -1,0 +1,30 @@
+program  testread
+   integer,allocatable::A(:)[*]
+   integer :: size,rank,partner,i, error
+
+   size = team_size()
+   rank = team_rank()
+
+   partner = size-rank - 1
+
+   allocate(A(4)[])
+
+   do i = 1,4
+      A(i) = rank
+   end do
+
+   call team_barrier()
+
+   error = 0
+   do i = 1,4
+      if (i - 1 .ne. A(i)[i - 1]) then
+        error = error + 1
+      endif
+   end do
+
+   if (0 .ne. error) then
+      print *, "Test failed for image ", rank
+   else if (0 .eq. rank) then
+      write(*, '(A)') "Test passed"
+   endif
+end program

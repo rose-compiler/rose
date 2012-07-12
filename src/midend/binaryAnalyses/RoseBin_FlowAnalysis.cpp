@@ -121,7 +121,7 @@ RoseBin_FlowAnalysis::getRootNodes(vector <SgGraphNode*>& rootNodes) {
     //ROSE_ASSERT(hex_address==hex_addr_tmp);
 
     SgNode* internal = node->get_SgNode();
-    SgAsmFunctionDeclaration* func = isSgAsmFunctionDeclaration(internal);
+    SgAsmFunction* func = isSgAsmFunction(internal);
     if (func) {
       rootNodes.push_back(node);
       //cerr <<  " ............................. rootNode : " << hex_address << " " << node->get_name() << endl;
@@ -134,7 +134,7 @@ RoseBin_FlowAnalysis::getRootNodes(vector <SgGraphNode*>& rootNodes) {
 bool
 RoseBin_FlowAnalysis::sameParents(SgGraphNode* node, SgGraphNode* next) {
   bool same=false;
-  if (isSgAsmFunctionDeclaration(node->get_SgNode())) {
+  if (isSgAsmFunction(node->get_SgNode())) {
     return true;
   }
 
@@ -142,13 +142,13 @@ RoseBin_FlowAnalysis::sameParents(SgGraphNode* node, SgGraphNode* next) {
   SgAsmx86Instruction* nextNode = isSgAsmx86Instruction(next->get_SgNode());
   if (thisNode && nextNode) {
     if (!db) {
-      SgAsmFunctionDeclaration* func1 = isSgAsmFunctionDeclaration(thisNode->get_parent()->get_parent());
-      SgAsmFunctionDeclaration* func2 = isSgAsmFunctionDeclaration(nextNode->get_parent()->get_parent());
+      SgAsmFunction* func1 = isSgAsmFunction(thisNode->get_parent()->get_parent());
+      SgAsmFunction* func2 = isSgAsmFunction(nextNode->get_parent()->get_parent());
       if (func1==func2)
         same=true;
     } else {
-      SgAsmFunctionDeclaration* func1 = isSgAsmFunctionDeclaration(thisNode->get_parent());
-      SgAsmFunctionDeclaration* func2 = isSgAsmFunctionDeclaration(nextNode->get_parent());
+      SgAsmFunction* func1 = isSgAsmFunction(thisNode->get_parent());
+      SgAsmFunction* func2 = isSgAsmFunction(nextNode->get_parent());
       if (func1==func2)
         same=true;
     }
@@ -168,7 +168,7 @@ RoseBin_FlowAnalysis::flattenBlocks(SgAsmNode* globalNode) {
   for (;itV!=tree.end();itV++) {
     SgAsmBlock* block = isSgAsmBlock(*itV);
     if (block && block!=globalNode) {
-      SgAsmFunctionDeclaration* func = isSgAsmFunctionDeclaration(block->get_parent());
+      SgAsmFunction* func = isSgAsmFunction(block->get_parent());
       if (func) {
         ROSE_ASSERT(g_algo->info);
         g_algo->info->returnTargets[func].insert(g_algo->info->returnTargets[block].begin(), g_algo->info->returnTargets[block].end());
@@ -202,7 +202,7 @@ RoseBin_FlowAnalysis::convertBlocksToFunctions(SgAsmNode* globalNode) {
       uint64_t addr = block->get_address();
       isSgAsmBlock(globalNode)->remove_statement(block);
       block->set_parent(NULL);
-      SgAsmFunctionDeclaration* func = new SgAsmFunctionDeclaration(addr, RoseBin_support::HexToString(addr));
+      SgAsmFunction* func = new SgAsmFunction(addr, RoseBin_support::HexToString(addr));
       ROSE_ASSERT(g_algo->info);
       g_algo->info->returnTargets[func].insert(g_algo->info->returnTargets[block].begin(), g_algo->info->returnTargets[block].end());
       isSgAsmBlock(globalNode)->append_statement(func);
@@ -229,20 +229,20 @@ RoseBin_FlowAnalysis::convertBlocksToFunctions(SgAsmNode* globalNode) {
 void
 RoseBin_FlowAnalysis::resolveFunctions(SgAsmNode* globalNode) {
   //cerr << " ObjDump-BinRose:: Detecting and merging Functions" << endl;
-  vector<SgAsmFunctionDeclaration*> visitedFunctions;
-  vector<SgNode*> tree =NodeQuery::querySubTree(globalNode, V_SgAsmFunctionDeclaration);
+  vector<SgAsmFunction*> visitedFunctions;
+  vector<SgNode*> tree =NodeQuery::querySubTree(globalNode, V_SgAsmFunction);
   //  vector<SgNode*>::iterator itV = tree.begin();
   int nr=0;
   while (!tree.empty()) {
     //  for (;itV!=tree.end();itV++) {
-    SgAsmFunctionDeclaration* funcD = isSgAsmFunctionDeclaration(tree.back());
+    SgAsmFunction* funcD = isSgAsmFunction(tree.back());
     tree.pop_back();
     nr++;
     if ((nr % 100)==0)
       if (RoseBin_support::DEBUG_MODE())
         cerr << " funcListSize : " << tree.size() << "  -- iteration : " << nr << "   func " << funcD->get_name() << endl;
 
-    //SgAsmFunctionDeclaration* funcD = isSgAsmFunctionDeclaration(*itV);
+    //SgAsmFunction* funcD = isSgAsmFunction(*itV);
     //itV++;
     ROSE_ASSERT(funcD);
     // make sure we dont visit a function twice
@@ -265,7 +265,7 @@ RoseBin_FlowAnalysis::resolveFunctions(SgAsmNode* globalNode) {
     ROSE_ASSERT(lastInst);
     SgAsmx86Instruction* nextInst = isSgAsmx86Instruction(resolveFunction(lastInst, hasStopCondition));
     if (nextInst) {
-      SgAsmFunctionDeclaration* nextFunc = isSgAsmFunctionDeclaration(nextInst->get_parent());
+      SgAsmFunction* nextFunc = isSgAsmFunction(nextInst->get_parent());
       if (nextFunc) {
         ROSE_ASSERT(g_algo->info);
         g_algo->info->returnTargets[funcD].insert(g_algo->info->returnTargets[nextFunc].begin(), g_algo->info->returnTargets[nextFunc].end());
@@ -410,7 +410,7 @@ RoseBin_FlowAnalysis::process_jumps_get_target(SgAsmx86Instruction* inst) {
             if (!db)
               block = isSgAsmNode(target->get_parent());
             ROSE_ASSERT(block);
-            SgAsmFunctionDeclaration* func = isSgAsmFunctionDeclaration(block->get_parent());
+            SgAsmFunction* func = isSgAsmFunction(block->get_parent());
 
             if (func) {
               string fname = func->get_name();
@@ -489,7 +489,7 @@ RoseBin_FlowAnalysis::process_jumps() {
           if (!db)
             b_b = isSgAsmNode(target->get_parent());
           ROSE_ASSERT(b_b);
-          SgAsmFunctionDeclaration* b_func = isSgAsmFunctionDeclaration(b_b->get_parent());
+          SgAsmFunction* b_func = isSgAsmFunction(b_b->get_parent());
 
           if (b_func) {
             // (16/Oct/07) tps: this is tricky, it appears that sometimes the target can
@@ -505,7 +505,7 @@ RoseBin_FlowAnalysis::process_jumps() {
                   b_b = target2;
                   if (!db)
                     b_b = isSgAsmNode(target2->get_parent());
-                  b_func = isSgAsmFunctionDeclaration(b_b->get_parent());
+                  b_func = isSgAsmFunction(b_b->get_parent());
                 }
               }
             }
@@ -563,7 +563,7 @@ RoseBin_FlowAnalysis::process_jumps() {
       SgAsmNode* b_b = target;
       if (!db)
         b_b = isSgAsmNode(target->get_parent());
-      SgAsmFunctionDeclaration* parent = isSgAsmFunctionDeclaration(b_b->get_parent());
+      SgAsmFunction* parent = isSgAsmFunction(b_b->get_parent());
       if (parent) {
         //ROSE_ASSERT(parent);
         std::vector <SgAsmStatement*> dest_list = parent->get_dest();
@@ -656,8 +656,8 @@ RoseBin_FlowAnalysis::visit(SgNode* node) {
 
   //  cerr << " traversing node " << node->class_name() << endl;
 
-  if (isSgAsmFunctionDeclaration(node) ) {
-    SgAsmFunctionDeclaration* binDecl = isSgAsmFunctionDeclaration(node);
+  if (isSgAsmFunction(node) ) {
+    SgAsmFunction* binDecl = isSgAsmFunction(node);
     string name = binDecl->get_name();
     ostringstream addrhex;
     addrhex << hex << setw(8) << binDecl->get_address() ;
@@ -856,7 +856,7 @@ RoseBin_FlowAnalysis::checkControlFlow( SgAsmInstruction* binInst,
             if (!db)
               parent = isSgAsmNode(parent->get_parent());
             if (parent) {
-              SgAsmFunctionDeclaration* funcdestparent = isSgAsmFunctionDeclaration(parent);
+              SgAsmFunction* funcdestparent = isSgAsmFunction(parent);
               string trg_func_name = funcdestparent->get_name();
               if (trg_func_name==currentFunctionName) {
                 funcDeclNode->append_properties(SgGraph::itself_call,RoseBin_support::ToString("itself_call"));
@@ -878,7 +878,7 @@ RoseBin_FlowAnalysis::checkControlFlow( SgAsmInstruction* binInst,
         int trg_func_address =1;
         string hexStrf = "";
 
-        SgAsmFunctionDeclaration* funcDeclparent=NULL;
+        SgAsmFunction* funcDeclparent=NULL;
         if (analysisName=="callgraph") {
           SgAsmNode* parent = dynamic_cast<SgAsmNode*>(bin_target->get_parent());
           if (parent==NULL)
@@ -887,7 +887,7 @@ RoseBin_FlowAnalysis::checkControlFlow( SgAsmInstruction* binInst,
             parent = isSgAsmNode(parent->get_parent());
           ROSE_ASSERT(parent);
 
-          funcDeclparent = isSgAsmFunctionDeclaration(parent);
+          funcDeclparent = isSgAsmFunction(parent);
           ROSE_ASSERT(funcDeclparent);
 
           trg_func_name = funcDeclparent->get_name();
@@ -1037,7 +1037,7 @@ RoseBin_FlowAnalysis::checkControlFlow( SgAsmInstruction* binInst,
           if (!db)
             block = isSgAsmNode(bin_target->get_parent());
           ROSE_ASSERT(block);
-          SgAsmFunctionDeclaration* funcPar = isSgAsmFunctionDeclaration(block->get_parent());
+          SgAsmFunction* funcPar = isSgAsmFunction(block->get_parent());
           if (funcPar) {
             string nameFunc = funcPar->get_name();
             if (nameFunc==currentFunctionName) {

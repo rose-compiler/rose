@@ -1,11 +1,17 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
+if ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+SUBDIRS = util ROSETTA roseSupport frontend midend backend \
+          3rdPartyLibraries roseIndependentSupport
+else
 SUBDIRS = util ROSETTA roseSupport frontend midend backend \
           3rdPartyLibraries roseIndependentSupport roseExtensions
+endif
 
 # This lists a large number of directories.  If "make install"
 # is run then we only need a single directory
 INCLUDES = -Winvalid-pch $(ROSE_INCLUDES) 
+
 
 # DQ (7/23/2008): New handling of EDG builds a single library instead of two.
 # Binary distributions of ROSE store the binary for EDG related code in the source tree.
@@ -13,9 +19,13 @@ INCLUDES = -Winvalid-pch $(ROSE_INCLUDES)
 # more information on this process.
 # libroseEDGlibraries = frontend/CxxFrontend/EDG/libroseEDG.la
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
-   libroseEDGlibraries = frontend/CxxFrontend/EDG/libroseEDG.la
+if ROSE_USE_CLANG_FRONTEND
+   libroseCxxlibraries = frontend/CxxFrontend/Clang/libroseClangFrontend.la
 else
-   libroseEDGlibraries =
+   libroseCxxlibraries = frontend/CxxFrontend/EDG/libroseEDG.la
+endif
+else
+   libroseCxxlibraries =
 endif
 
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
@@ -25,7 +35,10 @@ else
 endif
 
 if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
+ # DQ (8/15/2011): Revert back to what we had before to fix Hudson java only test.
+ # DQ (8/14/2011): Need this change to match Makefile changes in ECJ_ROSE_Connection/Makefile.am
    libroseJavaParserlibraries = frontend/ECJ_ROSE_Connection/libroseJava.la
+ # libroseJavaParserlibraries = frontend/ECJ_ROSE_Connection/libJavaTraversal.la
 else
    libroseJavaParserlibraries =
 endif
@@ -36,16 +49,23 @@ else
    librosePHPlibraries =
 endif
 
-if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
-   libroseBinaryLibraries = \
-      $(top_builddir)/src/frontend/BinaryDisassembly/libbinaryFrontend.la \
-      $(top_builddir)/src/midend/binaryAnalyses/libbinaryMidend.la \
-      $(top_builddir)/src/frontend/Disassemblers/libroseDisassemblers.la \
-      $(top_builddir)/src/frontend/BinaryFormats/libroseBinaryFormats.la \
-      $(top_builddir)/src/frontend/BinaryLoader/libroseBinaryLoader.la 
+if ROSE_BUILD_PYTHON_LANGUAGE_SUPPORT
+   librosePythonlibraries = frontend/PythonFrontend/librosePythonFrontend.la
 else
-   libroseBinaryLibraries = \
-      $(top_builddir)/src/frontend/BinaryFormats/libroseBinaryFormats.la
+   librosePythonlibraries =
+endif
+
+if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+   libroseBinaryLibraries =						    \
+	$(top_builddir)/src/frontend/BinaryDisassembly/libbinaryFrontend.la \
+	$(top_builddir)/src/frontend/BinaryFormats/libroseBinaryFormats.la  \
+	$(top_builddir)/src/frontend/BinaryLoader/libroseBinaryLoader.la    \
+	$(top_builddir)/src/frontend/Disassemblers/libroseDisassemblers.la  \
+	$(top_builddir)/src/midend/binaryAnalyses/libbinaryMidend.la
+else
+   libroseBinaryLibraries =						   \
+	$(top_builddir)/src/frontend/BinaryFormats/libroseBinaryFormats.la \
+	$(top_builddir)/src/frontend/Disassemblers/libroseDisassemblers.la
 endif
 
 if ROSE_USE_MYSQL
@@ -71,7 +91,21 @@ else
    libroseQtExtension =
 endif
 
+# TOO (11/22/2011): flattening midend Makefiles => TODO: move conditional compilation to Makefile.
 # TODO: correct list!
+if ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+libroseLibraries = \
+   $(top_builddir)/src/3rdPartyLibraries/MSTL/libmstl.la \
+   $(top_builddir)/src/backend/libbackend.la \
+   $(top_builddir)/src/frontend/SageIII/libsage3.la \
+   $(libroseEDGlibraries) \
+   $(top_builddir)/src/midend/astProcessing/libastprocessing.la \
+   $(top_builddir)/src/roseSupport/libroseSupport.la \
+   $(top_builddir)/src/util/support/libsupport.la \
+   $(top_builddir)/src/util/graphs/libgraphs.la \
+   $(top_builddir)/src/util/libroseutil.la \
+   $(libroseBinaryLibraries)
+else
 libroseLibraries = \
    $(top_builddir)/src/3rdPartyLibraries/MSTL/libmstl.la \
    $(top_builddir)/src/backend/libbackend.la \
@@ -79,36 +113,22 @@ libroseLibraries = \
    $(libroseOpenFortranParserlibraries) \
    $(libroseJavaParserlibraries) \
    $(librosePHPlibraries) \
+   $(libroseCxxlibraries) \
+   $(librosePythonlibraries) \
    $(libroseEDGlibraries) \
    $(libroseBinaryLibraries) \
-   $(top_builddir)/src/midend/abstractHandle/libabstractHandle.la \
-   $(top_builddir)/src/midend/astDiagnostics/libastDiagnostics.la \
-   $(top_builddir)/src/midend/astProcessing/libastprocessing.la \
-   $(top_builddir)/src/midend/astQuery/libquery.la \
-   $(top_builddir)/src/midend/astRewriteMechanism/librewrite.la \
-   $(top_builddir)/src/midend/astUtil/libastUtil.la \
    $(top_builddir)/src/midend/programAnalysis/libprogramAnalysis.la \
-   $(top_builddir)/src/midend/programTransformation/astInlining/libastinlining.la \
-   $(top_builddir)/src/midend/programTransformation/astOutlining/libastOutliner.la \
-   $(top_builddir)/src/midend/programTransformation/loopProcessing/computation/libcomputation.la \
-   $(top_builddir)/src/midend/programTransformation/loopProcessing/depGraph/libdepGraph.la \
-   $(top_builddir)/src/midend/programTransformation/loopProcessing/depInfo/libdepInfo.la \
-   $(top_builddir)/src/midend/programTransformation/loopProcessing/driver/libdriver.la \
-   $(top_builddir)/src/midend/programTransformation/loopProcessing/outsideInterface/libarrayOptimization.la \
-   $(top_builddir)/src/midend/programTransformation/loopProcessing/prepostTransformation/libprepostloop.la \
-   $(top_builddir)/src/midend/programTransformation/loopProcessing/slicing/libslicing.la \
-   $(top_builddir)/src/midend/programTransformation/ompLowering/libompLowering.la \
-   $(top_builddir)/src/midend/programTransformation/constantFolding/libconstantFolding.la \
-   $(top_builddir)/src/midend/programTransformation/finiteDifferencing/libfiniteDifferencing.la \
-   $(top_builddir)/src/midend/programTransformation/functionCallNormalization/libfunctionCallNormalization.la \
-   $(top_builddir)/src/midend/programTransformation/implicitCodeGeneration/libimplicitCodeGeneration.la \
-   $(top_builddir)/src/midend/programTransformation/partialRedundancyElimination/libpre.la \
+   $(top_builddir)/src/midend/programTransformation/loopProcessing/libLoopProcessing.la \
+   $(top_builddir)/src/midend/programTransformation/extractFunctionArgumentsNormalization/libExtractFunctionArgumentsNormalization.la \
+   $(top_builddir)/src/3rdPartyLibraries/POET/libpoet.la \
+   $(top_builddir)/src/midend/libmidend.la \
    $(top_builddir)/src/roseSupport/libroseSupport.la \
    $(top_builddir)/src/util/support/libsupport.la \
    $(top_builddir)/src/util/graphs/libgraphs.la \
    $(top_builddir)/src/util/libroseutil.la \
    $(libroseSqlite3xConnection) \
    $(libroseQtExtension)
+endif
 
 # DQ (4/17/2010): Added support to permit minimal ROSE configurations (e.g. --enable-only-fortran).
 # used $(libroseOpenFortranParserlibraries) to replace $(top_builddir)/src/frontend/OpenFortranParser_SAGE_Connection/libroseFortran.la
@@ -138,10 +158,10 @@ include_HEADERS = \
 # bin_PROGRAMS = testSharedRoseLib # testMultiRoseLib
 noinst_PROGRAMS = testSharedRoseLib 
 all-local: testSharedRoseLib$(EXEEXT) 
-# Test if programs using ROSE can be run
-	@echo "Testing whether a simple program linked against ROSE can be run:" >&2
-	@echo "The translator will be run without any input files, and will print a warning about that; the warning is normal." >&2
-	@./testSharedRoseLib$(EXEEXT) || (echo "You cannot run a program linked against ROSE.  Please be sure that your LD_LIBRARY_PATH (Linux) or DYLD_LIBRARY_PATH (Mac OSX) contains the correct libraries (JVM, Boost, librose.so, etc.)." >&2; exit 1)
+	@$(top_srcdir)/scripts/check_boost_linkage.sh .libs/testSharedRoseLib >&2
+	@echo "[INFO] Testing whether a simple program linked with ROSE can be run (a warning will be issued because the translator is being run without an input file):" >&2
+	@./testSharedRoseLib$(EXEEXT) || (echo "[ERROR] You cannot run a program linked with ROSE. Please be sure that your LD_LIBRARY_PATH (Linux) or DYLD_LIBRARY_PATH (Mac OSX) contains the correct libraries (JVM, Boost, librose.so, etc.)." >&2; exit 1)
+	@echo "[INFO] Success!"
 
 # PC (9/15/2006): force the use of the C++ linker
 LINK = $(CXXLINK)
@@ -158,15 +178,25 @@ endif
 
 
 librose_la_SOURCES = dummyCppFileForLibrose.C
-librose_la_LIBADD = $(libroseLibraries) $(JAVA_JVM_FLAGS) $(LIB_QT) -lm $(RT_LIBS) \
-                    $(BOOST_LDFLAGS) $(BOOST_DATE_TIME_LIB) \
-		    $(BOOST_THREAD_LIB) $(BOOST_FILESYSTEM_LIB) \
-		    $(BOOST_PROGRAM_OPTIONS_LIB) $(BOOST_REGEX_LIB) \
-		    $(BOOST_SYSTEM_LIB) $(BOOST_SERIALIZATION_LIB) \
-		    $(BOOST_WAVE_LIB) \
-		    -L$(top_builddir)/src/3rdPartyLibraries/libharu-2.1.0/src -lhpdf \
-		    $(OPT_SQLITE3_LDFLAGS) \
-        $(OPT_MYSQL_LDFLAGS) 
+
+if ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+librose_la_LIBADD = $(BOOST_LDFLAGS) $(libroseLibraries) $(JAVA_JVM_FLAGS) $(LIB_QT) -lm $(RT_LIBS) \
+          $(BOOST_DATE_TIME_LIB) \
+          $(BOOST_THREAD_LIB) $(BOOST_FILESYSTEM_LIB) \
+          $(BOOST_PROGRAM_OPTIONS_LIB) $(BOOST_REGEX_LIB) \
+          $(BOOST_SYSTEM_LIB) $(BOOST_SERIALIZATION_LIB) \
+          $(BOOST_WAVE_LIB)
+else
+librose_la_LIBADD = $(BOOST_LDFLAGS) $(libroseLibraries) $(JAVA_JVM_FLAGS) $(LIB_QT) -lm $(RT_LIBS) \
+          $(BOOST_DATE_TIME_LIB) \
+          $(BOOST_THREAD_LIB) $(BOOST_FILESYSTEM_LIB) \
+          $(BOOST_PROGRAM_OPTIONS_LIB) $(BOOST_REGEX_LIB) \
+          $(BOOST_SYSTEM_LIB) $(BOOST_SERIALIZATION_LIB) \
+          $(BOOST_WAVE_LIB) \
+          -L$(top_builddir)/src/3rdPartyLibraries/libharu-2.1.0/src -lhpdf \
+          $(OPT_SQLITE3_LDFLAGS) \
+          $(OPT_MYSQL_LDFLAGS) 
+endif
 
 # DQ (6/5/2010): Suggested change by Peter to support dwarf that would simplify use with Haskell
 if ROSE_USE_DWARF

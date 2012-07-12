@@ -6,7 +6,7 @@
 #define GRAPH_ACCESS_H
 
 #include <IteratorTmpl.h>
-//Provide edge directions and a reversing-edge-direction operation
+
 class GraphAccess {
  public:
   typedef enum {EdgeOut = 1, EdgeIn = 2, BiEdge = 3} EdgeDirection;
@@ -16,13 +16,11 @@ class GraphAccess {
        case EdgeIn: return EdgeOut;
        case BiEdge: return BiEdge;
       }
-                // tps (12/09/2009) : Removed warning : not all control paths return a value
-          assert(false);
-          return EdgeIn;
+      assert(false);
     }
 };
 
-// The graph access template: providing abstract iterator interface for nodes and edges
+// The graph access template
 template <class NodeImpl, class EdgeImpl>
 class GraphAccessTemplate : public GraphAccess
 {
@@ -33,20 +31,19 @@ class GraphAccessTemplate : public GraphAccess
   typedef IteratorWrap<Node*,IteratorImpl<Node*> > NodeIterator;
 
   virtual ~GraphAccessTemplate() {}
-  // iterator to all nodes
-  virtual NodeIterator GetNodeIterator() const = 0; 
-  // the iterator to all edges associated with node n and have a direction 'dir'
-  virtual EdgeIterator GetNodeEdgeIterator(const Node* n, EdgeDirection dir) const=0;
-  // the source or sink of edge e
-  virtual Node* GetEdgeEndPoint( const Edge* e, EdgeDirection dir) const = 0;
+  virtual NodeIterator GetNodeIterator() const = 0; // iterator to all nodes
+  virtual EdgeIterator   // the iterator to all edges incident to node n
+  GetNodeEdgeIterator(const Node* n, EdgeDirection dir) const=0;
+  virtual Node*  // the source or sink of edge e
+  GetEdgeEndPoint( const Edge* e, EdgeDirection dir) const = 0;
   virtual bool ContainNode(const Node* n) const = 0; // whether graph contains n
   virtual bool ContainEdge(const Edge* e) const = 0; // whether graph contains e
   virtual std::string nodeToString(Node* n) const { return ""; }
   virtual std::string edgeToString(Edge* n) const { return ""; }
 };
 
-// this template class builds a wrapper on top of a graph implementaion 
-// to implment GraphAccess interface 
+// this template class builds a bridge to GraphAccess interface 
+// from a concrete graph implementaion. 
 template <class NodeBase, class EdgeBase, class GraphImpl>
 class GraphAccessWrapTemplate : public GraphAccessTemplate<NodeBase,EdgeBase>
 {

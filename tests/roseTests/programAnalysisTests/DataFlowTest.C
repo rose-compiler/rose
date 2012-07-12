@@ -1,5 +1,4 @@
-
-#include "sage3basic.h"
+#include <sage3.h>
 
 #include <StmtInfoCollect.h>
 #include <AstInterface_ROSE.h>
@@ -86,7 +85,7 @@ main ( int argc,  char * argv[] )
      }
 
      SgProject sageProject ( (int)argc,argv);
-     SageInterface::changeAllLoopBodiesToBlocks(&sageProject);
+     SageInterface::changeAllBodiesToBlocks(&sageProject);
     CmdOptions::GetInstance()->SetOptions(argc, argv);
 
 

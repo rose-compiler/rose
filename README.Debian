@@ -149,7 +149,7 @@ same as Lenny.
 Installing Internal Projects that use ROSE
 ==========================================
 
-Internal projects are packaged searately from ROSE, they use the same
+Internal projects are packaged separately from ROSE, they use the same
 basic build process and scripts, and they reference an installed copy
 of ROSE (the ROSE headers and libraries).
 

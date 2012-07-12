@@ -150,7 +150,7 @@ void BtorTranslationPolicy::setInitialState(uint32_t entryPoint, bool initialCon
   writeBackReset();
 }
 
-BtorTranslationPolicy::BtorTranslationPolicy(BtorTranslationHooks* hooks, uint32_t minNumStepsToFindError, uint32_t maxNumStepsToFindError, SgProject* proj): problem(), hooks(hooks) {
+BtorTranslationPolicy::BtorTranslationPolicy(BtorTranslationHooks* hooks, uint32_t minNumStepsToFindError, uint32_t maxNumStepsToFindError, SgProject* proj): problem(), hooks(hooks), regdict(NULL) {
   assert (minNumStepsToFindError >= 1); // Can't find an error on the first step
   assert (maxNumStepsToFindError < 0xFFFFFFFFU); // Prevent overflows
   assert (minNumStepsToFindError <= maxNumStepsToFindError || maxNumStepsToFindError == 0);
@@ -168,10 +168,10 @@ BtorTranslationPolicy::BtorTranslationPolicy(BtorTranslationHooks* hooks, uint32
        true_() :
        problem.build_op_ulte(stepCount, number<32>(maxNumStepsToFindError))));
   {
-    vector<SgNode*> functions = NodeQuery::querySubTree(proj, V_SgAsmFunctionDeclaration);
+    vector<SgNode*> functions = NodeQuery::querySubTree(proj, V_SgAsmFunction);
     for (size_t i = 0; i < functions.size(); ++i) {
-      functionStarts.push_back(isSgAsmFunctionDeclaration(functions[i])->get_address());
-      // fprintf(stderr, "functionStarts 0x%"PRIx64"\n", isSgAsmFunctionDeclaration(functions[i])->get_address());
+      functionStarts.push_back(isSgAsmFunction(functions[i])->get_address());
+      // fprintf(stderr, "functionStarts 0x%"PRIx64"\n", isSgAsmFunction(functions[i])->get_address());
     }
   }
   {

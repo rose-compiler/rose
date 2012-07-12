@@ -281,7 +281,8 @@ ResetEmptyNames::visit(SgNode* node)
                     if (classSymbol != NULL)
                        {
 #if 0
-                         printf ("Calling insert(classSymbol = %p) using name = %s even if classSymbol->get_name() = %s \n",classSymbol,new_name.str(),classSymbol->get_name().str());
+                         printf ("Calling insert(classSymbol = %p) using name = %s even if classSymbol->get_name() = %s in scope = %p = %s \n",
+                              classSymbol,new_name.str(),classSymbol->get_name().str(),definingDeclaration->get_scope(),definingDeclaration->get_scope()->class_name().c_str());
 #endif
                       // definingDeclaration->get_scope()->insert_symbol(classSymbol->get_name(),classSymbol);
                       // We need to reinsert it using the new name and not the one in the declaration referenced by the symbol since we might not have changed the declaration's name yet!
@@ -346,8 +347,8 @@ ResetEmptyNames::visit(SgNode* node)
                          if (classSymbol != NULL)
                             {
 #if 0
-                              printf ("After reseting the name to = %s insert classSymbol using declaration = %p classSymbol->get_declaration() = %p \n",
-                                   definingDeclaration->get_name().str(),declaration,classSymbol->get_declaration());
+                              printf ("After reseting the name to = %s insert classSymbol using declaration = %p classSymbol->get_declaration() = %p scope = %p = %s \n",
+                                   definingDeclaration->get_name().str(),declaration,classSymbol->get_declaration(),definingDeclaration->get_scope(),definingDeclaration->get_scope()->class_name().c_str());
 #endif
                               definingDeclaration->get_scope()->insert_symbol(definingDeclaration->get_name(),classSymbol);
 

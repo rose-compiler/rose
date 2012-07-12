@@ -28,7 +28,7 @@ RoseAttributeMissing::RoseAttributeMissing(std::string str, const SgNode * node)
 RoseAttributeMissing::~RoseAttributeMissing() {}
 		
 void RoseAttributeMissing::print(std::ostream & out) {
-	out << "No " << p_str << " is attached to the node " << p_node << std::endl;
+	out << "No " << p_str << " is attached to the node " << p_node << " (" << p_node->class_name() << ") (" << p_node->unparseToString() << ")" << std::endl;
 }
 
 RoseUnknownNode::RoseUnknownNode(std::string str, const SgNode * node) :

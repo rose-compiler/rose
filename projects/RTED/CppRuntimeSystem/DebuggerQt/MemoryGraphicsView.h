@@ -5,6 +5,7 @@
 #include <QColor>
 
 #include "Util.h"
+#include "rted_typedefs.h"
 
 class MemoryType;
 class RsType;
@@ -16,7 +17,7 @@ class RsType;
 class RsTypeGraphicsRect : public QGraphicsRectItem
 {
     public:
-        RsTypeGraphicsRect(RsType * t, addr_type addr, QGraphicsItem * parent=0);
+        RsTypeGraphicsRect(const RsType* t, Address addr, QGraphicsItem * parent=0);
 
 
         virtual void paint(QPainter *painter,
@@ -30,8 +31,8 @@ class RsTypeGraphicsRect : public QGraphicsRectItem
         static float BOX_HEIGHT;
 
     protected:
-        RsType * t;
-        addr_type address;
+        const RsType* t;
+        Address address;
 
         QPoint textOffset; ///< offset in pixel where to draw the typename
 
@@ -54,19 +55,19 @@ class RsTypeGraphicsRect : public QGraphicsRectItem
 class MemoryGraphicsView : public QGraphicsView
 {
     public:
-        MemoryGraphicsView( QWidget * parent);
+        MemoryGraphicsView(QWidget* parent);
 
-        void setMemoryType(MemoryType * mt);
+        void setMemoryType(const MemoryType& mt);
 
     protected:
         QGraphicsScene * scene;
-        MemoryType * mt;
+        const MemoryType* mt;
 
         QVector<QGraphicsRectItem*> byteBoxes;
 
         /// Paints the rectangle and text for type t at given byte-offset
         /// at given y-layer
-        void paintTypeInfo(RsType * t, addr_type offset, int layer);
+        void paintTypeInfo(const RsType* t, size_t offset, int layer);
 
 
         // Size of a box which represents a byte

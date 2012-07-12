@@ -1,0 +1,8 @@
+!testing codimension that is not a *.
+! Rose has no place to save the codimension.
+
+program prog4_1
+ integer, copointer:: cp[5] ! codimension 5 is lost in translation
+  cp[][2] = 99  
+end program
+

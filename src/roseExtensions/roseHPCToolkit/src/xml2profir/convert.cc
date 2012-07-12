@@ -95,7 +95,7 @@ XMLToProfIRConverter::visit (TreeParamPtr_t tree)
     {
       ProfIRFactory_t::instance ().setElement (tree->value);
       IRTree_t::Val_t v =
-	ProfIRFactory_t::instance ().createObject ("PGM");
+	ProfIRFactory_t::instance ().createObject ("SecFlatProfile");
       if (v != NULL)
 	{
 	  prog_root_ = new IRTree_t (v);
@@ -126,6 +126,7 @@ XMLToProfIRConverter::visit (TreeParamPtr_t tree)
 
   size_t num_kids = parent->getNumChildren ();
   IRTree_t* child = parent->setChildValue (num_kids+1, new_val);
+
   saved_parents_.push (child);
 }
 

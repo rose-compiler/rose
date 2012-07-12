@@ -1,4 +1,3 @@
-
 #include <vector>
 #include <iostream>
 #include <stdlib.h>
@@ -10,10 +9,9 @@
 #include <LoopTransformInterface.h>
 
 extern bool DebugDep();
-//Collecting coefficient variables 'vec' from 'exp', 
-//given loop invariant variables 'vars' and loop nest levels 'size'
+
 template <class VarVec, class CoeffVec>
-SymbolicVal DecomposeAffineExpression(LoopTransformInterface& la, 
+SymbolicVal DecomposeAffineExpression(
             const SymbolicVal& exp, const VarVec& vars, CoeffVec& vec, int size)
   {
     // AstInterface& fa = la;
@@ -39,7 +37,7 @@ SymbolicVal DecomposeAffineExpression(LoopTransformInterface& la,
   }
 
 template <class CoeffVec, class BoundVec, class BoundOp>
-bool SplitEquation( LoopTransformInterface& la, CoeffVec& cur, 
+bool SplitEquation( CoeffVec& cur, 
                       const SymbolicVal& cut, const BoundVec& bounds, 
                       BoundOp& boundop, CoeffVec& split)
  {

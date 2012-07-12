@@ -25,6 +25,7 @@ using namespace std;
 // =====================================================================
 
 //! Convert the given set of variable symbols into function call arguments.
+// This is used for generating the function call to the outlined function.
 static
 void
 appendArgs (const ASTtools::VarSymSet_t& syms,  std::set<SgInitializedName*> readOnlyVars, std::string arg_name, SgExprListExp* e_list, SgScopeStatement* scope)

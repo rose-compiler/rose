@@ -4,7 +4,11 @@ namespace N
   class A
   {
  // Note that these are private, so the outline function will not 
- // be able to access them.
+ // be able to access them. The generated friend function must
+ // also be output with global qualification to permit it reference
+ // the global scope version of the function instead of generating 
+ // a reference to a function that has not been defined with a scope.
+
     int foo (void) const { return 7; }
 #if !SIMPLE
     int bar (void) const { return foo () / 2; }

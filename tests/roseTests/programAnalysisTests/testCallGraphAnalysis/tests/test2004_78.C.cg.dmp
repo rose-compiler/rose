@@ -1,8 +1,8 @@
-main -> A::foobar1
+A::B::Bclass::memberFunctionFoo ->
+A::B::C::foo_C ->
+A::B::foo_B ->
+A::B::foobar2 ->
 A::foo ->
 A::foo_A ->
 A::foobar1 -> A::B::foo_B
-A::B::foo_B ->
-A::B::foobar2 ->
-A::B::C::foo_C ->
-A::B::Bclass::memberFunctionFoo ->
+main -> A::foobar1

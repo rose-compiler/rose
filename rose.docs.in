@@ -9,10 +9,10 @@
 
 \image html compass_rose.gif
 
-\authors LLNL Staff: \b Dan \b Quinlan, \b Thomas \b Panas, \b Chunhua \b Liao \n
-         Former LLNL Post-docs (most of them are still active on ROSE project): \b Jeremiah \b Willcock,
+\authors LLNL Staff: \b Dan \b Quinlan, \b Chunhua \b Liao, and \b Justin \b Too \n
+         Former LLNL Post-docs (most of them are still active on ROSE project): \b Thomas \b Panas, \b Jeremiah \b Willcock,
             \b Markus \b Schordan, \b Qing \b Yi, and \b Rich \b Vuduc \n
-         Student Interns at LLNL: 
+         Student Interns at LLNL (Not yet kept up-to-date): 
            Gergo Barany (Technical University of Vienna),
            Michael Byrd (University of California at Davis),
            Gabriel Coutinho (Imperial College London),
@@ -23,7 +23,7 @@
            Christian Iwainsky (University of Erlanger, Germany),
            Lingxiao Jiang (University of California at Davis),
            Alin Jula (Texas A\&M),
-           Han Kim (University of California at San Diago),
+           Han Kim (University of California at San Diego),
            Milind Kulkarni (Cornell University),
            Markus Kowarschik (University of Erlanger, Germany),
            Gary Lee (University of California at Berkeley and Purdue University),
@@ -34,7 +34,7 @@
            Radu Popovici (Cornell University),
            Robert Preissl (Austria),
            Andreas Saebjornsen (University of Oslo, Norway),
-           Sunjeev Sikand (University of California at San Diago),
+           Sunjeev Sikand (University of California at San Diego),
            Andy Stone (Colorado State University at Fort Collins),
            Danny Thorne (University of Kentucky), 
            Nils Thuerey (University of Erlanger, Germany), 
@@ -65,7 +65,7 @@ one million lines of code in size).
    \ref AvailableDocumentation.
 
 \subsection ROSE_WebSite ROSE Web Site
-     The ROSE Web Site will ultimately be an alternative location to get more information
+     The ROSE Web Site is the main location to get more information
      about the ROSE project. Built in 2005, it has been slow to evolve since we wanted to 
      keep a low profile as long as possible while we focused on robustness issues within
      the ROSE project and infrastructure. \n
@@ -80,7 +80,7 @@ one million lines of code in size).
      <a href="../ROSE_Tutorial/ROSE-@VERSION@-Tutorial.pdf"> ROSE Tutorial (pdf) </a>.
 
      \if debuggingDocumentation
-          Versions of ROSE documentation (made accessable for debugging only): \n
+          Versions of ROSE documentation (made accessible for debugging only): \n
 
           -# User (abbreviated) version with using tag files to include Sage III:
                file:///home/dquinlan2/ROSE/DOCUMENTATION/USER_DRAFT_DOCS/docs/Rose/html/main.html \n
@@ -95,7 +95,7 @@ one million lines of code in size).
 \subsection dummyC ROSE Web Reference (this document)
     The ROSE Web Reference documents the classes representing the Intermediate
     Representation (IR) used in ROSE. The IR we use is derived from Sage++ and SageII
-    and is internally refered to as SageIII (with permission from the original authors of
+    and is internally referred to as SageIII (with permission from the original authors of
     Sage++ and SageII). \n
      <a href="../ROSE_HTML_Reference/index.html"> ROSE Web Reference (this document) </a> \n
 
@@ -117,11 +117,13 @@ one million lines of code in size).
 \subsection RosePublications ROSE Publications
     ROSE is a research project which emphasises publication about the new technologies
     that we are developing, every often as part of external collaborations.  Publications
-    specific to the ROSE project can be found at the main ROSE web page.
+    specific to the ROSE project can be found at the main ROSE web page.\n\n
+    <a href="../ROSE_HTML_Reference/ProjectPublications.html">Project Publications</a>\n
+    <a href="../ROSE_HTML_Reference/ProjectTalks.html">Project Talks</a>\n
 
 \section DownLoadInstructions ROSE Download Instructions
 
-    ROSE is an open source project. The ROSE project is publically release via the
+    ROSE is an open source project. The ROSE project is publicly release via the
     outreach.scidac.gov web site (which hosts the main ROSE web page).
 
 \if debuggingDocumentation
