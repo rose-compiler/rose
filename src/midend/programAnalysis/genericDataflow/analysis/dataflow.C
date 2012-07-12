@@ -266,13 +266,15 @@ bool IntraUniDirectionalDataflow::runAnalysis(const Function& func, NodeState* f
                         {
                                 if(analysisDebugLevel>=1){
                                         Dbg::dbg << " ==================================  "<<endl;
-                                        Dbg::dbg << "  Copying incoming Lattice "<<j<<": \n        "<<(*itA)->str("            ")<<endl;
-                                        Dbg::dbg << "  To outgoing Lattice "<<j<<": \n        "<<(*itP)->str("            ")<<endl;
+                                        Dbg::dbg << " Copy incoming lattice to outgoing lattice: "<<endl;
+                                        Dbg::dbg << "  Incoming/Above Lattice "<<j<<": \n        "<<(*itA)->str("            ")<<endl;
+                                        Dbg::dbg << "  Outgoing/Below Lattice before copying "<<j<<": \n        "<<(*itP)->str("            ")<<endl;
                                 }
                                 (*itP)->copy(*itA);
-                                /*if(analysisDebugLevel>=1){
-                                        Dbg::dbg << "    Copied Meet Below: Lattice "<<j<<": \n        "<<(*itB)->str("            ")<<endl;
-                                }*/
+                                
+                                if(analysisDebugLevel>=1){
+                                        Dbg::dbg << "  Outgoing/Below Lattice after copying "<<j<<": \n        "<<(*itP)->str("            ")<<endl;
+                                }
                         }
                         
                         // =================== TRANSFER FUNCTION ===================
@@ -281,6 +283,8 @@ bool IntraUniDirectionalDataflow::runAnalysis(const Function& func, NodeState* f
                           Dbg::dbg << " ==================================  "<<endl;
                           Dbg::dbg << "  Transferring the outgoing  Lattice ... "<<endl;
                         }
+                        
+                        //if this is a call site, call transfer function of the associated interprocedural analysis
                         if (isSgFunctionCallExp(sgn))
                           transferFunctionCall(func, n, state);
 
@@ -370,10 +374,10 @@ bool IntraUniDirectionalDataflow::runAnalysis(const Function& func, NodeState* f
                                 
                                 // Propagate the Lattices below this node to its descendant
                                 modified = propagateStateToNextNode(getLatticePost(state), n, numStates-1, getLatticeAnte(nextState), nextNode);
-                                if(analysisDebugLevel>=1){
-                                        Dbg::dbg << "    propagated/merged, modified="<<modified<<endl;
-                                        Dbg::dbg << "    ^^^^^^^^^^^^^^^^^^"<<endl;
-                                }
+//                                if(analysisDebugLevel>=1){
+//                                        Dbg::dbg << "    propagated/merged, modified="<<modified<<endl;
+//                                        Dbg::dbg << "    ^^^^^^^^^^^^^^^^^^"<<endl;
+//                                }
                                 // If the next node's state gets modified as a result of the propagation, 
                                 // add the node to the processing queue.
                                 if(modified)

@@ -130,92 +130,88 @@ ConstantPropagationLattice::str(string indent)
    {
      ostringstream outs;
      if(level == bottom)
-          outs << indent << "[level: bottom]";
-       else if(level == unknownValue)
-          outs << indent << "[level: unknownValue, val = "<<value<<"]";
-       else if(level == constantValue)
-          outs << indent << "[level: constantValue, val = "<<value<<"]";
-       else if(level == top)
-          outs << indent << "[level: top]";
+       outs << indent << "ConstantPropagationLattice:[level: bottom]";
+     else if(level == constantValue)
+       outs << indent << "ConstantPropagationLattice:[level: constantValue, val = "<<value<<"]";
+     else if(level == top)
+       outs << indent << "ConstantPropagationLattice:[level: top]";
 
      return outs.str();
    }
 
 // computes the meet of this and that and saves the result in this
 // returns true if this causes this to change and false otherwise
+/*
+// The different levels of this lattice
+
+// no information is known about the value of the variable
+static const short bottom = 1; // start point
+
+static const short constantValue = 2;
+
+static const short top = 3;
+*/
 bool
 ConstantPropagationLattice::meetUpdate(Lattice* X)
    {
      ConstantPropagationLattice* that = dynamic_cast<ConstantPropagationLattice*>(X);
 
-  // Need to handle bottom, copy from the other side.
+// Liao, 6/30/2012, clean up the meet function logic.
+// we only need a three level lattice: 1) bottom (unknown, or no information, start state) -> 2) constant value -> 3)top (stop state)
+//To write a complete and exhaustive meet function, 
+//   for each state: 
+//     enumerate all possible meet scenarios between the current state and any other states
 
+       if (this->level == bottom) // 1. can only go up: must be the value of that lattice since this lattice is already the bottom
+       {
+         // all three combinations are handled the same way: that could be bottom, constantValue, or even top
+        this->level = that->level;
+        this->value = that->value;
 
-  // This is the more technically interesting required function.
-  //   2. unknownValue, missing the cases that meet bottom, top ??
-     if (this->level == unknownValue && that->level == unknownValue)
+        return (that->level != bottom);
+       }
+       else if (this->level == constantValue)
+       { 
+         // three combinations:  
+        // 1. that lattice is at bottom, the constant value rules, no change
+        if (that->level == bottom)
         {
-       // leave it and return false
           return false;
         }
-       else
+        // 2. that lattice is a constant value
+        else if (that->level == constantValue)
         {
-          if (this->level == unknownValue && that->level == constantValue)
-             {
-               this->level = constantValue;
-               this->value = that->value;
-               return true;
-             }
-            else
-             {   //  3. const value: missing the cases of meeting bottom and top ??
-               if (this->level == constantValue && that->level == unknownValue)
-                  {
-                    return false;
-                  }
-                 else
-                  {
-                    if (this->level == constantValue && that->level == constantValue)
-                       {
-                         if (this->value == that->value)
-                            {
-                              return false;
-                            }
-                           else
-                            {
-                              this->level = top;
-                              return true;
-                            }
-                       }
-                      else // 4.  undefinedValue  is not covered ???
-                       {
-                         if (this->level == bottom) // 1. can only go up: must be the value of that lattice since this lattice is already the bottom
-                            {
-                              this->level = that->level;
-                              this->value = that->value;
-
-                              return (that->level != bottom);
-                            }
-                           else
-                            {
-                              if (this->level == top) //5.  already at the top. Cannot go up further.
-                                 {
-                                   return false;
-                                 }
-                                else
-                                 {
-                                   if (that->level == top)
-                                      {
-                                        bool modified = this->level != top;
-                                        this->level = top;
-                                        return modified;
-                                      }
-                                 }
-                            }
-                       }
-                  }
-             }
+          if (this->value == that->value) // same value, no change
+          {
+            return false;
+          }
+          else   // conflicting values, move to top and change state
+          {
+            this->level = top;
+            return true;
+          }
+        } 
+        // 3. that lattice is at top state
+        else if (that->level == top) // top always rules
+        {
+           this->level = top;  
+           return true;
         }
-
+       }
+       else if (this->level == top) //5.  already at the top. Cannot go up further.
+       {
+         // all combinations will result the same result. No change to this lattice
+        return false;
+       }
+       else
+       {
+         cerr<<"error: ConstantPropagationLattice::meetUpdate() reached invalid branch!"<<endl;
+         ROSE_ASSERT(false);
+       }
+    
+    // We should have handled all possible combinations before this point
+    cerr<<"error: ConstantPropagationLattice::meetUpdate() reached invalid branch!"<<endl;
+    ROSE_ASSERT(false);
   // Make up a return value for now.
      return false;
    }
@@ -253,6 +249,7 @@ ConstantPropagationAnalysisTransfer::transferIncrement(SgUnaryOp *sgn)
      delete arg2Lat; // Allocated by getLattices
    }
 
+//! transfer addition or subtraction operations: isAddition: true for addition, false for subtraction
 void
 ConstantPropagationAnalysisTransfer::transferAdditive(ConstantPropagationLattice *arg1Lat, ConstantPropagationLattice *arg2Lat, ConstantPropagationLattice *resLat, bool isAddition)
    {
@@ -320,6 +317,7 @@ ConstantPropagationAnalysisTransfer::transferDivision(ConstantPropagationLattice
         }
    }
 
+//! transfer the % operation
 void
 ConstantPropagationAnalysisTransfer::transferMod(ConstantPropagationLattice *arg1Lat, ConstantPropagationLattice *arg2Lat, ConstantPropagationLattice *resLat)
    {
@@ -350,6 +348,7 @@ ConstantPropagationAnalysisTransfer::visit(SgLongLongIntVal *sgn)
 void
 ConstantPropagationAnalysisTransfer::visit(SgLongIntVal *sgn)
    {
+   //TODO: similar logic as visit(SgIntVal *sgn)
    }
 
 void
@@ -513,8 +512,11 @@ ConstantPropagationAnalysis::genInitState(const Function& func, const DataflowNo
   // ???
   // vector<Lattice*> initLattices;
 	map<varID, Lattice*> emptyM;
+	// the finite vars exprs product lattice is initialized based on the result of liveness analysis (ldva), but why???
 	FiniteVarsExprsProductLattice* l = new FiniteVarsExprsProductLattice((Lattice*)new ConstantPropagationLattice(), emptyM/*genConstVarLattices()*/, 
 	                                                                     (Lattice*)NULL, ldva, /*func, */n, state);         
+// Liao, 7/1/2012. I don't think constant propagation's lattice initialization should be based on live variables only. So pass NULL to ldva.
+//     	                                                                     (Lattice*)NULL, NULL, /*func, */n, state);         
 	//Dbg::dbg << "DivAnalysis::genInitState, returning l="<<l<<" n=<"<<Dbg::escape(n.getNode()->unparseToString())<<" | "<<n.getNode()->class_name()<<" | "<<n.getIndex()<<">\n";
 	//Dbg::dbg << "    l="<<l->str("    ")<<"\n";
      initLattices.push_back(l);
