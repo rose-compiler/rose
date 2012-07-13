@@ -166,6 +166,7 @@ endif
 
 #Liao, 5/16/2009 add a set of self-verifiable test code with main() 
 # and let them run during make check
+# TV, 9/7/12 do not run them if using Clang
 TESTCODES_REQUIRED_TO_RUN =
 
 if !ROSE_USE_CLANG_FRONTEND

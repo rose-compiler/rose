@@ -22,6 +22,7 @@ SUBDIRS =
 if ROSE_USE_CLANG_FRONTEND
    SUBDIRS += C_tests
    SUBDIRS += C_subset_of_Cxx_tests
+# TV, 8/7/12, not ready yet
 #   SUBDIRS += CudaTests
 #   SUBDIRS += OpenClTests
 else
