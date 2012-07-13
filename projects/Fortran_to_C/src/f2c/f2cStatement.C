@@ -1,4 +1,4 @@
-#include "f2cStatement.h"
+#include "f2c.h"
 #include <algorithm>
 
 using namespace std;
@@ -32,7 +32,7 @@ void Fortran_to_C::translateFileName(SgProject* project)
       ROSE_ASSERT(found != string::npos);
     }
     
-    outputFilename.replace(found, 2, ".C");
+    outputFilename.replace(found, 2, ".c");
     outputFilename = "rose_f2c_" + outputFilename;
     if (SgProject::get_verbose() > 2)
     {
@@ -60,6 +60,7 @@ void Fortran_to_C::translateProgramHeaderStatement(SgProject* project)
     SgProgramHeaderStatement* programHeaderStatement = isSgProgramHeaderStatement(*i);
     
     // Get scopeStatement from SgProgramHeaderStatement
+    Sg_File_Info* fileInfo = Sg_File_Info::generateDefaultFileInfoForTransformationNode();
     SgScopeStatement* scopeStatement = programHeaderStatement->get_scope();
     ROSE_ASSERT(scopeStatement);
     
@@ -100,6 +101,16 @@ void Fortran_to_C::translateProgramHeaderStatement(SgProject* project)
     cFunctionDeclaration->set_definition(functionDefinition);
     programHeaderStatement->set_definition(NULL);
     
+    // Add return statement to the end of C function.
+    SgIntVal* returnValue = buildIntVal(0);
+    SgReturnStmt* returnStmt = buildReturnStmt(returnValue);
+    ROSE_ASSERT(returnStmt);
+    basicBlock->get_statements().insert(basicBlock->get_statements().end(),returnStmt);
+    returnStmt->set_parent(basicBlock);
+    
+    // The return value becomes the end of Construct.
+    returnValue->set_endOfConstruct(fileInfo);
+
     // Replace the SgProgramHeaderStatement with SgFunctionDeclaration.
     replaceStatement(programHeaderStatement,cFunctionDeclaration,true);
     

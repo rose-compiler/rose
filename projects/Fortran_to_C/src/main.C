@@ -13,7 +13,7 @@
 */  
 
 #include "rose.h"
-#include "f2c/f2cStatement.h"
+#include "f2c/f2c.h"
 
 using namespace std;
 using namespace Fortran_to_C;
@@ -41,6 +41,7 @@ int main( int argc, char * argv[] )
   translateProgramHeaderStatement(project);
   translateProcedureHeaderStatement(project);
   translateFortranDoLoop(project);
+  lineralizeArray(project);
       
 /*
   1. There should be no Fortran-specific AST nodes in the whole

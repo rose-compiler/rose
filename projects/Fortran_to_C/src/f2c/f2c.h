@@ -11,6 +11,8 @@ namespace Fortran_to_C
     void translateProcedureHeaderStatement(SgProject*);
     void translateFortranDoLoop(SgProject*);
     void fixFortranSymbolTable(SgNode*, bool);
+
+    void lineralizeArray(SgProject*); 
 }
 
 #endif  //_FORTRANTOC_H
