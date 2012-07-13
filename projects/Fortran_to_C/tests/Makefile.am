@@ -7,7 +7,11 @@ F2C_FLAGS = -rose:C_output_language
 TESTCODES_REQUIRED_TO_PASS = \
 							   implicitVariable1.F \
 							   implicitVariable2.F \
-							   array1.F \
+							   doloop1.F \
+							   doloop2.F \
+							   doloop3.F \
+							   implicitVariable1.F \
+							   implicitVariable2.F \
 							   program1.F \
 							   subroutine1.F \
 							   function1.F

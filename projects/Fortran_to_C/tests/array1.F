@@ -1,3 +1,2 @@
-      subroutine test1
-        real*4 test
+      program test1
       end

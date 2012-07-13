@@ -40,6 +40,7 @@ int main( int argc, char * argv[] )
   translateFileName(project);
   translateProgramHeaderStatement(project);
   translateProcedureHeaderStatement(project);
+  translateFortranDoLoop(project);
       
 /*
   1. There should be no Fortran-specific AST nodes in the whole

@@ -54,9 +54,8 @@ void Fortran_to_C::translateFileName(SgProject* project)
 /******************************************************************************************************************************/
 void Fortran_to_C::translateProgramHeaderStatement(SgProject* project)
 {
-  
-  Rose_STL_Container<SgNode*> ProgramHeaderStatementList = NodeQuery::querySubTree (project,V_SgProgramHeaderStatement);
-  for (Rose_STL_Container<SgNode*>::iterator i = ProgramHeaderStatementList.begin(); i != ProgramHeaderStatementList.end(); i++)
+  Rose_STL_Container<SgNode*> programHeaderStatementList = NodeQuery::querySubTree (project,V_SgProgramHeaderStatement);
+  for (Rose_STL_Container<SgNode*>::iterator i = programHeaderStatementList.begin(); i != programHeaderStatementList.end(); i++)
   {
     SgProgramHeaderStatement* programHeaderStatement = isSgProgramHeaderStatement(*i);
     
@@ -88,9 +87,12 @@ void Fortran_to_C::translateProgramHeaderStatement(SgProject* project)
                                                                                    scopeStatement,
                                                                                    decoratorList);
     
-    // Fix the function symbol declaration
+    // Remove original function symbol.  Keep the new function symbol with name of "main"
     SgFunctionSymbol* functionSymbol = isSgFunctionSymbol(scopeStatement->lookup_symbol(programHeaderStatement->get_name()));
-    functionSymbol->set_declaration(cFunctionDeclaration);
+    SgSymbolTable* globalSymbolTable = isSgSymbolTable(functionSymbol->get_parent());
+    globalSymbolTable->remove(functionSymbol);
+    functionSymbol->set_parent(NULL);
+    delete(functionSymbol);
     
     // Setup the C function declaration.
     deepDelete(cFunctionDeclaration->get_definition());
@@ -106,7 +108,7 @@ void Fortran_to_C::translateProgramHeaderStatement(SgProject* project)
        AST tree. Translator has to link these variable declaration to the main basic block under function declaration. 
     */
     fixFortranSymbolTable(functionDefinition,false);
-    
+   
     programHeaderStatement->set_parent(NULL);
     deepDelete(programHeaderStatement);
   }
@@ -329,4 +331,95 @@ void Fortran_to_C::fixFortranSymbolTable(SgNode* root, bool hasReturnVariable)
       ++j;
     }  // end of while loop
   }   // end of i loop
+}
+
+
+/******************************************************************************************************************************/
+/* 
+  Translate FortranDoLoop in Fortran into ForStatement in C.
+*/
+/******************************************************************************************************************************/
+void Fortran_to_C::translateFortranDoLoop(SgProject* project)
+{
+  Rose_STL_Container<SgNode*> fortranDoList = NodeQuery::querySubTree (project,V_SgFortranDo);
+  for (Rose_STL_Container<SgNode*>::iterator i = fortranDoList.begin(); i != fortranDoList.end(); i++)
+  {
+    SgFortranDo* fortranDo = isSgFortranDo(*i);
+    ROSE_ASSERT(fortranDo);
+
+    Sg_File_Info* fileInfo = Sg_File_Info::generateDefaultFileInfoForTransformationNode();
+
+    // Get FortranDo body
+    SgBasicBlock* loopBody = fortranDo->get_body();
+    fortranDo->set_body(NULL); 
+    // Get initialization
+    SgExpression* initialization = fortranDo->get_initialization();
+    fortranDo->set_initialization(NULL); 
+    // Get bound
+    SgExpression* bound = fortranDo->get_bound();
+    fortranDo->set_bound(NULL); 
+    // Get increment
+    SgExpression* increment = fortranDo->get_increment();
+    fortranDo->set_increment(NULL); 
+    // Get numerical label
+    SgLabelRefExp* numericLabel = fortranDo->get_numeric_label();
+    fortranDo->set_numeric_label(NULL);
+
+    // create forInitStatement
+    SgForInitStatement* forInitStatement = buildForInitStatement();
+    // Add the FortranDoLoop initialization into forInitStatement
+    forInitStatement->append_init_stmt(buildExprStatement(initialization));
+    forInitStatement->set_file_info(fileInfo);
+    // Get index variableExpression
+    ROSE_ASSERT(isSgBinaryOp(initialization));
+    SgExpression* variableExpression = ((SgBinaryOp*)initialization)->get_lhs_operand();
+    SgVarRefExp* varRefExp = isSgVarRefExp(variableExpression);
+    SgVariableSymbol* variableSymbol = varRefExp->get_symbol();
+
+    /* 
+      build C forStatement test case.
+      In theory, the initialization has to be a AssignOp.
+      LHS = initilized variable from initialization 
+      RHS = bound from FortranDoLoop                
+    */ 
+    SgLessOrEqualOp* lessOrEqualOp = buildLessOrEqualOp(buildVarRefExp(variableSymbol),
+                                                        bound);
+    SgExprStatement* testStatement = buildExprStatement(lessOrEqualOp);
+
+    /*
+      build C increment expression
+      generate "i = i + n" style of increment
+      
+      If increment in FortranDo is NULL, then the increment is 1 by default
+    */
+    SgAssignOp* cIncrementOp;
+    if(isSgNullExpression(increment) == NULL)
+    {
+      cIncrementOp = buildAssignOp(buildVarRefExp(variableSymbol),
+                                                  buildAddOp(buildVarRefExp(variableSymbol),
+                                                             increment));
+    }
+    else
+    {
+      cIncrementOp = buildAssignOp(buildVarRefExp(variableSymbol),
+                                                  buildAddOp(buildVarRefExp(variableSymbol),
+                                                  buildIntVal(1)));
+    }
+    // create C forStatement
+    SgForStatement* forStatement = buildForStatement(forInitStatement,
+                                                     testStatement,
+                                                     cIncrementOp,
+                                                     loopBody,
+                                                     NULL); 
+
+    forStatement->set_numeric_label(numericLabel);
+    forInitStatement->set_parent(forStatement);
+    testStatement->set_parent(forStatement);
+    cIncrementOp->set_parent(forStatement);
+    loopBody->set_parent(forStatement);
+
+    // Replace the SgFortranDo with SgForStatement
+    replaceStatement(fortranDo,forStatement,true);
+    deepDelete(fortranDo);
+  }
 }
