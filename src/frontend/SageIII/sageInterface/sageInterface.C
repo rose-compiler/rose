@@ -1913,6 +1913,15 @@ generateUniqueDeclaration ( SgDeclarationStatement* declaration )
 
      return keyDeclaration;
    }
+//! Extract a SgPragmaDeclaration's leading keyword . For example "#pragma omp parallel" has a keyword of "omp".
+std::string SageInterface::extractPragmaKeyword(const SgPragmaDeclaration *pragmaDeclaration)
+{
+  string pragmaString = pragmaDeclaration->get_pragma()->get_pragma();
+  istringstream istr(pragmaString);
+  std::string key;
+  istr >> key;
+  return key;
+}
 
 //! Check if a node is SgOmp*Statement
 bool SageInterface::isOmpStatement(SgNode* n)

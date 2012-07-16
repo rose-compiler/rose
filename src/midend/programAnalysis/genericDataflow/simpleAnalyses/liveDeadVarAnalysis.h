@@ -230,7 +230,7 @@ class VarsExprsProductLattice: public virtual ProductLattice
         //     currently live variables (these correspond to various useful constant variables like zeroVar)
         // allVarLattice - the lattice associated with allVar (the variable that represents all of memory)
         //     if allVarLattice==NULL, no support is provided for allVar
-        // func - the current function
+        // ldva - liveness analysis result. This can be set to NULL. Or only live variables at a CFG node will be used to initialize the product lattice
         // n - the dataflow node that this lattice will be associated with
         // state - the NodeState at this dataflow node
         VarsExprsProductLattice(Lattice* perVarLattice, 
