@@ -22,7 +22,7 @@ using namespace std;
   class analysisStatesToDOT : virtual public UnstructuredPassIntraAnalysis
   {
     private:
-      //    LiveDeadVarsAnalysis* lda; // reference to the source analysis
+      //LiveDeadVarsAnalysis* lda; // reference to the source analysis
       Analysis* lda; // reference to the source analysis
       void printEdge(const DataflowEdge& e); // print data flow edge
       void printNode(const DataflowNode& n, std::string state_string); // print date flow node
@@ -30,7 +30,7 @@ using namespace std;
     public:
       std::ostream* ostr; 
       // must transfer the custom filter from l, or the default filter will kick in!
-      analysisStatesToDOT (Analysis* l):  lda(l), Analysis(l->filter){ }; 
+      analysisStatesToDOT (Analysis* l): Analysis(l->filter), lda(l){ }; 
   };
   
   void analysisStatesToDOT::printEdge (const DataflowEdge& e)
@@ -60,7 +60,7 @@ using namespace std;
     void
   analysisStatesToDOT::visit(const Function& func, const DataflowNode& n, NodeState& state)
   { 
-    std::string state_str = state.str( lda, " ");
+    std::string state_str = state.str( lda, " "); // convert lattice into a string
     printNode(n, state_str);
     std::vector < DataflowEdge> outEdges = n.outEdges();
     for (unsigned int i = 0; i < outEdges.size(); ++i)
@@ -167,7 +167,7 @@ int dbgBuf::overflow(int c)
 int dbgBuf::printString(string s)
 {
         int r = baseBuf->sputn(s.c_str(), s.length());
-        if(r!=s.length()) return -1;
+        if(((size_t)r)!=s.length()) return -1;
         return 0;
 }
 
@@ -190,8 +190,8 @@ streamsize dbgBuf::xsputn(const char * s, streamsize n)
                 char spaceHTML[]="&nbsp;";
                 char tab[]="\t";
                 char tabHTML[]="&#09;";
-                char lt[]="&lt;";
-                char gt[]="&gt;";
+                //char lt[]="&lt;";
+                //char gt[]="&gt;";
                 while(i<n) {
                         int j;
                         for(j=i; j<n && s[j]!='\n' && s[j]!=' ' && s[j]!='\t'/* && s[j]!='<' && s[j]!='>'*/; j++) {
@@ -764,7 +764,7 @@ void dbgStream::addDOT(string imgFName, string graphName, string dot, ostream& r
         std::string escape(std::string s)
         {
                 string out;
-                for(int i=0; i<s.length(); i++) {
+                for(size_t i=0; i<s.length(); i++) {
                         // Manage HTML tags
                              if(s[i] == '<') out += "&lt;";
                         else if(s[i] == '>') out += "&gt;";
