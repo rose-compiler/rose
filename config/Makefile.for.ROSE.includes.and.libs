@@ -88,10 +88,10 @@ if ROSE_BUILD_ROSEHPCT
 endif
 
 # ROSE-YICES Package (destributed by SRI as a static library)
-if HAVE_LIBYICES
-  ROSE_YICES_INCLUDES = -I@YICES_PREFIX@/include
+if ROSE_HAVE_LIBYICES
+  ROSE_YICES_INCLUDES = -I@ROSE_YICES_PREFIX@/include
   ROSE_YICES_LIBS = -lyices
-  ROSE_YICES_LIBS_WITH_PATH = @YICES_PREFIX@/lib/libyices.a
+  ROSE_YICES_LIBS_WITH_PATH = @ROSE_YICES_PREFIX@/lib/libyices.a
 endif
 
 GLUT_LIBS = ${glut_path}

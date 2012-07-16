@@ -253,9 +253,9 @@ block_hash(SgAsmBlock *blk, unsigned char digest[20])
     /* Set original IP to a constant value so that hash is never dependent on the true original IP.  If the final IP doesn't
      * matter, then make it the same as the original so that the difference between the original and final does not include the
      * IP (SHA1 is calculated in terms of the difference). */
-    policy.get_orig_state().ip = policy.number<32>(0);
+    policy.get_orig_state().registers.ip = policy.number<32>(0);
     if (ignore_final_ip)
-        policy.get_state().ip = policy.get_orig_state().ip;
+        policy.get_state().registers.ip = policy.get_orig_state().registers.ip;
     return policy.SHA1(digest);
 }
 
@@ -1446,8 +1446,9 @@ main(int argc, char *argv[])
      * Final statistics
      *------------------------------------------------------------------------------------------------------------------------*/
     
-    if (SMTSolver::get_ncalls()>0)
-        printf("SMT solver was called %zu time%s\n", SMTSolver::get_ncalls(), 1==SMTSolver::get_ncalls()?"":"s");
+    size_t solver_ncalls = SMTSolver::get_class_stats().ncalls;
+    if (solver_ncalls>0)
+        printf("SMT solver was called %zu time%s\n", solver_ncalls, 1==solver_ncalls?"":"s");
     return 0;
 }
 

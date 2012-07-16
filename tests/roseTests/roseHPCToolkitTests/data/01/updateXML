@@ -1,0 +1,85 @@
+# This software was produced with support in part from the Defense Advanced
+# Research Projects Agency (DARPA) through AFRL Contract FA8650-09-C-1915.
+# Nothing in this work should be construed as reflecting the official policy
+# or position of the Defense Department, the United States government,
+# or Rice University.
+
+#--------------------------------------------------------------
+# Driver Makefile to generate sample HPCToolkit data in XML.
+
+CC = gcc
+CFLAGS = -g -O0
+CLDFLAGS =
+
+COUNTERS = TOT_CYC FP_OPS L1_DCM L2_TCM
+
+TARGET = example
+
+#--------------------------------------------------------------
+# HPCToolkit variables
+HPCT_ROOT = $(HOME)/hpctoolkit/INSTALL
+HPCT_RUN = $(HPCT_ROOT)/bin/hpcrun
+HPCT_PROF = $(HPCT_ROOT)/bin/hpcprof
+HPCT_STRUCT = $(HPCT_ROOT)/bin/hpcstruct
+HPCT_DATA = $(HOME)/hpcdata/INSTALL/hpcdata.sh
+
+OUT_PROFILE = PROFILE
+OUT_ANALYSIS = ANALYSIS
+OUT_PROGRAM = PROGRAM
+OUT_STRUCT = $(OUT_PROGRAM)/$(TARGET).hpcstruct
+#OUT_HPCVIEW = $(OUT_ANALYSIS)/analysis_config.hpcview
+OUT_ALL_EVENTS = $(OUT_ANALYSIS)/$(TARGET)_all_events.xml
+
+#--------------------------------------------------------------
+help:
+	@cat usage-Makefile.txt \
+		| sed "s,@COUNTERS@,$(COUNTERS),g" \
+		| sed "s,@OUT_PROFILE@,$(OUT_PROFILE),g" \
+		| sed "s,@OUT_ALL_EVENTS@,$(OUT_ALL_EVENTS),g" \
+		| sed "s,@OUT_STRUCT@,$(OUT_STRUCT),g" \
+		| sed "s,@TARGET@,$(TARGET),g"
+
+all: $(TARGET) struct profile analysis
+
+struct: $(OUT_STRUCT)
+
+profile: $(OUT_PROFILE)
+
+$(TARGET): $(TARGET).o
+	$(CC) $(CFLAGS) -o $@ $(TARGET).o
+
+$(OUT_STRUCT): $(TARGET)
+	mkdir -p `dirname $@`
+	$(HPCT_STRUCT) -I . $(TARGET) -o $@
+
+$(OUT_PROFILE): $(TARGET) $(OUT_STRUCT)
+	mkdir -p $(OUT_PROFILE)
+	for c in $(COUNTERS) ; do \
+		$(HPCT_RUN) -o $(OUT_PROFILE)/$$c-measurements -e PAPI_$$c@500000 ./$(TARGET) 6500 ; \
+	done
+	for c in $(COUNTERS) ; do \
+		$(HPCT_PROF) -I . -S $(OUT_STRUCT) $(OUT_PROFILE)/$$c-measurements -o  $(OUT_PROFILE)/$$c-database; \
+		bash $(HPCT_DATA) -o $(OUT_PROFILE)/PAPI_$$c.xml $(OUT_PROFILE)/$$c-database/experiment.xml; \
+		rm -rf $(OUT_PROFILE)/$$c-measurements $(OUT_PROFILE)/$$c-database; \
+	done
+
+analysis: $(TARGET) $(OUT_STRUCT)
+	mkdir -p $(OUT_ANALYSIS)
+	event_list='' ; \
+	for c in $(COUNTERS) ; do \
+		event_list="$${event_list} -e PAPI_$$c@500000" ; \
+	done ; \
+	echo "event list is " $${event_list}; \
+	$(HPCT_RUN) -o $(OUT_ANALYSIS)/all_events-measurements $${event_list} ./$(TARGET) 6500 ; \
+	$(HPCT_PROF) -I . -S $(OUT_STRUCT) $(OUT_ANALYSIS)/all_events-measurements -o  $(OUT_ANALYSIS)/all_events-database
+	bash $(HPCT_DATA) -o $(OUT_ALL_EVENTS) $(OUT_ANALYSIS)/all_events-database/experiment.xml
+	rm -rf $(OUT_ANALYSIS)/all_events-measurements $(OUT_ANALYSIS)/all_events-database
+
+.c.o:
+	$(CC) $(CFLAGS) -o $@ -c $<
+
+clean:
+	rm -f *.o core *~ $(TARGET)
+	rm -rf $(OUT_PROFILE) $(OUT_PROGRAM)
+
+# eof

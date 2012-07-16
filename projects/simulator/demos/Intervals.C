@@ -34,15 +34,15 @@ protected:
     void initialize_register_intervals(RSIM_Thread *t) {
         IntervalSemantics::State<> &dst = policy.get_state();
         RSIM_Semantics::InnerState<> &src = t->policy.get_concrete_state();
-        assert(dst.n_gprs==src.n_gprs);
-        for (size_t i=0; i<dst.n_gprs; ++i)
-            dst.gpr[i] = convert(src.gpr[i]);
-        assert(dst.n_segregs==src.n_segregs);
-        for (size_t i=0; i<dst.n_segregs; ++i)
-            dst.segreg[i] = convert(src.segreg[i]);
-        assert(dst.n_flags==src.n_flags);
-        for (size_t i=0; i<dst.n_flags; ++i)
-            dst.flag[i] = convert(src.flag[i]);
+        assert(dst.registers.n_gprs==src.registers.n_gprs);
+        for (size_t i=0; i<dst.registers.n_gprs; ++i)
+            dst.registers.gpr[i] = convert(src.registers.gpr[i]);
+        assert(dst.registers.n_segregs==src.registers.n_segregs);
+        for (size_t i=0; i<dst.registers.n_segregs; ++i)
+            dst.registers.segreg[i] = convert(src.registers.segreg[i]);
+        assert(dst.registers.n_flags==src.registers.n_flags);
+        for (size_t i=0; i<dst.registers.n_flags; ++i)
+            dst.registers.flag[i] = convert(src.registers.flag[i]);
     }
 
 public:
@@ -59,9 +59,10 @@ public:
             SgAsmx86Instruction *insn = isSgAsmx86Instruction(args.insn);
             if (triggered && insn) {
                 RTS_Message *m = args.thread->tracing(TRACE_MISC);
+                m->mesg("%s: %s", name, unparseInstructionWithAddress(insn).c_str());
                 semantics.processInstruction(insn);
                 std::ostringstream ss; ss <<policy;
-                m->mesg("%s: %s\n%s", name, unparseInstructionWithAddress(insn).c_str(), ss.str().c_str());
+                m->mesg("%s", ss.str().c_str());
             }
         }
         return enabled;

@@ -12,20 +12,50 @@ operator<<(std::ostream &o, const SMTSolver::Exception &e)
     return o <<"SMT solver: " <<e.mesg;
 }
 
-size_t SMTSolver::total_calls;
+SMTSolver::Stats SMTSolver::class_stats;
+RTS_mutex_t SMTSolver::class_stats_mutex = RTS_MUTEX_INITIALIZER(RTS_LAYER_ROSE_SMT_SOLVERS);
 
-bool
+void
+SMTSolver::init()
+{}
+
+// class method
+SMTSolver::Stats
+SMTSolver::get_class_stats() 
+{
+    Stats retval;
+    RTS_MUTEX(class_stats_mutex) {
+        retval = class_stats;
+    } RTS_MUTEX_END;
+    return retval;
+}
+
+// class method
+void
+SMTSolver::reset_class_stats()
+{
+    RTS_MUTEX(class_stats_mutex) {
+        class_stats = Stats();
+    } RTS_MUTEX_END;
+}
+
+SMTSolver::Satisfiable
 SMTSolver::satisfiable(const std::vector<InsnSemanticsExpr::TreeNodePtr> &exprs)
 {
-    bool retval = false;
+    Satisfiable retval = SAT_UNKNOWN;
+    bool got_satunsat_line = false;
 
 #ifdef _MSC_VER
     // tps (06/23/2010) : Does not work under Windows
     abort();
 #else
 
-    total_calls++;
-    output_text.clear();
+    clear_evidence();
+    ++stats.ncalls;
+    RTS_MUTEX(class_stats_mutex) {
+        ++class_stats.ncalls;
+    } RTS_MUTEX_END;
+    output_text = "";
 
     /* Generate the input file for the solver. */
     char config_name[L_tmpnam];
@@ -41,6 +71,13 @@ SMTSolver::satisfiable(const std::vector<InsnSemanticsExpr::TreeNodePtr> &exprs)
     Definitions defns;
     generate_file(config, exprs, &defns);
     config.close();
+    struct stat sb;
+    int status = stat(config_name, &sb);
+    assert(status>=0);
+    stats.input_size += sb.st_size;
+    RTS_MUTEX(class_stats_mutex) {
+        class_stats.input_size += sb.st_size;
+    } RTS_MUTEX_END;
 
     /* Show solver input */
     if (debug) {
@@ -55,44 +92,53 @@ SMTSolver::satisfiable(const std::vector<InsnSemanticsExpr::TreeNodePtr> &exprs)
         }
     }
 
-    /* Run the solver and read its output */
+    /* Run the solver and read its output. The first line should be the word "sat" or "unsat" */
     {
         std::string cmd = get_command(config_name);
         FILE *output = popen(cmd.c_str(), "r");
         assert(output!=NULL);
         char *line = NULL;
         size_t line_alloc = 0;
-        while (rose_getline(&line, &line_alloc, output)>0)
-            output_text.push_back(std::string(line));
+        ssize_t nread;
+        while ((nread=rose_getline(&line, &line_alloc, output))>0) {
+            stats.output_size += nread;
+            RTS_MUTEX(class_stats_mutex) {
+                class_stats.output_size += nread;
+            } RTS_MUTEX_END;
+            if (!got_satunsat_line) {
+                if (0==strncmp(line, "sat", 3) && isspace(line[3])) {
+                    retval = SAT_YES;
+                    got_satunsat_line = true;
+                } else if (0==strncmp(line, "unsat", 5) && isspace(line[5])) {
+                    retval = SAT_NO;
+                    got_satunsat_line = true;
+                } else {
+                    std::cerr <<"SMT solver failed to say \"sat\" or \"unsat\"\n";
+                    abort();
+                }
+            } else {
+                output_text += std::string(line);
+            }
+        }
         if (line) free(line);
         int status = pclose(output);
         if (debug) {
             fprintf(debug, "Running SMT solver=\"%s\"; exit status=%d\n", cmd.c_str(), status);
-            fprintf(debug, "SMT Solver output:\n");
-            for (size_t i=0; i<output_text.size(); i++)
-                fprintf(debug, "     %5zu: %s", i+1, output_text[i].c_str());
+            fprintf(debug, "SMT Solver reported: %s\n", (SAT_YES==retval ? "sat" : SAT_NO==retval ? "unsat" : "unknown"));
+            fprintf(debug, "SMT Solver output:\n%s", StringUtility::prefixLines(output_text, "     ").c_str());
         }
     }
 
-    /* First line should be the word "sat" or "unsat" */
-    assert(!output_text.empty());
-    if (output_text[0]=="sat\n") {
-        retval = true;
-    } else if (output_text[0]=="unsat\n") {
-        retval = false;
-    } else {
-        std::cerr <<"SMT solver failed to say \"sat\" or \"unsat\"\n";
-        abort(); /*probably not reached*/
-    }
-
     unlink(config_name);
-    parse_evidence();
+
+    if (SAT_YES==retval)
+        parse_evidence();
 #endif
     return retval;
 }
     
 
-bool
+SMTSolver::Satisfiable
 SMTSolver::satisfiable(const InsnSemanticsExpr::TreeNodePtr &tn)
 {
     std::vector<InsnSemanticsExpr::TreeNodePtr> exprs;
