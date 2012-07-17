@@ -188,7 +188,16 @@ class NodeState
         Lattice* getLatticeAbove(const Analysis* analysis, int latticeName) const;
         // returns the given lattice from below the node that is owned by the given analysis
         Lattice* getLatticeBelow(const Analysis* analysis, int latticeName) const;
-        
+
+        //! returns all the lattices from above the CFG node (corresponding to SgNode and an CFG index) that are owned by the given analysis
+        // (read-only access)
+        static const std::vector<Lattice*>& getLatticeAbove(const Analysis* analysis, SgNode* n, unsigned int index ) ;
+
+        // returns all the lattices from below the CFG node (corresponding to SgNode and an CFG index) that are owned by the given analysis
+        // (read-only access)
+        static const std::vector<Lattice*>& getLatticeBelow(const Analysis* analysis, SgNode* n, unsigned int index) ;
+
+       
         // returns the map containing all the lattices from above the node that are owned by the given analysis
         // (read-only access)
         const std::vector<Lattice*>& getLatticeAbove(const Analysis* analysis) const;
