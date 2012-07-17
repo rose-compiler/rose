@@ -1,5 +1,5 @@
-#ifndef _FUNCTIONS_H_
-#define _FUNCTIONS_H_
+#ifndef _OMP_CHECKER_INTERFACE_H_
+#define _OMP_CHECKER_INTERFACE_H_
 
 #include <iostream>
 #include <string>
@@ -13,62 +13,94 @@
 #include "yicesl_c.h"
 
 
+  #define List Rose_STL_Container< SgNode* >
 
+  #define Iter List::iterator
 
+  #define CIter List::const_iterator
+
+  #define Query NodeQuery::querySubTree
+
+  #define EnclNode SageInterface::getEnclosingNode
 
 namespace ompCheckerInterface
 {
-	
-	using std::cout;
-	using std::cin;
-	using std::endl;
-	using std::string;
-	using std::vector;
-	using std::stringstream;
-	
-#define List Rose_STL_Container< SgNode* >
-	
-#define Iter List::iterator
-	
-#define CIter List::const_iterator
-	
-#define Query NodeQuery::querySubTree
-	
-#define EnclNode SageInterface::getEnclosingNode	
 
-                   /* Fucntion Prototypes */
 
-void showNodeInfo( SgNode* );
+ //! visit AST nodes of OpenMP program 
 
-void process_omp_parallel( SgOmpParallelStatement* );
+  class visitorTraversal : public AstSimpleProcessing {
+      public:
+         visitorTraversal();
+         virtual void visit( SgNode* n );
+         virtual void atTraversalEnd();
+   };
 
-void getPrivateVarRefs( const SgOmpClausePtrList &,  SgVarRefExpPtrList & );
+ //! setup a constraints for SMT solver
+  class SMTModel {
+  
+   public: 
+	    SMTModel();
+        
+	    int varRaceNumber;
+        
+	    void varRaceNumberFinding(List& list);
+	   
+	    yices_expr varConstraints( SgVarRefExp* var );
+        
+	    bool SatOrUnsat(yices_expr varExp );
 
-void flagLocalPrivate( const List &, const List &, SgVarRefExpPtrList & );
+  };
 
-void removeExclusive( List &);
 
-void gatherReferences( const List &, List &);
+ /* Fucntion Prototypes of OpenMP Checker */
 
-void getUnique( List &);
+ //!  /* show reference node information  */ 
+ void showNodeInfo( SgNode* ); 
 
-void getUnique( SgVarRefExpPtrList &);
+ //!  /* process #pragma omp parallel region   */
+ void process_omp_parallel( SgOmpParallelStatement* );
 
-string getName( SgNode* );
+ //!  /* gather private variable references from omp clause */
+ void getClausetPrivateVarRefs( const SgOmpClausePtrList &,  SgVarRefExpPtrList & );
 
-void identifyRaces( const List &, const SgVarRefExpPtrList &, List &);
+ //! /* gather local variables as private in omp parallel region  */
+ void flagLocalPrivate( const List &, const List &, SgVarRefExpPtrList & );
 
-void showMembers( const List &);
+ //! /* delete expressions from critical, single, master.etc */
+ void removeExclusive( List &);
 
-void showMembers( const SgVarRefExpPtrList &);
+ //! /* gather references from remaining expressions in parallel region  */
+ void gatherReferences( const List &, List &);
 
-void removeTrivial( List &);
+ //! /* delete the duplcate varaibles in all references list*/
+ void getUnique( List &);
 
-void printWarnings( const vector<string> &);
+ //! /* delete the duplicate variables from clauses */
+ void getUnique( SgVarRefExpPtrList &);
 
-void printRaces( const List &, const List &);
+ //! /* get variables name */
+ std::string getName( SgNode* );
+
+ //! /* identify the race condiftions using SMT solver */
+ void identifyRaces( const List &, const SgVarRefExpPtrList &, List &);
+
+ //! /* show container information using by debug */
+ void showMembers( const List &);
+
+ //! /* show container inoformation using by debug */
+ void showMembers( const SgVarRefExpPtrList &);
+
+ //! /* remove duplicate element */
+ void removeTrivial( List &);
+
+ //! /* display reference information on warnings */
+ void printWarnings( const std::vector<std::string> &);
+
+ //! /* display reference information on RACEs */
+ void printRaces( const List &, const List &);
 
 
 }
 
-#endif
+#endif // _OMP_CHECKER_INTERFACE_H_

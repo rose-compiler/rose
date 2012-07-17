@@ -1,3 +1,13 @@
+/*
+
+varibale tid and sum are shared, array variable a[], b[], c[] are shared, but both a and b are only read, c[] is written.
+A class member is aa, the operation in class definition mul() should have been omp critical to prevent race condition.  
+
+*/
+
+
+
+
 #include <omp.h>
 #include <stdio.h>
 #include <stdlib.h>

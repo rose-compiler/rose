@@ -1,14 +1,17 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 bin_PROGRAMS = ompChecker
-ompChecker_SOURCES = ompChecker.C \
-                     ompCheckInterface.h 
+ompChecker_SOURCES = ompChecker.cpp \
+                     ompCheckInterface.cpp \
+                     ompCheckInterface.h  
 
 INCLUDES = $(ROSE_INCLUDES)
 LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
-C_TESTCODES_REQUIRED_TO_PASS = \
-                       	omptest.c 
+C_TESTCODES_REQUIRED_TO_PASS = \ 
+                        c_pi.c \
+                        c_lu.c \
+                        c_fft.c  
 
 CXX_TESTCODES_REQUIRED_TO_PASS = \
                         omptest1.cpp 
