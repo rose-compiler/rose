@@ -6,9 +6,11 @@
 \section{Adding Contributions to ROSE}%{{{
 
    We will be happy to work with you if you want to add new features to ROSE.
-We can setup a special SVN branch for you so that you can checkin your work and
-also update with our constant work on ROSE (on you schedule).  We can synchronize with 
-you to decide when we can review your work and merge your branch into the main trunk.
+We have an external git repository at \url{https://github.com/rose-compiler/rose}. 
+You can publish your contributions there using a fork of our repository and send a pull request to us to review and merge your contributions.
+%We can setup a special SVN branch for you so that you can checkin your work and
+%also update with our constant work on ROSE (on you schedule).  We can synchronize with 
+%you to decide when we can review your work and merge your branch into the main trunk.
 
 {\bf The number one most important aspect about any contribution you make is that it
 should include test codes that demonstrate the feature and test it within our 
@@ -45,13 +47,14 @@ feature to ROSE, show us your tests.
 This section is most useful for ROSE developers who have access to LLNL's network file
 system (NFS).
 \newline\newline
-We have (2) Git repositories:
+We have (3) Git repositories:
 \begin{itemize}
 	\item internal: \textit{/nfs/casc/overture/ROSE/git/ROSE.git}
-	\item external: \url{http://www.rosecompiler.org/rose.git} -- is synced with the internal repository.
+	\item external: \url{https://github.com/rose-compiler/rose} -- is synced with the internal repository.
+	\item external(being phased out): \url{http://www.rosecompiler.org/rose.git} -- is synced with the internal repository.
 \end{itemize}
 
-\textit{We also have an external SVN repository (see Section~\ref{gettingStarted::svn})}.
+%\textit{We also have an external SVN repository (see Section~\ref{gettingStarted::svn})}.
 %----------------------------------------------------------------------------------------
 %--
 	\subsection{Continuous Integration in ROSE}
@@ -130,6 +133,10 @@ in~\ref{gettingStarted::svn}.
 For advanced external users who are comfortable with git. 
 We have an external git repository which is cloned and synchronized with our internal shared repository. 
 To clone the external git repository, simply type:
+
+\textit{git clone https://github.com/rose-compiler/rose.git}
+
+Or 
 
 \textit{git clone http://www.rosecompiler.org/rose.git}
 
@@ -382,292 +389,227 @@ Git cheat sheet: \htmladdnormallink{http://cheat.errtheblog.com/s/git}{http://ch
 
 
 %Added by Liao 10/17/2008
- \section{Working with the ROSE SVN repository}%{{{
-\label{gettingStarted::svn}
-We maintain an external subversion repository for ROSE at SciDAC Outreach
-Center. It is synchronized with the internal shared git repository using a
-vendor drop scheme (building a distribution from the git repository and
-load the content of the distribution to the svn repository). 
-Some tips for using them are gathered in this section. 
+%phased out by Liao 7/12/2012
+%-------------------------------------------------------------
+\section{Working with the ROSE SVN repository (phasing out)}%{{{
+  \label{gettingStarted::svn}
+  We maintain an external subversion repository for ROSE at SciDAC Outreach
+    Center. It is synchronized with the internal shared git repository using a
+    vendor drop scheme (building a distribution from the git repository and
+        load the content of the distribution to the svn repository). 
+    Some tips for using them are gathered in this section. 
 
-If you are our external (non-LLNL) users who make contributions to ROSE,
-we highly recommend you to work on a dedicated branch of the external repository. 
-We can create the branch for you on request. And you need to apply an account of
-the SciDAC Outreach Center to have write access to your branch. 
+    If you are our external (non-LLNL) users who make contributions to ROSE,
+       we highly recommend you to work on a dedicated branch of the external repository. 
+         We can create the branch for you on request. And you need to apply an account of
+         the SciDAC Outreach Center to have write access to your branch. 
 
-Here are the steps to have an account with write access to ROSE's branches:
-Please follow the link on
-\htmladdnormallink{https://outreach.scidac.gov/account/register.php}{https://outreach.scidac.gov/account/register.php}
-to fill out a registration form (Project name: ROSE, PI: Daniel Quinlan)
-and fax a signed use policies form as instructed on the registration page.
-After getting your account, you need to log into the website and go to page
-\htmladdnormallink{https://outreach.scidac.gov/projects/rose/}{https://outreach.scidac.gov/projects/rose/}.
-Click "Request to join" on the top-right screen to request to join the ROSE
-project and we will grant you the write access to your branch. 
+         Here are the steps to have an account with write access to ROSE's branches:
+         Please follow the link on
+         \htmladdnormallink{https://outreach.scidac.gov/account/register.php}{https://outreach.scidac.gov/account/register.php}
+  to fill out a registration form (Project name: ROSE, PI: Daniel Quinlan)
+    and fax a signed use policies form as instructed on the registration page.
+    After getting your account, you need to log into the website and go to page
+    \htmladdnormallink{https://outreach.scidac.gov/projects/rose/}{https://outreach.scidac.gov/projects/rose/}.
+    Click "Request to join" on the top-right screen to request to join the ROSE
+    project and we will grant you the write access to your branch. 
 
-Some frequently used commands for ROSE external developers are listed
-below:
-\begin{itemize}
-\item Install your svn client ($>=$1.5.1 is recommended ) with
-\textit{libsvn\_ra\_dav} support
-(\htmladdnormallink{http://www.webdav.org/neon}{http://www.webdav.org/neon}
-and \textit{--with-ssl}) or set the right \textit{LD\_LIBRARY\_PATH} for it
-(\textit{libsvn\_ra\_dav-1.so}) if you encounter the following problem:\\
- \textit{svn: Unrecognized URL scheme for
- 'https://outreach.scidac.gov/svn/rose/trunk'} 
-\item To check out the main trunk, type: \\
-\textit{svn checkout https://outreach.scidac.gov/svn/rose/trunk rose}
-\item To check out a branch, type: \\
-\textit{svn checkout
-https://outreach.scidac.gov/svn/rose/branches/branch\_name rose} 
-\item Merge the new updates of the main trunk into your working branch. 
-Conceptually, svn merge works as two step: diff two revisions and merge the different into a working copy.
-So you need to know two revision numbers of the main
-trunk:
-the first is
-the latest revision number of the main trunk from which your branch was
-created (or most recently synchronized);
-the second is usually the head revision of the main trunk.
-\footnote{Subversion 1.5 is said to support svn merge with the head of
-a main trunk without explicitly specifying the beginning and end revision
-numbers. But this new feature is not mature enough to be used in our work
-as our tests showed. We will try to use the new feature later on when it
-becomes dependable.}: 
+    Some frequently used commands for ROSE external developers are listed
+    below:
+    \begin{itemize}
+  \item Install your svn client ($>=$1.5.1 is recommended ) with
+    \textit{libsvn\_ra\_dav} support
+    (\htmladdnormallink{http://www.webdav.org/neon}{http://www.webdav.org/neon}
+     and \textit{--with-ssl}) or set the right \textit{LD\_LIBRARY\_PATH} for it
+    (\textit{libsvn\_ra\_dav-1.so}) if you encounter the following problem:\\
+    \textit{svn: Unrecognized URL scheme for
+      'https://outreach.scidac.gov/svn/rose/trunk'} 
+      \item To check out the main trunk, type: \\
+      \textit{svn checkout https://outreach.scidac.gov/svn/rose/trunk rose}
+  \item To check out a branch, type: \\
+    \textit{svn checkout
+      https://outreach.scidac.gov/svn/rose/branches/branch\_name rose} 
+      \item Merge the new updates of the main trunk into your working branch. 
+      Conceptually, svn merge works as two step: diff two revisions and merge the different into a working copy.
+      So you need to know two revision numbers of the main
+      trunk:
+      the first is
+      the latest revision number of the main trunk from which your branch was
+      created (or most recently synchronized);
+  the second is usually the head revision of the main trunk.
+    \footnote{Subversion 1.5 is said to support svn merge with the head of
+      a main trunk without explicitly specifying the beginning and end revision
+        numbers. But this new feature is not mature enough to be used in our work
+        as our tests showed. We will try to use the new feature later on when it
+        becomes dependable.}: 
 
-\begin{itemize}
+        \begin{itemize}
   \item find the revision in which your branch was created or the last
-  synchronization point with the trunk:\\ 
-         \textit{svn log
-         https://outreach.scidac.gov/svn/rose/branches/branch\_name} 
-  \item cd local work copy of your branch, do the merge (overlapped merging
-  seems possible using subversion 1.5.1), assume the last synchronization
-  point(or originating point) is rev 56:\\
-        \textit{svn merge --dry-run -r 56:69
+    synchronization point with the trunk:\\ 
+    \textit{svn log
+      https://outreach.scidac.gov/svn/rose/branches/branch\_name} 
+      \item cd local work copy of your branch, do the merge (overlapped merging
+          seems possible using subversion 1.5.1), assume the last synchronization
+      point(or originating point) is rev 56:\\
+      \textit{svn merge --dry-run -r 56:69
         https://outreach.scidac.gov/svn/rose/trunk} \\
         \textit{svn merge -r 56:69
-        https://outreach.scidac.gov/svn/rose/trunk} 
-   \item Solve conflicts as needed.
-   \item svn commit: {\bf Note:please record the start and end revision numbers of
-   the main trunk being merged into the commit log to keep track of merging.
-   Please put this information on the first line if this is a commit following a
-   merge of your branch with the main trunk (see Commit Message Format in subsection~\ref{CommitMessageFormat} for details)}
-\end{itemize}                
-\item You can check the archive of email notifications of the svn commits
-from \htmladdnormallink{https://osp5.lbl.gov/pipermail/rose-commits}{https://osp5.lbl.gov/pipermail/rose-commits} 
-\end{itemize}
-
-\subsection{Commit Message Format}
-\label{CommitMessageFormat}
-   The automatically generated ChangeLog2 file will provide everyone with
-detailed information about what changes are made to ROSE over time. To
-make this information as clear and consistent as possible we have two
-(slightly different) commit message formats:
-% There are two styles of commit message formats: 
-1) normal commits of your local contributions to your branch or to 
-   the internal SVN trunk; and
-2) commits after a merge of the main trunk's changes.
-\begin{enumerate}
-   \item Normal svn commit (not those following an svn merge)
-   \begin{itemize}
-      \item {\tt svn commit} will start your favorite editor where you should enter a
-	    description of your changes. The first line of that description should be
-            a short, one-line summary ({\it i.e.}, a title with just the first word capitalized),
-            followed by a blank line, and as much detail as necessary. There is generally
-            no need to includes your name, date, names of files, etc. as this information
-            is readily available from the source revision management system. Do not prefix
-            the summary with tags like ``Summary:'', ``Title:'' etc. since it's already
-            implied that the first line is the summary.
-
-	    Here's an example specific to a commit on the internal SVN or an SVN branch:
-	    {\indent
-	       \begin{verbatim}
-Adjusted test case for new binary function detection
-    
-This test case assumed that the only functions in a binary executable
-were those that had symbols in the symbol table.  This is no longer
-true since we now determine function boundaries with a wider variety of
-heuristics.
-	       \end{verbatim} 
-            }
-   \end{itemize}
-   \item For the svn commit at any point after your svn merge \\
-	    Here's an example specific to a commit message on an SVN branch after a merge:
-	    {\indent
-	       \begin{verbatim}
-svn merge -r 402:428 https://outreach.scidac.gov/svn/rose/trunk
-	       \end{verbatim} 
-            }
-   \item If you mix an svn merge and some local contributions in one svn
-   commit (we don't suggest mixing them)\\
-	    Here's an example specific to the commit on an SVN branch ({\em note first line}):
-	    {\indent
-	       \begin{verbatim}
-svn merge -r 402:428
-Adjusted test case for new binary function detection
-    
-This test case assumed that the only functions in a binary executable
-were those that had symbols in the symbol table.  This is no longer
-true since we now determine function boundaries with a wider variety of
-heuristics.
-	       \end{verbatim} 
-            }
-\end{enumerate}
-
-
-% Moved this from being a section (1.6) to being a subsection (1.2.2)
-\subsection{Check In Process}
-
-   The following information applies to both the internal SVN reposiotry and the 
-branches that we provide to external collaborators.  There are a number of details
-that we need to make sure that your developent work can be used to update ROSE.
-
-For internal SVN users:
-{\bf Please get permission from the ROSE Development Team before you make your first check-in!}
-
-For all SVN users:
-   If you have access to the SVN repository (at LLNL) and are building the development 
-version of ROSE (available only from SVN, not what we package as a ROSE distribution; 
-e.g. not from a file name such as ROSE-\VersionNumber.tar.gz) then 
-% the README file in the top level directory also has instructions for how to get started. 
-there are a number of steps to the checkin process:
-%The README\_CHECKIN file has the instructions for our standard testing process.
-%This should be done before you check anything in; we don't reprint it so it is
-%represented at most only once.
-% {\bf NOTE: Get permission from the ROSE Development Team before you make your first check-in!}
-\begin{enumerate}
-   \item Make sure you are working with the latest update (run {\tt svn update} in the top
-    level directory.
-
- % \item In {\em ROSE/configure.in} modify version number (X.Y.ZZL) at the top of the file.
-
-   \item Run {\tt make} \&\& {\tt make docs} \&\& {\tt make check} \&\&
-   {\tt make dist} \&\& 
-         {\tt make distcheck} \&\& {\tt make install} \&\& {\tt make installcheck}, depending
-         on how aggressively you want your changes to be tested.
-   \begin{itemize}
-      \item Not all tests must be run, but we will know who you are (via {\tt svn blame} 
-            if the nightly test fail :-)).
-      \item All changes must at least compile, so that you don't hold back other
-            developers who update often.
-   \end{itemize}
-   \item The commit will fail if someone else has committed while you were running
-         your pre-commit tests. If this happens you will generally need to restart
-         the check-in process from the top.
-   \item Please follow the commit message format (see Commit Message Format in 
-         subsection~\ref{CommitMessageFormat} for details).
-
-%   \item ROSE/ChangeLog
-%   a new entry has to include at least the following information:
-%   - new version number
-%   - who checked it in
-%   - comments on changes
-%   - run 'cvschk' in your ROSE directory.
-%     copy the output of 'cvschk' to the ChangeLog (except "Extra Files")
-%     (this includes all version numbers of tools used, etc.)
-%
-% 4) Send an e-mail to casc-rose@llnl.gov that you are checking in a new 
-%    version of ROSE. Include the new version number in this e-mail.
-%
-% 6) check out a fresh version of ROSE in a new directory
-%   - run all tests as above, in part 2, on this checked-out version
-%   - make sure all tests succeed
-%
-% 7) cvs rtag ROSE-X-Y-ZZL ROSE
-%    - X-Y-ZZL has to be the same version number as in configure.in
-%      (X, Y, Z are numbers, L is a letter, note that here '-' is used instead
-%       of '.' as in configure.in)
-%
-% 8) send out e-mail that check-in was successful
-%    - copy & paste the output of make distcheck that the new version is ready
-%      for distribution in this e-mail.
-%    - include your new comments from the ChangeLog
-%
-% regular definition of version number:
-% X=Y=Z=[0-9], L=[a-z]
-% X.Y.ZZL /* in configure.in */
-% X-Y-ZZL /* when using cvs rtag */
-%
-% Note that in configure.in '.' is used to separate X,Y,ZZL where as with
-% etag '-' must be used, X-Y-ZZL!
-
-\end{enumerate}
-
-If you do not have access to the SVN repository at LLNL, and you wish to contribute
-work to the ROSE project, please make a patch.  Using the external SVN access via
-LBL use {\tt svn diff} to build a patch.
-Consider options: {\em --diff-cmd arg}.
-DQ(7/28/2008): This section still needs to be completed!
-
-
-
-\subsection{The Internal Repository}
-The tips here only apply to internal users who have access to LLNL
-machines.
-Again, make sure you are using subversion $>$ 1.4.x, 1.5.1 and up is recommended.
-\begin{itemize}
-\item Set local subversion configuration to ignore certain files and
-automatically set file attributes (e.g. binary or text files ) during committing. 
-A sample config file is available in the internal ROSE subversion repository:\\
-  \textit{trunk/ROSE/scripts/subversion.config}
-Please save it to your own .subversion/config before committing files. 
-\item List content in the repository:
-  \begin{itemize}
-          \item list root info: \textit{svn list
-          file:///nfs/casc/overture/ROSE/svn/ROSE}
-          \item list all branches: \textit{svn list
-          file:///nfs/casc/overture/ROSE/svn/ROSE/branches}
-          \item list all tags: \textit{svn list
-          file:///nfs/casc/overture/ROSE/svn/ROSE/tags} 
-   \end{itemize}       
-\item Check out something:
-   \begin{itemize}
-          \item the main trunk: \textit{svn co
-          file:///nfs/casc/overture/ROSE/svn/ROSE/trunk/ROSE rose-svn} 
-          \item a tag: \textit{svn co
-          file:///nfs/casc/overture/ROSE/svn/ROSE/tags/tag-name}
-          \item a branch: \textit{svn co
-          file:///nfs/casc/overture/ROSE/svn/ROSE/branches/branch-name} 
-          \item Either of these can be used on a separate machine (not CASC
-          or LC) with LLNL VPN access by changing \textit{file:///} to
-          \textit{svn+ssh://username@hostname/}. 
-    \end{itemize}      
-\item Merge the contributions from a branch of the external SVN repository (on SciDAC
-web site) to our internal repository at LLNL. Assume the branch is named \textit{testonly} and the
-contribution is from r4 to r5,
-\textit{sourcetree} is the working copy of the internal repository (Subversion 1.5 works better than 1.4.x):
-  \begin{itemize}
-          \item run make check, make dist, make distcheck on the external branch before the merge
-        % \item \textit{svn status} to check modified and new files. 
-        % \item \textit{svn add file-name} to add new files if there are any.
-          \item \textit{svn merge --dry-run -r4:5
-          https://outreach.scidac.gov/svn/rose/branches/testonly
-          sourcetree} 
-          \item \textit{svn merge -r4:5
-          https://outreach.scidac.gov/svn/rose/branches/testonly
-          sourcetree}
-          \item solve any possible conflicts alone the way
-           \item svn commit: please record the start and end revision numbers of
-         the external branch being merged into the log to keep track of merging. 
-         Please also copy the corresponding log content into the
-         commit message to preserve their commit messages.
-   \end{itemize}
-
-\item branches   
-    \begin{itemize}
-    \item Add a new branch based on the head of the main trunk:\\
-    \textit{svn cp file:///nfs/casc/overture/ROSE/svn/ROSE/trunk/ROSE file:///nfs/casc/overture/ROSE/svn/ROSE/branches/branch-name}
-    \item Delete a branch: \\
-    \textit{svn delete file:///nfs/casc/overture/ROSE/svn/ROSE/branches/branch-name}
+          https://outreach.scidac.gov/svn/rose/trunk} 
+          \item Solve conflicts as needed.
+          \item svn commit: {\bf Note:please record the start and end revision numbers of
+            the main trunk being merged into the commit log to keep track of merging.
+              Please put this information on the first line if this is a commit following a
+              merge of your branch with the main trunk (see Commit Message Format in subsection~\ref{CommitMessageFormat} for details)}
+  \end{itemize}                
+  \item You can check the archive of email notifications of the svn commits
+    from \htmladdnormallink{https://osp5.lbl.gov/pipermail/rose-commits}{https://osp5.lbl.gov/pipermail/rose-commits} 
     \end{itemize}
 
-\item Email notification: A perl script named post-commit (under
-svn/text/hooks or svn/ROSE/hooks) keeps our email recipient list.\\
-          \textit{/nfs/casc/overture/ROSE/svn/ROSE/hooks/post-commit}
-\item To upgrade, do \textit{svn switch} to new tag URL
-\item Building distributions of ROSE MUST be done with \textit{svn export}. Otherwise, .svn directories are copied into the distribution trees. 
+  \subsection{Commit Message Format}
+  \label{CommitMessageFormat}
+  The automatically generated ChangeLog2 file will provide everyone with
+    detailed information about what changes are made to ROSE over time. To
+    make this information as clear and consistent as possible we have two
+    (slightly different) commit message formats:
+    % There are two styles of commit message formats: 
+    1) normal commits of your local contributions to your branch or to 
+    the internal SVN trunk; and
+    2) commits after a merge of the main trunk's changes.
+    \begin{enumerate}
+  \item Normal svn commit (not those following an svn merge)
+    \begin{itemize}
+  \item {\tt svn commit} will start your favorite editor where you should enter a
+    description of your changes. The first line of that description should be
+    a short, one-line summary ({\it i.e.}, a title with just the first word capitalized),
+      followed by a blank line, and as much detail as necessary. There is generally
+        no need to includes your name, date, names of files, etc. as this information
+        is readily available from the source revision management system. Do not prefix
+        the summary with tags like ``Summary:'', ``Title:'' etc. since it's already
+        implied that the first line is the summary.
 
-\end{itemize}
-%}}}
+        Here's an example specific to a commit on the internal SVN or an SVN branch:
+        {\indent
+          \begin{verbatim}
+          Adjusted test case for new binary function detection
+
+            This test case assumed that the only functions in a binary executable
+            were those that had symbols in the symbol table.  This is no longer
+            true since we now determine function boundaries with a wider variety of
+            heuristics.
+            \end{verbatim} 
+        }
+  \end{itemize}
+  \item For the svn commit at any point after your svn merge \\
+    Here's an example specific to a commit message on an SVN branch after a merge:
+    {\indent
+      \begin{verbatim}
+      svn merge -r 402:428 https://outreach.scidac.gov/svn/rose/trunk
+        \end{verbatim} 
+    }
+  \item If you mix an svn merge and some local contributions in one svn
+    commit (we don't suggest mixing them)\\
+    Here's an example specific to the commit on an SVN branch ({\em note first line}):
+    {\indent
+      \begin{verbatim}
+      svn merge -r 402:428
+        Adjusted test case for new binary function detection
+
+        This test case assumed that the only functions in a binary executable
+        were those that had symbols in the symbol table.  This is no longer
+        true since we now determine function boundaries with a wider variety of
+        heuristics.
+        \end{verbatim} 
+    }
+  \end{enumerate}
+
+
+  % Moved this from being a section (1.6) to being a subsection (1.2.2)
+    \subsection{Check In Process}
+
+  The following information applies to both the internal SVN reposiotry and the 
+    branches that we provide to external collaborators.  There are a number of details
+    that we need to make sure that your developent work can be used to update ROSE.
+
+    For internal SVN users:
+    {\bf Please get permission from the ROSE Development Team before you make your first check-in!}
+
+  For all SVN users:
+    If you have access to the SVN repository (at LLNL) and are building the development 
+    version of ROSE (available only from SVN, not what we package as a ROSE distribution; 
+        e.g. not from a file name such as ROSE-version-number.tar.gz) then 
+    % the README file in the top level directory also has instructions for how to get started. 
+    there are a number of steps to the checkin process:
+    %The README\_CHECKIN file has the instructions for our standard testing process.
+    %This should be done before you check anything in; we don't reprint it so it is
+    %represented at most only once.
+    % {\bf NOTE: Get permission from the ROSE Development Team before you make your first check-in!}
+  \begin{enumerate}
+  \item Make sure you are working with the latest update (run {\tt svn update} in the top
+      level directory.
+
+      % \item In {\em ROSE/configure.in} modify version number (X.Y.ZZL) at the top of the file.
+
+      \item Run {\tt make} \&\& {\tt make docs} \&\& {\tt make check} \&\&
+      {\tt make dist} \&\& 
+      {\tt make distcheck} \&\& {\tt make install} \&\& {\tt make installcheck}, depending
+      on how aggressively you want your changes to be tested.
+      \begin{itemize}
+      \item Not all tests must be run, but we will know who you are (via {\tt svn blame} 
+        if the nightly test fail :-)).
+    \item All changes must at least compile, so that you don't hold back other
+    developers who update often.
+    \end{itemize}
+  \item The commit will fail if someone else has committed while you were running
+    your pre-commit tests. If this happens you will generally need to restart
+    the check-in process from the top.
+    \item Please follow the commit message format (see Commit Message Format in 
+        subsection~\ref{CommitMessageFormat} for details).
+
+    %   \item ROSE/ChangeLog
+    %   a new entry has to include at least the following information:
+    %   - new version number
+    %   - who checked it in
+    %   - comments on changes
+    %   - run 'cvschk' in your ROSE directory.
+    %     copy the output of 'cvschk' to the ChangeLog (except "Extra Files")
+    %     (this includes all version numbers of tools used, etc.)
+    %
+    % 4) Send an e-mail to casc-rose@llnl.gov that you are checking in a new 
+    %    version of ROSE. Include the new version number in this e-mail.
+    %
+    % 6) check out a fresh version of ROSE in a new directory
+    %   - run all tests as above, in part 2, on this checked-out version
+    %   - make sure all tests succeed
+    %
+    % 7) cvs rtag ROSE-X-Y-ZZL ROSE
+    %    - X-Y-ZZL has to be the same version number as in configure.in
+    %      (X, Y, Z are numbers, L is a letter, note that here '-' is used instead
+        %       of '.' as in configure.in)
+    %
+    % 8) send out e-mail that check-in was successful
+    %    - copy & paste the output of make distcheck that the new version is ready
+    %      for distribution in this e-mail.
+    %    - include your new comments from the ChangeLog
+    %
+    % regular definition of version number:
+    % X=Y=Z=[0-9], L=[a-z]
+    % X.Y.ZZL /* in configure.in */
+    % X-Y-ZZL /* when using cvs rtag */
+    %
+    % Note that in configure.in '.' is used to separate X,Y,ZZL where as with
+    % etag '-' must be used, X-Y-ZZL!
+
+    \end{enumerate}
+
+  If you do not have access to the SVN repository at LLNL, and you wish to contribute
+    work to the ROSE project, please make a patch.  Using the external SVN access via
+    LBL use {\tt svn diff} to build a patch.
+    Consider options: {\em --diff-cmd arg}.
+    DQ(7/28/2008): This section still needs to be completed!
+
+
+
+  %}}}
 
 % DQ (2/4/2009): Added documentation for how to sync external version of ROSE
 \section{Resync-ing with a full version of ROSE}%{{{
@@ -978,7 +920,15 @@ SOURCE_VARARG_OPERATOR_END
 \end{verbatim} 
 }}
 
-     \item Modify the EDG/SAGE connection code to have the new IR node built in the
+     \item Creating the new IR node at some point, such as somewhere within frontend, midend, or even backend if desired.
+           This step is decided by the purpose of the newly added IR types.
+           If the new types of IR come from their counterparts in EDG, then modifications to the EDG/SAGE connection code are needed.
+           If you are trying to represent some pragma information, you don't need to touch EDG and its connection. 
+           You just parse the pragma string in the original AST and create your own nodes to get a new version of AST. 
+           Then it should be done.
+
+           Here are the instructions if the new IR node is connected to EDG IR node.
+           Modify the EDG/SAGE connection code to have the new IR node built in the
            translation from EDG to SAGE III.  This step often requires a bit of expertise
            in working with the EDG/SAGE connection code. In general, it requires no great
            depth of knowledge of EDG.
@@ -1230,9 +1180,9 @@ users of ROSE. They are:
 \end{itemize}
 
 
-We are phasing out the casc-rose@llnl.gov mail list. 
 
 \commentout{
+We are phasing out the casc-rose@llnl.gov mail list. 
    There is an open email list for ROSE which can be subscribed to
 automatically.  The list name is: {\bf casc-rose}.
 
@@ -1580,6 +1530,7 @@ It conducts a set of sanity checks and postprocessing before the actual importin
 %}}}
 
 \section{Generating ChangeLog2}%{{{
+
 You can generate a GNU-style ChangeLog from ROSE's subversion commit logs using a program named \textit{svn2cl}. 
 Download it from \url{http://ch.tudelft.nl/~arthur/svn2cl/}
 and install it as directed in its documentation. 
