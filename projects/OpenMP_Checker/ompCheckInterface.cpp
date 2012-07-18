@@ -629,13 +629,13 @@ std::cout<<" the size of parallel region is: "<<parallels.size()<<endl;
     /* gather all expressions  read or write */
 
    expressions = Query( n, V_SgExprStatement );
-   showMembers( expressions);
+   //! showMembers( expressions);
 
    /* remove the expression from following area region */
     removeExclusive ( expressions);
 
 
-    showMembers( expressions);
+   //!  showMembers( expressions);
 
     /* be careful to process the loop */
 
