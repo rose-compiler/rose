@@ -6,7 +6,7 @@
 #include <fstream>
 #include <string.h>
 #include <map>
-
+#include <boost/algorithm/string.hpp>
 using namespace std;
 
 #include "genericDataflowCommon.h"
@@ -19,21 +19,6 @@ using namespace std;
 #include "latticeFull.h"
 #include "printAnalysisStates.h"
 
-#if 0
-#include "common.h"
-#include "variables.h"
-#include "cfgUtils.h"
-#include "analysisCommon.h"
-#include "functionState.h"
-#include "latticeFull.h"
-#include "analysis.h"
-#include "dataflow.h"
-#include "liveDeadVarAnalysis.h"
-#include "saveDotAnalysis.h"
-#endif
-
-// Include the header file specific to our analysis.
-// #include "divAnalysis.h"
 #include "constantPropagation.h"
 
 int numFails = 0, numPass = 0;
@@ -121,12 +106,6 @@ main( int argc, char * argv[] )
      initAnalysis(project);
      Dbg::init("Divisibility Analysis Test", ".", "index.html");
 
-  /* analysisDebugLevel = 0;
-
-     SaveDotAnalysis sda;
-     UnstructuredPassInterAnalysis upia_sda(sda);
-     upia_sda.runAnalysis();
-   */
 	
      liveDeadAnalysisDebugLevel = 1;
      analysisDebugLevel = 1;
@@ -137,25 +116,75 @@ main( int argc, char * argv[] )
           printf("*********************************************************************\n");
         }
 
+    // liveness analysis is used to generate FiniteVarsExprsProductLattice only for live variables at a CFG point
+    // &ldva can be set to NULL then all visible variables and expressions will be used to generate FiniteVarsExprsProductLattice
      LiveDeadVarsAnalysis ldva(project);
      UnstructuredPassInterDataflow ciipd_ldva(&ldva);
      ciipd_ldva.runAnalysis();
 
+    // prepare call graph
      CallGraphBuilder cgb(project);
      cgb.buildCallGraph();
      SgIncidenceDirectedGraph* graph = cgb.getGraph(); 
 
+    // use constant propagation within the context insensitive interprocedural dataflow driver
      analysisDebugLevel = 1;
-     ConstantPropagationAnalysis divA(&ldva);
-     ContextInsensitiveInterProceduralDataflow divInter(&divA, graph);
-     divInter.runAnalysis();
+     ConstantPropagationAnalysis cpA(&ldva);
+     //ConstantPropagationAnalysis cpA(NULL);
+     ContextInsensitiveInterProceduralDataflow cpInter(&cpA, graph);
+     cpInter.runAnalysis();
 
-     evaluateAnalysisStates eas(&divA, "    ");
+    // verify the results
+     evaluateAnalysisStates eas(&cpA, "    ");
      UnstructuredPassInterAnalysis upia_eas(eas);
      upia_eas.runAnalysis();
 
+// A better verification method using pragma strings embedded in the input test code
+  // grab live-in information from a Pragma Declaration
+  Rose_STL_Container <SgNode*> nodeList = NodeQuery::querySubTree(project, V_SgPragmaDeclaration);
+  for (Rose_STL_Container<SgNode *>::iterator i = nodeList.begin(); i != nodeList.end(); i++)
+  {
+    SgPragmaDeclaration* pdecl= isSgPragmaDeclaration((*i));
+    ROSE_ASSERT (pdecl != NULL);
+    // skip irrelevant pragmas
+    if (SageInterface::extractPragmaKeyword(pdecl) != "rose")
+      continue;
+   // NOTE: it is not ConstantPropagationLattice here!!
+   // grab the first lattice attached to the pragma statement for this analysis
+    VarsExprsProductLattice* lattice = dynamic_cast <VarsExprsProductLattice *>(NodeState::getLatticeAbove(&cpA, pdecl,0)[0]);
+    ROSE_ASSERT (lattice != NULL);
+    string lattice_str = lattice->str();
+    boost::erase_all(lattice_str, " ");
+    boost::erase_all(lattice_str, "\n");
+//    cout <<lattice_str<<endl;
+    std::string pragma_str = pdecl->get_pragma()->get_pragma ();
+    pragma_str.erase (0,5);
+    boost::erase_all(pragma_str, "\n");
+    // cout <<pragma_str <<endl;
+
+
+    boost::erase_all(pragma_str, " ");
+
+    if (lattice_str == pragma_str)
+    {
+     cout<<"Verified!"<<endl;
+    }
+    else
+    {
+     cout<<"Analysis results are not identical to the reference results from the pragma !"<<endl;
+     cout<<"=======pragma reference results========"<<endl; 
+     cout <<pragma_str <<endl;
+     cout<<"-------analysis results--------"<<endl; 
+     cout <<lattice_str<<endl;
+     assert (false);
+    }
+
+  }
+
+
+
 // Liao 1/6/2012, optionally dump dot graph of the analysis result
-//     Dbg::dotGraphGenerator(&divA);
+     Dbg::dotGraphGenerator(&cpA);
      if (numFails == 0 && numPass == eas.total_expectations)
           printf("PASS: %d / %d\n", numPass, eas.total_expectations);
        else
