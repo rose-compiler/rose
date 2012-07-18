@@ -1,0 +1,210 @@
+May 6, 2002
+
+New features and deficiencies are prioritized separately. Each group
+listed in order from highest priority to lowest.
+
+New features:
+
+* Control Flow Graph
+
+* Make it possible to pass optional command line arguments to the EDG
+  frontend.
+
+* It would be nice to use Bugzilla for ROSE. It is already installed and in 
+  use by other CASC projects.
+
+* The variable renaming issue. No provision to do this is ROSE. Our
+  proposed way of dealing with this: use an attribute to store the new
+  name. Have the unparser look at the attribute to figure out if the name
+  should be changed and if so, what is the new name. We don't have to do
+  this via unparser but it seems to be the easiest way to accomplish this.
+  But the unparser has no mechanism to do things like this. Currently, we
+  would have to copy their unparser, modify and use the modified copy.
+  Maybe Dan has some other ideas how to do this (maybe internally within
+  ROSE, so we would not have to maintain a modified copy of the unparser)?
+  What I mean here is some sort of  a mechanism by which some hooks could
+  be put in the unparser so user-defined code could be called from within
+  the unparser.
+
+Deficiencies:
+
+* Information not available in the Sage parse tree for anonymous
+  typedefs.
+  The following typedef is not represented correctly in Sage3:
+
+  typedef struct
+  {
+         int day;
+         int month;
+         int year;
+  } DATE;
+
+  The parser does not crash, however the definition of the struct (i.e.,
+  names and types of its fields) is not stored anywhere in the Sage tree
+  (as far as I [BW] can tell).
+ 
+* EDG to Sage3 conversion fails, it is not possible to continue. "For"
+  statements with expression lists, parser causes a failed assertion:
+
+  The input file looks like this:
+
+  int main(void)
+  {
+         int i, j;
+         for(i=0,j=0;i<10; i++)
+         {
+                 j++;
+         }
+         return 0;
+  }
+
+  The error:
+
+  ~/dan/dec20/compile/src> rose -rose:test 6 ~/roseadic_work/mytest.C
+  configDefsString =  -D__GNUG__=2 -D__EXCEPTIONS -D__GNUC__=2
+  -D__GNUC_MINOR__=96 -D__GNUC_PATCHLEVEL__=0 -D__ELF__ -Dunix -Dlinux
+  -D__ELF__ -D__unix__ -D__linux__ -D__unix -D__linux -D__NO_INLINE__
+  -Di386 -D__i386 -D__i386__ -D__tune_pentium__ -D__builtin_va_list=void*
+  -U__GNUG__ -U__GNUC__
+  configIncludeString =
+  -I/home/winnicka/dan/dec20/compile/g++_HEADERS/hdrs1
+  -I/home/winnicka/dan/dec20/compile/g++_HEADERS/hdrs2
+  -I/home/winnicka/dan/dec20/compile/g++_HEADERS/hdrs3
+  Finished building EDG AST, now build the SAGE AST ...
+  rose: Cxx_Grammar.C:8793: Sg_File_Info *SgLocatedNode::get_file_info ()
+  const: Assertion `this != __null' failed.
+  Abort
+ 
+  Everything works fine if I remove the "j=0" expression from the "for"
+  statement.
+
+* Variable names are dropped from function prototypes. 
+    int myfunc(int length, int index);
+  becomes:
+    int myfunc(int, int);
+  after unparsing.
+  We would like to keep the original code unchanged as much as possible
+  and hence preserve the names. Possibly, a command line argument to the
+  EDG front end would make this easier to implement.
+
+* Unparser issues. Back in February our plan was to use our own (i.e.,
+  adic) unparser. We are now going to use Sage3's but it formats the
+  output in a way that is not going to be readable (weird rules as to
+  where to insert new lines). (as an exercise, you can try running
+  Cxx_Grammar.h through rose and look at the unparsed code). And this is
+  just the beginning, since we will be inserting many new statements and
+  who knows what line numbers these new statements should have to keep the
+  unparser happy.
+
+* Pragmas are often saved at incorrect location in the parse tree. The
+  unparser does not
+  seem to be able to handle them at all but from looking at the dot files
+  it seems that often (but not always) pragmas are inserted in the wrong
+  scope, for example:
+  
+  #pragma INFO 1
+  int main()
+  {
+        return 1;
+  }
+
+  seems to have a parse tree that corresponds to:
+  int main()
+  {
+        #pragma INFO 1
+        return 1;
+  }
+
+* List of args to function pointers incorrect:
+
+  int (*a) (double)
+ 
+  after parsing and unparsing becomes:
+ 
+  int (* a)(double , double );
+
+* For constants, it would be nice that values are saved as strings instead
+  of/in addition to being saved as specific data types, i.e, for 
+  float foobar=3./2.;
+  right now what is saved is a float with value of 1.5, it would be nice
+  to have the string "3./2." so that it would look the same as in the original
+  code when unparsed.
+  I think this would require digging into EDG code, so it might not be
+  worth the trouble.
+
+* The code 
+  
+  enum a {PP, QQ};
+  a gla;
+  
+  class A
+  {
+          enum a {AA, BB};
+          a       thisa;
+          enum ::a  thata;
+          public:
+          A(){};  
+          int foobar()
+          {
+                  thata=PP;
+                  if(thata==QQ)
+                  {
+                          return 1;
+                  }
+                  thisa=AA;
+                  if(thisa==BB)
+                  {
+                          return 1;
+                  }
+                  return 0;
+          };
+  };
+  
+  int main()
+  {
+          A mya;
+          return mya.foobar();
+  }
+  
+  unparses to:
+  
+  enum a {PP,QQ};
+  enum a gla; 
+  
+  class A {
+  
+  private: enum a {AA,BB};
+      enum a thisa; 
+           enum a thata; 
+  
+  public: inline A(){ } 
+  inline int foobar()
+   { 
+    this -> thata = PP; 
+    if (this -> thata == 1)
+    { 
+     return 1;
+    } 
+    this -> thisa = A::AA; 
+    if (this -> thisa == 1)
+    { 
+     return 1;
+    } 
+    return 0;
+  } 
+  };
+
+
+    int main()
+  { 
+   class A mya; 
+   return mya.foobar();
+  } 
+
+  
+  Clearly, the declaration of "thata" is wrong (and g++ indeed complains
+  about the unparsed code but it is happy with the original).
+  This obviously will not be a problem in C, but when we move to C++ it
+  might (hopefully, people do not write code like this too often...)
+  Also, replacing BB and QQ with 1 is not great. This will be a nuisance
+  in C as well.

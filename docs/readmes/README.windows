@@ -1,0 +1,114 @@
+
+CMake is now checked in by Andreas, so we can play with it building ROSE using CMake
+under both Linux and Windows.
+
+
+For Windows:
+To run rdesktop from my Linux machine:
+     wxp -g 5 -s tux245-0
+or
+     rdesktop -g 1600x1200 tux270-0
+
+*** NOTE: if running in fullscreen mode use "CTRL-ALT-ENTER" to get out.
+
+
+
+Check out a new version of ROSE from SVN (on our tux245-0 system this is in:
+/cygdrive/c/ROSE/svn-rose)
+
+
+Run Cmake GUI (from Start Menu).
+   We are using CMake 2.6 Patch 4.
+   1) Specify the source code location ("where is the source code?")
+   2) Specify the location of the build tree ("Where to build the binaries?")
+   3) * Optional: There are different views (Simple, Advance, and Grouped)
+   4) Click "Configure" button.
+   5) The install directory needs to be setup (click on "...")
+   6) Click "Configure" button.
+   7) Click "Generate" button (which will appear after "configure" passes).
+
+Current problems:
+   1) First error: The top level ROSE/CMakeLists.txt file has some things that
+      will need to be commented out (languages (fortran), and a few libraries (m_lib,
+      rt_lib))
+
+   8) After passing ("Generating done"), close CMake GUI. 
+
+   9) In "Explorer" (or any file tool), enter the compile tree directory
+      and click on "Project.sln" to start the MS Visual Studio ROSE project.
+
+
+
+For new windows server tux270-0:
+   rdesktop tux270-0
+or
+   rdesktop -g 1600x1200 tux270-0
+<click other users>
+<enter login and password: e.g. "the-lab\quinlan1" and "PAC".
+
+What is needed to use ROSE is in the C:ROSE directory.
+
+Run git-bash (click on icon on left)
+
+To see how to build a git clone:
+cat ../ROSE-tps/ROSE-git/.git/config
+
+git clone ssh://dquinlan@tux282.llnl.gov/nfs/casc/overture/ROSE/git/ROSE.git
+
+
+Setting up SSH keys on Windows Server (logged in as hudson-rose):
+NOTE: Important is that is is done for CMD (not for git-bash or cygwin, etc.)
+More information about this is at: http://devlicio.us/blogs/sergio_pereira/archive/2009/05/06/git-ssh-putty-github-unfuddle-the-kitchen-sink.aspx
+
+A. Generate the keys:
+   1) Generate the keys, run "plink -agent tux269" and enter your
+      own login and then password. to login to tux269 and then exit.
+
+B. Copy the keys onto tux270-0:
+   1) Double Click on "My_Computer" icon
+   2) Goto C:, tools, pageant.exe
+   3) Double click on pageant.exe
+   4) Should display a computer with a hat on it in the bottom right corner of the screen.
+   5) Right click on icon (of computer with a hat on it)
+   6) click on "Add Key" (this will cause a window to put up called "Select Private Key File"
+   7) Goto "My Computer TUX270-0", "Local Disk(C:)", "putty_keys"
+   8) Click on file "id_rsa.ppk"  (this will load the private  key for use by ssh).
+   9) Now try to run the git command:
+         git clone ssh://hudson-rose@tux269/nfs/casc/overture/ROSE/git/ROSE.git c:\ROSE\hudson\workspace\test-windows\label\windows-server
+      and
+         git clone ssh://hudson-rose@tux269/nfs/casc/overture/ROSE/git/ROSE-EDG.git c:\ROSE\hudson\workspace\test-windows\label\windows-server\src\frontend\CxxFrontend\EDG
+      And it should work.
+
+  10) (moved to part A-1 above) If not then it might be because we ran "plink -agent tux269"
+     and entered the login "hudson-rose" and then the password,
+     to login to tux269, and then exited.
+
+
+For Linux:
+Command to run cmake to build ROSE:
+     cmake /home/dquinlan/ROSE/svn-rose -DBOOST_ROOT=/home/dquinlan/local/boost_1_37_0.gxx-4.2.4
+  OR
+     cmake /home/dquinlan/ROSE/git-rose-windows -DBOOST_ROOT=/home/dquinlan/local/boost_1_37_0.gxx-4.2.4
+
+Note that CMake will compile ROSE dramatically faster.  The reasons seem to be:
+   1) it is able to extract greater parallelism in the build process
+   2) it does not use libtool
+
+
+Brief writeup fron John:
+Hi Dan,
+   Here is a quick hit and I will fill it in with pictures next week:
+The key software that is needed to get it to work is called pageant.exe. To start this up
+navigate to c:\tools and double click on pageant.exe.  That will put a little icon in
+the system tray in the lower right hand corner which looks like a terminal with a
+black hat on it.  Once that is running, right click on it and select Èadd KeyÉ  That
+will pop up a  window and most likely it will already be at the point you need but if
+it is not, navigate to c:\putty_keys and select Èid_rsa.ppkÉ and that should allow you
+to use git from the command line.
+
+So for a quick reference:
+   Pageant.exe located at c:\tools
+
+Id_rsa.ppk located at c:\putty_keys
+
+John Van Zant
