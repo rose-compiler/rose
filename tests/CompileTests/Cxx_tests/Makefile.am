@@ -485,6 +485,7 @@ test2006_81.C \
 test2006_82.C \
 test2006_83.C \
 test2006_84.C \
+test2006_85.C \
 test2006_86.C \
 test2006_87.C \
 test2006_88.C \
@@ -612,6 +613,7 @@ test2007_133.C \
 test2007_135.C \
 test2007_142.C \
 test2007_147.C \
+test2007_150.C \
 test2007_151.C \
 test2007_152.C \
 test2007_154.C \
@@ -718,6 +720,7 @@ test2011_58.C \
 test2011_59.C \
 test2011_60.C \
 test2011_61.C \
+test2011_62.C \
 test2011_63.C \
 test2011_64.C \
 test2011_66.C \
@@ -754,6 +757,7 @@ test2011_98.C \
 test2011_99.C \
 test2011_100.C \
 test2011_101.C \
+test2011_110.C \
 test2011_111.C \
 test2011_115.C \
 test2011_117.C \
@@ -966,6 +970,9 @@ else
 include $(srcdir)/Makefile-pass.inc
 endif
 
+
+
+
 # Import list of C++ test cases that are known to fail:
 #   TESTCODE_CURRENTLY_FAILING
 #
@@ -976,7 +983,6 @@ test2005_123.C \
 test2005_137.C \
 test2005_143.C \
 test2006_54.C \
-test2006_85.C \
 test2006_90.C \
 test2006_122.C \
  test2006_151.C \
@@ -988,7 +994,6 @@ test2007_83.C \
 test2007_137.C \
 test2007_140.C \
 test2007_141.C \
-test2007_150.C \
 test2009_21.C \
 test2009_24.C \
 test2009_30.C \
@@ -997,11 +1002,9 @@ test2009_39.C \
 test2010_24.C \
 test2011_31.C \
 test2011_32.C \
-test2011_62.C \
  test2011_65.C \
 test2011_72.C \
 test2011_80.C \
-test2011_110.C \
  test2011_121.C \
 test2011_139.C \
 test2011_141.C \
