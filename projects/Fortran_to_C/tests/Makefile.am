@@ -5,8 +5,6 @@ TESTCODE_INCLUDES =
 F2C_FLAGS = -rose:C_output_language 
 
 TESTCODES_REQUIRED_TO_PASS = \
-							   implicitVariable1.F \
-							   implicitVariable2.F \
 							   doloop1.F \
 							   doloop2.F \
 							   doloop3.F \

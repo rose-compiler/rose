@@ -12,36 +12,30 @@ using namespace Fortran_to_C;
   Replace the output file name to rose_f2c_*.C"
 */
 /******************************************************************************************************************************/
-void Fortran_to_C::translateFileName(SgProject* project)
+void Fortran_to_C::translateFileName(SgFile* sourceFile)
 {
-  Rose_STL_Container<SgNode*> sourceFileList = NodeQuery::querySubTree (project,V_SgFile);
-  for (Rose_STL_Container<SgNode*>::iterator i = sourceFileList.begin(); i != sourceFileList.end(); i++)
+  string outputFilename = sourceFile->get_sourceFileNameWithoutPath();
+  size_t found;
+
+  if (SgProject::get_verbose() > 2)
   {
-    SgFile* sourceFile = isSgFile(*i);
-    string outputFilename = sourceFile->get_sourceFileNameWithoutPath();
-    size_t found;
-    
-    if (SgProject::get_verbose() > 2)
-    {
       std::cout << "find file name: " << sourceFile->get_sourceFileNameWithoutPath()  << std::endl;
-    }
-    // Search for *.F or *.f, both are valid for Fortran.
-    found = outputFilename.find(".F");
-    if (found == string::npos) {
+  }
+  // Search for *.F or *.f, both are valid for Fortran.
+  found = outputFilename.find(".F");
+  if (found == string::npos) {
       found = outputFilename.find(".f");
       ROSE_ASSERT(found != string::npos);
-    }
-    
-    outputFilename.replace(found, 2, ".C");
-    outputFilename = "rose_f2c_" + outputFilename;
-    if (SgProject::get_verbose() > 2)
-    {
-      std::cout << "New output name: " << outputFilename  << std::endl;
-    }
-    // set the output filename
-    sourceFile->set_unparse_output_filename(outputFilename);
-    ROSE_ASSERT(sourceFile->get_unparse_output_filename().empty() == false);
   }
+  
+  outputFilename.replace(found, 2, ".C");
+  outputFilename = "rose_f2c_" + outputFilename;
+  if (SgProject::get_verbose() > 2)
+  {
+      std::cout << "New output name: " << outputFilename  << std::endl;
+  }
+  // set the output filename
+  sourceFile->set_unparse_output_filename(outputFilename);
 }
 
 
@@ -52,66 +46,59 @@ void Fortran_to_C::translateFileName(SgProject* project)
   The main subroutine in Fortran will become main function in C.
 */
 /******************************************************************************************************************************/
-void Fortran_to_C::translateProgramHeaderStatement(SgProject* project)
+void Fortran_to_C::translateProgramHeaderStatement(SgProgramHeaderStatement* programHeaderStatement)
 {
-  Rose_STL_Container<SgNode*> programHeaderStatementList = NodeQuery::querySubTree (project,V_SgProgramHeaderStatement);
-  for (Rose_STL_Container<SgNode*>::iterator i = programHeaderStatementList.begin(); i != programHeaderStatementList.end(); i++)
-  {
-    SgProgramHeaderStatement* programHeaderStatement = isSgProgramHeaderStatement(*i);
-    
-    // Get scopeStatement from SgProgramHeaderStatement
-    SgScopeStatement* scopeStatement = programHeaderStatement->get_scope();
-    ROSE_ASSERT(scopeStatement);
-    
-    // Get ParameterList and DecoratorList
-    SgFunctionParameterList* functionParameterList = deepCopy(programHeaderStatement->get_parameterList());
-    SgExprListExp* decoratorList = deepCopy(programHeaderStatement->get_decoratorList());
-    
-    // Reuse FunctionDefinition from Fortran programHeaderStatement
-    SgFunctionDefinition* functionDefinition = programHeaderStatement->get_definition();
-    
-    // Get basicBlock from SgProgramHeaderStatement
-    SgBasicBlock* basicBlock = functionDefinition->get_body();
-    ROSE_ASSERT(basicBlock);
+  // Get scopeStatement from SgProgramHeaderStatement
+  SgScopeStatement* scopeStatement = programHeaderStatement->get_scope();
+  ROSE_ASSERT(scopeStatement);
+  
+  // Get ParameterList and DecoratorList
+  SgFunctionParameterList* functionParameterList = deepCopy(programHeaderStatement->get_parameterList());
+  SgExprListExp* decoratorList = deepCopy(programHeaderStatement->get_decoratorList());
+  
+  // Reuse FunctionDefinition from Fortran programHeaderStatement
+  SgFunctionDefinition* functionDefinition = programHeaderStatement->get_definition();
+  
+  // Get basicBlock from SgProgramHeaderStatement
+  SgBasicBlock* basicBlock = functionDefinition->get_body();
+  ROSE_ASSERT(basicBlock);
 
-    SgSymbolTable* symbolTable = basicBlock->get_symbol_table();
-    ROSE_ASSERT(symbolTable);
-    
-    // The main function return type is int
-    SgType* mainType = SgTypeInt::createType();
-    
-    // Create SgFunctionDeclaration for C main function. Name must be "main".
-    SgFunctionDeclaration* cFunctionDeclaration = buildDefiningFunctionDeclaration("main",
-                                                                                   mainType,
-                                                                                   functionParameterList,
-                                                                                   scopeStatement,
-                                                                                   decoratorList);
-    
-    // Remove original function symbol.  Keep the new function symbol with name of "main"
-    SgFunctionSymbol* functionSymbol = isSgFunctionSymbol(scopeStatement->lookup_symbol(programHeaderStatement->get_name()));
-    SgSymbolTable* globalSymbolTable = isSgSymbolTable(functionSymbol->get_parent());
-    globalSymbolTable->remove(functionSymbol);
-    functionSymbol->set_parent(NULL);
-    delete(functionSymbol);
-    
-    // Setup the C function declaration.
-    deepDelete(cFunctionDeclaration->get_definition());
-    functionDefinition->set_parent(cFunctionDeclaration);
-    cFunctionDeclaration->set_definition(functionDefinition);
-    programHeaderStatement->set_definition(NULL);
-    
-    // Replace the SgProgramHeaderStatement with SgFunctionDeclaration.
-    replaceStatement(programHeaderStatement,cFunctionDeclaration,true);
-    
-    /*
-       Fortran has the implicit data type.  Variables with implicit data type will be found in the local basic block in
-       AST tree. Translator has to link these variable declaration to the main basic block under function declaration. 
-    */
-    fixFortranSymbolTable(functionDefinition,false);
-   
-    programHeaderStatement->set_parent(NULL);
-    deepDelete(programHeaderStatement);
-  }
+  SgSymbolTable* symbolTable = basicBlock->get_symbol_table();
+  ROSE_ASSERT(symbolTable);
+  
+  // The main function return type is int
+  SgType* mainType = SgTypeInt::createType();
+  
+  // Create SgFunctionDeclaration for C main function. Name must be "main".
+  SgFunctionDeclaration* cFunctionDeclaration = buildDefiningFunctionDeclaration("main",
+                                                                                 mainType,
+                                                                                 functionParameterList,
+                                                                                 scopeStatement,
+                                                                                 decoratorList);
+  
+  // Remove original function symbol.  Keep the new function symbol with name of "main"
+  SgFunctionSymbol* functionSymbol = isSgFunctionSymbol(scopeStatement->lookup_symbol(programHeaderStatement->get_name()));
+  SgSymbolTable* globalSymbolTable = isSgSymbolTable(functionSymbol->get_parent());
+  globalSymbolTable->remove(functionSymbol);
+  functionSymbol->set_parent(NULL);
+  delete(functionSymbol);
+  
+  // Setup the C function declaration.
+  deepDelete(cFunctionDeclaration->get_definition());
+  functionDefinition->set_parent(cFunctionDeclaration);
+  cFunctionDeclaration->set_definition(functionDefinition);
+  programHeaderStatement->set_definition(NULL);
+  
+  // Replace the SgProgramHeaderStatement with SgFunctionDeclaration.
+  replaceStatement(programHeaderStatement,cFunctionDeclaration,true);
+  
+  /*
+     Fortran has the implicit data type.  Variables with implicit data type will be found in the local basic block in
+     AST tree. Translator has to link these variable declaration to the main basic block under function declaration. 
+  */
+  fixFortranSymbolTable(functionDefinition,false);
+ 
+  programHeaderStatement->set_parent(NULL);
 }  // End of Fortran_to_C::translateProgramHeaderStatement
 
 
@@ -122,100 +109,88 @@ void Fortran_to_C::translateProgramHeaderStatement(SgProject* project)
   The subroutine in Fortran will become function in C.
 */
 /******************************************************************************************************************************/
-void Fortran_to_C::translateProcedureHeaderStatement(SgProject* project)
+void Fortran_to_C::translateProcedureHeaderStatement(SgProcedureHeaderStatement* procedureHeaderStatement)
 {
-  Rose_STL_Container<SgNode*> procedureHeaderStatementList = NodeQuery::querySubTree (project,V_SgProcedureHeaderStatement);
-  for (Rose_STL_Container<SgNode*>::iterator i = procedureHeaderStatementList.begin(); i != procedureHeaderStatementList.end(); i++)
+  // We only handles Fortran function and Fortran subroutine
+  ROSE_ASSERT(procedureHeaderStatement->isFunction() || procedureHeaderStatement->isSubroutine());
+  
+  // Get fileInfo and scopeStatement from SgProcedureHeaderStatement
+  Sg_File_Info* fileInfo = Sg_File_Info::generateDefaultFileInfoForTransformationNode();
+  SgScopeStatement* scopeStatement = procedureHeaderStatement->get_scope();
+  ROSE_ASSERT(scopeStatement);
+  
+  // Get ParameterList and DecoratorList
+  SgFunctionParameterList* functionParameterList = deepCopy(procedureHeaderStatement->get_parameterList());
+  SgExprListExp* decoratorList = deepCopy(procedureHeaderStatement->get_decoratorList());
+  
+  // Get the return variable from Fortran, name is same as function name.
+  SgInitializedName* fortranReturnVar = procedureHeaderStatement->get_result_name();
+  ROSE_ASSERT(fortranReturnVar);
+  
+  // Reuse FunctionDefinition from Fortran procedureHeaderStatement
+  SgFunctionDefinition* functionDefinition = procedureHeaderStatement->get_definition();
+  
+  // Get basicBlock from SgProcedureHeaderStatement
+  SgBasicBlock* basicBlock = functionDefinition->get_body();
+  ROSE_ASSERT(basicBlock);
+  SgSymbolTable* symbolTable = basicBlock->get_symbol_table();
+  ROSE_ASSERT(symbolTable);
+  
+  // Get the function name from Fortran
+  SgName functionName = procedureHeaderStatement->get_name();
+  
+  /* 
+     Get the return function type from Fortran.
+     Subroutine has only void return type. 
+  */
+  SgType* functionType = procedureHeaderStatement->get_type()->get_return_type(); 
+  
+  // Create SgFunctionDeclaration for C function. 
+  SgFunctionDeclaration* cFunctionDeclaration = buildDefiningFunctionDeclaration(functionName,
+                                                                                 functionType,
+                                                                                 functionParameterList,
+                                                                                 scopeStatement,
+                                                                                 decoratorList);
+  
+  // Fix the function symbol declaration
+  SgFunctionSymbol* functionSymbol = isSgFunctionSymbol(scopeStatement->lookup_symbol(procedureHeaderStatement->get_name()));
+  functionSymbol->set_declaration(cFunctionDeclaration);
+  
+  // Setup the C function declaration.
+  deepDelete(cFunctionDeclaration->get_definition());
+  functionDefinition->set_parent(cFunctionDeclaration);
+  cFunctionDeclaration->set_definition(functionDefinition);
+  procedureHeaderStatement->set_definition(NULL);
+  
+  // If it is a Fortran function, add a return statement at the end.
+  if(procedureHeaderStatement->isFunction())
   {
-    SgProcedureHeaderStatement* procedureHeaderStatement = isSgProcedureHeaderStatement(*i);
+    // Create C return variable, based on the Fortran return variable name and type.
+    const SgName fortranReturnVarName = fortranReturnVar->get_name();
+  
+    // Build VarRefExp for the return statement.  The return varaible has same name as the Fortran function.
+    SgVarRefExp* VarRefExp = buildVarRefExp(fortranReturnVarName,basicBlock);
+    ROSE_ASSERT(VarRefExp);
     
-    // We only handles Fortran function and Fortran subroutine
-    ROSE_ASSERT(procedureHeaderStatement->isFunction() || procedureHeaderStatement->isSubroutine());
-    
-    // Get fileInfo and scopeStatement from SgProcedureHeaderStatement
-    Sg_File_Info* fileInfo = Sg_File_Info::generateDefaultFileInfoForTransformationNode();
-    SgScopeStatement* scopeStatement = procedureHeaderStatement->get_scope();
-    ROSE_ASSERT(scopeStatement);
-    
-    // Get ParameterList and DecoratorList
-    SgFunctionParameterList* functionParameterList = deepCopy(procedureHeaderStatement->get_parameterList());
-    SgExprListExp* decoratorList = deepCopy(procedureHeaderStatement->get_decoratorList());
-    
-    // Get the return variable from Fortran, name is same as function name.
-    SgInitializedName* fortranReturnVar = procedureHeaderStatement->get_result_name();
-    ROSE_ASSERT(fortranReturnVar);
-    
-    // Reuse FunctionDefinition from Fortran procedureHeaderStatement
-    SgFunctionDefinition* functionDefinition = procedureHeaderStatement->get_definition();
-    
-    // Get basicBlock from SgProcedureHeaderStatement
-    SgBasicBlock* basicBlock = functionDefinition->get_body();
-    ROSE_ASSERT(basicBlock);
-    SgSymbolTable* symbolTable = basicBlock->get_symbol_table();
-    ROSE_ASSERT(symbolTable);
-    
-    // Get the function name from Fortran
-    SgName functionName = procedureHeaderStatement->get_name();
-    
-    /* 
-       Get the return function type from Fortran.
-       Subroutine has only void return type. 
-    */
-    SgType* functionType = procedureHeaderStatement->get_type()->get_return_type(); 
-    
-    // Create SgFunctionDeclaration for C function. 
-    SgFunctionDeclaration* cFunctionDeclaration = buildDefiningFunctionDeclaration(functionName,
-                                                                                   functionType,
-                                                                                   functionParameterList,
-                                                                                   scopeStatement,
-                                                                                   decoratorList);
-    
-    // Fix the function symbol declaration
-    SgFunctionSymbol* functionSymbol = isSgFunctionSymbol(scopeStatement->lookup_symbol(procedureHeaderStatement->get_name()));
-    functionSymbol->set_declaration(cFunctionDeclaration);
-    
-    // Setup the C function declaration.
-    deepDelete(cFunctionDeclaration->get_definition());
-    functionDefinition->set_parent(cFunctionDeclaration);
-    cFunctionDeclaration->set_definition(functionDefinition);
-    procedureHeaderStatement->set_definition(NULL);
-    
-    // If it is a Fortran function, add a return statement at the end.
-    if(procedureHeaderStatement->isFunction())
-    {
-      // Create C return variable, based on the Fortran return variable name and type.
-      const SgName fortranReturnVarName = fortranReturnVar->get_name();
-    
-      // Build VarRefExp for the return statement.  The return varaible has same name as the Fortran function.
-      SgVarRefExp* VarRefExp = buildVarRefExp(fortranReturnVarName,basicBlock);
-      ROSE_ASSERT(VarRefExp);
-      
-      // Add return statement to the end of C function.
-      SgReturnStmt* returnStmt = buildReturnStmt(VarRefExp);
-      ROSE_ASSERT(returnStmt);
-      basicBlock->get_statements().insert(basicBlock->get_statements().end(),returnStmt);
-      returnStmt->set_parent(basicBlock);
-      
-      // The return value becomes the end of Construct.
-      VarRefExp->set_endOfConstruct(fileInfo);
-    }
-
-    // Replace the SgProcedureHeaderStatement with SgFunctionDeclaration.
-    replaceStatement(procedureHeaderStatement,cFunctionDeclaration,true);
-    
-    /*
-       Fortran has the implicit data type.  Variables with implicit data type will be found in the local basic block in
-       AST tree. Translator has to link these variable declaration to the main basic block under function declaration. 
-    */
-    fixFortranSymbolTable(functionDefinition,procedureHeaderStatement->isFunction());
-    
-    procedureHeaderStatement->set_parent(NULL);
-    procedureHeaderStatement->set_result_name(NULL);
-    deepDelete(procedureHeaderStatement);
+    // Add return statement to the end of C function.
+    SgReturnStmt* returnStmt = buildReturnStmt(VarRefExp);
+    ROSE_ASSERT(returnStmt);
+    basicBlock->get_statements().insert(basicBlock->get_statements().end(),returnStmt);
+    returnStmt->set_parent(basicBlock);
   }
+
+  // Replace the SgProcedureHeaderStatement with SgFunctionDeclaration.
+  replaceStatement(procedureHeaderStatement,cFunctionDeclaration,true);
+  
+  /*
+     Fortran has the implicit data type.  Variables with implicit data type will be found in the local basic block in
+     AST tree. Translator has to link these variable declaration to the main basic block under function declaration. 
+  */
+  fixFortranSymbolTable(functionDefinition,procedureHeaderStatement->isFunction());
+  
+  procedureHeaderStatement->set_parent(NULL);
+  procedureHeaderStatement->set_result_name(NULL);
 }  // End of Fortran_to_C::translateProcedureHeaderStatement
-
-
 
 /******************************************************************************************************************************/
 /* 
@@ -339,87 +314,79 @@ void Fortran_to_C::fixFortranSymbolTable(SgNode* root, bool hasReturnVariable)
   Translate FortranDoLoop in Fortran into ForStatement in C.
 */
 /******************************************************************************************************************************/
-void Fortran_to_C::translateFortranDoLoop(SgProject* project)
+void Fortran_to_C::translateFortranDoLoop(SgFortranDo* fortranDo)
 {
-  Rose_STL_Container<SgNode*> fortranDoList = NodeQuery::querySubTree (project,V_SgFortranDo);
-  for (Rose_STL_Container<SgNode*>::iterator i = fortranDoList.begin(); i != fortranDoList.end(); i++)
+  Sg_File_Info* fileInfo = Sg_File_Info::generateDefaultFileInfoForTransformationNode();
+
+  // Get FortranDo body
+  SgBasicBlock* loopBody = fortranDo->get_body();
+  fortranDo->set_body(NULL); 
+  // Get initialization
+  SgExpression* initialization = fortranDo->get_initialization();
+  fortranDo->set_initialization(NULL); 
+  // Get bound
+  SgExpression* bound = fortranDo->get_bound();
+  fortranDo->set_bound(NULL); 
+  // Get increment
+  SgExpression* increment = fortranDo->get_increment();
+  fortranDo->set_increment(NULL); 
+  // Get numerical label
+  SgLabelRefExp* numericLabel = fortranDo->get_numeric_label();
+  fortranDo->set_numeric_label(NULL);
+
+  // create forInitStatement
+  SgForInitStatement* forInitStatement = buildForInitStatement();
+  // Add the FortranDoLoop initialization into forInitStatement
+  forInitStatement->append_init_stmt(buildExprStatement(initialization));
+  forInitStatement->set_file_info(fileInfo);
+  // Get index variableExpression
+  ROSE_ASSERT(isSgBinaryOp(initialization));
+  SgExpression* variableExpression = ((SgBinaryOp*)initialization)->get_lhs_operand();
+  SgVarRefExp* varRefExp = isSgVarRefExp(variableExpression);
+  SgVariableSymbol* variableSymbol = varRefExp->get_symbol();
+
+  /* 
+    build C forStatement test case.
+    In theory, the initialization has to be a AssignOp.
+    LHS = initilized variable from initialization 
+    RHS = bound from FortranDoLoop                
+  */ 
+  SgLessOrEqualOp* lessOrEqualOp = buildLessOrEqualOp(buildVarRefExp(variableSymbol),
+                                                      bound);
+  SgExprStatement* testStatement = buildExprStatement(lessOrEqualOp);
+
+  /*
+    build C increment expression
+    generate "i = i + n" style of increment
+    
+    If increment in FortranDo is NULL, then the increment is 1 by default
+  */
+  SgAssignOp* cIncrementOp;
+  if(isSgNullExpression(increment) == NULL)
   {
-    SgFortranDo* fortranDo = isSgFortranDo(*i);
-    ROSE_ASSERT(fortranDo);
-
-    Sg_File_Info* fileInfo = Sg_File_Info::generateDefaultFileInfoForTransformationNode();
-
-    // Get FortranDo body
-    SgBasicBlock* loopBody = fortranDo->get_body();
-    fortranDo->set_body(NULL); 
-    // Get initialization
-    SgExpression* initialization = fortranDo->get_initialization();
-    fortranDo->set_initialization(NULL); 
-    // Get bound
-    SgExpression* bound = fortranDo->get_bound();
-    fortranDo->set_bound(NULL); 
-    // Get increment
-    SgExpression* increment = fortranDo->get_increment();
-    fortranDo->set_increment(NULL); 
-    // Get numerical label
-    SgLabelRefExp* numericLabel = fortranDo->get_numeric_label();
-    fortranDo->set_numeric_label(NULL);
-
-    // create forInitStatement
-    SgForInitStatement* forInitStatement = buildForInitStatement();
-    // Add the FortranDoLoop initialization into forInitStatement
-    forInitStatement->append_init_stmt(buildExprStatement(initialization));
-    forInitStatement->set_file_info(fileInfo);
-    // Get index variableExpression
-    ROSE_ASSERT(isSgBinaryOp(initialization));
-    SgExpression* variableExpression = ((SgBinaryOp*)initialization)->get_lhs_operand();
-    SgVarRefExp* varRefExp = isSgVarRefExp(variableExpression);
-    SgVariableSymbol* variableSymbol = varRefExp->get_symbol();
-
-    /* 
-      build C forStatement test case.
-      In theory, the initialization has to be a AssignOp.
-      LHS = initilized variable from initialization 
-      RHS = bound from FortranDoLoop                
-    */ 
-    SgLessOrEqualOp* lessOrEqualOp = buildLessOrEqualOp(buildVarRefExp(variableSymbol),
-                                                        bound);
-    SgExprStatement* testStatement = buildExprStatement(lessOrEqualOp);
-
-    /*
-      build C increment expression
-      generate "i = i + n" style of increment
-      
-      If increment in FortranDo is NULL, then the increment is 1 by default
-    */
-    SgAssignOp* cIncrementOp;
-    if(isSgNullExpression(increment) == NULL)
-    {
-      cIncrementOp = buildAssignOp(buildVarRefExp(variableSymbol),
-                                                  buildAddOp(buildVarRefExp(variableSymbol),
-                                                             increment));
-    }
-    else
-    {
-      cIncrementOp = buildAssignOp(buildVarRefExp(variableSymbol),
-                                                  buildAddOp(buildVarRefExp(variableSymbol),
-                                                  buildIntVal(1)));
-    }
-    // create C forStatement
-    SgForStatement* forStatement = buildForStatement(forInitStatement,
-                                                     testStatement,
-                                                     cIncrementOp,
-                                                     loopBody,
-                                                     NULL); 
-
-    forStatement->set_numeric_label(numericLabel);
-    forInitStatement->set_parent(forStatement);
-    testStatement->set_parent(forStatement);
-    cIncrementOp->set_parent(forStatement);
-    loopBody->set_parent(forStatement);
-
-    // Replace the SgFortranDo with SgForStatement
-    replaceStatement(fortranDo,forStatement,true);
-    deepDelete(fortranDo);
+    cIncrementOp = buildAssignOp(buildVarRefExp(variableSymbol),
+                                                buildAddOp(buildVarRefExp(variableSymbol),
+                                                           increment));
   }
-}
+  else
+  {
+    cIncrementOp = buildAssignOp(buildVarRefExp(variableSymbol),
+                                                buildAddOp(buildVarRefExp(variableSymbol),
+                                                buildIntVal(1)));
+  }
+  // create C forStatement
+  SgForStatement* forStatement = buildForStatement(forInitStatement,
+                                                   testStatement,
+                                                   cIncrementOp,
+                                                   loopBody,
+                                                   NULL); 
+
+  forStatement->set_numeric_label(numericLabel);
+  forInitStatement->set_parent(forStatement);
+  testStatement->set_parent(forStatement);
+  cIncrementOp->set_parent(forStatement);
+  loopBody->set_parent(forStatement);
+
+  // Replace the SgFortranDo with SgForStatement
+  replaceStatement(fortranDo,forStatement,true);
+}  // End of Fortran_to_C::translateProcedureHeaderStatement

@@ -6,10 +6,10 @@
 
 namespace Fortran_to_C 
 {
-    void translateFileName(SgProject*);
-    void translateProgramHeaderStatement(SgProject*);
-    void translateProcedureHeaderStatement(SgProject*);
-    void translateFortranDoLoop(SgProject*);
+    void translateFileName(SgFile*);
+    void translateProgramHeaderStatement(SgProgramHeaderStatement*);
+    void translateProcedureHeaderStatement(SgProcedureHeaderStatement*);
+    void translateFortranDoLoop(SgFortranDo*);
     void fixFortranSymbolTable(SgNode*, bool);
 }
 
