@@ -16,7 +16,38 @@
 #include "f2c/f2cStatement.h"
 
 using namespace std;
+using namespace SageInterface;
 using namespace Fortran_to_C;
+
+
+class f2cTraversal : public AstSimpleProcessing
+{
+  public:
+    virtual void visit(SgNode* n);
+};
+
+void f2cTraversal::visit(SgNode* n)
+{
+    if(n->variantT() == V_SgSourceFile)
+    {
+      SgFile* fileNode = isSgFile(n);
+      translateFileName(fileNode);
+    }
+    else if(n->variantT() == V_SgProgramHeaderStatement)
+    {
+      SgProgramHeaderStatement* ProgramHeaderStatement = isSgProgramHeaderStatement(n);
+      translateProgramHeaderStatement(ProgramHeaderStatement);
+      // Deep delete the original Fortran SgProgramHeaderStatement
+      deepDelete(ProgramHeaderStatement);
+    }
+    else if(n->variantT() == V_SgProcedureHeaderStatement)
+    {
+      SgProcedureHeaderStatement* ProcedureHeaderStatement = isSgProcedureHeaderStatement(n);
+      translateProcedureHeaderStatement(ProcedureHeaderStatement);
+      // Deep delete the original Fortran ProcedureHeaderStatement.
+      deepDelete(ProcedureHeaderStatement);
+    }
+}
 
 int main( int argc, char * argv[] )
 {
@@ -24,6 +55,9 @@ int main( int argc, char * argv[] )
     SgProject* project = frontend(argc,argv);
     AstTests::runAllTests(project);   
 
+
+   f2cTraversal f2c;
+   f2c.traverseInputFiles(project,postorder);
 /*
     1. The following funcitons search for the Fortran-specific
        AST nodes and transform them into C nodes. 
@@ -36,9 +70,9 @@ int main( int argc, char * argv[] )
     TODO:  We might be able enhance the following part by using
            AST traversal. 
 */
-    translateFileName(project);
-    translateProgramHeaderStatement(project);
-    translateProcedureHeaderStatement(project);
+    //translateFileName(project);
+    //translateProgramHeaderStatement(project);
+    //translateProcedureHeaderStatement(project);
       
 /*
     1. There should be no Fortran-specific AST nodes in the whole
@@ -47,8 +81,8 @@ int main( int argc, char * argv[] )
     TODO: make sure translator generating clean AST 
 */
 
-    //generateDOT(*project);
-    //generateAstGraph(project,8000);
+    generateDOT(*project);
+    generateAstGraph(project,8000);
     return backend(project);
 }
 
