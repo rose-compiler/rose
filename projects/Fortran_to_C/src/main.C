@@ -28,25 +28,33 @@ class f2cTraversal : public AstSimpleProcessing
 
 void f2cTraversal::visit(SgNode* n)
 {
-    if(n->variantT() == V_SgSourceFile)
-    {
-      SgFile* fileNode = isSgFile(n);
-      translateFileName(fileNode);
-    }
-    else if(n->variantT() == V_SgProgramHeaderStatement)
-    {
-      SgProgramHeaderStatement* ProgramHeaderStatement = isSgProgramHeaderStatement(n);
-      translateProgramHeaderStatement(ProgramHeaderStatement);
-      // Deep delete the original Fortran SgProgramHeaderStatement
-      deepDelete(ProgramHeaderStatement);
-    }
-    else if(n->variantT() == V_SgProcedureHeaderStatement)
-    {
-      SgProcedureHeaderStatement* ProcedureHeaderStatement = isSgProcedureHeaderStatement(n);
-      translateProcedureHeaderStatement(ProcedureHeaderStatement);
-      // Deep delete the original Fortran ProcedureHeaderStatement.
-      deepDelete(ProcedureHeaderStatement);
-    }
+  switch(n->variantT())
+  {
+    case V_SgSourceFile:
+      {
+        SgFile* fileNode = isSgFile(n);
+        translateFileName(fileNode);
+      }
+      break;
+    case V_SgProgramHeaderStatement:
+      {
+        SgProgramHeaderStatement* ProgramHeaderStatement = isSgProgramHeaderStatement(n);
+        translateProgramHeaderStatement(ProgramHeaderStatement);
+        // Deep delete the original Fortran SgProgramHeaderStatement
+        deepDelete(ProgramHeaderStatement);
+      }
+      break;
+    case V_SgProcedureHeaderStatement:
+      {
+        SgProcedureHeaderStatement* ProcedureHeaderStatement = isSgProcedureHeaderStatement(n);
+        translateProcedureHeaderStatement(ProcedureHeaderStatement);
+        // Deep delete the original Fortran ProcedureHeaderStatement.
+        deepDelete(ProcedureHeaderStatement);
+      }
+      break;
+    default:
+      break;
+  }
 }
 
 int main( int argc, char * argv[] )
