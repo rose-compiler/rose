@@ -3,6 +3,7 @@
 class X
    {
      public:
+//        static int isparallel;
           void foo() 
              {
             // This causes the symbol generated in class X to reference the 
@@ -19,7 +20,7 @@ int X::isparallel = -1;
 void foobar()
    {
 #if 1
-  // int a = X::isparallel;
+     int a = X::isparallel;
      X::isparallel;
 #endif
    }

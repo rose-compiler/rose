@@ -913,6 +913,29 @@ test2012_99.C \
 test2012_100.C \
 test2012_101.C \
 test2012_102.C \
+test2012_104.C \
+test2012_105.C \
+test2012_107.C \
+test2012_108.C \
+test2012_109.C \
+test2012_110.C \
+test2012_111.C \
+test2012_112.C \
+test2012_113.C \
+test2012_114.C \
+test2012_115.C \
+test2012_116.C \
+test2012_117.C \
+test2012_118.C \
+test2012_119.C \
+test2012_120.C \
+test2012_121.C \
+test2012_122.C \
+test2012_123.C \
+test2012_124.C \
+test2012_125.C \
+test2012_126.C \
+test2012_127.C \
 test_int_lexemes.C \
 test_int_lexemes_donot_pass.C \
 test_simple_int.C \
@@ -984,6 +1007,8 @@ test2011_139.C \
 test2011_141.C \
 test2011_142.C \
  test2012_33.C \
+test2012_103.C \
+test2012_106.C \
 inputBug327.C 
 
 

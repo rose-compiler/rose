@@ -462,42 +462,97 @@ SageBuilder::buildVariableDeclaration (const SgName & name, SgType* type, SgInit
 SgVariableDeclaration* 
 SageBuilder::buildVariableDeclaration_nfi (const SgName & name, SgType* type, SgInitializer * varInit, SgScopeStatement* scope)
  //(const SgName & name, SgType* type, SgInitializer * varInit= NULL, SgScopeStatement* scope = NULL)
-{
-   ROSE_ASSERT (scope != NULL);
-   ROSE_ASSERT(type != NULL);
-
-  SgVariableDeclaration * varDecl = new SgVariableDeclaration(name, type, varInit);
-  ROSE_ASSERT(varDecl);
-
-  varDecl->set_firstNondefiningDeclaration(varDecl);
-
-  if (name != "") { // Anonymous bit fields should not have symbols
-    fixVariableDeclaration(varDecl,scope);
-  }
-
-  SgInitializedName *initName = varDecl->get_decl_item (name);   
-  ROSE_ASSERT(initName); 
-  ROSE_ASSERT((initName->get_declptr())!=NULL);
-
-#if 1
-  //bug 119, SgVariableDefintion's File_info is needed for deep copy to work
-  // AstQuery based setSourcePositionForTransformation() cannot access all child nodes
-  // have to set SgVariableDefintion explicitly
-  SgVariableDefinition* variableDefinition_original = isSgVariableDefinition(initName->get_declptr());
-     ROSE_ASSERT(variableDefinition_original != NULL);
-  setOneSourcePositionNull(variableDefinition_original);
-#endif
-  setOneSourcePositionNull(varDecl);
+   {
+     ROSE_ASSERT(scope != NULL);
+     ROSE_ASSERT(type != NULL);
 
 #if 0
-// DQ (1/2/2010): Set the defining declaration to itself.
-  if (varDecl->get_definingDeclaration() == NULL)
-       varDecl->set_definingDeclaration(varDecl);
+     SgVariableDeclaration * varDecl = new SgVariableDeclaration(name, type, varInit);
+#else
+  // DQ (7/18/2012): Added debugging code (should fail for test2011_75.C).
+     SgVariableSymbol* variableSymbol = scope->lookup_variable_symbol(name);
+  // ROSE_ASSERT(variableSymbol == NULL);
+
+  // If there was a previous use of the variable, then there will be an existing symbol with it's declaration pointing to the SgInitializedName object.
+     SgVariableDeclaration * varDecl = NULL;
+     if (variableSymbol == NULL)
+        {
+          varDecl = new SgVariableDeclaration(name, type, varInit);
+        }
+       else
+        {
+          SgInitializedName* initializedName = variableSymbol->get_declaration();
+          ROSE_ASSERT(initializedName != NULL);
+          SgVariableDeclaration* associatedVariableDeclaration = isSgVariableDeclaration(initializedName->get_parent());
+          if (associatedVariableDeclaration != NULL)
+             {
+            // Build a seperate SgVariableDeclaration so that we can avoid sharing the SgInitializedName 
+            // (and it's possible initializer which would be an error for the secondary declaration 
+            // (the declaration in the class for the case of a static declaration))
+               varDecl = new SgVariableDeclaration(name, type, varInit);
+             }
+            else
+             {
+            // If there is not an associated SgVariableDeclaration then reuse the existing SgInitializedName.
+               varDecl = new SgVariableDeclaration(initializedName);
+             }
+        }
+#endif
+     ROSE_ASSERT(varDecl != NULL);
+
+     varDecl->set_firstNondefiningDeclaration(varDecl);
+
+  // DQ (7/9/2012): Added test (parent should not be set yet; set in parse_statement).
+     ROSE_ASSERT(varDecl->get_parent() == NULL);
+
+     if (name != "")
+        {
+       // Anonymous bit fields should not have symbols
+          fixVariableDeclaration(varDecl,scope);
+
+       // DQ (7/9/2012): Added test (parent should not be set yet; set in parse_statement).
+       // ROSE_ASSERT(varDecl->get_parent() == NULL);
+        }
+       else
+        {
+       // DQ (7/12/2012): This is not correct for C++ (to use the input scope), so don't set it here (unless we use the current scope instead of scope).
+       // Yes, let's set it to the current top of the scope stack.  This might be a problem if the scope stacj is not being used...
+          varDecl->set_parent(topScopeStack());
+          ROSE_ASSERT(varDecl->get_parent() != NULL);
+        }
+
+     SgInitializedName *initName = varDecl->get_decl_item (name);   
+     ROSE_ASSERT(initName);
+     ROSE_ASSERT((initName->get_declptr())!=NULL);
+
+  // DQ (7/9/2012): Added test (parent should not be set yet; set in parse_statement).
+  // ROSE_ASSERT(varDecl->get_parent() == NULL);
+
+#if 1
+  // bug 119, SgVariableDefintion's File_info is needed for deep copy to work
+  // AstQuery based setSourcePositionForTransformation() cannot access all child nodes
+  // have to set SgVariableDefintion explicitly
+     SgVariableDefinition* variableDefinition_original = isSgVariableDefinition(initName->get_declptr());
+     ROSE_ASSERT(variableDefinition_original != NULL);
+     setOneSourcePositionNull(variableDefinition_original);
+#endif
+     setOneSourcePositionNull(varDecl);
+
+#if 0
+  // DQ (1/2/2010): Set the defining declaration to itself.
+     if (varDecl->get_definingDeclaration() == NULL)
+          varDecl->set_definingDeclaration(varDecl);
 #endif
 
-  //ROSE_ASSERT (varDecl->get_declarationModifier().get_accessModifier().isPublic() == false);
-  return varDecl;
-}
+  // DQ (7/12/2012): The parent should be set to the current scope (not the same as that specified 
+  // in the scope (since that applies to the variable (SgInitializedName) not the SgVariableDeclaration).
+  // DQ (7/9/2012): Added test (parent should not be set yet; set in parse_statement).
+  // ROSE_ASSERT(varDecl->get_parent() == NULL);
+     ROSE_ASSERT(varDecl->get_parent() != NULL);
+
+  // ROSE_ASSERT (varDecl->get_declarationModifier().get_accessModifier().isPublic() == false);
+     return varDecl;
+   }
 
 
 #ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
@@ -1320,7 +1375,9 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & name, SgType*
           if (func_symbol == NULL)
              {
             // Note that a template function does not have a function type (just a name).
+#if 0
                printf ("NOTE: Maybe template symbols for template function declarations should use the function type \n");
+#endif
                ROSE_ASSERT(func_type != NULL);
 
 #if 0
@@ -2926,7 +2983,9 @@ SageBuilder::setTemplateNameInTemplateInstantiations( SgFunctionDeclaration* fun
    {
   // DQ (2/11/2012): If this is a template instantiation then we have to set the template name (seperate from the name of the function which can include template parameters)).
 
+#if 0
      printf ("In setTemplateNameInTemplateInstantiations(): name = %s func->get_name() = %s \n",name.str(),func->get_name().str());
+#endif
 
      SgTemplateInstantiationFunctionDecl*       templateInstantiationFunctionDecl       = isSgTemplateInstantiationFunctionDecl(func);
      SgTemplateInstantiationMemberFunctionDecl* templateInstantiationMemberFunctionDecl = isSgTemplateInstantiationMemberFunctionDecl(func);
@@ -2947,7 +3006,7 @@ SageBuilder::setTemplateNameInTemplateInstantiations( SgFunctionDeclaration* fun
                printf ("WARNING: In setTemplateNameInTemplateInstantiations(): name = %s (does not have any template argument syntax) \n",name.str());
              }
 
-#if 1
+#if 0
           printf ("In setTemplateNameInTemplateInstantiations(): detected construction of template instantiation func->get_name() = %s \n",func->get_name().str());
           printf ("In setTemplateNameInTemplateInstantiations(): templateNameWithoutArguments = %s \n",templateNameWithoutArguments.str());
           printf ("In setTemplateNameInTemplateInstantiations(): templateInstantiationFunctionDecl       = %p \n",templateInstantiationFunctionDecl);
@@ -2971,7 +3030,7 @@ SageBuilder::setTemplateNameInTemplateInstantiations( SgFunctionDeclaration* fun
                  // ROSE_ASSERT(templateNameWithoutArguments.getString().find('<') == string::npos);
                     ROSE_ASSERT(hasTemplateSyntax(templateNameWithoutArguments) == false);
                   }
-#if 1
+#if 0
                printf ("templateInstantiationMemberFunctionDecl->get_templateName() = %s \n",templateInstantiationMemberFunctionDecl->get_templateName().str());
 #endif
                ROSE_ASSERT(templateInstantiationMemberFunctionDecl->get_templateName().is_null() == false);
@@ -5689,10 +5748,12 @@ SageBuilder::buildActualArgumentExpression_nfi(SgName arg_name, SgExpression* ar
     return result;
 }
 
-SgPragmaDeclaration * SageBuilder::buildPragmaDeclaration(const string& name, SgScopeStatement* scope)
+SgPragmaDeclaration*
+SageBuilder::buildPragmaDeclaration(const string& name, SgScopeStatement* scope)
    {
      if (scope == NULL)
           scope = SageBuilder::topScopeStack();
+
      SgPragma* pragma = new SgPragma(name);
      ROSE_ASSERT(pragma);
 
@@ -5706,6 +5767,12 @@ SgPragmaDeclaration * SageBuilder::buildPragmaDeclaration(const string& name, Sg
      result->set_definingDeclaration (result);
      result->set_firstNondefiningDeclaration(result);
      pragma->set_parent(result);
+
+  // DQ (7/14/2012): Set the parent so that we can be consistant where possible (class declarations and 
+  // enum declaration can't have there parent set since they could be non-autonomous declarations).
+     result->set_parent(topScopeStack());
+
+     ROSE_ASSERT(result->get_parent() != NULL);
 
      return result;
    }
@@ -8218,8 +8285,9 @@ SageBuilder::buildNondefiningTemplateClassDeclaration_nfi(const SgName& name, Sg
      printf ("SageBuilder::buildNondefiningTemplateClassDeclaration_nfi(): scope = %p = %s \n",scope,scope->class_name().c_str());
      defdecl->set_scope(scope);
 
+  // DQ (7/15/2012): I think we don't want to set the nondefining template declaration parent either (but this might only apply to the defining declaration).
   // DQ (11/20/2011): Can name qualification make this incorrect?
-     defdecl->set_parent(scope);
+  // defdecl->set_parent(scope);
 
   // ROSE_ASSERT(classDef != NULL);
 
@@ -8445,6 +8513,9 @@ SageBuilder::buildNondefiningTemplateClassDeclaration_nfi(const SgName& name, Sg
      ROSE_ASSERT(defdecl->get_scope() != NULL);
 #endif
 
+  // DQ (7/15/2012): We want to inforce this.
+     ROSE_ASSERT(nondefdecl->get_parent() == NULL);
+
   // return defdecl;
      return nondefdecl;    
    }
@@ -8510,8 +8581,9 @@ SageBuilder::buildTemplateClassDeclaration_nfi(const SgName& name, SgClassDeclar
      printf ("SageBuilder::buildTemplateClassDeclaration_nfi(): scope = %p = %s \n",scope,scope->class_name().c_str());
      defdecl->set_scope(scope);
 
+  // DQ (7/15/2012): To support non-autonomous declarations (declarations nested in types) we don't want to set the parent here.  It will be set later.
   // DQ (11/20/2011): Can name qualification make this incorrect?
-     defdecl->set_parent(scope);
+  // defdecl->set_parent(scope);
 
      ROSE_ASSERT(classDef != NULL);
 
@@ -8715,10 +8787,11 @@ SageBuilder::buildTemplateClassDeclaration_nfi(const SgName& name, SgClassDeclar
   // DQ (12/26/2011): The non defining declaration should not have a valid pointer to the class definition.
      ROSE_ASSERT(nondefdecl->get_definition() == NULL);
 
+  // DQ (7/15/2012): We want to inforce this.
+     ROSE_ASSERT(defdecl->get_parent() == NULL);
+
      return defdecl;    
    }
-
-
 
 
 SgEnumDeclaration * SageBuilder::buildEnumDeclaration(const SgName& name, SgScopeStatement* scope /*=NULL*/)
@@ -8731,36 +8804,51 @@ SgEnumDeclaration * SageBuilder::buildEnumDeclaration(const SgName& name, SgScop
     setOneSourcePositionForTransformation(decl);
     setOneSourcePositionForTransformation(decl->get_firstNondefiningDeclaration());
     setOneSourcePositionForTransformation(decl->get_definingDeclaration());
+
+  // DQ (7/15/2012): We want to inforce this.
+     ROSE_ASSERT(decl->get_parent() == NULL);
+
     return decl;    
   } //buildEnumDeclaration()
 
+
 SgEnumDeclaration * SageBuilder::buildEnumDeclaration_nfi(const SgName& name, SgScopeStatement* scope)
-  {
-    SgEnumDeclaration* defdecl = new SgEnumDeclaration (name,NULL);
-    ROSE_ASSERT(defdecl);
-    setOneSourcePositionNull(defdecl);
-    // constructor is side-effect free
-    defdecl->set_definingDeclaration(defdecl);
+   {
+     SgEnumDeclaration* defdecl = new SgEnumDeclaration (name,NULL);
+     ROSE_ASSERT(defdecl);
+     setOneSourcePositionNull(defdecl);
+  // constructor is side-effect free
+     defdecl->set_definingDeclaration(defdecl);
 
-    // build the nondefining declaration
-    SgEnumDeclaration* nondefdecl = buildNondefiningEnumDeclaration_nfi(name, scope);
-    nondefdecl->set_definingDeclaration(defdecl);
-    defdecl->set_firstNondefiningDeclaration(nondefdecl);
+  // build the nondefining declaration
+     SgEnumDeclaration* nondefdecl = buildNondefiningEnumDeclaration_nfi(name, scope);
+     nondefdecl->set_definingDeclaration(defdecl);
+     defdecl->set_firstNondefiningDeclaration(nondefdecl);
 
- // DQ (1/11/2009): The buildNondefiningEnumDeclaration function builds an entry in the symbol table, and so we don't want a second one!
+  // DQ (1/11/2009): The buildNondefiningEnumDeclaration function builds an entry in the symbol table, and so we don't want a second one!
 #if 0
-    SgEnumSymbol* mysymbol = new SgEnumSymbol(nondefdecl);
-    ROSE_ASSERT(mysymbol);
- // scope->print_symboltable("buildEnumDeclaration_nfi(): before inserting new SgEnumSymbol");
-    scope->insert_symbol(name, mysymbol);
+     SgEnumSymbol* mysymbol = new SgEnumSymbol(nondefdecl);
+     ROSE_ASSERT(mysymbol);
+  // scope->print_symboltable("buildEnumDeclaration_nfi(): before inserting new SgEnumSymbol");
+     scope->insert_symbol(name, mysymbol);
 #endif
 
-    defdecl->set_scope(scope);
-    nondefdecl->set_scope(scope);
-    defdecl->set_parent(scope);
-    nondefdecl->set_parent(scope);
-    return defdecl;    
-  } //buildEnumDeclaration_nfi()
+     defdecl->set_scope(scope);
+     nondefdecl->set_scope(scope);
+
+#if 0
+  // DQ (7/12/2012): We can't set the parent here because if this is a non-autonomous declaration then it must be set later (to the outer declaration where this declaration is nested).
+     defdecl->set_parent(scope);
+     nondefdecl->set_parent(scope);
+#endif
+
+  // DQ (7/12/2012): When this is an unnamed enum declaration, this it is NON-AUTONIMOUS
+  // (and will have it's parent set in the associated variable or typedef declaration.
+  // In the case of a class declaration this is always NULL (this should be similar).
+     ROSE_ASSERT(defdecl->get_parent() == NULL);
+
+     return defdecl;    
+   } //buildEnumDeclaration_nfi()
 
   //! Build a SgFile node
 SgFile*

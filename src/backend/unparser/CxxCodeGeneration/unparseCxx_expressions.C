@@ -974,7 +974,7 @@ Unparse_ExprStmt::unparseVarRef(SgExpression* expr, SgUnparse_Info& info)
      SgVarRefExp* var_ref = isSgVarRefExp(expr);
      ROSE_ASSERT(var_ref != NULL);
 
-#if 0
+#if 1
      printf ("In Unparse_ExprStmt::unparseVarRef() \n");
      var_ref->get_startOfConstruct()->display("In Unparse_ExprStmt::unparseVarRef()");
 #endif
@@ -1029,7 +1029,7 @@ Unparse_ExprStmt::unparseVarRef(SgExpression* expr, SgUnparse_Info& info)
   // DQ (11/9/2007): Need to ignore these sorts of generated names
      if (nameQualifier.getString().find("__unnamed_class") == string::npos)
         {
-       // printf ("In Unparse_ExprStmt::unparseVarRef(): nameQualifier = %s \n",nameQualifier.str());
+          printf ("In Unparse_ExprStmt::unparseVarRef(): nameQualifier = %s \n",nameQualifier.str());
           curprint ( nameQualifier.str());
         }
 
@@ -1047,7 +1047,7 @@ Unparse_ExprStmt::unparseVarRef(SgExpression* expr, SgUnparse_Info& info)
           curprint (var_ref->get_symbol()->get_name().str());
         }
 
-#if 0
+#if 1
      printf ("Leaving Unparse_ExprStmt::unparseVarRef() \n");
 #endif
    }

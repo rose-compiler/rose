@@ -1392,6 +1392,15 @@ Grammar::setUpStatements ()
      ClassDeclaration.setDataPrototype("bool","global_qualification_required","= false",
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (7/9/2012): Added information required to indicate that declaration is contained in a type reference (as part of another declaration).
+  // This is also called autonomous declaration handling.  The following examples make
+  // clear the definition of autonomous and non autonomous declarations:
+  //      struct A { int i; };         // autonomous declaration
+  //      struct B { int i; } b;       // non autonomous declaration
+  // Clearly the autonomous case is the more common, but we must handle both.
+     ClassDeclaration.setDataPrototype("bool","isAutonomousDeclaration","= true",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
   // This class contains two lists (we don't know if this edit/substitution mechanism for work for two lists)
      ClassDefinition.setFunctionPrototype ( "HEADER_CLASS_DEFINITION_STATEMENT", "../Grammar/Statement.code" );      
      ClassDefinition.editSubstitute       ( "HEADER_LIST_DECLARATIONS_1", "HEADER_LIST_DECLARATIONS", "../Grammar/Statement.code" );
@@ -1917,6 +1926,16 @@ Grammar::setUpStatements ()
      EnumDeclaration.setDataPrototype ( "bool", "isUnNamed", "= false",
                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (7/10/2012): Added information required to indicate that declaration is contained in a type reference (as part of another declaration).
+  // This is also called autonomous declaration handling.  The following examples make
+  // clear the definition of autonomous and non autonomous declarations:
+  //      enum A { i; }; typedef A a;    // autonomous declaration
+  //      typedef enum B { i; } b;       // non autonomous declaration
+  // Clearly the autonomous case is the more common, but we must handle both.
+     EnumDeclaration.setDataPrototype("bool","isAutonomousDeclaration","= true",
+               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+
      ExprStatement.setFunctionPrototype ( "HEADER_EXPRESSION_STATEMENT", "../Grammar/Statement.code" );
 
 #if 0
@@ -2353,6 +2372,14 @@ Grammar::setUpStatements ()
      TypedefDeclaration.setDataPrototype("bool","global_qualification_required_for_base_type","= false",
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (7/9/2012): Added information required to indicate that declaration is contained in a type reference (as part of another declaration).
+  // This is also called autonomous declaration handling.  The following examples make
+  // clear the definition of autonomous and non autonomous declarations:
+  //      class A { int i; }; typedef A a;    // autonomous declaration
+  //      typedef class B { int i; } b;       // non autonomous declaration
+  // Clearly the autonomous case is the more common, but we must handle both.
+     TypedefDeclaration.setDataPrototype("bool","isAutonomousDeclaration","= true",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      PragmaDeclaration.setFunctionPrototype ( "HEADER_PRAGMA_STATEMENT", "../Grammar/Statement.code" );
 

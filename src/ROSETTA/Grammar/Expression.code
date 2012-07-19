@@ -1436,6 +1436,8 @@ SgExpression::get_qualified_name_prefix() const
   //    SgFunctionRefExp
   //    SgMemberFunctionRefExp
 
+     printf ("In get_qualified_name_prefix(): this = %p = %s \n",this,this->class_name().c_str());
+
   // DQ (5/28/2011): We have to handle the name qualification directly since types can be qualified 
   // different and so it depends upon where the type is referenced.  Thus the qualified name is 
   // stored in a map to the IR node that references the type.
@@ -1446,10 +1448,15 @@ SgExpression::get_qualified_name_prefix() const
      if (i != SgNode::get_globalQualifiedNameMapForNames().end())
         {
           nameQualifier = i->second;
-       // printf ("Found a valid name qualification: nameQualifier %s \n",nameQualifier.str());
+
+          printf ("Found a valid name qualification: nameQualifier %s \n",nameQualifier.str());
+        }
+       else
+        {
+          printf ("Could NOT find a valid name qualification: nameQualifier %s \n",nameQualifier.str());
         }
 
-  // printf ("nameQualifier for SgExpression = %p = %p = %s = %s \n",this,const_cast<SgExpression*>(this),class_name().c_str(),nameQualifier.str());
+     printf ("nameQualifier for SgExpression = %p = %p = %s = %s \n",this,const_cast<SgExpression*>(this),class_name().c_str(),nameQualifier.str());
 
      return nameQualifier;
    }

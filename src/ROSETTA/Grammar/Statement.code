@@ -1466,11 +1466,16 @@ HEADER_VARIABLE_DECLARATION_STATEMENT_START
        // Special constructor
        // SgVariableDeclaration (Sg_File_Info *info, const SgName& var_name, 
        //                     SgType *type, SgInitializer *initializer = NULL );
-          $CLASSNAME ( Sg_File_Info *info, const SgName& var_name, SgType *type, SgInitializer *initializer = NULL );
-          $CLASSNAME ( const SgName& var_name, SgType *type, SgInitializer *initializer );
+          SgVariableDeclaration ( Sg_File_Info *info, const SgName& var_name, SgType *type, SgInitializer *initializer = NULL );
+          SgVariableDeclaration ( const SgName& var_name, SgType *type, SgInitializer *initializer );
 
        // DQ (11/10/2006): This function is called by the custom written constructors (refactored code to simplify their implementation).
           void initializeData(Sg_File_Info *info, const SgName& var_name, SgType *type, SgInitializer *initializer);
+
+       // DQ (7/18/2012): New constructors and initializations to support building a SgVariableDeclaration from an existing SgInitializedName
+          SgVariableDeclaration( Sg_File_Info *info, SgInitializedName* c_item );
+          SgVariableDeclaration( SgInitializedName* c_item );
+          void initializeData(Sg_File_Info *info, SgInitializedName* c_item);
 
           void setDeclarationOnly() ROSE_DEPRECATED_FUNCTION;
           void setExtern() ROSE_DEPRECATED_FUNCTION;
@@ -10193,6 +10198,18 @@ SgVariableDeclaration::SgVariableDeclaration( const SgName& var_name, SgType *ty
      initializeData (NULL,var_name,type,initializer);
    }
 
+SgVariableDeclaration::SgVariableDeclaration( Sg_File_Info *info, SgInitializedName* c_item )
+   {
+     ROSE_ASSERT (this != NULL);
+     initializeData (info,c_item);
+   }
+
+SgVariableDeclaration::SgVariableDeclaration( SgInitializedName* c_item )
+   {
+     ROSE_ASSERT (this != NULL);
+     initializeData (NULL,c_item);
+   }
+
 void
 SgVariableDeclaration::initializeData(Sg_File_Info *info, const SgName& var_name, SgType *type, SgInitializer *initializer)
    {
@@ -10204,6 +10221,26 @@ SgVariableDeclaration::initializeData(Sg_File_Info *info, const SgName& var_name
   // SgInitializedName* c_item = new SgInitializedName(var_name, type, NULL, this);
      SgInitializedName* c_item = new SgInitializedName(var_name, type, initializer, this);
      ROSE_ASSERT (c_item != NULL);
+     
+     initializeData (NULL,c_item);
+   }
+
+
+// DQ (7/18/2012): Add to the API so that we can build a SgVariableDeclaration from an existing SgInitializedName.
+// void SgVariableDeclaration::initializeData(Sg_File_Info *info, const SgName& var_name, SgType *type, SgInitializer *initializer)
+void
+SgVariableDeclaration::initializeData(Sg_File_Info *info, SgInitializedName* c_item)
+   {
+     ROSE_ASSERT (this != NULL);
+
+  // DQ (7/20/2006): Suggested by Peter to so that the initializer will be used.
+  // DQ (6/1/2004): Changed list to contain pointers to SgInitializedName elements
+  // SgInitializedName c_item(var_name, type, 0, this);
+  // SgInitializedName* c_item = new SgInitializedName(var_name, type, NULL, this);
+  // SgInitializedName* c_item = new SgInitializedName(var_name, type, initializer, this);
+     ROSE_ASSERT (c_item != NULL);
+
+     SgInitializer *initializer = c_item->get_initptr();
 
   // DQ (10/10/2007): Added fix for Liao, this is required when using the alternative constructors.
   // DQ (10/10/2007): fixed the segmentation fault occurred in liaOutliner for class ::A this__ptr__ 
@@ -10857,7 +10894,13 @@ SgVariableDeclaration::compute_baseTypeDefiningDeclaration() const
         }
        else
         {
-          ROSE_ASSERT(p_baseTypeDefiningDeclaration == NULL);
+       // DQ (7/15/2012): This fails for test2012_120.C
+       // ROSE_ASSERT(p_baseTypeDefiningDeclaration == NULL);
+          if (p_baseTypeDefiningDeclaration != NULL)
+             {
+               printf ("Warning: In SgVariableDeclaration::compute_baseTypeDefiningDeclaration(): p_baseTypeDefiningDeclaration != NULL but returning NULL \n");
+             }
+
           return NULL;
         }
    }

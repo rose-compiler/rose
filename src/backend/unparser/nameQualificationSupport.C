@@ -3192,6 +3192,9 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                SgInitializedName* initializedName = variableSymbol->get_declaration();
                ROSE_ASSERT(initializedName != NULL);
 
+            // DQ (7/18/2012): Added test as part of debugging test2011_75.C.
+               ROSE_ASSERT(initializedName->get_parent() != NULL);
+
                SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(initializedName->get_parent());
             // ROSE_ASSERT(variableDeclaration != NULL);
                if (variableDeclaration == NULL)
@@ -3227,7 +3230,9 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 
                               printf ("Exiting as a test! \n");
 #endif
+                           // DQ (7/18/2012): Uncommented to debug test2011_75.C.
                            // ROSE_ASSERT(false);
+                              ROSE_ASSERT(false);
                             }
                        }
                   }

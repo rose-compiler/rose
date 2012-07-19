@@ -8749,8 +8749,17 @@ void SageInterface::appendStatement(SgStatement *stmt, SgScopeStatement* scope)
   // DQ (4/3/2012): Simple globally visible function to call (used for debugging in ROSE).
      void testAstForUniqueNodes ( SgNode* node );
 
+#if 0
+     printf ("In SageInterface::appendStatement(): stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+#endif
+
+  // DQ (6/19/2012): Exit as a test...
+  // ROSE_ASSERT(isSgClassDeclaration(stmt) == NULL);
+
      if (scope == NULL)
+        {
           scope = SageBuilder::topScopeStack();
+        }
 
      ROSE_ASSERT(stmt  != NULL);
      ROSE_ASSERT(scope != NULL);
@@ -8778,6 +8787,7 @@ void SageInterface::appendStatement(SgStatement *stmt, SgScopeStatement* scope)
     }
 #endif
 
+#if 0
   // catch-all for statement fixup
   // Must fix it before insert it into the scope,
      fixStatement(stmt,scope);
@@ -8787,6 +8797,38 @@ void SageInterface::appendStatement(SgStatement *stmt, SgScopeStatement* scope)
   // scope->append_statement (stmt);
      scope->insertStatementInScope(stmt,false);
      stmt->set_parent(scope); // needed?
+#else
+  // DQ (7/12/2012): Skip adding when this is a non-autonomous type declaration.
+     bool skipAddingStatement = false;
+     SgClassDeclaration* classDeclaration = isSgClassDeclaration(stmt);
+     if (classDeclaration != NULL)
+        {
+       // DQ (7/9/2012): We only skip the attachment of the class declaration to the scope if it is NOT and autonomous declaration.
+          skipAddingStatement = (classDeclaration->get_isAutonomousDeclaration() == false);
+        }
+       else
+        {
+          SgEnumDeclaration* enumDeclaration = isSgEnumDeclaration(stmt);
+          if (enumDeclaration != NULL)
+             {
+            // DQ (7/12/2012): We only skip the attachment of the class declaration to the scope if it is NOT and autonomous declaration.
+               skipAddingStatement = (enumDeclaration->get_isAutonomousDeclaration() == false);
+             }
+        }
+
+     if (skipAddingStatement == false)
+        {
+       // catch-all for statement fixup
+       // Must fix it before insert it into the scope,
+          fixStatement(stmt,scope);
+
+       //-----------------------
+       // append the statement finally
+       // scope->append_statement (stmt);
+          scope->insertStatementInScope(stmt,false);
+          stmt->set_parent(scope); // needed?
+        }
+#endif
 
   // update the links after insertion!
      if (isSgFunctionDeclaration(stmt))
@@ -8801,11 +8843,27 @@ void SageInterface::appendStatement(SgStatement *stmt, SgScopeStatement* scope)
 #endif
    }
 
-void SageInterface::appendStatementList(const std::vector<SgStatement*>& stmts, SgScopeStatement* scope) {
-    for (size_t i = 0; i < stmts.size(); ++i) {
-      appendStatement(stmts[i], scope);
-    }
-  }
+void
+SageInterface::appendStatementList(const std::vector<SgStatement*>& stmts, SgScopeStatement* scope) 
+   {
+     for (size_t i = 0; i < stmts.size(); ++i)
+        {
+#if 0
+          printf ("In appendStatementList(): stmts[i = %zu] = %p = %s \n",i,stmts[i],stmts[i]->class_name().c_str());
+          printf ("In appendStatementList(): stmts[i = %zu]->get_parent() = %p \n",i,stmts[i]->get_parent());
+#endif
+       // appendStatement(stmts[i], scope);
+          if (stmts[i]->get_parent() != NULL)
+             {
+               appendStatement(stmts[i], scope);
+             }
+            else
+             {
+               printf ("WARNING: In appendStatementList(): stmts[i = %zu] not added to scope (stmts[i]->get_parent() == NULL) \n",i);
+             }
+        }
+   }
+
 //!SageInterface::prependStatement()
   void SageInterface::prependStatement(SgStatement *stmt, SgScopeStatement* scope)
   {
@@ -9348,15 +9406,16 @@ void SageInterface::fixStructDeclaration(SgClassDeclaration* structDecl, SgScope
      if (nondefdecl->get_scope() == NULL)
           nondefdecl->set_scope(scope);
 
-     printf ("*** WARNING: In SageInterface::fixStructDeclaration(): Commented out the setting of the parent (of input class declaration and the nondefining declaration) to be the same as the scope (set only if NULL) \n");
 #if 0
      if (structDecl->get_parent() == NULL)
           structDecl->set_parent(scope);
      if (nondefdecl->get_parent() == NULL)
           nondefdecl->set_parent(scope);
+#else
+     printf ("*** WARNING: In SageInterface::fixStructDeclaration(): Commented out the setting of the parent (of input class declaration and the nondefining declaration) to be the same as the scope (set only if NULL) \n");
 #endif
 
-     SgName name= structDecl->get_name();
+     SgName name = structDecl->get_name();
   // This is rare case (translation error) when scope->lookup_class_symbol(name) will find something
   // but nondefdecl->get_symbol_from_symbol_table() returns NULL
   // But symbols are associated with nondefining declarations whenever possible
@@ -9546,7 +9605,12 @@ void SageInterface::fixVariableDeclaration(SgVariableDeclaration* varDecl, SgSco
           initName->set_scope(requiredScope);
 
        // optional?
-          varDecl->set_parent(scope);
+       // DQ (7/9/2012): Don't set this since it will be set later (see test2012_107.C) (LATER) Puting this back (mark declarations to not be output as compiler generated -- and not to be output).
+       // DQ (7/12/2012): This is not correct for C++, so don't set it here (unless we use the current scope instead of scope).
+       // Yes, let's set it to the current top of the scope stack.  This might be a problem if the scope stacj is not being used...
+       // varDecl->set_parent(scope);
+          varDecl->set_parent(topScopeStack());
+          ROSE_ASSERT(varDecl->get_parent() != NULL);
 
        // DQ (11/19/2011): C++ can have a different scope than that of the current scope.
        // symbol table
@@ -9588,7 +9652,7 @@ void SageInterface::fixVariableDeclaration(SgVariableDeclaration* varDecl, SgSco
   // But we have to replace the fake one with the real one once the variable declaration is inserted into AST
      if (SageInterface::is_Fortran_language() == true)
         {
-          fixVariableReferences (scope);
+          fixVariableReferences(scope);
         }
    }
 
