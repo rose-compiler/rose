@@ -1,0 +1,2 @@
+
+typedef enum {} x,y;

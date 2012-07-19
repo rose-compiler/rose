@@ -611,6 +611,7 @@ test2007_128.C \
 test2007_130.C \
 test2007_133.C \
 test2007_135.C \
+test2007_140.C \
 test2007_142.C \
 test2007_147.C \
 test2007_150.C \
@@ -940,6 +941,7 @@ test2012_124.C \
 test2012_125.C \
 test2012_126.C \
 test2012_127.C \
+test2012_128.C \
 test_int_lexemes.C \
 test_int_lexemes_donot_pass.C \
 test_simple_int.C \
@@ -992,7 +994,6 @@ test2007_38.C \
  test2007_55.C \
 test2007_83.C \
 test2007_137.C \
-test2007_140.C \
 test2007_141.C \
 test2009_21.C \
 test2009_24.C \
