@@ -41,6 +41,7 @@ SUBDIRS = \
 	PowerAwareCompiler \
 	ManyCoreRuntime \
 	mint \
+	Fortran_to_C \
 	extractMPISkeleton \
 	$(OPTIONAL_PROJECTS)
 
