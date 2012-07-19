@@ -2258,6 +2258,16 @@ fixupScopeInUnparseInfo ( SgUnparse_Info& ninfo , SgDeclarationStatement* declar
                          break;
                        }
 
+                 // DQ (6/19/2012): Added case to support test2012_103.C.
+                    case V_SgForInitStatement:
+                       {
+                         SgForInitStatement* forInitDeclaration = isSgForInitStatement(parentOfFunctionDeclaration);
+                      // currentScope = isSgScopeStatement(funcdecl_stmt->get_parent()->get_parent());
+                         currentScope = forInitDeclaration->get_scope();
+                         ROSE_ASSERT(currentScope != NULL);
+                         break;
+                       }
+
                     default:
                        {
                          printf ("Error: default reached in evaluation of function declaration structural location parentOfFunctionDeclaration = %s \n",parentOfFunctionDeclaration->class_name().c_str());
@@ -3448,6 +3458,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                unp->u_exprStmt->unparseAttachedPreprocessingInfo(decl_item, info, PreprocessingInfo::before);
 #if 0
                printf ("In unparseVarDeclStmt(): cname = decl_item->get_name() = %s \n",decl_item->get_name().str());
+               curprint ("\n /* In unparseVarDeclStmt(): cname = decl_item->get_name() = " + decl_item->get_name() + " */ \n");
 #endif
                tmp_name = decl_item->get_name();
                tmp_type = decl_item->get_type();
@@ -3575,7 +3586,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                   }
 
             // printf ("After isNameOnly() test: ninfo2.SkipClassDefinition() = %s \n",(ninfo2.SkipClassDefinition() == true) ? "true" : "false");
-#if 1
+
             // DQ (8/23/2006): This was used to specify global qualification separately from the more general name 
             // qualification mechanism, however having two mechanisms is a silly level of redundancy so we now use 
             // just one (the more general one) even though it is only used for global name qualification.
@@ -3591,7 +3602,6 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                  // ninfo2.set_forceQualifiedNames();
                     ninfo_for_type.set_requiresGlobalNameQualification();
                   }
-#endif
 
             // DQ (5/21/2011): Set the reference node for the qualified name lookup.
                ninfo_for_type.set_reference_node_for_qualification(decl_item);
@@ -3657,12 +3667,8 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                       // DQ (6/5/2011): The initial SgInitializedName need not really be used, but it is present in the AST.
                       // We now reset the symbol to the SgInitializedName that is used in the declaration.
                       // So this test can be removed.
-#if 1
                          if (previousInitializedName->get_prev_decl_item() != NULL)
                               ROSE_ASSERT(previousInitializedName->get_parent() != NULL);
-#else
-                         printf ("Commented out test of parent on decl_item->get_prev_decl_item()->get_parent() = %p \n",previousInitializedName);
-#endif
                        }
 
                  // DQ (10/10/2006): Only do name qualification for C++
@@ -3671,11 +3677,12 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                          SgUnparse_Info ninfo_for_variable(ninfo);
 #if 0
                       // DQ (10/24/2007): Added fix by Jeremiah (not well tested)
-                         if (classDefinition != NULL) {
+                         if (classDefinition != NULL)
+                            {
                            // JJW 10-23-2007
                            // Never qualify a member variable of a class
-                           ninfo_for_variable.set_SkipQualifiedNames();
-                         }
+                              ninfo_for_variable.set_SkipQualifiedNames();
+                            }
 #endif
                       // DQ (1/5/2007): C++ can be more complex and we can be initializing a variable in global scope initially declared in a class or namespace.
                       // printf ("variable name = %s decl_item->get_prev_decl_item() = %p \n",tmp_name.str(),decl_item->get_prev_decl_item());
@@ -3736,34 +3743,9 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                printf ("Calling 2nd part of unp->u_type->unparseType for %s \n",tmp_type->sage_class_name());
                printf ("ninfo2.SkipClassDefinition() = %s \n",(ninfo_for_type.SkipClassDefinition() == true) ? "true" : "false");
 #endif
-#if 0
-            // DQ (9/28/2004): Now that we have defining and non-defining declarations we should be able to simplify this code!
-            // if (isSgArrayType(tmp_type) != NULL)
-            // if ( (isSgArrayType(tmp_type) != NULL) && (declStmt != NULL) && (isSgTypedefDeclaration(declStmt) == NULL) )
-               if ( (declStmt != NULL) && (isSgTypedefDeclaration(declStmt) == NULL) )
-                  {
-                    printf ("(declStmt != NULL) && (isSgTypedefDeclaration(declStmt) == NULL) == true \n");
-                    printf ("tmp_type = %p = %s \n",tmp_type,tmp_type->class_name().c_str());
-#if 0
-                    if (isSgArrayType(tmp_type) != NULL)
-                       {
-                         printf ("This is an array type so use special handling ... \n");
-                         unp->u_type->unparseType(tmp_type, ninfo2);
-                       }
-#else
-                    unp->u_type->unparseType(tmp_type, ninfo2);
-#endif
-                  }
-                 else
-                  {
-                 // printf ("(declStmt != NULL) && (isSgTypedefDeclaration(declStmt) == NULL) == false \n");
-                    unp->u_type->unparseType(tmp_type, ninfo2);
-                  }
-#else
-                 // DQ (7/31/2006): I think that we can simplify to just this code.
-                 // unp->u_type->unparseType(tmp_type, ninfo2);
-                    unp->u_type->unparseType(tmp_type, ninfo_for_type);
-#endif
+            // DQ (7/31/2006): I think that we can simplify to just this code.
+            // unp->u_type->unparseType(tmp_type, ninfo2);
+               unp->u_type->unparseType(tmp_type, ninfo_for_type);
 
             // Mark that we are no longer processing the first entry 
             // (first variable in a declaration containing multiple "," separated names)
@@ -3778,49 +3760,12 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 #if 0
                     printf ("Initializer tmp_init = %s \n",tmp_init->class_name().c_str());
 #endif
-#if 0
-                    if ( tmp_init->variant() == ASSIGN_INIT || tmp_init->variant() == AGGREGATE_INIT )
-                       {
-                         curprint ( string(" = "));
-                       }
-#else
+
                  // DQ (8/5/2005): generate more faithful representation of assignment operator!
 #if 0
                     ninfo.display ("In Unparse_ExprStmt::unparseVarDeclStmt --- handling the initializer");
 #endif
-
                     SgConstructorInitializer* constructor = isSgConstructorInitializer(tmp_init);
-#if 0
-                    if (constructor != NULL)
-                       {
-                      // curprint(" /* unparseVarDeclStmt (initializer constructor): " + constructor->class_name() + " */ ");
-                         printf ("constructor->get_need_name()                   = %s \n",constructor->get_need_name()                   ? "true" : "false");
-                         printf ("constructor->get_is_explicit_cast()            = %s \n",constructor->get_is_explicit_cast()            ? "true" : "false");
-                         printf ("constructor->get_need_parenthesis_after_name() = %s \n",constructor->get_need_parenthesis_after_name() ? "true" : "false");
-                         printf ("constructor->get_associated_class_unknown()    = %s \n",constructor->get_associated_class_unknown()    ? "true" : "false");
-
-                      // DQ (11/9/2009): Added support for debugging test2009_40.C.
-                         SgMemberFunctionDeclaration * associatedConstructor = constructor->get_declaration();
-                         printf ("associatedConstructor = %p \n",associatedConstructor);
-                         if (associatedConstructor != NULL)
-                            {
-                              printf ("associatedConstructor = %s \n",associatedConstructor->class_name().c_str());
-                              printf ("associatedConstructor is private   = %s \n",associatedConstructor->get_declarationModifier().get_accessModifier().isPrivate()   ? "true" : "false");
-                              printf ("associatedConstructor is protected = %s \n",associatedConstructor->get_declarationModifier().get_accessModifier().isProtected() ? "true" : "false");
-                              printf ("associatedConstructor is public    = %s \n",associatedConstructor->get_declarationModifier().get_accessModifier().isPublic()    ? "true" : "false");
-
-                           // printf ("associatedConstructor is public    = %s \n",associatedConstructor->get_declarationModifier().get_accessModifier().isPublic()    ? "true" : "false");
-#if 0
-                              SgUnparse_Info local_info;
-                              printf ("stmt is = %s \n",stmt->unparseToString(&local_info).c_str());
-                              printf ("constructor is = %s \n",constructor->unparseToString(&local_info).c_str());
-                              printf ("associatedConstructor is = %s \n",associatedConstructor->unparseToString(&local_info).c_str());
-#endif
-                            }
-                       }
-
-                 // curprint(" /* unparseVarDeclStmt (initializer): " + tmp_init->class_name() + " */ ");
-#endif
                     if ( (tmp_init->variant() == ASSIGN_INIT) ||
                          (tmp_init->variant() == AGGREGATE_INIT) ||
                       // ( (constructor != NULL) && constructor->get_need_name() && constructor->get_is_explicit_cast() ) )
@@ -3877,7 +3822,6 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                          printf ("This is the MOST general case of not using an initializer \n");
 #endif
                        }
-#endif
 
                     SgUnparse_Info statementInfo(ninfo);
                     statementInfo.set_SkipClassDefinition();
@@ -3902,6 +3846,12 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 #endif
                   }
              }
+            else
+             {
+            // DQ (7/16/2012): Added new support for maultiple variables in the same declaration, output the name of the variable...
+               tmp_name = decl_item->get_name();
+               curprint ( tmp_name.str());
+             }
 
 #if 0
           curprint ( string("\n /* Inside of unparseVarDeclStmt(): increment the variable iterator */ \n"));
@@ -3910,9 +3860,10 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
        // Currently each variable declaration contains only a single variable!
           p++;
 
+       // DQ (7/16/2012): In the newer version of EDG 4.3 support this is no longer always true.
        // DQ (11/28/2004): Within the current design this is always true. Since we normalize 
        // multiple variable declarations into single variable declarations.
-          ROSE_ASSERT (p == vardecl_stmt->get_variables().end());
+       // ROSE_ASSERT (p == vardecl_stmt->get_variables().end());
 
        // DQ (11/28/2004): This this is always false within the current design.
           if (p != vardecl_stmt->get_variables().end())
@@ -3937,18 +3888,9 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      SgVariableDefinition *defn = vardecl_stmt->get_definition();
      if (defn != NULL)
         {
-#if 1
        // DQ (2/3/2007): Implement this unparse functions so that we can refactor this code
        // and so that the unparseToString will work properly for the SgVariableDefinition IR node.
           unparseVarDefnStmt(vardecl_stmt->get_definition(),ninfo);
-#else
-          SgUnsignedLongVal *bitfield = vardecl_stmt->get_definition()->get_bitfield();
-          if (bitfield != NULL)
-             {
-               curprint ( string(":"));
-               unparseExpression(bitfield, ninfo);
-             }
-#endif
         }
 
   // ninfo.display("Close off the statement with a \";\"?");
@@ -5078,14 +5020,14 @@ Unparse_ExprStmt::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
      SgTypedefDeclaration* typedef_stmt = isSgTypedefDeclaration(stmt);
      ROSE_ASSERT(typedef_stmt != NULL);
 
-  // printf ("In unp->u_type->unparseTypeDefStmt() = %p \n",typedef_stmt);
+     printf ("In unp->u_type->unparseTypeDefStmt() = %p \n",typedef_stmt);
   // curprint ( string("\n /* In unp->u_type->unparseTypeDefStmt() */ \n";
 
   // DQ (10/5/2004): This is the explicitly set boolean value which indicates that a class declaration is buried inside
   // the current variable declaration (e.g. struct A { int x; } a;).  In this case we have to output the base type with
   // its definition.
      bool outputTypeDefinition = typedef_stmt->get_typedefBaseTypeContainsDefiningDeclaration();
-  // printf ("outputTypeDefinition = %s \n",(outputTypeDefinition == true) ? "true" : "false");
+     printf ("outputTypeDefinition = %s \n",(outputTypeDefinition == true) ? "true" : "false");
 
      if (!info.inEmbeddedDecl())
         {

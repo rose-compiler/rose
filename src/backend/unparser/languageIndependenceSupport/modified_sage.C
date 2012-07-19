@@ -1186,6 +1186,8 @@ Unparse_MOD_SAGE::printSpecifier1 ( SgDeclarationStatement * decl_stmt, SgUnpars
 void
 Unparse_MOD_SAGE::outputExternLinkageSpecifier ( SgDeclarationStatement* decl_stmt )
    {
+     ROSE_ASSERT(decl_stmt != NULL);
+
   // DQ (5/10/2007): Fixed linkage to be a std::string instead of char*
   // if (decl_stmt->get_declarationModifier().get_storageModifier().isExtern() && decl_stmt->get_linkage())
      if (decl_stmt->get_declarationModifier().get_storageModifier().isExtern() && decl_stmt->get_linkage().empty() == false)

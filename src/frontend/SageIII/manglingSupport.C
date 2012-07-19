@@ -107,7 +107,8 @@ findRootFunc (const SgScopeStatement* scope)
    {
   // DQ (12/13/2011): This function is being called recursively (infinite recursion) for test2011_187.C (added support for SgTemplateFunctionDefinition).
 
-  // printf ("Inside of findRootFunc(scope = %p) \n",scope);
+     printf ("Inside of findRootFunc(scope = %p) \n",scope);
+
      if (scope != NULL)
         {
           if (scope->variantT () == V_SgFunctionDefinition)
@@ -126,7 +127,9 @@ findRootFunc (const SgScopeStatement* scope)
                  // printf ("In findRootFunc(): scope = %p = %s \n",scope,scope->class_name().c_str());
 
                     SgScopeStatement* nextOuterScope = scope->get_scope();
-                 // printf ("nextOuterScope = %p = %s \n",nextOuterScope,nextOuterScope->class_name().c_str());
+                    ROSE_ASSERT(nextOuterScope != NULL);
+
+                    printf ("nextOuterScope = %p = %s \n",nextOuterScope,nextOuterScope->class_name().c_str());
                     ROSE_ASSERT(nextOuterScope != scope);
 
                     return findRootFunc(scope->get_scope());

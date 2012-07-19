@@ -1302,7 +1302,7 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                     labelWithSourceCode = string("\\n  ") + functionDeclaration->get_name().getString() +
                                           "\\n  " + forwardFlagString +
                                           "\\n  " + friendFlagString +
-                                          "\\n  " +  StringUtility::numberToString(functionDeclaration) + "  ";
+                                          "\\n  " + StringUtility::numberToString(functionDeclaration) + "  ";
                  // printf ("########## functionDeclaration->get_name() = %s \n",functionDeclaration->get_name().str());
                     break;
                   }
@@ -1312,7 +1312,7 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                     SgTemplateDeclaration* templateDeclaration = isSgTemplateDeclaration(node);
                     additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=8,peripheries=2,color=\"blue\",fillcolor=green,fontname=\"7x13bold\",fontcolor=black,style=filled";
                     labelWithSourceCode = "\\n  " + templateDeclaration->get_name().getString() + 
-                                          "\\n  " +  StringUtility::numberToString(templateDeclaration) + "  ";
+                                          "\\n  " + StringUtility::numberToString(templateDeclaration) + "  ";
                     break;
                   }
 
@@ -1325,9 +1325,11 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                   {
                     SgClassDeclaration* classDeclaration = isSgClassDeclaration(node);
                     additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=8,peripheries=2,color=\"blue\",fillcolor=peru,fontname=\"7x13bold\",fontcolor=black,style=filled";
-                    string flagString = (classDeclaration->isForward() == true) ? "isForward" : "!isForward";
+                    string flagString  = (classDeclaration->isForward() == true) ? "isForward" : "!isForward";
+                    string flagString2 = (classDeclaration->get_isAutonomousDeclaration() == true) ? "isAutonomousDeclaration" : "!isAutonomousDeclaration";
                     labelWithSourceCode = "\\n  " + classDeclaration->get_name().getString() + 
                                           "\\n  " + flagString +
+                                          "\\n  " + flagString2 +
                                           "\\n  " + StringUtility::numberToString(classDeclaration) + "  ";
                  // printf ("########## classDeclaration->get_name() = %s \n",classDeclaration->get_name().str());
                     break;
@@ -1337,8 +1339,22 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                   {
                     SgTypedefDeclaration* typedefDeclaration = isSgTypedefDeclaration(node);
                     additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=8,peripheries=2,color=\"blue\",fillcolor=peru,fontname=\"7x13bold\",fontcolor=black,style=filled";
+                    string flagString  = (typedefDeclaration->get_typedefBaseTypeContainsDefiningDeclaration() == true) ? "typedefBaseTypeContainsDefiningDeclaration" : "!typedefBaseTypeContainsDefiningDeclaration";
+                 // string flagString2 = (typedefDeclaration->get_isAutonomousDeclaration() == true) ? "isAutonomousDeclaration" : "!isAutonomousDeclaration";
                     labelWithSourceCode = "\\n  " + typedefDeclaration->get_name().getString() + 
-                                          "\\n  " +  StringUtility::numberToString(typedefDeclaration) + "  ";
+                                          "\\n  " + flagString +
+                                       // "\\n  " + flagString2 +
+                                          "\\n  " + StringUtility::numberToString(typedefDeclaration) + "  ";
+                    break;
+                  }
+
+               case V_SgVariableDeclaration:
+                  {
+                    SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(node);
+                    additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=8,peripheries=2,color=\"blue\",fillcolor=peru,fontname=\"7x13bold\",fontcolor=black,style=filled";
+                    string flagString  = (variableDeclaration->get_variableDeclarationContainsBaseTypeDefiningDeclaration() == true) ? "variableDeclarationContainsBaseTypeDefiningDeclaration" : "!variableDeclarationContainsBaseTypeDefiningDeclaration";
+                    labelWithSourceCode = "\\n  " + flagString +
+                                          "\\n  " + StringUtility::numberToString(variableDeclaration) + "  ";
                     break;
                   }
 
@@ -1346,8 +1362,10 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                   {
                     SgEnumDeclaration* enumDeclaration = isSgEnumDeclaration(node);
                     additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=8,peripheries=2,color=\"blue\",fillcolor=green,fontname=\"7x13bold\",fontcolor=black,style=filled";
+                    string flagString   = (enumDeclaration->get_isAutonomousDeclaration() == true) ? "isAutonomousDeclaration" : "!isAutonomousDeclaration";
                     labelWithSourceCode = "\\n  " + enumDeclaration->get_name().getString() + 
-                                          "\\n  " +  StringUtility::numberToString(enumDeclaration) + "  ";
+                                          "\\n  " + flagString +
+                                          "\\n  " + StringUtility::numberToString(enumDeclaration) + "  ";
                     break;
                   }
 
@@ -1356,7 +1374,7 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                     SgNamespaceDeclarationStatement* namespaceDeclaration = isSgNamespaceDeclarationStatement(node);
                     additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=2,color=\"blue\",fillcolor=lightgreen,fontname=\"7x13bold\",fontcolor=black,style=filled";
                     labelWithSourceCode = "\\n  " + namespaceDeclaration->get_name().getString() + 
-                                          "\\n  " +  StringUtility::numberToString(namespaceDeclaration) + "  ";
+                                          "\\n  " + StringUtility::numberToString(namespaceDeclaration) + "  ";
                     break;
                   }
 
