@@ -600,6 +600,7 @@ test2007_77.C \
 test2007_78.C \
 test2007_81.C \
 test2007_82.C \
+test2007_83.C \
 test2007_84.C \
 test2007_85.C \
 test2007_90.C \
@@ -956,7 +957,6 @@ $(NEW_PASSING_FILES)
 NEW_PASSING_FILES = 
 
 # $(TESTCODE_CURRENTLY_FAILING)
-
 # DQ (2/15/2012): These test codes fail on OSX only.
 TESTCODE_CURRENTLY_FAILING_ON_OSX = \
 test2011_06.C \
@@ -964,16 +964,12 @@ test2004_35.C
 
 # DQ (12/29/2011): This passes but I had to handle a template constant parameter incorrectly in the AST to get past a problem in EDG (or my lack of understanding of an aspect of EDG).
 # test2011_191.C 
-
 # test2012_79.C 
 # test2012_81.C 
 
 else
 include $(srcdir)/Makefile-pass.inc
 endif
-
-
-
 
 # Import list of C++ test cases that are known to fail:
 #   TESTCODE_CURRENTLY_FAILING
@@ -992,7 +988,6 @@ test2007_04.C \
  test2007_05.C \
 test2007_38.C \
  test2007_55.C \
-test2007_83.C \
 test2007_137.C \
 test2007_141.C \
 test2009_21.C \
@@ -1013,6 +1008,7 @@ test2011_142.C \
  test2012_33.C \
 test2012_103.C \
 test2012_106.C \
+test2012_129.C \
 inputBug327.C 
 
 
