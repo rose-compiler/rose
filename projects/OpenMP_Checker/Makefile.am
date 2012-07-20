@@ -38,6 +38,8 @@ $(C_TESTCODES_REQUIRED_TO_PASS) \
 $(CXX_TESTCODES_REQUIRED_TO_PASS) \
 $(TESTCODE_CURRENTLY_FAILING)
 
+endif
+
 check-local:
 	@echo "Test for ROSE OpenMP Checker."
 	@$(MAKE) $(PASSING_C_TEST_Objects) 
