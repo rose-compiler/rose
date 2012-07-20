@@ -12,17 +12,6 @@
 #include "yices_c.h"
 #include "yicesl_c.h"
 
-
-  #define List Rose_STL_Container< SgNode* >
-
-  #define Iter List::iterator
-
-  #define CIter List::const_iterator
-
-  #define Query NodeQuery::querySubTree
-
-  #define EnclNode SageInterface::getEnclosingNode
-
 namespace ompCheckerInterface
 {
 
@@ -37,68 +26,68 @@ namespace ompCheckerInterface
    };
 
  //! setup a constraints for SMT solver
-  class SMTModel {
+  class CheckerModel {
   
    public: 
-	    SMTModel();
+	    CheckerModel();
         
 	    int varRaceNumber;
         
-	    void varRaceNumberFinding(List& list);
+	    void varRaceNumberFinding(Rose_STL_Container< SgNode* >& list);
 	   
 	    yices_expr varConstraints( SgVarRefExp* var );
         
-	    bool SatOrUnsat(yices_expr varExp );
+	    lbool SatOrUnsat(yices_expr varExp );
 
   };
 
 
- /* Fucntion Prototypes of OpenMP Checker */
+ //! Fucntion Prototypes of OpenMP Checker 
 
- //!  /* show reference node information  */ 
+ //! show reference node information  
  void showNodeInfo( SgNode* ); 
 
- //!  /* process #pragma omp parallel region   */
+ //!  process #pragma omp parallel region 
  void process_omp_parallel( SgOmpParallelStatement* );
 
- //!  /* gather private variable references from omp clause */
+ //! gather private variable references from omp clause
  void getClausetPrivateVarRefs( const SgOmpClausePtrList &,  SgVarRefExpPtrList & );
 
- //! /* gather local variables as private in omp parallel region  */
- void flagLocalPrivate( const List &, const List &, SgVarRefExpPtrList & );
+ //!  gather local variables as private in omp parallel region
+ void flagLocalPrivate( const Rose_STL_Container< SgNode* > &, const Rose_STL_Container< SgNode* > &, SgVarRefExpPtrList & );
 
- //! /* delete expressions from critical, single, master.etc */
- void removeExclusive( List &);
+ //!  delete expressions from critical, single, master.etc
+ void removeExclusive( Rose_STL_Container< SgNode* > &);
 
- //! /* gather references from remaining expressions in parallel region  */
- void gatherReferences( const List &, List &);
+ //!  gather references from remaining expressions in parallel region 
+ void gatherReferences( const Rose_STL_Container< SgNode* > &, Rose_STL_Container< SgNode* > &);
 
- //! /* delete the duplcate varaibles in all references list*/
- void getUnique( List &);
+ //!  delete the duplcate varaibles in all references list
+ void getUnique( Rose_STL_Container< SgNode* > &);
 
- //! /* delete the duplicate variables from clauses */
+ //!  delete the duplicate variables from clauses 
  void getUnique( SgVarRefExpPtrList &);
 
- //! /* get variables name */
+ //!   get variables name 
  std::string getName( SgNode* );
 
- //! /* identify the race condiftions using SMT solver */
- void identifyRaces( const List &, const SgVarRefExpPtrList &, List &);
+ //!  identify the race condiftions using SMT solver 
+ void identifyRaces( const Rose_STL_Container< SgNode* > &, const SgVarRefExpPtrList &, Rose_STL_Container< SgNode* > &);
 
- //! /* show container information using by debug */
- void showMembers( const List &);
+ //!  show container information using by debug 
+ void showMembers( const Rose_STL_Container< SgNode* > &);
 
- //! /* show container inoformation using by debug */
+ //!  show container inoformation using by debug */
  void showMembers( const SgVarRefExpPtrList &);
 
- //! /* remove duplicate element */
- void removeTrivial( List &);
+ //!   remove duplicate element 
+ void removeTrivial( Rose_STL_Container< SgNode* > &);
 
- //! /* display reference information on warnings */
+ //!   display reference information on warnings 
  void printWarnings( const std::vector<std::string> &);
 
- //! /* display reference information on RACEs */
- void printRaces( const List &, const List &);
+ //!   display reference information on race
+ void printRaces( const Rose_STL_Container< SgNode* > &, const Rose_STL_Container< SgNode* > &);
 
 
 }

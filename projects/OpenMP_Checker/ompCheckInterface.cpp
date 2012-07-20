@@ -1,11 +1,11 @@
 
-/*
+/**
 
- ompCheckInterface.cpp
+* ompCheckInterface.cpp
   
- prototype functions are involved in this source file
+* prototype functions are involved in this source file
 
- lasted edited by Hongyi on July/16/2012
+* lasted edited by Hongyi on July/16/2012
 
 
 */
@@ -45,30 +45,37 @@ void visitorTraversal::atTraversalEnd() {
 
 //! This is the definition for class SMTModel      
   
-   SMTModel::SMTModel() {cout<<"SMT works now"<<endl; }
+   CheckerModel::CheckerModel() {cout<<"SMT works now"<<endl; }
    
-   void SMTModel::varRaceNumberFinding( List& list )
+   void CheckerModel::varRaceNumberFinding( Rose_STL_Container< SgNode* >& list )
    {
       varRaceNumber =  list.size();
    }
   
-  bool SMTModel::SatOrUnsat( yices_expr varExp )
+  lbool  CheckerModel::SatOrUnsat( yices_expr varExp )
    {
      yices_context ctx = yices_mk_context();
   
      yices_assert( ctx, varExp );
      
-     if( yices_inconsistent(ctx) )
-       {
-        printf("unsat\n");
-         return true;
-       }
-      else
-       {
-        printf("sat\n");
-          return false;
-       }
-   
+     lbool tag = yices_check( ctx );
+    
+      if( tag == l_true )
+         {
+             printf(" Sat for data race! \n");
+             return l_true;
+         }    
+      else if( tag == l_false )
+        {
+             printf(" UnSat for data race ! \n");
+             return l_false;
+        }
+       else
+        {
+            printf(" Unknown yet, please feature check ! \n");
+            return l_undef;
+        }
+    
      yices_del_context(ctx);   
    }
 
@@ -185,9 +192,9 @@ void getClausePrivateVarRefs( const SgOmpClausePtrList & clauses, SgVarRefExpPtr
 
 /* show members in wuery list */
 
-void showMembers( const List & list )
+void showMembers( const Rose_STL_Container< SgNode* > & list )
 {
-    CIter iter = list.begin();
+    Rose_STL_Container< SgNode* >::const_iterator iter = list.begin();
     while ( iter != list.end() )
     {
         std::cout<< " the ref is: " <<(*iter)->unparseToString()<<endl;
@@ -202,16 +209,16 @@ void showMembers( const List & list )
 
 /* remove the expression from follwoing area atmoic, master, single, critical */
 
-void removeExclusive( List & list )
+void removeExclusive( Rose_STL_Container< SgNode* > & list )
  {
-  Iter iter = list.begin();
+  Rose_STL_Container< SgNode* >::iterator iter = list.begin();
   unsigned int size = list.size();
   unsigned int i = 0;
   
   while ( i < size )
   {
     /* #pragma omp critical */
-    SgOmpCriticalStatement* cp = EnclNode< SgOmpCriticalStatement >(list.at (i) );
+    SgOmpCriticalStatement* cp = SageInterface::getEnclosingNode< SgOmpCriticalStatement >(list.at (i) );
     if( cp )
      {
        list.erase(iter + i );
@@ -223,7 +230,7 @@ void removeExclusive( List & list )
     // TODO: some index in for statement should not cause race condition but not all variables in expressions
      /* for statement */  
      /*
-      SgForStatement*  forP =   EnclNode< SgForStatement >( list.at( i ) );
+      SgForStatement*  forP =   SageInterface::getEnclosingNode< SgForStatement >( list.at( i ) );
       if ( forP )
         {
            list.erase( iter + i );
@@ -235,7 +242,7 @@ void removeExclusive( List & list )
 
 
     /* atomic */
-       SgOmpAtomicStatement* ap =   EnclNode< SgOmpAtomicStatement >( list.at( i ) );
+       SgOmpAtomicStatement* ap =   SageInterface::getEnclosingNode< SgOmpAtomicStatement >( list.at( i ) );
         if ( ap ) 
         { 
             list.erase( iter + i ); 
@@ -245,7 +252,7 @@ void removeExclusive( List & list )
 
      /* single */
   
-        SgOmpSingleStatement* sp =  EnclNode< SgOmpSingleStatement >( list.at( i ) );
+        SgOmpSingleStatement* sp =  SageInterface::getEnclosingNode< SgOmpSingleStatement >( list.at( i ) );
         if ( sp )
         {
             list.erase( iter + i );
@@ -255,7 +262,7 @@ void removeExclusive( List & list )
 
         /*  MASTER */ 
 
-        SgOmpMasterStatement* mp =  EnclNode< SgOmpMasterStatement >( list.at( i ) );
+        SgOmpMasterStatement* mp =  SageInterface::getEnclosingNode< SgOmpMasterStatement >( list.at( i ) );
         if ( mp )
         {
             list.erase( iter + i );
@@ -288,9 +295,9 @@ string getName( SgNode * n )
 /* return the name of varriable in node */
 
 /*    Remove duplicate list entries  */
-void getUnique( List & list )
+void getUnique( Rose_STL_Container< SgNode* > & list )
 {
-    Iter start = list.begin();
+    Rose_STL_Container< SgNode* >::iterator start = list.begin();
     unsigned int size = list.size();
     unsigned int i, j;
 
@@ -321,9 +328,9 @@ void getUnique( List & list )
  /* gather varaible references from remaining expressions */
 
 
-void gatherReferences( const List& expr, List& vars)
+void gatherReferences( const Rose_STL_Container< SgNode* >& expr, Rose_STL_Container< SgNode* >& vars)
 {
- CIter iter = expr.begin();
+ Rose_STL_Container< SgNode* >::const_iterator iter = expr.begin();
  
   while (iter != expr.end() )
   {
@@ -333,7 +340,7 @@ void gatherReferences( const List& expr, List& vars)
   /* the end of judge right and write on both sides */     
 
 
-     List tempList = Query(*iter, V_SgVarRefExp );
+     Rose_STL_Container< SgNode* > tempList = NodeQuery::querySubTree(*iter, V_SgVarRefExp );
      
    // SgAssignOp* tmpExpr = isSgAssignOp( *iter );
     //ROSE_ASSERT( tmpExpr);
@@ -347,7 +354,7 @@ void gatherReferences( const List& expr, List& vars)
 
 
       
-    Iter ti = tempList.begin();
+    Rose_STL_Container< SgNode* >::iterator ti = tempList.begin();
      while ( ti != tempList.end() )
        {
          vars.push_back( *ti );
@@ -411,10 +418,10 @@ void getUnique( SgVarRefExpPtrList & list )
 /*    Identify variables declared within parallel region private by default */
 
 
-void flagLocalPrivate( const List & locals, const List & allRefs, 
+void flagLocalPrivate( const Rose_STL_Container< SgNode* > & locals, const Rose_STL_Container< SgNode* > & allRefs, 
                        SgVarRefExpPtrList & priv )
 {
-    CIter localsIter, allRefsIter;
+    Rose_STL_Container< SgNode* >::const_iterator localsIter, allRefsIter;
 
     // iterate through all references
     allRefsIter = allRefs.begin();
@@ -460,13 +467,13 @@ void flagLocalPrivate( const List & locals, const List & allRefs,
 
 
 /* idnetify the non-private varuables in writing shared memory  */
-void identifyRaces( const List& vars, const SgVarRefExpPtrList & priv, List & races )
+void identifyRaces( const Rose_STL_Container< SgNode* >& vars, const SgVarRefExpPtrList & priv, Rose_STL_Container< SgNode* > & races )
 {
 
   //  yices_context ctx = yices_mk_context();
     
 
-    CIter varIter = vars.begin();
+    Rose_STL_Container< SgNode* >::const_iterator varIter = vars.begin();
     unsigned int privIndex;
     unsigned int privSize = priv.size();
     bool match;
@@ -571,7 +578,7 @@ void identifyRaces( const List& vars, const SgVarRefExpPtrList & priv, List & ra
 
 
 /*  print out race report  */
-void printRaces( const List& races )
+void printRaces( const Rose_STL_Container< SgNode* >& races )
 {
 
   if( races.size() > 0 )
@@ -580,7 +587,7 @@ void printRaces( const List& races )
  
    }
  
- CIter iter = races.begin();
+ Rose_STL_Container< SgNode* >::const_iterator iter = races.begin();
   while (iter != races.end() )
   {
      std::cout<< " in parallel region:\n";
@@ -604,16 +611,16 @@ void  process_omp_parallel( SgOmpParallelStatement *n )
  vector< string > warnings;
  SgOmpClausePtrList clauseList;
  SgVarRefExpPtrList privateVariables;
- List allVariableReferences;
- List localVariables;
- List binaryOps;
- List expressions;
- List forStatements;
- List ompForStatements;
- List races;
- List forRaces;
+ Rose_STL_Container< SgNode* > allVariableReferences;
+ Rose_STL_Container< SgNode* > localVariables;
+ Rose_STL_Container< SgNode* > binaryOps;
+ Rose_STL_Container< SgNode* > expressions;
+ Rose_STL_Container< SgNode* > forStatements;
+ Rose_STL_Container< SgNode* > ompForStatements;
+ Rose_STL_Container< SgNode* > races;
+ Rose_STL_Container< SgNode* > forRaces;
  /*
- List parallels = Query(n, V_SgOmpParallelStatement );
+ Rose_STL_Container< SgNode* > parallels = NodeQuery::querySubTree(n, V_SgOmpParallelStatement );
 std::cout<<" the size of parallel region is: "<<parallels.size()<<endl;
  */
  
@@ -628,7 +635,7 @@ std::cout<<" the size of parallel region is: "<<parallels.size()<<endl;
  
     /* gather all expressions  read or write */
 
-   expressions = Query( n, V_SgExprStatement );
+   expressions = NodeQuery::querySubTree( n, V_SgExprStatement );
    //! showMembers( expressions);
 
    /* remove the expression from following area region */
@@ -650,21 +657,21 @@ std::cout<<" the size of parallel region is: "<<parallels.size()<<endl;
 
  /* mark the local variable in parallel region as private */
   
-   localVariables = Query( n, V_SgVariableDeclaration );
+   localVariables = NodeQuery::querySubTree( n, V_SgVariableDeclaration );
    flagLocalPrivate ( localVariables, allVariableReferences, privateVariables );
 
 
     /*omp for function edited by Hongyi Ma*/
  
-    ompForStatements = Query(n, V_SgOmpForStatement );
+    ompForStatements = NodeQuery::querySubTree(n, V_SgOmpForStatement );
  
-    Iter ompfIter = ompForStatements.begin();
+    Rose_STL_Container< SgNode* >::iterator ompfIter = ompForStatements.begin();
 
     while(ompfIter != ompForStatements.end() )
       {
          std::cout<<"the omp for statement: "<<(*ompfIter)->unparseToString()<<endl;
       
-         List reduxClause = Query( *ompfIter, V_SgOmpReductionClause );
+         Rose_STL_Container< SgNode* > reduxClause = NodeQuery::querySubTree( *ompfIter, V_SgOmpReductionClause );
          unsigned int reduxSize = reduxClause.size();
 
         if(reduxClause.size() == 1)
@@ -677,8 +684,8 @@ std::cout<<" the size of parallel region is: "<<parallels.size()<<endl;
        
           }
      
-           Rose_STL_Container< SgNode* > forRef = Query( *ompfIter, V_SgVarRefExp);
-         //  Rose_STL_Container< SgNode* > arrayPntrList = Query( *ompfIter, V_SgPntrArrRefExp );
+           Rose_STL_Container< SgNode* > forRef = NodeQuery::querySubTree( *ompfIter, V_SgVarRefExp);
+         //  Rose_STL_Container< SgNode* > arrayPntrList = NodeQuery::querySubTree( *ompfIter, V_SgPntrArrRefExp );
   
     
            std::cout<<" the indices is "<<forRef.at(0)->unparseToString()<<endl;
@@ -709,10 +716,10 @@ std::cout<<" the size of parallel region is: "<<parallels.size()<<endl;
            /***********************************************/
 
 
-           Rose_STL_Container< SgNode* > arrayPntrList = Query( *ompfIter, V_SgPntrArrRefExp );
+           Rose_STL_Container< SgNode* > arrayPntrList = NodeQuery::querySubTree( *ompfIter, V_SgPntrArrRefExp );
            
-           List varLeft; // to  store  writing  variables
-           List varRight; // to store reading variables
+           Rose_STL_Container< SgNode* > varLeft; // to  store  writing  variables
+           Rose_STL_Container< SgNode* > varRight; // to store reading variables
 
            /* there is no array for being processed */
            
@@ -720,13 +727,13 @@ std::cout<<" the size of parallel region is: "<<parallels.size()<<endl;
             //  std::cout<<"there is no array for prcocessing! "<<endl;
               /* to judge the  reading and writing variables on both sides of expression statement */            
              
-              List::iterator iRef = forRef.begin();
+              Rose_STL_Container< SgNode* >::iterator iRef = forRef.begin();
               
               while( iRef != forRef.end() )
                  {
                      if( (*iRef)->unparseToString().c_str() != indexName )
                        { 
-                          std::cout<<"this ref is :"<<(*iRef)->unparseToString().c_str()<<endl;
+                        // std::cout<<"this ref is :"<<(*iRef)->unparseToString().c_str()<<endl;
                                     SgNode* parent = (*iRef)->get_parent();
                                     ROSE_ASSERT( parent );
                                     SgAssignOp* aOp = isSgAssignOp( parent );
@@ -783,8 +790,8 @@ std::cout<<" the size of parallel region is: "<<parallels.size()<<endl;
 
          
 
-             List::iterator iRead = varRight.begin();
-             List::iterator iWrite = varLeft.begin();
+             Rose_STL_Container< SgNode* >::iterator iRead = varRight.begin();
+             Rose_STL_Container< SgNode* >::iterator iWrite = varLeft.begin();
             // bool onlyRead = true;
       
             
@@ -833,7 +840,7 @@ std::cout<<" the size of parallel region is: "<<parallels.size()<<endl;
    /* gather references from the  remaining expressions */
 
 // 1   gatherReferences ( expressions,  allVariableReferences );
-//2   localVariables = Query( n, V_SgVariableDeclaration );
+//2   localVariables = NodeQuery::querySubTree( n, V_SgVariableDeclaration );
 //3   flagLocalPrivate ( localVariables, allVariableReferences, privateVariables );
    /* identify the non-private variables */
 

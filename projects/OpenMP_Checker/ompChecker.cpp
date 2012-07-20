@@ -1,14 +1,12 @@
 ////////////OpenMP Checker main///////////////////////
 /*
 modified by Hongyi Ma
-07/ 17 / 2012
+07/ 19 / 2012
 */
 #include "ompCheckInterface.h"
 
 using namespace ompCheckerInterface;
 using namespace std;
-
-
 
 //   MAIN
 

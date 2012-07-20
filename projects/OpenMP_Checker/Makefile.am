@@ -1,5 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
+if ROSE_HAVE_YICES
 bin_PROGRAMS = ompChecker
 ompChecker_SOURCES = ompChecker.cpp \
                      ompCheckInterface.cpp \
@@ -8,13 +9,12 @@ ompChecker_SOURCES = ompChecker.cpp \
 INCLUDES = $(ROSE_INCLUDES)
 LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
-C_TESTCODES_REQUIRED_TO_PASS = \ 
-                        c_pi.c \
-                        c_lu.c \
-                        c_fft.c  
+C_TESTCODES_REQUIRED_TO_PASS = tests/c_pi.c \
+                               tests/c_lu.c \
+                               tests/c_fft.c  
 
 CXX_TESTCODES_REQUIRED_TO_PASS = \
-                        omptest1.cpp 
+                        tests/omptest1.cpp 
 
 TESTCODE_CURRENTLY_FAILING = 
 

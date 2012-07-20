@@ -1,6 +1,6 @@
 This directory is for OpenMP program Checker to detect race conditions
 
-By Hongyi Ma, July/16/2012
+By Hongyi Ma ma23@llnl.gov, July/16/2012
 
 --------------------------------
 
@@ -42,7 +42,8 @@ Waht is in the package
 
 *Tests:
 not completed yet, it is still on testing cases as much as possible
-
+benchmarks based on OmpSCR repository. http://sourceforge.net/projects/ompscr/
+and my own debug test code. 
 
 
  
