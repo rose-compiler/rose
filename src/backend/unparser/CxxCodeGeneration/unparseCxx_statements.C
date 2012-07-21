@@ -2807,19 +2807,17 @@ Unparse_ExprStmt::trimGlobalScopeQualifier ( string qualifiedName )
 
 void
 Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
-{
-  SgMemberFunctionDeclaration* mfuncdecl_stmt = isSgMemberFunctionDeclaration(stmt);
-  ROSE_ASSERT(mfuncdecl_stmt != NULL);
+   {
+     SgMemberFunctionDeclaration* mfuncdecl_stmt = isSgMemberFunctionDeclaration(stmt);
+     ROSE_ASSERT(mfuncdecl_stmt != NULL);
 
 #if 0
-  curprint ( string("\n/* Inside of Unparse_ExprStmt::unparseMFuncDeclStmt */ \n") ); 
+     curprint ( string("\n/* Inside of Unparse_ExprStmt::unparseMFuncDeclStmt */ \n") ); 
 #endif
 
 #if OUTPUT_DEBUGGING_FUNCTION_NAME
-  printf ("Inside of unparseMFuncDeclStmt() name = %s  transformed = %s prototype = %s \n",
-      mfuncdecl_stmt->get_qualified_name().str(),
-      isTransformed (mfuncdecl_stmt) ? "true" : "false",
-      (mfuncdecl_stmt->get_definition() == NULL) ? "true" : "false");
+     printf ("Inside of unparseMFuncDeclStmt() name = %s  transformed = %s prototype = %s \n",
+         mfuncdecl_stmt->get_qualified_name().str(), isTransformed (mfuncdecl_stmt) ? "true" : "false", (mfuncdecl_stmt->get_definition() == NULL) ? "true" : "false");
 #endif
 
 #if 0
@@ -2829,68 +2827,63 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
   //      curprint ( string("/* Unparser comment: Templated Member Function */";
   // curprint ( string("\n/* Unparser comment: mfuncdecl_stmt->get_from_template() = " + 
   //        mfuncdecl_stmt->get_from_template() + " */";
-  curprint ( string("\n/* Unparser comment: mfuncdecl_stmt->get_definition() = " ) + 
-      StringUtility::numberToString(mfuncdecl_stmt->get_definition()) + " */");
+     curprint ( string("\n/* Unparser comment: mfuncdecl_stmt->get_definition() = " ) + StringUtility::numberToString(mfuncdecl_stmt->get_definition()) + " */");
 #if 0
-  curprint ( string("\n/* Unparser comment: mfuncdecl_stmt->get_definition_ref() = " ) + 
-      StringUtility::numberToString(mfuncdecl_stmt->get_definition_ref()) + " */");
-  curprint ( string("\n/* Unparser comment: mfuncdecl_stmt->get_forwardDefinition() = " ) + 
-      StringUtility::numberToString(mfuncdecl_stmt->get_forwardDefinition()) + " */");
+     curprint ( string("\n/* Unparser comment: mfuncdecl_stmt->get_definition_ref() = " ) + StringUtility::numberToString(mfuncdecl_stmt->get_definition_ref()) + " */");
+     curprint ( string("\n/* Unparser comment: mfuncdecl_stmt->get_forwardDefinition() = " ) + StringUtility::numberToString(mfuncdecl_stmt->get_forwardDefinition()) + " */");
 #endif
-  curprint ( string("\n/* Unparser comment: mfuncdecl_stmt->get_definingDeclaration() = " ) + 
-      StringUtility::numberToString(mfuncdecl_stmt->get_definingDeclaration()) + " */");
-  curprint ( string("\n/* Unparser comment: mfuncdecl_stmt->get_firstNondefiningDeclaration() = " ) + 
-      StringUtility::numberToString(mfuncdecl_stmt->get_firstNondefiningDeclaration()) + " */");
-  curprint ( string("\n/* */");
+     curprint ( string("\n/* Unparser comment: mfuncdecl_stmt->get_definingDeclaration() = " ) + StringUtility::numberToString(mfuncdecl_stmt->get_definingDeclaration()) + " */");
+     curprint ( string("\n/* Unparser comment: mfuncdecl_stmt->get_firstNondefiningDeclaration() = " ) + StringUtility::numberToString(mfuncdecl_stmt->get_firstNondefiningDeclaration()) + " */");
+     curprint ( string("\n/* */");
 #endif
 
-      // DQ (12/3/2007): This causes a bug in the output of access level (public, protected, private)
-      // because the inforamtion change in ninfo is not propogated to info.
-      // DQ (11/3/2007): Moved construction of ninfo to start of function!
-      SgUnparse_Info ninfo(info);
+  // DQ (12/3/2007): This causes a bug in the output of access level (public, protected, private)
+  // because the inforamtion change in ninfo is not propogated to info.
+  // DQ (11/3/2007): Moved construction of ninfo to start of function!
+     SgUnparse_Info ninfo(info);
 
-      fixupScopeInUnparseInfo (ninfo,mfuncdecl_stmt);
+     fixupScopeInUnparseInfo (ninfo,mfuncdecl_stmt);
 
-      // Unparse any comments of directives attached to the SgCtorInitializerList
-      if (mfuncdecl_stmt->get_CtorInitializerList() != NULL)
-      {
-      // unparseAttachedPreprocessingInfo(mfuncdecl_stmt->get_CtorInitializerList(), info, PreprocessingInfo::before);
-      unparseAttachedPreprocessingInfo(mfuncdecl_stmt->get_CtorInitializerList(), ninfo, PreprocessingInfo::before);
-      }
+  // Unparse any comments of directives attached to the SgCtorInitializerList
+     if (mfuncdecl_stmt->get_CtorInitializerList() != NULL)
+        {
+       // unparseAttachedPreprocessingInfo(mfuncdecl_stmt->get_CtorInitializerList(), info, PreprocessingInfo::before);
+          unparseAttachedPreprocessingInfo(mfuncdecl_stmt->get_CtorInitializerList(), ninfo, PreprocessingInfo::before);
+        }
 
-      // DQ (11/23/2004): Experiment with skipping the output of specialized template member functions!
-      // this needs to be handled better in the future!
-      if (isSgTemplateInstantiationMemberFunctionDecl(mfuncdecl_stmt) != NULL)
-      {
+  // DQ (11/23/2004): Experiment with skipping the output of specialized template member functions!
+  // this needs to be handled better in the future!
+     if (isSgTemplateInstantiationMemberFunctionDecl(mfuncdecl_stmt) != NULL)
+        {
 #if PRINT_DEVELOPER_WARNINGS
-        printf ("DQ (11/23/2004): Experiment with skipping the output of specialized template member functions! \n");
+          printf ("DQ (11/23/2004): Experiment with skipping the output of specialized template member functions! \n");
 #endif
 
-        SgStatement* parentStatement = isSgStatement(mfuncdecl_stmt->get_parent());
-        ROSE_ASSERT(parentStatement != NULL);
-        if ( isSgTemplateInstantiationDirectiveStatement(parentStatement) != NULL )
-        {
-          // output the member function declaration if it is part of an explicit instatiation directive
-          // Note this code is confusiong becase what we are doing is NOT returning!
-          // printf ("This template member function is part of an explicit template directive! \n");
-          // curprint ( string("\n/* This template member function is part of an explicit template directive! */";
-        }
-        else
-        {
+          SgStatement* parentStatement = isSgStatement(mfuncdecl_stmt->get_parent());
+          ROSE_ASSERT(parentStatement != NULL);
+          if ( isSgTemplateInstantiationDirectiveStatement(parentStatement) != NULL )
+             {
+            // output the member function declaration if it is part of an explicit instatiation directive
+            // Note this code is confusiong becase what we are doing is NOT returning!
+            // printf ("This template member function is part of an explicit template directive! \n");
+            // curprint ( string("\n/* This template member function is part of an explicit template directive! */";
+             }
+            else
+             {
 #if 0
-          if ( isTransformed (mfuncdecl_stmt) == false )
-          {
-            // DQ (3/2/2005): I think we are ready to output the member functions of template classes (or even templated member functions).
-            // This should be made depedent upon the evaluation of bool Unparse_ExprStmt::isTransformed(SgStatement* stmt) so that it matches the 
-            // output of specialized class declarations!  And the output of template functions should then be made consistant.
-            curprint ( string("\n /* DQ (11/23/2004): Experiment with skipping the output of specialized template member functions! */ \n"));
-            return;
-          }
+               if ( isTransformed (mfuncdecl_stmt) == false )
+                  {
+                 // DQ (3/2/2005): I think we are ready to output the member functions of template classes (or even templated member functions).
+                 // This should be made depedent upon the evaluation of bool Unparse_ExprStmt::isTransformed(SgStatement* stmt) so that it matches the 
+                 // output of specialized class declarations!  And the output of template functions should then be made consistant.
+                    curprint ( string("\n /* DQ (11/23/2004): Experiment with skipping the output of specialized template member functions! */ \n"));
+                    return;
+                  }
 #else
-          // curprint ( string("\n /* Output of template member functions turned on 3/2/2005 */ \n";
+            // curprint ( string("\n /* Output of template member functions turned on 3/2/2005 */ \n";
 #endif
+             }
         }
-      }
 
   // DQ (4/21/2005): This is a very old comment and I think its information 
   // is now incorrect.  Likely this comment could be removed!
@@ -2910,355 +2903,371 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
   /* EXCEPTION HANDLING: Member Forward Declarations in *.C file */
 
 #if 0
-  printf ("mfuncdecl_stmt->isForward()      = %s \n",mfuncdecl_stmt->isForward() ? "true" : "false");
-  printf ("mfuncdecl_stmt->get_definition() = %s \n",mfuncdecl_stmt->get_definition() ? "true" : "false");
-  printf ("info.SkipFunctionDefinition()    = %s \n",info.SkipFunctionDefinition() ? "true" : "false");
+     printf ("mfuncdecl_stmt->isForward()      = %s \n",mfuncdecl_stmt->isForward() ? "true" : "false");
+     printf ("mfuncdecl_stmt->get_definition() = %s \n",mfuncdecl_stmt->get_definition() ? "true" : "false");
+     printf ("info.SkipFunctionDefinition()    = %s \n",info.SkipFunctionDefinition() ? "true" : "false");
 #endif
 
   // if ( !mfuncdecl_stmt->isForward() && mfuncdecl_stmt->get_definition() && !info.SkipFunctionDefinition() )
-  if ( !mfuncdecl_stmt->isForward() && mfuncdecl_stmt->get_definition() && !ninfo.SkipFunctionDefinition() )
-  {
+     if ( !mfuncdecl_stmt->isForward() && mfuncdecl_stmt->get_definition() && !ninfo.SkipFunctionDefinition() )
+        {
 #if 0
-    printf ("Unparsing special case of non-forward, valid definition and !skip function definition \n");
-    // curprint ( string("\n/* Unparsing special case of non-forward, valid definition and !skip function definition */ \n"; 
+          printf ("Unparsing special case of non-forward, valid definition and !skip function definition \n");
+       // curprint ( string("\n/* Unparsing special case of non-forward, valid definition and !skip function definition */ \n"; 
 #endif
 
-    // DQ (12/3/2007): We want the changes to the access state to be saved in
-    // the info object. See test2007_171.C for example of why this is critical.
-    // unparseStatement(mfuncdecl_stmt->get_definition(), info);
-    // unparseStatement(mfuncdecl_stmt->get_definition(), ninfo);
-    unparseStatement(mfuncdecl_stmt->get_definition(), info);
+       // DQ (12/3/2007): We want the changes to the access state to be saved in
+       // the info object. See test2007_171.C for example of why this is critical.
+       // unparseStatement(mfuncdecl_stmt->get_definition(), info);
+       // unparseStatement(mfuncdecl_stmt->get_definition(), ninfo);
+          unparseStatement(mfuncdecl_stmt->get_definition(), info);
 
-    if (mfuncdecl_stmt->isExternBrace())
-    {
-      unp->cur.format(mfuncdecl_stmt, info, FORMAT_BEFORE_BASIC_BLOCK2);
-      curprint ( string(" }"));
-      unp->cur.format(mfuncdecl_stmt, info, FORMAT_AFTER_BASIC_BLOCK2);
-    }
-  } 
-  else 
-  {
+          if (mfuncdecl_stmt->isExternBrace())
+             {
+               unp->cur.format(mfuncdecl_stmt, info, FORMAT_BEFORE_BASIC_BLOCK2);
+               curprint ( string(" }"));
+               unp->cur.format(mfuncdecl_stmt, info, FORMAT_AFTER_BASIC_BLOCK2);
+             }
+        }
+       else 
+        {
 #if 0
-    printf ("Normal case for unparsing member function declarations! \n");
-    // curprint ( string("\n/* Normal case for unparsing member function declarations */ \n"; 
+          printf ("Normal case for unparsing member function declarations! \n");
+       // curprint ( string("\n/* Normal case for unparsing member function declarations */ \n"; 
 #endif
 #if 0
-    // DQ (5/8/2004): Any generated specialization needed to use the 
-    // C++ syntax for explicit specification of specializations.
-    SgTemplateInstantiationMemberFunctionDecl* templateMemberFunction = isSgTemplateInstantiationMemberFunctionDecl(mfuncdecl_stmt);
-    if (templateMemberFunction != NULL && templateMemberFunction->get_templateArguments()->size() > 0)
-    {
-      curprint ( string("/* explicit template specialization */ "));
-      curprint ( string("template<> "));
-    }
+       // DQ (5/8/2004): Any generated specialization needed to use the 
+       // C++ syntax for explicit specification of specializations.
+          SgTemplateInstantiationMemberFunctionDecl* templateMemberFunction = isSgTemplateInstantiationMemberFunctionDecl(mfuncdecl_stmt);
+          if (templateMemberFunction != NULL && templateMemberFunction->get_templateArguments()->size() > 0)
+             {
+               curprint ( string("/* explicit template specialization */ "));
+               curprint ( string("template<> "));
+             }
 #endif
-    ROSE_ASSERT (mfuncdecl_stmt->get_parent() != NULL);
+          ROSE_ASSERT (mfuncdecl_stmt->get_parent() != NULL);
 
-    // DQ (11/15/2004): It might be safer to always force the qualified function name to be output!
-    // Better yet we should use the scope that is now explicitly stored in the Sage III AST!
+       // DQ (11/15/2004): It might be safer to always force the qualified function name to be output!
+       // Better yet we should use the scope that is now explicitly stored in the Sage III AST!
 #if PRINT_DEVELOPER_WARNINGS
-    printf ("IMPLEMENTATION NOTE: This does not test if the parent class is the correct class in deeply nested class structures \n");
+          printf ("IMPLEMENTATION NOTE: This does not test if the parent class is the correct class in deeply nested class structures \n");
 #endif
-    SgClassDefinition *parent_class = isSgClassDefinition(mfuncdecl_stmt->get_parent());
-    //        printf ("In unparseMFuncDeclStmt(): parent_class of member function declaration = %p = %s \n",
-    //             mfuncdecl_stmt->get_parent(),mfuncdecl_stmt->get_parent()->sage_class_name());
+          SgClassDefinition *parent_class = isSgClassDefinition(mfuncdecl_stmt->get_parent());
+       // printf ("In unparseMFuncDeclStmt(): parent_class of member function declaration = %p = %s \n",mfuncdecl_stmt->get_parent(),mfuncdecl_stmt->get_parent()->sage_class_name());
 
-    // printf ("Commented out call to get_suppress_atomic(mfuncdecl_stmt) \n");
+       // printf ("Commented out call to get_suppress_atomic(mfuncdecl_stmt) \n");
 #if 0
-    if (get_suppress_atomic(mfuncdecl_stmt))
-      info.set_SkipAtomic();
+          if (get_suppress_atomic(mfuncdecl_stmt))
+               info.set_SkipAtomic();
 #endif
 
-    // DQ and PC (6/1/2006): Added Peter's suggested fixes to support unparsing fully qualified names (supporting auto-documentation).
-    // if (parent_class && parent_class->get_declaration()->get_class_type() == SgClassDeclaration::e_class) 
-    if (parent_class && parent_class->get_declaration()->get_class_type() == SgClassDeclaration::e_class && !info.skipCheckAccess())
-    {
-      info.set_CheckAccess();
-    }
+       // DQ and PC (6/1/2006): Added Peter's suggested fixes to support unparsing fully qualified names (supporting auto-documentation).
+       // if (parent_class && parent_class->get_declaration()->get_class_type() == SgClassDeclaration::e_class) 
+          if (parent_class && parent_class->get_declaration()->get_class_type() == SgClassDeclaration::e_class && !info.skipCheckAccess())
+             {
+               info.set_CheckAccess();
+             }
 
-    // printDebugInfo("entering unp->u_sage->printSpecifier1", true);
-    unp->u_sage->printSpecifier1(mfuncdecl_stmt, info);
+       // printDebugInfo("entering unp->u_sage->printSpecifier1", true);
+          unp->u_sage->printSpecifier1(mfuncdecl_stmt, info);
 
-    // printDebugInfo("entering unp->u_sage->printSpecifier2", true);
-    unp->u_sage->printSpecifier2(mfuncdecl_stmt, info);
-    info.unset_CheckAccess();
+       // printDebugInfo("entering unp->u_sage->printSpecifier2", true);
+          unp->u_sage->printSpecifier2(mfuncdecl_stmt, info);
+          info.unset_CheckAccess();
 
-    // DQ (11/3/2007): Moved construction of ninfo to start of function!
-    // SgUnparse_Info ninfo(info);
-    SgType *rtype = NULL;
+       // DQ (11/3/2007): Moved construction of ninfo to start of function!
+       // SgUnparse_Info ninfo(info);
+          SgType *rtype = NULL;
 
-    // DQ (10/10/2006): Do output any qualified names (particularly for non-defining declarations).
-    // ninfo.set_forceQualifiedNames();
+       // DQ (10/10/2006): Do output any qualified names (particularly for non-defining declarations).
+       // ninfo.set_forceQualifiedNames();
 #if 0
-    curprint ( string("/* force output of qualified names */\n ") );
+          curprint ( string("/* force output of qualified names */\n ") );
 #endif
-    // DQ (10/17/2004): Added code to form skipping enum definitions.
-    // DQ (10/7/2004): Skip output of class definition for return type! C++ standard does not permit 
-    // a defining declaration within a return type, function parameter, or sizeof expression. 
+       // DQ (10/17/2004): Added code to form skipping enum definitions.
+       // DQ (10/7/2004): Skip output of class definition for return type! C++ standard does not permit 
+       // a defining declaration within a return type, function parameter, or sizeof expression. 
 
 #if 1
-    // This is a test for if the member function is structurally in the class where it is defined.
-    // printf ("parent_class = %p mfuncdecl_stmt->get_scope() = %p \n",parent_class,mfuncdecl_stmt->get_scope());
+       // This is a test for if the member function is structurally in the class where it is defined.
+       // printf ("parent_class = %p mfuncdecl_stmt->get_scope() = %p \n",parent_class,mfuncdecl_stmt->get_scope());
 
-    // DQ (11/5/2007): This test is not good enough (does not handle case of nested classes and the definition
-    // of member function outside of the nested class and inside of another class.
-    // if (parent_class)
-    if (parent_class == mfuncdecl_stmt->get_scope())
-    {
-      // JJW 10-23-2007 This member function is declared inside the
-      // class, so its name should never be qualified
+       // DQ (11/5/2007): This test is not good enough (does not handle case of nested classes and the definition
+       // of member function outside of the nested class and inside of another class.
+       // if (parent_class)
+          if (parent_class == mfuncdecl_stmt->get_scope())
+             {
+            // JJW 10-23-2007 This member function is declared inside the
+            // class, so its name should never be qualified
 
-      // printf ("mfuncdecl_stmt->get_declarationModifier().isFriend() = %s \n",mfuncdecl_stmt->get_declarationModifier().isFriend() ? "true" : "false");
-      if (mfuncdecl_stmt->get_declarationModifier().isFriend() == false)
-      {
-        // printf ("Setting SkipQualifiedNames (this is a member function located in its own class) \n");
-        ninfo.set_SkipQualifiedNames();
-      }
-    }
+            // printf ("mfuncdecl_stmt->get_declarationModifier().isFriend() = %s \n",mfuncdecl_stmt->get_declarationModifier().isFriend() ? "true" : "false");
+               if (mfuncdecl_stmt->get_declarationModifier().isFriend() == false)
+                  {
+                 // printf ("Setting SkipQualifiedNames (this is a member function located in its own class) \n");
+                    ninfo.set_SkipQualifiedNames();
+                  }
+             }
 #endif
-    ninfo.set_SkipClassDefinition();
-    ninfo.set_SkipEnumDefinition();
+          ninfo.set_SkipClassDefinition();
+          ninfo.set_SkipEnumDefinition();
 
-    // DQ (6/10/2007): set the declaration pointer so that the name qualification can see if this is 
-    // the declaration (so that exceptions to qualification can be tracked).
-    ninfo.set_declstatement_ptr(NULL);
-    ninfo.set_declstatement_ptr(mfuncdecl_stmt);
+       // DQ (6/10/2007): set the declaration pointer so that the name qualification can see if this is 
+       // the declaration (so that exceptions to qualification can be tracked).
+          ninfo.set_declstatement_ptr(NULL);
+          ninfo.set_declstatement_ptr(mfuncdecl_stmt);
 
-    // if (!(mfuncdecl_stmt->isConstructor() || mfuncdecl_stmt->isDestructor() || mfuncdecl_stmt->isConversion()))
-    if ( !( mfuncdecl_stmt->get_specialFunctionModifier().isConstructor() || 
-          mfuncdecl_stmt->get_specialFunctionModifier().isDestructor()  ||
-          mfuncdecl_stmt->get_specialFunctionModifier().isConversion() ) )
-    {
-      // printf ("In unparser: NOT a constructor, destructor or conversion operator \n");
+       // if (!(mfuncdecl_stmt->isConstructor() || mfuncdecl_stmt->isDestructor() || mfuncdecl_stmt->isConversion()))
+          if ( !( mfuncdecl_stmt->get_specialFunctionModifier().isConstructor() || 
+                  mfuncdecl_stmt->get_specialFunctionModifier().isDestructor()  ||
+                  mfuncdecl_stmt->get_specialFunctionModifier().isConversion() ) )
+             {
+            // printf ("In unparser: NOT a constructor, destructor or conversion operator \n");
 
-      // printf ("mfuncdecl_stmt->get_orig_return_type() = %p \n",mfuncdecl_stmt->get_orig_return_type());
+            // printf ("mfuncdecl_stmt->get_orig_return_type() = %p \n",mfuncdecl_stmt->get_orig_return_type());
 
-      if (mfuncdecl_stmt->get_orig_return_type() != NULL)
-      {
-        // printf ("mfuncdecl_stmt->get_orig_return_type() = %p = %s \n",mfuncdecl_stmt->get_orig_return_type(),mfuncdecl_stmt->get_orig_return_type()->sage_class_name());
-        rtype = mfuncdecl_stmt->get_orig_return_type();
-      }
-      else
-      {
-        printf ("In unparseMFuncDeclStmt: (should not happen) mfuncdecl_stmt->get_type()->get_return_type() = %p = %s \n",
-            mfuncdecl_stmt->get_type()->get_return_type(),mfuncdecl_stmt->get_type()->get_return_type()->sage_class_name());
-        rtype = mfuncdecl_stmt->get_type()->get_return_type();
-      }
-      // printf ("rtype = %p = %s \n",rtype,rtype->sage_class_name());
+               if (mfuncdecl_stmt->get_orig_return_type() != NULL)
+                  {
+                 // printf ("mfuncdecl_stmt->get_orig_return_type() = %p = %s \n",mfuncdecl_stmt->get_orig_return_type(),mfuncdecl_stmt->get_orig_return_type()->sage_class_name());
+                    rtype = mfuncdecl_stmt->get_orig_return_type();
+                  }
+                 else
+                  {
+                    printf ("In unparseMFuncDeclStmt: (should not happen) mfuncdecl_stmt->get_type()->get_return_type() = %p = %s \n",
+                         mfuncdecl_stmt->get_type()->get_return_type(),mfuncdecl_stmt->get_type()->get_return_type()->sage_class_name());
+                    rtype = mfuncdecl_stmt->get_type()->get_return_type();
+                  }
+            // printf ("rtype = %p = %s \n",rtype,rtype->sage_class_name());
 
-      ninfo.set_isTypeFirstPart();
-      ninfo.set_SkipClassSpecifier();
+               ninfo.set_isTypeFirstPart();
+               ninfo.set_SkipClassSpecifier();
 
-      SgUnparse_Info ninfo_for_type(ninfo);
+               SgUnparse_Info ninfo_for_type(ninfo);
 
-      // DQ (6/10/2007): set the declaration pointer so that the name qualification can see if this is 
-      // the declaration (so that exceptions to qualification can be tracked).
-      ROSE_ASSERT(ninfo_for_type.get_declstatement_ptr() != NULL);
+            // DQ (6/10/2007): set the declaration pointer so that the name qualification can see if this is 
+            // the declaration (so that exceptions to qualification can be tracked).
+               ROSE_ASSERT(ninfo_for_type.get_declstatement_ptr() != NULL);
 
-      // DQ (12/20/2006): This is used to specify global qualification separately from the more general name 
-      // qualification mechanism.  Note that SgVariableDeclarations don't use the requiresGlobalNameQualificationOnType
-      // on the SgInitializedNames in their list since the SgVariableDeclaration IR nodes is marked directly.
-      // printf ("mfuncdecl_stmt->get_requiresNameQualificationOnReturnType() = %s \n",mfuncdecl_stmt->get_requiresNameQualificationOnReturnType() ? "true" : "false");
-      // curprint ( string("\n/* funcdecl_stmt->get_requiresNameQualificationOnReturnType() = " + (mfuncdecl_stmt->get_requiresNameQualificationOnReturnType() ? "true" : "false") + " */ \n";
-      if (mfuncdecl_stmt->get_requiresNameQualificationOnReturnType() == true)
-      {
-        // Output the name qualification for the type in the variable declaration.
-        // But we have to do so after any modifiers are output, so in unp->u_type->unparseType().
-        // printf ("In Unparse_ExprStmt::unparseMemberFunctionDeclaration(): This return type requires a global qualifier \n");
+            // DQ (12/20/2006): This is used to specify global qualification separately from the more general name 
+            // qualification mechanism.  Note that SgVariableDeclarations don't use the requiresGlobalNameQualificationOnType
+            // on the SgInitializedNames in their list since the SgVariableDeclaration IR nodes is marked directly.
+            // printf ("mfuncdecl_stmt->get_requiresNameQualificationOnReturnType() = %s \n",mfuncdecl_stmt->get_requiresNameQualificationOnReturnType() ? "true" : "false");
+            // curprint ( string("\n/* funcdecl_stmt->get_requiresNameQualificationOnReturnType() = " + (mfuncdecl_stmt->get_requiresNameQualificationOnReturnType() ? "true" : "false") + " */ \n";
+               if (mfuncdecl_stmt->get_requiresNameQualificationOnReturnType() == true)
+                  {
+                 // Output the name qualification for the type in the variable declaration.
+                 // But we have to do so after any modifiers are output, so in unp->u_type->unparseType().
+                 // printf ("In Unparse_ExprStmt::unparseMemberFunctionDeclaration(): This return type requires a global qualifier \n");
 
-        // Note that general qualification of types is separated from the use of globl qualification.
-        // ninfo2.set_forceQualifiedNames();
-        ninfo_for_type.set_requiresGlobalNameQualification();
-      }
+                 // Note that general qualification of types is separated from the use of globl qualification.
+                 // ninfo2.set_forceQualifiedNames();
+                    ninfo_for_type.set_requiresGlobalNameQualification();
+                  }
 
-   // DQ (5/30/2011): Added support for name qualification.
-      ninfo_for_type.set_reference_node_for_qualification(mfuncdecl_stmt);
-      ROSE_ASSERT(ninfo_for_type.get_reference_node_for_qualification() != NULL);
+            // DQ (5/30/2011): Added support for name qualification.
+               ninfo_for_type.set_reference_node_for_qualification(mfuncdecl_stmt);
+               ROSE_ASSERT(ninfo_for_type.get_reference_node_for_qualification() != NULL);
 
-      ninfo_for_type.set_name_qualification_length(mfuncdecl_stmt->get_name_qualification_length_for_return_type());
-      ninfo_for_type.set_global_qualification_required(mfuncdecl_stmt->get_global_qualification_required_for_return_type());
-      ninfo_for_type.set_type_elaboration_required(mfuncdecl_stmt->get_type_elaboration_required_for_return_type());
+               ninfo_for_type.set_name_qualification_length(mfuncdecl_stmt->get_name_qualification_length_for_return_type());
+               ninfo_for_type.set_global_qualification_required(mfuncdecl_stmt->get_global_qualification_required_for_return_type());
+               ninfo_for_type.set_type_elaboration_required(mfuncdecl_stmt->get_type_elaboration_required_for_return_type());
 
-      // unp->u_type->unparseType(rtype, ninfo);
-      unp->u_type->unparseType(rtype, ninfo_for_type);
+            // unp->u_type->unparseType(rtype, ninfo);
+               unp->u_type->unparseType(rtype, ninfo_for_type);
 
-      ninfo.unset_SkipClassSpecifier();
-      // printf ("In unparser: DONE with NOT a constructor, destructor or conversion operator \n");
-    }
-    else
-    {
-      // DQ (9/17/2004): What can we assume about the return type of a constructor, destructor, or conversion operator?
-      if (mfuncdecl_stmt->get_orig_return_type() == NULL)
-      {
-        printf ("mfuncdecl_stmt->get_orig_return_type() == NULL mfuncdecl_stmt = %p = %s = %s \n",
-            mfuncdecl_stmt,mfuncdecl_stmt->class_name().c_str(),mfuncdecl_stmt->get_name().str());
-      }
-      ROSE_ASSERT(mfuncdecl_stmt->get_orig_return_type() != NULL);
-      ROSE_ASSERT(mfuncdecl_stmt->get_type()->get_return_type() != NULL);
-    }
+               ninfo.unset_SkipClassSpecifier();
+            // printf ("In unparser: DONE with NOT a constructor, destructor or conversion operator \n");
+             }
+            else
+             {
+            // DQ (9/17/2004): What can we assume about the return type of a constructor, destructor, or conversion operator?
+               if (mfuncdecl_stmt->get_orig_return_type() == NULL)
+                  {
+                    printf ("mfuncdecl_stmt->get_orig_return_type() == NULL mfuncdecl_stmt = %p = %s = %s \n",
+                         mfuncdecl_stmt,mfuncdecl_stmt->class_name().c_str(),mfuncdecl_stmt->get_name().str());
+                  }
+               ROSE_ASSERT(mfuncdecl_stmt->get_orig_return_type() != NULL);
+               ROSE_ASSERT(mfuncdecl_stmt->get_type()->get_return_type() != NULL);
+             }
 
-    ROSE_ASSERT (mfuncdecl_stmt != NULL);
+          ROSE_ASSERT (mfuncdecl_stmt != NULL);
 
-    // printf ("In unparser: parent_class = %p \n",parent_class);
-    // printf ("In unparser: mfuncdecl_stmt->get_name() = %s \n",mfuncdecl_stmt->get_name().str());
+       // printf ("In unparser: parent_class = %p \n",parent_class);
+       // printf ("In unparser: mfuncdecl_stmt->get_name() = %s \n",mfuncdecl_stmt->get_name().str());
 
-    // DQ (10/11/2006): As part of new implementation of qualified names we now default to the generation of all qualified names unless they are skipped.
-    // ninfo.set_SkipQualifiedNames();
+       // DQ (10/11/2006): As part of new implementation of qualified names we now default to the generation of all qualified names unless they are skipped.
+       // ninfo.set_SkipQualifiedNames();
 
-    // ninfo.display("unparse SgMemberFunction: ninfo");
-    // DQ (5/13/2011): Support for new name qualification.
-    ninfo.set_name_qualification_length(mfuncdecl_stmt->get_name_qualification_length());
-    ninfo.set_global_qualification_required(mfuncdecl_stmt->get_global_qualification_required());
+       // ninfo.display("unparse SgMemberFunction: ninfo");
+       // DQ (5/13/2011): Support for new name qualification.
+          ninfo.set_name_qualification_length(mfuncdecl_stmt->get_name_qualification_length());
+          ninfo.set_global_qualification_required(mfuncdecl_stmt->get_global_qualification_required());
 
- // Generate the qualified name
- // SgName nameQualifier = unp->u_name->generateNameQualifier( mfuncdecl_stmt , ninfo );
-    SgName nameQualifier = mfuncdecl_stmt->get_qualified_name_prefix();
- // printf ("nameQualifier for member function = %s \n",nameQualifier.str());
-    curprint ( nameQualifier.str() );
-    curprint ( mfuncdecl_stmt->get_name().str());
+       // Generate the qualified name
+       // SgName nameQualifier = unp->u_name->generateNameQualifier( mfuncdecl_stmt , ninfo );
+          SgName nameQualifier = mfuncdecl_stmt->get_qualified_name_prefix();
+       // printf ("nameQualifier for member function = %s \n",nameQualifier.str());
+          curprint ( nameQualifier.str() );
+          curprint ( mfuncdecl_stmt->get_name().str());
 
-    SgUnparse_Info ninfo2(info);
+          SgUnparse_Info ninfo2(info);
 
-    // DQ (10/10/2006): Do output any qualified names (particularly for non-defining declarations).
-    // ninfo2.set_forceQualifiedNames();
+       // DQ (10/10/2006): Do output any qualified names (particularly for non-defining declarations).
+       // ninfo2.set_forceQualifiedNames();
 
-    // DQ (10/17/2004): Skip output of enum and class definitions for return type! C++ standard does not permit 
-    // a defining declaration within a return type, function parameter, or sizeof expression. 
-    ninfo2.set_SkipClassDefinition();
-    ninfo2.set_SkipEnumDefinition();
+       // DQ (10/17/2004): Skip output of enum and class definitions for return type! C++ standard does not permit 
+       // a defining declaration within a return type, function parameter, or sizeof expression. 
+          ninfo2.set_SkipClassDefinition();
+          ninfo2.set_SkipEnumDefinition();
 
-    // DQ (6/10/2007): set the declaration pointer so that the name qualification can see if this is 
-    // the declaration (so that exceptions to qualification can be tracked).
-    ninfo2.set_declstatement_ptr(NULL);
-    ninfo2.set_declstatement_ptr(mfuncdecl_stmt);
+       // DQ (6/10/2007): set the declaration pointer so that the name qualification can see if this is 
+       // the declaration (so that exceptions to qualification can be tracked).
+          ninfo2.set_declstatement_ptr(NULL);
+          ninfo2.set_declstatement_ptr(mfuncdecl_stmt);
 
-    ninfo2.set_inArgList();
-    SgName tmp_name;
+          ninfo2.set_inArgList();
+          SgName tmp_name;
 
-    // DQ (10/7/2004): Skip output of class definition for return type! C++ standard does not permit 
-    // a defining declaration within a return type, function parameter, or sizeof expression. 
-    ninfo2.set_SkipClassDefinition();
+       // DQ (10/7/2004): Skip output of class definition for return type! C++ standard does not permit 
+       // a defining declaration within a return type, function parameter, or sizeof expression. 
+          ninfo2.set_SkipClassDefinition();
 
-    curprint ( string("("));
-    // Unparse the function arguments
-    unparseFunctionArgs(mfuncdecl_stmt,ninfo2);
-    curprint ( string(")"));
+          curprint ( string("("));
+       // Unparse the function arguments
+          unparseFunctionArgs(mfuncdecl_stmt,ninfo2);
+          curprint ( string(")"));
 
-    if (rtype != NULL)
-    {
-      SgUnparse_Info ninfo3(ninfo);
-      ninfo3.set_isTypeSecondPart();
+          if (rtype != NULL)
+             {
+               SgUnparse_Info ninfo3(ninfo);
+               ninfo3.set_isTypeSecondPart();
 
-      unp->u_type->unparseType(rtype, ninfo3);
-    }
+               unp->u_type->unparseType(rtype, ninfo3);
+             }
 
-    SgMemberFunctionType *mftype = isSgMemberFunctionType(mfuncdecl_stmt->get_type());
-    if (!info.SkipFunctionQualifier() && mftype )
-    {
-      if (mftype->isConstFunc())
-      {
-        curprint ( string(" const"));
-      }
-      if (mftype->isVolatileFunc())
-      {
-        curprint ( string(" volatile"));
-      }
-    }
+          SgMemberFunctionType *mftype = isSgMemberFunctionType(mfuncdecl_stmt->get_type());
+          if (!info.SkipFunctionQualifier() && mftype )
+             {
+               if (mftype->isConstFunc())
+                  {
+                    curprint ( string(" const"));
+                  }
+               if (mftype->isVolatileFunc())
+                  {
+                    curprint ( string(" volatile"));
+                  }
+             }
 
-    // DQ (4/28/2004): Added support for restrict modifier
-    if (mfuncdecl_stmt->get_declarationModifier().get_typeModifier().isRestrict())
-    {
-      curprint ( string(" restrict"));
-    }
+       // DQ (4/28/2004): Added support for restrict modifier
+          if (mfuncdecl_stmt->get_declarationModifier().get_typeModifier().isRestrict())
+             {
+               curprint ( string(" restrict"));
+             }
 
-    // DQ (4/28/2004): Added support for throw modifier
-    if (mfuncdecl_stmt->get_declarationModifier().isThrow())
-    {
-      // Unparse SgThrow
-      // unparseThrowExp(mfuncdecl_stmt->get_throwExpression,info);
-      // printf ("Incomplete implementation of throw specifier on function \n");
-      // curprint ( string(" throw( /* from unparseMFuncDeclStmt() type list output not implemented */ )";
-      const SgTypePtrList& exceptionSpecifierList = mfuncdecl_stmt->get_exceptionSpecification();
-      unparseExceptionSpecification(exceptionSpecifierList,ninfo);
-    }
+       // DQ (4/28/2004): Added support for throw modifier
+          if (mfuncdecl_stmt->get_declarationModifier().isThrow())
+             {
+            // Unparse SgThrow
+            // unparseThrowExp(mfuncdecl_stmt->get_throwExpression,info);
+            // printf ("Incomplete implementation of throw specifier on function \n");
+            // curprint ( string(" throw( /* from unparseMFuncDeclStmt() type list output not implemented */ )";
+               const SgTypePtrList& exceptionSpecifierList = mfuncdecl_stmt->get_exceptionSpecification();
+               unparseExceptionSpecification(exceptionSpecifierList,ninfo);
+             }
 
-    // if (mfuncdecl_stmt->isPure())
-    if (mfuncdecl_stmt->get_functionModifier().isPureVirtual())
-    {
-      curprint ( string(" = 0"));
-    }
+       // if (mfuncdecl_stmt->isPure())
+          if (mfuncdecl_stmt->get_functionModifier().isPureVirtual())
+             {
+               curprint ( string(" = 0"));
+             }
 
-    if (mfuncdecl_stmt->isForward() && !info.SkipSemiColon())
-    {
-      curprint ( string(";"));
-      if (mfuncdecl_stmt->isExternBrace())
-      {
-        curprint ( string(" }"));
-      }
-    }
-    else
-    {
-      int first = 1;
-      SgInitializedNamePtrList::iterator p = mfuncdecl_stmt->get_ctors().begin();
+          if (mfuncdecl_stmt->isForward() && !info.SkipSemiColon())
+             {
+               curprint ( string(";"));
+               if (mfuncdecl_stmt->isExternBrace())
+                  {
+                    curprint ( string(" }"));
+                  }
+             }
+            else
+             {
+               int first = 1;
+               SgInitializedNamePtrList::iterator p = mfuncdecl_stmt->get_ctors().begin();
 
-      while (p != mfuncdecl_stmt->get_ctors().end())
-      {
-        if (first)
-        {
-          curprint ( string(" : "));
-          first = 0;
+            // printf ("Unparsing the preinitialization list \n");
+
+               while (p != mfuncdecl_stmt->get_ctors().end())
+                  {
+                    if (first)
+                       {
+                         curprint ( string(" : "));
+                         first = 0;
+                       }
+                      else
+                       {
+                         curprint ( string(", "));
+                       }
+
+                    ROSE_ASSERT ((*p) != NULL);
+                    unparseAttachedPreprocessingInfo(*p, info, PreprocessingInfo::before);
+                    curprint (  (*p)->get_name().str());
+
+                 // DQ (8/4/2005): Removed the use of "()" here since it breaks test2005_123.C
+                 // DQ (8/2/2005): Added "()" to constructor initialization list (better here than for all SgAssignInitializer's expressions)
+                    SgExpression* initializer = (*p)->get_initializer();
+                    if (initializer != NULL)
+                       {
+                      // printf ("Unparsing the preinitialization list: found valid inializer = %p = %s \n",initializer,initializer->class_name().c_str());
+#if 1
+                         bool outputParenthesis = true;
+
+                      // DQ (7/21/2012): I think this setting is new for the NEW EDG support (and would allow use to later remove this data member).
+                         SgConstructorInitializer* constructorInitializer = isSgConstructorInitializer(initializer);
+                         if (constructorInitializer != NULL)
+                            {
+                           // ROSE_ASSERT(constructorInitializer->get_need_parenthesis_after_name() == false);
+                              outputParenthesis = (constructorInitializer->get_need_parenthesis_after_name() == false);
+                            }
+#else
+                      // DQ (8/6/2005): Remove "()" when SgConstructorInitializer is used in preinitialization list (since it will output a "()" already)
+                      // printf ("Output parenthesis for all but constructor initializers \n");
+                         bool outputParenthesis =  (isSgConstructorInitializer(initializer) == NULL);
+#endif
+                         if (outputParenthesis == true)
+                            {
+                              curprint ( string("("));
+                            }
+                      // DQ (6/4/2011): Set this in case the initializer is an expression that requires name 
+                      // qualification (e.g. SgConstructorInitializer).  See test2005_42.C for an example.
+                         info.set_reference_node_for_qualification(initializer);
+
+                      // unparseExpression((*p)->get_initializer(), info);
+                         unparseExpression(initializer, info);
+
+                      // DQ (6/4/2011): Clear this since we have used the input SgUnparse_Info.
+                         info.set_reference_node_for_qualification(NULL);
+
+                         if (outputParenthesis == true)
+                            {
+                              curprint ( string(")"));
+                            }
+                       }
+                    p++;
+                  }
+
+            // printf ("DONE: Unparsing the preinitialization list \n");
+             }
         }
-        else
-        {
-          curprint ( string(", "));
-        }
-        ROSE_ASSERT ((*p) != NULL);
-        unparseAttachedPreprocessingInfo(*p, info, PreprocessingInfo::before);
-        curprint (  (*p)->get_name().str());
-
-        // DQ (8/4/2005): Removed the use of "()" here since it breaks test2005_123.C
-        // DQ (8/2/2005): Added "()" to constructor initialization list (better here than for all SgAssignInitializer's expressions)
-        SgExpression* initializer = (*p)->get_initializer();
-        if (initializer != NULL)
-        {
-          // DQ (8/6/2005): Remove "()" when SgConstructorInitializer is used in preinitialization list (since it will output a "()" already)
-          // printf ("Output parenthesis for all but constructor initializers \n");
-          bool outputParenthesis =  (isSgConstructorInitializer(initializer) == NULL);
-          if (outputParenthesis == true)
-          {
-            curprint ( string("("));
-          }
-
-       // DQ (6/4/2011): Set this in case the initializer is an expression that requires name 
-       // qualification (e.g. SgConstructorInitializer).  See test2005_42.C for an example.
-          info.set_reference_node_for_qualification(initializer);
-
-          // unparseExpression((*p)->get_initializer(), info);
-          unparseExpression(initializer, info);
-
-       // DQ (6/4/2011): Clear this since we have used the input SgUnparse_Info.
-          info.set_reference_node_for_qualification(NULL);
-
-          if (outputParenthesis == true)
-          {
-            curprint ( string(")"));
-          }
-        }
-        p++;
-      }
-    }
-  }
 
   // DQ (1/23/03) Added option to support rewrite mechanism (generation of declarations)
-  if (info.AddSemiColonAfterDeclaration())
-  {
-    curprint ( string(";"));
-  }
+     if (info.AddSemiColonAfterDeclaration())
+        {
+          curprint ( string(";"));
+        }
 
   // Unparse any comments of directives attached to the SgCtorInitializerList
-  if (mfuncdecl_stmt->get_CtorInitializerList() != NULL)
-    unparseAttachedPreprocessingInfo(mfuncdecl_stmt->get_CtorInitializerList(), info, PreprocessingInfo::after);
-}
+     if (mfuncdecl_stmt->get_CtorInitializerList() != NULL)
+          unparseAttachedPreprocessingInfo(mfuncdecl_stmt->get_CtorInitializerList(), info, PreprocessingInfo::after);
+   }
 
 
 void

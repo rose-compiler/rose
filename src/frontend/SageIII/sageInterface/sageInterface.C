@@ -9412,7 +9412,11 @@ void SageInterface::fixStructDeclaration(SgClassDeclaration* structDecl, SgScope
      if (nondefdecl->get_parent() == NULL)
           nondefdecl->set_parent(scope);
 #else
-     printf ("*** WARNING: In SageInterface::fixStructDeclaration(): Commented out the setting of the parent (of input class declaration and the nondefining declaration) to be the same as the scope (set only if NULL) \n");
+  // printf ("*** WARNING: In SageInterface::fixStructDeclaration(): Commented out the setting of the parent (of input class declaration and the nondefining declaration) to be the same as the scope (set only if NULL) \n");
+
+  // DQ (7/21/2012): Can we assert this here? NO!
+  // ROSE_ASSERT(structDecl->get_parent() == NULL);
+  // ROSE_ASSERT(nondefdecl->get_parent() == NULL);
 #endif
 
      SgName name = structDecl->get_name();
@@ -9592,7 +9596,7 @@ void SageInterface::fixVariableDeclaration(SgVariableDeclaration* varDecl, SgSco
        // printf ("In SageInterface::fixVariableDeclaration() preAssociatedScope = %p \n",preAssociatedScope);
           if (preAssociatedScope != NULL)
              {
-               printf ("Note that this variable already has an associated scope! preAssociatedScope = %p = %s \n",preAssociatedScope,preAssociatedScope->class_name().c_str());
+               printf ("In SageInterface::fixVariableDeclaration(): Note that this variable already has an associated scope! preAssociatedScope = %p = %s (but will be reset below) \n",preAssociatedScope,preAssociatedScope->class_name().c_str());
             // ROSE_ASSERT(preAssociatedScope == scope);
 
                requiredScope = preAssociatedScope;

@@ -346,6 +346,7 @@ test2005_119.C \
 test2005_120.C \
 test2005_121.C \
 test2005_122.C \
+test2005_123.C \
 test2005_124.C \
 test2005_125.C \
 test2005_126.C \
@@ -948,6 +949,7 @@ test2012_127.C \
 test2012_128.C \
 test2012_129.C \
 test2012_130.C \
+test2012_131.C \
 test_int_lexemes.C \
 test_int_lexemes_donot_pass.C \
 test_simple_int.C \
@@ -988,7 +990,6 @@ endif
 #
 if ROSE_USE_EDG_VERSION_4_3
 TESTCODE_CURRENTLY_FAILING = \
-test2005_123.C \
 test2005_137.C \
 test2005_143.C \
 test2006_54.C \

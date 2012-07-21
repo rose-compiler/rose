@@ -2649,7 +2649,7 @@ SageBuilder::buildDefiningFunctionDeclaration_T(const SgName & name, SgType* ret
   // This is a problem for test2012_74.C (and a dozen other test codes that make use of STL).
      ROSE_ASSERT(first_nondefining_declaration != NULL);
 
-#if 1
+#if 0
      printf ("In buildDefiningFunctionDeclaration_T(): isMemberFunction = %s \n",isMemberFunction ? "true" : "false");
 #endif
 
@@ -7694,7 +7694,9 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& name, SgClassDeclaration::c
           scope = SageBuilder::topScopeStack();
         }
 
+#if 0
      printf ("Building a SgClassDeclaration: buildClassDeclaration_nfi() name = %s buildTemplateInstantiation = %s \n",name.str(),buildTemplateInstantiation ? "true" : "false");
+#endif
 
 #if 0
   // step 1. Build defining declaration
@@ -7775,7 +7777,9 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& name, SgClassDeclaration::c
      SgClassSymbol* mysymbol = NULL;
      if (scope != NULL)
         {
+#if 0
           printf ("Looking up the SgClassSymbol in scope = %p = %s name = %s \n",scope,scope->class_name().c_str(),name.str());
+#endif
        // mysymbol = scope->lookup_class_symbol(name);
           mysymbol = scope->lookup_class_symbol(name);
         }
@@ -7787,7 +7791,7 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& name, SgClassDeclaration::c
        // printf ("Warning: In SageBuilder::buildClassDeclaration_nfi(): scope == NULL \n");
         }
 
-#if 1
+#if 0
      printf ("In SageBuilder::buildClassDeclaration_nfi(): mysymbol = %p \n",mysymbol);
 #endif
 
@@ -7932,8 +7936,9 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& name, SgClassDeclaration::c
        // DQ (2/27/2012): I don't like that this is setting the parent to be a scope (not a bad default, but must be reset later if required).
        // Liao, 9/2/2009. scope stack is optional, it can be empty
        // nondefdecl->set_parent(topScopeStack());
-
+#if 0
           printf ("WARNING: In buildClassDeclaration_nfi(): Skipping the setting of the parents (for both defining and nondefining declaration) to be the same as the scope \n");
+#endif
        // nondefdecl->set_parent(scope);
        // defdecl->set_parent(scope);
 
@@ -7965,7 +7970,9 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& name, SgClassDeclaration::c
      SgClassDefinition* classDef = buildClassDefinition(NULL,buildTemplateInstantiation);
 
   // DQ (11/26/2011): Debugging EDG 3.3 use of templateArguments.
+#if 0
      printf ("Building a SgClassDeclaration: buildClassDeclaration_nfi() buildTemplateInstantiation = %s \n",buildTemplateInstantiation ? "true:" : "false");
+#endif
 
   // SgClassDeclaration* defdecl = new SgClassDeclaration (name,kind,NULL,classDef);
      SgClassDeclaration* defdecl = NULL;
