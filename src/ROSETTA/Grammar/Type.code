@@ -5066,8 +5066,9 @@ SgClassType::createType(SgDeclarationStatement* cd, SgExpression* optional_fortr
                  // DQ (3/21/2012): New conditional test for t != newType (and delete new type only then).
                     if (t != newType)
                        {
+#if 0
                          printf ("Deleting the just built exploritory type = %p (case of t != newType) t = %p = %s \n",newType,t,t->class_name().c_str());
-
+#endif
                          delete newType;
                          newType = NULL;
                        }
@@ -5120,8 +5121,10 @@ SgClassType::createType(SgDeclarationStatement* cd, SgExpression* optional_fortr
   // ROSE_ASSERT(type_from_declaration != NULL);
   // return ($CLASSNAME*) type_from_declaration;
 
+#if 0
      printf ("SgClassType::createType(): classDeclaration         = %p \n",classDeclaration);
      printf ("SgClassType::createType(): templateClassDeclaration = %p \n",templateClassDeclaration);
+#endif
 
      SgClassType* returnType = NULL;
      if (classDeclaration != NULL)
