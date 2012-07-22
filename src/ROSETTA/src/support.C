@@ -742,6 +742,16 @@ Grammar::setUpSupport ()
      File.setDataPrototype         ( "bool", "Cxx_only", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (7/21/2012): Adding C11 support.
+     File.setDataPrototype         ( "bool", "C11_only", "= false",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // DQ (7/21/2012): Adding C++0x support.
+     File.setDataPrototype         ( "bool", "Cxx0x_only", "= false",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // DQ (7/21/2012): Adding C++11 support.
+     File.setDataPrototype         ( "bool", "Cxx11_only", "= false",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
   // DQ (8/11/2007): Support for Fortran (Fortran, f77, f90, f95, f03)
      File.setDataPrototype         ( "bool", "Fortran_only", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -1580,6 +1590,15 @@ Grammar::setUpSupport ()
             NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      Project.setDataPrototype ( "bool", "Cxx_only", "= false",
             NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (7/21/2012): Added support for C11, C++0x and C++11 from the command line.
+     Project.setDataPrototype ( "bool", "C11_only", "= false",
+            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     Project.setDataPrototype ( "bool", "Cxx0x_only", "= false",
+            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     Project.setDataPrototype ( "bool", "Cxx11_only", "= false",
+            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      Project.setDataPrototype ( "bool", "Fortran_only", "= false",
             NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 

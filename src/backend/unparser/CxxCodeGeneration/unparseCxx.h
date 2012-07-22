@@ -434,6 +434,9 @@ class Unparse_ExprStmt : public UnparseLanguageIndependentConstructs
        // TV (05/06/2010): SgCudaKernelCallExp
           virtual void unparseCudaKernelCall(SgExpression* expr, SgUnparse_Info& info);
 
+      // DQ (7/21/2012): New IR node (only seen in C++11 so far).
+         void unparseTemplateParameterValue(SgExpression* expr, SgUnparse_Info& info);
+
    };
 
 #endif

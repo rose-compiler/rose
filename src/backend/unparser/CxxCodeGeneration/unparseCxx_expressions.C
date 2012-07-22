@@ -145,6 +145,10 @@ Unparse_ExprStmt::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpars
           case TEMPLATE_FUNCTION_REF:        { unparseTemplateFuncRef(expr, info);  break; }
           case TEMPLATE_MEMBER_FUNCTION_REF: { unparseTemplateMFuncRef(expr, info); break; }
 
+       // DQ (7/21/2012): This is only called if we process C++ code using the Cxx11 option.
+       // This can be demonstrated on test2012_133.C (any maybe many other places too).
+          case TEMPLATE_PARAMETER_VAL: { unparseTemplateParameterValue(expr, info); break; }
+
           default:
              {
             // printf ("Default reached in switch statement for unparsing expressions! expr = %p = %s \n",expr,expr->class_name().c_str());
@@ -153,6 +157,18 @@ Unparse_ExprStmt::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpars
                break;
              }
         }
+   }
+
+
+// DQ (7/21/2012): Added support for new template IR nodes (only used in C++11 code so far, see test2012_133.C).
+void
+Unparse_ExprStmt::unparseTemplateParameterValue(SgExpression* expr, SgUnparse_Info& info)
+   {
+     SgTemplateParameterVal* template_parameter_value = isSgTemplateParameterVal(expr);
+     ROSE_ASSERT(template_parameter_value != NULL);
+
+     printf ("Skip unparsing this IR node until we unserstand it's connection to C++11 better. \n");
+  // ROSE_ASSERT(false);
    }
 
 
