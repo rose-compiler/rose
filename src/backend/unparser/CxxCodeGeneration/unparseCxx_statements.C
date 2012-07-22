@@ -613,6 +613,10 @@ Unparse_ExprStmt::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_
   // DQ (added comments) this is where the new lines are introduced before statements.
      unp->cur.format(stmt, info, FORMAT_BEFORE_STMT);
 
+#if 1
+     printf ("In Unparse_ExprStmt::unparseLanguageSpecificStatement(): Selecting an unparse function for stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+#endif
+
      switch (stmt->variantT())
         {
        // DQ (8/14/2007): Need to move the C and C++ specific unparse member functions from the base class to this function.
@@ -1456,14 +1460,15 @@ Unparse_ExprStmt::unparseTemplateInstantiationFunctionDeclStmt (SgStatement* stm
      ROSE_ASSERT(templateInstantiationFunctionDeclaration != NULL);
      ROSE_ASSERT(templateInstantiationFunctionDeclaration->get_file_info() != NULL);
 
-     SgFunctionDeclaration* functionDeclaration = 
-          isSgFunctionDeclaration(templateInstantiationFunctionDeclaration);
+     SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(templateInstantiationFunctionDeclaration);
 
      ROSE_ASSERT(functionDeclaration != NULL);
 
-  // curprint("/* Output in curprint in Unparse_ExprStmt::unparseTemplateInstantiationFunctionDeclStmt() */");
+#if 1
+     curprint("/* Output in curprint in Unparse_ExprStmt::unparseTemplateInstantiationFunctionDeclStmt() */");
+#endif
 
-#if OUTPUT_DEBUGGING_FUNCTION_NAME
+#if OUTPUT_DEBUGGING_FUNCTION_NAME || 1
      printf ("Inside of unparseTemplateInstantiationFunctionDeclStmt() name = %s  transformed = %s prototype = %s static = %s compiler generated = %s transformed = %s output = %s \n",
        // templateInstantiationFunctionDeclaration->get_name().str(),
           templateInstantiationFunctionDeclaration->get_qualified_name().str(),
@@ -1516,8 +1521,10 @@ Unparse_ExprStmt::unparseTemplateInstantiationFunctionDeclStmt (SgStatement* stm
         {
        // Also output the template member function declaration the template declaration appears in the source file.
           string currentFileName = getFileName();
-
-       // DQ (5/2/2012): If the template declearation is not available then it is likely that is does not exist and so we will need to output the instantiation.
+#if 1
+          printf ("Inside of unparseTemplateInstantiationFunctionDeclStmt(): currentFileName = %s \n",currentFileName.c_str());
+#endif
+       // DQ (5/2/2012): If the template declaration is not available then it is likely that is does not exist and so we will need to output the instantiation.
        // The problem with this is that we actually build a template declaration in this case but it is not represented by a string (so until we
        // abandon the string use of the template declaration in the unparsing we can't take advantage of this).
 
@@ -1527,15 +1534,24 @@ Unparse_ExprStmt::unparseTemplateInstantiationFunctionDeclStmt (SgStatement* stm
                ROSE_ASSERT(templateInstantiationFunctionDeclaration->get_templateDeclaration()->get_file_info() != NULL);
                ROSE_ASSERT(templateInstantiationFunctionDeclaration->get_templateDeclaration()->get_file_info()->get_filename() != NULL);
                string declarationFileName = templateInstantiationFunctionDeclaration->get_templateDeclaration()->get_file_info()->get_filename();
-#if 0
+#if 1
                printf ("In unparseTemplateInstantiationFunctionDeclStmt(): currentFileName     = %s \n",currentFileName.c_str());
                printf ("In unparseTemplateInstantiationFunctionDeclStmt(): declarationFileName = %s \n",declarationFileName.c_str());
                printf ("templateInstantiationFunctionDeclaration source position information: \n");
-               templateInstantiationFunctionDeclaration->get_file_info()->display("debug");
+               templateInstantiationFunctionDeclaration->get_file_info()->display("templateInstantiationFunctionDeclaration: debug");
+               templateInstantiationFunctionDeclaration->get_templateDeclaration()->get_file_info()->display("templateInstantiationFunctionDeclaration->get_templateDeclaration(): debug");
 #endif
             // if ( declarationFileName == currentFileName )
             // if ( declarationFileName == currentFileName && templateInstantiationMemberFunctionDeclaration->get_file_info()->isOutputInCodeGeneration() == true)
+
+            // DQ (7/21/2012): We have already made the decission to output this function declaration (before we called this function).
+            // and in the case of an explicit template specialization the souce position would have a valid location with isOutputInCodeGeneration() set to false 
+            // (since this would not be compiler generated) see test2012_132.C for an example.
+#if 1
                if ( templateInstantiationFunctionDeclaration->get_file_info()->isOutputInCodeGeneration() == true )
+#else
+               if ( true )
+#endif
                   {
                  // printf ("Declaration appears in the current source file. \n");
 #if PRINT_DEVELOPER_WARNINGS
@@ -1545,7 +1561,9 @@ Unparse_ExprStmt::unparseTemplateInstantiationFunctionDeclStmt (SgStatement* stm
                   }
                  else
                   {
-                 // printf ("Declaration does NOT appear in the current source file. \n");
+#if 1
+                    printf ("Declaration does NOT appear in the current source file. \n");
+#endif
                  // curprint ( string("\n/* In unparseTemplateInstantiationFunctionDeclStmt(): skip output of template function declaration */ \n ";
 #if PRINT_DEVELOPER_WARNINGS
                     curprint ( string("/* Skipped output of template function declaration (name = " ) + templateInstantiationFunctionDeclaration->get_qualified_name().str() + ") */ \n");

@@ -1603,7 +1603,32 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                   {
                     SgTemplateArgument* templateArgument = isSgTemplateArgument(node);
                     additionalNodeOptions = "shape=circle,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=1,color=\"blue\",fillcolor=yellow,fontname=\"7x13bold\",fontcolor=black,style=filled";
-                    labelWithSourceCode = string("\\n  ") + StringUtility::numberToString(templateArgument) + "  ";
+                    string typeString  = (templateArgument->get_argumentType() == SgTemplateArgument::argument_undefined) ? "argument_undefined" : "!isForward";
+                    switch (templateArgument->get_argumentType())
+                       {
+                         case SgTemplateArgument::argument_undefined:
+                              typeString = "argument_undefined";
+                              break;
+
+                         case SgTemplateArgument::type_argument:
+                              typeString = "type_argument";
+                              typeString + string("\\n type = ") + StringUtility::numberToString(templateArgument->get_type()) + "  ";
+                              break;
+
+                         case SgTemplateArgument::nontype_argument:
+                              typeString = "nontype_argument";
+                              typeString + string("\\n expression = ") + StringUtility::numberToString(templateArgument->get_expression()) + "  ";
+                              break;
+
+                         default:
+                            {
+                              printf ("Error: default reached in case V_SgTemplateArgument: templateArgument->get_argumentType() \n");
+                              ROSE_ASSERT(false);
+                            }
+                       }
+
+                    labelWithSourceCode = string("\\n  ") + typeString + 
+                                          string("\\n  ") + StringUtility::numberToString(templateArgument) + "  ";
                     break;
                   }
 

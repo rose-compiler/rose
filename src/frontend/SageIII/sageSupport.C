@@ -1442,6 +1442,40 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
                printf ("C99 mode ON \n");
           set_C99_only(true);
         }
+
+  //
+  // C11 only option (turns on EDG c11 options (whatever they will be).
+  //
+     set_C11_only(false);
+     ROSE_ASSERT (get_C11_only() == false);
+     if ( CommandlineProcessing::isOption(argv,"-rose:","(C11|C11_only)",true) == true )
+        {
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("C11 mode ON \n");
+
+          printf ("Specification of C11 on command line not yet supported \n");
+          ROSE_ASSERT(false);
+
+          set_C11_only(true);
+        }
+
+  //
+  // C++11 only option (turns on EDG c++0x option currently.
+  //
+     set_Cxx11_only(false);
+     set_Cxx0x_only(false);
+     ROSE_ASSERT (get_Cxx11_only() == false);
+     if ( CommandlineProcessing::isOption(argv,"-rose:","(Cxx11|Cxx11_only)",true) == true )
+        {
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("Cxx11 mode ON \n");
+#if 0
+          set_C11_only(true);
+#else
+          set_Cxx0x_only(true);
+#endif
+        }
+
   //
   // UPC only option , enable UPC mode of ROSE, especially the file suffix is not .upc
   // It is an extension of C, so also set C mode.
@@ -2438,6 +2472,9 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
      optionCount = sla(argv, "-rose:", "($)", "(openmp:lowering|OpenMP:lowering)",1);
      optionCount = sla(argv, "-rose:", "($)", "(C99|C99_only)",1);
      optionCount = sla(argv, "-rose:", "($)", "(Cxx|Cxx_only)",1);
+     optionCount = sla(argv, "-rose:", "($)", "(C11|C11_only)",1);
+     optionCount = sla(argv, "-rose:", "($)", "(Cxx0x|Cxx0x_only)",1);
+     optionCount = sla(argv, "-rose:", "($)", "(Cxx11|Cxx11_only)",1);
 
      optionCount = sla(argv, "-rose:", "($)", "(output_warnings)",1);
      optionCount = sla(argv, "-rose:", "($)", "(cray_pointer_support)",1);
@@ -3733,7 +3770,8 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
         }
      }
      else {
-          if (get_C_only() == true || get_C99_only() == true)
+       // if (get_C_only() == true || get_C99_only() == true)
+          if (get_C_only() == true || get_C99_only() == true || get_C11_only() == true)
              {
             // AS(02/21/07) Add support for the gcc 'nostdinc' and 'nostdinc++' options
             // DQ (11/29/2006): if required turn on the use of the __cplusplus macro
@@ -3829,6 +3867,32 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
         {
        // Add option to indicate use of C code (not C++) to EDG frontend
           inputCommandLine.push_back("--c99");
+        }
+
+     if (get_C11_only() == true)
+        {
+       // Add option to indicate use of C11 code (not C++) to EDG frontend
+          inputCommandLine.push_back("--c11");
+
+          printf ("Not clear yet what internal option to use in EDG for C11 command line support \n");
+          ROSE_ASSERT(false);
+        }
+
+     if (get_Cxx0x_only() == true)
+        {
+       // Add option to indicate use of C++0x code to EDG frontend
+          inputCommandLine.push_back("--c++0x");
+        }
+
+     if (get_Cxx11_only() == true)
+        {
+       // Add option to indicate use of C++11 code to EDG frontend
+
+       // DQ (7/21/2012): Until we use a newer EDG 2012 release, I think the option name is: --c++0x
+       // Hopefull we don't have the turn on lamda support (using: "--lamdas") explicitly.
+
+       // inputCommandLine.push_back("--c++11");
+          inputCommandLine.push_back("--c++0x");
         }
 
      if (get_strict_language_handling() == true)
