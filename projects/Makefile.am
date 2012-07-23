@@ -23,6 +23,7 @@ SUBDIRS = \
 	MPI_Tools \
 	MacroRewrapper \
 	OpenMP_Analysis \
+        OpenMP_Checker \
 	QtDesignerPlugins \
 	RoseQt \
 	arrayOptimization \
