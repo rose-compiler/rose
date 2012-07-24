@@ -1,6 +1,6 @@
 /*
   Author: Pei-Hung Lin
-  Contact: phlin@cs.umn.edu
+  Contact: lin32@llnl.gov, phlin@cs.umn.edu
 
   Date Created       : July 5th, 2012
  
@@ -70,14 +70,12 @@ void f2cTraversal::visit(SgNode* n)
         SgArrayType* originalArrayType = isSgArrayType(initializedName->get_type());
         if(originalArrayType != NULL)
         {
-          std::cout << "Translate Array declaration" << std::endl;
           linearizeArrayDeclaration(originalArrayType);
         }
       }
       break;
     case V_SgPntrArrRefExp:
       {
-        std::cout << "Translate Array subscript" << std::endl;
         SgPntrArrRefExp* pntrArrRefExp = isSgPntrArrRefExp(n);
         ROSE_ASSERT(pntrArrRefExp);
         linearizeArraySubscript(pntrArrRefExp);

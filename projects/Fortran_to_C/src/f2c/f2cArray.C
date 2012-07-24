@@ -105,11 +105,11 @@ void Fortran_to_C::linearizeArraySubscript(SgPntrArrRefExp* pntrArrRefExp)
     /*
       The subscript conversion is following this example:
       case 1:
-      dimension a(d1,d2,d3,d4)    ====>   dimension(d1*d2*d3*d4)
+      dimension a(d1,d2,d3,d4)    ====>   dimension a(d1*d2*d3*d4)
       a(s1,s2,s3,s4)              ====>   a(s1-1 + d1*(s2-1 + d2*( s3-1 + d3*(s4-1))))
 
       case 2:
-      dimension a(d1L:d1H,d2L:d2H)    ====>   dimension((d1H-d1L+1)*(d2H-d2L+1))
+      dimension a(d1L:d1H,d2L:d2H)    ====>   dimension a((d1H-d1L+1)*(d2H-d2L+1))
       a(s1,s2)              ====>   a(s1-d1L + (d1H-d1L+1)*(s2-d2L)) 
     */ 
     Rose_STL_Container<SgExpression*>::reverse_iterator j1 =  subscriptExprList.rbegin();
