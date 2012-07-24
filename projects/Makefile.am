@@ -41,9 +41,12 @@ SUBDIRS = \
 	PowerAwareCompiler \
 	ManyCoreRuntime \
 	mint \
-	Fortran_to_C \
 	extractMPISkeleton \
 	$(OPTIONAL_PROJECTS)
+
+if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
+	Fortran_to_C \
+endif
 
 if ROSE_WITH_ISL
   SUBDIRS += RosePolly

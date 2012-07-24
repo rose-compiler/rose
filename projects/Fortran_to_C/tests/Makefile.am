@@ -37,5 +37,5 @@ check-local:
 clean-local:	
 	rm -f $(PASSING_FORTRAN_TEST_OBJECTS) *.c *.f *.dot
 
-EXTRA_DIST = $(ALL_TESTCODES) README
+EXTRA_DIST = $(ALL_TESTCODES) 
 
