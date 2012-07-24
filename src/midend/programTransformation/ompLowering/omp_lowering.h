@@ -12,6 +12,15 @@
 #define OMP_LOWERING_H 
 namespace OmpSupport
 {
+
+  //! makeDataSharingExplicit() can call some of existing functions for some work in OmpSupport namespace by Hongyi 07/16/2012
+ //! TODO: add a function within the OmpSupport namespace, the function should transform the AST, so all variables' data-sharing attributes are explicitied represented in the AST. ROSE has dedicated AST nodes for OpenMP directives and the associated clauses, such as private, shared, reduction.
+
+ int makeDataSharingExplicit( SgFile* );   
+
+
+// last edited by Hongyi on 07/16/2012. 
+  
   //! The type of target runtime libraries (not yet in use)
   // We support both Omni and GCC OpenMP runtime libraries
   enum omp_rtl_enum 
