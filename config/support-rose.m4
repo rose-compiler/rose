@@ -2024,6 +2024,7 @@ projects/MPI_Tools/MPIDeterminismAnalysis/Makefile
 projects/MacroRewrapper/Makefile
 projects/Makefile
 projects/OpenMP_Analysis/Makefile
+projects/OpenMP_Checker/Makefile
 projects/OpenMP_Translator/Makefile
 projects/OpenMP_Translator/includes/Makefile
 projects/OpenMP_Translator/tests/Makefile
