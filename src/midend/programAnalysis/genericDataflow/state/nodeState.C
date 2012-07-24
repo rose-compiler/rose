@@ -202,11 +202,37 @@ void NodeState::setLatticeBelow(const Analysis* analysis, vector<Lattice*>& latt
 
 static vector<Lattice*> emptyLatVec;
 
+//! returns all the lattices from above the CFG node (corresponding to SgNode and an CFG index) that are owned by the given analysis
+// (read-only access)
+const std::vector<Lattice*>& NodeState::getLatticeAbove(const Analysis* a, SgNode* n, unsigned int index ) 
+{
+  assert (a!= NULL);
+  assert (n != NULL);
+
+  NodeState *state =  NodeState::getNodeState(n, index);
+  assert (state != NULL);
+
+  return state->getLatticeAbove(a);
+}
+
+// returns all the lattices from below the CFG node (corresponding to SgNode and an CFG index) that are owned by the given analysis
+// (read-only access)
+const std::vector<Lattice*>& NodeState::getLatticeBelow(const Analysis* a, SgNode* n, unsigned int index) 
+{
+  assert (a!= NULL);
+  assert (n != NULL);
+
+  NodeState *state =  NodeState::getNodeState(n, index);
+  assert (state != NULL);
+  return state->getLatticeBelow(a);
+}
+
 // returns the given lattice from above the node, which owned by the given analysis
 Lattice* NodeState::getLatticeAbove(const Analysis* analysis, int latticeName) const
 {
         return getLattice_ex(dfInfoAbove, analysis, latticeName);
 }
+
 
 // returns the map containing all the lattices from above the node that are owned by the given analysis
 // (read-only access)

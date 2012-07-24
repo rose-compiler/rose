@@ -348,6 +348,9 @@ struct hash_nodeptr
    \brief Not sure the classifications right now
  */
 
+   //! Extract a SgPragmaDeclaration's leading keyword . For example "#pragma omp parallel" has a keyword of "omp".
+   std::string extractPragmaKeyword(const SgPragmaDeclaration *);
+
    //! Check if a node is SgOmp*Statement
    bool isOmpStatement(SgNode* );
    /*! \brief Return true if function is overloaded.
