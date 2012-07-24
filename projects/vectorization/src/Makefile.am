@@ -16,5 +16,6 @@ bin_PROGRAMS = vectorization
 
 vectorization_SOURCES=\
 	main.C \
+	normalization.C \
 	vectorization.C 
 

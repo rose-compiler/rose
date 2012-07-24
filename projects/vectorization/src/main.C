@@ -23,10 +23,37 @@
 #include <LoopTreeDepComp.h>
 
 #include "vectorization.h"
+#include "normalization.h"
 #include "CommandOptions.h"
 
 using namespace std;
 using namespace vectorization;
+using namespace normalization;
+
+
+class vectorizationTraversal : public AstSimpleProcessing
+{
+  public:
+    virtual void visit(SgNode* n);
+};
+
+void vectorizationTraversal::visit(SgNode* n)
+{
+  switch(n->variantT())
+  {
+    case V_SgForStatement:
+      {
+        SgForStatement* forStatement = isSgForStatement(n);
+        //SageInterface::forLoopNormalization(forStatement);
+        if(isInnermostLoop(forStatement)){
+          vectorizeBinaryOp(forStatement);
+        }
+      }
+      break;
+    default:
+      break;
+  }
+}
 
 int main( int argc, char * argv[] )
 {
@@ -58,14 +85,13 @@ int main( int argc, char * argv[] )
     comp->DumpDep();
   }
 */
+  normalizeExperission(project);
+   
   addHeaderFile(project,argvList);
 
-  Rose_STL_Container<SgNode*> forLoopList = NodeQuery::querySubTree (project,V_SgForStatement);
-  for (Rose_STL_Container<SgNode*>::iterator i = forLoopList.begin(); i != forLoopList.end(); i++)
-  {
-    SageInterface::forLoopNormalization(isSgForStatement(*i));
-  }
   
+  vectorizationTraversal doVectorization;
+  doVectorization.traverseInputFiles(project,postorder);
 
   //generateDOT(*project);
   generateAstGraph(project,80000);
