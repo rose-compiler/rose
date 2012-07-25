@@ -12,6 +12,7 @@ namespace vectorization
   void addHeaderFile(SgProject*, std::vector<std::string>&);
   bool isInnermostLoop(SgForStatement*);
 
+  void stripmineLoop(SgForStatement*, int);
 
   void vectorizeBinaryOp(SgForStatement*);
   void translateBinaryOp(SgBinaryOp*, SgScopeStatement*, SgName);

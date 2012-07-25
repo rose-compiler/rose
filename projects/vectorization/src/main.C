@@ -46,7 +46,8 @@ void vectorizationTraversal::visit(SgNode* n)
         SgForStatement* forStatement = isSgForStatement(n);
         //SageInterface::forLoopNormalization(forStatement);
         if(isInnermostLoop(forStatement)){
-          vectorizeBinaryOp(forStatement);
+          //vectorizeBinaryOp(forStatement);
+          stripmineLoop(forStatement,4);
         }
       }
       break;
@@ -62,6 +63,7 @@ int main( int argc, char * argv[] )
   SgProject* project = frontend(argc,argv);
   AstTests::runAllTests(project);   
 
+  //generateAstGraph(project,8000,"_orig");
 /* Generate data dependence graph
   ArrayAnnotation* annot = ArrayAnnotation::get_inst(); 
   ArrayInterface array_interface(*annot);
@@ -85,14 +87,14 @@ int main( int argc, char * argv[] )
     comp->DumpDep();
   }
 */
-  normalizeExperission(project);
    
-  addHeaderFile(project,argvList);
+  normalizeExperission(project);
 
   
   vectorizationTraversal doVectorization;
   doVectorization.traverseInputFiles(project,postorder);
 
+  addHeaderFile(project,argvList);
   //generateDOT(*project);
   generateAstGraph(project,80000);
  
