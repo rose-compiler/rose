@@ -20,6 +20,17 @@ using namespace SageInterface;
 using namespace Fortran_to_C;
 
 
+class typeTraversal : public ROSE_VisitorPattern
+{
+  public:
+    void visit(SgArrayType* type);
+};
+
+void typeTraversal::visit(SgArrayType* type)
+{
+  linearizeArrayDeclaration(type);
+}
+
 class f2cTraversal : public AstSimpleProcessing
 {
   public:
@@ -63,17 +74,6 @@ void f2cTraversal::visit(SgNode* n)
         deepDelete(fortranDo);
       }
       break;
-    case V_SgInitializedName:
-      {
-        SgInitializedName* initializedName = isSgInitializedName(n);
-        ROSE_ASSERT(initializedName);
-        SgArrayType* originalArrayType = isSgArrayType(initializedName->get_type());
-        if(originalArrayType != NULL)
-        {
-          linearizeArrayDeclaration(originalArrayType);
-        }
-      }
-      break;
     case V_SgPntrArrRefExp:
       {
         SgPntrArrRefExp* pntrArrRefExp = isSgPntrArrRefExp(n);
@@ -93,9 +93,14 @@ int main( int argc, char * argv[] )
   AstTests::runAllTests(project);   
 
   generateAstGraph(project,8000,"_orig");
+  
+  // Traversal with Memory Pool to search for arrayType
+  typeTraversal linearizeArrayType;
+  traverseMemoryPoolVisitorPattern(linearizeArrayType);
 
-   f2cTraversal f2c;
-   f2c.traverseInputFiles(project,postorder);
+  // Simple traversal, bottom-up, to translate the rest
+  f2cTraversal f2c;
+  f2c.traverseInputFiles(project,postorder);
       
 /*
   1. There should be no Fortran-specific AST nodes in the whole
