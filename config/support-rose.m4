@@ -519,7 +519,7 @@ if test "x$rose_boost_version" = "x103600" -o "x$_version" = "x1.36" \
 then
     echo "Reasonable version of Boost found!"
 else
-    ROSE_MSG_ERROR([Unsupported version of Boost: '$_version' ('$rose_boost_version')])
+    ROSE_MSG_ERROR([Unsupported version of Boost: '$_version' ('$rose_boost_version'). Only 1.36 to 1.48 is supported now.])
 fi
 
 # DQ (12/22/2008): Fix boost configure to handle OS with older version of Boost that will
