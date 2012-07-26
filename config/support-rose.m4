@@ -154,7 +154,7 @@ if test "x$enableval" = "xyes" ; then
        ],
        [AC_MSG_RESULT([done])],
        gcc_version=`gcc -dumpversion`
-       [AC_MSG_FAILURE([your GCC $gcc_version version is currently NOT supported by ROSE])])
+       [AC_MSG_FAILURE([your GCC $gcc_version version is currently NOT supported by ROSE. GCC 4.0.x to 4.4.x is supported now.])])
       AC_LANG_POP([C])
 else
     AC_MSG_RESULT([skipping])
