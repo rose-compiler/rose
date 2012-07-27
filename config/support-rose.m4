@@ -2160,6 +2160,8 @@ projects/compass2/tests/checkers/keyword_macro/Makefile
 projects/compass2/tests/checkers/keyword_macro/compass_parameters.xml
 projects/compass2/tests/checkers/non_global_cpp_directive/Makefile
 projects/compass2/tests/checkers/non_global_cpp_directive/compass_parameters.xml
+projects/compass2/tests/checkers/non_static_array_size/Makefile
+projects/compass2/tests/checkers/non_static_array_size/compass_parameters.xml
 projects/compass2/tests/core/Makefile
 projects/compass2/tests/core/compass_parameters.xml
 ])
