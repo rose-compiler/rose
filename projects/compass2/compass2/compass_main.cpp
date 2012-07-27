@@ -9,6 +9,7 @@
  * C/C++ system includes
  **--------------------------------------------------------------------------*/
 #include <iostream>
+#include <map>
 
 /*-----------------------------------------------------------------------------
  * Library includes
@@ -24,6 +25,7 @@
 extern const Compass::Checker* const functionPointerChecker;
 extern const Compass::Checker* const keywordMacroChecker;
 extern const Compass::Checker* const nonGlobalCppDirectiveChecker;
+extern const Compass::Checker* const nonStaticArraySizeChecker;
 
 /*-----------------------------------------------------------------------------
  * Main program
@@ -46,7 +48,7 @@ int main (int argc, char** argv)
 
     if (SgProject::get_verbose () > 0)
     {
-        std::cout << "In compass_main.cpp::main ()" << std::endl;
+        std::cout << "[Compass] [Main] In compass_main.cpp::main ()" << std::endl;
     }
 
     // -------------------------------------------------------------------------
@@ -68,6 +70,24 @@ int main (int argc, char** argv)
     Compass::Xml::ParametersParser parser ("compass_parameters.xml");
     params = parser.parse_parameters ();
 
+    // Enable which checkers?
+    typedef std::map<std::string, bool> EnabledCheckersMapType;
+    EnabledCheckersMapType enabled_checkers;
+    static const bool CHECKER_ENABLED = true;
+
+    Compass::ParametersMap enabled_checkers_parameters =
+        params[boost::regex("general::enabled_checker")];
+    // Save checker name in map for faster lookups.
+    BOOST_FOREACH(const Compass::ParametersMap::value_type& pair,
+                  enabled_checkers_parameters)
+    {
+        Compass::ParameterValues values = pair.second;
+        BOOST_FOREACH(std::string checker_name, values)
+        {
+            enabled_checkers[checker_name] = CHECKER_ENABLED;
+        }
+    }
+
     // -------------------------------------------------------------------------
     //  Call ROSE frontend
     // -------------------------------------------------------------------------
@@ -81,11 +101,40 @@ int main (int argc, char** argv)
     //  Build Compass Checkers
     // -------------------------------------------------------------------------
 
+    // -------------------------------------------------------------------------
+    //  Checkers
+    // -------------------------------------------------------------------------
     std::vector<const Compass::Checker*> traversals;
 
-    traversals.push_back (functionPointerChecker);
-    traversals.push_back (keywordMacroChecker);
-    traversals.push_back (nonGlobalCppDirectiveChecker);
+    BOOST_FOREACH(const EnabledCheckersMapType::value_type& pair,
+                  enabled_checkers)
+    {
+        const bool checker_is_enabled = pair.second;
+        if (CHECKER_ENABLED == checker_is_enabled)
+        {
+            std::string checker_name = pair.first;
+            if ("functionPointer" == checker_name)
+                traversals.push_back (functionPointerChecker);
+            else if ("keywordMacros" == checker_name)
+                traversals.push_back (keywordMacroChecker);
+            else if ("nonGlobalCppDirective" == checker_name)
+                traversals.push_back (nonGlobalCppDirectiveChecker);
+            //else if ("nonStaticArraySize" == checker_name)
+            //    traversals.push_back (nonStaticArraySizeChecker);
+            else
+            {
+                if (SgProject::get_verbose () >= 0)
+                {
+                    std::cout
+                      << "[Compass] [Parameters] "
+                      << "Uknown enabled_checker configuration detected: "
+                      << checker_name
+                      << std::endl;
+                }
+            }
+        }// CHECKER_ENABLED == checker_is_enabled
+    }
+
 
     Compass::PrintingOutputObject output(std::cerr);
 
@@ -109,26 +158,19 @@ int main (int argc, char** argv)
     {
         if (*itr == NULL)
         {
-            std::cerr << "Error: Traversal failed to initialize" << std::endl;
+            std::cerr
+              << "[Compass] [Main] "
+              << "Error: Traversal failed to initialize"
+              << std::endl;
             return 1;
         }
         else
         {
-            // TODO: enable toggling of checkers
-            // Compass::ParametersMap enabled_checkers =
-            //     params[boost::regex("general::.*")];
-            // // Save keywords in map for faster lookups.
-            // BOOST_FOREACH(const Compass::ParametersMap::value_type& pair, enabled_checkers)
-            // {
-            //     Compass::ParameterValues values = pair.second;
-            //     BOOST_FOREACH(std::string keyword, values)
-            //     {
-            //     }
-            // }
 
             if (SgProject::get_verbose () >= 0)
             {
               std::cout
+                << "[Compass] [Main] "
                 << "Running checker "
                 << (*itr)->checkerName.c_str ()
                 << std::endl;
@@ -150,8 +192,17 @@ int main (int argc, char** argv)
             }
             catch (const std::exception& e)
             {
-                std::cerr << "error running checker : " << (*itr)->checkerName << " - reason: " << e.what() << std::endl;
-                errors.push_back(std::make_pair((*itr)->checkerName, e.what()));
+                std::cerr
+                  << "[Compass] [Main] "
+                  << "error running checker : "
+                  << (*itr)->checkerName
+                  << " - reason: "
+                  << e.what()
+                  << std::endl;
+
+                errors.push_back(
+                  std::make_pair((*itr)->checkerName,
+                  e.what()));
             }
         }
     }//for each checker traversal

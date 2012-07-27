@@ -16,6 +16,7 @@ TESTCODES=\
 #  Test rules
 # ------------------------------------------------------------------------------
 
+.PHONY: $(TESTCODES:.cpp=.o)
 $(TESTCODES:.cpp=.o): $(TESTCODES)
 	$(TEST_SCRIPT) \
 		$(CHECKER) \

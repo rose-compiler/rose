@@ -9,13 +9,13 @@
     <parameter name="target_directory">
       @absolute_path_srcdir@
     </parameter>
-    <parameter name="enabled_checker">nonGlobalCppDirective</parameter>
+    <parameter name="enabled_checker">nonStaticArraySize</parameter>
   </general>
 
   <!-- Checker-specific Compass Parameters //-->
 
   <checkers>
-    <checker name="nonGlobalCppDirective">
+    <checker name="nonStaticArraySize">
     </checker>
   </checkers>
 </parameters>

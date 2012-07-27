@@ -35,8 +35,8 @@ main(int argc, char** argv)
 
 void test_basic_indexing(Compass::Parameters a_parameters)
   {
-    static const char* param_name = "general::RuleSelection";
-    static const char* expected_value = "/export/tmp.too1/workspace/rose/compass2/ROSE/projects/compass2/tests/checkers/function_pointer/RULE_SELECTION.in";
+    static const char* param_name = "general::foo";
+    static const char* expected_value = "bar";
 
     Compass::ParameterValues parameters = a_parameters[param_name];
     ROSE_ASSERT (parameters.size () == 1);

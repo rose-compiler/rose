@@ -24,6 +24,7 @@ TESTCODES=\
 #  Test rules
 # ------------------------------------------------------------------------------
 
+.PHONY: $(TESTCODES:.C=.o)
 $(TESTCODES:.C=.o): $(TESTCODES)
 	$(TEST_SCRIPT) \
 		$(CHECKER) \

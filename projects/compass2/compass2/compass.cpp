@@ -370,6 +370,11 @@ Parameters::operator[](const boost::regex &a_regex) const
 
     if (parameters.size() <= 0)
     {
+        std::cerr
+          << "[Compass] [Parameters] "
+          << "ERROR: parameter not found: "
+          << a_regex.str()
+          << std::endl;
         throw ParameterNotFoundException(a_regex.str());
     }
     else
