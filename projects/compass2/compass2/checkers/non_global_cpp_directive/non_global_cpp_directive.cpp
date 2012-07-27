@@ -28,7 +28,7 @@ extern const Compass::Checker* const nonGlobalCppDirectiveChecker;
 namespace CompassAnalyses
 {
 /**
- * \brief Detect function pointers and function references.
+ * \brief Detect non-global CPP directives.
  */
 namespace NonGlobalCppDirective
 {

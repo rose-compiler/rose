@@ -54,6 +54,7 @@ compass2_compass2_LDADD=\
 	compass2/checkers/function_pointer/libfunctionpointer.la \
 	compass2/checkers/keyword_macro/libkeywordmacro.la \
 	compass2/checkers/non_global_cpp_directive/libnonglobalcppdirective.la \
+	compass2/checkers/non_static_array_size/libnonstaticarraysize.la \
 	$(XERCES_LIBS) \
 	$(ROSE_LIBS)
 
@@ -64,7 +65,8 @@ compass2_compass2_LDADD=\
 noinst_LTLIBRARIES=\
 	compass2/checkers/function_pointer/libfunctionpointer.la \
 	compass2/checkers/keyword_macro/libkeywordmacro.la \
-	compass2/checkers/non_global_cpp_directive/libnonglobalcppdirective.la
+	compass2/checkers/non_global_cpp_directive/libnonglobalcppdirective.la \
+	compass2/checkers/non_static_array_size/libnonstaticarraysize.la
 
 compass2_checkers_function_pointer_libfunctionpointer_la_SOURCES=\
 	compass2/checkers/function_pointer/function_pointer.cpp
@@ -74,6 +76,9 @@ compass2_checkers_keyword_macro_libkeywordmacro_la_SOURCES=\
 
 compass2_checkers_non_global_cpp_directive_libnonglobalcppdirective_la_SOURCES=\
 	compass2/checkers/non_global_cpp_directive/non_global_cpp_directive.cpp
+
+compass2_checkers_non_static_array_size_libnonstaticarraysize_la_SOURCES=\
+	compass2/checkers/non_static_array_size/non_static_array_size.cpp
 
 # ------------------------------------------------------------------------------
 #  XML Schemas

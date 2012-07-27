@@ -6,12 +6,10 @@
   <!-- General Compass Parameters for all checkers //-->
 
   <general>
-    <parameter name="RuleSelection">
-      @absolute_path_srcdir@/projects/compass2/tests/checkers/keyword_macro/RULE_SELECTION.in
-    </parameter>
     <parameter name="target_directory">
       @absolute_path_srcdir@
     </parameter>
+    <parameter name="enabled_checker">keywordMacros</parameter>
   </general>
 
   <!-- Checker-specific Compass Parameters //-->

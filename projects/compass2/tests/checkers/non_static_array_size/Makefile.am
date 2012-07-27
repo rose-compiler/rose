@@ -10,7 +10,7 @@ COMPASS_PARAMETERS_XSD=$(top_srcdir)/projects/compass2/compass2/xml/compass_para
 TEST_SCRIPT=$(top_srcdir)/projects/compass2/tests/checkers/test_checker.sh
 
 TESTCODES=\
-	non_global_cpp_directive_test_1.cpp
+	non_static_array_size_test_1.cpp
 
 # ------------------------------------------------------------------------------
 #  Test rules
@@ -21,7 +21,7 @@ $(TESTCODES:.cpp=.o): $(TESTCODES)
 	$(TEST_SCRIPT) \
 		$(CHECKER) \
 		$(srcdir)/$(@:.o=.cpp) \
-		"Non-global CPP directive detected"
+		"Non-static array size detected"
 
 $(COMPASS2):
 	$(MAKE) -C $(top_builddir)/projects/compass2
