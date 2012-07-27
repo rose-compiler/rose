@@ -227,6 +227,11 @@ class CustomMemoryPoolDOTGeneration
              int m_defaultColor;           /*defaultColorFilter()*/
              int m_edge;   /* edgeFilter ()*/
              int m_emptySymbolTable;  /*emptySymbolTableFilter()*/ 
+
+          // DQ (7/22/2012): Added support to ignore empty IR nodes.
+             int m_emptyBasicBlock;            /* emptyBasicBlockFilter() */
+             int m_emptyFunctionParameterList; /* emptyFunctionParameterListFilter() */              
+
              int m_expression; /* expressionFilter ()*/
 
              int m_fileInfo;               /* fileInfoFilter ()*/
@@ -296,6 +301,10 @@ class CustomMemoryPoolDOTGeneration
 
        // DQ (3/2/2009): Ignore empty symbol tables
           void emptySymbolTableFilter(SgNode* n);
+
+      // DQ (7/22/2012): Ignore specific empty IR nodes.
+         void emptyBasicBlockFilter(SgNode* node);
+         void emptyFunctionParameterListFilter(SgNode* node);
 
        // DQ (3/2/2009): Ignore expression IR nodes
           void expressionFilter(SgNode* n);

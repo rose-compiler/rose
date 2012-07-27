@@ -896,6 +896,34 @@ CustomMemoryPoolDOTGeneration::emptySymbolTableFilter(SgNode* node)
    }
 
 void
+CustomMemoryPoolDOTGeneration::emptyBasicBlockFilter(SgNode* node)
+   {
+  // This function skips the representation of types and IR nodes associated with types
+     SgBasicBlock* block = isSgBasicBlock(node);
+     if (block != NULL)
+        {
+          if (block->get_statements().empty() == true)
+             {
+               skipNode(node);
+             }
+        }
+   }
+
+void
+CustomMemoryPoolDOTGeneration::emptyFunctionParameterListFilter(SgNode* node)
+   {
+  // This function skips the representation of types and IR nodes associated with types
+     SgFunctionParameterList* parameterList = isSgFunctionParameterList(node);
+     if (parameterList != NULL)
+        {
+          if (parameterList->get_args().empty() == true)
+             {
+               skipNode(node);
+             }
+        }
+   }
+
+void
 CustomMemoryPoolDOTGeneration::expressionFilter(SgNode* node)
    {
   // This function skips the representation of types and IR nodes associated with types
@@ -1287,13 +1315,26 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
             // DQ (2/27/2012): Added template support (new template declaration IR nodes).
                case V_SgTemplateFunctionDeclaration:
                case V_SgTemplateMemberFunctionDeclaration:
+                  {
+                    SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(node);
+                    additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=1,color=\"blue\",fillcolor=blueviolet,fontname=\"7x13bold\",fontcolor=black,style=filled";
+                    string forwardFlagString = (functionDeclaration->isForward() == true) ? "isForward" : "!isForward";
+                    string friendFlagString = (functionDeclaration->get_declarationModifier().isFriend() == true) ? "isFriend" : "!isFriend";
+                    labelWithSourceCode = string("\\n  ") + functionDeclaration->get_name().getString() +
+                                          "\\n  " + forwardFlagString +
+                                          "\\n  " + friendFlagString +
+                                          "\\n  " + StringUtility::numberToString(functionDeclaration) + "  ";
+                 // printf ("########## functionDeclaration->get_name() = %s \n",functionDeclaration->get_name().str());
+                    break;
+                  }
+
 
                case V_SgFunctionDeclaration:
                case V_SgProgramHeaderStatement:
                case V_SgProcedureHeaderStatement:
                case V_SgMemberFunctionDeclaration:
-               case V_SgTemplateInstantiationFunctionDecl:
-               case V_SgTemplateInstantiationMemberFunctionDecl:
+            // case V_SgTemplateInstantiationFunctionDecl:
+            // case V_SgTemplateInstantiationMemberFunctionDecl:
                   {
                     SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(node);
                     additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=1,color=\"blue\",fillcolor=royalblue,fontname=\"7x13bold\",fontcolor=black,style=filled";
@@ -1307,8 +1348,25 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                     break;
                   }
 
+            // DQ (7/22/2012): Distingish between these different types.
+               case V_SgTemplateInstantiationFunctionDecl: // functions
+               case V_SgTemplateInstantiationMemberFunctionDecl: // functions
+                  {
+                    SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(node);
+                    additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=1,color=\"blue\",fillcolor=lightseagreen,fontname=\"7x13bold\",fontcolor=black,style=filled";
+                    string forwardFlagString = (functionDeclaration->isForward() == true) ? "isForward" : "!isForward";
+                    string friendFlagString = (functionDeclaration->get_declarationModifier().isFriend() == true) ? "isFriend" : "!isFriend";
+                    labelWithSourceCode = string("\\n  ") + functionDeclaration->get_name().getString() +
+                                          "\\n  " + forwardFlagString +
+                                          "\\n  " + friendFlagString +
+                                          "\\n  " + StringUtility::numberToString(functionDeclaration) + "  ";
+                 // printf ("########## functionDeclaration->get_name() = %s \n",functionDeclaration->get_name().str());
+                    break;
+                  }
+
                case V_SgTemplateDeclaration:
                   {
+                 // This type is not supposed to be used in the new EDG 4.x work.
                     SgTemplateDeclaration* templateDeclaration = isSgTemplateDeclaration(node);
                     additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=8,peripheries=2,color=\"blue\",fillcolor=green,fontname=\"7x13bold\",fontcolor=black,style=filled";
                     labelWithSourceCode = "\\n  " + templateDeclaration->get_name().getString() + 
@@ -1316,15 +1374,42 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                     break;
                   }
 
+            // DQ (7/22/2012): Distingish between these template class and non template class IR nodes.
             // DQ (2/27/2012): Added template support (new template declaration IR nodes).
                case V_SgTemplateClassDeclaration:
+                  {
+                    SgClassDeclaration* classDeclaration = isSgClassDeclaration(node);
+                    additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=8,peripheries=2,color=\"blue\",fillcolor=blueviolet,fontname=\"7x13bold\",fontcolor=black,style=filled";
+                    string flagString  = (classDeclaration->isForward() == true) ? "isForward" : "!isForward";
+                    string flagString2 = (classDeclaration->get_isAutonomousDeclaration() == true) ? "isAutonomousDeclaration" : "!isAutonomousDeclaration";
+                    labelWithSourceCode = "\\n  " + classDeclaration->get_name().getString() + 
+                                          "\\n  " + flagString +
+                                          "\\n  " + flagString2 +
+                                          "\\n  " + StringUtility::numberToString(classDeclaration) + "  ";
+                 // printf ("########## classDeclaration->get_name() = %s \n",classDeclaration->get_name().str());
+                    break;
+                  }
 
                case V_SgClassDeclaration:
                case V_SgModuleStatement:
-               case V_SgTemplateInstantiationDecl:
+            // case V_SgTemplateInstantiationDecl:
                   {
                     SgClassDeclaration* classDeclaration = isSgClassDeclaration(node);
                     additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=8,peripheries=2,color=\"blue\",fillcolor=peru,fontname=\"7x13bold\",fontcolor=black,style=filled";
+                    string flagString  = (classDeclaration->isForward() == true) ? "isForward" : "!isForward";
+                    string flagString2 = (classDeclaration->get_isAutonomousDeclaration() == true) ? "isAutonomousDeclaration" : "!isAutonomousDeclaration";
+                    labelWithSourceCode = "\\n  " + classDeclaration->get_name().getString() + 
+                                          "\\n  " + flagString +
+                                          "\\n  " + flagString2 +
+                                          "\\n  " + StringUtility::numberToString(classDeclaration) + "  ";
+                 // printf ("########## classDeclaration->get_name() = %s \n",classDeclaration->get_name().str());
+                    break;
+                  }
+
+               case V_SgTemplateInstantiationDecl:
+                  {
+                    SgClassDeclaration* classDeclaration = isSgClassDeclaration(node);
+                    additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=8,peripheries=2,color=\"blue\",fillcolor=lightgreen,fontname=\"7x13bold\",fontcolor=black,style=filled";
                     string flagString  = (classDeclaration->isForward() == true) ? "isForward" : "!isForward";
                     string flagString2 = (classDeclaration->get_isAutonomousDeclaration() == true) ? "isAutonomousDeclaration" : "!isAutonomousDeclaration";
                     labelWithSourceCode = "\\n  " + classDeclaration->get_name().getString() + 
@@ -1917,6 +2002,11 @@ CustomMemoryPoolDOTGeneration::s_Filter_Flags::setDefault()
      m_defaultColor = 1;         /*defaultColorFilter()*/
      m_edge    = 1;              /* edgeFilter ()*/
      m_emptySymbolTable = 0;    /*emptySymbolTableFilter()*/
+
+  // DQ (7/22/2012): Ignore some empty IR nodes.
+     m_emptyBasicBlock = 0;             /*emptyBasicBlockFilter()*/
+     m_emptyFunctionParameterList = 0;  /*emptyFunctionParameterListFilter()*/
+
      m_expression = 0 ;          /* expressionFilter ()*/
 
      m_fileInfo =  1;             /* fileInfoFilter ()*/
@@ -1986,7 +2076,13 @@ CustomMemoryPoolDOTGeneration::s_Filter_Flags::s_Filter_Flags(std::vector <std::
      CommandlineProcessing::isOptionWithParameter(argvList, "-rose:dotgraph:","defaultColorFilter", m_defaultColor, true);
      CommandlineProcessing::isOptionWithParameter(argvList, "-rose:dotgraph:","defaultFilter", m_default, true);
      CommandlineProcessing::isOptionWithParameter(argvList, "-rose:dotgraph:","edgeFilter", m_edge, true);
+
      CommandlineProcessing::isOptionWithParameter(argvList, "-rose:dotgraph:","emptySymbolTableFilter", m_emptySymbolTable, true);
+
+  // DQ (7/22/2012): Added support to ignore some empty IR nodes.
+     CommandlineProcessing::isOptionWithParameter(argvList, "-rose:dotgraph:","emptyBasicBlockFilter", m_emptyBasicBlock, true);
+     CommandlineProcessing::isOptionWithParameter(argvList, "-rose:dotgraph:","emptyFunctionParameterListFilter", m_emptyFunctionParameterList, true);
+
      CommandlineProcessing::isOptionWithParameter(argvList, "-rose:dotgraph:","expressionFilter", m_expression, true);
 
      CommandlineProcessing::isOptionWithParameter(argvList, "-rose:dotgraph:","fileInfoFilter", m_fileInfo, true);
@@ -2015,27 +2111,31 @@ CustomMemoryPoolDOTGeneration::s_Filter_Flags::print_commandline_help()
 {
   cout<<"   -rose:help                     show this help message"<<endl;
 
-  cout<<"   -rose:dotgraph:asmFileFormatFilter           [0|1]  Disable or enable asmFileFormat filter"<<endl;
-  cout<<"   -rose:dotgraph:asmTypeFilter                 [0|1]  Disable or enable asmType filter"<<endl;
-  cout<<"   -rose:dotgraph:binaryExecutableFormatFilter  [0|1]  Disable or enable binaryExecutableFormat filter"<<endl;
-  cout<<"   -rose:dotgraph:commentAndDirectiveFilter     [0|1]  Disable or enable commentAndDirective filter"<<endl;
-  cout<<"   -rose:dotgraph:ctorInitializerListFilter     [0|1]  Disable or enable ctorInitializerList filter"<<endl;
+  cout<<"   -rose:dotgraph:asmFileFormatFilter              [0|1]  Disable or enable asmFileFormat filter"<<endl;
+  cout<<"   -rose:dotgraph:asmTypeFilter                    [0|1]  Disable or enable asmType filter"<<endl;
+  cout<<"   -rose:dotgraph:binaryExecutableFormatFilter     [0|1]  Disable or enable binaryExecutableFormat filter"<<endl;
+  cout<<"   -rose:dotgraph:commentAndDirectiveFilter        [0|1]  Disable or enable commentAndDirective filter"<<endl;
+  cout<<"   -rose:dotgraph:ctorInitializerListFilter        [0|1]  Disable or enable ctorInitializerList filter"<<endl;
 
-  cout<<"   -rose:dotgraph:defaultFilter                 [0|1]  Disable or enable default filter"<<endl;
-  cout<<"   -rose:dotgraph:defaultColorFilter            [0|1]  Disable or enable defaultColor filter"<<endl;
-  cout<<"   -rose:dotgraph:edgeFilter                    [0|1]  Disable or enable edge filter"<<endl;
-  cout<<"   -rose:dotgraph:expressionFilter              [0|1]  Disable or enable expression filter"<<endl;
-  cout<<"   -rose:dotgraph:fileInfoFilter                [0|1]  Disable or enable fileInfo filter"<<endl;
+  cout<<"   -rose:dotgraph:defaultFilter                    [0|1]  Disable or enable default filter"<<endl;
+  cout<<"   -rose:dotgraph:defaultColorFilter               [0|1]  Disable or enable defaultColor filter"<<endl;
+  cout<<"   -rose:dotgraph:edgeFilter                       [0|1]  Disable or enable edge filter"<<endl;
+  cout<<"   -rose:dotgraph:expressionFilter                 [0|1]  Disable or enable expression filter"<<endl;
+  cout<<"   -rose:dotgraph:fileInfoFilter                   [0|1]  Disable or enable fileInfo filter"<<endl;
 
-  cout<<"   -rose:dotgraph:frontendCompatibilityFilter   [0|1]  Disable or enable frontendCompatibility filter"<<endl;
-  cout<<"   -rose:dotgraph:symbolFilter                  [0|1]  Disable or enable symbol filter"<<endl;
-  cout<<"   -rose:dotgraph:emptySymbolTableFilter        [0|1]  Disable or enable emptySymbolTable filter"<<endl;
-  cout<<"   -rose:dotgraph:typeFilter                    [0|1]  Disable or enable type filter"<<endl;
-  cout<<"   -rose:dotgraph:variableDeclarationFilter     [0|1]  Disable or enable variableDeclaration filter"<<endl;
+  cout<<"   -rose:dotgraph:frontendCompatibilityFilter      [0|1]  Disable or enable frontendCompatibility filter"<<endl;
+  cout<<"   -rose:dotgraph:symbolFilter                     [0|1]  Disable or enable symbol filter"<<endl;
 
-  cout<<"   -rose:dotgraph:variableDefinitionFilter      [0|1]  Disable or enable variableDefinitionFilter filter"<<endl;
+  cout<<"   -rose:dotgraph:emptySymbolTableFilter           [0|1]  Disable or enable emptySymbolTable filter"<<endl;
+  cout<<"   -rose:dotgraph:emptyFunctionParameterListFilter [0|1]  Disable or enable emptyFunctionParameterList filter"<<endl;
+  cout<<"   -rose:dotgraph:emptyBasicBlockFilter            [0|1]  Disable or enable emptyBasicBlock filter"<<endl;
 
-  cout<<"   -rose:dotgraph:noFilter                      [0|1]  Disable or enable no filtering"<<endl;
+  cout<<"   -rose:dotgraph:typeFilter                       [0|1]  Disable or enable type filter"<<endl;
+  cout<<"   -rose:dotgraph:variableDeclarationFilter        [0|1]  Disable or enable variableDeclaration filter"<<endl;
+
+  cout<<"   -rose:dotgraph:variableDefinitionFilter         [0|1]  Disable or enable variableDefinitionFilter filter"<<endl;
+
+  cout<<"   -rose:dotgraph:noFilter                         [0|1]  Disable or enable no filtering"<<endl;
 }
 
 
@@ -2181,6 +2281,12 @@ SimpleColorMemoryPoolTraversal::visit(SgNode* node)
 #if 1
           if ( filterFlags->m_emptySymbolTable == 1) 
                emptySymbolTableFilter(node);
+
+       // DQ (7/22/2012): Added support to ignore some empty IR nodes.
+          if ( filterFlags->m_emptyBasicBlock == 1) 
+               emptyBasicBlockFilter(node);
+          if ( filterFlags->m_emptyFunctionParameterList == 1) 
+               emptyFunctionParameterListFilter(node);
 #endif
 #if 1
           if ( filterFlags->m_variableDefinition == 1) 

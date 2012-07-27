@@ -555,11 +555,19 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                   {
                  // This used to share an implementation with the case V_SgTemplateDeclaration, but that is 
                  // not appropriate with the newer IR design for template support in the EDG 4.x interface.
-                    printf ("In SageInterface::generateUniqueName(): case V_SgTemplateClassDeclaration: Sorry, not implemented! \n");
-                    ROSE_ASSERT(false);
 
-                 // DQ (3/28/2012): I think that we can assert this here!
-                    ROSE_ASSERT (key.empty() == false);
+                 // DQ (3/28/2012): I think that we can assert this here! No, key.empty() == true at least sometimes.
+                 // ROSE_ASSERT (key.empty() == false);
+
+                 // DQ (7/26/2012): This may require a more sophisticated implementation.
+                    printf ("In SageInterface::generateUniqueName(): case V_SgTemplateClassDeclaration: FIX ME! \n");
+                 // const SgDeclarationStatement* declaration = isSgDeclarationStatement(statement);
+                 // key += declaration->get_mangled_name();
+                    key = "__key__" + StringUtility::numberToString(statement);
+#if 0
+                    printf ("In SageInterface::generateUniqueName(): case V_SgTemplateClassDeclaration: Sorry, not implemented! key = %s \n",key.c_str());
+                    ROSE_ASSERT(false);
+#endif
                     break;
                   }
                 

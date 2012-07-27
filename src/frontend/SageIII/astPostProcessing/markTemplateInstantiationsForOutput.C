@@ -158,9 +158,9 @@ ProcessMemberFunctionTemplateDeclarations ( set<SgDeclarationStatement*> setOfRe
           bool isDefiningDeclaration         = definingDeclaration         == NULL ? false : (*i == definingDeclaration);
           bool isfirstNondefiningDeclaration = firstNondefiningDeclaration == NULL ? false : (*i == firstNondefiningDeclaration);
        // first debug the member functions!
-
+#if 0
           printf ("In ProcessMemberFunctionTemplateDeclarations() set element = %p = %s \n",*i,(*i)->class_name().c_str());
-
+#endif
        // We only have to worry about member functions (since that is what this function is handling).
           SgTemplateInstantiationMemberFunctionDecl* memberFunctionInstantiation = isSgTemplateInstantiationMemberFunctionDecl(*i);
           if (memberFunctionInstantiation != NULL)
@@ -1027,6 +1027,12 @@ MarkTemplateInstantiationsForOutputSupport::evaluateInheritedAttribute (
 #if 0
      printf ("In MarkTemplateInstantiationsForOutputSupport::evaluateInheritedAttribute(): node = %p = %s = %s \n",
           node,node->class_name().c_str(),SageInterface::get_name(node).c_str());
+#endif
+#if 1
+     if (isSgTemplateInstantiationFunctionDecl(node) != NULL)
+        {
+          printf ("SgTemplateInstantiationFunctionDecl IR node = %p name = %s \n",node,isSgTemplateInstantiationFunctionDecl(node)->get_name().str());
+        }
 #endif
 
      Sg_File_Info* fileInfo = node->get_file_info();

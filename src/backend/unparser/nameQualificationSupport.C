@@ -3074,6 +3074,12 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
           if (memberFunctionDeclaration != NULL)
              {
                SgStatement* currentStatement = TransformationSupport::getStatement(memberFunctionRefExp);
+               if (currentStatement == NULL)
+                  {
+                    printf ("Error: Location of where we can't associate the expression to a statement \n");
+                    memberFunctionRefExp->get_file_info()     ->display("Error: currentStatement == NULL: memberFunctionRefExp: debug");
+                    memberFunctionDeclaration->get_file_info()->display("Error: currentStatement == NULL: memberFunctionDeclaration: debug");
+                  }
                ROSE_ASSERT(currentStatement != NULL);
 
                SgScopeStatement* currentScope = currentStatement->get_scope();
