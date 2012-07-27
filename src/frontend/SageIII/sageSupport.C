@@ -134,6 +134,9 @@ SgValueExp::get_constant_folded_value_as_string() const
   // Note that the point is not to call unparse since that would provide the
   // expression tree and we want the constant folded value.
 
+  // DQ (7/24/2012): Added a test.
+     ROSE_ASSERT(this != NULL);
+
      string s;
      const int max_buffer_size = 500;
      char buffer[max_buffer_size];
@@ -2603,7 +2606,13 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
      optionCount = sla(argv, "-rose:dotgraph:", "($)^", "(defaultColorFilter)",&integerOption,1);
      optionCount = sla(argv, "-rose:dotgraph:", "($)^", "(defaultFilter)",&integerOption,1);
      optionCount = sla(argv, "-rose:dotgraph:", "($)^", "(edgeFilter)",&integerOption,1);
+
      optionCount = sla(argv, "-rose:dotgraph:", "($)^", "(emptySymbolTableFilter)",&integerOption,1);
+
+  // DQ (7/22/2012): Added support to igmore some specific empty IR nodes.
+     optionCount = sla(argv, "-rose:dotgraph:", "($)^", "(emptyBasicBlockFilter)",&integerOption,1);
+     optionCount = sla(argv, "-rose:dotgraph:", "($)^", "(emptyFunctionParameterListFilter)",&integerOption,1);
+
      optionCount = sla(argv, "-rose:dotgraph:", "($)^", "(expressionFilter)",&integerOption,1);
      optionCount = sla(argv, "-rose:dotgraph:", "($)^", "(fileInfoFilter)",&integerOption,1);
      optionCount = sla(argv, "-rose:dotgraph:", "($)^", "(frontendCompatibilityFilter)",&integerOption,1);
@@ -5234,6 +5243,11 @@ CommandlineProcessing::isOptionTakingSecondParameter( string argument )
           argument == "-rose:dotgraph:defaultFilter" ||
           argument == "-rose:dotgraph:edgeFilter" ||
           argument == "-rose:dotgraph:emptySymbolTableFilter" ||
+
+       // DQ (7/22/2012): Added support to ignore some specific empty IR nodes.
+          argument == "-rose:dotgraph:emptyBasicBlockFilter" ||
+          argument == "-rose:dotgraph:emptyFunctionParameterListFilter" ||
+
           argument == "-rose:dotgraph:expressionFilter" ||
           argument == "-rose:dotgraph:fileInfoFilter" ||
           argument == "-rose:dotgraph:frontendCompatibilityFilter" ||

@@ -1759,6 +1759,10 @@ TestAstForProperlyMangledNames::visit ( SgNode* node )
   // DQ (4/3/2011): This is used to compute the file if isValidMangledName() fails.
      SgFile* file = NULL;
 
+#if 0
+     printf ("In TestAstForProperlyMangledNames::visit(SgNode* node = %p = %s) \n",node,node->class_name().c_str());
+#endif
+
   // DQ (4/28/2005): Check out the mangled name for classes
      SgClassDeclaration* classDeclaration = isSgClassDeclaration(node);
      if (classDeclaration != NULL)
@@ -1768,7 +1772,7 @@ TestAstForProperlyMangledNames::visit ( SgNode* node )
           int counter = 0; // counts the numbre of scopes back to global scope (not critical, but useful for debugging)
           mangledName = classDeclaration->get_mangled_qualified_name(counter).str();
 #else
-          mangledName = classDeclaration->get_mangled_name().getString ();
+          mangledName = classDeclaration->get_mangled_name().getString();
 #endif
 
        // DQ (8/28/2006): Added tests for the length of the mangled names
@@ -1786,8 +1790,7 @@ TestAstForProperlyMangledNames::visit ( SgNode* node )
 
 #if 0
           string name = classDeclaration->get_name().str();
-          printf ("In TestAstForProperlyMangledNames::visit(SgNode*): \n           unmangled name = %s \n check mangled class name = %s \n",
-               name.c_str(),mangledName.c_str());
+          printf ("In TestAstForProperlyMangledNames::visit(SgNode*): \n           unmangled name = %s \n check mangled class name = %s \n",name.c_str(),mangledName.c_str());
 #endif
 
        // Make sure that there is no template specific syntax included in the mangled name
@@ -1845,8 +1848,7 @@ TestAstForProperlyMangledNames::visit ( SgNode* node )
           mangledName = functionDeclaration->get_mangled_name().str();
 #if 0
           string name = functionDeclaration->get_name().str();
-          printf ("In TestAstForProperlyMangledNames::visit(SgNode*): name = %s check mangled function name = %s \n",
-               name.c_str(),mangledName.c_str());
+          printf ("In TestAstForProperlyMangledNames::visit(SgNode*): name = %s check mangled function name = %s \n",name.c_str(),mangledName.c_str());
 #endif
        // Make sure that there is no template specific syntax included in the mangled name
           ROSE_ASSERT(mangledName.find('<') == string::npos);
@@ -1860,8 +1862,7 @@ TestAstForProperlyMangledNames::visit ( SgNode* node )
   // ROSE_ASSERT(mangledName.find('@') == string::npos);
      if (mangledName.find('@') != string::npos)
         {
-          printf ("Error: failed isValidMangledName() test node = %p = %s --- mangledName = %s \n",
-                  node,node->class_name().c_str(),mangledName.c_str());
+          printf ("Error: failed isValidMangledName() test node = %p = %s --- mangledName = %s \n",node,node->class_name().c_str(),mangledName.c_str());
         }
      ROSE_ASSERT(mangledName.find('@') == string::npos);
 

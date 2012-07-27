@@ -6364,7 +6364,7 @@ SgSymbolTable::insert ( const SgName & nm , SgSymbol *sp )
   // DQ (2/14/2007): Added assertion!
      assert (sp != NULL);
 
-#if 0
+#if 1
   // This outputs a message for every use of the insert function (for non function type symbols) useful for tracing through bugs
      SgNode* symbolBasis = sp->get_symbol_basis();
 #if 0
@@ -6379,7 +6379,9 @@ SgSymbolTable::insert ( const SgName & nm , SgSymbol *sp )
              sp,sp->class_name().c_str(),symbolBasis,symbolBasis != NULL ? symbolBasis->class_name().c_str() : "NULL");
 #endif
 
-  // DQ (12/3/3011): If this is a symbol for a member function declaration, then it should be a SgMemberFunctionSymbol, and not a SgFunctionSymbol.
+#if 0
+  // DQ (7/24/2012): Note that this can fail (e.g. test2004_77.C) since SgAliassymbols are not considered in this test, I think.
+  // DQ (12/3/2011): If this is a symbol for a member function declaration, then it should be a SgMemberFunctionSymbol, and not a SgFunctionSymbol.
      if (symbolBasis != NULL && isSgMemberFunctionDeclaration(symbolBasis) != NULL)
         {
           if (isSgMemberFunctionSymbol(sp) == NULL)
@@ -6388,6 +6390,7 @@ SgSymbolTable::insert ( const SgName & nm , SgSymbol *sp )
              }
           ROSE_ASSERT(isSgMemberFunctionSymbol(sp) != NULL);
         }
+#endif
 #endif
 
   // DQ (12/3/2011): Disable symbols with the same name (temporary testing/debugging).
@@ -15404,7 +15407,7 @@ SgTemplateArgument::get_scope () const
           dynamic_cast<const SgType*>(parentNode) == NULL &&
           dynamic_cast<const SgSymbol*>(parentNode) == NULL )
         {
-          printf ("Error in SgTemplateArgument::get_scope(): could not trace back to SgScopeStatement node this = %s parentNode = %s \n",class_name().c_str(),parentNode->class_name().c_str());
+          printf ("Error in SgTemplateArgument::get_scope(): could not trace back to SgScopeStatement node this = %p = %s parentNode = %p = %s \n",this,this->class_name().c_str(),parentNode,parentNode->class_name().c_str());
           const SgTemplateInstantiationDecl* templateInstantiation = isSgTemplateInstantiationDecl(parentNode);
           if (templateInstantiation != NULL)
              {

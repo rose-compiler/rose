@@ -1652,12 +1652,26 @@ SageInterface::get_name ( const SgExpression* expr )
                break;
              }
 
+       // DQ (7/25/2012): Added support for new template IR nodes.
+          case V_SgTemplateParameterVal:
+             {
+               const SgTemplateParameterVal* valueExp = isSgTemplateParameterVal(expr);
+               name = "template_parameter_value_expression_number_";
+            // name += valueExp->get_value();
+            // name += get_name(valueExp);
+               name += StringUtility::numberToString(valueExp->get_template_parameter_position());
+               break;
+             }
+
           default:
              {
             // Nothing to do for other IR nodes
-
+#if 0
+            // DQ (7/25/2012): Make this an error.
+               printf ("Note: default reached in get_name() expr = %p = %s \n",expr,expr->class_name().c_str());
+               ROSE_ASSERT(false);
+#endif
             // DQ (4/8/2010): define something specific to this function to make debugging more clear.
-            // printf ("Note: default reached in get_name() expr = %p = %s \n",expr,expr->class_name().c_str());
                name = "undefined_expression_name";
                break;
              }
@@ -3932,9 +3946,6 @@ SageInterface::getMangledNameFromCache( SgNode* astNode )
 std::string
 SageInterface::addMangledNameToCache( SgNode* astNode, const std::string & oldMangledName)
    {
-  // DQ (3/27/2012): Use this as a mechanism to limit the I/O but still output a warning infrequently.
-     static unsigned long counter = 0;
-
 #if 0
      SgGlobal* globalScope = isSgGlobal(astNode);
 
@@ -3967,7 +3978,7 @@ SageInterface::addMangledNameToCache( SgNode* astNode, const std::string & oldMa
 
      std::string mangledName;
 
-#define USE_SHORT_MANGLED_NAMES 0
+#define USE_SHORT_MANGLED_NAMES 1
 #if USE_SHORT_MANGLED_NAMES
      std::map<std::string, int> & shortMangledNameCache = SgNode::get_shortMangledNameCache();
 
@@ -3991,11 +4002,20 @@ SageInterface::addMangledNameToCache( SgNode* astNode, const std::string & oldMa
        mangledName = oldMangledName;
      }
 #else
+  // DQ (7/24/2012): Note that using this option can cause some test codes using operators that have
+  // difficult names (conversion operators to user-defined types) to fail.  See test2004_141.C for example.
+  // The conversion operator "operator T&() const;" will fail because the character "&" will remain in
+  // mangled name.  The substring coding changes the strings for the mangled names and this effectively
+  // removes the special characters, but there could be cases where they might remain.
+
+  // DQ (3/27/2012): Use this as a mechanism to limit the I/O but still output a warning infrequently.
+     static unsigned long counter = 0;
+
   // DQ (3/27/2012): Use this as a mechanism to limit the I/O but still output a warning infrequently.
   // This supports debugging the new EDG 4.x interface...
      if (counter++ % 500 == 0)
         {
-          printf ("WARNING: In SageInterface::addMangledNameToCache(): Using longer forms of mangled names \n");
+          printf ("WARNING: In SageInterface::addMangledNameToCache(): Using longer forms of mangled names (can cause some function names with embedded special characters to fail; test2004_141.C) \n");
         }
      mangledName = oldMangledName;
 #endif

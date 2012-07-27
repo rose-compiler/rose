@@ -490,18 +490,18 @@ ResetParentPointers::resetParentPointersInTemplateArgumentList ( const SgTemplat
                  // printf ("### In resetParentPointersInTemplateArgumentList(): namedType = %p \n",namedType);
                     if (namedType != NULL)
                        {
-#if 1
-                         printf ("### namedType = %p = %s name = %s \n",namedType,namedType->sage_class_name(),namedType->get_name().str());
+#if 0
+                         printf ("In resetParentPointersInTemplateArgumentList(): ### namedType = %p = %s name = %s \n",namedType,namedType->sage_class_name(),namedType->get_name().str());
 #endif
                          SgDeclarationStatement* declaration = namedType->get_declaration();
                          ROSE_ASSERT(declaration != NULL);
-#if 1
-                         printf ("declaration = %p = %s parent = %p = %s \n",
+#if 0
+                         printf ("In resetParentPointersInTemplateArgumentList(): declaration = %p = %s parent = %p = %s \n",
                                  declaration,declaration->class_name().c_str(),declaration->get_parent(),
                                  (declaration->get_parent() != NULL) ? declaration->get_parent()->class_name().c_str() : "NULL_PARENT");
 #endif
-#if 1
-                         printf ("### namedType = %p = %s name = %s declaration = %p = %s parent = %p = %s \n",
+#if 0
+                         printf ("In resetParentPointersInTemplateArgumentList(): ### namedType = %p = %s name = %s declaration = %p = %s parent = %p = %s \n",
                                  namedType,namedType->class_name().c_str(),namedType->get_name().str(),
                                  declaration,declaration->class_name().c_str(),declaration->get_parent(),
                                  (declaration->get_parent() != NULL) ? declaration->get_parent()->class_name().c_str() : "NULL_PARENT");

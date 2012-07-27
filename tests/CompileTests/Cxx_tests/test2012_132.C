@@ -4,29 +4,30 @@
 class A
    {
      public:
-         int increment();
+//       int increment();
    };
 
 // Template function
 template <typename T>
-int foo()
+void foo()
    {
   // This would be an error if T was a primative type
-     T t;
-     return t.increment();
+//   T t;
+//   return t.increment();
    }
 
 // specialization for when "int" is used
 template <>
-int foo<int>()
+void foo<int>()
    {
-     return 0;
+//   return 0;
    }
 
 int main()
    {
      foo<int>();
      foo<A>();
+     foo<A*>();
    }
 
 

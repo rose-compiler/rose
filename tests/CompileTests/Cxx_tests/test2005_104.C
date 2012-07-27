@@ -97,6 +97,7 @@ int main()
      pair<X,Y> x1;
      pair<X,Y> x2;
      
+  // This should unparse as: "bool result = (x1 == x2);"
      bool result = (x1 == x2);
 
      return 0;

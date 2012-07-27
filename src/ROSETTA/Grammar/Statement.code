@@ -6569,10 +6569,19 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
   // seem to just set this in the EDG interface since not all the pieces are in place as SAGE III
   // IR nodes. It resets the mangled name in p_name to the full template name.
 
+  // DQ (7/23/2012): This is one of three locations where the template arguments are assembled and where 
+  // the name generated idically (in each case) is critical.  Not clear how to best refactor this code.
+  // The other two are in edgRose.C in function: appendTemplateArgumentsToName()
+  // and in Statement.code: SgDeclarationStatement::resetTemplateNameSupport().
+
   // DQ (9/27/2004) Note: This is the only place within the construction of the Sage III AST (from EDG)
   // where the unparser is called.  It is in general unsafe to do this and it may be that this should 
   // be reserved for after the Sage III AST is fully constructed and all post processing fixup 
   // (currently limited to setting all parent pointers) is complete.
+
+#if 1
+     printf ("In SgDeclarationStatement::resetTemplateNameSupport(): CRITICAL FUNCTION TO BE REFACTORED \n");
+#endif
 
      ROSE_ASSERT (this != NULL);
      string returnName;
@@ -6599,7 +6608,7 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
 #endif
 
      SgScopeStatement* parentScope = get_scope();
-#if 0
+#if 1
      printf ("In resetTemplateNameSupport(): At %s parentScope = %s \n",sage_class_name(),parentScope->sage_class_name());
 #endif
 
@@ -6674,9 +6683,9 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
                   {
                     SgTemplateInstantiationMemberFunctionDecl* node = isSgTemplateInstantiationMemberFunctionDecl(this);
                     ROSE_ASSERT(node != NULL);
-
+#if 1
                     printf ("node = %p = (templateName) %s = (name) %s \n",node,node->get_templateName().str(),node->get_name().str());
-
+#endif
                     returnName         = node->get_templateName().str();
                     templateArgListPtr = &node->get_templateArguments();
 
@@ -6786,6 +6795,7 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
                                                 }
                                              break;
                                            }
+
                                         case V_SgTypedefType:
                                            {
                                              SgTypedefType* typedefType = isSgTypedefType(argumentType);
@@ -6943,6 +6953,38 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
                                              break;
                                            }
 
+
+                                     // DQ (7/23/2012): This appears to be a mising case.
+                                        case V_SgTemplateType:
+                                           {
+                                          // DQ (10/13/2004): If this is a template declaration then we might have to reset its name
+                                          // SgTemplateType* templateType = isSgTemplateType(argumentType);
+                                             printf ("In SgDeclarationStatement::resetTemplateNameSupport(): case SgTemplateArgument::type_argument: Found a SgTemplateType ... (nothing done in this case) \n");
+                                          // SgDeclarationStatement* declaration = templateType->get_declaration();
+                                          // ROSE_ASSERT(declaration != NULL);
+                                          // printf ("In SgDeclarationStatement::resetTemplateNameSupport(): case SgTemplateArgument::type_argument: declaration = %p = %s \n",declaration,declaration->class_name().c_str());
+#if 1
+                                          // Not clear if we have to reset the name of a template (unles it uses partial specialization, 
+                                          // but then it would be a partial template instantiation, I think.  We might also have to explicitly
+                                          // handle each of the different types of template declarations directly (if resetTemplateName() 
+                                          // is not a virtual function).
+                                          // printf ("In SgDeclarationStatement::resetTemplateNameSupport(): case SgTemplateArgument::type_argument: Found a template instantiation declaration  (SKIP calling resetTemplateName) ... (do we need this?) \n");
+                                          // declaration->resetTemplateName();
+#else
+                                          // OLD CODE...
+                                             SgClassDeclaration* classDeclaration = isSgClassDeclaration(declaration);
+                                             ROSE_ASSERT(classDeclaration != NULL);
+                                             SgTemplateInstantiationDecl* templateClassDeclaration = isSgTemplateInstantiationDecl(classDeclaration);
+                                             if (templateClassDeclaration != NULL)
+                                                {
+                                               // printf ("Found a template instantiation declaration  (call resetTemplateName) ... \n");
+                                                  templateClassDeclaration->resetTemplateName();
+                                                }
+#endif
+                                             break;
+                                           }
+
+
                                      // DQ (8/29/2009): Added SgArrayType to eliminate error message about 
                                      // default being reached (missed including this type previously).
                                         case V_SgArrayType:
@@ -7098,7 +7140,8 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
 
        // printf ("In SgDeclarationStatement::resetTemplateNameSupport(): Output the symbol table for scope = %p = %s: \n",parentScope,parentScope->class_name().c_str());
        // SageInterface::outputLocalSymbolTables(parentScope);
-#if 0
+
+#if 1
        // DQ (2/10/2007): Unload the associated symbol using the old name and reload it into the symbol table using the new name!
           printf ("\n\nCalling this->get_symbol_from_symbol_table() on %s parentScope = %p = %s name = %s count = %ld \n",
                this->class_name().c_str(),parentScope,parentScope->class_name().c_str(),name.str(),parentScope->count_symbol(name));
@@ -7123,12 +7166,13 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
                printf ("templateInstantiationMemberFunction->get_scope() = %p = %s \n",templateInstantiationMemberFunction->get_scope(),templateInstantiationMemberFunction->get_scope()->class_name().c_str());
              }
 #endif
+
           SgSymbol* symbol = this->get_symbol_from_symbol_table();
           if (symbol == NULL)
              {
             // If searching for the old name returned a null symbol pointer then make sure that there is an entry for the new name
             // printf ("Searching for returnName = %s \n",returnName.c_str());
-#if 0
+#if 1
                if (parentScope->count_symbol(returnName) >= 1)
                   {
                     printf ("Warning: symbol for returnName = %s is already in the symbol table but not associated with this = %p = %s count = %ld \n",
@@ -7138,7 +7182,7 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
                   }
 #endif
             // ROSE_ASSERT(parentScope->count_symbol(returnName) >= 1);
-#if 0
+#if 1
                printf ("There are a number of reasons why we could not have a valid symbol at this point: (parentScope = %p = %s = %s) \n",
                     parentScope,parentScope->class_name().c_str(),SageInterface::get_name(parentScope).c_str());
                printf ("   1) template used as base class in SgCtorInitializerList \n");
@@ -7154,7 +7198,7 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
              {
             // Remove the symbol (previously inserted under the old name and hashed accordingly) 
             // so that we can reinsert it into the symbol table after we change the name.
-#if 0
+#if 1
                printf ("Removing the symbol = %p = %s name = %s from scope %p = %s \n",symbol,symbol->class_name().c_str(),name.str(),parentScope,parentScope->class_name().c_str());
                SgClassSymbol* classSymbol = isSgClassSymbol(symbol);
                if (classSymbol != NULL)
@@ -7194,6 +7238,7 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
                SageInterface::outputLocalSymbolTables(parentScope);
 #endif
              }
+
        // DQ (2/15/2005): Modified to reference input parameters
        // DQ (10/11/2004): Removed call to unparser since it often requires that the parents
        // be set.  Now we have to mark this template as no longer containing a mangled name
@@ -7205,6 +7250,7 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
           testForBadGenerateTemplateName(returnName);
         }
    }
+
 
 // This is a local file scope (support) function
 static void
@@ -7218,7 +7264,7 @@ stringSupport ( string & sourceString, const string & targetString, const string
 
 // SgName $CLASSNAME::fixupTemplateNameForMangledNameSupport( const SgName & name) const
 // static SgName fixupTemplateNameForMangledNameSupport( const SgName & name)
-SgName $CLASSNAME::fixupTemplateNameForMangledNameSupport( const SgName & name) const
+SgName SgDeclarationStatement::fixupTemplateNameForMangledNameSupport( const SgName & name) const
    {
   // Where template names are reset to the form "foo < int >" we can look for just
   // the " < " and " > " substrings which are guaranteed to exist by construction!
@@ -8873,7 +8919,9 @@ SgFunctionDeclaration::get_mangled_name() const
 
      ROSE_ASSERT(this != NULL);
 
-  // printf ("In SgFunctionDeclaration::get_mangled_name() for this = %p \n",this);
+#if 0
+     printf ("In SgFunctionDeclaration::get_mangled_name() for this = %p = %s \n",this,this->class_name().c_str());
+#endif
 
 #if 0
 #if SKIP_MANGLED_NAME_CACHING
@@ -9032,6 +9080,20 @@ SgFunctionDeclaration::get_mangled_name() const
        // Reset the mangled name in the map.
        // p_globalMangledNameMap[function] = mangledName;
           SgNode::get_globalMangledNameMap()[const_cast<SgFunctionDeclaration*>(this)] = mangledName;
+
+       // DQ (7/24/2012): Added test for template brackets that are caught later in AstConsistencyTests.
+       // Make sure that there is no template specific syntax included in the mangled name
+          string mangled_name = mangledName;
+          if ( mangled_name.find('<') != string::npos )
+             {
+               printf ("In get_mangled_name(): this = %p = %s check mangled class name = %s \n",this,this->class_name().c_str(),mangled_name.c_str());
+             }
+          ROSE_ASSERT(mangled_name.find('<') == string::npos);
+
+#if 1
+       // DQ (7/24/2012): Output the mangled name being generated for debugging.
+          printf (">>>>>>>>>> SgFunctionDeclaration::get_mangled_name(): returning mangledName = %s \n",mangledName.str());
+#endif
 
           return mangledName;
         }
@@ -11245,6 +11307,11 @@ SgClassDeclaration::get_mangled_name(void) const
              }
           ROSE_ASSERT(mangled_name.find('<') == string::npos);
 
+#if 1
+       // DQ (7/24/2012): Output the mangled name being generated for debugging.
+          printf (">>>>>>>>>> SgClassDeclaration::get_mangled_name(): returning mangledName = %s \n",mangledName.str());
+#endif
+
           return mangledName;
         }
 #endif
@@ -11448,6 +11515,7 @@ SgTemplateInstantiationDecl::get_qualified_name() const
 #endif
    }
 
+
 // RV (2/1/2006): Added mangler for template instantiations.
 SgName
 SgTemplateInstantiationDecl::get_mangled_name (void) const
@@ -11470,7 +11538,7 @@ SgTemplateInstantiationDecl::get_mangled_name (void) const
      if (mangledNameString.empty() == false)
         {
        // return i->second.c_str();
-#if 1
+#if 0
           printf ("In SgTemplateInstantiationDecl::get_mangled_name(): (FOUND in cache) mangledNameString = %s get_name() = %s \n",mangledNameString.c_str(),get_name().str());
 #endif
           return mangledNameString;
@@ -11492,7 +11560,7 @@ SgTemplateInstantiationDecl::get_mangled_name (void) const
              }
           ROSE_ASSERT(template_name.is_null() == false);
 
-#if 1
+#if 0
           printf ("In SgTemplateInstantiationDecl::get_mangled_name(): template_name = %s get_templateArguments().size() = %zu get_scope() = %p \n",template_name.str(),get_templateArguments().size(),get_scope());
 #endif
 
@@ -11507,9 +11575,9 @@ SgTemplateInstantiationDecl::get_mangled_name (void) const
 
        // DQ (3/22/2012): Added assertion to detect bad (default) names being used.
           ROSE_ASSERT(template_name != "SETME_NONDEFINING_DECL<>");
-
+#if 0
           printf ("Before mangleTemplate(): template_name = %s \n",template_name.str());
-
+#endif
 #if 0
        // DQ (6/1/2012): Turn this test on!
           if (get_templateArguments().size() == 0)
@@ -11536,12 +11604,16 @@ SgTemplateInstantiationDecl::get_mangled_name (void) const
 
        // SgName mangledName = mangleTemplate (get_templateName(),get_templateArguments(),get_scope());
           SgName mangledName = mangleTemplate(template_name,get_templateArguments(),get_scope());
+#if 0
           printf ("After mangleTemplate(): get_templateArguments().size() = %zu mangledName = %s \n",get_templateArguments().size(),mangledName.str());
+#endif
           ROSE_ASSERT(get_firstNondefiningDeclaration() != NULL);
+#if 0
           printf ("After mangleTemplate(): get_firstNondefiningDeclaration()->get_templateArguments().size() = %zu \n",isSgTemplateInstantiationDecl(get_firstNondefiningDeclaration())->get_templateArguments().size());
           if (get_definingDeclaration() != NULL)
                printf ("After mangleTemplate(): get_definingDeclaration()->get_templateArguments().size() = %zu \n",isSgTemplateInstantiationDecl(get_definingDeclaration())->get_templateArguments().size());
-#if 1
+#endif
+#if 0
           printf ("In SgTemplateInstantiationDecl::get_mangled_name(): (NOT found in cache) mangledNameString = %s get_name() = %s get_templateName() = %s \n",mangledNameString.c_str(),get_name().str(),get_templateName().str());
 #endif
        // DQ (7/24/2010): Added to support type tables.
@@ -11549,7 +11621,7 @@ SgTemplateInstantiationDecl::get_mangled_name (void) const
 
        // p_globalMangledNameMap[declaration] = mangledName;
           mangledName = SageInterface::addMangledNameToCache(const_cast<SgTemplateInstantiationDecl*>(this),mangledName);
-#if 1
+#if 0
           printf ("After SageInterface::addMangledNameToCache(): mangledName = %s \n",mangledName.str());
 #endif
        // DQ (5/31/2012): Added test for template brackets that are caught later in AstConsistencyTests.
@@ -11560,6 +11632,11 @@ SgTemplateInstantiationDecl::get_mangled_name (void) const
                printf ("In SgTemplateInstantiationDecl::get_mangled_name(): this = %p = %s check mangled class name = %s \n",this,this->class_name().c_str(),mangled_name.c_str());
              }
           ROSE_ASSERT(mangled_name.find('<') == string::npos);
+
+#if 1
+       // DQ (7/24/2012): Output the mangled name being generated for debugging.
+          printf (">>>>>>>>>> SgTemplateInstantiationDecl::get_mangled_name(): returning mangledName = %s \n",mangledName.str());
+#endif
 
           return mangledName;
         }
@@ -11659,6 +11736,21 @@ SgTemplateInstantiationFunctionDecl::get_mangled_name (void) const
 
        // p_globalMangledNameMap[declaration] = mangledName;
           mangledName = SageInterface::addMangledNameToCache(const_cast<SgTemplateInstantiationFunctionDecl*>(this),mangledName);
+
+       // DQ (7/24/2012): Added test for template brackets that are caught later in AstConsistencyTests.
+       // Make sure that there is no template specific syntax included in the mangled name
+          string mangled_name = mangledName;
+          if ( mangled_name.find('<') != string::npos )
+             {
+               printf ("In get_mangled_name(): this = %p = %s check mangled class name = %s \n",this,this->class_name().c_str(),mangled_name.c_str());
+             }
+          ROSE_ASSERT(mangled_name.find('<') == string::npos);
+
+#if 1
+       // DQ (7/24/2012): Output the mangled name being generated for debugging.
+          printf (">>>>>>>>>> SgTemplateInstantiationFunctionDecl::get_mangled_name(): returning mangledName = %s \n",mangledName.str());
+#endif
+
           return mangledName;
         }
 #endif
@@ -11767,6 +11859,21 @@ SgTemplateInstantiationMemberFunctionDecl::get_mangled_name (void) const
 
        // p_globalMangledNameMap[declaration] = mangledName;
           mangledName = SageInterface::addMangledNameToCache(const_cast<SgTemplateInstantiationMemberFunctionDecl*>(this),mangledName);
+
+       // DQ (7/24/2012): Added test for template brackets that are caught later in AstConsistencyTests.
+       // Make sure that there is no template specific syntax included in the mangled name
+          string mangled_name = mangledName;
+          if ( mangled_name.find('<') != string::npos )
+             {
+               printf ("In get_mangled_name(): this = %p = %s check mangled class name = %s \n",this,this->class_name().c_str(),mangled_name.c_str());
+             }
+          ROSE_ASSERT(mangled_name.find('<') == string::npos);
+
+#if 1
+       // DQ (7/24/2012): Output the mangled name being generated for debugging.
+          printf (">>>>>>>>>> SgTemplateInstantiationMemberFunctionDecl::get_mangled_name(): returning mangledName = %s \n",mangledName.str());
+#endif
+
           return mangledName;
         }
 #endif
@@ -11866,7 +11973,9 @@ SgTemplateInstantiationDefn::get_mangled_name(void) const
    {
      SgName mangledName = get_declaration()->get_mangled_name(); 
 
+#if 0
      printf ("In SgTemplateInstantiationDefn::get_mangled_name(): mangleName = %s \n",mangledName.str());
+#endif
 
   // DQ (5/31/2012): Added test for template brackets that are caught later in AstConsistencyTests.
   // Make sure that there is no template specific syntax included in the mangled name

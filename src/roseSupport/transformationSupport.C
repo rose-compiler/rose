@@ -2573,27 +2573,41 @@ TransformationSupport::getModuleStatement( const SgNode* astNode)
    }
 
 
-SgTemplateDeclaration*
+// SgTemplateDeclaration*
+SgDeclarationStatement*
 TransformationSupport::getTemplateDeclaration( const SgNode* astNode)
    {
      const SgNode* parentNode = astNode;
-     while ( (isSgTemplateDeclaration(parentNode) == NULL) && (parentNode->get_parent() != NULL) )
+
+     printf ("In TransformationSupport::getTemplateDeclaration(): astNode = %p = %s \n",astNode,astNode != NULL ? astNode->class_name().c_str() : "NULL");
+
+  // DQ (7/25/2012): Updated to reflect new template design using different types or template IR nodes.
+  // while ( (isSgTemplateDeclaration(parentNode) == NULL) && (parentNode->get_parent() != NULL) )
+     while ( (isSgTemplateDeclaration(parentNode) == NULL) && (isSgTemplateClassDeclaration(parentNode) == NULL) && 
+             (isSgTemplateFunctionDeclaration(parentNode) == NULL) && (isSgTemplateMemberFunctionDeclaration(parentNode) == NULL) && 
+             (isSgTemplateVariableDeclaration(parentNode) == NULL) &&(parentNode->get_parent() != NULL) )
         {
           parentNode = parentNode->get_parent();
+          printf ("parentNode = %p = %s \n",parentNode,parentNode != NULL ? parentNode->class_name().c_str() : "NULL");
         }
 
+  // DQ (7/25/2012): Updated to reflect new template design using different types or template IR nodes.
   // Check to see if we made it back to the root (current root is SgProject).
   // It is also OK to stop at a node for which get_parent() returns NULL (SgType and SgSymbol nodes).
      if ( isSgTemplateDeclaration(parentNode) == NULL &&
+          isSgTemplateClassDeclaration(parentNode) == NULL &&
+          isSgTemplateFunctionDeclaration(parentNode) == NULL &&
+          isSgTemplateMemberFunctionDeclaration(parentNode) == NULL &&
+          isSgTemplateVariableDeclaration(parentNode) == NULL &&
           dynamic_cast<const SgType*>(parentNode) == NULL &&
           dynamic_cast<const SgSymbol*>(parentNode) == NULL )
         {
-#if 0
+#if 1
           if (astNode == NULL)
                printf ("Error: could not trace back to SgTemplateDeclaration node \n");
             else
-               printf ("Warning: could not trace back to SgTemplateDeclaration node from %s \n",astNode->class_name().c_str());
-          ROSE_ABORT();
+               printf ("Warning: could not trace back to template declaration node from %s \n",astNode->class_name().c_str());
+          ROSE_ASSERT(false);
 #endif
 
        // DQ (12/27/2010): This should not be an error (OK to return NULL).
@@ -2609,10 +2623,12 @@ TransformationSupport::getTemplateDeclaration( const SgNode* astNode)
         }
 
   // Make sure we have a SgFunctionDeclaration node
-     const SgTemplateDeclaration* templateDeclaration = isSgTemplateDeclaration(parentNode);
+  // const SgTemplateDeclaration* templateDeclaration = isSgTemplateDeclaration(parentNode);
+     const SgDeclarationStatement* templateDeclaration = isSgDeclarationStatement(parentNode);
      ROSE_ASSERT (templateDeclaration != NULL);
 
-     return const_cast<SgTemplateDeclaration*>(templateDeclaration);
+  // return const_cast<SgTemplateDeclaration*>(templateDeclaration);
+     return const_cast<SgDeclarationStatement*>(templateDeclaration);
    }
 
 

@@ -1436,7 +1436,9 @@ SgExpression::get_qualified_name_prefix() const
   //    SgFunctionRefExp
   //    SgMemberFunctionRefExp
 
+#if 0
      printf ("In get_qualified_name_prefix(): this = %p = %s \n",this,this->class_name().c_str());
+#endif
 
   // DQ (5/28/2011): We have to handle the name qualification directly since types can be qualified 
   // different and so it depends upon where the type is referenced.  Thus the qualified name is 
@@ -1448,15 +1450,20 @@ SgExpression::get_qualified_name_prefix() const
      if (i != SgNode::get_globalQualifiedNameMapForNames().end())
         {
           nameQualifier = i->second;
-
+#if 0
           printf ("Found a valid name qualification: nameQualifier %s \n",nameQualifier.str());
+#endif
         }
        else
         {
+#if 0
           printf ("Could NOT find a valid name qualification: nameQualifier %s \n",nameQualifier.str());
+#endif
         }
 
+#if 0
      printf ("nameQualifier for SgExpression = %p = %p = %s = %s \n",this,const_cast<SgExpression*>(this),class_name().c_str(),nameQualifier.str());
+#endif
 
      return nameQualifier;
    }
@@ -2965,17 +2972,60 @@ SgTemplateParameterVal::get_template_parameter_name() const
   // declaration and use the index position into its template parameter list (which 
   // can of course use different names).
 
+  // DQ (7/24/2012): Added test.
+     ROSE_ASSERT(this != NULL);
+
      ROSE_ASSERT(get_parent() != NULL);
-     SgTemplateDeclaration* templateDeclaration = TransformationSupport::getTemplateDeclaration(this);
-     ROSE_ASSERT(templateDeclaration != NULL);
+
+  // DQ (7/24/2012): For the new EDG support (4.x) and new template handling, we don't use
+  // a generic SgTemplateDeclaration; instead we have specific kinds of template declarations.
+  // So templateDeclaration will always be NULL now.
 
      int template_parameter_position = get_template_parameter_position();
 
+#if 0
+     SgTemplateDeclaration* templateDeclaration = TransformationSupport::getTemplateDeclaration(this);
+     if (templateDeclaration == NULL)
+        {
+          printf ("Error: In SgTemplateParameterVal::get_template_parameter_name(): templateDeclaration == NULL: this = %p = %s \n",this,this->class_name().c_str());
+        }
+     ROSE_ASSERT(templateDeclaration != NULL);
+
      SgTemplateParameterPtrList & templateParameters = templateDeclaration->get_templateParameters();
+#else
+  // DQ (7/25/2012): This reflects the new design of how templates are supported in ROSE.
+     SgDeclarationStatement* templateDeclaration = TransformationSupport::getTemplateDeclaration(this);
+     if (templateDeclaration == NULL)
+        {
+          printf ("Error: In SgTemplateParameterVal::get_template_parameter_name(): templateDeclaration == NULL: this = %p = %s \n",this,this->class_name().c_str());
+        }
+     ROSE_ASSERT(templateDeclaration != NULL);
+
+     SgTemplateParameterPtrList* templateParameters = NULL;
+     switch(templateDeclaration->variantT())
+        {
+          case V_SgTemplateDeclaration:               templateParameters = &(isSgTemplateDeclaration(templateDeclaration)->get_templateParameters());               break;
+          case V_SgTemplateClassDeclaration:          templateParameters = &(isSgTemplateClassDeclaration(templateDeclaration)->get_templateParameters());          break;
+          case V_SgTemplateFunctionDeclaration:       templateParameters = &(isSgTemplateMemberFunctionDeclaration(templateDeclaration)->get_templateParameters()); break;
+          case V_SgTemplateMemberFunctionDeclaration: templateParameters = &(isSgTemplateMemberFunctionDeclaration(templateDeclaration)->get_templateParameters()); break;
+          case V_SgTemplateVariableDeclaration:       templateParameters = &(isSgTemplateVariableDeclaration(templateDeclaration)->get_templateParameters());       break;
+
+          default:
+             {
+               printf ("Error: default reached in SgTemplateParameterVal::get_template_parameter_name(): templateDeclaration = %p = %s \n",templateDeclaration,templateDeclaration->class_name().c_str());
+               ROSE_ASSERT(false);
+             }
+        }
+
+     ROSE_ASSERT(templateParameters != NULL);
+#endif
+
+     long int numberOfTemplateParameters = (long int) templateParameters->size();
 
   // DQ (12/13/2011): this is a problem demonstrated by test2011_186.C, so we have to disable the template parameter position error checking.
      bool getParameterNameFromTemplateParameterList = true;
-     if (template_parameter_position >= (long int) templateParameters.size())
+  // if (template_parameter_position >= (long int) templateParameters.size())
+     if (template_parameter_position >= numberOfTemplateParameters)
         {
           printf ("This is a reference to a template parameter in an outer scope (e.g. we are a part of a member function with out explicit templates within a templated class declaration) \n");
           getParameterNameFromTemplateParameterList = false;
@@ -2984,17 +3034,20 @@ SgTemplateParameterVal::get_template_parameter_name() const
   // printf ("In SgTemplateParameterVal::get_template_parameter_name(): template_parameter_position = %d \n",template_parameter_position);
   // printf ("In SgTemplateParameterVal::get_template_parameter_name(): templateParameters.size()   = %zu \n",templateParameters.size());
 
-     if (template_parameter_position >= (long int)(templateParameters.size()))
+  // if (template_parameter_position >= (long int)(templateParameters.size()))
+     if (template_parameter_position >= numberOfTemplateParameters)
         {
           printf ("In SgTemplateParameterVal::get_template_parameter_name(): template_parameter_position = %d \n",template_parameter_position);
-          printf ("In SgTemplateParameterVal::get_template_parameter_name(): templateParameters.size()   = %zu \n",templateParameters.size());
+       // printf ("In SgTemplateParameterVal::get_template_parameter_name(): templateParameters.size()   = %zu \n",templateParameters.size());
+          printf ("In SgTemplateParameterVal::get_template_parameter_name(): numberOfTemplateParameters  = %zu \n",numberOfTemplateParameters);
         }
 
      SgName name;
      if (getParameterNameFromTemplateParameterList == true)
         {
           ROSE_ASSERT(template_parameter_position >= 0);
-          ROSE_ASSERT(template_parameter_position < (long int)(templateParameters.size()));
+       // ROSE_ASSERT(template_parameter_position < (long int)(templateParameters.size()));
+          ROSE_ASSERT(template_parameter_position < numberOfTemplateParameters);
 
        // SgTemplateParameter* templateParameter = templateParameters[position];
 
@@ -3003,7 +3056,8 @@ SgTemplateParameterVal::get_template_parameter_name() const
           SgTemplateParameter* templateParameter = NULL;
           if (template_parameter_position >= 0)
              {
-               templateParameter = templateParameters[template_parameter_position];
+            // templateParameter = templateParameters[template_parameter_position];
+               templateParameter = (*templateParameters)[template_parameter_position];
                ROSE_ASSERT(templateParameter != NULL);
 
             // printf ("In SgTemplateParameterVal::get_template_parameter_name(): templateParameter->get_parameterType() = %d \n",templateParameter->get_parameterType());

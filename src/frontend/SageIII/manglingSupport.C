@@ -107,7 +107,7 @@ findRootFunc (const SgScopeStatement* scope)
    {
   // DQ (12/13/2011): This function is being called recursively (infinite recursion) for test2011_187.C (added support for SgTemplateFunctionDefinition).
 
-     printf ("Inside of findRootFunc(scope = %p) \n",scope);
+  // printf ("Inside of findRootFunc(scope = %p) \n",scope);
 
      if (scope != NULL)
         {
@@ -128,8 +128,9 @@ findRootFunc (const SgScopeStatement* scope)
 
                     SgScopeStatement* nextOuterScope = scope->get_scope();
                     ROSE_ASSERT(nextOuterScope != NULL);
-
+#if 0
                     printf ("nextOuterScope = %p = %s \n",nextOuterScope,nextOuterScope->class_name().c_str());
+#endif
                     ROSE_ASSERT(nextOuterScope != scope);
 
                     return findRootFunc(scope->get_scope());
@@ -237,7 +238,7 @@ mangleQualifiersToString (const SgScopeStatement* scope)
 
                     const SgClassDeclaration* classDeclaration = def->get_declaration();
                     string name = classDeclaration->get_name().str();
-#if 1
+#if 0
                     printf ("In manglingSupport.C: mangleQualifiersToString(): mangled name for scope = %p = %s is: %s \n",scope,scope->class_name().c_str(),mangled_name.c_str());
                     printf ("In manglingSupport.C: mangleQualifiersToString(): class declaration = %p = %s class name = %s \n",classDeclaration,classDeclaration->class_name().c_str(),name.c_str());
 #endif
@@ -402,8 +403,14 @@ mangleTypes (const SgTypePtrList::const_iterator b,
 
 string
 mangleFunctionNameToString (const string& s, const string& ret_type_name )
-  {
-    string s_mangled (trimSpaces (s));
+   {
+  // DQ (7/24/2012): This causes a problem for the isspace(s[n_opstr]) test below (likely not the cause of the problem).
+     string s_mangled (trimSpaces (s));
+  // string s_mangled(s);
+
+#if 0
+     printf ("In mangleFunctionNameToString(s = %s ret_type_name = %s) \n",s.c_str(),ret_type_name.c_str());
+#endif
 
     // Special case: destructor names
     if (s[0] == '~')
@@ -422,7 +429,10 @@ mangleFunctionNameToString (const string& s, const string& ret_type_name )
 
     if (s.substr (0, n_opstr) == opstr) // begins with "operator"
       {
-        if (isspace (s[n_opstr]))
+#if 0
+        printf ("In mangleFunctionNameToString(): Found operator syntax isspace(s[n_opstr]) = %s \n",isspace(s[n_opstr]) ? "true" : "false");
+#endif
+        if (isspace(s[n_opstr]))
           {
             if (s.substr (n_opstr+1) == newstr) // is "operator new"
               s_mangled.replace (n_opstr, newstr.size ()+1, "__nw");
@@ -439,7 +449,9 @@ mangleFunctionNameToString (const string& s, const string& ret_type_name )
         else // real operator (suffix after the substring "operator ")
           {
             string s_op = s.substr (n_opstr);
-
+#if 0
+            printf ("In mangleFunctionNameToString(): s_op = %s \n",s_op.c_str());
+#endif
          // DQ (2/7/2006): Bug fix for case of function: operator_takes_lvalue_operand()
          // (this test appears in test2005_198.C).
             string s_op_mangled = s_op;
@@ -488,17 +500,35 @@ mangleFunctionNameToString (const string& s, const string& ret_type_name )
              // the mangle form is just the unmodified function name.
              // rtmp = fname;
               }
-
+#if 0
+            printf ("In mangleFunctionNameToString(): Before s_mangled.replace(): s_mangled = %s \n",s_mangled.c_str());
+#endif
          // DQ (2/7/2006): Bug fix for case of function such as operator_takes_lvalue_operand()
          // In the case of operator_takes_lvalue_operand() this should replace 
          // "_takes_lvalue_operand" with "_takes_lvalue_operand" (trivial case).
             s_mangled.replace (n_opstr, s_op.size (), s_op_mangled);
+#if 0
+            printf ("In mangleFunctionNameToString(): After s_mangled.replace(): s_mangled = %s \n",s_mangled.c_str());
+#endif
           }
       }
     // else, leave name as is.
+     else
+      {
+#if 0
+        printf ("In mangleFunctionNameToString(): No operator syntax found \n");
+#endif
+      }
 
-    return s_mangled;
-  }
+#if 0
+  // DQ (7/24/2012): Added test (failing for test2004_141.C); fails later in AST consistency tests.
+     ROSE_ASSERT(s_mangled.find('&') == string::npos);
+     ROSE_ASSERT(s_mangled.find('*') == string::npos);
+#endif
+
+     return s_mangled;
+   }
+
 
 SgName
 mangleFunctionName (const SgName& n, const SgName& ret_type_name )
@@ -611,12 +641,15 @@ mangleTemplateFunctionToString (const string& templ_name,
   // ROSE_ASSERT(templ_name.find('<') == string::npos);
      ROSE_ASSERT(SageInterface::hasTemplateSyntax(templ_name) == false);
 
-     if (func_type)
+     if (func_type != NULL)
         {
-          type_name = func_type->get_mangled ().getString ();
+          type_name = func_type->get_mangled().getString();
+
           const SgType* ret_type = func_type->get_return_type ();
-          if (ret_type)
+          if (ret_type != NULL)
+             {
                ret_type_name = ret_type->get_mangled ().getString ();
+             }
         }
        else
         {
@@ -624,10 +657,16 @@ mangleTemplateFunctionToString (const string& templ_name,
         }
 
   // This function's name, transformed.
-     string func_name = mangleFunctionNameToString (templ_name,ret_type_name);
+     string func_name = mangleFunctionNameToString(templ_name,ret_type_name);
+
+#if 0
+  // DQ (7/24/2012): Added test (failing for test2004_141.C); fails later in AST consistency tests.
+     ROSE_ASSERT(func_name.find('&') == string::npos);
+     ROSE_ASSERT(func_name.find('*') == string::npos);
+#endif
 
   // Compute the final mangled name.
-     string mangled_name = mangleTemplateToString (func_name, templ_args, scope) + "__" + type_name;
+     string mangled_name = mangleTemplateToString(func_name,templ_args,scope) + "__" + type_name;
 
      return mangled_name;
    }
