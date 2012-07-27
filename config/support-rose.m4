@@ -2280,8 +2280,6 @@ tests/roseTests/utilTests/Makefile
 tests/roseTests/fileLocation_tests/Makefile
 tests/roseTests/graph_tests/Makefile
 tests/roseTests/mergeTraversal_tests/Makefile
-tests/roseTests/cudaTests/Makefile
-tests/roseTests/openclTests/Makefile
 tests/translatorTests/Makefile
 tutorial/Makefile
 tutorial/exampleMakefile
