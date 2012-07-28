@@ -6376,7 +6376,17 @@ SgDeclarationStatement::testForBadGenerateTemplateName( const std::string & name
                printf ("..... name generated in processing a %s IR node \n",sage_class_name());
                printf ("..... generated name = %s \n",name.c_str());
                printf ("\n\n");
-               ROSE_ASSERT (false);
+
+            // DQ (7/27/2012): Modify this to handle a wide range of function names.
+               if (name.find("operator") != string::npos)
+                  {
+                    printf ("This is an operator and so can have names that can violate our test for template names (but still not template arguments; these are rare). \n");
+                  }
+                 else
+                  {
+                    printf ("This is a rule violation and also not an operator, so this is an error in ROSE \n");
+                    ROSE_ASSERT (false);
+                  }
             // ROSE_ASSERT (returnName.find("<<") == string::npos);
             // ROSE_ASSERT (returnName.find(">>") == string::npos);
              }
@@ -7172,7 +7182,7 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
              {
             // If searching for the old name returned a null symbol pointer then make sure that there is an entry for the new name
             // printf ("Searching for returnName = %s \n",returnName.c_str());
-#if 1
+#if 0
                if (parentScope->count_symbol(returnName) >= 1)
                   {
                     printf ("Warning: symbol for returnName = %s is already in the symbol table but not associated with this = %p = %s count = %ld \n",
@@ -7182,7 +7192,7 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
                   }
 #endif
             // ROSE_ASSERT(parentScope->count_symbol(returnName) >= 1);
-#if 1
+#if 0
                printf ("There are a number of reasons why we could not have a valid symbol at this point: (parentScope = %p = %s = %s) \n",
                     parentScope,parentScope->class_name().c_str(),SageInterface::get_name(parentScope).c_str());
                printf ("   1) template used as base class in SgCtorInitializerList \n");
@@ -9090,7 +9100,7 @@ SgFunctionDeclaration::get_mangled_name() const
              }
           ROSE_ASSERT(mangled_name.find('<') == string::npos);
 
-#if 1
+#if 0
        // DQ (7/24/2012): Output the mangled name being generated for debugging.
           printf (">>>>>>>>>> SgFunctionDeclaration::get_mangled_name(): returning mangledName = %s \n",mangledName.str());
 #endif
@@ -11307,7 +11317,7 @@ SgClassDeclaration::get_mangled_name(void) const
              }
           ROSE_ASSERT(mangled_name.find('<') == string::npos);
 
-#if 1
+#if 0
        // DQ (7/24/2012): Output the mangled name being generated for debugging.
           printf (">>>>>>>>>> SgClassDeclaration::get_mangled_name(): returning mangledName = %s \n",mangledName.str());
 #endif
@@ -11571,7 +11581,7 @@ SgTemplateInstantiationDecl::get_mangled_name (void) const
              {
                printf ("In SgTemplateInstantiationDecl::get_mangled_name(): this = %p = %s check mangled class name = %s \n",this,this->class_name().c_str(),mangled_name_1.c_str());
              }
-          ROSE_ASSERT(mangled_name_1.find('<') == string::npos);
+       // ROSE_ASSERT(mangled_name_1.find('<') == string::npos);
 
        // DQ (3/22/2012): Added assertion to detect bad (default) names being used.
           ROSE_ASSERT(template_name != "SETME_NONDEFINING_DECL<>");
@@ -11633,7 +11643,7 @@ SgTemplateInstantiationDecl::get_mangled_name (void) const
              }
           ROSE_ASSERT(mangled_name.find('<') == string::npos);
 
-#if 1
+#if 0
        // DQ (7/24/2012): Output the mangled name being generated for debugging.
           printf (">>>>>>>>>> SgTemplateInstantiationDecl::get_mangled_name(): returning mangledName = %s \n",mangledName.str());
 #endif
@@ -11746,7 +11756,7 @@ SgTemplateInstantiationFunctionDecl::get_mangled_name (void) const
              }
           ROSE_ASSERT(mangled_name.find('<') == string::npos);
 
-#if 1
+#if 0
        // DQ (7/24/2012): Output the mangled name being generated for debugging.
           printf (">>>>>>>>>> SgTemplateInstantiationFunctionDecl::get_mangled_name(): returning mangledName = %s \n",mangledName.str());
 #endif
@@ -11869,7 +11879,7 @@ SgTemplateInstantiationMemberFunctionDecl::get_mangled_name (void) const
              }
           ROSE_ASSERT(mangled_name.find('<') == string::npos);
 
-#if 1
+#if 0
        // DQ (7/24/2012): Output the mangled name being generated for debugging.
           printf (">>>>>>>>>> SgTemplateInstantiationMemberFunctionDecl::get_mangled_name(): returning mangledName = %s \n",mangledName.str());
 #endif

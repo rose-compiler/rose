@@ -104,6 +104,9 @@ SourcePositionClassification getSourcePositionClassificationMode();
 //! Set the current source position classification (defines how IR nodes built by the SageBuilder interface will be classified).
 void setSourcePositionClassificationMode(SourcePositionClassification X);
 
+// DQ (7/27/2012): changed semantics from removing the template arguments in names to adding the template arguments to names.
+SgName appendTemplateArgumentsToName( const SgName & name, const SgTemplateArgumentPtrList & templateArgumentsList);
+
 // *************************************************************************************************************
 
 
@@ -976,9 +979,9 @@ SgClassDefinition* buildClassDefinition_nfi(SgClassDeclaration *d = NULL, bool b
 //! Build a template class definition statement
 SgTemplateClassDefinition* buildTemplateClassDefinition(SgTemplateClassDeclaration *d = NULL );
 
+// DQ (7/27/2012): Removed from the API as part of new semantics for names with and without template arguments.
 // DQ (6/1/2012): Refactored support for setting the templateName to not have template argument syntax in the name.
-SgName generateTemplateNameFromTemplateNameWithTemplateArguements(SgName inputNameWithTemplateArguements);
-
+// SgName generateTemplateNameFromTemplateNameWithTemplateArguements(SgName inputNameWithTemplateArguements);
 
 //! Build a structure first nondefining declaration, without file info
 // DQ (6/6/2012): Added support to get the template arguments into place before computing the type.

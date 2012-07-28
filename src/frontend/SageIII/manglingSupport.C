@@ -639,7 +639,7 @@ mangleTemplateFunctionToString (const string& templ_name,
 
   // DQ (5/31/2012): Find locations where this is set and include template syntax.
   // ROSE_ASSERT(templ_name.find('<') == string::npos);
-     ROSE_ASSERT(SageInterface::hasTemplateSyntax(templ_name) == false);
+  // ROSE_ASSERT(SageInterface::hasTemplateSyntax(templ_name) == false);
 
      if (func_type != NULL)
         {
