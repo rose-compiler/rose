@@ -562,6 +562,8 @@ test2006_189.C \
 test2007_01.C \
 test2007_02.C \
 test2007_03.C \
+test2007_04.C \
+test2007_05.C \
 test2007_06.C \
 test2007_07.C \
 test2007_08.C \
@@ -1004,8 +1006,6 @@ test2006_54.C \
 test2006_90.C \
 test2006_122.C \
  test2006_151.C \
-test2007_04.C \
- test2007_05.C \
 test2007_38.C \
  test2007_55.C \
 test2007_137.C \
