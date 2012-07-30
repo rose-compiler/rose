@@ -164,6 +164,7 @@ fi
   ROSE_SUPPORT_COMPASS2
   ROSE_SUPPORT_GMP
   ROSE_SUPPORT_ISL
+  ROSE_SUPPORT_MPI
 
 ##
 #########################################################################################
