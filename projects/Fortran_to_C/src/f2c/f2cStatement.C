@@ -114,8 +114,6 @@ void Fortran_to_C::translateProcedureHeaderStatement(SgProcedureHeaderStatement*
   // We only handles Fortran function and Fortran subroutine
   ROSE_ASSERT(procedureHeaderStatement->isFunction() || procedureHeaderStatement->isSubroutine());
   
-  // Get fileInfo and scopeStatement from SgProcedureHeaderStatement
-  Sg_File_Info* fileInfo = Sg_File_Info::generateDefaultFileInfoForTransformationNode();
   SgScopeStatement* scopeStatement = procedureHeaderStatement->get_scope();
   ROSE_ASSERT(scopeStatement);
   

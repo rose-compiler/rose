@@ -13,7 +13,7 @@
 */  
 
 #include "rose.h"
-#include "f2c/f2c.h"
+#include "f2c.h"
 
 using namespace std;
 using namespace SageInterface;
@@ -39,6 +39,13 @@ class f2cTraversal : public AstSimpleProcessing
 
 void f2cTraversal::visit(SgNode* n)
 {
+  /*
+    1. The following switch statement search for the Fortran-specific
+       AST nodes and transform them into C nodes. 
+    2. The new C nodes are created first.  Attributes and details
+       are then copied from original Fortran nodes.  After the 
+       copy, original Fortran nodes are deleted. 
+  */
   switch(n->variantT())
   {
     case V_SgSourceFile:
