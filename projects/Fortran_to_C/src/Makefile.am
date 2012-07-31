@@ -9,13 +9,17 @@ AUTOMAKE_OPTIONS = subdir-objects
 #  Fortran_directive
 # ------------------------------------------------------------------------------
 
-INCLUDES = $(ROSE_INCLUDES)
+Fortran_to_C_includedir=$(srcdir)
+INCLUDES = $(ROSE_INCLUDES) -I$(Fortran_to_C_includedir)
 LDADD    = $(ROSE_LIBS)
 
 bin_PROGRAMS = Fortran_to_C
 
+
 Fortran_to_C_SOURCES=\
 	main.C \
 	f2c/f2cStatement.C \
-	f2c/f2cStatement.h 
+	f2c/f2cArray.C 
+
+Fortran_to_C_include_HEADERS = f2c.h
 

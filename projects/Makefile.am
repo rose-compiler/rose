@@ -41,10 +41,11 @@ SUBDIRS = \
 	RTC \
 	PowerAwareCompiler \
 	ManyCoreRuntime \
-	mint \
 	Fortran_to_C \
+	mint \
 	extractMPISkeleton \
 	$(OPTIONAL_PROJECTS)
+
 
 if ROSE_WITH_ISL
   SUBDIRS += RosePolly

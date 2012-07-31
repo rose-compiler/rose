@@ -1,4 +1,4 @@
-#include "f2cStatement.h"
+#include "f2c.h"
 #include <algorithm>
 
 using namespace std;
@@ -26,12 +26,12 @@ void Fortran_to_C::translateFileName(SgFile* sourceFile)
   if (found == string::npos) {
       found = outputFilename.find(".f");
       ROSE_ASSERT(found != string::npos);
-  }
-  
-  outputFilename.replace(found, 2, ".C");
-  outputFilename = "rose_f2c_" + outputFilename;
-  if (SgProject::get_verbose() > 2)
-  {
+    }
+    
+    outputFilename.replace(found, 2, ".c");
+    outputFilename = "rose_f2c_" + outputFilename;
+    if (SgProject::get_verbose() > 2)
+    {
       std::cout << "New output name: " << outputFilename  << std::endl;
   }
   // set the output filename
@@ -114,8 +114,6 @@ void Fortran_to_C::translateProcedureHeaderStatement(SgProcedureHeaderStatement*
   // We only handles Fortran function and Fortran subroutine
   ROSE_ASSERT(procedureHeaderStatement->isFunction() || procedureHeaderStatement->isSubroutine());
   
-  // Get fileInfo and scopeStatement from SgProcedureHeaderStatement
-  Sg_File_Info* fileInfo = Sg_File_Info::generateDefaultFileInfoForTransformationNode();
   SgScopeStatement* scopeStatement = procedureHeaderStatement->get_scope();
   ROSE_ASSERT(scopeStatement);
   
