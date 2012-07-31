@@ -9,9 +9,11 @@ AUTOMAKE_OPTIONS = subdir-objects
 #  vectorization
 # ------------------------------------------------------------------------------
 
-INCLUDES = $(ROSE_INCLUDES)
+#exec_prefix=${prefix}/vectorization
+Vectorization_includedir=$(exec_prefix)
+INCLUDES = $(ROSE_INCLUDES) -I$(Vectorization_includedir)
 LDADD    = $(ROSE_LIBS)
-
+lib_LIBRARIES = libsimd.a
 bin_PROGRAMS = vectorization
 
 vectorization_SOURCES=\
@@ -19,3 +21,10 @@ vectorization_SOURCES=\
 	normalization.C \
 	vectorization.C 
 
+Vectorization_include_HEADERS=\
+  normalization.h \
+  vectorization.h
+
+include_HEADERS = ROSE_SIMD.h
+  
+libsimd_a_SOURCES = rosesimd.c 

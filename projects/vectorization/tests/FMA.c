@@ -1,12 +1,15 @@
 int main(){
-  int a[16];
-  int b[16];
-  int c[16];
-  for (int i=0;i<16;i++)
+  float a[16];
+  float b[16];
+  float c[16];
+  int n = 16;
+  float as,bs,cs;
+  for (int i=0;i<n;i++)
   {
     a[i] = a[i] * b[i] + c[i];
     a[i] = a[i] * b[i] - c[i];
     a[i] = c[i] + a[i] * b[i];
     a[i] = c[i] - a[i] * b[i];
+    cs = as * bs + 1;  
   }
 }

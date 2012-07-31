@@ -50,7 +50,6 @@ void normalizeTraversal::visit(SgNode* n)
     else if((binaryOp->variantT() == V_SgSubtractOp) && (binaryOp->get_rhs_operand()->variantT() == V_SgMultiplyOp))
     {
       swapOperands(binaryOp);
-      SgNode* parent = binaryOp->get_parent();
       SgMinusOp* minusOp = buildMinusOp(deepCopy(binaryOp), SgUnaryOp::prefix);
       replaceExpression(binaryOp, minusOp, false);
       

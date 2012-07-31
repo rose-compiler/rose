@@ -31,23 +31,29 @@ using namespace vectorization;
 using namespace normalization;
 
 
-class vectorizationTraversal : public AstSimpleProcessing
+class transformTraversal : public AstSimpleProcessing
 {
   public:
     virtual void visit(SgNode* n);
 };
 
-void vectorizationTraversal::visit(SgNode* n)
+void transformTraversal::visit(SgNode* n)
 {
   switch(n->variantT())
   {
+    case V_SgGlobal:
+      {
+        SgGlobal* global = isSgGlobal(n);
+        insertSIMDDataType(global);
+      }
+      break;
     case V_SgForStatement:
       {
         SgForStatement* forStatement = isSgForStatement(n);
-        //SageInterface::forLoopNormalization(forStatement);
-        if(isInnermostLoop(forStatement)){
-          //vectorizeBinaryOp(forStatement);
-          stripmineLoop(forStatement,4);
+        SageInterface::forLoopNormalization(forStatement);
+        if(isInnermostLoop(forStatement) && isStrideOneLoop(forStatement)){
+          //stripmineLoop(forStatement,4);
+          updateLoopIteration(forStatement,4);
         }
       }
       break;
@@ -56,6 +62,31 @@ void vectorizationTraversal::visit(SgNode* n)
   }
 }
 
+class vectorizeTraversal : public AstSimpleProcessing
+{
+  public:
+    virtual void visit(SgNode* n);
+};
+
+void vectorizeTraversal::visit(SgNode* n)
+{
+  switch(n->variantT())
+  {
+    case V_SgForStatement:
+      {
+        SgForStatement* forStatement = isSgForStatement(n);
+        if(isInnermostLoop(forStatement)){
+          translateMultiplyAccumulateOperation(forStatement);
+          vectorizeBinaryOp(forStatement);
+        }
+      }
+      break;
+    default:
+      break;
+  }
+}
+
+
 int main( int argc, char * argv[] )
 {
   vector<string> argvList(argv, argv+argc);
@@ -63,7 +94,7 @@ int main( int argc, char * argv[] )
   SgProject* project = frontend(argc,argv);
   AstTests::runAllTests(project);   
 
-  //generateAstGraph(project,8000,"_orig");
+  generateAstGraph(project,8000,"_orig");
 /* Generate data dependence graph
   ArrayAnnotation* annot = ArrayAnnotation::get_inst(); 
   ArrayInterface array_interface(*annot);
@@ -90,17 +121,22 @@ int main( int argc, char * argv[] )
    
   normalizeExperission(project);
 
+  addHeaderFile(project,argvList);
   
-  vectorizationTraversal doVectorization;
+  transformTraversal loopTransformation;
+  loopTransformation.traverseInputFiles(project,postorder);
+  
+  vectorizeTraversal doVectorization;
   doVectorization.traverseInputFiles(project,postorder);
 
-  addHeaderFile(project,argvList);
+
   //generateDOT(*project);
   generateAstGraph(project,80000);
  
 
   // Output preprocessed source file.
-  unparseProject(project);
-  return 0;
+  //unparseProject(project);
+  return backend(project); 
+//  return 0;
 }
 
