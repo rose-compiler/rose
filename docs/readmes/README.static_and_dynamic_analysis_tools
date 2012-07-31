@@ -1,0 +1,174 @@
+This README is specific to the testing of ROSE using both static and dynamic analysis tools.
+
+
+**********************
+Static Analysis Tools:
+**********************
+   We are currently using Klocwork for static analysis of the ROSE source code.  The
+results will be made available to at least the ROSE developers with internal LLNL access.
+The results viewers are propritrary and so we might not be able to do more than this.
+
+Usage with ROSE:
+   This is fairly elaborate and will be details elsewhere (if required).  There is a
+web site for viewing the generated results of the analysis (this is still being setup).
+
+Views that we want to have of Klocwork results:
+   1) Separate views of severify 1, severify 2, and severity 3 issues
+
+   2) A view of ROSE only source code, thus excluding specific directories:
+       - src/frontend/CxxFrontend/EDG/EDG_3.3
+       - src/frontend/CxxFrontend/EDG/EDG_4.0
+       - libltdl
+       - src/3rdPartyLibraries/libharu-2.1.0
+       - projects
+       - src/ROSETTA
+       - src/roseExtensions
+
+   3) View of projects directory
+
+   4) View of Fortran support (for Rice)
+       - src/3rdPartyLibraries/fortran-parser
+       - src/frontend/OpenFortranParser_SAGE_Connection
+       - src/backend/unparser/FortranCodeGeneration
+
+   5) View of Java support (for Rice)
+       - src/3rdPartyLibraries/java-parser
+       - src/frontend/ECJ_ROSE_Connection
+       - src/backend/unparser/JavaCodeGeneration
+
+   6) View of Binary Analysis support only directories (and subdirs of):
+       - src/frontend/BinaryDisassembly
+       - src/frontend/BinaryFormats
+       - src/frontend/BinaryLoader
+       - src/midend/binaryAnalyses
+       - src/backend/asmUnparser
+
+   7) Separate views of frontend, midend, and backend
+
+   8) View of src/ROSETTA directory
+
+   9) View of roseExtensions directory
+       - src/roseExtensions
+
+  10) Separate views of each EDG of the directories:
+       - src/frontend/CxxFrontend/EDG/EDG_3.3
+       - src/frontend/CxxFrontend/EDG/EDG_4.0
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+***********************
+Dynamic Analysis Tools:
+***********************
+   We are currently using Insure++ for dynamic analysis testing of the ROSE source code.
+The results will be made available to at least the ROSE development team.  It is less
+clear in what form the results will be made available; currently they are output to stderr
+as part of the regression tests.  Running Insure++ with ROSE is now fairly
+easy, there is a configure option ("--enable-insure") and the "insure" executable
+must be in the user's path.  The testing of ROSE with Insure++ is handled using
+the standard "make" and "make check" to run all tests and gather output.  
+
+The ".psrc" file:
+   The user is expected to have a ".psrc" file to set required and optional details specific 
+to Insure++.  See Dan Quinlan for a copy of this file that is setup properly for use 
+at LLNL.
+
+Note that Insure++ can also test STL usage (option "-Zstl"), but I have not used that yet.
+
+By including the following line in the .psrc file:
+"insure++.report_file ROSE_insure_report.rpt" (without quotes)
+we can generate a report file that can be later loaded with the GUI ("insra")
+to review the results.  This is now we should generate nightly results.
+Note: You must load .rpt files through the GUI itself rather than from the command-line.
+      insra does not take command line options to make it easy the load the correct file.
+      So *.rpt files must be loaded explicitly (by clicking the load button in the GUI and
+      seleting the correct file).
+
+
+Usage with ROSE:
+   We don't consider the memory leaks in ROSETTA to be important. The execution of
+ROSETTA to generate the code used in ROSE can take about an hour if it is not optimized
+(without insure++ it will take only a few seconds).  The ".psrc" file shows how this can
+be done (turning off tracking of memory leaks).
+
+
+Usage of insra:
+   It works fine to bring up the GUI over the network from my Mac (use ssh -X option to
+   forward X specific calls).
+
+
+
+Customization:
+   It is possible to use
+      _Insure_checking_enable(0); // disable Insure++ checking
+and
+      _Insure_checking_enable(1); // enable Insure++ checking
+
+
+Also to output Insure++ specific text to the Insure++ output use:
+     _Insure_printf(char *fmt,[,arg...]);
+
+There is also a Memory Block Description API.
+
+What we have learned:
+
+  1) NULL_READ typically due to the use of C++ casts (e.g. "dynamic_cast<T>(pointer)", 
+where the pointer is NULL the result is a NULL pointer, but Insure++ considers this
+to be a NULL_READ error.  So to fix this, use:
+    (pointer == NULL) ? NULL : dynamic_cast<T>(pointer)"
+This fixes the problem, and might be better code, might also be faster code since
+dynamic_cast can be expensive. But it is non-standard usage, I think. This may be a 
+false positive from Insure++, I am not certain.
+
+  2) The use of "%zu" as a format for size_t appears to be flaged as BAD_FORMAT by Insure++.
+For example, if "argv" is declared as an STL "vector<string>", then:
+     printf ("List ALL arguments: argc = %zu \n",argv.size());
+Is the way to output "argv.size()" since "size()" returns type "size_t".  But Insure++
+reports this as compile-time issue: "BAD_FORMAT(other)".  I think this is a false positive.
+
+  3) Specification of: "insra.button_style round" in the ".psrc" file causes output of:
+"Warning: 
+    Name: Help
+    Class: XmCascadeButton
+    Illegal mnemonic character;  Could not convert X KEYSYM to a keycode"
+to the terminal windows where the tests are run.
+
+  4) What is up with stat.h. Message is:
+[unknown:unknown] **INSURE_WARNING**
+
+Common files have different coverage information. Discarded 
+conflicting records.
+
+/usr/include/sys/stat.h
+
+
+  5) We can write out a *.rpt file (it is huge, e.g. about 10Gig in size for the results
+from testing the C++ directory and the Fortran (LANL_POP, gfortranTestSuite, and top level 
+directories).  The file can be written out in a few minutes, but reading it in takes a
+long file (20 minutes so far (at 11am)).  Even a report representing 3 files generates
+a 7MB file.  Is there a way to make these files smaller?  The 7MB file can be written and
+read in a second or so.
+
+  6) Compiling with Insure++ frequently generates the message: "Error allocating block of mapfile tca.map".
+What does this mean?
+
+
+
+
+
+
+
+
+
