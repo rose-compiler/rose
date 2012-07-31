@@ -100,7 +100,8 @@ AC_DEFUN([ROSE_SUPPORT_MPI],
 AC_DEFUN([LX_QUERY_MPI_COMPILER],
 [
      # Try to find a working MPI compiler from the supplied names
-     # AC_PATH_PROGS($1, [$2], [not-found], [$4])
+     # AC_PATH_TOOL checks for the programs in [$4] below
+     # Omitting $PATH_SEPARATOR from args seems to break in linux
      AC_PATH_TOOL($1, [$2], [not-found], [$4]$PATH_SEPARATOR)
 
      mpi_command_line=`echo $$1`
