@@ -2035,6 +2035,7 @@ projects/Fortran_to_C/src/Makefile
 projects/Fortran_to_C/tests/Makefile
 projects/vectorization/Makefile
 projects/vectorization/src/Makefile
+projects/vectorization/tests/Makefile
 projects/PolyhedralModel/Makefile
 projects/PolyhedralModel/src/Makefile
 projects/PolyhedralModel/docs/Makefile
