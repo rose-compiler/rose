@@ -151,7 +151,7 @@ AC_DEFUN([LX_QUERY_MPI_COMPILER],
            lx_mpi_libs=`       echo "$lx_mpi_link_line" | grep -o -- '\(^\| \)-l\([[^\"[:space:]]]\+\|\"[[^\"[:space:]]]\+\"\)'`
            lx_mpi_link_args=`  echo "$lx_mpi_link_line" | grep -o -- '\(^\| \)-Wl,\([[^\"[:space:]]]\+\|\"[[^\"[:space:]]]\+\"\)'`
 
-            Create variables and clean up newlines and multiple spaces
+           # Create variables and clean up newlines and multiple spaces
            ROSE_WITH_MPI_$3FLAGS="$lx_mpi_defines $lx_mpi_includes"
            ROSE_WITH_MPI_$3LDFLAGS="$lx_mpi_link_paths $lx_mpi_libs $lx_mpi_link_args"
            ROSE_WITH_MPI_$3FLAGS=`  echo "$ROSE_WITH_MPI_$3FLAGS"   | tr '\n' ' ' | sed 's/^[[ \t]]*//;s/[[ \t]]*$//' | sed 's/  +/ /g'`
