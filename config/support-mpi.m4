@@ -100,11 +100,12 @@ AC_DEFUN([ROSE_SUPPORT_MPI],
 AC_DEFUN([LX_QUERY_MPI_COMPILER],
 [
      # Try to find a working MPI compiler from the supplied names
-     AC_PATH_PROGS($1, [$2], [not-found], [$4])
+     # AC_PATH_PROGS($1, [$2], [not-found], [$4])
+     AC_PATH_TOOL($1, [$2], [not-found], [$4]$PATH_SEPARATOR)
 
      mpi_command_line=`echo $$1`
      
-     # Figure out what the compiler responds to to get it to show us the compile
+     # Figure out what the compiler responds to get it to show us the compile
      # and link lines.  After this part of the macro, we'll have a valid 
      # lx_mpi_command_line
 
@@ -141,19 +142,19 @@ AC_DEFUN([LX_QUERY_MPI_COMPILER],
          fi
 	 	  
          if [[ ! -z "$lx_mpi_compile_line" -a ! -z "$lx_mpi_link_line" ]]; then
-            # Now extract the different parts of the MPI command line.  Do these separately in case we need to 
-            # parse them all out in future versions of this macro.
-            lx_mpi_defines=`    echo "$lx_mpi_compile_line" | grep -o -- '\(^\| \)-D\([[^\"[:space:]]]\+\|\"[[^\"[:space:]]]\+\"\)'`
-            lx_mpi_includes=`   echo "$lx_mpi_compile_line" | grep -o -- '\(^\| \)-I\([[^\"[:space:]]]\+\|\"[[^\"[:space:]]]\+\"\)'`
-            lx_mpi_link_paths=` echo "$lx_mpi_link_line" | grep -o -- '\(^\| \)-L\([[^\"[:space:]]]\+\|\"[[^\"[:space:]]]\+\"\)'`
-            lx_mpi_libs=`       echo "$lx_mpi_link_line" | grep -o -- '\(^\| \)-l\([[^\"[:space:]]]\+\|\"[[^\"[:space:]]]\+\"\)'`
-            lx_mpi_link_args=`  echo "$lx_mpi_link_line" | grep -o -- '\(^\| \)-Wl,\([[^\"[:space:]]]\+\|\"[[^\"[:space:]]]\+\"\)'`
+           # Now extract the different parts of the MPI command line.  Do these separately in case we need to 
+           # parse them all out in future versions of this macro.
+           lx_mpi_defines=`    echo "$lx_mpi_compile_line" | grep -o -- '\(^\| \)-D\([[^\"[:space:]]]\+\|\"[[^\"[:space:]]]\+\"\)'`
+           lx_mpi_includes=`   echo "$lx_mpi_compile_line" | grep -o -- '\(^\| \)-I\([[^\"[:space:]]]\+\|\"[[^\"[:space:]]]\+\"\)'`
+           lx_mpi_link_paths=` echo "$lx_mpi_link_line" | grep -o -- '\(^\| \)-L\([[^\"[:space:]]]\+\|\"[[^\"[:space:]]]\+\"\)'`
+           lx_mpi_libs=`       echo "$lx_mpi_link_line" | grep -o -- '\(^\| \)-l\([[^\"[:space:]]]\+\|\"[[^\"[:space:]]]\+\"\)'`
+           lx_mpi_link_args=`  echo "$lx_mpi_link_line" | grep -o -- '\(^\| \)-Wl,\([[^\"[:space:]]]\+\|\"[[^\"[:space:]]]\+\"\)'`
 
-            # Create variables and clean up newlines and multiple spaces
-            ROSE_WITH_MPI_$3FLAGS="$lx_mpi_defines $lx_mpi_includes"
-            ROSE_WITH_MPI_$3LDFLAGS="$lx_mpi_link_paths $lx_mpi_libs $lx_mpi_link_args"
-            ROSE_WITH_MPI_$3FLAGS=`  echo "$ROSE_WITH_MPI_$3FLAGS"   | tr '\n' ' ' | sed 's/^[[ \t]]*//;s/[[ \t]]*$//' | sed 's/  +/ /g'`
-            ROSE_WITH_MPI_$3LDFLAGS=`echo "$ROSE_WITH_MPI_$3LDFLAGS" | tr '\n' ' ' | sed 's/^[[ \t]]*//;s/[[ \t]]*$//' | sed 's/  +/ /g'`
+            Create variables and clean up newlines and multiple spaces
+           ROSE_WITH_MPI_$3FLAGS="$lx_mpi_defines $lx_mpi_includes"
+           ROSE_WITH_MPI_$3LDFLAGS="$lx_mpi_link_paths $lx_mpi_libs $lx_mpi_link_args"
+           ROSE_WITH_MPI_$3FLAGS=`  echo "$ROSE_WITH_MPI_$3FLAGS"   | tr '\n' ' ' | sed 's/^[[ \t]]*//;s/[[ \t]]*$//' | sed 's/  +/ /g'`
+           ROSE_WITH_MPI_$3LDFLAGS=`echo "$ROSE_WITH_MPI_$3LDFLAGS" | tr '\n' ' ' | sed 's/^[[ \t]]*//;s/[[ \t]]*$//' | sed 's/  +/ /g'`
 
          fi
      else
@@ -169,19 +170,19 @@ AC_DEFUN([LX_QUERY_MPI_COMPILER],
      CPPFLAGS=$ROSE_WITH_MPI_$3FLAGS
      LIBS=$ROSE_WITH_MPI_$3LDFLAGS
      AC_TRY_LINK([#include <mpi.h>],
-                 [int rank, size;
-                  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-                  MPI_Comm_size(MPI_COMM_WORLD, &size);],
-                 [# Add a define for testing at compile time.
-                  AC_DEFINE([HAVE_MPI], [1], [Define to 1 if you have MPI libs and headers.])
-                  have_$3_mpi='yes'
-                  AC_MSG_NOTICE([$3 MPI compiler binary found under $4])],
-                 [# zero out mpi flags so we don't link against the faulty library.
-                  ROSE_WITH_MPI_$3FLAGS=""
-                  ROSE_WITH_MPI_$3LDFLAGS=""
-                  have_$3_mpi='no'])
+                [int rank, size;
+                 MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+                 MPI_Comm_size(MPI_COMM_WORLD, &size);],
+                [# Add a define for testing at compile time.
+                 AC_DEFINE([HAVE_MPI], [1], [Define to 1 if you have MPI libs and headers.])
+                 have_$3_mpi='yes'
+                 AC_MSG_NOTICE([$3 MPI compiler binary found under $4])],
+                [# zero out mpi flags so we don't link against the faulty library.
+                 ROSE_WITH_MPI_$3FLAGS=""
+                 ROSE_WITH_MPI_$3LDFLAGS=""
+                 have_$3_mpi='no'])
 
-     # Substitute in Makefiles
+     #Substitute in Makefiles
      AC_SUBST($1)
      AC_SUBST(ROSE_WITH_MPI_$3FLAGS)
      AC_SUBST(ROSE_WITH_MPI_$3LDFLAGS)
