@@ -1,0 +1,85 @@
+This list of bugs to be fixed/things to be done is maintained by
+Markus Kowarschik.
+----------------------------------------------------------------
+
+1.
+Check in the new EDG version where exception handling is enabled!
+This is necessary in order to fix the bug that Erin discovered.
+Otherwise EDG will terminate with an error message.
+
+*****
+
+2.
+Problems with Overture file
+<PATH_TO_ROSE>/TESTS/CompileTests/OvertureCode/defect.C
+
+With the first bug fixed, this problem only occurs if both of
+the following conditions are fulfilled:
+1. The original source code does _not_ use the more complicated "operator[]"
+   notation, but the short operator notation.
+2. opt.overload_opt (data member of class Unparser_Opt) is set to FALSE.
+   (This means that the output of the preprocessor shall not contain
+   the more complicated "operator[]", "operator+", etc. notation, but the
+   shorter one.)
+
+In other words: the error occurs if the original source code does not
+contain the "operator[]" notation _and_ the source code to
+be generated shall not contain the complicated "operator[]" notation.
+
+The problem is the following.
+On the one hand, the unparser realizes that the member function to be
+called is an overloaded operator[]. If opt.overload_opt is set to FALSE,
+both the dot operator is omitted and it is determined that we need
+square brackets and no parenthesis. (We want "obj[i]" instead
+of "obj.operator[](i)"!) This is correct.
+
+On the other hand, this overloaded operator[] is inherited from a
+superclass, and the get_need_qualifier() method of class
+SgMemberFunctionRefExp tells us that we need the notation
+<className>::<funcName>. This is printed in Unparser::unparseMFuncRef().
+This forces the string "doubleGridCollectionFunction::operator" to
+be printed. (The dot in front of this string is missing --- see above ---
+and the argument is specified using square brackets --- see also above.
+
+*** There is a related problem with virtual functions!
+*** As far as I understand virtual functions cannot be
+*** handled correctly so far.
+
+Think about the implementation of the data member p_need_qualifier
+of class SgMemberFunctionRefExp!
+(Because in our case it's not necessary to explicitly name the base
+class doubleGridCollectionFunction where "operator[]" is defined!)
+
+Dan's suggestion: Fix the definition of the need_qualifier member variable
+in the EDG code!
+
+As a workaround the flag overload_opt in the class Unparser_Opt can be
+set to TRUE (see comment in file unparser.C) to enforce the keyword "operator"
+_always_ to be printed --- however, this is of course not what you want.
+The default value of this flag is FALSE, see file preprocessorSupport.C.
+
+*****
+
+3.
+This is another problem with the file "defect.C".
+The problem of missing modifiers (e.g., const) seems to be a bug in SAGE
+or in the EDG code.
+The method isSgModifierType() returns 0 in the case where the error occurs!
+See for example method unparseReferenceType() in unparse_type.C
+
+The problem only seems to occur if the parameter type is a reference
+type or a pointer type to a typedef type.
+In this case the parameter is represented as an SgReferenceType object
+and this object directly refers to an SgTypedef object
+(instead of refering to an SgModifiertType object in between).
+Consequently, the const modifier gets lost.
+
+I cannot tell yet _where_ the bug is located. These are just observations.
+
+*****
+
+4.
+PDF output: Obviously, the function showSgFunctionType() in pdf_ast.C
+prints the parameters twice since the return value of argumentTypeList.size()
+is twice the number of formal parameters the function actually has.
+And how does the unparser figure out the correct number of parameters?

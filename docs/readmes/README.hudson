@@ -1,0 +1,169 @@
+README for the new Hudson support in ROSE (Continuous Integration)
+ 
+##########  WHAT WE HAVE LEARNED ABOUT WORKING WITH HUDSON #############
+
+1. If Hudson fails right away (like the "too many open files" error)
+then it won't show a name for the branch.
+
+2. If Hudson fails before it starts running the test script (like above,
+or if it can't cleanly merge "master" into the to-be-tested branch) then
+it will retest that branch if you click "Build Now" or restart Hudson.
+
+3. If Hudson can't merge master into the branch to be tested it's
+because the "master" branch has advanced to the point that there are
+merge conflicts.
+
+4. How to cancel a hudson job: 
+   First, the "x" next to the job in the "Build History" list does not work.  However,
+if you go to the "Hudson" web page (http://tux269.llnl.gov:8080) instead of the
+ROSE-matrix web page (http://tux269.llnl.gov:8080/job/ROSE-matrix/); then
+you can click on the link (something line "Building ROSE-matrix #xxx)
+and if you click on the "x" there is will quickly cancel the job (first it
+cancels the pending builds in the "Build Queue" and then it will
+(after a few seconds) cancel the currently running jobs.
+
+#################  How to restart Hudson  ################
+
+To kill Hudson:
+screen -r
+ctrl-c
+
+To restart Hudson:
+screen -d -m ./startHudsonMaster
+
+
+#################  Information about Hudson  #################
+
+Information on git-svn usage:
+   http://maymay.net/blog/2009/02/24/how-to-use-git-svn-as-the-only-subversion-client-youll-need/
+
+The Video:
+   http://www.youtube.com/watch?v=4XpnKHJAok8
+
+
+Commands used one to setup and maintain GIT and not used by users afterward:
+   Command to use git-svn support (checkes out a git-based SVN repository):
+      git svn clone file:///nfs/casc/overture/ROSE/svn/ROSE/trunk/ROSE ROSE
+
+   To update git repository from SVN use (from in the git repository):
+      git svn fetch
+
+
+################# Maintaining Hudson ###################
+
+How to reboot Hudson after (if not setup properly in crontab)
+   1) start Hudson: "screen -d -m ./startHudsonMaster
+   2) Detach screen: "CTRL-a d"
+
+New Web Server Support:
+   http://tux269.llnl.gov:8080/job/ROSE/
+
+Previous directions before web server support:
+   How to logon to the tux269 machine:
+      ssh -X -L 8080:localhost:8080 tux269
+
+   How to bring up the hudson web page:
+      firefox http://localhost:8080/job/ROSE/ &
+
+How to reproduce bugs that Hudson finds:
+
+   1) Find the failed test within the Husdon web pages.
+      Check the build log to see what machine was used to do the build.
+   2) ssh to the correct machine using the "hudson-rose" account.
+   3) Source the file to setup the environment variables.
+      "source ~/startHudson-common"
+   4) Using the commands from the runScript (found in scripts/hudson)
+      issue any of al of the commands in the order specified in the runScript.
+      For example, run the edg specific commands if that was the part that failed.
+
+
+
+Setting up Hudson:
+   1) Download from: http://hudson-ci.org/
+
+   2) Install using:
+      cd /home/dquinlan/local/hudson-1.336/ && screen -d -m java -jar /home/dquinlan/local/hudson-1.336/hudson.war --httpListenAddress=127.0.0.1"
+      where "/home/dquinlan/local/hudson-1.336/" is an example location for the
+      "hudson.war" file.
+      Note that this starts husdon in a screen and detaches. Type "screen -r" to visit the
+      screen, and ^ad to exit the screen.  At this point hudson is running in the
+      background.
+
+   3) To see Hudson run, point your browser to: "http://localhost:8080"
+
+   4) Add git plugin if you want to run Hudson with git.
+      Note that you have to click the button to restart Hudson, but it will
+      restart itself automatically.
+
+   5) Add a job, define a user (yourself), and setup the email and 
+      logation of git repository, etc.
+
+   6) Click "ENABLE AUTOREFRESH" (top right corner of window).
+
+   7) Add a machine to use for running jobs.
+      If the machine is taken off line, reset this by disabling the 
+      6 or so reason why hudson will take a machine offline (diskspace,
+      and other resource limitations) and then reset the build executor.
+
+   x) Setup your crontab to restart hudson if your machine is rebooted.
+      "@reboot cd /home/dquinlan/local/hudson-1.336/ && screen -d -m java -jar /home/dquinlan/local/hudson-1.336/hudson.war --httpListenAddress=127.0.0.1"
+
+Additional setup issues for Hudson, configuration:
+* smtp server: smtp.llnl.gov
+* Enable security Access Control,  Security Realm: Hudson's own user database, Allow users to sign up,  Authorization: Matrix-based security 
+
+How to setup slave machines:
+
+copy the required files from an example node:
+-bash-3.00$ pwd 
+/export
+-bash-3.00$ ls -al
+total 36
+drwxr-xr-x   5 root        root  4096 Dec 14 09:59 .
+drwxr-xr-x  27 root        root  4096 Dec 10 09:06 ..
+drwx------   2 root        root 16384 Oct 16  2008 lost+found
+drwxr-xr-x   4 root        root  4096 Nov 13 14:34 old
+drwxr-xr-x   3 hudson-rose rose  4096 Dec 14 12:40 tmp.hudson-rose
+-bash-3.00$ rsync -av --delete tux283:/export/tmp.hudson-rose .
+
+This should setup the /export/tmp.hudson-rose directory.
+
+Better is to run from the /export directory: "rsync -av tux282:/export/tmp.hudson-rose ."
+And likely we only really need the "opt" directory where all the compilers are located.
+
+
+
+*****************************
+Hudson Windows Server Support
+*****************************
+
+  Different from the Linux machines where the slaves can be started from the
+Hudsom web page on tux269:8080, the Windows tux270-0 slave must
+be started by logging into tux270-0 and using the web page from
+explorer and starting launching the slave service (on tux270-0) directly.
+this is one of the ways that Hudson is handled differently on Windows
+than on Linux.
+
+
+**************************
+Our Hudson setup on tux269
+**************************
+
+Hudson builds a list of branches against which to test.  This is done
+by running get fetch (I think) on the directory located on tux283. The
+directory is: /export/tmp.hudson-rose/hudson/workspace/ROSE-matrix
+
+A currently problem is that it seems that Hudson is cycling through the
+branches and testing each one.  The branches are a set larger than what is
+in our main GIT repository in /nfs/casc, and it has bee identified
+to be the branches that are in tux283:/export/tmp.hudson-rose/hudson/workspace/ROSE-matrix
+This repository is being backed up and pruned to represent the smaller
+number of branches our main GIT repository in /nfs/casc.
+
+Note from Andreas:
+   If you ever run into this problem again, go into that directory 
+(tux283:/export/tmp.hudson-rose/hudson/workspace/ROSE-matrix) and type
+"git remote prune origin"
+
+
+
