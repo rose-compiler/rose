@@ -1,0 +1,1172 @@
+* TODO file for ROSE				-*- outline -*-
+
+Tell us if you feel like volunteering for any of these ideas, listed
+more or less in decreasing order of priority.  Some TODO items are
+implicit from received email.  Significant contributions require
+written assignments and disclaimers.
+
+-----------------
+June 27, 2008 Clean up the ROSE source tree for the public release
+SciDAC repository: 
+  ROSE (core)
+  EDG Binaries
+  Open Fortran Parser jar file
+Local repository:
+  EDG source
+  Testsuite: 
+    POP, 
+    OMP tests, 
+    developerscratch, 
+    Python example test, 
+    ROSEHPCT tests
+
+Old projects:
+  SimpleCallGraph
+  CompassDist
+  BinaryContextlookup
+  DatalogAnalysis
+  MOPS
+  A++1999/2003
+  OMPPreprocessor
+
+Sub directories : 
+  keep (Y)  ,
+    GNU_HEADERS Y
+    qmsh Y
+    Papers/talks Y
+    TAU headers Y
+    A++ Y
+    P++ Y
+    OvertureCode Y
+    SLA Y
+    MSTL Y
+  remove (N)
+    OpenAnalysis N
+    Open64 N
+    TXT2HTML N
+    aterm_bundle N
+    proposals N
+    Boost test N
+    mpich N
+    MySQL N
+    COCO N
+  undecided   
+    checkpoint Lib ?
+    PDFlib ?
+
+  -----------------
+  DONE * Multidimensional support is not finished yet (mostly there)
+    Could be made less dependent upon array objects (?)  
+
+DONE * Better unparser (in development by Gary Lee)
+
+WORKING * Better support to automatic code generation (for grammar implementations)
+
+* Need to implement the new transformation specification mechanism.
+
+* Need more sophisticated examples.
+
+DONE * Need to build Sage II in such a way that we can better maintain it
+       and make it portable.
+
+DONE (see below) * Need a way to display the AST (currently we can print out the AST associated with the sage representation)
+  but we have no mechanism to print out what is in the EDG representation.  This would be helpful.
+
+* Need to consider the requirements of the SGI FORTRAN 95 open source front-end.
+  I have read the WHIRL Intermediate Language Specification and this appears to be possible.
+
+* Require an inliner mechanism for the transformation support. Great student project!
+
+* Reference counting of the SAGE classes has not been implemented
+     The referenceCount data member is there now, but it needs to be incremented and
+     decremented to record references.  The new and delete operators have not been 
+     implemented either (though this is not required for reference counting).  This
+     is not a serious problem, except that it takes purify a long time to process the 
+     memory leaks it reports (as a result I have turned off this test in purify
+     (using -leaks-at-exit=no -inuse-at-exit=no)).
+
+* It would be good to have some simple and moderately sophisticated tree traversal 
+  mechanisms within ROSE.  Sage originally provided one, but it was difficult to use
+  for anything meaningful.  I don't know if we could design a better one, or perhaps
+  the Sage version would be fine for limited sorts of operations.  
+
+  Using a flag that is reset but records if graphs vertices have been processed would be
+  one approach. Likely a common technique.
+
+  Reasons for traversing the program tree:
+     1) display the program tree (this is problematic since this can amount to 
+        endless recursion (because the program tree (AST) is not really a tree
+        but an arbitrary graph).
+     3) Analysis:
+         a) simple analysis
+               * where const is cast away
+         b) moderately sophisticated analysis
+               * recording memory access patterns (?)
+               * similar error checking
+                    This might require call graph analysis and dependence analysis
+         c) complex analysis
+               * seeing the context of how statements are used together
+               * recognizing array statements
+     3) Transformations:
+         a) simple transformation might be possible using this approach
+               * instrumentation
+               * Converting the expanded CPP ASSERT macro back into a 
+                 call to "ASSERT(expression)";
+               * converting the expanded CPP NULL macro back into "NULL"
+                 (I think this is a bit harder than ASSERT).
+         b) moderately sophisticated transformations
+               * ?
+         c) complex transformations, likely a traversal mechanism is not powerful
+            enough to recognize where these transformation should be done.  But
+            likely once identified (using higher-level grammars) the transformations 
+            could be automated by a tree traversal mechanism on the higher-level 
+            grammars AST.
+               * array statement optimization
+
+* DONE: As an alternative to writing out the AST as an asci file, it might be helpful to
+  write it out as a hypertext format so that scopes/files could be collapsed.
+  There must be software around that does this.  Currently we output a very large 
+  file that uses indentation to should scope, something better would be helpful
+  and could be folded into the SvPablo (a AST viewer?).
+
+  The current mechanism uses PDF Bookmarks to display the hierarchy.  Mechanisms
+  are implemented to display both the EDG and SAGE ASTs.  The implementation is still
+  incomplete and should be filled in by anyone who wants to learn about the ASTs.
+  The EDG AST is traversed by scope instead of by source_sequence_list entry. We
+  really need both since the future connection of EDG to SAGE should likely be done
+  using a source_sequence_list entry traversal of the EDG AST!
+
+* The currently implemented mechanism for handling the use of extern "C" surrounding 
+  a #include<filename> directive is limited to one #include directive per 
+  extern "C" {} modifier.  The mechanism is a bit of a hack and not very robust.
+  A more details comment is in the ChangeLog about what was done ans its limitations.
+  A better method would build the include tree and search all branches and leaves of 
+  the include tree to verify that each declaration was really an 'extern "C" with braces' 
+  modifier. This would supplement the current approach which uses a lex rule to find the
+  'extern "C" {' modifier (when directives are extracted) and justs adds the closing 
+  brace "}" after the next #include directive (not very safe or smart).  This problem 
+  needs to be revisited.
+
+* DONE: Multi-file support.  We will at some point need to input a collection of files
+  for processing.  This will (at least on small enough projects) permit a full
+  call graph to be processed.  Other mechanisms for building a project wide call 
+  graph will have to be developed at some point (if required).
+
+* Currently the column position can be fooled by tabs (which are counted as a 
+  three columns).  To fix this we should first make a pass (it can be optional)
+  over the source code to expand out all tabs (to some user defined value).
+  Then we can process the code through the EDG front-end and get more reliable
+  column data for statements and expressions.  This will permit us to do a more
+  accurate job in the unparsing. This is not a high priority at the moment.
+  I have verified that TABS in ROSE are currently interpreted to be 3 spaces
+  (even though emacs interprets them to be 7 in my setup), and that the column
+  information displayed in the AST is wrong as a result.
+  This should be fixed before any effort at fixing other formatting problems
+  since this might be the cause of some of them and this issue would get in the way
+  of fixing other formatting problems.
+
+* DONE: Formatting of the unparsed code is done fairly well.  I think that there is some additional
+  line feeds inserted in the unparsing of preprocessor declarations and comments.
+  I don't know what tests of this should be done (or how picky we want to be).
+
+* DONE: Call graph support is required for many other features to be added to ROSE 
+  (e.g. dependence analysis).  This is a great student project. DOT could be used to
+  visualize the graph (seems to work well for even large graphs in Doxygen).
+
+* Our ROSE unparser writes directly to an output stream. I have noticed that other
+  unparsers used a separate structure with several function pointers (e.g. EDG).  
+  Is this better than what we do currently?  It might be that we could improve our 
+  unparser by putting the output string into the unparser class (then again I think 
+  this is exactly what we do).  So maybe there is nothing to improve here?
+
+* DONE: EDG records the location of "{" and "}" associated with statement blocks.
+  This could permit a more accurate positioning of comments in the unparsing phase.
+  This is not a high priority.
+
+* It appears that the strings used to define template declarations might already be in the
+  EDG AST so we would not require Danny Thorne's modification of EDG to save them explicitly.
+  Need to finish the PDF display of the EDG AST to figure this out.
+
+* DONE: The implementation of SAGE mixes the use of definitions with declarations in ways
+  that makes the code confusing.  For example a SgTypedefDeclaration has a tag TYPEDEF_STMT.
+  This should be fixed at some point to make the naming self consistant.
+
+* It seems that declarations of functions are output with the "(...)" arguments while member
+  function declarations are not (need to fix this). The temp fix for this is in the 
+  ROSE/src/unparser/unparse_stmt.C (in the Unparser::unparseTypeDefStmt function).
+
+* DONE: ROSE preprocessors don't correctly report when illegal options are used.
+  For example, "--help" yields the message:
+  "Assertion failed: ROSE::numberOfSourceFileNames == 1, file /home/dquinlan/ROSE/NEW_ROSE/src/command_line_options/buildCommandLine.C, line 876"
+  This needs to be addressed at some point.
+
+* Unparser bug (not too major)
+  Functions are unparsed with function argument names missing (see TESTS/CompileTests/C++Code/test2001_11.C)
+  Function parameters not unparsed correctly with the variable name.
+  With SUN CC we are just missing the variable name:
+       original C++ code:
+            void foo (int i);
+       unparsed C++ code:
+            extern void foo (int );
+
+* Erin Parker's try_catch_test.C fails to pass EDG and SAGE II.  The fix to EDG is to 
+  enable the exceptions_enabled in EDG/src/cmd_line.h, and the error is in SAGE II.
+  Within the implementation of the SgTryStmt::replace_statement(SgStatement *o, SgStatement *n)
+  there is a message:
+          printf ("ERROR: STL us not fixed in code -- exiting in SgTryStmt::replace_statement \n");
+          abort();
+  These STL iterators have to be put into place in about 5 places in the AST Restructuring Tools source.
+
+  I have modified the defaults for EDG so that EDG now accpects exception handling code. Then I modified
+  the C++ grammar to correctly build the AST.  The remaining problem is that the unparser does not 
+  generate the correct code.  This remains as work left to do. dqDevelopmentDirectory/test2001_29.C 
+  demonstrates the error.
+
+* DONE Support of multiple invocations of the SgFile
+  EDG has a problem when EDG_MAIN is called more than once.  The problem is that the command line
+  processing fails.  To best fix so far for this problem has been to return from the top of the
+  EDG proc_command_line(int argc, char *argv[]) function when the value of option_descriptions_used
+  is greater than 0 (which seems to indicate that it is part of the second invocation instead of the
+  first (it is initialized to 0 as a static file scope variable).  To change the primary source
+  filename I have modified EDG cmd_line.c to set the primary fine name to a global variable
+  that I have defined above the proc_command_line function in cmd_line.c.  This variable is
+  then set by the code in specification.C. As a result the command line can not be changed
+  after the first invocation, except to change the primary source file.  This seems to be 
+  a good enough fix since we can assume that we only want to change the source file name between 
+  invocations.  However, it does mean that the command line (except for the source file name)
+  is ignored after the first invocation of the SgFile constructor (which is called by the SgProject
+  constructor).
+
+
+* Transformations:
+  ** Need to define interfaces for transformations.
+  ** Need to handle multiple transformations.
+  ** Need more examples of transformations.
+  ** How should targets be recognized? Much of this work is done but there remain a few details:
+      1) Currently work uses a function which is called by the global transform function, but if we
+         are to bury the global transfer function within the specification mechanism then we need a
+         better approach.  A function pointer might work well here.  Templates seem to greatly complicate the
+         interface since then the global tree traversal mechanism would have to be templated.
+      2) Our primary approach within ROSE is to use the terminals of a specific grammar as targets for
+         transformations.  The use of a function to identify the target of a transformation can hide this
+         and even make it optionally more specific (C++ declarations of a specific type could be a target
+         for example, even if just using the C++ grammar).  We need examples of transformations that
+         use higher-level grammars (however, we need more infrastructure in place for this).
+
+  ** The current function TransformationSpecificationTypes::tripAwayWrapping( SgFile & file ); does not
+     get the statements representing the transformation out of the function into which they are placed.
+     As a result the whole wrapper function is inserted into the application's AST.
+
+
+
+
+* Markus Kowarschik is maintaining a separate todo file in this directory: TODO_MK
+  It contains a list of bugs (with detailed descriptions) to be fixed.
+
+
+* Things to remove in ROSE so that the development directory checked out from CVS is easy to understand
+  and so that the distributions build by autoconf/automake are clear.
+     remove ROSE/ROSETTA/old_simpleGrammar
+     remove ROSE/grammar.old_dir
+     remove ROSE/src/SAGE
+     remove ROSE/src/Padding            (make sure it is in the A++Preprocessor)
+     remove ROSE/src/PaddingTrans       (make sure it is in the A++Preprocessor)
+     remove ROSE/src/TransformBaseClass (make sure it is in the A++Preprocessor)
+     remove ROSE/src/Transform_2        (make sure it is in the A++Preprocessor)
+     remove ROSE/src/Transform_3        (make sure it is in the A++Preprocessor)
+     remove ROSE/src/Transform_4        (make sure it is in the A++Preprocessor)
+
+     check ROSE/SAGE/grammarBaseClass.C (I think this is used by ROSETTA grammars or the A++ preprocessor)
+     check ROSE/ROSETTA/MetaProgramExample.C  (make sure this is required)
+     check ROSE/ROSETTA/parser.C  (does not seem to be used)
+
+     check ROSE/ROSETTA/*.implementation (I think these can be removed)
+     check ROSE/ROSETTA/*.include        (I think these can be removed)
+
+     remove ROSE/ROSETTA/grammarData.C   (No longer used)
+
+     Update all the README files in each directory stating the purpose and organization of the directory
+
+* Configurations issue:
+     STL-1995 is a link to STL (and it should be the other way around).
+     STL is a directory where the 1995 version of STL is located.  I'm sure that this
+     was some sort of mistake.  But it need to be fixed so that the configuration is sane!
+     Currently in order to switch to a new version of STL, I have make STL-1995 a link
+     to the new STL located in ROSE/STLPort/STLport-4.5b8/stlport.
+     I have fixed the makelinks file to correctly build this "misleading" link
+
+* Testing by different people
+     Each person should have a directory containing a <name>TestsDirectory and a <name>Preprocessor directory.
+     This would allow each person to build there own specialized preprocessor for their own testing
+     and there own test codes to test the preprocessor.
+
+* Current handling of true and false are located in several locations (instead of centralized into bool.h).
+
+* Better support for acmacros (not available to everyone doing ROSE development)
+  Need to have configuration check if the acmacros directory is built and if not untar the binary acmacro.tar.gz
+  file and use it.  We will have to define a mechanism to keep this binary file up to date as well.  Currently
+  I have built the binary acmacros.tar.gz file and added it to the cvs repository (the simple part of the process).
+  This is a problem for people who have access to the CVS repository but who are not in the casc group
+  and so cannot access Brian Gunney's cvs repository for acmacros.
+
+* Currently ROSE will not compile with KCC on the Sun or Linux
+  Previously I had ROSE compiling with KCC on the SUN (so likely this is not too much to fix).
+  Bobby says that the problem is the same for both SUN and Linux.
+
+****************************************************
+TODO: Retargetable Compiler Support (work by Bobby):
+****************************************************
+     There is a little bit of work remaining to make ROSE portable to different compilers.  Bascially
+     a mechanism has been defined to permit ROSE to be made specific to any back-end C++ compiler.
+     However, an implementation showing how this works has only been implemented for the g++ and KCC
+     compilers (and the KCC example has remaining problems (on both Sun and Linux) and g++ on SUN also
+     currently fails).  The process involves copying the compiler specific header files (suprise, all compilers
+     seem to have some!) to a location within the ROSE compile tree.  For many compilers these files must
+     be edited to remove dependence upon "#include_next" (which is spelled differently by each compiler)
+     which has the same semantics for all compilers (at least KCC and g++). The semantics of #include_next
+     uses the list of include paths and permits all targets (of the #include_next <target.h>) to consider
+     only include directories listed AFTER the directory of the header file where the #include_next <target.h>
+     is read.  For all compilers (that Bobby has looked at; g++ and KCC) the target of the #include_next <target.h>
+     is always located in "/usr/include" so "#include_next <target.h>" is equivalent to "#include </usr/include/target.h>".
+     We can't be sure that this is always the case.  Our modification of the compiler specific header files
+     currently replaces all instances of "#include_next <target.h>" with "#include </usr/include/target.h>".
+     We will see if this is sufficently robust.  Note that the semantics of #include_next does not
+     force the target file to have the same name as the file where the #include_next directive appears,
+     but this is the way it is always used and so we have taken advantage of that as well in defining
+     the automatic transformations of the comiler specific files.
+
+     Bobby added files: compiler-defs.m4, create_system_headers, and dirincludes to the ROSE/config directory
+     and modified the ROSE/ROSETTA/Grammar/Support.code file to add an optional compiler name to the 
+     SgProject::compileOutput function and modified the construction of the -D list of options handed to 
+     the EDG frontend to take the list from the macros defined in the config.h file.
+
+* KCC currently fails to compile ROSE on both SUN and Linux (this used to work on the SUN so it should be to much work to fix).
+  Both platforms have the same problem (an STL problem).  Also, Bobby reports that the configure scripts report the size
+  of float, int, double, etc are all ZERO.  So something about the autoconf test for size of primative types needs to be 
+  looked checked.  LATER checks have confirmed that if KCC is used as the C compiler then the AC_SIZEOF_TYPE macro returns zero,
+  but if the default C compiler is used then the size of all tyes appear to be correct.  So don't use KCC as the C compiler!
+
+* EDG seems to have a problem being compiled with the g++ compiler on the SUN. The problem is nto that it will not
+  compile (it will), but that the executable built will not run.  Some sort of crash when it starts to use the EDG front-end.
+  Not clear is this is fixable, since we don't want to work on the EDG front-end, so we will see.  Debugging this
+  might be a job for purify or Insure.
+
+* Currently the create_system_headers shell script can take an optional parameter to specify the source directory of the target
+  back-end compilers compiler-specific header files.  This should eventually be able to be specified
+  as an option on the configure command line (perhaps the target directory should be specified on
+  the configure command line as well).
+
+* In the compiler-defs.m4 shell script the compiler should have it's possible path stripped off using "compilerName=`basename $1`"
+
+* ROSE/EDG/configure.in calls GET_COMPILER_SPECIFIC_DEFINES and so it sets the -D options and the compiler name, it might be that
+  only the compiler name is really needed.
+
+* ROSE/configure.in includes a line "rm -rf '$(CXX_TEMPLATE_REPOSITORY_PATH)'" to remove the template directory that is built
+  when the C++ autoconf test codes are compiled before $(CXX_TEMPLATE_REPOSITORY_PATH) is defined.  This avoids a directory
+  called "$(CXX_TEMPLATE_REPOSITORY_PATH)" in ROSE after configure has been run (which was always sort of ugly).  However,
+  this only makes sense on the SUN using the sun C++ compiler.  The fix should likely envolve a test to see what compiler
+  is being used so that the the "ti_files" directory can be removed when using the KCC compiler.  The current test which just
+  removes "$(CXX_TEMPLATE_REPOSITORY_PATH)" fails if using g++ or KCC, but it seems that the configure script goes on.
+
+* CC is now the defalt back-end C++ compiler for development on the SUN.  I have added an configure option to specify
+  the backend directly.
+
+*************************************************************
+END of TODO section specific to Retargetable Compiler Support
+*************************************************************
+
+* Preprocessor macro definitions should perhaps not be unparsed in the final output.  We might make this an option (or the default).
+
+*************************************************************
+* Configuration TODO list:
+*************************************************************
+
+DONE * Put in the AC macro call to make sure that version 2.52 or higher of autoconf is used
+
+* Change config.h (all four of them) to edg_config.h, sage_config.h, rosetta_config.h, and rose_config.h
+
+DONE * Call AC_CONFIG_SUBDIR multiple times dependent upon conditionals instead of just once.
+
+DONE * Remove references to: sla_PREFIX sla_INCLUDES sla_LIBS (now that we have removed sla as an option)
+
+DONE * Remove references to subdirectory's Makefiles within distclean-local rules (I think in ROSE/Makefile.am)
+
+* Need a way to make it clear when "make check" has passed all tests.
+
+*************************************************************
+* END Configuration TODO list
+*************************************************************
+
+
+* (4/8/2002) Program Statistics Gathering 
+  The purpose of gathering data about programs will become more clear in later research work when we
+  try to optimize the performance of applications.  Initially we should consider just gathing
+  information about a target application.  Such information could include:
+       Number of inlined functions (to determine potential overuse of inlining which could effect compile times)
+       Information about functions
+           Length of functions
+           Length of inlined vs. non-inlined functions
+           Relative location of functions (optimizations can include reordering to provide instruction cache optimizations)
+       Data Structures used
+           Complexity of data structures
+           Number of uses of library abstractions
+       Access Patterns
+
+
+**************************************************************************
+* (4/8/2002) Possible Summer Student Projects:
+**************************************************************************
+     1) Unparser built on query mechanism
+     2) Program statistics gathering (envolves development of a lot of specialized queries)
+     3) Flush out more interesting parts of the Name Query and Number Query Libraries (could generate call graph).
+           Number of branch points (conditionals) as a metric for complexity.
+     4) Visualization of program analysis (generate PDF file containing AST, source code, with links to call graph,
+        dependence graph, etc.).
+     5) Cache optimization for loop carry dependence optimization of array statements (merge the two loops associated with
+        the case when the lhs operand appears on the rhs).
+     6) Include the option to introduce a transformation which times the transformed and non-transformed code.
+     7) Include the option to test a transformation (compute the transformed and non-transformed code and compare the results).
+        This could be a general transformation into which many transformation could be put (as long as they have the property
+        of preserving the semantics).  Is semantics preservation a property in the classification of transformations?
+     8) Where statement transformations in A++/P++ Preprocessor
+     9) Indirect addressing in A++/P++ Preprocessor
+    10) Scalar Indexing transformation in A++/P++ Preprocessor
+
+* We need to classify abstractions and transformations (define a hiearchy of properties that describe transformations)
+    Need to find some literature on this topic
+    Common properties associated with semantics of abstractions (upon which we introduce transformations):
+        Element semantics: operations on the collection are applied to the elements (with no reduction)
+        Reduction semantics: operations on a collection generate a smaller collection
+        Widdening Semantics: operations on a collection generate a larger collection
+    Common properties of transformations:
+        preserve the semantics: array transformations in A++/P++ Preprocessor (axx)
+        change the semantics: e.g. Automatic differentiation
+    11) The context should be represented in the inherited attribute, the code to represent the
+        context of any libraries use within an application should be generated automatically.  This
+        should be possible for ROSETTA. This would be a project for anyone familiar with ROSETTA.
+        How similar is this to the recognition of abstractions or it is just the correct place to do
+        it.
+
+**************************************************************************
+* Documentation stuff to do
+**************************************************************************
+
+* Explain what files are generated and so should not be changed by the user
+
+* Explain our testing process
+
+* Explain the CVS checkin policy
+
+
+
+
+
+
+
+**************************************************************************
+* Member functions that would simplify use of Sage (future features)
+**************************************************************************
+
+* Member function in SgFunctionCallExp (and maybe SgFunctionType):
+
+  // returns true if the function is a member function (false if not a member function)
+     bool isMemberFunction();
+
+  // returns name of class for which function is a member (or empty string if not a member function).
+     string get_class_name();
+
+
+**************************************************************************
+* (8/11/03) Work to do before release of ROSE
+**************************************************************************
+
+SAGE work:
+   1) Consistant class names and function names
+   2) Consistant function interfaces (remove some and add others)
+        a. Define new function interfaces
+            1. getName functions at nodes containing names
+            2. getList (or "list") functions at nodes containing lists
+            3. virtual containsList function function returning bool implemented on SgNode
+            4. "insert" "replace" "remove" functions
+                 1. insert would be implemented as a non-virtual function 
+                    only at the astnodes where it makes sense.
+                 2. virtual replace function implemented on SgNode
+                      (checks node variant and handles case replace on 
+                      list of declarations vs. list of statements)
+                 3. remove function implemented on SgNode
+            5. Discuss if NULL pointeres are permited in interface.
+
+        b. Select existing functions to be removed
+            1. append, prepend, differnet insert functions in scopes etc.
+            2. getStatementList and getDeclarationList functions (in favor of "getList" or "list")
+
+   3) Fix duplicate (twin) SgInitializedName nodes
+
+*******************************************************************************
+* (9/12/2003) Program Visualization (How to Use Nil's OpenGL AST visualization)
+*******************************************************************************
+
+   Visualization Software:
+       Visualization of Compiler Graphs (VCG):
+            http://rw4.cs.uni-sb.de/~sander/html/gsvcg1.html#description
+       Graph Drawing Tools and Related Work:
+            http://rw4.cs.uni-sb.de/~sander/html/gstools.html
+       Mkfunctmap (Call graph visualization, shows clustering by file):
+            http://seclab.cs.ucdavis.edu/~hoagland/mkfunctmap.html
+
+Types of graphs:
+  1) Data Structure Graphs
+        * Data structure visualization in support of automated Dump/Restart code generation
+        * Diff of two data structures (useful for EDG updates)
+        * Data Stucture Dependence Graph
+               Given two data structures A and B, A is dependent on B iff data
+               used from data structure B is used to define data in data structure A.
+
+  2) Module Dependence Graphs (related to Data Stucture Dependence Graph)
+        * Automated Testing within massive program changes (such as occur in scientific computing)
+
+  3)
+
+
+*********************
+Example of how to run Nils' graphics display of dot files:
+
+    0 bash
+    1  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/thuerey1/local/lib/graphviz
+    2  cd /home/thuerey1/rose/dot3d
+
+    3 Process dot file for use with interative dot viewer
+      dot -Tdot test2004_11.C.dot > test2004_11.C.pdot
+
+    4  ./dot3d pl/prelayout_small.dot
+    5  ./dot3d pl/prelayout_xxxlarge.dot
+    9  ./dot3d pl/prelayout_large.dot
+
+
+**************************************************************************
+* (9/26/2003) Updates To SAGE Interface (Draft Proposal)
+**************************************************************************
+
+1) Rewrite mechanism level 1: insert(), replace(), remove()
+      taking both single SgStatement pointers and a list of SgNode pointers
+
+2) Add member functions to SgNode to permit simple access to the SgProject, SgFile, and
+   SgGlobal objects higher (toward the root) in the AST.
+      a) SgProject* SgNode::getProject(SgNode*);
+      b) SgFile*    SgNode::getFile(SgNode*);
+      c) SgGlobal*  SgNode::getGlobalScope(SgNode*);
+      d) Maybe also, SgDeclarationStatement SgNode::getDeclaration(SgNode*);
+      e) SgForInitStatement* SgForStatement::getInitializerStatements();
+
+3) Naming mechanisms (member functions which return names
+      a) string SgType::getName() to return the name of a type (function 
+         currently in ROSE/src/transformationSupport)
+      b) string SgFunctionDeclaration::getName()
+      c) string SgClassDeclaration::getName()
+      d) string SgFunctionDeclaration::getMangledName()
+      e) string SgClassDeclaration::getMangledName()
+
+4) Getting next and previous statements (at least one is implemented in ROSE::getPreviousStatement())
+      a) SgStatement* SgStatement::getPreviousStatement();
+      b) SgStatement* SgStatement::getNextStatement();
+
+5) Generating subcollections (using the Query Library and replacing the SgSymbolTable)
+      a) list<SgFunctionDeclarationStatements> SgScopeStatement::functionDeclarations()
+      b) list<SgFunctionDeclarationStatements> SgScopeStatement::memberFunctionDeclarations()
+      c) list<SgVarRefExpr> SgScopeStatement::variableReferences(SgInitializedName*)
+      d) others, etc.
+
+6) Symbol renaming (possible only after deleting the SgSymbolTable)
+      a) rename variables
+      b) rename types
+      c) rename functions
+
+7) Things to remove:
+      a) enum Cxx_GrammarVariants (use enum VariantT instead)
+      b) SgC_PreprocessorDirectiveStatement and all derived classes
+      c) SgCommentStatement and all derived classes
+      d) SgFunctionTypeTable (not used by anyone???)
+
+8) Things to rename
+     A. Change Class names
+          a) SgEllipse --> SgEllipsis
+          b) Statements named with suffix "Stmt" to be renamed with suffix "Statement" 
+          c) Statements names that don't contain the substring "statement" should 
+             be fix to contain the suffix "statement"
+          d) SgExprStatement --> SgExpressionStatement
+          e) SgForInitStatement --> SgForInitializerDeclarationStatement (???)
+
+          f) Affected SgStatement classes:
+                  SgBreakStmt 
+                  SgCaseOptionStmt 
+                  SgCatchStatementSeq 
+                  SgContinueStmt 
+                  SgDeclarationStatement  (see derived classes)
+                       SgAsmStmt 
+                       SgClassDeclaration 
+                           SgTemplateInstantiationDecl 
+                       SgCtorInitializerList 
+                       SgEnumDeclaration 
+                       SgFunctionDeclaration 
+                           SgMemberFunctionDeclaration 
+                       SgFunctionParameterList 
+                       SgTemplateDeclaration 
+                       SgTypedefDeclaration 
+                       SgVariableDeclaration 
+                       SgVariableDefinition 
+                  SgDefaultOptionStmt 
+                  SgReturnStmt 
+                  SgScopeStatement (see derived classes)
+                       SgBasicBlock 
+                       SgCatchOptionStmt 
+                       SgClassDefinition 
+                           SgTemplateInstantiationDefn 
+                       SgDoWhileStmt 
+                       SgFunctionDefinition 
+                       SgGlobal 
+                       SgIfStmt 
+                       SgWhileStmt 
+                  SgSpawnStmt 
+                  SgTryStmt
+
+     B. Change Function Names
+          a) Use of sage in function names
+                virtual const char* sage_class_name() const;
+             to 
+                virtual const string className() const = 0;
+
+          b) Variant access function
+                variantT() const;
+
+     C. Change Enum Names
+          a) VariantT -> <something better>
+
+     D. Change SgBaseClassList to be a list of pointers to SgBaseClass
+        (this detail is an inconsistancy in SAGE III, inherited from SAGE II)
+
+8) Previously defined TODO list* ((8/11/03) Work to do before release of ROSE)
+
+   1) Consistant class names and function names
+   2) Consistant function interfaces (remove some and add others)
+        a. Define new function interfaces
+            1. getName functions at nodes containing names
+            2. getList (or "list") functions at nodes containing lists
+            3. virtual containsList function function returning bool implemented on SgNode
+            4. "insert" "replace" "remove" functions
+                 1. insert would be implemented as a non-virtual function 
+                    only at the astnodes where it makes sense.
+                 2. virtual replace function implemented on SgNode
+                      (checks node variant and handles case replace on 
+                      list of declarations vs. list of statements)
+                 3. remove function implemented on SgNode
+            5. Discuss if NULL pointeres are permited in interface.
+
+        b. Select existing functions to be removed
+            1. append, prepend, differnet insert functions in scopes etc.
+            2. getStatementList and getDeclarationList functions (in favor of "getList" or "list")
+
+   3) Fix duplicate (twin) SgInitializedName nodes
+
+9) Member function in SgFunctionCallExp (and maybe SgFunctionType):
+
+      a) // returns true if the function is a member function (false if not a member function)
+            bool isMemberFunction();
+
+      b) // returns name of class for which function is a member (or empty string if not a member function).
+            string get_class_name(); OR string getClassName();
+
+10) Root directory reorganization
+    The current root directory for ROSE has a lot of subdirectories which make the project
+    confusing.
+      a) src directory does not contain but a little bit of the source code for ROSE
+      b) Analysis directory (what analysis is this and shouldn't several current 
+         subdirectories of the root directory go here?
+      c) ExamplePreprocessors (perhaps this should be renamed to ExampleTranslators?)
+      d) ContainerParallelizer should not go into the root directory (I think).
+         If we need a location for projects and the ExamplePreprocessors directory
+         is not good enough, then let's build a PROJECTS (pick a better name) directory.
+
+11) Things to Add (Possible things to add)
+      a) SgFunctionForwardDeclaration
+         Currently a forward declaration is just a normal SgFunctionDeclaration 
+         node with a null pointer to a SgFunctionDefinition.  It has a valid pointer
+         to a SgFunctionParameterList object but the scope of the SgFunctionParameterList
+         is the SgFunctionDefinition not the SgFunctionDeclaration (since a
+         SgFunctionDeclaration is not a SgScopeStatement object).  We could add a
+         SgForwardFunctionDeclaration and a SgForwardFunctionParameterList which would
+         handle these special case.  Then the SgForwardFunctionDeclaration would contain
+         a SgForwardFunctionParameterList, but the get_scope() function would return NULL
+         for a SgForwardFunctionParameterList (which is what it does now).  It is not
+         clear if this is a problem worth fixing or not.
+
+********************************************************************************
+* (10/11/2003) Things to add to SAGE III to support F90 (Initial Draft Proposal)
+********************************************************************************
+
+   This draft proposal for new IR nodes for SAGE III should open up some 
+discussion.  I have based it largely on the documented FORTRAN 90 support
+withn Sage++ (I had a copy of the old documentation at home).  I have been
+reviewing FORTRAN 90 (I have two books on F90) and so it has been quite
+interesting.  I have tried to separate out what might be new IR nodes and
+what IR nodes might be reused to stand for both C++ and F90.  I am still
+not certain we want to have a union of IRs within SAGE III, so this detail 
+has to discussed still.  We could use ROSETTA to build us a separate
+F90 IR so that the C++ IR is unchanged.  Then the input to ROSETTA would have to
+specify what is shared and what belongs separately to the IRS for each language.
+Then the details would appear in ROSETTA (which might be where it should be).
+
+   Many details have to be discussed and sorted out.  But independent of that I 
+think this draft details what needs to exist in the F90 IR.  Alternatively it
+represents what would have to be hidden in the C++ IR (via Markus's suggested 
+possible approach, if we somehow encoded the F90 into the C++ (not cerain that 
+is possible, but we can talk about that)).
+
+   Since these would build on many existing SAGE III IR classes, I think that they
+could be added without much trouble via ROSETTA.  They contain no F90 semantics so
+they are not complicated.  The trick is only to build these so that all the 
+Whirl IR elements have a place to map to within SAGE III.  Since there are similar
+to the f90 support in Sage++, these should represent a close to complete set
+of required IR nodes.  And of course as Beata pointd out SAGE now starts to
+come full circle on it's original implementation (but hopefuly more robust
+this time with leaveraging connections to EDG for C and c++ and leveraging a 
+connection to Open64 for FORTRAN 90).
+
+
+A. Possible new IR nodes for SAGE III (these likely match, in some way, 
+   F90 constructs in the RICE version of Whirl (I would guess), if 
+   source-to-source processing is possible):
+
+     SgProgramHeaderStatement : SgStatement
+      // Fortran Program Blocks
+         SgSymbol* name
+         SgBasicBlock* body
+
+         string getName()
+         SgBasicBlock* getBody()
+
+     SgProcedureHeaderStatement : SgStatement
+      // Fortran subroutines
+         SgSymbol* name
+         SgBasicBlock* body
+
+         string getName()
+         SgBasicBlock* getBody()
+
+     SgBlockDataStatement : SgStatement
+      // Fortran block data statements
+         SgSymbol* name
+         SgBasicBlock* body
+
+         string getName()
+         SgBasicBlock* getBody()
+
+     SgModuleStatement : SgStatement
+      // Fortran Module statements
+         SgSymbol* name
+         SgBasicBlock* body
+
+         string getName()
+         SgBasicBlock* getBody()
+
+     SgInterfaceStatement : SgStatement
+      // Fortran 90 operator interface statements
+         SgSymbol* name
+         SgBasicBlock* body
+         SgStatement* scope
+
+         string getName()
+         SgBasicBlock* getBody()
+         SgStatement* getScope()
+
+    SgParameterStatement : SgDeclarationStatement
+      // Fortran constants
+         SgExpression* constants
+         SgExpression* values
+
+    SgImplicitStatement : SgDeclarationStatement
+      // Fortran implicit type declarations
+         SgExpression* implicitLists (???)
+
+
+    SgStatementFunctionStatement
+      // Fortran statement function declarations
+      // likely want an initialized name list instead of name and argument lists ???
+         SgSymbol name
+         SgExpresssionList arguments
+         SgBasicBlock* body
+
+         SgInitilaizedNameList* arguments()
+         SgBasicBlock* getBody()
+
+     SgStructureDeclarationStatement
+       // Fortran 90 structure declarations
+         SgSymbol name
+         SgExpresssion* attributes
+         SgBasicBlock* body
+
+         SgExpression* getAttributes()
+         SgBasicBlock* getBody()
+
+         bool isPrivate()
+         bool isPublic()
+         bool is Sequence()
+
+     SgUseStatement
+       // Fortran 90 module usage statements
+         SgSymbol moduleName
+         SgExpression renameList
+         SgStatement scope
+
+     SgMiscellaniousStatement
+       // Fortran 90 "contains" statements, "private" statements, and "sequence" statements
+
+     SgLogicalIfStatement
+       // Fortran logical if statement
+
+     SgIfElseIfStatement
+       // Fortran if ... then ... elseif statements
+
+     SgArithmeticIfStatement
+       // Fortran arithmetic if statements
+
+
+     SgWhereStatement
+       // Fortran where statement
+
+     SgWhereBlockStatement
+       // Fortran where ... elsewhere statement
+
+     SgAssignmentStatement
+       // Fortran assignment statements
+          SgExpression* lhs
+          SgExpression* rhs
+
+     SgPointerAssignmentStatement
+       // Fortran pointer assignment statement
+
+     SgHeapStatement
+       // Fortran allocate and deallocate 
+
+     SgNullifyStatement
+       // Fortran pointer initialization statement
+
+     SgLabelListStatement
+       // Fortran statements containing lists of labels
+
+     SgAssignedGotoStatement
+       // Fortran assigned goto statement
+
+     SgComputedGotoStatement
+       // Fortran computed goto statement
+
+     SgStopOrPauseStatement
+       // Fortran stop statement
+
+     SgCallStatement
+       // Fortan call statement
+
+     SgIOStatement
+       // Fortran input/output and their control statements
+
+     SgInputOutputStatement
+       // Fortran read, write, and print statements
+
+     SgIOControlStatement
+       // Fortran open, close, inquire, backspace, rewind, endfile, and format statements
+
+     SgCycleStatement
+       // Fortran cycle statement
+
+     SgExitStatement
+       // Fortran exit statement
+
+     SgSubscriptExpression
+       // Fortran array references of the form lowerBound:upperBound:stride
+
+     SgKeywordValueExpression
+       // Fortran keyword values in I/O statements, etc.
+
+     SgReferenceExpression
+       // Fortran const references, type references, and interface references
+
+     SgVectorConstantExpression
+       // Fortran vector constants of the form [expr1,expr2,expr3]
+
+     SgObjectListExpression
+       // Fortran equivalence, namelist, and common statements
+
+     SgSpecPairExpression
+       // Fortran default control arguments to I/O statements
+
+     SgIOAccessExpressions
+       // Fortran index variable bound instantiations and do loop range representions
+
+     SgImplicitTypeExpression
+       // Fortran index variable bound instantiations
+
+     SgTypeExpression
+       // Fortran type expressions
+
+     SgSequenceStatement
+       // Fortran seq expressions
+
+     SgStringLengthExpression
+       // Fortran string length expressions
+
+     SgDefaultExpression
+       // Fortran default 
+
+     SgLabelReferenceExpression
+       // Fortran label reference
+
+     SgConstantExpression
+       // Fortran array constants
+
+     SgStructureConstructorExpression
+       // Fortran structure constructor
+
+     SgAttributeExpression
+       // Fortran attributes
+
+     SgKeywordArgumentExpression
+       // Fortran keyword arguments
+
+     SgUseOnlyExpression
+       // Fortran ONLY attribute of USE statements
+
+     SgUseRenameExpression
+       // Fortran USE statement renamings
+
+     SgLabelVariableSymbol
+       // Fortran symbols for label variable for assigned goto statements
+
+     SgExternalSymbol
+       // Fortran symbols for external functions
+
+     SgContructSymbol
+       // Fortran symbols for construct names
+
+     SgModuleSymbol
+       // Fortran symbols for module statements
+
+     SgInterfaceSymbol
+       // Fortran symbols for module interface statements
+
+     
+
+
+B. Common IR nodes (between C,C++,F90)
+
+   These nodes would be shared between C++ and F90 (it is not yet complete)
+
+      SgNode
+         SgLocatedNode
+            SgStatement
+               SgDeclarationStatement
+                  SgVariableDeclararionStatement
+               SgDoWhileStatement
+               SgIfStatement
+               SgSwitchStatement
+               SgExpressionStatement
+               SgContinueStatement
+               SgReturnStatement
+               SgGotoStatement
+
+            SgExpression
+               SgValueExpression
+               SgFunctionReferenceExpression
+               SgFunctionCallExpression
+               SgExpressionListExpression
+               SgVariableReferenceExpression
+               SgArrayReferenceExpression
+               SgInitializedNameList
+               SgUnaryExpression
+               SgBinaryExpression
+
+            SgSymbol
+               SgVariableSymbol
+               SgConstantSymbol
+               SgFunctionSymbol
+               
+            SgType
+               SgArrayType
+               SgClassType
+               SgFunctionType
+               
+            SgSupport
+               SgModifierNodes
+
+
+********************************************************************************
+* (10/23/2003) Data Structure Analysis
+********************************************************************************
+
+   Many types of proposed projects within ROSE (or projects requiring compiler
+   infrastructure more generally) operate on user-defined data structures.
+   It is for this broad reason (and many specific ones) that we propose a mechanism
+   to handle user-defined data structures.
+
+   Currently work is to graph the data structures (Andreas), but the requirements
+   are much more broad that visualization. 
+
+      1) Data structure visualization (if we can visualize it then likely we can't expect
+    to do much more so this is the first milestone).
+
+      2) Data Structure Queries
+            a) Where in the program is data accessed (there are different 
+               resolutions of access and different types of access)
+                  Resolution
+                     scope (is this another type of access?, e.g. global scope vs. local scope)
+                        read accesses
+                        write accesses
+                     object access
+                        read accesses
+                        write accesses
+                     data member access (field)
+                        read accesses
+                        write accesses
+
+     3) structural form of data
+           class hierachy
+
+
+     4) Transformations
+           Grouping code that accesses the same data (for temporal/spatial locality)
+
+     5) Data references (local or non-local writes)
+
+
+********************************************************************************
+* (10/31/2003) Ways to extend DOT graphs and PDF output
+********************************************************************************
+
+1) Overloaded Operator Support
+      Additional edges could be added to make clear (and debug) what the support for
+   overloaded operators includes.  Basically this reduces the expressions to a simpler
+   expression tree (what you would expect) over what SAGE III provides based on the
+   language constructs (which are rather complex for overloaded functions).  The
+   additional edges in the DOT graph could be represented in either a different color or
+   a different line type (dotted, dashed, etc.)
+
+
+2) High-Level Grammars
+     Coloring of the parts of an application's AST specific to high-level grammars
+   generated from domain-specific libraries.
+
+3) Additional node info in each node (context information).
+     a) Variable names
+     b) Function names
+     c) Unparsed strings for nodes where the string's length would be defined a priori.
+
+4) Need way to add options to the graph (not just nodes and edges).
+
+
+********************************************************************************
+* (11/21/2003) Current errors
+********************************************************************************
+
+  Can't compile tutorial/database directory
+  Can't compile Projects/DataBase directory
+
+********************************************************************************
+* (12/9/2003) Add unparse_info object to control backend
+********************************************************************************
+
+     Andreas's idea to handle graphing of data structures defined in libraries
+by unparsing the header files with the application code. Talk to Andreas.
+
+
+********************************************************************************
+* (12/19/2003) Current errors with new version of EDG (v3.3)
+********************************************************************************
+
+* empty file with coments loose the comments when unparsed
+
+
+
+********************************************************************************
+* (12/19/2003) Current errors in AST (reported by Nils)
+********************************************************************************
+
+get_scope used in replace basic block of for statement assumes that the
+    current scope is returned if called on a for statement.  Need to update
+    where get_scope is used in such functions so that it's new semantics is
+    not a problem.
+
+"return 0" can't replace return statement in int main() { return 0; }
+intermediate file's function prefix defines function to be void.
+
+Explain why the synthesized attributes for the AST rewrite mechanism have to define
+a copy constructor, operator=, and operator+=.  Need to document this and
+explain what happens if these rules are not followed.
+
+
+********************************************************************************
+* (12/23/2003) Current errors in AST (reported by Andreas)
+********************************************************************************
+
+Anonymous typedefs in unparser save a state which is problematic when debugging.
+If unparseToString is called then the structure in an anonymous typedef if output
+but then it is not output in the final unparsed file (rose_<filename>.C).  This
+is because state is saved internally in the SgUnparse_Info object.
+
+problematic field value:
+          static SgTypePtrList p_structureTagProcessingList;
+
+The fix should be to not have this be static, but I can't be certain.
+There was some reason why it had to be static in the first place.
+Perhaps because it would be copied by copy constructors and the state
+across copy constructor calls had to be maintained (something like that).
+
+
+********************************************************************************
+* (1/12/2004) Documentation Requirements (reported by Beata)
+********************************************************************************
+
+DONE: Specify where to get DOT (GraphViz) and Doxygen software used in ROSE 
+developers (added where to find MySQL as well).
+
+      Add mechanism to pass command line options to the EDG frontend.
+Something like -edg:<option name> which would be read and passed on to
+the EDG command line as -<option name>.  User should consult EDG documentation
+for current list of EDG options.  Those EDG options that effect the fron-end will
+make a difference, but any options that effect the EDG C++ code generating backend
+will not (since ROSE implements it's own code generating C++ backend; EDG's is 
+not used).
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
