@@ -166,9 +166,8 @@ endif
 
 #Liao, 5/16/2009 add a set of self-verifiable test code with main() 
 # and let them run during make check
-TESTCODES_REQUIRED_TO_RUN = \
-     test2009_18.c \
-     test2009_20.c
+# TV, 9/7/12 do not run them if using Clang
+TESTCODES_REQUIRED_TO_RUN =
 
 if !ROSE_USE_CLANG_FRONTEND
    TESTCODES_REQUIRED_TO_RUN += \
@@ -269,7 +268,8 @@ test2008_02.o: $(srcdir)/test2008_02.c
 #include $(top_srcdir)/config/QMTest_makefile.inc
 
 EXTRA_DIST = $(ALL_TESTCODES) builtin-types.def callee.c caller.c c-common.def \
-             test2006_134.h test2010_08.h predict.def test2010_15.h
+             test2006_134.h test2010_08.h predict.def test2010_15.h \
+             test2009_18.c test2009_20.c
 
 copyFiles:
 	cp $(srcdir)/*.h $(top_srcdir)/tests/CompileTests/C_tests
