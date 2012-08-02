@@ -131,6 +131,9 @@ static void syscall_getgid(RSIM_Thread *t, int callno);
 static void syscall_getgid32(RSIM_Thread *t, int callno);
 static void syscall_getgid32_enter(RSIM_Thread *t, int callno);
 static void syscall_getgid_enter(RSIM_Thread *t, int callno);
+static void syscall_getgroups32_enter(RSIM_Thread *t, int callno);
+static void syscall_getgroups32(RSIM_Thread *t, int callno);
+static void syscall_getgroups32_leave(RSIM_Thread *t, int callno);
 static void syscall_getpgrp(RSIM_Thread *t, int callno);
 static void syscall_getpgrp_enter(RSIM_Thread *t, int callno);
 static void syscall_getpid(RSIM_Thread *t, int callno);
@@ -196,6 +199,9 @@ static void syscall_pause_leave(RSIM_Thread *t, int callno);
 static void syscall_pipe(RSIM_Thread *t, int callno);
 static void syscall_pipe_enter(RSIM_Thread *t, int callno);
 static void syscall_pipe_leave(RSIM_Thread *t, int callno);
+static void syscall_pipe2(RSIM_Thread *t, int callno);
+static void syscall_pipe2_enter(RSIM_Thread *t, int callno);
+static void syscall_pipe2_leave(RSIM_Thread *t, int callno);
 static void syscall_prctl(RSIM_Thread *t, int callno);
 static void syscall_prctl_enter(RSIM_Thread *t, int callno);
 static void syscall_pread64(RSIM_Thread *t, int callno);
@@ -244,6 +250,8 @@ static void syscall_sched_yield_enter(RSIM_Thread *t, int callno);
 static void syscall_select(RSIM_Thread *t, int callno);
 static void syscall_select_enter(RSIM_Thread *t, int callno);
 static void syscall_select_leave(RSIM_Thread *t, int callno);
+static void syscall_setgroups32_enter(RSIM_Thread *t, int callno);
+static void syscall_setgroups32(RSIM_Thread *t, int callno);
 static void syscall_set_robust_list(RSIM_Thread *t, int callno);
 static void syscall_set_robust_list_enter(RSIM_Thread *t, int callno);
 static void syscall_set_thread_area(RSIM_Thread *t, int callno);
@@ -408,6 +416,8 @@ RSIM_Linux32::ctor()
     SC_REG(200, getgid32,                       default);
     SC_REG(201, geteuid32,                      default);
     SC_REG(202, getegid32,                      default);
+    SC_REG(205, getgroups32,                    getgroups32);
+    SC_REG(206, setgroups32,                    default);
     SC_REG(207, fchown32,                       default);
     SC_REG(212, chown,                          default);
     SC_REG(219, madvise,                        default);
@@ -428,7 +438,7 @@ RSIM_Linux32::ctor()
     SC_REG(271, utimes,                         default);
     SC_REG(306, fchmodat,                       default);
     SC_REG(311, set_robust_list,                default);
-
+    SC_REG(331, pipe2,                          pipe2);
 
 #undef SC_REG
 }
@@ -1191,6 +1201,48 @@ syscall_pipe(RSIM_Thread *t, int callno)
 
 static void
 syscall_pipe_leave(RSIM_Thread *t, int callno)
+{
+    t->syscall_leave("dP", (size_t)8, print_int_32);
+}
+
+/*******************************************************************************************************************************/
+
+static void
+syscall_pipe2_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("pipe", "pf", open_flags);
+}
+
+static void
+syscall_pipe2(RSIM_Thread *t, int callno)
+{
+#ifdef HAVE_PIPE2
+    int flags = t->syscall_arg(1);
+    int host[2];
+    int result = pipe2(host, flags);
+    if (-1==result) {
+        t->syscall_return(-errno);
+        return;
+    }
+
+    int32_t guest[2];
+    guest[0] = host[0];
+    guest[1] = host[1];
+    if (sizeof(guest)!=t->get_process()->mem_write(guest, t->syscall_arg(0), sizeof guest)) {
+        close(host[0]);
+        close(host[1]);
+        t->syscall_return(-EFAULT);
+        return;
+    }
+
+    t->syscall_return(result);
+#else
+    t->syscall_return(-ENOSYS);
+#endif
+}
+
+static void
+syscall_pipe2_leave(RSIM_Thread *t, int callno)
 {
     t->syscall_leave("dP", (size_t)8, print_int_32);
 }
@@ -2352,7 +2404,8 @@ sys_connect(RSIM_Thread *t, int fd, uint32_t addr_va, uint32_t addrlen)
             }
             size_t host_sz = 2/*af_family*/ + filename.size() + 1/*NUL*/;
             char host[host_sz];
-            *(uint16_t*)host = guest.sa_family;
+            uint16_t fam = guest.sa_family;
+            memcpy(host+0, &fam, 2);
             strcpy(host+2, filename.c_str());
 #ifdef SYS_socketcall /* i686 */
             ROSE_ASSERT(4==sizeof(int));
@@ -2677,7 +2730,7 @@ syscall_socketcall_leave(RSIM_Thread *t, int callno)
                 if (trace->get_file() &&
                     (int32_t)a[0] > 0 &&
                     sizeof(msghdr)==t->get_process()->mem_read(&msghdr, a[2], sizeof msghdr)) {
-                    trace->multipart("recvmsg", "");
+                    trace->multipart("recvmsg", "%s", ""); // this way to fix compiler warning
                     uint32_t nbytes = a[0];
                     for (unsigned i=0; i<msghdr.msg_iovlen && i<100 && nbytes>0; i++) {
                         uint32_t vasz[2];
@@ -3470,19 +3523,25 @@ sys_shmdt(RSIM_Thread *t, uint32_t shmaddr_va)
     int result = -ENOSYS;
 
     RTS_WRITE(t->get_process()->rwlock()) {
-        const MemoryMap::MapElement *me = t->get_process()->get_memory()->find(shmaddr_va);
-        if (!me || me->get_va()!=shmaddr_va || me->get_offset()!=0 || me->is_anonymous()) {
+        if (!t->get_process()->get_memory().exists(shmaddr_va)) {
+            result = -EINVAL;
+            break;
+        }
+        std::pair<Extent, MemoryMap::Segment> me = t->get_process()->get_memory().at(shmaddr_va);
+        if (me.first.first()!=shmaddr_va ||
+            me.second.get_buffer_offset()!=0 ||
+            dynamic_cast<MemoryMap::AnonymousBuffer*>(me.second.get_buffer().get())) {
             result = -EINVAL;
             break;
         }
 
-        result = shmdt(me->get_base());
+        result = shmdt(me.second.get_buffer()->get_data_ptr());
         if (-1==result) {
             result = -errno;
             break;
         }
 
-        t->get_process()->mem_unmap(me->get_va(), me->get_size(), t->tracing(TRACE_MMAP));
+        t->get_process()->mem_unmap(me.first.first(), me.first.size(), t->tracing(TRACE_MMAP));
         result = 0;
     } RTS_WRITE_END;
     t->syscall_return(result);
@@ -3674,7 +3733,7 @@ sys_shmat(RSIM_Thread *t, uint32_t shmid, uint32_t shmflg, uint32_t result_va, u
 
     RTS_WRITE(t->get_process()->rwlock()) {
         if (0==shmaddr) {
-            shmaddr = t->get_process()->get_memory()->find_last_free();
+            shmaddr = t->get_process()->get_memory().find_last_free();
         } else if (shmflg & SHM_RND) {
             shmaddr = ALIGN_DN(shmaddr, SHMLBA);
         } else if (ALIGN_DN(shmaddr, 4096)!=shmaddr) {
@@ -3701,9 +3760,10 @@ sys_shmat(RSIM_Thread *t, uint32_t shmid, uint32_t shmflg, uint32_t result_va, u
         ROSE_ASSERT(status>=0);
         ROSE_ASSERT(ds.shm_segsz>0);
         unsigned perms = MemoryMap::MM_PROT_READ | ((shmflg & SHM_RDONLY) ? 0 : MemoryMap::MM_PROT_WRITE);
-        MemoryMap::MapElement shm(shmaddr, ds.shm_segsz, buf, 0, perms);
-        shm.set_name("shmat("+StringUtility::numberToString(shmid)+")");
-        t->get_process()->get_memory()->insert(shm);
+
+        MemoryMap::BufferPtr buffer = MemoryMap::ExternBuffer::create(buf, ds.shm_segsz);
+        MemoryMap::Segment sgmt(buffer, 0, perms, "shmat("+StringUtility::numberToString(shmid)+")");
+        t->get_process()->get_memory().insert(Extent(shmaddr, ds.shm_segsz), sgmt);
 
         /* Return values */
         if (4!=t->get_process()->mem_write(&shmaddr, result_va, 4)) {
@@ -3724,7 +3784,8 @@ syscall_ipc(RSIM_Thread *t, int callno)
      * Linux kernel. */
     unsigned call = t->syscall_arg(0) & 0xffff;
     int version = t->syscall_arg(0) >> 16;
-    uint32_t first=t->syscall_arg(1), second=t->syscall_arg(2), third=t->syscall_arg(3), ptr=t->syscall_arg(4), fifth=t->syscall_arg(5);
+    uint32_t first=t->syscall_arg(1), second=t->syscall_arg(2), third=t->syscall_arg(3);
+    uint32_t ptr=t->syscall_arg(4), fifth=t->syscall_arg(5);
     switch (call) {
         case 1: /* SEMOP */
             sys_semtimedop(t, first, ptr, second, 0);
@@ -3917,34 +3978,29 @@ syscall_clone_enter(RSIM_Thread *t, int callno)
 static int
 sys_clone(RSIM_Thread *t, unsigned flags, uint32_t newsp, uint32_t parent_tid_va, uint32_t child_tls_va, uint32_t pt_regs_va)
 {
+    RSIM_Process *p = t->get_process();
+
     if (flags == (CLONE_CHILD_CLEARTID | CLONE_CHILD_SETTID | SIGCHLD)) {
-        /* This is a fork() */
 
-        /* Flush some files so buffered content isn't output twice. */
-        fflush(stdout);
-        fflush(stderr);
-        if (t->get_process()->get_tracing_file())
-            fflush(t->get_process()->get_tracing_file());
+        /* Apply process pre-fork callbacks */
+        p->get_callbacks().call_process_callbacks(RSIM_Callbacks::BEFORE, p, RSIM_Callbacks::ProcessCallback::FORK, true);
 
-        /* We cannot use clone() because it's a wrapper around the clone system call and we'd need to provide a function for it to
-         * execute. We want fork-like semantics. */
+        /* We cannot use clone() because it's a wrapper around the clone system call and we'd need to provide a function for it
+         * to execute. We want fork-like semantics.  The RSIM_Process::atfork_*() callbacks are invoked here, and among other
+         * actions, wait and post the simulator's global semaphore. */
+        t->atfork_prepare();
         pid_t pid = fork();
-        if (-1==pid)
-            return -errno;
 
-        if (0==pid) {
-            /* Kludge for now. FIXME [RPM 2011-02-14] */
-            t->post_fork();
-
-            /* Open new log files if necessary */
-            t->get_process()->open_tracing_file();
-            t->get_process()->btrace_close();
+        if (0!=pid) {
+            t->atfork_parent();
+        } else {
+            t->atfork_child();
 
             /* Thread-related things. We have to initialize a few data structures because the specimen may be using a
              * thread-aware library. */
             if (0!=(flags & CLONE_CHILD_SETTID) && child_tls_va) {
                 uint32_t pid32 = getpid();
-                size_t nwritten = t->get_process()->mem_write(&pid32, child_tls_va, 4);
+                size_t nwritten = p->mem_write(&pid32, child_tls_va, 4);
                 ROSE_ASSERT(4==nwritten);
             }
             if (0!=(flags & CLONE_CHILD_CLEARTID))
@@ -3952,30 +4008,27 @@ sys_clone(RSIM_Thread *t, unsigned flags, uint32_t newsp, uint32_t parent_tid_va
 
             /* Return register values in child */
             pt_regs_32 regs;
-            regs.bx = t->policy.readGPR(x86_gpr_bx).known_value();
-            regs.cx = t->policy.readGPR(x86_gpr_cx).known_value();
-            regs.dx = t->policy.readGPR(x86_gpr_dx).known_value();
-            regs.si = t->policy.readGPR(x86_gpr_si).known_value();
-            regs.di = t->policy.readGPR(x86_gpr_di).known_value();
-            regs.bp = t->policy.readGPR(x86_gpr_bp).known_value();
-            regs.sp = t->policy.readGPR(x86_gpr_sp).known_value();
-            regs.cs = t->policy.readSegreg(x86_segreg_cs).known_value();
-            regs.ds = t->policy.readSegreg(x86_segreg_ds).known_value();
-            regs.es = t->policy.readSegreg(x86_segreg_es).known_value();
-            regs.fs = t->policy.readSegreg(x86_segreg_fs).known_value();
-            regs.gs = t->policy.readSegreg(x86_segreg_gs).known_value();
-            regs.ss = t->policy.readSegreg(x86_segreg_ss).known_value();
-            uint32_t flags = 0;
-            for (size_t i=0; i<VirtualMachineSemantics::State::n_flags; i++) {
-                if (t->policy.readFlag((X86Flag)i).known_value()) {
-                    flags |= (1u<<i);
-                }
-            }
-            if (sizeof(regs)!=t->get_process()->mem_write(&regs, pt_regs_va, sizeof regs))
+            regs.bx = t->policy.readRegister<32>(t->policy.reg_ebx).known_value();
+            regs.cx = t->policy.readRegister<32>(t->policy.reg_ecx).known_value();
+            regs.dx = t->policy.readRegister<32>(t->policy.reg_edx).known_value();
+            regs.si = t->policy.readRegister<32>(t->policy.reg_esi).known_value();
+            regs.di = t->policy.readRegister<32>(t->policy.reg_edi).known_value();
+            regs.bp = t->policy.readRegister<32>(t->policy.reg_ebp).known_value();
+            regs.sp = t->policy.readRegister<32>(t->policy.reg_esp).known_value();
+            regs.cs = t->policy.readRegister<16>(t->policy.reg_cs).known_value();
+            regs.ds = t->policy.readRegister<16>(t->policy.reg_ds).known_value();
+            regs.es = t->policy.readRegister<16>(t->policy.reg_es).known_value();
+            regs.fs = t->policy.readRegister<16>(t->policy.reg_fs).known_value();
+            regs.gs = t->policy.readRegister<16>(t->policy.reg_gs).known_value();
+            regs.ss = t->policy.readRegister<16>(t->policy.reg_ss).known_value();
+            regs.flags = t->policy.readRegister<32>(t->policy.reg_eflags).known_value();
+            if (sizeof(regs)!=p->mem_write(&regs, pt_regs_va, sizeof regs))
                 return -EFAULT;
-        }
 
-        return pid;
+            p->get_callbacks().call_process_callbacks(RSIM_Callbacks::AFTER, p, RSIM_Callbacks::ProcessCallback::FORK, true);
+        }
+        
+        return -1==pid ? -errno : pid;
         
     } else if (flags == (CLONE_VM |
                          CLONE_FS |
@@ -3991,7 +4044,7 @@ sys_clone(RSIM_Thread *t, unsigned flags, uint32_t newsp, uint32_t parent_tid_va
         regs.sp = newsp;
         regs.ax = 0;
 
-        pid_t tid = t->get_process()->clone_thread(t, flags, parent_tid_va, child_tls_va, regs);
+        pid_t tid = p->clone_thread(t, flags, parent_tid_va, child_tls_va, regs);
         return tid;
     } else {
         return -EINVAL; /* can't handle this combination of flags */
@@ -4666,7 +4719,7 @@ syscall_rt_sigprocmask(RSIM_Thread *t, int callno)
 {
     int how=t->syscall_arg(0);
     uint32_t in_va=t->syscall_arg(1), out_va=t->syscall_arg(2);
-    size_t sigsetsize=t->syscall_arg(3);
+    size_t sigsetsize __attribute__((unused)) = t->syscall_arg(3);
     assert(sigsetsize==sizeof(RSIM_SignalHandling::sigset_32));
 
     RSIM_SignalHandling::sigset_32 in_set, out_set;
@@ -5068,6 +5121,105 @@ syscall_getegid32(RSIM_Thread *t, int callno)
 /*******************************************************************************************************************************/
 
 static void
+syscall_getgroups32_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("getgroups32", "dp");
+}
+
+static void
+syscall_getgroups32(RSIM_Thread *t, int callno)
+{
+    int nelmts = t->syscall_arg(0);
+    uint32_t list_ptr = t->syscall_arg(1);
+    int ngroups = 0;
+    gid_t *list = NULL;
+
+    /* Use the process mutex so we can figure out how much memory will be needed before we obtain the groups. */
+    RTS_READ(t->get_process()->rwlock()) {
+        if (-1==(ngroups = getgroups(0, NULL)))
+            t->syscall_return(-errno); // capture errno before we lose it
+        if (ngroups>0 && nelmts>0 && ngroups<=nelmts) {
+            list = new gid_t[ngroups];
+            int ngroups2 __attribute__((unused)) = getgroups(ngroups, list);
+            assert(ngroups2==ngroups);
+        }
+    } RTS_READ_END;
+
+    if (-1==ngroups) {
+        // errno already captured
+    } else if (0==nelmts) {
+        t->syscall_return(ngroups);
+    } else if (ngroups>nelmts) {
+        t->syscall_return(-EINVAL);
+    } else {
+        assert(list!=NULL);
+        assert(sizeof(list[0])==4); // gid_t is 4 bytes on i386
+        size_t nwrite = t->get_process()->mem_write(list, list_ptr, ngroups*sizeof(list[0]));
+        if (nwrite!=ngroups*sizeof(list[0])) {
+            t->syscall_return(-EFAULT);
+        } else {
+            t->syscall_return(ngroups);
+        }
+    }
+
+    delete[] list;
+}
+
+static void
+syscall_getgroups32_leave(RSIM_Thread *t, int callno)
+{
+    int ngroups = t->syscall_arg(-1);
+    int nreq = t->syscall_arg(0);
+    if (nreq>0) {
+        t->syscall_leave("d-P", std::min(ngroups, nreq)*sizeof(gid_t), print_int_32);
+    } else {
+        t->syscall_leave("d");
+    }
+}
+
+/*******************************************************************************************************************************/
+
+static void
+syscall_setgroups32_enter(RSIM_Thread *t, int callno)
+{
+    size_t ngroups = t->syscall_arg(0);
+    size_t maxgroups = sysconf(_SC_NGROUPS_MAX);
+    t->syscall_enter("setgroups32", "dP", std::min(ngroups, maxgroups)*sizeof(gid_t), print_int_32);
+}
+
+static void
+syscall_setgroups32(RSIM_Thread *t, int callno)
+{
+    int nelmts = t->syscall_arg(0);
+    uint32_t list_ptr = t->syscall_arg(1);
+    long maxgroups = sysconf(_SC_NGROUPS_MAX);
+
+    if (nelmts>maxgroups) {
+        t->syscall_return(-EINVAL);
+        return;
+    }
+    
+    gid_t *list = new gid_t[nelmts];
+    size_t nread = t->get_process()->mem_read(list, list_ptr, nelmts*sizeof(*list));
+    if (nread!=nelmts*sizeof(*list)) {
+        t->syscall_return(-EFAULT);
+        delete[] list;
+        return;
+    }
+
+    /* The write lock is required by syscall_getgroups32() */
+    int retval = 0;
+    RTS_WRITE(t->get_process()->rwlock()) {
+        retval = setgroups(nelmts, list);
+        t->syscall_return(-1==retval ? -errno : retval); // capture errno before we lose it
+    } RTS_WRITE_END;
+
+    delete[] list;
+}
+
+/*******************************************************************************************************************************/
+
+static void
 syscall_fchown32_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("fchown32", "ddd");
@@ -5148,7 +5300,7 @@ syscall_madvise(RSIM_Thread *t, int callno)
     /* If pages are unmapped, return -ENOMEM */
     ExtentMap mapped_mem;
     RTS_READ(t->get_process()->rwlock()) {
-        mapped_mem = t->get_process()->get_memory()->va_extents();
+        mapped_mem = t->get_process()->get_memory().va_extents();
     } RTS_READ_END;
     ExtentMap unmapped = mapped_mem.subtract_from(Extent(start, size));
     if (unmapped.size()>0) {
@@ -5435,7 +5587,7 @@ syscall_futex(RSIM_Thread *t, int callno)
             break;
     }
 
-    t->syscall_return(-1==result ? -errno : result);
+    t->syscall_return(result);
 }
 
 static void
@@ -5725,9 +5877,9 @@ syscall_fstatfs64_enter(RSIM_Thread *t, int callno)
 static void
 syscall_fstatfs64(RSIM_Thread *t, int callno)
 {
-    int fd              = t->syscall_arg(0);
-    size_t sb_sz        = t->syscall_arg(1);
-    uint32_t sb_va      = t->syscall_arg(2);
+    int fd                               = t->syscall_arg(0);
+    size_t sb_sz __attribute__((unused)) = t->syscall_arg(1);
+    uint32_t sb_va                       = t->syscall_arg(2);
 
     assert(sb_sz==sizeof(statfs64_32));
 
@@ -5846,26 +5998,27 @@ syscall_utimes(RSIM_Thread *t, int callno)
 static void
 syscall_fchmodat_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("fchmodat", "dsdd");
+    /* Note that the library fchmodat() takes a fourth flags argument with the only defined bit being AT_SYMLINK_NOFOLLOW, but
+     * the Linux 2.6.32 man page notes that "this flag is not currently implemented." */
+    t->syscall_enter("fchmodat", "dsf-", file_mode_flags /*, fchmod_flags*/);
 }
 
 static void
 syscall_fchmodat(RSIM_Thread *t, int callno)
 {
     int dirfd = t->syscall_arg(0);
-    uint32_t path = t->syscall_arg(1);
+    uint32_t path_va = t->syscall_arg(1);
     bool error;
-    std::string sys_path = t->get_process()->read_string(path, 0, &error);
+    std::string path = t->get_process()->read_string(path_va, 0, &error);
     if (error) {
         t->syscall_return(-EFAULT);
         return;
     }
     mode_t mode = t->syscall_arg(2);
-    int flags = t->syscall_arg(3);
+    int flags = 0;  // t->syscall_arg(3);
 
-    int result = syscall( 306, dirfd, (long) sys_path.c_str(), mode, flags);
-    if (result == -1) result = -errno;
-    t->syscall_return(result);
+    int result = fchmodat(dirfd, path.c_str(), mode, flags);
+    t->syscall_return(-1==result ? -errno : result);
 }
 
 /*******************************************************************************************************************************/

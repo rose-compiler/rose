@@ -1,13 +1,11 @@
 #include "sage3basic.h"
 #include "BinaryLoaderElf.h"
 #include "integerOps.h"                 /* needed for signExtend() */
+#include "MemoryMap.h"
 
 #include <fstream>
 #include <boost/regex.hpp>
 #include <boost/filesystem.hpp>
-
-#define __STDC_FORMAT_MACROS
-#include <inttypes.h>
 
 /* This binary loader can handle all ELF files. */
 bool
@@ -443,7 +441,8 @@ BinaryLoaderElf::SymbolMapEntry::get_vsymbol(const VersionedSymbol &version) con
         if (def && neededVersion == def->get_entries()->get_entries().front()->get_name()->get_string())
             return p_versions[i];
     }
-    ROSE_ASSERT(false);/* TODO, handle cases where input uses versioning, but definition does not */
+    assert(!"TODO, handle cases where input uses versioning, but definition does not");
+    abort();
 }
 
 void

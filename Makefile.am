@@ -21,6 +21,7 @@ if ROSE_BUILD_TESTS_DIRECTORY_SUPPORT
    SUBDIRS += tests
 endif
 
+if !ROSE_USE_CLANG_FRONTEND
 if !ROSE_USE_INSURE
 # DQ (4/23/2011): Ignoring all of these whole directories might be over kill.  But I have had problems with 
 # Insure++ compilation specific to Hudson and want to start small and work to grow the number of parts of ROSE
@@ -39,6 +40,7 @@ if ROSE_BUILD_TUTORIAL_DIRECTORY_SUPPORT
 endif
 SUBDIRS += binaries
 # endif for controling Insure++ usage.
+endif
 endif
 
 ACLOCAL_AMFLAGS = -I ./config -I ./acmacros -I ./libltdl -I /usr/share/aclocal
@@ -104,7 +106,7 @@ enforce_policies:
 # EXTRA_DIST = cmake CMakeLists.txt rose_config.h.in.cmake stamp-h.in stamp-h1.in rose.docs.in COPYRIGHT \
 #              LicenseInformation ROSE_ResearchPapers README.OSX README.Cygwin build ChangeLog2 bincompat-sig
 EXTRA_DIST = cmake CMakeLists.txt rose_config.h.in.cmake stamp-h.in stamp-h1.in rose.docs.in COPYRIGHT \
-             LicenseInformation ROSE_ResearchPapers README.Cygwin build ChangeLog2 bincompat-sig
+             LicenseInformation ROSE_ResearchPapers build ChangeLog2 bincompat-sig
 
 # Liao, 12/11/2009. we should force this rule to run every time we want to make a distribution
 # otherwise the stale one can go into the distribution package

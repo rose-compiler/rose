@@ -27,29 +27,30 @@ namespace CommandlineProcessing
 
           Rose_STL_Container<std::string> generateOptionList ( Rose_STL_Container<std::string> & argList, std::string inputPrefix );
 
-       //! Find all options with a form like inputprefix:option from argList, strip off inputprefix: and return a string list for options only.
-       //! All matching inputprefix:option in argList are also removed.   
-          Rose_STL_Container<std::string> generateOptionWithNameParameterList ( Rose_STL_Container<std::string> & argList, std::string inputPrefix );
+       //! Find all options matching 'inputPrefix:optionName' || 'inputPrefix:optionName optionValue' from argList,
+       //! strip off 'inputPrefix:' or replace it by 'newPrefix' if provided. Returns a string list of matched options.
+       //! All matching options and values are removed from argList.
+          Rose_STL_Container<std::string> generateOptionWithNameParameterList ( Rose_STL_Container<std::string> & argList, std::string inputPrefix, std::string newPrefix = "");
 
           extern Rose_STL_Container<std::string> extraCppSourceFileSuffixes;
 
-       //! Search 'argv' for an option like optionPrefix:option, remove the option if 'removeOption' is true.
+       //! Search 'argv' for an option like optionPrefixOption, remove the option if 'removeOption' is true. e.g. isOption(argv,"-rose:","(C99|C99_only)",false)
        /*! 
         The argument 'option' adds () to the actual option, and allows the |(OR) operations.For example: 
               CommandlineProcessing::isOption(argv,"-rose:","(skip_syntax_check)",true)
               CommandlineProcessing::isOption(argv,"-rose:","(C99|C99_only)",false) 
        */       
-          bool isOption ( std::vector<std::string> & argv, std::string optionPrefix, std::string option, bool removeOption );
+          bool isOption ( std::vector<std::string> & argv, std::string optionPrefix, std::string Option, bool removeOption );
 
-       //! Search 'argv' for 'optionPrefix:option value',  store the integer value into 'optionParameter'. Remove the original option if 'removeOption' is true.
+       //! Search 'argv' for 'optionPrefixOption value',  store the integer value into 'optionParameter'. Remove the original option if 'removeOption' is true.
        //! Available value types are: str, float, double, int, short, long, unsigned int, unsigned short, unsigned long, char, etc.
-          bool isOptionWithParameter ( std::vector<std::string> & argv, std::string optionPrefix, std::string option, int & optionParameter, bool removeOption );
+          bool isOptionWithParameter ( std::vector<std::string> & argv, std::string optionPrefix, std::string Option, int & optionParameter, bool removeOption );
 
-       //! Search 'argv' for 'optionPrefix:option value',  store the float value into 'optionParameter'. Remove the original option if 'removeOption' is true.
-          bool isOptionWithParameter ( std::vector<std::string> & argv, std::string optionPrefix, std::string option, float & optionParameter, bool removeOption );
+       //! Search 'argv' for 'optionPrefixOption value',  store the float value into 'optionParameter'. Remove the original option if 'removeOption' is true.
+          bool isOptionWithParameter ( std::vector<std::string> & argv, std::string optionPrefix, std::string Option, float & optionParameter, bool removeOption );
 
-       //! Search 'argv' for 'optionPrefix:option value',  store the string type value into 'optionParameter'. Remove the original option if 'removeOption' is true.
-          bool isOptionWithParameter ( std::vector<std::string> & argv, std::string optionPrefix, std::string option, std::string & optionParameter, bool removeOption );
+       //! Search 'argv' for 'optionPrefixOption value',  store the string type value into 'optionParameter'. Remove the original option if 'removeOption' is true.
+          bool isOptionWithParameter ( std::vector<std::string> & argv, std::string optionPrefix, std::string Option, std::string & optionParameter, bool removeOption );
 
       //! Add the strings in argList to the command line represented by argc and argv, prepend 'prefix' to each of the arguments
           void addListToCommandLine ( std::vector<std::string> & argv , std::string prefix, Rose_STL_Container<std::string> argList );
@@ -129,7 +130,7 @@ namespace CommandlineProcessing
           bool isOptionTakingThirdParameter ( std::string argument );
    };
 
-// DQ (4/5/2010): This are defined in sageSupport.C
+// DQ (4/5/2010): This are defined in sage_support.cpp
 //! Find the path of a ROSE support file.  If ROSE is not installed (see
 //! roseInstallPrefix()), the top of the source tree plus sourceTreeLocation is
 //! used as the location.  If the variable is not set, the path in
@@ -138,7 +139,7 @@ std::string
 findRoseSupportPathFromSource(const std::string& sourceTreeLocation,
                               const std::string& installTreeLocation);
 
-// DQ (4/5/2010): This are defined in sageSupport.C
+// DQ (4/5/2010): This are defined in sage_support.cpp
 //! Find the path of a ROSE support file.  If ROSE is not installed (see
 //! roseInstallPrefix()), the top of the build tree plus buildTreeLocation is
 //! used as the location.  If the variable is not set, the path in
@@ -147,7 +148,7 @@ std::string
 findRoseSupportPathFromBuild(const std::string& buildTreeLocation,
                              const std::string& installTreeLocation);
 
-// DQ (4/5/2010): This are defined in sageSupport.C
+// DQ (4/5/2010): This are defined in sage_support.cpp
 //! Find the path of the ROSE install prefix.  There is an assumption that
 //! <directory containing librose>/.. is the prefix, and that other things can
 //! be found from that.  This may not be true if the various install

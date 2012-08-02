@@ -446,6 +446,263 @@ bool x86InstructionIsUnconditionalBranch(SgAsmx86Instruction* inst) {
   }
 }
 
+bool x86InstructionIsPrivileged(SgAsmx86Instruction *insn)
+{
+    switch (insn->get_kind()) {
+        case x86_cli:           // clear interrupt flag
+        case x86_clts:          // clear task switched flag in CR0
+        case x86_hlt:           // halt
+        case x86_in:            // input from port
+        case x86_insb:          // input from port to string
+        case x86_insw:          // input from port to string
+        case x86_insd:          // input from port to string
+        case x86_lgdt:          // load global descriptor table register
+        case x86_lidt:          // load interrupt descriptor table register
+        case x86_lldt:          // load local descriptor table register
+        case x86_lmsw:          // load machine status word
+        case x86_ltr:           // load task register
+        case x86_out:           // output to port
+        case x86_outs:          // output string to port
+        case x86_outsb:         // output string to port
+        case x86_outsw:         // output string to port
+        case x86_outsd:         // output string to port
+        case x86_sti:           // set interrupt flag
+        case x86_sysexit:       // fast return from fast system call
+            return true;
+
+        case x86_mov: {         // mov (but only to/from control and debug registers)
+            const SgAsmExpressionPtrList &operands = insn->get_operandList()->get_operands();
+            if (2!=operands.size())
+                return false;
+            SgAsmRegisterReferenceExpression *rre0 = isSgAsmRegisterReferenceExpression(operands[0]);
+            SgAsmRegisterReferenceExpression *rre1 = isSgAsmRegisterReferenceExpression(operands[1]);
+            if ((rre0!=NULL && (rre0->get_descriptor().get_major()==x86_regclass_cr ||
+                                rre0->get_descriptor().get_major()==x86_regclass_dr)) ||
+                (rre1!=NULL && (rre1->get_descriptor().get_major()==x86_regclass_cr ||
+                                rre1->get_descriptor().get_major()==x86_regclass_dr)))
+                return true;
+            return false;
+        }
+
+        default:                // to shut up warnings from compiler
+            break;
+    }
+    return false;               // outside of switch to shut up warnings
+}
+
+bool x86InstructionIsFloatingPoint(SgAsmx86Instruction *insn)
+{
+    switch (insn->get_kind()) {
+        case x86_addpd:         // add packed double precision
+        case x86_addps:         // add packed single precision
+        case x86_addsd:         // add scalar double precision
+        case x86_addss:         // add scalar single precision
+        case x86_addsubpd:      // packed double floating ponit add/subtract
+        case x86_addsubps:      // packed single floating point add/subtract
+        case x86_andpd:         // bitwise logical AND of packed double precision
+        case x86_andps:         // bitwise logical AND of packed single precision
+        case x86_andnpd:        // bitwise logical AND NOT of packed double precision
+        case x86_andnps:        // bitwise logical AND NOT of packed single precision
+        case x86_blendpd:       // blend packed double precision
+        case x86_blendps:       // blend packed single precision
+        case x86_blendvpd:      // variable blend packed double precision
+        case x86_blendvps:      // variable blend packed single precision
+        case x86_cmppd:         // compare packed double precision
+        case x86_cmpps:         // compare packed single precision
+        case x86_cmpsd:         // compare scalar double precision
+        case x86_cmpss:         // compare scalar single precision
+        case x86_comisd:        // compare scalar ordered double precision and set EFLAGS
+        case x86_comiss:        // compare scalar ordered single precision and set EFLAGS
+        case x86_cvtdq2pd:      // convert packed dword integers to packed double precision
+        case x86_cvtdq2ps:      // convert packed dword integers to packed single precision
+        case x86_cvtpd2dq:      // convert packed double precision to packed dword integers
+        case x86_cvtpd2pi:      // convert packed double precision to packed dword integers
+        case x86_cvtpd2ps:      // convert packed double precision to packed single precision
+        case x86_cvtpi2pd:      // convert packed dword integers to packed double precision
+        case x86_cvtpi2ps:      // convert packed dword integers to packed single precision
+        case x86_cvtps2dq:      // convert packed single precision to packed dword integers
+        case x86_cvtps2pd:      // convert packed single precision to packed double precision
+        case x86_cvtps2pi:      // convert packed single precision to packed dword integers
+        case x86_cvtsd2si:      // convert scalar double precision to integer
+        case x86_cvtsd2ss:      // convert scalar double precision to scalar single precision
+        case x86_cvtsi2sd:      // convert dword integer to scalar double precision
+        case x86_cvtsi2ss:      // convert dword integer to scalar single precision
+        case x86_cvtss2sd:      // convert scalar single precision to scalar double precision
+        case x86_cvtss2si:      // convert scalar single precision to dword integer
+        case x86_cvttpd2dq:     // convert with truncation packed double precision to packed dword integers
+        case x86_cvttpd2pi:     // convert with truncation packed double precision to packed dword integers
+        case x86_cvttps2dq:     // convert with truncation packed single precision to packed dword integers
+        case x86_cvttps2pi:     // convert with truncation packed single precision to packed dword integers
+        case x86_cvttsd2si:     // convert with truncation scalar double precision to signed integer
+        case x86_cvttss2si:     // convert with truncation scalar single precision to dword integer
+        case x86_divpd:         // divide packed double precision
+        case x86_divps:         // divide packed single precision
+        case x86_divsd:         // divide scalar double precision
+        case x86_divss:         // divide scalar single precision
+        case x86_dppd:          // dot product of packed double precision
+        case x86_dpps:          // dot product of packed single precision
+        case x86_emms:          // empty MMX technology state
+        case x86_extractps:     // extract packed single precision
+        case x86_f2xm1:         // compute 2^x-1
+        case x86_fabs:          // absolute value
+        case x86_fadd:          // add
+        case x86_faddp:         // add
+        case x86_fiadd:         // add
+        case x86_fbld:          // load binary coded decimal
+        case x86_fbstp:         // store BCD integer and pop
+        case x86_fchs:          // change sign
+        case x86_fnclex:        // clear exceptions
+        case x86_fcmovb:        // conditional move
+        case x86_fcmove:        // conditional move
+        case x86_fcmovbe:       // conditional move
+        case x86_fcmovu:        // conditional move
+        case x86_fcmovnb:       // conditional move
+        case x86_fcmovne:       // conditional move
+        case x86_fcmovnbe:      // conditional move
+        case x86_fcmovnu:       // conditional move
+        case x86_fcom:          // compare
+        case x86_fcomp:         // compare
+        case x86_fcompp:        // compare
+        case x86_fcomi:         // compare and set EFLAGS
+        case x86_fcomip:        // compare and set EFLAGS
+        case x86_fucomi:        // compare and set EFLAGS
+        case x86_fucomip:       // compare and set EFLAGS
+        case x86_fcos:          // cosine
+        case x86_fdecstp:       // decrement stack top pointer
+        case x86_fdiv:          // divide
+        case x86_fdivp:         // divide
+        case x86_fidiv:         // divide
+        case x86_fdivr:         // reverse divide
+        case x86_fdivrp:        // reverse divide
+        case x86_fidivr:        // reverse divide
+        case x86_ffree:         // free floating point register
+        case x86_ficom:         // compare integer
+        case x86_ficomp:        // compare integer
+        case x86_fild:          // load integer
+        case x86_fincstp:       // increment stack top pointer
+        case x86_fninit:        // initialize floating point unit
+        case x86_fist:          // store integer
+        case x86_fistp:         // store integer
+        case x86_fisttp:        // store integer with truncation
+        case x86_fld:           // load
+        case x86_fld1:          // load constant
+        case x86_fldl2t:        // load constant
+        case x86_fldl2e:        // load constant
+        case x86_fldpi:         // load constant
+        case x86_fldlg2:        // load constant
+        case x86_fldln2:        // load constant
+        case x86_fldz:          // load constant
+        case x86_fldcw:         // load x87 fpu control word
+        case x86_fldenv:        // load x87 fpu environment
+        case x86_fmul:          // multiply
+        case x86_fmulp:         // multiply
+        case x86_fimul:         // multiply
+        case x86_fnop:          // no operation
+        case x86_fpatan:        // partial arctangent
+        case x86_fprem:         // partial remainder
+        case x86_fprem1:        // partial remainder
+        case x86_fptan:         // partial tangent
+        case x86_frndint:       // round to integer
+        case x86_frstor:        // restore x87 fpu state
+        case x86_fnsave:        // store x87 fpu state
+        case x86_fscale:        // scale
+        case x86_fsin:          // sine
+        case x86_fsincos:       // sine and cosine
+        case x86_fsqrt:         // square root
+        case x86_fst:           // store
+        case x86_fstp:          // store
+        case x86_fnstcw:        // store x87 fpu control word
+        case x86_fnstenv:       // store x87 fpu environment
+        case x86_fnstsw:        // store x87 fpu status word
+        case x86_fsub:          // subtract
+        case x86_fsubp:         // subtract
+        case x86_fisub:         // subtract
+        case x86_fsubr:         // reverse subtract
+        case x86_fsubrp:        // reverse subtract
+        case x86_fisubr:        // reverse subtract
+        case x86_ftst:          // test
+        case x86_fucom:         // unordered compare
+        case x86_fucomp:        // unordered compare
+        case x86_fucompp:       // unordered compare
+        case x86_fxam:          // examine ModR/M
+        case x86_fxch:          // exchange register contents
+        case x86_fxrstor:       // restore x87 fpu, mmx, xmm, and mxcsr state
+        case x86_fxsave:        // save x87 fpu, mmx technology, and sse state
+        case x86_fxtract:       // extract exponent and significand
+        case x86_fyl2x:         // compute y*ln(x)
+        case x86_fyl2xp1:       // compute y*ln(x+1)
+        case x86_haddpd:        // packed double horizontal add
+        case x86_haddps:        // packed single horizontal add
+        case x86_hsubpd:        // packed double horizontal subtract
+        case x86_hsubps:        // packed single horizontal subtract
+        case x86_insertps:      // insert packed single precision
+        case x86_maxpd:         // return maximum packed double precision
+        case x86_maxps:         // return maximum packed single precision
+        case x86_maxsd:         // return maximum scalar double precision
+        case x86_maxss:         // return maximum scalar single precision
+        case x86_minpd:         // return minimum packed double precision
+        case x86_minps:         // return minimum packed single precision
+        case x86_minsd:         // return minimum scalar double precision
+        case x86_minss:         // return minimum scalar single precision
+        case x86_movapd:        // move aligned packed double precision
+        case x86_movaps:        // move aligned packed single precision
+        case x86_movddup:       // move one double and duplicate
+        case x86_movdq2q:       // move quadword from xmm to mmx technology register
+        case x86_movhlps:       // move packed single precision high to low
+        case x86_movhpd:        // move high packed double precision
+        case x86_movhps:        // move high packed single precision
+        case x86_movlhps:       // move packed single precision low to high
+        case x86_movlpd:        // move low packed double precision
+        case x86_movlps:        // move low packed single precision
+        case x86_movmskpd:      // extract packed double precision sign mask
+        case x86_movmskps:      // extract packed single precision sign mask
+        case x86_movntpd:       // store packed double precision using non-temporal hint
+        case x86_movntps:       // store packed single precision using non-temporal hint
+        case x86_movq2dq:       // move quadword from mmx technology to xmm register
+        case x86_movsd:         // move scalar double precision
+        case x86_movshdup:      // move packed single high and duplicate
+        case x86_movsldup:      // move packed single low and duplicate
+        case x86_movss:         // move scalar single precision
+        case x86_movupd:        // move unaligned packed double precision
+        case x86_movups:        // move unaligned packed single precision
+        case x86_mulpd:         // multiply packed double precision
+        case x86_mulps:         // multiply packed single precision
+        case x86_mulsd:         // multiply scalar double precision
+        case x86_mulss:         // multiply scalar single precision
+        case x86_orps:          // bitwise logical OR of single precision
+        case x86_rcpps:         // compute reciprocals of packed single precision
+        case x86_rcpss:         // compute reciprocals of scalar single precision
+        case x86_roundpd:       // round packed double precision
+        case x86_roundps:       // round packed single precision
+        case x86_roundsd:       // round scalar double precision
+        case x86_roundss:       // round scalar single precision
+        case x86_rsqrtps:       // compute reciprocals of square roots of packed single precision
+        case x86_rsqrtss:       // compute reciprocals of square roots of scalar single precision
+        case x86_shufpd:        // shuffle packed double precision
+        case x86_shufps:        // shuffle packed single precision
+        case x86_sqrtpd:        // compute square roots of packed double precision
+        case x86_sqrtps:        // compute square roots of packed single precision
+        case x86_sqrtsd:        // compute square root of scalar double precision
+        case x86_sqrtss:        // compute square root of scalar single precision
+        case x86_subpd:         // subtract packed double precision
+        case x86_subps:         // subtract packed single precision
+        case x86_subsd:         // subtract scalar double precision
+        case x86_subss:         // subtract scalar single precision
+        case x86_ucomisd:       // unordered compare scalar double precision and set EFLAGS
+        case x86_ucomiss:       // unordered compare scalar single precision and set EFLAGS
+        case x86_unpckhpd:      // unpack and interleave high packed double precision
+        case x86_unpckhps:      // unpack and interleave high packed single precision
+        case x86_unpcklpd:      // unpack and interleave low packed double precision
+        case x86_unpcklps:      // unpack and interleave low packed single precision
+        case x86_xorpd:         // bitwise logical XOR for double precision
+        case x86_xorps:         // bitwise logical XOR for single precision
+            return true;
+        default:                // to shut up warnings from compiler
+            break;
+    }
+    return false;               // outside of switch to shut up warnings
+}
+
 bool x86GetKnownBranchTarget(SgAsmx86Instruction* insn, uint64_t& addr) {
   // Treats far destinations as "unknown"
   switch (insn->get_kind()) {

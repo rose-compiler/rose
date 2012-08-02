@@ -6,6 +6,9 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 # These test pass the compilation using ROSE, all AST tests, unparsing to generate 
 # Java code, and the final compilation of that code using a backend compiler (javac).
+# Liao 6/12/2011, temporarily commented out one test since it failed randomly
+# See details at https://github.com/rose-compiler/rose/issues/5
+#     pgc_test2011_18.java 
 TESTCODES_REQUIRED_TO_PASS = \
      test2011_01.java \
      test2011_02.java \
@@ -27,6 +30,7 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2011_18.java \
      test2011_19.java \
      test2011_20.java \
+     test2011_21.java \
      test2011_26.java \
      test2011_27.java \
      test2011_29.java \
@@ -42,6 +46,7 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2011_39.java \
      test2011_40.java \
      test2011_41.java \
+     test2011_42.java \
      test2011_47.java \
      test2011_50.java \
      pgc_2011_30.java \
@@ -57,9 +62,15 @@ TESTCODES_REQUIRED_TO_PASS = \
      pgc_test2011_09.java \
      pgc_test2011_10.java \
      pgc_test2011_11.java \
+     pgc_test2011_12.java \
      pgc_test2011_13.java \
      pgc_test2011_14.java \
      pgc_test2011_15.java \
+     pgc_test2011_16.java \
+     pgc_test2011_17.java \
+     pgc_test2011_19.java \
+     pgc_test2011_20.java \
+     pgc_test2011_21.java \
      \
      cave3_IntLit0.java \
      cave3_DoubleLit0.java \
@@ -68,10 +79,14 @@ TESTCODES_REQUIRED_TO_PASS = \
      cave3_dowhile0.java \
      cave3_LoadDep0.java \
      cave3_block0.java \
+     cave3_call0.java \
+     cave3_call1.java \
      cave3_constructor0.java \
      cave3_constructor1.java \
      cave3_constructor2.java \
      cave3_constructor3.java \
+     cave3_DoubleLit0.java \
+     cave3_dowhile0.java \
      cave3_for0.java \
      cave3_for1.java \
      cave3_for2.java \
@@ -79,9 +94,8 @@ TESTCODES_REQUIRED_TO_PASS = \
      cave3_for4.java \
      cave3_for5.java \
      cave3_for6.java \
-     cave3_foreach2.java \
-     cave3_foreach4.java \
-     cave3_foreach5.java \
+     cave3_for7.java \
+     cave3_for8.java \
      cave3_if0.java \
      cave3_if1.java \
      cave3_labelDecl0.java \
@@ -106,7 +120,9 @@ TESTCODES_REQUIRED_TO_PASS = \
      cave3_synchronized0.java \
      cave3_while0.java \
      cave3_while1.java \
-     cave3_while2.java
+     cave3_while2.java \
+     cave3_while3.java \
+     cave3_while4.java
 
 #
 # These test pass the compilation using ROSE, all AST tests, unparsing to generate 
@@ -116,16 +132,13 @@ TESTCODE_CURRENTLY_FAILING = \
      test2011_23.java \
      test2011_24.java \
      test2011_25.java \
+     test2011_44.java \
      \
-     pgc_test2011_12.java \
-     \
+     cave3_instanceof0.java \
      cave3_import0.java \
      cave3_import1.java \
      cave3_import2.java \
      cave3_import3.java \
-     cave3_instanceof0.java \
-     cave3_foreach0.java \
-     cave3_foreach1.java \
      cave3_foreach3.java \
      cave3_assert2.java \
      cave3_assert3.java
@@ -133,20 +146,25 @@ TESTCODE_CURRENTLY_FAILING = \
 # These tests pass the compilation using ROSE, all AST tests, and unparsing to generate 
 # Java code, but fails the final compilation step of the generated Java code.
 TESTCODES_REQUIRED_TO_PASS_FAILING_BACKEND_COMPILE = \
-     test2011_21.java \
      test2011_28.java \
-     test2011_42.java \
      simple.java
 
 # This is where the Java generics tests are put (currently not required to pass all phases).
 TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_6 = \
      test2011_43.java \
-     test2011_44.java \
      test2011_46.java \
      test2011_48.java \
      test2011_49.java \
      cave3_assert0.java \
-     cave3_assert1.java
+     cave3_assert1.java \
+     cave3_foreach0.java \
+     cave3_foreach1.java \
+     cave3_foreach2.java \
+     cave3_foreach4.java \
+     cave3_foreach5.java \
+     cave3_foreach6.java \
+     cave3_foreach7.java
+
 
 TESTCODES_REQUIRED_TO_PASS_FAILING_FOR_JAVA_6 = \
      test2011_45.java 

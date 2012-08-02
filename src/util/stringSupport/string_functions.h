@@ -136,8 +136,11 @@ namespace StringUtility
 
        //! Convert a number to a string
            std::string numberToString ( double x );
-       //! Convert an address to a string, preferring a hexadecimal representation with at least 8 digits.
-           std::string addrToString( uint64_t x );
+
+       //! Convert an address to a string, preferring a hexadecimal representation with at least 8 digits.  The second argument
+       //  indicates the number of significant bits.  The third argument indicates whether the value is considered to be
+       //  signed, in which case a negative value is also output, as in "0xff<-1>".
+           std::string addrToString(uint64_t x, size_t nbits=32, bool is_signed=false);
 
        //! Formatting support for generated code strings
            std::string indentMultilineString ( const std::string& inputString, int statementColumnNumber );
@@ -152,10 +155,15 @@ namespace StringUtility
       //! Generate a string from a vector of strings
            std::string listToString ( const std::vector<std::string> & X, bool separateStrings = false );
 
-       //! Remove redundent lines (substrings must be separated by "\n"
-           std::string removeRedundentSubstrings ( std::string X );
-      //! Remove redundent lines containing special substrings of form string#
-           std::string removePseudoRedundentSubstrings ( std::string X );
+           std::list<std::string> tokenize ( std::string X, char delim );
+
+       //! Remove redundant lines (substrings must be separated by "\n". FIXME (spelling)
+           std::string removeRedundentSubstrings ( std::string X ); // sic
+      //! Remove redundant lines containing special substrings of form string#. FIXME (spelling)
+           std::string removePseudoRedundentSubstrings ( std::string X ); // sic
+       //! Append an abbreviation or full name to a string.
+           void add_to_reason_string(std::string &result, bool isset, bool do_pad,
+                                     const std::string &abbr, const std::string &full);
        /*! @} */
 
        /*! @{ */
@@ -217,7 +225,8 @@ namespace StringUtility
            std::string stripFileSuffixFromFileName     ( const std::string & fileNameWithSuffix ); 
            //! Get the absolute path from the relative path
            std::string getAbsolutePathFromRelativePath ( const std::string & relativePath, bool printErrorIfAny /* = false */ );       
-           //! Get the file name suffix (extension), fileName could be either base name or name with full path
+           //! Get the file name suffix (extension) without the leading dot, fileName could be either base name or name with full path. 
+           // If no dot is found in the input fileName, the function just returns the original fileName
            std::string fileNameSuffix                  ( const std::string & fileName );          
 
   // True only if this is a valid C++ source file name extension (suffix). Duplicate of CommandlineProcessing::isCppFileNameSuffix(). 
@@ -422,6 +431,17 @@ namespace StringUtility
 
     // DQ (2/3/2009): Moved this function from attach_all_info.C
        std::vector<std::string> readWordsInFile( std::string filename);
+
+       /** Insert a prefix string before every line.  This function breaks the @p lines string into individual lines,
+        *  inserts the @p prefix string at the beginning of each line, then concatenates the lines together into a return
+        *  value.  If @p prefixAtFront is true (the default) then the prefix is added to the first line of @p lines, otherwise
+        *  the first line is unchanged.  An empty @p lines string is considered to be a single line.  If @p prefixAtBack is
+        *  false (the default) then the prefix is not appended to the @p lines string if @p lines ends with a linefeed. */
+       std::string prefixLines(const std::string &lines, const std::string &prefix,
+                               bool prefixAtFront=true, bool prefixAtBack=false);
+
+       /** Returns true if the string ends with line termination. */
+       bool isLineTerminated(const std::string &s);
 
    };
 

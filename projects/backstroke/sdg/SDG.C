@@ -165,8 +165,9 @@ void SystemDependenceGraph::build()
             // If this CFG node contains a function call expression, extract its all parameters
             // and make them as actual-in nodes.
             
-            else if (SgFunctionCallExp* funcCallExpr = isSgFunctionCallExp(astNode))
+            if (SgFunctionCallExp* funcCallExpr = isSgFunctionCallExp(astNode))
             {
+                cout << funcCallExpr->unparseToString() << endl;
                 CallSiteInfo callInfo;
                 callInfo.funcCall = funcCallExpr;
                 callInfo.vertex = sdgVertex;
@@ -177,10 +178,22 @@ void SystemDependenceGraph::build()
                 
                 // Get the associated function declaration.
                 SgFunctionDeclaration* funcDecl = funcCallExpr->getAssociatedFunctionDeclaration();
+                
+                if (funcDecl == NULL)
+                    continue;
+                ROSE_ASSERT(funcDecl);
+                
                 const SgInitializedNamePtrList& formalArgs = funcDecl->get_args();
                 
                 SgExprListExp* args = funcCallExpr->get_args();
                 const SgExpressionPtrList& actualArgs = args->get_expressions();
+                
+                if (formalArgs.size() != actualArgs.size())
+                {
+                    cout << funcDecl->get_file_info()->get_filename() << endl;
+                    cout << funcDecl->get_name() << formalArgs.size() << " " << actualArgs.size() << endl;
+                    continue;
+                }
                 
                 for (int i = 0, s = actualArgs.size(); i < s; ++i)
                 {
@@ -225,6 +238,7 @@ void SystemDependenceGraph::build()
                     Vertex paraOutVertex = addVertex(paraOutNode);
                     actualOutParameters[funcDecl].push_back(paraOutVertex);
                     callInfo.outPara.push_back(paraOutVertex);
+                    callInfo.isVoid = false;
                     callInfo.returned = paraOutVertex;
 
                     // Add a CD edge from call node to this actual-out node.
@@ -249,12 +263,13 @@ void SystemDependenceGraph::build()
     // Add call edges.
     foreach (const CallSiteInfo& callInfo, functionCalls)
     {
-        SgFunctionDeclaration* funcDecl = callInfo.funcCall->getAssociatedFunctionDeclaration();
+        SgFunctionDeclaration* funcDecl = isSgFunctionDeclaration(callInfo.funcCall->
+                                            getAssociatedFunctionDeclaration()->get_definingDeclaration());
         ROSE_ASSERT(funcDecl);
         if (functionsToEntries_.count(funcDecl))
             addEdge(callInfo.vertex, functionsToEntries_[funcDecl], new SDGEdge(SDGEdge::Call));
-        else
-            ;//ROSE_ASSERT(false);
+        //else
+            //ROSE_ASSERT(false);
     }
     
     //=============================================================================================//
@@ -486,6 +501,10 @@ void SystemDependenceGraph::addDataDependenceEdges(
     // Add an edge from returned result of each function call to all uses of this function call.
     foreach (const CallSiteInfo& callInfo, callSiteInfo)
     {
+        // Functions of void type does not return anything.
+        if (callInfo.isVoid)
+            continue;
+
         SgNode* node = (*this)[callInfo.returned]->astNode;
         if (isSgFunctionCallExp(node))
         {

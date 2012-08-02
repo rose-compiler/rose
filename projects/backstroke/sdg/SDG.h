@@ -91,6 +91,9 @@ class SystemDependenceGraph : public boost::adjacency_list<boost::vecS, boost::v
 public:
 	typedef boost::graph_traits<SystemDependenceGraph>::vertex_descriptor Vertex;
 	typedef boost::graph_traits<SystemDependenceGraph>::edge_descriptor   Edge;
+
+    static Vertex nullVertex()
+    { return boost::graph_traits<SystemDependenceGraph>::null_vertex(); }
     
 protected:
     typedef ControlFlowGraph::Vertex CFGVertex;
@@ -118,12 +121,15 @@ protected:
 
     struct CallSiteInfo
     {
+        CallSiteInfo() : funcCall(NULL), isVoid(true) {}
         typedef SystemDependenceGraph::Vertex Vertex;
 
         SgFunctionCallExp* funcCall;
         Vertex vertex;
         std::vector<Vertex> inPara;
         std::vector<Vertex> outPara;
+        // If the called function returns anything.
+        bool isVoid;
         Vertex returned;
     };
     

@@ -219,7 +219,7 @@ public:
 public:
     /** Class method to parse, map, link, and/or relocate all interpretations of the specified binary composite. This should
      *  only be called for an SgBinaryComposite object that has been created but for which no binary files have been parsed
-     *  yet.  It's only called from sageSupport.C by SgBinaryComposite::buildAST().  A BinaryLoader::Exception is thrown if
+     *  yet.  It's only called from sage_support.cpp by SgBinaryComposite::buildAST().  A BinaryLoader::Exception is thrown if
      *  there's an error of some sort. */
     static void load(SgBinaryComposite* composite, bool read_executable_file_format_only=false);
 

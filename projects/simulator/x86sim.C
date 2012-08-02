@@ -73,6 +73,7 @@ main(int argc, char *argv[], char *envp[])
     /* Suck out any command-line switches that the tool recognizes.  Leave the others for processing by the RSIM_Simulator
      * class. */
     bool do_disassemble_at_oep = false;
+    bool do_activate = true;
     for (int i=1; i<argc; i++) {
         bool parsed = false;
         if (!strncmp(argv[i], "--disassemble=", 14)) {
@@ -101,7 +102,14 @@ main(int argc, char *argv[], char *envp[])
                 if (','==*at)
                     at++;
             }
+        } else if (!strcmp(argv[i], "--no-activate")) {
+            parsed = true;
+            do_activate = false;
+        } else if (!strcmp(argv[i], "--activate")) {
+            parsed = true;
+            do_activate = true;
         }
+
         if (parsed) {
             memmove(argv+i, argv+i+1, (argc-i)*sizeof(*argv));
             --argc;
@@ -114,7 +122,9 @@ main(int argc, char *argv[], char *envp[])
     if (do_disassemble_at_coredump)
         sim.get_callbacks().add_process_callback(RSIM_Callbacks::BEFORE, new DisassembleAtCoreDump);
 
+#if 0
     sim.get_callbacks().add_signal_callback(RSIM_Callbacks::AFTER, new RSIM_Tools::SignalStackTrace);
+#endif
         
         
 #if 0
@@ -241,6 +251,12 @@ main(int argc, char *argv[], char *envp[])
     sim.install_callback(new RSIM_Tools::UnhandledInstruction);
 #   endif
 
+    /***************************************************************************************************************************/
+#if 0 /* DEBUGGING [RPM 2011-12-13] */
+    RSIM_Tools::ForkPauser forkPauser;
+    sim.get_callbacks().add_process_callback(RSIM_Callbacks::AFTER, &forkPauser);
+#endif
+
     /***************************************************************************************************************************
      *                                  The main program...
      ***************************************************************************************************************************/
@@ -255,14 +271,16 @@ main(int argc, char *argv[], char *envp[])
         do_disassemble_at_addr.insert(sim.get_process()->get_ep_orig_va());
 
     /* Get ready to execute by making the specified simulator active. This sets up signal handlers, etc. */
-    sim.activate();
+    if (do_activate)
+        sim.activate();
 
     /* Allow executor threads to run and return when the simulated process terminates. The return value is the termination
      * status of the simulated program. */
     sim.main_loop();
 
     /* Not really necessary since we're not doing anything else. */
-    sim.deactivate();
+    if (do_activate)
+        sim.deactivate();
 
     /* Describe termination status, and then exit ourselves with that same status. */
     sim.describe_termination(stderr);

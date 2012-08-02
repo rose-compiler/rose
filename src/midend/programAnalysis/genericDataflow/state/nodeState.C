@@ -202,11 +202,37 @@ void NodeState::setLatticeBelow(const Analysis* analysis, vector<Lattice*>& latt
 
 static vector<Lattice*> emptyLatVec;
 
+//! returns all the lattices from above the CFG node (corresponding to SgNode and an CFG index) that are owned by the given analysis
+// (read-only access)
+const std::vector<Lattice*>& NodeState::getLatticeAbove(const Analysis* a, SgNode* n, unsigned int index ) 
+{
+  assert (a!= NULL);
+  assert (n != NULL);
+
+  NodeState *state =  NodeState::getNodeState(n, index);
+  assert (state != NULL);
+
+  return state->getLatticeAbove(a);
+}
+
+// returns all the lattices from below the CFG node (corresponding to SgNode and an CFG index) that are owned by the given analysis
+// (read-only access)
+const std::vector<Lattice*>& NodeState::getLatticeBelow(const Analysis* a, SgNode* n, unsigned int index) 
+{
+  assert (a!= NULL);
+  assert (n != NULL);
+
+  NodeState *state =  NodeState::getNodeState(n, index);
+  assert (state != NULL);
+  return state->getLatticeBelow(a);
+}
+
 // returns the given lattice from above the node, which owned by the given analysis
 Lattice* NodeState::getLatticeAbove(const Analysis* analysis, int latticeName) const
 {
         return getLattice_ex(dfInfoAbove, analysis, latticeName);
 }
+
 
 // returns the map containing all the lattices from above the node that are owned by the given analysis
 // (read-only access)
@@ -744,9 +770,19 @@ NodeState* NodeState::getNodeState(const DataflowNode& n, int index)
 {
         // if we haven't assigned a NodeState for every dataflow node
         if(!nodeStateMapInit)
-                initNodeStateMap();
+                initNodeStateMap(n.filter);
         
         return nodeStateMap[n][index];
+}
+
+NodeState* NodeState::getNodeState(SgNode * n, int index/*=0 */)
+{
+  assert (n != NULL);
+  assert (index >= 0);
+
+  CFGNode cfgn(n, (unsigned int)index);
+  DataflowNode dfn(cfgn, defaultFilter);
+  return getNodeState (dfn, index);
 }
 
 // returns a vector of NodeState objects associated with the given dataflow node.
@@ -754,7 +790,7 @@ const vector<NodeState*> NodeState::getNodeStates(const DataflowNode& n)
 {
         // if we haven't assigned a NodeState for every dataflow node
         if(!nodeStateMapInit)
-                initNodeStateMap();
+                initNodeStateMap(n.filter);
         
         return nodeStateMap[n];
 }
@@ -764,13 +800,13 @@ int NodeState::numNodeStates(DataflowNode& n)
 {
         // if we haven't assigned a NodeState for every dataflow node
         if(!nodeStateMapInit)
-                initNodeStateMap();
+                initNodeStateMap(n.filter);
         
         return nodeStateMap[n].size();
 }
 
 // initializes the nodeStateMap
-void NodeState::initNodeStateMap()
+void NodeState::initNodeStateMap(bool (*filter) (CFGNode cfgn))
 {
         set<FunctionState*> allFuncs = FunctionState::getAllDefinedFuncs();
         
@@ -778,8 +814,8 @@ void NodeState::initNodeStateMap()
         for(set<FunctionState*>::iterator it=allFuncs.begin(); it!=allFuncs.end(); it++)
         {
                 const Function& func = (*it)->func;
-                DataflowNode funcCFGStart = cfgUtils::getFuncStartCFG(func.get_definition());
-                DataflowNode funcCFGEnd = cfgUtils::getFuncEndCFG(func.get_definition());
+                DataflowNode funcCFGStart = cfgUtils::getFuncStartCFG(func.get_definition(),filter);
+                DataflowNode funcCFGEnd = cfgUtils::getFuncEndCFG(func.get_definition(), filter);
                 
                 // Iterate over all the dataflow nodes in this function
                 for(VirtualCFG::iterator it(funcCFGStart); it!=VirtualCFG::dataflow::end(); it++)

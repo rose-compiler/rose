@@ -324,6 +324,8 @@ void
 FortranCodeGeneration_locatedNode::unparseFortranIncludeLine (SgStatement* stmt, SgUnparse_Info& info)
    {
   // This is support for the language specific include mechanism.
+     if (info.outputFortranModFile())  // rmod file expands the include file but does not contain the include statement
+         return;
      SgFortranIncludeLine* includeLine = isSgFortranIncludeLine(stmt);
 
      curprint("include ");
@@ -2079,15 +2081,14 @@ FortranCodeGeneration_locatedNode::unparseBasicBlockStmt(SgStatement* stmt, SgUn
 
      SgStatementPtrList::iterator p = basic_stmt->get_statements().begin();
      for ( ; p != basic_stmt->get_statements().end(); ++p)
-        { 
+     {
        // cout << "stmt: " << hex << (*p) << dec << endl;
           ROSE_ASSERT((*p) != NULL);
          // FMZ: for module file, only output the variable declarations (not definitions)
-         if (!info.outputFortranModFile() ||
-                        (*p)->variantT()==V_SgVariableDeclaration) {
-          unparseStatement((*p), info);
-        }
-        }
+         if ( !info.outputFortranModFile() || (*p)->variantT()==V_SgVariableDeclaration
+                 || (*p)->variantT()==V_SgAttributeSpecificationStatement )  // DXN (02/07/2012): unparse attribute statements also
+             unparseStatement((*p), info);
+     }
 
   // Liao (10/14/2010): This helps handle cases such as 
   //    c$OMP END PARALLEL
@@ -5409,8 +5410,6 @@ FortranCodeGeneration_locatedNode::curprint(const std::string & str) const
                 // warn if successful wrapping is impossible
                 if( str.size() > usable_cols )
                     printf("Warning: can't wrap long line in Fortran free format (text is longer than a line)\n");
-                else if( free_cols < 1 )
-                    printf("Warning: can't wrap long line in Fortran free format (no room for final '&')\n");
 
                 // emit free-format line continuation even if result will still be too long
                 unp->u_sage->curprint("&");

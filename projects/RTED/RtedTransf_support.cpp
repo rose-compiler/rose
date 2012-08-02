@@ -11,15 +11,14 @@
 #include <boost/algorithm/string.hpp>
 
 #include "sageFunctors.h"
-#include "sageGeneric.hpp"
+#include "sageGeneric.h"
 
 #include "RtedSymbols.h"
 #include "DataStructures.h"
 #include "RtedTransformation.h"
 
-using namespace std;
-using namespace SageInterface;
-using namespace SageBuilder;
+namespace SI = SageInterface;
+namespace SB = SageBuilder;
 
 // This really belongs in the non-existent DataStructures.cpp
 const std::string RtedForStmtProcessed::Key( "Rted::ForStmtProcessed" );
@@ -101,7 +100,7 @@ SgUpcBarrierStatement* buildUpcBarrierStatement()
   SgExpression*          exp = NULL;
   SgUpcBarrierStatement* barrier_stmt = new SgUpcBarrierStatement(exp);
 
-  setOneSourcePositionForTransformation(barrier_stmt);
+  SI::setOneSourcePositionForTransformation(barrier_stmt);
   return barrier_stmt;
 }
 
@@ -110,7 +109,7 @@ typedef SgUpcLocalsizeofExpression SgUpcLocalsizeofOp;
 #if NOTUSED
 
 static
-SgUpcLocalsizeofOp* buildUpcLocalsizeofOp(SgExpression* exp)
+SgUpcLocalsizeofOp* SB::buildUpcLocalsizeofOp(SgExpression* exp)
 {
   ROSE_ASSERT(exp);
 
@@ -136,7 +135,7 @@ SgStatement* getSurroundingStatement(SgInitializedName& n)
 
 SgAggregateInitializer* genAggregateInitializer(SgExprListExp* initexpr, SgType* type)
 {
-  SgAggregateInitializer* res = buildAggregateInitializer(initexpr, type);
+  SgAggregateInitializer* res = SB::buildAggregateInitializer(initexpr, type);
 
   // not sure whether the explicit braces flag needs to be set
   res->set_need_explicit_braces(true);
@@ -149,9 +148,9 @@ SgExprStatement* insertCheck(InsertLoc iloc, SgStatement* stmt, SgFunctionSymbol
 {
   ROSE_ASSERT(stmt && checker && args);
 
-  SgFunctionRefExp*  funRef = buildFunctionRefExp(checker);
-  SgFunctionCallExp* funcCallExp = buildFunctionCallExp(funRef, args);
-  SgExprStatement*   exprStmt = buildExprStatement(funcCallExp);
+  SgFunctionRefExp*  funRef = SB::buildFunctionRefExp(checker);
+  SgFunctionCallExp* funcCallExp = SB::buildFunctionCallExp(funRef, args);
+  SgExprStatement*   exprStmt = SB::buildExprStatement(funcCallExp);
 
   SageInterface::insertStatement(stmt, exprStmt, iloc == ilBefore);
 
@@ -162,8 +161,8 @@ SgExprStatement* insertCheck(InsertLoc iloc, SgStatement* stmt, SgFunctionSymbol
 {
   SgExprStatement* exprStmt = insertCheck(iloc, stmt, checker, args);
 
-  attachComment(exprStmt, "", PreprocessingInfo::before);
-  attachComment(exprStmt, comment, PreprocessingInfo::before);
+  SI::attachComment(exprStmt, "", PreprocessingInfo::before);
+  SI::attachComment(exprStmt, comment, PreprocessingInfo::before);
 
   return exprStmt;
 }
@@ -214,7 +213,14 @@ SgType* skip_ReferencesAndTypedefs( SgType* type ) {
 
 SgBasicBlock& requiresParentIsBasicBlock(SgStatement& stmt)
 {
-  SgLocatedNode* block = ensureBasicBlockAsParent(&stmt);
+    // Unfortunately ensureBasicBlockAsParent() does not work as its name suggests. Here is what it
+    // really means
+  //SgLocatedNode* block = SI::ensureBasicBlockAsParent(&stmt);
+  SgLocatedNode* block = NULL;
+  if (SI::isBodyStatement(&stmt) && !isSgBasicBlock(&stmt))
+      block = SI::makeSingleStatementBodyToBlock(&stmt); // push the stmt into a newly created basic block body
+  else
+      block = isSgLocatedNode(stmt.get_parent());
   SgBasicBlock*  res = isSgBasicBlock(block);
 
   ROSE_ASSERT(res);
@@ -230,7 +236,7 @@ SgCastExp* cstyle_ctor(SgType* type, SgAggregateInitializer* exp)
 {
   ROSE_ASSERT(type && exp);
 
-  return buildCastExp(exp, type, SgCastExp::e_C_style_cast);
+  return SB::buildCastExp(exp, type, SgCastExp::e_C_style_cast);
 }
 
 static
@@ -262,23 +268,23 @@ RtedTransformation::ctorAddressDesc(SgAggregateInitializer* exp) const
 SgCastExp*
 RtedTransformation::ctorTypeDescList(SgAggregateInitializer* exp) const
 {
-  return cstyle_ctor(buildArrayType(roseTypeDesc(), NULL), exp);
+  return cstyle_ctor(SB::buildArrayType(roseTypeDesc(), NULL), exp);
 }
 
 SgCastExp*
 RtedTransformation::ctorDimensionList(SgAggregateInitializer* exp) const
 {
-  return cstyle_ctor(buildArrayType(roseDimensionType(), NULL), exp);
+  return cstyle_ctor(SB::buildArrayType(roseDimensionType(), NULL), exp);
 }
 
 
 SgAggregateInitializer*
 RtedTransformation::mkAddressDesc(AddressDesc desc) const
 {
-  SgExprListExp* initexpr = buildExprListExp();
+  SgExprListExp* initexpr = SB::buildExprListExp();
 
-  appendExpression(initexpr, buildIntVal(desc.levels));
-  appendExpression(initexpr, buildIntVal(desc.shared_mask));
+  SI::appendExpression(initexpr, SB::buildIntVal(desc.levels));
+  SI::appendExpression(initexpr, SB::buildIntVal(desc.shared_mask));
 
   return genAggregateInitializer(initexpr, roseAddressDesc());
 }
@@ -321,15 +327,9 @@ struct SharedQueryResult
   long          layout() const { return shared.second; }
 };
 
-struct SharedQueryHandler
+struct SharedQueryHandler : sg::DispatchHandler<SharedQueryResult>
 {
-  SharedQueryResult   res;
-
-  SharedQueryHandler()
-  : res()
-  {}
-
-  void handle(const SgNode&) { assert(false); }
+  void handle(const SgNode& n) { sg::unexpected_node(n); }
   void handle(const SgType&) { }
 
   void handle(const SgModifierType& n)
@@ -347,8 +347,6 @@ struct SharedQueryHandler
   {
     res.base = n.get_base_type();
   }
-
-  operator SharedQueryResult() { return res; }
 };
 
 static
@@ -393,10 +391,7 @@ bool isStaticVariable(const SgInitializedName& n)
 
 AllocKind varAllocKind(const SgInitializedName& n)
 {
-
-  const bool global = isSgGlobal(n.get_scope());
-
-  if (!global && !isStaticVariable(n)) return akStack;
+  if (!isSgGlobal(n.get_scope()) && !isStaticVariable(n)) return akStack;
 
   if (isUpcShared(n.get_type())) return akUpcSharedGlobal;
 
@@ -511,10 +506,10 @@ RtedTransformation::isInInstrumentedFile( SgNode* n ) {
 }
 
 std::string removeSpecialChar(std::string str) {
-  string searchString="\"";
-  string replaceString="'";
-  string::size_type pos = 0;
-  while ( (pos = str.find(searchString, pos)) != string::npos ) {
+  std::string searchString="\"";
+  std::string replaceString="'";
+  std::string::size_type pos = 0;
+  while ( (pos = str.find(searchString, pos)) != std::string::npos ) {
     str.replace( pos, searchString.size(), replaceString );
     ++pos;
   }
@@ -528,7 +523,7 @@ SgVarRefExp* genVarRef( SgInitializedName* initName )
     SgScopeStatement* scope = initName -> get_scope();
     SgVariableSymbol* varsym = isSgVariableSymbol(scope->lookup_symbol(initName->get_name()));
 
-    return buildVarRefExp(varsym);
+    return SB::buildVarRefExp(varsym);
 }
 
 
@@ -540,7 +535,7 @@ SgVarRefExp* genVarRef( SgInitializedName* initName )
 static
 SgExpression* getUppermostLvalue( SgExpression* exp )
 {
-  if (exp) cerr << "Checking if exp has parent: " << exp->unparseToString() << "  :" << endl;
+  if (exp) std::cerr << "Checking if exp has parent: " << exp->unparseToString() << "  :" << std::endl;
 
   if (exp==NULL || exp->get_parent()==NULL) return exp;
 
@@ -576,8 +571,8 @@ SgExpression* getUppermostLvalue( SgExpression* exp )
   return exp;
 }
 
-SgFunctionDeclaration* RtedTransformation::getDefiningDeclaration( SgFunctionCallExp* fn_call ) {
-    SgFunctionDeclaration* fn_decl = fn_call -> getAssociatedFunctionDeclaration();
+SgFunctionDeclaration* RtedTransformation::getDefiningDeclaration( SgFunctionCallExp& fn_call ) {
+    SgFunctionDeclaration* fn_decl = fn_call.getAssociatedFunctionDeclaration();
     ROSE_ASSERT( fn_decl );
 
     SgFunctionDeclaration* rv =
@@ -611,7 +606,7 @@ SgFunctionDeclaration* RtedTransformation::getDefiningDeclaration( SgFunctionCal
 
     // may as well set the reference while we're here, in case of multiple call
     // sites for the same declaration
-    fn_call -> getAssociatedFunctionDeclaration() -> set_definingDeclaration( rv );
+    fn_call.getAssociatedFunctionDeclaration() -> set_definingDeclaration( rv );
 
     return rv;
 }
@@ -655,7 +650,7 @@ void RtedTransformation::appendAllocKind( SgExprListExp* arg_list, AllocKind kin
 {
   ROSE_ASSERT( arg_list );
 
-  appendExpression(arg_list, mkAllocKind(kind));
+  SI::appendExpression(arg_list, mkAllocKind(kind));
 }
 
 static
@@ -674,18 +669,18 @@ void RtedTransformation::appendFileInfo( SgExprListExp* arg_list, SgScopeStateme
     ROSE_ASSERT(arg_list && scope && file_info);
 
 
-    SgExpression*           filename = buildStringVal( file_info->get_filename() );
-    SgExpression*           linenr = buildIntVal( file_info->get_line() - 1);
-    SgExpression*           linenrTransformed = buildOpaqueVarRefExp("__LINE__", globalScope(scope));
-    SgExprListExp*          fiArgs = buildExprListExp();
+    SgExpression*           filename = SB::buildStringVal( file_info->get_filename() );
+    SgExpression*           linenr = SB::buildIntVal( file_info->get_line() - 1);
+    SgExpression*           linenrTransformed = SB::buildOpaqueVarRefExp("__LINE__", globalScope(scope));
+    SgExprListExp*          fiArgs = SB::buildExprListExp();
 
-    appendExpression( fiArgs, filename );
-    appendExpression( fiArgs, linenr );
-    appendExpression( fiArgs, linenrTransformed );
+    SI::appendExpression( fiArgs, filename );
+    SI::appendExpression( fiArgs, linenr );
+    SI::appendExpression( fiArgs, linenrTransformed );
 
     SgAggregateInitializer* fiCtorArg = genAggregateInitializer(fiArgs, roseFileInfo());
 
-    appendExpression( arg_list, ctorSourceInfo(fiCtorArg) );
+    SI::appendExpression( arg_list, ctorSourceInfo(fiCtorArg) );
 }
 
 SgType* skip_ModifierType(SgType* t)
@@ -741,39 +736,62 @@ SgType* skip_PointerLevel(SgType* t)
 }
 */
 
-struct PointerDiscoverer
+namespace
 {
-  SgPointerType* res;
-
-  PointerDiscoverer()
-  : res(NULL)
-  {}
-
-  template <class SgNodeType>
-  void skip(SgNodeType& n)
+  struct PointerDiscoverer : sg::DispatchHandler<SgPointerType*>
   {
-    res = sg::dispatch(PointerDiscoverer(), n.get_base_type());
-  }
+    PointerDiscoverer()
+    : Base(NULL)
+    {}
 
-  void handle(SgNode& n)
+    template <class SgNodeType>
+    void skip(SgNodeType& n)
+    {
+      res = sg::dispatch(PointerDiscoverer(), n.get_base_type());
+    }
+
+    void handle(SgNode& n)          { sg::unexpected_node(n); }
+
+    void handle(SgPointerType& n)   { res = &n; }
+
+    void handle(SgModifierType& n)  { skip(n); }
+    void handle(SgReferenceType& n) { skip(n); }
+    void handle(SgArrayType& n)     { skip(n); }
+    void handle(SgTypedefType& n)   { skip(n); }
+  };
+
+  struct FunctionReturnTypeHandler : sg::DispatchHandler<ReturnInfo::Kind>
   {
-    std::cerr << "unexpected type: " << typeid(n).name() << std::endl;
-    ROSE_ASSERT(false);
-  }
+    FunctionReturnTypeHandler()
+    : Base(ReturnInfo::rtNone)
+    {}
 
-  void handle(SgPointerType& n)   { res = &n; }
+    template <class SgNodeType>
+    void skip(SgNodeType& n)
+    {
+      res = sg::dispatch(FunctionReturnTypeHandler(), n.get_base_type());
+    }
 
-  void handle(SgModifierType& n)  { skip(n); }
-  void handle(SgReferenceType& n) { skip(n); }
-  void handle(SgArrayType& n)     { skip(n); }
-  void handle(SgTypedefType& n)   { skip(n); }
+    void handle(SgNode& n)          { sg::unexpected_node(n); }
 
-  operator SgPointerType*() { return res; }
-};
+    void handle(SgType& n)          { res = ReturnInfo::rtValue; }
+    void handle(SgPointerType& n)   { res = ReturnInfo::rtIndirection; }
+    void handle(SgReferenceType& n) { res = ReturnInfo::rtIndirection; }
+    void handle(SgTypeVoid& n)      { res = ReturnInfo::rtVoid; }
+
+    void handle(SgModifierType& n)  { skip(n); }
+    void handle(SgTypedefType& n)   { skip(n); }
+  };
+}
 
 SgPointerType* discover_PointerType(SgType* t)
 {
   return sg::dispatch(PointerDiscoverer(), t);
+}
+
+ReturnInfo::Kind functionReturnType(SgType* t)
+{
+  return sg::dispatch(FunctionReturnTypeHandler(), t);
 }
 
 AllocKind cxxHeapAllocKind(SgType* t)
@@ -814,12 +832,8 @@ SgType* skip_ArrPtrType(SgType* t)
 ///          shared int         f   [1];  /* indirections, shared_mask: 1, 3 */
 ///          shared int         (*g)[1];  /* indirections, shared_mask: 2, 6 */
 ///          shared int         *h  [1];  /* indirections, shared_mask: 2, 4 */
-struct IndirectionHandler
+struct IndirectionHandler : sg::DispatchHandler<TypeStructureInfo>
 {
-    IndirectionHandler()
-    : res()
-    {}
-
     // extends the shared bit from the lower level
     //   e.g., shared int x[1] is stored in shared space
     //         so the shared bit is extended from the base type (int)
@@ -847,14 +861,8 @@ struct IndirectionHandler
       res = sg::dispatch(IndirectionHandler(), n.get_base_type());
     }
 
-    void unexpected(SgNode& n)
-    {
-      sg::unused(n);
-      ROSE_ASSERT(false);
-    }
-
     /// unexpected node type
-    void handle(SgNode& n) { unexpected(n); }
+    void handle(SgNode& n) { sg::unexpected_node(n); }
 
     /// base case
     void handle(SgType& n) { res.type = &n; }
@@ -910,9 +918,6 @@ struct IndirectionHandler
 
       return res;
     }
-
-  private:
-    TypeStructureInfo res;
 };
 
 
@@ -934,7 +939,8 @@ SgType* skip_References(SgType* t)
 
 SgType* skip_TopLevelTypes(SgType* t)
 {
-  SgType* res = skip_References(skip_ModifierType(t));
+  SgType* res = skip_ReferencesAndTypedefs(skip_ModifierType(t));
+  // was: SgType* res = skip_References(skip_ModifierType(t));
 
   if (res == t) return res;
   return skip_TopLevelTypes(res);
@@ -975,11 +981,11 @@ RtedTransformation::mkTypeInformation(SgType* type, bool resolve_class_names, bo
   if (array_to_pointer && type_string == "SgArrayType")
     type_string = "SgPointerType";
 
-  SgExprListExp*          initexpr = buildExprListExp();
+  SgExprListExp*          initexpr = SB::buildExprListExp();
 
-  appendExpression( initexpr, buildStringVal(type_string) );
-  appendExpression( initexpr, buildStringVal(base_type_string) );
-  appendExpression( initexpr, mkAddressDesc(addrDesc) );
+  SI::appendExpression( initexpr, SB::buildStringVal(type_string) );
+  SI::appendExpression( initexpr, SB::buildStringVal(base_type_string) );
+  SI::appendExpression( initexpr, mkAddressDesc(addrDesc) );
 
   // \note when the typedesc object is added to an argument list, it requires
   //       an explicit type cast. This is not always required (e.g., when we
@@ -1000,18 +1006,16 @@ RtedTransformation::appendDimensions(SgExprListExp* arg_list, const RtedArray& a
 {
       ROSE_ASSERT(arg_list);
 
-      SgExprListExp* dimargs = buildExprListExp();
+      SgExprListExp* dimargs = SB::buildExprListExp();
       SgExpression*  noDims = SageBuilder::buildIntVal( arr.getDimension() );
 
       SageInterface::appendExpression(dimargs, noDims);
-      BOOST_FOREACH( SgExpression* expr, arr.getIndices() ) {
-          if ( expr == NULL )
-          {
-              // \pp ???
-              expr = SageBuilder::buildIntVal( -1 );
-          }
-
+      BOOST_FOREACH( SgExpression* expr, arr.getIndices() )
+      {
+          // \pp ??? if ( expr == NULL ) { expr = SageBuilder::buildIntVal( -1 ); }
           ROSE_ASSERT( expr );
+
+          std::cout << "m=" << typeid(*expr).name() << std::endl;
 
           // we add a value 0, otherwise the unparser skips the expressions
           // \pp \todo fix the unparser
@@ -1109,36 +1113,36 @@ void RtedTransformation::appendAddressAndSize(
     //  but we do want to create the array as s2..s2+sizeof(s2)
     if( (am == Elem) && isSgArrayType( type ))
     {
-        SgType* clone = deepCopy(isSgArrayType(type)->get_base_type());
+        SgType* clone = SI::deepCopy(isSgArrayType(type)->get_base_type());
 
-        szexp = buildSizeOfOp(clone);
+        szexp = SB::buildSizeOfOp(clone);
     }
 #if 0
       else if (unionclass) {
-  cerr <<"isUnionClass" << endl;
+  std::cerr <<"isUnionClass" << std::endl;
   SgType* classtype = unionclass ->get_declaration()->get_type();
-  cerr <<" unionclass : " << unionclass->unparseToString()<<"  type: " << classtype->class_name() << endl;
+  std::cerr <<" unionclass : " << unionclass->unparseToString()<<"  type: " << classtype->class_name() << std::endl;
 
-         szexp = buildSizeOfOp( isSgType(classtype-> copy( copy )));
-         //        buildSizeOfOp( buildIntVal(8))
+         szexp = SB::buildSizeOfOp( isSgType(classtype-> copy( copy )));
+         //        SB::buildSizeOfOp( SB::buildIntVal(8))
       }
 #endif
     else if (szop)
     {
-        SgExpression* clone = deepCopy(szop);
+        SgExpression* clone = SI::deepCopy(szop);
 
-        szexp = buildSizeOfOp(clone);
+        szexp = SB::buildSizeOfOp(clone);
     }
     else
     {
         // \pp can this happen?
-        szexp = buildSizeOfOp(buildLongIntVal(0));
+        szexp = SB::buildSizeOfOp(SB::buildLongIntVal(0));
     }
 
     ROSE_ASSERT(szexp != NULL);
 
     appendAddress( arg_list, exp );
-    appendExpression( arg_list, szexp );
+    SI::appendExpression( arg_list, szexp );
 }
 
 #if OBSOLETE_CODE
@@ -1170,7 +1174,7 @@ public:
   /// dont strip : *((cast)*val) because that leaves only *val
   void visit( SgNode* _n ) {
     SgCastExp* n = isSgCastExp( _n );
-    //    cerr << " $$$$$ Traversing nodes : " << _n->class_name() << endl;
+    //    std::cerr << " $$$$$ Traversing nodes : " << _n->class_name() << std::endl;
     if( n==NULL && first_node ) {
       first_node = false;
       rv = n;
@@ -1183,7 +1187,7 @@ public:
 
       rv = n -> get_operand();
     } else {
-      //replaceExpression( n, n -> get_operand() );
+      //SI::replaceExpression( n, n -> get_operand() );
     }
   }
 };
@@ -1209,12 +1213,11 @@ struct AddressOfExprBuilder
   {}
 
   void set(SgExpression& v) { res = &v; }
-  void address(SgExpression& v) { res = buildAddressOfOp(&v); }
+  void address(SgExpression& v) { res = SB::buildAddressOfOp(&v); }
 
-  void handle(SgNode& n) { ROSE_ASSERT(false); }
+  void handle(SgNode& n) { sg::unexpected_node(n); }
 
-  void handle(SgExpression& n) { address(n); }
-
+  void handle(SgExpression& n)      { address(n); }
   void handle(SgPointerDerefExp& n) { set(*n.get_operand()); }
 
   void handle(SgVarRefExp& n)
@@ -1250,53 +1253,53 @@ static
 SgExpression* genAddressOf(SgExpression* const exp, bool upcShared)
 {
   // \pp \todo why can the expression be NULL?
-  if (exp == NULL) return buildLongIntVal(0);
+  if (exp == NULL) return SB::buildLongIntVal(0);
 
   // \pp skip cast expressions b/c they create an r-value
   //     but we need an l-value when we use the address (& (int*) ptr)
   //~ LValueVisitor       make_lvalue_visitor;
-  //~ SgExpression*       cloneexp = deepCopy(exp);
+  //~ SgExpression*       cloneexp = SI::deepCopy(exp);
   //~ SgExpression* const exp_copy = make_lvalue_visitor.visit_subtree( cloneexp );
 
   SgExpression* const postcast = skip_Casts(exp);
-  SgExpression* const exp_copy = deepCopy(postcast);
-  SgType*             char_type = buildCharType();
+  SgExpression* const exp_copy = SI::deepCopy(postcast);
+  SgType*             char_type = SB::buildCharType();
 
   // in UPC we must not cast away the shared modifier
   // \pp \todo replace the magic -1 with sth more meaningful
   //           also in Cxx_Grammar and SageBuilder
-  if (upcShared) char_type = buildUpcSharedType(char_type, -1);
+  if (upcShared) char_type = SB::buildUpcSharedType(char_type, -1);
 
-  SgType*             char_ptr = buildPointerType(char_type);
+  SgType*             char_ptr = SB::buildPointerType(char_type);
   SgExpression*       address_exp = addressOfExpr(exp_copy);
 
   // we return the address as [shared] char*
-  return buildCastExp(address_exp, char_ptr);
+  return SB::buildCastExp(address_exp, char_ptr);
 }
 
 SgFunctionCallExp* RtedTransformation::mkAddress(SgExpression* exp, bool upcShared) const
 {
   ROSE_ASSERT( exp );
 
-  SgExprListExp* const args = buildExprListExp();
+  SgExprListExp* const args = SB::buildExprListExp();
   SgFunctionSymbol*    ctor = symbols.roseAddr;
 
   // for upc shared pointers we call rted_AddrSh and cast the
   //   expression to a shared char*
   if (upcShared)
   {
-    SgType* char_type = buildCharType();
+    SgType* char_type = SB::buildCharType();
 
     // \pp \todo replace the magic -1 with sth more meaningful
-    SgType* shchar_type = buildUpcSharedType(char_type, -1);
+    SgType* shchar_type = SB::buildUpcSharedType(char_type, -1);
 
-    exp = buildCastExp(exp, buildPointerType(shchar_type));
+    exp = SB::buildCastExp(exp, SB::buildPointerType(shchar_type));
     ctor = symbols.roseAddrSh;
   }
 
   ROSE_ASSERT(ctor);
-  appendExpression(args, exp);
-  return buildFunctionCallExp(ctor, args);
+  SI::appendExpression(args, exp);
+  return SB::buildFunctionCallExp(ctor, args);
 }
 
 
@@ -1308,16 +1311,16 @@ RtedTransformation::genAdjustedAddressOf(SgExpression* exp)
   SgIntVal* offset = NULL;
 
   if( isSgPlusPlusOp( exp )) {
-      offset = buildIntVal( 1 );
+      offset = SB::buildIntVal( 1 );
       exp = isSgUnaryOp( exp ) -> get_operand();
   } else if( isSgMinusMinusOp( exp )) {
-      offset = buildIntVal( -1 );
+      offset = SB::buildIntVal( -1 );
       exp = isSgUnaryOp( exp ) -> get_operand();
   } else if( isSgPlusAssignOp( exp )) {
       offset = isSgIntVal( isSgBinaryOp( exp ) ->get_rhs_operand());
       exp = isSgBinaryOp( exp ) -> get_lhs_operand();
   } else if( isSgMinusAssignOp( exp )) {
-      offset = buildIntVal(
+      offset = SB::buildIntVal(
           -1 *
           isSgIntVal( isSgBinaryOp( exp ) ->get_rhs_operand()) -> get_value()
       );
@@ -1332,7 +1335,7 @@ RtedTransformation::genAdjustedAddressOf(SgExpression* exp)
   if ( offset != NULL )
   {
     Sg_File_Info* fi = exp -> get_file_info();
-    SgMultiplyOp* mul = new SgMultiplyOp( fi, offset, buildSizeOfOp(exp) );
+    SgMultiplyOp* mul = new SgMultiplyOp( fi, offset, SB::buildSizeOfOp(exp) );
 
     arg = new SgAddOp( fi, arg, mul );
   }
@@ -1348,7 +1351,7 @@ void RtedTransformation::appendAddress(SgExprListExp* arg_list, SgExpression* ex
 {
     SgExpression* arg = genAdjustedAddressOf(exp);
 
-    appendExpression( arg_list, arg );
+    SI::appendExpression( arg_list, arg );
 }
 
 
@@ -1366,17 +1369,17 @@ void appendClassName( SgExprListExp* arg_list, SgType* type )
     {
       SgClassDeclaration* classdecl = isSgClassDeclaration( isSgClassType( type ) -> get_declaration() );
 
-      appendExpression( arg_list, buildStringVal(classdecl->get_mangled_name()) );
+      SI::appendExpression( arg_list, SB::buildStringVal(classdecl->get_mangled_name()) );
     }
     else
     {
-      appendExpression( arg_list, buildStringVal( "" ) );
+      SI::appendExpression( arg_list, SB::buildStringVal( "" ) );
     }
 }
 
 void appendBool(SgExprListExp* arglist, bool val)
 {
-  appendExpression(arglist, buildIntVal(val));
+  SI::appendExpression(arglist, SB::buildIntVal(val));
 }
 
 
@@ -1395,20 +1398,20 @@ RtedTransformation::prependPseudoForInitializerExpression(SgExpression* exp, SgS
   if( !for_stmt_processed ) {
 
     // { int RuntimeSystem_eval_once = 1; for( ... ) }
-    SgBasicBlock *new_scope = buildBasicBlock();
+    SgBasicBlock *new_scope = SB::buildBasicBlock();
     SgVariableDeclaration* eval_once_var
-      = buildVariableDeclaration(
+      = SB::buildVariableDeclaration(
         "RuntimeSystem_eval_once",
-        buildIntType(),
-        buildAssignInitializer( buildIntVal( 1 )),
+        SB::buildIntType(),
+        SB::buildAssignInitializer( SB::buildIntVal( 1 )),
         new_scope );
     new_scope -> prepend_statement( eval_once_var );
 
     // eval_once = 0
     SgAssignOp* initial_expression
-      = buildBinaryExpression< SgAssignOp >(
-        buildVarRefExp( "RuntimeSystem_eval_once", new_scope ),
-        buildIntVal( 0 ));
+      = SB::buildBinaryExpression< SgAssignOp >(
+        SB::buildVarRefExp( "RuntimeSystem_eval_once", new_scope ),
+        SB::buildIntVal( 0 ));
 
     // for( ... ; test; ... )
     // -> for( ... ; test | (eval_once && ((eval_once = 0) | exp1 | exp2 ... )); ... )
@@ -1416,20 +1419,20 @@ RtedTransformation::prependPseudoForInitializerExpression(SgExpression* exp, SgS
     ROSE_ASSERT( test );
 
     SgExpression* old_test = test -> get_expression();
-    replaceExpression(
+    SI::replaceExpression(
         test -> get_expression(),
         // test | ...
-        buildBinaryExpression< SgBitOrOp >(
+        SB::buildBinaryExpression< SgBitOrOp >(
             // throw-away expression to avoid null values
-            buildIntVal( 0 ),
+            SB::buildIntVal( 0 ),
             // eval_once && ...
-            buildBinaryExpression< SgAndOp >(
-                buildVarRefExp( "RuntimeSystem_eval_once", new_scope ),
+            SB::buildBinaryExpression< SgAndOp >(
+                SB::buildVarRefExp( "RuntimeSystem_eval_once", new_scope ),
                 initial_expression )),
         true);
     isSgBinaryOp( test -> get_expression() ) -> set_lhs_operand( old_test );
 
-    replaceStatement( for_stmt, new_scope );
+    SI::replaceStatement( for_stmt, new_scope );
     new_scope -> append_statement( for_stmt );
 
     for_stmt_processed = new RtedForStmtProcessed( initial_expression );
@@ -1441,12 +1444,12 @@ RtedTransformation::prependPseudoForInitializerExpression(SgExpression* exp, SgS
 
   // old_exp -> old_exp | new_exp
   SgBinaryOp* new_exp
-    = buildBinaryExpression< SgBitOrOp >(
+    = SB::buildBinaryExpression< SgBitOrOp >(
         exp,
         // This is just a throw-away expression to avoid NULL issues
-        buildIntVal( 0 ));
+        SB::buildIntVal( 0 ));
 
-  replaceExpression( for_stmt_processed -> get_exp(), new_exp, true );
+  SI::replaceExpression( for_stmt_processed->get_exp(), new_exp, true );
   new_exp -> set_rhs_operand( for_stmt_processed -> get_exp() );
   for_stmt_processed -> set_exp( new_exp );
 }
@@ -1455,23 +1458,20 @@ SgBasicBlock*
 RtedTransformation::buildGlobalConstructor(SgScopeStatement* scope, std::string name)
 {
   //SgStatement* global=NULL;
-  // build the classdeclaration and definition for RtedGlobal
-  SgClassDeclaration* decl = buildClassDeclaration_nfi(
-                   "RtedGlobal_"+name,
-                   SgClassDeclaration::e_class,
-                   scope, NULL);
+  // SB::build the classdeclaration and definition for RtedGlobal
+  SgClassDeclaration* decl = SB::buildClassDeclaration_nfi( "RtedGlobal_"+name, SgClassDeclaration::e_class, scope, NULL);
   ROSE_ASSERT(decl);
   globConstructor = decl;
-  SgClassDefinition* def = buildClassDefinition(decl);
+  SgClassDefinition* def = SB::buildClassDefinition(decl);
   ROSE_ASSERT(def);
 
-  SgFunctionParameterList* param = buildFunctionParameterList (buildFunctionParameterTypeList());
+  SgFunctionParameterList* param = SB::buildFunctionParameterList(SB::buildFunctionParameterTypeList());
   ROSE_ASSERT(param);
   ROSE_ASSERT(def->get_scope());
   ROSE_ASSERT(def->get_parent()); // should be the declaration
   ROSE_ASSERT(isSgClassDefinition(def));
 
-  SgMemberFunctionDeclaration* mf = buildDefiningMemberFunctionDeclaration("RtedGlobal_"+name,buildVoidType(),param,def);
+  SgMemberFunctionDeclaration* mf = SB::buildDefiningMemberFunctionDeclaration( "RtedGlobal_"+name, SB::buildVoidType(), param, def );
   ROSE_ASSERT(mf);
 
   SgSpecialFunctionModifier& fmod = mf->get_specialFunctionModifier();
@@ -1483,10 +1483,10 @@ RtedTransformation::buildGlobalConstructor(SgScopeStatement* scope, std::string 
   ROSE_ASSERT(block);
 
   // append memberfunc decl to classdef
-  prependStatement(mf, def);
+  SI::prependStatement(mf, def);
 
-  // build the call to RtedGlobal: RtedGlobal rg;
-  globalConstructorVariable = buildVariableDeclaration("rg_"+name,decl->get_type(),NULL,scope);
+  // SB::build the call to RtedGlobal: RtedGlobal rg;
+  globalConstructorVariable = SB::buildVariableDeclaration("rg_"+name,decl->get_type(),NULL,scope);
   ROSE_ASSERT(globalConstructorVariable);
 
   return block;
@@ -1497,14 +1497,6 @@ bool traverseAllChildrenAndFind(SgExpression* varRef, SgStatement* stmt)
   ROSE_ASSERT(varRef);
 
   return (stmt!=NULL) && SageInterface::isAncestor(stmt, varRef);
-
-  //~ if (stmt==NULL) return false;
-  //~
-  //~ const SgNodePtrList&          nodes = NodeQuery::querySubTree(stmt,V_SgExpression);
-  //~ SgNodePtrList::const_iterator zz = nodes.end();
-  //~ SgNodePtrList::const_iterator pos = std::find(nodes.begin(), zz, varRef);
-  //~
-  //~ return (pos != zz);
 }
 
 bool traverseAllChildrenAndFind(SgInitializedName* varRef, SgStatement* stmt)
@@ -1512,15 +1504,74 @@ bool traverseAllChildrenAndFind(SgInitializedName* varRef, SgStatement* stmt)
   ROSE_ASSERT(varRef);
 
   return (stmt!=NULL) && SageInterface::isAncestor(stmt, varRef);
+}
 
-  // \pp \todo replace this and the previous function with isAncestorOf implementation
-  //~ if (stmt == NULL) return false;
-  //~
-  //~ const SgNodePtrList&          nodes = NodeQuery::querySubTree(stmt,V_SgInitializedName);
-  //~ SgNodePtrList::const_iterator zz = nodes.end();
-  //~ SgNodePtrList::const_iterator pos = std::find(nodes.begin(), zz, varRef);
-  //~
-  //~ return (pos != zz);
+
+SgExprStatement*
+RtedTransformation::buildDelayedLeakCheckExitStmt( SourceFileType filetype,
+                                                   size_t blocks,
+                                                   SgScopeStatement& scope,
+                                                   SgInitializedName& result,
+                                                   Sg_File_Info* fileinfo
+                                                 )
+{
+  ROSE_ASSERT(fileinfo);
+
+  SgExprListExp*    args = SB::buildExprListExp();
+  SgFunctionSymbol* sym = NULL;
+
+  if ((filetype & ftCxx) == ftCxx)
+  {
+    sym = symbols.roseCxxTransientPtr;
+  }
+  else
+  {
+    sym = symbols.roseCTransientPtr;
+    SI::appendExpression(args, SB::buildIntVal(blocks));
+  }
+
+  ROSE_ASSERT(sym);
+  SI::appendExpression(args, mkAddress(SB::buildVarRefExp(&result), false /* non shared */ ));
+  appendFileInfo      (args, &scope, fileinfo);
+
+  return SB::buildFunctionCallStmt( SB::buildFunctionRefExp(sym), args );
+}
+
+SgExprStatement*
+RtedTransformation::buildExitBlockStmt(size_t blocks, SgScopeStatement& scope, Sg_File_Info* fileinfo)
+{
+  ROSE_ASSERT(symbols.roseExitScope && fileinfo);
+
+  SgExprListExp* args = SB::buildExprListExp();
+
+  SI::appendExpression(args, SB::buildIntVal(blocks));
+  appendFileInfo      (args, &scope, fileinfo);
+
+  return SB::buildFunctionCallStmt( SB::buildFunctionRefExp(symbols.roseExitScope), args );
+}
+
+SgExprStatement*
+RtedTransformation::buildEnterBlockStmt(const std::string& scopename)
+{
+    SgExprListExp* args = SB::buildExprListExp();
+
+    SI::appendExpression( args, SB::buildStringVal(scopename) );
+
+                                    //~ + ":"
+                                    //~ + RoseBin_support::ToString( fiStmt->get_line() )
+
+    ROSE_ASSERT( symbols.roseEnterScope );
+    return SB::buildFunctionCallStmt( SB::buildFunctionRefExp(symbols.roseEnterScope), args );
+}
+
+void RtedTransformation::insertErrorReport(SgStatement& loc, const std::string& msg)
+{
+  SgExprListExp* args = SB::buildExprListExp();
+
+  SI::appendExpression(args, SB::buildStringVal(msg));
+  appendFileInfo      (args, &loc);
+
+  insertCheck(ilBefore, &loc, symbols.roseReportViolation, args);
 }
 
 SgBasicBlock*
@@ -1539,7 +1590,7 @@ RtedTransformation::appendGlobalConstructor(SgScopeStatement* /*scope*/, SgState
 {
   ROSE_ASSERT(globConstructor && stmt);
 
-  insertStatement(stmt, globConstructor, true);
+  SI::insertStatement(stmt, globConstructor, true);
 }
 
 void
@@ -1548,15 +1599,14 @@ RtedTransformation::appendGlobalConstructorVariable(SgScopeStatement* /*scope*/,
   // add the global constructor to the top of the file
   ROSE_ASSERT(globalConstructorVariable && stmt);
 
-  insertStatement(stmt, globalConstructorVariable);
+  SI::insertStatement(stmt, globalConstructorVariable);
 }
 
 
 SgVariableDeclaration*
-RtedTransformation::getGlobalVariableForClass(SgGlobal* gl,
-                SgClassDeclaration* classStmt) {
+RtedTransformation::getGlobalVariableForClass(SgGlobal* gl, SgClassDeclaration* classStmt) {
   SgVariableDeclaration* var = NULL;
-  string classDeclName = classStmt->get_name().str();
+  std::string classDeclName = classStmt->get_name().str();
 
   // get all children of global
   SgDeclarationStatementPtrList decls = gl->get_declarations();
@@ -1569,11 +1619,11 @@ RtedTransformation::getGlobalVariableForClass(SgGlobal* gl,
       ROSE_ASSERT(initName);
       SgClassType* varT = isSgClassType(initName->get_type());
       if (varT) {
-  string classname = varT->get_name().str() ;
+  std::string classname = varT->get_name().str() ;
   //cerr<< "Found global var with type : " << varT->class_name() << "  " <<
   //  initName->unparseToString() << "  class name : " <<
   //  classname<< "         comparing to == " << classDeclName << "   compGen: " <<
-  //    classStmt->get_file_info()->isCompilerGenerated() << endl;
+  //    classStmt->get_file_info()->isCompilerGenerated() << std::endl;
   if (classname==classDeclName)
     var=vard;
       }
@@ -1581,126 +1631,6 @@ RtedTransformation::getGlobalVariableForClass(SgGlobal* gl,
   }
 
   return var;
-
 }
-
-////
-// \todo move into SageInterface or SageBuilder
-////
-
-  SgInitializedName& getFirstVariable(SgVariableDeclaration& vardecl)
-  {
-    ROSE_ASSERT(vardecl.get_variables().size());
-
-    return *vardecl.get_variables().front();
-  }
-
-  /// \brief  clones a function parameter list @params and uses the function
-  ///         definition @fundef as new scope
-  /// \return a copy of a function parameter list
-  /// \param  params the original list
-  /// \param  fundef the function definition with which the new parameter list
-  ///         will be associated (indirectly through the function declaration).
-  ///         fundef can be NULL.
-  static
-  SgFunctionParameterList&
-  cloneParameterList(const SgFunctionParameterList& params, SgFunctionDefinition* fundef = NULL)
-  {
-    namespace SB = SageBuilder;
-
-    SgFunctionParameterList&          copy = *SB::buildFunctionParameterList();
-    const SgInitializedNamePtrList&   orig_decls = params.get_args();
-
-    std::transform( orig_decls.begin(), orig_decls.end(), sg::sage_inserter(copy), sg::InitNameCloner(copy, fundef) );
-
-    return copy;
-  }
-
-  /// \brief swaps the "defining elements" of two function declarations
-  static
-  void swapDefiningElements(SgFunctionDeclaration& ll, SgFunctionDeclaration& rr)
-  {
-    namespace SB = SageBuilder;
-
-    // swap definitions
-    sg::swap_child(ll, rr, &SgFunctionDeclaration::get_definition,    &SgFunctionDeclaration::set_definition);
-    sg::swap_child(ll, rr, &SgFunctionDeclaration::get_parameterList, &SgFunctionDeclaration::set_parameterList);
-
-    // \todo do we need to swap also exception spec, decorator_list, etc. ?
-  }
-
-  std::pair<SgStatement*, SgInitializedName*>
-  wrapFunction(SgFunctionDeclaration& definingDeclaration, SgName newName)
-  {
-    namespace SB = SageBuilder;
-    namespace SI = SageInterface;
-
-    // handles freestanding functions only
-    ROSE_ASSERT(typeid(SgFunctionDeclaration) == typeid(definingDeclaration));
-    ROSE_ASSERT(definingDeclaration.get_definingDeclaration() == &definingDeclaration);
-
-    // clone function parameter list
-    SgFunctionParameterList&  param_list = cloneParameterList(*definingDeclaration.get_parameterList());
-
-    // create new function definition/declaration in the same scope
-    SgScopeStatement*         containing_scope = definingDeclaration.get_scope();
-    SgType*                   result_type = definingDeclaration.get_type()->get_return_type();
-    SgExprListExp*            decorators = SI::deepCopy( definingDeclaration.get_decoratorList() );
-    SgFunctionDeclaration*    wrapperfn = SB::buildDefiningFunctionDeclaration(newName, result_type, &param_list, containing_scope, decorators);
-    SgFunctionDefinition*     wrapperdef = wrapperfn->get_definition();
-    ROSE_ASSERT(wrapperdef);
-
-    // copy the exception specification
-    wrapperfn->set_exceptionSpecification(definingDeclaration.get_exceptionSpecification());
-
-    // swap the original's function definition w/ the clone's function def
-    //  and the original's func parameter list w/ the clone's parameters
-    swapDefiningElements(definingDeclaration, *wrapperfn);
-
-    // call original function from within the defining decl's body
-    SgBasicBlock*             body = wrapperdef->get_body();
-    SgExprListExp*            args = SB::buildExprListExp();
-    SgInitializedNamePtrList& param_decls = param_list.get_args();
-
-    std::transform( param_decls.begin(), param_decls.end(), sg::sage_inserter(*args), sg::VarRefBuilder(*wrapperdef) );
-
-    SgFunctionCallExp*        callWrapped = SB::buildFunctionCallExp( newName, result_type, args, body );
-    SgInitializedName*        resultName = NULL;
-    SgStatement*              callStatement = NULL;
-
-    // \todo skip legal qualifiers that could be on top of void
-    if (!isSgTypeVoid(result_type))
-    {
-      // add call to original function and assign result to variable
-      SgVariableDeclaration*  res = SB::buildVariableDeclaration( "res", result_type, SB::buildAssignInitializer(callWrapped), body );
-      SgVarRefExp*            resref = SB::buildVarRefExp( res );
-
-      SI::appendStatement(res, body);
-
-      // add return statement, returning result
-      resultName    = &getFirstVariable(*res);
-      callStatement = res;
-
-      SI::appendStatement(SB::buildReturnStmt(resref), body);
-    }
-    else
-    {
-      // add function call statement to original function
-      callStatement = SB::buildExprStatement(callWrapped);
-      SI::appendStatement(callStatement, body);
-    }
-
-    ROSE_ASSERT(callStatement);
-
-    // create non defining declaration
-    SgExprListExp*            decorator_proto = SI::deepCopy( decorators );
-    SgFunctionDeclaration*    wrapperfn_proto = SB::buildNondefiningFunctionDeclaration(wrapperfn, containing_scope, decorator_proto);
-
-    // add the new functions at the proper location of the surrounding scope
-    SI::insertStatementBefore(&definingDeclaration, wrapperfn_proto);
-    SI::insertStatementAfter (&definingDeclaration, wrapperfn);
-
-    return std::make_pair(callStatement, resultName);
-  }
 
 #endif

@@ -38,13 +38,24 @@ public:
         start_ = node;
         buildCFG();
       }
-
+    SgNode* getEntry()
+    {
+    return start_;
+    }
+    SgIncidenceDirectedGraph* getGraph()
+    {
+    return graph_;
+    }
+    SgGraphNode* getGraphNode(CFGNode n) {
+        return alNodes[n];
+    }
     // Build CFG according to the 'is_filtered_' flag.
     virtual void buildCFG()
     {
         buildFullCFG();
     }
-
+    std::map<CFGNode, SgGraphNode*> alNodes;
+    CFGNode neededStart;
     // Build CFG for debugging.
     virtual void buildFullCFG();
     // Build filtered CFG which only contains interesting nodes.

@@ -12,7 +12,7 @@
 #include "RSIM_Callbacks.h"
 #include "RSIM_Futex.h"
 #include "RSIM_Process.h"
-#include "RSIM_SemanticPolicy.h"
+#include "RSIM_SemanticsSettings.h"
 #include "RSIM_Thread.h"
 #include "RSIM_Templates.h"
 #include "RSIM_Tools.h"
@@ -53,9 +53,9 @@
  *       the specimen.  This has an impact on performance.</li>
  *
  *   <li>The specimen's instructions are simulated rather than executed directly by the CPU.  The simulation is performed by
- *       the X86InstructionSemantics class defined in ROSE and an RSIM_SemanticPolicy class defined in the simulator.  The
- *       X86InstructionSemantics class defines what basic operations must be performed by each instruction, while the
- *       RSIM_SemanticPolicy class defines the operations themselves.
+ *       the X86InstructionSemantics class defined in ROSE and the RSIM_Semantics name space classes defined in the simulator.
+ *       The X86InstructionSemantics class defines what basic operations must be performed by each instruction, while the
+ *       RSIM_Semantics classes define the operations themselves.  See the RSIM_SemanticsSettings.h file for details.
  *
  *       Simulating each instruction has a number of advantages:
  *       <ol>
@@ -293,29 +293,50 @@ public:
 
     /** Install a callback object.
      *
-     *  This is just a convenient way of installing a callback object.  It appends it to the BEFORE slot of the appropriate
-     *  queue.
+     *  This is just a convenient way of installing a callback object.  It appends it to the BEFORE slot (by default) of the
+     *  appropriate queue.  If @p everwhere is true (not the default) then it also appends the callback to the appropriate
+     *  callback list of the process and all existing threads.  Regardless of whether a callback is applied to process and
+     *  threads, whenever a new process is created it gets a clone of all the simulator callbacks, and whenever a new thread is
+     *  created it gets a clone of all its process callbacks.
      *
      *  @{ */  // ******* Similar functions in RSIM_Process and RSIM_Thread ******
-    void install_callback(RSIM_Callbacks::InsnCallback *cb) {
-        callbacks.add_insn_callback(RSIM_Callbacks::BEFORE, cb);
-    }
-    void install_callback(RSIM_Callbacks::MemoryCallback *cb) {
-        callbacks.add_memory_callback(RSIM_Callbacks::BEFORE, cb);
-    }
-    void install_callback(RSIM_Callbacks::SyscallCallback *cb) {
-        callbacks.add_syscall_callback(RSIM_Callbacks::BEFORE, cb);
-    }
-    void install_callback(RSIM_Callbacks::SignalCallback *cb) {
-        callbacks.add_signal_callback(RSIM_Callbacks::BEFORE, cb);
-    }
-    void install_callback(RSIM_Callbacks::ThreadCallback *cb) {
-        callbacks.add_thread_callback(RSIM_Callbacks::BEFORE, cb);
-    }
-    void install_callback(RSIM_Callbacks::ProcessCallback *cb) {
-        callbacks.add_process_callback(RSIM_Callbacks::BEFORE, cb);
-    }
+    void install_callback(RSIM_Callbacks::InsnCallback *cb,
+                          RSIM_Callbacks::When when=RSIM_Callbacks::BEFORE, bool everywhere=false);
+    void install_callback(RSIM_Callbacks::MemoryCallback *cb,
+                          RSIM_Callbacks::When when=RSIM_Callbacks::BEFORE, bool everywhere=false);
+    void install_callback(RSIM_Callbacks::SyscallCallback *cb,
+                          RSIM_Callbacks::When when=RSIM_Callbacks::BEFORE, bool everywhere=false);
+    void install_callback(RSIM_Callbacks::SignalCallback *cb,
+                          RSIM_Callbacks::When when=RSIM_Callbacks::BEFORE, bool everywhere=false);
+    void install_callback(RSIM_Callbacks::ThreadCallback *cb,
+                          RSIM_Callbacks::When when=RSIM_Callbacks::BEFORE, bool everywhere=false);
+    void install_callback(RSIM_Callbacks::ProcessCallback *cb,
+                          RSIM_Callbacks::When when=RSIM_Callbacks::BEFORE, bool everywhere=false);
     /** @} */
+
+    /** Remove a callback object.
+     *
+     *  This is just a convenient way of removing callback objects.  It removes up to one instance of the callback from the
+     *  simulator and, if @p everwhere is true (not the default) it recursively calls the removal methods for the process and
+     *  all threads.  The comparison to find a callback object is by callback address.  If the callback has a @p clone() method
+     *  that allocates a new callback object, then the callback specified as an argument probably won't be found in the process
+     *  or threads.
+     *
+     * @{ */
+    void remove_callback(RSIM_Callbacks::InsnCallback *cb,
+                         RSIM_Callbacks::When when=RSIM_Callbacks::BEFORE, bool everywhere=false);
+    void remove_callback(RSIM_Callbacks::MemoryCallback *cb,
+                         RSIM_Callbacks::When when=RSIM_Callbacks::BEFORE, bool everywhere=false);
+    void remove_callback(RSIM_Callbacks::SyscallCallback *cb,
+                         RSIM_Callbacks::When when=RSIM_Callbacks::BEFORE, bool everywhere=false);
+    void remove_callback(RSIM_Callbacks::SignalCallback *cb,
+                         RSIM_Callbacks::When when=RSIM_Callbacks::BEFORE, bool everywhere=false);
+    void remove_callback(RSIM_Callbacks::ThreadCallback *cb,
+                         RSIM_Callbacks::When when=RSIM_Callbacks::BEFORE, bool everywhere=false);
+    void remove_callback(RSIM_Callbacks::ProcessCallback *cb,
+                         RSIM_Callbacks::When when=RSIM_Callbacks::BEFORE, bool everywhere=false);
+    /** @} */
+    
 
     /**************************************************************************************************************************
      *                                  System calls

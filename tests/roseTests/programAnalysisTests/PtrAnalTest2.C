@@ -60,7 +60,7 @@ int a;
 	DEBUG_STMT = 0;
 
     SgProject sageProject ( argc,argv);
-    SageInterface::changeAllLoopBodiesToBlocks(&sageProject);
+    SageInterface::changeAllBodiesToBlocks(&sageProject);
     CmdOptions::GetInstance()->SetOptions(argc, argv);
 
 

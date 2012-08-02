@@ -78,6 +78,8 @@ void Range<rose_addr_t>::print(std::ostream &o) const;
 
 class ExtentMap: public RangeMap<Extent> {
 public:
+	ExtentMap(): RangeMap<Extent>() {}
+	template<class Other> ExtentMap(const Other &other): RangeMap<Extent>(other) {}
 	static char category(const Extent &a, const Extent &b);
 	ExtentMap subtract_from(const Extent &e) const {
 		return invert_within<ExtentMap>(e);
@@ -281,15 +283,14 @@ typedef SgAsmGenericSectionPtrList*           SgAsmGenericFilePtrListPtr;
 // typedef Rose_STL_Container<SgAsmElfSegmentEntry*> SgAsmElfSegmentEntryPtrList;
 // typedef SgAsmElfSegmentEntryPtrList*              SgAsmElfSegmentEntryPtrListPtr;
 
-// DQ (8/3/2008): Added support for new IR nodes for new binary file formate work by Robb.
-typedef Rose_STL_Container<SgAsmPEImportHNTEntry*> SgAsmPEImportHNTEntryPtrList;
-typedef SgAsmPEImportHNTEntryPtrList*              SgAsmPEImportHNTEntryPtrListPtr;
-
-typedef Rose_STL_Container<SgAsmPEImportILTEntry*> SgAsmPEImportILTEntryPtrList;
-typedef SgAsmPEImportILTEntryPtrList*              SgAsmPEImportILTEntryPtrListPtr;
+typedef Rose_STL_Container<SgAsmPEImportItem*> SgAsmPEImportItemPtrList;
+typedef SgAsmPEImportItemPtrList*              SgAsmPEImportItemPtrListPtr;
 
 typedef Rose_STL_Container<SgAsmPEImportDirectory*> SgAsmPEImportDirectoryPtrList;
 typedef SgAsmPEImportDirectoryPtrList*              SgAsmPEImportDirectoryPtrListPtr;
+
+typedef Rose_STL_Container<SgAsmPEImportItem*> SgAsmPEImportItemPtrList;
+typedef SgAsmPEImportItemPtrList*              SgAsmPEImportItemPtrListPtr;
 
 // DQ (6/14/2008): Added to support new exec format IR nodes
 typedef Rose_STL_Container<SgAsmElfSymbol*> SgAsmElfSymbolPtrList;
@@ -439,8 +440,8 @@ typedef SgAsmStatementPtrList*              SgAsmStatementPtrListPtr;
 typedef Rose_STL_Container<SgAsmExpression*> SgAsmExpressionPtrList;
 typedef SgAsmExpressionPtrList*              SgAsmExpressionPtrListPtr;
 
-typedef Rose_STL_Container<SgAsmTarget*> SgAsmTargetPtrList;
-typedef SgAsmTargetPtrList* 		 SgAsmTargetPtrListPtr;
+typedef Rose_STL_Container<SgAsmIntegerValueExpression*> SgAsmIntegerValuePtrList;
+typedef SgAsmIntegerValuePtrList* 		 SgAsmIntegerValuePtrListPtr;
 
 // JJW (3/19/2008): Added support for containers of x86 instructions
 typedef Rose_STL_Container<SgAsmx86Instruction*> SgAsmx86InstructionPtrList;

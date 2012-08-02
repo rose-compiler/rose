@@ -11,12 +11,19 @@ namespace VirtualCFG {
 // "Interesting" node and edge filters for use with dataflow analyses
 class DataflowEdge;
 
+bool defaultFilter (CFGNode cfgn);
+
 class DataflowNode {
         public:
         CFGNode n;
+        bool (*filter) (CFGNode cfgn); // a filter function to decide which raw CFG node to show (if return true) or hide (otherwise)           
         
-        DataflowNode(CFGNode n): n(n) {}
-        DataflowNode(const DataflowNode& dfn): n(dfn.n) {}
+        // We enforce the user codes (the framework) of DataflowNode to explicitly set filter, or provide default filter on their own
+        DataflowNode(CFGNode n, bool (*f) (CFGNode)): n(n), filter(f) {}
+        // By default, the default filter function is used unless otherwise specified
+//        DataflowNode(CFGNode n, bool (*f) (CFGNode) = defaultFilter): n(n), filter(f) {}
+        DataflowNode(const DataflowNode& dfn): n(dfn.n), filter (dfn.filter) {} 
+
         std::string toString() const {return n.toString();}
         std::string toStringForDebugging() const {return n.toStringForDebugging();}
         std::string id() const {return n.id();}
@@ -36,15 +43,18 @@ typedef std::map<SgNode*, DataflowNode> m_AST2CFG;
 
 class DataflowEdge {
         CFGPath p;
+        bool (*filter) (CFGNode cfgn);
         
         public:
-        DataflowEdge(CFGPath p): p(p) {}
-        DataflowEdge(const DataflowEdge& dfe): p(dfe.p) {}
+//        DataflowEdge(CFGPath p, bool (*f) (CFGNode) = defaultFilter): p(p), filter(f) {}
+        DataflowEdge(CFGPath p, bool (*f) (CFGNode) ): p(p), filter(f) {}
+        DataflowEdge(const DataflowEdge& dfe): p(dfe.p), filter(dfe.filter) {}
+
         std::string toString() const {return p.toString();}
         std::string toStringForDebugging() const {return p.toStringForDebugging();}
         std::string id() const {return p.id();}
-        DataflowNode source() const {return DataflowNode(p.source());}
-        DataflowNode target() const {return DataflowNode(p.target());}
+        DataflowNode source() const {return DataflowNode(p.source(), filter);}
+        DataflowNode target() const {return DataflowNode(p.target(), filter);}
         EdgeConditionKind condition() const {return p.condition();}
         SgExpression* caseLabel() const {return p.caseLabel();}
         SgExpression* conditionBasedOn() const {return p.conditionBasedOn();}
@@ -55,9 +65,10 @@ class DataflowEdge {
         //bool operator<(const DataflowEdge& o) const {return p < o.p;}
 };
 
-inline DataflowNode makeDataflowCfg(SgNode* start) {
+//inline DataflowNode makeDataflowCfg(SgNode* start, bool (*f) (CFGNode) = defaultFilter) {
+inline DataflowNode makeDataflowCfg(SgNode* start, bool (*f) (CFGNode) ) {
         // Returns CFG node for just before start
-        return DataflowNode(cfgBeginningOfConstruct(start));
+        return DataflowNode(cfgBeginningOfConstruct(start), f);
 }
 
 bool isDataflowInteresting(CFGNode cn);

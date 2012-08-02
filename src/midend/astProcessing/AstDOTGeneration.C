@@ -19,11 +19,6 @@
 #undef TEMPLATE_IMPLEMENTATIONS
 #include "AstConsistencyTests.h"
 
-// DQ (11/6/2008): Added to support the PRIx64 macro for portable (32/64)-bit address I/O.
-// It might be that this should be added more uniformally in ROSE.
-#define __STDC_FORMAT_MACROS
-#include <inttypes.h>
-
 #ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
    #include "AsmUnparser_compat.h"
 #endif
@@ -417,10 +412,10 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
                name = genericString->get_string();
              }
 
-          SgAsmPEImportHNTEntry* peImportHNTEntry = isSgAsmPEImportHNTEntry(node);
-          if (peImportHNTEntry != NULL)
+          SgAsmPEImportItem* peImportItem = isSgAsmPEImportItem(node);
+          if (peImportItem != NULL)
              {
-               SgAsmGenericString* genericString = peImportHNTEntry->get_name();
+               SgAsmGenericString* genericString = peImportItem->get_name();
                ROSE_ASSERT(genericString != NULL);
 
                name = genericString->get_string();

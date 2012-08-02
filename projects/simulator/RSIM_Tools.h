@@ -13,6 +13,52 @@
  *  source code and write similar tools as classes within your own source files, which are then registered as RSIM callbacks. */
 namespace RSIM_Tools {
 
+/** Pauses at process fork.
+ *
+ *  When a process forks, this callback is invoked first for the process performing the fork, and then for the new process
+ *  created by the fork.  Whether the callback is on the BEFORE or AFTER list determines whether it's called by the parent
+ *  and/or child process.  The affected process creates a named fifo and blocks until some other process writes something to
+ *  that fifo.  The fifo is then closed, removed from the file system, and the specimen calling thread is allowed to continue.
+ *
+ *  For instance, to cause the specimen to stop in all newly forked processes, the callback should be registered on the AFTER
+ *  list only, like this:
+ *
+ *  @code
+ *  RSIM_Linux32 *sim = ...;
+ *  RSIM_Tools::ForkPauser pause;
+ *  sim.get_callbacks().add_process_callback(RSIM_Callbacks::AFTER, &pause);
+ *  @endcode
+ */
+class ForkPauser: public RSIM_Callbacks::ProcessCallback {
+public:
+    bool pause_on_fork;
+
+    ForkPauser(): pause_on_fork(true) {}
+
+    virtual ForkPauser *clone() { return this; }
+
+    virtual bool operator()(bool enabled, const Args &args) {
+        if (enabled && args.reason==FORK) {
+            std::cerr <<"ForkPauser: pid=" <<getpid();
+            if (pause_on_fork) {
+                std::string filename("/tmp/paused_"); filename += StringUtility::numberToString(getpid());
+                int status __attribute__((unused)) = mkfifo(filename.c_str(), 0666);
+                assert(status>=0);
+                std::cerr <<"; paused -- say \"echo >" <<filename <<"\" to resume...";
+                int fd = open(filename.c_str(), O_RDONLY);
+                assert(fd>=0);
+                char buf;
+                read(fd, &buf, 1);
+                std::cerr <<" resumed";
+                close(fd);
+                unlink(filename.c_str());
+            }
+            std::cerr <<std::endl;
+        }
+        return enabled;
+    }
+};
+
 /** Traverses the AST to find a symbol for a global function with the specified name.
  *
  *  This class operates over an AST and is not a callback like most of the other classes in this collection of tools.  The
@@ -40,34 +86,46 @@ namespace RSIM_Tools {
  *       rose_addr_t f2_va = FunctionFinder().address(project, "printf");
  *  @endcode
  */
-class FunctionFinder: public AstSimpleProcessing {
+class FunctionFinder {
 private:
-    std::string fname;          /**< Holds address() function for use during traversal. */
+    struct T1: public AstSimpleProcessing {
+        std::string fname;          /* Holds address() function for use during traversal. */
+        T1(const std::string &fname): fname(fname) {}
+        void visit(SgNode *node) {
+            SgAsmElfSymbol *sym = isSgAsmElfSymbol(node);
+            if (sym &&
+                sym->get_def_state() == SgAsmGenericSymbol::SYM_DEFINED &&
+                sym->get_binding()   == SgAsmGenericSymbol::SYM_GLOBAL &&
+                sym->get_type()      == SgAsmGenericSymbol::SYM_FUNC &&
+                sym->get_name()->get_string() == fname)
+                throw sym->get_value();
+        }
+    };
 
 public:
     /** Search for a function.  Searches for a function named @p fname in the specified @p ast and returns its entry
      *  address. The function must be a global, defined symbol.  If the function cannot be found, then the null address is
      *  returned. */
     rose_addr_t address(SgNode *ast, const std::string &fname) {
-        this->fname = fname;
         try {
-            traverse(ast, preorder);
+            T1(fname).traverse(ast, preorder);
         } catch (rose_addr_t addr) {
             return addr;
         }
         return 0;
     }
 
-private:
-    /** Traversal callback. */
-    void visit(SgNode *node) {
-        SgAsmElfSymbol *sym = isSgAsmElfSymbol(node);
-        if (sym &&
-            sym->get_def_state() == SgAsmGenericSymbol::SYM_DEFINED &&
-            sym->get_binding()   == SgAsmGenericSymbol::SYM_GLOBAL &&
-            sym->get_type()      == SgAsmGenericSymbol::SYM_FUNC &&
-            sym->get_name()->get_string() == fname)
-            throw sym->get_value();
+    /** Search for a function.  Searches for a function named @p fname in all of the specified binary headers and returns the
+     *  first one found.  The function must be a global, defined symbol.  If the function cannot be found under any header,
+     *  then the null address is returned.  This function is intended to be called with RSIM_Process::get_loads() as the
+     *  argument, which is why the vector uses SgAsmGenericHeader instead of SgNode. */
+    rose_addr_t address(const std::vector<SgAsmGenericHeader*> &headers, const std::string &fname) {
+        for (std::vector<SgAsmGenericHeader*>::const_iterator hi=headers.begin(); hi!=headers.end(); ++hi) {
+            rose_addr_t addr = address(*hi, fname);
+            if (addr!=0)
+                return addr;
+        }
+        return 0;
     }
 };
 
@@ -176,9 +234,11 @@ public:
                         std::string name = defn->get_name();
                         if (name.empty()) {
                             RTS_READ(process->rwlock()) {
-                                const MemoryMap::MapElement *me = process->get_memory()->find(defn->get_entry_va());
-                                if (me && !me->get_name().empty())
-                                    name = "in " + me->get_name();
+                                if (process->get_memory().exists(defn->get_entry_va())) {
+                                    const MemoryMap::Segment &sgmt = process->get_memory().at(defn->get_entry_va()).second;
+                                    if (!sgmt.get_name().empty())
+                                        name = "in " + sgmt.get_name();
+                                }
                             } RTS_READ_END;
                         }
                         if (defn->get_entry_va()!=func_start)
@@ -269,7 +329,7 @@ public:
                  * address of a CALL instruction in executable memory.  This only handles CALLs encoded in two or five
                  * bytes. */
                 bool bp_not_pushed = false;
-                uint32_t esp = args.thread->policy.readGPR(x86_gpr_sp).known_value();
+                uint32_t esp = args.thread->policy.readRegister<32>(args.thread->policy.reg_esp).known_value();
                 uint32_t top_word;
                 SgAsmx86Instruction *call_insn;
                 try {
@@ -507,12 +567,17 @@ public:
     rose_addr_t when;                   /**< IP value when this callback is to be triggered. */
     rose_addr_t va;                     /**< Starting address to dump. */
     size_t nbytes;                      /**< Number of bytes to dump. */
+    bool do_binary;                     /**< If true, then dump binary data, otherwise format with 'fmt'. */
     HexdumpFormat fmt;                  /**< Format to use for hexdump. */
+    std::string filename;               /**< Optional output file.  If empty, output is sent to the TRACE_MISC facility. */
+
 
     /** Constructor.  Creates an instruction callback that will dump @p nbytes bytes of memory starting at address @p va every
-     *  time the simulator is about to execute an instruction at address @p when. */
-    MemoryDumper(rose_addr_t when, rose_addr_t va, size_t nbytes)
-        : when(when), va(va), nbytes(nbytes) {
+     *  time the simulator is about to execute an instruction at address @p when.  If a file name is specified, then data will
+     *  be dumped in binary format to the specified file, otherwise the data is dumped in hexdump format to the TRACE_MISC
+     *  facility. */
+    MemoryDumper(rose_addr_t when, rose_addr_t va, size_t nbytes, const std::string filename="")
+        : when(when), va(va), nbytes(nbytes), do_binary(!filename.empty()), filename(filename) {
         fmt.prefix = "  ";
         fmt.multiline = true;
     }
@@ -524,14 +589,70 @@ public:
             RTS_Message *m = args.thread->tracing(TRACE_MISC);
             m->multipart("MemoryDumper", "MemoryDumper triggered: dumping %zu byte%s at 0x%08"PRIx64"\n",
                          nbytes, 1==nbytes?"":"s", va);
-            uint8_t *buffer = new uint8_t[nbytes];
-            size_t nread = args.thread->get_process()->mem_read(buffer, va, nbytes);
-            if (nread < nbytes)
-                m->mesg("MemoryDumper: read failed at 0x%08"PRIx64, va+nread);
-            std::string s = SgAsmExecutableFileFormat::hexdump(va, buffer, nbytes, fmt);
-            m->more("%s", s.c_str());
+            if (do_binary) {
+                /* Raw output to a file */
+                assert(!filename.empty());
+                int fd = open(filename.c_str(), O_TRUNC|O_CREAT|O_RDWR, 0666);
+                if (fd<=0) {
+                    m->mesg("MemoryDumper: %s: %s", filename.c_str(), strerror(errno));
+                    goto error;
+                }
+                uint8_t buffer[4096];
+                rose_addr_t va = this->va;
+                size_t nbytes = this->nbytes;
+                while (nbytes>0) {
+                    size_t to_read = std::min(nbytes, sizeof buffer);
+                    size_t nread = args.thread->get_process()->mem_read(buffer, va, to_read);
+                    for (size_t nwrite=0; nwrite<nread; /*void*/) {
+                        ssize_t n = write(fd, buffer+nwrite, nread-nwrite);
+                        if (n<0) {
+                            m->mesg("MemoryDumper: write failed\n");
+                            close(fd);
+                            goto error;
+                        }
+                        nwrite += n;
+                    }
+                    if (nread<to_read) {
+                        m->mesg("MemoryDumper: read failed at 0x%08"PRIx64, va+nread);
+                        close(fd);
+                        goto error;
+                    }
+                    nbytes -= nread;
+                    va += nread;
+                }
+                close(fd);
+            } else {
+                /* Formatted output to a file or trace facility. */
+                uint8_t *buffer = new uint8_t[nbytes];
+                size_t nread = args.thread->get_process()->mem_read(buffer, va, nbytes);
+                int fd = -1;
+                if (nread < nbytes)
+                    m->mesg("MemoryDumper: read failed at 0x%08"PRIx64, va+nread);
+                std::string s = SgAsmExecutableFileFormat::hexdump(va, buffer, nread, fmt);
+                if (!filename.empty()) {
+                    if (-1==(fd=open(filename.c_str(), O_TRUNC|O_CREAT|O_RDWR, 0666))) {
+                        m->mesg("MemoryDumper: %s: %s", filename.c_str(), strerror(errno));
+                        delete[] buffer;
+                        goto error;
+                    }
+                    for (size_t nwrite=0; nwrite<nread; /*void*/) {
+                        ssize_t n = write(fd, buffer+nwrite, nread-nwrite);
+                        if (n<0) {
+                            m->mesg("MemoryDumper: write failed\n");
+                            close(fd);
+                            delete[] buffer;
+                            goto error;
+                        }
+                        nwrite += n;
+                    }
+                    close(fd);
+                } else {
+                    m->more("%s", s.c_str());
+                }
+                delete[] buffer;
+            }
+        error:
             m->multipart_end();
-            delete[] buffer;
         }
         return enabled;
     }
@@ -721,7 +842,7 @@ public:
 class UnhandledInstruction: public RSIM_Callbacks::InsnCallback {
 public:
     struct MmxValue {
-        VirtualMachineSemantics::ValueType<32> lo, hi;
+        RSIM_SEMANTICS_VTYPE<32> lo, hi;
     };
 
     MmxValue mmx[8];                    // MMX registers 0-7
@@ -734,7 +855,7 @@ public:
             RTS_Message *m = args.thread->tracing(TRACE_MISC);
             const SgAsmExpressionPtrList &operands = insn->get_operandList()->get_operands();
             uint32_t newip_va = insn->get_address() + insn->get_size();
-            VirtualMachineSemantics::ValueType<32> newip = args.thread->policy.number<32>(newip_va);
+            RSIM_SEMANTICS_VTYPE<32> newip = args.thread->policy.number<32>(newip_va);
             switch (insn->get_kind()) {
                 case x86_movd: {
                     assert(2==operands.size());
@@ -744,7 +865,7 @@ public:
                         m->mesg(fmt, unparseInstruction(insn).c_str());
                         mmx[mmx_number].lo = args.thread->semantics.read32(operands[1]);
                         mmx[mmx_number].hi = args.thread->policy.number<32>(0);
-                        args.thread->policy.writeIP(newip);
+                        args.thread->policy.writeRegister(args.thread->policy.reg_eip, newip);
                         enabled = false;
                     }
                     break;
@@ -756,11 +877,11 @@ public:
                     if (mre && mre->get_descriptor().get_major()==x86_regclass_xmm) {
                         int mmx_number = mre->get_descriptor().get_minor();
                         m->mesg(fmt, unparseInstruction(insn).c_str());
-                        VirtualMachineSemantics::ValueType<32> addr = args.thread->semantics.readEffectiveAddress(operands[0]);
+                        RSIM_SEMANTICS_VTYPE<32> addr = args.thread->semantics.readEffectiveAddress(operands[0]);
                         args.thread->policy.writeMemory(x86_segreg_ss, addr, mmx[mmx_number].lo, args.thread->policy.true_());
                         addr = args.thread->policy.add<32>(addr, args.thread->policy.number<32>(4));
                         args.thread->policy.writeMemory(x86_segreg_ss, addr, mmx[mmx_number].hi, args.thread->policy.true_());
-                        args.thread->policy.writeIP(newip);
+                        args.thread->policy.writeRegister(args.thread->policy.reg_eip, newip);
                         enabled = false;
                     }
                     break;
@@ -769,7 +890,7 @@ public:
                 case x86_pause: {
                     /* PAUSE is treated as a CPU hint, and is a no-op on some architectures. */
                     assert(0==operands.size());
-                    args.thread->policy.writeIP(newip);
+                    args.thread->policy.writeRegister(args.thread->policy.reg_eip, newip);
                     enabled = false;
                     break;
                 }
@@ -780,10 +901,10 @@ public:
                      * the mxcsr register. */
                     m->mesg(fmt, unparseInstruction(insn).c_str());
                     assert(1==operands.size());
-                    VirtualMachineSemantics::ValueType<32> value = args.thread->policy.number<32>(0x1f80); // from GDB
-                    VirtualMachineSemantics::ValueType<32> addr = args.thread->semantics.readEffectiveAddress(operands[0]);
+                    RSIM_SEMANTICS_VTYPE<32> value = args.thread->policy.number<32>(0x1f80); // from GDB
+                    RSIM_SEMANTICS_VTYPE<32> addr = args.thread->semantics.readEffectiveAddress(operands[0]);
                     args.thread->policy.writeMemory(x86_segreg_ss, addr, value, args.thread->policy.true_());
-                    args.thread->policy.writeIP(newip);
+                    args.thread->policy.writeRegister(args.thread->policy.reg_eip, newip);
                     enabled = false;
                     break;
                 }
@@ -793,9 +914,9 @@ public:
                      * (for possible side effects) but then just throw away the value. */
                     m->mesg(fmt, unparseInstruction(insn).c_str());
                     assert(1==operands.size());
-                    VirtualMachineSemantics::ValueType<32> addr = args.thread->semantics.readEffectiveAddress(operands[0]);
+                    RSIM_SEMANTICS_VTYPE<32> addr = args.thread->semantics.readEffectiveAddress(operands[0]);
                     (void)args.thread->policy.readMemory<32>(x86_segreg_ss, addr, args.thread->policy.true_());
-                    args.thread->policy.writeIP(newip);
+                    args.thread->policy.writeRegister(args.thread->policy.reg_eip, newip);
                     enabled = false;
                     break;
                 }

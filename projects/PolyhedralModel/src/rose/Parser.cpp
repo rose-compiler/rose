@@ -13,6 +13,41 @@
 
 namespace PolyhedricAnnotation {
 
+std::pair<SgExpression *, int> removeFuncCall(SgFunctionCallExp * func_call) {
+  SgFunctionRefExp * func_ref = isSgFunctionRefExp(func_call->get_function());
+  if (func_ref != NULL) {
+    std::string func_name = func_ref->get_symbol_i()->get_name().getString();
+    if (func_name == "floor" || func_name == "ceil") {
+      SgExpression * exp = func_call->get_args()->get_expressions()[0];
+      if (isSgCastExp(exp)) exp = isSgCastExp(exp)->get_operand_i();
+      ROSE_ASSERT(isSgDivideOp(exp));
+      SgDivideOp * div_op = isSgDivideOp(exp);
+      if (div_op == NULL) return std::pair<SgExpression *, int>(func_call, 1);
+      exp = div_op->get_lhs_operand_i();
+      SgExpression * tmp = div_op->get_rhs_operand_i();
+      SgCastExp * cast_exp = isSgCastExp(tmp);
+      SgIntVal * div = isSgIntVal(tmp);
+      if (cast_exp != NULL) div = isSgIntVal(cast_exp->get_operand_i());
+      ROSE_ASSERT(div != NULL);
+      return std::pair<SgExpression *, int>(exp, div->get_value());
+    }
+  }
+  return std::pair<SgExpression *, int>(func_call, 1);
+}
+
+void separateMinMax(SgExpression * exp, std::vector<std::pair<SgExpression *, int> > & conj) {
+  if (isSgCastExp(exp)) exp = isSgCastExp(exp)->get_operand_i();
+
+  if (isSgFunctionCallExp(exp)) conj.push_back(removeFuncCall(isSgFunctionCallExp(exp)));
+  else
+    if (isSgConditionalExp(exp)) {
+      separateMinMax(isSgConditionalExp(exp)->get_true_exp(), conj);
+      separateMinMax(isSgConditionalExp(exp)->get_false_exp(), conj);
+    }
+    else
+      conj.push_back(std::pair<SgExpression *, int>(exp, 1));
+}
+
 RoseVariable getIterator(SgForStatement * for_stmt) {
 	SgForInitStatement * init_stmt = for_stmt->get_for_init_stmt();
 	SgExprStatement * exp_stmt = isSgExprStatement(init_stmt->get_init_stmt()[0]);
@@ -274,6 +309,12 @@ void translateLinearExpression(SgExpression * lin_exp, std::map<RoseVariable, in
 			res.insert(std::pair<RoseVariable, int>(*translateVarRef(lin_exp), coef_));
 			break;
 		}
+                case V_SgCastExp:
+                        translateLinearExpression(isSgCastExp(lin_exp)->get_operand_i(), res, coef_);
+                        break;
+		case V_SgMinusOp:
+			translateLinearExpression(isSgMinusOp(lin_exp)->get_operand_i(), res, -coef_);
+			break;
 		case V_SgIntVal:
 			coef = isSgIntVal(lin_exp)->get_value();
 			res.insert(std::pair<RoseVariable, int>(RoseVariable(), coef_ * coef));

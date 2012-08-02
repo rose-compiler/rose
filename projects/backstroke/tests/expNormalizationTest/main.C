@@ -1,6 +1,9 @@
 #include <normalizations/expNormalization.h>
 #include <utilities/utilities.h>
-#include <utilities/cppDefinesAndNamespaces.h>
+#include <boost/foreach.hpp>
+
+#define foreach BOOST_FOREACH
+#define reverse_foreach BOOST_REVERSE_FOREACH
 
 using namespace std;
 using namespace SageInterface;

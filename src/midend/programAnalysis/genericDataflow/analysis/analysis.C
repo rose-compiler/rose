@@ -34,8 +34,8 @@ InterProceduralAnalysis::~InterProceduralAnalysis() {}
 // state - the function's NodeState
 bool UnstructuredPassIntraAnalysis::runAnalysis(const Function& func, NodeState* state)
 {
-        DataflowNode funcCFGStart = cfgUtils::getFuncStartCFG(func.get_definition());
-        DataflowNode funcCFGEnd = cfgUtils::getFuncEndCFG(func.get_definition());
+        DataflowNode funcCFGStart = cfgUtils::getFuncStartCFG(func.get_definition(),filter);
+        DataflowNode funcCFGEnd = cfgUtils::getFuncEndCFG(func.get_definition(), filter);
         
         if(analysisDebugLevel>=2)
                 Dbg::dbg << "UnstructuredPassIntraAnalysis::runAnalysis() function "<<func.get_name().getString()<<"()\n";
@@ -62,7 +62,7 @@ bool UnstructuredPassIntraAnalysis::runAnalysis(const Function& func, NodeState*
 void UnstructuredPassInterAnalysis::runAnalysis()
 {
         set<FunctionState*> allFuncs = FunctionState::getAllDefinedFuncs();
-        
+        // Go through functions one by one, call an intra-procedural analysis on each of them
         // iterate over all functions with bodies
         for(set<FunctionState*>::iterator it=allFuncs.begin(); it!=allFuncs.end(); it++)
         {
@@ -83,6 +83,7 @@ void UnstructuredPassInterAnalysis::runAnalysis()
 InterProceduralDataflow::InterProceduralDataflow(IntraProceduralDataflow* intraDataflowAnalysis) : 
         InterProceduralAnalysis((IntraProceduralAnalysis*)intraDataflowAnalysis)
 {
+       filter = intraDataflowAnalysis->filter; // propagate the CFG filter from intra- to inter-level, or the default filter will kick in at inter-level.
         Dbg::dbg << "InterProceduralDataflow() intraAnalysis="<<intraAnalysis<<", intraDataflowAnalysis="<<intraDataflowAnalysis<<endl;
         set<FunctionState*> allFuncs = FunctionState::getAllDefinedFuncs();
         
@@ -117,9 +118,9 @@ InterProceduralDataflow::InterProceduralDataflow(IntraProceduralDataflow* intraD
                                         Dbg::dbg << *it << ": " << (*it)->str("    ") << endl;
                                 }
                         */
-                        DataflowNode begin = func.get_definition()->cfgForBeginning();
+                        DataflowNode begin(func.get_definition()->cfgForBeginning(), filter);
                         Dbg::dbg << "begin="<<begin.getNode()<<" = ["<<Dbg::escape(begin.getNode()->unparseToString())<<" | "<<begin.getNode()->class_name()<<"]"<<endl;
-                        intraDataflowAnalysis->genInitState(func, func.get_definition()->cfgForBeginning(), funcS->state,
+                        intraDataflowAnalysis->genInitState(func, DataflowNode(func.get_definition()->cfgForBeginning(), filter), funcS->state,
                                                             initLats, initFacts);
                         // Make sure that the starting lattices are initialized
                         for(vector<Lattice*>::iterator it=initLats.begin(); it!=initLats.end(); it++)
@@ -246,9 +247,9 @@ bool IntraUniDirectionalDataflow::propagateStateToNextNode(
                 Dbg::dbg << "\n        Propagating to Next Node: "<<nextNode.getNode()<<"["<<nextNode.getNode()->class_name()<<" | "<<Dbg::escape(nextNode.getNode()->unparseToString())<<"]"<<endl;
                 int j;
                 for(j=0, itC = curNodeState.begin(); itC != curNodeState.end(); itC++, j++)
-                        Dbg::dbg << "        Cur node: Lattice "<<j<<": \n            "<<(*itC)->str("            ")<<endl;
+                        Dbg::dbg << "        Current node: Lattice "<<j<<": \n            "<<(*itC)->str("            ")<<endl;
                 for(j=0, itN = nextNodeState.begin(); itN != nextNodeState.end(); itN++, j++)
-                        Dbg::dbg << "        Next node: Lattice "<<j<<": \n            "<<(*itN)->str("            ")<<endl;
+                        Dbg::dbg << "        Next/Descendant node: Lattice before propagation "<<j<<": \n            "<<(*itN)->str("            ")<<endl;
         }
 
         // Update forward info above nextNode from the forward info below curNode.
@@ -262,7 +263,11 @@ bool IntraUniDirectionalDataflow::propagateStateToNextNode(
                 // Finite Lattices can use the regular meet operator, while infinite Lattices
                 // must also perform widening to ensure convergence.
                 if((*itN)->finiteLattice())
+                {
+                        if(analysisDebugLevel>=1)
+                           Dbg::dbg << "        Finite lattice: using regular meetUpdate from current'lattic into next node's lattice... "<<endl;
                         modified = (*itN)->meetUpdate(*itC) || modified;
+                }
                 else
                 {
                         //InfiniteLattice* meetResult = (InfiniteLattice*)itN->second->meet(itC->second);
@@ -281,15 +286,15 @@ bool IntraUniDirectionalDataflow::propagateStateToNextNode(
         if(analysisDebugLevel>=1) {
                 if(modified)
                 {
-                        Dbg::dbg << "        Next node's in-data modified. Adding..."<<endl;
+                        Dbg::dbg << "        Next node's lattice *modified* by the propagation. "<<endl;
                         int j=0;
                         for(itN = nextNodeState.begin(); itN != nextNodeState.end(); itN++, j++)
                         {
-                                Dbg::dbg << "        Propagated: Lattice "<<j<<": \n            "<<(*itN)->str("            ")<<endl;
+                                Dbg::dbg << "        Modified lattice "<<j<<": \n            "<<(*itN)->str("            ")<<endl;
                         }
                 }
                 else
-                        Dbg::dbg << "        No modification on this node"<<endl;
+                        Dbg::dbg << "        Next node's lattice is *unchanged* by the propagation. "<<endl;
         }
 
         return modified;
@@ -852,7 +857,7 @@ void ContextInsensitiveInterProceduralDataflow::visit(const CGFunction* funcCG)
                 if (intraDataflow->visited.find(func) == intraDataflow->visited.end()) {
                         vector<Lattice*>  initLats;
                         vector<NodeFact*> initFacts;
-                        intraDataflow->genInitState(func, cfgUtils::getFuncStartCFG(func.get_definition()),
+                        intraDataflow->genInitState(func, cfgUtils::getFuncStartCFG(func.get_definition(), filter),
                                                     fState->state, initLats, initFacts);
                         //                        intraAnalysis->genInitState(func, cfgUtils::getFuncEndCFG(func.get_definition()),
                         //                            fState->state, initLats, initFacts);

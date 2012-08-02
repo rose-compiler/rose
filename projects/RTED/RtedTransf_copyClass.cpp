@@ -6,7 +6,7 @@
 #include <string>
 #include <set>
 
-#include "sageGeneric.hpp"
+#include "sageGeneric.h"
 
 #include "RtedSymbols.h"
 #include "DataStructures.h"
@@ -91,26 +91,19 @@ void RtedTransformation::insertNamespaceIntoSourceFile( SgProject* project )
    // add to top of each source file
    // insert at top of all C files in reverse order
    // only if the class has a constructor and if it is declared in a header file
-   std::vector<SgSourceFile*>::const_iterator aa = srcfiles.begin();
-   std::vector<SgSourceFile*>::const_iterator zz = srcfiles.end();
-   for (;aa != zz; ++aa)
+   std::vector<SgSourceFile*>::const_iterator       aa = srcfiles.begin();
+   const std::vector<SgSourceFile*>::const_iterator zz = srcfiles.end();
+   for ( ; aa != zz; ++aa)
    {
       SgSourceFile* sf = *aa;
       bool          isInSourceFileSet = isInInstrumentedFile(sf);
 
       if (isInSourceFileSet)
       {
-         // we should only do this for C++!
-         std::string filename = sf->get_file_info()->get_filename();
-         if (  filename.find(".cxx") != std::string::npos
-            || filename.find(".cpp") != std::string::npos
-            || filename.find(".cc")  != std::string::npos
-            || filename.find(".C")   != std::string::npos
-            )
+         // if it is a C++ program, then insert namespace
+         if ( fileType(*sf) == ftCxx )
          {
-            // if it is not a C but C++ program, then insert namespace
             if (RTEDDEBUG) cerr << " **** Inserting file into sourceFileRoseNamespaceMap:" << sf -> get_file_info() -> get_filename() << endl;
-            //if (filename.find("_s.cpp")!=std::string::npos)
             insertNamespaceIntoSourceFile(sf);
          }
       }

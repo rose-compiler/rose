@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "sageGeneric.hpp"
+#include "sageGeneric.h"
 
 #include "RtedSymbols.h"
 
@@ -86,51 +86,61 @@ void set_rtedfunc(SgGlobal& n, const std::string& name, SgFunctionSymbol*& res)
 
 void RtedSymbols::initialize(SgGlobal& n, SourceFileType sft)
 {
-  set_rtedfunc(n, "CreateArray",              roseCreateArray);
-  set_rtedfunc(n, "AllocMem",                 roseAllocMem);
-  set_rtedfunc(n, "AccessArray",              roseAccessArray);
-  set_rtedfunc(n, "Checkpoint",               roseCheckpoint);
-  set_rtedfunc(n, "FunctionCall",             roseFunctionCall);
-  set_rtedfunc(n, "AssertFunctionSignature",  roseAssertFunctionSignature);
-  set_rtedfunc(n, "ConfirmFunctionSignature", roseConfirmFunctionSignature);
-  set_rtedfunc(n, "ConvertIntToString",       roseConvertIntToString);
-  set_rtedfunc(n, "CreateVariable",           roseCreateVariable);
-  set_rtedfunc(n, "CreateObject",             roseCreateObject);
-  set_rtedfunc(n, "InitVariable",             roseInitVariable);
-  set_rtedfunc(n, "MovePointer",              roseMovePointer);
-  set_rtedfunc(n, "EnterScope",               roseEnterScope);
-  set_rtedfunc(n, "ExitScope",                roseExitScope);
-  set_rtedfunc(n, "AccessVariable",           roseAccessVariable);
-  set_rtedfunc(n, "IOFunctionCall",           roseIOFunctionCall);
-  set_rtedfunc(n, "RegisterTypeCall",         roseRegisterTypeCall);
-  set_rtedfunc(n, "FreeMemory",               roseFreeMemory);
-  set_rtedfunc(n, "ReallocateMemory",         roseReallocateMemory);
-  set_rtedfunc(n, "CheckIfThisNULL",          roseCheckIfThisNULL);
-  set_rtedfunc(n, "Addr",                     roseAddr);
-  set_rtedfunc(n, "Close",                    roseClose);
+  set_rtedfunc(n, "CreateArray",               roseCreateArray);
+  set_rtedfunc(n, "AllocMem",                  roseAllocMem);
+  set_rtedfunc(n, "AccessArray",               roseAccessArray);
+  set_rtedfunc(n, "Checkpoint",                roseCheckpoint);
+  set_rtedfunc(n, "FunctionCall",              roseFunctionCall);
+  set_rtedfunc(n, "AssertFunctionSignature",   roseAssertFunctionSignature);
+  set_rtedfunc(n, "ConfirmFunctionSignature",  roseConfirmFunctionSignature);
+  set_rtedfunc(n, "ConvertIntToString",        roseConvertIntToString);
+  set_rtedfunc(n, "CreateVariable",            roseCreateVariable);
+  set_rtedfunc(n, "CreateObject",              roseCreateObject);
+  set_rtedfunc(n, "InitVariable",              roseInitVariable);
+  set_rtedfunc(n, "MovePointer",               roseMovePointer);
+  set_rtedfunc(n, "EnterScope",                roseEnterScope);
+  set_rtedfunc(n, "ExitScope",                 roseExitScope);
+  set_rtedfunc(n, "AccessVariable",            roseAccessVariable);
+  set_rtedfunc(n, "IOFunctionCall",            roseIOFunctionCall);
+  set_rtedfunc(n, "RegisterTypeCall",          roseRegisterTypeCall);
+  set_rtedfunc(n, "FreeMemory",                roseFreeMemory);
+  set_rtedfunc(n, "ReallocateMemory",          roseReallocateMemory);
+  set_rtedfunc(n, "CheckIfThisNULL",           roseCheckIfThisNULL);
+  set_rtedfunc(n, "Addr",                      roseAddr);
+  set_rtedfunc(n, "Close",                     roseClose);
 
-  set_rtedfunc(n, "UpcAllInitialize",         roseUpcAllInitialize);
+  set_rtedfunc(n, "ReportViolation",           roseReportViolation);
+  set_rtedfunc(n, "UpcAllInitialize",          roseUpcAllInitialize);
 
-  set_rtedtype(n, "AddressDesc",              roseAddressDesc);
-  set_rtedtype(n, "TypeDesc",                 roseTypeDesc);
-  set_rtedtype(n, "SourceInfo",               roseSourceInfo);
-  set_rtedenum(n, "AllocKind",                roseAllocKind);
+  set_rtedfunc(n, "CxxTransientPtr",           roseCxxTransientPtr);
+  set_rtedfunc(n, "CTransientPtr",             roseCTransientPtr);
+  set_rtedfunc(n, "CheckTransientPtr",         roseCheckTransientPtr);
+  set_rtedfunc(n, "CheckForMemoryLeak",        roseCheckForMemoryLeak);
+
+  set_rtedtype(n, "AddressDesc",               roseAddressDesc);
+  set_rtedtype(n, "TypeDesc",                  roseTypeDesc);
+  set_rtedtype(n, "SourceInfo",                roseSourceInfo);
+  set_rtedenum(n, "AllocKind",                 roseAllocKind);
 
   // language specific symbols
   if (sft == ftUPC)
   {
-  set_rtedfunc(n, "UpcExitWorkzone",          roseUpcExitWorkzone);
-  set_rtedfunc(n, "UpcEnterWorkzone",         roseUpcEnterWorkzone);
+    set_rtedfunc(n, "UpcExitWorkzone",           roseUpcExitWorkzone);
+    set_rtedfunc(n, "UpcEnterWorkzone",          roseUpcEnterWorkzone);
 
-  set_rtedfunc(n, "UpcBeginExclusive",        roseUpcBeginExclusive);
-  set_rtedfunc(n, "UpcEndExclusive",          roseUpcEndExclusive);
-  set_rtedfunc(n, "UpcEnterSharedPtr",        roseUpcEnterSharedPtr);
-  set_rtedfunc(n, "UpcExitSharedPtr",         roseUpcExitSharedPtr);
-  set_rtedfunc(n, "AddrSh",                   roseAddrSh);
-}
+    set_rtedfunc(n, "UpcBeginExclusive",         roseUpcBeginExclusive);
+    set_rtedfunc(n, "UpcEndExclusive",           roseUpcEndExclusive);
+    set_rtedfunc(n, "UpcEnterSharedPtr",         roseUpcEnterSharedPtr);
+    set_rtedfunc(n, "UpcExitSharedPtr",          roseUpcExitSharedPtr);
+    set_rtedfunc(n, "AddrSh",                    roseAddrSh);
+  }
+  else if (sft == ftCxx)
+  {
+    set_rtedtype(n, "ScopeGuard",                roseScopeGuard);
+  }
 
   // other symbols
-  set_typedef_type(n, "size_t",               size_t_member);
+  set_typedef_type(n, "size_t",                size_t_member);
 }
 
 const std::string RtedSymbols::prefix("rted_");

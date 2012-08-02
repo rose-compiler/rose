@@ -1,19 +1,17 @@
 /* Algorithms to detect what instructions make up basic blocks and which blocks make up functions, and how to create the
  * necessary SgAsmBlock and SgAsmFunction IR nodes from this information. */
-#define __STDC_FORMAT_MACROS
-// tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
-#include <inttypes.h>
 
 #include "Partitioner.h"
 #include "Assembler.h"
 #include "AssemblerX86.h"
 #include "AsmUnparser_compat.h"
-#include "VirtualMachineSemantics.h"
+#include "PartialSymbolicSemantics.h"
 #include "stringify.h"
 
 #include <errno.h>
 #include <fcntl.h>
+#include <math.h>
 #include <stdarg.h>
 
 /* See header file for full documentation. */
@@ -51,245 +49,6 @@ Partitioner::isSgAsmx86Instruction(SgNode *node)
 {
     return ::isSgAsmx86Instruction(node);
 }
-
-
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// These SgAsmFunction methods have no other home, so they're here for now. Do not move them into
-// src/ROSETTA/Grammar/BinaryInstruction.code because then they can't be indexed by C-aware tools.
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-static void
-add_to_reason_string(std::string &result, bool isset, bool do_pad, const std::string &abbr, const std::string &full) {
-    if (isset) {
-        if (do_pad) {
-            result += abbr;
-        } else {
-            if (result.size()>0) result += ", ";
-            result += full;
-        }
-    } else if (do_pad) {
-        result += ".";
-    }
-}
-
-/** Returns a multi-line string describing the letters used for function reasons.  The letters are returned by the padding
- *  version of reason_str(). */
-std::string
-SgAsmFunction::reason_key(const std::string &prefix)
-{
-    return (prefix + "E = entry address         H = CFG head             C = function call(*)\n" +
-            prefix + "X = exception frame       T = thunk                I = imported/dyn-linked\n" +
-            prefix + "S = function symbol       P = instruction pattern  G = CFG graph analysis\n" +
-            prefix + "U = user-def detection    N = NOP/zero padding     D = discontiguous blocks\n" +
-            prefix + "V = intra-function block  L = leftover blocks      M = miscellaneous\n" +
-            prefix + "Note: \"c\" means this is the target of a call-like instruction or instruction\n" +
-            prefix + "      sequence but the call is not present in the global control flow graph, while\n" +
-            prefix + "      \"C\" means the call is in the CFG.\n");
-}
-
-/** Returns reason string for this function. */
-std::string
-SgAsmFunction::reason_str(bool do_pad) const
-{
-    return reason_str(do_pad, get_reason());
-}
-
-/** Class method that converts a reason bit vector to a human-friendly string. The second argument is the bit vector of
- *  SgAsmFunction::FunctionReason bits. */
-std::string
-SgAsmFunction::reason_str(bool do_pad, unsigned r)
-{
-    std::string result;
-
-    /* entry point and instruction heads are mutually exclusive, so we use the same column for both when padding. */
-    if (r & FUNC_ENTRY_POINT) {
-        add_to_reason_string(result, true, do_pad, "E", "entry point");
-    } else {
-        add_to_reason_string(result, (r & FUNC_INSNHEAD), do_pad, "H", "insn head");
-    }
-
-    /* Function call:
-     *   "C" means the function was detected because we saw a call-like instructon (such as x86 CALL or FARCALL) or instruction
-     *       sequence (such as pushing the return value and then branching) in code that was determined to be reachable by
-     *       analyzing the control flow graph.
-     *
-     *   "c" means this function is the target of some call-like instruction (such as x86 CALL or FARCALL) but could not
-     *       determine whether the instruction is actually executed.
-     */
-    if (r & FUNC_CALL_TARGET) {
-        add_to_reason_string(result, true, do_pad, "C", "function call");
-    } else {
-        add_to_reason_string(result, (r & FUNC_CALL_INSN), do_pad, "c", "call instruction");
-    }
-
-    if (r & FUNC_EH_FRAME) {
-        add_to_reason_string(result, true,                 do_pad, "X", "exception frame");
-    } else {
-        add_to_reason_string(result, (r & FUNC_THUNK),     do_pad, "T", "thunk");
-    }
-    add_to_reason_string(result, (r & FUNC_IMPORT),        do_pad, "I", "import");
-    add_to_reason_string(result, (r & FUNC_SYMBOL),        do_pad, "S", "symbol");
-    add_to_reason_string(result, (r & FUNC_PATTERN),       do_pad, "P", "pattern");
-    add_to_reason_string(result, (r & FUNC_GRAPH),         do_pad, "G", "graph");
-    add_to_reason_string(result, (r & FUNC_USERDEF),       do_pad, "U", "user defined");
-    add_to_reason_string(result, (r & FUNC_PADDING),       do_pad, "N", "padding");
-    add_to_reason_string(result, (r & FUNC_DISCONT),       do_pad, "D", "discontiguous");
-    add_to_reason_string(result, (r & FUNC_LEFTOVERS),     do_pad, "L", "leftovers");
-    add_to_reason_string(result, (r & FUNC_INTRABLOCK),    do_pad, "V", "intrablock");
-    add_to_reason_string(result, (r & FUNC_MISCMASK),      do_pad, "M", "misc-"+StringUtility::numberToString(r & FUNC_MISCMASK));
-    return result;
-}
-
-/** Returns information about the function addresses.  Every non-empty function has a minimum (inclusive) and maximum
- *  (exclusive) address which are returned by reference, but not all functions own all the bytes within that range of
- *  addresses. Therefore, the exact bytes are returned by adding them to the optional ExtentMap argument.  This function
- *  returns the number of nodes (instructions and static data items) in the function.  If the function contains no nodes then
- *  the extent map is not modified and the low and high addresses are both set to zero.
- *
- *  If an @p exclude functor is provided, then any node for which it returns true is not considered part of the function.  This
- *  can be used for such things as filtering out data blocks that are marked as padding.  For example:
- *
- *  @code
- *  class NotPadding: public SgAsmFunction::NodeSelector {
- *  public:
- *      virtual bool operator()(SgNode *node) {
- *          SgAsmStaticData *data = isSgAsmStaticData(node);
- *          SgAsmBlock *block = SageInterface::getEnclosingNode<SgAsmBlock>(data);
- *          return !data || !block || block->get_reason()!=SgAsmBlock::BLK_PADDING;
- *      }
- *  } notPadding;
- *
- *  ExtentMap extents;
- *  function->get_extent(&extents, NULL, NULL, &notPadding);
- *  @endcode
- *
- *  Here's another example that calculates the extent of only the padding data, based on the negation of the filter in the
- *  previous example:
- *
- *  @code
- *  class OnlyPadding: public NotPadding {
- *  public:
- *      virtual bool operator()(SgNode *node) {
- *          return !NotPadding::operator()(node);
- *      }
- *  } onlyPadding;
- *
- *  ExtentMap extents;
- *  function->get_extent(&extents, NULL, NULL, &onlyPadding);
- *  @endcode
- */
-size_t
-SgAsmFunction::get_extent(ExtentMap *extents, rose_addr_t *lo_addr, rose_addr_t *hi_addr, NodeSelector *selector)
-{
-    struct T1: public AstSimpleProcessing {
-        ExtentMap *extents;
-        rose_addr_t *lo_addr, *hi_addr;
-        NodeSelector *selector;
-        size_t nnodes;
-        T1(ExtentMap *extents, rose_addr_t *lo_addr, rose_addr_t *hi_addr, NodeSelector *selector)
-            : extents(extents), lo_addr(lo_addr), hi_addr(hi_addr), selector(selector), nnodes(0) {
-            if (lo_addr)
-                *lo_addr = 0;
-            if (hi_addr)
-                *hi_addr = 0;
-        }
-        void visit(SgNode *node) {
-            if (selector && !(*selector)(node))
-                return;
-            SgAsmInstruction *insn = isSgAsmInstruction(node);
-            SgAsmStaticData *data = isSgAsmStaticData(node);
-            rose_addr_t lo, hi;
-            if (insn) {
-                lo = insn->get_address();
-                hi = lo + insn->get_size();
-            } else if (data) {
-                lo = data->get_address();
-                hi = lo + data->get_size();
-            } else {
-                return;
-            }
-
-            if (0==nnodes++) {
-                if (lo_addr)
-                    *lo_addr = lo;
-                if (hi_addr)
-                    *hi_addr = hi;
-            } else {
-                if (lo_addr)
-                    *lo_addr = std::min(*lo_addr, lo);
-                if (hi_addr)
-                    *hi_addr = std::max(*hi_addr, hi);
-            }
-            if (extents && hi>lo)
-                extents->insert(Extent(lo, hi-lo));
-        }
-    } t1(extents, lo_addr, hi_addr, selector);
-    t1.traverse(this, preorder);
-    return t1.nnodes;
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// These SgAsmBlock methods have no other home, so they're here for now. Do not move them into
-// src/ROSETTA/Grammar/BinaryInstruction.code because then they can't be indexed by C-aware tools.
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-/** Returns a multi-line string describing the letters used for basic block reasons.  The letters are returned by the padding
- *  version of reason_str(). */
-std::string
-SgAsmBlock::reason_key(const std::string &prefix)
-{
-    return (prefix + "L = left over blocks    N = NOP/zero padding     V = intrafunction block\n" +
-            prefix + "J = jump table          E = Function entry\n" +
-            prefix + "H = CFG head            1 = first CFG traversal 2 = second CFG traversal\n" +
-            prefix + "U = user-def reason     M = miscellaneous\n");
-}
-
-/** Returns reason string for this block. */
-std::string
-SgAsmBlock::reason_str(bool do_pad) const
-{
-    return reason_str(do_pad, get_reason());
-}
-
-/** Class method that converts a reason bit vector to a human-friendly string. The second argument is the bit vector of
- *  SgAsmBlock::Reason bits.  Some of the positions in the padded return value are used for more than one bit.  For instance,
- *  the first character can be "L" for leftovers, "N" for padding, "E" for entry point, or "-" for none of the above. */
-std::string
-SgAsmBlock::reason_str(bool do_pad, unsigned r)
-{
-    std::string result;
-
-    if (r & BLK_LEFTOVERS) {
-        add_to_reason_string(result, true, do_pad, "L", "leftovers");
-    } else if (r & BLK_PADDING) {
-        add_to_reason_string(result, true, do_pad, "N", "padding");
-    } else if (r & BLK_INTRAFUNC) {
-        add_to_reason_string(result, true, do_pad, "V", "intrafunc"); // because V is used for FUNC_INTRABLOCK
-    } else if (r & BLK_JUMPTABLE) {
-        add_to_reason_string(result, true, do_pad, "J", "jumptable");
-    } else {
-        add_to_reason_string(result, (r & BLK_ENTRY_POINT),  do_pad, "E", "entry point");
-    }
-
-    if (r & BLK_CFGHEAD) {
-        add_to_reason_string(result, true, do_pad, "H", "CFG head");
-    } else if (r & BLK_GRAPH1) {
-        add_to_reason_string(result, true, do_pad, "1", "graph-1");
-    } else {
-        add_to_reason_string(result, (r & BLK_GRAPH2), do_pad, "2", "graph-2");
-    }
-
-    if (r & BLK_USERDEF) {
-        add_to_reason_string(result, true, do_pad, "U", "user defined");
-    } else {
-        add_to_reason_string(result, (r & BLK_MISCMASK), do_pad, "M", "misc-" + StringUtility::numberToString(r & BLK_MISCMASK));
-    }
-    return result;
-}
-/*
- *
- *******************************************************************************************************************************/
 
 /* Progress report class variables. */
 time_t Partitioner::progress_interval = 10;
@@ -358,8 +117,12 @@ Partitioner::parse_switches(const std::string &s, unsigned flags)
         unsigned bits = 0;
         if (word=="entry" || word=="entry_point") {
             bits = SgAsmFunction::FUNC_ENTRY_POINT;
-        } else if (word=="call" || word=="call_target") {
+        } else if (word=="call_target") {
             bits = SgAsmFunction::FUNC_CALL_TARGET;
+        } else if (word=="call_insn") {
+            bits = SgAsmFunction::FUNC_CALL_INSN;
+        } else if (word=="call") {
+            bits = SgAsmFunction::FUNC_CALL_TARGET | SgAsmFunction::FUNC_CALL_INSN;
         } else if (word=="eh" || word=="eh_frame") {
             bits = SgAsmFunction::FUNC_EH_FRAME;
         } else if (word=="import") {
@@ -372,6 +135,12 @@ Partitioner::parse_switches(const std::string &s, unsigned flags)
             bits = SgAsmFunction::FUNC_USERDEF;
         } else if (word=="pad" || word=="padding" || word=="interpad") {
             bits = SgAsmFunction::FUNC_PADDING;
+        } else if (word=="intrablock") {
+            bits = SgAsmFunction::FUNC_INTRABLOCK;
+        } else if (word=="thunk") {
+            bits = SgAsmFunction::FUNC_THUNK;
+        } else if (word=="misc" || word=="miscellaneous" || word=="interpadfunc") {
+            bits = SgAsmFunction::FUNC_MISCMASK;
         } else if (word=="unassigned" || word=="unclassified" || word=="leftover" || word=="leftovers") {
             bits = SgAsmFunction::FUNC_LEFTOVERS;
         } else if (word=="default") {
@@ -400,16 +169,6 @@ Partitioner::parse_switches(const std::string &s, unsigned flags)
     return flags;
 }
 
-static bool is_writable(const MemoryMap::MapElement &me) __attribute__((unused));
-static bool is_writable(const MemoryMap::MapElement &me) {
-    return 0 != (me.get_mapperms() & MemoryMap::MM_PROT_WRITE);
-}
-
-static bool is_unexecutable(const MemoryMap::MapElement &me) __attribute__((unused));
-static bool is_unexecutable(const MemoryMap::MapElement &me) {
-    return 0 == (me.get_mapperms() & MemoryMap::MM_PROT_EXEC);
-}
-
 /* Set disassembly and memory initialization maps. */
 void
 Partitioner::set_map(MemoryMap *map, MemoryMap *ro_map)
@@ -420,11 +179,88 @@ Partitioner::set_map(MemoryMap *map, MemoryMap *ro_map)
             this->ro_map = *ro_map;
         } else {
             this->ro_map = *map;
-            this->ro_map.prune(is_writable);
+            this->ro_map.prune(MemoryMap::MM_PROT_READ, MemoryMap::MM_PROT_WRITE);
         }
     } else {
         this->ro_map.clear();
     }
+}
+
+/* Looks for a jump table. Documented in header file. */
+Disassembler::AddressSet
+Partitioner::discover_jump_table(BasicBlock *bb, bool do_create, ExtentMap *table_extent)
+{
+    using namespace BinaryAnalysis::InstructionSemantics;
+
+    /* Do some cheap up-front checks. */
+    SgAsmx86Instruction *insn_x86 = isSgAsmx86Instruction(bb->last_insn());
+    if (!insn_x86 || (insn_x86->get_kind()!=x86_jmp && insn_x86->get_kind()==x86_farjmp) ||
+        1!=insn_x86->get_operandList()->get_operands().size())
+        return Disassembler::AddressSet();
+    SgAsmExpression *target_expr = insn_x86->get_operandList()->get_operands()[0];
+    SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(target_expr);
+    SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(target_expr);
+    if (!mre && !rre)
+        return Disassembler::AddressSet(); // no indirection
+
+    /* Evaluate the basic block semantically to get an expression for the final EIP. */
+    typedef PartialSymbolicSemantics::ValueType<32> RegisterValueType;
+    typedef PartialSymbolicSemantics::Policy<> Policy;
+    typedef X86InstructionSemantics<Policy, PartialSymbolicSemantics::ValueType> Semantics;
+    Policy policy;
+    policy.set_map(&ro_map);
+    Semantics semantics(policy);
+    try {
+        for (size_t i=0; i<bb->insns.size(); ++i) {
+            insn_x86 = isSgAsmx86Instruction(bb->insns[i]->node);
+            assert(insn_x86); // we know we're in a basic block of x86 instructions already
+            policy.writeRegister(semantics.REG_EIP, policy.number<32>(insn_x86->get_address()));
+            semantics.processInstruction(insn_x86);
+        }
+    } catch (...) {
+        return Disassembler::AddressSet(); // something went wrong, so just give up (e.g., unhandled instruction)
+
+    }
+
+    /* Scan through memory to find from whence the EIP value came.  There's no need to scan for an EIP which is a known value
+     * since such control flow successors would be picked the usual way elsewhere.  It's also quite possible that the EIP value
+     * is also stored at some other memory addresses outside the jump table (e.g., a function pointer argument stored on the
+     * stack), so we also skip over any memory whose address is known. */
+    Disassembler::AddressSet successors;
+    RegisterValueType eip = policy.readRegister<32>(semantics.REG_EIP);
+    size_t entry_size = 4; // FIXME: bytes per jump table entry
+    if (!eip.is_known()) {
+        for (Policy::StateType::Memory::iterator mi=policy.get_state().memory.begin(); mi!=policy.get_state().memory.end(); ++mi) {
+            if (mi->get_data()==eip && !mi->get_address().is_known()) {
+                rose_addr_t base_va = mi->get_address().offset;
+                size_t nentries = 0;
+                while (1) {
+                    uint8_t buf[entry_size];
+                    size_t nread = ro_map.read(buf, base_va+nentries*entry_size, entry_size);
+                    if (nread!=entry_size)
+                        break;
+                    rose_addr_t target_va = 0;
+                    for (size_t i=0; i<entry_size; i++)
+                        target_va |= buf[i] << (i*8);
+                    if (!map->exists(target_va, MemoryMap::MM_PROT_EXEC))
+                        break;
+                    successors.insert(target_va);
+                    ++nentries;
+                }
+                if (nentries>0) {
+                    if (table_extent)
+                        table_extent->insert(Extent(base_va, nentries*entry_size));
+                    if (do_create) {
+                        DataBlock *dblock = find_db_starting(base_va, nentries*entry_size);
+                        append(bb, dblock, SgAsmBlock::BLK_JUMPTABLE);
+                    }
+                    if (debug)
+                        fprintf(debug, "[jump table at 0x%08"PRIx64"+%zu*%zu]", base_va, nentries, entry_size);
+                }
+            }
+        }
+    }
+    return successors;
 }
 
 /** Runs local block analyses if their cached results are invalid and caches the results.  A local analysis is one whose
@@ -448,62 +284,16 @@ Partitioner::update_analyses(BasicBlock *bb)
      * map. We use a "do" loop so the logic nesting doesn't get so deep: just break when we find that something doesn't match
      * what we expect. */
     if (!bb->cache.sucs_complete && bb->cache.sucs.empty()) {
-        do {
-            SgAsmx86Instruction *insn_x86 = isSgAsmx86Instruction(bb->last_insn());
-            if (!insn_x86 || (insn_x86->get_kind()!=x86_jmp && insn_x86->get_kind()==x86_farjmp) ||
-                1!=insn_x86->get_operandList()->get_operands().size())
-                break;
-            SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(insn_x86->get_operandList()->get_operands()[0]);
-            if (!mre)
-                break;
-            SgAsmBinaryAdd *add = isSgAsmBinaryAdd(mre->get_address());
-            if (!add)
-                break;
-            SgAsmValueExpression *base = isSgAsmValueExpression(add->get_lhs());
-            if (!base)
-                break;
-            SgAsmBinaryMultiply *mult = isSgAsmBinaryMultiply(add->get_rhs());
-            if (!mult)
-                break;
-            SgAsmRegisterReferenceExpression *reg = isSgAsmRegisterReferenceExpression(mult->get_lhs());
-            if (!reg)
-                break;
-            SgAsmValueExpression *step = isSgAsmValueExpression(mult->get_rhs());
-            if (!step)
-                break;
-            rose_addr_t base_va = value_of(base);
-            size_t entry_size = value_of(step);
-            if (! ((entry_size==2 && insn_x86->get_operandSize()==x86_insnsize_16) ||
-                   (entry_size==4 && insn_x86->get_operandSize()==x86_insnsize_32) ||
-                   (entry_size==8 && insn_x86->get_operandSize()==x86_insnsize_64)))
-                break;
-
-            /* How big is the table? */
-            size_t nentries = 0;
-            while (1) {
-                uint8_t buf[8];
-                size_t nread = ro_map.read(buf, base_va+nentries*entry_size, entry_size);
-                if (nread!=entry_size)
-                    break;
-                rose_addr_t target_va = 0;
-                for (size_t i=0; i<entry_size; i++)
-                    target_va |= buf[i] << (i*8);
-                const MemoryMap::MapElement *me = map->find(target_va);
-                if (!me || 0==(me->get_mapperms() & MemoryMap::MM_PROT_EXEC))
-                    break;
-                ++nentries;
-                bb->cache.sucs.insert(target_va);
+        ExtentMap table_extent;
+        Disassembler::AddressSet table_entries = discover_jump_table(bb, true, &table_extent);
+        if (!table_entries.empty()) {
+            bb->cache.sucs.insert(table_entries.begin(), table_entries.end());
+            if (debug) {
+                std::ostringstream ss;
+                ss <<"[jump table at " <<table_extent <<"]";
+                fprintf(debug, "%s", ss.str().c_str());
             }
-            if (0==nentries)
-                break;
-
-            /* Create a data block for the jump table. */
-            DataBlock *dblock = find_db_starting(base_va, nentries*entry_size);
-            append(bb, dblock, SgAsmBlock::BLK_JUMPTABLE);
-
-            if (debug)
-                fprintf(debug, "[jump table at 0x%08"PRIx64"+%zu*%zu]", base_va, nentries, entry_size);
-        } while (0);
+        }
     }
 
     /* Call target analysis. For x86, a function call is any CALL instruction except when the call target is the fall-through
@@ -570,9 +360,16 @@ Partitioner::successors(BasicBlock *bb, bool *complete)
         rose_addr_t fall_through_va = canonic_block(bb->last_insn()->get_address() + bb->last_insn()->get_size());
         rose_addr_t call_target_va = call_target(bb);
         if (call_target_va!=NO_TARGET) {
-            BasicBlock *target_bb = find_bb_starting(call_target_va, false);
-            if (target_bb && target_bb->function && target_bb->function->may_return)
+            Instruction *target_insn = find_instruction(call_target_va, true);
+            BasicBlock *target_bb = target_insn ? find_bb_starting(call_target_va, false) : NULL;
+            if (!target_insn) {
+                /* We know the call target, but could not obtain an instruction there.  The target might be a dynamically
+                 * linked function that isn't mapped yet.  Assume it returns. */
                 retval.insert(fall_through_va);
+            } else if (target_bb && target_bb->function && target_bb->function->possible_may_return()) {
+                /* There's a function at the call target and that function might return. */
+                retval.insert(fall_through_va);
+            }
         } else {
             retval.insert(fall_through_va); /*true 99% of the time*/
         }
@@ -602,6 +399,8 @@ Partitioner::call_target(BasicBlock *bb)
 bool
 Partitioner::pops_return_address(rose_addr_t va)
 {
+    using namespace BinaryAnalysis::InstructionSemantics;
+
     bool on_stack = true; /*assume return value stays on stack; prove otherwise*/
 
     /* Create the basic block if possible, but if we created it here then we should clear it below. */
@@ -613,12 +412,12 @@ Partitioner::pops_return_address(rose_addr_t va)
 
         SgAsmx86Instruction *last_insn = isSgAsmx86Instruction(bb->last_insn());
 
-        typedef VirtualMachineSemantics::Policy Policy;
-        typedef X86InstructionSemantics<Policy, VirtualMachineSemantics::ValueType> Semantics;
+        typedef PartialSymbolicSemantics::Policy<> Policy;
+        typedef X86InstructionSemantics<Policy, PartialSymbolicSemantics::ValueType> Semantics;
         Policy policy;
         policy.set_map(get_map());
-        VirtualMachineSemantics::ValueType<32> orig_retaddr;
-        policy.writeMemory(x86_segreg_ss, policy.readGPR(x86_gpr_sp), orig_retaddr, policy.true_());
+        PartialSymbolicSemantics::ValueType<32> orig_retaddr;
+        policy.writeMemory(x86_segreg_ss, policy.readRegister<32>("esp"), orig_retaddr, policy.true_());
         Semantics semantics(policy);
 
 #if 0
@@ -639,7 +438,7 @@ Partitioner::pops_return_address(rose_addr_t va)
             }
             on_stack = policy.on_stack(orig_retaddr);
             if (!on_stack && debug)
-                fprintf(debug, "[B%08"PRIx64" discards return address]", va);
+                fprintf(debug, "[B%08"PRIx64"#%zu discards return address]", va, bb->insns.size());
         } catch (const Semantics::Exception&) {
             /*void*/
         } catch (const Policy::Exception&) {
@@ -726,6 +525,60 @@ Partitioner::Function::clear_data_blocks()
     data_blocks.clear();
 }
 
+/* Move basic blocks from the other function to this one. */
+void
+Partitioner::Function::move_basic_blocks_from(Function *other)
+{
+    for (BasicBlocks::iterator bbi=other->basic_blocks.begin(); bbi!=other->basic_blocks.end(); ++bbi) {
+        basic_blocks[bbi->first] = bbi->second;
+        bbi->second->function = this;
+    }
+    other->basic_blocks.clear();
+
+    heads.insert(other->heads.begin(), other->heads.end());
+    other->heads.clear();
+}
+
+/* Move data blocks from the other function to this one. */
+void
+Partitioner::Function::move_data_blocks_from(Function *other)
+{
+    for (DataBlocks::iterator dbi=other->data_blocks.begin(); dbi!=other->data_blocks.end(); ++dbi) {
+        data_blocks[dbi->first] = dbi->second;
+        dbi->second->function = this;
+    }
+    other->data_blocks.clear();
+}
+
+/* Increase knowledge about may-return property. */
+void
+Partitioner::Function::promote_may_return(SgAsmFunction::MayReturn new_value) {
+    switch (get_may_return()) {
+        case SgAsmFunction::RET_UNKNOWN:
+            set_may_return(new_value);
+            break;
+        case SgAsmFunction::RET_SOMETIMES:
+            if (SgAsmFunction::RET_ALWAYS==new_value || SgAsmFunction::RET_NEVER==new_value)
+                set_may_return(new_value);
+            break;
+        case SgAsmFunction::RET_ALWAYS:
+        case SgAsmFunction::RET_NEVER:
+            break;
+    }
+}
+
+void
+Partitioner::Function::show_properties(FILE *debug) const
+{
+    if (debug) {
+        std::string may_return_str = stringifySgAsmFunctionMayReturn(get_may_return(), "RET_");
+        for (size_t i=0; i<may_return_str.size(); ++i)
+            may_return_str[i] = tolower(may_return_str[i]);
+        fprintf(debug, "{nbblocks=%zu, ndblocks=%zu, may-return=%s}",
+                basic_blocks.size(), data_blocks.size(), may_return_str.c_str());
+    }
+}
+
 /* Return partitioner to initial state */
 void
 Partitioner::clear()
@@ -762,6 +615,12 @@ Partitioner::clear()
 
     /* Clear all disassembly failures from the cache. */
     clear_disassembler_errors();
+
+    /* Clear statistics and code criteria.  This object manages memory for its statistics, but the caller manages the memory
+     * for the code criteria. */
+    delete aggregate_mean;           aggregate_mean     = NULL;
+    delete aggregate_variance;       aggregate_variance = NULL;
+    code_criteria = NULL; // owned by user
 }
 
 void
@@ -884,31 +743,12 @@ Partitioner::append(Function* f, BasicBlock *bb, unsigned reason, bool keep/*=fa
     /* If the block is a function return then mark the function as returning.  On a transition from a non-returning function
      * to a returning function, we must mark all calling functions as pending so that the fall-through address of their
      * function calls to this function are eventually discovered.  This includes recursive calls since we may have already
-     * discovered the recursive call but not followed the fall-through address.
-     *
-     * FIXME: It's probably no longer necessary to go back and mark calling functions as pending because we do that in the
-     *        analyze_cfg() loop.  Doing it in analyze_cfg() is probably more efficient than running these nested loops each
-     *        time we have a transition. [RPM 2010-07-30] */
+     * discovered the recursive call but not followed the fall-through address.  Marking callers as "pending" happens in the
+     * analyze_cfg() method, were we can handle all the calls at the same time (more efficient than doing one at a time right
+     * here). */
     update_analyses(bb);
-    if (bb->cache.function_return && !f->may_return) {
-        f->may_return = true;
-#if 0
-        if (debug) fprintf(debug, "[returns-to");
-        for (BasicBlocks::iterator bbi=basic_blocks.begin(); bbi!=basic_blocks.end(); ++bbi) {
-            if (bbi->second->function!=NULL) {
-                const Disassembler::AddressSet &sucs = successors(bbi->second, NULL);
-                for (Disassembler::AddressSet::const_iterator si=sucs.begin(); si!=sucs.end(); ++si) {
-                    if (*si==f->entry_va) {
-                        if (debug) fprintf(debug, " F%08"PRIx64, bbi->second->function->entry_va);
-                        bbi->second->function->pending = true;
-                        break;
-                    }
-                }
-            }
-        }
-        if (debug) fprintf(debug, "]");
-#endif
-    }
+    if (bb->cache.function_return)
+        f->promote_may_return(SgAsmFunction::RET_SOMETIMES);
 }
 
 /** Append data region to function.  This method is a bit of a misnomer because the order that the data blocks are appended to
@@ -1119,7 +959,7 @@ Partitioner::find_bb_starting(rose_addr_t va, bool create/*true*/)
     if (!create)
         return NULL;
     if (debug)
-        fprintf(debug, "[split from B%08"PRIx64"]", bb->address());
+        fprintf(debug, "[split from B%08"PRIx64"#%zu]", bb->address(), bb->insns.size());
     if (bb->function!=NULL)
         bb->function->pending = true;
     truncate(bb, va);
@@ -1142,6 +982,7 @@ Partitioner::canonic_block(rose_addr_t va)
         va = bb->cache.alias_for;
     }
     assert(!"possible alias loop");
+    return va;
 }
 
 /* Finds an existing function definition. */
@@ -1177,6 +1018,8 @@ Partitioner::add_function(rose_addr_t entry_va, unsigned reasons, std::string na
 void
 Partitioner::mark_ipd_configuration()
 {
+    using namespace BinaryAnalysis::InstructionSemantics;
+
     for (BlockConfigMap::iterator bci=block_config.begin(); bci!=block_config.end(); ++bci) {
         rose_addr_t va = bci->first;
         BlockConfig *bconf = bci->second;
@@ -1208,10 +1051,12 @@ Partitioner::mark_ipd_configuration()
             std::string block_name = block_name_str;
             if (debug) fprintf(stderr, "running successors program for %s\n", block_name_str);
 
+            // FIXME: Use a copy (COW) version of the map so we don't need to modify the real map and so that the simulated
+            // program can't accidentally modify the stuff being disassembled. [RPM 2012-05-07]
             MemoryMap *map = get_map();
             assert(map!=NULL);
-            using namespace VirtualMachineSemantics;
-            typedef X86InstructionSemantics<Policy, ValueType> Semantics;
+            typedef PartialSymbolicSemantics::Policy<> Policy;
+            typedef X86InstructionSemantics<Policy, PartialSymbolicSemantics::ValueType> Semantics;
             Policy policy;
             policy.set_map(map);
             Semantics semantics(policy);
@@ -1229,25 +1074,24 @@ Partitioner::mark_ipd_configuration()
 
             /* Load the instructions to execute */
             rose_addr_t text_va = map->find_free(0, bconf->sucs_program.size(), 4096);
-            MemoryMap::MapElement text_me(text_va, bconf->sucs_program.size(), &(bconf->sucs_program[0]), 0,
-                                          MemoryMap::MM_PROT_READ|MemoryMap::MM_PROT_EXEC);
-            text_me.set_name(block_name + " successors program text");
-            map->insert(text_me);
+            MemoryMap::Segment text_sgmt(MemoryMap::ExternBuffer::create(&(bconf->sucs_program[0]), bconf->sucs_program.size()),
+                                         0, MemoryMap::MM_PROT_RX, block_name + " successors program text");
+            map->insert(Extent(text_va, bconf->sucs_program.size()), text_sgmt);
 
             /* Create a stack */
             static const size_t stack_size = 8192;
             rose_addr_t stack_va = map->find_free(text_va+bconf->sucs_program.size()+1, stack_size, 4096);
-            MemoryMap::MapElement stack_me(stack_va, stack_size, MemoryMap::MM_PROT_READ|MemoryMap::MM_PROT_WRITE);
-            stack_me.set_name(block_name + " successors stack");
-            map->insert(stack_me);
+            MemoryMap::Segment stack_sgmt(MemoryMap::AnonymousBuffer::create(stack_size), 0,
+                                          MemoryMap::MM_PROT_RW, block_name + " successors stack");
+            map->insert(Extent(stack_va, stack_size), stack_sgmt);
             rose_addr_t stack_ptr = stack_va + stack_size;
 
             /* Create an area for the returned vector of successors */
             static const size_t svec_size = 8192;
             rose_addr_t svec_va = map->find_free(stack_va+stack_size+1, svec_size, 4096);
-            MemoryMap::MapElement svec_me(svec_va, svec_size, MemoryMap::MM_PROT_READ|MemoryMap::MM_PROT_WRITE);
-            svec_me.set_name(block_name + " successors vector");
-            map->insert(svec_me);
+            MemoryMap::Segment svec_sgmt(MemoryMap::AnonymousBuffer::create(svec_size), 0,
+                                         MemoryMap::MM_PROT_RW, block_name + " successors vector");
+            map->insert(Extent(svec_va, svec_size), svec_sgmt);
 
             /* What is the "return" address. Eventually the successors program will execute a "RET" instruction that will
              * return to this address.  We can choose something arbitrary as long as it doesn't conflict with anything else.
@@ -1265,7 +1109,7 @@ Partitioner::mark_ipd_configuration()
             /* old stack pointer */
             stack_ptr -= 4;
             policy.writeMemory<32>(x86_segreg_ss, policy.number<32>(stack_ptr),
-                                   policy.readGPR(x86_gpr_sp), policy.true_());
+                                   policy.readRegister<32>("esp"), policy.true_());
 
             /* address past the basic block's last instruction */
             stack_ptr -= 4;
@@ -1294,32 +1138,35 @@ Partitioner::mark_ipd_configuration()
                                    policy.number<32>(return_va), policy.true_());
 
             /* Adjust policy stack pointer */
-            policy.writeGPR(x86_gpr_sp, policy.number<32>(stack_ptr));
+            policy.writeRegister("esp", policy.number<32>(stack_ptr));
 
             /* Interpret the program */
             if (debug) fprintf(stderr, "  running the program...\n");
             Disassembler *disassembler = Disassembler::lookup(new SgAsmPEFileHeader(new SgAsmGenericFile()));
             assert(disassembler!=NULL);
-            policy.writeIP(policy.number<32>(text_va));
+            policy.writeRegister("eip", policy.number<32>(text_va));
             while (1) {
-                rose_addr_t ip = policy.readIP().known_value();
+                rose_addr_t ip = policy.readRegister<32>("eip").known_value();
                 if (ip==return_va) break;
                 SgAsmx86Instruction *insn = isSgAsmx86Instruction(disassembler->disassembleOne(map, ip));
                 if (debug) fprintf(stderr, "    0x%08"PRIx64": %s\n", ip, insn?unparseInstruction(insn).c_str():"<null>");
                 assert(insn!=NULL);
                 semantics.processInstruction(insn);
-                assert(policy.readIP().is_known());
+                assert(policy.readRegister<32>("eip").is_known());
                 SageInterface::deleteAST(insn);
             }
 
             /* Extract the list of successors. The number of successors is the first element of the list. */
             if (debug) fprintf(stderr, "  extracting program return values...\n");
-            ValueType<32> nsucs = policy.readMemory<32>(x86_segreg_ss, policy.number<32>(svec_va), policy.true_());
+            PartialSymbolicSemantics::ValueType<32> nsucs = policy.readMemory<32>(x86_segreg_ss, policy.number<32>(svec_va),
+                                                                                  policy.true_());
             assert(nsucs.is_known());
             if (debug) fprintf(stderr, "    number of successors: %"PRId64"\n", nsucs.known_value());
             assert(nsucs.known_value()*4 <= svec_size-4); /*first entry is size*/
             for (size_t i=0; i<nsucs.known_value(); i++) {
-                ValueType<32> suc_va = policy.readMemory<32>(x86_segreg_ss, policy.number<32>(svec_va+4+i*4), policy.true_());
+                PartialSymbolicSemantics::ValueType<32> suc_va = policy.readMemory<32>(x86_segreg_ss,
+                                                                                       policy.number<32>(svec_va+4+i*4),
+                                                                                       policy.true_());
                 if (suc_va.is_known()) {
                     if (debug) fprintf(stderr, "    #%zu: 0x%08"PRIx64"\n", i, suc_va.known_value());
                     bb->cache.sucs.insert(suc_va.known_value());
@@ -1331,9 +1178,9 @@ Partitioner::mark_ipd_configuration()
 
             /* Unmap the program */
             if (debug) fprintf(stderr, "  unmapping the program...\n");
-            map->erase(text_me);
-            map->erase(stack_me);
-            map->erase(svec_me);
+            map->erase(text_sgmt);
+            map->erase(stack_sgmt);
+            map->erase(svec_sgmt);
 
             if (debug) fprintf(stderr, "  done.\n");
         }
@@ -1447,8 +1294,11 @@ Partitioner::mark_elf_plt_entries(SgAsmGenericHeader *fhdr)
          *        [RPM 2010-05-11] */
         if ("abort@plt"!=name && "execl@plt"!=name && "execlp@plt"!=name && "execv@plt"!=name && "execvp@plt"!=name &&
             "exit@plt"!=name && "_exit@plt"!=name && "fexecve@plt"!=name &&
-            "longjmp@plt"!=name && "__longjmp@plt"!=name && "siglongjmp@plt"!=name)
-            plt_func->may_return = true;
+            "longjmp@plt"!=name && "__longjmp@plt"!=name && "siglongjmp@plt"!=name) {
+            plt_func->set_may_return(SgAsmFunction::RET_ALWAYS);
+        } else {
+            plt_func->set_may_return(SgAsmFunction::RET_NEVER);
+        }
     }
 }
 
@@ -1790,7 +1640,7 @@ Partitioner::scan_intrafunc_insns(InsnRangeCallbacks &cblist)
 }
 
 void
-Partitioner::scan_unassigned_bytes(ByteRangeCallbacks &cblist, MemoryMap *restrict_var/*=NULL*/)
+Partitioner::scan_unassigned_bytes(ByteRangeCallbacks &cblist, MemoryMap *restrict_map/*=NULL*/)
 {
     if (cblist.empty())
         return;
@@ -1802,16 +1652,16 @@ Partitioner::scan_unassigned_bytes(ByteRangeCallbacks &cblist, MemoryMap *restri
     /* Unassigned ranges are the inverse of everything assigned.  Then further restrict the unassigned range map according to
      * the supplied memory map. */
     ExtentMap unassigned = assigned.invert<ExtentMap>();
-    if (restrict_var)
-        unassigned.erase_ranges(restrict_var->va_extents().invert<ExtentMap>());
+    if (restrict_map)
+        unassigned.erase_ranges(restrict_map->va_extents().invert<ExtentMap>());
 
     /* Traverse the unassigned map, invoking the callbacks for each range. */
     for (ExtentMap::iterator ri=unassigned.begin(); ri!=unassigned.end(); ++ri)
-        cblist.apply(true, ByteRangeCallback::Args(this, assigned, ri->first));
+        cblist.apply(true, ByteRangeCallback::Args(this, restrict_map, assigned, ri->first));
 }
 
 void
-Partitioner::scan_intrafunc_bytes(ByteRangeCallbacks &cblist, MemoryMap *restrict_var/*=NULL*/)
+Partitioner::scan_intrafunc_bytes(ByteRangeCallbacks &cblist, MemoryMap *restrict_map/*=NULL*/)
 {
     if (cblist.empty())
         return;
@@ -1840,11 +1690,11 @@ Partitioner::scan_intrafunc_bytes(ByteRangeCallbacks &cblist, MemoryMap *restric
     } filter;
     ByteRangeCallbacks cblist2 = cblist;
     cblist2.prepend(&filter);
-    scan_unassigned_bytes(cblist2, restrict_var);
+    scan_unassigned_bytes(cblist2, restrict_map);
 }
 
 void
-Partitioner::scan_interfunc_bytes(ByteRangeCallbacks &cblist, MemoryMap *restrict_var/*=NULL*/)
+Partitioner::scan_interfunc_bytes(ByteRangeCallbacks &cblist, MemoryMap *restrict_map/*=NULL*/)
 {
     if (cblist.empty())
         return;
@@ -1873,7 +1723,7 @@ Partitioner::scan_interfunc_bytes(ByteRangeCallbacks &cblist, MemoryMap *restric
     } filter;
     ByteRangeCallbacks cblist2 = cblist;
     cblist2.prepend(&filter);
-    scan_unassigned_bytes(cblist2, restrict_var);
+    scan_unassigned_bytes(cblist2, restrict_map);
 }
 
 bool
@@ -1891,7 +1741,6 @@ Partitioner::FindDataPadding::operator()(bool enabled, const Args &args)
     for (size_t pi=1; pi<patterns.size(); ++pi)
         max_psize = std::max(max_psize, patterns[pi].size());
 
-
     /* What is the previous function?  The one to which padding is to be attached. */
     if (range.first()<=Extent::minimum())
         return true;
@@ -1902,7 +1751,6 @@ Partitioner::FindDataPadding::operator()(bool enabled, const Args &args)
         return true;
     Function *func = prev->second.get();
     assert(func!=NULL);
-
 
     /* Do we need to be contiguous with a following function?  This only checks whether the incoming range ends at the
      * beginning of a function.  We'll check below whether a padding sequence also ends at the end of this range. */
@@ -1921,7 +1769,8 @@ Partitioner::FindDataPadding::operator()(bool enabled, const Args &args)
      * read, although this shouldn't happen if the caller supplied the correct memory map to the scan_*_bytes() method. */
     if (range.size() > maximum_range_size)
         return true;
-    SgUnsignedCharList buf = p->ro_map.read(range.first(), range.size());
+    MemoryMap *map = args.restrict_map ? args.restrict_map : &p->ro_map;
+    SgUnsignedCharList buf = map->read(range.first(), range.size());
     if (ends_contiguously && buf.size()<range.size())
         return true;
     range.resize(buf.size());
@@ -2127,7 +1976,7 @@ Partitioner::FindInsnPadding::operator()(bool enabled, const Args &args)
                 if (bb && !bb->function) {
                     p->append(new_func, bb, SgAsmBlock::BLK_PADDING, true/*head of CFG subgraph*/);
                     if (p->debug)
-                        fprintf(p->debug, " B%08"PRIx64, bb->address());
+                        fprintf(p->debug, " B%08"PRIx64"#%zu", bb->address(), bb->insns.size());
                 }
             }
             if (p->debug)
@@ -2184,7 +2033,7 @@ Partitioner::find_db_starting(rose_addr_t start_va, size_t size/*=0*/)
 }
 
 bool
-Partitioner::FindIntraFunctionInsns::operator()(bool enabled, const Args &args)
+Partitioner::FindFunctionFragments::operator()(bool enabled, const Args &args)
 {
     if (!enabled)
         return false;
@@ -2196,52 +2045,71 @@ Partitioner::FindIntraFunctionInsns::operator()(bool enabled, const Args &args)
         p->function_extent(function_extents);
     }
 
-    /* This range must begin contiguously with a function. */
+    /* Compute and cache code criteria. */
+    if (!code_criteria) {
+        RegionStats *mean = p->aggregate_statistics();
+        RegionStats *variance = p->get_aggregate_variance();
+        code_criteria = p->new_code_criteria(mean, variance, threshold);
+    }
+
+    /* This range must begin contiguously with a valid function. */
     if (args.range.first()<=Extent::minimum())
         return true;
     FunctionRangeMap::iterator prev = function_extents->find(args.range.first()-1);
     if (prev==function_extents->end())
         return true;
     Function *func = prev->second.get();
-
-    /* This range must end contiguously with the same function. */
-    if (args.range.last()>=Extent::maximum())
-        return true;
-    FunctionRangeMap::iterator next = function_extents->find(args.range.last()+1);
-    if (next==function_extents->end() || next->second.get()!=func)
+    if (0!=(func->reason & excluded_reasons))
         return true;
 
-    /* If this function is interleaved with another then how can we know that the instructions in question should actually
-     * belong to this function?  If we're interleaved with one other function, then we could very easily be interleaved with
-     * additional functions and this block could belong to any of them. */
-    if (require_contiguous && !p->is_contiguous(func, false))
+    /* Should this range end contiguously with the same function?  Perhaps we should relax this and only require that the
+     * preceding function has an address after this range? [RPM 2011-11-25] */
+    if (require_intrafunction) {
+        if (args.range.last()>=Extent::maximum())
+            return true;
+        FunctionRangeMap::iterator next = function_extents->find(args.range.last()+1);
+        if (next==function_extents->end() || next->second.get()!=func)
+            return true;
+    }
+
+    /* If the preceding function is interleaved with another then how can we know that the instructions in question should
+     * actually belong to this function?  If we're interleaved with one other function, then we could very easily be
+     * interleaved with additional functions and this address region could belong to any of them. */
+    if (require_noninterleaved && !p->is_contiguous(func, false))
         return true;
 
-    /* Get the list of basic blocks for the instructions in this range and their address extents. */
+    /* Bail unless the region statistically looks like code. */
+    ExtentMap pending;
+    pending.insert(args.range);
+    RegionStats *stats = p->region_statistics(pending);
+    double raw_vote;
+    if (!code_criteria->satisfied_by(stats, &raw_vote))
+        return true;
+    
+    /* Get the list of basic blocks for the instructions in this range and their address extents.  Bail if a basic block
+     * extends beyond the address ranges we're considering, rather than splitting the block.  Also bail if we encounter two or
+     * more instructions that overlap since that's a pretty strong indication that this isn't code. */
     std::set<BasicBlock*> bblocks;
-    ExtentMap block_extents;
-    rose_addr_t va = args.range.first();
-    while (va<=args.range.last()) {
+    while (!pending.empty()) {
+        rose_addr_t va = pending.min();
         BasicBlock *bb = va==args.range.first() ? p->find_bb_starting(va) : p->find_bb_containing(va);
         if (!bb || bb->function)
             return true;
-        bblocks.insert(bb);
-        for (InstructionVector::iterator ii=bb->insns.begin(); ii!=bb->insns.end(); ++ii) {
-            rose_addr_t first = (*ii)->get_address();
-            size_t size = (*ii)->get_size();
-            block_extents.insert(Extent(first, size));
+        if (bblocks.find(bb)==bblocks.end()) {
+            bblocks.insert(bb);
+            for (InstructionVector::iterator ii=bb->insns.begin(); ii!=bb->insns.end(); ++ii) {
+                Extent ie((*ii)->get_address(), (*ii)->get_size());
+                if (!pending.contains(ie))
+                    return true;
+                pending.erase(ie);
+            }
         }
-        va = block_extents.begin()->first.last() + 1; // the address of the first missing instruction
     }
 
-    /* Make sure that all the instructions we got fit in the hole we're trying to fill. */
-    ExtentMap hole; hole.insert(args.range);
-    if (!hole.contains(block_extents))
-        return true;
-
-    /* Add the basic blocks to the function. */
+    /* All looks good.  Add the basic blocks to the preceding function. */
     for (std::set<BasicBlock*>::iterator bi=bblocks.begin(); bi!=bblocks.end(); ++bi) {
-        p->append(func, *bi, SgAsmBlock::BLK_INTRAFUNC, true/*head of CFG subgraph*/);
+        (*bi)->code_likelihood = raw_vote;
+        p->append(func, *bi, SgAsmBlock::BLK_FRAGMENT, true/*CFG head*/);
         ++nfound;
     }
 
@@ -2487,7 +2355,7 @@ Partitioner::FindPostFunctionInsns::operator()(bool enabled, const Args &args)
             if (p->debug) {
                 if (0==nadded)
                     fprintf(p->debug, "Partitioner::PostFunctionBlocks: for F%08"PRIx64": added", func->entry_va);
-                fprintf(p->debug, " B%08"PRIx64, bb->address());
+                fprintf(p->debug, " B%08"PRIx64"#%zu", bb->address(), bb->insns.size());
             }
             p->append(func, bb, SgAsmBlock::BLK_POSTFUNC, true/*head of CFG subgraph*/);
             func->pending = true;
@@ -2651,30 +2519,22 @@ Partitioner::name_import_entries(SgAsmGenericHeader *fhdr)
     struct ImportIndexBuilder: public AstSimpleProcessing {
         typedef std::map<rose_addr_t, std::string> Index;
         typedef Index::iterator iterator;
+        Partitioner *partitioner;
         Index index;
         SgAsmGenericHeader *fhdr;
-        ImportIndexBuilder(SgAsmGenericHeader *fhdr): fhdr(fhdr) {
+        ImportIndexBuilder(Partitioner *partitioner, SgAsmGenericHeader *fhdr): partitioner(partitioner), fhdr(fhdr) {
             traverse(fhdr, preorder);
         }
         void visit(SgNode *node) {
-            SgAsmPEImportDirectory *idir = isSgAsmPEImportDirectory(node);
-            SgAsmPEImportLookupTable *ilt = idir ? idir->get_ilt() : NULL;
-            SgAsmPEImportLookupTable *iat = idir ? idir->get_iat() : NULL;
-            if (ilt && iat) {
-                rose_addr_t iat_base_va = idir->get_iat_rva() + fhdr->get_base_va();
-                size_t nentries = ilt->get_entries()->get_vector().size();
-                assert(nentries==iat->get_entries()->get_vector().size());
-                for (size_t i=0; i<nentries; ++i) {
-                    SgAsmPEImportILTEntry *ilt_entry = ilt->get_entries()->get_vector()[i];
-                    SgAsmPEImportILTEntry *iat_entry = iat->get_entries()->get_vector()[i];
-                    assert(ilt_entry!=NULL && iat_entry!=NULL);
-                    rose_addr_t iat_entry_va = iat_base_va + i*fhdr->get_word_size();
-                    if (ilt_entry->get_entry_type() == SgAsmPEImportILTEntry::ILT_HNT_ENTRY_RVA)
-                        index[iat_entry_va] = ilt_entry->get_hnt_entry()->get_name()->get_string();
-                }
+            SgAsmPEImportItem *import = isSgAsmPEImportItem(node);
+            if (import) {
+                std::string name = import->get_name()->get_string();
+                rose_addr_t va = import->get_bound_rva().get_va();
+                if (va!=0 && !name.empty())
+                    index[va] = name;
             }
         }
-    } imports(fhdr);
+    } imports(this, fhdr);
 
     /* Look for functions whose first instruction is an indirect jump through one of the memory addresses we indexed above. */
     for (Functions::iterator fi=functions.begin(); fi!=functions.end(); ++fi) {
@@ -2708,6 +2568,11 @@ Partitioner::name_import_entries(SgAsmGenericHeader *fhdr)
 void
 Partitioner::pre_cfg(SgAsmInterpretation *interp/*=NULL*/)
 {
+    if (debug) {
+        fprintf(debug, "Function reasons referenced by Partitioner debugging output:\n%s",
+                SgAsmFunction::reason_key("  ").c_str());
+    }
+
     mark_ipd_configuration();   /*seed partitioner based on IPD configuration information*/
 
     if (interp) {
@@ -2788,13 +2653,22 @@ Partitioner::discover_first_block(Function *func)
         bb = find_bb_containing(func->entry_va);
         assert(bb!=NULL);
         assert(func->entry_va==bb->address());
+    } else if (bb && bb->function!=NULL && bb->function!=func) {
+        if (debug) fprintf(debug, "[removing B%08"PRIx64" from F%08"PRIx64"]", func->entry_va, bb->function->entry_va);
+        bb->function->pending = true;
+        remove(bb->function, bb);
     }
 
     if (bb) {
         append(func, bb, SgAsmBlock::BLK_ENTRY_POINT);
-        if (debug) fprintf(debug, "added %zu instruction%s\n", bb->insns.size(), 1==bb->insns.size()?"":"s");
+        if (debug)
+            fprintf(debug, "#%zu ", bb->insns.size());
     } else if (debug) {
-        fprintf(debug, "no instruction at function entry address\n");
+        fprintf(debug, "no instruction at function entry address ");
+    }
+    if (debug) {
+        func->show_properties(debug);
+        fputc('\n', debug);
     }
 }
 
@@ -2822,6 +2696,7 @@ Partitioner::discover_blocks(Function *f, rose_addr_t va, unsigned reason)
     /* Find basic block at address, creating it if necessary. */
     BasicBlock *bb = find_bb_starting(va);
     assert(bb!=NULL);
+    if (debug) fprintf(debug, "#%zu", bb->insns.size());
 
     /* If the current function has been somehow marked as pending then we might as well give up discovering its blocks because
      * some of its blocks' successors may have changed.  This can happen, for instance, if the create_bb() called above had to
@@ -2933,7 +2808,7 @@ void
 Partitioner::analyze_cfg(SgAsmBlock::Reason reason)
 {
     for (size_t pass=1; true; pass++) {
-        if (debug) fprintf(debug, "========== Partitioner::analyze_cfg() pass %zu ==========\n", pass);
+        if (debug) fprintf(debug, "\n========== Partitioner::analyze_cfg() pass %zu ==========\n", pass);
         progress(debug, "Partitioner: starting %s pass %zu: "
                  "%zu function%s, %zu insn%s, %zu block%s\n",
                  stringifySgAsmBlockReason(reason, "BLK_").c_str(), pass,
@@ -2943,90 +2818,42 @@ Partitioner::analyze_cfg(SgAsmBlock::Reason reason)
         /* Analyze function return characteristics. */
         for (BasicBlocks::iterator bi=basic_blocks.begin(); bi!=basic_blocks.end(); ++bi) {
             BasicBlock *bb = bi->second;
-            rose_addr_t return_va = canonic_block(bb->last_insn()->get_address() + bb->last_insn()->get_size());
-            BasicBlock *return_bb = find_bb_starting(return_va);
+            if (!bb->function)
+                continue;
+
             rose_addr_t target_va = NO_TARGET; /*call target*/
-            BasicBlock *target_bb = NULL;
+            bool iscall = is_function_call(bb, &target_va);
+            rose_addr_t return_va = canonic_block(bb->last_insn()->get_address() + bb->last_insn()->get_size()); // fall through
+            BasicBlock *return_bb = NULL, *target_bb = NULL; /* computed only if needed since they might split basic blocks */
             bool succs_complete;
             Disassembler::AddressSet succs = successors(bb, &succs_complete);
-#if 0 /*DEBUG [RPM 2010-07-30]*/
-            do {
-                static rose_addr_t req_call_block_va   = 0x08048364;
-                static rose_addr_t req_target_va       = 0x0804836e;
-                static rose_addr_t req_return_va       = 0x0804836e;
 
-                if (address(bb)!=req_call_block_va) break;
-                fprintf(stderr, "in pass %zu found block 0x%08"PRIx64"\n", pass, req_call_block_va);
-                fprintf(stderr, "  belongs to function? %s\n", bb->function?"yes":"no");
-                if (!bb->function) break;
-                fprintf(stderr, "    that function is 0x%08"PRIx64"\n", bb->function->entry_va);
-                bool is_call = is_function_call(bb, &target_va);
-                fprintf(stderr, "  is a function call? %s\n", is_call?"yes":"no");
-                if (!is_call) break;
-                fprintf(stderr, "    target va is 0x%08"PRIx64"\n", target_va);
-                if (target_va!=req_target_va) break;
-                target_bb = find_bb_starting(target_va, false);
-                fprintf(stderr, "  target block exists? %s\n", target_bb?"yes":"no");
-                if (!target_bb) break;
-                fprintf(stderr, "  target block belongs to a function? %s\n", target_bb->function?"yes":"no");
-                if (!target_bb->function) break;
-                fprintf(stderr, "    that function is 0x%08"PRIx64"\n", target_bb->function->entry_va);
-                if (target_bb->function->entry_va!=req_target_va) break;
-                fprintf(stderr, "  target function returns? %s\n", target_bb->function->returns?"yes":"no");
-                if (!target_bb->function->returns) break;
-                fprintf(stderr, "  return address is 0x%08"PRIx64"\n", return_va);
-                if (return_va!=req_return_va) break;
-                fprintf(stderr, "  return block exists? %s\n", return_bb?"yes":"no");
-                if (!return_bb) break;
-                fprintf(stderr, "  return block in a function? %s\n", return_bb->function?"yes":"no");
-                if (!return_bb->function) {
-                    fprintf(stderr, "  marking function 0x%08"PRIx64" as pending!\n", bb->function->entry_va);
-                } else if (return_bb->function->entry_va==return_va) {
-                    fprintf(stderr, "    returns to fall-through address\n");
-                    if (!bb->function->returns) {
-                        fprintf(stderr, "    marking calling function as returning\n");
-                        fprintf(stderr, "    NEED ANOTHER PASS!\n");
-                        /* Track the parent now */
-                        req_call_block_va       = 0x080482c8;
-                        req_target_va           = 0x08048364;
-                        req_return_va           = 0x080482d3;
-
-                    }
-                }
-            } while (0);
-#endif
-            if (bb->function && return_bb &&
-                is_function_call(bb, &target_va) && target_va!=NO_TARGET &&
+            if (iscall && target_va!=NO_TARGET &&
+                NULL!=(return_bb=find_bb_starting(return_va)) &&
                 NULL!=(target_bb=find_bb_starting(target_va, false)) &&
-                target_bb->function && target_bb->function->may_return) {
-                if (!return_bb->function) {
-                    /* Function A makes a call to function B and we know that function B could return but the return address is
-                     * not part of any function.  Mark function A as pending so that we rediscover its blocks. */
-                    bb->function->pending = true;
-                    if (debug) {
-                        fprintf(debug, "  F%08"PRIx64" may return to B%08"PRIx64" in F%08"PRIx64"\n",
-                                target_bb->function->entry_va, return_va, bb->function->entry_va);
-                    }
-                } else if (return_va==target_bb->function->entry_va && !bb->function->may_return) {
+                target_bb->function && target_bb->function->possible_may_return()) {
+                if (return_bb->function && return_va==target_bb->function->entry_va && !bb->function->possible_may_return()) {
                     /* This handles the case when function A's return from B falls through into B. In this case, since B
-                     * returns then A also returns.  We mark A as returning and we'll catch A's callers on the next pass.
+                     * returns then A also returns.  We mark A as returning.
                      *    function_A:
                      *        ...
                      *        CALL function_B
                      *    function_B:
                      *        RET
                      */
-                    bb->function->may_return = true;
+                    bb->function->promote_may_return(SgAsmFunction::RET_SOMETIMES);
                     if (debug) {
                         fprintf(debug, "  Function F%08"PRIx64" may return by virtue of call fall-through at B%08"PRIx64"\n",
                                 bb->function->entry_va, bb->address());
                     }
                 }
-            } else if (bb->function && !bb->function->may_return && !is_function_call(bb, NULL) && succs_complete) {
-                for (Disassembler::AddressSet::iterator si=succs.begin(); si!=succs.end() && !bb->function->may_return; ++si) {
+            } else if (!bb->function->possible_may_return() && !is_function_call(bb, NULL) && succs_complete) {
+                for (Disassembler::AddressSet::iterator si=succs.begin();
+                     si!=succs.end() && !bb->function->possible_may_return();
+                     ++si) {
                     if (0!=(target_va=*si) && NULL!=(target_bb=find_bb_starting(target_va, false)) &&
                         target_bb->function && target_bb->function!=bb->function &&
-                        target_va==target_bb->function->entry_va && target_bb->function->may_return) {
+                        target_va==target_bb->function->entry_va && target_bb->function->possible_may_return()) {
                         /* The block bb isn't a function call, but branches to the entry point of another function.  If that
                          * function returns then so does this one.  This handles situations like:
                          *      function_A:
@@ -3038,10 +2865,67 @@ Partitioner::analyze_cfg(SgAsmBlock::Reason reason)
                          * We don't need to set function_A->pending because the reachability of the instruction after its JMP
                          * won't change regardless of whether the "called" function returns (i.e., the return is to the caller
                          * of function_A, not to function_A itself. */
-                        bb->function->may_return = true;
+                        bb->function->promote_may_return(SgAsmFunction::RET_SOMETIMES);
                         if (debug) {
                             fprintf(debug, "  F%08"PRIx64" may return by virtue of branching to function F%08"PRIx64
                                     " which may return\n", bb->function->entry_va, target_bb->function->entry_va);
+                        }
+                    }
+                }
+            } else if (!bb->function->possible_may_return() && !is_function_call(bb, NULL) && !succs_complete) {
+                /* If the basic block's successor is not known, then we must assume that it branches to something that could
+                 * return. */
+                bb->function->promote_may_return(SgAsmFunction::RET_SOMETIMES);
+                if (debug) {
+                    fprintf(debug, "  F%08"PRIx64" may return by virtue of incomplete successors\n",
+                            bb->function->entry_va);
+                }
+            }
+        }
+
+        /* Which functions did we think didn't return but now think they might return? */
+        Disassembler::AddressSet might_now_return;
+        for (Functions::iterator fi=functions.begin(); fi!=functions.end(); ++fi) {
+            Function *func = fi->second;
+            if (func->changed_may_return() && func->possible_may_return()) {
+                if (debug)
+                    fprintf(debug, "%s F%08"PRIx64, might_now_return.empty()?"newly returning functions:":"", func->entry_va);
+                might_now_return.insert(func->entry_va);
+                func->commit_may_return();
+            }
+        }
+        if (debug && !might_now_return.empty())
+            fprintf(debug, "\n");
+
+        /* If we previously thought a function didn't return, but now we think it might return, we need to mark as pending all
+         * callers if the return address in that caller isn't already part of the caller function.   There's no need to do this
+         * fairly expensive loop of we didn't transition any functions from does-not-return to may-return.  We use the
+         * might_now_return set rather than looking up functions with find_function() because the former is probably faster,
+         * especially if we have lots of functions but only a few transitioned from does-not-return to may-return, which is the
+         * common case. */
+        if (!might_now_return.empty()) {
+            for (BasicBlocks::iterator bi=basic_blocks.begin(); bi!=basic_blocks.end(); ++bi) {
+                BasicBlock *bb = bi->second;
+                if (bb->function && !bb->function->pending) {
+                    Disassembler::AddressSet succs = successors(bb, NULL);
+                    for (Disassembler::AddressSet::iterator si=succs.begin(); si!=succs.end(); ++si) {
+                        if (might_now_return.find(*si)!=might_now_return.end()) {
+                            // This is a call from a basic block (bb) to a function that we now think might return.  If the
+                            // return-to block is not already part of the calling function, then we should mark the calling
+                            // function as pending.
+                            rose_addr_t return_va = canonic_block(bb->last_insn()->get_address() + bb->last_insn()->get_size());
+                            BasicBlock *return_bb = find_bb_starting(return_va, false); // do not create the block
+                            if (return_bb && return_bb->function!=bb->function) {
+                                bb->function->pending = true;
+                                if (debug) {
+                                    Function *called_func = find_function(*si); // don't call this unless debugging (performance)
+                                    assert(called_func!=NULL);
+                                    fprintf(debug,
+                                            "newreturn %s F%08"PRIx64" \"%s\" returns to B%08"PRIx64" in F%08"PRIx64"\n",
+                                            SgAsmFunction::reason_str(true, called_func->reason).c_str(), called_func->entry_va,
+                                            called_func->name.c_str(), return_bb->address(), bb->function->entry_va);
+                                }
+                            }
                         }
                     }
                 }
@@ -3059,8 +2943,11 @@ Partitioner::analyze_cfg(SgAsmBlock::Reason reason)
             }
         }
 
-        if (pending.size()==0)
+        if (pending.size()==0) {
+            if (debug)
+                fprintf(debug, "finished for %s", stringifySgAsmBlockReason(reason, "BLK_").c_str());
             break;
+        }
 
         /* Make sure all functions have an initial basic block if possible. */
         for (size_t i=0; i<pending.size(); ++i)
@@ -3078,7 +2965,11 @@ Partitioner::analyze_cfg(SgAsmBlock::Reason reason)
             } catch (const AbandonFunctionDiscovery&) {
                 /* thrown when discover_blocks() decides it needs to start over on a function */
             }
-            if (debug) fprintf(debug, "\n");
+            if (debug) {
+                fputc(' ', debug);
+                pending[i]->show_properties(debug);
+                fputc('\n', debug);
+            }
         }
     }
 }
@@ -3102,7 +2993,8 @@ Partitioner::detach_thunk(Function *func)
     if (func->basic_blocks.empty())
         return false;
     BasicBlock *entry_bb = find_bb_starting(func->entry_va, false);
-    assert(entry_bb!=NULL && entry_bb->function==func);
+    if (NULL==entry_bb || entry_bb->function!=func)
+        return false;
     if (func->basic_blocks.size()==1 && entry_bb->insns.size()==1)
         return false;
 
@@ -3131,15 +3023,24 @@ Partitioner::detach_thunk(Function *func)
             return false;
     }
 
-    /* Create a new function and transfer everything but the first instruction to the new function. */
+    /* Create a new function to hold everything but the entry instruction */
     if (debug)
         fprintf(debug, "Partitioner::detach_thunk: detaching thunk F%08"PRIx64" from body F%08"PRIx64"\n",
                 func->entry_va, second_va);
     Function *new_func = add_function(second_va, func->reason);
-    func->reason |= SgAsmFunction::FUNC_THUNK;
-    new_func->heads = func->heads; func->heads.clear(); new_func->heads.erase(func->entry_va);
-    new_func->may_return = func->may_return;
+    new_func->name = func->name;
+    new_func->set_may_return(func->get_may_return());
 
+    /* Adjust the old function, which now represents the thunk. */
+    func->reason |= SgAsmFunction::FUNC_THUNK;
+    func->pending = false;
+    if (!func->name.empty() && std::string::npos==func->name.find("-thunk"))
+        func->name += "-thunk";
+    
+    /* Transfer all instructions (except the thunk itself) to new_func. */
+    new_func->heads = func->heads;
+    func->heads.clear();
+    new_func->heads.erase(func->entry_va);
     BasicBlocks bblocks = func->basic_blocks;
     for (BasicBlocks::iterator bi=bblocks.begin(); bi!=bblocks.end(); ++bi) {
         if (bi->first==func->entry_va) {
@@ -3164,6 +3065,7 @@ Partitioner::detach_thunk(Function *func)
         }
     }
 
+    /* Transfer all data blocks to new_func. */
     DataBlocks dblocks = func->data_blocks;
     for (DataBlocks::iterator di=dblocks.begin(); di!=dblocks.end(); ++di) {
         DataBlock *dblock = di->second;
@@ -3197,18 +3099,175 @@ Partitioner::adjust_padding()
     }
 }
 
+/* Merge function fragments when possible. */
+void
+Partitioner::merge_function_fragments()
+{
+    // Find connected components of the control flow graph, but only considering function fragments.  We do this in a single
+    // pass, and at the end of this loop each function fragment, F, will have group number group_number[traversal_number[F]].
+    typedef std::map<Function*, size_t> TravNumMap;
+    TravNumMap traversal_number;       // which DFS traversal first visited the function?
+    std::vector<size_t> group_number;  // group number for each traversal (indexed by traversal number)
+    for (Functions::iterator fi=functions.begin(); fi!=functions.end(); ++fi) {
+        if (SgAsmFunction::FUNC_GRAPH!=fi->second->reason)
+            continue; // only consider functions that are strictly fragments
+        if (traversal_number.find(fi->second)!=traversal_number.end())
+            continue; // we already visited this function
+
+        size_t tnum = group_number.size();
+        group_number.push_back(tnum);
+        traversal_number[fi->second] = tnum;
+
+        // Depth first search considering only function fragments
+        std::vector<Function*> dfs_functions;
+        dfs_functions.push_back(fi->second);
+        while (!dfs_functions.empty()) {
+            Function *source_func = dfs_functions.back(); dfs_functions.pop_back();
+            for (BasicBlocks::iterator bi=source_func->basic_blocks.begin(); bi!=source_func->basic_blocks.end(); ++bi) {
+                BasicBlock *source_bb = bi->second;
+                Disassembler::AddressSet succs = successors(source_bb);
+                for (Disassembler::AddressSet::iterator si=succs.begin(); si!=succs.end(); ++si) {
+                    BasicBlock *target_bb = find_bb_starting(*si, false); // do not create the block
+                    Function *target_func = target_bb ? target_bb->function : NULL;
+                    if (target_func && target_func!=source_func && SgAsmFunction::FUNC_GRAPH==target_func->reason) {
+                        bool inserted = traversal_number.insert(std::make_pair(target_func, tnum)).second;
+                        if (inserted) {
+                            dfs_functions.push_back(target_func);
+                        } else {
+                            group_number[traversal_number[target_func]] = tnum;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /* Reorganize so that we have lists of function fragments by group number. */
+    typedef std::vector<std::vector<Function*> > FragmentIndex;
+    FragmentIndex fragment_index(group_number.size(), std::vector<Function*>());
+    for (Functions::iterator fi=functions.begin(); fi!=functions.end(); ++fi) {
+        TravNumMap::iterator tn_found = traversal_number.find(fi->second);
+        if (tn_found!=traversal_number.end()) {
+            size_t gnum = group_number[tn_found->second];
+            fragment_index[gnum].push_back(fi->second);
+        }
+    }
+#if 0 /* DEBUGGING [RPM 2012-04-18] */
+    fprintf(stderr, "Partitioner::merge_function_fragments: fragment index: \n");
+    for (size_t gnum=0; gnum<fragment_index.size(); gnum++) {
+        fprintf(stderr, "  group-%zu:", gnum);
+        for (std::vector<Function*>::iterator fi=fragment_index[gnum].begin(); fi!=fragment_index[gnum].end(); ++fi)
+            fprintf(stderr, " F%08"PRIx64, (*fi)->entry_va);
+        fprintf(stderr, "\n");
+    }
+#endif
+            
+    /* Find the non-fragment predecessors of each fragment group. A fragment group can be merged into another function only if
+     * the fragment group has a single predecessor. */
+    std::vector<Function*> parent(fragment_index.size(), NULL);
+    for (Functions::iterator fi=functions.begin(); fi!=functions.end(); ++fi) {
+        Function *source_func = fi->second;
+        if (SgAsmFunction::FUNC_GRAPH!=source_func->reason) {
+            bool multi_parents = false;
+            for (BasicBlocks::iterator bi=source_func->basic_blocks.begin();
+                 bi!=source_func->basic_blocks.end() && !multi_parents;
+                 ++bi) {
+                Disassembler::AddressSet succs = successors(bi->second);
+                for (Disassembler::AddressSet::iterator si=succs.begin(); si!=succs.end() && !multi_parents; ++si) {
+                    BasicBlock *target_bb = find_bb_starting(*si, false/*do not create*/);
+                    Function *target_func = target_bb ? target_bb->function : NULL;
+                    TravNumMap::iterator tn_found = target_func ? traversal_number.find(target_func) : traversal_number.end();
+                    size_t gnum = tn_found!=traversal_number.end() ? group_number[tn_found->second] : (size_t)(-1);
+                    if (gnum!=(size_t)(-1)) {
+                        /* source_func (non-fragment) branches to fragment group number <gnum> */
+                        if (parent[gnum]) {
+                            parent[gnum] = NULL;
+                            fragment_index[gnum].clear(); // multiple non-fragment predecessors of this group; discard group
+                            multi_parents = true;
+                        } else {
+                            parent[gnum] = source_func;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /* Merge functions */
+    if (debug)
+        fprintf(debug, "Partitioner::merge_function_fragments...\n");
+    for (size_t gnum=0; gnum<fragment_index.size(); ++gnum) {
+        if (parent[gnum]!=NULL && !fragment_index[gnum].empty()) {
+            if (debug) {
+                fprintf(debug, "fragments %s F%08"PRIx64" \"%s\" merging",
+                        SgAsmFunction::reason_str(true, parent[gnum]->reason).c_str(),
+                        parent[gnum]->entry_va, parent[gnum]->name.c_str());
+            }
+            for (std::vector<Function*>::iterator fi=fragment_index[gnum].begin(); fi!=fragment_index[gnum].end(); ++fi) {
+                if (debug)
+                    fprintf(debug, " F0x%08"PRIx64, (*fi)->entry_va);
+                merge_functions(parent[gnum], *fi); *fi = NULL;
+                parent[gnum]->reason &= ~SgAsmFunction::FUNC_GRAPH;
+            }
+            if (debug) {
+                fputc(' ', debug);
+                parent[gnum]->show_properties(debug);
+                fputc('\n', debug);
+            }
+        }
+    }
+}
+
+void
+Partitioner::merge_functions(Function *parent, Function *other)
+{
+    parent->reason |= other->reason;
+
+    if (parent->name.empty()) {
+        parent->name = other->name;
+    } else if (!other->name.empty() && 0!=parent->name.compare(other->name)) {
+        parent->name += "+" + other->name;
+    }
+
+    parent->move_basic_blocks_from(other);
+    parent->move_data_blocks_from(other);
+
+    if (other->pending)
+        parent->pending = true;
+
+    parent->promote_may_return(other->get_may_return());
+
+    functions.erase(other->entry_va);
+    delete other;
+}
+
 void
 Partitioner::post_cfg(SgAsmInterpretation *interp/*=NULL*/)
 {
+    /* Obtain aggregate statistics over all the functions, and cache them. These statistics describe code, so we want to do
+     * this before we add data blocks to the functions.  Any statistics already cached should be considered outdated. */
+    clear_aggregate_statistics();
+    RegionStats *mean = aggregate_statistics();
+    RegionStats *variance = get_aggregate_variance();
+    if (debug) {
+        std::ostringstream s;
+        s <<"=== Mean ===\n" <<*mean <<"\n"
+          <<"=== Variance ===\n" <<*variance <<"\n";
+        fputs(s.str().c_str(), debug);
+    }
+
     /* A memory map that contains only the executable regions.  I.e., those that might contain instructions. */
     MemoryMap exe_map = *map;
-    exe_map.prune(is_unexecutable);
+    exe_map.prune(MemoryMap::MM_PROT_EXEC);
 
     /* Add unassigned intra-function blocks to the surrounding function.  This needs to come before detecting inter-function
      * padding, otherwise it will also try to add the stuff between the true function and its following padding. */
     if (func_heuristics & SgAsmFunction::FUNC_INTRABLOCK) {
-        FindIntraFunctionInsns find_intra_function_insns;
-        scan_unassigned_bytes(&find_intra_function_insns, &exe_map);
+        FindFunctionFragments fff;
+        fff.require_noninterleaved = true;
+        fff.require_intrafunction = true;
+        fff.threshold = 0; // treat all intra-function regions as code
+        scan_unassigned_bytes(&fff, &exe_map);
     }
 
     /* Detect inter-function padding */
@@ -3229,7 +3288,7 @@ Partitioner::post_cfg(SgAsmInterpretation *interp/*=NULL*/)
 
         /* Scan only executable regions of memory. */
         MemoryMap exe_map = *map;
-        exe_map.prune(is_unexecutable);
+        exe_map.prune(MemoryMap::MM_PROT_EXEC);
         scan_interfunc_bytes(&cb, &exe_map);
     }
 
@@ -3250,17 +3309,30 @@ Partitioner::post_cfg(SgAsmInterpretation *interp/*=NULL*/)
     }
 
     /* Find functions that we missed between inter-function padding. */
-    FindInterPadFunctions find_interpad_functions;
-    scan_unassigned_bytes(&find_interpad_functions, &exe_map);
+    if (func_heuristics & SgAsmFunction::FUNC_MISCMASK) {
+        FindInterPadFunctions find_interpad_functions;
+        scan_unassigned_bytes(&find_interpad_functions, &exe_map);
+    }
 
-    /* Split thunks off from their jumped-to function.  Not really necessary, but the result is more like other common
-     * disassemblers and also more closely matches what would happen if we had debugging information in the executable. */
-    if (func_heuristics & SgAsmFunction::FUNC_THUNK)
-        detach_thunks();
+    /* Find code fragments that appear after a function. */
+    if (func_heuristics & SgAsmFunction::FUNC_INTRABLOCK) {
+        FindFunctionFragments fff;
+        fff.require_noninterleaved = false;
+        fff.require_intrafunction = false;
+        fff.threshold = 0.7;
+        scan_unassigned_bytes(&fff, &exe_map);
+    }
 
-    /* Run one last analysis of the CFG because we may need to fix some things up after having added more blocks from the
+    /* Run another analysis of the CFG because we may need to fix some things up after having added more blocks from the
      * post-cfg analyses we did above. If nothing happened above, then analyze_cfg() should be fast. */
     analyze_cfg(SgAsmBlock::BLK_GRAPH2);
+
+    /* Split thunks off from their jumped-to function.  Not really necessary, but the result is more like other common
+     * disassemblers and also more closely matches what would happen if we had debugging information in the executable.  This
+     * should only run after analyze_cfg() because it assumes that a function's blocks have all been discovered -- it does some
+     * analysis on the function's internal control flow. */
+    if (0!=(func_heuristics & SgAsmFunction::FUNC_THUNK) && detach_thunks()>0)
+        analyze_cfg(SgAsmBlock::BLK_GRAPH3);
 
     /* Find thunks again.  We might have more things satisfying the relatively strict thunk definition. */
     if (func_heuristics & SgAsmFunction::FUNC_THUNK) {
@@ -3279,8 +3351,12 @@ Partitioner::post_cfg(SgAsmInterpretation *interp/*=NULL*/)
     /* Make sure padding is back where it belongs. */
     adjust_padding();
 
+    /* Merge extra functions that we might have created.  Sometimes it's possible that we break a function into too many parts,
+     * and we can recombine those parts now. */
+    merge_function_fragments();
+
     /* Give existing functions names from symbol tables. Don't create more functions. */
-    if (interp) {
+    if (interp && 0!=(func_heuristics & SgAsmFunction::FUNC_IMPORT)) {
         const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
         for (size_t i=0; i<headers.size(); i++) {
             name_plt_entries(headers[i]); // give names to ELF .plt trampolines
@@ -3483,9 +3559,9 @@ Partitioner::is_contiguous(Function *func, bool strict)
     return true;
 }
 
-/* Update SgAsmTarget nodes. */
+/* Update CFG edge nodes. */
 void
-Partitioner::update_targets(SgNode *ast)
+Partitioner::fixup_cfg_edges(SgNode *ast)
 {
     typedef std::map<rose_addr_t, SgAsmBlock*> BlockMap;
 
@@ -3516,11 +3592,11 @@ Partitioner::update_targets(SgNode *ast)
             SgAsmBlock *block = isSgAsmBlock(node);
             if (block) {
                 for (size_t i=0; i<block->get_successors().size(); i++) {
-                    SgAsmTarget *target = block->get_successors()[i];
-                    if (target && NULL==target->get_block()) {
-                        BlockMap::const_iterator bi=block_map.find(target->get_address());
+                    SgAsmIntegerValueExpression *target = block->get_successors()[i];
+                    if (target && NULL==target->get_base_node()) {
+                        BlockMap::const_iterator bi=block_map.find(target->get_absolute_value());
                         if (bi!=block_map.end())
-                            target->set_block(bi->second);
+                            target->make_relative_to(bi->second);
                     }
                 }
             }
@@ -3532,9 +3608,101 @@ Partitioner::update_targets(SgNode *ast)
     TargetPopulator(ast, block_map);
 }
 
+/* Make pointers relative to what they point into. */
+void
+Partitioner::fixup_pointers(SgNode *ast, SgAsmInterpretation *interp/*=NULL*/)
+{
+
+    struct FixerUpper: public AstPrePostProcessing {
+        Partitioner *p;
+        SgAsmInterpretation *interp;
+        SgAsmInstruction *insn;
+        SgAsmGenericSectionPtrList mapped_sections;
+        DataRangeMap static_data;
+
+        FixerUpper(Partitioner *p, SgAsmInterpretation *interp)
+            : p(p), interp(interp), insn(NULL) {}
+
+        void atTraversalStart() {
+            /* Get a list of all memory-mapped sections in the interpretation. */
+            if (interp) {
+                const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
+                for (SgAsmGenericHeaderPtrList::const_iterator hi=headers.begin(); hi!=headers.end(); ++hi) {
+                    if ((*hi)->is_mapped())
+                        mapped_sections.push_back(*hi);
+                    SgAsmGenericSectionPtrList file_sections = (*hi)->get_mapped_sections();
+                    mapped_sections.insert(mapped_sections.end(), file_sections.begin(), file_sections.end());
+                }
+            }
+
+            /* Get a list of all static data blocks */
+            p->datablock_extent(&static_data);
+        }
+
+        void preOrderVisit(SgNode *node) {
+            if (!insn) {
+                insn = isSgAsmInstruction(node);
+            } else if (isSgAsmIntegerValueExpression(node)) {
+                SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(node);
+
+                /* Don't monkey with constants that are already relative to some other node.  These are things that have been
+                 * already fixed up by other methods. */
+                if (ival->get_base_node()!=NULL)
+                    return;
+                rose_addr_t va = ival->get_absolute_value();
+
+                /* If this constant is a code pointer, then make the pointer relative to the instruction it points to.  If that
+                 * instruction is the entry instruction of a function, then point to the function instead.  A value is
+                 * considered a code pointer only if it points to an existing instruction that's contained in a basic block,
+                 * and that basic block is part of a valid function.  This constraint weeds out pointers to code that was
+                 * disassembled but later discarded. */
+                Instruction *target_insn = p->find_instruction(va, false/*do not create*/);
+                if (target_insn && target_insn->bblock && target_insn->bblock->function &&
+                    0==(target_insn->bblock->function->reason & SgAsmFunction::FUNC_LEFTOVERS)) {
+                    SgAsmFunction *target_func = SageInterface::getEnclosingNode<SgAsmFunction>(target_insn->node);
+                    if (target_func && target_func->get_entry_va()==target_insn->get_address()) {
+                        ival->make_relative_to(target_func);
+                    } else {
+                        ival->make_relative_to(target_insn->node);
+                    }
+                    return;
+                }
+
+                /* If this constant points into a static data block, then make it relative to that block. */
+                DataRangeMap::iterator dbi = static_data.find(va);
+                if (dbi!=static_data.end()) {
+                    DataBlock *dblock = dbi->second.get();
+                    for (size_t i=0; i<dblock->nodes.size(); ++i) {
+                        SgAsmStaticData *sd = dblock->nodes[i];
+                        if (va>=sd->get_address() && va<sd->get_address()+sd->get_size()) {
+                            ival->make_relative_to(sd);
+                            return;
+                        }
+                    }
+                }
+                
+                /* If this constant points into a non-executable data segment, then make the pointer relative to that data
+                 * segment. */
+                SgAsmGenericSection *section = SgAsmGenericFile::best_section_by_va(mapped_sections, ival->get_absolute_value());
+                if (section && !section->get_mapped_xperm()) {
+                    ival->make_relative_to(section);
+                    return;
+                }
+            }
+        }
+
+        void postOrderVisit(SgNode *node) {
+            if (isSgAsmInstruction(node))
+                insn = NULL;
+        }
+    };
+
+    FixerUpper(this, interp).traverse(ast);
+}
+
 /* Build the global block containing all functions. */
 SgAsmBlock *
-Partitioner::build_ast()
+Partitioner::build_ast(SgAsmInterpretation *interp/*=NULL*/)
 {
     /* Build a function to hold all the unassigned instructions.  Update documentation if changing the name of
      * this generated function!  We do this by traversing the instructions and obtaining a basic block for each one.  If the
@@ -3589,7 +3757,9 @@ Partitioner::build_ast()
         delete catchall;
     }
 
-    update_targets(retval);
+    /* Make pointers relative to the thing into which they point. */
+    fixup_cfg_edges(retval);
+    fixup_pointers(retval, interp);
     return retval;
 }
 
@@ -3644,7 +3814,14 @@ Partitioner::build_ast(Function* f)
     retval->set_entry_va(f->entry_va);
     retval->set_name(f->name);
     retval->set_address(first_basic_block->address());
-    retval->set_can_return(f->may_return);
+
+    /* Set the SgAsmFunction::can_return property.  If we've never indicated that a function might return then assume it
+     * doesn't return.  We're all done with analysis now, so it must not return. */
+    if (SgAsmFunction::RET_UNKNOWN==f->get_may_return()) {
+        retval->set_may_return(SgAsmFunction::RET_NEVER);
+    } else {
+        retval->set_may_return(f->get_may_return());
+    }
 
     for (NodeMap::iterator ni=nodes.begin(); ni!=nodes.end(); ++ni) {
         retval->get_statementList().push_back(ni->second);
@@ -3670,6 +3847,7 @@ Partitioner::build_ast(BasicBlock* block)
     retval->set_id(block->address());
     retval->set_address(block->address());
     retval->set_reason(block->reason);
+    retval->set_code_likelihood(block->code_likelihood);
 
     for (InstructionVector::const_iterator ii=block->insns.begin(); ii!=block->insns.end(); ++ii) {
         Instruction *insn = *ii;
@@ -3677,13 +3855,16 @@ Partitioner::build_ast(BasicBlock* block)
         insn->node->set_parent(retval);
     }
 
-    /* Cache block successors so other layers don't have to constantly compute them.  We fill in the successor SgAsmTarget
-     * objects with only the address and not pointers to blocks since we don't have all the blocks yet.  The pointers will be
-     * initialized in the no-argument version build_ast() higher up on the stack. */
+    /* Cache block successors so other layers don't have to constantly compute them.  We fill in the successor
+     * SgAsmIntegerValueExpression objects with only the address and not pointers to blocks since we don't have all the blocks
+     * yet.  The pointers will be initialized in the no-argument version build_ast() higher up on the stack. */
     bool complete;
     Disassembler::AddressSet successor_addrs = successors(block, &complete);
-    for (Disassembler::AddressSet::iterator si=successor_addrs.begin(); si!=successor_addrs.end(); ++si)
-        retval->get_successors().push_back(new SgAsmTarget(retval, NULL, *si));
+    for (Disassembler::AddressSet::iterator si=successor_addrs.begin(); si!=successor_addrs.end(); ++si) {
+        SgAsmIntegerValueExpression *value = new SgAsmIntegerValueExpression(*si);
+        value->set_parent(retval);
+        retval->get_successors().push_back(value);
+    }
     retval->set_successors_complete(complete);
     return retval;
 }
@@ -3724,7 +3905,7 @@ Partitioner::partition(SgAsmInterpretation* interp/*=NULL*/, const Disassembler:
         pre_cfg(interp);
         analyze_cfg(SgAsmBlock::BLK_GRAPH1);
         post_cfg(interp);
-        retval = build_ast();
+        retval = build_ast(interp);
         set_map(old_map, &old_ro_map);
     } catch (...) {
         set_map(old_map, &old_ro_map);
@@ -3745,7 +3926,7 @@ Partitioner::partition(SgAsmInterpretation* interp/*=NULL*/, Disassembler *d, Me
     pre_cfg(interp);
     analyze_cfg(SgAsmBlock::BLK_GRAPH1);
     post_cfg(interp);
-    return build_ast();
+    return build_ast(interp);
 }
 
 void

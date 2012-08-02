@@ -19,6 +19,7 @@ int main()
 #include "stringify.h"
 #include "BinaryLoader.h"                       /* maps specimen into an address space */
 #include "BinaryFunctionCall.h"                 /* function call graphs */
+#include "BinaryCallingConvention.h"            /* for testing the calling convention analysis. */
 
 class IdaFile {
 public:
@@ -84,7 +85,23 @@ IdaFile::parse(const std::string &csv_name, const std::string &exe_hash)
         free(line);
     fclose(f);
 }
+    
+/* An unparser for showing instructions for data blocks. */
+class DataBlockUnparser: public AsmUnparser {
+public:
+    class DataNote: public UnparserCallback {
+    public:
+        virtual bool operator()(bool enabled, const InsnArgs &args) {
+            if (enabled)
+                args.output <<" (data)";
+            return enabled;
+        }
+    } data_note;
 
+    DataBlockUnparser() {
+        insn_callbacks.unparse.prepend(&data_note);
+    }
+};
 
 /* We use our own instruction unparser that does a few additional things that ROSE's default unparser doesn't do.  The extra
  * things are each implemented as a callback and are described below. */
@@ -229,24 +246,58 @@ class MyUnparser: public AsmUnparser {
         }
     };
 
+    /* Disassembles data blocks.  Data blocks (other than padding and jump tables) are disassembled and we output the
+     * instructions in address order after the data block. */
+    class DataBlockDisassembler: public UnparserCallback {
+    public:
+        Disassembler *disassembler;
+        DataBlockUnparser sub_unparser;
+        DataBlockDisassembler(Disassembler *disassembler): disassembler(disassembler) {}
+        virtual bool operator()(bool enabled, const StaticDataArgs &args) {
+            SgAsmBlock *block = SageInterface::getEnclosingNode<SgAsmBlock>(args.data);
+            if (enabled && block &&
+                0==(block->get_reason() & SgAsmBlock::BLK_PADDING) &&
+                0==(block->get_reason() & SgAsmBlock::BLK_JUMPTABLE)) {
+                SgUnsignedCharList data = args.data->get_raw_bytes();
+                MemoryMap map;
+                map.insert(Extent(args.data->get_address(), data.size()),
+                           MemoryMap::Segment(MemoryMap::ExternBuffer::create(&data[0], data.size()), 0,
+                                              MemoryMap::MM_PROT_RX, "static data block"));
+                Disassembler::AddressSet worklist;
+                worklist.insert(args.data->get_address());
+                Disassembler::InstructionMap insns = disassembler->disassembleBuffer(&map, worklist);
+                for (Disassembler::InstructionMap::iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
+                    sub_unparser.unparse(args.output, ii->second);
+                    SageInterface::deleteAST(ii->second);
+                }
+            }
+            return enabled;
+        }
+    };
+
 public:
     FuncName<SgAsmInstruction, AsmUnparser::UnparserCallback::InsnArgs> insn_func_name;
     FuncName<SgAsmStaticData,  AsmUnparser::UnparserCallback::StaticDataArgs> data_func_name;
     FuncCallers func_callers;
     DiscontiguousNotifier<SgAsmInstruction, AsmUnparser::UnparserCallback::InsnArgs> insn_skip;
     DiscontiguousNotifier<SgAsmStaticData,  AsmUnparser::UnparserCallback::StaticDataArgs> data_skip;
+    DataBlockDisassembler data_block_disassembler;
     rose_addr_t next_address;
     size_t nprinted;
 
-    MyUnparser(FunctionCallGraph &cg, IdaInfo &ida)
-        : insn_func_name(ida), data_func_name(ida), func_callers(cg), next_address(0), nprinted(0) {
+    MyUnparser(FunctionCallGraph &cg, IdaInfo &ida, Disassembler *disassembler)
+        : insn_func_name(ida), data_func_name(ida), func_callers(cg), data_block_disassembler(disassembler),
+          next_address(0), nprinted(0) {
         set_organization(AsmUnparser::ORGANIZED_BY_ADDRESS);
+        insnBlockEntry.show_function = false; // don't show function addresses since our own show_names() does that.
         insn_callbacks.pre
             .append(&insn_func_name)
             .after(&insnBlockSeparation, &insn_skip, 1);
         staticdata_callbacks.pre
             .append(&data_func_name)
             .after(&staticDataBlockSeparation, &data_skip, 1);
+        staticdata_callbacks.post
+            .append(&data_block_disassembler);
         function_callbacks.pre
             .before(&functionAttributes, &func_callers, 1);
     }
@@ -285,11 +336,11 @@ public:
                <<"\n"
                <<"\n"
                <<"\n"
-               <<"Address     Hexadecimal data         CharData  BIR   ROSE     ";
+               <<"Address     Hexadecimal data         CharData   BIR     ROSE     ";
         for (size_t i=0; i<insn_func_name.ida.size(); i++)
             output <<"IDA[" <<i <<"]     ";
         output <<"    Instruction etc.\n";
-        output <<"----------- ------------------------|--------| --- {---------";
+        output <<"----------- ------------------------|--------| ------ {---------";
         for (size_t i=0; i<insn_func_name.ida.size(); i++)
             output <<" ----------";
         output <<"}   -----------------------------------\n";
@@ -599,23 +650,24 @@ statistics(SgAsmInterpretation *interp, const Disassembler::InstructionMap &insn
         fprintf(stderr, "Notes (\"[#]\") referenced above can be found at the end of stdout.\n");
 }
 
-static bool
-writable_region(const MemoryMap::MapElement &me) {
-    return 0 != (me.get_mapperms() & MemoryMap::MM_PROT_WRITE);
-}
+struct WritableRegion: public MemoryMap::Visitor {
+    virtual bool operator()(const MemoryMap*, const Extent&, const MemoryMap::Segment &segment) {
+        return 0 != (segment.get_mapperms() & MemoryMap::MM_PROT_WRITE);
+    }
+} writable_region;
 
 /* Returns true for any anonymous memory region containing more than a certain size. */
 static rose_addr_t large_anonymous_region_limit = 8192;
-static bool
-large_anonymous_region(const MemoryMap::MapElement &me)
-{
-    if (me.is_anonymous() && me.get_size()>large_anonymous_region_limit) {
-        fprintf(stderr, "ignoring zero-mapped memory at va 0x%08"PRIx64" + 0x%08"PRIx64" = 0x%08"PRIx64"\n",
-                me.get_va(), me.get_size(), me.get_va()+me.get_size());
-        return true;
+struct LargeAnonymousRegion: public MemoryMap::Visitor {
+    virtual bool operator()(const MemoryMap*, const Extent &range, const MemoryMap::Segment &segment) {
+        if (range.size()>large_anonymous_region_limit && segment.get_buffer()->is_zero()) {
+            fprintf(stderr, "ignoring zero-mapped memory at va 0x%08"PRIx64" + 0x%08"PRIx64" = 0x%08"PRIx64"\n",
+                    range.first(), range.size(), range.last()+1);
+            return true;
+        }
+        return false;
     }
-    return false;
-}
+} large_anonymous_region;
 
 /* Label the graphviz vertices with function entry addresses rather than vertex numbers. */
 template<class FunctionCallGraph>
@@ -688,18 +740,14 @@ main(int argc, char *argv[])
             if (isec) {
                 rose_addr_t addr = isec->get_mapped_actual_va();
                 size_t size = isec->get_mapped_size();
-                MemoryMap::MapElement me(addr, size, MemoryMap::MM_PROT_READ);
-                map->mprotect(me, true/*relax*/);
+                map->mprotect(Extent(addr, size), MemoryMap::MM_PROT_READ, true/*relax*/);
             }
 
             SgAsmPEImportDirectory *idir = isSgAsmPEImportDirectory(node);
-            if (idir && idir->get_iat_rva()!=0 && idir->get_iat()!=NULL) {
-                SgAsmPEImportLookupTable *iat = idir->get_iat();
-                SgAsmPEImportILTEntryPtrList iat_entries = iat->get_entries()->get_vector();
-                rose_addr_t addr = idir->get_iat_rva() + fhdr->get_base_va();
-                size_t size = iat_entries.size() * fhdr->get_word_size();
-                MemoryMap::MapElement me(addr, size, MemoryMap::MM_PROT_READ);
-                map->mprotect(me, true/*relax*/);
+            if (idir && idir->get_iat_rva().get_rva()!=0) {
+                rose_addr_t iat_va = idir->get_iat_rva().get_va();
+                size_t iat_sz = idir->get_iat_nalloc();
+                map->mprotect(Extent(iat_va, iat_sz), MemoryMap::MM_PROT_READ, true/*relax*/);
             }
         }
     };
@@ -734,11 +782,6 @@ main(int argc, char *argv[])
                              Disassembler::SEARCH_UNKNOWN | Disassembler::SEARCH_UNUSED);
     Disassembler::BadMap bad;
     Disassembler::InstructionMap insns = disassembler->disassembleBuffer(map, worklist, NULL, &bad);
-    if (!bad.empty()) {
-        std::cerr <<"  Disassembly failed at " <<bad.size() <<" address" <<(1==bad.size()?"":"es") <<":\n";
-        for (Disassembler::BadMap::const_iterator bmi=bad.begin(); bmi!=bad.end(); ++bmi)
-            std::cerr <<"    " <<StringUtility::addrToString(bmi->first) <<": " <<bmi->second.mesg <<"\n";
-    }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     std::cerr <<"Partitioning instructions into functions...\n";
@@ -749,6 +792,74 @@ main(int argc, char *argv[])
     SgAsmBlock *gblock = partitioner->partition(interp, insns);
     interp->set_global_block(gblock);
     gblock->set_parent(interp);
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Evaluate how well the code criteria subsystem is working
+#if 0
+    Partitioner::RegionStats *mean=partitioner->get_aggregate_mean(), *variance=partitioner->get_aggregate_variance();
+    assert(mean && variance);
+    std::cerr <<"\n=== Aggregate mean ===\n" <<*mean <<"\n=== Aggregate variance ===\n" <<*variance <<"\n";
+    Partitioner::CodeCriteria *cc = partitioner->new_code_criteria(mean, variance, 0.5);
+    partitioner->set_code_criteria(cc);
+
+    struct CodeDetector: public AstPrePostProcessing {
+        Partitioner *partitioner;
+        ExtentMap function_extent;
+
+        CodeDetector(Partitioner *partitioner): partitioner(partitioner) {}
+        
+        void preOrderVisit(SgNode *node) {
+            SgAsmInstruction *insn = isSgAsmInstruction(node);
+            if (insn)
+                function_extent.insert(Extent(insn->get_address(), insn->get_size()));
+        }
+
+        void postOrderVisit(SgNode *node) {
+            SgAsmFunction *func = isSgAsmFunction(node);
+            if (func) {
+                std::ostringstream ss;
+                double vote;
+                bool iscode = partitioner->is_code(function_extent, &vote, &ss);
+                func->set_comment(StringUtility::addrToString(func->get_entry_va()) +
+                                  ": Code? "+ (iscode?"YES":"NO") + "  (" + StringUtility::numberToString(vote) + ")\n" +
+                                  ss.str());
+                function_extent.clear();
+            }
+        }
+    } code_detector(partitioner);
+    code_detector.traverse(gblock);
+
+    struct DataDetector: public AstSimpleProcessing {
+        Partitioner *partitioner;
+        DataDetector(Partitioner *partitioner): partitioner(partitioner) {}
+        void visit(SgNode *node) {
+            SgAsmStaticData *data = isSgAsmStaticData(node);
+            SgAsmBlock *blk = SageInterface::getEnclosingNode<SgAsmBlock>(data);
+            if (data && blk && 0==(blk->get_reason() & (SgAsmBlock::BLK_PADDING|SgAsmBlock::BLK_JUMPTABLE))) {
+                ExtentMap data_extent;
+                data_extent.insert(Extent(data->get_address(), data->get_size()));
+                double vote;
+                std::ostringstream ss;
+                bool iscode = partitioner->is_code(data_extent, &vote, &ss);
+                data->set_comment(ss.str());
+            }
+        }
+    } data_detector(partitioner);
+    data_detector.traverse(gblock, preorder);
+#endif
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Test the function calling convention analysis
+#if 0
+    struct CConvTester: public AstSimpleProcessing {
+        void visit(SgNode *node) {
+            SgAsmFunction *func = isSgAsmFunction(node);
+            if (func)
+                BinaryCallingConvention().analyze_callee(func);
+        }
+    } cconvTester;
+    cconvTester.traverse(gblock, preorder);
+#endif
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     std::cerr <<"Generating function call graph...\n";
@@ -767,10 +878,15 @@ main(int argc, char *argv[])
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     std::cerr <<"Generating output...\n";
-    MyUnparser<BinaryAnalysis::FunctionCall::Graph> unparser(cg, ida);
+#if 1
+    MyUnparser<BinaryAnalysis::FunctionCall::Graph> unparser(cg, ida, disassembler);
     unparser.unparse(std::cout, gblock);
-
+#else
+    AsmUnparser().unparse(std::cout, gblock);
+#endif
     statistics(interp, insns, ida);
+
+    return 0;
 }
 
 #endif /* HAVE_GCRYPT_H */

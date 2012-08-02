@@ -61,6 +61,7 @@ Unparse_Java::unparseLanguageSpecificExpression(SgExpression* expr, SgUnparse_In
           case NEW_OP:                  { unparseNewOp(expr, info); break; }
           case DELETE_OP:               { unparseDeleteOp(expr, info); break; }
           case THIS_NODE:               { unparseThisNode(expr, info); break; }
+          case SUPER_NODE:              { unparseSuperNode(expr, info); break; }
 
           case TYPE_REF:                { unparseTypeRef(expr, info); break; }
           case EXPR_INIT:               { unparseExprInit(expr, info); break; }
@@ -98,6 +99,7 @@ Unparse_Java::unparseLanguageSpecificExpression(SgExpression* expr, SgUnparse_In
          case V_SgBitXorOp:
          case V_SgDivideOp:
          case V_SgDotExp:
+         case V_SgArrowExp:
          case V_SgEqualityOp:
          case V_SgGreaterOrEqualOp:
          case V_SgGreaterThanOp:
@@ -278,7 +280,25 @@ Unparse_Java::unparseVarRef(SgExpression* expr, SgUnparse_Info& info) {
      SgVarRefExp* var_ref = isSgVarRefExp(expr);
      ROSE_ASSERT(var_ref != NULL);
 
+     //
+     // An SgVarRefExp may contain a Type prefix stored in the "prefix" attribute.
+     //
+     if (var_ref -> attributeExists("prefix")) {
+         AstRegExAttribute *attribute = (AstRegExAttribute *) var_ref -> getAttribute("prefix");
+         curprint(attribute -> expression);
+         curprint(".");
+     }
+
      unparseName(var_ref->get_symbol()->get_name(), info);
+
+     //
+     // An SgVarRefExp may contain a name suffix stored in the "suffix" attribute.
+     //
+     if (var_ref -> attributeExists("suffix")) {
+         curprint(".");
+         AstRegExAttribute *attribute = (AstRegExAttribute *) var_ref -> getAttribute("suffix");
+         curprint(attribute -> expression);
+     }
 }
 
 void
@@ -326,7 +346,15 @@ Unparse_Java::unparseStringVal(SgExpression* expr, SgUnparse_Info& info)
   // DQ (3/25/2006): Finally we can use the C++ string class
      string targetString = "ROSE-MACRO-CALL:";
      int targetStringLength = targetString.size();
-     string stringValue = str_val->get_value();
+
+     string tempString = str_val->get_value();
+     string stringValue = "";
+     for (int i = 0; i < tempString.length(); i++) { // Replace each occurrence of '\"' in the string by "\\\""
+         if (tempString[i] == '\"')
+              stringValue += "\\\"";
+         else stringValue += tempString[i];
+     }
+
      string::size_type location = stringValue.find(targetString);
      if (location != string::npos)
         {
@@ -341,7 +369,7 @@ Unparse_Java::unparseStringVal(SgExpression* expr, SgUnparse_Info& info)
        // curprint ( "\"" + str_val->get_value() + "\"";
           if (str_val->get_wcharString() == true)
                curprint ( "L");
-          curprint ( "\"" + str_val->get_value() + "\"");
+          curprint ( "\"" + stringValue + "\"");
         }
 #endif
 
@@ -609,48 +637,29 @@ Unparse_Java::unparseComplexVal(SgExpression* expr, SgUnparse_Info& info)
 //  is done for non-operator function calls, or when the operator overloading option
 //  is turned on. 
 //-----------------------------------------------------------------------------------
-void
-Unparse_Java::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
-   {
-     SgFunctionCallExp* func_call = isSgFunctionCallExp(expr);
-     ROSE_ASSERT(func_call != NULL);
+void Unparse_Java::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info) {
+    SgFunctionCallExp* func_call = isSgFunctionCallExp(expr);
+    ROSE_ASSERT(func_call != NULL);
 
-     if (func_call -> attributeExists("prefix")) {
-         AstRegExAttribute *attribute = (AstRegExAttribute *) func_call -> getAttribute("prefix");
-         curprint(attribute -> expression);
-         curprint(".");
-     /*
-         SgFunctionDeclaration *declaration = func_call -> getAssociatedFunctionDeclaration();
-         SgMemberFunctionDeclaration *functionDeclaration = isSgMemberFunctionDeclaration(declaration);
-         ROSE_ASSERT(functionDeclaration);
-         SgClassDeclaration *classDeclaration = functionDeclaration -> get_associatedClassDeclaration();
-         ROSE_ASSERT(classDeclaration);
-         SgClassType *classType = classDeclatation -> get_type();
-         ROSE_ASSERT (classType != NUL);
-         curprint(classType -> get_qualified_name().getString());
-         curprint(".");
-     */
-     }
-     /*
-     if (isSgMemberFunctionType(func_call -> get_type())) {
-         SgFunctionDeclaration *declaration = func_call -> getAssociatedFunctionDeclaration();
-         SgMemberFunctionDeclaration *functionDeclaration = isSgMemberFunctionDeclaration(declaration);
-         ROSE_ASSERT(functionDeclaration);
+    //
+    // If the attribute points to the null string, it identifies an implicit Super call.
+    // We ignore implicit super calls.
+    //
+    if (func_call -> attributeExists("prefix")) {
+        AstRegExAttribute *prefix_attribute = (AstRegExAttribute *) func_call -> getAttribute("prefix");
+        curprint(prefix_attribute -> expression);
+        curprint(".");
+    }
 
-         if (functionDeclaration -> get_declarationModifier().get_storageModifier().isStatic()) {
-             SgType *type = isSgMemberFunctionType(func_call -> get_type()) -> get_class_type();
-             ROSE_ASSERT (type != NULL && isSgNamedType(type));
-             curprint(isSgNamedType(type) -> get_qualified_name().getString());
-             curprint(".");
-         }
-     }
-     */
-
-     unparseExpression(func_call->get_function(), info);
-     curprint("(");
-     unparseExpression(func_call->get_args(), info);
-     curprint(")");
-   }
+    if (func_call -> attributeExists("<init>")) {
+        AstRegExAttribute *constructor_attribute = (AstRegExAttribute *) func_call -> getAttribute("<init>");
+        curprint(constructor_attribute -> expression);
+    }
+    else unparseExpression(func_call->get_function(), info);
+    curprint("(");
+    unparseExpression(func_call->get_args(), info);
+    curprint(")");
+}
 
 void Unparse_Java::unparseUnaryMinusOp(SgExpression* expr, SgUnparse_Info& info) { unparseUnaryOperator(expr, "-", info); }
 void Unparse_Java::unparseUnaryAddOp(SgExpression* expr, SgUnparse_Info& info) { unparseUnaryOperator(expr, "+", info); }
@@ -739,14 +748,21 @@ Unparse_Java::unparseCastOp(SgExpression* expr, SgUnparse_Info& info) {
     curprint("(");
     unparseType(cast->get_type(), info);
     curprint(") ");
+    curprint("(");
     unparseExpression(cast->get_operand(), info);
+    curprint(") ");
 }
 
 void
 Unparse_Java::unparseArrayOp(SgExpression* expr, SgUnparse_Info& info)
    { 
-     //unparseBinaryOperator(expr, "[]", info); 
-     ROSE_ASSERT(!"unimplemented");
+    SgPntrArrRefExp *array_ref = isSgPntrArrRefExp(expr);
+    ROSE_ASSERT(array_ref != NULL);
+
+    unparseExpression(array_ref -> get_lhs_operand(), info);
+    curprint("[");
+    unparseExpression(array_ref -> get_rhs_operand(), info);
+    curprint("]");
    }
 
 void
@@ -760,22 +776,27 @@ Unparse_Java::unparseNewOp(SgExpression* expr, SgUnparse_Info& info)
      ROSE_ASSERT(new_op != NULL);
   /* code inserted from specification */
 
+     // charles4: 02/26/2012  Seems to be left-over code from C++
+     /*
      if (new_op->get_need_global_specifier())
         {
        // DQ (1/5/2006): I don't think that we want the extra space after the "::".
        // curprint ( ":: ";
           curprint ( "::");
         }
+     */
 
      curprint ( "new ");
 
   // curprint ( "\n /* Output any placement arguments */ \n";
+     // charles4: 02/26/2012  I don't understand the importance of this code.
+     /*
      SgUnparse_Info newinfo(info);
      newinfo.unset_inVarDecl();
      if (new_op->get_placement_args() != NULL)
         {
        // printf ("Output placement arguments for new operator \n");
-          curprint ( "\n/* Output placement arguments for new operator */\n");
+       curprint ( "\n*//* Output placement arguments for new operator *//*\n");
 
        // DQ (1/5/2006): The placement arguments require "() " (add a space to make it look nice)
           curprint ( "(");
@@ -792,7 +813,7 @@ Unparse_Java::unparseNewOp(SgExpression* expr, SgUnparse_Info& info)
   // the problem is that the type name is not being output after the new keyword.  It should unparse to "new typename (args)" and 
   // instead just unparses to "new (args)".  Error occurprints in generated code (rose_polygonalaleremapswig.C).
      newinfo.unset_SkipBaseType();
-
+     */
   // This fixes a bug having to do with the unparsing of the type name of constructors in return statements.
 
   // curprint ( "\n /* Output type name for new operator */ \n";
@@ -802,19 +823,53 @@ Unparse_Java::unparseNewOp(SgExpression* expr, SgUnparse_Info& info)
   // DQ (1/17/2006): The the type specified explicitly in the new expressions syntax, 
   // get_type() has been modified to return a pointer to new_op->get_specified_type().
   // unp->u_type->unparseType(new_op->get_type(), newinfo);
+
+  //
+  // charles4 - 02/26/2012 The specialized call below to unparse the type was replaced by the simpler call because it invokes the wrong function!
+  //
+     /*
      unp->u_type->unparseType(new_op->get_specified_type(), newinfo);
+     */
+     if (isSgArrayType(new_op->get_specified_type())) {
+         unparseType(isSgArrayType(new_op->get_specified_type()) -> get_base_type(), info);
+         ROSE_ASSERT(new_op -> get_constructor_args());
+         SgConstructorInitializer *init = new_op -> get_constructor_args();
+         ROSE_ASSERT(init);
+         vector<SgExpression *> args = init -> get_args() -> get_expressions();
+         for (int i = 0; i < args.size(); i++) {
+             curprint ("[");
+             unparseExpression(args[i], info);
+             curprint("]");
+         }
+         // TODO: Process intializers, if any!!!
+     }
+     else {
+         unparseType(new_op->get_specified_type(), info);
+         curprint ( "(");
+         ROSE_ASSERT(new_op -> get_constructor_args());
+         SgConstructorInitializer *init = new_op -> get_constructor_args();
+         ROSE_ASSERT(init);
+         vector<SgExpression *> args = init -> get_args() -> get_expressions();
+         for (int i = 0; i < args.size(); i++) {
+             unparseExpression(args[i], info);
+             if (i + 1 < args.size())
+                 curprint(", ");
+         }
+         curprint ( ")");
+     }
 
   // printf ("DONE: new_op->get_type()->sage_class_name() = %s \n",new_op->get_type()->sage_class_name());
 
   // curprint ( "\n /* Output constructor args */ \n";
-
+     // charles4: 02/26/2012  I don't understand the importance of this code.
+     /*
      if (new_op->get_constructor_args() != NULL)
         {
        // printf ("In Unparse_ExprStmt::unparseNewOp: Now unparse new_op->get_constructor_args() \n");
           unparseExpression(new_op->get_constructor_args(), newinfo);
         }
      else curprint ( "()"); // charles4: Still need parentheses for empty argument list.
-
+     */
 //
 // chares4: I don't understand what the purpose of the unreachable "else" block below is.
 //          I added the "else " alternative above because it is required for the Unparser
@@ -843,13 +898,13 @@ Unparse_Java::unparseNewOp(SgExpression* expr, SgUnparse_Info& info)
 #endif
 
   // curprint ( "\n /* Output builtin args */ \n";
-
+     /*
      if (new_op->get_builtin_args() != NULL)
         {
        // printf ("In Unparse_ExprStmt::unparseNewOp: Now unparse new_op->get_builtin_args() \n");
           unparseExpression(new_op->get_builtin_args(), newinfo);
         }
-
+     */
   // curprint ( "\n /* Leaving Unparse_ExprStmt::unparseNewOp */ \n";
   // printf ("Leaving Unparse_ExprStmt::unparseNewOp \n");
 #endif
@@ -889,6 +944,14 @@ Unparse_Java::unparseThisNode(SgExpression* expr, SgUnparse_Info& info)
           curprint ( "this"); 
         }
    }
+
+void
+Unparse_Java::unparseSuperNode(SgExpression* expr, SgUnparse_Info& info) {
+    SgSuperExp* super_node = isSgSuperExp(expr);
+
+    ROSE_ASSERT(super_node != NULL);
+    curprint ("super"); 
+}
 
 void
 Unparse_Java::unparseScopeOp(SgExpression* expr, SgUnparse_Info& info)
@@ -1002,8 +1065,17 @@ Unparse_Java::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
    }
 
 void
-Unparse_Java::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
+Unparse_Java::unparseConInit(SgExpression *expr, SgUnparse_Info& info)
 {
+    SgConstructorInitializer *init = isSgConstructorInitializer(expr);
+    ROSE_ASSERT(init);
+    vector<SgExpression *> args = init -> get_args() -> get_expressions();
+    for (int i = 0; i < args.size(); i++) {
+        unparseExpression(args[i], info);
+        if (i + 1 < args.size())
+            curprint(", ");
+    }
+
 #if 0
   printf ("In Unparse_Java::unparseConInit expr = %p \n",expr);
   printf ("WARNING: This is redundent with the Unparse_Java::unp->u_sage->unparseOneElemConInit (This function does not handle qualidied names!) \n");
@@ -1015,9 +1087,7 @@ Unparse_Java::unparseAssnInit(SgExpression* expr, SgUnparse_Info& info)
    {
      SgAssignInitializer* assn_init = isSgAssignInitializer(expr);
      ROSE_ASSERT(assn_init != NULL);
-
-     curprint("= ");
-     unparseExpression(assn_init->get_operand_i(), info);
+     unparseExpression(assn_init->get_operand(), info);
    }
 
 void
@@ -1085,6 +1155,25 @@ Unparse_Java::unparseCompoundAssignOp(SgCompoundAssignOp* op,
 void
 Unparse_Java::unparseBinaryOp(SgBinaryOp* op,
                               SgUnparse_Info & info) {
+
+    //
+    // An SgDotExp may contain a Type prefix stored in the "prefix" attribute.
+    //
+    if (op -> attributeExists("prefix")) {
+        AstRegExAttribute *attribute = (AstRegExAttribute *) op -> getAttribute("prefix");
+        curprint(attribute -> expression);
+        curprint(".");
+    }
+
+     //
+     // An SgDotExp may contain a name suffix stored in the "suffix" attribute.
+     //
+     if (op -> attributeExists("suffix")) {
+         curprint(".");
+         AstRegExAttribute *attribute = (AstRegExAttribute *) op -> getAttribute("suffix");
+         curprint(attribute -> expression);
+     }
+
     unparseExpression(op->get_lhs_operand(), info);
     switch (op->variantT()) {
         case V_SgAddOp:                curprint(" + ");   break;
@@ -1094,7 +1183,8 @@ Unparse_Java::unparseBinaryOp(SgBinaryOp* op,
         case V_SgBitOrOp:              curprint(" | ");   break;
         case V_SgBitXorOp:             curprint(" ^ ");   break;
         case V_SgDivideOp:             curprint(" / ");   break;
-        case V_SgDotExp:               curprint(".");     break;
+        case V_SgDotExp:               curprint(".");     break; // charles4: There is no Dot operation per se in Java
+        case V_SgArrowExp:             curprint(".");     break; // charles4: The Java dot operator is equivalent to the C Arrow operator
         case V_SgEqualityOp:           curprint(" == ");  break;
         case V_SgGreaterOrEqualOp:     curprint(" >= ");  break;
         case V_SgGreaterThanOp:        curprint(" > ");   break;

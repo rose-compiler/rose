@@ -11,11 +11,15 @@ noinst_PROGRAMS=
 lib_LIBRARIES=
 TEST_TARGETS = 
 
+warn_no_tests:
+	@echo "  NOTE    simulator testing is disabled (no i386 support)"
+
 ###############################################################################################################################
 #  DOCUMENTATION, CONFIGURATION, ETC
 ###############################################################################################################################
 
-EXTRA_DIST += README test_status.txt syscall_tests.conf pthread_tests.conf RSIM.dxy
+EXTRA_DIST += README test_status.txt internal_tests.conf syscall_tests.conf pthread_tests.conf RSIM.dxy \
+	USED_HEADER_FILES.C demos/MultiDomainDemo.h demos/RiscTracingPolicy.h
 
 ###############################################################################################################################
 #  SIMULATOR LIBRARY
@@ -31,7 +35,6 @@ libRSIM_la_SOURCES =				\
 	RSIM_Futex.C				\
 	RSIM_Linux32.C				\
 	RSIM_Process.C				\
-	RSIM_SemanticPolicy.C			\
 	RSIM_SignalHandling.C			\
 	RSIM_Simulator.C			\
 	RSIM_Thread.C				\
@@ -44,7 +47,9 @@ include_HEADERS +=				\
 	RSIM_Futex.h				\
 	RSIM_Linux32.h				\
 	RSIM_Process.h				\
-	RSIM_SemanticPolicy.h			\
+	RSIM_SemanticsSettings.h		\
+	RSIM_SemanticsInner.h			\
+	RSIM_SemanticsOuter.h			\
 	RSIM_SignalHandling.h			\
 	RSIM_Simulator.h			\
 	RSIM_Templates.h			\
@@ -55,6 +60,21 @@ $(libRSIM_la_SOURCES:.C=.o): %.o: %.h
 $(libRSIM_la_SOURCES:.C=.lo): %.lo: %.h
 
 ###############################################################################################################################
+# CLIENT LIBRARY
+###############################################################################################################################
+
+EXTRA_DIST += RSIM_Client.c RSIM_Client.h
+MOSTLYCLEANFILES += librsim_client.a
+librsim_client.a: RSIM_Client.o
+	@echo "  LINK32  $@"
+	$(AR) rcs $@ $^
+
+MOSTLYCLEANFILES += RSIM_Client.o
+RSIM_Client.o: RSIM_Client.c RSIM_Client.h
+	@echo "  CC32   $@"
+	: ; $(CC) $(CFLAGS32) -Wall -o $@ -c $<
+
+###############################################################################################################################
 #  PROGRAMS
 ###############################################################################################################################
 
@@ -62,28 +82,33 @@ $(libRSIM_la_SOURCES:.C=.lo): %.lo: %.h
 # Do not install RSIM_Private.h -- it is only used during compilation.
 EXTRA_DIST += RSIM_Private.h
 noinst_PROGRAMS += x86sim
-include_HEADERS += x86sim.h
 x86sim_SOURCES = x86sim.C
 x86sim_CPPFLAGS = $(ROSE_INCLUDES) -DX86_VDSO_PATH_1='"$(srcdir)"' -DX86_VDSO_PATH_2='"$(include_dir)"'
-x86sim_LDADD = libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS) 
+x86sim_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS) 
 
 # Simulator for windows programs
 noinst_PROGRAMS += x86win
 x86win_SOURCES = x86win.C
 x86win_CPPFLAGS = $(ROSE_INCLUDES)
-x86win_LDADD = libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+x86win_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 # Robb's debugging area so he doesn't need to monkey with x86sim all the time
 noinst_PROGRAMS += x86robb
 x86robb_SOURCES = x86robb.C
 x86robb_CPPFLAGS = $(ROSE_INCLUDES)
-x86robb_LDADD = libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+x86robb_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 # Dump contents of an RSIM_FutexTable
 noinst_PROGRAMS += x86futex
 x86futex_SOURCES = x86futex.C
 x86futex_CPPFLAGS = $(ROSE_INCLUDES)
-x86futex_LDADD = libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+x86futex_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+# Disassemble a process
+noinst_PROGRAMS += x86dis
+x86dis_SOURCES = x86dis.C
+x86dis_CPPFLAGS = $(ROSE_INCLUDES)
+x86dis_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 
 ###############################################################################################################################
@@ -97,14 +122,14 @@ EXTRA_DIST += demos/README demos/SignAnalysisExample.h
 noinst_PROGRAMS += demo1
 demo1_SOURCES = demos/demo1.C
 demo1_CPPFLAGS = $(ROSE_INCLUDES)
-demo1_LDADD = libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+demo1_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 #------------------------------------------------------------------------------------------------------------------------------
 # demo 2: synchronous sign analysis
 noinst_PROGRAMS += demo2
 demo2_SOURCES = demos/demo2.C
 demo2_CPPFLAGS = $(ROSE_INCLUDES)
-demo2_LDADD = libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+demo2_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 #------------------------------------------------------------------------------------------------------------------------------
 # demo 3: symbolic semantics for an uncalled function using the Yices SMT solver.
@@ -112,7 +137,7 @@ demo2_LDADD = libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 noinst_PROGRAMS += demo3
 demo3_SOURCES = demos/demo3.C
 demo3_CPPFLAGS = $(ROSE_INCLUDES)
-demo3_LDADD = libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+demo3_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 EXTRA_DIST += demos/demo3input.c
 MOSTLYCLEANFILES += demo3input
@@ -129,7 +154,7 @@ run_demo3: demo3 demo3input
 noinst_PROGRAMS += demo4
 demo4_SOURCES = demos/demo4.C
 demo4_CPPFLAGS = $(ROSE_INCLUDES)
-demo4_LDADD = libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+demo4_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 MOSTLYCLEANFILES += demo4input
 demo4input: demo3input
@@ -144,7 +169,7 @@ run_demo4: demo4 demo4input
 noinst_PROGRAMS += demo5
 demo5_SOURCES = demos/demo5.C
 demo5_CPPFLAGS = $(ROSE_INCLUDES)
-demo5_LDADD = libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+demo5_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 EXTRA_DIST += demos/demo5input.c
 MOSTLYCLEANFILES += demo5input
@@ -161,7 +186,7 @@ run_demo5: demo5 demo5input
 noinst_PROGRAMS += demo6
 demo6_SOURCES = demos/demo6.C
 demo6_CPPFLAGS = $(ROSE_INCLUDES)
-demo6_LDADD = libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+demo6_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 .PHONY: run_demo6
 run_demo6: demo6
@@ -172,19 +197,50 @@ run_demo6: demo6
 noinst_PROGRAMS += demo7
 demo7_SOURCES = demos/demo7.C
 demo7_CPPFLAGS = $(ROSE_INCLUDES)
-demo7_LDADD = libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+demo7_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 .PHONY: run_demo7
 run_demo7: demo7
 	./demo7 --debug $(top_srcdir)/binaries/samples/buffer2.bin
 
 #------------------------------------------------------------------------------------------------------------------------------
+# demo 7b: generate a disassembly listing after dynamic linking
+noinst_PROGRAMS += demo7b
+demo7b_SOURCES = demos/demo7b.C
+demo7b_CPPFLAGS = $(ROSE_INCLUDES)
+demo7b_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+.PHONY: run_demo7b
+run_demo7b: demo7b
+	./demo7b --debug $(top_srcdir)/binaries/samples/buffer2.bin
+
+#------------------------------------------------------------------------------------------------------------------------------
 # demo 8: report statistics about number of instructions and system calls
 noinst_PROGRAMS += demo8
 demo8_SOURCES = demos/demo8.C
 demo8_CPPFLAGS = $(ROSE_INCLUDES)
-demo8_LDADD = libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+demo8_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
+#------------------------------------------------------------------------------------------------------------------------------
+# Example of running a multi-domain semantic analysis to find places where symbolic semantics becomes too complex.
+noinst_PROGRAMS += SymbolicBomb
+SymbolicBomb_SOURCES = demos/SymbolicBomb.C
+SymbolicBomb_CPPFLAGS = $(ROSE_INCLUDES)
+SymbolicBomb_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+#------------------------------------------------------------------------------------------------------------------------------
+# Example of running an interval analysis in lock step with the simulator
+noinst_PROGRAMS += Intervals
+Intervals_SOURCES = demos/Intervals.C
+Intervals_CPPFLAGS = $(ROSE_INCLUDES)
+Intervals_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+#------------------------------------------------------------------------------------------------------------------------------
+# Example of using an SMT solver in lock step with the simulator
+noinst_PROGRAMS += smt_example
+smt_example_SOURCES = demos/smt_example.C
+smt_example_CPPFLAGS = $(ROSE_INCLUDES)
+smt_example_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 
 ###############################################################################################################################
@@ -196,7 +252,7 @@ demo8_LDADD = libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 noinst_PROGRAMS += concrete_1
 concrete_1_SOURCES = papers/concrete_1.C
 concrete_1_CPPFLAGS = $(ROSE_INCLUDES)
-concrete_1_LDADD = libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+concrete_1_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 EXTRA_DIST += papers/gzip_sample_1.c
 concrete_1_input: papers/gzip_sample_1.c
@@ -213,7 +269,7 @@ run_concrete_1: concrete_1 concrete_1_input
 noinst_PROGRAMS += concrete_2
 concrete_2_SOURCES = papers/concrete_2.C
 concrete_2_CPPFLAGS = $(ROSE_INCLUDES)
-concrete_2_LDADD = libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+concrete_2_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 EXTRA_DIST += papers/gzip_sample_1.c
 concrete_2_input: papers/gzip_sample_1.c
@@ -230,7 +286,7 @@ run_concrete_2: concrete_2 concrete_2_input
 noinst_PROGRAMS += symbolic_1
 symbolic_1_SOURCES = papers/symbolic_1.C
 symbolic_1_CPPFLAGS = $(ROSE_INCLUDES)
-symbolic_1_LDADD = libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+symbolic_1_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 EXTRA_DIST += papers/gzip_sample_2.c
 symbolic_1_input: papers/gzip_sample_2.c
@@ -250,7 +306,7 @@ run_symbolic_1: symbolic_1 symbolic_1_input
 noinst_PROGRAMS += symbolic_2
 symbolic_2_SOURCES = papers/symbolic_2.C
 symbolic_2_CPPFLAGS = $(ROSE_INCLUDES)
-symbolic_2_LDADD = libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+symbolic_2_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 EXTRA_DIST += papers/grep_sample_1.c papers/glibc_strcmp.c
 grep_sample_1: papers/grep_sample_1.c
@@ -280,6 +336,138 @@ run_symbolic_2_grep_strchr: symbolic_2 $(32BIT_REPO)/grep
 	: 0x08049508 is __libc_start_main@plt
 	: 0x08049488 is strchr@plt
 	LD_BIND_NOW=y ./symbolic_2 --debug --trigger=0x08049508 --analysis-func=0x08049488 --take-branch=nnnnnnyy $(32BIT_REPO)/grep x /dev/null
+
+
+#------------------------------------------------------------------------------------------------------------------------------
+# Analysis to determine type info
+noinst_PROGRAMS += types_1
+types_1_SOURCES = papers/types_1.C
+types_1_CPPFLAGS = $(ROSE_INCLUDES)
+types_1_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+# Input files for types_1 analysis
+EXTRA_DIST += local_tests/types.c local_tests/types_extern.c test_types_1.conf test_types_1.conf
+MOSTLYCLEANFILES += types_extern.o libtypes_extern.{a,so} types_{static,shared}
+
+types_extern.o: local_tests/types_extern.c
+	@echo "  CC32    $@"
+	@$(CC) $(CFLAGS32) -fPIC -o $@ -c $^
+
+libtypes_extern.a: types_extern.o
+	@echo "  AR      $@"
+	@ar rcs $@ $^
+
+libtypes_extern.so: types_extern.o
+	@echo "  LINK    $@"
+	@$(CC) $(CFLAGS32) -shared -fPIC -Wl,-soname,$@ -o $@ $^
+
+types_static: local_tests/types.c libtypes_extern.a
+	@echo "  LINK    $@"
+	@$(CC) $(CFLAGS32) -static -o $@ $^
+
+types_shared: local_tests/types.c libtypes_extern.so
+	@echo "  LINK    $@"
+	@$(CC) $(CFLAGS32) -fPIC -o $@ $^
+
+# Names of functions to analyze in types_static and types_shared executables
+TYPES_1_FUNCTIONS =simple01 simple02 simple03 simple04 simple05 simple06 simple07 simple08 simple09 simple10 \
+                   simple11 simple12 simple13 simple14 simple15 simple16 simple17 simple18 simple19 simple20 \
+                   simple21 simple22 simple23 simple24 simple25 \
+                   flow01 flow02 flow03 flow04 flow05 flow06 flow07
+
+# Test targets for types_1 analysis.  Done this way for parallelism, etc.  See scripts/rth_run.pl --help for details.
+if ENABLE_I386
+TYPES_1_STATIC_TARGETS = $(addprefix test_types_1_,$(addsuffix _static.passed,$(TYPES_1_FUNCTIONS)))
+TYPES_1_SHARED_TARGETS = $(addprefix test_types_1_,$(addsuffix _shared.passed,$(TYPES_1_FUNCTIONS)))
+$(TYPES_1_STATIC_TARGETS): %.passed: $(srcdir)/test_types_1.conf types_1 types_static
+	@$(RTH_RUN) ANALYSIS_FUNC=$(patsubst test_types_1_%_static.passed,%,$@) SPECIMEN=./types_static \
+		$(srcdir)/test_types_1.conf $@
+$(TYPES_1_SHARED_TARGETS): %.passed: $(srcdir)/test_types_1.conf types_1 types_shared
+	@$(RTH_RUN) ANALYSIS_FUNC=$(patsubst test_types_1_%_shared.passed,%,$@) SPECIMEN=./types_shared \
+		$(srcdir)/test_types_1.conf $@
+else
+TYPES_1_STATIC_TARGETS = warn_no_tests
+TYPES_1_SHARED_TARGETS = warn_no_tests
+endif
+
+.PHONY: test_types_1
+test_types_1: $(TYPES_1_STATIC_TARGETS) $(TYPES_1_SHARED_TARGETS)
+
+# Cleanup targets. We can't put all the generated files in MOSTLYCLEANFILES because the list gets too long to pass
+# as arguments to "rm" (deficiency in automake).  Therefore we'll create a *.clean target for each test and have
+# clean-local depend on it.
+.PHONY: test_types_1_cleanups
+TYPES_1_CLEANUPS = $(patsubst %.passed, %.clean, $(TYPES_1_STATIC_TARGETS) $(TYPES_1_SHARED_TARGETS))
+.PHONY: $(TYPES_1_CLEANUPS)
+$(TYPES_1_CLEANUPS):
+	rm -f $(foreach ext, passed failed err out, $(patsubst %.clean, %, $@).$(ext))
+
+#------------------------------------------------------------------------------------------------------------------------------
+# Ptraced-based "run to original entry point, then branch and count how long it takes for child to crash.
+noinst_PROGRAMS += ptrace_jmp
+ptrace_jmp_SOURCES = papers/ptrace_jmp.C
+ptrace_jmp_CPPFLAGS = $(ROSE_INCLUDES)
+ptrace_jmp_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+###############################################################################################################################
+#  INTERNAL SIMULATOR TESTS
+###############################################################################################################################
+
+INTERNAL_TEST_TARGETS =
+
+#------------------------------------------------------------------------------------------------------------------------------
+# Futex tests
+noinst_PROGRAMS += testFutex
+testFutex_SOURCES = testFutex.C
+testFutex_CPPFLAGS = $(ROSE_INCLUDES)
+testFutex_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+# Input file (specimen) for testFutex
+EXTRA_DIST += local_tests/testFutexInput.c
+MOSTLYCLEANFILES += testFutexInput
+testFutexInput: local_tests/testFutexInput.c
+	@echo "  CC32    $@"
+	@$(CC) $(CFLAGS32) -o $@ $^ -pthread -lpthread -lrt
+
+# The test, which simulates the specimen, which makes a special system call, which tests the futex layer
+if ENABLE_I386
+INTERNAL_TEST_TARGETS += testFutex.passed
+testFutex.passed: testFutex testFutexInput $(srcdir)/internal_tests.conf
+	@$(RTH_RUN) SIMULATOR=./testFutex SPECIMEN=./testFutexInput $(srcdir)/internal_tests.conf $@
+endif
+MOSTLYCLEANFILES += testFutex.{passed,failed,out,err}
+
+#------------------------------------------------------------------------------------------------------------------------------
+# Transaction tests
+
+# The executable
+EXTRA_DIST += local_tests/client_transactions.c
+MOSTLYCLEANFILES += client_transactions
+client_transactions: local_tests/client_transactions.c librsim_client.a
+	@echo "  CC32    $@"
+	@$(CC) $(CFLAGS32) -o $@ -I$(srcdir) $< -L. -lrsim_client
+
+# The test
+if ENABLE_I386
+EXTRA_DIST += client_transactions.conf
+INTERNAL_TEST_TARGETS += client_transactions.passed
+client_transactions.passed: client_transactions x86sim $(srcdir)/client_transactions.conf
+	@$(RTH_RUN) SIMULATOR=./x86sim SPECIMEN=./client_transactions ANSWER=$(srcdir)/local_tests/client_transactions.ans \
+	    $(srcdir)/client_transactions.conf $@
+endif
+MOSTLYCLEANFILES += client_transactions.{passed,failed,out,err}
+
+#------------------------------------------------------------------------------------------------------------------------------
+# all internal tests
+
+if ENABLE_I386
+else
+INTERNAL_TEST_TARGETS += warn_no_tests
+endif
+
+check-internal: $(INTERNAL_TEST_TARGETS)
+MOSTLYCLEANFILES += $(INTERNAL_TEST_TARGETS)
+
 
 
 ###############################################################################################################################
@@ -419,7 +607,6 @@ SYS_TEST_INPUTS_TS_SRC = \
 		   $(srcdir)/syscall_tests/syscall_tst.117.shmget.01.c \
 		   $(srcdir)/syscall_tests/syscall_tst.117.shmget.02.c \
 		   $(srcdir)/syscall_tests/syscall_tst.118.1.c \
-		   $(srcdir)/syscall_tests/syscall_tst.118.2.c \
 		   $(srcdir)/syscall_tests/syscall_tst.118.3.c \
 		   $(srcdir)/syscall_tests/syscall_tst.122.c \
 		   $(srcdir)/syscall_tests/syscall_tst.125.1.c \
@@ -640,6 +827,7 @@ TEST_INPUTS_FAILING = \
 		   $(srcdir)/tests/syscall_tst.117.shmget.03.c \
 		   $(srcdir)/tests/syscall_tst.117.shmget.04.c \
 		   $(srcdir)/tests/syscall_tst.117.shmget.05.c \
+		   $(srcdir)/syscall_tests/syscall_tst.118.2.c \
 		   $(srcdir)/tests/syscall_tst.195.1.c	       \
 		   $(srcdir)/tests/syscall_tst.195.2.c	       \
 		   $(srcdir)/tests/syscall_tst.195.3.c	       \
@@ -708,6 +896,8 @@ TEST_INPUTS_FAILING = \
 #			This test cannot be run under the simulator with stderr redirected to a file (it enters an infinite loop
 #			somewhere in the setrlimit() syscall emulation). Since "make check" runs tests with their stderr
 #			redirected to a file, we will skip this test.
+#		   $(srcdir)/syscall_tests/syscall_tst.118.2.c
+#			Uses floating point instructions
 
 
 
@@ -807,9 +997,24 @@ $(SYS_TEST_TARGETS): %.passed: % $(srcdir)/syscall_tests.conf x86sim
 	@$(RTH_RUN) INPUT=./$< $(srcdir)/syscall_tests.conf $@
 else
 SYS_TEST_TARGETS = warn_no_tests
-warn_no_tests:
-	@echo "  NOTE    x86sim testing is disabled (no i386 support)"
 endif
+
+# Some of the tests create files name "tfile_%d_%d" where the two numbers are a serial number and a PID. About 5000 of
+# these files are created in total and many of them are not placed in the specified temporary directories. Therefore
+# we have to remove them with a wildcard instead. Sorry if you had your own files with similar names (we tried to be careful).
+MOSTLYCLEANFILES += 						   \
+	rm -f tfile_[0-9]_[0-9][0-9][0-9]			   \
+	rm -f tfile_[0-9]_[0-9][0-9][0-9][0-9]			   \
+	rm -f tfile_[0-9]_[0-9][0-9][0-9][0-9][0-9]		   \
+	rm -f tfile_[0-9][0-9]_[0-9][0-9][0-9]			   \
+	rm -f tfile_[0-9][0-9]_[0-9][0-9][0-9][0-9]		   \
+	rm -f tfile_[0-9][0-9]_[0-9][0-9][0-9][0-9][0-9]	   \
+	rm -f tfile_[0-9][0-9][0-9]_[0-9][0-9][0-9]		   \
+	rm -f tfile_[0-9][0-9][0-9]_[0-9][0-9][0-9][0-9]	   \
+	rm -f tfile_[0-9][0-9][0-9]_[0-9][0-9][0-9][0-9][0-9]	   \
+	rm -f tfile_[0-9][0-9][0-9][0-9]_[0-9][0-9][0-9]	   \
+	rm -f tfile_[0-9][0-9][0-9][0-9]_[0-9][0-9][0-9][0-9]	   \
+	rm -f tfile_[0-9][0-9][0-9][0-9]_[0-9][0-9][0-9][0-9][0-9]
 
 # Cleanup targets. We can't put all the generated files in MOSTLYCLEANFILES because the list gets too long to pass
 # as arguments to "rm" (deficiency in automake).  Therefore we'll create a *.clean target for each test and have
@@ -818,7 +1023,6 @@ SYS_TEST_CLEANUPS = $(addsuffix .clean, $(SYS_TEST_INPUTS))
 .PHONY: $(SYS_TEST_CLEANUPS)
 $(SYS_TEST_CLEANUPS):
 	rm -f $(foreach ext, passed failed err out, $(patsubst %.clean, %, $@).$(ext))
-
 
 # Main syscall testing target, on which "make check" depends.
 check-syscalls:  $(SYS_TEST_TARGETS)
@@ -856,19 +1060,13 @@ PTHREAD_TEST_INPUTS_SRC =							   \
 		    $(srcdir)/pthread_tests/pthread_attr_setdetachstate.4-1.c	   \
 		    $(srcdir)/pthread_tests/pthread_attr_setinheritsched.1-1.c	   \
 		    $(srcdir)/pthread_tests/pthread_attr_setinheritsched.2-1.c	   \
-		    $(srcdir)/pthread_tests/pthread_attr_setinheritsched.2-2.c	   \
-		    $(srcdir)/pthread_tests/pthread_attr_setinheritsched.2-3.c	   \
-		    $(srcdir)/pthread_tests/pthread_attr_setinheritsched.2-4.c	   \
 		    $(srcdir)/pthread_tests/pthread_attr_setinheritsched.4-1.c	   \
 		    $(srcdir)/pthread_tests/pthread_attr_setschedparam.1-1.c	   \
 		    $(srcdir)/pthread_tests/pthread_attr_setschedparam.1-2.c	   \
-		    $(srcdir)/pthread_tests/pthread_attr_setschedparam.1-3.c	   \
-		    $(srcdir)/pthread_tests/pthread_attr_setschedparam.1-4.c	   \
 		    $(srcdir)/pthread_tests/pthread_attr_setschedpolicy.1-1.c	   \
 		    $(srcdir)/pthread_tests/pthread_attr_setschedpolicy.4-1.c	   \
 		    $(srcdir)/pthread_tests/pthread_attr_setscope.1-1.c		   \
 		    $(srcdir)/pthread_tests/pthread_attr_setscope.4-1.c		   \
-		    $(srcdir)/pthread_tests/pthread_attr_setscope.5-1.c		   \
 		    $(srcdir)/pthread_tests/pthread_attr_setstack.1-1.c		   \
 		    $(srcdir)/pthread_tests/pthread_attr_setstack.2-1.c		   \
 		    $(srcdir)/pthread_tests/pthread_attr_setstack.4-1.c		   \
@@ -1199,20 +1397,26 @@ PTHREAD_TEST_INPUTS_SRC =							   \
 		    $(srcdir)/pthread_tests/pthread_testcancel.1-1.c		   \
 		    $(srcdir)/pthread_tests/pthread_testcancel.2-1.c
 
-PTHREAD_INPUTS_FAILING =							\
-		    $(srcdir)/pthread_tests/pthread_barrier_wait.6-1.c		\
-		    $(srcdir)/pthread_tests/pthread_cond_destroy.2-1.c		\
-		    $(srcdir)/pthread_tests/pthread_cond_init.1-3.c		\
-		    $(srcdir)/pthread_tests/pthread_cond_init.4-2.c		\
-		    $(srcdir)/pthread_tests/pthread_cond_signal.1-2.c		\
-		    $(srcdir)/pthread_tests/pthread_create.10-1.c		\
-		    $(srcdir)/pthread_tests/pthread_mutexattr_getprotocol.1-2.c	\
-		    $(srcdir)/pthread_tests/pthread_mutexattr_setprotocol.1-1.c	\
-		    $(srcdir)/pthread_tests/pthread_mutexattr_setprotocol.3-1.c	\
-		    $(srcdir)/pthread_tests/pthread_mutexattr_setprotocol.3-2.c	\
-		    $(srcdir)/pthread_tests/pthread_mutexattr_settype.2-1.c	\
-		    $(srcdir)/pthread_tests/pthread_once.4-1.c			\
-		    $(srcdir)/pthread_tests/pthread_spin_trylock.1-1.c
+PTHREAD_INPUTS_FAILING =                                                        \
+                    $(srcdir)/pthread_tests/pthread_attr_setinheritsched.2-2.c  \
+                    $(srcdir)/pthread_tests/pthread_attr_setinheritsched.2-3.c  \
+                    $(srcdir)/pthread_tests/pthread_attr_setinheritsched.2-4.c  \
+                    $(srcdir)/pthread_tests/pthread_attr_setschedparam.1-3.c    \
+                    $(srcdir)/pthread_tests/pthread_attr_setschedparam.1-4.c    \
+		    $(srcdir)/pthread_tests/pthread_attr_setscope.5-1.c         \
+                    $(srcdir)/pthread_tests/pthread_barrier_wait.6-1.c          \
+                    $(srcdir)/pthread_tests/pthread_cond_destroy.2-1.c          \
+                    $(srcdir)/pthread_tests/pthread_cond_init.1-3.c             \
+                    $(srcdir)/pthread_tests/pthread_cond_init.4-2.c             \
+                    $(srcdir)/pthread_tests/pthread_cond_signal.1-2.c           \
+                    $(srcdir)/pthread_tests/pthread_create.10-1.c               \
+                    $(srcdir)/pthread_tests/pthread_mutexattr_getprotocol.1-2.c \
+                    $(srcdir)/pthread_tests/pthread_mutexattr_setprotocol.1-1.c \
+                    $(srcdir)/pthread_tests/pthread_mutexattr_setprotocol.3-1.c \
+                    $(srcdir)/pthread_tests/pthread_mutexattr_setprotocol.3-2.c \
+                    $(srcdir)/pthread_tests/pthread_mutexattr_settype.2-1.c     \
+                    $(srcdir)/pthread_tests/pthread_once.4-1.c                  \
+                    $(srcdir)/pthread_tests/pthread_spin_trylock.1-1.c
 
 # Details about why things are listed in $(PTHREAD_INPUTS_FAILING)
 #	test result is non-deterministic when run natively
@@ -1235,6 +1439,14 @@ PTHREAD_INPUTS_FAILING =							\
 #		    $(srcdir)/pthread_tests/pthread_cond_destroy.2-1.c
 #		    $(srcdir)/pthread_tests/pthread_cond_init.4-2.c
 #		    $(srcdir)/pthread_tests/pthread_cond_signal.1-2.c
+#       these tests require special privileges that aren't available for many users
+#		    $(srcdir)/pthread_tests/pthread_attr_setinheritsched.2-2.c
+#		    $(srcdir)/pthread_tests/pthread_attr_setinheritsched.2-3.c
+#		    $(srcdir)/pthread_tests/pthread_attr_setinheritsched.2-4.c
+#		    $(srcdir)/pthread_tests/pthread_attr_setschedparam.1-3.c
+#		    $(srcdir)/pthread_tests/pthread_attr_setschedparam.1-4.c
+#	these tests are hard coded to always fail
+#		    $(srcdir)/pthread_tests/pthread_attr_setscope.5-1.c
 
 PTHREAD_TEST_INCLUDES= \
                     ${srcdir}/pthread_tests/pthread_atfork.testfrmw.c \
@@ -1294,7 +1506,6 @@ EXTRA_DIST += ${PTHREAD_TEST_INPUTS_SRC} ${PTHREAD_TEST_INCLUDES}
 PTHREAD_TEST_INPUTS = $(basename $(notdir $(PTHREAD_TEST_INPUTS_SRC)))
 MOSTLYCLEANFILES += $(PTHREAD_TEST_INPUTS) $(addsufix .o, $(PTHREAD_TEST_INPUTS))
 
-
 $(PTHREAD_TEST_INPUTS): %: $(srcdir)/pthread_tests/%.c
 	@echo "  CC32    $@"
 	@$(CC) $(CFLAGS32) -g -I$(srcdir)/pthread_tests -Wall -o $@ $^ -lpthread -lrt
@@ -1336,7 +1547,7 @@ check-pthread:  $(PTHREAD_TEST_TARGETS)
 test-inputs: $(SYS_TEST_INPUTS) $(PTHREAD_TEST_INPUTS)
 
 .PHONY: run-tests
-run-tests: check-syscalls check-pthread
+run-tests: check-syscalls check-pthread check-internal test_types_1
 	@$(RTH_STATS)
 
 check-local: run-tests
@@ -1348,7 +1559,7 @@ check-local: run-tests
 # Rather than stuffing *everything* in MOSTLYCLEANFILES, we use cleanup targets. This is to avoid argument lists that
 # are too long due.  In general, we don't want to use wild cards because some users might have some similarly named files
 # that they wouldn't expect a "make clean" to delete.
-clean-local: $(SYS_TEST_CLEANUPS) $(PTHREAD_TEST_CLEANUPS)
+clean-local: $(SYS_TEST_CLEANUPS) $(PTHREAD_TEST_CLEANUPS) $(TYPES_1_CLEANUPS)
 	-chmod -f -R a+rwx tmp-sim
 	rm -rf tmp-sim x-core.rose test-file-fchown32
 	-chmod -f -R a+rwx fchmodattestdir* fchmodattestfile*.txt

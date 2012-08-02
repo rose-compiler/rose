@@ -243,12 +243,12 @@ Partitioner::IPDParser::parse_ReturnSpec()
 {
     if (is_symbol("return") || is_symbol("returns")) {
         match_symbol();
-        cur_func->may_return = true;
+        cur_func->set_may_return(SgAsmFunction::RET_ALWAYS); // or perhaps RET_SOMETIMES?
         return true;
     }
     if (is_symbol("noreturn")) {
         match_symbol("noreturn");
-        cur_func->may_return = false;
+        cur_func->set_may_return(SgAsmFunction::RET_NEVER);
         return true;
     }
     return false;
@@ -325,7 +325,8 @@ Partitioner::IPDParser::parse_Successors()
             throw Exception(std::string("successor program assembly failed: ") + e.mesg);
         }
     } else {
-        /* Successors specified as a list of addresses */
+        /* Successors specified as a list of addresses in curly braces */
+        match_terminal("{");
         cur_block->sucs_specified = true;
         cur_block->sucs.clear();
         cur_block->sucs_complete = true;
@@ -339,6 +340,7 @@ Partitioner::IPDParser::parse_Successors()
             match_terminal("...");
             cur_block->sucs_complete = false;
         }
+        match_terminal("}");
     }
 
     return true;

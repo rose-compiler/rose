@@ -1,9 +1,7 @@
 /* Windows PE Section Tables (SgAsmPESectionTable and related classes) */
 #include "sage3basic.h"
 #include "BinaryLoader.h"
-#define __STDC_FORMAT_MACROS
-#include <inttypes.h>
-
+#include "MemoryMap.h"
 
 void
 SgAsmPESectionTableEntry::ctor(const PESectionTableEntry_disk *disk)

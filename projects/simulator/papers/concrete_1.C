@@ -62,11 +62,11 @@ public:
             // manipulation if this example were multi-threaded.  The buffer should be at or above 0x40000000, at least one
             // page in length, and aligned on a page boundary.
             RTS_WRITE(process->rwlock()) {
-                buf_va = process->get_memory()->find_free(0x40000000, sizeof buf, 0x1000);
+                buf_va = process->get_memory().find_free(0x40000000, sizeof buf, 0x1000);
                 if (buf_va) {
-                    MemoryMap::MapElement me(buf_va, sizeof buf, buf, 0, MemoryMap::MM_PROT_RWX);
-                    me.set_name("Debugging page");
-                    process->get_memory()->insert(me);
+                    MemoryMap::BufferPtr sgmt_buffer = MemoryMap::ExternBuffer::create(buf, sizeof buf);
+                    MemoryMap::Segment sgmt(sgmt_buffer, 0, MemoryMap::MM_PROT_RWX, "Debugging page");
+                    process->get_memory().insert(Extent(buf_va, sizeof buf), sgmt);
                 }
             } RTS_WRITE_END;
             if (!buf_va) {
@@ -89,12 +89,12 @@ public:
             *(uint32_t*)(buf+0x1000-5)  = strlen((char*)buf);           // updcrc's second argument
             *(uint32_t*)(buf+0x1000-9)  = (uint32_t)buf_va;             // updcrc's first argument
             *(uint32_t*)(buf+0x1000-13) = buf_va+0x1000-1;              // special return address, the NOP above
-            args.thread->policy.writeGPR(x86_gpr_sp, args.thread->policy.number<32>(buf_va+0x1000-13));
+            args.thread->policy.writeRegister("esp", args.thread->policy.number<32>(buf_va+0x1000-13));
 
             // Modify EIP to point to the entry address of the function being analyzed, and set "enabled" to false to
             // indicate that the current instruction (the first instruction of main), should not be simulated at this
             // time.
-            args.thread->policy.writeIP(args.thread->policy.number<32>(analysis_va));
+            args.thread->policy.writeRegister("eip", args.thread->policy.number<32>(analysis_va));
             enabled = false;
             trace->mesg("Analysis: simulator will continue to run to analyse the function...");
 
@@ -103,12 +103,12 @@ public:
             // top of our debugging stack.  Obtain the analyzed function's return value from the EAX register, restore all
             // registers to their original values, and unmap our debugging buffer from the specimen.
             RTS_Message *trace = args.thread->tracing(TRACE_MISC);
-            uint32_t result = args.thread->policy.readGPR(x86_gpr_ax).known_value();
+            uint32_t result = args.thread->policy.readRegister<32>("eax").known_value();
             trace->mesg("Analysis: function returned 0x%08"PRIx32, result);
 
             // Unmap our debugging page of memory
             RTS_WRITE(process->rwlock()) {
-                process->get_memory()->erase(MemoryMap::MapElement(buf_va, sizeof buf));
+                process->get_memory().erase(Extent(buf_va, sizeof buf));
             } RTS_WRITE_END;
 
             // Restore registers

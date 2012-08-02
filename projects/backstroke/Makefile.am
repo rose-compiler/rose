@@ -1,26 +1,25 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-SUBDIRS = utilities eventDetection reverseComputation restrictedLanguage \
-	normalizations slicing ssa valueGraph pluggableReverser testCodeGeneration . tests sdg
+SUBDIRS = utilities eventDetection restrictedLanguage \
+	normalizations slicing valueGraph pluggableReverser testCodeGeneration . tests sdg
 
 INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/backstroke
 
 # Make a common backstroke library
-# lib_LTLIBRARIES lists all the librarlies that should be built with libtool
-lib_LIBRARIES =  libBackstroke.a
+# lib_LTLIBRARIES lists all the libraries that should be built with libtool
+lib_LTLIBRARIES =  libBackstroke.la
 
-libBackstroke_a_DEPENDENCIES = 
-libBackstroke_a_SOURCES = backstroke.C
-libBackstroke_a_include_HEADERS = backstroke.h
-libBackstroke_a_includedir = $(includedir)/backstroke
+libBackstroke_la_DEPENDENCIES = 
+libBackstroke_la_SOURCES = backstroke.C
+libBackstroke_la_include_HEADERS = backstroke.h
+libBackstroke_la_includedir = $(includedir)/backstroke
 
 # Link all sublibs
-libBackstroke_a_LIBADD = utilities/libBackstrokeUtilities.a \
-			normalizations/libBackstrokeNormalizations.a \
-			reverseComputation/libBackstrokeReverser.a \
-			restrictedLanguage/libBackstrokeRestrictedLanguage.a \
-			pluggableReverser/libBackstrokePluggableReverser.a \
-			testCodeGeneration/libBackstrokeTestCodeBuilder.a
+libBackstroke_la_LIBADD = utilities/libBackstrokeUtilities.la \
+			normalizations/libBackstrokeNormalizations.la \
+			restrictedLanguage/libBackstrokeRestrictedLanguage.la \
+			pluggableReverser/libBackstrokePluggableReverser.la \
+			testCodeGeneration/libBackstrokeTestCodeBuilder.la
 
 EXTRA_DIST = 
 

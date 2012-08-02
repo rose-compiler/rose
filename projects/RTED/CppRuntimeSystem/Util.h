@@ -5,8 +5,6 @@
 #include <string>
 #include <sstream>
 
-// typedef unsigned long addr_type;
-
 #include "rted_iface_structs.h"
 
 template<typename T>
@@ -17,17 +15,6 @@ std::string ToString(T t)
   myStream << t << std::flush;
   return myStream.str(); //returns the string form of the stringstream object
 }
-
-/*
-template<typename T>
-inline
-std::string HexToString(T t)
-{
-  std::ostringstream myStream; //creates an ostringstream object
-  myStream << std::hex << t ;
-  return myStream.str(); //returns the string form of the stringstream object
-}
-*/
 
 struct PointerCompare
 {
@@ -96,6 +83,7 @@ class RuntimeViolation
                 INVALID_TYPE_ACCESS,            ///< invalid access to "typed" memory
                 UNEXPECTED_FUNCTION_SIGNATURE,  ///< a c program compiled with a missing or wrong
                                                 ///  prototype gave the wrong types at the callsite
+                OTHER,                          ///< Any violation not covered by the category above
                 NONE,                           ///< no violation
                 UNKNOWN_VIOLATION
         };

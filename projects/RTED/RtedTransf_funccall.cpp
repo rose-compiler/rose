@@ -6,7 +6,7 @@
 #include <string>
 #include <boost/algorithm/string/predicate.hpp>
 
-#include "sageGeneric.hpp"
+#include "sageGeneric.h"
 
 #include "RtedTransformation.h"
 
@@ -751,7 +751,7 @@ void FunctionCallInfo::ptrToMemberFunctionCall(SgBinaryOp& n)
 
 
 static
-void store_if_needed( RtedTransformation::UpcBlockingOpsContainer& cont, SgFunctionCallExp& call )
+void store_if_needed(RtedTransformation::UpcBlockingOpsContainer& cont, SgFunctionCallExp& call)
 {
   SgStatement* stmt = getSurroundingStatement(call);
   SgStatement* last = cont.empty() ? NULL : cont.back();
@@ -764,23 +764,21 @@ void store_if_needed( RtedTransformation::UpcBlockingOpsContainer& cont, SgFunct
 /***************************************************************
  * Check if the current node is a "interesting" function call
  **************************************************************/
-void RtedTransformation::visit_isFunctionCall(SgFunctionCallExp* const fcexp)
+ReturnInfo::Kind RtedTransformation::visit_FunctionCall(SgFunctionCallExp& fcexp)
 {
-  ROSE_ASSERT(fcexp);
-
-  SgExpression* const                 fun = fcexp->get_function();
+  SgExpression* const                 fun = fcexp.get_function();
   const FunctionCallInfo              callee = sg::dispatch(FunctionCallInfo(*this), fun);
 
   // \pp \todo \note The current implementation cannot handle function targets
   //                 determined at runtime (e.g., function pointer).
-  if (!callee.target) return;
+  if (!callee.target) return ReturnInfo::rtNone;
 
   // \pp \todo the rest of this function's logic could/should be pushed
   //           into FunctionCallInfo.
 
   // find out if this is a IO-CALL like : myfile << "something" ;
   // with fstream myfile;
-  SgExprListExp* const                exprlist = isSgExprListExp(fcexp->get_args());
+  SgExprListExp* const                exprlist = isSgExprListExp(fcexp.get_args());
   ROSE_ASSERT(exprlist);
 
   SgExpressionPtrList&                args = exprlist->get_expressions();
@@ -799,11 +797,11 @@ void RtedTransformation::visit_isFunctionCall(SgFunctionCallExp* const fcexp)
   }
 
   std::cerr << "\n@@@@ Found a function call: " << callee.name;
-  std::cerr << "   : fcexp->get_function() : " << fun->class_name()
-            << "   parent : " << fcexp->get_parent()->class_name() << "  : " << fcexp->get_parent()->unparseToString()
+  std::cerr << "   : fcexp.get_function() : " << fun->class_name()
+            << "   parent : " << fcexp.get_parent()->class_name() << "  : " << fcexp.get_parent()->unparseToString()
             << "\n   : type: : " << fun->get_type()->class_name()
             << "   : parent type: : " << isSgExpression(fun->get_parent())->get_type()->class_name()
-            << "   unparse: " << fcexp->unparseToString()
+            << "   unparse: " << fcexp.unparseToString()
             << std::endl;
 
   // \pp \todo this should ask whether the function was defined in global scope
@@ -821,8 +819,8 @@ void RtedTransformation::visit_isFunctionCall(SgFunctionCallExp* const fcexp)
        // this is used, e.g. with  File* fp = fopen("file","r");
        // Therefore we need to go up and see if there is an AssignmentOperator
        // and get the var on the left side
-       SgStatement*   stmt = getSurroundingStatement( *fcexp );
-       SgExpression*  varOnLeft = getExpressionLeftOfAssignmentFromChildOnRight(fcexp);
+       SgStatement*   stmt = getSurroundingStatement(fcexp);
+       SgExpression*  varOnLeft = getExpressionLeftOfAssignmentFromChildOnRight(&fcexp);
        SgExpression*  varOnLeftStr=NULL;
        if (varOnLeft) {
           // need to get the mangled_name of the varRefExp on left hand side
@@ -847,19 +845,19 @@ void RtedTransformation::visit_isFunctionCall(SgFunctionCallExp* const fcexp)
     }
     else if ("free" == callee.name)
     {
-       frees.push_back( Deallocations::value_type(fcexp, akCHeap) );
+       frees.push_back( Deallocations::value_type(&fcexp, akCHeap) );
     }
     else if( "realloc" == callee.name )
     {
-       reallocs.push_back( fcexp );
+       reallocs.push_back( &fcexp );
     }
     else if( "upc_free" == callee.name )
     {
-       frees.push_back( Deallocations::value_type(fcexp, akUpcShared) );
+       frees.push_back( Deallocations::value_type(&fcexp, akUpcShared) );
     }
     else if (upcHeapManagementNeeded(callee.name))
     {
-      store_if_needed( upcBlockingOps, *fcexp );
+      store_if_needed( upcBlockingOps, fcexp );
     }
     else if (!isGlobalFunctionOnIgnoreList(callee.name))
     {
@@ -867,15 +865,17 @@ void RtedTransformation::visit_isFunctionCall(SgFunctionCallExp* const fcexp)
     }
   }
 
+  ReturnInfo::Kind res = ReturnInfo::rtNone;
+
   if (!handled)
   {
      // if we're able to, use the function definition's body as the end of
      // scope (for line number complaints).  If not, the callsite is good too.
-     SgStatement*           fncallStmt = getSurroundingStatement( *fcexp );
+     SgStatement*           fncallStmt = getSurroundingStatement( fcexp );
 
      if (!fncallStmt->get_file_info()->isCompilerGenerated())
      {
-       callsites.push_back( fcexp );
+       res = functionReturnType(fcexp.get_type());
 
        if ( getDefiningDeclaration( fcexp ) == NULL )
        {
@@ -886,42 +886,35 @@ void RtedTransformation::visit_isFunctionCall(SgFunctionCallExp* const fcexp)
 
           // \pp Why do not we verify the used and actual function signatures at
           //     start-up time?
-          function_call_missing_def.push_back( fcexp );
+          function_call_missing_def.push_back( &fcexp );
        }
      }
   }
+
+  return res;
 }
 
-void RtedTransformation::transformCallSites(CallSiteContainer::value_type fcexp)
+void RtedTransformation::transformUnusedPointerReturn(CallSiteContainer::value_type callexp)
 {
-  SgLocatedNode*         end_of_scope = fcexp;
-  SgFunctionDeclaration* fndecl = getDefiningDeclaration( fcexp );
+  // call rted_function checking that the memory the pointer points to is
+  // is reachable, after this pointer disappears
+  SgExprListExp*       args = SB::buildExprListExp();
+  SgExprStatement*     parent = isSgExprStatement(callexp->get_parent());
 
-  if ( fndecl )
+  if (!parent)
   {
-    SgFunctionDefinition* fndef = fndecl->get_definition();
-
-    // \pp the original RTED code does not test whether get_definition
-    //     is successful (and it works). Not sure why this is required
-    //     now (to test operator<<(std::ostream&, 'std::endl')?
-    if (fndef) end_of_scope = fndef->get_body();
+    std::cerr << "---> " << typeid(*callexp->get_parent()).name() << std::endl;
+    std::cerr << "---> " << callexp->get_parent()->unparseToString() << std::endl;
+    ROSE_ASSERT(false);
   }
 
-  SgStatement*   callstmt = getSurroundingStatement(*fcexp);
-  SgLocatedNode* block = SI::ensureBasicBlockAsParent(callstmt);
-  SgBasicBlock*  res = isSgBasicBlock(block);
+  SI::appendExpression(args, mkAddress(callexp, false /* non-shared */));
 
-  // \pp this is an artifact of instrumentation on statement level
-  //     if we cannot convert the parent to a basic block we cannot instrument :(
-  if (res)
-  {
-    SgStatement* enterblock = buildEnterBlockStmt(fcexp->get_function()->get_type()->unparseToString());
-    SgStatement* exitblock  = buildExitBlockStmt(1, callstmt->get_scope(), end_of_scope->get_endOfConstruct());
+  SgFunctionRefExp*    funref = SB::buildFunctionRefExp(symbols.roseCheckForMemoryLeak);
+  SgFunctionCallExp*   check = SB::buildFunctionCallExp(funref, args);
 
-    SI::insertStatementBefore(callstmt, enterblock);
-    SI::insertStatementAfter(callstmt, exitblock);
-  }
+  check->set_parent(parent);
+  parent->set_expression(check);
 }
-
 
 #endif

@@ -228,6 +228,11 @@ public:
      *  are invoked regardless of whether the instruction was simulated, and the initial @p prev value for these callbacks is
      *  the return value from the last pre-instruction callback (or true if there were none).
      *
+     *  If a pre-instruction callback changes the value of the EIP register so that it is different than the instruction's
+     *  address, the instruction dispatch loop will re-fetch the instruction (at the new address) without first executing any
+     *  of the post-instruction callbacks for the original instruction.  This repeats until the post-callback EIP matches the
+     *  instruction, regardless of whether the final pre-instruction callback returned true or false.
+     *
      *  Thread safety:  This method is thread safe.  The callbacks may register and/or unregister themselves or other callbacks
      *  from this RSIM_Callbacks object, but those actions do not affect which callbacks are made by this invocation of
      *  call_insn_callbacks(). */
@@ -626,6 +631,10 @@ public:
         /** Reason for invoking process callbacks. */
         enum Reason {
             START,                              /**< Process is starting execution. */
+            FORK,                               /**< New process created via clone system call.  The callback is invoked by the
+                                                 *   thread performing the clone() system call before the system call is made,
+                                                 *   and by the main thread of the new process almost immediately after the
+                                                 *   system call returns. */
             COREDUMP,                           /**< Process is about to dump core. If call_process_callbacks() return false
                                                  *   then the core dump is avoided. */
             FINISH,                             /**< Process has finished execution. */

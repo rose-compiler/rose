@@ -4,7 +4,7 @@
 /** Example sign analysis.
  *
  *  This example demonstrates how to write a (very simple, naive) sign analysis and the structure of this file is based on the
- *  VirtualMachineSemantics.h file.  This analysis makes certain assumptions to make a simple example:
+ *  PartialSymbolicSemantics.h file.  This analysis makes certain assumptions to make a simple example:
  *
  *  <ul>
  *    <li>All values are signed integers (except 1-bit flags, which are unsigned).</li>
@@ -78,14 +78,16 @@ namespace SignAnalysisExample {
      * consists of the registers and memory. We're assuming an i386. See also ROSE's <Registers.h> */
     class State {
     public:
-        static const size_t n_gprs = 8;         /**< Number of general purpose registers */
-        static const size_t n_segregs = 6;      /**< Number of 16-bit segmentation descriptor registers */
-        static const size_t n_flags = 32;       /**< We treat EFLAGS as individual 1-bit (unsigned) values */
+        struct {
+            static const size_t n_gprs = 8;         /**< Number of general purpose registers */
+            static const size_t n_segregs = 6;      /**< Number of 16-bit segmentation descriptor registers */
+            static const size_t n_flags = 32;       /**< We treat EFLAGS as individual 1-bit (unsigned) values */
 
-        ValueType<32> ip;                       /**< Instruction pointer */
-        ValueType<32> gpr[n_gprs];              /**< General purpose registers */
-        ValueType<32> segreg[n_segregs];        /**< Segmentation registers */
-        ValueType<1> flag[n_flags];             /**< Bits of EFLAGS */
+            ValueType<32> ip;                       /**< Instruction pointer */
+            ValueType<32> gpr[n_gprs];              /**< General purpose registers */
+            ValueType<32> segreg[n_segregs];        /**< Segmentation registers */
+            ValueType<1> flag[n_flags];             /**< Bits of EFLAGS */
+        } registers;
 
         /** Memory cells are <address,value> pairs.  Addresses belong to the same domain as values, therefore we have only
          * three possible addresses: negative, zero, positive.  This makes it impossible to determine the next instruction
@@ -95,13 +97,13 @@ namespace SignAnalysisExample {
         /** Prints state.  Prints all registers and the three memory locations.  The values are printed as "0", "+", and/or "-"
          *  depending on their sign. */
         void print(std::ostream &o) const {
-            for (size_t i=0; i<n_gprs; i++)
-                o <<gprToString((X86GeneralPurposeRegister)i) <<"=" <<gpr[i] <<" ";
-            for (size_t i=0; i<n_segregs; i++)
-                o <<segregToString((X86SegmentRegister)i) <<"=" <<segreg[i] <<" ";
-            o <<"ip=" <<ip <<" ";
-            for (size_t i=0; i<n_flags; i++)
-                o <<flagToString((X86Flag)i) <<"=" <<flag[i] <<" ";
+            for (size_t i=0; i<registers.n_gprs; i++)
+                o <<gprToString((X86GeneralPurposeRegister)i) <<"=" <<registers.gpr[i] <<" ";
+            for (size_t i=0; i<registers.n_segregs; i++)
+                o <<segregToString((X86SegmentRegister)i) <<"=" <<registers.segreg[i] <<" ";
+            o <<"ip=" <<registers.ip <<" ";
+            for (size_t i=0; i<registers.n_flags; i++)
+                o <<flagToString((X86Flag)i) <<"=" <<registers.flag[i] <<" ";
             o <<"mem[0]=" <<memory[0] <<" ";
             o <<"mem[+]=" <<memory[1] <<" ";
             o <<"mem[-]=" <<memory[2] << std::endl;
@@ -121,6 +123,19 @@ namespace SignAnalysisExample {
     class Policy {
     private:
         State cur_state;
+        const RegisterDictionary *regdict;
+
+    public:
+        struct Exception {
+            Exception(const std::string &mesg): mesg(mesg) {}
+            friend std::ostream& operator<<(std::ostream &o, const Exception &e) {
+                o <<"SignAnalysisExample exception: " <<e.mesg;
+                return o;
+            }
+            std::string mesg;
+        };
+        
+        Policy(): regdict(NULL) {}
 
         /**********************************************************************************************************************
          * Some extra functions that are normally defined but not absolutely necessary.
@@ -134,7 +149,7 @@ namespace SignAnalysisExample {
 
         /**********************************************************************************************************************
          * The operator signatures are dictated by the instruction semantics layer (such as x86InstructionSemantics class)
-         * since the policy is "plugged into" an instruction semantics class.  See VirtualMachineSemantics.h for documentation
+         * since the policy is "plugged into" an instruction semantics class.  See PartialSymbolicSemantics.h for documentation
          * of each method.
          **********************************************************************************************************************/
     public:
@@ -150,14 +165,14 @@ namespace SignAnalysisExample {
         }
 
         template<size_t FromLen, size_t ToLen>
-        ValueType<ToLen> extendByMSB(const ValueType<FromLen> &a) const {
+        ValueType<ToLen> unsignedExtend(const ValueType<FromLen> &a) const {
             if (ToLen==FromLen) return ValueType<ToLen>(a);
             if (ToLen>FromLen) return ValueType<ToLen>(POSITIVE);
             return ValueType<ToLen>();
         }
 
         void startInstruction(SgAsmInstruction *insn) {
-            cur_state.ip = ValueType<32>(insn->get_address());
+            cur_state.registers.ip = ValueType<32>(insn->get_address());
         }
 
         void finishInstruction(SgAsmInstruction*) {}
@@ -215,68 +230,6 @@ namespace SignAnalysisExample {
 
         void sysenter() {
             cur_state = State();        // we have no idea what might have changed
-        }
-
-        ValueType<32> readGPR(X86GeneralPurposeRegister r) const {
-            return cur_state.gpr[r];
-        }
-
-        void writeGPR(X86GeneralPurposeRegister r, const ValueType<32> &value) {
-            cur_state.gpr[r] = value;
-        }
-
-        ValueType<16> readSegreg(X86SegmentRegister sr) const {
-            return cur_state.segreg[sr];
-        }
-
-        void writeSegreg(X86SegmentRegister sr, const ValueType<16> &value) {
-            cur_state.segreg[sr] = value;
-        }
-
-        ValueType<32> readIP() const {
-            return cur_state.ip;
-        }
-
-        void writeIP(const ValueType<32> &value) {
-            cur_state.ip = value;
-        }
-
-        ValueType<1> readFlag(X86Flag f) const {
-            return cur_state.flag[f];
-        }
-
-        void writeFlag(X86Flag f, const ValueType<1> &value) {
-            cur_state.flag[f] = value;
-        }
-
-        template<size_t Len>
-        ValueType<Len> readMemory(X86SegmentRegister segreg, const ValueType<32> &addr, ValueType<1> cond) const {
-            unsigned sign = 0;
-            if (addr.sign & ZERO)
-                sign |= cur_state.memory[0].sign;
-            if (addr.sign & POSITIVE)
-                sign |= cur_state.memory[1].sign;
-            if (addr.sign & NEGATIVE)
-                sign |= cur_state.memory[2].sign;
-            return ValueType<Len>(sign);
-        }
-
-        template<size_t Len>
-        void writeMemory(X86SegmentRegister segreg, const ValueType<32> &addr, const ValueType<Len> &data, ValueType<1> cond) {
-            if (addr.sign==ZERO) {
-                cur_state.memory[0] = data;                       // must alias
-            } else if (addr.sign==POSITIVE) {
-                cur_state.memory[1] = data;                       // must alias
-            } else if (addr.sign==NEGATIVE) {
-                cur_state.memory[2] = data;                       // must alias
-            } else {
-                if (addr.sign & ZERO)
-                    cur_state.memory[0].sign |= data.sign;        // may alias
-                if (addr.sign & POSITIVE)
-                    cur_state.memory[1].sign |= data.sign;        // may alias
-                if (addr.sign & NEGATIVE)
-                    cur_state.memory[2].sign |= data.sign;        // may alias
-            }
         }
 
         template<size_t Len>
@@ -498,6 +451,49 @@ namespace SignAnalysisExample {
                 return a;
             return ValueType<Len>();
         }
+
+        /** Returns the register dictionary. */
+        const RegisterDictionary *get_register_dictionary() const {
+            return regdict ? regdict : RegisterDictionary::dictionary_pentium4();
+        }
+
+        /** Sets the register dictionary. */
+        void set_register_dictionary(const RegisterDictionary *regdict) {
+            this->regdict = regdict;
+        }
+
+#include "ReadWriteRegisterFragment.h"
+
+        template<size_t Len>
+        ValueType<Len> readMemory(X86SegmentRegister segreg, const ValueType<32> &addr, ValueType<1> cond) const {
+            unsigned sign = 0;
+            if (addr.sign & ZERO)
+                sign |= cur_state.memory[0].sign;
+            if (addr.sign & POSITIVE)
+                sign |= cur_state.memory[1].sign;
+            if (addr.sign & NEGATIVE)
+                sign |= cur_state.memory[2].sign;
+            return ValueType<Len>(sign);
+        }
+
+        template<size_t Len>
+        void writeMemory(X86SegmentRegister segreg, const ValueType<32> &addr, const ValueType<Len> &data, ValueType<1> cond) {
+            if (addr.sign==ZERO) {
+                cur_state.memory[0] = data;                       // must alias
+            } else if (addr.sign==POSITIVE) {
+                cur_state.memory[1] = data;                       // must alias
+            } else if (addr.sign==NEGATIVE) {
+                cur_state.memory[2] = data;                       // must alias
+            } else {
+                if (addr.sign & ZERO)
+                    cur_state.memory[0].sign |= data.sign;        // may alias
+                if (addr.sign & POSITIVE)
+                    cur_state.memory[1].sign |= data.sign;        // may alias
+                if (addr.sign & NEGATIVE)
+                    cur_state.memory[2].sign |= data.sign;        // may alias
+            }
+        }
+
     };
 }; /*namespace*/
 

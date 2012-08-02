@@ -23,6 +23,19 @@ int main(int argc, char * argv[])
   s3 = UnknownIndexSet::get_inst();
   assert (*s1 == *s3);
 
+  // test for index vector like [2][4], operator ==
+  IndexVector_Impl* myindexv = new IndexVector_Impl();
+  myindexv ->index_vector.push_back(ConstIndexSet::get_inst((size_t)0));
+
+  IndexVector_Impl* myindexv2 = new IndexVector_Impl();
+  myindexv2 ->index_vector.push_back(ConstIndexSet::get_inst((size_t)0));
+
+  IndexVector_Impl* myindexv3 = new IndexVector_Impl();
+  myindexv3 ->index_vector.push_back(ConstIndexSet::get_inst((size_t)2));
+
+  assert (*myindexv == *myindexv2);
+  assert (myindexv != myindexv2); // improper comparison since addresses are used 
+  assert ((*myindexv) != (*myindexv3));
 //  return backend(project);
   return 0;
 }

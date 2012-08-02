@@ -188,7 +188,16 @@ class NodeState
         Lattice* getLatticeAbove(const Analysis* analysis, int latticeName) const;
         // returns the given lattice from below the node that is owned by the given analysis
         Lattice* getLatticeBelow(const Analysis* analysis, int latticeName) const;
-        
+
+        //! returns all the lattices from above the CFG node (corresponding to SgNode and an CFG index) that are owned by the given analysis
+        // (read-only access)
+        static const std::vector<Lattice*>& getLatticeAbove(const Analysis* analysis, SgNode* n, unsigned int index ) ;
+
+        // returns all the lattices from below the CFG node (corresponding to SgNode and an CFG index) that are owned by the given analysis
+        // (read-only access)
+        static const std::vector<Lattice*>& getLatticeBelow(const Analysis* analysis, SgNode* n, unsigned int index) ;
+
+       
         // returns the map containing all the lattices from above the node that are owned by the given analysis
         // (read-only access)
         const std::vector<Lattice*>& getLatticeAbove(const Analysis* analysis) const;
@@ -283,6 +292,11 @@ class NodeState
         // index is used when multiple NodeState objects are associated with a given node
         // (ex: SgFunctionCallExp has 3 NodeStates: entry, function body, exit)
         static NodeState* getNodeState(const DataflowNode& n, int index=0);
+
+
+        //returns the NodeState object associated with a given SgNode
+        //index is used when multiple Control flow nodes (and consequently multiple NodeStates) are associated with a given node
+        static NodeState* getNodeState(SgNode * n, int index=0);
         
         // returns a vector of NodeState objects associated with the given dataflow node.
         static const std::vector<NodeState*> getNodeStates(const DataflowNode& n);
@@ -292,7 +306,7 @@ class NodeState
         
         private:
         // initializes the nodeStateMap
-        static void initNodeStateMap();
+        static void initNodeStateMap(bool (*filter) (CFGNode cfgn));
         
         public:
         /*// copies the facts from that to this

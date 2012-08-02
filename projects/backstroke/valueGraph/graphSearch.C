@@ -413,13 +413,13 @@ NEXT:
         PathSet paths;
         foreach (const Route& route, routes)
         {
-            cout << route.paths << endl;
+            cout << ">>>" << route.paths << endl;
             if (paths.empty())
                 paths = route.paths;
             else
                 paths |= route.paths;
         }
-        ROSE_ASSERT(!paths.flip().any());
+        //ROSE_ASSERT(!paths.flip().any());
         
         foreach (const Route& route, routes)
         {

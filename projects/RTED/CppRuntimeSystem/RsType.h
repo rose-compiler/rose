@@ -16,10 +16,8 @@
  * A type may consist of subtypes: a subtype is basically just a member when the current type is a class
  * the subtypes of an array is the type it consists of
  */
-class RsType
+struct RsType
 {
-    public:
-
         explicit
         RsType(const std::string& name)
         : stringId(name)
@@ -102,19 +100,6 @@ class RsType
         /// (i.e. an @c RsCompoundType).
         virtual bool isConsistentWith( const RsType &other ) const;
 
-#if OBSOLETE_CODE
-        /// Refines a subtype (i.e. member of classes)
-        /// the template parameter specifies at which RsType should be stopped
-        /// i.e. of which type   the refinedType is (mostly used SgBasicType an SgArrayType)
-        /// @param courseType    the type which should be refined, for example class with many members
-        /// @param offset        the offset where to refine
-        /// @param refinedType   output parameter, the refined type, or NULL if invalid (if offset lies in padding)
-        /// @param refinedOffset the offset relative to new type
-        template<class T>
-        static
-        std::pair<RsType*, size_t> RsType::getTypeAt(RsType * coarseType,  size_t offset);
-#endif /* OBSOLETE_CODE */
-
         static RsType& UnknownType;
 
     protected:
@@ -123,10 +108,8 @@ class RsType
 };
 
 
-
-class RsArrayType : public RsType
+struct RsArrayType : RsType
 {
-    public:
         RsArrayType()
         : RsType(), baseType(NULL), elementCount(0)
         {}
@@ -270,8 +253,7 @@ struct RsClassType : RsType
 
 
         /// Checks if all members have been registered (all member-sizes add up to byteSize)
-        /// @param verbose if true all padding areas are written to stdout
-        virtual bool         isComplete(bool verbose=false) const;
+        virtual bool         isComplete() const;
 
         /// Print type information to a stream
         virtual void  print(std::ostream & os) const;
@@ -306,10 +288,8 @@ std::ostream& operator<< (std::ostream &os, const RsType& m);
 
 
 
-class RsBasicType : public RsType
+struct RsBasicType : RsType
 {
-    public:
-
      // DQ (10/7/2009): The use of this specific name for enum values could be a problem for ROSE
      // since they are typename isn ROSE and enum names in this section of code.
 
@@ -360,8 +340,6 @@ class RsBasicType : public RsType
         : RsType("unknown"), type(SgUnknownType), byteSize(0)
         {}
 
-        virtual ~RsBasicType() {}
-
         SgType                getSgType()       const               { return type;     }
 
         virtual size_t        getByteSize()     const               { return byteSize; }
@@ -406,17 +384,14 @@ RsBasicType::SgType& operator++(RsBasicType::SgType& val)
  *     the type of the BasicType still stays SgPointerType ( so the size information is still correct)
  *     additionally the target/base-type is stored
  */
-class RsPointerType : public RsBasicType
+struct RsPointerType : RsBasicType
 {
-    public:
         explicit
-        RsPointerType(const RsType * baseType);
+        RsPointerType(const RsType* baseType);
 
         RsPointerType()
         : RsBasicType(), baseType(NULL)
         {}
-
-        virtual ~RsPointerType() {}
 
         virtual std::string getDisplayName() const;
 

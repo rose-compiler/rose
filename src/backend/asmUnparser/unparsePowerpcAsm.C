@@ -13,7 +13,7 @@
 #include <boost/lexical_cast.hpp>
 #include "integerOps.h"
 #include "powerpcInstructionProperties.h"
-
+#include "Registers.h"
 
 /****************************************************
  * resolve expression

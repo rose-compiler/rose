@@ -28,17 +28,11 @@ $(TESTCODES_Objects): ./CudaTests
 	rm -f $(@:.o=.cu)
 
 check-local:
-if ROSE_BUILD_EDG_WITH_CUDA_SUPPORT
 	@echo "Tests C for CUDA support (parsing)"
 	@$(MAKE) $(TESTCODES_Objects)
 	@echo "***********************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests/CudaTests: make check rule complete (terminated normally) ******"
 	@echo "***********************************************************************************************"
-else
-	@echo "****************************************************************************************************"
-	@echo "****** ROSE/tests/CompileTests/CudaTests: (ROSE not configured for these tests) ******"
-	@echo "****************************************************************************************************"
-endif
 
 clean-local:
 	rm -f *.o rose_* test_*

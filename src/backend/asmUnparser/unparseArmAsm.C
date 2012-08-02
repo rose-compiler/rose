@@ -1,6 +1,7 @@
 #include "sage3basic.h"
 #include "stringify.h"
 #include "AsmUnparser_compat.h"
+#include "Registers.h"
 
 static std::string unparseArmRegister(SgAsmArmRegisterReferenceExpression *reg) {
     const RegisterDescriptor &rdesc = reg->get_descriptor();

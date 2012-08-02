@@ -102,7 +102,7 @@ namespace VirtualCFG {
     CFGNode src, tgt;
     public:
     //! Constructor
-    CFGEdge(CFGNode src, CFGNode tgt): src(src), tgt(tgt) {}
+    CFGEdge(CFGNode src, CFGNode tgt): src(src), tgt(tgt) { assert(src.getNode() != NULL && tgt.getNode() != NULL); }
     
     //! Default constructor. Used for compatibility with containers
     CFGEdge() {}
@@ -277,7 +277,7 @@ namespace VirtualCFG {
     std::string toStringForDebugging() const {return n.toStringForDebugging();}
     std::string id() const {return n.id();}
     SgNode* getNode() const {return n.getNode();}
-        const CFGNode& toNode() const { return n; }
+    const CFGNode& toNode() const { return n; }
     unsigned int getIndex() const {return n.getIndex();}
     std::vector<InterestingEdge> outEdges() const;
     std::vector<InterestingEdge> inEdges() const;

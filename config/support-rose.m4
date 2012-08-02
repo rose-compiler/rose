@@ -161,6 +161,9 @@ else
 fi
 
   ROSE_SUPPORT_UPC
+  ROSE_SUPPORT_COMPASS2
+  ROSE_SUPPORT_GMP
+  ROSE_SUPPORT_ISL
 
 ##
 #########################################################################################
@@ -327,6 +330,14 @@ AM_CONDITIONAL(ROSE_USE_NEW_EDG_INTERFACE, [test "x$enable_new_edg_interface" = 
 AM_CONDITIONAL(ROSE_USE_EDG_VERSION_4, [test "x$enable_edg_version4" = xyes])
 AM_CONDITIONAL(ROSE_USE_EDG_VERSION_4_3, [test "x$enable_edg_version43" = xyes])
 
+AC_ARG_ENABLE(clang-frontend, AS_HELP_STRING([--enable-clang-frontend], [Use Clang frontend instead of EDG]))
+AM_CONDITIONAL(ROSE_USE_CLANG_FRONTEND, [test "x$enable_clang_frontend" = xyes])
+if test "x$enable_clang_frontend" = "xyes"; then
+  ROSE_SUPPORT_CLANG
+else
+  AC_MSG_NOTICE([Clang frontend support disabled])
+fi
+
 # DQ (1/4/2009) Added support for optional GNU language extensions in new EDG/ROSE interface.
 # This value will be substituted into EDG/4.0/src/rose_lang_feat.h in the future (not used at present!)
 AC_ARG_ENABLE(gnu-extensions, AS_HELP_STRING([--enable-gnu-extensions], [Enable internal support in ROSE for GNU language extensions]))
@@ -470,19 +481,9 @@ echo "rose_boost_version = $rose_boost_version"
 
 # Define macros for conditional compilation of parts of ROSE based on version of boost
 # (this ONLY happens for the tests in tests/CompilerOptionsTests/testWave)
-# we don't want conditional compilation or code in ROSE based on version numbers of Boost.
-# AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_35,test "x$_version" = "x1.35")
-# AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_36,test "x$_version" = "x1.36")
-# AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_37,test "x$_version" = "x1.37")
-# AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_38,test "x$_version" = "x1.38")
-# AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_39,test "x$_version" = "x1.39")
-# AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_40,test "x$_version" = "x1.40")
-# AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_41,test "x$_version" = "x1.41")
-# AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_42,test "x$_version" = "x1.42")
-# AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_43,test "x$_version" = "x1.43")
-# AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_44,test "x$_version" = "x1.44")
-# AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_45,test "x$_version" = "x1.45")
-# AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_46,test "x$_version" = "x1.46")
+#
+# !! We don't want conditional compilation or code in ROSE based on version numbers of Boost. !!
+#
 
 AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_35,test "x$rose_boost_version" = "x103500" -o "x$_version" = "x1.35")
 AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_36,test "x$rose_boost_version" = "x103600" -o "x$_version" = "x1.36")
@@ -498,6 +499,7 @@ AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_45,test "x$rose_boost_version" = "x104
 AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_46,test "x$rose_boost_version" = "x104600" -o "x$_version" = "x1.46")
 AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_46,test "x$rose_boost_version" = "x104601" -o "x$_version" = "x1.46")
 AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_47,test "x$rose_boost_version" = "x104700" -o "x$_version" = "x1.47")
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_48,test "x$rose_boost_version" = "x104800" -o "x$_version" = "x1.48")
 
 # DQ (10/18/2010): Error checking for Boost version.
 if test "x$rose_boost_version" = "x103600" -o "x$_version" = "x1.36" \
@@ -512,11 +514,12 @@ if test "x$rose_boost_version" = "x103600" -o "x$_version" = "x1.36" \
    -o "x$rose_boost_version" = "x104500" -o "x$_version" = "x1.45" \
    -o "x$rose_boost_version" = "x104600" -o "x$_version" = "x1.46" \
    -o "x$rose_boost_version" = "x104601" -o "x$_version" = "x1.46" \
-   -o "x$rose_boost_version" = "x104700" -o "x$_version" = "x1.47"; then 
-echo "Reasonable version of Boost found!"
+   -o "x$rose_boost_version" = "x104700" -o "x$_version" = "x1.47" \
+   -o "x$rose_boost_version" = "x104800" -o "x$_version" = "x1.48"
+then
+    echo "Reasonable version of Boost found!"
 else
-echo "No identifiable version of boost recognised!"
-exit 1;
+    ROSE_MSG_ERROR([Unsupported version of Boost: '$_version' ('$rose_boost_version')])
 fi
 
 # DQ (12/22/2008): Fix boost configure to handle OS with older version of Boost that will
@@ -592,8 +595,12 @@ if test x$enable_new_edg_interface = xyes; then
   AC_DEFINE([TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS], [], [Controls design of internal template declaration support within the ROSE AST.])
 
 else
-  GENERATE_BACKEND_C_COMPILER_SPECIFIC_HEADERS
-  GENERATE_BACKEND_CXX_COMPILER_SPECIFIC_HEADERS
+  if test x$enable_clang_frontend = xyes; then
+    INSTALL_CLANG_SPECIFIC_HEADERS
+  else
+    GENERATE_BACKEND_C_COMPILER_SPECIFIC_HEADERS
+    GENERATE_BACKEND_CXX_COMPILER_SPECIFIC_HEADERS
+  fi
 fi
 
 # End macro ROSE_SUPPORT_ROSE_BUILD_INCLUDE_FILES.
@@ -798,6 +805,8 @@ AC_SUBST(TEST_SMT_SOLVER)
 # # echo "Support for both DWARF and Intel Pin fails, these configure options are incompatable."
 #   AC_MSG_ERROR([Support for both DWARF and Intel Pin fails, these configure options are incompatable!])
 #fi
+
+ROSE_SUPPORT_MINT
 
 ROSE_SUPPORT_PHP
 
@@ -1571,13 +1580,22 @@ fi
 AM_CONDITIONAL(ROSE_HAS_EDG_SOURCE, [test "x$has_edg_source" = "xyes"])
 AM_CONDITIONAL(BINARY_EDG_TARBALL_ENABLED, [test "x$binary_edg_tarball_enabled" = "xyes"])
 
+ROSE_ARG_ENABLE(
+  [alternate-edg-build-cpu],
+  [for alternate EDG build cpu],
+  [allows you to generate EDG binaries with a different CPU type in the name string]
+)
+
 #The build_triplet_without_redhat variable is used only in src/frontend/CxxFrontend/Makefile.am to determine the binary edg name
 build_triplet_without_redhat=`${srcdir}/config/cleanConfigGuessOutput "$build" "$build_cpu" "$build_vendor"`
+if test "x$CONFIG_HAS_ROSE_ENABLE_ALTERNATE_EDG_BUILD_CPU" = "xyes"; then
+  # Manually modify the build CPU <build_cpu>-<build_vendor>-<build>
+  build_triplet_without_redhat="$(echo "$build_triplet_without_redhat" | sed 's/^[[^-]]*\(.*\)/'$ROSE_ENABLE_ALTERNATE_EDG_BUILD_CPU'\1/')"
+fi
 AC_SUBST(build_triplet_without_redhat) dnl This is done even with EDG source, since it is used to determine the binary to make in roseFreshTest
 
 # End macro ROSE_SUPPORT_ROSE_PART_3.
-]
-)
+])
 
 #-----------------------------------------------------------------------------
 
@@ -1765,6 +1783,7 @@ AC_COMPILE_IFELSE([struct S {int a, b;}; static __thread struct S x;],
 AC_CHECK_HEADERS([asm/ldt.h elf.h linux/types.h linux/dirent.h linux/unistd.h])
 AC_CHECK_HEADERS([sys/types.h sys/mman.h sys/stat.h sys/uio.h sys/wait.h sys/utsname.h sys/ioctl.h sys/sysinfo.h sys/socket.h])
 AC_CHECK_HEADERS([termios.h grp.h syscall.h])
+AC_CHECK_FUNCS(pipe2)
 AC_CHECK_TYPE(user_desc,
               AC_DEFINE(HAVE_USER_DESC, [], [Defined if the user_desc type is declared in <asm/ldt.h>]),
               [],
@@ -1899,6 +1918,7 @@ src/frontend/SageIII/GENERATED_CODE_DIRECTORY_Cxx_Grammar/Makefile
 src/frontend/SageIII/astFromString/Makefile
 src/frontend/SageIII/includeDirectivesProcessing/Makefile
 src/frontend/CxxFrontend/Makefile
+src/frontend/CxxFrontend/Clang/Makefile
 src/frontend/OpenFortranParser_SAGE_Connection/Makefile
 src/frontend/ECJ_ROSE_Connection/Makefile
 src/frontend/PHPFrontend/Makefile
@@ -1908,23 +1928,13 @@ src/frontend/BinaryLoader/Makefile
 src/frontend/BinaryFormats/Makefile
 src/frontend/Disassemblers/Makefile
 src/midend/Makefile
-src/midend/abstractHandle/Makefile
-src/midend/abstractMemoryObject/Makefile
-src/midend/astUtil/Makefile
-src/midend/astQuery/Makefile
-src/midend/astProcessing/Makefile
-src/midend/astRewriteMechanism/Makefile
-src/midend/astDiagnostics/Makefile
 src/midend/binaryAnalyses/Makefile
 src/midend/programAnalysis/Makefile
 src/midend/programAnalysis/staticSingleAssignment/Makefile
-src/midend/programTransformation/Makefile
+src/midend/programAnalysis/ssaUnfilteredCfg/Makefile
+src/midend/programAnalysis/systemDependenceGraph/Makefile
+src/midend/programTransformation/extractFunctionArgumentsNormalization/Makefile
 src/midend/programTransformation/loopProcessing/Makefile
-src/midend/programTransformation/loopProcessing/prepostTransformation/Makefile
-src/midend/programTransformation/loopProcessing/computation/Makefile
-src/midend/programTransformation/loopProcessing/slicing/Makefile
-src/midend/programTransformation/loopProcessing/outsideInterface/Makefile
-src/midend/programTransformation/loopProcessing/driver/Makefile
 src/backend/Makefile
 src/roseSupport/Makefile
 src/roseExtensions/Makefile
@@ -2008,6 +2018,7 @@ projects/DatalogAnalysis/tests/Makefile
 projects/DistributedMemoryAnalysisCompass/Makefile
 projects/DocumentationGenerator/Makefile
 projects/FiniteStateModelChecker/Makefile
+projects/graphColoring/Makefile
 projects/HeaderFilesInclusion/HeaderFilesGraphGenerator/Makefile
 projects/HeaderFilesInclusion/HeaderFilesNotIncludedList/Makefile
 projects/HeaderFilesInclusion/Makefile
@@ -2017,6 +2028,7 @@ projects/MPI_Tools/MPIDeterminismAnalysis/Makefile
 projects/MacroRewrapper/Makefile
 projects/Makefile
 projects/OpenMP_Analysis/Makefile
+projects/OpenMP_Checker/Makefile
 projects/OpenMP_Translator/Makefile
 projects/OpenMP_Translator/includes/Makefile
 projects/OpenMP_Translator/tests/Makefile
@@ -2040,14 +2052,10 @@ projects/RTED/Makefile
 projects/RoseQt/AstViewer/Makefile
 projects/RoseQt/Makefile
 projects/SatSolver/Makefile
-projects/SemanticSignatureVectors/Makefile
-projects/SemanticSignatureVectors/tests/Makefile
 projects/UpcTranslation/Makefile
 projects/UpcTranslation/tests/Makefile
 projects/arrayOptimization/Makefile
 projects/arrayOptimization/test/Makefile
-projects/assemblyToSourceAst/Makefile
-projects/assemblyToSourceAst/tests/Makefile
 projects/autoParallelization/Makefile
 projects/autoParallelization/tests/Makefile
 projects/autoTuning/Makefile
@@ -2059,20 +2067,18 @@ projects/backstroke/eventDetection/ROSS/Makefile
 projects/backstroke/eventDetection/SPEEDES/Makefile
 projects/backstroke/normalizations/Makefile
 projects/backstroke/slicing/Makefile
-projects/backstroke/ssa/Makefile
 projects/backstroke/valueGraph/Makefile
 projects/backstroke/valueGraph/headerUnparser/Makefile
 projects/backstroke/pluggableReverser/Makefile
 projects/backstroke/testCodeGeneration/Makefile
 projects/backstroke/restrictedLanguage/Makefile
-projects/backstroke/reverseComputation/Makefile
 projects/backstroke/tests/Makefile
 projects/backstroke/tests/cfgReverseCodeGenerator/Makefile
 projects/backstroke/tests/expNormalizationTest/Makefile
-projects/backstroke/tests/extractFunctionArgumentsTest/Makefile
 projects/backstroke/tests/pluggableReverserTest/Makefile
 projects/backstroke/tests/restrictedLanguageTest/Makefile
 projects/backstroke/tests/testCodeBuilderTest/Makefile
+projects/backstroke/tests/incrementalInversionTest/Makefile
 projects/backstroke/utilities/Makefile
 projects/backstroke/sdg/Makefile
 projects/binCompass/Makefile
@@ -2106,6 +2112,9 @@ projects/compass/tools/compass/tests/Makefile
 projects/compass/tools/compassVerifier/Makefile
 projects/compass/tools/sampleCompassSubset/Makefile
 projects/dataStructureGraphing/Makefile
+projects/extractMPISkeleton/Makefile
+projects/extractMPISkeleton/src/Makefile
+projects/extractMPISkeleton/tests/Makefile
 projects/haskellport/Makefile
 projects/haskellport/Setup.hs
 projects/haskellport/rose.cabal.in
@@ -2122,31 +2131,29 @@ projects/roseToLLVM/Makefile
 projects/roseToLLVM/src/Makefile
 projects/roseToLLVM/src/rosetollvm/Makefile
 projects/roseToLLVM/tests/Makefile
+projects/RosePolly/Makefile
 projects/simulator/Makefile
 projects/symbolicAnalysisFramework/Makefile
-projects/symbolicAnalysisFramework/src/analysis/Makefile
-projects/symbolicAnalysisFramework/src/arrIndexLabeler/Makefile
-projects/symbolicAnalysisFramework/src/cfgUtils/Makefile
 projects/symbolicAnalysisFramework/src/chkptRangeAnalysis/Makefile
-projects/symbolicAnalysisFramework/src/common/Makefile
 projects/symbolicAnalysisFramework/src/external/Makefile
-projects/symbolicAnalysisFramework/src/lattice/Makefile
 projects/symbolicAnalysisFramework/src/mpiAnal/Makefile
 projects/symbolicAnalysisFramework/src/ompAnal/Makefile
-projects/symbolicAnalysisFramework/src/rwAccessLabeler/Makefile
-projects/symbolicAnalysisFramework/src/simpleAnalyses/Makefile
-projects/symbolicAnalysisFramework/src/state/Makefile
 projects/symbolicAnalysisFramework/src/unionFind/Makefile
 projects/symbolicAnalysisFramework/src/varBitVector/Makefile
-projects/symbolicAnalysisFramework/src/variables/Makefile
 projects/symbolicAnalysisFramework/src/varLatticeVector/Makefile
+projects/symbolicAnalysisFramework/src/taintAnalysis/Makefile
+projects/symbolicAnalysisFramework/src/parallelCFG/Makefile
 projects/symbolicAnalysisFramework/src/Makefile
 projects/symbolicAnalysisFramework/tests/Makefile
 projects/symbolicAnalysisFramework/include/Makefile
 projects/taintcheck/Makefile
+projects/RTC/Makefile
 projects/PowerAwareCompiler/Makefile
 projects/ManyCoreRuntime/Makefile
 projects/ManyCoreRuntime/docs/Makefile
+projects/mint/Makefile
+projects/mint/src/Makefile
+projects/mint/tests/Makefile
 projects/traceAnalysis/Makefile
 projects/PolyhedralModel/Makefile
 projects/PolyhedralModel/src/Makefile
@@ -2154,6 +2161,12 @@ projects/PolyhedralModel/docs/Makefile
 projects/PolyhedralModel/tests/Makefile
 projects/PolyhedralModel/tests/rose-pragma/Makefile
 projects/PolyhedralModel/tests/rose-max-cover/Makefile
+projects/PolyhedralModel/tests/cuda-kernel/Makefile
+projects/PolyhedralModel/projects/Makefile
+projects/PolyhedralModel/projects/loop-ocl/Makefile
+projects/PolyhedralModel/projects/spmd-generator/Makefile
+projects/PolyhedralModel/projects/polygraph/Makefile
+projects/PolyhedralModel/projects/utils/Makefile
 tests/Makefile
 tests/RunTests/Makefile
 tests/RunTests/A++Tests/Makefile
@@ -2256,9 +2269,12 @@ tests/roseTests/programAnalysisTests/staticInterproceduralSlicingTests/Makefile
 tests/roseTests/programAnalysisTests/testCallGraphAnalysis/Makefile
 tests/roseTests/programAnalysisTests/variableLivenessTests/Makefile
 tests/roseTests/programAnalysisTests/variableRenamingTests/Makefile
+tests/roseTests/programAnalysisTests/ssa_UnfilteredCfg_Test/Makefile
 tests/roseTests/programAnalysisTests/staticSingleAssignmentTests/Makefile
 tests/roseTests/programAnalysisTests/generalDataFlowAnalysisTests/Makefile
+tests/roseTests/programAnalysisTests/systemDependenceGraphTests/Makefile
 tests/roseTests/programTransformationTests/Makefile
+tests/roseTests/programTransformationTests/extractFunctionArgumentsTest/Makefile
 tests/roseTests/roseHPCToolkitTests/Makefile
 tests/roseTests/roseHPCToolkitTests/data/01/ANALYSIS/Makefile
 tests/roseTests/roseHPCToolkitTests/data/01/Makefile
@@ -2319,6 +2335,25 @@ demo/Makefile
 demo/qrose/Makefile
 binaries/Makefile
 binaries/samples/Makefile
+])
+
+dnl
+dnl Compass2
+dnl
+AC_CONFIG_FILES([
+projects/compass2/Makefile
+projects/compass2/docs/Makefile
+projects/compass2/docs/asciidoc/Makefile
+projects/compass2/docs/doxygen/doxygen.config
+projects/compass2/docs/doxygen/Makefile
+projects/compass2/tests/Makefile
+projects/compass2/tests/checkers/Makefile
+projects/compass2/tests/checkers/function_pointer/Makefile
+projects/compass2/tests/checkers/function_pointer/compass_parameters.xml
+projects/compass2/tests/checkers/keyword_macro/Makefile
+projects/compass2/tests/checkers/keyword_macro/compass_parameters.xml
+projects/compass2/tests/core/Makefile
+projects/compass2/tests/core/compass_parameters.xml
 ])
 
 # DQ (10/27/2010): New Fortran tests (from gfortan test suite).

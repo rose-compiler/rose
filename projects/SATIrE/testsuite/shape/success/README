@@ -1,0 +1,5 @@
+The files with prefix 
+  * 'nnh_' are examples from the book "Principle of Program Analysis"
+    (F. Nielson, H.R. Nielson, C. Hankin).
+  * 'srw98_' are examples from the TOPLAS'98, "Solving shape-analysis problems
+     in languages with destructive updating" (M. Sagiv, T. Reps, R. Wilhelm)

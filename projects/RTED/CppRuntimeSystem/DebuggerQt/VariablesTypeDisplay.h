@@ -9,7 +9,7 @@ class StackManager;
 class VariablesTypeDisplay : public ItemTreeNode
 {
     public:
-        VariablesTypeDisplay(VariablesType * mt_, bool displayMem=true);
+        VariablesTypeDisplay(const VariablesType& mt_, bool displayMem=true);
 
         virtual QVariant data(int role, int column=0) const;
         virtual QStringList sectionHeader() const;
@@ -20,7 +20,7 @@ class VariablesTypeDisplay : public ItemTreeNode
     protected:
         VariablesTypeDisplay() : vt(NULL) {}
 
-        VariablesType  * vt;
+        const VariablesType* vt;
 
 };
 

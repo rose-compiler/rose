@@ -353,6 +353,10 @@ SgUpcMythread* buildUpcMythread_nfi();
 SgThisExp* buildThisExp(SgClassSymbol* sym);
 SgThisExp* buildThisExp_nfi(SgClassSymbol* sym);
 
+//! Build super pointer
+SgSuperExp* buildSuperExp(SgClassSymbol* sym);
+SgSuperExp* buildSuperExp_nfi(SgClassSymbol* sym);
+
 //! Build lambda expression
 SgLambdaRefExp* buildLambdaRefExp(SgType* return_type, SgFunctionParameterList* params, SgScopeStatement* scope);
 
@@ -623,6 +627,10 @@ SgAssignInitializer * buildAssignInitializer_nfi(SgExpression * operand_i = NULL
 //! Build an aggregate initializer
 SgAggregateInitializer * buildAggregateInitializer(SgExprListExp * initializers = NULL, SgType * type = NULL);
 SgAggregateInitializer * buildAggregateInitializer_nfi(SgExprListExp * initializers, SgType * type = NULL);
+
+//! Build a compound initializer, for vector type initialization
+SgCompoundInitializer * buildCompoundInitializer(SgExprListExp * initializers = NULL, SgType * type = NULL);
+SgCompoundInitializer * buildCompoundInitializer_nfi(SgExprListExp * initializers, SgType * type = NULL);
 
 // DQ (!/4/2009): Added support for building SgConstructorInitializer
 SgConstructorInitializer * buildConstructorInitializer( SgMemberFunctionDeclaration *declaration,SgExprListExp *args,SgType *expression_type,bool need_name,bool need_qualifier,bool need_parenthesis_after_name,bool associated_class_unknown);

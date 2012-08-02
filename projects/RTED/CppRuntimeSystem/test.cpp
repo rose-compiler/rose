@@ -14,87 +14,85 @@ ostream& out = cout;
 static const long nondistributed = 0;
 
 static
-void beginScope(RuntimeSystem* rs, const std::string& desc)
+void beginScope(RuntimeSystem& rs, const char* desc)
 {
-  rs->beginScope(desc);
+  rs.getStackManager().beginScope(desc);
 }
 
 static
-void endScope(RuntimeSystem* rs)
+void endScope(RuntimeSystem& rs)
 {
-  rs->endScope(1);
+  rs.getStackManager().endScope(1);
 }
 
 static
-void freeMemory(RuntimeSystem* rs, Address addr, MemoryType::AllocKind kind = akCxxNew)
+void freeMemory(RuntimeSystem& rs, Address addr, MemoryType::AllocKind kind = akCxxNew)
 {
-  rs->freeMemory(addr, kind);
+  rs.freeMemory(addr, kind);
 }
 
 static
-void createMemory(RuntimeSystem* rs, Address addr, size_t sz, MemoryType::AllocKind kind = akCxxNew, const RsType* t = NULL)
+void createMemory(RuntimeSystem& rs, Address addr, size_t sz, MemoryType::AllocKind kind = akCxxNew, const RsType* t = NULL)
 {
-  rs->createMemory(addr, sz, kind, nondistributed, t);
+  rs.createMemory(addr, sz, kind, nondistributed, t);
 }
 
 static
-void createArray(RuntimeSystem* rs, Address addr, const char* a, const char* b, const RsArrayType* arr)
+void createArray(RuntimeSystem& rs, Address addr, const char* a, const char* b, const RsArrayType* arr)
 {
-  rs->createArray(addr, a, b, arr, akStack, nondistributed);
-}
-
-
-static
-SourcePosition srcPosition(const char* file, size_t src, size_t rted)
-{
-  SourceInfo si;
-
-  si.file = file; si.src_line = src; si.rted_line = rted;
-  return SourcePosition(si);
+  rs.createArray(addr, a, b, arr, akStack, nondistributed);
 }
 
 
 static
-void registerPointerChange( RuntimeSystem* rs,
+SourceInfo srcPosition(const char* file, size_t src, size_t rted)
+{
+  SourceInfo si = { file, src, rted };;
+
+  return si;
+}
+
+
+static
+void registerPointerChange( RuntimeSystem& rs,
                             Address src,
                             Address tgt,
-                            const RsPointerType* t,
-                            bool checkPointerMove = false,
-                            bool checkMemLeaks = true
+                            const RsPointerType& t,
+                            bool checkPointerMove = false
                           )
 {
-    rs->registerPointerChange(src, tgt, t, checkPointerMove, checkMemLeaks);
+    rs.registerPointerChange(src, tgt, t, checkPointerMove);
 }
 
 
-static
-void registerPointerChange( RuntimeSystem* rs,
-                            Address src,
-                            Address tgt,
-                            bool checkPointerMove = false,
-                            bool checkMemLeaks = true
-                          )
-{
-    rs->registerPointerChange(src, tgt, checkPointerMove, checkMemLeaks);
-}
+//~ static
+//~ void registerPointerChange( RuntimeSystem& rs,
+                            //~ Address src,
+                            //~ Address tgt,
+                            //~ bool checkPointerMove = false,
+                            //~ bool checkMemLeaks = true
+                          //~ )
+//~ {
+    //~ rs.registerPointerChange(src, tgt, checkPointerMove, checkMemLeaks);
+//~ }
 
 static
-void registerPointerChange( RuntimeSystem* rs,
+void registerPointerChange( RuntimeSystem& rs,
                             const std::string& mangledName,
                             Address tgt,
-                            bool checkPointerMove = false,
-                            bool checkMemLeaks = true
+                            bool checkPointerMove = false
                           )
 {
-    Address src = rs->getStackManager()->getVariableByMangledName(mangledName)->getAddress();
+    const VariablesType* var = rs.getStackManager().getVariableByMangledName(mangledName);
+    const RsPointerType& ptr_type = dynamic_cast<const RsPointerType&>(*var->getType());
 
-    registerPointerChange(rs, src, tgt, checkPointerMove, checkMemLeaks);
+    registerPointerChange(rs, var->getAddress(), tgt, ptr_type, checkPointerMove);
 }
 
 static
-void checkMemRead(RuntimeSystem* rs, Address addr, size_t sz)
+void checkMemRead(RuntimeSystem& rs, Address addr, size_t sz)
 {
-  rs->checkMemRead(addr, sz);
+  rs.checkMemRead(addr, sz);
 }
 
 static
@@ -108,9 +106,9 @@ void registerMemType(MemoryType& mt, size_t ofs, const RsType* t)
 
 
 static
-void checkMemWrite(RuntimeSystem* rs, Address addr, size_t sz, const RsType* t = NULL)
+void checkMemWrite(RuntimeSystem& rs, Address addr, size_t sz, const RsType* t = NULL)
 {
-  rs->checkMemWrite(addr, sz, t);
+  rs.checkMemWrite(addr, sz, t);
 }
 
 inline
@@ -170,8 +168,8 @@ Address operator-(const Address& lhs, long offset)
 #define TEST_INIT( MSG)                               \
     out << "-- " << (MSG) << endl ;         \
     bool errorFound=false;                            \
-    RuntimeSystem * rs = RuntimeSystem::instance();   \
-    rs->checkpoint(srcPosition( (MSG), __LINE__, __LINE__ ));              \
+    RuntimeSystem& rs = RuntimeSystem::instance();   \
+    rs.checkpoint((rted_SourceInfo) { MSG, __LINE__, __LINE__ });              \
 
 
 //#ASR 07/07/10
@@ -198,17 +196,17 @@ Address operator-(const Address& lhs, long offset)
     }                                                              \
     errorFound=false;                                              \
 
-#define CHECKPOINT rs -> checkpoint( srcPosition( "", __LINE__, __LINE__ ));
+#define CHECKPOINT rs.checkpoint( srcPosition( "", __LINE__, __LINE__ ));
 
 
-#define CLEANUP  {  rs->doProgramExitChecks();  rs->clearStatus(); }
+#define CLEANUP  {  rs.doProgramExitChecks();  rs.clearStatus(); }
 
 
 
 // ------------------- cstdlib string test macros ----------------------------
 
 // each test must define TRY_BODY, as a call to the method being tested, e.g.
-//      rs->check_strlen(  (const char*) str)
+//      rs.check_strlen(  (const char*) str)
 #define TRY_BODY
 
 
@@ -314,12 +312,12 @@ void testSuccessfulMallocFree()
 
     createMemory(rs, asAddr(42),10);
 
-    rs->log() << "After creation" << endl;
-    rs->printMemStatus();
+    rs.log() << "After creation" << endl;
+    rs.printMemStatus();
     freeMemory(rs, asAddr(42));
 
-    rs->log() << "After free" << endl;
-    rs->printMemStatus();
+    rs.log() << "After free" << endl;
+    rs.printMemStatus();
 
     CLEANUP
 }
@@ -365,7 +363,7 @@ void testInvalidStackFree()
     freeMemory(rs, asAddr(42));
 
     // but freeing stack memory is not okay
-    rs->createStackMemory(asAddr(42),sizeof(int),"SgTypeInt");
+    rs.createStackMemory(asAddr(42),sizeof(int),"SgTypeInt");
     try  {  freeMemory(rs, asAddr(42));   }
     TEST_CATCH(RuntimeViolation::INVALID_FREE)
 
@@ -415,7 +413,7 @@ void testMemoryLeaks()
 
     freeMemory(rs, asAddr(60));
 
-    try{ rs->doProgramExitChecks(); }
+    try{ rs.doProgramExitChecks(); }
     TEST_CATCH(RuntimeViolation::MEMORY_LEAK)
 
     freeMemory(rs, asAddr(0));
@@ -492,30 +490,30 @@ void testStack()
     Address addr=0;
 
     RuntimeSystem * rs = RuntimeSystem::instance();
-    rs->createVariable(addr+=4,"GlobalVar1","MangledGlobal1","SgInt");
-    rs->createVariable(addr+=4,"GlobalVar2","MangledGlobal2","SgDouble");
+    rs.createVariable(addr+=4,"GlobalVar1","MangledGlobal1","SgInt");
+    rs.createVariable(addr+=4,"GlobalVar2","MangledGlobal2","SgDouble");
 
     cout << endl << endl << "After Globals" << endl;
 
-    rs->printStack(cout);
-    rs->printMemStatus(cout);
+    rs.printStack(cout);
+    rs.printMemStatus(cout);
 
     beginScope(rs, "Function1");
-    rs->createVariable(addr+=4,"Function1Var1","Mangled","SgInt");
-    rs->createVariable(addr+=4,"Fucntion1Var2","Mangled","SgDouble");
+    rs.createVariable(addr+=4,"Function1Var1","Mangled","SgInt");
+    rs.createVariable(addr+=4,"Fucntion1Var2","Mangled","SgDouble");
 
     checkMemWrite(rs, 2348080,4);
     checkMemRead(rs, addr-4,4);
 
     cout << endl << endl << "After Function1" << endl;
-    rs->printStack(cout);
-    rs->printMemStatus(cout);
+    rs.printStack(cout);
+    rs.printMemStatus(cout);
 
 
     endScope(rs);
     cout << endl << endl << "After return of function" << endl;
-    rs->printStack(cout);
-    rs->printMemStatus(cout);
+    rs.printStack(cout);
+    rs.printMemStatus(cout);
 }
 */
 
@@ -527,10 +525,10 @@ void testFileDoubleClose()
 {
     TEST_INIT("Testing double file close");
 
-    rs->registerFileOpen((FILE*)42,"MyFileName.txt",READ);
-    rs->registerFileClose((FILE*)42);
+    rs.registerFileOpen((FILE*)42,"MyFileName.txt",READ);
+    rs.registerFileClose((FILE*)42);
 
-    try { rs->registerFileClose((FILE*)42); }
+    try { rs.registerFileClose((FILE*)42); }
     TEST_CATCH(RuntimeViolation::INVALID_FILE_CLOSE)
 
     CLEANUP
@@ -541,11 +539,11 @@ void testFileDoubleOpen()
 {
     TEST_INIT("Testing double file open");
 
-    rs->registerFileOpen((FILE*)42,"MyFileName.txt",READ);
-    try {  rs->registerFileOpen((FILE*)42,"Other.txt",READ); }
+    rs.registerFileOpen((FILE*)42,"MyFileName.txt",READ);
+    try {  rs.registerFileOpen((FILE*)42,"Other.txt",READ); }
     TEST_CATCH(RuntimeViolation::DOUBLE_FILE_OPEN)
 
-    rs->registerFileClose((FILE*)42);
+    rs.registerFileClose((FILE*)42);
 
     CLEANUP
 }
@@ -554,12 +552,12 @@ void testFileInvalidClose()
 {
     TEST_INIT("Testing invalid file close");
 
-    rs->registerFileOpen((FILE*)42,"MyFileName.txt",READ);
-    try {  rs->registerFileClose((FILE*)43); }
+    rs.registerFileOpen((FILE*)42,"MyFileName.txt",READ);
+    try {  rs.registerFileClose((FILE*)43); }
     TEST_CATCH(RuntimeViolation::INVALID_FILE_CLOSE)
 
 
-    rs->registerFileClose((FILE*)42);
+    rs.registerFileClose((FILE*)42);
 
     CLEANUP
 }
@@ -568,11 +566,11 @@ void testFileUnclosed()
 {
     TEST_INIT("Testing detection of unclosed files");
 
-    rs->registerFileOpen((FILE*)42,"MyFileName.txt",READ);
-    try {  rs->doProgramExitChecks(); }
+    rs.registerFileOpen((FILE*)42,"MyFileName.txt",READ);
+    try {  rs.doProgramExitChecks(); }
     TEST_CATCH(RuntimeViolation::UNCLOSED_FILES)
 
-    rs->registerFileClose((FILE*)42);
+    rs.registerFileClose((FILE*)42);
 
     CLEANUP
 }
@@ -582,33 +580,33 @@ void testFileInvalidAccess()
     TEST_INIT("Testing invalid file-access");
 
 
-    try{ rs->registerFileOpen(NULL,"name",READ ); }
+    try{ rs.registerFileOpen(NULL,"name",READ ); }
     TEST_CATCH(RuntimeViolation::INVALID_FILE_OPEN)
 
 
     FILE * fh = (FILE*)42;
     // some allowed operations
-    rs->registerFileOpen(fh,"MyFileName.txt",READ | WRITE);
-    rs->checkFileAccess(fh,true);
-    rs->checkFileAccess(fh,false);
-    rs->registerFileClose(fh);
+    rs.registerFileOpen(fh,"MyFileName.txt",READ | WRITE);
+    rs.checkFileAccess(fh,true);
+    rs.checkFileAccess(fh,false);
+    rs.registerFileClose(fh);
 
 
     // check if illegal write is detected
-    rs->registerFileOpen(fh,"MyFileName.txt",READ);
-    rs->checkFileAccess(fh,true);
-    try {  rs->checkFileAccess(fh,false); } //invalid write
+    rs.registerFileOpen(fh,"MyFileName.txt",READ);
+    rs.checkFileAccess(fh,true);
+    try {  rs.checkFileAccess(fh,false); } //invalid write
     TEST_CATCH(RuntimeViolation::INVALID_FILE_ACCESS)
-    rs->registerFileClose(fh);
+    rs.registerFileClose(fh);
 
     // check if illegal read is detected
-    rs->registerFileOpen(fh,"MyFileName.txt",WRITE);
-    rs->checkFileAccess(fh,false);
-    try {  rs->checkFileAccess(fh,true); } //invalid read
+    rs.registerFileOpen(fh,"MyFileName.txt",WRITE);
+    rs.checkFileAccess(fh,false);
+    try {  rs.checkFileAccess(fh,true); } //invalid read
     TEST_CATCH(RuntimeViolation::INVALID_FILE_ACCESS)
-    rs->registerFileClose(fh);
+    rs.registerFileClose(fh);
 
-    try {  rs->checkFileAccess((FILE*)43,true); }
+    try {  rs.checkFileAccess((FILE*)43,true); }
     TEST_CATCH(RuntimeViolation::INVALID_FILE_ACCESS)
 
     CLEANUP
@@ -621,7 +619,7 @@ void testScopeFreesStack()
 
 
     beginScope(rs, "main");
-    rs->createVariable(
+    rs.createVariable(
         asAddr(4),
         "my_var",
         "mangled_my_var",
@@ -642,7 +640,7 @@ void testImplicitScope()
     TEST_INIT("Testing that an implicit scope exists for globals/main")
     errorFound=false; /*tps unused variable - removing warning */
 
-    rs->createVariable(
+    rs.createVariable(
         asAddr(4),
         "my_var",
         "mangled_my_var",
@@ -661,7 +659,7 @@ void testImplicitScope()
 {
     //
     TEST_INIT("Testing detection of lost mem-regions");
-    TypeSystem * ts = rs->getTypeSystem();
+    TypeSystem& ts = rs.getTypeSystem();
 
     createMemory(rs, asAddr(10), 2*sizeof(int));
     createMemory(rs, asAddr(18), 2*sizeof(int));
@@ -670,15 +668,15 @@ void testImplicitScope()
     int           ptrSize = sizeof(void*);
 
     beginScope(rs, "Scope1");
-        rs->createVariable(addr+=ptrSize,"p1_to_10","mangled_p1_to_10",ts->getPointerType("SgTypeInt"), akStack, nondistributed);
+        rs.createVariable(addr+=ptrSize,"p1_to_10","mangled_p1_to_10",*ts.getPointerType("SgTypeInt"), akStack, nondistributed);
         registerPointerChange(rs, "mangled_p1_to_10", asAddr(10));
 
-        rs->createVariable(addr+=ptrSize,"p1_to_18","mangled_p1_to_18",ts->getPointerType("SgTypeInt"), akStack, nondistributed);
+        rs.createVariable(addr+=ptrSize,"p1_to_18","mangled_p1_to_18",*ts.getPointerType("SgTypeInt"), akStack, nondistributed);
         registerPointerChange(rs, "mangled_p1_to_18", asAddr(18));
 
 
         beginScope(rs, "Scope2");
-            rs->createVariable(addr+=ptrSize,"p2_to_10","mangled_p2_to_10",ts->getPointerType("SgTypeInt"), akStack, nondistributed);
+            rs.createVariable(addr+=ptrSize,"p2_to_10","mangled_p2_to_10",*ts.getPointerType("SgTypeInt"), akStack, nondistributed);
             registerPointerChange(rs, "mangled_p2_to_10", asAddr(10));
         endScope(rs);
 
@@ -700,29 +698,29 @@ void testLostMemRegionFromDoublePointer()
 {
     TEST_INIT(  "Testing detection of lost mem region, which was previously "
                 "pointed to by heap ptr")
-    TypeSystem * ts = rs -> getTypeSystem();
+    TypeSystem&          ts = rs.getTypeSystem();
 
-    AddressDesc ptr_desc = rted_ptr();
-const RsType*     int_ptr = ts -> getPointerType( "SgTypeInt", ptr_desc );
-    AddressDesc ptr_ptr_desc = rted_address_of(ptr_desc);
-const RsType*     int_ptr_ptr = ts -> getPointerType( "SgTypeInt", ptr_ptr_desc );
+    AddressDesc          ptr_desc = rted_ptr();
+    const RsPointerType* int_ptr = ts.getPointerType( "SgTypeInt", ptr_desc );
+    AddressDesc          ptr_ptr_desc = rted_address_of(ptr_desc);
+    const RsPointerType* int_ptr_ptr = ts.getPointerType( "SgTypeInt", ptr_ptr_desc );
 
-    Address var_addr = asAddr(0x7ffb0);
-    Address heap_addr_outer = asAddr(0x42);
-    Address heap_addr_inner = asAddr(0x24601);
+    Address              var_addr = asAddr(0x7ffb0);
+    Address              heap_addr_outer = asAddr(0x42);
+    Address              heap_addr_inner = asAddr(0x24601);
 
     createMemory(rs,  heap_addr_outer, 2 * sizeof( int* ));
     createMemory(rs,  heap_addr_inner, 2 * sizeof( int ));
 
     // int** ptr;
-    rs -> createVariable( var_addr, "int**", "mangled_int**", int_ptr_ptr, akStack, nondistributed );
+    rs.createVariable( var_addr, "int**", "mangled_int**", *int_ptr_ptr, akStack, nondistributed );
     // ptr = (int**) malloc( 2 * sizeof( int* ));
-    registerPointerChange( rs, var_addr, heap_addr_outer, false );
+    registerPointerChange( rs, var_addr, heap_addr_outer, *int_ptr_ptr, false );
 
     // ptr[ 0 ] = (int*) malloc( 2 * sizeof( int ));
     checkMemWrite( rs, heap_addr_outer, sizeof( int* ), int_ptr );
-    rs->checkpoint( SourcePosition() );
-    registerPointerChange( rs, heap_addr_outer, heap_addr_inner, false );
+    rs.checkpoint( (rted_SourceInfo) {"?", __LINE__, __LINE__} );
+    registerPointerChange( rs, heap_addr_outer, heap_addr_inner, *int_ptr, false );
 
 
     try{ freeMemory(rs,  heap_addr_outer ); }
@@ -741,29 +739,29 @@ void testPointerChanged()
     createMemory(rs, asAddr(10), 2*sizeof(int));
     createMemory(rs, asAddr(18), 2*sizeof(int));
 
-    TypeSystem * ts = rs->getTypeSystem();
+    TypeSystem& ts = rs.getTypeSystem();
 
     std::cout << "--- Scope 1" << std::endl;
 
-    rs -> setViolationPolicy( RuntimeViolation::INVALID_PTR_ASSIGN, ViolationPolicy::Exit );
+    rs.setViolationPolicy( RuntimeViolation::INVALID_PTR_ASSIGN, ViolationPolicy::Exit );
     // Case1: change of allocation chunk
     Address addr = asAddr(100);
     int ptrSize = sizeof(void*);
     beginScope(rs, "Scope1");
 
-        rs->createVariable(addr+=ptrSize,"p1_to_10","mangled_p1_to_10", ts->getPointerType("SgTypeInt"), akStack, nondistributed);
+        rs.createVariable(addr+=ptrSize,"p1_to_10","mangled_p1_to_10", *ts.getPointerType("SgTypeInt"), akStack, nondistributed);
         registerPointerChange(rs, "mangled_p1_to_10", asAddr(10));
 
-        rs->createVariable(addr+=ptrSize,"p2_to_10","mangled_p2_to_10",ts->getPointerType("SgTypeInt"), akStack, nondistributed);
+        rs.createVariable(addr+=ptrSize,"p2_to_10","mangled_p2_to_10", *ts.getPointerType("SgTypeInt"), akStack, nondistributed);
         registerPointerChange(rs, "mangled_p2_to_10", asAddr(10));
 
-        rs->createVariable(addr+=ptrSize,"p1_to_18","mangled_p1_to_18",ts->getPointerType("SgTypeInt"), akStack, nondistributed);
+        rs.createVariable(addr+=ptrSize,"p1_to_18","mangled_p1_to_18", *ts.getPointerType("SgTypeInt"), akStack, nondistributed);
         registerPointerChange(rs, "mangled_p1_to_18", asAddr(18));
 
         try{ registerPointerChange(rs, "mangled_p1_to_10", asAddr(18), true); }
         TEST_CATCH(RuntimeViolation::INVALID_PTR_ASSIGN )
 
-        rs->checkpoint(SourcePosition());
+        rs.checkpoint((rted_SourceInfo) {"?", __LINE__, __LINE__});
         registerPointerChange(rs, "mangled_p1_to_18", asAddr(18+sizeof(int)));
 
         freeMemory(rs, asAddr(10));
@@ -776,15 +774,15 @@ void testPointerChanged()
     // Case2: change of "type-chunk"
     beginScope(rs, "Scope2");
         struct A { int arr[10]; int behindArr; };
-        RsClassType * typeA = &ts->getClassType("A",sizeof(A),false);
-        typeA->addMember("arr",ts->getArrayType("SgTypeInt",10 * sizeof(int)), offsetof(A,arr));
-        typeA->addMember("behindArr",ts->getTypeInfo("SgTypeInt"),offsetof(A,behindArr));
+        RsClassType * typeA = &ts.getClassType("A",sizeof(A),false);
+        typeA->addMember("arr",ts.getArrayType("SgTypeInt",10 * sizeof(int)), offsetof(A,arr));
+        typeA->addMember("behindArr",ts.getTypeInfo("SgTypeInt"),offsetof(A,behindArr));
         assert(typeA->isComplete());
 
         // Create an instance of A on stack
-        rs->createVariable(asAddr(0x42),"instanceOfA","mangled", typeA, akStack, nondistributed);
+        rs.createVariable(asAddr(0x42),"instanceOfA","mangled", *typeA, akStack, nondistributed);
 
-        rs->createVariable(asAddr(0x100),"intPtr","mangled_intPtr",ts->getPointerType("SgTypeInt"), akStack, nondistributed);
+        rs.createVariable(asAddr(0x100),"intPtr","mangled_intPtr", *ts.getPointerType("SgTypeInt"), akStack, nondistributed);
         registerPointerChange(rs, "mangled_intPtr",asAddr(0x42));
 
         try{ registerPointerChange(rs, "mangled_intPtr", asAddr(0x42) + 10*sizeof(int),true); }
@@ -794,17 +792,17 @@ void testPointerChanged()
     std::cout << "--- Scope 3" << std::endl;
 
     // use default policy for case 3
-    rs -> setViolationPolicy( RuntimeViolation::INVALID_PTR_ASSIGN, ViolationPolicy::InvalidatePointer );
+    rs.setViolationPolicy( RuntimeViolation::INVALID_PTR_ASSIGN, ViolationPolicy::InvalidatePointer );
     // Case3: into non-allocated memory
-    rs -> beginScope( "Scope3" );
+    beginScope(rs, "Scope3" );
 
         CHECKPOINT
         int *ptr = (int*) (&ptr);
-        rs->createVariable( memAddr(&ptr),"s3_ptr","mangled_s3_ptr",ts->getPointerType("SgTypeInt"), akStack, nondistributed);
+        rs.createVariable( memAddr(&ptr),"s3_ptr","mangled_s3_ptr", *ts.getPointerType("SgTypeInt"), akStack, nondistributed);
 
         CHECKPOINT
         // default policy is to invalidate pointers
-        registerPointerChange(rs, memAddr(&ptr), memAddr(ptr), ts->getPointerType("SgTypeInt"), true, false);
+        registerPointerChange(rs, memAddr(&ptr), memAddr(ptr), *ts.getPointerType("SgTypeInt"), true);
 
         CHECKPOINT
         try{ checkMemRead(rs,  memAddr(ptr), sizeof(ptr)); }
@@ -821,12 +819,12 @@ void testInvalidPointerAssign()
 {
     TEST_INIT("Testing Invalid Pointer assign");
 
-    TypeSystem * ts = rs->getTypeSystem();
+    TypeSystem& ts = rs.getTypeSystem();
 
     beginScope(rs, "Scope2");
         // Create an instance of A on stack
-        rs->createVariable(asAddr(0x42), "instanceOfA","mangled","SgTypeDouble", akStack, nondistributed);
-        rs->createVariable(asAddr(0x100), "intPtr","mangled_intPtr",ts->getPointerType("SgTypeInt"), akStack, nondistributed);
+        rs.createVariable(asAddr(0x42), "instanceOfA","mangled","SgTypeDouble", akStack, nondistributed);
+        rs.createVariable(asAddr(0x100), "intPtr","mangled_intPtr", *ts.getPointerType("SgTypeInt"), akStack, nondistributed);
         // Try to access double with an int ptr
         try { registerPointerChange(rs, "mangled_intPtr", asAddr(0x42)); }
         TEST_CATCH ( RuntimeViolation::INVALID_TYPE_ACCESS )
@@ -840,20 +838,20 @@ void testPointerTracking()
     TEST_INIT("Testing Pointer tracking")
     errorFound=false; /*tps unused variable - removing warning */
 
-    TypeSystem * ts = rs->getTypeSystem();
+    TypeSystem& ts = rs.getTypeSystem();
 
     // class A { int arr[2]; int intBehindArr; }
-    RsClassType * type = &ts->getClassType("A",3*sizeof(int),false);
-    type->addMember("arr",ts->getArrayType("SgTypeInt",2 * sizeof(int)));
-    type->addMember("intBehindArr",ts->getTypeInfo("SgTypeInt"));
+    RsClassType * type = &ts.getClassType("A",3*sizeof(int),false);
+    type->addMember("arr",ts.getArrayType("SgTypeInt",2 * sizeof(int)));
+    type->addMember("intBehindArr",ts.getTypeInfo("SgTypeInt"));
 
     beginScope(rs, "TestScope");
-    rs->createVariable(asAddr(42), "instanceOfA","mangled","A", akStack, nondistributed);
+    rs.createVariable(asAddr(42), "instanceOfA","mangled","A", akStack, nondistributed);
 
-    rs->createVariable(asAddr(100), "pointer","mangledPointer",ts->getPointerType("A"), akStack, nondistributed);
+    rs.createVariable(asAddr(100), "pointer","mangledPointer", *ts.getPointerType("A"), akStack, nondistributed);
 
-    //rs->setQtDebuggerEnabled(true);
-    //rs->checkpoint(SourcePosition());
+    //rs.setQtDebuggerEnabled(true);
+    //rs.checkpoint(SourcePosition());
 
 
     endScope(rs);
@@ -872,14 +870,14 @@ void testMultidimensionalStackArrayAccess()
 {
     TEST_INIT("Testing Multidimensional Array Access")
 
-    TypeSystem * ts = rs -> getTypeSystem();
-    MemoryManager* mm = rs -> getMemManager();
+    TypeSystem& ts = rs.getTypeSystem();
+    MemoryManager& mm = rs.getMemManager();
 
     size_t intsz = sizeof( int );
 
     // int x[ 2 ][ 3 ]
     //  type array of array of int
-    const RsArrayType* type = ts->getArrayType( ts->getArrayType( "SgTypeInt", 3 * intsz), 2 * 3 * sizeof(int) );
+    const RsArrayType* type = ts.getArrayType( ts.getArrayType( "SgTypeInt", 3 * intsz), 2 * 3 * sizeof(int) );
 
     beginScope(rs, "TestScope");
 
@@ -888,15 +886,15 @@ void testMultidimensionalStackArrayAccess()
     // check legal memory read from same memory region, but out of bounds on
     // inner array, i.e check
     //  x[ 0 ][ 3 ]     // actually x[ 1 ][ 0 ]
-    try { checkIfSameChunk( *mm, asAddr(0x100), asAddr(0x100) + 3 * intsz, intsz); }
+    try { checkIfSameChunk( mm, asAddr(0x100), asAddr(0x100) + 3 * intsz, intsz); }
     TEST_CATCH ( RuntimeViolation::POINTER_CHANGED_MEMAREA )
     // as above, but out of bounds in the other direction
-    try { checkIfSameChunk( *mm, asAddr(0x100) + 3 * intsz, asAddr(0x100) + 2 * intsz, intsz); }
+    try { checkIfSameChunk( mm, asAddr(0x100) + 3 * intsz, asAddr(0x100) + 2 * intsz, intsz); }
     TEST_CATCH ( RuntimeViolation::POINTER_CHANGED_MEMAREA )
 
     CHECKPOINT
     // as above, but this time legally access the sub array
-    checkIfSameChunk( *mm, asAddr(0x100) + 3 * intsz, asAddr(0x100) + 3 * intsz, intsz);
+    checkIfSameChunk( mm, asAddr(0x100) + 3 * intsz, asAddr(0x100) + 3 * intsz, intsz);
 
     endScope(rs);
 
@@ -906,39 +904,41 @@ void testMultidimensionalStackArrayAccess()
 void testArrayAccess()
 {
     TEST_INIT("Testing Heap Array")
-    TypeSystem * ts = rs->getTypeSystem();
+    TypeSystem&          ts = rs.getTypeSystem();
+    Address              heapAddr = asAddr(0x42);
 
-    Address heapAddr = asAddr(0x42);
     createMemory(rs, heapAddr,10*sizeof(int));
     createMemory(rs, heapAddr+10*sizeof(int),10); //allocate second chunk directly afterwards
 
-    rs -> setViolationPolicy( RuntimeViolation::INVALID_PTR_ASSIGN, ViolationPolicy::Exit );
+    rs.setViolationPolicy( RuntimeViolation::INVALID_PTR_ASSIGN, ViolationPolicy::Exit );
     beginScope(rs, "Scope");
 
-    Address pointerAddr = asAddr(0x100);
-    rs->createVariable(asAddr(0x100),"intPointer","mangled_intPointer",ts->getPointerType("SgTypeInt"), akStack, nondistributed);
+    Address              pointerAddr = asAddr(0x100);
+    const RsPointerType* intptr = ts.getPointerType("SgTypeInt");
+
+    rs.createVariable(pointerAddr, "intPointer", "mangled_intPointer", *intptr, akStack, nondistributed);
     CHECKPOINT
-    registerPointerChange(rs, pointerAddr,heapAddr,false);
+    registerPointerChange(rs, pointerAddr, heapAddr, *intptr, false);
 
     CHECKPOINT
     //simulate iteration over array
     for(int i=0; i<10 ; i++)
-        registerPointerChange(rs, pointerAddr,heapAddr+ i*sizeof(int),true);
+        registerPointerChange(rs, pointerAddr, heapAddr+ i*sizeof(int), *intptr, true);
 
 
     // write in second allocation ( not allowed to changed mem-chunk)
-    try { registerPointerChange(rs, pointerAddr,heapAddr+ 10*sizeof(int),true); }
+    try { registerPointerChange(rs, pointerAddr,heapAddr+ 10*sizeof(int), *intptr, true); }
     TEST_CATCH ( RuntimeViolation::INVALID_PTR_ASSIGN )
 
     // write in illegal mem region before
-    try { registerPointerChange(rs, pointerAddr, heapAddr - sizeof(int),true); }
+    try { registerPointerChange(rs, pointerAddr, heapAddr - sizeof(int), *intptr, true); }
     TEST_CATCH ( RuntimeViolation::INVALID_READ )
 
     freeMemory(rs, heapAddr);
     freeMemory(rs, heapAddr+10*sizeof(int));
 
     endScope(rs);
-    rs -> setViolationPolicy( RuntimeViolation::INVALID_PTR_ASSIGN, ViolationPolicy::InvalidatePointer );
+    rs.setViolationPolicy( RuntimeViolation::INVALID_PTR_ASSIGN, ViolationPolicy::InvalidatePointer );
 
     CLEANUP
 }
@@ -947,12 +947,12 @@ void testDoubleArrayHeapAccess()
 {
     TEST_INIT("Testing Heap Double Array (e.g. int**)")
     errorFound=false; /*tps unused variable - removing warning */
-    TypeSystem * ts = rs -> getTypeSystem();
+    TypeSystem& ts = rs.getTypeSystem();
 
-    AddressDesc ptr_desc = rted_ptr();
-const RsType*     int_ptr = ts -> getPointerType( "SgTypeInt", ptr_desc );
-    AddressDesc ptr_ptr_desc = rted_address_of(ptr_desc);
-const RsType*     int_ptr_ptr = ts -> getPointerType( "SgTypeInt", ptr_ptr_desc );
+    AddressDesc          ptr_desc = rted_ptr();
+    const RsPointerType* int_ptr = ts.getPointerType( "SgTypeInt", ptr_desc );
+    AddressDesc          ptr_ptr_desc = rted_address_of(ptr_desc);
+    const RsPointerType* int_ptr_ptr = ts.getPointerType( "SgTypeInt", ptr_ptr_desc );
 
     Address var_addr = asAddr(0x7ffb0);
     Address heap_addr_outer = asAddr(0x42);
@@ -962,18 +962,18 @@ const RsType*     int_ptr_ptr = ts -> getPointerType( "SgTypeInt", ptr_ptr_desc 
     createMemory(rs,  heap_addr_inner, 2 * sizeof( int ));
 
     // int** ptr;
-    rs -> createVariable( var_addr, "int**", "mangled_int**", int_ptr_ptr, akStack, nondistributed );
+    rs.createVariable( var_addr, "int**", "mangled_int**", *int_ptr_ptr, akStack, nondistributed );
     // ptr = (int**) malloc( 2 * sizeof( int* ));
-    registerPointerChange( rs, var_addr, heap_addr_outer, false );
+    registerPointerChange( rs, var_addr, heap_addr_outer, *int_ptr_ptr, false );
 
     // ptr[ 0 ] = (int*) malloc( 2 * sizeof( int ));
     checkMemWrite( rs, heap_addr_outer, sizeof( int* ), int_ptr );
-    rs->checkpoint(SourcePosition());
-    registerPointerChange( rs, heap_addr_outer, heap_addr_inner );
+    rs.checkpoint(srcPosition("?", __LINE__, __LINE__));
+    registerPointerChange( rs, heap_addr_outer, heap_addr_inner, *int_ptr );
 
 
-    freeMemory(rs,  heap_addr_inner );
-    freeMemory(rs,  heap_addr_outer );
+    freeMemory(rs, heap_addr_inner );
+    freeMemory(rs, heap_addr_outer );
 
     CLEANUP
 }
@@ -995,10 +995,10 @@ void test_memcpy()
 
 
     // 4..20 doesn't overlap 20..36
-    rs->check_memcpy( point_to<void>(ptr1), point_to<void>(ptr2), 16);
+    rs.check_memcpy( point_to<void>(ptr1), point_to<void>(ptr2), 16);
 
     // but 4..20 overlaps 16..32
-    try { rs->check_memcpy( point_to<void>(ptr1), point_to<void>(ptr2 - 4), 16);}
+    try { rs.check_memcpy( point_to<void>(ptr1), point_to<void>(ptr2 - 4), 16);}
     TEST_CATCH( RuntimeViolation::INVALID_MEM_OVERLAP)
 
     freeMemory(rs,  ptr1);
@@ -1019,11 +1019,11 @@ void test_memmove()
     Address ptr2 = address;
 
 
-    try { rs->check_memmove( point_to<void>(ptr1), point_to<void>(ptr2 - 4), 16);}
+    try { rs.check_memmove( point_to<void>(ptr1), point_to<void>(ptr2 - 4), 16);}
     TEST_CATCH( RuntimeViolation::INVALID_READ)
 
     checkMemWrite(rs,  address, 16);
-    rs->check_memmove( point_to<void>(ptr1), point_to<void>(ptr2), 16);
+    rs.check_memmove( point_to<void>(ptr1), point_to<void>(ptr2), 16);
 
     freeMemory(rs,  ptr1);
     freeMemory(rs,  ptr2);
@@ -1036,13 +1036,13 @@ void test_strcpy()
     //~ TEST_INIT("Testing calls to strcpy");
 //~
     //~ #undef TRY_BODY
-    //~ #define TRY_BODY rs->check_strcpy(  dest, (const char*) source);
+    //~ #define TRY_BODY rs.check_strcpy(  dest, (const char*) source);
     //~ TEST_INIT_STRING( DEST_SOURCE)
     //~ TEST_STRING_READ_TERMINATED( source)
     //~ TEST_STRING_WRITE( dest, SZ / 2, SZ)
 //~
     //~ // also, it's not legal for the strings to overlap
-    //~ try { rs->check_strcpy( source + (N/2), source); }
+    //~ try { rs.check_strcpy( source + (N/2), source); }
     //~ TEST_CATCH( RuntimeViolation::INVALID_MEM_OVERLAP);
 //~
     //~ TRY_BODY
@@ -1057,13 +1057,13 @@ void test_strncpy()
     //~ TEST_INIT("Testing calls to strncpy");
 //~
     //~ #undef TRY_BODY
-    //~ #define TRY_BODY rs->check_strncpy(  dest, (const char*) source, N / 2);
+    //~ #define TRY_BODY rs.check_strncpy(  dest, (const char*) source, N / 2);
     //~ TEST_INIT_STRING( DEST_SOURCE)
     //~ TEST_STRING_READ( source)
     //~ TEST_STRING_WRITE( dest, SZ / 4, SZ / 2)
 //~
     //~ // also it's not legal for the strings to overlap
-    //~ try { rs->check_strncpy(  source + (N/2),  source, N); }
+    //~ try { rs.check_strncpy(  source + (N/2),  source, N); }
     //~ TEST_CATCH( RuntimeViolation::INVALID_MEM_OVERLAP);
 //~
     //~ TRY_BODY
@@ -1078,7 +1078,7 @@ void test_strcat()
     TEST_INIT("Testing calls to strcat");
 
     #undef TRY_BODY
-    #define TRY_BODY rs->check_strcat(  dest, (const char*) source);
+    #define TRY_BODY rs.check_strcat(  dest, (const char*) source);
     TEST_INIT_STRING( DEST_SOURCE)
     TEST_STRING_READ_TERMINATED( source)
     TEST_STRING_READ_TERMINATED( dest)
@@ -1097,7 +1097,7 @@ void test_strncat()
     TEST_INIT("Testing calls to strncat");
 
     #undef TRY_BODY
-    #define TRY_BODY rs->check_strncat(  dest, (const char*) source, N / 2);
+    #define TRY_BODY rs.check_strncat(  dest, (const char*) source, N / 2);
     TEST_INIT_STRING( DEST_SOURCE)
     TEST_STRING_READ( source)
     TEST_STRING_READ( dest)
@@ -1116,7 +1116,7 @@ void test_strchr()
     TEST_INIT("Testing calls to strchr");
 
     #undef TRY_BODY
-    #define TRY_BODY rs->check_strchr(  (const char*) str, 'x');
+    #define TRY_BODY rs.check_strchr(  (const char*) str, 'x');
     TEST_INIT_STRING( char *str = NULL)
     TEST_STRING_READ_TERMINATED( str)
 
@@ -1131,7 +1131,7 @@ void test_strpbrk()
     TEST_INIT("Testing calls to strpbrk");
 
     #undef TRY_BODY
-    #define TRY_BODY rs->check_strpbrk(  (const char*) str1, (const char*) str2);
+    #define TRY_BODY rs.check_strpbrk(  (const char*) str1, (const char*) str2);
     TEST_STR1_STR2
 
     CLEANUP
@@ -1142,7 +1142,7 @@ void test_strspn()
     TEST_INIT("Testing calls to strspn");
 
     #undef TRY_BODY
-    #define TRY_BODY rs->check_strspn(  (const char*) str1, (const char*) str2);
+    #define TRY_BODY rs.check_strspn(  (const char*) str1, (const char*) str2);
     TEST_STR1_STR2
 
     CLEANUP
@@ -1153,7 +1153,7 @@ void test_strstr()
     TEST_INIT("Testing calls to strstr");
 
     #undef TRY_BODY
-    #define TRY_BODY rs->check_strstr(  (const char*) str1, (const char*) str2);
+    #define TRY_BODY rs.check_strstr(  (const char*) str1, (const char*) str2);
     TEST_STR1_STR2
 
     CLEANUP
@@ -1164,7 +1164,7 @@ void test_strlen()
     TEST_INIT("Testing calls to strlen");
 
     #undef TRY_BODY
-    #define TRY_BODY rs->check_strlen(  (const char*) str);
+    #define TRY_BODY rs.check_strlen(  (const char*) str);
     TEST_INIT_STRING( char* str = NULL)
     TEST_STRING_READ_TERMINATED( str)
 
@@ -1190,7 +1190,7 @@ void test_memcpy_strict_overlap()
 
     // even though there's no overlap with the copied ranges, memcpy shouldn't
     // be called when the allocated blocks overlap
-    try { rs->check_memcpy( s1, s2, 3);}
+    try { rs.check_memcpy( s1, s2, 3);}
     TEST_CATCH( RuntimeViolation::INVALID_MEM_OVERLAP)
 
     freeMemory(rs,  memAddr(s2));
@@ -1214,9 +1214,9 @@ void test_meminit_nullterm_included()
 
     checkMemWrite(rs,  memAddr(s2), n);
 
-    rs->check_strcpy( (char*) s1, (const char*) s2);
+    rs.check_strcpy( (char*) s1, (const char*) s2);
     strcpy( s1, s2);
-    rs->check_strcpy( (char*) s3, (const char*) s1);
+    rs.check_strcpy( (char*) s3, (const char*) s1);
 
     freeMemory(rs,  memAddr(s1));
     freeMemory(rs,  memAddr(s2));
@@ -1236,27 +1236,27 @@ void test_range_overlap()
     createMemory(rs,  memAddr(s2), sizeof(s2));
     createMemory(rs,  memAddr(s3), sizeof(s3));
     checkMemWrite(rs,  memAddr(s3), sizeof(s3));
-    rs->check_strcpy( s2, s3);
+    rs.check_strcpy( s2, s3);
 
     strcpy( s2, s3);
     s1 = &s2[ 3 ];
 
-    try { rs->check_strcat( s1, s2);}
+    try { rs.check_strcat( s1, s2);}
     TEST_CATCH( RuntimeViolation::INVALID_MEM_OVERLAP)
 
-    rs->check_strcpy( &s2[ 10 ], s3);
+    rs.check_strcpy( &s2[ 10 ], s3);
     strcpy( &s2[ 10 ], s3);
 
     // this should be fine -- the cat doesn't reach s2[ 10 ]
     s2[ 0 ] = '\0';
     s1 = &s2[0];
-    rs->check_strcat( s1, &s2[ 10 ]);
+    rs.check_strcat( s1, &s2[ 10 ]);
 
     s1[ 0 ] = ' ';
     s1[ 3 ] = '\0';
 
     // now the cat will reach and an overlap occurs
-    try { rs->check_strcat( s1, &s2[ 10 ]);}
+    try { rs.check_strcat( s1, &s2[ 10 ]);}
     TEST_CATCH( RuntimeViolation::INVALID_MEM_OVERLAP)
 
 
@@ -1272,22 +1272,22 @@ void testTypeSystemDetectNested()
 {
     TEST_INIT("Testing TypeSystem: nested type detection")
 
-    TypeSystem * ts = rs->getTypeSystem();
+    TypeSystem& ts = rs.getTypeSystem();
 
     // Register Struct A
     struct A { int a1; char a2; double a3; };
-    RsClassType * typeA = &ts->getClassType("A",sizeof(A),false);
-    typeA->addMember("a1",ts->getTypeInfo("SgTypeInt"),   offsetof(A,a1));
-    typeA->addMember("a2",ts->getTypeInfo("SgTypeChar"),  offsetof(A,a2));
-    typeA->addMember("a3",ts->getTypeInfo("SgTypeDouble"),offsetof(A,a3));
+    RsClassType * typeA = &ts.getClassType("A",sizeof(A),false);
+    typeA->addMember("a1",ts.getTypeInfo("SgTypeInt"),   offsetof(A,a1));
+    typeA->addMember("a2",ts.getTypeInfo("SgTypeChar"),  offsetof(A,a2));
+    typeA->addMember("a3",ts.getTypeInfo("SgTypeDouble"),offsetof(A,a3));
     assert(typeA->isComplete());
 
     // Register Struct B
     struct B { A arr[10]; char b1; int b2; };
-    RsClassType * typeB = &ts->getClassType("B",sizeof(B),false);
-    typeB->addMember("arr",ts->getArrayType("A",10 * sizeof(struct A)),    offsetof(B,arr));
-    typeB->addMember("b1",ts->getTypeInfo("SgTypeChar"),offsetof(B,b1) );
-    typeB->addMember("b2",ts->getTypeInfo("SgTypeInt"), offsetof(B,b2));
+    RsClassType * typeB = &ts.getClassType("B",sizeof(B),false);
+    typeB->addMember("arr",ts.getArrayType("A",10 * sizeof(struct A)),    offsetof(B,arr));
+    typeB->addMember("b1",ts.getTypeInfo("SgTypeChar"),offsetof(B,b1) );
+    typeB->addMember("b2",ts.getTypeInfo("SgTypeInt"), offsetof(B,b2));
     assert(typeB->isComplete());
 
 
@@ -1295,17 +1295,17 @@ void testTypeSystemDetectNested()
     // Create Memory with first an A and then a B
     const Address ADDR = asAddr(42);
     createMemory(rs, ADDR, sizeof(A)+sizeof(B));
-    MemoryType* mt = rs->getMemManager()->getMemoryType(ADDR);
-    registerMemType(*mt, 0, ts->getTypeInfo("A"));
+    MemoryType* mt = rs.getMemManager().getMemoryType(ADDR);
+    registerMemType(*mt, 0, ts.getTypeInfo("A"));
     CHECKPOINT
-    registerMemType(*mt, 0 + sizeof(A), ts->getTypeInfo("B"));
+    registerMemType(*mt, 0 + sizeof(A), ts.getTypeInfo("B"));
     CHECKPOINT
-    registerMemType(*mt, 0 + sizeof(A) + offsetof(A,a3), ts->getTypeInfo("SgTypeDouble"));
+    registerMemType(*mt, 0 + sizeof(A) + offsetof(A,a3), ts.getTypeInfo("SgTypeDouble"));
 
 
-    //rs->setQtDebuggerEnabled(true);
-    //rs->checkpoint(SourcePosition());
-    //rs->setQtDebuggerEnabled(false);
+    //rs.setQtDebuggerEnabled(true);
+    //rs.checkpoint(SourcePosition());
+    //rs.setQtDebuggerEnabled(false);
     /*
     RsType * type1 = mt->getTypeAt(sizeof(A)+offsetof(B,arr),sizeof(A));
     RsType * type2 = mt->getTypeAt(sizeof(A)+offsetof(B,arr) + 5*sizeof(A)+1,sizeof(A));
@@ -1315,24 +1315,24 @@ void testTypeSystemDetectNested()
 
     CHECKPOINT
     //Access to padded area
-    try { registerMemType(*mt, 0 + offsetof(A,a2)+1,ts->getTypeInfo("SgTypeChar")); }
+    try { registerMemType(*mt, 0 + offsetof(A,a2)+1,ts.getTypeInfo("SgTypeChar")); }
     TEST_CATCH( RuntimeViolation::INVALID_TYPE_ACCESS)
 
     CHECKPOINT
     //Access to padded area
     //Wrong type
-    try { registerMemType(*mt, 0, ts->getTypeInfo("B")); }
+    try { registerMemType(*mt, 0, ts.getTypeInfo("B")); }
     TEST_CATCH( RuntimeViolation::INVALID_TYPE_ACCESS)
 
     CHECKPOINT
     //Access to padded area
     //Wrong basic type
-    registerMemType(*mt, 0 + offsetof(A,a2), ts->getTypeInfo("SgTypeChar"));
-    try { registerMemType(*mt, 0 + offsetof(A,a2), ts->getTypeInfo("SgTypeInt")); }
+    registerMemType(*mt, 0 + offsetof(A,a2), ts.getTypeInfo("SgTypeChar"));
+    try { registerMemType(*mt, 0 + offsetof(A,a2), ts.getTypeInfo("SgTypeInt")); }
     TEST_CATCH( RuntimeViolation::INVALID_TYPE_ACCESS)
 
-    rs->log() << "Type System Status after test" << endl;
-    ts->print(rs->log());
+    rs.log() << "Type System Status after test" << endl;
+    ts.print(rs.log());
 
     CHECKPOINT
     freeMemory(rs, asAddr(42));
@@ -1343,35 +1343,35 @@ void testTypeSystemDetectNested()
 void testTypeSystemMerge()
 {
     TEST_INIT("Testing TypeSystem: Merging basic types into a struct ")
-    TypeSystem * ts = rs->getTypeSystem();
+    TypeSystem& ts = rs.getTypeSystem();
 
     struct A { int a1; int a2; float a3; };
-    RsClassType * typeA = &ts->getClassType("A",sizeof(A),false);
-    typeA->addMember("a1", ts->getTypeInfo("SgTypeInt"),   offsetof(A,a1));
-    typeA->addMember("a2", ts->getTypeInfo("SgTypeInt"),   offsetof(A,a2));
-    typeA->addMember("a3", ts->getTypeInfo("SgTypeFloat"), offsetof(A,a3));
+    RsClassType * typeA = &ts.getClassType("A",sizeof(A),false);
+    typeA->addMember("a1", ts.getTypeInfo("SgTypeInt"),   offsetof(A,a1));
+    typeA->addMember("a2", ts.getTypeInfo("SgTypeInt"),   offsetof(A,a2));
+    typeA->addMember("a3", ts.getTypeInfo("SgTypeFloat"), offsetof(A,a3));
     assert(typeA->isComplete());
 
-    rs -> checkpoint( SourcePosition() );
+    rs.checkpoint( srcPosition("?", __LINE__, __LINE__) );
     const Address ADDR = asAddr(42);
     createMemory(rs, ADDR, 100);
 
-        MemoryType* mt = rs->getMemManager()->getMemoryType(ADDR);
+        MemoryType* mt = rs.getMemManager().getMemoryType(ADDR);
         //first part in mem is a double
-        registerMemType(*mt, 0, ts->getTypeInfo("SgTypeDouble"));
+        registerMemType(*mt, 0, ts.getTypeInfo("SgTypeDouble"));
 
         //then two ints are accessed
-        registerMemType(*mt, 0 + sizeof(double)+offsetof(A,a1),ts->getTypeInfo("SgTypeInt"));
-        registerMemType(*mt, 0 + sizeof(double)+offsetof(A,a2),ts->getTypeInfo("SgTypeInt") );
+        registerMemType(*mt, 0 + sizeof(double)+offsetof(A,a1),ts.getTypeInfo("SgTypeInt"));
+        registerMemType(*mt, 0 + sizeof(double)+offsetof(A,a2),ts.getTypeInfo("SgTypeInt") );
         //then the same location is accessed with an struct of two int -> has to merge
         registerMemType(*mt, 0 + sizeof(double),typeA);
 
         // because of struct access it is known that after the two ints a float follows -> access with int failes
-        try { registerMemType(*mt, 0 + sizeof(double) + offsetof(A,a3), ts->getTypeInfo("SgTypeInt")); }
+        try { registerMemType(*mt, 0 + sizeof(double) + offsetof(A,a3), ts.getTypeInfo("SgTypeInt")); }
         TEST_CATCH( RuntimeViolation::INVALID_TYPE_ACCESS)
 
 
-    rs -> checkpoint( SourcePosition() );
+    rs.checkpoint( srcPosition("?", __LINE__, __LINE__) );
     freeMemory(rs, ADDR);
 
     CLEANUP
@@ -1380,14 +1380,14 @@ void testTypeSystemMerge()
 void testPartialTypeSystemArrayAccess() {
     TEST_INIT("Testing types: array access of type with subtype overlap")
     errorFound=false; /*tps unused variable - removing warning */
-    MemoryManager *mm = rs -> getMemManager();
-    TypeSystem *ts = rs -> getTypeSystem();
+    MemoryManager& mm = rs.getMemManager();
+    TypeSystem& ts = rs.getTypeSystem();
 
     // register type(s)
     struct Typ { char a; int b; };
-    RsClassType *typ = &ts->getClassType( "Typ", sizeof( Typ ),false);
-    typ -> addMember( "a", ts->getTypeInfo( "SgTypeInt" ), offsetof( Typ, a ));
-    typ -> addMember( "b", ts->getTypeInfo( "SgTypeInt" ), offsetof( Typ, b ));
+    RsClassType *typ = &ts.getClassType( "Typ", sizeof( Typ ),false);
+    typ -> addMember( "a", ts.getTypeInfo( "SgTypeInt" ), offsetof( Typ, a ));
+    typ -> addMember( "b", ts.getTypeInfo( "SgTypeInt" ), offsetof( Typ, b ));
     assert( typ -> isComplete() );
 
     Address Addr = asAddr(0x42);
@@ -1401,9 +1401,9 @@ void testPartialTypeSystemArrayAccess() {
     //  0       8   12  16
     //  ////[int]////[int]
     //  [  Typ  ]/////////
-    MemoryType*mt = mm -> getMemoryType( Addr );
+    MemoryType* mt = mm.getMemoryType( Addr );
     registerMemType( *mt, 0, typ );
-    registerMemType( *mt, 0 + el2_b_offset, ts->getTypeInfo( "SgTypeInt" ));
+    registerMemType( *mt, 0 + el2_b_offset, ts.getTypeInfo( "SgTypeInt" ));
 
     // Check array access of larger type.  So far we have no reason to complain:
     // we don't know the full type at 8..16, but the part we do know is
@@ -1412,7 +1412,7 @@ void testPartialTypeSystemArrayAccess() {
     //  0       8   12  16
     //          [  Typ?  ]
     CHECKPOINT
-    checkIfSameChunk( *mm, Addr, Addr + el2_offset, (size_t)sizeof( Typ ));
+    checkIfSameChunk( mm, Addr, Addr + el2_offset, (size_t)sizeof( Typ ));
 
     freeMemory(rs,  Addr );
     CLEANUP
@@ -1421,37 +1421,37 @@ void testPartialTypeSystemArrayAccess() {
 void testTypeSystemSubtypes() {
     TEST_INIT("Testing types: createObject should handle subtypes")
     errorFound=false; /*tps unused variable - removing warning */
-    MemoryManager* mm = rs -> getMemManager();
-    TypeSystem* ts = rs -> getTypeSystem();
+    MemoryManager& mm = rs.getMemManager();
+    TypeSystem& ts = rs.getTypeSystem();
 
     // register types
     class Base { public: int x; };
     class Sub : public Base { public: int y[ 200 ]; };
     RsClassType* rs_base = new RsClassType( "Base", sizeof( Base ), false );
-    rs_base -> addMember( "x", ts->getTypeInfo( "SgTypeInt" ), offsetof( Base, x ));
+    rs_base -> addMember( "x", ts.getTypeInfo( "SgTypeInt" ), offsetof( Base, x ));
     assert( rs_base -> isComplete() );
 
     RsClassType* rs_sub = new RsClassType( "Sub", sizeof( Sub ), false );
     rs_sub -> addMember(
         "y",
-        ts -> getArrayType( "SgTypeInt", sizeof( int[ 200 ])),
+        ts.getArrayType( "SgTypeInt", sizeof( int[ 200 ])),
         offsetof( Sub, y ));
     assert( rs_sub -> isComplete() );
 
     // we should be able to call createObject for the same address in either
     // order and end up with the more specific (larger) type.
-    rs -> createObject( asAddr(0x42), rs_base );
-    rs -> createObject( asAddr(0x42), rs_sub );
-    MemoryType* mt = mm -> findContainingMem( asAddr(0x42), 1 );
+    rs.createObject( asAddr(0x42), rs_base );
+    rs.createObject( asAddr(0x42), rs_sub );
+    MemoryType* mt = mm.findContainingMem( asAddr(0x42), 1 );
     assert( mt );
     assert( rs_sub == mt -> getTypeAt( 0, mt -> getSize() ));
 
     freeMemory(rs, asAddr(0x42) );
 
     // same test, but we call createObject in the reverse order
-    rs -> createObject( asAddr(0x42), rs_sub );
-    rs -> createObject( asAddr(0x42), rs_base );
-    mt = mm -> findContainingMem( asAddr(0x42), 1 );
+    rs.createObject( asAddr(0x42), rs_sub );
+    rs.createObject( asAddr(0x42), rs_base );
+    mt = mm.findContainingMem( asAddr(0x42), 1 );
     assert( mt );
     assert( rs_sub == mt -> getTypeAt( 0, mt -> getSize() ));
 
@@ -1463,33 +1463,33 @@ void testTypeSystemSubtypes() {
 void testTypeSystemNested() {
     TEST_INIT("Testing types: createObject should ignore nested types")
     errorFound=false; /*tps unused variable - removing warning */
-    MemoryManager* mm = rs -> getMemManager();
-    TypeSystem* ts = rs -> getTypeSystem();
+    MemoryManager& mm = rs.getMemManager();
+    TypeSystem& ts = rs.getTypeSystem();
 
     // register types
     class Base { public: int x; };
     class Composite { public: int p; Base y[ 200 ]; };
     RsClassType* rs_base = new RsClassType( "Base", sizeof( Base ), false );
-    rs_base -> addMember( "x", ts->getTypeInfo( "SgTypeInt" ), offsetof( Base, x ));
+    rs_base -> addMember( "x", ts.getTypeInfo( "SgTypeInt" ), offsetof( Base, x ));
     assert( rs_base -> isComplete() );
 
     RsClassType* rs_composite = new RsClassType( "Composite", sizeof( Composite ), false );
-    rs_composite -> addMember( "p", ts->getTypeInfo( "SgTypeInt" ), offsetof( Composite, p ));
+    rs_composite -> addMember( "p", ts.getTypeInfo( "SgTypeInt" ), offsetof( Composite, p ));
     rs_composite -> addMember(
         "y",
-        ts -> getArrayType( rs_base, sizeof( Base[ 200 ])),
+        ts.getArrayType( rs_base, sizeof( Base[ 200 ])),
         offsetof( Composite, y ));
     assert( rs_composite -> isComplete() );
 
 
     // Once we create the larger class, we should ignore calls to the composite
     // types.  If we did this in the reverse order the types would be merged.
-    rs -> createObject( asAddr(0x42), rs_composite );
-    MemoryType* mt = mm -> findContainingMem( asAddr(0x42), 1 );
+    rs.createObject( asAddr(0x42), rs_composite );
+    MemoryType* mt = mm.findContainingMem( asAddr(0x42), 1 );
     assert( mt );
     assert( rs_composite == mt -> getTypeAt( 0, mt -> getSize() ));
 
-    rs -> createObject( asAddr(0x42) + offsetof( Composite, y ), rs_base );
+    rs.createObject( asAddr(0x42) + offsetof( Composite, y ), rs_base );
     assert( mt );
     assert( rs_composite == mt -> getTypeAt( 0, mt -> getSize() ));
 
@@ -1501,37 +1501,37 @@ void testTypeSystemNested() {
 void testTypeConsistencyChecking() {
     TEST_INIT("Testing type consistency checking")
     errorFound=false; /*tps unused variable - removing warning */
-    TypeSystem *ts = rs -> getTypeSystem();
+    TypeSystem& ts = rs.getTypeSystem();
 
     // register user types
     struct Typ { char a; int b; };
-    RsClassType *typ = &ts->getClassType( "TypA", sizeof( Typ ), false);
-    typ -> addMember( "a", ts->getTypeInfo( "SgTypeChar" ), offsetof( Typ, a ));
-    typ -> addMember( "b", ts->getTypeInfo( "SgTypeInt" ), offsetof( Typ, b ));
+    RsClassType *typ = &ts.getClassType( "TypA", sizeof( Typ ), false);
+    typ -> addMember( "a", ts.getTypeInfo( "SgTypeChar" ), offsetof( Typ, a ));
+    typ -> addMember( "b", ts.getTypeInfo( "SgTypeInt" ), offsetof( Typ, b ));
     assert( typ -> isComplete() );
 
-    typ = &ts->getClassType( "TypB", sizeof( Typ ),false);
-    typ -> addMember( "a", ts->getTypeInfo( "SgTypeChar" ), offsetof( Typ, a ));
-    typ -> addMember( "b", ts->getTypeInfo( "SgTypeInt" ), offsetof( Typ, b ));
+    typ = &ts.getClassType( "TypB", sizeof( Typ ),false);
+    typ -> addMember( "a", ts.getTypeInfo( "SgTypeChar" ), offsetof( Typ, a ));
+    typ -> addMember( "b", ts.getTypeInfo( "SgTypeInt" ), offsetof( Typ, b ));
     assert( typ -> isComplete() );
 
     // gather types
-    const RsType & int_typ = *(ts->getTypeInfo( "SgTypeInt" ));
-    const RsType & typA = *(ts->getTypeInfo( "TypA" ));
-    const RsType & typB = *(ts->getTypeInfo( "TypB" ));
+    const RsType & int_typ = *(ts.getTypeInfo( "SgTypeInt" ));
+    const RsType & typA = *(ts.getTypeInfo( "TypA" ));
+    const RsType & typB = *(ts.getTypeInfo( "TypB" ));
 
     vector< RsType* > to_delete;
     // char, 4 unknown
     RsCompoundType* compound = new RsCompoundType( sizeof( Typ ));
     RsType &compound_char = *compound;
     to_delete.push_back( compound );
-    compound -> addMember( "", ts->getTypeInfo( "SgTypeChar" ), offsetof( Typ, a ));
+    compound -> addMember( "", ts.getTypeInfo( "SgTypeChar" ), offsetof( Typ, a ));
 
     // 1 unknown, int
     compound = new RsCompoundType( sizeof( Typ ));
     RsType &compound_int = *compound;
     to_delete.push_back( compound );
-    compound -> addMember( "", ts->getTypeInfo( "SgTypeInt" ), offsetof( Typ, b ));
+    compound -> addMember( "", ts.getTypeInfo( "SgTypeInt" ), offsetof( Typ, b ));
 
     // 5 char
     compound = new RsCompoundType( sizeof( Typ ));
@@ -1540,7 +1540,7 @@ void testTypeConsistencyChecking() {
     compound
         -> addMember(
             "",
-            ts -> getArrayType( "SgTypeChar", 5 * sizeof( char )),
+            ts.getArrayType( "SgTypeChar", 5 * sizeof( char )),
             offsetof( Typ, a ));
 
     assert( !( int_typ.isConsistentWith( typA )));
@@ -1589,9 +1589,9 @@ extern "C"
 
       try
       {
-          RuntimeSystem * rs = RuntimeSystem::instance();
-          rs->setTestingMode(true);
-          rs->setOutputFile("test_output.txt");
+          RuntimeSystem& rs = RuntimeSystem::instance();
+          rs.setTestingMode(true);
+          rs.setOutputFile("test_output.txt");
 
           testTypeConsistencyChecking();
 //~ //~
@@ -1649,7 +1649,7 @@ extern "C"
           test_range_overlap();
 
 
-    rs->doProgramExitChecks();
+    rs.doProgramExitChecks();
     printf("All tests passed. \n");
       }
       catch( RuntimeViolation& e)

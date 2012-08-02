@@ -44,6 +44,8 @@ public:
 
     /* The actual analysis, triggered when we reach the specified execution address... */
     virtual bool operator()(bool enabled, const Args &args) {
+        using namespace BinaryAnalysis::InstructionSemantics;
+
         if (enabled && args.insn->get_address()==trigger_addr) {
 
             /* An SMT solver is necessary for this example to work correctly. ROSE uses the SMT solver to try to figure out
@@ -62,21 +64,22 @@ public:
 
             /* Create the policy that holds the analysis state which is modified by each instruction.  Then plug the policy
              * into the X86InstructionSemantics to which we'll feed each instruction. */
-            SymbolicSemantics::Policy policy(&smt_solver);
-            X86InstructionSemantics<SymbolicSemantics::Policy, SymbolicSemantics::ValueType> semantics(policy);
+            SymbolicSemantics::Policy<SymbolicSemantics::State, SymbolicSemantics::ValueType> policy(&smt_solver);
+            X86InstructionSemantics<SymbolicSemantics::Policy<SymbolicSemantics::State, SymbolicSemantics::ValueType>,
+                                    SymbolicSemantics::ValueType> semantics(policy);
 
             /* The top of the stack contains the (unknown) return address.  The value above that is the function's first
              * argument, which we print for reference.  It will be an unkown value, like "v62[32]". */
-            SymbolicSemantics::ValueType<32> arg1_va = policy.add(policy.readGPR(x86_gpr_sp), policy.number<32>(4));
+            SymbolicSemantics::ValueType<32> arg1_va = policy.add(policy.readRegister<32>("esp"), policy.number<32>(4));
             SymbolicSemantics::ValueType<32> arg1 = policy.readMemory<32>(x86_segreg_ss, arg1_va, policy.true_());
             std::cout <<"function argument = " <<arg1 <<"\n";
             std::cout <<"  (Note: \"vN[M]\" is a variable (the Nth variable) of type M-bit vector.)\n";
 
             /* Run the analysis until we can't figure out what instruction is next.  If we set things up correctly, the
              * simulation will stop when we hit the RET instruction to return from this function. */
-            policy.writeIP(SymbolicSemantics::ValueType<32>(analysis_addr));
-            while (policy.readIP().is_known()) {
-                uint64_t va = policy.readIP().known_value();
+            policy.writeRegister("eip", SymbolicSemantics::ValueType<32>(analysis_addr));
+            while (policy.readRegister<32>("eip").is_known()) {
+                uint64_t va = policy.readRegister<32>("eip").known_value();
                 SgAsmx86Instruction *insn = isSgAsmx86Instruction(args.thread->get_process()->get_instruction(va));
                 assert(insn!=NULL);
                 semantics.processInstruction(insn);
@@ -84,25 +87,26 @@ public:
 
             /* Show the value of the EAX register since this is where GCC puts the function's return value.  If we did things
              * right, the return value should depend only on the functions first argument, which we printed above. */
-            std::cout <<"return value = " <<policy.readGPR(x86_gpr_ax) <<"\n";
+            std::cout <<"return value = " <<policy.readRegister<32>("eax") <<"\n";
             std::cout <<"  (Note: format is LISP-like; \"[M]\" notation means type is an M-bit vector.)\n";
 
             /* Is there some way this function can be called in order to generate a particular value? */
             if (!arg1.is_known()) {
                 using namespace InsnSemanticsExpr;
-                LeafNode *target = LeafNode::create_integer(32, 2067789406);
-                uint64_t arg1_varno = dynamic_cast<LeafNode*>(arg1.expr)->get_name();
-                InternalNode expr(32, OP_EQ, policy.readGPR(x86_gpr_ax).expr, target);
+                LeafNodePtr target = LeafNode::create_integer(32, 2067789406);
+                LeafNodePtr arg1_leaf = arg1.get_expression()->isLeafNode();
+                uint64_t arg1_varno = arg1_leaf->get_name();
+                InternalNodePtr expr = InternalNode::create(32, OP_EQ, policy.readRegister<32>("eax").get_expression(), target);
                 std::cout <<"using an SMT solver to find a solution to f(x) = " <<target <<"...\n";
-                if (smt_solver.satisfiable(&expr)) {
-                    LeafNode *arg1_value = dynamic_cast<LeafNode*>(smt_solver.get_definition(arg1_varno));
+                if (SMTSolver::SAT_YES==smt_solver.satisfiable(expr)) {
+                    LeafNodePtr arg1_value = smt_solver.evidence_for_variable(arg1_varno)->isLeafNode();
                     if (arg1_value) {
                         std::cout <<"  solution is x = " <<arg1_value <<"\n";
                     } else {
                         std::cout <<"  satisfiable, but no solution found\n";
                     }
                 } else {
-                    std::cout <<"  not satisfiable.\n";
+                    std::cout <<"  not satisfiable, or unknown.\n";
                 }
             }
 
