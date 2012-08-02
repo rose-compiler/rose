@@ -1,4 +1,5 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
+include $(top_srcdir)/tests/input_codes/Makefile.for.input.codes
 
 # DQ (2/6/2010): I don't understand why this is required in every Makefile.am through out ROSE.
 include $(top_srcdir)/projects/compass/src/compassSupport/compass_dirs.inc
@@ -43,7 +44,6 @@ RoseDocsDependencies = \
      rose.cfg \
      $(top_builddir)/rose.docs \
      $(top_builddir)/src/frontend/SageIII/sage.docs \
-     $(top_srcdir)/src/frontend/Open64/documentation.docs \
      $(top_srcdir)/src/frontend/SageIII/sage.docs.in \
      $(top_srcdir)/src/extra.docs \
      $(top_srcdir)/src/util/commandlineProcessing/commandlineProcessingDocumentation.docs \
@@ -128,8 +128,7 @@ roseCommandline.txt:
 # Generate an example of the output from running a test program
 roseExecutionOutput.txt:
 	if (test -x $(top_builddir)/src/testSharedRoseLib); then \
-	  echo "int main() { int x=0; return x; }" > roseTestProgram.C; \
-	  $(SET_ROSE_IN_BUILD_TREE) $(top_builddir)/src/testSharedRoseLib roseTestProgram.C >& roseExecutionOutput.txt; \
+	  $(SET_ROSE_IN_BUILD_TREE) $(top_builddir)/src/testSharedRoseLib $(__minimal_input_code) >& roseExecutionOutput.txt; \
 	else \
 	  echo "Execution output is not available (build ROSE, then rebuild documentation)." > roseExecutionOutput.txt; \
 	fi;
@@ -196,6 +195,7 @@ make-web-pages: $(RoseDoxygenDocumentation) $(PACKAGE_NAME)-$(PACKAGE_VERSION)-U
 	cp -f $(srcdir)/projects.html ROSE_WebPages/projects.html
 	cp -f $(srcdir)/FAQ.html ROSE_WebPages/FAQ.html
 	cp -f $(srcdir)/documents.html ROSE_WebPages/documents.html
+	cp -f $(srcdir)/highlights.html ROSE_WebPages/highlights.html
 	cp -f $(srcdir)/news.html ROSE_WebPages/news.html
 	cp -f $(srcdir)/regressionTest.html ROSE_WebPages/regressionTest.html
 	cp -f $(COMPASS_MANUAL) ROSE_WebPages/
@@ -205,6 +205,7 @@ make-web-pages: $(RoseDoxygenDocumentation) $(PACKAGE_NAME)-$(PACKAGE_VERSION)-U
 	cp -fr $(HASKELLPORT_APIDOCS)/* ROSE_WebPages/ROSE_HaskellAPI/
 #	cp -r $(top_srcdir)/ROSE_ResearchPapers ROSE_WebPages/ROSE_ResearchPapers
 	cp -fr $(top_srcdir)/ROSE_ResearchPapers ROSE_WebPages/
+	cp -fr $(srcdir)/powerpoints ROSE_WebPages/
 	cp -f ROSE_InstallationInstructions.pdf ROSE_WebPages/ROSE_InstallationInstructions.pdf
 	cp -f ROSE_Exam.pdf ROSE_WebPages/ROSE_Exam.pdf
 	cp -f ROSE_DeveloperInstructions.pdf ROSE_WebPages/ROSE_DeveloperInstructions.pdf

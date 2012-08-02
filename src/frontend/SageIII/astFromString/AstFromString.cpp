@@ -1203,7 +1203,7 @@ namespace AstFromString
      : logical_or_expression ('?' expression ':' conditional_expression)?
      ;
 
-     ? means 0 or 1 occurence
+     ? means 0 or 1 occurrences
      */
   bool afs_match_conditional_expression()
   {

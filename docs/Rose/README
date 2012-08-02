@@ -1,18 +1,31 @@
 
 This directory contains most of the ROSE documentation. Both LaTeX and Doxygen
-are used to document ROSE.  The source files from which we build the documentation are
-located in different directories within the ROSE source tree.  This makes it
-easy for developers to update their documentation associated with specific
-subprojects within ROSE.
+are used to document ROSE.  
 
     There are three pieces to the ROSE documentation.
    1) HTML Documentation
          included html version of manual, tutorial, and Doxygen generated 
-         documetnation about all the classes within ROSE (or most of them).
+         documentation about all the classes within ROSE (or most of them).
    2) ROSE User Manual
          Contains a readable introduction to ROSE and it's mechanisms.
+
+         As part of the manual, we include:
+         * the installation guide and 
+         * ROSE developer's guide
    3) ROSE Tutorial
          Contains lots of examples, with input and outputs from each.
+
+The source files from which we build the documentation are located in different directories within the ROSE source tree.  
+* Advantage: this makes it easy for developers to update their documentation associated with specific
+subprojects within ROSE.
+* Disadvantage: It also makes it difficult to update the document since fixing a typo may require
+lengthy build in the build tree.
+** workaround now: We provide manual_skeleton.tex which can be used to test an individual chapter within the source tree.
+   Please look into this file to see how it can help speed up adding/fixing things in the manual.
+
+TODO:
+* support build Manual within the source tree without depending on generated files or configuration options.
+* moving things to tutorials if they have to have dependencies on the generated files within the build tree of ROSE 
 
 Notes: 
    1) The configure system for ROSE builds the html and latex documentation
@@ -20,15 +33,15 @@ Notes:
       build any documentation.  
         a) At present the ROSE documentation however contains some explicit paths
            which might not be correct when the user untars the automatically
-           packadged documentation.  We will be attempting to fix this in the future,
+           packaged documentation.  We will be attempting to fix this in the future,
            it is not presently clear how to fix this, although Markus has suggested
            that we make the explicit paths relative (but relative to what?).
 
    2) All Latex documentation for ROSE is provided.
 
-   3) Currently, "make distcheck" will force the documetnation to be built if it is not 
+   3) Currently, "make distcheck" will force the documentation to be built if it is not 
     already built and copied into the Source Tree.  This is the only case of the build process
-    modifiying the source tree, but this avoid having the user build the documentation for
+    modifying the source tree, but this avoid having the user build the documentation for
     ROSE (which would force a dependence upon latex (setup with extended internal buffer
     sizes) and Doxygen and some other tools (dot, etc.).
   
@@ -45,3 +58,4 @@ Notes:
 
    6) Run "make cleanSource" to clear the distribution saved to the source tree.
 
+Last updated, Liao 7/12/2012

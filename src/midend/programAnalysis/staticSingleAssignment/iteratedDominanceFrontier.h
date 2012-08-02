@@ -1,6 +1,6 @@
 #pragma once
 
-#include "backstrokeCFG.h"
+#include <boostGraphCFG.h>
 #include "rose.h"
 #include <vector>
 #include <set>
@@ -12,7 +12,6 @@
 
 namespace ssa_private
 {
-    using namespace Backstroke;
     using namespace std;
     using namespace boost;
 
@@ -60,8 +59,7 @@ namespace ssa_private
     map<CfgNodeT, set<CfgNodeT> > calculateDominanceFrontiers(SgFunctionDefinition* func, map<CfgNodeT, CfgNodeT>* iDominatorMap,
     map<CfgNodeT, CfgNodeT>* iPostDominatorMap)
     {
-        //typedef CFG<CfgNodeT, CfgEdgeT> ControlFlowGraph;
-        typedef CFG<ssa_private::DataflowCfgFilter> ControlFlowGraph;
+        typedef CFG<CfgNodeT, CfgEdgeT> ControlFlowGraph;
 
         //Build a CFG first
         ControlFlowGraph functionCfg(func);

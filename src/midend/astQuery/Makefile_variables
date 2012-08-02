@@ -1,0 +1,55 @@
+# Non-recursive Makefile
+
+mAstQuery_la_sources=\
+	$(mAstQueryPath)/nodeQuery.C \
+	$(mAstQueryPath)/nodeQueryInheritedAttribute.C \
+	$(mAstQueryPath)/booleanQuery.C \
+	$(mAstQueryPath)/booleanQueryInheritedAttribute.C \
+	$(mAstQueryPath)/nameQuery.C \
+	$(mAstQueryPath)/nameQueryInheritedAttribute.C \
+	$(mAstQueryPath)/numberQuery.C \
+	$(mAstQueryPath)/numberQueryInheritedAttribute.C \
+	$(mAstQueryPath)/astQuery.C \
+	$(mAstQueryPath)/astQueryInheritedAttribute.C
+
+nodeQuery.lo : $(mAstQueryPath)/nodeQuery.C $(mAstQueryPath)/queryVariant.C
+
+mAstQuery_la_dependencies=\
+	$(mAstQueryPath)/nodeQuery.o
+
+mAstQuery_includeHeaders=\
+	$(mAstQueryPath)/nodeQuery.h \
+	$(mAstQueryPath)/nodeQueryInheritedAttribute.h \
+	$(mAstQueryPath)/booleanQuery.h \
+	$(mAstQueryPath)/booleanQueryInheritedAttribute.h \
+	$(mAstQueryPath)/nameQuery.h \
+	$(mAstQueryPath)/nameQueryInheritedAttribute.h \
+	$(mAstQueryPath)/numberQuery.h \
+	$(mAstQueryPath)/numberQueryInheritedAttribute.h \
+	$(mAstQueryPath)/astQuery.h \
+	$(mAstQueryPath)/astQueryInheritedAttribute.h \
+	$(mAstQueryPath)/roseQueryLib.h
+
+# Note: queryVariant.C is included in nodeQuery.C
+mAstQuery_extraDist=\
+	$(mAstQueryPath)/CMakeLists.txt \
+	$(mAstQueryPath)/queryVariant.C \
+	$(mAstQueryPath)/QueryLib.docs
+
+mAstQuery_cleanLocal=\
+	rm -rf \
+		$(mAstQueryPath)/cxx_templates \
+		$(mAstQueryPath)/ii_files \
+		$(mAstQueryPath)/ti_files \
+		$(mAstQueryPath)/Templates.DB
+
+mAstQuery_distCleanLocal=\
+	rm -rf \
+		$(mAstQueryPath)/Templates.DB
+
+# A way to add additional error checking at compile time
+# ROSE_WARNINGS = -Wall -W -Wswitch-enum -Wswitch-default -Wswitch
+# GXX_COMPILER_REPORT = -fmem-report -ftime-report
+# GXX_COMPILER_REPORT =
+# AM_CXXFLAGS = $(ROSE_WARNINGS) $(GXX_COMPILER_REPORT)
+

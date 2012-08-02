@@ -13,6 +13,11 @@ namespace AbstractMemoryObject {
     return (this < &other);
   }
 
+  bool Function_Impl::operator < (const ObjSet& other) const
+  {
+    return (this < &other);
+  }
+
   bool LabeledAggregate_Impl::operator < (const ObjSet& other) const
   {
     return (this < &other);
@@ -34,6 +39,10 @@ namespace AbstractMemoryObject {
   // so we have to use two keys (parent ObjSet and SgSymbol) to ensure the uniqueness of named objects
   //
   // Array elements are represented as NamedObj also. They need one more key (IndexVector) to differentiate them
+  // Total three keys: 
+  //    Parent ObjSet: needed only for a member of a data structure, or an element of an array
+  //    Associated symbol: needed for all NamedObj, the unique symbol for a scalar, a member of a data structure.  Or the shared symbol for array and all its elements
+  //    IndexVector: needed only for an element of an array only 
   map<ObjSet*,  map<SgSymbol*, map <IndexVector*, ObjSet* > > > named_objset_map; 
 
 
@@ -52,6 +61,21 @@ namespace AbstractMemoryObject {
     assert (false);
     return false;
   }
+
+  bool IndexSet::mayEqual(const IndexSet & other) const
+  {
+    cerr<<"Error. Calling the base mayEqual() of IndexSet is not allowed. "<<endl;
+    assert (false);
+    return false;
+  }
+
+  bool IndexSet::mustEqual(const IndexSet & other) const
+  {
+    cerr<<"Error. Calling the base mustEqual() of IndexSet is not allowed. "<<endl;
+    assert (false);
+    return false;
+  }
+
   bool IndexSet::operator!=(const IndexSet & other) const
   {
     cerr<<"Error. Calling the base operator!=() of IndexSet is not allowed. "<<endl;
@@ -78,6 +102,56 @@ namespace AbstractMemoryObject {
       {
         const UnknownIndexSet & uis = dynamic_cast <const UnknownIndexSet&> (other);
         return (uis == *this);
+      }
+      catch (bad_cast & bc)
+      {
+        cerr<<"Error: unreachable branch reached ."<<endl;
+        assert (false);
+      }
+
+    }
+   return rt;
+  }
+
+  bool ConstIndexSet::mayEqual(const IndexSet & other) const
+  {
+    bool rt = false;
+    try
+    {
+      const ConstIndexSet & cis = dynamic_cast <const ConstIndexSet&> (other);
+      return (cis.value == this->value);
+    }
+    catch (bad_cast & bc)
+    {
+      try
+      {
+        const UnknownIndexSet & uis = dynamic_cast <const UnknownIndexSet&> (other);
+        return true; // may equal to an unknown index set
+      }
+      catch (bad_cast & bc)
+      {
+        cerr<<"Error: unreachable branch reached ."<<endl;
+        assert (false);
+      }
+
+    }
+   return rt;
+  }
+
+  bool ConstIndexSet::mustEqual (const IndexSet & other) const
+  {
+    bool rt = false;
+    try
+    {
+      const ConstIndexSet & cis = dynamic_cast <const ConstIndexSet&> (other);
+      return (cis.value == this->value);
+    }
+    catch (bad_cast & bc)
+    {
+      try
+      {
+        const UnknownIndexSet & uis = dynamic_cast <const UnknownIndexSet&> (other);
+        return false; // cannot decide if it is a must relation
       }
       catch (bad_cast & bc)
       {
@@ -268,20 +342,21 @@ namespace AbstractMemoryObject {
 
    }
 
-
-
   // They are all single object
   size_t Scalar_Impl::objCount() {return 1;}
+  size_t Function_Impl::objCount() {return 1;}
   size_t LabeledAggregate_Impl::objCount() {return 1;}
   size_t Array_Impl::objCount() {return 1;}
   size_t Pointer_Impl::objCount() {return 1;}
 
   bool Scalar_Impl::maySet() { return false; }
+  bool Function_Impl::maySet() { return false; }
   bool LabeledAggregate_Impl::maySet() { return false; }
   bool Array_Impl::maySet() { return false; }
   bool Pointer_Impl::maySet() { return false; }
 
   bool Scalar_Impl::mustSet() { return true; }
+  bool Function_Impl::mustSet() { return true; }
   bool LabeledAggregate_Impl::mustSet() { return true; }
   bool Array_Impl::mustSet() { return true; }
   bool Pointer_Impl::mustSet() { return true; }
@@ -307,6 +382,7 @@ namespace AbstractMemoryObject {
     assert (i !=  elements.size()); // must find it! 
     return i;
   }
+
   std::string LabeledAggregateField_Impl::toString()
   {
     string rt;
@@ -327,6 +403,7 @@ namespace AbstractMemoryObject {
  */ 
 
  // expression objects: true if the same SgExpression, otherwise all false 
+ // TODO need to plug in real value analysis for expressions to answer this question
   bool ExprObj::operator== (const ObjSet& o2) const
   {
     try
@@ -340,6 +417,34 @@ namespace AbstractMemoryObject {
     }
   }
 
+ // concern about the ExprObj itself , not the value it contains/stores
+  bool ExprObj::mayEqual (const ObjSet& o2) const
+  {
+    try
+    {
+      const ExprObj & expr_o2 = dynamic_cast <const ExprObj&> (o2);
+      return (  this -> anchor_exp  == expr_o2.anchor_exp);
+    }
+    catch (bad_cast & bc)
+    {
+      return false;
+    }
+  }
+
+  // reuse the equal operator, which is must equal for ExprObj
+  bool ExprObj::mustEqual (const ObjSet& o2) const
+  {
+    try
+    {
+      const ExprObj & expr_o2 = dynamic_cast <const ExprObj&> (o2);
+      return (  this -> anchor_exp  == expr_o2.anchor_exp);
+    }
+    catch (bad_cast & bc)
+    {
+      return false;
+    }
+  }
+ 
   std::string ExprObj::toString()
   {
     string rt;
@@ -369,11 +474,56 @@ namespace AbstractMemoryObject {
    return (o1==o2);
   } 
 
+  bool ScalarExprObj::mayEqual (const ObjSet& o2) const
+  {
+   const ExprObj& o1 = dynamic_cast<const ExprObj&> (*this);
+   return (o1.mayEqual(o2));
+  } 
+
+  bool ScalarExprObj::mustEqual (const ObjSet& o2) const
+  {
+   const ExprObj& o1 = dynamic_cast<const ExprObj&> (*this);
+   return (o1.mustEqual(o2));
+  } 
+
+
   std::string ScalarExprObj::toString()
   {
     string rt = "ScalarExprObj @" + StringUtility::numberToString(this)+ " "+ ExprObj::toString();
     return rt;
   }
+  //------------------
+  std::set<SgType*> FunctionExprObj::getType() const
+  {
+    std::set<SgType*> rt;
+    rt.insert (ExprObj::getType());
+    return rt;
+  }
+
+  bool FunctionExprObj::operator == (const ObjSet& o2) const
+  {
+   const ExprObj& o1 = dynamic_cast<const ExprObj&> (*this);
+   return (o1==o2);
+  } 
+
+  bool FunctionExprObj::mayEqual (const ObjSet& o2) const
+  {
+   const ExprObj& o1 = dynamic_cast<const ExprObj&> (*this);
+   return (o1.mayEqual(o2));
+  } 
+
+  bool FunctionExprObj::mustEqual (const ObjSet& o2) const
+  {
+   const ExprObj& o1 = dynamic_cast<const ExprObj&> (*this);
+   return (o1.mustEqual(o2));
+  } 
+
+  std::string FunctionExprObj::toString()
+  {
+    string rt = "FunctionExprObj @" + StringUtility::numberToString(this)+ " "+ ExprObj::toString();
+    return rt;
+  }
+
 
   //------------------
    std::set<SgType*> ArrayExprObj::getType()
@@ -390,6 +540,17 @@ namespace AbstractMemoryObject {
     return (o1==o2);
   } 
 
+  bool ArrayExprObj::mayEqual(const ObjSet& o2) const
+  {
+   const ExprObj& o1 = dynamic_cast<const ExprObj&> (*this);
+    return (o1.mayEqual(o2));
+  } 
+
+  bool ArrayExprObj::mustEqual (const ObjSet& o2) const
+  {
+   const ExprObj& o1 = dynamic_cast<const ExprObj&> (*this);
+    return (o1.mustEqual(o2));
+  } 
 
   std::string ArrayExprObj::toString()
   {
@@ -411,7 +572,7 @@ namespace AbstractMemoryObject {
     SgType* t = ExprObj::getType();
     SgPointerType* p_t = isSgPointerType(t);
     assert (p_t != NULL);
-    return createAliasedObjSet (p_t);
+    return createAliasedObjSet (p_t->get_base_type());
   }
 
   ObjSet* PointerExprObj::getElements() // in case it is a pointer to array
@@ -436,6 +597,19 @@ namespace AbstractMemoryObject {
     return (o1==o2);
   } 
 
+  // we concern about the PointerExprObj itself, not the mem location it points to!!
+  bool PointerExprObj::mayEqual (const ObjSet& o2) const
+  {
+    const ExprObj& o1 = dynamic_cast<const ExprObj&> (*this);
+    return (o1.mayEqual(o2));
+  } 
+
+  // identical pointers, must equal for now
+  bool PointerExprObj::mustEqual (const ObjSet& o2) const
+  {
+   const ExprObj& o1 = dynamic_cast<const ExprObj&> (*this);
+   return (o1.mustEqual(o2));
+  } 
 
   std::string PointerExprObj::toString()
   {
@@ -468,6 +642,18 @@ namespace AbstractMemoryObject {
     return (o1==o2);
   } 
 
+  bool LabeledAggregateExprObj::mayEqual (const ObjSet& o2) const
+  {
+    const ExprObj& o1 = dynamic_cast<const ExprObj&> (*this);
+    return (o1.mayEqual(o2));
+  } 
+
+  bool LabeledAggregateExprObj::mustEqual (const ObjSet& o2) const
+  {
+    const ExprObj& o1 = dynamic_cast<const ExprObj&> (*this);
+    return (o1.mustEqual(o2));
+  } 
+
    std::string LabeledAggregateExprObj::toString()
    {
      std::string rt = "LabeledAggregateExprObj @ " + StringUtility::numberToString (this);
@@ -489,8 +675,57 @@ namespace AbstractMemoryObject {
     NamedObj o1 = *this;
     if (o1.anchor_symbol == o2.anchor_symbol) // same symbol
       if (o1.parent == o2.parent)   // same parent
-        if (o1.array_index_vector == o2. array_index_vector) // same array index
-        rt = true ;
+      {
+        if ( (o1.array_index_vector) != NULL && (o2.array_index_vector) != NULL)
+        {
+            // same array index, must use *pointer == *pointer to get the right comparison!!
+          if ((*(o1.array_index_vector)) == (*(o2.array_index_vector))) 
+            rt = true; // semantically equivalent index vectors
+        }
+        else
+          if ( o1.array_index_vector == o2.array_index_vector) // both are NULL
+            rt = true ;
+      }
+    return rt;
+  }
+
+  bool NamedObj::mayEqual (const NamedObj & o2) const
+  {
+    bool rt = false;
+    NamedObj o1 = *this;
+    if (o1.anchor_symbol == o2.anchor_symbol) // same symbol
+      if (o1.parent->mayEqual(*(o2.parent)))   // same parent
+      {
+        if ( (o1.array_index_vector) != NULL && (o2.array_index_vector) != NULL)
+        {
+            // same array index, must use *pointer == *pointer to get the right comparison!!
+          if ((*(o1.array_index_vector)).mayEqual(*(o2.array_index_vector))) 
+            rt = true; // semantically equivalent index vectors
+        }
+        else
+          if ( o1.array_index_vector == o2.array_index_vector) // both are NULL
+            rt = true ;
+      }
+    return rt;
+  }
+
+  bool NamedObj::mustEqual (const NamedObj & o2) const
+  {
+    bool rt = false;
+    NamedObj o1 = *this;
+    if (o1.anchor_symbol == o2.anchor_symbol) // same symbol
+      if (o1.parent->mustEqual(*(o2.parent)))   // same parent
+      {
+        if ( (o1.array_index_vector) != NULL && (o2.array_index_vector) != NULL)
+        {
+            // same array index, must use *pointer == *pointer to get the right comparison!!
+          if ((*(o1.array_index_vector)).mustEqual(*(o2.array_index_vector))) 
+            rt = true; // semantically equivalent index vectors
+        }
+        else
+          if ( o1.array_index_vector == o2.array_index_vector) // both are NULL
+            rt = true ;
+      }
     return rt;
   }
 
@@ -520,6 +755,59 @@ namespace AbstractMemoryObject {
     }
   }
 
+  bool NamedObj::mayEqual (const ObjSet & o2) const
+  {
+    // three cases:
+    try
+    { // case 1:
+      NamedObj o1 = * this; 
+      const AliasedObj & aliased_o2 = dynamic_cast <const AliasedObj&> (o2);
+      return isAliased (o1.getType(), aliased_o2.getType());
+    }
+    catch (bad_cast & bc)
+    {
+      try
+      { // case 2:
+        const NamedObj& named_o2 = dynamic_cast <const NamedObj&> (o2);
+        NamedObj o1 = *this;
+        return o1.mayEqual(named_o2);
+      }
+      catch (bad_cast & bc)
+      {
+        //case 3:
+        // Only Expression Obj is left, always return false 
+        return false;
+      }
+    }
+ 
+  }
+
+  bool NamedObj::mustEqual (const ObjSet & o2) const
+  {
+    // three cases:
+    try
+    { // case 1:
+      NamedObj o1 = * this; 
+      const AliasedObj & aliased_o2 = dynamic_cast <const AliasedObj&> (o2);
+      return false; //TODO accurate alias analysis can answer this question better. For now, we cannot decide. 
+    }
+    catch (bad_cast & bc)
+    {
+      try
+      { // case 2:
+        const NamedObj& named_o2 = dynamic_cast <const NamedObj&> (o2);
+        NamedObj o1 = *this;
+        return o1.mustEqual(named_o2);
+      }
+      catch (bad_cast & bc)
+      {
+        //case 3:
+        // Only Expression Obj is left, always return false 
+        return false;
+      }
+    }
+  }
+
   std::string IndexVector_Impl::toString()
   {
     string rt;
@@ -531,6 +819,11 @@ namespace AbstractMemoryObject {
      }
      return rt;
    }
+
+  bool IndexVector_Impl:: operator != (const IndexVector & other) const
+  {
+    return !(*this == other) ;
+  }
 
   bool IndexVector_Impl:: operator == (const IndexVector & other) const
   {
@@ -559,6 +852,62 @@ namespace AbstractMemoryObject {
 
     return rt; 
   }
+
+  bool IndexVector_Impl::mayEqual (const IndexVector & other) const
+  {
+    bool rt = false;
+    try {
+      const IndexVector_Impl & other_impl = dynamic_cast <const IndexVector_Impl & > (other);
+      bool has_diff_element = false;
+      if (this->getSize() == other_impl.getSize()) 
+      { // same size, no different element
+        for (size_t i =0; i< other_impl.getSize(); i++)
+        {
+          if (!(*(this->index_vector[i])).mayEqual(*(other_impl.index_vector[i])))
+          {
+            has_diff_element = true;
+              break;
+          }
+        }
+        if (!has_diff_element )
+          rt = true;
+      }
+    }
+    catch (std::bad_cast& bc)
+    {
+      rt = IndexVector::mayEqual(other);
+    }
+    return rt; 
+  }
+
+  bool IndexVector_Impl::mustEqual (const IndexVector & other) const
+  {
+    bool rt = false;
+    try {
+      const IndexVector_Impl & other_impl = dynamic_cast <const IndexVector_Impl & > (other);
+      bool has_diff_element = false;
+      if (this->getSize() == other_impl.getSize()) 
+      { // same size, no different element
+        for (size_t i =0; i< other_impl.getSize(); i++)
+        {
+          if (!(*(this->index_vector[i])).mustEqual(*(other_impl.index_vector[i])))
+          {
+            has_diff_element = true;
+              break;
+          }
+        }
+        if (!has_diff_element )
+          rt = true;
+      }
+    }
+    catch (std::bad_cast& bc)
+    {
+      rt = IndexVector::mustEqual(other);
+    }
+    return rt; 
+  }
+
+
 
   std::string IndexSet::toString()
   {
@@ -610,11 +959,58 @@ namespace AbstractMemoryObject {
     return (o1==o2);
   } 
 
+  bool ScalarNamedObj::mayEqual(const ObjSet& o2) const
+  {
+    const NamedObj& o1 = dynamic_cast<const NamedObj&> (*this);
+    return (o1.mayEqual(o2));
+  } 
+
+  bool ScalarNamedObj::mustEqual (const ObjSet& o2) const
+  {
+    const NamedObj& o1 = dynamic_cast<const NamedObj&> (*this);
+    return (o1.mustEqual(o2));
+  } 
+
   std::string ScalarNamedObj::toString()
   {
     string rt = "ScalarNamedObj @" + StringUtility::numberToString(this)+ " "+ NamedObj::toString();
     return rt;
   }
+
+  //------------------
+  std::set<SgType*> FunctionNamedObj::getType()
+  {
+    std::set<SgType*> rt;
+    rt.insert (NamedObj::getType());
+    return rt;
+  }
+
+  // This is a confusing part:  operator == of ObjSet side is implemented through the operator== () of the NamedObj
+  bool FunctionNamedObj::operator == (const ObjSet& o2) const
+  {
+    const NamedObj& o1 = dynamic_cast<const NamedObj&> (*this);
+    return (o1==o2);
+  } 
+
+  bool FunctionNamedObj::mayEqual (const ObjSet& o2) const
+  {
+    const NamedObj& o1 = dynamic_cast<const NamedObj&> (*this);
+    return (o1.mayEqual(o2));
+  } 
+
+  bool FunctionNamedObj::mustEqual (const ObjSet& o2) const
+  {
+    const NamedObj& o1 = dynamic_cast<const NamedObj&> (*this);
+    return (o1.mustEqual(o2));
+  } 
+
+
+  std::string FunctionNamedObj::toString()
+  {
+    string rt = "FunctionNamedObj @" + StringUtility::numberToString(this)+ " "+ NamedObj::toString();
+    return rt;
+  }
+
 
   //------------------
   std::set<SgType*> PointerNamedObj::getType() const
@@ -630,7 +1026,7 @@ namespace AbstractMemoryObject {
     SgType* t = NamedObj::getType();
     SgPointerType* p_t = isSgPointerType(t);
     assert (p_t != NULL);
-    return createAliasedObjSet (p_t);
+    return createAliasedObjSet (p_t->get_base_type());
   }
 
   ObjSet* PointerNamedObj::getElements() // in case it is a pointer to array
@@ -655,6 +1051,18 @@ namespace AbstractMemoryObject {
   {
    const NamedObj& o1 = dynamic_cast<const NamedObj&> (*this);
     return (o1==o2);
+  } 
+
+  bool PointerNamedObj::mayEqual(const ObjSet& o2) const
+  {
+    const NamedObj& o1 = dynamic_cast<const NamedObj&> (*this);
+    return (o1.mustEqual(o2));
+  } 
+
+  bool PointerNamedObj::mustEqual(const ObjSet& o2) const
+  {
+    const NamedObj& o1 = dynamic_cast<const NamedObj&> (*this);
+    return (o1.mustEqual(o2));
   } 
 
 
@@ -736,6 +1144,19 @@ namespace AbstractMemoryObject {
      const NamedObj& o1 = dynamic_cast<const NamedObj&> (*this);
      return (o1==o2);
    } 
+
+   bool LabeledAggregateNamedObj::mayEqual (const ObjSet& o2) const
+   { 
+     const NamedObj& o1 = dynamic_cast<const NamedObj&> (*this);
+     return (o1.mayEqual(o2));
+   } 
+
+   bool LabeledAggregateNamedObj::mustEqual(const ObjSet& o2) const
+   { 
+     const NamedObj& o1 = dynamic_cast<const NamedObj&> (*this);
+     return (o1.mustEqual(o2));
+   } 
+
 
 
    //---------------------
@@ -821,6 +1242,18 @@ namespace AbstractMemoryObject {
    const NamedObj& o1 = dynamic_cast<const NamedObj&> (*this);
     return (o1==o2);
   } 
+  bool ArrayNamedObj::mayEqual (const ObjSet& o2) const
+  { 
+   const NamedObj& o1 = dynamic_cast<const NamedObj&> (*this);
+    return (o1.mayEqual(o2));
+  } 
+  bool ArrayNamedObj::mustEqual (const ObjSet& o2) const
+  { 
+   const NamedObj& o1 = dynamic_cast<const NamedObj&> (*this);
+    return (o1.mustEqual(o2));
+  } 
+
+
 
   // --------------------- Aliased Object --------------------
   std::string AliasedObj::toString()  
@@ -831,15 +1264,37 @@ namespace AbstractMemoryObject {
     return rt;
   } 
 
+  // Simplest alias analysis: same type ==> aliased
   bool isAliased (const SgType *t1, const SgType* t2) 
   {
-     // Simplest alias analysis: same type ==> aliased
     // TODO : consider subtype, if type1 is a subtype of type2, they are aliased to each other also
     if (t1 == t2)
       return true;
-    else
-      return false;
-    
+    else if (isSgFunctionType(t1) && isSgFunctionType(t2)) // function type, check return and argument types
+    {
+      const SgFunctionType * ft1 = isSgFunctionType(t1);
+      const SgFunctionType * ft2 = isSgFunctionType(t2);
+      if (isAliased (ft1->get_return_type(), ft2->get_return_type())) // CHECK return type
+      {
+        SgFunctionParameterTypeList* ptl1 = ft1->get_argument_list();
+        SgFunctionParameterTypeList* ptl2 = ft2->get_argument_list();
+        SgTypePtrList tpl1 = ptl1->get_arguments();
+        SgTypePtrList tpl2 = ptl2->get_arguments();
+        if (tpl1.size() == tpl2.size())
+        {
+          size_t equal_count = 0;
+          for (size_t i =0; i< tpl1.size(); i++) // check each argument type
+          {
+            if ( isAliased (tpl1[i], tpl2[i]) )
+              equal_count ++;
+          }
+          if (equal_count == tpl1.size())
+            return true;
+        }
+      }
+    }
+
+    return false;
   }
 
   bool AliasedObj::operator == ( const AliasedObj & o2)  const
@@ -849,6 +1304,51 @@ namespace AbstractMemoryObject {
     SgType* other_type = o2.getType();
     return isAliased (own_type, other_type);
  }
+
+
+ // if type may alias to each other, may equal
+  bool AliasedObj::mayEqual ( const AliasedObj & o2)  const
+  {
+    AliasedObj o1 = *this;
+    SgType* own_type = o1.getType();
+    SgType* other_type = o2.getType();
+    return isAliased (own_type, other_type);
+ }
+
+ //identical type means must equal 
+  bool AliasedObj::mustEqual ( const AliasedObj & o2)  const
+  { 
+    AliasedObj o1 = *this;
+    SgType* t1 = o1.getType();
+    SgType* t2 = o2.getType();
+
+    if (t1 == t2)
+      return true;
+    else if (isSgFunctionType(t1) && isSgFunctionType(t2)) // function type, check return and argument types
+    {
+      const SgFunctionType * ft1 = isSgFunctionType(t1);
+      const SgFunctionType * ft2 = isSgFunctionType(t2);
+      if (isAliased (ft1->get_return_type(), ft2->get_return_type())) // CHECK return type
+      {
+        SgFunctionParameterTypeList* ptl1 = ft1->get_argument_list();
+        SgFunctionParameterTypeList* ptl2 = ft2->get_argument_list();
+        SgTypePtrList tpl1 = ptl1->get_arguments();
+        SgTypePtrList tpl2 = ptl2->get_arguments();
+        if (tpl1.size() == tpl2.size())
+        {
+          size_t equal_count = 0;
+          for (size_t i =0; i< tpl1.size(); i++) // check each argument type
+          {
+            if ( isAliased (tpl1[i], tpl2[i]) )
+              equal_count ++;
+          }
+          if (equal_count == tpl1.size())
+            return true;
+        }
+      }
+    }
+    return false;
+  }
 
   bool AliasedObj::operator == (const ObjSet& o2) const
   {
@@ -878,11 +1378,111 @@ namespace AbstractMemoryObject {
     }
   }
 
+  bool AliasedObj::mayEqual (const ObjSet& o2) const
+  {
+    // three cases
+    // 1. o2 is  ExpressionObj: always return false
+    // 2. o2 is Named Obj: return operator == (AliasedObj&o1, NamedObj & o2)
+    // 3. o2 is AliasedObj:
+
+    // There might be better way to code this
+    try
+    {
+      const AliasedObj & aliased_o2 = dynamic_cast <const AliasedObj&> (o2); 
+      AliasedObj o1 = *this;
+      return o1.mayEqual(aliased_o2);
+    } 
+    catch (bad_cast & bc)
+    {
+      try
+      {
+        const NamedObj named_o2 = dynamic_cast <const NamedObj&> (o2); 
+        return isAliased (this->getType(), named_o2.getType());
+      } 
+      catch (bad_cast & bc)
+      {
+        return false;
+      }
+    }
+  }
+
+
+  bool AliasedObj::mustEqual (const ObjSet& o2) const
+  {
+    // There might be better way to code this
+    try
+    {
+      const AliasedObj & aliased_o2 = dynamic_cast <const AliasedObj&> (o2); 
+      AliasedObj o1 = *this;
+      return o1.mustEqual(aliased_o2);
+    } 
+    catch (bad_cast & bc)
+    {
+      try
+      {
+        const NamedObj named_o2 = dynamic_cast <const NamedObj&> (o2); 
+        return false; //  no way they can be equal mem object
+      } 
+      catch (bad_cast & bc)
+      {
+        return false;
+      }
+    }
+  }
+
+
   bool ScalarAliasedObj::operator == (const ObjSet& o2) const
   {
     const AliasedObj& o1 = dynamic_cast<const AliasedObj&> (*this);
     return (o1==o2);
   }
+
+  bool ScalarAliasedObj::mayEqual(const ObjSet& o2) const
+  {
+    const AliasedObj& o1 = dynamic_cast<const AliasedObj&> (*this);
+    return (o1.mayEqual(o2));
+  }
+
+  bool ScalarAliasedObj::mustEqual(const ObjSet& o2) const
+  {
+    const AliasedObj& o1 = dynamic_cast<const AliasedObj&> (*this);
+    return (o1.mustEqual(o2));
+  }
+
+  bool PointerAliasedObj::equalPoints(const Pointer & that)
+  {
+    SgType* this_type = *(this->getType().begin()); 
+    SgType* that_type = *(that.getType().begin());
+    return (this_type == that_type);
+  }
+  ObjSet* PointerAliasedObj::getDereference()
+  {
+    // simplest type-based implementation
+    SgType* t = AliasedObj::getType();
+    SgPointerType* p_t = isSgPointerType(t);
+    assert (p_t != NULL);
+    return createAliasedObjSet (p_t->get_base_type());
+  }
+
+
+  bool FunctionAliasedObj::operator == (const ObjSet& o2) const
+  {
+    const AliasedObj& o1 = dynamic_cast<const AliasedObj&> (*this);
+    return (o1==o2);
+  }
+
+  bool FunctionAliasedObj::mayEqual(const ObjSet& o2) const
+  {
+    const AliasedObj& o1 = dynamic_cast<const AliasedObj&> (*this);
+    return (o1.mayEqual(o2));
+  }
+
+  bool FunctionAliasedObj::mustEqual(const ObjSet& o2) const
+  {
+    const AliasedObj& o1 = dynamic_cast<const AliasedObj&> (*this);
+    return (o1.mustEqual(o2));
+  }
+
 
   bool LabeledAggregateAliasedObj::operator == (const ObjSet& o2) const
   {
@@ -890,12 +1490,36 @@ namespace AbstractMemoryObject {
     //  return (o1.operator==( o2));
     return (o1==o2);
   }
+  bool LabeledAggregateAliasedObj::mayEqual(const ObjSet& o2) const
+  {
+    const AliasedObj& o1 = dynamic_cast<const AliasedObj&> (*this);
+    return (o1.mayEqual(o2));
+  }
+
+  bool LabeledAggregateAliasedObj::mustEqual(const ObjSet& o2) const
+  {
+    const AliasedObj& o1 = dynamic_cast<const AliasedObj&> (*this);
+    return (o1.mustEqual(o2));
+  }
+
 
   bool ArrayAliasedObj::operator == (const ObjSet& o2) const
   {
     const AliasedObj& o1 = dynamic_cast<const AliasedObj&> (*this);
     return (o1==o2);
   }
+  bool ArrayAliasedObj::mayEqual(const ObjSet& o2) const
+  {
+    const AliasedObj& o1 = dynamic_cast<const AliasedObj&> (*this);
+    return (o1.mayEqual(o2));
+  }
+
+  bool ArrayAliasedObj::mustEqual(const ObjSet& o2) const
+  {
+    const AliasedObj& o1 = dynamic_cast<const AliasedObj&> (*this);
+    return (o1.mustEqual(o2));
+  }
+
 
   bool PointerAliasedObj::operator == (const ObjSet& o2) const
   {
@@ -903,7 +1527,26 @@ namespace AbstractMemoryObject {
     return (o1==o2);
   }
 
+  bool PointerAliasedObj::mayEqual(const ObjSet& o2) const
+  {
+    const AliasedObj& o1 = dynamic_cast<const AliasedObj&> (*this);
+    return (o1.mayEqual(o2));
+  }
+
+  bool PointerAliasedObj::mustEqual(const ObjSet& o2) const
+  {
+    const AliasedObj& o1 = dynamic_cast<const AliasedObj&> (*this);
+    return (o1.mustEqual(o2));
+  }
+
   std::set<SgType*> ScalarAliasedObj::getType()
+  {
+    std::set<SgType*> rt;
+    rt.insert (AliasedObj::getType());
+    return rt;
+  }
+
+  std::set<SgType*> FunctionAliasedObj::getType()
   {
     std::set<SgType*> rt;
     rt.insert (AliasedObj::getType());
@@ -937,6 +1580,14 @@ namespace AbstractMemoryObject {
     string rt = "ScalarAliasedObj @ " + StringUtility::numberToString(this)+ " "+ AliasedObj::toString();
     return rt;
   }
+
+  string FunctionAliasedObj::toString()
+  {
+    string rt = "FunctionAliasedObj @ " + StringUtility::numberToString(this)+ " "+ AliasedObj::toString();
+    return rt;
+  }
+
+
   string LabeledAggregateAliasedObj::toString()
   {
     string rt = "LabeledAggregateAliasedObj @ " + StringUtility::numberToString(this)+ " "+ AliasedObj::toString();
@@ -970,8 +1621,9 @@ namespace AbstractMemoryObject {
     assert (false);
 
   }
-  // builder for different objects
-  ObjSet* createAliasedObjSet(SgType*t)  // One object per type, Type based alias analysis
+  // creator for different objects
+  // ------------------------------------------------------------------
+  ObjSet* createAliasedObjSet(SgType*t)  // One object per type, Type based alias analysis. A type of the object pointed to by a pointer
   {
     bool assert_flag = true; 
     assert (t!= NULL);
@@ -1004,6 +1656,11 @@ namespace AbstractMemoryObject {
         rt = new   LabeledAggregateAliasedObj (t);
         assert (rt != NULL); 
       }  
+      else if (isSgFunctionType(t))
+      {  
+        rt = new FunctionAliasedObj (t);
+        assert (rt != NULL); 
+      }  
       else
       {
         cerr<<"Warning: createAliasedObjSet(): unhandled type:"<<t->class_name()<<endl;
@@ -1031,12 +1688,14 @@ namespace AbstractMemoryObject {
   //  Labeled aggregate
   //  Pointer
   //  Array
+  // ------------------------------------------------------------------
   ObjSet* createNamedObjSet(SgSymbol* anchor_symbol, SgType* t, ObjSet* parent, IndexVector * iv)
   {
     ObjSet* rt = NULL;
-    if (!isSgVariableSymbol(anchor_symbol))
+
+    if (!isSgVariableSymbol(anchor_symbol) && !isSgFunctionSymbol(anchor_symbol))
     {
-      cerr<<"Warning. createNamedObjSet() skips non-variable symbol:"<< anchor_symbol->class_name() <<endl;
+      cerr<<"Warning. createNamedObjSet() skips non-variable and non-function symbol:"<< anchor_symbol->class_name() <<endl;
       return NULL;
     }
     
@@ -1050,7 +1709,7 @@ namespace AbstractMemoryObject {
     }
     bool assert_flag = true; 
 
-    if (named_objset_map[parent][anchor_symbol][iv] == NULL)
+    if (named_objset_map[parent][anchor_symbol][iv] == NULL) // TODO: Here is buggy, index vector is not uniquely generated now!
     { // None found, create a new one depending on its type and update the map
       if (SageInterface::isScalarType(t))
         // We define the following SgType as scalar types: 
@@ -1059,6 +1718,12 @@ namespace AbstractMemoryObject {
         rt = new ScalarNamedObj(anchor_symbol, t, parent, iv);
         assert (rt != NULL);
       }
+      else if (isSgFunctionType(t))
+      {
+        rt = new FunctionNamedObj(anchor_symbol,t, parent, iv);
+        assert (rt != NULL);
+      }
+ 
       else if (isSgPointerType(t))
       {
         rt = new PointerNamedObj(anchor_symbol,t, parent, iv);
@@ -1244,6 +1909,8 @@ namespace AbstractMemoryObject {
   // SgExpression here excludes SgVarRef, which should be associated with a named memory object
   map<SgExpression*, ObjSet*> expr_objset_map; 
 
+  // ------------------------------------------------------------------
+  // Creator for expression ObjSet
   ObjSet* createExpressionObjSet(SgExpression* anchor_exp, SgType*t)
   {
     ObjSet* rt = NULL;
@@ -1269,6 +1936,12 @@ namespace AbstractMemoryObject {
         rt = new ScalarExprObj(anchor_exp, t);
         assert (rt != NULL);
       }
+      else if (isSgFunctionType(t))
+      {
+        rt = new FunctionExprObj(anchor_exp,t);
+        assert (rt != NULL);
+      }
+ 
       else if (isSgPointerType(t))
       {
         rt = new PointerExprObj(anchor_exp,t);
@@ -1279,13 +1952,11 @@ namespace AbstractMemoryObject {
         rt = new LabeledAggregateExprObj (anchor_exp,t);
         assert (rt != NULL);
       }
-/* //TODO
       else if (isSgArrayType(t))
       {
-        rt = new ArrayNamedObj (t);
+        rt = new ArrayExprObj (anchor_exp, t);
         assert (rt != NULL);
       }
-*/
       else
       {
         cerr<<"Warning: createExprObjSet(): unhandled expression:"<<anchor_exp->class_name() << 

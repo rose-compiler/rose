@@ -1,3 +1,6 @@
+#ifndef _VARIABLESTATETRANSFER_H
+#define _VARIABLESTATETRANSFER_H
+
 #include "dataflow.h"
 #include "latticeFull.h"
 #include "liveDeadVarAnalysis.h"
@@ -22,6 +25,7 @@ protected:
     return dynamic_cast<LatticeType *>(prodLat->getVarLattice(var));
   }
 
+  //! create three lattices from a binary operation: lhs, rhs, and result lattices
   bool getLattices(const SgBinaryOp *sgn, LatticeType* &arg1Lat, LatticeType* &arg2Lat, LatticeType* &resLat) {
     arg1Lat = getLattice(sgn->get_lhs_operand());
     arg2Lat = getLattice(sgn->get_rhs_operand());
@@ -35,6 +39,7 @@ protected:
 
     return (arg1Lat && arg2Lat && resLat);
   }
+  
   bool getLattices(const SgUnaryOp *sgn,  LatticeType* &arg1Lat, LatticeType* &arg2Lat, LatticeType* &resLat) {
     arg1Lat = getLattice(sgn->get_operand());
     resLat = getLattice(sgn);
@@ -103,7 +108,7 @@ public:
     if (inits.size() > 0) {
       res->copy(getLattice(inits[0]));
       modified = true;
-      for (int i = 1; i < inits.size(); ++i)
+      for (size_t i = 1; i < inits.size(); ++i)
         res->meetUpdate(getLattice(inits[i]));
     }
   }
@@ -194,3 +199,5 @@ public:
     }
   }
 };
+
+#endif

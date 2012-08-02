@@ -171,6 +171,7 @@ SgAsmGenericStrtab
 SgAsmGenericSymbol
 SgAsmGenericSymbolList
 SgAsmInstruction
+SgAsmIntegerValueExpression
 SgAsmInterpretation
 SgAsmInterpretationList
 SgAsmLEEntryPoint
@@ -206,11 +207,8 @@ SgAsmPEExportSection
 SgAsmPEFileHeader
 SgAsmPEImportDirectory
 SgAsmPEImportDirectoryList
-SgAsmPEImportHNTEntry
-SgAsmPEImportHNTEntryList
-SgAsmPEImportILTEntry
-SgAsmPEImportILTEntryList
-SgAsmPEImportLookupTable
+SgAsmPEImportItem
+SgAsmPEImportItemList
 SgAsmPEImportSection
 SgAsmPERVASizePair
 SgAsmPERVASizePairList
@@ -232,8 +230,6 @@ SgAsmStaticData
 SgAsmStmt
 SgAsmStoredString
 SgAsmStringStorage
-SgAsmTarget
-SgAsmTargetList
 SgAsmType
 SgAsmType128bitFloat
 SgAsmType80bitFloat
@@ -307,6 +303,7 @@ SgComplexVal
 SgComprehension
 SgComprehensionList
 SgCompoundAssignOp
+SgCompoundInitializer
 SgComputedGotoStatement
 SgConcatenationOp
 SgConditionalExp
@@ -619,6 +616,7 @@ SgTemplateParameterList
 SgTemplateSymbol
 SgTemplateType
 SgThisExp
+SgSuperExp
 SgThrowOp
 SgToken
 SgTryStmt

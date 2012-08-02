@@ -45,6 +45,7 @@ set<FunctionState*>& FunctionState::getAllFuncs()
                 collect.traverse();
                 allFuncsComputed=true;
         }
+
         return allFuncs;
 }
 
@@ -62,10 +63,15 @@ FunctionState* FunctionState::getDefinedFuncState(const Function& func)
 // func may be any declared function
 FunctionState* FunctionState::getFuncState(const Function& func)
 {
-        for(set<FunctionState*>::iterator it=allFuncs.begin(); it!=allFuncs.end(); it++)        
-                if((*it)->func == func)
-                        return *it;
-        return NULL;
+  if (!allFuncsComputed) // Liao, 4/6/2012, make sure the internal set is computed first.
+  {
+    getAllFuncs();
+  }
+
+  for(set<FunctionState*>::iterator it=allFuncs.begin(); it!=allFuncs.end(); it++)        
+    if((*it)->func == func)
+      return *it;
+  return NULL;
 }
 
 // given a function call, sets argParamMap to map all simple arguments to this function to their 

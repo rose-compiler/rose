@@ -67,8 +67,6 @@ UnparseLanguageIndependentConstructs::curprint (const std::string & str) const
                 // warn if successful wrapping is impossible
                 if( str.size() > usable_cols )
                     printf("Warning: can't wrap long line in Fortran free format (text is longer than a line)\n");
-                else if( free_cols < 1 )
-                    printf("Warning: can't wrap long line in Fortran free format (no room for final '&')\n");
 
                 // emit free-format line continuation even if result will still be too long
                 unp->u_sage->curprint("&");
@@ -4012,6 +4010,7 @@ UnparseLanguageIndependentConstructs::requiresParentheses(SgExpression* expr, Sg
           case DOUBLE_VAL:
           case LONG_DOUBLE_VAL:
           case AGGREGATE_INIT:
+          case SUPER_NODE: // charles4:  This case needed for Java only.
              {
 #if DEBUG_PARENTHESIS_PLACEMENT
                printf ("     case statements return false \n");

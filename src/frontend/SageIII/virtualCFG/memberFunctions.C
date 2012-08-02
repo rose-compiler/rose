@@ -1427,7 +1427,7 @@ std::vector<CFGEdge> SgContinueStmt::cfgOutEdges(unsigned int idx) {
         case V_SgForStatement: newIndex = 3; break;
         case V_SgWhileStmt: newIndex = 0; break;
         case V_SgFortranDo: newIndex = 5; break;
-        case V_SgJavaForEachStatement: newIndex = 0; break;
+        case V_SgJavaForEachStatement: newIndex = 1; break;
         case V_SgJavaLabelStatement: newIndex = 0; break;
         default: ROSE_ASSERT (false);
       }
@@ -3658,6 +3658,30 @@ SgThisExp::cfgInEdges(unsigned int idx)
      return result;
    }
 
+unsigned int
+SgSuperExp::cfgIndexForEnd() const
+   {
+     return 0;
+   }
+
+std::vector<CFGEdge>
+SgSuperExp::cfgOutEdges(unsigned int idx)
+   {
+     std::vector<CFGEdge> result;
+     ROSE_ASSERT (idx == 0);
+     makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result);
+     return result;
+  }
+
+std::vector<CFGEdge>
+SgSuperExp::cfgInEdges(unsigned int idx)
+   {
+     std::vector<CFGEdge> result;
+     ROSE_ASSERT (idx == 0);
+     makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result);
+     return result;
+   }
+
 unsigned int SgInitializer::cfgIndexForEnd() const
    {
      return 1;
@@ -3684,6 +3708,32 @@ SgAggregateInitializer::cfgInEdges(unsigned int idx)
        case 0: makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result); break;
        case 1: makeEdge(this->get_initializers()->cfgForEnd(), CFGNode(this, idx), result); break;
        default: ROSE_ASSERT (!"Bad index for SgAggregateInitializer");
+     }
+
+     return result;
+   }
+
+std::vector<CFGEdge>
+SgCompoundInitializer::cfgOutEdges(unsigned int idx)
+   {
+     std::vector<CFGEdge> result;
+     switch (idx) {
+       case 0: makeEdge(CFGNode(this, idx), this->get_initializers()->cfgForBeginning(), result); break;
+       case 1: makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result); break;
+       default: ROSE_ASSERT (!"Bad index for SgAggregateInitializer");
+     }
+
+     return result;
+   }
+
+std::vector<CFGEdge>
+SgCompoundInitializer::cfgInEdges(unsigned int idx)
+   {
+     std::vector<CFGEdge> result;
+     switch (idx) {
+       case 0: makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result); break;
+       case 1: makeEdge(this->get_initializers()->cfgForEnd(), CFGNode(this, idx), result); break;
+       default: ROSE_ASSERT (!"Bad index for SgCompoundInitializer");
      }
 
      return result;
@@ -4065,12 +4115,22 @@ SgDesignatedInitializer::cfgFindChildIndex(SgNode* n)
 
 unsigned int
 SgInitializedName::cfgIndexForEnd() const {
-  return this->get_initializer() ? 1 : 0;
+  return this->get_initializer() ? 1 : 0; // SgInitializedName may have one or two CFGNodes, depending on if it  has initializer (2 CFG nodes) or not (only 1, so the end index is 0)
 }
 
 bool
 SgInitializedName::cfgIsIndexInteresting(unsigned int idx) const {
+#if 0 //TODO turn this on at some point, though we have filters to handle this.
+  if ( this->get_initializer() ) // Liao 2/23/2012, more accurate handling. only the last one is interesting if there is an initializer
+    return (idx == 1 );
+  else 
+  {
+    assert (idx == 0); // there should be only one CFGNode if no initializer
+    return true;
+  }
+#else
   return true;
+#endif  
 }
 
 unsigned int
@@ -4972,81 +5032,68 @@ SgJavaForEachStatement::cfgIndexForEnd() const
      return 3;
    }
 
-bool SgJavaForEachStatement::cfgIsIndexInteresting(unsigned int idx) const {
-  return idx == 1;
-}
-
-unsigned int
-SgJavaForEachStatement::cfgFindChildIndex(SgNode* n)
+unsigned int SgJavaForEachStatement::cfgFindNextChildIndex(SgNode* n)
    {
-     // for (String s : expr)
-     // 'expr' assumes the role of the traditional loop condition.
-     // It is named 'collection' in the SgForEachStatement
-     if (n == this->get_collection()) {
-          return 0;
-     }
-         if (n == this->get_loop_body()) {
-          return 1;
-     } else {
-         ROSE_ASSERT (!"Bad child in java for each statement");
-     }
-     return 0;
+     unsigned int parentIndex = this->cfgFindChildIndex(n);
+     unsigned int returnValue;
+     // the fall-through case of the loop body is to go back to cfg 1
+     if (parentIndex == 2)
+          returnValue = 1;
+       else
+          returnValue = parentIndex + 1;
+
+     return returnValue;
    }
+
+
+bool SgJavaForEachStatement::cfgIsIndexInteresting(unsigned int idx) const {
+  return idx == 2;
+}
 
 std::vector<CFGEdge>
 SgJavaForEachStatement::cfgOutEdges(unsigned int idx) {
-  std::vector<CFGEdge> result;
-  CFGNode res = NULL;
-
-  switch (idx) {
-    case 0:
-        makeEdge(CFGNode(this, idx), this->get_collection()->cfgForBeginning(), result);
-        break;
-    case 1:
-        makeEdge(CFGNode(this, idx), this->get_loop_body()->cfgForBeginning(), result);
-        break;
-    case 2:
-        // backedge from body exit to foreach's 'collection' condition
-        makeEdge(CFGNode(this, idx),CFGNode(this, 0), result);
-        break;
-    case 3:
-        makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result);
-        break;
+    std::vector<CFGEdge> result;
+    switch (idx) {
+    case 0: makeEdge(CFGNode(this, idx), this->get_element()->cfgForBeginning(), result); break;
+    case 1: makeEdge(CFGNode(this, idx), this->get_collection()->cfgForBeginning(), result);
+            break;
+    case 2: makeEdge(CFGNode(this, idx), this->get_loop_body()->cfgForBeginning(), result);
+            makeEdge(CFGNode(this, idx), CFGNode(this, 3), result);
+            break;
+    case 3: makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result); break;
     default: ROSE_ASSERT (!"Bad index for SgJavaForEachStatement");
-  }
-  return result;
+    }
+    return result;
 }
 
-std::vector<CFGEdge>
-SgJavaForEachStatement::cfgInEdges(unsigned int idx) {
-  std::vector<CFGEdge> result;
-  switch (idx) {
-    case 0: makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result);
-            // backedge from body exit to foreach's 'collection' condition
-                makeEdge(CFGNode(this, 2), CFGNode(this, idx), result);
-                break;
-    case 1: makeEdge(this->get_collection()->cfgForEnd(), CFGNode(this, idx), result); break;
-    case 2: {
-      makeEdge(this->get_loop_body()->cfgForEnd(), CFGNode(this, idx), result);
-      // continue goes to the beginning of the loop
-      vector<SgContinueStmt*> continueStmts = SageInterface::findContinueStmts(this->get_loop_body(), "");
-      for (unsigned int i = 0; i < continueStmts.size(); ++i) {
-        makeEdge(CFGNode(continueStmts[i], 0), CFGNode(this, idx), result);
-      }
-      break;
+std::vector<CFGEdge> SgJavaForEachStatement::cfgInEdges(unsigned int idx) {
+    std::vector<CFGEdge> result;
+    switch (idx) {
+    case 0: {
+        makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result);
+        break;
     }
+    case 1: {
+        makeEdge(this->get_element()->cfgForEnd(), CFGNode(this, idx), result);
+        makeEdge(this->get_loop_body()->cfgForEnd(), CFGNode(this, idx), result);
+        std::vector<SgContinueStmt*> continueStmts = SageInterface::findContinueStmts(this->get_loop_body(), "");
+        for (unsigned int i = 0; i < continueStmts.size(); ++i) {
+            makeEdge(CFGNode(continueStmts[i], 0), CFGNode(this, idx), result);
+        }
+        break;
+    }
+    case 2: makeEdge(this->get_collection()->cfgForEnd(), CFGNode(this, idx), result); break;
     case 3: {
-      makeEdge(this->get_collection()->cfgForEnd(), CFGNode(this, idx), result);
-      // break goes to the exit node
-      vector<SgBreakStmt*> breakStmts = SageInterface::findBreakStmts(this->get_loop_body(), "");
-      for (unsigned int i = 0; i < breakStmts.size(); ++i) {
-        makeEdge(CFGNode(breakStmts[i], 0), CFGNode(this, idx), result);
-      }
-      break;
+        makeEdge(CFGNode(this, 2), CFGNode(this, idx), result);
+        std::vector<SgBreakStmt*> breakStmts = SageInterface::findBreakStmts(this->get_loop_body(), "");
+        for (unsigned int i = 0; i < breakStmts.size(); ++i) {
+            makeEdge(CFGNode(breakStmts[i], 0), CFGNode(this, idx), result);
+        }
+        break;
     }
     default: ROSE_ASSERT (!"Bad index for SgJavaForEachStatement");
-  }
-  return result;
+    }
+    return result;
 }
 
 unsigned int

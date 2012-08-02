@@ -12,15 +12,20 @@ endif
 # is run then we only need a single directory
 INCLUDES = -Winvalid-pch $(ROSE_INCLUDES) 
 
+
 # DQ (7/23/2008): New handling of EDG builds a single library instead of two.
 # Binary distributions of ROSE store the binary for EDG related code in the source tree.
 # JJW (8/3/2008): See src/frontend/CxxFrontend/Makefile.am.forBinaryEDG for
 # more information on this process.
 # libroseEDGlibraries = frontend/CxxFrontend/EDG/libroseEDG.la
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
-   libroseEDGlibraries = frontend/CxxFrontend/EDG/libroseEDG.la
+if ROSE_USE_CLANG_FRONTEND
+   libroseCxxlibraries = frontend/CxxFrontend/Clang/libroseClangFrontend.la
 else
-   libroseEDGlibraries =
+   libroseCxxlibraries = frontend/CxxFrontend/EDG/libroseEDG.la
+endif
+else
+   libroseCxxlibraries =
 endif
 
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
@@ -51,15 +56,16 @@ else
 endif
 
 if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
-   libroseBinaryLibraries = \
-      $(top_builddir)/src/frontend/BinaryDisassembly/libbinaryFrontend.la \
-      $(top_builddir)/src/midend/binaryAnalyses/libbinaryMidend.la \
-      $(top_builddir)/src/frontend/Disassemblers/libroseDisassemblers.la \
-      $(top_builddir)/src/frontend/BinaryFormats/libroseBinaryFormats.la \
-      $(top_builddir)/src/frontend/BinaryLoader/libroseBinaryLoader.la 
+   libroseBinaryLibraries =						    \
+	$(top_builddir)/src/frontend/BinaryDisassembly/libbinaryFrontend.la \
+	$(top_builddir)/src/frontend/BinaryFormats/libroseBinaryFormats.la  \
+	$(top_builddir)/src/frontend/BinaryLoader/libroseBinaryLoader.la    \
+	$(top_builddir)/src/frontend/Disassemblers/libroseDisassemblers.la  \
+	$(top_builddir)/src/midend/binaryAnalyses/libbinaryMidend.la
 else
-   libroseBinaryLibraries = \
-      $(top_builddir)/src/frontend/BinaryFormats/libroseBinaryFormats.la
+   libroseBinaryLibraries =						   \
+	$(top_builddir)/src/frontend/BinaryFormats/libroseBinaryFormats.la \
+	$(top_builddir)/src/frontend/Disassemblers/libroseDisassemblers.la
 endif
 
 if ROSE_USE_MYSQL
@@ -85,6 +91,7 @@ else
    libroseQtExtension =
 endif
 
+# TOO (11/22/2011): flattening midend Makefiles => TODO: move conditional compilation to Makefile.
 # TODO: correct list!
 if ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 libroseLibraries = \
@@ -92,14 +99,12 @@ libroseLibraries = \
    $(top_builddir)/src/backend/libbackend.la \
    $(top_builddir)/src/frontend/SageIII/libsage3.la \
    $(libroseEDGlibraries) \
-   $(top_builddir)/src/midend/astDiagnostics/libastDiagnostics.la \
    $(top_builddir)/src/midend/astProcessing/libastprocessing.la \
-   $(top_builddir)/src/midend/astQuery/libquery.la \
    $(top_builddir)/src/roseSupport/libroseSupport.la \
    $(top_builddir)/src/util/support/libsupport.la \
    $(top_builddir)/src/util/graphs/libgraphs.la \
    $(top_builddir)/src/util/libroseutil.la \
-   $(libroseBinaryLibraries) 
+   $(libroseBinaryLibraries)
 else
 libroseLibraries = \
    $(top_builddir)/src/3rdPartyLibraries/MSTL/libmstl.la \
@@ -108,25 +113,15 @@ libroseLibraries = \
    $(libroseOpenFortranParserlibraries) \
    $(libroseJavaParserlibraries) \
    $(librosePHPlibraries) \
+   $(libroseCxxlibraries) \
    $(librosePythonlibraries) \
    $(libroseEDGlibraries) \
    $(libroseBinaryLibraries) \
-   $(top_builddir)/src/midend/abstractHandle/libabstractHandle.la \
-   $(top_builddir)/src/midend/abstractMemoryObject/libabstractMemoryObject.la \
-   $(top_builddir)/src/midend/astDiagnostics/libastDiagnostics.la \
-   $(top_builddir)/src/midend/astProcessing/libastprocessing.la \
-   $(top_builddir)/src/midend/astQuery/libquery.la \
-   $(top_builddir)/src/midend/astRewriteMechanism/librewrite.la \
-   $(top_builddir)/src/midend/astUtil/libastUtil.la \
    $(top_builddir)/src/midend/programAnalysis/libprogramAnalysis.la \
    $(top_builddir)/src/midend/programTransformation/loopProcessing/libLoopProcessing.la \
-   $(top_builddir)/src/midend/programTransformation/loopProcessing/computation/libcomputation.la \
-   $(top_builddir)/src/midend/programTransformation/loopProcessing/driver/libdriver.la \
-   $(top_builddir)/src/midend/programTransformation/loopProcessing/outsideInterface/libarrayOptimization.la \
-   $(top_builddir)/src/midend/programTransformation/loopProcessing/prepostTransformation/libprepostloop.la \
-   $(top_builddir)/src/midend/programTransformation/loopProcessing/slicing/libslicing.la \
+   $(top_builddir)/src/midend/programTransformation/extractFunctionArgumentsNormalization/libExtractFunctionArgumentsNormalization.la \
    $(top_builddir)/src/3rdPartyLibraries/POET/libpoet.la \
-   $(top_builddir)/src/midend/programTransformation/libprogramTransformation.la \
+   $(top_builddir)/src/midend/libmidend.la \
    $(top_builddir)/src/roseSupport/libroseSupport.la \
    $(top_builddir)/src/util/support/libsupport.la \
    $(top_builddir)/src/util/graphs/libgraphs.la \
@@ -163,17 +158,10 @@ include_HEADERS = \
 # bin_PROGRAMS = testSharedRoseLib # testMultiRoseLib
 noinst_PROGRAMS = testSharedRoseLib 
 all-local: testSharedRoseLib$(EXEEXT) 
-	@boostlibdirs=$$(ldd .libs/testSharedRoseLib |							    \
-                        sed -n --posix '/libboost/s%.*=> /\(\([^ \t/]*/\)*\).*%/\1%p' |			    \
-                        sort |uniq);									    \
-	 if test $$(echo "$$boostlibdirs" |wc -l) -gt 1; then						    \
-	     echo "Boost libraries are being drawn from multiple directories.  This is probably an error:"; \
-	     ldd .libs/testSharedRoseLib |sed -n --posix '/libboost/p';					    \
-	     false;											    \
-	 fi
-	@echo "Testing whether a simple program linked against ROSE can be run:" >&2
-	@echo "The translator will be run without any input files, and will print a warning about that; the warning is normal." >&2
-	@./testSharedRoseLib$(EXEEXT) || (echo "You cannot run a program linked against ROSE.  Please be sure that your LD_LIBRARY_PATH (Linux) or DYLD_LIBRARY_PATH (Mac OSX) contains the correct libraries (JVM, Boost, librose.so, etc.)." >&2; exit 1)
+	@$(top_srcdir)/scripts/check_boost_linkage.sh .libs/testSharedRoseLib >&2
+	@echo "[INFO] Testing whether a simple program linked with ROSE can be run (a warning will be issued because the translator is being run without an input file):" >&2
+	@./testSharedRoseLib$(EXEEXT) || (echo "[ERROR] You cannot run a program linked with ROSE. Please be sure that your LD_LIBRARY_PATH (Linux) or DYLD_LIBRARY_PATH (Mac OSX) contains the correct libraries (JVM, Boost, librose.so, etc.)." >&2; exit 1)
+	@echo "[INFO] Success!"
 
 # PC (9/15/2006): force the use of the C++ linker
 LINK = $(CXXLINK)

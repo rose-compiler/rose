@@ -20,8 +20,13 @@ extern int analysisDebugLevel;
 
 class Analysis
 {
-        public:
-        Analysis() {}
+  public:
+    // a filter function to decide which raw CFG node to show (if return true) or hide (otherwise)  
+    // This is required to support custom filters of virtual CFG
+    // Custom filter is set inside the intra-procedural analysis.
+    // Inter-procedural analysis will copy the filter from its intra-procedural analysis during the call to its constructor.
+    bool (*filter) (CFGNode cfgn); 
+    Analysis(bool (*f)(CFGNode) = defaultFilter):filter(f) {}
 };
 
 class InterProceduralAnalysis;
@@ -64,6 +69,7 @@ class InterProceduralAnalysis : virtual public Analysis
  *** UnstructuredPassAnalyses ***
  ********************************/
 
+// A driver class which simply iterates through all CFG nodes of a specified function
 class UnstructuredPassIntraAnalysis : virtual public IntraProceduralAnalysis
 {
         public:
@@ -74,7 +80,7 @@ class UnstructuredPassIntraAnalysis : virtual public IntraProceduralAnalysis
         
         virtual void visit(const Function& func, const DataflowNode& n, NodeState& state)=0;
 };
-
+// A driver class which simply iterates all function definitions one by one and call intra-procedural analysis on each of them.
 class UnstructuredPassInterAnalysis : virtual public InterProceduralAnalysis
 {
         public:

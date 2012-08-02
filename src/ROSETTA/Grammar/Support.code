@@ -526,12 +526,6 @@ HEADER_STORAGE_MODIFIER_START
                e_cuda_shared         = 17, /*!< CUDA, in device's shared memory */
                e_cuda_dynamic_shared = 18, /*!< CUDA, in device's shared memory, dynamically allocated */
 
-            // TV (05/06/2010): Support for OpenCL storage modifiers
-               e_opencl_global   = 19, /*!< OpenCL, accessible from all the device */
-               e_opencl_local    = 20, /*!< OpenCL, accessible for a work-group only */
-               e_opencl_constant = 21, /*!< OpenCL, read-only variable accessible from all the device */
-               e_opencl_private  = 22, /*!< OpenCL, accessible only from one work-item */
-               
                e_last_modifier  /*!< last value (upper bound on range of values, used in error checking) */
              };
 
@@ -609,20 +603,6 @@ HEADER_STORAGE_MODIFIER_START
 
           bool isCudaDynamicShared() const;
           void setCudaDynamicShared();
-
-       // TV (05/06/2010): Support for OpenCL storage modifiers
-
-          bool isOpenclGlobal() const;
-          void setOpenclGlobal();
-
-          bool isOpenclLocal() const;
-          void setOpenclLocal();
-
-          bool isOpenclConstant() const;
-          void setOpenclConstant();
-
-          bool isOpenclPrivate() const;
-          void setOpenclPrivate();
 
           std::string displayString() const;
           void display ( std::string label ) const;
@@ -1232,6 +1212,17 @@ HEADER_TYPE_MODIFIER_START
                e_gnu_attribute__nonnull__            = 27,/*!< GNU specific attribute for function type (GNU extension) */
                e_gnu_attribute__sentinel__           = 28,/*!< GNU specific attribute for function type (GNU extension) */
 
+            // TV (02/27/2012): Address space modifer
+               e_address_space__                     = 29,/*!< address space modifier, get_address_space_value() give the associated param */
+
+            // TV (02/27/2012): OpenCL related Modifier
+               e_ocl_global__                        = 30,/*!< OpenCL specific address space modifier */
+               e_ocl_local__                         = 31,/*!< OpenCL specific address space modifier */
+               e_ocl_constant__                      = 32,/*!< OpenCL specific address space modifier */
+
+            // TV (03/03/2012): Address space modifer
+               e_vector_type__                       = 33,/*!< GCC vector type attribute and other vector extentions */
+
             // Last attribute enum (used for internal bounds checking)
                e_last_modifier /*!< last value (upper bound on range of values, used in error checking) */
              };
@@ -1454,6 +1445,26 @@ HEADER_TYPE_MODIFIER_START
           bool isGnuAttributeSentinel() const;
           void setGnuAttributeSentinel();
           void unsetGnuAttributeSentinel();
+
+          bool haveAddressSpace() const;
+          void setAddressSpace();
+          void unsetAddressSpace();
+
+          bool isOpenclGlobal() const;
+          void setOpenclGlobal();
+          void unsetOpenclGlobal();
+
+          bool isOpenclLocal() const;
+          void setOpenclLocal();
+          void unsetOpenclLocal();
+
+          bool isOpenclConstant() const;
+          void setOpenclConstant();
+          void unsetOpenclConstant();
+
+          bool isVectorType() const;
+          void setVectorType();
+          void unsetVectorType();
 
           std::string displayString() const;
           void display ( std::string label ) const;
@@ -2144,20 +2155,6 @@ void SgStorageModifier::setCudaShared()      { p_modifier = e_cuda_shared; }
 bool SgStorageModifier::isCudaDynamicShared() const { return p_modifier == e_cuda_dynamic_shared; }
 void SgStorageModifier::setCudaDynamicShared()      { p_modifier = e_cuda_dynamic_shared; }
 
-// TV (05/06/2010): Support for OpenCL storage modifiers
-
-bool SgStorageModifier::isOpenclGlobal() const { return p_modifier == e_opencl_global; }
-void SgStorageModifier::setOpenclGlobal()      { p_modifier = e_opencl_global; }
-
-bool SgStorageModifier::isOpenclLocal() const { return p_modifier == e_opencl_local; }
-void SgStorageModifier::setOpenclLocal()      { p_modifier = e_opencl_local; }
-
-bool SgStorageModifier::isOpenclConstant() const { return p_modifier == e_opencl_constant; }
-void SgStorageModifier::setOpenclConstant()      { p_modifier = e_opencl_constant; }
-
-bool SgStorageModifier::isOpenclPrivate() const { return p_modifier == e_opencl_private; }
-void SgStorageModifier::setOpenclPrivate()      { p_modifier = e_opencl_private; }
-
 string
 $CLASSNAME::displayString() const
    {
@@ -2213,10 +2210,6 @@ bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs)
 	       (lhs.isCudaConstant()   == rhs.isCudaConstant()  ) &&
 	       (lhs.isCudaShared()     == rhs.isCudaShared()  ) &&
 	       (lhs.isCudaDynamicShared() == rhs.isCudaDynamicShared()  ) &&
-	       (lhs.isOpenclGlobal()   == rhs.isOpenclGlobal()  ) &&
-	       (lhs.isOpenclLocal()    == rhs.isOpenclLocal()  ) &&
-	       (lhs.isOpenclConstant() == rhs.isOpenclConstant()  ) &&
-	       (lhs.isOpenclPrivate()  == rhs.isOpenclPrivate()  ) &&
 		   true;
 }
 
@@ -3174,6 +3167,26 @@ bool SgTypeModifier::isGnuAttributeSentinel() const  { return checkBit(e_gnu_att
 void SgTypeModifier::setGnuAttributeSentinel()       { setBit(e_gnu_attribute__sentinel__,p_modifierVector); }
 void SgTypeModifier::unsetGnuAttributeSentinel()     { unsetBit(e_gnu_attribute__sentinel__,p_modifierVector); }
 
+bool SgTypeModifier::haveAddressSpace() const { return checkBit(e_address_space__,p_modifierVector); }
+void SgTypeModifier::setAddressSpace()        { setBit(e_address_space__,p_modifierVector); }
+void SgTypeModifier::unsetAddressSpace()      { unsetBit(e_address_space__,p_modifierVector); }
+
+bool SgTypeModifier::isOpenclGlobal() const { return checkBit(e_ocl_global__,p_modifierVector); }
+void SgTypeModifier::setOpenclGlobal()      { setBit(e_ocl_global__,p_modifierVector); }
+void SgTypeModifier::unsetOpenclGlobal()    { unsetBit(e_ocl_global__,p_modifierVector); }
+
+bool SgTypeModifier::isOpenclLocal() const { return checkBit(e_ocl_local__,p_modifierVector); }
+void SgTypeModifier::setOpenclLocal()      { setBit(e_ocl_local__,p_modifierVector); }
+void SgTypeModifier::unsetOpenclLocal()    { unsetBit(e_ocl_local__,p_modifierVector); }
+
+bool SgTypeModifier::isOpenclConstant() const { return checkBit(e_ocl_constant__,p_modifierVector); }
+void SgTypeModifier::setOpenclConstant()      { setBit(e_ocl_constant__,p_modifierVector); }
+void SgTypeModifier::unsetOpenclConstant()    { unsetBit(e_ocl_constant__,p_modifierVector); }
+
+bool SgTypeModifier::isVectorType() const { return checkBit(e_vector_type__,p_modifierVector); }
+void SgTypeModifier::setVectorType()      { setBit(e_vector_type__,p_modifierVector); }
+void SgTypeModifier::unsetVectorType()    { unsetBit(e_vector_type__,p_modifierVector); }
+
 string
 $CLASSNAME::displayString() const
    {
@@ -3237,6 +3250,16 @@ bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs)
 	       (lhs.isGnuAttributeWarnUnusedResult() == rhs.isGnuAttributeWarnUnusedResult()) &&
 	       (lhs.isGnuAttributeNonnull()          == rhs.isGnuAttributeNonnull()         ) &&
 	       (lhs.isGnuAttributeSentinel()         == rhs.isGnuAttributeSentinel()        ) &&
+           // Address Space
+               (lhs.haveAddressSpace()        == rhs.haveAddressSpace()        ) &&
+               (lhs.get_address_space_value() == rhs.get_address_space_value() ) &&
+           // OpenCL specific
+               (lhs.isOpenclGlobal()   == rhs.isOpenclGlobal()    ) &&
+               (lhs.isOpenclLocal()    == rhs.isOpenclLocal()    ) &&
+               (lhs.isOpenclConstant() == rhs.isOpenclConstant() ) &&
+           // Vector Type
+               (lhs.isVectorType()    == rhs.isVectorType()    ) &&
+               (lhs.get_vector_size() == rhs.get_vector_size() ) &&
 		   true;
 }
 
@@ -4131,7 +4154,8 @@ HEADER_INITIALIZED_NAME_START
                e_gnu_attribute__nocommon__               = 4, /*!< GNU specific attribute for (GNU extension) */
                e_gnu_attribute__transparent_union__      = 5, /*!< GNU specific attribute for (GNU extension) */
                e_gnu_attribute__weakref__                = 6,/*!< GNU specific attribute for (GNU extension) */
-               e_gnu_attribute__packed__                 = 6,/*!< GNU specific attribute for (GNU extension) */
+            // Packed was same value than weakref
+               e_gnu_attribute__packed__                 = 7,/*!< GNU specific attribute for (GNU extension) */
                e_last_gnu_variable_attribute /*!< last value (upper bound on range of values, used in error checking) */
              };
 
@@ -4271,10 +4295,11 @@ HEADER_INITIALIZED_NAME_START
        //   virtual void set_file_info(Sg_File_Info* X);
 
        // DQ (2/6/2007): Added support to get the symbol from the declaration (via the symbol table in the scope)
-      //! Get the associated SgSymbol from the symbol table located in the scope
+      //! Get the associated SgSymbol from the symbol table located in the scope, without considering possible prev_decl_item. Internal use only. Users should use search_for_symbol_from_symbol_table() instead.
           SgSymbol* get_symbol_from_symbol_table() const;
 
        // PC (10/1/2009): Added support to get the symbol from the correct associated declaration
+       //! User interface for retrieving the associated symbol. It searches through the possible chain of prev_decl_item.
           SgSymbol* search_for_symbol_from_symbol_table() const;
 
 #if ALT_FIXUP_COPY
@@ -4941,6 +4966,9 @@ HEADER_APPLICATION_FILE_START
        // BP : 11/13/2001, modified to take compiler name
           void build_EDG_CommandLine ( std::vector<std::string> & inputCommandLine, std::vector<std::string>& argv, int fileNameIndex );
 
+       // TV: 02/15/12, CLANG also need a command line builder
+          void build_CLANG_CommandLine ( std::vector<std::string> & inputCommandLine, std::vector<std::string>& argv, int fileNameIndex );
+
       //! Move this function from ROSE into the AST restructuring tool
       //  friend void pdfPrintAbstractSyntaxTreeEDG  ( SgFile *file, bool writeOutHeaderFiles = false );
       //  friend void pdfPrintAbstractSyntaxTreeEDG  ( SgFile *file );
@@ -5303,6 +5331,12 @@ HEADER_APPLICATION_PROJECT_START
 
           bool get_Java_only (void) const;
           void set_Java_only (bool value);
+          std::list<std::string> get_Java_classpath (void) const;
+          void set_Java_classpath (std::list<std::string> param);
+          std::list<std::string> get_Java_sourcepath (void) const;
+          void set_Java_sourcepath (std::list<std::string> param);
+          std::string get_Java_destdir (void) const;
+          void set_Java_destdir (std::string param);
 
        // DQ (2/4/2009): This is now a data member at the SgProject and so is automatically generated asa member function.
        // bool get_binary_only (void) const;
@@ -11760,8 +11794,8 @@ ROSEAttributesListPtr getPreprocessorDirectives( char *fileName);
 // #include "sageCommonSourceHeader.h"
 // extern an_il_header il_header;
 
-// Moved to sageSupport.C: void SgFile::setupSourceFilename ( const vector<string>& argv )
-// Moved to sageSupport.C: void SgFile::doSetupForConstructor(const vector<string>& argv, int& errorCode, int fileNameIndex, SgProject* project)
+// Moved to sage_support.cpp: void SgFile::setupSourceFilename ( const vector<string>& argv )
+// Moved to sage_support.cpp: void SgFile::doSetupForConstructor(const vector<string>& argv, int& errorCode, int fileNameIndex, SgProject* project)
 
 SgFile::SgFile ( int & argc, char** & argv , SgProject* project )
 // : p_numberOfCommandLineArguments(argc) , p_commandLineArgumentList(NULL)
@@ -12334,12 +12368,12 @@ roseDisplayMechanism( SgFile *file )
    }
 #endif
 
-// Moved to sageSupport.C: int  SgFile::callFrontEnd ()
-// Moved to sageSupport.C: void SgFile::stripRoseCommandLineOptions ( vector<string>& argv )
-// Moved to sageSupport.C: void SgFile::processRoseCommandLineOptions ( vector<string> & argv )
-// Moved to sageSupport.C: void SgFile::stripEdgCommandLineOptions ( vector<string> & argv )
-// Moved to sageSupport.C: void SgFile::processBackendSpecificCommandLineOptions ( const vector<string>& argvOrig )
-// Moved to sageSupport.C: bool SgFile::isPrelinkPhase() const
+// Moved to sage_support.cpp: int  SgFile::callFrontEnd ()
+// Moved to sage_support.cpp: void SgFile::stripRoseCommandLineOptions ( vector<string>& argv )
+// Moved to sage_support.cpp: void SgFile::processRoseCommandLineOptions ( vector<string> & argv )
+// Moved to sage_support.cpp: void SgFile::stripEdgCommandLineOptions ( vector<string> & argv )
+// Moved to sage_support.cpp: void SgFile::processBackendSpecificCommandLineOptions ( const vector<string>& argvOrig )
+// Moved to sage_support.cpp: bool SgFile::isPrelinkPhase() const
 
 SgProject*
 SgFile::get_project()
@@ -12370,8 +12404,8 @@ SgFile::get_project()
      return project;
    }
 
-// Moved to sageSupport.C: void SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string> & argv, int fileNameIndex )
-// Moved to sageSupport.C: void SgFile::usage ( int status )
+// Moved to sage_support.cpp: void SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string> & argv, int fileNameIndex )
+// Moved to sage_support.cpp: void SgFile::usage ( int status )
 
 #ifdef _MSC_VER
 #include <direct.h> 	// getcwd()
@@ -12503,7 +12537,7 @@ SgFile::generateOutputFileName() const
    }
 
 
-// Moved to sageSupport.C: string SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameIndex, const string& compilerName )
+// Moved to sage_support.cpp: string SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameIndex, const string& compilerName )
 
 
 // Forward declarations of classes used to control and tailor the code generation.
@@ -12537,7 +12571,7 @@ SgFile::unparse ( UnparseFormatHelp *unparseFormatHelp, UnparseDelegate* unparse
      unparseFile ( this, unparseFormatHelp, unparseDelegate, NULL );
    }
 
-// Moved to sageSupport.C: int SgFile::compileOutput ( vector<string>& argv, int fileNameIndex, const string& compilerNameOrig )
+// Moved to sage_support.cpp: int SgFile::compileOutput ( vector<string>& argv, int fileNameIndex, const string& compilerNameOrig )
 
 
 // DQ (5/8/2010): Added support to reset the Sg_File_Info (source code position information) 
@@ -13122,8 +13156,8 @@ SgProject::operator[]( unsigned int i )
 #endif
    }
 
-// Moved to sageSupport.C: int SgProject::parse(const vector<string>& argv)
-// Moved to sageSupport.C: void SgProject::processCommandLine(const vector<string>& input_argv)
+// Moved to sage_support.cpp: int SgProject::parse(const vector<string>& argv)
+// Moved to sage_support.cpp: void SgProject::processCommandLine(const vector<string>& input_argv)
 
 std::ostream & operator<< ( std::ostream & os, const Rose_STL_Container<string> & l )
    {
@@ -13136,7 +13170,7 @@ std::ostream & operator<< ( std::ostream & os, const Rose_STL_Container<string> 
 // void buildHiddenTypeAndDeclarationLists( SgProject* project );
 
 #if 0
-// Moved the sageSupport.C
+// Moved the sage_support.cpp
 int 
 SgProject::parse()
    {
@@ -13263,7 +13297,7 @@ SgProject::unparse ( UnparseFormatHelp *unparseFormatHelp, UnparseDelegate* unpa
 #endif
    }
 
-// Moved to sageSupport.C: int SgProject::compileOutput( const std::string& compilerName )
+// Moved to sage_support.cpp: int SgProject::compileOutput( const std::string& compilerName )
 
 void
 SgProject::resetSourcePositionToGeneratedCode ( UnparseFormatHelp *unparseFormatHelp )
@@ -13634,6 +13668,45 @@ SgProject::get_Java_only (void) const
      return result;
    }
 
+void
+SgProject::set_Java_classpath (std::list<std::string> param)
+   {
+     p_Java_classpath = param;
+   }
+
+std::list<std::string>
+SgProject::get_Java_classpath (void) const
+   {
+     return p_Java_classpath;
+   }
+   
+void
+SgProject::set_Java_sourcepath (std::list<std::string> param)
+   {
+     p_Java_sourcepath = param;
+   }
+
+std::list<std::string>
+SgProject::get_Java_sourcepath (void) const
+   {
+     return p_Java_sourcepath;
+   }
+   
+void
+SgProject::set_Java_destdir (std::string param)
+   {
+     p_Java_destdir = param;
+   }
+
+std::string
+SgProject::get_Java_destdir (void) const
+   {
+    // If modifying, check stripJavaCommandLineOptions in cmdline.cpp    
+    if (p_Java_destdir == "") {
+      return ROSE::getWorkingDirectory();
+    }
+    return p_Java_destdir;
+   }
 
 #if 0
 // DQ (2/4/2009): This is now a data member at the SgProject and so is automatically generated asa member function.
@@ -13747,8 +13820,8 @@ SgProject::display ( const std::string & label ) const
         }
    }
 
-// Moved to sageSupport.C: int SgProject::link ( std::string linkerName )
-// Moved to sageSupport.C: int SgProject::link ( const std::vector<std::string>& argv, std::string linkerName )
+// Moved to sage_support.cpp: int SgProject::link ( std::string linkerName )
+// Moved to sage_support.cpp: int SgProject::link ( const std::vector<std::string>& argv, std::string linkerName )
 
 const SgStringList &
 SgProject::get_includePathList () const

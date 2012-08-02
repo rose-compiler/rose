@@ -16,33 +16,33 @@ AC_DEFUN([ROSE_SUPPORT_YICES],[
     dnl Find the yices executable and/or library.
     HAVE_LIBYICES=
     if test $ac_cv_use_yices = yes; then
-        YICES_PREFIX=
-        AC_PATH_PROG(YICES, yices)
+	ROSE_YICES_PREFIX=
+        AC_PATH_PROG(ROSE_YICES, yices)
         AC_CHECK_LIB(yices, yicesl_version,
-                     [AC_DEFINE(HAVE_LIBYICES, [], [Defined when the Yices SMT-Solver library is present and should be used.])
-                      HAVE_LIBYICES=yes])
+                     [AC_DEFINE(ROSE_HAVE_LIBYICES, [], [Defined when the Yices SMT-Solver library is present and should be used.])
+                      ROSE_HAVE_LIBYICES=yes])
     elif test -n "$ac_cv_use_yices" -a "$ac_cv_use_yices" != no; then
-        YICES_PREFIX="$ac_cv_use_yices"
-        AC_PATH_PROG(YICES, yices, [], [$YICES_PREFIX/bin])
-        AC_CHECK_FILE(["$YICES_PREFIX/lib/libyices.a"],
-                      [AC_DEFINE(HAVE_LIBYICES, [], [Defined when the Yices SMT-Solver library is present and should be used.])
-                       HAVE_LIBYICES=yes])
+        ROSE_YICES_PREFIX="$ac_cv_use_yices"
+        AC_PATH_PROG(ROSE_YICES, yices, [], [$ROSE_YICES_PREFIX/bin])
+        AC_CHECK_FILE(["$ROSE_YICES_PREFIX/lib/libyices.a"],
+                      [AC_DEFINE(ROSE_HAVE_LIBYICES, [], [Defined when the Yices SMT-Solver library is present and should be used.])
+                       ROSE_HAVE_LIBYICES=yes])
     fi
 
     dnl Sanity check... If the user told us to use yices, then we must find either an executable or the library.
-    if test "$ac_cv_use_yices" != no -a -z "$YICES" -a -z "$HAVE_LIBYICES"; then
+    if test "$ac_cv_use_yices" != no -a -z "$ROSE_YICES" -a -z "$ROSE_HAVE_LIBYICES"; then
         AC_MSG_ERROR([found neither yices executable nor libyices.a for --with-yices])
     fi
 
     dnl Results
-    dnl   YICES         -- defined as the name of the "yices" executable if available
-    dnl   YICES_PREFIX  -- the name of the directory where Yices software is installed if no on search paths
-    dnl   HAVE_LIBYICES -- defined if the Yices library and include files are available
-    if test -n "$YICES"; then
-        AC_DEFINE_UNQUOTED(YICES, ["$YICES"], [Absolute name of yices executable, or the empty string.])
+    dnl   ROSE_YICES         -- defined as the name of the "yices" executable if available
+    dnl   ROSE_YICES_PREFIX  -- the name of the directory where Yices software is installed if no on search paths
+    dnl   ROSE_HAVE_LIBYICES -- defined if the Yices library and include files are available
+    if test -n "$ROSE_YICES"; then
+        AC_DEFINE_UNQUOTED(ROSE_YICES, ["$ROSE_YICES"], [Absolute name of yices executable, or the empty string.])
     fi
-    AC_SUBST(YICES)
-    AC_SUBST(YICES_PREFIX)
-    AM_CONDITIONAL(HAVE_LIBYICES, [test -n "$HAVE_LIBYICES"])
-    AM_CONDITIONAL(HAVE_YICES,    [test -n "$YICES"])
+    AC_SUBST(ROSE_YICES)
+    AC_SUBST(ROSE_YICES_PREFIX)
+    AM_CONDITIONAL(ROSE_HAVE_LIBYICES, [test -n "$ROSE_HAVE_LIBYICES"])
+    AM_CONDITIONAL(ROSE_HAVE_YICES,    [test -n "$ROSE_YICES"])
 ])

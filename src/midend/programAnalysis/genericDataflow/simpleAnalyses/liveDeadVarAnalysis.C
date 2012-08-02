@@ -30,12 +30,8 @@ void LiveVarsLattice::copy(Lattice* that)
         liveVars = dynamic_cast<LiveVarsLattice*>(that)->liveVars;
 }
 
-// Called by analyses to create a copy of this lattice. However, if this lattice maintains any 
-//    information on a per-variable basis, these per-variable mappings must be converted from 
-//    the current set of variables to another set. This may be needed during function calls, 
-//    when dataflow information from the caller/callee needs to be transferred to the callee/calleer.
-// We do not force child classes to define their own versions of this function since not all
-//    Lattices have per-variable information.
+
+// replace variables with a new set of variables
 // varNameMap - maps all variable names that have changed, in each mapping pair, pair->first is the 
 //              old variable and pair->second is the new variable
 // func - the function that the copy Lattice will now be associated with
@@ -69,7 +65,8 @@ void LiveVarsLattice::incorporateVars(Lattice* that_arg)
 // return a lattice for the given expression. Similarly, a lattice that keeps track of constraints
 // on values of variables and expressions will return the portion of the lattice that relates to
 // the given expression. 
-// It it legal for this function to return NULL if no information is available.
+
+// It is legal for this function to return NULL if no information is available.
 // The function's caller is responsible for deallocating the returned object
 Lattice* LiveVarsLattice::project(SgExpression* expr) { 
         varID var = SgExpr2Var(expr);
@@ -298,18 +295,31 @@ public:
   void visit(SgNewExp *sgn) {
     // The placement arguments are used
     SgExprListExp* exprList = sgn->get_placement_args();
-    for(SgExpressionPtrList::iterator expr=exprList->get_expressions().begin();
-        expr!=exprList->get_expressions().end(); expr++)
-      ldva.used(*expr);
+    // NOTE: placement args are optional
+    // exprList could be NULL
+    // check for NULL before adding to used set
+    if(exprList) {
+        for(SgExpressionPtrList::iterator expr=exprList->get_expressions().begin();
+            expr!=exprList->get_expressions().end(); expr++)
+            ldva.used(*expr);
+    }
                                 
     // The placement arguments are used
+    // check for NULL before adding to used set
+    // not sure if this check is required for get_constructor_args()
     exprList = sgn->get_constructor_args()->get_args();
-    for(SgExpressionPtrList::iterator expr=exprList->get_expressions().begin();
-        expr!=exprList->get_expressions().end(); expr++)
-      ldva.used(*expr);
+    if(exprList) {
+        for(SgExpressionPtrList::iterator expr=exprList->get_expressions().begin();
+            expr!=exprList->get_expressions().end(); expr++)
+            ldva.used(*expr);
+    }
                                 
     // The built-in arguments are used (DON'T KNOW WHAT THESE ARE!)
-    ldva.used(sgn->get_builtin_args());
+    // check for NULL before adding to used set
+    // not sure if this check is required for get_builtin_args()
+    if(sgn->get_builtin_args()) {
+        ldva.used(sgn->get_builtin_args());
+    }
   }
   // Function Calls
   void visit(SgFunctionCallExp *sgn) {
@@ -335,14 +345,24 @@ public:
   // Sizeof
   void visit(SgSizeOfOp *sgn) {
     // XXX: The argument is NOT used, but its type is
-    ldva.used(sgn->get_operand_expr());
+    // NOTE: get_operand_expr() returns NULL when sizeof(type)
+    // FIX: use get_operand_expr() only when sizeof() involves expr
+    // ldva.used(sgn->get_operand_expr());
+      if(sgn->get_operand_expr()) {
+          ldva.used(sgn->get_operand_expr());
+      }
   }
   // This
   void visit(SgThisExp *sgn) {
   }
   // Variable Reference (we know this expression is live)
   void visit(SgVarRefExp *sgn) {
-    ldva.used(sgn);
+//  Liao, 4/5/2012. We cannot decide if a SgVarRefExp is read or written
+//    without its context information: for example, in  a = b; both a and b are represented as
+//    SgVarRefExp. But a is written and b is read.
+//    We should let the ancestor node (like SgAssignOp) decide on the READ/Written of SgVarRefExp.
+//    This is already done.   
+//    ldva.used(sgn); 
   }
 
   LDVAExpressionTransfer(LiveDeadVarsTransfer &base)
@@ -367,8 +387,11 @@ void LiveDeadVarsTransfer::visit(SgExpression *sgn)
   }
 
   // Remove the expression itself since it has no uses above itself
-  if(liveDeadAnalysisDebugLevel>=1) Dbg::dbg << indent << "   Removing "<<SgExpr2Var(sgn)<<endl;
-  modified = liveLat->remVar(SgExpr2Var(sgn)) || modified;
+  if (!isSgVarRefExp(sgn)) // Liao 4/5/2012, we should not remove SgVarRef since it may have uses above itself
+  {
+    if(liveDeadAnalysisDebugLevel>=1) Dbg::dbg << indent << "   Removing the expression itself"<<SgExpr2Var(sgn)<<endl;
+    modified = liveLat->remVar(SgExpr2Var(sgn)) || modified;
+  }
 }
 
 void LiveDeadVarsTransfer::visit(SgInitializedName *sgn) {
@@ -431,17 +454,38 @@ bool LiveDeadVarsTransfer::finish()
                 for(set<varID>::iterator var=assignedVars.begin(); var!=assignedVars.end(); var++)
                         Dbg::dbg << var << ", ";
                 Dbg::dbg << ">"<<endl;
+                Dbg::dbg << indent << "    assignedExprs=<";
+                for(set<SgExpression*>::iterator exp=assignedExprs.begin(); exp!=assignedExprs.end(); exp++)
+                        Dbg::dbg << (*exp)->class_name() <<":"<< (*exp)->unparseToString() << ", ";
+                Dbg::dbg << ">"<<endl;
         }
-        
+         /* Live-In (node) = Used(node) + (Live-Out (node) - Assigned (b))  
+          * Live-Out (node) is the lattice after merging ???
+          * */ 
         // Record for each assigned expression:
         //    If the expression corresponds to a variable, record that the variable is dead.
         //    Otherwise, record that the expression that computes the assigned memory location is live
         for(set<SgExpression*>::iterator asgn=assignedExprs.begin(); asgn!=assignedExprs.end(); asgn++) {
                 // If the lhs is a variable reference, remove it from live variables unless we also use this variable
                 if(isVarExpr(*asgn))
-                { if(usedVars.find(SgExpr2Var(*asgn)) != usedVars.end()) modified = liveLat->remVar(SgExpr2Var(*asgn)) || modified; }
+                { 
+                  // if(usedVars.find(SgExpr2Var(*asgn)) != usedVars.end()) // found in use?  Wrong condition!!
+                  if(usedVars.find(SgExpr2Var(*asgn)) == usedVars.end()) // if not found in use, then remove it, Liao 4/5/2012
+                  {
+                    modified = liveLat->remVar(SgExpr2Var(*asgn)) || modified; 
+                    if(liveDeadAnalysisDebugLevel>=1) {
+                      Dbg::dbg << indent << "    removing assigned expr <" << (*asgn)->class_name() <<":"<<(*asgn)->unparseToString();
+                      Dbg::dbg << ">"<<endl;
+                    }
+                  }
+                }
                 else
-                        modified = liveLat->addVar(SgExpr2Var(*asgn)) || modified;
+                {
+                  modified = liveLat->addVar(SgExpr2Var(*asgn)) || modified;
+                  if(liveDeadAnalysisDebugLevel>=1) {
+                    Dbg::dbg << indent << "    add assigned expr as live <" << (*asgn)->class_name() <<":"<<(*asgn)->unparseToString();
+                  }
+                }
         }
         for(set<varID>::iterator asgn=assignedVars.begin(); asgn!=assignedVars.end(); asgn++) {
                 // Remove this variable from live variables unless we also use this variable
@@ -459,7 +503,8 @@ bool LiveDeadVarsTransfer::finish()
 }
 
 // Initialize vars to hold all the variables and expressions that are live at DataflowNode n
-void getAllLiveVarsAt(LiveDeadVarsAnalysis* ldva, const DataflowNode& n, const NodeState& state, set<varID>& vars, string indent)
+//void getAllLiveVarsAt(LiveDeadVarsAnalysis* ldva, const DataflowNode& n, const NodeState& state, set<varID>& vars, string indent)
+void getAllLiveVarsAt(LiveDeadVarsAnalysis* ldva, const NodeState& state, set<varID>& vars, string indent)
 {
         //Dbg::dbg << "getAllLiveVarsAt() n="<<Dbg::escape(n.getNode()->unparseToString()) << " | " << n.getNode()->class_name()<<" | "<<n.getIndex()<<endl;
         //Dbg::dbg << "    state.getLatticeAbove(ldva): #="<<state.getLatticeAbove(ldva).size()<<endl;
@@ -474,7 +519,6 @@ void getAllLiveVarsAt(LiveDeadVarsAnalysis* ldva, const DataflowNode& n, const N
         //}
         //Dbg::dbg << "    state = "<<state.str(ldva, "        ")<<endl;
         //Dbg::dbg.flush();
-        
         LiveVarsLattice* liveLAbove = dynamic_cast<LiveVarsLattice*>(*(state.getLatticeAbove(ldva).begin()));
         LiveVarsLattice* liveLBelow = dynamic_cast<LiveVarsLattice*>(*(state.getLatticeBelow(ldva).begin()));
 
@@ -486,11 +530,38 @@ void getAllLiveVarsAt(LiveDeadVarsAnalysis* ldva, const DataflowNode& n, const N
 }
 
 // Returns the set of variables and expressions that are live at DataflowNode n
-set<varID> getAllLiveVarsAt(LiveDeadVarsAnalysis* ldva, const DataflowNode& n, const NodeState& state, string indent)
+//set<varID> getAllLiveVarsAt(LiveDeadVarsAnalysis* ldva, const DataflowNode& n, const NodeState& state, string indent)
+set<varID> getAllLiveVarsAt(LiveDeadVarsAnalysis* ldva, const NodeState& state, string indent)
 {
         set<varID> vars;
-        getAllLiveVarsAt(ldva, n, state, vars, indent);
+        //getAllLiveVarsAt(ldva, n, state, vars, indent);
+        getAllLiveVarsAt(ldva, state, vars, indent);
         return vars;
+}
+
+// get Live-In variable lattice for a control flow graph node generated from a SgNode with an index
+LiveVarsLattice* getLiveInVarsAt(LiveDeadVarsAnalysis* ldva, SgNode* n, unsigned int index /*= 0 */)
+{
+
+  assert (ldva != NULL); 
+  assert (n != NULL); 
+
+  NodeState *state =  NodeState::getNodeState(n, index);
+  assert (state != NULL);
+  LiveVarsLattice* liveLAbove = dynamic_cast<LiveVarsLattice*>(*(state->getLatticeAbove(ldva).begin()));
+  return liveLAbove;
+}
+
+// get Live-Out variable lattice for a control flow graph node generated from a SgNode with an index
+LiveVarsLattice* getLiveOutVarsAt(LiveDeadVarsAnalysis* ldva, SgNode* n, unsigned int index /* = 0 */)
+{
+  assert (ldva != NULL); 
+  assert (n != NULL); 
+
+  NodeState *state =  NodeState::getNodeState(n, index);
+  assert (state != NULL);
+  LiveVarsLattice* liveLBelow = dynamic_cast<LiveVarsLattice*>(*(state->getLatticeBelow(ldva).begin()));
+  return liveLBelow;
 }
 
 // ###################################
@@ -503,6 +574,9 @@ VarsExprsProductLattice::VarsExprsProductLattice(const DataflowNode& n, const No
 { 
 }                       
 
+//Collect all expressions, not just variable reference expression, in the AST
+// The reason is that the temp expressions are often useful to propagate data flow information (lattices)
+// example:  for a+b, the SgAddOp can be used to calculate the addition of two operands.
 class collectAllVarRefs: public AstSimpleProcessing {
         public:
         //set<SgVarRefExp*> refs;
@@ -521,21 +595,22 @@ class collectAllVarRefs: public AstSimpleProcessing {
 //     currently live variables (these correspond to various useful constant variables like zeroVar)
 // allVarLattice - the lattice associated with allVar (the variable that represents all of memory)
 //     if allVarLattice==NULL, no support is provided for allVar
-// func - the current function
+// ldva - liveness analysis result. This can be set to NULL. Or only live variables at a CFG node will be used to initialize the product lattice
 // n - the dataflow node that this lattice will be associated with
 // state - the NodeState at this dataflow node
 VarsExprsProductLattice::VarsExprsProductLattice
-                            (Lattice* perVarLattice, 
+                       (Lattice* perVarLattice, 
                         const map<varID, Lattice*>& constVarLattices, 
                         Lattice* allVarLattice,
                         LiveDeadVarsAnalysis* ldva, 
-                        const DataflowNode& n, const NodeState& state) : 
-                                perVarLattice(perVarLattice), allVarLattice(allVarLattice), constVarLattices(constVarLattices), ldva(ldva), n(n), state(state)
+                        const DataflowNode& n, 
+                        const NodeState& state) : 
+                              perVarLattice(perVarLattice), allVarLattice(allVarLattice), constVarLattices(constVarLattices), ldva(ldva), n(n), state(state)
 {
         // If a LiveDeadVarsAnalysis was provided, create a lattice only for each live object
         if(ldva) { 
                 // Initialize varLatticeIndex with instances of perVarLattice for each variable that is live at n
-                varIDSet liveVars = getAllLiveVarsAt(ldva, n, state, "    ");
+                varIDSet liveVars = getAllLiveVarsAt(ldva, state, "    ");
                 int idx=0;
                 for(varIDSet::iterator var=liveVars.begin(); var!=liveVars.end(); var++, idx++) {
                         varLatticeIndex[*var] = idx;
@@ -548,7 +623,10 @@ VarsExprsProductLattice::VarsExprsProductLattice
                 // Get all the variables that were accessed in the function that contains the given DataflowNode
                 set<SgInitializedName *> readVars, writeVars;
                 SgNode* cur = n.getNode();
-                while(cur && !isSgFunctionDefinition(cur)) { /*Dbg::dbg << "    cur=<"<<Dbg::escape(cur->unparseToString()) << " | " << cur->class_name()<<">"<<endl;*/ cur = cur->get_parent(); }
+                while(cur && !isSgFunctionDefinition(cur)) 
+                { /*Dbg::dbg << "    cur=<"<<Dbg::escape(cur->unparseToString()) << " | " << cur->class_name()<<">"<<endl;*/
+                 cur = cur->get_parent(); 
+                }
                 /*SgFunctionDefinition *func;
                      if(isSgFunctionDefinition(n.getNode()))    func = isSgFunctionDefinition(n.getNode());
                 else if(isSgFunctionParameterList(n.getNode())) func = isSgFunctionDefinition(isSgFunctionDeclaration(n.getNode()->get_parent())->get_definition());
@@ -562,6 +640,10 @@ VarsExprsProductLattice::VarsExprsProductLattice
                         collect.traverse(func, preorder);
                         for(set<SgExpression*>::iterator ref=collect.refs.begin(); ref!=collect.refs.end(); ref++) {
                                 //Dbg::dbg << "        ref="<<Dbg::escape((*ref)->unparseToString()) << " | " << (*ref)->class_name()<<">"<<endl;
+                                // Liao 7/1/2012. skip temp expression which is a descendant of the current node
+                                // we only need to preserve them in their current scope, not beyond
+                                //if (SageInterface::isAncestor(n.getNode(), *ref))
+                                //  continue;
                                 varID var = SgExpr2Var(*ref);
                                 if(varLatticeIndex.find(var) == varLatticeIndex.end()) {
                                         varLatticeIndex[var] = lattices.size();
@@ -778,7 +860,7 @@ bool VarsExprsProductLattice::meetUpdate(Lattice *lThat)
 // varNameMap - maps all variable names that have changed, in each mapping pair, pair->first is the 
 //              old variable and pair->second is the new variable
 // func - the function that the copy Lattice will now be associated with
-void VarsExprsProductLattice::remapVars(const map<varID, varID>& varNameMap, const Function& newFunc)
+void VarsExprsProductLattice::remapVars(const map<varID, varID>& varNameMap, const Function& newFunc, bool (*filter) (CFGNode cfgn))
 {
 //      Dbg::dbg << "remapVars("<<newFunc.get_name().getString()<<"()), func="<<func.get_name().getString<<endl;
         
@@ -789,8 +871,8 @@ void VarsExprsProductLattice::remapVars(const map<varID, varID>& varNameMap, con
         map<varID, int> newVarLatticeIndex;
         
         // Fill newLattices with lattices associated with variables in the new function 
-        DataflowNode funcCFGStart = cfgUtils::getFuncStartCFG(newFunc.get_definition());
-        varIDSet newRefVars = getAllLiveVarsAt(ldva, funcCFGStart, *NodeState::getNodeState(funcCFGStart, 0), "    ");
+        DataflowNode funcCFGStart = cfgUtils::getFuncStartCFG(newFunc.get_definition(),filter); //TODO This function is never being used somehow
+        varIDSet newRefVars = getAllLiveVarsAt(ldva, *NodeState::getNodeState(funcCFGStart, 0), "    ");
         
         // Iterate through all the variables that are live at the top of newFunc and for each one 
         int idx=0;
@@ -1025,7 +1107,9 @@ string VarsExprsProductLattice::str(string indent)
         
         ostringstream outs;
         //outs << "[VarsExprsProductLattice: n="<<n.getNode()<<" = <"<<Dbg::escape(n.getNode()->unparseToString())<<" | "<<n.getNode()->class_name()<<" | "<<n.getIndex()<<"> level="<<(getLevel()==uninitialized ? "uninitialized" : "initialized")<<endl;
-        outs << "[VarsExprsProductLattice: n="<<n.getNode()<<" level="<<(getLevel()==uninitialized ? "uninitialized" : "initialized")<<endl;
+        //outs << "[VarsExprsProductLattice: n="<<n.getNode()<<" level="<<(getLevel()==uninitialized ? "uninitialized" : "initialized")<<endl;
+        // Liao 7/1/2012, avoid print out changing memory address info. so the string output can be used to verify correctness of analysis
+        outs << "[VarsExprsProductLattice: level="<<(getLevel()==uninitialized ? "uninitialized" : "initialized")<<endl;
         //varIDSet refVars;// = getVisibleVars(func);
         //for(varIDSet::iterator it = refVars.begin(); it!=refVars.end(); it++)
         for(map<varID, int>::iterator varIdx=varLatticeIndex.begin(); varIdx!=varLatticeIndex.end(); varIdx++)

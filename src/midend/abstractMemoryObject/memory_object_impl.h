@@ -5,11 +5,14 @@
 
 namespace AbstractMemoryObject 
 {
-
+  // One simple implementation for abstract memory object
+  // This implementation is tied to the ROSE AST (another set of base classes such as expression,
+  // named, and aliased objects)
+  //
   // Big picture of this implementation
   // How the multiple inheritance results in the classes here
   //
-  //                      Scalar            LabeledAggregate        Array       Pointer
+  //                      Scalar            LabeledAggregate        Array       Pointer  Function
   // -----------------------------------------------------------------------------
   // Expression Objects | ScalarExp          LabAggreExp 
   // Named objects      | ScalarNamedObj    
@@ -26,6 +29,17 @@ namespace AbstractMemoryObject
       // We implement operator < () at this level
       bool operator < (const ObjSet& other) const ;
   };
+
+  class Function_Impl : public Function
+  {
+    public:
+      virtual bool maySet();
+      virtual bool mustSet();
+      virtual size_t objCount();    
+      // We implement operator < () at this level
+      bool operator < (const ObjSet& other) const ;
+  };
+
 
   class LabeledAggregate_Impl : public LabeledAggregate
   {
@@ -78,6 +92,8 @@ namespace AbstractMemoryObject
 
       IndexSet (Index_type t):type(t){} 
       virtual bool operator== (const IndexSet & other) const;
+      virtual bool mayEqual (const IndexSet & other)  const ;
+      virtual bool mustEqual (const IndexSet & other) const ;
       virtual bool operator!= (const IndexSet & other) const;
       virtual ~IndexSet();
       virtual std::string toString();
@@ -98,7 +114,9 @@ namespace AbstractMemoryObject
       size_t getValue() {return value; };
       // we should not tweak the value once an instance is created. So there is no setValue()
       // integer index equal to another integer index if the integer values are the same
-      bool operator == (const IndexSet & other) const; 
+      bool operator== (const IndexSet & other) const; 
+      bool mayEqual (const IndexSet & other) const; 
+      bool mustEqual (const IndexSet & other) const; 
       bool operator != (const IndexSet & other) const; 
       std::string toString() {return "["+StringUtility::numberToString(value) + "]" ;};
     private:
@@ -113,7 +131,10 @@ namespace AbstractMemoryObject
     public:
       static UnknownIndexSet* get_inst();
       // unknown index may equal to other
-      bool operator == (const IndexSet & other) const {return true; };  // may be equal to any others
+      bool operator== (const IndexSet & other) const {return true; };  // may be equal to any others
+      bool mayEqual (const IndexSet & other) const {return true; };  
+      bool mustEqual (const IndexSet & other) const {return false; }; 
+
       bool operator != (const IndexSet & other) const {return true; };  
       std::string toString() {return "[unknown]" ;};
     private:
@@ -129,7 +150,11 @@ namespace AbstractMemoryObject
       size_t getSize() const {  return index_vector.size(); };
       std::vector<IndexSet *> index_vector; // a vector of memory objects of named objects or temp expression objects
       std::string toString();
-      bool operator == (const IndexVector & other) const ;
+      bool operator== (const IndexVector & other) const ;
+      bool mayEqual (const IndexVector & other) const ;
+      bool mustEqual (const IndexVector & other) const ;
+
+      bool operator != (const IndexVector & other) const ;
   };
 
   class NamedObj; 
@@ -158,9 +183,12 @@ namespace AbstractMemoryObject
   // -----------------------------------------------------------------------------------------------
   //
   // Three kinds of memory objects in ROSE AST: each of them can be one of the four categories above.
-  // 1) SgExpression temporary variables: each SgExpression which is not named memory objects . They can be seen as compiler-generated discrete temp variables
+  // 1) SgExpression temporary variables: each SgExpression which is not named memory objects. 
+  //                         They can be seen as compiler-generated discrete temp variables
   // 2) named memory objects : one object for each named variable 
-  // 3) aliased memory objects: one object for each type
+  // 3) aliased memory objects: one object for each type, used for a vague memory object
+  //                             representing a set of aliased objects. All aliased objects of the
+  //                             same type are represented by a single aliased memory object
 
   class ExprObj // one object for each SgExpression which does not have a corresponding symbol
     // They are similar to compiler-generated temporaries for three operand AST format
@@ -172,8 +200,11 @@ namespace AbstractMemoryObject
       ExprObj (SgExpression* a, SgType* t): anchor_exp(a), type(t) {};
       SgType* getType() const {return type;}
       // equal if and only the o2 is another ExprObj with the same SgExpression anchor
-      bool operator == (const ExprObj& o2) const;
-      bool operator == (const ObjSet& o2) const; // this is necessary to allow derived classes to implement ObjSet::operator==(ObjSet&)
+      bool operator== (const ExprObj& o2) const;
+      // this is necessary to allow derived classes to implement ObjSet::operator==(ObjSet&)
+      bool operator== (const ObjSet& o2) const; 
+      bool mayEqual (const ObjSet& o2) const; 
+      bool mustEqual (const ObjSet& o2) const; 
       bool isConstant () {return isSgValueExp(anchor_exp); } ; // if the expression object represent a constant value (SgValueExp)
       std::string toString();
   };
@@ -181,12 +212,14 @@ namespace AbstractMemoryObject
   // Correspond to variables that are explicit named in the source code
   // Including: local, global, and static variables, as well as their fields
   // Named objects may not directly alias each other since they must be stored disjointly
-  // Two named objects are equal to each other if they correspond to the same entry in the application's symbol table. 
-  // (?? Should an implementation enforce unique named objects for a unique symbol entry??)
+  // In most cases, two named objects are equal to each other if they correspond to the same entry in the application's symbol table. 
+  //
+  // However, for a symbol representing a field of a structure, it can be shared by many instances
+  // of the structure. In this case, a parent objSet is needed to distinguish between them 
   class NamedObj  // one object for each named variable with a symbol
   { 
     public:
-      SgSymbol* anchor_symbol; 
+      SgSymbol* anchor_symbol; // could be a symbol for variable, function, class/structure, etc.
       SgType* type;  // in most cases, the type here should be anchor_symbol->get_type(). But array element's type can be different from its array type
       ObjSet* parent; //exists for 1) compound variables like a.b, where a is b's parent, 2) also for array element, where array is the parent
       IndexVector*  array_index_vector; // exists for array element: the index vector of an array element. Ideally this data member could be reused for index of field of structure/class
@@ -201,11 +234,17 @@ namespace AbstractMemoryObject
 
       std::string toString(); 
 
-      bool operator == (const NamedObj& o2) const;
-      bool operator == (const ObjSet& o2) const;
+      bool operator== (const NamedObj& o2) const;
+      bool mayEqual (const NamedObj& o2) const; 
+      bool mustEqual (const NamedObj& o2) const; 
+
+      bool operator== (const ObjSet& o2) const;
+
+      bool mayEqual (const ObjSet& o2) const; 
+      bool mustEqual (const ObjSet& o2) const; 
   };
 
-  //  memory regions that may be accessible via a pointer, such as heap memory
+  //  Memory regions that may be accessible via a pointer, such as heap memory
   //  This implementation does not track accurate aliases, an aliased memory object and 
   //  an aliased or named object may be equal if they have the same type
   class AliasedObj 
@@ -217,7 +256,13 @@ namespace AbstractMemoryObject
       std::string toString(); 
 
       bool operator == (const AliasedObj & o2) const;
+      bool mayEqual (const AliasedObj & o2) const;
+      bool mustEqual (const AliasedObj & o2) const;
+
       bool operator == (const ObjSet& o2) const;
+
+      bool mayEqual (const ObjSet& o2) const; 
+      bool mustEqual (const ObjSet& o2) const; 
   };
 
 
@@ -230,9 +275,29 @@ namespace AbstractMemoryObject
       std::set<SgType*> getType() const;
       // Implement ObjSet::operator== () at this level, through ExprObj::operator==().
       bool operator == (const ObjSet& o2) const;
+      // multiple inheritance, must be clear about the behavior inherited from both parents
+      bool mayEqual (const ObjSet& o2) const; 
+      bool mustEqual (const ObjSet& o2) const; 
       std::string toString();
   };
 
+   // Does it make sense to have expressions which are of a function type?
+   //  I guess so, like function passed as parameter, or a  pointer to a function?
+   class FunctionExprObj: public Function_Impl, public ExprObj
+  {
+    public:
+      FunctionExprObj (SgExpression* e, SgType* t):ExprObj(e,t) {}
+      std::set<SgType*> getType() const;
+      // Implement ObjSet::operator== () at this level, through ExprObj::operator==().
+      bool operator == (const ObjSet& o2) const;
+
+      bool mayEqual (const ObjSet& o2) const; 
+      bool mustEqual (const ObjSet& o2) const; 
+
+      std::string toString();
+  };
+
+  
   class LabeledAggregateExprObj: public LabeledAggregate_Impl, public ExprObj
   {
     public:
@@ -241,6 +306,9 @@ namespace AbstractMemoryObject
 
       // Returns true if this object and that object may/must refer to the same labeledAggregate memory object.
       bool operator == (const ObjSet& o2) const;
+
+      bool mayEqual (const ObjSet& o2) const; 
+      bool mustEqual (const ObjSet& o2) const; 
       std::string toString();
   };
 
@@ -251,6 +319,8 @@ namespace AbstractMemoryObject
       std::set<SgType*> getType();
       //TODO other member functions still make sense?
       bool operator == (const ObjSet& o2) const;
+      bool mayEqual (const ObjSet& o2) const; 
+      bool mustEqual (const ObjSet& o2) const; 
       std::string toString();
 
   };
@@ -269,6 +339,8 @@ namespace AbstractMemoryObject
 
       // Returns true if this object and that object may/must refer to the same pointer memory object.
       bool operator == (const ObjSet& o2) const;
+      bool mayEqual (const ObjSet& o2) const; 
+      bool mustEqual (const ObjSet& o2) const; 
       std::string toString();
 
   };
@@ -281,8 +353,29 @@ namespace AbstractMemoryObject
       ScalarNamedObj (SgSymbol* s, SgType* t, ObjSet* p, IndexVector* iv): NamedObj (s,t,p, iv) {}
       std::set<SgType*> getType();
       bool operator == (const ObjSet & that) const ;
+
+      bool mayEqual (const ObjSet& o2) const; 
+      bool mustEqual (const ObjSet& o2) const; 
       std::string toString();
   };
+
+  class FunctionNamedObj: public Function_Impl, public NamedObj 
+  {
+    public:
+
+      // simple constructor, a function symbol is enough
+      FunctionNamedObj (SgSymbol* s): NamedObj (s,s->get_type(), NULL, NULL) {}
+      // I am not sure when a function can be used as a child and an array element. But this is
+      // provided just in case
+      FunctionNamedObj (SgSymbol* s, SgType* t, ObjSet* p, IndexVector* iv): NamedObj (s,t,p, iv) {}
+      std::set<SgType*> getType();
+      bool operator == (const ObjSet & that) const ;
+
+      bool mayEqual (const ObjSet& o2) const; 
+      bool mustEqual (const ObjSet& o2) const; 
+      std::string toString();
+  };
+
 
   class LabeledAggregateNamedObj: public LabeledAggregate_Impl, public NamedObj
   {
@@ -293,6 +386,8 @@ namespace AbstractMemoryObject
       // Returns true if this object and that object may/must refer to the same labeledAggregate memory object.
       bool operator == (const ObjSet & that) const ;
 
+      bool mayEqual (const ObjSet& o2) const; 
+      bool mustEqual (const ObjSet& o2) const; 
       std::string toString();
   };
 
@@ -316,6 +411,8 @@ namespace AbstractMemoryObject
       ObjSet* getDereference () ;
       bool operator == (const ObjSet & that) const ;
  
+      bool mayEqual (const ObjSet& o2) const; 
+      bool mustEqual (const ObjSet& o2) const; 
   };
 
   class PointerNamedObj: public Pointer_Impl, public NamedObj
@@ -331,6 +428,9 @@ namespace AbstractMemoryObject
       bool equalPoints(Pointer & that);
       // Returns true if this object and that object may/must refer to the same pointer memory object.
       bool operator == (const ObjSet & that) const ;
+
+      bool mayEqual (const ObjSet& o2) const; 
+      bool mustEqual (const ObjSet& o2) const; 
       std::string toString();
   };
 
@@ -341,9 +441,26 @@ namespace AbstractMemoryObject
       ScalarAliasedObj (SgType* t): AliasedObj(t){}
       std::set<SgType*> getType();
       bool operator == (const ObjSet& o2) const; 
+
+      bool mayEqual (const ObjSet& o2) const; 
+      bool mustEqual (const ObjSet& o2) const; 
       std::string toString();
 
   };
+
+  class FunctionAliasedObj: public Function_Impl, public AliasedObj
+  {
+    public:
+      FunctionAliasedObj (SgType* t): AliasedObj(t){}
+      std::set<SgType*> getType();
+      bool operator == (const ObjSet& o2) const; 
+
+      bool mayEqual (const ObjSet& o2) const; 
+      bool mustEqual (const ObjSet& o2) const; 
+      std::string toString();
+
+  };
+
 
   class LabeledAggregateAliasedObj : public  LabeledAggregate_Impl, public AliasedObj
   {
@@ -354,6 +471,9 @@ namespace AbstractMemoryObject
       // size_t fieldCount();
       // std::list<LabeledAggregateField*> getElements() const;
       bool operator == (const ObjSet& o2) const; 
+
+      bool mayEqual (const ObjSet& o2) const; 
+      bool mustEqual (const ObjSet& o2) const; 
       std::string toString();
   };
 
@@ -369,6 +489,9 @@ namespace AbstractMemoryObject
       //  getNumDims();
 
       bool operator == (const ObjSet& o2) const; 
+
+      bool mayEqual (const ObjSet& o2) const; 
+      bool mustEqual (const ObjSet& o2) const; 
       std::string toString();
   };
 
@@ -376,11 +499,14 @@ namespace AbstractMemoryObject
   {
     public:
       PointerAliasedObj (SgType* t): AliasedObj(t){}
-      // TODO ObjSet* getDereference () const;
+      ObjSet* getDereference ();
       // ObjSet * getElements() const;
-      // bool equalPoints(const Pointer & that);
+      bool equalPoints(const Pointer & that);
       std::set<SgType*> getType();
       bool operator == (const ObjSet& o2) const; 
+
+      bool mayEqual (const ObjSet& o2) const; 
+      bool mustEqual (const ObjSet& o2) const; 
       std::string toString();
   };
 

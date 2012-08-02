@@ -296,7 +296,6 @@ install(FILES  Cxx_Grammar.h  rosedll.h   Cxx_GrammarMemoryPoolSupport.h     Cxx
 ## AstAttributeDOT.h
 ## astGraph.h
 ## astGraphTemplate.C
-## sageSupport.h
 ## C++_include_files.h
 #
 #clean-local:

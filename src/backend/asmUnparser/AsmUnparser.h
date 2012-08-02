@@ -4,6 +4,7 @@
 #include <ostream>
 
 #include "callbacks.h"          /* Needed for ROSE_Callbacks::List<> */
+#include "BinaryControlFlow.h"
 
 class SgAsmInstruction;
 class SgAsmBlock;
@@ -61,8 +62,9 @@ class SgAsmInterpretation;
  *     when output is organized by address.
  *        <ol>
  *           <li>BasicBlockReasons (pre): emits the reasons why this block is part of the function.</li>
+ *           <li>BasicBlockPredecessors (pre): emits addresses of basic block control flow predecessors.</li>
  *           <li>BasicBlockBody (unparse): unparses each instruction of the basic block.</li>
- *           <li>BasicBlockSuccessors (post): emits addresses of basic block successors.</li>
+ *           <li>BasicBlockSuccessors (post): emits addresses of basic block control flow successors.</li>
  *           <li>BasicBlockLineTermination (post): emits a linefeed at the end of each basic block.</li>
  *           <li>BasicBlockCleanup (post): cleans up analysis from BasicBlockNoopUpdater and future built-in functors.</li>
  *        </ol>
@@ -92,6 +94,7 @@ class SgAsmInterpretation;
  *           <li>FunctionReasons (pre): emits the reasons why this is address is considered the start of a function.</li>
  *           <li>FunctionName (pre): emits the name of the function in angle brackets, or "no name".</li>
  *           <li>FunctionLineTermination (pre): emits a linefeed for functions.</li>
+ *           <li>FunctionComment (pre): emits function comments followed by a linefeed if necessary.</li>
  *           <li>FunctionAttributes (pre): emits additional information about the function, such as whether it returns to the
  *               caller.</li>
  *           <li>FunctionBody (unparse): unparses the basic blocks of a function.</li>
@@ -183,6 +186,12 @@ public:
                                          *    sort the output.  This organization is typical of more traditional
                                          *    disassemblers. */
     };
+
+    /** Control Flow Graph type.  The unparser supports the standard binary control flow graph data type.  This could be
+     *  templatized, but we're planning to move to a non-template graph type in the near future [RPM 2012-04-18]. */
+    typedef BinaryAnalysis::ControlFlow::Graph CFG;
+    typedef boost::graph_traits<CFG>::vertex_descriptor CFG_Vertex;
+    typedef std::map<SgAsmBlock*, CFG_Vertex> CFG_BlockMap;
 
     class UnparserCallback {
     public:
@@ -312,6 +321,9 @@ public:
      *  output is organized by address. */
     class InsnBlockEntry: public UnparserCallback {
     public:
+        bool show_function;             /**< If true (the default) show entry address of function owning block. */
+        bool show_reasons;              /**< If true (the default) show block reason bits. */
+        InsnBlockEntry(): show_function(true), show_reasons(true) {}
         virtual bool operator()(bool enabled, const InsnArgs &args);
     };
 
@@ -350,6 +362,13 @@ public:
         virtual bool operator()(bool enabled, const BasicBlockArgs &args);
     };
 
+    /** Functor to emit control flow predecessor addresses.  This functor outputs a line containing the addresses of all known
+     *  predecessors according to the unparser's control flow graph. */
+    class BasicBlockPredecessors: public UnparserCallback {
+    public:
+        virtual bool operator()(bool enabled, const BasicBlockArgs &args);
+    };
+
     /** Functor to update unparser's is_noop array. */
     class BasicBlockNoopUpdater: public UnparserCallback {
     public:
@@ -371,9 +390,10 @@ public:
         virtual bool operator()(bool enabled, const BasicBlockArgs &args);
     };
 
-    /** Functor to emit block successor list.  These are the successors that were probably cached by the instruction
-     * partitioner (see Partitioner class), which does fairly extensive analysis -- certainly more than just looking at the
-     * last instruction of the block. */
+    /** Functor to emit block successor list.  If the unparser's control flow graph is not empty, then we use it to find
+     *  successors, otherwise we consult the successors cached in the AST.  The AST-cached successors were probably cached by
+     *  the instruction partitioner (see Partitioner class), which does fairly extensive analysis -- certainly more than just
+     *  looking at the last instruction of the block.  */
     class BasicBlockSuccessors: public UnparserCallback {
     public:
         virtual bool operator()(bool enabled, const BasicBlockArgs &args);
@@ -429,6 +449,9 @@ public:
      *  output is organized by address. */
     class StaticDataBlockEntry: public UnparserCallback {
     public:
+        bool show_function;             /**< If true (the default) show entry address of function owning block. */
+        bool show_reasons;              /**< If true (the default) show block reason bits. */
+        StaticDataBlockEntry(): show_function(true), show_reasons(true) {}
         virtual bool operator()(bool enabled, const StaticDataArgs &args);
     };
 
@@ -506,6 +529,12 @@ public:
         virtual bool operator()(bool enabled, const FunctionArgs &args);
     };
 
+    /** Functor to print function comments followed by a linefeed if necessary. */
+    class FunctionComment: public UnparserCallback {
+    public:
+        virtual bool operator()(bool enabled, const FunctionArgs &args);
+    };
+
     /** Functor to emit function attributes.  Attributes are emitted one per line and each line is prefixed with a user
      *  supplied string.  The string is a printf format string and may contain one integer specifier for the function entry
      *  address.   The default is "0x%08llx: ". */
@@ -562,6 +591,7 @@ public:
     InsnLineTermination insnLineTermination;
 
     BasicBlockReasons basicBlockReasons;
+    BasicBlockPredecessors basicBlockPredecessors;
     BasicBlockNoopUpdater basicBlockNoopUpdater;
     BasicBlockNoopWarning basicBlockNoopWarning;
     BasicBlockBody basicBlockBody;
@@ -584,6 +614,7 @@ public:
     FunctionReasons functionReasons;
     FunctionName functionName;
     FunctionLineTermination functionLineTermination;
+    FunctionComment functionComment;
     FunctionAttributes functionAttributes;
     FunctionBody functionBody;
 
@@ -677,8 +708,14 @@ public:
 
     /** Adds function labels to the label map.  This method traverses the specified AST looking for function symbols, and adds
      *  their address and name to the label map for the unparser.  The map is used by some callbacks to convert numeric values
-     *  to more human friendly labels. */
+     *  to more human friendly labels.   If integer values are relative to other AST nodes, then one doesn't need to populate
+     *  the LabelMap (see documentation for the AsmUnparser::labels data member. */
     void add_function_labels(SgNode *ast);
+
+    /** Associates a control flow graph with this unparser.  If a control flow graph is present then certain output callbacks
+     *  will be able to use that information.  For instance, the basicBlockPredecessors will emit a list of all the
+     *  predecessors of a block.  Passing an empty graph will remove control flow information. */
+    void add_control_flow_graph(const BinaryAnalysis::ControlFlow::Graph &cfg);
 
 protected:
     struct CallbackLists {
@@ -702,15 +739,38 @@ protected:
     CallbackLists interp_callbacks;                     /**< Callbacks for interpretation unparsing. */
 
     /** This map is consulted whenever a constant is encountered. If the constant is defined as a key of the map, then that
-     *  element's string is used as a label. */
+     *  element's string is used as a label.  Populating this map is not as important as it once was, because now integers can
+     *  be associated with other addressable AST nodes and labels are generated from them.  For example, if 0x08042000 is the
+     *  entry address of a function named "init", then it can be added to the LabelMap and the unparser will generate this
+     *  assembly code:
+     *
+     * @code
+     *  call 0x08042000<init>
+     * @endcode
+     *
+     * If the SgAsmDoubleWordValueExpression that represents the 0x08042000 is associated with the SgAsmFunction node for the
+     * "init" function, then the same output is generated when the LabelMap is not populated.  In fact, the new method can also
+     * generate code like this, where the integer is an offset from the entry point:
+     *
+     * @code
+     *  je 0x08042080<init+0x80>
+     * @endcode
+     *
+     * which isn't possible in general with the LabelMap mechanism. */
     LabelMap labels;
 
     /** How output will be organized. */
     Organization organization;
 
-    /** Initializes the objects callback lists.  This is invoked by the default constructor. */
+    /** Initializes the callback lists.  This is invoked by the default constructor. */
     virtual void init();
 
+    /** Control flow graph. If non-empty, then it is used for things like listing CFG predecessors of each basic block. */
+    CFG cfg;
+
+    /** A mapping from SgAsmBlock to control flow graph vertex. This map is updated when the control flow graph is modified by
+     *  the add_control_flow_graph() method. */
+    CFG_BlockMap cfg_blockmap;
 };
 
 #endif

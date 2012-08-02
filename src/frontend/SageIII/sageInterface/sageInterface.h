@@ -3,6 +3,7 @@
 
 #include "sage3basic.hhh"
 #include <stdint.h>
+#include <utility>
 
 #if 0   // FMZ(07/07/2010): the argument "nextErrorCode" should be call-by-reference
 SgFile* determineFileType ( std::vector<std::string> argv, int nextErrorCode, SgProject* project );
@@ -351,6 +352,9 @@ struct hash_nodeptr
 //! Diagnostic function for tracing back through the parent list to understand at runtime where in the AST a failure happened.
    void whereAmI(SgNode* node);
 
+   //! Extract a SgPragmaDeclaration's leading keyword . For example "#pragma omp parallel" has a keyword of "omp".
+   std::string extractPragmaKeyword(const SgPragmaDeclaration *);
+
    //! Check if a node is SgOmp*Statement
    bool isOmpStatement(SgNode* );
    /*! \brief Return true if function is overloaded.
@@ -385,6 +389,10 @@ struct hash_nodeptr
 
    */
     std::string generateUniqueName ( const SgNode * node, bool ignoreDifferenceBetweenDefiningAndNondefiningDeclarations);
+
+    /** Generate a name that is unique in the current scope and any parent and children scopes.
+    * @param baseName the word to be included in the variable names. */
+    std::string generateUniqueVariableName(SgScopeStatement* scope, std::string baseName = "temp");
 
   // DQ (8/10/2010): Added const to first parameter.
   // DQ (3/10/2007):
@@ -557,9 +565,9 @@ sortSgNodeListBasedOnAppearanceOrderInSource(const std::vector<SgDeclarationStat
   // labels for scopes in a function (as required for name mangling).
   /*! \brief Clears the cache of scope,integer pairs for the input function.
 
-      This is used to clear the cache of computed unique lables for scopes in a function.
+      This is used to clear the cache of computed unique labels for scopes in a function.
       This function should be called after any transformation on a function that might effect
-      the allocation of scopes and cause the existing unique numbrs to be incorrect.
+      the allocation of scopes and cause the existing unique numbers to be incorrect.
       This is part of support to provide unique names for variables and types defined is
       different nested scopes of a function (used in mangled name generation).
    */
@@ -722,7 +730,7 @@ bool isAssignable(SgType* type);
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 //! Check if a class type is a pure virtual class. True means that there is at least
-//! one pure virtual function that has not been overridden. 
+//! one pure virtual function that has not been overridden.
 //! In the case of an incomplete class type (forward declaration), this function returns false.
 bool isPureVirtualClass(SgType* type, const ClassHierarchyWrapper& classHierarchy);
 #endif
@@ -797,7 +805,57 @@ SgType* getArrayElementType(SgType* t);
 //! Get the element type of an array, pointer or string, or NULL if not applicable
 SgType* getElementType(SgType* t);
 
-//! Check if an expression is an array access (SgPntrArrRefExp). If so, return its name expression and subscripts if requested. Users can use convertRefToInitializedName() to get the possible name. It does not check if the expression is a top level SgPntrArrRefExp. 
+
+/// \brief  returns the array dimensions in an array as defined for arrtype
+/// \param  arrtype the type of a C/C++ array
+/// \return an array that contains an expression indicating each dimension's size.
+///         OWNERSHIP of the expressions is TRANSFERED TO the CALLER (which
+///         becomes responsible for freeing the expressions).
+///         Note, the first entry of the array is a SgNullExpression, iff the
+///         first array dimension was not specified.
+/// \code
+///         int x[] = { 1, 2, 3 };
+/// \endcode
+///         note, the expression does not have to be a constant
+/// \code
+///         int x[i*5];
+/// \endcode
+/// \post   return-value.empty() == false
+/// \post   return-value[*] != NULL (no nullptr in the returned vector)
+std::vector<SgExpression*>
+get_C_array_dimensions(const SgArrayType& arrtype);
+
+/// \brief  returns the array dimensions in an array as defined for arrtype
+/// \param  arrtype the type of a C/C++ array
+/// \param  varref  a reference to an array variable (the variable of type arrtype)
+/// \return an array that contains an expression indicating each dimension's size.
+///         OWNERSHIP of the expressions is TRANSFERED TO the CALLER (which
+///         becomes responsible for freeing the expressions).
+///         If the first array dimension was not specified an expression
+///         that indicates that size is generated.
+/// \code
+///         int x[][3] = { 1, 2, 3, 4, 5, 6 };
+/// \endcode
+///         the entry for the first dimension will be:
+/// \code
+///         // 3 ... size of 2nd dimension
+///         sizeof(x) / (sizeof(int) * 3)
+/// \endcode
+/// \pre    arrtype is the array-type of varref
+/// \post   return-value.empty() == false
+/// \post   return-value[*] != NULL (no nullptr in the returned vector)
+/// \post   !isSgNullExpression(return-value[*])
+std::vector<SgExpression*>
+get_C_array_dimensions(const SgArrayType& arrtype, const SgVarRefExp& varref);
+
+/// \overload
+/// \note     see get_C_array_dimensions for SgVarRefExp for details.
+/// \todo     make initname const
+std::vector<SgExpression*>
+get_C_array_dimensions(const SgArrayType& arrtype, SgInitializedName& initname);
+
+
+//! Check if an expression is an array access (SgPntrArrRefExp). If so, return its name expression and subscripts if requested. Users can use convertRefToInitializedName() to get the possible name. It does not check if the expression is a top level SgPntrArrRefExp.
 bool isArrayReference(SgExpression* ref, SgExpression** arrayNameExp=NULL, std::vector<SgExpression*>** subscripts=NULL);
 
 
@@ -875,7 +933,7 @@ void changeContinuesToGotos(SgStatement* stmt, SgLabelStatement* label);
 SgInitializedName* getLoopIndexVariable(SgNode* loop);
 
 //!Check if a SgInitializedName is used as a loop index within a AST subtree
-//! This function will use a bottom-up traverse starting from the subtree_root to find all enclosing loops and check if ivar is used as an index for either of them. 
+//! This function will use a bottom-up traverse starting from the subtree_root to find all enclosing loops and check if ivar is used as an index for either of them.
 bool isLoopIndexVariable(SgInitializedName* ivar, SgNode* subtree_root);
 
 //! Routines to get and set the body of a loop
@@ -913,7 +971,7 @@ bool normalizeForLoopInitDeclaration(SgForStatement* loop);
 //! Normalize a for loop, return true if successful
 //!
 //! Translations are :
-//!    For the init statement: for (int i=0;... ) becomes int i; for (i=0;..)   
+//!    For the init statement: for (int i=0;... ) becomes int i; for (i=0;..)
 //!    For test expression:
 //!           i<x is normalized to i<= (x-1) and
 //!           i>x is normalized to i>= (x+1)
@@ -1375,6 +1433,19 @@ void replaceStatement(SgStatement* oldStmt, SgStatement* newStmt, bool movePrepr
 //! Replace an anchor node with a specified pattern subtree with optional SgVariantExpression. All SgVariantExpression in the pattern will be replaced with copies of the anchor node.
 SgNode* replaceWithPattern (SgNode * anchor, SgNode* new_pattern);
 
+/** Given an expression, generates a temporary variable whose initializer optionally evaluates
+* that expression. Then, the var reference expression returned can be used instead of the original
+* expression. The temporary variable created can be reassigned to the expression by the returned SgAssignOp;
+* this can be used when the expression the variable represents needs to be evaluated. NOTE: This handles
+* reference types correctly by using pointer types for the temporary.
+* @param expression Expression which will be replaced by a variable
+* @param scope scope in which the temporary variable will be generated
+* @param reEvaluate an assignment op to reevaluate the expression. Leave NULL if not needed
+* @return declaration of the temporary variable, and a a variable reference expression to use instead of
+* the original expression. */
+std::pair<SgVariableDeclaration*, SgExpression* > createTempVariableForExpression(SgExpression* expression,
+        SgScopeStatement* scope, bool initializeInDeclaration, SgAssignOp** reEvaluate = NULL);
+
 //! Append an argument to SgFunctionParameterList, transparently set parent,scope, and symbols for arguments when possible
 /*! We recommend to build SgFunctionParameterList before building a function declaration
  However, it is still allowed to append new arguments for existing function declarations.
@@ -1621,30 +1692,50 @@ void changeBreakStatementsToGotos(SgStatement* loopOrSwitch);
 //! Check if the body of a 'for' statement is a SgBasicBlock, create one if not.
 SgBasicBlock* ensureBasicBlockAsBodyOfFor(SgForStatement* fs);
 
-//! Check if the body of a 'for' statement is a SgBasicBlock, create one if not. (10nov17: PP for RTED/upc)
+//! Check if the body of a 'upc_forall' statement is a SgBasicBlock, create one if not.
 SgBasicBlock* ensureBasicBlockAsBodyOfUpcForAll(SgUpcForAllStatement* fs);
 
 //! Check if the body of a 'while' statement is a SgBasicBlock, create one if not.
 SgBasicBlock* ensureBasicBlockAsBodyOfWhile(SgWhileStmt* ws);
+
 //! Check if the body of a 'do .. while' statement is a SgBasicBlock, create one if not.
 SgBasicBlock* ensureBasicBlockAsBodyOfDoWhile(SgDoWhileStmt* ws);
+
 //! Check if the body of a 'switch' statement is a SgBasicBlock, create one if not.
 SgBasicBlock* ensureBasicBlockAsBodyOfSwitch(SgSwitchStatement* ws);
+
 //! Check if the true body of a 'if' statement is a SgBasicBlock, create one if not.
 SgBasicBlock* ensureBasicBlockAsTrueBodyOfIf(SgIfStmt* ifs);
+
 //! Check if the false body of a 'if' statement is a SgBasicBlock, create one if not.
 SgBasicBlock* ensureBasicBlockAsFalseBodyOfIf(SgIfStmt* ifs);
+
+//! Check if the body of a 'catch' statement is a SgBasicBlock, create one if not.
 SgBasicBlock* ensureBasicBlockAsBodyOfCatch(SgCatchOptionStmt* cos);
+
 //! Check if the body of a SgOmpBodyStatement is a SgBasicBlock, create one if not
 SgBasicBlock* ensureBasicBlockAsBodyOfOmpBodyStmt(SgOmpBodyStatement* ompbodyStmt);
-/** A wrapper of all ensureBasicBlockAs*() above to ensure the parent of s is a scope statement with list of statements as children,
-  * otherwise generate a SgBasicBlock in between. If s is the body of a loop, catch, or if statement and is already
-  * a basic block, s is returned unmodified. Else, the (potentially new) parent of s is returned. */
-SgLocatedNode* ensureBasicBlockAsParent(SgStatement* s);
 
-//! Fix up ifs, loops, etc. to have blocks as all components and add dummy else
-//! clauses to if statements that don't have them
+
+//! Check if a statement is a (true or false) body of a container-like parent, such as For, Upc_forall, Do-while,
+//! switch, If, Catch, OmpBodyStmt, etc
+bool isBodyStatement (SgStatement* s);
+
+//! Fix up ifs, loops, while, switch, Catch, OmpBodyStatement, etc. to have blocks as body components. It also adds an empty else body to if statements that don't have them.
+void changeAllBodiesToBlocks(SgNode* top);
+
+//! The same as changeAllBodiesToBlocks(SgNode* top). To be phased out.
 void changeAllLoopBodiesToBlocks(SgNode* top);
+
+//! Make a single statement body to be a basic block. Its parent is if, while, catch, or upc_forall etc.
+SgBasicBlock * makeSingleStatementBodyToBlock(SgStatement* singleStmt);
+
+#if 0
+/**  If s is the body of a loop, catch, or if statement and is already a basic block,
+ *   s is returned unmodified. Otherwise generate a SgBasicBlock between s and its parent
+ *   (a loop, catch, or if statement, etc). */
+SgLocatedNode* ensureBasicBlockAsParent(SgStatement* s);
+#endif
 
 //! Get the constant value from a constant integer expression; abort on
 //! everything else.  Note that signed long longs are converted to unsigned.
@@ -1654,11 +1745,60 @@ unsigned long long getIntegerConstantValue(SgValueExp* expr);
 std::vector<SgDeclarationStatement*> getDependentDeclarations (SgStatement* stmt );
 
 
-//! Insert an expression (new_exp )before another expression (anchor_exp) has possible side effects, without changing the original semantics. This is achieved by using a comma operator: (new_exp, anchor_exp). The comma operator is returned. 
+//! Insert an expression (new_exp )before another expression (anchor_exp) has possible side effects, without changing the original semantics. This is achieved by using a comma operator: (new_exp, anchor_exp). The comma operator is returned.
 SgCommaOpExp *insertBeforeUsingCommaOp (SgExpression* new_exp, SgExpression* anchor_exp);
 
-//! Insert an expression (new_exp ) after another expression (anchor_exp) has possible side effects, without changing the original semantics. This is done by using two comma operators:  type T1; ... ((T1 = anchor_exp, new_exp),T1) )... , where T1 is a temp variable saving the possible side effect of anchor_exp. The top level comma op exp is returned. The reference to T1 in T1 = anchor_exp is saved in temp_ref.  
+//! Insert an expression (new_exp ) after another expression (anchor_exp) has possible side effects, without changing the original semantics. This is done by using two comma operators:  type T1; ... ((T1 = anchor_exp, new_exp),T1) )... , where T1 is a temp variable saving the possible side effect of anchor_exp. The top level comma op exp is returned. The reference to T1 in T1 = anchor_exp is saved in temp_ref.
 SgCommaOpExp *insertAfterUsingCommaOp (SgExpression* new_exp, SgExpression* anchor_exp, SgStatement** temp_decl = NULL, SgVarRefExp** temp_ref = NULL);
+
+
+/// \brief   moves the body of a function f to a new function f`;
+///          f's body is replaced with code that forwards the call to f`.
+/// \return  a pair indicating the statement containing the call of f`
+///          and an initialized name refering to the temporary variable
+///          holding the result of f`. In case f returns void
+///          the initialized name is NULL.
+/// \param   definingDeclaration the defining function declaration of f
+/// \param   newName the name of function f`
+/// \details f's new body becomes { f`(...); } and { int res = f`(...); return res; }
+///          for functions returning void and a value, respectively.
+///          two function declarations are inserted in f's enclosing scope
+/// \code
+///          result_type f`(...);                       <--- (1)
+///          result_type f (...) { forward call to f` }
+///          result_type f`(...) { original code }      <--- (2)
+/// \endcode
+///          Calls to f are not updated, thus in the transformed code all
+///          calls will continue calling f (this is also true for
+///          recursive function calls from within the body of f`).
+///          After the function has created the wrapper,
+///          definingDeclaration becomes the wrapper function
+///          The definition of f` is the next entry in the
+///          statement list; the forward declaration of f` is the previous
+///          entry in the statement list.
+/// \pre     definingDeclaration must be a defining declaration of a
+///          free standing function.
+///          typeid(SgFunctionDeclaration) == typeid(definingDeclaration)
+///          i.e., this function is NOT implemented for class member functions,
+///          template functions, procedures, etc.
+std::pair<SgStatement*, SgInitializedName*>
+wrapFunction(SgFunctionDeclaration& definingDeclaration, SgName newName);
+
+/// \overload
+/// \tparam  NameGen functor that generates a new name based on the old name.
+///          interface: SgName nameGen(const SgName&)
+/// \param   nameGen name generator
+/// \brief   see wrapFunction for details
+template <class NameGen>
+std::pair<SgStatement*, SgInitializedName*>
+wrapFunction(SgFunctionDeclaration& definingDeclaration, NameGen nameGen)
+{
+  return wrapFunction(definingDeclaration, nameGen(definingDeclaration.get_name()));
+}
+
+/// \brief convenience function that returns the first initialized name in a
+///        list of variable declarations.
+SgInitializedName& getFirstVariable(SgVariableDeclaration& vardecl);
 
 
 //@}

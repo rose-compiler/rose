@@ -4,12 +4,11 @@
 //#include "fileoffsetbits.h"
 #include "sage3basic.h"
 #include "AsmUnparser_compat.h"
+#include "MemoryMap.h"
 
-#define __STDC_FORMAT_MACROS
 #include <boost/math/common_factor.hpp>
 #include <errno.h>
 #include <fcntl.h>
-#include <inttypes.h>
 #include <unistd.h>
 
 /** Non-parsing constructor. If you're creating an executable from scratch then call this function and you're done. But if
@@ -77,14 +76,8 @@ SgAsmGenericFile::parse(std::string fileName)
 /* Destructs by closing and unmapping the file and destroying all sections, headers, etc. */
 SgAsmGenericFile::~SgAsmGenericFile() 
 {
-    /* Delete child headers before this */
-    while (p_headers->get_headers().size()) {
-        SgAsmGenericHeader *header = p_headers->get_headers().back();
-        p_headers->get_headers().pop_back();
-        delete header;
-    }
-    ROSE_ASSERT(p_headers->get_headers().empty()   == true);
-    
+    /* AST child nodes have already been deleted if we're called from SageInterface::deleteAST() */
+
     /* Unmap and close */
     unsigned char *mapped = p_data.pool();
     if (mapped && p_data.size()>0)
@@ -93,12 +86,6 @@ SgAsmGenericFile::~SgAsmGenericFile()
 
     if ( p_fd >= 0 )
         close(p_fd);
-
-    // Delete the pointers to the IR nodes containing the STL lists
-    delete p_headers;
-    p_headers = NULL;
-    delete p_holes;
-    p_holes = NULL;
 }
 
 /** Returns original size of file, based on file system */
@@ -184,16 +171,17 @@ SgAsmGenericFile::read_content(const MemoryMap *map, rose_addr_t start_va, void 
     size_t ncopied = 0;
     while (ncopied < size) {
         rose_addr_t va = start_va + ncopied;
-        const MemoryMap::MapElement *me = NULL;
-        size_t nread = map->read1((uint8_t*)dst_buf+ncopied, va, size-ncopied, MemoryMap::MM_PROT_NONE, &me);
-        if (!nread) break;
-        assert(me!=NULL);
+        size_t nread = map->read1((uint8_t*)dst_buf+ncopied, va, size-ncopied, MemoryMap::MM_PROT_NONE);
+        if (0==nread) break;
 
-        if (get_tracking_references() && &(get_data()[0])==me->get_base()) {
-            /* We are tracking file reads and this map element does, indeed, point into the file. */
-            size_t me_offset = va - me->get_va();                       /* virtual offset within this map element */
-            size_t file_offset = me->get_offset() + me_offset;          /* offset from beginning of the file */
-            mark_referenced_extent(file_offset, nread);
+        if (get_tracking_references()) {
+            assert(map->exists(va));
+            std::pair<Extent, MemoryMap::Segment> me = map->at(va);
+            if (me.second.get_buffer()->get_data_ptr()==&(get_data()[0])) {
+                /* We are tracking file reads and this segment does, indeed, point into the file. */
+                size_t file_offset = me.second.get_buffer_offset(me.first, va);
+                mark_referenced_extent(file_offset, nread);
+            }
         }
 
         ncopied += nread;
@@ -201,7 +189,7 @@ SgAsmGenericFile::read_content(const MemoryMap *map, rose_addr_t start_va, void 
 
     if (ncopied<size) {
         if (strict)
-            throw MemoryMap::NotMapped(map, start_va+ncopied);
+            throw MemoryMap::NotMapped("SgAsmGenericFile::read_content() no mapping", map, start_va+ncopied);
         memset((char*)dst_buf+ncopied, 0, size-ncopied);                /*zero pad result if necessary*/
     }
     return ncopied;
@@ -354,8 +342,10 @@ SgAsmGenericFile::get_sections(bool include_holes) const
 
     /* Add sections pointed to by headers. */
     for (SgAsmGenericHeaderPtrList::iterator i=p_headers->get_headers().begin(); i!=p_headers->get_headers().end(); ++i) {
-        const SgAsmGenericSectionPtrList &recurse = (*i)->get_sections()->get_sections();
-        retval.insert(retval.end(), recurse.begin(), recurse.end());
+        if ((*i)->get_sections()!=NULL) {
+            const SgAsmGenericSectionPtrList &recurse = (*i)->get_sections()->get_sections();
+            retval.insert(retval.end(), recurse.begin(), recurse.end());
+        }
     }
     return retval;
 }
@@ -581,27 +571,35 @@ SgAsmGenericFile::get_best_section_by_va(rose_addr_t va, size_t *nfound/*optiona
     return best_section_by_va(candidates, va);
 }
 
-/** Definition for "best" as used by
- *  SgAsmGenericFile::get_best_section_by_va() and
- *  SgAsmGenericHeader::get_best_section_by_va() */
+/** Definition for "best" as used by SgAsmGenericFile::get_best_section_by_va() and
+ *  SgAsmGenericHeader::get_best_section_by_va().  The specified list of sections is scanned and the best one containing the
+ *  specified virtual address is returned.  The operation is equivalent to the successive elimination of bad sections: first
+ *  eliminate all sections that do not contain the virtual address.  If more than one remains, eliminate all but the smallest.
+ *  If two or more are tied in size and at least one has a name, eliminate those that don't have names.  If more than one
+ *  section remains, return the section that is earliest in the specified list of sections.  Return the null pointer if no
+ *  section contains the specified virtual address, or if any two sections that contain the virtual address map it to different
+ *  parts of the underlying binary file. */
 SgAsmGenericSection *
 SgAsmGenericFile::best_section_by_va(const SgAsmGenericSectionPtrList &sections, rose_addr_t va)
 {
-    if (0==sections.size())
-        return NULL;
-    if (1==sections.size()) 
-        return sections[0];
-    SgAsmGenericSection *best = sections[0];
-    rose_addr_t fo0 = sections[0]->get_va_offset(va);
-    for (size_t i=1; i<sections.size(); i++) {
-        if (fo0 != sections[i]->get_va_offset(va))
-            return NULL; /* all sections sections must map the VA to the same file offset */
-        if (best->get_mapped_size() > sections[i]->get_mapped_size()) {
-            best = sections[i]; /*prefer sections with a smaller mapped size*/
-        } else if (best->get_name()->get_string().size()==0 && sections[i]->get_name()->get_string().size()>0) {
-            best = sections[i]; /*prefer sections having a name*/
+    SgAsmGenericSection *best = NULL;
+    rose_addr_t file_offset = 0;
+    for (SgAsmGenericSectionPtrList::const_iterator si=sections.begin(); si!=sections.end(); ++si) {
+        SgAsmGenericSection *section = *si;
+        if (!section->is_mapped() || va<section->get_mapped_actual_va() ||
+            va>=section->get_mapped_actual_va()+section->get_mapped_size()) {
+            // section does not contain virtual address
+        } else if (!best) {
+            best = section;
+            file_offset = section->get_offset() + (va - section->get_mapped_actual_va());
+        } else if (file_offset != section->get_offset() + (va - section->get_mapped_actual_va())) {
+            return NULL; // error
+        } else if (best->get_mapped_size() > section->get_mapped_size()) {
+            best = section;
+        } else if (best->get_name()->get_string().empty() && !section->get_name()->get_string().empty()) {
+            best = section;
         } else {
-            /*prefer section defined earlier*/
+            // prefer section defined earlier
         }
     }
     return best;
@@ -1118,7 +1116,7 @@ SgAsmGenericFile::dump_all(const std::string &dump_name)
         }
 
         /* Dump interpretations that point only to this file. */
-        SgBinaryComposite *binary = isSgBinaryComposite(get_parent());
+        SgBinaryComposite *binary = SageInterface::getEnclosingNode<SgBinaryComposite>(this);
         ROSE_ASSERT(binary!=NULL);
         const SgAsmInterpretationPtrList &interps = binary->get_interpretations()->get_interpretations();
         for (size_t i=0; i<interps.size(); i++) {
@@ -1295,7 +1293,7 @@ SgAsmGenericFile::unfill_holes()
     SgAsmGenericSectionPtrList to_delete = get_holes()->get_sections();
     for (size_t i=0; i<to_delete.size(); i++) {
         SgAsmGenericSection *hole = to_delete[i];
-        delete hole;
+        SageInterface::deleteAST(hole);
     }
     
     /* Destructor for holes should have removed links to those holes. */

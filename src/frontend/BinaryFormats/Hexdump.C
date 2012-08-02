@@ -1,8 +1,6 @@
 /* Functions that produce output reminiscent of the Unix "hexdump" command. */
 // tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
-#define __STDC_FORMAT_MACROS
-#include <inttypes.h>
 #include <stdarg.h>
 
 /* Helper function that safely sprintfs to a buffer, allocation the buffer as needed. Note that the buffer is never freed (so
@@ -163,7 +161,8 @@ SgAsmExecutableFileFormat::hexdump(rose_addr_t base_addr, const std::string &pre
 void
 SgAsmExecutableFileFormat::hexdump(FILE *f, rose_addr_t base_addr, const unsigned char *data, size_t n, const HexdumpFormat &fmt)
 {
-    fputs(hexdump(base_addr, data, n, fmt).c_str(), f);
+    if (f)
+        fputs(hexdump(base_addr, data, n, fmt).c_str(), f);
 }
 
 /* File output with old-style arguments */    
@@ -171,7 +170,8 @@ void
 SgAsmExecutableFileFormat::hexdump(FILE *f, rose_addr_t base_addr, const std::string &prefix, const SgUnsignedCharList &data, 
                                    bool multiline)
 {
-    fputs(hexdump(base_addr, prefix, data, multiline).c_str(), f);
+    if (f)
+        fputs(hexdump(base_addr, prefix, data, multiline).c_str(), f);
 }
 
 /* File output for SgFileContentList */
@@ -179,5 +179,6 @@ void
 SgAsmExecutableFileFormat::hexdump(FILE *f, rose_addr_t base_addr, const std::string &prefix, const SgFileContentList &data, 
                                    bool multiline)
 {
-    fputs(hexdump(base_addr, prefix, data, multiline).c_str(), f);
+    if (f)
+        fputs(hexdump(base_addr, prefix, data, multiline).c_str(), f);
 }

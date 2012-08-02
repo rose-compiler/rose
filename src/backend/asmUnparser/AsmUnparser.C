@@ -1,8 +1,4 @@
 #include "sage3basic.h"
-
-#define __STDC_FORMAT_MACROS
-#include <inttypes.h>
-
 #include "AsmUnparser.h"
 #include "AsmUnparser_compat.h" /*FIXME: needed until no longer dependent upon unparseInstruction()*/
 
@@ -85,7 +81,8 @@ AsmUnparser::init()
     basicblock_callbacks.pre
         //.append(&basicBlockNoopUpdater)       /* Disabled by default for speed. */
         //.append(&basicBlockNoopWarning)       /* No-op if basicBlockNoopUpdater isn't used. */
-        .append(&basicBlockReasons);
+        .append(&basicBlockReasons)
+        .append(&basicBlockPredecessors);
     basicblock_callbacks.unparse
         .append(&basicBlockBody);               /* used only for ORGANIZED_BY_AST */
     basicblock_callbacks.post
@@ -113,6 +110,7 @@ AsmUnparser::init()
         .append(&functionReasons)
         .append(&functionName)
         .append(&functionLineTermination)
+        .append(&functionComment)
         .append(&functionAttributes);
     function_callbacks.unparse
         .append(&functionBody);                 /* used only for ORGANIZED_BY_AST */
@@ -139,6 +137,20 @@ AsmUnparser::add_function_labels(SgNode *node)
     } traversal(this);
     traversal.traverse(node, preorder);
 };
+
+void
+AsmUnparser::add_control_flow_graph(const BinaryAnalysis::ControlFlow::Graph &cfg)
+{
+    this->cfg = cfg;
+    cfg_blockmap.clear();
+    boost::graph_traits<CFG>::vertex_iterator vi, vi_end;
+    for (boost::tie(vi, vi_end)=vertices(cfg); vi!=vi_end; ++vi) {
+        SgAsmBlock *blk = get(boost::vertex_name, cfg, *vi);
+        if (blk)
+            cfg_blockmap[blk] = *vi;
+    }
+}
+    
 
 bool
 AsmUnparser::is_unparsable_node(SgNode *node)
@@ -404,13 +416,29 @@ AsmUnparser::InsnBlockEntry::operator()(bool enabled, const InsnArgs &args)
 {
     if (enabled && ORGANIZED_BY_ADDRESS==args.unparser->get_organization()) {
         SgAsmBlock *block = isSgAsmBlock(args.insn->get_parent()); // look only to immediate parent
+        bool is_first_insn = block && args.insn==block->get_statementList().front();
+
         static size_t width = 0;
         if (0==width)
             width = block->reason_str(true, 0).size();
-        if (block && args.insn==block->get_statementList().front()) {
-            args.output <<" " <<block->reason_str(true) <<" ";
-        } else {
-            args.output <<std::setw(width+2) <<" ";
+
+        if (show_function) {
+            SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(block);
+            char buf[32];
+            if (func && is_first_insn) {
+                snprintf(buf, sizeof buf, "F%08"PRIx64, func->get_entry_va());
+            } else {
+                sprintf(buf, "%*s", 9, "");
+            }
+            args.output <<" " <<buf;
+        }
+
+        if (show_reasons) {
+            if (block && is_first_insn) {
+                args.output <<" " <<block->reason_str(true) <<" ";
+            } else {
+                args.output <<std::setw(width+2) <<" ";
+            }
         }
     }
     return enabled;
@@ -474,6 +502,30 @@ AsmUnparser::BasicBlockNoopUpdater::operator()(bool enabled, const BasicBlockArg
 }
 
 bool
+AsmUnparser::BasicBlockPredecessors::operator()(bool enabled, const BasicBlockArgs &args)
+{
+    if (enabled) {
+        CFG_BlockMap::const_iterator bmi=args.unparser->cfg_blockmap.find(args.block);
+        if (bmi!=args.unparser->cfg_blockmap.end()) {
+            CFG_Vertex vertex = bmi->second;
+            size_t npreds = 0;
+            boost::graph_traits<CFG>::in_edge_iterator ei, ei_end;
+            for (boost::tie(ei, ei_end)=in_edges(vertex, args.unparser->cfg); ei!=ei_end; ++ei) {
+                SgAsmBlock *pred = get(boost::vertex_name, args.unparser->cfg, source(*ei, args.unparser->cfg));
+                if (pred) {
+                    char buf[64];
+                    snprintf(buf, sizeof buf, " B%08"PRIx64, pred->get_address());
+                    args.output <<(0==npreds++ ? "Predecessors:":"") <<buf;
+                }
+            }
+            if (npreds>0)
+                args.output <<"\n";
+        }
+    }
+    return enabled;
+}
+
+bool
 AsmUnparser::BasicBlockNoopWarning::operator()(bool enabled, const BasicBlockArgs &args)
 {
     if (enabled && !args.unparser->insn_is_noop.empty()) {
@@ -493,8 +545,12 @@ AsmUnparser::BasicBlockNoopWarning::operator()(bool enabled, const BasicBlockArg
 bool
 AsmUnparser::BasicBlockReasons::operator()(bool enabled, const BasicBlockArgs &args)
 {
-    if (enabled)
-        args.output <<"Basic block: " <<args.block->reason_str(false) <<"\n";
+    if (enabled) {
+        args.output <<"Basic block: " <<args.block->reason_str(false);
+        if (args.block->get_code_likelihood()<1.0 && args.block->get_code_likelihood()>=0.0)
+            args.output <<"; " <<floor(100.0*args.block->get_code_likelihood()+0.5) <<"% code likelihood";
+        args.output <<"\n";
+    }
     return enabled;
 }
 
@@ -513,9 +569,44 @@ AsmUnparser::BasicBlockSuccessors::operator()(bool enabled, const BasicBlockArgs
 {
     if (enabled) {
         args.output <<"            (successors:";
-        const SgAsmTargetPtrList &successors = args.block->get_successors();
-        for (SgAsmTargetPtrList::const_iterator si=successors.begin(); si!=successors.end(); ++si)
-            args.output <<" " <<StringUtility::addrToString((*si)->get_address());
+
+        CFG_BlockMap::const_iterator bmi = args.unparser->cfg_blockmap.find(args.block);
+        if (bmi!=args.unparser->cfg_blockmap.end()) {
+            // Use the unparser's CFG if it contains infor for this block.
+            CFG_Vertex vertex = bmi->second;
+            boost::graph_traits<CFG>::out_edge_iterator ei, ei_end;
+            for (boost::tie(ei, ei_end)=out_edges(vertex, args.unparser->cfg); ei!=ei_end; ++ei) {
+                SgAsmBlock *suc = get(boost::vertex_name, args.unparser->cfg, target(*ei, args.unparser->cfg));
+                SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(suc);
+                if (suc) {
+                    char buf[64];
+                    snprintf(buf, sizeof buf, "%08"PRIx64, suc->get_address());
+                    args.output <<" "
+                                <<(func && func->get_entry_va()==suc->get_address() ? "F" : "B")
+                                <<buf;
+                }
+            }
+        } else {
+            // Use the successors cached in the AST. We print them as absolute virtual addresses rather than using
+            // SgAsmIntegerValueExpression::get_label() because the value would probably have already been printed using
+            // get_label() in the previous disassembled instruction.
+            const SgAsmIntegerValuePtrList &successors = args.block->get_successors();
+            for (SgAsmIntegerValuePtrList::const_iterator si=successors.begin(); si!=successors.end(); ++si) {
+                char buf[64];
+                SgNode *base_node = (*si)->get_base_node();
+                if (isSgAsmBlock(base_node)) {
+                    snprintf(buf, sizeof buf, "B%08"PRIx64, (*si)->get_absolute_value());
+                } else if (isSgAsmFunction(base_node)) {
+                    snprintf(buf, sizeof buf, "F%08"PRIx64, (*si)->get_absolute_value());
+                } else {
+                    snprintf(buf, sizeof buf, "0x%08"PRIx64, (*si)->get_absolute_value());
+                }
+                args.output <<" " <<buf;
+            }
+        }
+
+        // The control flow graph doesn't store whether successor information is complete or not.  We have no choice but to get
+        // that tidbit from the AST.
         if (!args.block->get_successors_complete())
             args.output <<"...";
         args.output <<")\n";
@@ -560,13 +651,29 @@ AsmUnparser::StaticDataBlockEntry::operator()(bool enabled, const StaticDataArgs
 {
     if (enabled && ORGANIZED_BY_ADDRESS==args.unparser->get_organization()) {
         SgAsmBlock *block = isSgAsmBlock(args.data->get_parent()); // look only to immediate parent
+        bool is_first_data = block && args.data==block->get_statementList().front();
+
         static size_t width = 0;
         if (0==width)
             width = block->reason_str(true, 0).size();
-        if (block && args.data==block->get_statementList().front()) {
-            args.output <<" " <<block->reason_str(true) <<" ";
-        } else {
-            args.output <<std::setw(width+2) <<" ";
+
+        if (show_function) {
+            SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(block);
+            char buf[32];
+            if (func && is_first_data) {
+                snprintf(buf, sizeof buf, "F%08"PRIx64, func->get_entry_va());
+            } else {
+                sprintf(buf, "%*s", 9, "");
+            }
+            args.output <<" " <<buf;
+        }
+
+        if (show_reasons) {
+            if (block && is_first_data) {
+                args.output <<" " <<block->reason_str(true) <<" ";
+            } else {
+                args.output <<std::setw(width+2) <<" ";
+            }
         }
     }
     return enabled;
@@ -612,6 +719,9 @@ AsmUnparser::StaticDataDetails::operator()(bool enabled, const StaticDataArgs &a
 
         if (dblock && 0!=(dblock->get_reason() & SgAsmBlock::BLK_JUMPTABLE)) {
             args.output <<" " <<nbytes <<"-byte jump table beginning at "
+                        <<StringUtility::addrToString(args.data->get_address());
+        } else if (dblock && 0!=(dblock->get_reason() & SgAsmBlock::BLK_PADDING)) {
+            args.output <<" " <<nbytes <<"-byte padding beginning at "
                         <<StringUtility::addrToString(args.data->get_address());
         } else {
             args.output <<" " <<nbytes <<" byte" <<(1==nbytes?"":"s") <<" untyped data beginning at "
@@ -708,18 +818,40 @@ AsmUnparser::FunctionLineTermination::operator()(bool enabled, const FunctionArg
     return enabled;
 }
 
+bool
+AsmUnparser::FunctionComment::operator()(bool enabled, const FunctionArgs &args)
+{
+    if (enabled) {
+        std::string s = args.func->get_comment();
+        if (!s.empty()) {
+            args.output <<s;
+            if (0==s.compare(s.size()-1, 1, "\n"))
+                args.output <<std::endl;
+        }
+    }
+    return enabled;
+}
+
 AsmUnparser::FunctionAttributes::FunctionAttributes(): prefix("0x%08"PRIx64": ") {}
 
 bool
 AsmUnparser::FunctionAttributes::operator()(bool enabled, const FunctionArgs &args)
 {
     if (enabled) {
-        if (!args.func->get_can_return()) {
-            char buf[256];
-            int nprint = snprintf(buf, sizeof buf, prefix.c_str(), args.func->get_entry_va());
-            if ((size_t)nprint>=sizeof buf)
-                sprintf(buf, "0x%08"PRIx64" <OVERFLOW>: ", args.func->get_entry_va());
-            args.output <<buf <<"Function does not return to caller." <<std::endl;
+        switch (args.func->get_may_return()) {
+            case SgAsmFunction::RET_ALWAYS:
+            case SgAsmFunction::RET_SOMETIMES:
+            case SgAsmFunction::RET_UNKNOWN:
+                // the usual cases, don't say anything, assume function might return
+                break;
+            case SgAsmFunction::RET_NEVER: {
+                char buf[256];
+                int nprint = snprintf(buf, sizeof buf, prefix.c_str(), args.func->get_entry_va());
+                if ((size_t)nprint>=sizeof buf)
+                    sprintf(buf, "0x%08"PRIx64" <OVERFLOW>: ", args.func->get_entry_va());
+                args.output <<buf <<"Function does not return to caller." <<std::endl;
+                break;
+            }
         }
     }
     return enabled;
