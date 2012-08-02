@@ -438,7 +438,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
          + " */ \n");
      char buffer[100];
      snprintf (buffer,100,"%p",stmt);
-     curprint ( string("\n/* Top of unparseStatement " ) + stmt->class_name() + " at: " + buffer + " */ \n");
+     curprint ("\n/* Top of unparseStatement " + stmt->class_name() + " at: " + buffer + " */ \n");
 #endif
 
 #if 0
@@ -543,9 +543,10 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
           return;
         }
 
-
      if( unparseLineReplacement(stmt,info) )
        return;
+
+  // curprint("/* Calling unparseAttachedPreprocessingInfo */ \n ");
 
   // Markus Kowarschik: This is the new code to unparse directives before the current statement
      //AS(05/20/09): LineReplacement should replace a statement with a line. Override unparsing
@@ -576,7 +577,6 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
   // becasue we don't want it to appear in the Fortran code generation.
   // DQ (added comments) this is where the new lines are introduced before statements.
   // unp->cur.format(stmt, info, FORMAT_BEFORE_STMT);
-
   // curprint("/* After FORMAT_BEFORE_STMT */ \n ");
 
   // This is the added code to support the copy based unparsing mechanism.
@@ -656,6 +656,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
           unparseStatementNumbers(stmt,info);
 #if 0
           printf ("In UnparseLanguageIndependentConstructs::unparseStatement(): Selecting an unparse function for stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+          curprint("/* In UnparseLanguageIndependentConstructs::unparseStatement(): Selecting an unparse function for stmt */ \n ");
 #endif
           switch (stmt->variantT())
              {
@@ -705,6 +706,10 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
                     unparseLanguageSpecificStatement(stmt,info);
                     break;
              }
+
+#if 0
+          curprint("/* In UnparseLanguageIndependentConstructs::unparseStatement(): DONE Selecting an unparse function for stmt */ \n ");
+#endif
 
        // DQ (5/8/2010): Reset the source code position in the AST.
           if (unp->get_resetSourcePosition() == true)

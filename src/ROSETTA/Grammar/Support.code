@@ -6398,7 +6398,7 @@ SgSymbolTable::insert ( const SgName & nm , SgSymbol *sp )
   // DQ (2/14/2007): Added assertion!
      assert (sp != NULL);
 
-#if 1
+#if 0
   // This outputs a message for every use of the insert function (for non function type symbols) useful for tracing through bugs
      SgNode* symbolBasis = sp->get_symbol_basis();
 #if 0
@@ -14416,7 +14416,27 @@ SgUnparse_Info::PrintName() const
 
 void
 SgUnparse_Info::set_PrintName()
-   { if(!p_var_name.is_null()) setBit(b_PrintName); }
+   {
+#if 0
+     printf ("p_var_name.is_null() = %s p_var_name = %s \n",p_var_name.is_null() ? "true" : "false",p_var_name.str());
+
+  // This is the older version of the code (dependent on an internal variable that was easy to forget to set).
+     if(!p_var_name.is_null())
+        {
+          setBit(b_PrintName); 
+        }
+       else
+        {
+          printf ("PrintName is not set! \n");
+        }
+#else
+  // DQ (7/30/2012): I like this simpler semantics better.
+     setBit(b_PrintName);
+#endif
+#if 0
+     printf ("Leaving set_PrintName(): PrintName() = %s \n",PrintName() ? "true" : "false");
+#endif
+   }
 
 void
 SgUnparse_Info::unset_PrintName()

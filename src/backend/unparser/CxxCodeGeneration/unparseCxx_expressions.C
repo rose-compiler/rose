@@ -1055,10 +1055,13 @@ Unparse_ExprStmt::unparseVarRef(SgExpression* expr, SgUnparse_Info& info)
           nameQualifier = var_ref->get_qualified_name_prefix();
         }
 
+  // DQ (7/31/2012): I don't think we use the name "__unnamed_class" any more (so this maybe be always true).
   // DQ (11/9/2007): Need to ignore these sorts of generated names
      if (nameQualifier.getString().find("__unnamed_class") == string::npos)
         {
+#if 0
           printf ("In Unparse_ExprStmt::unparseVarRef(): nameQualifier = %s \n",nameQualifier.str());
+#endif
           curprint ( nameQualifier.str());
         }
 
@@ -1076,7 +1079,7 @@ Unparse_ExprStmt::unparseVarRef(SgExpression* expr, SgUnparse_Info& info)
           curprint (var_ref->get_symbol()->get_name().str());
         }
 
-#if 1
+#if 0
      printf ("Leaving Unparse_ExprStmt::unparseVarRef() \n");
 #endif
    }
@@ -1125,7 +1128,7 @@ Unparse_ExprStmt::unparseFuncRefSupport(SgExpression* expr, SgUnparse_Info& info
      SgNode* nodeReferenceToFunction = info.get_reference_node_for_qualification();
      if (nodeReferenceToFunction != NULL)
         {
-          printf ("rrrrrrrrrrrr In unparseType() output type generated name: nodeReferenceToFunction = %p = %s SgNode::get_globalTypeNameMap().size() = %zu \n",nodeReferenceToFunction,nodeReferenceToFunction->class_name().c_str(),SgNode::get_globalTypeNameMap().size());
+       // printf ("rrrrrrrrrrrr In unparseFuncRefSupport() output type generated name: nodeReferenceToFunction = %p = %s SgNode::get_globalTypeNameMap().size() = %zu \n",nodeReferenceToFunction,nodeReferenceToFunction->class_name().c_str(),SgNode::get_globalTypeNameMap().size());
 
           std::map<SgNode*,std::string>::iterator i = SgNode::get_globalTypeNameMap().find(nodeReferenceToFunction);
           if (i != SgNode::get_globalTypeNameMap().end())
@@ -1133,7 +1136,7 @@ Unparse_ExprStmt::unparseFuncRefSupport(SgExpression* expr, SgUnparse_Info& info
                usingGeneratedNameQualifiedFunctionNameString = true;
 
                functionNameString = i->second.c_str();
-               printf ("ssssssssssssssss Found type name in SgNode::get_globalTypeNameMap() typeNameString = %s for nodeReferenceToType = %p = %s \n",functionNameString.c_str(),nodeReferenceToFunction,nodeReferenceToFunction->class_name().c_str());
+            // printf ("ssssssssssssssss Found type name in SgNode::get_globalTypeNameMap() typeNameString = %s for nodeReferenceToType = %p = %s \n",functionNameString.c_str(),nodeReferenceToFunction,nodeReferenceToFunction->class_name().c_str());
              }
         }
        else
@@ -1147,17 +1150,17 @@ Unparse_ExprStmt::unparseFuncRefSupport(SgExpression* expr, SgUnparse_Info& info
         }
 #endif
 
-#if 1
+#if 0
      printf ("In unparseFuncRef(): usingGeneratedNameQualifiedFunctionNameString = %s \n",usingGeneratedNameQualifiedFunctionNameString ? "true" : "false");
 #endif
 
      if (usingGeneratedNameQualifiedFunctionNameString == true)
         {
        // Output the previously generated type name contianing the correct name qualification of subtypes (e.g. template arguments).
-          curprint ("/* output the function in unparseFuncRef() */");
+       // curprint ("/* output the function in unparseFuncRef() */");
 
           curprint(functionNameString);
-          curprint ("/* DONE: output the function in unparseFuncRef() */");
+       // curprint ("/* DONE: output the function in unparseFuncRef() */");
         }
        else
         {
@@ -1173,7 +1176,7 @@ Unparse_ExprStmt::unparseFuncRefSupport(SgExpression* expr, SgUnparse_Info& info
      string func_name = func_ref->get_symbol()->get_name().str();
      int diff = 0; // the length difference between "operator" and function
 
-#if 1
+#if 0
      printf ("Inside of Unparse_ExprStmt::unparseFuncRef(): func_name = %s \n",func_name.c_str());
 #endif
 
@@ -1181,7 +1184,7 @@ Unparse_ExprStmt::unparseFuncRefSupport(SgExpression* expr, SgUnparse_Info& info
      ROSE_ASSERT(func_ref->get_symbol()->get_declaration() != NULL);
      SgDeclarationStatement*         declaration = func_ref->get_symbol()->get_declaration();
 
-#if 1
+#if 0
   // DQ (7/26/2012): Test the function name (debuging test2009_31.C: "operator<<" output as "operator")
      printf ("declaration = %p = %s \n",declaration,declaration->class_name().c_str());
      SgTemplateInstantiationFunctionDecl* templateInstantiationFunctionDecl = isSgTemplateInstantiationFunctionDecl(declaration);

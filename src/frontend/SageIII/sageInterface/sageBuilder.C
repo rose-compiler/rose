@@ -166,7 +166,7 @@ SgSymbolTable::find_symbol_by_type_of_function (const SgName & name, const SgTyp
                case V_SgFunctionDeclaration:
                case V_SgTemplateInstantiationFunctionDecl:
                   {
-#if 1
+#if 0
                     printf ("In SgSymbolTable::find_symbol_by_type_of_function(): This is a SgFunctionDeclaration or SgTemplateInstantiationFunctionDecl function \n");
 #endif
                  // func_symbol = this->find_function(name,func_type);
@@ -177,7 +177,7 @@ SgSymbolTable::find_symbol_by_type_of_function (const SgName & name, const SgTyp
                case V_SgMemberFunctionDeclaration:
                case V_SgTemplateInstantiationMemberFunctionDecl:
                   {
-#if 1
+#if 0
                     printf ("In SgSymbolTable::find_symbol_by_type_of_function(): This is a SgMemberFunctionDeclaration or SgTemplateInstantiationMemberFunctionDecl function \n");
 #endif
                     func_symbol = find_nontemplate_member_function(name,func_type);
@@ -186,7 +186,7 @@ SgSymbolTable::find_symbol_by_type_of_function (const SgName & name, const SgTyp
 
                case V_SgTemplateFunctionDeclaration:
                   {
-#if 1
+#if 0
                     printf ("In SgSymbolTable::find_symbol_by_type_of_function(): This is a SgTemplateFunctionDeclaration function \n");
 #endif
                     func_symbol = find_template_function(name,func_type);
@@ -195,7 +195,7 @@ SgSymbolTable::find_symbol_by_type_of_function (const SgName & name, const SgTyp
 
                case V_SgTemplateMemberFunctionDeclaration:
                   {
-#if 1
+#if 0
                     printf ("In SgSymbolTable::find_symbol_by_type_of_function(): This is a SgTemplateMemberFunctionDeclaration function \n");
 #endif
                     func_symbol = find_template_member_function(name,func_type);
@@ -1356,13 +1356,16 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
 
      bool buildTemplateInstantiation = ((VariantT)actualFunction::static_variant == V_SgTemplateInstantiationFunctionDecl || (VariantT)actualFunction::static_variant == V_SgTemplateInstantiationMemberFunctionDecl);
 
+#if 0
      printf ("In buildNondefiningFunctionDeclaration_T(): buildTemplateInstantiation = %s \n",buildTemplateInstantiation ? "true" : "false");
+#endif
      if (buildTemplateInstantiation == true)
         {
           ROSE_ASSERT(templateArgumentsList != NULL);
           nameWithTemplateArguments = appendTemplateArgumentsToName(nameWithoutTemplateArguments,*templateArgumentsList);
-
+#if 0
           printf ("Building a SgClassDeclaration: buildNondefiningClassDeclaration_nfi() nameWithTemplateArguments = %s buildTemplateInstantiation = %s \n",nameWithTemplateArguments.str(),buildTemplateInstantiation ? "true:" : "false");
+#endif
         }
 
   // printf ("Building non-defining function for scope = %p in file = %s \n",scope,TransformationSupport::getSourceFile(scope)->getFileName().c_str());
@@ -1393,7 +1396,7 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
   // by all prototypes and defining declarations of a same function!
   // SgFunctionType * func_type = buildFunctionType(return_type,paralist);
 
-#if 1
+#if 0
      printf ("In buildNondefiningFunctionDeclaration_T(): isMemberFunction = %s scope = %p = %s \n",isMemberFunction ? "true" : "false",scope,scope->class_name().c_str());
 #endif
 

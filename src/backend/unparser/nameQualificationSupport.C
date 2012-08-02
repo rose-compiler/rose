@@ -3671,6 +3671,112 @@ NameQualificationTraversal::setNameQualification(SgVarRefExp* varRefExp, SgVaria
      bool outputGlobalQualification     = false;
      bool outputTypeEvaluation          = false;
 
+  // DQ (7/31/2012): check if this is a SgVarRefExp that is associated with a class that is un-named, if so then 
+  // supress the name qualification (which would use the internally generated name).  Note that all constructs 
+  // that are un-named have names generated internally for them so that we can support the AST merge process
+  // and generally reference multiple un-named constructs that may exist in a single compilation unit.
+  // SgClassDeclaration* classDeclaration = isSgClassDeclaration(varRefExp->parent());
+
+     ROSE_ASSERT(varRefExp != NULL);
+     SgBinaryOp* dotExp   = isSgDotExp(varRefExp->get_parent());
+     SgBinaryOp* arrowExp = isSgArrowExp(varRefExp->get_parent());
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+     printf ("dotExp = %p arrowExp = %p \n",dotExp,arrowExp);
+#endif
+
+     SgVarRefExp* possibleClassVarRefExp = NULL;
+     if (dotExp != NULL)
+        {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+          printf ("Note that this code is overly sensitive to the local structure of the AST expressions \n");
+#endif
+          possibleClassVarRefExp = isSgVarRefExp(dotExp->get_lhs_operand());
+
+          if (possibleClassVarRefExp == NULL)
+             {
+               SgPntrArrRefExp* possiblePntrArrRefExp = isSgPntrArrRefExp(dotExp->get_lhs_operand());
+               if (possiblePntrArrRefExp != NULL)
+                  {
+                    possibleClassVarRefExp = isSgVarRefExp(possiblePntrArrRefExp->get_lhs_operand());
+                  }
+             }
+        }
+
+     if (arrowExp != NULL)
+        {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+          printf ("Note that this code is overly sensitive to the local structure of the AST expressions \n");
+#endif
+          possibleClassVarRefExp = isSgVarRefExp(arrowExp->get_lhs_operand());
+
+          if (possibleClassVarRefExp == NULL)
+             {
+               SgPntrArrRefExp* possiblePntrArrRefExp = isSgPntrArrRefExp(arrowExp->get_lhs_operand());
+               if (possiblePntrArrRefExp != NULL)
+                  {
+                    possibleClassVarRefExp = isSgVarRefExp(possiblePntrArrRefExp->get_lhs_operand());
+                  }
+             }
+#if 0
+          printf ("Case of SgVarRefExp to un-named class not finished yet! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+     printf ("possibleClassVarRefExp = %p \n",possibleClassVarRefExp);
+#endif
+
+     SgClassType* classType = NULL;
+     if (possibleClassVarRefExp != NULL)
+        {
+          SgType* varRefExpType = possibleClassVarRefExp->get_type(); 
+          ROSE_ASSERT(varRefExpType != NULL);
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+          printf ("In NameQualificationTraversal::setNameQualification(): varRefExpType = %p = %s \n",varRefExpType,varRefExpType->class_name().c_str());
+#endif
+
+       // DQ (8/2/2012): test2007_06.C and test2012_156.C show that we need to strip past the typedefs.
+       // Note that we don't want to strip typedefs, since that could take us past public types and into private types.
+       // SgType* possibleClassType = varRefExpType->stripType(SgType::STRIP_MODIFIER_TYPE|SgType::STRIP_REFERENCE_TYPE|SgType::STRIP_POINTER_TYPE|SgType::STRIP_ARRAY_TYPE); // Excluding SgType::STRIP_TYPEDEF_TYPE
+          SgType* possibleClassType = varRefExpType->stripType(SgType::STRIP_MODIFIER_TYPE|SgType::STRIP_REFERENCE_TYPE|SgType::STRIP_POINTER_TYPE|SgType::STRIP_ARRAY_TYPE|SgType::STRIP_TYPEDEF_TYPE);
+          classType = isSgClassType(possibleClassType);
+        }
+
+
+     bool isAnUnamedConstructs = false;
+     if (classType != NULL)
+        {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+          printf ("In NameQualificationTraversal::setNameQualification(): classType = %p = %s \n",classType,classType->class_name().c_str());
+#endif
+          SgClassDeclaration* classDeclaration = isSgClassDeclaration(classType->get_declaration());
+          ROSE_ASSERT(classDeclaration != NULL);
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+          printf ("In NameQualificationTraversal::setNameQualification(): classDeclaration = %p = %s \n",classDeclaration,classDeclaration->class_name().c_str());
+#endif
+          SgClassDeclaration* definingClassDeclaration = isSgClassDeclaration(classDeclaration->get_definingDeclaration());
+          ROSE_ASSERT(definingClassDeclaration != NULL);
+
+       // This should be true so assert this here.
+          ROSE_ASSERT(classDeclaration->get_isUnNamed() == definingClassDeclaration->get_isUnNamed());
+
+          if (classDeclaration->get_isUnNamed() == true)
+             {
+               isAnUnamedConstructs = true;
+#if 0
+               printf ("Error: This is an un-named class/struct and so we can't generate name qualification for it's data members. \n");
+               ROSE_ASSERT(false);
+#endif
+             }
+        }
+
+  // DQ (7/31/2012): If this is an un-named construct then no qualifiaction can be used since there is no associated name.
+     if (isAnUnamedConstructs == false)
+        {
      string qualifier = setNameQualificationSupport(variableDeclaration->get_scope(),amountOfNameQualificationRequired, outputNameQualificationLength, outputGlobalQualification, outputTypeEvaluation);
 
      varRefExp->set_global_qualification_required(outputGlobalQualification);
@@ -3714,6 +3820,7 @@ NameQualificationTraversal::setNameQualification(SgVarRefExp* varRefExp, SgVaria
                printf ("Note: name in qualifiedNameMapForNames already exists and is different... \n");
 #endif
              }
+        }
         }
    }
 
