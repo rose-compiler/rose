@@ -570,7 +570,7 @@ LiveVarsLattice* getLiveOutVarsAt(LiveDeadVarsAnalysis* ldva, SgNode* n, unsigne
 
 // Minimal constructor that initializes just the portions of the object required to make an 
 // initial blank VarsExprsProductLattice
-VarsExprsProductLattice::VarsExprsProductLattice(const DataflowNode& n, const NodeState& state) : n(n), state(state)
+VarsExprsProductLattice::VarsExprsProductLattice(const DataflowNode& n, const NodeState& state, bool (*filter) (CFGNode cfgn)) : n(n), state(state), filter(filter)
 { 
 }                       
 
@@ -860,7 +860,7 @@ bool VarsExprsProductLattice::meetUpdate(Lattice *lThat)
 // varNameMap - maps all variable names that have changed, in each mapping pair, pair->first is the 
 //              old variable and pair->second is the new variable
 // func - the function that the copy Lattice will now be associated with
-void VarsExprsProductLattice::remapVars(const map<varID, varID>& varNameMap, const Function& newFunc, bool (*filter) (CFGNode cfgn))
+void VarsExprsProductLattice::remapVars(const map<varID, varID>& varNameMap, const Function& newFunc)
 {
 //      Dbg::dbg << "remapVars("<<newFunc.get_name().getString()<<"()), func="<<func.get_name().getString<<endl;
         
@@ -1144,7 +1144,7 @@ string VarsExprsProductLattice::str(string indent)
 
 // Initial blank FiniteVarsExprsProductLattice
 FiniteVarsExprsProductLattice::FiniteVarsExprsProductLattice(const DataflowNode& n, const NodeState& state) :
-                VarsExprsProductLattice(n, state)
+                VarsExprsProductLattice(n, state,filter)
 {}
 
 // Retrns a blank instance of a VarsExprsProductLattice that only has the fields n and state set
@@ -1198,7 +1198,7 @@ Lattice* FiniteVarsExprsProductLattice::copy() const
 // Minimal constructor that initializes just the portions of the object required to make an 
 // initial blank VarsExprsProductLattice
 InfiniteVarsExprsProductLattice::InfiniteVarsExprsProductLattice(const DataflowNode& n, const NodeState& state) : 
-                VarsExprsProductLattice(n, state)
+                VarsExprsProductLattice(n, state,filter)
 {}
 
 // Retrns a blank instance of a VarsExprsProductLattice that only has the fields n and state set
