@@ -988,9 +988,22 @@ include $(srcdir)/Makefile-pass.inc
 endif
 
 
-
-
-
+# TV (08/02/12): Added a list of none previously referenced test codes, code to be sorted
+TESTCODE_TO_BE_SORTED = \
+test2011_178.C \
+test2011_196.C \
+test2011_197.C \
+test2011_198.C \
+test2011_199.C \
+test2011_200.C \
+test2011_201.C \
+test2011_202.C \
+test2011_203.C \
+test2012_133.C \
+test2012_134.C \
+test2012_135.C \
+test2012_35.C \
+test2012_79.C
 
 
 
