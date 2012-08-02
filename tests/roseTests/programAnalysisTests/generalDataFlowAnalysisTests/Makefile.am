@@ -45,12 +45,13 @@ INCLUDES = $(ROSE_INCLUDES) \
 #    src/midend/programAnalysis/generalDataFlowAnalysis
 # directory.
 # This test program does not require the rest of ROSE so it can be handled locally
-bin_PROGRAMS  = constantPropagationTest taintedFlowAnalysisTest liveDeadVarAnalysisTest
+bin_PROGRAMS  = constantPropagationTest taintedFlowAnalysisTest liveDeadVarAnalysisTest pointerAliasAnalysisTest
 # bin_PROGRAMS  = constantPropagationTest 
 
 liveDeadVarAnalysisTest_SOURCES = liveDeadVarAnalysisTest.C
 constantPropagationTest_SOURCES = constantPropagation.C constantPropagationTest.C
 taintedFlowAnalysisTest_SOURCES = taintedFlowAnalysis.C taintedFlowAnalysisTest.C
+pointerAliasAnalysisTest_SOURCES = pointerAliasAnalysis.C pointerAliasAnalysisTest.C
 
 # testCallGraph_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 # LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
@@ -1445,7 +1446,7 @@ verify-constantpropagation:$(CXX_CONSTANT_PROPAGATION_FILES)
 
 # DQ (9/22/2011): All of the test codes are from other directories, so we don't what them in the EXTRA_DIST rule.
 # EXTRA_DIST = $(TESTCODES)
-EXTRA_DIST = constantPropagation.h taintedFlowAnalysis.h $(CXX_LOCAL_LIVENESS_PASS) $(CXX_LOCAL_CONSTANT_PROPAGATION_PASS)
+EXTRA_DIST = constantPropagation.h taintedFlowAnalysis.h pointerAliasAnalysis.h $(CXX_LOCAL_LIVENESS_PASS)
 
 check-cxx: $(CXX_FILES)
 check-c: $(C_FILES)
