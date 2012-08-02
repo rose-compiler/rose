@@ -27,6 +27,10 @@ DBcompoundarray *pointer = DBAllocCompoundarray();
 
 extern "C" { extern DBcompoundarray *DBAllocCompoundarray(void); }
 extern "C" { extern DBcurve *DBAllocCurve(void); }
+
+// If this is output as: 
+//      extern "C" { extern XYZ *functionReturningXYZ(void); } 
+// then it is an error because the source position is not correct by column number.
 extern "C" { extern XYZ *functionReturningXYZ(void); }
 
 

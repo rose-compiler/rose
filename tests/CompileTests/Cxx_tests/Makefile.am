@@ -595,6 +595,7 @@ test2007_50.C \
 test2007_51.C \
 test2007_52.C \
 test2007_53.C \
+test2007_55.C \
 test2007_57.C \
 test2007_59.C \
 test2007_70.C \
@@ -959,6 +960,22 @@ test2012_132.C \
 test2012_136.C \
 test2012_137.C \
 test2012_138.C \
+test2012_141.C \
+test2012_142.C \
+test2012_143.C \
+test2012_144.C \
+test2012_145.C \
+test2012_146.C \
+test2012_147.C \
+test2012_148.C \
+test2012_149.C \
+test2012_150.C \
+test2012_151.C \
+test2012_152.C \
+test2012_153.C \
+test2012_154.C \
+test2012_155.C \
+test2012_156.C \
 test_int_lexemes.C \
 test_int_lexemes_donot_pass.C \
 test_simple_int.C \
@@ -1007,7 +1024,6 @@ test2006_90.C \
 test2006_122.C \
  test2006_151.C \
 test2007_38.C \
- test2007_55.C \
 test2007_137.C \
 test2007_141.C \
 test2009_21.C \
