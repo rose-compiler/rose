@@ -907,8 +907,37 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
        // this version should be more robust in generating correct qualified names when the parent is inconsistant
        // with the explicitly stored scope (which happens in rare cases, but particularly in KULL and for va_list
        // bases typedefed types).
-          SgName nm = decl->get_name();
-
+#if 0
+          printf ("In unparseClassType(): info.PrintName() = %s decl->get_isUnNamed() = %s \n",(info.PrintName() == true) ? "true" : "false",decl->get_isUnNamed() ? "true" : "false");
+#endif
+       // DQ (7/28/2012): Added support for un-named types in typedefs.
+       // SgName nm = decl->get_name();
+          SgName nm;
+#if 1
+          if (decl->get_isUnNamed() == false || info.PrintName() == true)
+             {
+               nm = decl->get_name();
+#if 0
+               printf ("In unparseClassType(): nm = %s \n",nm.str());
+#endif
+             }
+#else
+          if (decl->get_isUnNamed() == false)
+             {
+               nm = decl->get_name();
+             }
+            else
+             {
+            // Else if this is a declaration in a variable declaration, then we do want to output a generated name.
+            // We could also mark the declaration for the cases where this is required. See test2012_141.C for this case.
+               ROSE_ASSERT(decl->get_parent() != NULL);
+               SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(decl->get_parent());
+               if (variableDeclaration != NULL)
+                  {
+                    nm = decl->get_name();
+                  }
+             }
+#endif
        // printf ("In unparseClassType: nm = %s \n",nm.str());
 
        // DQ (6/27/2006): nm.is_null() is a better test for an empty name, don't output the qualifier for un-named
@@ -1264,6 +1293,7 @@ Unparse_Type::unparseEnumType(SgType* type, SgUnparse_Info& info)
                   }
                  else
                   {
+
                  // DQ (6/2/2011): Newest support for name qualification...
                     SgName nameQualifier = unp->u_name->lookup_generated_qualified_name(info.get_reference_node_for_qualification());
 #if 0
@@ -1272,7 +1302,32 @@ Unparse_Type::unparseEnumType(SgType* type, SgUnparse_Info& info)
                  // printf ("nameQualifier (from unp->u_name->generateNameQualifier function) = %s \n",nameQualifier.str());
                  // curprint ("\n/* nameQualifier (from unp->u_name->generateNameQualifier function) = " + nameQualifier + " */ \n ";
                     curprint (nameQualifier.str());
+#if 1
+                 // DQ (7/28/2012): Added support for un-named types in typedefs.
+                    SgName nm;
+                    if (edecl->get_isUnNamed() == false)
+                       {
+                         nm = edecl->get_name();
+                       }
+                      else
+                       {
+                      // Else if this is a declaration in a variable declaration, then we do want to output a generated name.
+                      // We could also mark the declaration for the cases where this is required. See test2012_141.C for this case.
+                         ROSE_ASSERT(edecl->get_parent() != NULL);
+                         SgTypedefDeclaration* typedefDeclaration = isSgTypedefDeclaration(edecl->get_parent());
+                         if (typedefDeclaration != NULL)
+                            {
+                              nm = edecl->get_name();
+                            }
+                         SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(edecl->get_parent());
+                         if (variableDeclaration != NULL)
+                            {
+                              nm = edecl->get_name();
+                            }
+                       }
+#else
                     SgName nm = enum_type->get_name();
+#endif
 
                     if (nm.getString() != "")
                        {

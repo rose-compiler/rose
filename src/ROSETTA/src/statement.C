@@ -1276,6 +1276,24 @@ Grammar::setUpStatements ()
      VariableDeclaration.setDataPrototype("bool","global_qualification_required","= false",
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (7/28/2012): We need to support lists of types at the end of a variable declaration. ROSE presently
+  // will output separate declarations for each type.  This is OK (but will be fixed) however it interferes
+  // with the new support for un-named types in typedef declarations.  so we want to mark declarations that
+  // are output assocuated with a previous declaration.  Example of where this is relevant is:
+  //      struct { } S,T;
+  // which will be output as (using __xxx as an internal name):
+  //      struct __xxx { } S;
+  //      struct __xxx T;
+  // But the second (associated) declaration need to use the name of the un-named type "S"
+  // See test2012_141.C for an example of this issue.
+     VariableDeclaration.setDataPrototype("bool","isAssociatedWithDeclarationList","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (7/30/2012): Mark this as the first declaration of a declaration list.
+     VariableDeclaration.setDataPrototype("bool","isFirstDeclarationOfDeclarationList","= true",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+
 
      VariableDefinition.setFunctionPrototype ( "HEADER_VARIABLE_DEFINITION_STATEMENT", "../Grammar/Statement.code" );
 
@@ -2379,6 +2397,23 @@ Grammar::setUpStatements ()
   //      typedef class B { int i; } b;       // non autonomous declaration
   // Clearly the autonomous case is the more common, but we must handle both.
      TypedefDeclaration.setDataPrototype("bool","isAutonomousDeclaration","= true",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (7/28/2012): We need to support lists of types at the end of a typedef declaration. ROSE presently
+  // will output seperate declarations for each type.  This is OK (but will be fixed) however it interferes
+  // with the new support for un-named types in typedef declarations.  so we want to mark declarations that
+  // are output assocuated with a previous declaration.  Example of where this is relevant is:
+  //      typedef struct { } S,T;
+  // which will be output as:
+  //      typedef struct { } S;
+  //      typedef S T;
+  // But the second (associated) declaration need to use the name of the un-named type "S"
+  // See test2012_141.C for an example of this issue.
+     TypedefDeclaration.setDataPrototype("bool","isAssociatedWithDeclarationList","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (7/30/2012): Mark this as the first declaration of a declaration list.
+     TypedefDeclaration.setDataPrototype("bool","isFirstDeclarationOfDeclarationList","= true",
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      PragmaDeclaration.setFunctionPrototype ( "HEADER_PRAGMA_STATEMENT", "../Grammar/Statement.code" );

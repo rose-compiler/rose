@@ -1188,6 +1188,10 @@ Unparse_MOD_SAGE::outputExternLinkageSpecifier ( SgDeclarationStatement* decl_st
    {
      ROSE_ASSERT(decl_stmt != NULL);
 
+#if 0
+     curprint ("\n/* Inside of outputExternLinkageSpecifier() */ \n ");
+#endif
+
   // DQ (5/10/2007): Fixed linkage to be a std::string instead of char*
   // if (decl_stmt->get_declarationModifier().get_storageModifier().isExtern() && decl_stmt->get_linkage())
      if (decl_stmt->get_declarationModifier().get_storageModifier().isExtern() && decl_stmt->get_linkage().empty() == false)

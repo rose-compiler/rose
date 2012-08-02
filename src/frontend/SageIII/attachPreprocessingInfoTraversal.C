@@ -313,7 +313,7 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
 
           if ( attachCommentOrDirective == true )
              {
-#if 0
+#if DEBUG_ATTACH_PREPROCESSING_INFO
                printf ("Attaching \"%s\" (from line# %d) to %s locatedNode = %p = %s = %s at line %d \n",
                    currentPreprocessingInfoPtr->getString().c_str(),
                    currentPreprocessingInfoPtr->getLineNumber(),
