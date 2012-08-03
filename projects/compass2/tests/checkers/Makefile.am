@@ -6,6 +6,8 @@ AUTOMAKE_OPTIONS = subdir-objects
 
 SUBDIRS=\
 	function_pointer \
+	global_variables \
 	keyword_macro \
-	non_global_cpp_directive
+	non_global_cpp_directive \
+	non_static_array_size
 

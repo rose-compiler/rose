@@ -1,0 +1,200 @@
+// -*- mode: C++; c-basic-offset: 2; indent-tabs-mode: nil -*-
+// vim: expandtab:shiftwidth=2:tabstop=2
+
+/**
+ * \file    global_variables.cpp
+ * \author  Justin Too <too1@llnl.gov>
+ * \date    August 3, 2012
+ */
+
+#include <boost/foreach.hpp>
+#include <boost/algorithm/string/split.hpp>
+
+#include "rose.h"
+#include "compass2/compass.h"
+
+using std::string;
+using namespace StringUtility;
+
+extern const Compass::Checker* const globalVariablesChecker;
+
+/*-----------------------------------------------------------------------------
+ * Interface
+ *---------------------------------------------------------------------------*/
+
+#ifndef COMPASS_GLOBAL_VARIABLES_H
+#define COMPASS_GLOBAL_VARIABLES_H
+
+namespace CompassAnalyses
+{
+/**
+ * \brief Detect global variables.
+ */
+namespace GlobalVariables
+{
+  extern const string checker_name;
+  extern const string short_description;
+  extern const string long_description;
+
+  /**
+   * \brief Specification of checker results.
+   */
+  class CheckerOutput: public Compass::OutputViolationBase {
+   public:
+    CheckerOutput(SgNode *const node);
+
+   private:
+    DISALLOW_COPY_AND_ASSIGN(CheckerOutput);
+  };
+
+  /**
+   * \brief Specification of AST traversal.
+   */
+  class Traversal : public Compass::AstSimpleProcessingWithRunFunction {
+   public:
+    Traversal(Compass::Parameters inputParameters,
+              Compass::OutputObject *output);
+
+    /**
+     * \brief Get inherited attribute for traversal.
+     *
+     * We are not using an inherited attribute for this checker.
+     *
+     * \returns NULL
+     */
+    void* initialInheritedAttribute() const
+    {
+        return NULL;
+    }
+
+    void run(SgNode *n)
+    {
+        this->traverse(n, preorder);
+    }
+
+    void visit(SgNode *n);
+
+    /*-----------------------------------------------------------------------
+     * Utilities
+     *---------------------------------------------------------------------*/
+
+    /*-----------------------------------------------------------------------
+     * Accessors / Mutators
+     *---------------------------------------------------------------------*/
+    string source_directory() const { return source_directory_; }
+    void set_source_directory(const string &source_directory)
+    {
+        source_directory_ = source_directory;
+    }
+
+    Compass::OutputObject* output() const { return output_; }
+    void set_output(Compass::OutputObject *const output)
+    {
+        output_ = output;
+    }
+
+   private:
+    /*-----------------------------------------------------------------------
+     * Attributes
+     *---------------------------------------------------------------------*/
+    string source_directory_; ///< Restrict analysis to user input files.
+    Compass::OutputObject* output_;
+
+    /*-----------------------------------------------------------------------
+     * Utilities
+     *---------------------------------------------------------------------*/
+    DISALLOW_COPY_AND_ASSIGN(Traversal);
+  };
+} // ::CompassAnalyses
+} // ::GlobalVariables
+#endif // COMPASS_GLOBAL_VARIABLES_H
+
+/*-----------------------------------------------------------------------------
+ * Implementation
+ *---------------------------------------------------------------------------*/
+
+namespace CompassAnalyses
+{
+namespace GlobalVariables
+{
+  const string checker_name      = "GlobalVariables";
+  const string short_description = "Global variable detected ";
+  const string long_description  = "This analysis looks for global variables";
+} // ::CompassAnalyses
+} // ::GlobalVariables
+
+CompassAnalyses::GlobalVariables::
+CheckerOutput::CheckerOutput(SgNode *node)
+    : OutputViolationBase(
+        node,
+        ::globalVariablesChecker->checkerName,
+        ::globalVariablesChecker->shortDescription)
+{}
+
+
+CompassAnalyses::GlobalVariables::Traversal::
+Traversal(Compass::Parameters a_parameters, Compass::OutputObject *output)
+    : output_(output)
+{
+    try
+    {
+        string target_directory =
+            a_parameters["general::target_directory"].front();
+        source_directory_.assign(target_directory);
+    }
+    catch (Compass::ParameterNotFoundException e)
+    {
+        std::cout << "ParameterNotFoundException: " << e.what() << std::endl;
+        homeDir(source_directory_);
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void
+CompassAnalyses::GlobalVariables::Traversal::
+visit(SgNode *node)
+{
+    SgLocatedNode* located_node = isSgLocatedNode(node);
+    if (located_node != NULL &&
+        Compass::IsNodeInUserLocation(located_node, source_directory_))
+    {
+        SgInitializedName* initialized_name = isSgInitializedName(node);
+        if (initialized_name != NULL)
+        {
+            SgScopeStatement* scope = initialized_name->get_scope();
+            if (isSgGlobal(scope))
+            {
+                output_->addOutput(new CheckerOutput(node));
+            }
+        }
+    }// if target node
+}// end of the visit function.
+
+// Checker main run function and metadata
+
+static void
+run(Compass::Parameters params, Compass::OutputObject *output)
+{
+    CompassAnalyses::GlobalVariables::Traversal(params, output).run(
+      Compass::projectPrerequisite.getProject());
+}
+
+// Remove this function if your checker is not an AST traversal
+static Compass::AstSimpleProcessingWithRunFunction*
+createTraversal(Compass::Parameters params, Compass::OutputObject *output)
+{
+    return new CompassAnalyses::GlobalVariables::Traversal(params, output);
+}
+
+extern const Compass::Checker* const globalVariablesChecker =
+  new Compass::CheckerUsingAstSimpleProcessing(
+      CompassAnalyses::GlobalVariables::checker_name,
+    // Descriptions should not include the newline character "\n".
+      CompassAnalyses::GlobalVariables::short_description,
+      CompassAnalyses::GlobalVariables::long_description,
+      Compass::C | Compass::Cpp,
+      Compass::PrerequisiteList(1, &Compass::projectPrerequisite),
+      run,
+      createTraversal);
+

@@ -2156,6 +2156,8 @@ projects/compass2/tests/Makefile
 projects/compass2/tests/checkers/Makefile
 projects/compass2/tests/checkers/function_pointer/Makefile
 projects/compass2/tests/checkers/function_pointer/compass_parameters.xml
+projects/compass2/tests/checkers/global_variables/Makefile
+projects/compass2/tests/checkers/global_variables/compass_parameters.xml
 projects/compass2/tests/checkers/keyword_macro/Makefile
 projects/compass2/tests/checkers/keyword_macro/compass_parameters.xml
 projects/compass2/tests/checkers/non_global_cpp_directive/Makefile
