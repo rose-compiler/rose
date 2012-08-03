@@ -1,5 +1,7 @@
 // 3 matches
 
+int allowed_global_variable;
+
 int g1;
 
 int main()
