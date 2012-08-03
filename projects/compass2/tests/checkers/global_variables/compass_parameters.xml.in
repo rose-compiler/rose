@@ -16,6 +16,7 @@
 
   <checkers>
     <checker name="globalVariables">
+      <parameter name="globalVariables">allowed_global_variable</parameter>
     </checker>
   </checkers>
 </parameters>

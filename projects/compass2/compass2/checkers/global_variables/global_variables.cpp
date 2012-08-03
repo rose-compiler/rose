@@ -41,7 +41,7 @@ namespace GlobalVariables
    */
   class CheckerOutput: public Compass::OutputViolationBase {
    public:
-    CheckerOutput(SgNode *const node);
+    CheckerOutput(SgNode *const node, std::string variable_name);
 
    private:
     DISALLOW_COPY_AND_ASSIGN(CheckerOutput);
@@ -100,6 +100,9 @@ namespace GlobalVariables
     string source_directory_; ///< Restrict analysis to user input files.
     Compass::OutputObject* output_;
 
+    typedef std::map<std::string, bool> WhitelistMap;
+    WhitelistMap white_list_; ///< white list of permitted global variables
+
     /*-----------------------------------------------------------------------
      * Utilities
      *---------------------------------------------------------------------*/
@@ -124,11 +127,12 @@ namespace GlobalVariables
 } // ::GlobalVariables
 
 CompassAnalyses::GlobalVariables::
-CheckerOutput::CheckerOutput(SgNode *node)
+CheckerOutput::CheckerOutput(SgNode *const node, std::string variable_name)
     : OutputViolationBase(
         node,
         ::globalVariablesChecker->checkerName,
-        ::globalVariablesChecker->shortDescription)
+        ::globalVariablesChecker->shortDescription +
+        ": " + variable_name)
 {}
 
 
@@ -141,6 +145,18 @@ Traversal(Compass::Parameters a_parameters, Compass::OutputObject *output)
         string target_directory =
             a_parameters["general::target_directory"].front();
         source_directory_.assign(target_directory);
+
+        // Save list of permitted variables in map for faster lookups.
+        Compass::ParametersMap parameters =
+            a_parameters[boost::regex("globalVariables::.*")];
+        BOOST_FOREACH(const Compass::ParametersMap::value_type& pair, parameters)
+        {
+            Compass::ParameterValues values = pair.second;
+            BOOST_FOREACH(std::string variable_name, values)
+            {
+                white_list_[variable_name] = true; // true => permitted
+            }
+        }
     }
     catch (Compass::ParameterNotFoundException e)
     {
@@ -165,7 +181,12 @@ visit(SgNode *node)
             SgScopeStatement* scope = initialized_name->get_scope();
             if (isSgGlobal(scope))
             {
-                output_->addOutput(new CheckerOutput(node));
+                std::string variable_name =
+                    initialized_name->get_name().getString();
+                if (white_list_.find(variable_name) == white_list_.end())
+                {
+                    output_->addOutput(new CheckerOutput(node, variable_name));
+                }
             }
         }
     }// if target node
