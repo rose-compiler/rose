@@ -23,6 +23,7 @@
 #include "compass2/compass.h"
 
 extern const Compass::Checker* const functionPointerChecker;
+extern const Compass::Checker* const globalVariablesChecker;
 extern const Compass::Checker* const keywordMacroChecker;
 extern const Compass::Checker* const nonGlobalCppDirectiveChecker;
 extern const Compass::Checker* const nonStaticArraySizeChecker;
@@ -106,6 +107,7 @@ int main (int argc, char** argv)
     // -------------------------------------------------------------------------
     std::vector<const Compass::Checker*> traversals;
 
+    // Only enable the user-specified checkers
     BOOST_FOREACH(const EnabledCheckersMapType::value_type& pair,
                   enabled_checkers)
     {
@@ -115,6 +117,8 @@ int main (int argc, char** argv)
             std::string checker_name = pair.first;
             if ("functionPointer" == checker_name)
                 traversals.push_back (functionPointerChecker);
+            else if ("globalVariables" == checker_name)
+                traversals.push_back (globalVariablesChecker);
             else if ("keywordMacros" == checker_name)
                 traversals.push_back (keywordMacroChecker);
             else if ("nonGlobalCppDirective" == checker_name)
