@@ -4124,7 +4124,7 @@ Unparse_ExprStmt::unparseClassDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      SgClassDeclaration* classdecl_stmt = isSgClassDeclaration(stmt);
      ROSE_ASSERT(classdecl_stmt != NULL);
 
-#if 1
+#if 0
   // printf ("Inside of Unparse_ExprStmt::unparseClassDeclStmt(): classdecl_stmt->get_from_template() = %s \n",
   //      classdecl_stmt->get_from_template() ? "true" : "false");
      if (classdecl_stmt->get_from_template() == true)
@@ -4142,7 +4142,7 @@ Unparse_ExprStmt::unparseClassDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
   // printf ("At top of unparseClassDeclStmt name = %s \n",classdecl_stmt->get_name().str());
 
-#if 1
+#if 0
      printf ("In Unparse_ExprStmt::unparseClassDeclStmt(): classdecl_stmt = %p isForward() = %s info.SkipClassDefinition() = %s name = %s \n",
           classdecl_stmt,(classdecl_stmt->isForward() == true) ? "true" : "false",
           (info.SkipClassDefinition() == true) ? "true" : "false",classdecl_stmt->get_name().str());
@@ -4172,8 +4172,9 @@ Unparse_ExprStmt::unparseClassDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
         }
        else
         {
+#if 0
           printf ("Not unparsing the class definition \n");
-
+#endif
           if (!info.inEmbeddedDecl())
              {
                SgUnparse_Info ninfo(class_info);
@@ -4197,9 +4198,9 @@ Unparse_ExprStmt::unparseClassDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
             // printf ("Commented out get_suppress_global(classdecl_stmt) \n");
             // if (get_suppress_global(classdecl_stmt))
             //      ninfo.set_SkipGlobal(); //attributes.h
-
+#if 0
                printf ("In unparseClassDeclStmt(): Calling printSpecifier() \n");
-
+#endif
             // printDebugInfo("entering unp->u_sage->printSpecifier", true);
                unp->u_sage->printSpecifier(classdecl_stmt, ninfo);
                info.set_access_attribute(ninfo.get_access_attribute());
@@ -4209,9 +4210,10 @@ Unparse_ExprStmt::unparseClassDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
           if (!info.SkipClassSpecifier())
              {
+#if 0
                printf ("Processing the class specifier \n");
                curprint ("\n/* Processing the class specifier */ \n ");
-
+#endif
                switch (classdecl_stmt->get_class_type()) 
                   {
                     case SgClassDeclaration::e_class : 
@@ -4279,7 +4281,7 @@ Unparse_ExprStmt::unparseClassDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
        // DQ (7/28/2012): This is the original code (I think it is what we really want, but we need to test this.
        // DQ (6/5/2011): Newest refactored support for name qualification.
           SgName nameQualifier = classdecl_stmt->get_qualified_name_prefix();
-#if 1
+#if 0
           printf ("In unparseClassDeclStmt(): Output SgClassDeclaration = %p = %s qualified name: nameQualifier = %s \n",classdecl_stmt,classdecl_stmt->get_name().str(),nameQualifier.str());
 #endif
        // Output the qualified name.
@@ -4314,7 +4316,7 @@ Unparse_ExprStmt::unparseClassDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
              }
 #endif
 
-#if 1
+#if 0
           curprint("/* After name in Unparse_ExprStmt::unparseClassDeclStmt */ \n");
 #endif
           if (classdecl_stmt->isForward() && !info.SkipSemiColon())

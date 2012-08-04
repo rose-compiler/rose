@@ -1219,13 +1219,13 @@ Unparse_MOD_SAGE::outputTemplateSpecializationSpecifier ( SgDeclarationStatement
           (isSgTemplateInstantiationFunctionDecl(decl_stmt)       != NULL) ||
           (isSgTemplateInstantiationMemberFunctionDecl(decl_stmt) != NULL) )
         {
-#if 1
+#if 0
           curprint( "\n/* In outputTemplateSpecializationSpecifier(): This is a template instantiation */ ");
 #endif
           if ( isSgTemplateInstantiationDirectiveStatement(decl_stmt->get_parent()) != NULL)
              {
             // Template instantiation directives use "template" instead of "template<>"
-#if 1
+#if 0
                curprint( "\n/* In outputTemplateSpecializationSpecifier(): This is a SgTemplateInstantiationDirectiveStatement */ ");
 #endif
                curprint( "template ");
@@ -1234,7 +1234,7 @@ Unparse_MOD_SAGE::outputTemplateSpecializationSpecifier ( SgDeclarationStatement
              {
             // Normal case for output of template instantiations (which ROSE puts out as specializations)
             // curprint( "template<> ");
-#if 1
+#if 0
                curprint( "\n/* In outputTemplateSpecializationSpecifier(): Normal case for output of template instantiations */ ");
 #endif
             // DQ (5/2/2012): If this is a function template instantiation in a class template instantiation then 

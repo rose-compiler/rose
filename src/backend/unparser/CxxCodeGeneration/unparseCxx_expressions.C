@@ -1212,13 +1212,15 @@ Unparse_ExprStmt::unparseFuncRefSupport(SgExpression* expr, SgUnparse_Info& info
        // set the length difference between "operator" and function
           diff = strlen(func_name.c_str()) - strlen("operator");
 
+          printf ("Found an operator: func_name = %s \n",func_name.c_str());
+
        // DQ (1/6/2006): trap out cases of global new and delete functions called 
        // using ("::operator new" or "::operator delete" syntax).  In these cases 
        // the function are treated as normal function calls and not classified in 
        // the AST as SgNewExp and SgDeleteExp.  See test2006_04.C.
           bool isNewOperator    =  (strncmp(func_name.c_str(), "operator new", 12) == 0)    ? true : false;
           bool isDeleteOperator =  (strncmp(func_name.c_str(), "operator delete", 15) == 0) ? true : false;
-#if 0
+#if 1
           printf ("isNewOperator    = %s \n",isNewOperator    ? "true" : "false");
           printf ("isDeleteOperator = %s \n",isDeleteOperator ? "true" : "false");
 #endif
@@ -1567,32 +1569,32 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
                       // decided to handle these cases because they are amusing (C++ Trivia) :-).
 #if 0
                          printf ("Output special case of .operator->() or ->operator->() \n");
-                         curprint ( "\n /* Output special case of .operator->() or ->operator->() */ \n");
+                         curprint("\n /* Output special case of .operator->() or ->operator->() */ \n");
 #endif
                          if (dotExpression != NULL)
-                              curprint (".operator->()");
+                              curprint(".operator->()");
                            else
-                              curprint ("->operator->()");
+                              curprint("->operator->()");
                        }
                       else
                        {
                       // DQ (2/9/2010): Fix for test2010_03.C
-                      // curprint (func_name);
-                         curprint (string(" ") + func_name + " ");
+                      // curprint(func_name);
+                         curprint(" " + func_name + " ");
                        }
                   }
                  else
                   {
                  // DQ (2/9/2010): This does not fix test2010_03.C, but defines a uniform handling as in the fix above.
                  // curprint (func_name);
-                    curprint (string(" ") + func_name + " ");
+                    curprint(" " + func_name + " ");
                   }
 #if 0
                if (arrowExpression != NULL)
                   {
                  // DQ (2/17/2005): If the parent is an arrow expression then output the dereference operator!
-                    curprint ( " /* output a derference of the pointer implied by SgArrowExp */ ");
-                    curprint ( " * ");
+                    curprint(" /* output a derference of the pointer implied by SgArrowExp */ ");
+                    curprint(" * ");
                   }
 #endif
              }
@@ -2053,9 +2055,9 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
      bool needSquareBrackets = false;
 
 #if 0
-     curprint ( "/* func_call->get_function()                   = " + func_call->get_function()->class_name() + " */\n ");
-     curprint ( "/* unp->opt.get_overload_opt()                      = " + ((unp->opt.get_overload_opt() == true) ? "true" : "false") + " */\n ");
-     curprint ( "/* isBinaryOperator(func_call->get_function()) = " + ((isBinaryOperator(func_call->get_function()) == true) ? "true" : "false") + " */\n ");
+     curprint("/* func_call->get_function()                   = " + func_call->get_function()->class_name() + " */\n ");
+     curprint(string("/* unp->opt.get_overload_opt()                 = ") + ((unp->opt.get_overload_opt() == true) ? "true" : "false") + " */\n ");
+  // curprint("/* isBinaryOperator(func_call->get_function()) = " + ((unp->u_sage->isBinaryOperator(func_call->get_function()) == true) ? "true" : "false") + " */\n ");
 #endif
 #if 0
      printf ("func_call->get_function() = %p = %s \n",func_call->get_function(),func_call->get_function()->class_name().c_str());
@@ -2065,12 +2067,12 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
      ROSE_ASSERT(func_ref != NULL);
      ROSE_ASSERT(func_ref->get_symbol() != NULL);
      printf ("Function name = %s \n",func_ref->get_symbol()->get_name().str());
-     printf ("isBinaryOperator(func_call->get_function())     = %s \n",isBinaryOperator(func_call->get_function()) ? "true" : "false");
+     printf ("isBinaryOperator(func_call->get_function())     = %s \n",unp->u_sage->isBinaryOperator(func_call->get_function()) ? "true" : "false");
      printf ("isSgDotExp(func_call->get_function())           = %s \n",isSgDotExp(func_call->get_function()) ? "true" : "false");
      printf ("isSgArrowExp(func_call->get_function())         = %s \n",isSgArrowExp(func_call->get_function()) ? "true" : "false");
 
-     printf ("isUnaryOperatorPlus(func_call->get_function())  = %s \n",isUnaryOperatorPlus(func_call->get_function()) ? "true" : "false");
-     printf ("isUnaryOperatorMinus(func_call->get_function()) = %s \n",isUnaryOperatorMinus(func_call->get_function()) ? "true" : "false");
+     printf ("isUnaryOperatorPlus(func_call->get_function())  = %s \n",unp->u_sage->isUnaryOperatorPlus(func_call->get_function()) ? "true" : "false");
+     printf ("isUnaryOperatorMinus(func_call->get_function()) = %s \n",unp->u_sage->isUnaryOperatorMinus(func_call->get_function()) ? "true" : "false");
 #endif
 
   // DQ (6/17/2007): Turn off the generation of "B b; b+b" in favor of "B b; b.A::operator+(b)
@@ -2390,8 +2392,9 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
 
                     if ( (mfunc_ref != NULL) && mfunc_ref->get_symbol()->get_declaration()->get_specialFunctionModifier().isOperator() )
                          print_paren = false;
-#if 1  //Liao, work around for bug 320, operator flag for *i is not set properly, 2/18/2009
-       // Please turn this code off when the bug is fixed!                  
+#if 1
+                  // Liao, work around for bug 320, operator flag for *i is not set properly, 2/18/2009
+                  // Please turn this code off when the bug is fixed!
                      if   (mfunc_ref != NULL)
                      {
                        string name = mfunc_ref->get_symbol()->get_name().getString();
@@ -2402,8 +2405,7 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
                            cerr<<"unparseCxx_expresssions.C error: found a function named as operator* which is not set as isOperator! \n Fixed its unparsing here temporarily but please consult bug 320!"<<endl;
                        }
                      }
-#endif                         
-
+#endif
                  // DQ (2/20/2005) The operator()() is the parenthesis operator and for this case we do want to output "(" and ")"
                     if (unp->u_sage->isBinaryParenOperator(rhs) == true)
                          print_paren = true;

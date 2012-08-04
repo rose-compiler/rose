@@ -965,21 +965,23 @@ UnparseLanguageIndependentConstructs::unparseExpression(SgExpression* expr, SgUn
           curprint (code);
         }
        else if (expressionTree != NULL && info.SkipConstantFoldedExpressions() == false)
-         {
-         unparseExpression(expressionTree, info);
-         }
+        {
+          unparseExpression(expressionTree, info);
+        }
        else
         {
        // DQ (5/21/2004): revised need_paren handling in EDG/SAGE III and within SAGE III IR)
        // QY (7/9/2004): revised to use the new unp->u_sage->PrintStartParen test
           bool printParen = requiresParentheses(expr,info);
+
 #if 0
        // DQ (8/21/2005): Suppress comments when unparsing to build type names
           if ( !info.SkipComments() || !info.SkipCPPDirectives() )
              {
-               curprint ( string("\n /* In unparseExpression paren ") + expr->sage_class_name() + string(" paren printParen = ") + (printParen ? "true" : "false") + string(" */ \n"));
+               curprint("\n /* In unparseExpression paren " + expr->class_name() + " paren printParen = " + (printParen ? "true" : "false") + " */ \n");
              }
 #endif
+
        // if (printParen)
        // ROSE_ASSERT(currentFile != NULL);
        // if ( (printParen == true) && (currentFile->get_Fortran_only() == false) )
@@ -3922,16 +3924,16 @@ UnparseLanguageIndependentConstructs::requiresParentheses(SgExpression* expr, Sg
 
 #define DEBUG_PARENTHESIS_PLACEMENT 0
 #if DEBUG_PARENTHESIS_PLACEMENT && 1
-     printf ("\n\n***** In PrintStartParen() \n");
-     printf ("In PrintStartParen(): expr = %s need_paren = %s \n",expr->sage_class_name(),expr->get_need_paren() ? "true" : "false");
-     printf ("isOverloadedArrowOperator(expr) = %s \n",(isOverloadedArrowOperator(expr) == true) ? "true" : "false");
+     printf ("\n\n***** In requiresParentheses() \n");
+     printf ("In requiresParentheses(): expr = %s need_paren = %s \n",expr->class_name().c_str(),expr->get_need_paren() ? "true" : "false");
+     printf ("isOverloadedArrowOperator(expr) = %s \n",(unp->u_sage->isOverloadedArrowOperator(expr) == true) ? "true" : "false");
   // curprint( "\n /* expr = " << expr->sage_class_name() << " */ \n");
   // curprint( "\n /* RECORD_REF = " << RECORD_REF << " expr->variant() = " << expr->variant() << " */ \n");
 
      if (parentExpr != NULL)
         {
-          printf ("In PrintStartParen(): parentExpr = %s \n",parentExpr->sage_class_name());
-          printf ("isOverloadedArrowOperator(parentExpr) = %s \n",(isOverloadedArrowOperator(parentExpr) == true) ? "true" : "false");
+          printf ("In requiresParentheses(): parentExpr = %s \n",parentExpr->sage_class_name());
+          printf ("isOverloadedArrowOperator(parentExpr) = %s \n",(unp->u_sage->isOverloadedArrowOperator(parentExpr) == true) ? "true" : "false");
        // curprint( "\n /* parentExpr = " << parentExpr->sage_class_name() << " */ \n");
         }
        else
@@ -4059,6 +4061,7 @@ UnparseLanguageIndependentConstructs::requiresParentheses(SgExpression* expr, Sg
                PrecedenceSpecifier exprPrecedence = getPrecedence(expr);
 
 #if DEBUG_PARENTHESIS_PLACEMENT
+               int exprVariant = GetOperatorVariant(expr);
                printf ("exprVariant = %d  exprPrecedence = %d \n",exprVariant,exprPrecedence);
 #endif
                if (exprPrecedence > parentPrecedence)
