@@ -11491,6 +11491,11 @@ Sg_File_Info::setSourcePositionUnavailableInFrontend()
    {
      assert(this != NULL);
      p_classificationBitField |= e_source_position_unavailable_in_frontend;
+
+#if 1
+  // DQ (8/3/2012): We don't want to use this unless absolutely required; so output a message to support debugging.
+     printf ("In Sg_File_Info::setSourcePositionUnavailableInFrontend() \n");
+#endif
    }
 
 void
@@ -11498,6 +11503,11 @@ Sg_File_Info::unsetSourcePositionUnavailableInFrontend()
    {
      assert(this != NULL);
      p_classificationBitField &= ~e_source_position_unavailable_in_frontend;
+
+#if 1
+  // DQ (8/3/2012): We don't want to use this unless absolutely required; so output a message to support debugging.
+     printf ("In Sg_File_Info::unsetSourcePositionUnavailableInFrontend() \n");
+#endif
    }
 
 bool

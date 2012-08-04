@@ -1219,22 +1219,34 @@ Unparse_MOD_SAGE::outputTemplateSpecializationSpecifier ( SgDeclarationStatement
           (isSgTemplateInstantiationFunctionDecl(decl_stmt)       != NULL) ||
           (isSgTemplateInstantiationMemberFunctionDecl(decl_stmt) != NULL) )
         {
+#if 1
+          curprint( "\n/* In outputTemplateSpecializationSpecifier(): This is a template instantiation */ ");
+#endif
           if ( isSgTemplateInstantiationDirectiveStatement(decl_stmt->get_parent()) != NULL)
              {
-            // Template intanatiation directives use "template" instaed of "template<>"
+            // Template instantiation directives use "template" instead of "template<>"
+#if 1
+               curprint( "\n/* In outputTemplateSpecializationSpecifier(): This is a SgTemplateInstantiationDirectiveStatement */ ");
+#endif
                curprint( "template ");
              }
             else
              {
             // Normal case for output of template instantiations (which ROSE puts out as specializations)
             // curprint( "template<> ");
-
+#if 1
+               curprint( "\n/* In outputTemplateSpecializationSpecifier(): Normal case for output of template instantiations */ ");
+#endif
             // DQ (5/2/2012): If this is a function template instantiation in a class template instantiation then 
             // we don't want the "template<>" (error in g++, at least).  See test2012_59.C.
                SgTemplateInstantiationDefn* templateClassInstatiationDefn = isSgTemplateInstantiationDefn(decl_stmt->get_parent());
                if (templateClassInstatiationDefn != NULL)
                   {
                     printf ("This is a declaration defined in a templated class (suppress the output of template specialization syntax) \n");
+
+                 // DQ (8/2/2012): This branch should not be possible so assert false as a test.
+                    printf ("Error: It should be impossible to reach this code since SgTemplateInstantiationDefn is not a class, function or member function type \n");
+                    ROSE_ASSERT(false);
                   }
                  else
                   {

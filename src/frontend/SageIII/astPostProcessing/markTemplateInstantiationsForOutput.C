@@ -1028,7 +1028,7 @@ MarkTemplateInstantiationsForOutputSupport::evaluateInheritedAttribute (
      printf ("In MarkTemplateInstantiationsForOutputSupport::evaluateInheritedAttribute(): node = %p = %s = %s \n",
           node,node->class_name().c_str(),SageInterface::get_name(node).c_str());
 #endif
-#if 1
+#if 0
      if (isSgTemplateInstantiationFunctionDecl(node) != NULL)
         {
           printf ("SgTemplateInstantiationFunctionDecl IR node = %p name = %s \n",node,isSgTemplateInstantiationFunctionDecl(node)->get_name().str());

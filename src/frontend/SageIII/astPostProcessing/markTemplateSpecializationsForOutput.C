@@ -14,7 +14,7 @@ markTemplateSpecializationsForOutput( SgNode* node )
 
      ROSE_ASSERT(node != NULL);
 
-#if 1
+#if 0
      printf ("In markTemplateSpecializationsForOutput(): This function marks template specialization to be output node = %p = %s \n",node,node->class_name().c_str());
 #endif
 
@@ -27,7 +27,7 @@ markTemplateSpecializationsForOutput( SgNode* node )
 
      if (node->get_parent() == NULL)
         {
-#if 1
+#if 0
           printf ("In markTemplateSpecializationsForOutput(): Detected AST fragement not associated with primary AST, ignore template handling ... \n");
 #endif
           SgProject *project = isSgProject(node);
@@ -52,7 +52,7 @@ markTemplateSpecializationsForOutput( SgNode* node )
         }
        else
         {
-#if 1
+#if 0
           printf ("In markTemplateSpecializationsForOutput(): Getting the SgFile from the AST node \n");
 #endif
           file = TransformationSupport::getSourceFile(node);
