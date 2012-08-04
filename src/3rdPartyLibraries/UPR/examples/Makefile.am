@@ -1,0 +1,3 @@
+
+SUBDIRS = cuda opencl xomp
+

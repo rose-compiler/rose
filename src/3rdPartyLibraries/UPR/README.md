@@ -1,0 +1,8 @@
+
+UPR - Unified Parallel Runtime
+==============================
+
+Object oriented runtime for in-node parallelism (OpenCL, CUDA, OpenMP, ...),
+conceive to make code generation easier (modular) in automatic and/or guided
+parallelisation in ROSE Compiler.
+
