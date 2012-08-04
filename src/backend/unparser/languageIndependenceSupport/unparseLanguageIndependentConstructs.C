@@ -551,8 +551,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
   // curprint("/* Calling unparseAttachedPreprocessingInfo */ \n ");
 
   // Markus Kowarschik: This is the new code to unparse directives before the current statement
-     //AS(05/20/09): LineReplacement should replace a statement with a line. Override unparsing
-     //of subtree.
+  // AS(05/20/09): LineReplacement should replace a statement with a line. Override unparsing of subtree.
      unparseAttachedPreprocessingInfo(stmt, info, PreprocessingInfo::before);
 
      outputCompilerGeneratedStatements(info);
@@ -684,6 +683,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
                case V_SgIdentDirectiveStatement:   unparseIdentDirectiveStatement  (stmt, info); break;
                case V_SgIncludeNextDirectiveStatement: unparseIncludeNextDirectiveStatement  (stmt, info); break;
                case V_SgLinemarkerDirectiveStatement:  unparseLinemarkerDirectiveStatement  (stmt, info); break;
+
             // Liao 10/21/2010. Handle generic OpenMP directive unparsing here.
                case V_SgOmpAtomicStatement:
                case V_SgOmpSectionStatement:
@@ -691,7 +691,8 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
                case V_SgOmpBarrierStatement:           unparseOmpSimpleStatement        (stmt, info);break;
                case V_SgOmpThreadprivateStatement:     unparseOmpThreadprivateStatement (stmt, info);break;
                case V_SgOmpFlushStatement:             unparseOmpFlushStatement         (stmt, info);break;
-               // Generic OpenMP directives with a format of : begin-directive, begin-clauses, body, end-directive , end-clauses
+
+            // Generic OpenMP directives with a format of : begin-directive, begin-clauses, body, end-directive , end-clauses
                case V_SgOmpCriticalStatement:
                case V_SgOmpMasterStatement:
                case V_SgOmpOrderedStatement:
@@ -700,11 +701,15 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
                case V_SgOmpWorkshareStatement:
                case V_SgOmpSingleStatement:
                case V_SgOmpTaskStatement:  unparseOmpGenericStatement (stmt, info); break;
+
                default:
                  // DQ (11/4/2008): This is a bug for the case of a SgFortranDo statement, unclear what to do about this.
                  // Call the derived class implementation for C, C++, or Fortran specific language unparsing.
                  // unparseLanguageSpecificStatement(stmt,info);
                  // unp->repl->unparseLanguageSpecificStatement(stmt,info);
+#if 0
+                    printf ("In UnparseLanguageIndependentConstructs::unparseStatement(): Calling unparseLanguageSpecificStatement() for stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+#endif
                     unparseLanguageSpecificStatement(stmt,info);
                     break;
              }
