@@ -872,8 +872,30 @@ void VarsExprsProductLattice::remapVars(const map<varID, varID>& varNameMap, con
         
         // Fill newLattices with lattices associated with variables in the new function 
         DataflowNode funcCFGStart = cfgUtils::getFuncStartCFG(newFunc.get_definition(),filter); //TODO This function is never being used somehow
-        varIDSet newRefVars = getAllLiveVarsAt(ldva, *NodeState::getNodeState(funcCFGStart, 0), "    ");
-        
+
+        //Akshatha(08/12): To handle cases which do not require LiveDeadVars Analysis        
+        varIDSet newRefVars;
+        if(ldva)
+            newRefVars = getAllLiveVarsAt(ldva, *NodeState::getNodeState(funcCFGStart, 0), "    ");
+        else
+        {
+            SgNode* cur = n.getNode();
+            while(cur && !isSgFunctionDefinition(cur))
+            { /*Dbg::dbg << "    cur=<"<<Dbg::escape(cur->unparseToString()) << " | " << cur->class_name()<<">"<<endl;*/
+                 cur = cur->get_parent();
+            }
+            SgFunctionDefinition *func = isSgFunctionDefinition(cur);
+            if(func){
+                collectAllVarRefs collect;
+                collect.traverse(func,preorder);
+                for(set<SgExpression*>::iterator ref = collect.refs.begin(); ref!=collect.refs.end();ref++){
+                    varID var = SgExpr2Var(*ref);
+                    newRefVars.insert(var);
+                }
+            }
+        }
+        //Akshatha(08/12): End of Code changes
+
         // Iterate through all the variables that are live at the top of newFunc and for each one 
         int idx=0;
         for(varIDSet::iterator it = newRefVars.begin(); it!=newRefVars.end(); it++, idx++)
