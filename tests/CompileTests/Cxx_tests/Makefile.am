@@ -461,6 +461,7 @@ test2006_47.C \
 test2006_50.C \
 test2006_52.C \
 test2006_53.C \
+test2006_54.C \
 test2006_55.C \
 test2006_56.C \
 test2006_57.C \
@@ -931,8 +932,10 @@ test2012_99.C \
 test2012_100.C \
 test2012_101.C \
 test2012_102.C \
+test2012_103.C \
 test2012_104.C \
 test2012_105.C \
+test2012_106.C \
 test2012_107.C \
 test2012_108.C \
 test2012_109.C \
@@ -981,6 +984,8 @@ test2012_156.C \
 test2012_157.C \
 test2012_158.C \
 test2012_159.C \
+test2012_160.C \
+test2012_161.C \
 test_int_lexemes.C \
 test_int_lexemes_donot_pass.C \
 test_simple_int.C \
@@ -1013,14 +1018,11 @@ endif
 
 
 
-
-
 # Import list of C++ test cases that are known to fail:
 #   TESTCODE_CURRENTLY_FAILING
 #
 if ROSE_USE_EDG_VERSION_4_3
 TESTCODE_CURRENTLY_FAILING = \
-test2006_54.C \
 test2006_90.C \
 test2006_122.C \
  test2006_151.C \
@@ -1038,8 +1040,6 @@ test2011_32.C \
  test2011_65.C \
 test2011_80.C \
  test2012_33.C \
-test2012_103.C \
-test2012_106.C \
 inputBug327.C 
 
 
