@@ -3394,7 +3394,9 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
 #endif
 
      SgNode* nodeReferenceToType = newinfo.get_reference_node_for_qualification();
-  // printf ("In unparseConInit(): nodeReferenceToType = %p \n",nodeReferenceToType);
+#if 0
+     printf ("In unparseConInit(): nodeReferenceToType = %p \n",nodeReferenceToType);
+#endif
      if (nodeReferenceToType != NULL)
         {
 #if 0
@@ -3404,8 +3406,9 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
         }
        else
         {
-       // curprint ("\n /* In unparseConInit(): nodeReferenceToType = NULL */ \n");
-
+#if 0
+          curprint ("\n /* In unparseConInit(): nodeReferenceToType = NULL */ \n");
+#endif
        // DQ (6/4/2011): If it is not set then set it to the SgConstructorInitializer expression.
        // We can't enforce that it be non-null since that would have far reaching effects on the 
        // unparser implementation.
@@ -3491,14 +3494,18 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
                     nm = nameQualifier + con_init->get_class_decl()->get_name();
 #endif
                   }
-#if 0
+#if 1
+              // DQ (8/4/2012): We need this case to handle tests such as test2012_162.C.
               // DQ (3/29/2012): For EDG 4.x it appear we need a bit more since both con_init->get_declaration() and con_init->get_class_decl() can be NULL (see test2012_52.C).
                  else
                   {
+#if 0
                     printf ("Need to handle new case for where both con_init->get_declaration() and con_init->get_class_decl() can be NULL \n");
                     printf ("Get name of type = %p = %s name = %s \n",con_init->get_type(),con_init->get_type()->class_name().c_str(),"NOT EVALUATED YET");
+#endif
+                    unp->u_type->unparseType(con_init->get_type(),newinfo);
 
-                    ROSE_ASSERT ( nm.is_null() == false );
+                 // ROSE_ASSERT ( nm.is_null() == false );
                   }
 #endif
              }
@@ -3507,7 +3514,10 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
 #if 0
           printf ("In Unparse_ExprStmt::unparseConInit(): nm = %s \n",nm.str());
 #endif
-          ROSE_ASSERT ( nm.is_null() == false );
+
+       // DQ (8/4/2012): Commented out this test since we output the type name using unparseType() for the case of a primative type.
+       // ROSE_ASSERT ( nm.is_null() == false );
+
        // printf ("In Unparse_ExprStmt::unparseConInit: info.PrintName() = %s nm = %s \n",info.PrintName() ? "true" : "false",nm.str());
        // curprint ( "\n /* Debugging In Unparse_ExprStmt::unparseConInit: nm = " + nm.str() + " */ \n";
 
@@ -3517,7 +3527,7 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
           if ( unp->u_sage->printConstructorName(con_init) && !nm.is_null() )
              {
             // printf ("unp->u_sage->printConstructorName(con_init) == true \n");
-               curprint ( nm.str());
+               curprint(nm.str());
                outputParenthisis = true;
              }
         }
@@ -3551,7 +3561,9 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
      ROSE_ASSERT(con_init->get_args() != NULL);
      if ( con_init->get_need_parenthesis_after_name() == true )
         {
-       // printf ("Output the parenthisis after the class name \n");
+#if 0
+          printf ("Output the parenthisis after the class name \n");
+#endif
           outputParenthisis = true;
         }
 #endif
@@ -3560,7 +3572,7 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
      if (outputParenthisis == true)
           curprint ( "(");
 
-     if (con_init->get_args())
+     if (con_init->get_args() != NULL)
         {
        // DQ (11/13/2004): Remove the parenthesis if we don't output the constructor name
        // this would only work if there was a single argument to the constructor!

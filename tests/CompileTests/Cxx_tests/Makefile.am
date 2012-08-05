@@ -495,6 +495,7 @@ test2006_86.C \
 test2006_87.C \
 test2006_88.C \
 test2006_89.C \
+test2006_90.C \
 test2006_91.C \
 test2006_92.C \
 test2006_93.C \
@@ -986,6 +987,7 @@ test2012_158.C \
 test2012_159.C \
 test2012_160.C \
 test2012_161.C \
+test2012_162.C \
 test_int_lexemes.C \
 test_int_lexemes_donot_pass.C \
 test_simple_int.C \
@@ -1018,12 +1020,14 @@ endif
 
 
 
+
+
+
 # Import list of C++ test cases that are known to fail:
 #   TESTCODE_CURRENTLY_FAILING
 #
 if ROSE_USE_EDG_VERSION_4_3
 TESTCODE_CURRENTLY_FAILING = \
-test2006_90.C \
 test2006_122.C \
  test2006_151.C \
 test2007_38.C \
