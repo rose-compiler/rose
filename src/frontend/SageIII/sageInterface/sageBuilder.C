@@ -5446,16 +5446,21 @@ SgForInitStatement * SageBuilder::buildForInitStatement(const SgStatementPtrList
   return result;
 }
 
-SgForInitStatement * SageBuilder::buildForInitStatement_nfi(SgStatementPtrList & statements) {
-  SgForInitStatement * result = new SgForInitStatement();
+SgForInitStatement*
+SageBuilder::buildForInitStatement_nfi(SgStatementPtrList & statements)
+   {
+     SgForInitStatement * result = new SgForInitStatement();
 
-  result->get_init_stmt() = statements;
+     result->get_init_stmt() = statements;
 
-  for (SgStatementPtrList::iterator it = result->get_init_stmt().begin(); it != result->get_init_stmt().end(); it++)
-    (*it)->set_parent(result);
+     for (SgStatementPtrList::iterator it = result->get_init_stmt().begin(); it != result->get_init_stmt().end(); it++)
+        {
+          printf ("In buildForInitStatement_nfi(): set the parent for it = %p = %s \n",*it,(*it)->class_name().c_str());
+          (*it)->set_parent(result);
+        }
 
-  return result;
-}
+     return result;
+   }
 
 //! Based on the contribution from Pradeep Srinivasa@ LANL
 //Liao, 8/27/2008

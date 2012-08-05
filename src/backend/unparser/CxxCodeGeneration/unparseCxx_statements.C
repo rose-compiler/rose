@@ -2152,12 +2152,18 @@ Unparse_ExprStmt::unparseForStmt(SgStatement* stmt, SgUnparse_Info& info)
   // ROSE_ASSERT(tmp_stmt != NULL);
      if (tmp_stmt != NULL)
         {
+#if 0
+          curprint("\n/* Unparse the for_init_stmt */\n ");
+#endif
           unparseStatement(tmp_stmt,newinfo);
+#if 0
+          curprint("\n/* DONE: Unparse the for_init_stmt */\n ");
+#endif
         }
        else
         {
           printf ("Warning in unparseForStmt(): for_stmt->get_for_init_stmt() == NULL \n");
-          curprint ( string("; "));
+          curprint("; ");
         }
      newinfo.unset_inConditional();
 
