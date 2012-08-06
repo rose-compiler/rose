@@ -7907,7 +7907,7 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
 
 
   // Note that the nonDefiningDecl pointer does not appear to be used.
-     printf ("WARNING: In SageBuilder::buildClassDeclaration_nfi(): the nonDefiningDecl pointer (input parameter) does not appear to be used. \n");
+      printf ("WARNING: In SageBuilder::buildClassDeclaration_nfi(): the nonDefiningDecl pointer = %p (input parameter) does not appear to be used. \n",nonDefiningDecl);
 
      if (scope == NULL)
         {
@@ -7955,8 +7955,8 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
      SgClassSymbol* mysymbol = NULL;
      if (scope != NULL)
         {
-#if 0
-          printf ("Looking up the SgClassSymbol in scope = %p = %s name = %s \n",scope,scope->class_name().c_str(),name.str());
+#if 1
+          printf ("Looking up the SgClassSymbol in scope = %p = %s nameWithTemplateArguments = %s \n",scope,scope->class_name().c_str(),nameWithTemplateArguments.str());
 #endif
        // mysymbol = scope->lookup_class_symbol(name);
        // mysymbol = scope->lookup_class_symbol(name);
@@ -7970,7 +7970,7 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
        // printf ("Warning: In SageBuilder::buildClassDeclaration_nfi(): scope == NULL \n");
         }
 
-#if 0
+#if 1
      printf ("In SageBuilder::buildClassDeclaration_nfi(): mysymbol = %p \n",mysymbol);
 #endif
 
@@ -8000,6 +8000,9 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
         }
        else // build a nondefnining declaration if it does not exist
         {
+#if 1
+          printf ("In In SageBuilder::buildClassDeclaration_nfi(): building a nondefnining declaration if it does not exist \n");
+#endif
        // DQ (1/25/2009): We only want to build a new declaration if we can't reuse the existing declaration.
        // DQ (1/1/2012): Fixed to force matching types or IR nodes for defining and non-defining declarations.
           if (buildTemplateInstantiation == true)
@@ -8072,7 +8075,7 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
        // that amounts to a kind of name qualification internally (maybe even exactly name qualification, but I would
        // have to think about that a bit more).
           ROSE_ASSERT(scope != NULL);
-#if 0
+#if 1
           printf ("In SageBuilder::buildClassDeclaration_nfi(): Set the scope of the new non-defining declaration to %p = %s \n",scope,scope->class_name().c_str());
 #endif
           nondefdecl->set_scope(scope);
@@ -8130,6 +8133,9 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
           if (scope != NULL)
              {
                mysymbol = new SgClassSymbol(nondefdecl);
+#if 1
+               printf ("Insert the new SgClassSymbol = %p into the scope = %p = %s \n",mysymbol,scope,scope->class_name().c_str());
+#endif
             // scope->insert_symbol(name, mysymbol);
                scope->insert_symbol(nameWithTemplateArguments, mysymbol);
              }
@@ -8138,7 +8144,7 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
             // Liao 9/2/2009: This is not an error. We support bottomup AST construction and scope can be unkown.   
             // DQ (1/26/2009): I think this should be an error, but that appears it would
             // break the existing interface. Need to discuss this with Liao.
-            // printf ("Warning: no scope provided to support symbol table entry! \n");
+               printf ("Warning: no scope provided to support symbol table entry! \n");
              }
         }
 
