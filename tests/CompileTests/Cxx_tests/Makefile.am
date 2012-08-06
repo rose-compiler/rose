@@ -993,6 +993,7 @@ test2012_162.C \
 test2012_163.C \
 test2012_164.C \
 test2012_165.C \
+test2012_166.C \
 test_int_lexemes.C \
 test_int_lexemes_donot_pass.C \
 test_simple_int.C \
@@ -1000,6 +1001,7 @@ test_wchars.C \
 lexPhase2003_01.C \
 inputForLoopLocator.C \
 inputBug317.C \
+inputBug327.C \
 X.C \
 $(NEW_PASSING_FILES)
 
@@ -1041,8 +1043,7 @@ test2010_24.C \
 test2011_31.C \
 test2011_32.C \
  test2011_65.C \
- test2012_33.C \
-inputBug327.C 
+ test2012_33.C 
 
 
 # DQ (2/19/2012): These appear to fail only sometimes and were noticed just before going on travel (test with valgrind).
