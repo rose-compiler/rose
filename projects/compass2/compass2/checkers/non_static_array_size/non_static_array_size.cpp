@@ -19,8 +19,6 @@ using namespace StringUtility;
 
 extern const Compass::Checker* const nonStaticArraySizeChecker;
 
-Compass::ProjectPrerequisite Compass::projectPrerequisite;
-
 /*-----------------------------------------------------------------------------
  * Interface
  *---------------------------------------------------------------------------*/
@@ -152,6 +150,10 @@ Traversal(Compass::Parameters a_parameters, Compass::OutputObject* output)
 //////////////////////////////////////////////////////////////////////////////
 
 // TODO: check dynamic arrays?
+
+// TODO: not possible to detect. According to Tristan Vanderbruggen:
+// * EDG performs constant propagation; no original expression tree saved
+// * Clang may be able to handle this
 
 void
 CompassAnalyses::NonStaticArraySize::Traversal::
