@@ -9,7 +9,7 @@ AUTOMAKE_OPTIONS = subdir-objects
 #  Fortran_directive
 # ------------------------------------------------------------------------------
 
-Fortran_to_C_includedir=$(srcdir)
+Fortran_to_C_includedir=$(prefix)
 INCLUDES = $(ROSE_INCLUDES) -I$(Fortran_to_C_includedir)
 LDADD    = $(ROSE_LIBS)
 
