@@ -817,9 +817,19 @@ Unparse_ExprStmt::unparseNamespaceDeclarationStatement (SgStatement* stmt, SgUnp
 
   // This can be an empty string (in the case of an unnamed namespace)
      SgName name = namespaceDeclaration->get_name();
-          curprint ( name.str());
+     curprint(name.str());
 
-     unparseStatement(namespaceDeclaration->get_definition(),info);
+  // DQ (8/6/2012): test2010_24.C causes the new namespace alias support to generate namespaceDeclaration->get_definition() == NULL.
+  // I don't know yet if this is reasonable, so output a warning for now.
+  // unparseStatement(namespaceDeclaration->get_definition(),info);
+     if (namespaceDeclaration->get_definition() != NULL)
+        {
+          unparseStatement(namespaceDeclaration->get_definition(),info);
+        }
+       else
+        {
+          printf ("WARNING: I think we were expecting a definition associated with this SgNamespaceDeclarationStatement \n");
+        }
    }
 
 void
