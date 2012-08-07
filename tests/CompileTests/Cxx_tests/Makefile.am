@@ -869,6 +869,7 @@ test2012_29.C \
 test2012_30.C \
 test2012_31.C \
 test2012_32.C \
+test2012_33.C \
 test2012_34.C \
 test2012_36.C \
 test2012_37.C \
@@ -1042,8 +1043,7 @@ test2009_39.C \
 test2010_24.C \
 test2011_31.C \
 test2011_32.C \
- test2011_65.C \
- test2012_33.C 
+ test2011_65.C 
 
 
 # DQ (2/19/2012): These appear to fail only sometimes and were noticed just before going on travel (test with valgrind).

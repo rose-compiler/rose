@@ -578,7 +578,7 @@ Unparse_ExprStmt::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_
      int numberOfComments = -1;
      if (stmt->getAttachedPreprocessingInfo() != NULL)
           numberOfComments = stmt->getAttachedPreprocessingInfo()->size();
-     curprint ( string("/* startOfConstruct: file = " ) + stmt->get_startOfConstruct()->get_filenameString()
+     curprint(string("/* startOfConstruct: file = " ) + stmt->get_startOfConstruct()->get_filenameString()
         + " raw filename = " + stmt->get_startOfConstruct()->get_raw_filename()
         + " raw line = "     + StringUtility::numberToString(stmt->get_startOfConstruct()->get_raw_line())
         + " raw column = "   + StringUtility::numberToString(stmt->get_startOfConstruct()->get_raw_col())
@@ -2459,7 +2459,6 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      SgUnparse_Info ninfo(info);
 
      fixupScopeInUnparseInfo (ninfo,funcdecl_stmt);
-    
 
   // DQ (10/10/2006): Do output any qualified names (particularly for non-defining declarations).
   // ninfo.set_forceQualifiedNames();
@@ -5746,6 +5745,12 @@ Unparse_ExprStmt::unparseTemplateClassDeclStmt(SgStatement* stmt, SgUnparse_Info
 void
 Unparse_ExprStmt::unparseTemplateFunctionDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
+  // DQ (8/6/2012): Unparse the associated comments.
+  // We can't unparse comments in the templae declarations until we stop using saved string form 
+  // of the template declaration.  This will be done in a later version of the release of the
+  // new template support.  In the mean time we have to supress attaching CPP directives to the
+  // inside of template declarations.
+
      unparseTemplateDeclarationStatment_support<SgTemplateFunctionDeclaration>(stmt,info);
    }
 

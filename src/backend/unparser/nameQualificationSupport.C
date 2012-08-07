@@ -2653,8 +2653,10 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
             // that has not been defined yet.  This fixes test2012_165.C.
             // **************************************************
                bool skipGlobalNameQualification = skipNameQualificationIfNotProperlyDeclaredWhereDeclarationIsDefinable(declaration);
-#if 1
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                printf ("case of SgInitializedName: currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
+#endif
 
             // DQ (8/4/2012): However, this quasi-pathological case does not apply to template instantiations 
             // (only non-template classes or maybe named types more generally?).  Handle template declarations similarly.
@@ -2670,9 +2672,9 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                  // if so then do the regularly scheduled name qualification.
 
                     SgScopeStatement* scope = declaration->get_scope();
-                    printf ("case of SgInitializedName: scope = %p = %s \n",scope,scope->class_name().c_str());
+                 // printf ("case of SgInitializedName: scope = %p = %s \n",scope,scope->class_name().c_str());
                     int distanceBackThroughScopes = amountOfNameQualificationRequiredForType;
-                    printf ("case of SgInitializedName: distanceBackThroughScopes = %d \n",distanceBackThroughScopes);
+                 // printf ("case of SgInitializedName: distanceBackThroughScopes = %d \n",distanceBackThroughScopes);
                     while (distanceBackThroughScopes > 0 && scope != NULL)
                        {
                       // Traverse backwards through the scopes checking for a SgTemplateClassDefinition scope
@@ -2691,12 +2693,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                          distanceBackThroughScopes--;
                        }
                   }
-#else
-               if (isSgTemplateInstantiationDecl(declaration) != NULL || isSgTemplateClassDeclaration(declaration) != NULL)
-                  {
-                    skipGlobalNameQualification = false;
-                  }
-#endif
+
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                printf ("Test of Type used in SgInitializedName: declaration = %p = %s skipGlobalNameQualification = %s \n",declaration,declaration->class_name().c_str(),skipGlobalNameQualification ? "true" : "false");
 #endif
