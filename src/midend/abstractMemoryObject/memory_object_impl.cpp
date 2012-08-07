@@ -689,43 +689,101 @@ namespace AbstractMemoryObject {
     return rt;
   }
 
+  // FIX:
+  // Sriram 06/26/2012
+  // 
   bool NamedObj::mayEqual (const NamedObj & o2) const
-  {
+  {    
     bool rt = false;
+    bool isSymbolEqual = false, isParentEqual = false, isArrayIndexVectorEqual = false;
     NamedObj o1 = *this;
+
     if (o1.anchor_symbol == o2.anchor_symbol) // same symbol
-      if (o1.parent->mayEqual(*(o2.parent)))   // same parent
+    {
+      isSymbolEqual = true;
+      if(o1.parent !=NULL && o2.parent != NULL) // compare parents for compound memory objects only if both are not NULL
       {
-        if ( (o1.array_index_vector) != NULL && (o2.array_index_vector) != NULL)
+        if (o1.parent->mayEqual(*(o2.parent)))   // same parent
         {
+          isParentEqual = true;
+          if ((o1.array_index_vector) != NULL && (o2.array_index_vector) != NULL)
+          {
             // same array index, must use *pointer == *pointer to get the right comparison!!
-          if ((*(o1.array_index_vector)).mayEqual(*(o2.array_index_vector))) 
-            rt = true; // semantically equivalent index vectors
+              if ((*(o1.array_index_vector)).mayEqual(*(o2.array_index_vector)))
+              {
+                isArrayIndexVectorEqual = true; // semantically equivalent index vectors
+              }
+          }
+          else
+          {
+            if (o1.array_index_vector == o2.array_index_vector) // both are NULL
+            {
+              isArrayIndexVectorEqual = true;
+            }
+          }
+        } // end if parents mayEqual()
+      } // end if parents != NULL
+      else 
+      { 
+        // for simple memory objects both parents are NULL
+        if(o1.parent == o2.parent)
+        {
+          isParentEqual = true;
+          isArrayIndexVectorEqual = true; // both index vectors are NULL
         }
-        else
-          if ( o1.array_index_vector == o2.array_index_vector) // both are NULL
-            rt = true ;
       }
+      // return true only if all flags are true
+      rt = isSymbolEqual && isParentEqual && isArrayIndexVectorEqual;      
+    } // end if anchor_symbol same
     return rt;
   }
 
+  // FIX:
+  // Sriram 06/26/2012
+  //
   bool NamedObj::mustEqual (const NamedObj & o2) const
-  {
+  {    
     bool rt = false;
+    bool isSymbolEqual = false, isParentEqual = false, isArrayIndexVectorEqual = false;
     NamedObj o1 = *this;
+
     if (o1.anchor_symbol == o2.anchor_symbol) // same symbol
-      if (o1.parent->mustEqual(*(o2.parent)))   // same parent
+    {
+      isSymbolEqual = true;
+      if(o1.parent !=NULL && o2.parent != NULL) // compare parents for compound memory objects only if both are not NULL
       {
-        if ( (o1.array_index_vector) != NULL && (o2.array_index_vector) != NULL)
+        if (o1.parent->mustEqual(*(o2.parent)))   // same parent
         {
+          isParentEqual = true;
+          if ((o1.array_index_vector) != NULL && (o2.array_index_vector) != NULL)
+          {
             // same array index, must use *pointer == *pointer to get the right comparison!!
-          if ((*(o1.array_index_vector)).mustEqual(*(o2.array_index_vector))) 
-            rt = true; // semantically equivalent index vectors
+              if ((*(o1.array_index_vector)).mustEqual(*(o2.array_index_vector)))
+              {
+                isArrayIndexVectorEqual = true; // semantically equivalent index vectors
+              }
+          }
+          else
+          {
+            if (o1.array_index_vector == o2.array_index_vector) // both are NULL
+            {
+              isArrayIndexVectorEqual = true;
+            }
+          }
+        } // end if parents mustEqual()
+      } // end if parents == NULL
+      else 
+      { 
+          // for simple memory objects both parents are NULL
+        if( o1.parent == o2.parent )
+        {
+          isParentEqual = true;
+          isArrayIndexVectorEqual = true; // both index vectors are NULL
         }
-        else
-          if ( o1.array_index_vector == o2.array_index_vector) // both are NULL
-            rt = true ;
       }
+      // return true only if all flags are true
+      rt = isSymbolEqual && isParentEqual && isArrayIndexVectorEqual;
+    }
     return rt;
   }
 
