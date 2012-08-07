@@ -1053,6 +1053,9 @@ if test x$edg_opencl = xtrue; then
   GENERATE_OPENCL_SPECIFIC_HEADERS
 fi
 
+# support for Unified Parallel Runtime, check for CUDA and OpenCL
+ROSE_SUPPORT_UPR
+
 # *********************************************************************
 # Option to control internal support of PPL (Parma Polyhedron Library)
 # *********************************************************************
@@ -1890,6 +1893,18 @@ src/3rdPartyLibraries/qrose/Components/Common/icons/Makefile
 src/3rdPartyLibraries/qrose/Components/QueryBox/Makefile
 src/3rdPartyLibraries/qrose/Components/SourceBox/Makefile
 src/3rdPartyLibraries/qrose/Components/TreeBox/Makefile
+src/3rdPartyLibraries/UPR/Makefile
+src/3rdPartyLibraries/UPR/docs/Makefile
+src/3rdPartyLibraries/UPR/docs/doxygen/Makefile
+src/3rdPartyLibraries/UPR/docs/doxygen/doxy.conf
+src/3rdPartyLibraries/UPR/examples/Makefile
+src/3rdPartyLibraries/UPR/examples/cuda/Makefile
+src/3rdPartyLibraries/UPR/examples/opencl/Makefile
+src/3rdPartyLibraries/UPR/examples/xomp/Makefile
+src/3rdPartyLibraries/UPR/include/Makefile
+src/3rdPartyLibraries/UPR/include/UPR/Makefile
+src/3rdPartyLibraries/UPR/lib/Makefile
+src/3rdPartyLibraries/UPR/tools/Makefile
 src/ROSETTA/Makefile
 src/ROSETTA/src/Makefile
 src/frontend/Makefile
