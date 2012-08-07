@@ -168,6 +168,12 @@ AttachPreprocessingInfoTreeTrav::display(const std::string & label) const
         }
    }
 
+// DQ (8/6/2012): New copy constructor.
+AttachPreprocessingInfoTreeTraversalInheritedAttrribute::AttachPreprocessingInfoTreeTraversalInheritedAttrribute(const AttachPreprocessingInfoTreeTraversalInheritedAttrribute & X)
+   {
+     isPartOfTemplateDeclaration = X.isPartOfTemplateDeclaration;
+   }
+
 
 void
 AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber
@@ -207,7 +213,11 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
         {
           int line = locatedNode->get_startOfConstruct()->get_line();
           int col  = locatedNode->get_startOfConstruct()->get_col();
-          cout << "Visiting SgStatement node: " << line << ", " << col << " -> ";
+          int ending_line = locatedNode->get_endOfConstruct()->get_line();
+          int ending_col  = locatedNode->get_endOfConstruct()->get_col();
+
+       // DQ (8/6/2012): Added support for endOfConstruct().
+          cout << "Visiting SgStatement node: " << line << ", " << col << " (ending " << ending_line << ":" << ending_col << ") -> ";
           cout << getVariantName(locatedNode->variantT()) << endl;
         }
 #if 0
@@ -812,7 +822,42 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
           currentStatement->get_endOfConstruct()->display("In AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute(): (END) debug");
         }
 #endif
-       // Check if current AST node is an SgFile object
+
+     ROSE_ASSERT(n != NULL);
+  // printf ("In AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute(): n = %p = %s \n",n,n->class_name().c_str());
+  // SgTemplateFunctionDeclaration* templateDeclaration = isSgTemplateFunctionDeclaration(n);
+     SgDeclarationStatement* templateDeclaration = isSgTemplateFunctionDeclaration(n);
+     if (templateDeclaration == NULL) templateDeclaration = isSgTemplateMemberFunctionDeclaration(n);
+     if (templateDeclaration == NULL) templateDeclaration = isSgTemplateClassDeclaration(n);
+     if (templateDeclaration == NULL) templateDeclaration = isSgTemplateVariableDeclaration(n);
+     if (templateDeclaration != NULL)
+             {
+            // Set the flag in the inherited attribute.
+            // printf ("Set the flag for this to be in a template declaration n = %p = %s \n",n,n->class_name().c_str());
+               inheritedAttribute.isPartOfTemplateDeclaration = true;
+             }
+            else
+             {
+               if (inheritedAttribute.isPartOfTemplateDeclaration == true)
+                  {
+                 // printf ("This is a part of a template declaration (suppress attachment of comments and CPP directves to template declarations, since they are unparsed as strings for the moment) n = %p = %s \n",n,n->class_name().c_str());
+                  }
+                 else
+                  {
+                 // printf ("This is not part of a template declaration n = %p = %s \n",n,n->class_name().c_str());
+                  }
+             }
+
+  // DQ (8/6/2012): Allow those associated with the declaration and non inside of the template declaration.
+     if (inheritedAttribute.isPartOfTemplateDeclaration == true && templateDeclaration == NULL)
+        {
+#if DEBUG_ATTACH_PREPROCESSING_INFO
+          printf ("Returning without further processing if we are a part of a template declaration \n");
+#endif
+          return inheritedAttribute;
+        }
+
+  // Check if current AST node is an SgFile object
      SgFile* currentFilePtr = isSgFile(n);
      if (currentFilePtr != NULL)
         {
@@ -1003,7 +1048,24 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
         }
 #endif
 
-  // These used to be a problem, so we can continue to test tese specific cases.
+  // DQ (8/6/2012): Allow those associated with the declaration and non inside of the template declaration.
+     ROSE_ASSERT(n != NULL);
+  // printf ("In AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute(): n = %p = %s \n",n,n->class_name().c_str());
+     SgDeclarationStatement* templateDeclaration = isSgTemplateFunctionDeclaration(n);
+     if (templateDeclaration == NULL) templateDeclaration = isSgTemplateMemberFunctionDeclaration(n);
+     if (templateDeclaration == NULL) templateDeclaration = isSgTemplateClassDeclaration(n);
+     if (templateDeclaration == NULL) templateDeclaration = isSgTemplateVariableDeclaration(n);
+
+     if (inheritedAttribute.isPartOfTemplateDeclaration == true && templateDeclaration == NULL)
+  // if (inheritedAttribute.isPartOfTemplateDeclaration == true )
+        {
+#if DEBUG_ATTACH_PREPROCESSING_INFO
+          printf ("Returning without further processing if we are a part of a template declaration \n");
+#endif
+          return returnSynthesizeAttribute;
+        }
+
+  // These used to be a problem, so we can continue to test these specific cases.
      ROSE_ASSERT (isSgCaseOptionStmt(n)   == NULL || isSgCaseOptionStmt(n)->get_body()             != NULL);
      ROSE_ASSERT (isSgClassDeclaration(n) == NULL || isSgClassDeclaration(n)->get_endOfConstruct() != NULL);
 
