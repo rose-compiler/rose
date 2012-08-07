@@ -21,6 +21,6 @@ SUBDIRS += MSTL libharu-2.1.0 antlr-jars qrose POET
 endif
 
 # TV (08/03/12): Need to finish integration before
-# SUBDIRS += UPR
+SUBDIRS += UPR
 
 EXTRA_DIST = CMakeLists.txt

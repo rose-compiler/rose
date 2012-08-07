@@ -1,7 +1,7 @@
 
 noinst_PROGRAMS=
 
-if HAVE_XOMP_LIB
+if ROSE_HAVE_XOMP_LIB
   noinst_PROGRAMS += test
 endif
 
@@ -21,7 +21,7 @@ test_LDADD= \
 ../../lib/libUPR-Xomp.la:
 	make -C ../../lib libUPR-Xomp.la
 
-if HAVE_XOMP_LIB
+if ROSE_HAVE_XOMP_LIB
 check: test
 	./test
 endif

@@ -1,7 +1,7 @@
 
 noinst_PROGRAMS=
 
-if HAVE_CUDA_LIB
+if ROSE_HAVE_CUDA_LIB
   noinst_PROGRAMS += test
 endif
 
@@ -21,7 +21,7 @@ test_LDADD= \
 ../../lib/libUPR-CUDA.la:
 	make -C ../../lib libUPR-CUDA.la
 
-if HAVE_CUDA_LIB
+if ROSE_HAVE_CUDA_LIB
 check: test
 	./test
 endif

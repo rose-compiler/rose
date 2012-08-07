@@ -7,10 +7,19 @@
 namespace UPR {
 
 /*! \brief Base class for the notion of executor (CPU, GPU, other acc)
+ *
+ * This class still need some design, currently is just providing a unique ID.\n
+ * Later, it will contain an "idea" of the topology of the executor.\n
+ * \n
+ * For example:\n
+ * - a GPU is a set of SIMD executors\n
+ * - a node is composed of CPUs and GPUs\n
+ * - a CPU contains multiple cores\n
+ * - ...
  */
 class Executor {
   protected:
-    unsigned long kind;
+    unsigned long kind; /// Kind of executor. It will hold a value from a model dependent enumeration.
 
   protected:
     Executor();
@@ -23,15 +32,17 @@ class Executor {
     virtual void print(std::ostream & out) const = 0;
 
   public:
-    const unsigned long id;
+    const unsigned long id; /// ID of the executor. Unique for each instance of the class
 
-  static unsigned long id_cnt;
+  static unsigned long id_cnt; /// Counter for unique ID genration
 
   friend class Scheduler;
 };
 
-/*! \brief represents the notion of Host, it is the thread 0 or the host processor in a CPU/GPU system.
- *         It is here for sequential task and contains the original data
+/*! \brief represents the notion of Host, it is the thread 0 or the host processor in a CPU/GPU system.\n
+ * 
+ * The host executor does not have a physical reality: it is the original thread associated to the process.
+ * It exists to hold the computation of sequential task (and also the scheduler)
  */
 class Host : public Executor {
   protected:
@@ -43,20 +54,23 @@ class Host : public Executor {
     virtual void print(std::ostream & out) const;
 
   public:
+    /// May be needed for later model, I will keep it until I make my mind
     static const unsigned long executor_kind;
 
   friend class Scheduler;
 };
 
-/*! \brief Represent some data (as multi-dimensional array) but not the allocation of the data
+/*! \brief Represent some data (as multi-dimensional array).
+ *
+ * Memory allocation for this data are also stored in this class and can be multiple.
  */
 class Data {
   protected:
     unsigned dim_cnt; /// Dimension of this data (array dimension), if (dim_cnt == 0) then it is a scalar
     unsigned long * dims; /// Array storing the size of each dimension, if (dim_cnt > 0) then typeof(dims) = unsigned long[dim_cnt] else dims = NULL
-    unsigned data_size;
+    unsigned data_size; /// size of the base type of the array (eg, A a[10][10] -> sizeof(A) )
 
-    void * host_data;
+    void * host_data; /// pointer to the allocation of the data for the host executor (if this allocation exist)
 
   protected:
     Data(unsigned dim_cnt_, unsigned long * dims_, unsigned data_size_);
@@ -80,7 +94,7 @@ class Data {
      */
     void setHostData(Host * host, void * host_data_);
 
-    /*! /brief specify that the version of this data hosted by an executor need to survive the destructor
+    /*! /brief specify that the version of this data hosted by an executor need to survive the destructor (it is a live-out data on this executor)
      *  /param executor for which we keep the data
      */
     virtual bool keep(Executor * executor);
@@ -96,9 +110,9 @@ class Data {
  */
 class Task {
   protected:
-    unsigned long id; /// Unique task id of this task
+    unsigned long id; /// Unique task ID of this task
 
-    static unsigned long id_cnt; /// Unique task id counter
+    static unsigned long id_cnt; /// Counter for unique ID generation
 
   protected:
     Task();
@@ -142,7 +156,7 @@ class ExecTask : public Task {
   friend class Scheduler;
 };
 
-/*! \brief Represent dtata transfert task which use a link between two executor.
+/*! \brief Represent data transfert task which use a link between two executor.
  */
 class DataTask : public Task {
   protected:
@@ -163,7 +177,17 @@ class DataTask : public Task {
   friend class Scheduler;
 };
 
-/*! \brief Main component of the Unified Runtime, it provides basic function that need to be expand by model and application specific implementations.
+/*! \brief Main component of the Unified Runtime, it provides basic function that need to be expand by model and application specific implementations.\n
+ * \n
+ * Currently, the scheduler need to know all tasks before starting to execute them.\n
+ * Eventually, it will be possible for a task to create new task:\n
+ *  - to be execute after the current set of task\n
+ *  - after some important change, to be insert in the current task graph\n
+ * \n
+ * The Scheduler build a dependencies graph of the tasks then provide task to be executed on demand with the function 'Task * next()'.
+ * A naive implementation of next is provided but it can be overloaded.\n
+ * \n
+ * The scheduler run on the host (cpu or thread 0 depending on the model). It is a centralized scheduler.
  */
 class Scheduler {
   protected:
@@ -186,7 +210,7 @@ class Scheduler {
 
     bool p_schedule_done; /// true if the field 'next' have been compute for every node in the scheduling graph
 
-    Host * p_host;
+    Host * p_host; /// Pointer to the "host" executor need to be valid. The scheduler and any sequential task are run on htis executor.
 
   protected:
     Scheduler();
