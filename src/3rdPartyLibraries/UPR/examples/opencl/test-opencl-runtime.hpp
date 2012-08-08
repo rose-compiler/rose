@@ -2,15 +2,20 @@
 #ifndef __TEST_OPENCL_RUNTIME_HPP__
 #define __TEST_OPENCL_RUNTIME_HPP__
 
-
 #include "UPR/opencl-runtime.hpp"
 
 namespace UPR {
 
+/**
+ * /brief An example of Application Specific Task for an OpenCL GPU
+ */
 class Task_1 : public OpenCL_GPU_Task {
   // TODO
 };
 
+/**
+ * /brief An example of Application Specific Scheduler for OpenCL
+ */
 class App_OpenCL_Scheduler : public OpenCL_Scheduler {
   protected:
 
