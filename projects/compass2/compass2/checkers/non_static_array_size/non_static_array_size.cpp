@@ -4,7 +4,7 @@
 /**
  * \file    non_static_array_size.cpp
  * \author  Justin Too <too1@llnl.gov>
- * \date    September 9, 2011
+ * \date    August 5, 2012
  */
 
 #include "rose.h"
