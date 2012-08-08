@@ -1,3 +1,7 @@
+/**
+ * /author Tristan Vanderbruggen (vanderbruggentristan@gmail.com)
+ * /date   08/2012
+ */
 
 #include <iostream>
 

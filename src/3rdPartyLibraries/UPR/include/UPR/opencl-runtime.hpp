@@ -1,14 +1,14 @@
+/**
+ * /author Tristan Vanderbruggen (vanderbruggentristan@gmail.com)
+ * /date   08/2012
+ */
 
 #ifndef __OPENCL_RUNTIME_HPP_
 #define __OPENCL_RUNTIME_HPP_
 
 #include "UPR/runtime.hpp"
 
-#if HAVE_OPENCL_CL_H
-    #include <OpenCL/cl.h>
-#elif HAVE_OPENCL_OPENCL_H
-    #include <OpenCL/OpenCL.h>
-#endif
+#include <OpenCL/cl.h>
 
 #include <map>
 

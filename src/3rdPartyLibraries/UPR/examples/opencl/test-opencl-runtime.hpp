@@ -1,3 +1,7 @@
+/**
+ * /author Tristan Vanderbruggen (vanderbruggentristan@gmail.com)
+ * /date   08/2012
+ */
 
 #ifndef __TEST_OPENCL_RUNTIME_HPP__
 #define __TEST_OPENCL_RUNTIME_HPP__

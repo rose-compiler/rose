@@ -1,3 +1,7 @@
+/**
+ * /author Tristan Vanderbruggen (vanderbruggentristan@gmail.com)
+ * /date   08/2012
+ */
 
 __kernel void task_1(unsigned int size, __global float * a, __global float * b, __global float * r) {
   unsigned int i = get_global_id(0);
