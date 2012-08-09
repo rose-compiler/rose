@@ -56,6 +56,8 @@ endif
 # omplexer.cc needs a header generaetd from ompparser.yy
 omplexer.lo: ompparser.h omplexer.cc
 ompparser.h: ompparser.cc
+	if test -f ompparser.hh; then $(LN_S) ompparser.hh ompparser.h; fi;
+
 
 # Force sage.docs to be make by default 
 # (if sage.docs.in is modified)
