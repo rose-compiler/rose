@@ -2695,7 +2695,7 @@ void buildHiddenTypeAndDeclarationLists( SgNode* node /*SgProject* project*/ )
      // DQ (10/22/2007): These are hard to find and remove from the output!!!
      // cout << endl;
 
-        HiddenListComputationTraversal hiddenlist_traversal;
+        HiddenListComputationTraversal* hiddenlist_traversal = NULL;
 
         if(collection_mode_of_NamespacesAndClassTraversal == 0) {
 
@@ -2705,7 +2705,7 @@ void buildHiddenTypeAndDeclarationLists( SgNode* node /*SgProject* project*/ )
                 //        hiddenlist_traversal.ClassHashMap = namespaces_and_class_traversal.ClassHashMap;
                 //        hiddenlist_traversal.UsingDirRelativeToDeclarations = namespaces_and_class_traversal.UsingDirRelativeToDeclarations;
                 //        hiddenlist_traversal.UsingDeclRelativeToDeclarations = namespaces_and_class_traversal.UsingDeclRelativeToDeclarations;
-                hiddenlist_traversal = HiddenListComputationTraversal(0, namespaces_and_class_traversal.NamespacesHashMap, namespaces_and_class_traversal.ClassHashMap, namespaces_and_class_traversal.UsingDirRelativeToDeclarations, namespaces_and_class_traversal.UsingDeclRelativeToDeclarations );
+                hiddenlist_traversal = new HiddenListComputationTraversal(0, namespaces_and_class_traversal.NamespacesHashMap, namespaces_and_class_traversal.ClassHashMap, namespaces_and_class_traversal.UsingDirRelativeToDeclarations, namespaces_and_class_traversal.UsingDeclRelativeToDeclarations );
 
         }
         else if(collection_mode_of_NamespacesAndClassTraversal == 1) {
@@ -2716,7 +2716,7 @@ void buildHiddenTypeAndDeclarationLists( SgNode* node /*SgProject* project*/ )
                 //        hiddenlist_traversal.ClassHashMap = namespaces_and_class_traversal.ClassHashMap;
                 //        hiddenlist_traversal.UsingDirRelativeToDeclarations_2 = namespaces_and_class_traversal.UsingDirRelativeToDeclarations_2;
                 //        hiddenlist_traversal.UsingDeclRelativeToDeclarations_2 = namespaces_and_class_traversal.UsingDeclRelativeToDeclarations_2;
-                hiddenlist_traversal = HiddenListComputationTraversal(0, namespaces_and_class_traversal.NamespacesHashMap, namespaces_and_class_traversal.ClassHashMap, namespaces_and_class_traversal.UsingDirRelativeToDeclarations_2, namespaces_and_class_traversal.UsingDeclRelativeToDeclarations_2 );
+                hiddenlist_traversal = new HiddenListComputationTraversal(0, namespaces_and_class_traversal.NamespacesHashMap, namespaces_and_class_traversal.ClassHashMap, namespaces_and_class_traversal.UsingDirRelativeToDeclarations_2, namespaces_and_class_traversal.UsingDeclRelativeToDeclarations_2 );
 
         }
         else {
@@ -2730,12 +2730,12 @@ void buildHiddenTypeAndDeclarationLists( SgNode* node /*SgProject* project*/ )
 
                 cout << endl;
                 cout << " >>>  Namespace-Information of whole AST collected by NamespacesAndClassTraversal: " << endl;
-                String_VectorOfNamespaceInformation_HashMapOutput(hiddenlist_traversal.NamespacesHashMap);
+                String_VectorOfNamespaceInformation_HashMapOutput(hiddenlist_traversal->NamespacesHashMap);
 
                 cout << endl;
 
                 cout << " >>>  Class-Information of whole AST collected by NamespacesAndClassTraversal: " << endl;
-                StringVectorHashMapOutput(hiddenlist_traversal.ClassHashMap);
+                StringVectorHashMapOutput(hiddenlist_traversal->ClassHashMap);
                 cout << endl;
 
         #endif
@@ -2743,13 +2743,13 @@ void buildHiddenTypeAndDeclarationLists( SgNode* node /*SgProject* project*/ )
 
         // check if there are using-directives or using-declarations in the input code
         // Motivation for this, look at Function Definition to learn more!
-        SetUsingDirectivesSetAndUsingDeclarationsSet(hiddenlist_traversal, project);
+        SetUsingDirectivesSetAndUsingDeclarationsSet(*hiddenlist_traversal, project);
 
         // ad comment above from June 8 2007 : now we call the hidden-list computation only for the specified input-files! -> traverseImputFile instead of traverse
         //hiddenlist_traversal.traverse(project, inheritedAttribute);
 
         // Robert Preissl, July 9 2007 : this function is called in astPostProcessing for SgFile (changed from traverseInputFiles to traverseWithinFile)
-        hiddenlist_traversal.traverseWithinFile(project, inheritedAttribute);
+        hiddenlist_traversal->traverseWithinFile(project, inheritedAttribute);
 }
 
 } // namespace
