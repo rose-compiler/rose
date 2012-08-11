@@ -3034,7 +3034,7 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
         {
 #if 0
           printf ("Normal case for unparsing member function declarations! \n");
-       // curprint ( string("\n/* Normal case for unparsing member function declarations */ \n"; 
+          curprint("\n/* Normal case for unparsing member function declarations */ \n"); 
 #endif
 #if 0
        // DQ (5/8/2004): Any generated specialization needed to use the 
@@ -3069,9 +3069,14 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                info.set_CheckAccess();
              }
 
+#if 0
+          curprint("/* Calling printSpecifier1() */\n ");
+#endif
        // printDebugInfo("entering unp->u_sage->printSpecifier1", true);
           unp->u_sage->printSpecifier1(mfuncdecl_stmt, info);
-
+#if 0
+          curprint("/* Calling printSpecifier2() */\n ");
+#endif
        // printDebugInfo("entering unp->u_sage->printSpecifier2", true);
           unp->u_sage->printSpecifier2(mfuncdecl_stmt, info);
           info.unset_CheckAccess();
@@ -3083,7 +3088,7 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
        // DQ (10/10/2006): Do output any qualified names (particularly for non-defining declarations).
        // ninfo.set_forceQualifiedNames();
 #if 0
-          curprint ( string("/* force output of qualified names */\n ") );
+          curprint("/* force output of qualified names */\n ");
 #endif
        // DQ (10/17/2004): Added code to form skipping enum definitions.
        // DQ (10/7/2004): Skip output of class definition for return type! C++ standard does not permit 

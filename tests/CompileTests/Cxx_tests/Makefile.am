@@ -528,7 +528,7 @@ test2006_121.C \
 test2006_123.C \
 test2006_124.C \
 test2006_125.C \
-test2006_126.C  \
+test2006_126.C \
 test2006_129.C \
 test2006_139.C \
 test2006_140.C \
@@ -589,6 +589,7 @@ test2007_25.C \
 test2007_26.C \
 test2007_28.C \
 test2007_29.C \
+test2007_38.C \
 test2007_40.C \
 test2007_41.C \
 test2007_43.C \
@@ -1003,12 +1004,17 @@ test2012_168.C \
 test2012_169.C \
 test2012_170.C \
 test2012_171.C \
+test2012_172.C \
 test2012_173.C \
 test2012_174.C \
+test2012_175.C \
 test2012_176.C \
 test2012_177.C \
 test2012_178.C \
 test2012_179.C \
+test2012_180.C \
+test2012_181.C \
+test2012_182.C \
 test_int_lexemes.C \
 test_int_lexemes_donot_pass.C \
 test_simple_int.C \
@@ -1034,8 +1040,6 @@ test2004_35.C
 # test2012_79.C 
 # test2012_81.C 
 
-# test2012_172.C 
-# test2012_175.C 
 
 else
 include $(srcdir)/Makefile-pass.inc
@@ -1048,7 +1052,6 @@ endif
 if ROSE_USE_EDG_VERSION_4_3
 TESTCODE_CURRENTLY_FAILING = \
 test2006_122.C \
-test2007_38.C \
 test2007_137.C \
 test2007_141.C \
 test2009_21.C \

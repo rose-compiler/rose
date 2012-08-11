@@ -1262,8 +1262,8 @@ Unparse_MOD_SAGE::outputTemplateSpecializationSpecifier ( SgDeclarationStatement
 void
 Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_Info& info)
    {
-
   // DQ (8/29/2005): These specifiers have to be output in a different order for g++ 3.3.x and 3.4.x
+
 #ifdef __GNUC__
    #if (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 3) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER < 4)
      outputTemplateSpecializationSpecifier(decl_stmt);
@@ -1343,7 +1343,20 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
        // DQ (2/2/2006): Not sure if virtual can be output when isForwardDeclarationOfTemplateSpecialization == true
           if (functionDeclaration->get_functionModifier().isVirtual())
              {
-               curprint( "virtual ");
+#if 0
+               if (functionDeclaration == functionDeclaration->get_firstNondefiningDeclaration())
+                  {
+                    curprint("/* output virtual for the non-defining function declarations */ ");
+                  }
+                 else
+                  {
+                    if (functionDeclaration == functionDeclaration->get_definingDeclaration())
+                       {
+                         curprint("/* output virtual for the defining function declarations */ ");
+                       }
+                  }
+#endif
+               curprint("virtual ");
              }
 
        // if (unp->opt.get_inline_opt())
