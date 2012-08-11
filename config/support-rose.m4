@@ -164,6 +164,7 @@ fi
   ROSE_SUPPORT_COMPASS2
   ROSE_SUPPORT_GMP
   ROSE_SUPPORT_ISL
+  ROSE_SUPPORT_MPI
 
 ##
 #########################################################################################
@@ -2144,6 +2145,9 @@ projects/ManyCoreRuntime/docs/Makefile
 projects/mint/Makefile
 projects/mint/src/Makefile
 projects/mint/tests/Makefile
+projects/Fortran_to_C/Makefile
+projects/Fortran_to_C/src/Makefile
+projects/Fortran_to_C/tests/Makefile
 projects/traceAnalysis/Makefile
 projects/PolyhedralModel/Makefile
 projects/PolyhedralModel/src/Makefile
