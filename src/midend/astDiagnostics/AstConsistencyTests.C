@@ -2146,8 +2146,15 @@ TestAstForUniqueStatementsInScopes::visit ( SgNode* node )
                printf ("Error: duplicate statements in scope = %p = %s \n",scope,scope->class_name().c_str());
                scope->get_file_info()->display("Error: duplicate statements in scope");
              }
-
+#if 1
           ROSE_ASSERT(pass);
+#else
+       // DQ (8/9/2012): debugging... (test2012_174.C)
+          if (pass == false)
+             {
+               printf ("****** Commented out this error to view the dot file ****** \n");
+             }
+#endif
         }
    }
 
@@ -2183,7 +2190,7 @@ TestAstForUniqueNodesInAST::visit ( SgNode* node )
 
            printf ("Error: found a shared IR node = %p = %s in the AST. \n",node,node->class_name().c_str());
 
-#if 0
+#if 1
            ROSE_ASSERT(false);
 #else
         // DQ (4/26/2012): debugging... (test2012_67.C)

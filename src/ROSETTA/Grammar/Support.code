@@ -11408,6 +11408,11 @@ Sg_File_Info::setOutputInCodeGeneration()
   // Make sure that both bits are set!
   // setCompilerGenerated();
      assert(this != NULL);
+
+#if 0
+     printf ("In setOutputInCodeGeneration(): parent = %p \n",this->get_parent());
+#endif
+
      p_classificationBitField |= e_output_in_code_generation;
    }
 
@@ -11492,7 +11497,7 @@ Sg_File_Info::setSourcePositionUnavailableInFrontend()
      assert(this != NULL);
      p_classificationBitField |= e_source_position_unavailable_in_frontend;
 
-#if 1
+#if 0
   // DQ (8/3/2012): We don't want to use this unless absolutely required; so output a message to support debugging.
      printf ("In Sg_File_Info::setSourcePositionUnavailableInFrontend() \n");
 #endif
@@ -11504,7 +11509,7 @@ Sg_File_Info::unsetSourcePositionUnavailableInFrontend()
      assert(this != NULL);
      p_classificationBitField &= ~e_source_position_unavailable_in_frontend;
 
-#if 1
+#if 0
   // DQ (8/3/2012): We don't want to use this unless absolutely required; so output a message to support debugging.
      printf ("In Sg_File_Info::unsetSourcePositionUnavailableInFrontend() \n");
 #endif

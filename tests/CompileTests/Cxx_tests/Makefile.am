@@ -10,9 +10,9 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 if ROSE_USE_EDG_VERSION_4_3
 
 # EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
-#   $(TESTCODE_CURRENTLY_FAILING)
+#  $(TESTCODE_CURRENTLY_FAILING)
 
-# EXAMPLE_TESTCODES_REQUIRED_TO_PASS = $(TESTCODE_CURRENTLY_FAILING)
+# EXAMPLE_TESTCODES_REQUIRED_TO_PASS = $(NEVER_PASING_TESTCODE_CURRENTLY_FAILING)
 
 EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
 test_CplusplusMacro_Cpp.C \
@@ -1003,6 +1003,12 @@ test2012_168.C \
 test2012_169.C \
 test2012_170.C \
 test2012_171.C \
+test2012_173.C \
+test2012_174.C \
+test2012_176.C \
+test2012_177.C \
+test2012_178.C \
+test2012_179.C \
 test_int_lexemes.C \
 test_int_lexemes_donot_pass.C \
 test_simple_int.C \
@@ -1027,6 +1033,9 @@ test2004_35.C
 # test2011_191.C 
 # test2012_79.C 
 # test2012_81.C 
+
+# test2012_172.C 
+# test2012_175.C 
 
 else
 include $(srcdir)/Makefile-pass.inc
@@ -1162,7 +1171,7 @@ test2010_15.C
 
 # DQ (8/6/2012): This is the list of test code that were failing before the move to EDG 4.3 (failing with the use of EDG 3.3)
 # DQ (8/6/2012): Original count is 183 failing tests that have never passed previously.
-TESTCODE_CURRENTLY_FAILING = \
+NEVER_PASING_TESTCODE_CURRENTLY_FAILING = \
 lexPhase2003_02.C \
 test2004_25.C \
 test2005_69.C \

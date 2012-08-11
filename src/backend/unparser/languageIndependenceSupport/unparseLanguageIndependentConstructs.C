@@ -226,7 +226,7 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
         }
 
 #if 0
-     printf ("statementInFile = %p = %s = %s = %s \n",stmt,stmt->class_name().c_str(),SageInterface::get_name(stmt).c_str(),(statementInFile == true) ? "true" : "false");
+     printf ("\nstatementInFile = %p = %s = %s = %s \n",stmt,stmt->class_name().c_str(),SageInterface::get_name(stmt).c_str(),(statementInFile == true) ? "true" : "false");
   // stmt->get_file_info()->display("debug why false");
   // if (statementInFile == false)
         {
@@ -593,6 +593,8 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
              }
         }
 
+#if 0
+  // DQ (8/7/2012): I don't think we need this.
   // DQ (5/22/2007): Added to support name qualification and access to the new hidden 
   // type, declaration and class elaboration lists stored in the scopes.
      SgScopeStatement* scopeStatement = isSgScopeStatement(stmt);
@@ -618,15 +620,18 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
           savedScope = info.get_current_scope();
         }
      
-
   // DQ (5/27/2007): Commented out, uncomment when we are ready for Robert's new hidden list mechanism.
      if (info.get_current_scope() == NULL)
         {
           printf ("In unparseStatement(): info.get_current_scope() == NULL (likely called from SgNode::unparseToString()) stmt = %p = %s \n",stmt,stmt->class_name().c_str());
           stmt->get_startOfConstruct()->display("In unparseStatement(): info.get_current_scope() == NULL: debug");
+#if 0
+       // DQ (8/7/2012): I don't think we need this.
           ROSE_ASSERT(false);
+#endif
         }
   // ROSE_ASSERT(info.get_current_scope() != NULL);
+#endif
 
   // DQ (7/20/2008): This mechanism is now extended to SgStatement and revised to handle 
   // more cases than just replacement of the 
@@ -725,6 +730,8 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
              }
         }
 
+#if 0
+  // DQ (8/7/2012): I don't think we need this.
   // DQ (11/3/2007): Save the original scope so that we can restore it at the end (since we don't use a new SgUnparse_Info object).
      if (scopeStatement != NULL)
         {
@@ -751,6 +758,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
           printf ("WARNING: scopes stored in SgUnparse_Info object have been changed \n");
           ROSE_ASSERT(false);
         }
+#endif
 
 #if OUTPUT_EMBEDDED_COLOR_CODES_FOR_STATEMENTS
      if (get_embedColorCodesInGeneratedCode() > 0)
