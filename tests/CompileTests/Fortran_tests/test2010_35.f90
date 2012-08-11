@@ -11,7 +11,7 @@ module io_typestest2010_35
 ! !PUBLIC TYPES:
 
    ! Generic IO field descriptor
-   integer, public :: construct_file
+   ! integer, public :: construct_file
 
    integer, parameter, public :: i4 = selected_int_kind(6)
 
