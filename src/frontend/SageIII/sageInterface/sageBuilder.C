@@ -1032,9 +1032,10 @@ SageBuilder::buildMemberFunctionType(SgType* return_type, SgFunctionParameterTyp
      ROSE_ASSERT(struct_name->get_parent() != NULL);
   // ROSE_ASSERT(struct_name->get_declaration() != NULL);
 
+#if 0
      printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
      printf ("In buildMemberFunctionType() return_type = %p typeList = %p struct_name = %p = %s = %s mfunc_specifier = %u \n",return_type,typeList,struct_name,struct_name->class_name().c_str(),struct_name->get_declaration()->get_name().str(),mfunc_specifier);
-
+#endif
 
   // SgDeclarationStatement* declaration = struct_name->get_declaration();
      SgTemplateClassDefinition* templateClassDefinition = isSgTemplateClassDefinition(struct_name);
@@ -2779,13 +2780,17 @@ SageBuilder::buildDefiningFunctionDeclaration_T(const SgName & XXX_name, SgType*
 
      bool buildTemplateInstantiation = ((VariantT)actualFunction::static_variant == V_SgTemplateInstantiationFunctionDecl || (VariantT)actualFunction::static_variant == V_SgTemplateInstantiationMemberFunctionDecl);
 
+#if 0
      printf ("In buildDefiningFunctionDeclaration_T(): buildTemplateInstantiation = %s \n",buildTemplateInstantiation ? "true" : "false");
+#endif
+
      if (buildTemplateInstantiation == true)
         {
           ROSE_ASSERT(templateArgumentsList != NULL);
           nameWithTemplateArguments = appendTemplateArgumentsToName(nameWithoutTemplateArguments,*templateArgumentsList);
-
+#if 0
           printf ("Building a SgClassDeclaration: buildDefiningClassDeclaration_nfi() nameWithTemplateArguments = %s buildTemplateInstantiation = %s \n",nameWithTemplateArguments.str(),buildTemplateInstantiation ? "true:" : "false");
+#endif
         }
 
      ROSE_ASSERT(nameWithoutTemplateArguments.is_null() == false);
@@ -2811,7 +2816,7 @@ SageBuilder::buildDefiningFunctionDeclaration_T(const SgName & XXX_name, SgType*
   // This is a problem for test2012_74.C (and a dozen other test codes that make use of STL).
      ROSE_ASSERT(first_nondefining_declaration != NULL);
 
-#if 1
+#if 0
      printf ("In buildDefiningFunctionDeclaration_T(): isMemberFunction = %s \n",isMemberFunction ? "true" : "false");
 #endif
 
@@ -2855,7 +2860,7 @@ SageBuilder::buildDefiningFunctionDeclaration_T(const SgName & XXX_name, SgType*
 
      SgDeclarationStatement* firstNondefiningFunctionDeclaration = NULL;
 
-#if 1
+#if 0
      printf ("In buildDefiningFunctionDeclaration_T(): scope     = %p = %s \n",scope,scope->class_name().c_str());
      printf ("In buildDefiningFunctionDeclaration_T(): func_type = %p = %s \n",func_type,func_type->class_name().c_str());
      printf ("In buildDefiningFunctionDeclaration_T(): Looking for function in symbol table with nameWithTemplateArguments = %s \n",nameWithTemplateArguments.str());
