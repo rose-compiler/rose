@@ -6705,12 +6705,15 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
 
                  // DQ (2/17/2005): We can't translate "operator+" into "operator+<int>" since it will become "+<int>" 
                  // in the unparser so make sure that this is not a name of an overloaded operator function.
+#if 0
                     printf ("member function name = %s \n",returnName.c_str());
-
+#endif
                  // if (TransformationSupport::classifyOverloadedOperator(returnName) != TransformationSupport::FUNCTION_CALL_OPERATOR_CODE)
                     if (node->get_specialFunctionModifier().isOperator() == true)
                        {
+#if 0
                          printf ("Skipping appending the templates arguments to this overloaded operator \n");
+#endif
                          appendTemplateArguments = false;
                        }
 

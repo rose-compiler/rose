@@ -3159,7 +3159,7 @@ SageBuilder::setTemplateNameInTemplateInstantiations( SgFunctionDeclaration* fun
    {
   // DQ (2/11/2012): If this is a template instantiation then we have to set the template name (seperate from the name of the function which can include template parameters)).
 
-#if 1
+#if 0
      printf ("In setTemplateNameInTemplateInstantiations(): name = %s func->get_name() = %s \n",name.str(),func->get_name().str());
 #endif
 
@@ -7955,7 +7955,7 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
      SgClassSymbol* mysymbol = NULL;
      if (scope != NULL)
         {
-#if 1
+#if 0
           printf ("Looking up the SgClassSymbol in scope = %p = %s nameWithTemplateArguments = %s \n",scope,scope->class_name().c_str(),nameWithTemplateArguments.str());
 #endif
        // mysymbol = scope->lookup_class_symbol(name);
@@ -7970,7 +7970,7 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
        // printf ("Warning: In SageBuilder::buildClassDeclaration_nfi(): scope == NULL \n");
         }
 
-#if 1
+#if 0
      printf ("In SageBuilder::buildClassDeclaration_nfi(): mysymbol = %p \n",mysymbol);
 #endif
 
@@ -8000,7 +8000,7 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
         }
        else // build a nondefnining declaration if it does not exist
         {
-#if 1
+#if 0
           printf ("In In SageBuilder::buildClassDeclaration_nfi(): building a nondefnining declaration if it does not exist \n");
 #endif
        // DQ (1/25/2009): We only want to build a new declaration if we can't reuse the existing declaration.
@@ -8075,7 +8075,7 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
        // that amounts to a kind of name qualification internally (maybe even exactly name qualification, but I would
        // have to think about that a bit more).
           ROSE_ASSERT(scope != NULL);
-#if 1
+#if 0
           printf ("In SageBuilder::buildClassDeclaration_nfi(): Set the scope of the new non-defining declaration to %p = %s \n",scope,scope->class_name().c_str());
 #endif
           nondefdecl->set_scope(scope);
@@ -8133,7 +8133,7 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
           if (scope != NULL)
              {
                mysymbol = new SgClassSymbol(nondefdecl);
-#if 1
+#if 0
                printf ("Insert the new SgClassSymbol = %p into the scope = %p = %s \n",mysymbol,scope,scope->class_name().c_str());
 #endif
             // scope->insert_symbol(name, mysymbol);

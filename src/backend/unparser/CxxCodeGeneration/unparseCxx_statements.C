@@ -65,7 +65,7 @@ Unparse_ExprStmt::unparseOneElemConInit(SgConstructorInitializer* con_init, SgUn
      curprint( "\n /* Inside of Unparse_MOD_SAGE::unparseOneElemConInit */ \n");
 #endif
 
-#if 1
+#if 0
      printf ("\n\nInside of Unparse_MOD_SAGE::unparseOneElemConInit (%p) \n",con_init);
      curprint("\n /* Inside of Unparse_MOD_SAGE::unparseOneElemConInit */ \n");
 #endif
@@ -73,7 +73,7 @@ Unparse_ExprStmt::unparseOneElemConInit(SgConstructorInitializer* con_init, SgUn
   // taken from unparseConInit
      SgUnparse_Info newinfo(info);
 
-#if 1
+#if 0
      printf ("con_init->get_need_name()      = %s \n",(con_init->get_need_name() == true) ? "true" : "false");
      printf ("con_init->get_need_qualifier() = %s \n",(con_init->get_need_qualifier() == true) ? "true" : "false");
      printf ("con_init->get_declaration()    = %p \n",con_init->get_declaration());
@@ -1504,7 +1504,7 @@ Unparse_ExprStmt::unparseTemplateInstantiationFunctionDeclStmt (SgStatement* stm
 
      ROSE_ASSERT(functionDeclaration != NULL);
 
-#if 0
+#if 1
      curprint("/* Output in curprint in Unparse_ExprStmt::unparseTemplateInstantiationFunctionDeclStmt() */");
 #endif
 
@@ -1690,6 +1690,10 @@ Unparse_ExprStmt::unparseTemplateInstantiationMemberFunctionDeclStmt (SgStatemen
           (templateInstantiationMemberFunctionDeclaration->get_file_info()->isOutputInCodeGeneration() == true) ? "true" : "false");
 #endif
 
+#if 0
+     curprint("/* Output in curprint in Unparse_ExprStmt::unparseTemplateInstantiationMemberFunctionDeclStmt() */");
+#endif
+
   // DQ (6/1/2005): Use this case when PROTOTYPE_INSTANTIATIONS_IN_IL is to true in EDG's host_envir.h
      bool outputMemberFunctionTemplateInstantiation = false;
      if ( isTransformed (templateInstantiationMemberFunctionDeclaration) == true )
@@ -1720,10 +1724,17 @@ Unparse_ExprStmt::unparseTemplateInstantiationMemberFunctionDeclStmt (SgStatemen
         {
        // Also output the template member function declaration the template declaration appears in the source file.
           string currentFileName = getFileName();
+
+          if (templateInstantiationMemberFunctionDeclaration->get_templateDeclaration() == NULL)
+             {
+               printf (" I think that this can happen (see test2005_139.C) \n");
+             }
+#if 0
           ROSE_ASSERT(templateInstantiationMemberFunctionDeclaration->get_templateDeclaration() != NULL);
           ROSE_ASSERT(templateInstantiationMemberFunctionDeclaration->get_templateDeclaration()->get_file_info() != NULL);
           ROSE_ASSERT(templateInstantiationMemberFunctionDeclaration->get_templateDeclaration()->get_file_info()->get_filename() != NULL);
           string declarationFileName = templateInstantiationMemberFunctionDeclaration->get_templateDeclaration()->get_file_info()->get_filename();
+#endif
 #if 0
           printf ("In unparseTemplateInstantiationMemberFunctionDeclStmt(): currentFileName     = %s \n",currentFileName.c_str());
           printf ("In unparseTemplateInstantiationMemberFunctionDeclStmt(): declarationFileName = %s \n",declarationFileName.c_str());
@@ -1747,7 +1758,9 @@ Unparse_ExprStmt::unparseTemplateInstantiationMemberFunctionDeclStmt (SgStatemen
        // if ( declarationFileName == currentFileName && templateInstantiationMemberFunctionDeclaration->get_file_info()->isOutputInCodeGeneration() == true)
           if ( templateInstantiationMemberFunctionDeclaration->get_file_info()->isOutputInCodeGeneration() == true )
              {
-            // printf ("Declaration appears in the current source file. \n");
+#if 1
+               printf ("Declaration appears in the current source file. \n");
+#endif
                outputMemberFunctionTemplateInstantiation = true;
              }
             else
@@ -5767,7 +5780,17 @@ Unparse_ExprStmt::unparseTemplateFunctionDeclStmt(SgStatement* stmt, SgUnparse_I
 void
 Unparse_ExprStmt::unparseTemplateMemberFunctionDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
+#if 0
+     printf ("In unparseTemplateMemberFunctionDeclStmt(stmt = %p) \n",stmt);
+     curprint("/* In unparseTemplateMemberFunctionDeclStmt() */ \n ");
+#endif
+
      unparseTemplateDeclarationStatment_support<SgTemplateMemberFunctionDeclaration>(stmt,info);
+
+#if 0
+     printf ("DONE: In unparseTemplateMemberFunctionDeclStmt(stmt = %p) \n",stmt);
+     curprint("/* DONE: In unparseTemplateMemberFunctionDeclStmt() */ \n ");
+#endif
    }
 
 void

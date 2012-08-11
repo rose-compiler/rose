@@ -56,9 +56,9 @@ MarkTemplateInstantiationsForOutput::BuildSetOfRequiredTemplateDeclarations ( Sg
 
 #if 0
      printf ("Through with first call to traverse AST! \n");
-     printf ("declarationFixupTraversal.listOfTemplateDeclarationsToOutput.size() = %zu \n",
-          declarationFixupTraversal.listOfTemplateDeclarationsToOutput.size());
+     printf ("declarationFixupTraversal.listOfTemplateDeclarationsToOutput.size() = %zu \n",declarationFixupTraversal.listOfTemplateDeclarationsToOutput.size());
 #endif
+
      int prelinkIterationCounter = 0;
      while ( declarationFixupTraversal.listOfTemplateDeclarationsToOutput.empty() == false )
         {
@@ -198,14 +198,12 @@ ProcessMemberFunctionTemplateDeclarations ( set<SgDeclarationStatement*> setOfRe
                string filenameOfTemplateDeclaration = templateDeclaration->get_file_info()->get_filename();
 
                ROSE_ASSERT(templateDeclaration->get_scope() != NULL);
-               SgTemplateInstantiationDefn* memberFunctionScopeTemplateInstantiationDefinition = 
-                                   isSgTemplateInstantiationDefn(templateDeclaration->get_scope());
+               SgTemplateInstantiationDefn* memberFunctionScopeTemplateInstantiationDefinition = isSgTemplateInstantiationDefn(templateDeclaration->get_scope());
                if (memberFunctionScopeTemplateInstantiationDefinition != NULL)
                   {
                  // This is a SgTemplateInstantiationMemberFunctionDecl in a templated class declaration 
                  // (so it might be a templated member function or a non-templated member function).
-                    SgTemplateInstantiationDecl* memberFunctionScopeTemplateInstantiationDeclaration = 
-                         isSgTemplateInstantiationDecl(memberFunctionScopeTemplateInstantiationDefinition->get_declaration());
+                    SgTemplateInstantiationDecl* memberFunctionScopeTemplateInstantiationDeclaration = isSgTemplateInstantiationDecl(memberFunctionScopeTemplateInstantiationDefinition->get_declaration());
                     ROSE_ASSERT(memberFunctionScopeTemplateInstantiationDeclaration != NULL);
 #ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
                     SgDeclarationStatement* memberFunctionScopeTemplateDeclaration = memberFunctionScopeTemplateInstantiationDeclaration->get_templateDeclaration();
@@ -251,23 +249,20 @@ ProcessMemberFunctionTemplateDeclarations ( set<SgDeclarationStatement*> setOfRe
                     SgTemplateDeclaration* templateDeclaration = memberFunctionInstantiation->get_templateDeclaration();
 #endif
                  // bool templateDeclarationIsDeclaredInClass = (templateDeclaration->get_parent() == templateDeclaration->get_scope());
-                         SgNode* parentOfTemplateDeclaration = templateDeclaration->get_parent();
+                    SgNode* parentOfTemplateDeclaration = templateDeclaration->get_parent();
                  // Later this test will have to be for "isTemplateDefinition(parentOfTemplateDeclaration));"
                  // Make this a little more general since a member function might appear in a non-templated class.
                  // bool templateDeclarationIsDeclaredInClass = (isSgTemplateInstantiationDefn(parentOfTemplateDeclaration) != NULL);
                     bool templateDeclarationIsDeclaredInClass = (isSgClassDefinition(parentOfTemplateDeclaration) != NULL);
 #if 0
-                    printf ("templateDeclaration->get_parent()    = %p = %s \n",
-                              templateDeclaration->get_parent(),templateDeclaration->get_parent()->class_name().c_str());
-                    printf ("templateDeclaration->get_scope()     = %p = %s \n",
-                              templateDeclaration->get_scope(),templateDeclaration->get_scope()->class_name().c_str());
+                    printf ("templateDeclaration->get_parent()    = %p = %s \n",templateDeclaration->get_parent(),templateDeclaration->get_parent()->class_name().c_str());
+                    printf ("templateDeclaration->get_scope()     = %p = %s \n",templateDeclaration->get_scope(),templateDeclaration->get_scope()->class_name().c_str());
                     printf ("templateDeclarationIsDeclaredInClass = %s \n",templateDeclarationIsDeclaredInClass ? "true" : "false");
                  // printf ("templateDeclaration: get_name() = %s get_string() = %s \n",
                  //           templateDeclaration->get_name().str(),templateDeclaration->get_string().str());
                  // printf ("templateDeclaration: get_string() = %s \n",templateDeclaration->get_string().str());
 
-                    printf ("memberFunctionInstantiation->get_definition() = %p \n",
-                              memberFunctionInstantiation->get_definition());
+                    printf ("memberFunctionInstantiation->get_definition() = %p \n",memberFunctionInstantiation->get_definition());
                  // printf ("memberFunctionInstantiation->get_parent()     = %p = %s \n",
                  //      memberFunctionInstantiation->get_parent(),memberFunctionInstantiation->get_parent()->class_name().c_str());
                  // printf ("memberFunctionInstantiation->get_scope()      = %p = %s \n",
@@ -281,20 +276,22 @@ ProcessMemberFunctionTemplateDeclarations ( set<SgDeclarationStatement*> setOfRe
                  // if ( isSpecialization == true )
                     if ( (isSpecialization == true) || (isDefinedInClass == true) )
                        {
-#if 0
-                         printf ("Found a specialization in the current file, mark the specialization for output (on line = %d) \n",
-                                   templateDeclaration->get_file_info()->get_line());
+#if 1
+                         printf ("Found a specialization in the current file, mark the specialization for output (on line = %d) \n",templateDeclaration->get_file_info()->get_line());
 #endif
                       // I assume this is a definition if we are marking it for output!
                       // ROSE_ASSERT(memberFunctionInstantiation->get_definition() != NULL);
-
+#if 1
+                         printf ("Calling markForOutputInCodeGeneration() for memberFunctionInstantiation = %p = %s \n",memberFunctionInstantiation,memberFunctionInstantiation->class_name().c_str());
+#endif
                       // Mark this for output later when we generate code!
                          markForOutputInCodeGeneration(memberFunctionInstantiation);
                        }
                       else
                        {
+#if 0
                          printf ("templateDeclarationIsDeclaredInClass = %s \n",templateDeclarationIsDeclaredInClass ? "true" : "false");
-
+#endif
                          if (templateDeclarationIsDeclaredInClass == true)
                             {
                            // If it is not a specialization it might have been that the template declaration 
@@ -313,17 +310,22 @@ ProcessMemberFunctionTemplateDeclarations ( set<SgDeclarationStatement*> setOfRe
                               printf ("     member function qualified name = %s \n",memberFunctionInstantiation->get_qualified_name().str());
 #endif
 
+                           // DQ (8/8/2012): Output this declaration only if it is part of the class being output.
                            // DQ (8/26/2005): Suppress prototypes of constuctors (see test2005_147.C), not clear why these can't be output!
-                              bool processMemberFunction = true;
+                           // bool processMemberFunction = true;
+                              SgClassDefinition* parentClassDefinition = isSgClassDefinition(memberFunctionInstantiation->get_scope());
+                              ROSE_ASSERT(parentClassDefinition != NULL);
+                              SgClassDeclaration* parentClassDeclaration = parentClassDefinition->get_declaration();
+                              ROSE_ASSERT(parentClassDeclaration != NULL);
+
+                              bool processMemberFunction = (parentClassDeclaration->get_file_info()->isOutputInCodeGeneration() == true);
 
                            // DQ (8/27/2005): skipping constructors appears to be required for both g++ 3.3.x and 3.4.x
                            // special handling for non-defining constructor declarations
 #if 0
-                              printf ("memberFunctionInstantiation->get_specialFunctionModifier().isConstructor() = %s \n",
-                                      memberFunctionInstantiation->get_specialFunctionModifier().isConstructor() ? "true" : "false");
+                              printf ("memberFunctionInstantiation->get_specialFunctionModifier().isConstructor() = %s \n",memberFunctionInstantiation->get_specialFunctionModifier().isConstructor() ? "true" : "false");
 #endif
-                              if ( isDefiningDeclaration == false &&
-                                   memberFunctionInstantiation->get_specialFunctionModifier().isConstructor() == true )
+                              if ( isDefiningDeclaration == false && memberFunctionInstantiation->get_specialFunctionModifier().isConstructor() == true )
                                  {
                                 // printf ("Warning: Skipping output of constructor prototypes since their specialization is a problem (bug) in some versions of g++ (I think 3.4.x) \n");
                                    processMemberFunction = false;
@@ -333,8 +335,9 @@ ProcessMemberFunctionTemplateDeclarations ( set<SgDeclarationStatement*> setOfRe
                               if (processMemberFunction == true)
                                  {
                                 // This is not a constructor prototype so it is OK to output the prototype
-                                // printf ("Calling markForOutputInCodeGeneration(memberFunctionInstantiation = %p) \n",memberFunctionInstantiation);
-
+#if 1
+                                   printf ("Calling markForOutputInCodeGeneration(memberFunctionInstantiation = %p) \n",memberFunctionInstantiation);
+#endif
                                 // Mark this for output later when we generate code!
                                 // This marks the defining and non-defining declarations for output
                                 // (which for the case of a constructor we fixup below).
@@ -343,8 +346,7 @@ ProcessMemberFunctionTemplateDeclarations ( set<SgDeclarationStatement*> setOfRe
                                 // DQ (8/28/2005): It is a bug in g++ if we output the forward declaration
                                 // of a member function specialization (for either a template or non-template 
                                 // member function).
-                                   if ( isDefiningDeclaration == true &&
-                                        memberFunctionInstantiation->get_specialFunctionModifier().isConstructor() == true )
+                                   if ( isDefiningDeclaration == true && memberFunctionInstantiation->get_specialFunctionModifier().isConstructor() == true )
                                       {
 #if 0
                                         SgDeclarationStatement* temp = memberFunctionInstantiation->get_firstNondefiningDeclaration();
@@ -725,9 +727,8 @@ MarkTemplateInstantiationsForOutput::ProcessFunctionTemplateDeclarations ( set<S
                     printf ("In MarkTemplateInstantiationsForOutput::ProcessFunctionTemplateDeclarations(): isSpecialization = %s \n",isSpecialization ? "true" : "false");
                     if (isSpecialization == true)
                        {
-#if 0
-                         printf ("Calling markForOutputInCodeGeneration on functionInstantiation = %p = %s \n",
-                              functionInstantiation,functionInstantiation->class_name().c_str());
+#if 1
+                         printf ("Calling markForOutputInCodeGeneration on functionInstantiation = %p = %s \n",functionInstantiation,functionInstantiation->class_name().c_str());
 #endif
                          markForOutputInCodeGeneration (functionInstantiation);
                        }
@@ -806,13 +807,16 @@ MarkTemplateInstantiationsForOutput::ProcessClassTemplateDeclarations ( set<SgDe
 #endif
                     if (isSpecialization == true)
                        {
-#if 0
+#if 1
                          printf ("Calling markForOutputInCodeGeneration on classInstantiation = %p = %s \n",classInstantiation,classInstantiation->class_name().c_str());
 #endif
                          markForOutputInCodeGeneration (classInstantiation);
                        }
                   }
              }
+#if 0
+          printf ("At base of loop: ProcessClassTemplateDeclarations() set element = %p = %s \n",*i,(*i)->class_name().c_str());
+#endif
         }
    }
 
