@@ -159,7 +159,7 @@ int main(int argc, char *argv[])
 
     //Setup pointerAliasAnalysis and filter CFG nodes based on mFilter criteria
     pointerAliasAnalysis poal(NULL);
-    poal.filter = attrFilter;
+    //poal.filter = attrFilter;
 
     ContextInsensitiveInterProceduralDataflow inter_al(&poal, graph);
     inter_al.runAnalysis();
