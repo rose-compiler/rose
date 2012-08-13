@@ -161,6 +161,9 @@ void postProcessingSupport (SgNode* node)
        // DQ (5/1/2012): After EDG/ROSE translation, there should be no IR nodes marked as transformations.
           detectTransformations(node);
 
+       // DQ (8/12/2012): reset all of the type references (to intermediately generated types).
+          fixupTypeReferences();
+
        // Reset and test and parent pointers so that it matches our definition 
        // of the AST (as defined by the AST traversal mechanism).
           topLevelResetParentPointer(node);

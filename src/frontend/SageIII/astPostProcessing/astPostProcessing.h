@@ -53,6 +53,10 @@
 // DQ (5/1/2012): Added testing for marked transformations in the AST (should be none after EDG/ROSE translation).
 #include "detectTransformations.h"
 
+// DQ (8/12/2012): Fixup the SgModifiers used to hold type reference in EDG to types in instantiated templates that had not yet been seen).
+// This post processing effects test2012_190.C and test2007_141.C.
+#include "fixupTypeReferences.h"
+
 
 /*! \brief Postprocessing that is not likely to be handled in the EDG/Sage III translation.
  */
