@@ -581,6 +581,12 @@ Grammar::setUpTypes ()
   //      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, DEF_DELETE);
 #endif
 
+  // DQ (8/12/2012): This is used as a wrapper to support type references that will be fixed up after the AST 
+  // is build and all types exist. It is part of the new C++ support and required for types hidden in template 
+  // instantiations that have not yet been processed yet.
+     ModifierType.setDataPrototype ("char*", "frontend_type_reference" , "= NULL",
+                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
   // DQ (10/10/2006): The idea here is that these would be wrappers for existing types, 
   // but I think this was ultimately a problem to make it really work (because it could 
   // only replace SgType and not SgNamedType, for example; so it is not used as an IR 
@@ -670,6 +676,29 @@ Grammar::setUpTypes ()
      TypeDefault.setFunctionPrototype ("HEADER_TYPE_DEFAULT_TYPE", "../Grammar/Type.code" );
      TypeDefault.setDataPrototype ("SgName", "name" , "= \"\"",
                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+#if 0
+  // DQ (8/12/2012): I might not need this, since I have a more direct approach.
+  // DQ (8/12/2012): I need a mechanism to store references to types (typically in template instantiations) 
+  // that have not been seen yet and will be fixed up later.  I will use a SgDefaultType (used similarly in 
+  // the Fortran support) and then fixed up in a seperate pass of AST post-processing.  At this point the
+  // type_translation_cache map (of EDG types to ROSE types) should have a valid entry (because all of the
+  // template instantiations will have been processed).  Note that this need not confuse the name mangling
+  // since that can alternatively be done with either the typedef type of the typedef's base type.  It is
+  // more important to support this where types are output (e.g as part of variable declarations) so that 
+  // the type names being output will not be private. We have to store both sides of the reference so that
+  // we can find the IR node in the ROSE AST to be reset (points to this SgTypeDefault IR node).  Then the
+  // proper SgType node to use instead is found from:
+  //      "type_translation_cache[(a_type_ptr)frontend_type_reference]".
+  // This replacement must be done ast the AST has been build as a preliminary step in the AST post-processing.
+  // All of the associated SgDefaultIr nodes can then be deleted.
+  // I regret that I don't have a better solution for this problem, I don't like these solutions.  Maybe I 
+  // will still have a better idea...
+     TypeDefault.setDataPrototype ("SgNode*", "rose_node" , "= \"\"",
+                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     TypeDefault.setDataPrototype ("void*", "frontend_type_reference" , "= \"\"",
+                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
 
   // DQ (2/1/2011): Added label type to support Fortran alternative return arguments in function declarations.
      TypeLabel.setFunctionPrototype ("HEADER_TYPE_LABEL_TYPE", "../Grammar/Type.code" );
