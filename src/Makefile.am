@@ -17,7 +17,7 @@ INCLUDES = -Winvalid-pch $(ROSE_INCLUDES)
 # Binary distributions of ROSE store the binary for EDG related code in the source tree.
 # JJW (8/3/2008): See src/frontend/CxxFrontend/Makefile.am.forBinaryEDG for
 # more information on this process.
-# libroseEDGlibraries = frontend/CxxFrontend/EDG/libroseEDG.la
+# TV (08/2012): changed 'libroseEDGlibraries' to 'libroseCxxlibraries' while adding Clang support to ROSE
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 if ROSE_USE_CLANG_FRONTEND
    libroseCxxlibraries = frontend/CxxFrontend/Clang/libroseClangFrontend.la
@@ -98,8 +98,8 @@ libroseLibraries = \
    $(top_builddir)/src/3rdPartyLibraries/MSTL/libmstl.la \
    $(top_builddir)/src/backend/libbackend.la \
    $(top_builddir)/src/frontend/SageIII/libsage3.la \
-   $(libroseEDGlibraries) \
-   $(top_builddir)/src/midend/astProcessing/libastprocessing.la \
+   $(libroseCxxlibraries) \
+   $(top_builddir)/src/midend/libmidend.la \
    $(top_builddir)/src/roseSupport/libroseSupport.la \
    $(top_builddir)/src/util/support/libsupport.la \
    $(top_builddir)/src/util/graphs/libgraphs.la \
@@ -113,9 +113,7 @@ libroseLibraries = \
    $(libroseOpenFortranParserlibraries) \
    $(libroseJavaParserlibraries) \
    $(librosePHPlibraries) \
-   $(libroseCxxlibraries) \
    $(librosePythonlibraries) \
-   $(libroseEDGlibraries) \
    $(libroseBinaryLibraries) \
    $(top_builddir)/src/midend/programAnalysis/libprogramAnalysis.la \
    $(top_builddir)/src/midend/programTransformation/loopProcessing/libLoopProcessing.la \

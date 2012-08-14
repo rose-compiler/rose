@@ -87,10 +87,13 @@ libmidend_la_SOURCES=\
 	$(mAbstractMemoryObject_la_sources) \
 	$(mAstDiagnostics_la_sources) \
 	$(mAstProcessing_la_sources) \
+	$(mAstQuery_la_sources)
+if !ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+libmidend_la_SOURCES+=\
 	$(mAstRewriteMechanism_la_sources) \
-	$(mAstQuery_la_sources) \
 	$(mAstUtil_la_sources) \
 	$(mProgramTransformation_la_sources)
+endif
 
 # astProcessing _la_LIBADD = $(CXX_TEMPLATE_OBJECTS)
 libmidend_la_LIBADD=\

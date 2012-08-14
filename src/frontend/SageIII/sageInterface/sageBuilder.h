@@ -818,7 +818,7 @@ buildDefiningFunctionDeclaration_T (const SgName & name, SgType* return_type, Sg
 //! Build a function declaration with a function body
 // SgFunctionDeclaration* buildDefiningFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList * parlist, SgScopeStatement* scope, SgExprListExp* decoratorList, bool buildTemplateInstantiation, SgFunctionDeclaration* first_nondefinng_declaration);
 SgFunctionDeclaration*
-buildDefiningFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList * parlist, SgScopeStatement* scope, SgExprListExp* decoratorList, bool buildTemplateInstantiation, SgFunctionDeclaration* first_nondefinng_declaration,SgTemplateArgumentPtrList* templateArgumentsList);
+buildDefiningFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList * parlist, SgScopeStatement* scope, SgExprListExp* decoratorList, bool buildTemplateInstantiation = false, SgFunctionDeclaration* first_nondefinng_declaration = NULL, SgTemplateArgumentPtrList* templateArgumentsList = NULL);
 
 #if 0
 // DQ (7/26/2012): I would like to remove these from the API (if possible).
