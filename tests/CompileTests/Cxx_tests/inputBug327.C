@@ -2,6 +2,7 @@
 // A test for 'const' used in function parameter list
 #include <vector>
 using namespace std;
+
 class CFGEdge;
 class CFGNode
 {
@@ -26,4 +27,5 @@ void foo()
   makeClosure(&CFGPath::target);
 
 }
+
 

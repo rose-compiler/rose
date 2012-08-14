@@ -2347,6 +2347,18 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
   // forward declaration in a scope permitting a defining declaration, the function name must be qualified as per
   // usual name qualification rules.
 
+  // DQ (8/4/2012): It is too complex to add this declaration support here (use the previous code and just
+  // handle the specific cases where we need to add a declaration to the reference set spereately.
+  // DQ (8/4/2012): Let any procesing define a declaration to be used for the reference set.
+  // Ititially it is NULL, but specific cases can set this so that the associated declaration 
+  // we be recorded as referenced.  This is important for test2012_164.C, where a variable declaration
+  // generates a reference to a type that at first must not use a qualified name (since there is no
+  // explicit forward declaration for the type (a class/struct).  This is a facinating case since
+  // the scope of the declaration is the outer namespace from where it is first implicitly referenced 
+  // via a variable declaration.  This is part of debugging test2005_133.C (of which test2012_16[3-5].C
+  // are simpler cases.  
+  // SgDeclarationStatement* declarationForReferencedNameSet = NULL;
+
   // DQ (6/11/2011): This is a new IR nodes, but the use of it causes a few problems (test2004_109.C) 
   // because the source position is not computed correctly (I think).
      SgTemplateClassDefinition* templateClassDefinition = isSgTemplateClassDefinition(n);
@@ -2462,6 +2474,9 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
      SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(n);
      if (variableDeclaration != NULL)
         {
+       // DQ (8/4/2012): Why is this case procesed if the SgInitializedNames are processed sperately (this appears to be redundant with that).
+          printf ("QUESTION: Why is this case of name qualification SgVariableDeclaration procesed if the SgInitializedNames are processed sperately (this appears to be redundant with that). \n");
+
           SgInitializedName* initializedName = SageInterface::getFirstInitializedName(variableDeclaration);
           ROSE_ASSERT(initializedName != NULL);
 
@@ -2486,7 +2501,32 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                printf ("Putting the name qualification for the type into the SgInitializedName = %p = %s \n",initializedName,initializedName->get_name().str());
 #endif
+
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+               printf ("declaration = %p = %s \n",declaration,declaration->class_name().c_str());
+#endif
+
+#if 1
+            // **************************************************
+            // DQ (8/4/2012): The type being used might not have to be qualified if it is associated with a SgClassDeclaration that has not been defined yet.
+            // **************************************************
+               bool skipGlobalNameQualification = skipNameQualificationIfNotProperlyDeclaredWhereDeclarationIsDefinable(declaration);
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+               printf ("Test of Type used in SgVariableDeclaration: skipGlobalNameQualification = %s \n",skipGlobalNameQualification ? "true" : "false");
+#endif
+#if 1
+               setNameQualification(initializedName,declaration,amountOfNameQualificationRequiredForType,skipGlobalNameQualification);
+#else
+               if (skipGlobalNameQualification == false)
+                  {
+                    setNameQualification(initializedName,declaration,amountOfNameQualificationRequiredForType);
+                  }
+#endif
+            // **************************************************
+#else
                setNameQualification(initializedName,declaration,amountOfNameQualificationRequiredForType);
+#endif
              }
             else
              {
@@ -2605,8 +2645,80 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                printf ("SgInitializedName's (%s) type: amountOfNameQualificationRequiredForType = %d \n",initializedName->get_name().str(),amountOfNameQualificationRequiredForType);
 #endif
-               setNameQualification(initializedName,declaration,amountOfNameQualificationRequiredForType);
 
+#if 1
+            // DQ (8/4/2012): This is redundant code with where the SgInitializedName appears in the SgVariableDeclaration.
+            // **************************************************
+            // DQ (8/4/2012): The type being used might not have to be qualified if it is associated with a SgClassDeclaration 
+            // that has not been defined yet.  This fixes test2012_165.C.
+            // **************************************************
+               bool skipGlobalNameQualification = skipNameQualificationIfNotProperlyDeclaredWhereDeclarationIsDefinable(declaration);
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+               printf ("case of SgInitializedName: currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
+#endif
+
+            // DQ (8/4/2012): However, this quasi-pathological case does not apply to template instantiations 
+            // (only non-template classes or maybe named types more generally?).  Handle template declarations similarly.
+            // OR enum declarations (since they can have a forward declaration (except that this is a common languae extension...).
+               if (isSgTemplateInstantiationDecl(declaration) != NULL || isSgEnumDeclaration(declaration) != NULL)
+                  {
+                 // Do the regularly schedule name qualification for these cases.
+                    skipGlobalNameQualification = false;
+                  }
+                 else
+                  {
+                 // Look back through the scopes and see if we are in a template instantiation or template scope, 
+                 // if so then do the regularly scheduled name qualification.
+
+                    SgScopeStatement* scope = declaration->get_scope();
+                 // printf ("case of SgInitializedName: scope = %p = %s \n",scope,scope->class_name().c_str());
+                    int distanceBackThroughScopes = amountOfNameQualificationRequiredForType;
+                 // printf ("case of SgInitializedName: distanceBackThroughScopes = %d \n",distanceBackThroughScopes);
+                    while (distanceBackThroughScopes > 0 && scope != NULL)
+                       {
+                      // Traverse backwards through the scopes checking for a SgTemplateClassDefinition scope
+                      // If we traverse off the end of SgGlobal then the amountOfNameQualificationRequiredForType 
+                      // value was trying to trigger global qualification, so this is not a problem.
+                      // We at least need isSgTemplateInstantiationDefn, not clear about isSgTemplateClassDefinition.
+
+                         if (isSgTemplateInstantiationDefn(scope) != NULL || isSgTemplateClassDefinition(scope) != NULL)
+                            {
+                              skipGlobalNameQualification = false;
+                            }
+
+                         ROSE_ASSERT(scope != NULL);
+                         scope = scope->get_scope();
+
+                         distanceBackThroughScopes--;
+                       }
+                  }
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+               printf ("Test of Type used in SgInitializedName: declaration = %p = %s skipGlobalNameQualification = %s \n",declaration,declaration->class_name().c_str(),skipGlobalNameQualification ? "true" : "false");
+#endif
+
+            // DQ (8/4/2012): Added support to permit global qualification be be skipped explicitly (see test2012_164.C and test2012_165.C for examples where this is important).
+               setNameQualification(initializedName,declaration,amountOfNameQualificationRequiredForType,skipGlobalNameQualification);
+
+            // **************************************************
+#else
+            // setNameQualification(initializedName,declaration,amountOfNameQualificationRequiredForType);
+               setNameQualification(initializedName,declaration,amountOfNameQualificationRequiredForType,false);
+#endif
+
+#if 1
+            // DQ (8/4/2012): Isolate that handling of the referencedNameSet from the use of skipGlobalNameQualification so that we can debug (test2012_96.C).
+            // if (skipGlobalNameQualification == true && referencedNameSet.find(declaration) == referencedNameSet.end())
+               if (referencedNameSet.find(declaration) == referencedNameSet.end())
+                  {
+                 // No qualification is required but we do want to count this as a reference to the class.
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                    printf ("No qualification should be used for this type (class) AND insert it into the referencedNameSet \n");
+#endif
+                    referencedNameSet.insert(declaration);
+                  }
+#endif
             // This can be inside of the case where (declaration != NULL)
             // Traverse the type to set any possible template arguments (or other subtypes?) that require name qualification.
                traverseType(initializedName->get_type(),initializedName,currentScope,currentStatement);
@@ -2714,7 +2826,10 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 
                            // This is the same code as below so it could be refactored (special handling for function declarations 
                            // that are defining declaration and don't have an associated nondefining declaration).
+
+                           // DQ (8/4/2012): This is a case using the referencedNameSet that should be refactored out of this location.
                               SgDeclarationStatement* declarationForReferencedNameSet = functionDeclaration->get_firstNondefiningDeclaration();
+
                               if (declarationForReferencedNameSet == NULL)
                                  {
                                 // Note that a function with only a defining declaration will not have a nondefining declaration 
@@ -2734,6 +2849,9 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                                    ROSE_ASSERT(declarationForReferencedNameSet != NULL);
                                  }
                               ROSE_ASSERT(declarationForReferencedNameSet != NULL);
+
+                           // DQ (8/4/2012): We would like to refactor this code (I think).
+                              printf ("Name qualification for SgFunctionDeclaration: I think this should be using the defined function xxx so that we isolate references to the referencedNameSet \n");
 
                               if (referencedNameSet.find(declarationForReferencedNameSet) == referencedNameSet.end())
                                  {
@@ -3483,10 +3601,13 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 
        // SgDeclarationStatement* firstNondefiningDeclaration   = declaration->get_firstNondefiningDeclaration();
           SgDeclarationStatement* declarationForReferencedNameSet = declaration->get_firstNondefiningDeclaration();
+       // ROSE_ASSERT(declarationForReferencedNameSet == NULL);
+       // declarationForReferencedNameSet = declaration->get_firstNondefiningDeclaration();
+
           if (declarationForReferencedNameSet == NULL)
              {
             // Note that a function with only a defining declaration will not have a nondefining declaration 
-            // automatically constructed in the AST (unlike classes and some onther sorts of declarations).
+            // automatically constructed in the AST (unlike classes and some other sorts of declarations).
                declarationForReferencedNameSet = declaration->get_definingDeclaration();
 
             // DQ (6/22/2011): I think this is true.  This assertion fails for test2006_78.C (a template example code).
@@ -4418,11 +4539,13 @@ NameQualificationTraversal::setNameQualification ( SgUsingDirectiveStatement* us
    }
 
 
+// DQ (8/4/2012): Added support to permit global qualification be be skipped explicitly (see test2012_164.C and test2012_165.C for examples where this is important).
 // void NameQualificationTraversal::setNameQualification(SgInitializedName* initializedName,SgFunctionDeclaration* functionDeclaration, int amountOfNameQualificationRequired)
+// void NameQualificationTraversal::setNameQualification(SgInitializedName* initializedName,SgDeclarationStatement* declaration, int amountOfNameQualificationRequired)
 void
-NameQualificationTraversal::setNameQualification(SgInitializedName* initializedName,SgDeclarationStatement* declaration, int amountOfNameQualificationRequired)
+NameQualificationTraversal::setNameQualification(SgInitializedName* initializedName,SgDeclarationStatement* declaration, int amountOfNameQualificationRequired, bool skipGlobalQualification)
    {
-  // This is used to set the name qualification on the return type referenced by the SgInitializedName, and not on the SgInitializedName IR node itself.
+  // This is used to set the name qualification on the type referenced by the SgInitializedName, and not on the SgInitializedName IR node itself.
 
   // Setup call to refactored code.
      int  outputNameQualificationLength = 0;
@@ -4431,6 +4554,24 @@ NameQualificationTraversal::setNameQualification(SgInitializedName* initializedN
 
   // setNameQualificationSupport(functionDeclaration->get_scope(),amountOfNameQualificationRequired, outputNameQualificationLength, outputGlobalQualification, outputTypeEvaluation);
      string qualifier = setNameQualificationSupport(declaration->get_scope(),amountOfNameQualificationRequired, outputNameQualificationLength, outputGlobalQualification, outputTypeEvaluation);
+
+  // DQ (8/4/2012): In rare cases we have to eliminate qualification only if it is going to be global qualification.
+  // if (skipGlobalQualification == true && qualifier == "::")
+     if (skipGlobalQualification == true)
+        {
+          printf ("In NameQualificationTraversal::setNameQualification(SgInitializedName* initializedName): skipGlobalQualification has caused global qualification to be ignored \n");
+          qualifier = "";
+
+          outputNameQualificationLength = 0;
+          outputGlobalQualification     = false;
+
+       // Note clear if this is what we want.
+          outputTypeEvaluation          = false;
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
 
 #if 1
      initializedName->set_global_qualification_required_for_type(outputGlobalQualification);

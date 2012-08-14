@@ -9784,7 +9784,9 @@ void SageInterface::fixVariableDeclaration(SgVariableDeclaration* varDecl, SgSco
        // printf ("In SageInterface::fixVariableDeclaration() preAssociatedScope = %p \n",preAssociatedScope);
           if (preAssociatedScope != NULL)
              {
+#if 0
                printf ("In SageInterface::fixVariableDeclaration(): Note that this variable already has an associated scope! preAssociatedScope = %p = %s (but will be reset below) \n",preAssociatedScope,preAssociatedScope->class_name().c_str());
+#endif
             // ROSE_ASSERT(preAssociatedScope == scope);
 
                requiredScope = preAssociatedScope;

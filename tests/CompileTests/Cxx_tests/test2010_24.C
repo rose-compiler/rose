@@ -4,11 +4,13 @@
  * 11/12/2010
  * */
 #include <vector>
+
 namespace mystd
 {
 };
+
 namespace s = std;
-   namespace s = std;
+namespace s = std;
 
 namespace ms = mystd;
-   namespace ms = mystd;
+namespace ms = mystd;

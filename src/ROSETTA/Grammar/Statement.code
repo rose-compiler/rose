@@ -6589,7 +6589,7 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
   // be reserved for after the Sage III AST is fully constructed and all post processing fixup 
   // (currently limited to setting all parent pointers) is complete.
 
-#if 1
+#if 0
      printf ("In SgDeclarationStatement::resetTemplateNameSupport(): CRITICAL FUNCTION TO BE REFACTORED \n");
 #endif
 
@@ -6618,7 +6618,8 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
 #endif
 
      SgScopeStatement* parentScope = get_scope();
-#if 1
+
+#if 0
      printf ("In resetTemplateNameSupport(): At %s parentScope = %s \n",sage_class_name(),parentScope->sage_class_name());
 #endif
 
@@ -6693,7 +6694,7 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
                   {
                     SgTemplateInstantiationMemberFunctionDecl* node = isSgTemplateInstantiationMemberFunctionDecl(this);
                     ROSE_ASSERT(node != NULL);
-#if 1
+#if 0
                     printf ("node = %p = (templateName) %s = (name) %s \n",node,node->get_templateName().str(),node->get_name().str());
 #endif
                     returnName         = node->get_templateName().str();
@@ -6704,12 +6705,15 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
 
                  // DQ (2/17/2005): We can't translate "operator+" into "operator+<int>" since it will become "+<int>" 
                  // in the unparser so make sure that this is not a name of an overloaded operator function.
+#if 0
                     printf ("member function name = %s \n",returnName.c_str());
-
+#endif
                  // if (TransformationSupport::classifyOverloadedOperator(returnName) != TransformationSupport::FUNCTION_CALL_OPERATOR_CODE)
                     if (node->get_specialFunctionModifier().isOperator() == true)
                        {
+#if 0
                          printf ("Skipping appending the templates arguments to this overloaded operator \n");
+#endif
                          appendTemplateArguments = false;
                        }
 
@@ -7151,7 +7155,7 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
        // printf ("In SgDeclarationStatement::resetTemplateNameSupport(): Output the symbol table for scope = %p = %s: \n",parentScope,parentScope->class_name().c_str());
        // SageInterface::outputLocalSymbolTables(parentScope);
 
-#if 1
+#if 0
        // DQ (2/10/2007): Unload the associated symbol using the old name and reload it into the symbol table using the new name!
           printf ("\n\nCalling this->get_symbol_from_symbol_table() on %s parentScope = %p = %s name = %s count = %ld \n",
                this->class_name().c_str(),parentScope,parentScope->class_name().c_str(),name.str(),parentScope->count_symbol(name));
@@ -7208,7 +7212,7 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
              {
             // Remove the symbol (previously inserted under the old name and hashed accordingly) 
             // so that we can reinsert it into the symbol table after we change the name.
-#if 1
+#if 0
                printf ("Removing the symbol = %p = %s name = %s from scope %p = %s \n",symbol,symbol->class_name().c_str(),name.str(),parentScope,parentScope->class_name().c_str());
                SgClassSymbol* classSymbol = isSgClassSymbol(symbol);
                if (classSymbol != NULL)

@@ -12,6 +12,7 @@ if ROSE_USE_EDG_VERSION_4_3
 # EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
 #  $(TESTCODE_CURRENTLY_FAILING)
 
+# EXAMPLE_TESTCODES_REQUIRED_TO_PASS = $(NEVER_PASING_TESTCODE_CURRENTLY_FAILING)
 
 EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
 test_CplusplusMacro_Cpp.C \
@@ -360,11 +361,13 @@ test2005_133.C \
 test2005_134.C \
 test2005_135.C \
 test2005_136.C \
+test2005_137.C \
 test2005_138.C \
 test2005_139.C \
 test2005_140.C \
 test2005_141.C \
 test2005_142.C \
+test2005_143.C \
 test2005_144.C \
 test2005_145.C \
 test2005_146.C \
@@ -459,6 +462,7 @@ test2006_47.C \
 test2006_50.C \
 test2006_52.C \
 test2006_53.C \
+test2006_54.C \
 test2006_55.C \
 test2006_56.C \
 test2006_57.C \
@@ -492,6 +496,7 @@ test2006_86.C \
 test2006_87.C \
 test2006_88.C \
 test2006_89.C \
+test2006_90.C \
 test2006_91.C \
 test2006_92.C \
 test2006_93.C \
@@ -523,7 +528,7 @@ test2006_121.C \
 test2006_123.C \
 test2006_124.C \
 test2006_125.C \
-test2006_126.C  \
+test2006_126.C \
 test2006_129.C \
 test2006_139.C \
 test2006_140.C \
@@ -537,6 +542,7 @@ test2006_147.C \
 test2006_148.C \
 test2006_149.C \
 test2006_150.C \
+test2006_151.C \
 test2006_152.C \
 test2006_153.C \
 test2006_154.C \
@@ -583,6 +589,7 @@ test2007_25.C \
 test2007_26.C \
 test2007_28.C \
 test2007_29.C \
+test2007_38.C \
 test2007_40.C \
 test2007_41.C \
 test2007_43.C \
@@ -617,7 +624,9 @@ test2007_128.C \
 test2007_130.C \
 test2007_133.C \
 test2007_135.C \
+test2007_137.C \
 test2007_140.C \
+test2007_141.C \
 test2007_142.C \
 test2007_147.C \
 test2007_150.C \
@@ -670,6 +679,7 @@ test2009_15.C \
 test2009_18.C \
 test2009_19.C \
 test2009_20.C \
+test2009_24.C \
 test2009_27.C \
 test2009_28.C \
 test2009_31.C \
@@ -682,6 +692,7 @@ test2010_05.C \
 test2010_06.C \
 test2010_18.C \
 test2010_19.C \
+test2010_24.C \
 test2011_01.C \
 test2011_02.C \
 test2011_05.C \
@@ -744,6 +755,7 @@ test2011_76.C \
 test2011_77.C \
 test2011_78.C \
 test2011_79.C \
+test2011_80.C \
 test2011_81.C \
 test2011_82.C \
 test2011_83.C \
@@ -863,6 +875,7 @@ test2012_29.C \
 test2012_30.C \
 test2012_31.C \
 test2012_32.C \
+test2012_33.C \
 test2012_34.C \
 test2012_36.C \
 test2012_37.C \
@@ -929,8 +942,10 @@ test2012_99.C \
 test2012_100.C \
 test2012_101.C \
 test2012_102.C \
+test2012_103.C \
 test2012_104.C \
 test2012_105.C \
+test2012_106.C \
 test2012_107.C \
 test2012_108.C \
 test2012_109.C \
@@ -976,6 +991,39 @@ test2012_153.C \
 test2012_154.C \
 test2012_155.C \
 test2012_156.C \
+test2012_157.C \
+test2012_158.C \
+test2012_159.C \
+test2012_160.C \
+test2012_161.C \
+test2012_162.C \
+test2012_163.C \
+test2012_164.C \
+test2012_165.C \
+test2012_166.C \
+test2012_167.C \
+test2012_168.C \
+test2012_169.C \
+test2012_170.C \
+test2012_171.C \
+test2012_172.C \
+test2012_173.C \
+test2012_174.C \
+test2012_175.C \
+test2012_176.C \
+test2012_177.C \
+test2012_178.C \
+test2012_179.C \
+test2012_180.C \
+test2012_181.C \
+test2012_182.C \
+test2012_183.C \
+test2012_184.C \
+test2012_185.C \
+test2012_186.C \
+test2012_187.C \
+test2012_188.C \
+test2012_190.C \
 test_int_lexemes.C \
 test_int_lexemes_donot_pass.C \
 test_simple_int.C \
@@ -983,6 +1031,7 @@ test_wchars.C \
 lexPhase2003_01.C \
 inputForLoopLocator.C \
 inputBug317.C \
+inputBug327.C \
 X.C \
 $(NEW_PASSING_FILES)
 
@@ -999,6 +1048,7 @@ test2004_35.C
 # test2011_191.C 
 # test2012_79.C 
 # test2012_81.C 
+
 
 else
 include $(srcdir)/Makefile-pass.inc
@@ -1023,36 +1073,321 @@ test2012_35.C \
 test2012_79.C
 
 
-
-
 # Import list of C++ test cases that are known to fail:
 #   TESTCODE_CURRENTLY_FAILING
 #
 if ROSE_USE_EDG_VERSION_4_3
 TESTCODE_CURRENTLY_FAILING = \
-test2005_137.C \
-test2005_143.C \
-test2006_54.C \
-test2006_90.C \
 test2006_122.C \
- test2006_151.C \
-test2007_38.C \
-test2007_137.C \
-test2007_141.C \
 test2009_21.C \
-test2009_24.C \
 test2009_30.C \
  test2009_37.C \
 test2009_39.C \
-test2010_24.C \
 test2011_31.C \
 test2011_32.C \
- test2011_65.C \
-test2011_80.C \
- test2012_33.C \
-test2012_103.C \
-test2012_106.C \
-inputBug327.C 
+ test2011_65.C
+
+# DQ (8/12/2012): This test code appears to demonstrate a loss of the template arguments in the name qualification.
+# test2012_189.C
+
+
+
+
+
+
+# DQ (8/6/2012): These are the previously failing test with the older version of ROSE (115 of the 183 old failing tests pass now: 68 left...).
+PASSING_PREVIOUSLY_FAILING_TESTS = \
+certSignalExample.C \
+longFile.C \
+test2005_151.C \
+test2005_200.C \
+test2005_204.C \
+test2005_69.C \
+test2005_85.C \
+test2006_09.C \
+test2006_127.C \
+test2006_15.C \
+test2006_167.C \
+test2006_168.C \
+test2006_169.C \
+test2006_172.C \
+test2006_174.C \
+test2006_175.C \
+test2006_176.C \
+test2006_180.C \
+test2006_182.C \
+test2006_186.C \
+test2006_188.C \
+test2006_27.C \
+test2006_64.C \
+test2007_100.C \
+test2007_104.C \
+test2007_106.C \
+test2007_107.C \
+test2007_110.C \
+test2007_111.C \
+test2007_114.C \
+test2007_116.C \
+test2007_117.C \
+test2007_118.C \
+test2007_119.C \
+test2007_120.C \
+test2007_121.C \
+test2007_122.C \
+test2007_126.C \
+test2007_127.C \
+test2007_129.C \
+test2007_131.C \
+test2007_132.C \
+test2007_134.C \
+test2007_136.C \
+test2007_143.C \
+test2007_145.C \
+test2007_148.C \
+test2007_149.C \
+test2007_156.C \
+test2007_168.C \
+test2007_174.C \
+test2007_176.C \
+test2007_18.C \
+test2007_19.C \
+test2007_20.C \
+test2007_22.C \
+test2007_27.C \
+test2007_31.C \
+test2007_32.C \
+test2007_33.C \
+test2007_34.C \
+test2007_36.C \
+test2007_37.C \
+test2007_39.C \
+test2007_45.C \
+test2007_51.C \
+test2007_52.C \
+test2007_56.C \
+test2007_58.C \
+test2007_61.C \
+test2007_63.C \
+test2007_67.C \
+test2007_68.C \
+test2007_71.C \
+test2007_73.C \
+test2007_74.C \
+test2007_76.C \
+test2007_80.C \
+test2007_86.C \
+test2007_87.C \
+test2007_88.C \
+test2007_89.C \
+test2007_91.C \
+test2007_96.C \
+test2007_97.C \
+test2007_99.C \
+test2009_07.C \
+test2009_13.C \
+test2009_22.C \
+test2009_33.C \
+test2009_34.C \
+test2009_38.C \
+test2009_44.C \
+test2009_46.C \
+test2009_47.C \
+test2010_07.C \
+test2010_09.C \
+test2010_10.C \
+test2010_11.C \
+test2010_15.C
+
+
+
+# DQ (8/6/2012): This is the list of test code that were failing before the move to EDG 4.3 (failing with the use of EDG 3.3)
+# DQ (8/6/2012): Original count is 183 failing tests that have never passed previously.
+NEVER_PASING_TESTCODE_CURRENTLY_FAILING = \
+lexPhase2003_02.C \
+test2004_25.C \
+test2005_69.C \
+test2005_85.C \
+test2005_115.C \
+test2005_151.C \
+test2005_188.C \
+test2005_200.C \
+test2005_201.C \
+test2005_204.C \
+test2005_205.C \
+test2006_09.C \
+test2006_11.C \
+test2006_15.C \
+test2006_21.C \
+test2006_24.C \
+test2006_27.C \
+test2006_33.C \
+test2006_35.C \
+test2006_36.C \
+test2006_49.C \
+test2006_60.C \
+test2006_64.C \
+test2006_127.C \
+test2006_128.C \
+test2006_130.C \
+test2006_131.C \
+test2006_138.C \
+test2006_167.C \
+test2006_168.C \
+test2006_169.C \
+test2006_170.C \
+test2006_171.C \
+test2006_172.C \
+test2006_173.C \
+test2006_174.C \
+test2006_175.C \
+test2006_176.C \
+test2006_180.C \
+test2006_182.C \
+test2006_184.C \
+test2006_186.C \
+test2006_187.C \
+test2006_188.C \
+test2007_18.C \
+test2007_19.C \
+test2007_20.C \
+test2007_22.C \
+test2007_27.C \
+test2007_30.C \
+test2007_31.C \
+test2007_32.C \
+test2007_33.C \
+test2007_34.C \
+test2007_35.C \
+test2007_36.C \
+test2007_37.C \
+test2007_39.C \
+test2007_42.C \
+test2007_45.C \
+test2007_51.C \
+test2007_52.C \
+test2007_54.C \
+test2007_56.C \
+test2007_58.C \
+test2007_60.C \
+test2007_61.C \
+test2007_63.C \
+test2007_64.C \
+test2007_65.C \
+test2007_66.C \
+test2007_67.C \
+test2007_68.C \
+test2007_69.C \
+test2007_71.C \
+test2007_73.C \
+test2007_74.C \
+test2007_76.C \
+test2007_79.C \
+test2007_80.C \
+test2007_86.C \
+test2007_87.C \
+test2007_88.C \
+test2007_89.C \
+test2007_91.C \
+test2007_92.C \
+test2007_93.C \
+test2007_96.C \
+test2007_97.C \
+test2007_99.C \
+test2007_100.C \
+test2007_101.C \
+test2007_104.C \
+test2007_105.C \
+test2007_106.C \
+test2007_107.C \
+test2007_108.C \
+test2007_109.C \
+test2007_110.C \
+test2007_111.C \
+test2007_112.C \
+test2007_113.C \
+test2007_114.C \
+test2007_115.C \
+test2007_116.C \
+test2007_117.C \
+test2007_118.C \
+test2007_119.C \
+test2007_120.C \
+test2007_121.C \
+test2007_122.C \
+test2007_123.C \
+test2007_124.C \
+test2007_125.C \
+test2007_126.C \
+test2007_127.C \
+test2007_129.C \
+test2007_131.C \
+test2007_132.C \
+test2007_134.C \
+test2007_136.C \
+test2007_138.C \
+test2007_139.C \
+test2007_143.C \
+test2007_144.C \
+test2007_145.C \
+test2007_146.C \
+test2007_148.C \
+test2007_149.C \
+test2007_153.C \
+test2007_156.C \
+test2007_168.C \
+test2007_174.C \
+test2007_175.C \
+test2007_176.C \
+test2009_07.C \
+test2009_13.C \
+test2009_17.C \
+test2009_21.C \
+test2009_22.C \
+test2009_29.C \
+test2009_32.C \
+test2009_33.C \
+test2009_34.C \
+test2009_35.C \
+test2009_36.C \
+test2009_38.C \
+test2009_43.C \
+test2009_44.C \
+test2009_45.C \
+test2009_46.C \
+test2009_47.C \
+test2010_01.C \
+test2010_02.C \
+test2010_07.C \
+test2010_08.C \
+test2010_09.C \
+test2010_10.C \
+test2010_11.C \
+test2010_12.C \
+test2010_15.C \
+test2010_16.C \
+test2010_17.C \
+test2010_22.C \
+test2010_27.C \
+test2011_01.C \
+test2011_02.C \
+test2011_05.C \
+test2011_06.C \
+test2011_07.C \
+test2011_08.C \
+test2011_09.C \
+test2011_10.C \
+test2011_11.C \
+test2011_12.C \
+test2011_13.C \
+test2011_14.C \
+test2011_15.C \
+test2011_16.C \
+test2011_17.C \
+test2011_18.C \
+longFile.C \
+certSignalExample.C \
+test2010_26.C
+
 
 
 # DQ (2/19/2012): These appear to fail only sometimes and were noticed just before going on travel (test with valgrind).

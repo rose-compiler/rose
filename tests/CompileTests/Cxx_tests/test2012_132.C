@@ -30,4 +30,3 @@ int main()
      foo<A*>();
    }
 
-

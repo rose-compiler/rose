@@ -4,6 +4,8 @@
 
 #else
 
+// Use this branch for debugging only!
+
 namespace std
    {
      template <typename T>
