@@ -1,0 +1,44 @@
+Project: Fortran_to_C
+------------------------------------------------------------------------------------------
+Intern project at Lawrence Livermore National Laboratory.
+
+Author: Pei-Hung Lin
+Contact: lin32@llnl.gov, phlin@cs.umn.edu
+
+Date Created       : July 2012
+
+------------------------------------------------------------------------------------------
+Project Goal: 
+Generate translator that can translate Fortran 77 input into C output.
+
+------------------------------------------------------------------------------------------
+Design/Implementation:
+In SageIII AST, there are several types of tree node are language dependent.
+The translator will search the fortran-specialized nodes and transform them to
+the generalized (used in C) tree node.
+
+
+------------------------------------------------------------------------------------------
+Instruction:
+Fortran_to_C source.F -rose:C_output_language  
+
+Be sure to add -rose:C_output_language.  This will force ROSE to use C as output language.
+The output file has prefix name "rose_f2c_".
+
+
+------------------------------------------------------------------------------------------
+Feasible capabilities:
+  
+  Simple program, function, subroutine declaration.
+  Simple if statement.  
+  
+  Source Node (Fortran)		========>		Target Node (C) 
+  
+  SgProgramHeaderStatement				SgFunctionDeclaration
+  SgProcedureHeaderStatement				SgFunctionDeclaration
+
+------------------------------------------------------------------------------------------
+TODO list:
+  1. Array declaration.
+  2. Fortran do loop.
+  3. Equivalence statement.
