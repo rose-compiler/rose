@@ -51,8 +51,17 @@ class AttachPreprocessingInfoTreeTraversalInheritedAttrribute
           AttachPreprocessingInfoTreeTraversalInheritedAttrribute()
              {
             // Nothing else to do here.
+
+            // DQ (8/6/2012): This is a part of fixing the CPP directives for templates until they are no longer unparsed as strings.
+               isPartOfTemplateDeclaration = false;
              }
 #endif
+
+       // DQ (8/6/2012): Added copy constructor.
+          AttachPreprocessingInfoTreeTraversalInheritedAttrribute(const AttachPreprocessingInfoTreeTraversalInheritedAttrribute & X);
+
+       // DQ (8/6/2012): This is a part of fixing the CPP directives for templates until they are no longer unparsed as strings.
+          bool isPartOfTemplateDeclaration;
    };
 
 // This is an empty class, meaning that we could likely just have implemented a TopDownProcessing traversal.

@@ -224,7 +224,7 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
         }
 
 #if 0
-     printf ("statementInFile = %p = %s = %s = %s \n",stmt,stmt->class_name().c_str(),SageInterface::get_name(stmt).c_str(),(statementInFile == true) ? "true" : "false");
+     printf ("\nstatementInFile = %p = %s = %s = %s \n",stmt,stmt->class_name().c_str(),SageInterface::get_name(stmt).c_str(),(statementInFile == true) ? "true" : "false");
   // stmt->get_file_info()->display("debug why false");
   // if (statementInFile == false)
         {
@@ -549,8 +549,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
   // curprint("/* Calling unparseAttachedPreprocessingInfo */ \n ");
 
   // Markus Kowarschik: This is the new code to unparse directives before the current statement
-     //AS(05/20/09): LineReplacement should replace a statement with a line. Override unparsing
-     //of subtree.
+  // AS(05/20/09): LineReplacement should replace a statement with a line. Override unparsing of subtree.
      unparseAttachedPreprocessingInfo(stmt, info, PreprocessingInfo::before);
 
      outputCompilerGeneratedStatements(info);
@@ -592,6 +591,8 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
              }
         }
 
+#if 0
+  // DQ (8/7/2012): I don't think we need this.
   // DQ (5/22/2007): Added to support name qualification and access to the new hidden 
   // type, declaration and class elaboration lists stored in the scopes.
      SgScopeStatement* scopeStatement = isSgScopeStatement(stmt);
@@ -617,15 +618,18 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
           savedScope = info.get_current_scope();
         }
      
-
   // DQ (5/27/2007): Commented out, uncomment when we are ready for Robert's new hidden list mechanism.
      if (info.get_current_scope() == NULL)
         {
           printf ("In unparseStatement(): info.get_current_scope() == NULL (likely called from SgNode::unparseToString()) stmt = %p = %s \n",stmt,stmt->class_name().c_str());
           stmt->get_startOfConstruct()->display("In unparseStatement(): info.get_current_scope() == NULL: debug");
+#if 0
+       // DQ (8/7/2012): I don't think we need this.
           ROSE_ASSERT(false);
+#endif
         }
   // ROSE_ASSERT(info.get_current_scope() != NULL);
+#endif
 
   // DQ (7/20/2008): This mechanism is now extended to SgStatement and revised to handle 
   // more cases than just replacement of the 
@@ -682,6 +686,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
                case V_SgIdentDirectiveStatement:   unparseIdentDirectiveStatement  (stmt, info); break;
                case V_SgIncludeNextDirectiveStatement: unparseIncludeNextDirectiveStatement  (stmt, info); break;
                case V_SgLinemarkerDirectiveStatement:  unparseLinemarkerDirectiveStatement  (stmt, info); break;
+
             // Liao 10/21/2010. Handle generic OpenMP directive unparsing here.
                case V_SgOmpAtomicStatement:
                case V_SgOmpSectionStatement:
@@ -689,7 +694,8 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
                case V_SgOmpBarrierStatement:           unparseOmpSimpleStatement        (stmt, info);break;
                case V_SgOmpThreadprivateStatement:     unparseOmpThreadprivateStatement (stmt, info);break;
                case V_SgOmpFlushStatement:             unparseOmpFlushStatement         (stmt, info);break;
-               // Generic OpenMP directives with a format of : begin-directive, begin-clauses, body, end-directive , end-clauses
+
+            // Generic OpenMP directives with a format of : begin-directive, begin-clauses, body, end-directive , end-clauses
                case V_SgOmpCriticalStatement:
                case V_SgOmpMasterStatement:
                case V_SgOmpOrderedStatement:
@@ -698,11 +704,15 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
                case V_SgOmpWorkshareStatement:
                case V_SgOmpSingleStatement:
                case V_SgOmpTaskStatement:  unparseOmpGenericStatement (stmt, info); break;
+
                default:
                  // DQ (11/4/2008): This is a bug for the case of a SgFortranDo statement, unclear what to do about this.
                  // Call the derived class implementation for C, C++, or Fortran specific language unparsing.
                  // unparseLanguageSpecificStatement(stmt,info);
                  // unp->repl->unparseLanguageSpecificStatement(stmt,info);
+#if 0
+                    printf ("In UnparseLanguageIndependentConstructs::unparseStatement(): Calling unparseLanguageSpecificStatement() for stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+#endif
                     unparseLanguageSpecificStatement(stmt,info);
                     break;
              }
@@ -718,6 +728,8 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
              }
         }
 
+#if 0
+  // DQ (8/7/2012): I don't think we need this.
   // DQ (11/3/2007): Save the original scope so that we can restore it at the end (since we don't use a new SgUnparse_Info object).
      if (scopeStatement != NULL)
         {
@@ -744,6 +756,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
           printf ("WARNING: scopes stored in SgUnparse_Info object have been changed \n");
           ROSE_ASSERT(false);
         }
+#endif
 
 #if OUTPUT_EMBEDDED_COLOR_CODES_FOR_STATEMENTS
      if (get_embedColorCodesInGeneratedCode() > 0)
@@ -958,21 +971,23 @@ UnparseLanguageIndependentConstructs::unparseExpression(SgExpression* expr, SgUn
           curprint (code);
         }
        else if (expressionTree != NULL && info.SkipConstantFoldedExpressions() == false)
-         {
-         unparseExpression(expressionTree, info);
-         }
+        {
+          unparseExpression(expressionTree, info);
+        }
        else
         {
        // DQ (5/21/2004): revised need_paren handling in EDG/SAGE III and within SAGE III IR)
        // QY (7/9/2004): revised to use the new unp->u_sage->PrintStartParen test
           bool printParen = requiresParentheses(expr,info);
+
 #if 0
        // DQ (8/21/2005): Suppress comments when unparsing to build type names
           if ( !info.SkipComments() || !info.SkipCPPDirectives() )
              {
-               curprint ( string("\n /* In unparseExpression paren ") + expr->sage_class_name() + string(" paren printParen = ") + (printParen ? "true" : "false") + string(" */ \n"));
+               curprint("\n /* In unparseExpression paren " + expr->class_name() + " paren printParen = " + (printParen ? "true" : "false") + " */ \n");
              }
 #endif
+
        // if (printParen)
        // ROSE_ASSERT(currentFile != NULL);
        // if ( (printParen == true) && (currentFile->get_Fortran_only() == false) )
@@ -3915,16 +3930,16 @@ UnparseLanguageIndependentConstructs::requiresParentheses(SgExpression* expr, Sg
 
 #define DEBUG_PARENTHESIS_PLACEMENT 0
 #if DEBUG_PARENTHESIS_PLACEMENT && 1
-     printf ("\n\n***** In PrintStartParen() \n");
-     printf ("In PrintStartParen(): expr = %s need_paren = %s \n",expr->sage_class_name(),expr->get_need_paren() ? "true" : "false");
-     printf ("isOverloadedArrowOperator(expr) = %s \n",(isOverloadedArrowOperator(expr) == true) ? "true" : "false");
+     printf ("\n\n***** In requiresParentheses() \n");
+     printf ("In requiresParentheses(): expr = %s need_paren = %s \n",expr->class_name().c_str(),expr->get_need_paren() ? "true" : "false");
+     printf ("isOverloadedArrowOperator(expr) = %s \n",(unp->u_sage->isOverloadedArrowOperator(expr) == true) ? "true" : "false");
   // curprint( "\n /* expr = " << expr->sage_class_name() << " */ \n");
   // curprint( "\n /* RECORD_REF = " << RECORD_REF << " expr->variant() = " << expr->variant() << " */ \n");
 
      if (parentExpr != NULL)
         {
-          printf ("In PrintStartParen(): parentExpr = %s \n",parentExpr->sage_class_name());
-          printf ("isOverloadedArrowOperator(parentExpr) = %s \n",(isOverloadedArrowOperator(parentExpr) == true) ? "true" : "false");
+          printf ("In requiresParentheses(): parentExpr = %s \n",parentExpr->sage_class_name());
+          printf ("isOverloadedArrowOperator(parentExpr) = %s \n",(unp->u_sage->isOverloadedArrowOperator(parentExpr) == true) ? "true" : "false");
        // curprint( "\n /* parentExpr = " << parentExpr->sage_class_name() << " */ \n");
         }
        else
@@ -4053,6 +4068,7 @@ UnparseLanguageIndependentConstructs::requiresParentheses(SgExpression* expr, Sg
                PrecedenceSpecifier exprPrecedence = getPrecedence(expr);
 
 #if DEBUG_PARENTHESIS_PLACEMENT
+               int exprVariant = GetOperatorVariant(expr);
                printf ("exprVariant = %d  exprPrecedence = %d \n",exprVariant,exprPrecedence);
 #endif
                if (exprPrecedence > parentPrecedence)

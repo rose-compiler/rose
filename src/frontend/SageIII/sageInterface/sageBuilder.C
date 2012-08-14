@@ -1036,9 +1036,10 @@ SageBuilder::buildMemberFunctionType(SgType* return_type, SgFunctionParameterTyp
      ROSE_ASSERT(struct_name->get_parent() != NULL);
   // ROSE_ASSERT(struct_name->get_declaration() != NULL);
 
+#if 0
      printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
      printf ("In buildMemberFunctionType() return_type = %p typeList = %p struct_name = %p = %s = %s mfunc_specifier = %u \n",return_type,typeList,struct_name,struct_name->class_name().c_str(),struct_name->get_declaration()->get_name().str(),mfunc_specifier);
-
+#endif
 
   // SgDeclarationStatement* declaration = struct_name->get_declaration();
      SgTemplateClassDefinition* templateClassDefinition = isSgTemplateClassDefinition(struct_name);
@@ -2783,13 +2784,17 @@ SageBuilder::buildDefiningFunctionDeclaration_T(const SgName & XXX_name, SgType*
 
      bool buildTemplateInstantiation = ((VariantT)actualFunction::static_variant == V_SgTemplateInstantiationFunctionDecl || (VariantT)actualFunction::static_variant == V_SgTemplateInstantiationMemberFunctionDecl);
 
+#if 0
      printf ("In buildDefiningFunctionDeclaration_T(): buildTemplateInstantiation = %s \n",buildTemplateInstantiation ? "true" : "false");
+#endif
+
      if (buildTemplateInstantiation == true)
         {
           ROSE_ASSERT(templateArgumentsList != NULL);
           nameWithTemplateArguments = appendTemplateArgumentsToName(nameWithoutTemplateArguments,*templateArgumentsList);
-
+#if 0
           printf ("Building a SgClassDeclaration: buildDefiningClassDeclaration_nfi() nameWithTemplateArguments = %s buildTemplateInstantiation = %s \n",nameWithTemplateArguments.str(),buildTemplateInstantiation ? "true:" : "false");
+#endif
         }
 
      ROSE_ASSERT(nameWithoutTemplateArguments.is_null() == false);
@@ -2815,7 +2820,7 @@ SageBuilder::buildDefiningFunctionDeclaration_T(const SgName & XXX_name, SgType*
   // This is a problem for test2012_74.C (and a dozen other test codes that make use of STL).
      ROSE_ASSERT(first_nondefining_declaration != NULL);
 
-#if 1
+#if 0
      printf ("In buildDefiningFunctionDeclaration_T(): isMemberFunction = %s \n",isMemberFunction ? "true" : "false");
 #endif
 
@@ -2859,7 +2864,7 @@ SageBuilder::buildDefiningFunctionDeclaration_T(const SgName & XXX_name, SgType*
 
      SgDeclarationStatement* firstNondefiningFunctionDeclaration = NULL;
 
-#if 1
+#if 0
      printf ("In buildDefiningFunctionDeclaration_T(): scope     = %p = %s \n",scope,scope->class_name().c_str());
      printf ("In buildDefiningFunctionDeclaration_T(): func_type = %p = %s \n",func_type,func_type->class_name().c_str());
      printf ("In buildDefiningFunctionDeclaration_T(): Looking for function in symbol table with nameWithTemplateArguments = %s \n",nameWithTemplateArguments.str());
@@ -3163,7 +3168,7 @@ SageBuilder::setTemplateNameInTemplateInstantiations( SgFunctionDeclaration* fun
    {
   // DQ (2/11/2012): If this is a template instantiation then we have to set the template name (seperate from the name of the function which can include template parameters)).
 
-#if 1
+#if 0
      printf ("In setTemplateNameInTemplateInstantiations(): name = %s func->get_name() = %s \n",name.str(),func->get_name().str());
 #endif
 
@@ -5492,16 +5497,21 @@ SgForInitStatement * SageBuilder::buildForInitStatement(const SgStatementPtrList
   return result;
 }
 
-SgForInitStatement * SageBuilder::buildForInitStatement_nfi(SgStatementPtrList & statements) {
-  SgForInitStatement * result = new SgForInitStatement();
+SgForInitStatement*
+SageBuilder::buildForInitStatement_nfi(SgStatementPtrList & statements)
+   {
+     SgForInitStatement * result = new SgForInitStatement();
 
-  result->get_init_stmt() = statements;
+     result->get_init_stmt() = statements;
 
-  for (SgStatementPtrList::iterator it = result->get_init_stmt().begin(); it != result->get_init_stmt().end(); it++)
-    (*it)->set_parent(result);
+     for (SgStatementPtrList::iterator it = result->get_init_stmt().begin(); it != result->get_init_stmt().end(); it++)
+        {
+          printf ("In buildForInitStatement_nfi(): set the parent for it = %p = %s \n",*it,(*it)->class_name().c_str());
+          (*it)->set_parent(result);
+        }
 
-  return result;
-}
+     return result;
+   }
 
 //! Based on the contribution from Pradeep Srinivasa@ LANL
 //Liao, 8/27/2008
@@ -7948,7 +7958,7 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
 
 
   // Note that the nonDefiningDecl pointer does not appear to be used.
-     printf ("WARNING: In SageBuilder::buildClassDeclaration_nfi(): the nonDefiningDecl pointer (input parameter) does not appear to be used. \n");
+      printf ("WARNING: In SageBuilder::buildClassDeclaration_nfi(): the nonDefiningDecl pointer = %p (input parameter) does not appear to be used. \n",nonDefiningDecl);
 
      if (scope == NULL)
         {
@@ -7997,7 +8007,7 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
      if (scope != NULL)
         {
 #if 0
-          printf ("Looking up the SgClassSymbol in scope = %p = %s name = %s \n",scope,scope->class_name().c_str(),name.str());
+          printf ("Looking up the SgClassSymbol in scope = %p = %s nameWithTemplateArguments = %s \n",scope,scope->class_name().c_str(),nameWithTemplateArguments.str());
 #endif
        // mysymbol = scope->lookup_class_symbol(name);
        // mysymbol = scope->lookup_class_symbol(name);
@@ -8041,6 +8051,9 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
         }
        else // build a nondefnining declaration if it does not exist
         {
+#if 0
+          printf ("In In SageBuilder::buildClassDeclaration_nfi(): building a nondefnining declaration if it does not exist \n");
+#endif
        // DQ (1/25/2009): We only want to build a new declaration if we can't reuse the existing declaration.
        // DQ (1/1/2012): Fixed to force matching types or IR nodes for defining and non-defining declarations.
           if (buildTemplateInstantiation == true)
@@ -8171,6 +8184,9 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
           if (scope != NULL)
              {
                mysymbol = new SgClassSymbol(nondefdecl);
+#if 0
+               printf ("Insert the new SgClassSymbol = %p into the scope = %p = %s \n",mysymbol,scope,scope->class_name().c_str());
+#endif
             // scope->insert_symbol(name, mysymbol);
                scope->insert_symbol(nameWithTemplateArguments, mysymbol);
              }
@@ -8179,7 +8195,7 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
             // Liao 9/2/2009: This is not an error. We support bottomup AST construction and scope can be unkown.   
             // DQ (1/26/2009): I think this should be an error, but that appears it would
             // break the existing interface. Need to discuss this with Liao.
-            // printf ("Warning: no scope provided to support symbol table entry! \n");
+               printf ("Warning: no scope provided to support symbol table entry! \n");
              }
         }
 

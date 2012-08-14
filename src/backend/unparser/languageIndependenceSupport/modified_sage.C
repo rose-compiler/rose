@@ -1219,22 +1219,35 @@ Unparse_MOD_SAGE::outputTemplateSpecializationSpecifier ( SgDeclarationStatement
           (isSgTemplateInstantiationFunctionDecl(decl_stmt)       != NULL) ||
           (isSgTemplateInstantiationMemberFunctionDecl(decl_stmt) != NULL) )
         {
+#if 0
+          curprint( "\n/* In outputTemplateSpecializationSpecifier(): This is a template instantiation */ ");
+#endif
           if ( isSgTemplateInstantiationDirectiveStatement(decl_stmt->get_parent()) != NULL)
              {
-            // Template intanatiation directives use "template" instaed of "template<>"
+            // Template instantiation directives use "template" instead of "template<>"
+#if 0
+               curprint( "\n/* In outputTemplateSpecializationSpecifier(): This is a SgTemplateInstantiationDirectiveStatement */ ");
+#endif
                curprint( "template ");
              }
             else
              {
             // Normal case for output of template instantiations (which ROSE puts out as specializations)
             // curprint( "template<> ");
-
+#if 0
+               curprint( "\n/* In outputTemplateSpecializationSpecifier(): Normal case for output of template instantiations */ ");
+#endif
             // DQ (5/2/2012): If this is a function template instantiation in a class template instantiation then 
             // we don't want the "template<>" (error in g++, at least).  See test2012_59.C.
                SgTemplateInstantiationDefn* templateClassInstatiationDefn = isSgTemplateInstantiationDefn(decl_stmt->get_parent());
                if (templateClassInstatiationDefn != NULL)
                   {
                     printf ("This is a declaration defined in a templated class (suppress the output of template specialization syntax) \n");
+
+                 // DQ (8/8/2012): This is a valid branch, commented out assert(false).
+                 // DQ (8/2/2012): This branch should not be possible so assert false as a test (note that test2005_139.C will demonstrate this branch).
+                    printf ("Error: It should be impossible to reach this code since SgTemplateInstantiationDefn is not a class, function or member function type \n");
+                 // ROSE_ASSERT(false);
                   }
                  else
                   {
@@ -1249,8 +1262,8 @@ Unparse_MOD_SAGE::outputTemplateSpecializationSpecifier ( SgDeclarationStatement
 void
 Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_Info& info)
    {
-
   // DQ (8/29/2005): These specifiers have to be output in a different order for g++ 3.3.x and 3.4.x
+
 #ifdef __GNUC__
    #if (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 3) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER < 4)
      outputTemplateSpecializationSpecifier(decl_stmt);
@@ -1330,7 +1343,20 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
        // DQ (2/2/2006): Not sure if virtual can be output when isForwardDeclarationOfTemplateSpecialization == true
           if (functionDeclaration->get_functionModifier().isVirtual())
              {
-               curprint( "virtual ");
+#if 0
+               if (functionDeclaration == functionDeclaration->get_firstNondefiningDeclaration())
+                  {
+                    curprint("/* output virtual for the non-defining function declarations */ ");
+                  }
+                 else
+                  {
+                    if (functionDeclaration == functionDeclaration->get_definingDeclaration())
+                       {
+                         curprint("/* output virtual for the defining function declarations */ ");
+                       }
+                  }
+#endif
+               curprint("virtual ");
              }
 
        // if (unp->opt.get_inline_opt())

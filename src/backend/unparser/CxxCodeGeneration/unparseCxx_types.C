@@ -302,7 +302,7 @@ string get_type_name(SgType* t)
              }
         }
 //#endif
-}
+   }
 
 //-----------------------------------------------------------------------------------
 //  void Unparse_Type::unparseType
