@@ -50,9 +50,11 @@ bin_compass2_LDADD=\
 	libcompass2.la \
 	bin/checkers/default_argument/libdefaultargument.la \
 	bin/checkers/function_pointer/libfunctionpointer.la \
+	bin/checkers/function_prototype/libfunctionprototype.la \
 	bin/checkers/function_with_multiple_returns/libfunctionwithmultiplereturns.la \
-	bin/checkers/keyword_macro/libkeywordmacro.la \
 	bin/checkers/global_variables/libglobalvariables.la \
+	bin/checkers/keyword_macro/libkeywordmacro.la \
+	bin/checkers/keyword_macro/libkeywordmacro.la \
 	bin/checkers/non_global_cpp_directive/libnonglobalcppdirective.la \
 	bin/checkers/non_static_array_size/libnonstaticarraysize.la \
 	$(XERCES_LIBS) \
@@ -65,6 +67,7 @@ bin_compass2_LDADD=\
 noinst_LTLIBRARIES=\
 	bin/checkers/default_argument/libdefaultargument.la \
 	bin/checkers/function_pointer/libfunctionpointer.la \
+	bin/checkers/function_prototype/libfunctionprototype.la \
 	bin/checkers/function_with_multiple_returns/libfunctionwithmultiplereturns.la \
 	bin/checkers/global_variables/libglobalvariables.la \
 	bin/checkers/keyword_macro/libkeywordmacro.la \
@@ -76,6 +79,9 @@ bin_checkers_default_argument_libdefaultargument_la_SOURCES=\
 
 bin_checkers_function_pointer_libfunctionpointer_la_SOURCES=\
 	bin/checkers/function_pointer/function_pointer.cpp
+
+bin_checkers_function_prototype_libfunctionprototype_la_SOURCES=\
+	bin/checkers/function_prototype/function_prototype.cpp
 
 bin_checkers_function_with_multiple_returns_libfunctionwithmultiplereturns_la_SOURCES=\
 	bin/checkers/function_with_multiple_returns/function_with_multiple_returns.cpp
