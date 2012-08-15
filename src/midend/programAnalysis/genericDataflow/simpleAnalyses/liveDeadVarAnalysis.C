@@ -570,7 +570,7 @@ LiveVarsLattice* getLiveOutVarsAt(LiveDeadVarsAnalysis* ldva, SgNode* n, unsigne
 
 // Minimal constructor that initializes just the portions of the object required to make an 
 // initial blank VarsExprsProductLattice
-VarsExprsProductLattice::VarsExprsProductLattice(const DataflowNode& n, const NodeState& state) : n(n), state(state)
+VarsExprsProductLattice::VarsExprsProductLattice(const DataflowNode& n, const NodeState& state, bool (*filter) (CFGNode cfgn)) : n(n), state(state), filter(filter)
 { 
 }                       
 
@@ -860,7 +860,7 @@ bool VarsExprsProductLattice::meetUpdate(Lattice *lThat)
 // varNameMap - maps all variable names that have changed, in each mapping pair, pair->first is the 
 //              old variable and pair->second is the new variable
 // func - the function that the copy Lattice will now be associated with
-void VarsExprsProductLattice::remapVars(const map<varID, varID>& varNameMap, const Function& newFunc, bool (*filter) (CFGNode cfgn))
+void VarsExprsProductLattice::remapVars(const map<varID, varID>& varNameMap, const Function& newFunc)
 {
 //      Dbg::dbg << "remapVars("<<newFunc.get_name().getString()<<"()), func="<<func.get_name().getString<<endl;
         
@@ -872,11 +872,41 @@ void VarsExprsProductLattice::remapVars(const map<varID, varID>& varNameMap, con
         
         // Fill newLattices with lattices associated with variables in the new function 
         DataflowNode funcCFGStart = cfgUtils::getFuncStartCFG(newFunc.get_definition(),filter); //TODO This function is never being used somehow
-        varIDSet newRefVars = getAllLiveVarsAt(ldva, *NodeState::getNodeState(funcCFGStart, 0), "    ");
+
+        //Akshatha(08/12): To handle cases which do not require LiveDeadVars Analysis        
+        varIDSet newRefVars;
+        if(ldva)
+            newRefVars = getAllLiveVarsAt(ldva, *NodeState::getNodeState(funcCFGStart, 0), "    ");
+        else
+        {
+
+            //Obtain the SgNode for newFunc, traverse up to get its FunctionDefinition, and finally populate the newRefVars vector with varID's of all the variables present in this function
+            
+            SgNode* cur = newFunc.get_definition();
+            //SgNode* cur = n.getNode();
         
+            ROSE_ASSERT(cur != NULL);    
+            while(cur && !isSgFunctionDefinition(cur))
+            { /*Dbg::dbg << "    cur=<"<<Dbg::escape(cur->unparseToString()) << " | " << cur->class_name()<<">"<<endl;*/
+                 cur = cur->get_parent();
+            }
+
+            ROSE_ASSERT(cur != NULL);
+            SgFunctionDefinition *func = isSgFunctionDefinition(cur);
+            if(func){
+                collectAllVarRefs collect;
+                collect.traverse(func,preorder);
+                for(set<SgExpression*>::iterator ref = collect.refs.begin(); ref!=collect.refs.end();ref++){
+                    varID var = SgExpr2Var(*ref);
+                    newRefVars.insert(var);
+                }
+            }
+        }
+        //Akshatha(08/12): End of Code changes
+
         // Iterate through all the variables that are live at the top of newFunc and for each one 
         int idx=0;
-        for(varIDSet::iterator it = newRefVars.begin(); it!=newRefVars.end(); it++, idx++)
+        for(varIDSet::iterator it = newRefVars.begin(); it!=newRefVars.end(); it++ /*, idx++*/)
         {
                 varID newVar = *it;
 //              printf("remapVars() newVar = %s\n", newVar.str().c_str());
@@ -894,6 +924,8 @@ void VarsExprsProductLattice::remapVars(const map<varID, varID>& varNameMap, con
                                 Lattice* l = getVarLattice(oldVar);
                                 ROSE_ASSERT(l);
                                 newLattices.push_back(l);
+                                newVarLatticeIndex[newVar] = idx;
+                                idx++;
                                 
                                 // Erase the mapping of oldVar in varLatticeIndex
                                 varLatticeIndex.erase(oldVar);
@@ -908,21 +940,28 @@ void VarsExprsProductLattice::remapVars(const map<varID, varID>& varNameMap, con
                         // Check if this new variable is in fact an old variable 
                         Lattice* l = getVarLattice(newVar);
                         
-                        /*Dbg::dbg << "VarsExprsProductLattice::remapVars() l = "<<l->str("") << endl;
-                        Dbg::dbg << "      getVarIndex(newFunc, newVar)=" << getVarIndex(newFunc, newVar) << endl;*/
+                        //Dbg::dbg << "      getVarIndex(newFunc, newVar)=" << getVarIndex(newFunc, newVar) << endl;
                         // If it is, add it at its new index
                         if(l) {
+                                //Dbg::dbg << "VarsExprsProductLattice::remapVars() l = ["<<newVar<<"] "<< l->str("") << endl;
                                 //newLattices[getVarIndex(newFunc, newVar)] = l;
                                 newLattices.push_back(l);
                                 // Erase the original mapping of newVar in varLatticeIndex
+                                newVarLatticeIndex[newVar] = idx;
+                                idx++;
+               
                                 varLatticeIndex.erase(newVar);
                         // If not, add a fresh lattice for this variable
                         } else
-                                newLattices.push_back(perVarLattice->copy());
+                          {
+                            Dbg::dbg << "No Lattice found: [";
+                            //Akshatha(08/12): We do not push a variable which is not in scope
+                            //newLattices.push_back(perVarLattice->copy()); These changes were made to avoid pushing empty lattices for variables which were not in scope between caller and callee. This resulted in local variable lattices being wiped out while mapping variables from caller to callee and vice-versa.
+                          }
                 }
                 
                 // Record that newVar is at index idx
-                newVarLatticeIndex[newVar] = idx;
+                //newVarLatticeIndex[newVar] = idx;
         }
         
         // Deallocate the lattices of all the variables that do not exist in newFunc are are not 
@@ -931,10 +970,13 @@ void VarsExprsProductLattice::remapVars(const map<varID, varID>& varNameMap, con
                 ROSE_ASSERT(lattices[varIdx->second]);
                 delete lattices[varIdx->second];
         }
-        
+      
+        Dbg::dbg<<"Index :"<<idx;
+        ROSE_ASSERT(newLattices.size() == newVarLatticeIndex.size());
         // Replace newVPL information with the remapped information
         lattices        = newLattices;
         varLatticeIndex = newVarLatticeIndex;
+        ROSE_ASSERT(lattices.size() == varLatticeIndex.size());
 }
 
 // Called by analyses to copy over from the that Lattice dataflow information into this Lattice.
@@ -1144,7 +1186,7 @@ string VarsExprsProductLattice::str(string indent)
 
 // Initial blank FiniteVarsExprsProductLattice
 FiniteVarsExprsProductLattice::FiniteVarsExprsProductLattice(const DataflowNode& n, const NodeState& state) :
-                VarsExprsProductLattice(n, state)
+                VarsExprsProductLattice(n, state,filter)
 {}
 
 // Retrns a blank instance of a VarsExprsProductLattice that only has the fields n and state set
@@ -1198,7 +1240,7 @@ Lattice* FiniteVarsExprsProductLattice::copy() const
 // Minimal constructor that initializes just the portions of the object required to make an 
 // initial blank VarsExprsProductLattice
 InfiniteVarsExprsProductLattice::InfiniteVarsExprsProductLattice(const DataflowNode& n, const NodeState& state) : 
-                VarsExprsProductLattice(n, state)
+                VarsExprsProductLattice(n, state,filter)
 {}
 
 // Retrns a blank instance of a VarsExprsProductLattice that only has the fields n and state set
