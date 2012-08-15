@@ -5,57 +5,54 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 AUTOMAKE_OPTIONS = subdir-objects
 
 # ------------------------------------------------------------------------------
-#  Compass2 main library
+#  Compass2
 # ------------------------------------------------------------------------------
 
 INCLUDES=\
+	-I$(top_srcdir)/projects \
 	-I$(top_srcdir)/projects/compass2 \
 	$(XERCES_CPPFLAGS) \
 	$(ROSE_INCLUDES)
 
 LDADD = \
-	compass2/libcompass2.la \
+	libcompass2.la \
 	$(XERCES_LIBS) \
 	$(ROSE_LIBS)
 
 LDFLAGS = $(XERCES_LDFLAGS)
 
-## TODO: add compass-$(ROSE_API_VERSION)
+# ------------------------------------------------------------------------------
+#  libcompass2.la
+# ------------------------------------------------------------------------------
 
-## The nobase_ prefix instructs Automake to not strip the directory part from
-## each filename. For example,
-##
-##     Install to ${PREFIX}/lib/compass2/libcompass.la
-compass_libdir = $(libdir)
-nobase_lib_LTLIBRARIES = compass2/libcompass2.la
+compass2_API_VERSION=0.0.0
+exec_prefix=${prefix}/compass2-$(compass2_API_VERSION)
+libcompass2_la_includedir = ${exec_prefix}/include/compass2
 
-compass2_libcompass2_la_SOURCES=\
-	compass2/compass.cpp
+lib_LTLIBRARIES = libcompass2.la
 
-## The nobase_ prefix instructs Automake to not strip the directory part from
-## each filename. For example,
-##
-##     Install to ${PREFIX}/include/compass2/compass.h
-compass_includedir = $(includedir)
-nobase_compass_include_HEADERS=\
-	compass2/compass.h
+libcompass2_la_SOURCES=\
+	compass.cpp
+
+libcompass2_la_include_HEADERS=\
+	compass.h
 
 # ------------------------------------------------------------------------------
 #  Compass2 main executable
 # ------------------------------------------------------------------------------
 
-nobase_bin_PROGRAMS = compass2/compass2
+bin_PROGRAMS = bin/compass2
 
-compass2_compass2_SOURCES=\
-	compass2/compass_main.cpp
+bin_compass2_SOURCES=\
+	bin/compass_main.cpp
 
-compass2_compass2_LDADD=\
-	compass2/libcompass2.la \
-	compass2/checkers/function_pointer/libfunctionpointer.la \
-	compass2/checkers/keyword_macro/libkeywordmacro.la \
-	compass2/checkers/global_variables/libglobalvariables.la \
-	compass2/checkers/non_global_cpp_directive/libnonglobalcppdirective.la \
-	compass2/checkers/non_static_array_size/libnonstaticarraysize.la \
+bin_compass2_LDADD=\
+	libcompass2.la \
+	bin/checkers/function_pointer/libfunctionpointer.la \
+	bin/checkers/keyword_macro/libkeywordmacro.la \
+	bin/checkers/global_variables/libglobalvariables.la \
+	bin/checkers/non_global_cpp_directive/libnonglobalcppdirective.la \
+	bin/checkers/non_static_array_size/libnonstaticarraysize.la \
 	$(XERCES_LIBS) \
 	$(ROSE_LIBS)
 
@@ -64,33 +61,33 @@ compass2_compass2_LDADD=\
 # ------------------------------------------------------------------------------
 
 noinst_LTLIBRARIES=\
-	compass2/checkers/function_pointer/libfunctionpointer.la \
-	compass2/checkers/global_variables/libglobalvariables.la \
-	compass2/checkers/keyword_macro/libkeywordmacro.la \
-	compass2/checkers/non_global_cpp_directive/libnonglobalcppdirective.la \
-	compass2/checkers/non_static_array_size/libnonstaticarraysize.la
+	bin/checkers/function_pointer/libfunctionpointer.la \
+	bin/checkers/global_variables/libglobalvariables.la \
+	bin/checkers/keyword_macro/libkeywordmacro.la \
+	bin/checkers/non_global_cpp_directive/libnonglobalcppdirective.la \
+	bin/checkers/non_static_array_size/libnonstaticarraysize.la
 
-compass2_checkers_function_pointer_libfunctionpointer_la_SOURCES=\
-	compass2/checkers/function_pointer/function_pointer.cpp
+bin_checkers_function_pointer_libfunctionpointer_la_SOURCES=\
+	bin/checkers/function_pointer/function_pointer.cpp
 
-compass2_checkers_keyword_macro_libkeywordmacro_la_SOURCES=\
-	compass2/checkers/keyword_macro/keyword_macro.cpp
+bin_checkers_keyword_macro_libkeywordmacro_la_SOURCES=\
+	bin/checkers/keyword_macro/keyword_macro.cpp
 
-compass2_checkers_global_variables_libglobalvariables_la_SOURCES=\
-	compass2/checkers/global_variables/global_variables.cpp
+bin_checkers_global_variables_libglobalvariables_la_SOURCES=\
+	bin/checkers/global_variables/global_variables.cpp
 
-compass2_checkers_non_global_cpp_directive_libnonglobalcppdirective_la_SOURCES=\
-	compass2/checkers/non_global_cpp_directive/non_global_cpp_directive.cpp
+bin_checkers_non_global_cpp_directive_libnonglobalcppdirective_la_SOURCES=\
+	bin/checkers/non_global_cpp_directive/non_global_cpp_directive.cpp
 
-compass2_checkers_non_static_array_size_libnonstaticarraysize_la_SOURCES=\
-	compass2/checkers/non_static_array_size/non_static_array_size.cpp
+bin_checkers_non_static_array_size_libnonstaticarraysize_la_SOURCES=\
+	bin/checkers/non_static_array_size/non_static_array_size.cpp
 
 # ------------------------------------------------------------------------------
 #  XML Schemas
 # ------------------------------------------------------------------------------
 
 COMPASS_PARAMETERS_GRAMMAR=\
-	compass2/xml/compass_parameters.xsd
+	share/xml/compass_parameters.xsd
 
 ## The nobase_ prefix instructs Automake to not strip the directory part from
 ## each filename. For example,
@@ -116,10 +113,10 @@ noinst_PROGRAMS=\
 	tests/core/test_parser
 
 tests_core_test_parameters_parser_SOURCES=\
-	compass2/tests/test_parameters_parser.cpp
+	tests/core/test_parameters_parser.cpp
 
 tests_core_test_parser_SOURCES=\
-	compass2/tests/test_parser.cpp
+	tests/core/test_parser.cpp
 
 # ------------------------------------------------------------------------------
 #  Documentation
@@ -137,12 +134,8 @@ clean-local:
 	rm -f \
 		*.xml
 	rm -f \
-		$(nobase_lib_LTLIBRARIES)
+		compass2.lo \
+		compass.lo  \
 	rm -f \
-		$(nobase_bin_PROGRAMS)
-	rm -f \
-		compass2/src/compass2.lo \
-		compass2/src/compass.lo  \
-	rm -f \
-		compass2/tools/compass_main.o
+		bin/compass_main.o
 
