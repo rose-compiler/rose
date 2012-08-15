@@ -41,7 +41,8 @@ mpaGenericDataflow_la_sources=\
 	$(mpaGenericDataflowPath)/state/functionState.C \
 	$(mpaGenericDataflowPath)/state/nodeState.C \
 	$(mpaGenericDataflowPath)/variables/variables.C \
-	$(mpaGenericDataflowPath)/variables/varSets.C
+	$(mpaGenericDataflowPath)/variables/varSets.C 
+
 
 mpaGenericDataflow_includeHeaders=\
 	$(mpaGenericDataflowPath)/analysis/analysis.h \
@@ -78,7 +79,7 @@ mpaGenericDataflow_includeHeaders=\
 	$(mpaGenericDataflowPath)/state/LogicalCond.h \
 	$(mpaGenericDataflowPath)/state/nodeState.h \
 	$(mpaGenericDataflowPath)/variables/variables.h \
-	$(mpaGenericDataflowPath)/variables/varSets.h
+	$(mpaGenericDataflowPath)/variables/varSets.h 
 
 mpaGenericDataflow_extraDist=\
 	$(mpaGenericDataflowPath)/CMakeLists.txt
