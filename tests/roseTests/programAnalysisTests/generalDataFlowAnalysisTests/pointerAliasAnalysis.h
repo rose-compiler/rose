@@ -12,13 +12,13 @@ extern int pointerAliasAnalysisDebugLevel;
 
 /*
     Pointer Alias Analysis
-    AliasRelationNode : A struct that holds the alias information which includes the deference 
+    aliasDerefCount : A struct that holds the alias information which includes the deference 
                 Count for each pointer variable. E.g., int *p = &q would maintain a pair like so:
                 pair( <p(SgVarSymbol), p(varID), 1> , < q(SgVariableSymbol), q(varID), -1 > ).
-                AliasRelationNodes are used to create compact representation graphs for the pointers at 
-                each CFG Node, by creating/removing an edge between the varID's of the left and right AliasRelationNodes
+                aliasDerefCounts are used to create compact representation graphs for the pointers at 
+                each CFG Node, by creating/removing an edge between the varID's of the left and right aliasDerefCounts
 */
-struct AliasRelationNode{
+struct aliasDerefCount{
     //! The VariableSymbol participating in aliasing
     SgVariableSymbol* var;
     varID vID;
@@ -29,12 +29,12 @@ struct AliasRelationNode{
     //!  &a  -1
     int derefLevel;
 
-    bool operator==(const AliasRelationNode &that) const {
+    bool operator==(const aliasDerefCount &that) const {
         assert(this != NULL);
         return (this->var == that.var && this->vID == that.vID && this->derefLevel == that.derefLevel);
     }
 
-    bool operator<(const AliasRelationNode &that) const{
+    bool operator<(const aliasDerefCount &that) const{
         assert(this != NULL);
         return true;
     }
@@ -43,30 +43,44 @@ struct AliasRelationNode{
 
 /*
     Lattices:   Per variable lattices using the FiniteVarsExprProductLattice
-                Each variable maintains a set<varID> and set< pair<AliasRelationNode,AliasRelationNode> >
+                Each variable maintains a set<varID> and set< pair<aliasDerefCount,aliasDerefCount> >
                 The set of all per-variable lattices is an abstraction of the compact representation graph, i.e, a structure to maintain
                 the pointer alias information at each CFG Node.
+
+    Example:    Consider the code:
+                    int **x;
+                    int *p,*q;
+                    int a;
+                    p = &a;
+                    q = p;
+                    x = &p;
+
+                The aliases at the end of this piece of code would look something like this:
+                p -> a
+                q -> a
+                x -> p
+
+                The compact representation graph would be a graph containing an edge from 'x' to 'p', 'p' to 'a' and an edge from 'q' to 'a'
+
+                To represent it as a lattice, we have per variable lattices like so:
+                p: {a}
+                q: {a}
+                x: {p}
+                where each variable such as 'p' and 'q' here contain a set<varID> as it aliases.
+
+                Since each variable pointer is stored with a derefernce count in aliasDerefCount, we use that information to traverse the per variable lattices using a recursive algorithm called "computeAliases". For ex: derefernce 2 for variable x gives {a}
 */
 class pointerAliasLattice : public FiniteLattice
 {
-public:
-        // Possible levels of this compact representation(CR) graph.
-        typedef enum {
-                // Uninitialized CR graph. Graph is empty
-                bottom=0,
-                //Full graph with Points-to information
-                top
-                }levels;
 protected:
-        levels level;
         //per variable aliases
-        set<varID> aliases;
+        set<varID> aliasedVariables;
 
-        //Set of all alias relations per CFG Node
-        set< std::pair<AliasRelationNode, AliasRelationNode> > aliasRelations;
+        //Set of all alias relations per CFG Node. These relations denote the graph edges in the compact represntation graph for pointers
+        set< std::pair<aliasDerefCount, aliasDerefCount> > aliasRelations;
 
 public:
-        pointerAliasLattice():level(bottom){};
+        pointerAliasLattice(){};
         void initialize();
         Lattice* copy()const ;
         void copy(Lattice* that);
@@ -75,11 +89,11 @@ public:
         bool meetUpdate(Lattice* that);
         std::string str(std::string);
 
-        void setAliases(varID al);
-        void clearAliases();
-        void setAliasRelation(std::pair < AliasRelationNode, AliasRelationNode > alRel);
-        set< std::pair<AliasRelationNode, AliasRelationNode> > getAliasRelations();
-        set<varID> getAliases();
+        void setAliasedVariables(varID al);
+        void clearAliasedVariables();
+        void setAliasRelation(std::pair < aliasDerefCount, aliasDerefCount > alRel);
+        set< std::pair<aliasDerefCount, aliasDerefCount> > getAliasRelations();
+        set<varID> getAliasedVariables();
 private:
         template <typename T> bool search(set<T> thisSet, T value);
 };
@@ -100,6 +114,7 @@ class pointerAliasAnalysisTransfer : public VariableStateTransfer<pointerAliasLa
           using VariableStateTransfer<pointerAliasLattice>::getLattices;
 
     public:
+          //Visit function to apply "transfer" on the specified SgNode in CFG
           void visit(SgFunctionCallExp *sgn);
           void visit(SgAssignOp *sgn);
           void visit(SgAssignInitializer *sgn);
@@ -108,10 +123,18 @@ class pointerAliasAnalysisTransfer : public VariableStateTransfer<pointerAliasLa
           bool finish();
           pointerAliasAnalysisTransfer(const Function& func, const DataflowNode& n, NodeState& state, const std::vector<Lattice*>& dfInfo);
     private:
+         
+          //processes LHS of an expression 'node' and populates 'arNode' with the varID and its derefCount
+          void processLHS(SgNode *node, struct aliasDerefCount &arNode);
+
+
+          //processes RHS of an expression 'node' and populates 'arNode' with the varID and its derefCount
+          void processRHS(SgNode *node, struct aliasDerefCount &arNode);
           
-          void processLHS(SgNode *node, struct AliasRelationNode &arNode);
-          void processRHS(SgNode *node, struct AliasRelationNode &arNode);
-          bool updateAliases(set< std::pair<AliasRelationNode, AliasRelationNode> > aliasRelations,int isMust);
+          //Updates the 'aliasedVariables' set by establishing an relation('edge' in compact representation graph) between 'aliasRelations' pair. 'isMust' denotes may or must alias
+          bool updateAliases(set< std::pair<aliasDerefCount, aliasDerefCount> > aliasRelations,int isMust);
+
+          //Recursive function to traverse the per-variable lattices to compute Aliases for 'var' at deref count of 'derefLevel'
           void computeAliases(pointerAliasLattice *lat, varID var, int derefLevel, set<varID> &result);
 }; 
 
