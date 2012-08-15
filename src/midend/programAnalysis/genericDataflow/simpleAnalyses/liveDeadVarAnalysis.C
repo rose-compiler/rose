@@ -880,12 +880,18 @@ void VarsExprsProductLattice::remapVars(const map<varID, varID>& varNameMap, con
         else
         {
 
+            //Obtain the SgNode for newFunc, traverse up to get its FunctionDefinition, and finally populate the newRefVars vector with varID's of all the variables present in this function
+            
             SgNode* cur = newFunc.get_definition();
             //SgNode* cur = n.getNode();
+        
+            ROSE_ASSERT(cur != NULL);    
             while(cur && !isSgFunctionDefinition(cur))
             { /*Dbg::dbg << "    cur=<"<<Dbg::escape(cur->unparseToString()) << " | " << cur->class_name()<<">"<<endl;*/
                  cur = cur->get_parent();
             }
+
+            ROSE_ASSERT(cur != NULL);
             SgFunctionDefinition *func = isSgFunctionDefinition(cur);
             if(func){
                 collectAllVarRefs collect;
@@ -950,7 +956,7 @@ void VarsExprsProductLattice::remapVars(const map<varID, varID>& varNameMap, con
                           {
                             Dbg::dbg << "No Lattice found: [";
                             //Akshatha(08/12): We do not push a variable which is not in scope
-                            //newLattices.push_back(perVarLattice->copy());
+                            //newLattices.push_back(perVarLattice->copy()); These changes were made to avoid pushing empty lattices for variables which were not in scope between caller and callee. This resulted in local variable lattices being wiped out while mapping variables from caller to callee and vice-versa.
                           }
                 }
                 
