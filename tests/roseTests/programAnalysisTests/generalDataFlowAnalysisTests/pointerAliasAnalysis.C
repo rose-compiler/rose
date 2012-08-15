@@ -20,8 +20,7 @@ void pointerAliasLattice::copy(Lattice* that_arg)
 {
     pointerAliasLattice *that = dynamic_cast<pointerAliasLattice*>(that_arg);
     Dbg::dbg<<"Entering COPY : That:" <<that<<" -- "<< that->str(" ") << "This :"<< endl << " -- " << str(" ")<<endl ;
-    this->level = that->level;
-    this->aliases = that->aliases;
+    this->aliasedVariables = that->aliasedVariables;
     this->aliasRelations = that->aliasRelations;
 }
 
@@ -29,7 +28,7 @@ void pointerAliasLattice::copy(Lattice* that_arg)
 bool pointerAliasLattice::operator==(Lattice* that_arg)
 {
         pointerAliasLattice* that = dynamic_cast<pointerAliasLattice*>(that_arg);
-        return aliases == that->aliases;
+        return aliasedVariables == that->aliasedVariables;
 }
 
 //Required function for printing debug information
@@ -37,16 +36,15 @@ string pointerAliasLattice::str(string indent)
 {
         ostringstream oss;
         oss<< "Aliases:{ ";
-        for(set<varID>::iterator al = aliases.begin(); al!=aliases.end(); ){             
+        for(set<varID>::iterator al = aliasedVariables.begin(); al!=aliasedVariables.end(); al++){             
              oss << *al;
-             al++;
-             if(al != aliases.end())
-                oss<<",";
+             if(al != aliasedVariables.end())
+                oss<<"  ";
         }      
         oss<<" }";
 
         oss << "{";        
-        for(set< std::pair<AliasRelationNode, AliasRelationNode> >::iterator alRel = aliasRelations.begin(); alRel!=aliasRelations.end(); ){
+        for(set< std::pair<aliasDerefCount, aliasDerefCount> >::iterator alRel = aliasRelations.begin(); alRel!=aliasRelations.end(); alRel++){
             if((alRel->first).var != NULL && (alRel->second).var !=NULL) 
                 oss << "(" << isSgVariableSymbol((alRel->first).var)->get_name() 
                     << "," <<(alRel->first).vID
@@ -56,7 +54,8 @@ string pointerAliasLattice::str(string indent)
                     << "," <<(alRel->second).vID
                     << "," <<(alRel->second).derefLevel 
                     << ")";
-            alRel++;
+            else
+                ROSE_ASSERT(((alRel->first).var == NULL && (alRel->second).var ==NULL));
         }
         oss << "}";
         return oss.str();
@@ -64,20 +63,27 @@ string pointerAliasLattice::str(string indent)
 
 
 //Add a new Alias
-void pointerAliasLattice::setAliases(varID al)
+void pointerAliasLattice::setAliasedVariables(varID al)
 {
-    aliases.insert(al);
+    aliasedVariables.insert(al);
 }
 
 
 //Add a new Alias relation pair
-void pointerAliasLattice::setAliasRelation(std::pair < AliasRelationNode, AliasRelationNode > alRel)
+void pointerAliasLattice::setAliasRelation(std::pair < aliasDerefCount, aliasDerefCount > alRel)
 {
     aliasRelations.insert(alRel);
 }
 
 
-//Union of that lattice with this lattice
+//Meet of that lattice with this lattice
+/*
+    Performs a meet on:
+        - that.aliasRelations with this.aliasRelations set. This is a union of sets by ensuring we do not have duplicate elements
+        - that.aliasedVariables with this.aliasedVariables set. This can also be viewed as a union of compact representation graphs and is simply a union of sets byt ensuring we do not have duplicates.
+
+    If the union of either of the sets results in modification of this, we set the 'modified' flag to true
+*/
 bool pointerAliasLattice::meetUpdate(Lattice* that_arg)
 {
     bool modified=false;
@@ -85,9 +91,9 @@ bool pointerAliasLattice::meetUpdate(Lattice* that_arg)
     Dbg::dbg<<"IN MEETTPDATE That:" << that->str(" ") << "This :"<< str(" ")<<endl ;
     
     //Union of Aliasrelations
-    set< std::pair<AliasRelationNode, AliasRelationNode> > thisAliasRelations= aliasRelations;
-    set< std::pair<AliasRelationNode, AliasRelationNode> > thatAliasRelations= that->getAliasRelations();
-    for(set< std::pair<AliasRelationNode, AliasRelationNode> >::iterator alRel = thatAliasRelations.begin(); 
+    set< std::pair<aliasDerefCount, aliasDerefCount> > thisAliasRelations= aliasRelations;
+    set< std::pair<aliasDerefCount, aliasDerefCount> > thatAliasRelations= that->getAliasRelations();
+    for(set< std::pair<aliasDerefCount, aliasDerefCount> >::iterator alRel = thatAliasRelations.begin(); 
         alRel!=thatAliasRelations.end();alRel++ )
     {
        //set::find() doesnt work well on pairs for some reason. Adding a search function for now
@@ -97,14 +103,14 @@ bool pointerAliasLattice::meetUpdate(Lattice* that_arg)
         }
     }
 
-    //Union of Aliases (Compact Representation Graphs)
-    set< varID > thisAlias= aliases;
-    set< varID > thatAlias= that->getAliases();
+    //Union of aliasedVariables (Compact Representation Graphs)
+    set< varID > thisAlias= aliasedVariables;
+    set< varID > thatAlias= that->getAliasedVariables();
     Dbg::dbg<<"This alias Size :"<<thisAlias.size() << " That alias Size :"<<thatAlias.size();
     for(set< varID >::iterator al = thatAlias.begin(); al!=thatAlias.end();al++ )
     {
        if(thisAlias.find(*al) == thisAlias.end()){
-         this->setAliases(*al);
+         this->setAliasedVariables(*al);
          modified = true;
         }
     }
@@ -126,22 +132,22 @@ bool pointerAliasLattice::search(set<T> thisSet, T value)
 
 
 //Getter for AliasRelations
-set< std::pair<AliasRelationNode, AliasRelationNode> > pointerAliasLattice::getAliasRelations() 
+set< std::pair<aliasDerefCount, aliasDerefCount> > pointerAliasLattice::getAliasRelations() 
 {
     return aliasRelations;
 }
 
 //Getter for Aliases
-set<varID> pointerAliasLattice::getAliases()
+set<varID> pointerAliasLattice::getAliasedVariables()
 {
-    return aliases;
+    return aliasedVariables;
 }
 
 
 //Clear Aliases - used for must-aliases
-void pointerAliasLattice::clearAliases()
+void pointerAliasLattice::clearAliasedVariables()
 {
-    aliases.clear();
+    aliasedVariables.clear();
 }
 
 
@@ -163,6 +169,9 @@ pointerAliasAnalysisTransfer::pointerAliasAnalysisTransfer(const Function& func,
 {}
 
 
+
+//Transfer function for Assign operations. 
+//Calculates the aliasDerefCount for left and right side of AssignOP expression and updates lattice with alias information
 void pointerAliasAnalysisTransfer::visit(SgAssignOp *sgn)
 {
       ROSE_ASSERT(sgn != NULL);
@@ -170,7 +179,7 @@ void pointerAliasAnalysisTransfer::visit(SgAssignOp *sgn)
 
       SgExpression *lhs = NULL;
       SgExpression *rhs = NULL;
-      AliasRelationNode leftARNode, rightARNode;
+      aliasDerefCount leftARNode, rightARNode;
 
       SageInterface::isAssignmentStatement(sgn,&lhs, &rhs);
       Dbg::dbg << "AssignOP Stement"<<lhs->variantT()<<"and"<<rhs->variantT()<<"\n"; 
@@ -181,12 +190,14 @@ void pointerAliasAnalysisTransfer::visit(SgAssignOp *sgn)
       if((leftARNode.var !=NULL) && (rightARNode.var !=NULL))
         resLat->setAliasRelation(make_pair(leftARNode,rightARNode)); 
         
-      //Update the Aliases(Compact Representation Graph)
+      //Update the aliasedVariables(Compact Representation Graph)
       updateAliases(resLat->getAliasRelations(),1);
 }
 
 
 
+//Transfer function for Function Call Expressions. 
+//Gets the lattice of the function call expression and updates lattice with alias information
 void pointerAliasAnalysisTransfer::visit(SgFunctionCallExp *sgn)
 {
     pointerAliasLattice *resLat = getLattice(sgn);
@@ -194,6 +205,10 @@ void pointerAliasAnalysisTransfer::visit(SgFunctionCallExp *sgn)
 }
 
 
+
+
+//Transfer function for AssignInitializer operations. 
+//Calculates the aliasDerefCount for left and right side of AssignInitializer expression and updates lattice with alias information
 void pointerAliasAnalysisTransfer::visit(SgAssignInitializer *sgn)
 {
     
@@ -203,7 +218,7 @@ void pointerAliasAnalysisTransfer::visit(SgAssignInitializer *sgn)
 
     SgExpression *lhs = static_cast<SgExpression *> (assgn_i->get_parent());
     SgExpression *rhs = assgn_i->get_operand();
-    AliasRelationNode leftARNode, rightARNode;
+    aliasDerefCount leftARNode, rightARNode;
 
     processLHS(lhs,leftARNode);
     processRHS(rhs,rightARNode);
@@ -217,6 +232,10 @@ void pointerAliasAnalysisTransfer::visit(SgAssignInitializer *sgn)
 }
 
 
+
+
+//Transfer function for Constructor Initalizers. 
+//Gets the lattice of the constructor initializer and updates lattice with alias information
 void pointerAliasAnalysisTransfer::visit(SgConstructorInitializer *sgn)
 {
     pointerAliasLattice *resLat = getLattice(sgn);
@@ -240,13 +259,13 @@ bool pointerAliasAnalysisTransfer::finish()
     - If is must alias, remove existing aliases of left variable lattice
     - Add a alias between each left variable and all their right variable aliases 
 */
-bool pointerAliasAnalysisTransfer::updateAliases(set< std::pair<AliasRelationNode, AliasRelationNode> > aliasRelations, int isMust)
+bool pointerAliasAnalysisTransfer::updateAliases(set< std::pair<aliasDerefCount, aliasDerefCount> > aliasRelations, int isMust)
 {
     bool modified = false;
     pointerAliasLattice *toLat, *fromLat;
     set <varID>  rightResult, leftResult;
 
-    for(set< std::pair<AliasRelationNode, AliasRelationNode> >::iterator alRel = aliasRelations.begin();
+    for(set< std::pair<aliasDerefCount, aliasDerefCount> >::iterator alRel = aliasRelations.begin();
             alRel!=aliasRelations.end();alRel++ )
     {
         computeAliases(getLattice((alRel->first).vID), (alRel->first).vID, (alRel->first).derefLevel, leftResult);
@@ -260,7 +279,7 @@ bool pointerAliasAnalysisTransfer::updateAliases(set< std::pair<AliasRelationNod
                 toLat = getLattice(*leftVar);
                 //if((toLat->getAliases()).size()==1)
                 //{   
-                    toLat->clearAliases();
+                    toLat->clearAliasedVariables();
                     modified = true; 
                 //}
             }
@@ -269,7 +288,7 @@ bool pointerAliasAnalysisTransfer::updateAliases(set< std::pair<AliasRelationNod
         for(set<varID>::iterator leftVar = leftResult.begin(); leftVar != leftResult.end(); leftVar++ ) {
             toLat = getLattice(*leftVar);        
             for(set<varID>::iterator rightVar = rightResult.begin(); rightVar != rightResult.end(); rightVar++ ) {
-               toLat->setAliases(*rightVar); 
+               toLat->setAliasedVariables(*rightVar); 
                modified = true; 
             }
         }  
@@ -279,13 +298,30 @@ return modified;
 
 
 //Compute Aliases by recursively walking through the compact representation of per-variable lattices
+/*
+    Consider 
+            int **x;
+            int *p,*q;
+            int a;
+            p = &a;
+            q = p;
+            x = &p;
+    
+    With per variable lattices like so:
+            p: {a}
+            q: {a}
+            x: {p}
+
+    To compute aliases for a pointer say 'x' with a deref count =2, we recursively travserse through the pervariableLattices sets to compute its aliases.
+    Ex :  computeAliases('x',2,result) -->computeAliases('p', 1, result)  --> computeAliases('a',0,result) --> result = {a}   
+*/
 void pointerAliasAnalysisTransfer::computeAliases(pointerAliasLattice *lat, varID var, int derefLevel, set<varID> &result)
 {
    if(derefLevel==0)
     result.insert(var);
    else
     {
-        set<varID> outS = lat->getAliases();
+        set<varID> outS = lat->getAliasedVariables();
         for(set<varID>::iterator outVar = outS.begin(); outVar != outS.end(); outVar++)
         {
             computeAliases(getLattice(*outVar),*outVar,derefLevel-1,result);
@@ -297,7 +333,7 @@ void pointerAliasAnalysisTransfer::computeAliases(pointerAliasLattice *lat, varI
 //- process left hand side of expressions(node) and calculate the dereference count for pointer and reference variables
 //- The newly found alias relation is placed in the arNode. 
 //- Alias relations are established only for pointer and references.
-void pointerAliasAnalysisTransfer::processLHS(SgNode *node,struct AliasRelationNode &arNode) {
+void pointerAliasAnalysisTransfer::processLHS(SgNode *node,struct aliasDerefCount &arNode) {
     if(node == NULL)
         return;
 
@@ -305,6 +341,8 @@ void pointerAliasAnalysisTransfer::processLHS(SgNode *node,struct AliasRelationN
     SgVarRefExp *var_exp;
     varID var;
     int derefLevel = 0;
+    
+   
     switch (node->variantT()) {
         case V_SgInitializedName:
         {
@@ -319,22 +357,17 @@ void pointerAliasAnalysisTransfer::processLHS(SgNode *node,struct AliasRelationN
         {
              var_exp = isSgVarRefExp(node);
              ROSE_ASSERT(var_exp != NULL);
-            sym = var_exp->get_symbol();
-            var = SgExpr2Var(var_exp);
+             sym = var_exp->get_symbol();
+             var = SgExpr2Var(var_exp);
         }
         break;
 
         case V_SgPointerDerefExp:
         {
-            SgPointerDerefExp *tmp = isSgPointerDerefExp(node);
-            SgPointerDerefExp *deref_exp = NULL;
-            ROSE_ASSERT(tmp != NULL);
-            while(tmp != NULL) {
-                deref_exp = tmp;
-                tmp = isSgPointerDerefExp(deref_exp->get_operand());
-                derefLevel++;
-            }
-            processLHS(deref_exp->get_operand(), arNode);
+            SgPointerDerefExp *ptr_exp = isSgPointerDerefExp(node);
+            ROSE_ASSERT(ptr_exp != NULL);
+            processLHS(ptr_exp->get_operand(), arNode);
+            derefLevel++;
             arNode.derefLevel += derefLevel;
             return;
         }
@@ -343,10 +376,9 @@ void pointerAliasAnalysisTransfer::processLHS(SgNode *node,struct AliasRelationN
         case V_SgArrowExp:
         {
             SgBinaryOp *bin_exp = isSgBinaryOp(node);
-            if(bin_exp != NULL) {
-                processLHS(bin_exp->get_rhs_operand(), arNode);
-                return;
-            }
+            ROSE_ASSERT(bin_exp != NULL);
+            processLHS(bin_exp->get_rhs_operand(), arNode);
+            return;
         }
         break;
 
@@ -358,7 +390,9 @@ void pointerAliasAnalysisTransfer::processLHS(SgNode *node,struct AliasRelationN
     //Maintain alias relation for Pointer/Reference types only
     if(sym != NULL &&
             (SageInterface::isPointerType(sym->get_type()) == false && SageInterface::isReferenceType(sym->get_type())==false) )
-                sym = NULL;
+    {
+            sym = NULL;
+    } 
 
     arNode.var = sym;
     arNode.vID = var;
@@ -369,7 +403,7 @@ void pointerAliasAnalysisTransfer::processLHS(SgNode *node,struct AliasRelationN
 //- Process aliases for Right hand side of expression and calculate derefernce count for pointer and reference variables
 //- The newly found alias relation is placed in the arNode. 
 //- Alias relations are established only for pointer and references.
-void pointerAliasAnalysisTransfer::processRHS(SgNode *node, struct AliasRelationNode &arNode) {
+void pointerAliasAnalysisTransfer::processRHS(SgNode *node, struct aliasDerefCount &arNode) {
     if(node == NULL)
         return;
 
@@ -387,7 +421,6 @@ void pointerAliasAnalysisTransfer::processRHS(SgNode *node, struct AliasRelation
         {
             var_exp = isSgVarRefExp(node);
             ROSE_ASSERT(var_exp != NULL);
-            // get the variable symbol
             sym = var_exp->get_symbol();
             var = SgExpr2Var(var_exp);
         }
@@ -396,24 +429,19 @@ void pointerAliasAnalysisTransfer::processRHS(SgNode *node, struct AliasRelation
         // = *a or = **a or = ***a  etc
         case V_SgPointerDerefExp:
         {
-            SgPointerDerefExp *tmp = isSgPointerDerefExp(node);
-            SgPointerDerefExp *deref_exp = NULL;
-            ROSE_ASSERT(tmp != NULL);
-            while(tmp != NULL) {
-                deref_exp = tmp;
-                tmp = isSgPointerDerefExp(deref_exp->get_operand());
-                derefLevel++;
-            }
-            processRHS(deref_exp->get_operand(), arNode);
+            SgPointerDerefExp *ptr_exp = isSgPointerDerefExp(node);
+            ROSE_ASSERT(ptr_exp != NULL);
+            processRHS(ptr_exp->get_operand(), arNode);
+            derefLevel++;
             arNode.derefLevel += derefLevel;
             return;
         }
         break;
-        //  = &b
-        case   V_SgAddressOfOp:
+        //  = &b or = &&b(supported in C++Ox) etc
+        case V_SgAddressOfOp:
         {
             SgAddressOfOp *add_exp = isSgAddressOfOp(node);
-            assert(add_exp != NULL);
+            ROSE_ASSERT(add_exp != NULL);
             processRHS(add_exp->get_operand(), arNode);
             sym = arNode.var;
             var = arNode.vID;
@@ -425,10 +453,9 @@ void pointerAliasAnalysisTransfer::processRHS(SgNode *node, struct AliasRelation
         case V_SgArrowExp:
         {
             SgBinaryOp *bin_exp = isSgBinaryOp(node);
-            if(bin_exp != NULL) {
-                processRHS(bin_exp->get_rhs_operand(), arNode);
-                return;
-            }
+            ROSE_ASSERT(bin_exp != NULL);
+            processRHS(bin_exp->get_rhs_operand(), arNode);
+            return;
         }
         break;
         // Case where *a = *b = *c ...etc
@@ -454,14 +481,18 @@ void pointerAliasAnalysisTransfer::processRHS(SgNode *node, struct AliasRelation
        // C *c = new C or
        // c = new C
        //return new C
+       /*
+           We follow the rule that every memory location has a unique name.
+           To assign a unique name for 'new Class()' expression we assign "__tmp_Mem_x" to identify it using a SgVariableSymbol name
+           The AST is updated to reflect the new variable Declaration
+       */
        case V_SgNewExp:
        {
         SgNewExp *new_exp = isSgNewExp(node);
         if(new_variables.count(new_exp) == 0){
 
-            SgScopeStatement *scope = NULL;
+           SgScopeStatement *scope = NULL;
            SgNode *parent=new_exp->get_parent();
-           //isSgStatement(parent)->get_scope()
            SgStatement *stmt = NULL;
 
            // find the nearest parent which is a statement
@@ -471,7 +502,7 @@ void pointerAliasAnalysisTransfer::processRHS(SgNode *node, struct AliasRelation
            scope = stmt->get_scope();
            SgType *type = new_exp->get_type()->dereference();
            std::stringstream ss;
-           ss << "__tmp_VFA__" << new_index;
+           ss << "__tmp_Mem__" << new_index;
            std::string name;
            ss >> name;
            SgName var_name = name;
