@@ -59,7 +59,7 @@ pointerAliasAnalysisTest_SOURCES = pointerAliasAnalysis.C pointerAliasAnalysisTe
 #         $(SAF_BUILD_ROOT)/src/analysis/libSafanalysis.la \
 #         $(SAF_BUILD_ROOT)/src/simpleAnalyses/libSafsimpleAnalyses.la \
 #         $(SAF_BUILD_ROOT)/src/lattice/libSaflattice.la \
-#         $(SAF_BUILD_ROOT)/src/common/libSafcommon.la \`
+#         $(SAF_BUILD_ROOT)/src/common/libSafcommon.la \
 #         $(SAF_BUILD_ROOT)/src/cfgUtils/libSafcfgUtils.la \
 #         $(SAF_BUILD_ROOT)/src/variables/libSafvariables.la \
 #         $(SAF_BUILD_ROOT)/src/state/libSafstate.la \
@@ -1458,7 +1458,7 @@ verify-pointerAliasAnalysis:$(CXX_POINTER_ALIASANALYSIS_FILES)
 
 # DQ (9/22/2011): All of the test codes are from other directories, so we don't what them in the EXTRA_DIST rule.
 # EXTRA_DIST = $(TESTCODES)
-EXTRA_DIST = constantPropagation.h taintedFlowAnalysis.h pointerAliasAnalysis.h $(CXX_LOCAL_LIVENESS_PASS)
+EXTRA_DIST = constantPropagation.h taintedFlowAnalysis.h pointerAliasAnalysis.h $(CXX_LOCAL_LIVENESS_PASS) $(CXX_LOCAL_CONSTANT_PROPAGATION_PASS) $(CXX_LOCAL_POINTER_ALIASANALYSIS_PASS)
 
 check-cxx: $(CXX_FILES)
 check-c: $(C_FILES)
