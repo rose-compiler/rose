@@ -7,25 +7,41 @@ void foo()
   a=10;
   int c = b;
   p = &x;
-  #pragma rose [pointerAliasLattice: p:Aliases=[x]]
+  #pragma rose p: Aliases:{ x }{}\
+    x: Aliases:{ }{}\
+    a: Aliases:{ }{}\
+    b: Aliases:{ }{}
 }
 
 void main()
 {
   x = 79;
   a=20;
-  int *r = &a;
-  #pragma rose [pointerAliasLattice: SgAssignInitializer:Aliases=[a]]
+  int *r;
 
+  r = &a;
+  #pragma rose p: Aliases:{ }{}\
+    x: Aliases:{ }{}\
+    a: Aliases:{ }{}\
+    b: Aliases:{ }{}\
+    r: Aliases:{ a }{}
 
   b = 8;
 
   foo();
-  #pragma rose [pointerAliasLattice: p:Aliases=[x], SgAssignInitializer:Aliases=[a]]
-  
+  #pragma rose p: Aliases:{ x }{}\
+    x: Aliases:{ }{}\
+    a: Aliases:{ }{}\
+    b: Aliases:{ }{}\
+    r: Aliases:{ a }{}
+
   x  = b + a + x;
 
   p = &b;
-  #pragma rose [pointerAliasLattice: p:Aliases=[b], SgAssignInitializer:Aliases=[a]]
+  #pragma rose p: Aliases:{ b }{}\
+    x: Aliases:{ }{}\
+    a: Aliases:{ }{}\
+    b: Aliases:{ }{}\
+    r: Aliases:{ a }{}
 }
 

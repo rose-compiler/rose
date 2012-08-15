@@ -4,23 +4,42 @@ int main()
     int *p,*q;
     a=10;
     p=&a;
-    #pragma rose [pointerAliasLattice: p:Aliases=[a]]
-
+    #pragma rose a: Aliases:{ }{}\
+    b: Aliases:{ }{}\
+    c: Aliases:{ }{}\
+    p: Aliases:{ a }{}\
+    q: Aliases:{ }{}\
+    x: Aliases:{ }{}
 
     if(1)
     {
       p = &b;
-      #pragma rose [pointerAliasLattice: p:Aliases=[b]]
+      #pragma rose a: Aliases:{ }{}\
+        b: Aliases:{ }{}\
+        c: Aliases:{ }{}\
+        p: Aliases:{ b }{}\
+        q: Aliases:{ }{}\
+        x: Aliases:{ }{}
     }
     else
       { 
         int *x;
         x = &c;
-        #pragma rose [pointerAliasLattice: p:Aliases=[a], x:Aliases=[c]]
+        #pragma rose a: Aliases:{ }{}\
+        b: Aliases:{ }{}\
+        c: Aliases:{ }{}\
+        p: Aliases:{ a }{}\
+        q: Aliases:{ }{}\
+        x: Aliases:{ c }{}
       }
 
     q = p;
-    #pragma rose [pointerAliasLattice: p:Aliases=[a,b], q:Aliases=[a,b], x:Aliases=[c]]
-
+    #pragma rose a: Aliases:{ }{}\
+    b: Aliases:{ }{}\
+    c: Aliases:{ }{}\
+    p: Aliases:{ a b }{}\
+    q: Aliases:{ a b }{}\
+    x: Aliases:{ c }{}
+    
     return 0;
 }
