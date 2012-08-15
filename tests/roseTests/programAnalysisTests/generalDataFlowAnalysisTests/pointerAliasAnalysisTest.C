@@ -21,6 +21,8 @@ using namespace std;
 #include "printAnalysisStates.h"
 #include "pointerAliasAnalysis.h"
 
+
+/*
 bool mFilter (CFGNode cfgn)
 {
       SgNode *node = cfgn.getNode();
@@ -109,7 +111,7 @@ void VirtualFunctionAnalysis::ignoreVirtualFunctionCalls()
     generateDOT(*project);   
 }
 
-/*
+
 void VirtualFunctionAnalysis::updatePointerAlias(pointerAliasAnalysis* _poal)
 {
     pl = _poal;
@@ -145,12 +147,13 @@ int main(int argc, char *argv[])
           printf("*************************************************************\n");
         }
 
+     /*We do not need LiveDeadVariable Analysis for this work*/
      //LiveDeadVarsAnalysis ldva(project);
      //UnstructuredPassInterDataflow ciipd_ldva(&ldva);
      //ciipd_ldva.runAnalysis();
 
-     VirtualFunctionAnalysis vfal(project, NULL); 
-     vfal.ignoreVirtualFunctionCalls();
+    // VirtualFunctionAnalysis vfal(project, NULL); 
+    // vfal.ignoreVirtualFunctionCalls();
 
     //Build the call graph
     CallGraphBuilder cgb(project);
@@ -167,6 +170,51 @@ int main(int argc, char *argv[])
     //vfal.updatePointerAlias(&poal);
     //UnstructuredPassInterAnalysis upia(vfal);
     //upia.runAnalysis();
+
+
+    // A better verification method using pragma strings embedded in the input test code
+    // grab live-in information from a Pragma Declaration
+    Rose_STL_Container <SgNode*> nodeList = NodeQuery::querySubTree(project, V_SgPragmaDeclaration);
+    for (Rose_STL_Container<SgNode *>::iterator i = nodeList.begin(); i != nodeList.end(); i++)
+    {
+        SgPragmaDeclaration* pdecl= isSgPragmaDeclaration((*i));
+        ROSE_ASSERT (pdecl != NULL);
+        // skip irrelevant pragmas
+        if (SageInterface::extractPragmaKeyword(pdecl) != "rose")
+            continue;
+   
+        // NOTE: it is not pointerAliasLattice here!!
+        // grab the first lattice attached to the pragma statement for this analysis
+        VarsExprsProductLattice* lattice = dynamic_cast <VarsExprsProductLattice *>(NodeState::getLatticeAbove(&poal, pdecl,0)[0]);
+        ROSE_ASSERT (lattice != NULL);
+        string lattice_str = lattice->str();
+        boost::erase_all(lattice_str, " ");
+        boost::erase_all(lattice_str, "\n");
+        //    cout <<lattice_str<<endl;
+        std::string pragma_str = pdecl->get_pragma()->get_pragma ();
+        pragma_str.erase (0,5);
+        boost::erase_all(pragma_str, "\n");
+        // cout <<pragma_str <<endl;
+
+        boost::erase_all(pragma_str, " ");
+
+        size_t found = lattice_str.find(pragma_str);
+        if (found != string::npos)
+        {
+            cout<<"Verified!"<<endl;
+        }
+        else
+        {
+            cout<<"Analysis results are not identical to the reference results from the pragma !"<<endl;
+            cout<<"=======pragma reference results========"<<endl;
+            cout <<pragma_str <<endl;
+            cout<<"-------analysis results--------"<<endl;
+            cout <<lattice_str<<endl;
+            assert (false);
+        }
+
+    }
+
 
     Dbg::dotGraphGenerator (&poal);
 return 0;
