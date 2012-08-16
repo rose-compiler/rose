@@ -24,6 +24,7 @@
 
 extern const Compass::Checker* const defaultArgumentChecker;
 extern const Compass::Checker* const functionPointerChecker;
+extern const Compass::Checker* const functionWithMultipleReturnsChecker;
 extern const Compass::Checker* const globalVariablesChecker;
 extern const Compass::Checker* const keywordMacroChecker;
 extern const Compass::Checker* const nonGlobalCppDirectiveChecker;
@@ -120,6 +121,8 @@ int main (int argc, char** argv)
                 traversals.push_back (functionPointerChecker);
             else if ("defaultArgument" == checker_name)
                 traversals.push_back (defaultArgumentChecker);
+            else if ("functionWithMultipleReturns" == checker_name)
+                traversals.push_back (functionWithMultipleReturnsChecker);
             else if ("globalVariables" == checker_name)
                 traversals.push_back (globalVariablesChecker);
             else if ("keywordMacros" == checker_name)
