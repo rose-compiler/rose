@@ -2158,6 +2158,8 @@ projects/compass2/tests/checkers/default_argument/Makefile
 projects/compass2/tests/checkers/default_argument/compass_parameters.xml
 projects/compass2/tests/checkers/function_pointer/Makefile
 projects/compass2/tests/checkers/function_pointer/compass_parameters.xml
+projects/compass2/tests/checkers/function_with_multiple_returns/Makefile
+projects/compass2/tests/checkers/function_with_multiple_returns/compass_parameters.xml
 projects/compass2/tests/checkers/global_variables/Makefile
 projects/compass2/tests/checkers/global_variables/compass_parameters.xml
 projects/compass2/tests/checkers/keyword_macro/Makefile

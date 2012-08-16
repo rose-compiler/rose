@@ -117,6 +117,10 @@ namespace Compass
    * @}
    **------------------------------------------------------------------------*/
 
+  /**
+   * @return True if <tt>SgLocatedNode</tt> exists in a file beneath
+   * <tt>path</tt>.
+   */
   bool
   IsNodeInUserLocation(const SgLocatedNode *const node, const std::string& path);
 
