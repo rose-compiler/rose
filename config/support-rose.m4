@@ -2154,6 +2154,8 @@ projects/compass2/docs/doxygen/doxygen.config
 projects/compass2/docs/doxygen/Makefile
 projects/compass2/tests/Makefile
 projects/compass2/tests/checkers/Makefile
+projects/compass2/tests/checkers/default_argument/Makefile
+projects/compass2/tests/checkers/default_argument/compass_parameters.xml
 projects/compass2/tests/checkers/function_pointer/Makefile
 projects/compass2/tests/checkers/function_pointer/compass_parameters.xml
 projects/compass2/tests/checkers/global_variables/Makefile
