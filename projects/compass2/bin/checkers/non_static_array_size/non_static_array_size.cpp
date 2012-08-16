@@ -1,6 +1,3 @@
-// -*- mode: C++; c-basic-offset: 2; indent-tabs-mode: nil -*-
-// vim: expandtab:shiftwidth=2:tabstop=2
-
 /**
  * \file    non_static_array_size.cpp
  * \author  Justin Too <too1@llnl.gov>
