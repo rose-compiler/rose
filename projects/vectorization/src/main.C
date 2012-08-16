@@ -11,6 +11,7 @@
 */  
 
 #include "rose.h"
+
 //Array Annotation headers
 #include <CPPAstInterface.h>
 #include <ArrayAnnot.h>
@@ -24,12 +25,20 @@
 
 #include "vectorization.h"
 #include "normalization.h"
+#include "SIMDAnalysis.h"
 #include "CommandOptions.h"
 
 using namespace std;
 using namespace vectorization;
 using namespace normalization;
+using namespace SIMDAnalysis;
 
+DFAnalysis* defuse;
+/* 
+  VF is the vector factor, usually is the SIMD width.  
+  We set it up here for the ealy stage development.
+*/
+int VF = 4;
 
 class transformTraversal : public AstSimpleProcessing
 {
@@ -53,7 +62,7 @@ void transformTraversal::visit(SgNode* n)
         SageInterface::forLoopNormalization(forStatement);
         if(isInnermostLoop(forStatement) && isStrideOneLoop(forStatement)){
           //stripmineLoop(forStatement,4);
-          updateLoopIteration(forStatement,4);
+          updateLoopIteration(forStatement,VF);
         }
       }
       break;
@@ -76,6 +85,8 @@ void vectorizeTraversal::visit(SgNode* n)
       {
         SgForStatement* forStatement = isSgForStatement(n);
         if(isInnermostLoop(forStatement)){
+//          getDefList(defuse, forStatement->get_loop_body());
+//          getUseList(defuse, forStatement->get_loop_body());
           translateMultiplyAccumulateOperation(forStatement);
           vectorizeBinaryOp(forStatement);
         }
@@ -87,6 +98,7 @@ void vectorizeTraversal::visit(SgNode* n)
 }
 
 
+
 int main( int argc, char * argv[] )
 {
   vector<string> argvList(argv, argv+argc);
@@ -94,7 +106,7 @@ int main( int argc, char * argv[] )
   SgProject* project = frontend(argc,argv);
   AstTests::runAllTests(project);   
 
-  generateAstGraph(project,8000,"_orig");
+  //generateAstGraph(project,8000,"_orig");
 /* Generate data dependence graph
   ArrayAnnotation* annot = ArrayAnnotation::get_inst(); 
   ArrayInterface array_interface(*annot);
@@ -118,25 +130,36 @@ int main( int argc, char * argv[] )
     comp->DumpDep();
   }
 */
-   
-  normalizeExperission(project);
-
-  addHeaderFile(project,argvList);
   
+// Normalize the loop to identify FMA operation.
+  normalizeExperission(project);
+// Add required header files for ROSE vectorization framework.
+  addHeaderFile(project,argvList);
+
+/*
+  This stage includes loop normalization (implemented in mid-end), and loop strip-mining.
+*/ 
   transformTraversal loopTransformation;
   loopTransformation.traverseInputFiles(project,postorder);
   
+
+//  defuse = new DefUseAnalysis(project);
+//  defuse->run(false);
+
+/*
+  This stage translates the operators to the intrinsic function calls. 
+*/ 
   vectorizeTraversal doVectorization;
   doVectorization.traverseInputFiles(project,postorder);
 
+  //generateAstGraph(project,80000);
 
   //generateDOT(*project);
-  generateAstGraph(project,80000);
  
 
   // Output preprocessed source file.
   //unparseProject(project);
   return backend(project); 
-//  return 0;
+  //return 0;
 }
 

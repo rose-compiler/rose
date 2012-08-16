@@ -19,10 +19,12 @@ bin_PROGRAMS = vectorization
 vectorization_SOURCES=\
 	main.C \
 	normalization.C \
+	SIMDAnalysis.C \
 	vectorization.C 
 
 Vectorization_include_HEADERS=\
   normalization.h \
+  SIMDAnalysis.h \
   vectorization.h
 
 include_HEADERS = ROSE_SIMD.h

@@ -1,5 +1,4 @@
 #include "vectorization.h"
-#include "normalization.h"
 #include "CommandOptions.h"
 #include "AstInterface.h"
 #include "AstInterface_ROSE.h"
@@ -8,7 +7,6 @@ using namespace std;
 using namespace SageInterface;
 using namespace SageBuilder;
 using namespace vectorization;
-using namespace normalization;
 
 /******************************************************************************************************************************/
 /*
@@ -17,6 +15,7 @@ using namespace normalization;
   This mapping process depends on the translator options provided by user.
 */
 /******************************************************************************************************************************/
+extern int VF;
 
 void vectorization::addHeaderFile(SgProject* project,vector<string>&argvList)
 {
@@ -38,6 +37,21 @@ void vectorization::addHeaderFile(SgProject* project,vector<string>&argvList)
   }
 }
 
+/******************************************************************************************************************************/
+/*
+  Insert these data types into AST.  
+  This step has to be done in the beginning of translation.  
+  The later SIMD translation can recognize and use these SIMD data type.
+  These data types will map to the typedef in the header file.
+*/
+/******************************************************************************************************************************/
+
+void vectorization::insertSIMDDataType(SgGlobal* globalScope)
+{
+  buildOpaqueType("__SIMD",globalScope);
+  buildOpaqueType("__SIMDi",globalScope);
+  buildOpaqueType("__SIMDd",globalScope);
+}
 
 /******************************************************************************************************************************/
 /*
@@ -60,8 +74,6 @@ void vectorization::translateBinaryOp(SgBinaryOp* binaryOp, SgScopeStatement* sc
   translateOperand(lhs);  
   translateOperand(rhs);  
 }
-
-
 
 /******************************************************************************************************************************/
 /*
@@ -96,8 +108,6 @@ SgType* vectorization::getSIMDType(SgType* variableType, SgScopeStatement* scope
   }
   return returnSIMDType;
 }
-
-
 
 /******************************************************************************************************************************/
 /*
@@ -141,29 +151,83 @@ void vectorization::translateOperand(SgExpression* operand)
     case V_SgPntrArrRefExp:
       {
         SgPntrArrRefExp* pntrArrRefExp = isSgPntrArrRefExp(operand);
-        SgVarRefExp* arrayRefExp  = isSgVarRefExp(pntrArrRefExp->get_lhs_operand());
+
+        //  If the operand is multi-dimensional array, then we have to do a recursive search to get the SgVarRefExp
+        SgNode* tmpNode = pntrArrRefExp->get_lhs_operand();
+        SgVarRefExp* arrayRefExp  = NULL;
+        while((arrayRefExp = isSgVarRefExp(tmpNode)) == NULL)
+        {
+          pntrArrRefExp = isSgPntrArrRefExp(tmpNode);
+          tmpNode = (isSgPntrArrRefExp(tmpNode))->get_lhs_operand();
+        }
+        ROSE_ASSERT(arrayRefExp);
         SgVariableSymbol* arraySymbol = arrayRefExp->get_symbol();
+
         SgDeclarationStatement* arrayDeclarationStmt = arraySymbol->get_declaration()->get_declaration();
         string arrayName = arrayRefExp->get_symbol()->get_name().getString();
-        if (SgProject::get_verbose() > 2)
-          std::cout << "array:" << arrayName << std::endl;
         string SIMDName = arrayName + "_SIMD";
 
         if(lookupSymbolInParentScopes(SIMDName,getEnclosingFunctionDefinition(operand)) == NULL)
         {
+          /* 
+            To create pointers that can point to multi-dimension array, 
+            we need to retrieve the dimension information for each array.
+            Multi-dimensional array in C is declared as array of arrays.  Therefore, we have to fetch all the information recursively.
+          */
+          vector<SgExpression*> arrayInfo;
+          SgType* originalType = arraySymbol->get_type();
+          SgArrayType* tmpArrayType = isSgArrayType(originalType);
+          arrayInfo.insert(arrayInfo.begin(),tmpArrayType->get_index());
+          while((tmpArrayType = isSgArrayType(tmpArrayType->get_base_type())) != NULL)
+          {
+            arrayInfo.insert(arrayInfo.begin(),tmpArrayType->get_index());
+          }
+          // Get the original data type and find the mapped SIMD data type.
           SgArrayType* arrayType = isSgArrayType(arraySymbol->get_type());
           ROSE_ASSERT(arrayType);
           SIMDType = getSIMDType(arrayType->get_base_type(),getEnclosingFunctionDefinition(operand)); 
-          SgPointerType* SIMDPointerType = buildPointerType(SIMDType);
-          SgVariableDeclaration* SIMDDeclarationStmt = buildVariableDeclaration(SIMDName,SIMDPointerType,NULL,getEnclosingFunctionDefinition(operand));        
-          insertStatement(arrayDeclarationStmt,SIMDDeclarationStmt,false,true);
 
+          /*
+            This following section creates pointer that points to a multi-dimension array, and applied the type casting on that.
+            The following table should expalin the details:
+
+            dimension       original array        SIMD pointer that points to the original array
+              1             float a[i];           __SIMD *a_SIMD;       
+              2             float b[j][i];        __SIMD (*b_SIMD)[i / 4];
+              3             float c[k][j][i];     __SIMD (*c_SIMD)[j][i / 4];
+          */
+          SgType* newType = NULL;
+          SgType* baseType = isSgType(SIMDType);
+          for(vector<SgExpression*>::iterator i=arrayInfo.begin(); i <arrayInfo.end()-1;++i)
+          {
+            SgArrayType* tmpArrayType;
+            if(i == arrayInfo.begin())
+            {
+              tmpArrayType = buildArrayType(baseType,buildDivideOp(*i,buildIntVal(VF)));
+            }
+            else
+            {
+              tmpArrayType = buildArrayType(baseType,*i);
+            }
+            baseType = isSgType(tmpArrayType);
+          }
+          newType = buildPointerType(baseType);
+
+          // VariableDeclaration for this pointer, that points to the array space
+          SgVariableDeclaration* SIMDDeclarationStmt = buildVariableDeclaration(SIMDName,newType,NULL,getEnclosingFunctionDefinition(operand));        
+          insertStatement(arrayDeclarationStmt,SIMDDeclarationStmt,false,true);
+          // define the pointer and make sure it points to the beginning of the array
           SgExprStatement* pointerAssignment = buildAssignStatement(buildVarRefExp(SIMDDeclarationStmt),
-                                                                    buildCastExp(buildVarRefExp(arraySymbol), SIMDPointerType, SgCastExp::e_C_style_cast ));
+                                                                    buildCastExp(buildVarRefExp(arraySymbol), 
+                                                                    newType, 
+                                                                    SgCastExp::e_C_style_cast ));
           insertStatementAfterLastDeclaration(pointerAssignment,getEnclosingFunctionDefinition(operand));
         }
-        SgVarRefExp* newOperand = buildVarRefExp(SIMDName, getEnclosingFunctionDefinition(operand));
-        replaceExpression(pntrArrRefExp->get_lhs_operand(), newOperand, false);
+        /* 
+          we have the SIMD pointer, we can use this as the operand in the SIMD intrinsic functions.
+        */
+        SgVarRefExp* newOperand = buildVarRefExp(SIMDName, getEnclosingFunctionDefinition(arrayRefExp));
+        replaceExpression(arrayRefExp, newOperand, false);
 
       }
       break;
@@ -178,17 +242,16 @@ void vectorization::translateOperand(SgExpression* operand)
       break;
     default:
       {
-        // If operand isn't varRefExp or pntrArrRefExp, then we do nothing with it.
+        // By default, we don't change anything for the operands. 
       }
       break;
   }
 }
 
-
-
 /******************************************************************************************************************************/
 /*
   Search for all the binary operations in the loop body and translate them into SIMD function calls.
+  We implement translations for the basic arithmetic operator first.
 */
 /******************************************************************************************************************************/
 void vectorization::vectorizeBinaryOp(SgForStatement* forStatement)
@@ -236,26 +299,6 @@ void vectorization::vectorizeBinaryOp(SgForStatement* forStatement)
         break;
     }
     
-  }
-}
-
-
-/******************************************************************************************************************************/
-/*
-  Check if the loop is innermostloop.  If yes, it is candidate for SIMD translation.
-  Otherwise, it needs more transformation to perform SIMD. 
-  We perform the node query on a forStatement.  If the result has only one forStatement from the query,
-  this imply it's a innermost loop.
-*/
-/******************************************************************************************************************************/
-bool vectorization::isInnermostLoop(SgForStatement* forStatement)
-{
-  Rose_STL_Container<SgNode*> innerLoopList = NodeQuery::querySubTree (forStatement,V_SgForStatement);
-  if(innerLoopList.size() == 1){
-    return true;
-  }
-  else{
-    return false;
   }
 }
 
@@ -370,23 +413,6 @@ void vectorization::stripmineLoop(SgForStatement* forStatement, int VF)
   prependStatement(pragmadecl,outerBasicBlock);
 }
 
-/******************************************************************************************************************************/
-/*
-  Insert these data types into AST.  
-  This step has to be done in the beginning of translation.  
-  The later SIMD translation can recognize and use these SIMD data type.
-  These data types will map to the typedef in the header file.
-*/
-/******************************************************************************************************************************/
-
-void vectorization::insertSIMDDataType(SgGlobal* globalScope)
-{
-  buildOpaqueType("__SIMD",globalScope);
-  buildOpaqueType("__SIMDi",globalScope);
-  buildOpaqueType("__SIMDd",globalScope);
-}
-
-
 
 /******************************************************************************************************************************/
 /*
@@ -425,8 +451,6 @@ void vectorization::translateMultiplyAccumulateOperation(SgForStatement* forStat
   maddTraversal maddTranslation;
   maddTranslation.traverse(forStatement,postorder);
 }
-
-
 
 /******************************************************************************************************************************/
 /*
@@ -473,11 +497,21 @@ void vectorization::generateMultiplyAccumulateFunctionCall(SgBinaryOp* root, SgN
   translateOperand(exp3);
 }
 
-
-
-
 /******************************************************************************************************************************/
 /*
+  THis is a similar function to the stripmineLoop. Difference is in the loopStatement.
+  StripmineLoop can be applied on non-vectorizable loop, but this one has to be applied to the vectorizable loop.
+
+  for (i=0; i<Num; i++) {
+    ...
+  }
+    
+  transform the loop to the following format:
+
+  for (i=0, j = i; i < Num; i+=VF, j ++) { 
+  }
+
+
 */
 /******************************************************************************************************************************/
 void vectorization::updateLoopIteration(SgForStatement* forStatement, int VF)
@@ -532,6 +566,7 @@ void vectorization::updateLoopIteration(SgForStatement* forStatement, int VF)
   ROSE_ASSERT(increment);
   SgCommaOpExp* commaOpExp = buildCommaOpExp(increment, newIncrementOp);
   forStatement->set_increment(commaOpExp);
+  commaOpExp->set_parent(forStatement);
   
   /*
     The original loop body becomes the inner loop body.  However, the index name has to be replaced by the inner
@@ -549,68 +584,15 @@ void vectorization::updateLoopIteration(SgForStatement* forStatement, int VF)
 
 
 
+
 /******************************************************************************************************************************/
 /*
-  Check if the loop has stride distance 1.  
-  We only test this after the loop normalization.  Therefore, the increment expression has only two cases:
-  1. i += 1;
-  2. i = i +/- k;
+  SIMD intrinsic function has different surffix name for different type of operands.
+  If it is a integer operand, then it has "_epi32" at the end.
+  If it is a float operand, then it has "_ps" at the end.
+  If it is a double operand, then it has "_pd" at the end.
 */
 /******************************************************************************************************************************/
-
-bool vectorization::isStrideOneLoop(SgNode* loop)
-{
-  // Get the increment expression
-  SgExpression* increment = NULL;
-  if (SgFortranDo* doLoop = isSgFortranDo(loop))
-  {
-    increment = doLoop->get_increment();
-  }
-  else if  (SgForStatement* forLoop = isSgForStatement(loop))
-  {
-    increment = forLoop->get_increment();
-  }
-  else
-  {
-    ROSE_ASSERT(false);
-  }
-
-  switch (increment->variantT()) 
-  {
-    case V_SgAssignOp:
-      {
-        SgAssignOp* assignOp = isSgAssignOp(increment);
-        SgVarRefExp* lhs = isSgVarRefExp(assignOp->get_rhs_operand());
-        SgAddOp* addOp = isSgAddOp(assignOp->get_rhs_operand());
-        if((lhs != NULL) && (addOp != NULL))
-        {
-          SgExpression* rhs = addOp->get_rhs_operand();
-          SgVarRefExp* leftOperand = isSgVarRefExp(addOp->get_lhs_operand());
-          SgIntVal* strideDistance = isSgIntVal(rhs);
-          return ((leftOperand != NULL) && 
-                  (lhs->get_symbol() == leftOperand->get_symbol()) &&
-                  (strideDistance != NULL) && 
-                  (strideDistance->get_value() == 1));
-        }
-        else
-        {
-          return false;
-        }
-      }
-      break;
-    case V_SgPlusAssignOp:
-      {
-        SgPlusAssignOp* plusAssignOp = isSgPlusAssignOp(increment);
-        SgExpression* rhs = plusAssignOp->get_rhs_operand();
-        SgIntVal* strideDistance = isSgIntVal(rhs);
-        return ((strideDistance != NULL) && (strideDistance->get_value() == 1));
-      }
-      break;
-    default:
-      return false;
-  }
-}
-
 
 string vectorization::getSIMDOpSuffix(SgType* opType)
 {

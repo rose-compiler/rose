@@ -10,8 +10,6 @@
 namespace vectorization 
 {
   void addHeaderFile(SgProject*, std::vector<std::string>&);
-  bool isInnermostLoop(SgForStatement*);
-
   void stripmineLoop(SgForStatement*, int);
   void updateLoopIteration(SgForStatement*, int);
 
@@ -24,7 +22,6 @@ namespace vectorization
   void insertSIMDDataType(SgGlobal*);
   SgType* getSIMDType(SgType*, SgScopeStatement*);
 
-  bool isStrideOneLoop(SgNode*);
   std::string getSIMDOpSuffix(SgType*);
 }
 
