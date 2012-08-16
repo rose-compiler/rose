@@ -147,6 +147,32 @@ Traversal(Compass::Parameters a_parameters, Compass::OutputObject* output)
 
 //////////////////////////////////////////////////////////////////////////////
 
+/** visit(SgNode *node)
+ *
+ *  Purpose
+ *  ========
+ *
+ *  Search for functions that don't have a prototype,
+ *  i.e. forward function definition.  For example:
+ *
+ *      void function_def_and_decl()
+ *      {
+ *      }
+ *
+ *  Target AST
+ *  ==========
+ *              (1)
+ *      SgFunctionDeclaration
+ *               |
+ *           search for
+ *  first non-defining declaration
+ *               |
+ *         ------------
+ *        |            |
+ *       YES           NO
+ *        |            |
+ *    prototype  (2) <target: does not have prototype>
+ */
 void
 CompassAnalyses::FunctionPrototype::Traversal::
 visit(SgNode *node)
@@ -155,25 +181,19 @@ visit(SgNode *node)
     if (located_node != NULL &&
         Compass::IsNodeInUserLocation(located_node, source_directory_))
     {
+        // (1)
         SgFunctionDeclaration* function_decl =
             isSgFunctionDeclaration(node);
         if (function_decl != NULL)
         {
-            SgFunctionDefinition* function_definition =
-                function_decl->get_definition();
-            if (! function_decl->isForward())
+            // (2)
+            SgDeclarationStatement* first_defining_decl =
+                function_decl->get_firstNondefiningDeclaration();
+            // No forward declaration (i.e. function prototype)
+            if (first_defining_decl == NULL)
             {
-    std::cout << function_decl->get_name().str() << " is NOT a forward declaration with definition=" << function_definition << std::endl;
-                // No forward declaration (i.e. function prototype)
-                if (function_definition == NULL)
-                {
-                    output_->addOutput(
-                      new CheckerOutput(node));
-                }
-            }
-            else
-            {
-    std::cout << function_decl->get_name().str() << " is a forward declaration with definition=" << function_definition << std::endl;
+                output_->addOutput(
+                  new CheckerOutput(node));
             }
         }
     }
