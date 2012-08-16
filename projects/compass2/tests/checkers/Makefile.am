@@ -7,6 +7,7 @@ AUTOMAKE_OPTIONS = subdir-objects
 SUBDIRS=\
 	default_argument \
 	function_pointer \
+	function_prototype \
 	function_with_multiple_returns \
 	global_variables \
 	keyword_macro \
