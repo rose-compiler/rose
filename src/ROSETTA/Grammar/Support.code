@@ -6393,6 +6393,7 @@ SgSymbolTable::insert ( const SgName & nm , SgSymbol *sp )
 #endif
 #endif
 
+#if 0
   // DQ (12/3/2011): Disable symbols with the same name (temporary testing/debugging).
      if (exists(nm) == true)
         {
@@ -6402,6 +6403,7 @@ SgSymbolTable::insert ( const SgName & nm , SgSymbol *sp )
        // ROSE_ASSERT(s == NULL);
         }
   // ROSE_ASSERT(exists(nm) == false);
+#endif
 
   // #if SYMBOL_TABLE_ERROR_CHECKING
   // SgFunctionTypeSymbol does not have a valid get_symbol_basis(), so skip this case!
