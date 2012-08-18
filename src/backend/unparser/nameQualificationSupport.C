@@ -2254,6 +2254,48 @@ NameQualificationTraversal::skipNameQualificationIfNotProperlyDeclaredWhereDecla
         }
 #endif
 
+  // DQ (8/18/2012): If this is a template instantiation, then we need to look at where the template declaration is and if IT is defined.
+  // See test2009_30.C for an example of this.
+     SgTemplateInstantiationFunctionDecl* templateInstantiationFunctionDecl = isSgTemplateInstantiationFunctionDecl(declaration);
+     if (templateInstantiationFunctionDecl != NULL)
+        {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+          printf ("In skipNameQualificationIfNotProperlyDeclaredWhereDeclarationIsDefinable(): templateInstantiationFunctionDecl->get_name() = %p = %s \n",templateInstantiationFunctionDecl,templateInstantiationFunctionDecl->get_name().str());
+#endif
+
+       // DQ (8/18/2012): Note that test2012_57.C and test2012_59.C have template specalizations that don't appear 
+       // to have there associated template declaration set properly, issue a warning for now.
+       // declarationToSearchForInReferencedNameSet = templateInstantiationFunctionDecl->get_templateDeclaration();
+          if (templateInstantiationFunctionDecl->get_templateDeclaration() == NULL)
+             {
+               printf ("WARNING: templateInstantiationFunctionDecl->get_templateDeclaration() == NULL for templateInstantiationFunctionDecl = %p = %s \n",templateInstantiationFunctionDecl,templateInstantiationFunctionDecl->get_name().str());
+             }
+            else
+             {
+               declarationToSearchForInReferencedNameSet = templateInstantiationFunctionDecl->get_templateDeclaration();
+             }
+          ROSE_ASSERT(declarationToSearchForInReferencedNameSet != NULL);
+        }
+       else
+        {
+       // Also test for member function.
+          SgTemplateInstantiationMemberFunctionDecl* templateInstantiationMemberFunctionDecl = isSgTemplateInstantiationMemberFunctionDecl(declaration);
+          if (templateInstantiationMemberFunctionDecl != NULL)
+             {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+               printf ("In skipNameQualificationIfNotProperlyDeclaredWhereDeclarationIsDefinable(): templateInstantiationMemberFunctionDecl->get_name() = %p = %s \n",templateInstantiationMemberFunctionDecl,templateInstantiationMemberFunctionDecl->get_name().str());
+#endif
+               declarationToSearchForInReferencedNameSet = templateInstantiationMemberFunctionDecl->get_templateDeclaration();
+               ROSE_ASSERT(declarationToSearchForInReferencedNameSet != NULL);
+             }
+            else
+             {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+               printf ("In skipNameQualificationIfNotProperlyDeclaredWhereDeclarationIsDefinable(): This is not a template function instantation (member nor non-member function) \n");
+#endif
+             }
+        }
+
   // DQ (6/22/2011): This fixes test2011_97.C which only has a defining declaration so that the declaration->get_firstNondefiningDeclaration() was NULL.
   // if (referencedNameSet.find(declaration->get_firstNondefiningDeclaration()) == referencedNameSet.end())
      if (referencedNameSet.find(declarationToSearchForInReferencedNameSet) == referencedNameSet.end())

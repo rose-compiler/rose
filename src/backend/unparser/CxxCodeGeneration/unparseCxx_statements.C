@@ -1493,10 +1493,8 @@ Unparse_ExprStmt::unparseTemplateInstantiationFunctionDeclStmt (SgStatement* stm
   // DQ (6/8/2005): If this is an inlined function, we need to make sure that 
   // the function has not been used anywhere before where we output it here.
 
-
   // DQ (3/24/2004): New function to support templates
-     SgTemplateInstantiationFunctionDecl* templateInstantiationFunctionDeclaration = 
-          isSgTemplateInstantiationFunctionDecl(stmt);
+     SgTemplateInstantiationFunctionDecl* templateInstantiationFunctionDeclaration = isSgTemplateInstantiationFunctionDecl(stmt);
      ROSE_ASSERT(templateInstantiationFunctionDeclaration != NULL);
      ROSE_ASSERT(templateInstantiationFunctionDeclaration->get_file_info() != NULL);
 
@@ -1504,7 +1502,8 @@ Unparse_ExprStmt::unparseTemplateInstantiationFunctionDeclStmt (SgStatement* stm
 
      ROSE_ASSERT(functionDeclaration != NULL);
 
-#if 1
+#if 0
+     printf("Inside of Unparse_ExprStmt::unparseTemplateInstantiationFunctionDeclStmt() templateInstantiationFunctionDeclaration = %p \n",templateInstantiationFunctionDeclaration);
      curprint("/* Output in curprint in Unparse_ExprStmt::unparseTemplateInstantiationFunctionDeclStmt() */");
 #endif
 

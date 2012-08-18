@@ -1310,9 +1310,13 @@ Unparse_ExprStmt::unparseFuncRefSupport(SgExpression* expr, SgUnparse_Info& info
           SgTemplateInstantiationFunctionDecl* templateInstantiationFunctionDecl = isSgTemplateInstantiationFunctionDecl(declaration);
           if (templateInstantiationFunctionDecl != NULL)
              {
+#if 0
+               printf ("In unparseFuncRef(): declaration->get_declarationModifier().isFriend() = %s \n",declaration->get_declarationModifier().isFriend() ? "true" : "false");
+               printf ("In unparseFuncRef(): diff = %d \n",diff);
+#endif
                if ( (declaration->get_declarationModifier().isFriend() == false) && (diff == 0) )
                   {
-#if 1
+#if 0
                     printf ("Regenerate the name func_name = %s \n",func_name.c_str());
                     printf ("templateInstantiationFunctionDecl->get_templateName() = %s \n",templateInstantiationFunctionDecl->get_templateName().str());
 #endif
