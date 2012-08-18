@@ -19,6 +19,8 @@ using namespace std;
 using namespace SageInterface;
 using namespace Fortran_to_C;
 
+bool isLinearlizeArray = true;
+vector<SgArrayType*> arrayTypeList;
 
 class typeTraversal : public ROSE_VisitorPattern
 {
@@ -28,7 +30,10 @@ class typeTraversal : public ROSE_VisitorPattern
 
 void typeTraversal::visit(SgArrayType* type)
 {
-  linearizeArrayDeclaration(type);
+  arrayTypeList.push_back(type);
+/*
+*/
+  
 }
 
 class f2cTraversal : public AstSimpleProcessing
@@ -85,7 +90,14 @@ void f2cTraversal::visit(SgNode* n)
       {
         SgPntrArrRefExp* pntrArrRefExp = isSgPntrArrRefExp(n);
         ROSE_ASSERT(pntrArrRefExp);
-        linearizeArraySubscript(pntrArrRefExp);
+        if(isLinearlizeArray)
+        {
+          linearizeArraySubscript(pntrArrRefExp);
+        }
+        else
+        {
+          translateArraySubscript(pntrArrRefExp);
+        }
       }
       break;
     default:
@@ -102,9 +114,20 @@ int main( int argc, char * argv[] )
   generateAstGraph(project,8000,"_orig");
   
   // Traversal with Memory Pool to search for arrayType
-  typeTraversal linearizeArrayType;
-  traverseMemoryPoolVisitorPattern(linearizeArrayType);
+  typeTraversal translateArrayType;
+  traverseMemoryPoolVisitorPattern(translateArrayType);
 
+  for(vector<SgArrayType*>::iterator i=arrayTypeList.begin(); i<arrayTypeList.end(); ++i)
+  {
+    if(isLinearlizeArray)
+    {
+      linearizeArrayDeclaration(*i);
+    }
+    else
+    {
+      translateArrayDeclaration(*i);
+    }
+  }
   // Simple traversal, bottom-up, to translate the rest
   f2cTraversal f2c;
   f2c.traverseInputFiles(project,postorder);
@@ -115,7 +138,7 @@ int main( int argc, char * argv[] )
   
   TODO: make sure translator generating clean AST 
 */
-    generateDOT(*project);
+    //generateDOT(*project);
     generateAstGraph(project,8000);
     return backend(project);
 }

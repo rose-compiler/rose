@@ -59,8 +59,13 @@ namespace Fortran_to_C
     void translateFortranDoLoop(SgFortranDo*);
     void fixFortranSymbolTable(SgNode*, bool);
 
+    void translateArrayDeclaration(SgArrayType*);
+    void translateArraySubscript(SgPntrArrRefExp*);
     void linearizeArrayDeclaration(SgArrayType*);
     void linearizeArraySubscript(SgPntrArrRefExp*);
+  
+    SgExpression* getFortranDimensionSize(SgExpression*);
+    SgExpression* get0basedIndex(SgExpression*, SgExpression*);
 }
 
 #endif  //_FORTRANTOC_H
