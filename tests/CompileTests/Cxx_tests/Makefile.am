@@ -683,7 +683,9 @@ test2009_21.C \
 test2009_24.C \
 test2009_27.C \
 test2009_28.C \
+test2009_30.C \
 test2009_31.C \
+test2009_37.C \
 test2009_40.C \
 test2009_41.C \
 test2009_42.C \
@@ -1062,8 +1064,6 @@ endif
 if ROSE_USE_EDG_VERSION_4_3
 TESTCODE_CURRENTLY_FAILING = \
 test2006_122.C \
-test2009_30.C \
- test2009_37.C \
 test2009_39.C \
 test2011_31.C \
 test2011_32.C \
