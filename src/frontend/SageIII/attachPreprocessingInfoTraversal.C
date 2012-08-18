@@ -70,7 +70,7 @@ found in the directory ROSE/TESTS/KnownBugs/AttachPreprocessingInfo.
 using namespace std;
 
 // Debug flag
-#define DEBUG_ATTACH_PREPROCESSING_INFO 0
+#define DEBUG_ATTACH_PREPROCESSING_INFO 1
 
 
 //It is needed because otherwise, the default destructor breaks something.
@@ -1538,6 +1538,9 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
 
                  // DQ (3/11/2012): Added case.
                     case V_SgTemplateFunctionDefinition:
+
+                 // DQ (8/12/2012): Added support for attaching comments after a SgFunctionDefinition.
+                    case V_SgFunctionDefinition:
 
                  // DQ (12/29/2011): Adding support for template function and member function declarations.
                     case V_SgTemplateFunctionDeclaration:
