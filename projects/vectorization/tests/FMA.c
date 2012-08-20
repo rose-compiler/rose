@@ -1,3 +1,7 @@
+/*
+  Test vectorization for FMA instructions.
+  a = b * c + d ==> a = _SIMD_madd_ps(b,c,d);
+*/
 int main(){
   float a[16];
   float b[16];

@@ -1,3 +1,6 @@
+/*
+  Test vectorization for simple arithemetic statements.
+*/
 int main(){
   float a[16];
   float b[16];

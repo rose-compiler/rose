@@ -4,11 +4,12 @@
 
   Date Created       : July 26th, 2012
 
-  This provide the mapping to unify the SIMD intrinsics.
+  This file provides runtime library functions.  
+  The functions will map to the SIMD intrinsic functions used in different compilers. 
 */
 
 //#include "rose_config.h"
-#include "ROSE_SIMD.h"
+#include "rose_simd.h"
 
 #define USE_SSE 1
 
@@ -216,7 +217,7 @@ __SIMDi _SIMD_msub_epi32(__SIMDi a, __SIMDi b, __SIMDi c)
 #endif
 }
 
-__SIMD _SIMD_splats(float f)
+__SIMD _SIMD_splats_ps(float f)
 {
 #ifdef  USE_SSE
   return _mm_set1_ps(f);
@@ -224,5 +225,27 @@ __SIMD _SIMD_splats(float f)
   return _m256_set1_ps(f);
 #elif defiend USE_IBM
   return vec_splats(f);
+#endif
+}
+
+__SIMDd _SIMD_splats_pd(double f)
+{
+#ifdef  USE_SSE
+  return _mm_set1_pd(f);
+#elif defiend USE_AVX
+  return _m256_set1_pd(f);
+#elif defiend USE_IBM
+  return vec_splats(f);
+#endif
+}
+
+__SIMDi _SIMD_splats_epi32(int i)
+{
+#ifdef  USE_SSE
+  return _mm_set1_epi32(i);
+#elif defiend USE_AVX
+  return _m256_set1_epi32(i);
+#elif defiend USE_IBM
+  return vec_splats(i);
 #endif
 }

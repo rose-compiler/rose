@@ -7,10 +7,13 @@
 
 namespace SIMDAnalysis
 {
-
+//  Get the Def information
   void getDefList(DFAnalysis*, SgNode*);
+//  Get the Use information
   void getUseList(DFAnalysis*, SgNode*);
-  bool isInnermostLoop(SgForStatement*);
+//  Check if the loop is innermost loop
+  bool isInnermostLoop(SgNode*);
+//  Check if the loop has stride distance 1  
   bool isStrideOneLoop(SgNode*);
 
 }

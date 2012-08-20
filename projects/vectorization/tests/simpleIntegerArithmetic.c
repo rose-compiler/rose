@@ -1,3 +1,6 @@
+/*
+  Test vectorization for simple arithmetic statements using integer operands.
+*/
 int main(){
   int a[16];
   int b[16];

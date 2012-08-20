@@ -1,3 +1,6 @@
+/*
+  Test vectorization for multi-dimensional array
+*/
 int main(){
   float a[64][32][16];
   float b[32][16];

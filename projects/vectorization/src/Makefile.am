@@ -15,6 +15,9 @@ INCLUDES = $(ROSE_INCLUDES) -I$(Vectorization_includedir)
 LDADD    = $(ROSE_LIBS)
 lib_LIBRARIES = libsimd.a
 bin_PROGRAMS = vectorization
+include_HEADERS = rose_simd.h
+
+libsimd_a_SOURCES = rosesimd.c 
 
 vectorization_SOURCES=\
 	main.C \
@@ -27,6 +30,4 @@ Vectorization_include_HEADERS=\
   SIMDAnalysis.h \
   vectorization.h
 
-include_HEADERS = ROSE_SIMD.h
   
-libsimd_a_SOURCES = rosesimd.c 

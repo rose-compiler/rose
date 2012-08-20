@@ -6,18 +6,18 @@
 using namespace std;
 using namespace SageInterface;
 using namespace SageBuilder;
-using namespace vectorization;
+using namespace SIMDVectorization;
 
 /******************************************************************************************************************************/
 /*
   Add the SIMD header files to the output file.  
-  Inside the ROSE_SIMD.h, the header file includes the required header files for different architecture. 
+  Inside the rose_simd.h, the header file includes the required header files for different architecture. 
   This mapping process depends on the translator options provided by user.
 */
 /******************************************************************************************************************************/
 extern int VF;
 
-void vectorization::addHeaderFile(SgProject* project,vector<string>&argvList)
+void SIMDVectorization::addHeaderFile(SgProject* project)
 {
   Rose_STL_Container<SgNode*> globalList = NodeQuery::querySubTree (project,V_SgGlobal);
   for(Rose_STL_Container<SgNode*>::iterator i = globalList.begin(); i != globalList.end(); i++)
@@ -32,7 +32,7 @@ void vectorization::addHeaderFile(SgProject* project,vector<string>&argvList)
     //SgScopeStatement* scopeStatement = global->get_scope();
 
     // Insert this SIMD header file before all other headers
-    PreprocessingInfo* headerInfo = insertHeader("ROSE_SIMD.h",PreprocessingInfo::after,false,global);
+    PreprocessingInfo* headerInfo = insertHeader("rose_simd.h",PreprocessingInfo::after,false,global);
     headerInfo->set_file_info(global->get_file_info());
   }
 }
@@ -46,7 +46,7 @@ void vectorization::addHeaderFile(SgProject* project,vector<string>&argvList)
 */
 /******************************************************************************************************************************/
 
-void vectorization::insertSIMDDataType(SgGlobal* globalScope)
+void SIMDVectorization::insertSIMDDataType(SgGlobal* globalScope)
 {
   buildOpaqueType("__SIMD",globalScope);
   buildOpaqueType("__SIMDi",globalScope);
@@ -56,12 +56,17 @@ void vectorization::insertSIMDDataType(SgGlobal* globalScope)
 /******************************************************************************************************************************/
 /*
   translate the binary operator to the mapped SIMD intrisic functions
+  Example:  
+  a[i] = b[i] + c[i]  ==>  a_SIMD[i_strip_] = _SIMD_add_ps( b_SIMD[i_strip_] , c_SIMD[i_strip_]);
+  a = b - c           ==> __SIMD a_SIMD = _SIMD_sub_ps(_SIMD_splats_ps(b), _SIMD_spalts_ps(c));
 */
 /******************************************************************************************************************************/
-void vectorization::translateBinaryOp(SgBinaryOp* binaryOp, SgScopeStatement* scope, SgName name)
+void SIMDVectorization::translateBinaryOp(SgBinaryOp* binaryOp, SgScopeStatement* scope, SgName name)
 {
   SgExpression* lhs = binaryOp->get_lhs_operand();
+  ROSE_ASSERT(lhs);
   SgExpression* rhs = binaryOp->get_rhs_operand();
+  ROSE_ASSERT(rhs);
   lhs->set_parent(NULL);
   rhs->set_parent(NULL);
   SgExprListExp* vectorAddArgs = buildExprListExp(lhs, rhs);
@@ -84,8 +89,9 @@ void vectorization::translateBinaryOp(SgBinaryOp* binaryOp, SgScopeStatement* sc
         Now we rely on this scope to look up the declared SIMD data type, which should be in global scope.
 */
 /******************************************************************************************************************************/
-SgType* vectorization::getSIMDType(SgType* variableType, SgScopeStatement* scope)
+SgType* SIMDVectorization::getSIMDType(SgType* variableType, SgScopeStatement* scope)
 {
+  ROSE_ASSERT(variableType);
   SgType* returnSIMDType;
   switch(variableType->variantT())
   {
@@ -99,10 +105,23 @@ SgType* vectorization::getSIMDType(SgType* variableType, SgScopeStatement* scope
         returnSIMDType = lookupTypedefSymbolInParentScopes("__SIMDi",scope)->get_type();
       }
       break;
+    case V_SgTypeFloat:
+      {
+        returnSIMDType = lookupTypedefSymbolInParentScopes("__SIMD",scope)->get_type();
+      }
+      break;
+    case V_SgArrayType:
+      {
+        /*
+          If the variableSymbol returns its type as SgArrayType, then we need to query the base_type to get the real data type.
+        */
+        SgArrayType* arrayType = isSgArrayType(variableType);
+        returnSIMDType = getSIMDType(arrayType->get_base_type(),scope); 
+      }
+      break;
     default:
       {
-        // TODO: This default case might cause problem.  Need more consideration!!
-        returnSIMDType = lookupTypedefSymbolInParentScopes("__SIMD",scope)->get_type();
+        cerr<<"warning, unhandled node type: "<< variableType->class_name()<<endl;
       }
       break;
   }
@@ -117,7 +136,7 @@ SgType* vectorization::getSIMDType(SgType* variableType, SgScopeStatement* scope
   we substitute the operand to a SIMD data type pointer.
 */
 /******************************************************************************************************************************/
-void vectorization::translateOperand(SgExpression* operand)
+void SIMDVectorization::translateOperand(SgExpression* operand)
 {
   SgType* SIMDType = NULL;
   switch(operand->variantT())
@@ -235,8 +254,11 @@ void vectorization::translateOperand(SgExpression* operand)
     case V_SgFloatVal:
     case V_SgCastExp:
       {
+        string suffix = "";
+        suffix = getSIMDOpSuffix(operand->get_type());
+        SgName functionName = SgName("_SIMD_splats"+suffix);
         SgExprListExp* SIMDAddArgs = buildExprListExp(deepCopy(operand));
-        SgFunctionCallExp* SIMDSplats = buildFunctionCallExp("_SIMD_splats",operand->get_type(), SIMDAddArgs, getEnclosingFunctionDefinition(operand));
+        SgFunctionCallExp* SIMDSplats = buildFunctionCallExp(functionName,operand->get_type(), SIMDAddArgs, getEnclosingFunctionDefinition(operand));
         replaceExpression(operand, SIMDSplats); 
       }
       break;
@@ -254,7 +276,7 @@ void vectorization::translateOperand(SgExpression* operand)
   We implement translations for the basic arithmetic operator first.
 */
 /******************************************************************************************************************************/
-void vectorization::vectorizeBinaryOp(SgForStatement* forStatement)
+void SIMDVectorization::vectorizeBinaryOp(SgForStatement* forStatement)
 {
   SgStatement* loopBody = forStatement->get_loop_body();
   ROSE_ASSERT(loopBody);
@@ -295,8 +317,28 @@ void vectorization::vectorizeBinaryOp(SgForStatement* forStatement)
           translateOperand(binaryOp->get_rhs_operand()); 
         }
         break;
-      default:
+      case V_SgAndOp:
+      case V_SgBitAndOp:
+      case V_SgBitOrOp:
+      case V_SgBitXorOp:
+      case V_SgEqualityOp:
+      case V_SgGreaterOrEqualOp:
+      case V_SgGreaterThanOp:
+      case V_SgExponentiationOp:
+      case V_SgNotOp:
+      case V_SgLessOrEqualOp:
+      case V_SgLessThanOp:
+      case V_SgNotEqualOp:
+        {
+          cout << "support for " << binaryOp->class_name() << " is under construction" << endl;
+        }
         break;
+      case V_SgPntrArrRefExp:
+        break;
+      default:
+        {
+          cerr<<"warning, unhandled binaryOp: "<< binaryOp->class_name()<<endl;
+        }
     }
     
   }
@@ -322,7 +364,7 @@ void vectorization::vectorizeBinaryOp(SgForStatement* forStatement)
 
 */
 /******************************************************************************************************************************/
-void vectorization::stripmineLoop(SgForStatement* forStatement, int VF)
+void SIMDVectorization::stripmineLoop(SgForStatement* forStatement, int VF)
 {
   // Fetch all information from original forStatement
   SgInitializedName* indexVariable = getLoopIndexVariable(forStatement);
@@ -446,7 +488,7 @@ class maddTraversal : public AstSimpleProcessing
     }
 };
 
-void vectorization::translateMultiplyAccumulateOperation(SgForStatement* forStatement)
+void SIMDVectorization::translateMultiplyAccumulateOperation(SgForStatement* forStatement)
 {
   maddTraversal maddTranslation;
   maddTranslation.traverse(forStatement,postorder);
@@ -462,7 +504,7 @@ void vectorization::translateMultiplyAccumulateOperation(SgForStatement* forStat
   Then we replace the root with this new functionCallExp.
 */
 /******************************************************************************************************************************/
-void vectorization::generateMultiplyAccumulateFunctionCall(SgBinaryOp* root, SgName functionName)
+void SIMDVectorization::generateMultiplyAccumulateFunctionCall(SgBinaryOp* root, SgName functionName)
 {
   SgBinaryOp* lhs = isSgBinaryOp(root->get_lhs_operand());
   ROSE_ASSERT(lhs);
@@ -514,7 +556,7 @@ void vectorization::generateMultiplyAccumulateFunctionCall(SgBinaryOp* root, SgN
 
 */
 /******************************************************************************************************************************/
-void vectorization::updateLoopIteration(SgForStatement* forStatement, int VF)
+void SIMDVectorization::updateLoopIteration(SgForStatement* forStatement, int VF)
 {
   // Fetch all information from original forStatement
   SgInitializedName* indexVariable = getLoopIndexVariable(forStatement);
@@ -594,7 +636,7 @@ void vectorization::updateLoopIteration(SgForStatement* forStatement, int VF)
 */
 /******************************************************************************************************************************/
 
-string vectorization::getSIMDOpSuffix(SgType* opType)
+string SIMDVectorization::getSIMDOpSuffix(SgType* opType)
 {
   string suffix = "";
   SgType* type;

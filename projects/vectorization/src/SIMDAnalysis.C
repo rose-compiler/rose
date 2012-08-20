@@ -8,7 +8,8 @@ using namespace SIMDAnalysis;
 /******************************************************************************************************************************/
 /*
   Get the Def information.
-  This is reserved for later usage.
+
+  TODO: This is reserved for later usage.
 */
 /******************************************************************************************************************************/
 
@@ -45,7 +46,8 @@ void SIMDAnalysis::getDefList(DFAnalysis* defuse, SgNode* root)
 /******************************************************************************************************************************/
 /*
   Get the Use information.
-  This is reserved for later usage.
+
+  TODO: This is reserved for later usage.
 */
 /******************************************************************************************************************************/
 void SIMDAnalysis::getUseList(DFAnalysis* defuse, SgNode* root) 
@@ -85,15 +87,49 @@ void SIMDAnalysis::getUseList(DFAnalysis* defuse, SgNode* root)
   this imply it's a innermost loop.
 */
 /******************************************************************************************************************************/
-bool SIMDAnalysis::isInnermostLoop(SgForStatement* forStatement)
+bool SIMDAnalysis::isInnermostLoop(SgNode* n)
 {
-  Rose_STL_Container<SgNode*> innerLoopList = NodeQuery::querySubTree (forStatement,V_SgForStatement);
-  if(innerLoopList.size() == 1){
-    return true;
+  Rose_STL_Container<SgNode*> innerLoopList;
+  bool result = false;
+  switch(n->variantT())
+  {
+    case V_SgForStatement:
+      {
+        SgForStatement* forStatement = isSgForStatement(n);
+        innerLoopList = NodeQuery::querySubTree (forStatement,V_SgForStatement);
+        if(innerLoopList.size() == 1)
+          result = true;
+        else
+           result = false;
+      }
+      break;
+    case V_SgFortranDo:
+      {
+        SgFortranDo* fortranDo = isSgFortranDo(n);
+        innerLoopList = NodeQuery::querySubTree (fortranDo,V_SgFortranDo);
+        if(innerLoopList.size() == 1)
+          result = true;
+        else
+          result = false;
+      }
+      break;
+    case V_SgWhileStmt:
+      {
+        SgWhileStmt* whileStatement = isSgWhileStmt(n);
+        innerLoopList = NodeQuery::querySubTree (whileStatement,V_SgWhileStmt);
+        if(innerLoopList.size() == 1)
+          result = true;
+        else
+          result = false;
+      }
+      break;
+    default:
+      {
+        cerr<<"warning, unhandled node type: "<< n->class_name()<<endl;
+        result = false;
+      }
   }
-  else{
-    return false;
-  }
+  return result;
 }
 
 /******************************************************************************************************************************/
@@ -107,53 +143,27 @@ bool SIMDAnalysis::isInnermostLoop(SgForStatement* forStatement)
 
 bool SIMDAnalysis::isStrideOneLoop(SgNode* loop)
 {
-  // Get the increment expression
-  SgExpression* increment = NULL;
+  SgInitializedName* ivar = NULL;
+  SgExpression* lb = NULL;
+  SgExpression* ub = NULL;
+  SgExpression* step = NULL;
+  SgStatement* orig_body = NULL;
+  bool is_canonical = false;
+
   if (SgFortranDo* doLoop = isSgFortranDo(loop))
   {
-    increment = doLoop->get_increment();
+    is_canonical = isCanonicalDoLoop(doLoop, &ivar, &lb, &ub, &step, &orig_body, NULL, NULL);
   }
   else if  (SgForStatement* forLoop = isSgForStatement(loop))
   {
-    increment = forLoop->get_increment();
+    is_canonical = isCanonicalForLoop(forLoop, &ivar, &lb, &ub, &step, &orig_body, NULL, NULL);
   }
   else
   {
+    cerr<<"warning, input is not loop. "<< endl;    
     ROSE_ASSERT(false);
   }
 
-  switch (increment->variantT()) 
-  {
-    case V_SgAssignOp:
-      {
-        SgAssignOp* assignOp = isSgAssignOp(increment);
-        SgVarRefExp* lhs = isSgVarRefExp(assignOp->get_rhs_operand());
-        SgAddOp* addOp = isSgAddOp(assignOp->get_rhs_operand());
-        if((lhs != NULL) && (addOp != NULL))
-        {
-          SgExpression* rhs = addOp->get_rhs_operand();
-          SgVarRefExp* leftOperand = isSgVarRefExp(addOp->get_lhs_operand());
-          SgIntVal* strideDistance = isSgIntVal(rhs);
-          return ((leftOperand != NULL) && 
-                  (lhs->get_symbol() == leftOperand->get_symbol()) &&
-                  (strideDistance != NULL) && 
-                  (strideDistance->get_value() == 1));
-        }
-        else
-        {
-          return false;
-        }
-      }
-      break;
-    case V_SgPlusAssignOp:
-      {
-        SgPlusAssignOp* plusAssignOp = isSgPlusAssignOp(increment);
-        SgExpression* rhs = plusAssignOp->get_rhs_operand();
-        SgIntVal* strideDistance = isSgIntVal(rhs);
-        return ((strideDistance != NULL) && (strideDistance->get_value() == 1));
-      }
-      break;
-    default:
-      return false;
-  }
+  SgIntVal* strideDistance = isSgIntVal(step);
+  return (is_canonical && (strideDistance != NULL) && (strideDistance->get_value() == 1));
 }

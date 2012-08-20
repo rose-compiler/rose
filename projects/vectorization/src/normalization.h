@@ -4,10 +4,21 @@
 #include "rose.h"
 #include "sageBuilder.h"
 
-namespace normalization
+namespace SIMDNormalization
 {
+//  Swap the lhs and rhs operand
   void swapOperands(SgBinaryOp*);
-  void normalizeExperission(SgProject*);
+
+/******************************************************************************************************************************/
+/*
+  Normalize the expression to the following format:
+  No transformation needed: a * b + c ==> (a * b) + c
+  No transformation needed: a * b - c ==> (a * b) - c
+  Transformation needed   : c + a * b ==> (a * b) + c 
+  Transformation needed   : c - a * b ==> -( (a * b) - c)
+*/
+/******************************************************************************************************************************/
+  void normalizeExpression(SgProject*);
 }
 
 #endif // _NORMALIZATION_H

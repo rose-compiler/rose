@@ -3,19 +3,17 @@
 using namespace std;
 using namespace SageInterface;
 using namespace SageBuilder;
-using namespace normalization;
+using namespace SIMDNormalization;
 
 /******************************************************************************************************************************/
 /*
   Swap the lhs and rhs operand
 */
 /******************************************************************************************************************************/
-void normalization::swapOperands(SgBinaryOp* binaryOp) 
+void SIMDNormalization::swapOperands(SgBinaryOp* binaryOp) 
 {
   SgExpression* lhs = binaryOp->get_lhs_operand();
   SgExpression* rhs = binaryOp->get_rhs_operand();
-  binaryOp->set_lhs_operand(NULL);
-  binaryOp->set_rhs_operand(NULL);
   binaryOp->set_lhs_operand(rhs);
   binaryOp->set_rhs_operand(lhs);
 }
@@ -24,10 +22,10 @@ void normalization::swapOperands(SgBinaryOp* binaryOp)
 /******************************************************************************************************************************/
 /*
   Normalize the expression to the following format:
-  a * b + c ==> (a * b) + c
-  a * b - c ==> (a * b) - c
-  c + a * b ==> (a * b) + c
-  c - a * b ==> -( (a * b) - c)
+  No transformation needed: a * b + c ==> (a * b) + c
+  No transformation needed: a * b - c ==> (a * b) - c
+  Transformation needed   : c + a * b ==> (a * b) + c 
+  Transformation needed   : c - a * b ==> -( (a * b) - c)
 */
 /******************************************************************************************************************************/
 
@@ -43,10 +41,16 @@ void normalizeTraversal::visit(SgNode* n)
   if(binaryOp != NULL)
   {
     ROSE_ASSERT(binaryOp);
+    /*
+        a + (b * c) ===>  (b * c) + a
+    */
     if((binaryOp->variantT() == V_SgAddOp) && (binaryOp->get_rhs_operand()->variantT() == V_SgMultiplyOp))
     {
       swapOperands(binaryOp);
     }
+    /*
+        a - (b * c) ===>  -((b * c) - a)
+    */
     else if((binaryOp->variantT() == V_SgSubtractOp) && (binaryOp->get_rhs_operand()->variantT() == V_SgMultiplyOp))
     {
       swapOperands(binaryOp);
@@ -57,7 +61,7 @@ void normalizeTraversal::visit(SgNode* n)
   }
 }
 
-void normalization::normalizeExperission(SgProject* project)
+void SIMDNormalization::normalizeExpression(SgProject* project)
 {
   normalizeTraversal traversal;
   traversal.traverse(project, postorder); 

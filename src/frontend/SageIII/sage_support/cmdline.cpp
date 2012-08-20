@@ -4042,50 +4042,6 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 #endif
 
   // *******************************************************************
-  // phlin (6/25/2012)  Handle SSE/AVX option
-  // *******************************************************************
-     if ( CommandlineProcessing::isOption(argv,"-m","sse4.2",false) == true )
-        {
-       // printf ("In build_EDG_CommandLine(): Option -msse4.2 found (compile only)! \n");
-          inputCommandLine.push_back("-D__SSE3__");
-          inputCommandLine.push_back("-D__SSSE3__");
-          inputCommandLine.push_back("-D__SSE4__");
-          inputCommandLine.push_back("-D__SSE4_1__");
-          inputCommandLine.push_back("-D__SSE4_2__");
-        }
-
-     if ( CommandlineProcessing::isOption(argv,"-m","sse4.1",false) == true )
-        {
-       // printf ("In build_EDG_CommandLine(): Option -msse4.1 found (compile only)! \n");
-          inputCommandLine.push_back("-D__SSE3__");
-          inputCommandLine.push_back("-D__SSSE3__");
-          inputCommandLine.push_back("-D__SSE4__");
-          inputCommandLine.push_back("-D__SSE4_1__");
-        }
-
-     if ( CommandlineProcessing::isOption(argv,"-m","sse4",false) == true )
-        {
-       // printf ("In build_EDG_CommandLine(): Option -msse4 found (compile only)! \n");
-          inputCommandLine.push_back("-D__SSE3__");
-          inputCommandLine.push_back("-D__SSSE3__");
-          inputCommandLine.push_back("-D__SSE4__");
-        }
-
-     if ( CommandlineProcessing::isOption(argv,"-m","sse3",false) == true )
-        {
-       // printf ("In build_EDG_CommandLine(): Option -msse3 found (compile only)! \n");
-          inputCommandLine.push_back("-D__SSE3__");
-          inputCommandLine.push_back("-D__SSSE3__");
-        }
-
-     if ( CommandlineProcessing::isOption(argv,"-m","avx",false) == true )
-        {
-       // AVX doesn't need any special option here.
-       // printf ("In build_EDG_CommandLine(): Option -mavx found (compile only)! \n");
-        }
-
-
-  // *******************************************************************
   // Handle specific edg options (-c)
   // *******************************************************************
 
