@@ -381,6 +381,10 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
         }
        else
         {
+#if 0
+          curprint("\n/* Top of unparseType() processing main switch statement */ \n");
+#endif
+
        // This is the code that was always used before the addition of type names generated from where name qualification of subtypes are required.
           switch (type->variant())
              {
@@ -459,6 +463,7 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
          + " firstPart  " + firstPartString + " secondPart " + secondPartString + " */ \n");
 #endif
    }
+
 
 #if 1
 void
@@ -1748,8 +1753,13 @@ Unparse_Type::unparseFunctionType(SgType* type, SgUnparse_Info& info)
      int needParen = 0;
      if (ninfo.isReferenceToSomething() || ninfo.isPointerToSomething())
         {
-          needParen=1;
+          needParen = 1;
         }
+
+#if 0
+     printf ("In unparseFunctionType(): needParen = %d \n",needParen);
+     curprint("\n/* In unparseFunctionType: needParen = " + StringUtility::numberToString(needParen) + " */ \n");
+#endif
 
   // DQ (10/8/2004): Skip output of class definition for return type! C++ standard does not permit
   // a defining declaration within a return type, function parameter, or sizeof expression.
@@ -1796,7 +1806,10 @@ Unparse_Type::unparseFunctionType(SgType* type, SgUnparse_Info& info)
 #endif
                if (needParen)
                   {
-                    curprint ( ")");
+#if 0
+                    curprint ("/* needParen must be true */ \n ");
+#endif
+                    curprint (")");
                     info.unset_isReferenceToSomething();
                     info.unset_isPointerToSomething();
                   }
@@ -1817,31 +1830,61 @@ Unparse_Type::unparseFunctionType(SgType* type, SgUnparse_Info& info)
 
             // printf ("Setting reference_node_for_qualification to SgFunctionType, but this is not correct where name qualification is required. \n");
 
+#if 0
+               curprint ("/* Output the type arguments (with parenthesis) */ \n ");
+#endif
                curprint ( "(");
                SgTypePtrList::iterator p = func_type->get_arguments().begin();
                while(p != func_type->get_arguments().end())
                   {
                  // printf ("Output function argument ... \n");
+#if OUTPUT_DEBUGGING_FUNCTION_INTERNALS
+                    curprint ( "\n/* In unparseFunctionType(): Output the function type arguments */ \n");
+#endif
                     unparseType(*p, ninfo2);
                     p++;
                     if (p != func_type->get_arguments().end())
                        { curprint ( ", "); }
                   }
                curprint ( ")");
+#if OUTPUT_DEBUGGING_FUNCTION_INTERNALS
+               curprint ( "\n/* In unparseFunctionType(): AFTER parenthesis are output */ \n");
+#endif
                unparseType(func_type->get_return_type(), info); // catch the 2nd part of the rtype
 #if OUTPUT_DEBUGGING_FUNCTION_INTERNALS
-               curprint ( "\n/* Done: In unparseFunctionType: handling second part */ \n");
+               curprint ( "\n/* Done: In unparseFunctionType(): handling second part */ \n");
 #endif
              }
             else
              {
+#if OUTPUT_DEBUGGING_FUNCTION_INTERNALS
+               curprint ( "\n/* In unparseFunctionType: recursive call with isTypeFirstPart == true */ \n");
+#endif
+#if 0
+            // DQ (8/19/2012): Temp code while debugging (test2012_192.C).
+               printf ("Error: I think this should not be done \n");
+               ROSE_ASSERT(false);
+#endif
                ninfo.set_isTypeFirstPart();
                unparseType(func_type, ninfo);
+
+#if OUTPUT_DEBUGGING_FUNCTION_INTERNALS
+               curprint ( "\n/* In unparseFunctionType: recursive call with isTypeSecondPart == true */ \n");
+#endif
                ninfo.set_isTypeSecondPart();
                unparseType(func_type, ninfo);
+
+#if OUTPUT_DEBUGGING_FUNCTION_INTERNALS
+               curprint ( "\n/* In unparseFunctionType: end of recursive call */ \n");
+#endif
              }
         }
+
+#if OUTPUT_DEBUGGING_FUNCTION_INTERNALS
+     curprint("\n/* Leaving unparseFunctionType() */ \n");
+#endif
    }
+
 
 void Unparse_Type::unparseMemberFunctionType(SgType* type, SgUnparse_Info& info)
    {

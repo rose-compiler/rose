@@ -190,6 +190,12 @@ Unparse_ExprStmt::unparseFunctionParameterDeclaration (
      SgInitializer *tmp_init = initializedName->get_initializer();
      SgType        *tmp_type = initializedName->get_type();
      ROSE_ASSERT (initializedName!= NULL);
+
+#if 0
+     printf ("unparseFunctionParameterDeclaration(): funcdecl_stmt->get_args().size() = %zu \n",funcdecl_stmt->get_args().size());
+     curprint( string("\n/* unparseFunctionParameterDeclaration(): funcdecl_stmt->get_args().size() = ") + StringUtility::numberToString((int)(funcdecl_stmt->get_args().size())) + " */ \n");
+#endif
+
 #if 0
    // Liao 11/9/2010, moved to upper callers since this is called when unparsing both old-style and new-style function parameter lists
    // Skip duplicated unparsing of the attached information for C function arguments declared in old style.
@@ -391,8 +397,8 @@ Unparse_ExprStmt::unparseFunctionArgs(SgFunctionDeclaration* funcdecl_stmt, SgUn
      ROSE_ASSERT (funcdecl_stmt != NULL);
 
 #if 0
-     printf ("funcdecl_stmt->get_args().size() = %zu \n",funcdecl_stmt->get_args().size());
-     curprint( "\n/* funcdecl_stmt->get_args().size() = " << (int)(funcdecl_stmt->get_args().size()) << " */ \n");
+     printf ("unparseFunctionArgs(): funcdecl_stmt->get_args().size() = %zu \n",funcdecl_stmt->get_args().size());
+     curprint("\n/* unparseFunctionArgs(): funcdecl_stmt->get_args().size() = " + StringUtility::numberToString((int)(funcdecl_stmt->get_args().size())) + " */ \n");
 #endif
 
      SgInitializedNamePtrList::iterator p = funcdecl_stmt->get_args().begin();
@@ -486,7 +492,7 @@ Unparse_ExprStmt::unparse_helper(SgFunctionDeclaration* funcdecl_stmt, SgUnparse
   // curprint( "\n/* Skipping trimGlobalScopeQualifier() */\n ");
   // nameQualifier = trimGlobalScopeQualifier ( nameQualifier.str() ).c_str();
 
-     curprint( nameQualifier.str());
+     curprint(nameQualifier.str());
 
   // output the function name
      curprint( funcdecl_stmt->get_name().str());
@@ -514,12 +520,12 @@ Unparse_ExprStmt::unparse_helper(SgFunctionDeclaration* funcdecl_stmt, SgUnparse
   // Using this C++ constraint avoids building a more complex mechanism to turn it off.
      ninfo2.set_SkipClassDefinition();
 
-     curprint( "(");
+     curprint("(");
 
      unparseFunctionArgs(funcdecl_stmt,ninfo2);
-     
+
   // printf ("Adding a closing \")\" to the end of the argument list \n");
-     curprint( ")");
+     curprint(")");
 
      if ( funcdecl_stmt->get_oldStyleDefinition() )
         {
@@ -542,13 +548,13 @@ Unparse_ExprStmt::unparse_helper(SgFunctionDeclaration* funcdecl_stmt, SgUnparse
              }
         }
 
+#if 0
   // curprint( endl;
-  // curprint( "Added closing \")\" to the end of the argument list \n");
+     curprint("/* Added closing \")\" to the end of the argument list */ \n");
   // curprint(flush();
-
-  // printf ("End of function Unparse_ExprStmt::unparse_helper() \n");
+     printf ("Leaving Unparse_ExprStmt::unparse_helper() \n");
+#endif
    }
-
 
 
 void
@@ -2405,16 +2411,22 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      SgFunctionDeclaration* funcdecl_stmt = isSgFunctionDeclaration(stmt);
      ROSE_ASSERT(funcdecl_stmt != NULL);
 
+  // DQ (8/19/2012): I don't think I like how we are skipping forward declarations here (need to understand this better).
   // Liao, 9/25/2009, skip the compiler generated forward declaration for a SgTemplateInstantiationFunctionDecl
   // see bug 369: https://outreach.scidac.gov/tracker/index.php?func=detail&aid=369&group_id=24&atid=185
      if (funcdecl_stmt->isForward() == true) 
         {
           SgFunctionDeclaration* def_decl = isSgFunctionDeclaration(funcdecl_stmt->get_definingDeclaration());
-          if (def_decl)
+          if (def_decl != NULL)
              {
                if (isSgTemplateInstantiationFunctionDecl(def_decl))
                   {
                  // cout<<"Skipping a forward declaration of a template instantiation function declaration..."<<endl;
+
+                    printf ("In unparseFuncDeclStmt(): Skipping a forward declaration of a template instantiation function declaration... \n");
+#if 0
+                    curprint("/* In unparseFuncDeclStmt(): Skipping a forward declaration of a template instantiation function declaration...*/ \n");
+#endif
                     return;
                   }
              }
@@ -2489,10 +2501,9 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      if ( (funcdecl_stmt->isForward() == false) && (funcdecl_stmt->get_definition() != NULL) && (info.SkipFunctionDefinition() == false) )
         {
 #if 0
-       // printf ("Not a forward function (normal function) \n");
+          printf ("Not a forward function (normal function) \n");
           curprint("\n/* Not a forward function (normal function) */ \n ");
 #endif
-
        // DQ (12/5/2007): This call to unparse the definition can change the scope in info, so save it and restore it
        // SgScopeStatement* savedScope = info.get_current_scope();
 
@@ -2703,7 +2714,7 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
              }
 #endif
 
-#if OUTPUT_FUNCTION_DECLARATION_DATA
+#if OUTPUT_FUNCTION_DECLARATION_DATA || 0
           curprint ("/* calling unparse_helper */");
 #endif
           unparse_helper(funcdecl_stmt, ninfo);
@@ -2711,18 +2722,20 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
        // DQ (10/15/2006): Matching call to unset the stored declaration.
           ninfo.set_declstatement_ptr(NULL);
 
-       // curprint ( string("/* DONE: calling unparse_helper */";
+#if 0
+          curprint ("/* DONE: calling unparse_helper */");
+#endif
 
           ninfo.set_isTypeSecondPart();
 
-#if OUTPUT_FUNCTION_DECLARATION_DATA
-          curprint ( string("/* output the second part of the type */"));
+#if OUTPUT_FUNCTION_DECLARATION_DATA || 0
+          curprint ("/* output the second part of the type */");
 #endif
 
           unp->u_type->unparseType(rtype, ninfo);
 
-#if OUTPUT_FUNCTION_DECLARATION_DATA
-          curprint ( string("/* DONE: output the second part of the type */"));
+#if OUTPUT_FUNCTION_DECLARATION_DATA || 0
+          curprint("/* DONE: output the second part of the type */");
 #endif
 
        // DQ (4/28/2004): Added support for throw modifier
@@ -2775,10 +2788,9 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
         }
 
 #if 0
-  // curprint ( string("/* End of Unparse_ExprStmt::unparseFuncDeclStmt */";
-     curprint ( string("\n/* End of Unparse_ExprStmt::unparseFuncDeclStmt (" ) + StringUtility::numberToString(stmt) 
-         + "): sage_class_name() = " + stmt->sage_class_name() + " */ \n");
-     printf ("End of Unparse_ExprStmt::unparseFuncDeclStmt() \n");
+  // curprint("/* End of Unparse_ExprStmt::unparseFuncDeclStmt */");
+     curprint("\n/* Leaving Unparse_ExprStmt::unparseFuncDeclStmt (" + StringUtility::numberToString(stmt) + "): sage_class_name() = " + stmt->sage_class_name() + " */ \n");
+     printf ("Leaving Unparse_ExprStmt::unparseFuncDeclStmt() \n");
 #endif
    }
 
@@ -5507,7 +5519,9 @@ Unparse_ExprStmt::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
        // DQ (7/28/2012): This is similar to code in the variable declaration unpaser function and so might be refactored.
        // DQ (7/28/2012): If this is a declaration associated with a declaration list from a previous (the last statement) typedef
        // then output the name if that declaration had an un-named type (class or enum).
+#if 0
           printf ("In unparseTypedefStmt(): typedef_stmt->get_isAssociatedWithDeclarationList() = %s \n",typedef_stmt->get_isAssociatedWithDeclarationList() ? "true" : "false");
+#endif
           if (typedef_stmt->get_isAssociatedWithDeclarationList() == true)
              {
 #if 1
