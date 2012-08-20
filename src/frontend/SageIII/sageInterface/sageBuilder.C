@@ -903,22 +903,31 @@ SageBuilder::buildFunctionParameterList_nfi() {
 // no type vs. void type ?
 SgFunctionParameterTypeList * 
 SageBuilder::buildFunctionParameterTypeList(SgFunctionParameterList * paralist)
-{
-  if (paralist==NULL) 
-  return NULL;
-  if (paralist->get_args().size()==0)
-    return NULL;
-  SgFunctionParameterTypeList* typePtrList = new SgFunctionParameterTypeList;
-  ROSE_ASSERT(typePtrList);
+   {
+  // DQ (8/19/2012): I am not a fan of this sort of codeing style either (NULL pointers as inputs should be an error).
+     if (paralist==NULL)
+        {
+          printf ("WARNING: In buildFunctionParameterTypeList(): Accepting NULL input and returning NULL pointer. \n");
 
-  SgInitializedNamePtrList args = paralist->get_args();
-  SgInitializedNamePtrList::const_iterator i;
-  for(i=args.begin(); i!=args.end();i++)
-    (typePtrList->get_arguments()).push_back( (*i)->get_type() );
-  setSourcePositionForTransformation(typePtrList);
-  return typePtrList;
-  
-}
+          return NULL;
+        }
+
+  // DQ (8/18/2012): This is a problem, any valid list (even zero length) should result in a valid return list of types (even zero length).
+  // if (paralist->get_args().size()==0)
+  //      return NULL;
+
+     SgFunctionParameterTypeList* typePtrList = new SgFunctionParameterTypeList;
+     ROSE_ASSERT(typePtrList != NULL);
+
+     SgInitializedNamePtrList args = paralist->get_args();
+     SgInitializedNamePtrList::const_iterator i;
+     for(i = args.begin(); i != args.end(); i++)
+          (typePtrList->get_arguments()).push_back( (*i)->get_type() );
+
+     setSourcePositionForTransformation(typePtrList);
+
+     return typePtrList;
+   }
 
 
 SgFunctionParameterTypeList *
@@ -946,7 +955,9 @@ SageBuilder::buildFunctionParameterTypeList(SgType* type0, SgType* type1, SgType
 {
   SgFunctionParameterTypeList* typePtrList = new SgFunctionParameterTypeList;
   ROSE_ASSERT(typePtrList);
+
   SgTypePtrList& types = typePtrList->get_arguments();
+
   if (type0) types.push_back(type0);
   if (type1) types.push_back(type1);
   if (type2) types.push_back(type2);
@@ -967,10 +978,20 @@ SageBuilder::buildFunctionType(SgType* return_type, SgFunctionParameterTypeList*
    {
      ROSE_ASSERT(return_type != NULL);
 
+  // DQ (8/19/2012): Can we enforce this?
+     ROSE_ASSERT(typeList != NULL);
+
 #if 0
      printf ("Inside of SageBuilder::buildFunctionType(SgType,SgFunctionParameterTypeList) \n");
      printf ("Inside of SageBuilder::buildFunctionType() return_type = %s \n",return_type->get_mangled().str());
+     printf ("Inside of SageBuilder::buildFunctionType() typeList->get_arguments().size() = %zu \n",typeList->get_arguments().size());
 #endif
+
+     if (isSgFunctionType(return_type) != NULL)
+        {
+          printf ("ERROR: Inside of SageBuilder::buildFunctionType(): function type can't be return type of function type (at least for debugging) \n");
+          ROSE_ASSERT(false);
+        }
 
      SgFunctionTypeTable * fTable = SgNode::get_globalFunctionTypeTable();
      ROSE_ASSERT(fTable);
@@ -1001,8 +1022,133 @@ SageBuilder::buildFunctionType(SgType* return_type, SgFunctionParameterTypeList*
                typeList->set_parent(funcType);
              }
 
+#if 0
+          printf ("Inserting function type = %s into function type table with type = %p \n",typeName.str(),funcType);
+#endif
+
           fTable->insert_function_type(typeName,funcType);
         }
+
+#if 0
+     printf ("Leaving buildFunctionType(): Returning function type = %p \n",funcType); 
+#endif
+
+     return funcType;
+   }
+
+
+
+SgMemberFunctionType*
+SageBuilder::buildMemberFunctionType(SgType* return_type, SgFunctionParameterTypeList* typeList, SgClassType *classType, unsigned int mfunc_specifier)
+   {
+  // DQ (8/19/2012): This is a refactored version of the buildMemberFunctionType() below so that we can 
+  // isolate out the part that uses a SgClassType from the version that uses the SgClassDefinition.
+
+  // DQ (12/3/2011): We need to FIRST look into the global function type table to reuse types.
+  // SgMemberFunctionType * funcType = new SgMemberFunctionType(return_type, false, classType, mfunc_specifier);
+  // SgMemberFunctionType * funcType = SgMemberFunctionType::createType(return_type, false, classType, mfunc_specifier);
+  // SgPartialFunctionType* partialFunctionType = SgPartialFunctionType::createType(return_type, false, classType, mfunc_specifier);
+     SgPartialFunctionType* partialFunctionType = new SgPartialFunctionType(return_type, false, classType, mfunc_specifier);
+     ROSE_ASSERT(partialFunctionType != NULL);
+
+  // printf ("In buildMemberFunctionType(): partialFunctionType = %p = %s \n",partialFunctionType,partialFunctionType->class_name().c_str());
+
+  // DQ (3/8/2012): If this is non-zero then the SgPartialFunctionType should have somethin set internally.
+     if (mfunc_specifier != 0)
+        {
+#if 0
+          printf ("In buildMemberFunctionType(): partialFunctionType->isConstFunc()    = %s \n",partialFunctionType->isConstFunc()    ? "true" : "false");
+          printf ("In buildMemberFunctionType(): partialFunctionType->isVolatileFunc() = %s \n",partialFunctionType->isVolatileFunc() ? "true" : "false");
+          printf ("In buildMemberFunctionType(): partialFunctionType->isRestrictFunc() = %s \n",partialFunctionType->isRestrictFunc() ? "true" : "false");
+#endif
+       // ROSE_ASSERT(partialFunctionType->isConstFunc() == true || partialFunctionType->isVolatileFunc() == true);
+          ROSE_ASSERT(partialFunctionType->isConstFunc() == true || partialFunctionType->isVolatileFunc() == true || partialFunctionType->isRestrictFunc() == true);
+        }
+
+  // SgMemberFunctionType* funcType = SgMemberFunctionType::createType(partialFunctionType, NULL);
+     SgMemberFunctionType* funcType = SgMemberFunctionType::createType(partialFunctionType, NULL);
+     ROSE_ASSERT(funcType != NULL);
+
+  // printf ("In buildMemberFunctionType(): funcType = %p = %s \n",funcType,funcType->class_name().c_str());
+
+     if (typeList != NULL)
+        {
+          funcType->set_argument_list(typeList);
+          typeList->set_parent(funcType);
+        }
+
+     SgName typeName = funcType->get_mangled_type();
+
+  // Maintain the global type table 
+     SgFunctionTypeTable* fTable = SgNode::get_globalFunctionTypeTable();
+     ROSE_ASSERT(fTable != NULL);
+
+  // fTable->get_function_type_table()->print("In buildMemberFunctionType(): globalFunctionTypeTable BEFORE");
+
+     SgType* typeInTable = fTable->lookup_function_type(typeName);
+
+#if 0
+     printf ("########### In buildMemberFunctionType(): Looking in global function type table for member function type = %p name = %s typeInTable = %p \n",funcType,typeName.str(),typeInTable);
+#endif
+
+     if (typeInTable == NULL)
+        {
+#if 0
+          printf ("########### In buildMemberFunctionType(): Adding funcType = %p = %s to global function type table \n",funcType,typeName.str());
+#endif
+          fTable->insert_function_type(typeName,funcType);
+        }
+       else
+        {
+       // DQ (12/3/2011): Added this case to support reuse of function types (not handled by the createType functions).
+       // Delete the one generated so that we could form the mangled name.
+
+       // printf ("Deleting funcType = %p = %s \n",funcType,funcType->class_name().c_str());
+
+       // DQ (3/22/2012): Added assertion.
+          ROSE_ASSERT(typeInTable != funcType);
+
+#if 1
+       // DQ (4/25/2012): While debugging let's skip calling delete so that the slot in the memory pool will not be reused.
+          printf ("(debugging) Skipping delete of funcType = %p = %s \n",funcType,funcType->class_name().c_str());
+#else
+          delete funcType;
+#endif
+          funcType = NULL;
+#if 0
+       // DQ (12/13/2011): Is this executed!
+          printf ("Is this executed! \n");
+          ROSE_ASSERT(false);
+#endif
+       // Return the one from the global type table.
+          funcType = isSgMemberFunctionType(typeInTable);
+          ROSE_ASSERT(funcType != NULL);
+        }
+#if 0
+        }
+       else
+        {
+       // DQ (12/4/2011): Templates should not really generate types, but we need just such a concept.
+          ROSE_ASSERT(templateClassDeclaration != NULL);
+
+          printf ("Not clear how to handle case of SgTemplateClassDeclaration \n");
+          ROSE_ASSERT(false);
+        }
+#endif
+
+  // fTable->get_function_type_table()->print("In buildMemberFunctionType(): globalFunctionTypeTable AFTER");
+
+  // DQ (1/21/2009): TODO: Need to mark the function type as const, volatile, 
+  // or restrict (assert that none are set for now).
+  // ROSE_ASSERT(mfunc_specifier == 0);
+  // funcType->set_mfunc_specifier(mfunc_specifier);
+#if 0
+     printf ("Leaving buildMemberFunctionType(): returning funcType = %p = %s mfunc_specifier = %u \n",funcType,funcType->class_name().c_str(),mfunc_specifier);
+     printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
+#endif
+
+  // DQ (3/8/2012): This should be non-zero for a const member function type.
+  // ROSE_ASSERT(mfunc_specifier == 0);
 
      return funcType;
    }
@@ -1013,7 +1159,7 @@ SageBuilder::buildFunctionType(SgType* return_type, SgFunctionParameterTypeList*
 // build member function type, 
 // 
 // insert into symbol table when not duplicated
-SgMemberFunctionType * 
+SgMemberFunctionType*
 SageBuilder::buildMemberFunctionType(SgType* return_type, SgFunctionParameterTypeList* typeList, SgClassDefinition *struct_name, /* const, volatile, restrict support */ unsigned int mfunc_specifier)
    {
   // This function has to first build a version of the SgMemberFunctionType so that it can generate a mangled name.
@@ -1102,6 +1248,10 @@ SageBuilder::buildMemberFunctionType(SgType* return_type, SgFunctionParameterTyp
 
      ROSE_ASSERT(classType != NULL);
 
+#if 1
+  // DQ (8/19/2012): This code has been refactored.
+     funcType = buildMemberFunctionType(return_type,typeList,classType,mfunc_specifier);
+#else
   // DQ (12/3/2011): We need to FIRST look into the global function type table to reuse types.
   // SgMemberFunctionType * funcType = new SgMemberFunctionType(return_type, false, classType, mfunc_specifier);
   // SgMemberFunctionType * funcType = SgMemberFunctionType::createType(return_type, false, classType, mfunc_specifier);
@@ -1207,14 +1357,15 @@ SageBuilder::buildMemberFunctionType(SgType* return_type, SgFunctionParameterTyp
 
   // DQ (3/8/2012): This should be non-zero for a const member function type.
   // ROSE_ASSERT(mfunc_specifier == 0);
+#endif
 
      return funcType;
    }
 
 
- //----------------------------------------------------
- //! Build an opaque type with a name, useful when a type's details are unknown during transformation, especially for a runtime library's internal type.
- SgType * SageBuilder::buildOpaqueType(std::string const name, SgScopeStatement * scope)
+//----------------------------------------------------
+//! Build an opaque type with a name, useful when a type's details are unknown during transformation, especially for a runtime library's internal type.
+SgType * SageBuilder::buildOpaqueType(std::string const name, SgScopeStatement * scope)
 {
   // we require users to specify a target scope
   ROSE_ASSERT(scope);
@@ -1261,20 +1412,28 @@ SageBuilder::buildFunctionType(SgType* return_type, SgFunctionParameterList * ar
      printf ("Inside of SageBuilder::buildFunctionType(SgType,SgFunctionParameterList) \n");
 #endif
 
-     SgFunctionParameterTypeList * typeList = buildFunctionParameterTypeList(argList);
-     SgFunctionType * func_type = buildFunctionType(return_type, typeList);
-     return  func_type;
+  // DQ (8/19/2012): Can we assert this?
+     ROSE_ASSERT(argList != NULL);
+
+     SgFunctionParameterTypeList* typeList  = buildFunctionParameterTypeList(argList);
+
+  // DQ (8/19/2012): Can we assert this?
+     ROSE_ASSERT(typeList != NULL);
+
+     SgFunctionType*              func_type = buildFunctionType(return_type, typeList);
+
+     return func_type;
    }
 
 
 // DQ (12/1/2011): Added similar function for SgMemberFunctionType as for SgFunctionType 
 // (required for use in template function buildNondefiningFunctionDeclaration_T<T>()).
 SgMemberFunctionType*
-SageBuilder::buildMemberFunctionType(SgType* return_type, SgFunctionParameterList * argList, SgClassDefinition *struct_name, /* const, volatile, restrict support */ unsigned int mfunc_specifier)
+SageBuilder::buildMemberFunctionType(SgType* return_type, SgFunctionParameterList * argList, SgClassDefinition *classDefinition, /* const, volatile, restrict support */ unsigned int mfunc_specifier)
    {
-     SgFunctionParameterTypeList * typeList = buildFunctionParameterTypeList(argList);
-     SgMemberFunctionType * func_type = buildMemberFunctionType(return_type, typeList, struct_name, mfunc_specifier);
-     return  func_type;
+     SgFunctionParameterTypeList* typeList  = buildFunctionParameterTypeList(argList);
+     SgMemberFunctionType*        func_type = buildMemberFunctionType(return_type, typeList, classDefinition, mfunc_specifier);
+     return func_type;
    }
 
 

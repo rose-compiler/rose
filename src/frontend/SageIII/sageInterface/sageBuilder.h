@@ -181,20 +181,19 @@ SgArrayType* buildArrayType(SgType* base_type=NULL, SgExpression* index=NULL);
 SgModifierType* buildFortranKindType(SgType* base_type, SgExpression* kindExpression );
 
 //! Build function type from return type and parameter type list
-SgFunctionType * 
-buildFunctionType(SgType* return_type, SgFunctionParameterTypeList * typeList=NULL);
+SgFunctionType* buildFunctionType(SgType* return_type, SgFunctionParameterTypeList * typeList=NULL);
 
 //! Build function type from return type and parameter list
-SgFunctionType * 
-buildFunctionType(SgType* return_type, SgFunctionParameterList * argList=NULL);
+SgFunctionType* buildFunctionType(SgType* return_type, SgFunctionParameterList * argList=NULL);
 
 // DQ (1/16/2009): Added to support member function in C++ (for new interface)
-SgMemberFunctionType * 
-buildMemberFunctionType(SgType* return_type, SgFunctionParameterTypeList * typeList, SgClassDefinition *struct_name, unsigned int mfunc_specifier);
+SgMemberFunctionType* buildMemberFunctionType(SgType* return_type, SgFunctionParameterTypeList * typeList, SgClassDefinition *struct_name, unsigned int mfunc_specifier);
 
 // DQ (12/2/2011): Added for symetry with other functios to generate SgFunctionType
-SgMemberFunctionType * 
-buildMemberFunctionType(SgType* return_type, SgFunctionParameterList* argList = NULL, SgClassDefinition *struct_name = NULL, unsigned int mfunc_specifier = 0);
+SgMemberFunctionType* buildMemberFunctionType(SgType* return_type, SgFunctionParameterList* argList = NULL, SgClassDefinition *struct_name = NULL, unsigned int mfunc_specifier = 0);
+
+// DQ (8/19/2012): Refactored some of the code supporting construction of the SgMemberFunctionType.
+SgMemberFunctionType* buildMemberFunctionType(SgType* return_type, SgFunctionParameterTypeList* typeList, SgClassType *classType, unsigned int mfunc_specifier);
 
 
  //! Build an opaque type with a name, useful when a type's details are unknown during transformation, especially for a runtime library's internal type. Must provide scope here. 
