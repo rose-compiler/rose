@@ -607,7 +607,11 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
   // qualification recursively but only for template declaration (SgTemplateInstantiationDecl, I think).
   // printf ("declaration  = %p = %s = %s = %s \n",declaration,declaration->class_name().c_str(),SageInterface::get_name(declaration).c_str(),SageInterface::generateUniqueName(declaration,true).c_str());
      printf ("declaration  = %p = %s = %s \n",declaration,declaration->class_name().c_str(),SageInterface::get_name(declaration).c_str());
+     declaration->get_startOfConstruct()->display("declaration");
      printf ("currentScope = %p = %s = %s \n",currentScope,currentScope->class_name().c_str(),SageInterface::get_name(currentScope).c_str());
+     currentScope->get_startOfConstruct()->display("currentScope");
+     printf ("positionStatement = %p = %s \n",positionStatement,positionStatement->class_name().c_str());
+     positionStatement->get_startOfConstruct()->display("positionStatement");
 #endif
 
      SgClassDeclaration*              classDeclaration     = isSgClassDeclaration(declaration);
@@ -692,7 +696,19 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
         {
        // Note that there can be more than one symbol if the name is hidden in a base class scope (and thus there are SgAliasSymbols using the same name).
           ROSE_ASSERT(currentScope != NULL);
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+          printf ("Initial lookup: name = %s currentScope = %p = %s \n",name.str(),currentScope,currentScope->class_name().c_str());
+#endif
+
+       // DQ 8/21/2012): this is looking in the parent scopes of the currentScope and thus not including the currentScope.
+       // This is a bug for test2011_31.C where there is a variable who's name hides the name in the parent scopes (and it not detected).
+       // SgSymbol* symbol = SageInterface::lookupSymbolInParentScopes(name,currentScope);
           SgSymbol* symbol = SageInterface::lookupSymbolInParentScopes(name,currentScope);
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+          printf ("Initial lookup: symbol = %p = %s \n",symbol,(symbol != NULL) ? symbol->class_name().c_str() : "NULL");
+#endif
 
        // This is used to count the number of symbols of the same type in a single scope.
        // size_t numberOfSymbols = 0;
@@ -709,6 +725,14 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                   {
                     symbol = aliasSymbol->get_alias();
                     ROSE_ASSERT(symbol != NULL);
+
+                 // DQ (8/21/2012): Commented out the assertion, but warn about how nesting appears to be present.
+                 // DQ (8/20/2012): The symbol in side the SgAliasSymbol should not be another alias. This fails for test2004_48.C).
+                    if (isSgAliasSymbol(symbol) != NULL)
+                       {
+                         printf ("WARNING: can't assert isSgAliasSymbol(symbol) == NULL after processing SgAliasSymbol (might require loop to strip away nested SgAliasSymbol symbols. \n");
+                       }
+                 // ROSE_ASSERT(isSgAliasSymbol(symbol) == NULL);
                   }
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
@@ -1136,6 +1160,31 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                          SgVariableSymbol* variableSymbol = isSgVariableSymbol(symbol);
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                          printf ("variableSymbol = %p = %s \n",variableSymbol,symbol->class_name().c_str());
+#endif
+
+#if 0
+                      // DQ (8/21/2012): This is better fixed by another method that elimiated a redundant SgBasicBlock that was being generated (in edgRose.C).
+                      // DQ (8/20/2012): Check that we have the correct symbol.
+                         if (variableSymbol != NULL)
+                            {
+                           // DQ (8/20/2012): If this is NON-NULL then we still have to check that it is the correct symbol (see test2011_31.C).
+                           // SgInitializedName* declarationForVariableAssociatedWithSymbol = variableSymbol->get_declaration();
+                              SgInitializedName* initializedNameForVariableAssociatedWithSymbol = variableSymbol->get_declaration();
+                              ROSE_ASSERT(initializedNameForVariableAssociatedWithSymbol != NULL);
+                              SgInitializedName* currentVariableDeclarationInitializedName = SageInterface::getFirstInitializedName(variableDeclaration); 
+                              ROSE_ASSERT(currentVariableDeclarationInitializedName != NULL);
+
+                              printf ("initializedNameForVariableAssociatedWithSymbol = %p \n",initializedNameForVariableAssociatedWithSymbol);
+                              initializedNameForVariableAssociatedWithSymbol->get_startOfConstruct()->display("initializedNameForVariableAssociatedWithSymbol");
+                              printf ("currentVariableDeclarationInitializedName      = %p \n",currentVariableDeclarationInitializedName);
+                              currentVariableDeclarationInitializedName->get_startOfConstruct()->display("currentVariableDeclarationInitializedName");
+
+                              if (initializedNameForVariableAssociatedWithSymbol != currentVariableDeclarationInitializedName)
+                                 {
+                                // If this is not the correct then rest the variableSymbol to NULL and look for another symbol in an outer scope.
+                                   variableSymbol = NULL;
+                                 }
+                            }
 #endif
                          if (variableSymbol == NULL)
                             {
@@ -3413,6 +3462,9 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                   }
                  else
                   {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                    printf ("In case SgVarRefExp: (currentStatement != NULL) Calling nameQualificationDepth() \n");
+#endif
                     int amountOfNameQualificationRequired = nameQualificationDepth(variableDeclaration,currentScope,currentStatement);
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                     printf ("SgVarRefExp's SgDeclarationStatement: amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
@@ -3440,6 +3492,10 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                     ROSE_ASSERT(variableDeclaration != NULL);
 
                     currentStatement = explictlySpecifiedCurrentScope;
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                    printf ("In case SgVarRefExp: (currentStatement == NULL) Calling nameQualificationDepth() \n");
+#endif
                     int amountOfNameQualificationRequired = nameQualificationDepth(variableDeclaration,explictlySpecifiedCurrentScope,currentStatement);
 
                     setNameQualification(varRefExp,variableDeclaration,amountOfNameQualificationRequired);

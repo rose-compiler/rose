@@ -1060,7 +1060,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
   // if (inheritedAttribute.isPartOfTemplateDeclaration == true )
         {
 #if DEBUG_ATTACH_PREPROCESSING_INFO
-          printf ("Returning without further processing if we are a part of a template declaration \n");
+          printf ("Returning without further processing if we are a part of a template declaration n = %p = %s \n",n,n->class_name().c_str());
 #endif
           return returnSynthesizeAttribute;
         }

@@ -713,6 +713,8 @@ test2011_27.C \
 test2011_28.C \
 test2011_29.C \
 test2011_30.C \
+test2011_31.C \
+test2011_32.C \
 test2011_33.C \
 test2011_34.C \
 test2011_35.C \
@@ -1031,6 +1033,7 @@ test2012_190.C \
 test2012_191.C \
 test2012_192.C \
 test2012_193.C \
+test2012_194.C \
 test_int_lexemes.C \
 test_int_lexemes_donot_pass.C \
 test_simple_int.C \
@@ -1068,8 +1071,6 @@ endif
 if ROSE_USE_EDG_VERSION_4_3
 TESTCODE_CURRENTLY_FAILING = \
 test2006_122.C \
-test2011_31.C \
-test2011_32.C \
  test2011_65.C
 
 # DQ (8/12/2012): This test code appears to demonstrate a loss of the template arguments in the name qualification.
