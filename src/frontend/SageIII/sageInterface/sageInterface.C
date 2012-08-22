@@ -4592,7 +4592,9 @@ SgSymbol *SageInterface:: lookupSymbolInParentScopes (const SgName &  name, SgSc
 
      ROSE_ASSERT(cscope != NULL);
 
-  // printf ("In SageInterface:: lookupSymbolInParentScopes(): cscope = %p = %s \n",cscope,cscope->class_name().c_str());
+#if 0
+     printf ("In SageInterface:: lookupSymbolInParentScopes(): cscope = %p = %s \n",cscope,cscope->class_name().c_str());
+#endif
      while ((cscope != NULL) && (symbol == NULL))
         {
           if (cscope->get_symbol_table() == NULL)
@@ -4612,13 +4614,16 @@ SgSymbol *SageInterface:: lookupSymbolInParentScopes (const SgName &  name, SgSc
              }
           ROSE_ASSERT(cscope->get_symbol_table() != NULL);
 
-       // printf ("   --- In SageInterface:: lookupSymbolInParentScopes(): cscope = %p = %s \n",cscope,cscope->class_name().c_str());
+#if 0
+          printf("   --- In SageInterface:: lookupSymbolInParentScopes(): name = %s cscope = %p = %s \n",name.str(),cscope,cscope->class_name().c_str());
+#endif
           symbol = cscope->lookup_symbol(name);
-
+#if 0
        // debug
-       // cscope->print_symboltable("In SageInterface:: lookupSymbolInParentScopes(): debug");
-
-          if (cscope->get_parent()!=NULL) // avoid calling get_scope when parent is not set
+          printf("   --- In SageInterface:: lookupSymbolInParentScopes(): symbol = %p \n",symbol);
+          cscope->print_symboltable("In SageInterface:: lookupSymbolInParentScopes(): debug");
+#endif
+          if (cscope->get_parent() != NULL) // avoid calling get_scope when parent is not set
                cscope = isSgGlobal(cscope) ? NULL : cscope->get_scope();
             else 
                cscope = NULL;
@@ -4640,8 +4645,7 @@ SgSymbol *SageInterface:: lookupSymbolInParentScopes (const SgName &  name, SgSc
 #if 0
 // DQ (7/13/2011): This was part of a merge conflict with the above modified function.
 // It appeas they are the same so this one is commented out.
-SgSymbol *SageInterface:: lookupSymbolInParentScopes (const SgName &  name,
-        SgScopeStatement *cscope)
+SgSymbol *SageInterface:: lookupSymbolInParentScopes (const SgName &  name, SgScopeStatement *cscope)
 {
     SgSymbol* symbol = NULL;
     if (cscope == NULL)
