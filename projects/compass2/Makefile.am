@@ -48,6 +48,7 @@ bin_compass2_SOURCES=\
 
 bin_compass2_LDADD=\
 	libcompass2.la \
+	bin/checkers/dead_function/libdeadfunction.la \
 	bin/checkers/default_argument/libdefaultargument.la \
 	bin/checkers/function_pointer/libfunctionpointer.la \
 	bin/checkers/function_prototype/libfunctionprototype.la \
@@ -65,6 +66,7 @@ bin_compass2_LDADD=\
 # ------------------------------------------------------------------------------
 
 noinst_LTLIBRARIES=\
+	bin/checkers/dead_function/libdeadfunction.la \
 	bin/checkers/default_argument/libdefaultargument.la \
 	bin/checkers/function_pointer/libfunctionpointer.la \
 	bin/checkers/function_prototype/libfunctionprototype.la \
@@ -73,6 +75,9 @@ noinst_LTLIBRARIES=\
 	bin/checkers/keyword_macro/libkeywordmacro.la \
 	bin/checkers/non_global_cpp_directive/libnonglobalcppdirective.la \
 	bin/checkers/non_static_array_size/libnonstaticarraysize.la
+
+bin_checkers_dead_function_libdeadfunction_la_SOURCES=\
+	bin/checkers/dead_function/dead_function.cpp
 
 bin_checkers_default_argument_libdefaultargument_la_SOURCES=\
 	bin/checkers/default_argument/default_argument.cpp

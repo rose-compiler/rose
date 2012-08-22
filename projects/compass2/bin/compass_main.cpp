@@ -22,6 +22,7 @@
  **--------------------------------------------------------------------------*/
 #include "compass2/compass.h"
 
+extern const Compass::Checker* const deadFunctionChecker;
 extern const Compass::Checker* const defaultArgumentChecker;
 extern const Compass::Checker* const functionPointerChecker;
 extern const Compass::Checker* const functionPrototypeChecker;
@@ -120,6 +121,8 @@ int main (int argc, char** argv)
             std::string checker_name = pair.first;
             if ("functionPointer" == checker_name)
                 traversals.push_back (functionPointerChecker);
+            else if ("deadFunction" == checker_name)
+                traversals.push_back (deadFunctionChecker);
             else if ("defaultArgument" == checker_name)
                 traversals.push_back (defaultArgumentChecker);
             else if ("functionPrototype" == checker_name)
