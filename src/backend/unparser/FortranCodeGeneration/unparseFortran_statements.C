@@ -1229,14 +1229,30 @@ FortranCodeGeneration_locatedNode::unparseAttributeSpecificationStatement(SgStat
 
      const SgStringList & localList = attributeSpecificationStatement->get_name_list();
 
+  // We need to recognize the commonblockobject in the list
+     Rose_STL_Container<SgNode*> commonBlockList = NodeQuery::querySubTree (attributeSpecificationStatement->get_scope(),V_SgCommonBlockObject);
   // printf ("In unparseAttributeSpecificationStatement(): localList size = %zu \n",localList.size());
 
      SgStringList::const_iterator i = localList.begin();
+     string outputName = "";
      while (i != localList.end())
         {
        // printf ("Output name = %s \n",(*i).c_str());
+          outputName = *i;
+          for (Rose_STL_Container<SgNode*>::iterator j = commonBlockList.begin(); j != commonBlockList.end(); j++)
+            {
+               SgCommonBlockObject* commonBlockObject = isSgCommonBlockObject(*j);
+               ROSE_ASSERT(commonBlockObject);
+               string blockName = commonBlockObject->get_block_name();
+//               std::cout << "commonblock:" << commonBlockObject << blockName << std::endl;
+               if(blockName.compare(outputName) == 0)
+                {
+                  outputName = "/" + outputName + "/";
+                  break;
+                }
+            }
 
-          curprint(*i);
+          curprint(outputName);
 
           i++;
 
