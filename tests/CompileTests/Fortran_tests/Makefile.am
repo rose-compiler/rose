@@ -738,6 +738,10 @@ F90_TESTCODES_REQUIRED_TO_PASS += \
 # test2011_57.f90 
 # test2011_62.f90 
 # test2011_69.f90 
+# phlin (as 08/22/2012):
+# test case for ROSE-bugs #597
+F90_TESTCODES_REQUIRED_TO_PASS += \
+     test2012_SavedCommonBlock.f90 
 
 # DQ (9/30/2011): There is a long history of this being a statistical failure on at least OSX systems. 
 # test2010_161.f90 
@@ -765,7 +769,6 @@ F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS += \
      test2010_105.f \
      test2010_157.f \
      test2011_94.f 
-
 
 # DXN (as of 08/10/2011):
 F03_TESTCODES_REQUIRED_TO_PASS += \
