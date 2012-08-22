@@ -35,8 +35,7 @@ endif
 endif
 
 # DQ (11/3/2011): For now we don't want to worry about these tests with the EDG 4.3 based support in ROSE.
-if !ROSE_USE_EDG_VERSION_4_3
-
+if !ROSE_USE_EDG_VERSION_4_4
 # DQ (7/25/2010): Put these tests after the most basic tests that users expect ROSE to pass (C,C++,C99, etc.).
 if !ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
 SUBDIRS += OpenMP_tests
@@ -70,9 +69,8 @@ if !USING_XTENSA_BACKEND_COMPILER
 endif
 endif
 
-# end of !ROSE_USE_EDG_VERSION_4_3
+# end of !ROSE_USE_EDG_VERSION_4_4
 endif
-
 
 if ROSE_BUILD_PYTHON_LANGUAGE_SUPPORT
    SUBDIRS += Python_tests

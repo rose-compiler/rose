@@ -7,7 +7,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 
 
-if ROSE_USE_EDG_VERSION_4_3
+if ROSE_USE_EDG_VERSION_4_4
 
 # EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
 #  $(TESTCODE_CURRENTLY_FAILING)
@@ -1076,7 +1076,7 @@ test2012_79.C
 # Import list of C++ test cases that are known to fail:
 #   TESTCODE_CURRENTLY_FAILING
 #
-if ROSE_USE_EDG_VERSION_4_3
+if ROSE_USE_EDG_VERSION_4_4
 TESTCODE_CURRENTLY_FAILING = \
 test2006_122.C \
 test2009_21.C \

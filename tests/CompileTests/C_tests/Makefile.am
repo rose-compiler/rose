@@ -139,13 +139,13 @@ if ROSE_USE_CLANG_FRONTEND
 endif
 
 if !ROSE_USE_CLANG_FRONTEND
-if ROSE_USE_EDG_VERSION_4_3
+if ROSE_USE_EDG_VERSION_4_4
    TESTCODES_REQUIRED_TO_PASS += \
      test2004_21.c \
      test2005_168.c \
      test2006_65.c
 endif
-if !ROSE_USE_EDG_VERSION_4_3
+if !ROSE_USE_EDG_VERSION_4_4
    TESTCODES_REQUIRED_TO_PASS += \
      stdio.c \
      test2006_48.c \
@@ -217,7 +217,7 @@ TEST_Exe_Objects = ${TESTCODES_REQUIRED_TO_RUN:.c=.o}
 
 PASSING_TEST_Executables =  ${TEST_Exe_Objects:.o=.out}
 
-if !ROSE_USE_EDG_VERSION_4_3
+if !ROSE_USE_EDG_VERSION_4_4
 # any programs needed by your tests that does not need to be built by make all.
 check_PROGRAMS = $(PASSING_TEST_Executables)
 # a list of programs or scripts to run in order to do the testing 
