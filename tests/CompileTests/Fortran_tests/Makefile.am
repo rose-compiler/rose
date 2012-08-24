@@ -403,13 +403,15 @@ if !ROSE_USING_GFORTRAN_VERSION_4_0
 endif
 
 # DQ (2/1/2011): These test codes will not pass the initial syntax checking with the GNU gfortran version 4.4.x compiler.
-if !ROSE_USING_GFORTRAN_VERSION_4_4
+#if !ROSE_USING_GFORTRAN_VERSION_4_4
+if !ROSE_USING_GFORTRAN_VERSION_LATER_4_4
 #  F90_TESTCODES_REQUIRED_TO_PASS += test2010_164.f90 test2011_37.f90 
    F90_TESTCODES_REQUIRED_TO_PASS += \
      test2010_164.f90 
 
 # DQ (4/10/2011): And if it is not gfortran 4.5, then add this test code.
-if !ROSE_USING_GFORTRAN_VERSION_4_5
+#if !ROSE_USING_GFORTRAN_VERSION_4_5
+if !ROSE_USING_GFORTRAN_VERSION_LATER_4_5
    F90_TESTCODES_REQUIRED_TO_PASS += \
      test2011_37.f90 
 endif
@@ -740,8 +742,10 @@ F90_TESTCODES_REQUIRED_TO_PASS += \
 # test2011_69.f90 
 # phlin (as 08/22/2012):
 # test case for ROSE-bugs #597
+if ROSE_USING_GFORTRAN_VERSION_LATER_4_5
 F90_TESTCODES_REQUIRED_TO_PASS += \
      test2012_SavedCommonBlock.f90 
+endif
 
 # DQ (9/30/2011): There is a long history of this being a statistical failure on at least OSX systems. 
 # test2010_161.f90 

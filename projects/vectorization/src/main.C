@@ -199,7 +199,7 @@ int main( int argc, char * argv[] )
   vector<string> argList = localCopy_argv;
   build_SIMD_CommandLine(argList,localCopy_argv);
   int newArgc;
-  char** newArgv;
+  char** newArgv = NULL;
   CommandlineProcessing::generateArgcArgvFromList(argList,newArgc, newArgv);
 // Build the AST used by ROSE
   SgProject* project = frontend(newArgc,newArgv);

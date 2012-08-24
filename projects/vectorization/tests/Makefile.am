@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-VECTORIZATION=../src/vectorization
+VECTORIZATION=@VECTORIZATION@
 
 DIFF=diff
 
