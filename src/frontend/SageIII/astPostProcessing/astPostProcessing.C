@@ -168,9 +168,11 @@ void postProcessingSupport (SgNode* node)
        // of the AST (as defined by the AST traversal mechanism).
           topLevelResetParentPointer(node);
 
-       // Another 2nd step to make sure that parents of even IR nodes not traversed 
-       // can be set properly.
-          resetParentPointersInMemoryPool();
+       // DQ (8/23/2012): Modified to take a SgNode so that we could compute the global scope for use in setting 
+       // parents of template instantiations that have not be placed into the AST but exist in the memory pool.
+       // Another 2nd step to make sure that parents of even IR nodes not traversed can be set properly.
+       // resetParentPointersInMemoryPool();
+          resetParentPointersInMemoryPool(node);
 
        // DQ (6/27/2005): fixup the defining and non-defining declarations referenced at each SgDeclarationStatement
        // This is a more sophisticated fixup than that done by fixupDeclarations. See test2009_09.C for an example
@@ -275,7 +277,8 @@ void postProcessingSupport (SgNode* node)
   // DQ (6/10/2007): This is called later, but call it now to reset the parents in SgTemplateInstantiationDecl
   // This is required (I think) so that resetTemplateNames() can compute template argument name qualification correctly.
   // See test2005_28.C for where this is required.
-     resetParentPointersInMemoryPool();
+  // resetParentPointersInMemoryPool();
+     resetParentPointersInMemoryPool(node);
 
   // Output progress comments for these relatively expensive operations on the AST
      if ( SgProject::get_verbose() >= AST_POST_PROCESSING_VERBOSE_LEVEL )
@@ -452,7 +455,8 @@ void postProcessingSupport (SgNode* node)
   // TestParentPointersOfSymbols::test();
 
   // DQ (5/24/2006): reset the remaining parents in IR nodes missed by the AST based traversals
-     resetParentPointersInMemoryPool();
+  // resetParentPointersInMemoryPool();
+     resetParentPointersInMemoryPool(node);
 
   // DQ (3/17/2007): This should be empty
   // ROSE_ASSERT(SgNode::get_globalMangledNameMap().size() == 0);

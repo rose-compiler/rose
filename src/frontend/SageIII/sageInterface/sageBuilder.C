@@ -313,7 +313,7 @@ SageBuilder::appendTemplateArgumentsToName( const SgName & name, const SgTemplat
   // and in Statement.code: SgDeclarationStatement::resetTemplateNameSupport().
 
 #if 1
-     printf ("In appendTemplateArgumentsToName(): CRITICAL FUNCTION TO BE REFACTORED \n");
+     printf ("In appendTemplateArgumentsToName(): CRITICAL FUNCTION TO BE REFACTORED (name = %s) \n",name.str());
 #endif
 
      SgName returnName = name + " < ";
@@ -322,7 +322,7 @@ SageBuilder::appendTemplateArgumentsToName( const SgName & name, const SgTemplat
      while (i != templateArgumentsList.end())
         {
 #if 0
-          printf ("In appendTemplateArgumentsToName(): templateArgumentsList element *i = %s \n",(*i)->class_name().c_str());
+           printf ("In appendTemplateArgumentsToName(): (top of loop) templateArgumentsList element *i = %s returnName = %s \n",(*i)->class_name().c_str(),returnName.str());
 #endif
 #if 0
           string s = string("/* templateArgument is explicitlySpecified = ") + (((*i)->get_explicitlySpecified() == true) ? "true" : "false") + " */";
@@ -330,14 +330,26 @@ SageBuilder::appendTemplateArgumentsToName( const SgName & name, const SgTemplat
        // unparseTemplateArgument(*i,info);
           returnName += (*i)->unparseToString();
 
+#if 0
+          printf ("In appendTemplateArgumentsToName(): (after appending template name) returnName = %s \n",returnName.str());
+#endif
+
           i++;
           if (i != templateArgumentsList.end())
              {
             // returnName += ",";
                returnName += " , ";
              }
+
+#if 0
+          printf ("In appendTemplateArgumentsToName(): (bottom of loop) returnName = %s \n",returnName.str());
+#endif
         }
      returnName += " > ";
+
+#if 0
+     printf ("Leaving appendTemplateArgumentsToName(): returnName = %s \n",returnName.str());
+#endif
 
      return returnName;
    }
@@ -7421,11 +7433,14 @@ SageBuilder::buildNondefiningClassDeclaration_nfi(const SgName& XXX_name, SgClas
 
           scope->insert_symbol(name, mysymbol);
 #else
+       // DQ (8/22/2012): Use the template arguments to further disambiguate names that would 
+       // not include name qualification on template arguments.
        // Reuse any previously defined symbols (to avoid redundant symbols in the symbol table) 
        // and find the firstNondefiningDeclaration.
        // SgClassSymbol* mysymbol = scope->lookup_class_symbol(name);
        // SgClassSymbol* mysymbol = scope->lookup_nontemplate_class_symbol(name);
-          SgClassSymbol* mysymbol = scope->lookup_nontemplate_class_symbol(nameWithTemplateArguments);
+       // SgClassSymbol* mysymbol = scope->lookup_nontemplate_class_symbol(nameWithTemplateArguments);
+          SgClassSymbol* mysymbol = scope->lookup_nontemplate_class_symbol(nameWithTemplateArguments,templateArgumentsList);
 
           printf ("In SageBuilder::buildNondefiningClassDeclaration(): mysymbol = %p \n",mysymbol);
           if (mysymbol != NULL)
@@ -7521,9 +7536,11 @@ SageBuilder::buildNondefiningClassDeclaration_nfi(const SgName& XXX_name, SgClas
                     nondefdecl->set_type(SgClassType::createType(nondefdecl));
                   }
 
+            // DQ (8/22/2012): Use the template arguments to further disambiguate names that would 
+            // not include name qualification on template arguments.
             // DQ (12/27/2011): Added new test.
             // ROSE_ASSERT(scope->lookup_nontemplate_class_symbol(name) != NULL);
-               ROSE_ASSERT(scope->lookup_nontemplate_class_symbol(nameWithTemplateArguments) != NULL);
+               ROSE_ASSERT(scope->lookup_nontemplate_class_symbol(nameWithTemplateArguments,templateArgumentsList) != NULL);
              }
 
           ROSE_ASSERT(mysymbol != NULL);
@@ -7544,9 +7561,10 @@ SageBuilder::buildNondefiningClassDeclaration_nfi(const SgName& XXX_name, SgClas
 
      ROSE_ASSERT(nondefdecl->get_parent() != NULL);
 
+  // DQ (8/22/2012): Use the template arguments to further disambiguate names that would not include name qualification on template arguments.
   // DQ (12/27/2011): Added new test.
   // ROSE_ASSERT(nondefdecl->get_scope()->lookup_nontemplate_class_symbol(name) != NULL);
-     ROSE_ASSERT(nondefdecl->get_scope()->lookup_nontemplate_class_symbol(nameWithTemplateArguments) != NULL);
+     ROSE_ASSERT(nondefdecl->get_scope()->lookup_nontemplate_class_symbol(nameWithTemplateArguments,templateArgumentsList) != NULL);
 
      return nondefdecl;
    }
@@ -7928,7 +7946,8 @@ SageBuilder::buildNondefiningClassDeclaration ( SgName name, SgScopeStatement* s
      SgClassSymbol* mysymbol = NULL;
      if (scope != NULL)
         {
-          mysymbol = scope->lookup_class_symbol(name);
+       // mysymbol = scope->lookup_class_symbol(name);
+          mysymbol = scope->lookup_class_symbol(name,NULL);
         }
        else
         {
@@ -8153,9 +8172,14 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
 #if 0
           printf ("Looking up the SgClassSymbol in scope = %p = %s nameWithTemplateArguments = %s \n",scope,scope->class_name().c_str(),nameWithTemplateArguments.str());
 #endif
+
+       // DQ (8/22/2012): We need to provide more information ofr the symbol table lookup to correctly resolve 
+       // (and disambiguate template instantations where the name qualification of the template arguments would 
+       // be significant).
        // mysymbol = scope->lookup_class_symbol(name);
        // mysymbol = scope->lookup_class_symbol(name);
-          mysymbol = scope->lookup_class_symbol(nameWithTemplateArguments);
+       // mysymbol = scope->lookup_class_symbol(nameWithTemplateArguments);
+          mysymbol = scope->lookup_class_symbol(nameWithTemplateArguments,templateArgumentsList);
         }
        else
         {

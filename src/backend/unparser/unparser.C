@@ -1277,6 +1277,10 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputU
   // some data must be cleaned up differently!  So put this back and leave it this way, and remove the
   // "Implementation Note".
 
+#if 0
+     printf ("In globalUnparseToString(): astNode = %p = %s \n",astNode,astNode->class_name().c_str());
+#endif
+
   // Both SgProject and SgFile are handled via recursive calls
      if ( (isSgProject(astNode) != NULL) || (isSgSourceFile(astNode) != NULL) )
         {
@@ -1437,13 +1441,21 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputU
                          roseUnparser.u_exprStmt->unparseTemplateParameter(const_cast<SgTemplateParameter*>(templateParameter),inheritedAttributeInfo);
                          break;
                        }
+
                     case V_SgTemplateArgument:
                        {
                          const SgTemplateArgument* templateArgument = isSgTemplateArgument(astNode);
-
+#if 0
+                      // printf ("In globalUnparseToString_OpenMPSafe(): case V_SgTemplateArgument (before): returnString = %s outputString = %s \n",returnString.c_str(),outputString.str());
+                         printf ("In globalUnparseToString_OpenMPSafe(): case V_SgTemplateArgument (before): returnString = %s \n",returnString.c_str());
+#endif
                       // DQ (2/2/2007): Note that we should modify the unparser to take the IR nodes as const pointers, but this is a bigger job than I want to do now!
                          ROSE_ASSERT(roseUnparser.u_exprStmt != NULL);
                          roseUnparser.u_exprStmt->unparseTemplateArgument(const_cast<SgTemplateArgument*>(templateArgument),inheritedAttributeInfo);
+#if 0
+                      // printf ("In globalUnparseToString_OpenMPSafe(): case V_SgTemplateArgument (after): returnString = %s outputString = %s \n",returnString.c_str(),outputString.str());
+                         printf ("In globalUnparseToString_OpenMPSafe(): case V_SgTemplateArgument (after): returnString = %s \n",returnString.c_str());
+#endif
                          break;
                        }
 
@@ -1542,7 +1554,9 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputU
                delete inheritedAttributeInfoPointer;
         }
 
-  // printf ("In globalUnparseToString_OpenMPSafe(): returnString = %s \n",returnString.c_str());
+#if 0
+     printf ("In globalUnparseToString_OpenMPSafe(): returnString = %s \n",returnString.c_str());
+#endif
 
      return returnString;
    }

@@ -167,7 +167,15 @@ Unparse_ExprStmt::unparseTemplateParameterValue(SgExpression* expr, SgUnparse_In
      SgTemplateParameterVal* template_parameter_value = isSgTemplateParameterVal(expr);
      ROSE_ASSERT(template_parameter_value != NULL);
 
-     printf ("Skip unparsing this IR node until we unserstand it's connection to C++11 better. \n");
+     printf ("In unparseTemplateParameterValue(): template_parameter_value->get_template_parameter_position() = %d \n",template_parameter_value->get_template_parameter_position());
+     printf ("In unparseTemplateParameterValue(): template_parameter_value->get_valueString()                 = %s \n",template_parameter_value->get_valueString().c_str());
+
+     printf ("In unparseTemplateParameterValue(): Output the SgTemplateParameterVal valueString = %s \n",template_parameter_value->get_valueString().c_str());
+
+     curprint(template_parameter_value->get_valueString());
+
+  // printf ("Skip unparsing this IR node until we understand it's connection to C++11 better. \n");
+  // DQ (8/23/2012): Uncommented to support debugging.
   // ROSE_ASSERT(false);
    }
 
@@ -497,7 +505,9 @@ void
 Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, SgUnparse_Info& info)
    {
      ROSE_ASSERT(templateArgument != NULL);
-
+#if 0
+     printf ("In unparseTemplateArgument (%p) \n",templateArgument);
+#endif
 #if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES
      printf ("Unparse TemplateArgument (%p) \n",templateArgument);
      unp->u_exprStmt->curprint ( "\n/* Unparse TemplateArgument */ \n");
@@ -534,21 +544,25 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
      ROSE_ASSERT(newInfo.get_reference_node_for_qualification() != NULL);
 
 #if 0
-     printf ("Exiting in unparseTemplateArgument() to see whate this is called \n");
+     printf ("Exiting in unparseTemplateArgument() to see where this is called \n");
      ROSE_ASSERT(false);
 #endif
 
   // ROSE_ASSERT(newInfo.isTypeFirstPart() == false);
   // ROSE_ASSERT(newInfo.isTypeSecondPart() == false);
 
+#if 0
+     printf ("In unparseTemplateArgument(): templateArgument->get_argumentType() = %d \n",templateArgument->get_argumentType());
+#endif
+
      switch (templateArgument->get_argumentType())
         {
           case SgTemplateArgument::type_argument:
              {
                ROSE_ASSERT (templateArgument->get_type() != NULL);
-
-            // printf ("In unparseTemplateArgument(): templateArgument->get_type() = %s \n",templateArgument->get_type()->class_name().c_str());
-
+#if 0
+               printf ("In unparseTemplateArgument(): templateArgument->get_type() = %s \n",templateArgument->get_type()->class_name().c_str());
+#endif
 #if OUTPUT_DEBUGGING_INFORMATION
                printf ("In unparseTemplateArgument(): templateArgument->get_type() = %s \n",templateArgument->get_type()->sage_class_name());
                unp->u_exprStmt->curprint ( "\n /* templateArgument->get_type() */ \n");
@@ -584,7 +598,6 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
                printf ("newInfo.get_reference_node_for_qualification() = %p = %s \n",newInfo.get_reference_node_for_qualification(),newInfo.get_reference_node_for_qualification()->class_name().c_str());
 #endif
 
-#if 1
             // DQ (5/28/2011): We have to handle the name qualification directly since types can be qualified 
             // different and so it depends upon where the type is referenced.  Thus the qualified name is 
             // stored in a map to the IR node that references the type.
@@ -602,19 +615,28 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
                          curprint(nameQualifier);
                        }
                   }
-#endif
+
             // DQ (7/23/2011): To unparse the type directly we can't have either of these set!
             // ROSE_ASSERT(newInfo.isTypeFirstPart()  == false);
             // ROSE_ASSERT(newInfo.isTypeSecondPart() == false);
 
             // This will unparse the type will any required name qualification.
+#if 0
+               printf ("In unparseTemplateArgument(): Calling unparseType(templateArgument->get_type(),newInfo); \n");
+#endif
                unp->u_type->unparseType(templateArgument->get_type(),newInfo);
+#if 0
+               printf ("DONE: In unparseTemplateArgument(): Calling unparseType(templateArgument->get_type(),newInfo); \n");
+#endif
                break;
              }
 
           case SgTemplateArgument::nontype_argument:
              {
                ROSE_ASSERT (templateArgument->get_expression() != NULL);
+#if 0
+               printf ("In unparseTemplateArgument(): templateArgument->get_expression() = %s \n",templateArgument->get_expression()->sage_class_name());
+#endif
 #if OUTPUT_DEBUGGING_INFORMATION
                printf ("In unparseTemplateArgument(): templateArgument->get_expression() = %s \n",templateArgument->get_expression()->sage_class_name());
                unp->u_exprStmt->curprint ( "\n /* templateArgument->get_expression() */ \n");
@@ -634,7 +656,9 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
              {
             // unparseTemplateName(templateArgument->xxx,newInfo);
                ROSE_ASSERT(templateArgument->get_templateDeclaration() != NULL);
-
+#if 0
+               printf ("In unparseTemplateArgument(): template_template_argument: templateArgument->get_templateDeclaration()->get_template_name() = %s \n",templateArgument->get_templateDeclaration()->get_template_name().str());
+#endif
             // curprint ( "\n /* SgTemplateArgument::template_template_argument */ \n");
 
             // DQ (8/24/2006): Skip output of the extra space.
@@ -642,6 +666,7 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
 #ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
                unp->u_exprStmt->curprint ( templateArgument->get_templateDeclaration()->get_template_name().str());
 #else
+#error "Older version of pre-EDG 4.x code!"
                unp->u_exprStmt->curprint ( templateArgument->get_templateDeclaration()->get_name().str());
 #endif
             // printf ("Error: template_argument case not implemented in Unparse_ExprStmt::unparseTemplateArgument \n");
@@ -663,6 +688,9 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
              }
         }
 
+#if 0
+     printf ("Leaving unparseTemplateArgument (%p) \n",templateArgument);
+#endif
 #if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES
      printf ("Leaving unparseTemplateArgument (%p) \n",templateArgument);
      unp->u_exprStmt->curprint ( string("\n/* Bottom of unparseTemplateArgument */ \n"));
