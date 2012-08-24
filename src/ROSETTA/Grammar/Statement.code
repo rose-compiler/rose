@@ -274,7 +274,12 @@ HEADER_SCOPE_STATEMENT_START
           SgSymbol*          lookup_symbol            (const SgName& n) const;
           SgVariableSymbol*  lookup_var_symbol        (const SgName& n) const ROSE_DEPRECATED_FUNCTION;
           SgVariableSymbol*  lookup_variable_symbol   (const SgName& n) const;
+
           SgClassSymbol*     lookup_class_symbol      (const SgName& n) const;
+
+       // DQ (8/22/2012): We need more information to disambiguate where template argument name qualification would be important. See test2012_195.C.
+          SgClassSymbol*     lookup_class_symbol      (const SgName& n, SgTemplateArgumentPtrList* templateArgumentsList) const;
+
           SgFunctionSymbol*  lookup_function_symbol   (const SgName& n) const;
           SgFunctionSymbol*  lookup_function_symbol   (const SgName& n, const SgType* t) const;
           SgTypedefSymbol*   lookup_typedef_symbol    (const SgName& n) const;
@@ -288,7 +293,10 @@ HEADER_SCOPE_STATEMENT_START
 
        // DQ (12/12/2011): Added support for template declarations in the AST.
           SgTemplateClassSymbol* lookup_template_class_symbol    (const SgName& n) const;
-          SgClassSymbol*         lookup_nontemplate_class_symbol (const SgName& n) const;
+
+       // DQ (8/22/2012): If we have template arguments then we have a chance to disambiguate SgTemplateInstantiationDecl IR nodes based on the
+       // arguments which would otherwise require qulified names (which are difficult to robustly support using as the AST is being constructed).
+          SgClassSymbol*         lookup_nontemplate_class_symbol (const SgName& n, SgTemplateArgumentPtrList* templateArgumentsList) const;
 
        // DQ (12/27/2011): Added support for template declarations in the AST.
           SgTemplateFunctionSymbol*       lookup_template_function_symbol (const SgName& n, const SgType* t) const;
@@ -4298,6 +4306,15 @@ SgScopeStatement::lookup_class_symbol(const SgName& n) const
      return p_symbol_table->find_class(n);
    }
 
+SgClassSymbol*
+SgScopeStatement::lookup_class_symbol(const SgName& n, SgTemplateArgumentPtrList* templateArgumentsList) const
+   {
+  // DQ (8/22/2012): We need more information to disambiguate where template argument name qualification would be important. See test2012_195.C.
+
+     assert (p_symbol_table != NULL);
+     return p_symbol_table->find_class(n,templateArgumentsList);
+   }
+
 // DQ (1/30/2007): Added these back into ROSE.
 // DQ (5/22/2006): I would like to restrict support of a number of functions that I 
 // think are redundant with the simple lookup_symbol(const SgName& n) (above).
@@ -4364,12 +4381,14 @@ SgScopeStatement::lookup_template_class_symbol    (const SgName& n) const
      return p_symbol_table->find_template_class(n);
    }
 
+// DQ (8/22/2012): If we have template arguments then we have a chance to disambiguate SgTemplateInstantiationDecl IR nodes based on the
+// arguments which would otherwise require qulified names (which are difficult to robustly support using as the AST is being constructed).
 // DQ (12/12/2011): Added support for template declarations in the AST.
 SgClassSymbol*
-SgScopeStatement::lookup_nontemplate_class_symbol    (const SgName& n) const
+SgScopeStatement::lookup_nontemplate_class_symbol    (const SgName& n, SgTemplateArgumentPtrList* templateArgumentsList) const
    {
      assert (p_symbol_table != NULL);
-     return p_symbol_table->find_nontemplate_class(n);
+     return p_symbol_table->find_nontemplate_class(n,templateArgumentsList);
    }
 
 SgTemplateFunctionSymbol*

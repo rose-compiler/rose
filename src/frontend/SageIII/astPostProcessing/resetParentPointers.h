@@ -147,14 +147,18 @@ void resetFileInfoParentPointersInMemoryPool();
 class ResetFileInfoParentPointersInMemoryPool : public ROSE_VisitTraversal
    {
      public:
-     virtual ~ResetFileInfoParentPointersInMemoryPool() {};
+          virtual ~ResetFileInfoParentPointersInMemoryPool() {};
+
       //! Required traversal function
           void visit (SgNode* node);
    };
 
 /*! \brief This traversal calles ResetParentPointersInMemoryPool Memory Pool traversal.
  */
-void resetParentPointersInMemoryPool();
+// DQ (8/23/2012): Modified to take a SgNode so that we could compute the global scope for use in setting 
+// parents of template instantiations that have not be placed into the AST but exist in the memory pool.
+// void resetParentPointersInMemoryPool();
+void resetParentPointersInMemoryPool(SgNode* node);
 
 /*! \brief This traversal uses the Memory Pool traversal to fixup remaining parent pointers.
 
@@ -165,7 +169,13 @@ void resetParentPointersInMemoryPool();
 class ResetParentPointersInMemoryPool : public ROSE_VisitTraversal
    {
      public:
-     virtual ~ResetParentPointersInMemoryPool() {};
+          SgGlobal* globalScope;
+
+       // DQ (8/23/2012): Added a constructor to take SgGlobal so that we will have it available to use 
+       // for setting parents of SgTemplateInstatiations that are not in the AST but in the memory pool.
+          ResetParentPointersInMemoryPool(SgGlobal* n) : globalScope(n) {};
+
+          virtual ~ResetParentPointersInMemoryPool() {};
       //! Required traversal function
           void visit (SgNode* node);
    };

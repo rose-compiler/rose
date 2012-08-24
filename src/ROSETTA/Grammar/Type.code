@@ -4931,19 +4931,20 @@ SgClassType::createType(SgDeclarationStatement* cd, SgExpression* optional_fortr
   // DQ (10/4/2010): I think that pointer types can't have a kind parameter, so this should be NULL.
      ROSE_ASSERT(optional_fortran_type_kind == NULL);
 
-#if 0
-     printf ("cd = %p = %s cd->get_definition() = %p = %s \n",
-          cd,cd->sage_class_name(),
-          cd->get_definition(),(cd->get_definition() != NULL) ? cd->get_definition()->sage_class_name() : "NULL");
-     printf ("cd->get_type() = %p \n",cd->get_type());
-     printf ("cd = %p cd->get_definingDeclaration()         = %p \n",cd,cd->get_definingDeclaration());
-     printf ("cd = %p cd->get_firstNondefiningDeclaration() = %p \n",cd,cd->get_firstNondefiningDeclaration());
-#endif
-
   // DQ (12/4/2011): Adding template declaration support to AST.  An SgClassType is modified to hold a SgTemplateClassDeclaration or a SgClassDeclaration.
      SgClassDeclaration*         classDeclaration         = isSgClassDeclaration(cd);
      SgTemplateClassDeclaration* templateClassDeclaration = isSgTemplateClassDeclaration(cd);
      ROSE_ASSERT(classDeclaration != NULL || templateClassDeclaration != NULL);
+     ROSE_ASSERT(classDeclaration != NULL);
+
+#if 1
+  // These debugging statements don't deal with the modifications to handle SgTemplateClassDeclaration.
+     printf ("In SgClassType::createType(): cd = %p = %s cd->get_definition() = %p = %s \n",classDeclaration,classDeclaration->class_name().c_str(),
+          classDeclaration->get_definition(),(classDeclaration->get_definition() != NULL) ? classDeclaration->get_definition()->class_name().c_str() : "NULL");
+     printf ("In SgClassType::createType(): cd->get_type() = %p \n",classDeclaration->get_type());
+     printf ("In SgClassType::createType(): cd = %p cd->get_definingDeclaration()         = %p \n",classDeclaration,classDeclaration->get_definingDeclaration());
+     printf ("In SgClassType::createType(): cd = %p cd->get_firstNondefiningDeclaration() = %p \n",classDeclaration,classDeclaration->get_firstNondefiningDeclaration());
+#endif
 
      SgType* type_from_declaration = NULL;
   // if (classDeclaration != NULL)
@@ -4961,7 +4962,7 @@ SgClassType::createType(SgDeclarationStatement* cd, SgExpression* optional_fortr
         }
 
   // ROSE_ASSERT(type_from_declaration != NULL);
-#if 0
+#if 1
      printf ("Inside of SgClassType::createType(): cd = %p = %s type_from_declaration = %p \n",cd,cd->class_name().c_str(),type_from_declaration);
 #endif
 
@@ -4977,22 +4978,21 @@ SgClassType::createType(SgDeclarationStatement* cd, SgExpression* optional_fortr
        // DQ (7/22/2010): Use the global type table to get the type.
           $CLASSNAME* newType = new $CLASSNAME(cd);
           ROSE_ASSERT(newType != NULL);
-#if 1
+
        // DQ (3/14/2012): Note that the new template support allows that classDeclaration is non-null (since template classes are derived from non-template classes).
           ROSE_ASSERT(classDeclaration != NULL);
-#if 0
+#if 1
           printf ("Inside of SgClassType::createType(): cd = %p = %s = %s newType = %p \n",cd,cd->class_name().c_str(),classDeclaration->get_name().str(),newType);
 #endif
-#endif
           SgScopeStatement* currentScope = getCurrentScope();
-#if 0
+#if 1
           printf ("Inside of SgClassType::createType(): currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
 #endif
        // DQ (3/14/2012): Make sure that this is a valid pointer else it might explain why qualification is not being use to generate the mangled names.
        // ROSE_ASSERT(cd->get_scope() != NULL);
           if (cd->get_scope() == NULL && currentScope != NULL)
              {
-#if 0
+#if 1
                printf ("Inside of SgClassType::createType(): Setting scope for cd = %p = %s to currentScope = %p = %s \n",cd,cd->class_name().c_str(),currentScope,currentScope->class_name().c_str());
 #endif
                cd->set_scope(currentScope);
@@ -5002,22 +5002,22 @@ SgClassType::createType(SgDeclarationStatement* cd, SgExpression* optional_fortr
        // We have to build the type before we can generate a mangle name for it.
           SgName name = newType->get_mangled();
 
-#if 0
+#if 1
           printf ("Inside of SgClassType::createType(): type name (newType->get_mangled()) = %s \n",name.str());
 #endif
           if (name.is_null() == true)
              {
-#if 0
+#if 1
                printf ("Need to handle special case of SgClassDeclaration of un-named class cd = %p = %s \n",cd,cd->class_name().c_str());
 #endif
-#if 0
+#if 1
                printf ("Need to handle special case of SgClassDeclaration of un-named class cd = %p = %s \n",cd,cd->class_name().c_str());
                ROSE_ASSERT(cd->get_file_info() != NULL);
                cd->get_file_info()->display("Need to handle special case of SgClassDeclaration of un-named class");
 #endif
             // name = SageInterface::generateUniqueName(cd,/* ignoreDifferenceBetweenDefiningAndNondefiningDeclarations = */ true);
                name = SageInterface::generateUniqueName(newType,/* ignoreDifferenceBetweenDefiningAndNondefiningDeclarations = */ true);
-#if 0
+#if 1
                printf ("Generated a unique name (using SageInterface::generateUniqueName())= %s \n",name.str());
 #endif
             // name = SageInterface::get_name(newType);
@@ -5036,12 +5036,12 @@ SgClassType::createType(SgDeclarationStatement* cd, SgExpression* optional_fortr
                if (t == NULL)
                   {
                  // If the type is not in the type table then insert it so that we can reuse it.
-#if 0
+#if 1
                     printf ("Mangled type name for SgClassType = %s (not available in type table) \n",name.str());
 #endif
                  // get_globalTypeTable()->insert_type(name,newType);
                     currentScope->get_type_table()->insert_type(name,newType);
-#if 0
+#if 1
                     printf ("This SgClassType::createType() function also sets the type in the SgClassDeclaration = %p \n",cd);
 #endif
 
@@ -5057,13 +5057,10 @@ SgClassType::createType(SgDeclarationStatement* cd, SgExpression* optional_fortr
                  // If it is already present in the type table then delete the type (so that it will remain unique).
                     SgClassType* classType = isSgClassType(t);
                     ROSE_ASSERT(classType != NULL);
-#if 1
                     ROSE_ASSERT(classType->get_declaration() != NULL);
-#if 0
+#if 1
                     printf ("Mangled type classType = %p (classType->get_declaration() = %p = %s) name for SgClassType name = %s (already exists in type table) \n",t,classType->get_declaration(),classType->get_declaration()->class_name().c_str(),name.str());
 #endif
-#endif
-
                  // DQ (3/21/2012): New test.
                  // ROSE_ASSERT(t != newType);
                  // delete newType;
@@ -5072,7 +5069,7 @@ SgClassType::createType(SgDeclarationStatement* cd, SgExpression* optional_fortr
                  // DQ (3/21/2012): New conditional test for t != newType (and delete new type only then).
                     if (t != newType)
                        {
-#if 0
+#if 1
                          printf ("Deleting the just built exploritory type = %p (case of t != newType) t = %p = %s \n",newType,t,t->class_name().c_str());
 #endif
                          delete newType;
@@ -5082,7 +5079,7 @@ SgClassType::createType(SgDeclarationStatement* cd, SgExpression* optional_fortr
                        {
                          printf ("WARNING: In SgClassType::createType(): Found a case of t == newType \n");
                        }
-#if 0
+#if 1
                     printf ("This SgClassType::createType() function also sets the type in the SgClassDeclaration = %p \n",cd);
 #endif
                     $CLASSNAME* typeFromTypeTable = is$CLASSNAME(t);
@@ -5127,7 +5124,7 @@ SgClassType::createType(SgDeclarationStatement* cd, SgExpression* optional_fortr
   // ROSE_ASSERT(type_from_declaration != NULL);
   // return ($CLASSNAME*) type_from_declaration;
 
-#if 0
+#if 1
      printf ("SgClassType::createType(): classDeclaration         = %p \n",classDeclaration);
      printf ("SgClassType::createType(): templateClassDeclaration = %p \n",templateClassDeclaration);
 #endif
@@ -5151,13 +5148,25 @@ SgClassType::createType(SgDeclarationStatement* cd, SgExpression* optional_fortr
         {
           printf ("returnType = %p = %s \n",returnType,returnType->class_name().c_str());
           printf ("returnType->get_declaration() = %p = %s cd = %p = %s \n",returnType->get_declaration(),returnType->get_declaration()->class_name().c_str(),cd,cd->class_name().c_str());
+          printf ("returnType->get_declaration() = %p = %s cd = %p = %s \n",returnType->get_declaration(),isSgClassDeclaration(returnType->get_declaration())->get_name().str(),classDeclaration,classDeclaration->get_name().str());
           ROSE_ASSERT(returnType->get_declaration()->get_firstNondefiningDeclaration() != NULL);
           ROSE_ASSERT(cd->get_firstNondefiningDeclaration() != NULL);
           printf ("returnType->get_declaration()->get_firstNondefiningDeclaration() = %p = %s cd->get_firstNondefiningDeclaration() = %p = %s \n",returnType->get_declaration()->get_firstNondefiningDeclaration(),returnType->get_declaration()->get_firstNondefiningDeclaration()->class_name().c_str(),cd->get_firstNondefiningDeclaration(),cd->get_firstNondefiningDeclaration()->class_name().c_str());
         }
+#if 1
+  // DQ (8/23/2012): Restoring the original code...
      ROSE_ASSERT(returnType->get_declaration() == cd);
+#else
+  // DQ (8/23/2012): Note clear if this is helpful given the new name handling to resolve template instantiations when template arguments are NOT name qualified.
+  // This fails for test2011_121.C.
+  // ROSE_ASSERT(returnType->get_declaration() == cd);
+     if (returnType->get_declaration() != cd)
+        {
+          printf ("WARNING: In SgClassType::createType(): commented out asertion returnType->get_declaration() == cd \n");
+        }
+#endif
 
-#if 0
+#if 1
      printf ("Leaving SgClassType::createType(): returnType = %p = %s \n",returnType,returnType->class_name().c_str());
 #endif
 

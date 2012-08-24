@@ -145,7 +145,7 @@ Grammar::setUpExpressions ()
      NEW_TERMINAL_MACRO (DoubleVal,              "DoubleVal",              "DOUBLE_VAL" );
      NEW_TERMINAL_MACRO (LongDoubleVal,          "LongDoubleVal",          "LONG_DOUBLE_VAL" );
 
-  // DQ (11/28/2011): Adding support for temp,ate declarations in the AST.
+  // DQ (11/28/2011): Adding support for template declarations in the AST.
      NEW_TERMINAL_MACRO (TemplateParameterVal,   "TemplateParameterVal",   "TEMPLATE_PARAMETER_VAL" );
 
   // Liao 6/18/2008: Support UPC constant THREADS, MYTHREAD
