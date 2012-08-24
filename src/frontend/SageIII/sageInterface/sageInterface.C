@@ -4537,7 +4537,7 @@ SageInterface::lookupClassSymbolInParentScopes (const SgName &  name, SgScopeSta
      while ((cscope != NULL) && (symbol == NULL))
         {
        // I think this will resolve SgAliasSymbols to be a SgClassSymbol where the alias is of a SgClassSymbol.
-          symbol = cscope->lookup_class_symbol(name);
+          symbol = cscope->lookup_class_symbol(name,NULL);
 
           if (cscope->get_parent() != NULL) // avoid calling get_scope when parent is not set
                cscope = isSgGlobal(cscope) ? NULL : cscope->get_scope();
@@ -4733,7 +4733,7 @@ SageInterface::lookupClassSymbolInParentScopes (const SgName &  name, SgScopeSta
      while ((cscope != NULL) && (symbol == NULL))
         {
        // I think this will resolve SgAliasSymbols to be a SgClassSymbol where the alias is of a SgClassSymbol.
-          symbol = cscope->lookup_class_symbol(name);
+          symbol = cscope->lookup_class_symbol(name,NULL);
 
           if (cscope->get_parent() != NULL) // avoid calling get_scope when parent is not set
                cscope = isSgGlobal(cscope) ? NULL : cscope->get_scope();
