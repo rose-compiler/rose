@@ -13349,12 +13349,14 @@ SgTypedefDeclaration::post_construction_initialization()
 #endif
 #endif
 
+#if 0
   // DQ (3/20/2012): We would like to assert this, but I don't think it is always possible. For example, test2001_19.C fails for this test.
   // ROSE_ASSERT(this->get_parent_scope() != NULL);
      if (this->get_parent_scope() == NULL)
         {
           printf ("WARNING: In SgTypedefDeclaration::post_construction_initialization(): this->get_parent_scope() == NULL \n");
         }
+#endif
 
      set_type(SgTypedefType::createType(this));
 

@@ -7338,7 +7338,7 @@ SgSymbolTable::hasMatchingTemplateArgumentsOrNoTemplateArguments(SgTemplateArgum
 
      ROSE_ASSERT(classSymbol != NULL);
 
-#if 1
+#if 0
      printf ("\nIn SgSymbolTable::hasMatchingTemplateArgumentsOrNoTemplateArguments(): templateArgumentsList = %p \n",templateArgumentsList);
 #endif
 
@@ -7353,7 +7353,7 @@ SgSymbolTable::hasMatchingTemplateArgumentsOrNoTemplateArguments(SgTemplateArgum
                ROSE_ASSERT(templateArgumentsList->size() == templateClassInstantiation->get_templateArguments().size());
 
             // Check if they are the same size...
-#if 1
+#if 0
                printf ("In SgSymbolTable::hasMatchingTemplateArgumentsOrNoTemplateArguments(): templateArgumentsList->size() = %zu templateClassInstantiation->get_templateArguments().size() = %zu \n",
                     templateArgumentsList->size(),templateClassInstantiation->get_templateArguments().size());
                for (size_t i = 0; i < templateArgumentsList->size(); i++)
@@ -7375,13 +7375,13 @@ SgSymbolTable::hasMatchingTemplateArgumentsOrNoTemplateArguments(SgTemplateArgum
                  // if they are all SgTemplateType template arguments.
                     if (returnValue == false)
                        {
-#if 1
+#if 0
                          printf ("SgSymbolTable::hasMatchingTemplateArgumentsOrNoTemplateArguments(): Double check if we had set returnValue to false based on SgTemplateType template arguments (if so, then return true) \n");
 #endif
                          bool isTemplateType = true;
                          for (size_t i = 0; i < templateArgumentsList->size(); i++)
                             {
-#if 1
+#if 0
                               printf ("----- (*templateArgumentsList)[%zu] = %p = %s templateClassInstantiation->get_templateArguments()[%zu] = %p = %s \n",
                                    i,(*templateArgumentsList)[i],(*templateArgumentsList)[i]->class_name().c_str(),
                                    i,templateClassInstantiation->get_templateArguments()[i],templateClassInstantiation->get_templateArguments()[i]->class_name().c_str());
@@ -7397,7 +7397,7 @@ SgSymbolTable::hasMatchingTemplateArgumentsOrNoTemplateArguments(SgTemplateArgum
                            // if (templateArgumentLocal->get_argumentType() == SgTemplateArgument::type_argument && templateArgumentFromSymbol->get_argumentType() == SgTemplateArgument::type_argument)
                               if (templateArgumentLocal->get_argumentType() == SgTemplateArgument::type_argument && templateArgumentFromSymbol->get_argumentType() == SgTemplateArgument::type_argument)
                                  {
-#if 1
+#if 0
                                    printf ("Template arguments match in argument type: \n");
                                    printf ("   templateArgumentLocal->get_type()      = %p = %s \n",templateArgumentLocal->get_type(),     templateArgumentLocal->get_type()->class_name().c_str());
                                    printf ("   templateArgumentFromSymbol->get_type() = %p = %s \n",templateArgumentFromSymbol->get_type(),templateArgumentFromSymbol->get_type()->class_name().c_str());
@@ -7410,7 +7410,7 @@ SgSymbolTable::hasMatchingTemplateArgumentsOrNoTemplateArguments(SgTemplateArgum
                                      // Process this as a typedef (strip to base type and re-evaluate).
                                         SgType* typeLocal      = typedefTypeLocal     ->stripType();
                                         SgType* typeFromSymbol = typedefTypeFromSymbol->stripType();
-#if 1
+#if 0
                                         printf ("typeLocal      = %p = %s \n",typeLocal,typeLocal->class_name().c_str());
                                         printf ("typeFromSymbol = %p = %s \n",typeFromSymbol,typeFromSymbol->class_name().c_str());
 #endif
@@ -7423,7 +7423,7 @@ SgSymbolTable::hasMatchingTemplateArgumentsOrNoTemplateArguments(SgTemplateArgum
                                       {
                                         SgTemplateType* templateArgumentTypeLocal      = isSgTemplateType(templateArgumentLocal->get_type());
                                         SgTemplateType* templateArgumentTypeFromSymbol = isSgTemplateType(templateArgumentFromSymbol->get_type());
-#if 1
+#if 0
                                         printf ("templateArgumentTypeLocal      = %p \n",templateArgumentTypeLocal);
                                         printf ("templateArgumentTypeFromSymbol = %p \n",templateArgumentTypeFromSymbol);
 #endif
@@ -7433,7 +7433,7 @@ SgSymbolTable::hasMatchingTemplateArgumentsOrNoTemplateArguments(SgTemplateArgum
                                           // If these are pointers or referneces to SgTypeType IR nodes then we might have to strip off the type modifiers.
                                           // isTemplateType = (templateArgumentTypeLocal != NULL && templateArgumentTypeFromSymbol != NULL);
                                              isTemplateType = ( (templateArgumentLocal->get_type() == templateArgumentFromSymbol->get_type()) || (templateArgumentTypeLocal != NULL && templateArgumentTypeFromSymbol != NULL) );
-#if 1
+#if 0
                                              printf ("isTemplateType = %s \n",isTemplateType ? "true" : "false");
 #endif
                                            }
