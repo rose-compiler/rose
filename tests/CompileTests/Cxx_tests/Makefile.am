@@ -679,10 +679,14 @@ test2009_15.C \
 test2009_18.C \
 test2009_19.C \
 test2009_20.C \
+test2009_21.C \
 test2009_24.C \
 test2009_27.C \
 test2009_28.C \
+test2009_30.C \
 test2009_31.C \
+test2009_37.C \
+test2009_39.C \
 test2009_40.C \
 test2009_41.C \
 test2009_42.C \
@@ -709,6 +713,8 @@ test2011_27.C \
 test2011_28.C \
 test2011_29.C \
 test2011_30.C \
+test2011_31.C \
+test2011_32.C \
 test2011_33.C \
 test2011_34.C \
 test2011_35.C \
@@ -741,6 +747,7 @@ test2011_61.C \
 test2011_62.C \
 test2011_63.C \
 test2011_64.C \
+test2011_65.C \
 test2011_66.C \
 test2011_67.C \
 test2011_68.C \
@@ -1024,6 +1031,11 @@ test2012_186.C \
 test2012_187.C \
 test2012_188.C \
 test2012_190.C \
+test2012_191.C \
+test2012_192.C \
+test2012_193.C \
+test2012_194.C \
+test2012_195.C \
 test_int_lexemes.C \
 test_int_lexemes_donot_pass.C \
 test_simple_int.C \
@@ -1078,14 +1090,7 @@ test2012_79.C
 #
 if ROSE_USE_EDG_VERSION_4
 TESTCODE_CURRENTLY_FAILING = \
-test2006_122.C \
-test2009_21.C \
-test2009_30.C \
- test2009_37.C \
-test2009_39.C \
-test2011_31.C \
-test2011_32.C \
- test2011_65.C
+test2006_122.C 
 
 # DQ (8/12/2012): This test code appears to demonstrate a loss of the template arguments in the name qualification.
 # test2012_189.C

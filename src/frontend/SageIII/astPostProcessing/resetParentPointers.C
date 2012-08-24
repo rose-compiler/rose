@@ -1436,7 +1436,7 @@ void ResetParentPointersOfClassAndNamespaceDeclarations::visit(SgNode* node)
                   }
                break;
              }
-            
+
           case V_SgNamespaceDefinitionStatement:
              {
                SgNamespaceDefinitionStatement* namespaceDefinition = isSgNamespaceDefinitionStatement(node);
@@ -1457,7 +1457,7 @@ void ResetParentPointersOfClassAndNamespaceDeclarations::visit(SgNode* node)
                   }
                break;
              }
-            
+
           case V_SgGlobal:
              {
                SgGlobal* globalScope = isSgGlobal(node);
@@ -1694,15 +1694,36 @@ ResetFileInfoParentPointersInMemoryPool::visit(SgNode* node)
 
 
 
+// DQ (8/23/2012): Modified to take a SgNode so that we could compute the global scope for use in setting 
+// parents of template instantiations that have not be placed into the AST but exist in the memory pool.
 // This is called directly from void postProcessingSupport (SgNode* node).
+// void resetParentPointersInMemoryPool()
 void
-resetParentPointersInMemoryPool()
+resetParentPointersInMemoryPool(SgNode* node)
    {
   // There are two traversals here, these could be combined since they both operate on the memory pool.
 
      TimingPerformance timer ("Reset parent pointers in memory pool:");
 
-     ResetParentPointersInMemoryPool t;
+     ROSE_ASSERT(node != NULL);
+     printf ("In resetParentPointersInMemoryPool() : node = %p = %s \n",node,node->class_name().c_str());
+
+     SgGlobal* globalScope = NULL;
+     SgProject* project = isSgProject(node);
+     if (project != NULL)
+        {
+           SgFile* file = (*project)[0];
+          SgSourceFile* sourceFile = isSgSourceFile(file);
+          ROSE_ASSERT(sourceFile != NULL);
+
+          globalScope = sourceFile->get_globalScope();
+        }
+     ROSE_ASSERT(globalScope != NULL);
+
+     ResetParentPointersInMemoryPool t(globalScope);
+
+     ROSE_ASSERT(t.globalScope != NULL);
+
      t.traverseMemoryPool();
 
   // JJW: Moved this down because it requires that some non-Sg_File_Info
@@ -1719,10 +1740,16 @@ ResetParentPointersInMemoryPool::visit(SgNode* node)
      SgLocatedNode* temp_locatedNode = isSgLocatedNode(node);
      if ( (temp_locatedNode != NULL) && (temp_locatedNode->get_file_info()->isFrontendSpecific() == false) )
         {
+
+#error "DEAD CODE!"
+
        // Only do I/O on nodes not in the header of predefined functions.
           printf ("##### ResetParentPointersInMemoryPool::visit(node = %p = %s) \n",node,node->class_name().c_str());
         }
 #endif
+
+  // I built a pointer to global scope so that we could use it for this case.
+     ROSE_ASSERT(globalScope != NULL);
 
      SgType*        type        = isSgType(node);
      SgSymbol*      symbol      = isSgSymbol(node);
@@ -1932,6 +1959,17 @@ ResetParentPointersInMemoryPool::visit(SgNode* node)
                          if (declaration->get_parent() == NULL)
                             {
                                printf ("##### ResetParentPointersInMemoryPool::visit(declaration = %p = %s) declaration->get_parent() == NULL \n",node,node->class_name().c_str());
+
+                            // DQ (8/23/2012): For remaining template instantiationsthat only have a non-definng declaration, set the parent to the global scope (since they don't appear to be connected to anything else).
+                               SgTemplateInstantiationDecl* templateInstantiation = isSgTemplateInstantiationDecl(nondefiningDeclaration);
+                               if (templateInstantiation != NULL)
+                                  {
+                                    printf ("WARNING: This is a case of a template class instantiation that does not appear in the AST but exists in the memory pool as part of the new refined disambiguation of template instantations using template arguments. \n");
+
+                                 // I built a pointer to global scope so that we could use it for this case.
+                                    ROSE_ASSERT(globalScope != NULL);
+                                    templateInstantiation->set_parent(globalScope);
+                                  }
                             }
 #endif
                       // DQ (6/10/2007): Test for null parents before the call to resetTemplateNames()
@@ -2104,8 +2142,10 @@ ResetParentPointersInMemoryPool::visit(SgNode* node)
                     break;
                   }
 
+#error "DEAD CODE!"
+
                case V_SgStorageModifier:
-            //   case V_SgInitializedName:
+            // case V_SgInitializedName:
                case V_SgSymbolTable:
             // case V_SgFile:
                case V_SgSourceFile:
@@ -2130,6 +2170,8 @@ ResetParentPointersInMemoryPool::visit(SgNode* node)
                     break;
                   }
 
+#error "DEAD CODE!"
+
                case V_Sg_File_Info:
                   {
                     if (support->get_parent() == NULL)
@@ -2145,6 +2187,8 @@ ResetParentPointersInMemoryPool::visit(SgNode* node)
                     ROSE_ASSERT(support->get_parent() != NULL);
                     break;
                   }
+
+#error "DEAD CODE!"
 
                default:
                   {
@@ -2164,6 +2208,9 @@ ResetParentPointersInMemoryPool::visit(SgNode* node)
   // DQ (6/10/2007): Test for null parents before the call to resetTemplateNames()
      if (node->get_parent() != NULL)
         {
+
+#error "DEAD CODE!"
+
           printf ("##### ResetParentPointersInMemoryPool::visit(node = %p = %s) node->get_parent() != NULL \n",node,node->sage_class_name());
         }
      ROSE_ASSERT(node->get_parent() == NULL);

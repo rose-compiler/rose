@@ -127,19 +127,32 @@ string get_type_name(SgType* t)
                 }
                return returnString;
              }
-          case T_DEFAULT:            return "int";
+
+          case T_DEFAULT:
+             {
+#if 1
+               printf ("Outp case T_DEFAULT: (int) \n");
+#endif
+               return "int";
+             }
+
           case T_POINTER:
                 {
+#if 1
+                  printf ("Outp case T_POINTER: \n");
+#endif
                   SgPointerType* pointer_type = isSgPointerType(t);
                   ROSE_ASSERT(pointer_type != NULL);
                   return get_type_name(pointer_type->get_base_type()) + "*";
                 }
+
           case T_REFERENCE:
                 {
                   SgReferenceType* ref_type = isSgReferenceType(t);
                   ROSE_ASSERT(ref_type != NULL);
                   return get_type_name(ref_type->get_base_type()) + "&";
                 }
+
           case T_MEMBER_POINTER:
                {
                   SgPointerMemberType* mpointer_type = isSgPointerMemberType(t);
@@ -166,6 +179,7 @@ string get_type_name(SgType* t)
                        get_type_name(mpointer_type->get_class_type()) + "::*" + ")";
                   }
                }
+
           case T_CLASS:
               {
                 SgClassType* class_type = isSgClassType(t);
@@ -180,6 +194,7 @@ string get_type_name(SgType* t)
                 else
                    return string(class_type->get_name().str());
                }
+
           case T_ENUM:
                {
                 SgEnumType* enum_type = isSgEnumType(t);
@@ -191,12 +206,14 @@ string get_type_name(SgType* t)
                 else
                     return string(enum_type->get_name().str());
                }
+
           case T_TYPEDEF:
                {
                 SgTypedefType* typedef_type = isSgTypedefType(t);
                 ROSE_ASSERT(typedef_type != NULL);
                 return string(typedef_type->get_qualified_name().str());
                }
+
           case T_MODIFIER:
                {
                 SgModifierType* mod_type = isSgModifierType(t);
@@ -265,6 +282,7 @@ string get_type_name(SgType* t)
                res = res + ")";
                return res;
               }
+
           case T_MEMBERFUNCTION:
               {
                SgMemberFunctionType* mfunc_type = isSgMemberFunctionType(t);
@@ -281,6 +299,7 @@ string get_type_name(SgType* t)
                res = res + ")";
                return res;
              }
+
           case T_ARRAY:
              {
               SgArrayType* array_type = isSgArrayType(t);
@@ -292,6 +311,7 @@ string get_type_name(SgType* t)
                res = res + "]";
                return res;
              }
+
           case T_ELLIPSE: return "...";
 
           default:
@@ -318,15 +338,21 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
 #if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES
      string firstPartString  = (info.isTypeFirstPart()  == true) ? "true" : "false";
      string secondPartString = (info.isTypeSecondPart() == true) ? "true" : "false";
-     printf ("In Unparse_Type::unparseType(): type->sage_class_name() = %s firstPart = %s secondPart = %s \n",
+     printf ("In Unparse_Type::unparseType(): type->class_name() = %s firstPart = %s secondPart = %s \n",
              type->class_name().c_str(),firstPartString.c_str(),secondPartString.c_str());
+#endif
+#if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES
      curprint ( string("\n/* Top of unparseType name ") + type->class_name().c_str()
          + " firstPart " + firstPartString + " secondPart " + secondPartString + " */ \n");
 #endif
 
 #if 0
-     printf ("In Unparse_Type::unparseType(): type->sage_class_name() = %s \n",type->sage_class_name());
-     curprint ( string("\n/* Top of unparseType: sage_class_name() = ") + type->sage_class_name() + " */ \n");
+     printf ("In Unparse_Type::unparseType(): type->class_name() = %s \n",type->class_name().c_str());
+#endif
+
+#if 0
+     printf ("In Unparse_Type::unparseType(): type->class_name() = %s \n",type->class_name().c_str());
+     curprint ( string("\n/* Top of unparseType: class_name() = ") + type->class_name() + " */ \n");
 #endif
 
 #if 0
@@ -392,6 +418,10 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
         }
        else
         {
+#if 0
+          curprint("\n/* Top of unparseType() processing main switch statement */ \n");
+#endif
+
        // This is the code that was always used before the addition of type names generated from where name qualification of subtypes are required.
           switch (type->variant())
              {
@@ -435,7 +465,19 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
                     break;
                   }
 
-               case T_POINTER:            unparsePointerType(type, info);          break;
+            // case T_POINTER:            unparsePointerType(type, info);          break;
+               case T_POINTER:
+                  {
+#if 0
+                    printf ("Calling unparsePointerType(%p) \n",type);
+#endif
+                    unparsePointerType(type, info);
+#if 0
+                    printf ("DONE: Calling unparsePointerType(%p) \n",type);
+#endif
+                    break;
+                  }
+
                case T_MEMBER_POINTER:     unparseMemberPointerType(type, info);    break;
                case T_REFERENCE:          unparseReferenceType(type, info);        break;
             // case T_NAME:               unparseNameType(type, info);             break;
@@ -452,7 +494,17 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
                case T_ARRAY:              unparseArrayType(type, info);            break;
 
             // DQ (11/20/2011): Adding support for template declarations within the AST.
-               case T_TEMPLATE:           unparseTemplateType(type, info);         break;
+               case T_TEMPLATE:
+                  {
+#if 0
+                    printf ("Calling unparseTemplateType(%p) \n",type);
+#endif
+                    unparseTemplateType(type, info);
+#if 0
+                    printf ("DONE: Calling unparseTemplateType(%p) \n",type);
+#endif
+                    break;
+                  }
 
                default:
                   {
@@ -470,6 +522,7 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
          + " firstPart  " + firstPartString + " secondPart " + secondPartString + " */ \n");
 #endif
    }
+
 
 #if 1
 void
@@ -1771,8 +1824,13 @@ Unparse_Type::unparseFunctionType(SgType* type, SgUnparse_Info& info)
      int needParen = 0;
      if (ninfo.isReferenceToSomething() || ninfo.isPointerToSomething())
         {
-          needParen=1;
+          needParen = 1;
         }
+
+#if 0
+     printf ("In unparseFunctionType(): needParen = %d \n",needParen);
+     curprint("\n/* In unparseFunctionType: needParen = " + StringUtility::numberToString(needParen) + " */ \n");
+#endif
 
   // DQ (10/8/2004): Skip output of class definition for return type! C++ standard does not permit
   // a defining declaration within a return type, function parameter, or sizeof expression.
@@ -1819,7 +1877,10 @@ Unparse_Type::unparseFunctionType(SgType* type, SgUnparse_Info& info)
 #endif
                if (needParen)
                   {
-                    curprint ( ")");
+#if 0
+                    curprint ("/* needParen must be true */ \n ");
+#endif
+                    curprint (")");
                     info.unset_isReferenceToSomething();
                     info.unset_isPointerToSomething();
                   }
@@ -1840,33 +1901,64 @@ Unparse_Type::unparseFunctionType(SgType* type, SgUnparse_Info& info)
 
             // printf ("Setting reference_node_for_qualification to SgFunctionType, but this is not correct where name qualification is required. \n");
 
+#if 0
+               curprint ("/* Output the type arguments (with parenthesis) */ \n ");
+#endif
                curprint ( "(");
                SgTypePtrList::iterator p = func_type->get_arguments().begin();
                while(p != func_type->get_arguments().end())
                   {
                  // printf ("Output function argument ... \n");
+#if OUTPUT_DEBUGGING_FUNCTION_INTERNALS
+                    curprint ( "\n/* In unparseFunctionType(): Output the function type arguments */ \n");
+#endif
                     unparseType(*p, ninfo2);
                     p++;
                     if (p != func_type->get_arguments().end())
                        { curprint ( ", "); }
                   }
                curprint ( ")");
+#if OUTPUT_DEBUGGING_FUNCTION_INTERNALS
+               curprint ( "\n/* In unparseFunctionType(): AFTER parenthesis are output */ \n");
+#endif
                unparseType(func_type->get_return_type(), info); // catch the 2nd part of the rtype
 #if OUTPUT_DEBUGGING_FUNCTION_INTERNALS
-               curprint ( "\n/* Done: In unparseFunctionType: handling second part */ \n");
+               curprint ( "\n/* Done: In unparseFunctionType(): handling second part */ \n");
 #endif
              }
             else
              {
+#if OUTPUT_DEBUGGING_FUNCTION_INTERNALS
+               curprint ( "\n/* In unparseFunctionType: recursive call with isTypeFirstPart == true */ \n");
+#endif
+#if 0
+            // DQ (8/19/2012): Temp code while debugging (test2012_192.C).
+               printf ("Error: I think this should not be done \n");
+               ROSE_ASSERT(false);
+#endif
                ninfo.set_isTypeFirstPart();
                unparseType(func_type, ninfo);
+
+#if OUTPUT_DEBUGGING_FUNCTION_INTERNALS
+               curprint ( "\n/* In unparseFunctionType: recursive call with isTypeSecondPart == true */ \n");
+#endif
                ninfo.set_isTypeSecondPart();
                unparseType(func_type, ninfo);
+
+#if OUTPUT_DEBUGGING_FUNCTION_INTERNALS
+               curprint ( "\n/* In unparseFunctionType: end of recursive call */ \n");
+#endif
              }
         }
+
+#if OUTPUT_DEBUGGING_FUNCTION_INTERNALS
+     curprint("\n/* Leaving unparseFunctionType() */ \n");
+#endif
    }
 
-void Unparse_Type::unparseMemberFunctionType(SgType* type, SgUnparse_Info& info)
+
+void
+Unparse_Type::unparseMemberFunctionType(SgType* type, SgUnparse_Info& info)
    {
      SgMemberFunctionType* mfunc_type = isSgMemberFunctionType(type);
      ROSE_ASSERT(mfunc_type != NULL);
@@ -1935,7 +2027,8 @@ void Unparse_Type::unparseMemberFunctionType(SgType* type, SgUnparse_Info& info)
         }
    }
 
-void Unparse_Type::unparseArrayType(SgType* type, SgUnparse_Info& info)
+void
+Unparse_Type::unparseArrayType(SgType* type, SgUnparse_Info& info)
    {
      SgArrayType* array_type = isSgArrayType(type);
      ROSE_ASSERT(array_type != NULL);
@@ -2011,7 +2104,8 @@ void Unparse_Type::unparseArrayType(SgType* type, SgUnparse_Info& info)
 
 
 
-void Unparse_Type::unparseTemplateType(SgType* type, SgUnparse_Info& info)
+void
+Unparse_Type::unparseTemplateType(SgType* type, SgUnparse_Info& info)
    {
   // This has to be able to select the kind of type being used (likely a template parameter, and unparse it by name).
   // I think that this is non-trivial, since the type might be more than just a name...
@@ -2020,9 +2114,28 @@ void Unparse_Type::unparseTemplateType(SgType* type, SgUnparse_Info& info)
      SgTemplateType* template_type = isSgTemplateType(type);
      ROSE_ASSERT(template_type != NULL);
 
+#if 1
      printf ("In unparseTemplateType(): Unparsing the SgTemplateType as a single 'int' \n");
+#endif
+#if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES
+     string firstPartString  = (info.isTypeFirstPart()  == true) ? "true" : "false";
+     string secondPartString = (info.isTypeSecondPart() == true) ? "true" : "false";
+     printf ("In Unparse_Type::unparseTemplateType(): type->class_name() = %s firstPart = %s secondPart = %s \n",type->class_name().c_str(),firstPartString.c_str(),secondPartString.c_str());
+#endif
 
   // For now just unparse a simple string that will at least be a correct type.
   // curprint("unparse_template_type ");
-     curprint("int ");
+
+  // DQ (8/23/2012): Only out put anything for the 2nd part fo the type.
+  // This avoids output of the type twice (which is something I have not tracked down, but appears to be happening).
+  // curprint("int ");
+     if (info.isTypeSecondPart() == true)
+        {
+          curprint("int ");
+        }
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
    }

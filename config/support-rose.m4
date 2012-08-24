@@ -2236,6 +2236,7 @@ tests/CompileTests/C_tests/Makefile
 tests/CompileTests/C99_tests/Makefile
 tests/CompileTests/Java_tests/Makefile
 tests/CompileTests/Cxx_tests/Makefile
+tests/CompileTests/Cxx11_tests/Makefile
 tests/CompileTests/C_subset_of_Cxx_tests/Makefile
 tests/CompileTests/Fortran_tests/Makefile
 tests/CompileTests/Fortran_tests/LANL_POP/Makefile
