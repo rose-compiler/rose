@@ -160,6 +160,12 @@ else
     AC_MSG_RESULT([skipping])
 fi
 
+GCC_VERSION=`gcc -dumpversion | cut -d\. -f1`
+GCC_MINOR_VERSION=`gcc -dumpversion | cut -d\. -f2`
+
+AC_SUBST(GCC_VERSION)
+AC_SUBST(GCC_MINOR_VERSION)
+
   ROSE_SUPPORT_UPC
   ROSE_SUPPORT_COMPASS2
   ROSE_SUPPORT_GMP
@@ -259,7 +265,7 @@ fi
 
 # DQ (2/2/2010): New code to control use of different versions of EDG with ROSE.
 AC_ARG_ENABLE(edg-version,
-[  --enable-edg_version     major.minor version number for EDG (e.g. 3.3, 3.10, 4.0, 4.1).],
+[  --enable-edg_version     major.minor version number for EDG (e.g. 3.3, 4.0, 4.3, 4.4).],
 [ echo "Setting up EDG version"
 ])
 
