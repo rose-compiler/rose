@@ -77,18 +77,18 @@ test2009_19.c \
 test2010_16.c \
 zpagccp.c
 
-$(C_TESTS_TO_CHECK): ./EDG_4_x_Translator
+$(C_TESTS_TO_CHECK): ./frontend_test
 	@cp $(srcdir)/../C_tests/$@ $@
-	@if ./EDG_4_x_Translator $(ROSE_FLAGS) -I$(srcdir)/../C_tests -c $@ &> /dev/null; then \
+	@if ./frontend_test $(ROSE_FLAGS) -I$(srcdir)/../C_tests -c $@ &> /dev/null; then \
 	  echo 1 $@ >> C-tests.lst; \
 	else \
 	  echo 0 $@ >> C-tests.lst; \
 	fi;
 	@rm -f $@
 
-test2005_168.c: ./EDG_4_x_Translator
+test2005_168.c: ./frontend_test
 	@cp $(srcdir)/../C_tests/$@ $@
-	@if ./EDG_4_x_Translator $(ROSE_FLAGS) -I$(top_srcdir)/src/util/commandlineProcessing -I$(srcdir)/../C_tests -c $@ &> /dev/null; then \
+	@if ./frontend_test $(ROSE_FLAGS) -I$(top_srcdir)/src/util/commandlineProcessing -I$(srcdir)/../C_tests -c $@ &> /dev/null; then \
 	  echo 1 $@ >> C-tests.lst; \
 	else \
 	  echo 0 $@ >> C-tests.lst; \

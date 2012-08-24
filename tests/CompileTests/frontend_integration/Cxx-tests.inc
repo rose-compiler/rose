@@ -875,12 +875,397 @@ test2010_24.C \
 test2010_25.C \
 test2010_26.C \
 test2010_27.C \
+test2011_152.C \
+test2011_153.C \
+test2011_154.C \
+test2011_155.C \
+test2011_156.C \
+test2011_157.C \
+test2011_158.C \
+test2011_159.C \
+test2011_160.C \
+test2011_161.C \
+test2011_162.C \
+test2011_163.C \
+test2011_164.C \
+test2011_165.C \
+test2011_166.C \
+test2011_167.C \
+test2011_168.C \
+test2011_169.C \
+test2011_170.C \
+test2011_171.C \
+test2011_172.C \
+test2011_173.C \
+test2011_174.C \
+test2011_175.C \
+test2011_176.C \
+test2011_177.C \
+test2011_178.C \
+test2011_179.C \
+test2011_180.C \
+test2011_181.C \
+test2011_182.C \
+test2011_183.C \
+test2011_184.C \
+test2011_185.C \
+test2011_186.C \
+test2011_187.C \
+test2011_188.C \
+test2011_189.C \
+test2011_190.C \
+test2011_191.C \
+test2011_192.C \
+test2011_193.C \
+test2011_194.C \
+test2011_195.C \
+test2011_196.C \
+test2011_197.C \
+test2011_198.C \
+test2011_199.C \
+test2011_200.C \
+test2011_201.C \
+test2011_202.C \
+test2011_203.C \
+test2011_75.C \
+test2012_01.C \
+test2012_02.C \
+test2012_03.C \
+test2012_04.C \
+test2012_05.C \
+test2012_06.C \
+test2012_07.C \
+test2012_08.C \
+test2012_09.C \
+test2012_100.C \
+test2012_101.C \
+test2012_102.C \
+test2012_103.C \
+test2012_104.C \
+test2012_105.C \
+test2012_106.C \
+test2012_107.C \
+test2012_108.C \
+test2012_109.C \
+test2012_10.C \
+test2012_110.C \
+test2012_111.C \
+test2012_112.C \
+test2012_113.C \
+test2012_114.C \
+test2012_115.C \
+test2012_116.C \
+test2012_117.C \
+test2012_118.C \
+test2012_119.C \
+test2012_11.C \
+test2012_120.C \
+test2012_121.C \
+test2012_122.C \
+test2012_123.C \
+test2012_124.C \
+test2012_125.C \
+test2012_126.C \
+test2012_127.C \
+test2012_128.C \
+test2012_129.C \
+test2012_12.C \
+test2012_130.C \
+test2012_131.C \
+test2012_132.C \
+test2012_133.C \
+test2012_134.C \
+test2012_135.C \
+test2012_136.C \
+test2012_137.C \
+test2012_138.C \
+test2012_139.C \
+test2012_13.C \
+test2012_140.C \
+test2012_141.C \
+test2012_142.C \
+test2012_143.C \
+test2012_144.C \
+test2012_145.C \
+test2012_146.C \
+test2012_147.C \
+test2012_148.C \
+test2012_149.C \
+test2012_14.C \
+test2012_150.C \
+test2012_151.C \
+test2012_152.C \
+test2012_153.C \
+test2012_154.C \
+test2012_155.C \
+test2012_156.C \
+test2012_157.C \
+test2012_158.C \
+test2012_159.C \
+test2012_15.C \
+test2012_160.C \
+test2012_161.C \
+test2012_162.C \
+test2012_163.C \
+test2012_164.C \
+test2012_165.C \
+test2012_166.C \
+test2012_167.C \
+test2012_168.C \
+test2012_169.C \
+test2012_16.C \
+test2012_170.C \
+test2012_171.C \
+test2012_172.C \
+test2012_173.C \
+test2012_174.C \
+test2012_175.C \
+test2012_176.C \
+test2012_177.C \
+test2012_178.C \
+test2012_179.C \
+test2012_17.C \
+test2012_180.C \
+test2012_181.C \
+test2012_182.C \
+test2012_183.C \
+test2012_184.C \
+test2012_185.C \
+test2012_186.C \
+test2012_187.C \
+test2012_188.C \
+test2012_189.C \
+test2012_18.C \
+test2012_190.C \
+test2012_19.C \
+test2012_20.C \
+test2012_21.C \
+test2012_22.C \
+test2012_23.C \
+test2012_24.C \
+test2012_25.C \
+test2012_26.C \
+test2012_27.C \
+test2012_28.C \
+test2012_29.C \
+test2012_30.C \
+test2012_31.C \
+test2012_32.C \
+test2012_33.C \
+test2012_34.C \
+test2012_35.C \
+test2012_36.C \
+test2012_37.C \
+test2012_38.C \
+test2012_39.C \
+test2012_40.C \
+test2012_41.C \
+test2012_42.C \
+test2012_43.C \
+test2012_44.C \
+test2012_45.C \
+test2012_46.C \
+test2012_47.C \
+test2012_48.C \
+test2012_49.C \
+test2012_50.C \
+test2012_51.C \
+test2012_52.C \
+test2012_53.C \
+test2012_54.C \
+test2012_55.C \
+test2012_56.C \
+test2012_57.C \
+test2012_58.C \
+test2012_59.C \
+test2012_60.C \
+test2012_61.C \
+test2012_62.C \
+test2012_63.C \
+test2012_64.C \
+test2012_65.C \
+test2012_66.C \
+test2012_67.C \
+test2012_68.C \
+test2012_69.C \
+test2012_70.C \
+test2012_71.C \
+test2012_72.C \
+test2012_73.C \
+test2012_74.C \
+test2012_75.C \
+test2012_76.C \
+test2012_77.C \
+test2012_78.C \
+test2012_79.C \
+test2012_80.C \
+test2012_81.C \
+test2012_82.C \
+test2012_83.C \
+test2012_84.C \
+test2012_85.C \
+test2012_86.C \
+test2012_87.C \
+test2012_88.C \
+test2012_89.C \
+test2012_90.C \
+test2012_91.C \
+test2012_92.C \
+test2012_93.C \
+test2012_94.C \
+test2012_95.C \
+test2012_96.C \
+test2012_97.C \
+test2012_98.C \
+test2012_99.C \
 test2011_01.C \
 test2011_02.C \
 test2011_05.C \
 test2011_06.C \
 test2011_07.C \
 test2011_08.C \
+test2011_09.C \
+test2011_100.C \
+test2011_101.C \
+test2011_102.C \
+test2011_103.C \
+test2011_104.C \
+test2011_105.C \
+test2011_106.C \
+test2011_107.C \
+test2011_108.C \
+test2011_109.C \
+test2011_10.C \
+test2011_110.C \
+test2011_111.C \
+test2011_112.C \
+test2011_113.C \
+test2011_114.C \
+test2011_115.C \
+test2011_116.C \
+test2011_117.C \
+test2011_118.C \
+test2011_119.C \
+test2011_11.C \
+test2011_120.C \
+test2011_121.C \
+test2011_122.C \
+test2011_123.C \
+test2011_124.C \
+test2011_125.C \
+test2011_126.C \
+test2011_127.C \
+test2011_128.C \
+test2011_129.C \
+test2011_12.C \
+test2011_130.C \
+test2011_131.C \
+test2011_132.C \
+test2011_133.C \
+test2011_134.C \
+test2011_135.C \
+test2011_136.C \
+test2011_137.C \
+test2011_138.C \
+test2011_139.C \
+test2011_13.C \
+test2011_140.C \
+test2011_141.C \
+test2011_142.C \
+test2011_143.C \
+test2011_144.C \
+test2011_145.C \
+test2011_146.C \
+test2011_147.C \
+test2011_148.C \
+test2011_149.C \
+test2011_14.C \
+test2011_150.C \
+test2011_151.C \
+test2011_15.C \
+test2011_16.C \
+test2011_17.C \
+test2011_18.C \
+test2011_19.C \
+test2011_20.C \
+test2011_21.C \
+test2011_22.C \
+test2011_23.C \
+test2011_24.C \
+test2011_25.C \
+test2011_26.C \
+test2011_27.C \
+test2011_28.C \
+test2011_29.C \
+test2011_30.C \
+test2011_31.C \
+test2011_32.C \
+test2011_33.C \
+test2011_34.C \
+test2011_35.C \
+test2011_36.C \
+test2011_37.C \
+test2011_38.C \
+test2011_39.C \
+test2011_40.C \
+test2011_41.C \
+test2011_42.C \
+test2011_43.C \
+test2011_44.C \
+test2011_45.C \
+test2011_46.C \
+test2011_47.C \
+test2011_48.C \
+test2011_49.C \
+test2011_50.C \
+test2011_51.C \
+test2011_52.C \
+test2011_53.C \
+test2011_54.C \
+test2011_55.C \
+test2011_56.C \
+test2011_57.C \
+test2011_58.C \
+test2011_59.C \
+test2011_60.C \
+test2011_61.C \
+test2011_62.C \
+test2011_63.C \
+test2011_64.C \
+test2011_65.C \
+test2011_66.C \
+test2011_67.C \
+test2011_68.C \
+test2011_69.C \
+test2011_70.C \
+test2011_71.C \
+test2011_72.C \
+test2011_73.C \
+test2011_74.C \
+test2011_76.C \
+test2011_77.C \
+test2011_78.C \
+test2011_79.C \
+test2011_80.C \
+test2011_81.C \
+test2011_82.C \
+test2011_83.C \
+test2011_84.C \
+test2011_85.C \
+test2011_86.C \
+test2011_87.C \
+test2011_88.C \
+test2011_89.C \
+test2011_90.C \
+test2011_91.C \
+test2011_92.C \
+test2011_93.C \
+test2011_94.C \
+test2011_95.C \
+test2011_96.C \
+test2011_97.C \
+test2011_98.C \
+test2011_99.C \
 test.C \
 test_CplusplusMacro_C.C \
 test_CplusplusMacro_Cpp.C \
@@ -891,10 +1276,54 @@ test_simple_int.C \
 test_wchars.C \
 X.C
 
-
-$(CXX_TESTS_TO_CHECK): ./EDG_4_x_Translator
+$(CXX_TESTS_TO_CHECK): ./frontend_test
 	@cp $(srcdir)/../Cxx_tests/$@ $@
-	@if ./EDG_4_x_Translator $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests -c $@ &> /dev/null; then \
+	@if ./frontend_test $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests -c $@ &> /dev/null; then \
+	  echo 1 $@ >> Cxx-tests.lst; \
+	else \
+	  echo 0 $@ >> Cxx-tests.lst; \
+	fi;
+	@rm -f $@
+
+test2005_56.C: ../../frontend_test
+	@cp $(srcdir)/../Cxx_tests/$@ $@
+	@if ../../frontend_test $(ROSE_FLAGS) -DTEST_STRING_MACRO=\""Thu Apr 14 08:18:33 PDT 2005"\" -c $@ &> /dev/null; then
+	  echo 1 $@ >> Cxx-tests.lst; \
+	else \
+	  echo 0 $@ >> Cxx-tests.lst; \
+	fi;
+	@rm -f $@
+
+test2010_01.C: ../../frontend_test
+	@cp $(srcdir)/../Cxx_tests/$@ $@
+        @if ../../frontend_test $(ROSE_FLAGS) $(ROSE_INCLUDES) -c $@ &> /dev/null; then
+	  echo 1 $@ >> Cxx-tests.lst; \
+	else \
+	  echo 0 $@ >> Cxx-tests.lst; \
+	fi;
+	@rm -f $@
+
+test2010_02.C: ../../frontend_test
+	@cp $(srcdir)/../Cxx_tests/$@ $@
+        @if ../../frontend_test $(ROSE_FLAGS) -I$(top_builddir) $(ROSE_INCLUDES) -c $@ &> /dev/null; then
+	  echo 1 $@ >> Cxx-tests.lst; \
+	else \
+	  echo 0 $@ >> Cxx-tests.lst; \
+	fi;
+	@rm -f $@
+
+test2010_07.C: ../../frontend_test
+	@cp $(srcdir)/../Cxx_tests/$@ $@
+        @if ../../frontend_test $(ROSE_FLAGS) -I$(top_builddir) -I$(top_srcdir)/src -I$(top_srcdir)/src/util -c $@ &> /dev/null; then
+	  echo 1 $@ >> Cxx-tests.lst; \
+	else \
+	  echo 0 $@ >> Cxx-tests.lst; \
+	fi;
+	@rm -f $@
+
+test2010_08.C: ../../frontend_test
+	@cp $(srcdir)/../Cxx_tests/$@ $@
+        @if ../../frontend_test $(ROSE_FLAGS) -I$(top_builddir) $(ROSE_INCLUDES) -c $@ &> /dev/null; then
 	  echo 1 $@ >> Cxx-tests.lst; \
 	else \
 	  echo 0 $@ >> Cxx-tests.lst; \

@@ -4,10 +4,10 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # These are C testcodes that test the new EDG Interface (using EDG 4.0) #
 #########################################################################
 
-bin_PROGRAMS = EDG_4_x_Translator
+bin_PROGRAMS = frontend_test
 
 # This tests the ability to read and regenerate the input application and compile it using the backend compiler.
-EDG_4_x_Translator_SOURCES = EDG_4_x_Translator.C
+frontend_test_SOURCES = frontend_test.C
 
 # Use names set in ROSE/config/Makefile.for.ROSE.includes.and.libs
 INCLUDES = $(ROSE_INCLUDES)

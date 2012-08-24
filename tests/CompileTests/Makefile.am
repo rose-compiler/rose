@@ -77,7 +77,7 @@ if ROSE_BUILD_PYTHON_LANGUAGE_SUPPORT
 endif
 
 # Used to check all C and C++ test codes: not really specific to EDG 4.x
-SUBDIRS += EDG_4_x
+SUBDIRS += frontend_integration
 
 # end of ROSE_USE_CLANG_FRONTEND
 endif
