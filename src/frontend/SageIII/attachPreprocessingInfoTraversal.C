@@ -70,7 +70,7 @@ found in the directory ROSE/TESTS/KnownBugs/AttachPreprocessingInfo.
 using namespace std;
 
 // Debug flag
-#define DEBUG_ATTACH_PREPROCESSING_INFO 1
+#define DEBUG_ATTACH_PREPROCESSING_INFO 0
 
 
 //It is needed because otherwise, the default destructor breaks something.
