@@ -4,6 +4,8 @@
 #include "abiStuff.h"
 #include <vector>
 
+#include <climits>
+
 using namespace std;
 using namespace SageBuilder;
 using namespace SageInterface;
