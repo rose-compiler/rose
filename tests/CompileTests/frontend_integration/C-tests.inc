@@ -83,8 +83,7 @@ $(C_TESTS_TO_CHECK): ./frontend_test
 	  echo 1 $@ >> C-tests.lst; \
 	else \
 	  echo 0 $@ >> C-tests.lst; \
-	fi;
-	@rm -f $@
+	fi || true;
 
 test2005_168.c: ./frontend_test
 	@cp $(srcdir)/../C_tests/$@ $@
@@ -92,8 +91,7 @@ test2005_168.c: ./frontend_test
 	  echo 1 $@ >> C-tests.lst; \
 	else \
 	  echo 0 $@ >> C-tests.lst; \
-	fi;
-	@rm -f $@
+	fi || true;
 
 check-Ctests:
 	@rm -f C-tests.lst

@@ -1282,53 +1282,47 @@ $(CXX_TESTS_TO_CHECK): ./frontend_test
 	  echo 1 $@ >> Cxx-tests.lst; \
 	else \
 	  echo 0 $@ >> Cxx-tests.lst; \
-	fi;
-	@rm -f $@
+	fi || true;
 
-test2005_56.C: ../../frontend_test
+test2005_56.C: ./frontend_test
 	@cp $(srcdir)/../Cxx_tests/$@ $@
-	@if ../../frontend_test $(ROSE_FLAGS) -DTEST_STRING_MACRO=\""Thu Apr 14 08:18:33 PDT 2005"\" -c $@ &> /dev/null; then
+	@if ./frontend_test $(ROSE_FLAGS) -DTEST_STRING_MACRO=\""Thu Apr 14 08:18:33 PDT 2005"\" -c $@ &> /dev/null; then \
 	  echo 1 $@ >> Cxx-tests.lst; \
 	else \
 	  echo 0 $@ >> Cxx-tests.lst; \
-	fi;
-	@rm -f $@
+	fi || true;
 
-test2010_01.C: ../../frontend_test
+test2010_01.C: ./frontend_test
 	@cp $(srcdir)/../Cxx_tests/$@ $@
-        @if ../../frontend_test $(ROSE_FLAGS) $(ROSE_INCLUDES) -c $@ &> /dev/null; then
+	@if ./frontend_test $(ROSE_FLAGS) $(ROSE_INCLUDES) -c $@ &> /dev/null; then \
 	  echo 1 $@ >> Cxx-tests.lst; \
 	else \
 	  echo 0 $@ >> Cxx-tests.lst; \
-	fi;
-	@rm -f $@
+	fi || true;
 
-test2010_02.C: ../../frontend_test
+test2010_02.C: ./frontend_test
 	@cp $(srcdir)/../Cxx_tests/$@ $@
-        @if ../../frontend_test $(ROSE_FLAGS) -I$(top_builddir) $(ROSE_INCLUDES) -c $@ &> /dev/null; then
+	@if ./frontend_test $(ROSE_FLAGS) -I$(top_builddir) $(ROSE_INCLUDES) -c $@ &> /dev/null; then \
 	  echo 1 $@ >> Cxx-tests.lst; \
 	else \
 	  echo 0 $@ >> Cxx-tests.lst; \
-	fi;
-	@rm -f $@
+	fi || true;
 
-test2010_07.C: ../../frontend_test
+test2010_07.C: ./frontend_test
 	@cp $(srcdir)/../Cxx_tests/$@ $@
-        @if ../../frontend_test $(ROSE_FLAGS) -I$(top_builddir) -I$(top_srcdir)/src -I$(top_srcdir)/src/util -c $@ &> /dev/null; then
+	@if ./frontend_test $(ROSE_FLAGS) -I$(top_builddir) -I$(top_srcdir)/src -I$(top_srcdir)/src/util -c $@ &> /dev/null; then \
 	  echo 1 $@ >> Cxx-tests.lst; \
 	else \
 	  echo 0 $@ >> Cxx-tests.lst; \
-	fi;
-	@rm -f $@
+	fi || true;
 
-test2010_08.C: ../../frontend_test
+test2010_08.C: ./frontend_test
 	@cp $(srcdir)/../Cxx_tests/$@ $@
-        @if ../../frontend_test $(ROSE_FLAGS) -I$(top_builddir) $(ROSE_INCLUDES) -c $@ &> /dev/null; then
+	@if ./frontend_test $(ROSE_FLAGS) -I$(top_builddir) $(ROSE_INCLUDES) -c $@ &> /dev/null; then \
 	  echo 1 $@ >> Cxx-tests.lst; \
 	else \
 	  echo 0 $@ >> Cxx-tests.lst; \
-	fi;
-	@rm -f $@
+	fi || true;
 
 check-Cxxtests:
 	@rm -f Cxx-tests.lst
