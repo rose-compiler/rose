@@ -313,7 +313,7 @@ SageBuilder::appendTemplateArgumentsToName( const SgName & name, const SgTemplat
   // and in Statement.code: SgDeclarationStatement::resetTemplateNameSupport().
 
 #if 1
-     printf ("In appendTemplateArgumentsToName(): CRITICAL FUNCTION TO BE REFACTORED (name = %s) \n",name.str());
+     printf ("In SageBuilder::appendTemplateArgumentsToName(): CRITICAL FUNCTION TO BE REFACTORED (name = %s) \n",name.str());
 #endif
 
      SgName returnName = name + " < ";
@@ -321,34 +321,38 @@ SageBuilder::appendTemplateArgumentsToName( const SgName & name, const SgTemplat
      SgTemplateArgumentPtrList::const_iterator i = templateArgumentsList.begin();
      while (i != templateArgumentsList.end())
         {
-#if 0
-           printf ("In appendTemplateArgumentsToName(): (top of loop) templateArgumentsList element *i = %s returnName = %s \n",(*i)->class_name().c_str(),returnName.str());
+#if 1
+          printf ("In SageBuilder::appendTemplateArgumentsToName(): (top of loop) templateArgumentsList element *i = %s returnName = %s \n",(*i)->class_name().c_str(),returnName.str());
 #endif
 #if 0
           string s = string("/* templateArgument is explicitlySpecified = ") + (((*i)->get_explicitlySpecified() == true) ? "true" : "false") + " */";
 #endif
        // unparseTemplateArgument(*i,info);
           returnName += (*i)->unparseToString();
-
 #if 0
-          printf ("In appendTemplateArgumentsToName(): (after appending template name) returnName = %s \n",returnName.str());
+          printf ("In SageBuilder::appendTemplateArgumentsToName(): (after appending template name) returnName = %s \n",returnName.str());
 #endif
-
           i++;
+
+       // If there are more arguments then we need a "," to seperate them.
           if (i != templateArgumentsList.end())
              {
+            // Since we have a few places were these names are generated the code is sensative to names being 
+            // generated exactly the same.  So the space on both sides of the "," is critical. This will be fixed
+            // and all locations where this is done are marked with "CRITICAL FUNCTION TO BE REFACTORED".
             // returnName += ",";
                returnName += " , ";
              }
 
 #if 0
-          printf ("In appendTemplateArgumentsToName(): (bottom of loop) returnName = %s \n",returnName.str());
+          printf ("In SageBuilder::appendTemplateArgumentsToName(): (bottom of loop) returnName = %s \n",returnName.str());
 #endif
         }
+
      returnName += " > ";
 
-#if 0
-     printf ("Leaving appendTemplateArgumentsToName(): returnName = %s \n",returnName.str());
+#if 1
+     printf ("Leaving SageBuilder::appendTemplateArgumentsToName(): returnName = %s \n",returnName.str());
 #endif
 
      return returnName;

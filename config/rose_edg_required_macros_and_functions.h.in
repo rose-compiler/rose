@@ -2143,6 +2143,17 @@ int __builtin_ia32_psrlwi(int,int);
 int __builtin_ia32_psrldi(int,int);
 int __builtin_ia32_psrlqi(long long,int);
 
+// DQ (8/25/2012): Moved this to avoid their output in the debugging mode for ROSE.
+// As a result of this move they are not output in the DOT graphs where the macro
+// SKIP_ROSE_BUILTIN_DECLARATIONS is defined.
+
+// Change from Tristan (I think): I think these definitions will break on 32-bit 
+// systems The built-in declarations from gcc actually specify the bit length 
+// explictly e.g. int32_t __builtin_bswap32 (int32_t x)
+// However, integer types such as int32_t are not defined here.
+int __builtin_bswap32 (int x);
+long int __builtin_bswap64 (long int x);
+
 /* matching else for SKIP_ROSE_BUILTIN_DECLARATIONS */
 #else
 
@@ -2160,12 +2171,5 @@ int __frontend_specific_variable_to_provide_header_file_path;
 
 /* matching endif for SKIP_ROSE_BUILTIN_DECLARATIONS */
 #endif
-
-//I think these definitions will break on 32-bit systems
-//The built-in declarations from gcc actually specify the bit length explictly
-//e.g. int32_t __builtin_bswap32 (int32_t x)
-//However, integer types such as int32_t are not defined here.
-int __builtin_bswap32 (int x);
-long int __builtin_bswap64 (long int x);
 
 #endif /* !ROSE_USE_NEW_EDG_INTERFACE */

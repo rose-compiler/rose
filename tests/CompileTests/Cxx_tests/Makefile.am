@@ -1036,6 +1036,8 @@ test2012_192.C \
 test2012_193.C \
 test2012_194.C \
 test2012_195.C \
+test2012_196.C \
+test2012_197.C \
 test_int_lexemes.C \
 test_int_lexemes_donot_pass.C \
 test_simple_int.C \
