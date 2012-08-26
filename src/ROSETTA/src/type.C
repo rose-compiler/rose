@@ -759,6 +759,10 @@ Grammar::setUpTypes ()
      PointerMemberType.excludeFunctionSource ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
      PointerMemberType.setFunctionSource ( "SOURCE_POINTER_MEMBER_GET_MANGLED", "../Grammar/Type.code");
 
+  // DQ (8/25/2012): Avoid the default generated get_mangled_name() function for this IR node.
+     TemplateType.excludeFunctionSource ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
+
+
   // Setup the mangled name function (a different entry specific to each class)
      TypeUnknown.editSubstitute( "MANGLED_ID_STRING", "Unknown" );
      TypeChar.editSubstitute( "MANGLED_ID_STRING", "c" );
@@ -796,8 +800,9 @@ Grammar::setUpTypes ()
   // ArrayType.editSubstitute( "MANGLED_ID_STRING", "A_" );
      TypeEllipse.editSubstitute( "MANGLED_ID_STRING", "e" );
 
+  // DQ (8/25/2012): Avoid the default generated get_mangled_name() function for this IR node.
   // DQ (5/11/2012): We need to define this.
-     TemplateType.editSubstitute( "MANGLED_ID_STRING", "TemplateType" );
+  // TemplateType.editSubstitute( "MANGLED_ID_STRING", "TemplateType" );
 
   // DQ (5/11/2012): This should not be used, bu we should define this for all types.
      PartialFunctionModifierType.editSubstitute( "MANGLED_ID_STRING", "PartialFunctionType" );

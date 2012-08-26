@@ -554,7 +554,7 @@ mangleTemplateArgsToString (const SgTemplateArgumentPtrList::const_iterator b,
         
         const SgTemplateArgument* arg = *i;
         ROSE_ASSERT (arg);
-        mangled_name << arg->get_mangled_name ().getString ();
+        mangled_name << arg->get_mangled_name().getString();
       }
     return mangled_name.str ();
   }
@@ -584,7 +584,7 @@ mangleTemplateToString (const string& templ_name,
         }
        else
         {
-          args_mangled = mangleTemplateArgsToString (templ_args.begin(),templ_args.end());
+          args_mangled = mangleTemplateArgsToString(templ_args.begin(),templ_args.end());
         }
 
   // Compute the name qualification, if any.
