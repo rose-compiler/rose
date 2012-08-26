@@ -6992,7 +6992,16 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
                                            {
                                           // DQ (10/13/2004): If this is a template declaration then we might have to reset its name
                                           // SgTemplateType* templateType = isSgTemplateType(argumentType);
+#if 1
+                                          // DQ (8/26/2012): Decrease the volume of warnings from this part of the code.
+                                             static int count = 0;
+                                             if (count++ % 100 == 0)
+                                                {
+                                                  printf ("In SgDeclarationStatement::resetTemplateNameSupport(): case SgTemplateArgument::type_argument: Found a SgTemplateType ... (nothing done in this case) \n");
+                                                }
+#else
                                              printf ("In SgDeclarationStatement::resetTemplateNameSupport(): case SgTemplateArgument::type_argument: Found a SgTemplateType ... (nothing done in this case) \n");
+#endif
                                           // SgDeclarationStatement* declaration = templateType->get_declaration();
                                           // ROSE_ASSERT(declaration != NULL);
                                           // printf ("In SgDeclarationStatement::resetTemplateNameSupport(): case SgTemplateArgument::type_argument: declaration = %p = %s \n",declaration,declaration->class_name().c_str());

@@ -1023,7 +1023,16 @@ TestAstProperties::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttribu
                     case V_SgIntVal:
                        {
                       // Unclear what should be checked here, for now allow this as an acceptable case.
+#if 1
+                      // DQ (8/26/2012): Decrease the volume of warnings from this part of the code.
+                         static int count = 0;
+                         if (count++ % 100 == 0)
+                            {
+                              printf ("Warning: EDG 4.0 specific case, found unusual case of SgIntVal returned from SgFunctionCallExp::get_function() member function \n");
+                            }
+#else
                          printf ("Warning: EDG 4.0 specific case, found unusual case of SgIntVal returned from SgFunctionCallExp::get_function() member function \n");
+#endif
                          break;
                        }
 #endif
@@ -1117,7 +1126,16 @@ TestAstProperties::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttribu
                     case V_SgTypeInt:
                        {
                       // Unclear what should be checked here, for now allow this as an acceptable case.
+#if 1
+                      // DQ (8/26/2012): Decrease the volume of warnings from this part of the code.
+                         static int count = 0;
+                         if (count++ % 100 == 0)
+                            {
+                              printf ("Warning: EDG 4.0 specific case, found unusual case of SgTypeInt returned from SgFunctionCallExp::get_type() member function \n");
+                            }
+#else
                          printf ("Warning: EDG 4.0 specific case, found unusual case of SgTypeInt returned from SgFunctionCallExp::get_type() member function \n");
+#endif
                          break;
                        }
 #endif
@@ -1630,7 +1648,7 @@ TestAstTemplateProperties::visit ( SgNode* astNode )
                          if (templateClassDefinition != NULL)
                             {
                            // Special case...debugging new use of SgTemplateClassDefinition.
-                              printf ("Found a case of SgTemplateClassDefinition \n");
+                              printf ("AST ConsistancyTest: TestAstTemplateProperties Found a case of SgTemplateClassDefinition (case not handled) \n");
                             }
                            else
                             {
@@ -1641,7 +1659,7 @@ TestAstTemplateProperties::visit ( SgNode* astNode )
                                 // This is NOT a data member of the templated class (or nested class of a templated class)
                                    if (variableDeclaration->get_specialization() != SgClassDeclaration::e_no_specialization)
                                       {
-                                        printf ("Note: variableDeclaration->get_specialization() = %d != SgClassDeclaration::e_no_specialization  (variableDeclaration = %p) \n",variableDeclaration->get_specialization(),variableDeclaration);
+                                        printf ("Note: AST ConsistancyTest: variableDeclaration->get_specialization() = %d != SgClassDeclaration::e_no_specialization  (variableDeclaration = %p) \n",variableDeclaration->get_specialization(),variableDeclaration);
                                         variableDeclaration->get_file_info()->display("variableDeclaration->get_specialization() != SgClassDeclaration::e_no_specialization");
                                       }
                                 // DQ (6/30/2005): Commented out to focus more on KULL, output a warning for now!
@@ -4681,7 +4699,7 @@ TestChildPointersInMemoryPool::visit( SgNode *node )
                       // DQ (3/3/2007): This is always a case we want to warn about!
                          printf ("SgClassSymbol is not in parent's child list, node: %p = %s = %s parent: %p = %s = %s \n",
                               node,node->class_name().c_str(),SageInterface::get_name(node).c_str(),parent,parent->class_name().c_str(),SageInterface::get_name(parent).c_str());
-                         classDeclaration->get_file_info()->display("location: debug");
+                         classDeclaration->get_file_info()->display("case V_SgClassSymbol: location: debug");
                          break;
                        }
 
@@ -4693,7 +4711,7 @@ TestChildPointersInMemoryPool::visit( SgNode *node )
                       // DQ (3/3/2007): This is always a case we want to warn about!
                          printf ("SgFunctionSymbol is not in parent's child list, node: %p = %s = %s parent: %p = %s = %s \n",
                               node,node->class_name().c_str(),SageInterface::get_name(node).c_str(),parent,parent->class_name().c_str(),SageInterface::get_name(parent).c_str());
-                         functionDeclaration->get_file_info()->display("location: debug");
+                         functionDeclaration->get_file_info()->display("case V_SgFunctionSymbol: location: debug");
                          break;
                        }
 
@@ -4714,7 +4732,7 @@ TestChildPointersInMemoryPool::visit( SgNode *node )
                               printf ("parent3 IR node = %p = %s \n",parent3,parent3->class_name().c_str());
                               SgNode* parent4 = parent3->get_parent();
                               printf ("parent4 IR node = %p = %s \n",parent4,parent4->class_name().c_str());
-                              initializedName->get_file_info()->display("location: debug");
+                              initializedName->get_file_info()->display("case V_SgStorageModifier: location: debug");
                             }
                            else
                             {
@@ -4736,7 +4754,7 @@ TestChildPointersInMemoryPool::visit( SgNode *node )
                                    node,node->class_name().c_str(),SageInterface::get_name(node).c_str(),parent,parent->class_name().c_str(),SageInterface::get_name(parent).c_str());
                               printf ("templateInstantiationDecl->get_definingDeclaration() = %p templateInstantiationDecl->get_firstNondefiningDeclaration() = %p \n",
                                    templateInstantiationDecl->get_definingDeclaration(),templateInstantiationDecl->get_firstNondefiningDeclaration());
-                              templateInstantiationDecl->get_file_info()->display("location: debug");
+                              templateInstantiationDecl->get_file_info()->display("case V_SgTemplateArgument: location: debug");
                             }
                            else
                             {

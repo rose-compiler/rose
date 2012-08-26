@@ -523,6 +523,7 @@ Grammar::setUpTypes ()
   // using a template parameter.  This should likely be mapped back to the template parameter by position in the sequence of 
   // template parameters and the template declaration (OR just the template paramters only; I have not decided).
      TemplateType.setDataPrototype     ("SgName","name","= \"\"",CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     TemplateType.setDataPrototype     ("int","template_parameter_position","= -1",CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // Skip building a parse function for this terminal/nonterminal of the Grammar
      if (isRootGrammar() == false)
