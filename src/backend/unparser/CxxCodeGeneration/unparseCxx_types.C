@@ -2115,8 +2115,10 @@ Unparse_Type::unparseTemplateType(SgType* type, SgUnparse_Info& info)
      ROSE_ASSERT(template_type != NULL);
 
 #if 1
+  // DQ (8/25/2012): This allows everything to work, but likely with some internal problems that are not being noticed.
      SgName name = "int ";
 #else
+  // This is the code that we want to use, but it is not working.
      SgName name = template_type->get_name();
 #endif
 
