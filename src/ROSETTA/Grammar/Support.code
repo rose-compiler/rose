@@ -15654,6 +15654,10 @@ SgTemplateArgument::SgTemplateArgument ( SgTemplateDeclaration* argument, bool e
 SgName
 SgTemplateArgument::get_mangled_name (void) const
    {
+#if 0
+     printf ("In SgTemplateArgument::get_mangled_name(): get_argumentType() = %d \n",get_argumentType());
+#endif
+
      ostringstream mangled_name;
      switch (get_argumentType())
         {
@@ -15751,7 +15755,15 @@ SgTemplateArgument::get_mangled_name (void) const
                break;
         }
 
+#if 0
+     printf ("In SgTemplateArgument::get_mangled_name(): mangled_name = %s \n",mangled_name.str());
+#endif
+
      string str_mangled_name (mangled_name.str());
+
+#if 0
+     printf ("Leaving SgTemplateArgument::get_mangled_name(): str_mangled_name = %s \n",str_mangled_name.c_str());
+#endif
 
      return SgName (str_mangled_name.c_str());
    }

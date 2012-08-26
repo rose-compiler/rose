@@ -6987,7 +6987,7 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
                                            }
 
 
-                                     // DQ (7/23/2012): This appears to be a mising case.
+                                     // DQ (7/23/2012): This appears to be a missing case.
                                         case V_SgTemplateType:
                                            {
                                           // DQ (10/13/2004): If this is a template declaration then we might have to reset its name

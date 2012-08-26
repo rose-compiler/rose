@@ -312,7 +312,7 @@ SageBuilder::appendTemplateArgumentsToName( const SgName & name, const SgTemplat
   // The other two are in edgRose.C in function: appendTemplateArgumentsToName()
   // and in Statement.code: SgDeclarationStatement::resetTemplateNameSupport().
 
-#if 1
+#if 0
      printf ("In SageBuilder::appendTemplateArgumentsToName(): CRITICAL FUNCTION TO BE REFACTORED (name = %s) \n",name.str());
 #endif
 
@@ -321,7 +321,7 @@ SageBuilder::appendTemplateArgumentsToName( const SgName & name, const SgTemplat
      SgTemplateArgumentPtrList::const_iterator i = templateArgumentsList.begin();
      while (i != templateArgumentsList.end())
         {
-#if 1
+#if 0
           printf ("In SageBuilder::appendTemplateArgumentsToName(): (top of loop) templateArgumentsList element *i = %s returnName = %s \n",(*i)->class_name().c_str(),returnName.str());
 #endif
 #if 0
@@ -351,7 +351,7 @@ SageBuilder::appendTemplateArgumentsToName( const SgName & name, const SgTemplat
 
      returnName += " > ";
 
-#if 1
+#if 0
      printf ("Leaving SageBuilder::appendTemplateArgumentsToName(): returnName = %s \n",returnName.str());
 #endif
 
