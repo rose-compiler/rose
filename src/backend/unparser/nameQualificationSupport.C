@@ -726,13 +726,20 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                     symbol = aliasSymbol->get_alias();
                     ROSE_ASSERT(symbol != NULL);
 
+#if 1
                  // DQ (8/21/2012): Commented out the assertion, but warn about how nesting appears to be present.
                  // DQ (8/20/2012): The symbol in side the SgAliasSymbol should not be another alias. This fails for test2004_48.C).
                     if (isSgAliasSymbol(symbol) != NULL)
                        {
-                         printf ("WARNING: can't assert isSgAliasSymbol(symbol) == NULL after processing SgAliasSymbol (might require loop to strip away nested SgAliasSymbol symbols. \n");
+                      // DQ (8/24/2012): Allow this to be output a little less often.
+                         static int counter = 0;
+                         if (counter++ % 100 == 0)
+                            {
+                              printf ("WARNING: can't assert isSgAliasSymbol(symbol) == NULL after processing SgAliasSymbol (might require loop to strip away nested SgAliasSymbol symbols. \n");
+                            }
                        }
                  // ROSE_ASSERT(isSgAliasSymbol(symbol) == NULL);
+#endif
                   }
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
@@ -2565,9 +2572,15 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
      SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(n);
      if (variableDeclaration != NULL)
         {
+#if 1
+       // DQ (8/24/2012): Allow this to be output a little less often.
        // DQ (8/4/2012): Why is this case procesed if the SgInitializedNames are processed sperately (this appears to be redundant with that).
-          printf ("QUESTION: Why is this case of name qualification SgVariableDeclaration procesed if the SgInitializedNames are processed sperately (this appears to be redundant with that). \n");
-
+          static int counter = 0;
+          if (counter++ % 100 == 0)
+             {
+               printf ("QUESTION: Why is this case of name qualification SgVariableDeclaration procesed if the SgInitializedNames are processed sperately (this appears to be redundant with that). \n");
+             }
+#endif
           SgInitializedName* initializedName = SageInterface::getFirstInitializedName(variableDeclaration);
           ROSE_ASSERT(initializedName != NULL);
 

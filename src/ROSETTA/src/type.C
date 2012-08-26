@@ -519,6 +519,11 @@ Grammar::setUpTypes ()
      TemplateType.setFunctionPrototype ("HEADER_TEMPLATE_TYPE", "../Grammar/Type.code" );
   // TemplateInstantiationType.setFunctionPrototype ("HEADER_GET_NAME", "../Grammar/Type.code" );
 
+  // DQ (8/25/2012): Added support for name of template type. Note that this is the name "T1" in instantiation of a template 
+  // using a template parameter.  This should likely be mapped back to the template parameter by position in the sequence of 
+  // template parameters and the template declaration (OR just the template paramters only; I have not decided).
+     TemplateType.setDataPrototype     ("SgName","name","= \"\"",CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
   // Skip building a parse function for this terminal/nonterminal of the Grammar
      if (isRootGrammar() == false)
         {
@@ -674,8 +679,7 @@ Grammar::setUpTypes ()
 
   // DQ (12/26/2010): Added mechanism to store names of types that can't be identified in initial parsing (applicable only to Fortran).
      TypeDefault.setFunctionPrototype ("HEADER_TYPE_DEFAULT_TYPE", "../Grammar/Type.code" );
-     TypeDefault.setDataPrototype ("SgName", "name" , "= \"\"",
-                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     TypeDefault.setDataPrototype ("SgName", "name" , "= \"\"",NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 #if 0
   // DQ (8/12/2012): I might not need this, since I have a more direct approach.
