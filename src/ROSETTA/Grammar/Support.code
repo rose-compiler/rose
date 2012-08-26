@@ -7391,9 +7391,9 @@ SgSymbolTable::hasMatchingTemplateArgumentsOrNoTemplateArguments(SgTemplateArgum
                               SgTemplateArgument* templateArgumentFromSymbol = isSgTemplateArgument(templateClassInstantiation->get_templateArguments()[i]);
                               ROSE_ASSERT(templateArgumentLocal != NULL);
                               ROSE_ASSERT(templateArgumentFromSymbol != NULL);
-
+#if 0
                               printf ("----- templateArgumentLocal->get_argumentType() = %d templateArgumentFromSymbol->get_argumentType() = %d \n",templateArgumentLocal->get_argumentType(),templateArgumentFromSymbol->get_argumentType());
-
+#endif
                            // if (templateArgumentLocal->get_argumentType() == SgTemplateArgument::type_argument && templateArgumentFromSymbol->get_argumentType() == SgTemplateArgument::type_argument)
                               if (templateArgumentLocal->get_argumentType() == SgTemplateArgument::type_argument && templateArgumentFromSymbol->get_argumentType() == SgTemplateArgument::type_argument)
                                  {
@@ -7467,8 +7467,10 @@ SgSymbolTable::hasMatchingTemplateArgumentsOrNoTemplateArguments(SgTemplateArgum
              }
             else
              {
-            // DQ (8/22/2012): Consider if this make sense...
+            // DQ (8/22/2012): Consider if this make sense...yes, if it is not a template instantiation then matching is based on name in a specific scope only.
+#if 0
                printf ("WARNING: SgSymbolTable::hasMatchingTemplateArgumentsOrNoTemplateArguments(): templateClassInstantiation == NULL (return true) \n");
+#endif
                returnValue = true;
              }
         }
@@ -7936,7 +7938,7 @@ SgSymbolTable::find_template_member_function(const SgName& nm, const SgType* t)
   // Find the sublist that match the name.
      std::pair<hash_iterator, hash_iterator> range = p_table->equal_range(nm);
 
-#if 1
+#if 0
      if (range.first == range.second)
         {
           printf ("In SgSymbolTable::find_template_member_function(): WARNING no symbols found with name = %s \n",nm.str());

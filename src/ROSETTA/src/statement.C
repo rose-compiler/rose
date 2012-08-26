@@ -1419,6 +1419,11 @@ Grammar::setUpStatements ()
      ClassDeclaration.setDataPrototype("bool","isAutonomousDeclaration","= true",
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (8/26/2012): Use this to mark clases that are build to represent SgTemplateType IR nodes used in 
+  // template argument lists inside of template declarations.  Related to concept of is_non_real setting.
+     ClassDeclaration.setDataPrototype("bool","isRepresentingTemplateParameterInTemplateDeclaration","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
   // This class contains two lists (we don't know if this edit/substitution mechanism for work for two lists)
      ClassDefinition.setFunctionPrototype ( "HEADER_CLASS_DEFINITION_STATEMENT", "../Grammar/Statement.code" );      
      ClassDefinition.editSubstitute       ( "HEADER_LIST_DECLARATIONS_1", "HEADER_LIST_DECLARATIONS", "../Grammar/Statement.code" );

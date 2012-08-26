@@ -295,7 +295,16 @@ mangleQualifiersToString (const SgScopeStatement* scope)
             // DQ (5/12/2012): Implement this case later, but it does not cause anything to fail presently (I think).
                case V_SgTemplateClassDefinition:
                   {
+#if 1
+                 // DQ (8/26/2012): Decrease the volume of warnings from this part of the code.
+                    static int count = 0;
+                    if (count++ % 100 == 0)
+                       {
+                         printf ("WARNING: In mangleQualifiersToString(const SgScopeStatement*): Case SgTemplateClassDefinition not implemented \n");
+                       }
+#else
                     printf ("WARNING: In mangleQualifiersToString(const SgScopeStatement*): Case SgTemplateClassDefinition not implemented \n");
+#endif
                     break;
                   }
 
