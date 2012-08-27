@@ -728,6 +728,7 @@ HEADER_FUNCTION_MODIFIER_START
                e_java_native                 = 32, /*!< Java native keyword used for JNI function specification */
                e_java_synchronized           = 33, /*!< Java synchronized keyword used to only allow one thread at a time into a particular section of code */
                e_java_strictfp               = 34, /*!< Java strictfp keyword used to specify strict floating point evaluation by JVM */
+               e_java_initializer            = 35, /*!< Java initializer keyword used to specify that this "synthetic" function is, in fact, an initializer block */
 
                e_last_modifier     /*!< last value (upper bound on range of values, used in error checking) */
              };
@@ -896,6 +897,10 @@ HEADER_FUNCTION_MODIFIER_START
           bool isJavaStrictfp() const;
           void setJavaStrictfp();
           void unsetJavaStrictfp();
+
+          bool isJavaInitializer() const;
+          void setJavaInitializer();
+          void unsetJavaInitializer();
 
           std::string displayString() const;
           void display ( std::string label ) const;
@@ -2490,6 +2495,11 @@ bool SgFunctionModifier::isJavaStrictfp() const { return checkBit(e_java_strictf
 void SgFunctionModifier::setJavaStrictfp()      { setBit(e_java_strictfp, p_modifierVector); }
 void SgFunctionModifier::unsetJavaStrictfp()    { unsetBit(e_java_strictfp, p_modifierVector); }
 
+// PC (07/24/2012): Added support for Java specific feature: Initializer blocks.
+bool SgFunctionModifier::isJavaInitializer() const { return checkBit(e_java_initializer, p_modifierVector); }
+void SgFunctionModifier::setJavaInitializer()      { setBit(e_java_initializer, p_modifierVector); }
+void SgFunctionModifier::unsetJavaInitializer()    { unsetBit(e_java_initializer, p_modifierVector); }
+
 string
 SgFunctionModifier::displayString() const
    {
@@ -2525,6 +2535,7 @@ SgFunctionModifier::displayString() const
      s += std::string("isJavaNative() = ")       + std::string(isJavaNative()       ? "true " : "false ");
      s += std::string("isJavaSynchronized() = ") + std::string(isJavaSynchronized() ? "true " : "false ");
      s += std::string("isJavaStrictfp() = ")     + std::string(isJavaStrictfp()     ? "true " : "false ");
+     s += std::string("isJavaInitializer() = ")  + std::string(isJavaInitializer()  ? "true " : "false ");
      s += ")";
      return s;
    }
@@ -2594,6 +2605,7 @@ bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs)
 	       (lhs.isJavaNative()               == rhs.isJavaNative()              ) &&
 	       (lhs.isJavaSynchronized()         == rhs.isJavaSynchronized()        ) &&
 	       (lhs.isJavaStrictfp()             == rhs.isJavaStrictfp()            ) &&
+	       (lhs.isJavaInitializer()          == rhs.isJavaInitializer()         ) &&
 		   true;
    }
 
@@ -2612,6 +2624,7 @@ void SgFunctionModifier::reset()
      unsetJavaNative();
      unsetJavaSynchronized();
      unsetJavaStrictfp();
+     unsetJavaInitializer();
 
   // Set this bit to indicate the default value (we want a value of all zero bits to be an error)
      setDefault();

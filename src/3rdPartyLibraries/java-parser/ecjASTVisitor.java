@@ -33,6 +33,17 @@ class ecjASTVisitor extends ExtendedASTVisitor {
     private final JavaSourcePositionInformationFactory posFactory;
      
     //
+    // Keep track of how many anonymous types is associated with a top-level type declaration.
+    //
+    HashMap<String, Integer> anonymousClassCounter = new HashMap<String, Integer>();
+
+    //
+    // Keep track of how many local typedeclaration of a given name is associated with a top-level 
+    // type declaration.
+    //
+    public static HashMap<String, HashMap<String, Integer>> localClassCounter = new HashMap<String, HashMap<String, Integer>>();
+
+    //
     // Keep track of the set of Catch block arguments.
     // Keep track of the set of Blocks that are Catch blocks.
     //
@@ -87,7 +98,8 @@ class ecjASTVisitor extends ExtendedASTVisitor {
             if (method instanceof ConstructorDeclaration) {
                 if (JavaParser.verboseLevel > 1)
                     System.out.println("    Side-visiting Constructor Declaration Header for " + method.getClass().getName());
-                JavaParserSupport.processConstructorDeclarationHeader((ConstructorDeclaration) method, createJavaToken(method)); 
+                ConstructorDeclaration constructor = (ConstructorDeclaration) method;
+                JavaParserSupport.processConstructorDeclarationHeader(constructor, createJavaToken(method));
             }
             else {
                 if (JavaParser.verboseLevel > 1)
@@ -98,6 +110,16 @@ class ecjASTVisitor extends ExtendedASTVisitor {
 
         if (JavaParser.verboseLevel > 1)
             System.out.println("Pre-visiting " + node.getClass().getName());
+
+        //
+        // Ignore default constructors.
+        //
+        if (node instanceof ConstructorDeclaration) { // a constructor declaration?
+            ConstructorDeclaration constructor = (ConstructorDeclaration) node;
+            if (constructor.isDefaultConstructor()) { // a default constructor?
+                return false; // ignore it !
+            }
+        }
 
         return true;
     }
@@ -112,6 +134,9 @@ class ecjASTVisitor extends ExtendedASTVisitor {
 
     // *************************************************
     public void enterTypeDeclaration(TypeDeclaration node) {
+        if (JavaParser.verboseLevel > 0)
+            System.out.println("Inside of enter (TypeDeclaration)");
+
         if (node.memberTypes != null && node.memberTypes.length > 0) {
             TypeHeaderDelimiters.put(node.memberTypes[0], node);
         }
@@ -122,9 +147,9 @@ class ecjASTVisitor extends ExtendedASTVisitor {
             TypeHeaderDelimiters.put(node.methods[0], node); 
         }
         else TypesWithNoBody.add(node);
-            
-        String typename = new String(node.name);
-        JavaParser.cactionTypeDeclaration(typename,
+
+        JavaParser.cactionTypeDeclaration(JavaParserSupport.getPackageName(node.binding),
+                                          JavaParserSupport.getTypeName(node.binding),
                                           node.kind(node.modifiers) == TypeDeclaration.INTERFACE_DECL,
                                           (node.binding != null && node.binding.isAbstract()),
                                           (node.binding != null && node.binding.isFinal()),
@@ -167,9 +192,16 @@ class ecjASTVisitor extends ExtendedASTVisitor {
         if (JavaParser.verboseLevel > 0)
             System.out.println("Inside of exit (AllocationExpression,BlockScope)");
 
+// TODO: REMOVE generateType
+/*        
         // Generate the associated type ...
         JavaParserSupport.generateType(node.type);
+*/
+        if (JavaParser.verboseLevel > 0) 
+            System.out.println("The Allocation type is bound to type " + node.type.resolvedType.debugName());
 
+        JavaParserSupport.preprocessClass(node.type.resolvedType);
+        
         JavaParser.cactionAllocationExpressionEnd(node.type.toString(),
                                                   node.arguments == null ? 0 : node.arguments.length,
                                                   createJavaToken(node));
@@ -236,7 +268,8 @@ class ecjASTVisitor extends ExtendedASTVisitor {
             System.out.println(" modifiers = " + node.modifiers);
         }
 
-        JavaParserSupport.generateType(node.type);
+// TODO: REMOVE generateType
+//        JavaParserSupport.generateType(node.type);
         JavaParser.cactionArgument(name, catchArguments.contains(node), createJavaToken(node));
         
         if (JavaParser.verboseLevel > 0)
@@ -278,17 +311,32 @@ class ecjASTVisitor extends ExtendedASTVisitor {
     }
 
 
-    public boolean enter(ArrayAllocationExpression node,BlockScope scope) {
+    public boolean enter(ArrayAllocationExpression node, BlockScope scope) {
         if (JavaParser.verboseLevel > 0)
             System.out.println("Inside of enter (ArrayAllocationExpression,BlockScope)");
 
-        JavaParserSupport.generateType(node.type);
-        JavaParser.cactionArrayAllocationExpression(createJavaToken(node));
+        //
+        // Traverse the children of this node here because we need to generate a 0 integer
+        // expression for each missing dimension.
+        //
+		int dimensions_length = node.dimensions.length;
+		node.type.traverse(this, scope);
+		for (int i = 0; i < dimensions_length; i++) {
+			if (node.dimensions[i] != null)
+				 node.dimensions[i].traverse(this, scope);
+            else JavaParser.cactionIntLiteral(0, "0", createJavaToken(node));
+		}
+		if (node.initializer != null)
+			node.initializer.traverse(this, scope);
 
+// TODO: REMOVE generateType
+//        JavaParserSupport.generateType(node.type);
+        JavaParser.cactionArrayAllocationExpression(createJavaToken(node));
+        
         if (JavaParser.verboseLevel > 0)
             System.out.println("Leaving enter (ArrayAllocationExpression,BlockScope)");
 
-        return true; // do nothing by node, keep traversing
+        return false; // We've already traversed the children of this node. Indicate this by returning false!
     }
 
     public void exit(ArrayAllocationExpression node, BlockScope scope) {
@@ -397,16 +445,22 @@ class ecjASTVisitor extends ExtendedASTVisitor {
         if (JavaParser.verboseLevel > 0)
             System.out.println("Inside of enter (ArrayTypeReference,BlockScope)");
 
+// TODO: REMOVE generateType
+/*
         if (node.resolvedType != null) {
             JavaParserSupport.generateType(node);
         }
         else {
             System.out.println("Sorry, not implemented SingleTypeReference: node.resolvedType == NULL");
         }
-
+*/
         ArrayBinding arrayType = (ArrayBinding) node.resolvedType;
         TypeBinding baseType = arrayType.leafComponentType;
-        JavaParser.cactionArrayTypeReference(/* new String(node.token) */ /* node.resolvedType.debugName() */ baseType.debugName(), node.dimensions(), createJavaToken(node));
+
+        JavaParser.cactionArrayTypeReference(JavaParserSupport.getPackageName(baseType),
+                                             JavaParserSupport.getTypeName(baseType),
+                                             node.dimensions(),
+                                             createJavaToken(node));
 
         if (JavaParser.verboseLevel > 0)
             System.out.println("Leaving enter (ArrayTypeReference,BlockScope)");
@@ -429,14 +483,22 @@ class ecjASTVisitor extends ExtendedASTVisitor {
         if (JavaParser.verboseLevel > 0)
             System.out.println("Inside of enter (ArrayTypeReference,ClassScope)");
 
+// TODO: REMOVE generateType
+/*
         if (node.resolvedType != null) {
             JavaParserSupport.generateType(node);
         }
         else {
             System.out.println("Sorry, not implemented SingleTypeReference: node.resolvedType == NULL");
         }
+*/
+        ArrayBinding arrayType = (ArrayBinding) node.resolvedType;
+        TypeBinding baseType = arrayType.leafComponentType;
 
-        JavaParser.cactionArrayTypeReference(/* new String(node.token) */ node.resolvedType.debugName(), node.dimensions(), createJavaToken(node));
+        JavaParser.cactionArrayTypeReference(JavaParserSupport.getPackageName(baseType),
+                                             JavaParserSupport.getTypeName(baseType),
+                                             node.dimensions(),
+                                             createJavaToken(node));
 
         if (JavaParser.verboseLevel > 0)
             System.out.println("Leaving enter (ArrayTypeReference, ClassScope)");
@@ -699,9 +761,9 @@ class ecjASTVisitor extends ExtendedASTVisitor {
             System.out.println("Inside of enter (CompilationUnitDeclaration,CompilationUnitScope)");
 
         // Except for out here for debugging, the filename string is not used (even on the C++ side of the JNI function.
-        String s = new String(node.getFileName());
+        String filename = new String(node.getFileName());
         if (JavaParser.verboseLevel > 0) {
-            System.out.println("Compiling file = " + s);
+            System.out.println("Compiling file = " + filename);
         }
 
         // Ouput some information about the CompilationUnitScope (we don't use the package name currently).
@@ -710,7 +772,8 @@ class ecjASTVisitor extends ExtendedASTVisitor {
         StringBuffer packageReference = new StringBuffer();
         for (int i = 0, tokenArrayLength = scope.currentPackageName.length; i < tokenArrayLength; i++) {
             String tokenString = new String(scope.currentPackageName[i]);
-            System.out.println("     --- packageReference tokens = " + tokenString);
+// TODO: REMOVE generateType
+System.out.println("     --- packageReference tokens = " + tokenString);
 
             if (i > 0) {
                 packageReference.append('.');
@@ -718,33 +781,14 @@ class ecjASTVisitor extends ExtendedASTVisitor {
 
             packageReference.append(tokenString);
         }
+        String package_name = new String(packageReference);
 
         if (JavaParser.verboseLevel > 0)
             System.out.println("Package name = " + packageReference.toString());
 
         // Call the Java side of the JNI function.
         // This function only does a few tests on the C++ side to make sure that it is ready to construct the ROSE AST.
-        JavaParser.cactionCompilationUnitDeclaration(s, createJavaToken(node));
-
-        // Build the default implicit classes that will be required to process Java functions.
-        // The symbol for these classes need to be added to the global scope and the then
-        // we need to add the required name qualification support for data member and member 
-        // function lookup.
-        if (JavaParser.verboseLevel > 1)
-            System.out.println("Calling buildImplicitClassSupport for java.lang.System");
-
-        // We now read in classes on demand as they are references, if there are references.  All classes are read as 
-        // required to resolved all types in the program and the implicitly read classes.  Interestingly, there
-        // are nearly 3000 classes in the 135 packages in the J2SE 1.4.2 standard class library (over 3000 classes 
-        // in 165 packages in J2SE 5.0). Commercial class libraries that you might use add many more packages. 
-        // This triggers the building of a recursively identified set of classes required to define all types in the problem.
-        // JavaParserSupport.buildImplicitClassSupport("java.lang.System");
-
-        if (JavaParser.verboseLevel > 1)
-            System.out.println("DONE: Calling buildImplicitClassSupport for java.lang.System");
-
-        // System.out.println("Exiting as a test in visit (CompilationUnitDeclaration,CompilationUnitScope)...");
-        // System.exit(1);
+        JavaParser.cactionCompilationUnitDeclaration(package_name, filename, createJavaToken(node));
 
         if (JavaParser.verboseLevel > 0)
             System.out.println("Leaving enter (CompilationUnitDeclaration,CompilationUnitScope)");
@@ -834,6 +878,8 @@ class ecjASTVisitor extends ExtendedASTVisitor {
         if (JavaParser.verboseLevel > 0)
             System.out.println("Inside of enter (ConstructorDeclaration,ClassScope)");
 
+        assert(! node.isDefaultConstructor());
+        
         // char [] name = node.selector;
         // System.out.println("Inside of enter (ConstructorDeclaration,ClassScope) method name = " + node.selector);
         String name = new String(node.selector);
@@ -863,12 +909,13 @@ class ecjASTVisitor extends ExtendedASTVisitor {
             // System.out.println("     --- method typeParameters (empty) = " + node.typeParameters);
         }
 
-        if (JavaParser.verboseLevel > 2)
-            System.out.println("Push void as a return type for now (will be ignored because this is a constructor)");
-
-        if (JavaParser.verboseLevel > 2)
-            System.out.println("DONE: Push void as a return type for now (will be ignored because this is a constructor)");
-
+// TODO: REMOVE this !!!
+//        if (JavaParser.verboseLevel > 2)
+//            System.out.println("Push void as a return type for now (will be ignored because this is a constructor)");
+//
+//        if (JavaParser.verboseLevel > 2)
+//            System.out.println("DONE: Push void as a return type for now (will be ignored because this is a constructor)");
+//
         JavaParser.cactionConstructorDeclaration(name, createJavaToken(node));
 
         if (JavaParser.verboseLevel > 0)
@@ -881,27 +928,29 @@ class ecjASTVisitor extends ExtendedASTVisitor {
         if (JavaParser.verboseLevel > 0)
             System.out.println("Inside of exit (ConstructorDeclaration,ClassScope)");
 
-        // DQ (7/31/2011): Added more precise handling of statements to be collected from the statement stack.
-        int numberOfStatements = 0;
-        if (node.statements != null) {
-            numberOfStatements = node.statements.length;
-            if (JavaParser.verboseLevel > 0)
-                System.out.println("Inside of exit (ConstructorDeclaration,ClassScope): numberOfStatements = " + numberOfStatements);
-        }
+        if (! node.isDefaultConstructor()) {        
+            // DQ (7/31/2011): Added more precise handling of statements to be collected from the statement stack.
+            int numberOfStatements = 0;
+            if (node.statements != null) {
+                numberOfStatements = node.statements.length;
+                if (JavaParser.verboseLevel > 0)
+                    System.out.println("Inside of exit (ConstructorDeclaration,ClassScope): numberOfStatements = " + numberOfStatements);
+            }
 
-        // DQ (7/31/2011): I don't know if there is just one of these (super()) or if there could be many.
-        if (node.constructorCall != null) {
-               numberOfStatements++;
-            // System.out.println("Inside of exit (ConstructorDeclaration,ClassScope): increment the numberOfStatements = " + numberOfStatements);
-        }
+            // DQ (7/31/2011): I don't know if there is just one of these (super()) or if there could be many.
+            if (node.constructorCall != null) {
+                numberOfStatements++;
+                // System.out.println("Inside of exit (ConstructorDeclaration,ClassScope): increment the numberOfStatements = " + numberOfStatements);
+            }
           
-        if (node.constructorCall == null && (node.statements == null || node.statements.length == 0)) {
-            if (JavaParser.verboseLevel > 1)
-                System.out.println("    Side-visiting Constructor Declaration Header for " + node.getClass().getName());
-            JavaParserSupport.processConstructorDeclarationHeader(node, createJavaToken(node));
-        }
+            if (node.constructorCall == null && (node.statements == null || node.statements.length == 0)) {
+                if (JavaParser.verboseLevel > 1)
+                    System.out.println("    Side-visiting Constructor Declaration Header for " + node.getClass().getName());
+                JavaParserSupport.processConstructorDeclarationHeader(node, createJavaToken(node));
+            }
 
-        JavaParser.cactionConstructorDeclarationEnd(numberOfStatements, createJavaToken(node));
+            JavaParser.cactionConstructorDeclarationEnd(numberOfStatements, createJavaToken(node));
+        }
     }
 
 
@@ -1031,6 +1080,16 @@ class ecjASTVisitor extends ExtendedASTVisitor {
 
         if (JavaParser.verboseLevel > 0)
             System.out.println("In visit (ExplicitConstructorCall,BlockScope): node.accessMode = " + node.accessMode);
+
+        //
+        // Push the types of the parameters of the method that was matched for this call so that the
+        // translator can retrieve the exact method in question.
+        //
+        if (node.binding.parameters != null) {
+            for (int i = 0; i < node.binding.parameters.length; i++) {
+                JavaParserSupport.generateAndPushType(node.binding.parameters[i]);
+            }
+        }
 
         JavaParser.cactionExplicitConstructorCallEnd(node.isImplicitSuper(),
                                                      node.isSuperAccess(),
@@ -1343,17 +1402,40 @@ class ecjASTVisitor extends ExtendedASTVisitor {
             System.out.println("importReference (string) = " + importReference.toString());
 
         // DQ (8/22/2011): Read the referenced class or set of classes defined by the import statement.
-        if (! containsWildcard) { // Build support for a real class
-            JavaParserSupport.buildImplicitClassSupport(importReferenceWithoutWildcard);
+//        if (! containsWildcard) { // Build support for a real class
+/*
+        Class cls = null;
+        try {
+            cls = Class.forName(importReferenceWithoutWildcard);
         }
-        else { // just prime the system for an "import ... .*;"
-            //              JavaParser.cactionLookupClassType(importReferenceWithoutWildcard);
-            JavaParser.cactionBuildImplicitClassSupportStart(importReferenceWithoutWildcard);
-            JavaParser.cactionBuildImplicitClassSupportEnd(0, importReferenceWithoutWildcard);
+        catch (ClassNotFoundException e) {
+            System.out.println("(*) Caught error in JavaParserSupport (Parser failed)");
+            System.err.println(e);
+
+            System.exit(1);
         }
+        JavaParserSupport.preprocessClass(cls);
+*/
+        Class cls = JavaParserSupport.preprocessClass(importReferenceWithoutWildcard);
+        
+//        }
+//        else { // just prime the system for an "import ... .*;"
+//            //              JavaParser.cactionLookupClassType(importReferenceWithoutWildcard);
+//            JavaParser.cactionBuildImplicitClassSupportStart(importReferenceWithoutWildcard);
+//            JavaParser.cactionBuildImplicitClassSupportEnd(0, importReferenceWithoutWildcard);
+//        }
 
         // DQ (4/15/2011): I could not get the passing of a boolean to work, so I am just passing an integer.
-        JavaParser.cactionImportReference(importReferenceWithoutWildcard, containsWildcard, createJavaToken(node));
+        if (cls == null) { // assume this is the name of a package
+            JavaParser.cactionImportReference(node.isStatic(), importReferenceWithoutWildcard, "", containsWildcard, createJavaToken(node));
+        }
+        else {
+            String canonical_name = cls.getCanonicalName(),
+                   simple_name = cls.getSimpleName(),
+                   package_name = JavaParserSupport.getMainPackageName(cls, 0),
+                   type_name = canonical_name.substring(package_name.length() == 0 ? 0 : package_name.length() + 1);
+            JavaParser.cactionImportReference(node.isStatic(), package_name, type_name, containsWildcard, createJavaToken(node));
+        }
 
         if (JavaParser.verboseLevel > 0)
             System.out.println("Leaving enter (ImportReference,CompilationUnitScope)");
@@ -1372,7 +1454,7 @@ class ecjASTVisitor extends ExtendedASTVisitor {
         if (JavaParser.verboseLevel > 0)
             System.out.println("Inside of enter (Initializer,MethodScope)");
 
-        JavaParser.cactionInitializer(createJavaToken(node));
+        JavaParser.cactionInitializer(node.isStatic(), createJavaToken(node));
 
         if (JavaParser.verboseLevel > 0)
             System.out.println("Leaving enter (Initializer,MethodScope)");
@@ -1384,6 +1466,11 @@ class ecjASTVisitor extends ExtendedASTVisitor {
         // do nothing  by default
         if (JavaParser.verboseLevel > 0)
             System.out.println("Leaving exit (Initializer,MethodScope)");
+
+        JavaParser.cactionInitializerEnd(createJavaToken(node));
+
+        if (JavaParser.verboseLevel > 0)
+            System.out.println("Leaving exit (Initializer, MethodScope)");
     }
 
 
@@ -1434,7 +1521,7 @@ class ecjASTVisitor extends ExtendedASTVisitor {
     //*    Start of JavaDoc Nodes.                             *
     //*                                                        *
     //**********************************************************
-
+/*
     public boolean enter(Javadoc node, BlockScope scope) {
         if (JavaParser.verboseLevel > 0)
             System.out.println("Inside of enter (Javadoc,BlockScope)");
@@ -1889,7 +1976,7 @@ class ecjASTVisitor extends ExtendedASTVisitor {
         if (JavaParser.verboseLevel > 0)
             System.out.println("Leaving exit (JavadocSingleTypeReference,ClassScope)");
     }
-
+*/
 
     //**********************************************************
     //*                                                        *
@@ -2033,51 +2120,27 @@ class ecjASTVisitor extends ExtendedASTVisitor {
             System.out.println("Inside of enter (MessageSend,BlockScope)");
 
         // JavaParser.cactionMessageSend("abc");
-        JavaParserSupport.sourcePosition(node);
+//        JavaParserSupport.sourcePosition(node);
+//System.out.println("Computed Source Position");
 
-        String name                        = new String(node.selector);
+        String method_name                 = new String(node.selector);
         String associatedClassVariableName = node.receiver.toString();
-
-        // String associatedClassName = node.actualReceiverType.toString();
-        String associatedClassName = node.actualReceiverType.debugName();
-
 
         if (JavaParser.verboseLevel > 0) {
             System.out.println("MessageSend node = " + node);
 
-            System.out.println("     --- function call name = " + name);
+            System.out.println("     --- function call name = " + method_name);
 
             System.out.println("     --- function call from class name (binding)            = " + node.binding);
             System.out.println("     --- function call from class name (receiver)           = " + node.receiver);
             System.out.println("     --- function call from class name (associatedClassVar) = " + associatedClassVariableName);
-            System.out.println("     --- function call from class name (associatedClass)    = " + associatedClassName);
-
-            if (node.typeArguments != null) {
-                System.out.println("Sorry, not implemented in support for MessageSend: typeArguments");
-                for (int i = 0, typeArgumentsLength = node.typeArguments.length; i < typeArgumentsLength; i++) {
-                    // node.typeArguments[i].traverse(visitor, blockScope);
-                    System.out.println("     --- method send (function call) typeArguments = " + node.typeArguments[i]);
-                }
-            }
-
-            if (node.arguments != null) {
-                System.out.println("Sorry, not implemented in support for MessageSend: arguments");
-                int argumentsLength = node.arguments.length;
-                for (int i = 0; i < argumentsLength; i++) {
-                    // node.arguments[i].traverse(visitor, blockScope);
-                    System.out.println("     --- method arguments (function call arguments) arguments = " + node.arguments[i]);
-                }
-            }
+            System.out.println("     --- function call from class name (associatedClass)    = " + node.actualReceiverType.debugName());
         }
 
-        // Build this as an implicit class (if it is already built it will be detected and not rebuilt).
-        // System.out.println("Calling buildImplicitClassSupport for associatedClassName = " + associatedClassName);
-
-        // DQ (8/18/2011): check if the name starts with "java", if so it is an implicit class.
-        // JavaParserSupport.buildImplicitClassSupport(associatedClassName);
-        if (associatedClassName.startsWith("java") == true) {
-            JavaParserSupport.buildImplicitClassSupport(associatedClassName);
-        }
+        // 
+        // Make sure this class is available
+        //
+        JavaParserSupport.preprocessClass(node.actualReceiverType);
 
         // This is an error for test2001_04.java when println is found since it is not located in "java.lang" but is in java.io"
         // Maybe we need to process ""java.lang.System" and "java.io.String" and a few other classes explicitly.
@@ -2090,10 +2153,12 @@ class ecjASTVisitor extends ExtendedASTVisitor {
         // System.exit(1);
 
         // JavaParser.cactionMessageSend(name,associatedClassVariableName, createJavaToken(node));
+         JavaParser.cactionMessageSend(JavaParserSupport.getPackageName(node.actualReceiverType),
+                                       JavaParserSupport.getTypeName(node.actualReceiverType),
+                                       method_name,
+                                       createJavaToken(node));
 
-        JavaParser.cactionMessageSend(name,associatedClassName, createJavaToken(node));
-
-        if (JavaParser.verboseLevel > 0)
+         if (JavaParser.verboseLevel > 0)
             System.out.println("Leaving enter (MessageSend,BlockScope)");
 
         return true; // do nothing by node, keep traversing
@@ -2103,9 +2168,23 @@ class ecjASTVisitor extends ExtendedASTVisitor {
         if (JavaParser.verboseLevel > 0)
             System.out.println("Inside of exit (MessageSend,BlockScope)");
 
-        JavaParser.cactionMessageSendEnd(node.typeArguments == null ? 0 : node.typeArguments.length,
+        //
+        // Push the types of the parameters of the method that was matched for this call so that the
+        // translator can retrieve the exact method in question.
+        //
+        if (node.binding.parameters != null) {
+            for (int i = 0; i < node.binding.parameters.length; i++) {
+                JavaParserSupport.generateAndPushType(node.binding.parameters[i]);
+            }
+        }
+
+        String method_name = new String(node.selector);
+        JavaParser.cactionMessageSendEnd(node.binding.isStatic(),
+        		                         JavaParserSupport.getPackageName(node.actualReceiverType),
+                                         JavaParserSupport.getTypeName(node.actualReceiverType),
+                                         method_name,
+                                         node.typeArguments == null ? 0 : node.typeArguments.length,
                                          node.arguments == null ? 0 : node.arguments.length,
-                                         node.binding./*original().*/isStatic(),
                                          createJavaToken(node));
 
         if (JavaParser.verboseLevel > 0)
@@ -2155,8 +2234,9 @@ class ecjASTVisitor extends ExtendedASTVisitor {
         if (JavaParser.verboseLevel > 2)
             System.out.println("Process the return type = " + node.returnType);
 
+// TODO: REMOVE generateType
         // Build the return type in ROSE and push it onto the stack (astJavaTypeStack).
-        JavaParserSupport.generateType(node.returnType);
+//        JavaParserSupport.generateType(node.returnType);
 
         if (JavaParser.verboseLevel > 2)
             System.out.println("DONE: Process the return type = " + node.returnType);
@@ -2388,7 +2468,8 @@ class ecjASTVisitor extends ExtendedASTVisitor {
         // We need to find the qualified name for the associated type name (it should be unique).
         // This has to be handled on the Java side...
 
-        String qualifiedTypeName = JavaParserSupport.hashmapOfQualifiedNamesOfClasses.get(name);
+//      String qualifiedTypeName = JavaParserSupport.hashmapOfQualifiedNamesOfClasses.get(name);
+        String qualifiedTypeName = node.resolvedType.debugName();
 
         if (JavaParser.verboseLevel > 0)
             System.out.println("At top of exit (ParameterizedSingleTypeReference,BlockScope) qualifiedTypeName = " + qualifiedTypeName);
@@ -2512,7 +2593,7 @@ class ecjASTVisitor extends ExtendedASTVisitor {
                                             ? new String(node.actualReceiverType.qualifiedPackageName()) + "."
                                             : "")
                                      + type_name;
-            JavaParserSupport.buildImplicitClassSupport(full_type_name);
+            JavaParserSupport.preprocessClass(full_type_name);
         }
           
         strbuf = new StringBuffer();
@@ -2561,7 +2642,7 @@ class ecjASTVisitor extends ExtendedASTVisitor {
                                             ? new String(node.actualReceiverType.qualifiedPackageName()) + "."
                                             : "")
                                      + type_name;
-            JavaParserSupport.buildImplicitClassSupport(full_type_name);
+            JavaParserSupport.preprocessClass(full_type_name);
         }
           
         strbuf = new StringBuffer();
@@ -2665,14 +2746,19 @@ class ecjASTVisitor extends ExtendedASTVisitor {
         if (JavaParser.verboseLevel > 0)
             System.out.println("Inside of enter (QualifiedTypeReference,BlockScope)");
 
+// TODO: REMOVE generateType
+/*
         if (node.resolvedType != null) {
             JavaParserSupport.generateType(node);
         }
         else {
             System.out.println("Sorry, not implemented SingleTypeReference: node.resolvedType == NULL");
         }
+*/
 
-        JavaParser.cactionTypeReference(node.resolvedType.debugName(), createJavaToken(node));
+        JavaParser.cactionTypeReference(JavaParserSupport.getPackageName(node.resolvedType),
+                                        JavaParserSupport.getTypeName(node.resolvedType),
+                                        createJavaToken(node));
 
         if (JavaParser.verboseLevel > 0)
             System.out.println("Leaving enter (QualifiedTypeReference,BlockScope)");
@@ -2691,14 +2777,19 @@ class ecjASTVisitor extends ExtendedASTVisitor {
         if (JavaParser.verboseLevel > 0)
             System.out.println("Inside of enter (QualifiedTypeReference,ClassScope)");
 
+// TODO: REMOVE generateType
+/*
         if (node.resolvedType != null) {
             JavaParserSupport.generateType(node);
         }
         else {
             System.out.println("Sorry, not implemented SingleTypeReference: node.resolvedType == NULL");
         }
+*/
 
-        JavaParser.cactionTypeReference(node.resolvedType.debugName(), createJavaToken(node));
+        JavaParser.cactionTypeReference(JavaParserSupport.getPackageName(node.resolvedType),
+                                        JavaParserSupport.getTypeName(node.resolvedType),
+                                        createJavaToken(node));
 
         if (JavaParser.verboseLevel > 0)
             System.out.println("Leaving enter (QualifiedTypeReference,ClassScope)");
@@ -2766,7 +2857,35 @@ class ecjASTVisitor extends ExtendedASTVisitor {
             System.out.println("node.genericCast = " + node.genericCast);
         }
 
-        JavaParser.cactionSingleNameReference(varRefName, createJavaToken(node));
+        if (node.binding instanceof TypeBinding) { // is this name a type?
+            TypeBinding type_binding = (TypeBinding) node.binding;
+            assert(type_binding.canBeInstantiated());
+            if (JavaParser.verboseLevel > 0) {
+                System.out.println("The  Single name referenced " + varRefName + " is bound to type " + type_binding.debugName());
+            }
+            JavaParserSupport.preprocessClass(type_binding);
+            
+            JavaParser.cactionTypeReference(JavaParserSupport.getPackageName(type_binding),
+                                            JavaParserSupport.getTypeName(type_binding),
+                                            createJavaToken(node));
+        }
+        else { // the name is a variable
+        	String package_name = "",
+        	       type_name = "";
+
+        	if (node.localVariableBinding() == null) { // not a local variable
+            	TypeBinding type_binding = node.actualReceiverType;
+                assert(type_binding.canBeInstantiated());
+                if (JavaParser.verboseLevel > 0) {
+                    System.out.println("The  Single name referenced " + varRefName + " is bound to type " + type_binding.debugName());
+                }
+                JavaParserSupport.preprocessClass(type_binding);
+                package_name = JavaParserSupport.getPackageName(type_binding);
+                type_name = JavaParserSupport.getTypeName(type_binding);
+        	}
+
+        	JavaParser.cactionSingleNameReference(package_name, type_name, varRefName, createJavaToken(node));
+        }
 
         if (JavaParser.verboseLevel > 0)
             System.out.println("Leaving enter (SingleNameReference,BlockScope)");
@@ -2804,14 +2923,24 @@ class ecjASTVisitor extends ExtendedASTVisitor {
         if (JavaParser.verboseLevel > 0)
             System.out.println("Inside of enter (SingleTypeReference,BlockScope)");
 
+// TODO: REMOVE generateType
+/*
         if (node.resolvedType != null) {
             JavaParserSupport.generateType(node);
         }
         else {
             System.out.println("Sorry, not implemented SingleTypeReference: node.resolvedType == NULL");
         }
-
-        JavaParser.cactionTypeReference(node.resolvedType.debugName(), createJavaToken(node));
+*/
+        if (node.resolvedType.canBeInstantiated()) {
+            if (JavaParser.verboseLevel > 0)
+                System.out.println("The single type referenced is bound to type " + node.resolvedType.debugName());        
+            JavaParserSupport.preprocessClass(node.resolvedType);
+        }
+                    
+        JavaParser.cactionTypeReference(JavaParserSupport.getPackageName(node.resolvedType),
+                                        JavaParserSupport.getTypeName(node.resolvedType),
+                                        createJavaToken(node));
 
         if (JavaParser.verboseLevel > 0)
             System.out.println("Leaving enter (SingleTypeReference,BlockScope)");
@@ -2830,14 +2959,19 @@ class ecjASTVisitor extends ExtendedASTVisitor {
         if (JavaParser.verboseLevel > 0)
             System.out.println("Inside of enter (SingleTypeReference,BlockScope)");
          
+// TODO: REMOVE generateType
+/*
         if (node.resolvedType != null) {
             JavaParserSupport.generateType(node);
         }
         else {
             System.out.println("Sorry, not implemented SingleTypeReference: node.resolvedType == NULL");
         }
+*/
 
-        JavaParser.cactionTypeReference(node.resolvedType.debugName(), createJavaToken(node));
+        JavaParser.cactionTypeReference(JavaParserSupport.getPackageName(node.resolvedType),
+                                        JavaParserSupport.getTypeName(node.resolvedType),
+                                        createJavaToken(node));
           
         if (JavaParser.verboseLevel > 0)
             System.out.println("Leaving enter (SingleTypeReference,BlockScope)");
@@ -2858,7 +2992,8 @@ class ecjASTVisitor extends ExtendedASTVisitor {
 
         // System.out.println("Inside of enter (StringLiteral,BlockScope): node = " + node);
         String literal = new String(node.source());
-        System.out.println("Inside of enter (StringLiteral,BlockScope): node = " + literal);
+// TODO: REMOVE THIS !
+//System.out.println("Inside of enter (StringLiteral,BlockScope): node = " + literal);
 
         JavaParser.cactionStringLiteral(literal, createJavaToken(node));
 
@@ -3060,10 +3195,65 @@ class ecjASTVisitor extends ExtendedASTVisitor {
             System.out.println("Leaving exit (TryStatement,BlockScope)");
     }
 
-
+    //
+    // TODO: In the case of a local class declaration, we need to invoke traverseClass to
+    // perform a prepass over the class member declarations to set up the symbol table. The
+    // same thing needs to happen for anonymous classes. 
+    //
     public boolean enter(TypeDeclaration node, BlockScope scope) {
         if (JavaParser.verboseLevel > 0)
             System.out.println("visit TypeDeclaration -- BlockScope");
+
+        assert(node.binding instanceof LocalTypeBinding); 
+        
+        LocalTypeBinding binding = (LocalTypeBinding) node.binding;
+        assert(binding.enclosingMethod != null);
+        ReferenceBinding enclosing_type_binding = binding.enclosingMethod.declaringClass;
+        String enclosing_type_name = enclosing_type_binding.debugName().replace('.', '$');
+        String typename = enclosing_type_name + "$";
+        int count = 0;
+        if (binding.isAnonymousType()) {
+            if (anonymousClassCounter.containsKey(enclosing_type_name))
+                count = anonymousClassCounter.get(enclosing_type_name);
+            typename = typename + (count + 1);
+        }
+        else {
+            String simple_type_name = binding.debugName();
+            if (! localClassCounter.containsKey(enclosing_type_name)) {
+                localClassCounter.put(enclosing_type_name, new HashMap<String, Integer>());
+            }
+            if (localClassCounter.get(enclosing_type_name).containsKey(simple_type_name))
+                count = localClassCounter.get(enclosing_type_name).get(simple_type_name);
+            localClassCounter.get(enclosing_type_name).put(simple_type_name, new Integer(count));
+            typename = typename + (count + 1) + simple_type_name;
+        }
+System.out.println("Assuming the type name is: " + typename);
+        Class cls;
+        try {
+System.out.println("About to lookup type name: " + typename);
+            cls = Class.forName(typename);
+System.out.println("Successfully did the forName lookup of type: " + typename);
+assert(cls != null); 
+assert(cls.getName() != null);
+assert(cls.getSimpleName() != null);
+            String class_name = cls.getName();
+System.out.println("I am here - 2: " + class_name);
+            String simple_name = cls.getSimpleName();
+System.out.println("I am here - 3: " + simple_name);
+// TODO: REMOVE THIS
+System.out.println(";  The class name is " + class_name +
+                   ";  The simple class name is " + simple_name);
+//            assert(cls.getEnclosingClass() == null); // not an inner class
+//            insertType(class_package, cls); // keep track of top-level classes that have been seen
+//            identifyUserDefinedTypes(cls, node);
+        }
+        catch (ClassNotFoundException e) {
+            System.out.println("(*) Caught error in JavaParserSupport (Parser failed)");
+            System.err.println(e);
+
+            System.exit(1);
+        }
+System.out.println("Successfully looked up type name: " + typename);
 
         enterTypeDeclaration(node);
         

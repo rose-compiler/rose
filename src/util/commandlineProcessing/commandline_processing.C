@@ -365,7 +365,11 @@ CommandlineProcessing::generateOptionList ( Rose_STL_Container<string> & argList
           if ( (*i).substr(0,prefixLength) == inputPrefix )
              {
             // get the rest of the string as the option
-               optionList.push_back((*i).substr(prefixLength));
+               string option = (*i).substr(prefixLength);
+               optionList.push_back(option);
+               if (option == "classpath" || option == "cp" && i < argList.end()) { // if a classpath grap the next argument
+                   optionList.push_back(*(++i));
+               }
 
             // keep track of elements so that they can be deleted later (after exit from loop over the eleents)
             // deleteList.push_back(*i);
