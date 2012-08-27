@@ -1,0 +1,99 @@
+----------------------------------------------------------------------------
+CodeThorn 1.0 Alpha
+----------------------------------------------------------------------------
+
+CodeThorn is a tool for analyzing C/C++ program, combining approaches
+from data flow analysis, constraint-based analysis, and model
+checking.
+
+The main focus in the development of CodeThorn is the exploration of
+program analysis algorithms in combining above approaches. Therefore
+the target language is currently restricted to a small (while-like)
+subset of C++ with functions.
+
+The analysis is performed on the high-level ROSE AST. CodeThorn
+maintains a close one-to-one mapping of analysis information to the
+ROSE AST nodes.
+
+The implemented base approach is an instance of a general framework. CodeThorn
+generates several visualizations as dot output for analysis results:
+
+1) AST (ast.dot) : blue nodes are labeled and correspond to one or more nodes
+   in the CFG, semantics of white nodes are handled by the transfer functions.
+2) Control flow graph (cfg.dot) : a control flow graph (as usual)
+3) Transition Graph (transitiongraph1.dot) : a graph showing the computed
+   system states. The nodes represent System States and consist of:
+   a) a label, representing an abstract program counter
+   b) a Property State
+   c) a Constraint Set
+   d) Input/Output and Exit information of the program (not finished in Alpha yet)
+   The edges represent state transitions and correspond to cfg edges. They are labeled
+   with the respective statement which has been analyzed by a transfer function.
+
+4) A folded Transition Graph (transitiongraph2.dot) : represents
+   essentially the same information as the transition graph above, but
+   folded for each program location. System states are represented as
+   single grey rectangles and associated as block structure with its
+   respective program location (represented as red blocks (with a
+   label)).
+   Edges: green edges represent true-branches
+          red edges represent false-branches
+		  black edges represent forward-edges
+          blue edges represent backward-edges (in loops)
+
+   "make viz" invokes dot to translate all visualizations to ps files. The ps files
+   are stored in the directory "viz".
+
+----------------------------------------------------------------------------
+AVAILABILITY:
+----------------------------------------------------------------------------
+
+CodeThorn is maintained as a (tracking) branch of ROSE. Contributions are
+pushed to the ROSE repository frequently. The latest version of CodeThorn
+is available on github at: git://github.com/mschordan/rose.git
+
+Website: http://staff.technikum-wien.at/~schordan/codethorn
+
+If you are interested in ROSE but not CodeThorn check out ROSE from:
+git://github.com/rose-compiler/rose.git
+
+----------------------------------------------------------------------------
+CodeThorn INSTALLATION:
+----------------------------------------------------------------------------
+1) install ROSE
+2) set the following environment variables:
+   ROSE_INCLUDE_DIR=
+   ROSE_LIB_DIR=
+   BOOST_CPPFLAGS=
+   LD_LIBRARY_PATH=
+
+ROSE_INCLUDE_DIR should refer to the include directory of installed ROSE
+e.g. /home/myhomedir/roseinstall/include
+
+ROSE_LIB_DIR should refer to the library where the rose libary can be found
+e.g. /home/myhomedir/roseinstall/lib
+
+BOOST_CPPFLAGS should include flags which are required to compile with boost libs
+e.g. -pthread -I/home/myhomedir/boostinstall/include
+
+LD_LIBRARY_PATH should include the ROSE and BOOST libs
+e.g. LD_LIBRARY_PATH=/home/myhomedir/roseinstall/lib:/home/myhomedir/boostinstall/lib
+
+cd codethorn/src
+make
+make check
+
+----------------------------------------------------------------------------
+LICENSE
+----------------------------------------------------------------------------
+
+We use the a similar license as the ROSE project. CodeThorn is maintained as a subproject
+of ROSE. See COPYING.
+
+----------------------------------------------------------------------------
+ALPHA ISSUES
+----------------------------------------------------------------------------
+
+* operator? is not finished yet. 
+* variable id mappings are not used yet.
+* i/o operations are not recorded in system state(s) yet.

@@ -1,0 +1,570 @@
+/*********************************
+ * Author: Markus Schordan, 2012 *
+ *********************************/
+
+#include "Analyzer.h"
+
+string Analyzer::nodeToString(SgNode* node) {
+  string textual;
+  if(node->attributeExists("info"))
+	 textual=node->getAttribute("info")->toString()+":";
+  return textual+SgNodeHelper::nodeToString(node);
+}
+
+Analyzer::Analyzer():optionCompactStateString(true) {
+  // intentionally empty
+}
+
+Analyzer::~Analyzer() {
+  // intentionally empty, nothing to free explicitly
+}
+
+void Analyzer::recordTransition(const EState* sourceState, Edge e, const EState* targetState) {
+  transitionGraph.push_back(Transition(sourceState,e,targetState));
+}
+
+void Analyzer::printStatusMessage() {
+  const string csi = "\33[";
+  const string white = csi+"37m";
+  const string red = csi+"31m";
+  const string magenta = csi+"35m";
+  const string cyan = csi+"36m";
+  const string blue = csi+"34m";
+  const string startOfLine = csi+"0G";
+  const string hideCursor = csi+"?25l";
+  const string bold_on = csi+"1m";
+  static int lastNumEStates=0;
+  if(isEmptyWorkList()) {
+	//cout << "Empty Work List: empty."<<endl;
+	return;
+  }
+  const EState* topWorkListeState=topWorkList();
+  if(topWorkListeState) {
+	//cout << "DEBUG: Working on: "<<topWorkList()->toString()<<endl;
+  } else {
+	cerr << "INTERNAL ERROR: null pointer in work list. Bailing out. ";
+	exit(1);
+  }
+	// report we are alife
+  if((eStateSet.size()-lastNumEStates)>=displayDiff) {
+	lastNumEStates=eStateSet.size();
+	//cout<<startOfLine;
+	//cout<<hideCursor;
+	//cout<<bold_on;
+	cout<<white<<"Number of states/estates/transitions: ";
+	cout<<magenta<<stateSet.size()
+		<<white<<"/"
+		<<cyan<<eStateSet.size()
+		<<white<<"/"
+		<<blue<<transitionGraph.size()
+		<<white<<"";
+	cout<<endl;
+  }
+}
+
+void Analyzer::runSolver1() {
+  displayDiff=0;
+  while(!isEmptyWorkList()) {
+	printStatusMessage();
+	displayDiff=1000;
+	const EState* currentEStatePtr=popWorkList();
+	assert(currentEStatePtr);
+	Flow edgeSet=flow.outEdges(currentEStatePtr->label);
+	//cerr << "DEBUG: edgeSet size:"<<edgeSet.size()<<endl;
+	for(Flow::iterator i=edgeSet.begin();i!=edgeSet.end();++i) {
+	  //cerr << "DEBUG: Before transferFunction: eState="<<currentEStatePtr->toString()<<endl;
+	  EState newEState=transferFunction(*i,currentEStatePtr);
+	  if(newEState.label!=NO_ESTATE && (!newEState.constraints.deqConstraintExists())) {
+		//cout << "DEBUG: Adding to Worklist:"<<newEState.toString()<<endl;
+		const EState* newEStatePtr=addToWorkListIfNew(newEState);
+		recordTransition(currentEStatePtr,*i,newEStatePtr);
+	  } else {
+		//cout << "DEBUG: NO_ESTATE (transition not recorded)"<<endl;
+	  }
+	  //cerr << "DEBUG: After transferFunction: eState="<<newEState.toString()<<endl;
+	}
+  }
+  displayDiff=0;
+  printStatusMessage();
+  cout << "analysis finished (worklist is empty)."<<endl;
+}
+
+const EState* Analyzer::addToWorkListIfNew(EState eState) {
+  if(!eStateSet.eStateExists(eState)) {
+	eStateSet.insert(eState);
+	const EState* p=eStateSet.eStatePtr(eState);
+	addToWorkList(p);
+	return p;
+  } else {
+	//cout << "DEBUG: State already exists. Not added:"<<eState.toString()<<endl;
+	const EState* p=eStateSet.eStatePtr(eState);
+	return p;
+  }
+}
+
+EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState currentEState, Label targetLabel) {
+  //cout << "INFO1: we are at "<<astTermWithNullValuesToString(nextNodeToAnalyze1)<<endl;
+  SgNode* initName0=decl->get_traversalSuccessorByIndex(1); // get-InitializedName
+  if(initName0) {
+	if(SgInitializedName* initName=isSgInitializedName(initName0)) {
+	  SgSymbol* initDeclVar=initName->search_for_symbol_from_symbol_table();
+	  SgName initDeclVarName=initDeclVar->get_name();
+	  string initDeclVarNameString=initDeclVarName.getString();
+	  //cout << "INIT-DECLARATION: var:"<<initDeclVarNameString<<"=";
+	  SgInitializer* initializer=initName->get_initializer();
+	  ConstraintSet cset=currentEState.constraints;
+	  if(SgAssignInitializer* assignInitializer=isSgAssignInitializer(initializer)) {
+		//cout << "initalizer found:"<<endl;
+		SgExpression* rhs=assignInitializer->get_operand_i();
+		State newState=analyzeAssignRhs(*currentEState.state,initDeclVarNameString,rhs,cset);
+		stateSet.insert(newState);
+		return EState(targetLabel,stateSet.statePtr(newState),cset);
+	  } else {
+		//cout << "no initializer (OK)."<<endl;
+		State newState=*currentEState.state;
+		newState[initDeclVarNameString]=ANALYZER_INT_TOP;
+		stateSet.insert(newState);
+		return EState(targetLabel,stateSet.statePtr(newState),cset);
+	  }
+	} else {
+	  cerr << "Error: in declaration (@initializedName) no variable found ... bailing out."<<endl;
+	  exit(1);
+	}
+  } else {
+	cerr << "Error: in declaration: no variable found ... bailing out."<<endl;
+	exit(1);
+  }
+}
+
+
+
+EState Analyzer::transferFunction(Edge edge, const EState* eState) {
+  assert(edge.source==eState->label);
+
+  // we do not pass information on the local edge
+  if(edge.type==EDGE_LOCAL) {
+	EState noEState;
+	noEState.label=NO_ESTATE;
+	return noEState;
+  }
+
+  EState currentEState=*eState;
+  State currentState=*currentEState.state;
+  ConstraintSet cset=currentEState.constraints;
+  // 1. we handle the edge as outgoing edge
+  SgNode* nextNodeToAnalyze1=cfanalyzer->getNode(edge.source);
+  SgNode* targetNode=cfanalyzer->getNode(edge.target);
+  assert(nextNodeToAnalyze1);
+
+  if(edge.type==EDGE_CALL) {
+	// 1) obtain actual parameters from source
+	// 2) obtain formal parameters from target
+	// 3) eval each actual parameter and assign result to formal parameter in state
+	// 4) create new eState
+
+	// ad 1)
+	SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(getLabeler()->getNode(edge.source));
+	assert(funCall);
+	SgExpressionPtrList& actualParameters=SgNodeHelper::getFunctionCallActualParameterList(funCall);
+	// ad 2)
+	SgFunctionDefinition* funDef=isSgFunctionDefinition(getLabeler()->getNode(edge.target));
+	SgInitializedNamePtrList& formalParameters=SgNodeHelper::getFunctionDefinitionFormalParameterList(funDef);
+	assert(funDef);
+	// ad 3)
+	State newState=currentState;
+	SgInitializedNamePtrList::iterator i=formalParameters.begin();
+	SgExpressionPtrList::iterator j=actualParameters.begin();
+	while(i!=formalParameters.end() || j!=actualParameters.end()) {
+	  SgInitializedName* name=*i;
+	  VariableName varNameString=name->get_name();
+	  SgExpression* expr=*j;
+	  SingleEvalResultConstInt evalResult=exprAnalyzer.evalConstInt(expr,currentEState);
+	  int val;
+	  if(evalResult.isConstInt()) val=evalResult.intValue();
+	  if(evalResult.isTop()) val=ANALYZER_INT_TOP;
+	  if(evalResult.isBot()) val=ANALYZER_INT_BOT;
+	  newState[varNameString]=val;
+	  ++i;++j;
+	}
+	assert(i==formalParameters.end() && j==actualParameters.end()); // must hold if #fparams==#aparams (TODO: default values)
+	// ad 4
+	stateSet.insert(newState);
+	return EState(edge.target,stateSet.statePtr(newState),cset);
+  }
+
+  // "return x;": add $return=eval() [but not for "return f();"]
+  if(isSgReturnStmt(nextNodeToAnalyze1) && !SgNodeHelper::Pattern::matchReturnStmtFunctionCallExp(nextNodeToAnalyze1)) {
+	SgNode* expr=SgNodeHelper::getFirstChild(nextNodeToAnalyze1);
+	ConstraintSet cset=currentEState.constraints;
+	State newState=analyzeAssignRhs(*(currentEState.state),string("$return"),expr,cset);
+	stateSet.insert(newState);
+	return EState(edge.target,stateSet.statePtr(newState),cset);
+  }
+
+  if(getLabeler()->isFunctionCallReturnLabel(edge.source)) {
+	// case 1: return f(); pass eState trough
+	if(SgNodeHelper::Pattern::matchReturnStmtFunctionCallExp(nextNodeToAnalyze1)) {
+	  EState newEState=currentEState;
+	  newEState.label=edge.target;
+	  return newEState;
+	}
+	// case 2: x=f(); bind variable x to value of $return
+	if(SgNodeHelper::Pattern::matchExprStmtAssignOpVarRefExpFunctionCallExp(nextNodeToAnalyze1)) {
+	  SgNode* lhs=SgNodeHelper::getLhs(SgNodeHelper::getExprStmtChild(nextNodeToAnalyze1));
+	  string lhsVarName;
+	  bool isLhsVar=ExprAnalyzer::variable(lhs,lhsVarName);
+	  assert(isLhsVar); // must hold
+
+	  State newState=*currentEState.state;
+	  string returnVarName="$return";
+	  int evalResult=newState[returnVarName];
+	  newState.deleteVar(returnVarName);
+	  newState[lhsVarName]=evalResult;
+	  stateSet.insert(newState);
+	  ConstraintSet cset=currentEState.constraints;
+	  return EState(edge.target,stateSet.statePtr(newState),cset);
+	}
+	// case 3: f(); remove $return from state (discard value)
+	if(SgNodeHelper::Pattern::matchExprStmtFunctionCallExp(nextNodeToAnalyze1)) {
+	  State newState=*currentEState.state;
+	  string returnVarName="$return";
+	  newState.deleteVar(returnVarName);
+	  stateSet.insert(newState);
+	  ConstraintSet cset=currentEState.constraints;
+	  return EState(edge.target,stateSet.statePtr(newState),cset);
+
+	}
+  }
+  // special case external call
+  if(SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze1) 
+	 ||edge.type==EDGE_EXTERNAL
+	 ||edge.type==EDGE_CALLRETURN) {
+	EState newEState=currentEState;
+	newEState.label=edge.target;
+	return newEState;
+  }
+  
+  //cout << "INFO1: we are at "<<astTermWithNullValuesToString(nextNodeToAnalyze1)<<endl;
+  if(SgVariableDeclaration* decl=isSgVariableDeclaration(nextNodeToAnalyze1)) {
+	return analyzeVariableDeclaration(decl,currentEState, edge.target);
+  }
+
+  if(isSgExprStatement(nextNodeToAnalyze1)) {
+	SgNode* nextNodeToAnalyze2=SgNodeHelper::getExprStmtChild(nextNodeToAnalyze1);
+	assert(nextNodeToAnalyze2);
+	//cout << "INFO2: we are at "<<astTermWithNullValuesToString(nextNodeToAnalyze2)<<endl;
+	if(edge.type==EDGE_TRUE || edge.type==EDGE_FALSE) {
+	  SingleEvalResultConstInt evalResult=exprAnalyzer.evalConstInt(nextNodeToAnalyze2,currentEState);
+	  if((evalResult.isTrue() && edge.type==EDGE_TRUE) || (evalResult.isFalse() && edge.type==EDGE_FALSE) || evalResult.isTop()) {
+		// pass on EState
+		EState newEState=evalResult.eState;
+		newEState.label=edge.target;
+
+		// merge with collected constraints of expr (exprConstraints), and invert for false branch
+		if(edge.type==EDGE_TRUE) {
+		  newEState.constraints=evalResult.eState.constraints+evalResult.exprConstraints;
+		} else if(edge.type==EDGE_FALSE) {
+		  ConstraintSet s1=evalResult.eState.constraints;
+		  ConstraintSet s2=evalResult.exprConstraints.invertedConstraints();
+		  newEState.constraints=s1+s2;
+		}
+		return newEState;
+	  } else {
+		// we determined not to be on an execution path, therefore return EState with NO_ESTATE
+		EState noEState;
+		noEState.label=NO_ESTATE;
+		return noEState;
+	  }
+
+	}
+	if(isSgConditionalExp(nextNodeToAnalyze2)) {
+	  //cout << "Conditional expression found [ignoring]"<<endl;
+	  ConstraintSet cset=currentEState.constraints;
+	  State newState=*currentEState.state;
+	  //SgNode* condition=SgNodeHelper::getCond(nextNodeToAnalyze2);
+	  //SingleEvalResultConstInt evalResult=exprAnalyzer.evalConstInt(nextNodeToAnalyze2,currentEState);
+	  // TODO: resolve condexp 
+	  //Constraint c(Constraint::DEQ_VAR_CONST,string("$exit"), 1);
+	  //cset.insert(c);
+	  //stateSet.insert(newState);
+	  return EState(edge.target,stateSet.statePtr(newState),cset);
+	}
+
+	if(isSgAssignOp(nextNodeToAnalyze2)) {
+	  // analyze assignment and return new eState
+	  // currentEState
+	  ConstraintSet cset=currentEState.constraints;
+	  State newState=analyzeAssignOp(*currentEState.state,nextNodeToAnalyze2,cset);
+	  stateSet.insert(newState);
+	  return EState(edge.target,stateSet.statePtr(newState),cset);
+	}
+  }
+  // nothing to analyze, just create new eState (from same State) with target label of edge
+  // can be same state if edge is a backedge to same cfg node
+  EState newEState=currentEState;
+  newEState.label=edge.target;
+  return newEState;
+}
+
+void Analyzer::initializeSolver1(std::string functionToStartAt,SgNode* root) {
+  std::string funtofind=functionToStartAt;
+  MyAst completeast(root);
+  startFunRoot=completeast.findFunctionByName(funtofind);
+  if(startFunRoot==0) { 
+    std::cerr << "Function '"<<funtofind<<"' not found.\n"; exit(1);
+  }
+  cout << "INIT: Initializing AST node info."<<endl;
+  initAstNodeInfo(root);
+
+  cout << "INIT: Creating Labeler."<<endl;
+  Labeler* labeler= new Labeler(root);
+  cout << "INIT: Creating CFAnalyzer."<<endl;
+  cfanalyzer=new CFAnalyzer(labeler);
+  cout << "INIT: Building CFG."<<endl;
+  flow=cfanalyzer->flow(root);
+  cout << "INIT: Intra-Flow OK. (size: " << flow.size() << " edges)"<<endl;
+  InterFlow interFlow=cfanalyzer->interFlow(flow);
+  cout << "INIT: Inter-Flow OK. (size: " << interFlow.size()*2 << " edges)"<<endl;
+  cfanalyzer->intraInterFlow(flow,interFlow);
+  cout << "INIT: IntraInter-CFG OK. (size: " << flow.size() << " edges)"<<endl;
+
+  //SgNode* startNode=isSgFunctionDefinition(startFunRoot)->get_body();
+  // create empty state
+  State emptyState;
+  stateSet.insert(emptyState);
+  const State* emptyStateStored=stateSet.statePtr(emptyState);
+  assert(emptyStateStored);
+  //cout << "INIT: local empty state:"<<&emptyState<<endl;
+  //cout << "INIT: emptyStateStored:"<<emptyStateStored<<endl;
+  //cout << "INIT: stateSet:"<<stateSet.toString()<<endl;
+
+  assert(cfanalyzer);
+  EState eState(cfanalyzer->getLabel(startFunRoot),emptyStateStored);
+  
+  if(SgProject* project=isSgProject(root)) {
+	cout << "STATUS: Number of global variables: ";
+	list<SgVariableDeclaration*> globalVars=SgNodeHelper::listOfGlobalVars(project);
+	cout << globalVars.size()<<endl;
+	for(list<SgVariableDeclaration*>::iterator i=globalVars.begin();i!=globalVars.end();++i) {
+	  eState=analyzeVariableDeclaration(*i,eState,eState.label);
+	}
+  } else {
+	cout << "INIT: no global scope.";
+  }	
+
+  // TODO: delete global vars which are not used in the analyzed program (not necessary in PState)
+  
+  //cout << "INIT: local "<<eState.toString()<<endl;
+  eStateSet.insert(eState);
+  const EState* currentEState=eStateSet.eStatePtr(eState);
+  assert(currentEState);
+  //cout << "INIT: "<<eStateSet.toString()<<endl;
+  addToWorkList(currentEState);
+  cout << "INIT: start state: "<<currentEState->toString()<<endl;
+  cout << "INIT: finished."<<endl;
+}
+
+string Analyzer::transitionGraphDotHtmlNode(Label lab) {
+  string s;
+  s+="L"+Labeler::labelToString(lab)+" [shape=none, margin=0, label=";
+  s+="<\n";
+  s+="<TABLE BORDER=\"0\"  CELLBORDER=\"1\" CELLSPACING=\"0\" CELLPADDING=\"4\">\n";
+  s+="<TR>\n";
+  s+="<TD ROWSPAN=\"1\">";
+  s+="\""+SgNodeHelper::nodeToString(getLabeler()->getNode(lab))+"\"";
+  s+="</TD>\n";
+  //set<const State*> inEdgeStateSet=transitionInEdgeStateSetOfLabel(lab);
+  //set<const State*> outEdgeStateSet=transitionOutEdgeStateSetOfLabel(lab);
+  string sinline;
+  string soutline;
+
+  set<const EState*> eStateSet=transitionSourceEStateSetOfLabel(lab);
+  for(set<const EState*>::iterator j=eStateSet.begin();j!=eStateSet.end();++j) {
+	  sinline+="<TD PORT=\""+eStateToString(*j)+"\">";
+	  sinline+=eStateToString(*j);
+	  sinline+="</TD>";
+  }
+  if(sinline=="") sinline="<TD>empty</TD>";
+  if(soutline=="") soutline="<TD>empty</TD>";
+  s+=sinline+"</TR>\n";
+  //s+="<TR>"+soutline+"</TR>\n";
+  s+="</TABLE>";
+  s+=">];\n";
+  return s;
+}
+
+string Analyzer::stateToString(const State* state) {
+  stringstream ss;
+  if(optionCompactStateString)
+	ss<<"S"<<state;
+  else
+	ss<<state->toString();
+  return ss.str();
+}
+
+string Analyzer::eStateToString(const EState* eState) {
+  stringstream ss;
+  if(optionCompactStateString)
+	ss<<"ES"<<eState;
+  else
+	ss << eState->toString();
+  return ss.str();
+}
+
+string Analyzer::transitionGraphToDot() {
+  stringstream ss;
+  for(TransitionGraph::iterator j=transitionGraph.begin();j!=transitionGraph.end();++j) {
+	ss <<"\""<<eStateToString((*j).source)<<"\""<< "->" <<"\""<<eStateToString((*j).target)<<"\"";
+    ss <<" [label=\""<<SgNodeHelper::nodeToString(getLabeler()->getNode((*j).edge.source));
+	ss <<"["<<(*j).edge.typeToString()<<"]";
+	ss <<"\"]"<<";"<<endl;
+  }
+  return ss.str();
+}
+
+set<const EState*> Analyzer::transitionSourceEStateSetOfLabel(Label lab) {
+  set<const EState*> eStateSet;
+  for(TransitionGraph::iterator j=transitionGraph.begin();j!=transitionGraph.end();++j) {
+	if((*j).source->label==lab)
+	  eStateSet.insert((*j).source);
+  }
+  return eStateSet;
+}
+
+string Analyzer::foldedTransitionGraphToDot() {
+  stringstream ss;
+  ss<<"digraph html {\n";
+  // generate nodes
+  LabelSet labelSet=flow.nodeLabels();
+  for(LabelSet::iterator i=labelSet.begin();i!=labelSet.end();++i) {
+	ss<<transitionGraphDotHtmlNode(*i);
+  }
+  // generate edges
+  for(TransitionGraph::iterator j=transitionGraph.begin();j!=transitionGraph.end();++j) {
+	const EState* source=(*j).source;
+	const EState* target=(*j).target;
+	ss <<"L"<<Labeler::labelToString(source->label)<<":"<<"\""<<eStateToString(source)<<"\""
+	   <<"->"
+	   <<"L"<<Labeler::labelToString(target->label)<<":"<<"\""<<eStateToString(target)<<"\"";
+	if((*j).edge.type==EDGE_TRUE) ss<<"[color=green]";
+	if((*j).edge.type==EDGE_FALSE) ss<<"[color=red]";
+	if((*j).edge.type==EDGE_BACKWARD) ss<<"[color=blue]";
+	ss << ";"<<endl;
+    //ss <<" [label=\""<<SgNodeHelper::nodeToString(getLabeler()->getNode((*j).edge.source))<<"\"]"<<";"<<endl;
+  }
+  ss<<"}\n";
+  return ss.str();
+}
+
+State Analyzer::analyzeAssignRhs(State currentState,string lhsVar, SgNode* rhs, ConstraintSet& cset) {
+  assert(isSgExpression(rhs));
+  bool isRhsIntVal=false;
+  int rhsIntVal=ANALYZER_INT_TOP;
+
+  if(SgMinusOp* minusOp=isSgMinusOp(rhs)) {
+	if(SgIntVal* intValNode=isSgIntVal(SgNodeHelper::getFirstChild(rhs))) {
+	  // found integer on rhs
+	  rhsIntVal=-((int)intValNode->get_value());
+	  isRhsIntVal=true;
+	}
+  }
+
+  // extracted info: isRhsIntVal:rhsIntVal 
+  if(SgIntVal* intValNode=isSgIntVal(rhs)) {
+	// found integer on rhs
+	rhsIntVal=(int)intValNode->get_value();
+	isRhsIntVal=true;
+  }
+  // allow single var on rhs
+  if(SgVarRefExp* varRefExp=isSgVarRefExp(rhs)) {
+	string rhsVarName;
+	bool isRhsVar=ExprAnalyzer::variable(rhs,rhsVarName);
+	assert(isRhsVar);
+	if(currentState.varExists(rhsVarName)) {
+	  rhsIntVal=currentState[rhsVarName];
+	  isRhsIntVal=true;
+	} else {
+	  cerr << "WARNING: access to variable "<<rhsVarName<< "on rhs of assignment, but variable does not exist in state. Initializing with top."<<endl;
+	  rhsIntVal=ANALYZER_INT_TOP;
+	}
+  }
+  State newState=currentState;
+  if(newState.varExists(lhsVar)) {
+	if(!isRhsIntVal) {
+	  rhsIntVal=ANALYZER_INT_TOP;
+	}
+	if(newState[lhsVar]==rhsIntVal) {
+	  // update of existing variable with same value
+	  // => no state change
+	} else {
+	  // update of existing variable with new value
+	  newState[lhsVar]=rhsIntVal;
+	}
+  } else {
+	// new variable with new value
+	newState[lhsVar]=rhsIntVal;
+  }
+  if(rhsIntVal!=ANALYZER_INT_TOP)
+	cset.deleteVarConstraints(lhsVar);
+  return newState;
+}
+
+State Analyzer::analyzeAssignOp(State currentState,SgNode* node,ConstraintSet& cset) {
+  if(node==0) {
+	cerr << "WARNING: analyzeAssignOp: null pointer found (ignoring)"<<endl;
+	return currentState;
+  }
+  State newState;
+  assert(isSgAssignOp(node));
+  bool isLhsVar=false;
+  bool isRhsVar=false;
+	
+  string lhsVarName="unknown-var"; // we only initialize for debugging purposes
+
+  SgNode* lhs=SgNodeHelper::getLhs(node);
+  SgNode* rhs=SgNodeHelper::getRhs(node);
+  isLhsVar=ExprAnalyzer::variable(lhs,lhsVarName);
+  if(isLhsVar) {
+	newState=analyzeAssignRhs(currentState, lhsVarName, rhs, cset);
+	
+	return newState;
+  }
+  cerr << "WARNING: analyzeAssignOp: unrecognized expression on lhs."<<endl;
+  newState=currentState;
+  return newState;
+}
+
+void Analyzer::initAstNodeInfo(SgNode* node) {
+  MyAst ast(node);
+  for(MyAst::iterator i=ast.begin();i!=ast.end();++i) {
+	AstNodeInfo* attr=new AstNodeInfo();
+	(*i)->addNewAttribute("info",attr);
+  }
+}
+
+void Analyzer::generateAstNodeInfo(SgNode* node) {
+  assert(node);
+  if(!cfanalyzer) {
+	cerr << "Error: DFAnalyzer: no cfanalyzer found."<<endl;
+	exit(1);
+  }
+  MyAst ast(node);
+  for(MyAst::iterator i=ast.begin().withoutNullValues();i!=ast.end();++i) {
+	assert(*i);
+	AstNodeInfo* attr=dynamic_cast<AstNodeInfo*>((*i)->getAttribute("info"));
+	if(attr) {
+	  if(cfanalyzer->getLabel(*i)>0) {
+		attr->setLabel(cfanalyzer->getLabel(*i));
+		attr->setInitialLabel(cfanalyzer->initialLabel(*i));
+		attr->setFinalLabels(cfanalyzer->finalLabels(*i));
+	  } else {
+		(*i)->removeAttribute("info");
+	  }
+	} 
+#if 0
+	cout << "DEBUG:"<<(*i)->sage_class_name();
+	if(attr) cout<<":"<<attr->toString();
+	else cout<<": no attribute!"<<endl;
+#endif
+  }
+}

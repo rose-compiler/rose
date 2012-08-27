@@ -1,0 +1,475 @@
+/*********************************
+ * Author: Markus Schordan, 2012 *
+ *********************************/
+
+#include "codethorn.h"
+#include "SgNodeHelper.h"
+#include "Labeler.h"
+#include "StateRepresentation.h"
+#include "Analyzer.h"
+#include "LanguageRestrictor.h"
+#include "Timer.h"
+
+void write_file(std::string filename, std::string data) {
+  std::ofstream myfile;
+  myfile.open(filename.c_str(),std::ios::out);
+  myfile << data;
+  myfile.close();
+}
+
+string int_to_string(int x) {
+  stringstream ss;
+  ss << x;
+  return ss.str();
+}
+
+void checkTypes() {
+  State s1;
+  cout << "RUNNING CHECKS: START"<<endl;
+  if(!s1.varExists("x"))
+	cout << "PASS: x does not exist."<<endl;
+  else
+	cout << "FAIL: x does not exist."<<endl;
+  s1["x"]=5;
+  if(s1.varExists("x"))
+	cout << "PASS: x does exist."<<endl;
+  else
+	cout << "FAIL: x does exist."<<endl;
+  cout<<"x value: " <<s1.varValueToString("x")<<endl;
+  cout<<"State: "<<s1.toString()<<endl;
+  s1["y"]=7;
+  cout<<"State: "<<s1.toString()<<endl;
+  s1["x"]=6;
+  cout<<"State: "<<s1.toString()<<endl;
+  s1["x"]=ANALYZER_INT_TOP;
+  cout<<"State: "<<s1.toString()<<endl;
+  s1.erase("x");
+  cout<<"State: "<<s1.toString()<<endl;
+  cout<<"- - - - - - - - - - - - - - - - - - -"<<endl;
+  StateSet ss1;
+  cout<<"StateSet-1: "<<ss1.toString()<<endl;
+  ss1.insert(s1);
+  cout<<"StateSet-2: "<<ss1.toString()<<endl;
+  ss1.insert(s1);
+  cout<<"StateSet-3: "<<ss1.toString()<<endl;
+  State s2=s1;
+  ss1.insert(s2);
+  cout<<"StateSet-4: "<<ss1.toString()<<endl;
+  s2["y"]=10;
+  cout<<"StateSet-5: "<<ss1.toString()<<endl;
+  ss1.insert(s2);
+  cout<<"StateSet-6: "<<ss1.toString()<<endl;
+
+  cout << endl;
+  {
+	cout << "RUNNING CHECKS FOR BOOLLATTICE TYPE: START"<<endl;
+	AType::BoolLattice a;
+	a=true;
+	cout << "a: "<<a.toString()<<endl;
+	AType::BoolLattice b;
+	b=false;
+	cout << "b: "<<b.toString()<<endl;
+	AType::BoolLattice c=a||b;
+	cout << "c=a||b: "<<c.toString()<<endl;
+	AType::Top e;
+	AType::BoolLattice d;
+	d=e;
+	cout << "d: "<<d<<endl;
+	c=c||d;
+	cout << "c=c||d: "<<c<<endl;
+	AType::BoolLattice f=AType::Bot();
+	d=AType::Bot();
+	cout << "d: "<<d<<endl;
+	cout << "f: "<<d<<endl;
+	a=d&&f;
+	cout << "a=d&&f: "<<a<<endl;
+	f=false;
+	cout << "f: "<<f<<endl;
+	a=d&&f;
+	cout << "a=d&&f: "<<a<<endl;
+	cout << "RUNNING CHECKS FOR BOOL LATTICE TYPE: END"<<endl;
+  }
+  cout << "RUNNING CHECKS: END"<<endl;
+
+  cout << endl;
+  {
+	cout << "RUNNING CHECKS FOR CONSTINT LATTICE TYPE: START"<<endl;
+	AType::ConstIntLattice a;
+	a=true;
+	cout << "a: "<<a.toString();
+	if(a.isTrue()) cout << "(true)";
+	if(a.isFalse()) cout << "(false)";
+	cout<<endl;
+	AType::ConstIntLattice b;
+	b=false;
+	cout << "b: "<<b.toString();
+	if(b.isTrue()) cout << "(true)";
+	if(b.isFalse()) cout << "(false)";
+	cout<<endl;
+
+	AType::ConstIntLattice c=a||b;
+	cout << "c=a||b: "<<c.toString()<<endl;
+	AType::Top e;
+	AType::ConstIntLattice d;
+	d=e;
+	cout << "d: "<<d<<endl;
+	c=c||d;
+	cout << "c=c||d: "<<c<<endl;
+	AType::ConstIntLattice f=AType::Bot();
+	d=AType::Bot();
+	cout << "d: "<<d<<endl;
+	cout << "f: "<<d<<endl;
+	a=d&&f;
+	cout << "a=d&&f: "<<a<<endl;
+	f=false;
+	cout << "f: "<<f<<endl;
+	a=d&&f;
+	cout << "a=d&&f: "<<a<<endl;
+	a=5;
+	cout << "a=5: "<<a;
+	if(a.isTrue()) cout << "(true)";
+	if(a.isFalse()) cout << "(false)";
+	cout<<endl;
+	a=0;
+	cout << "a=0: "<<a;
+	if(a.isTrue()) cout << "(true)";
+	if(a.isFalse()) cout << "(false)";
+	cout<<endl;
+	//	a=a+1;
+	//cout << "a=a+1: "<<a<<endl;
+	cout << "RUNNING CHECKS FOR CONST INT LATTICE TYPE: END"<<endl;
+  }
+  cout << endl;
+  {
+	cout << "RUNNING CHECKS FOR CONSTRAINT TYPE: START"<<endl;
+	Constraint c1(Constraint::EQ_VAR_CONST,"x",1);
+	Constraint c2(Constraint::NEQ_VAR_CONST,"y",2);
+	Constraint c3(Constraint::DEQ_VAR_CONST,"z",1);
+	cout<<"c1:"<<c1.toString()<<endl;
+	cout<<"c2:"<<c2.toString()<<endl;
+	cout<<"c3:"<<c3.toString()<<endl;
+	ConstraintSet cs;
+	cs.insert(c1);
+	cs.insert(c2);
+	cs.insert(c3);
+	cout<<"ConstraintSet cs:"<<cs.toString()<<endl;
+	if(cs.constraintExists(Constraint::EQ_VAR_CONST,"x",1))
+	  cout << "constraintExists(EQ_Var_Const,x,1): true (TEST:PASS)"<<endl;
+	else
+	  cout << "constraintExists(EQ_Var_Const,x,1): false (TEST:FAIL)"<<endl;
+
+	if(cs.constraintExists(c2))
+	  cout << "constraintExists(c2): true (TEST:PASS)"<<endl;
+	else
+	  cout << "constraintExists(c2): false (TEST:FAIL)"<<endl;
+	cout << "RUNNING CHECKS FOR CONSTRAINT TYPE: END"<<endl;
+  }
+  {
+	cout << "RUNNING CHECKS FOR COMBINED TYPES: START"<<endl;
+	EState es1;
+	EState es2;
+	cout << "EState created. "<<endl;
+	cout << "empty EState: "<<es1.toString()<<endl;
+	es1.label=1;
+	es1.constraints.insert(Constraint(Constraint::EQ_VAR_CONST,"x",1));
+	es2.label=1;
+	es2.constraints.insert(Constraint(Constraint::NEQ_VAR_CONST,"x",1));
+	cout << "empty EState with label and constraint es1: "<<es1.toString()<<endl;
+	cout << "empty EState with label and constraint es2: "<<es2.toString()<<endl;
+	State s;
+	es1.state=&s;
+	es2.state=&s;
+	cout << "empty EState with label, empty state, and constraint es1: "<<es1.toString()<<endl;
+	cout << "empty EState with label, empty state, and constraint es2: "<<es2.toString()<<endl;
+	bool testres=(es1==es2);
+	if(testres)
+	  cout << "es1==es2: "<<testres<< "(not as expected: FAIL)"<<endl;
+	else
+	  cout << "es1==es2: "<<testres<< "(as expected: PASS)"<<endl;
+	cout << "RUNNING CHECKS FOR COMBINED TYPES: END"<<endl;
+  }
+  cout << "RUNNING CHECKS: END"<<endl;
+}
+
+void checkLanguageRestrictor(int argc, char *argv[]) {
+  // Build the AST used by ROSE
+  SgProject* sageProject = frontend(argc,argv);
+  LanguageRestrictor lr;
+  LanguageRestrictor::VariantSet vs= lr.computeVariantSetOfProvidedAst(sageProject);
+  for(LanguageRestrictor::VariantSet::iterator i=vs.begin();i!=vs.end();++i) {
+	cout << "VARIANT: "<<lr.variantToString(*i)<<endl;
+  }
+  cout <<endl;
+  lr.allowAstNodesRequiredForEmptyProgram();
+  vs=lr.getAllowedAstNodeVariantSet();
+  for(LanguageRestrictor::VariantSet::iterator i=vs.begin();i!=vs.end();++i) {
+	cout << "VARIANT: "<<lr.variantToString(*i)<<endl;
+  }
+}
+
+bool CodeThornLanguageRestrictor::checkIfAstIsAllowed(SgNode* node) {
+  MyAst ast(node);
+  for(MyAst::iterator i=ast.begin();i!=ast.end();++i) {
+	if(!isAllowedAstNode(*i)) {
+	  cerr << "Error: Unsupported language construct found: " << (*i)->sage_class_name() << endl;
+	  // report first error and return
+	  switch((*i)->variantT()) {
+	  V_SgDoWhileStmt: cerr << "Error info: cfg construction for do-while-statement not supported yet."<<endl; break;
+	  V_SgForStatement: cerr << "Error info: cfg construction for for-statement not supported yet."<<endl; break;
+	  V_SgContinueStmt: cerr << "Error info: cfg construction for continue-statement not supported yet."<<endl; break;
+	  }
+	  return false;
+	}
+  }
+}
+
+void checkProgram(SgNode* root) {
+  LanguageRestrictor lr;
+  lr.allowAstNodesRequiredForEmptyProgram();
+  LanguageRestrictor::VariantSet vs;
+  vs.insert(V_SgIntVal);
+  vs.insert(V_SgAssignOp);
+  vs.insert(V_SgCastExp);
+  vs.insert(V_SgVarRefExp);
+  vs.insert(V_SgExprStatement);
+  vs.insert(V_SgIfStmt);
+  vs.insert(V_SgWhileStmt);
+  vs.insert(V_SgBreakStmt);
+  vs.insert(V_SgAndOp);
+  vs.insert(V_SgOrOp);
+  vs.insert(V_SgNotOp);
+  vs.insert(V_SgNotEqualOp);
+  vs.insert(V_SgEqualityOp);
+  vs.insert(V_SgIntVal);
+  vs.insert(V_SgVariableDeclaration);
+  vs.insert(V_SgAddOp);
+  vs.insert(V_SgReturnStmt);
+  vs.insert(V_SgAssignInitializer);
+  vs.insert(V_SgBoolValExp);
+  vs.insert(V_SgLabelStatement);
+  vs.insert(V_SgNullStatement);
+  vs.insert(V_SgConditionalExp); // TODO (assignments not handled!)
+  vs.insert(V_SgMinusOp); // TODO!
+
+  // inter-procedural
+  vs.insert(V_SgFunctionCallExp);
+  vs.insert(V_SgFunctionRefExp);
+  vs.insert(V_SgExprListExp);
+
+  // rers Problems
+  vs.insert(V_SgTypedefDeclaration);
+  vs.insert(V_SgClassDeclaration);
+  vs.insert(V_SgClassDefinition);
+  vs.insert(V_SgEnumDeclaration);
+  vs.insert(V_SgStringVal);
+  vs.insert(V_SgAddressOfOp);
+
+  lr.setAstNodeVariantSet(vs,true);
+  cout << "INIT: Running CodeThorn language restrictor."<<endl;
+  bool valid=lr.checkIfAstIsAllowed(root);
+  if(!valid) {
+	cout << "INIT FAILED: Input program not valid. No analysis performed."<<endl;
+	exit(1);
+  }
+}
+
+bool checkUniqueVariableSymbolMapping(SgProject* project) {
+  // create a mapping of variableNames and its computed UniqueVariableSymbol
+  // the mapping must be bijective
+  typedef pair<string,SgSymbol*> MapPair;
+  set<MapPair> checkSet;
+
+  list<SgGlobal*> globList=SgNodeHelper::listOfSgGlobal(project);
+  for(list<SgGlobal*>::iterator k=globList.begin();k!=globList.end();++k) {
+	MyAst ast(*k);
+	for(MyAst::iterator i=ast.begin();i!=ast.end();++i) {
+	  SgSymbol* sym=0;
+	  bool found=false;
+	  if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(*i)) {
+		sym=SgNodeHelper::getUniqueSymbolOfVariableDeclaration(varDecl);
+		found=true;
+	  }
+	  if(SgVarRefExp* varRef=isSgVarRefExp(*i)) {
+		sym=SgNodeHelper::getUniqueSymbolOfVariable(varRef);
+		found=true;
+	  }
+	  if(found) {
+		string longName=SgNodeHelper::uniqueLongVariableName(*i);
+		MapPair pair=make_pair(longName,sym);
+		checkSet.insert(pair);
+	  }
+	}
+  }
+
+  int numOfPairs=checkSet.size();
+  set<string> nameSet;
+  set<SgSymbol*> symbolSet;
+  bool mappingOK=true;
+  for(set<MapPair>::iterator i=checkSet.begin();i!=checkSet.end();++i) {
+	  nameSet.insert((*i).first);
+	  symbolSet.insert((*i).second);
+  }
+  if((nameSet.size()!=checkSet.size()) || (symbolSet.size()!=checkSet.size())|| mappingOK==false) {
+	// variable symbol mapping not bijective
+	// in case of an error we perform some expensive operations to provide a proper error explanation
+	cerr << "WARNING: Variable<->Symbol mapping not bijective."<<endl;
+	for(set<MapPair>::iterator i=checkSet.begin();i!=checkSet.end();++i) {
+	  for(set<MapPair>::iterator j=checkSet.begin();j!=checkSet.end();++j) {
+		// check if we find a pair with same name but different symbol
+#if 0
+		if((*i).first==(*j).first && i!=j) {
+		  cout << "    Problematic mapping: same name  : "<<(*i).first <<" <-> "<<(*i).second
+			   << " <==> "
+			   <<(*j).first <<" <-> "<<(*j).second
+			   <<endl;
+		}
+		if((*i).second==(*j).second && i!=j) {
+		  cout << "    Problematic mapping: same symbol: "<<(*i).first <<" <-> "<<(*i).second
+			   << " <==> "
+			   <<(*j).first <<" <-> "<<(*j).second
+			   <<endl;
+		}
+#endif
+	  }
+	}
+	return false;
+  }
+  return true;
+}
+
+int main( int argc, char * argv[] ) {
+#if 0
+  try {
+  checkTypes();
+  //checkLanguageRestrictor(argc,argv);
+  } catch(char* str) {
+	cerr << "*Exception raised: " << str << endl;
+  } catch(const char* str) {
+	cerr << "Exception raised: " << str << endl;
+ }
+  return 0;
+#else
+  try {
+	Timer timer;
+	timer.start();
+  // Build the AST used by ROSE
+  cout << "INIT: Parsing and creating AST."<<endl;
+  SgProject* sageProject = frontend(argc,argv);
+  
+  cout << "INIT: Running ROSE AST tests."<<endl;
+  // Run internal consistency tests on AST
+  AstTests::runAllTests(sageProject);
+
+  SgNode* root=sageProject;
+  checkProgram(root);
+
+  cout << "INIT: Running variable<->symbol mapping check."<<endl;
+  checkUniqueVariableSymbolMapping(sageProject);
+
+  Analyzer analyzer;
+  analyzer.initializeSolver1("main",root);
+  analyzer.setOptionCompactStateString(false);
+#if 0
+  MyAst completeast(root);
+  string funtofind="main";
+  SgNode* mainroot=completeast.findFunctionByName(funtofind);
+  if(mainroot==0) { 
+    std::cerr << "Function '"<<funtofind<<"' not found.\n"; exit(1);
+  }
+  cout << "Mainroot:"<<mainroot<<endl;
+
+  Labeler labeler(mainroot);
+  CFAnalyzer cfanalyzer(&labeler);
+  Flow flow=cfanalyzer.flow(mainroot);
+  cout << "CFG: size: " << flow.size() << " edges."<<endl;
+  analyzer.setCFAnalyzer(&cfanalyzer);
+  //analyzer.computeEState(analyzer.takeFromWorkList(),mainroot);
+#endif
+
+  cout << "NOTE: We are ignoring operator '?' (not implemented yet)"<<endl;
+  cout << "=============================================================="<<endl;
+  analyzer.runSolver1();
+  //  cout << analyzer.stateSetToString(final);
+  cout << "=============================================================="<<endl;
+  timer.stop();
+  double totalRunTime=timer.getElapsedTimeInMilliSec();
+
+  long stateSetSize=analyzer.getStateSet()->size();
+  long stateSetBytes=stateSetSize*sizeof(State);
+  long eStateSetSize=analyzer.getEStateSet()->size();
+  long eStateSetBytes=eStateSetSize*sizeof(EState);
+  long transitionGraphSize=analyzer.getTransitionGraph()->size();
+  long transitionGraphBytes=transitionGraphSize*sizeof(Transition);
+
+  const string csi = "\33[";
+  const string white = csi+"37m";
+  const string green = csi+"32m";
+  const string red = csi+"31m";
+  const string magenta = csi+"35m";
+  const string cyan = csi+"36m";
+  const string blue = csi+"34m";
+  const string bold_on = csi+"1m";
+  const string bold_off = csi+"22m";
+  const string normal = csi+"0m";
+
+  cout << "Number of states     : "<<magenta<<stateSetSize<<white<<" (memory: "<<magenta<<stateSetBytes<<white<<" bytes)"<<endl;
+  cout << "Number of estates    : "<<cyan<<eStateSetSize<<white<<" (memory: "<<cyan<<eStateSetBytes<<white<<" bytes)"<<endl;
+  cout << "Number of transitions: "<<blue<<transitionGraphSize<<white<<" (memory: "<<blue<<transitionGraphBytes<<white<<" bytes)"<<endl;
+  cout << "Memory total         : "<<green<<stateSetBytes+eStateSetBytes+transitionGraphBytes<<" bytes"<<normal<<endl;
+  if(totalRunTime<1000.0) 
+	cout << "Time total           : "<<green<<totalRunTime<<" ms"<<normal<<endl;
+  else
+	cout << "Time total           : "<<green<<totalRunTime/1000.0<<" seconds"<<normal<<endl;
+  // we only generate a visualization if #estates<=1000
+  if(eStateSetSize>1000) {
+	//cout << "Number of eStates > 1000. Not generating visualization."<<endl;
+	exit(0);
+  }
+  Visualizer visualizer(analyzer.getLabeler(),analyzer.getFlow(),analyzer.getStateSet(),analyzer.getEStateSet(),analyzer.getTransitionGraph());
+  string dotFile="digraph G {\n";
+  dotFile+=analyzer.transitionGraphToDot();
+  dotFile+="}\n";
+  write_file("transitiongraph1.dot", dotFile);
+  cout << "generated transitiongraph1.dot."<<endl;
+  string dotFile3=visualizer.foldedTransitionGraphToDot();
+  write_file("transitiongraph2.dot", dotFile3);
+  cout << "generated transitiongraph2.dot."<<endl;
+
+  assert(analyzer.startFunRoot);
+  //analyzer.generateAstNodeInfo(analyzer.startFunRoot);
+  //dotFile=astTermWithNullValuesToDot(analyzer.startFunRoot);
+  analyzer.generateAstNodeInfo(sageProject);
+  dotFile=functionAstTermsWithNullValuesToDot(sageProject);
+  write_file("ast.dot", dotFile);
+  cout << "generated ast.dot."<<endl;
+
+  write_file("cfg.dot", analyzer.flow.toDot(analyzer.cfanalyzer->getLabeler()));
+  cout << "generated cfg.dot."<<endl;
+  {
+#if 0
+  cout << "MAP:"<<endl;
+  cout << analyzer.getLabeler()->toString();
+#endif
+#if 0
+  CFAnalyzer* cfanalyzer=analyzer.getCFAnalyzer();
+  Flow* flow=analyzer.getFlow();
+  cout << "Labels="<<flow->nodeLabels().toString()<<endl;
+  flow->setTextOptionPrintType(false);
+  cout << "FCall-Labels="<<cfanalyzer->functionCallLabels(*flow).toString()<<endl;
+  cout << "OUTPUT: Flow=";
+  cout <<flow->toString()<<endl;
+  cout << "OUTPUT: Interflow=";
+  InterFlow interFlow=cfanalyzer->interFlow(*flow);
+  cout << interFlow.toString();
+  cout << endl;
+#endif
+  }
+  } catch(char* str) {
+	cerr << "*Exception raised: " << str << endl;
+  } catch(const char* str) {
+	cerr << "Exception raised: " << str << endl;
+ }
+  return 0;
+#endif
+}
+
