@@ -31,6 +31,7 @@ extern const Compass::Checker* const globalVariablesChecker;
 extern const Compass::Checker* const keywordMacroChecker;
 extern const Compass::Checker* const nonGlobalCppDirectiveChecker;
 extern const Compass::Checker* const nonStaticArraySizeChecker;
+extern const Compass::Checker* const variableNameSimilarityChecker;
 
 /*-----------------------------------------------------------------------------
  * Main program
@@ -137,6 +138,8 @@ int main (int argc, char** argv)
                 traversals.push_back (nonGlobalCppDirectiveChecker);
             //else if ("nonStaticArraySize" == checker_name)
             //    traversals.push_back (nonStaticArraySizeChecker);
+            else if ("variableNameSimilarity" == checker_name)
+                traversals.push_back (variableNameSimilarityChecker);
             else
             {
                 if (SgProject::get_verbose () >= 0)

@@ -13,4 +13,5 @@ SUBDIRS=\
 	global_variables \
 	keyword_macro \
 	non_global_cpp_directive \
-	non_static_array_size
+	non_static_array_size \
+	variable_name_similarity

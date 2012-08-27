@@ -58,6 +58,7 @@ bin_compass2_LDADD=\
 	bin/checkers/keyword_macro/libkeywordmacro.la \
 	bin/checkers/non_global_cpp_directive/libnonglobalcppdirective.la \
 	bin/checkers/non_static_array_size/libnonstaticarraysize.la \
+	bin/checkers/variable_name_similarity/libvariablenamesimilarity.la \
 	$(XERCES_LIBS) \
 	$(ROSE_LIBS)
 
@@ -74,7 +75,8 @@ noinst_LTLIBRARIES=\
 	bin/checkers/global_variables/libglobalvariables.la \
 	bin/checkers/keyword_macro/libkeywordmacro.la \
 	bin/checkers/non_global_cpp_directive/libnonglobalcppdirective.la \
-	bin/checkers/non_static_array_size/libnonstaticarraysize.la
+	bin/checkers/non_static_array_size/libnonstaticarraysize.la \
+	bin/checkers/variable_name_similarity/libvariablenamesimilarity.la
 
 bin_checkers_dead_function_libdeadfunction_la_SOURCES=\
 	bin/checkers/dead_function/dead_function.cpp
@@ -102,6 +104,9 @@ bin_checkers_non_global_cpp_directive_libnonglobalcppdirective_la_SOURCES=\
 
 bin_checkers_non_static_array_size_libnonstaticarraysize_la_SOURCES=\
 	bin/checkers/non_static_array_size/non_static_array_size.cpp
+
+bin_checkers_variable_name_similarity_libvariablenamesimilarity_la_SOURCES=\
+	bin/checkers/variable_name_similarity/variable_name_similarity.cpp
 
 # ------------------------------------------------------------------------------
 #  XML Schemas

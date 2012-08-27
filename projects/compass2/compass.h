@@ -672,6 +672,18 @@ namespace Xml
             nodeArray.push_back(node);
           }
 
+        // Constructor for use with two IR nodes.
+        OutputViolationBase (SgNode* first_node,
+                             SgNode* second_node,
+                             const std::string& checker = "default value",
+                             const std::string & description = "default value")
+          : m_checkerName (checker),
+            m_shortDescription (description)
+          {
+            nodeArray.push_back(first_node);
+            nodeArray.push_back(second_node);
+          }
+
         // Constructor for use with multiple IR nodes.
         OutputViolationBase (std::vector<SgNode*>& inputNodeArray,
                              const std::string& checker = "default value",
