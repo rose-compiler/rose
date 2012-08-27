@@ -63,7 +63,7 @@ AC_DEFUN([ROSE_SUPPORT_COMPASS2],
 
   AM_CONDITIONAL(ROSE_BUILD_COMPASS2, [test "x$HAVE_XERCES" = "xyes"])
 
-  ABS_COMPASS2_XML_SRCDIR="$(cd "$srcdir" && pwd)"/projects/compass2/compass2/xml
+  ABS_COMPASS2_XML_SRCDIR="$(cd "$srcdir" && pwd)"/projects/compass2/share/xml
   AC_SUBST(ABS_COMPASS2_XML_SRCDIR)
 
 # End macro ROSE_SUPPORT_COMPASS.
