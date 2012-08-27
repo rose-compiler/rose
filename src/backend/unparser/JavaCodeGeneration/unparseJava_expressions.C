@@ -843,6 +843,23 @@ Unparse_Java::unparseNewOp(SgExpression* expr, SgUnparse_Info& info)
          }
          // TODO: Process intializers, if any!!!
      }
+     else if (isSgPointerType(new_op->get_specified_type())) {
+         SgPointerType *pointer_type = isSgPointerType(new_op->get_specified_type());
+         while(isSgPointerType(pointer_type -> get_base_type())) { // find the base type...
+             pointer_type = isSgPointerType(pointer_type -> get_base_type());
+         }
+         unparseType(pointer_type -> get_base_type(), info);
+
+         SgConstructorInitializer *init = new_op -> get_constructor_args();
+         ROSE_ASSERT(init);
+         vector<SgExpression *> args = init -> get_args() -> get_expressions();
+         for (int i = 0; i < args.size(); i++) {
+             curprint ("[");
+             unparseExpression(args[i], info);
+             curprint("]");
+         }
+         // TODO: Process intializers, if any!!!
+     }
      else {
          unparseType(new_op->get_specified_type(), info);
          curprint ( "(");

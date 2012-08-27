@@ -48,7 +48,7 @@ static jobject jofp_get_new_object(jmethodID method, jobjectArray args, jstring 
 
 
 static int jofp_invoke(int argc, char **argv) {
-    int retval= 0;
+    int retval = 0;
 
     jobjectArray args;
  

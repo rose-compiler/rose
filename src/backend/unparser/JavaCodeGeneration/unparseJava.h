@@ -112,6 +112,8 @@ class Unparse_Java : public UnparseLanguageIndependentConstructs
           virtual void unparsePseudoDtorRef           (SgExpression* expr, SgUnparse_Info& info);
           virtual void unparseJavaInstanceOfOp        (SgExpression* expr, SgUnparse_Info& info);
 
+//          virtual void unparseGlobalStmt       (SgStatement* stmt, SgUnparse_Info& info);
+
           virtual void unparseBasicBlockStmt   (SgStatement* stmt, SgUnparse_Info& info);
 
        // DQ (4/16/2011): Added Java specific "import" statement.
@@ -230,6 +232,7 @@ class Unparse_Java : public UnparseLanguageIndependentConstructs
           virtual void unparseClassType(SgClassType* type, SgUnparse_Info& info);
           virtual void unparseEnumType(SgEnumType* type, SgUnparse_Info& info);
           virtual void unparseArrayType(SgArrayType* type, SgUnparse_Info& info);
+          virtual void unparsePointerType(SgPointerType* type, SgUnparse_Info& info);
           virtual void unparseModifierType(SgModifierType* type, SgUnparse_Info& info);
 
           virtual void unparseJavaParameterizedType(SgJavaParameterizedType* type, SgUnparse_Info& info);

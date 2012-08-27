@@ -82,6 +82,8 @@ Unparse_Java::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_Info
         {
        // DQ (3/14/2011): Need to move the Java specific unparse member functions from the base class to this function.
 
+//          case V_SgGlobal:                   cout << "Got it !!!" << endl; /* unparseGlobalStmt   (stmt, info); */ break;
+
        // declarations
        // case V_SgInterfaceStatement:     unparseInterfaceStmt(stmt, info); break;
           case V_SgVariableDeclaration:    unparseVarDeclStmt  (stmt, info); break;
@@ -204,6 +206,71 @@ Unparse_Java::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_Info
         if (printNewline) unp->cur.insert_newline();
    }
 
+/*
+void
+Unparse_Java::unparseGlobalStmt (SgStatement* stmt, SgUnparse_Info& info)
+   {
+     SgGlobal* globalScope = isSgGlobal(stmt);
+     ROSE_ASSERT(globalScope != NULL);
+
+#if OUTPUT_HIDDEN_LIST_DATA
+     outputHiddenListData (globalScope);
+#endif
+
+
+#if 0
+     int declarationCounter = 0;
+#endif
+
+  // Setup an iterator to go through all the statements in the top scope of the file.
+     SgDeclarationStatementPtrList & globalStatementList = globalScope->get_declarations();
+     SgDeclarationStatementPtrList::iterator statementIterator = globalStatementList.begin();
+     while ( statementIterator != globalStatementList.end() )
+        {
+          SgStatement* currentStatement = *statementIterator;
+          ROSE_ASSERT(currentStatement != NULL);
+
+#if 0
+          printf ("In unparseGlobalStmt(): declaration #%d is %p = %s = %s \n",declarationCounter++,currentStatement,currentStatement->class_name().c_str(),SageInterface::get_name(currentStatement).c_str());
+#endif
+
+          if (ROSE_DEBUG > 3)
+             {
+            // (*primary_os)
+               cout << "In run_unparser(): getLineNumber(currentStatement) = "
+#if 1
+                    << currentStatement->get_file_info()->displayString()
+#else
+                    << ROSE::getLineNumber(currentStatement)
+                    << " getFileName(currentStatement) = " 
+                    << ROSE::getFileName(currentStatement)
+#endif
+                    << " unp->cur_index = " 
+                    << unp->cur_index
+                    << endl;
+             }
+
+       // DQ (6/4/2007): Make a new SgUnparse_Info object for each statement in global scope
+       // This should permit children to set the current_scope and not effect other children
+       // see test2007_56.C for example "namespace A { extern int x; } int A::x = 42;"
+       // Namespace definition scope should not effect scope set in SgGlobal.
+       // unparseStatement(currentStatement, info);
+          SgUnparse_Info infoLocal(info);
+          unparseStatement(currentStatement, infoLocal);
+
+       // Go to the next statement
+          statementIterator++;
+        }
+
+  // DQ (5/27/2005): Added support for compiler-generated statements that might appear at the end of the applications
+  // printf ("At end of unparseGlobalStmt \n");
+  // outputCompilerGeneratedStatements(info);
+
+  // DQ (4/21/2005): Output a new line at the end of the file (some compilers complain if this is not present)
+     unp->cur.insert_newline(1);
+}
+*/
+
 void
 Unparse_Java::unparseNestedStatement(SgStatement* stmt, SgUnparse_Info& info) {
     info.inc_nestingLevel();
@@ -224,6 +291,8 @@ Unparse_Java::unparseImportDeclarationStatement (SgStatement* stmt, SgUnparse_In
      ROSE_ASSERT (importDeclaration != NULL);
 
      curprint("import ");
+     if (importDeclaration -> get_declarationModifier().get_storageModifier().isStatic())
+         curprint("static ");
      unparseName(importDeclaration->get_path(), info);
      if (importDeclaration -> get_containsWildCard())
          curprint(".*");
@@ -725,6 +794,12 @@ Unparse_Java::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      */
 
      unparseDeclarationModifier(mfuncdecl_stmt->get_declarationModifier(), info);
+
+     if (mfuncdecl_stmt->get_functionModifier().isJavaInitializer()) { // If this is an initializer block, process it here and return.
+         unparseBasicBlockStmt(mfuncdecl_stmt->get_definition() -> get_body(), info);
+         return;
+     }
+
      unparseFunctionModifier(mfuncdecl_stmt->get_functionModifier(), info);
 
      //TODO remove when specialFxnModifier.isConstructor works
@@ -822,6 +897,38 @@ Unparse_Java::unparseClassDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
      SgClassDeclaration *classdecl_stmt = isSgClassDeclaration(stmt);
      ROSE_ASSERT(classdecl_stmt != NULL);
+
+     //
+     // If this Class was used to simulate a Java package that contains user-defined types,
+     // process the package and the user-defined types in it.
+     //
+     if (classdecl_stmt -> attributeExists("namespace")) {
+         SgClassDefinition *class_definition = classdecl_stmt -> get_definition();
+         if (class_definition -> attributeExists("package")) {
+             AstRegExAttribute *attribute = (AstRegExAttribute *) class_definition -> getAttribute("package");
+             if (attribute -> expression.size() > 0) { // not the null package name?
+                 curprint("package ");
+                 curprint(attribute -> expression);
+                 curprint(";");
+                 unp->cur.insert_newline();
+             }
+
+             //
+             // Now, process the import and type declarations.
+             //
+             foreach (SgDeclarationStatement *child, class_definition -> get_members()) {
+                 if (isSgJavaImportStatement(child)) {
+                     unparseStatement(child, info);
+                 }
+                 else if (child -> attributeExists("user-defined-type")) {
+                     unparseClassDeclStmt(child, info);
+                 }
+             }
+         }
+
+
+         return;
+     }
 
      unparseDeclarationModifier(classdecl_stmt->get_declarationModifier(), info);
 

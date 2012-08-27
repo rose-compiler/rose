@@ -31,6 +31,10 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2011_19.java \
      test2011_20.java \
      test2011_21.java \
+     test2011_22.java \
+     test2011_23.java \
+     test2011_24.java \
+     test2011_25.java \
      test2011_26.java \
      test2011_27.java \
      test2011_29.java \
@@ -59,7 +63,6 @@ TESTCODES_REQUIRED_TO_PASS = \
      pgc_test2011_06.java \
      pgc_test2011_07.java \
      pgc_test2011_08.java \
-     pgc_test2011_09.java \
      pgc_test2011_10.java \
      pgc_test2011_11.java \
      pgc_test2011_12.java \
@@ -72,6 +75,8 @@ TESTCODES_REQUIRED_TO_PASS = \
      pgc_test2011_20.java \
      pgc_test2011_21.java \
      \
+     cave3_assert2.java \
+     cave3_assert3.java \
      cave3_IntLit0.java \
      cave3_DoubleLit0.java \
      cave3_call0.java \
@@ -98,6 +103,11 @@ TESTCODES_REQUIRED_TO_PASS = \
      cave3_for8.java \
      cave3_if0.java \
      cave3_if1.java \
+     cave3_import0.java \
+     cave3_import1.java \
+     cave3_import2.java \
+     cave3_import3.java \
+     cave3_instanceof0.java \
      cave3_labelDecl0.java \
      cave3_labelDecl1.java \
      cave3_labelDecl2.java \
@@ -105,7 +115,6 @@ TESTCODES_REQUIRED_TO_PASS = \
      cave3_labelBreak0.java \
      cave3_labelBreak1.java \
      cave3_labelBreak2.java \
-     cave3_labelBreak4.java \
      cave3_labelBreak5.java \
      cave3_labelContinue0.java \
      cave3_labelContinue1.java \
@@ -128,47 +137,36 @@ TESTCODES_REQUIRED_TO_PASS = \
 # These test pass the compilation using ROSE, all AST tests, unparsing to generate 
 # Java code, and the final compilation of that code using a backend compiler (javac).
 TESTCODE_CURRENTLY_FAILING = \
-     test2011_22.java \
-     test2011_23.java \
-     test2011_24.java \
-     test2011_25.java \
-     test2011_44.java \
+     pgc_test2011_09.java \
      \
-     cave3_instanceof0.java \
-     cave3_import0.java \
-     cave3_import1.java \
-     cave3_import2.java \
-     cave3_import3.java \
-     cave3_foreach3.java \
-     cave3_assert2.java \
-     cave3_assert3.java
+     cave3_labelBreak4.java
 
 # These tests pass the compilation using ROSE, all AST tests, and unparsing to generate 
 # Java code, but fails the final compilation step of the generated Java code.
 TESTCODES_REQUIRED_TO_PASS_FAILING_BACKEND_COMPILE = \
-     test2011_28.java \
      simple.java
 
 # This is where the Java generics tests are put (currently not required to pass all phases).
 TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_6 = \
-     test2011_43.java \
-     test2011_46.java \
-     test2011_48.java \
-     test2011_49.java \
      cave3_assert0.java \
      cave3_assert1.java \
      cave3_foreach0.java \
-     cave3_foreach1.java \
+     cave3_foreach1.java
+
+TESTCODES_REQUIRED_TO_PASS_FAILING_FOR_JAVA_6 = \
+     test2011_43.java \
+     test2011_44.java \
+     test2011_45.java \
+     test2011_46.java \
+     test2011_48.java \
+     test2011_49.java \
+     \
      cave3_foreach2.java \
+     cave3_foreach3.java \
      cave3_foreach4.java \
      cave3_foreach5.java \
      cave3_foreach6.java \
      cave3_foreach7.java
-
-
-TESTCODES_REQUIRED_TO_PASS_FAILING_FOR_JAVA_6 = \
-     test2011_45.java 
-
 
 # Later we will move these tests to the gcjTestSuite subdirectory.
 GCJ_TESTCODES_REQUIRED_TO_PASS = \

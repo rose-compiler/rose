@@ -155,6 +155,7 @@ class JavaTraversal implements Callable<Boolean> {
 
 
     /* tps (10/08/10): AST traversal contains all current nodes of ECJ ---------------------------------------------- */
+/*
     public void traverseAST(CompilationUnitDeclaration unit) {
         final ASTVisitor visitor = new ASTVisitor() {
             public void endVisit( AllocationExpression node, BlockScope scope) {
@@ -386,18 +387,22 @@ class JavaTraversal implements Callable<Boolean> {
             public void endVisit(LongLiteral  node, BlockScope scope) {
                 popNode(); // do nothing  by default
             }
+*/            
             /**
              * @param annotation
              * @param scope
              * @shashcountere 3.1
              */
+ /*   
             public void endVisit(MarkerAnnotation  node, BlockScope scope) {
                 popNode(); // do nothing  by default
             }
+*/
             /**
              * @param pair
              * @param scope
              */
+ /*
             public void endVisit(MemberValuePair  node, BlockScope scope) {
                 popNode(); // do nothing  by default
             }
@@ -410,11 +415,13 @@ class JavaTraversal implements Callable<Boolean> {
             public void endVisit(StringLiteralConcatenation  node, BlockScope scope) {
                 popNode(); // do nothing  by default
             }
+*/
             /**
              * @param annotation
              * @param scope
              * @shashcountere 3.1
              */
+ /*
             public void endVisit(NormalAnnotation  node, BlockScope scope) {
                 popNode(); // do nothing  by default
             }
@@ -472,11 +479,13 @@ class JavaTraversal implements Callable<Boolean> {
             public void endVisit(ReturnStatement  node, BlockScope scope) {
                 popNode(); // do nothing  by default
             }
+*/
             /**
              * @param annotation
              * @param scope
              * @shashcountere 3.1
              */
+ /*
             public void endVisit(SingleMemberAnnotation  node, BlockScope scope) {
                 popNode(); // do nothing  by default
             }
@@ -730,7 +739,7 @@ class JavaTraversal implements Callable<Boolean> {
                 printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
             }
             public boolean visit(JavadocMessageSend  node, ClassScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
+                printToDOT(node); pushNode(node); return true; /traverseAST/ do nothing by  node, keep traversing
             }
             public boolean visit(JavadocQualifiedTypeReference  node, BlockScope scope) {
                 printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
@@ -765,19 +774,23 @@ class JavaTraversal implements Callable<Boolean> {
             public boolean visit(LongLiteral  node, BlockScope scope) {
                 printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
             }
+*/
             /**
              * @param annotation
              * @param scope
              * @shashcountere 3.1
              */
+ /*
             public boolean visit(MarkerAnnotation  node, BlockScope scope) {
                 printToDOT(node); pushNode(node); return true;
             }
+ */
             /**
              * @param pair
              * @param scope
              * @shashcountere 3.1
              */
+ /*   
             public boolean visit(MemberValuePair  node, BlockScope scope) {
                 printToDOT(node); pushNode(node); return true;
             }
@@ -790,11 +803,13 @@ class JavaTraversal implements Callable<Boolean> {
             public boolean visit(StringLiteralConcatenation node, BlockScope scope) {
                 printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
             }
+*/
             /**
              * @param annotation
              * @param scope
              * @shashcountere 3.1
              */
+ /*
             public boolean visit(NormalAnnotation  node, BlockScope scope) {
                 printToDOT(node); pushNode(node); return true;
             }
@@ -852,11 +867,13 @@ class JavaTraversal implements Callable<Boolean> {
             public boolean visit(ReturnStatement  node, BlockScope scope) {
                 printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
             }
+*/
             /**
              * @param annotation
              * @param scope
              * @shashcountere 3.1
              */
+ /*   
             public boolean visit(SingleMemberAnnotation  node, BlockScope scope) {
                 printToDOT(node); pushNode(node); return true;
             }
@@ -930,7 +947,8 @@ class JavaTraversal implements Callable<Boolean> {
 
         unit.traverse(visitor,unit.scope);
     }
-
+*/
+    
     // Added support for command line processing to set the verbose level (passed directly from ROSE "--rose:verbose n").
     public static String [] filterCommandline(String args[]) {
         int commandlineErrorLevel = 0;
@@ -1012,8 +1030,16 @@ class JavaTraversal implements Callable<Boolean> {
     public static void main(String args[]) {
         /* tps : set up and configure ---------------------------------------------- */
 
+// TODO: Remove this!
+//for (int i = 0; i < args.length; i++)
+//System.out.println("ROSE Original Argument " + i + ": " + args[i]);
+
         // Filter out ROSE specific options.
         args = filterCommandline(args);
+
+// TODO: Remove this!
+//for (int i = 0; i < args.length; i++)
+//System.out.println("ROSE Filtered Argument " + i + ": " + args[i]);
 
         if (verboseLevel > 0)
             System.out.println("Compiling ...");
@@ -1088,8 +1114,9 @@ class JavaTraversal implements Callable<Boolean> {
         main.batchCompiler.internalBeginToCompile(sourceUnits, maxUnits);
         // main.batchCompiler.compile(sourceUnits);
 
-        JavaTraversal jt = new JavaTraversal();
-        jt.invokeINIT();
+// TODO: REMOVE THIS !
+//        JavaTraversal jt = new JavaTraversal();
+//        jt.invokeINIT();
         try {
             // writing to the DOT file
             FileWriter fstream = new FileWriter("ast.dot");
@@ -1112,37 +1139,48 @@ class JavaTraversal implements Callable<Boolean> {
                 System.out.println("test 7 ...");
 
             JavaParser.cactionCompilationUnitList(main.batchCompiler.totalUnits, args);
-            JavaParser.cactionGenerateType("java.lang.Object", 0);
-            JavaParser.cactionTypeReference("java.lang.Object", new JavaToken("Dummy JavaToken (see createJavaToken)", new JavaSourcePositionInformation(0)));
-            JavaParser.cactionProcessObject();
 
             if (verboseLevel > 2)
                 System.out.println("test 8 ...");
 
+// TODO: REMOVE THIS !
+//System.out.println("Getting started - Preprocessing " + main.batchCompiler.totalUnits + " units");
             for (int i = 0; i < main.batchCompiler.totalUnits; i++) {
                 CompilationUnitDeclaration unit = main.batchCompiler.unitsToProcess[i];
+                assert(unit != null);
 
+                if (verboseLevel > 2)
+                    System.out.println("calling main.batchCompiler.process(unit, i) ...");
+
+                main.batchCompiler.process(unit, i);
+
+                JavaParserSupport.preprocess(unit);
+            }
+//TODO: REMOVE THIS !
+//System.out.println("Came back successfully from preprocessing phase");
+
+            for (int i = 0; i < main.batchCompiler.totalUnits; i++) {
+                CompilationUnitDeclaration unit = main.batchCompiler.unitsToProcess[i];
                 try {
-                    assert(unit != null);
 
-                    if (verboseLevel > 2)
-                        System.out.println("calling main.batchCompiler.process(unit, i) ...");
-
-                    main.batchCompiler.process(unit, i);
-
-                    if (verboseLevel > 2)
-                        System.out.println("calling jt.traverseAST(unit) ...");
-
+// TODO: REMOVE THIS !
+//                    if (verboseLevel > 2)
+//                        System.out.println("calling jt.traverseAST(unit) ...");
+                    /*
+System.out.println("About to traverse " + new String(unit.getFileName()));
                     jt.traverseAST(unit); /*tps this is a better place for the traversal */
-
+/*
                     if (verboseLevel > 2)
                         System.out.println("test 9 ...");
-
+*/
                     // **************************************************
                     // This is where the traveral of the ECJ AST is done.
                     // **************************************************
+//TODO: REMOVE THIS !
+//System.out.println("Actual Traversal of AST of " + new String(unit.getFileName()));
                     JavaParser.startParsingAST(unit, verboseLevel);
-
+//TODO: REMOVE THIS !
+//System.out.println("Done Traversing AST of " + new String(unit.getFileName()));                    
                     if (verboseLevel > 2)
                         System.out.println("test 10 ...");
                 }
@@ -1170,7 +1208,10 @@ class JavaTraversal implements Callable<Boolean> {
             return;
         }
 
-        jt.invokeEND();
+        JavaParser.cactionCompilationUnitListEnd();
+
+// TODO: REMOVE THIS !
+//        jt.invokeEND();
         try {
             // closing the DOT file
             out.write("}\n");

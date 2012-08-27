@@ -3589,6 +3589,21 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
        // Call the OS with the commandline defined by: syntaxCheckingCommandline
           javaCommandLine.push_back(get_sourceFileNameWithPath());
 
+       //
+       // If the classpath was specified, add it to the list of options here.
+       //
+         list<string> classpath_list = get_project() -> get_Java_classpath();
+         if (classpath_list.size()) {
+             list<string>::iterator i = classpath_list.begin();
+             string classpath = (*i);
+             for (i++; i != classpath_list.end(); i++) {
+                 classpath += ":";
+                 classpath += (*i);
+             }
+             javaCommandLine.push_back("-classpath");
+             javaCommandLine.push_back(classpath);
+         }
+
        // At this point we have the full command line with the source file name
           if (get_verbose() > 1)
              {
@@ -3791,6 +3806,21 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
         {
           frontEndCommandLine.push_back("-1.6");
         }
+
+  //
+  // If the classpath was specified, add it to the list of options here.
+  //
+     list<string> classpath_list = get_project() -> get_Java_classpath();
+     if (classpath_list.size()) {
+         list<string>::iterator i = classpath_list.begin();
+         string classpath = (*i);
+         for (i++; i != classpath_list.end(); i++) {
+             classpath += ":";
+             classpath += (*i);
+         }
+         frontEndCommandLine.push_back("-classpath");
+         frontEndCommandLine.push_back(classpath);
+     }
 
   // Java does not use include files, so we can enforce this.
      ROSE_ASSERT(get_project()->get_includeDirectorySpecifierList().empty() == true);
