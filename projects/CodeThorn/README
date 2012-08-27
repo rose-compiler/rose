@@ -70,7 +70,7 @@ CodeThorn INSTALLATION:
 ROSE_INCLUDE_DIR should refer to the include directory of installed ROSE
 e.g. /home/myhomedir/roseinstall/include
 
-ROSE_LIB_DIR should refer to the library where the rose libary can be found
+ROSE_LIB_DIR should refer to the library where the ROSE libary can be found
 e.g. /home/myhomedir/roseinstall/lib
 
 BOOST_CPPFLAGS should include flags which are required to compile with boost libs
@@ -87,8 +87,8 @@ make check
 LICENSE
 ----------------------------------------------------------------------------
 
-We use the a similar license as the ROSE project. CodeThorn is maintained as a subproject
-of ROSE. See COPYING.
+We use a similar license as the ROSE project. CodeThorn is
+maintained as a subproject of ROSE. See COPYING.
 
 ----------------------------------------------------------------------------
 ALPHA ISSUES

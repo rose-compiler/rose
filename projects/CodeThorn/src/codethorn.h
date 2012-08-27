@@ -1,3 +1,10 @@
+#ifndef CODETHORN_H
+#define CODETHORN_H
+
+/*********************************
+ * Author: Markus Schordan, 2012 *
+ *********************************/
+
 #include <iostream>
 #include <fstream>
 #include <set>
@@ -21,3 +28,5 @@ class CodeThornLanguageRestrictor : public LanguageRestrictor {
 public:
   bool checkIfAstIsAllowed(SgNode* node);
 };
+
+#endif
