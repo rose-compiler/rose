@@ -2,7 +2,7 @@
 CodeThorn 1.0 Alpha
 ----------------------------------------------------------------------------
 
-CodeThorn is a tool for analyzing C/C++ program, combining approaches
+CodeThorn is a tool for analyzing C/C++ programs, combining approaches
 from data flow analysis, constraint-based analysis, and model
 checking.
 
@@ -11,12 +11,11 @@ program analysis algorithms in combining above approaches. Therefore
 the target language is currently restricted to a small (while-like)
 subset of C++ with functions.
 
-The analysis is performed on the high-level ROSE AST. CodeThorn
-maintains a close one-to-one mapping of analysis information to the
-ROSE AST nodes.
+The implemented base approach is an instance of a general framework. The
+analysis is an interprocedural flow-sensitive analysis. Different
+forms of context information are currently investigated.
 
-The implemented base approach is an instance of a general framework. CodeThorn
-generates several visualizations as dot output for analysis results:
+CodeThorn generates several visualizations of analysis results as dot output:
 
 1) AST (ast.dot) : blue nodes are labeled and correspond to one or more nodes
    in the CFG, semantics of white nodes are handled by the transfer functions.
