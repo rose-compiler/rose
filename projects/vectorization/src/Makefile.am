@@ -13,6 +13,7 @@ AUTOMAKE_OPTIONS = subdir-objects
 Vectorization_includedir=$(exec_prefix)
 INCLUDES = $(ROSE_INCLUDES) -I$(Vectorization_includedir)
 LDADD    = $(ROSE_LIBS)
+libsimd_a_CPPFLAGS = -msse 
 lib_LIBRARIES = libsimd.a
 bin_PROGRAMS = vectorization
 include_HEADERS = rose_simd.h
