@@ -2822,6 +2822,25 @@ SOURCE_JAVA_PARAMETERIZED_TYPE_END
 
 
 SOURCE_TEMPLATE_TYPE_START
+
+SgName
+SgTemplateType::get_mangled(void) const
+   {
+     ROSE_ASSERT(this != NULL);
+
+#if 0
+     printf ("In SgTemplateType::get_mangled(): this = %p get_name() = %s \n",this,get_name().str());
+#endif
+
+     SgName mangled_name = get_name();
+
+#if 0
+    printf ("In SgTemplateType::get_mangled(): this = %p mangled_name = %s \n",this,mangled_name.str());
+#endif
+
+     return mangled_name;
+   }
+
 SOURCE_TEMPLATE_TYPE_END
 
 
@@ -5146,12 +5165,12 @@ SgClassType::createType(SgDeclarationStatement* cd, SgExpression* optional_fortr
   // DQ (3/22/2012): Added assertions.
      if (returnType->get_declaration() != cd)
         {
-          printf ("returnType = %p = %s \n",returnType,returnType->class_name().c_str());
-          printf ("returnType->get_declaration() = %p = %s cd = %p = %s \n",returnType->get_declaration(),returnType->get_declaration()->class_name().c_str(),cd,cd->class_name().c_str());
-          printf ("returnType->get_declaration() = %p = %s cd = %p = %s \n",returnType->get_declaration(),isSgClassDeclaration(returnType->get_declaration())->get_name().str(),classDeclaration,classDeclaration->get_name().str());
+          printf ("In SgClassType::createType(): returnType = %p = %s \n",returnType,returnType->class_name().c_str());
+          printf ("In SgClassType::createType(): returnType->get_declaration() = %p = %s cd = %p = %s \n",returnType->get_declaration(),returnType->get_declaration()->class_name().c_str(),cd,cd->class_name().c_str());
+          printf ("In SgClassType::createType(): returnType->get_declaration() = %p = %s cd = %p = %s \n",returnType->get_declaration(),isSgClassDeclaration(returnType->get_declaration())->get_name().str(),classDeclaration,classDeclaration->get_name().str());
           ROSE_ASSERT(returnType->get_declaration()->get_firstNondefiningDeclaration() != NULL);
           ROSE_ASSERT(cd->get_firstNondefiningDeclaration() != NULL);
-          printf ("returnType->get_declaration()->get_firstNondefiningDeclaration() = %p = %s cd->get_firstNondefiningDeclaration() = %p = %s \n",returnType->get_declaration()->get_firstNondefiningDeclaration(),returnType->get_declaration()->get_firstNondefiningDeclaration()->class_name().c_str(),cd->get_firstNondefiningDeclaration(),cd->get_firstNondefiningDeclaration()->class_name().c_str());
+          printf ("In SgClassType::createType(): returnType->get_declaration()->get_firstNondefiningDeclaration() = %p = %s cd->get_firstNondefiningDeclaration() = %p = %s \n",returnType->get_declaration()->get_firstNondefiningDeclaration(),returnType->get_declaration()->get_firstNondefiningDeclaration()->class_name().c_str(),cd->get_firstNondefiningDeclaration(),cd->get_firstNondefiningDeclaration()->class_name().c_str());
         }
 #if 1
   // DQ (8/23/2012): Restoring the original code...

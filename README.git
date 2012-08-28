@@ -850,3 +850,17 @@ git commit --allow-empty
 
 # And then push the changes
 git push origin dq-cxx-rc
+
+
+New merged-builder branch specific instructions:
+
+Push to local repository:
+   smgit commit -am "More C++11 support (passing 1030 out of 1031 passing tests for ROSE)."
+
+Push to main repository:
+   Push the main branch:
+      git push origin merged-builder
+
+   Push the submodule:
+      git push origin HEAD:merged-builder
+

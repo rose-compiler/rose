@@ -682,9 +682,9 @@ MarkTemplateInstantiationsForOutput::ProcessFunctionTemplateDeclarations ( set<S
           bool isDefiningDeclaration         = definingDeclaration         == NULL ? false : (*i == definingDeclaration);
           bool isfirstNondefiningDeclaration = firstNondefiningDeclaration == NULL ? false : (*i == firstNondefiningDeclaration);
        // first debug the member functions!
-
+#if 0
           printf ("In ProcessFunctionTemplateDeclarations() set element = %p = %s \n",*i,(*i)->class_name().c_str());
-
+#endif
           SgTemplateInstantiationFunctionDecl* functionInstantiation = isSgTemplateInstantiationFunctionDecl(*i);
           if (functionInstantiation != NULL)
              {
@@ -727,7 +727,7 @@ MarkTemplateInstantiationsForOutput::ProcessFunctionTemplateDeclarations ( set<S
                     printf ("In MarkTemplateInstantiationsForOutput::ProcessFunctionTemplateDeclarations(): isSpecialization = %s \n",isSpecialization ? "true" : "false");
                     if (isSpecialization == true)
                        {
-#if 1
+#if 0
                          printf ("Calling markForOutputInCodeGeneration on functionInstantiation = %p = %s \n",functionInstantiation,functionInstantiation->class_name().c_str());
 #endif
                          markForOutputInCodeGeneration (functionInstantiation);

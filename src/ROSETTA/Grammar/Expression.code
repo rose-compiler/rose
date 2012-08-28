@@ -3253,7 +3253,16 @@ SgFunctionCallExp::get_type() const
      SgFunctionType* functionType = isSgFunctionType(likelyFunctionType);
      if (functionType == NULL)
         {
+#if 1
+       // DQ (8/26/2012): Decrease the volume of warnings from this part of the code.
+          static int count = 0;
+          if (count++ % 100 == 0)
+             {
+               printf ("Warning: unexpected type found for likelyFunctionType = %p = %s \n",likelyFunctionType,likelyFunctionType->class_name().c_str());
+             }
+#else
           printf ("Warning: unexpected type found for likelyFunctionType = %p = %s \n",likelyFunctionType,likelyFunctionType->class_name().c_str());
+#endif
        // get_file_info()->display("Location of call to SgFunctionCallExp::get_type(): debug");
 
        // DQ (7/15/2007): Handle case of typedef of function type

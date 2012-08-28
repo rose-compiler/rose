@@ -1,4 +1,4 @@
-// Example C++ 11 features:
+// Example C++ 11 features: tests lamda function
 
 int main() 
    {

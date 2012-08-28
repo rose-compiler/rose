@@ -1541,6 +1541,15 @@ SageInterface::get_name ( const SgType* type )
                     break;
                   }
 
+            // DQ (8/26/2012): Added case to support template declaration work.
+               case V_SgTemplateType:
+                  {
+                    const SgTemplateType* templateType = isSgTemplateType(type);
+                    returnName = "templateType_";
+                    returnName += templateType->get_name();
+                    break;
+                  }
+
                default:
                   {
                     returnName = type->class_name();

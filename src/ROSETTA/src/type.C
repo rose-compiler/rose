@@ -519,6 +519,12 @@ Grammar::setUpTypes ()
      TemplateType.setFunctionPrototype ("HEADER_TEMPLATE_TYPE", "../Grammar/Type.code" );
   // TemplateInstantiationType.setFunctionPrototype ("HEADER_GET_NAME", "../Grammar/Type.code" );
 
+  // DQ (8/25/2012): Added support for name of template type. Note that this is the name "T1" in instantiation of a template 
+  // using a template parameter.  This should likely be mapped back to the template parameter by position in the sequence of 
+  // template parameters and the template declaration (OR just the template paramters only; I have not decided).
+     TemplateType.setDataPrototype     ("SgName","name","= \"\"",CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     TemplateType.setDataPrototype     ("int","template_parameter_position","= -1",CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
   // Skip building a parse function for this terminal/nonterminal of the Grammar
      if (isRootGrammar() == false)
         {
@@ -674,8 +680,7 @@ Grammar::setUpTypes ()
 
   // DQ (12/26/2010): Added mechanism to store names of types that can't be identified in initial parsing (applicable only to Fortran).
      TypeDefault.setFunctionPrototype ("HEADER_TYPE_DEFAULT_TYPE", "../Grammar/Type.code" );
-     TypeDefault.setDataPrototype ("SgName", "name" , "= \"\"",
-                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     TypeDefault.setDataPrototype ("SgName", "name" , "= \"\"",NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 #if 0
   // DQ (8/12/2012): I might not need this, since I have a more direct approach.
@@ -755,6 +760,10 @@ Grammar::setUpTypes ()
      PointerMemberType.excludeFunctionSource ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
      PointerMemberType.setFunctionSource ( "SOURCE_POINTER_MEMBER_GET_MANGLED", "../Grammar/Type.code");
 
+  // DQ (8/25/2012): Avoid the default generated get_mangled_name() function for this IR node.
+     TemplateType.excludeFunctionSource ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
+
+
   // Setup the mangled name function (a different entry specific to each class)
      TypeUnknown.editSubstitute( "MANGLED_ID_STRING", "Unknown" );
      TypeChar.editSubstitute( "MANGLED_ID_STRING", "c" );
@@ -792,8 +801,9 @@ Grammar::setUpTypes ()
   // ArrayType.editSubstitute( "MANGLED_ID_STRING", "A_" );
      TypeEllipse.editSubstitute( "MANGLED_ID_STRING", "e" );
 
+  // DQ (8/25/2012): Avoid the default generated get_mangled_name() function for this IR node.
   // DQ (5/11/2012): We need to define this.
-     TemplateType.editSubstitute( "MANGLED_ID_STRING", "TemplateType" );
+  // TemplateType.editSubstitute( "MANGLED_ID_STRING", "TemplateType" );
 
   // DQ (5/11/2012): This should not be used, bu we should define this for all types.
      PartialFunctionModifierType.editSubstitute( "MANGLED_ID_STRING", "PartialFunctionType" );
