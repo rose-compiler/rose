@@ -422,7 +422,7 @@ int main( int argc, char * argv[] ) {
 	cout << "Time total           : "<<green<<totalRunTime/1000.0<<" seconds"<<normal<<endl;
   // we only generate a visualization if #estates<=1000
   if(eStateSetSize>1000) {
-	//cout << "Number of eStates > 1000. Not generating visualization."<<endl;
+	cout << "Number of eStates > 1000. Not generating visualization."<<endl;
 	exit(0);
   }
   Visualizer visualizer(analyzer.getLabeler(),analyzer.getFlow(),analyzer.getStateSet(),analyzer.getEStateSet(),analyzer.getTransitionGraph());
