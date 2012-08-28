@@ -421,7 +421,7 @@ int main( int argc, char * argv[] ) {
   else
 	cout << "Time total           : "<<green<<totalRunTime/1000.0<<" seconds"<<normal<<endl;
   // we only generate a visualization if #estates<=1000
-  if(eStateSetSize>1000) {
+  if(transitionGraphSize>2500) {
 	//cout << "Number of eStates > 1000. Not generating visualization."<<endl;
 	exit(0);
   }

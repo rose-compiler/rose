@@ -131,7 +131,11 @@ string Visualizer::transitionGraphDotHtmlNode(Label lab) {
 	  sinline+=eStateToString(*j);
 	  sinline+="</TD>";
   }
-  if(sinline=="") sinline="<TD>empty</TD>";
+  if(sinline=="") {
+	sinline="<TD>empty</TD>";
+	// instead of generating empty nodes we do not generate anything for empty nodes
+	return "";
+  }
   s+=sinline+"</TR>\n";
   s+="</TABLE>";
   s+=">];\n";
