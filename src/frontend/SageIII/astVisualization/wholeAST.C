@@ -1697,12 +1697,21 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
 
                          case SgTemplateArgument::type_argument:
                               typeString = "type_argument";
-                              typeString + string("\\n type = ") + StringUtility::numberToString(templateArgument->get_type()) + "  ";
+
+                           // DQ (8/25/2012): Modified to output the string representing the type.
+                              typeString += string("\\n type = ") + templateArgument->get_type()->unparseToString();
+                              typeString += string("\\n type = ") + StringUtility::numberToString(templateArgument->get_type()) + "  ";
                               break;
 
                          case SgTemplateArgument::nontype_argument:
                               typeString = "nontype_argument";
-                              typeString + string("\\n expression = ") + StringUtility::numberToString(templateArgument->get_expression()) + "  ";
+
+                           // DQ (8/25/2012): Fixed bug to output the value of the tepression pointer.
+                              typeString += string("\\n expression = ") + StringUtility::numberToString(templateArgument->get_expression()) + "  ";
+                              break;
+
+                         case SgTemplateArgument::template_template_argument:
+                              typeString = "template_template_argument";
                               break;
 
                          default:

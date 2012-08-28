@@ -2114,9 +2114,18 @@ Unparse_Type::unparseTemplateType(SgType* type, SgUnparse_Info& info)
      SgTemplateType* template_type = isSgTemplateType(type);
      ROSE_ASSERT(template_type != NULL);
 
-#if 1
-     printf ("In unparseTemplateType(): Unparsing the SgTemplateType as a single 'int' \n");
+#if 0
+  // DQ (8/25/2012): This allows everything to work, but likely with some internal problems that are not being noticed.
+     SgName name = "int ";
+#else
+  // This is the code that we want to use, but it is not working.
+     SgName name = template_type->get_name();
 #endif
+
+#if 0
+     printf ("In unparseTemplateType(): Unparsing the SgTemplateType as name = %s \n",name.str());
+#endif
+
 #if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES
      string firstPartString  = (info.isTypeFirstPart()  == true) ? "true" : "false";
      string secondPartString = (info.isTypeSecondPart() == true) ? "true" : "false";
@@ -2125,14 +2134,35 @@ Unparse_Type::unparseTemplateType(SgType* type, SgUnparse_Info& info)
 
   // For now just unparse a simple string that will at least be a correct type.
   // curprint("unparse_template_type ");
-
+#if 1
+  // DQ (8/25/2012): This was a problem for the output ofr types called from different locations.
+     if ( (info.isTypeFirstPart() == false) && (info.isTypeSecondPart() == false) )
+        {
+       // This is the case where this is called from unparseToString. So we need to output something.
+          curprint(name);
+        }
+       else
+        {
+       // This is the case where it is called from within the unparser.
+          if (info.isTypeSecondPart() == true)
+             {
+               curprint(name);
+             }
+        }
+#else
+  // Older version of code...
+#if 0
   // DQ (8/23/2012): Only out put anything for the 2nd part fo the type.
   // This avoids output of the type twice (which is something I have not tracked down, but appears to be happening).
-  // curprint("int ");
+     curprint("int ");
+#else
+  // if (info.isTypeFirstPart() == true)
      if (info.isTypeSecondPart() == true)
         {
           curprint("int ");
         }
+#endif
+#endif
 
 #if 0
      printf ("Exiting as a test! \n");

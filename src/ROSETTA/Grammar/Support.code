@@ -7391,9 +7391,9 @@ SgSymbolTable::hasMatchingTemplateArgumentsOrNoTemplateArguments(SgTemplateArgum
                               SgTemplateArgument* templateArgumentFromSymbol = isSgTemplateArgument(templateClassInstantiation->get_templateArguments()[i]);
                               ROSE_ASSERT(templateArgumentLocal != NULL);
                               ROSE_ASSERT(templateArgumentFromSymbol != NULL);
-
+#if 0
                               printf ("----- templateArgumentLocal->get_argumentType() = %d templateArgumentFromSymbol->get_argumentType() = %d \n",templateArgumentLocal->get_argumentType(),templateArgumentFromSymbol->get_argumentType());
-
+#endif
                            // if (templateArgumentLocal->get_argumentType() == SgTemplateArgument::type_argument && templateArgumentFromSymbol->get_argumentType() == SgTemplateArgument::type_argument)
                               if (templateArgumentLocal->get_argumentType() == SgTemplateArgument::type_argument && templateArgumentFromSymbol->get_argumentType() == SgTemplateArgument::type_argument)
                                  {
@@ -7467,8 +7467,10 @@ SgSymbolTable::hasMatchingTemplateArgumentsOrNoTemplateArguments(SgTemplateArgum
              }
             else
              {
-            // DQ (8/22/2012): Consider if this make sense...
+            // DQ (8/22/2012): Consider if this make sense...yes, if it is not a template instantiation then matching is based on name in a specific scope only.
+#if 0
                printf ("WARNING: SgSymbolTable::hasMatchingTemplateArgumentsOrNoTemplateArguments(): templateClassInstantiation == NULL (return true) \n");
+#endif
                returnValue = true;
              }
         }
@@ -7508,7 +7510,7 @@ SgSymbolTable::find_class(const SgName & nm, SgTemplateArgumentPtrList* template
                   }
                  else
                   {
-#if 1
+#if 0
                      printf ("In SgSymbolTable::find_class(): The template arguments are NOT the same (keep searching) nm = %s \n",nm.str());
 #endif
                   }
@@ -7546,7 +7548,7 @@ SgSymbolTable::find_class(const SgName & nm, SgTemplateArgumentPtrList* template
                        }
                       else
                        {
-#if 1
+#if 0
                          printf ("The template arguments (aliases) are NOT the same (keep searching) \n");
 #endif
                        }
@@ -7936,7 +7938,7 @@ SgSymbolTable::find_template_member_function(const SgName& nm, const SgType* t)
   // Find the sublist that match the name.
      std::pair<hash_iterator, hash_iterator> range = p_table->equal_range(nm);
 
-#if 1
+#if 0
      if (range.first == range.second)
         {
           printf ("In SgSymbolTable::find_template_member_function(): WARNING no symbols found with name = %s \n",nm.str());
@@ -8066,7 +8068,7 @@ SgSymbolTable::find_nontemplate_class (const SgName & nm, SgTemplateArgumentPtrL
                   }
                  else
                   {
-#if 1
+#if 0
                      printf ("In SgSymbolTable::find_nontemplate_class(): The template arguments are NOT the same (keep searching) nm = %s \n",nm.str());
 #endif
                   }
@@ -15654,6 +15656,10 @@ SgTemplateArgument::SgTemplateArgument ( SgTemplateDeclaration* argument, bool e
 SgName
 SgTemplateArgument::get_mangled_name (void) const
    {
+#if 0
+     printf ("In SgTemplateArgument::get_mangled_name(): get_argumentType() = %d \n",get_argumentType());
+#endif
+
      ostringstream mangled_name;
      switch (get_argumentType())
         {
@@ -15751,7 +15757,15 @@ SgTemplateArgument::get_mangled_name (void) const
                break;
         }
 
+#if 0
+     printf ("In SgTemplateArgument::get_mangled_name(): mangled_name = %s \n",mangled_name.str());
+#endif
+
      string str_mangled_name (mangled_name.str());
+
+#if 0
+     printf ("Leaving SgTemplateArgument::get_mangled_name(): str_mangled_name = %s \n",str_mangled_name.c_str());
+#endif
 
      return SgName (str_mangled_name.c_str());
    }

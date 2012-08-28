@@ -295,7 +295,16 @@ mangleQualifiersToString (const SgScopeStatement* scope)
             // DQ (5/12/2012): Implement this case later, but it does not cause anything to fail presently (I think).
                case V_SgTemplateClassDefinition:
                   {
+#if 1
+                 // DQ (8/26/2012): Decrease the volume of warnings from this part of the code.
+                    static int count = 0;
+                    if (count++ % 100 == 0)
+                       {
+                         printf ("WARNING: In mangleQualifiersToString(const SgScopeStatement*): Case SgTemplateClassDefinition not implemented \n");
+                       }
+#else
                     printf ("WARNING: In mangleQualifiersToString(const SgScopeStatement*): Case SgTemplateClassDefinition not implemented \n");
+#endif
                     break;
                   }
 
@@ -554,7 +563,7 @@ mangleTemplateArgsToString (const SgTemplateArgumentPtrList::const_iterator b,
         
         const SgTemplateArgument* arg = *i;
         ROSE_ASSERT (arg);
-        mangled_name << arg->get_mangled_name ().getString ();
+        mangled_name << arg->get_mangled_name().getString();
       }
     return mangled_name.str ();
   }
@@ -584,7 +593,7 @@ mangleTemplateToString (const string& templ_name,
         }
        else
         {
-          args_mangled = mangleTemplateArgsToString (templ_args.begin(),templ_args.end());
+          args_mangled = mangleTemplateArgsToString(templ_args.begin(),templ_args.end());
         }
 
   // Compute the name qualification, if any.
