@@ -18,10 +18,10 @@ TEST_Results=$(TESTCODES:.c=.c)
 TEST_COMPARE_FILES=$(COMPARE_CODES:.c=.c)
 
 ../src/vectorization:
-	$(MAKE) -C ../src vectorization 
+	$(MAKE) -C $(top_builddir)/projects/vectorization/src  
 
 $(TEST_Results): ../src/vectorization $(@:.c=.c)
-	../src/vectorization -msse3 -lsimd $(srcdir)/$(@:.c=.c) -I$(exec_prefix)/include -L$(exec_prefix)/lib
+	../src/vectorization -msse3 -lsimd $(srcdir)/$(@:.c=.c) -I$(top_srcdir)/projects/vectorization/src -L$(top_builddir)/projects/vectorization/src
 
 $(TEST_COMPARE_FILES): $(TEST_Results) 
 	@if $(DIFF)	$(srcdir)/$(@:.c=.c) $(@:.c=.c); then :; else echo "Files differ; test falied"; exit 1; fi
