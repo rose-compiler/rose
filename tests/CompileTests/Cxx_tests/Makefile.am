@@ -525,6 +525,7 @@ test2006_118.C \
 test2006_119.C \
 test2006_120.C \
 test2006_121.C \
+test2006_122.C \
 test2006_123.C \
 test2006_124.C \
 test2006_125.C \
@@ -1039,6 +1040,7 @@ test2012_195.C \
 test2012_196.C \
 test2012_197.C \
 test2012_198.C \
+test2012_199.C \
 test_int_lexemes.C \
 test_int_lexemes_donot_pass.C \
 test_simple_int.C \
@@ -1063,7 +1065,6 @@ test2004_35.C
 # test2011_191.C 
 # test2012_79.C 
 # test2012_81.C 
-
 
 else
 include $(srcdir)/Makefile-pass.inc
@@ -1092,8 +1093,7 @@ test2012_79.C
 #   TESTCODE_CURRENTLY_FAILING
 #
 if ROSE_USE_EDG_VERSION_4
-TESTCODE_CURRENTLY_FAILING = \
-test2006_122.C 
+TESTCODE_CURRENTLY_FAILING = 
 
 # DQ (8/12/2012): This test code appears to demonstrate a loss of the template arguments in the name qualification.
 # test2012_189.C
