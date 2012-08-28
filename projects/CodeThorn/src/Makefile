@@ -5,6 +5,7 @@ MYDATE = `date +%Y_%m_%d`
 
 CC                    = gcc-4.4
 CXX                   = g++-4.4
+BISON                 = bison
 
 # Location of include directory after "make install" (set as environment variable)
 #ROSE_INCLUDE_DIR = 
@@ -14,13 +15,13 @@ CXX                   = g++-4.4
 
 # Location of library directory after "make install" (set as environment variable)
 #ROSE_LIB_DIR = 
-ROSE_LIBS = $(ROSE_LIB_DIR)/librose.la
+ROSE_LIBS = -Wl,-rpath -Wl,$(ROSE_LIB_DIR) -L $(ROSE_LIB_DIR) -lrose
 
 # Location of ROSE's libtool (it's only in the compilation path)
 
 CPPFLAGS              = -O3
 #CXXCPPFLAGS           = @CXXCPPFLAGS@
-CXXFLAGS              = 
+CXXFLAGS              = -Wno-deprecated
 LDFLAGS               = 
 YACC                  = bison
 
@@ -30,9 +31,16 @@ OBJECT_FILES=MyAst.o AstTerm.o Labeler.o SgNodeHelper.o CFAnalyzer.o ExprAnalyze
 all: $(TOOLNAME3)
 	@if [ x$${ROSE_IN_BUILD_TREE:+present} = xpresent ]; then echo "ROSE_IN_BUILD_TREE should not be set" >&2; exit 1; fi
 
+
+.PHONY: check dist viz clean distclean bsps
+
 # Example suffix rule for more experienced makefile users
 # .C.o:
 #	g++ -c -I$(ROSE_INCLUDE_DIR) -o $@ $(@:.o=.C)
+
+ltlparser: LTLParser.y++ LTL.h
+	$(BISON) -p ltl_ $<
+	$(CXX) -o $@ -g LTLParser.tab.c++
 
 MyAst.o: MyAst.h MyAst.C
 	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) MyAst.C -c 
@@ -71,7 +79,7 @@ LanguageRestrictor.o: LanguageRestrictor.h LanguageRestrictor.C
 	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) LanguageRestrictor.C -c
 
 $(TOOLNAME3): $(TOOLNAME3).C  $(TOOLNAME3).h $(OBJECT_FILES)
-	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) -L$(ROSE_LIB_DIR) -lrose $(OBJECT_FILES) $(TOOLNAME3).C -o$(TOOLNAME3) 
+	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES) $(TOOLNAME3).C -o$(TOOLNAME3) 
 
 check: codethorn
 	./codethorn tests/rers/Problem1.c
