@@ -1710,6 +1710,10 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                               typeString += string("\\n expression = ") + StringUtility::numberToString(templateArgument->get_expression()) + "  ";
                               break;
 
+                         case SgTemplateArgument::template_template_argument:
+                              typeString = "template_template_argument";
+                              break;
+
                          default:
                             {
                               printf ("Error: default reached in case V_SgTemplateArgument: templateArgument->get_argumentType() \n");
