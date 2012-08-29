@@ -2363,6 +2363,35 @@ SageBuilder::buildNondefiningFunctionDeclaration (const SgName & name, SgType* r
      return result;
    }
 
+
+// DQ (8/28/2012): This preserves the original API with a simpler function (however for C++ at least, it is frequently not sufficent).
+// We need to decide if the SageBuilder API should include these sorts of functions.
+SgFunctionDeclaration*
+SageBuilder::buildNondefiningFunctionDeclaration(const SgName& name, SgType* return_type, SgFunctionParameterList* paralist, SgScopeStatement* scope, SgExprListExp* decoratorList)
+   {
+     return buildNondefiningFunctionDeclaration (name,return_type,paralist,scope,decoratorList,false,NULL);
+   }
+
+
+// DQ (8/28/2012): This preserves the original API with a simpler function (however for C++ at least, it is frequently not sufficent).
+// We need to decide if the SageBuilder API should include these sorts of functions.
+SgMemberFunctionDeclaration*
+SageBuilder::buildNondefiningMemberFunctionDeclaration(const SgName& name, SgType* return_type, SgFunctionParameterList* paralist, SgScopeStatement* scope)
+   {
+     unsigned int memberFunctionModifiers = 0;
+     return buildNondefiningMemberFunctionDeclaration (name,return_type,paralist,scope,NULL,memberFunctionModifiers,false,NULL);
+   }
+
+// DQ (8/28/2012): This preserves the original API with a simpler function (however for C++ at least, it is frequently not sufficent).
+// We need to decide if the SageBuilder API should include these sorts of functions.
+SgMemberFunctionDeclaration*
+SageBuilder::buildDefiningMemberFunctionDeclaration(const SgName& name, SgType* return_type, SgFunctionParameterList* paralist, SgScopeStatement* scope)
+   {
+     unsigned int memberFunctionModifiers = 0;
+     return buildDefiningMemberFunctionDeclaration (name,return_type,paralist,scope,NULL,false,memberFunctionModifiers,NULL,NULL);
+   }
+
+
 SgTemplateFunctionDeclaration*
 SageBuilder::buildNondefiningTemplateFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, SgScopeStatement* scope, SgExprListExp* decoratorList)
    {
@@ -2761,7 +2790,8 @@ SageBuilder::buildNondefiningMemberFunctionDeclaration (const SgName & name, SgM
    }
 #endif
 
-#if 0
+#if 1
+// DQ (8/29/2012): This is re-enabled because the backstroke project is using it.
 // DQ (7/26/2012): I would like to remove this from the API (at least for now while debugging the newer API required for template argument handling).
 // SgMemberFunctionDeclaration* SageBuilder::buildDefiningMemberFunctionDeclaration (const SgName & name, SgMemberFunctionType* func_type, SgScopeStatement* scope, SgExprListExp* decoratorList)
 SgMemberFunctionDeclaration*
@@ -2772,8 +2802,9 @@ SageBuilder::buildDefiningMemberFunctionDeclaration (const SgName & name, SgMemb
 
      bool buildTemplateInstantiation         = false;
      unsigned int functionConstVolatileFlags = 0;
+     SgTemplateArgumentPtrList* templateArgumentsList = NULL;
 
-     return SageBuilder::buildDefiningMemberFunctionDeclaration(name, return_type, paralist, scope, decoratorList, buildTemplateInstantiation, functionConstVolatileFlags, first_nondefining_declaration);
+     return SageBuilder::buildDefiningMemberFunctionDeclaration(name, return_type, paralist, scope, decoratorList, buildTemplateInstantiation, functionConstVolatileFlags, first_nondefining_declaration, templateArgumentsList);
    }
 #endif
 
@@ -3488,6 +3519,24 @@ SageBuilder::buildDefiningFunctionDeclaration(const SgName& name, SgType* return
         }
 
      return func;
+   }
+
+
+// DQ (8/28/2012): This preserves the original API with a simpler function (however for C++ at least, it is frequently not sufficent).
+// We need to decide if the SageBuilder API should include these sorts of functions.
+SgFunctionDeclaration*
+SageBuilder::buildDefiningFunctionDeclaration(const SgName& name, SgType* return_type, SgFunctionParameterList* parameter_list, SgScopeStatement* scope)
+   {
+     return buildDefiningFunctionDeclaration (name,return_type,parameter_list,scope,NULL,false,NULL,NULL);
+   }
+
+
+// DQ (8/28/2012): This preserves the original API with a simpler function (however for C++ at least, it is frequently not sufficent).
+// We need to decide if the SageBuilder API should include these sorts of functions.
+SgProcedureHeaderStatement*
+SageBuilder::buildProcedureHeaderStatement(const SgName& name, SgType* return_type, SgFunctionParameterList* parameter_list, SgProcedureHeaderStatement::subprogram_kind_enum kind, SgScopeStatement* scope)
+   {
+     return buildProcedureHeaderStatement(name.str(),return_type,parameter_list,kind,scope,NULL);
    }
 
 

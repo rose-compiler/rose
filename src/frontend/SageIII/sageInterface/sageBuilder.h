@@ -750,6 +750,11 @@ buildNondefiningFunctionDeclaration_T (const SgName & name, SgType* return_type,
 SgFunctionDeclaration*
 buildNondefiningFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope, SgExprListExp* decoratorList, bool buildTemplateInstantiation, SgTemplateArgumentPtrList* templateArgumentsList);
 
+// DQ (8/28/2012): This preserves the original API with a simpler function (however for C++ at least, it is frequently not sufficent).
+// We need to decide if the SageBuilder API should include these sorts of functions.
+SgFunctionDeclaration* buildNondefiningFunctionDeclaration(const SgName& name, SgType* return_type, SgFunctionParameterList* parameter_list, SgScopeStatement* scope = NULL, SgExprListExp* decoratorList = NULL);
+
+
 SgTemplateFunctionDeclaration *
 buildNondefiningTemplateFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL);
 
@@ -794,11 +799,12 @@ SgMemberFunctionDeclaration*
 buildDefiningMemberFunctionDeclaration (const SgName & name, SgMemberFunctionType* func_type, SgFunctionParameterList* paralist, SgScopeStatement* scope, SgExprListExp* decoratorList /* , unsigned int functionConstVolatileFlags = 0 */, SgMemberFunctionDeclaration* first_nondefinng_declaration);
 #endif
 
-#if 0
+#if 1
+// DQ (8/29/2012): This is re-enabled because the backstroke project is using it (also added back the default parameters; which I don't think I like in the API).
 // DQ (7/26/2012): I would like to remove this from the API (at least for now while debugging the newer API required for template argument handling).
 //! Build a defining ( non-prototype) member function declaration from a SgMemberFunctionType
 SgMemberFunctionDeclaration*
-buildDefiningMemberFunctionDeclaration (const SgName & name, SgMemberFunctionType* func_type, SgScopeStatement* scope, SgExprListExp* decoratorList /* , unsigned int functionConstVolatileFlags = 0 */, SgMemberFunctionDeclaration* first_nondefinng_declaration);
+buildDefiningMemberFunctionDeclaration (const SgName & name, SgMemberFunctionType* func_type, SgScopeStatement* scope, SgExprListExp* decoratorList = NULL /* , unsigned int functionConstVolatileFlags = 0 */, SgMemberFunctionDeclaration* first_nondefinng_declaration = NULL);
 #endif
 
 //! Build a prototype for an existing member function declaration (defining or nondefining is fine) 
@@ -806,6 +812,15 @@ buildDefiningMemberFunctionDeclaration (const SgName & name, SgMemberFunctionTyp
 // buildNondefiningMemberFunctionDeclaration (const SgMemberFunctionDeclaration* funcdecl, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL);
 SgMemberFunctionDeclaration*
 buildNondefiningMemberFunctionDeclaration (const SgMemberFunctionDeclaration* funcdecl, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL, unsigned int functionConstVolatileFlags = 0);
+
+// DQ (8/28/2012): This preserves the original API with a simpler function (however for C++ at least, it is frequently not sufficent).
+// We need to decide if the SageBuilder API should include these sorts of functions.
+SgMemberFunctionDeclaration* buildNondefiningMemberFunctionDeclaration(const SgName& name, SgType* return_type, SgFunctionParameterList* parameter_list, SgScopeStatement* scope = NULL);
+
+// DQ (8/28/2012): This preserves the original API with a simpler function (however for C++ at least, it is frequently not sufficent).
+// We need to decide if the SageBuilder API should include these sorts of functions.
+SgMemberFunctionDeclaration* buildDefiningMemberFunctionDeclaration(const SgName& name, SgType* return_type, SgFunctionParameterList* parameter_list, SgScopeStatement* scope = NULL);
+
 
 //! A template function for function declaration builders
 template <class actualFunction>
@@ -830,6 +845,14 @@ buildDefiningFunctionDeclaration (const std::string & name, SgType* return_type,
 SgFunctionDeclaration*
 buildDefiningFunctionDeclaration (const char* name, SgType* return_type, SgFunctionParameterList * parlist, SgScopeStatement* scope, SgExprListExp* decoratorList, SgFunctionDeclaration* first_nondefinng_declaration);
 #endif
+
+// DQ (8/28/2012): This preserves the original API with a simpler function (however for C++ at least, it is frequently not sufficent).
+// We need to decide if the SageBuilder API should include these sorts of functions.
+SgFunctionDeclaration* buildDefiningFunctionDeclaration(const SgName& name, SgType* return_type, SgFunctionParameterList* parameter_list, SgScopeStatement* scope = NULL);
+
+// DQ (8/28/2012): This preserves the original API with a simpler function (however for C++ at least, it is frequently not sufficent).
+// We need to decide if the SageBuilder API should include these sorts of functions.
+SgProcedureHeaderStatement* buildProcedureHeaderStatement(const SgName& name, SgType* return_type, SgFunctionParameterList* parameter_list, SgProcedureHeaderStatement::subprogram_kind_enum, SgScopeStatement* scope = NULL);
 
 //! Build a Fortran subroutine or procedure
 SgProcedureHeaderStatement*
@@ -1037,7 +1060,7 @@ SgStringConversion* buildStringConversion_nfi(SgExpression* exp);
 // DQ (1/24/2009): Added this "_nfi" function but refactored buildStructDeclaration to also use it (this needs to be done uniformally).
 // SgClassDeclaration * buildClassDeclaration_nfi(const SgName& name, SgClassDeclaration::class_types kind, SgScopeStatement* scope, SgClassDeclaration* nonDefiningDecl, bool buildTemplateInstantiation = false);
 // SgClassDeclaration * buildClassDeclaration_nfi(const SgName& name, SgClassDeclaration::class_types kind, SgScopeStatement* scope, SgClassDeclaration* nonDefiningDecl, bool buildTemplateInstantiation);
-   SgClassDeclaration * buildClassDeclaration_nfi(const SgName& name, SgClassDeclaration::class_types kind, SgScopeStatement* scope, SgClassDeclaration* nonDefiningDecl, bool buildTemplateInstantiation, SgTemplateArgumentPtrList* templateArgumentsList);
+SgClassDeclaration * buildClassDeclaration_nfi(const SgName& name, SgClassDeclaration::class_types kind, SgScopeStatement* scope, SgClassDeclaration* nonDefiningDecl, bool buildTemplateInstantiation, SgTemplateArgumentPtrList* templateArgumentsList);
 
 // DQ (11/19/2011): Added to support template class declaration using EDG 4.x support (to support the template declarations directly in the AST).
 SgTemplateClassDeclaration* buildTemplateClassDeclaration_nfi(const SgName& name, SgClassDeclaration::class_types kind, SgScopeStatement* scope, SgTemplateClassDeclaration* nonDefiningDecl );

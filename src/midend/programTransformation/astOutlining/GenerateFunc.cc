@@ -8,8 +8,14 @@
  *  routines for use in an empirical tuning application. Such routines
  *  can be isolated into their own, dynamically shareable modules.
  */
+
 // tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
+
+// DQ (8/28/2012): Added this so that we can see where the macros 
+// are used to control the use of new vs. old template support.
+#include <rose_config.h>
+
 #include "sageBuilder.h"
 #include <iostream>
 #include <string>
@@ -49,12 +55,28 @@ createFuncSkeleton (const string& name, SgType* ret_type,
   // Liao 12/13/2007, generate SgProcedureHeaderStatement for Fortran code
      if (SageInterface::is_Fortran_language()) 
         {
+#ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
+       // DQ (8/28/2012): Generate a NULL pointer for now and fix that later.
+          fortranRoutine = NULL;
+
+          printf ("Need to use new SageBuilder API \n");
+          ROSE_ASSERT(false);
+#else
           fortranRoutine = SageBuilder::buildProcedureHeaderStatement(name.c_str(),ret_type, params, SgProcedureHeaderStatement::e_subroutine_subprogram_kind,scope);
+#endif
           func = isSgFunctionDeclaration(fortranRoutine);  
         }
        else
         {
+#ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
+       // DQ (8/28/2012): Generate a NULL pointer for now and fix that later.
+          func = NULL;
+
+          printf ("Need to use new SageBuilder API \n");
+          ROSE_ASSERT(false);
+#else
           func = SageBuilder::buildDefiningFunctionDeclaration(name,ret_type,params,scope);
+#endif
         }
 
      ROSE_ASSERT (func != NULL);

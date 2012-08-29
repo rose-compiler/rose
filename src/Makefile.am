@@ -110,6 +110,7 @@ libroseLibraries = \
    $(top_builddir)/src/3rdPartyLibraries/MSTL/libmstl.la \
    $(top_builddir)/src/backend/libbackend.la \
    $(top_builddir)/src/frontend/SageIII/libsage3.la \
+   $(libroseCxxlibraries) \
    $(libroseOpenFortranParserlibraries) \
    $(libroseJavaParserlibraries) \
    $(librosePHPlibraries) \

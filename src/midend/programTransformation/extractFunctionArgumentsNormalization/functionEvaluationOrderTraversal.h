@@ -78,3 +78,4 @@ private:
     /** All the function calls seen so far. */
     std::vector<FunctionCallInfo> functionCalls;
 };
+
