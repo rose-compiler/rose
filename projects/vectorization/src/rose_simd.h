@@ -14,7 +14,8 @@ __SIMDd is for the double.
 */
 
 #ifdef  USE_SSE
-#include <xmmintrin.h>
+// By default we support SSE2, and turning -msse2 on 
+#include <emmintrin.h>
 typedef  __m128   __SIMD; 
 typedef  __m128i  __SIMDi; 
 typedef  __m128d  __SIMDd; 

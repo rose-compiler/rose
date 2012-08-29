@@ -24,7 +24,7 @@ $(TEST_Results): ../src/vectorization $(@:.c=.c)
 	../src/vectorization -msse3 -lsimd $(srcdir)/$(@:.c=.c) -I$(top_srcdir)/projects/vectorization/src -L$(top_builddir)/projects/vectorization/src
 
 $(TEST_COMPARE_FILES): $(TEST_Results) 
-	@if $(DIFF)	$(srcdir)/$(@:.c=.c) $(@:.c=.c); then :; else echo "Files differ; test falied"; exit 1; fi
+	@if $(DIFF)	$(top_srcdir)/projects/vectorization/tests/$(@:.c=.c) $(@:.c=.c); then :; else echo "Files differ; test falied"; exit 1; fi
 
 check-local:
 	@$(MAKE) $(TEST_Results)
@@ -35,4 +35,4 @@ check-local:
 
 clean-local:
 	rm -f *.o rose_*.[cC] *.dot *.out 
-EXTRA_DIST = $(TESTCODES)
+EXTRA_DIST = $(TESTCODES) $(COMPARE_CODES)

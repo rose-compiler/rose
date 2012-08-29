@@ -13,7 +13,10 @@ AUTOMAKE_OPTIONS = subdir-objects
 Vectorization_includedir=$(exec_prefix)
 INCLUDES = $(ROSE_INCLUDES) -I$(Vectorization_includedir)
 LDADD    = $(ROSE_LIBS)
-libsimd_la_CPPFLAGS = -msse 
+
+# -msse and -msse2 are enabled for x86-64 compiler by default.
+# they have to be enabled on i386 - i686 compilers.
+libsimd_la_CPPFLAGS = -msse -msse2 
 lib_LTLIBRARIES = libsimd.la
 bin_PROGRAMS = vectorization
 include_HEADERS = rose_simd.h
