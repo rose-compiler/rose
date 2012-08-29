@@ -26,9 +26,7 @@ int main (int argc, char *argv[])
   appendArg(paraList, arg2);  
 
 	  // build a Fortran subroutine declaration 
-  SgProcedureHeaderStatement* func1 = buildProcedureHeaderStatement\
-     ("TEST1",buildVoidType(),paraList, 
-     SgProcedureHeaderStatement::e_subroutine_subprogram_kind);
+  SgProcedureHeaderStatement* func1 = buildProcedureHeaderStatement ("TEST1",buildVoidType(),paraList,SgProcedureHeaderStatement::e_subroutine_subprogram_kind);
 
 	  // build a statement inside the function body
   SgBasicBlock *func_body = func1->get_definition ()->get_body ();

@@ -45,15 +45,13 @@ int main (int argc, char *argv[])
   SgFunctionParameterList * paraList = buildFunctionParameterList();
   appendArg(paraList,arg1);
 
-  SgMemberFunctionDeclaration * funcdecl = buildNondefiningMemberFunctionDeclaration
-                                          ("bar",buildVoidType(), paraList);
+  SgMemberFunctionDeclaration * funcdecl = buildNondefiningMemberFunctionDeclaration("bar",buildVoidType(), paraList);
   appendStatement(funcdecl); 
 
   // build a defining member function 
   SgFunctionParameterList * paraList2 = isSgFunctionParameterList(deepCopy(paraList)); 
   ROSE_ASSERT(paraList2);
-  SgMemberFunctionDeclaration* funcdecl_2 = buildDefiningMemberFunctionDeclaration
-                           ("bar2",buildVoidType(),paraList2);
+  SgMemberFunctionDeclaration* funcdecl_2 = buildDefiningMemberFunctionDeclaration("bar2",buildVoidType(),paraList2);
   appendStatement(funcdecl_2);                         
 
   popScopeStack ();

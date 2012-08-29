@@ -1098,7 +1098,52 @@ TESTCODE_CURRENTLY_FAILING =
 # DQ (8/12/2012): This test code appears to demonstrate a loss of the template arguments in the name qualification.
 # test2012_189.C
 
-
+# This source files are listed as unused source files and thus violate 
+# the unused source file ploicy so let's list them explicitly here:
+UNMENTIONED_SOURCE_FILES = \
+c++trick.C \
+sgnodee.hpp \
+test2006_136.h \
+test2007_113.h \
+test2007_114.h \
+test2007_40.h \
+test2007_95.C \
+test2008_07.C \
+test2008_15.C \
+test2009_23.C \
+test2009_26.C \
+test2010_20.C \
+test2010_21.C \
+test2010_23.C \
+test2011_102.C \
+test2011_103.C \
+test2011_104.C \
+test2011_105.C \
+test2011_106.C \
+test2011_107.C \
+test2011_108.C \
+test2011_109.C \
+test2011_112.C \
+test2011_122.C \
+test2011_123.C \
+test2011_124.C \
+test2011_125.C \
+test2011_126.C \
+test2011_127.C \
+test2011_128.C \
+test2011_129.C \
+test2011_130.C \
+test2011_131.C \
+test2011_132.C \
+test2011_134.C \
+test2011_144.C \
+test2011_145.C \
+test2011_148.C \
+test2012_139.C \
+test2012_140.C \
+test2012_178.h \
+test2012_189.C \
+test_gnu.C 
 
 
 

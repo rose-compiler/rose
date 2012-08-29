@@ -132,8 +132,11 @@ namespace upcTranslation{
     SgFunctionParameterList * paraList = buildFunctionParameterList();
     appendArg(paraList,arg1);  
     appendArg(paraList,arg2);  
-    SgFunctionDeclaration * func1 = buildNondefiningFunctionDeclaration \
-       ("upcrt_gcd",buildIntType(),paraList);
+
+ // DQ (8/29/2012): Minor fix to compile with new SageBuilder API.
+ // SgFunctionDeclaration * func1 = buildNondefiningFunctionDeclaration ("upcrt_gcd",buildIntType(),paraList);
+    SgFunctionDeclaration * func1 = buildNondefiningFunctionDeclaration ("upcrt_gcd",buildIntType(),paraList,NULL);
+
     SgStatement* old_first_stmt = getFirstStatement(global_scope);
     prependStatement (func1);
     func1->get_declarationModifier().get_storageModifier().setExtern();

@@ -39,7 +39,7 @@ $warning = "" if @remaining > 1481; # as of 2010-10-18 there are 1480 violations
 print $desc if @remaining;
 print "  $_$warning\n" for sort @remaining;
 
-print "Number of remaining unused source files: " . @remaining . ".\n";
+print "Number of remaining unused source files (limit 1481): " . @remaining . ".\n";
 
 
 exit(@remaining ? ($warning?128:1) : 0);

@@ -24,14 +24,12 @@ int main (int argc, char *argv[])
   appendArg(paraList,arg1);  
   appendArg(paraList,arg2);  
 	  // build nondefining function declaration 
-  SgFunctionDeclaration * func1 = buildNondefiningFunctionDeclaration \
-     (SgName("foo"),buildVoidType(),paraList);
+  SgFunctionDeclaration * func1 = buildNondefiningFunctionDeclaration (SgName("foo"),buildVoidType(),paraList);
   appendStatement (func1);
 
     // SgFunctionParameterList should not be shared, deepcopy
   SgFunctionParameterList * paraList2 = isSgFunctionParameterList(deepCopy(paraList));
-  SgFunctionDeclaration * func2 = buildNondefiningFunctionDeclaration \
-     (SgName("foo"),buildVoidType(),paraList2);
+  SgFunctionDeclaration * func2 = buildNondefiningFunctionDeclaration (SgName("foo"),buildVoidType(),paraList2);
   // insert prototype function declaration
   appendStatement (func2);
 

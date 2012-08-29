@@ -3166,6 +3166,61 @@ SgMemberFunctionRefExp::cfgInEdges(unsigned int idx)
      return result;
    }
 
+
+// *******************
+// DQ (8/28/2012): Added CFG support for TemplateFunctionRefExp
+unsigned int
+SgTemplateFunctionRefExp::cfgIndexForEnd() const
+   {
+     return 0;
+   }
+
+std::vector<CFGEdge>
+SgTemplateFunctionRefExp::cfgOutEdges(unsigned int idx)
+   {
+     std::vector<CFGEdge> result;
+     ROSE_ASSERT (idx == 0);
+     makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result);
+     return result;
+   }
+
+std::vector<CFGEdge>
+SgTemplateFunctionRefExp::cfgInEdges(unsigned int idx)
+   {
+     std::vector<CFGEdge> result;
+     ROSE_ASSERT (idx == 0);
+     makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result);
+     return result;
+   }
+// *******************
+
+// *******************
+// DQ (8/28/2012): Added CFG support for TemplateMemberFunctionRefExp
+unsigned int
+SgTemplateMemberFunctionRefExp::cfgIndexForEnd() const
+   {
+     return 0;
+   }
+
+std::vector<CFGEdge>
+SgTemplateMemberFunctionRefExp::cfgOutEdges(unsigned int idx)
+   {
+     std::vector<CFGEdge> result;
+     ROSE_ASSERT (idx == 0);
+     makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result);
+     return result;
+   }
+
+std::vector<CFGEdge>
+SgTemplateMemberFunctionRefExp::cfgInEdges(unsigned int idx)
+   {
+     std::vector<CFGEdge> result;
+     ROSE_ASSERT (idx == 0);
+     makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result);
+     return result;
+   }
+// *******************
+
 unsigned int
 SgPseudoDestructorRefExp::cfgIndexForEnd() const
    {

@@ -528,3 +528,4 @@ bool StaticSingleAssignment::isArgumentNonConstReferenceOrPointer(SgInitializedN
 
     return false;
 }
+

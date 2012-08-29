@@ -1459,7 +1459,11 @@ RtedTransformation::buildGlobalConstructor(SgScopeStatement* scope, std::string 
 {
   //SgStatement* global=NULL;
   // SB::build the classdeclaration and definition for RtedGlobal
-  SgClassDeclaration* decl = SB::buildClassDeclaration_nfi( "RtedGlobal_"+name, SgClassDeclaration::e_class, scope, NULL);
+
+// DQ (8/29/2012): Minor modification to support new SageBulder API (previously default parameters must not be explicit).
+// SgClassDeclaration* decl = SB::buildClassDeclaration_nfi( "RtedGlobal_"+name, SgClassDeclaration::e_class, scope, NULL);
+   SgClassDeclaration* decl = SB::buildClassDeclaration_nfi( "RtedGlobal_"+name, SgClassDeclaration::e_class, scope, NULL,false, NULL);
+
   ROSE_ASSERT(decl);
   globConstructor = decl;
   SgClassDefinition* def = SB::buildClassDefinition(decl);

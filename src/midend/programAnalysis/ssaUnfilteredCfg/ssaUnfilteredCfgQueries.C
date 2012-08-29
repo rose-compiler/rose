@@ -574,3 +574,4 @@ const SSA_UnfilteredCfg::NodeReachingDefTable& SSA_UnfilteredCfg::getLastVersion
 {
     return getReachingDefsAfter(astNode);
 }
+

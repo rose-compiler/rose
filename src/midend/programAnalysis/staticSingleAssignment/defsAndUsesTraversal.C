@@ -301,3 +301,4 @@ void DefsAndUsesTraversal::addDefForVarAtNode(SgVarRefExp* currentVar, SgNode* d
                 << " at " << defNode->cfgForBeginning().toStringForDebugging() << endl;
     }
 }
+

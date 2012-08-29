@@ -59,13 +59,15 @@ OLD_TESTCODES_REQUIRED_TO_PASS = \
      test2010_17.c \
      test2011_05.c \
      test2007_177.c \
-     test2005_168.c \
      test2006_65.c \
      test2010_11.c \
      test2010_14.c \
      math.c \
      complex_01.c \
      constants.c
+
+# This is listed seperately below with the required path to find the "sla.h" header file.
+# test2005_168.c 
 
 TESTCODES_REQUIRED_TO_PASS = \
      test_CplusplusMacro_C.c \

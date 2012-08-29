@@ -78,6 +78,14 @@
    __builtin_stdarg_start */
 #define __builtin_va_start __builtin_stdarg_start
 
+/* DQ (8/28/2012): This is an EDG limitation (stricter interpretation of C and C++, I gather).
+   EDG 4.4 no longer supports the GNU extension ``__thread'' so we have to disable this
+   by setting it with a macro to defin it away (to nothing).  See the details in the 
+   EDG/src/Changes file. This is tested in: C_tests/test2009_19.c.
+*/
+
+#define __thread 
+
 /* Outside strict ISO C mode (-ansi, -std=c89 or -std=c99), the functions _exit, alloca,
     bcmp, bzero, dcgettext, dgettext, dremf, dreml, drem, exp10f, exp10l, exp10, ffsll,
     ffsl, ffs, fprintf_unlocked, fputs_unlocked, gammaf, gammal, gamma, gettext, index,
