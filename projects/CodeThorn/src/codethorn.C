@@ -472,8 +472,8 @@ int main( int argc, char * argv[] ) {
   else
 	cout << "Time total           : "<<green<<totalRunTime/1000.0<<" seconds"<<normal<<endl;
   // we only generate a visualization if #estates<=1000
-  if(eStateSetSize>1000) {
-	cout << "Number of eStates > 1000. Not generating visualization."<<endl;
+  if(eStateSetSize>2500) {
+	cout << "Number of eStates > 2500. Not generating visualization."<<endl;
   } else {
     Visualizer visualizer(analyzer.getLabeler(),analyzer.getFlow(),analyzer.getStateSet(),analyzer.getEStateSet(),analyzer.getTransitionGraph());
     string dotFile="digraph G {\n";

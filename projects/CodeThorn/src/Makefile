@@ -66,6 +66,11 @@ viz: transitiongraph1.dot transitiongraph2.dot cfg.dot ast.dot
 	dot -Tps transitiongraph2.dot -oviz/transitiongraph2.ps
 	dot -Tps cfg.dot -oviz/cfg.ps
 	dot -Gordering=out -Tps ast.dot -oviz/ast.ps
+vizjpg: transitiongraph1.dot transitiongraph2.dot cfg.dot ast.dot
+	dot -Tjpg transitiongraph1.dot -oviz/transitiongraph1.jpg
+	dot -Tjpg transitiongraph2.dot -oviz/transitiongraph2.jpg
+	dot -Tjpg cfg.dot -oviz/cfg.jpg
+	dot -Gordering=out -Tjpg ast.dot -oviz/ast.jpg
 
 clean:
 	rm -f testCode.o
@@ -84,14 +89,36 @@ distclean: clean
 	rm -rf html latex
 
 bsps: codethorn
-	./codethorn tests/basictest10f.C && make viz
+	./codethorn tests/basictest10f.C && make viz && make vizjpg
+	cp tests/basictest10f.C bsps
 	cp viz/cfg.ps bsps/basictest10f_cfg.ps
 	cp viz/transitiongraph1.ps bsps/basictest10f_transitiongraph1.ps
 	cp viz/transitiongraph2.ps bsps/basictest10f_transitiongraph2.ps
-	./codethorn tests/basictest15.C && make viz
+	cp viz/ast.jpg bsps/basictest10f_ast.jpg
+	cp viz/cfg.jpg bsps/basictest10f_cfg.jpg
+	cp viz/transitiongraph1.jpg bsps/basictest10f_transitiongraph1.jpg
+	cp viz/transitiongraph2.jpg bsps/basictest10f_transitiongraph2.jpg
+	./codethorn tests/basictest15.C && make viz && make vizjpg
+	cp tests/basictest15.C bsps
 	cp viz/cfg.ps bsps/basictest15_cfg.ps
 	cp viz/transitiongraph1.ps bsps/basictest15_transitiongraph1.ps
 	cp viz/transitiongraph2.ps bsps/basictest15_transitiongraph2.ps
+	cp viz/ast.jpg bsps/basictest15_ast.jpg
+	cp viz/cfg.jpg bsps/basictest15_cfg.jpg
+	cp viz/transitiongraph1.jpg bsps/basictest15_transitiongraph1.jpg
+	cp viz/transitiongraph2.jpg bsps/basictest15_transitiongraph2.jpg
+
+	./codethorn tests/rers/Problem1.c
+	cp tests/rers/Problem1.c bsps
+	dot -Tjpg ast.dot -oviz/ast.jpg
+	cp viz/ast.jpg bsps/rers1_ast.jpg
+# too large (dot takes too long)
+#	dot -Tjpg cfg.dot -ocfg.jpg
+#	cp viz/cfg.jpg bsps/rers1_cfg.jpg
+# dot seg faults
+# cp viz/transitiongraph1.jpg bsps/rers1_transitiongraph1.jpg
+	dot -Tjpg transitiongraph2.dot -oviz/transitiongraph2.jpg
+	cp viz/transitiongraph2.jpg bsps/rers1_transitiongraph2.jpg
 
 dist:
 	tar cvzf codethorn_$(MYDATE).tgz *.C *cpp *.h *.txt *.lxx *.yxx docs tests Makefile* TODO
