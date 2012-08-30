@@ -1041,6 +1041,8 @@ class JavaTraversal implements Callable<Boolean> {
 //for (int i = 0; i < args.length; i++)
 //System.out.println("ROSE Filtered Argument " + i + ": " + args[i]);
 
+        JavaParserSupport.initialize();
+        
         //
         // Look to see if a classpath was specified. If so, create a class loader for it.
         //

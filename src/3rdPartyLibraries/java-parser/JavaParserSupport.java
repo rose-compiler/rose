@@ -51,13 +51,20 @@ class JavaParserSupport {
     //
     // Create a symbolTable map to keep track of user-defined type declarations.
     //
-    public static HashMap<Class, TypeDeclaration> userTypeTable = new HashMap<Class, TypeDeclaration>();
-
+    public static HashMap<Class, TypeDeclaration> userTypeTable;
+ 
     //
     // Create a symbolTable map to keep track of packages and type that have already been encountered.
     //
-    public static HashMap<String, HashMap<String, Class>> symbolTable = new HashMap<String, HashMap<String, Class>>();
-
+    public static HashMap<String, HashMap<String, Class>> symbolTable;
+ 
+    public static void initialize() {
+// TODO: REMOVE THIS !
+//        System.out.println("Calling initialize");
+        userTypeTable = new HashMap<Class, TypeDeclaration>();
+        symbolTable = new HashMap<String, HashMap<String, Class>>();
+    }
+    
     public static boolean typeExists(String package_name, String type_name) {
         return (symbolTable.containsKey(package_name) ? symbolTable.get(package_name).containsKey(type_name) : false); 
     }
@@ -950,10 +957,7 @@ System.out.println("Converting it to " + typename);
                     JavaParser.cactionTypeReference("", "void", new JavaToken("Dummy JavaToken (see createJavaToken)", new JavaSourcePositionInformation(0)));
                 }
                 else {
-                    if (method_binding.returnType.canBeInstantiated()) {
-                        generateAndPushType(method_binding.returnType);
-                    }
-                    else JavaParser.cactionTypeReference("", method_binding.returnType.debugName(), new JavaToken("Dummy JavaToken (see createJavaToken)", new JavaSourcePositionInformation(0)));
+                    generateAndPushType(method_binding.returnType);
                 }
 
                 Argument args[] = method.arguments;
@@ -1635,15 +1639,12 @@ System.out.println("The type " + node.resolvedType.debugName() + " cannot be ins
      * @param type_binding
      */
     static public void generateAndPushType(TypeBinding type_binding) {
-        if (! type_binding.canBeInstantiated()) {
-            JavaParser.cactionTypeReference("", type_binding.debugName(), new JavaToken("Dummy JavaToken (see createJavaToken)", new JavaSourcePositionInformation(0)));
-        }
-        else if (type_binding instanceof ArrayBinding) {
+        if (type_binding instanceof ArrayBinding) {
             ArrayBinding arrayType = (ArrayBinding) type_binding;
             TypeBinding baseType = arrayType.leafComponentType;
 
-            String package_name = (baseType.getPackage() != null ? new String(baseType.getPackage().readableName()) : ""),
-                   type_name = baseType.debugName().substring(package_name.length() == 0 ? 0 : package_name.length() + 1);
+            String package_name = getPackageName(baseType),
+                   type_name = getTypeName(baseType);
 
 // TODO: REMOVE THIS
 //System.out.println("**- The package is: " + package_name + ";  The class name is " + type_name);
@@ -1651,8 +1652,8 @@ System.out.println("The type " + node.resolvedType.debugName() + " cannot be ins
             JavaParser.cactionArrayTypeReference(package_name, type_name, arrayType.dimensions(), new JavaToken("Dummy JavaToken (see createJavaToken)", new JavaSourcePositionInformation(0)));
         }
         else {
-            String package_name = (type_binding.getPackage() != null ? new String(type_binding.getPackage().readableName()) : ""),
-                   type_name = type_binding.debugName().substring(package_name.length() == 0 ? 0 : package_name.length() + 1);
+            String package_name = getPackageName(type_binding),
+                   type_name = getTypeName(type_binding);
 
 // TODO: REMOVE THIS
 //System.out.println("**- The package is: " + package_name + ";  The class name is " + type_name);
