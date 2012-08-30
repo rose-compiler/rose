@@ -9,8 +9,7 @@ AUTOMAKE_OPTIONS = subdir-objects
 #  vectorization
 # ------------------------------------------------------------------------------
 
-#exec_prefix=${prefix}/vectorization
-Vectorization_includedir=$(exec_prefix)
+vectorization_includedir=$(exec_prefix)
 INCLUDES = $(ROSE_INCLUDES) -I$(Vectorization_includedir)
 LDADD    = $(ROSE_LIBS)
 
@@ -29,7 +28,7 @@ vectorization_SOURCES=\
 	SIMDAnalysis.C \
 	vectorization.C 
 
-Vectorization_include_HEADERS=\
+vectorization_include_HEADERS=\
   normalization.h \
   SIMDAnalysis.h \
   vectorization.h

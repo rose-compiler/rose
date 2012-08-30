@@ -27,11 +27,15 @@ $(TEST_COMPARE_FILES): $(TEST_Results)
 	@if $(DIFF)	$(top_srcdir)/projects/vectorization/tests/$(@:.c=.c) $(@:.c=.c); then :; else echo "Files differ; test falied"; exit 1; fi
 
 check-local:
+if ROSE_BUILD_C_LANGUAGE_SUPPORT
 	@$(MAKE) $(TEST_Results)
 	@$(MAKE) $(TEST_COMPARE_FILES)
 	@echo "***********************************************************************************************"
 	@echo "*** ROSE/projects/vectorization/tests: make check rule complete (terminated normally)"
 	@echo "***********************************************************************************************"
+else
+	@echo "Skipping tests"
+endif
 
 clean-local:
 	rm -f *.o rose_*.[cC] *.dot *.out 
