@@ -319,15 +319,15 @@ class ecjASTVisitor extends ExtendedASTVisitor {
         // Traverse the children of this node here because we need to generate a 0 integer
         // expression for each missing dimension.
         //
-		int dimensions_length = node.dimensions.length;
-		node.type.traverse(this, scope);
-		for (int i = 0; i < dimensions_length; i++) {
-			if (node.dimensions[i] != null)
-				 node.dimensions[i].traverse(this, scope);
+        int dimensions_length = node.dimensions.length;
+        node.type.traverse(this, scope);
+        for (int i = 0; i < dimensions_length; i++) {
+            if (node.dimensions[i] != null)
+                 node.dimensions[i].traverse(this, scope);
             else JavaParser.cactionIntLiteral(0, "0", createJavaToken(node));
-		}
-		if (node.initializer != null)
-			node.initializer.traverse(this, scope);
+        }
+        if (node.initializer != null)
+            node.initializer.traverse(this, scope);
 
 // TODO: REMOVE generateType
 //        JavaParserSupport.generateType(node.type);
@@ -1392,10 +1392,15 @@ System.out.println("     --- packageReference tokens = " + tokenString);
             importReference.append(tokenString);
         }
 
+        Class cls = null;
         boolean containsWildcard = ((node.bits & node.OnDemand) != 0);
         String importReferenceWithoutWildcard = importReference.toString();
         if (containsWildcard) {
+            JavaParserSupport.importOnDemandList.add(importReferenceWithoutWildcard + ".");
             importReference.append(".*");
+        }
+        else {
+            cls = JavaParserSupport.preprocessClass(importReferenceWithoutWildcard);
         }
 
         if (JavaParser.verboseLevel > 1)
@@ -1406,7 +1411,8 @@ System.out.println("     --- packageReference tokens = " + tokenString);
 /*
         Class cls = null;
         try {
-            cls = Class.forName(importReferenceWithoutWildcard);
+            cls = getClassForName(importReferenceWithoutWildcard);
+            if (cls == null) throw new ClassNotFoundException(importReferenceWithoutWildcard);
         }
         catch (ClassNotFoundException e) {
             System.out.println("(*) Caught error in JavaParserSupport (Parser failed)");
@@ -1416,7 +1422,6 @@ System.out.println("     --- packageReference tokens = " + tokenString);
         }
         JavaParserSupport.preprocessClass(cls);
 */
-        Class cls = JavaParserSupport.preprocessClass(importReferenceWithoutWildcard);
         
 //        }
 //        else { // just prime the system for an "import ... .*;"
@@ -1425,17 +1430,22 @@ System.out.println("     --- packageReference tokens = " + tokenString);
 //            JavaParser.cactionBuildImplicitClassSupportEnd(0, importReferenceWithoutWildcard);
 //        }
 
-        // DQ (4/15/2011): I could not get the passing of a boolean to work, so I am just passing an integer.
-        if (cls == null) { // assume this is the name of a package
-            JavaParser.cactionImportReference(node.isStatic(), importReferenceWithoutWildcard, "", containsWildcard, createJavaToken(node));
+        String package_name,
+               type_name = "";
+        if (cls == null) { // assume this is the name of a package.
+            package_name = importReferenceWithoutWildcard;
+
+            JavaParser.cactionPushPackage(package_name);
+            JavaParser.cactionPopPackage();
         }
         else {
             String canonical_name = cls.getCanonicalName(),
-                   simple_name = cls.getSimpleName(),
-                   package_name = JavaParserSupport.getMainPackageName(cls, 0),
-                   type_name = canonical_name.substring(package_name.length() == 0 ? 0 : package_name.length() + 1);
-            JavaParser.cactionImportReference(node.isStatic(), package_name, type_name, containsWildcard, createJavaToken(node));
+                   simple_name = cls.getSimpleName();
+            package_name = JavaParserSupport.getMainPackageName(cls, 0);
+            type_name = canonical_name.substring(package_name.length() == 0 ? 0 : package_name.length() + 1);
         }
+
+        JavaParser.cactionImportReference(node.isStatic(), package_name, type_name, containsWildcard, createJavaToken(node));
 
         if (JavaParser.verboseLevel > 0)
             System.out.println("Leaving enter (ImportReference,CompilationUnitScope)");
@@ -2180,7 +2190,7 @@ System.out.println("     --- packageReference tokens = " + tokenString);
 
         String method_name = new String(node.selector);
         JavaParser.cactionMessageSendEnd(node.binding.isStatic(),
-        		                         JavaParserSupport.getPackageName(node.actualReceiverType),
+                                         JavaParserSupport.getPackageName(node.actualReceiverType),
                                          JavaParserSupport.getTypeName(node.actualReceiverType),
                                          method_name,
                                          node.typeArguments == null ? 0 : node.typeArguments.length,
@@ -2588,13 +2598,12 @@ System.out.println("     --- packageReference tokens = " + tokenString);
         String type_prefix = new String(strbuf);
         String package_name = new String(node.actualReceiverType.qualifiedPackageName());
         String type_name = new String(node.actualReceiverType.qualifiedSourceName());
-        if (typePrefixLength > 0) { // is there an type prefix?
-            String full_type_name = (package_name.length() > 0
-                                            ? new String(node.actualReceiverType.qualifiedPackageName()) + "."
-                                            : "")
-                                     + type_name;
-            JavaParserSupport.preprocessClass(full_type_name);
-        }
+// TODO: Remove this
+//        if (typePrefixLength > 0) { // is there an type prefix?
+        String full_type_name = (package_name.length() > 0 ? (package_name + ".") : "") + type_name;
+        JavaParserSupport.preprocessClass(full_type_name);
+// TODO: Remove this
+//        }
           
         strbuf = new StringBuffer();
         for (int i = typePrefixLength; i < node.tokens.length; i++) {
@@ -2756,9 +2765,16 @@ System.out.println("     --- packageReference tokens = " + tokenString);
         }
 */
 
-        JavaParser.cactionTypeReference(JavaParserSupport.getPackageName(node.resolvedType),
-                                        JavaParserSupport.getTypeName(node.resolvedType),
-                                        createJavaToken(node));
+        if (node.resolvedType.canBeInstantiated()) {
+            if (JavaParser.verboseLevel > 0)
+                System.out.println("The qualified type referenced is bound to type " + node.resolvedType.debugName());        
+            JavaParserSupport.preprocessClass(node.resolvedType);
+        }
+
+        String package_name = JavaParserSupport.getPackageName(node.resolvedType);
+        String  type_name = JavaParserSupport.getTypeName(node.resolvedType);
+        
+        JavaParser.cactionTypeReference(package_name, type_name, createJavaToken(node));
 
         if (JavaParser.verboseLevel > 0)
             System.out.println("Leaving enter (QualifiedTypeReference,BlockScope)");
@@ -2787,9 +2803,16 @@ System.out.println("     --- packageReference tokens = " + tokenString);
         }
 */
 
-        JavaParser.cactionTypeReference(JavaParserSupport.getPackageName(node.resolvedType),
-                                        JavaParserSupport.getTypeName(node.resolvedType),
-                                        createJavaToken(node));
+        if (node.resolvedType.canBeInstantiated()) {
+            if (JavaParser.verboseLevel > 0)
+                System.out.println("The qualified type referenced is bound to type " + node.resolvedType.debugName());        
+            JavaParserSupport.preprocessClass(node.resolvedType);
+        }
+
+        String package_name = JavaParserSupport.getPackageName(node.resolvedType);
+        String  type_name = JavaParserSupport.getTypeName(node.resolvedType);
+        
+        JavaParser.cactionTypeReference(package_name, type_name, createJavaToken(node));
 
         if (JavaParser.verboseLevel > 0)
             System.out.println("Leaving enter (QualifiedTypeReference,ClassScope)");
@@ -2861,20 +2884,20 @@ System.out.println("     --- packageReference tokens = " + tokenString);
             TypeBinding type_binding = (TypeBinding) node.binding;
             assert(type_binding.canBeInstantiated());
             if (JavaParser.verboseLevel > 0) {
-                System.out.println("The  Single name referenced " + varRefName + " is bound to type " + type_binding.debugName());
+                System.out.println("The Single name referenced " + varRefName + " is bound to type " + type_binding.debugName());
             }
             JavaParserSupport.preprocessClass(type_binding);
-            
+
             JavaParser.cactionTypeReference(JavaParserSupport.getPackageName(type_binding),
                                             JavaParserSupport.getTypeName(type_binding),
                                             createJavaToken(node));
         }
         else { // the name is a variable
-        	String package_name = "",
-        	       type_name = "";
+            String package_name = "",
+                   type_name = "";
 
-        	if (node.localVariableBinding() == null) { // not a local variable
-            	TypeBinding type_binding = node.actualReceiverType;
+            if (node.localVariableBinding() == null) { // not a local variable
+                TypeBinding type_binding = node.actualReceiverType;
                 assert(type_binding.canBeInstantiated());
                 if (JavaParser.verboseLevel > 0) {
                     System.out.println("The  Single name referenced " + varRefName + " is bound to type " + type_binding.debugName());
@@ -2882,9 +2905,9 @@ System.out.println("     --- packageReference tokens = " + tokenString);
                 JavaParserSupport.preprocessClass(type_binding);
                 package_name = JavaParserSupport.getPackageName(type_binding);
                 type_name = JavaParserSupport.getTypeName(type_binding);
-        	}
+            }
 
-        	JavaParser.cactionSingleNameReference(package_name, type_name, varRefName, createJavaToken(node));
+            JavaParser.cactionSingleNameReference(package_name, type_name, varRefName, createJavaToken(node));
         }
 
         if (JavaParser.verboseLevel > 0)
@@ -2934,13 +2957,15 @@ System.out.println("     --- packageReference tokens = " + tokenString);
 */
         if (node.resolvedType.canBeInstantiated()) {
             if (JavaParser.verboseLevel > 0)
-                System.out.println("The single type referenced is bound to type " + node.resolvedType.debugName());        
+                System.out.println("(1) The single type referenced is bound to type " + node.resolvedType.debugName());
             JavaParserSupport.preprocessClass(node.resolvedType);
         }
-                    
-        JavaParser.cactionTypeReference(JavaParserSupport.getPackageName(node.resolvedType),
-                                        JavaParserSupport.getTypeName(node.resolvedType),
-                                        createJavaToken(node));
+//else System.out.println("The type " + node.resolvedType.debugName() + " can't be instantiated");
+
+        String package_name = JavaParserSupport.getPackageName(node.resolvedType);
+        String  type_name = JavaParserSupport.getTypeName(node.resolvedType);
+        
+        JavaParser.cactionTypeReference(package_name, type_name, createJavaToken(node));
 
         if (JavaParser.verboseLevel > 0)
             System.out.println("Leaving enter (SingleTypeReference,BlockScope)");
@@ -2968,10 +2993,16 @@ System.out.println("     --- packageReference tokens = " + tokenString);
             System.out.println("Sorry, not implemented SingleTypeReference: node.resolvedType == NULL");
         }
 */
+        if (node.resolvedType.canBeInstantiated()) {
+            if (JavaParser.verboseLevel > 0)
+                System.out.println("(2) The single type referenced is bound to type " + node.resolvedType.debugName());        
+            JavaParserSupport.preprocessClass(node.resolvedType);
+        }
 
-        JavaParser.cactionTypeReference(JavaParserSupport.getPackageName(node.resolvedType),
-                                        JavaParserSupport.getTypeName(node.resolvedType),
-                                        createJavaToken(node));
+        String package_name = JavaParserSupport.getPackageName(node.resolvedType);
+        String  type_name = JavaParserSupport.getTypeName(node.resolvedType);
+        
+        JavaParser.cactionTypeReference(package_name, type_name, createJavaToken(node));
           
         if (JavaParser.verboseLevel > 0)
             System.out.println("Leaving enter (SingleTypeReference,BlockScope)");
@@ -3227,22 +3258,18 @@ System.out.println("     --- packageReference tokens = " + tokenString);
             localClassCounter.get(enclosing_type_name).put(simple_type_name, new Integer(count));
             typename = typename + (count + 1) + simple_type_name;
         }
-System.out.println("Assuming the type name is: " + typename);
+        
+// TODO: Anonymous and local class declaration stuff !?
+/*
         Class cls;
         try {
-System.out.println("About to lookup type name: " + typename);
-            cls = Class.forName(typename);
-System.out.println("Successfully did the forName lookup of type: " + typename);
-assert(cls != null); 
-assert(cls.getName() != null);
-assert(cls.getSimpleName() != null);
+            cls = getClassForName(typename);
+            if (cls == null) throw new ClassNotFoundException(typename);
             String class_name = cls.getName();
-System.out.println("I am here - 2: " + class_name);
             String simple_name = cls.getSimpleName();
-System.out.println("I am here - 3: " + simple_name);
 // TODO: REMOVE THIS
-System.out.println(";  The class name is " + class_name +
-                   ";  The simple class name is " + simple_name);
+//System.out.println(";  The class name is " + class_name +
+//                   ";  The simple class name is " + simple_name);
 //            assert(cls.getEnclosingClass() == null); // not an inner class
 //            insertType(class_package, cls); // keep track of top-level classes that have been seen
 //            identifyUserDefinedTypes(cls, node);
@@ -3253,8 +3280,10 @@ System.out.println(";  The class name is " + class_name +
 
             System.exit(1);
         }
-System.out.println("Successfully looked up type name: " + typename);
-
+// TODO: REMOVE THIS
+//System.out.println("Successfully looked up type name: " + typename);
+*/
+        
         enterTypeDeclaration(node);
         
         if (JavaParser.verboseLevel > 0)

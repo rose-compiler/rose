@@ -96,10 +96,10 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionInsertClassEnd(JNIEnv *env, jclass
 JNIEXPORT void JNICALL Java_JavaParser_cactionBuildClassSupportStart(JNIEnv *env, jclass xxx, jstring java_string, jboolean java_is_interface) {
     SgName name = convertJavaStringToCxxString(env, java_string);
 
-    if (SgProject::get_verbose() > 0)
-        printf ("Inside of Java_JavaParser_cactionBuildClassSupportStart(): %s \n", name.str());
-
     bool is_interface = java_is_interface;
+
+    if (SgProject::get_verbose() > 0)
+        printf ("Inside of Java_JavaParser_cactionBuildClassSupportStart(): %s %s \n", (is_interface ? "interface" : "class"), name.str());
 
     SgScopeStatement *outerScope = astJavaScopeStack.top();
     ROSE_ASSERT(outerScope != NULL);
@@ -157,6 +157,69 @@ cout.flush();
     }
     */
 }
+
+
+JNIEXPORT void JNICALL Java_JavaParser_cactionBuildClassExtendsAndImplementsSupport(JNIEnv *env, jclass xxx, jboolean java_has_super_class, jint java_num_interfaces) {
+    bool has_super_class = java_has_super_class;
+    int number_of_interfaces = java_num_interfaces;
+
+    if (SgProject::get_verbose() > 0)
+        printf ("Inside of Java_JavaParser_cactionBuildClassExtendsAndImplementsSupport()\n");
+
+    ROSE_ASSERT(! astJavaScopeStack.empty());
+    SgClassDefinition *class_definition = isSgClassDefinition(astJavaScopeStack.top());
+
+    if (SgProject::get_verbose() > 0) {
+        cout << "Type " << class_definition -> get_qualified_name()
+             << " has "
+             << (has_super_class ? "a super class" : "no super class")
+             << " and "
+             << number_of_interfaces
+             << " interface(s)."
+             << endl;
+        cout.flush();
+    }
+
+    //
+    // Process the interfaces for this type, if any.
+    //
+    for (int i = 0; i < number_of_interfaces; i++) {
+         SgType *type = astJavaComponentStack.popType();
+         SgClassType *interface_type = isSgClassType(type);
+
+         if (SgProject::get_verbose() > 0) {
+             cout << "   Type " << interface_type -> get_qualified_name()
+                  << endl;
+             cout.flush();
+         }
+
+         SgDeclarationStatement *declaration = interface_type -> get_declaration();
+         SgClassDeclaration *interface_declaration = isSgClassDeclaration(declaration -> get_definingDeclaration());
+//         ROSE_ASSERT(interface_declaration -> get_explicit_interface()); // must be an interface
+         SgBaseClass *base = new SgBaseClass(interface_declaration);
+         base -> set_parent(class_definition);
+         class_definition -> prepend_inheritance(base);
+    }
+
+    //
+    // Add Super class to the current Class definition.
+    //
+    if (has_super_class) {
+        SgType *type = astJavaComponentStack.popType();
+        SgClassType *class_type = isSgClassType(type);
+         if (SgProject::get_verbose() > 0) {
+             cout << "   Type " << class_type -> get_qualified_name()
+                  << endl;
+             cout.flush();
+        }
+        SgDeclarationStatement *declaration = class_type -> get_declaration();
+        SgClassDeclaration *class_declaration = isSgClassDeclaration(declaration -> get_definingDeclaration());
+        ROSE_ASSERT(! class_declaration -> get_explicit_interface()); // must be a class
+        SgBaseClass *base = new SgBaseClass(class_declaration);
+        base -> set_parent(class_definition);
+        class_definition -> prepend_inheritance(base);
+    }
+ }
 
 
 /**
@@ -742,6 +805,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionTypeDeclarationHeader(JNIEnv *env,
     //
     for (int i = 0; i < number_of_interfaces; i++) {
          SgType *type = astJavaComponentStack.popType();
+// TODO: Remove this!   Already processed in Java_JavaParser_cactionBuildClassExtendsAndImplementsSupport(...)
+ /*
          SgClassType *interface_type = isSgClassType(type);
          SgDeclarationStatement *declaration = interface_type -> get_declaration();
          SgClassDeclaration *interface_declaration = isSgClassDeclaration(declaration -> get_definingDeclaration());
@@ -749,6 +814,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionTypeDeclarationHeader(JNIEnv *env,
          SgBaseClass *base = new SgBaseClass(interface_declaration);
          base -> set_parent(classDefinition);
          classDefinition -> prepend_inheritance(base);
+ */
     }
 
     //
@@ -756,6 +822,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionTypeDeclarationHeader(JNIEnv *env,
     //
     if (has_super_class) {
         SgType *type = astJavaComponentStack.popType();
+// TODO: Remove this!   Already processed in Java_JavaParser_cactionBuildClassExtendsAndImplementsSupport(...)
+/*
         SgClassType *class_type = isSgClassType(type);
         SgDeclarationStatement *declaration = class_type -> get_declaration();
         SgClassDeclaration *class_declaration = isSgClassDeclaration(declaration -> get_definingDeclaration());
@@ -763,6 +831,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionTypeDeclarationHeader(JNIEnv *env,
         SgBaseClass *base = new SgBaseClass(class_declaration);
         base -> set_parent(classDefinition);
         classDefinition -> prepend_inheritance(base);
+*/
     }
 
     ROSE_ASSERT(classDefinition == astJavaComponentStack.top());
@@ -1263,17 +1332,13 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionTypeReference(JNIEnv *env, jclass,
     SgName package_name = convertJavaPackageNameToCxxString(env, java_package_name),
            type_name = convertJavaStringToCxxString(env, java_type_name);
 
+// REMOVE THIS !!!
+//cout << "*Looking for package of size " << package_name.getString().size() << ": " << package_name.getString() << endl;
+//cout << "*Looking for type of size " << type_name.getString().size() << ": " << type_name.getString() << endl;
+//cout.flush();
+
     SgType *type = lookupTypeByName(package_name, type_name, 0 /* not an array - number of dimensions is 0 */);
 
-// REMOVE THIS !!!
-/*
-if (type == NULL) {
-cout << "*Could not locate type " << type_name
-     << endl;
-cout.flush();
-type = ::ObjectClassType;
-}
-*/
     ROSE_ASSERT(type != NULL);
 
     astJavaComponentStack.push(type);
@@ -1566,6 +1631,10 @@ cout.flush();
 }
 
 
+//
+// TODO: REVIEW THIS!!!!
+// Seems awfully complicated with some legacy code mixed in!
+//
 JNIEXPORT void JNICALL Java_JavaParser_cactionQualifiedNameReference(JNIEnv *env, jclass, jstring java_package_name, jstring java_type_prefix, jstring java_type_name, jstring java_name, jobject jToken) {
     if (SgProject::get_verbose() > 0)
         printf ("Build a qualified name reference \n");
@@ -1608,6 +1677,19 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionQualifiedNameReference(JNIEnv *env
         else {
             variable_symbol = lookupVariableByName(*i);
         }
+
+// TODO: REMOVE THIS!
+if(variable_symbol == NULL) {
+cout << "Could not find ..."
+    << "; type_prefix = " << type_prefix
+    << "package_name = " << package_name
+    << "; type_name = " << type_name
+    << "; qualifiedName = " << qualifiedName
+    << " in scope " 
+    << astJavaScopeStack.top() -> class_name()
+    << endl;
+cout.flush();
+}
         ROSE_ASSERT(variable_symbol);
         SgExpression *result = SageBuilder::buildVarRefExp(variable_symbol);
         ROSE_ASSERT(result != NULL);
@@ -4018,6 +4100,18 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionSingleNameReference(JNIEnv *env, j
 
         variable_symbol = lookupVariableByName(name);
     }
+
+// TODO: REMOVE THIS!
+if(variable_symbol == NULL) {
+cout << "Could not find ..."
+    << "package_name = " << package_name.getString()
+    << "; type_name = " << type_name.getString()
+    << "; variable_name = " << name.getString()
+    << " in scope " 
+    << astJavaScopeStack.top() -> class_name()
+    << endl;
+cout.flush();
+}
 
     ROSE_ASSERT(variable_symbol);
     SgVarRefExp *varRefExp = SageBuilder::buildVarRefExp(variable_symbol);

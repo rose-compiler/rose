@@ -264,6 +264,7 @@ class JavaParser  implements Callable<Boolean> {
 
 
     public static native void cactionBuildClassSupportStart(String className, boolean is_interface);
+    public static native void cactionBuildClassExtendsAndImplementsSupport(boolean has_super_class, int num_interfaces);
     public static native void cactionBuildClassSupportEnd(String className);
     public static native void cactionBuildMethodSupport(String methodName, boolean is_constructor, boolean is_abstract, boolean is_native, int num_arguments);
     public static native void cactionBuildFieldSupport(String fieldName);
