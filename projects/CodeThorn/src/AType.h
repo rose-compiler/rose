@@ -51,11 +51,11 @@ class ConstIntLattice {
   ConstIntLattice(Bot e);
   // type conversion
   ConstIntLattice(int x);
-  bool isTop();
-  bool isTrue();
-  bool isFalse();
-  bool isBot();
-  bool isConstInt();
+  bool isTop() const;
+  bool isTrue() const;
+  bool isFalse() const;
+  bool isBot() const;
+  bool isConstInt() const;
   ConstIntLattice operator!();
   ConstIntLattice operator-(); // unary minus
   ConstIntLattice operator||(ConstIntLattice other);
@@ -66,7 +66,7 @@ class ConstIntLattice {
   string toString();
   friend ostream& operator<<(ostream& os, const ConstIntLattice& toStream);
   ValueType getValueType();
-  int getIntValue();
+  int getIntValue() const;
  private:
   int intValue;
   ValueType valueType;

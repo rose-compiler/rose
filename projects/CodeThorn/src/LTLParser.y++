@@ -7,7 +7,7 @@
 #include <iostream>
 #include <string>
 #include <cassert>
-#include "ltl.h"
+#include "LTL.h"
 
 // Scanner function
 int ltl_lex(void);
@@ -17,11 +17,13 @@ void ltl_error (char const *msg);
 #define YYSTYPE ltl::Expr*
 
 // Scanner variables
+bool ltl_eof = false;
 static int ltl_pos = 0;
 static int ltl_line = 1;
 static int ltl_next_char = EOF;
 static std::stringstream debug_line;
-static YYSTYPE ltl_val;
+ltl::Formula* ltl_val;
+FILE* ltl_input = NULL;
 
 %}
      
@@ -58,10 +60,10 @@ static YYSTYPE ltl_val;
 // (G (! ((oY & ! iC) & (F iC)) | (! oW U iC)))
 // output W does never occur between output Y and input C
 
-start: expr { ltl_val = $1; }
+start: expr     { assert($1); ltl_val = new ltl::Formula(*$1); return 0; }
 
 expr:
-'(' op_expr ')' { $$ = $2; }
+'(' expr ')'    { $$ = $2; }
 | IN_SYMBOL     { $$ = new ltl::InputSymbol(ltl_next_char); }
 | OUT_SYMBOL    { $$ = new ltl::OutputSymbol(ltl_next_char); }
 | op_expr       { $$ = $1; }
@@ -81,29 +83,32 @@ op_expr:
 
 
 int ltl_lex(void) {
-  ltl_next_char = getc(stdin);
+  if (!ltl_input) ltl_input = stdin;
+  ltl_next_char = getc(ltl_input);
   debug_line << (char)ltl_next_char;
   ltl_pos++;
   switch (ltl_next_char) {
-  case EOF:   return 0;
-  case 'i':   ltl_next_char = getc(stdin);
+  case EOF:   ltl_eof = true; return 0;
+  case 'i':   ltl_next_char = getc(ltl_input);
               debug_line << (char)ltl_next_char;
               return IN_SYMBOL;
-  case 'o':   ltl_next_char = getc(stdin);
+  case 'o':   ltl_next_char = getc(ltl_input);
               debug_line << (char)ltl_next_char;
               return OUT_SYMBOL;
-  case 'W':   ltl_next_char = getc(stdin);
-              if (ltl_next_char == 'U') return WU;
-	      else {
-		ltl_pos--;
-		ungetc(ltl_next_char, stdin);
-		return ltl_next_char;
-	      }
+  case 'W':   ltl_next_char = getc(ltl_input);
+              if (ltl_next_char == 'U') {
+		debug_line << (char)ltl_next_char;
+		return WU;
+              } else {
+                ltl_pos--;
+                ungetc(ltl_next_char, ltl_input);
+                return ltl_next_char;
+              }
   case '\r':
   case '\n':  ltl_line++; 
               ltl_pos=1;
               debug_line.clear();
-              return ltl_lex();
+              return 0;
   case ' ':
   case '\t':  return ltl_lex();
   default:    return ltl_next_char;
@@ -111,18 +116,33 @@ int ltl_lex(void) {
 }
 
 void ltl_error (char const *msg) {
+  if (ltl_eof) {
+    // std::cerr << "unexpected end of file" << std::endl;
+    return;
+  }
   std::string remainder;
-  std::getline(std::cin, remainder);
+  int c;
+  while (1) {
+    c = fgetc(ltl_input);
+    if (c == '\r' || c == '\n' || c == EOF)
+      break;
+    debug_line << (char)c;
+  }
   std::cerr << debug_line.str() << remainder << std::endl;
   std::cerr << std::string(ltl_pos-1, '-') << "^"<< std::endl;
   fprintf(stderr, "%d:%d: %s\n", ltl_line, ltl_pos, msg);
   exit(1);
 }
 
+#ifdef LTL_PARSER_DEBUG
 int main (void)
 {
-  ltl_parse();
-  assert(ltl_val);
-  std::cout << std::string(*ltl_val) << std::endl;
+  while (ltl_parse() == 0) {
+    if (ltl_eof) break;
+    if (ltl_val)
+      std::cout << std::string(*ltl_val) << std::endl;
+    ltl_val = NULL;
+  }
 }
+#endif
 

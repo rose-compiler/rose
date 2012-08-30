@@ -94,11 +94,11 @@ AType::ConstIntLattice::ConstIntLattice(Top e) {valueType=AType::ConstIntLattice
 AType::ConstIntLattice::ConstIntLattice(Bot e) {valueType=AType::ConstIntLattice::BOT;}
 // type conversion
 AType::ConstIntLattice::ConstIntLattice(int x) {valueType=AType::ConstIntLattice::CONSTINT;intValue=x;}
-bool AType::ConstIntLattice::isTop() {return valueType==AType::ConstIntLattice::TOP;}
-bool AType::ConstIntLattice::isTrue() {return valueType==AType::ConstIntLattice::CONSTINT && intValue!=0;}
-bool AType::ConstIntLattice::isFalse() {return valueType==AType::ConstIntLattice::CONSTINT && intValue==0;}
-bool AType::ConstIntLattice::isBot() {return valueType==AType::ConstIntLattice::BOT;}
-bool AType::ConstIntLattice::isConstInt() {return valueType==AType::ConstIntLattice::CONSTINT;}
+bool AType::ConstIntLattice::isTop() const {return valueType==AType::ConstIntLattice::TOP;}
+bool AType::ConstIntLattice::isTrue() const {return valueType==AType::ConstIntLattice::CONSTINT && intValue!=0;}
+bool AType::ConstIntLattice::isFalse() const {return valueType==AType::ConstIntLattice::CONSTINT && intValue==0;}
+bool AType::ConstIntLattice::isBot() const {return valueType==AType::ConstIntLattice::BOT;}
+bool AType::ConstIntLattice::isConstInt() const {return valueType==AType::ConstIntLattice::CONSTINT;}
 
 AType::ConstIntLattice AType::ConstIntLattice::operator!() {
   AType::ConstIntLattice tmp;
@@ -226,6 +226,6 @@ AType::ConstIntLattice::ValueType AType::ConstIntLattice::getValueType() {
   return valueType;
 }
 
-int AType::ConstIntLattice::getIntValue() { 
+int AType::ConstIntLattice::getIntValue() const { 
   return intValue;
 }
