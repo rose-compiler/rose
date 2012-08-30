@@ -672,7 +672,8 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
 #ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
                unp->u_exprStmt->curprint ( templateArgument->get_templateDeclaration()->get_template_name().str());
 #else
-#error "Older version of pre-EDG 4.x code!"
+// DQ (8/29/2012): this is OK to compile now (using the older EDG 3.3 work for backward compatability).
+// #error "Older version of pre-EDG 4.x code!"
                unp->u_exprStmt->curprint ( templateArgument->get_templateDeclaration()->get_name().str());
 #endif
             // printf ("Error: template_argument case not implemented in Unparse_ExprStmt::unparseTemplateArgument \n");

@@ -2392,6 +2392,7 @@ SageBuilder::buildDefiningMemberFunctionDeclaration(const SgName& name, SgType* 
    }
 
 
+#ifdef ROSE_USE_NEW_EDG_INTERFACE
 SgTemplateFunctionDeclaration*
 SageBuilder::buildNondefiningTemplateFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, SgScopeStatement* scope, SgExprListExp* decoratorList)
    {
@@ -2414,7 +2415,9 @@ SageBuilder::buildNondefiningTemplateFunctionDeclaration (const SgName & name, S
 
      return result;
    }
+#endif
 
+#ifdef ROSE_USE_NEW_EDG_INTERFACE
 // SgTemplateFunctionDeclaration* SageBuilder::buildDefiningTemplateFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, SgScopeStatement* scope, SgExprListExp* decoratorList, unsigned int functionConstVolatileFlags)
 // SgTemplateFunctionDeclaration* SageBuilder::buildDefiningTemplateFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, SgScopeStatement* scope, SgExprListExp* decoratorList)
 SgTemplateFunctionDeclaration*
@@ -2429,7 +2432,9 @@ SageBuilder::buildDefiningTemplateFunctionDeclaration (const SgName & name, SgTy
 
      return result;
    }
+#endif
 
+#ifdef ROSE_USE_NEW_EDG_INTERFACE
 // SgTemplateMemberFunctionDeclaration* SageBuilder::buildDefiningTemplateMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *paralist, SgScopeStatement* scope, SgExprListExp* decoratorList, unsigned int functionConstVolatileFlags)
 SgTemplateMemberFunctionDeclaration*
 SageBuilder::buildDefiningTemplateMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *paralist, SgScopeStatement* scope, SgExprListExp* decoratorList, unsigned int functionConstVolatileFlags, SgTemplateMemberFunctionDeclaration* first_nondefining_declaration)
@@ -2454,6 +2459,8 @@ SageBuilder::buildDefiningTemplateMemberFunctionDeclaration (const SgName & name
 
      return result;
    }
+#endif
+
 
 //! Build a prototype for an existing member function declaration (defining or nondefining ) 
 SgMemberFunctionDeclaration *
@@ -2552,6 +2559,8 @@ SageBuilder::buildNondefiningMemberFunctionDeclaration (const SgName & name, SgT
      return result;
    }
 
+
+#ifdef ROSE_USE_NEW_EDG_INTERFACE
 SgTemplateMemberFunctionDeclaration*
 SageBuilder::buildNondefiningTemplateMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, SgScopeStatement* scope, SgExprListExp* decoratorList, unsigned int functionConstVolatileFlags)
    {
@@ -2645,6 +2654,7 @@ SageBuilder::buildNondefiningTemplateMemberFunctionDeclaration (const SgName & n
 
      return result;
    }
+#endif
 
 #if 0
 SgMemberFunctionDeclaration*
@@ -5274,6 +5284,7 @@ SageBuilder::buildFunctionRefExp_nfi(SgFunctionSymbol* sym)
   return func_ref;
 }
 
+#ifdef ROSE_USE_NEW_EDG_INTERFACE
 // DQ (12/15/2011): Adding template declaration support to the AST.
 SgTemplateFunctionRefExp *
 SageBuilder::buildTemplateFunctionRefExp_nfi(SgTemplateFunctionSymbol* sym)
@@ -5283,7 +5294,9 @@ SageBuilder::buildTemplateFunctionRefExp_nfi(SgTemplateFunctionSymbol* sym)
      ROSE_ASSERT(func_ref);
      return func_ref;
    }
+#endif
 
+#ifdef ROSE_USE_NEW_EDG_INTERFACE
 // DQ (12/29/2011): Adding template declaration support to the AST.
 SgTemplateMemberFunctionRefExp *
 SageBuilder::buildTemplateMemberFunctionRefExp_nfi(SgTemplateMemberFunctionSymbol* sym, bool virtual_call, bool need_qualifier)
@@ -5293,6 +5306,7 @@ SageBuilder::buildTemplateMemberFunctionRefExp_nfi(SgTemplateMemberFunctionSymbo
      ROSE_ASSERT(func_ref);
      return func_ref;
    }
+#endif
 
 // lookup member function symbol to create a reference to it
 SgMemberFunctionRefExp *
@@ -8767,6 +8781,7 @@ SageBuilder::buildTemplateClassDeclaration ( SgName name, SgScopeStatement* scop
    }
 #endif
 
+#ifdef ROSE_USE_NEW_EDG_INTERFACE
 SgTemplateClassDefinition*
 SageBuilder::buildTemplateClassDefinition(SgTemplateClassDeclaration *d /*= NULL*/ )
   {
@@ -8790,8 +8805,9 @@ SageBuilder::buildTemplateClassDefinition(SgTemplateClassDeclaration *d /*= NULL
     setOneSourcePositionForTransformation(result);
     return result;
   }
+#endif
 
-
+#ifdef ROSE_USE_NEW_EDG_INTERFACE
 // SgTemplateClassDeclaration * SageBuilder::buildTemplateClassDeclaration_nfi(SgName & name, SgClassDeclaration::class_types kind, SgScopeStatement* scope, SgTemplateClassDeclaration* nonDefiningDecl )
 SgTemplateClassDeclaration * 
 SageBuilder::buildNondefiningTemplateClassDeclaration_nfi(const SgName& name, SgClassDeclaration::class_types kind, SgScopeStatement* scope )
@@ -9029,8 +9045,10 @@ SageBuilder::buildNondefiningTemplateClassDeclaration_nfi(const SgName& name, Sg
 
      return nondefdecl;    
    }
+#endif
 
 
+#ifdef ROSE_USE_NEW_EDG_INTERFACE
 SgTemplateClassDeclaration * 
 SageBuilder::buildTemplateClassDeclaration_nfi(const SgName& name, SgClassDeclaration::class_types kind, SgScopeStatement* scope, SgTemplateClassDeclaration* nonDefiningDecl )
 // SageBuilder::buildTemplateClassDeclaration_nfi(SgName & name, SgClassDeclaration::class_types kind, SgScopeStatement* scope, SgTemplateClassDeclaration* nonDefiningDecl )
@@ -9320,6 +9338,7 @@ SageBuilder::buildTemplateClassDeclaration_nfi(const SgName& name, SgClassDeclar
 
      return defdecl;    
    }
+#endif
 
 
 SgEnumDeclaration * SageBuilder::buildEnumDeclaration(const SgName& name, SgScopeStatement* scope /*=NULL*/)
