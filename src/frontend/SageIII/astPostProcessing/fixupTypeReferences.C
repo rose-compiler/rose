@@ -18,8 +18,7 @@ FixupTypeReferencesOnMemoryPool::visit ( SgNode* node )
 #endif
 
 
-
-     
+#ifdef ROSE_USE_NEW_EDG_INTERFACE
 void fixupTypeReferences()
    {
   // DQ (7/7/2005): Introduce tracking of performance of ROSE.
@@ -33,4 +32,4 @@ void fixupTypeReferences()
 
      printf ("DONE: Inside of fixupTypeReferences() \n");
    }
-
+#endif
