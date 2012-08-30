@@ -837,11 +837,16 @@ Unparse_Java::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
          unparseInitializedName(*name_it, info);
      }
 
+     AstRegExAttribute *attribute = (AstRegExAttribute *) mfuncdecl_stmt -> getAttribute("exception");
+           
      if (mfuncdecl_stmt -> isForward()) {
-         curprint(");");
+         curprint(")");
+         curprint(attribute != NULL ? (" throws " + attribute -> expression).c_str() : "");
+         curprint(";");
      }
      else {
          curprint(") ");
+         curprint(attribute != NULL ?  ("throws " + attribute -> expression + " ").c_str() : "");
          SgFunctionDefinition *function_definition = mfuncdecl_stmt->get_definition();
 //
 // charles4 10/10/2011: For some reason, when either of the 2 entry points below are invoked,
