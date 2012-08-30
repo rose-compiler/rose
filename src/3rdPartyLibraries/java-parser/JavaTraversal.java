@@ -1041,6 +1041,18 @@ class JavaTraversal implements Callable<Boolean> {
 //for (int i = 0; i < args.length; i++)
 //System.out.println("ROSE Filtered Argument " + i + ": " + args[i]);
 
+        //
+        // Look to see if a classpath was specified. If so, create a class loader for it.
+        //
+        String classpath = "";
+        for (int i = 0; i < args.length; i++) {
+	        if (args[i].equals("-classpath") || args[i].equals("-cp")) {
+                classpath = args[i+1];
+                break;
+	        }
+        }
+        JavaParserSupport.processClasspath(classpath);
+        
         if (verboseLevel > 0)
             System.out.println("Compiling ...");
 
@@ -1159,7 +1171,11 @@ class JavaTraversal implements Callable<Boolean> {
 //TODO: REMOVE THIS !
 //System.out.println("Came back successfully from preprocessing phase");
 
-            for (int i = 0; i < main.batchCompiler.totalUnits; i++) {
+            //
+            // We only process the main unit to prevent the Unparser from generating multiple
+            // compilation units in the same file.
+            //
+            /* for ( */ int i = 0; /* i < main.batchCompiler.totalUnits; i++)*/ {
                 CompilationUnitDeclaration unit = main.batchCompiler.unitsToProcess[i];
                 try {
 

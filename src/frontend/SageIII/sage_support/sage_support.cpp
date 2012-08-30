@@ -3129,7 +3129,17 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
         }
 
   // Build the classpath list for Java support.
-     const string classpath = build_classpath();
+     string classpath = build_classpath();
+
+  //
+  // In the case of Javam add the paths specified for the input program, if any.
+  //
+     list<string> classpath_list = get_project() -> get_Java_classpath();
+     for (list<string>::iterator i = classpath_list.begin(); i != classpath_list.end(); i++) {
+         classpath += ":";
+         classpath += (*i);
+     }
+
 
   // This is part of debugging output to call OFP and output the list of parser actions that WOULD be called.
   // printf ("get_output_parser_actions() = %s \n",get_output_parser_actions() ? "true" : "false");

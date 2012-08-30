@@ -20,6 +20,10 @@ import org.eclipse.jdt.internal.compiler.util.*;
 // DQ (10/30/2010): Added support for reflection to get methods in implicitly included objects.
 import java.lang.reflect.*;
 
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
+
 
 // DQ (11/1/2010): This improved design separates out the parsing support, from the ECJ AST traversal, and the parser.
 class JavaParserSupport {
@@ -37,6 +41,12 @@ class JavaParserSupport {
 
     // This is used to compute source code positions.
     private static CompilationResult rose_compilationResult;
+
+    public static ArrayList<String> importOnDemandList = null;
+    //
+    // Create a loader for finding classes.
+    //
+    public static ClassLoader pathLoader = null;
 
     //
     // Create a symbolTable map to keep track of user-defined type declarations.
@@ -91,6 +101,25 @@ class JavaParserSupport {
     }
 */
 
+    static Class getClassForName(String typename) {
+        Class cls = null;
+        try {
+            cls = Class.forName(typename, true, pathLoader);
+        }
+        catch (ClassNotFoundException ee) {
+            if (verboseLevel > 0) {
+                System.out.println("(2) Caught error in JavaParserSupport (Parser failed)");
+                System.err.println(ee);
+            }
+        }
+        catch(NoClassDefFoundError eee) {
+            System.err.println("(1) Error in getClassForName --- Could not read type: " + eee.getMessage()); 
+            System.exit(1);
+        }
+        
+    	return cls;
+    }
+    
     /**
      * 
      */
@@ -104,7 +133,7 @@ class JavaParserSupport {
                 for (int k = 0; k < inner.length; k++) { // ... look for its matching counterpart.
                     if (inner[k].getSimpleName() == typename) {
                         identifyUserDefinedTypes(inner[k], node.memberTypes[i]);
-System.out.println("Matching user-defined inner class " + typename + " with " + inner[k].getCanonicalName());
+//System.out.println("Matching user-defined inner class " + typename + " with " + inner[k].getCanonicalName());
                     }
                 }
             }
@@ -129,7 +158,8 @@ System.out.println("** The package is: " + name + ";  The class name is " + snam
 }
 */
         try {
-            Class cls = Class.forName(typename);
+            Class cls = getClassForName(typename);
+            if (cls == null) throw new ClassNotFoundException(typename);
             String canonical_name = cls.getCanonicalName(),
                    class_name = cls.getName(),
                    simple_name = cls.getSimpleName(),
@@ -157,6 +187,41 @@ System.out.println("(1) The canonical name is: " + canonical_name +
         }
     }
 
+public static void processClasspath(String classpath) {
+    importOnDemandList = new ArrayList<String>();
+    importOnDemandList.add(""); // The null package must be first!
+		
+    ArrayList<File> files = new ArrayList<File>();
+    while(classpath.length() > 0) {
+    	int index = classpath.indexOf(':');
+        if (index == -1) {
+        	files.add(new File(classpath));
+        	classpath = "";
+        }
+        else {
+        	String filename = classpath.substring(0, index);
+        	files.add(new File(filename));
+        	classpath = classpath.substring(index + 1);
+        }
+    }
+
+    try {
+        // Convert File to a URL
+        URL[] urls = new URL[files.size() + 1];
+        for (int i = 0; i < files.size(); i++) {
+            urls[i] = files.get(i).toURL();
+        }
+        urls[files.size()] = new File(".").toURL(); // always add curent directory
+
+        // Create a new class loader with the directories
+        pathLoader = new URLClassLoader(urls, ClassLoader.getSystemClassLoader());
+    } catch (MalformedURLException e) {
+        System.err.println("(3) Error in processClasspath: " + e.getMessage()); 
+        System.exit(1);
+    }
+}
+    
+    
     /**
      * @param unit
      * 
@@ -164,7 +229,7 @@ System.out.println("(1) The canonical name is: " + canonical_name +
     public static void preprocess(CompilationUnitDeclaration unit) {
         String package_name = "";
 // TODO: REMOVE THIS
-//System.out.println("preprocess(unit)" + new String(unit.getFileName()));
+
         //
         // Make sure that Object is processed first!
         //
@@ -248,7 +313,11 @@ System.out.println("Inserting type " + "java.lang.Object");
         //
         //
         //
-        if (unit.types != null) {
+        if (unit.types == null) { // No units!?  Process the "null" package anyway.
+            JavaParser.cactionPushPackage(package_name);
+            JavaParser.cactionPopPackage();
+        }
+        else {
             for (int i = 0; i < unit.types.length; i++) {
                 TypeDeclaration node = unit.types[i];
 //System.out.println("identifying type " + new String(node.name));                                     
@@ -262,7 +331,7 @@ System.out.println("Inserting type " + "java.lang.Object");
 //
 //                    insertClasses(cls);
 //                    traverseClass(cls);
-preprocessClass(cls);
+                    preprocessClass(cls);
                 }
             }
 /*
@@ -282,7 +351,8 @@ System.out.println("** The package is: " + name + ";  The class name is " + snam
 //                preprocessClass(typename);
 //
                 try {
-                    Class cls = Class.forName(typename);
+                    Class cls = getClassForName(typename);
+                    if (cls == null) throw new ClassNotFoundException(typename);                    
                     String canonical_name = cls.getCanonicalName(),
                            class_name = cls.getName(),
                            simple_name = cls.getSimpleName(),
@@ -376,7 +446,7 @@ System.out.println("Inserting type " + canonical_name);
 
     public static void processConstructorDeclarationHeader(ConstructorDeclaration constructor, JavaToken jToken) {
     	assert(! constructor.isDefaultConstructor());
-    	
+    
         String name = new String(constructor.selector);
         boolean is_native = constructor.isNative();
         boolean is_private = (constructor.binding != null) && (! constructor.binding.isPrivate());
@@ -624,6 +694,9 @@ assert(! base_class.isSynthetic());
     }
 
     public static Class preprocessClass(TypeBinding binding) {
+        while (binding.enclosingType() != null) {
+            binding = binding.enclosingType();
+        }
         return preprocessClass(getFullyQualifiedTypeName(binding));
     }
     
@@ -631,18 +704,10 @@ assert(! base_class.isSynthetic());
      * 
      */
     public static Class preprocessClass(String typename) {
-        Class cls = null;
-        try {
-            cls = Class.forName(typename);
+        Class cls = getClassForName(typename);
+        if (cls != null) {
             preprocessClass(cls);
         }
-        catch (ClassNotFoundException e) {
-            if (verboseLevel > 0) {
-                System.out.println("(2) Caught error in JavaParserSupport (Parser failed)");
-                System.err.println(e);
-            }
-        }
-
         return cls;
     }
 /*
@@ -685,12 +750,12 @@ System.out.println("Converting it to " + typename);
                    package_name = getMainPackageName(base_class, 1); 
 
 // TODO: REMOVE THIS
-//System.out.println("(2) The canonical name is: " + canonical_name + "; The package is: " + package_name + ";  The class name is " + class_name + ";  The simple class name is " + simple_name);
+// System.out.println("(2) The canonical name is: " + canonical_name + "; The package is: " + package_name + ";  The class name is " + class_name + ";  The simple class name is " + simple_name);
 
            if (! typeExists(package_name, simple_name)) {
                 insertType(package_name, base_class);
 // TODO: REMOVE THIS
-//System.out.println("Inserting type " + canonical_name);
+// System.out.println("Inserting type " + canonical_name);
                 //
                 // TODO:  For now, we make an exception with user-specified classes and do not insert them
                 // into the package that they are declared in. From Rose's point of view, these classes will
@@ -704,11 +769,9 @@ System.out.println("Converting it to " + typename);
                 JavaParser.cactionPopPackage();
             }
 // TODO: REMOVE THIS
-/*            
-else {
-System.out.println("The type " + canonical_name  + " has already been processed");
-}
-*/
+//else {
+//System.out.println("The type " + canonical_name  + " has already been processed");
+//}
         }
     }
 
@@ -766,10 +829,12 @@ System.out.println("The type " + canonical_name  + " has already been processed"
         // process the super class
         if (super_class != null) {
             if (verboseLevel > 2) {
-                System.out.println("interface name = " + super_class.getName());
+                System.out.println("Super Class name = " + super_class.getName());
             }
 
             preprocessClass(super_class);
+            generateAndPushType(super_class);
+//            catch (NoClassDefFoundError eee) { 
         }
 
         // Process the interfaces.
@@ -778,7 +843,10 @@ System.out.println("The type " + canonical_name  + " has already been processed"
                 System.out.println("interface name = " + interfaceList[i].getName());
             }
             preprocessClass(interfaceList[i]);
+            generateAndPushType(interfaceList[i]);
         }
+
+        JavaParser.cactionBuildClassExtendsAndImplementsSupport((super_class != null), interfaceList.length);
 
         //
         // Process the inner classes. Note that the inner classes must be processed first in case

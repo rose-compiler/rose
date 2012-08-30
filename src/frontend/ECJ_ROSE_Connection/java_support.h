@@ -404,7 +404,7 @@ SgMemberFunctionDeclaration *buildNonDefiningMemberFunction(const SgName &inputN
 SgMemberFunctionDeclaration *buildDefiningMemberFunction   (const SgName &inputName, SgClassDefinition *classDefinition, int num_arguments);
 
 SgMemberFunctionDeclaration *lookupMemberFunctionInClassScope(SgClassDefinition *classDefinition, const SgName &inputName, int num_arguments);
-SgMemberFunctionSymbol *lookupFunctionSymbolInClassScope(SgClassDefinition *classDefinition, const SgName &inputName, std::list<SgType *> &);
+SgMemberFunctionSymbol *lookupFunctionSymbolInClassScope(SgClassDefinition *classDefinition, const SgName &inputName, const std::list<SgType *> &);
 
 SgClassDeclaration *buildJavaClass (const SgName &className, SgScopeStatement *scope);
 

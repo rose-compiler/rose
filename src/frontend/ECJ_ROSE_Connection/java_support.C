@@ -613,132 +613,121 @@ SgMemberFunctionDeclaration *buildDefiningMemberFunction(const SgName &inputName
 }
 
 
-SgMemberFunctionDeclaration *lookupMemberFunctionInClassScope(SgClassDefinition *classDefinition, const SgName &function_name, int num_arguments) {
-    ROSE_ASSERT(classDefinition != NULL);
 
-    // Loop over the types in the astJavaComponentStack (the rest of the stack).
-    list<SgInitializedName *> names;
-    for (int i = 0; i < num_arguments; i++) { // charles4 10/12/2011: Reverse the content of the stack.
-        SgNode *node = astJavaComponentStack.pop();
-        SgInitializedName *initializedName = isSgInitializedName(node);
-        ROSE_ASSERT(initializedName);
-        names.push_front(initializedName);
-    }
-
-    SgType *return_type = astJavaComponentStack.popType(); // Remove the return type ... We don't need it!
-    ROSE_ASSERT(return_type != NULL);
-
-    SgMemberFunctionDeclaration *function_declaration = NULL;
-    vector<SgDeclarationStatement *> declarations = classDefinition -> get_members();
-    for (int i = 0; i < declarations.size(); i++, function_declaration = NULL) {
-        SgDeclarationStatement *declaration = declarations[i];
-        function_declaration = isSgMemberFunctionDeclaration(declaration);
-        if (function_declaration && function_declaration -> get_name() == function_name) {
-            vector<SgInitializedName *> args = function_declaration -> get_args();
-            if (args.size() == num_arguments) {
-// TODO: REMOVE THIS !
-//cout << "Checking out function "
-//     << function_declaration -> get_name().getString()
-//     << " with " << num_arguments << " arguments."
-//     << endl;
-//cout.flush();
-                std::list<SgInitializedName *>::iterator j = names.begin();
-                int k;
-                for (k = 0; k < num_arguments; k++, j++) {
-// TODO: REMOVE THIS !
-//cout << "The type of argument " << k << " is "
-//     << args[k] -> get_type() -> class_name()
-//     << endl;
-                    SgInitializedName *var = (*j);
-// TODO: REMOVE THIS !
-//cout << "The type of parameter " << k << " is "
-//     << var -> get_type() -> class_name()
-//     << endl;
-                if (! isCompatibleTypes(var -> get_type(), args[k] -> get_type()))
-                        break;
-                }
-
-                if (k == num_arguments) {// all the arguments match?
-// TODO: REMOVE THIS !
-//cout << "Found a match for function "
-//     << function_declaration -> get_name()
-//     << endl;
-                    break;
-                }
-            }
+/**
+ * Lookup a member function in current class only (doesn't look in super and interfaces classes)
+ */
+SgMemberFunctionDeclaration *lookupMemberFunctionInClass(SgClassDefinition *classDefinition, const SgName &function_name, const list<SgType *>& types) {
+  int num_arguments = types.size();
+  SgMemberFunctionDeclaration *function_declaration = NULL;
+  vector<SgDeclarationStatement *> declarations = classDefinition -> get_members();
+  for (int i = 0; i < declarations.size(); i++, function_declaration = NULL) {
+    SgDeclarationStatement *declaration = declarations[i];
+    function_declaration = isSgMemberFunctionDeclaration(declaration);
+    if (function_declaration && function_declaration -> get_name() == function_name) {
+      vector<SgInitializedName *> args = function_declaration -> get_args();
+      if (args.size() == num_arguments) {
+        list<SgType *>::const_iterator j = types.begin();
+        int k;
+        for (k = 0; k < num_arguments; k++, j++) {
+          SgType *type = (*j);
+          if (! isCompatibleTypes(type, args[k] -> get_type())) {
+            // Not all types are compatible, continue to look
+            continue;
+          }
         }
+
+        if (k == num_arguments) {// all the arguments match?
+          break;
+        }
+      }
     }
-
-    //
-    // Release space used for these extraneous Initialized variables!
-    //
-    for (std::list<SgInitializedName *>::iterator name_it = names.begin(); name_it != names.end(); name_it++) {
-        delete (*name_it);
-    }
-
-// TODO: REMOVE THIS !
-//if (! function_declaration) {
-//cout << "Could not find a match for function "
-//     << function_name
-//     << endl;
-//}
-
-    return function_declaration;
+  }
+  return function_declaration;
 }
 
+SgMemberFunctionDeclaration *lookupMemberFunctionInClassScope(SgClassDefinition *classDefinition, const SgName &function_name, int num_arguments) {
+  ROSE_ASSERT(classDefinition != NULL);
 
-SgMemberFunctionSymbol *lookupFunctionSymbolInClassScope(SgClassDefinition *classDefinition, const SgName &function_name, list<SgType *> &formal_types) {
-    ROSE_ASSERT(classDefinition != NULL);
+  // Loop over the types in the astJavaComponentStack (the rest of the stack).
+  list<SgInitializedName *> names;
+  list<SgType *> types;
+  for (int i = 0; i < num_arguments; i++) { // charles4 10/12/2011: Reverse the content of the stack.
+    SgNode *node = astJavaComponentStack.pop();
+    SgInitializedName *initializedName = isSgInitializedName(node);
+    ROSE_ASSERT(initializedName);
+    types.push_front(initializedName->get_type());
+    names.push_front(initializedName);
+  }
 
-    std::list<SgType *>::iterator type_it;
+  SgType *return_type = astJavaComponentStack.popType(); // Remove the return type ... We don't need it!
+  ROSE_ASSERT(return_type != NULL);
 
-    SgMemberFunctionDeclaration *function_declaration = NULL;
-    vector<SgDeclarationStatement *> declarations = classDefinition -> get_members();
-    for (int i = 0; i < declarations.size(); i++, function_declaration = NULL) {
-        SgDeclarationStatement *declaration = declarations[i];
-        function_declaration = isSgMemberFunctionDeclaration(declaration);
-        if (function_declaration && function_declaration -> get_name() == function_name) {
-            vector<SgInitializedName *> args = function_declaration -> get_args();
-            if (args.size() == formal_types.size()) {
-// TODO: REMOVE THIS !
-//cout << "(2) Checking out function "
-//     << function_declaration -> get_name().getString()
-//     << " with " << args.size() << " arguments."
-//     << endl;
-//cout.flush();
-                int k;
-                for (k = 0, type_it = formal_types.begin(); k < args.size(); k++, type_it++) {
-// TODO: REMOVE THIS !
-//cout << "(2) The type of argument " << k << " is "
-//     << (isSgClassType(args[k] -> get_type()) ? isSgClassType(args[k] -> get_type()) -> get_qualified_name().getString() : args[k] -> get_type() -> class_name())
-//     << endl;
-//cout << "(2) The type of parameter " << k << " is "
-//     << (isSgClassType(*type_it) ? isSgClassType(*type_it) -> get_qualified_name().getString() : (*type_it) -> class_name())
-//     << endl;
-                    if (! isCompatibleTypes((*type_it), args[k] -> get_type())) {
-                        break;
-                    }
-                }
+  SgMemberFunctionDeclaration *function_declaration = NULL;
+  function_declaration = lookupMemberFunctionInClass(classDefinition, function_name, types);
+  //
+  // Release space used for these extraneous Initialized variables!
+  //
+  for (std::list<SgInitializedName *>::iterator name_it = names.begin(); name_it != names.end(); name_it++) {
+    delete (*name_it);
+  }
 
-                if (k == args.size()) {// all the arguments match?
-// TODO: REMOVE THIS !
-//cout << "Found a match for function "
-//     << function_declaration -> get_name()
-//     << endl;
-                    break;
-                }
-            }
-        }
+  // TODO: REMOVE THIS !
+  //if (! function_declaration) {
+  //cout << "Could not find a match for function "
+  //     << function_name
+  //     << endl;
+  //}
+  ROSE_ASSERT(function_declaration != NULL);
+
+  return function_declaration;
+}
+
+SgMemberFunctionSymbol *lookupFunctionSymbolInClassScope(SgClassDefinition *classDefinition, const SgName &function_name, const list<SgType *> &formal_types) {
+  ROSE_ASSERT(classDefinition != NULL);
+
+  std::list<SgType *>::iterator type_it;
+
+// TODO: REMOVE THIS
+//  cout << "Looking for " << function_name << " in " << classDefinition->get_qualified_name() << endl;
+
+  SgMemberFunctionDeclaration *function_declaration = NULL;
+  list<SgClassDeclaration *> workList;
+  workList.push_front(classDefinition->get_declaration());
+  //TODO This way of iterating the transitive closure is wrong, according to the java spec
+  // we should get the list of methods seen from the class and get the most specific one.
+  while ((function_declaration == NULL) && !workList.empty()) {
+    SgClassDeclaration * classDeclaration = workList.front();
+    SgClassDefinition * classDefinition = classDeclaration->get_definition(); // get the super class definition
+    function_declaration = lookupMemberFunctionInClass(classDefinition, function_name, formal_types);
+    // If nothing has been found get the inheritance list of current class
+    // and add all at the end of the worklist (breadth-first search)
+    if (function_declaration == NULL) {
+      const SgBaseClassPtrList & inheritance = classDefinition->get_inheritances();
+// TODO: REMOVE THIS
+// cout << "Pushing super/interfaces for " << function_name << " size " << inheritance.size() << endl;
+      SgBaseClassPtrList::const_iterator it;
+      for(it = inheritance.begin();
+          it != inheritance.end();
+          it++) {
+        // Retrieve SgClassDeclaration from SgBaseClass
+        SgClassDeclaration * decl = (*it)->get_base_class();
+// TODO: REMOVE THIS
+// cout << "Pushing super/interfaces for " << function_name << " in " << decl->get_qualified_name() << endl;
+        workList.push_back(decl);
+      }
     }
+    workList.pop_front();
+  }
 
-    ROSE_ASSERT(function_declaration);
+  ROSE_ASSERT(function_declaration);
 
-    SgSymbol *symbol =  function_declaration -> get_symbol_from_symbol_table();
-    ROSE_ASSERT(symbol);
-    SgMemberFunctionSymbol *function_symbol = isSgMemberFunctionSymbol(symbol);
-    ROSE_ASSERT(function_symbol);
+  SgSymbol *symbol =  function_declaration -> get_symbol_from_symbol_table();
+  ROSE_ASSERT(symbol);
+  SgMemberFunctionSymbol *function_symbol = isSgMemberFunctionSymbol(symbol);
+  ROSE_ASSERT(function_symbol);
 
-    return function_symbol;
+  return function_symbol;
 }
 
 
@@ -1412,7 +1401,7 @@ SgType *lookupTypeByName(SgName &package_name, SgName &type_name, int num_dimens
 // TODO: REMOVE THIS !
 //if(type_symbol == NULL) {
 //cout << "Looking for simple name type " << (*name)
-//     << " in package \"" << package_name << "\""
+//     << " in package " << package_name
 //     << " with " << num_dimensions  << " dimensions"
 //     << endl;
 //cout.flush();
