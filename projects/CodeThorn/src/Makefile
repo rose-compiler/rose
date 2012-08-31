@@ -26,6 +26,8 @@ YACC                  = bison
 
 OBJECT_FILES=MyAst.o AstTerm.o Labeler.o SgNodeHelper.o CFAnalyzer.o ExprAnalyzer.o StateRepresentation.o Analyzer.o Visualizer.o Timer.o LanguageRestrictor.o AType.o
 
+OBJECT_FILES_EXPERIMENTAL=BoostGraphIntegration.o
+
 # Default make rule to use
 all: $(TOOLNAME3)
 	@if [ x$${ROSE_IN_BUILD_TREE:+present} = xpresent ]; then echo "ROSE_IN_BUILD_TREE should not be set" >&2; exit 1; fi
@@ -36,6 +38,9 @@ all: $(TOOLNAME3)
 
 MyAst.o: MyAst.h MyAst.C
 	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) MyAst.C -c 
+
+BoostGraphIntegration.o: BoostGraphIntegration.h BoostGraphIntegration.C
+	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) BoostGraphIntegration.C -c 
 
 AstTerm.o: AstTerm.h AstTerm.C
 	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) AstTerm.C -c
@@ -70,8 +75,8 @@ Timer.o: Timer.h Timer.cpp
 LanguageRestrictor.o: LanguageRestrictor.h LanguageRestrictor.C
 	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) LanguageRestrictor.C -c
 
-$(TOOLNAME3): $(TOOLNAME3).C  $(TOOLNAME3).h $(OBJECT_FILES)
-	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) -L$(ROSE_LIB_DIR) -lrose $(OBJECT_FILES) $(TOOLNAME3).C -o$(TOOLNAME3) 
+$(TOOLNAME3): $(TOOLNAME3).C  $(TOOLNAME3).h $(OBJECT_FILES) $(OBJECT_FILES_EXPERIMENTAL)
+	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) -L$(ROSE_LIB_DIR) -lrose $(OBJECT_FILES) $(OBJECT_FILES_EXPERIMENTAL) $(TOOLNAME3).C -o$(TOOLNAME3) 
 
 check: codethorn
 	./codethorn tests/rers/Problem1.c
@@ -124,13 +129,6 @@ bsps: codethorn
 
 	./codethorn tests/rers/Problem1.c
 	cp tests/rers/Problem1.c bsps
-	dot -Tjpg ast.dot -oviz/ast.jpg
-	cp viz/ast.jpg bsps/rers1_ast.jpg
-# too large (dot takes too long)
-#	dot -Tjpg cfg.dot -ocfg.jpg
-#	cp viz/cfg.jpg bsps/rers1_cfg.jpg
-# dot seg faults
-# cp viz/transitiongraph1.jpg bsps/rers1_transitiongraph1.jpg
 	dot -Tjpg transitiongraph2.dot -oviz/transitiongraph2.jpg
 	cp viz/transitiongraph2.jpg bsps/rers1_transitiongraph2.jpg
 

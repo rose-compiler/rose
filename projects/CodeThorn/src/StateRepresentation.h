@@ -105,15 +105,17 @@ class EStateSet : public set<EState> {
   const EState* eStatePtr(EState& s);
   string toString();
 };
+
 class Transition {
  public:
  Transition(const EState* source,Edge edge, const EState* target):source(source),edge(edge),target(target){}
 public:
-  const EState* source;
+  const EState* source; // source node
   Edge edge;
-  const EState* target; 
+  const EState* target; // target node
 
 };
+
 class EStateList : public list<EState> {
  public:
   string toString();
@@ -123,6 +125,10 @@ class TransitionGraph : public list<Transition> {
  public:
   set<const EState*> transitionSourceEStateSetOfLabel(Label lab);
   set<const EState*> eStateSetOfLabel(Label lab);
+
+ private:
+  int numberOfNodes;
 };
+
 
 #endif
