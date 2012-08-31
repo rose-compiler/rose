@@ -57,8 +57,8 @@ class ConstraintSet : public set<Constraint> {
  public:
   bool constraintExists(Constraint::ConstraintOp op, VariableName varName, AValue intVal);
   bool constraintExists(Constraint& c);
-  ConstraintSet::iterator findSpecific(Constraint::ConstraintOp op, VariableName varName);
-  AType::ConstIntLattice varConstIntLatticeValue(VariableName varName);
+  ConstraintSet::iterator findSpecific(Constraint::ConstraintOp op, VariableName varName) const;
+  AType::ConstIntLattice varConstIntLatticeValue(VariableName varName) const;
   string toString() const;
   ConstraintSet& operator+=(ConstraintSet& s2);
   ConstraintSet operator+(ConstraintSet& s2);
@@ -105,6 +105,7 @@ class EStateSet : public set<EState> {
   const EState* eStatePtr(EState& s);
   string toString();
 };
+
 class Transition {
  public:
  Transition(const EState* source,Edge edge, const EState* target):source(source),edge(edge),target(target){}
@@ -114,6 +115,7 @@ public:
   const EState* target; 
 
 };
+
 class EStateList : public list<EState> {
  public:
   string toString();

@@ -9,6 +9,12 @@
 #include "Analyzer.h"
 #include "LanguageRestrictor.h"
 #include "Timer.h"
+#include "LTL.h"
+#include "LTLChecker.h"
+#include <cstdio>
+#include <cstring>
+#include <boost/program_options.hpp>
+namespace po = boost::program_options;
 
 void write_file(std::string filename, std::string data) {
   std::ofstream myfile;
@@ -338,6 +344,7 @@ bool checkUniqueVariableSymbolMapping(SgProject* project) {
 }
 
 int main( int argc, char * argv[] ) {
+  string ltl_file;
 #if 0
   try {
   checkTypes();
@@ -352,6 +359,50 @@ int main( int argc, char * argv[] ) {
   try {
 	Timer timer;
 	timer.start();
+
+  // Command line option handling.
+  po::options_description desc
+    ("CodeThorn 1.0\n"
+     "Supported options");
+
+  desc.add_options()
+    ("help", "produce this help message")
+    ("rose-help", "show help for compiler frontend options")
+    ("version", "display the version")
+    ("verify", po::value< string >(), "verify all LTL formulae in the file [arg]")
+    ;
+
+  po::variables_map args;
+  po::store(po::command_line_parser(argc, argv).
+	    options(desc).allow_unregistered().run(), args);
+  po::notify(args);
+
+  if (args.count("help")) {
+    cout << desc << "\n";
+    return 0;
+  }
+
+  if (args.count("rose-help")) {
+    argv[1] = strdup("--help");
+  }
+
+  if (args.count("version")) {
+    cout << "CodeThorn version 1.0\n";
+    return 0;
+  }
+
+  if (args.count("verify")) {
+    ltl_file = args["verify"].as<string>();
+    for (int i=1; i<argc; ++i)
+      if (string(argv[i]) == "--verify") {
+	// do not confuse ROSE frontend
+	argv[i] = strdup("");
+	assert(i+1<argc);
+	argv[i+1] = strdup("");
+      }
+  }
+
+
   // Build the AST used by ROSE
   cout << "INIT: Parsing and creating AST."<<endl;
   SgProject* sageProject = frontend(argc,argv);
@@ -421,49 +472,72 @@ int main( int argc, char * argv[] ) {
   else
 	cout << "Time total           : "<<green<<totalRunTime/1000.0<<" seconds"<<normal<<endl;
   // we only generate a visualization if #estates<=1000
-  if(transitionGraphSize>2500) {
-	//cout << "Number of eStates > 1000. Not generating visualization."<<endl;
-	exit(0);
+  if(eStateSetSize>2500) {
+	cout << "Number of eStates > 2500. Not generating visualization."<<endl;
+  } else {
+    Visualizer visualizer(analyzer.getLabeler(),analyzer.getFlow(),analyzer.getStateSet(),analyzer.getEStateSet(),analyzer.getTransitionGraph());
+    string dotFile="digraph G {\n";
+    dotFile+=analyzer.transitionGraphToDot();
+    dotFile+="}\n";
+    write_file("transitiongraph1.dot", dotFile);
+    cout << "generated transitiongraph1.dot."<<endl;
+    string dotFile3=visualizer.foldedTransitionGraphToDot();
+    write_file("transitiongraph2.dot", dotFile3);
+    cout << "generated transitiongraph2.dot."<<endl;
+
+    assert(analyzer.startFunRoot);
+    //analyzer.generateAstNodeInfo(analyzer.startFunRoot);
+    //dotFile=astTermWithNullValuesToDot(analyzer.startFunRoot);
+    analyzer.generateAstNodeInfo(sageProject);
+    dotFile=functionAstTermsWithNullValuesToDot(sageProject);
+    write_file("ast.dot", dotFile);
+    cout << "generated ast.dot."<<endl;
+    
+    write_file("cfg.dot", analyzer.flow.toDot(analyzer.cfanalyzer->getLabeler()));
+    cout << "generated cfg.dot."<<endl;
   }
-  Visualizer visualizer(analyzer.getLabeler(),analyzer.getFlow(),analyzer.getStateSet(),analyzer.getEStateSet(),analyzer.getTransitionGraph());
-  string dotFile="digraph G {\n";
-  dotFile+=analyzer.transitionGraphToDot();
-  dotFile+="}\n";
-  write_file("transitiongraph1.dot", dotFile);
-  cout << "generated transitiongraph1.dot."<<endl;
-  string dotFile3=visualizer.foldedTransitionGraphToDot();
-  write_file("transitiongraph2.dot", dotFile3);
-  cout << "generated transitiongraph2.dot."<<endl;
-
-  assert(analyzer.startFunRoot);
-  //analyzer.generateAstNodeInfo(analyzer.startFunRoot);
-  //dotFile=astTermWithNullValuesToDot(analyzer.startFunRoot);
-  analyzer.generateAstNodeInfo(sageProject);
-  dotFile=functionAstTermsWithNullValuesToDot(sageProject);
-  write_file("ast.dot", dotFile);
-  cout << "generated ast.dot."<<endl;
-
-  write_file("cfg.dot", analyzer.flow.toDot(analyzer.cfanalyzer->getLabeler()));
-  cout << "generated cfg.dot."<<endl;
   {
 #if 0
-  cout << "MAP:"<<endl;
-  cout << analyzer.getLabeler()->toString();
+    cout << "MAP:"<<endl;
+    cout << analyzer.getLabeler()->toString();
 #endif
 #if 0
-  CFAnalyzer* cfanalyzer=analyzer.getCFAnalyzer();
-  Flow* flow=analyzer.getFlow();
-  cout << "Labels="<<flow->nodeLabels().toString()<<endl;
-  flow->setTextOptionPrintType(false);
-  cout << "FCall-Labels="<<cfanalyzer->functionCallLabels(*flow).toString()<<endl;
-  cout << "OUTPUT: Flow=";
-  cout <<flow->toString()<<endl;
-  cout << "OUTPUT: Interflow=";
-  InterFlow interFlow=cfanalyzer->interFlow(*flow);
-  cout << interFlow.toString();
-  cout << endl;
+    CFAnalyzer* cfanalyzer=analyzer.getCFAnalyzer();
+    Flow* flow=analyzer.getFlow();
+    cout << "Labels="<<flow->nodeLabels().toString()<<endl;
+    flow->setTextOptionPrintType(false);
+    cout << "FCall-Labels="<<cfanalyzer->functionCallLabels(*flow).toString()<<endl;
+    cout << "OUTPUT: Flow=";
+    cout <<flow->toString()<<endl;
+    cout << "OUTPUT: Interflow=";
+    InterFlow interFlow=cfanalyzer->interFlow(*flow);
+    cout << interFlow.toString();
+    cout << endl;
 #endif
   }
+  
+  //
+  // Verification
+  //
+  if (ltl_file.size()) {
+    ltl::Checker checker(*analyzer.getEStateSet(),
+			 *analyzer.getTransitionGraph());
+    ltl_input = fopen(ltl_file.c_str(), "r");
+    while ( (ltl_parse() == 0) && !ltl_eof) {
+      if (ltl_val == NULL) {
+	cerr<<red<< "Syntax error" << endl;
+	continue;
+      }
+
+      cout<<normal<<"Verifying formula "<<magenta<< string(*ltl_val) <<normal<<"."<<endl;
+      checker.verify(*ltl_val);
+
+    }
+    fclose(ltl_input);
+  } 
+
+
+
   } catch(char* str) {
 	cerr << "*Exception raised: " << str << endl;
   } catch(const char* str) {
@@ -471,5 +545,6 @@ int main( int argc, char * argv[] ) {
  }
   return 0;
 #endif
+
 }
 
