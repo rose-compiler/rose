@@ -126,7 +126,7 @@ bool ConstraintSet::constraintExists(Constraint& tmp) {
   return foundElemIter!=end();
 }
 
-ConstraintSet::iterator ConstraintSet::findSpecific(Constraint::ConstraintOp op, VariableName varName) {
+ConstraintSet::iterator ConstraintSet::findSpecific(Constraint::ConstraintOp op, VariableName varName) const {
   // find op-constraint for variable varname
   for(ConstraintSet::iterator i=begin();i!=end();++i) {
 	if((*i).var==varName && (*i).op==op)
@@ -135,7 +135,7 @@ ConstraintSet::iterator ConstraintSet::findSpecific(Constraint::ConstraintOp op,
   return end();
 }
 
-AType::ConstIntLattice ConstraintSet::varConstIntLatticeValue(VariableName varName) {
+AType::ConstIntLattice ConstraintSet::varConstIntLatticeValue(VariableName varName) const {
   AType::ConstIntLattice c;
   ConstraintSet::iterator i=findSpecific(Constraint::EQ_VAR_CONST,varName);
   if(i==end()) {
