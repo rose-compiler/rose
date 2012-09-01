@@ -26,7 +26,13 @@ SgInitializedName* isSgInitializedName(SgNode* node);
 const SgInitializedName* isSgInitializedName(const SgNode* node);
 #endif
 
+// DQ (9/1/2012): Debugging code to trace haskell_port error.
+extern int abcd;
+
 namespace VirtualCFG {
+
+// DQ (9/1/2012): Debugging code to trace haskell_port error.
+extern int efgh;
 
   class CFGEdge;
 

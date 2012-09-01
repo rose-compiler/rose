@@ -583,15 +583,15 @@ SgFunctionRefExp * buildFunctionRefExp(SgFunctionSymbol* sym);
 
 SgFunctionRefExp * buildFunctionRefExp_nfi(SgFunctionSymbol* sym);
 
-#ifdef ROSE_USE_NEW_EDG_INTERFACE
+// #ifdef ROSE_USE_NEW_EDG_INTERFACE
 // DQ (12/15/2011): Adding template declaration support to the AST.
 SgTemplateFunctionRefExp* buildTemplateFunctionRefExp_nfi(SgTemplateFunctionSymbol* sym);
-#endif
+// #endif
 
-#ifdef ROSE_USE_NEW_EDG_INTERFACE
+// #ifdef ROSE_USE_NEW_EDG_INTERFACE
 // DQ (12/29/2011): Adding template declaration support to the AST.
 SgTemplateMemberFunctionRefExp* buildTemplateMemberFunctionRefExp_nfi(SgTemplateMemberFunctionSymbol* sym, bool virtual_call, bool need_qualifier);
-#endif
+// #endif
 
 SgMemberFunctionRefExp * buildMemberFunctionRefExp_nfi(SgMemberFunctionSymbol* sym, bool virtual_call, bool need_qualifier);
 SgMemberFunctionRefExp * buildMemberFunctionRefExp(SgMemberFunctionSymbol* sym, bool virtual_call, bool need_qualifier);
@@ -706,12 +706,15 @@ buildVariableDeclaration(const char* name, SgType *type, SgInitializer *varInit=
 SgVariableDeclaration* 
 buildVariableDeclaration_nfi(const SgName & name, SgType *type, SgInitializer *varInit, SgScopeStatement* scope);
 
-#ifdef ROSE_USE_NEW_EDG_INTERFACE
+// DQ (8/31/2012): Note that this macro can't be used in header files since it can only be set
+// after sage3.h has been read.  The reason is that this is a portability problem when "rose_config.h"
+// appears in header files of applications using ROSE's header files.
+// #ifdef ROSE_USE_NEW_EDG_INTERFACE
 // DQ (12/6/2011): Adding support for template declarations into the AST.
 // SgTemplateDeclaration*
 // SgVariableDeclaration* buildTemplateVariableDeclaration_nfi(const SgName & name, SgType *type, SgInitializer *varInit, SgScopeStatement* scope);
 SgTemplateVariableDeclaration* buildTemplateVariableDeclaration_nfi(const SgName & name, SgType *type, SgInitializer *varInit, SgScopeStatement* scope);
-#endif
+// #endif
 
 //!Build a typedef declaration, such as: typedef int myint; 
 SgTypedefDeclaration* 
@@ -760,16 +763,16 @@ buildNondefiningFunctionDeclaration (const SgName & name, SgType* return_type, S
 SgFunctionDeclaration* buildNondefiningFunctionDeclaration(const SgName& name, SgType* return_type, SgFunctionParameterList* parameter_list, SgScopeStatement* scope = NULL, SgExprListExp* decoratorList = NULL);
 
 
-#ifdef ROSE_USE_NEW_EDG_INTERFACE
+// #ifdef ROSE_USE_NEW_EDG_INTERFACE
 SgTemplateFunctionDeclaration *
 buildNondefiningTemplateFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL);
-#endif
+// #endif
 
-#ifdef ROSE_USE_NEW_EDG_INTERFACE
+// #ifdef ROSE_USE_NEW_EDG_INTERFACE
 // DQ (12/1/2011): Adding support for template declarations into the AST.
 SgTemplateFunctionDeclaration*
 buildDefiningTemplateFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope, SgExprListExp* decoratorList, SgTemplateFunctionDeclaration* first_nondefinng_declaration);
-#endif
+// #endif
 
 //! Build a prototype for an existing function declaration (defining or nondefining is fine) 
 SgFunctionDeclaration *
@@ -784,16 +787,16 @@ buildNondefiningFunctionDeclaration (const SgFunctionDeclaration* funcdecl, SgSc
 SgMemberFunctionDeclaration*
 buildNondefiningMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope, SgExprListExp* decoratorList, unsigned int functionConstVolatileFlags, bool buildTemplateInstantiation, SgTemplateArgumentPtrList* templateArgumentsList);
 
-#ifdef ROSE_USE_NEW_EDG_INTERFACE
+// #ifdef ROSE_USE_NEW_EDG_INTERFACE
 SgTemplateMemberFunctionDeclaration*
 buildNondefiningTemplateMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope = NULL, SgExprListExp* decoratorList = NULL, unsigned int functionConstVolatileFlags = 0);
-#endif
+// #endif
 
-#ifdef ROSE_USE_NEW_EDG_INTERFACE
+// #ifdef ROSE_USE_NEW_EDG_INTERFACE
 // DQ (12/1/2011): Adding support for template declarations in the AST.
 SgTemplateMemberFunctionDeclaration*
 buildDefiningTemplateMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope, SgExprListExp* decoratorList, unsigned int functionConstVolatileFlags, SgTemplateMemberFunctionDeclaration* first_nondefing_declaration );
-#endif
+// #endif
 
 ////! Build a prototype member function declaration
 //SgMemberFunctionDeclaration*
@@ -1018,11 +1021,11 @@ SgClassDefinition* buildClassDefinition(SgClassDeclaration *d = NULL, bool build
 // SgClassDefinition* buildClassDefinition_nfi(SgClassDeclaration *d = NULL);
 SgClassDefinition* buildClassDefinition_nfi(SgClassDeclaration *d = NULL, bool buildTemplateInstantiation = false);
 
-#ifdef ROSE_USE_NEW_EDG_INTERFACE
+// #ifdef ROSE_USE_NEW_EDG_INTERFACE
 // DQ (11/19/2011): Added more template declaration support.
 //! Build a template class definition statement
 SgTemplateClassDefinition* buildTemplateClassDefinition(SgTemplateClassDeclaration *d = NULL );
-#endif
+// #endif
 
 // DQ (7/27/2012): Removed from the API as part of new semantics for names with and without template arguments.
 // DQ (6/1/2012): Refactored support for setting the templateName to not have template argument syntax in the name.
@@ -1034,10 +1037,10 @@ SgTemplateClassDefinition* buildTemplateClassDefinition(SgTemplateClassDeclarati
 // SgClassDeclaration* buildNondefiningClassDeclaration_nfi(const SgName& name, SgClassDeclaration::class_types kind, SgScopeStatement* scope, bool buildTemplateInstantiation = false);
    SgClassDeclaration* buildNondefiningClassDeclaration_nfi(const SgName& name, SgClassDeclaration::class_types kind, SgScopeStatement* scope, bool buildTemplateInstantiation, SgTemplateArgumentPtrList* templateArgumentsList);
 
-#ifdef ROSE_USE_NEW_EDG_INTERFACE
+// #ifdef ROSE_USE_NEW_EDG_INTERFACE
 // DQ (11/29/2011): Adding template declaration support to the AST.
 SgTemplateClassDeclaration* buildNondefiningTemplateClassDeclaration_nfi(const SgName& name, SgClassDeclaration::class_types kind, SgScopeStatement* scope);
-#endif
+// #endif
 
 // DQ (11/7/2009): Added functions to build C++ class.
 SgClassDeclaration* buildNondefiningClassDeclaration ( SgName name, SgScopeStatement* scope );
@@ -1079,10 +1082,10 @@ SgStringConversion* buildStringConversion_nfi(SgExpression* exp);
 // SgClassDeclaration * buildClassDeclaration_nfi(const SgName& name, SgClassDeclaration::class_types kind, SgScopeStatement* scope, SgClassDeclaration* nonDefiningDecl, bool buildTemplateInstantiation);
 SgClassDeclaration * buildClassDeclaration_nfi(const SgName& name, SgClassDeclaration::class_types kind, SgScopeStatement* scope, SgClassDeclaration* nonDefiningDecl, bool buildTemplateInstantiation, SgTemplateArgumentPtrList* templateArgumentsList);
 
-#ifdef ROSE_USE_NEW_EDG_INTERFACE
+// #ifdef ROSE_USE_NEW_EDG_INTERFACE
 // DQ (11/19/2011): Added to support template class declaration using EDG 4.x support (to support the template declarations directly in the AST).
 SgTemplateClassDeclaration* buildTemplateClassDeclaration_nfi(const SgName& name, SgClassDeclaration::class_types kind, SgScopeStatement* scope, SgTemplateClassDeclaration* nonDefiningDecl );
-#endif
+// #endif
 
 //! Build an enum, It is also a declaration statement in SAGE III
 SgEnumDeclaration * buildEnumDeclaration(const SgName& name, SgScopeStatement* scope=NULL);

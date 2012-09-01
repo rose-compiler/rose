@@ -455,6 +455,10 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
   // DQ (1/20/2007): Some IR nodes should force related nodes to be removed (SgFunctionSymbol IR nodes, etc.)
      switch(node->variantT())
         {
+       // DQ (9/1/2012): The template function and member function declaration is derived from the SgFunctionDeclaration.
+          case V_SgTemplateFunctionDeclaration:
+          case V_SgTemplateMemberFunctionDeclaration:
+
           case V_SgFunctionDeclaration:
           case V_SgProgramHeaderStatement:
           case V_SgProcedureHeaderStatement:
@@ -1134,6 +1138,9 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
                break;
              }
 
+       // DQ (9/1/2012): The template class declaration is derived from the SgClassDeclaration.
+          case V_SgTemplateClassDeclaration:
+
           case V_SgClassDeclaration:
           case V_SgDerivedTypeStatement:
        // DQ (2/10/2007): Added case for SgTemplateInstantiationDecl
@@ -1491,11 +1498,15 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
                break;
              }
 
+       // DQ (9/1/2012): These cases should likely not be the same (any more). Since SgTemplateClassDeclaration is not derived from SgTemplateDeclaration any more in the New EDG connection).
        // DQ (6/11/2011): Added support for new template IR nodes.
-          case V_SgTemplateClassDeclaration:
+       // case V_SgTemplateClassDeclaration:
           case V_SgTemplateDeclaration:
              {
                SgTemplateDeclaration* templateDeclaration = isSgTemplateDeclaration(node);
+
+            // DQ (9/1/2012): Added assertion.
+               ROSE_ASSERT(templateDeclaration != NULL);
 
             // Template declarations have no associated type (so what is the SgTemplateType for???)!
             // nodeList.insert(templateDeclaration->get_type());
@@ -1837,7 +1848,12 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
           case V_SgAsmStmt:
           case V_SgNamespaceAliasDeclarationStatement:
        // case V_SgTemplateInstantiationDecl:
+
+       // DQ (9/1/2012): The template function and member function declaration is derived from the SgFunctionDeclaration.
+          case V_SgTemplateVariableDeclaration:
+
           case V_SgVariableDeclaration:
+
           case V_SgUsingDeclarationStatement:
           case V_SgUsingDirectiveStatement:
           case V_SgTemplateInstantiationDirectiveStatement:
