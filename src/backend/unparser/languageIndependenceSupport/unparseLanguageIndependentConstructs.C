@@ -2515,7 +2515,7 @@ UnparseLanguageIndependentConstructs::unparseEnumVal(SgExpression* expr, SgUnpar
         {
        // The enum value output in the enum declaration should be a value (it could be an enum constant
        // if it has already been output as a value (repreated reference) but this is an obsure detail).
-          curprint ( tostring(enum_val->get_value()));
+          curprint(tostring(enum_val->get_value()));
         }
        else
         {
@@ -2554,6 +2554,14 @@ UnparseLanguageIndependentConstructs::unparseEnumVal(SgExpression* expr, SgUnpar
                  // SgName nameQualifier = unp->u_name->generateNameQualifier(enum_val->get_declaration(),info);
                     SgName nameQualifier = enum_val->get_qualified_name_prefix();
 
+                 // DQ (8/31/2012): If we are going to NOT output a name, then we had better not out any name qualification.
+                    if (enum_val->get_name().is_null() == true)
+                       {
+                         printf ("If the enum name does not exist, then we can't qualify it nameQualifier = %s (reset) \n",(nameQualifier.is_null() == false) ? nameQualifier.str() : "NULL");
+                         nameQualifier = "";
+                         ROSE_ASSERT(nameQualifier.is_null() == true);
+                       }
+
                  // printf ("variable's nameQualifier = %s \n",(nameQualifier.is_null() == false) ? nameQualifier.str() : "NULL");
                  // ROSE_ASSERT (nameQualifier.is_null() == false);
                     if (nameQualifier.is_null() == false)
@@ -2571,10 +2579,20 @@ UnparseLanguageIndependentConstructs::unparseEnumVal(SgExpression* expr, SgUnpar
 
        // printf ("In Unparse_ExprStmt::unparseEnumVal: classdefn = %s pointer \n",classdefn ? "VALID" : "NULL");
 
+       // DQ (8/31/2012): We need to allow for values that would not be mapped to enum names and in this case 
+       // are output as enum values (see test2012_202.C for an example of this).
        // DQ (6/18/2006): Identify the case of an un-named enum, would be an error if we unparsed this directly.
-          ROSE_ASSERT (enum_val->get_name().is_null() == false);
-
-          curprint (  enum_val->get_name().str());
+       // ROSE_ASSERT (enum_val->get_name().is_null() == false);
+       // curprint (  enum_val->get_name().str());
+          if (enum_val->get_name().is_null() == false)
+             {
+            // This is the typical case.
+               curprint(enum_val->get_name().str());
+             }
+            else
+             {
+               curprint(tostring(enum_val->get_value()));
+             }
         }
    }
 
@@ -2591,11 +2609,11 @@ UnparseLanguageIndependentConstructs::unparseIntVal(SgExpression* expr, SgUnpars
   // DQ (8/30/2006): Make change suggested by Rama (patch)
      if (int_val->get_valueString() == "")
         {
-          curprint ( tostring(int_val->get_value()));
+          curprint(tostring(int_val->get_value()));
         }
        else
         {
-          curprint ( int_val->get_valueString());
+          curprint(int_val->get_valueString());
         }
    }
 
@@ -2612,11 +2630,11 @@ UnparseLanguageIndependentConstructs::unparseUIntVal(SgExpression* expr, SgUnpar
   // DQ (8/30/2006): Make change suggested by Rama (patch)
      if (uint_val->get_valueString() == "")
         {
-          curprint ( tostring(uint_val->get_value()));
+          curprint(tostring(uint_val->get_value()));
         }
        else
         {
-          curprint ( uint_val->get_valueString());
+          curprint(uint_val->get_valueString());
         }
    }
 
@@ -2633,11 +2651,11 @@ UnparseLanguageIndependentConstructs::unparseLongIntVal(SgExpression* expr, SgUn
   // DQ (8/30/2006): Make change suggested by Rama (patch)
      if (longint_val->get_valueString() == "")
         {
-          curprint ( tostring(longint_val->get_value()));
+          curprint(tostring(longint_val->get_value()));
         }
        else
         {
-          curprint ( longint_val->get_valueString());
+          curprint(longint_val->get_valueString());
         }
    }
 
@@ -2654,11 +2672,11 @@ UnparseLanguageIndependentConstructs::unparseLongLongIntVal(SgExpression* expr, 
   // DQ (8/30/2006): Make change suggested by Rama (patch)
      if (longlongint_val->get_valueString() == "")
         {
-          curprint ( tostring(longlongint_val->get_value()));
+          curprint(tostring(longlongint_val->get_value()));
         }
        else
         {
-          curprint ( longlongint_val->get_valueString());
+          curprint(longlongint_val->get_valueString());
         }
    }
 
@@ -2675,11 +2693,11 @@ UnparseLanguageIndependentConstructs::unparseULongLongIntVal(SgExpression* expr,
   // DQ (8/30/2006): Make change suggested by Rama (patch)
      if (ulonglongint_val->get_valueString() == "")
         {
-          curprint ( tostring(ulonglongint_val->get_value()));
+          curprint(tostring(ulonglongint_val->get_value()));
         }
        else
         {
-          curprint ( ulonglongint_val->get_valueString());
+          curprint(ulonglongint_val->get_valueString());
         }
    }
 
@@ -2696,11 +2714,11 @@ UnparseLanguageIndependentConstructs::unparseULongIntVal(SgExpression* expr, SgU
   // DQ (8/30/2006): Make change suggested by Rama (patch)
      if (ulongint_val->get_valueString() == "")
         {
-          curprint ( tostring(ulongint_val->get_value()));
+          curprint(tostring(ulongint_val->get_value()));
         }
        else
         {
-          curprint ( ulongint_val->get_valueString());
+          curprint(ulongint_val->get_valueString());
         }
    }
 
@@ -2725,11 +2743,11 @@ UnparseLanguageIndependentConstructs::unparseFloatVal(SgExpression* expr, SgUnpa
         {
           if (float_val->get_valueString() == "")
              {
-               curprint ( tostring(float_val->get_value()));
+               curprint(tostring(float_val->get_value()));
              }
             else
              {
-               curprint ( float_val->get_valueString());
+               curprint(float_val->get_valueString());
              }
         }
        else
@@ -2741,7 +2759,7 @@ UnparseLanguageIndependentConstructs::unparseFloatVal(SgExpression* expr, SgUnpa
         {
        // printf ("Infinite value found as value in unparseFloatVal() \n");
        // curprint ( "std::numeric_limits<float>::infinity()";
-          curprint ( "__builtin_huge_valf()");
+          curprint( "__builtin_huge_valf()");
         }
        else
         {
@@ -2750,14 +2768,14 @@ UnparseLanguageIndependentConstructs::unparseFloatVal(SgExpression* expr, SgUnpa
           if ((float_value != float_value) || (float_value == std::numeric_limits<float>::quiet_NaN()) )
              {
             // curprint ( "std::numeric_limits<float>::quiet_NaN()";
-               curprint ( "__builtin_nanf (\"\")");
+               curprint( "__builtin_nanf (\"\")");
              }
             else
              {
                if (float_value == std::numeric_limits<float>::signaling_NaN())
                   {
                  // curprint ( "std::numeric_limits<float>::signaling_NaN()";
-                    curprint ( "__builtin_nansf (\"\")");
+                    curprint("__builtin_nansf (\"\")");
                   }
                  else
                   {
@@ -2766,11 +2784,11 @@ UnparseLanguageIndependentConstructs::unparseFloatVal(SgExpression* expr, SgUnpa
                  // AS (11/08/2005) add support for values as string
                     if (float_val->get_valueString() == "")
                        {
-                         curprint ( tostring(float_val->get_value()));
+                         curprint(tostring(float_val->get_value()));
                        }
                       else
                        {
-                         curprint ( float_val->get_valueString());
+                         curprint(float_val->get_valueString());
                        }
                   }
              }
@@ -2844,9 +2862,9 @@ UnparseLanguageIndependentConstructs::unparseDoubleVal(SgExpression* expr, SgUnp
                  // curprint ( dbl_val->get_value();
                  // AS (11/08/2005) add support for values as string
                     if (dbl_val->get_valueString() == "")
-                         curprint ( tostring(double_value));
+                         curprint(tostring(double_value));
                       else
-                         curprint ( dbl_val->get_valueString());
+                         curprint(dbl_val->get_valueString());
                   }
              }
         }
