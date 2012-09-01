@@ -5,6 +5,7 @@
 #include "codethorn.h"
 #include "SgNodeHelper.h"
 #include "Labeler.h"
+#include "VariableIdMapping.h"
 #include "StateRepresentation.h"
 #include "Analyzer.h"
 #include "LanguageRestrictor.h"
@@ -14,6 +15,7 @@
 #include <cstdio>
 #include <cstring>
 #include <boost/program_options.hpp>
+
 namespace po = boost::program_options;
 
 void write_file(std::string filename, std::string data) {
@@ -279,69 +281,6 @@ void checkProgram(SgNode* root) {
   }
 }
 
-bool checkUniqueVariableSymbolMapping(SgProject* project) {
-  // create a mapping of variableNames and its computed UniqueVariableSymbol
-  // the mapping must be bijective
-  typedef pair<string,SgSymbol*> MapPair;
-  set<MapPair> checkSet;
-
-  list<SgGlobal*> globList=SgNodeHelper::listOfSgGlobal(project);
-  for(list<SgGlobal*>::iterator k=globList.begin();k!=globList.end();++k) {
-	MyAst ast(*k);
-	for(MyAst::iterator i=ast.begin();i!=ast.end();++i) {
-	  SgSymbol* sym=0;
-	  bool found=false;
-	  if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(*i)) {
-		sym=SgNodeHelper::getUniqueSymbolOfVariableDeclaration(varDecl);
-		found=true;
-	  }
-	  if(SgVarRefExp* varRef=isSgVarRefExp(*i)) {
-		sym=SgNodeHelper::getUniqueSymbolOfVariable(varRef);
-		found=true;
-	  }
-	  if(found) {
-		string longName=SgNodeHelper::uniqueLongVariableName(*i);
-		MapPair pair=make_pair(longName,sym);
-		checkSet.insert(pair);
-	  }
-	}
-  }
-
-  int numOfPairs=checkSet.size();
-  set<string> nameSet;
-  set<SgSymbol*> symbolSet;
-  bool mappingOK=true;
-  for(set<MapPair>::iterator i=checkSet.begin();i!=checkSet.end();++i) {
-	  nameSet.insert((*i).first);
-	  symbolSet.insert((*i).second);
-  }
-  if((nameSet.size()!=checkSet.size()) || (symbolSet.size()!=checkSet.size())|| mappingOK==false) {
-	// variable symbol mapping not bijective
-	// in case of an error we perform some expensive operations to provide a proper error explanation
-	cerr << "WARNING: Variable<->Symbol mapping not bijective."<<endl;
-	for(set<MapPair>::iterator i=checkSet.begin();i!=checkSet.end();++i) {
-	  for(set<MapPair>::iterator j=checkSet.begin();j!=checkSet.end();++j) {
-		// check if we find a pair with same name but different symbol
-#if 0
-		if((*i).first==(*j).first && i!=j) {
-		  cout << "    Problematic mapping: same name  : "<<(*i).first <<" <-> "<<(*i).second
-			   << " <==> "
-			   <<(*j).first <<" <-> "<<(*j).second
-			   <<endl;
-		}
-		if((*i).second==(*j).second && i!=j) {
-		  cout << "    Problematic mapping: same symbol: "<<(*i).first <<" <-> "<<(*i).second
-			   << " <==> "
-			   <<(*j).first <<" <-> "<<(*j).second
-			   <<endl;
-		}
-#endif
-	  }
-	}
-	return false;
-  }
-  return true;
-}
 
 int main( int argc, char * argv[] ) {
   string ltl_file;
@@ -415,7 +354,13 @@ int main( int argc, char * argv[] ) {
   checkProgram(root);
 
   cout << "INIT: Running variable<->symbol mapping check."<<endl;
-  checkUniqueVariableSymbolMapping(sageProject);
+
+  VariableIdMapping varIdMap;
+  varIdMap.computeUniqueVariableSymbolMapping(sageProject);
+  if(!varIdMap.isUniqueVariableSymbolMapping()) {
+	cerr << "WARNING: Variable<->Symbol mapping not bijective."<<endl;
+	//varIdMap.reportUniqueVariableSymbolMappingViolations();
+  }
 
   Analyzer analyzer;
   analyzer.initializeSolver1("main",root);

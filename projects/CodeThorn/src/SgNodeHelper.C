@@ -9,21 +9,6 @@
 
 using namespace std;
 
-SgNodeHelper::UniqueVariableSymbol*
-SgNodeHelper::getUniqueSymbolOfVariableDeclaration(SgVariableDeclaration* decl) {  
-  SgInitializedName* initName=SgNodeHelper::getInitializedNameOfVariableDeclaration(decl);
-  SgSymbol* initDeclVar=initName->search_for_symbol_from_symbol_table();
-  return initDeclVar;
-}
-
-// returns a unique UniqueVariableSymbol (SgSymbol*) for a variale in a variable declaration (can be used as ID)
-SgNodeHelper::UniqueVariableSymbol*
-SgNodeHelper::getUniqueSymbolOfVariable(SgVarRefExp* varRefExp) {
-  SgVariableSymbol* varSym=varRefExp->get_symbol();
-  SgInitializedName* varInitName=varSym->get_declaration();
-  SgSymbol* uniqueSymbol=varInitName->search_for_symbol_from_symbol_table();
-  return uniqueSymbol;
-}
 
 SgExpression* SgNodeHelper::getInitializerExpressionOfVariableDeclaration(SgVariableDeclaration* decl) {
   SgInitializedName* initName=SgNodeHelper::getInitializedNameOfVariableDeclaration(decl);
@@ -38,24 +23,6 @@ SgExpression* SgNodeHelper::getInitializerExpressionOfVariableDeclaration(SgVari
   }
 }
 
-string SgNodeHelper::uniqueVariableSymbolToString(SgNodeHelper::UniqueVariableSymbol* symbol) {
-  SgName nameObject=symbol->get_name();
-  string nameString=nameObject.getString();
-  return nameString;
-}
-
-SgNodeHelper::UniqueVariableSymbol* 
-SgNodeHelper::createUniqueTemporaryVariableSymbol(string name) {
-  return new UniqueTemporaryVariableSymbol(name);
-}
-
-void SgNodeHelper::deleteUniqueTemporaryVariableSymbol(UniqueVariableSymbol* symbol) {
-  if(dynamic_cast<UniqueTemporaryVariableSymbol*>(symbol))
-	delete symbol;
-  else
-	throw "SgNodeHelper::deleteUniqueTemporaryVariableSymbol: improper node operation.";
-}
-
 // returns the SgInitializedName of a variable declaration or throws an exception
 SgInitializedName* SgNodeHelper::getInitializedNameOfVariableDeclaration(SgVariableDeclaration* decl) {
   SgNode* initName0=decl->get_traversalSuccessorByIndex(1); // get-InitializedName
@@ -68,6 +35,12 @@ SgInitializedName* SgNodeHelper::getInitializedNameOfVariableDeclaration(SgVaria
   } else {
 	throw "Error: AST structure failure: no variable found.";
   }
+}
+
+string SgNodeHelper::symbolToString(SgSymbol* symbol) {
+  SgName nameObject=symbol->get_name();
+  string nameString=nameObject.getString();
+  return nameString;
 }
 
 list<SgGlobal*> SgNodeHelper::listOfSgGlobal(SgProject* project) {
@@ -114,19 +87,36 @@ list<SgFunctionDefinition*> SgNodeHelper::listOfGlobalFunctionDefinitions(SgGlob
   return funDefList;
 }
 
+SgSymbol*
+SgNodeHelper::getSymbolOfVariableDeclaration(SgVariableDeclaration* decl) {  
+  SgInitializedName* initName=SgNodeHelper::getInitializedNameOfVariableDeclaration(decl);
+  SgSymbol* initDeclVar=initName->search_for_symbol_from_symbol_table();
+  return initDeclVar;
+}
+
+// returns a unique UniqueVariableSymbol (SgSymbol*) for a variale in a variable declaration (can be used as ID)
+SgSymbol*
+SgNodeHelper::getSymbolOfVariable(SgVarRefExp* varRefExp) {
+  SgVariableSymbol* varSym=varRefExp->get_symbol();
+  SgInitializedName* varInitName=varSym->get_declaration();
+  SgSymbol* symbol=varInitName->search_for_symbol_from_symbol_table();
+  return symbol;
+}
+
+
 string SgNodeHelper::uniqueLongVariableName(SgNode* node) {
   SgSymbol* sym;
   bool found=false;
   if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(node)) {
-	sym=SgNodeHelper::getUniqueSymbolOfVariableDeclaration(varDecl);
+	sym=SgNodeHelper::getSymbolOfVariableDeclaration(varDecl);
 	found=true;
   }
   if(SgVarRefExp* varRef=isSgVarRefExp(node)) {
-	sym=SgNodeHelper::getUniqueSymbolOfVariable(varRef);
+	sym=SgNodeHelper::getSymbolOfVariable(varRef);
 	found=true;
   }
   if(found) {
-	string name=SgNodeHelper::uniqueVariableSymbolToString(sym);
+	string name=SgNodeHelper::symbolToString(sym);
 	// we search from the SgSymbol (which is somewhere found in the AST). Even if it is in the symbol table
 	// we will still find the right function!
 	SgFunctionDefinition* funDef=SgNodeHelper::correspondingSgFunctionDefinition(sym);
@@ -439,10 +429,3 @@ int SgNodeHelper::numChildren(SgNode* node) {
   }
 }
 
-SgNodeHelper::UniqueTemporaryVariableSymbol::UniqueTemporaryVariableSymbol(string name) : SgVariableSymbol() {
-  _tmpName=name;
-}
-
-SgName SgNodeHelper::UniqueTemporaryVariableSymbol::get_name() const {
-  return SgName(_tmpName);
-}

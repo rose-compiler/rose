@@ -12,13 +12,6 @@
 using namespace std;
 
 namespace SgNodeHelper {
-  typedef SgSymbol UniqueVariableSymbol;
-
-  // returns a unique SgSymbol* for a variale in a variable declaration (can be used as ID)
-  UniqueVariableSymbol* getUniqueSymbolOfVariableDeclaration(SgVariableDeclaration* decl);
-
-  // returns a unique SgSymbol* for a variable in a SgVarRefExp (can be used as ID)
-  UniqueVariableSymbol* getUniqueSymbolOfVariable(SgVarRefExp* decl);
 
   // returns the initializer expression of a variable declaration. If no initializer exists it returns 0.
   SgExpression* getInitializerExpressionOfVariableDeclaration(SgVariableDeclaration* decl);
@@ -26,27 +19,8 @@ namespace SgNodeHelper {
   // returns the initialized name object of a variable declaration. Otherwise it throws an exception.
   SgInitializedName* getInitializedNameOfVariableDeclaration(SgVariableDeclaration* decl);
 
-  // returns name of symbol as string
-  string uniqueVariableSymbolToString(SgSymbol* symbol);
-
-  /* creates a long unique variable name for a given node of type SgVariableDeclaration or SgVarRefExp
-	 if node is not one of those two types an exception is thrown
-	 the long variable name consists $functionName$scopeLevel$varName
-	 in case of global scope functionName is empty, giving a string: $$scopeLevel$varName 
-  */
-  string uniqueLongVariableName(SgNode* node);
-
   /* computes for a given node at which scope nesting level this node is in its AST */
   int scopeNestingLevel(SgNode* node);
-
-  /* create a new unique variable symbol (should be used together with deleteUniqueVariableSymbol)
-	 this is useful if additional (e.g. temporary) variables are introduced in an analysis
-	 this function does NOT insert this new symbol in any symbol table
-   */
-  UniqueVariableSymbol* createUniqueTemporaryVariableSymbol(string name);
-
-  // delete a unique variable symbol (should be used together with createUniqueVariableSymbol)
-  void deleteUniqueTemporaryVariableSymbol(UniqueVariableSymbol* uniqueVarSym);
 
   // returns the root node representing the AST of the condition of If, While, DoWhile, For, CondOperator (does not handle switch).
   SgNode* getCond(SgNode* node);
@@ -105,6 +79,23 @@ namespace SgNodeHelper {
 
   // is true if 'node' is the root node of the AST representing the condition of If, While, DoWhile, For. (does not handle switch).
   bool isCond(SgNode* node);
+
+  // returns a SgSymbol* for a variale in a variable declaration
+  SgSymbol* getSymbolOfVariableDeclaration(SgVariableDeclaration* decl);
+
+  // returns a SgSymbol* for a variable in a SgVarRefExp
+  SgSymbol* getSymbolOfVariable(SgVarRefExp* decl);
+
+  // returns name of symbol as string
+  string symbolToString(SgSymbol* symbol);
+
+  /* Creates a long unique variable name for a given node of type SgVariableDeclaration or SgVarRefExp
+	 If node is not one of those two types an exception is thrown
+	 The long variable name consists $functionName$scopeLevel$varName
+	 In case of global scope functionName is empty, giving a string: $$scopeLevel$varName 
+	 Note: this function only considers C-functions. Classes are recognized.
+  */
+  string uniqueLongVariableName(SgNode* node);
 
   /* returns a set of SgNode where each node is a break node, but
 	 properly excludes all nested loops. Hence, the parameter 'node' can
@@ -183,18 +174,6 @@ namespace SgNodeHelper {
 	// tests pattern SgExprStatement(SgAssignOp(VarRefExp,FunctionCallExp)) and returns pointer to FunctionCallExp, otherwise 0.
 	SgFunctionCallExp* matchExprStmtAssignOpVarRefExpFunctionCallExp(SgNode *);
   } // end of namespace Pattern
-
-  class UniqueTemporaryVariableSymbol : public SgVariableSymbol {
-  public:
-	// Constructor: we only allow this single constructor
-	UniqueTemporaryVariableSymbol(string name);
-	// Destructor: default is sufficient
-	
-	// overrides inherited get_name (we do not use a declaration)
-	SgName get_name() const;
-  private:
-	string _tmpName;
-  };
 
 } // end of namespace SgNodeHelper
 
