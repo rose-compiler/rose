@@ -84,6 +84,7 @@ clean:
 	rm -f *.ps
 	rm -f viz/*
 	rm -f bsps/*
+	rm -f LTLParser.tab.c++
 
 distclean: clean
 	rm -f *.tgz
