@@ -1,20 +1,48 @@
 #ifndef ATYPE_H
 #define ATYPE_H
 
+/*************************************************************
+ * Copyright: (C) 2012 by Markus Schordan                    *
+ * Author   : Markus Schordan                                *
+ * License  : see file LICENSE in the CodeThorn distribution *
+ *************************************************************/
+
 #include <limits.h>
 #include <string>
 #include <sstream>
 
 using namespace std;
 
+/*!
+  \brief Several abstract types implementing abstract semantics.
+  \details These types are used by the analyzer for computing abstract values according the semantics of the respective domain.
+  \date 2012
+  \author Markus Schordan
+ */
 namespace AType {
 
+/*!
+  \brief Serves as top value in analysis.
+  \date 2012
+  \author Markus Schordan
+ */
   class Top {
   };
 
-class Bot {
-};
+/*!
+  \brief Serves as bot value in analysis.
+  \date 2012
+  \author Markus Schordan
+ */
+  class Bot {
+  };
 
+/*!
+  \brief Implements semantic functions of a boolean lattice.
+  \date 2012
+  \author Markus Schordan
+  \details All lattice domain operators are implemented as overloaded functions.
+ */
 class BoolLattice {
  public:
   enum ValueType { FALSE, TRUE, BOT, TOP};
@@ -40,9 +68,15 @@ class BoolLattice {
 
 ostream& operator<<(ostream& os, BoolLattice& toStream);
 
+/*!
+  \brief Implements semantic functions of an integer lattice.
+  \date 2012
+  \author Markus Schordan
+  \details All lattice domain operators are implemented as overloaded functions.
+ */
 class ConstIntLattice {
  public:
-  enum ValueType { BOT, TOP, CONSTINT, TRUE,FALSE};
+  enum ValueType { BOT, TOP, CONSTINT};
   ConstIntLattice();
   ConstIntLattice(bool val);
   // type conversion

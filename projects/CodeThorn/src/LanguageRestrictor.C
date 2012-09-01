@@ -1,3 +1,9 @@
+/*************************************************************
+ * Copyright: (C) 2012 by Markus Schordan                    *
+ * Author   : Markus Schordan                                *
+ * License  : see file LICENSE in the CodeThorn distribution *
+ *************************************************************/
+
 #include "LanguageRestrictor.h"
 
 LanguageRestrictor::VariantSet LanguageRestrictor::computeVariantSetOfProvidedAst(SgNode* node) {

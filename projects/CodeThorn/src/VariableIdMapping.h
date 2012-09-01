@@ -1,3 +1,12 @@
+#ifndef VARIABLEIDMAPPING_H
+#define VARIABLEIDMAPPING_H
+
+/*************************************************************
+ * Copyright: (C) 2012 by Markus Schordan                    *
+ * Author   : Markus Schordan                                *
+ * License  : see file LICENSE in the CodeThorn distribution *
+ *************************************************************/
+
 #include "rose.h"
 #include <string>
 #include "SgNodeHelper.h"
@@ -5,18 +14,14 @@
 
 using namespace std;
 
-#ifndef VARIABLEIDMAPPING_H
-#define VARIABLEIDMAPPING_H
-
-
-typedef SgSymbol* VariableId;
+class VariableId;
 
 class VariableIdMapping {
+
  public:
   // the computation of the CodeThorn-defined ROSE-based variable-symbol mapping
   // creates a mapping of variableNames and its computed UniqueVariableSymbol
-  // the mapping must be bijective
-  void computeUniqueVariableSymbolMapping(SgProject* project);
+  void computeVariableSymbolMapping(SgProject* project);
 
   // checks whether the computed CodeThorn-defined ROSE-based variable-symbol mapping is bijective.
   bool isUniqueVariableSymbolMapping();
@@ -54,8 +59,17 @@ class VariableIdMapping {
  private:
   typedef pair<string,SgSymbol*> MapPair;
   set<MapPair> checkSet;
-
 }; // end of class VariableIdMapping
+
+class VariableId {
+  friend class VariableIdMapping;
+ public:
+  VariableId();
+ private:
+  VariableId(SgSymbol* sym);
+  SgSymbol* getSymbol();
+  SgSymbol* sym;
+};
 
 #endif
 

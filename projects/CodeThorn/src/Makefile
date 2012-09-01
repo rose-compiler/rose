@@ -34,7 +34,7 @@ all: $(TOOLNAME3)
 	@if [ x$${ROSE_IN_BUILD_TREE:+present} = xpresent ]; then echo "ROSE_IN_BUILD_TREE should not be set" >&2; exit 1; fi
 
 
-.PHONY: check dist viz clean distclean bsps doc
+.PHONY: check dist viz clean distclean bsps docs
 
 # Example suffix rule for more experienced makefile users
 # .C.o:
@@ -60,7 +60,7 @@ check: $(TOOLNAME3)
 test: $(TOOLNAME3)
 	./$(TOOLNAME3) tests/rers/Problem1.c --verify tests/rers/properties1.ltl
 
-doc:
+docs:
 	doxygen Doxyfile
 
 viz: transitiongraph1.dot transitiongraph2.dot cfg.dot ast.dot
@@ -89,7 +89,7 @@ clean:
 distclean: clean
 	rm -f *.tgz
 	rm -f *~
-	rm -rf html latex
+	rm -rf ../docs/doxygen
 
 bsps: codethorn
 	./codethorn tests/basictest10f.C && make viz && make vizjpg
@@ -117,4 +117,4 @@ bsps: codethorn
 	cp viz/transitiongraph2.jpg bsps/rers1_transitiongraph2.jpg
 
 dist:
-	tar cvzf codethorn_$(MYDATE).tgz *.C *cpp *.h *.txt *.lxx *.yxx docs tests Makefile* TODO
+	tar cvzf codethorn_$(MYDATE).tgz *.C *cpp *.h *.lxx *.yxx tests/*.C tests/*.c Makefile*

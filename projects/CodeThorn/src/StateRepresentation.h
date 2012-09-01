@@ -1,6 +1,12 @@
 #ifndef STATE_REPRESENTATION_H
 #define STATE_REPRESENTATION_H
 
+/*************************************************************
+ * Copyright: (C) 2012 by Markus Schordan                    *
+ * Author   : Markus Schordan                                *
+ * License  : see file LICENSE in the CodeThorn distribution *
+ *************************************************************/
+
 #include <string>
 #include <set>
 #include <map>

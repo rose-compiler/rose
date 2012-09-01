@@ -1,6 +1,12 @@
 #ifndef EVAL_EXPR_H
 #define EVAL_EXPR_H
 
+/*************************************************************
+ * Copyright: (C) 2012 by Markus Schordan                    *
+ * Author   : Markus Schordan                                *
+ * License  : see file LICENSE in the CodeThorn distribution *
+ *************************************************************/
+
 #include <limits.h>
 #include <string>
 #include "StateRepresentation.h"

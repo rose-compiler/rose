@@ -1,3 +1,9 @@
+/*************************************************************
+ * Copyright: (C) 2012 by Markus Schordan                    *
+ * Author   : Markus Schordan                                *
+ * License  : see file LICENSE in the CodeThorn distribution *
+ *************************************************************/
+
 #include "AType.h"
 
 ostream& AType::operator<<(ostream& os, BoolLattice& toStream) {
@@ -214,9 +220,6 @@ string AType::ConstIntLattice::toString() {
 	ss<<getIntValue();
 	return ss.str();
   }
-	// TODO: true and false to be removed
-  case AType::ConstIntLattice::TRUE: return "true-error";
-  case AType::ConstIntLattice::FALSE: return "false-error";
   default:
 	throw "Error: ConstIntLattice::toString operation failed.";
   }

@@ -1,6 +1,8 @@
-/*********************************
- * Author: Markus Schordan, 2012 *
- *********************************/
+/*************************************************************
+ * Copyright: (C) 2012 by Markus Schordan                    *
+ * Author   : Markus Schordan                                *
+ * License  : see file LICENSE in the CodeThorn distribution *
+ *************************************************************/
 
 #include "codethorn.h"
 #include "SgNodeHelper.h"
@@ -356,7 +358,7 @@ int main( int argc, char * argv[] ) {
   cout << "INIT: Running variable<->symbol mapping check."<<endl;
 
   VariableIdMapping varIdMap;
-  varIdMap.computeUniqueVariableSymbolMapping(sageProject);
+  varIdMap.computeVariableSymbolMapping(sageProject);
   if(!varIdMap.isUniqueVariableSymbolMapping()) {
 	cerr << "WARNING: Variable<->Symbol mapping not bijective."<<endl;
 	//varIdMap.reportUniqueVariableSymbolMappingViolations();

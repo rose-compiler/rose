@@ -1,7 +1,12 @@
+/*************************************************************
+ * Copyright: (C) 2012 by Markus Schordan                    *
+ * Author   : Markus Schordan                                *
+ * License  : see file LICENSE in the CodeThorn distribution *
+ *************************************************************/
 
 #include "VariableIdMapping.h"
 
-void VariableIdMapping::computeUniqueVariableSymbolMapping(SgProject* project) {
+void VariableIdMapping::computeVariableSymbolMapping(SgProject* project) {
 
   list<SgGlobal*> globList=SgNodeHelper::listOfSgGlobal(project);
   for(list<SgGlobal*>::iterator k=globList.begin();k!=globList.end();++k) {
@@ -78,22 +83,19 @@ string VariableIdMapping::uniqueLongVariableName(VariableId varId) {
 }
 
 VariableId VariableIdMapping::variableId(SgVariableDeclaration* decl) {
-  return SgNodeHelper::getSymbolOfVariableDeclaration(decl);
+  return VariableId(SgNodeHelper::getSymbolOfVariableDeclaration(decl));
 }
 
 VariableId VariableIdMapping::variableId(SgVarRefExp* varRefExp) {
-  return SgNodeHelper::getSymbolOfVariable(varRefExp);
+  return VariableId(SgNodeHelper::getSymbolOfVariable(varRefExp));
 }
 
-bool VariableIdMapping::isTemporaryVariableId(VariableId symbol) {
-  return dynamic_cast<UniqueTemporaryVariableSymbol*>(symbol);
+bool VariableIdMapping::isTemporaryVariableId(VariableId varId) {
+  return dynamic_cast<UniqueTemporaryVariableSymbol*>(varId.getSymbol());
 }
 
 SgSymbol* VariableIdMapping::getSymbol(VariableId varId) {
-  if(isSgSymbol(varId))
-	return varId;
-  else
-	throw "VariableIdMapping:: improper id operatoin.";
+  return varId.getSymbol();
 }
 
 SgSymbol* 
@@ -101,9 +103,9 @@ VariableIdMapping::createUniqueTemporaryVariableId(string name) {
   return new UniqueTemporaryVariableSymbol(name);
 }
 
-void VariableIdMapping::deleteUniqueTemporaryVariableId(VariableId symbol) {
-  if(isTemporaryVariableId(symbol))
-	delete symbol;
+void VariableIdMapping::deleteUniqueTemporaryVariableId(VariableId varId) {
+  if(isTemporaryVariableId(varId.getSymbol()))
+	delete varId.getSymbol();
   else
 	throw "VariableIdMapping::deleteUniqueTemporaryVariableSymbol: improper id operation.";
 }
@@ -114,4 +116,12 @@ VariableIdMapping::UniqueTemporaryVariableSymbol::UniqueTemporaryVariableSymbol(
 
 SgName VariableIdMapping::UniqueTemporaryVariableSymbol::get_name() const {
   return SgName(_tmpName);
+}
+
+VariableId::VariableId():sym(0){
+}
+VariableId::VariableId(SgSymbol* sym):sym(sym){
+}
+SgSymbol* VariableId::getSymbol() {
+  return sym;
 }

@@ -1,6 +1,12 @@
 #ifndef LANGUAGE_RESTRICTOR_H
 #define LANGUAGE_RESTRICTOR_H
 
+/*************************************************************
+ * Copyright: (C) 2012 by Markus Schordan                    *
+ * Author   : Markus Schordan                                *
+ * License  : see file LICENSE in the CodeThorn distribution *
+ *************************************************************/
+
 #include "rose.h"
 #include <set>
 #include <string>
@@ -8,6 +14,12 @@
 
 using namespace std;
 
+/*!
+  \brief Allows to check an AST for a restricted subset of C/C++.
+  \details This class can be used to check the AST of an input program to contain only nodes of a certain subset of C/C++.
+  \date 2012
+  \author Markus Schordan
+ */
 class LanguageRestrictor {
  public:
   typedef set<VariantT> VariantSet;

@@ -1,9 +1,11 @@
 #ifndef ANALYZER_H
 #define ANALYZER_H
 
-/*********************************
- * Author: Markus Schordan, 2012 *
- *********************************/
+/*************************************************************
+ * Copyright: (C) 2012 by Markus Schordan                    *
+ * Author   : Markus Schordan                                *
+ * License  : see file LICENSE in the CodeThorn distribution *
+ *************************************************************/
 
 #include <iostream>
 #include <fstream>

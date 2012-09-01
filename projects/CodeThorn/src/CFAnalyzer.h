@@ -1,9 +1,11 @@
-#ifndef cfg_h
-#define cfg_h
+#ifndef CFANALYZER_H
+#define CFANALYZER_H
 
-/*********************************
- * Author: Markus Schordan, 2012 *
- *********************************/
+/*************************************************************
+ * Copyright: (C) 2012 by Markus Schordan                    *
+ * Author   : Markus Schordan                                *
+ * License  : see file LICENSE in the CodeThorn distribution *
+ *************************************************************/
 
 #include "rose.h"
 #include "SgNodeHelper.h"
