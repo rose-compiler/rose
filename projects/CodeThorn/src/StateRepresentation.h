@@ -13,6 +13,7 @@
 #include "Labeler.h"
 #include "CFAnalyzer.h"
 #include "AType.h"
+#include "VariableIdMapping.h"
 
 using namespace std;
 
@@ -23,13 +24,13 @@ typedef int AValue; // MS: TODO: replace 'int' with 'ConstIntLattice'
 class State;
 typedef set<const State*> StatePtrSet;
 
-class State : public map<VariableName,AValue> {
+class State : public map<VariableId,AValue> {
  public:
-  bool varExists(VariableName varname) const;
-  bool varIsConst(VariableName varname) const;
-  string varValueToString(string varname) const;
+  bool varExists(VariableId varname) const;
+  bool varIsConst(VariableId varname) const;
+  string varValueToString(VariableId varname) const;
   string toString() const;
-  void deleteVar(VariableName varname);
+  void deleteVar(VariableId varname);
 };
 
 class StateSet : public set<State> {
@@ -47,9 +48,9 @@ class StateSet : public set<State> {
 class Constraint {
  public:
   enum ConstraintOp {EQ_VAR_CONST,NEQ_VAR_CONST,DEQ_VAR_CONST};
-  Constraint(ConstraintOp op0,VariableName lhs, AValue rhs);
+  Constraint(ConstraintOp op0,VariableId lhs, AValue rhs);
   ConstraintOp op;
-  VariableName var;
+  VariableId var;
   AValue intVal;
   string toString() const;
  private:
@@ -61,14 +62,14 @@ bool operator==(const Constraint& c1, const Constraint& c2);
 
 class ConstraintSet : public set<Constraint> {
  public:
-  bool constraintExists(Constraint::ConstraintOp op, VariableName varName, AValue intVal);
+  bool constraintExists(Constraint::ConstraintOp op, VariableId varId, AValue intVal);
   bool constraintExists(Constraint& c);
-  ConstraintSet::iterator findSpecific(Constraint::ConstraintOp op, VariableName varName) const;
-  AType::ConstIntLattice varConstIntLatticeValue(VariableName varName) const;
+  ConstraintSet::iterator findSpecific(Constraint::ConstraintOp op, VariableId varId) const;
+  AType::ConstIntLattice varConstIntLatticeValue(VariableId varId) const;
   string toString() const;
   ConstraintSet& operator+=(ConstraintSet& s2);
   ConstraintSet operator+(ConstraintSet& s2);
-  ConstraintSet deleteVarConstraints(VariableName varName);
+  ConstraintSet deleteVarConstraints(VariableId varId);
   ConstraintSet invertedConstraints();
 
   // that's a tricky form of reuse (hiding the inherited function (not overloading, nor overriding)).
@@ -85,7 +86,7 @@ class InputOutput {
  InputOutput():op(NONE){ val=AType::Bot();}
   enum OpType {IN_VAR,OUT_VAR,OUT_CONST,NONE};
   OpType op;
-  VariableName var;
+  VariableId var;
   AType::ConstIntLattice val;
 };
 

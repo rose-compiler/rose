@@ -110,6 +110,7 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
   if(initName0) {
 	if(SgInitializedName* initName=isSgInitializedName(initName0)) {
 	  SgSymbol* initDeclVar=initName->search_for_symbol_from_symbol_table();
+	  VariableId initDeclVarId=VariableId(initDeclVar);
 	  SgName initDeclVarName=initDeclVar->get_name();
 	  string initDeclVarNameString=initDeclVarName.getString();
 	  //cout << "INIT-DECLARATION: var:"<<initDeclVarNameString<<"=";
@@ -118,13 +119,13 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
 	  if(SgAssignInitializer* assignInitializer=isSgAssignInitializer(initializer)) {
 		//cout << "initalizer found:"<<endl;
 		SgExpression* rhs=assignInitializer->get_operand_i();
-		State newState=analyzeAssignRhs(*currentEState.state,initDeclVarNameString,rhs,cset);
+		State newState=analyzeAssignRhs(*currentEState.state,initDeclVarId,rhs,cset);
 		stateSet.insert(newState);
 		return EState(targetLabel,stateSet.statePtr(newState),cset);
 	  } else {
 		//cout << "no initializer (OK)."<<endl;
 		State newState=*currentEState.state;
-		newState[initDeclVarNameString]=ANALYZER_INT_TOP;
+		newState[initDeclVarId]=ANALYZER_INT_TOP;
 		stateSet.insert(newState);
 		return EState(targetLabel,stateSet.statePtr(newState),cset);
 	  }
@@ -178,14 +179,15 @@ EState Analyzer::transferFunction(Edge edge, const EState* eState) {
 	SgExpressionPtrList::iterator j=actualParameters.begin();
 	while(i!=formalParameters.end() || j!=actualParameters.end()) {
 	  SgInitializedName* name=*i;
-	  VariableName varNameString=name->get_name();
+	  VariableId varId=variableIdMapping.variableId(name);
+	  //VariableName varNameString=name->get_name();
 	  SgExpression* expr=*j;
 	  SingleEvalResultConstInt evalResult=exprAnalyzer.evalConstInt(expr,currentEState);
 	  int val;
 	  if(evalResult.isConstInt()) val=evalResult.intValue();
 	  if(evalResult.isTop()) val=ANALYZER_INT_TOP;
 	  if(evalResult.isBot()) val=ANALYZER_INT_BOT;
-	  newState[varNameString]=val;
+	  newState[varId]=val;
 	  ++i;++j;
 	}
 	assert(i==formalParameters.end() && j==actualParameters.end()); // must hold if #fparams==#aparams (TODO: default values)
@@ -198,7 +200,10 @@ EState Analyzer::transferFunction(Edge edge, const EState* eState) {
   if(isSgReturnStmt(nextNodeToAnalyze1) && !SgNodeHelper::Pattern::matchReturnStmtFunctionCallExp(nextNodeToAnalyze1)) {
 	SgNode* expr=SgNodeHelper::getFirstChild(nextNodeToAnalyze1);
 	ConstraintSet cset=currentEState.constraints;
-	State newState=analyzeAssignRhs(*(currentEState.state),string("$return"),expr,cset);
+	State newState=analyzeAssignRhs(*(currentEState.state),
+									variableIdMapping.createUniqueTemporaryVariableId(string("$return")),
+									expr,
+									cset);
 	stateSet.insert(newState);
 	return EState(edge.target,stateSet.statePtr(newState),cset);
   }
@@ -213,15 +218,15 @@ EState Analyzer::transferFunction(Edge edge, const EState* eState) {
 	// case 2: x=f(); bind variable x to value of $return
 	if(SgNodeHelper::Pattern::matchExprStmtAssignOpVarRefExpFunctionCallExp(nextNodeToAnalyze1)) {
 	  SgNode* lhs=SgNodeHelper::getLhs(SgNodeHelper::getExprStmtChild(nextNodeToAnalyze1));
-	  string lhsVarName;
-	  bool isLhsVar=ExprAnalyzer::variable(lhs,lhsVarName);
+	  VariableId lhsVarId;
+	  bool isLhsVar=ExprAnalyzer::variable(lhs,lhsVarId);
 	  assert(isLhsVar); // must hold
 
 	  State newState=*currentEState.state;
-	  string returnVarName="$return";
-	  int evalResult=newState[returnVarName];
-	  newState.deleteVar(returnVarName);
-	  newState[lhsVarName]=evalResult;
+	  VariableId returnVarId=variableIdMapping.createUniqueTemporaryVariableId(string("$return"));
+	  int evalResult=newState[returnVarId];
+	  newState.deleteVar(returnVarId);
+	  newState[lhsVarId]=evalResult;
 	  stateSet.insert(newState);
 	  ConstraintSet cset=currentEState.constraints;
 	  return EState(edge.target,stateSet.statePtr(newState),cset);
@@ -229,8 +234,8 @@ EState Analyzer::transferFunction(Edge edge, const EState* eState) {
 	// case 3: f(); remove $return from state (discard value)
 	if(SgNodeHelper::Pattern::matchExprStmtFunctionCallExp(nextNodeToAnalyze1)) {
 	  State newState=*currentEState.state;
-	  string returnVarName="$return";
-	  newState.deleteVar(returnVarName);
+	  VariableId returnVarId=variableIdMapping.createUniqueTemporaryVariableId(string("$return"));
+	  newState.deleteVar(returnVarId);
 	  stateSet.insert(newState);
 	  ConstraintSet cset=currentEState.constraints;
 	  return EState(edge.target,stateSet.statePtr(newState),cset);
@@ -458,7 +463,7 @@ string Analyzer::foldedTransitionGraphToDot() {
   return ss.str();
 }
 
-State Analyzer::analyzeAssignRhs(State currentState,string lhsVar, SgNode* rhs, ConstraintSet& cset) {
+State Analyzer::analyzeAssignRhs(State currentState,VariableId lhsVar, SgNode* rhs, ConstraintSet& cset) {
   assert(isSgExpression(rhs));
   bool isRhsIntVal=false;
   int rhsIntVal=ANALYZER_INT_TOP;
@@ -479,14 +484,14 @@ State Analyzer::analyzeAssignRhs(State currentState,string lhsVar, SgNode* rhs, 
   }
   // allow single var on rhs
   if(SgVarRefExp* varRefExp=isSgVarRefExp(rhs)) {
-	string rhsVarName;
-	bool isRhsVar=ExprAnalyzer::variable(rhs,rhsVarName);
+	VariableId rhsVarId;
+	bool isRhsVar=ExprAnalyzer::variable(rhs,rhsVarId);
 	assert(isRhsVar);
-	if(currentState.varExists(rhsVarName)) {
-	  rhsIntVal=currentState[rhsVarName];
+	if(currentState.varExists(rhsVarId)) {
+	  rhsIntVal=currentState[rhsVarId];
 	  isRhsIntVal=true;
 	} else {
-	  cerr << "WARNING: access to variable "<<rhsVarName<< "on rhs of assignment, but variable does not exist in state. Initializing with top."<<endl;
+	  cerr << "WARNING: access to variable "<<rhsVarId.longVariableName()<< "on rhs of assignment, but variable does not exist in state. Initializing with top."<<endl;
 	  rhsIntVal=ANALYZER_INT_TOP;
 	}
   }
@@ -521,13 +526,13 @@ State Analyzer::analyzeAssignOp(State currentState,SgNode* node,ConstraintSet& c
   bool isLhsVar=false;
   bool isRhsVar=false;
 	
-  string lhsVarName="unknown-var"; // we only initialize for debugging purposes
+  VariableId lhsVar;
 
   SgNode* lhs=SgNodeHelper::getLhs(node);
   SgNode* rhs=SgNodeHelper::getRhs(node);
-  isLhsVar=ExprAnalyzer::variable(lhs,lhsVarName);
+  isLhsVar=ExprAnalyzer::variable(lhs,lhsVar);
   if(isLhsVar) {
-	newState=analyzeAssignRhs(currentState, lhsVarName, rhs, cset);
+	newState=analyzeAssignRhs(currentState, lhsVar, rhs, cset);
 	
 	return newState;
   }

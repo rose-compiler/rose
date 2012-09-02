@@ -95,11 +95,14 @@ namespace SgNodeHelper {
   //! is true if 'node' is the root node of the AST representing the condition of If, While, DoWhile, For. (does not handle switch).
   bool isCond(SgNode* node);
 
-  //! returns a SgSymbol* for a variale in a variable declaration
+  //! returns the SgSymbol* of the variable in a variable declaration
   SgSymbol* getSymbolOfVariableDeclaration(SgVariableDeclaration* decl);
 
-  //! returns a SgSymbol* for a variable in a SgVarRefExp
+  //! returns the SgSymbol* of the variable in a SgVarRefExp
   SgSymbol* getSymbolOfVariable(SgVarRefExp* decl);
+
+  //! returns the SgSymbol* of a SgInitializedName
+  SgSymbol* getSymbolOfInitializedName(SgInitializedName* initName);
 
   //! returns name of symbol as string
   string symbolToString(SgSymbol* symbol);

@@ -73,7 +73,7 @@ class Analyzer {
   //void computeEState(const EState* eState,SgNode* node);
 
   State analyzeAssignOp(State state,SgNode* node,ConstraintSet& cset);
-  State analyzeAssignRhs(State currentState,string lhsVar, SgNode* rhs,ConstraintSet& cset);
+  State analyzeAssignRhs(State currentState,VariableId lhsVar, SgNode* rhs,ConstraintSet& cset);
   EState analyzeVariableDeclaration(SgVariableDeclaration* nextNodeToAnalyze1,EState currentEState, Label targetLabel);
   EState transferFunction(Edge edge, const EState* eState);
   string stateToString(const State* state);
@@ -117,6 +117,7 @@ class Analyzer {
   EStateSet* getEStateSet() { return &eStateSet; }
  private:
   ExprAnalyzer exprAnalyzer;
+  VariableIdMapping variableIdMapping;
   EStateWorkList eStateWorkList;
   EStateSet eStateSet;
   StateSet stateSet;

@@ -15,6 +15,7 @@
 using namespace std;
 
 class VariableId;
+typedef string VariableName;
 
 class VariableIdMapping {
 
@@ -32,7 +33,7 @@ class VariableIdMapping {
 	 this is useful if additional (e.g. temporary) variables are introduced in an analysis
 	 this function does NOT insert this new symbol in any symbol table
    */
-  SgSymbol* createUniqueTemporaryVariableId(string name);
+  VariableId createUniqueTemporaryVariableId(string name);
 
   // delete a unique variable symbol (should be used together with createUniqueVariableSymbol)
   void deleteUniqueTemporaryVariableId(VariableId uniqueVarSym);
@@ -50,7 +51,8 @@ class VariableIdMapping {
   };
 
   VariableId variableId(SgVariableDeclaration* decl);
-  VariableId variableId(SgVarRefExp* decl);
+  VariableId variableId(SgVarRefExp* varRefExp);
+  VariableId variableId(SgInitializedName* initName);
   bool isTemporaryVariableId(VariableId varId);
   SgSymbol* getSymbol(VariableId varId);
   string variableName(VariableId varId);
@@ -59,17 +61,27 @@ class VariableIdMapping {
  private:
   typedef pair<string,SgSymbol*> MapPair;
   set<MapPair> checkSet;
+  typedef pair<VariableId,VariableName> PairOfVarIdAndVarName;
+  typedef set<PairOfVarIdAndVarName> TemporaryVariableIdMapping;
+  TemporaryVariableIdMapping temporaryVariableIdMapping;
 }; // end of class VariableIdMapping
 
 class VariableId {
   friend class VariableIdMapping;
+  friend bool operator<(VariableId id1, VariableId id2);
+  friend bool operator==(VariableId id1, VariableId id2);
  public:
   VariableId();
- private:
+  string variableName() const;
+  string longVariableName() const;
   VariableId(SgSymbol* sym);
-  SgSymbol* getSymbol();
+ private:
+  SgSymbol* getSymbol() const;
   SgSymbol* sym;
 };
+
+bool operator<(VariableId id1, VariableId id2);
+bool operator==(VariableId id1, VariableId id2);
 
 #endif
 

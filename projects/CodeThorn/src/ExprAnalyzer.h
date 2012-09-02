@@ -10,6 +10,7 @@
 #include <limits.h>
 #include <string>
 #include "StateRepresentation.h"
+#include "VariableIdMapping.h"
 
 using namespace std;
 
@@ -47,8 +48,10 @@ class ExprAnalyzer {
   SingleEvalResultConstInt evalConstInt(SgNode* node,EState eState);
   bool childrenVarConst(string* var, int* con);
   bool childrenConstVar(int* con, string* var);
-  // returns true if node is a VarRefExp and varName=name, otherwise false and varName="$".
+  // returns true if node is a VarRefExp and sets varName=name, otherwise false and varName="$".
   static bool variable(SgNode* node,VariableName& varName);
+  // returns true if node is a VarRefExp and sets varId=id, otherwise false and varId=0.
+  static bool variable(SgNode* node,VariableId& varId);
 };
 
 #endif

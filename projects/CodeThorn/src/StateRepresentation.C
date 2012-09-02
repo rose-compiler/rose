@@ -28,10 +28,13 @@ bool operator==(const Constraint& c1, const Constraint& c2) {
 bool operator!=(const Constraint& c1, const Constraint& c2) {
   return !(c1==c2);
 }
-Constraint::Constraint(ConstraintOp op0,VariableName lhs, AValue rhs):op(op0),var(lhs),intVal(rhs){} 
+
+Constraint::Constraint(ConstraintOp op0,VariableId lhs, AValue rhs):op(op0),var(lhs),intVal(rhs) {
+} 
+
 string Constraint::toString() const {
   stringstream ss;
-  ss<<var<<(*this).opToString()<<intVal;
+  ss<<var.longVariableName()<<(*this).opToString()<<intVal;
   return ss.str();
 }
 
@@ -122,8 +125,8 @@ ConstraintSet& ConstraintSet::operator+=(ConstraintSet& s2) {
   return *this;
 }
 
-bool ConstraintSet::constraintExists(Constraint::ConstraintOp op, VariableName varName, AValue intVal) { 
-  Constraint tmp(op,varName,intVal);
+bool ConstraintSet::constraintExists(Constraint::ConstraintOp op, VariableId varId, AValue intVal) { 
+  Constraint tmp(op,varId,intVal);
   return constraintExists(tmp);
 }
 bool ConstraintSet::constraintExists(Constraint& tmp) { 
@@ -131,18 +134,18 @@ bool ConstraintSet::constraintExists(Constraint& tmp) {
   return foundElemIter!=end();
 }
 
-ConstraintSet::iterator ConstraintSet::findSpecific(Constraint::ConstraintOp op, VariableName varName) const {
+ConstraintSet::iterator ConstraintSet::findSpecific(Constraint::ConstraintOp op, VariableId varId) const {
   // find op-constraint for variable varname
   for(ConstraintSet::iterator i=begin();i!=end();++i) {
-	if((*i).var==varName && (*i).op==op)
+	if((*i).var==varId && (*i).op==op)
 	  return i;
   }
   return end();
 }
 
-AType::ConstIntLattice ConstraintSet::varConstIntLatticeValue(VariableName varName) const {
+AType::ConstIntLattice ConstraintSet::varConstIntLatticeValue(VariableId varId) const {
   AType::ConstIntLattice c;
-  ConstraintSet::iterator i=findSpecific(Constraint::EQ_VAR_CONST,varName);
+  ConstraintSet::iterator i=findSpecific(Constraint::EQ_VAR_CONST,varId);
   if(i==end()) {
 	// no EQ_VAR_CONST constraint for this variable
 	return AType::ConstIntLattice(AType::Top());
@@ -151,9 +154,9 @@ AType::ConstIntLattice ConstraintSet::varConstIntLatticeValue(VariableName varNa
   }
 }
 
-ConstraintSet ConstraintSet::deleteVarConstraints(VariableName varName) {
+ConstraintSet ConstraintSet::deleteVarConstraints(VariableId varId) {
   for(ConstraintSet::iterator i=begin();i!=end();++i) {
-	if((*i).var==varName)
+	if((*i).var==varId)
 	  erase(i);
   }
   return *this;
@@ -175,26 +178,26 @@ string State::toString() const {
   stringstream ss;
   ss << "("<<this << "{";
   for(State::const_iterator j=begin();j!=end();++j) {
-    ss << "("<<(*j).first<<","<<varValueToString((*j).first)<<") ";
+    ss << "("<<(*j).first.longVariableName()<<","<<varValueToString((*j).first)<<") ";
   }
   ss<<"})";
   return ss.str();
 }
 
-void State::deleteVar(VariableName varName) {
+void State::deleteVar(VariableId varId) {
   for(State::iterator i=begin();i!=end();++i) {
-	if((*i).first==varName)
+	if((*i).first==varId)
 	  erase(i);
   }
 }
 
-bool State::varExists(VariableName varname) const {
-  State::const_iterator i=find(varname);
+bool State::varExists(VariableId varId) const {
+  State::const_iterator i=find(varId);
   return !(i==end());
 }
 
-bool State::varIsConst(VariableName varname) const {
-  State::const_iterator i=find(varname);
+bool State::varIsConst(VariableId varId) const {
+  State::const_iterator i=find(varId);
   if(i!=end()) {
 	int val=(*i).second;
 	return val!=ANALYZER_INT_TOP && val!=ANALYZER_INT_BOT;
@@ -203,9 +206,9 @@ bool State::varIsConst(VariableName varname) const {
   }
 }
 
-string State::varValueToString(string varname) const {
+string State::varValueToString(VariableId varId) const {
   stringstream ss;
-  AValue val=(*(const_cast<State*>(this)))[varname];
+  AValue val=(*(const_cast<State*>(this)))[varId];
   if(val==ANALYZER_INT_TOP) return "top";
   if(val==ANALYZER_INT_BOT) return "bot";
   ss << val;

@@ -99,10 +99,14 @@ SgSymbol*
 SgNodeHelper::getSymbolOfVariable(SgVarRefExp* varRefExp) {
   SgVariableSymbol* varSym=varRefExp->get_symbol();
   SgInitializedName* varInitName=varSym->get_declaration();
-  SgSymbol* symbol=varInitName->search_for_symbol_from_symbol_table();
+  SgSymbol* symbol=getSymbolOfInitializedName(varInitName);
   return symbol;
 }
 
+SgSymbol*
+SgNodeHelper::getSymbolOfInitializedName(SgInitializedName* initName) {
+ SgSymbol* initDeclVar=initName->search_for_symbol_from_symbol_table();
+}
 
 string SgNodeHelper::uniqueLongVariableName(SgNode* node) {
   SgSymbol* sym;

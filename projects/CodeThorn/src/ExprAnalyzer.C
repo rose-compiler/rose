@@ -17,6 +17,18 @@ bool ExprAnalyzer::variable(SgNode* node, string& varName) {
 	return false;
   }
 }
+bool ExprAnalyzer::variable(SgNode* node, VariableId& varId) {
+  if(SgVarRefExp* varref=isSgVarRefExp(node)) {
+	// found variable
+	SgVariableSymbol* varsym=varref->get_symbol();
+	varId=VariableId(varsym);
+	return true;
+  } else {
+	VariableId defaultVarId;
+	varId=defaultVarId;
+	return false;
+  }
+}
 bool ExprAnalyzer::childrenVarConst(string* var, int* con) {
   return false;
 }
@@ -94,11 +106,11 @@ SingleEvalResultConstInt ExprAnalyzer::evalConstInt(SgNode* node,EState eState) 
 	  res.result=(lhsResult.result==rhsResult.result);
 	  res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
 	  // record new constraint
-	  VariableName varName;
-	  if((variable(lhs,varName) && rhsResult.isConstInt()) || (lhsResult.isConstInt() && variable(rhs,varName))) {
+	  VariableId varId;
+	  if((variable(lhs,varId) && rhsResult.isConstInt()) || (lhsResult.isConstInt() && variable(rhs,varId))) {
 		// only add the equality constraint if no constant is bound to the respective variable
-		if(!res.eState.state->varIsConst(varName)) {
-		  res.exprConstraints.insert(Constraint(Constraint::EQ_VAR_CONST,varName,rhsResult.intValue()));
+		if(!res.eState.state->varIsConst(varId)) {
+		  res.exprConstraints.insert(Constraint(Constraint::EQ_VAR_CONST,varId,rhsResult.intValue()));
 		}
 	  }
 	  return res;
@@ -107,11 +119,11 @@ SingleEvalResultConstInt ExprAnalyzer::evalConstInt(SgNode* node,EState eState) 
 	  res.result=(lhsResult.result!=rhsResult.result);
 	  res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
 	  // record new constraint
-	  VariableName varName;
-	  if((variable(lhs,varName) && rhsResult.isConstInt()) || (lhsResult.isConstInt() && variable(rhs,varName))) {
+	  VariableId varId;
+	  if((variable(lhs,varId) && rhsResult.isConstInt()) || (lhsResult.isConstInt() && variable(rhs,varId))) {
 		// only add the inequality constraint if no constant is bound to the respective variable
-		if(!res.eState.state->varIsConst(varName)) {
-		  res.exprConstraints.insert(Constraint(Constraint::NEQ_VAR_CONST,varName,rhsResult.intValue()));
+		if(!res.eState.state->varIsConst(varId)) {
+		  res.exprConstraints.insert(Constraint(Constraint::NEQ_VAR_CONST,varId,rhsResult.intValue()));
 		}
 	  }
 	  return res;
@@ -191,13 +203,13 @@ SingleEvalResultConstInt ExprAnalyzer::evalConstInt(SgNode* node,EState eState) 
 	return res;
   }
   case V_SgVarRefExp: {
-	string varName;
-	bool isVar=ExprAnalyzer::variable(node,varName);
+	VariableId varId;
+	bool isVar=ExprAnalyzer::variable(node,varId);
 	assert(isVar);
 	const State* state=eState.state;
-	if(state->varExists(varName)) {
+	if(state->varExists(varId)) {
 	  State state2=*state; // also removes constness
-	  int tmpres=state2[varName]; // MS: TODO: replace int in state with ConstIntLattice
+	  int tmpres=state2[varId]; // MS: TODO: replace int in state with ConstIntLattice
 	  if(tmpres==ANALYZER_INT_TOP)
 		res.result=AType::Top();
 	  else if(tmpres==ANALYZER_INT_BOT)
@@ -207,7 +219,7 @@ SingleEvalResultConstInt ExprAnalyzer::evalConstInt(SgNode* node,EState eState) 
 		
 	  if(res.result.isTop()) {
 		// in case of TOP we try to extract a possibly more precise value from the constraints
-		AType::ConstIntLattice val=res.eState.constraints.varConstIntLatticeValue(varName);
+		AType::ConstIntLattice val=res.eState.constraints.varConstIntLatticeValue(varId);
 		//if(!val.isTop())
 		//  cout << "DEBUG: extracing more precise value from constraints: "<<res.result.toString()<<" ==> "<<val.toString()<<endl;
 		res.result=val;
@@ -215,7 +227,7 @@ SingleEvalResultConstInt ExprAnalyzer::evalConstInt(SgNode* node,EState eState) 
 	  return res;
 	} else {
 	  res.result=AType::Top();
-	  cerr << "WARNING: variable not in State (var="<<varName<<"). Initialized with top."<<endl;
+	  cerr << "WARNING: variable not in State (var="<<varId.longVariableName()<<"). Initialized with top."<<endl;
 	  return res;
 	}
 	break;

@@ -34,26 +34,29 @@ string int_to_string(int x) {
 }
 
 void checkTypes() {
+  VariableIdMapping variableIdMapping;
   State s1;
   cout << "RUNNING CHECKS: START"<<endl;
-  if(!s1.varExists("x"))
+  VariableId var_x=variableIdMapping.createUniqueTemporaryVariableId("x");
+  if(!s1.varExists(var_x))
 	cout << "PASS: x does not exist."<<endl;
   else
 	cout << "FAIL: x does not exist."<<endl;
-  s1["x"]=5;
-  if(s1.varExists("x"))
+  s1[var_x]=5;
+  if(s1.varExists(var_x))
 	cout << "PASS: x does exist."<<endl;
   else
 	cout << "FAIL: x does exist."<<endl;
-  cout<<"x value: " <<s1.varValueToString("x")<<endl;
+  cout<<"x value: " <<s1.varValueToString(var_x)<<endl;
   cout<<"State: "<<s1.toString()<<endl;
-  s1["y"]=7;
+  VariableId var_y=variableIdMapping.createUniqueTemporaryVariableId("y");
+  s1[var_y]=7;
   cout<<"State: "<<s1.toString()<<endl;
-  s1["x"]=6;
+  s1[var_x]=6;
   cout<<"State: "<<s1.toString()<<endl;
-  s1["x"]=ANALYZER_INT_TOP;
+  s1[var_x]=ANALYZER_INT_TOP;
   cout<<"State: "<<s1.toString()<<endl;
-  s1.erase("x");
+  s1.erase(var_x);
   cout<<"State: "<<s1.toString()<<endl;
   cout<<"- - - - - - - - - - - - - - - - - - -"<<endl;
   StateSet ss1;
@@ -65,7 +68,7 @@ void checkTypes() {
   State s2=s1;
   ss1.insert(s2);
   cout<<"StateSet-4: "<<ss1.toString()<<endl;
-  s2["y"]=10;
+  s2[var_y]=10;
   cout<<"StateSet-5: "<<ss1.toString()<<endl;
   ss1.insert(s2);
   cout<<"StateSet-6: "<<ss1.toString()<<endl;
@@ -152,9 +155,13 @@ void checkTypes() {
   cout << endl;
   {
 	cout << "RUNNING CHECKS FOR CONSTRAINT TYPE: START"<<endl;
-	Constraint c1(Constraint::EQ_VAR_CONST,"x",1);
-	Constraint c2(Constraint::NEQ_VAR_CONST,"y",2);
-	Constraint c3(Constraint::DEQ_VAR_CONST,"z",1);
+	VariableId var_x=variableIdMapping.createUniqueTemporaryVariableId("x");
+	VariableId var_y=variableIdMapping.createUniqueTemporaryVariableId("y");
+	VariableId var_z=variableIdMapping.createUniqueTemporaryVariableId("z");
+
+	Constraint c1(Constraint::EQ_VAR_CONST,var_x,1);
+	Constraint c2(Constraint::NEQ_VAR_CONST,var_y,2);
+	Constraint c3(Constraint::DEQ_VAR_CONST,var_z,1);
 	cout<<"c1:"<<c1.toString()<<endl;
 	cout<<"c2:"<<c2.toString()<<endl;
 	cout<<"c3:"<<c3.toString()<<endl;
@@ -163,7 +170,7 @@ void checkTypes() {
 	cs.insert(c2);
 	cs.insert(c3);
 	cout<<"ConstraintSet cs:"<<cs.toString()<<endl;
-	if(cs.constraintExists(Constraint::EQ_VAR_CONST,"x",1))
+	if(cs.constraintExists(Constraint::EQ_VAR_CONST,var_x,1))
 	  cout << "constraintExists(EQ_Var_Const,x,1): true (TEST:PASS)"<<endl;
 	else
 	  cout << "constraintExists(EQ_Var_Const,x,1): false (TEST:FAIL)"<<endl;
@@ -181,9 +188,10 @@ void checkTypes() {
 	cout << "EState created. "<<endl;
 	cout << "empty EState: "<<es1.toString()<<endl;
 	es1.label=1;
-	es1.constraints.insert(Constraint(Constraint::EQ_VAR_CONST,"x",1));
+	VariableId var_x=variableIdMapping.createUniqueTemporaryVariableId("x");
+	es1.constraints.insert(Constraint(Constraint::EQ_VAR_CONST,var_x,1));
 	es2.label=1;
-	es2.constraints.insert(Constraint(Constraint::NEQ_VAR_CONST,"x",1));
+	es2.constraints.insert(Constraint(Constraint::NEQ_VAR_CONST,var_x,1));
 	cout << "empty EState with label and constraint es1: "<<es1.toString()<<endl;
 	cout << "empty EState with label and constraint es2: "<<es2.toString()<<endl;
 	State s;

@@ -90,6 +90,10 @@ VariableId VariableIdMapping::variableId(SgVarRefExp* varRefExp) {
   return VariableId(SgNodeHelper::getSymbolOfVariable(varRefExp));
 }
 
+VariableId VariableIdMapping::variableId(SgInitializedName* initName) {
+  return VariableId(SgNodeHelper::getSymbolOfInitializedName(initName));
+}
+
 bool VariableIdMapping::isTemporaryVariableId(VariableId varId) {
   return dynamic_cast<UniqueTemporaryVariableSymbol*>(varId.getSymbol());
 }
@@ -98,11 +102,24 @@ SgSymbol* VariableIdMapping::getSymbol(VariableId varId) {
   return varId.getSymbol();
 }
 
-SgSymbol* 
+VariableId
 VariableIdMapping::createUniqueTemporaryVariableId(string name) {
-  return new UniqueTemporaryVariableSymbol(name);
+  for(TemporaryVariableIdMapping::iterator i=temporaryVariableIdMapping.begin();
+	  i!=temporaryVariableIdMapping.end();
+	  ++i) {
+	PairOfVarIdAndVarName id_name=*i;
+	if(id_name.second==name) {
+	  // name for temporary variable exists, return existing id
+	  return id_name.first;
+	}
+  }
+  // temporary variable with name 'name' does not exist yet, create, register, and return
+  VariableId newVarId=VariableId(new UniqueTemporaryVariableSymbol(name));
+  temporaryVariableIdMapping.insert(make_pair(newVarId,name));
+  return newVarId;
 }
 
+// we use a function as a destructor may delete it multiple times
 void VariableIdMapping::deleteUniqueTemporaryVariableId(VariableId varId) {
   if(isTemporaryVariableId(varId.getSymbol()))
 	delete varId.getSymbol();
@@ -122,6 +139,25 @@ VariableId::VariableId():sym(0){
 }
 VariableId::VariableId(SgSymbol* sym):sym(sym){
 }
-SgSymbol* VariableId::getSymbol() {
+SgSymbol* VariableId::getSymbol() const {
   return sym;
+}
+
+string
+VariableId::variableName() const {
+  SgSymbol* sym=getSymbol();
+  return SgNodeHelper::symbolToString(sym);
+}
+
+string
+VariableId::longVariableName() const {
+  SgSymbol* sym=getSymbol();
+  return SgNodeHelper::uniqueLongVariableName(sym);
+}
+
+bool operator<(VariableId id1, VariableId id2) {
+  return id1.getSymbol()<id2.getSymbol();
+}
+bool operator==(VariableId id1, VariableId id2) {
+  return id1.getSymbol()==id2.getSymbol();
 }
