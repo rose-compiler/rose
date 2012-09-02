@@ -272,7 +272,7 @@ addAssociatedNodes( SgType* type, set<SgNode*> & nodeList, bool markMemberNodesD
              }
 
           case V_SgQualifiedNameType:
-          case V_SgTemplateType:
+       // case V_SgTemplateType:
 #ifndef ROSE_USE_NEW_EDG_INTERFACE 
           case V_SgPartialFunctionType:
 #endif
@@ -294,6 +294,9 @@ addAssociatedNodes( SgType* type, set<SgNode*> & nodeList, bool markMemberNodesD
        // These don't have types hidden internally (but they do have declarations)
        // case V_SgClassType:
        // case V_SgEnumType:
+
+       // DQ (9/1/2012): Added more template support.
+          case V_SgTemplateType:
 
        // These are primative types
           case V_SgTypeBool:
