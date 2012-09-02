@@ -640,7 +640,7 @@ SageBuilder::buildTemplateVariableDeclaration_nfi (const SgName & name, SgType* 
      ROSE_ASSERT(type != NULL);
 
   // At present we don't have a SgTemplateVariableDeclaration IR node, so use the base class SgTemplateDeclaration for now!
-     printf ("ROSE needs a SgTemplateVariableDeclaration IR node \n");
+  // printf ("ROSE maybe needs a SgTemplateVariableDeclaration IR node \n");
 
   // SgTemplateDeclaration * varDecl = new SgTemplateDeclaration(name, type, varInit);
   // SgTemplateDeclaration * varDecl = new SgTemplateDeclaration(name);
@@ -5007,13 +5007,17 @@ SageBuilder::buildVarRefExp(const SgName& name, SgScopeStatement* scope/*=NULL*/
 #else
           symbol = scope->lookup_variable_symbol(name);
 #endif
+#if 0
           printf ("In SageBuilder::buildVarRefExp(): scope = %p = %s name = %s symbol = %p \n",scope,scope->class_name().c_str(),name.str(),symbol);
+#endif
 //        ROSE_ASSERT(symbol != NULL);
         }
 
      if (symbol != NULL) 
         {
+#if 0
           printf ("What type of symbol is this: symbol = %p = %s \n",symbol,symbol->class_name().c_str());
+#endif
           varSymbol = isSgVariableSymbol(symbol); 
         }
        else
@@ -5039,7 +5043,9 @@ SageBuilder::buildVarRefExp(const SgName& name, SgScopeStatement* scope/*=NULL*/
      setOneSourcePositionForTransformation(varRef);
      ROSE_ASSERT(varRef != NULL);
 
+#if 0
      printf ("In SageBuilder::buildVarRefExp(const SgName& name, SgScopeStatement* scope = %p): varRef = %p \n",scope,varRef);
+#endif
 
      return varRef; 
    }

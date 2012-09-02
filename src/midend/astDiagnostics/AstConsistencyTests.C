@@ -2191,34 +2191,37 @@ void
 TestAstForUniqueNodesInAST::visit ( SgNode* node )
    {
   // DQ (4/2/2012): This is a more robust (and expensive) test to check for shared IR nodes in the AST (there should be none).
+     ROSE_ASSERT(node != NULL);
 
-      ROSE_ASSERT(node != NULL);
+#if 0
+     printf ("TestAstForUniqueNodesInAST::visit (): IR node = %p = %s in the AST. \n",node,node->class_name().c_str());
+#endif
 
-      if (astNodeSet.find(node) != astNodeSet.end())
-         {
-           printf ("Error: found a shared IR node = %p = %s in the AST. \n",node,node->class_name().c_str());
-           SgLocatedNode* locatedNode = isSgLocatedNode(node);
-           if (locatedNode != NULL)
-              {
-             // Note that we must exclude IR nodes marked explicitly as shared by AST merge.
+     if (astNodeSet.find(node) != astNodeSet.end())
+        {
+          printf ("Error: found a shared IR node = %p = %s in the AST. \n",node,node->class_name().c_str());
+          SgLocatedNode* locatedNode = isSgLocatedNode(node);
+          if (locatedNode != NULL)
+             {
+            // Note that we must exclude IR nodes marked explicitly as shared by AST merge.
 
-                ROSE_ASSERT(locatedNode->get_file_info() != NULL);
-                locatedNode->get_file_info()->display("Error: found a shared IR node (might be marked as shared after AST merge; not handled yet)");
-              }
+               ROSE_ASSERT(locatedNode->get_file_info() != NULL);
+               locatedNode->get_file_info()->display("Error: found a shared IR node (might be marked as shared after AST merge; not handled yet)");
+             }
 
-           printf ("Error: found a shared IR node = %p = %s in the AST. \n",node,node->class_name().c_str());
+          printf ("Error: found a shared IR node = %p = %s in the AST. \n",node,node->class_name().c_str());
 
 #if 1
-           ROSE_ASSERT(false);
+          ROSE_ASSERT(false);
 #else
-        // DQ (4/26/2012): debugging... (test2012_67.C)
-           printf ("Commented out this error to view the dot file \n");
+       // DQ (4/26/2012): debugging... (test2012_67.C)
+          printf ("Commented out this error to view the dot file \n");
 #endif
-         }
+        }
 #if 0
-      printf ("In TestAstForUniqueNodesInAST::visit(): astNodeSet.insert(node = %p = %s) \n",node,node->class_name().c_str());
+     printf ("In TestAstForUniqueNodesInAST::visit(): astNodeSet.insert(node = %p = %s) \n",node,node->class_name().c_str());
 #endif
-      astNodeSet.insert(node);
+     astNodeSet.insert(node);
    }
 
 

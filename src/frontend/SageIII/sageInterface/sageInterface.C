@@ -8994,11 +8994,13 @@ void SageInterface::appendStatement(SgStatement *stmt, SgScopeStatement* scope)
         {
           updateDefiningNondefiningLinks(isSgFunctionDeclaration(stmt),scope);
         }
-#if 1
+
+#if 0
+  // DQ (9/1/2012): this is a debugging mode that we need to more easily turn on an off.
   // DQ (4/3/2012): Added test to make sure that the pointers are unique.
      testAstForUniqueNodes(scope);
 #else
-     printf ("In SageInterface::appendStatement(): Skipping test for unique statements in subtree \n");
+  // printf ("In SageInterface::appendStatement(): Skipping test for unique statements in subtree \n");
 #endif
    }
 
