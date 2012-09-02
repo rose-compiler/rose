@@ -16,19 +16,27 @@ void VariableIdMapping::computeVariableSymbolMapping(SgProject* project) {
 	  bool found=false;
 	  if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(*i)) {
 		sym=SgNodeHelper::getSymbolOfVariableDeclaration(varDecl);
-		found=true;
+		if(sym)
+		  found=true;
+		else
+		  ;//cerr<<"WARNING: ROSE-AST ERROR: VariableDeclaration without associated symbol found. Ignoring.";
 	  }
 	  if(SgVarRefExp* varRef=isSgVarRefExp(*i)) {
 		sym=SgNodeHelper::getSymbolOfVariable(varRef);
-		found=true;
+		if(sym)
+		  found=true;
+		else
+		  ;//cerr<<"WARNING: ROSE-AST ERROR: VarRefExp without associated symbol found. Ignoring.";
 	  }
 	  if(found) {
+		cout << "Found:"<<SgNodeHelper::symbolToString(sym)<<endl;
 		string longName=SgNodeHelper::uniqueLongVariableName(*i);
 		MapPair pair=make_pair(longName,sym);
 		checkSet.insert(pair);
 	  }
 	}
   }
+  cout << "STATUS: computeVariableSymbolMapping: done."<<endl;
   return;
 }
 
@@ -76,10 +84,12 @@ string VariableIdMapping::variableName(VariableId varId) {
 }
 
 string VariableIdMapping::uniqueLongVariableName(VariableId varId) {
-  if(!isTemporaryVariableId(varId)) 
-	return SgNodeHelper::uniqueLongVariableName(getSymbol(varId));
-  else
+  if(!isTemporaryVariableId(varId)) {
+	variableName(varId);
+	//return SgNodeHelper::uniqueLongVariableName(getSymbol(varId));
+  } else {
 	return "$$$tmp"+variableName(varId);
+  }
 }
 
 VariableId VariableIdMapping::variableId(SgVariableDeclaration* decl) {
@@ -152,7 +162,8 @@ VariableId::variableName() const {
 string
 VariableId::longVariableName() const {
   SgSymbol* sym=getSymbol();
-  return SgNodeHelper::uniqueLongVariableName(sym);
+  // TODO: MS: long names do not work with SgNodehelper from SgSymbol. We can only support this with precomputed VariableIdMappings (we do not want to use mangled names)
+  return SgNodeHelper::symbolToString(sym);
 }
 
 bool operator<(VariableId id1, VariableId id2) {

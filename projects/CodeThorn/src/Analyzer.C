@@ -208,6 +208,37 @@ EState Analyzer::transferFunction(Edge edge, const EState* eState) {
 	return EState(edge.target,stateSet.statePtr(newState),cset);
   }
 
+  if(getLabeler()->isFunctionExitLabel(edge.source)) {
+	if(SgFunctionDefinition* funDef=isSgFunctionDefinition(getLabeler()->getNode(edge.source))) {
+	  // 1) determine all local variables of function
+	  // 2) delete all local variables from state
+	  // 2a) remove variable from state
+	  // 2b) remove all constraints concerning this variable
+	  // 3) create new EState and return
+
+	  // ad 1)
+	  set<SgVariableDeclaration*> varDecls=SgNodeHelper::localVariableDeclarationsOfFunction(funDef);
+	  // ad 2)
+	  ConstraintSet cset=currentEState.constraints;
+	  State newState=*(currentEState.state);
+	  for(set<SgVariableDeclaration*>::iterator i=varDecls.begin();i!=varDecls.end();++i) {
+		SgSymbol* sym=SgNodeHelper::getSymbolOfVariableDeclaration(*i);
+		if(sym) {
+		  VariableId varId=VariableId(sym);
+		  cout<<"DEBUG: removing variable:"<<varId.variableName()<<endl;
+		  newState.deleteVar(varId);
+		  cset=cset.deleteVarConstraints(varId);
+		}
+	  }
+	  // ad 3)
+	  stateSet.insert(newState);
+	  return EState(edge.target,stateSet.statePtr(newState),cset);
+	} else {
+	  cerr << "FATAL ERROR: no function definition associated with function exit label."<<endl;
+	  exit(1);
+	}
+  }
+
   if(getLabeler()->isFunctionCallReturnLabel(edge.source)) {
 	// case 1: return f(); pass eState trough
 	if(SgNodeHelper::Pattern::matchReturnStmtFunctionCallExp(nextNodeToAnalyze1)) {
@@ -240,6 +271,26 @@ EState Analyzer::transferFunction(Edge edge, const EState* eState) {
 	  ConstraintSet cset=currentEState.constraints;
 	  return EState(edge.target,stateSet.statePtr(newState),cset);
 
+	}
+  }
+  if(edge.type==EDGE_EXTERNAL) {
+	if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze1) ) {
+	   string fName=SgNodeHelper::getFunctionName(funCall);
+	   SgExpressionPtrList& actualParams=SgNodeHelper::getFunctionCallActualParameterList(funCall);
+#if 0
+	   if(fName=="scanf") {
+		 cout << "IO: scanf"<<endl;
+	   }
+	   if(fName=="printf") {
+		 cout << "IO: printf"<<endl;
+	   }
+	   if(fName=="fprintf") {
+		 cout << "IO: fprintf"<<endl;
+	   }
+#endif
+	   EState newEState=currentEState;
+	   newEState.label=edge.target;
+	   return newEState;
 	}
   }
   // special case external call

@@ -119,6 +119,16 @@ string SgNodeHelper::uniqueLongVariableName(SgNode* node) {
 	sym=SgNodeHelper::getSymbolOfVariable(varRef);
 	found=true;
   }
+#if 0
+  /* MS: NOTE: We cannot do this because SgVariableSymbol does not have a proper parent set.
+	 In general, SgSymbols should not be considered to be necessarily a node of the AST
+	 (rather of its decoration)
+  */
+  if(SgSymbol* sym0=isSgSymbol(node)) {
+	sym=sym0;
+	found=true;
+  }
+#endif
   if(found) {
 	string name=SgNodeHelper::symbolToString(sym);
 	// we search from the SgSymbol (which is somewhere found in the AST). Even if it is in the symbol table
@@ -213,6 +223,19 @@ SgInitializedNamePtrList& SgNodeHelper::getFunctionDefinitionFormalParameterList
   SgFunctionDeclaration* funDecl=funDef->get_declaration();
   return funDecl->get_args();
 }
+
+set<SgVariableDeclaration*> SgNodeHelper::localVariableDeclarationsOfFunction(SgFunctionDefinition* funDef) {
+  set<SgVariableDeclaration*> localVarDecls;
+  MyAst ast(funDef);
+  for(MyAst::iterator i=ast.begin();i!=ast.end();++i) {
+	if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(*i)) {
+	  localVarDecls.insert(varDecl);
+	}
+  }
+  return localVarDecls;
+}
+
+
 
 SgFunctionCallExp* SgNodeHelper::Pattern::matchFunctionCall(SgNode* node) {
   if(SgFunctionCallExp* fce=SgNodeHelper::Pattern::matchReturnStmtFunctionCallExp(node))
@@ -378,6 +401,10 @@ string SgNodeHelper::getFunctionName(SgNode* node) {
   SgFunctionDeclaration* fundecl;
   if(SgFunctionDefinition* fundef=isSgFunctionDefinition(node)) {
 	node=fundef->get_declaration();
+  }
+  if(SgFunctionCallExp* funCall=isSgFunctionCallExp(node)) {
+	// MS: conditional update of variable 'node' is intentional for following if
+	node=funCall->getAssociatedFunctionDeclaration();
   }
   if(SgFunctionDeclaration* tmpfundecl=isSgFunctionDeclaration(node)) {
 	fundecl=tmpfundecl;

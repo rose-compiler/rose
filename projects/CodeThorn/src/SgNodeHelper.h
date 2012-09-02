@@ -54,7 +54,7 @@ namespace SgNodeHelper {
   //! returns the last Statement of SgBasicBlock (throws exception if numChildren==0)
   SgNode* getLastOfBlock(SgNode* node);
 
-  //! returns function name of SgFunctionDefinition and SgFunctionDeclaration
+  //! returns function name of SgFunctionDefinition, SgFunctionDeclaration, SgFunctionCall.
   string getFunctionName(SgNode* node);
 
   /*! This is a lookup function currently not available in ROSE: It
@@ -141,6 +141,9 @@ namespace SgNodeHelper {
 
   //! return a function-definition's list of formal paramters
   SgInitializedNamePtrList& getFunctionDefinitionFormalParameterList(SgNode* node);
+
+  //! returns the set of all local variable-declarations of a function
+  set<SgVariableDeclaration*> localVariableDeclarationsOfFunction(SgFunctionDefinition* funDef);
 
   //! returns the child of SgExprStatement (which is guaranteed to be unique and to exist)
   SgNode* getExprStmtChild(SgNode* node);

@@ -72,6 +72,8 @@ void checkTypes() {
   cout<<"StateSet-5: "<<ss1.toString()<<endl;
   ss1.insert(s2);
   cout<<"StateSet-6: "<<ss1.toString()<<endl;
+  if(ss1.size()==2) cout << "TEST: PASS"<<endl;
+  else cout << "TEST: FAIL"<<endl;
 
   cout << endl;
   {
@@ -302,6 +304,8 @@ int main( int argc, char * argv[] ) {
 	cerr << "*Exception raised: " << str << endl;
   } catch(const char* str) {
 	cerr << "Exception raised: " << str << endl;
+  } catch(string str) {
+	cerr << "Exception raised: " << str << endl;
  }
   return 0;
 #else
@@ -367,11 +371,12 @@ int main( int argc, char * argv[] ) {
 
   VariableIdMapping varIdMap;
   varIdMap.computeVariableSymbolMapping(sageProject);
+  cout << "STATUS: Variable<->Symbol mapping created."<<endl;
   if(!varIdMap.isUniqueVariableSymbolMapping()) {
 	cerr << "WARNING: Variable<->Symbol mapping not bijective."<<endl;
 	//varIdMap.reportUniqueVariableSymbolMappingViolations();
   }
-
+  cout << "INIT: creating solver."<<endl;
   Analyzer analyzer;
   analyzer.initializeSolver1("main",root);
   analyzer.setOptionCompactStateString(false);
@@ -483,19 +488,19 @@ int main( int argc, char * argv[] ) {
 	cerr<<red<< "Syntax error" << endl;
 	continue;
       }
-
+	  
       cout<<normal<<"Verifying formula "<<magenta<< string(*ltl_val) <<normal<<"."<<endl;
       checker.verify(*ltl_val);
-
+	  
     }
     fclose(ltl_input);
   } 
-
-
-
+  
   } catch(char* str) {
 	cerr << "*Exception raised: " << str << endl;
   } catch(const char* str) {
+	cerr << "Exception raised: " << str << endl;
+  } catch(string str) {
 	cerr << "Exception raised: " << str << endl;
  }
   return 0;
