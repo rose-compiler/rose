@@ -90,14 +90,16 @@ class ConstIntLattice {
   bool isFalse() const;
   bool isBot() const;
   bool isConstInt() const;
+  bool isSameAbstractValue(const ConstIntLattice& c2) const;
+  bool isSmallerAbstractValue(const ConstIntLattice& c2) const;
   ConstIntLattice operator!();
   ConstIntLattice operator-(); // unary minus
   ConstIntLattice operator||(ConstIntLattice other);
   ConstIntLattice operator&&(ConstIntLattice other);
-  ConstIntLattice operator==(ConstIntLattice other);
+  ConstIntLattice operator==(ConstIntLattice other) const;
   ConstIntLattice operator!=(ConstIntLattice other);
   //ConstIntLattice operator<(ConstIntLattice other);
-  string toString();
+  string toString() const;
   friend ostream& operator<<(ostream& os, const ConstIntLattice& toStream);
   ValueType getValueType();
   int getIntValue() const;

@@ -11,6 +11,43 @@
 
 using namespace std;
 
+void InputOutput::recordInputVariable(VariableId varId) {
+  op=IN_VAR;
+  var=varId;
+}
+
+void InputOutput::recordOutputVariable(VariableId varId) {
+  op=OUT_VAR;
+  var=varId;
+}
+
+string InputOutput::toString() const {
+  string str;
+  switch(op) {
+  case IN_VAR: str="in:"+var.variableName();break;
+  case OUT_VAR: str="out:"+var.variableName();break;
+  case OUT_CONST: str="out:"+val.toString();break;
+  case NONE: str="none";break;
+  default:
+	cerr<<"FATAL ERROR: unkown IO operation abstraction.";
+	exit(1);
+  }
+  return str;
+}
+
+bool operator<(const InputOutput& c1, const InputOutput& c2) {
+  return c1.op<c2.op || ((c1.op==c2.op) && (c1.var<c2.var)) || ((c1.var==c2.var) && (c1.val.isSmallerAbstractValue(c2.val)));
+}
+
+bool operator==(const InputOutput& c1, const InputOutput& c2) {
+  return c1.op==c2.op && c1.var==c2.var && (c1.val.isSameAbstractValue(c2.val));
+}
+
+bool operator!=(const InputOutput& c1, const InputOutput& c2) {
+  return !(c1==c2);
+}
+
+
 bool operator<(const Constraint& c1, const Constraint& c2) {
   if(c1.var<c2.var)
 	return true;
@@ -242,11 +279,11 @@ string StateSet::toString() {
 
 // define order for EState elements (necessary for EStateSet)
 bool operator<(const EState& c1, const EState& c2) {
-  return c1.label<c2.label || (c1.label==c2.label && c1.state<c2.state) || (c1.state==c2.state && c1.constraints<c2.constraints);
+  return c1.label<c2.label || (c1.label==c2.label && c1.state<c2.state) || (c1.state==c2.state && c1.constraints<c2.constraints) || (c1.constraints==c2.constraints && (c1.io<c2.io));
 }
 
 bool operator==(const EState& c1, const EState& c2) {
-  return c1.label==c2.label && c1.state==c2.state && c1.constraints==c2.constraints;
+  return c1.label==c2.label && c1.state==c2.state && c1.constraints==c2.constraints && c1.io==c2.io;
 }
 
 bool operator!=(const EState& c1, const EState& c2) {
@@ -303,6 +340,7 @@ string EState::toString() const {
   else
 	ss <<"NULL";
   ss <<", constraints="<<constraints.toString();
+  ss <<", io="<<io.toString();
   ss<<")";
   return ss.str();
 }

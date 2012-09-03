@@ -83,12 +83,20 @@ class ConstraintSet : public set<Constraint> {
 */
 class InputOutput {
  public:
- InputOutput():op(NONE){ val=AType::Bot();}
+ InputOutput():op(NONE),var(VariableId(0)){ val=AType::Bot();}
   enum OpType {IN_VAR,OUT_VAR,OUT_CONST,NONE};
   OpType op;
   VariableId var;
   AType::ConstIntLattice val;
+  string toString() const;
+  void recordInputVariable(VariableId varId);
+  void recordOutputVariable(VariableId varId);
 };
+
+bool operator<(const InputOutput& c1, const InputOutput& c2);
+bool operator==(const InputOutput& c1, const InputOutput& c2);
+bool operator!=(const InputOutput& c1, const InputOutput& c2);
+
 
 class EState {
  public:

@@ -133,9 +133,13 @@ string Visualizer::transitionGraphDotHtmlNode(Label lab) {
   string sinline;
   set<const EState*> eStateSet=transitionGraph->eStateSetOfLabel(lab);
   for(set<const EState*>::iterator j=eStateSet.begin();j!=eStateSet.end();++j) {
-	  sinline+="<TD BGCOLOR=\"lightgrey\" PORT=\""+eStateToString(*j)+"\">";
-	  sinline+=eStateToString(*j);
-	  sinline+="</TD>";
+	// decide on color first
+	string color="lightgrey";
+	if((*j)->io.op==InputOutput::IN_VAR) color="dodgerblue";
+	if((*j)->io.op==InputOutput::OUT_VAR) color="orange";
+	sinline+="<TD BGCOLOR=\""+color+"\" PORT=\""+eStateToString(*j)+"\">";
+	sinline+=eStateToString(*j);
+	sinline+="</TD>";
   }
   if(sinline=="") {
 	sinline="<TD>empty</TD>";

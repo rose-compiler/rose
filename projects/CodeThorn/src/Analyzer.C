@@ -225,7 +225,6 @@ EState Analyzer::transferFunction(Edge edge, const EState* eState) {
 		SgSymbol* sym=SgNodeHelper::getSymbolOfVariableDeclaration(*i);
 		if(sym) {
 		  VariableId varId=VariableId(sym);
-		  cout<<"DEBUG: removing variable:"<<varId.variableName()<<endl;
 		  newState.deleteVar(varId);
 		  cset=cset.deleteVarConstraints(varId);
 		}
@@ -277,18 +276,63 @@ EState Analyzer::transferFunction(Edge edge, const EState* eState) {
 	if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze1) ) {
 	   string fName=SgNodeHelper::getFunctionName(funCall);
 	   SgExpressionPtrList& actualParams=SgNodeHelper::getFunctionCallActualParameterList(funCall);
-#if 0
+	   InputOutput newio;
 	   if(fName=="scanf") {
-		 cout << "IO: scanf"<<endl;
+		 if(actualParams.size()==2) {
+		   SgAddressOfOp* addressOp=isSgAddressOfOp(actualParams[1]);
+		   if(!addressOp) {
+			 cerr<<"Error: unsupported scanf argument #2 (no address operator found). Currently scanf with exactly one variable of the form scanf(\"%d\",&v) is supported."<<endl;
+			 exit(1);
+		   }
+		   SgVarRefExp* varRefExp=isSgVarRefExp(SgNodeHelper::getFirstChild(addressOp));
+		   if(!varRefExp) {
+			 cerr<<"Error: unsupported scanf argument #2 (no variable found). Currently scanf with exactly one variable of the form scanf(\"%d\",&v) is supported."<<endl;
+			 exit(1);
+		   }
+		   // matched: SgAddressOfOp(SgVarRefExp())
+		   SgSymbol* sym=SgNodeHelper::getSymbolOfVariable(varRefExp);
+		   assert(sym);
+		   VariableId varId=VariableId(sym);
+		   newio.recordInputVariable(varId);
+		 } else {
+		   cerr<<"Error: unsupported number of scanf arguments. Currently scanf with exactly one variable of the form scanf(\"%d\",&v) is supported."<<endl;
+		   exit(1);
+		 }
 	   }
 	   if(fName=="printf") {
-		 cout << "IO: printf"<<endl;
+		 if(actualParams.size()==2) {
+		   SgVarRefExp* varRefExp=isSgVarRefExp(actualParams[1]);
+		   if(!varRefExp) {
+			 cerr<<"Error: unsupported print argument #2 (no variable found). Currently printf with exactly one variable of the form printf(\"...%d...\",v) is supported."<<endl;
+			 exit(1);
+		   }
+		   SgSymbol* sym=SgNodeHelper::getSymbolOfVariable(varRefExp);
+		   assert(sym);
+		   VariableId varId=VariableId(sym);
+		   newio.recordOutputVariable(varId);
+		 } else {
+		   cerr<<"Error: unsupported number of printf arguments. Currently printf with exactly one variable of the form printf(\"...%d...\",v) is supported."<<endl;
+		   exit(1);
+		 }
 	   }
 	   if(fName=="fprintf") {
-		 cout << "IO: fprintf"<<endl;
+		 if(actualParams.size()==3) {
+		   SgVarRefExp* varRefExp=isSgVarRefExp(actualParams[2]);
+		   if(!varRefExp) {
+			 cerr<<"Error: unsupported fprint argument #3 (no variable found). Currently printf with exactly one variable of the form fprintf(stream,\"...%d...\",v) is supported."<<endl;
+			 exit(1);
+		   }
+		   SgSymbol* sym=SgNodeHelper::getSymbolOfVariable(varRefExp);
+		   assert(sym);
+		   VariableId varId=VariableId(sym);
+		   newio.recordOutputVariable(varId);
+		 } else {
+		   cerr<<"Error: unsupported number of fprintf arguments. Currently printf with exactly one variable of the form fprintf(stream,\"...%d...\",v) is supported."<<endl;
+		   exit(1);
+		 }
 	   }
-#endif
 	   EState newEState=currentEState;
+	   newEState.io=newio;
 	   newEState.label=edge.target;
 	   return newEState;
 	}

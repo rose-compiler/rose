@@ -100,7 +100,20 @@ SgNodeHelper::getSymbolOfVariable(SgVarRefExp* varRefExp) {
   SgVariableSymbol* varSym=varRefExp->get_symbol();
   SgInitializedName* varInitName=varSym->get_declaration();
   SgSymbol* symbol=getSymbolOfInitializedName(varInitName);
-  return symbol;
+  if(symbol==0) {
+	// MS: Fall back solution: try to find a symbol using the declaration 
+	//     (that's sometimes necessary when coming from a SgVariableSymbol)
+	SgDeclarationStatement* varInitNameDecl=varInitName->get_declaration();
+	if(SgVariableDeclaration* decl=isSgVariableDeclaration(varInitNameDecl)) {
+	  return SgNodeHelper::getSymbolOfVariableDeclaration(decl);
+	} else {
+	  // we give up
+	  //cerr << "WARNING: getSymbolOfVariable: no symbol found."<<endl;
+	  return 0;
+	}
+  } else {
+	return symbol;
+  }
 }
 
 SgSymbol*

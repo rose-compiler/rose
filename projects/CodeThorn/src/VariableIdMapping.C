@@ -29,7 +29,6 @@ void VariableIdMapping::computeVariableSymbolMapping(SgProject* project) {
 		  ;//cerr<<"WARNING: ROSE-AST ERROR: VarRefExp without associated symbol found. Ignoring.";
 	  }
 	  if(found) {
-		cout << "Found:"<<SgNodeHelper::symbolToString(sym)<<endl;
 		string longName=SgNodeHelper::uniqueLongVariableName(*i);
 		MapPair pair=make_pair(longName,sym);
 		checkSet.insert(pair);
@@ -156,6 +155,10 @@ SgSymbol* VariableId::getSymbol() const {
 string
 VariableId::variableName() const {
   SgSymbol* sym=getSymbol();
+  if(sym==0) return "id-no-var";
+  //stringstream ss;
+  //ss<<sym<<":"<<SgNodeHelper::symbolToString(sym);
+  //return ss.str();
   return SgNodeHelper::symbolToString(sym);
 }
 
@@ -163,7 +166,7 @@ string
 VariableId::longVariableName() const {
   SgSymbol* sym=getSymbol();
   // TODO: MS: long names do not work with SgNodehelper from SgSymbol. We can only support this with precomputed VariableIdMappings (we do not want to use mangled names)
-  return SgNodeHelper::symbolToString(sym);
+  return variableName();
 }
 
 bool operator<(VariableId id1, VariableId id2) {

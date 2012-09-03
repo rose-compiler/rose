@@ -181,7 +181,14 @@ AType::ConstIntLattice AType::ConstIntLattice::operator&&(ConstIntLattice other)
   throw "Error: ConstIntLattice operation&& failed.";
 }
 
-AType::ConstIntLattice AType::ConstIntLattice::operator==(ConstIntLattice other) {
+bool AType::ConstIntLattice::isSmallerAbstractValue(const ConstIntLattice& c2) const {
+  return (valueType<c2.valueType) || ((valueType==c2.valueType) && (intValue<c2.intValue));
+}
+bool AType::ConstIntLattice::isSameAbstractValue(const ConstIntLattice& c2) const {
+  return (valueType==c2.valueType) && (intValue==c2.intValue);
+}
+
+AType::ConstIntLattice AType::ConstIntLattice::operator==(ConstIntLattice other) const {
   // all TOP cases
   if(valueType==AType::ConstIntLattice::TOP || other.valueType==AType::ConstIntLattice::TOP) { return AType::Top(); }
   // all BOT cases
@@ -211,7 +218,7 @@ AType::ConstIntLattice AType::ConstIntLattice::operator<(ConstIntLattice other) 
 }
 #endif
 
-string AType::ConstIntLattice::toString() {
+string AType::ConstIntLattice::toString() const {
   switch(valueType) {
   case AType::ConstIntLattice::TOP: return "top";
   case AType::ConstIntLattice::BOT: return "bot";
