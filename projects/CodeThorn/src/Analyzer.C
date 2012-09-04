@@ -5,7 +5,15 @@
  *************************************************************/
 
 #include "Analyzer.h"
+#include "CollectionOperators.h"
 
+set<string> Analyzer::variableIdsToVariableNames(set<VariableId> s) {
+  set<string> res;
+  for(set<VariableId>::iterator i=s.begin();i!=s.end();++i) {
+	res.insert((*i).variableName());
+  }
+  return res;
+}
 string Analyzer::nodeToString(SgNode* node) {
   string textual;
   if(node->attributeExists("info"))
@@ -139,7 +147,27 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
   }
 }
 
+set<VariableId> Analyzer::determineVariableIdsOfVariableDeclarations(set<SgVariableDeclaration*> varDecls) {
+  set<VariableId> resultSet;
+  for(set<SgVariableDeclaration*>::iterator i=varDecls.begin();i!=varDecls.end();++i) {
+	SgSymbol* sym=SgNodeHelper::getSymbolOfVariableDeclaration(*i);
+	if(sym) {
+	  resultSet.insert(VariableId(sym));
+	}
+  }
+  return resultSet;
+}
 
+set<VariableId> Analyzer::determineVariableIdsOfSgInitializedNames(SgInitializedNamePtrList& namePtrList) {
+  set<VariableId> resultSet;
+  for(SgInitializedNamePtrList::iterator i=namePtrList.begin();i!=namePtrList.end();++i) {
+	SgSymbol* sym=SgNodeHelper::getSymbolOfInitializedName(*i);
+	if(sym) {
+	  resultSet.insert(VariableId(sym));
+	}
+  }
+  return resultSet;
+}
 
 EState Analyzer::transferFunction(Edge edge, const EState* eState) {
   assert(edge.source==eState->label);
@@ -180,7 +208,7 @@ EState Analyzer::transferFunction(Edge edge, const EState* eState) {
 	while(i!=formalParameters.end() || j!=actualParameters.end()) {
 	  SgInitializedName* name=*i;
 	  VariableId varId=variableIdMapping.variableId(name);
-	  //VariableName varNameString=name->get_name();
+	  // VariableName varNameString=name->get_name();
 	  SgExpression* expr=*j;
 	  SingleEvalResultConstInt evalResult=exprAnalyzer.evalConstInt(expr,currentEState);
 	  int val;
@@ -208,9 +236,10 @@ EState Analyzer::transferFunction(Edge edge, const EState* eState) {
 	return EState(edge.target,stateSet.statePtr(newState),cset);
   }
 
+  // function exit node:
   if(getLabeler()->isFunctionExitLabel(edge.source)) {
 	if(SgFunctionDefinition* funDef=isSgFunctionDefinition(getLabeler()->getNode(edge.source))) {
-	  // 1) determine all local variables of function
+	  // 1) determine all local variables (including formal parameters) of function
 	  // 2) delete all local variables from state
 	  // 2a) remove variable from state
 	  // 2b) remove all constraints concerning this variable
@@ -221,13 +250,16 @@ EState Analyzer::transferFunction(Edge edge, const EState* eState) {
 	  // ad 2)
 	  ConstraintSet cset=currentEState.constraints;
 	  State newState=*(currentEState.state);
-	  for(set<SgVariableDeclaration*>::iterator i=varDecls.begin();i!=varDecls.end();++i) {
-		SgSymbol* sym=SgNodeHelper::getSymbolOfVariableDeclaration(*i);
-		if(sym) {
-		  VariableId varId=VariableId(sym);
-		  newState.deleteVar(varId);
-		  cset=cset.deleteVarConstraints(varId);
-		}
+	  set<VariableId> localVars=determineVariableIdsOfVariableDeclarations(varDecls);
+	  SgInitializedNamePtrList& formalParamInitNames=SgNodeHelper::getFunctionDefinitionFormalParameterList(funDef);
+	  set<VariableId> formalParams=determineVariableIdsOfSgInitializedNames(formalParamInitNames);
+	  set<VariableId> vars=localVars+formalParams;
+	  set<string> names=variableIdsToVariableNames(vars);
+
+	  for(set<VariableId>::iterator i=vars.begin();i!=vars.end();++i) {
+		VariableId varId=*i;
+		newState.deleteVar(varId);
+		cset.deleteConstraints(varId);
 	  }
 	  // ad 3)
 	  stateSet.insert(newState);
@@ -251,7 +283,6 @@ EState Analyzer::transferFunction(Edge edge, const EState* eState) {
 	  VariableId lhsVarId;
 	  bool isLhsVar=ExprAnalyzer::variable(lhs,lhsVarId);
 	  assert(isLhsVar); // must hold
-
 	  State newState=*currentEState.state;
 	  VariableId returnVarId=variableIdMapping.createUniqueTemporaryVariableId(string("$return"));
 	  int evalResult=newState[returnVarId];
@@ -331,6 +362,7 @@ EState Analyzer::transferFunction(Edge edge, const EState* eState) {
 		   exit(1);
 		 }
 	   }
+	   // for all other external functions are use identity as transfer function
 	   EState newEState=currentEState;
 	   newEState.io=newio;
 	   newEState.label=edge.target;
@@ -582,6 +614,9 @@ State Analyzer::analyzeAssignRhs(State currentState,VariableId lhsVar, SgNode* r
 	VariableId rhsVarId;
 	bool isRhsVar=ExprAnalyzer::variable(rhs,rhsVarId);
 	assert(isRhsVar);
+	// x=y: contraint propagation for var1=var2 assignments
+	cset.duplicateConstraints(lhsVar, rhsVarId);
+
 	if(currentState.varExists(rhsVarId)) {
 	  rhsIntVal=currentState[rhsVarId];
 	  isRhsIntVal=true;
@@ -606,8 +641,9 @@ State Analyzer::analyzeAssignRhs(State currentState,VariableId lhsVar, SgNode* r
 	// new variable with new value
 	newState[lhsVar]=rhsIntVal;
   }
+  // make sure, we only create/propagate contraints if a non-const value is assigned
   if(rhsIntVal!=ANALYZER_INT_TOP)
-	cset.deleteVarConstraints(lhsVar);
+	cset.deleteConstraints(lhsVar);
   return newState;
 }
 

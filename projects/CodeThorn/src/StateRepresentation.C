@@ -21,6 +21,11 @@ void InputOutput::recordOutputVariable(VariableId varId) {
   var=varId;
 }
 
+void InputOutput::recordOutputConst(AType::ConstIntLattice val0) {
+  op=OUT_CONST;
+  val=val0;
+}
+
 string InputOutput::toString() const {
   string str;
   switch(op) {
@@ -115,6 +120,39 @@ ConstraintSet ConstraintSet::invertedConstraints() {
   return result;
 }
 
+void ConstraintSet::invertConstraints() {
+  for(ConstraintSet::iterator i=begin();i!=end();++i) {
+	Constraint c=*i;
+	switch(c.op) {
+	case Constraint::EQ_VAR_CONST:
+	  // c ist const because it is an element in a sorted set
+	  erase(c); // we remove c from the set (but c remains unchanged and available)
+	  insert(Constraint(Constraint::NEQ_VAR_CONST,c.var,c.intVal));
+	  break;
+	case Constraint::NEQ_VAR_CONST:
+	  // c ist const because it is an element in a sorted set
+	  erase(c); // we remove c from the set (but c remains unchanged and available)
+	  insert(Constraint(Constraint::EQ_VAR_CONST,c.var,c.intVal));
+	  break;
+	case Constraint::DEQ_VAR_CONST:
+	  // remains unchanged
+	  break;
+	default:
+	  throw "Error: ConstraintSet::invertedConstraints: unknown operator.";
+	}
+  }
+}
+
+void  ConstraintSet::duplicateConstraints(VariableId lhsVarId, VariableId rhsVarId) {
+  deleteConstraints(lhsVarId);
+  for(ConstraintSet::iterator i=begin();i!=end();++i) {
+	Constraint c=*i;
+	if(c.var==rhsVarId)
+	  insert(Constraint(c.op,lhsVarId,c.intVal));
+  }
+}
+
+
 void ConstraintSet::insert(Constraint c) {
   // we have to look which version of constraint already exists (it can only be at most one)
   switch(c.op) {
@@ -192,11 +230,15 @@ AType::ConstIntLattice ConstraintSet::varConstIntLatticeValue(VariableId varId) 
 }
 
 ConstraintSet ConstraintSet::deleteVarConstraints(VariableId varId) {
+  deleteConstraints(varId);
+  return *this;
+}
+
+void ConstraintSet::deleteConstraints(VariableId varId) {
   for(ConstraintSet::iterator i=begin();i!=end();++i) {
 	if((*i).var==varId)
 	  erase(i);
   }
-  return *this;
 }
 
 string ConstraintSet::toString() const {

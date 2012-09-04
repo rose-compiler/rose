@@ -70,7 +70,11 @@ class ConstraintSet : public set<Constraint> {
   ConstraintSet& operator+=(ConstraintSet& s2);
   ConstraintSet operator+(ConstraintSet& s2);
   ConstraintSet deleteVarConstraints(VariableId varId);
+  void deleteConstraints(VariableId varId);
   ConstraintSet invertedConstraints();
+  void invertConstraints();
+  //! duplicates constraints for par2 variable and adds them for par1 variable.
+  void duplicateConstraints(VariableId lhsVarId, VariableId rhsVarId);
 
   // that's a tricky form of reuse (hiding the inherited function (not overloading, nor overriding)).
   void insert(Constraint c);
@@ -91,6 +95,7 @@ class InputOutput {
   string toString() const;
   void recordInputVariable(VariableId varId);
   void recordOutputVariable(VariableId varId);
+  void recordOutputConst(AType::ConstIntLattice val);
 };
 
 bool operator<(const InputOutput& c1, const InputOutput& c2);

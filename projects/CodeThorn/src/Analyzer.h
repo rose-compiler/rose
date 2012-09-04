@@ -115,6 +115,13 @@ class Analyzer {
   CFAnalyzer* cfanalyzer;
   StateSet* getStateSet() { return &stateSet; }
   EStateSet* getEStateSet() { return &eStateSet; }
+
+  //! compute the VariableIds of variable declarations
+  set<VariableId> determineVariableIdsOfVariableDeclarations(set<SgVariableDeclaration*> decls);
+  //! compute the VariableIds of SgInitializedNamePtrList
+  set<VariableId> determineVariableIdsOfSgInitializedNames(SgInitializedNamePtrList& namePtrList);
+
+  set<string> variableIdsToVariableNames(set<VariableId>);
  private:
   ExprAnalyzer exprAnalyzer;
   VariableIdMapping variableIdMapping;

@@ -9,7 +9,6 @@
 
 using namespace std;
 
-
 SgExpression* SgNodeHelper::getInitializerExpressionOfVariableDeclaration(SgVariableDeclaration* decl) {
   SgInitializedName* initName=SgNodeHelper::getInitializedNameOfVariableDeclaration(decl);
   SgInitializer* initializer=initName->get_initializer();

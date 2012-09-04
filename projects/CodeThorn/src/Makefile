@@ -48,6 +48,9 @@ LTLParser.o: LTLParser.y++ LTL.h
 	$(BISON) -p ltl_ $<
 	$(CXX) -o $@ $(CXXFLAGS) $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) LTLParser.tab.c++ -c
 
+Analyzer.o : CollectionOperators.h Analyzer.h AstTerm.h Labeler.h CFAnalyzer.h MyAst.h SgNodeHelper.h ExprAnalyzer.h StateRepresentation.h Analyzer.C
+	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) Analyzer.C -c 
+
 %.o: %.C %.h
 	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $< -c 
 
