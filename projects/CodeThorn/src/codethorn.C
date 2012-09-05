@@ -480,7 +480,7 @@ int main( int argc, char * argv[] ) {
   // Verification
   //
   if (ltl_file.size()) {
-    ltl::Checker checker(*analyzer.getEStateSet(),
+    LTL::Checker checker(*analyzer.getEStateSet(),
 			 *analyzer.getTransitionGraph());
     ltl_input = fopen(ltl_file.c_str(), "r");
     while ( (ltl_parse() == 0) && !ltl_eof) {

@@ -5,7 +5,7 @@
 #include <boost/shared_ptr.hpp>
 
 /// Linear Temporal Logic (LTL) Abstract syntax tree (AST)
-namespace ltl {
+namespace LTL {
   
   /// Inherited Attribute for visitor pattern
   class InheritedAttribute {};
@@ -256,7 +256,7 @@ namespace ltl {
 
 extern FILE* ltl_input;
 extern int ltl_parse();
-extern ltl::Formula* ltl_val;
+extern LTL::Formula* ltl_val;
 extern bool ltl_eof;
 
 

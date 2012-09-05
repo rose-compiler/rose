@@ -6,7 +6,7 @@
 #include "LTL.h"
 #include <map>
 
-namespace ltl {
+namespace LTL {
   /**
    * A naive checker for LTL formulae.
    */

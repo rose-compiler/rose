@@ -2,7 +2,7 @@
 #include <boost/graph/graph_traits.hpp>
 #include <boost/graph/adjacency_list.hpp>
 
-using namespace ltl;
+using namespace LTL;
 using namespace boost;
 
 enum e_BoolLattice { 
@@ -11,7 +11,7 @@ enum e_BoolLattice {
   TRUE  =  1 
 };
 typedef enum e_BoolLattice BoolLattice;
-typedef vector< map<const ltl::Expr*, int> > LTLProperties;
+typedef vector< map<const LTL::Expr*, int> > LTLProperties;
 typedef adjacency_list<vecS, vecS, bidirectionalS, const EState*> BoostTransitionGraph;
 typedef graph_traits<BoostTransitionGraph> GraphTraits;
 

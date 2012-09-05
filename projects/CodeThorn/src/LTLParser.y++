@@ -14,7 +14,7 @@ int ltl_lex(void);
 void ltl_error (char const *msg);
 
 // Parser return type
-#define YYSTYPE ltl::Expr*
+#define YYSTYPE LTL::Expr*
 
 // Scanner variables
 bool ltl_eof = false;
@@ -22,7 +22,7 @@ static int ltl_pos = 0;
 static int ltl_line = 1;
 static int ltl_next_char = EOF;
 static std::stringstream debug_line;
-ltl::Formula* ltl_val;
+LTL::Formula* ltl_val;
 FILE* ltl_input = NULL;
 
 %}
@@ -60,24 +60,24 @@ FILE* ltl_input = NULL;
 // (G (! ((oY & ! iC) & (F iC)) | (! oW U iC)))
 // output W does never occur between output Y and input C
 
-start: expr     { assert($1); ltl_val = new ltl::Formula(*$1); return 0; }
+start: expr     { assert($1); ltl_val = new LTL::Formula(*$1); return 0; }
 
 expr:
 '(' expr ')'    { $$ = $2; }
-| IN_SYMBOL     { $$ = new ltl::InputSymbol(ltl_next_char); }
-| OUT_SYMBOL    { $$ = new ltl::OutputSymbol(ltl_next_char); }
+| IN_SYMBOL     { $$ = new LTL::InputSymbol(ltl_next_char); }
+| OUT_SYMBOL    { $$ = new LTL::OutputSymbol(ltl_next_char); }
 | op_expr       { $$ = $1; }
 
 op_expr:
-  '!' expr %prec NOT { $$ = new ltl::Not($2); }
-| 'X' expr %prec X   { $$ = new ltl::Next($2); }
-| 'F' expr %prec F   { $$ = new ltl::Eventually($2); }
-| 'G' expr %prec G   { $$ = new ltl::Globally($2); }
-| expr '&' expr      { $$ = new ltl::And($1, $3); }
-| expr '|' expr      { $$ = new ltl::Or($1, $3); }
-| expr 'U' expr      { $$ = new ltl::Until($1, $3); }
-| expr WU  expr      { $$ = new ltl::WeakUntil($1, $3); }
-| expr 'R' expr      { $$ = new ltl::Release($1, $3); }
+  '!' expr %prec NOT { $$ = new LTL::Not($2); }
+| 'X' expr %prec X   { $$ = new LTL::Next($2); }
+| 'F' expr %prec F   { $$ = new LTL::Eventually($2); }
+| 'G' expr %prec G   { $$ = new LTL::Globally($2); }
+| expr '&' expr      { $$ = new LTL::And($1, $3); }
+| expr '|' expr      { $$ = new LTL::Or($1, $3); }
+| expr 'U' expr      { $$ = new LTL::Until($1, $3); }
+| expr WU  expr      { $$ = new LTL::WeakUntil($1, $3); }
+| expr 'R' expr      { $$ = new LTL::Release($1, $3); }
 
 %%
 
