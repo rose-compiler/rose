@@ -5,6 +5,7 @@
 
 #include "callbacks.h"          /* Needed for ROSE_Callbacks::List<> */
 #include "BinaryControlFlow.h"
+#include "BinaryFunctionCall.h"
 
 class SgAsmInstruction;
 class SgAsmBlock;
@@ -91,12 +92,15 @@ class SgAsmInterpretation;
  *        <ol>
  *           <li>FunctionEntryAddress (pre): emits the function's entry virtual address.</li>
  *           <li>FunctionSeparator (pre): emits a bunch of "=" characters to make the function stand out.</li>
- *           <li>FunctionReasons (pre): emits the reasons why this is address is considered the start of a function.</li>
+ *           <li>FunctionReasons (pre): emits the reasons why this address is considered the start of a function.</li>
  *           <li>FunctionName (pre): emits the name of the function in angle brackets, or "no name".</li>
  *           <li>FunctionLineTermination (pre): emits a linefeed for functions.</li>
  *           <li>FunctionComment (pre): emits function comments followed by a linefeed if necessary.</li>
+ *           <li>FunctionPredecessors (pre): emits information about what calls this function
+ *           <li>FunctionSuccessors (pre): emits information about what functions are called by this function.</li>
  *           <li>FunctionAttributes (pre): emits additional information about the function, such as whether it returns to the
  *               caller.</li>
+ *           <li>FunctionLineTermination (pre): blank line before first block.<li>
  *           <li>FunctionBody (unparse): unparses the basic blocks of a function.</li>
  *        </ol>
  *     </li>
@@ -192,6 +196,9 @@ public:
     typedef BinaryAnalysis::ControlFlow::Graph CFG;
     typedef boost::graph_traits<CFG>::vertex_descriptor CFG_Vertex;
     typedef std::map<SgAsmBlock*, CFG_Vertex> CFG_BlockMap;
+    typedef BinaryAnalysis::FunctionCall::Graph CG;
+    typedef boost::graph_traits<CG>::vertex_descriptor CG_Vertex;
+    typedef std::map<SgAsmFunction*, CG_Vertex> CG_FunctionMap;
 
     class UnparserCallback {
     public:
@@ -535,6 +542,24 @@ public:
         virtual bool operator()(bool enabled, const FunctionArgs &args);
     };
 
+    /** Functor to print caller addresses. Callers are only shown if a control flow graph is present (see
+     * add_control_flow_graph()). */
+    class FunctionPredecessors: public UnparserCallback {
+    public:
+        std::string prefix;
+        FunctionPredecessors();
+        virtual bool operator()(bool enabled, const FunctionArgs &args);
+    };
+
+    /** Functor to print callee addresses. Prints a list of functions called by this function.  Callees are only shown if a
+     *  control flow graph is present (see add_control_flow_graph()). */
+    class FunctionSuccessors: public UnparserCallback {
+    public:
+        std::string prefix;
+        FunctionSuccessors();
+        virtual bool operator()(bool enabled, const FunctionArgs &args);
+    };
+
     /** Functor to emit function attributes.  Attributes are emitted one per line and each line is prefixed with a user
      *  supplied string.  The string is a printf format string and may contain one integer specifier for the function entry
      *  address.   The default is "0x%08llx: ". */
@@ -615,6 +640,8 @@ public:
     FunctionName functionName;
     FunctionLineTermination functionLineTermination;
     FunctionComment functionComment;
+    FunctionPredecessors functionPredecessors;
+    FunctionSuccessors functionSuccessors;
     FunctionAttributes functionAttributes;
     FunctionBody functionBody;
 
@@ -771,6 +798,13 @@ protected:
     /** A mapping from SgAsmBlock to control flow graph vertex. This map is updated when the control flow graph is modified by
      *  the add_control_flow_graph() method. */
     CFG_BlockMap cfg_blockmap;
+
+    /** Function call graph.  This graph is built from the control flow graph whenever add_control_flow_graph() is called. */
+    CG cg;
+
+    /** A mapping from SgAsmFunction to call graph vertex.  This map is updated when the control flow graph is modified by the
+     *  add_control_flow_graph() method. */
+    CG_FunctionMap cg_functionmap;
 };
 
 #endif

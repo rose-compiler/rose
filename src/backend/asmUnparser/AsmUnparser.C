@@ -111,7 +111,10 @@ AsmUnparser::init()
         .append(&functionName)
         .append(&functionLineTermination)
         .append(&functionComment)
-        .append(&functionAttributes);
+        .append(&functionPredecessors)
+        .append(&functionSuccessors)
+        .append(&functionAttributes)
+        .append(&functionLineTermination);
     function_callbacks.unparse
         .append(&functionBody);                 /* used only for ORGANIZED_BY_AST */
 
@@ -141,13 +144,28 @@ AsmUnparser::add_function_labels(SgNode *node)
 void
 AsmUnparser::add_control_flow_graph(const BinaryAnalysis::ControlFlow::Graph &cfg)
 {
+    // Control flow graph
     this->cfg = cfg;
-    cfg_blockmap.clear();
-    boost::graph_traits<CFG>::vertex_iterator vi, vi_end;
-    for (boost::tie(vi, vi_end)=vertices(cfg); vi!=vi_end; ++vi) {
-        SgAsmBlock *blk = get(boost::vertex_name, cfg, *vi);
-        if (blk)
-            cfg_blockmap[blk] = *vi;
+    {
+        cfg_blockmap.clear();
+        boost::graph_traits<CFG>::vertex_iterator vi, vi_end;
+        for (boost::tie(vi, vi_end)=vertices(cfg); vi!=vi_end; ++vi) {
+            SgAsmBlock *blk = get(boost::vertex_name, cfg, *vi);
+            if (blk)
+                cfg_blockmap[blk] = *vi;
+        }
+    }
+
+    // Function call graph
+    BinaryAnalysis::FunctionCall().build_cg_from_cfg(cfg, cg);
+    {
+        cg_functionmap.clear();
+        boost::graph_traits<CG>::vertex_iterator vi, vi_end;
+        for (boost::tie(vi, vi_end)=vertices(cg); vi!=vi_end; ++vi) {
+            SgAsmFunction *func = get(boost::vertex_name, cg, *vi);
+            if (func)
+                cg_functionmap[func] = *vi;
+        }
     }
 }
     
@@ -572,7 +590,7 @@ AsmUnparser::BasicBlockSuccessors::operator()(bool enabled, const BasicBlockArgs
 
         CFG_BlockMap::const_iterator bmi = args.unparser->cfg_blockmap.find(args.block);
         if (bmi!=args.unparser->cfg_blockmap.end()) {
-            // Use the unparser's CFG if it contains infor for this block.
+            // Use the unparser's CFG if it contains info for this block.
             CFG_Vertex vertex = bmi->second;
             boost::graph_traits<CFG>::out_edge_iterator ei, ei_end;
             for (boost::tie(ei, ei_end)=out_edges(vertex, args.unparser->cfg); ei!=ei_end; ++ei) {
@@ -827,6 +845,70 @@ AsmUnparser::FunctionComment::operator()(bool enabled, const FunctionArgs &args)
             args.output <<s;
             if (0==s.compare(s.size()-1, 1, "\n"))
                 args.output <<std::endl;
+        }
+    }
+    return enabled;
+}
+
+AsmUnparser::FunctionPredecessors::FunctionPredecessors(): prefix("0x%08"PRIx64": ") {}
+
+bool
+AsmUnparser::FunctionPredecessors::operator()(bool enabled, const FunctionArgs &args)
+{
+    if (enabled) {
+        CG_FunctionMap::const_iterator fmi = args.unparser->cg_functionmap.find(args.func);
+        if (fmi!=args.unparser->cg_functionmap.end()) {
+            char pre[256];
+            int nprint = snprintf(pre, sizeof pre, prefix.c_str(), args.func->get_entry_va());
+            if ((size_t)nprint>=sizeof pre)
+                sprintf(pre, "0x%08"PRIx64" <OVERFLOW>: ", args.func->get_entry_va());
+            CG_Vertex vertex = fmi->second;
+            size_t npreds = 0;
+            boost::graph_traits<CG>::in_edge_iterator ei, ei_end;
+            for (boost::tie(ei, ei_end)=in_edges(vertex, args.unparser->cg); ei!=ei_end; ++ei) {
+                SgAsmFunction *pred = get(boost::vertex_name, args.unparser->cg, source(*ei, args.unparser->cg));
+                if (pred) {
+                    ++npreds;
+                    args.output <<pre <<"Called by " <<StringUtility::addrToString(pred->get_entry_va());
+                    std::string fname = pred->get_name();
+                    if (!fname.empty())
+                        args.output <<"<" <<fname <<">";
+                    args.output <<"\n";
+                }
+            }
+            if (0==npreds)
+                args.output <<pre <<"No known callers.\n";
+        }
+    }
+    return enabled;
+}
+
+AsmUnparser::FunctionSuccessors::FunctionSuccessors(): prefix("0x%08"PRIx64": ") {}
+
+bool
+AsmUnparser::FunctionSuccessors::operator()(bool enabled, const FunctionArgs &args)
+{
+    if (enabled) {
+        CG_FunctionMap::const_iterator fmi = args.unparser->cg_functionmap.find(args.func);
+        if (fmi!=args.unparser->cg_functionmap.end()) {
+            char pre[256];
+            int nprint = snprintf(pre, sizeof pre, prefix.c_str(), args.func->get_entry_va());
+            if ((size_t)nprint>=sizeof pre)
+                sprintf(pre, "0x%08"PRIx64" <OVERFLOW>: ", args.func->get_entry_va());
+            CG_Vertex vertex = fmi->second;
+            size_t nsuccs = 0;
+            boost::graph_traits<CG>::out_edge_iterator ei, ei_end;
+            for (boost::tie(ei, ei_end)=out_edges(vertex, args.unparser->cg); ei!=ei_end; ++ei) {
+                SgAsmFunction *succ = get(boost::vertex_name, args.unparser->cg, target(*ei, args.unparser->cg));
+                if (succ) {
+                    ++nsuccs;
+                    args.output <<pre <<"This function calls " <<StringUtility::addrToString(succ->get_entry_va());
+                    std::string fname = succ->get_name();
+                    if (!fname.empty())
+                        args.output <<"<" <<fname <<">";
+                    args.output <<"\n";
+                }
+            }
         }
     }
     return enabled;
