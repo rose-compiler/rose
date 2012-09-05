@@ -23,6 +23,7 @@ va 0x080495bc + 0x00000004 = 0x080495c0 rw-p at anon aca     + 0x00000000 buffer
 va 0x080495c0 + 0x00000a40 = 0x0804a000 rw-p at anon aaj     + 0x00000004 buffer2.bin(LOAD#3)
 
 0x08048278: ================================== Function (function call, symbol, pattern) <_init>
+
 0x08048278: 55                      |U       | F08048278 E1....    push   ebp
 0x08048279: 89 e5                   |..      |                     mov    ebp, esp
 0x0804827b: 83 ec 08                |...     |                     sub    esp, 0x08
@@ -40,12 +41,14 @@ va 0x080495c0 + 0x00000a40 = 0x0804a000 rw-p at anon aaj     + 0x00000004 buffer
 0x0804829f: 00                      |.       | F08048278 ..M001  17 bytes untyped data beginning at 0x0804828f
 
 0x080482a0: ================================== Function (function call, import) <malloc@plt>
+
 0x080482a0: ff 25 a8 95 04 08       |.%....  | F080482a0 E1....    jmp    DWORD PTR ds:[0x080495a8<.got.plt+0x0c>]
 
 0x080482a6: 68 00 00 00 00 e9 e0 ff |h.......|
 0x080482ae: ff ff                   |..      | F080482a0 ..M001  10 bytes untyped data beginning at 0x080482a6
 
 0x080482b0: ================================== Function (function call, import) <__libc_start_main@plt>
+
 0x080482b0: ff 25 ac 95 04 08       |.%....  | F080482b0 E1....    jmp    DWORD PTR ds:[0x080495ac<.got.plt+0x10>]
 
 0x080482b6: 68 08 00 00 00 e9 d0 ff |h.......|
@@ -53,6 +56,7 @@ va 0x080495c0 + 0x00000a40 = 0x0804a000 rw-p at anon aaj     + 0x00000004 buffer
 
 0x080482c0: ================================== Function (entry point, symbol) <_start>
 0x080482c0: Function does not return to caller.
+
 0x080482c0: 31 ed                   |1.      | F080482c0 E1....    xor    ebp, ebp
 0x080482c2: 5e                      |^       |                     pop    esi
 0x080482c3: 89 e1                   |..      |                     mov    ecx, esp
@@ -72,6 +76,7 @@ va 0x080495c0 + 0x00000a40 = 0x0804a000 rw-p at anon aaj     + 0x00000004 buffer
 0x080482e2: 90 90                   |..      | F080482c0 N.....  2-byte padding beginning at 0x080482e2
 
 0x080482e4: ================================== Function (function call, symbol, pattern) <call_gmon_start>
+
 0x080482e4: 55                      |U       | F080482e4 E1....    push   ebp
 0x080482e5: 89 e5                   |..      |                     mov    ebp, esp
 0x080482e7: 53                      |S       |                     push   ebx
@@ -94,6 +99,7 @@ va 0x080495c0 + 0x00000a40 = 0x0804a000 rw-p at anon aaj     + 0x00000004 buffer
 0x0804830d: 90 90 90                |...     | F080482e4 N.....  11-byte padding beginning at 0x08048305
 
 0x08048310: ================================== Function (function call, symbol, pattern) <__do_global_dtors_aux>
+
 0x08048310: 55                      |U       | F08048310 E1....    push   ebp
 0x08048311: 89 e5                   |..      |                     mov    ebp, esp
 0x08048313: 83 ec 08                |...     |                     sub    esp, 0x08
@@ -119,6 +125,7 @@ va 0x080495c0 + 0x00000a40 = 0x0804a000 rw-p at anon aaj     + 0x00000004 buffer
 0x0804833f: 90                      |.       | F08048310 ..M001  1 byte untyped data beginning at 0x0804833f
 
 0x08048340: ================================== Function (function call, symbol, pattern) <frame_dummy>
+
 0x08048340: 55                      |U       | F08048340 E1....    push   ebp
 0x08048341: 89 e5                   |..      |                     mov    ebp, esp
 0x08048343: 83 ec 08                |...     |                     sub    esp, 0x08
@@ -139,11 +146,13 @@ va 0x080495c0 + 0x00000a40 = 0x0804a000 rw-p at anon aaj     + 0x00000004 buffer
 0x08048363: 90                      |.       | F08048340 ..M001  1 byte untyped data beginning at 0x08048363
 
 0x08048364: ================================== Function (symbol) <main>
+
 0x08048364: 8d 4c 24 04             |.L$.    | F08048364 E1....    lea    ecx, [esp + 0x04]
 0x08048368: 83 e4 f0                |...     |                     and    esp, 0xf0<-0x10>
 0x0804836b: ff 71 fc                |.q.     |                     push   DWORD PTR ds:[ecx + 0xfc<-0x04>]
 
 0x0804836e: ================================== Function (pattern) unknown name
+
 0x0804836e: 55                      |U       | F0804836e E1....    push   ebp
 0x0804836f: 89 e5                   |..      |                     mov    ebp, esp
 0x08048371: 51                      |Q       |                     push   ecx
@@ -176,6 +185,7 @@ va 0x080495c0 + 0x00000a40 = 0x0804a000 rw-p at anon aaj     + 0x00000004 buffer
 0x080483bf: c3                      |.       |                     ret    
 
 0x080483c0: ================================== Function (symbol, pattern) <__libc_csu_init>
+
 0x080483c0: 55                      |U       | F080483c0 E1....    push   ebp
 0x080483c1: 89 e5                   |..      |                     mov    ebp, esp
 0x080483c3: 57                      |W       |                     push   edi
@@ -218,6 +228,7 @@ va 0x080495c0 + 0x00000a40 = 0x0804a000 rw-p at anon aaj     + 0x00000004 buffer
 0x08048412: 89 f6                   |..      | F080483c0 ..M001  2 bytes untyped data beginning at 0x08048412
 
 0x08048414: ================================== Function (symbol, pattern) <__libc_csu_fini>
+
 0x08048414: 55                      |U       | F08048414 E1....    push   ebp
 0x08048415: 89 e5                   |..      |                     mov    ebp, esp
 0x08048417: 57                      |W       |                     push   edi
@@ -254,6 +265,7 @@ va 0x080495c0 + 0x00000a40 = 0x0804a000 rw-p at anon aaj     + 0x00000004 buffer
 0x0804845e: 90 90                   |..      | F08048414 N.....  10-byte padding beginning at 0x08048456
 
 0x08048460: ================================== Function (function call, symbol, pattern) <__do_global_ctors_aux>
+
 0x08048460: 55                      |U       | F08048460 E1....    push   ebp
 0x08048461: 89 e5                   |..      |                     mov    ebp, esp
 0x08048463: 53                      |S       |                     push   ebx
@@ -282,6 +294,7 @@ va 0x080495c0 + 0x00000a40 = 0x0804a000 rw-p at anon aaj     + 0x00000004 buffer
 0x08048491: 90 90 90                |...     | F08048460 N.....  3-byte padding beginning at 0x08048491
 
 0x08048494: ================================== Function (function call, symbol, pattern) <_fini>
+
 0x08048494: 55                      |U       | F08048494 E1....    push   ebp
 0x08048495: 89 e5                   |..      |                     mov    ebp, esp
 0x08048497: 53                      |S       |                     push   ebx
