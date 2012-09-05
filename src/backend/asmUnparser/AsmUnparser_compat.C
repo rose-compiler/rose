@@ -1,6 +1,7 @@
 /* These are backward compatibility functions now implemented in terms of AsmUnparser */
 #include "sage3basic.h"
 #include "AsmUnparser_compat.h"
+#include "BinaryControlFlow.h"
 
 /* FIXME: this should be a SgAsmInstruction class method. */
 std::string unparseInstruction(SgAsmInstruction* insn, const AsmUnparser::LabelMap *labels) {
@@ -105,6 +106,9 @@ unparseAsmInterpretation(SgAsmInterpretation* interp)
     std::ostringstream s;
     AsmUnparser unparser;
     unparser.add_function_labels(interp);
+    BinaryAnalysis::ControlFlow::Graph cfg;
+    BinaryAnalysis::ControlFlow().build_cfg_from_ast(interp, cfg/*out*/);
+    unparser.add_control_flow_graph(cfg);
     unparser.unparse(s, interp);
     return s.str();
 }

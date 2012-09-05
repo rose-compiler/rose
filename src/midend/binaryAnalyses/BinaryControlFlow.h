@@ -333,6 +333,40 @@ namespace BinaryAnalysis {
             void finish_vertex(Vertex v, ControlFlowGraph g);
         };
             
+        /* Helper class for build_cfg_from_ast().  Adds vertices to its 'cfg' member. Vertices are any SgAsmBlock that contains
+         * at least one SgAsmInstruction. */
+        template<class ControlFlowGraph>
+        class VertexInserter: public AstSimpleProcessing {
+        public:
+            ControlFlow *analyzer;
+            ControlFlowGraph &cfg;
+            typedef typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor Vertex;
+            typedef std::map<SgAsmBlock*, Vertex> BlockVertexMap;
+            BlockVertexMap &bv_map;
+            VertexInserter(ControlFlow *analyzer, ControlFlowGraph &cfg, BlockVertexMap &bv_map)
+                : analyzer(analyzer), cfg(cfg), bv_map(bv_map)
+                {}
+            // Add basic block to graph if it hasn't been added already.
+            void conditionally_add_vertex(SgAsmBlock *block) {
+                if (block && block->has_instructions() && !analyzer->is_vertex_filtered(block) &&
+                    bv_map.find(block)==bv_map.end()) {
+                    Vertex vertex = add_vertex(cfg);
+                    bv_map[block] = vertex;
+                    put(boost::vertex_name, cfg, vertex, block);
+                }
+            }
+            void visit(SgNode *node) {
+                if (isSgAsmFunction(node)) {
+                    // Add the function entry block before the other blocks of the function.  This ensures that the entry block
+                    // of a function has a lower vertex number than the other blocks of the function (the traversal is not
+                    // guaranteed to visit the function basic blocks in that order).
+                    conditionally_add_vertex(isSgAsmFunction(node)->get_entry_block());
+                } else {
+                    conditionally_add_vertex(isSgAsmBlock(node));
+                }
+            }
+        };
+
     public:
         /** Orders nodes by depth first search reverse post order.
          *
@@ -456,35 +490,7 @@ BinaryAnalysis::ControlFlow::build_cfg_from_ast(SgNode *root, ControlFlowGraph &
     BlockVertexMap bv_map;
 
     cfg.clear();
-
-    /* Define the vertices. Vertices are any SgAsmBlock that contains at least one SgAsmInstruction. */
-    struct T1: public AstSimpleProcessing {
-        ControlFlow *analyzer;
-        ControlFlowGraph &cfg;
-        BlockVertexMap &bv_map;
-        T1(ControlFlow *analyzer, ControlFlowGraph &cfg, BlockVertexMap &bv_map)
-            : analyzer(analyzer), cfg(cfg), bv_map(bv_map)
-            {}
-        // Add basic block to graph if it hasn't been added already.
-        void conditionally_add_vertex(SgAsmBlock *block) {
-            if (block && block->has_instructions() && !analyzer->is_vertex_filtered(block) && bv_map.find(block)==bv_map.end()) {
-                Vertex vertex = add_vertex(cfg);
-                bv_map[block] = vertex;
-                put(boost::vertex_name, cfg, vertex, block);
-            }
-        }
-        void visit(SgNode *node) {
-            if (isSgAsmFunction(node)) {
-                // Add the function entry block before the other blocks of the function.  This ensures that the entry block of
-                // a function has a lower vertex number than the other blocks of the function (the traversal is not guaranteed
-                // to visit the function basic blocks in that order).
-                conditionally_add_vertex(isSgAsmFunction(node)->get_entry_block());
-            } else {
-                conditionally_add_vertex(isSgAsmBlock(node));
-            }
-        }
-    };
-    T1(this, cfg, bv_map).traverse(root, preorder);
+    VertexInserter<ControlFlowGraph>(this, cfg, bv_map).traverse(root, preorder);
 
     /* Add the edges. */
     typename boost::graph_traits<ControlFlowGraph>::vertex_iterator vi, vi_end;
