@@ -269,7 +269,7 @@ void checkProgram(SgNode* root) {
   vs.insert(V_SgLabelStatement);
   vs.insert(V_SgNullStatement);
   vs.insert(V_SgConditionalExp); // TODO (assignments not handled!)
-  vs.insert(V_SgMinusOp); // TODO!
+  vs.insert(V_SgMinusOp);
 
   // inter-procedural
   vs.insert(V_SgFunctionCallExp);

@@ -152,7 +152,6 @@ string Visualizer::transitionGraphDotHtmlNode(Label lab) {
   return s;
 }
 
-// TODO - NOT FINISHED!!!
 string Visualizer::foldedTransitionGraphToDot() {
   stringstream ss;
   ss<<"digraph html {\n";

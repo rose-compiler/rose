@@ -206,16 +206,25 @@ EState Analyzer::transferFunction(Edge edge, const EState* eState) {
 	SgInitializedNamePtrList::iterator i=formalParameters.begin();
 	SgExpressionPtrList::iterator j=actualParameters.begin();
 	while(i!=formalParameters.end() || j!=actualParameters.end()) {
-	  SgInitializedName* name=*i;
-	  VariableId varId=variableIdMapping.variableId(name);
+	  SgInitializedName* formalParameterName=*i;
+	  VariableId formalParameterVarId=variableIdMapping.variableId(formalParameterName);
 	  // VariableName varNameString=name->get_name();
-	  SgExpression* expr=*j;
-	  SingleEvalResultConstInt evalResult=exprAnalyzer.evalConstInt(expr,currentEState);
+	  SgExpression* actualParameterExpr=*j;
+
+	  // check whether the actualy parameter is a single variable: In this case we can propagate the constraints of that variable to the formal parameter.
+	  // pattern: call: f(x), callee: f(int y) => constraints of x are propagated to y
+	  VariableId actualParameterVarId;
+	  if(bool isActualParamterVar=ExprAnalyzer::variable(actualParameterExpr,actualParameterVarId)) {
+		// propagate constraint from actualParamterVarId to formalParameterVarId
+		cset.duplicateConstraints(formalParameterVarId, actualParameterVarId); // duplication direction from right to left (as in an assignment)
+	  }
+	  // general case: the actual argument is an arbitrary expression (including a single variable)
+	  SingleEvalResultConstInt evalResult=exprAnalyzer.evalConstInt(actualParameterExpr,currentEState);
 	  int val;
 	  if(evalResult.isConstInt()) val=evalResult.intValue();
 	  if(evalResult.isTop()) val=ANALYZER_INT_TOP;
 	  if(evalResult.isBot()) val=ANALYZER_INT_BOT;
-	  newState[varId]=val;
+	  newState[formalParameterVarId]=val;
 	  ++i;++j;
 	}
 	assert(i==formalParameters.end() && j==actualParameters.end()); // must hold if #fparams==#aparams (TODO: default values)
@@ -284,12 +293,16 @@ EState Analyzer::transferFunction(Edge edge, const EState* eState) {
 	  bool isLhsVar=ExprAnalyzer::variable(lhs,lhsVarId);
 	  assert(isLhsVar); // must hold
 	  State newState=*currentEState.state;
+	  // we only create this variable here to be able to find an existing $return variable!
 	  VariableId returnVarId=variableIdMapping.createUniqueTemporaryVariableId(string("$return"));
 	  int evalResult=newState[returnVarId];
-	  newState.deleteVar(returnVarId);
 	  newState[lhsVarId]=evalResult;
+	  cset.duplicateConstraints(lhsVarId, returnVarId); // duplicate constraints of $return to lhsVar
+	  newState.deleteVar(returnVarId); // remove $return from state
+	  cout << "DEBUG: constraints: before delete: "<<cset.toString()<<endl;
+	  cset.deleteConstraints(returnVarId); // remove constraints of $return
+	  cout << "DEBUG: constraints: after  delete: "<<cset.toString()<<endl;
 	  stateSet.insert(newState);
-	  ConstraintSet cset=currentEState.constraints;
 	  return EState(edge.target,stateSet.statePtr(newState),cset);
 	}
 	// case 3: f(); remove $return from state (discard value)
@@ -297,6 +310,7 @@ EState Analyzer::transferFunction(Edge edge, const EState* eState) {
 	  State newState=*currentEState.state;
 	  VariableId returnVarId=variableIdMapping.createUniqueTemporaryVariableId(string("$return"));
 	  newState.deleteVar(returnVarId);
+	  cset.deleteConstraints(returnVarId); // remove constraints of $return
 	  stateSet.insert(newState);
 	  ConstraintSet cset=currentEState.constraints;
 	  return EState(edge.target,stateSet.statePtr(newState),cset);
@@ -590,11 +604,14 @@ string Analyzer::foldedTransitionGraphToDot() {
   return ss.str();
 }
 
+// TODO: x=x eliminates constraints of x but it should not.
 State Analyzer::analyzeAssignRhs(State currentState,VariableId lhsVar, SgNode* rhs, ConstraintSet& cset) {
   assert(isSgExpression(rhs));
   bool isRhsIntVal=false;
+  bool isRhsVar=false;
   int rhsIntVal=ANALYZER_INT_TOP;
 
+  // TODO: -1 is OK, but not -(-1); yet.
   if(SgMinusOp* minusOp=isSgMinusOp(rhs)) {
 	if(SgIntVal* intValNode=isSgIntVal(SgNodeHelper::getFirstChild(rhs))) {
 	  // found integer on rhs
@@ -612,37 +629,43 @@ State Analyzer::analyzeAssignRhs(State currentState,VariableId lhsVar, SgNode* r
   // allow single var on rhs
   if(SgVarRefExp* varRefExp=isSgVarRefExp(rhs)) {
 	VariableId rhsVarId;
-	bool isRhsVar=ExprAnalyzer::variable(rhs,rhsVarId);
+	isRhsVar=ExprAnalyzer::variable(rhs,rhsVarId);
 	assert(isRhsVar);
 	// x=y: contraint propagation for var1=var2 assignments
 	cset.duplicateConstraints(lhsVar, rhsVarId);
 
 	if(currentState.varExists(rhsVarId)) {
 	  rhsIntVal=currentState[rhsVarId];
-	  isRhsIntVal=true;
 	} else {
 	  cerr << "WARNING: access to variable "<<rhsVarId.longVariableName()<< "on rhs of assignment, but variable does not exist in state. Initializing with top."<<endl;
 	  rhsIntVal=ANALYZER_INT_TOP;
+	  isRhsIntVal=true;
 	}
   }
   State newState=currentState;
   if(newState.varExists(lhsVar)) {
-	if(!isRhsIntVal) {
+	if(!isRhsIntVal && !isRhsVar) {
 	  rhsIntVal=ANALYZER_INT_TOP;
 	}
 	if(newState[lhsVar]==rhsIntVal) {
 	  // update of existing variable with same value
 	  // => no state change
+	  return newState;
 	} else {
 	  // update of existing variable with new value
 	  newState[lhsVar]=rhsIntVal;
+	  if(rhsIntVal!=ANALYZER_INT_TOP && !isRhsVar)
+		cset.deleteConstraints(lhsVar);
+	  return newState;
 	}
   } else {
 	// new variable with new value
 	newState[lhsVar]=rhsIntVal;
+	// no update of constraints because no constraints can exist for a new variable
+	return newState;
   }
-  // make sure, we only create/propagate contraints if a non-const value is assigned
-  if(rhsIntVal!=ANALYZER_INT_TOP)
+  // make sure, we only create/propagate contraints if a non-const value is assigned or if a variable is on the rhs.
+  if(rhsIntVal!=ANALYZER_INT_TOP && !isRhsVar)
 	cset.deleteConstraints(lhsVar);
   return newState;
 }
