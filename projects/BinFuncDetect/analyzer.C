@@ -86,23 +86,6 @@ IdaFile::parse(const std::string &csv_name, const std::string &exe_hash)
     fclose(f);
 }
     
-/* An unparser for showing instructions for data blocks. */
-class DataBlockUnparser: public AsmUnparser {
-public:
-    class DataNote: public UnparserCallback {
-    public:
-        virtual bool operator()(bool enabled, const InsnArgs &args) {
-            if (enabled)
-                args.output <<" (data)";
-            return enabled;
-        }
-    } data_note;
-
-    DataBlockUnparser() {
-        insn_callbacks.unparse.prepend(&data_note);
-    }
-};
-
 /* We use our own instruction unparser that does a few additional things that ROSE's default unparser doesn't do.  The extra
  * things are each implemented as a callback and are described below. */
 class MyUnparser: public AsmUnparser {
@@ -194,51 +177,21 @@ class MyUnparser: public AsmUnparser {
         }
     };
 
-    /* Disassembles data blocks.  Data blocks (other than padding and jump tables) are disassembled and we output the
-     * instructions in address order after the data block. */
-    class DataBlockDisassembler: public UnparserCallback {
-    public:
-        Disassembler *disassembler;
-        DataBlockUnparser sub_unparser;
-        DataBlockDisassembler(Disassembler *disassembler): disassembler(disassembler) {}
-        virtual bool operator()(bool enabled, const StaticDataArgs &args) {
-            SgAsmBlock *block = SageInterface::getEnclosingNode<SgAsmBlock>(args.data);
-            if (enabled && block &&
-                0==(block->get_reason() & SgAsmBlock::BLK_PADDING) &&
-                0==(block->get_reason() & SgAsmBlock::BLK_JUMPTABLE)) {
-                SgUnsignedCharList data = args.data->get_raw_bytes();
-                MemoryMap map;
-                map.insert(Extent(args.data->get_address(), data.size()),
-                           MemoryMap::Segment(MemoryMap::ExternBuffer::create(&data[0], data.size()), 0,
-                                              MemoryMap::MM_PROT_RX, "static data block"));
-                Disassembler::AddressSet worklist;
-                worklist.insert(args.data->get_address());
-                Disassembler::InstructionMap insns = disassembler->disassembleBuffer(&map, worklist);
-                for (Disassembler::InstructionMap::iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
-                    sub_unparser.unparse(args.output, ii->second);
-                    SageInterface::deleteAST(ii->second);
-                }
-            }
-            return enabled;
-        }
-    };
-
 public:
     FuncName<SgAsmInstruction, AsmUnparser::UnparserCallback::InsnArgs> insn_func_name;
     FuncName<SgAsmStaticData,  AsmUnparser::UnparserCallback::StaticDataArgs> data_func_name;
-    DataBlockDisassembler data_block_disassembler;
 
     MyUnparser(BinaryAnalysis::ControlFlow::Graph &cfg, IdaInfo &ida, Disassembler *disassembler)
-        : insn_func_name(ida), data_func_name(ida), data_block_disassembler(disassembler) {
+        : insn_func_name(ida), data_func_name(ida) {
         add_control_flow_graph(cfg);
         set_organization(AsmUnparser::ORGANIZED_BY_ADDRESS);
         insnBlockEntry.show_function = false; // don't show function addresses since our own show_names() does that.
+        staticDataBlockEntry.show_function = false;
+        staticDataDisassembler.init(disassembler);
         insn_callbacks.pre
             .append(&insn_func_name);
         staticdata_callbacks.pre
             .append(&data_func_name);
-        staticdata_callbacks.post
-            .append(&data_block_disassembler);
     }
 
     /* Augment parent class by printing a key and some column headings. */
