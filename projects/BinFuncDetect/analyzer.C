@@ -105,10 +105,7 @@ public:
 
 /* We use our own instruction unparser that does a few additional things that ROSE's default unparser doesn't do.  The extra
  * things are each implemented as a callback and are described below. */
-template<class FunctionCallGraph>
 class MyUnparser: public AsmUnparser {
-    typedef typename boost::graph_traits<FunctionCallGraph>::vertex_descriptor Vertex;
-
     void show_names(std::ostream &output, IdaInfo &ida, SgNode *node,
                     rose_addr_t rose_func_va, const std::vector<rose_addr_t> &ida_func_va,
                     rose_addr_t start_va, size_t nbytes) {
@@ -220,32 +217,6 @@ class MyUnparser: public AsmUnparser {
         }
     };
 
-    /* Emits info about what other functions call this one whenever we hit an entry point of a function. */
-    class FuncCallers: public UnparserCallback {
-    public:
-        FunctionCallGraph &cg;
-        FuncCallers(FunctionCallGraph &cg): cg(cg) {}
-        virtual bool operator()(bool enabled, const FunctionArgs &args) {
-            if (enabled && AsmUnparser::ORGANIZED_BY_ADDRESS==args.unparser->get_organization()) {
-                size_t ncallers = 0;
-                Vertex called_v = args.func->get_cached_vertex();
-                if (called_v!=(Vertex)(-1)) {
-                    typename boost::graph_traits<FunctionCallGraph>::in_edge_iterator ei, eend;
-                    for (boost::tie(ei, eend)=in_edges(called_v, cg); ei!=eend; ++ei) {
-                        SgAsmFunction *caller = get(boost::vertex_name, cg, source(*ei, cg));
-                        if (0==ncallers++)
-                            args.output <<StringUtility::addrToString(args.func->get_entry_va()) <<": Function called by";
-                        args.output <<" 0x" <<std::hex <<caller->get_entry_va() <<std::dec;
-                    }
-                    if (0==ncallers)
-                        args.output <<StringUtility::addrToString(args.func->get_entry_va()) <<": No known callers.";
-                    args.output <<"\n";
-                }
-            }
-            return enabled;
-        }
-    };
-
     /* Disassembles data blocks.  Data blocks (other than padding and jump tables) are disassembled and we output the
      * instructions in address order after the data block. */
     class DataBlockDisassembler: public UnparserCallback {
@@ -278,16 +249,16 @@ class MyUnparser: public AsmUnparser {
 public:
     FuncName<SgAsmInstruction, AsmUnparser::UnparserCallback::InsnArgs> insn_func_name;
     FuncName<SgAsmStaticData,  AsmUnparser::UnparserCallback::StaticDataArgs> data_func_name;
-    FuncCallers func_callers;
     DiscontiguousNotifier<SgAsmInstruction, AsmUnparser::UnparserCallback::InsnArgs> insn_skip;
     DiscontiguousNotifier<SgAsmStaticData,  AsmUnparser::UnparserCallback::StaticDataArgs> data_skip;
     DataBlockDisassembler data_block_disassembler;
     rose_addr_t next_address;
     size_t nprinted;
 
-    MyUnparser(FunctionCallGraph &cg, IdaInfo &ida, Disassembler *disassembler)
-        : insn_func_name(ida), data_func_name(ida), func_callers(cg), data_block_disassembler(disassembler),
+    MyUnparser(BinaryAnalysis::ControlFlow::Graph &cfg, IdaInfo &ida, Disassembler *disassembler)
+        : insn_func_name(ida), data_func_name(ida), data_block_disassembler(disassembler),
           next_address(0), nprinted(0) {
+        add_control_flow_graph(cfg);
         set_organization(AsmUnparser::ORGANIZED_BY_ADDRESS);
         insnBlockEntry.show_function = false; // don't show function addresses since our own show_names() does that.
         insn_callbacks.pre
@@ -298,8 +269,6 @@ public:
             .after(&staticDataBlockSeparation, &data_skip, 1);
         staticdata_callbacks.post
             .append(&data_block_disassembler);
-        function_callbacks.pre
-            .before(&functionAttributes, &func_callers, 1);
     }
 
     /* Augment parent class by printing a key and some column headings. */
@@ -669,18 +638,6 @@ struct LargeAnonymousRegion: public MemoryMap::Visitor {
     }
 } large_anonymous_region;
 
-/* Label the graphviz vertices with function entry addresses rather than vertex numbers. */
-template<class FunctionCallGraph>
-struct GraphvizVertexWriter {
-    typedef typename boost::graph_traits<FunctionCallGraph>::vertex_descriptor Vertex;
-    const FunctionCallGraph &g;
-    GraphvizVertexWriter(FunctionCallGraph &g): g(g) {}
-    void operator()(std::ostream &output, const Vertex &v) {
-        SgAsmFunction *func = get(boost::vertex_name, g, v);
-        output <<"[ label=\"" <<StringUtility::addrToString(func->get_entry_va()) <<"\" ]";
-    }
-};
-
 int
 main(int argc, char *argv[])
 {
@@ -862,24 +819,22 @@ main(int argc, char *argv[])
 #endif
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    std::cerr <<"Generating function call graph...\n";
-    struct NoLeftovers: public BinaryAnalysis::FunctionCall::VertexFilter {
-        virtual bool operator()(BinaryAnalysis::FunctionCall*, SgAsmFunction *func) {
+    std::cerr <<"Generating control flow graph...\n";
+    struct NoLeftovers: public BinaryAnalysis::ControlFlow::VertexFilter {
+        virtual bool operator()(BinaryAnalysis::ControlFlow*, SgAsmBlock *blk) {
+            SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(blk);
             return func && 0==(func->get_reason() & SgAsmFunction::FUNC_LEFTOVERS);
         }
     } vertex_filter;
-    BinaryAnalysis::FunctionCall cg_analyzer;
-    cg_analyzer.set_vertex_filter(&vertex_filter);
-    BinaryAnalysis::FunctionCall::Graph cg;
-    cg_analyzer.build_cg_from_ast(interp, cg);
-    cg_analyzer.cache_vertex_descriptors(cg);
-    std::ofstream cgfile("cg.dot");
-    boost::write_graphviz(cgfile, cg, GraphvizVertexWriter<BinaryAnalysis::FunctionCall::Graph>(cg));
+    BinaryAnalysis::ControlFlow cfg_analyzer;
+    cfg_analyzer.set_vertex_filter(&vertex_filter);
+    BinaryAnalysis::ControlFlow::Graph cfg;
+    cfg_analyzer.build_cfg_from_ast(interp, cfg);
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     std::cerr <<"Generating output...\n";
 #if 1
-    MyUnparser<BinaryAnalysis::FunctionCall::Graph> unparser(cg, ida, disassembler);
+    MyUnparser unparser(cfg, ida, disassembler);
     unparser.unparse(std::cout, gblock);
 #else
     AsmUnparser().unparse(std::cout, gblock);
