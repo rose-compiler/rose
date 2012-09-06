@@ -31,3 +31,4 @@ bool IncludeDirective::isQuotedInclude() {
 size_t IncludeDirective::getStartPos() {
     return startPos;
 }
+

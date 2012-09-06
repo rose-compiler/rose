@@ -1934,8 +1934,18 @@ SgType::handledUsingLocalTable(SgType* t)
 
      bool returnValue = false;
 
+  // DQ (9/3/2012): I think this should be modified to include SgTemplateType as well.
      if (isSgEnumType(t) != NULL || isSgClassType(t) != NULL || isSgTypedefType(t) != NULL)
         {
+          returnValue = true;
+        }
+
+  // DQ (9/4/2012): I have made SgTemplateType be stored in the local type table.
+  // DQ (9/3/2012): I think this should be modified to include SgTemplateType as well.
+     SgTemplateType* templateType = isSgTemplateType(t);
+     if (templateType != NULL)
+        {
+       // printf ("WARNING: In SgType::handledUsingLocalTable(): I think that SgTemplateType should be handled out of the local type table! templateType = %p = %s \n",templateType,templateType->get_name().str());
           returnValue = true;
         }
 
@@ -5151,7 +5161,12 @@ SgClassType::createType(SgDeclarationStatement* cd, SgExpression* optional_fortr
      SgClassType* returnType = NULL;
      if (classDeclaration != NULL)
         {
+          ROSE_ASSERT(classDeclaration->get_type() != NULL);
           returnType = isSgClassType(classDeclaration->get_type());
+          if (returnType == NULL)
+             {
+               printf ("Error: returnType == NULL: classDeclaration->get_type() = %p = %s \n",classDeclaration->get_type(),classDeclaration->get_type()->class_name().c_str());
+             }
           ROSE_ASSERT(returnType != NULL);
         }
        else
@@ -5709,7 +5724,7 @@ SgModifierType::insertModifierTypeIntoTypeTable( SgModifierType* result )
   // this by testing that at least one type modifier flag was set, not done yet.
      SgName name = result->get_mangled();
 
-#if 0
+#if 1
      printf ("insertModifierTypeIntoTypeTable(): result is modifier type to base_type = %p = %s name = %s \n",result->get_base_type(),result->get_base_type()->class_name().c_str(),name.str());
 #endif
 
@@ -5728,7 +5743,7 @@ SgModifierType::insertModifierTypeIntoTypeTable( SgModifierType* result )
           ROSE_ASSERT(root_type != NULL);
           if (handledUsingLocalTable(root_type) == false)
              {
-#if 0
+#if 1
                printf ("insertModifierTypeIntoTypeTable(): Mangled type name for $CLASSNAME = %s (does NOT exist in type table) interting it... \n",name.str());
 #endif
                get_globalTypeTable()->insert_type(name,result);
@@ -5736,7 +5751,7 @@ SgModifierType::insertModifierTypeIntoTypeTable( SgModifierType* result )
             else
              {
             // For now we can skip this case and then later use the local type table from the scope of the declaration.
-#if 0
+#if 1
                printf ("insertModifierTypeIntoTypeTable(): Skip putting the SgModifierType into the global type table for specific root types = %s name = %s \n",root_type->class_name().c_str(),name.str());
 #endif
              }
@@ -5752,7 +5767,7 @@ SgModifierType::insertModifierTypeIntoTypeTable( SgModifierType* result )
        // ROSE_ASSERT(false);
 
        // If it is already present in the type table then delete the type (so that it will remain unique).
-#if 0
+#if 1
            printf ("insertModifierTypeIntoTypeTable(): Mangled type name for SgModifierType = %s t = %p = %s (already exists in type table) \n",name.str(),t,t->class_name().c_str());
            printf ("insertModifierTypeIntoTypeTable(): t = %p result = %p \n",t,result);
 #endif
@@ -5772,6 +5787,9 @@ SgModifierType::insertModifierTypeIntoTypeTable( SgModifierType* result )
         // not a SgModifierType.
            if (isSgModifierType(t) != NULL)
              {
+#if 1
+               printf ("insertModifierTypeIntoTypeTable(): Reset result (the return variabel) to be the SgModifier found in the type table (t = %p) \n",t);
+#endif
                result = isSgModifierType(t);
              }
 

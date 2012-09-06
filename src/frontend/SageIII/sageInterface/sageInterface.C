@@ -8979,7 +8979,9 @@ void SageInterface::appendStatement(SgStatement *stmt, SgScopeStatement* scope)
         {
        // catch-all for statement fixup
        // Must fix it before insert it into the scope,
+          printf ("In appendStatementList(): Calling fixStatement() \n");
           fixStatement(stmt,scope);
+          printf ("DONE: In appendStatementList(): Calling fixStatement() \n");
 
        //-----------------------
        // append the statement finally
@@ -9623,6 +9625,7 @@ void SageInterface::fixStructDeclaration(SgClassDeclaration* structDecl, SgScope
 #endif
 
      SgName name = structDecl->get_name();
+
   // This is rare case (translation error) when scope->lookup_class_symbol(name) will find something
   // but nondefdecl->get_symbol_from_symbol_table() returns NULL
   // But symbols are associated with nondefining declarations whenever possible
@@ -9630,6 +9633,10 @@ void SageInterface::fixStructDeclaration(SgClassDeclaration* structDecl, SgScope
   // Liao, 9/2/2009
   // SgClassSymbol* mysymbol = scope->lookup_class_symbol(name);
      SgClassSymbol* mysymbol = isSgClassSymbol(nondefdecl->get_symbol_from_symbol_table());
+
+  // DQ (9/4/2012): I want to assert this for the new EDG/ROSE connection code (at least).
+     ROSE_ASSERT(mysymbol != NULL);
+
      if (mysymbol == NULL)
         {
        // DQ (12/3/2011): This will be an error for C++ if the scope of the statment is different from the scope where it is located structurally...
@@ -9661,6 +9668,15 @@ void SageInterface::fixStructDeclaration(SgClassDeclaration* structDecl, SgScope
              }
         }
 
+  // DQ (9/4/2012): I want to assert this for the new EDG/ROSE connection code (at least).
+     ROSE_ASSERT(nondefdecl->get_type() != NULL);
+
+  // DQ (9/4/2012): This is a sign that the pointer to the type was deleted.
+     ROSE_ASSERT(nondefdecl->get_type()->variantT() != V_SgNode);
+
+  // DQ (9/4/2012): This should be a SgClassType IR node.
+     ROSE_ASSERT(isSgClassType(nondefdecl->get_type()) != NULL);
+
   // fixup SgClassType, which is associated with the first non-defining declaration only
   // and the other declarations share it.
      if (nondefdecl->get_type() == NULL)
@@ -9669,13 +9685,36 @@ void SageInterface::fixStructDeclaration(SgClassDeclaration* structDecl, SgScope
         }
      ROSE_ASSERT (nondefdecl->get_type() != NULL);
 
+  // DQ (9/4/2012): If defDecl != NULL, I want to assert this for the new EDG/ROSE connection code (at least).
+     if (defdecl != NULL)
+        {
+       // DQ (9/4/2012): This is a sign that the pointer to the type was deleted.
+          ROSE_ASSERT(defdecl->get_type()->variantT() != V_SgNode);
+
+       // DQ (9/4/2012): This should be a SgClassType IR node.
+          ROSE_ASSERT(isSgClassType(defdecl->get_type()) != NULL);
+        }
+
   // ROSE_ASSERT(defdecl != NULL);
      if (defdecl != NULL)
         {
-          if (defdecl->get_type()!= nondefdecl->get_type())
+       // DQ (9/4/2012): If defDecl != NULL, I want to assert this for the new EDG/ROSE connection code (at least).
+          ROSE_ASSERT(defdecl->get_type() != NULL);
+          if (defdecl->get_type() != nondefdecl->get_type())
+             {
+               printf ("ERROR: defdecl->get_type() != nondefdecl->get_type(): what are these: \n");
+               printf ("   defdecl->get_type()    = %p = %s \n",defdecl   ->get_type(),defdecl   ->get_type()->class_name().c_str());
+               printf ("   nondefdecl->get_type() = %p = %s \n",nondefdecl->get_type(),nondefdecl->get_type()->class_name().c_str());
+             }
+          ROSE_ASSERT(defdecl->get_type() == nondefdecl->get_type());
+
+          if (defdecl->get_type() != nondefdecl->get_type())
              {
                if (defdecl->get_type())
-                    delete defdecl->get_type();
+                  {
+                    printf ("WARNING: In SageInterface::fixStructDeclaration(): skipped calling delete on (defdecl = %p = %s) defdecl->get_type() = %p = %s \n",defdecl,defdecl->class_name().c_str(),defdecl->get_type(),defdecl->get_type()->class_name().c_str());
+                 // delete defdecl->get_type();
+                  }
                defdecl->set_type(nondefdecl->get_type());
              }
           ROSE_ASSERT (defdecl->get_type() != NULL);
