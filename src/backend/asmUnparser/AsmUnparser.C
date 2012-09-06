@@ -67,6 +67,7 @@ AsmUnparser::init()
 
     insn_callbacks.pre
         .append(&insnBlockSeparation)           /* used only for ORGANIZED_BY_ADDRESS */
+        .append(&insnSkipBackBegin)             /* used only for ORGANIZED_BY_ADDRESS */
         .append(&insnFuncEntry)                 /* used only for ORGANIZED_BY_ADDRESS */
         //.append(&insnAddress)                 /* Using insnRawBytes instead, which also prints addresses. */
         .append(&insnRawBytes)
@@ -76,7 +77,8 @@ AsmUnparser::init()
     insn_callbacks.post
         .append(&insnNoEffect)
         .append(&insnComment)
-        .append(&insnLineTermination);
+        .append(&insnLineTermination)
+        .append(&insnSkipBackEnd);              /* used only for ORGANIZED_BY_ADDRESS */
 
     basicblock_callbacks.pre
         //.append(&basicBlockNoopUpdater)       /* Disabled by default for speed. */
@@ -92,13 +94,15 @@ AsmUnparser::init()
 
     staticdata_callbacks.pre
         .append(&staticDataBlockSeparation)     /* used only for ORGANIZED_BY_ADDRESS */
+        .append(&staticDataSkipBackBegin)       /* used only for ORGANIZED_BY_ADDRESS */
         .append(&staticDataRawBytes)
         .append(&staticDataBlockEntry);         /* used only for ORGANIZED_BY_ADDRESS */
     staticdata_callbacks.unparse
         .append(&staticDataDetails)
         .append(&staticDataComment);
     staticdata_callbacks.post
-        .append(&staticDataLineTermination);
+        .append(&staticDataLineTermination)
+        .append(&staticDataSkipBackEnd);        /* used only for ORGANIZED_BY_ADDRESS */
 
     datablock_callbacks.unparse
         .append(&dataBlockBody)                 /* used only for ORGANIZED_BY_AST */
@@ -228,6 +232,32 @@ AsmUnparser::find_unparsable_nodes(SgNode *ast)
     } t1(this);
     t1.traverse(ast);
     return t1.found;
+}
+
+void
+AsmUnparser::start_of_object(rose_addr_t va, std::ostream &output)
+{
+    if (skipback.active && ORGANIZED_BY_ADDRESS==organization) {
+        if (skipback.triggered) {
+            if (va > skipback.va) {
+                rose_addr_t nskipped = va - skipback.va;
+                output <<"Skipping " <<nskipped <<" byte" <<(1==nskipped?"":"s") <<"\n";
+            } else if (va < skipback.va) {
+                rose_addr_t nback = skipback.va - va;
+                output <<"Backward " <<nback <<" byte" <<(1==nback?"":"s") <<"\n";
+            }
+        }
+        skipback.triggered = true;
+    }
+}
+
+void
+AsmUnparser::end_of_object(rose_addr_t va)
+{
+    if (skipback.active && ORGANIZED_BY_ADDRESS==organization) {
+        skipback.triggered = true;
+        skipback.va = va;
+    }
 }
 
 /******************************************************************************************************************************
@@ -402,6 +432,14 @@ AsmUnparser::InsnBlockSeparation::operator()(bool enabled, const InsnArgs &args)
 }
 
 bool
+AsmUnparser::InsnSkipBackBegin::operator()(bool enabled, const InsnArgs &args)
+{
+    if (enabled)
+        args.unparser->start_of_object(args.insn->get_address(), args.output);
+    return enabled;
+}
+
+bool
 AsmUnparser::InsnFuncEntry::operator()(bool enabled, const InsnArgs &args)
 {
     if (enabled && ORGANIZED_BY_ADDRESS==args.unparser->get_organization()) {
@@ -493,6 +531,14 @@ AsmUnparser::InsnLineTermination::operator()(bool enabled, const InsnArgs &args)
 {
     if (enabled)
         args.output <<std::endl;
+    return enabled;
+}
+
+bool
+AsmUnparser::InsnSkipBackEnd::operator()(bool enabled, const InsnArgs &args)
+{
+    if (enabled)
+        args.unparser->end_of_object(args.insn->get_address() + args.insn->get_size());
     return enabled;
 }
 
@@ -665,6 +711,14 @@ AsmUnparser::StaticDataBlockSeparation::operator()(bool enabled, const StaticDat
 }
 
 bool
+AsmUnparser::StaticDataSkipBackBegin::operator()(bool enabled, const StaticDataArgs &args)
+{
+    if (enabled)
+        args.unparser->start_of_object(args.data->get_address(), args.output);
+    return enabled;
+}
+
+bool
 AsmUnparser::StaticDataBlockEntry::operator()(bool enabled, const StaticDataArgs &args)
 {
     if (enabled && ORGANIZED_BY_ADDRESS==args.unparser->get_organization()) {
@@ -762,6 +816,14 @@ AsmUnparser::StaticDataLineTermination::operator()(bool enabled, const StaticDat
 {
     if (enabled)
         args.output <<std::endl;
+    return enabled;
+}
+
+bool
+AsmUnparser::StaticDataSkipBackEnd::operator()(bool enabled, const StaticDataArgs &args)
+{
+    if (enabled)
+        args.unparser->end_of_object(args.data->get_address() + args.data->get_size());
     return enabled;
 }
 
