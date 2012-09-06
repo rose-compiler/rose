@@ -194,29 +194,6 @@ class MyUnparser: public AsmUnparser {
         }
     };
 
-    template<class NodeType, class Args>
-    class DiscontiguousNotifier: public UnparserCallback {
-    public:
-        virtual bool operator()(bool enabled, const Args &args) {
-            if (enabled) {
-                MyUnparser *unparser = dynamic_cast<MyUnparser*>(args.unparser);
-                NodeType *node = args.get_node();
-                rose_addr_t va = node->get_address();
-                if (unparser->nprinted++>0 && va!=unparser->next_address) {
-                    if (va > unparser->next_address) {
-                        rose_addr_t nskipped = va - unparser->next_address;
-                        args.output <<"Skipping " <<nskipped <<" byte" <<(1==nskipped?"":"s") <<"\n";
-                    } else {
-                        rose_addr_t nskipped = unparser->next_address - va;
-                        args.output <<"Backward " <<nskipped <<" byte" <<(1==nskipped?"":"s") <<"\n";
-                    }
-                }
-                unparser->next_address = va + node->get_size();
-            }
-            return enabled;
-        }
-    };
-
     /* Disassembles data blocks.  Data blocks (other than padding and jump tables) are disassembled and we output the
      * instructions in address order after the data block. */
     class DataBlockDisassembler: public UnparserCallback {
@@ -249,24 +226,17 @@ class MyUnparser: public AsmUnparser {
 public:
     FuncName<SgAsmInstruction, AsmUnparser::UnparserCallback::InsnArgs> insn_func_name;
     FuncName<SgAsmStaticData,  AsmUnparser::UnparserCallback::StaticDataArgs> data_func_name;
-    DiscontiguousNotifier<SgAsmInstruction, AsmUnparser::UnparserCallback::InsnArgs> insn_skip;
-    DiscontiguousNotifier<SgAsmStaticData,  AsmUnparser::UnparserCallback::StaticDataArgs> data_skip;
     DataBlockDisassembler data_block_disassembler;
-    rose_addr_t next_address;
-    size_t nprinted;
 
     MyUnparser(BinaryAnalysis::ControlFlow::Graph &cfg, IdaInfo &ida, Disassembler *disassembler)
-        : insn_func_name(ida), data_func_name(ida), data_block_disassembler(disassembler),
-          next_address(0), nprinted(0) {
+        : insn_func_name(ida), data_func_name(ida), data_block_disassembler(disassembler) {
         add_control_flow_graph(cfg);
         set_organization(AsmUnparser::ORGANIZED_BY_ADDRESS);
         insnBlockEntry.show_function = false; // don't show function addresses since our own show_names() does that.
         insn_callbacks.pre
-            .append(&insn_func_name)
-            .after(&insnBlockSeparation, &insn_skip, 1);
+            .append(&insn_func_name);
         staticdata_callbacks.pre
-            .append(&data_func_name)
-            .after(&staticDataBlockSeparation, &data_skip, 1);
+            .append(&data_func_name);
         staticdata_callbacks.post
             .append(&data_block_disassembler);
     }
