@@ -102,6 +102,7 @@ AsmUnparser::init()
         .append(&staticDataComment);
     staticdata_callbacks.post
         .append(&staticDataLineTermination)
+        .append(&staticDataDisassembler)
         .append(&staticDataSkipBackEnd);        /* used only for ORGANIZED_BY_ADDRESS */
 
     datablock_callbacks.unparse
@@ -816,6 +817,56 @@ AsmUnparser::StaticDataLineTermination::operator()(bool enabled, const StaticDat
 {
     if (enabled)
         args.output <<std::endl;
+    return enabled;
+}
+
+void
+AsmUnparser::StaticDataDisassembler::reset()
+{
+    if (unparser_allocated_here)
+        delete unparser;
+    unparser_allocated_here = false;
+    disassembler = NULL;
+    unparser = NULL;
+}
+
+void
+AsmUnparser::StaticDataDisassembler::init(Disassembler *d, AsmUnparser *u)
+{
+    reset();
+    disassembler = d;
+
+    if (u) {
+        unparser = u;
+        unparser_allocated_here = false;
+    } else {
+        unparser = new AsmUnparser;
+        unparser->insn_callbacks.unparse.prepend(&data_note);
+        unparser_allocated_here = true;
+    }
+}
+
+bool
+AsmUnparser::StaticDataDisassembler::operator()(bool enabled, const StaticDataArgs &args)
+{
+    SgAsmBlock *block = SageInterface::getEnclosingNode<SgAsmBlock>(args.data);
+    if (enabled && block && disassembler && unparser &&
+        0==(block->get_reason() & SgAsmBlock::BLK_PADDING) &&
+        0==(block->get_reason() & SgAsmBlock::BLK_JUMPTABLE)) {
+        SgUnsignedCharList data = args.data->get_raw_bytes();
+        MemoryMap map;
+        map.insert(Extent(args.data->get_address(), data.size()),
+                   MemoryMap::Segment(MemoryMap::ExternBuffer::create(&data[0], data.size()), 0,
+                                      MemoryMap::MM_PROT_RX, "static data block"));
+        Disassembler::AddressSet worklist;
+        worklist.insert(args.data->get_address());
+        Disassembler::BadMap bad;
+        Disassembler::InstructionMap insns = disassembler->disassembleBuffer(&map, worklist, NULL, &bad);
+        for (Disassembler::InstructionMap::iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
+            unparser->unparse(args.output, ii->second);
+            SageInterface::deleteAST(ii->second);
+        }
+    }
     return enabled;
 }
 

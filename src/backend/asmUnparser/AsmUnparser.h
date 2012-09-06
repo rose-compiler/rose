@@ -6,6 +6,7 @@
 #include "callbacks.h"          /* Needed for ROSE_Callbacks::List<> */
 #include "BinaryControlFlow.h"
 #include "BinaryFunctionCall.h"
+#include "Disassembler.h"
 
 class SgAsmInstruction;
 class SgAsmBlock;
@@ -83,6 +84,7 @@ class SgAsmInterpretation;
  *               callback into smaller parts once we have something interesting to denote.</li>
  *           <li>StaticDataComment (unparse): emits any comment associated with the data.</li>
  *           <li>StaticDataLineTermination (post): emits a linefeed at the end of each data object.</li>
+ *           <li>StaticDataDisassembler (post): disassembles data as if it were code.</li>
  *           <li>StaticDataSkipBackEnd (post): updates skip/back info at the end of a static data block.</li>
  *        </ol>
  *     </li>
@@ -118,6 +120,44 @@ class SgAsmInterpretation;
  *
  *  Additional functors are defined within the AsmUnparser class but are not installed into the callback lists by
  *  default. They're only provided because they might be useful to end users.
+ *
+ *  @section AsmUnparser_SDD Static Data Disassembly
+ *
+ *  Sometimes ROSE mistakenly assumes that certain parts of the address space are static data. This can happen, for example,
+ *  when code is unreachable.  One common place this happens is when a call is made to a function that never returns, but the
+ *  compiler thought it might return.  It's often useful to be able to disassemble these static data areas and present them as
+ *  instructions (in addition to the usual data presentation).  Originally, this had to be done by hand using a derived
+ *  AsmUnparser class and registering a static data unparser that did the disassembly, but now the AsmUnparser class
+ *  defines a staticDataDisassembler callback (of type StaticDataDisassembler) for this purpose.  In order to disassemble
+ *  static data, one needs to provide the staticDataDisassembler with a disassembler.  One way to do that is to use the default
+ *  disassembler for the interpretation that's being unparsed.  One could also use the same disassembler that was originally
+ *  used to disassemble the entire specimen. In either case, setting the disassembler's recursion properties is probably wise
+ *  since static data is often meaningless as instructions.
+ *
+ *  @code
+ *  SgAsmInterpretation *interp = ...;
+ *  Disassembler *disassembler = Disassembler::lookup(interp)->clone();
+ *  disassembler->set_search(Disassembler::SEARCH_DEFAULT | Disassembler::SEARCH_DEADEND |
+ *                           Disassembler::SEARCH_UNKNOWN | Disassembler::SEARCH_UNUSED);
+ *  AsmUnparser unparser;
+ *  unparser.staticDataDisassembler.init(disassembler);
+ *  unparser.unparse(std::cout, interp);
+ *  delete disassembler; // ok to delete since we won't be using unparser anymore
+ *  @endcode
+ *
+ *  The output will look something like this:
+ *
+ *  @verbatim
+ 0x0804828f: 00 ff 35 a0 95 04 08 ff |..5.....|
+ 0x08048297: 25 a4 95 04 08 00 00 00 |%.......|
+ 0x0804829f: 00                      |.       | 17 bytes untyped data beginning at 0x0804828f
+ 0x0804828f: 00 ff                   |..      | (data)   add    bh, bh
+ 0x08048291: 35 a0 95 04 08          |5....   | (data)   xor    eax, 0x080495a0
+ 0x08048296: ff 25 a4 95 04 08       |.%....  | (data)   jmp    DWORD PTR ds:[0x080495a4]
+ 0x0804829c: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
+ 0x0804829e: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al @endverbatim
+ *
+ *  @section AsmUnparser_Examples Examples
  *
  *  This example shows how to escape entire instructions for HTML output, and surround each instruction with an HTML table row.
  *  We could have just as easily combined all three parts into a single functor, but doing it this way makes the example
@@ -510,6 +550,32 @@ public:
         virtual bool operator()(bool enabled, const StaticDataArgs &args);
     };
 
+    /** Disassembles static data as if it were code.   This callback only does something if it is first initialized with a
+     *  disassembler. It can also be initialized with an unparser, but that is optional (the default unparser will be the same
+     *  as a default-constructed AsmUnparser except that a pre-instruction callback is added to print the string "(data)" in
+     *  front of every instruction as a reminder that the instruction came from what ROSE considered to be static data. */
+    class StaticDataDisassembler: public UnparserCallback {
+    public:
+        class DataNote: public UnparserCallback {
+        public:
+            virtual bool operator()(bool enabled, const InsnArgs &args) {
+                if (enabled)
+                    args.output <<" (data)";
+                return enabled;
+            }
+        };
+
+        DataNote data_note;
+        Disassembler *disassembler;
+        AsmUnparser *unparser;
+        bool unparser_allocated_here;
+        StaticDataDisassembler(): disassembler(NULL), unparser(NULL), unparser_allocated_here(false) {}
+        ~StaticDataDisassembler() { reset(); }
+        virtual void reset();
+        virtual void init(Disassembler *disassembler, AsmUnparser *unparser=NULL);
+        virtual bool operator()(bool enabled, const StaticDataArgs &args);
+    };
+
     /** Update static data end address for skip/back reporting.  This callback should probably not be removed if skip/back
      *  reporting is enabled and output is organized by address. Removing it could cause other object types to loose track of
      *  where we are in the address space and thus make incorrect skip/back reports. */
@@ -671,6 +737,7 @@ public:
     StaticDataDetails staticDataDetails;
     StaticDataComment staticDataComment;
     StaticDataLineTermination staticDataLineTermination;
+    StaticDataDisassembler staticDataDisassembler;
     StaticDataSkipBackEnd staticDataSkipBackEnd;
 
     DataBlockBody dataBlockBody;
