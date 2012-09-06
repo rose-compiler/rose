@@ -103,11 +103,22 @@ unparseAsmStatement(SgAsmStatement* stmt)
 std::string
 unparseAsmInterpretation(SgAsmInterpretation* interp)
 {
+    // Build a control flow graph, but exclude all the basic blocks that are marked as disassembly leftovers.
+    struct NoLeftovers: public BinaryAnalysis::ControlFlow::VertexFilter {
+        virtual bool operator()(BinaryAnalysis::ControlFlow*, SgAsmBlock *blk) {
+            SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(blk);
+            return func && 0==(func->get_reason() & SgAsmFunction::FUNC_LEFTOVERS);
+        }
+    } vertex_filter;
+    BinaryAnalysis::ControlFlow cfg_analyzer;
+    cfg_analyzer.set_vertex_filter(&vertex_filter);
+    BinaryAnalysis::ControlFlow::Graph cfg;
+    cfg_analyzer.build_cfg_from_ast(interp, cfg/*out*/);
+
+    // Unparse the interpretation to a string.
     std::ostringstream s;
     AsmUnparser unparser;
     unparser.add_function_labels(interp);
-    BinaryAnalysis::ControlFlow::Graph cfg;
-    BinaryAnalysis::ControlFlow().build_cfg_from_ast(interp, cfg/*out*/);
     unparser.add_control_flow_graph(cfg);
     unparser.unparse(s, interp);
     return s.str();
