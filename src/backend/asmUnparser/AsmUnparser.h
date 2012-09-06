@@ -48,6 +48,7 @@ class SgAsmInterpretation;
  *     <li>Instruction callbacks (SgAsmInstruction).
  *        <ol>
  *           <li>InsnBlockSeparation (pre): emits inter-block spacing when output is organized by address.</li>
+ *           <li>InsnSkipBackStart (pre): prints skip/back info when output is organized by address.</li>
  *           <li>InsnFuncEntry (pre): emits function info at entry points when output is organized by address.</li>
  *           <li>InsnRawBytes (pre): emits address and raw bytes of instruction in a hexdump-like format.</li>
  *           <li>InsnBlockEntry (pre): emits info about first instruction of each block when output is organized by address.</li>
@@ -57,6 +58,7 @@ class SgAsmInterpretation;
  *               part of the pre-callbacks for basic blocks.</li>
  *           <li>InsnComment (post): emits any comment associated with the instruction.</li>
  *           <li>InsnLineTermination (post): emits a line feed at the end of the instruction.</li>
+ *           <li>InsnSkipBackEnd (post): updates skip/back info at the end of the instruction.</li>
  *        </ol>
  *     </li>
  *     <li>Basic block callbacks (SgAsmBlock objects containing only instruction objects).  These callbacks are not invoked
@@ -73,6 +75,7 @@ class SgAsmInterpretation;
  *     <li>StaticData (SgAsmStaticData):
  *        <ol>
  *           <li>StaticDataBlockSeparation (pre): emits inter-block spacing when output is organized by address.</li>
+ *           <li>StaticDataSkipBackStart (pre): prints skip/back info when output is organized by address.</li>
  *           <li>StaticDataRawBytes (pre): emits a hexdump-like output of the value.</li>
  *           <li>StaticDataBlockEntry (pre): emits info about the first data node of each data block when output is
  *               organzied by address.</li>
@@ -80,6 +83,7 @@ class SgAsmInterpretation;
  *               callback into smaller parts once we have something interesting to denote.</li>
  *           <li>StaticDataComment (unparse): emits any comment associated with the data.</li>
  *           <li>StaticDataLineTermination (post): emits a linefeed at the end of each data object.</li>
+ *           <li>StaticDataSkipBackEnd (post): updates skip/back info at the end of a static data block.</li>
  *        </ol>
  *     </li>
  *     <li>Data blocks (SgAsmBlock objects containing only data objects):
@@ -289,6 +293,15 @@ public:
      *                                  Instruction Callbacks
      **************************************************************************************************************************/
 
+    /** Functor to print skip/back information when an instruction is entered. Skip/back information can be enabled/disabled
+     *  across the entire unparser by calling the set_skipback_reporting() method. This callback can be removed per object type
+     *  without confusing other objects that define a similar callbacks (for example, to disable skip/back reporting for
+     *  instructions but leave it in place for static data). */
+    class InsnSkipBackBegin: public UnparserCallback {
+    public:
+        virtual bool operator()(bool enabled, const InsnArgs &args);
+    };
+
     /** Functor to emit basic block separation in output organized by address.  This does nothing if the output is organized by
      *  AST since the basic block callbacks handle it in that case. */
     class InsnBlockSeparation: public UnparserCallback {
@@ -359,6 +372,14 @@ public:
         virtual bool operator()(bool enabled, const InsnArgs &args);
     };
 
+    /** Update instruction end address for skip/back reporting.  This callback should probably not be removed if skip/back
+     *  reporting is enabled and output is organized by address. Removing it could cause other object types to loose track of
+     *  where we are in the address space and thus make incorrect skip/back reports. */
+    class InsnSkipBackEnd: public UnparserCallback {
+    public:
+        virtual bool operator()(bool enabled, const InsnArgs &args);
+    };
+
     /**************************************************************************************************************************
      *                                  Basic Block Callbacks
      **************************************************************************************************************************/
@@ -423,6 +444,15 @@ public:
      *                                  Static Data Callbacks
      **************************************************************************************************************************/
 
+    /** Functor to print skip/back information when a static data block is entered. Skip/back information can be
+     *  enabled/disabled across the entire unparser by calling the set_skipback_reporting() method. This callback can be
+     *  removed per object type without confusing other objects that define a similar callbacks (for example, to disable
+     *  skip/back reporting for static data blocks but leave it in place for instructions). */
+    class StaticDataSkipBackBegin: public UnparserCallback {
+    public:
+        virtual bool operator()(bool enabled, const StaticDataArgs &args);
+    };
+
     /** Functor to emit data block separation in output organized by address.  This does nothing if the output is organized by
      *  AST since the data block callbacks handle it in that case. */
     class StaticDataBlockSeparation: public UnparserCallback {
@@ -476,6 +506,14 @@ public:
 
     /** Functor to emit a blank line after every data block. */
     class StaticDataLineTermination: public UnparserCallback {
+    public:
+        virtual bool operator()(bool enabled, const StaticDataArgs &args);
+    };
+
+    /** Update static data end address for skip/back reporting.  This callback should probably not be removed if skip/back
+     *  reporting is enabled and output is organized by address. Removing it could cause other object types to loose track of
+     *  where we are in the address space and thus make incorrect skip/back reports. */
+    class StaticDataSkipBackEnd: public UnparserCallback {
     public:
         virtual bool operator()(bool enabled, const StaticDataArgs &args);
     };
@@ -605,6 +643,7 @@ public:
      *
      *  @{
      */
+    InsnSkipBackBegin insnSkipBackBegin;
     InsnBlockSeparation insnBlockSeparation;
     InsnFuncEntry insnFuncEntry;
     InsnAddress insnAddress;
@@ -614,6 +653,7 @@ public:
     InsnNoEffect insnNoEffect;
     InsnComment insnComment;
     InsnLineTermination insnLineTermination;
+    InsnSkipBackEnd insnSkipBackEnd;
 
     BasicBlockReasons basicBlockReasons;
     BasicBlockPredecessors basicBlockPredecessors;
@@ -624,12 +664,14 @@ public:
     BasicBlockLineTermination basicBlockLineTermination;
     BasicBlockCleanup basicBlockCleanup;
 
+    StaticDataSkipBackBegin staticDataSkipBackBegin;
     StaticDataBlockSeparation staticDataBlockSeparation;
     StaticDataRawBytes staticDataRawBytes;
     StaticDataBlockEntry staticDataBlockEntry;
     StaticDataDetails staticDataDetails;
     StaticDataComment staticDataComment;
     StaticDataLineTermination staticDataLineTermination;
+    StaticDataSkipBackEnd staticDataSkipBackEnd;
 
     DataBlockBody dataBlockBody;
     DataBlockLineTermination dataBlockLineTermination;
@@ -744,6 +786,20 @@ public:
      *  predecessors of a block.  Passing an empty graph will remove control flow information. */
     void add_control_flow_graph(const BinaryAnalysis::ControlFlow::Graph &cfg);
 
+    /** Controls printing of skip/back messages during linear output.  Each callback that prints an object that occupies
+     *  address space should call start_of_object() and end_of_object() before and after printing the object.  If output is
+     *  organized in the linear fashion and the start of an object does not coincide with the end of the previous object, and
+     *  if skip/back reporting is enabled, then a message about skipping ahead or backward is inserted into the unparse
+     *  output at that point.
+     *  @{ */
+    void set_skipback_reporting(bool b=true) { skipback.active=b; skipback.triggered=false; }
+    void clear_skipback_reporting() { set_skipback_reporting(false); }
+    bool get_skipback_reporting() const { return skipback.active; }
+    void reset_skipback() { skipback.triggered=false; skipback.va=0; }
+    void start_of_object(rose_addr_t, std::ostream&);
+    void end_of_object(rose_addr_t);
+    /** @} */
+
 protected:
     struct CallbackLists {
         ROSE_Callbacks::List<UnparserCallback> unparse;                 /**< The main unparsing callbacks. */
@@ -805,6 +861,14 @@ protected:
     /** A mapping from SgAsmFunction to call graph vertex.  This map is updated when the control flow graph is modified by the
      *  add_control_flow_graph() method. */
     CG_FunctionMap cg_functionmap;
+
+    /** Details for skip/back reporting. See set_skipback_reporting(). */
+    struct SkipBack {
+        SkipBack(): active(true), triggered(false), va(0) {}
+        bool active;                    /** Make reports? */
+        bool triggered;                 /** Have we seen the first object yet? Is the 'va' member valid? */
+        rose_addr_t va;                 /** Virtual address for previous end_of_object() call. */
+    } skipback;
 };
 
 #endif
