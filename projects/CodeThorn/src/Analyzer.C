@@ -299,9 +299,7 @@ EState Analyzer::transferFunction(Edge edge, const EState* eState) {
 	  newState[lhsVarId]=evalResult;
 	  cset.duplicateConstraints(lhsVarId, returnVarId); // duplicate constraints of $return to lhsVar
 	  newState.deleteVar(returnVarId); // remove $return from state
-	  cout << "DEBUG: constraints: before delete: "<<cset.toString()<<endl;
 	  cset.deleteConstraints(returnVarId); // remove constraints of $return
-	  cout << "DEBUG: constraints: after  delete: "<<cset.toString()<<endl;
 	  stateSet.insert(newState);
 	  return EState(edge.target,stateSet.statePtr(newState),cset);
 	}
