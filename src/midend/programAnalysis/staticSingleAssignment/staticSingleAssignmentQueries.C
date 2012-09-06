@@ -689,3 +689,4 @@ StaticSingleAssignment::NodeReachingDefTable StaticSingleAssignment::getLastVers
 
     return lastVersions;
 }
+

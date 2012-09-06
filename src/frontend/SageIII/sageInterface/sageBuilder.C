@@ -4991,6 +4991,9 @@ SageBuilder::buildVarRefExp(const std::string& varName, SgScopeStatement* scope)
 SgVarRefExp *
 SageBuilder::buildVarRefExp(const SgName& name, SgScopeStatement* scope/*=NULL*/)
    {
+     ROSE_ASSERT(scope != NULL);
+     printf ("In SageBuilder::buildVarRefExp(): scope = %p = %s = %s \n",scope,scope->class_name().c_str(),get_name(scope).c_str());
+
      if (scope == NULL)
           scope = SageBuilder::topScopeStack();
 
@@ -7105,9 +7108,16 @@ SgTypeFloat * SageBuilder::buildFloatType()
 //! Build a modifier type.
 SgModifierType* SageBuilder::buildModifierType(SgType* base_type /* = NULL*/)
    {
+  // DQ (9/3/2012): Added assertion.
+     ROSE_ASSERT(base_type != NULL);
+
   // DQ (7/28/2010): New (similar) approach using type table support.
      SgModifierType *result = new SgModifierType(base_type);
      ROSE_ASSERT(result != NULL);
+
+#if 1
+     printf ("In SageBuilder::buildModifierType(): Building a SgModifierType: result = %p base_type = %p = %s \n",result,base_type,base_type->class_name().c_str());
+#endif
 
   // DQ (7/28/2010): Insert result type into type table and return it, or 
   // replace the result type, if already available in the type table, with 
@@ -7116,7 +7126,12 @@ SgModifierType* SageBuilder::buildModifierType(SgType* base_type /* = NULL*/)
 
      if (result != result2)
         {
+#if 1
+       // DQ (9/3/2012): While debugging let's skip calling delete so that the slot in the memory pool will not be reused.
+          printf ("(debugging) In SageBuilder::buildModifierType(): Skipping delete of SgModifierType = %p = %s \n",result,result->class_name().c_str());
+#else
           delete result;
+#endif
         }
 
      return result2;
@@ -7132,17 +7147,37 @@ SgModifierType* SageBuilder::buildConstType(SgType* base_type /*=NULL*/)
      result->get_typeModifier().get_constVolatileModifier().setConst();
      return result;
 #else
+  // DQ (9/3/2012): Added assertion.
+     ROSE_ASSERT(base_type != NULL);
+
   // DQ (7/28/2010): New (similar) approach using type table support.
      SgModifierType *result = new SgModifierType(base_type);
      ROSE_ASSERT(result!=NULL);
      result->get_typeModifier().get_constVolatileModifier().setConst();
 
+#if 1
+     printf ("In SageBuilder::buildConstType(): Building a SgModifierType: result = %p base_type = %p = %s \n",result,base_type,base_type->class_name().c_str());
+#endif
+
   // DQ (7/28/2010): Insert result type into type table and return it, or 
   // replace the result type, if already available in the type table, with 
   // the type from type table.
-      SgModifierType *result2 = SgModifierType::insertModifierTypeIntoTypeTable(result);
+     SgModifierType *result2 = SgModifierType::insertModifierTypeIntoTypeTable(result);
+
      if (result != result2)
-       delete result;
+        {
+#if 1
+          printf ("In SageBuilder::buildConstType(result = %p) using type from type table (result2 = %p) deleting result = %p (skipping delete) \n",result,result2,result);
+#endif
+
+#if 1
+       // DQ (9/3/2012): While debugging let's skip calling delete so that the slot in the memory pool will not be reused.
+          printf ("(debugging) In SageBuilder::buildConstType(): Skipping delete of SgModifierType = %p = %s \n",result,result->class_name().c_str());
+#else
+          delete result;
+#endif
+        }
+
      return result2;
 #endif
  }
@@ -7151,15 +7186,29 @@ SgModifierType* SageBuilder::buildConstType(SgType* base_type /*=NULL*/)
 SgModifierType*
 SageBuilder::buildFortranKindType(SgType* base_type, SgExpression* kindExpression )
    {
+  // DQ (9/3/2012): Added assertion.
+     ROSE_ASSERT(base_type != NULL);
+
      SgModifierType *result = new SgModifierType(base_type);
      ROSE_ASSERT(result != NULL);
 
      result->set_type_kind(kindExpression);
 
+#if 1
+     printf ("In SageBuilder::buildFortranKindType(): Building a SgModifierType: result = %p base_type = %p = %s \n",result,base_type,base_type->class_name().c_str());
+#endif
+
      SgModifierType *result2 = SgModifierType::insertModifierTypeIntoTypeTable(result);
 
      if (result != result2)
+        {
+#if 1
+       // DQ (9/3/2012): While debugging let's skip calling delete so that the slot in the memory pool will not be reused.
+          printf ("(debugging) In SageBuilder::buildFortranKindType(): Skipping delete of SgModifierType = %p = %s \n",result,result->class_name().c_str());
+#else
           delete result;
+#endif
+        }
 
      return result2;
    }
@@ -7168,17 +7217,32 @@ SageBuilder::buildFortranKindType(SgType* base_type, SgExpression* kindExpressio
   //! Build a volatile type.
 SgModifierType* SageBuilder::buildVolatileType(SgType* base_type /*=NULL*/)
    {
+  // DQ (9/3/2012): Added assertion.
+     ROSE_ASSERT(base_type != NULL);
+
      SgModifierType *result = new SgModifierType(base_type);
      ROSE_ASSERT(result!=NULL);
 
      result->get_typeModifier().get_constVolatileModifier().setVolatile();
+
+#if 1
+     printf ("In SageBuilder::buildVolatileType(): Building a SgModifierType: result = %p base_type = %p = %s \n",result,base_type,base_type->class_name().c_str());
+#endif
 
   // DQ (7/29/2010): Insert result type into type table and return it, or 
   // replace the result type, if already available in the type table, with 
   // the type from type table.
      SgModifierType * result2 = SgModifierType::insertModifierTypeIntoTypeTable(result);
      if (result != result2)
-       delete result;
+        {
+#if 1
+       // DQ (9/3/2012): While debugging let's skip calling delete so that the slot in the memory pool will not be reused.
+          printf ("(debugging) In SageBuilder::buildVolatileType(): Skipping delete of SgModifierType = %p = %s \n",result,result->class_name().c_str());
+#else
+          delete result;
+#endif
+        }
+
      return result2;
    }
 
@@ -7186,7 +7250,7 @@ SgModifierType* SageBuilder::buildVolatileType(SgType* base_type /*=NULL*/)
   //! Build a restrict type.
 SgModifierType* SageBuilder::buildRestrictType(SgType* base_type)
    {
-     ROSE_ASSERT(base_type!=NULL);
+     ROSE_ASSERT(base_type != NULL);
      if (!isSgPointerType(base_type) && !isSgReferenceType(base_type))
         {
           printf("Base type of restrict type must be a pointer or reference type.\n");
@@ -7197,12 +7261,24 @@ SgModifierType* SageBuilder::buildRestrictType(SgType* base_type)
 
      result->get_typeModifier().setRestrict();
 
+#if 1
+     printf ("In SageBuilder::buildRestrictType(): Building a SgModifierType: result = %p base_type = %p = %s \n",result,base_type,base_type->class_name().c_str());
+#endif
+
   // DQ (7/29/2010): Insert result type into type table and return it, or 
   // replace the result type, if already available in the type table, with 
   // the type from type table.
      SgModifierType * result2 = SgModifierType::insertModifierTypeIntoTypeTable(result);
      if (result != result2)
-       delete result;
+        {
+#if 1
+       // DQ (9/3/2012): While debugging let's skip calling delete so that the slot in the memory pool will not be reused.
+          printf ("(debugging) In SageBuilder::buildRestrictType(): Skipping delete of SgModifierType = %p = %s \n",result,result->class_name().c_str());
+#else
+          delete result;
+#endif
+        }
+
      return result2;
    }
 
@@ -7210,17 +7286,32 @@ SgModifierType* SageBuilder::buildRestrictType(SgType* base_type)
   //! Build a UPC strict type.
 SgModifierType* SageBuilder::buildUpcStrictType(SgType* base_type /*=NULL*/)
    {
+  // DQ (9/3/2012): Added assertion.
+     ROSE_ASSERT(base_type != NULL);
+
      SgModifierType *result = new SgModifierType(base_type);
      ROSE_ASSERT(result!=NULL);
 
      result->get_typeModifier().get_upcModifier().set_modifier(SgUPC_AccessModifier::e_upc_strict);
+
+#if 1
+     printf ("In SageBuilder::buildUpcStrictType(): Building a SgModifierType: result = %p base_type = %p = %s \n",result,base_type,base_type->class_name().c_str());
+#endif
 
   // DQ (7/29/2010): Insert result type into type table and return it, or 
   // replace the result type, if already available in the type table, with 
   // the type from type table.
      SgModifierType *result2 = SgModifierType::insertModifierTypeIntoTypeTable(result);
      if (result != result2)
-       delete result;
+        {
+#if 1
+       // DQ (9/3/2012): While debugging let's skip calling delete so that the slot in the memory pool will not be reused.
+          printf ("(debugging) In SageBuilder::buildUpcStrictType(): Skipping delete of SgModifierType = %p = %s \n",result,result->class_name().c_str());
+#else
+          delete result;
+#endif
+        }
+
      return result2;
    }
 
@@ -7228,17 +7319,32 @@ SgModifierType* SageBuilder::buildUpcStrictType(SgType* base_type /*=NULL*/)
   //! Build a UPC relaxed type.
 SgModifierType* SageBuilder::buildUpcRelaxedType(SgType* base_type /*=NULL*/)
    {
+  // DQ (9/3/2012): Added assertion.
+     ROSE_ASSERT(base_type != NULL);
+
      SgModifierType *result = new SgModifierType(base_type);
      ROSE_ASSERT(result!=NULL);
 
      result->get_typeModifier().get_upcModifier().set_modifier(SgUPC_AccessModifier::e_upc_relaxed);
+
+#if 1
+     printf ("In SageBuilder::buildUpcRelaxedType(): Building a SgModifierType: result = %p base_type = %p = %s \n",result,base_type,base_type->class_name().c_str());
+#endif
 
   // DQ (7/29/2010): Insert result type into type table and return it, or 
   // replace the result type, if already available in the type table, with 
   // the type from type table.
      SgModifierType * result2 = SgModifierType::insertModifierTypeIntoTypeTable(result);
      if (result != result2)
-       delete result;
+        {
+#if 1
+       // DQ (9/3/2012): While debugging let's skip calling delete so that the slot in the memory pool will not be reused.
+          printf ("(debugging) In SageBuilder::buildUpcRelaxedType(): Skipping delete of SgModifierType = %p = %s \n",result,result->class_name().c_str());
+#else
+          delete result;
+#endif
+        }
+
      return result2;
    }
 
@@ -7246,6 +7352,9 @@ SgModifierType* SageBuilder::buildUpcRelaxedType(SgType* base_type /*=NULL*/)
   //! Build a UPC shared type.
 SgModifierType* SageBuilder::buildUpcSharedType(SgType* base_type /*=NULL*/, long layout /*= -1*/)
    {
+  // DQ (9/3/2012): Added assertion.
+     ROSE_ASSERT(base_type != NULL);
+
      SgModifierType *result = new SgModifierType(base_type);
      ROSE_ASSERT(result!=NULL);
 
@@ -7255,12 +7364,24 @@ SgModifierType* SageBuilder::buildUpcSharedType(SgType* base_type /*=NULL*/, lon
   // result->get_typeModifier().get_upcModifier().set_layout(-1); // No layout ("shared" without a block size)
      result->get_typeModifier().get_upcModifier().set_layout(layout); // No layout ("shared" without a block size)
 
+#if 1
+     printf ("In SageBuilder::buildUpcSharedType(): Building a SgModifierType: result = %p base_type = %p = %s \n",result,base_type,base_type->class_name().c_str());
+#endif
+
   // DQ (7/29/2010): Insert result type into type table and return it, or 
   // replace the result type, if already available in the type table, with 
   // the type from type table.
      SgModifierType * result2 = SgModifierType::insertModifierTypeIntoTypeTable(result);
      if (result != result2)
-       delete result;
+        {
+#if 1
+       // DQ (9/3/2012): While debugging let's skip calling delete so that the slot in the memory pool will not be reused.
+          printf ("(debugging) In SageBuilder::buildUpcSharedType(): Skipping delete of SgModifierType = %p = %s \n",result,result->class_name().c_str());
+#else
+          delete result;
+#endif
+        }
+
      return result2;
    }
 
@@ -7268,10 +7389,17 @@ SgModifierType* SageBuilder::buildUpcSharedType(SgType* base_type /*=NULL*/, lon
   //! Build a UPC shared[] type.
 SgModifierType* SageBuilder::buildUpcBlockIndefiniteType(SgType* base_type /*=NULL*/)
    {
+  // DQ (9/3/2012): Added assertion.
+     ROSE_ASSERT(base_type != NULL);
+
      SgModifierType *result = isSgModifierType(buildUpcSharedType(base_type));
      ROSE_ASSERT(result!=NULL);
 
      result->get_typeModifier().get_upcModifier().set_layout(0); // [] layout
+
+#if 1
+     printf ("In SageBuilder::buildUpcBlockIndefiniteType(): Building a SgModifierType: result = %p base_type = %p = %s \n",result,base_type,base_type->class_name().c_str());
+#endif
 
   // DQ (7/29/2010): Insert result type into type table and return it, or 
   // replace the result type, if already available in the type table, with 
@@ -7285,10 +7413,17 @@ SgModifierType* SageBuilder::buildUpcBlockIndefiniteType(SgType* base_type /*=NU
   //! Build a UPC shared[*] type.
 SgModifierType* SageBuilder::buildUpcBlockStarType(SgType* base_type /*=NULL*/)
    {
+  // DQ (9/3/2012): Added assertion.
+     ROSE_ASSERT(base_type != NULL);
+
      SgModifierType *result = isSgModifierType(buildUpcSharedType(base_type));
      ROSE_ASSERT(result!=NULL);
 
      result->get_typeModifier().get_upcModifier().set_layout(-2); // [*] layout
+
+#if 1
+     printf ("In SageBuilder::buildUpcBlockStarType(): Building a SgModifierType: result = %p base_type = %p = %s \n",result,base_type,base_type->class_name().c_str());
+#endif
 
   // DQ (7/29/2010): Insert result type into type table and return it, or 
   // replace the result type, if already available in the type table, with 
@@ -7302,10 +7437,17 @@ SgModifierType* SageBuilder::buildUpcBlockStarType(SgType* base_type /*=NULL*/)
   //! Build a UPC shared[n] type.
 SgModifierType* SageBuilder::buildUpcBlockNumberType(SgType* base_type, long block_factor)
    {
+  // DQ (9/3/2012): Added assertion.
+     ROSE_ASSERT(base_type != NULL);
+
      SgModifierType *result = isSgModifierType(buildUpcSharedType(base_type));
      ROSE_ASSERT(result!=NULL);
 
      result->get_typeModifier().get_upcModifier().set_layout(block_factor); // [block_factor] layout
+
+#if 1
+     printf ("In SageBuilder::buildUpcBlockNumberType(): Building a SgModifierType: result = %p base_type = %p = %s \n",result,base_type,base_type->class_name().c_str());
+#endif
 
   // DQ (7/29/2010): Insert result type into type table and return it, or 
   // replace the result type, if already available in the type table, with 
@@ -7320,6 +7462,9 @@ SgModifierType* SageBuilder::buildUpcBlockNumberType(SgType* base_type, long blo
   //! Build a complex type.
 SgTypeComplex* SageBuilder::buildComplexType(SgType* base_type /*=NULL*/)
  {
+  // DQ (9/3/2012): Added assertion.
+     ROSE_ASSERT(base_type != NULL);
+
    SgTypeComplex *result = new SgTypeComplex(base_type);
    ROSE_ASSERT(result!=NULL);
    return result;
@@ -7328,10 +7473,14 @@ SgTypeComplex* SageBuilder::buildComplexType(SgType* base_type /*=NULL*/)
   //! Build an imaginary type.
 SgTypeImaginary* SageBuilder::buildImaginaryType(SgType* base_type /*=NULL*/)
  {
+  // DQ (9/3/2012): Added assertion.
+     ROSE_ASSERT(base_type != NULL);
+
    SgTypeImaginary *result = new SgTypeImaginary(base_type);
    ROSE_ASSERT(result!=NULL);
    return result;
  }
+
 //! Build a const/volatile type qualifier
 SgConstVolatileModifier * SageBuilder::buildConstVolatileModifier (SgConstVolatileModifier::cv_modifier_enum mtype/*=SgConstVolatileModifier::e_unknown*/)
 {
@@ -7461,7 +7610,7 @@ SageBuilder::buildNondefiningClassDeclaration_nfi(const SgName& XXX_name, SgClas
           ROSE_ASSERT(templateArgumentsList != NULL);
           nameWithTemplateArguments = appendTemplateArgumentsToName(nameWithoutTemplateArguments,*templateArgumentsList);
 
-#if 0
+#if 1
           printf ("Building a SgClassDeclaration: buildNondefiningClassDeclaration_nfi() nameWithTemplateArguments = %s buildTemplateInstantiation = %s \n",nameWithTemplateArguments.str(),buildTemplateInstantiation ? "true:" : "false");
 #endif
 
@@ -7572,20 +7721,35 @@ SageBuilder::buildNondefiningClassDeclaration_nfi(const SgName& XXX_name, SgClas
        // SgClassSymbol* mysymbol = scope->lookup_nontemplate_class_symbol(nameWithTemplateArguments);
           SgClassSymbol* mysymbol = scope->lookup_nontemplate_class_symbol(nameWithTemplateArguments,templateArgumentsList);
 
-          printf ("In SageBuilder::buildNondefiningClassDeclaration(): mysymbol = %p \n",mysymbol);
+          printf ("In SageBuilder::buildNondefiningClassDeclaration(): mysymbol = %p = %s \n",mysymbol,(mysymbol != NULL) ? mysymbol->class_name().c_str() : "null");
+
           if (mysymbol != NULL)
              {
                firstNondefdecl = isSgClassDeclaration(mysymbol->get_declaration());
                ROSE_ASSERT(firstNondefdecl != NULL);
+
+            // DQ (9/4/2012): Added assertion.
+               ROSE_ASSERT(firstNondefdecl->get_type() != NULL);
 
             // DQ (3/22/2012): Now we can built the type and have it use the same nondefining declaration as from the symbol (required to match).
                ROSE_ASSERT(nondefdecl->get_type() == NULL);
 
                if (nondefdecl->get_type() == NULL)
                   {
+                    printf ("In SageBuilder::buildNondefiningClassDeclaration(): Why are we creating a new type instead of reusing the type (firstNondefdecl->get_type() = %p) from the firstNondefdecl = %p \n",firstNondefdecl->get_type(),firstNondefdecl);
+
+                 // Note: It would be better to just call: "nondefdecl->set_type(firstNondefdecl->get_type());"
+                    printf ("NOTE: Call nondefdecl->set_type(firstNondefdecl->get_type()); instead of nondefdecl->set_type(SgClassType::createType(firstNondefdecl)); \n");
+
                  // DQ (3/22/2012): Be careful to use the same declaration as from the symbol.
                  // nondefdecl->set_type(SgClassType::createType(nondefdecl));
                     nondefdecl->set_type(SgClassType::createType(firstNondefdecl));
+                    ROSE_ASSERT(nondefdecl->get_type() != NULL);
+
+                    printf ("In SageBuilder::buildNondefiningClassDeclaration(): nondefdecl->get_type() = %p = %s \n",nondefdecl->get_type(),nondefdecl->get_type()->class_name().c_str());
+
+                 // DQ (9/4/2012): Added assertion.
+                    ROSE_ASSERT(nondefdecl->get_type() == firstNondefdecl->get_type());
                   }
 
 #if (REUSE_CLASS_DECLARATION_FROM_SYMBOL == 0)
@@ -7601,6 +7765,9 @@ SageBuilder::buildNondefiningClassDeclaration_nfi(const SgName& XXX_name, SgClas
                ROSE_ASSERT(firstNondefdecl != NULL);
                ROSE_ASSERT(firstNondefdecl->get_type() != NULL);
 
+            // DQ (9/4/2012): We can now assert this because of how the type is constructed above.
+               ROSE_ASSERT (nondefdecl->get_type() == firstNondefdecl->get_type());
+
             // Share the type!
                if (nondefdecl->get_type() != firstNondefdecl->get_type())
                   {
@@ -7610,7 +7777,7 @@ SageBuilder::buildNondefiningClassDeclaration_nfi(const SgName& XXX_name, SgClas
                  // delete nondefdecl->get_type();
                     printf ("Setting the new type to be from firstNondefdecl = %p (sharing type) firstNondefdecl->get_type() = %p = %s \n",firstNondefdecl,firstNondefdecl->get_type(),firstNondefdecl->get_type()->class_name().c_str());
                     nondefdecl->set_type(firstNondefdecl->get_type());
-#if 0
+#if 1
                  // DQ (12/13/2011): Is this executed!
                     printf ("Unclear if this code is executed \n");
                     ROSE_ASSERT(false);
@@ -7666,6 +7833,8 @@ SageBuilder::buildNondefiningClassDeclaration_nfi(const SgName& XXX_name, SgClas
                     nondefdecl->set_type(SgClassType::createType(nondefdecl));
                   }
 
+               printf ("NOTE: In buildNondefiningClassDeclaration_nfi(): 2nd time this is a performance issue (maybe) to call the lookup_nontemplate_class_symbol() again \n");
+
             // DQ (8/22/2012): Use the template arguments to further disambiguate names that would 
             // not include name qualification on template arguments.
             // DQ (12/27/2011): Added new test.
@@ -7690,6 +7859,8 @@ SageBuilder::buildNondefiningClassDeclaration_nfi(const SgName& XXX_name, SgClas
      ROSE_ASSERT(nondefdecl->get_type() != NULL);
 
      ROSE_ASSERT(nondefdecl->get_parent() != NULL);
+
+     printf ("NOTE: In buildNondefiningClassDeclaration_nfi(): 3rd time this is a performance issue (maybe) to call the lookup_nontemplate_class_symbol() again \n");
 
   // DQ (8/22/2012): Use the template arguments to further disambiguate names that would not include name qualification on template arguments.
   // DQ (12/27/2011): Added new test.
@@ -8251,7 +8422,7 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
 
 
   // Note that the nonDefiningDecl pointer does not appear to be used.
-#if 0
+#if 1
       printf ("WARNING: In SageBuilder::buildClassDeclaration_nfi(): the nonDefiningDecl pointer = %p (input parameter) does not appear to be used. \n",nonDefiningDecl);
 #endif
 
@@ -8301,7 +8472,7 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
      SgClassSymbol* mysymbol = NULL;
      if (scope != NULL)
         {
-#if 0
+#if 1
           printf ("Looking up the SgClassSymbol in scope = %p = %s nameWithTemplateArguments = %s \n",scope,scope->class_name().c_str(),nameWithTemplateArguments.str());
 #endif
 
@@ -8321,7 +8492,7 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
        // printf ("Warning: In SageBuilder::buildClassDeclaration_nfi(): scope == NULL \n");
         }
 
-#if 0
+#if 1
      printf ("In SageBuilder::buildClassDeclaration_nfi(): mysymbol = %p \n",mysymbol);
 #endif
 
@@ -8351,7 +8522,7 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
         }
        else // build a nondefnining declaration if it does not exist
         {
-#if 0
+#if 1
           printf ("In In SageBuilder::buildClassDeclaration_nfi(): building a nondefnining declaration if it does not exist \n");
 #endif
        // DQ (1/25/2009): We only want to build a new declaration if we can't reuse the existing declaration.
@@ -8407,6 +8578,9 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
             else
              {
             // We know that the name without template arguments should be used here (but they are the same).
+#if 1
+               printf ("WARNING: In buildClassDeclaration_nfi(): Are we building a new SgClassDeclaration as a nondefining declaration when we should be using the nonDefiningDecl = %p \n",nonDefiningDecl);
+#endif
             // nondefdecl = new SgClassDeclaration(name,kind,NULL,NULL);
                nondefdecl = new SgClassDeclaration(nameWithoutTemplateArguments,kind,NULL,NULL);
 
@@ -8451,6 +8625,10 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
                printf ("nondefdecl = %p = %s nondefdecl->get_type()->get_declaration() = %p = %s \n",nondefdecl,nondefdecl->class_name().c_str(),nondefdecl->get_type()->get_declaration(),nondefdecl->get_type()->get_declaration()->class_name().c_str());
              }
           ROSE_ASSERT(nondefdecl->get_type()->get_declaration() == nondefdecl);
+
+#if 1
+          printf ("In buildClassDeclaration_nfi(): after set_type(): nondefdecl = %p = %s nondefdecl->get_type() = %p = %s \n",nondefdecl,nondefdecl->class_name().c_str(),nondefdecl->get_type(),nondefdecl->get_type()->class_name().c_str());
+#endif
 
        // printf ("SageBuilder::buildClassDeclaration_nfi(): nondefdecl = %p \n",nondefdecl);
 
@@ -8690,9 +8868,16 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
           ROSE_ASSERT (nondefdecl->get_type() != NULL);
           defdecl->set_type(nondefdecl->get_type());
 
+#if 1
+          printf ("In buildClassDeclaration_nfi(): defdecl = %p = %s defdecl->get_type() = %p = %s \n",defdecl,defdecl->class_name().c_str(),defdecl->get_type(),defdecl->get_type()->class_name().c_str());
+#endif
+
           ROSE_ASSERT (nondefdecl->get_firstNondefiningDeclaration() != NULL);
           ROSE_ASSERT (nondefdecl->get_type()->get_declaration() == isSgDeclarationStatement(nondefdecl->get_firstNondefiningDeclaration()));
         }
+
+  // DQ (9/4/2012): Added assertion.
+     ROSE_ASSERT (defdecl->get_type() == nondefdecl->get_type());
 
   // patch up the SgClassType for the defining class declaration
      ROSE_ASSERT (nondefdecl->get_type() != NULL);
@@ -8713,7 +8898,18 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
      ROSE_ASSERT (nondefdecl->get_type()->get_declaration() == isSgDeclarationStatement(nondefdecl->get_firstNondefiningDeclaration()));
      ROSE_ASSERT (nondefdecl->get_type()->get_declaration() == isSgDeclarationStatement(nondefdecl));
 
+  // DQ (9/4/2012): Added assertion.
+     ROSE_ASSERT (defdecl->get_type() == nondefdecl->get_type());
+
+  // This appears to be redundant...is it?
      defdecl->set_type(nondefdecl->get_type());
+
+#if 1
+     printf ("In buildClassDeclaration_nfi(): after calling set_type() again: defdecl = %p = %s defdecl->get_type() = %p = %s \n",defdecl,defdecl->class_name().c_str(),defdecl->get_type(),defdecl->get_type()->class_name().c_str());
+#endif
+
+  // DQ (9/4/2012): Added assertion.
+     ROSE_ASSERT (defdecl->get_type() == nondefdecl->get_type());
 
   // I don't think this is always a forward declaration (e.g. if it is not used in a prototype).
   // Checking the olded EDG/ROSE interface it appears that it is always marked forward (unless 
@@ -8722,9 +8918,20 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
 
      if (scope != NULL)  // put into fixStructDeclaration() or alike later on
         {
+       // DQ (9/4/2012): Added assertion.
+          ROSE_ASSERT (defdecl->get_type() == nondefdecl->get_type());
+
        // Note, this function sets the parent to be the scope if it is not already set.
           fixStructDeclaration(defdecl,scope);
+
+       // DQ (9/4/2012): Added assertion.
+          ROSE_ASSERT (defdecl->get_type() == nondefdecl->get_type());
+
           fixStructDeclaration(nondefdecl,scope);
+
+       // DQ (9/4/2012): Added assertion.
+          ROSE_ASSERT (defdecl->get_type() == nondefdecl->get_type());
+
 #if 0
           SgClassSymbol* mysymbol = new SgClassSymbol(nondefdecl);
           ROSE_ASSERT(mysymbol);

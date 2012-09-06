@@ -335,3 +335,4 @@ void DefsAndUsesTraversal::CollectDefsAndUses(SgNode* traversalRoot, DefsAndUses
     defs.insert(traversal.cfgNodeToDefinedVars.begin(), traversal.cfgNodeToDefinedVars.end());
     uses.insert(traversal.astNodeToUsedVars.begin(), traversal.astNodeToUsedVars.end());
 }
+
