@@ -1310,6 +1310,7 @@ main(int argc, char *argv[])
         unparser.add_function_labels(block);
         unparser.set_organization(do_linear ? AsmUnparser::ORGANIZED_BY_ADDRESS : AsmUnparser::ORGANIZED_BY_AST);
         unparser.add_control_flow_graph(cfg);
+        unparser.staticDataDisassembler.init(disassembler); // disassemble static data blocks
         fputs("\n\n", stdout);
         unparser.unparse(std::cout, block);
         fputs("\n\n", stdout);
