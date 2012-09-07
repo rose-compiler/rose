@@ -490,11 +490,20 @@ int main( int argc, char * argv[] ) {
       }
 	  
       cout<<normal<<"Verifying formula "<<magenta<< string(*ltl_val) <<normal<<"."<<endl;
-      checker.verify(*ltl_val);
-	  
+      try {
+	if (checker.verify(*ltl_val))
+	  cout<<green<< "YES" << endl;
+	else
+	  cout<<green<< "NO" << endl;
+      } catch(...) {
+	cout<<red<< "FAILED" << endl;
+      }  
     }
     fclose(ltl_input);
   } 
+
+  // reset terminal
+  cout<<normal<<"done."<<endl;
   
   } catch(char* str) {
 	cerr << "*Exception raised: " << str << endl;
@@ -505,6 +514,5 @@ int main( int argc, char * argv[] ) {
  }
   return 0;
 #endif
-
 }
 

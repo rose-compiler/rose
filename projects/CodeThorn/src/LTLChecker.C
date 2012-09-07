@@ -2,6 +2,8 @@
 #include <boost/graph/graph_traits.hpp>
 #include <boost/graph/adjacency_list.hpp>
 
+//  Written 2012 by Adrian Prantl <adrian@llnl.gov>.
+
 using namespace LTL;
 using namespace boost;
 
@@ -16,36 +18,98 @@ typedef adjacency_list<vecS, vecS, bidirectionalS, const EState*> BoostTransitio
 typedef graph_traits<BoostTransitionGraph> GraphTraits;
 
 #define FOR_EACH_TRANSITION(TRANSITION)				     \
-  for (TransitionGraph::iterator TRANSITION=transitionGraph.begin(); \
+  for (TransitionGraph::const_iterator TRANSITION=transitionGraph.begin(); \
        TRANSITION != transitionGraph.end();			     \
        ++TRANSITION)						     
 
 #define FOR_EACH_STATE(STATE, LABEL)			             \
   Label LABEL=0;                                                     \
-  for (EStateSet::iterator STATE=eStateSet.begin();     	     \
+  for (EStateSet::const_iterator STATE=eStateSet.begin();     	     \
        STATE != eStateSet.end();				     \
        ++STATE, ++LABEL)						     
 #define props ltl_properties[label]
 
-class Visualizer: public BottomUpVisitor {
+
+/**
+ * DOT visualization of the LTL Checker result
+ */
+class Visualizer: public TopDownVisitor {
 public: 
   Visualizer(LTLProperties& p, Label state)
-    : ltl_properties(p), label(state) {}
+    : ltl_properties(p), label(state), n(1234567) {}
   LTLProperties& ltl_properties;
   Label label;
   stringstream s;
+  int n; // consecutive labeling of dot node
+  static const int shift = 16777216;
 
-  void visit(const InputSymbol* e)  {s<<props[e];}
-  void visit(const OutputSymbol* e) {s<<props[e];}
-  void visit(const Not* e)	    {s<<"("<<props[e]<<" = "<<"!"<<props[e->expr]<<")";}
-  void visit(const Next* e)	    {s<<"("<<props[e]<<" = "<<"X"<<props[e->expr]<<")";}
-  void visit(const Eventually* e)   {s<<"("<<props[e]<<" = "<<"F"<<props[e->expr]<<")";}
-  void visit(const Globally* e)	    {s<<"("<<props[e]<<" = "<<"G"<<props[e->expr]<<")";}
-  void visit(const And* e)      {s<<"("<<props[e]<<"="<<props[e->expr1]<<" & "<<props[e->expr2]<<")";}
-  void visit(const Or* e)	{s<<"("<<props[e]<<"="<<props[e->expr1]<<" | "<<props[e->expr2]<<")";}
-  void visit(const Until* e)	{s<<"("<<props[e]<<"="<<props[e->expr1]<<" U "<<props[e->expr2]<<")";}
-  void visit(const WeakUntil* e){s<<"("<<props[e]<<"="<<props[e->expr1]<<" WU "<<props[e->expr2]<<")";}
-  void visit(const Release* e)	{s<<"("<<props[e]<<"="<<props[e->expr1]<<" R "<<props[e->expr2]<<")";}
+  struct Attr: public InheritedAttribute { 
+    Attr(int i) : dot_label(i) {}
+    int dot_label;
+  };
+  static Attr* get(IAttr a) { return static_cast<Attr*>(a.get()); }
+  static IAttr newAttr(int n)  { return IAttr((InheritedAttribute*)new Attr(n)); }
+  int newNode(IAttr a) { 
+    int node = label*shift+n++;
+    s<<node<<" -> "<<get(a)->dot_label<<" [color=green];\n  "; 
+    return node;
+  }
+
+  IAttr visit(const InputSymbol* e, IAttr a)  {
+    int node = newNode(a);
+    s<<node<<" [label=\""<<props[e]<<"\"];\n  ";
+    return newAttr(node);
+  }
+  IAttr visit(const OutputSymbol* e, IAttr a) {
+    int node = newNode(a);
+    s<<node<<" [label=\""<<props[e]<<"\"];\n  ";
+    return newAttr(node);
+  }
+  IAttr visit(const Not* e, IAttr a) {
+    int node = newNode(a);
+    s<<node<<" [label=\""<<props[e]<<" = "<<"!"<<props[e->expr]<<"\"];\n  ";
+    return newAttr(node);
+  }
+  IAttr visit(const Next* e, IAttr a) {
+    int node = newNode(a);
+    s<<node<<" [label=\""<<"("<<props[e]<<" = "<<"X"<<props[e->expr]<<")\"];\n  ";
+    return newAttr(node);
+  }
+  IAttr visit(const Eventually* e, IAttr a) {
+    int node = newNode(a);
+    s<<node<<" [label=\""<<"("<<props[e]<<" = "<<"F"<<props[e->expr]<<")\"];\n  ";
+    return newAttr(node);
+  }
+  IAttr visit(const Globally* e, IAttr a) {
+    int node = newNode(a);
+    s<<node<<" [label=\""<<"("<<props[e]<<" = "<<"G"<<props[e->expr]<<")\"];\n  ";
+    return newAttr(node);
+  }
+  IAttr visit(const And* e, IAttr a) {
+    int node = newNode(a);
+    s<<node<<" [label=\""<<"("<<props[e]<<"="<<props[e->expr1]<<" & "<<props[e->expr2]<<")\"];\n  ";
+    return newAttr(node);
+  }
+  IAttr visit(const Or* e, IAttr a) {
+    int node = newNode(a);
+    s<<node<<" [label=\""<<"("<<props[e]<<"="<<props[e->expr1]<<" | "<<props[e->expr2]<<")\"];\n  ";
+    return newAttr(node);
+  }
+  IAttr visit(const Until* e, IAttr a)	{
+    int node = newNode(a);
+    s<<node<<" [label=\""<<"("<<props[e]<<"="<<props[e->expr1]<<" U "<<props[e->expr2]<<")\"];\n  ";
+    return newAttr(node);
+  }
+  IAttr visit(const WeakUntil* e, IAttr a) {
+    int node = newNode(a);
+    s<<node<<" [label=\""<<"("<<props[e]<<"="<<props[e->expr1]<<" WU "<<props[e->expr2]<<")\"];\n  ";
+    return newAttr(node);
+  }
+  IAttr visit(const Release* e, IAttr a) {
+    int node = newNode(a);
+    s<<node<<" [label=\""<<"("<<props[e]<<"="<<props[e->expr1]<<" R "<<props[e->expr2]<<")\"];\n  ";
+    return newAttr(node);
+  }
 };
 
 Checker::Checker(EStateSet& ess, TransitionGraph& g)
@@ -68,14 +132,14 @@ Checker::Checker(EStateSet& ess, TransitionGraph& g)
  *
  * TODO: Are there better anmes for these classes?
  */
-class Verifyer: public BottomUpVisitor {
+class Verifier: public BottomUpVisitor {
   EStateSet& eStateSet;
   BoostTransitionGraph& g;
   Label start;
 public:
   LTLProperties ltl_properties;
 
-  Verifyer(EStateSet& ess, BoostTransitionGraph& btg, Label start_label, int max_label) 
+  Verifier(EStateSet& ess, BoostTransitionGraph& btg, Label start_label, int max_label) 
     : eStateSet(ess), g(btg), start(start_label) {
     // reserve a result map for each label
     // it maps an analysis result to each sub-expression of the ltl formula
@@ -137,12 +201,75 @@ public:
     }										      \
   }
 
+  /**
+   * perform a backward-directed fixpoint iteration over all states
+   *
+   * since our programs do not necessarily have exit nodes, we start
+   * the working set with all nodes where START == true.
+   *
+   * FIXME: rewrite this as a template
+   */
+# define bw_fixpoint(INIT, START, JOIN, CALC) {				\
+    stack<Label> workset;						\
+    FOR_EACH_STATE(state, label) {					\
+      props[e] = INIT;							\
+      if (START) workset.push(label);					\
+    }									\
+    									\
+    while (!workset.empty()) {						\
+      Label label = workset.top(); workset.pop();			\
+      /*cerr<<"Visiting state "<<label<<endl;*/				\
+      const EState* state = g[label];					\
+      assert(state);							\
+      									\
+      /* Merge result of incoming edges */				\
+      int merged_succs = TRUE;						\
+      bool has_succs = false;						\
+      /* for each successor */						\
+      GraphTraits::out_edge_iterator out_i, out_end;			\
+      for (tie(out_i, out_end) = out_edges(label, g); out_i != out_end; ++out_i) { \
+	Label succ = target(*out_i, g);					\
+	int succ_prop = ltl_properties[succ][e];			\
+	/*cerr<<"  succ: "<<succ<<" = "<<succ_prop<<endl;*/			\
+									\
+	merged_succs = merged_succs JOIN succ_prop;			\
+	has_succs = true;						\
+      }									\
+      if (!has_succs)							\
+	merged_succs = FALSE;						\
+      									\
+      /* Calculate property for this node */				\
+      /*assert(props.find(e->expr) != props.end());*/			\
+      int old_val = props[e];						\
+      									\
+      props[e] = CALC;							\
+      									\
+      /*cerr<<"  "<<label<<" <- "<<props[e]<<" was: "<<old_val<<endl;*/	\
+      bool no_fixpoint = (old_val == bot || old_val != props[e]);	\
+      if (no_fixpoint) {						\
+	/*cerr<<"NO FIX!"<<endl;*/						\
+	/* for each predecessor */					\
+	GraphTraits::in_edge_iterator in_i, in_end;			\
+	for (tie(in_i, in_end) = in_edges(label, g); in_i != in_end; ++in_i) { \
+	  Label pred = source(*in_i, g);				\
+	  /*cerr<<"  pred: "<<pred<<endl;*/					\
+	  workset.push(pred);						\
+	}								\
+      } else {								\
+	/*cerr<<"FIX!"<<endl;*/						\
+      }									\
+    }									\
+  }
 
+
+
+  // Implementation status: TODO
   void visit(const InputSymbol* e) {
     FOR_EACH_STATE(state, label) {
       char c;
       switch (state->io.op) {
       case InputOutput::IN_VAR: {
+	//record input_vars = 
 	const AType::ConstIntLattice& lval = 
 	  state->constraints.varConstIntLatticeValue(state->io.var);
 	assert(lval.isConstInt());
@@ -158,22 +285,27 @@ public:
     }
   }
 
+  // Implementation status: DONE
   void visit(const OutputSymbol* e) {
     FOR_EACH_STATE(state, label) {
       char c;
       switch (state->io.op) {
       case InputOutput::OUT_CONST: {
 	const AType::ConstIntLattice& lval = state->io.val;
+	cerr<<lval.toString()<<endl;
 	assert(lval.isConstInt());
         c = lval.getIntValue()+'A';
 	break;
       }
       case InputOutput::OUT_VAR: {
-	const AType::ConstIntLattice& lval = 
-	  state->constraints.varConstIntLatticeValue(state->io.var);
-	assert(lval.isConstInt());
-	c = lval.getIntValue()+'A';
-	break;
+      	//const AType::ConstIntLattice& lval = 
+      	//  state->constraints.varConstIntLatticeValue(state->io.var);
+	const State& prop_state = *state->state;
+	assert(prop_state.varIsConst(state->io.var));
+	AValue aval = const_cast<State&>(prop_state)[state->io.var];
+	cerr<<aval<<endl;
+      	c = aval+'A';
+      	break;
       }
       default:
 	c = EOF;
@@ -183,19 +315,34 @@ public:
     }
   }
 
+  // Implementation status: DONE
   void visit(const Not* e) {
     FOR_EACH_STATE(state, label) 
       props[e] = !props[e->expr];
   }
 
+  // Implementation status: TODO
   void visit(const Next* e) { assert(false); }
+
+  // Implementation status: TODO
   void visit(const Eventually* e) {
-    fixpoint(bot, // init
-	     &&,  // join
-	     props[e] = props[e->expr] || merged_preds // calc
-	     );
-    cerr<<"FIXME: fetch the result from the leaf nodes and store it"<< endl;
+    // I'm interpreting Eventually to be a backward problem
+    //  
+    //  a     if e(b) then F e(a) and F e(b) but not F e(c)
+    //  |\
+    //  b c
+    //
+    // propagate the information that the event occured up each path
+    bw_fixpoint(bot,                           // init
+		props[e->expr] /*== true*/,    // start
+		&&,                            // join
+		props[e->expr] || merged_succs // calc
+		);
+    FOR_EACH_STATE(state, label) 
+      if (props[e] == bot) props[e] = false;
   }
+
+  // Implementation status: DONE
   void visit(const Globally* e) {
     int global = TRUE;
     FOR_EACH_STATE(state, label) 
@@ -207,16 +354,19 @@ public:
     }
   }
 
+  // Implementation status: DONE
   void visit(const And* e) {
     FOR_EACH_STATE(state, label)
       props[e] = props[e->expr1] && props[e->expr2];
   }
 
+  // Implementation status: DONE
   void visit(const Or* e) {
     FOR_EACH_STATE(state, label)
       props[e] = props[e->expr1] || props[e->expr2];
   }
 
+  // Implementation status: TODO
   void visit(const Until* e) {
     // A holds until B occurs
     //
@@ -235,6 +385,8 @@ public:
     FOR_EACH_STATE(state, label)
       props[e] = props[e] ^ props[e->expr2];
   }
+
+  // Implementation status: TODO
   void visit(const WeakUntil* e) {
     // A holds until B occurs, but B may never occur
     //
@@ -250,6 +402,8 @@ public:
     FOR_EACH_STATE(state, label)
       props[e] = props[e] || (!props[e] && props[e->expr2]);
   }
+
+  // Implementation status: TODO
   void visit(const Release* e) {
     // If !B occurs, A happens before it.
     //
@@ -277,7 +431,7 @@ Checker::verify(const Formula& f)
   int N = eStateSet.size();
   int i = 0;
   map<const EState*, Label> estate_label;
-  FOR_EACH_STATE(state, label) {
+  FOR_EACH_STATE(state, l1) {
     estate_label[&(*state)] = i++;
   }
 
@@ -290,23 +444,25 @@ Checker::verify(const Formula& f)
     g[tgt] = t->target;
   }
   
-  Verifyer v(eStateSet, g, estate_label[transitionGraph.begin()->source], N);
+  Verifier v(eStateSet, g, estate_label[transitionGraph.begin()->source], N);
   const Expr& e = f;
   e.accept(v);
 
   // generate dot output for debugging
-  cout<<"generating visualization..."<<endl;
   stringstream s;
   s<<"digraph G {\n";
   FOR_EACH_TRANSITION(t) {
+    s<<"node[shape=rectangle, color=gray, style=filled];\n  ";
     s<<estate_label[t->source]<<" -> "<<estate_label[t->target]<<";\n";
   }
   FOR_EACH_STATE(state, l) {
     Visualizer viz(v.ltl_properties, l);
-    e.accept(viz);
+    e.accept(viz, Visualizer::newAttr(l));
     s<<l<<" [label=\""<<l<<":"<< state->toString() <<"\"] ;\n";
-    s<<l<<" -> ltl_"<< l <<";\n";
-    s<<"ltl_"<<l<<" [label=\""<< viz.s.str() <<"\", shape=rectangle, color=yellow, style=filled] ;\n";
+    s<<"subgraph ltl_"<<l<<" {\n";
+    s<<"  node[shape=rectangle, color=green, style=filled];\n  ";
+    s<<viz.s.str();
+    s<<"}\n";
   }
   s<<"}\n";
 
@@ -314,6 +470,11 @@ Checker::verify(const Formula& f)
   myfile.open("ltl_output.dot", std::ios::out);
   myfile << s.str();
   myfile.close();
+  cout<<"generated ltl_output.dot."<<endl;
 
+  // use result at start node as return value, 
+  // I hope this is always correct
+  FOR_EACH_STATE(state, label) 
+    return v.props[&e];
 }
 

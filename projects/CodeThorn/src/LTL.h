@@ -5,6 +5,7 @@
 #include <boost/shared_ptr.hpp>
 
 /// Linear Temporal Logic (LTL) Abstract syntax tree (AST)
+//  Written 2012 by Adrian Prantl <adrian@llnl.gov>.
 namespace LTL {
   
   /// Inherited Attribute for visitor pattern

@@ -1,5 +1,6 @@
 // -*- mode: C++; coding: utf-8; -*-
 // Parser for LTL formulae 
+// Written 2012 by Adrian Prantl <adrian@llnl.gov>.
 %{
 #include <cstdio>
 #include <cstdlib>
