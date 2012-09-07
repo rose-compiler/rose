@@ -8979,9 +8979,9 @@ void SageInterface::appendStatement(SgStatement *stmt, SgScopeStatement* scope)
         {
        // catch-all for statement fixup
        // Must fix it before insert it into the scope,
-          printf ("In appendStatementList(): Calling fixStatement() \n");
+       // printf ("In appendStatementList(): Calling fixStatement() \n");
           fixStatement(stmt,scope);
-          printf ("DONE: In appendStatementList(): Calling fixStatement() \n");
+       // printf ("DONE: In appendStatementList(): Calling fixStatement() \n");
 
        //-----------------------
        // append the statement finally
