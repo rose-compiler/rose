@@ -10,10 +10,12 @@
 #include "Labeler.h"
 #include "CFAnalyzer.h"
 #include "StateRepresentation.h"
+#include "Analyzer.h"
 
 class Visualizer {
  public:
   Visualizer();
+  Visualizer(Analyzer* analyzer);
   Visualizer(Labeler* l, Flow* f, StateSet* ss, EStateSet* ess, TransitionGraph* tg);
   void setOptionStateId(bool);
   void setOptionStateProperties(bool);
@@ -27,10 +29,6 @@ class Visualizer {
   void setEStateSet(EStateSet* x);
   void setTransitionGraph(TransitionGraph* x);
   void createMappings();
-  StateId stateId(const State* state);
-  StateId stateId(const State state);
-  EStateId eStateId(const EState* eState);
-  EStateId eStateId(const EState eState);
   string stateToString(const State* state);
   string eStateToString(const EState* state);
   string transitionGraphDotHtmlNode(Label lab);
@@ -42,13 +40,13 @@ class Visualizer {
   StateSet* stateSet;
   EStateSet* eStateSet;
   TransitionGraph* transitionGraph;
+  
   bool optionStateId;
   bool optionStateProperties;
   bool optionEStateLabel;
   bool optionEStateId;
   bool optionEStateProperties;
   bool optionTransitionGraphDotHtmlNode;
-  bool idMappingsAreConsistent;
 };
 
 #endif

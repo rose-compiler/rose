@@ -294,6 +294,21 @@ string State::varValueToString(VariableId varId) const {
   return ss.str();
 }
 
+StateId StateSet::stateId(const State* state) {
+  return stateId(*state);
+}
+
+StateId StateSet::stateId(const State state) {
+  StateId id=0;
+  for(StateSet::iterator i=begin();i!=end();++i) {
+	if(state==*i)
+	  return id;
+	id++;
+  }
+  return NO_STATE;
+}
+
+
 const State* StateSet::statePtr(State& s) {
   StateSet::iterator i=find(s);
   if(i==end())
@@ -331,6 +346,22 @@ bool operator==(const EState& c1, const EState& c2) {
 bool operator!=(const EState& c1, const EState& c2) {
   return !(c1==c2);
 }
+
+
+EStateId EStateSet::eStateId(const EState* eState) {
+  return eStateId(*eState);
+}
+
+EStateId EStateSet::eStateId(const EState eState) {
+  EStateId id=0;
+  for(EStateSet::iterator i=begin();i!=end();++i) {
+	if(eState==*i)
+	  return id;
+	id++;
+  }
+  return NO_ESTATE;
+}
+
 
 bool EStateSet::eStateExists(EState& s) {
   return eStatePtr(s)!=0;

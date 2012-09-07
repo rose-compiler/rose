@@ -21,10 +21,26 @@ Visualizer::Visualizer():
   flow(0),
   stateSet(0),
   eStateSet(0),
-  transitionGraph(0),
-  idMappingsAreConsistent(true) // empty mappings are consistent
+  transitionGraph(0)
 {}
 
+//! The analyzer provides all necessary information
+Visualizer::Visualizer(Analyzer* analyzer):
+  optionStateId(true),
+  optionStateProperties(false),
+  optionEStateLabel(false),
+  optionEStateId(true),
+  optionEStateProperties(false),
+  optionTransitionGraphDotHtmlNode(true) 
+{
+  setLabeler(analyzer->getLabeler());
+  setFlow(analyzer->getFlow());
+  setStateSet(analyzer->getStateSet());
+  setEStateSet(analyzer->getEStateSet());
+  setTransitionGraph(analyzer->getTransitionGraph());
+}
+
+  //! For providing specific information. For some visualizations not all information is required. The respective set-function can be used as well to set specific program information (this allows to also visualize computed subsets of information (such as post-processed transition graphs etc.).
 Visualizer::Visualizer(Labeler* l, Flow* f, StateSet* ss, EStateSet* ess, TransitionGraph* tg):
   optionStateId(true),
   optionStateProperties(false),
@@ -36,8 +52,7 @@ Visualizer::Visualizer(Labeler* l, Flow* f, StateSet* ss, EStateSet* ess, Transi
   flow(f),
   stateSet(ss),
   eStateSet(ess),
-  transitionGraph(tg),
-  idMappingsAreConsistent(false) // make sure mappings are computed
+  transitionGraph(tg)
 {}
 
 void Visualizer::setOptionStateId(bool x) {optionStateId=x;}
@@ -46,54 +61,16 @@ void Visualizer::setOptionEStateLabel(bool x) {optionEStateLabel=x;}
 void Visualizer::setOptionEStateId(bool x) {optionEStateId=x;}
 void Visualizer::setOptionEStateProperties(bool x) {optionEStateProperties=x;}
 void Visualizer::setOptionTransitionGraphDotHtmlNode(bool x) {optionTransitionGraphDotHtmlNode=x;}
-void Visualizer::setLabeler(Labeler* x) { labeler=x; idMappingsAreConsistent=false; }
-void Visualizer::setFlow(Flow* x) { flow=x; idMappingsAreConsistent=false;}
-void Visualizer::setStateSet(StateSet* x) { stateSet=x; idMappingsAreConsistent=false;}
-void Visualizer::setEStateSet(EStateSet* x) { eStateSet=x; idMappingsAreConsistent=false;}
-void Visualizer::setTransitionGraph(TransitionGraph* x) { transitionGraph=x; idMappingsAreConsistent=false;}
-
-void Visualizer::createMappings() {
-  /* currently all mappings are computed on demand. But that's too slow for larger data sets.
-   * we may want to precompute mappings in future.
-   */
-  idMappingsAreConsistent=true;
-}
-
-StateId Visualizer::stateId(const State* state) {
-  return stateId(*state);
-}
-StateId Visualizer::stateId(const State state) {
-  StateId id=0;
-  if(!idMappingsAreConsistent)
-	createMappings();
-  for(StateSet::iterator i=stateSet->begin();i!=stateSet->end();++i) {
-	if(state==*i)
-	  return id;
-	id++;
-  }
-  return NO_STATE;
-}
-
-EStateId Visualizer::eStateId(const EState* eState) {
-  return eStateId(*eState);
-}
-
-EStateId Visualizer::eStateId(const EState eState) {
-  EStateId id=0;
-  if(!idMappingsAreConsistent)
-	createMappings();
-  for(EStateSet::iterator i=eStateSet->begin();i!=eStateSet->end();++i) {
-	if(eState==*i)
-	  return id;
-	id++;
-  }
-  return NO_ESTATE;
-}
+void Visualizer::setLabeler(Labeler* x) { labeler=x; }
+void Visualizer::setFlow(Flow* x) { flow=x; }
+void Visualizer::setStateSet(StateSet* x) { stateSet=x; }
+void Visualizer::setEStateSet(EStateSet* x) { eStateSet=x; }
+void Visualizer::setTransitionGraph(TransitionGraph* x) { transitionGraph=x; }
 
 string Visualizer::stateToString(const State* state) {
   stringstream ss;
   if(optionStateId) {
-	ss<<"PS"<<stateId(state);
+	ss<<"PS"<<stateSet->stateId(state);
   } else {
 	ss<< state;
   }
@@ -103,7 +80,7 @@ string Visualizer::stateToString(const State* state) {
 string Visualizer::eStateToString(const EState* eState) {
   stringstream ss;
   if(optionEStateId) {
-	ss<<"ES"<<eStateId(eState);
+	ss<<"ES"<<eStateSet->eStateId(eState);
   } else {
 	ss<< eState;
   }

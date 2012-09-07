@@ -380,22 +380,6 @@ int main( int argc, char * argv[] ) {
   Analyzer analyzer;
   analyzer.initializeSolver1("main",root);
   analyzer.setOptionCompactStateString(false);
-#if 0
-  MyAst completeast(root);
-  string funtofind="main";
-  SgNode* mainroot=completeast.findFunctionByName(funtofind);
-  if(mainroot==0) { 
-    std::cerr << "Function '"<<funtofind<<"' not found.\n"; exit(1);
-  }
-  cout << "Mainroot:"<<mainroot<<endl;
-
-  Labeler labeler(mainroot);
-  CFAnalyzer cfanalyzer(&labeler);
-  Flow flow=cfanalyzer.flow(mainroot);
-  cout << "CFG: size: " << flow.size() << " edges."<<endl;
-  analyzer.setCFAnalyzer(&cfanalyzer);
-  //analyzer.computeEState(analyzer.takeFromWorkList(),mainroot);
-#endif
 
   cout << "NOTE: We are ignoring operator '?' (not implemented yet)"<<endl;
   cout << "=============================================================="<<endl;
@@ -456,25 +440,13 @@ int main( int argc, char * argv[] ) {
     write_file("cfg.dot", analyzer.flow.toDot(analyzer.cfanalyzer->getLabeler()));
     cout << "generated cfg.dot."<<endl;
   }
-  {
+
 #if 0
+  {
     cout << "MAP:"<<endl;
     cout << analyzer.getLabeler()->toString();
-#endif
-#if 0
-    CFAnalyzer* cfanalyzer=analyzer.getCFAnalyzer();
-    Flow* flow=analyzer.getFlow();
-    cout << "Labels="<<flow->nodeLabels().toString()<<endl;
-    flow->setTextOptionPrintType(false);
-    cout << "FCall-Labels="<<cfanalyzer->functionCallLabels(*flow).toString()<<endl;
-    cout << "OUTPUT: Flow=";
-    cout <<flow->toString()<<endl;
-    cout << "OUTPUT: Interflow=";
-    InterFlow interFlow=cfanalyzer->interFlow(*flow);
-    cout << interFlow.toString();
-    cout << endl;
-#endif
   }
+#endif
   
   //
   // Verification

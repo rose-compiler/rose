@@ -54,14 +54,12 @@ class AstNodeInfo : public AstAttribute {
 typedef stack<const EState*> EStateWorkList;
 
 class Analyzer {
+  friend class Visualizer;
 
  public:
   
   Analyzer();
   ~Analyzer();
-
-  void setCFAnalyzer(CFAnalyzer* cf) { cfanalyzer=cf; }
-  CFAnalyzer* getCFAnalyzer() { return cfanalyzer; }
 
   void initAstNodeInfo(SgNode* node);
   //int label(SgNode* node);
@@ -70,7 +68,6 @@ class Analyzer {
 
   static string nodeToString(SgNode* node);
   void initializeSolver1(std::string functionToStartAt,SgNode* root);
-  //void computeEState(const EState* eState,SgNode* node);
 
   State analyzeAssignOp(State state,SgNode* node,ConstraintSet& cset);
   State analyzeAssignRhs(State currentState,VariableId lhsVar, SgNode* rhs,ConstraintSet& cset);
@@ -103,18 +100,24 @@ class Analyzer {
   SgNode* getCond(SgNode* node);
   void generateAstNodeInfo(SgNode* node);
 
-  // requires init
+  //! requires init
   void runSolver1();
+
+  //! The analyzer requires a CFAnalyzer to obtain the ICFG.
+  void setCFAnalyzer(CFAnalyzer* cf) { cfanalyzer=cf; }
+  CFAnalyzer* getCFAnalyzer() { return cfanalyzer; }
+
+  // access  functions for computed information
   Labeler* getLabeler() { return cfanalyzer->getLabeler(); }
   Flow* getFlow() { return &flow; }
+  StateSet* getStateSet() { return &stateSet; }
+  EStateSet* getEStateSet() { return &eStateSet; }
   TransitionGraph* getTransitionGraph() { return &transitionGraph; }
 
   //private: TODO
   Flow flow;
   SgNode* startFunRoot;
   CFAnalyzer* cfanalyzer;
-  StateSet* getStateSet() { return &stateSet; }
-  EStateSet* getEStateSet() { return &eStateSet; }
 
   //! compute the VariableIds of variable declarations
   set<VariableId> determineVariableIdsOfVariableDeclarations(set<SgVariableDeclaration*> decls);

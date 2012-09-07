@@ -38,6 +38,8 @@ class StateSet : public set<State> {
   bool stateExists(State& s);
   const State* statePtr(State& s);
   string toString();
+  StateId stateId(const State* state);
+  StateId stateId(const State state);
 };
 
 /*
@@ -124,6 +126,8 @@ class EStateSet : public set<EState> {
   bool eStateExists(EState& s);
   const EState* eStatePtr(EState& s);
   string toString();
+  EStateId eStateId(const EState* eState);
+  EStateId eStateId(const EState eState);
 };
 
 class Transition {
