@@ -116,10 +116,10 @@ VariableIdMapping::createUniqueTemporaryVariableId(string name) {
   for(TemporaryVariableIdMapping::iterator i=temporaryVariableIdMapping.begin();
 	  i!=temporaryVariableIdMapping.end();
 	  ++i) {
-	PairOfVarIdAndVarName id_name=*i;
-	if(id_name.second==name) {
+	PairOfVarIdAndVarName id_name_pair=*i;
+	if(id_name_pair.second==name) {
 	  // name for temporary variable exists, return existing id
-	  return id_name.first;
+	  return id_name_pair.first;
 	}
   }
   // temporary variable with name 'name' does not exist yet, create, register, and return
@@ -163,8 +163,16 @@ VariableId::variableName() const {
 }
 
 string
+VariableId::toString() const {
+  stringstream ss;
+  ss<<getSymbol();
+  return ss.str();
+}
+
+string
 VariableId::longVariableName() const {
   SgSymbol* sym=getSymbol();
+  if(sym==0) return "id-no-var";
   // TODO: MS: long names do not work with SgNodehelper from SgSymbol. We can only support this with precomputed VariableIdMappings (we do not want to use mangled names)
   return variableName();
 }

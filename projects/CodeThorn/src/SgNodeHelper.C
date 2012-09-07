@@ -131,17 +131,8 @@ string SgNodeHelper::uniqueLongVariableName(SgNode* node) {
 	sym=SgNodeHelper::getSymbolOfVariable(varRef);
 	found=true;
   }
-#if 0
-  /* MS: NOTE: We cannot do this because SgVariableSymbol does not have a proper parent set.
-	 In general, SgSymbols should not be considered to be necessarily a node of the AST
-	 (rather of its decoration)
-  */
-  if(SgSymbol* sym0=isSgSymbol(node)) {
-	sym=sym0;
-	found=true;
-  }
-#endif
   if(found) {
+	if(sym==0) return "$error:symbol==0$";
 	string name=SgNodeHelper::symbolToString(sym);
 	// we search from the SgSymbol (which is somewhere found in the AST). Even if it is in the symbol table
 	// we will still find the right function!

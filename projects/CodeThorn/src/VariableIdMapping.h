@@ -72,6 +72,7 @@ class VariableId {
   friend bool operator==(VariableId id1, VariableId id2);
  public:
   VariableId();
+  string toString() const;
   string variableName() const;
   string longVariableName() const;
   VariableId(SgSymbol* sym);
