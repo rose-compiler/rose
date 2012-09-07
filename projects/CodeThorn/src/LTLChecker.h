@@ -2,11 +2,13 @@
 #ifndef __LTLCHECKER_H__
 #define __LTLCHECKER_H__
 
+// Written 2012 by Adrian Prantl <adrian@llnl.gov>.
+
 #include "StateRepresentation.h"
 #include "LTL.h"
 #include <map>
 
-namespace ltl {
+namespace LTL {
   /**
    * A naive checker for LTL formulae.
    */

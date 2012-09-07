@@ -25,7 +25,7 @@ CXXFLAGS              = -Wno-deprecated
 LDFLAGS               = 
 YACC                  = bison
 
-OBJECT_FILES=MyAst.o AstTerm.o Labeler.o SgNodeHelper.o VariableIdMapping.o CFAnalyzer.o ExprAnalyzer.o StateRepresentation.o Analyzer.o Visualizer.o Timer.o LanguageRestrictor.o AType.o LTLParser.o LTLChecker.o
+OBJECT_FILES=MyAst.o AstTerm.o Labeler.o SgNodeHelper.o VariableIdMapping.o CFAnalyzer.o ExprAnalyzer.o StateRepresentation.o Analyzer.o Visualizer.o Timer.o LanguageRestrictor.o AType.o LTLParser.o LTLChecker.o codethorn.o
 
 OBJECT_FILES_EXPERIMENTAL=BoostGraphIntegration.o
 
@@ -49,19 +49,18 @@ LTLParser.o: LTLParser.y++ LTL.h
 	$(CXX) -o $@ $(CXXFLAGS) $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) LTLParser.tab.c++ -c
 
 Analyzer.o : CollectionOperators.h Analyzer.h AstTerm.h Labeler.h CFAnalyzer.h MyAst.h SgNodeHelper.h ExprAnalyzer.h StateRepresentation.h Analyzer.C
-	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) Analyzer.C -c 
 
 %.o: %.C %.h
 	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $< -c 
 
 $(TOOLNAME3): $(TOOLNAME3).C  $(TOOLNAME3).h $(OBJECT_FILES)
-	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES) $(TOOLNAME3).C -o$(TOOLNAME3) 
+	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES) -o$(TOOLNAME3) 
 
 check: $(TOOLNAME3)
-	./$(TOOLNAME3) tests/rers/Problem1.c
+	./$(TOOLNAME3) tests/rers/Problem1.c --verify tests/rers/properties1.ltl
 
 test: $(TOOLNAME3)
-	./$(TOOLNAME3) tests/rers/Problem1.c --verify tests/rers/properties1.ltl
+	./$(TOOLNAME3) tests/rers_mini1.C    --verify tests/rers_mini1.ltl
 
 docs:
 	doxygen Doxyfile
