@@ -6,6 +6,7 @@ using namespace SageInterface;
 using namespace SageBuilder;
 using namespace Fortran_to_C;
 
+extern bool isLinearlizeArray;
 /******************************************************************************************************************************/
 /* 
   Rename the output filename to .C file
@@ -390,3 +391,100 @@ void Fortran_to_C::translateFortranDoLoop(SgFortranDo* fortranDo)
   // Replace the SgFortranDo with SgForStatement
   replaceStatement(fortranDo,forStatement,true);
 }  // End of Fortran_to_C::translateProcedureHeaderStatement
+
+
+/******************************************************************************************************************************/
+/* 
+  Translate the  AttributeSpecificationStatement
+*/
+/******************************************************************************************************************************/
+void Fortran_to_C::translateAttributeSpecificationStatement(SgAttributeSpecificationStatement* attributeSpecificationStatement)
+{
+  switch(attributeSpecificationStatement->get_attribute_kind())
+  {
+    case SgAttributeSpecificationStatement::e_dimensionStatement:
+      {
+        SgExpressionPtrList dimensionList = attributeSpecificationStatement->get_parameter_list()->get_expressions();
+        Rose_STL_Container<SgExpression*>::iterator i =  dimensionList.begin();
+        while(i != dimensionList.end())
+        {
+          SgPntrArrRefExp* pntrArrRefExp = isSgPntrArrRefExp(*i);
+          ROSE_ASSERT(pntrArrRefExp);
+          if(isLinearlizeArray)
+          {
+            linearizeArraySubscript(pntrArrRefExp);
+          }
+          else
+          {
+            translateArraySubscript(pntrArrRefExp);
+          }
+          ++i;
+        }
+        
+      }
+      break;
+    case SgAttributeSpecificationStatement::e_parameterStatement:
+      {
+      }
+      break;
+    case SgAttributeSpecificationStatement::e_accessStatement_private:
+    case SgAttributeSpecificationStatement::e_accessStatement_public:
+    case SgAttributeSpecificationStatement::e_allocatableStatement:
+    case SgAttributeSpecificationStatement::e_asynchronousStatement:
+    case SgAttributeSpecificationStatement::e_bindStatement:
+    case SgAttributeSpecificationStatement::e_dataStatement:
+    case SgAttributeSpecificationStatement::e_externalStatement:
+    case SgAttributeSpecificationStatement::e_intentStatement:
+    case SgAttributeSpecificationStatement::e_intrinsicStatement:
+    case SgAttributeSpecificationStatement::e_optionalStatement:
+    case SgAttributeSpecificationStatement::e_pointerStatement:
+    case SgAttributeSpecificationStatement::e_protectedStatement:
+    case SgAttributeSpecificationStatement::e_saveStatement:
+    case SgAttributeSpecificationStatement::e_targetStatement:
+    case SgAttributeSpecificationStatement::e_valueStatement:
+    case SgAttributeSpecificationStatement::e_volatileStatement:
+    case SgAttributeSpecificationStatement::e_last_attribute_spec:
+    case SgAttributeSpecificationStatement::e_unknown_attribute_spec:
+    default:
+      break;
+  }
+}
+
+/******************************************************************************************************************************/
+/* 
+  Translate the  SgEquivalenceStatement
+*/
+/******************************************************************************************************************************/
+void Fortran_to_C::translateEquivalenceStatement(SgEquivalenceStatement* equivalenceStatement)
+{
+  SgExpressionPtrList equivalentList = equivalenceStatement->get_equivalence_set_list()->get_expressions();
+  for(vector<SgExpression*>::iterator i=equivalentList.begin(); i<equivalentList.end(); ++i)
+  {
+    SgExprListExp* equivalentPairExp = isSgExprListExp(*i);
+    ROSE_ASSERT(equivalentPairExp);
+    SgExpressionPtrList equivalentPair = equivalentPairExp->get_expressions(); 
+    ROSE_ASSERT(equivalentPair.size() == 2);
+
+    SgExpression* expr1 = equivalentPair[0];
+    SgExpression* expr2 = equivalentPair[1];
+    /*
+      case 1: equivalence (a,b)
+    */
+    if()
+    {
+    }
+    /*
+      case 3: equivalence (a(i),b(j))
+    */
+    else if()
+    {
+    }
+    /*
+      case 2: equivalence (a,b(i))
+    */
+    else
+    {
+    }
+
+  }
+}

@@ -14,6 +14,8 @@ TESTCODES_REQUIRED_TO_PASS = \
 							   array2.F \
 							   array3.F \
 							   array4.F \
+							   dimension1.F \
+							   dimension2.F \
 							   program1.F \
 							   subroutine1.F \
 							   function1.F

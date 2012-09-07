@@ -56,6 +56,8 @@ namespace Fortran_to_C
     void translateFileName(SgFile*);
     void translateProgramHeaderStatement(SgProgramHeaderStatement*);
     void translateProcedureHeaderStatement(SgProcedureHeaderStatement*);
+    void translateAttributeSpecificationStatement(SgAttributeSpecificationStatement*);
+    void translateEquivalenceStatement(SgEquivalenceStatement*);
     void translateFortranDoLoop(SgFortranDo*);
     void fixFortranSymbolTable(SgNode*, bool);
 

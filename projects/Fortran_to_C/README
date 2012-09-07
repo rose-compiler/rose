@@ -35,10 +35,61 @@ Feasible capabilities:
   Source Node (Fortran)		========>		Target Node (C) 
   
   SgProgramHeaderStatement				SgFunctionDeclaration
-  SgProcedureHeaderStatement				SgFunctionDeclaration
+  SgProcedureHeaderStatement		    SgFunctionDeclaration
+  SgFortranDo                           SgForStatement 
+  SgPntrArrRefExp (for Fortran)         SgPntrArrRefExp (for C)
+  
 
 ------------------------------------------------------------------------------------------
 TODO list:
-  1. Array declaration.
-  2. Fortran do loop.
-  3. Equivalence statement.
+  1. SgAttributeSpecificationStatement
+  2. SgEquivalenceStatement
+  3. SgParameterStatement
+
+I/O list:
+SgPrintStatement
+SgReadStatement
+SgWriteStatement
+SgOpenStatement
+SgCloseStatement
+SgFormatStatement
+
+CAF list:
+SgCAFWithTeamStatement
+
+
+Other list that needs more consideration:
+SgModuleStatement
+SgInterfaceStatement
+SgCommonBlock
+SgUseStatement
+SgDerivedTypeStatement
+SgModuleStatement
+SgInquireStatement
+SgFlushStatement
+SgRewindStatement
+SgBackspaceStatement
+SgEndfileStatement
+SgWaitStatement
+SgAssociateStatement
+SgImplicitStatement
+SgBlockDataStatement
+SgStatementFunctionStatement
+SgWhereStatement
+SgElseWhereStatement
+SgNullifyStatement
+SgArithmeticIfStatement
+SgAssignStatement
+SgComputedGotoStatement
+SgAssignedGotoStatement
+SgNamelistStatement
+SgImportStatement
+SgForAllStatement
+SgContainsStatement
+SgEntryStatement
+SgFortranIncludeLine
+SgAllocateStatement
+SgDeallocateStatement
+SgOmpDoStatement
+
+

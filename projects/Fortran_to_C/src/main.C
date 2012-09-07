@@ -14,13 +14,16 @@
 
 #include "rose.h"
 #include "f2c.h"
+#include "CommandOptions.h"
 
 using namespace std;
 using namespace SageInterface;
 using namespace Fortran_to_C;
 
-bool isLinearlizeArray = true;
+bool isLinearlizeArray = false;
 vector<SgArrayType*> arrayTypeList;
+vector<SgStatement*> statementList;
+vector<SgNode*> removeList;
 
 class typeTraversal : public ROSE_VisitorPattern
 {
@@ -65,16 +68,25 @@ void f2cTraversal::visit(SgNode* n)
         ROSE_ASSERT(ProgramHeaderStatement);
         translateProgramHeaderStatement(ProgramHeaderStatement);
         // Deep delete the original Fortran SgProgramHeaderStatement
-        deepDelete(ProgramHeaderStatement);
+        removeList.push_back(ProgramHeaderStatement);
       }
       break;
     case V_SgProcedureHeaderStatement:
       {
-        SgProcedureHeaderStatement* ProcedureHeaderStatement = isSgProcedureHeaderStatement(n);
-        ROSE_ASSERT(ProcedureHeaderStatement);
-        translateProcedureHeaderStatement(ProcedureHeaderStatement);
-        // Deep delete the original Fortran ProcedureHeaderStatement.
-        deepDelete(ProcedureHeaderStatement);
+        SgProcedureHeaderStatement* procedureHeaderStatement = isSgProcedureHeaderStatement(n);
+        ROSE_ASSERT(procedureHeaderStatement);
+        translateProcedureHeaderStatement(procedureHeaderStatement);
+        // Deep delete the original Fortran procedureHeaderStatement.
+        removeList.push_back(procedureHeaderStatement);
+      }
+      break;
+    case V_SgEquivalenceStatement:
+      {
+        SgEquivalenceStatement* equivalenceStatement = isSgEquivalenceStatement(n);
+        ROSE_ASSERT(equivalenceStatement);
+        translateEquivalenceStatement(equivalenceStatement);
+        statementList.push_back(equivalenceStatement);
+        removeList.push_back(equivalenceStatement);
       }
       break;
     case V_SgFortranDo:
@@ -83,7 +95,16 @@ void f2cTraversal::visit(SgNode* n)
         ROSE_ASSERT(fortranDo);
         translateFortranDoLoop(fortranDo);
         // Deep delete the original fortranDo .
-        deepDelete(fortranDo);
+        removeList.push_back(fortranDo);
+      }
+      break;
+    case V_SgAttributeSpecificationStatement:
+      {
+        SgAttributeSpecificationStatement* attributeSpecificationStatement = isSgAttributeSpecificationStatement(n);
+        ROSE_ASSERT(attributeSpecificationStatement);
+        translateAttributeSpecificationStatement(attributeSpecificationStatement);
+        statementList.push_back(attributeSpecificationStatement);
+        removeList.push_back(attributeSpecificationStatement);
       }
       break;
     case V_SgPntrArrRefExp:
@@ -107,8 +128,17 @@ void f2cTraversal::visit(SgNode* n)
 
 int main( int argc, char * argv[] )
 {
+  Rose_STL_Container<std::string> localCopy_argv = CommandlineProcessing::generateArgListFromArgcArgv(argc, argv);
+  int newArgc;
+  char** newArgv = NULL;
+  vector<string> argList = localCopy_argv;
+  if (CommandlineProcessing::isOption(argList,"-f2c:","linearize",true) == true)
+  {
+    isLinearlizeArray = true;
+  }
+  CommandlineProcessing::generateArgcArgvFromList(argList,newArgc, newArgv);
 // Build the AST used by ROSE
-  SgProject* project = frontend(argc,argv);
+  SgProject* project = frontend(newArgc,newArgv);
   AstTests::runAllTests(project);   
 
   generateAstGraph(project,8000,"_orig");
@@ -131,6 +161,19 @@ int main( int argc, char * argv[] )
   // Simple traversal, bottom-up, to translate the rest
   f2cTraversal f2c;
   f2c.traverseInputFiles(project,postorder);
+
+  // removing all the SgAttributeSpecificationStatement from AST
+  for(vector<SgStatement*>::iterator i=statementList.begin(); i<statementList.end(); ++i)
+  {
+    removeStatement(*i);
+    (*i)->set_parent(NULL);
+  }
+      
+  // deepDelete the removed nodes 
+  for(vector<SgNode*>::iterator i=removeList.begin(); i<removeList.end(); ++i)
+  {
+    deepDelete(*i);
+  }
       
 /*
   1. There should be no Fortran-specific AST nodes in the whole
