@@ -27,53 +27,80 @@ import java.net.URLClassLoader;
 
 // DQ (11/1/2010): This improved design separates out the parsing support, from the ECJ AST traversal, and the parser.
 class JavaParserSupport {
-    // DQ (8/20/2011): Added a simple way to control the number of data members, constructors, and member functions built.
-    // 0: No significant limits applied to number of constructs in the AST.
-    // 1: Limits the number to be built into the enerated AST
-    static boolean VISUALIZE_AST = false;
+    public int verboseLevel = 0;
 
-    // This class is intended to contain functions to support the JNI specific in src/frontend/ECJ_ROSE_Connection/JavaParserActionROSE.C.
-    // Note that the functions in JavaParserActionROSE.C are JNI functions that are called by the Java
-    // code in src/3rdPartyLibraries/java-parser/ecjASTVisitor.java, this layout of code is similar to the handling of the Fortran support 
-    // in ROSE (except that OFP calls functions representing parser actions while this Java support calls functions representing the
-    // translation of the ECJ AST to build the ROSE AST (so the Java support has less to do with parsing than AST translation)).
-    // The AST translation is similar to the translation from the EDG AST translation to build the ROSE AST (supporting C and C++).
-
-    // This is used to compute source code positions.
-    private static CompilationResult rose_compilationResult;
-
-    public static ArrayList<String> importOnDemandList = null;
     //
     // Create a loader for finding classes.
     //
-    public static ClassLoader pathLoader = null;
+    public ClassLoader pathLoader = null;
 
     //
     // Create a symbolTable map to keep track of user-defined type declarations.
     //
-    public static HashMap<Class, TypeDeclaration> userTypeTable;
+    public HashMap<Class, TypeDeclaration> userTypeTable;
  
     //
     // Create a symbolTable map to keep track of packages and type that have already been encountered.
     //
-    public static HashMap<String, HashMap<String, Class>> symbolTable;
- 
-    public static void initialize() {
-// TODO: REMOVE THIS !
-//        System.out.println("Calling initialize");
-        userTypeTable = new HashMap<Class, TypeDeclaration>();
-        symbolTable = new HashMap<String, HashMap<String, Class>>();
+    public HashMap<String, HashMap<String, Class>> symbolTable;
+        
+    public JavaParserSupport(String classpath, int input_verbose_level) {
+        // Set the verbose level for ROSE specific processing on the Java specific ECJ/ROSE translation.
+        this.verboseLevel = input_verbose_level;
+
+        // Reinitialize the type and symbol table for this compilation unit.
+        this.userTypeTable = new HashMap<Class, TypeDeclaration>();
+        this.symbolTable = new HashMap<String, HashMap<String, Class>>();
+
+        //
+        // Now process the classpath 
+        //
+        ArrayList<File> files = new ArrayList<File>();
+        while(classpath.length() > 0) {
+            int index = classpath.indexOf(':');
+            if (index == -1) {
+                files.add(new File(classpath));
+                classpath = "";
+            }
+            else {
+                String filename = classpath.substring(0, index);
+                files.add(new File(filename));
+                classpath = classpath.substring(index + 1);
+            }
+        }
+
+        // Always add the current directory, ".", to the classpath
+        files.add(new File("."));
+
+        //
+        // Now create a new class loader with the classpath.
+        //
+        try {
+            // Convert File to a URL
+            URL[] urls = new URL[files.size() + 1];
+            for (int i = 0; i < files.size(); i++) {
+                urls[i] = files.get(i).toURI().toURL();
+            }
+
+            // Create a new class loader with the directories
+            this.pathLoader = new URLClassLoader(urls);
+        } catch (MalformedURLException e) {
+            System.err.println("(3) Error in processClasspath: " + e.getMessage()); 
+            System.exit(1);
+        }
     }
     
-    public static boolean typeExists(String package_name, String type_name) {
+    
+ 
+    public boolean typeExists(String package_name, String type_name) {
         return (symbolTable.containsKey(package_name) ? symbolTable.get(package_name).containsKey(type_name) : false); 
     }
 
-    public static boolean typeExists(String type_name) {
+    public boolean typeExists(String type_name) {
         return typeExists("", type_name); 
     }
 
-    public static void insertType(String package_name, String type_name) {
+    public void insertType(String package_name, String type_name) {
         assert (! (symbolTable.containsKey(package_name) && symbolTable.get(package_name).containsKey(type_name))); 
         if (! symbolTable.containsKey(package_name)) {
             symbolTable.put(package_name, new HashMap<String, Class>());
@@ -81,7 +108,7 @@ class JavaParserSupport {
         symbolTable.get(package_name).put(type_name, null); 
     }
     
-    public static void insertType(String package_name, Class type) {
+    public void insertType(String package_name, Class type) {
         String type_name = new String(type.getSimpleName());
         assert (! (symbolTable.containsKey(package_name) && symbolTable.get(package_name).containsKey(type_name))); 
         if (! symbolTable.containsKey(package_name)) {
@@ -108,29 +135,37 @@ class JavaParserSupport {
     }
 */
 
-    static Class getClassForName(String typename) {
+    Class getClassForName(String typename) {
         Class cls = null;
         try {
             cls = Class.forName(typename, true, pathLoader);
         }
-        catch (ClassNotFoundException ee) {
+        catch (Throwable e) { // Note that this should have been:  catch (ClassNotFoundException e) ...
+            //
+            // As stated above, the forName function throws the exception ClassNotFoundException. Thus, we
+            // should really have specified the following catch statement for it:
+            //
+            //         catch (ClassNotFoundException e) {
+            //
+            // However, in many instances, the function forName() throws a NullPointerException (why???) which
+            // causes the program to crash.  Since we are interested only in knowing whether or not the typename
+            // in question is associated with a class that is retrievable by the loader, we simply try to catch
+            // any Throwable exception.
+            //
             if (verboseLevel > 0) {
-                System.out.println("(2) Caught error in JavaParserSupport (Parser failed)");
-                System.err.println(ee);
+                System.out.println("Class " + typename + " was not found");
+                System.out.println("(1) Caught error in JavaParserSupport (Parser failed)");
+                System.err.println(e);
             }
         }
-        catch(NoClassDefFoundError eee) {
-            System.err.println("(1) Error in getClassForName --- Could not read type: " + eee.getMessage()); 
-            System.exit(1);
-        }
-        
-    	return cls;
+
+        return cls;
     }
     
     /**
      * 
      */
-    static void identifyUserDefinedTypes(Class cls, TypeDeclaration node) {
+    void identifyUserDefinedTypes(Class cls, TypeDeclaration node) {
         userTypeTable.put(cls, node);   // keep track of user-defined TypeDeclarations
 
         if (node.memberTypes != null) {
@@ -151,7 +186,7 @@ class JavaParserSupport {
      * 
      * 
      */
-    static void identifyUserDefinedTypes(String prefix, TypeDeclaration node) {
+    void identifyUserDefinedTypes(String prefix, TypeDeclaration node) {
         String typename = prefix + (prefix.length() > 0 ? "." : "") + new String(node.name);
 // TODO: REMOVE THIS
 /*
@@ -187,56 +222,18 @@ System.out.println("(1) The canonical name is: " + canonical_name +
             identifyUserDefinedTypes(cls, node);
         }
         catch (ClassNotFoundException e) {
-            System.out.println("(1) Caught error in JavaParserSupport (Parser failed)");
+            System.out.println("(2) Caught error in JavaParserSupport (Parser failed)");
             System.err.println(e);
 
             System.exit(1);
         }
     }
 
-public static void processClasspath(String classpath) {
-    importOnDemandList = new ArrayList<String>();
-    importOnDemandList.add(""); // The null package must be first!
-		
-    ArrayList<File> files = new ArrayList<File>();
-    while(classpath.length() > 0) {
-    	int index = classpath.indexOf(':');
-        if (index == -1) {
-        	files.add(new File(classpath));
-        	classpath = "";
-        }
-        else {
-        	String filename = classpath.substring(0, index);
-        	files.add(new File(filename));
-        	classpath = classpath.substring(index + 1);
-        }
-    }
-
-    try {
-        // Convert File to a URL
-        URL[] urls = new URL[files.size() + 1];
-        for (int i = 0; i < files.size(); i++) {
-            urls[i] = files.get(i).toURL();
-        }
-        urls[files.size()] = new File(".").toURL(); // always add curent directory
-
-        // Create a new class loader with the directories
-        pathLoader = new URLClassLoader(urls, ClassLoader.getSystemClassLoader());
-    } catch (MalformedURLException e) {
-        System.err.println("(3) Error in processClasspath: " + e.getMessage()); 
-        System.exit(1);
-    }
-}
-    
-    
     /**
      * @param unit
      * 
      */
-    public static void preprocess(CompilationUnitDeclaration unit) {
-        String package_name = "";
-// TODO: REMOVE THIS
-
+    public void preprocess(CompilationUnitDeclaration unit) {
         //
         // Make sure that Object is processed first!
         //
@@ -253,23 +250,10 @@ System.out.println("Inserting type " + "java.lang.Object");
 */
             JavaParser.cactionSetupString();
         }
-
+/*
         //
         //
         //
-        if (unit.currentPackage != null) {
-            ImportReference importReference = unit.currentPackage;
-            StringBuffer package_buffer = new StringBuffer();
-            for (int i = 0, tokenArrayLength = importReference.tokens.length; i < tokenArrayLength; i++) {
-                String tokenString = new String(importReference.tokens[i]);
-                if (i > 0) {
-                    package_buffer.append('.');
-                }
-                package_buffer.append(tokenString);
-            }
-            package_name = package_buffer.toString();
-//System.out.println("Processed package " + package_name);                     
-        }
         
         //
         //
@@ -297,7 +281,7 @@ System.out.println("Inserting type " + "java.lang.Object");
                     package_buffer.append(".*");
                 }
 
-                if (JavaParser.verboseLevel > 1)
+                if (verboseLevel > 1)
                     System.out.println("importReference (string) = " + package_buffer.toString());
 
                 // DQ (8/22/2011): Read the referenced class or set of classes defined by the import statement.
@@ -314,13 +298,33 @@ System.out.println("Inserting type " + "java.lang.Object");
                     JavaParser.cactionBuildImplicitClassSupportEnd(0, importReferenceWithoutWildcard);
                 }
                 */
+        /*
             }
+        }
+*/
+
+        //
+        //
+        //
+        String package_name = "";
+        if (unit.currentPackage != null) {
+            ImportReference importReference = unit.currentPackage;
+            StringBuffer package_name_buffer = new StringBuffer();
+            for (int i = 0, tokenArrayLength = importReference.tokens.length; i < tokenArrayLength; i++) {
+                String tokenString = new String(importReference.tokens[i]);
+                if (i > 0) {
+                    package_name_buffer.append('.');
+                }
+                package_name_buffer.append(tokenString);
+            }
+            package_name = package_name_buffer.toString();
+//System.out.println("Package name is: " + package_name);                     
         }
 
         //
         //
         //
-        if (unit.types == null) { // No units!?  Process the "null" package anyway.
+        if (unit.types == null) { // No units!?  ... then at least process the package.
             JavaParser.cactionPushPackage(package_name);
             JavaParser.cactionPopPackage();
         }
@@ -332,7 +336,7 @@ System.out.println("Inserting type " + "java.lang.Object");
             }
             
             for (Class cls : userTypeTable.keySet()) {
-                if (cls.getEnclosingClass() == null) {
+                if (cls.getEnclosingClass() == null) { // a top-level class?
 // TODO: REMOVE THIS
 //System.out.println("Inserting type " + cls.getCanonicalName());
 //
@@ -397,7 +401,6 @@ System.out.println("Inserting type " + canonical_name);
     // private static HashMap<String,String> hashmapOfQualifiedNamesOfClasses;
 //    public static HashMap<String,String> hashmapOfQualifiedNamesOfClasses;
 
-    private static int verboseLevel = 0;
 /*
     // Initialization function, but be called before we can use member functions in this class.
     public static void initialize(CompilationResult x, int input_verboseLevel) {
@@ -451,8 +454,8 @@ System.out.println("Inserting type " + canonical_name);
     }
 */
 
-    public static void processConstructorDeclarationHeader(ConstructorDeclaration constructor, JavaToken jToken) {
-    	assert(! constructor.isDefaultConstructor());
+    public void processConstructorDeclarationHeader(ConstructorDeclaration constructor, JavaToken jToken) {
+        assert(! constructor.isDefaultConstructor());
     
         String name = new String(constructor.selector);
         boolean is_native = constructor.isNative();
@@ -468,8 +471,14 @@ System.out.println("Inserting type " + canonical_name);
          
          
     }
-     
-    public static void processMethodDeclarationHeader(MethodDeclaration method, JavaToken jToken) {
+
+
+    /**
+     * 
+     * @param method
+     * @param jToken
+     */
+    public void processMethodDeclarationHeader(MethodDeclaration method, JavaToken jToken) {
         String name = new String(method.selector);
 
         // Setup the function modifiers
@@ -506,6 +515,79 @@ System.out.println("Inserting type " + canonical_name);
                                                   jToken
                                                  );
     }
+
+
+    /**
+     * 
+     * @param node
+     * @param jToken
+     */
+    void processQualifiedNameReference (QualifiedNameReference node, JavaToken jToken ) {
+//System.out.println("The binding (" + node.binding.getClass().getCanonicalName() + 
+//		           ") is " + new String(node.binding.readableName()));
+//System.out.println("The receiver binding is " + new String(node.actualReceiverType.readableName()));
+        int type_prefix_length = node.indexOfFirstFieldBinding - 1;
+        TypeBinding type_binding = null;
+        if (node.binding instanceof FieldBinding) {
+            type_binding = ((FieldBinding) node.binding).declaringClass;
+            assert(type_binding == node.actualReceiverType);
+        }
+        else if (node.binding instanceof VariableBinding) {
+        	assert(type_prefix_length == 0);
+        }
+        else {
+        	assert(node.binding instanceof TypeBinding);
+        	type_binding = (TypeBinding) node.binding;
+        	type_prefix_length++; // The field in question is a type.
+        }
+
+        StringBuffer strbuf = new StringBuffer();
+//System.out.println("First field index = " + node.indexOfFirstFieldBinding);
+        for (int i = 0; i < type_prefix_length; i++) {
+            strbuf.append(node.tokens[i]);
+            if (i + 1 < type_prefix_length)
+                strbuf.append(".");
+        }
+
+        String type_prefix = new String(strbuf);
+//System.out.println("type_prefix = " + type_prefix);
+
+        if (type_prefix.length() > 0) {
+            Class cls = preprocessClass(type_binding);
+            assert(cls != null);
+
+            JavaParser.cactionTypeReference(getPackageName(type_binding), getTypeName(type_binding), jToken);
+
+            for (int i = type_prefix_length; i < node.tokens.length; i++) {
+                String field = new String(node.tokens[i]);
+//System.out.println("Processing the sub field name: " + field);
+                JavaParser.cactionFieldReferenceEnd(field, jToken);
+            }
+        }
+        else {
+        	int field_index = type_prefix_length;
+        	String first_field = new String(node.tokens[field_index++]);
+        	assert(node.binding instanceof VariableBinding);
+//System.out.println("Processing the first field name: " + first_field);
+
+        	JavaParser.cactionSingleNameReference("", "", first_field, jToken);
+
+            strbuf = new StringBuffer();
+            for (int i = field_index; i < node.tokens.length; i++) {
+                String field = new String(node.tokens[i]);
+//System.out.println("Processing the sub field name: " + field);
+
+                JavaParser.cactionFieldReferenceEnd(field, jToken);
+            
+                strbuf.append(field);
+                if (i + 1 < node.tokens.length)
+                    strbuf.append(".");
+            }
+            String name = new String(strbuf);
+//System.out.println("The rest of the name is " + name);
+        }
+    }
+    
     
     /**
      * 
@@ -621,7 +703,7 @@ System.out.println("Inserting type " + canonical_name);
     /**
      * 
      */
-    public static String qualifiedName(char [][]tokens) {
+    public String qualifiedName(char [][]tokens) {
         StringBuffer name = new StringBuffer();
         for (int i = 0, tokenArrayLength = tokens.length; i < tokenArrayLength; i++) {
             String tokenString = new String(tokens[i]);
@@ -641,7 +723,7 @@ System.out.println("Inserting type " + canonical_name);
      * @param binding
      * @return
      */
-    public static String getPackageName(TypeBinding binding) {
+    public String getPackageName(TypeBinding binding) {
         return (binding.getPackage() != null ? new String(binding.getPackage().readableName()) : "");
     }
     
@@ -650,7 +732,7 @@ System.out.println("Inserting type " + canonical_name);
      * @param binding
      * @return
      */
-    public static String getTypeName(TypeBinding binding) {
+    public String getTypeName(TypeBinding binding) {
         String debug_name = binding.debugName(),
                type_name;
     
@@ -675,7 +757,7 @@ System.out.println("Inserting type " + canonical_name);
      * @param binding
      * @return
      */
-    public static String getFullyQualifiedTypeName(TypeBinding binding) {
+    public String getFullyQualifiedTypeName(TypeBinding binding) {
         String package_name = getPackageName(binding),
                type_name = getTypeName(binding);
         return (package_name.length() == 0 ? type_name : package_name + "." + type_name);
@@ -684,7 +766,7 @@ System.out.println("Inserting type " + canonical_name);
     //
     // If we have an an inner class, get its outermost enclosing parent.
     //
-    public static String getMainPackageName(Class base_class, int num) {
+    public String getMainPackageName(Class base_class, int num) {
         while (base_class.getDeclaringClass() != null) {
             base_class = base_class.getDeclaringClass();
         }
@@ -700,7 +782,7 @@ assert(! base_class.isSynthetic());
         return package_name;
     }
 
-    public static Class preprocessClass(TypeBinding binding) {
+    public Class preprocessClass(TypeBinding binding) {
         while (binding.enclosingType() != null) {
             binding = binding.enclosingType();
         }
@@ -710,7 +792,7 @@ assert(! base_class.isSynthetic());
     /**
      * 
      */
-    public static Class preprocessClass(String typename) {
+    public Class preprocessClass(String typename) {
         Class cls = getClassForName(typename);
         if (cls != null) {
             preprocessClass(cls);
@@ -731,7 +813,7 @@ System.out.println("Converting it to " + typename);
      * 
      * @param cls
      */
-    public static void preprocessClass(Class cls) {
+    public void preprocessClass(Class cls) {
         //
         // If the class in question is an array, get the ultimate base class.
         //
@@ -793,7 +875,7 @@ System.out.println("Converting it to " + typename);
      * may refer to an inner class which has not yet been processed as its type.
      * 
      */
-    private static void insertClasses(Class cls) {
+    private void insertClasses(Class cls) {
         JavaParser.cactionInsertClassStart(cls.getSimpleName());
         Class innerClasslist[] = cls.getDeclaredClasses();
         for (int i = 0; i < innerClasslist.length; i++) {
@@ -809,7 +891,7 @@ System.out.println("Converting it to " + typename);
      * @param cls
      * @param className
      */
-    private static void traverseClass(Class cls) {
+    private void traverseClass(Class cls) {
 // TODO: REMOVE THIS
 //System.out.println("Starting with class " + cls.getCanonicalName());
         String class_name = cls.getSimpleName();
@@ -896,7 +978,7 @@ System.out.println("Converting it to " + typename);
             Class type = fld.getType();
             preprocessClass(type);
 
-            JavaParserSupport.generateAndPushType(type);
+            generateAndPushType(type);
 
             if (verboseLevel > 2)
                 System.out.println("Build the data member (field) for name = " + fld.getName());
@@ -1000,7 +1082,7 @@ System.out.println("Converting it to " + typename);
                 JavaParser.cactionTypeReference("", "void", new JavaToken("Dummy JavaToken (see createJavaToken)", new JavaSourcePositionInformation(0)));
 
                 for (int j = 0; j < pvec.length; j++) {
-                    JavaParserSupport.generateAndPushType(pvec[j]);
+                    generateAndPushType(pvec[j]);
                     JavaParser.cactionArgumentEnd(ct.getName() + j, false /* not a Catch argument */, new JavaToken("Dummy JavaToken (see createJavaToken)", new JavaSourcePositionInformation(0)));
                 }
 
@@ -1020,11 +1102,11 @@ System.out.println("Converting it to " + typename);
 
                 Class pvec[] = m.getParameterTypes();
 
-                JavaParserSupport.generateAndPushType(m.getReturnType());
+                generateAndPushType(m.getReturnType());
 
                 // System.out.println("method name = " + m.getName());
                 for (int j = 0; j < pvec.length; j++) {
-                    JavaParserSupport.generateAndPushType(pvec[j]);
+                    generateAndPushType(pvec[j]);
                     JavaParser.cactionArgumentEnd(m.getName() + j, false /* not a Catch argument */, new JavaToken("Dummy JavaToken (see createJavaToken)", new JavaSourcePositionInformation(0)));
                 }
 
@@ -1412,7 +1494,7 @@ System.out.println("The canonical name is: " + cls.getCanonicalName() +
     }
 */
 
-   public static boolean isPrimitiveType ( TypeBinding typeBinding ) {
+   public boolean isPrimitiveType(TypeBinding typeBinding) {
         switch (typeBinding.id) {
             case TypeIds.T_void:
             case TypeIds.T_boolean:
@@ -1423,7 +1505,7 @@ System.out.println("The canonical name is: " + cls.getCanonicalName() +
             case TypeIds.T_float:
             case TypeIds.T_int:
             case TypeIds.T_long:
-            case TypeIds.T_JavaLangObject:
+            //    case TypeIds.T_JavaLangObject:
             //    case TypeIds.T_JavaLangString:
                 return true;
 
@@ -1560,23 +1642,23 @@ System.out.println("The type " + node.resolvedType.debugName() + " cannot be ins
     */
 
 
-    public static void generateAndPushType(Class node) {
+    public void generateAndPushType(Class cls) {
         // This function is used to build types that are classes (implicit classes 
         // that already exist (have been built) and thus just need be found and a 
         // reference put onto the astJavaTypeStack).
         if (verboseLevel > 0)
-            System.out.println("Inside of generateAndPushType(Class) for class = " + node);
+            System.out.println("Inside of generateAndPushType(Class) for class = " + cls);
 
-        if (! node.isPrimitive()) {
+        if (! cls.isPrimitive()) {
             // Investigate any new type.
-            if (node.isArray() == true) {
+            if (cls.isArray() == true) {
                 // DQ (3/21/2011): If this is an array of some type then we have to query the base type and for now I will skip this.
                 // System.out.println("Skipping case of array of type for now (sorry not implemented)... " + node.getComponentType());
 
                 // Build an integer type instead of an array of the proper type (temporary fix so that I can focus on proper class support).
                 // JavaParser.cactionGenerateType("int");
                 int num_dimensions = 0;
-                Class n = node;
+                Class n = cls;
                 while (n.isArray()) {
                      num_dimensions++;
                      n = n.getComponentType();
@@ -1590,13 +1672,14 @@ System.out.println("The type " + node.resolvedType.debugName() + " cannot be ins
 // TODO: REMOVE THIS
 //System.out.println("(3) The canonical name is: " + node.getCanonicalName() +
 //         "; The package is: " + package_name + ";  The class name is " + class_name + ";  The simple class name is " + simple_name + ";  The type name is " + type_name);
+//
+//                JavaParser.cactionGenerateType(package_name, type_name, num_dimensions);
 
-                JavaParser.cactionGenerateType(package_name, type_name, num_dimensions);
                 JavaParser.cactionArrayTypeReference(package_name, type_name, num_dimensions, new JavaToken("Dummy JavaToken (see createJavaToken)", new JavaSourcePositionInformation(0)));
             }
             else {
                 // Note that "toString()" inserts "class" into the generated name of the type (so use "getName()").
-                String className = node.getName();
+                String className = cls.getName();
 
                 // If this is a class type (e.g. in the C++ sense) then we want to build a proper SgClassType IR node.
                 // System.out.println("Build a proper class for this type = " + node);
@@ -1604,16 +1687,17 @@ System.out.println("The type " + node.resolvedType.debugName() + " cannot be ins
 
                 // We know that this name should be interpreted as a proper class so we need to call a specific JNI function to cause it to be generated on the C++ side.
                 // JavaParser.cactionGenerateType(className);
-                String canonical_name = node.getCanonicalName(),
-                       class_name = node.getName(),
-                       simple_name = node.getSimpleName(),
-                       package_name = getMainPackageName(node, 3),
+                String canonical_name = cls.getCanonicalName(),
+                       class_name = cls.getName(),
+                       simple_name = cls.getSimpleName(),
+                       package_name = getMainPackageName(cls, 3),
                        type_name = canonical_name.substring(package_name.length() == 0 ? 0 : package_name.length() + 1);
 // TODO: REMOVE THIS
 //System.out.println("(4) The canonical name is: " + node.getCanonicalName() +
 //         "; The package is: " + package_name  + ";  The class name is " + class_name + ";  The simple class name is " + simple_name + ";  The type name is " + type_name);
+//
+//                JavaParser.cactionGenerateType(package_name, type_name, 0);
 
-                JavaParser.cactionGenerateType(package_name, type_name, 0);
                 JavaParser.cactionTypeReference(package_name, type_name, new JavaToken("Dummy JavaToken (see createJavaToken)", new JavaSourcePositionInformation(0)));
                 // System.out.println("Exiting as a test in generateType(Class) (case of proper class)");
                 // System.exit(1);
@@ -1623,14 +1707,16 @@ System.out.println("The type " + node.resolvedType.debugName() + " cannot be ins
             if (verboseLevel > 0)
                 System.out.println("Build a primitive type: int ");
 
-            String type_name = node.getName();
+            String type_name = cls.getName();
 
-            JavaParser.cactionGenerateType("" /* primitive type has no package */ , type_name, 0);
+// TODO: REMOVE THIS
+//            JavaParser.cactionGenerateType("" /* primitive type has no package */ , type_name, 0);
+
             JavaParser.cactionTypeReference("", type_name, new JavaToken("Dummy JavaToken (see createJavaToken)", new JavaSourcePositionInformation(0)));
         }
 
         if (verboseLevel > 0)
-            System.out.println("Leaving generateType(Class) (case of proper class)");
+            System.out.println("Leaving generateAndPushType(Class) (case of proper class)");
     }
 
 
@@ -1638,7 +1724,7 @@ System.out.println("The type " + node.resolvedType.debugName() + " cannot be ins
      * 
      * @param type_binding
      */
-    static public void generateAndPushType(TypeBinding type_binding) {
+    public void generateAndPushType(TypeBinding type_binding) {
         if (type_binding instanceof ArrayBinding) {
             ArrayBinding arrayType = (ArrayBinding) type_binding;
             TypeBinding baseType = arrayType.leafComponentType;
@@ -1660,5 +1746,44 @@ System.out.println("The type " + node.resolvedType.debugName() + " cannot be ins
 
             JavaParser.cactionTypeReference(package_name, type_name, new JavaToken("Dummy JavaToken (see createJavaToken)", new JavaSourcePositionInformation(0)));
         }
+    }
+
+
+// -------------------------------------------------------------------------------------------
+    
+    public void translate(CompilationUnitDeclaration unit) {
+        // Debugging support...
+        if (verboseLevel > 0)
+            System.out.println("Start parsing");
+
+        try {
+            // Make a copy of the compiation unit so that we can compute source code positions.
+            // rose_compilationResult = unit.compilationResult;
+//TODO: REMOVE THIS !?
+//        JavaParserSupport.initialize(unit.compilationResult,verboseLevel);
+
+            // Example of how to call the traversal using a better design that isolates out the traversal of the ECJ AST from the parser.
+            // "final" is required because the traverse function requires the visitor to be final.
+            // final ecjASTVisitor visitor = new ecjASTVisitor(this);
+            ecjASTVisitor visitor = new ecjASTVisitor(unit, this);
+            unit.traverse(visitor, unit.scope);
+        }
+        catch (Throwable e) {
+            System.out.println("Caught error in JavaParser (Parser failed)");
+            System.err.println(e);
+
+            // Make sure we exit as quickly as possible to simplify debugging.
+            System.exit(1);
+
+            // Make sure we exit on any error so it is caught quickly.
+            // System.exit(1);
+
+            // throw e;
+            return;
+        }
+
+        // Debugging support...
+        if (verboseLevel > 0)
+            System.out.println("Done parsing");
     }
 }

@@ -23,6 +23,11 @@ extern SgSourceFile *OpenFortranParser_globalFilePointer;
 extern SgArrayType *getUniqueArrayType(SgType *, int);
 extern SgPointerType *getUniquePointerType(SgType *, int);
 
+std::string getFullyQualifiedName(SgClassDefinition *);
+std::string getFullyQualifiedName(SgClassType *);
+
+std::string normalize(std::string str);
+
 //
 class AstArrayTypeAttribute : public AstAttribute {
 public:
@@ -403,7 +408,7 @@ bool        convertJavaBooleanToCxxBoolean(JNIEnv *env, const jboolean &java_boo
 SgMemberFunctionDeclaration *buildNonDefiningMemberFunction(const SgName &inputName, SgClassDefinition *classDefinition, int num_arguments);
 SgMemberFunctionDeclaration *buildDefiningMemberFunction   (const SgName &inputName, SgClassDefinition *classDefinition, int num_arguments);
 
-SgMemberFunctionDeclaration *lookupMemberFunctionInClassScope(SgClassDefinition *classDefinition, const SgName &inputName, int num_arguments);
+SgMemberFunctionDeclaration *lookupMemberFunctionDeclarationInClassScope(SgClassDefinition *classDefinition, const SgName &inputName, int num_arguments);
 SgMemberFunctionSymbol *lookupFunctionSymbolInClassScope(SgClassDefinition *classDefinition, const SgName &inputName, const std::list<SgType *> &);
 
 SgClassDeclaration *buildJavaClass (const SgName &className, SgScopeStatement *scope);

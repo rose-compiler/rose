@@ -1041,20 +1041,6 @@ class JavaTraversal implements Callable<Boolean> {
 //for (int i = 0; i < args.length; i++)
 //System.out.println("ROSE Filtered Argument " + i + ": " + args[i]);
 
-        JavaParserSupport.initialize();
-        
-        //
-        // Look to see if a classpath was specified. If so, create a class loader for it.
-        //
-        String classpath = "";
-        for (int i = 0; i < args.length; i++) {
-	        if (args[i].equals("-classpath") || args[i].equals("-cp")) {
-                classpath = args[i+1];
-                break;
-	        }
-        }
-        JavaParserSupport.processClasspath(classpath);
-        
         if (verboseLevel > 0)
             System.out.println("Compiling ...");
 
@@ -1157,6 +1143,18 @@ class JavaTraversal implements Callable<Boolean> {
             if (verboseLevel > 2)
                 System.out.println("test 8 ...");
 
+            //
+            // What is the class path for these compilation units?
+            //
+            String classpath = "";
+            for (int i = 0; i < args.length; i++) {
+                if (args[i].equals("-classpath") || args[i].equals("-cp")) {
+                    classpath = args[i+1];
+                    break;
+                }
+            }
+            JavaParserSupport java_parser_support = new JavaParserSupport(classpath, verboseLevel);
+
 // TODO: REMOVE THIS !
 //System.out.println("Getting started - Preprocessing " + main.batchCompiler.totalUnits + " units");
             for (int i = 0; i < main.batchCompiler.totalUnits; i++) {
@@ -1168,7 +1166,7 @@ class JavaTraversal implements Callable<Boolean> {
 
                 main.batchCompiler.process(unit, i);
 
-                JavaParserSupport.preprocess(unit);
+                java_parser_support.preprocess(unit);
             }
 //TODO: REMOVE THIS !
 //System.out.println("Came back successfully from preprocessing phase");
@@ -1196,7 +1194,7 @@ System.out.println("About to traverse " + new String(unit.getFileName()));
                     // **************************************************
 //TODO: REMOVE THIS !
 //System.out.println("Actual Traversal of AST of " + new String(unit.getFileName()));
-                    JavaParser.startParsingAST(unit, verboseLevel);
+                    java_parser_support.translate(unit);
 //TODO: REMOVE THIS !
 //System.out.println("Done Traversing AST of " + new String(unit.getFileName()));                    
                     if (verboseLevel > 2)

@@ -62,13 +62,21 @@ Unparse_Java::unparseModifierType(SgModifierType* type, SgUnparse_Info& info) {
 }
 
 void
-Unparse_Java::unparseClassType(SgClassType* type, SgUnparse_Info& info)
+Unparse_Java::unparseClassType(SgClassType *type, SgUnparse_Info& info)
    {
-     SgClassDeclaration *decl = isSgClassDeclaration(type->get_declaration());
-     ROSE_ASSERT(decl != NULL);
-
-     unparseName(decl->get_name(), info);
+     //SgClassDeclaration *decl = isSgClassDeclaration(type->get_declaration());
+     //ROSE_ASSERT(decl != NULL);
+     //unparseName(decl->get_name(), info);
      //todo templates and qualified names
+
+     //
+     // Note that we use this attribute to store the qualified name of the type instead of
+     // "type -> get_qualified_name()" because the qualified name has been altered to remap
+     // any use of the character '.' which is not a valid character for a variable name in ROSE.
+     //
+     AstRegExAttribute *attribute = (AstRegExAttribute *) type -> getAttribute("name");
+     ROSE_ASSERT(attribute);
+     curprint(attribute -> expression);
    }
 
 

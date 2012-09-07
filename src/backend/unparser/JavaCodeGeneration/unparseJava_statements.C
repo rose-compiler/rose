@@ -909,8 +909,8 @@ Unparse_Java::unparseClassDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      //
      if (classdecl_stmt -> attributeExists("namespace")) {
          SgClassDefinition *class_definition = classdecl_stmt -> get_definition();
-         if (class_definition -> attributeExists("package")) {
-             AstRegExAttribute *attribute = (AstRegExAttribute *) class_definition -> getAttribute("package");
+         if (class_definition -> attributeExists("translated_package")) {
+             AstRegExAttribute *attribute = (AstRegExAttribute *) class_definition -> getAttribute("translated_package");
              if (attribute -> expression.size() > 0) { // not the null package name?
                  curprint("package ");
                  curprint(attribute -> expression);
@@ -1271,6 +1271,9 @@ void
 Unparse_Java::unparseBaseClass(SgBaseClass* base, SgUnparse_Info& info) {
     ROSE_ASSERT(base != NULL);
 
-    SgClassDeclaration* base_class = base->get_base_class();
-    unparseName(base_class->get_name(), info);
+    SgClassDeclaration* base_class = base -> get_base_class();
+    SgClassType *class_type = base_class -> get_type();
+    ROSE_ASSERT(class_type);
+    //unparseName(base_class->get_name(), info);
+    unparseClassType(class_type, info);
 }

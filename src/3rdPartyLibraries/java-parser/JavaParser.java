@@ -34,8 +34,6 @@ class JavaParser  implements Callable<Boolean> {
     // or borrowed from the existing C and C++ support in ROSE.  We will however
     // add any required IR nodes as needed.
 
-    public static int verboseLevel = 0;
-
     // -------------------------------------------------------------------------------------------
     public static native void cactionPushPackage(String package_name);
     public static native void cactionPopPackage();
@@ -72,7 +70,8 @@ class JavaParser  implements Callable<Boolean> {
 
     public static native void cactionMessageSendEnd(boolean java_is_static, String packageName, String typeName, String functionName, int numTypeArguments, int numArguments, JavaToken jToken);
 
-    public static native void cactionQualifiedNameReference(String package_name, String type_prefix, String type_name, String name, JavaToken jToken);
+// TODO: Remove this !    
+//    public static native void cactionQualifiedNameReference(String package_name, String type_prefix, String type_name, String name, JavaToken jToken);
     public static native void cactionStringLiteral(String value, JavaToken jToken);
 
     public static native void cactionAllocationExpression(JavaToken jToken);
@@ -150,7 +149,7 @@ class JavaParser  implements Callable<Boolean> {
     // public static native void cactionImportReference(String path);
     // public static native void cactionImportReference(String path , Boolean inputContainsWildcard );
     // public static native void cactionImportReference(String path , int java_ContainsWildcard );
-    public static native void cactionImportReference(boolean java_is_static, String package_name, String type_name, boolean java_ContainsWildcard, JavaToken jToken);
+    public static native void cactionImportReference(boolean java_is_static, String package_name, String type_name, String name_suffix, boolean java_ContainsWildcard, JavaToken jToken);
 
     public static native void cactionInitializer(boolean java_is_static, JavaToken jToken);
     public static native void cactionInitializerEnd(JavaToken jToken);
@@ -273,10 +272,10 @@ class JavaParser  implements Callable<Boolean> {
     public static native void cactionArgumentName(String name);
     public static native void cactionArgumentModifiers(int modifiers);
 
+// TODO: REMOVE THIS    
     // Type support
-    public static native void cactionGenerateType(String package_name, String typeName, int num_dimensions);
+//    public static native void cactionGenerateType(String package_name, String typeName, int num_dimensions);
     //     public static native void cactionGenerateClassType(String className, int num_dimensions);
-
     // Build an array type using the base type that will be found on the astJavaTypeStack.
     //     public static native void cactionGenerateArrayType();
 
@@ -305,63 +304,14 @@ class JavaParser  implements Callable<Boolean> {
     // JNI functions.
     static { System.loadLibrary("JavaTraversal"); }
 
-    // -------------------------------------------------------------------------------------------
-
-    static public void startParsingAST(CompilationUnitDeclaration unit, int input_verbose_level) {
-        // Set the verbose level for ROSE specific processing on the Java specific ECJ/ROSE translation.
-        verboseLevel = input_verbose_level;
-
-        // Debugging support...
-        if (verboseLevel > 0)
-            System.out.println("Start parsing");
-
-        // Example of how to call the 
-        // traverseAST(unit);
-
-        try {
-            // Make a copy of the compiation unit so that we can compute source code positions.
-            // rose_compilationResult = unit.compilationResult;
-// TODO: REMOVE THIS !?        	
-//            JavaParserSupport.initialize(unit.compilationResult,verboseLevel);
-
-            // Example of how to call the traversal using a better design that isolates out the traversal of the ECJ AST from the parser.
-            // "final" is required because the traverse function requires the visitor to be final.
-            // final ecjASTVisitor visitor = new ecjASTVisitor(this);
-            ecjASTVisitor visitor = new ecjASTVisitor(unit);
-
-            unit.traverse(visitor,unit.scope);
-
-            // Experiment with error on Java side...catch on C++ side...
-            // System.out.println("Exiting in JavaParser::startParsingAST()");
-            // System.exit(1);
-        }
-        catch (Throwable e) {
-            System.out.println("Caught error in JavaParser (Parser failed)");
-            System.err.println(e);
-
-            // Make sure we exit as quickly as possible to simplify debugging.
-            System.exit(1);
-
-            // Make sure we exit on any error so it is caught quickly.
-            // System.exit(1);
-
-            // throw e;
-            return;
-        }
-
-        // Debugging support...
-        if (verboseLevel > 0)
-            System.out.println("Done parsing");
-    }
-
     // DQ (10/12/2010): Implemented abstract baseclass "call()" member function (similar to OFP).
     // This provides the support to detect errors and communicate them back to ROSE (C++ code).
     public Boolean call() throws Exception {
         // boolean error = false;
         // boolean error = true;
 
-        if (verboseLevel > 0)
-            System.out.println("Parser exiting normally");
+        // if (JavaParserSupport.verboseLevel > 0)
+        //    System.out.println("Parser exiting normally");
 
         // return new Boolean(error);
         // return Boolean.valueOf(error);

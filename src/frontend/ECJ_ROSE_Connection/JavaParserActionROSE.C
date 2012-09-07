@@ -188,7 +188,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBuildClassExtendsAndImplementsSupp
          SgClassType *interface_type = isSgClassType(type);
 
          if (SgProject::get_verbose() > 0) {
-             cout << "   Type " << interface_type -> get_qualified_name()
+             string name = getFullyQualifiedName(interface_type);
+             cout << "   Type " << name
                   << endl;
              cout.flush();
          }
@@ -207,8 +208,9 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBuildClassExtendsAndImplementsSupp
     if (has_super_class) {
         SgType *type = astJavaComponentStack.popType();
         SgClassType *class_type = isSgClassType(type);
-         if (SgProject::get_verbose() > 0) {
-             cout << "   Type " << class_type -> get_qualified_name()
+        if (SgProject::get_verbose() > 0) {
+            string name = getFullyQualifiedName(class_type);
+             cout << "   Type " << name
                   << endl;
              cout.flush();
         }
@@ -367,7 +369,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionTest(JNIEnv *env, jclass) {
 
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionPushPackage(JNIEnv *env, jclass, jstring java_package_name) {
-    SgName package_name = convertJavaPackageNameToCxxString(env, java_package_name);
+    SgName converted_package_name = convertJavaPackageNameToCxxString(env, java_package_name);
 
 // TODO: REMOVE THIS !
 //cout << "Pushing package " << package_name
@@ -391,7 +393,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionPushPackage(JNIEnv *env, jclass, j
     }
     SgNamespaceDefinitionStatement *package = declaration -> get_definition();
 */
-    SgClassSymbol *namespace_symbol = ::globalScope -> lookup_class_symbol(package_name);
+    SgClassSymbol *namespace_symbol = ::globalScope -> lookup_class_symbol(converted_package_name);
     SgClassDeclaration *declaration;
     if (namespace_symbol == NULL) {
 // TODO: REMOVE THIS!!!
@@ -399,11 +401,13 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionPushPackage(JNIEnv *env, jclass, j
 //     << " (" << astJavaScopeStack.size() << ")"
 //     << endl;
 //cout.flush();
-        declaration = SageBuilder::buildDefiningClassDeclaration(package_name, ::globalScope);
-        declaration -> setAttribute("namespace", new AstRegExAttribute(package_name));
+        SgName original_package_name = convertJavaStringToCxxString(env, java_package_name);
+
+        declaration = SageBuilder::buildDefiningClassDeclaration(converted_package_name, ::globalScope);
+        declaration -> setAttribute("namespace", new AstRegExAttribute(original_package_name));
         SgClassDefinition *definition = declaration -> get_definition();
         ROSE_ASSERT(definition);
-        definition -> setAttribute("namespace", new AstRegExAttribute(package_name));
+        definition -> setAttribute("namespace", new AstRegExAttribute(original_package_name));
         ::globalScope -> append_declaration(declaration);
         declaration -> set_parent(::globalScope);
     }
@@ -576,7 +580,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionCompilationUnitDeclaration(JNIEnv 
     //
     // Tag the package so that the unparser can process its containing user-defined types.
     //
-    package -> setAttribute("package", new AstRegExAttribute(convertJavaStringToCxxString(env, java_package_name)));
+    package -> setAttribute("translated_package", new AstRegExAttribute(convertJavaStringToCxxString(env, java_package_name)));
     astJavaScopeStack.push(package); // Push the package onto the scopestack.
 
 // TODO: REMOVE THIS !
@@ -871,7 +875,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionTypeDeclarationEnd(JNIEnv *env, jc
              cerr.flush();
         }
 
-        classDefinition -> prepend_statement(statement);
+        classDefinition -> append_statement(statement);
     }
 
 // TODO: Remove this !!!
@@ -944,10 +948,23 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionConstructorDeclarationHeader(JNIEn
     //
     // TODO:
     //
-    for (int i = 0; i  < numberOfThrownExceptions; i++) { // Pop the Thrown types
+    string exceptions = "";
+    for (int i = 0; i < numberOfThrownExceptions; i++) { // Pop the Thrown types
         SgType *type = astJavaComponentStack.popType();
-        // TODO: Do something with this Thrown type !!!
-        ROSE_ASSERT(isSgClassType(type));
+        SgClassType *class_type = isSgClassType(type);
+        ROSE_ASSERT(class_type);
+
+// TODO: REMOVE THIS !
+// TODO: Do something serious with this Thrown type !!!
+//
+//        string package_name = class_type -> get_qualified_name();
+//        replace(package_name.begin(), package_name.end(), '_', '.'); // TODO: Do this right !!!!
+        string throw_name = getFullyQualifiedName(class_type);
+
+        exceptions += throw_name;
+
+        if (i < numberOfThrownExceptions - 1)
+            exceptions += ", ";
     }
 
     SgClassDefinition *classDefinition = isSgClassDefinition(astJavaScopeStack.top());
@@ -957,7 +974,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionConstructorDeclarationHeader(JNIEn
     // NOTE that we left the arguments and the return type on the Component stack.  They will be processed
     // by this function call. 
     //
-    SgMemberFunctionDeclaration *function_declaration = lookupMemberFunctionInClassScope(classDefinition, name, numberOfArguments); // buildDefiningMemberFunction(name, classDefinition, numberOfArguments);
+    SgMemberFunctionDeclaration *function_declaration = lookupMemberFunctionDeclarationInClassScope(classDefinition, name, numberOfArguments); // buildDefiningMemberFunction(name, classDefinition, numberOfArguments);
     ROSE_ASSERT(function_declaration);
 
     ROSE_ASSERT(numberOfTypeParameters == 0); // TODO: pop and process the Type Parameters.
@@ -977,6 +994,10 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionConstructorDeclarationHeader(JNIEn
     ROSE_ASSERT(astJavaScopeStack.top() -> get_parent() != NULL);
 
     setJavaSourcePosition(function_definition -> get_body(), env, jToken);
+
+    if (exceptions.size()) {
+        function_declaration -> setAttribute("exception", new AstRegExAttribute(exceptions));
+    }
 
     // Since this is a constructor, set it explicitly as such.
     function_declaration -> get_specialFunctionModifier().setConstructor();
@@ -1185,10 +1206,23 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMethodDeclarationHeader(JNIEnv *en
     //
     // TODO:
     //
+    string exceptions = "";
     for (int i = 0; i < numberOfThrownExceptions; i++) { // Pop the Thrown types
         SgType *type = astJavaComponentStack.popType();
-        // TODO: Do something with this Thrown type !!!
-        ROSE_ASSERT(isSgClassType(type));
+        SgClassType *class_type = isSgClassType(type);
+        ROSE_ASSERT(class_type);
+        
+// TODO: REMOVE THIS !
+// TODO: Do something serious with this Thrown type !!!
+//
+//        string package_name = class_type -> get_qualified_name();
+//        replace(package_name.begin(), package_name.end(), '_', '.'); // TODO: Do this right !!!!
+        string throw_name = getFullyQualifiedName(class_type);
+
+        exceptions += throw_name;
+
+        if (i < numberOfThrownExceptions - 1)
+            exceptions += ", ";
     }
 
     SgClassDefinition *classDefinition = isSgClassDefinition(astJavaScopeStack.top());
@@ -1201,7 +1235,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMethodDeclarationHeader(JNIEnv *en
 // TODO: REMOVE THIS !
 //cout << "Got this far" << endl;
 //cout.flush();
-    SgMemberFunctionDeclaration *functionDeclaration = lookupMemberFunctionInClassScope(classDefinition, name, numberOfArguments); // buildDefiningMemberFunction(name, classDefinition, numberOfArguments);
+    SgMemberFunctionDeclaration *functionDeclaration = lookupMemberFunctionDeclarationInClassScope(classDefinition, name, numberOfArguments); // buildDefiningMemberFunction(name, classDefinition, numberOfArguments);
     ROSE_ASSERT(functionDeclaration != NULL);
 // TODO: REMOVE THIS !
 //cout << "Got back from this far" << endl;
@@ -1223,6 +1257,10 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMethodDeclarationHeader(JNIEnv *en
     ROSE_ASSERT(astJavaScopeStack.top() -> get_parent() != NULL);
 
     setJavaSourcePosition(functionDefinition -> get_body(), env, jToken);
+
+    if (exceptions.size()) {
+        functionDeclaration -> setAttribute("exception", new AstRegExAttribute(exceptions));
+    }
 
     // By default, the access modifier is set to unknown
     functionDeclaration -> get_declarationModifier().get_accessModifier().set_modifier(SgAccessModifier::e_unknown);
@@ -1532,8 +1570,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMessageSendEnd(JNIEnv *env, jclass
   bool is_static = java_is_static;
 
   SgName package_name  = convertJavaPackageNameToCxxString(env, java_package_name),
-           type_name  = convertJavaStringToCxxString(env, java_type_name),
-           function_name  = convertJavaStringToCxxString(env, java_function_name);
+         type_name  = convertJavaStringToCxxString(env, java_type_name),
+         function_name  = convertJavaStringToCxxString(env, java_function_name);
 
     if (SgProject::get_verbose() > 2)
         printf ("Inside of Java_JavaParser_cactionMessageSendEnd() \n");
@@ -1599,12 +1637,16 @@ cout.flush();
 */
         if (isSgClassType(receiver)) { // Note that if this is true then the function must be static... See unparseJava_expression.C: unparseFucnCall
             SgClassType *type = isSgClassType(receiver);
-            string full_name = isSgNamedType(receiver) -> get_qualified_name(),
-                   type_name = isSgNamedType(receiver) -> get_name();
-            //
-            // TODO: Do this cleanly by tagging every package with its original name and reconstituting the name of the type...
-            //
-            replace(full_name.begin(), full_name.end(), '_', '.'); // restore the package 
+            string type_name = isSgNamedType(receiver) -> get_name();
+
+// TODO: REMOVE THIS !
+//
+// TODO: Do this cleanly by tagging every package with its original name and reconstituting the name of the type...
+//
+//            string full_name = isSgNamedType(receiver) -> get_qualified_name(),
+// replace(full_name.begin(), full_name.end(), '_', '.'); // restore the package 
+            string full_name = getFullyQualifiedName(type);
+
             string class_name = (full_name.size() == type_name.size() ? type_name : full_name.substr(0, full_name.size() - type_name.size()) + type_name);
             exprForFunction -> setAttribute("prefix", new AstRegExAttribute(class_name));
         }
@@ -1631,10 +1673,12 @@ cout.flush();
 }
 
 
+// TODO: REMOVE THIS !!!
 //
 // TODO: REVIEW THIS!!!!
 // Seems awfully complicated with some legacy code mixed in!
 //
+/*
 JNIEXPORT void JNICALL Java_JavaParser_cactionQualifiedNameReference(JNIEnv *env, jclass, jstring java_package_name, jstring java_type_prefix, jstring java_type_name, jstring java_name, jobject jToken) {
     if (SgProject::get_verbose() > 0)
         printf ("Build a qualified name reference \n");
@@ -1643,12 +1687,25 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionQualifiedNameReference(JNIEnv *env
     string type_prefix = convertJavaStringToCxxString(env, java_type_prefix);
     string type_name = convertJavaStringToCxxString(env, java_type_name);
     string qualifiedName = convertJavaStringToCxxString(env, java_name);
+cout << "Looking for type  ..."
+    << "; type_prefix = " << type_prefix
+    << "; package_name = " << package_name
+    << "; type_name = " << type_name
+    << "; qualifiedName = " << qualifiedName
+    << endl;
+cout.flush();
 
     // list<SgName> qualifiedNameList = generateQualifierList(qualifiedName);
     SgClassType *class_type = NULL;
     if (type_prefix.length() > 0) {
         string full_name = (package_name.length() > 0 ? (package_name + ".") : "") + type_name;
         class_type = lookupTypeFromQualifiedName(full_name);
+if (!class_type){
+cout << "Could not find the type name "
+    << full_name
+    << endl;
+cout.flush();
+}
         ROSE_ASSERT(class_type);
     }
 
@@ -1682,7 +1739,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionQualifiedNameReference(JNIEnv *env
 if(variable_symbol == NULL) {
 cout << "Could not find ..."
     << "; type_prefix = " << type_prefix
-    << "package_name = " << package_name
+    << "; package_name = " << package_name
     << "; type_name = " << type_name
     << "; qualifiedName = " << qualifiedName
     << " in scope " 
@@ -1702,11 +1759,15 @@ cout.flush();
         for (i++; i != nameList.end(); i++) {
             SgType *type = result -> get_type();
             ROSE_ASSERT(! isSgJavaParameterizedType(type));
-            if (isSgArrayType(type)) {
-                ROSE_ASSERT((*i).getString().compare("length") == 0);
-                result -> setAttribute("suffix", new AstRegExAttribute("length"));
+//            if (isSgArrayType(type) && (*i).getString().compare("length") == 0) {
+            if (isSgPointerType(type) && (*i).getString().compare("length") == 0) { // In fact, this is a Java array which is a type !!!
+                result -> setAttribute("suffix", new AstRegExAttribute("length")); // TODO: The field "length" does not exist since we don't have a real type!
             }
             else {
+                if (isSgPointerType(type)) { // In fact, this is a Java array which is a type!!!
+                    type = ::ObjectClassType;
+                }
+
                 SgClassType *class_type = isSgClassType(type);
                 SgClassDeclaration *class_declaration = (SgClassDeclaration *) class_type -> get_declaration() -> get_definingDeclaration();
                 SgClassDefinition *definition = isSgClassDefinition(class_declaration -> get_definition());
@@ -1730,6 +1791,7 @@ cout.flush();
         astJavaComponentStack.push(result);
     }
 }
+*/
 
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionStringLiteral(JNIEnv *env, jclass, jstring java_string, jobject jToken) {
@@ -1906,7 +1968,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitFieldSupport(JNIEnv *
         variableDeclaration -> get_file_info() -> display("source position in Java_JavaParser_cactionBuildImplicitFieldSupport(): debug");
 }
 
-
+// TODO: REMOVE THIS !!!
+/*
 JNIEXPORT void JNICALL Java_JavaParser_cactionGenerateType(JNIEnv *env, jclass xxx, jstring java_package_name, jstring java_type_name, jint java_num_dimensions) {
     // This is general support for building types.  Using JNI one to many calls from Java are made to C++ 
     // with enough information to build specific types or parts of types (for aggragate types such as classes).
@@ -2076,10 +2139,12 @@ type = ::ObjectClassType;
 }
         }
 */
+/*
         type = lookupTypeByName(package_name, type_name, number_of_dimensions);
         ROSE_ASSERT(type);
     }
 }
+*/
 
 
 // JNIEXPORT void JNICALL Java_JavaParser_cactionGenerateClassType(JNIEnv *env, jclass xxx, jstring java_string, jobject jToken)
@@ -3040,10 +3105,17 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionFieldReferenceEnd(JNIEnv *env, jcl
     if (SgProject::get_verbose() > 0)
         printf ("Building a variable reference for name = %s \n", field_name.str());
 
-    SgExpression *receiver = astJavaComponentStack.popExpression();
+    SgNode *prefix = astJavaComponentStack.pop();
+    SgExpression *receiver = isSgExpression(prefix);
+    SgType *type = isSgType(prefix);
+    ROSE_ASSERT(receiver || type);
+    if (type == NULL) {
+        type = receiver -> get_type();
+    }
+    ROSE_ASSERT(type);
+
     SgExpression *result;
-    SgType *type = receiver -> get_type();
-    if (isSgPointerType(type)) { // PC: This is NOT C++ !!!
+    if (isSgThisExp(receiver) || isSgSuperExp(receiver)) { // First, take care of these special pointer types:  "this" and "super"
         SgClassType *class_type = isSgClassType(isSgPointerType(type) -> get_base_type());
         ROSE_ASSERT(class_type);
         SgClassDeclaration *declaration = isSgClassDeclaration(class_type -> get_declaration() -> get_definingDeclaration());
@@ -3056,8 +3128,20 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionFieldReferenceEnd(JNIEnv *env, jcl
         setJavaSourcePosition(field, env, jToken);
         result = SageBuilder::buildBinaryExpression<SgDotExp>(receiver, field);
     }
+    else if (isSgPointerType(type) && field_name.getString().compare("length") == 0) { // In fact, this is a Java array which is a type !!!
+        receiver -> setAttribute("suffix", new AstRegExAttribute("length")); // TODO: The field "length" does not exist since we don't have a real type!
+        result = receiver;
+    }
     else {
-        SgClassType *class_type = isSgClassType(receiver -> get_type());
+        if (isSgPointerType(type)) { // In fact, this is a Java array which is a type!!!
+            type = ::ObjectClassType;
+        }
+
+        SgClassType *class_type = isSgClassType(type);
+if (! class_type) {
+cout << "The funny class is " << type -> class_name() << endl;
+cout.flush();
+}
         ROSE_ASSERT(class_type);
         SgClassDeclaration *declaration = isSgClassDeclaration(class_type -> get_declaration() -> get_definingDeclaration());
         ROSE_ASSERT(declaration);
@@ -3067,7 +3151,22 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionFieldReferenceEnd(JNIEnv *env, jcl
         SgVarRefExp *field = SageBuilder::buildVarRefExp(variable_symbol);
         ROSE_ASSERT(field != NULL);
         setJavaSourcePosition(field, env, jToken);
-        result = SageBuilder::buildBinaryExpression<SgDotExp>(receiver, field);
+
+        if (receiver) {
+            result = SageBuilder::buildBinaryExpression<SgDotExp>(receiver, field);
+        }
+        else {
+// TODO: REMOVE THIS !
+//
+// TODO: Do this cleanly by tagging every package with its original name and reconstituting the name of the type...
+//
+//            string class_name = class_type -> get_qualified_name().getString();
+//            replace(class_name.begin(), class_name.end(), '_', '.'); // restore the package 
+            string class_name = getFullyQualifiedName(class_type);
+
+            field -> setAttribute("prefix", new AstRegExAttribute(class_name));
+            result = field;
+        }
     }
 
     astJavaComponentStack.push(result);
@@ -3352,7 +3451,13 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionIfStatementEnd(JNIEnv *env, jclass
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionImportReference(JNIEnv *env, jclass, jboolean java_is_static, jstring java_package_name, jstring java_type_name, jboolean java_contains_wildcard, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionImportReference(JNIEnv *env, jclass,
+                                                              jboolean java_is_static,
+                                                              jstring java_package_name,
+                                                              jstring java_type_name,
+                                                              jstring java_name_suffix,
+                                                              jboolean java_contains_wildcard,
+                                                              jobject jToken) {
     // This is the import statement.  The semantics is to include the named file and add its 
     // declarations to the global scope so that they can be referenced by the current file.
     // The import directive tells the compiler where to look for the class definitions 
@@ -3365,7 +3470,11 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionImportReference(JNIEnv *env, jclas
 
     SgName package_name = convertJavaPackageNameToCxxString(env, java_package_name),
            type_name = convertJavaStringToCxxString(env, java_type_name),
-           qualifiedName = convertJavaStringToCxxString(env, java_package_name) + string(package_name.getString().size() && type_name.getString().size() ? "." : "") + type_name.getString();
+           name_suffix = convertJavaStringToCxxString(env, java_name_suffix),
+           qualifiedName = convertJavaStringToCxxString(env, java_package_name) +
+                           string(package_name.getString().size() && type_name.getString().size() ? "." : "") + 
+                           type_name.getString() +
+                           (name_suffix.getString().size() ? ("." + name_suffix.getString()) : "");
 
     bool contains_wildcard = java_contains_wildcard;
 
@@ -4097,21 +4206,20 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionSingleNameReference(JNIEnv *env, j
     else { // a local variable!
         if (SgProject::get_verbose() > 0)
             printf ("Building a variable reference for name = %s \n", name.str());
-
         variable_symbol = lookupVariableByName(name);
     }
 
 // TODO: REMOVE THIS!
-if(variable_symbol == NULL) {
-cout << "Could not find ..."
-    << "package_name = " << package_name.getString()
-    << "; type_name = " << type_name.getString()
-    << "; variable_name = " << name.getString()
-    << " in scope " 
-    << astJavaScopeStack.top() -> class_name()
-    << endl;
-cout.flush();
-}
+//if(variable_symbol == NULL) {
+//cout << "Could not find ..."
+//    << "package_name = " << package_name.getString()
+//    << "; type_name = " << type_name.getString()
+//    << "; variable_name = " << name.getString()
+//    << " in scope " 
+//    << astJavaScopeStack.top() -> class_name()
+//    << endl;
+//cout.flush();
+//}
 
     ROSE_ASSERT(variable_symbol);
     SgVarRefExp *varRefExp = SageBuilder::buildVarRefExp(variable_symbol);
