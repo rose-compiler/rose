@@ -32,6 +32,15 @@ Unparse_Java::unparseLanguageSpecificExpression(SgExpression* expr, SgUnparse_In
      printf ("In Unparse_Java::unparseLanguageSpecificExpression ( expr = %p = %s ) language = %s \n",expr,expr->class_name().c_str(),languageName().c_str());
 #endif
 
+     //
+     // An expression may contain a Type prefix stored in the "prefix" attribute.
+     //
+     if (expr -> attributeExists("prefix")) {
+         AstRegExAttribute *attribute = (AstRegExAttribute *) expr -> getAttribute("prefix");
+         curprint(attribute -> expression);
+         curprint(".");
+     }
+
      switch (expr->variant())
         {
           case UNARY_EXPRESSION:  { unparseUnaryExpr (expr, info); break; }
@@ -136,6 +145,15 @@ Unparse_Java::unparseLanguageSpecificExpression(SgExpression* expr, SgUnparse_In
                break;
      }
     }
+
+     //
+     // An Expression may contain a name suffix stored in the "suffix" attribute.
+     //
+     if (expr -> attributeExists("suffix")) {
+         curprint(".");
+         AstRegExAttribute *attribute = (AstRegExAttribute *) expr -> getAttribute("suffix");
+         curprint(attribute -> expression);
+     }
    }
 
 PrecedenceSpecifier
@@ -280,25 +298,7 @@ Unparse_Java::unparseVarRef(SgExpression* expr, SgUnparse_Info& info) {
      SgVarRefExp* var_ref = isSgVarRefExp(expr);
      ROSE_ASSERT(var_ref != NULL);
 
-     //
-     // An SgVarRefExp may contain a Type prefix stored in the "prefix" attribute.
-     //
-     if (var_ref -> attributeExists("prefix")) {
-         AstRegExAttribute *attribute = (AstRegExAttribute *) var_ref -> getAttribute("prefix");
-         curprint(attribute -> expression);
-         curprint(".");
-     }
-
      unparseName(var_ref->get_symbol()->get_name(), info);
-
-     //
-     // An SgVarRefExp may contain a name suffix stored in the "suffix" attribute.
-     //
-     if (var_ref -> attributeExists("suffix")) {
-         curprint(".");
-         AstRegExAttribute *attribute = (AstRegExAttribute *) var_ref -> getAttribute("suffix");
-         curprint(attribute -> expression);
-     }
 }
 
 void
@@ -640,16 +640,6 @@ Unparse_Java::unparseComplexVal(SgExpression* expr, SgUnparse_Info& info)
 void Unparse_Java::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info) {
     SgFunctionCallExp* func_call = isSgFunctionCallExp(expr);
     ROSE_ASSERT(func_call != NULL);
-
-    //
-    // If the attribute points to the null string, it identifies an implicit Super call.
-    // We ignore implicit super calls.
-    //
-    if (func_call -> attributeExists("prefix")) {
-        AstRegExAttribute *prefix_attribute = (AstRegExAttribute *) func_call -> getAttribute("prefix");
-        curprint(prefix_attribute -> expression);
-        curprint(".");
-    }
 
     if (func_call -> attributeExists("<init>")) {
         AstRegExAttribute *constructor_attribute = (AstRegExAttribute *) func_call -> getAttribute("<init>");
@@ -1172,24 +1162,6 @@ Unparse_Java::unparseCompoundAssignOp(SgCompoundAssignOp* op,
 void
 Unparse_Java::unparseBinaryOp(SgBinaryOp* op,
                               SgUnparse_Info & info) {
-
-    //
-    // An SgDotExp may contain a Type prefix stored in the "prefix" attribute.
-    //
-    if (op -> attributeExists("prefix")) {
-        AstRegExAttribute *attribute = (AstRegExAttribute *) op -> getAttribute("prefix");
-        curprint(attribute -> expression);
-        curprint(".");
-    }
-
-     //
-     // An SgDotExp may contain a name suffix stored in the "suffix" attribute.
-     //
-     if (op -> attributeExists("suffix")) {
-         curprint(".");
-         AstRegExAttribute *attribute = (AstRegExAttribute *) op -> getAttribute("suffix");
-         curprint(attribute -> expression);
-     }
 
     unparseExpression(op->get_lhs_operand(), info);
     switch (op->variantT()) {

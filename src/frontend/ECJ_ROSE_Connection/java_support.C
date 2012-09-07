@@ -86,6 +86,61 @@ bool isCompatibleTypes(SgType *source_type, SgType *target_type) {
     return source_type == target_type;
 }
 
+string getFullyQualifiedName(SgClassDefinition *definition) {
+    if (definition -> attributeExists("namespace")) {
+        AstRegExAttribute *attribute = (AstRegExAttribute *) definition -> getAttribute("namespace");
+        return attribute -> expression;
+    }
+
+    string name = definition -> get_declaration() -> get_name();
+    if (isSgClassDefinition(definition -> get_scope())) {
+        string prefix = getFullyQualifiedName((SgClassDefinition *) definition -> get_scope());
+        return (prefix.size() > 0 ? (prefix + ".") : "") + name;
+    }
+
+    ROSE_ASSERT(false /* && definition -> get_scope() -> class_name() */);
+
+    return "";
+}
+
+string getFullyQualifiedName(SgClassType *class_type) {
+    AstRegExAttribute *attribute = (AstRegExAttribute *) class_type -> getAttribute("name");
+    if (! attribute) {
+        SgClassDeclaration *declaration = isSgClassDeclaration(class_type -> get_declaration());
+        ROSE_ASSERT(declaration);
+        SgClassDeclaration *defining_declaration = isSgClassDeclaration(declaration -> get_definingDeclaration());
+        ROSE_ASSERT(defining_declaration);
+        SgClassDefinition *definition = defining_declaration -> get_definition();
+        ROSE_ASSERT(definition);
+        attribute = new AstRegExAttribute(getFullyQualifiedName(definition));
+        class_type -> setAttribute("name", attribute);
+    }
+
+    return attribute -> expression;
+}
+
+//
+// Replace newline character by its escape character sequence.
+//
+// TODO: PC Question: Shouldn't the unparser be doing this as it is already processing
+//                    other escape sequences such as \" and \'.
+//
+string normalize(string source) {
+    string target = "";
+    for (string::iterator it = source.begin(); it < source.end(); it++) {
+        switch(*it) {
+            case '\n':
+                target += "\\n";
+                break;
+            default:
+                target += (*it);
+                break;
+        }
+    }
+
+    return target;
+}
+
 // DQ (8/15/2011): This declaration was moved to openJavaParser_main.C to
 // separate the work on Java from the rest of ROSE and support the ROSE
 // configuration language only options.
@@ -381,7 +436,7 @@ string convertJavaStringToCxxString(JNIEnv *env, const jstring &java_string) {
     env -> ReleaseStringUTFChars(java_string, str);
     ROSE_ASSERT(str != NULL);
 
-    return returnString;
+    return normalize(returnString);
 }
 
 string convertJavaPackageNameToCxxString(JNIEnv *env, const jstring &java_string) {
@@ -617,70 +672,72 @@ SgMemberFunctionDeclaration *buildDefiningMemberFunction(const SgName &inputName
 /**
  * Lookup a member function in current class only (doesn't look in super and interfaces classes)
  */
-SgMemberFunctionDeclaration *lookupMemberFunctionInClass(SgClassDefinition *classDefinition, const SgName &function_name, const list<SgType *>& types) {
-  int num_arguments = types.size();
-  SgMemberFunctionDeclaration *function_declaration = NULL;
-  vector<SgDeclarationStatement *> declarations = classDefinition -> get_members();
-  for (int i = 0; i < declarations.size(); i++, function_declaration = NULL) {
-    SgDeclarationStatement *declaration = declarations[i];
-    function_declaration = isSgMemberFunctionDeclaration(declaration);
-    if (function_declaration && function_declaration -> get_name() == function_name) {
-      vector<SgInitializedName *> args = function_declaration -> get_args();
-      if (args.size() == num_arguments) {
-        list<SgType *>::const_iterator j = types.begin();
-        int k;
-        for (k = 0; k < num_arguments; k++, j++) {
-          SgType *type = (*j);
-          if (! isCompatibleTypes(type, args[k] -> get_type())) {
-            // Not all types are compatible, continue to look
-            continue;
-          }
-        }
+SgMemberFunctionDeclaration *lookupMemberFunctionDeclarationInClass(SgClassDefinition *classDefinition, const SgName &function_name, const list<SgType *>& types) {
+    int num_arguments = types.size();
+    SgMemberFunctionDeclaration *function_declaration = NULL;
+    vector<SgDeclarationStatement *> declarations = classDefinition -> get_members();
+    for (int i = 0; i < declarations.size(); i++, function_declaration = NULL) {
+        SgDeclarationStatement *declaration = declarations[i];
+        function_declaration = isSgMemberFunctionDeclaration(declaration);
+        if (function_declaration && function_declaration -> get_name() == function_name) {
+            vector<SgInitializedName *> args = function_declaration -> get_args();
+            if (args.size() == num_arguments) {
+                list<SgType *>::const_iterator j = types.begin();
+                int k;
+                for (k = 0; k < num_arguments; k++, j++) {
+                    SgType *type = (*j);
+                    if (! isCompatibleTypes(type, args[k] -> get_type())) {
+                        // Not all types are compatible, continue to look
+                        break;
+                    }
+                }
 
-        if (k == num_arguments) {// all the arguments match?
-          break;
+                if (k == num_arguments) {// all the arguments match?
+                    break;
+                }
+            }
         }
-      }
     }
-  }
-  return function_declaration;
+
+    return function_declaration;
 }
 
-SgMemberFunctionDeclaration *lookupMemberFunctionInClassScope(SgClassDefinition *classDefinition, const SgName &function_name, int num_arguments) {
-  ROSE_ASSERT(classDefinition != NULL);
+SgMemberFunctionDeclaration *lookupMemberFunctionDeclarationInClassScope(SgClassDefinition *classDefinition, const SgName &function_name, int num_arguments) {
+    ROSE_ASSERT(classDefinition != NULL);
 
-  // Loop over the types in the astJavaComponentStack (the rest of the stack).
-  list<SgInitializedName *> names;
-  list<SgType *> types;
-  for (int i = 0; i < num_arguments; i++) { // charles4 10/12/2011: Reverse the content of the stack.
-    SgNode *node = astJavaComponentStack.pop();
-    SgInitializedName *initializedName = isSgInitializedName(node);
-    ROSE_ASSERT(initializedName);
-    types.push_front(initializedName->get_type());
-    names.push_front(initializedName);
-  }
+    // Loop over the types in the astJavaComponentStack (the rest of the stack).
+    list<SgInitializedName *> names;
+    list<SgType *> types;
+    for (int i = 0; i < num_arguments; i++) { // charles4 10/12/2011: Reverse the content of the stack.
+        SgNode *node = astJavaComponentStack.pop();
+        SgInitializedName *initializedName = isSgInitializedName(node);
+        ROSE_ASSERT(initializedName);
+        types.push_front(initializedName->get_type());
+        names.push_front(initializedName);
+    }
 
-  SgType *return_type = astJavaComponentStack.popType(); // Remove the return type ... We don't need it!
-  ROSE_ASSERT(return_type != NULL);
+    SgType *return_type = astJavaComponentStack.popType(); // Remove the return type ... We don't need it!
+    ROSE_ASSERT(return_type != NULL);
 
-  SgMemberFunctionDeclaration *function_declaration = NULL;
-  function_declaration = lookupMemberFunctionInClass(classDefinition, function_name, types);
-  //
-  // Release space used for these extraneous Initialized variables!
-  //
-  for (std::list<SgInitializedName *>::iterator name_it = names.begin(); name_it != names.end(); name_it++) {
-    delete (*name_it);
-  }
+    SgMemberFunctionDeclaration *function_declaration = NULL;
+    function_declaration = lookupMemberFunctionDeclarationInClass(classDefinition, function_name, types);
 
-  // TODO: REMOVE THIS !
-  //if (! function_declaration) {
-  //cout << "Could not find a match for function "
-  //     << function_name
-  //     << endl;
-  //}
-  ROSE_ASSERT(function_declaration != NULL);
+    //
+    // Release space used for these extraneous Initialized variables!
+    //
+    for (std::list<SgInitializedName *>::iterator name_it = names.begin(); name_it != names.end(); name_it++) {
+        delete (*name_it);
+    }
 
-  return function_declaration;
+// TODO: REMOVE THIS !
+//if (! function_declaration) {
+//cout << "Could not find a match for function "
+//     << function_name
+//     << endl;
+//}
+    ROSE_ASSERT(function_declaration != NULL);
+
+    return function_declaration;
 }
 
 SgMemberFunctionSymbol *lookupFunctionSymbolInClassScope(SgClassDefinition *classDefinition, const SgName &function_name, const list<SgType *> &formal_types) {
@@ -699,7 +756,7 @@ SgMemberFunctionSymbol *lookupFunctionSymbolInClassScope(SgClassDefinition *clas
   while ((function_declaration == NULL) && !workList.empty()) {
     SgClassDeclaration * classDeclaration = workList.front();
     SgClassDefinition * classDefinition = classDeclaration->get_definition(); // get the super class definition
-    function_declaration = lookupMemberFunctionInClass(classDefinition, function_name, formal_types);
+    function_declaration = lookupMemberFunctionDeclarationInClass(classDefinition, function_name, formal_types);
     // If nothing has been found get the inheritance list of current class
     // and add all at the end of the worklist (breadth-first search)
     if (function_declaration == NULL) {
@@ -731,7 +788,7 @@ SgMemberFunctionSymbol *lookupFunctionSymbolInClassScope(SgClassDefinition *clas
 }
 
 
-SgClassDeclaration *buildJavaClass (const SgName &className, SgScopeStatement *scope) {
+SgClassDeclaration *buildJavaClass(const SgName &className, SgScopeStatement *scope) {
     // This is a low level function to build the class specific to Java requirements 
     // (not very different from C++, but with a "super" function).
 
@@ -1271,6 +1328,13 @@ SgVariableSymbol *lookupVariableByName(const SgName &name) {
     // super class and interfaces.
     //
     for (std::list<SgScopeStatement*>::iterator i = astJavaScopeStack.begin(); symbol == NULL && i != astJavaScopeStack.end(); i++)  {
+// TODO: REMOVE THIS !
+//cout << "Looking for name "
+//     << name.getString()
+//     << " in scope "
+//     << (isSgClassDefinition(*i) ? isSgClassDefinition(*i) -> get_qualified_name().getString() : (*i) -> class_name())
+//     << endl;
+//cout.flush();
         symbol = (isSgClassDefinition(*i)
                       ? lookupSimpleNameVariableInClassScope(name, (SgClassDefinition *) (*i))
                       : (*i) -> lookup_symbol(name));
@@ -1279,6 +1343,20 @@ SgVariableSymbol *lookupVariableByName(const SgName &name) {
     }
 
     SgVariableSymbol *variable_symbol = isSgVariableSymbol(symbol);
+// TODO: REMOVE THIS !
+//if (symbol && (!variable_symbol)) {
+//cout << "I found the name "
+//     << symbol -> get_name().getString()
+//     << " and it is of type "
+//     << symbol -> class_name()
+//     << endl;
+//cout.flush();
+//}
+//else if (symbol)
+//cout << "I found the name "
+//     << symbol -> get_name().getString()
+//     << endl;
+//cout.flush();
 
     return variable_symbol;
 }
@@ -1426,6 +1504,10 @@ SgType *lookupTypeByName(SgName &package_name, SgName &type_name, int num_dimens
         }
 
         type = type_symbol -> get_type();
+
+        SgClassType *class_type = isSgClassType(type);
+        ROSE_ASSERT(class_type);
+        getFullyQualifiedName(class_type);
     }
 
     //
