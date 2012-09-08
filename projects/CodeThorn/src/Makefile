@@ -50,6 +50,9 @@ LTLParser.o: LTLParser.y++ LTL.h
 
 Analyzer.o : CollectionOperators.h Analyzer.h AstTerm.h Labeler.h CFAnalyzer.h MyAst.h SgNodeHelper.h ExprAnalyzer.h StateRepresentation.h Analyzer.C
 
+codethorn.o: codethorn.C codethorn.h LTL.h
+LTLChecker.o: LTLChecker.C LTLChecker.h LTL.h
+
 %.o: %.C %.h
 	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $< -c 
 
