@@ -30,7 +30,9 @@ class Visualizer {
   void setTransitionGraph(TransitionGraph* x);
   void createMappings();
   string stateToString(const State* state);
+  string stateToDotString(const State* state);
   string eStateToString(const EState* state);
+  string eStateToDotString(const EState* state);
   string transitionGraphDotHtmlNode(Label lab);
   string transitionGraphToDot();
   string foldedTransitionGraphToDot();
@@ -41,9 +43,10 @@ class Visualizer {
   EStateSet* eStateSet;
   TransitionGraph* transitionGraph;
   
+  bool optionStateObjectAddress;
   bool optionStateId;
   bool optionStateProperties;
-  bool optionEStateLabel;
+  bool optionEStateObjectAddress;
   bool optionEStateId;
   bool optionEStateProperties;
   bool optionTransitionGraphDotHtmlNode;

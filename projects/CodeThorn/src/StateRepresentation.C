@@ -308,6 +308,13 @@ StateId StateSet::stateId(const State state) {
   return NO_STATE;
 }
 
+string StateSet::stateIdString(const State* state) {
+  stringstream ss;
+  ss<<stateId(state);
+  return ss.str();
+}
+
+
 
 const State* StateSet::statePtr(State& s) {
   StateSet::iterator i=find(s);
@@ -362,6 +369,11 @@ EStateId EStateSet::eStateId(const EState eState) {
   return NO_ESTATE;
 }
 
+string EStateSet::eStateIdString(const EState* eState) {
+  stringstream ss;
+  ss<<eStateId(eState);
+  return ss.str();
+}
 
 bool EStateSet::eStateExists(EState& s) {
   return eStatePtr(s)!=0;
@@ -406,7 +418,7 @@ set<const EState*> TransitionGraph::eStateSetOfLabel(Label lab) {
 
 string EState::toString() const {
   stringstream ss;
-  ss << "@"<<this << " EState";
+  ss << "EState";
   ss << "(label="<<label<<", state=";
   if(state)
 	ss <<state->toString();

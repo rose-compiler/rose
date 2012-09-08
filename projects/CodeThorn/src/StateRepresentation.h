@@ -40,6 +40,7 @@ class StateSet : public set<State> {
   string toString();
   StateId stateId(const State* state);
   StateId stateId(const State state);
+  string stateIdString(const State* state);
 };
 
 /*
@@ -128,6 +129,7 @@ class EStateSet : public set<EState> {
   string toString();
   EStateId eStateId(const EState* eState);
   EStateId eStateId(const EState eState);
+  string eStateIdString(const EState* eState);
 };
 
 class Transition {

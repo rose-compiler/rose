@@ -510,6 +510,7 @@ void Analyzer::initializeSolver1(std::string functionToStartAt,SgNode* root) {
   cout << "INIT: finished."<<endl;
 }
 
+#if 0
 string Analyzer::transitionGraphDotHtmlNode(Label lab) {
   string s;
   s+="L"+Labeler::labelToString(lab)+" [shape=none, margin=0, label=";
@@ -538,7 +539,9 @@ string Analyzer::transitionGraphDotHtmlNode(Label lab) {
   s+=">];\n";
   return s;
 }
+#endif
 
+#if 0
 string Analyzer::stateToString(const State* state) {
   stringstream ss;
   if(optionCompactStateString)
@@ -556,17 +559,7 @@ string Analyzer::eStateToString(const EState* eState) {
 	ss << eState->toString();
   return ss.str();
 }
-
-string Analyzer::transitionGraphToDot() {
-  stringstream ss;
-  for(TransitionGraph::iterator j=transitionGraph.begin();j!=transitionGraph.end();++j) {
-	ss <<"\""<<eStateToString((*j).source)<<"\""<< "->" <<"\""<<eStateToString((*j).target)<<"\"";
-    ss <<" [label=\""<<SgNodeHelper::nodeToString(getLabeler()->getNode((*j).edge.source));
-	ss <<"["<<(*j).edge.typeToString()<<"]";
-	ss <<"\"]"<<";"<<endl;
-  }
-  return ss.str();
-}
+#endif
 
 set<const EState*> Analyzer::transitionSourceEStateSetOfLabel(Label lab) {
   set<const EState*> eStateSet;
@@ -577,6 +570,7 @@ set<const EState*> Analyzer::transitionSourceEStateSetOfLabel(Label lab) {
   return eStateSet;
 }
 
+#if 0
 string Analyzer::foldedTransitionGraphToDot() {
   stringstream ss;
   ss<<"digraph html {\n";
@@ -601,6 +595,7 @@ string Analyzer::foldedTransitionGraphToDot() {
   ss<<"}\n";
   return ss.str();
 }
+#endif
 
 // TODO: x=x eliminates constraints of x but it should not.
 State Analyzer::analyzeAssignRhs(State currentState,VariableId lhsVar, SgNode* rhs, ConstraintSet& cset) {

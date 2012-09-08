@@ -73,11 +73,11 @@ class Analyzer {
   State analyzeAssignRhs(State currentState,VariableId lhsVar, SgNode* rhs,ConstraintSet& cset);
   EState analyzeVariableDeclaration(SgVariableDeclaration* nextNodeToAnalyze1,EState currentEState, Label targetLabel);
   EState transferFunction(Edge edge, const EState* eState);
-  string stateToString(const State* state);
-  string eStateToString(const EState* eState);
-  string transitionGraphDotHtmlNode(Label l);
-  string transitionGraphToDot();
-  string foldedTransitionGraphToDot();
+  //  string stateToString(const State* state);
+  //string eStateToString(const EState* eState);
+  //  string transitionGraphDotHtmlNode(Label l);
+  //string transitionGraphToDot();
+  //string foldedTransitionGraphToDot();
   void setOptionCompactStateString(bool opt) {optionCompactStateString=opt;}
   void addToWorkList(const EState* eState) { eStateWorkList.push(eState); }
   const EState* addToWorkListIfNew(EState eState);
