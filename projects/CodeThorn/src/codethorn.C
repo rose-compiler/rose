@@ -322,6 +322,7 @@ int main( int argc, char * argv[] ) {
     ("help", "produce this help message")
     ("rose-help", "show help for compiler frontend options")
     ("version", "display the version")
+    ("author", "display the authors of CodeThorn")
     ("verify", po::value< string >(), "verify all LTL formulae in the file [arg]")
     ("tg1-estate-address", po::value< string >(), "transition graph 1: visualize address [=yes|no]")
     ("tg1-estate-id", po::value< string >(), "transition graph 1: visualize estate-id [=yes|no]")
@@ -345,9 +346,13 @@ int main( int argc, char * argv[] ) {
   }
 
   if (args.count("version")) {
-    cout << "CodeThorn version 1.0\n";
+    cout << "CodeThorn version 1.1 [RC1]\n";
+    cout << "Written by Markus Schordan and Adrian Prantl\n";
+    cout << "2012\n";
     return 0;
   }
+
+
 
   if (args.count("verify")) {
     ltl_file = args["verify"].as<string>();
