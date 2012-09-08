@@ -12,6 +12,9 @@ int calculate_output(int input) {
 	return 22;
   } else if(f==6) {
 	f=5;
+	return 23;
+  } else if(f==5) {
+	f=4;
   }
   return -1;
 }

@@ -1,2 +1,48 @@
-F oW
-F oX
+SYNTAX: every line not starting with '(' is a comment
+NOTE:   tests for rers_mini.C 
+        All of these should be true!
+
+(F oW)
+output W will occur
+----------------------------------------
+
+(F oX)
+output X will occur
+----------------------------------------
+
+(!(G ! oW))
+W is not the only output
+----------------------------------------
+
+(G ! (oU & oW))
+U and W happen not at the same time
+----------------------------------------
+
+(!(G (oU | oW)))
+it's always either U or W (not true because start node has no output at all)
+----------------------------------------
+
+(! oX WU (oW & ! oX))
+output W does not occur before output X
+----------------------------------------
+
+(oW WU (oX & ! oW))
+output X occurs before output W
+OPEN DISCUSSION: 
+this fails because of the start node where no output happens at all. What should we do?
+If we write it like this,
+(F (oW WU (oX & ! oW)))
+it succeeds.
+----------------------------------------
+
+(! oX WU oW)
+output X does never occur before output V
+----------------------------------------
+
+(G ! iX)
+input X will never occur
+----------------------------------------
+
+(F iV)
+input V will occur
+----------------------------------------

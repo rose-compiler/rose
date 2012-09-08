@@ -229,8 +229,7 @@ namespace LTL {
           if (!getAttr(a)->quantified) throw "unquantified input operation"; 
           return a;
         }
-
-        IAttr visit(const OutputSymbol* e, IAttr a) { 
+        IAttr visit(const OutputSymbol* e, IAttr a) {
           if (!getAttr(a)->quantified) throw "unquantified output operation";
           return a;
         }
@@ -241,8 +240,14 @@ namespace LTL {
         IAttr visit(const Until* e,      IAttr a) { return newAttr(true); }
         IAttr visit(const WeakUntil* e,  IAttr a) { return newAttr(true); }
         IAttr visit(const Release* e,    IAttr a) { return newAttr(true); }
+
+        IAttr visit(const Not* e,        IAttr a) { return a; }
+        IAttr visit(const And* e,        IAttr a) { return a; }
+        IAttr visit(const Or* e,         IAttr a) { return a; }
+
       };
 
+      std::cerr<<std::string(e1)<<std::endl;
       WellFormedVisitor v;
       e1.accept(v, WellFormedVisitor::newAttr(false));
     }
