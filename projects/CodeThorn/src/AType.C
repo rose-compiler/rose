@@ -181,11 +181,18 @@ AType::ConstIntLattice AType::ConstIntLattice::operator&&(ConstIntLattice other)
   throw "Error: ConstIntLattice operation&& failed.";
 }
 
-bool AType::ConstIntLattice::isSmallerAbstractValue(const ConstIntLattice& c2) const {
-  return (valueType<c2.valueType) || ((valueType==c2.valueType) && (intValue<c2.intValue));
+bool AType::strictWeakOrderingIsSmaller(const AType::ConstIntLattice& c1, const AType::ConstIntLattice& c2) {
+  if(c1.isConstInt() && c2.isConstInt())
+	return c1.getValueType()<c2.getValueType();
+  return (c1.getValueType()<c2.getValueType());
 }
-bool AType::ConstIntLattice::isSameAbstractValue(const ConstIntLattice& c2) const {
-  return (valueType==c2.valueType) && (intValue==c2.intValue);
+bool AType::strictWeakOrderingIsEqual(const AType::ConstIntLattice& c1, const AType::ConstIntLattice& c2) {
+  if(c1.isConstInt() && c2.isConstInt())
+	return c1.getIntValue()==c2.getIntValue();
+  return c1.getValueType()==c2.getValueType();
+}
+bool AType::ConstIntLatticeCmp::operator()(const AType::ConstIntLattice& c1, const AType::ConstIntLattice& c2) const {
+  AType::strictWeakOrderingIsSmaller(c1,c2);
 }
 
 AType::ConstIntLattice AType::ConstIntLattice::operator==(ConstIntLattice other) const {
@@ -232,7 +239,7 @@ string AType::ConstIntLattice::toString() const {
   }
 }
 
-AType::ConstIntLattice::ValueType AType::ConstIntLattice::getValueType() {
+AType::ConstIntLattice::ValueType AType::ConstIntLattice::getValueType() const {
   return valueType;
 }
 

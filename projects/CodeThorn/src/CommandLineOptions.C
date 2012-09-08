@@ -1,9 +1,6 @@
 #include "CommandLineOptions.h"
 #include <sstream>
 #include <iostream>
-#include <cstdio>
-#include <cstring>
-#include <boost/program_options.hpp>
 
 /////////////////////////////////////////////////
 // Command line processing global options

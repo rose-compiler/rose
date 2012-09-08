@@ -296,6 +296,7 @@ void checkProgram(SgNode* root) {
 
 int main( int argc, char * argv[] ) {
   string ltl_file;
+  //set<AType::ConstIntLattice,AType::ConstIntLatticeCmp> settest;
 #if 0
   try {
   checkTypes();

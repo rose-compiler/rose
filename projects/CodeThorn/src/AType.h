@@ -21,11 +21,11 @@ using namespace std;
  */
 namespace AType {
 
-/*!
-  \brief Serves as top value in analysis.
-  \date 2012
-  \author Markus Schordan
- */
+  /*!
+	\brief Serves as top value in analysis.
+	\date 2012
+	\author Markus Schordan
+  */
   class Top {
   };
 
@@ -47,7 +47,7 @@ class BoolLattice {
  public:
   enum ValueType { FALSE, TRUE, BOT, TOP};
   BoolLattice();
-  BoolLattice(bool val);
+  BoolLattice(bool val); // type conversion
   BoolLattice(Top e); // type conversion
   BoolLattice(Bot e); // type conversion
   BoolLattice(int x); // type conversion
@@ -66,7 +66,12 @@ class BoolLattice {
   ValueType value;
 };
 
-ostream& operator<<(ostream& os, BoolLattice& toStream);
+ ostream& operator<<(ostream& os, BoolLattice& toStream);
+
+ class ConstIntLattice;
+
+ bool strictWeakOrderingIsSmaller(const ConstIntLattice& c1, const ConstIntLattice& c2);
+ bool strictWeakOrderingIsEqual(const ConstIntLattice& c1, const ConstIntLattice& c2);
 
 /*!
   \brief Implements semantic functions of an integer lattice.
@@ -76,7 +81,9 @@ ostream& operator<<(ostream& os, BoolLattice& toStream);
  */
 class ConstIntLattice {
  public:
-  enum ValueType { BOT, TOP, CONSTINT};
+  friend bool strictWeakOrderingIsSmaller(const ConstIntLattice& c1, const ConstIntLattice& c2);
+  friend bool strictWeakOrderingIsEqual(const ConstIntLattice& c1, const ConstIntLattice& c2);
+  enum ValueType { BOT, CONSTINT, TOP};
   ConstIntLattice();
   ConstIntLattice(bool val);
   // type conversion
@@ -90,8 +97,8 @@ class ConstIntLattice {
   bool isFalse() const;
   bool isBot() const;
   bool isConstInt() const;
-  bool isSameAbstractValue(const ConstIntLattice& c2) const;
-  bool isSmallerAbstractValue(const ConstIntLattice& c2) const;
+  //  bool strictWeakOrderingIsSmaller(const ConstIntLattice& c2) const;
+  //bool strictWeakOrderingIsEqual(const ConstIntLattice& c2) const;
   ConstIntLattice operator!();
   ConstIntLattice operator-(); // unary minus
   ConstIntLattice operator||(ConstIntLattice other);
@@ -101,7 +108,7 @@ class ConstIntLattice {
   //ConstIntLattice operator<(ConstIntLattice other);
   string toString() const;
   friend ostream& operator<<(ostream& os, const ConstIntLattice& toStream);
-  ValueType getValueType();
+  ValueType getValueType() const;
   int getIntValue() const;
  private:
   int intValue;
@@ -109,6 +116,15 @@ class ConstIntLattice {
 };
 
  ostream& operator<<(ostream& os, ConstIntLattice& toStream);
+
+  /*! \brief Comparison class, allowing to use ConstIntLattice in ordered containers (e.g. set)
+	\date 2012
+	\author Markus Schordan
+  */
+  struct ConstIntLatticeCmp {
+	bool operator()(const AType::ConstIntLattice& c1, const AType::ConstIntLattice& c2) const;
+  };
+
 
 } // end of namespace AType
 

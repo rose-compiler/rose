@@ -41,11 +41,11 @@ string InputOutput::toString() const {
 }
 
 bool operator<(const InputOutput& c1, const InputOutput& c2) {
-  return c1.op<c2.op || ((c1.op==c2.op) && (c1.var<c2.var)) || ((c1.var==c2.var) && (c1.val.isSmallerAbstractValue(c2.val)));
+  return c1.op<c2.op || ((c1.op==c2.op) && (c1.var<c2.var)) || ((c1.var==c2.var) && (AType::strictWeakOrderingIsSmaller(c1.val,c2.val)));
 }
 
 bool operator==(const InputOutput& c1, const InputOutput& c2) {
-  return c1.op==c2.op && c1.var==c2.var && (c1.val.isSameAbstractValue(c2.val));
+  return c1.op==c2.op && c1.var==c2.var && (AType::strictWeakOrderingIsEqual(c1.val,c2.val));
 }
 
 bool operator!=(const InputOutput& c1, const InputOutput& c2) {
