@@ -7,6 +7,9 @@
 #include "Analyzer.h"
 #include "CollectionOperators.h"
 
+Analyzer::Analyzer():startFunRoot(0),cfanalyzer(0) {
+}
+
 set<string> Analyzer::variableIdsToVariableNames(set<VariableId> s) {
   set<string> res;
   for(set<VariableId>::iterator i=s.begin();i!=s.end();++i) {
@@ -19,10 +22,6 @@ string Analyzer::nodeToString(SgNode* node) {
   if(node->attributeExists("info"))
 	 textual=node->getAttribute("info")->toString()+":";
   return textual+SgNodeHelper::nodeToString(node);
-}
-
-Analyzer::Analyzer():optionCompactStateString(true) {
-  // intentionally empty
 }
 
 Analyzer::~Analyzer() {
@@ -474,15 +473,11 @@ void Analyzer::initializeSolver1(std::string functionToStartAt,SgNode* root) {
   cfanalyzer->intraInterFlow(flow,interFlow);
   cout << "INIT: IntraInter-CFG OK. (size: " << flow.size() << " edges)"<<endl;
 
-  //SgNode* startNode=isSgFunctionDefinition(startFunRoot)->get_body();
   // create empty state
   State emptyState;
   stateSet.insert(emptyState);
   const State* emptyStateStored=stateSet.statePtr(emptyState);
   assert(emptyStateStored);
-  //cout << "INIT: local empty state:"<<&emptyState<<endl;
-  //cout << "INIT: emptyStateStored:"<<emptyStateStored<<endl;
-  //cout << "INIT: stateSet:"<<stateSet.toString()<<endl;
 
   assert(cfanalyzer);
   EState eState(cfanalyzer->getLabel(startFunRoot),emptyStateStored);
@@ -510,57 +505,6 @@ void Analyzer::initializeSolver1(std::string functionToStartAt,SgNode* root) {
   cout << "INIT: finished."<<endl;
 }
 
-#if 0
-string Analyzer::transitionGraphDotHtmlNode(Label lab) {
-  string s;
-  s+="L"+Labeler::labelToString(lab)+" [shape=none, margin=0, label=";
-  s+="<\n";
-  s+="<TABLE BORDER=\"0\"  CELLBORDER=\"1\" CELLSPACING=\"0\" CELLPADDING=\"4\">\n";
-  s+="<TR>\n";
-  s+="<TD ROWSPAN=\"1\">";
-  s+="\""+SgNodeHelper::nodeToString(getLabeler()->getNode(lab))+"\"";
-  s+="</TD>\n";
-  //set<const State*> inEdgeStateSet=transitionInEdgeStateSetOfLabel(lab);
-  //set<const State*> outEdgeStateSet=transitionOutEdgeStateSetOfLabel(lab);
-  string sinline;
-  string soutline;
-
-  set<const EState*> eStateSet=transitionSourceEStateSetOfLabel(lab);
-  for(set<const EState*>::iterator j=eStateSet.begin();j!=eStateSet.end();++j) {
-	  sinline+="<TD PORT=\""+eStateToString(*j)+"\">";
-	  sinline+=eStateToString(*j);
-	  sinline+="</TD>";
-  }
-  if(sinline=="") sinline="<TD>empty</TD>";
-  if(soutline=="") soutline="<TD>empty</TD>";
-  s+=sinline+"</TR>\n";
-  //s+="<TR>"+soutline+"</TR>\n";
-  s+="</TABLE>";
-  s+=">];\n";
-  return s;
-}
-#endif
-
-#if 0
-string Analyzer::stateToString(const State* state) {
-  stringstream ss;
-  if(optionCompactStateString)
-	ss<<"S"<<state;
-  else
-	ss<<state->toString();
-  return ss.str();
-}
-
-string Analyzer::eStateToString(const EState* eState) {
-  stringstream ss;
-  if(optionCompactStateString)
-	ss<<"ES"<<eState;
-  else
-	ss << eState->toString();
-  return ss.str();
-}
-#endif
-
 set<const EState*> Analyzer::transitionSourceEStateSetOfLabel(Label lab) {
   set<const EState*> eStateSet;
   for(TransitionGraph::iterator j=transitionGraph.begin();j!=transitionGraph.end();++j) {
@@ -569,33 +513,6 @@ set<const EState*> Analyzer::transitionSourceEStateSetOfLabel(Label lab) {
   }
   return eStateSet;
 }
-
-#if 0
-string Analyzer::foldedTransitionGraphToDot() {
-  stringstream ss;
-  ss<<"digraph html {\n";
-  // generate nodes
-  LabelSet labelSet=flow.nodeLabels();
-  for(LabelSet::iterator i=labelSet.begin();i!=labelSet.end();++i) {
-	ss<<transitionGraphDotHtmlNode(*i);
-  }
-  // generate edges
-  for(TransitionGraph::iterator j=transitionGraph.begin();j!=transitionGraph.end();++j) {
-	const EState* source=(*j).source;
-	const EState* target=(*j).target;
-	ss <<"L"<<Labeler::labelToString(source->label)<<":"<<"\""<<eStateToString(source)<<"\""
-	   <<"->"
-	   <<"L"<<Labeler::labelToString(target->label)<<":"<<"\""<<eStateToString(target)<<"\"";
-	if((*j).edge.type==EDGE_TRUE) ss<<"[color=green]";
-	if((*j).edge.type==EDGE_FALSE) ss<<"[color=red]";
-	if((*j).edge.type==EDGE_BACKWARD) ss<<"[color=blue]";
-	ss << ";"<<endl;
-    //ss <<" [label=\""<<SgNodeHelper::nodeToString(getLabeler()->getNode((*j).edge.source))<<"\"]"<<";"<<endl;
-  }
-  ss<<"}\n";
-  return ss.str();
-}
-#endif
 
 // TODO: x=x eliminates constraints of x but it should not.
 State Analyzer::analyzeAssignRhs(State currentState,VariableId lhsVar, SgNode* rhs, ConstraintSet& cset) {

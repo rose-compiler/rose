@@ -11,17 +11,13 @@
 #include "CFAnalyzer.h"
 #include "StateRepresentation.h"
 #include "Analyzer.h"
+#include "CommandLineOptions.h"
 
 class Visualizer {
  public:
   Visualizer();
   Visualizer(Analyzer* analyzer);
   Visualizer(Labeler* l, Flow* f, StateSet* ss, EStateSet* ess, TransitionGraph* tg);
-  void setOptionStateId(bool);
-  void setOptionStateProperties(bool);
-  void setOptionEStateLabel(bool);
-  void setOptionEStateId(bool);
-  void setOptionEStateProperties(bool);
   void setOptionTransitionGraphDotHtmlNode(bool);
   void setLabeler(Labeler* x);
   void setFlow(Flow* x);
@@ -50,6 +46,9 @@ class Visualizer {
   bool optionEStateId;
   bool optionEStateProperties;
   bool optionTransitionGraphDotHtmlNode;
+
+  bool tg1; // is true when we are visualizing transition graph 1, otherwise false.
+  bool tg2; // is true when we are visualizing transition graph 2, otherwise false.
 };
 
 #endif

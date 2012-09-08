@@ -6,18 +6,15 @@
 
 #include "Visualizer.h"
 #include "SgNodeHelper.h"
+#include "CommandLineOptions.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // BEGIN OF VISUALIZER
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 Visualizer::Visualizer():
-  optionStateObjectAddress(false),
-  optionStateId(true),
-  optionStateProperties(false),
-  optionEStateObjectAddress(false),
-  optionEStateId(false),
-  optionEStateProperties(true),
+  tg1(false),
+  tg2(false),
   optionTransitionGraphDotHtmlNode(true),
   labeler(0),
   flow(0),
@@ -28,12 +25,8 @@ Visualizer::Visualizer():
 
 //! The analyzer provides all necessary information
 Visualizer::Visualizer(Analyzer* analyzer):
-  optionStateObjectAddress(false),
-  optionStateId(true),
-  optionStateProperties(false),
-  optionEStateObjectAddress(false),
-  optionEStateId(false),
-  optionEStateProperties(true),
+  tg1(false),
+  tg2(false),
   optionTransitionGraphDotHtmlNode(true)
 {
   setLabeler(analyzer->getLabeler());
@@ -45,12 +38,8 @@ Visualizer::Visualizer(Analyzer* analyzer):
 
   //! For providing specific information. For some visualizations not all information is required. The respective set-function can be used as well to set specific program information (this allows to also visualize computed subsets of information (such as post-processed transition graphs etc.).
 Visualizer::Visualizer(Labeler* l, Flow* f, StateSet* ss, EStateSet* ess, TransitionGraph* tg):
-  optionStateObjectAddress(false),
-  optionStateId(true),
-  optionStateProperties(false),
-  optionEStateObjectAddress(false),
-  optionEStateId(false),
-  optionEStateProperties(true),
+  tg1(false),
+  tg2(false),
   optionTransitionGraphDotHtmlNode(true),
   labeler(l),
   flow(f),
@@ -59,10 +48,6 @@ Visualizer::Visualizer(Labeler* l, Flow* f, StateSet* ss, EStateSet* ess, Transi
   transitionGraph(tg)
 {}
 
-void Visualizer::setOptionStateId(bool x) {optionStateId=x;}
-void Visualizer::setOptionStateProperties(bool x) {optionStateProperties=x;}
-void Visualizer::setOptionEStateId(bool x) {optionEStateId=x;}
-void Visualizer::setOptionEStateProperties(bool x) {optionEStateProperties=x;}
 void Visualizer::setOptionTransitionGraphDotHtmlNode(bool x) {optionTransitionGraphDotHtmlNode=x;}
 void Visualizer::setLabeler(Labeler* x) { labeler=x; }
 void Visualizer::setFlow(Flow* x) { flow=x; }
@@ -72,38 +57,43 @@ void Visualizer::setTransitionGraph(TransitionGraph* x) { transitionGraph=x; }
 
 string Visualizer::stateToString(const State* state) {
   stringstream ss;
-  if(optionStateObjectAddress) {
+  bool stateAddressSeparator=false;
+  if((tg1&&boolOptions["tg1-state-address"])||(tg2&&boolOptions["tg2-state-address"])) {
 	ss<<"@"<<state;
+	stateAddressSeparator=true;
   }	
-  if(optionStateId) {
-	if(optionStateObjectAddress)
+  if((tg1&&boolOptions["tg1-state-id"])||(tg2&&boolOptions["tg2-state-id"])) {
+	if(stateAddressSeparator)
 	  ss<<":";
 	ss<<"S"<<stateSet->stateId(state);
   }
-  if(optionStateProperties) {
+  if((tg1&&boolOptions["tg1-state-properties"])||(tg2&&boolOptions["tg2-state-properties"])) {
 	ss<<state->toString();
+  } 
+  return ss.str();
+}
+
+string Visualizer::eStateToString(const EState* eState) {
+  stringstream ss;
+  bool stateAddressSeparator=false;
+  if((tg1&&boolOptions["tg1-estate-address"])||(tg2&&boolOptions["tg2-estate-address"])) {
+	ss<<"@"<<eState;
+	stateAddressSeparator=true;
+  }	
+  if((tg1&&boolOptions["tg1-estate-id"])||(tg2&&boolOptions["tg2-estate-id"])) {
+	if(stateAddressSeparator) {
+	  ss<<":";
+	}
+	ss<<"ES"<<eStateSet->eStateId(eState);
+  }
+  if((tg1&&boolOptions["tg1-estate-properties"])||(tg2&&boolOptions["tg2-estate-properties"])) {
+	ss<<eState->toString();
   } 
   return ss.str();
 }
 
 string Visualizer::stateToDotString(const State* state) {
   return string("\""+SgNodeHelper::doubleQuotedEscapedString(stateToString(state))+"\"");
-}
-
-string Visualizer::eStateToString(const EState* eState) {
-  stringstream ss;
-  if(optionEStateObjectAddress) {
-	ss<<"@"<<eState;
-  }	
-  if(optionEStateId) {
-	if(optionEStateObjectAddress)
-	  ss<<":";
-	ss<<"ES"<<eStateSet->eStateId(eState);
-  }
-  if(optionEStateProperties) {
-	ss<<eState->toString();
-  } 
-  return ss.str();
 }
 
 string Visualizer::eStateToDotString(const EState* eState) {
@@ -155,6 +145,7 @@ string Visualizer::transitionGraphToDot() {
 #endif
 
 string Visualizer::transitionGraphToDot() {
+  tg1=true;
   stringstream ss;
   for(TransitionGraph::iterator j=transitionGraph->begin();j!=transitionGraph->end();++j) {
 	ss <<"\""<<eStateToString((*j).source)<<"\""<< "->" <<"\""<<eStateToString((*j).target)<<"\"";
@@ -162,10 +153,12 @@ string Visualizer::transitionGraphToDot() {
 	ss <<"["<<(*j).edge.typeToString()<<"]";
 	ss <<"\"]"<<";"<<endl;
   }
+  tg1=false;
   return ss.str();
 }
 
 string Visualizer::foldedTransitionGraphToDot() {
+  tg2=true;
   stringstream ss;
   ss<<"digraph html {\n";
   // generate nodes
@@ -187,6 +180,7 @@ string Visualizer::foldedTransitionGraphToDot() {
     //ss <<" [label=\""<<SgNodeHelper::nodeToString(getLabeler()->getNode((*j).edge.source))<<"\"]"<<";"<<endl;
   }
   ss<<"}\n";
+  tg2=false;
   return ss.str();
 }
 

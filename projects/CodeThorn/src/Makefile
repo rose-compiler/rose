@@ -25,7 +25,7 @@ CXXFLAGS              = -Wno-deprecated
 LDFLAGS               = 
 YACC                  = bison
 
-OBJECT_FILES=MyAst.o AstTerm.o Labeler.o SgNodeHelper.o VariableIdMapping.o CFAnalyzer.o ExprAnalyzer.o StateRepresentation.o Analyzer.o Visualizer.o Timer.o LanguageRestrictor.o AType.o LTLParser.o LTLChecker.o codethorn.o
+OBJECT_FILES=MyAst.o AstTerm.o Labeler.o SgNodeHelper.o VariableIdMapping.o CFAnalyzer.o ExprAnalyzer.o StateRepresentation.o Analyzer.o Visualizer.o Timer.o LanguageRestrictor.o AType.o LTLParser.o LTLChecker.o CommandLineOptions.o codethorn.o
 
 OBJECT_FILES_EXPERIMENTAL=BoostGraphIntegration.o
 

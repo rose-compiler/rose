@@ -62,9 +62,6 @@ class Analyzer {
   ~Analyzer();
 
   void initAstNodeInfo(SgNode* node);
-  //int label(SgNode* node);
-  //CfgEdgeSet outEdges(SgNode* node);
-  //CfgEdgeSet computeCfg(SgNode* node);
 
   static string nodeToString(SgNode* node);
   void initializeSolver1(std::string functionToStartAt,SgNode* root);
@@ -73,12 +70,6 @@ class Analyzer {
   State analyzeAssignRhs(State currentState,VariableId lhsVar, SgNode* rhs,ConstraintSet& cset);
   EState analyzeVariableDeclaration(SgVariableDeclaration* nextNodeToAnalyze1,EState currentEState, Label targetLabel);
   EState transferFunction(Edge edge, const EState* eState);
-  //  string stateToString(const State* state);
-  //string eStateToString(const EState* eState);
-  //  string transitionGraphDotHtmlNode(Label l);
-  //string transitionGraphToDot();
-  //string foldedTransitionGraphToDot();
-  void setOptionCompactStateString(bool opt) {optionCompactStateString=opt;}
   void addToWorkList(const EState* eState) { eStateWorkList.push(eState); }
   const EState* addToWorkListIfNew(EState eState);
   void recordTransition(const EState* sourceState, Edge e, const EState* targetState);
@@ -132,9 +123,7 @@ class Analyzer {
   EStateSet eStateSet;
   StateSet stateSet;
   TransitionGraph transitionGraph;
-  bool optionCompactStateString;
   set<const EState*> transitionSourceEStateSetOfLabel(Label lab);
-  bool optionStateNumber; // generate state number (not just the address)
   int displayDiff;
 };
 

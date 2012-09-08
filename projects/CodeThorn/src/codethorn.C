@@ -294,67 +294,6 @@ void checkProgram(SgNode* root) {
   }
 }
 
-/////////////////////////////////////////////////
-// Command line processing and global options
-/////////////////////////////////////////////////
-po::variables_map args;
-
-class BoolOptions {
-public:
-  BoolOptions(int argc, char* argv[]):argc(argc),argv(argv){}
-  void registerOption(string name, bool defaultval) { mapping[name]=defaultval; }
-  void processOptions();
-  bool operator[](string option) {
-	return mapping[option];
-  }
-  string toString();
-private:
-  int argc;
-  char** argv;
-  map<string,bool> mapping;
-};
-
-BoolOptions* boolOptions;
-
-string BoolOptions::toString() {
-  stringstream options;
-  options<<"Options:"<<endl;
-  for(map<string,bool>::iterator i=mapping.begin();i!=mapping.end();++i) {
-	options<<(*i).first<<":"<<(*i).second<<endl;
-  }
-  return options.str();
-}
-
-void BoolOptions::processOptions() {
-  for(map<string,bool>::iterator i=mapping.begin();i!=mapping.end();++i) {
-	string option=(*i).first;
-	if (args.count(option)) {
-	  string x= args[option].as<string>();
-	  if(x=="yes")
-		mapping[option]=true;
-	  else {
-		if(x=="no")
-		  mapping[option]=false;
-		else {
-		  cerr<< "Wrong option: "<<option<<"="<<x<<". Only yes or no is allowed."<<endl;
-		  exit(1);
-		}
-	  }
-	  for (int i=1; i<argc; ++i) {
-		if (string(argv[i]) == option) {
-		  // do not confuse ROSE frontend
-		  argv[i] = strdup("");
-		  assert(i+1<argc);
-		  argv[i+1] = strdup("");
-		}
-	  }
-	}
-  }
-}
-
-/////////////////////////////////////////////////
-
-
 int main( int argc, char * argv[] ) {
   string ltl_file;
 #if 0
@@ -384,12 +323,12 @@ int main( int argc, char * argv[] ) {
     ("rose-help", "show help for compiler frontend options")
     ("version", "display the version")
     ("verify", po::value< string >(), "verify all LTL formulae in the file [arg]")
-    ("tg1-estate-address", po::value< string >(), "visualization in transition graph 1: show the state-address")
-    ("tg1-estate-id", po::value< string >(), "visualization in transition graph 1: show the state-id")
-    ("tg1-estate-properties", po::value< string >(), "visualization in transition graph 1: do not show the state-properties")
-    ("tg2-estate-address", po::value< string >(), "visualization in transition graph 2: show the state-address")
-    ("tg2-estate-id", po::value< string >(), "visualization in transition graph 2: do not show the state-id")
-    ("tg2-estate-properties", po::value< string >(),"visualization in transition graph 2: show the all properties")
+    ("tg1-estate-address", po::value< string >(), "transition graph 1: visualize address [=yes|no]")
+    ("tg1-estate-id", po::value< string >(), "transition graph 1: visualize estate-id [=yes|no]")
+    ("tg1-estate-properties", po::value< string >(), "transition graph 1: visualize all estate-properties [=yes|no]")
+    ("tg2-estate-address", po::value< string >(), "transition graph 2: visualize address [=yes|no]")
+    ("tg2-estate-id", po::value< string >(), "transition graph 2: visualize estate-id [=yes|no]")
+    ("tg2-estate-properties", po::value< string >(),"transition graph 2: visualize all estate-properties [=yes|no]")
     ;
 
   po::store(po::command_line_parser(argc, argv).
@@ -421,15 +360,15 @@ int main( int argc, char * argv[] ) {
       }
   }
 
-  boolOptions=new BoolOptions(argc,argv);
-  boolOptions->registerOption("tg1-estate-address",false);
-  boolOptions->registerOption("tg1-estate-id",false);
-  boolOptions->registerOption("tg1-estate-properties",true);
-  boolOptions->registerOption("tg2-estate-address",false);
-  boolOptions->registerOption("tg2-estate-id",true);
-  boolOptions->registerOption("tg2-estate-properties",false);
-  boolOptions->processOptions();
-  cout<<boolOptions->toString();
+  boolOptions.init(argc,argv);
+  boolOptions.registerOption("tg1-estate-address",false);
+  boolOptions.registerOption("tg1-estate-id",false);
+  boolOptions.registerOption("tg1-estate-properties",true);
+  boolOptions.registerOption("tg2-estate-address",false);
+  boolOptions.registerOption("tg2-estate-id",true);
+  boolOptions.registerOption("tg2-estate-properties",false);
+  boolOptions.processOptions();
+  cout<<boolOptions.toString();
 
   // Build the AST used by ROSE
   cout << "INIT: Parsing and creating AST."<<endl;
@@ -454,7 +393,6 @@ int main( int argc, char * argv[] ) {
   cout << "INIT: creating solver."<<endl;
   Analyzer analyzer;
   analyzer.initializeSolver1("main",root);
-  analyzer.setOptionCompactStateString(false);
 
   cout << "NOTE: We are ignoring operator '?' (not implemented yet)"<<endl;
   cout << "=============================================================="<<endl;
@@ -496,13 +434,10 @@ int main( int argc, char * argv[] ) {
   } else {
     Visualizer visualizer(analyzer.getLabeler(),analyzer.getFlow(),analyzer.getStateSet(),analyzer.getEStateSet(),analyzer.getTransitionGraph());
     string dotFile="digraph G {\n";
-	visualizer.setOptionEStateId(true);
-	visualizer.setOptionEStateProperties(true);
     dotFile+=visualizer.transitionGraphToDot();
     dotFile+="}\n";
     write_file("transitiongraph1.dot", dotFile);
     cout << "generated transitiongraph1.dot."<<endl;
-	visualizer.setOptionEStateProperties(true);
     string dotFile3=visualizer.foldedTransitionGraphToDot();
     write_file("transitiongraph2.dot", dotFile3);
     cout << "generated transitiongraph2.dot."<<endl;
