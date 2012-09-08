@@ -533,20 +533,33 @@ int main( int argc, char * argv[] ) {
     LTL::Checker checker(*analyzer.getEStateSet(),
 			 *analyzer.getTransitionGraph());
     ltl_input = fopen(ltl_file.c_str(), "r");
-    while ( (ltl_parse() == 0) && !ltl_eof) {
-      if (ltl_val == NULL) {
-	cerr<<red<< "Syntax error" << endl;
+    while ( !ltl_eof) {
+      try { 
+        if (ltl_parse() != 0) {
+          cerr<<red<< "Syntax error" << endl;
+	  continue;
+        }
+        if (ltl_val == NULL) {
+	  // empty line
+	  continue;
+	}
+      } catch(const char* s) {
+        if (ltl_val) cout<<normal<<string(*ltl_val)<<endl;
+        cout<< s<<endl<<red<< "FAILED" << endl;
 	continue;
-      }
+      } catch(...) {
+	cout<<red<< "Parser exception" << endl;
+	continue;
+      }  
 	  
       cout<<normal<<"Verifying formula "<<magenta<< string(*ltl_val) <<normal<<"."<<endl;
       try {
 	if (checker.verify(*ltl_val))
-	  cout<<green<< "YES" << endl;
+	  cout<<green<<"YES"<<normal<<endl;
 	else
-	  cout<<green<< "NO" << endl;
+	  cout<<green<<"NO"<<normal<<endl;
       } catch(...) {
-	cout<<red<< "FAILED" << endl;
+          cout<<red<<"FAILED"<<normal<<endl;
       }  
     }
     fclose(ltl_input);

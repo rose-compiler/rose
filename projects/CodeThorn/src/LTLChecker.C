@@ -6,6 +6,7 @@
 
 using namespace LTL;
 using namespace boost;
+using namespace std;
 
 enum e_BoolLattice { 
   bot   = -1,
@@ -54,60 +55,74 @@ public:
     s<<node<<" -> "<<get(a)->dot_label<<" [color=green];\n  "; 
     return node;
   }
+  static string color(bool green) {
+    return green ? "color=green" : "color=red";
+  }
 
   IAttr visit(const InputSymbol* e, IAttr a)  {
     int node = newNode(a);
-    s<<node<<" [label=\""<<props[e]<<"\"];\n  ";
+    s<<node<<" ["<<color(props[e])<<",label=\"Input "<<string(1, e->c)
+    <<" = "<<props[e]<<"\"];\n  ";
     return newAttr(node);
   }
   IAttr visit(const OutputSymbol* e, IAttr a) {
     int node = newNode(a);
-    s<<node<<" [label=\""<<props[e]<<"\"];\n  ";
+    s<<node<<" ["<<color(props[e])<<",label=\"Output "<<string(1, e->c)
+    <<" = "<<props[e]<<"\"];\n  ";
     return newAttr(node);
   }
   IAttr visit(const Not* e, IAttr a) {
     int node = newNode(a);
-    s<<node<<" [label=\""<<props[e]<<" = "<<"!"<<props[e->expr]<<"\"];\n  ";
+    s<<node<<" ["<<color(props[e])<<",label=\""<<props[e]
+    <<" = "<<"!"<<props[e->expr]<<"\"];\n  ";
     return newAttr(node);
   }
   IAttr visit(const Next* e, IAttr a) {
     int node = newNode(a);
-    s<<node<<" [label=\""<<"("<<props[e]<<" = "<<"X"<<props[e->expr]<<")\"];\n  ";
+    s<<node<<" ["<<color(props[e])<<",label=\""<<"("<<props[e]
+    <<" = "<<"X"<<props[e->expr]<<")\"];\n  ";
     return newAttr(node);
   }
   IAttr visit(const Eventually* e, IAttr a) {
     int node = newNode(a);
-    s<<node<<" [label=\""<<"("<<props[e]<<" = "<<"F"<<props[e->expr]<<")\"];\n  ";
+    s<<node<<" ["<<color(props[e])<<",label=\""<<"("<<props[e]
+    <<" = "<<"F"<<props[e->expr]<<")\"];\n  ";
     return newAttr(node);
   }
   IAttr visit(const Globally* e, IAttr a) {
     int node = newNode(a);
-    s<<node<<" [label=\""<<"("<<props[e]<<" = "<<"G"<<props[e->expr]<<")\"];\n  ";
+    s<<node<<" ["<<color(props[e])<<",label=\""<<"("<<props[e]
+    <<" = "<<"G"<<props[e->expr]<<")\"];\n  ";
     return newAttr(node);
   }
   IAttr visit(const And* e, IAttr a) {
     int node = newNode(a);
-    s<<node<<" [label=\""<<"("<<props[e]<<"="<<props[e->expr1]<<" & "<<props[e->expr2]<<")\"];\n  ";
+    s<<node<<" ["<<color(props[e])<<",label=\""<<"("<<props[e]
+    <<" = "<<props[e->expr1]<<" & "<<props[e->expr2]<<")\"];\n  ";
     return newAttr(node);
   }
   IAttr visit(const Or* e, IAttr a) {
     int node = newNode(a);
-    s<<node<<" [label=\""<<"("<<props[e]<<"="<<props[e->expr1]<<" | "<<props[e->expr2]<<")\"];\n  ";
+    s<<node<<" ["<<color(props[e])<<",label=\""<<"("<<props[e]
+    <<" = "<<props[e->expr1]<<" | "<<props[e->expr2]<<")\"];\n  ";
     return newAttr(node);
   }
   IAttr visit(const Until* e, IAttr a)	{
     int node = newNode(a);
-    s<<node<<" [label=\""<<"("<<props[e]<<"="<<props[e->expr1]<<" U "<<props[e->expr2]<<")\"];\n  ";
+    s<<node<<" ["<<color(props[e])<<",label=\""<<"("<<props[e]
+    <<" = "<<props[e->expr1]<<" U "<<props[e->expr2]<<")\"];\n  ";
     return newAttr(node);
   }
   IAttr visit(const WeakUntil* e, IAttr a) {
     int node = newNode(a);
-    s<<node<<" [label=\""<<"("<<props[e]<<"="<<props[e->expr1]<<" WU "<<props[e->expr2]<<")\"];\n  ";
+    s<<node<<" ["<<color(props[e])<<",label=\""<<"("<<props[e]
+    <<" = "<<props[e->expr1]<<" WU "<<props[e->expr2]<<")\"];\n  ";
     return newAttr(node);
   }
   IAttr visit(const Release* e, IAttr a) {
     int node = newNode(a);
-    s<<node<<" [label=\""<<"("<<props[e]<<"="<<props[e->expr1]<<" R "<<props[e->expr2]<<")\"];\n  ";
+    s<<node<<" ["<<color(props[e])<<",label=\""<<"("<<props[e]
+    <<" = "<<props[e->expr1]<<" R "<<props[e->expr2]<<")\"];\n  ";
     return newAttr(node);
   }
 };
@@ -131,6 +146,7 @@ Checker::Checker(EStateSet& ess, TransitionGraph& g)
  *   fixpoint iteration over the entire transition graph.
  *
  * TODO: Are there better anmes for these classes?
+ * JOINS should have the same information
  */
 class Verifier: public BottomUpVisitor {
   EStateSet& eStateSet;
@@ -152,53 +168,52 @@ public:
    *
    * FIXME: rewrite this as a template
    */
-# define fixpoint(INIT, JOIN, CALC) {						      \
-    FOR_EACH_STATE(state, label)						      \
-      props[e] = INIT;								      \
-										      \
-    stack<Label> workset;							      \
-    workset.push(start);							      \
-										      \
-    while (!workset.empty()) {							      \
-      Label label = workset.top(); workset.pop();				      \
-      /*cerr<<"Visiting state "<<label<<endl;*/					      \
-      const EState* state = g[label];						      \
-      assert(state);								      \
-										      \
-      /* Merge result of incoming edges */					      \
-      int merged_preds = TRUE;							      \
-      bool has_preds = false;							      \
-      /* for each predecessor */						      \
-      GraphTraits::in_edge_iterator in_i, in_end;				      \
-      for (tie(in_i, in_end) = in_edges(label, g); in_i != in_end; ++in_i) {	      \
-	Label pred = source(*in_i, g);						      \
-	int pred_prop = ltl_properties[pred][e];				      \
-	/*cerr<<"  pred: "<<pred<<" = "<<pred_prop<<endl;*/			      \
-										      \
-	merged_preds = merged_preds JOIN pred_prop;				      \
-	has_preds = true;							      \
-      }										      \
-      if (!has_preds)								      \
-	merged_preds = FALSE;							      \
-										      \
-      /* Calculate property for this node */					      \
-      /*assert(props.find(e->expr) != props.end());*/			              \
-      int old_val = props[e];							      \
-      CALC;								              \
-      /* cerr<<"  "<<label<<" <- "<<props[e]<<endl; */				      \
-      bool no_fixpoint = (old_val == INIT || old_val != props[e]);		      \
-      if (no_fixpoint) {							      \
-	/* for each successor */						      \
-	GraphTraits::out_edge_iterator out_i, out_end;				      \
-	for (tie(out_i, out_end) = out_edges(label, g); out_i != out_end; ++out_i) {  \
-	  Label succ = target(*out_i, g);					      \
-	  /*cerr<<"  succ: "<<succ<<endl;*/					      \
-	  workset.push(succ);							      \
-	}									      \
-      } else {									      \
-	/*cerr<<"FIX!"<<endl;*/							      \
-      }										      \
-    }										      \
+# define fixpoint(INIT, JOIN, CALC) {					\
+    FOR_EACH_STATE(state, label)					\
+      props[e] = INIT;							\
+    									\
+    stack<Label> workset;						\
+    workset.push(start);						\
+    									\
+    while (!workset.empty()) {						\
+      Label label = workset.top(); workset.pop();			\
+      /*cerr<<"Visiting state "<<label<<endl;*/				\
+      const EState* state = g[label];					\
+      assert(state);							\
+      									\
+      /* Merge result of incoming edges */				\
+      int joined_preds = TRUE;						\
+      bool has_preds = false;						\
+      /* for each predecessor */					\
+      GraphTraits::in_edge_iterator in_i, in_end;			\
+      for (tie(in_i, in_end) = in_edges(label, g); in_i != in_end; ++in_i) { \
+	Label pred = source(*in_i, g);					\
+	int pred_prop = ltl_properties[pred][e];			\
+	/*cerr<<"  pred: "<<pred<<" = "<<pred_prop<<endl;*/		\
+									\
+	joined_preds = joined_preds JOIN pred_prop;			\
+	has_preds = true;						\
+      }									\
+      if (!has_preds) joined_preds = FALSE;				\
+      									\
+      /* Calculate property for this node */				\
+      /*assert(props.find(e->expr) != props.end());*/			\
+      int old_val = props[e];						\
+      props[e] = old_val JOIN ( CALC );					\
+      /* cerr<<"  "<<label<<" <- "<<props[e]<<endl; */			\
+      bool no_fixpoint = (old_val == INIT || old_val != props[e]);	\
+      if (no_fixpoint) {						\
+	/* for each successor */					\
+	GraphTraits::out_edge_iterator out_i, out_end;			\
+	for (tie(out_i, out_end) = out_edges(label, g); out_i != out_end; ++out_i) { \
+	  Label succ = target(*out_i, g);				\
+	  /*cerr<<"  succ: "<<succ<<endl;*/				\
+	  workset.push(succ);						\
+	}								\
+      } else {								\
+	/*cerr<<"FIX!"<<endl;*/						\
+      }									\
+    }									\
   }
 
   /**
@@ -223,36 +238,36 @@ public:
       assert(state);							\
       									\
       /* Merge result of incoming edges */				\
-      int merged_succs = TRUE;						\
+      int joined_succs = TRUE;						\
       bool has_succs = false;						\
       /* for each successor */						\
       GraphTraits::out_edge_iterator out_i, out_end;			\
       for (tie(out_i, out_end) = out_edges(label, g); out_i != out_end; ++out_i) { \
 	Label succ = target(*out_i, g);					\
 	int succ_prop = ltl_properties[succ][e];			\
-	/*cerr<<"  succ: "<<succ<<" = "<<succ_prop<<endl;*/			\
+	/*cerr<<"  succ: "<<succ<<" = "<<succ_prop<<endl;*/		\
 									\
-	merged_succs = merged_succs JOIN succ_prop;			\
+	joined_succs = joined_succs JOIN succ_prop;			\
 	has_succs = true;						\
       }									\
       if (!has_succs)							\
-	merged_succs = FALSE;						\
+	joined_succs = FALSE;						\
       									\
       /* Calculate property for this node */				\
       /*assert(props.find(e->expr) != props.end());*/			\
       int old_val = props[e];						\
       									\
-      props[e] = CALC;							\
+      props[e] = old_val JOIN ( CALC );					\
       									\
       /*cerr<<"  "<<label<<" <- "<<props[e]<<" was: "<<old_val<<endl;*/	\
       bool no_fixpoint = (old_val == bot || old_val != props[e]);	\
       if (no_fixpoint) {						\
-	/*cerr<<"NO FIX!"<<endl;*/						\
+	/*cerr<<"NO FIX!"<<endl;*/					\
 	/* for each predecessor */					\
 	GraphTraits::in_edge_iterator in_i, in_end;			\
 	for (tie(in_i, in_end) = in_edges(label, g); in_i != in_end; ++in_i) { \
 	  Label pred = source(*in_i, g);				\
-	  /*cerr<<"  pred: "<<pred<<endl;*/					\
+	  /*cerr<<"  pred: "<<pred<<endl;*/				\
 	  workset.push(pred);						\
 	}								\
       } else {								\
@@ -262,57 +277,80 @@ public:
   }
 
 
+  static void updateInputVar(const EState* estate, const VariableId** v) {
+    assert(v);
+    if (estate->io.op == InputOutput::IN_VAR) {
+      *v = &estate->io.var;
+    }
+  }
 
-  // Implementation status: TODO
+  /// return True iff that state is an Oc operation
+  static int isInputState(const EState* estate, const VariableId** v, int c, int joined_preds) {
+    assert(v);
+    updateInputVar(estate, v);
+    if (*v == NULL) 
+      return false;
+    assert(*v);
+
+    const AType::ConstIntLattice& lval = 
+      estate->constraints.varConstIntLatticeValue(**v);
+    if (lval.isConstInt())
+      return c == lval.getIntValue()+'A';
+    else
+      return bot || joined_preds;
+  }
+
+  // Implementation status: IN PROGRESS
+  // NOTE: Assumes there is only one input variable
   void visit(const InputSymbol* e) {
-    FOR_EACH_STATE(state, label) {
-      char c;
-      switch (state->io.op) {
-      case InputOutput::IN_VAR: {
-	//record input_vars = 
-	const AType::ConstIntLattice& lval = 
-	  state->constraints.varConstIntLatticeValue(state->io.var);
-	assert(lval.isConstInt());
-	c = lval.getIntValue()+'A';
-	// FIXME: this is WRONG. We should re-run the contraint propagation with that value!?
-	break;
-      }
-      default:
-	c = EOF;
-      }
-      if (c != EOF) cerr<<"input: "<<c<< endl;
-      props[e] = (c == e->c);
+    const VariableId* input_var = NULL;
+
+    fixpoint(bot,                                                // init
+	     &&, /*implicitly ignore bot*/                       // join
+	     isInputState(state, &input_var, e->c, joined_preds) // calc
+	     );
+
+
+    FOR_EACH_STATE(state, label) 
+      if (props[e] == bot) props[e] = false;
+  }
+
+  /// return True iff that state is an Oc operation
+  static bool isOutputState(const EState* estate, int c) {
+    switch (estate->io.op) {
+    case InputOutput::OUT_CONST: {
+      const AType::ConstIntLattice& lval = estate->io.val;
+      cerr<<lval.toString()<<endl;
+      assert(lval.isConstInt());
+      return c == lval.getIntValue()+'A';
+    }
+    case InputOutput::OUT_VAR: {
+      const State& prop_state = *estate->state;
+      assert(prop_state.varIsConst(estate->io.var));
+      AValue aval = const_cast<State&>(prop_state)[estate->io.var];
+      //cerr<<aval<<endl;
+      return c == aval+'A';
+    }
+    default:
+      return false;
     }
   }
 
   // Implementation status: DONE
   void visit(const OutputSymbol* e) {
-    FOR_EACH_STATE(state, label) {
-      char c;
-      switch (state->io.op) {
-      case InputOutput::OUT_CONST: {
-	const AType::ConstIntLattice& lval = state->io.val;
-	cerr<<lval.toString()<<endl;
-	assert(lval.isConstInt());
-        c = lval.getIntValue()+'A';
-	break;
-      }
-      case InputOutput::OUT_VAR: {
-      	//const AType::ConstIntLattice& lval = 
-      	//  state->constraints.varConstIntLatticeValue(state->io.var);
-	const State& prop_state = *state->state;
-	assert(prop_state.varIsConst(state->io.var));
-	AValue aval = const_cast<State&>(prop_state)[state->io.var];
-	cerr<<aval<<endl;
-      	c = aval+'A';
-      	break;
-      }
-      default:
-	c = EOF;
-      }
-      if (c != EOF) cerr<<"output: "<<c<< endl;
-      props[e] = (c == e->c);
-    }
+    // Caveat: Although the LTL semantics say so, we can't start on
+    // the start node. Maybe at the first I/O node? 
+    //
+    // Think about ``oA U oB''.
+    //
+    // PLEASE NOTE: We therefore define oX to be true until oY occurs
+    //
+
+    // propagate the O predicate until we reach the next O predicate
+    fixpoint(bot,                                       // init
+	     &&, /*implicitly ignore bot*/              // join
+	     isOutputState(state, e->c) || joined_preds // calc
+	     );
   }
 
   // Implementation status: DONE
@@ -324,11 +362,11 @@ public:
   // Implementation status: TODO
   void visit(const Next* e) { assert(false); }
 
-  // Implementation status: TODO
+  // Implementation status: DONE
   void visit(const Eventually* e) {
     // I'm interpreting Eventually to be a backward problem
     //  
-    //  a     if e(b) then F e(a) and F e(b) but not F e(c)
+    //  a     if p(b) then F p(a) and F p(b) but not F p(c)
     //  |\
     //  b c
     //
@@ -336,7 +374,7 @@ public:
     bw_fixpoint(bot,                           // init
 		props[e->expr] /*== true*/,    // start
 		&&,                            // join
-		props[e->expr] || merged_succs // calc
+		props[e->expr] || joined_succs // calc
 		);
     FOR_EACH_STATE(state, label) 
       if (props[e] == bot) props[e] = false;
@@ -345,12 +383,16 @@ public:
   // Implementation status: DONE
   void visit(const Globally* e) {
     int global = TRUE;
-    FOR_EACH_STATE(state, label) 
+    FOR_EACH_STATE(state, label) {
       global = global && props[e->expr];
-
-    { // propagate the global result to all states
-      FOR_EACH_STATE(state, label) 
-	props[e] = global; 
+      if (!global) {
+	cerr<<"global failed at "<<label<<endl;
+	break;
+      }
+    }
+    // propagate the global result to all states
+    {  FOR_EACH_STATE(state, label) 
+ 	props[e] = global; 
     }
   }
 
@@ -366,59 +408,60 @@ public:
       props[e] = props[e->expr1] || props[e->expr2];
   }
 
-  // Implementation status: TODO
+  // Implementation status: DONE
   void visit(const Until* e) {
     // A holds until B occurs
     //
-    // Caveat: Although the LTL semantics say so, we can't start on
-    // the start node. Maybe at the first I/O node? 
+    // I'm interpreting UNITL as follows:
     //
-    // Think about ``oA U oB''.
+    //  a
+    //  |\
+    // Ab \    A U B is valid at b and c
+    //  | Ad
+    // Bc 
+    bw_fixpoint(bot,                            // init
+		props[e->expr2] /*== true*/,    // start
+		&&, /*implicitly ignore bot*/   // join
+		props[e->expr2] || (props[e->expr1] && joined_succs) // calc
+		);
 
-    // First find out if there exists an uninterrupted chain of As
-    fixpoint(bot, // init
-	     &&,  // join
-	     props[e] = props[e->expr1] || merged_preds // calc
-	     );
-
-    // FIXME: this is not yet correct!
-    FOR_EACH_STATE(state, label)
-      props[e] = props[e] ^ props[e->expr2];
+    FOR_EACH_STATE(state, label) 
+      if (props[e] == bot) props[e] = false;
   }
 
-  // Implementation status: TODO
+  // Implementation status: TESTING
   void visit(const WeakUntil* e) {
-    // A holds until B occurs, but B may never occur
+    // A holds until B occurs, which may never happen
     //
-    // Caveat: see Until.
+    // I'm interpreting WEAK UNITL as follows:
+    //
+    //  a
+    //  |\
+    // Ab \    A WU B is valid at b and c and f
+    //  | Ad
+    // Ac  |\
+    //     e Bf
+    bw_fixpoint(props[e->expr1] ? TRUE : bot,          // init
+		props[e->expr1] || props[e->expr2],    // start
+		&&,                                    // join
+		props[e->expr2] || (props[e->expr1] && joined_succs) // calc
+		);
 
-    // First find out if there exists an uninterrupted chain of As
-    fixpoint(bot, // init
-	     &&,  // join
-	     props[e] = props[e->expr1] || merged_preds // calc
-	     );
-
-    // FIXME: this is not yet correct either!
-    FOR_EACH_STATE(state, label)
-      props[e] = props[e] || (!props[e] && props[e->expr2]);
+    FOR_EACH_STATE(state, label) 
+      if (props[e] == bot) props[e] = false;
   }
 
-  // Implementation status: TODO
+  // Implementation status: DONE, BUT UNSURE ABOUT SEMANTICS
   void visit(const Release* e) {
     // If !B occurs, A happens before it.
     //
-    // Caveat: see Until.
-    FOR_EACH_STATE(state, label)
-      props[e] = bot;
-    // TODO
+    // first move forward
+    fixpoint(bot,    // init
+	     &&,                                     // join
+	     ((props[e->expr1] && props[e->expr2]) || // A&B  or
+	      (!props[e->expr2] && joined_preds))     // !A & B@pred
+	     );
   }
-
-
-  //void visit(const Next* e)	    { assert(false&&"not implemented"); }
-  //void visit(const Eventually* e) { /*witness[e] = 0;*/ }
-  //void visit(const Until* e)	    { /*until_occurred[e] = false;*/ }
-  //void visit(const WeakUntil* e)  { /*until_occurred[e] = false;*/ }
-  //void visit(const Release* e)    { /*released[e] = false;*/ }
 };
 
 
@@ -451,8 +494,18 @@ Checker::verify(const Formula& f)
   // generate dot output for debugging
   stringstream s;
   s<<"digraph G {\n";
+  s<<"node[shape=rectangle, color=gray, style=filled];\n  ";
   FOR_EACH_TRANSITION(t) {
-    s<<"node[shape=rectangle, color=gray, style=filled];\n  ";
+    switch (t->source->io.op) {
+    case InputOutput::IN_VAR:
+      s<<estate_label[t->source]<<" [shape=rectangle, color=yellow, style=filled];\n  ";
+      break;
+    case InputOutput::OUT_VAR:
+    case InputOutput::OUT_CONST:
+      s<<estate_label[t->source]<<" [shape=rectangle, color=blue, style=filled];\n  ";
+      break;
+    default: break;
+    }
     s<<estate_label[t->source]<<" -> "<<estate_label[t->target]<<";\n";
   }
   FOR_EACH_STATE(state, l) {
@@ -460,17 +513,20 @@ Checker::verify(const Formula& f)
     e.accept(viz, Visualizer::newAttr(l));
     s<<l<<" [label=\""<<l<<":"<< state->toString() <<"\"] ;\n";
     s<<"subgraph ltl_"<<l<<" {\n";
-    s<<"  node[shape=rectangle, color=green, style=filled];\n  ";
+    s<<"  node[shape=rectangle, style=filled];\n  ";
     s<<viz.s.str();
     s<<"}\n";
   }
   s<<"}\n";
 
-  std::ofstream myfile;
-  myfile.open("ltl_output.dot", std::ios::out);
+  ofstream myfile;
+  stringstream fname;
+  static int n = 1;
+  fname << "ltl_output_" << n++ << ".dot";
+  myfile.open(fname.str().c_str(), ios::out);
   myfile << s.str();
   myfile.close();
-  cout<<"generated ltl_output.dot."<<endl;
+  cout<<"generated "<<fname.str()<<"."<<endl;
 
   // use result at start node as return value, 
   // I hope this is always correct

@@ -68,7 +68,7 @@ class ConstraintSet : public set<Constraint> {
   bool constraintExists(Constraint::ConstraintOp op, VariableId varId, AValue intVal);
   bool constraintExists(Constraint& c);
   ConstraintSet::iterator findSpecific(Constraint::ConstraintOp op, VariableId varId) const;
-  AType::ConstIntLattice varConstIntLatticeValue(VariableId varId) const;
+  AType::ConstIntLattice varConstIntLatticeValue(const VariableId varId) const;
   string toString() const;
   ConstraintSet& operator+=(ConstraintSet& s2);
   ConstraintSet operator+(ConstraintSet& s2);

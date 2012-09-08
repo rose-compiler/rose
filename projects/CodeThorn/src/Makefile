@@ -50,6 +50,9 @@ LTLParser.o: LTLParser.y++ LTL.h
 
 Analyzer.o : CollectionOperators.h Analyzer.h AstTerm.h Labeler.h CFAnalyzer.h MyAst.h SgNodeHelper.h ExprAnalyzer.h StateRepresentation.h Analyzer.C
 
+codethorn.o: codethorn.C codethorn.h LTL.h
+LTLChecker.o: LTLChecker.C LTLChecker.h LTL.h
+
 %.o: %.C %.h
 	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $< -c 
 
@@ -57,7 +60,7 @@ $(TOOLNAME3): $(TOOLNAME3).C  $(TOOLNAME3).h $(OBJECT_FILES)
 	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES) -o$(TOOLNAME3) 
 
 check: $(TOOLNAME3)
-	./$(TOOLNAME3) tests/rers/Problem1.c --verify tests/rers/properties1.ltl
+	./$(TOOLNAME3) tests/rers/Problem1.c --verify tests/rers/properties1.txt
 
 test: $(TOOLNAME3)
 	./$(TOOLNAME3) tests/rers_mini1.C    --verify tests/rers_mini1.ltl

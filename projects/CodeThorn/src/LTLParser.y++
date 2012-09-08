@@ -23,21 +23,22 @@ static int ltl_pos = 0;
 static int ltl_line = 1;
 static int ltl_next_char = EOF;
 static std::stringstream debug_line;
-LTL::Formula* ltl_val;
+LTL::Formula* ltl_val = NULL;
 FILE* ltl_input = NULL;
 
 %}
-     
-%token IN_SYMBOL OUT_SYMBOL WU
-%left  NOT
-%left  X
-%left  F
-%left  G
-%left  '&'
-%left  '|'
-%left  'U'
-%left  WU
-%left  'R'
+
+%token IN_SYMBOL OUT_SYMBOL WU END
+/* operator precedences */
+%nonassoc G
+%nonassoc R
+%nonassoc WU
+%nonassoc U
+%left     OR
+%left     AND
+%nonassoc F
+%nonassoc X
+%nonassoc NOT
 
 %% /* Grammar rules and actions follow.  */
 
@@ -61,44 +62,64 @@ FILE* ltl_input = NULL;
 // (G (! ((oY & ! iC) & (F iC)) | (! oW U iC)))
 // output W does never occur between output Y and input C
 
-start: expr     { assert($1); ltl_val = new LTL::Formula(*$1); return 0; }
+start: 
+END { ltl_val = NULL; return 0; }
+| bin_expr { 
+  if ($1 == NULL) 
+    ltl_val = NULL;
+  else 
+    ltl_val = new LTL::Formula(*$1); 
+  return 0; 
+}
 
-expr:
-'(' expr ')'    { $$ = $2; }
-| IN_SYMBOL     { $$ = new LTL::InputSymbol(ltl_next_char); }
-| OUT_SYMBOL    { $$ = new LTL::OutputSymbol(ltl_next_char); }
-| op_expr       { $$ = $1; }
+lit:
+'(' bin_expr ')' { $$ = $2; }
+| IN_SYMBOL	 { $$ = new LTL::InputSymbol(ltl_next_char); }
+| OUT_SYMBOL	 { $$ = new LTL::OutputSymbol(ltl_next_char); }
 
-op_expr:
-  '!' expr %prec NOT { $$ = new LTL::Not($2); }
-| 'X' expr %prec X   { $$ = new LTL::Next($2); }
-| 'F' expr %prec F   { $$ = new LTL::Eventually($2); }
-| 'G' expr %prec G   { $$ = new LTL::Globally($2); }
-| expr '&' expr      { $$ = new LTL::And($1, $3); }
-| expr '|' expr      { $$ = new LTL::Or($1, $3); }
-| expr 'U' expr      { $$ = new LTL::Until($1, $3); }
-| expr WU  expr      { $$ = new LTL::WeakUntil($1, $3); }
-| expr 'R' expr      { $$ = new LTL::Release($1, $3); }
+un_expr:
+  lit        		{ $$ = $1; }
+| '!' un_expr %prec NOT { $$ = new LTL::Not($2); }
+| 'X' un_expr %prec X	{ $$ = new LTL::Next($2); }
+| 'F' un_expr %prec F	{ $$ = new LTL::Eventually($2); }
+| 'G' un_expr %prec G	{ $$ = new LTL::Globally($2); }
+
+bin_expr:
+| un_expr                        { $$ = $1; }
+| bin_expr '&' un_expr %prec AND { $$ = new LTL::And($1, $3); }
+| bin_expr '|' un_expr %prec OR	 { $$ = new LTL::Or($1, $3); }
+| bin_expr 'U' un_expr %prec U	 { $$ = new LTL::Until($1, $3); }
+| bin_expr WU  un_expr %prec WU	 { $$ = new LTL::WeakUntil($1, $3); }
+| bin_expr 'R' un_expr %prec R	 { $$ = new LTL::Release($1, $3); }
 
 %%
 
-
+using namespace std;
 int ltl_lex(void) {
   if (!ltl_input) ltl_input = stdin;
   ltl_next_char = getc(ltl_input);
-  debug_line << (char)ltl_next_char;
+  debug_line << string(1, ltl_next_char);
   ltl_pos++;
+
+  // skip comment lines
+  if (ltl_pos == 1 && ltl_next_char != '(') {
+    ltl_val = NULL;;
+    while ((ltl_next_char!='\n' && ltl_next_char != EOF)) {
+      ltl_next_char = getc(ltl_input);
+    } 
+  }
+
   switch (ltl_next_char) {
-  case EOF:   ltl_eof = true; return 0;
+  case EOF:   ltl_eof = true; return END;
   case 'i':   ltl_next_char = getc(ltl_input);
-              debug_line << (char)ltl_next_char;
+              debug_line << string(1, ltl_next_char);
               return IN_SYMBOL;
   case 'o':   ltl_next_char = getc(ltl_input);
-              debug_line << (char)ltl_next_char;
+              debug_line << string(1, ltl_next_char);
               return OUT_SYMBOL;
   case 'W':   ltl_next_char = getc(ltl_input);
               if (ltl_next_char == 'U') {
-		debug_line << (char)ltl_next_char;
+		debug_line << string(1, ltl_next_char);
 		return WU;
               } else {
                 ltl_pos--;
@@ -107,9 +128,9 @@ int ltl_lex(void) {
               }
   case '\r':
   case '\n':  ltl_line++; 
-              ltl_pos=1;
+              ltl_pos=0;
               debug_line.clear();
-              return 0;
+	      return ltl_lex();
   case ' ':
   case '\t':  return ltl_lex();
   default:    return ltl_next_char;

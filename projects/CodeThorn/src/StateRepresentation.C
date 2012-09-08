@@ -218,7 +218,7 @@ ConstraintSet::iterator ConstraintSet::findSpecific(Constraint::ConstraintOp op,
   return end();
 }
 
-AType::ConstIntLattice ConstraintSet::varConstIntLatticeValue(VariableId varId) const {
+AType::ConstIntLattice ConstraintSet::varConstIntLatticeValue(const VariableId varId) const {
   AType::ConstIntLattice c;
   ConstraintSet::iterator i=findSpecific(Constraint::EQ_VAR_CONST,varId);
   if(i==end()) {
