@@ -404,29 +404,13 @@ void Fortran_to_C::translateAttributeSpecificationStatement(SgAttributeSpecifica
   {
     case SgAttributeSpecificationStatement::e_dimensionStatement:
       {
-        SgExpressionPtrList dimensionList = attributeSpecificationStatement->get_parameter_list()->get_expressions();
-        Rose_STL_Container<SgExpression*>::iterator i =  dimensionList.begin();
-        while(i != dimensionList.end())
-        {
-          SgPntrArrRefExp* pntrArrRefExp = isSgPntrArrRefExp(*i);
-          ROSE_ASSERT(pntrArrRefExp);
-          if(isLinearlizeArray)
-          {
-            linearizeArraySubscript(pntrArrRefExp);
-          }
-          else
-          {
-            translateArraySubscript(pntrArrRefExp);
-          }
-          ++i;
-        }
-        
+        deepDelete(attributeSpecificationStatement->get_parameter_list());        
+        break;
       }
-      break;
     case SgAttributeSpecificationStatement::e_parameterStatement:
       {
+        break;
       }
-      break;
     case SgAttributeSpecificationStatement::e_accessStatement_private:
     case SgAttributeSpecificationStatement::e_accessStatement_public:
     case SgAttributeSpecificationStatement::e_allocatableStatement:
@@ -457,6 +441,7 @@ void Fortran_to_C::translateAttributeSpecificationStatement(SgAttributeSpecifica
 /******************************************************************************************************************************/
 void Fortran_to_C::translateEquivalenceStatement(SgEquivalenceStatement* equivalenceStatement)
 {
+  SgScopeStatement* scope = equivalenceStatement->get_scope();
   SgExpressionPtrList equivalentList = equivalenceStatement->get_equivalence_set_list()->get_expressions();
   for(vector<SgExpression*>::iterator i=equivalentList.begin(); i<equivalentList.end(); ++i)
   {
@@ -468,23 +453,348 @@ void Fortran_to_C::translateEquivalenceStatement(SgEquivalenceStatement* equival
     SgExpression* expr1 = equivalentPair[0];
     SgExpression* expr2 = equivalentPair[1];
     /*
-      case 1: equivalence (a,b)
+      case 1: equivalence (a,b) , or equivalence(a(c),b)
+      Transformation:
+        1. create pointer b
+        2. b points to the beginning address of a, no matter a is scalar or array
     */
-    if()
+    if(isSgVarRefExp(expr2) != NULL)
     {
+      bool isEquivToVarRef = false;
+      SgVarRefExp* varRefExp1 = NULL;
+      
+      if(isSgVarRefExp(expr1) != NULL)
+      {
+        isEquivToVarRef = true;
+        varRefExp1 = isSgVarRefExp(expr1);
+      }
+      else if(isSgPntrArrRefExp(expr1) != NULL)
+      {
+        SgPntrArrRefExp* tmpArrayType = isSgPntrArrRefExp(expr1);
+        varRefExp1 = isSgVarRefExp(tmpArrayType->get_lhs_operand());
+        while((tmpArrayType = isSgPntrArrRefExp(tmpArrayType->get_lhs_operand())) != NULL)
+        {
+          varRefExp1 = isSgVarRefExp(tmpArrayType->get_lhs_operand());
+        }
+      }
+      SgVariableSymbol* symbol1 = varRefExp1->get_symbol();
+      SgType* var1OriginalType = symbol1->get_type();
+
+
+      SgVarRefExp* varRefExp2 = isSgVarRefExp(expr2);
+      SgVariableSymbol* symbol2 = varRefExp2->get_symbol();
+      SgType* var2OriginalType = symbol2->get_type();
+      SgInitializedName* sym2InitializedName = symbol2->get_declaration();
+      SgDeclarationStatement* sym2OldDecl = sym2InitializedName->get_declaration();
+
+      if(isSgArrayType(var2OriginalType) != NULL)
+      {
+        SgArrayType* tmpArrayType = isSgArrayType(var2OriginalType);
+        vector<SgExpression*> arrayInfo;
+        arrayInfo.insert(arrayInfo.begin(),tmpArrayType->get_index());
+        SgType* baseType = tmpArrayType->get_base_type();
+        while((tmpArrayType = isSgArrayType(tmpArrayType->get_base_type())) != NULL)
+        {
+          baseType = tmpArrayType->get_base_type();
+          arrayInfo.insert(arrayInfo.begin(),tmpArrayType->get_index());
+        }
+        // Now baseType should have the base type of multi-dimensional array.
+        SgType* newType = NULL;
+        for(vector<SgExpression*>::iterator i=arrayInfo.begin(); i <arrayInfo.end()-1;++i)
+        {
+          SgArrayType* tmpType;
+          tmpType = buildArrayType(baseType,*i);
+          baseType = isSgType(tmpType);
+        }
+        // build the new PointerType
+        newType = buildPointerType(baseType);
+
+        SgAssignInitializer* assignInitializer = NULL;
+        // VariableDeclaration for this pointer, that points to the array space
+        if(isEquivToVarRef)
+        {
+          /* 
+            This following case is tested in equivalence2.F
+            real*4 a(4,16), b(4,4)
+            equivalence(a,b)
+          */ 
+          assignInitializer = buildAssignInitializer(buildCastExp(buildAddressOfOp(buildVarRefExp(symbol1)),
+                                                                  newType,
+                                                                  SgCastExp::e_C_style_cast));
+        }
+        else
+        {
+          /* 
+            This following case is tested in equivalence3.F
+            real*4 a(4,16), b(4,4)
+           equivalence(a(1,4),b)
+          */ 
+          SgPntrArrRefExp* var1PntrArrRef = isSgPntrArrRefExp(expr1);
+          SgExpression* newVar1Exp = buildAddressOfOp(deepCopy(var1PntrArrRef));
+          assignInitializer = buildAssignInitializer(buildCastExp(newVar1Exp,
+                                                                  newType,
+                                                                  SgCastExp::e_C_style_cast));
+        }
+
+        SgVariableDeclaration* sym2NewDecl = buildVariableDeclaration(symbol2->get_name(),
+                                                                      newType,
+                                                                      assignInitializer,
+                                                                      scope);        
+        SgInitializedName* sym2NewIntializedName = *((sym2NewDecl->get_variables()).begin());
+        sym2NewIntializedName->set_prev_decl_item(NULL);
+        symbol2->set_declaration(sym2NewIntializedName);
+        replaceStatement(sym2OldDecl,sym2NewDecl,true);
+        deepDelete(sym2OldDecl);
+
+      }
+      else
+      {
+        /*
+          This is the type when b is just a scalar variable.
+          the rest of hte usage of b has to be a derefence.
+          b = ...   ====> *b = ...
+          c = b     ====> c  = *b
+        */
+        SgPointerType* newType = buildPointerType(var2OriginalType);
+        SgAssignInitializer* assignInitializer = NULL;
+        if(isEquivToVarRef)
+        {
+          /* 
+            This following case is tested in equivalence1.F
+            real*4 a, b
+           equivalence(a,b)
+          */ 
+          /*
+            if both variable are same type, then no cast is needed. Otherwise, we cast its type.
+          */
+          if(var1OriginalType == var2OriginalType)
+              assignInitializer = buildAssignInitializer(buildAddressOfOp(buildVarRefExp(symbol1)));
+          else
+              assignInitializer = buildAssignInitializer(buildCastExp(buildAddressOfOp(buildVarRefExp(symbol1)),
+                                                                      newType, 
+                                                                      SgCastExp::e_C_style_cast));
+        }
+        else
+        {
+          /* 
+            This following case is tested in equivalence4.F
+            real*4 a(4,16), b
+           equivalence(a(1,4),b)
+          */ 
+          SgPntrArrRefExp* var1PntrArrRef = isSgPntrArrRefExp(expr1);
+          SgExpression* newVar1Exp = buildAddressOfOp(deepCopy(var1PntrArrRef));
+          assignInitializer = buildAssignInitializer(buildCastExp(newVar1Exp,
+                                                                  newType, 
+                                                                  SgCastExp::e_C_style_cast));
+        }    
+        SgVariableDeclaration* sym2NewDecl = buildVariableDeclaration(symbol2->get_name(),
+                                                                      newType,
+                                                                      assignInitializer,
+                                                                      scope);
+        SgInitializedName* sym2NewIntializedName = *((sym2NewDecl->get_variables()).begin());
+        sym2NewIntializedName->set_prev_decl_item(NULL);
+        symbol2->set_declaration(sym2NewIntializedName);
+        replaceStatement(sym2OldDecl,sym2NewDecl,true);
+        deepDelete(sym2OldDecl);
+  
+        // Node query for all SgVarRefExp pointing to variable2 
+        Rose_STL_Container<SgNode*> varList = NodeQuery::querySubTree (getEnclosingFunctionDefinition(equivalenceStatement),V_SgVarRefExp);
+        for (Rose_STL_Container<SgNode*>::iterator i = varList.begin(); i != varList.end(); i++)
+        {
+          SgVarRefExp* varRef = isSgVarRefExp(*i);
+          if(varRef->get_symbol()->get_declaration() == sym2NewIntializedName)
+          {
+              replaceExpression(varRef,
+                                buildPointerDerefExp(buildVarRefExp(symbol2)),
+                                false);
+          }
+        }
+      }
     }
     /*
-      case 3: equivalence (a(i),b(j))
+      case 2: equivalence (a,b(c)) , or equivalence(a(c),b(d))
+      Transformation:
     */
-    else if()
+    else if(isSgPntrArrRefExp(expr2) != NULL)
     {
+      bool isEquivToVarRef = false;
+      SgVarRefExp* varRefExp1 = NULL;
+      
+      if(isSgVarRefExp(expr1) != NULL)
+      {
+        isEquivToVarRef = true;
+        varRefExp1 = isSgVarRefExp(expr1);
+      }
+      else if(isSgPntrArrRefExp(expr1) != NULL)
+      {
+        SgPntrArrRefExp* tmpArrayType = isSgPntrArrRefExp(expr1);
+        varRefExp1 = isSgVarRefExp(tmpArrayType->get_lhs_operand());
+        while((tmpArrayType = isSgPntrArrRefExp(tmpArrayType->get_lhs_operand())) != NULL)
+        {
+          varRefExp1 = isSgVarRefExp(tmpArrayType->get_lhs_operand());
+        }
+      }
+      // fetch information of var1
+      SgVariableSymbol* symbol1 = varRefExp1->get_symbol();
+      SgType* var1OriginalType = symbol1->get_type();
+      SgInitializedName* sym1InitializedName = symbol1->get_declaration();
+      SgDeclarationStatement* sym1OldDecl = sym1InitializedName->get_declaration();
+
+      // fetch information of var2
+      SgPntrArrRefExp* var2PntrArrRef = isSgPntrArrRefExp(expr2);
+      SgVarRefExp* varRefExp2 = isSgVarRefExp(var2PntrArrRef->get_lhs_operand());
+      while((var2PntrArrRef = isSgPntrArrRefExp(var2PntrArrRef->get_lhs_operand())) != NULL)
+      {
+        varRefExp2 = isSgVarRefExp(var2PntrArrRef->get_lhs_operand());
+      }
+      SgVariableSymbol* symbol2 = varRefExp2->get_symbol();
+      SgType* var2OriginalType = symbol2->get_type();
+      SgInitializedName* sym2InitializedName = symbol2->get_declaration();
+      SgDeclarationStatement* sym2OldDecl = sym2InitializedName->get_declaration();
+
+      if(isEquivToVarRef)
+      {
+        if(isSgArrayType(var1OriginalType) != NULL)
+        {
+          /*
+          real*4 a(4)
+          equivalence(a, b(c)) 
+          */
+          SgArrayType* tmpArrayType = isSgArrayType(var1OriginalType);
+          vector<SgExpression*> arrayInfo;
+          arrayInfo.insert(arrayInfo.begin(),tmpArrayType->get_index());
+          SgType* baseType = tmpArrayType->get_base_type();
+          while((tmpArrayType = isSgArrayType(tmpArrayType->get_base_type())) != NULL)
+          {
+            baseType = tmpArrayType->get_base_type();
+            arrayInfo.insert(arrayInfo.begin(),tmpArrayType->get_index());
+          }
+          // Now baseType should have the base type of multi-dimensional array.
+          SgType* newType = NULL;
+          for(vector<SgExpression*>::iterator i=arrayInfo.begin(); i <arrayInfo.end()-1;++i)
+          {
+            SgArrayType* tmpType;
+            tmpType = buildArrayType(baseType,*i);
+            baseType = isSgType(tmpType);
+          }
+          // build the new PointerType
+          newType = buildPointerType(baseType);
+
+          SgAssignInitializer* assignInitializer = NULL;
+          var2PntrArrRef = isSgPntrArrRefExp(expr2);
+          SgExpression* newVar2Exp = buildAddressOfOp(deepCopy(var2PntrArrRef));
+          assignInitializer = buildAssignInitializer(buildCastExp(newVar2Exp,
+                                                                  newType, 
+                                                                  SgCastExp::e_C_style_cast));
+          SgVariableDeclaration* sym1NewDecl = buildVariableDeclaration(symbol1->get_name(),
+                                                                        newType,
+                                                                        assignInitializer,
+                                                                        scope);
+          SgInitializedName* sym1NewIntializedName = *((sym1NewDecl->get_variables()).begin());
+          sym1NewIntializedName->set_prev_decl_item(NULL);
+          symbol1->set_declaration(sym1NewIntializedName);
+          insertStatementAfterLastDeclaration(sym1NewDecl,scope);
+          removeStatement(sym1OldDecl);
+          deepDelete(sym1OldDecl);
+
+        }
+        else
+        {
+          /*
+          real*4 a
+          equivalence(a, b(c)) 
+          */
+          SgPointerType* newType = buildPointerType(var1OriginalType);
+          SgAssignInitializer* assignInitializer = NULL;
+          var2PntrArrRef = isSgPntrArrRefExp(expr2);
+          SgExpression* newVar2Exp = buildAddressOfOp(deepCopy(var2PntrArrRef));
+          assignInitializer = buildAssignInitializer(buildCastExp(newVar2Exp,
+                                                                  newType, 
+                                                                  SgCastExp::e_C_style_cast));
+          SgVariableDeclaration* sym1NewDecl = buildVariableDeclaration(symbol1->get_name(),
+                                                                        newType,
+                                                                        assignInitializer,
+                                                                        scope);
+          SgInitializedName* sym1NewIntializedName = *((sym1NewDecl->get_variables()).begin());
+          sym1NewIntializedName->set_prev_decl_item(NULL);
+          symbol1->set_declaration(sym1NewIntializedName);
+          insertStatementAfterLastDeclaration(sym1NewDecl,scope);
+          removeStatement(sym1OldDecl);
+          deepDelete(sym1OldDecl);
+          // Node query for all SgVarRefExp pointing to variable1 
+          Rose_STL_Container<SgNode*> varList = NodeQuery::querySubTree (getEnclosingFunctionDefinition(equivalenceStatement),V_SgVarRefExp);
+          for (Rose_STL_Container<SgNode*>::iterator i = varList.begin(); i != varList.end(); i++)
+          {
+            SgVarRefExp* varRef = isSgVarRefExp(*i);
+            if(varRef->get_symbol()->get_declaration() == sym1NewIntializedName)
+            {
+                replaceExpression(varRef,
+                                  buildPointerDerefExp(buildVarRefExp(symbol1)),
+                                  false);
+            }
+          }
+        }
+      }
+      else
+      {
+/*
+!!!!!IMPORTANT!!!!!!
+This case, we would need Fortran user to follow this rule.
+equivalence(largeArray, smallArray)
+
+Example:
+dimension a(4,4),b(4)
+equivalence(a(1,4),b(1))
+
+Then, b will become a pointer points to a(1,4), and b will never reference out of bound.
+Having the reverse order would cause a to reference out of bound.
+*/
+        /*
+        real*4 a(4)
+        equivalence(a(d), b(c)) 
+        */
+        SgArrayType* tmpArrayType = isSgArrayType(var2OriginalType);
+        vector<SgExpression*> arrayInfo;
+        arrayInfo.insert(arrayInfo.begin(),tmpArrayType->get_index());
+        SgType* baseType = tmpArrayType->get_base_type();
+        while((tmpArrayType = isSgArrayType(tmpArrayType->get_base_type())) != NULL)
+        {
+          baseType = tmpArrayType->get_base_type();
+          arrayInfo.insert(arrayInfo.begin(),tmpArrayType->get_index());
+        }
+        // Now baseType should have the base type of multi-dimensional array.
+        SgType* newType = NULL;
+        for(vector<SgExpression*>::iterator i=arrayInfo.begin(); i <arrayInfo.end()-1;++i)
+        {
+          SgArrayType* tmpType;
+          tmpType = buildArrayType(baseType,*i);
+          baseType = isSgType(tmpType);
+        }
+        // build the new PointerType
+        newType = buildPointerType(baseType);
+
+        SgAssignInitializer* assignInitializer = NULL;
+        SgPntrArrRefExp* var1PntrArrRef = isSgPntrArrRefExp(expr1);
+        SgExpression* newVar1Exp = buildAddressOfOp(deepCopy(var1PntrArrRef));
+        assignInitializer = buildAssignInitializer(buildCastExp(newVar1Exp,
+                                                                newType,
+                                                                SgCastExp::e_C_style_cast));
+
+        SgVariableDeclaration* sym2NewDecl = buildVariableDeclaration(symbol2->get_name(),
+                                                                      newType,
+                                                                      assignInitializer,
+                                                                      scope);        
+        SgInitializedName* sym2NewIntializedName = *((sym2NewDecl->get_variables()).begin());
+        sym2NewIntializedName->set_prev_decl_item(NULL);
+        symbol2->set_declaration(sym2NewIntializedName);
+        replaceStatement(sym2OldDecl,sym2NewDecl,true);
+        deepDelete(sym2OldDecl);
+      }
     }
-    /*
-      case 2: equivalence (a,b(i))
-    */
     else
     {
+      cerr<<"warning, unhandled equivalence case"<<endl;
     }
-
   }
+  deepDelete(equivalenceStatement->get_equivalence_set_list());
 }

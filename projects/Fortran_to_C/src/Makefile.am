@@ -18,6 +18,7 @@ bin_PROGRAMS = Fortran_to_C
 
 Fortran_to_C_SOURCES=\
 	main.C \
+	f2c/f2cExpression.C \
 	f2c/f2cStatement.C \
 	f2c/f2cArray.C 
 

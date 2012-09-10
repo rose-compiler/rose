@@ -1,6 +1,7 @@
       program equivalence1
-      dimension a(10)
-      dimension b(10)
-      equivalence (a,b(1))
-      a(1) = 1.
+        real*4 a, b
+        real*4 c
+        equivalence(a,b)
+        b = 1.
+        c = b + 5.
       end

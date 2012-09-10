@@ -152,27 +152,30 @@ void Fortran_to_C::translateArraySubscript(SgPntrArrRefExp* pntrArrRefExp)
     // rank info has to match between subscripts and dim_info
     ROSE_ASSERT(arraySubscript->get_expressions().size() == dimInfo->get_expressions().size());
 
-    Rose_STL_Container<SgExpression*>::iterator j1 =  subscriptExprList.begin();
-    Rose_STL_Container<SgExpression*>::iterator j2 =  dimExpressionPtrList.begin();
-    SgExpression* newIndexExp = get0basedIndex(*j1, *j2);
     if(subscriptExprList.size() == 1)
     {
+      Rose_STL_Container<SgExpression*>::iterator j1 =  subscriptExprList.begin();
+      Rose_STL_Container<SgExpression*>::iterator j2 =  dimExpressionPtrList.begin();
+      SgExpression* newIndexExp = get0basedIndex(*j1, *j2);
       pntrArrRefExp->set_rhs_operand(newIndexExp);
     }
     else
     {
+      Rose_STL_Container<SgExpression*>::reverse_iterator j1 =  subscriptExprList.rbegin();
+      Rose_STL_Container<SgExpression*>::reverse_iterator j2 =  dimExpressionPtrList.rbegin();
+      SgExpression* newIndexExp = get0basedIndex(*j1, *j2);
       SgPntrArrRefExp* newPntrArrRefExp = buildPntrArrRefExp(baseExp, newIndexExp);
       baseExp->set_parent(newPntrArrRefExp);
       j1 = j1 + 1;
       j2 = j2 + 1;
-      for(; j1< (subscriptExprList.end()-1); ++j1, ++j2)
+      for(; j1< (subscriptExprList.rend()-1); ++j1, ++j2)
       {
         SgExpression* newIndexExp = get0basedIndex(*j1, *j2);
         baseExp = isSgExpression(newPntrArrRefExp);
         newPntrArrRefExp = buildPntrArrRefExp(baseExp, newIndexExp);
         baseExp->set_parent(newPntrArrRefExp);
       }
-      SgExpression* newIndexExp = get0basedIndex(*j1, *j2);
+      newIndexExp = get0basedIndex(*j1, *j2);
       pntrArrRefExp->set_lhs_operand(newPntrArrRefExp);
       pntrArrRefExp->set_rhs_operand(newIndexExp);
       newIndexExp->set_parent(pntrArrRefExp);

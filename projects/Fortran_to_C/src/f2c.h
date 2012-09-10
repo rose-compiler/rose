@@ -2,6 +2,7 @@
 #define _FORTRANTOC_H
 
 #include "rose.h"
+#include <map>
 #include "sageBuilder.h"
 
 /*
@@ -66,6 +67,9 @@ namespace Fortran_to_C
     void linearizeArrayDeclaration(SgArrayType*);
     void linearizeArraySubscript(SgPntrArrRefExp*);
   
+    void translateImplicitFunctionCallExp(SgFunctionCallExp*);
+    SgName convertImplicitFunctionName(SgName, SgType*);
+
     SgExpression* getFortranDimensionSize(SgExpression*);
     SgExpression* get0basedIndex(SgExpression*, SgExpression*);
 }
