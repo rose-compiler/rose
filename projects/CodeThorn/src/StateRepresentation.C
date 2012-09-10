@@ -12,28 +12,25 @@
 
 using namespace std;
 
-void InputOutput::recordInputVariable(VariableId varId) {
-  op=IN_VAR;
+void InputOutput::recordVariable(OpType op0,VariableId varId) {
+  op=op0;
   var=varId;
 }
 
-void InputOutput::recordOutputVariable(VariableId varId) {
-  op=OUT_VAR;
-  var=varId;
-}
-
-void InputOutput::recordOutputConst(AType::ConstIntLattice val0) {
-  op=OUT_CONST;
-  val=val0;
+void InputOutput::recordConst(OpType op0,AType::ConstIntLattice val) {
+  cerr<<"IO with constants not supported yet."<<endl;
+  exit(1);
 }
 
 string InputOutput::toString() const {
   string str;
   switch(op) {
-  case IN_VAR: str="in:"+var.variableName();break;
-  case OUT_VAR: str="out:"+var.variableName();break;
-  case OUT_CONST: str="out:"+val.toString();break;
   case NONE: str="none";break;
+  case STDIN_VAR: str="stdin:"+var.variableName();break;
+  case STDOUT_VAR: str="stdout:"+var.variableName();break;
+  case STDERR_VAR: str="stderr:"+var.variableName();break;
+  case STDOUT_CONST: str="out:"+val.toString();break;
+  case STDERR_CONST: str="out:"+val.toString();break;
   default:
 	cerr<<"FATAL ERROR: unkown IO operation abstraction.";
 	exit(1);

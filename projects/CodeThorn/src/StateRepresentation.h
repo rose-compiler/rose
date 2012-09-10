@@ -99,14 +99,13 @@ bool operator!=(const ConstraintSet& s1, const ConstraintSet& s2);
 class InputOutput {
  public:
  InputOutput():op(NONE),var(VariableId(0)){ val=AType::Bot();}
-  enum OpType {IN_VAR,OUT_VAR,OUT_CONST,NONE};
+  enum OpType {NONE,STDIN_VAR,STDOUT_VAR,STDOUT_CONST,STDERR_VAR,STDERR_CONST};
   OpType op;
   VariableId var;
   AType::ConstIntLattice val;
   string toString() const;
-  void recordInputVariable(VariableId varId);
-  void recordOutputVariable(VariableId varId);
-  void recordOutputConst(AType::ConstIntLattice val);
+  void recordVariable(OpType op, VariableId varId);
+  void recordConst(OpType op, AType::ConstIntLattice val);
 };
 
 bool operator<(const InputOutput& c1, const InputOutput& c2);

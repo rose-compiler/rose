@@ -266,14 +266,12 @@ int main( int argc, char * argv[] ) {
   }
 #endif
 
-#if 0 
-  // check output var to be constant in transition graph (successful for all rers-io-vars)
+#if 0
+  // check output var to be constant in transition graph
   TransitionGraph* tg=analyzer.getTransitionGraph();
   for(TransitionGraph::iterator i=tg->begin();i!=tg->end();++i) {
-	EState es1=(*i).source;
-	EState es2=(*i).target;
-	assert(tg.io.op==OUT_VAR && (!source.state.varIsConst(tg.io.var)));
-	assert(tg.io.op==OUT_VAR && (!target.state.varIsConst(tg.io.var)));
+	const EState* es1=(*i).source;
+	assert(es1->io.op==InputOutput::STDOUT_VAR && es1->state->varIsConst(es1->io.var));
   }
 #endif
 

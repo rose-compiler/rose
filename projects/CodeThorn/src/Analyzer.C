@@ -406,7 +406,7 @@ EState Analyzer::transferFunction(Edge edge, const EState* eState) {
 		   SgSymbol* sym=SgNodeHelper::getSymbolOfVariable(varRefExp);
 		   assert(sym);
 		   VariableId varId=VariableId(sym);
-		   newio.recordInputVariable(varId);
+		   newio.recordVariable(InputOutput::STDIN_VAR,varId);
 		 } else {
 		   cerr<<"Error: unsupported number of scanf arguments. Currently scanf with exactly one variable of the form scanf(\"%d\",&v) is supported."<<endl;
 		   exit(1);
@@ -422,14 +422,7 @@ EState Analyzer::transferFunction(Edge edge, const EState* eState) {
 		   SgSymbol* sym=SgNodeHelper::getSymbolOfVariable(varRefExp);
 		   assert(sym);
 		   VariableId varId=VariableId(sym);
-		   newio.recordOutputVariable(varId);
-#if 0
-		   if(currentState.varIsConst(varId)) {
-			 cout << "CONST OUTPUT VAR found."<<endl;
-		   } else  {
-			 cout << "NON-CONST OUTPUT VAR found."<<endl;
-		   }
-#endif
+		   newio.recordVariable(InputOutput::STDOUT_VAR,varId);
 		   assert(newio.var==varId);
 		 } else {
 		   cerr<<"Error: unsupported number of printf arguments. Currently printf with exactly one variable of the form printf(\"...%d...\",v) is supported."<<endl;
@@ -446,7 +439,7 @@ EState Analyzer::transferFunction(Edge edge, const EState* eState) {
 		   SgSymbol* sym=SgNodeHelper::getSymbolOfVariable(varRefExp);
 		   assert(sym);
 		   VariableId varId=VariableId(sym);
-		   newio.recordOutputVariable(varId);
+		   newio.recordVariable(InputOutput::STDERR_VAR,varId);
 		 } else {
 		   cerr<<"Error: unsupported number of fprintf arguments. Currently printf with exactly one variable of the form fprintf(stream,\"...%d...\",v) is supported."<<endl;
 		   exit(1);
