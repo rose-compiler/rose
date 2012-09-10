@@ -18,6 +18,7 @@
 #include <cstring>
 #include <boost/program_options.hpp>
 #include <map>
+#include "InternalChecks.h"
 
 namespace po = boost::program_options;
 
@@ -32,200 +33,6 @@ string int_to_string(int x) {
   stringstream ss;
   ss << x;
   return ss.str();
-}
-
-void checkTypes() {
-  VariableIdMapping variableIdMapping;
-  State s1;
-  cout << "RUNNING CHECKS: START"<<endl;
-  VariableId var_x=variableIdMapping.createUniqueTemporaryVariableId("x");
-  if(!s1.varExists(var_x))
-	cout << "PASS: x does not exist."<<endl;
-  else
-	cout << "FAIL: x does not exist."<<endl;
-  s1[var_x]=5;
-  if(s1.varExists(var_x))
-	cout << "PASS: x does exist."<<endl;
-  else
-	cout << "FAIL: x does exist."<<endl;
-  cout<<"x value: " <<s1.varValueToString(var_x)<<endl;
-  cout<<"State: "<<s1.toString()<<endl;
-  VariableId var_y=variableIdMapping.createUniqueTemporaryVariableId("y");
-  s1[var_y]=7;
-  cout<<"State: "<<s1.toString()<<endl;
-  s1[var_x]=6;
-  cout<<"State: "<<s1.toString()<<endl;
-  s1[var_x]=ANALYZER_INT_TOP;
-  cout<<"State: "<<s1.toString()<<endl;
-  s1.erase(var_x);
-  cout<<"State: "<<s1.toString()<<endl;
-  cout<<"- - - - - - - - - - - - - - - - - - -"<<endl;
-  StateSet ss1;
-  cout<<"StateSet-1: "<<ss1.toString()<<endl;
-  ss1.insert(s1);
-  cout<<"StateSet-2: "<<ss1.toString()<<endl;
-  ss1.insert(s1);
-  cout<<"StateSet-3: "<<ss1.toString()<<endl;
-  State s2=s1;
-  ss1.insert(s2);
-  cout<<"StateSet-4: "<<ss1.toString()<<endl;
-  s2[var_y]=10;
-  cout<<"StateSet-5: "<<ss1.toString()<<endl;
-  ss1.insert(s2);
-  cout<<"StateSet-6: "<<ss1.toString()<<endl;
-  if(ss1.size()==2) cout << "TEST: PASS"<<endl;
-  else cout << "TEST: FAIL"<<endl;
-
-  cout << endl;
-  {
-	cout << "RUNNING CHECKS FOR BOOLLATTICE TYPE: START"<<endl;
-	AType::BoolLattice a;
-	a=true;
-	cout << "a: "<<a.toString()<<endl;
-	AType::BoolLattice b;
-	b=false;
-	cout << "b: "<<b.toString()<<endl;
-	AType::BoolLattice c=a||b;
-	cout << "c=a||b: "<<c.toString()<<endl;
-	AType::Top e;
-	AType::BoolLattice d;
-	d=e;
-	cout << "d: "<<d<<endl;
-	c=c||d;
-	cout << "c=c||d: "<<c<<endl;
-	AType::BoolLattice f=AType::Bot();
-	d=AType::Bot();
-	cout << "d: "<<d<<endl;
-	cout << "f: "<<d<<endl;
-	a=d&&f;
-	cout << "a=d&&f: "<<a<<endl;
-	f=false;
-	cout << "f: "<<f<<endl;
-	a=d&&f;
-	cout << "a=d&&f: "<<a<<endl;
-	cout << "RUNNING CHECKS FOR BOOL LATTICE TYPE: END"<<endl;
-  }
-  cout << "RUNNING CHECKS: END"<<endl;
-
-  cout << endl;
-  {
-	cout << "RUNNING CHECKS FOR CONSTINT LATTICE TYPE: START"<<endl;
-	AType::ConstIntLattice a;
-	a=true;
-	cout << "a: "<<a.toString();
-	if(a.isTrue()) cout << "(true)";
-	if(a.isFalse()) cout << "(false)";
-	cout<<endl;
-	AType::ConstIntLattice b;
-	b=false;
-	cout << "b: "<<b.toString();
-	if(b.isTrue()) cout << "(true)";
-	if(b.isFalse()) cout << "(false)";
-	cout<<endl;
-
-	AType::ConstIntLattice c=a||b;
-	cout << "c=a||b: "<<c.toString()<<endl;
-	AType::Top e;
-	AType::ConstIntLattice d;
-	d=e;
-	cout << "d: "<<d<<endl;
-	c=c||d;
-	cout << "c=c||d: "<<c<<endl;
-	AType::ConstIntLattice f=AType::Bot();
-	d=AType::Bot();
-	cout << "d: "<<d<<endl;
-	cout << "f: "<<d<<endl;
-	a=d&&f;
-	cout << "a=d&&f: "<<a<<endl;
-	f=false;
-	cout << "f: "<<f<<endl;
-	a=d&&f;
-	cout << "a=d&&f: "<<a<<endl;
-	a=5;
-	cout << "a=5: "<<a;
-	if(a.isTrue()) cout << "(true)";
-	if(a.isFalse()) cout << "(false)";
-	cout<<endl;
-	a=0;
-	cout << "a=0: "<<a;
-	if(a.isTrue()) cout << "(true)";
-	if(a.isFalse()) cout << "(false)";
-	cout<<endl;
-	//	a=a+1;
-	//cout << "a=a+1: "<<a<<endl;
-	cout << "RUNNING CHECKS FOR CONST INT LATTICE TYPE: END"<<endl;
-  }
-  cout << endl;
-  {
-	cout << "RUNNING CHECKS FOR CONSTRAINT TYPE: START"<<endl;
-	VariableId var_x=variableIdMapping.createUniqueTemporaryVariableId("x");
-	VariableId var_y=variableIdMapping.createUniqueTemporaryVariableId("y");
-	VariableId var_z=variableIdMapping.createUniqueTemporaryVariableId("z");
-
-	Constraint c1(Constraint::EQ_VAR_CONST,var_x,1);
-	Constraint c2(Constraint::NEQ_VAR_CONST,var_y,2);
-	Constraint c3(Constraint::DEQ_VAR_CONST,var_z,1);
-	cout<<"c1:"<<c1.toString()<<endl;
-	cout<<"c2:"<<c2.toString()<<endl;
-	cout<<"c3:"<<c3.toString()<<endl;
-	ConstraintSet cs;
-	cs.insert(c1);
-	cs.insert(c2);
-	cs.insert(c3);
-	cout<<"ConstraintSet cs:"<<cs.toString()<<endl;
-	if(cs.constraintExists(Constraint::EQ_VAR_CONST,var_x,1))
-	  cout << "constraintExists(EQ_Var_Const,x,1): true (TEST:PASS)"<<endl;
-	else
-	  cout << "constraintExists(EQ_Var_Const,x,1): false (TEST:FAIL)"<<endl;
-
-	if(cs.constraintExists(c2))
-	  cout << "constraintExists(c2): true (TEST:PASS)"<<endl;
-	else
-	  cout << "constraintExists(c2): false (TEST:FAIL)"<<endl;
-	cout << "RUNNING CHECKS FOR CONSTRAINT TYPE: END"<<endl;
-  }
-  {
-	cout << "RUNNING CHECKS FOR COMBINED TYPES: START"<<endl;
-	EState es1;
-	EState es2;
-	cout << "EState created. "<<endl;
-	cout << "empty EState: "<<es1.toString()<<endl;
-	es1.label=1;
-	VariableId var_x=variableIdMapping.createUniqueTemporaryVariableId("x");
-	es1.constraints.insert(Constraint(Constraint::EQ_VAR_CONST,var_x,1));
-	es2.label=1;
-	es2.constraints.insert(Constraint(Constraint::NEQ_VAR_CONST,var_x,1));
-	cout << "empty EState with label and constraint es1: "<<es1.toString()<<endl;
-	cout << "empty EState with label and constraint es2: "<<es2.toString()<<endl;
-	State s;
-	es1.state=&s;
-	es2.state=&s;
-	cout << "empty EState with label, empty state, and constraint es1: "<<es1.toString()<<endl;
-	cout << "empty EState with label, empty state, and constraint es2: "<<es2.toString()<<endl;
-	bool testres=(es1==es2);
-	if(testres)
-	  cout << "es1==es2: "<<testres<< "(not as expected: FAIL)"<<endl;
-	else
-	  cout << "es1==es2: "<<testres<< "(as expected: PASS)"<<endl;
-	cout << "RUNNING CHECKS FOR COMBINED TYPES: END"<<endl;
-  }
-  cout << "RUNNING CHECKS: END"<<endl;
-}
-
-void checkLanguageRestrictor(int argc, char *argv[]) {
-  // Build the AST used by ROSE
-  SgProject* sageProject = frontend(argc,argv);
-  LanguageRestrictor lr;
-  LanguageRestrictor::VariantSet vs= lr.computeVariantSetOfProvidedAst(sageProject);
-  for(LanguageRestrictor::VariantSet::iterator i=vs.begin();i!=vs.end();++i) {
-	cout << "VARIANT: "<<lr.variantToString(*i)<<endl;
-  }
-  cout <<endl;
-  lr.allowAstNodesRequiredForEmptyProgram();
-  vs=lr.getAllowedAstNodeVariantSet();
-  for(LanguageRestrictor::VariantSet::iterator i=vs.begin();i!=vs.end();++i) {
-	cout << "VARIANT: "<<lr.variantToString(*i)<<endl;
-  }
 }
 
 bool CodeThornLanguageRestrictor::checkIfAstIsAllowed(SgNode* node) {
@@ -296,34 +103,20 @@ void checkProgram(SgNode* root) {
 
 int main( int argc, char * argv[] ) {
   string ltl_file;
-  //set<AType::ConstIntLattice,AType::ConstIntLatticeCmp> settest;
-#if 0
-  try {
-  checkTypes();
-  //checkLanguageRestrictor(argc,argv);
-  } catch(char* str) {
-	cerr << "*Exception raised: " << str << endl;
-  } catch(const char* str) {
-	cerr << "Exception raised: " << str << endl;
-  } catch(string str) {
-	cerr << "Exception raised: " << str << endl;
- }
-  return 0;
-#else
   try {
 	Timer timer;
 	timer.start();
 
   // Command line option handling.
   po::options_description desc
-    ("CodeThorn 1.0\n"
+    ("CodeThorn 1.1 [RC1]\n"
      "Supported options");
 
   desc.add_options()
     ("help", "produce this help message")
     ("rose-help", "show help for compiler frontend options")
     ("version", "display the version")
-    ("author", "display the authors of CodeThorn")
+    ("internal-checks", "run internal consistency checks (without input program)")
     ("verify", po::value< string >(), "verify all LTL formulae in the file [arg]")
     ("tg1-estate-address", po::value< string >(), "transition graph 1: visualize address [=yes|no]")
     ("tg1-estate-id", po::value< string >(), "transition graph 1: visualize estate-id [=yes|no]")
@@ -337,6 +130,13 @@ int main( int argc, char * argv[] ) {
 	    options(desc).allow_unregistered().run(), args);
   po::notify(args);
 
+  if (args.count("internal-checks")) {
+	if(internalChecks(argc,argv)==false)
+	  return 1;
+	else
+	  return 0;
+  }
+  
   if (args.count("help")) {
     cout << desc << "\n";
     return 0;
@@ -353,18 +153,18 @@ int main( int argc, char * argv[] ) {
     return 0;
   }
 
-
-
   if (args.count("verify")) {
     ltl_file = args["verify"].as<string>();
-    for (int i=1; i<argc; ++i)
-      if (string(argv[i]) == "--verify") {
-	// do not confuse ROSE frontend
-	argv[i] = strdup("");
-	assert(i+1<argc);
-	argv[i+1] = strdup("");
-      }
+	for (int i=1; i<argc; ++i) {
+	  if (string(argv[i]) == "--verify") {
+		// do not confuse ROSE frontend
+		argv[i] = strdup("");
+		assert(i+1<argc);
+		argv[i+1] = strdup("");
+	  }
+	}
   }
+
 
   boolOptions.init(argc,argv);
   boolOptions.registerOption("tg1-estate-address",false);
@@ -400,7 +200,6 @@ int main( int argc, char * argv[] ) {
   Analyzer analyzer;
   analyzer.initializeSolver1("main",root);
 
-  cout << "NOTE: We are ignoring operator '?' (not implemented yet)"<<endl;
   cout << "=============================================================="<<endl;
   analyzer.runSolver1();
   //  cout << analyzer.stateSetToString(final);
@@ -466,7 +265,16 @@ int main( int argc, char * argv[] ) {
     cout << analyzer.getLabeler()->toString();
   }
 #endif
-  
+
+#if 0
+  // check output var to be constant in transition graph
+  TransitionGraph* tg=analyzer.getTransitionGraph();
+  for(TransitionGraph::iterator i=tg->begin();i!=tg->end();++i) {
+	const EState* es1=(*i).source;
+	assert(es1->io.op==InputOutput::STDOUT_VAR && es1->state->varIsConst(es1->io.var));
+  }
+#endif
+
   //
   // Verification
   //
@@ -523,6 +331,5 @@ int main( int argc, char * argv[] ) {
 	cerr << "Exception raised: " << str << endl;
  }
   return 0;
-#endif
 }
 

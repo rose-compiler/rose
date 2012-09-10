@@ -14,11 +14,6 @@
 
 using namespace std;
 
-// MS: temporary defines (to be removed)
-#define ANALYZER_INT_TOP INT_MAX
-#define ANALYZER_INT_BOT INT_MIN
-
-
 class SingleEvalResult {
  public:
   EState eState;
@@ -34,7 +29,7 @@ class SingleEvalResultConstInt {
   EState eState;
   ConstraintSet exprConstraints; // temporary during evaluation of expression
   AType::ConstIntLattice result;
-  int intValue() {return result.getIntValue();}
+  AValue value() {return result;}
   bool isConstInt() {return result.isConstInt();}
   bool isTop() {return result.isTop();}
   bool isTrue() {return result.isTrue();}

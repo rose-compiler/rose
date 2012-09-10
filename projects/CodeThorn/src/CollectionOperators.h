@@ -41,4 +41,16 @@ std::set<T> operator+(std::set<T>& s1, std::set<T>& s2) {
   return result;
 }
 
+// subset
+template<typename T>
+bool operator<(std::set<T> const& s1, std::set<T> const& s2) {
+  for(typename std::set<T>::iterator i=s1.begin();i!=s1.end();++i) {
+	typename std::set<T>::iterator foundpos=s2.find(*i);
+	if(foundpos==s2.end())
+	  return false;
+  }
+  return true;
+}
+
+
 #endif

@@ -275,7 +275,7 @@ public:
 
   static void updateInputVar(const EState* estate, const VariableId** v) {
     assert(v);
-    if (estate->io.op == InputOutput::IN_VAR) {
+    if (estate->io.op == InputOutput::STDIN_VAR) {
       *v = &estate->io.var;
     }
   }
@@ -320,18 +320,18 @@ public:
   /// return True iff that state is an Oc operation
   static BoolLattice isOutputState(const EState* estate, int c) {
     switch (estate->io.op) {
-    case InputOutput::OUT_CONST: {
-      const ConstIntLattice& lval = estate->io.val;
+    case InputOutput::STDOUT_CONST: {
+      const AType::ConstIntLattice& lval = estate->io.val;
       cerr<<lval.toString()<<endl;
       assert(lval.isConstInt());
       return c == lval.getIntValue()+'A';
     }
-    case InputOutput::OUT_VAR: {
+    case InputOutput::STDOUT_VAR: {
       const State& prop_state = *estate->state;
       assert(prop_state.varIsConst(estate->io.var));
-      AValue aval = const_cast<State&>(prop_state)[estate->io.var];
+      AValue aval = const_cast<State&>(prop_state)[estate->io.var].getValue();
       //cerr<<aval<<endl;
-      return c == aval+'A';
+      return c == aval.getIntValue()+'A';
     }
     default:
       return false;
@@ -516,11 +516,11 @@ Checker::verify(const Formula& f)
   s<<"node[shape=rectangle, color=gray, style=filled];\n  ";
   FOR_EACH_TRANSITION(t) {
     switch (t->source->io.op) {
-    case InputOutput::IN_VAR:
+    case InputOutput::STDIN_VAR:
       s<<estate_label[t->source]<<" [shape=rectangle, color=yellow, style=filled];\n  ";
       break;
-    case InputOutput::OUT_VAR:
-    case InputOutput::OUT_CONST:
+    case InputOutput::STDOUT_VAR:
+    case InputOutput::STDOUT_CONST:
       s<<estate_label[t->source]<<" [shape=rectangle, color=blue, style=filled];\n  ";
       break;
     default: break;

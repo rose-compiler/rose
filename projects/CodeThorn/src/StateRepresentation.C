@@ -8,31 +8,29 @@
 #include "ExprAnalyzer.h"
 #include "AType.h"
 #include <algorithm>
+#include "CollectionOperators.h"
 
 using namespace std;
 
-void InputOutput::recordInputVariable(VariableId varId) {
-  op=IN_VAR;
+void InputOutput::recordVariable(OpType op0,VariableId varId) {
+  op=op0;
   var=varId;
 }
 
-void InputOutput::recordOutputVariable(VariableId varId) {
-  op=OUT_VAR;
-  var=varId;
-}
-
-void InputOutput::recordOutputConst(AType::ConstIntLattice val0) {
-  op=OUT_CONST;
-  val=val0;
+void InputOutput::recordConst(OpType op0,AType::ConstIntLattice val) {
+  cerr<<"IO with constants not supported yet."<<endl;
+  exit(1);
 }
 
 string InputOutput::toString() const {
   string str;
   switch(op) {
-  case IN_VAR: str="in:"+var.variableName();break;
-  case OUT_VAR: str="out:"+var.variableName();break;
-  case OUT_CONST: str="out:"+val.toString();break;
   case NONE: str="none";break;
+  case STDIN_VAR: str="stdin:"+var.variableName();break;
+  case STDOUT_VAR: str="stdout:"+var.variableName();break;
+  case STDERR_VAR: str="stderr:"+var.variableName();break;
+  case STDOUT_CONST: str="out:"+val.toString();break;
+  case STDERR_CONST: str="out:"+val.toString();break;
   default:
 	cerr<<"FATAL ERROR: unkown IO operation abstraction.";
 	exit(1);
@@ -58,13 +56,13 @@ bool operator<(const Constraint& c1, const Constraint& c2) {
 	return true;
   if(c1.var==c2.var && c1.op<c2.op)
 	return true;
-  if(c1.op==c2.op && c1.intVal </*=*/ c2.intVal)
+  if(c1.op==c2.op && AType::strictWeakOrderingIsSmaller(c1.intVal,c2.intVal)) 
 	return true;
   return false;
 }
 
 bool operator==(const Constraint& c1, const Constraint& c2) {
-  return c1.intVal==c2.intVal && c1.op==c2.op && c1.var==c2.var;
+  return c1.var==c2.var && c1.op==c2.op &&AType::strictWeakOrderingIsEqual(c1.intVal,c2.intVal);
 }
 
 bool operator!=(const Constraint& c1, const Constraint& c2) {
@@ -76,7 +74,7 @@ Constraint::Constraint(ConstraintOp op0,VariableId lhs, AValue rhs):op(op0),var(
 
 string Constraint::toString() const {
   stringstream ss;
-  ss<<var.longVariableName()<<(*this).opToString()<<intVal;
+  ss<<var.longVariableName()<<(*this).opToString()<<intVal.toString();
   return ss.str();
 }
 
@@ -156,7 +154,7 @@ void  ConstraintSet::duplicateConstraints(VariableId lhsVarId, VariableId rhsVar
 void ConstraintSet::insert(Constraint c) {
   // we have to look which version of constraint already exists (it can only be at most one)
   switch(c.op) {
-  case Constraint::EQ_VAR_CONST:
+  case Constraint::EQ_VAR_CONST: {
 	if(constraintExists(Constraint::DEQ_VAR_CONST,c.var,c.intVal))
 	  return;
 	if(constraintExists(Constraint::NEQ_VAR_CONST,c.var,c.intVal)) {
@@ -164,8 +162,24 @@ void ConstraintSet::insert(Constraint c) {
 	  set<Constraint>::insert(Constraint(Constraint::DEQ_VAR_CONST,c.var,c.intVal));
 	  return;
 	}
-	break;
-  case Constraint::NEQ_VAR_CONST:
+	ConstraintSet::iterator i=findSpecific(Constraint::EQ_VAR_CONST,c.var);
+	if(i!=end()) {
+	  if(!AType::strictWeakOrderingIsEqual((*i).intVal,c.intVal)) {
+		// other x==num exists with num!=c.num ==> DEQ
+		erase(*i);
+		set<Constraint>::insert(Constraint(Constraint::DEQ_VAR_CONST,c.var,c.intVal));
+		return;
+	  } else {
+		// nothing todo (same constraint already exists)
+		return;
+	  }
+	}
+	// all remaining constraints can be removed (can only be inqualities)
+	deleteConstraints(c.var);
+	set<Constraint>::insert(Constraint(Constraint::EQ_VAR_CONST,c.var,c.intVal));
+	return;
+  }
+  case Constraint::NEQ_VAR_CONST: {
 	if(constraintExists(Constraint::DEQ_VAR_CONST,c.var,c.intVal))
 	  return;
 	if(constraintExists(Constraint::EQ_VAR_CONST,c.var,c.intVal)) {
@@ -174,6 +188,7 @@ void ConstraintSet::insert(Constraint c) {
 	  return;
 	}
 	break;
+  }
   case Constraint::DEQ_VAR_CONST:
 	erase(Constraint(Constraint::EQ_VAR_CONST,c.var,c.intVal));
 	erase(Constraint(Constraint::NEQ_VAR_CONST,c.var,c.intVal));
@@ -200,13 +215,32 @@ ConstraintSet& ConstraintSet::operator+=(ConstraintSet& s2) {
   return *this;
 }
 
-bool ConstraintSet::constraintExists(Constraint::ConstraintOp op, VariableId varId, AValue intVal) { 
+bool ConstraintSet::constraintExists(Constraint::ConstraintOp op, VariableId varId, AValue intVal) const { 
   Constraint tmp(op,varId,intVal);
   return constraintExists(tmp);
 }
-bool ConstraintSet::constraintExists(Constraint& tmp) { 
+bool ConstraintSet::constraintExists(const Constraint& tmp) const { 
+#if 1
+  // we use this as the find algorithm does not properly work yet (TODO: investigate)
+  for(ConstraintSet::iterator i=begin();i!=end();++i) {
+	if(*i==tmp)
+	  return true;
+  }
+  return false;
+#else
   ConstraintSet::const_iterator foundElemIter=find(tmp);
   return foundElemIter!=end();
+#endif
+}
+
+ConstraintSet ConstraintSet::findSpecificSet(Constraint::ConstraintOp op, VariableId varId) const {
+  ConstraintSet cs;
+  // find op-constraint for variable varname
+  for(ConstraintSet::iterator i=begin();i!=end();++i) {
+	if((*i).var==varId && (*i).op==op)
+	  cs.insert(Constraint((*i).op,(*i).var,(*i).intVal));
+  }
+  return cs;
 }
 
 ConstraintSet::iterator ConstraintSet::findSpecific(Constraint::ConstraintOp op, VariableId varId) const {
@@ -227,6 +261,35 @@ AType::ConstIntLattice ConstraintSet::varConstIntLatticeValue(const VariableId v
   } else {
 	return AType::ConstIntLattice((*i).intVal);
   }
+}
+
+bool operator==(const ConstraintSet& s1, const ConstraintSet& s2) {
+  for(ConstraintSet::iterator i=s1.begin();i!=s1.end();++i) {
+	if(!s2.constraintExists(*i))
+	  return false;
+  }
+  return s1.size()==s2.size();
+}
+
+bool operator<(const ConstraintSet& s1, const ConstraintSet& s2) {
+  if(s1.size()==s2.size()) {
+	for(ConstraintSet::const_iterator i=s1.begin(),j=s2.begin();i!=s1.end() && j!=s2.end();++i,++j) {
+	  if((*i)==(*j)) {
+		continue;
+	  } else {
+		if(!((*i)<(*j))) {
+		  return false;
+		}
+	  }
+	}
+	return !(s1==s2);
+  } else {
+	return s1.size()<s2.size();
+  }
+}
+
+bool operator!=(const ConstraintSet& s1, const ConstraintSet& s2) {
+  return !(s1==s2);
 }
 
 ConstraintSet ConstraintSet::deleteVarConstraints(VariableId varId) {
@@ -278,8 +341,8 @@ bool State::varExists(VariableId varId) const {
 bool State::varIsConst(VariableId varId) const {
   State::const_iterator i=find(varId);
   if(i!=end()) {
-	int val=(*i).second;
-	return val!=ANALYZER_INT_TOP && val!=ANALYZER_INT_BOT;
+	AValue val=(*i).second.getValue();
+	return val.isConstInt();
   } else {
 	throw "Error: State::varIsConst : variable does not exist.";
   }
@@ -287,11 +350,8 @@ bool State::varIsConst(VariableId varId) const {
 
 string State::varValueToString(VariableId varId) const {
   stringstream ss;
-  AValue val=(*(const_cast<State*>(this)))[varId];
-  if(val==ANALYZER_INT_TOP) return "top";
-  if(val==ANALYZER_INT_BOT) return "bot";
-  ss << val;
-  return ss.str();
+  AValue val=((*(const_cast<State*>(this)))[varId]).getValue();
+  return val.toString();
 }
 
 StateId StateSet::stateId(const State* state) {
@@ -314,14 +374,21 @@ string StateSet::stateIdString(const State* state) {
   return ss.str();
 }
 
-
-
 const State* StateSet::statePtr(State& s) {
+#if 1
+  // we use this as the find algorithm does not properly work yet (TODO: investigate)
+  for(StateSet::iterator i=begin();i!=end();++i) {
+	if(*i==s)
+	  return &*i;
+  }
+  return 0;
+#else
   StateSet::iterator i=find(s);
   if(i==end())
 	return 0;
   else
 	return &*i;
+#endif
 }
 
 bool StateSet::stateExists(State& s) {
@@ -341,13 +408,58 @@ string StateSet::toString() {
   return ss.str();
 }
 
+#if 0
+bool operator<(const State::value_type& elem1, const State::value_type& elem2) {
+  return elem1.first<elem2.first || (elem1.first==elem2.first && (elem1.second<elem2.second));
+}
+#endif
+
+// define order for State elements, we use the strict subset relation (necessary for StateSet)
+
+bool operator<(const State& s1, const State& s2) {
+  // we only check for all first members (=VariableId) because they are
+  // guaranteed to be unique in a State
+
+  for(State::const_iterator i=s1.begin(),j=s2.begin();i!=s1.end() && j!=s2.end();++i,++j) {
+	if(((*i).first==(*j).first)) {
+	  continue;
+	} else {
+	  if(!((*i).first<(*j).first)) {
+		return false;
+	  }
+	}
+  }
+  return !(s1==s2);
+}
+
+bool operator==(const State& c1, const State& c2) {
+  if(c1.size()==c2.size()) {
+	State::const_iterator i=c1.begin();
+	State::const_iterator j=c2.begin();
+	while(i!=c1.end()) {
+	  if(!((*i).first==(*j).first))
+		return false;
+	  if(!((*i).second==(*j).second))
+		return false;
+	  ++i;++j;
+	}
+	return true;
+  } else {
+	return false;
+  }
+}
+
+bool operator!=(const State& c1, const State& c2) {
+  return !(c1==c2);
+}
+
 // define order for EState elements (necessary for EStateSet)
 bool operator<(const EState& c1, const EState& c2) {
-  return c1.label<c2.label || (c1.label==c2.label && c1.state<c2.state) || (c1.state==c2.state && c1.constraints<c2.constraints) || (c1.constraints==c2.constraints && (c1.io<c2.io));
+  return (c1.label<c2.label) || ((c1.label==c2.label) && (c1.state<c2.state)) || (c1.state==c2.state && c1.constraints<c2.constraints) || ((c1.constraints==c2.constraints) && (c1.io<c2.io));
 }
 
 bool operator==(const EState& c1, const EState& c2) {
-  return c1.label==c2.label && c1.state==c2.state && c1.constraints==c2.constraints && c1.io==c2.io;
+  return (c1.label==c2.label) && (c1.state==c2.state) && (c1.constraints==c2.constraints) && (c1.io==c2.io);
 }
 
 bool operator!=(const EState& c1, const EState& c2) {
