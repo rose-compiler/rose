@@ -183,7 +183,7 @@ AType::ConstIntLattice AType::ConstIntLattice::operator&&(ConstIntLattice other)
 
 bool AType::strictWeakOrderingIsSmaller(const AType::ConstIntLattice& c1, const AType::ConstIntLattice& c2) {
   if(c1.isConstInt() && c2.isConstInt())
-	return c1.getValueType()<c2.getValueType();
+	return c1.getIntValue()<c2.getIntValue();
   return (c1.getValueType()<c2.getValueType());
 }
 bool AType::strictWeakOrderingIsEqual(const AType::ConstIntLattice& c1, const AType::ConstIntLattice& c2) {
@@ -194,6 +194,18 @@ bool AType::strictWeakOrderingIsEqual(const AType::ConstIntLattice& c1, const AT
 bool AType::ConstIntLatticeCmp::operator()(const AType::ConstIntLattice& c1, const AType::ConstIntLattice& c2) const {
   AType::strictWeakOrderingIsSmaller(c1,c2);
 }
+
+bool AType::CppCapsuleConstIntLatticeLessComparator::operator()(const AType::CppCapsuleConstIntLattice& c1, const AType::CppCapsuleConstIntLattice& c2) const {
+  return AType::strictWeakOrderingIsSmaller(c1.getValue(),c2.getValue());
+}
+
+bool AType::CppCapsuleConstIntLattice::operator==(AType::CppCapsuleConstIntLattice other) const {
+  return AType::strictWeakOrderingIsEqual(getValue(),other.getValue());
+}
+bool AType::CppCapsuleConstIntLattice::operator<(AType::CppCapsuleConstIntLattice other) const {
+  return AType::strictWeakOrderingIsSmaller(getValue(),other.getValue());
+}
+
 
 AType::ConstIntLattice AType::ConstIntLattice::operator==(ConstIntLattice other) const {
   // all TOP cases

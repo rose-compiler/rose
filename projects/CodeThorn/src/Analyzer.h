@@ -70,7 +70,7 @@ class Analyzer {
   State analyzeAssignRhs(State currentState,VariableId lhsVar, SgNode* rhs,ConstraintSet& cset);
   EState analyzeVariableDeclaration(SgVariableDeclaration* nextNodeToAnalyze1,EState currentEState, Label targetLabel);
   EState transferFunction(Edge edge, const EState* eState);
-  void addToWorkList(const EState* eState) { eStateWorkList.push(eState); }
+  void addToWorkList(const EState* eState);
   const EState* addToWorkListIfNew(EState eState);
   void recordTransition(const EState* sourceState, Edge e, const EState* targetState);
   void printStatusMessage();
@@ -81,6 +81,10 @@ class Analyzer {
 	eStateWorkList.pop();
 	return co;
   }
+  /*! if state exists in stateSet, a pointer to the existing state is returned otherwise 
+	a new state is entered into stateSet and a pointer to it is returned.
+  */
+  const State* processState(State s);
   bool isEmptyWorkList() { return eStateWorkList.size()==0;}
   const EState* topWorkList() { return eStateWorkList.top();}
   const EState* popWorkList() {

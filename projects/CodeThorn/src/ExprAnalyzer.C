@@ -110,7 +110,7 @@ SingleEvalResultConstInt ExprAnalyzer::evalConstInt(SgNode* node,EState eState) 
 	  if((variable(lhs,varId) && rhsResult.isConstInt()) || (lhsResult.isConstInt() && variable(rhs,varId))) {
 		// only add the equality constraint if no constant is bound to the respective variable
 		if(!res.eState.state->varIsConst(varId)) {
-		  res.exprConstraints.insert(Constraint(Constraint::EQ_VAR_CONST,varId,rhsResult.intValue()));
+		  res.exprConstraints.insert(Constraint(Constraint::EQ_VAR_CONST,varId,rhsResult.value()));
 		}
 	  }
 	  return res;
@@ -123,7 +123,7 @@ SingleEvalResultConstInt ExprAnalyzer::evalConstInt(SgNode* node,EState eState) 
 	  if((variable(lhs,varId) && rhsResult.isConstInt()) || (lhsResult.isConstInt() && variable(rhs,varId))) {
 		// only add the inequality constraint if no constant is bound to the respective variable
 		if(!res.eState.state->varIsConst(varId)) {
-		  res.exprConstraints.insert(Constraint(Constraint::NEQ_VAR_CONST,varId,rhsResult.intValue()));
+		  res.exprConstraints.insert(Constraint(Constraint::NEQ_VAR_CONST,varId,rhsResult.value()));
 		}
 	  }
 	  return res;
@@ -209,18 +209,12 @@ SingleEvalResultConstInt ExprAnalyzer::evalConstInt(SgNode* node,EState eState) 
 	const State* state=eState.state;
 	if(state->varExists(varId)) {
 	  State state2=*state; // also removes constness
-	  int tmpres=state2[varId]; // MS: TODO: replace int in state with ConstIntLattice
-	  if(tmpres==ANALYZER_INT_TOP)
-		res.result=AType::Top();
-	  else if(tmpres==ANALYZER_INT_BOT)
-		res.result=AType::Bot();
-	  else
-		res.result=tmpres;
-		
+	  res.result=state2[varId].getValue();
 	  if(res.result.isTop()) {
 		// in case of TOP we try to extract a possibly more precise value from the constraints
 		AType::ConstIntLattice val=res.eState.constraints.varConstIntLatticeValue(varId);
 		//if(!val.isTop())
+		// TODO: we will want to monitor this for statistics!
 		//  cout << "DEBUG: extracing more precise value from constraints: "<<res.result.toString()<<" ==> "<<val.toString()<<endl;
 		res.result=val;
 	  }

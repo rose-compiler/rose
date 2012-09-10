@@ -10,6 +10,17 @@
 Analyzer::Analyzer():startFunRoot(0),cfanalyzer(0) {
 }
 
+const State* Analyzer::processState(State newState) {
+  if(!stateSet.stateExists(newState)) {
+	stateSet.insert(newState);
+	const State* newStatePtr=stateSet.statePtr(newState);
+	assert(newStatePtr);
+	return newStatePtr;
+  }
+  return stateSet.statePtr(newState);  
+}
+
+
 set<string> Analyzer::variableIdsToVariableNames(set<VariableId> s) {
   set<string> res;
   for(set<VariableId>::iterator i=s.begin();i!=s.end();++i) {
@@ -51,7 +62,7 @@ void Analyzer::printStatusMessage() {
   if(topWorkListeState) {
 	//cout << "DEBUG: Working on: "<<topWorkList()->toString()<<endl;
   } else {
-	cerr << "INTERNAL ERROR: null pointer in work list. Bailing out. ";
+	cerr << "INTERNAL ERROR: null pointer in work list. Bailing out. "<<endl;
 	exit(1);
   }
 	// report we are alife
@@ -71,6 +82,15 @@ void Analyzer::printStatusMessage() {
   }
 }
 
+void Analyzer::addToWorkList(const EState* eState) { 
+  if(!eState) {
+	cerr<<"INTERNAL ERROR: null pointer added to work list."<<endl;
+	exit(1);
+  }
+  eStateWorkList.push(eState); 
+}
+
+
 void Analyzer::runSolver1() {
   displayDiff=0;
   while(!isEmptyWorkList()) {
@@ -81,14 +101,15 @@ void Analyzer::runSolver1() {
 	Flow edgeSet=flow.outEdges(currentEStatePtr->label);
 	//cerr << "DEBUG: edgeSet size:"<<edgeSet.size()<<endl;
 	for(Flow::iterator i=edgeSet.begin();i!=edgeSet.end();++i) {
-	  //cerr << "DEBUG: Before transferFunction: eState="<<currentEStatePtr->toString()<<endl;
+	  //cerr << "DEBUG: Before transferFunction:"<<nodeToString(getLabeler()->getNode((*i).source)) <<" : eState="<<currentEStatePtr->toString()<<endl;
 	  EState newEState=transferFunction(*i,currentEStatePtr);
 	  if(newEState.label!=NO_ESTATE && (!newEState.constraints.deqConstraintExists())) {
-		//cout << "DEBUG: Adding to Worklist:"<<newEState.toString()<<endl;
+		//cerr << "DEBUG: Adding to Worklist:"<<newEState.toString()<<endl;
 		const EState* newEStatePtr=addToWorkListIfNew(newEState);
 		recordTransition(currentEStatePtr,*i,newEStatePtr);
 	  } else {
-		//cout << "DEBUG: NO_ESTATE (transition not recorded)"<<endl;
+		//cerr << "DEBUG: NO_ESTATE (transition not recorded)"<<endl;
+		//cerr << "INFO: found final state."<<endl;
 	  }
 	  //cerr << "DEBUG: After transferFunction: eState="<<newEState.toString()<<endl;
 	}
@@ -102,11 +123,47 @@ const EState* Analyzer::addToWorkListIfNew(EState eState) {
   if(!eStateSet.eStateExists(eState)) {
 	eStateSet.insert(eState);
 	const EState* p=eStateSet.eStatePtr(eState);
+	// display error description
+	if(!p) {
+	  //  cout << endl;
+	  //cout << "ES: "<<eStateSet.toString()<<endl;
+	  //cout << "ES: "<<eStateSet.toString()<<endl;
+	  cout << "eState:"<<eState.toString()<<endl;
+	  cout << "eStateExists:"<<eStateSet.eStateExists(eState)<<endl;
+	  cout << "eStateSet.size():"<<eStateSet.size()<<endl;
+	  eStateSet.insert(eState);
+	  cout << "eStateSet.size():"<<eStateSet.size()<<endl;
+	  cout << "-----------------"<<endl;
+	  EStateSet eStateSet2;
+	  EState violatingEState;
+	  for(EStateSet::iterator i=eStateSet.begin();i!=eStateSet.end();++i) {
+		eStateSet2.insert(*i);
+		int size=eStateSet2.size();
+		eStateSet2.insert(eState);		
+		if(eStateSet2.size()==size) {
+		  violatingEState=*i;
+		  cout << "Violating eState:"<<(*i).toString()<<endl;
+		}
+		eStateSet2.erase(eState);
+	  }
+	  EStateSet eStateSet3;
+	  eStateSet3.insert(violatingEState);
+	  eStateSet3.insert(eState);
+	  cout << "eStateSet3.size()="<<eStateSet3.size()<<endl;
+	  cout << "cmp: =="<<(violatingEState==eState)<<endl;
+	  cout << "cmp: <"<<(violatingEState<eState)<<endl;
+	  cout << "cmp: >"<<(eState<violatingEState)<<endl;
+	  cout << "cmpcs: =="<<(violatingEState.constraints==eState.constraints)<<endl;
+	  cout << "cmpcs: <"<<(violatingEState.constraints<eState.constraints)<<endl;
+	  cout << "cmpcs: >"<<(eState.constraints<violatingEState.constraints)<<endl;
+	}
+	assert(p);
 	addToWorkList(p);
 	return p;
   } else {
 	//cout << "DEBUG: State already exists. Not added:"<<eState.toString()<<endl;
 	const EState* p=eStateSet.eStatePtr(eState);
+	assert(p);
 	return p;
   }
 }
@@ -127,14 +184,14 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
 		//cout << "initalizer found:"<<endl;
 		SgExpression* rhs=assignInitializer->get_operand_i();
 		State newState=analyzeAssignRhs(*currentEState.state,initDeclVarId,rhs,cset);
-		stateSet.insert(newState);
-		return EState(targetLabel,stateSet.statePtr(newState),cset);
+		const State* newStatePtr=processState(newState);
+		return EState(targetLabel,newStatePtr,cset);
 	  } else {
 		//cout << "no initializer (OK)."<<endl;
 		State newState=*currentEState.state;
-		newState[initDeclVarId]=ANALYZER_INT_TOP;
-		stateSet.insert(newState);
-		return EState(targetLabel,stateSet.statePtr(newState),cset);
+		newState[initDeclVarId]=AType::Top();
+		const State* newStatePtr=processState(newState);
+		return EState(targetLabel,newStatePtr,cset);
 	  }
 	} else {
 	  cerr << "Error: in declaration (@initializedName) no variable found ... bailing out."<<endl;
@@ -168,6 +225,15 @@ set<VariableId> Analyzer::determineVariableIdsOfSgInitializedNames(SgInitialized
   return resultSet;
 }
 
+bool isAssertExpr(SgNode* node) {
+  if(isSgExprStatement(node)) {
+	node=SgNodeHelper::getExprStmtChild(node);
+	if(isSgConditionalExp(node))
+	  return true;
+  }
+  return false;
+}
+
 EState Analyzer::transferFunction(Edge edge, const EState* eState) {
   assert(edge.source==eState->label);
 
@@ -185,6 +251,15 @@ EState Analyzer::transferFunction(Edge edge, const EState* eState) {
   SgNode* nextNodeToAnalyze1=cfanalyzer->getNode(edge.source);
   SgNode* targetNode=cfanalyzer->getNode(edge.target);
   assert(nextNodeToAnalyze1);
+
+  // handle assert(0)
+  if(isAssertExpr(nextNodeToAnalyze1)) {
+	  EState newEState=currentEState;
+	  VariableId exitVar=variableIdMapping.createUniqueTemporaryVariableId(string("$__assert_fail"));
+	  newEState.constraints.insert(Constraint(Constraint::DEQ_VAR_CONST,exitVar,AType::ConstIntLattice(0)));
+	  newEState.label=edge.target;
+	  return newEState;
+  }
 
   if(edge.type==EDGE_CALL) {
 	// 1) obtain actual parameters from source
@@ -219,17 +294,13 @@ EState Analyzer::transferFunction(Edge edge, const EState* eState) {
 	  }
 	  // general case: the actual argument is an arbitrary expression (including a single variable)
 	  SingleEvalResultConstInt evalResult=exprAnalyzer.evalConstInt(actualParameterExpr,currentEState);
-	  int val;
-	  if(evalResult.isConstInt()) val=evalResult.intValue();
-	  if(evalResult.isTop()) val=ANALYZER_INT_TOP;
-	  if(evalResult.isBot()) val=ANALYZER_INT_BOT;
-	  newState[formalParameterVarId]=val;
+	  newState[formalParameterVarId]=evalResult.value();
 	  ++i;++j;
 	}
 	assert(i==formalParameters.end() && j==actualParameters.end()); // must hold if #fparams==#aparams (TODO: default values)
 	// ad 4
-	stateSet.insert(newState);
-	return EState(edge.target,stateSet.statePtr(newState),cset);
+	const State* newStatePtr=processState(newState);
+	return EState(edge.target,newStatePtr,cset);
   }
 
   // "return x;": add $return=eval() [but not for "return f();"]
@@ -240,8 +311,8 @@ EState Analyzer::transferFunction(Edge edge, const EState* eState) {
 									variableIdMapping.createUniqueTemporaryVariableId(string("$return")),
 									expr,
 									cset);
-	stateSet.insert(newState);
-	return EState(edge.target,stateSet.statePtr(newState),cset);
+	const State* newStatePtr=processState(newState);
+	return EState(edge.target,newStatePtr,cset);
   }
 
   // function exit node:
@@ -270,8 +341,8 @@ EState Analyzer::transferFunction(Edge edge, const EState* eState) {
 		cset.deleteConstraints(varId);
 	  }
 	  // ad 3)
-	  stateSet.insert(newState);
-	  return EState(edge.target,stateSet.statePtr(newState),cset);
+	  const State* newStatePtr=processState(newState);
+	  return EState(edge.target,newStatePtr,cset);
 	} else {
 	  cerr << "FATAL ERROR: no function definition associated with function exit label."<<endl;
 	  exit(1);
@@ -294,13 +365,13 @@ EState Analyzer::transferFunction(Edge edge, const EState* eState) {
 	  State newState=*currentEState.state;
 	  // we only create this variable here to be able to find an existing $return variable!
 	  VariableId returnVarId=variableIdMapping.createUniqueTemporaryVariableId(string("$return"));
-	  int evalResult=newState[returnVarId];
+	  AValue evalResult=newState[returnVarId].getValue();
 	  newState[lhsVarId]=evalResult;
 	  cset.duplicateConstraints(lhsVarId, returnVarId); // duplicate constraints of $return to lhsVar
 	  newState.deleteVar(returnVarId); // remove $return from state
 	  cset.deleteConstraints(returnVarId); // remove constraints of $return
-	  stateSet.insert(newState);
-	  return EState(edge.target,stateSet.statePtr(newState),cset);
+	  const State* newStatePtr=processState(newState);
+	  return EState(edge.target,newStatePtr,cset);
 	}
 	// case 3: f(); remove $return from state (discard value)
 	if(SgNodeHelper::Pattern::matchExprStmtFunctionCallExp(nextNodeToAnalyze1)) {
@@ -308,9 +379,9 @@ EState Analyzer::transferFunction(Edge edge, const EState* eState) {
 	  VariableId returnVarId=variableIdMapping.createUniqueTemporaryVariableId(string("$return"));
 	  newState.deleteVar(returnVarId);
 	  cset.deleteConstraints(returnVarId); // remove constraints of $return
-	  stateSet.insert(newState);
+	  const State* newStatePtr=processState(newState);
 	  ConstraintSet cset=currentEState.constraints;
-	  return EState(edge.target,stateSet.statePtr(newState),cset);
+	  return EState(edge.target,newStatePtr,cset);
 
 	}
   }
@@ -352,6 +423,14 @@ EState Analyzer::transferFunction(Edge edge, const EState* eState) {
 		   assert(sym);
 		   VariableId varId=VariableId(sym);
 		   newio.recordOutputVariable(varId);
+#if 0
+		   if(currentState.varIsConst(varId)) {
+			 cout << "CONST OUTPUT VAR found."<<endl;
+		   } else  {
+			 cout << "NON-CONST OUTPUT VAR found."<<endl;
+		   }
+#endif
+		   assert(newio.var==varId);
 		 } else {
 		   cerr<<"Error: unsupported number of printf arguments. Currently printf with exactly one variable of the form printf(\"...%d...\",v) is supported."<<endl;
 		   exit(1);
@@ -432,7 +511,8 @@ EState Analyzer::transferFunction(Edge edge, const EState* eState) {
 	  //Constraint c(Constraint::DEQ_VAR_CONST,string("$exit"), 1);
 	  //cset.insert(c);
 	  //stateSet.insert(newState);
-	  return EState(edge.target,stateSet.statePtr(newState),cset);
+	  const State* newStatePtr=processState(newState);
+	  return EState(edge.target,newStatePtr,cset);
 	}
 
 	if(isSgAssignOp(nextNodeToAnalyze2)) {
@@ -440,8 +520,8 @@ EState Analyzer::transferFunction(Edge edge, const EState* eState) {
 	  // currentEState
 	  ConstraintSet cset=currentEState.constraints;
 	  State newState=analyzeAssignOp(*currentEState.state,nextNodeToAnalyze2,cset);
-	  stateSet.insert(newState);
-	  return EState(edge.target,stateSet.statePtr(newState),cset);
+	  const State* newStatePtr=processState(newState);
+	  return EState(edge.target,newStatePtr,cset);
 	}
   }
   // nothing to analyze, just create new eState (from same State) with target label of edge
@@ -475,9 +555,9 @@ void Analyzer::initializeSolver1(std::string functionToStartAt,SgNode* root) {
 
   // create empty state
   State emptyState;
-  stateSet.insert(emptyState);
-  const State* emptyStateStored=stateSet.statePtr(emptyState);
+  const State* emptyStateStored=processState(emptyState);
   assert(emptyStateStored);
+  cout << "INIT: Empty state(stored): "<<emptyStateStored->toString()<<endl;
 
   assert(cfanalyzer);
   EState eState(cfanalyzer->getLabel(startFunRoot),emptyStateStored);
@@ -495,7 +575,6 @@ void Analyzer::initializeSolver1(std::string functionToStartAt,SgNode* root) {
 
   // TODO: delete global vars which are not used in the analyzed program (not necessary in PState)
   
-  //cout << "INIT: local "<<eState.toString()<<endl;
   eStateSet.insert(eState);
   const EState* currentEState=eStateSet.eStatePtr(eState);
   assert(currentEState);
@@ -519,7 +598,7 @@ State Analyzer::analyzeAssignRhs(State currentState,VariableId lhsVar, SgNode* r
   assert(isSgExpression(rhs));
   bool isRhsIntVal=false;
   bool isRhsVar=false;
-  int rhsIntVal=ANALYZER_INT_TOP;
+  AValue rhsIntVal=AType::Top();
 
   // TODO: -1 is OK, but not -(-1); yet.
   if(SgMinusOp* minusOp=isSgMinusOp(rhs)) {
@@ -545,26 +624,28 @@ State Analyzer::analyzeAssignRhs(State currentState,VariableId lhsVar, SgNode* r
 	cset.duplicateConstraints(lhsVar, rhsVarId);
 
 	if(currentState.varExists(rhsVarId)) {
-	  rhsIntVal=currentState[rhsVarId];
+	  rhsIntVal=currentState[rhsVarId].getValue();
 	} else {
 	  cerr << "WARNING: access to variable "<<rhsVarId.longVariableName()<< "on rhs of assignment, but variable does not exist in state. Initializing with top."<<endl;
-	  rhsIntVal=ANALYZER_INT_TOP;
+	  rhsIntVal=AType::Top();
 	  isRhsIntVal=true;
 	}
   }
   State newState=currentState;
   if(newState.varExists(lhsVar)) {
 	if(!isRhsIntVal && !isRhsVar) {
-	  rhsIntVal=ANALYZER_INT_TOP;
+	  rhsIntVal=AType::Top();
 	}
-	if(newState[lhsVar]==rhsIntVal) {
+	// we are using AValue here (and  operator== is overloaded for AValue==AValue)
+	// for this comparison isTrue() is also false if any of the two operands is AType::Top()
+	if( (newState[lhsVar].getValue()==rhsIntVal).isTrue() ) {
 	  // update of existing variable with same value
 	  // => no state change
 	  return newState;
 	} else {
 	  // update of existing variable with new value
 	  newState[lhsVar]=rhsIntVal;
-	  if(rhsIntVal!=ANALYZER_INT_TOP && !isRhsVar)
+	  if(!rhsIntVal.isTop() && !isRhsVar)
 		cset.deleteConstraints(lhsVar);
 	  return newState;
 	}
@@ -575,7 +656,7 @@ State Analyzer::analyzeAssignRhs(State currentState,VariableId lhsVar, SgNode* r
 	return newState;
   }
   // make sure, we only create/propagate contraints if a non-const value is assigned or if a variable is on the rhs.
-  if(rhsIntVal!=ANALYZER_INT_TOP && !isRhsVar)
+  if(!rhsIntVal.isTop() && !isRhsVar)
 	cset.deleteConstraints(lhsVar);
   return newState;
 }

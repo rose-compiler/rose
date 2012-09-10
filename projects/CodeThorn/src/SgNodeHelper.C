@@ -89,8 +89,12 @@ list<SgFunctionDefinition*> SgNodeHelper::listOfGlobalFunctionDefinitions(SgGlob
 SgSymbol*
 SgNodeHelper::getSymbolOfVariableDeclaration(SgVariableDeclaration* decl) {  
   SgInitializedName* initName=SgNodeHelper::getInitializedNameOfVariableDeclaration(decl);
-  SgSymbol* initDeclVar=initName->search_for_symbol_from_symbol_table();
-  return initDeclVar;
+  if(initName) {
+	SgSymbol* initDeclVar=initName->search_for_symbol_from_symbol_table();
+	return initDeclVar;
+  } else {
+	return 0;
+  }
 }
 
 // returns a unique UniqueVariableSymbol (SgSymbol*) for a variale in a variable declaration (can be used as ID)
@@ -118,6 +122,7 @@ SgNodeHelper::getSymbolOfVariable(SgVarRefExp* varRefExp) {
 SgSymbol*
 SgNodeHelper::getSymbolOfInitializedName(SgInitializedName* initName) {
  SgSymbol* initDeclVar=initName->search_for_symbol_from_symbol_table();
+ return initDeclVar;
 }
 
 string SgNodeHelper::uniqueLongVariableName(SgNode* node) {

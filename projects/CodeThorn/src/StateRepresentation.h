@@ -20,11 +20,14 @@ using namespace std;
 typedef int StateId;
 typedef int EStateId;
 typedef string VariableName;
-typedef int AValue; // MS: TODO: replace 'int' with 'ConstIntLattice'
+typedef AType::ConstIntLattice AValue; 
+typedef AType::CppCapsuleConstIntLattice CppCapsuleAValue; 
+typedef AType::CppCapsuleConstIntLatticeLessComparator CppCapsuleAValueLessComp; 
+typedef AType::ConstIntLatticeCmp AValueCmp; 
 class State;
 typedef set<const State*> StatePtrSet;
 
-class State : public map<VariableId,AValue> {
+class State : public map<VariableId,CppCapsuleAValue> {
  public:
   bool varExists(VariableId varname) const;
   bool varIsConst(VariableId varname) const;
@@ -62,12 +65,14 @@ class Constraint {
 
 bool operator<(const Constraint& c1, const Constraint& c2);
 bool operator==(const Constraint& c1, const Constraint& c2);
+bool operator!=(const Constraint& c1, const Constraint& c2);
 
 class ConstraintSet : public set<Constraint> {
  public:
-  bool constraintExists(Constraint::ConstraintOp op, VariableId varId, AValue intVal);
-  bool constraintExists(Constraint& c);
+  bool constraintExists(Constraint::ConstraintOp op, VariableId varId, AValue intVal) const;
+  bool constraintExists(const Constraint& c) const;
   ConstraintSet::iterator findSpecific(Constraint::ConstraintOp op, VariableId varId) const;
+  ConstraintSet findSpecificSet(Constraint::ConstraintOp op, VariableId varId) const;
   AType::ConstIntLattice varConstIntLatticeValue(const VariableId varId) const;
   string toString() const;
   ConstraintSet& operator+=(ConstraintSet& s2);
@@ -84,6 +89,9 @@ class ConstraintSet : public set<Constraint> {
 
   bool deqConstraintExists();
 };
+bool operator==(const ConstraintSet& s1, const ConstraintSet& s2);
+bool operator<(const ConstraintSet& s1, const ConstraintSet& s2);
+bool operator!=(const ConstraintSet& s1, const ConstraintSet& s2);
 
 /* Input: a value val is read into a variable var
    Output: either a variable or a value is written
@@ -118,9 +126,17 @@ class EState {
   InputOutput io;
 };
 
+// define order for State elements (necessary for StateSet)
+bool operator<(const State& c1, const State& c2);
+bool operator==(const State& c1, const State& c2);
+bool operator!=(const State& c1, const State& c2);
+//bool operator<(const State::value_type& elem1, const State::value_type& elem2);
+//bool operator==(const pair<VariableId,AValue>& elem1, const pair<VariableId,AValue>& elem2);
+
 // define order for EState elements (necessary for EStateSet)
 bool operator<(const EState& c1, const EState& c2);
 bool operator==(const EState& c1, const EState& c2);
+bool operator!=(const EState& c1, const EState& c2);
 
 class EStateSet : public set<EState> {
  public:

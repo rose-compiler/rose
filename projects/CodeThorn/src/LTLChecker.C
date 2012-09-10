@@ -327,9 +327,9 @@ public:
     case InputOutput::OUT_VAR: {
       const State& prop_state = *estate->state;
       assert(prop_state.varIsConst(estate->io.var));
-      AValue aval = const_cast<State&>(prop_state)[estate->io.var];
+      AValue aval = const_cast<State&>(prop_state)[estate->io.var].getValue();
       //cerr<<aval<<endl;
-      return c == aval+'A';
+      return c == aval.getIntValue()+'A';
     }
     default:
       return false;
