@@ -486,7 +486,7 @@ int main( int argc, char * argv[] ) {
 	}
       } catch(const char* s) {
         if (ltl_val) cout<<normal<<string(*ltl_val)<<endl;
-        cout<< s<<endl<<red<< "FAILED" << endl;
+        cout<< s<<endl<<red<< "Grammar Error" << endl;
 	continue;
       } catch(...) {
 	cout<<red<< "Parser exception" << endl;
@@ -499,8 +499,14 @@ int main( int argc, char * argv[] ) {
 	  cout<<green<<"YES"<<normal<<endl;
 	else
 	  cout<<green<<"NO"<<normal<<endl;
+      } catch(const char* str) {
+	cerr << "Exception raised: " << str << endl;
+	cout<<red<<"FAILED"<<normal<<endl;
+      } catch(string str) {
+	cerr << "Exception raised: " << str << endl;
+	cout<<red<<"FAILED"<<normal<<endl;
       } catch(...) {
-          cout<<red<<"FAILED"<<normal<<endl;
+	cout<<red<<"FAILED"<<normal<<endl;
       }  
     }
     fclose(ltl_input);
