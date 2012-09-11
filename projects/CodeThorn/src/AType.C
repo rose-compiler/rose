@@ -35,13 +35,18 @@ bool AType::BoolLattice::isTrue()  const {return value==AType::BoolLattice::TRUE
 bool AType::BoolLattice::isFalse() const {return value==AType::BoolLattice::FALSE;}
 bool AType::BoolLattice::isBot()   const {return value==AType::BoolLattice::BOT;}
 
+/**
+ * CAVEAT:    We define !bot := bot
+ * RATIONALE: bot means "not yet analyzed" / "no meaningful result"
+ *	      top means "could be any value"
+ */
 AType::BoolLattice AType::BoolLattice::operator!() {
   AType::BoolLattice tmp;
   switch(value) {
   case FALSE: tmp.value=TRUE;break;
   case TRUE: tmp.value=FALSE;break;
   case TOP: tmp.value=TOP;break;
-  case BOT: tmp.value=TOP;break;
+  case BOT: tmp.value=BOT;break;
   default:
 	throw "Error: BoolLattice operation '!' failed.";
   }
