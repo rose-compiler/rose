@@ -1,3 +1,4 @@
+// -*- mode: C++; coding: utf-8; -*-
 /*************************************************************
  * Copyright: (C) 2012 by Markus Schordan                    *
  * Author   : Markus Schordan                                *
@@ -29,21 +30,35 @@ AType::BoolLattice::BoolLattice(Bot e) {value=AType::BoolLattice::BOT;}
 // type conversion
 AType::BoolLattice::BoolLattice(int x) {if(x==0) value=AType::BoolLattice::FALSE; else value=AType::BoolLattice::TRUE;}
 
-bool AType::BoolLattice::isTop() {return value==AType::BoolLattice::TOP;}
-bool AType::BoolLattice::isTrue() {return value==AType::BoolLattice::TRUE;}
-bool AType::BoolLattice::isFalse() {return value==AType::BoolLattice::FALSE;}
-bool AType::BoolLattice::isBot() {return value==AType::BoolLattice::BOT;}
+bool AType::BoolLattice::isTop()   const {return value==AType::BoolLattice::TOP;}
+bool AType::BoolLattice::isTrue()  const {return value==AType::BoolLattice::TRUE;}
+bool AType::BoolLattice::isFalse() const {return value==AType::BoolLattice::FALSE;}
+bool AType::BoolLattice::isBot()   const {return value==AType::BoolLattice::BOT;}
+
+/**
+ * CAVEAT:    We define !bot := bot
+ * RATIONALE: bot means "not yet analyzed" / "no meaningful result"
+ *	      top means "could be any value"
+ */
 AType::BoolLattice AType::BoolLattice::operator!() {
   AType::BoolLattice tmp;
   switch(value) {
   case FALSE: tmp.value=TRUE;break;
   case TRUE: tmp.value=FALSE;break;
   case TOP: tmp.value=TOP;break;
-  case BOT: tmp.value=TOP;break;
+  case BOT: tmp.value=BOT;break;
   default:
 	throw "Error: BoolLattice operation '!' failed.";
   }
   return tmp;
+}
+
+bool AType::BoolLattice::operator==(AType::BoolLattice other) const {
+  return other.value == value;
+}
+
+bool AType::BoolLattice::operator!=(AType::BoolLattice other) const {
+  return other.value != value;
 }
 
 AType::BoolLattice AType::BoolLattice::operator||(AType::BoolLattice other) {
@@ -65,6 +80,7 @@ AType::BoolLattice AType::BoolLattice::operator&&(AType::BoolLattice other) {
   if(value==TOP || other.value==TOP) { tmp.value=TOP; return tmp; }
   // all BOT cases
   if(value==BOT) { tmp.value=other.value; return tmp; }
+  if(other.value==BOT) { tmp.value=value; return tmp; }
   // usual bool cases
   if(value==FALSE) { tmp.value=FALSE; return tmp; }
   if(value==TRUE && other.value==TRUE) { tmp.value=TRUE; return tmp; }
@@ -73,10 +89,10 @@ AType::BoolLattice AType::BoolLattice::operator&&(AType::BoolLattice other) {
 }
 // operator= : C++ default used
 // operator== : C++ default used
-string AType::BoolLattice::toString() {
+string AType::BoolLattice::toString() const {
   switch(value) {
-  case TOP: return "top";
-  case BOT: return "bot";
+  case TOP: return "⊤" /*"top"*/; /* AP: not shure how legal this is */
+  case BOT: return "⊥" /*"bot"*/;
   case TRUE: return "true";
   case FALSE: return "false";
   default:

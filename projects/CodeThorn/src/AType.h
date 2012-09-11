@@ -51,16 +51,17 @@ class BoolLattice {
   BoolLattice(Top e); // type conversion
   BoolLattice(Bot e); // type conversion
   BoolLattice(int x); // type conversion
-  bool isTop();
-  bool isTrue();
-  bool isFalse();
-  bool isBot();
+  bool isTop() const;
+  bool isTrue() const;
+  bool isFalse() const;
+  bool isBot() const;
   BoolLattice operator!();
   BoolLattice operator||(BoolLattice other);
   BoolLattice operator&&(BoolLattice other);
   // operator= : C++ default used
-  // operator== : C++ default used
-  string toString();
+  bool operator==(BoolLattice other) const;
+  bool operator!=(BoolLattice other) const;
+  string toString() const;
   friend ostream& operator<<(ostream& os, const BoolLattice& toStream);
  private:
   ValueType value;

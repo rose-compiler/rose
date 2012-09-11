@@ -10,7 +10,9 @@
 
 namespace LTL {
   /**
-   * A naive checker for LTL formulae.
+   * A dataflow-based checker for LTL formulae.
+   * \date 2012
+   * \author Adrian Prantl
    */
   class Checker {
   public:
