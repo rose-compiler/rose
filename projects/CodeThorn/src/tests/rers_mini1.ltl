@@ -2,47 +2,91 @@ SYNTAX: every line not starting with '(' is a comment
 NOTE:   tests for rers_mini.C 
         All of these should be true!
 
+1
 (F oW)
 output W will occur
 ----------------------------------------
 
+2
 (F oX)
 output X will occur
 ----------------------------------------
 
+3
 (!(G ! oW))
 W is not the only output
 ----------------------------------------
 
+4
 (G ! (oU & oW))
 U and W happen not at the same time
 ----------------------------------------
 
+5
 (!(G (oU | oW)))
 it's always either U or W (not true because start node has no output at all)
 ----------------------------------------
 
+6
 (! oX WU (oW & ! oX))
 output W does not occur before output X
 ----------------------------------------
 
+7
 (oW WU (oX & ! oW))
 output X occurs before output W
 OPEN DISCUSSION: 
 this fails because of the start node where no output happens at all. What should we do?
 If we write it like this,
+8
 (F (oW WU (oX & ! oW)))
 it succeeds.
 ----------------------------------------
 
+9
 (! oX WU oW)
 output X does never occur before output V
 ----------------------------------------
 
+10
 (G ! iX)
 input X will never occur
 ----------------------------------------
 
+11
 (F iV)
 input V will occur
 ----------------------------------------
+
+12
+(G ! (oX & oW))
+X and W happen not at the same time
+----------------------------------------
+
+13
+(oX U oW)
+
+14
+Checking for equivalence: A == B === A&B | (!A & !B)
+((! (X oW) & X (! oW)) | (!(! (X oW)) & !(X (! oW))))
+equivalence !X A == X !A, for A=oW
+
+15
+((! (F oW) & G (! oW)) | (!(! (F oW)) & !(G (! oW))))
+equivalence !F A == G !A, for A=oW
+
+16
+((! (G oW) & F (! oW)) | (!(! (G oW)) & !(F (! oW))))
+equivalence !G A == F !A, for A=oW
+
+17
+(((! (oW U oX)) & (!oW R !oX)) | ((!!(oW U oX)) & !(!oW R !oX)))
+equivalence ! A U B == !A R !B
+
+18
+(((! (oW R oX)) & (!oW U !oX)) | ((!!(oW R oX)) & !(!oW U !oX)))
+equivalence ! A R B == !A U !B
+
+19
+(((oW R oX) & (!(!oW U !oX))) | ((!(oW R oX)) & !!(!oW U !oX)))
+equivalence A R B == !(!A U !B)
