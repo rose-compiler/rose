@@ -60,10 +60,21 @@ $(TOOLNAME3): $(TOOLNAME3).C  $(TOOLNAME3).h $(OBJECT_FILES)
 	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES) -o$(TOOLNAME3) 
 
 check: $(TOOLNAME3)
-	./$(TOOLNAME3) tests/rers/Problem1.c --verify tests/rers/properties1.txt
+	./$(TOOLNAME3) --internal-checks
+	./$(TOOLNAME3) --edg:no_warnings tests/rers_mini1.c    --verify tests/rers_mini1.ltl
 
 test: $(TOOLNAME3)
-	./$(TOOLNAME3) tests/rers_mini1.C    --verify tests/rers_mini1.ltl
+	./$(TOOLNAME3) --edg:no_warnings tests/rers/Problem1.c    --verify tests/rers/properties1.txt
+
+
+RERS=Problem1.log Problem2.log Problem3.log
+
+rers: $(RERS)
+
+# parallel tests with make -j<N> test
+%.log: tests/rers/%.c $(TOOLNAME3) Makefile
+	./$(TOOLNAME3) --edg:no_warnings $< \
+	     --verify $(patsubst tests/rers/Problem%.c,tests/rers/properties%.txt,$<) >$@
 
 docs:
 	doxygen Doxyfile
