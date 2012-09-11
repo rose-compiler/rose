@@ -1,6 +1,9 @@
 // -*- mode: C++; coding: utf-8; -*-
-// Parser for LTL formulae 
-// Written 2012 by Adrian Prantl <adrian@llnl.gov>.
+/// Parser for LTL formulae 
+/// \date 2012
+/// \author Adrian Prantl
+/// 
+/// Written 2012 by Adrian Prantl <adrian@llnl.gov>.
 %{
 #include <cstdio>
 #include <cstdlib>
@@ -42,26 +45,27 @@ FILE* ltl_input = NULL;
 
 %% /* Grammar rules and actions follow.  */
 
-// In the LTL formulae, the atomic propositions correspond to input
-// and output symbols, where the prefix i is used for input and o is
-// used for output symbols, to allow a clear distinction.
-
-// The LTL formulae are given in a standard syntax, making use of the
-// following temporal operators:
-
-// X φ (next): φ has to hold after the next step
-// F φ (eventually): φ has to hold at some point in the future (or now)
-// G φ (globally): φ has to hold always (including now)
-// φ U ψ (until): φ has to hold until ψ holds (which eventually occurs)
-// φ WU ψ (weak until): φ has to hold until ψ holds (which does not necessarily occur)
-// φ R ψ (release): φ has to hold until ψ held in the previous step.
-// Additionally, the boolean operators & (conjunction), | (disjunction) and ! (negation) are used.
-
-// Example:
-//
-// (G (! ((oY & ! iC) & (F iC)) | (! oW U iC)))
-// output W does never occur between output Y and input C
-
+/**
+ * In the LTL formulae, the atomic propositions correspond to input
+ * and output symbols, where the prefix i is used for input and o is
+ * used for output symbols, to allow a clear distinction.
+ *
+ * The LTL formulae are given in a standard syntax, making use of the
+ * following temporal operators:
+ *
+ * X φ (next): φ has to hold after the next step
+ * F φ (eventually): φ has to hold at some point in the future (or now)
+ * G φ (globally): φ has to hold always (including now)
+ * φ U ψ (until): φ has to hold until ψ holds (which eventually occurs)
+ * φ WU ψ (weak until): φ has to hold until ψ holds (which does not necessarily occur)
+ * φ R ψ (release): φ has to hold until ψ held in the previous step.
+ * Additionally, the boolean operators & (conjunction), | (disjunction) and ! (negation) are used.
+ * 
+ * Example:
+ *
+ * (G (! ((oY & ! iC) & (F iC)) | (! oW U iC)))
+ * output W does never occur between output Y and input C
+ */
 start: 
 END { ltl_val = NULL; return 0; }
 | bin_expr { 

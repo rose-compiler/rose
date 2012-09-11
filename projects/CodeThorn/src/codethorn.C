@@ -301,12 +301,12 @@ int main( int argc, char * argv[] ) {
 	continue;
       }  
 	  
-      cout<<normal<<"Verifying formula "<<magenta<< string(*ltl_val) <<normal<<"."<<endl;
+      cout<<endl<<"Verifying formula "<<white<<string(*ltl_val)<<normal<<"."<<endl;
       try {
 	if (checker.verify(*ltl_val))
 	  cout<<green<<"YES"<<normal<<endl;
 	else
-	  cout<<green<<"NO"<<normal<<endl;
+	  cout<<cyan<<"NO"<<normal<<endl;
       } catch(const char* str) {
 	cerr << "Exception raised: " << str << endl;
 	cout<<red<<"FAILED"<<normal<<endl;

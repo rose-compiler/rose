@@ -3,7 +3,7 @@
 #include <boost/graph/graph_traits.hpp>
 #include <boost/graph/adjacency_list.hpp>
 
-//  Written 2012 by Adrian Prantl <adrian@llnl.gov>.
+// Written 2012 by Adrian Prantl <adrian@llnl.gov>.
 
 using namespace LTL;
 using namespace boost;
@@ -48,11 +48,14 @@ public:
   static IAttr newAttr(int n)  { return IAttr((InheritedAttribute*)new Attr(n)); }
   int newNode(IAttr a) { 
     int node = label*shift+n++;
-    s<<node<<" -> "<<get(a)->dot_label<<" [color=green];\n  "; 
+    s<<node<<" -> "<<get(a)->dot_label<<" [color=limegreen];\n  "; 
     return node;
   }
-  static string color(BoolLattice green) {
-    return green.isTrue() ? "color=green" : "color=red";
+  static string color(BoolLattice lval) {
+    if (lval.isTrue())  return  "color=limegreen";
+    if (lval.isFalse()) return  "color=crimson";
+    if (lval.isTop())   return  "color=red";
+    if (lval.isBot())   return  "color=gainsboro";
   }
 
   IAttr visit(const InputSymbol* e, IAttr a)  {
@@ -178,8 +181,7 @@ public:
       assert(state);							\
       									\
       /* Merge result of incoming edges */				\
-      BoolLattice joined_preds = true;					\
-      bool has_preds = false;						\
+      BoolLattice joined_preds = Bot();					\
       /* for each predecessor */					\
       GraphTraits::in_edge_iterator in_i, in_end;			\
       for (tie(in_i, in_end) = in_edges(label, g); in_i != in_end; ++in_i) { \
@@ -188,9 +190,7 @@ public:
 	/*cerr<<"  pred: "<<pred<<" = "<<pred_prop<<endl;*/		\
 									\
 	joined_preds = joined_preds JOIN pred_prop;			\
-	has_preds = true;						\
       }									\
-      if (!has_preds) joined_preds = false;				\
       									\
       /* Calculate property for this node */				\
       /*assert(props.find(e->expr) != props.end());*/			\
@@ -224,9 +224,13 @@ public:
     stack<Label> workset;						\
     FOR_EACH_STATE(state, label) {					\
       props[e] = INIT;							\
-      if (START) workset.push(label);					\
+      if (START) {							\
+	/*cerr<<"start: "<<label<<endl;*/				\
+	workset.push(label);						\
+      }									\
     }									\
-    									\
+									\
+    /*assert(!workset.empty());*/					\
     while (!workset.empty()) {						\
       Label label = workset.top(); workset.pop();			\
       /*cerr<<"Visiting state "<<label<<endl;*/				\
@@ -234,8 +238,7 @@ public:
       assert(state);							\
       									\
       /* Merge result of incoming edges */				\
-      BoolLattice joined_succs = true;					\
-      bool has_succs = false;						\
+      BoolLattice joined_succs = Bot();					\
       /* for each successor */						\
       GraphTraits::out_edge_iterator out_i, out_end;			\
       for (tie(out_i, out_end) = out_edges(label, g); out_i != out_end; ++out_i) { \
@@ -244,10 +247,7 @@ public:
 	/*cerr<<"  succ: "<<succ<<" = "<<succ_prop<<endl;*/		\
 									\
 	joined_succs = joined_succs JOIN succ_prop;			\
-	has_succs = true;						\
       }									\
-      if (!has_succs)							\
-	joined_succs = false;						\
       									\
       /* Calculate property for this node */				\
       /*assert(props.find(e->expr) != props.end());*/			\
@@ -312,57 +312,90 @@ public:
 	     isInputState(state, &input_var, e->c, joined_preds) // calc
 	     );
 
-
-    //FOR_EACH_STATE(state, label) 
-    //  if (props[e].isBot()) props[e] = false;
   }
 
   /// return True iff that state is an Oc operation
-  static BoolLattice isOutputState(const EState* estate, int c) {
+  static BoolLattice isOutputState(const EState* estate, int c, BoolLattice joined_preds) {
     switch (estate->io.op) {
     case InputOutput::STDOUT_CONST: {
       const AType::ConstIntLattice& lval = estate->io.val;
-      cerr<<lval.toString()<<endl;
+      //cerr<<lval.toString()<<endl;
       assert(lval.isConstInt());
       return c == lval.getIntValue()+'A';
     }
     case InputOutput::STDOUT_VAR: {
       const State& prop_state = *estate->state;
+      //const ConstIntLattice& lval = estate->constraints.varConstIntLatticeValue(estate->io.var);
+      //cerr<<estate->toString()<<endl;
+      //cerr<<prop_state.varValueToString(estate->io.var)<<" lval="<<lval.toString()<<endl;
       assert(prop_state.varIsConst(estate->io.var));
       AValue aval = const_cast<State&>(prop_state)[estate->io.var].getValue();
       //cerr<<aval<<endl;
       return c == aval.getIntValue()+'A';
     }
     default:
-      return false;
+      if (joined_preds.isBot())
+	return Top();
+      else return joined_preds;
     }
   }
 
-  // Implementation status: DONE
+  /**
+   * Caveat: Although the LTL semantics say so, we can't start on
+   * the start node. Maybe at the first I/O node? 
+   * 
+   * Think about ``oA U oB''.
+   * 
+   * PLEASE NOTE: We therefore define oX to be true until oY occurs
+   * 
+   * Implementation status: DONE
+   */
   void visit(const OutputSymbol* e) {
-    // Caveat: Although the LTL semantics say so, we can't start on
-    // the start node. Maybe at the first I/O node? 
-    //
-    // Think about ``oA U oB''.
-    //
-    // PLEASE NOTE: We therefore define oX to be true until oY occurs
-    //
-
     // propagate the O predicate until we reach the next O predicate
     fixpoint(Bot(),                                     // init
 	     &&,                                        // join
-	     isOutputState(state, e->c) || joined_preds // calc
+	     isOutputState(state, e->c, joined_preds)   // calc
 	     );
-  }
 
-  // Implementation status: DONE
+    // we set Bot nodes to Top to ensure termination. Fix it here
+    FOR_EACH_STATE(state, label)
+      if (props[e].isTop()) props[e] = Bot();
+  }
+  
+  /**
+   * NOT
+   *
+   * Implementation status: DONE
+   */
   void visit(const Not* e) {
     FOR_EACH_STATE(state, label) 
       props[e] = !props[e->expr];
   }
 
-  // Implementation status: TODO
-  void visit(const Next* e) { assert(false); }
+  /**
+   * I'm interpreting Next as follows
+   *  
+   *  a	    N A is true at a.
+   *  |\
+   * Ab Ac
+   *
+   * We simply join the information (A) from all successors.
+   *
+   * Implementation status: DONE
+   */
+  void visit(const Next* e) {
+    FOR_EACH_STATE(state, label) {
+      BoolLattice joined_succs = Bot();
+      
+      /* for each successor */					
+      GraphTraits::out_edge_iterator out_i, out_end;			
+      for (tie(out_i, out_end) = out_edges(label, g); out_i != out_end; ++out_i) { 
+	Label succ = target(*out_i, g);
+	joined_succs = joined_succs && ltl_properties[label][e->expr];
+      }
+      props[e] = joined_succs;
+    }
+  }
 
   /**
    * I'm interpreting Eventually to be a backward problem
@@ -381,13 +414,10 @@ public:
 		&&,                            // join
 		props[e->expr] || joined_succs // calc
 		);
-    // FOR_EACH_STATE(state, label) 
-    //   if (props[e] == BOT) props[e] = false;
   }
 
   /**
    * True, iff for each state we have TOP or TRUE
-   *
    * Implementation status: DONE
    */
   void visit(const Globally* e) {
@@ -396,13 +426,14 @@ public:
       global = global && props[e->expr];
       // TOP and TRUE are seen as valid
       if (global.isFalse()) {
-	cerr<<"global failed at "<<label<<endl;
+	//cerr<<"global failed at "<<label<<endl;
 	break;
       }
     }
+    
     // propagate the global result to all states
     {  FOR_EACH_STATE(state, label) 
- 	props[e] = global; 
+ 	props[e] = global;
     }
   }
 
@@ -438,8 +469,8 @@ public:
 		props[e->expr2] || (props[e->expr1] && joined_succs) // calc
 		);
 
-    // FOR_EACH_STATE(state, label) 
-    //  if (props[e] == BOT) props[e] = false;
+    //FOR_EACH_STATE(state, label)
+    //  if (props[e].isBot()) props[e] = false;
   }
 
   /**
@@ -457,16 +488,14 @@ public:
    * Implementation status: TESTING
    */
   void visit(const WeakUntil* e) {
-    bw_fixpoint(props[e->expr1].isTrue() 
-		? BoolLattice(true)
-		: BoolLattice(Bot()),                  // init
-		props[e->expr1].isTrue() || props[e->expr2].isTrue(), // start
-		&&,                                    // join
+    bw_fixpoint(Bot(),                                // init
+		props[e->expr2].isTrue(),                            // start
+		&&,                                                  // join
 		props[e->expr2] || (props[e->expr1] && joined_succs) // calc
 		);
 
-    // FOR_EACH_STATE(state, label) 
-    //   if (props[e] == BOT) props[e] = false;
+    //FOR_EACH_STATE(state, label)
+    //  if (props[e].isBot()) props[e] = false;
   }
 
   /**
@@ -476,7 +505,7 @@ public:
    */
   void visit(const Release* e) {
     fixpoint(Bot(),  // init
-	     &&,                                     // join
+	     &&,                                      // join
 	     ((props[e->expr1] && props[e->expr2]) || // A&B  or
 	      (!props[e->expr2] && joined_preds))     // !A & B@pred
 	     );
@@ -511,45 +540,55 @@ Checker::verify(const Formula& f)
   e.accept(v);
 
   // generate dot output for debugging
-  stringstream s;
-  s<<"digraph G {\n";
-  s<<"node[shape=rectangle, color=gray, style=filled];\n  ";
-  FOR_EACH_TRANSITION(t) {
-    switch (t->source->io.op) {
-    case InputOutput::STDIN_VAR:
-      s<<estate_label[t->source]<<" [shape=rectangle, color=yellow, style=filled];\n  ";
-      break;
-    case InputOutput::STDOUT_VAR:
-    case InputOutput::STDOUT_CONST:
-      s<<estate_label[t->source]<<" [shape=rectangle, color=blue, style=filled];\n  ";
-      break;
-    default: break;
+  bool ltl_output_dot = true;
+  bool show_derivation = true;
+  bool show_node_detail = true;
+  if (ltl_output_dot) {
+    stringstream s;
+    s<<"digraph G {\n";
+    s<<"node[shape=rectangle, color=lightsteelblue, style=filled];\n  ";
+    FOR_EACH_TRANSITION(t) {
+      switch (t->source->io.op) {
+      case InputOutput::STDIN_VAR:
+	s<<estate_label[t->source]<<" [shape=rectangle, color=gold, style=filled];\n  ";
+	break;
+      case InputOutput::STDOUT_VAR:
+      case InputOutput::STDOUT_CONST:
+	s<<estate_label[t->source]<<" [shape=rectangle, color=indigo, style=filled];\n  ";
+	break;
+      default: break;
+      }
+      s<<estate_label[t->source]<<" -> "<<estate_label[t->target]<<";\n";
     }
-    s<<estate_label[t->source]<<" -> "<<estate_label[t->target]<<";\n";
-  }
-  FOR_EACH_STATE(state, l) {
-    Visualizer viz(v.ltl_properties, l);
-    e.accept(viz, Visualizer::newAttr(l));
-    s<<l<<" [label=\""<<l<<":"<< state->toString() <<"\"] ;\n";
-    s<<"subgraph ltl_"<<l<<" {\n";
-    s<<"  node[shape=rectangle, style=filled];\n  ";
-    s<<viz.s.str();
+    FOR_EACH_STATE(state, l) {
+      Visualizer viz(v.ltl_properties, l);
+      e.accept(viz, Visualizer::newAttr(l));
+      s<<l<<" [label=\""<<l;
+      if (show_node_detail) s<<":"<< state->toString();
+      s<<"\"] ;\n";
+      s<<"subgraph ltl_"<<l<<" {\n";
+      s<<"  node[shape=rectangle, style=filled];\n  ";
+      if (show_derivation) s<<viz.s.str();
+      s<<"}\n";
+    }
     s<<"}\n";
+
+    ofstream myfile;
+    stringstream fname;
+    static int n = 1;
+    fname << "ltl_output_" << n++ << ".dot";
+    myfile.open(fname.str().c_str(), ios::out);
+    myfile << s.str();
+    myfile.close();
+    cout<<"generated "<<fname.str()<<"."<<endl;
   }
-  s<<"}\n";
-
-  ofstream myfile;
-  stringstream fname;
-  static int n = 1;
-  fname << "ltl_output_" << n++ << ".dot";
-  myfile.open(fname.str().c_str(), ios::out);
-  myfile << s.str();
-  myfile.close();
-  cout<<"generated "<<fname.str()<<"."<<endl;
-
-  // use result at start node as return value, 
+  // use result the first non-BOT node as return value, 
   // I hope this is always correct
-  FOR_EACH_STATE(state, label) 
-    return v.props[&e].isTrue();
+  FOR_EACH_STATE(state, label) {
+    // skip over BOT states, which often happen at start
+    if (!v.props[&e].isBot())
+      return v.props[&e].isTrue();
+  }
+  throw "undecided";
 }
 

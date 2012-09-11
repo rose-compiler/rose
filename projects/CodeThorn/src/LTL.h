@@ -5,7 +5,10 @@
 #include <boost/shared_ptr.hpp>
 
 /// Linear Temporal Logic (LTL) Abstract syntax tree (AST)
-//  Written 2012 by Adrian Prantl <adrian@llnl.gov>.
+///
+/// Written 2012 by Adrian Prantl <adrian@llnl.gov>.
+/// \date 2012
+/// \author Adrian Prantl
 namespace LTL {
   
   /// Inherited Attribute for visitor pattern
@@ -247,7 +250,6 @@ namespace LTL {
 
       };
 
-      std::cerr<<std::string(e1)<<std::endl;
       WellFormedVisitor v;
       e1.accept(v, WellFormedVisitor::newAttr(false));
     }
