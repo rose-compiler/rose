@@ -97,7 +97,7 @@ void checkTypes() {
 	d=e;
 	check("Top e; d=e => d isTop",d.isTop());
 	c=c||d;
-	check("c=c||d: top",c.isTop());
+	check("c=c||d: top",c.isTrue());
 	AType::BoolLattice f=AType::Bot();
 	d=AType::Bot();
 	check("d=bot: bot",d.isBot());

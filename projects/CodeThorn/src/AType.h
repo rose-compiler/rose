@@ -98,15 +98,13 @@ class ConstIntLattice {
   bool isFalse() const;
   bool isBot() const;
   bool isConstInt() const;
-  //  bool strictWeakOrderingIsSmaller(const ConstIntLattice& c2) const;
-  //bool strictWeakOrderingIsEqual(const ConstIntLattice& c2) const;
   ConstIntLattice operator!();
   ConstIntLattice operator-(); // unary minus
   ConstIntLattice operator||(ConstIntLattice other);
   ConstIntLattice operator&&(ConstIntLattice other);
   ConstIntLattice operator==(ConstIntLattice other) const;
   ConstIntLattice operator!=(ConstIntLattice other);
-  //ConstIntLattice operator<(ConstIntLattice other);
+  ConstIntLattice operator<(ConstIntLattice other);
   string toString() const;
   friend ostream& operator<<(ostream& os, const ConstIntLattice& toStream);
   ValueType getValueType() const;

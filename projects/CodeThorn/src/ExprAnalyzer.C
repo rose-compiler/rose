@@ -131,7 +131,7 @@ SingleEvalResultConstInt ExprAnalyzer::evalConstInt(SgNode* node,EState eState) 
 	case V_SgAndOp:
 	  res.result=(lhsResult.result&&rhsResult.result);
 	  // we encode CPP-AND semantics here!
-	  if(res.result.isTrue()||res.result.isTop())
+	  if((lhsResult.isTrue()||lhsResult.isTop())&&(rhsResult.isTrue()||rhsResult.isTop()))
 		res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
 	  else {
 		// do not up-proagate collected constraints (exprConstraints remains empty) because (lhs AND rhs)=false
