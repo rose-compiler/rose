@@ -3,6 +3,10 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # DQ: This should be handled differently.  No analysis should not have its own makefile include file.
 # include $(top_srcdir)/projects/symbolicAnalysisFramework/common.for.dep.libs
 
+# Forward decls
+MOSTLYCLEANFILES =
+
+
 # SAF_SRC_ROOT   = $(top_srcdir)/projects/symbolicAnalysisFramework
 SAF_SRC_ROOT   = $(top_srcdir)/src/midend/programAnalysis/genericDataflow/
 # SAF_BUILD_ROOT = $(top_builddir)/projects/symbolicAnalysisFramework
@@ -52,6 +56,38 @@ liveDeadVarAnalysisTest_SOURCES = liveDeadVarAnalysisTest.C
 constantPropagationTest_SOURCES = constantPropagation.C constantPropagationTest.C
 taintedFlowAnalysisTest_SOURCES = taintedFlowAnalysis.C taintedFlowAnalysisTest.C
 pointerAliasAnalysisTest_SOURCES = pointerAliasAnalysis.C pointerAliasAnalysisTest.C
+
+
+####################################################################################################################
+# This section of the file (until the next line of #'s) is for the taintAnalysisTest.
+#
+
+bin_PROGRAMS += taintAnalysisTest
+taintAnalysisTest_SOURCES = taintAnalysisTest.C
+
+TAINT_ANALYSIS_INPUTS =				\
+	taint_input0.C				\
+	taint_input1.C				\
+	taint_input2.C				\
+	taint_input3.C				\
+	taint_input4.C				\
+	taint_input5.C				\
+	taint_input6.C
+
+TAINT_TEST_TARGETS = $(addsuffix .passed, $(TAINT_ANALYSIS_INPUTS))
+
+$(TAINT_TEST_TARGETS): %.passed: $(srcdir)/% taintAnalysisTest taintAnalysisTest.conf
+	@$(RTH_RUN) INPUT=$< ANSWER=$<.ans $(srcdir)/taintAnalysisTest.conf $@
+
+.PHONY: check-taint
+check-taint: $(TAINT_TEST_TARGETS)
+
+MOSTLYCLEANFILES += $(TAINT_TEST_TARGETS) $(patsubst %.passed, %.failed, $(TAINT_TEST_TARGETS))
+
+####################################################################################################################
+
+
+
 
 # testCallGraph_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 # LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
@@ -1496,7 +1532,7 @@ endif
 # directory.
 # check-local:
 # check-local: check-cxx check-c check-c99 check-fortran
-check-local: check-c_languages check-fortran
+check-local: check-c_languages check-fortran check-taint
 # check-local:
 #	@$(MAKE) $(TEST_Objects)
 	@echo "******************************************************************************************************************************"
