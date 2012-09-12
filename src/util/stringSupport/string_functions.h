@@ -449,7 +449,6 @@ namespace StringUtility
         *  Xenix, etc.), BeOS, Amiga, RISC OS and others.  Any occurrance of CR+LF, LF+CR, or CR by itself (in that order of
         *  left-to-right matching) is replaced by a single LF character. */
        std::string fixLineTermination(const std::string &input);
-   
        /** Converts a multi-line string to a single line.  This function converts a multi-line string to a single line by
         *  replacing line-feeds and carriage-returns (and their surrounding white space) with a user-supplied replacement
         *  string (that defaults to a single space). Line termination (and it's surrounding white space) that appears at the
