@@ -38,6 +38,7 @@ mpaGenericDataflow_la_sources=\
 	$(mpaGenericDataflowPath)/simpleAnalyses/saveDotAnalysis.C \
 	$(mpaGenericDataflowPath)/simpleAnalyses/sequenceStructAnalysis.C \
 	$(mpaGenericDataflowPath)/simpleAnalyses/sgnAnalysis.C \
+	$(mpaGenericDataflowPath)/simpleAnalyses/taintAnalysis.C \
 	$(mpaGenericDataflowPath)/state/functionState.C \
 	$(mpaGenericDataflowPath)/state/nodeState.C \
 	$(mpaGenericDataflowPath)/variables/variables.C \
@@ -74,6 +75,7 @@ mpaGenericDataflow_includeHeaders=\
 	$(mpaGenericDataflowPath)/simpleAnalyses/saveDotAnalysis.h \
 	$(mpaGenericDataflowPath)/simpleAnalyses/sequenceStructAnalysis.h \
 	$(mpaGenericDataflowPath)/simpleAnalyses/sgnAnalysis.h \
+	$(mpaGenericDataflowPath)/simpleAnalyses/taintAnalysis.h \
 	$(mpaGenericDataflowPath)/simpleAnalyses/VariableStateTransfer.h \
 	$(mpaGenericDataflowPath)/state/functionState.h \
 	$(mpaGenericDataflowPath)/state/LogicalCond.h \
