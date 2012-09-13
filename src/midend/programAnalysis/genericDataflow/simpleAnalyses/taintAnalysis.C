@@ -125,6 +125,10 @@ TaintAnalysis::transfer(const Function& func, const DataflowNode& node_, NodeSta
         result = dynamic_cast<TaintLattice*>(prodLat->getVarLattice(SgExpr2Var(xop)));
         if (result)
             modified = result->set_vertex(TaintLattice::VERTEX_UNTAINTED);
+        
+    } else if (isSgAddressOfOp(node)) {
+        // as in "&x".  The result taintedness has nothing to do with the value in x.
+        /*void*/
 
     } else if (isSgBinaryOp(node)) {
         // as in "a + b"
