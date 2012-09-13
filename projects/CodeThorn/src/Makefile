@@ -64,6 +64,9 @@ $(TOOLNAME3): $(TOOLNAME3).C  $(TOOLNAME3).h $(OBJECT_FILES)
 
 check: $(TOOLNAME3)
 	./$(TOOLNAME3) --internal-checks
+	@echo ================================================================
+	@echo CHECK: all of the following formulae should evaluate to "YES"!
+	@echo ================================================================
 	./$(TOOLNAME3) --edg:no_warnings tests/rers_mini1.c    --verify tests/rers_mini1.ltl
 
 test: $(TOOLNAME3)

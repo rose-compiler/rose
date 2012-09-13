@@ -5,6 +5,7 @@
 // Written 2012 by Adrian Prantl <adrian@llnl.gov>.
 
 #include "StateRepresentation.h"
+#include "AType.h"
 #include "LTL.h"
 #include <map>
 
@@ -18,7 +19,7 @@ namespace LTL {
   public:
     Checker(EStateSet& ess, TransitionGraph& g);
     /// verify the LTL formula f
-    bool verify(const Formula& f);
+    AType::BoolLattice verify(const Formula& f);
 
   protected:
     TransitionGraph& transitionGraph;
