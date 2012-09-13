@@ -36,7 +36,6 @@ int F5() {
     return a;
 }
 #endif
-<<<<<<< HEAD
 
 // The address of a variable is untainted when the stack pointer is untainted, even if the variable contains a tainted value.
 // Since we don't know the taintedness of the stack pointer (i.e., bottom) then the address of a stack variable is unknown
@@ -45,5 +44,3 @@ int *F6() {
     int a = TAINTED_int;
     return &a;
 }
-=======
->>>>>>> 76d0319... (Taint Analysis) Added tests
