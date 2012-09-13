@@ -135,7 +135,7 @@ class TaintAnalysis: public IntraFWDataflow {
 protected:
     LiveDeadVarsAnalysis* ldv_analysis;
     std::ostream *debug;
-	
+
 public:
     // USABILITY: Documentation as to why a live/dead analysis is used in SgnAnalysis would be nice. I tried doing it without
     //            originally to make things simpler, but it seems that the FiniteVarsExprProductLattice depends on it even
