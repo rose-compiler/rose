@@ -81,10 +81,16 @@ class Analyzer {
 	eStateWorkList.pop();
 	return co;
   }
+ private:
   /*! if state exists in stateSet, a pointer to the existing state is returned otherwise 
 	a new state is entered into stateSet and a pointer to it is returned.
   */
-  const State* processState(State s);
+  const State* processNewState(State& s);
+  const State* processNewOrExistingState(State& s);
+  const EState* processNewEState(EState& s);
+  const EState* processNewOrExistingEState(EState& s);
+  EStateSet::ProcessingResult processEState(EState& s);
+ public:
   bool isEmptyWorkList() { return eStateWorkList.size()==0;}
   const EState* topWorkList() { return eStateWorkList.top();}
   const EState* popWorkList() {
@@ -120,6 +126,11 @@ class Analyzer {
   set<VariableId> determineVariableIdsOfSgInitializedNames(SgInitializedNamePtrList& namePtrList);
 
   set<string> variableIdsToVariableNames(set<VariableId>);
+
+  bool isAssertExpr(SgNode* node);
+  //! adds a specific constraint to an existing eState which is checked by isFailedAsserEState and determines a failed-assert eState
+  bool isFailedAssertEState(const EState* eState);
+  EState createFailedAssertEState(const EState eState, Label target);
  private:
   ExprAnalyzer exprAnalyzer;
   VariableIdMapping variableIdMapping;

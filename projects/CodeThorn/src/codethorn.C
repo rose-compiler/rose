@@ -165,7 +165,6 @@ int main( int argc, char * argv[] ) {
 	}
   }
 
-
   boolOptions.init(argc,argv);
   boolOptions.registerOption("tg1-estate-address",false);
   boolOptions.registerOption("tg1-estate-id",false);
@@ -225,9 +224,10 @@ int main( int argc, char * argv[] ) {
   const string bold_off = csi+"22m";
   const string normal = csi+"0m";
 
-  cout << "Number of stdin-estates : "<<cyan<<(analyzer.getEStateSet()->numberOfIoTypeStates(InputOutput::STDIN_VAR))<<white<<endl;
-  cout << "Number of stdout-estates: "<<cyan<<(analyzer.getEStateSet()->numberOfIoTypeStates(InputOutput::STDOUT_VAR))<<white<<endl;
-  cout << "Number of stderr-estates: "<<cyan<<(analyzer.getEStateSet()->numberOfIoTypeStates(InputOutput::STDERR_VAR))<<white<<endl;
+  cout << "Number of stdin-estates        : "<<cyan<<(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDIN_VAR))<<white<<endl;
+  cout << "Number of stdout-estates       : "<<cyan<<(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDOUT_VAR))<<white<<endl;
+  cout << "Number of stderr-estates       : "<<cyan<<(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDERR_VAR))<<white<<endl;
+  cout << "Number of failed-assert-estates: "<<cyan<<(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::FAILED_ASSERT))<<white<<endl;
   cout << "Number of states     : "<<magenta<<stateSetSize<<white<<" (memory: "<<magenta<<stateSetBytes<<white<<" bytes)"<<endl;
   cout << "Number of estates    : "<<cyan<<eStateSetSize<<white<<" (memory: "<<cyan<<eStateSetBytes<<white<<" bytes)"<<endl;
   cout << "Number of transitions: "<<blue<<transitionGraphSize<<white<<" (memory: "<<blue<<transitionGraphBytes<<white<<" bytes)"<<endl;

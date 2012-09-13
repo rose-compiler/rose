@@ -115,12 +115,14 @@ string Visualizer::transitionGraphDotHtmlNode(Label lab) {
   set<const EState*> eStateSetOfLabel=transitionGraph->eStateSetOfLabel(lab);
   for(set<const EState*>::iterator j=eStateSetOfLabel.begin();j!=eStateSetOfLabel.end();++j) {
 	// decide on color first
-	string color="lightgrey";
-	if((*j)->io.op==InputOutput::STDIN_VAR) color="dodgerblue";
-	if((*j)->io.op==InputOutput::STDOUT_VAR) color="orange";
-	if((*j)->io.op==InputOutput::STDERR_VAR) color="orangered";
-	sinline+="<TD BGCOLOR=\""+color+"\" PORT=\"P"+eStateSet->eStateIdString(*j)+"\">";
-	sinline+=eStateToString(*j);
+	string textcolor="black";
+	string bgcolor="lightgrey";
+	if((*j)->io.op==InputOutput::STDIN_VAR) bgcolor="dodgerblue";
+	if((*j)->io.op==InputOutput::STDOUT_VAR) bgcolor="orange";
+	if((*j)->io.op==InputOutput::STDERR_VAR) bgcolor="orangered";
+	if((*j)->io.op==InputOutput::FAILED_ASSERT) {bgcolor="black";textcolor="white";}
+	sinline+="<TD BGCOLOR=\""+bgcolor+"\" PORT=\"P"+eStateSet->eStateIdString(*j)+"\">";
+	sinline+="<FONT COLOR=\""+textcolor+"\">"+eStateToString(*j)+"</FONT>";
 	sinline+="</TD>";
   }
   if(sinline=="") {

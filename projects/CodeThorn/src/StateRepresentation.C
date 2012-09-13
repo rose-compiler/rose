@@ -17,6 +17,10 @@ void InputOutput::recordVariable(OpType op0,VariableId varId) {
   var=varId;
 }
 
+void InputOutput::recordFailedAssert() {
+  op=FAILED_ASSERT;
+}
+
 void InputOutput::recordConst(OpType op0,AType::ConstIntLattice val) {
   cerr<<"IO with constants not supported yet."<<endl;
   exit(1);
@@ -31,8 +35,9 @@ string InputOutput::toString() const {
   case STDERR_VAR: str="stderr:"+var.variableName();break;
   case STDOUT_CONST: str="out:"+val.toString();break;
   case STDERR_CONST: str="out:"+val.toString();break;
+  case FAILED_ASSERT: str="failedassert";break;
   default:
-	cerr<<"FATAL ERROR: unkown IO operation abstraction.";
+	cerr<<"FATAL ERROR: unknown IO operation abstraction.";
 	exit(1);
   }
   return str;
@@ -352,9 +357,32 @@ string StateSet::stateIdString(const State* state) {
   return ss.str();
 }
 
+const State* StateSet::processNewState(State& s) {
+  ProcessingResult res=processState(s);
+  assert(res.first==false);
+  return res.second;
+}
+
+const State* StateSet::processNewOrExistingState(State& s) {
+  ProcessingResult res=StateSet::processState(s);
+  return res.second;
+}
+
+StateSet::ProcessingResult StateSet::processState(State& s) {
+  if(const State* existingStatePtr=statePtr(s)) {
+	assert(existingStatePtr);
+	return make_pair(true,existingStatePtr);
+  } else {
+	push_back(s);
+	const State* existingStatePtr=statePtr(s);
+	assert(existingStatePtr);
+	return make_pair(false,existingStatePtr);
+  }
+  assert(0);
+}
+
 const State* StateSet::statePtr(State& s) {
-#if 0
-  // we use this as the find algorithm does not properly work yet (TODO: investigate)
+#if 1
   for(StateSet::iterator i=begin();i!=end();++i) {
 	if(*i==s)
 	  return &*i;
@@ -422,16 +450,42 @@ string EStateSet::eStateIdString(const EState* eState) {
   return ss.str();
 }
 
-const EState* EStateSet::processEState(EState newEState) {
-  const EState* newEStatePtr=eStatePtr(newEState);
-  if(newEStatePtr==0) {
-	push_front(newEState);
-	const EState* newEStatePtr=eStatePtr(newEState);
-	assert(newEStatePtr);
-	return newEStatePtr;
-  }
-  return newEStatePtr;
+const EState* EStateSet::processNewEState(EState& s) {
+  ProcessingResult res=processEState(s);
+  assert(res.first==false);
+  return res.second;
 }
+
+const EState* EStateSet::processNewOrExistingEState(EState& s) {
+  ProcessingResult res=processEState(s);
+  return res.second;
+}
+
+EStateSet::ProcessingResult EStateSet::processEState(EState s) {
+  if(const EState* existingEStatePtr=eStatePtr(s)) {
+	return make_pair(true,existingEStatePtr);
+  } else {
+	push_back(s);
+	const EState* existingEStatePtr=eStatePtr(s);
+	assert(existingEStatePtr);
+	return make_pair(false,existingEStatePtr);
+  }
+  assert(0);
+}
+
+#if 0
+const EState* EStateSet::processEState(EState s) {
+  if(const EState* existingEStatePtr=eStatePtr(s)) {
+	return existingEStatePtr;
+  } else {
+	push_back(s);
+	const EState* existingEStatePtr=eStatePtr(s);
+	assert(existingEStatePtr);
+	return existingEStatePtr;
+  }
+  assert(0);
+}
+#endif
 
 bool EStateSet::eStateExists(EState& s) {
   return eStatePtr(s)!=0;
@@ -442,7 +496,7 @@ void EStateSet::addNewEState(EState newEState) {
   push_back(newEState);
 }
 
-int EStateSet::numberOfIoTypeStates(InputOutput::OpType op) {
+int EStateSet::numberOfIoTypeEStates(InputOutput::OpType op) {
   int counter=0;
   for(EStateSet::iterator i=begin();i!=end();++i) {
 	if((*i).io.op==op)

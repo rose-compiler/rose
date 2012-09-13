@@ -10,6 +10,7 @@
 #include <string>
 #include <set>
 #include <map>
+#include <utility>
 #include "Labeler.h"
 #include "CFAnalyzer.h"
 #include "AType.h"
@@ -36,14 +37,19 @@ class State : public map<VariableId,CppCapsuleAValue> {
   void deleteVar(VariableId varname);
 };
 
-class StateSet : public set<State> {
+class StateSet : public list<State> {
  public:
+  typedef pair<bool, const State*> ProcessingResult;
   bool stateExists(State& s);
-  const State* statePtr(State& s);
+  ProcessingResult processState(State& s);
+  const State* processNewState(State& s);
+  const State* processNewOrExistingState(State& s);
   string toString();
   StateId stateId(const State* state);
   StateId stateId(const State state);
   string stateIdString(const State* state);
+ private:
+  const State* statePtr(State& s);
 };
 
 /*
@@ -101,13 +107,14 @@ class ConstraintSet : public set<Constraint> {
 class InputOutput {
  public:
  InputOutput():op(NONE),var(VariableId(0)){ val=AType::Bot();}
-  enum OpType {NONE,STDIN_VAR,STDOUT_VAR,STDOUT_CONST,STDERR_VAR,STDERR_CONST};
+  enum OpType {NONE,STDIN_VAR,STDOUT_VAR,STDOUT_CONST,STDERR_VAR,STDERR_CONST, FAILED_ASSERT};
   OpType op;
   VariableId var;
   AType::ConstIntLattice val;
   string toString() const;
   void recordVariable(OpType op, VariableId varId);
   void recordConst(OpType op, AType::ConstIntLattice val);
+  void recordFailedAssert();
 };
 
 bool operator<(const InputOutput& c1, const InputOutput& c2);
@@ -141,15 +148,19 @@ bool operator!=(const EState& c1, const EState& c2);
 
 class EStateSet : public list<EState> {
  public:
+  typedef pair<bool,const EState*> ProcessingResult;
   bool eStateExists(EState& s);
-  const EState* processEState(EState newEState);
-  void addNewEState(EState newEState);
+  ProcessingResult processEState(EState newEState);
+  const EState* processNewEState(EState& s);
+  const EState* processNewOrExistingEState(EState& s);
   string toString();
   EStateId eStateId(const EState* eState);
   EStateId eStateId(const EState eState);
   string eStateIdString(const EState* eState);
+  int numberOfIoTypeEStates(InputOutput::OpType);
+  void addNewEState(EState newEState);
+ private:
   const EState* eStatePtr(EState& s);
-  int numberOfIoTypeStates(InputOutput::OpType);
 };
 
 class Transition {
