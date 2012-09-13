@@ -3,8 +3,9 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # DQ: This should be handled differently.  No analysis should not have its own makefile include file.
 # include $(top_srcdir)/projects/symbolicAnalysisFramework/common.for.dep.libs
 
-# Forward decls
+# Forward decls (for +=)
 MOSTLYCLEANFILES =
+EXTRA_DIST =
 
 
 # SAF_SRC_ROOT   = $(top_srcdir)/projects/symbolicAnalysisFramework
@@ -74,6 +75,7 @@ TAINT_ANALYSIS_INPUTS =				\
 	taint_input5.C				\
 	taint_input6.C
 
+EXTRA_DIST += $(TAINT_ANALYSIS_INPUTS) $(addsuffix .ans, $(TAINT_ANALYSIS_INPUTS))
 TAINT_TEST_TARGETS = $(addsuffix .passed, $(TAINT_ANALYSIS_INPUTS))
 
 $(TAINT_TEST_TARGETS): %.passed: $(srcdir)/% taintAnalysisTest taintAnalysisTest.conf
@@ -1493,8 +1495,8 @@ verify-constantpropagation:$(CXX_CONSTANT_PROPAGATION_FILES)
 verify-pointerAliasAnalysis:$(CXX_POINTER_ALIASANALYSIS_FILES)
 
 # DQ (9/22/2011): All of the test codes are from other directories, so we don't what them in the EXTRA_DIST rule.
-# EXTRA_DIST = $(TESTCODES)
-EXTRA_DIST = constantPropagation.h taintedFlowAnalysis.h pointerAliasAnalysis.h $(CXX_LOCAL_LIVENESS_PASS) $(CXX_LOCAL_CONSTANT_PROPAGATION_PASS) $(CXX_LOCAL_POINTER_ALIASANALYSIS_PASS)
+# EXTRA_DIST += $(TESTCODES)
+EXTRA_DIST += constantPropagation.h taintedFlowAnalysis.h pointerAliasAnalysis.h $(CXX_LOCAL_LIVENESS_PASS) $(CXX_LOCAL_CONSTANT_PROPAGATION_PASS) $(CXX_LOCAL_POINTER_ALIASANALYSIS_PASS)
 
 check-cxx: $(CXX_FILES)
 check-c: $(C_FILES)
