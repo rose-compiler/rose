@@ -15,6 +15,9 @@ int calculate_output(int input) {
 	return 23;
   } else if(f==5) {
 	f=4;
+	return 24;
+  } else if(f==4) {
+	f=3;
   }
   return -1;
 }
