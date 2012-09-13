@@ -294,7 +294,8 @@ int main( int argc, char * argv[] ) {
     while ( !ltl_eof) {
       try { 
         if (ltl_parse() != 0) {
-          cerr<<red<< "Syntax error" << endl;
+          cerr<<red<< "Syntax error" <<normal<<endl;
+	  ++n;
 	  ++n_failed;
 	  continue;
         }
@@ -304,11 +305,13 @@ int main( int argc, char * argv[] ) {
 	}
       } catch(const char* s) {
         if (ltl_val) cout<<normal<<string(*ltl_val)<<endl;
-        cout<< s<<endl<<red<< "Grammar Error" << endl;
+        cout<< s<<endl<<red<< "Grammar Error" <<normal<<endl;
+	++n;
 	++n_failed;
 	continue;
       } catch(...) {
 	cout<<red<< "Parser exception" << endl;
+	++n;
 	++n_failed;
 	continue;
       }  

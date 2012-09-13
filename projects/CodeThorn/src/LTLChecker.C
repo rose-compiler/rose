@@ -2,6 +2,8 @@
 #include "AType.h"
 #include <boost/graph/graph_traits.hpp>
 #include <boost/graph/adjacency_list.hpp>
+#include <stack>
+#include <queue>
 
 // Written 2012 by Adrian Prantl <adrian@llnl.gov>.
 
@@ -436,12 +438,12 @@ public:
    * Implementation status: DONE
    */
   void visit(const Eventually* e) {
-    bw_fixpoint(/* init */      Bot(),
+    bw_fixpoint(/* init */      false,
 		/* start */     props[e->expr].isTrue(),
-		/* join */      &&,
+		/* join */      ||,
 		/* calc  */     props[e->expr] || joined_succs,
 		/* otherwise */ props[e] = false,
-		/* debug */     NOP
+		/* debug */     NOP //cerr<<props[e->expr]<<" || "<<joined_succs<<endl;
 		);
   }
 
@@ -583,9 +585,12 @@ Checker::verify(const Formula& f)
     g[tgt] = t->target;
   }
   
-  Verifier v(eStateSet, g, estate_label[transitionGraph.begin()->source], N);
+  Label start = estate_label[transitionGraph.begin()->source];
+  Verifier v(eStateSet, g, start, N);
   const Expr& e = f;
   e.accept(v);
+
+  // Visualization
 
   // generate dot output for debugging
   // TODO: implement these as cmdline options
@@ -638,12 +643,34 @@ Checker::verify(const Formula& f)
     myfile.close();
     cout<<"generated "<<fname.str()<<"."<<endl;
   }
-  // use result the first non-BOT node as return value, 
-  // I hope this is always correct
-  FOR_EACH_STATE(state, label) {
-    // skip over BOT states, which often happen at start
-    if (!v.props[&e].isBot())
-      return v.props[&e].isTrue();
+
+  // Skip over states until we reach any i/o state
+  // I hope this is always correct.
+  //
+  // We need to skip over the first couple of non-IO states because
+  // the result will be non-sentical (=⊥) most of the time anyway.
+  //
+  // We do this by doing a BFS and returning the result at the first I/O node.
+  // CAVEAT: This will fail horribly on non-RERS inputs.
+  queue<Label> workset;							
+  workset.push(start);										    
+  while (!workset.empty()) {						
+    Label label = workset.front(); workset.pop();			
+    const EState* state = g[label];
+
+    // Return the first result at an O node
+    // FIXME: not always correct, obviously. See comment above.
+    if (state->io.op == InputOutput::STDOUT_CONST ||
+	state->io.op == InputOutput::STDOUT_VAR) {
+      return v.props[&e];
+    }
+
+    /* add each successor to workset */					
+    GraphTraits::out_edge_iterator out_i, out_end;			
+    for (tie(out_i, out_end) = out_edges(label, g); out_i != out_end; ++out_i) { 
+      Label succ = target(*out_i, g);
+      workset.push(succ);
+    }
   }
   return Top();
 }

@@ -33,18 +33,17 @@ it's always either X or Y
 ----------------------------------------
 
 7
-(! oX WU (oY & ! oX))
+( ( (oX WU (oY & ! oX))))
 output Y does not occur before output X
 ----------------------------------------
 
 8
 (oY WU (oX & ! oY))
 output X occurs before output Y
-OPEN DISCUSSION: 
-If we write it like this,
+
 9
 (F (oY WU (oX & ! oY)))
-it succeeds.
+weaker version of the above.
 ----------------------------------------
 
 10
@@ -68,8 +67,8 @@ at some point Y follows X
 ----------------------------------------
 
 16
-(!(F (oY U oX)))
-X is never after Y
+(!(F (oY R oX)))
+X does never follow after Y
 ----------------------------------------
 
 17
@@ -118,3 +117,12 @@ equivalence A R B == !(!A U !B)
 27
 (G !oW)
 output W will never occur
+
+28
+((G ! oX) | (F (oX & (F oY))))
+output Y occurs after output X
+
+29
+(!((G ! oY) | (F (oY & (F oX)))))
+NOT: output X occurs after output Y
+
