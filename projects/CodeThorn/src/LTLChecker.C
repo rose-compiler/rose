@@ -2,6 +2,8 @@
 #include "AType.h"
 #include <boost/graph/graph_traits.hpp>
 #include <boost/graph/adjacency_list.hpp>
+#include <stack>
+#include <queue>
 
 // Written 2012 by Adrian Prantl <adrian@llnl.gov>.
 
@@ -165,6 +167,11 @@ public:
   /**
    * perform a forward-directed fixpoint iteration over all states
    *
+   * \param INIT  initial value of each node
+   * \param JOIN  join operator
+   * \param CALC  dataflow equation
+   *
+   *
    * FIXME: rewrite this as a template
    */
 # define fixpoint(INIT, JOIN, CALC) {					\
@@ -218,9 +225,18 @@ public:
    * since our programs do not necessarily have exit nodes, we start
    * the working set with all nodes where START == true.
    *
+   * \param INIT  initial value of each node
+   * \param START condition that decides whether a node is in 
+   *              the initial workset
+   * \param JOIN  join operator
+   * \param CALC  dataflow equation
+   * \param OTHERWISE  action to be performed at every node 
+   *                   if the intial workset is emtpy
+   *
+   *
    * FIXME: rewrite this as a template
    */
-# define bw_fixpoint(INIT, START, JOIN, CALC) {				\
+# define bw_fixpoint(INIT, START, JOIN, CALC, OTHERWISE, DEBUG) {	\
     stack<Label> workset;						\
     FOR_EACH_STATE(state, label) {					\
       props[e] = INIT;							\
@@ -230,7 +246,12 @@ public:
       }									\
     }									\
 									\
-    /*assert(!workset.empty());*/					\
+    if (workset.empty()) {						\
+      FOR_EACH_STATE(state, label) {					\
+        OTHERWISE;							\
+      }									\
+    }									\
+									\
     while (!workset.empty()) {						\
       Label label = workset.top(); workset.pop();			\
       /*cerr<<"Visiting state "<<label<<endl;*/				\
@@ -238,14 +259,13 @@ public:
       assert(state);							\
       									\
       /* Merge result of incoming edges */				\
-      BoolLattice joined_succs = Bot();					\
+      BoolLattice joined_succs = INIT;					\
       /* for each successor */						\
       GraphTraits::out_edge_iterator out_i, out_end;			\
       for (tie(out_i, out_end) = out_edges(label, g); out_i != out_end; ++out_i) { \
 	Label succ = target(*out_i, g);					\
 	BoolLattice succ_prop = ltl_properties[succ][e];		\
 	/*cerr<<"  succ: "<<succ<<" = "<<succ_prop<<endl;*/		\
-									\
 	joined_succs = joined_succs JOIN succ_prop;			\
       }									\
       									\
@@ -254,6 +274,8 @@ public:
       BoolLattice old_val = props[e];					\
       									\
       props[e] = old_val JOIN ( CALC );					\
+									\
+      DEBUG;								\
       									\
       /*cerr<<"  "<<label<<" <- "<<props[e]<<" was: "<<old_val<<endl;*/	\
       bool no_fixpoint = (old_val.isBot() || old_val != props[e]);	\
@@ -271,6 +293,8 @@ public:
       }									\
     }									\
   }
+
+# define NOP do{} while(0)
 
 
   static void updateInputVar(const EState* estate, const VariableId** v) {
@@ -373,6 +397,8 @@ public:
   }
 
   /**
+   * X φ (next): φ has to hold after the next step
+   *
    * I'm interpreting Next as follows
    *  
    *  a	    N A is true at a.
@@ -398,6 +424,9 @@ public:
   }
 
   /**
+   * F φ (eventually): φ has to hold at some point in the future (or now)
+   *
+   *
    * I'm interpreting Eventually to be a backward problem
    *  
    *  a	    if p(b) then F p(a) and F p(b) but not F p(c)
@@ -409,14 +438,18 @@ public:
    * Implementation status: DONE
    */
   void visit(const Eventually* e) {
-    bw_fixpoint(Bot(),                         // init
-		props[e->expr].isTrue(),       // start
-		&&,                            // join
-		props[e->expr] || joined_succs // calc
+    bw_fixpoint(/* init */      false,
+		/* start */     props[e->expr].isTrue(),
+		/* join */      ||,
+		/* calc  */     props[e->expr] || joined_succs,
+		/* otherwise */ props[e] = false,
+		/* debug */     NOP //cerr<<props[e->expr]<<" || "<<joined_succs<<endl;
 		);
   }
 
   /**
+   * G φ (globally): φ has to hold always (including now)
+   *
    * True, iff for each state we have TOP or TRUE
    * Implementation status: DONE
    */
@@ -450,23 +483,31 @@ public:
   }
 
   /**
+   * φ U ψ (until): φ has to hold until ψ holds (which eventually occurs)
+   *
    * A holds until B occurs
    *
-   * I'm interpreting UNITL as follows:
+   * I'm interpreting UNTIL as follows:
    *
    *  a
    *  |\
-   * Ab \    A U B is valid at b and c
+   * Ab \    A U B is valid at b and c, e = ⊥
    *  | Ad
    * Bc 
+   *  |
+   *  e
    *
    * Implementation status: DONE
    */
   void visit(const Until* e) {
-    bw_fixpoint(Bot(),                          // init
-		props[e->expr2].isTrue(),       // start
-		&&,                             // join
-		props[e->expr2] || (props[e->expr1] && joined_succs) // calc
+    bw_fixpoint(/* init */      false,
+		/* start */     !props[e->expr2].isBot(),
+		/* join */      ||,
+		/* calc */      props[e->expr2] || (props[e->expr1] && joined_succs),
+		/* otherwise */ props[e] = false,
+		/* debug */ 
+		NOP 
+		//cerr<<props[e->expr2]<<" || ("<<props[e->expr1]<<" && "<<joined_succs<<")"<<endl
 		);
 
     //FOR_EACH_STATE(state, label)
@@ -474,6 +515,8 @@ public:
   }
 
   /**
+   * φ WU ψ (weak until): φ has to hold until ψ holds (which does not necessarily occur)
+   *
    * A holds until B occurs, which may never happen
    *
    * I'm interpreting WEAK UNITL as follows:
@@ -488,10 +531,12 @@ public:
    * Implementation status: TESTING
    */
   void visit(const WeakUntil* e) {
-    bw_fixpoint(Bot(),                                // init
-		props[e->expr2].isTrue(),                            // start
-		&&,                                                  // join
-		props[e->expr2] || (props[e->expr1] && joined_succs) // calc
+    bw_fixpoint(/* init */	Bot(),
+		/* start */	!props[e->expr2].isBot(),
+		/* join */	||,
+		/* calc */	props[e->expr2] || (props[e->expr1] && joined_succs),
+		/* otherwise */ NOP,
+		/* debug */     NOP
 		);
 
     //FOR_EACH_STATE(state, label)
@@ -499,23 +544,28 @@ public:
   }
 
   /**
+   * φ R ψ (release): φ has to hold until ψ held in the previous step.
+   *
    * If !B occurs, A happens before it.
    *
+   * According to the unwinding property, R seems to be the dual operator of U.
    * Implementation status: DONE?, BUT UNSURE ABOUT SEMANTICS
    */
   void visit(const Release* e) {
-    fixpoint(Bot(),  // init
-	     &&,                                      // join
-	     ((props[e->expr1] && props[e->expr2]) || // A&B  or
-	      (!props[e->expr2] && joined_preds))     // !A & B@pred
-	     );
+    bw_fixpoint(/* init */      Bot(),
+		/* start */     props[e->expr2].isTrue(),
+		/* join */      &&,
+		/* calc */      props[e->expr2] && (props[e->expr1] || joined_succs),
+		/* otherwise */ props[e] = false,
+		/* debug */     NOP
+		);
   }
 };
 
 
 
 
-bool
+BoolLattice
 Checker::verify(const Formula& f)
 {
   // Build our own customized Transition graph
@@ -535,14 +585,20 @@ Checker::verify(const Formula& f)
     g[tgt] = t->target;
   }
   
-  Verifier v(eStateSet, g, estate_label[transitionGraph.begin()->source], N);
+  Label start = estate_label[transitionGraph.begin()->source];
+  Verifier v(eStateSet, g, start, N);
   const Expr& e = f;
   e.accept(v);
 
+  // Visualization
+
   // generate dot output for debugging
+  // TODO: implement these as cmdline options
   bool ltl_output_dot = true;
   bool show_derivation = true;
   bool show_node_detail = true;
+  bool collapsed_graph = false;
+
   if (ltl_output_dot) {
     stringstream s;
     s<<"digraph G {\n";
@@ -564,7 +620,12 @@ Checker::verify(const Formula& f)
       Visualizer viz(v.ltl_properties, l);
       e.accept(viz, Visualizer::newAttr(l));
       s<<l<<" [label=\""<<l;
-      if (show_node_detail) s<<":"<< state->toString();
+      if (show_node_detail) {
+	s<<":";
+	if (collapsed_graph) {
+	  
+	} else s<<state->toString();
+      }
       s<<"\"] ;\n";
       s<<"subgraph ltl_"<<l<<" {\n";
       s<<"  node[shape=rectangle, style=filled];\n  ";
@@ -582,13 +643,35 @@ Checker::verify(const Formula& f)
     myfile.close();
     cout<<"generated "<<fname.str()<<"."<<endl;
   }
-  // use result the first non-BOT node as return value, 
-  // I hope this is always correct
-  FOR_EACH_STATE(state, label) {
-    // skip over BOT states, which often happen at start
-    if (!v.props[&e].isBot())
-      return v.props[&e].isTrue();
+
+  // Skip over states until we reach any i/o state
+  // I hope this is always correct.
+  //
+  // We need to skip over the first couple of non-IO states because
+  // the result will be non-sentical (=⊥) most of the time anyway.
+  //
+  // We do this by doing a BFS and returning the result at the first I/O node.
+  // CAVEAT: This will fail horribly on non-RERS inputs.
+  queue<Label> workset;							
+  workset.push(start);										    
+  while (!workset.empty()) {						
+    Label label = workset.front(); workset.pop();			
+    const EState* state = g[label];
+
+    // Return the first result at an O node
+    // FIXME: not always correct, obviously. See comment above.
+    if (state->io.op == InputOutput::STDOUT_CONST ||
+	state->io.op == InputOutput::STDOUT_VAR) {
+      return v.props[&e];
+    }
+
+    /* add each successor to workset */					
+    GraphTraits::out_edge_iterator out_i, out_end;			
+    for (tie(out_i, out_end) = out_edges(label, g); out_i != out_end; ++out_i) { 
+      Label succ = target(*out_i, g);
+      workset.push(succ);
+    }
   }
-  throw "undecided";
+  return Top();
 }
 

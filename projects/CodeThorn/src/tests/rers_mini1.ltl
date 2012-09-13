@@ -3,8 +3,8 @@ NOTE:   tests for rers_mini.C
         All of these should be true!
 
 1
-(F oW)
-output W will occur
+(!(F oW))
+output W will never occur
 ----------------------------------------
 
 2
@@ -13,80 +13,116 @@ output X will occur
 ----------------------------------------
 
 3
-(!(G ! oW))
-W is not the only output
+(F oY)
+output Y will occur
 ----------------------------------------
 
 4
-(G ! (oU & oW))
-U and W happen not at the same time
+(!(G ! oY))
+Y is not the only output
 ----------------------------------------
 
 5
-(!(G (oU | oW)))
-it's always either U or W (not true because start node has no output at all)
+(G ! (oX & oY))
+U and W happen not at the same time
 ----------------------------------------
 
 6
-(! oX WU (oW & ! oX))
-output W does not occur before output X
+(G (oY | oX))
+it's always either X or Y
 ----------------------------------------
 
 7
-(oW WU (oX & ! oW))
-output X occurs before output W
-OPEN DISCUSSION: 
-this fails because of the start node where no output happens at all. What should we do?
-If we write it like this,
-8
-(F (oW WU (oX & ! oW)))
-it succeeds.
+( ( (oX WU (oY & ! oX))))
+output Y does not occur before output X
 ----------------------------------------
 
+8
+(oY WU (oX & ! oY))
+output X occurs before output Y
+
 9
-(! oX WU oW)
-output X does never occur before output V
+(F (oY WU (oX & ! oY)))
+weaker version of the above.
 ----------------------------------------
 
 10
+(! oY WU oX)
+output Y does never occur before output X
+----------------------------------------
+
+11, 12, 13, 14
+(    F (oY WU oX))
+must be true at the very end
+(   (F (oY U oX)))
+must be true at oX.
+(    F (oY WU oZ))
+trivially true
+(  !(F (oY U oZ)))
+difference between U and WU.
+
+15
+(F (oX U oY))
+at some point Y follows X
+----------------------------------------
+
+16
+(!(F (oY R oX)))
+X does never follow after Y
+----------------------------------------
+
+17
 (G ! iX)
 input X will never occur
 ----------------------------------------
 
-11
+18
 (F iV)
 input V will occur
 ----------------------------------------
 
-12
+19
 (G ! (oX & oW))
 X and W happen not at the same time
 ----------------------------------------
 
-13
-(oX U oW)
+20 base case for the following
+(oX U oY)
 
-14
+21
 Checking for equivalence: A == B === A&B | (!A & !B)
-((! (X oW) & X (! oW)) | (!(! (X oW)) & !(X (! oW))))
-equivalence !X A == X !A, for A=oW
+((! (X oY) & X (! oY)) | (!(! (X oY)) & !(X (! oY))))
+equivalence !X A == X !A, for A=oY
 
-15
-((! (F oW) & G (! oW)) | (!(! (F oW)) & !(G (! oW))))
-equivalence !F A == G !A, for A=oW
+22
+((! (F oY) & G (! oY)) | (!(! (F oY)) & !(G (! oY))))
+equivalence !F A == G !A, for A=oY
 
-16
-((! (G oW) & F (! oW)) | (!(! (G oW)) & !(F (! oW))))
-equivalence !G A == F !A, for A=oW
+23
+((! (G oY) & F (! oY)) | (!(! (G oY)) & !(F (! oY))))
+equivalence !G A == F !A, for A=oY
 
-17
-(((! (oW U oX)) & (!oW R !oX)) | ((!!(oW U oX)) & !(!oW R !oX)))
+24
+(((! (oY U oX)) & (!oY R !oX)) | ((!!(oY U oX)) & !(!oY R !oX)))
 equivalence ! A U B == !A R !B
 
-18
-(((! (oW R oX)) & (!oW U !oX)) | ((!!(oW R oX)) & !(!oW U !oX)))
+25
+(((! (oY R oX)) & (!oY U !oX)) | ((!!(oY R oX)) & !(!oY U !oX)))
 equivalence ! A R B == !A U !B
 
-19
-(((oW R oX) & (!(!oW U !oX))) | ((!(oW R oX)) & !!(!oW U !oX)))
+26
+(((oY R oX) & (!(!oY U !oX))) | ((!(oY R oX)) & !!(!oY U !oX)))
 equivalence A R B == !(!A U !B)
+
+27
+(G !oW)
+output W will never occur
+
+28
+((G ! oX) | (F (oX & (F oY))))
+output Y occurs after output X
+
+29
+(!((G ! oY) | (F (oY & (F oX)))))
+NOT: output X occurs after output Y
+

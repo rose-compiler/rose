@@ -9,12 +9,15 @@
 int calculate_output(int input) {
   if(input==21 && f==7) {
 	f=6;
-	return 22;
+	return 22; // W (unreachable, though)
   } else if(f==6) {
 	f=5;
-	return 23;
+	return 23; // X
   } else if(f==5) {
 	f=4;
+	return 24; // Y
+  } else if(f==4) {
+	f=3;
   }
   return -1;
 }
