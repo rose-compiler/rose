@@ -281,6 +281,12 @@ int main( int argc, char * argv[] ) {
   //
   // Verification
   //
+  int n = 0;
+  int n_yes = 0;
+  int n_no = 0;
+  int n_undecided = 0;
+  int n_failed = 0;
+
   if (ltl_file.size()) {
     LTL::Checker checker(*analyzer.getEStateSet(),
 			 *analyzer.getTransitionGraph());
@@ -289,6 +295,7 @@ int main( int argc, char * argv[] ) {
       try { 
         if (ltl_parse() != 0) {
           cerr<<red<< "Syntax error" << endl;
+	  ++n_failed;
 	  continue;
         }
         if (ltl_val == NULL) {
@@ -298,29 +305,51 @@ int main( int argc, char * argv[] ) {
       } catch(const char* s) {
         if (ltl_val) cout<<normal<<string(*ltl_val)<<endl;
         cout<< s<<endl<<red<< "Grammar Error" << endl;
+	++n_failed;
 	continue;
       } catch(...) {
 	cout<<red<< "Parser exception" << endl;
+	++n_failed;
 	continue;
       }  
 	  
+      ++n;
       cout<<endl<<"Verifying formula "<<white<<string(*ltl_val)<<normal<<"."<<endl;
       try {
-	if (checker.verify(*ltl_val))
+	AType::BoolLattice result = checker.verify(*ltl_val);
+	if (result.isTrue()) {
+	  ++n_yes;
 	  cout<<green<<"YES"<<normal<<endl;
-	else
+	} else if (result.isFalse()) {
+	  ++n_no;
 	  cout<<cyan<<"NO"<<normal<<endl;
+	} else {
+	  ++n_undecided;
+	  cout<<magenta<<"UNDECIDED"<<normal<<endl;
+	}
       } catch(const char* str) {
+	++n_failed;
 	cerr << "Exception raised: " << str << endl;
 	cout<<red<<"FAILED"<<normal<<endl;
       } catch(string str) {
+	++n_failed;
 	cerr << "Exception raised: " << str << endl;
 	cout<<red<<"FAILED"<<normal<<endl;
       } catch(...) {
+	++n_failed;
 	cout<<red<<"FAILED"<<normal<<endl;
       }  
     }
     fclose(ltl_input);
+    assert(n_yes+n_no+n_undecided+n_failed == n);
+    cout<<"\nStatistics "<<endl
+        <<"========== "<<endl
+	<<n_yes      <<"/"<<n<<green  <<" YES, "       <<normal 	
+	<<n_no       <<"/"<<n<<cyan   <<" NO, "	       <<normal 	
+	<<n_undecided<<"/"<<n<<magenta<<" UNDECIDED, " <<normal 	
+	<<n_failed   <<"/"<<n<<red    <<" FAILED"      <<normal 	
+	<<endl;
+
   } 
 
   // reset terminal
