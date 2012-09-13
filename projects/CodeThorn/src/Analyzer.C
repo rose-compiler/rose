@@ -121,31 +121,31 @@ void Analyzer::runSolver1() {
 
 const EState* Analyzer::addToWorkListIfNew(EState eState) {
   if(!eStateSet.eStateExists(eState)) {
-	eStateSet.insert(eState);
+	eStateSet.addNewEState(eState);
 	const EState* p=eStateSet.eStatePtr(eState);
 	// display error description
 	if(!p) {
 	  //  cout << endl;
-	  //cout << "ES: "<<eStateSet.toString()<<endl;
-	  //cout << "ES: "<<eStateSet.toString()<<endl;
+	  cout << "ES: "<<eStateSet.toString()<<endl;
 	  cout << "eState:"<<eState.toString()<<endl;
 	  cout << "eStateExists:"<<eStateSet.eStateExists(eState)<<endl;
 	  cout << "eStateSet.size():"<<eStateSet.size()<<endl;
-	  eStateSet.insert(eState);
+	  eStateSet.push_back(eState);
 	  cout << "eStateSet.size():"<<eStateSet.size()<<endl;
 	  cout << "-----------------"<<endl;
 	  EStateSet eStateSet2;
 	  EState violatingEState;
 	  for(EStateSet::iterator i=eStateSet.begin();i!=eStateSet.end();++i) {
-		eStateSet2.insert(*i);
+		eStateSet2.addNewEState(*i);
 		int size=eStateSet2.size();
-		eStateSet2.insert(eState);		
+		eStateSet2.addNewEState(eState);		
 		if(eStateSet2.size()==size) {
 		  violatingEState=*i;
 		  cout << "Violating eState:"<<(*i).toString()<<endl;
 		}
-		eStateSet2.erase(eState);
+		eStateSet2.remove(eState);
 	  }
+#if 0
 	  EStateSet eStateSet3;
 	  eStateSet3.insert(violatingEState);
 	  eStateSet3.insert(eState);
@@ -156,6 +156,7 @@ const EState* Analyzer::addToWorkListIfNew(EState eState) {
 	  cout << "cmpcs: =="<<(violatingEState.constraints==eState.constraints)<<endl;
 	  cout << "cmpcs: <"<<(violatingEState.constraints<eState.constraints)<<endl;
 	  cout << "cmpcs: >"<<(eState.constraints<violatingEState.constraints)<<endl;
+#endif
 	}
 	assert(p);
 	addToWorkList(p);
@@ -568,7 +569,7 @@ void Analyzer::initializeSolver1(std::string functionToStartAt,SgNode* root) {
 
   // TODO: delete global vars which are not used in the analyzed program (not necessary in PState)
   
-  eStateSet.insert(eState);
+  eStateSet.addNewEState(eState);
   const EState* currentEState=eStateSet.eStatePtr(eState);
   assert(currentEState);
   //cout << "INIT: "<<eStateSet.toString()<<endl;
