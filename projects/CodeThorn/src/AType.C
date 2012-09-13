@@ -269,11 +269,11 @@ AType::ConstIntLattice AType::ConstIntLattice::operator==(ConstIntLattice other)
 	return ConstIntLattice(false);
 }
 
-AType::ConstIntLattice AType::ConstIntLattice::operator!=(ConstIntLattice other) {
+AType::ConstIntLattice AType::ConstIntLattice::operator!=(ConstIntLattice other) const {
   return !(*this==other);
 }
 
-AType::ConstIntLattice AType::ConstIntLattice::operator<(ConstIntLattice other) {
+AType::ConstIntLattice AType::ConstIntLattice::operator<(ConstIntLattice other) const {
   if(isTop()||other.isTop())
 	return Top();
   if(isBot())

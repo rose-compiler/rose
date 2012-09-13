@@ -55,9 +55,10 @@ class Constraint {
  public:
   enum ConstraintOp {EQ_VAR_CONST,NEQ_VAR_CONST,DEQ_VAR_CONST};
   Constraint(ConstraintOp op0,VariableId lhs, AValue rhs);
+  Constraint(ConstraintOp op0,VariableId lhs, CppCapsuleAValue rhs);
   ConstraintOp op;
   VariableId var;
-  AValue intVal;
+  CppCapsuleAValue intVal;
   string toString() const;
  private:
   string opToString() const;
@@ -69,6 +70,7 @@ bool operator!=(const Constraint& c1, const Constraint& c2);
 
 class ConstraintSet : public set<Constraint> {
  public:
+  bool constraintExists(Constraint::ConstraintOp op, VariableId varId, CppCapsuleAValue intVal) const;
   bool constraintExists(Constraint::ConstraintOp op, VariableId varId, AValue intVal) const;
   bool constraintExists(const Constraint& c) const;
   ConstraintSet::iterator findSpecific(Constraint::ConstraintOp op, VariableId varId) const;
@@ -89,9 +91,9 @@ class ConstraintSet : public set<Constraint> {
 
   bool deqConstraintExists();
 };
-bool operator==(const ConstraintSet& s1, const ConstraintSet& s2);
-bool operator<(const ConstraintSet& s1, const ConstraintSet& s2);
-bool operator!=(const ConstraintSet& s1, const ConstraintSet& s2);
+//bool operator==(const ConstraintSet& s1, const ConstraintSet& s2);
+//bool operator<(const ConstraintSet& s1, const ConstraintSet& s2);
+//bool operator!=(const ConstraintSet& s1, const ConstraintSet& s2);
 
 /* Input: a value val is read into a variable var
    Output: either a variable or a value is written
@@ -126,9 +128,9 @@ class EState {
 };
 
 // define order for State elements (necessary for StateSet)
-bool operator<(const State& c1, const State& c2);
-bool operator==(const State& c1, const State& c2);
-bool operator!=(const State& c1, const State& c2);
+//bool operator<(const State& c1, const State& c2);
+//bool operator==(const State& c1, const State& c2);
+//bool operator!=(const State& c1, const State& c2);
 //bool operator<(const State::value_type& elem1, const State::value_type& elem2);
 //bool operator==(const pair<VariableId,AValue>& elem1, const pair<VariableId,AValue>& elem2);
 
@@ -137,14 +139,17 @@ bool operator<(const EState& c1, const EState& c2);
 bool operator==(const EState& c1, const EState& c2);
 bool operator!=(const EState& c1, const EState& c2);
 
-class EStateSet : public set<EState> {
+class EStateSet : public list<EState> {
  public:
   bool eStateExists(EState& s);
-  const EState* eStatePtr(EState& s);
+  const EState* processEState(EState newEState);
+  void addNewEState(EState newEState);
   string toString();
   EStateId eStateId(const EState* eState);
   EStateId eStateId(const EState eState);
   string eStateIdString(const EState* eState);
+  const EState* eStatePtr(EState& s);
+  int numberOfIoTypeStates(InputOutput::OpType);
 };
 
 class Transition {

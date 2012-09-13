@@ -103,8 +103,8 @@ class ConstIntLattice {
   ConstIntLattice operator||(ConstIntLattice other);
   ConstIntLattice operator&&(ConstIntLattice other);
   ConstIntLattice operator==(ConstIntLattice other) const;
-  ConstIntLattice operator!=(ConstIntLattice other);
-  ConstIntLattice operator<(ConstIntLattice other);
+  ConstIntLattice operator!=(ConstIntLattice other) const;
+  ConstIntLattice operator<(ConstIntLattice other) const;
   string toString() const;
   friend ostream& operator<<(ostream& os, const ConstIntLattice& toStream);
   ValueType getValueType() const;

@@ -50,26 +50,29 @@ bool operator!=(const InputOutput& c1, const InputOutput& c2) {
   return !(c1==c2);
 }
 
-
+#if 1
 bool operator<(const Constraint& c1, const Constraint& c2) {
   if(c1.var<c2.var)
 	return true;
   if(c1.var==c2.var && c1.op<c2.op)
 	return true;
-  if(c1.op==c2.op && AType::strictWeakOrderingIsSmaller(c1.intVal,c2.intVal)) 
+  if(c1.op==c2.op && (c1.intVal<c2.intVal)) 
 	return true;
   return false;
 }
 
 bool operator==(const Constraint& c1, const Constraint& c2) {
-  return c1.var==c2.var && c1.op==c2.op &&AType::strictWeakOrderingIsEqual(c1.intVal,c2.intVal);
+  return c1.var==c2.var && c1.op==c2.op && (c1.intVal==c2.intVal);
 }
 
 bool operator!=(const Constraint& c1, const Constraint& c2) {
   return !(c1==c2);
 }
+#endif
 
-Constraint::Constraint(ConstraintOp op0,VariableId lhs, AValue rhs):op(op0),var(lhs),intVal(rhs) {
+Constraint::Constraint(ConstraintOp op0,VariableId lhs, AValue rhs):op(op0),var(lhs),intVal(CppCapsuleAValue(rhs)) {
+} 
+Constraint::Constraint(ConstraintOp op0,VariableId lhs, CppCapsuleAValue rhs):op(op0),var(lhs),intVal(rhs) {
 } 
 
 string Constraint::toString() const {
@@ -164,7 +167,7 @@ void ConstraintSet::insert(Constraint c) {
 	}
 	ConstraintSet::iterator i=findSpecific(Constraint::EQ_VAR_CONST,c.var);
 	if(i!=end()) {
-	  if(!AType::strictWeakOrderingIsEqual((*i).intVal,c.intVal)) {
+	  if(!((*i).intVal==c.intVal)) {
 		// other x==num exists with num!=c.num ==> DEQ
 		erase(*i);
 		set<Constraint>::insert(Constraint(Constraint::DEQ_VAR_CONST,c.var,c.intVal));
@@ -215,12 +218,15 @@ ConstraintSet& ConstraintSet::operator+=(ConstraintSet& s2) {
   return *this;
 }
 
-bool ConstraintSet::constraintExists(Constraint::ConstraintOp op, VariableId varId, AValue intVal) const { 
+bool ConstraintSet::constraintExists(Constraint::ConstraintOp op, VariableId varId, CppCapsuleAValue intVal) const { 
   Constraint tmp(op,varId,intVal);
   return constraintExists(tmp);
 }
+bool ConstraintSet::constraintExists(Constraint::ConstraintOp op, VariableId varId, AValue intVal) const { 
+  return constraintExists(op,varId,CppCapsuleAValue(intVal));
+}
 bool ConstraintSet::constraintExists(const Constraint& tmp) const { 
-#if 1
+#if 0
   // we use this as the find algorithm does not properly work yet (TODO: investigate)
   for(ConstraintSet::iterator i=begin();i!=end();++i) {
 	if(*i==tmp)
@@ -259,38 +265,10 @@ AType::ConstIntLattice ConstraintSet::varConstIntLatticeValue(const VariableId v
 	// no EQ_VAR_CONST constraint for this variable
 	return AType::ConstIntLattice(AType::Top());
   } else {
-	return AType::ConstIntLattice((*i).intVal);
+	return AType::ConstIntLattice((*i).intVal.getValue());
   }
 }
 
-bool operator==(const ConstraintSet& s1, const ConstraintSet& s2) {
-  for(ConstraintSet::iterator i=s1.begin();i!=s1.end();++i) {
-	if(!s2.constraintExists(*i))
-	  return false;
-  }
-  return s1.size()==s2.size();
-}
-
-bool operator<(const ConstraintSet& s1, const ConstraintSet& s2) {
-  if(s1.size()==s2.size()) {
-	for(ConstraintSet::const_iterator i=s1.begin(),j=s2.begin();i!=s1.end() && j!=s2.end();++i,++j) {
-	  if((*i)==(*j)) {
-		continue;
-	  } else {
-		if(!((*i)<(*j))) {
-		  return false;
-		}
-	  }
-	}
-	return !(s1==s2);
-  } else {
-	return s1.size()<s2.size();
-  }
-}
-
-bool operator!=(const ConstraintSet& s1, const ConstraintSet& s2) {
-  return !(s1==s2);
-}
 
 ConstraintSet ConstraintSet::deleteVarConstraints(VariableId varId) {
   deleteConstraints(varId);
@@ -375,7 +353,7 @@ string StateSet::stateIdString(const State* state) {
 }
 
 const State* StateSet::statePtr(State& s) {
-#if 1
+#if 0
   // we use this as the find algorithm does not properly work yet (TODO: investigate)
   for(StateSet::iterator i=begin();i!=end();++i) {
 	if(*i==s)
@@ -408,55 +386,12 @@ string StateSet::toString() {
   return ss.str();
 }
 
-#if 0
-bool operator<(const State::value_type& elem1, const State::value_type& elem2) {
-  return elem1.first<elem2.first || (elem1.first==elem2.first && (elem1.second<elem2.second));
-}
-#endif
-
-// define order for State elements, we use the strict subset relation (necessary for StateSet)
-
-bool operator<(const State& s1, const State& s2) {
-  // we only check for all first members (=VariableId) because they are
-  // guaranteed to be unique in a State
-
-  for(State::const_iterator i=s1.begin(),j=s2.begin();i!=s1.end() && j!=s2.end();++i,++j) {
-	if(((*i).first==(*j).first)) {
-	  continue;
-	} else {
-	  if(!((*i).first<(*j).first)) {
-		return false;
-	  }
-	}
-  }
-  return !(s1==s2);
-}
-
-bool operator==(const State& c1, const State& c2) {
-  if(c1.size()==c2.size()) {
-	State::const_iterator i=c1.begin();
-	State::const_iterator j=c2.begin();
-	while(i!=c1.end()) {
-	  if(!((*i).first==(*j).first))
-		return false;
-	  if(!((*i).second==(*j).second))
-		return false;
-	  ++i;++j;
-	}
-	return true;
-  } else {
-	return false;
-  }
-}
-
-bool operator!=(const State& c1, const State& c2) {
-  return !(c1==c2);
-}
-
 // define order for EState elements (necessary for EStateSet)
+#if 1
 bool operator<(const EState& c1, const EState& c2) {
   return (c1.label<c2.label) || ((c1.label==c2.label) && (c1.state<c2.state)) || (c1.state==c2.state && c1.constraints<c2.constraints) || ((c1.constraints==c2.constraints) && (c1.io<c2.io));
 }
+#endif
 
 bool operator==(const EState& c1, const EState& c2) {
   return (c1.label==c2.label) && (c1.state==c2.state) && (c1.constraints==c2.constraints) && (c1.io==c2.io);
@@ -487,13 +422,38 @@ string EStateSet::eStateIdString(const EState* eState) {
   return ss.str();
 }
 
+const EState* EStateSet::processEState(EState newEState) {
+  const EState* newEStatePtr=eStatePtr(newEState);
+  if(newEStatePtr==0) {
+	push_front(newEState);
+	const EState* newEStatePtr=eStatePtr(newEState);
+	assert(newEStatePtr);
+	return newEStatePtr;
+  }
+  return newEStatePtr;
+}
+
 bool EStateSet::eStateExists(EState& s) {
   return eStatePtr(s)!=0;
 }
 
+void EStateSet::addNewEState(EState newEState) { 
+  assert(eStatePtr(newEState)==0);
+  push_back(newEState);
+}
+
+int EStateSet::numberOfIoTypeStates(InputOutput::OpType op) {
+  int counter=0;
+  for(EStateSet::iterator i=begin();i!=end();++i) {
+	if((*i).io.op==op)
+	  counter++;
+  }
+  return counter;
+} 
+
 const EState* EStateSet::eStatePtr(EState& s) {
 #if 1
-  // we use this as the find algorithm does not properly work yet (TODO: investigate)
+  // we use this as the find algorithm cannot be used for this data structure yet.
   for(EStateSet::iterator i=begin();i!=end();++i) {
 	if(*i==s)
 	  return &*i;
