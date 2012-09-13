@@ -81,6 +81,50 @@ extern __SIMD  _SIMD_splats_ps(float);
 extern __SIMDd  _SIMD_splats_pd(double);
 extern __SIMDi  _SIMD_splats_epi32(int);
 
+// and:  a = b & c  ==> a = _SIMD_and_ps(b,c)
+extern __SIMD  _SIMD_and_ps(__SIMD, __SIMD);
+extern __SIMDd _SIMD_and_pd(__SIMDd, __SIMDd);
+
+// and:  a = b | c  ==> a = _SIMD_or_ps(b,c)
+extern __SIMD  _SIMD_or_ps(__SIMD, __SIMD);
+extern __SIMDd _SIMD_or_pd(__SIMDd, __SIMDd);
+
+// and:  a = b ^ c  ==> a = _SIMD_xor_ps(b,c)
+extern __SIMD  _SIMD_xor_ps(__SIMD, __SIMD);
+extern __SIMDd _SIMD_xor_pd(__SIMDd, __SIMDd);
+
+// neg:  a = -a  ==> a = _SIMD_neg_ps(a)
+extern __SIMD  _SIMD_neg_ps(__SIMD);
+extern __SIMDd _SIMD_neg_pd(__SIMDd);
+
+// SIMD select
+extern __SIMD  _SIMD_sel_ps(__SIMD, __SIMD, void**);
+extern __SIMDd  _SIMD_sel_pd(__SIMDd, __SIMDd, void**);
+
+// SIMD cmpeq
+extern void  _SIMD_cmpeq_ps(__SIMD, __SIMD, void**);
+extern void  _SIMD_cmpeq_pd(__SIMDd, __SIMDd, void**);
+
+// SIMD cmpne
+extern void  _SIMD_cmpne_ps(__SIMD, __SIMD, void**);
+extern void  _SIMD_cmpne_pd(__SIMDd, __SIMDd, void**);
+
+// SIMD cmplt
+extern void  _SIMD_cmplt_ps(__SIMD, __SIMD, void**);
+extern void  _SIMD_cmplt_pd(__SIMDd, __SIMDd, void**);
+
+// SIMD cmple
+extern void  _SIMD_cmple_ps(__SIMD, __SIMD, void**);
+extern void  _SIMD_cmple_pd(__SIMDd, __SIMDd, void**);
+
+// SIMD cmpgt
+extern void  _SIMD_cmpgt_ps(__SIMD, __SIMD, void**);
+extern void  _SIMD_cmpgt_pd(__SIMDd, __SIMDd, void**);
+
+// SIMD cmpge
+extern void  _SIMD_cmpge_ps(__SIMD, __SIMD, void**);
+extern void  _SIMD_cmpge_pd(__SIMDd, __SIMDd, void**);
+
 #ifdef __cplusplus
 }
 #endif

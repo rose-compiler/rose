@@ -56,6 +56,7 @@ check if loop is innermost, and stride one structure.
 Basic loop-level vectorization for most basic arithmetic operators.
 Able to catch FMA (fused multiply-add instruction.) e.g. a = b * c + d;  ==> a = _SIMD_madd(b,c,d);
 Able to handle multi-dimensional array in C.
+Generate translation for if statement in vector loop.  This has to follow Fortran's CVMGM instruction.
 Testing codes can be translated, and compiled by GNU C compiler with SSE 3 instructions.
 
 Compiler support for SIMD versions:
@@ -69,15 +70,37 @@ TODO list:
 
 1. Use Defuse analysis to take care of scalar statements in the vector loop.
 2. Generate translation for most binaryOp (should be straight forward).
-3. Generate translation for if statement in vector loop.  This has to follow Fortran's CVMGM instruction.
-4. Generate translation for special mathematical functions, e.g. sin, cos, pow...
-5. Create prologue and epiloge iterations if the loop iteratins isn't perfect.
-6. Involve the data-dependence analysis in vectorization.
-7. Subscript analysis.  Make sure the subscripts fulfill the SIMD requirement.
-8. Alignment handling.  Except the __attribute__((aligned(x))), do we have better approach to force alignment?
-9. Multi-platform:  need to test IBM platform using AltiVec instruction.  
-10.Supports for SSE4.2, AVX instructions, but this requires support from later version of GCC (4.5+).
-
+3. Generate translation for special mathematical functions, e.g. sin, cos, pow...
+4. Create prologue and epiloge iterations if the loop iteratins isn't perfect.
+5. Involve the data-dependence analysis in vectorization.
+6. Subscript analysis.  Make sure the subscripts fulfill the SIMD requirement.
+7. Alignment handling.  Except the __attribute__((aligned(x))), do we have better approach to force alignment?
+8. Multi-platform:  need to test IBM platform using AltiVec instruction.  
+9. Supports for SSE4.2, AVX instructions, but this requires support from later version of GCC (4.5+).
+10.SgCastExp.  Especially the cast from real to double.
 
 Note: To allow Fortan code to use this framework, we have to finish the Fortran-to-C work.
  
+
+KNOWN BUGS:
+1.
+Source code:
+ 
+int main(){
+  float tmp;
+  int n = 16;
+  for (int i=0;i<n;i++)
+  {
+    tmp = 2.f;
+  }
+}
+
+Error: 
+./src/vectorization /Users/lin32/development/src/vectorization-rose/projects/vectorization/tests/conditionalStmt.c 
+"/Users/lin32/development/src/vectorization-rose/projects/vectorization/tests/conditionalStmt.c", line 5: warning: 
+          variable "tmp" was set but never used
+    float tmp;
+          ^
+
+warning, unhandled node type in getSIMDType: SgTypedefType
+Segmentation fault

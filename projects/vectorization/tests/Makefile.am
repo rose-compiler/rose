@@ -6,12 +6,22 @@ TESTCODES_REQUIRED_TO_PASS = \
 	simpleArithmetic.c \
 	simpleIntegerArithmetic.c \
 	multiDimensionArray.c \
+	conditionalStmt1.c \
+	conditionalStmt2.c \
+	conditionalStmt3.c \
+	conditionalStmt4.c \
+	conditionalStmt5.c \
 	FMA.c
 
 COMPARE_CODES = \
 	rose_simpleArithmetic.c \
 	rose_simpleIntegerArithmetic.c \
 	rose_multiDimensionArray.c \
+	rose_conditionalStmt1.c \
+	rose_conditionalStmt2.c \
+	rose_conditionalStmt3.c \
+	rose_conditionalStmt4.c \
+	rose_conditionalStmt5.c \
 	rose_FMA.c
 
 TEST_OUTPUTS = $(TESTCODES_REQUIRED_TO_PASS:.c=)

@@ -44,18 +44,40 @@ void normalizeTraversal::visit(SgNode* n)
     /*
         a + (b * c) ===>  (b * c) + a
     */
-    if((binaryOp->variantT() == V_SgAddOp) && (binaryOp->get_rhs_operand()->variantT() == V_SgMultiplyOp))
+    if(binaryOp->variantT() == V_SgAddOp)
     {
-      swapOperands(binaryOp);
+      if(binaryOp->get_rhs_operand()->variantT() == V_SgMultiplyOp)
+      {
+        swapOperands(binaryOp);
+      }
+      else if(binaryOp->get_rhs_operand()->variantT() == V_SgCastExp)
+      {
+        SgCastExp* castExp = isSgCastExp(binaryOp->get_rhs_operand());
+        if(castExp->get_operand()->variantT() == V_SgMultiplyOp)
+          swapOperands(binaryOp);
+      }
     }
     /*
         a - (b * c) ===>  -((b * c) - a)
     */
-    else if((binaryOp->variantT() == V_SgSubtractOp) && (binaryOp->get_rhs_operand()->variantT() == V_SgMultiplyOp))
+    else if(binaryOp->variantT() == V_SgSubtractOp)
     {
-      swapOperands(binaryOp);
-      SgMinusOp* minusOp = buildMinusOp(deepCopy(binaryOp), SgUnaryOp::prefix);
-      replaceExpression(binaryOp, minusOp, false);
+      if(binaryOp->get_rhs_operand()->variantT() == V_SgMultiplyOp)
+      {
+        swapOperands(binaryOp);
+        SgMinusOp* minusOp = buildMinusOp(deepCopy(binaryOp), SgUnaryOp::prefix);
+        replaceExpression(binaryOp, minusOp, false);
+      }
+      else if(binaryOp->get_rhs_operand()->variantT() == V_SgCastExp)
+      {
+        SgCastExp* castExp = isSgCastExp(binaryOp->get_rhs_operand());
+        if(castExp->get_operand()->variantT() == V_SgMultiplyOp)
+        {
+          swapOperands(binaryOp);
+          SgMinusOp* minusOp = buildMinusOp(deepCopy(binaryOp), SgUnaryOp::prefix);
+          replaceExpression(binaryOp, minusOp, false);
+        }
+      }
       
     }
   }
