@@ -293,7 +293,8 @@ int main( int argc, char * argv[] ) {
     ltl_input = fopen(ltl_file.c_str(), "r");
     while ( !ltl_eof) {
       try { 
-        if (ltl_parse() != 0) {
+	ltl_label = 0;
+        if (ltl_parse()) {
           cerr<<red<< "Syntax error" <<normal<<endl;
 	  ++n;
 	  ++n_failed;

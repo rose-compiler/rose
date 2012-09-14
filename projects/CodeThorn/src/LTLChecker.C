@@ -12,7 +12,7 @@ using namespace boost;
 using namespace std;
 using namespace AType;
 
-typedef vector< map<const Expr*, BoolLattice> > LTLProperties;
+typedef vector< vector<BoolLattice> > LTLProperties;
 typedef adjacency_list<vecS, vecS, bidirectionalS, const EState*> BoostTransitionGraph;
 typedef graph_traits<BoostTransitionGraph> GraphTraits;
 
@@ -60,70 +60,95 @@ public:
     if (lval.isBot())   return  "color=gainsboro";
   }
 
-  IAttr visit(const InputSymbol* e, IAttr a)  {
+  IAttr visit(const InputSymbol* expr, IAttr a)  {
+    short e = expr->label;
     int node = newNode(a);
-    s<<node<<" ["<<color(props[e])<<",label=\"Input "<<string(1, e->c)
+    s<<node<<" ["<<color(props[e])<<",label=\"Input "<<string(1, expr->c)
      <<" = "<<props[e]<<"\"];\n  ";
     return newAttr(node);
   }
-  IAttr visit(const OutputSymbol* e, IAttr a) {
+  IAttr visit(const OutputSymbol* expr, IAttr a) {
+    short e = expr->label;
     int node = newNode(a);
-    s<<node<<" ["<<color(props[e])<<",label=\"Output "<<string(1, e->c)
+    s<<node<<" ["<<color(props[e])<<",label=\"Output "<<string(1, expr->c)
      <<" = "<<props[e]<<"\"];\n  ";
     return newAttr(node);
   }
-  IAttr visit(const Not* e, IAttr a) {
+  IAttr visit(const Not* expr, IAttr a) {
+    short e = expr->label;
+    short e1 = expr->expr1->label;
     int node = newNode(a);
     s<<node<<" ["<<color(props[e])<<",label=\""<<props[e]
-     <<" = "<<"!"<<props[e->expr]<<"\"];\n  ";
+     <<" = "<<"!"<<props[e1]<<"\"];\n  ";
     return newAttr(node);
   }
-  IAttr visit(const Next* e, IAttr a) {
+  IAttr visit(const Next* expr, IAttr a) {
+    short e = expr->label;
+    short e1 = expr->expr1->label;
     int node = newNode(a);
     s<<node<<" ["<<color(props[e])<<",label=\""<<"("<<props[e]
-     <<" = "<<"X "<<props[e->expr]<<")\"];\n  ";
+     <<" = "<<"X "<<props[e1]<<")\"];\n  ";
     return newAttr(node);
   }
-  IAttr visit(const Eventually* e, IAttr a) {
+  IAttr visit(const Eventually* expr, IAttr a) {
+    short e = expr->label;
+    short e1 = expr->expr1->label;
     int node = newNode(a);
     s<<node<<" ["<<color(props[e])<<",label=\""<<"("<<props[e]
-     <<" = "<<"F "<<props[e->expr]<<")\"];\n  ";
+     <<" = "<<"F "<<props[e1]<<")\"];\n  ";
     return newAttr(node);
   }
-  IAttr visit(const Globally* e, IAttr a) {
+  IAttr visit(const Globally* expr, IAttr a) {
+    short e = expr->label;
+    short e1 = expr->expr1->label;
     int node = newNode(a);
     s<<node<<" ["<<color(props[e])<<",label=\""<<"("<<props[e]
-     <<" = "<<"G "<<props[e->expr]<<")\"];\n  ";
+     <<" = "<<"G "<<props[e1]<<")\"];\n  ";
     return newAttr(node);
   }
-  IAttr visit(const And* e, IAttr a) {
+  IAttr visit(const And* expr, IAttr a) {
+    short e = expr->label;
+    short e1 = expr->expr1->label;
+    short e2 = expr->expr2->label;
     int node = newNode(a);
     s<<node<<" ["<<color(props[e])<<",label=\""<<"("<<props[e]
-     <<" = "<<props[e->expr1]<<" & "<<props[e->expr2]<<")\"];\n  ";
+     <<" = "<<props[e1]<<" & "<<props[e2]<<")\"];\n  ";
     return newAttr(node);
   }
-  IAttr visit(const Or* e, IAttr a) {
+  IAttr visit(const Or* expr, IAttr a) {
+    short e = expr->label;
+    short e1 = expr->expr1->label;
+    short e2 = expr->expr2->label;
     int node = newNode(a);
     s<<node<<" ["<<color(props[e])<<",label=\""<<"("<<props[e]
-     <<" = "<<props[e->expr1]<<" | "<<props[e->expr2]<<")\"];\n  ";
+     <<" = "<<props[e1]<<" | "<<props[e2]<<")\"];\n  ";
     return newAttr(node);
   }
-  IAttr visit(const Until* e, IAttr a)	{
+  IAttr visit(const Until* expr, IAttr a)	{
+    short e = expr->label;
+    short e1 = expr->expr1->label;
+    short e2 = expr->expr2->label;
     int node = newNode(a);
     s<<node<<" ["<<color(props[e])<<",label=\""<<"("<<props[e]
-     <<" = "<<props[e->expr1]<<" U "<<props[e->expr2]<<")\"];\n  ";
+     <<" = "<<props[e1]<<" U "<<props[e2]<<")\"];\n  ";
     return newAttr(node);
   }
-  IAttr visit(const WeakUntil* e, IAttr a) {
+  IAttr visit(const WeakUntil* expr, IAttr a) {
+    short e = expr->label;
+    short e1 = expr->expr1->label;
+    short e2 = expr->expr2->label;
     int node = newNode(a);
     s<<node<<" ["<<color(props[e])<<",label=\""<<"("<<props[e]
-     <<" = "<<props[e->expr1]<<" WU "<<props[e->expr2]<<")\"];\n  ";
+     <<" = "<<props[e1]<<" WU "<<props[e2]<<")\"];\n  ";
     return newAttr(node);
   }
-  IAttr visit(const Release* e, IAttr a) {
+  IAttr visit(const Release* expr, IAttr a) {
+    short e = expr->label;
+    short e1 = expr->expr1->label;
+    short e2 = expr->expr2->label;
     int node = newNode(a);
     s<<node<<" ["<<color(props[e])<<",label=\""<<"("<<props[e]
-     <<" = "<<props[e->expr1]<<" R "<<props[e->expr2]<<")\"];\n  ";
+     <<" = "<<props[e1]<<" R "<<props[e2]<<")\"];\n  ";
     return newAttr(node);
   }
 };
@@ -153,15 +178,20 @@ class Verifier: public BottomUpVisitor {
   EStateSet& eStateSet;
   BoostTransitionGraph& g;
   Label start;
+  // this map contains the label of every LTL expression
+  map<const Expr*, Label> expr_label;
+
 public:
   LTLProperties ltl_properties;
 
-  Verifier(EStateSet& ess, BoostTransitionGraph& btg, Label start_label, int max_label) 
+  Verifier(EStateSet& ess, BoostTransitionGraph& btg, 
+	   Label start_label, int max_label, short expr_size) 
     : eStateSet(ess), g(btg), start(start_label) {
     // reserve a result map for each label
     // it maps an analysis result to each sub-expression of the ltl formula
     ltl_properties.resize(max_label);
-    
+    for (Label i=0; i<max_label; i++)
+      ltl_properties[i].resize(expr_size);
   }
 
   /**
@@ -200,7 +230,7 @@ public:
       }									\
       									\
       /* Calculate property for this node */				\
-      /*assert(props.find(e->expr) != props.end());*/			\
+      /*assert(props.find(e->expr1) != props.end());*/			\
       BoolLattice old_val = props[e];					\
       props[e] = old_val JOIN ( CALC );					\
       /* cerr<<"  "<<label<<" <- "<<props[e]<<endl; */			\
@@ -270,7 +300,7 @@ public:
       }									\
       									\
       /* Calculate property for this node */				\
-      /*assert(props.find(e->expr) != props.end());*/			\
+      /*assert(props.find(e->expr1) != props.end());*/			\
       BoolLattice old_val = props[e];					\
       									\
       props[e] = old_val JOIN ( CALC );					\
@@ -328,12 +358,13 @@ public:
 
   // Implementation status: IN PROGRESS
   // NOTE: Assumes there is only one input variable
-  void visit(const InputSymbol* e) {
+  void visit(const InputSymbol* expr) {
+    short e = expr->label;
     const VariableId* input_var = NULL;
 
-    fixpoint(Bot(),                                              // init
-	     &&,                                                 // join
-	     isInputState(state, &input_var, e->c, joined_preds) // calc
+    fixpoint(Bot(),                                                 // init
+	     &&,                                                    // join
+	     isInputState(state, &input_var, expr->c, joined_preds) // calc
 	     );
 
   }
@@ -374,11 +405,12 @@ public:
    * 
    * Implementation status: DONE
    */
-  void visit(const OutputSymbol* e) {
+  void visit(const OutputSymbol* expr) {
+    short e = expr->label;
     // propagate the O predicate until we reach the next O predicate
-    fixpoint(Bot(),                                     // init
-	     &&,                                        // join
-	     isOutputState(state, e->c, joined_preds)   // calc
+    fixpoint(Bot(),                                        // init
+	     &&,                                           // join
+	     isOutputState(state, expr->c, joined_preds)   // calc
 	     );
 
     // we set Bot nodes to Top to ensure termination. Fix it here
@@ -391,9 +423,11 @@ public:
    *
    * Implementation status: DONE
    */
-  void visit(const Not* e) {
+  void visit(const Not* expr) {
+    short e = expr->label;
+    short e1 = expr->expr1->label;
     FOR_EACH_STATE(state, label) 
-      props[e] = !props[e->expr];
+      props[e] = !props[e1];
   }
 
   /**
@@ -409,7 +443,10 @@ public:
    *
    * Implementation status: DONE
    */
-  void visit(const Next* e) {
+  void visit(const Next* expr) {
+    short e = expr->label;
+    short e1 = expr->expr1->label;
+
     FOR_EACH_STATE(state, label) {
       BoolLattice joined_succs = Bot();
       
@@ -417,7 +454,7 @@ public:
       GraphTraits::out_edge_iterator out_i, out_end;			
       for (tie(out_i, out_end) = out_edges(label, g); out_i != out_end; ++out_i) { 
 	Label succ = target(*out_i, g);
-	joined_succs = joined_succs && ltl_properties[label][e->expr];
+	joined_succs = joined_succs && ltl_properties[label][e1];
       }
       props[e] = joined_succs;
     }
@@ -437,13 +474,16 @@ public:
    *
    * Implementation status: DONE
    */
-  void visit(const Eventually* e) {
+  void visit(const Eventually* expr) {
+    short e = expr->label;
+    short e1 = expr->expr1->label;
+
     bw_fixpoint(/* init */      false,
-		/* start */     props[e->expr].isTrue(),
+		/* start */     props[e1].isTrue(),
 		/* join */      ||,
-		/* calc  */     props[e->expr] || joined_succs,
+		/* calc  */     props[e1] || joined_succs,
 		/* otherwise */ props[e] = false,
-		/* debug */     NOP //cerr<<props[e->expr]<<" || "<<joined_succs<<endl;
+		/* debug */     NOP //cerr<<props[e1]<<" || "<<joined_succs<<endl;
 		);
   }
 
@@ -453,10 +493,13 @@ public:
    * True, iff for each state we have TOP or TRUE
    * Implementation status: DONE
    */
-  void visit(const Globally* e) {
+  void visit(const Globally* expr) {
+    short e = expr->label;
+    short e1 = expr->expr1->label;
+
     BoolLattice global = true;
     FOR_EACH_STATE(state, label) {
-      global = global && props[e->expr];
+      global = global && props[e1];
       // TOP and TRUE are seen as valid
       if (global.isFalse()) {
 	//cerr<<"global failed at "<<label<<endl;
@@ -471,15 +514,23 @@ public:
   }
 
   // Implementation status: DONE
-  void visit(const And* e) {
+  void visit(const And* expr) {
+    short e = expr->label;
+    short e1 = expr->expr1->label;
+    short e2 = expr->expr2->label;
+
     FOR_EACH_STATE(state, label)
-      props[e] = props[e->expr1] && props[e->expr2];
+      props[e] = props[e1] && props[e2];
   }
 
   // Implementation status: DONE
-  void visit(const Or* e) {
+  void visit(const Or* expr) {
+    short e = expr->label;
+    short e1 = expr->expr1->label;
+    short e2 = expr->expr2->label;
+
     FOR_EACH_STATE(state, label)
-      props[e] = props[e->expr1] || props[e->expr2];
+      props[e] = props[e1] || props[e2];
   }
 
   /**
@@ -499,19 +550,20 @@ public:
    *
    * Implementation status: DONE
    */
-  void visit(const Until* e) {
+  void visit(const Until* expr) {
+    short e = expr->label;
+    short e1 = expr->expr1->label;
+    short e2 = expr->expr2->label;
+
     bw_fixpoint(/* init */      false,
-		/* start */     !props[e->expr2].isBot(),
+		/* start */     !props[e2].isBot(),
 		/* join */      ||,
-		/* calc */      props[e->expr2] || (props[e->expr1] && joined_succs),
+		/* calc */      props[e2] || (props[e1] && joined_succs),
 		/* otherwise */ props[e] = false,
 		/* debug */ 
 		NOP 
-		//cerr<<props[e->expr2]<<" || ("<<props[e->expr1]<<" && "<<joined_succs<<")"<<endl
+		//cerr<<props[e2]<<" || ("<<props[e1]<<" && "<<joined_succs<<")"<<endl
 		);
-
-    //FOR_EACH_STATE(state, label)
-    //  if (props[e].isBot()) props[e] = false;
   }
 
   /**
@@ -528,13 +580,17 @@ public:
    * Ac	 |\
    *	 e Bf
    *
-   * Implementation status: TESTING
+   * Implementation status: DONE
    */
-  void visit(const WeakUntil* e) {
+  void visit(const WeakUntil* expr) {
+    short e = expr->label;
+    short e1 = expr->expr1->label;
+    short e2 = expr->expr2->label;
+
     bw_fixpoint(/* init */	Bot(),
-		/* start */	!props[e->expr2].isBot(),
+		/* start */	!props[e2].isBot(),
 		/* join */	||,
-		/* calc */	props[e->expr2] || (props[e->expr1] && joined_succs),
+		/* calc */	props[e2] || (props[e1] && joined_succs),
 		/* otherwise */ NOP,
 		/* debug */     NOP
 		);
@@ -549,13 +605,17 @@ public:
    * If !B occurs, A happens before it.
    *
    * According to the unwinding property, R seems to be the dual operator of U.
-   * Implementation status: DONE?, BUT UNSURE ABOUT SEMANTICS
+   * Implementation status: DONE
    */
-  void visit(const Release* e) {
+  void visit(const Release* expr) {
+    short e = expr->label;
+    short e1 = expr->expr1->label;
+    short e2 = expr->expr2->label;
+
     bw_fixpoint(/* init */      Bot(),
-		/* start */     props[e->expr2].isTrue(),
+		/* start */     props[e2].isTrue(),
 		/* join */      &&,
-		/* calc */      props[e->expr2] && (props[e->expr1] || joined_succs),
+		/* calc */      props[e2] && (props[e1] || joined_succs),
 		/* otherwise */ props[e] = false,
 		/* debug */     NOP
 		);
@@ -584,9 +644,10 @@ Checker::verify(const Formula& f)
     g[src] = t->source;
     g[tgt] = t->target;
   }
-  
+
+  // Verify!
   Label start = estate_label[transitionGraph.begin()->source];
-  Verifier v(eStateSet, g, start, N);
+  Verifier v(eStateSet, g, start, N, f.size());
   const Expr& e = f;
   e.accept(v);
 
@@ -662,7 +723,7 @@ Checker::verify(const Formula& f)
     // FIXME: not always correct, obviously. See comment above.
     if (state->io.op == InputOutput::STDOUT_CONST ||
 	state->io.op == InputOutput::STDOUT_VAR) {
-      return v.props[&e];
+      return v.ltl_properties[label][e.label];
     }
 
     /* add each successor to workset */					
