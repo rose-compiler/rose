@@ -60,7 +60,7 @@ CLEAN_TARGETS += clean-taint-analysis
 clean-taint-analysis:
 	rm -f $(TAINT_ANALYSIS_TESTS) $(TAINT_ANALYSIS_TESTS:.passed=.failed)
 	rm -f $(TAINT_ANALYSIS_TESTS:.passed=.out) $(TAINT_ANALYSIS_TESTS:.passed=.err)
-	rm -f detail.html index.html summary.html
+	rm -rf detail.html index.html summary.html dbg_imgs
 
 
 
@@ -84,7 +84,7 @@ clean-cxx-constprop-local:
 	rm -f $(CXX_CONSTPROP_LOCAL_TESTS) $(CXX_CONSTPROP_LOCAL_TESTS:.passed=.failed)
 	rm -f $(CXX_CONSTPROP_LOCAL_TESTS:.passed=.out) $(CXX_CONSTPROP_LOCAL_TESTS:.passed=.err)
 	rm -f $(patsubst cxxcpls_%.passed, %*.dot, $(CXX_CONSTPROP_LOCAL_TESTS))
-	rm -f detail.html index.html summary.html
+	rm -rf detail.html index.html summary.html dbg_imgs
 
 
 
@@ -172,11 +172,9 @@ CXX_CONSTPROP_SPECIMENS =													 \
 	test2011_82.C test2011_83.C test2011_84.C test2011_85.C test2011_86.C test2011_87.C test2011_88.C test2011_89.C		 \
 	test2011_90.C test2011_91.C test2011_92.C test2011_93.C test2011_94.C test2011_95.C test2011_96.C test2011_97.C		 \
 	test2011_98.C test_CplusplusMacro_Cpp.C test_int_lexemes.C test_int_lexemes_donot_pass.C test_simple_int.C test_wchars.C
-
 # DQ (3/2/2013): Note that test2006_103.C fails for the new switch statement handling.
 # DQ (2/3/2013): Removed one failing test to see if there were any more.
 # test2006_103.C 
-
 CXX_CONSTPROP_SPECIMENS_FAILING =											\
 	inputBug317.C inputBug327.C inputForLoopLocator.C test2001_04.C test2001_14.C test2001_28.C test2003_01.C	\
 	test2003_15.C test2003_18.C test2003_32.C test2003_35.C test2003_36.C test2004_02.C test2004_10.C test2004_11.C	\
@@ -221,7 +219,7 @@ clean-cxx-constprop:
 	rm -f $(CXX_CONSTPROP_TESTS) $(CXX_CONSTPROP_TESTS:.passed=.failed)
 	rm -f $(CXX_CONSTPROP_TESTS:.passed=.out) $(CXX_CONSTPROP_TESTS:.passed=.err)
 	rm -f $(patsubst cxxcp_%.passed, %*.dot, $(CXX_CONSTPROP_TESTS))
-	rm -f detail.html index.html summary.html
+	rm -rf detail.html index.html summary.html dbg_imgs
 	rm -f exception_L4R__L5R_cfg.dot exception_L6R__L7R_cfg.dot test2004_40.h_fooAfter___Fb_v_Gb__Fe___L2R_cfg.dot
 	rm -f test2004_40.h_fooBefore___Fb_v_Gb__Fe___L2R_cfg.dot test2005_81.h_L1R_cfg.dot
 	rm -f test2005_81.h_L2R_cfg.dot test2005_88.h_L2R_cfg.dot test2005_88.h_L3R_cfg.dot
@@ -253,11 +251,9 @@ C_CONSTPROP_SPECIMENS = 												 \
 	test2006_57.C test2006_62.C test2006_69.C test2006_75.C test2006_76.C test2006_82.C test2006_83.C test2006_88.C	 \
 	test2006_91.C test2006_94.C test2006_97.C test2006_99.C test_CplusplusMacro_C.C test_int_lexemes.C		 \
 	test_int_lexemes_donot_pass.C test_simple_int.C test_wchars.C
-
 # DQ (3/2/2013): Note that test2006_103.C fails for the new switch statement handling.
 # DQ (2/3/2013): Removed one failing test to see if there were any more.
 # test2006_103.C 
-
 C_CONSTPROP_SPECIMENS_FAILING =											     \
 	lastTest.C test2001_14.C test2003_15.C test2003_18.C test2003_32.C test2003_35.C test2003_36.C test2004_14.C \
 	test2004_60.C test2005_100.C test2005_164.C test2005_187.C test2005_202.C test2006_40.C test2006_50.C
@@ -278,7 +274,7 @@ clean-c-constprop:
 	rm -f $(C_CONSTPROP_TESTS) $(C_CONSTPROP_TESTS:.passed=.failed)
 	rm -f $(C_CONSTPROP_TESTS:.passed=.out) $(C_CONSTPROP_TESTS:.passed=.err)
 	rm -f $(C_CONSTPROP_TESTS:.C.passed=.c) $(C_CONSTPROP_TESTS:.C.passed=.c*.dot)
-	rm -f detail.html index.html summary.html
+	rm -rf detail.html index.html summary.html dbg_imgs
 
 
 
@@ -306,7 +302,7 @@ clean-c99-constprop:
 	rm -f $(C99_CONSTPROP_TESTS) $(C99_CONSTPROP_TESTS:.passed=.failed)
 	rm -f $(C99_CONSTPROP_TESTS:.passed=.out) $(C99_CONSTPROP_TESTS:.passed=.err)
 	rm -f $(patsubst c99cp_%.passed, %*.dot, $(C99_CONSTPROP_TESTS))
-	rm -f detail.html index.html summary.html
+	rm -rf detail.html index.html summary.html dbg_imgs
 
 
 
@@ -347,7 +343,7 @@ clean-f77-constprop:
 	rm -f $(F77_CONSTPROP_TESTS) $(F77_CONSTPROP_TESTS:.passed=.failed)
 	rm -f $(F77_CONSTPROP_TESTS:.passed=.out) $(F77_CONSTPROP_TESTS:.passed=.err)
 	rm -f $(patsubst f77cp_%.passed, %*.dot, $(F77_CONSTPROP_TESTS))
-	rm -f detail.html index.html summary.html
+	rm -rf detail.html index.html summary.html dbg_imgs
 
 
 
@@ -397,7 +393,7 @@ clean-f90-constprop:
 	rm -f $(F90_CONSTPROP_TESTS) $(F90_CONSTPROP_TESTS:.passed=.failed)
 	rm -f $(F90_CONSTPROP_TESTS:.passed=.out) $(F90_CONSTPROP_TESTS:.passed=.err)
 	rm -f $(patsubst f90cp_%.passed, %*.dot, $(F90_CONSTPROP_TESTS))
-	rm -f detail.html index.html summary.html
+	rm -rf detail.html index.html summary.html dbg_imgs
 
 
 
@@ -432,7 +428,7 @@ clean-f03-constprop:
 	rm -f $(F03_CONSTPROP_TESTS:.passed=.out) $(F03_CONSTPROP_TESTS:.passed=.err)
 	rm -f $(patsubst f03cp_%.passed, %*.dot, $(F03_CONSTPROP_TESTS))
 	rm -f $(patsubst f03cp_%.f03.passed, %*.rmod, $(F03_CONSTPROP_TESTS))
-	rm -f detail.html index.html summary.html
+	rm -rf detail.html index.html summary.html dbg_imgs
 
 
 
@@ -457,7 +453,7 @@ clean-cxx-liveness:
 	rm -f $(CXX_LIVENESS_TESTS) $(CXX_LIVENESS_TESTS:.passed=.failed)
 	rm -f $(CXX_LIVENESS_TESTS:.passed=.out) $(CXX_LIVENESS_TESTS:.passed=.err)
 	rm -f $(patsubst cxxla_%.passed, %*.dot, $(CXX_LIVENESS_TESTS))
-	rm -f detail.html index.html summary.html
+	rm -rf detail.html index.html summary.html dbg_imgs
 
 
 
@@ -468,13 +464,11 @@ clean-cxx-liveness:
 # DQ (3/2/2013): Note that test_ptr1.C fails for the new switch statement handling.
 CXX_POINTER_ALIAS_SPECIMENS = test_ptr1.C test_ptr2.C	test_ptr3.C test_ptr4.C test_ptr5.C
 # CXX_POINTER_ALIAS_SPECIMENS = test_ptr2.C	test_ptr3.C test_ptr4.C test_ptr5.C
-
 EXTRA_DIST += $(CXX_POINTER_ALIAS_SPECIMENS)
 
 CXX_POINTER_ALIAS_TESTS = $(addprefix cxxpa_, $(addsuffix .passed, $(CXX_POINTER_ALIAS_SPECIMENS)))
 $(CXX_POINTER_ALIAS_TESTS): cxxpa_%.passed: $(srcdir)/% $(TEST_EXIT_STATUS) ./pointerAliasAnalysisTest
 	@$(RTH_RUN) CMD="./pointerAliasAnalysisTest $(ROSE_FLAGS) -c $<" $(TEST_EXIT_STATUS) $@
-
 C_CHECK_TARGETS += check-cxx-pointer-alias
 .PHONY: check-cxx-pointer-alias
 check-cxx-pointer-alias: $(CXX_POINTER_ALIAS_TESTS)
@@ -485,14 +479,13 @@ clean-cxx-pointer-alias:
 	rm -f $(CXX_POINTER_ALIAS_TESTS) $(CXX_POINTER_ALIAS_TESTS:.passed=.failed)
 	rm -f $(CXX_POINTER_ALIAS_TESTS:.passed=.out) $(CXX_POINTER_ALIAS_TESTS:.passed=.err)
 	rm -f $(patsubst cxxpa_%.passed, %*.dot, $(CXX_POINTER_ALIAS_TESTS))
-	rm -f detail.html index.html summary.html
+	rm -rf detail.html index.html summary.html dbg_imgs
 
 
 
 ###############################################################################################################################
 ### Automake check and clean rules
 ###############################################################################################################################
-
 # These two are defined based on what languages ROSE was compiled to support.
 .PHONY: check-c-languages check-fortran-languages
 
@@ -517,13 +510,10 @@ endif
 
 
 check-local: check-c-languages check-fortran-languages
-	@echo "************************************************************************************************************************************"
-	@echo "****** ROSE/tests/roseTests/programAnalysisTests/generalDataFlowAnalysisTests: make check rule complete (terminated normally) ******"
-	@echo "************************************************************************************************************************************"
+
 
 # Clean only files that are created by the build system (i.e., no wild cards, because that tends to delete files that
 # developers are working with).  Also, the MOSTLYCLEANFILES list gets too long for the shell, so we use phony targets to
 # clean each test individually.
 clean-local: $(CLEAN_TARGETS)
-	rm -rf dbg_imgs
 	rm -f $(MOSTLYCLEANFILES)
