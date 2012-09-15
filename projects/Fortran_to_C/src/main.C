@@ -134,8 +134,15 @@ void f2cTraversal::visit(SgNode* n)
     case V_SgFunctionCallExp:
       {
         SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(n);
-        translateImplicitFunctionCallExp(functionCallExp);
         ROSE_ASSERT(functionCallExp);
+        translateImplicitFunctionCallExp(functionCallExp);
+        break;
+      }
+    case V_SgGlobal:
+      {
+        SgGlobal* global = isSgGlobal(n);
+        ROSE_ASSERT(global);
+        removeFortranMaxMinFunction(global);
         break;
       }
     default:

@@ -68,7 +68,10 @@ namespace Fortran_to_C
     void linearizeArraySubscript(SgPntrArrRefExp*);
   
     void translateImplicitFunctionCallExp(SgFunctionCallExp*);
-    SgName convertImplicitFunctionName(SgName, SgType*);
+    void insertSystemHeader(const std::string&,SgScopeStatement*);
+    bool convertMathFunctionName(SgName, SgName*, SgType*);
+    bool isMaxMinFunctionName(SgName, SgType*);
+    void removeFortranMaxMinFunction(SgGlobal*);
 
     SgExpression* getFortranDimensionSize(SgExpression*);
     SgExpression* get0basedIndex(SgExpression*, SgExpression*);

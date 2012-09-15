@@ -798,3 +798,28 @@ Having the reverse order would cause a to reference out of bound.
   }
   deepDelete(equivalenceStatement->get_equivalence_set_list());
 }
+
+
+void Fortran_to_C::removeFortranMaxMinFunction(SgGlobal* global)
+{
+  vector<string> functionName;
+  functionName.push_back("min");
+  functionName.push_back("max");
+  functionName.push_back("dmin");
+  functionName.push_back("dmin");
+  for(vector<string>::iterator i = functionName.begin(); i != functionName.end(); ++i){
+    SgFunctionSymbol* funcSymbol = lookupFunctionSymbolInParentScopes((*i), global); 
+    if(funcSymbol != NULL)
+    {
+      ROSE_ASSERT(funcSymbol);
+      SgSymbolTable* symTable = isSgSymbolTable(funcSymbol->get_parent());
+      ROSE_ASSERT(symTable);
+      symTable->remove(funcSymbol);
+      SgFunctionDeclaration* decl = funcSymbol->get_declaration();
+      funcSymbol->set_declaration(NULL);
+      deepDelete(decl);
+      deepDelete(funcSymbol);
+    }
+  }
+}
+

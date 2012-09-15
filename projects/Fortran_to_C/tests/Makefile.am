@@ -26,6 +26,8 @@ TESTCODES_REQUIRED_TO_PASS = \
 							   equivalence7.F \
 							   program1.F \
 							   subroutine1.F \
+							   implicitFunctionCall1.F \
+							   implicitFunctionCall2.F \
 							   function1.F
 
 
