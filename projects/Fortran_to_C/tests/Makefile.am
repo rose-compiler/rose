@@ -28,6 +28,8 @@ TESTCODES_REQUIRED_TO_PASS = \
 							   subroutine1.F \
 							   implicitFunctionCall1.F \
 							   implicitFunctionCall2.F \
+							   functionArgs1.F \
+							   functionArgs2.F \
 							   function1.F
 
 

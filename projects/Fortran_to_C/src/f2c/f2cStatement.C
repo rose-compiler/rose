@@ -56,7 +56,7 @@ void Fortran_to_C::translateProgramHeaderStatement(SgProgramHeaderStatement* pro
   ROSE_ASSERT(scopeStatement);
   
   // Get ParameterList and DecoratorList
-  SgFunctionParameterList* functionParameterList = deepCopy(programHeaderStatement->get_parameterList());
+  SgFunctionParameterList* functionParameterList = buildFunctionParameterList(); 
   SgExprListExp* decoratorList = deepCopy(programHeaderStatement->get_decoratorList());
   
   // Reuse FunctionDefinition from Fortran programHeaderStatement
@@ -92,6 +92,8 @@ void Fortran_to_C::translateProgramHeaderStatement(SgProgramHeaderStatement* pro
   cFunctionDeclaration->set_definition(functionDefinition);
   programHeaderStatement->set_definition(NULL);
   
+  translateFunctionParameterList(functionParameterList,programHeaderStatement->get_parameterList(),functionDefinition);
+
   // Replace the SgProgramHeaderStatement with SgFunctionDeclaration.
   replaceStatement(programHeaderStatement,cFunctionDeclaration,true);
   
@@ -105,6 +107,36 @@ void Fortran_to_C::translateProgramHeaderStatement(SgProgramHeaderStatement* pro
 }  // End of Fortran_to_C::translateProgramHeaderStatement
 
 
+/******************************************************************************************************************************/
+/*
+  Convert to a new functionParameterList
+*/
+/******************************************************************************************************************************/
+void Fortran_to_C::translateFunctionParameterList(SgFunctionParameterList* newList, SgFunctionParameterList* oldList, SgFunctionDefinition* funcDef)
+{
+  SgInitializedNamePtrList argList = oldList->get_args();
+  for(SgInitializedNamePtrList::iterator i=argList.begin(); i != argList.end(); ++i)
+  {
+    SgType* newType = (*i)->get_type();
+    /*
+       We need to handle multi-dimensional array argument.
+       We have performed the arrayType translation in the earlier process, 
+       therefore, the arrayType AST is alreay in C-style.
+    */
+    if(isSgArrayType(newType))
+    {
+      SgArrayType* rootType = isSgArrayType(newType);
+      SgType* baseType = rootType->get_base_type();
+      newType = buildPointerType(baseType);
+      rootType->set_base_type(NULL);
+      deepDelete(rootType);
+    }
+    SgInitializedName* newName = buildInitializedName((*i)->get_name(), newType);
+    newName->set_scope(funcDef);
+    newList->append_arg(newName);
+  }
+  
+}
 
 /******************************************************************************************************************************/
 /* 
@@ -121,7 +153,7 @@ void Fortran_to_C::translateProcedureHeaderStatement(SgProcedureHeaderStatement*
   ROSE_ASSERT(scopeStatement);
   
   // Get ParameterList and DecoratorList
-  SgFunctionParameterList* functionParameterList = deepCopy(procedureHeaderStatement->get_parameterList());
+  SgFunctionParameterList* functionParameterList = buildFunctionParameterList(); 
   SgExprListExp* decoratorList = deepCopy(procedureHeaderStatement->get_decoratorList());
   
   // Get the return variable from Fortran, name is same as function name.
@@ -152,7 +184,8 @@ void Fortran_to_C::translateProcedureHeaderStatement(SgProcedureHeaderStatement*
                                                                                  functionParameterList,
                                                                                  scopeStatement,
                                                                                  decoratorList);
-  
+
+
   // Fix the function symbol declaration
   SgFunctionSymbol* functionSymbol = isSgFunctionSymbol(scopeStatement->lookup_symbol(procedureHeaderStatement->get_name()));
   functionSymbol->set_declaration(cFunctionDeclaration);
@@ -162,6 +195,8 @@ void Fortran_to_C::translateProcedureHeaderStatement(SgProcedureHeaderStatement*
   functionDefinition->set_parent(cFunctionDeclaration);
   cFunctionDeclaration->set_definition(functionDefinition);
   procedureHeaderStatement->set_definition(NULL);
+
+  translateFunctionParameterList(functionParameterList,procedureHeaderStatement->get_parameterList(),functionDefinition);
   
   // If it is a Fortran function, add a return statement at the end.
   if(procedureHeaderStatement->isFunction())
