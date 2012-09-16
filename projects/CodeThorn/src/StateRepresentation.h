@@ -15,16 +15,13 @@
 #include "CFAnalyzer.h"
 #include "AType.h"
 #include "VariableIdMapping.h"
+#include "ConstraintRepresentation.h"
 
 using namespace std;
 
 typedef int StateId;
 typedef int EStateId;
 typedef string VariableName;
-typedef AType::ConstIntLattice AValue; 
-typedef AType::CppCapsuleConstIntLattice CppCapsuleAValue; 
-typedef AType::CppCapsuleConstIntLatticeLessComparator CppCapsuleAValueLessComp; 
-typedef AType::ConstIntLatticeCmp AValueCmp; 
 class State;
 typedef set<const State*> StatePtrSet;
 
@@ -52,54 +49,6 @@ class StateSet : public list<State> {
   const State* statePtr(State& s);
 };
 
-/*
-  EQ_VAR_CONST : equal (==)
-  NEQ_VAR_CONST: not equal (!=)
-  DEQ_VAR_CONST: disequal (both, EQ and NEQ)
-*/
-class Constraint {
- public:
-  enum ConstraintOp {EQ_VAR_CONST,NEQ_VAR_CONST,DEQ_VAR_CONST};
-  Constraint(ConstraintOp op0,VariableId lhs, AValue rhs);
-  Constraint(ConstraintOp op0,VariableId lhs, CppCapsuleAValue rhs);
-  ConstraintOp op;
-  VariableId var;
-  CppCapsuleAValue intVal;
-  string toString() const;
- private:
-  string opToString() const;
-};
-
-bool operator<(const Constraint& c1, const Constraint& c2);
-bool operator==(const Constraint& c1, const Constraint& c2);
-bool operator!=(const Constraint& c1, const Constraint& c2);
-
-class ConstraintSet : public set<Constraint> {
- public:
-  bool constraintExists(Constraint::ConstraintOp op, VariableId varId, CppCapsuleAValue intVal) const;
-  bool constraintExists(Constraint::ConstraintOp op, VariableId varId, AValue intVal) const;
-  bool constraintExists(const Constraint& c) const;
-  ConstraintSet::iterator findSpecific(Constraint::ConstraintOp op, VariableId varId) const;
-  ConstraintSet findSpecificSet(Constraint::ConstraintOp op, VariableId varId) const;
-  AType::ConstIntLattice varConstIntLatticeValue(const VariableId varId) const;
-  string toString() const;
-  ConstraintSet& operator+=(ConstraintSet& s2);
-  ConstraintSet operator+(ConstraintSet& s2);
-  ConstraintSet deleteVarConstraints(VariableId varId);
-  void deleteConstraints(VariableId varId);
-  ConstraintSet invertedConstraints();
-  void invertConstraints();
-  //! duplicates constraints for par2 variable and adds them for par1 variable.
-  void duplicateConstraints(VariableId lhsVarId, VariableId rhsVarId);
-
-  // that's a tricky form of reuse (hiding the inherited function (not overloading, nor overriding)).
-  void insert(Constraint c);
-
-  bool deqConstraintExists();
-};
-//bool operator==(const ConstraintSet& s1, const ConstraintSet& s2);
-//bool operator<(const ConstraintSet& s1, const ConstraintSet& s2);
-//bool operator!=(const ConstraintSet& s1, const ConstraintSet& s2);
 
 /* Input: a value val is read into a variable var
    Output: either a variable or a value is written

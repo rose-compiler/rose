@@ -19,6 +19,7 @@ using namespace std;
   \date 2012
   \author Markus Schordan
  */
+
 namespace AType {
 
   /*!
@@ -142,5 +143,10 @@ class ConstIntLattice {
   };
 
 } // end of namespace AType
+
+typedef AType::ConstIntLattice AValue; 
+typedef AType::CppCapsuleConstIntLattice CppCapsuleAValue; 
+typedef AType::CppCapsuleConstIntLatticeLessComparator CppCapsuleAValueLessComp; 
+typedef AType::ConstIntLatticeCmp AValueCmp; 
 
 #endif

@@ -35,6 +35,42 @@ string int_to_string(int x) {
   return ss.str();
 }
 
+string color(string name) {
+  if(!boolOptions["colors"]) 
+	return "";
+  string c="\33[";
+  if(name=="normal") return c+"0m";
+  if(name=="bold") return c+"1m";
+  if(name=="bold-off") return c+"22m";
+  if(name=="blink") return c+"5m";
+  if(name=="blink-off") return c+"25m";
+  if(name=="underline") return c+"4m";
+  if(name=="default-text-color") return c+"39m";
+  if(name=="default-bg-color") return c+"49m";
+  bool bgcolor=false;
+  string prefix="bg-";
+  size_t pos=name.find(prefix);
+  if(pos==0) {
+	bgcolor=true;
+	name=name.substr(prefix.size(),name.size()-prefix.size());
+  }
+  string colors[]={"black","red","green","yellow","blue","magenta","cyan","white"};
+  int i;
+  for(i=0;i<8;i++) {
+	if(name==colors[i]) {
+	  break;
+	}
+  }
+  if(i<8) {
+	if(bgcolor)
+	  return c+"4"+int_to_string(i)+"m";
+	else
+	  return c+"3"+int_to_string(i)+"m";
+  }
+  else
+	throw "Error: unknown color code.";
+}
+
 bool CodeThornLanguageRestrictor::checkIfAstIsAllowed(SgNode* node) {
   MyAst ast(node);
   for(MyAst::iterator i=ast.begin();i!=ast.end();++i) {
@@ -124,11 +160,23 @@ int main( int argc, char * argv[] ) {
     ("tg2-estate-address", po::value< string >(), "transition graph 2: visualize address [=yes|no]")
     ("tg2-estate-id", po::value< string >(), "transition graph 2: visualize estate-id [=yes|no]")
     ("tg2-estate-properties", po::value< string >(),"transition graph 2: visualize all estate-properties [=yes|no]")
+	("colors",po::value< string >(),"use colors in output [=yes|no]")
     ;
 
   po::store(po::command_line_parser(argc, argv).
 	    options(desc).allow_unregistered().run(), args);
   po::notify(args);
+
+  boolOptions.init(argc,argv);
+  boolOptions.registerOption("tg1-estate-address",false);
+  boolOptions.registerOption("tg1-estate-id",false);
+  boolOptions.registerOption("tg1-estate-properties",true);
+  boolOptions.registerOption("tg2-estate-address",false);
+  boolOptions.registerOption("tg2-estate-id",true);
+  boolOptions.registerOption("tg2-estate-properties",false);
+  boolOptions.registerOption("colors",true);
+  boolOptions.processOptions();
+  cout<<boolOptions.toString();
 
   if (args.count("internal-checks")) {
 	if(internalChecks(argc,argv)==false)
@@ -164,16 +212,6 @@ int main( int argc, char * argv[] ) {
 	  }
 	}
   }
-
-  boolOptions.init(argc,argv);
-  boolOptions.registerOption("tg1-estate-address",false);
-  boolOptions.registerOption("tg1-estate-id",false);
-  boolOptions.registerOption("tg1-estate-properties",true);
-  boolOptions.registerOption("tg2-estate-address",false);
-  boolOptions.registerOption("tg2-estate-id",true);
-  boolOptions.registerOption("tg2-estate-properties",false);
-  boolOptions.processOptions();
-  cout<<boolOptions.toString();
 
   // Build the AST used by ROSE
   cout << "INIT: Parsing and creating AST."<<endl;
@@ -213,29 +251,18 @@ int main( int argc, char * argv[] ) {
   long transitionGraphSize=analyzer.getTransitionGraph()->size();
   long transitionGraphBytes=transitionGraphSize*sizeof(Transition);
 
-  const string csi = "\33[";
-  const string white = csi+"37m";
-  const string green = csi+"32m";
-  const string red = csi+"31m";
-  const string magenta = csi+"35m";
-  const string cyan = csi+"36m";
-  const string blue = csi+"34m";
-  const string bold_on = csi+"1m";
-  const string bold_off = csi+"22m";
-  const string normal = csi+"0m";
-
-  cout << "Number of stdin-estates        : "<<cyan<<(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDIN_VAR))<<white<<endl;
-  cout << "Number of stdout-estates       : "<<cyan<<(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDOUT_VAR))<<white<<endl;
-  cout << "Number of stderr-estates       : "<<cyan<<(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDERR_VAR))<<white<<endl;
-  cout << "Number of failed-assert-estates: "<<cyan<<(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::FAILED_ASSERT))<<white<<endl;
-  cout << "Number of states     : "<<magenta<<stateSetSize<<white<<" (memory: "<<magenta<<stateSetBytes<<white<<" bytes)"<<endl;
-  cout << "Number of estates    : "<<cyan<<eStateSetSize<<white<<" (memory: "<<cyan<<eStateSetBytes<<white<<" bytes)"<<endl;
-  cout << "Number of transitions: "<<blue<<transitionGraphSize<<white<<" (memory: "<<blue<<transitionGraphBytes<<white<<" bytes)"<<endl;
-  cout << "Memory total         : "<<green<<stateSetBytes+eStateSetBytes+transitionGraphBytes<<" bytes"<<normal<<endl;
+  cout << "Number of stdin-estates        : "<<color("cyan")<<(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDIN_VAR))<<color("white")<<endl;
+  cout << "Number of stdout-estates       : "<<color("cyan")<<(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDOUT_VAR))<<color("white")<<endl;
+  cout << "Number of stderr-estates       : "<<color("cyan")<<(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDERR_VAR))<<color("white")<<endl;
+  cout << "Number of failed-assert-estates: "<<color("cyan")<<(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::FAILED_ASSERT))<<color("white")<<endl;
+  cout << "Number of states     : "<<color("magenta")<<stateSetSize<<color("white")<<" (memory: "<<color("magenta")<<stateSetBytes<<color("white")<<" bytes)"<<endl;
+  cout << "Number of estates    : "<<color("cyan")<<eStateSetSize<<color("white")<<" (memory: "<<color("cyan")<<eStateSetBytes<<color("white")<<" bytes)"<<endl;
+  cout << "Number of transitions: "<<color("blue")<<transitionGraphSize<<color("white")<<" (memory: "<<color("blue")<<transitionGraphBytes<<color("white")<<" bytes)"<<endl;
+  cout << "Memory total         : "<<color("green")<<stateSetBytes+eStateSetBytes+transitionGraphBytes<<" bytes"<<color("normal")<<endl;
   if(totalRunTime<1000.0) 
-	cout << "Time total           : "<<green<<totalRunTime<<" ms"<<normal<<endl;
+	cout << "Time total           : "<<color("green")<<totalRunTime<<" ms"<<color("normal")<<endl;
   else
-	cout << "Time total           : "<<green<<totalRunTime/1000.0<<" seconds"<<normal<<endl;
+	cout << "Time total           : "<<color("green")<<totalRunTime/1000.0<<" seconds"<<color("normal")<<endl;
   // we only generate a visualization if #estates<=1000
   if(eStateSetSize>2500) {
 	cout << "Number of eStates > 2500. Not generating visualization."<<endl;
@@ -294,7 +321,7 @@ int main( int argc, char * argv[] ) {
     while ( !ltl_eof) {
       try { 
         if (ltl_parse() != 0) {
-          cerr<<red<< "Syntax error" <<normal<<endl;
+          cerr<<color("red")<< "Syntax error" <<color("normal")<<endl;
 	  ++n;
 	  ++n_failed;
 	  continue;
@@ -304,59 +331,59 @@ int main( int argc, char * argv[] ) {
 	  continue;
 	}
       } catch(const char* s) {
-        if (ltl_val) cout<<normal<<string(*ltl_val)<<endl;
-        cout<< s<<endl<<red<< "Grammar Error" <<normal<<endl;
+        if (ltl_val) cout<<color("normal")<<string(*ltl_val)<<endl;
+        cout<< s<<endl<<color("red")<< "Grammar Error" <<color("normal")<<endl;
 	++n;
 	++n_failed;
 	continue;
       } catch(...) {
-	cout<<red<< "Parser exception" << endl;
+	cout<<color("red")<< "Parser exception" << endl;
 	++n;
 	++n_failed;
 	continue;
       }  
 	  
       ++n;
-      cout<<endl<<"Verifying formula "<<white<<string(*ltl_val)<<normal<<"."<<endl;
+      cout<<endl<<"Verifying formula "<<color("white")<<string(*ltl_val)<<color("normal")<<"."<<endl;
       try {
 	AType::BoolLattice result = checker.verify(*ltl_val);
 	if (result.isTrue()) {
 	  ++n_yes;
-	  cout<<green<<"YES"<<normal<<endl;
+	  cout<<color("green")<<"YES"<<color("normal")<<endl;
 	} else if (result.isFalse()) {
 	  ++n_no;
-	  cout<<cyan<<"NO"<<normal<<endl;
+	  cout<<color("cyan")<<"NO"<<color("normal")<<endl;
 	} else {
 	  ++n_undecided;
-	  cout<<magenta<<"UNDECIDED"<<normal<<endl;
+	  cout<<color("magenta")<<"UNDECIDED"<<color("normal")<<endl;
 	}
       } catch(const char* str) {
 	++n_failed;
 	cerr << "Exception raised: " << str << endl;
-	cout<<red<<"FAILED"<<normal<<endl;
+	cout<<color("red")<<"FAILED"<<color("normal")<<endl;
       } catch(string str) {
 	++n_failed;
 	cerr << "Exception raised: " << str << endl;
-	cout<<red<<"FAILED"<<normal<<endl;
+	cout<<color("red")<<"FAILED"<<color("normal")<<endl;
       } catch(...) {
 	++n_failed;
-	cout<<red<<"FAILED"<<normal<<endl;
+	cout<<color("red")<<"FAILED"<<color("normal")<<endl;
       }  
     }
     fclose(ltl_input);
     assert(n_yes+n_no+n_undecided+n_failed == n);
     cout<<"\nStatistics "<<endl
         <<"========== "<<endl
-	<<n_yes      <<"/"<<n<<green  <<" YES, "       <<normal 	
-	<<n_no       <<"/"<<n<<cyan   <<" NO, "	       <<normal 	
-	<<n_undecided<<"/"<<n<<magenta<<" UNDECIDED, " <<normal 	
-	<<n_failed   <<"/"<<n<<red    <<" FAILED"      <<normal 	
+	<<n_yes      <<"/"<<n<<color("green")  <<" YES, "       <<color("normal") 	
+	<<n_no       <<"/"<<n<<color("cyan")   <<" NO, "	       <<color("normal") 	
+	<<n_undecided<<"/"<<n<<color("magenta")<<" UNDECIDED, " <<color("normal") 	
+	<<n_failed   <<"/"<<n<<color("red")    <<" FAILED"      <<color("normal") 	
 	<<endl;
 
   } 
 
   // reset terminal
-  cout<<normal<<"done."<<endl;
+  cout<<color("normal")<<"done."<<endl;
   
   } catch(char* str) {
 	cerr << "*Exception raised: " << str << endl;

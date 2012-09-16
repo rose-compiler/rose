@@ -110,7 +110,7 @@ SingleEvalResultConstInt ExprAnalyzer::evalConstInt(SgNode* node,EState eState) 
 	  if((variable(lhs,varId) && rhsResult.isConstInt()) || (lhsResult.isConstInt() && variable(rhs,varId))) {
 		// only add the equality constraint if no constant is bound to the respective variable
 		if(!res.eState.state->varIsConst(varId)) {
-		  res.exprConstraints.insert(Constraint(Constraint::EQ_VAR_CONST,varId,rhsResult.value()));
+		  res.exprConstraints.addConstraint(Constraint(Constraint::EQ_VAR_CONST,varId,rhsResult.value()));
 		}
 	  }
 	  return res;
@@ -123,7 +123,7 @@ SingleEvalResultConstInt ExprAnalyzer::evalConstInt(SgNode* node,EState eState) 
 	  if((variable(lhs,varId) && rhsResult.isConstInt()) || (lhsResult.isConstInt() && variable(rhs,varId))) {
 		// only add the inequality constraint if no constant is bound to the respective variable
 		if(!res.eState.state->varIsConst(varId)) {
-		  res.exprConstraints.insert(Constraint(Constraint::NEQ_VAR_CONST,varId,rhsResult.value()));
+		  res.exprConstraints.addConstraint(Constraint(Constraint::NEQ_VAR_CONST,varId,rhsResult.value()));
 		}
 	  }
 	  return res;

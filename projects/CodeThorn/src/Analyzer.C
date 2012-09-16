@@ -603,6 +603,10 @@ State Analyzer::analyzeAssignRhs(State currentState,VariableId lhsVar, SgNode* r
 	// x=y: contraint propagation for var1=var2 assignments
 	cset.duplicateConstraints(lhsVar, rhsVarId);
 
+#if 0
+	cset.insertEqVarVar(lhsVar,rhsVarId); // VAR_VAR
+#endif
+
 	if(currentState.varExists(rhsVarId)) {
 	  rhsIntVal=currentState[rhsVarId].getValue();
 	} else {
