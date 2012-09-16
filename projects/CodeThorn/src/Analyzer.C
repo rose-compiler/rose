@@ -7,6 +7,8 @@
 #include "Analyzer.h"
 #include "CollectionOperators.h"
 
+string color(string);
+
 Analyzer::Analyzer():startFunRoot(0),cfanalyzer(0) {
 }
 
@@ -33,16 +35,7 @@ void Analyzer::recordTransition(const EState* sourceState, Edge e, const EState*
 }
 
 void Analyzer::printStatusMessage() {
-  const string csi = "\33[";
-  const string white = csi+"37m";
-  const string red = csi+"31m";
-  const string magenta = csi+"35m";
-  const string cyan = csi+"36m";
-  const string blue = csi+"34m";
-  const string startOfLine = csi+"0G";
-  const string hideCursor = csi+"?25l";
-  const string bold_on = csi+"1m";
-  static int lastNumEStates=0;
+  long int lastNumEStates=0;
   if(isEmptyWorkList()) {
 	//cout << "Empty Work List: empty."<<endl;
 	return;
@@ -57,16 +50,13 @@ void Analyzer::printStatusMessage() {
 	// report we are alife
   if((eStateSet.size()-lastNumEStates)>=displayDiff) {
 	lastNumEStates=eStateSet.size();
-	//cout<<startOfLine;
-	//cout<<hideCursor;
-	//cout<<bold_on;
-	cout<<white<<"Number of states/estates/transitions: ";
-	cout<<magenta<<stateSet.size()
-		<<white<<"/"
-		<<cyan<<eStateSet.size()
-		<<white<<"/"
-		<<blue<<transitionGraph.size()
-		<<white<<"";
+	cout<<color("white")<<"Number of states/estates/transitions: ";
+	cout<<color("magenta")<<stateSet.size()
+		<<color("white")<<"/"
+		<<color("cyan")<<eStateSet.size()
+		<<color("white")<<"/"
+		<<color("blue")<<transitionGraph.size()
+		<<color("white")<<"";
 	cout<<endl;
   }
 }
