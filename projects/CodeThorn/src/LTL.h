@@ -4,6 +4,15 @@
 
 #include <boost/shared_ptr.hpp>
 
+namespace LTL { class Formula; }
+
+// global variables from Bison
+extern FILE* ltl_input;
+extern int ltl_parse();
+extern LTL::Formula* ltl_val;
+extern bool ltl_eof;
+extern short ltl_label;
+
 /// Linear Temporal Logic (LTL) Abstract syntax tree (AST)
 ///
 /// Written 2012 by Adrian Prantl <adrian@llnl.gov>.
@@ -69,8 +78,8 @@ namespace LTL {
   void accept(TopDownVisitor& v, IAttr a) const { v.visit(this, a); }
 
 #define LTL_UNARY_VISITOR						\
-  void accept(BottomUpVisitor& v)         const { expr->accept(v); v.visit(this); } \
-  void accept(TopDownVisitor& v, IAttr a) const { expr->accept(v, v.visit(this, a)); }
+  void accept(BottomUpVisitor& v)         const { expr1->accept(v); v.visit(this); } \
+  void accept(TopDownVisitor& v, IAttr a) const { expr1->accept(v, v.visit(this, a)); }
 
 #define LTL_BINARY_VISITOR					\
   void accept(BottomUpVisitor& v) const					\
@@ -94,6 +103,7 @@ namespace LTL {
    */
   class Expr {
   public:
+    short label;
     std::string id;
     Expr(std::string _id="not implemented"): id(_id) {}
     virtual operator std::string () const { return id; }
@@ -103,13 +113,14 @@ namespace LTL {
 
   class UnaryExpr : public Expr {
   public:
-    Expr *expr;
-    UnaryExpr(std::string _id, Expr *e): expr(e), Expr(_id) {
+    Expr *expr1;
+    UnaryExpr(std::string _id, Expr *e): expr1(e), Expr(_id) {
       assert(e);
+      label = ltl_label++;
     }
     operator std::string () const {
       std::stringstream s;
-      s << id << "(" << std::string(*expr) << ")" ;
+      s << id << "(" << std::string(*expr1) << ")" ;
       return s.str();
     }
   };
@@ -119,6 +130,7 @@ namespace LTL {
     Expr *expr1, *expr2;
     BinaryExpr(std::string _id, Expr *e1, Expr *e2): expr1(e1), expr2(e2), Expr(_id) {
       assert(e1 && e2);
+      label = ltl_label++;
     }
     operator std::string () const {
       std::stringstream s;
@@ -130,14 +142,22 @@ namespace LTL {
   class InputSymbol : public Expr {
   public:
     char c;
-    InputSymbol(int _c) { c = (char)_c; id = "input("+std::string(1, c)+")"; }
+    InputSymbol(int _c) { 
+      label = ltl_label++;
+      c = (char)_c; 
+      id = "input("+std::string(1, c)+")"; 
+    }
     LTL_ATOMIC_VISITOR
   };
 
   class OutputSymbol : public Expr {
   public:
     char c;
-    OutputSymbol(int _c) { c = (char)_c; id = "output("+std::string(1, c)+")"; }
+    OutputSymbol(int _c) { 
+      label = ltl_label++;
+      c = (char)_c;
+      id = "output("+std::string(1, c)+")"; 
+    }
     LTL_ATOMIC_VISITOR
   };
                     
@@ -216,7 +236,7 @@ namespace LTL {
      * unquantified. E.g., what's the difference between "oX" and "G
      * oX", otherwise?
      */
-    Formula(const Expr& e1) :e(e1) {
+    Formula(const Expr& e1) :e(e1), expr_size(ltl_label) {
       class WellFormedVisitor: public TopDownVisitor {
       public:
         struct Attr: public InheritedAttribute { 
@@ -256,16 +276,13 @@ namespace LTL {
 
     operator std::string () const { return std::string(e); }
     operator const Expr& () const { return e; }
+    short size() const { return expr_size; }
+
   protected:
     const Expr& e;
+    short expr_size;
   };
 
 };
-
-extern FILE* ltl_input;
-extern int ltl_parse();
-extern LTL::Formula* ltl_val;
-extern bool ltl_eof;
-
 
 #endif
