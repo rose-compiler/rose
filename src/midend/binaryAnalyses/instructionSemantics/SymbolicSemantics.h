@@ -643,7 +643,7 @@ namespace BinaryAnalysis {              // documented elsewhere
                     orig_state.memory.print(o, prefix+"    ", rmap);
                 }
                 friend std::ostream& operator<<(std::ostream &o, const Policy &p) {
-                    p.print(o, NULL);
+                    p.print(o, "", NULL);
                     return o;
                 }
 
@@ -778,47 +778,98 @@ namespace BinaryAnalysis {              // documented elsewhere
                                           const ValueType<nBits> *dflt=NULL) const {
                     assert(8==nBits || 16==nBits || 32==nBits);
                     typedef typename State<ValueType>::Memory::CellList CellList;
-                    ValueType<nBits> retval, defs;
 
-                    for (size_t bytenum=0; bytenum<nBits/8; ++bytenum) { // little endian
-                        // read byte
+                    // Read bytes in little endian order.
+                    ValueType<nBits> retval, defs;
+                    std::vector<ValueType<8> > bytes; // little endian order
+                    for (size_t bytenum=0; bytenum<nBits/8; ++bytenum) {
                         ValueType<8> dflt_byte = dflt ? state.memory.extract_byte(*dflt, bytenum) : ValueType<8>();
                         ValueType<8> byte = mem_read_byte(state, state.memory.add(addr, bytenum), dflt_byte);
                         defs.defined_by(NULL, byte.get_defining_instructions());
+                        bytes.push_back(byte);
+                    }
 
-                        // extend byte
-                        ValueType<nBits> word;
-                        if (byte.is_known()) {
-                            word = ValueType<nBits>(byte.known_value());
-                        } else if (nBits==8) {
-                            word = ValueType<nBits>(byte.get_expression());
-                        } else {
-                            word = ValueType<nBits>(InternalNode::create(nBits, InsnSemanticsExpr::OP_UEXTEND,
-                                                                         LeafNode::create_integer(32, nBits),
-                                                                         byte.get_expression()));
-                        }
-
-                        // left shift
-                        if (0!=bytenum) {
-                            if (word.is_known()) {
-                                word = ValueType<nBits>(word.known_value() << (bytenum*8));
-                            } else {
-                                word = ValueType<nBits>(InternalNode::create(nBits, InsnSemanticsExpr::OP_SHR0,
-                                                                             LeafNode::create_integer(32, bytenum*8),
-                                                                             word.get_expression()));
+                    // Try to match the pattern of bytes:
+                    //    (extract 0  8 EXPR_0)
+                    //    (extract 8 16 EXPR_1)
+                    //    ...
+                    // where EXPR_i are all structurally identical.
+                    bool matched = false;
+                    if (bytes.size()>1) {
+                        matched = true; // and prove otherwise
+                        for (size_t bytenum=0; bytenum<bytes.size() && matched; ++bytenum) {
+                            InternalNodePtr extract = bytes[bytenum].get_expression()->isInternalNode();
+                            if (!extract || InsnSemanticsExpr::OP_EXTRACT!=extract->get_operator()) {
+                                matched = false;
+                                break;
+                            }
+                            LeafNodePtr arg0 = extract->child(0)->isLeafNode();
+                            LeafNodePtr arg1 = extract->child(1)->isLeafNode();
+                            if (!arg0 || !arg0->is_known() || arg0->get_value()!=8*bytenum ||
+                                !arg1 || !arg1->is_known() || arg1->get_value()!=8*(bytenum+1)) {
+                                matched = false;
+                                break;
+                            }
+                            if (bytenum>0) {
+                                TreeNodePtr e0 = bytes[0      ].get_expression()->isInternalNode()->child(2);
+                                TreeNodePtr ei = bytes[bytenum].get_expression()->isInternalNode()->child(2);
+                                matched = e0->equivalent_to(ei);
                             }
                         }
+                    }
 
-                        // bit-wise OR into the return value
-                        if (0==bytenum) {
-                            retval = word;
-                        } else if (retval.is_known() && word.is_known()) {
-                            retval = ValueType<nBits>(retval.known_value() | word.known_value());
+                    // If the bytes match the above pattern, then we can just return (the low order bits of) EXPR_0, otherwise
+                    // we have to construct a return value by extending and shifting the bytes and bitwise-OR them together.
+                    if (matched) {
+                        TreeNodePtr e0 = bytes[0].get_expression()->isInternalNode()->child(2);
+                        if (e0->get_nbits()==nBits) {
+                            retval = ValueType<nBits>(e0);
                         } else {
-                            retval = ValueType<nBits>(InternalNode::create(nBits, InsnSemanticsExpr::OP_BV_OR,
-                                                                           retval.get_expression(), word.get_expression()));
+                            assert(e0->get_nbits()>nBits);
+                            retval = ValueType<nBits>(InternalNode::create(nBits, InsnSemanticsExpr::OP_EXTRACT,
+                                                                           LeafNode::create_integer(32, 0),
+                                                                           LeafNode::create_integer(32, nBits),
+                                                                           e0));
+                        }
+                    } else {
+                        for (size_t bytenum=0; bytenum<bytes.size(); ++bytenum) { // little endian
+                            ValueType<8> byte = bytes[bytenum];
+
+                            // extend byte
+                            ValueType<nBits> word;
+                            if (byte.is_known()) {
+                                word = ValueType<nBits>(byte.known_value());
+                            } else if (nBits==8) {
+                                word = ValueType<nBits>(byte.get_expression());
+                            } else {
+                                word = ValueType<nBits>(InternalNode::create(nBits, InsnSemanticsExpr::OP_UEXTEND,
+                                                                             LeafNode::create_integer(32, nBits),
+                                                                             byte.get_expression()));
+                            }
+
+                            // left shift
+                            if (0!=bytenum) {
+                                if (word.is_known()) {
+                                    word = ValueType<nBits>(word.known_value() << (bytenum*8));
+                                } else {
+                                    word = ValueType<nBits>(InternalNode::create(nBits, InsnSemanticsExpr::OP_SHR0,
+                                                                                 LeafNode::create_integer(32, bytenum*8),
+                                                                                 word.get_expression()));
+                                }
+                            }
+
+                            // bit-wise OR into the return value
+                            if (0==bytenum) {
+                                retval = word;
+                            } else if (retval.is_known() && word.is_known()) {
+                                retval = ValueType<nBits>(retval.known_value() | word.known_value());
+                            } else {
+                                retval = ValueType<nBits>(InternalNode::create(nBits, InsnSemanticsExpr::OP_BV_OR,
+                                                                               retval.get_expression(), word.get_expression()));
+                            }
                         }
                     }
+
                     retval.defined_by(NULL, defs.get_defining_instructions());
                     return retval;
                 }
