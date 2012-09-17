@@ -619,7 +619,8 @@ State Analyzer::analyzeAssignRhs(State currentState,VariableId lhsVar, SgNode* r
 	isRhsVar=ExprAnalyzer::variable(rhs,rhsVarId);
 	assert(isRhsVar);
 	// x=y: constraint propagation for var1=var2 assignments
-	cset.addEqVarVar(lhsVar, rhsVarId);
+	// we do not perform this operation on assignments yet, as the constraint set could become inconsistent.
+	//cset.addEqVarVar(lhsVar, rhsVarId);
 
 	if(currentState.varExists(rhsVarId)) {
 	  rhsIntVal=currentState[rhsVarId].getValue();
