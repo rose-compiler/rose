@@ -30,6 +30,7 @@ TESTCODES_REQUIRED_TO_PASS = \
 							   implicitFunctionCall2.F \
 							   functionArgs1.F \
 							   functionArgs2.F \
+							   label.F \
 							   function1.F
 
 

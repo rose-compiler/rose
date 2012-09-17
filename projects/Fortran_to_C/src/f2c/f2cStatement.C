@@ -239,8 +239,34 @@ void Fortran_to_C::fixFortranSymbolTable(SgNode* root, bool hasReturnVariable)
   SgFunctionDefinition* functionDefinition = isSgFunctionDefinition(root);
   SgBasicBlock* basicBlock = functionDefinition->get_body();
   ROSE_ASSERT(basicBlock);
-  SgSymbolTable* symbolTable = basicBlock->get_symbol_table();
+  SgSymbolTable* symbolTable = functionDefinition->get_symbol_table();
   ROSE_ASSERT(symbolTable);
+
+  map<SgLabelSymbol*, SgLabelStatement*> labelStmtList;
+  std::set<SgNode *> symbolList  = symbolTable->get_symbols();
+  std::set<SgNode *>::iterator i = symbolList.begin();
+  for(; i != symbolList.end(); ++i)
+  {
+    SgLabelSymbol* localLabelSymbol = isSgLabelSymbol(*i);
+    if(localLabelSymbol != NULL)
+    {
+      string cLabelName = "FortranLabel" + localLabelSymbol->get_name().getString();
+      SgLabelStatement* fortranLabelStmt = isSgLabelStatement(localLabelSymbol->get_fortran_statement());
+      ROSE_ASSERT(fortranLabelStmt);
+
+      // building new lableStmt
+      SgLabelStatement* newLabelStmt = buildLabelStatement(cLabelName, NULL, functionDefinition);
+      newLabelStmt->set_scope(fortranLabelStmt->get_scope());
+      SgLabelSymbol* newSymbol = new SgLabelSymbol(newLabelStmt);
+      symbolTable->insert(cLabelName,newSymbol);
+      // make the list of oldLabelSymbol and newLabelStatement
+      labelStmtList.insert(pair<SgLabelSymbol*,SgLabelStatement*>(localLabelSymbol,newLabelStmt));
+
+      replaceStatement(fortranLabelStmt,newLabelStmt,true);
+      deepDelete(fortranLabelStmt->get_numeric_label()); 
+      deepDelete(fortranLabelStmt);
+    }
+  }
   
   // Node query for all basic blocks in functions
   Rose_STL_Container<SgNode*> basicBlockList = NodeQuery::querySubTree (root,V_SgBasicBlock);
@@ -254,9 +280,9 @@ void Fortran_to_C::fixFortranSymbolTable(SgNode* root, bool hasReturnVariable)
     ROSE_ASSERT(localSymbolTable);
     
     // Get all symbols from the local symbol table
-    std::set<SgNode *> symbolList  = localSymbolTable->get_symbols();
-    std::set<SgNode *>::iterator j = symbolList.begin();
-    while(j != symbolList.end())
+    std::set<SgNode *> localSymbolList  = localSymbolTable->get_symbols();
+    std::set<SgNode *>::iterator j = localSymbolList.begin();
+    for(; j != localSymbolList.end(); ++j)
     {
       SgSymbol* symbol = isSgSymbol(*j);   
       ROSE_ASSERT(symbol);
@@ -339,9 +365,22 @@ void Fortran_to_C::fixFortranSymbolTable(SgNode* root, bool hasReturnVariable)
           }
         }
       }
-      ++j;
-    }  // end of while loop
+    }  
   }   // end of i loop
+
+  // Replace the target of Fortran gotoStatement
+  Rose_STL_Container<SgNode*> gotoList = NodeQuery::querySubTree (root,V_SgGotoStatement);
+  for (Rose_STL_Container<SgNode*>::iterator j = gotoList.begin(); j != gotoList.end(); j++)
+  {
+    SgGotoStatement* gotoStmt = isSgGotoStatement(*j);
+    map<SgLabelSymbol*, SgLabelStatement*>::iterator i = labelStmtList.find(gotoStmt->get_label_expression()->get_symbol());
+    if(i != labelStmtList.end())
+    {
+      delete(gotoStmt->get_label_expression());
+      gotoStmt->set_label_expression(NULL);
+      gotoStmt->set_label(i->second);
+    }
+  }
 }
 
 
