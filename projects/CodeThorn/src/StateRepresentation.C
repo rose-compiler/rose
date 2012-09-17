@@ -9,6 +9,7 @@
 #include "AType.h"
 #include <algorithm>
 #include "CollectionOperators.h"
+#include "CommandLineOptions.h"
 
 using namespace std;
 
@@ -178,7 +179,12 @@ bool operator<(const EState& c1, const EState& c2) {
 #endif
 
 bool operator==(const EState& c1, const EState& c2) {
-  return (c1.label==c2.label) && (c1.state==c2.state) && (c1.constraints==c2.constraints) && (c1.io==c2.io);
+  bool result=((c1.label==c2.label) && (c1.state==c2.state));
+  if(boolOptions["precision-equality-constraints"])
+	result = result && (c1.constraints==c2.constraints);
+  if(boolOptions["precision-equality-io"])
+	result = result && (c1.io==c2.io);
+  return result;
 }
 
 bool operator!=(const EState& c1, const EState& c2) {
@@ -228,20 +234,6 @@ EStateSet::ProcessingResult EStateSet::processEState(EState s) {
   }
   assert(0);
 }
-
-#if 0
-const EState* EStateSet::processEState(EState s) {
-  if(const EState* existingEStatePtr=eStatePtr(s)) {
-	return existingEStatePtr;
-  } else {
-	push_back(s);
-	const EState* existingEStatePtr=eStatePtr(s);
-	assert(existingEStatePtr);
-	return existingEStatePtr;
-  }
-  assert(0);
-}
-#endif
 
 bool EStateSet::eStateExists(EState& s) {
   return eStatePtr(s)!=0;

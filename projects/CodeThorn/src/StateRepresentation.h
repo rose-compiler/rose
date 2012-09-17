@@ -76,10 +76,15 @@ class EState {
  EState():label(0),state(0){}
  EState(Label label, const State* state):label(label),state(state){}
  EState(Label label, const State* state, ConstraintSet cset):label(label),state(state),constraints(cset){}
+  Label getLabel() { return label; }
+  const State* getState() { return state; }
+  ConstraintSet getConstraints() { return constraints; }
+  InputOutput getInputOutput() { return io; }
   string toString() const;
+  // MS: following entries will be made private
   Label label;
   const State* state;
-  ConstraintSet constraints;
+  ConstraintSet constraints;  // MS: will become a pointer to ConstraintSet
   InputOutput io;
 };
 

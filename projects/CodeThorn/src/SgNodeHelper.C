@@ -68,6 +68,30 @@ list<SgVariableDeclaration*> SgNodeHelper::listOfGlobalVars(SgProject* project) 
   return globalVarDeclList;
 }
 
+list<SgFunctionDefinition*> SgNodeHelper::listOfFunctionDefinitions(SgProject* project) {
+  list<SgFunctionDefinition*> funDefList;
+  MyAst ast(project);
+  for(MyAst::iterator i=ast.begin();i!=ast.end();++i) {
+	if(SgFunctionDefinition* funDef=isSgFunctionDefinition(*i)) {
+	  funDefList.push_back(funDef);
+	}
+  }
+  return funDefList;
+}
+
+list<SgVarRefExp*> SgNodeHelper::listOfUsedVarsInFunctions(SgProject* project) {
+  list<SgVarRefExp*> varRefExpList;
+  list<SgFunctionDefinition*> funDefList=SgNodeHelper::listOfFunctionDefinitions(project);
+  for(list<SgFunctionDefinition*>::iterator i=funDefList.begin();i!=funDefList.end();++i) {
+	MyAst ast(*i);
+	for(MyAst::iterator i=ast.begin();i!=ast.end();++i) {
+	  if(SgVarRefExp* varRefExp=isSgVarRefExp(*i))
+		varRefExpList.push_back(varRefExp);
+	}
+  }
+  return varRefExpList;
+}
+
 list<SgVariableDeclaration*> SgNodeHelper::listOfGlobalVars(SgGlobal* global) {
   list<SgVariableDeclaration*> varDeclList;
   SgDeclarationStatementPtrList& declStmtList=global->get_declarations();
@@ -79,11 +103,6 @@ list<SgVariableDeclaration*> SgNodeHelper::listOfGlobalVars(SgGlobal* global) {
 	}
   }
   return varDeclList;
-}
-
-list<SgFunctionDefinition*> SgNodeHelper::listOfGlobalFunctionDefinitions(SgGlobal* global) {
-  list<SgFunctionDefinition*> funDefList;
-  return funDefList;
 }
 
 SgSymbol*

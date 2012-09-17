@@ -161,7 +161,13 @@ int main( int argc, char * argv[] ) {
     ("tg2-estate-id", po::value< string >(), "transition graph 2: visualize estate-id [=yes|no]")
     ("tg2-estate-properties", po::value< string >(),"transition graph 2: visualize all estate-properties [=yes|no]")
 	("colors",po::value< string >(),"use colors in output [=yes|no]")
-    ;
+	("report-stdout",po::value< string >(),"report stdout estates during analysis [=yes|no]")
+	("report-failed-assert",po::value< string >(),"report failed assert estates during analysis [=yes|no]")
+	("precision-equality-constraints",po::value< string >(),"(experimental)use constraints for determining estate equality [=yes|no]")
+	("precision-equality-io",po::value< string >(),"(experimental)use constraints for determining estate equality [=yes|no]")
+	("precision-bool",po::value< string >(),"use conservative top with intbool-(and/or) operators (used in LTL)")
+	("precision-intbool",po::value< string >(),"use conservative top with intbool-(and/or) operators (used in int-analyzer)")
+	;
 
   po::store(po::command_line_parser(argc, argv).
 	    options(desc).allow_unregistered().run(), args);
@@ -175,6 +181,12 @@ int main( int argc, char * argv[] ) {
   boolOptions.registerOption("tg2-estate-id",true);
   boolOptions.registerOption("tg2-estate-properties",false);
   boolOptions.registerOption("colors",true);
+  boolOptions.registerOption("report-stdout",false);
+  boolOptions.registerOption("report-failed-assert",false);
+  boolOptions.registerOption("precision-equality-constraints",true);
+  boolOptions.registerOption("precision-equality-io",true);
+  boolOptions.registerOption("precision-bool",true);
+  boolOptions.registerOption("precision-intbool",true);
   boolOptions.processOptions();
   cout<<boolOptions.toString();
 

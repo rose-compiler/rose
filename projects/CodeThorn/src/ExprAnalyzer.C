@@ -46,16 +46,16 @@ SingleEvalResult ExprAnalyzer::eval(SgNode* node,EState eState) {
   switch(node->variantT()) {
   case V_SgAndOp: {
 	SgNode* lhs=SgNodeHelper::getLhs(node);
-	SgNode* rhs=SgNodeHelper::getRhs(node);
 	SingleEvalResult lhsResult=eval(lhs,eState);
+	SgNode* rhs=SgNodeHelper::getRhs(node);
 	SingleEvalResult rhsResult=eval(rhs,eState);
 	tmp.result=lhsResult.result&&rhsResult.result;
 	return tmp;
   }
   case V_SgOrOp: {
 	SgNode* lhs=SgNodeHelper::getLhs(node);
-	SgNode* rhs=SgNodeHelper::getRhs(node);
 	SingleEvalResult lhsResult=eval(lhs,eState);
+	SgNode* rhs=SgNodeHelper::getRhs(node);
 	SingleEvalResult rhsResult=eval(rhs,eState);
 	tmp.result=lhsResult.result||rhsResult.result;
 	return tmp;
@@ -96,10 +96,9 @@ SingleEvalResultConstInt ExprAnalyzer::evalConstInt(SgNode* node,EState eState) 
   res.result=AType::ConstIntLattice(AType::Bot());
   if(dynamic_cast<SgBinaryOp*>(node)) {
 	SgNode* lhs=SgNodeHelper::getLhs(node);
-	SgNode* rhs=SgNodeHelper::getRhs(node);
 	SingleEvalResultConstInt lhsResult=evalConstInt(lhs,eState);
+	SgNode* rhs=SgNodeHelper::getRhs(node);
 	SingleEvalResultConstInt rhsResult=evalConstInt(rhs,eState);
-	// union constraintSet from lhs and rhs
 
 	switch(node->variantT()) {
 	case V_SgEqualityOp: {
@@ -129,23 +128,31 @@ SingleEvalResultConstInt ExprAnalyzer::evalConstInt(SgNode* node,EState eState) 
 	  return res;
 	}
 	case V_SgAndOp:
-	  res.result=(lhsResult.result&&rhsResult.result);
-	  // we encode CPP-AND semantics here!
-	  if((lhsResult.isTrue()||lhsResult.isTop())&&(rhsResult.isTrue()||rhsResult.isTop()))
-		res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
-	  else {
-		// do not up-proagate collected constraints (exprConstraints remains empty) because (lhs AND rhs)=false
+	  // we encode short-circuit CPP-AND semantics here!
+	  if(lhsResult.result.isFalse()) {
+		res.result=lhsResult.result;
+		res.exprConstraints=lhsResult.exprConstraints;
+	  } else {
+		res.result=(lhsResult.result&&rhsResult.result);
+		if(res.result.isTrue())
+		  res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
+		else {
+		// do not up-proagate collected constraints (exprConstraints remains empty) because (lhs AND rhs) is possibly false
+		}
 	  }
 	  return res;
 	case V_SgOrOp:
-	  res.result=(lhsResult.result||rhsResult.result);
-	  // we encode CPP-OR semantics here!
-	  if(lhsResult.isTrue()||lhsResult.isTop())
-		res.exprConstraints=lhsResult.exprConstraints; // we do not propagte rhs constraints (because of short-circuit evaluation semantics)
-	  else if(rhsResult.isTrue()||rhsResult.isTop()) {
-		res.exprConstraints=rhsResult.exprConstraints; // we do not propagte lhs constraints (because of short-circuit evaluation semantics and lhs is FALSE)
+	  // we encode short-circuit CPP-OR semantics here!
+	  if(lhsResult.result.isTrue()) {
+		res.result=lhsResult.result;
+		res.exprConstraints=lhsResult.exprConstraints;
 	  } else {
-		// do not up-proagate collected constraints (exprConstraints remains empty) because (lhs OR rhs)=false
+		res.result=(lhsResult.result||rhsResult.result);
+		if(res.result.isTrue())
+		  res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
+		else {
+		// do not up-proagate collected constraints (exprConstraints remains empty) because (lhs AND rhs) is possibly false
+		}
 	  }
 	  return res;
 	default:
