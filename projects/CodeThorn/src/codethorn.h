@@ -25,6 +25,7 @@ using namespace std;
 /* general auxiliary functions */
 string int_to_string(int x);
 void write_file(std::string filename, std::string data);
+string color(string name);
 
 class CodeThornLanguageRestrictor : public LanguageRestrictor {
 public:

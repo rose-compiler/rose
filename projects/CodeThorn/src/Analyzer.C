@@ -6,6 +6,9 @@
 
 #include "Analyzer.h"
 #include "CollectionOperators.h"
+#include "CommandLineOptions.h"
+
+string color(string);
 
 Analyzer::Analyzer():startFunRoot(0),cfanalyzer(0) {
 }
@@ -33,16 +36,7 @@ void Analyzer::recordTransition(const EState* sourceState, Edge e, const EState*
 }
 
 void Analyzer::printStatusMessage() {
-  const string csi = "\33[";
-  const string white = csi+"37m";
-  const string red = csi+"31m";
-  const string magenta = csi+"35m";
-  const string cyan = csi+"36m";
-  const string blue = csi+"34m";
-  const string startOfLine = csi+"0G";
-  const string hideCursor = csi+"?25l";
-  const string bold_on = csi+"1m";
-  static int lastNumEStates=0;
+  static long int lastNumEStates=displayDiff;
   if(isEmptyWorkList()) {
 	//cout << "Empty Work List: empty."<<endl;
 	return;
@@ -57,16 +51,13 @@ void Analyzer::printStatusMessage() {
 	// report we are alife
   if((eStateSet.size()-lastNumEStates)>=displayDiff) {
 	lastNumEStates=eStateSet.size();
-	//cout<<startOfLine;
-	//cout<<hideCursor;
-	//cout<<bold_on;
-	cout<<white<<"Number of states/estates/transitions: ";
-	cout<<magenta<<stateSet.size()
-		<<white<<"/"
-		<<cyan<<eStateSet.size()
-		<<white<<"/"
-		<<blue<<transitionGraph.size()
-		<<white<<"";
+	cout<<color("white")<<"Number of states/estates/transitions: ";
+	cout<<color("magenta")<<stateSet.size()
+		<<color("white")<<"/"
+		<<color("cyan")<<eStateSet.size()
+		<<color("white")<<"/"
+		<<color("blue")<<transitionGraph.size()
+		<<color("white")<<"";
 	cout<<endl;
   }
 }
@@ -98,9 +89,12 @@ void Analyzer::runSolver1() {
 		recordTransition(currentEStatePtr,*i,newEStatePtr);
 	  }
 	  if(newEState.label!=NO_ESTATE && (!newEState.constraints.deqConstraintExists()) && (isFailedAssertEState(&newEState))) {
-		// failed-assert end-state: do not add to work list but do add it to the transitino graph
+		// failed-assert end-state: do not add to work list but do add it to the transition graph
 		const EState* newEStatePtr=processNewOrExistingEState(newEState);
 		recordTransition(currentEStatePtr,*i,newEStatePtr);		
+		if(boolOptions["report-failed-assert"]) {
+		  cout << "REPORT: failed-assert: "<<newEStatePtr->toString()<<endl;
+		}
 	  }
 	  if(newEState.label==NO_STATE) {
 		//cerr << "DEBUG: NO_ESTATE (transition not recorded)"<<endl;
@@ -280,7 +274,7 @@ EState Analyzer::transferFunction(Edge edge, const EState* eState) {
 	  VariableId actualParameterVarId;
 	  if(bool isActualParamterVar=ExprAnalyzer::variable(actualParameterExpr,actualParameterVarId)) {
 		// propagate constraint from actualParamterVarId to formalParameterVarId
-		cset.duplicateConstraints(formalParameterVarId, actualParameterVarId); // duplication direction from right to left (as in an assignment)
+		cset.addEqVarVar(formalParameterVarId,actualParameterVarId);
 	  }
 	  // general case: the actual argument is an arbitrary expression (including a single variable)
 	  SingleEvalResultConstInt evalResult=exprAnalyzer.evalConstInt(actualParameterExpr,currentEState);
@@ -357,9 +351,11 @@ EState Analyzer::transferFunction(Edge edge, const EState* eState) {
 	  VariableId returnVarId=variableIdMapping.createUniqueTemporaryVariableId(string("$return"));
 	  AValue evalResult=newState[returnVarId].getValue();
 	  newState[lhsVarId]=evalResult;
-	  cset.duplicateConstraints(lhsVarId, returnVarId); // duplicate constraints of $return to lhsVar
+
+	  cset.duplicateConstConstraints(lhsVarId, returnVarId); // duplicate constraints of $return to lhsVar
 	  newState.deleteVar(returnVarId); // remove $return from state
 	  cset.deleteConstraints(returnVarId); // remove constraints of $return
+
 	  const State* newStatePtr=processNewOrExistingState(newState);
 	  return EState(edge.target,newStatePtr,cset);
 	}
@@ -414,6 +410,10 @@ EState Analyzer::transferFunction(Edge edge, const EState* eState) {
 		   VariableId varId=VariableId(sym);
 		   newio.recordVariable(InputOutput::STDOUT_VAR,varId);
 		   assert(newio.var==varId);
+		   if(boolOptions["report-stdout"]) {
+			 cout << "REPORT: stdout:"<<varId.toString()<<":"<<eState->toString()<<endl;
+		   }
+
 		 } else {
 		   cerr<<"Error: unsupported number of printf arguments. Currently printf with exactly one variable of the form printf(\"...%d...\",v) is supported."<<endl;
 		   exit(1);
@@ -548,14 +548,32 @@ void Analyzer::initializeSolver1(std::string functionToStartAt,SgNode* root) {
 	cout << "STATUS: Number of global variables: ";
 	list<SgVariableDeclaration*> globalVars=SgNodeHelper::listOfGlobalVars(project);
 	cout << globalVars.size()<<endl;
-	for(list<SgVariableDeclaration*>::iterator i=globalVars.begin();i!=globalVars.end();++i) {
-	  eState=analyzeVariableDeclaration(*i,eState,eState.label);
+	
+	list<SgVarRefExp*> varRefExpList=SgNodeHelper::listOfUsedVarsInFunctions(project);
+	// compute set of varIds (it is a set because we want multiple uses of the same var to be represented by one id)
+	set<VariableId> setOfUsedVars;
+	for(list<SgVarRefExp*>::iterator i=varRefExpList.begin();i!=varRefExpList.end();++i) {
+	  setOfUsedVars.insert(variableIdMapping.variableId(*i));
 	}
+	cout << "STATUS: Number of used variables: "<<setOfUsedVars.size()<<endl;
+
+	int filteredVars=0;
+	for(list<SgVariableDeclaration*>::iterator i=globalVars.begin();i!=globalVars.end();++i) {
+	  if(setOfUsedVars.find(variableIdMapping.variableId(*i))!=setOfUsedVars.end())
+		eState=analyzeVariableDeclaration(*i,eState,eState.label);
+	  else
+		filteredVars++;
+	}
+	cout << "STATUS: Number of filtered variables for initial state: "<<filteredVars<<endl;
   } else {
 	cout << "INIT: no global scope.";
   }	
 
   // TODO: delete global vars which are not used in the analyzed program (not necessary in PState)
+  
+
+
+
   const EState* currentEState=processNewEState(eState);
   assert(currentEState);
   //cout << "INIT: "<<eStateSet.toString()<<endl;
@@ -600,8 +618,8 @@ State Analyzer::analyzeAssignRhs(State currentState,VariableId lhsVar, SgNode* r
 	VariableId rhsVarId;
 	isRhsVar=ExprAnalyzer::variable(rhs,rhsVarId);
 	assert(isRhsVar);
-	// x=y: contraint propagation for var1=var2 assignments
-	cset.duplicateConstraints(lhsVar, rhsVarId);
+	// x=y: constraint propagation for var1=var2 assignments
+	cset.addEqVarVar(lhsVar, rhsVarId);
 
 	if(currentState.varExists(rhsVarId)) {
 	  rhsIntVal=currentState[rhsVarId].getValue();

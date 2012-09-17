@@ -7,6 +7,10 @@
 
 #include "AType.h"
 #include "assert.h"
+#include "CommandLineOptions.h"
+#include <iostream>
+
+using namespace std;
 
 ostream& AType::operator<<(ostream& os, BoolLattice& toStream) {
   os << toStream.toString();
@@ -65,11 +69,16 @@ bool AType::BoolLattice::operator!=(AType::BoolLattice other) const {
 AType::BoolLattice AType::BoolLattice::operator||(AType::BoolLattice other) {
   AType::BoolLattice tmp;
   // all TOP cases
-  if(isTop()   && other.isTop())   return Top();
-  if(isTop()   && other.isTrue())  return true;
-  if(isTrue()  && other.isTop())   return true;
-  if(isTop()   && other.isFalse()) return Top();
-  if(isFalse() && other.isTop())   return Top();
+  if(!boolOptions["precision-bool"]) {
+	if(isTop()   || other.isTop())   return Top();
+  }
+  else {
+	if(isTop()   && other.isTop())   return Top();
+	if(isTop()   && other.isTrue())  return true;
+	if(isTrue()  && other.isTop())   return true;
+	if(isTop()   && other.isFalse()) return Top();
+	if(isFalse() && other.isTop())   return Top();
+  }
   // all BOT cases
   if(value==BOT)                   return other;
   if(other.value==BOT)             return *this;
@@ -82,12 +91,16 @@ AType::BoolLattice AType::BoolLattice::operator||(AType::BoolLattice other) {
 }
 
 AType::BoolLattice AType::BoolLattice::operator&&(AType::BoolLattice other) {
-  // all TOP cases
-  if(isTop()   && other.isTop())   return Top();
-  if(isTop()   && other.isTrue())  return Top();
-  if(isTrue()  && other.isTop())   return Top();
-  if(isTop()   && other.isFalse()) return false;
-  if(isFalse() && other.isTop())   return false;
+  if(!boolOptions["precision-bool"]) {
+	if(isTop()   || other.isTop())   return Top();
+  } else {
+	// all TOP cases
+	if(isTop()   && other.isTop())   return Top();
+	if(isTop()   && other.isTrue())  return Top();
+	if(isTrue()  && other.isTop())   return Top();
+	if(isTop()   && other.isFalse()) return false;
+	if(isFalse() && other.isTop())   return false;
+  }
   // all BOT cases
   if(value==BOT)                   return other;
   if(other.value==BOT)             return *this;
@@ -170,13 +183,16 @@ AType::ConstIntLattice AType::ConstIntLattice::operator-() {
 
 AType::ConstIntLattice AType::ConstIntLattice::operator||(ConstIntLattice other) {
   AType::ConstIntLattice tmp;
-  // all TOP cases
-  if(isTop()   && other.isTop())   return Top();
-  if(isTop()   && other.isTrue())  return true;
-  if(isTrue()  && other.isTop())   return true;
-  if(isTop()   && other.isFalse()) return Top();
-  if(isFalse() && other.isTop())   return Top();
-
+  if(!boolOptions["precision-intbool"]) {
+	if(isTop()   || other.isTop())   return Top();
+  } else {
+	// all TOP cases
+	if(isTop()   && other.isTop())   return Top();
+	if(isTop()   && other.isTrue())  return true;
+	if(isTrue()  && other.isTop())   return true;
+	if(isTop()   && other.isFalse()) return Top();
+	if(isFalse() && other.isTop())   return Top();
+  }
   // all BOT cases
   if(valueType==BOT) {
 	tmp.valueType=other.valueType; 
@@ -199,12 +215,16 @@ AType::ConstIntLattice AType::ConstIntLattice::operator||(ConstIntLattice other)
 
 AType::ConstIntLattice AType::ConstIntLattice::operator&&(ConstIntLattice other) {
   AType::ConstIntLattice tmp;
-  // all TOP cases
-  if(isTop()   && other.isTop())   return Top();
-  if(isTop()   && other.isTrue())  return Top();
-  if(isTrue()  && other.isTop())   return Top();
-  if(isTop()   && other.isFalse()) return false;
-  if(isFalse() && other.isTop())   return false;
+  if(!boolOptions["precision-intbool"]) {
+	if(isTop()   || other.isTop())   return Top();
+  } else {
+	// all TOP cases
+	if(isTop()   && other.isTop())   return Top();
+	if(isTop()   && other.isTrue())  return Top();
+	if(isTrue()  && other.isTop())   return Top();
+	if(isTop()   && other.isFalse()) return false;
+	if(isFalse() && other.isTop())   return false;
+  }
   // all BOT cases
   if(valueType==BOT) {
 	tmp.valueType=other.valueType;

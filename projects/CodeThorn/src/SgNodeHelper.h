@@ -99,7 +99,7 @@ namespace SgNodeHelper {
   SgSymbol* getSymbolOfVariableDeclaration(SgVariableDeclaration* decl);
 
   //! returns the SgSymbol* of the variable in a SgVarRefExp
-  SgSymbol* getSymbolOfVariable(SgVarRefExp* decl);
+  SgSymbol* getSymbolOfVariable(SgVarRefExp* varRefExp);
 
   //! returns the SgSymbol* of a SgInitializedName
   SgSymbol* getSymbolOfInitializedName(SgInitializedName* initName);
@@ -186,6 +186,9 @@ namespace SgNodeHelper {
 	 Note: static/external can be resolved by further processing those objects
    */
   list<SgVariableDeclaration*> listOfGlobalVars(SgGlobal* global);
+
+  list<SgFunctionDefinition*> listOfFunctionDefinitions(SgProject* SgProject);
+  list<SgVarRefExp*> listOfUsedVarsInFunctions(SgProject* SgProject);
 
   /*! identifies the list of SgFunctionDefinitions in global scope
      Functions/methods of classes are NOT included in this list.
