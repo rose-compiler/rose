@@ -438,6 +438,15 @@ noinst_PROGRAMS += cory002
 cory002_SOURCES = cory002.C
 cory002_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 
+# Test symbolic semantics memory read-after-write
+noinst_PROGRAMS += testSymReadWrite
+testSymReadWrite_SOURCES = testSymReadWrite.C
+testSymReadWrite_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+STATIC_TEST_TARGETS += testSymReadWrite.passed
+EXTRA_DIST += testSymReadWrite.conf testSymReadWrite.ans
+testSymReadWrite.passed: testSymReadWrite.conf testSymReadWrite.ans testSymReadWrite
+	@$(RTH_RUN) INPUT=memreadwrite $< $@
+
 ###############################################################################################################################
 # DEMOS
 #

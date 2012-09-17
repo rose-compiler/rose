@@ -1,0 +1,405 @@
+0x80480a0:sub    esp, 0x00000008
+registers:
+    ax      = { defs={} expr=v48[32] }
+    cx      = { defs={} expr=v49[32] }
+    dx      = { defs={} expr=v50[32] }
+    bx      = { defs={} expr=v51[32] }
+    sp      = { defs={0x080480a0} expr=(add[32] v52[32] -8[32]) }
+    bp      = { defs={} expr=v53[32] }
+    si      = { defs={} expr=v54[32] }
+    di      = { defs={} expr=v55[32] }
+    es      = { defs={} expr=v56[16] }
+    cs      = { defs={} expr=v57[16] }
+    ss      = { defs={} expr=v58[16] }
+    ds      = { defs={} expr=v59[16] }
+    fs      = { defs={} expr=v60[16] }
+    gs      = { defs={} expr=v61[16] }
+    cf      = { defs={0x080480a0} expr=(invert[1] (extract[1] 31[32] 32[32] (extract[32] 1[32] 33[32] (bv-xor[33] (uextend[33] 33[32] v52[32]) (bv-xor[33] 4294967287[33] (add[33] (uextend[33] 33[32] v52[32]) 4294967288[33])))))) }
+    ?1      = { defs={} expr=v63[1] }
+    pf      = { defs={0x080480a0} expr=(invert[1] (bv-xor[1] (bv-xor[1] (bv-xor[1] (extract[1] 0[32] 1[32] (extract[8] 0[32] 8[32] (add[32] v52[32] -8[32]))) (extract[1] 1[32] 2[32] (extract[8] 0[32] 8[32] (add[32] v52[32] -8[32])))) (bv-xor[1] (extract[1] 2[32] 3[32] (extract[8] 0[32] 8[32] (add[32] v52[32] -8[32]))) (extract[1] 3[32] 4[32] (extract[8] 0[32] 8[32] (add[32] v52[32] -8[32]))))) (bv-xor[1] (bv-xor[1] (extract[1] 4[32] 5[32] (extract[8] 0[32] 8[32] (add[32] v52[32] -8[32]))) (extract[1] 5[32] 6[32] (extract[8] 0[32] 8[32] (add[32] v52[32] -8[32])))) (bv-xor[1] (extract[1] 6[32] 7[32] (extract[8] 0[32] 8[32] (add[32] v52[32] -8[32]))) (extract[1] 7[32] 8[32] (extract[8] 0[32] 8[32] (add[32] v52[32] -8[32]))))))) }
+    ?3      = { defs={} expr=v65[1] }
+    af      = { defs={0x080480a0} expr=(invert[1] (extract[1] 3[32] 4[32] (extract[32] 1[32] 33[32] (bv-xor[33] (uextend[33] 33[32] v52[32]) (bv-xor[33] 4294967287[33] (add[33] (uextend[33] 33[32] v52[32]) 4294967288[33])))))) }
+    ?5      = { defs={} expr=v67[1] }
+    zf      = { defs={0x080480a0} expr=(zerop[1] (add[32] v52[32] -8[32])) }
+    sf      = { defs={0x080480a0} expr=(extract[1] 31[32] 32[32] (add[32] v52[32] -8[32])) }
+    tf      = { defs={} expr=v70[1] }
+    if      = { defs={} expr=v71[1] }
+    df      = { defs={} expr=v72[1] }
+    of      = { defs={0x080480a0} expr=(bv-xor[1] (extract[1] 31[32] 32[32] (extract[32] 1[32] 33[32] (bv-xor[33] (uextend[33] 33[32] v52[32]) (bv-xor[33] 4294967287[33] (add[33] (uextend[33] 33[32] v52[32]) 4294967288[33]))))) (extract[1] 30[32] 31[32] (extract[32] 1[32] 33[32] (bv-xor[33] (uextend[33] 33[32] v52[32]) (bv-xor[33] 4294967287[33] (add[33] (uextend[33] 33[32] v52[32]) 4294967288[33])))))) }
+    iopl0   = { defs={} expr=v74[1] }
+    iopl1   = { defs={} expr=v75[1] }
+    nt      = { defs={} expr=v76[1] }
+    ?15     = { defs={} expr=v77[1] }
+    rf      = { defs={} expr=v78[1] }
+    vm      = { defs={} expr=v79[1] }
+    ac      = { defs={} expr=v80[1] }
+    vif     = { defs={} expr=v81[1] }
+    vip     = { defs={} expr=v82[1] }
+    id      = { defs={} expr=v83[1] }
+    ?22     = { defs={} expr=v84[1] }
+    ?23     = { defs={} expr=v85[1] }
+    ?24     = { defs={} expr=v86[1] }
+    ?25     = { defs={} expr=v87[1] }
+    ?26     = { defs={} expr=v88[1] }
+    ?27     = { defs={} expr=v89[1] }
+    ?28     = { defs={} expr=v90[1] }
+    ?29     = { defs={} expr=v91[1] }
+    ?30     = { defs={} expr=v92[1] }
+    ?31     = { defs={} expr=v93[1] }
+    ip      = { defs={0x080480a0} expr=0x080480a6[32] }
+memory:
+init mem:
+0x80480a6:mov    DWORD PTR ss:[esp], eax
+registers:
+    ax      = { defs={} expr=v48[32] }
+    cx      = { defs={} expr=v49[32] }
+    dx      = { defs={} expr=v50[32] }
+    bx      = { defs={} expr=v51[32] }
+    sp      = { defs={0x080480a0} expr=(add[32] v52[32] -8[32]) }
+    bp      = { defs={} expr=v53[32] }
+    si      = { defs={} expr=v54[32] }
+    di      = { defs={} expr=v55[32] }
+    es      = { defs={} expr=v56[16] }
+    cs      = { defs={} expr=v57[16] }
+    ss      = { defs={} expr=v58[16] }
+    ds      = { defs={} expr=v59[16] }
+    fs      = { defs={} expr=v60[16] }
+    gs      = { defs={} expr=v61[16] }
+    cf      = { defs={0x080480a0} expr=(invert[1] (extract[1] 31[32] 32[32] (extract[32] 1[32] 33[32] (bv-xor[33] (uextend[33] 33[32] v52[32]) (bv-xor[33] 4294967287[33] (add[33] (uextend[33] 33[32] v52[32]) 4294967288[33])))))) }
+    ?1      = { defs={} expr=v63[1] }
+    pf      = { defs={0x080480a0} expr=(invert[1] (bv-xor[1] (bv-xor[1] (bv-xor[1] (extract[1] 0[32] 1[32] (extract[8] 0[32] 8[32] (add[32] v52[32] -8[32]))) (extract[1] 1[32] 2[32] (extract[8] 0[32] 8[32] (add[32] v52[32] -8[32])))) (bv-xor[1] (extract[1] 2[32] 3[32] (extract[8] 0[32] 8[32] (add[32] v52[32] -8[32]))) (extract[1] 3[32] 4[32] (extract[8] 0[32] 8[32] (add[32] v52[32] -8[32]))))) (bv-xor[1] (bv-xor[1] (extract[1] 4[32] 5[32] (extract[8] 0[32] 8[32] (add[32] v52[32] -8[32]))) (extract[1] 5[32] 6[32] (extract[8] 0[32] 8[32] (add[32] v52[32] -8[32])))) (bv-xor[1] (extract[1] 6[32] 7[32] (extract[8] 0[32] 8[32] (add[32] v52[32] -8[32]))) (extract[1] 7[32] 8[32] (extract[8] 0[32] 8[32] (add[32] v52[32] -8[32]))))))) }
+    ?3      = { defs={} expr=v65[1] }
+    af      = { defs={0x080480a0} expr=(invert[1] (extract[1] 3[32] 4[32] (extract[32] 1[32] 33[32] (bv-xor[33] (uextend[33] 33[32] v52[32]) (bv-xor[33] 4294967287[33] (add[33] (uextend[33] 33[32] v52[32]) 4294967288[33])))))) }
+    ?5      = { defs={} expr=v67[1] }
+    zf      = { defs={0x080480a0} expr=(zerop[1] (add[32] v52[32] -8[32])) }
+    sf      = { defs={0x080480a0} expr=(extract[1] 31[32] 32[32] (add[32] v52[32] -8[32])) }
+    tf      = { defs={} expr=v70[1] }
+    if      = { defs={} expr=v71[1] }
+    df      = { defs={} expr=v72[1] }
+    of      = { defs={0x080480a0} expr=(bv-xor[1] (extract[1] 31[32] 32[32] (extract[32] 1[32] 33[32] (bv-xor[33] (uextend[33] 33[32] v52[32]) (bv-xor[33] 4294967287[33] (add[33] (uextend[33] 33[32] v52[32]) 4294967288[33]))))) (extract[1] 30[32] 31[32] (extract[32] 1[32] 33[32] (bv-xor[33] (uextend[33] 33[32] v52[32]) (bv-xor[33] 4294967287[33] (add[33] (uextend[33] 33[32] v52[32]) 4294967288[33])))))) }
+    iopl0   = { defs={} expr=v74[1] }
+    iopl1   = { defs={} expr=v75[1] }
+    nt      = { defs={} expr=v76[1] }
+    ?15     = { defs={} expr=v77[1] }
+    rf      = { defs={} expr=v78[1] }
+    vm      = { defs={} expr=v79[1] }
+    ac      = { defs={} expr=v80[1] }
+    vif     = { defs={} expr=v81[1] }
+    vip     = { defs={} expr=v82[1] }
+    id      = { defs={} expr=v83[1] }
+    ?22     = { defs={} expr=v84[1] }
+    ?23     = { defs={} expr=v85[1] }
+    ?24     = { defs={} expr=v86[1] }
+    ?25     = { defs={} expr=v87[1] }
+    ?26     = { defs={} expr=v88[1] }
+    ?27     = { defs={} expr=v89[1] }
+    ?28     = { defs={} expr=v90[1] }
+    ?29     = { defs={} expr=v91[1] }
+    ?30     = { defs={} expr=v92[1] }
+    ?31     = { defs={} expr=v93[1] }
+    ip      = { defs={0x080480a0,0x080480a6} expr=0x080480a9[32] }
+memory:
+    address = { defs={} expr=(add[32] (add[32] v52[32] -8[32]) 3[32]) }
+      value = { defs={} expr=(extract[8] 24[32] 32[32] v48[32]) }
+      flags = { }
+    address = { defs={} expr=(add[32] (add[32] v52[32] -8[32]) 2[32]) }
+      value = { defs={} expr=(extract[8] 16[32] 24[32] v48[32]) }
+      flags = { }
+    address = { defs={} expr=(add[32] (add[32] v52[32] -8[32]) 1[32]) }
+      value = { defs={} expr=(extract[8] 8[32] 16[32] v48[32]) }
+      flags = { }
+    address = { defs={0x080480a0} expr=(add[32] v52[32] -8[32]) }
+      value = { defs={} expr=(extract[8] 0[32] 8[32] v48[32]) }
+      flags = { }
+init mem:
+0x80480a9:mov    ecx, DWORD PTR ss:[esp]
+registers:
+    ax      = { defs={} expr=v48[32] }
+    cx      = { defs={0x080480a9} expr=v48[32] }
+    dx      = { defs={} expr=v50[32] }
+    bx      = { defs={} expr=v51[32] }
+    sp      = { defs={0x080480a0} expr=(add[32] v52[32] -8[32]) }
+    bp      = { defs={} expr=v53[32] }
+    si      = { defs={} expr=v54[32] }
+    di      = { defs={} expr=v55[32] }
+    es      = { defs={} expr=v56[16] }
+    cs      = { defs={} expr=v57[16] }
+    ss      = { defs={} expr=v58[16] }
+    ds      = { defs={} expr=v59[16] }
+    fs      = { defs={} expr=v60[16] }
+    gs      = { defs={} expr=v61[16] }
+    cf      = { defs={0x080480a0} expr=(invert[1] (extract[1] 31[32] 32[32] (extract[32] 1[32] 33[32] (bv-xor[33] (uextend[33] 33[32] v52[32]) (bv-xor[33] 4294967287[33] (add[33] (uextend[33] 33[32] v52[32]) 4294967288[33])))))) }
+    ?1      = { defs={} expr=v63[1] }
+    pf      = { defs={0x080480a0} expr=(invert[1] (bv-xor[1] (bv-xor[1] (bv-xor[1] (extract[1] 0[32] 1[32] (extract[8] 0[32] 8[32] (add[32] v52[32] -8[32]))) (extract[1] 1[32] 2[32] (extract[8] 0[32] 8[32] (add[32] v52[32] -8[32])))) (bv-xor[1] (extract[1] 2[32] 3[32] (extract[8] 0[32] 8[32] (add[32] v52[32] -8[32]))) (extract[1] 3[32] 4[32] (extract[8] 0[32] 8[32] (add[32] v52[32] -8[32]))))) (bv-xor[1] (bv-xor[1] (extract[1] 4[32] 5[32] (extract[8] 0[32] 8[32] (add[32] v52[32] -8[32]))) (extract[1] 5[32] 6[32] (extract[8] 0[32] 8[32] (add[32] v52[32] -8[32])))) (bv-xor[1] (extract[1] 6[32] 7[32] (extract[8] 0[32] 8[32] (add[32] v52[32] -8[32]))) (extract[1] 7[32] 8[32] (extract[8] 0[32] 8[32] (add[32] v52[32] -8[32]))))))) }
+    ?3      = { defs={} expr=v65[1] }
+    af      = { defs={0x080480a0} expr=(invert[1] (extract[1] 3[32] 4[32] (extract[32] 1[32] 33[32] (bv-xor[33] (uextend[33] 33[32] v52[32]) (bv-xor[33] 4294967287[33] (add[33] (uextend[33] 33[32] v52[32]) 4294967288[33])))))) }
+    ?5      = { defs={} expr=v67[1] }
+    zf      = { defs={0x080480a0} expr=(zerop[1] (add[32] v52[32] -8[32])) }
+    sf      = { defs={0x080480a0} expr=(extract[1] 31[32] 32[32] (add[32] v52[32] -8[32])) }
+    tf      = { defs={} expr=v70[1] }
+    if      = { defs={} expr=v71[1] }
+    df      = { defs={} expr=v72[1] }
+    of      = { defs={0x080480a0} expr=(bv-xor[1] (extract[1] 31[32] 32[32] (extract[32] 1[32] 33[32] (bv-xor[33] (uextend[33] 33[32] v52[32]) (bv-xor[33] 4294967287[33] (add[33] (uextend[33] 33[32] v52[32]) 4294967288[33]))))) (extract[1] 30[32] 31[32] (extract[32] 1[32] 33[32] (bv-xor[33] (uextend[33] 33[32] v52[32]) (bv-xor[33] 4294967287[33] (add[33] (uextend[33] 33[32] v52[32]) 4294967288[33])))))) }
+    iopl0   = { defs={} expr=v74[1] }
+    iopl1   = { defs={} expr=v75[1] }
+    nt      = { defs={} expr=v76[1] }
+    ?15     = { defs={} expr=v77[1] }
+    rf      = { defs={} expr=v78[1] }
+    vm      = { defs={} expr=v79[1] }
+    ac      = { defs={} expr=v80[1] }
+    vif     = { defs={} expr=v81[1] }
+    vip     = { defs={} expr=v82[1] }
+    id      = { defs={} expr=v83[1] }
+    ?22     = { defs={} expr=v84[1] }
+    ?23     = { defs={} expr=v85[1] }
+    ?24     = { defs={} expr=v86[1] }
+    ?25     = { defs={} expr=v87[1] }
+    ?26     = { defs={} expr=v88[1] }
+    ?27     = { defs={} expr=v89[1] }
+    ?28     = { defs={} expr=v90[1] }
+    ?29     = { defs={} expr=v91[1] }
+    ?30     = { defs={} expr=v92[1] }
+    ?31     = { defs={} expr=v93[1] }
+    ip      = { defs={0x080480a0,0x080480a6,0x080480a9} expr=0x080480ac[32] }
+memory:
+    address = { defs={} expr=(add[32] (add[32] v52[32] -8[32]) 3[32]) }
+      value = { defs={} expr=(extract[8] 24[32] 32[32] v48[32]) }
+      flags = { }
+    address = { defs={} expr=(add[32] (add[32] v52[32] -8[32]) 2[32]) }
+      value = { defs={} expr=(extract[8] 16[32] 24[32] v48[32]) }
+      flags = { }
+    address = { defs={} expr=(add[32] (add[32] v52[32] -8[32]) 1[32]) }
+      value = { defs={} expr=(extract[8] 8[32] 16[32] v48[32]) }
+      flags = { }
+    address = { defs={0x080480a0} expr=(add[32] v52[32] -8[32]) }
+      value = { defs={} expr=(extract[8] 0[32] 8[32] v48[32]) }
+      flags = { }
+init mem:
+0x80480ac:mov    ebx, 0x00000000
+registers:
+    ax      = { defs={} expr=v48[32] }
+    cx      = { defs={0x080480a9} expr=v48[32] }
+    dx      = { defs={} expr=v50[32] }
+    bx      = { defs={0x080480ac} expr=0[32] }
+    sp      = { defs={0x080480a0} expr=(add[32] v52[32] -8[32]) }
+    bp      = { defs={} expr=v53[32] }
+    si      = { defs={} expr=v54[32] }
+    di      = { defs={} expr=v55[32] }
+    es      = { defs={} expr=v56[16] }
+    cs      = { defs={} expr=v57[16] }
+    ss      = { defs={} expr=v58[16] }
+    ds      = { defs={} expr=v59[16] }
+    fs      = { defs={} expr=v60[16] }
+    gs      = { defs={} expr=v61[16] }
+    cf      = { defs={0x080480a0} expr=(invert[1] (extract[1] 31[32] 32[32] (extract[32] 1[32] 33[32] (bv-xor[33] (uextend[33] 33[32] v52[32]) (bv-xor[33] 4294967287[33] (add[33] (uextend[33] 33[32] v52[32]) 4294967288[33])))))) }
+    ?1      = { defs={} expr=v63[1] }
+    pf      = { defs={0x080480a0} expr=(invert[1] (bv-xor[1] (bv-xor[1] (bv-xor[1] (extract[1] 0[32] 1[32] (extract[8] 0[32] 8[32] (add[32] v52[32] -8[32]))) (extract[1] 1[32] 2[32] (extract[8] 0[32] 8[32] (add[32] v52[32] -8[32])))) (bv-xor[1] (extract[1] 2[32] 3[32] (extract[8] 0[32] 8[32] (add[32] v52[32] -8[32]))) (extract[1] 3[32] 4[32] (extract[8] 0[32] 8[32] (add[32] v52[32] -8[32]))))) (bv-xor[1] (bv-xor[1] (extract[1] 4[32] 5[32] (extract[8] 0[32] 8[32] (add[32] v52[32] -8[32]))) (extract[1] 5[32] 6[32] (extract[8] 0[32] 8[32] (add[32] v52[32] -8[32])))) (bv-xor[1] (extract[1] 6[32] 7[32] (extract[8] 0[32] 8[32] (add[32] v52[32] -8[32]))) (extract[1] 7[32] 8[32] (extract[8] 0[32] 8[32] (add[32] v52[32] -8[32]))))))) }
+    ?3      = { defs={} expr=v65[1] }
+    af      = { defs={0x080480a0} expr=(invert[1] (extract[1] 3[32] 4[32] (extract[32] 1[32] 33[32] (bv-xor[33] (uextend[33] 33[32] v52[32]) (bv-xor[33] 4294967287[33] (add[33] (uextend[33] 33[32] v52[32]) 4294967288[33])))))) }
+    ?5      = { defs={} expr=v67[1] }
+    zf      = { defs={0x080480a0} expr=(zerop[1] (add[32] v52[32] -8[32])) }
+    sf      = { defs={0x080480a0} expr=(extract[1] 31[32] 32[32] (add[32] v52[32] -8[32])) }
+    tf      = { defs={} expr=v70[1] }
+    if      = { defs={} expr=v71[1] }
+    df      = { defs={} expr=v72[1] }
+    of      = { defs={0x080480a0} expr=(bv-xor[1] (extract[1] 31[32] 32[32] (extract[32] 1[32] 33[32] (bv-xor[33] (uextend[33] 33[32] v52[32]) (bv-xor[33] 4294967287[33] (add[33] (uextend[33] 33[32] v52[32]) 4294967288[33]))))) (extract[1] 30[32] 31[32] (extract[32] 1[32] 33[32] (bv-xor[33] (uextend[33] 33[32] v52[32]) (bv-xor[33] 4294967287[33] (add[33] (uextend[33] 33[32] v52[32]) 4294967288[33])))))) }
+    iopl0   = { defs={} expr=v74[1] }
+    iopl1   = { defs={} expr=v75[1] }
+    nt      = { defs={} expr=v76[1] }
+    ?15     = { defs={} expr=v77[1] }
+    rf      = { defs={} expr=v78[1] }
+    vm      = { defs={} expr=v79[1] }
+    ac      = { defs={} expr=v80[1] }
+    vif     = { defs={} expr=v81[1] }
+    vip     = { defs={} expr=v82[1] }
+    id      = { defs={} expr=v83[1] }
+    ?22     = { defs={} expr=v84[1] }
+    ?23     = { defs={} expr=v85[1] }
+    ?24     = { defs={} expr=v86[1] }
+    ?25     = { defs={} expr=v87[1] }
+    ?26     = { defs={} expr=v88[1] }
+    ?27     = { defs={} expr=v89[1] }
+    ?28     = { defs={} expr=v90[1] }
+    ?29     = { defs={} expr=v91[1] }
+    ?30     = { defs={} expr=v92[1] }
+    ?31     = { defs={} expr=v93[1] }
+    ip      = { defs={0x080480a0,0x080480a6,0x080480a9,0x080480ac} expr=0x080480b1[32] }
+memory:
+    address = { defs={} expr=(add[32] (add[32] v52[32] -8[32]) 3[32]) }
+      value = { defs={} expr=(extract[8] 24[32] 32[32] v48[32]) }
+      flags = { }
+    address = { defs={} expr=(add[32] (add[32] v52[32] -8[32]) 2[32]) }
+      value = { defs={} expr=(extract[8] 16[32] 24[32] v48[32]) }
+      flags = { }
+    address = { defs={} expr=(add[32] (add[32] v52[32] -8[32]) 1[32]) }
+      value = { defs={} expr=(extract[8] 8[32] 16[32] v48[32]) }
+      flags = { }
+    address = { defs={0x080480a0} expr=(add[32] v52[32] -8[32]) }
+      value = { defs={} expr=(extract[8] 0[32] 8[32] v48[32]) }
+      flags = { }
+init mem:
+0x80480b1:mov    eax, 0x00000001
+registers:
+    ax      = { defs={0x080480b1} expr=1[32] }
+    cx      = { defs={0x080480a9} expr=v48[32] }
+    dx      = { defs={} expr=v50[32] }
+    bx      = { defs={0x080480ac} expr=0[32] }
+    sp      = { defs={0x080480a0} expr=(add[32] v52[32] -8[32]) }
+    bp      = { defs={} expr=v53[32] }
+    si      = { defs={} expr=v54[32] }
+    di      = { defs={} expr=v55[32] }
+    es      = { defs={} expr=v56[16] }
+    cs      = { defs={} expr=v57[16] }
+    ss      = { defs={} expr=v58[16] }
+    ds      = { defs={} expr=v59[16] }
+    fs      = { defs={} expr=v60[16] }
+    gs      = { defs={} expr=v61[16] }
+    cf      = { defs={0x080480a0} expr=(invert[1] (extract[1] 31[32] 32[32] (extract[32] 1[32] 33[32] (bv-xor[33] (uextend[33] 33[32] v52[32]) (bv-xor[33] 4294967287[33] (add[33] (uextend[33] 33[32] v52[32]) 4294967288[33])))))) }
+    ?1      = { defs={} expr=v63[1] }
+    pf      = { defs={0x080480a0} expr=(invert[1] (bv-xor[1] (bv-xor[1] (bv-xor[1] (extract[1] 0[32] 1[32] (extract[8] 0[32] 8[32] (add[32] v52[32] -8[32]))) (extract[1] 1[32] 2[32] (extract[8] 0[32] 8[32] (add[32] v52[32] -8[32])))) (bv-xor[1] (extract[1] 2[32] 3[32] (extract[8] 0[32] 8[32] (add[32] v52[32] -8[32]))) (extract[1] 3[32] 4[32] (extract[8] 0[32] 8[32] (add[32] v52[32] -8[32]))))) (bv-xor[1] (bv-xor[1] (extract[1] 4[32] 5[32] (extract[8] 0[32] 8[32] (add[32] v52[32] -8[32]))) (extract[1] 5[32] 6[32] (extract[8] 0[32] 8[32] (add[32] v52[32] -8[32])))) (bv-xor[1] (extract[1] 6[32] 7[32] (extract[8] 0[32] 8[32] (add[32] v52[32] -8[32]))) (extract[1] 7[32] 8[32] (extract[8] 0[32] 8[32] (add[32] v52[32] -8[32]))))))) }
+    ?3      = { defs={} expr=v65[1] }
+    af      = { defs={0x080480a0} expr=(invert[1] (extract[1] 3[32] 4[32] (extract[32] 1[32] 33[32] (bv-xor[33] (uextend[33] 33[32] v52[32]) (bv-xor[33] 4294967287[33] (add[33] (uextend[33] 33[32] v52[32]) 4294967288[33])))))) }
+    ?5      = { defs={} expr=v67[1] }
+    zf      = { defs={0x080480a0} expr=(zerop[1] (add[32] v52[32] -8[32])) }
+    sf      = { defs={0x080480a0} expr=(extract[1] 31[32] 32[32] (add[32] v52[32] -8[32])) }
+    tf      = { defs={} expr=v70[1] }
+    if      = { defs={} expr=v71[1] }
+    df      = { defs={} expr=v72[1] }
+    of      = { defs={0x080480a0} expr=(bv-xor[1] (extract[1] 31[32] 32[32] (extract[32] 1[32] 33[32] (bv-xor[33] (uextend[33] 33[32] v52[32]) (bv-xor[33] 4294967287[33] (add[33] (uextend[33] 33[32] v52[32]) 4294967288[33]))))) (extract[1] 30[32] 31[32] (extract[32] 1[32] 33[32] (bv-xor[33] (uextend[33] 33[32] v52[32]) (bv-xor[33] 4294967287[33] (add[33] (uextend[33] 33[32] v52[32]) 4294967288[33])))))) }
+    iopl0   = { defs={} expr=v74[1] }
+    iopl1   = { defs={} expr=v75[1] }
+    nt      = { defs={} expr=v76[1] }
+    ?15     = { defs={} expr=v77[1] }
+    rf      = { defs={} expr=v78[1] }
+    vm      = { defs={} expr=v79[1] }
+    ac      = { defs={} expr=v80[1] }
+    vif     = { defs={} expr=v81[1] }
+    vip     = { defs={} expr=v82[1] }
+    id      = { defs={} expr=v83[1] }
+    ?22     = { defs={} expr=v84[1] }
+    ?23     = { defs={} expr=v85[1] }
+    ?24     = { defs={} expr=v86[1] }
+    ?25     = { defs={} expr=v87[1] }
+    ?26     = { defs={} expr=v88[1] }
+    ?27     = { defs={} expr=v89[1] }
+    ?28     = { defs={} expr=v90[1] }
+    ?29     = { defs={} expr=v91[1] }
+    ?30     = { defs={} expr=v92[1] }
+    ?31     = { defs={} expr=v93[1] }
+    ip      = { defs={0x080480a0,0x080480a6,0x080480a9,0x080480ac,0x080480b1} expr=0x080480b6[32] }
+memory:
+    address = { defs={} expr=(add[32] (add[32] v52[32] -8[32]) 3[32]) }
+      value = { defs={} expr=(extract[8] 24[32] 32[32] v48[32]) }
+      flags = { }
+    address = { defs={} expr=(add[32] (add[32] v52[32] -8[32]) 2[32]) }
+      value = { defs={} expr=(extract[8] 16[32] 24[32] v48[32]) }
+      flags = { }
+    address = { defs={} expr=(add[32] (add[32] v52[32] -8[32]) 1[32]) }
+      value = { defs={} expr=(extract[8] 8[32] 16[32] v48[32]) }
+      flags = { }
+    address = { defs={0x080480a0} expr=(add[32] v52[32] -8[32]) }
+      value = { defs={} expr=(extract[8] 0[32] 8[32] v48[32]) }
+      flags = { }
+init mem:
+0x80480b6:int    0x80
+registers:
+    ax      = { defs={} expr=v101[32] }
+    cx      = { defs={} expr=v102[32] }
+    dx      = { defs={} expr=v103[32] }
+    bx      = { defs={} expr=v104[32] }
+    sp      = { defs={} expr=v105[32] }
+    bp      = { defs={} expr=v106[32] }
+    si      = { defs={} expr=v107[32] }
+    di      = { defs={} expr=v108[32] }
+    es      = { defs={} expr=v109[16] }
+    cs      = { defs={} expr=v110[16] }
+    ss      = { defs={} expr=v111[16] }
+    ds      = { defs={} expr=v112[16] }
+    fs      = { defs={} expr=v113[16] }
+    gs      = { defs={} expr=v114[16] }
+    cf      = { defs={} expr=v115[1] }
+    ?1      = { defs={} expr=v116[1] }
+    pf      = { defs={} expr=v117[1] }
+    ?3      = { defs={} expr=v118[1] }
+    af      = { defs={} expr=v119[1] }
+    ?5      = { defs={} expr=v120[1] }
+    zf      = { defs={} expr=v121[1] }
+    sf      = { defs={} expr=v122[1] }
+    tf      = { defs={} expr=v123[1] }
+    if      = { defs={} expr=v124[1] }
+    df      = { defs={} expr=v125[1] }
+    of      = { defs={} expr=v126[1] }
+    iopl0   = { defs={} expr=v127[1] }
+    iopl1   = { defs={} expr=v128[1] }
+    nt      = { defs={} expr=v129[1] }
+    ?15     = { defs={} expr=v130[1] }
+    rf      = { defs={} expr=v131[1] }
+    vm      = { defs={} expr=v132[1] }
+    ac      = { defs={} expr=v133[1] }
+    vif     = { defs={} expr=v134[1] }
+    vip     = { defs={} expr=v135[1] }
+    id      = { defs={} expr=v136[1] }
+    ?22     = { defs={} expr=v137[1] }
+    ?23     = { defs={} expr=v138[1] }
+    ?24     = { defs={} expr=v139[1] }
+    ?25     = { defs={} expr=v140[1] }
+    ?26     = { defs={} expr=v141[1] }
+    ?27     = { defs={} expr=v142[1] }
+    ?28     = { defs={} expr=v143[1] }
+    ?29     = { defs={} expr=v144[1] }
+    ?30     = { defs={} expr=v145[1] }
+    ?31     = { defs={} expr=v146[1] }
+    ip      = { defs={} expr=v100[32] }
+memory:
+init mem:
+0x80480b8:hlt    
+registers:
+    ax      = { defs={} expr=v101[32] }
+    cx      = { defs={} expr=v102[32] }
+    dx      = { defs={} expr=v103[32] }
+    bx      = { defs={} expr=v104[32] }
+    sp      = { defs={} expr=v105[32] }
+    bp      = { defs={} expr=v106[32] }
+    si      = { defs={} expr=v107[32] }
+    di      = { defs={} expr=v108[32] }
+    es      = { defs={} expr=v109[16] }
+    cs      = { defs={} expr=v110[16] }
+    ss      = { defs={} expr=v111[16] }
+    ds      = { defs={} expr=v112[16] }
+    fs      = { defs={} expr=v113[16] }
+    gs      = { defs={} expr=v114[16] }
+    cf      = { defs={} expr=v115[1] }
+    ?1      = { defs={} expr=v116[1] }
+    pf      = { defs={} expr=v117[1] }
+    ?3      = { defs={} expr=v118[1] }
+    af      = { defs={} expr=v119[1] }
+    ?5      = { defs={} expr=v120[1] }
+    zf      = { defs={} expr=v121[1] }
+    sf      = { defs={} expr=v122[1] }
+    tf      = { defs={} expr=v123[1] }
+    if      = { defs={} expr=v124[1] }
+    df      = { defs={} expr=v125[1] }
+    of      = { defs={} expr=v126[1] }
+    iopl0   = { defs={} expr=v127[1] }
+    iopl1   = { defs={} expr=v128[1] }
+    nt      = { defs={} expr=v129[1] }
+    ?15     = { defs={} expr=v130[1] }
+    rf      = { defs={} expr=v131[1] }
+    vm      = { defs={} expr=v132[1] }
+    ac      = { defs={} expr=v133[1] }
+    vif     = { defs={} expr=v134[1] }
+    vip     = { defs={} expr=v135[1] }
+    id      = { defs={} expr=v136[1] }
+    ?22     = { defs={} expr=v137[1] }
+    ?23     = { defs={} expr=v138[1] }
+    ?24     = { defs={} expr=v139[1] }
+    ?25     = { defs={} expr=v140[1] }
+    ?26     = { defs={} expr=v141[1] }
+    ?27     = { defs={} expr=v142[1] }
+    ?28     = { defs={} expr=v143[1] }
+    ?29     = { defs={} expr=v144[1] }
+    ?30     = { defs={} expr=v145[1] }
+    ?31     = { defs={} expr=v146[1] }
+    ip      = { defs={0x080480b8} expr=0x080480b8[32] }
+memory:
+init mem:
