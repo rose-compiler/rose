@@ -196,7 +196,6 @@ Policy<State, ValueType>::symbolic_state_complexity()
     return visitor.nnodes;
 }
 
-#if 0 /* This is meant only as an example of how to do something; you wouldn't really want to unconditionally do this here! */
 MULTI_DOMAIN_TEMPLATE
 template<size_t nBits>
 ValueType<nBits>
@@ -232,7 +231,6 @@ Policy<State, ValueType>::readRegister(const char *regname) {
     const RegisterDescriptor &desc = this->findRegister(regname, nBits);
     return this->template readRegister<nBits>(desc);
 }
-#endif
 
 MULTI_DOMAIN_TEMPLATE
 template<size_t nBits>
@@ -244,7 +242,7 @@ Policy<State, ValueType>::readMemory(X86SegmentRegister sr, ValueType<32> addr, 
 
 #if 0
     // Andreas: example
-    using namespace InsnSemanticsExpr;
+    using InsnSemanticsExpr;
     TreeNodePtr node = addr.get_expression();
     bool is_free_variable = node->isLeafNode() && node->isLeafNode()->isVariable();
 #endif
