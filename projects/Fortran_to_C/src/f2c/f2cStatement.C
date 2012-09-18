@@ -251,20 +251,39 @@ void Fortran_to_C::fixFortranSymbolTable(SgNode* root, bool hasReturnVariable)
     if(localLabelSymbol != NULL)
     {
       string cLabelName = "FortranLabel" + localLabelSymbol->get_name().getString();
-      SgLabelStatement* fortranLabelStmt = isSgLabelStatement(localLabelSymbol->get_fortran_statement());
-      ROSE_ASSERT(fortranLabelStmt);
+      switch(localLabelSymbol->get_fortran_statement()->variantT())
+      {
+        case V_SgLabelStatement:
+          {
+            SgLabelStatement* fortranLabelStmt = isSgLabelStatement(localLabelSymbol->get_fortran_statement());
+            // building new lableStmt
+            SgLabelStatement* newLabelStmt = buildLabelStatement(cLabelName, NULL, functionDefinition);
+            newLabelStmt->set_scope(fortranLabelStmt->get_scope());
+            SgLabelSymbol* newSymbol = new SgLabelSymbol(newLabelStmt);
+            symbolTable->insert(cLabelName,newSymbol);
+            // make the list of oldLabelSymbol and newLabelStatement
+            labelStmtList.insert(pair<SgLabelSymbol*,SgLabelStatement*>(localLabelSymbol,newLabelStmt));
 
-      // building new lableStmt
-      SgLabelStatement* newLabelStmt = buildLabelStatement(cLabelName, NULL, functionDefinition);
-      newLabelStmt->set_scope(fortranLabelStmt->get_scope());
-      SgLabelSymbol* newSymbol = new SgLabelSymbol(newLabelStmt);
-      symbolTable->insert(cLabelName,newSymbol);
-      // make the list of oldLabelSymbol and newLabelStatement
-      labelStmtList.insert(pair<SgLabelSymbol*,SgLabelStatement*>(localLabelSymbol,newLabelStmt));
+            replaceStatement(fortranLabelStmt,newLabelStmt,true);
+            break;
+          }
+        case V_SgBasicBlock:
+        case V_SgFunctionDefinition:
+          {
+            SgLabelStatement* newLabelStmt = buildLabelStatement(cLabelName, NULL, functionDefinition);
+            SgLabelSymbol* newSymbol = new SgLabelSymbol(newLabelStmt);
+            symbolTable->insert(cLabelName,newSymbol);
 
-      replaceStatement(fortranLabelStmt,newLabelStmt,true);
-      deepDelete(fortranLabelStmt->get_numeric_label()); 
-      deepDelete(fortranLabelStmt);
+            labelStmtList.insert(pair<SgLabelSymbol*,SgLabelStatement*>(localLabelSymbol,newLabelStmt));
+            delete(localLabelSymbol->get_fortran_statement()->get_numeric_label());
+            localLabelSymbol->get_fortran_statement()->set_numeric_label(NULL);
+            break;
+          }
+        default:
+          {
+            cout << "unhandled statement in get_fortran_statement:" << localLabelSymbol->get_fortran_statement()->variantT() << endl;
+          }
+      }
     }
   }
   
@@ -370,16 +389,51 @@ void Fortran_to_C::fixFortranSymbolTable(SgNode* root, bool hasReturnVariable)
 
   // Replace the target of Fortran gotoStatement
   Rose_STL_Container<SgNode*> gotoList = NodeQuery::querySubTree (root,V_SgGotoStatement);
-  for (Rose_STL_Container<SgNode*>::iterator j = gotoList.begin(); j != gotoList.end(); j++)
+  for (Rose_STL_Container<SgNode*>::iterator i = gotoList.begin(); i != gotoList.end(); i++)
   {
-    SgGotoStatement* gotoStmt = isSgGotoStatement(*j);
-    map<SgLabelSymbol*, SgLabelStatement*>::iterator i = labelStmtList.find(gotoStmt->get_label_expression()->get_symbol());
-    if(i != labelStmtList.end())
+    SgGotoStatement* gotoStmt = isSgGotoStatement(*i);
+    map<SgLabelSymbol*, SgLabelStatement*>::iterator j = labelStmtList.find(gotoStmt->get_label_expression()->get_symbol());
+    if(j != labelStmtList.end())
     {
       delete(gotoStmt->get_label_expression());
       gotoStmt->set_label_expression(NULL);
-      gotoStmt->set_label(i->second);
+      gotoStmt->set_label(j->second);
     }
+  }
+  // Fixing the untranslated labelStatement 
+  Rose_STL_Container<SgNode*> fortranLabelStmtList = NodeQuery::querySubTree (root,V_SgLabelStatement);
+  for (Rose_STL_Container<SgNode*>::iterator i = fortranLabelStmtList.begin(); i != fortranLabelStmtList.end(); i++)
+  {
+    SgLabelStatement* oldStmt = isSgLabelStatement(*i);
+    if(oldStmt->get_numeric_label() != NULL)
+    {
+      SgLabelSymbol* oldSymbol = isSgLabelSymbol(isSgLabelRefExp(oldStmt->get_numeric_label())->get_symbol());
+      ROSE_ASSERT(oldSymbol);
+      map<SgLabelSymbol*, SgLabelStatement*>::iterator j = labelStmtList.find(oldSymbol);
+      if(j != labelStmtList.end())
+      {
+        j->second->set_scope(oldStmt->get_scope());
+        replaceStatement(oldStmt,j->second,true);
+        delete(oldStmt->get_numeric_label());
+        oldStmt->set_numeric_label(NULL);
+        delete(oldStmt);
+      }
+      else
+      {
+        cerr << "SgLabelSymbol has no attached Fortran statement" << endl;
+        ROSE_ASSERT(false);
+      }
+    }
+  }
+
+  // remove all the old labelSymbol from symbol table.
+  for(map<SgLabelSymbol*, SgLabelStatement*>::iterator i = labelStmtList.begin(); i != labelStmtList.end(); ++i)
+  {
+    SgSymbolTable* tmpTable = isSgSymbolTable(i->first->get_parent());
+    ROSE_ASSERT(tmpTable);
+    if (SgProject::get_verbose() > 2)
+      cout << "remove label symbol:" << i->first << " name = " << i->first->get_name().getString() << endl;
+    tmpTable->remove(i->first);
   }
 }
 
@@ -445,6 +499,7 @@ void Fortran_to_C::translateFortranDoLoop(SgFortranDo* fortranDo)
   }
   else
   {
+    deepDelete(increment);
     cIncrementOp = buildAssignOp(buildVarRefExp(variableSymbol),
                                                 buildAddOp(buildVarRefExp(variableSymbol),
                                                 buildIntVal(1)));
@@ -461,6 +516,17 @@ void Fortran_to_C::translateFortranDoLoop(SgFortranDo* fortranDo)
   testStatement->set_parent(forStatement);
   cIncrementOp->set_parent(forStatement);
   loopBody->set_parent(forStatement);
+
+  if(fortranDo->get_end_numeric_label() != NULL)
+  {
+    SgLabelRefExp* labelRef = fortranDo->get_end_numeric_label();
+    ROSE_ASSERT(labelRef->get_symbol());
+    buildComment(forStatement,
+                 "Loop was Fortran Do loop with Label:"+labelRef->get_symbol()->get_name().getString(),
+                 PreprocessingInfo::before, PreprocessingInfo::C_StyleComment);
+    fortranDo->set_end_numeric_label(NULL);
+    delete(labelRef);
+  }
 
   // Replace the SgFortranDo with SgForStatement
   replaceStatement(fortranDo,forStatement,true);
