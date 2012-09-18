@@ -50,7 +50,7 @@ public:
   static IAttr newAttr(int n)  { return IAttr((InheritedAttribute*)new Attr(n)); }
   int newNode(IAttr a) {
     int node = label*shift+n++;
-    s<<node<<" -> "<<get(a)->dot_label<<" [color=limegreen];\n  ";
+    s<<node<<" -> "<<get(a)->dot_label<<" [color=limegreen, weight=2, style=dashed];\n  ";
     return node;
   }
   static string color(BoolLattice lval) {
@@ -321,24 +321,38 @@ public:
 # define NOP do{} while(0)
 
 
-  static void updateInputVar(const EState* estate, const VariableId** v) {
-    assert(v);
+  static void updateInputVar(const EState* estate, set<VariableId>& input_vars) {
     if (estate->io.op == InputOutput::STDIN_VAR) {
-      *v = &estate->io.var;
+      input_vars.insert(estate->io.var);
     }
   }
 
   /// return True iff that state is an Oc operation
-  static BoolLattice isInputState(const EState* estate, const VariableId** v,
+  static BoolLattice isInputState(const EState* estate, 
+				  set<VariableId>& input_vars,
 				  int c, BoolLattice joined_preds) {
-    assert(v);
-    updateInputVar(estate, v);
-    if (*v == NULL)
+    updateInputVar(estate, input_vars);
+    if (input_vars.empty())
       return false;
-    assert(*v);
 
-    const ConstIntLattice& lval =
-      estate->constraints.varConstIntLatticeValue(**v);
+    BoolLattice r = BoolLattice(Top()) || joined_preds;
+    ConstraintSet constraints = estate->getConstraints();
+    for (set<VariableId>::const_iterator ivar = input_vars.begin();
+	 ivar != input_vars.end(); ++ivar) {
+      r = r || is_eq(estate, constraints, *ivar, c);
+      for (ConstraintSet::iterator eqvv = constraints.findSpecific(Constraint::EQ_VAR_VAR, *ivar);
+	   eqvv != constraints.end(); ++eqvv) {
+	r = r || is_eq(estate, constraints, eqvv->rhsVar(), c);
+      }
+    }
+    return r;
+  }
+
+  static BoolLattice is_eq(const EState* estate, 
+			   const ConstraintSet& constraints, 
+			   const VariableId& v, 
+			   int c) {
+    const ConstIntLattice& lval = estate->constraints.varConstIntLatticeValue(v);
     //cerr<<endl<<"ivar == "<<(*v)->variableName()<<endl;
     //cerr<<estate->constraints.toString()<<endl;
     //cerr<<lval.toString()<<endl;
@@ -346,19 +360,20 @@ public:
       //cerr<<(bool)(c == lval.getIntValue()+'A')<<endl;
       return c == lval.getIntValue()+'A';
     }
-    else
-      return BoolLattice(Top()) || joined_preds;
+    else {
+      return BoolLattice(Top());
+    }
   }
 
   // Implementation status: IN PROGRESS
-  // NOTE: Assumes there is only one input variable
+  // NOTE: This is extremely taylored to the RERS challenge benchmarks.
   void visit(const InputSymbol* expr) {
     short e = expr->label;
-    const VariableId* input_var = NULL;
+    set<VariableId> input_vars;
 
     fixpoint(Bot(),                                                 // init
 	     &&,                                                    // join
-	     isInputState(state, &input_var, expr->c, joined_preds) // calc
+	     isInputState(state, input_vars, expr->c, joined_preds) // calc
 	     );
 
   }
@@ -636,7 +651,7 @@ Checker::Checker(EStateSet& ess, TransitionGraph& _tg)
     add_edge(src, tgt, full_graph);
     full_graph[src] = t->source;
     full_graph[tgt] = t->target;
-    cerr<<src<<"("<<t->source<<") -- "<<tgt<<"("<<t->target<<")"<<endl;
+    //cerr<<src<<"("<<t->source<<") -- "<<tgt<<"("<<t->target<<")"<<endl;
     assert(full_graph[src]);
     assert(full_graph[tgt]);
   }
