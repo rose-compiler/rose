@@ -357,8 +357,14 @@ State<ValueType>::print(std::ostream &o) const
                 if (memvar && memvar->is_variable()) {
                     typename MemoryCells::const_iterator found = state.memvals.find(memvar->get_name());
                     if (found!=state.memvals.end()) {
-                        o <<"    address = " <<addr <<"\n"
-                          <<"      value = " <<found->second <<"\n";
+                        o <<"    address symbolic: " <<addr <<"\n";
+                        if (found->second.is_valid(CONCRETE))
+                            o <<"      value concrete: " <<found->second.get_subvalue(CONCRETE) <<"\n";
+                        if (found->second.is_valid(INTERVAL))
+                            o <<"      value interval: " <<found->second.get_subvalue(INTERVAL) <<"\n";
+                        if (found->second.is_valid(SYMBOLIC))
+                            o <<"      value symbolic: " <<found->second.get_subvalue(SYMBOLIC) <<"\n";
+                        
                     }
                 }
             }
