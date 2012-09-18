@@ -274,7 +274,7 @@ EState Analyzer::transferFunction(Edge edge, const EState* eState) {
 	  VariableId actualParameterVarId;
 	  if(bool isActualParamterVar=ExprAnalyzer::variable(actualParameterExpr,actualParameterVarId)) {
 		// propagate constraint from actualParamterVarId to formalParameterVarId
-		cset.addEqVarVar(formalParameterVarId,actualParameterVarId);
+		cset.addAssignEqVarVar(formalParameterVarId,actualParameterVarId);
 	  }
 	  // general case: the actual argument is an arbitrary expression (including a single variable)
 	  SingleEvalResultConstInt evalResult=exprAnalyzer.evalConstInt(actualParameterExpr,currentEState);
@@ -352,7 +352,7 @@ EState Analyzer::transferFunction(Edge edge, const EState* eState) {
 	  AValue evalResult=newState[returnVarId].getValue();
 	  newState[lhsVarId]=evalResult;
 
-	  cset.duplicateConstConstraints(lhsVarId, returnVarId); // duplicate constraints of $return to lhsVar
+	  cset.moveConstConstraints(lhsVarId, returnVarId); // duplicate constraints of $return to lhsVar
 	  newState.deleteVar(returnVarId); // remove $return from state
 	  cset.deleteConstraints(returnVarId); // remove constraints of $return
 

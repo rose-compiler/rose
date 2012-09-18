@@ -156,17 +156,17 @@ int main( int argc, char * argv[] ) {
     ("verify", po::value< string >(), "verify all LTL formulae in the file [arg]")
     ("tg1-estate-address", po::value< string >(), "transition graph 1: visualize address [=yes|no]")
     ("tg1-estate-id", po::value< string >(), "transition graph 1: visualize estate-id [=yes|no]")
-    ("tg1-estate-properties", po::value< string >(), "transition graph 1: visualize all estate-properties [=yes|no]")
+	("tg1-estate-properties", po::value< string >(), "transition graph 1: visualize all estate-properties [=yes|no]")
     ("tg2-estate-address", po::value< string >(), "transition graph 2: visualize address [=yes|no]")
     ("tg2-estate-id", po::value< string >(), "transition graph 2: visualize estate-id [=yes|no]")
     ("tg2-estate-properties", po::value< string >(),"transition graph 2: visualize all estate-properties [=yes|no]")
 	("colors",po::value< string >(),"use colors in output [=yes|no]")
 	("report-stdout",po::value< string >(),"report stdout estates during analysis [=yes|no]")
 	("report-failed-assert",po::value< string >(),"report failed assert estates during analysis [=yes|no]")
-	("precision-equality-constraints",po::value< string >(),"(experimental)use constraints for determining estate equality [=yes|no]")
-	("precision-equality-io",po::value< string >(),"(experimental)use constraints for determining estate equality [=yes|no]")
-	("precision-bool",po::value< string >(),"use conservative top with intbool-(and/or) operators (used in LTL)")
-	("precision-intbool",po::value< string >(),"use conservative top with intbool-(and/or) operators (used in int-analyzer)")
+	("precision-equality-constraints",po::value< string >(),"(experimental) use constraints for determining estate equality [=yes|no]")
+	("precision-equality-io",po::value< string >(),"(experimental) use constraints for determining estate equality [=yes|no]")
+	("precision-bool",po::value< string >(),"use precise top with bool-(and/or) operators (used in LTL)")
+	("precision-intbool",po::value< string >(),"use precise top with intbool-(and/or) operators (used in int-analyzer)")
 	;
 
   po::store(po::command_line_parser(argc, argv).
