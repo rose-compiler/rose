@@ -12,6 +12,7 @@ int calculate_output2(int input) {
   else if(input==22 && f==7) {
 	return 24;
   }
+  return 21;
 }
 
 int calculate_output(int input) {
