@@ -5,20 +5,20 @@
 // inputs
 int f= 6;
 
-int calculate_output2(int input) {
-  if(input==21) {
+int calculate_output2(int input2) {
+  if(input2==21) {
 	return 23;
   }
-  else if(input==22 && f==7) {
+  else if(input2==22 && f==7) {
 	return 24;
   }
 }
 
-int calculate_output(int input) {
-  if(input==21 && f==6) {
+int calculate_output(int input1) {
+  if(input1==21 && f==6) {
 	f=7;
   }
-  return calculate_output2(input);
+  return calculate_output2(input1);
 }
 
 int main()

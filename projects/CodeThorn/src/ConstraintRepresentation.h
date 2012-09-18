@@ -65,12 +65,18 @@ class ConstraintSet : public set<Constraint> {
   ConstraintSet invertedConstraints();
   void invertConstraints();
   //! duplicates constraints for par2 variable and adds them for par1 variable.
+  void moveConstConstraints(VariableId lhsVarId, VariableId rhsVarId);
   void duplicateConstConstraints(VariableId lhsVarId, VariableId rhsVarId);
 
   void addConstraint(Constraint c);
+  //! erase simply deletes the Constraint from the constraint set (in difference, removeConstraint reorganizes the constraints)
+  void eraseConstraint(Constraint c);
+  //! remove transfers information to other vars if the constraint to be deleted is x=y. It tries to keep information alive by transfering it to other variables if possible)
   void removeConstraint(Constraint c);
+  //! implemented by method removeConstraint
   void removeConstraint(ConstraintSet::iterator i);
   bool deqConstraintExists();
+  void addAssignEqVarVar(VariableId, VariableId);
   void addEqVarVar(VariableId, VariableId);
   void removeEqVarVar(VariableId, VariableId);
 };

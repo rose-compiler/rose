@@ -99,9 +99,9 @@ bool ConstraintSet::deqConstraintExists() {
   return false;
 }
 
-void ConstraintSet::addEqVarVar(VariableId lhsVar, VariableId rhsVar) {
+void ConstraintSet::addAssignEqVarVar(VariableId lhsVar, VariableId rhsVar) {
   //TODO: check for const-sets
-  duplicateConstConstraints(lhsVar, rhsVar); // duplication direction from right to left (as in an assignment)
+  moveConstConstraints(lhsVar, rhsVar); // duplication direction from right to left (as in an assignment)
   addConstraint(Constraint(Constraint::EQ_VAR_VAR,lhsVar,rhsVar));
 }
 void ConstraintSet::removeEqVarVar(VariableId lhsVar, VariableId rhsVar) {
@@ -111,6 +111,7 @@ void ConstraintSet::removeEqVarVar(VariableId lhsVar, VariableId rhsVar) {
 
 ConstraintSet ConstraintSet::invertedConstraints() {
   ConstraintSet result;
+  // TODO: ensure that only a single equality constraint is inverted, otherwise this would be not correct.
   for(ConstraintSet::iterator i=begin();i!=end();++i) {
 	Constraint c=*i;
 	switch(c.op()) {
@@ -123,6 +124,9 @@ ConstraintSet ConstraintSet::invertedConstraints() {
 	case Constraint::DEQ_VAR_CONST:
 	  result.addConstraint(Constraint(Constraint::DEQ_VAR_CONST,c.lhsVar(),c.rhsVal())); // unchanged
 	  break;
+	  // we do not extract VAR_VAR constraints from expressions. We only invert constraint sets which have been extracted from expressions.
+	  // therefore VAR_VAR constraints are not supposed to be inverted.
+#if 0
 	case Constraint::EQ_VAR_VAR:
 	  result.addConstraint(Constraint(Constraint::NEQ_VAR_VAR,c.lhsVar(),c.rhsVar()));
 	  break;
@@ -132,8 +136,9 @@ ConstraintSet ConstraintSet::invertedConstraints() {
 	case Constraint::DEQ_VAR_VAR:
 	  result.addConstraint(Constraint(Constraint::DEQ_VAR_VAR,c.lhsVar(),c.rhsVar())); // unchanged
 	  break;
+#endif
 	default:
-	  throw "Error: ConstraintSet::invertedConstraints: unknown operator.";
+	  throw "Error: ConstraintSet::invertedConstraints: unknown or unsupported operator.";
 	}
   }
   return result;
@@ -157,12 +162,12 @@ void ConstraintSet::invertConstraints() {
 	  // remains unchanged
 	  break;
 	default:
-	  throw "Error: ConstraintSet::invertedConstraints: unknown operator.";
+	  throw "Error: ConstraintSet::invertedConstraints: unknown or unsupported operator.";
 	}
   }
 }
 
-void  ConstraintSet::duplicateConstConstraints(VariableId lhsVarId, VariableId rhsVarId) {
+void  ConstraintSet::moveConstConstraints(VariableId lhsVarId, VariableId rhsVarId) {
   if(lhsVarId==rhsVarId)
 	return; // duplication not necessary
   deleteConstraints(lhsVarId);
@@ -173,6 +178,18 @@ void  ConstraintSet::duplicateConstConstraints(VariableId lhsVarId, VariableId r
 	}
   }
 }
+
+void  ConstraintSet::duplicateConstConstraints(VariableId lhsVarId, VariableId rhsVarId) {
+  if(lhsVarId==rhsVarId)
+	return; // duplication not necessary
+  for(ConstraintSet::iterator i=begin();i!=end();++i) {
+	Constraint c=*i;
+	if(c.isVarValOp() && c.lhsVar()==rhsVarId) {
+	  addConstraint(Constraint(c.op(),lhsVarId,c.rhsValCppCapsule()));
+	}
+  }
+}
+
 
 void ConstraintSet::addConstraint(Constraint c) {
   // we have to look which version of constraint already exists (it can only be at most one)
@@ -218,8 +235,8 @@ void ConstraintSet::addConstraint(Constraint c) {
 	set<Constraint>::insert(Constraint(Constraint::DEQ_VAR_CONST,c.lhsVar(),c.rhsValCppCapsule()));
 	return;
   case Constraint::EQ_VAR_VAR:
-	// TODO: keep constraint consistent for x==y as well 
-	// (currently only the transfer functions ensure this)
+	// TODO: maintain consistency wenn x=y is inserted but constraints of x and y are in conflict
+	// currently we only add x=y for a fresh variable y on parameter passing
 	set<Constraint>::insert(Constraint(Constraint::EQ_VAR_VAR,c.lhsVar(),c.rhsVar()));
 	return;
   default:
@@ -229,12 +246,25 @@ void ConstraintSet::addConstraint(Constraint c) {
   set<Constraint>::insert(c);
 }
 
-void ConstraintSet::removeConstraint(Constraint c) {
+void ConstraintSet::eraseConstraint(Constraint c) {
   erase(c);
 }
 
+void ConstraintSet::removeConstraint(Constraint c) {
+  if(c.op()==Constraint::EQ_VAR_VAR) {
+	// ensure we do not loose information because of dropping x=y
+	// example: x!=1,y!=2,x=y => x!=1,x!=2,y!=1,y!=2
+	duplicateConstConstraints(c.lhsVar(), c.rhsVar()); // duplication direction from right to left (as in an assignment)
+	duplicateConstConstraints(c.rhsVar(), c.lhsVar()); // duplication direction from right to left (as in an assignment)
+	eraseConstraint(c);
+  } else {
+	// all other cases
+	eraseConstraint(c);
+  }
+}
+
 void ConstraintSet::removeConstraint(ConstraintSet::iterator i) {
-  erase(i);
+  removeConstraint(*i);
 }
 
 ConstraintSet ConstraintSet::operator+(ConstraintSet& s2) {
@@ -254,6 +284,7 @@ ConstraintSet& ConstraintSet::operator+=(ConstraintSet& s2) {
 bool ConstraintSet::constraintExists(Constraint::ConstraintOp op) const { 
   return constraintsWithOp(op).size()>0;
 }
+
 ConstraintSet ConstraintSet::constraintsWithOp(Constraint::ConstraintOp op) const { 
   ConstraintSet cs;
   for(ConstraintSet::iterator i=begin();i!=end();++i) {
@@ -267,9 +298,11 @@ bool ConstraintSet::constraintExists(Constraint::ConstraintOp op, VariableId var
   Constraint tmp(op,varId,intVal);
   return constraintExists(tmp);
 }
+
 bool ConstraintSet::constraintExists(Constraint::ConstraintOp op, VariableId varId, AValue intVal) const { 
   return constraintExists(op,varId,CppCapsuleAValue(intVal));
 }
+
 bool ConstraintSet::constraintExists(const Constraint& tmp) const { 
 #if 1
   // we use this as the find algorithm does not properly work yet (TODO: investigate)
@@ -321,6 +354,20 @@ ConstraintSet ConstraintSet::deleteVarConstraints(VariableId varId) {
 }
 
 void ConstraintSet::deleteConstraints(VariableId varId) {
+#if 1
+  // ensure we delete equalities before all other constraints (removing equalities keeps information alive)
+  for(ConstraintSet::iterator i=begin();i!=end();++i) {
+	if(((*i).op()==Constraint::EQ_VAR_VAR)) {
+	  if(((*i).lhsVar()==varId)) 
+		removeConstraint(i);
+	  else {
+		if(((*i).rhsVar()==varId)) 
+		  removeConstraint(i);
+	  }
+	}
+  }
+#endif
+  // now, remove all other constraints with variable varId
   for(ConstraintSet::iterator i=begin();i!=end();++i) {
 	if((*i).lhsVar()==varId)
 	  removeConstraint(i);
