@@ -240,13 +240,6 @@ Policy<State, ValueType>::readMemory(X86SegmentRegister sr, ValueType<32> addr, 
     if (!triggered)
         return  Super::template readMemory<nBits>(sr, addr, cond);
 
-#if 0
-    // Andreas: example
-    using InsnSemanticsExpr;
-    TreeNodePtr node = addr.get_expression();
-    bool is_free_variable = node->isLeafNode() && node->isLeafNode()->isVariable();
-#endif
-
     // We need a symbolic address. If we don't have one, then try to construct one from values we do have. (Andreas, this
     // is the stuff you guys need to write--how to convert a value from one domain to another; I just stubbed this out for
     // now. [RPM])
