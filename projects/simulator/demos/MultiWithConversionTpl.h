@@ -162,7 +162,7 @@ Policy<State, ValueType>::xor_(const ValueType<nBits> &a, const ValueType<nBits>
             if (symbolic_bool.is_known() && symbolic_bool.known_value()!=0) {
                 trace()->mesg("%s: xor_ optimization triggered for interval domain", name);
                 trace()->mesg("%s: instruction: %s", name, unparseInstruction(this->get_policy(CONCRETE).get_insn()).c_str());
-#if 0 // FIXME: throws an exception, segfaults, ?
+#if 0 // FIXME: throws an exception, segfaults, ? [possibly fixed by commit 5cb0fa28, but not verified yet]
                 std::ostringstream ss; ss <<this->get_policy(SYMBOLIC);
                 trace()->mesg("%s: symbolic state:\n%s", name, StringUtility::prefixLines(ss.str(), "    ").c_str());
 #endif
