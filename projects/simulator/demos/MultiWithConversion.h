@@ -61,17 +61,19 @@ public:
     typedef std::pair<uint64_t, ValueType<8> > MemoryCell;      // pair of symbolic variable number and multi-value
     typedef std::map<uint64_t, ValueType<8> > MemoryCells;
     MemoryCells memvals;                                        // mapping from symbolic variable number to multi-value
-    InsnSemanticsExpr::TreeNodePtr mccarthy;                    // McCarthy expression for the current memory state
+    InsnSemanticsExpr::TreeNodePtr mccarthy_ss;                 // McCarthy expression for the current stack segment memory state
+    InsnSemanticsExpr::TreeNodePtr mccarthy_ds;                 // McCarthy expression for the current data segment memory state
 
     State() {
-        mccarthy = InsnSemanticsExpr::LeafNode::create_memory(8, "empty memory");
+        mccarthy_ss = InsnSemanticsExpr::LeafNode::create_memory(8, "empty stack segment memory");
+        mccarthy_ds = InsnSemanticsExpr::LeafNode::create_memory(8, "empty data segment memory");
     }
 
     // Write a single byte to memory
-    void mem_write_byte(const SYMBOLIC_VALUE<32> &addr, const ValueType<8> &value);
+    void mem_write_byte(X86SegmentRegister sr, const SYMBOLIC_VALUE<32> &addr, const ValueType<8> &value);
 
     // Read a single byte from memory
-    ValueType<8> mem_read_byte(const SYMBOLIC_VALUE<32> &addr);
+    ValueType<8> mem_read_byte(X86SegmentRegister sr, const SYMBOLIC_VALUE<32> &addr);
 
     // Given a free memory variable, return the associated multi-value.
     ValueType<8> get_memval(InsnSemanticsExpr::LeafNodePtr);

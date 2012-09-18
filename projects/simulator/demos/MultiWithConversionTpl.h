@@ -221,20 +221,20 @@ Policy<State, ValueType>::readMemory(X86SegmentRegister sr, ValueType<32> addr, 
     // Read a multi-byte value from memory in little-endian order.
     assert(8==nBits || 16==nBits || 32==nBits);
     SYMBOLIC_VALUE<32> a0 = addr.get_subvalue(SYMBOLIC);
-    ValueType<32> dword = this->concat(ValueType<24>(0), state.mem_read_byte(a0));
+    ValueType<32> dword = this->concat(ValueType<24>(0), state.mem_read_byte(sr, a0));
     if (nBits>=16) {
         SYMBOLIC_VALUE<32> a1 = this->get_policy(SYMBOLIC).add(a0, SYMBOLIC_VALUE<32>(1));
         dword = this->or_(dword, this->concat(ValueType<16>(0),
-                                              this->concat(state.mem_read_byte(a1), ValueType<8>(0))));
+                                              this->concat(state.mem_read_byte(sr, a1), ValueType<8>(0))));
     }
     if (nBits>=24) {
         SYMBOLIC_VALUE<32> a2 = this->get_policy(SYMBOLIC).add(a0, SYMBOLIC_VALUE<32>(2));
         dword = this->or_(dword, this->concat(ValueType<8>(0),
-                                              this->concat(state.mem_read_byte(a2), ValueType<16>(0))));
+                                              this->concat(state.mem_read_byte(sr, a2), ValueType<16>(0))));
     }
     if (nBits>=32) {
         SYMBOLIC_VALUE<32> a3 = this->get_policy(SYMBOLIC).add(a0, SYMBOLIC_VALUE<32>(3));
-        dword = this->or_(dword, this->concat(state.mem_read_byte(a3), ValueType<24>(0)));
+        dword = this->or_(dword, this->concat(state.mem_read_byte(sr, a3), ValueType<24>(0)));
     }
     return this->template extract<0, nBits>(dword);
 }
@@ -274,21 +274,21 @@ Policy<State, ValueType>::writeMemory(X86SegmentRegister sr, ValueType<32> addr,
             assert(8==nBits || 16==nBits || 32==nBits);
             SYMBOLIC_VALUE<32> a0 = addr.get_subvalue(SYMBOLIC);
             ValueType<8> b0 = this->template extract<0, 8>(data);
-            state.mem_write_byte(a0, b0);
+            state.mem_write_byte(sr, a0, b0);
             if (nBits>=16) {
                 SYMBOLIC_VALUE<32> a1 = this->get_policy(SYMBOLIC).add(a0, SYMBOLIC_VALUE<32>(1));
                 ValueType<8> b1 = this->template extract<8, 16>(data);
-                state.mem_write_byte(a1, b1);
+                state.mem_write_byte(sr, a1, b1);
             }
             if (nBits>=24) {
                 SYMBOLIC_VALUE<32> a2 = this->get_policy(SYMBOLIC).add(a0, SYMBOLIC_VALUE<32>(2));
                 ValueType<8> b2 = this->template extract<16, 24>(data);
-                state.mem_write_byte(a2, b2);
+                state.mem_write_byte(sr, a2, b2);
             }
             if (nBits>=32) {
                 SYMBOLIC_VALUE<32> a3 = this->get_policy(SYMBOLIC).add(a0, SYMBOLIC_VALUE<32>(3));
                 ValueType<8> b3 = this->template extract<24, 32>(data);
-                state.mem_write_byte(a3, b3);
+                state.mem_write_byte(sr, a3, b3);
             }
         }
     }
@@ -302,25 +302,29 @@ Policy<State, ValueType>::print(std::ostream &o) const
       <<"== Interval State ==\n" <<this->get_policy(INTERVAL) <<"\n"
       <<"== Symbolic State ==\n";
     this->get_policy(SYMBOLIC).print(o); //FIXME: "o<<this->get_policy(SYMBOLIC)" throws std::logic_error
-    o <<"\n"
-      <<"== Multi Memory ==\n" <<state <<"\n";
+    o <<"\n" <<state <<"\n";
 }
 
 template <template <size_t> class ValueType>
 void
-State<ValueType>::mem_write_byte(const SYMBOLIC_VALUE<32> &addr, const ValueType<8> &value)
+State<ValueType>::mem_write_byte(X86SegmentRegister sr, const SYMBOLIC_VALUE<32> &addr, const ValueType<8> &value)
 {
     using namespace InsnSemanticsExpr;
     LeafNodePtr memvar = LeafNode::create_variable(8, "MEMVAR");
     memvals.insert(std::make_pair(memvar->get_name(), value));
-    mccarthy = InternalNode::create(8, OP_WRITE, mccarthy, addr.get_expression(), memvar);
+    if (x86_segreg_ss==sr) {
+        mccarthy_ss = InternalNode::create(8, OP_WRITE, mccarthy_ss, addr.get_expression(), memvar);
+    } else {
+        mccarthy_ds = InternalNode::create(8, OP_WRITE, mccarthy_ds, addr.get_expression(), memvar);
+    }
 }
 
 template <template <size_t> class ValueType>
 ValueType<8>
-State<ValueType>::mem_read_byte(const SYMBOLIC_VALUE<32> &addr)
+State<ValueType>::mem_read_byte(X86SegmentRegister sr, const SYMBOLIC_VALUE<32> &addr)
 {
     using namespace InsnSemanticsExpr;
+    InsnSemanticsExpr::TreeNodePtr mccarthy = x86_segreg_ss==sr ? mccarthy_ss : mccarthy_ds;
     SYMBOLIC_VALUE<8> read_op(InternalNode::create(8, OP_READ, mccarthy, addr.get_expression()));
     ValueType<8> retval;
     retval.set_subvalue(SYMBOLIC, read_op);
@@ -370,7 +374,10 @@ State<ValueType>::print(std::ostream &o) const
             }
         }
     } t1(o, *this);
-    mccarthy->depth_first_visit(&t1);
+    o <<"== Multi Memory (stack segment) ==\n";
+    mccarthy_ss->depth_first_visit(&t1);
+    o <<"== Multi Memory (data segment) ==\n";
+    mccarthy_ds->depth_first_visit(&t1);
 }
 
 } // namespace
