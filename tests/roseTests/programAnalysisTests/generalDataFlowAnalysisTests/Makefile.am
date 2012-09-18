@@ -60,7 +60,7 @@ CLEAN_TARGETS += clean-taint-analysis
 clean-taint-analysis:
 	rm -f $(TAINT_ANALYSIS_TESTS) $(TAINT_ANALYSIS_TESTS:.passed=.failed)
 	rm -f $(TAINT_ANALYSIS_TESTS:.passed=.out) $(TAINT_ANALYSIS_TESTS:.passed=.err)
-	rm -rf detail.html index.html summary.html dbg_imgs
+	rm -f detail.html index.html summary.html
 
 
 
@@ -84,7 +84,7 @@ clean-cxx-constprop-local:
 	rm -f $(CXX_CONSTPROP_LOCAL_TESTS) $(CXX_CONSTPROP_LOCAL_TESTS:.passed=.failed)
 	rm -f $(CXX_CONSTPROP_LOCAL_TESTS:.passed=.out) $(CXX_CONSTPROP_LOCAL_TESTS:.passed=.err)
 	rm -f $(patsubst cxxcpls_%.passed, %*.dot, $(CXX_CONSTPROP_LOCAL_TESTS))
-	rm -rf detail.html index.html summary.html dbg_imgs
+	rm -f detail.html index.html summary.html
 
 
 
@@ -215,10 +215,10 @@ clean-cxx-constprop:
 	rm -f $(CXX_CONSTPROP_TESTS) $(CXX_CONSTPROP_TESTS:.passed=.failed)
 	rm -f $(CXX_CONSTPROP_TESTS:.passed=.out) $(CXX_CONSTPROP_TESTS:.passed=.err)
 	rm -f $(patsubst cxxcp_%.passed, %*.dot, $(CXX_CONSTPROP_TESTS))
-	rm -rf detail.html index.html summary.html dbg_imgs
+	rm -f detail.html index.html summary.html
 	rm -f exception_L4R__L5R_cfg.dot exception_L6R__L7R_cfg.dot test2004_40.h_fooAfter___Fb_v_Gb__Fe___L2R_cfg.dot
-	rm -f test2004_40.h_fooBefore___Fb_v_Gb__Fe___L2R_cfg.dot test2005_81.h_L2R_cfg.dot test2005_88.h_L2R_cfg.dot
-	rm -f test2005_88.h_L3R_cfg.dot
+	rm -f test2004_40.h_fooBefore___Fb_v_Gb__Fe___L2R_cfg.dot test2005_81.h_L1R_cfg.dot
+	rm -f test2005_81.h_L2R_cfg.dot test2005_88.h_L2R_cfg.dot test2005_88.h_L3R_cfg.dot
 
 
 
@@ -267,7 +267,7 @@ clean-c-constprop:
 	rm -f $(C_CONSTPROP_TESTS) $(C_CONSTPROP_TESTS:.passed=.failed)
 	rm -f $(C_CONSTPROP_TESTS:.passed=.out) $(C_CONSTPROP_TESTS:.passed=.err)
 	rm -f $(C_CONSTPROP_TESTS:.C.passed=.c) $(C_CONSTPROP_TESTS:.C.passed=.c*.dot)
-	rm -rf detail.html index.html summary.html dbg_imgs
+	rm -f detail.html index.html summary.html
 
 
 
@@ -295,7 +295,7 @@ clean-c99-constprop:
 	rm -f $(C99_CONSTPROP_TESTS) $(C99_CONSTPROP_TESTS:.passed=.failed)
 	rm -f $(C99_CONSTPROP_TESTS:.passed=.out) $(C99_CONSTPROP_TESTS:.passed=.err)
 	rm -f $(patsubst c99cp_%.passed, %*.dot, $(C99_CONSTPROP_TESTS))
-	rm -rf detail.html index.html summary.html dbg_imgs
+	rm -f detail.html index.html summary.html
 
 
 
@@ -336,7 +336,7 @@ clean-f77-constprop:
 	rm -f $(F77_CONSTPROP_TESTS) $(F77_CONSTPROP_TESTS:.passed=.failed)
 	rm -f $(F77_CONSTPROP_TESTS:.passed=.out) $(F77_CONSTPROP_TESTS:.passed=.err)
 	rm -f $(patsubst f77cp_%.passed, %*.dot, $(F77_CONSTPROP_TESTS))
-	rm -rf detail.html index.html summary.html dbg_imgs
+	rm -f detail.html index.html summary.html
 
 
 
@@ -386,7 +386,7 @@ clean-f90-constprop:
 	rm -f $(F90_CONSTPROP_TESTS) $(F90_CONSTPROP_TESTS:.passed=.failed)
 	rm -f $(F90_CONSTPROP_TESTS:.passed=.out) $(F90_CONSTPROP_TESTS:.passed=.err)
 	rm -f $(patsubst f90cp_%.passed, %*.dot, $(F90_CONSTPROP_TESTS))
-	rm -rf detail.html index.html summary.html dbg_imgs
+	rm -f detail.html index.html summary.html
 
 
 
@@ -421,7 +421,7 @@ clean-f03-constprop:
 	rm -f $(F03_CONSTPROP_TESTS:.passed=.out) $(F03_CONSTPROP_TESTS:.passed=.err)
 	rm -f $(patsubst f03cp_%.passed, %*.dot, $(F03_CONSTPROP_TESTS))
 	rm -f $(patsubst f03cp_%.f03.passed, %*.rmod, $(F03_CONSTPROP_TESTS))
-	rm -rf detail.html index.html summary.html dbg_imgs
+	rm -f detail.html index.html summary.html
 
 
 
@@ -446,7 +446,7 @@ clean-cxx-liveness:
 	rm -f $(CXX_LIVENESS_TESTS) $(CXX_LIVENESS_TESTS:.passed=.failed)
 	rm -f $(CXX_LIVENESS_TESTS:.passed=.out) $(CXX_LIVENESS_TESTS:.passed=.err)
 	rm -f $(patsubst cxxla_%.passed, %*.dot, $(CXX_LIVENESS_TESTS))
-	rm -rf detail.html index.html summary.html dbg_imgs
+	rm -f detail.html index.html summary.html
 
 
 
@@ -471,7 +471,7 @@ clean-cxx-pointer-alias:
 	rm -f $(CXX_POINTER_ALIAS_TESTS) $(CXX_POINTER_ALIAS_TESTS:.passed=.failed)
 	rm -f $(CXX_POINTER_ALIAS_TESTS:.passed=.out) $(CXX_POINTER_ALIAS_TESTS:.passed=.err)
 	rm -f $(patsubst cxxpa_%.passed, %*.dot, $(CXX_POINTER_ALIAS_TESTS))
-	rm -rf detail.html index.html summary.html dbg_imgs
+	rm -f detail.html index.html summary.html
 
 
 
@@ -508,4 +508,5 @@ check-local: check-c-languages check-fortran-languages
 # developers are working with).  Also, the MOSTLYCLEANFILES list gets too long for the shell, so we use phony targets to
 # clean each test individually.
 clean-local: $(CLEAN_TARGETS)
+	rm -rf dbg_imgs
 	rm -f $(MOSTLYCLEANFILES)
