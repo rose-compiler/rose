@@ -162,12 +162,6 @@ public:
     template<size_t nBits>
     void writeMemory(X86SegmentRegister sr, ValueType<32> addr, const ValueType<nBits> &data, const ValueType<1> &cond);
 
-    // Read a value from a register
-    template<size_t nBits>
-    ValueType<nBits> readRegister(const RegisterDescriptor &reg);
-    template<size_t nBits>
-    ValueType<nBits> readRegister(const char *regname);
-
     // Print the states for each sub-domain and our own state containing the mixed semantics memory.
     void print(std::ostream&) const;
     friend std::ostream& operator<<(std::ostream &o, const Policy &p) {

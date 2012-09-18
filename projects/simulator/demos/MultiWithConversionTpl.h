@@ -199,42 +199,6 @@ Policy<State, ValueType>::symbolic_state_complexity()
 MULTI_DOMAIN_TEMPLATE
 template<size_t nBits>
 ValueType<nBits>
-Policy<State, ValueType>::readRegister(const RegisterDescriptor &reg)
-{
-    ValueType<nBits> retval = Super::template readRegister<nBits>(reg);
-
-    if (triggered) {
-        // Convert interval to symbolic, discarding any symbolic value we once had
-        assert(retval.is_valid(INTERVAL));
-        INTERVAL_VALUE<nBits> &iv = retval.get_subvalue(INTERVAL);
-        uint64_t lo = iv.get_intervals().min();  // minimum across all distinct contiguous intervals
-        uint64_t hi = iv.get_intervals().max();  // likewise
-
-        // I probably got this wrong. Look at yices documentation and the node types in InsnSemanicsExpr.h
-        using namespace InsnSemanticsExpr;
-        LeafNodePtr var = LeafNode::create_variable(nBits);
-        InternalNodePtr expr = InternalNode::create(nBits, InsnSemanticsExpr::OP_OR,
-                                                    InternalNode::create(nBits, InsnSemanticsExpr::OP_UGE,
-                                                                         var, LeafNode::create_integer(nBits, lo)),
-                                                    InternalNode::create(nBits, InsnSemanticsExpr::OP_ULE,
-                                                                         var, LeafNode::create_integer(nBits, hi)));
-        retval.set_subvalue(SYMBOLIC, SYMBOLIC_VALUE<nBits>(expr));
-    }
-    return retval;
-}
-
-// We need this one too; they probably should have had different names when the base class was designed
-MULTI_DOMAIN_TEMPLATE
-template<size_t nBits>
-ValueType<nBits>
-Policy<State, ValueType>::readRegister(const char *regname) {
-    const RegisterDescriptor &desc = this->findRegister(regname, nBits);
-    return this->template readRegister<nBits>(desc);
-}
-
-MULTI_DOMAIN_TEMPLATE
-template<size_t nBits>
-ValueType<nBits>
 Policy<State, ValueType>::readMemory(X86SegmentRegister sr, ValueType<32> addr, const ValueType<1> &cond)
 {
     if (!triggered)
