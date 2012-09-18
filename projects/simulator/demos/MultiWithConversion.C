@@ -52,6 +52,21 @@ main(int argc, char *argv[], char *envp[])
 {
     std::ios::sync_with_stdio();
 
+    // Parse command-line switches understood by MultiWithConversion and leave the rest for the simulator.
+    rose_addr_t target_va = 0; // analysis address (i.e., the "arbitrary offset"). Zero implies the program's OEP
+    for (int i=1; i<argc; ++i) {
+        if (!strcmp(argv[i], "--help") || !strcmp(argv[i], "-h") || !strcmp(argv[i], "-?")) {
+            std::cout <<"usage: " <<argv[0] <<" [--target=ADDRESS] [SIMULATOR_SWITCHES] SPECIMEN [SPECIMEN_ARGS...]\n";
+            exit(0);
+        } else if (!strncmp(argv[i], "--target=", 9)) {
+            target_va = strtoull(argv[i]+9, NULL, 0);
+            memmove(argv+i, argv+i+1, (argc-- -i)*sizeof(*argv)); // argv has argc+1 elements
+            --i;
+        } else {
+            break;
+        }
+    }
+
     // Our instruction callback.  We can't set its trigger address until after we load the specimen, but we want to register
     // the callback with the simulator before we create the first thread.
     SemanticController semantic_controller;
@@ -68,8 +83,7 @@ main(int argc, char *argv[], char *envp[])
     // our analysis to run as soon as the dynamic linker is finished.  We don't know the OEP until after the sim.exec() call
     // that loads the specimen into memory, so by time we can register our callback, the RSIM_Process has copied 
     rose_addr_t trigger_va = sim.get_process()->get_ep_orig_va();
-    rose_addr_t target_va = trigger_va; // arbitrary virtual address (i.e., the "arbitrary offset")
-    semantic_controller.arm(trigger_va, target_va);
+    semantic_controller.arm(trigger_va, 0==target_va ? trigger_va : target_va);
 
     //sim.activate();
     sim.main_loop();
