@@ -42,8 +42,10 @@ class ExprAnalyzer {
  public:
   SingleEvalResult eval(SgNode* node,EState eState);
   SingleEvalResultConstInt evalConstInt(SgNode* node,EState eState);
-  bool childrenVarConst(string* var, int* con);
-  bool childrenConstVar(int* con, string* var);
+  //! extracts constraints which might be extractable
+  ConstraintSet determineExtractableConstraints(SgNode* node, EState& eState);
+  //! all constraints are provided to ensure the expression evaluates to true or false
+  SingleEvalResultConstInt evalConstIntExprWithOneProvidedConstraint(SgNode* nextNodeToAnalyze2, EState& currentEState, Constraint& constraint);
   // returns true if node is a VarRefExp and sets varName=name, otherwise false and varName="$".
   static bool variable(SgNode* node,VariableName& varName);
   // returns true if node is a VarRefExp and sets varId=id, otherwise false and varId=0.

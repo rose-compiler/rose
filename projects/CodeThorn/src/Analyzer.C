@@ -459,30 +459,49 @@ EState Analyzer::transferFunction(Edge edge, const EState* eState) {
   if(isSgExprStatement(nextNodeToAnalyze1)) {
 	SgNode* nextNodeToAnalyze2=SgNodeHelper::getExprStmtChild(nextNodeToAnalyze1);
 	assert(nextNodeToAnalyze2);
-	//cout << "INFO2: we are at "<<astTermWithNullValuesToString(nextNodeToAnalyze2)<<endl;
 	if(edge.type==EDGE_TRUE || edge.type==EDGE_FALSE) {
-	  SingleEvalResultConstInt evalResult=exprAnalyzer.evalConstInt(nextNodeToAnalyze2,currentEState);
-	  if((evalResult.isTrue() && edge.type==EDGE_TRUE) || (evalResult.isFalse() && edge.type==EDGE_FALSE) || evalResult.isTop()) {
-		// pass on EState
-		EState newEState=evalResult.eState;
-		newEState.label=edge.target;
 
-		// merge with collected constraints of expr (exprConstraints), and invert for false branch
-		if(edge.type==EDGE_TRUE) {
-		  newEState.constraints=evalResult.eState.constraints+evalResult.exprConstraints;
-		} else if(edge.type==EDGE_FALSE) {
-		  ConstraintSet s1=evalResult.eState.constraints;
-		  ConstraintSet s2=evalResult.exprConstraints.invertedConstraints();
-		  newEState.constraints=s1+s2;
+	  // TODO:  not implemented yet, currently exctrableCSet is always of size 0
+	  ConstraintSet extractableCSet=exprAnalyzer.determineExtractableConstraints(nextNodeToAnalyze2,currentEState);
+	  if(extractableCSet.size()==1) {
+		// SPECIFIC CASE: the specific case of one extrable constraint
+		// TODO: process extractableCSet and generate two versions of constraint and two versions of EState
+		EState trueExtendedCurrentEState=currentEState;
+		EState falseExtendedCurrentEState=currentEState;
+		SingleEvalResultConstInt evalResult1=exprAnalyzer.evalConstInt(nextNodeToAnalyze2,trueExtendedCurrentEState);
+		SingleEvalResultConstInt evalResult2=exprAnalyzer.evalConstInt(nextNodeToAnalyze2,falseExtendedCurrentEState);
+		assert(!evalResult1.value().isTop() && !evalResult2.value().isTop());
+		if((evalResult1.value()!=evalResult2.value()).isTrue()) {
+		  // sucessfully extracted a constraint
+		  // TODO
+		} else {
+		  // it was impossible to extract a constraint
+		  // TODO
 		}
-		return newEState;
 	  } else {
-		// we determined not to be on an execution path, therefore return EState with NO_ESTATE
-		EState noEState;
-		noEState.label=NO_ESTATE;
-		return noEState;
+		// GENERAL CASE: we may extract several constraints but are more conservative
+		SingleEvalResultConstInt evalResult=exprAnalyzer.evalConstInt(nextNodeToAnalyze2,currentEState);
+		if((evalResult.isTrue() && edge.type==EDGE_TRUE) || (evalResult.isFalse() && edge.type==EDGE_FALSE) || evalResult.isTop()) {
+		  // pass on EState
+		  EState newEState=evalResult.eState;
+		  newEState.label=edge.target;
+		  
+		  // merge with collected constraints of expr (exprConstraints), and invert for false branch
+		  if(edge.type==EDGE_TRUE) {
+			newEState.constraints=evalResult.eState.constraints+evalResult.exprConstraints;
+		  } else if(edge.type==EDGE_FALSE) {
+			ConstraintSet s1=evalResult.eState.constraints;
+			ConstraintSet s2=evalResult.exprConstraints.invertedConstraints();
+			newEState.constraints=s1+s2;
+		  }
+		  return newEState;
+		} else {
+		  // we determined not to be on an execution path, therefore return EState with NO_ESTATE
+		  EState noEState;
+		  noEState.label=NO_ESTATE;
+		  return noEState;
+		}
 	  }
-
 	}
 	if(isSgConditionalExp(nextNodeToAnalyze2)) {
 	  // we currently only handle ConditionalExpressions as used in asserts

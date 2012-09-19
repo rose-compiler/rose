@@ -29,12 +29,11 @@ bool ExprAnalyzer::variable(SgNode* node, VariableId& varId) {
 	return false;
   }
 }
-bool ExprAnalyzer::childrenVarConst(string* var, int* con) {
-  return false;
-}
 
-bool ExprAnalyzer::childrenConstVar(int* con, string* var) {
-  return false;
+ConstraintSet ExprAnalyzer::determineExtractableConstraints(SgNode* node, EState& eState) {
+  ConstraintSet extractableCSet;
+  // TODO: extract 
+  return extractableCSet;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -134,7 +133,8 @@ SingleEvalResultConstInt ExprAnalyzer::evalConstInt(SgNode* node,EState eState) 
 		res.exprConstraints=lhsResult.exprConstraints;
 	  } else {
 		res.result=(lhsResult.result&&rhsResult.result);
-		if(res.result.isTrue())
+		// TODO: work here
+		if(res.result.isTrue()) 
 		  res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
 		else {
 		// do not up-proagate collected constraints (exprConstraints remains empty) because (lhs AND rhs) is possibly false
@@ -148,6 +148,7 @@ SingleEvalResultConstInt ExprAnalyzer::evalConstInt(SgNode* node,EState eState) 
 		res.exprConstraints=lhsResult.exprConstraints;
 	  } else {
 		res.result=(lhsResult.result||rhsResult.result);
+		// TODO: work here
 		if(res.result.isTrue())
 		  res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
 		else {
