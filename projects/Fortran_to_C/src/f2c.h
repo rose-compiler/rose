@@ -58,10 +58,12 @@ namespace Fortran_to_C
     void translateProgramHeaderStatement(SgProgramHeaderStatement*);
     void translateProcedureHeaderStatement(SgProcedureHeaderStatement*);
     void translateAttributeSpecificationStatement(SgAttributeSpecificationStatement*);
+    void translateCommonBlock(SgCommonBlock*);
     void translateFunctionParameterList(SgFunctionParameterList*, SgFunctionParameterList*, SgFunctionDefinition*);
     void translateEquivalenceStatement(SgEquivalenceStatement*);
     void translateFortranDoLoop(SgFortranDo*);
     void fixFortranSymbolTable(SgNode*, bool);
+    std::string emulateParameterValue(SgExpression*, SgExpression**);
 
     void translateArrayDeclaration(SgArrayType*);
     void translateArraySubscript(SgPntrArrRefExp*);
@@ -73,6 +75,7 @@ namespace Fortran_to_C
     bool convertMathFunctionName(SgName, SgName*, SgType*);
     bool isMaxMinFunctionName(SgName, SgType*);
     void removeFortranMaxMinFunction(SgGlobal*);
+
 
     SgExpression* getFortranDimensionSize(SgExpression*);
     SgExpression* get0basedIndex(SgExpression*, SgExpression*);

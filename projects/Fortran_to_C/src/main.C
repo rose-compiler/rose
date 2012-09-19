@@ -18,6 +18,7 @@
 
 using namespace std;
 using namespace SageInterface;
+using namespace SageBuilder;
 using namespace Fortran_to_C;
 
 bool isLinearlizeArray = false;
@@ -25,6 +26,7 @@ vector<SgArrayType*> arrayTypeList;
 vector<SgVariableDeclaration*> variableDeclList;
 vector<SgPntrArrRefExp*> pntrArrRefList;
 vector<SgEquivalenceStatement*> equivalenceList;
+map<SgVariableSymbol*,SgExpression*> parameterSymbolList;
 vector<SgStatement*> statementList;
 vector<SgNode*> removeList;
 
@@ -122,15 +124,15 @@ void f2cTraversal::visit(SgNode* n)
         removeList.push_back(fortranDo);
         break;
       }
-    case V_SgAttributeSpecificationStatement:
-      {
-        SgAttributeSpecificationStatement* attributeSpecificationStatement = isSgAttributeSpecificationStatement(n);
-        ROSE_ASSERT(attributeSpecificationStatement);
-        translateAttributeSpecificationStatement(attributeSpecificationStatement);
-        statementList.push_back(attributeSpecificationStatement);
-        removeList.push_back(attributeSpecificationStatement);
-        break;
-      }
+//    case V_SgAttributeSpecificationStatement:
+//      {
+//        SgAttributeSpecificationStatement* attributeSpecificationStatement = isSgAttributeSpecificationStatement(n);
+//        ROSE_ASSERT(attributeSpecificationStatement);
+//        translateAttributeSpecificationStatement(attributeSpecificationStatement);
+//        statementList.push_back(attributeSpecificationStatement);
+//        removeList.push_back(attributeSpecificationStatement);
+//        break;
+//      }
     case V_SgFunctionCallExp:
       {
         SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(n);
@@ -138,11 +140,30 @@ void f2cTraversal::visit(SgNode* n)
         translateImplicitFunctionCallExp(functionCallExp);
         break;
       }
+    case V_SgCommonBlock:
+      {
+        SgCommonBlock* commonBlock = isSgCommonBlock(n);
+        ROSE_ASSERT(commonBlock);
+        //translateCommonBlock(commonBlock);
+        break;
+      }
     case V_SgGlobal:
       {
         SgGlobal* global = isSgGlobal(n);
         ROSE_ASSERT(global);
         removeFortranMaxMinFunction(global);
+//        PreprocessingInfo* defMaxInfo = new PreprocessingInfo(PreprocessingInfo::CpreprocessorDefineDeclaration,
+//                                                              "#define max(a,b) (((a)>(b))?(a):(b))", 
+//                                                              "Transformation generated",
+//                                                              0, 0, 0, PreprocessingInfo::before);
+//        defMaxInfo->set_file_info(global->get_file_info());
+//        global->addToAttachedPreprocessingInfo(defMaxInfo,PreprocessingInfo::before);
+//        PreprocessingInfo* defMinInfo = new PreprocessingInfo(PreprocessingInfo::CpreprocessorDefineDeclaration,
+//                                                              "#define min(a,b) (((a)<(b))?(a):(b))", 
+//                                                              "Transformation generated",
+//                                                              0, 0, 0, PreprocessingInfo::before);
+//        defMinInfo->set_file_info(global->get_file_info());
+//        global->addToAttachedPreprocessingInfo(defMinInfo,PreprocessingInfo::before);
         break;
       }
     default:
@@ -186,7 +207,7 @@ int main( int argc, char * argv[] )
       for(vector<SgInitializedName*>::iterator i=varList.begin(); i<varList.end(); ++i)
       {
         SgVariableDeclaration* newDecl = SageBuilder::buildVariableDeclaration((*i)->get_name(), (*i)->get_type(),(*i)->get_initializer(),scope);
-        SageInterface::insertStatementBefore(variableDeclaration,newDecl,true);
+        insertStatementBefore(variableDeclaration,newDecl,true);
         SgVariableSymbol* symbol = isSgVariableSymbol((*i)->search_for_symbol_from_symbol_table());
         ROSE_ASSERT(symbol);
         SgInitializedName* newIntializedName = *((newDecl->get_variables()).begin());
@@ -197,6 +218,46 @@ int main( int argc, char * argv[] )
     removeList.push_back(variableDeclaration);
     }
   }
+
+  // replace the parameter 
+  Rose_STL_Container<SgNode*> AttributeSpecificationStatement = NodeQuery::querySubTree (project,V_SgAttributeSpecificationStatement);
+  for (Rose_STL_Container<SgNode*>::iterator i = AttributeSpecificationStatement.begin(); i != AttributeSpecificationStatement.end(); i++)
+  {
+    SgAttributeSpecificationStatement* attributeSpecificationStatement = isSgAttributeSpecificationStatement(*i);
+    ROSE_ASSERT(attributeSpecificationStatement);
+    translateAttributeSpecificationStatement(attributeSpecificationStatement);
+    statementList.push_back(attributeSpecificationStatement);
+    removeList.push_back(attributeSpecificationStatement);
+  }
+
+  // remove the parameter symbol
+  Rose_STL_Container<SgNode*> parameterRefList = NodeQuery::querySubTree (project,V_SgVarRefExp);
+  for (Rose_STL_Container<SgNode*>::iterator i = parameterRefList.begin(); i != parameterRefList.end(); i++)
+  {
+    SgVarRefExp* parameterRef = isSgVarRefExp(*i);
+    if(parameterSymbolList.find(parameterRef->get_symbol()) != parameterSymbolList.end())
+    {
+      SgExpression* newExpr = isSgExpression(deepCopy(parameterSymbolList.find(parameterRef->get_symbol())->second));
+      newExpr->set_parent(parameterRef->get_parent());
+      replaceExpression(parameterRef,
+                        newExpr,
+                        false);
+    }
+  }
+
+  /*
+     Parameters will be replaced by #define, all the declarations should be removed
+  */
+  for(map<SgVariableSymbol*,SgExpression*>::iterator i=parameterSymbolList.begin();i!=parameterSymbolList.end();++i)
+  {
+    SgVariableSymbol* symbol = i->first;
+    SgInitializedName* initializedName = symbol->get_declaration();
+    SgVariableDeclaration* decl = isSgVariableDeclaration(initializedName->get_parent());
+    statementList.push_back(decl);
+    removeList.push_back(decl);
+  }
+
+    generateAstGraph(project,8000);
 
   // Traversal with Memory Pool to search for arrayType
   arrayTypeTraversal translateArrayType;
@@ -245,7 +306,7 @@ int main( int argc, char * argv[] )
   f2cTraversal f2c;
   f2c.traverseInputFiles(project,postorder);
 
-  // removing all the SgAttributeSpecificationStatement from AST
+  // removing all the unsed statement from AST
   for(vector<SgStatement*>::iterator i=statementList.begin(); i<statementList.end(); ++i)
   {
     removeStatement(*i);

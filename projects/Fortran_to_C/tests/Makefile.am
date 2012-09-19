@@ -32,6 +32,9 @@ TESTCODES_REQUIRED_TO_PASS = \
 							   functionArgs2.F \
 							   label.F \
 							   loopWithLabel.F \
+							   parameter1.F \
+							   parameter2.F \
+							   parameter3.F \
 							   function1.F
 
 

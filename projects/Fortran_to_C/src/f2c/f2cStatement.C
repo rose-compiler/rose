@@ -7,6 +7,8 @@ using namespace SageBuilder;
 using namespace Fortran_to_C;
 
 extern bool isLinearlizeArray;
+extern map<SgVariableSymbol*,SgExpression*> parameterSymbolList;
+extern vector<SgNode*> removeList;
 /******************************************************************************************************************************/
 /* 
   Rename the output filename to .C file
@@ -87,7 +89,7 @@ void Fortran_to_C::translateProgramHeaderStatement(SgProgramHeaderStatement* pro
   delete(functionSymbol);
   
   // Setup the C function declaration.
-  deepDelete(cFunctionDeclaration->get_definition());
+  removeList.push_back(cFunctionDeclaration->get_definition());
   functionDefinition->set_parent(cFunctionDeclaration);
   cFunctionDeclaration->set_definition(functionDefinition);
   programHeaderStatement->set_definition(NULL);
@@ -129,7 +131,7 @@ void Fortran_to_C::translateFunctionParameterList(SgFunctionParameterList* newLi
       SgType* baseType = rootType->get_base_type();
       newType = buildPointerType(baseType);
       rootType->set_base_type(NULL);
-      deepDelete(rootType);
+      removeList.push_back(rootType);
     }
     SgInitializedName* newName = buildInitializedName((*i)->get_name(), newType);
     newName->set_scope(funcDef);
@@ -191,7 +193,7 @@ void Fortran_to_C::translateProcedureHeaderStatement(SgProcedureHeaderStatement*
   functionSymbol->set_declaration(cFunctionDeclaration);
   
   // Setup the C function declaration.
-  deepDelete(cFunctionDeclaration->get_definition());
+  removeList.push_back(cFunctionDeclaration->get_definition());
   functionDefinition->set_parent(cFunctionDeclaration);
   cFunctionDeclaration->set_definition(functionDefinition);
   procedureHeaderStatement->set_definition(NULL);
@@ -363,7 +365,7 @@ void Fortran_to_C::fixFortranSymbolTable(SgNode* root, bool hasReturnVariable)
             SgSymbolTable* parentSymbolTable = isSgSymbolTable(localVariableSymbol->get_parent());
             ROSE_ASSERT(parentSymbolTable);
             parentSymbolTable->remove(localVariableSymbol);
-            deepDelete(localVariableSymbol);
+            removeList.push_back(localVariableSymbol);
           }
         }
         /*
@@ -437,6 +439,19 @@ void Fortran_to_C::fixFortranSymbolTable(SgNode* root, bool hasReturnVariable)
   }
 }
 
+/******************************************************************************************************************************/
+/* 
+  Translate CommonBlock in Fortran.
+  All the variables in the commonBlock list will change their scope to SgGlobal.
+*/
+/******************************************************************************************************************************/
+void Fortran_to_C::translateCommonBlock(SgCommonBlock* commonBlock)
+{
+  SgGlobal* global = getGlobalScope(commonBlock);
+  SgSymbolTable* globalSymbolTable = global->get_symbol_table();
+
+  SgCommonBlockObjectPtrList commonBlockObjPtrList = commonBlock->get_block_list();
+}
 
 /******************************************************************************************************************************/
 /* 
@@ -499,7 +514,7 @@ void Fortran_to_C::translateFortranDoLoop(SgFortranDo* fortranDo)
   }
   else
   {
-    deepDelete(increment);
+    removeList.push_back(increment);
     cIncrementOp = buildAssignOp(buildVarRefExp(variableSymbol),
                                                 buildAddOp(buildVarRefExp(variableSymbol),
                                                 buildIntVal(1)));
@@ -544,11 +559,33 @@ void Fortran_to_C::translateAttributeSpecificationStatement(SgAttributeSpecifica
   {
     case SgAttributeSpecificationStatement::e_dimensionStatement:
       {
-        deepDelete(attributeSpecificationStatement->get_parameter_list());        
+        removeList.push_back(attributeSpecificationStatement->get_parameter_list());        
         break;
       }
     case SgAttributeSpecificationStatement::e_parameterStatement:
       {
+        SgExpressionPtrList parameterList =  attributeSpecificationStatement->get_parameter_list()->get_expressions();
+        for(SgExpressionPtrList::iterator i=parameterList.begin(); i != parameterList.end(); ++i)
+        {
+          SgAssignOp* assignParameterOp = isSgAssignOp(*i);
+          ROSE_ASSERT(assignParameterOp);
+          SgVarRefExp* lhs = isSgVarRefExp(assignParameterOp->get_lhs_operand());
+          ROSE_ASSERT(lhs);
+          SgVariableSymbol* parameterSymbol = lhs->get_symbol();
+          ROSE_ASSERT(parameterSymbol);
+          SgExpression* parameterValue = isSgExpression(assignParameterOp->get_rhs_operand());
+          SgExpression* returnExpr = NULL;
+//          if (SgProject::get_verbose() > 2)
+//            cout << "parameter " << parameterSymbol->get_name() << " is " << emulateParameterValue( parameterValue, returnExpr) << endl;
+          PreprocessingInfo* defInfo = new PreprocessingInfo(PreprocessingInfo::CpreprocessorDefineDeclaration,
+                                                                "#define "+ parameterSymbol->get_name() + " " + emulateParameterValue( parameterValue, &returnExpr), 
+                                                                "Transformation generated",
+                                                                0, 0, 0, PreprocessingInfo::before);
+          defInfo->set_file_info(attributeSpecificationStatement->get_file_info());
+          attributeSpecificationStatement->get_scope()->addToAttachedPreprocessingInfo(defInfo,PreprocessingInfo::before);
+          parameterSymbolList.insert(pair<SgVariableSymbol*,SgExpression*>(parameterSymbol,returnExpr)); 
+        }
+        removeList.push_back(attributeSpecificationStatement->get_parameter_list());
         break;
       }
     case SgAttributeSpecificationStatement::e_accessStatement_private:
@@ -573,6 +610,114 @@ void Fortran_to_C::translateAttributeSpecificationStatement(SgAttributeSpecifica
       break;
   }
 }
+
+string Fortran_to_C::emulateParameterValue(SgExpression* root, SgExpression** returnExpr)
+{
+  string output = "";
+  switch(root->variantT())
+  {
+    case V_SgVarRefExp:
+      {
+        SgVariableSymbol* varSymbol = isSgVariableSymbol(isSgVarRefExp(root)->get_symbol());
+        ROSE_ASSERT(varSymbol);
+        if(parameterSymbolList.find(varSymbol) != parameterSymbolList.end())
+        {
+          *returnExpr = parameterSymbolList.find(varSymbol)->second; 
+        }
+        else
+        {
+          cerr << "Cannot evaluate parameter value" << endl;
+          ROSE_ASSERT(false);
+        }
+        output = varSymbol->get_name().getString();
+        return output;
+      }
+    case V_SgIntVal:
+      {
+        output = isSgIntVal(root)->get_valueString();
+        *returnExpr = isSgExpression(root);
+        return output;
+      }
+    case V_SgLongIntVal:
+      {
+        output = isSgLongIntVal(root)->get_valueString();
+        *returnExpr = (root);
+        return output;
+      }
+    case V_SgFloatVal:
+      {
+        output = isSgFloatVal(root)->get_valueString();
+        *returnExpr = (root);
+        return output;
+      }
+    case V_SgDoubleVal:
+      {
+        output = isSgDoubleVal(root)->get_valueString();
+        *returnExpr = (root);
+        return output;
+      }
+    case V_SgAddOp:
+      {
+        SgBinaryOp* binaryOp = isSgBinaryOp(root);
+        SgExpression* expr1;
+        SgExpression* expr2;
+        output = "(" +  emulateParameterValue(binaryOp->get_lhs_operand(),&expr1) + "+" + emulateParameterValue(binaryOp->get_rhs_operand(),&expr2) + ")";
+        *returnExpr = buildAddOp(expr1, expr2);
+        return output;
+      }
+    case V_SgSubtractOp:
+      {
+        SgBinaryOp* binaryOp = isSgBinaryOp(root);
+        SgExpression* expr1;
+        SgExpression* expr2;
+        output = "(" +  emulateParameterValue(binaryOp->get_lhs_operand(),&expr1) + "-" + emulateParameterValue(binaryOp->get_rhs_operand(),&expr2) + ")";
+        *returnExpr = buildSubtractOp(expr1, expr2);
+        return output;
+      }
+    case V_SgMultiplyOp:
+      {
+        SgBinaryOp* binaryOp = isSgBinaryOp(root);
+        SgExpression* expr1;
+        SgExpression* expr2;
+        output = "(" +  emulateParameterValue(binaryOp->get_lhs_operand(),&expr1) + "*" + emulateParameterValue(binaryOp->get_rhs_operand(),&expr2) + ")";
+        *returnExpr = buildMultiplyOp(expr1, expr2);
+        return output;
+      }
+    case V_SgDivideOp:
+      {
+        SgBinaryOp* binaryOp = isSgBinaryOp(root);
+        SgExpression* expr1;
+        SgExpression* expr2;
+        output = "(" +  emulateParameterValue(binaryOp->get_lhs_operand(),&expr1) + "/" + emulateParameterValue(binaryOp->get_rhs_operand(),&expr2) + ")";
+        *returnExpr = buildDivideOp(expr1, expr2);
+        return output;
+      }
+    case V_SgFunctionCallExp:
+      {
+        SgFunctionSymbol* functionSymbol = isSgFunctionCallExp(root)->getAssociatedFunctionSymbol();
+        SgExpressionPtrList argList = isSgFunctionCallExp(root)->get_args()->get_expressions();
+        SgExprListExp* tmpList = buildExprListExp();
+        output = "(" +functionSymbol->get_name()+ "(";
+        for(SgExpressionPtrList::iterator i=argList.begin(); i!=argList.end(); ++i)
+        {
+          SgExpression* expr;
+          output = output + emulateParameterValue(*i,&expr);
+          tmpList->append_expression(expr);
+          if(i != argList.end()-1) 
+            output = output + ",";
+        }
+        output = output + "))";
+        *returnExpr = buildFunctionCallExp(deepCopy(functionSymbol), tmpList);
+        return output;
+      }
+    default:
+      {
+        cerr << "unhandled expression type in Parameter" << endl;
+        ROSE_ASSERT(false);
+      }
+  }
+}
+
 
 /******************************************************************************************************************************/
 /* 
@@ -684,7 +829,7 @@ void Fortran_to_C::translateEquivalenceStatement(SgEquivalenceStatement* equival
         sym2NewIntializedName->set_prev_decl_item(NULL);
         symbol2->set_declaration(sym2NewIntializedName);
         replaceStatement(sym2OldDecl,sym2NewDecl,true);
-        deepDelete(sym2OldDecl);
+        removeList.push_back(sym2OldDecl);
 
       }
       else
@@ -735,7 +880,7 @@ void Fortran_to_C::translateEquivalenceStatement(SgEquivalenceStatement* equival
         sym2NewIntializedName->set_prev_decl_item(NULL);
         symbol2->set_declaration(sym2NewIntializedName);
         replaceStatement(sym2OldDecl,sym2NewDecl,true);
-        deepDelete(sym2OldDecl);
+        removeList.push_back(sym2OldDecl);
   
         // Node query for all SgVarRefExp pointing to variable2 
         Rose_STL_Container<SgNode*> varList = NodeQuery::querySubTree (getEnclosingFunctionDefinition(equivalenceStatement),V_SgVarRefExp);
@@ -835,7 +980,7 @@ void Fortran_to_C::translateEquivalenceStatement(SgEquivalenceStatement* equival
           symbol1->set_declaration(sym1NewIntializedName);
           insertStatementAfterLastDeclaration(sym1NewDecl,scope);
           removeStatement(sym1OldDecl);
-          deepDelete(sym1OldDecl);
+          removeList.push_back(sym1OldDecl);
 
         }
         else
@@ -860,7 +1005,7 @@ void Fortran_to_C::translateEquivalenceStatement(SgEquivalenceStatement* equival
           symbol1->set_declaration(sym1NewIntializedName);
           insertStatementAfterLastDeclaration(sym1NewDecl,scope);
           removeStatement(sym1OldDecl);
-          deepDelete(sym1OldDecl);
+          removeList.push_back(sym1OldDecl);
           // Node query for all SgVarRefExp pointing to variable1 
           Rose_STL_Container<SgNode*> varList = NodeQuery::querySubTree (getEnclosingFunctionDefinition(equivalenceStatement),V_SgVarRefExp);
           for (Rose_STL_Container<SgNode*>::iterator i = varList.begin(); i != varList.end(); i++)
@@ -928,7 +1073,7 @@ Having the reverse order would cause a to reference out of bound.
         sym2NewIntializedName->set_prev_decl_item(NULL);
         symbol2->set_declaration(sym2NewIntializedName);
         replaceStatement(sym2OldDecl,sym2NewDecl,true);
-        deepDelete(sym2OldDecl);
+        removeList.push_back(sym2OldDecl);
       }
     }
     else
@@ -936,7 +1081,7 @@ Having the reverse order would cause a to reference out of bound.
       cerr<<"warning, unhandled equivalence case"<<endl;
     }
   }
-  deepDelete(equivalenceStatement->get_equivalence_set_list());
+  removeList.push_back(equivalenceStatement->get_equivalence_set_list());
 }
 
 
@@ -957,8 +1102,8 @@ void Fortran_to_C::removeFortranMaxMinFunction(SgGlobal* global)
       symTable->remove(funcSymbol);
       SgFunctionDeclaration* decl = funcSymbol->get_declaration();
       funcSymbol->set_declaration(NULL);
-      deepDelete(decl);
-      deepDelete(funcSymbol);
+      removeList.push_back(decl);
+      removeList.push_back(funcSymbol);
     }
   }
 }

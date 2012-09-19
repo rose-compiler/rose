@@ -5,6 +5,7 @@ using namespace SageInterface;
 using namespace SageBuilder;
 using namespace Fortran_to_C;
 
+extern vector<SgNode*> removeList;
 
 SgExpression* Fortran_to_C::getFortranDimensionSize(SgExpression* inputExpression)
 {
@@ -109,7 +110,7 @@ void Fortran_to_C::linearizeArrayDeclaration(SgArrayType* originalArrayType)
     ++j;
   }
   // calling set_index won't replace the default index expression.  I have to delete the default manually.
-  deepDelete(originalArrayType->get_index());
+  removeList.push_back(originalArrayType->get_index());
   originalArrayType->set_index(newDimExpr);
   newDimExpr->set_parent(originalArrayType);
   originalArrayType->set_rank(1); 
@@ -282,7 +283,7 @@ void Fortran_to_C::linearizeArraySubscript(SgPntrArrRefExp* pntrArrRefExp)
     SgExprListExp* newSubscriptList = buildExprListExp(newSubscriptExprList);
     // un-link and remove the rhs operand
     pntrArrRefExp->get_rhs_operand()->set_parent(NULL);
-    deepDelete(pntrArrRefExp->get_rhs_operand());
+    removeList.push_back(pntrArrRefExp->get_rhs_operand());
     // add the new subscriptExpression into rhs operand
     pntrArrRefExp->set_rhs_operand(newSubscriptList);
     newSubscriptList->set_parent(pntrArrRefExp);
