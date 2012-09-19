@@ -527,6 +527,7 @@ INPUT                  =										     \
                          @top_srcdir@/src/backend/unparser/languageIndependenceSupport/documentation.docs    \
                          @top_srcdir@/src/backend/unparser/CxxCodeGeneration/documentation.docs		     \
                          @top_srcdir@/src/backend/unparser/FortranCodeGeneration/documentation.docs	     \
+			 @top_srcdir@/src/util/FormatRestorer.h						     \
                          @top_srcdir@/src/util/utilDocumentation.docs					     \
                          @top_srcdir@/src/util/stringSupport/stringSupportDocumentation.docs		     \
                          @top_srcdir@/src/util/stringSupport/						     \

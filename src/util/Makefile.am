@@ -38,7 +38,7 @@ libroseutil_la_LIBADD = \
 # DQ (4/5/2009): Added rose_paths.C to clean rule, instead of to the DISTCLEANFILES
 # DISTCLEANFILES = rose_paths.C
 
-include_HEADERS = setup.h processSupport.h rose_paths.h rose_getline.h rose_strtoull.h
+include_HEADERS = FormatRestorer.h setup.h processSupport.h rose_paths.h rose_getline.h rose_strtoull.h
 
 EXTRA_DIST = CMakeLists.txt setup.h utilDocumentation.docs
 
