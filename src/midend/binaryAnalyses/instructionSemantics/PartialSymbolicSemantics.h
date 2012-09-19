@@ -19,6 +19,7 @@
 #include "x86InstructionSemantics.h"
 #include "BaseSemantics.h"
 #include "MemoryMap.h"
+#include "FormatRestorer.h"
 
 namespace BinaryAnalysis {                      // documented elsewhere
     namespace InstructionSemantics {            // documented elsewhere
@@ -96,6 +97,7 @@ namespace BinaryAnalysis {                      // documented elsewhere
                 /** Print the value. If a rename map is specified a named value will be renamed to have a shorter name.  See the
                  *  rename() method for details. */
                 void print(std::ostream &o, RenameMap *rmap=NULL) const {
+                    FormatRestorer restorer(o); // restore format flags when we leave this scope
                     uint64_t sign_bit = (uint64_t)1 << (nBits-1); /* e.g., 80000000 */
                     uint64_t val_mask = sign_bit - 1;             /* e.g., 7fffffff */
                     /*magnitude of negative value*/
