@@ -87,7 +87,7 @@ SingleEvalResult ExprAnalyzer::eval(SgNode* node,EState eState) {
 //////////////////////////////////////////////////////////////////////
 // EVAL CONSTINT
 //////////////////////////////////////////////////////////////////////
-SingleEvalResultConstInt ExprAnalyzer::evalConstInt(SgNode* node,EState eState) {
+SingleEvalResultConstInt ExprAnalyzer::evalConstInt(SgNode* node,EState eState, bool useConstraints, bool safeConstraintPropagation) {
   assert(eState.state); // ensure state exists
   SingleEvalResultConstInt res;
   // initialize with default values from argument(s)
@@ -95,9 +95,9 @@ SingleEvalResultConstInt ExprAnalyzer::evalConstInt(SgNode* node,EState eState) 
   res.result=AType::ConstIntLattice(AType::Bot());
   if(dynamic_cast<SgBinaryOp*>(node)) {
 	SgNode* lhs=SgNodeHelper::getLhs(node);
-	SingleEvalResultConstInt lhsResult=evalConstInt(lhs,eState);
+	SingleEvalResultConstInt lhsResult=evalConstInt(lhs,eState,useConstraints,safeConstraintPropagation);
 	SgNode* rhs=SgNodeHelper::getRhs(node);
-	SingleEvalResultConstInt rhsResult=evalConstInt(rhs,eState);
+	SingleEvalResultConstInt rhsResult=evalConstInt(rhs,eState,useConstraints,safeConstraintPropagation);
 
 	switch(node->variantT()) {
 	case V_SgEqualityOp: {
@@ -121,7 +121,13 @@ SingleEvalResultConstInt ExprAnalyzer::evalConstInt(SgNode* node,EState eState) 
 	  if((variable(lhs,varId) && rhsResult.isConstInt()) || (lhsResult.isConstInt() && variable(rhs,varId))) {
 		// only add the inequality constraint if no constant is bound to the respective variable
 		if(!res.eState.state->varIsConst(varId)) {
-		  res.exprConstraints.addConstraint(Constraint(Constraint::NEQ_VAR_CONST,varId,rhsResult.value()));
+		  Constraint newConstraint=Constraint(Constraint::NEQ_VAR_CONST,varId,rhsResult.value());
+		  if(eState.constraints.constraintExists(newConstraint) && useConstraints) {
+			// override result of evaluation based on existent constraint
+			res.result=true;
+		  } else {
+			res.exprConstraints.addConstraint(newConstraint);
+		  }
 		}
 	  }
 	  return res;
@@ -134,7 +140,7 @@ SingleEvalResultConstInt ExprAnalyzer::evalConstInt(SgNode* node,EState eState) 
 	  } else {
 		res.result=(lhsResult.result&&rhsResult.result);
 		// TODO: work here
-		if(res.result.isTrue()) 
+		if(res.result.isTrue() || !safeConstraintPropagation) 
 		  res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
 		else {
 		// do not up-proagate collected constraints (exprConstraints remains empty) because (lhs AND rhs) is possibly false
@@ -149,7 +155,7 @@ SingleEvalResultConstInt ExprAnalyzer::evalConstInt(SgNode* node,EState eState) 
 	  } else {
 		res.result=(lhsResult.result||rhsResult.result);
 		// TODO: work here
-		if(res.result.isTrue())
+		if(res.result.isTrue() || !safeConstraintPropagation)
 		  res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
 		else {
 		// do not up-proagate collected constraints (exprConstraints remains empty) because (lhs AND rhs) is possibly false
@@ -162,7 +168,7 @@ SingleEvalResultConstInt ExprAnalyzer::evalConstInt(SgNode* node,EState eState) 
   }
   if(dynamic_cast<SgUnaryOp*>(node)) {
 	SgNode* child=SgNodeHelper::getFirstChild(node);
-	SingleEvalResultConstInt operandResult=evalConstInt(child,eState);
+	SingleEvalResultConstInt operandResult=evalConstInt(child,eState,useConstraints,safeConstraintPropagation);
 	switch(node->variantT()) {
 	case V_SgNotOp:
 	  res.result=!operandResult.result;
@@ -174,7 +180,7 @@ SingleEvalResultConstInt ExprAnalyzer::evalConstInt(SgNode* node,EState eState) 
 	  SgCastExp* castExp=isSgCastExp(node);
 	  // TODO: model effect of cast when sub language is extended
 	  res.exprConstraints=operandResult.exprConstraints;
-	  return evalConstInt(SgNodeHelper::getFirstChild(castExp),eState);
+	  return evalConstInt(SgNodeHelper::getFirstChild(castExp),eState,useConstraints,safeConstraintPropagation);
 	}
 	case V_SgMinusOp: {
 	  res.result=-operandResult.result; // using overloaded operator
@@ -218,7 +224,7 @@ SingleEvalResultConstInt ExprAnalyzer::evalConstInt(SgNode* node,EState eState) 
 	if(state->varExists(varId)) {
 	  State state2=*state; // also removes constness
 	  res.result=state2[varId].getValue();
-	  if(res.result.isTop()) {
+	  if(res.result.isTop() && useConstraints) {
 		// in case of TOP we try to extract a possibly more precise value from the constraints
 		AType::ConstIntLattice val=res.eState.constraints.varConstIntLatticeValue(varId);
 		//if(!val.isTop())
@@ -240,3 +246,149 @@ SingleEvalResultConstInt ExprAnalyzer::evalConstInt(SgNode* node,EState eState) 
   } // end of switch
   throw "Error: evalConstInt failed.";
 }
+
+//////////////////////////////////////////////////////////////////////
+// PURE EVAL CONSTINT
+//////////////////////////////////////////////////////////////////////
+AValue ExprAnalyzer::pureEvalConstInt(SgNode* node,EState& eState) {
+  ConstraintSet cset=eState.constraints;
+  AValue res;
+  // initialize with default values from argument(s)
+  res=AType::ConstIntLattice(AType::Bot());
+
+  if(dynamic_cast<SgBinaryOp*>(node)) {
+	SgNode* lhs=SgNodeHelper::getLhs(node);
+	AValue lhsResult=pureEvalConstInt(lhs,eState);
+	SgNode* rhs=SgNodeHelper::getRhs(node);
+	AValue rhsResult=pureEvalConstInt(rhs,eState);
+
+	switch(node->variantT()) {
+	case V_SgEqualityOp: {
+	  res=(lhsResult==rhsResult);
+	  // record new constraint
+	  VariableId varId;
+	  if((variable(lhs,varId) && rhsResult.isConstInt()) || (lhsResult.isConstInt() && variable(rhs,varId))) {
+		// only add the equality constraint if no constant is bound to the respective variable
+		if(!eState.state->varIsConst(varId)) {
+		  Constraint newConstraint=Constraint(Constraint::NEQ_VAR_CONST,varId,rhsResult);
+		  if(cset.constraintExists(newConstraint)) {
+			return true; // existing constraint allows to assume this fact as true 
+		  }
+		}
+	  }
+	  return res;
+	}
+	case V_SgNotEqualOp: {
+	  res=(lhsResult!=rhsResult);
+	  // record new constraint
+	  VariableId varId;
+	  if((variable(lhs,varId) && rhsResult.isConstInt()) || (lhsResult.isConstInt() && variable(rhs,varId))) {
+		// only add the inequality constraint if no constant is bound to the respective variable
+		if(!eState.state->varIsConst(varId)) {
+		  Constraint newConstraint=Constraint(Constraint::NEQ_VAR_CONST,varId,rhsResult);
+		  if(cset.constraintExists(newConstraint)) {
+			// override result of evaluation based on existent constraint
+			res=true;
+		  } else {
+			res=AType::Top();
+		  }
+		}
+	  }
+	  return res;
+	}
+	case V_SgAndOp:
+	  // we encode short-circuit CPP-AND semantics here!
+	  if(lhsResult.isFalse()) {
+		res=lhsResult;
+	  } else {
+		res=(lhsResult&&rhsResult);
+	  }
+	  return res;
+	case V_SgOrOp:
+	  // we encode short-circuit CPP-OR semantics here!
+	  if(lhsResult.isTrue()) {
+		res=lhsResult;
+	  } else {
+		res=(lhsResult||rhsResult);
+	  }
+	  return res;
+	default:
+	  throw "Error: evalConstInt::binary operation failed.";
+	}
+  }
+  if(dynamic_cast<SgUnaryOp*>(node)) {
+	SgNode* child=SgNodeHelper::getFirstChild(node);
+	AValue operandResult=pureEvalConstInt(child,eState);
+	switch(node->variantT()) {
+	case V_SgNotOp:
+	  res=!operandResult;
+	  return res;
+	case V_SgCastExp: {
+	  SgCastExp* castExp=isSgCastExp(node);
+	  return pureEvalConstInt(SgNodeHelper::getFirstChild(castExp),eState);
+	}
+	case V_SgMinusOp: {
+	  res=-operandResult; // using overloaded operator
+	  return res;
+	}
+	default:
+	  cerr << "@NODE:"<<node->sage_class_name()<<endl;
+	  throw "Error: pureEvalConstInt::unary operation failed.";
+	} // end switch
+  }
+  assert(!dynamic_cast<SgBinaryOp*>(node) && !dynamic_cast<SgUnaryOp*>(node));
+
+  // ALL REMAINING CASES DO NOT GENERATE CONSTRAINTS
+  switch(node->variantT()) {
+  case V_SgBoolValExp: {
+	SgBoolValExp* boolValExp=isSgBoolValExp(node);
+	assert(boolValExp);
+	int boolVal= boolValExp->get_value();
+	if(boolVal==0) {
+	  res=false;
+	  return res;
+	}
+	if(boolVal==1) {
+	  res=true;
+	  return res;
+	}
+	break;
+  }
+  case V_SgIntVal: {
+	SgIntVal* intValNode=isSgIntVal(node);
+	int intVal=intValNode->get_value();
+	res=intVal;
+	return res;
+  }
+  case V_SgVarRefExp: {
+	VariableId varId;
+	bool isVar=ExprAnalyzer::variable(node,varId);
+	assert(isVar);
+	const State* state=eState.state;
+	if(state->varExists(varId)) {
+	  State state2=*state; // also removes constness
+	  res=state2[varId].getValue();
+	  if(res.isTop()) {
+		// in case of TOP we try to extract a possibly more precise value from the constraints
+		AValue val=cset.varConstIntLatticeValue(varId);
+		//if(!val.isTop())
+		// TODO: we will want to monitor this for statistics!
+		//  cout << "DEBUG: extracing more precise value from constraints: "<<res.toString()<<" ==> "<<val.toString()<<endl;
+		res=val;
+	  }
+	  return res;
+	} else {
+	  res=AType::Top();
+	  cerr << "WARNING: variable not in State (var="<<varId.longVariableName()<<"). Initialized with top."<<endl;
+	  return res;
+	}
+	break;
+  }
+  default:
+	cerr << "@NODE:"<<node->sage_class_name()<<endl;
+	throw "Error: evalConstInt::unknown operation failed.";
+  } // end of switch
+  throw "Error: evalConstInt failed.";
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////

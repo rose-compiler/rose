@@ -277,7 +277,7 @@ EState Analyzer::transferFunction(Edge edge, const EState* eState) {
 		cset.addAssignEqVarVar(formalParameterVarId,actualParameterVarId);
 	  }
 	  // general case: the actual argument is an arbitrary expression (including a single variable)
-	  SingleEvalResultConstInt evalResult=exprAnalyzer.evalConstInt(actualParameterExpr,currentEState);
+	  SingleEvalResultConstInt evalResult=exprAnalyzer.evalConstInt(actualParameterExpr,currentEState,true, true);
 	  newState[formalParameterVarId]=evalResult.value();
 	  ++i;++j;
 	}
@@ -468,8 +468,8 @@ EState Analyzer::transferFunction(Edge edge, const EState* eState) {
 		// TODO: process extractableCSet and generate two versions of constraint and two versions of EState
 		EState trueExtendedCurrentEState=currentEState;
 		EState falseExtendedCurrentEState=currentEState;
-		SingleEvalResultConstInt evalResult1=exprAnalyzer.evalConstInt(nextNodeToAnalyze2,trueExtendedCurrentEState);
-		SingleEvalResultConstInt evalResult2=exprAnalyzer.evalConstInt(nextNodeToAnalyze2,falseExtendedCurrentEState);
+		SingleEvalResultConstInt evalResult1=exprAnalyzer.evalConstInt(nextNodeToAnalyze2,trueExtendedCurrentEState,true,true);
+		SingleEvalResultConstInt evalResult2=exprAnalyzer.evalConstInt(nextNodeToAnalyze2,falseExtendedCurrentEState,true,true);
 		assert(!evalResult1.value().isTop() && !evalResult2.value().isTop());
 		if((evalResult1.value()!=evalResult2.value()).isTrue()) {
 		  // sucessfully extracted a constraint
@@ -480,7 +480,7 @@ EState Analyzer::transferFunction(Edge edge, const EState* eState) {
 		}
 	  } else {
 		// GENERAL CASE: we may extract several constraints but are more conservative
-		SingleEvalResultConstInt evalResult=exprAnalyzer.evalConstInt(nextNodeToAnalyze2,currentEState);
+		SingleEvalResultConstInt evalResult=exprAnalyzer.evalConstInt(nextNodeToAnalyze2,currentEState,true,true);
 		if((evalResult.isTrue() && edge.type==EDGE_TRUE) || (evalResult.isFalse() && edge.type==EDGE_FALSE) || evalResult.isTop()) {
 		  // pass on EState
 		  EState newEState=evalResult.eState;
