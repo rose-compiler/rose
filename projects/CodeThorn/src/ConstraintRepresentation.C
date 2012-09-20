@@ -13,16 +13,40 @@
 
 using namespace std;
 
+void Constraint::negate() {
+  switch(op()) {
+  case EQ_VAR_CONST: _op=NEQ_VAR_CONST;break;
+  case NEQ_VAR_CONST: _op=EQ_VAR_CONST;break;
+  case DEQ_VAR_CONST: break;
+  case EQ_VAR_VAR: _op=NEQ_VAR_VAR;break;
+  case NEQ_VAR_VAR: _op=EQ_VAR_VAR;break;
+  case DEQ_VAR_VAR: break;
+  default:
+	cerr<< "Error: unkown constraint operator."<<endl;
+	exit(1);
+  }
+}
+
 Constraint::ConstraintOp Constraint::op() const { return _op; }
 VariableId Constraint::lhsVar() const { return _lhsVar; }
 VariableId Constraint::rhsVar() const { return _rhsVar; }
 AValue Constraint::rhsVal() const { return _intVal.getValue(); }
 CppCapsuleAValue Constraint::rhsValCppCapsule() const { return _intVal; }
+
 bool Constraint::isVarVarOp() const {
 	return (_op==EQ_VAR_VAR || _op==NEQ_VAR_VAR || _op==DEQ_VAR_VAR);
   }
 bool Constraint::isVarValOp() const {
   return (_op==EQ_VAR_CONST || _op==NEQ_VAR_CONST || _op==DEQ_VAR_CONST);
+}
+bool Constraint::isEquation() const {
+  return (_op==EQ_VAR_VAR || _op==EQ_VAR_CONST);
+}
+bool Constraint::isInequation() const {
+  return (_op==NEQ_VAR_VAR || _op==NEQ_VAR_CONST);
+}
+bool Constraint::isDisequation() const {
+  return (_op==DEQ_VAR_VAR || _op==DEQ_VAR_CONST);
 }
 
 bool operator<(const Constraint& c1, const Constraint& c2) {

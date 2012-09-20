@@ -35,6 +35,10 @@ class Constraint {
   string toString() const;
   bool isVarVarOp() const;
   bool isVarValOp() const;
+  bool isEquation() const;
+  bool isInequation() const;
+  bool isDisequation() const;
+  void negate();
  private:
   string opToString() const;
   ConstraintOp _op;

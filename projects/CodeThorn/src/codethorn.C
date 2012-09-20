@@ -167,6 +167,7 @@ int main( int argc, char * argv[] ) {
 	("precision-equality-io",po::value< string >(),"(experimental) use constraints for determining estate equality [=yes|no]")
 	("precision-bool",po::value< string >(),"use precise top with bool-(and/or) operators (used in LTL)")
 	("precision-intbool",po::value< string >(),"use precise top with intbool-(and/or) operators (used in int-analyzer)")
+	("precision-exact-constraints",po::value< string >(),"use precise constraint extraction (experimental)")
 	;
 
   po::store(po::command_line_parser(argc, argv).
@@ -187,6 +188,7 @@ int main( int argc, char * argv[] ) {
   boolOptions.registerOption("precision-equality-io",true);
   boolOptions.registerOption("precision-bool",true);
   boolOptions.registerOption("precision-intbool",true);
+  boolOptions.registerOption("precision-exact-constraints",false);
   boolOptions.processOptions();
   cout<<boolOptions.toString();
 

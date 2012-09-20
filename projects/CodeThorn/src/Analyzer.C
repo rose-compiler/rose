@@ -459,48 +459,90 @@ EState Analyzer::transferFunction(Edge edge, const EState* eState) {
   if(isSgExprStatement(nextNodeToAnalyze1)) {
 	SgNode* nextNodeToAnalyze2=SgNodeHelper::getExprStmtChild(nextNodeToAnalyze1);
 	assert(nextNodeToAnalyze2);
+	SingleEvalResultConstInt evalResult;
 	if(edge.type==EDGE_TRUE || edge.type==EDGE_FALSE) {
-
-	  // TODO:  not implemented yet, currently exctrableCSet is always of size 0
-	  ConstraintSet extractableCSet=exprAnalyzer.determineExtractableConstraints(nextNodeToAnalyze2,currentEState);
-	  if(extractableCSet.size()==1) {
-		// SPECIFIC CASE: the specific case of one extrable constraint
-		// TODO: process extractableCSet and generate two versions of constraint and two versions of EState
-		EState trueExtendedCurrentEState=currentEState;
-		EState falseExtendedCurrentEState=currentEState;
-		SingleEvalResultConstInt evalResult1=exprAnalyzer.evalConstInt(nextNodeToAnalyze2,trueExtendedCurrentEState,true,true);
-		SingleEvalResultConstInt evalResult2=exprAnalyzer.evalConstInt(nextNodeToAnalyze2,falseExtendedCurrentEState,true,true);
-		assert(!evalResult1.value().isTop() && !evalResult2.value().isTop());
-		if((evalResult1.value()!=evalResult2.value()).isTrue()) {
-		  // sucessfully extracted a constraint
-		  // TODO
+	  SingleEvalResultConstInt evalResult1=exprAnalyzer.evalConstInt(nextNodeToAnalyze2,currentEState,false,false);
+	  if(boolOptions["precision-exact-constraints"]==false)
+		goto generalcase; // the general case is safe but does not extract all constraints
+	  if(evalResult1.isTop() && evalResult1.exprConstraints.size()==1) {
+		// mode 1: 
+		// we can extract all constraints
+		SingleEvalResultConstInt evalResult2=exprAnalyzer.evalConstInt(nextNodeToAnalyze2,currentEState,true,false);
+		if(evalResult2.isTrue()||evalResult2.isFalse()) {
+		  cout << "INFO: constraint extraction: check: mode 1b."<<endl;
+		  ConstraintSet::iterator i=evalResult2.exprConstraints.begin();
+		  Constraint c=*i; // only one constraint can exist here
+		  assert(evalResult1.exprConstraints.size()==1);
+		  if(currentEState.constraints.constraintExists(c)) {
+			// we are done: the found constraint already exists
+			evalResult=evalResult2;
+		  } else {
+			if(c.op()==Constraint::NEQ_VAR_CONST) {
+			  // found inequation: add it
+			  evalResult2.exprConstraints.addConstraint(c);
+			  evalResult=evalResult2;
+			} else { 
+			  if(c.op()==Constraint::EQ_VAR_CONST) {
+				// found equation: eliminate inquations on that variable and add it.
+				evalResult2.eState.constraints.deleteConstraints(c.lhsVar());
+				evalResult2.eState.constraints.addConstraint(c);
+				evalResult=evalResult2;
+			  } else {
+				cerr << "ERROR: constraint extraction failed."<<endl;
+				exit(1);
+			  }
+			}
+		  }
 		} else {
-		  // it was impossible to extract a constraint
-		  // TODO
+		  // more complicated constraint extraction
+		  assert(evalResult2.isTop());
+		  ConstraintSet::iterator i=evalResult2.exprConstraints.begin();
+		  Constraint c=*i; // only one constraint can exist here
+		  assert(evalResult2.exprConstraints.size()==1);
+		  EState trueExtendedCurrentEState=currentEState;
+		  trueExtendedCurrentEState.constraints.addConstraint(c);
+		  c.negate();
+		  EState falseExtendedCurrentEState=currentEState;
+		  falseExtendedCurrentEState.constraints.addConstraint(c);
+		  SingleEvalResultConstInt evalResultT=exprAnalyzer.evalConstInt(nextNodeToAnalyze2,trueExtendedCurrentEState,true,false);
+		  SingleEvalResultConstInt evalResultF=exprAnalyzer.evalConstInt(nextNodeToAnalyze2,falseExtendedCurrentEState,true,false);
+		  cout << "INFO: constraint extraction: check:"<<(!evalResult1.value().isTop() && !evalResult2.value().isTop())<<endl;
+		  if((evalResult1.value()!=evalResult2.value()).isTrue()) {
+			// sucessfully extracted a constraint
+			// we are done, since the constraint has been collected
+			evalResult=evalResultT;
+		  } else {
+			// it was impossible to extract a proper constraint
+			// delete collected constraint
+			// investigate: maybe this case cannot exist because it is fully covered by case1?
+			evalResult=evalResult1; // it is OK to use evalResult1 here as no constraint can be extracted
+		  }
 		}
 	  } else {
+	  generalcase:
+		// mode 2:
 		// GENERAL CASE: we may extract several constraints but are more conservative
-		SingleEvalResultConstInt evalResult=exprAnalyzer.evalConstInt(nextNodeToAnalyze2,currentEState,true,true);
-		if((evalResult.isTrue() && edge.type==EDGE_TRUE) || (evalResult.isFalse() && edge.type==EDGE_FALSE) || evalResult.isTop()) {
-		  // pass on EState
-		  EState newEState=evalResult.eState;
-		  newEState.label=edge.target;
-		  
-		  // merge with collected constraints of expr (exprConstraints), and invert for false branch
-		  if(edge.type==EDGE_TRUE) {
-			newEState.constraints=evalResult.eState.constraints+evalResult.exprConstraints;
-		  } else if(edge.type==EDGE_FALSE) {
-			ConstraintSet s1=evalResult.eState.constraints;
-			ConstraintSet s2=evalResult.exprConstraints.invertedConstraints();
-			newEState.constraints=s1+s2;
-		  }
-		  return newEState;
-		} else {
-		  // we determined not to be on an execution path, therefore return EState with NO_ESTATE
-		  EState noEState;
-		  noEState.label=NO_ESTATE;
-		  return noEState;
+		evalResult=exprAnalyzer.evalConstInt(nextNodeToAnalyze2,currentEState,true,true);
+	  }
+	  if((evalResult.isTrue() && edge.type==EDGE_TRUE) || (evalResult.isFalse() && edge.type==EDGE_FALSE) || evalResult.isTop()) {
+		// pass on EState
+		EState newEState=evalResult.eState;
+		newEState.label=edge.target;
+		
+		// merge with collected constraints of expr (exprConstraints), and invert for false branch
+		if(edge.type==EDGE_TRUE) {
+		  newEState.constraints=evalResult.eState.constraints+evalResult.exprConstraints;
+		} else if(edge.type==EDGE_FALSE) {
+		  ConstraintSet s1=evalResult.eState.constraints;
+		  ConstraintSet s2=evalResult.exprConstraints.invertedConstraints();
+		  newEState.constraints=s1+s2;
 		}
+		return newEState;
+	  } else {
+		  // we determined not to be on an execution path, therefore return EState with NO_ESTATE
+		EState noEState;
+		noEState.label=NO_ESTATE;
+		return noEState;
 	  }
 	}
 	if(isSgConditionalExp(nextNodeToAnalyze2)) {
