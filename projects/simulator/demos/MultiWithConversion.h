@@ -36,6 +36,11 @@
 #ifndef RSIM_MultiWithConversion_H
 #define RSIM_MultiWithConversion_H              /* used by MultiWithConversion.C */
 
+#if 0 // used to fool scripts/policies/UnusedHeaders
+#include "MultiWithConversion.h"
+#include "MultiWithConversionTpl.h"
+#endif
+
 namespace MultiDomainDemo {
 
 // Make names for the sub policies.
