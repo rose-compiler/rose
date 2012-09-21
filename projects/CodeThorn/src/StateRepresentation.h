@@ -124,6 +124,7 @@ public:
   const EState* source; // source node
   Edge edge;
   const EState* target; // target node
+  string toString() const;
 
 };
 
@@ -136,7 +137,7 @@ class TransitionGraph : public list<Transition> {
  public:
   set<const EState*> transitionSourceEStateSetOfLabel(Label lab);
   set<const EState*> eStateSetOfLabel(Label lab);
-
+  string toString() const;
  private:
   int numberOfNodes;
 };

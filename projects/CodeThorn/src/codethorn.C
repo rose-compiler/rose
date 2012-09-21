@@ -289,6 +289,10 @@ int main( int argc, char * argv[] ) {
     write_file("transitiongraph2.dot", dotFile3);
     cout << "generated transitiongraph2.dot."<<endl;
 
+	string datFile1=(analyzer.getTransitionGraph())->toString();
+	write_file("transitiongraph1.dat", datFile1);
+    cout << "generated transitiongraph1.dat."<<endl;
+
     assert(analyzer.startFunRoot);
     //analyzer.generateAstNodeInfo(analyzer.startFunRoot);
     //dotFile=astTermWithNullValuesToDot(analyzer.startFunRoot);

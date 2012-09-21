@@ -58,11 +58,12 @@ bool operator!=(const InputOutput& c1, const InputOutput& c2) {
 
 string State::toString() const {
   stringstream ss;
-  ss << "("<<this << "{";
+  ss << "State="<< "{";
   for(State::const_iterator j=begin();j!=end();++j) {
-    ss << "("<<(*j).first.longVariableName()<<","<<varValueToString((*j).first)<<") ";
+	if(j!=begin()) ss<<", ";
+    ss <<(*j).first.longVariableName()<<"->"<<varValueToString((*j).first);
   }
-  ss<<"})";
+  ss<<"}";
   return ss.str();
 }
 
@@ -270,6 +271,26 @@ const EState* EStateSet::eStatePtr(EState& s) {
 #endif
 }
 
+string Transition::toString() const {
+  string s1="SourceNode: "+source->toString()+"\n";
+  string s2="Edge: "+edge.toString()+"\n";
+  string s3="TargetNode: "+target->toString()+"\n";
+  return s1+s2+s3;
+}
+
+string TransitionGraph::toString() const {
+  string s;
+  int cnt=0;
+  for(TransitionGraph::const_iterator i=begin();i!=end();++i) {
+	stringstream ss;
+	ss<<cnt;
+	s+="Transition Nr "+ss.str()+":\n";
+	s+=(*i).toString()+"\n";
+	cnt++;
+  }
+  return s;
+}
+
 set<const EState*> TransitionGraph::transitionSourceEStateSetOfLabel(Label lab) {
   set<const EState*> eStateSet;
   for(TransitionGraph::iterator j=begin();j!=end();++j) {
@@ -293,7 +314,7 @@ set<const EState*> TransitionGraph::eStateSetOfLabel(Label lab) {
 string EState::toString() const {
   stringstream ss;
   ss << "EState";
-  ss << "(label="<<label<<", state=";
+  ss << "("<<label<<", ";
   if(state)
 	ss <<state->toString();
   else
@@ -322,7 +343,7 @@ string EStateSet::toString() {
   for(EStateSet::iterator i=begin();
 	  i!=end();
 	  ++i) {
-	ss<<(*i).toString()<<",";
+	ss<<(*i).toString()<<",\n";
   }
   ss<<"}";
   return ss.str();
