@@ -8,6 +8,7 @@ using namespace Fortran_to_C;
 
 extern bool isLinearlizeArray;
 extern map<SgVariableSymbol*,SgExpression*> parameterSymbolList;
+extern vector<SgStatement*> statementList;
 extern vector<SgNode*> removeList;
 /******************************************************************************************************************************/
 /* 
@@ -103,42 +104,11 @@ void Fortran_to_C::translateProgramHeaderStatement(SgProgramHeaderStatement* pro
      Fortran has the implicit data type.  Variables with implicit data type will be found in the local basic block in
      AST tree. Translator has to link these variable declaration to the main basic block under function declaration. 
   */
-  fixFortranSymbolTable(functionDefinition,false);
+  //fixFortranSymbolTable(functionDefinition,false);
  
   programHeaderStatement->set_parent(NULL);
 }  // End of Fortran_to_C::translateProgramHeaderStatement
 
-
-/******************************************************************************************************************************/
-/*
-  Convert to a new functionParameterList
-*/
-/******************************************************************************************************************************/
-void Fortran_to_C::translateFunctionParameterList(SgFunctionParameterList* newList, SgFunctionParameterList* oldList, SgFunctionDefinition* funcDef)
-{
-  SgInitializedNamePtrList argList = oldList->get_args();
-  for(SgInitializedNamePtrList::iterator i=argList.begin(); i != argList.end(); ++i)
-  {
-    SgType* newType = (*i)->get_type();
-    /*
-       We need to handle multi-dimensional array argument.
-       We have performed the arrayType translation in the earlier process, 
-       therefore, the arrayType AST is alreay in C-style.
-    */
-    if(isSgArrayType(newType))
-    {
-      SgArrayType* rootType = isSgArrayType(newType);
-      SgType* baseType = rootType->get_base_type();
-      newType = buildPointerType(baseType);
-      rootType->set_base_type(NULL);
-      removeList.push_back(rootType);
-    }
-    SgInitializedName* newName = buildInitializedName((*i)->get_name(), newType);
-    newName->set_scope(funcDef);
-    newList->append_arg(newName);
-  }
-  
-}
 
 /******************************************************************************************************************************/
 /* 
@@ -215,6 +185,14 @@ void Fortran_to_C::translateProcedureHeaderStatement(SgProcedureHeaderStatement*
     ROSE_ASSERT(returnStmt);
     basicBlock->get_statements().insert(basicBlock->get_statements().end(),returnStmt);
     returnStmt->set_parent(basicBlock);
+    /* 
+      We move this deletion from fixFortranSymbolTable to here. 
+      Here is the last palce that I use return name, it sould be safe to delete here. 
+    */
+    if(fortranReturnVar->get_parent() == NULL)
+    {
+      deepDelete(fortranReturnVar);
+    }
   }
 
   // Replace the SgProcedureHeaderStatement with SgFunctionDeclaration.
@@ -224,11 +202,77 @@ void Fortran_to_C::translateProcedureHeaderStatement(SgProcedureHeaderStatement*
      Fortran has the implicit data type.  Variables with implicit data type will be found in the local basic block in
      AST tree. Translator has to link these variable declaration to the main basic block under function declaration. 
   */
-  fixFortranSymbolTable(functionDefinition,procedureHeaderStatement->isFunction());
+  //fixFortranSymbolTable(functionDefinition,procedureHeaderStatement->isFunction());
   
   procedureHeaderStatement->set_parent(NULL);
   procedureHeaderStatement->set_result_name(NULL);
 }  // End of Fortran_to_C::translateProcedureHeaderStatement
+
+
+/******************************************************************************************************************************/
+/*
+  Update variableDeclaration list 
+*/
+/******************************************************************************************************************************/
+
+void Fortran_to_C::updateVariableDeclarationList(SgVariableDeclaration* variableDeclaration)
+{
+  SgInitializedNamePtrList varList = variableDeclaration->get_variables();
+  SgScopeStatement* scope = variableDeclaration->get_scope(); 
+  for(vector<SgInitializedName*>::iterator i=varList.begin(); i<varList.end(); ++i)
+  {
+    SgVariableDeclaration* newDecl = SageBuilder::buildVariableDeclaration((*i)->get_name(), (*i)->get_type(),(*i)->get_initializer(),scope);
+    insertStatementBefore(variableDeclaration,newDecl,true);
+    SgVariableSymbol* symbol = isSgVariableSymbol((*i)->search_for_symbol_from_symbol_table());
+    ROSE_ASSERT(symbol);
+    SgInitializedName* newIntializedName = *((newDecl->get_variables()).begin());
+    newIntializedName->set_prev_decl_item(NULL);
+    symbol->set_declaration(newIntializedName);
+  }
+} 
+
+
+
+/******************************************************************************************************************************/
+/*
+  Convert to a new functionParameterList
+*/
+/******************************************************************************************************************************/
+void Fortran_to_C::translateFunctionParameterList(SgFunctionParameterList* newList, SgFunctionParameterList* oldList, SgFunctionDefinition* funcDef)
+{
+  SgInitializedNamePtrList argList = oldList->get_args();
+  for(SgInitializedNamePtrList::iterator i=argList.begin(); i != argList.end(); ++i)
+  {
+    (*i)->set_declptr(NULL);
+    if(isSgVariableDeclaration((*i)->get_parent()) != NULL)
+    {
+      SgVariableDeclaration* oldDecl = isSgVariableDeclaration((*i)->get_parent());
+      (*i)->set_parent(newList);
+      statementList.push_back(oldDecl);
+    }
+    SgVariableSymbol* symbol = isSgVariableSymbol(lookupVariableSymbolInParentScopes((*i)->get_name(),(*i)->get_scope()));
+    ROSE_ASSERT(symbol);
+    SgType* newType = (*i)->get_type();
+    /*
+       We need to handle multi-dimensional array argument.
+       We have performed the arrayType translation in the earlier process, 
+       therefore, the arrayType AST is alreay in C-style.
+    */
+    if(isSgArrayType(newType))
+    {
+      SgArrayType* rootType = isSgArrayType(newType);
+      SgType* baseType = rootType->get_base_type();
+      newType = buildPointerType(baseType);
+      rootType->set_base_type(NULL);
+      removeList.push_back(rootType);
+    }
+    SgInitializedName* newName = buildInitializedName((*i)->get_name(), newType);
+    newName->set_scope(funcDef);
+    symbol->set_declaration(newName);
+    newList->append_arg(newName);
+  }
+  
+}
 
 /******************************************************************************************************************************/
 /* 
@@ -239,6 +283,7 @@ void Fortran_to_C::translateProcedureHeaderStatement(SgProcedureHeaderStatement*
 void Fortran_to_C::fixFortranSymbolTable(SgNode* root, bool hasReturnVariable)
 {
   SgFunctionDefinition* functionDefinition = isSgFunctionDefinition(root);
+  ROSE_ASSERT(functionDefinition);
   SgBasicBlock* basicBlock = functionDefinition->get_body();
   ROSE_ASSERT(basicBlock);
   SgSymbolTable* symbolTable = functionDefinition->get_symbol_table();
@@ -350,7 +395,8 @@ void Fortran_to_C::fixFortranSymbolTable(SgNode* root, bool hasReturnVariable)
             */
             SgInitializedName* newInitializedName = variableDeclaration->get_decl_item(localVariableSymbol->get_name());
             localVariableSymbol->set_declaration(newInitializedName);
-            delete(localVariableInitailizedName);
+            //delete(localVariableInitailizedName);
+            localVariableInitailizedName->set_parent(NULL);
           }
           /* 
             The else case is for the Fortran subroutine, which has no return type.
@@ -830,7 +876,6 @@ void Fortran_to_C::translateEquivalenceStatement(SgEquivalenceStatement* equival
         symbol2->set_declaration(sym2NewIntializedName);
         replaceStatement(sym2OldDecl,sym2NewDecl,true);
         removeList.push_back(sym2OldDecl);
-
       }
       else
       {

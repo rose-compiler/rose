@@ -173,6 +173,7 @@ void f2cTraversal::visit(SgNode* n)
 
 int main( int argc, char * argv[] )
 {
+// Option to linearize the array.
   Rose_STL_Container<std::string> localCopy_argv = CommandlineProcessing::generateArgListFromArgcArgv(argc, argv);
   int newArgc;
   char** newArgv = NULL;
@@ -192,7 +193,7 @@ int main( int argc, char * argv[] )
   // Traversal with Memory Pool to search for variableDeclaration
   variableDeclTraversal translateVariableDeclaration;
   traverseMemoryPoolVisitorPattern(translateVariableDeclaration);
-  for(vector<SgVariableDeclaration*>::iterator dec=variableDeclList.begin(); dec<variableDeclList.end(); ++dec)
+  for(vector<SgVariableDeclaration*>::iterator dec=variableDeclList.begin(); dec!=variableDeclList.end(); ++dec)
   {
     /*
        For the Fortran AST, a single variableDeclaration can be shared by multiple variables.
@@ -202,24 +203,43 @@ int main( int argc, char * argv[] )
     ROSE_ASSERT(variableDeclaration);
     if((variableDeclaration->get_variables()).size() != 1)
     {
-      SgInitializedNamePtrList varList = variableDeclaration->get_variables();
-      SgScopeStatement* scope = variableDeclaration->get_scope(); 
-      for(vector<SgInitializedName*>::iterator i=varList.begin(); i<varList.end(); ++i)
-      {
-        SgVariableDeclaration* newDecl = SageBuilder::buildVariableDeclaration((*i)->get_name(), (*i)->get_type(),(*i)->get_initializer(),scope);
-        insertStatementBefore(variableDeclaration,newDecl,true);
-        SgVariableSymbol* symbol = isSgVariableSymbol((*i)->search_for_symbol_from_symbol_table());
-        ROSE_ASSERT(symbol);
-        SgInitializedName* newIntializedName = *((newDecl->get_variables()).begin());
-        newIntializedName->set_prev_decl_item(NULL);
-        symbol->set_declaration(newIntializedName);
-      }
-    statementList.push_back(variableDeclaration);
-    removeList.push_back(variableDeclaration);
+      updateVariableDeclarationList(variableDeclaration);
+      statementList.push_back(variableDeclaration);
+      removeList.push_back(variableDeclaration);
     }
   }
 
-  // replace the parameter 
+  // reset the vector that collects all variable declaration. We need to walk through memory pool again to find types
+  
+  variableDeclList.clear();
+  traverseMemoryPoolVisitorPattern(translateVariableDeclaration);
+  for(vector<SgVariableDeclaration*>::iterator dec=variableDeclList.begin(); dec!=variableDeclList.end(); ++dec)
+  {
+    SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(*dec);
+    ROSE_ASSERT(variableDeclaration);
+    SgInitializedNamePtrList initializedNameList = variableDeclaration->get_variables();
+    for(SgInitializedNamePtrList::iterator i=initializedNameList.begin(); i!=initializedNameList.end();++i)
+    {
+      SgInitializedName* initiallizedName = isSgInitializedName(*i);
+      SgType* baseType = initiallizedName->get_type();
+      if(baseType->variantT() == V_SgArrayType)
+      {
+        SgArrayType* arrayBase = isSgArrayType(baseType);
+        // At this moment, we are still working on the Fortran-stype AST.  Therefore, there is no nested types for multi-dim array.
+        if(arrayBase->findBaseType()->variantT() == V_SgTypeString)
+        {
+          arrayBase->reset_base_type(translateType(arrayBase->findBaseType()));
+          arrayBase->set_rank(arrayBase->get_rank()+1);
+        }
+      }
+      else
+      {
+        initiallizedName->set_type(translateType(baseType));
+      }
+    }
+  }
+
+  // replace the AttributeSpecificationStatement 
   Rose_STL_Container<SgNode*> AttributeSpecificationStatement = NodeQuery::querySubTree (project,V_SgAttributeSpecificationStatement);
   for (Rose_STL_Container<SgNode*>::iterator i = AttributeSpecificationStatement.begin(); i != AttributeSpecificationStatement.end(); i++)
   {
@@ -230,9 +250,10 @@ int main( int argc, char * argv[] )
     removeList.push_back(attributeSpecificationStatement);
   }
 
-  // remove the parameter symbol
-  Rose_STL_Container<SgNode*> parameterRefList = NodeQuery::querySubTree (project,V_SgVarRefExp);
-  for (Rose_STL_Container<SgNode*>::iterator i = parameterRefList.begin(); i != parameterRefList.end(); i++)
+  // replace the parameter reference
+  parameterTraversal translateParameterRef;
+  traverseMemoryPoolVisitorPattern(translateParameterRef);
+  for(vector<SgVarRefExp*>::iterator i=parameterRefList.begin(); i!=parameterRefList.end(); ++i)
   {
     SgVarRefExp* parameterRef = isSgVarRefExp(*i);
     if(parameterSymbolList.find(parameterRef->get_symbol()) != parameterSymbolList.end())
@@ -262,7 +283,7 @@ int main( int argc, char * argv[] )
   // Traversal with Memory Pool to search for arrayType
   arrayTypeTraversal translateArrayType;
   traverseMemoryPoolVisitorPattern(translateArrayType);
-  for(vector<SgArrayType*>::iterator i=arrayTypeList.begin(); i<arrayTypeList.end(); ++i)
+  for(vector<SgArrayType*>::iterator i=arrayTypeList.begin(); i!=arrayTypeList.end(); ++i)
   {
     if(isLinearlizeArray)
     {
@@ -277,7 +298,7 @@ int main( int argc, char * argv[] )
   // Traversal with Memory Pool to search for pntrArrRefExp
   pntrArrRefTraversal translatePntrArrRefExp;
   traverseMemoryPoolVisitorPattern(translatePntrArrRefExp);
-  for(vector<SgPntrArrRefExp*>::iterator i=pntrArrRefList.begin(); i<pntrArrRefList.end(); ++i)
+  for(vector<SgPntrArrRefExp*>::iterator i=pntrArrRefList.begin(); i!=pntrArrRefList.end(); ++i)
   {
     if(isLinearlizeArray)
     {
@@ -289,10 +310,27 @@ int main( int argc, char * argv[] )
     }
   }
 
+    generateAstGraph(project,8000,"_orig");
+
+  Rose_STL_Container<SgNode*> functionList = NodeQuery::querySubTree (project,V_SgFunctionDeclaration);
+  for (Rose_STL_Container<SgNode*>::iterator i = functionList.begin(); i != functionList.end(); i++)
+  {
+    if((isSgProcedureHeaderStatement(*i) != NULL) ||
+       (isSgProgramHeaderStatement(*i) != NULL)){
+      SgFunctionDeclaration* functionBody = isSgFunctionDeclaration(*i);
+      bool hasReturnVal = false;
+      if(isSgProcedureHeaderStatement(functionBody))
+      {
+        hasReturnVal = isSgProcedureHeaderStatement(functionBody)->isFunction();
+      }
+      fixFortranSymbolTable(functionBody->get_definition(),hasReturnVal);
+    }
+  } 
+
   // Traversal with Memory Pool to search for equivalenceStatement
   equivalencelTraversal translateEquivalenceStmt;
   traverseMemoryPoolVisitorPattern(translateEquivalenceStmt);
-  for(vector<SgEquivalenceStatement*>::iterator i=equivalenceList.begin(); i<equivalenceList.end(); ++i)
+  for(vector<SgEquivalenceStatement*>::iterator i=equivalenceList.begin(); i!=equivalenceList.end(); ++i)
   {
     SgEquivalenceStatement* equivalenceStatement = isSgEquivalenceStatement(*i);
     ROSE_ASSERT(equivalenceStatement);
@@ -302,19 +340,20 @@ int main( int argc, char * argv[] )
   }
 
 
+
   // Simple traversal, bottom-up, to translate the rest
   f2cTraversal f2c;
   f2c.traverseInputFiles(project,postorder);
 
   // removing all the unsed statement from AST
-  for(vector<SgStatement*>::iterator i=statementList.begin(); i<statementList.end(); ++i)
+  for(vector<SgStatement*>::iterator i=statementList.begin(); i!=statementList.end(); ++i)
   {
     removeStatement(*i);
     (*i)->set_parent(NULL);
   }
       
   // deepDelete the removed nodes 
-  for(vector<SgNode*>::iterator i=removeList.begin(); i<removeList.end(); ++i)
+  for(vector<SgNode*>::iterator i=removeList.begin(); i!=removeList.end(); ++i)
   {
     deepDelete(*i);
   }
