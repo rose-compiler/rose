@@ -69,7 +69,7 @@ class Analyzer {
   State analyzeAssignOp(State state,SgNode* node,ConstraintSet& cset);
   State analyzeAssignRhs(State currentState,VariableId lhsVar, SgNode* rhs,ConstraintSet& cset);
   EState analyzeVariableDeclaration(SgVariableDeclaration* nextNodeToAnalyze1,EState currentEState, Label targetLabel);
-  EState transferFunction(Edge edge, const EState* eState);
+  list<EState> transferFunction(Edge edge, const EState* eState);
   void addToWorkList(const EState* eState);
   const EState* addToWorkListIfNew(EState eState);
   void recordTransition(const EState* sourceState, Edge e, const EState* targetState);

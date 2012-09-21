@@ -41,7 +41,8 @@ class SingleEvalResultConstInt {
 class ExprAnalyzer {
  public:
   SingleEvalResult eval(SgNode* node,EState eState);
-  SingleEvalResultConstInt evalConstInt(SgNode* node,EState eState, bool useConstraints, bool safeConstraintPropagation);
+  // old version: SingleEvalResultConstInt evalConstInt(SgNode* node,EState eState, bool useConstraints, bool safeConstraintPropagation);
+  list<SingleEvalResultConstInt> evalConstInt(SgNode* node,EState eState, bool useConstraints, bool safeConstraintPropagation);
   //! extracts constraints which might be extractable
   ConstraintSet determineExtractableConstraints(SgNode* node, EState& eState);
 

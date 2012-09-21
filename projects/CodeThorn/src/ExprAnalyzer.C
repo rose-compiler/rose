@@ -18,9 +18,11 @@ bool ExprAnalyzer::variable(SgNode* node, string& varName) {
   }
 }
 bool ExprAnalyzer::variable(SgNode* node, VariableId& varId) {
+  assert(node);
   if(SgVarRefExp* varref=isSgVarRefExp(node)) {
 	// found variable
 	SgVariableSymbol* varsym=varref->get_symbol();
+	assert(varsym);
 	varId=VariableId(varsym);
 	return true;
   } else {
@@ -87,7 +89,14 @@ SingleEvalResult ExprAnalyzer::eval(SgNode* node,EState eState) {
 //////////////////////////////////////////////////////////////////////
 // EVAL CONSTINT
 //////////////////////////////////////////////////////////////////////
-SingleEvalResultConstInt ExprAnalyzer::evalConstInt(SgNode* node,EState eState, bool useConstraints, bool safeConstraintPropagation) {
+list<SingleEvalResultConstInt> listify(SingleEvalResultConstInt res) {
+  list<SingleEvalResultConstInt> resList;
+  resList.push_back(res);
+  return resList;
+}
+
+
+list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState eState, bool useConstraints, bool safeConstraintPropagation) {
   assert(eState.state); // ensure state exists
   SingleEvalResultConstInt res;
   // initialize with default values from argument(s)
@@ -95,106 +104,194 @@ SingleEvalResultConstInt ExprAnalyzer::evalConstInt(SgNode* node,EState eState, 
   res.result=AType::ConstIntLattice(AType::Bot());
   if(dynamic_cast<SgBinaryOp*>(node)) {
 	SgNode* lhs=SgNodeHelper::getLhs(node);
-	SingleEvalResultConstInt lhsResult=evalConstInt(lhs,eState,useConstraints,safeConstraintPropagation);
+	list<SingleEvalResultConstInt> lhsResultList=evalConstInt(lhs,eState,useConstraints,safeConstraintPropagation);
 	SgNode* rhs=SgNodeHelper::getRhs(node);
-	SingleEvalResultConstInt rhsResult=evalConstInt(rhs,eState,useConstraints,safeConstraintPropagation);
-
-	switch(node->variantT()) {
-	case V_SgEqualityOp: {
-	  res.result=(lhsResult.result==rhsResult.result);
-	  res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
-	  // record new constraint
-	  VariableId varId;
-	  if((variable(lhs,varId) && rhsResult.isConstInt()) || (lhsResult.isConstInt() && variable(rhs,varId))) {
-		// only add the equality constraint if no constant is bound to the respective variable
-		if(!res.eState.state->varIsConst(varId)) {
-		  res.exprConstraints.addConstraint(Constraint(Constraint::EQ_VAR_CONST,varId,rhsResult.value()));
-		}
-	  }
-	  return res;
-	}
-	case V_SgNotEqualOp: {
-	  res.result=(lhsResult.result!=rhsResult.result);
-	  res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
-	  // record new constraint
-	  VariableId varId;
-	  if((variable(lhs,varId) && rhsResult.isConstInt()) || (lhsResult.isConstInt() && variable(rhs,varId))) {
-		// only add the inequality constraint if no constant is bound to the respective variable
-		if(!res.eState.state->varIsConst(varId)) {
-		  Constraint newConstraint=Constraint(Constraint::NEQ_VAR_CONST,varId,rhsResult.value());
-		  if(eState.constraints.constraintExists(newConstraint) && useConstraints) {
-			// override result of evaluation based on existent constraint
-			res.result=true;
-		  } else {
-			res.exprConstraints.addConstraint(newConstraint);
+	list<SingleEvalResultConstInt> rhsResultList=evalConstInt(rhs,eState,useConstraints,safeConstraintPropagation);
+	//assert(lhsResultList.size()==1);
+	//assert(rhsResultList.size()==1);
+	list<SingleEvalResultConstInt> resultList;
+	for(list<SingleEvalResultConstInt>::iterator liter=lhsResultList.begin();
+		liter!=lhsResultList.end();
+		++liter) {
+	  for(list<SingleEvalResultConstInt>::iterator riter=rhsResultList.begin();
+		  riter!=rhsResultList.end();
+		  ++riter) {
+		SingleEvalResultConstInt lhsResult=*liter;
+		SingleEvalResultConstInt rhsResult=*riter;
+		
+		switch(node->variantT()) {
+		case V_SgEqualityOp: {
+		  res.result=(lhsResult.result==rhsResult.result);
+		  res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
+		  // record new constraint
+		  VariableId varId;
+		  if(variable(lhs,varId) && rhsResult.isConstInt()) {
+			// only add the equality constraint if no constant is bound to the respective variable
+			if(!res.eState.state->varIsConst(varId)) {
+			  SingleEvalResultConstInt tmpres1=res;
+			  SingleEvalResultConstInt tmpres2=res;
+			  tmpres1.exprConstraints.addConstraint(Constraint(Constraint::EQ_VAR_CONST,varId,rhsResult.value()));
+			  tmpres1.result=true;
+			  tmpres2.exprConstraints.addConstraint(Constraint(Constraint::NEQ_VAR_CONST,varId,rhsResult.value()));
+			  tmpres2.result=false;
+			  resultList.push_back(tmpres1);
+			  resultList.push_back(tmpres2);
+			  return resultList;
+			  break;
+			}
 		  }
+		  if(lhsResult.isConstInt() && variable(rhs,varId)) {
+			// only add the equality constraint if no constant is bound to the respective variable
+			if(!res.eState.state->varIsConst(varId)) {
+			  SingleEvalResultConstInt tmpres1=res;
+			  SingleEvalResultConstInt tmpres2=res;
+			  tmpres1.exprConstraints.addConstraint(Constraint(Constraint::EQ_VAR_CONST,varId,lhsResult.value()));
+			  tmpres1.result=true;
+			  tmpres2.exprConstraints.addConstraint(Constraint(Constraint::NEQ_VAR_CONST,varId,lhsResult.value()));
+			  tmpres2.result=false;
+			  resultList.push_back(tmpres1);
+			  resultList.push_back(tmpres2);
+			  break;
+			}
+		  }
+		  resultList.push_back(res);
+		  break;
 		}
-	  }
-	  return res;
-	}
-	case V_SgAndOp:
-	  // we encode short-circuit CPP-AND semantics here!
-	  if(lhsResult.result.isFalse()) {
-		res.result=lhsResult.result;
-		res.exprConstraints=lhsResult.exprConstraints;
-	  } else {
-		res.result=(lhsResult.result&&rhsResult.result);
-		// TODO: work here
-		if(res.result.isTrue() || !safeConstraintPropagation) 
+		case V_SgNotEqualOp: {
+		  res.result=(lhsResult.result!=rhsResult.result);
 		  res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
-		else {
-		// do not up-proagate collected constraints (exprConstraints remains empty) because (lhs AND rhs) is possibly false
+		  // record new constraint
+		  VariableId varId;
+		  if(variable(lhs,varId) && rhsResult.isConstInt()) {
+			// only add the equality constraint if no constant is bound to the respective variable
+			if(!res.eState.state->varIsConst(varId)) {
+			  SingleEvalResultConstInt tmpres1=res;
+			  SingleEvalResultConstInt tmpres2=res;
+			  tmpres1.exprConstraints.addConstraint(Constraint(Constraint::NEQ_VAR_CONST,varId,rhsResult.value()));
+			  tmpres1.result=true;
+			  tmpres2.exprConstraints.addConstraint(Constraint(Constraint::EQ_VAR_CONST,varId,rhsResult.value()));
+			  tmpres2.result=false;
+			  resultList.push_back(tmpres1);
+			  resultList.push_back(tmpres2);
+			  break;
+			}
+		  }
+		  if(lhsResult.isConstInt() && variable(rhs,varId)) {
+			// only add the equality constraint if no constant is bound to the respective variable
+			if(!res.eState.state->varIsConst(varId)) {
+			  SingleEvalResultConstInt tmpres1=res;
+			  SingleEvalResultConstInt tmpres2=res;
+			  tmpres1.exprConstraints.addConstraint(Constraint(Constraint::NEQ_VAR_CONST,varId,lhsResult.value()));
+			  tmpres1.result=true;
+			  tmpres2.exprConstraints.addConstraint(Constraint(Constraint::EQ_VAR_CONST,varId,lhsResult.value()));
+			  tmpres2.result=false;
+			  resultList.push_back(tmpres1);
+			  resultList.push_back(tmpres2);
+			  break;
+			}
+		  }
+		  resultList.push_back(res);
+		  break;
+		}
+		case V_SgAndOp: {
+		  res.result=(lhsResult.result&&rhsResult.result);
+		  if(lhsResult.result.isFalse()) {
+			res.exprConstraints=lhsResult.exprConstraints.invertedConstraints();
+			// rhs is not considered due to short-circuit AND semantics
+		  }
+		  if(lhsResult.result.isTrue() && rhsResult.result.isFalse()) {
+			res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints.invertedConstraints();
+		  }
+		  if(lhsResult.result.isTrue() && rhsResult.result.isTrue()) {
+			res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
+		  }
+		  
+		  // in case of top we do not propagate constraints
+		  if(lhsResult.result.isTop() && !safeConstraintPropagation) {
+			res.exprConstraints+=lhsResult.exprConstraints;
+		  }
+		  if(rhsResult.result.isTop() && !safeConstraintPropagation) {
+			res.exprConstraints+=rhsResult.exprConstraints;
+		  }
+		  resultList.push_back(res);
+		  break;
+		}
+		case V_SgOrOp: {
+		  res.result=(lhsResult.result||rhsResult.result);
+		  // we encode short-circuit CPP-OR semantics here!
+		  if(lhsResult.result.isTrue()) {
+			res.result=lhsResult.result;
+			res.exprConstraints=lhsResult.exprConstraints;
+		  }
+		  if(lhsResult.result.isFalse() && rhsResult.result.isFalse()) {
+			res.exprConstraints=lhsResult.exprConstraints.invertedConstraints()+rhsResult.exprConstraints.invertedConstraints();
+		  }
+		  if(lhsResult.result.isFalse() && rhsResult.result.isTrue()) {
+			res.exprConstraints=lhsResult.exprConstraints.invertedConstraints()+rhsResult.exprConstraints;
+		  }
+		  // in case of top we do not propagate constraints
+		  if(lhsResult.result.isTop() && !safeConstraintPropagation) {
+			res.exprConstraints+=lhsResult.exprConstraints;
+		  }
+		  if(rhsResult.result.isTop() && !safeConstraintPropagation) {
+			res.exprConstraints+=rhsResult.exprConstraints;
+		  }
+		  resultList.push_back(res);
+		  break;
+		}
+		default:
+		  cerr << "Binary Op:"<<SgNodeHelper::nodeToString(node)<<endl;
+		  throw "Error: evalConstInt::binary operation failed.";
 		}
 	  }
-	  return res;
-	case V_SgOrOp:
-	  // we encode short-circuit CPP-OR semantics here!
-	  if(lhsResult.result.isTrue()) {
-		res.result=lhsResult.result;
-		res.exprConstraints=lhsResult.exprConstraints;
-	  } else {
-		res.result=(lhsResult.result||rhsResult.result);
-		// TODO: work here
-		if(res.result.isTrue() || !safeConstraintPropagation)
-		  res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
-		else {
-		// do not up-proagate collected constraints (exprConstraints remains empty) because (lhs AND rhs) is possibly false
-		}
-	  }
-	  return res;
-	default:
-	  throw "Error: evalConstInt::binary operation failed.";
 	}
+	//assert(resultList.size()==1);
+	return resultList;
   }
+  
   if(dynamic_cast<SgUnaryOp*>(node)) {
 	SgNode* child=SgNodeHelper::getFirstChild(node);
-	SingleEvalResultConstInt operandResult=evalConstInt(child,eState,useConstraints,safeConstraintPropagation);
-	switch(node->variantT()) {
-	case V_SgNotOp:
-	  res.result=!operandResult.result;
-	  // we propagate the inverted constraints
-	  res.exprConstraints=operandResult.exprConstraints.invertedConstraints();
-	  return res;
-	case V_SgCastExp: {
-	  // no constraint handling necessary, as all constraints get computed and propagated for child
-	  SgCastExp* castExp=isSgCastExp(node);
-	  // TODO: model effect of cast when sub language is extended
-	  res.exprConstraints=operandResult.exprConstraints;
-	  return evalConstInt(SgNodeHelper::getFirstChild(castExp),eState,useConstraints,safeConstraintPropagation);
+	list<SingleEvalResultConstInt> operandResultList=evalConstInt(child,eState,useConstraints,safeConstraintPropagation);
+	assert(operandResultList.size()==1);
+	list<SingleEvalResultConstInt> resultList;
+	for(list<SingleEvalResultConstInt>::iterator oiter=operandResultList.begin();
+		oiter!=operandResultList.end();
+		++oiter) {
+	  SingleEvalResultConstInt operandResult=*oiter;
+	  switch(node->variantT()) {
+	  case V_SgNotOp:
+		res.result=!operandResult.result;
+		// we propagate the inverted constraints
+		res.exprConstraints=operandResult.exprConstraints.invertedConstraints();
+		resultList.push_back(res);
+	  break;
+	  case V_SgCastExp: {
+		// no constraint handling necessary, as all constraints get computed and propagated for child
+		SgCastExp* castExp=isSgCastExp(node);
+		// TODO: model effect of cast when sub language is extended
+		res.exprConstraints=operandResult.exprConstraints;
+		//return evalConstInt(SgNodeHelper::getFirstChild(castExp),eState,useConstraints,safeConstraintPropagation);
+		resultList.push_back(res);
+		break;
+	  }
+	  case V_SgMinusOp: {
+		res.result=-operandResult.result; // using overloaded operator
+		res.exprConstraints=operandResult.exprConstraints;
+		resultList.push_back(res);
+		break;
+	  }
+	  default:
+		cerr << "@NODE:"<<node->sage_class_name()<<endl;
+		throw "Error: evalConstInt::unary operation failed.";
+	  } // end switch
 	}
-	case V_SgMinusOp: {
-	  res.result=-operandResult.result; // using overloaded operator
-	  res.exprConstraints=operandResult.exprConstraints;
-	  return res;
-	}
-	default:
-	  cerr << "@NODE:"<<node->sage_class_name()<<endl;
-	  throw "Error: evalConstInt::unary operation failed.";
-	} // end switch
+	return  resultList;
   }
+  
   assert(!dynamic_cast<SgBinaryOp*>(node) && !dynamic_cast<SgUnaryOp*>(node));
-
+  
   // ALL REMAINING CASES DO NOT GENERATE CONSTRAINTS
+  // EXPRESSION LEAF NODES
   switch(node->variantT()) {
   case V_SgBoolValExp: {
 	SgBoolValExp* boolValExp=isSgBoolValExp(node);
@@ -202,11 +299,11 @@ SingleEvalResultConstInt ExprAnalyzer::evalConstInt(SgNode* node,EState eState, 
 	int boolVal= boolValExp->get_value();
 	if(boolVal==0) {
 	  res.result=false;
-	  return res;
+	  return listify(res);
 	}
 	if(boolVal==1) {
 	  res.result=true;
-	  return res;
+	  return listify(res);
 	}
 	break;
   }
@@ -214,7 +311,7 @@ SingleEvalResultConstInt ExprAnalyzer::evalConstInt(SgNode* node,EState eState, 
 	SgIntVal* intValNode=isSgIntVal(node);
 	int intVal=intValNode->get_value();
 	res.result=intVal;
-	return res;
+	return listify(res);
   }
   case V_SgVarRefExp: {
 	VariableId varId;
@@ -232,11 +329,11 @@ SingleEvalResultConstInt ExprAnalyzer::evalConstInt(SgNode* node,EState eState, 
 		//  cout << "DEBUG: extracing more precise value from constraints: "<<res.result.toString()<<" ==> "<<val.toString()<<endl;
 		res.result=val;
 	  }
-	  return res;
+	  return listify(res);
 	} else {
 	  res.result=AType::Top();
 	  cerr << "WARNING: variable not in State (var="<<varId.longVariableName()<<"). Initialized with top."<<endl;
-	  return res;
+	  return listify(res);
 	}
 	break;
   }

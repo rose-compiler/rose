@@ -128,6 +128,8 @@ public:
 
 };
 
+bool operator==(Transition& t1, Transition& t2);
+
 class EStateList : public list<EState> {
  public:
   string toString();
@@ -137,6 +139,7 @@ class TransitionGraph : public list<Transition> {
  public:
   set<const EState*> transitionSourceEStateSetOfLabel(Label lab);
   set<const EState*> eStateSetOfLabel(Label lab);
+  void add(Transition trans);
   string toString() const;
  private:
   int numberOfNodes;

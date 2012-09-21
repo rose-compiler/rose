@@ -32,7 +32,7 @@ Analyzer::~Analyzer() {
 }
 
 void Analyzer::recordTransition(const EState* sourceState, Edge e, const EState* targetState) {
-  transitionGraph.push_back(Transition(sourceState,e,targetState));
+  transitionGraph.add(Transition(sourceState,e,targetState));
 }
 
 void Analyzer::printStatusMessage() {
@@ -82,25 +82,30 @@ void Analyzer::runSolver1() {
 	//cerr << "DEBUG: edgeSet size:"<<edgeSet.size()<<endl;
 	for(Flow::iterator i=edgeSet.begin();i!=edgeSet.end();++i) {
 	  //cerr << "DEBUG: Before transferFunction:"<<nodeToString(getLabeler()->getNode((*i).source)) <<" : eState="<<currentEStatePtr->toString()<<endl;
-	  EState newEState=transferFunction(*i,currentEStatePtr);
-	  if(newEState.label!=NO_ESTATE && (!newEState.constraints.deqConstraintExists()) &&(!isFailedAssertEState(&newEState))) {
-		//cerr << "DEBUG: Adding to Worklist:"<<newEState.toString()<<endl;
-		const EState* newEStatePtr=addToWorkListIfNew(newEState);
-		recordTransition(currentEStatePtr,*i,newEStatePtr);
-	  }
-	  if(newEState.label!=NO_ESTATE && (!newEState.constraints.deqConstraintExists()) && (isFailedAssertEState(&newEState))) {
-		// failed-assert end-state: do not add to work list but do add it to the transition graph
-		const EState* newEStatePtr=processNewOrExistingEState(newEState);
-		recordTransition(currentEStatePtr,*i,newEStatePtr);		
-		if(boolOptions["report-failed-assert"]) {
-		  cout << "REPORT: failed-assert: "<<newEStatePtr->toString()<<endl;
+	  list<EState> newEStateList=transferFunction(*i,currentEStatePtr);
+	  for(list<EState>::iterator nesListIter=newEStateList.begin();
+		  nesListIter!=newEStateList.end();
+		  ++nesListIter) {
+		EState newEState=*nesListIter;
+		if(newEState.label!=NO_ESTATE && (!newEState.constraints.deqConstraintExists()) &&(!isFailedAssertEState(&newEState))) {
+		  //cerr << "DEBUG: Adding to Worklist:"<<newEState.toString()<<endl;
+		  const EState* newEStatePtr=addToWorkListIfNew(newEState);
+		  recordTransition(currentEStatePtr,*i,newEStatePtr);
 		}
-	  }
-	  if(newEState.label==NO_STATE) {
-		//cerr << "DEBUG: NO_ESTATE (transition not recorded)"<<endl;
-		//cerr << "INFO: found final state."<<endl;
-	  }
-	  //cerr << "DEBUG: After transferFunction: eState="<<newEState.toString()<<endl;
+		if(newEState.label!=NO_ESTATE && (!newEState.constraints.deqConstraintExists()) && (isFailedAssertEState(&newEState))) {
+		  // failed-assert end-state: do not add to work list but do add it to the transition graph
+		  const EState* newEStatePtr=processNewOrExistingEState(newEState);
+		  recordTransition(currentEStatePtr,*i,newEStatePtr);		
+		  if(boolOptions["report-failed-assert"]) {
+			cout << "REPORT: failed-assert: "<<newEStatePtr->toString()<<endl;
+		  }
+		}
+		if(newEState.label==NO_STATE) {
+		  //cerr << "DEBUG: NO_ESTATE (transition not recorded)"<<endl;
+		  //cerr << "INFO: found final state."<<endl;
+		}
+		//cerr << "DEBUG: After transferFunction: eState="<<newEState.toString()<<endl;
+	  } // end of loop on transfer function return-estates
 	}
   }
   displayDiff=0;
@@ -221,17 +226,21 @@ EStateSet::ProcessingResult Analyzer::processEState(EState& s) {
   return eStateSet.processEState(s);
 }
 
+list<EState> elistify(EState res) {
+  list<EState> resList;
+  resList.push_back(res);
+  return resList;
+}
 
-EState Analyzer::transferFunction(Edge edge, const EState* eState) {
+
+list<EState> Analyzer::transferFunction(Edge edge, const EState* eState) {
   assert(edge.source==eState->label);
-
   // we do not pass information on the local edge
   if(edge.type==EDGE_LOCAL) {
 	EState noEState;
 	noEState.label=NO_ESTATE;
-	return noEState;
+	return elistify(noEState);
   }
-
   EState currentEState=*eState;
   State currentState=*currentEState.state;
   ConstraintSet cset=currentEState.constraints;
@@ -239,10 +248,9 @@ EState Analyzer::transferFunction(Edge edge, const EState* eState) {
   SgNode* nextNodeToAnalyze1=cfanalyzer->getNode(edge.source);
   SgNode* targetNode=cfanalyzer->getNode(edge.target);
   assert(nextNodeToAnalyze1);
-
   // handle assert(0)
   if(isAssertExpr(nextNodeToAnalyze1)) {
-	return createFailedAssertEState(currentEState,edge.target);
+	return elistify(createFailedAssertEState(currentEState,edge.target));
   }
 
   if(edge.type==EDGE_CALL) {
@@ -265,28 +273,36 @@ EState Analyzer::transferFunction(Edge edge, const EState* eState) {
 	SgExpressionPtrList::iterator j=actualParameters.begin();
 	while(i!=formalParameters.end() || j!=actualParameters.end()) {
 	  SgInitializedName* formalParameterName=*i;
+	  assert(formalParameterName);
 	  VariableId formalParameterVarId=variableIdMapping.variableId(formalParameterName);
 	  // VariableName varNameString=name->get_name();
 	  SgExpression* actualParameterExpr=*j;
-
+	  assert(actualParameterExpr);
 	  // check whether the actualy parameter is a single variable: In this case we can propagate the constraints of that variable to the formal parameter.
 	  // pattern: call: f(x), callee: f(int y) => constraints of x are propagated to y
 	  VariableId actualParameterVarId;
+	  assert(actualParameterExpr);
 	  if(bool isActualParamterVar=ExprAnalyzer::variable(actualParameterExpr,actualParameterVarId)) {
 		// propagate constraint from actualParamterVarId to formalParameterVarId
 		cset.addAssignEqVarVar(formalParameterVarId,actualParameterVarId);
 	  }
 	  // general case: the actual argument is an arbitrary expression (including a single variable)
-	  SingleEvalResultConstInt evalResult=exprAnalyzer.evalConstInt(actualParameterExpr,currentEState,true, true);
+	  list<SingleEvalResultConstInt> evalResultList=exprAnalyzer.evalConstInt(actualParameterExpr,currentEState,true, true);
+	  assert(evalResultList.size()>0);
+	  list<SingleEvalResultConstInt>::iterator resultListIter=evalResultList.begin();
+	  SingleEvalResultConstInt evalResult=*resultListIter;
+	  if(evalResultList.size()>1) {
+		cerr<<"Error: We currently do not support multi-state generating operators in function call parameters (yet)."<<endl;
+		exit(1);
+	  }
 	  newState[formalParameterVarId]=evalResult.value();
 	  ++i;++j;
 	}
 	assert(i==formalParameters.end() && j==actualParameters.end()); // must hold if #fparams==#aparams (TODO: default values)
 	// ad 4
 	const State* newStatePtr=processNewOrExistingState(newState);
-	return EState(edge.target,newStatePtr,cset);
+	return elistify(EState(edge.target,newStatePtr,cset));
   }
-
   // "return x;": add $return=eval() [but not for "return f();"]
   if(isSgReturnStmt(nextNodeToAnalyze1) && !SgNodeHelper::Pattern::matchReturnStmtFunctionCallExp(nextNodeToAnalyze1)) {
 	SgNode* expr=SgNodeHelper::getFirstChild(nextNodeToAnalyze1);
@@ -296,7 +312,7 @@ EState Analyzer::transferFunction(Edge edge, const EState* eState) {
 									expr,
 									cset);
 	const State* newStatePtr=processNewOrExistingState(newState);
-	return EState(edge.target,newStatePtr,cset);
+	return elistify(EState(edge.target,newStatePtr,cset));
   }
 
   // function exit node:
@@ -326,19 +342,18 @@ EState Analyzer::transferFunction(Edge edge, const EState* eState) {
 	  }
 	  // ad 3)
 	  const State* newStatePtr=processNewOrExistingState(newState);
-	  return EState(edge.target,newStatePtr,cset);
+	  return elistify(EState(edge.target,newStatePtr,cset));
 	} else {
 	  cerr << "FATAL ERROR: no function definition associated with function exit label."<<endl;
 	  exit(1);
 	}
   }
-
   if(getLabeler()->isFunctionCallReturnLabel(edge.source)) {
 	// case 1: return f(); pass eState trough
 	if(SgNodeHelper::Pattern::matchReturnStmtFunctionCallExp(nextNodeToAnalyze1)) {
 	  EState newEState=currentEState;
 	  newEState.label=edge.target;
-	  return newEState;
+	  return elistify(newEState);
 	}
 	// case 2: x=f(); bind variable x to value of $return
 	if(SgNodeHelper::Pattern::matchExprStmtAssignOpVarRefExpFunctionCallExp(nextNodeToAnalyze1)) {
@@ -357,7 +372,7 @@ EState Analyzer::transferFunction(Edge edge, const EState* eState) {
 	  cset.deleteConstraints(returnVarId); // remove constraints of $return
 
 	  const State* newStatePtr=processNewOrExistingState(newState);
-	  return EState(edge.target,newStatePtr,cset);
+	  return elistify(EState(edge.target,newStatePtr,cset));
 	}
 	// case 3: f(); remove $return from state (discard value)
 	if(SgNodeHelper::Pattern::matchExprStmtFunctionCallExp(nextNodeToAnalyze1)) {
@@ -367,8 +382,7 @@ EState Analyzer::transferFunction(Edge edge, const EState* eState) {
 	  cset.deleteConstraints(returnVarId); // remove constraints of $return
 	  const State* newStatePtr=processNewOrExistingState(newState);
 	  ConstraintSet cset=currentEState.constraints;
-	  return EState(edge.target,newStatePtr,cset);
-
+	  return elistify(EState(edge.target,newStatePtr,cset));
 	}
   }
   if(edge.type==EDGE_EXTERNAL) {
@@ -439,7 +453,7 @@ EState Analyzer::transferFunction(Edge edge, const EState* eState) {
 	   EState newEState=currentEState;
 	   newEState.io=newio;
 	   newEState.label=edge.target;
-	   return newEState;
+	   return elistify(newEState);
 	}
   }
   // special case external call
@@ -448,12 +462,12 @@ EState Analyzer::transferFunction(Edge edge, const EState* eState) {
 	 ||edge.type==EDGE_CALLRETURN) {
 	EState newEState=currentEState;
 	newEState.label=edge.target;
-	return newEState;
+	return elistify(newEState);
   }
   
   //cout << "INFO1: we are at "<<astTermWithNullValuesToString(nextNodeToAnalyze1)<<endl;
   if(SgVariableDeclaration* decl=isSgVariableDeclaration(nextNodeToAnalyze1)) {
-	return analyzeVariableDeclaration(decl,currentEState, edge.target);
+	return elistify(analyzeVariableDeclaration(decl,currentEState, edge.target));
   }
 
   if(isSgExprStatement(nextNodeToAnalyze1)) {
@@ -461,89 +475,36 @@ EState Analyzer::transferFunction(Edge edge, const EState* eState) {
 	assert(nextNodeToAnalyze2);
 	SingleEvalResultConstInt evalResult;
 	if(edge.type==EDGE_TRUE || edge.type==EDGE_FALSE) {
-	  SingleEvalResultConstInt evalResult1=exprAnalyzer.evalConstInt(nextNodeToAnalyze2,currentEState,false,false);
-	  if(boolOptions["precision-exact-constraints"]==false)
-		goto generalcase; // the general case is safe but does not extract all constraints
-	  if(evalResult1.isTop() && evalResult1.exprConstraints.size()==1) {
-		// mode 1: 
-		// we can extract all constraints
-		SingleEvalResultConstInt evalResult2=exprAnalyzer.evalConstInt(nextNodeToAnalyze2,currentEState,true,false);
-		if(evalResult2.isTrue()||evalResult2.isFalse()) {
-		  cout << "INFO: constraint extraction: check: mode 1b."<<endl;
-		  ConstraintSet::iterator i=evalResult2.exprConstraints.begin();
-		  Constraint c=*i; // only one constraint can exist here
-		  assert(evalResult1.exprConstraints.size()==1);
-		  if(currentEState.constraints.constraintExists(c)) {
-			// we are done: the found constraint already exists
-			evalResult=evalResult2;
-		  } else {
-			if(c.op()==Constraint::NEQ_VAR_CONST) {
-			  // found inequation: add it
-			  evalResult2.exprConstraints.addConstraint(c);
-			  evalResult=evalResult2;
-			} else { 
-			  if(c.op()==Constraint::EQ_VAR_CONST) {
-				// found equation: eliminate inquations on that variable and add it.
-				evalResult2.eState.constraints.deleteConstraints(c.lhsVar());
-				evalResult2.eState.constraints.addConstraint(c);
-				evalResult=evalResult2;
-			  } else {
-				cerr << "ERROR: constraint extraction failed."<<endl;
-				exit(1);
-			  }
-			}
+	  list<SingleEvalResultConstInt> evalResultList=exprAnalyzer.evalConstInt(nextNodeToAnalyze2,currentEState,true,true);
+	  //assert(evalResultList.size()==1);
+	  list<EState> newEStateList;
+	  for(list<SingleEvalResultConstInt>::iterator i=evalResultList.begin();
+		  i!=evalResultList.end();
+		  ++i) {
+		SingleEvalResultConstInt evalResult=*i;
+		EState newEState;
+		if((evalResult.isTrue() && edge.type==EDGE_TRUE) || (evalResult.isFalse() && edge.type==EDGE_FALSE) || evalResult.isTop()) {
+		  // pass on EState
+		  newEState=evalResult.eState;
+		  newEState.label=edge.target;
+		  
+		  // merge with collected constraints of expr (exprConstraints), and invert for false branch
+		  if(edge.type==EDGE_TRUE) {
+			newEState.constraints=evalResult.eState.constraints+evalResult.exprConstraints;
+		  } else if(edge.type==EDGE_FALSE) {
+			ConstraintSet s1=evalResult.eState.constraints;
+			ConstraintSet s2=evalResult.exprConstraints.invertedConstraints();
+			newEState.constraints=s1+s2;
 		  }
 		} else {
-		  // more complicated constraint extraction
-		  assert(evalResult2.isTop());
-		  ConstraintSet::iterator i=evalResult2.exprConstraints.begin();
-		  Constraint c=*i; // only one constraint can exist here
-		  assert(evalResult2.exprConstraints.size()==1);
-		  EState trueExtendedCurrentEState=currentEState;
-		  trueExtendedCurrentEState.constraints.addConstraint(c);
-		  c.negate();
-		  EState falseExtendedCurrentEState=currentEState;
-		  falseExtendedCurrentEState.constraints.addConstraint(c);
-		  SingleEvalResultConstInt evalResultT=exprAnalyzer.evalConstInt(nextNodeToAnalyze2,trueExtendedCurrentEState,true,false);
-		  SingleEvalResultConstInt evalResultF=exprAnalyzer.evalConstInt(nextNodeToAnalyze2,falseExtendedCurrentEState,true,false);
-		  cout << "INFO: constraint extraction: check:"<<(!evalResult1.value().isTop() && !evalResult2.value().isTop())<<endl;
-		  if((evalResult1.value()!=evalResult2.value()).isTrue()) {
-			// sucessfully extracted a constraint
-			// we are done, since the constraint has been collected
-			evalResult=evalResultT;
-		  } else {
-			// it was impossible to extract a proper constraint
-			// delete collected constraint
-			// investigate: maybe this case cannot exist because it is fully covered by case1?
-			evalResult=evalResult1; // it is OK to use evalResult1 here as no constraint can be extracted
-		  }
-		}
-	  } else {
-	  generalcase:
-		// mode 2:
-		// GENERAL CASE: we may extract several constraints but are more conservative
-		evalResult=exprAnalyzer.evalConstInt(nextNodeToAnalyze2,currentEState,true,true);
-	  }
-	  if((evalResult.isTrue() && edge.type==EDGE_TRUE) || (evalResult.isFalse() && edge.type==EDGE_FALSE) || evalResult.isTop()) {
-		// pass on EState
-		EState newEState=evalResult.eState;
-		newEState.label=edge.target;
-		
-		// merge with collected constraints of expr (exprConstraints), and invert for false branch
-		if(edge.type==EDGE_TRUE) {
-		  newEState.constraints=evalResult.eState.constraints+evalResult.exprConstraints;
-		} else if(edge.type==EDGE_FALSE) {
-		  ConstraintSet s1=evalResult.eState.constraints;
-		  ConstraintSet s2=evalResult.exprConstraints.invertedConstraints();
-		  newEState.constraints=s1+s2;
-		}
-		return newEState;
-	  } else {
 		  // we determined not to be on an execution path, therefore return EState with NO_ESTATE
-		EState noEState;
-		noEState.label=NO_ESTATE;
-		return noEState;
+		  newEState.label=NO_ESTATE;
+		}
+		// build LIST of results of newEState
+		newEStateList.push_back(newEState);
 	  }
+	  // return LIST
+	  return newEStateList;
 	}
 	if(isSgConditionalExp(nextNodeToAnalyze2)) {
 	  // we currently only handle ConditionalExpressions as used in asserts
@@ -556,7 +517,7 @@ EState Analyzer::transferFunction(Edge edge, const EState* eState) {
 	  //cset.insert(c);
 	  //stateSet.insert(newState);
 	  const State* newStatePtr=processNewOrExistingState(newState);
-	  return EState(edge.target,newStatePtr,cset);
+	  return elistify(EState(edge.target,newStatePtr,cset));
 	}
 
 	if(isSgAssignOp(nextNodeToAnalyze2)) {
@@ -565,14 +526,14 @@ EState Analyzer::transferFunction(Edge edge, const EState* eState) {
 	  ConstraintSet cset=currentEState.constraints;
 	  State newState=analyzeAssignOp(*currentEState.state,nextNodeToAnalyze2,cset);
 	  const State* newStatePtr=processNewOrExistingState(newState);
-	  return EState(edge.target,newStatePtr,cset);
+	  return elistify(EState(edge.target,newStatePtr,cset));
 	}
   }
   // nothing to analyze, just create new eState (from same State) with target label of edge
   // can be same state if edge is a backedge to same cfg node
   EState newEState=currentEState;
   newEState.label=edge.target;
-  return newEState;
+  return elistify(newEState);
 }
 
 void Analyzer::initializeSolver1(std::string functionToStartAt,SgNode* root) {

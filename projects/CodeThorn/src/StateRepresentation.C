@@ -278,6 +278,18 @@ string Transition::toString() const {
   return s1+s2+s3;
 }
 
+void TransitionGraph::add(Transition trans) {
+  for(TransitionGraph::iterator i=begin();i!=end();++i) {
+	if(trans==*i)
+	  return;
+  }
+  push_back(trans);
+}
+
+bool operator==(Transition& t1, Transition& t2) {
+  return t1.source==t2.source && t1.edge==t2.edge && t1.target==t2.target;
+}
+
 string TransitionGraph::toString() const {
   string s;
   int cnt=0;

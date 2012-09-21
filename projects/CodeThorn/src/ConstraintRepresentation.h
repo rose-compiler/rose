@@ -62,8 +62,6 @@ class ConstraintSet : public set<Constraint> {
   ConstraintSet findSpecificSet(Constraint::ConstraintOp op, VariableId varId) const;
   AType::ConstIntLattice varConstIntLatticeValue(const VariableId varId) const;
   string toString() const;
-  ConstraintSet& operator+=(ConstraintSet& s2);
-  ConstraintSet operator+(ConstraintSet& s2);
   ConstraintSet deleteVarConstraints(VariableId varId);
   void deleteConstraints(VariableId varId);
   ConstraintSet invertedConstraints();
@@ -83,7 +81,10 @@ class ConstraintSet : public set<Constraint> {
   void addAssignEqVarVar(VariableId, VariableId);
   void addEqVarVar(VariableId, VariableId);
   void removeEqVarVar(VariableId, VariableId);
+  ConstraintSet& operator+=(ConstraintSet& s2);
+  //ConstraintSet operator+(ConstraintSet& s2);
 };
+ConstraintSet operator+(ConstraintSet s1, ConstraintSet s2);
 //bool operator==(const ConstraintSet& s1, const ConstraintSet& s2);
 //bool operator<(const ConstraintSet& s1, const ConstraintSet& s2);
 //bool operator!=(const ConstraintSet& s1, const ConstraintSet& s2);

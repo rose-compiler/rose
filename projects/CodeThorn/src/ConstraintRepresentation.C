@@ -291,6 +291,14 @@ void ConstraintSet::removeConstraint(ConstraintSet::iterator i) {
   removeConstraint(*i);
 }
 
+#if 1
+ConstraintSet operator+(ConstraintSet s1, ConstraintSet s2) {
+  ConstraintSet result=s1;
+  for(ConstraintSet::iterator i2=s2.begin();i2!=s2.end();++i2)
+	result.addConstraint(*i2);
+  return result;
+}
+#else
 ConstraintSet ConstraintSet::operator+(ConstraintSet& s2) {
   ConstraintSet result;
   result=*this;
@@ -298,6 +306,7 @@ ConstraintSet ConstraintSet::operator+(ConstraintSet& s2) {
 	result.addConstraint(*i2);
   return result;
 }
+#endif
 
 ConstraintSet& ConstraintSet::operator+=(ConstraintSet& s2) {
   for(ConstraintSet::iterator i2=s2.begin();i2!=s2.end();++i2)

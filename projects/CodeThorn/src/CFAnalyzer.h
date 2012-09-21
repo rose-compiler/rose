@@ -26,6 +26,7 @@ class Edge {
   Label target;
 };
 
+bool operator==(const Edge& e1, const Edge& e2);
 bool operator<(const Edge& e1, const Edge& e2);
 
 class Flow : public set<Edge> {
