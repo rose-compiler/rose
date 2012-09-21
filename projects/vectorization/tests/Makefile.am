@@ -11,6 +11,7 @@ TESTCODES_REQUIRED_TO_PASS = \
 	conditionalStmt3.c \
 	conditionalStmt4.c \
 	conditionalStmt5.c \
+	scalarPromotionExtraction.c \
 	FMA.c
 
 COMPARE_CODES = \
@@ -22,6 +23,7 @@ COMPARE_CODES = \
 	rose_conditionalStmt3.c \
 	rose_conditionalStmt4.c \
 	rose_conditionalStmt5.c \
+	rose_scalarPromotionExtraction.c \
 	rose_FMA.c
 
 TEST_OUTPUTS = $(TESTCODES_REQUIRED_TO_PASS:.c=)

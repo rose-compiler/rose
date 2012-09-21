@@ -28,7 +28,7 @@ typedef  __m256d  __SIMDd;
 
 #elif defined USE_IBM
 typedef  vector float   __SIMD; 
-typedef  vector int     __SIMDi; 
+typedef  vector int32_t __SIMDi; 
 typedef  vector double  __SIMDd; 
 
 #endif
@@ -79,7 +79,7 @@ extern __SIMDi _SIMD_msub_epi32(__SIMDi, __SIMDi, __SIMDi);
 // Sets all values packed in the SIMD operand to the same value.
 extern __SIMD  _SIMD_splats_ps(float);
 extern __SIMDd  _SIMD_splats_pd(double);
-extern __SIMDi  _SIMD_splats_epi32(int);
+extern __SIMDi  _SIMD_splats_epi32(int32_t);
 
 // and:  a = b & c  ==> a = _SIMD_and_ps(b,c)
 extern __SIMD  _SIMD_and_ps(__SIMD, __SIMD);
@@ -124,6 +124,11 @@ extern void  _SIMD_cmpgt_pd(__SIMDd, __SIMDd, void**);
 // SIMD cmpge
 extern void  _SIMD_cmpge_ps(__SIMD, __SIMD, void**);
 extern void  _SIMD_cmpge_pd(__SIMDd, __SIMDd, void**);
+
+// SIMD extract
+extern float   _SIMD_extract_ps(__SIMD, int32_t);
+extern double  _SIMD_extract_pd(__SIMDd, int32_t);
+extern int32_t _SIMD_extract_epi32(__SIMDi, int32_t);
 
 #ifdef __cplusplus
 }

@@ -32,12 +32,24 @@ using namespace std;
 using namespace SIMDVectorization;
 using namespace SIMDNormalization;
 using namespace SIMDAnalysis;
-
+vector<SgForStatement*> loopList;
 /* 
   VF is the vector factor, usually is the SIMD width.  
   We set it up here for the ealy stage development.
 */
 int VF = 4;
+
+// memory pool traversal for variable declaration
+class loopTraversal : public ROSE_VisitorPattern
+{
+  public:
+    void visit(SgForStatement* loop);
+};
+
+void loopTraversal::visit(SgForStatement* loop)
+{
+  loopList.push_back(loop);
+}
 
 class transformTraversal : public AstSimpleProcessing
 {
@@ -53,50 +65,10 @@ void transformTraversal::visit(SgNode* n)
       {
         SgGlobal* global = isSgGlobal(n);
         insertSIMDDataType(global);
+        break;
       }
-      break;
-    case V_SgForStatement:
-      {
-        SgForStatement* forStatement = isSgForStatement(n);
-        SageInterface::forLoopNormalization(forStatement);
-        if(isInnermostLoop(forStatement) && isStrideOneLoop(forStatement)){
-          //stripmineLoop(forStatement,4);
-          updateLoopIteration(forStatement,VF);
-        }
-      }
-      break;
     default:
-      break;
-  }
-}
-
-class vectorizeTraversal : public AstSimpleProcessing
-{
-  public:
-    virtual void visit(SgNode* n);
-};
-
-void vectorizeTraversal::visit(SgNode* n)
-{
-  switch(n->variantT())
-  {
-    case V_SgForStatement:
-      {
-        SgForStatement* forStatement = isSgForStatement(n);
-        if(isInnermostLoop(forStatement)){
-          SgStatement* loopBody = forStatement->get_loop_body();
-          ROSE_ASSERT(loopBody);
-//          getDefList(defuse, forStatement->get_loop_body());
-//          getUseList(defuse, forStatement->get_loop_body());
-          translateMultiplyAccumulateOperation(loopBody);
-          vectorizeBinaryOp(loopBody);
-          vectorizeUnaryOp(loopBody);
-          vectorizeConditionalStmt(loopBody);
-        }
-      }
-      break;
-    default:
-      break;
+      {}
   }
 }
 
@@ -210,6 +182,7 @@ int main( int argc, char * argv[] )
   AstTests::runAllTests(project);   
   if (SgProject::get_verbose() > 2)
     generateAstGraph(project,8000,"_orig");
+
 /* Generate data dependence graph
   ArrayAnnotation* annot = ArrayAnnotation::get_inst(); 
   ArrayInterface array_interface(*annot);
@@ -245,15 +218,47 @@ int main( int argc, char * argv[] )
   transformTraversal loopTransformation;
   loopTransformation.traverseInputFiles(project,postorder);
   
-
+  loopTraversal translateLoop;
+  traverseMemoryPoolVisitorPattern(translateLoop);
+  for(vector<SgForStatement*>::iterator i=loopList.begin(); i!=loopList.end(); ++i)
+  {
+    SgForStatement* forStatement = isSgForStatement(*i);
+    SageInterface::forLoopNormalization(forStatement);
+    if(isInnermostLoop(forStatement) && isStrideOneLoop(forStatement)){
+      //stripmineLoop(forStatement,4);
+      updateLoopIteration(forStatement,VF);
+      normalizeCompoundAssignOp(forStatement);
+    }
+  }
 //  defuse = new DefUseAnalysis(project);
 //  defuse->run(false);
+    generateAstGraph(project,8000,"_tmp");
 
+// clear the vector, and redo the memory traversal to collect new loop list
+  loopList.clear();
 /*
   This stage translates the operators to the intrinsic function calls. 
 */ 
-  vectorizeTraversal doVectorization;
-  doVectorization.traverseInputFiles(project,postorder);
+  traverseMemoryPoolVisitorPattern(translateLoop);
+  for(vector<SgForStatement*>::iterator i=loopList.begin(); i!=loopList.end(); ++i)
+  {
+    SgForStatement* forStatement = isSgForStatement(*i);
+    if(isInnermostLoop(forStatement)){
+      SgStatement* loopBody = forStatement->get_loop_body();
+      ROSE_ASSERT(loopBody);
+
+      std::set< SgInitializedName *> liveIns, liveOuts;
+      LivenessAnalysis * liv = SageInterface::call_liveness_analysis (SageInterface::getProject());
+      SageInterface::getLiveVariables(liv, forStatement, liveIns, liveOuts);
+
+      scalarVariableConversion(forStatement, liveIns, liveOuts);
+
+      translateMultiplyAccumulateOperation(loopBody);
+      vectorizeBinaryOp(loopBody);
+      vectorizeUnaryOp(loopBody);
+      vectorizeConditionalStmt(loopBody);
+    }
+  }
 
   if (SgProject::get_verbose() > 2)
     generateAstGraph(project,80000);

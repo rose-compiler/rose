@@ -150,20 +150,20 @@ void SIMDVectorization::translateOperand(SgExpression* operand)
         SgDeclarationStatement* scalarDeclarationStmt = variableSymbol->get_declaration()->get_declaration();
         ROSE_ASSERT(scalarDeclarationStmt);
 
-        string scalarName = varRefExp->get_symbol()->get_name().getString();
+        string scalarName = variableSymbol->get_name().getString();
         if (SgProject::get_verbose() > 2)
           std::cout << "scalar:" << scalarName << std::endl;
         // Create new SIMD variable that stores the same scalar value in all its data elements
         string SIMDName = scalarName + "_SIMD";
 
         // If the new SIMD variable isn't declared, then we create it right after the scalar varialbe declaration
-        if(lookupSymbolInParentScopes(SIMDName,getEnclosingFunctionDefinition(operand)) == NULL)
+        if(lookupSymbolInParentScopes(SIMDName,getScope(operand)) == NULL)
         {
-          SIMDType = getSIMDType(variableSymbol->get_type(),getEnclosingFunctionDefinition(operand)); 
-          SgVariableDeclaration* SIMDDeclarationStmt = buildVariableDeclaration(SIMDName,SIMDType,NULL,getEnclosingFunctionDefinition(operand));        
+          SIMDType = getSIMDType(variableSymbol->get_type(),getScope(operand)); 
+          SgVariableDeclaration* SIMDDeclarationStmt = buildVariableDeclaration(SIMDName,SIMDType,NULL,variableSymbol->get_scope());        
           insertStatement(scalarDeclarationStmt,SIMDDeclarationStmt,false,true);
         }
-        SgVarRefExp* newOperand = buildVarRefExp(SIMDName, getEnclosingFunctionDefinition(operand));
+        SgVarRefExp* newOperand = buildVarRefExp(SIMDName, getScope(operand));
         newOperand->set_parent(operand->get_parent());
         replaceExpression(operand, newOperand, false);
       }
@@ -184,10 +184,10 @@ void SIMDVectorization::translateOperand(SgExpression* operand)
         SgVariableSymbol* arraySymbol = arrayRefExp->get_symbol();
 
         SgDeclarationStatement* arrayDeclarationStmt = arraySymbol->get_declaration()->get_declaration();
-        string arrayName = arrayRefExp->get_symbol()->get_name().getString();
+        string arrayName = arraySymbol->get_name().getString();
         string SIMDName = arrayName + "_SIMD";
 
-        if(lookupSymbolInParentScopes(SIMDName,getEnclosingFunctionDefinition(operand)) == NULL)
+        if(lookupSymbolInParentScopes(SIMDName,getScope(operand)) == NULL)
         {
           /* 
             To create pointers that can point to multi-dimension array, 
@@ -205,7 +205,7 @@ void SIMDVectorization::translateOperand(SgExpression* operand)
           // Get the original data type and find the mapped SIMD data type.
           SgArrayType* arrayType = isSgArrayType(arraySymbol->get_type());
           ROSE_ASSERT(arrayType);
-          SIMDType = getSIMDType(arrayType->get_base_type(),getEnclosingFunctionDefinition(operand)); 
+          SIMDType = getSIMDType(arrayType->get_base_type(),getScope(operand)); 
 
           /*
             This following section creates pointer that points to a multi-dimension array, and applied the type casting on that.
@@ -234,7 +234,7 @@ void SIMDVectorization::translateOperand(SgExpression* operand)
           newType = buildPointerType(baseType);
 
           // VariableDeclaration for this pointer, that points to the array space
-          SgVariableDeclaration* SIMDDeclarationStmt = buildVariableDeclaration(SIMDName,newType,NULL,getEnclosingFunctionDefinition(operand));        
+          SgVariableDeclaration* SIMDDeclarationStmt = buildVariableDeclaration(SIMDName,newType,NULL,arraySymbol->get_scope());        
           insertStatement(arrayDeclarationStmt,SIMDDeclarationStmt,false,true);
           // define the pointer and make sure it points to the beginning of the array
           SgExprStatement* pointerAssignment = buildAssignStatement(buildVarRefExp(SIMDDeclarationStmt),
@@ -246,7 +246,7 @@ void SIMDVectorization::translateOperand(SgExpression* operand)
         /* 
           we have the SIMD pointer, we can use this as the operand in the SIMD intrinsic functions.
         */
-        SgVarRefExp* newOperand = buildVarRefExp(SIMDName, getEnclosingFunctionDefinition(arrayRefExp));
+        SgVarRefExp* newOperand = buildVarRefExp(SIMDName, getScope(arrayRefExp));
         replaceExpression(arrayRefExp, newOperand, false);
 
       }
@@ -261,7 +261,7 @@ void SIMDVectorization::translateOperand(SgExpression* operand)
         SgExprListExp* SIMDAddArgs = buildExprListExp(deepCopy(operand));
         SgFunctionCallExp* SIMDSplats = buildFunctionCallExp(functionName,operand->get_type(), 
                                                              SIMDAddArgs, 
-                                                             getEnclosingFunctionDefinition(operand));
+                                                             getScope(operand));
         replaceExpression(operand, SIMDSplats); 
       }
       break;
@@ -1078,7 +1078,98 @@ void SIMDVectorization::updateLoopIteration(SgForStatement* forStatement, int VF
 }
 
 
+void SIMDVectorization::scalarVariableConversion(SgForStatement* forStatement, std::set<SgInitializedName*> liveIns, std::set<SgInitializedName*> liveOuts)
+{
+//  
+// getLoopIndexVariable won't support here because there are multiple initialization statements.
+  SgStatementPtrList initStmtList = forStatement->get_init_stmt();
+  for(SgStatementPtrList::iterator i = initStmtList.begin(); i!=initStmtList.end(); ++i)
+  {
+    SgExpression* expr = isSgExprStatement(*i)->get_expression();
+    ROSE_ASSERT(expr);
+    SgVarRefExp* varRef = isSgVarRefExp(isSgBinaryOp(expr)->get_lhs_operand());
+    ROSE_ASSERT(varRef);
+    SgInitializedName* indexName = isSgInitializedName(varRef->get_symbol()->get_declaration());
+    ROSE_ASSERT(indexName);
+    std::set<SgInitializedName*>::iterator it = liveIns.find(indexName);
+    if(it != liveIns.end()) 
+    {
+      if (SgProject::get_verbose() > 2)
+        cout << "remove index " << indexName->get_name() << "from LiveIns" << endl;
+      liveIns.erase(it);
+    }
+  }
+// Insert the promotion statement for the scalars used in the vector loop.
+  for(std::set< SgInitializedName *>::iterator i=liveIns.begin(); i!=liveIns.end(); ++i)
+  {
+    if(isScalarType((*i)->get_typeptr()))
+    {
+      SgVariableSymbol* symbol = isSgVariableSymbol((*i)->get_symbol_from_symbol_table());
+      ROSE_ASSERT(symbol);
+      SgDeclarationStatement* scalarDeclarationStmt = symbol->get_declaration()->get_declaration();
+      ROSE_ASSERT(scalarDeclarationStmt);
+      string scalarName = symbol->get_name().getString();
+      if (SgProject::get_verbose() > 2)
+        std::cout << "scalar:" << scalarName << std::endl;
+      // Create new SIMD variable that stores the same scalar value in all its data elements
+      string SIMDName = scalarName + "_SIMD";
+      SgType* SIMDType = getSIMDType(symbol->get_type(),getScope(forStatement)); 
+      if(lookupSymbolInParentScopes(SIMDName,getScope(forStatement)) == NULL)
+      {
+        SgVariableDeclaration* SIMDDeclarationStmt = buildVariableDeclaration(SIMDName,SIMDType,NULL,symbol->get_scope());        
+        insertStatement(scalarDeclarationStmt,SIMDDeclarationStmt,false,true);
+      }
+      string promoteFuncName = "_SIMD_splats" + getSIMDOpSuffix(symbol->get_type());
+      SgFunctionCallExp* callScalarPromotion = buildFunctionCallExp(promoteFuncName, 
+                                                                    SIMDType, 
+                                                                    buildExprListExp(buildVarRefExp(symbol)), 
+                                                                    getScope(forStatement));
+      SgExprStatement* promotionStmt = buildAssignStatement(buildVarRefExp(SIMDName, getScope(forStatement)),
+                                                            callScalarPromotion);
+      insertStatementBefore(forStatement, promotionStmt);
+    }
+  }
+  
+// insert the extraction statement at the end of the vector loop
+  for(std::set< SgInitializedName *>::iterator i=liveOuts.begin(); i!=liveOuts.end(); ++i)
+  {
+    if(isScalarType((*i)->get_typeptr()))
+    {
+      SgVariableSymbol* symbol = isSgVariableSymbol((*i)->get_symbol_from_symbol_table());
+      ROSE_ASSERT(symbol);
+      SgDeclarationStatement* scalarDeclarationStmt = symbol->get_declaration()->get_declaration();
+      ROSE_ASSERT(scalarDeclarationStmt);
+      string scalarName = symbol->get_name().getString();
+      if (SgProject::get_verbose() > 2)
+        std::cout << "scalar:" << scalarName << std::endl;
+      // Create new SIMD variable that stores the same scalar value in all its data elements
+      string SIMDName = scalarName + "_SIMD";
+      SgType* SIMDType = getSIMDType(symbol->get_type(),getScope(forStatement)); 
+      if(lookupSymbolInParentScopes(SIMDName,getScope(forStatement)) == NULL)
+      {
+        SgVariableDeclaration* SIMDDeclarationStmt = buildVariableDeclaration(SIMDName,SIMDType,NULL,symbol->get_scope());        
+        insertStatement(scalarDeclarationStmt,SIMDDeclarationStmt,false,true);
+      }
+      string extractFuncName = "_SIMD_extract" + getSIMDOpSuffix(symbol->get_type());
+      SgFunctionCallExp* callScalarExtraction = buildFunctionCallExp(extractFuncName, 
+                                                                    symbol->get_type(), 
+                                                                    buildExprListExp(buildVarRefExp(SIMDName, getScope(forStatement)), buildIntVal(VF-1)), 
+                                                                    getScope(forStatement));
+      SgExprStatement* extractStmt = buildAssignStatement(buildVarRefExp(symbol),
+                                                            callScalarExtraction);
+      insertStatementAfter(forStatement, extractStmt);
+    }
+  }
 
+//  for(std::set< SgInitializedName *>::iterator i=liveIns.begin(); i!=liveIns.end(); ++i)
+//  {
+//    cout << "in: " << (*i)->get_name() << endl;
+//  }
+//  for(std::set< SgInitializedName *>::iterator i=liveOuts.begin(); i!=liveOuts.end(); ++i)
+//  {
+//    cout << "out: " << (*i)->get_name() << endl;
+//  }
+}
 
 /******************************************************************************************************************************/
 /*
@@ -1121,3 +1212,5 @@ string SIMDVectorization::getSIMDOpSuffix(SgType* opType)
 
   return suffix;
 }
+
+

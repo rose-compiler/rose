@@ -67,6 +67,9 @@ namespace SIMDVectorization
 //  Decide the suffix name of SIMD functions based on the operand's type
   std::string getSIMDOpSuffix(SgType*);
 
+// Promote scalar variable to SIMD varialbe before the loop, or extract scalar from SIMD variable after loop
+  void scalarVariableConversion(SgForStatement*, std::set<SgInitializedName*>, std::set<SgInitializedName*>);
+
 // Add expression for true statement into ConditionalStmtTable
   void insertConditionalStmtTable(SgStatement*, std::map<SgName,conditionalStmts*>&);
   void updateConditionalStmtTable(SgStatement*, std::map<SgName,conditionalStmts*>&);

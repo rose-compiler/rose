@@ -239,7 +239,7 @@ __SIMDd _SIMD_splats_pd(double f)
 #endif
 }
 
-__SIMDi _SIMD_splats_epi32(int i)
+__SIMDi _SIMD_splats_epi32(int32_t i)
 {
 #ifdef  USE_SSE
   return _mm_set1_epi32(i);
@@ -252,7 +252,7 @@ __SIMDi _SIMD_splats_epi32(int i)
 
 /*
   V_SgAndOp
-  Integer is not supported. 
+  int32_teger is not supported. 
 */
 __SIMD _SIMD_and_ps(__SIMD a, __SIMD b)
 {
@@ -278,7 +278,7 @@ __SIMDd _SIMD_and_pd(__SIMDd a, __SIMDd b)
 
 /*
   V_SgBitOrOp
-  integer is not supported. 
+  int32_teger is not supported. 
 */
 __SIMD _SIMD_or_ps(__SIMD a, __SIMD b)
 {
@@ -548,5 +548,33 @@ void _SIMD_cmpge_pd(__SIMDd a, __SIMDd b, void** resultPtr)
   *result = _mm256_cmp(a,b,29);
 #elif defined USE_IBM
   *result = vec_cmpge(a,b);
+#endif
+}
+
+// extract scalar from SIMD operand
+float _SIMD_extract_ps(__SIMD a, int32_t i)
+{
+#if defined USE_IBM
+  return vec_extract(a,i);
+#else
+  return *(((float*)&a)+i);
+#endif
+}
+
+double _SIMD_extract_pd(__SIMDd a, int32_t i)
+{
+#if defined USE_IBM
+  return vec_extract(a,i);
+#else
+  return *(((double*)&a)+i);
+#endif
+}
+
+int32_t _SIMD_extract_epi32(__SIMDi a, int32_t i)
+{
+#if defined USE_IBM
+  return vec_extract(a,i);
+#else
+  return *(((int32_t*)&a)+i);
 #endif
 }
