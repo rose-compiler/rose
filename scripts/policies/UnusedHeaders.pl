@@ -57,6 +57,11 @@ while (my $file = $files->next_file) {
 	    delete $index{lc $name};
 	  }
 	}
+      } elsif (/\b__TH[I]S_HEADER_IS_USED__\b/) { # The [I] is to make sure we don't match this particular occurrence
+	# If a header file really is used but just not included in any source code, then you may indicate so in the
+	# header by adding a line that matches this pattern.
+	my($basename) = $file = ~ /([^\/]+)$/;
+	delete $index{lc $basename};
       }
     }
     close FILE;

@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Demonstrates multi-domain semantics with conversions between the values.
+// Demonstrates multi-domain semantics with conversions between the values.                             __THIS_HEADER_IS_USED__
 //
 // The basic idea is to make some minor changes to the simulator source code (mostly in RSIM_SemanticsSettings.h) so that the
 // simulator will use a semantic domain that we define in this file.  Our semantic domain is ROSE's MultiSemantics (see ROSE

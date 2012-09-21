@@ -1,4 +1,4 @@
-// See MultiWithConversion.h for documentation
+// See MultiWithConversion.h for documentation                                          __THIS_HEADER_IS_USED__
 // This header is included at the end of RSIM_Templates.h
 
 #include "YicesSolver.h"
