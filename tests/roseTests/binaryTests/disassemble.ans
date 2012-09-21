@@ -30,32 +30,32 @@ disassembled 3199 instructions and 18 failures (use --show-bad to see errors)
 0x080482c8: This function calls 0x080483d0<frame_dummy>
 0x080482c8: This function calls 0x08048560<__do_global_ctors_aux>
 
-Basic block: entry point, graph-1
-Predecessors: B08048490
+0x080482c8: Basic block reasons: entry point, graph-1
+0x080482c8: Predecessor blocks: 0x08048490<__libc_csu_init>
 0x080482c8: 55                      |U       |   push   ebp
 0x080482c9: 89 e5                   |..      |   mov    ebp, esp
 0x080482cb: 83 ec 08                |...     |   sub    esp, 0x08
 0x080482ce: e8 91 00 00 00          |.....   |   call   0x08048364<call_gmon_start>
-            (successors: B080482d3 F08048364)
+0x080482ce: Successor blocks: 0x080482d3, 0x08048364<call_gmon_start>
 
-Basic block: graph-1
-Predecessors: B080482c8
+0x080482d3: Basic block reasons: graph-1
+0x080482d3: Predecessor blocks: 0x080482c8
+0x080482d3: Dominator block: 0x080482c8
 0x080482d3: e8 f8 00 00 00          |.....   |   call   0x080483d0<frame_dummy>
-            (dominator 0x080482c8)
-            (successors: B080482d8 F080483d0)
+0x080482d3: Successor blocks: 0x080482d8, 0x080483d0<frame_dummy>
 
-Basic block: graph-1
-Predecessors: B080482d3
+0x080482d8: Basic block reasons: graph-1
+0x080482d8: Predecessor blocks: 0x080482d3
+0x080482d8: Dominator block: 0x080482d3
 0x080482d8: e8 83 02 00 00          |.....   |   call   0x08048560<__do_global_ctors_aux>
-            (dominator 0x080482d3)
-            (successors: B080482dd F08048560)
+0x080482d8: Successor blocks: 0x080482dd, 0x08048560<__do_global_ctors_aux>
 
-Basic block: graph-1
-Predecessors: B080482d8
+0x080482dd: Basic block reasons: graph-1
+0x080482dd: Predecessor blocks: 0x080482d8
+0x080482dd: Dominator block: 0x080482d8
 0x080482dd: c9                      |.       |   leave  
 0x080482de: c3                      |.       |   ret    
-            (dominator 0x080482d8)
-            (successors:...)
+0x080482de: Successor blocks: unknown
 
 0x080482df: 00 ff 35 ac 96 04 08 ff |..5.....|
 0x080482e7: 25 b0 96 04 08 00 00 00 |%.......|
@@ -69,10 +69,10 @@ Predecessors: B080482d8
 0x080482f0: ================================== Function (function call, import) <signal@plt>
 0x080482f0: Called by 0x0804845b<main>
 
-Basic block: entry point, graph-1
-Predecessors: B0804845b
+0x080482f0: Basic block reasons: entry point, graph-1
+0x080482f0: Predecessor blocks: 0x0804845b<main>
 0x080482f0: ff 25 b4 96 04 08       |.%....  |   jmp    DWORD PTR ds:[0x080496b4<.got.plt+0x0c>]
-            (successors:...)
+0x080482f0: Successor blocks: unknown
 
 0x080482f6: 68 00 00 00 00 e9 e0 ff |h.......|
 0x080482fe: ff ff                   |..      | 10 bytes untyped data beginning at 0x080482f6
@@ -82,10 +82,10 @@ Predecessors: B0804845b
 0x08048300: ================================== Function (function call, import) <puts@plt>
 0x08048300: Called by 0x08048404<bar>
 
-Basic block: entry point, graph-1
-Predecessors: B08048404
+0x08048300: Basic block reasons: entry point, graph-1
+0x08048300: Predecessor blocks: 0x08048404<bar>
 0x08048300: ff 25 b8 96 04 08       |.%....  |   jmp    DWORD PTR ds:[0x080496b8<.got.plt+0x10>]
-            (successors:...)
+0x08048300: Successor blocks: unknown
 
 0x08048306: 68 08 00 00 00 e9 d0 ff |h.......|
 0x0804830e: ff ff                   |..      | 10 bytes untyped data beginning at 0x08048306
@@ -95,10 +95,10 @@ Predecessors: B08048404
 0x08048310: ================================== Function (function call, import) <__libc_start_main@plt>
 0x08048310: Called by 0x08048340<_start>
 
-Basic block: entry point, graph-1
-Predecessors: B08048340
+0x08048310: Basic block reasons: entry point, graph-1
+0x08048310: Predecessor blocks: 0x08048340<_start>
 0x08048310: ff 25 bc 96 04 08       |.%....  |   jmp    DWORD PTR ds:[0x080496bc<.got.plt+0x14>]
-            (successors:...)
+0x08048310: Successor blocks: unknown
 
 0x08048316: 68 10 00 00 00 e9 c0 ff |h.......|
 0x0804831e: ff ff                   |..      | 10 bytes untyped data beginning at 0x08048316
@@ -109,10 +109,10 @@ Predecessors: B08048340
 0x08048320: Called by 0x08048418<foo>
 0x08048320: Function does not return to caller.
 
-Basic block: entry point, graph-1
-Predecessors: B08048423
+0x08048320: Basic block reasons: entry point, graph-1
+0x08048320: Predecessor blocks: 0x08048423<foo>
 0x08048320: ff 25 c0 96 04 08       |.%....  |   jmp    DWORD PTR ds:[0x080496c0<.got.plt+0x18>]
-            (successors:...)
+0x08048320: Successor blocks: unknown
 
 0x08048326: 68 18 00 00 00 e9 b0 ff |h.......|
 0x0804832e: ff ff                   |..      | 10 bytes untyped data beginning at 0x08048326
@@ -122,10 +122,10 @@ Predecessors: B08048423
 0x08048330: ================================== Function (function call, import) <__gmon_start__@plt>
 0x08048330: Called by 0x08048364<call_gmon_start>
 
-Basic block: entry point, graph-1
-Predecessors: B0804837f
+0x08048330: Basic block reasons: entry point, graph-1
+0x08048330: Predecessor blocks: 0x0804837f<call_gmon_start>
 0x08048330: ff 25 c4 96 04 08       |.%....  |   jmp    DWORD PTR ds:[0x080496c4<.got.plt+0x1c>]
-            (successors:...)
+0x08048330: Successor blocks: unknown
 
 0x08048336: 68 20 00 00 00 e9 a0 ff |h ......|
 0x0804833e: ff ff                   |..      | 10 bytes untyped data beginning at 0x08048336
@@ -137,7 +137,7 @@ Predecessors: B0804837f
 0x08048340: This function calls 0x08048310<__libc_start_main@plt>
 0x08048340: Function does not return to caller.
 
-Basic block: entry point, graph-1
+0x08048340: Basic block reasons: entry point, graph-1
 0x08048340: 31 ed                   |1.      |   xor    ebp, ebp
 0x08048342: 5e                      |^       |   pop    esi
 0x08048343: 89 e1                   |..      |   mov    ecx, esp
@@ -151,13 +151,13 @@ Basic block: entry point, graph-1
 0x08048356: 56                      |V       |   push   esi
 0x08048357: 68 5b 84 04 08          |h[...   |   push   0x0804845b<main>
 0x0804835c: e8 af ff ff ff          |.....   |   call   0x08048310<__libc_start_main@plt>
-            (successors: F08048310 B08048361)
+0x0804835c: Successor blocks: 0x08048310<__libc_start_main@plt>, 0x08048361
 
-Basic block: graph-1
-Predecessors: B08048340
+0x08048361: Basic block reasons: graph-1
+0x08048361: Predecessor blocks: 0x08048340
+0x08048361: Dominator block: 0x08048340
 0x08048361: f4                      |.       |   hlt    
-            (dominator 0x08048340)
-            (successors:)
+0x08048361: Successor blocks: none
 
 0x08048362: 90 90                   |..      | 2-byte padding beginning at 0x08048362
 
@@ -165,8 +165,8 @@ Predecessors: B08048340
 0x08048364: Called by 0x080482c8<_init>
 0x08048364: This function calls 0x08048330<__gmon_start__@plt>
 
-Basic block: entry point, graph-1
-Predecessors: B080482c8
+0x08048364: Basic block reasons: entry point, graph-1
+0x08048364: Predecessor blocks: 0x080482c8<_init>
 0x08048364: 55                      |U       |   push   ebp
 0x08048365: 89 e5                   |..      |   mov    ebp, esp
 0x08048367: 53                      |S       |   push   ebx
@@ -177,81 +177,81 @@ Predecessors: B080482c8
 0x08048375: 8b 93 fc ff ff ff       |......  |   mov    edx, DWORD PTR ds:[ebx + 0xfffffffc<-0x00000004>]
 0x0804837b: 85 d2                   |..      |   test   edx, edx
 0x0804837d: 74 05                   |t.      |   je     0x08048384<<Insn>>
-            (successors: B0804837f B08048384)
+0x0804837d: Successor blocks: 0x0804837f, 0x08048384
 
-Basic block: graph-1
-Predecessors: B08048364
+0x0804837f: Basic block reasons: graph-1
+0x0804837f: Predecessor blocks: 0x08048364
+0x0804837f: Dominator block: 0x08048364
 0x0804837f: e8 ac ff ff ff          |.....   |   call   0x08048330<__gmon_start__@plt>
-            (dominator 0x08048364)
-            (successors: F08048330 B08048384)
+0x0804837f: Successor blocks: 0x08048330<__gmon_start__@plt>, 0x08048384
 
-Basic block: graph-1
-Predecessors: B08048364 B0804837f
+0x08048384: Basic block reasons: graph-1
+0x08048384: Predecessor blocks: 0x08048364, 0x0804837f
+0x08048384: Dominator block: 0x08048364
 0x08048384: 58                      |X       |   pop    eax
 0x08048385: 5b                      |[       |   pop    ebx
 0x08048386: c9                      |.       |   leave  
 0x08048387: c3                      |.       |   ret    
-            (dominator 0x08048364)
-            (successors:...)
+0x08048387: Successor blocks: unknown
 
 0x08048388: 90 90 90 90 90 90 90 90 |........| 8-byte padding beginning at 0x08048388
 
 0x08048390: ================================== Function (function call, symbol) <__do_global_dtors_aux>
 0x08048390: Called by 0x08048590<_fini>
 
-Basic block: entry point, graph-1
-Predecessors: B08048590
+0x08048390: Basic block reasons: entry point, graph-1
+0x08048390: Predecessor blocks: 0x08048590<_fini>
 0x08048390: 55                      |U       |   push   ebp
 0x08048391: 89 e5                   |..      |   mov    ebp, esp
 0x08048393: 83 ec 08                |...     |   sub    esp, 0x08
 0x08048396: 80 3d d4 96 04 08 00    |.=..... |   cmp    BYTE PTR ds:[0x080496d4<.bss>], 0x00
 0x0804839d: 75 2d                   |u-      |   jne    0x080483cc<<Insn>>
-            (successors: B0804839f B080483cc)
+0x0804839d: Successor blocks: 0x0804839f, 0x080483cc
 
-Basic block: graph-1
-Predecessors: B08048390
+0x0804839f: Basic block reasons: graph-1
+0x0804839f: Predecessor blocks: 0x08048390
+0x0804839f: Dominator block: 0x08048390
 0x0804839f: a1 d0 96 04 08          |.....   |   mov    eax, DWORD PTR ds:[0x080496d0<.data+8>]
 0x080483a4: 8b 10                   |..      |   mov    edx, DWORD PTR ds:[eax]
 0x080483a6: 85 d2                   |..      |   test   edx, edx
 0x080483a8: 74 1b                   |t.      |   je     0x080483c5<<Insn>>
-            (dominator 0x08048390)
-            (successors: B080483aa B080483c5)
+0x080483a8: Successor blocks: 0x080483aa, 0x080483c5
 
-Basic block: graph-1
-Predecessors: B0804839f
+0x080483aa: Basic block reasons: graph-1
+0x080483aa: Predecessor blocks: 0x0804839f
+0x080483aa: Dominator block: 0x0804839f
 0x080483aa: 8d b6 00 00 00 00       |......  |   lea    esi, [esi + 0x00000000]
-            (dominator 0x0804839f)
-            (successors: B080483b0)
+0x080483aa: Successor blocks: 0x080483b0
 
-Basic block: graph-1
-Predecessors: B080483aa B080483ba
+0x080483b0: Basic block reasons: graph-1
+0x080483b0: Predecessor blocks: 0x080483aa, 0x080483ba
+0x080483b0: Dominator block: 0x080483aa
 0x080483b0: 83 c0 04                |...     |   add    eax, 0x04
 0x080483b3: a3 d0 96 04 08          |.....   |   mov    DWORD PTR ds:[0x080496d0<.data+8>], eax
 0x080483b8: ff d2                   |..      |   call   edx
-            (dominator 0x080483aa)
-            (successors: B080483ba...)
+0x080483b8: Successor blocks: 0x080483ba, unknown
 
-Basic block: graph-1
-Predecessors: B080483b0
+0x080483ba: Basic block reasons: graph-1
+0x080483ba: Predecessor blocks: 0x080483b0
+0x080483ba: Dominator block: 0x080483b0
 0x080483ba: a1 d0 96 04 08          |.....   |   mov    eax, DWORD PTR ds:[0x080496d0<.data+8>]
 0x080483bf: 8b 10                   |..      |   mov    edx, DWORD PTR ds:[eax]
 0x080483c1: 85 d2                   |..      |   test   edx, edx
 0x080483c3: 75 eb                   |u.      |   jne    0x080483b0<<Insn>>
-            (dominator 0x080483b0)
-            (successors: B080483b0 B080483c5)
+0x080483c3: Successor blocks: 0x080483b0, 0x080483c5
 
-Basic block: graph-1
-Predecessors: B0804839f B080483ba
+0x080483c5: Basic block reasons: graph-1
+0x080483c5: Predecessor blocks: 0x0804839f, 0x080483ba
+0x080483c5: Dominator block: 0x0804839f
 0x080483c5: c6 05 d4 96 04 08 01    |....... |   mov    BYTE PTR ds:[0x080496d4<.bss>], 0x01
-            (dominator 0x0804839f)
-            (successors: B080483cc)
+0x080483c5: Successor blocks: 0x080483cc
 
-Basic block: graph-1
-Predecessors: B08048390 B080483c5
+0x080483cc: Basic block reasons: graph-1
+0x080483cc: Predecessor blocks: 0x08048390, 0x080483c5
+0x080483cc: Dominator block: 0x08048390
 0x080483cc: c9                      |.       |   leave  
 0x080483cd: c3                      |.       |   ret    
-            (dominator 0x08048390)
-            (successors:...)
+0x080483cd: Successor blocks: unknown
 
 0x080483ce: 89 f6                   |..      | 2 bytes untyped data beginning at 0x080483ce
 0x080483ce: 89 f6                   |..      | (data)   mov    esi, esi
@@ -259,62 +259,62 @@ Predecessors: B08048390 B080483c5
 0x080483d0: ================================== Function (function call, symbol) <frame_dummy>
 0x080483d0: Called by 0x080482c8<_init>
 
-Basic block: entry point, graph-1
-Predecessors: B080482d3
+0x080483d0: Basic block reasons: entry point, graph-1
+0x080483d0: Predecessor blocks: 0x080482d3<_init>
 0x080483d0: 55                      |U       |   push   ebp
 0x080483d1: 89 e5                   |..      |   mov    ebp, esp
 0x080483d3: 83 ec 08                |...     |   sub    esp, 0x08
 0x080483d6: a1 d8 95 04 08          |.....   |   mov    eax, DWORD PTR ds:[0x080495d8<.jcr>]
 0x080483db: 85 c0                   |..      |   test   eax, eax
 0x080483dd: 74 21                   |t!      |   je     0x08048400<<Insn>>
-            (successors: B080483df B08048400)
+0x080483dd: Successor blocks: 0x080483df, 0x08048400
 
-Basic block: graph-1
-Predecessors: B080483d0
+0x080483df: Basic block reasons: graph-1
+0x080483df: Predecessor blocks: 0x080483d0
+0x080483df: Dominator block: 0x080483d0
 0x080483df: b8 00 00 00 00          |.....   |   mov    eax, 0x00000000
 0x080483e4: 85 c0                   |..      |   test   eax, eax
 0x080483e6: 74 18                   |t.      |   je     0x08048400<<Insn>>
-            (dominator 0x080483d0)
-            (successors: B08048400)
+0x080483e6: Successor blocks: 0x08048400
 
-Basic block: fragment, CFG head; 57% code likelihood
+0x080483e8: Basic block reasons: fragment, CFG head; 57% code likelihood
 0x080483e8: c7 04 24 d8 95 04 08    |..$.... |   mov    DWORD PTR ss:[esp], 0x080495d8<.jcr>
 0x080483ef: e8 0c 7c fb f7          |..|..   |   call   0x00000000
-            (successors: B080483f4)
+0x080483ef: Successor blocks: 0x080483f4
 
-Basic block: fragment, CFG head; 57% code likelihood
-Predecessors: B080483e8
+0x080483f4: Basic block reasons: fragment, CFG head; 57% code likelihood
+0x080483f4: Predecessor blocks: 0x080483e8
 0x080483f4: 8d b6 00 00 00 00       |......  |   lea    esi, [esi + 0x00000000]
 0x080483fa: 8d bf 00 00 00 00       |......  |   lea    edi, [edi + 0x00000000]
-            (successors: B08048400)
+0x080483fa: Successor blocks: 0x08048400
 
-Basic block: graph-1
-Predecessors: B080483d0 B080483df B080483f4
+0x08048400: Basic block reasons: graph-1
+0x08048400: Predecessor blocks: 0x080483d0, 0x080483df, 0x080483f4
+0x08048400: Dominator block: 0x080483d0
 0x08048400: 89 ec                   |..      |   mov    esp, ebp
 0x08048402: 5d                      |]       |   pop    ebp
 0x08048403: c3                      |.       |   ret    
-            (dominator 0x080483d0)
-            (successors:...)
+0x08048403: Successor blocks: unknown
 
 0x08048404: ================================== Function (function call, symbol) <bar>
 0x08048404: Called by 0x08048418<foo>
 0x08048404: This function calls 0x08048300<puts@plt>
 
-Basic block: entry point, graph-1
-Predecessors: B08048418
+0x08048404: Basic block reasons: entry point, graph-1
+0x08048404: Predecessor blocks: 0x08048418<foo>
 0x08048404: 55                      |U       |   push   ebp
 0x08048405: 89 e5                   |..      |   mov    ebp, esp
 0x08048407: 83 ec 08                |...     |   sub    esp, 0x08
 0x0804840a: c7 04 24 b4 85 04 08    |..$.... |   mov    DWORD PTR ss:[esp], 0x080485b4<<StaticData@0x080485aa>+0x0a>
 0x08048411: e8 ea fe ff ff          |.....   |   call   0x08048300<puts@plt>
-            (successors: F08048300 B08048416)
+0x08048411: Successor blocks: 0x08048300<puts@plt>, 0x08048416
 
-Basic block: graph-1
-Predecessors: B08048404
+0x08048416: Basic block reasons: graph-1
+0x08048416: Predecessor blocks: 0x08048404
+0x08048416: Dominator block: 0x08048404
 0x08048416: c9                      |.       |   leave  
 0x08048417: c3                      |.       |   ret    
-            (dominator 0x08048404)
-            (successors:...)
+0x08048417: Successor blocks: unknown
 
 0x08048418: ================================== Function (function call, symbol) <foo>
 0x08048418: Called by 0x0804842f<handler>
@@ -322,33 +322,33 @@ Predecessors: B08048404
 0x08048418: This function calls 0x08048404<bar>
 0x08048418: Function does not return to caller.
 
-Basic block: entry point, graph-1
-Predecessors: B0804842f
+0x08048418: Basic block reasons: entry point, graph-1
+0x08048418: Predecessor blocks: 0x0804842f<handler>
 0x08048418: 55                      |U       |   push   ebp
 0x08048419: 89 e5                   |..      |   mov    ebp, esp
 0x0804841b: 83 ec 08                |...     |   sub    esp, 0x08
 0x0804841e: e8 e1 ff ff ff          |.....   |   call   0x08048404<bar>
-            (successors: F08048404 B08048423)
+0x0804841e: Successor blocks: 0x08048404<bar>, 0x08048423
 
-Basic block: graph-1
-Predecessors: B08048418
+0x08048423: Basic block reasons: graph-1
+0x08048423: Predecessor blocks: 0x08048418
+0x08048423: Dominator block: 0x08048418
 0x08048423: c7 04 24 00 00 00 00    |..$.... |   mov    DWORD PTR ss:[esp], 0x00000000
 0x0804842a: e8 f1 fe ff ff          |.....   |   call   0x08048320<_exit@plt>
-            (dominator 0x08048418)
-            (successors: F08048320)
+0x0804842a: Successor blocks: 0x08048320<_exit@plt>
 
 0x0804842f: ================================== Function (symbol) <handler>
 0x0804842f: No known callers.
 0x0804842f: This function calls 0x08048418<foo>
 0x0804842f: Function does not return to caller.
 
-Basic block: entry point, graph-1
+0x0804842f: Basic block reasons: entry point, graph-1
 0x0804842f: 55                      |U       |   push   ebp
 0x08048430: 89 e5                   |..      |   mov    ebp, esp
 0x08048432: 83 ec 08                |...     |   sub    esp, 0x08
 0x08048435: ff 05 d8 96 04 08       |......  |   inc    DWORD PTR ds:[0x080496d8<.bss+4>]
 0x0804843b: e8 d8 ff ff ff          |.....   |   call   0x08048418<foo>
-            (successors: F08048418)
+0x0804843b: Successor blocks: 0x08048418<foo>
 
 0x08048440: e8 d3 ff ff ff c7 44 24 |......D$|
 0x08048448: 04 2f 84 04 08 c7 04 24 |./.....$|
@@ -365,7 +365,7 @@ Basic block: entry point, graph-1
 0x0804845b: No known callers.
 0x0804845b: This function calls 0x080482f0<signal@plt>
 
-Basic block: entry point, graph-1
+0x0804845b: Basic block reasons: entry point, graph-1
 0x0804845b: 55                      |U       |   push   ebp
 0x0804845c: 89 e5                   |..      |   mov    ebp, esp
 0x0804845e: 83 ec 08                |...     |   sub    esp, 0x08
@@ -375,15 +375,15 @@ Basic block: entry point, graph-1
 0x0804846b: c7 44 24 04 2f 84 04 08 |.D$./...|   mov    DWORD PTR ss:[esp + 0x04], 0x0804842f<handler>
 0x08048473: c7 04 24 0a 00 00 00    |..$.... |   mov    DWORD PTR ss:[esp], 0x0000000a
 0x0804847a: e8 71 fe ff ff          |.q...   |   call   0x080482f0<signal@plt>
-            (successors: F080482f0 B0804847f)
+0x0804847a: Successor blocks: 0x080482f0<signal@plt>, 0x0804847f
 
-Basic block: graph-1
-Predecessors: B0804845b
+0x0804847f: Basic block reasons: graph-1
+0x0804847f: Predecessor blocks: 0x0804845b
+0x0804847f: Dominator block: 0x0804845b
 0x0804847f: b8 00 00 00 00          |.....   |   mov    eax, 0x00000000
 0x08048484: c9                      |.       |   leave  
 0x08048485: c3                      |.       |   ret    
-            (dominator 0x0804845b)
-            (successors:...)
+0x08048485: Successor blocks: unknown
 
 0x08048486: 90 90 90 90 90 90 90 90 |........|
 0x0804848e: 90 90                   |..      | 10-byte padding beginning at 0x08048486
@@ -392,7 +392,7 @@ Predecessors: B0804845b
 0x08048490: No known callers.
 0x08048490: This function calls 0x080482c8<_init>
 
-Basic block: entry point, graph-1
+0x08048490: Basic block reasons: entry point, graph-1
 0x08048490: 55                      |U       |   push   ebp
 0x08048491: 89 e5                   |..      |   mov    ebp, esp
 0x08048493: 57                      |W       |   push   edi
@@ -403,10 +403,11 @@ Basic block: entry point, graph-1
 0x0804849e: 5b                      |[       |   pop    ebx
 0x0804849f: 81 c3 0a 12 00 00       |......  |   add    ebx, 0x0000120a
 0x080484a5: e8 1e fe ff ff          |.....   |   call   0x080482c8<_init>
-            (successors: F080482c8 B080484aa)
+0x080484a5: Successor blocks: 0x080482c8<_init>, 0x080484aa
 
-Basic block: graph-1
-Predecessors: B08048490
+0x080484aa: Basic block reasons: graph-1
+0x080484aa: Predecessor blocks: 0x08048490
+0x080484aa: Dominator block: 0x08048490
 0x080484aa: 8d 83 20 ff ff ff       |.. ...  |   lea    eax, [ebx + 0xffffff20<-0x000000e0>]
 0x080484b0: 8d 93 20 ff ff ff       |.. ...  |   lea    edx, [ebx + 0xffffff20<-0x000000e0>]
 0x080484b6: 29 d0                   |).      |   sub    eax, edx
@@ -419,8 +420,7 @@ Predecessors: B08048490
 0x080484c5: 5f                      |_       |   pop    edi
 0x080484c6: 5d                      |]       |   pop    ebp
 0x080484c7: c3                      |.       |   ret    
-            (dominator 0x08048490)
-            (successors:...)
+0x080484c7: Successor blocks: unknown
 
 0x080484c8: 90 8d b4 26 00 00 00 00 |...&....|
 0x080484d0: 31 ff 89 d6 8d b6 00 00 |1.......|
@@ -453,7 +453,7 @@ Predecessors: B08048490
 0x08048500: No known callers.
 0x08048500: This function calls 0x08048590<_fini>
 
-Basic block: entry point, graph-1
+0x08048500: Basic block reasons: entry point, graph-1
 0x08048500: 55                      |U       |   push   ebp
 0x08048501: 89 e5                   |..      |   mov    ebp, esp
 0x08048503: 57                      |W       |   push   edi
@@ -472,42 +472,42 @@ Basic block: entry point, graph-1
 0x0804852a: 83 f8 ff                |...     |   cmp    eax, 0xff<-0x01>
 0x0804852d: 74 1c                   |t.      |   je     0x0804854b<<Insn>>
 0x0804854b: e8 40 00 00 00          |.@...   |   call   0x08048590<_fini>
-            (successors: B08048550 F08048590)
+0x0804854b: Successor blocks: 0x08048550, 0x08048590<_fini>
 
-Basic block: fragment, CFG head; 67% code likelihood
+0x0804852f: Basic block reasons: fragment, CFG head; 67% code likelihood
 0x0804852f: 8d 34 82                |.4.     |   lea    esi, [edx + eax*0x04]
 0x08048532: 31 ff                   |1.      |   xor    edi, edi
 0x08048534: 8d b6 00 00 00 00       |......  |   lea    esi, [esi + 0x00000000]
 0x0804853a: 8d bf 00 00 00 00       |......  |   lea    edi, [edi + 0x00000000]
 0x08048540: ff 16                   |..      |   call   DWORD PTR ds:[esi]
-            (successors: B08048542...)
+0x08048540: Successor blocks: 0x08048542, unknown
 
-Basic block: fragment, CFG head; 67% code likelihood
-Predecessors: B0804852f
+0x08048542: Basic block reasons: fragment, CFG head; 67% code likelihood
+0x08048542: Predecessor blocks: 0x0804852f
 0x08048542: 47                      |G       |   inc    edi
 0x08048543: 83 ee 04                |...     |   sub    esi, 0x04
 0x08048546: 39 7d f0                |9}.     |   cmp    DWORD PTR ss:[ebp + 0xf0<-0x10>], edi
 0x08048549: 75 f5                   |u.      |   jne    0x08048540<<Insn>>
-            (successors:)
+0x08048549: Successor blocks: none
 
-Basic block: graph-1
-Predecessors: B08048500
+0x08048550: Basic block reasons: graph-1
+0x08048550: Predecessor blocks: 0x08048500
+0x08048550: Dominator block: 0x08048500
 0x08048550: 83 c4 0c                |...     |   add    esp, 0x0c
 0x08048553: 5b                      |[       |   pop    ebx
 0x08048554: 5e                      |^       |   pop    esi
 0x08048555: 5f                      |_       |   pop    edi
 0x08048556: 5d                      |]       |   pop    ebp
 0x08048557: c3                      |.       |   ret    
-            (dominator 0x08048500)
-            (successors:...)
+0x08048557: Successor blocks: unknown
 
 0x08048558: 90 90 90 90 90 90 90 90 |........| 8-byte padding beginning at 0x08048558
 
 0x08048560: ================================== Function (function call, symbol) <__do_global_ctors_aux>
 0x08048560: Called by 0x080482c8<_init>
 
-Basic block: entry point, graph-1
-Predecessors: B080482d8
+0x08048560: Basic block reasons: entry point, graph-1
+0x08048560: Predecessor blocks: 0x080482d8<_init>
 0x08048560: 55                      |U       |   push   ebp
 0x08048561: 89 e5                   |..      |   mov    ebp, esp
 0x08048563: 53                      |S       |   push   ebx
@@ -516,45 +516,45 @@ Predecessors: B080482d8
 0x0804856c: a1 c8 95 04 08          |.....   |   mov    eax, DWORD PTR ds:[0x080495c8<.ctors>]
 0x08048571: 83 f8 ff                |...     |   cmp    eax, 0xff<-0x01>
 0x08048574: 74 16                   |t.      |   je     0x0804858c<<Insn>>
-            (successors: B08048576 B0804858c)
+0x08048574: Successor blocks: 0x08048576, 0x0804858c
 
-Basic block: graph-1
-Predecessors: B08048560
+0x08048576: Basic block reasons: graph-1
+0x08048576: Predecessor blocks: 0x08048560
+0x08048576: Dominator block: 0x08048560
 0x08048576: 8d 76 00                |.v.     |   lea    esi, [esi + 0x00]
 0x08048579: 8d bc 27 00 00 00 00    |..'.... |   lea    edi, [edi + 0x00000000]
-            (dominator 0x08048560)
-            (successors: B08048580)
+0x08048579: Successor blocks: 0x08048580
 
-Basic block: graph-1
-Predecessors: B08048576 B08048585
+0x08048580: Basic block reasons: graph-1
+0x08048580: Predecessor blocks: 0x08048576, 0x08048585
+0x08048580: Dominator block: 0x08048576
 0x08048580: 83 eb 04                |...     |   sub    ebx, 0x04
 0x08048583: ff d0                   |..      |   call   eax
-            (dominator 0x08048576)
-            (successors: B08048585...)
+0x08048583: Successor blocks: 0x08048585, unknown
 
-Basic block: graph-1
-Predecessors: B08048580
+0x08048585: Basic block reasons: graph-1
+0x08048585: Predecessor blocks: 0x08048580
+0x08048585: Dominator block: 0x08048580
 0x08048585: 8b 03                   |..      |   mov    eax, DWORD PTR ds:[ebx]
 0x08048587: 83 f8 ff                |...     |   cmp    eax, 0xff<-0x01>
 0x0804858a: 75 f4                   |u.      |   jne    0x08048580<<Insn>>
-            (dominator 0x08048580)
-            (successors: B08048580 B0804858c)
+0x0804858a: Successor blocks: 0x08048580, 0x0804858c
 
-Basic block: graph-1
-Predecessors: B08048560 B08048585
+0x0804858c: Basic block reasons: graph-1
+0x0804858c: Predecessor blocks: 0x08048560, 0x08048585
+0x0804858c: Dominator block: 0x08048560
 0x0804858c: 58                      |X       |   pop    eax
 0x0804858d: 5b                      |[       |   pop    ebx
 0x0804858e: 5d                      |]       |   pop    ebp
 0x0804858f: c3                      |.       |   ret    
-            (dominator 0x08048560)
-            (successors:...)
+0x0804858f: Successor blocks: unknown
 
 0x08048590: ================================== Function (function call, symbol) <_fini>
 0x08048590: Called by 0x08048500<__libc_csu_fini>
 0x08048590: This function calls 0x08048390<__do_global_dtors_aux>
 
-Basic block: entry point, graph-1
-Predecessors: B08048500
+0x08048590: Basic block reasons: entry point, graph-1
+0x08048590: Predecessor blocks: 0x08048500<__libc_csu_fini>
 0x08048590: 55                      |U       |   push   ebp
 0x08048591: 89 e5                   |..      |   mov    ebp, esp
 0x08048593: 53                      |S       |   push   ebx
@@ -563,16 +563,16 @@ Predecessors: B08048500
 0x0804859a: 5b                      |[       |   pop    ebx
 0x0804859b: 81 c3 0e 11 00 00       |......  |   add    ebx, 0x0000110e
 0x080485a1: e8 ea fd ff ff          |.....   |   call   0x08048390<__do_global_dtors_aux>
-            (successors: F08048390 B080485a6)
+0x080485a1: Successor blocks: 0x08048390<__do_global_dtors_aux>, 0x080485a6
 
-Basic block: graph-1
-Predecessors: B08048590
+0x080485a6: Basic block reasons: graph-1
+0x080485a6: Predecessor blocks: 0x08048590
+0x080485a6: Dominator block: 0x08048590
 0x080485a6: 58                      |X       |   pop    eax
 0x080485a7: 5b                      |[       |   pop    ebx
 0x080485a8: c9                      |.       |   leave  
 0x080485a9: c3                      |.       |   ret    
-            (dominator 0x08048590)
-            (successors:...)
+0x080485a9: Successor blocks: unknown
 
 0x080485aa: 00 00 03 00 00 00 01 00 |........|
 0x080485b2: 02 00 48 65 6c 6c 6f 2c |..Hello,|

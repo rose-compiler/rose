@@ -3,37 +3,37 @@ Successors: buffer is self contained.
 
 0x08048310: ================================== Function (entry point) <entry_function>
 
-Basic block: entry point, graph-1
+0x08048310: Basic block reasons: entry point, graph-1
 0x08048310: 55                      |U       |   push   ebp
 0x08048311: 89 e5                   |..      |   mov    ebp, esp
 0x08048313: 83 ec 08                |...     |   sub    esp, 0x08
 0x08048316: 80 3d bc 95 04 08 00    |.=..... |   cmp    BYTE PTR ds:[0x080495bc], 0x00
 0x0804831d: 74 0c                   |t.      |   je     0x0804832b<<Insn>>
-            (successors: B0804831f B0804832b)
+0x0804831d: Successor blocks: 0x0804831f, 0x0804832b
 
-Basic block: graph-1
+0x0804831f: Basic block reasons: graph-1
 0x0804831f: eb 1c                   |..      |   jmp    0x0804833d<<Insn>>
-            (successors: B0804833d)
+0x0804831f: Successor blocks: 0x0804833d
 
-Basic block: graph-1
+0x08048321: Basic block reasons: graph-1
 0x08048321: 83 c0 04                |...     |   add    eax, 0x04
 0x08048324: a3 b8 95 04 08          |.....   |   mov    DWORD PTR ds:[0x080495b8], eax
 0x08048329: ff d2                   |..      |   call   edx
-            (successors: B0804832b...)
+0x08048329: Successor blocks: 0x0804832b, unknown
 
-Basic block: graph-1
+0x0804832b: Basic block reasons: graph-1
 0x0804832b: a1 b8 95 04 08          |.....   |   mov    eax, DWORD PTR ds:[0x080495b8]
 0x08048330: 8b 10                   |..      |   mov    edx, DWORD PTR ds:[eax]
 0x08048332: 85 d2                   |..      |   test   edx, edx
 0x08048334: 75 eb                   |u.      |   jne    0x08048321<<Insn>>
-            (successors: B08048321 B08048336)
+0x08048334: Successor blocks: 0x08048321, 0x08048336
 
-Basic block: graph-1
+0x08048336: Basic block reasons: graph-1
 0x08048336: c6 05 bc 95 04 08 01    |....... |   mov    BYTE PTR ds:[0x080495bc], 0x01
-            (successors: B0804833d)
+0x08048336: Successor blocks: 0x0804833d
 
-Basic block: graph-1
+0x0804833d: Basic block reasons: graph-1
 0x0804833d: c9                      |.       |   leave  
 0x0804833e: c3                      |.       |   ret    
-            (successors:...)
+0x0804833e: Successor blocks: unknown
 

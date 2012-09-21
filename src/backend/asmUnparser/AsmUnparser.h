@@ -253,7 +253,7 @@ public:
             AsmUnparser *unparser;      /**< The object doing the unparsing, from which this callback is invoked. */
             std::ostream &output;       /**< Where output should be sent. */
         };
-            
+
         /** Arguments passed to instruction unparsing callbacks. */
         struct InsnArgs: public GeneralArgs {
             InsnArgs(AsmUnparser *unparser, std::ostream &output, SgAsmInstruction *insn, size_t position_in_block)
@@ -364,7 +364,9 @@ public:
         virtual bool operator()(bool enabled, const InsnArgs &args);
     };
 
-    /** Functor to emit instruction bytes. The output is similar to the hexdump utility. */
+    /** Functor to emit instruction bytes. The output is similar to the hexdump utility. This callback emits its own line
+     *  prefix information via SgAsmExecutableFileFormat::hexdump() rather than using the format set with the unparser's
+     *  set_prefix_format(). See class HexdumpFormat for how to configure the hex dumper. */
     class InsnRawBytes: public UnparserCallback {
     public:
         HexdumpFormat fmt;
@@ -650,8 +652,6 @@ public:
      * add_control_flow_graph()). */
     class FunctionPredecessors: public UnparserCallback {
     public:
-        std::string prefix;
-        FunctionPredecessors();
         virtual bool operator()(bool enabled, const FunctionArgs &args);
     };
 
@@ -659,8 +659,6 @@ public:
      *  control flow graph is present (see add_control_flow_graph()). */
     class FunctionSuccessors: public UnparserCallback {
     public:
-        std::string prefix;
-        FunctionSuccessors();
         virtual bool operator()(bool enabled, const FunctionArgs &args);
     };
 
@@ -669,8 +667,6 @@ public:
      *  address.   The default is "0x%08llx: ". */
     class FunctionAttributes: public UnparserCallback {
     public:
-        std::string prefix;
-        FunctionAttributes();
         virtual bool operator()(bool enabled, const FunctionArgs &args);
     };
 
@@ -867,6 +863,32 @@ public:
     void end_of_object(rose_addr_t);
     /** @} */
 
+    /** Controls printing of line prefixes.
+     *
+     *  Lines have an optional prefix area that tends to be the same regardless of the kind of object being printed. For
+     *  instance, the default is for most lines to contain an address of some sort.  Sometimes we want the prefix area to be
+     *  the same size for all lines but have some lines with a blank prefix; and sometimes we want to omit the prefix and its
+     *  indentation altogether.
+     *
+     *  The prefix format (set_prefix_format() and get_prefix_format()) is a printf-style format string with an optional format
+     *  specifier for an unsigned 64-bit integer address.  The address is set by the unparser when an unparsable object is
+     *  encountered, but can be overridden by on of that object's callbacks (set_prefix_address() and get_prefix_address()). A
+     *  prefix string is returned by by line_prefix() or blank_prefix() using the current format string and address (a blank
+     *  prefix first calls line_prefix() and then changes all characters to ASCII SPC).
+     *
+     * @{ */
+    virtual void set_prefix_format(const std::string &format) { lineprefix.format = format; }
+    virtual const std::string& get_prefix_format() const { return lineprefix.format; }
+    virtual void set_prefix_address(rose_addr_t va) { lineprefix.address = va; }
+    virtual rose_addr_t get_prefix_address() const { return lineprefix.address; }
+    virtual std::string line_prefix() const;
+    virtual std::string blank_prefix() const { return std::string(line_prefix().size(), ' '); }
+    /** @} */
+
+
+    
+
+
 protected:
     struct CallbackLists {
         ROSE_Callbacks::List<UnparserCallback> unparse;                 /**< The main unparsing callbacks. */
@@ -932,10 +954,17 @@ protected:
     /** Details for skip/back reporting. See set_skipback_reporting(). */
     struct SkipBack {
         SkipBack(): active(true), triggered(false), va(0) {}
-        bool active;                    /** Make reports? */
-        bool triggered;                 /** Have we seen the first object yet? Is the 'va' member valid? */
-        rose_addr_t va;                 /** Virtual address for previous end_of_object() call. */
+        bool active;                    /**< Make reports? */
+        bool triggered;                 /**< Have we seen the first object yet? Is the 'va' member valid? */
+        rose_addr_t va;                 /**< Virtual address for previous end_of_object() call. */
     } skipback;
+
+    /** Details for line prefixes. See line_prefix(). */
+    struct LinePrefix {
+        LinePrefix(): format("0x%08"PRIx64": "), address(0) {}
+        std::string format;             /**< Printf-style format string. This may contain a format for a uint64_t address. */
+        rose_addr_t address;            /**< Address to use when generating a prefix string. */
+    } lineprefix;
 };
 
 #endif
