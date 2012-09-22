@@ -13,7 +13,7 @@ Edge::Edge(Label source0,EdgeType type0,Label target0):source(source0),type(type
 
 string Edge::toString() const {
   stringstream ss;
-  ss << "("<<source<<","<<typeToString()<<","<<target<<")";
+  ss << "Edge"<<"("<<source<<","<<typeToString()<<","<<target<<")";
   return ss.str();
 }
 string Edge::toStringNoType() const {

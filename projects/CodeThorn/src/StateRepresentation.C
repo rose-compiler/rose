@@ -61,7 +61,15 @@ string State::toString() const {
   ss << "State="<< "{";
   for(State::const_iterator j=begin();j!=end();++j) {
 	if(j!=begin()) ss<<", ";
-    ss <<(*j).first.longVariableName()<<"->"<<varValueToString((*j).first);
+	ss<<"(";
+    ss <<(*j).first.longVariableName();
+#if 0
+	ss<<"->";
+#else
+	ss<<",";
+#endif
+	ss<<varValueToString((*j).first);
+	ss<<")";
   }
   ss<<"}";
   return ss.str();
@@ -272,10 +280,10 @@ const EState* EStateSet::eStatePtr(EState& s) {
 }
 
 string Transition::toString() const {
-  string s1="SourceNode: "+source->toString()+"\n";
-  string s2="Edge: "+edge.toString()+"\n";
-  string s3="TargetNode: "+target->toString()+"\n";
-  return s1+s2+s3;
+  string s1=source->toString();
+  string s2=edge.toString();
+  string s3=target->toString();
+  return string("(")+s1+", "+s2+", "+s3+")";
 }
 
 void TransitionGraph::add(Transition trans) {
@@ -296,7 +304,7 @@ string TransitionGraph::toString() const {
   for(TransitionGraph::const_iterator i=begin();i!=end();++i) {
 	stringstream ss;
 	ss<<cnt;
-	s+="Transition Nr "+ss.str()+":\n";
+	s+="Transition["+ss.str()+"]=";
 	s+=(*i).toString()+"\n";
 	cnt++;
   }
