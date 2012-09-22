@@ -425,3 +425,38 @@ string ConstraintSet::toString() const {
   return ss.str();
 }
 
+bool ConstraintSetMaintainer::constraintSetExists(ConstraintSet& s) {
+  return constraintSetPtr(s)!=0;
+}
+
+const ConstraintSet* ConstraintSetMaintainer::constraintSetPtr(ConstraintSet& s) {
+  // we use this as the find algorithm cannot be used for this data structure yet.
+  for(ConstraintSetMaintainer::iterator i=begin();i!=end();++i) {
+	if(*i==s)
+	  return &*i;
+  }
+  return 0;
+}
+
+const ConstraintSet* ConstraintSetMaintainer::processNewConstraintSet(ConstraintSet& s) {
+  ProcessingResult res=processConstraintSet(s);
+  assert(res.first==false);
+  return res.second;
+}
+
+const ConstraintSet* ConstraintSetMaintainer::processNewOrExistingConstraintSet(ConstraintSet& s) {
+  ProcessingResult res=processConstraintSet(s);
+  return res.second;
+}
+
+ConstraintSetMaintainer::ProcessingResult ConstraintSetMaintainer::processConstraintSet(ConstraintSet s) {
+  if(const ConstraintSet* existingConstraintSetPtr=constraintSetPtr(s)) {
+	return make_pair(true,existingConstraintSetPtr);
+  } else {
+	push_back(s);
+	const ConstraintSet* existingConstraintSetPtr=constraintSetPtr(s);
+	assert(existingConstraintSetPtr);
+	return make_pair(false,existingConstraintSetPtr);
+  }
+  assert(0);
+}

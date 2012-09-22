@@ -1,5 +1,8 @@
 # MS: makefile for local development with installed version of ROSE.
 
+# for building the reference implementation use:
+# make codethornref REFKNOBS="-DSTATESET_REF"
+
 TOOLNAME3 = codethorn
 MYDATE = `date +%Y_%m_%d`
 
@@ -19,7 +22,7 @@ ROSE_LIBS = -Wl,-rpath -Wl,$(ROSE_LIB_DIR) -L $(ROSE_LIB_DIR) -lrose
 
 # Location of ROSE's libtool (it's only in the compilation path)
 
-CPPFLAGS              = -O3 -march=native -ftree-vectorize -ggdb
+CPPFLAGS              = $(REFKNOBS) -O3 -march=native -ftree-vectorize -ggdb
 #CXXCPPFLAGS           = @CXXCPPFLAGS@
 CXXFLAGS              = -Wno-deprecated
 LDFLAGS               = 
@@ -60,7 +63,10 @@ xxtest: xxtest.C  $(OBJECT_FILES)
 	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES) -oxxtest 
 
 $(TOOLNAME3): $(TOOLNAME3).C  $(TOOLNAME3).h $(OBJECT_FILES)
-	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES) -o$(TOOLNAME3) -L/home/schordan/development/install/boost-1.45.0/lib -lboost_program_options
+	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES) -o$(TOOLNAME3)
+
+$(TOOLNAME3)ref: $(TOOLNAME3).C  $(TOOLNAME3).h $(OBJECT_FILES)
+	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES) -o$(TOOLNAME3)ref
 
 check: $(TOOLNAME3)
 	./$(TOOLNAME3) --internal-checks
@@ -112,6 +118,7 @@ distclean: clean
 	rm -f *.tgz
 	rm -f *~
 	rm -rf ../docs/doxygen
+	rm -f $(TOOLNAME3)ref
 
 bsps: codethorn
 	./codethorn tests/basictest10f.C && make viz && make vizjpg

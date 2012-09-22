@@ -34,7 +34,13 @@ class State : public map<VariableId,CppCapsuleAValue> {
   void deleteVar(VariableId varname);
 };
 
+//#define FAST_STATESET
+
+#ifdef STATESET_REF
 class StateSet : public list<State> {
+#else
+class StateSet : public set<State> {
+#endif
  public:
   typedef pair<bool, const State*> ProcessingResult;
   bool stateExists(State& s);
@@ -103,6 +109,7 @@ bool operator!=(const EState& c1, const EState& c2);
 class EStateSet : public list<EState> {
  public:
   typedef pair<bool,const EState*> ProcessingResult;
+  void addNewEState(EState newEState); // obsolete (only used in internal tests)
   bool eStateExists(EState& s);
   ProcessingResult processEState(EState newEState);
   const EState* processNewEState(EState& s);
@@ -112,7 +119,6 @@ class EStateSet : public list<EState> {
   EStateId eStateId(const EState eState);
   string eStateIdString(const EState* eState);
   int numberOfIoTypeEStates(InputOutput::OpType);
-  void addNewEState(EState newEState);
  private:
   const EState* eStatePtr(EState& s);
 };

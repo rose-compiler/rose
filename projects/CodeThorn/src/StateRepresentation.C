@@ -139,7 +139,11 @@ StateSet::ProcessingResult StateSet::processState(State& s) {
 	assert(existingStatePtr);
 	return make_pair(true,existingStatePtr);
   } else {
+#ifdef STATESET_REF
 	push_back(s);
+#else
+	insert(s);
+#endif
 	const State* existingStatePtr=statePtr(s);
 	assert(existingStatePtr);
 	return make_pair(false,existingStatePtr);
@@ -148,7 +152,7 @@ StateSet::ProcessingResult StateSet::processState(State& s) {
 }
 
 const State* StateSet::statePtr(State& s) {
-#if 1
+#ifdef STATESET_REF
   for(StateSet::iterator i=begin();i!=end();++i) {
 	if(*i==s)
 	  return &*i;

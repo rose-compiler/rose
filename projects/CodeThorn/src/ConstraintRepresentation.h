@@ -90,4 +90,16 @@ ConstraintSet operator+(ConstraintSet s1, ConstraintSet s2);
 //bool operator<(const ConstraintSet& s1, const ConstraintSet& s2);
 //bool operator!=(const ConstraintSet& s1, const ConstraintSet& s2);
 
+class ConstraintSetMaintainer : public list<ConstraintSet> {
+ public:
+  typedef pair<bool,const ConstraintSet*> ProcessingResult;
+  bool constraintSetExists(ConstraintSet& s);
+  ProcessingResult processConstraintSet(ConstraintSet newConstraintSet);
+  const ConstraintSet* processNewConstraintSet(ConstraintSet& s);
+  const ConstraintSet* processNewOrExistingConstraintSet(ConstraintSet& s);
+  string toString();
+ private:
+  const ConstraintSet* constraintSetPtr(ConstraintSet& s);
+};
+
 #endif
