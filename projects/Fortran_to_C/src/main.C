@@ -259,6 +259,7 @@ int main( int argc, char * argv[] )
     if(parameterSymbolList.find(parameterRef->get_symbol()) != parameterSymbolList.end())
     {
       SgExpression* newExpr = isSgExpression(deepCopy(parameterSymbolList.find(parameterRef->get_symbol())->second));
+      ROSE_ASSERT(newExpr);
       newExpr->set_parent(parameterRef->get_parent());
       replaceExpression(parameterRef,
                         newExpr,
@@ -310,7 +311,6 @@ int main( int argc, char * argv[] )
     }
   }
 
-    generateAstGraph(project,8000,"_orig");
 
   Rose_STL_Container<SgNode*> functionList = NodeQuery::querySubTree (project,V_SgFunctionDeclaration);
   for (Rose_STL_Container<SgNode*>::iterator i = functionList.begin(); i != functionList.end(); i++)

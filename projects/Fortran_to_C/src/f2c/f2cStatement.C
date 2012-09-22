@@ -810,6 +810,8 @@ void Fortran_to_C::translateEquivalenceStatement(SgEquivalenceStatement* equival
       }
       SgVariableSymbol* symbol1 = varRefExp1->get_symbol();
       SgType* var1OriginalType = symbol1->get_type();
+      SgInitializedName* sym1InitializedName = symbol1->get_declaration();
+      SgDeclarationStatement* sym1OldDecl = sym1InitializedName->get_declaration();
 
 
       SgVarRefExp* varRefExp2 = isSgVarRefExp(expr2);
@@ -874,7 +876,9 @@ void Fortran_to_C::translateEquivalenceStatement(SgEquivalenceStatement* equival
         SgInitializedName* sym2NewIntializedName = *((sym2NewDecl->get_variables()).begin());
         sym2NewIntializedName->set_prev_decl_item(NULL);
         symbol2->set_declaration(sym2NewIntializedName);
-        replaceStatement(sym2OldDecl,sym2NewDecl,true);
+        insertStatementAfter(sym1OldDecl,sym2NewDecl);
+//        replaceStatement(sym2OldDecl,sym2NewDecl,true);
+        statementList.push_back(sym2OldDecl);
         removeList.push_back(sym2OldDecl);
       }
       else
@@ -924,7 +928,9 @@ void Fortran_to_C::translateEquivalenceStatement(SgEquivalenceStatement* equival
         SgInitializedName* sym2NewIntializedName = *((sym2NewDecl->get_variables()).begin());
         sym2NewIntializedName->set_prev_decl_item(NULL);
         symbol2->set_declaration(sym2NewIntializedName);
-        replaceStatement(sym2OldDecl,sym2NewDecl,true);
+        insertStatementAfter(sym1OldDecl,sym2NewDecl);
+        statementList.push_back(sym2OldDecl);
+        //replaceStatement(sym2OldDecl,sym2NewDecl,true);
         removeList.push_back(sym2OldDecl);
   
         // Node query for all SgVarRefExp pointing to variable2 

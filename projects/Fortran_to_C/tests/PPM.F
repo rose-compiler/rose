@@ -813,248 +813,248 @@ c
 c-----------------------------------------------------------------------
 c
       dimension         d(ninsugarcube,nsugarcubes,nsugarcubes,0:1)
-c      dimension                mydcube(nsugarcubes,nsugarcubes,0:1)
-c      dimension       dnu(ninsugarcube,nsugarcubes,nsugarcubes)
-c      dimension      ddbg(ninsugarcube,0:nsugarcubes+1,
-c     &                                 0:nsugarcubes+1,2)
-c      dimension    dnudbg(ninsugarcube,nsugarcubes,nsugarcubes,0:1)
+      dimension                mydcube(nsugarcubes,nsugarcubes,0:1)
+      dimension       dnu(ninsugarcube,nsugarcubes,nsugarcubes)
+      dimension      ddbg(ninsugarcube,0:nsugarcubes+1,
+     &                                 0:nsugarcubes+1,2)
+      dimension    dnudbg(ninsugarcube,nsugarcubes,nsugarcubes,0:1)
 c
       dimension dc(ny,nz,nx,nvars,nsugarcubes,nsugarcubes,0:1)
       equivalence   (dc,d)
-cc
-c      dimension   dnuc(ny*nz*nx,nvars,nsugarcubes,nsugarcubes)
-c      equivalence   (dnuc,dnu)
-cc
-c      dimension    xlcube(nsugar*2,0:1)
-c      dimension           myxlcube(0:1)
-c      dimension    ybcube(nsugar*2,nsugarcubes)
-c      dimension    zfcube(nsugar*2,nsugarcubes)
-cc
-c      character*1   voxels(nxx*nyy*nzz,1,0:1)
-c      character*1   voxelcube(nxx*nyy*nzz,0:1)
-c      equivalence  (voxelcube,voxels)
-cc
-c      character*1    voxlrho(nxx,nyy,nzz)
-c      equivalence   (voxlrho,voxels(1,1,0))
-cc
-cc              1     2   3   4   5   6   7   8
-cc     vars:  vort, divu, S, rho, p, ux, uy, uz
-cc
-cc
-cc
-cc     ALL THE FOLLOWING INPUT ARRAYS ARE PRODUCED IN  DIVERSIFY,
-cc     WHICH UNPACKS THE STORAGE ARRAY  D  CONTAINING THE FUNDAMENTAL
-cc     FLUID STATE VARIABLES:  RHO, UX, UY, UZ
-cc
-cc
-c      dimension        xl(nx+nghostcells)
-c      dimension        xr(nx+nghostcells)
-c      dimension        ym(nssq),   zm(nssq),   cylm(nssq)
-c      dimension        sintwopicyl(nssq),   costwopir(nssq)
-c      dimension        sintwopixl(nx+nghostcells)
-c      dimension        cospixl(nx+nghostcells)
-cc
-cc
-cc     Output arrays from Diversify that are used everywhere:
-cc
-c      dimension       rho(nssq,nx+nghostcells)
-cc
-c      dimension      rhoc(ny,nz,ncs,nx+nghostcells)
-c      equivalence   (rhoc,rho)
-cc
-cc
-cc     Output arrays from FVsCsEs:
-cc
-c      dimension           dm(nssq,nx+nghostcells)
-c      dimension       courno(nssq,nx+nghostcells)
-cc
-cc
-cc     Arrays set for input to ppmintrf0vec:
-cc
+c
+      dimension   dnuc(ny*nz*nx,nvars,nsugarcubes,nsugarcubes)
+      equivalence   (dnuc,dnu)
+c
+      dimension    xlcube(nsugar*2,0:1)
+      dimension           myxlcube(0:1)
+      dimension    ybcube(nsugar*2,nsugarcubes)
+      dimension    zfcube(nsugar*2,nsugarcubes)
+c
+      character*1   voxels(nxx*nyy*nzz,1,0:1)
+      character*1   voxelcube(nxx*nyy*nzz,0:1)
+      equivalence  (voxelcube,voxels)
+c
+      character*1    voxlrho(nxx,nyy,nzz)
+      equivalence   (voxlrho,voxels(1,1,0))
+c
+c              1     2   3   4   5   6   7   8
+c     vars:  vort, divu, S, rho, p, ux, uy, uz
+c
+c
+c
+c     ALL THE FOLLOWING INPUT ARRAYS ARE PRODUCED IN  DIVERSIFY,
+c     WHICH UNPACKS THE STORAGE ARRAY  D  CONTAINING THE FUNDAMENTAL
+c     FLUID STATE VARIABLES:  RHO, UX, UY, UZ
+c
+c
+      dimension        xl(nx+nghostcells)
+      dimension        xr(nx+nghostcells)
+      dimension        ym(nssq),   zm(nssq),   cylm(nssq)
+      dimension        sintwopicyl(nssq),   costwopir(nssq)
+      dimension        sintwopixl(nx+nghostcells)
+      dimension        cospixl(nx+nghostcells)
+c
+c
+c     Output arrays from Diversify that are used everywhere:
+c
+      dimension       rho(nssq,nx+nghostcells)
+c
+      dimension      rhoc(ny,nz,ncs,nx+nghostcells)
+      equivalence   (rhoc,rho)
+c
+c
+c     Output arrays from FVsCsEs:
+c
+      dimension           dm(nssq,nx+nghostcells)
+      dimension       courno(nssq,nx+nghostcells)
+c
+c
+c     Arrays set for input to ppmintrf0vec:
+c
+      dimension       unsmth(nssq,nx+nghostcells)
+c
+c
+c     Output arrays from ppmintrf0vec:
+c
+      dimension         rhol(nssq,nx+nghostcells)
+      dimension         rhor(nssq,nx+nghostcells)
+      dimension         drho(nssq,nx+nghostcells)
+      dimension         rho6(nssq,nx+nghostcells)
 c      dimension       unsmth(nssq,nx+nghostcells)
-cc
-cc
-cc     Output arrays from ppmintrf0vec:
-cc
-c      dimension         rhol(nssq,nx+nghostcells)
-c      dimension         rhor(nssq,nx+nghostcells)
-c      dimension         drho(nssq,nx+nghostcells)
-c      dimension         rho6(nssq,nx+nghostcells)
-cc      dimension       unsmth(nssq,nx+nghostcells)
-cc
-cc
-cc     Scratch arrays for ppmintrf0vec:
-cc
-c      dimension          dal(nssq,nx+nghostcells)
-c      dimension       absdal(nssq,nx+nghostcells)
-c      dimension       dasppm(nssq,nx+nghostcells)
-c      dimension       damnot(nssq,nx+nghostcells)
-c      dimension       alsmth(nssq,nx+nghostcells)
-c      dimension       alunsm(nssq,nx+nghostcells)
-cc
-cc
-cc     Output arrays from Riemann0:
-cc
-c      dimension        uxavl(nssq,nx+nghostcells)
-c      dimension       duxavl(nssq,nx+nghostcells)
-c      dimension       sigmal(nssq,nx+nghostcells)
-cc
-cc
-cc     Output arrays from Fluxes:
-cc
-c      dimension        dvoll(nssq,nx+nghostcells)
-c      dimension       dmassl(nssq,nx+nghostcells)
-cc
-cc
-cc     Output arrays from CellUpdate:
-cc
-c      dimension        rhonu(nssq,nx+nghostcells)
-cc
-c#if istrace
-c      dimension             xldbg(1-nghostcells:nx*nbqx+nghostcells)
-c      dimension             xrdbg(1-nghostcells:nx*nbqx+nghostcells)
-c      dimension       rhodbg(nssq,1-nghostcells:nx*nbqx+nghostcells)
-c      dimension        dmdbg(nssq,1-nghostcells:nx*nbqx+nghostcells)
-c      dimension    cournodbg(nssq,1-nghostcells:nx*nbqx+nghostcells)
-c      dimension    unsmthdbg(nssq,1-nghostcells:nx*nbqx+nghostcells)
-c      dimension      rholdbg(nssq,1-nghostcells:nx*nbqx+nghostcells)
-c      dimension      rhordbg(nssq,1-nghostcells:nx*nbqx+nghostcells)
-c      dimension      drhodbg(nssq,1-nghostcells:nx*nbqx+nghostcells)
-c      dimension      rho6dbg(nssq,1-nghostcells:nx*nbqx+nghostcells)
-c      dimension     uxavldbg(nssq,1-nghostcells:nx*nbqx+nghostcells)
-c      dimension    duxavldbg(nssq,1-nghostcells:nx*nbqx+nghostcells)
-c      dimension    sigmaldbg(nssq,1-nghostcells:nx*nbqx+nghostcells)
-c      dimension     dvolldbg(nssq,1-nghostcells:nx*nbqx+nghostcells)
-c      dimension    dmassldbg(nssq,1-nghostcells:nx*nbqx+nghostcells)
-c      dimension     rhonudbg(nssq,1-nghostcells:nx*nbqx+nghostcells)
-c#endif
-cc
-cc
-cc     Visualization arrays:
-cc
-c      dimension        adiab(nssq,nx+nghostcells)
-cc
-cc
-cc     Scratch arrays:
-cc
-c      dimension     thing01(nssq,nx)
-c      dimension     thing02(nssq,nx)
-cc
-cc
-cc     Scratch arraylets:
-cc
-c      dimension     thngy01(nssq), thngy02(nssq), thngy03(nssq)
-c      dimension     thngy04(nssq), thngy05(nssq), thngy06(nssq)
-cc
-c      dimension      thngy1(nssq),  thngy2(nssq),        s(nssq)
-c      dimension       almon(nssq),   armon(nssq), unsmooth(nssq)
-cc
-c      dimension      thingl(nssq),  dthing(nssq),   thing6(nssq)
-cc
-cc
-c      real*8   flops,adds,amults,recips,cvmgms,sqrts,rsqrts,exps,oop
-c      dimension        ii(1-nx-nghostcells:0)
-c      dimension       iis(nx)
-cc
-cc
-cc
-cc
-cc
-cc
-cc     It is imperative that all the working data for this routine be on
-cc     the stack if OpenMP is to deliver the proper performance.
-cc     Introducing a "save" statement, which puts everything on the heap,
-cc     is a disaster if we are using OpenMP.  That requires of course
-cc     that we put in a "threadprivate" statement, which gives correct
-cc     results but not correct performance.  This appears to be inexplic-
-cc     able.  It could be related to OpenMP's not keeping its threads
-cc     locked onto processor cores, as it should do.  Regardless of where
-cc     this working storage is placed in memory, on a cache-based CPU it
-cc     should all be cache resident.  Hence there is some bad interaction
-cc     of OpenMP and the hardware.  The slow down for putting this data
-cc     on the heap is a factor of 2.  Incredible.
-cc
-cc
-cc
-c      myifdebug = ifdebug
-cc
-c      flops = flopcounts(1)
-c      adds = flopcounts(2)
-c      amults = flopcounts(3)
-c      recips = flopcounts(4)
-c      cvmgms = flopcounts(5)
-c      sqrts = flopcounts(6)
-c      rsqrts = flopcounts(7)
-c      exps = flopcounts(8)
-cc
-cc
-c      third = 1. / 3.
-c      sixth = .5 * third
-c      forthd = 4. * third
-c      twelth = .25 * third
-c      fftnth = .2 * third
-c      smlfrc = .005
-c      small = .000002
-c      almost1 = .999998
-c      smaller = .0000001
-cc
-c      crterr = .1
-c      ferrfc = 10.
-cc
-c      stpner = 20.
-c      crtrat = .05
-c      smlrat = .1
-cc
-cc
-c      GammaAir = 1.4
-c      smlvol = smaller * deex
-c      smallmass = smlvol * smlrho
-cc
-cc
-cc      ssmalu = .01 * SmallU
-c      smlusq = smallu * smallu
-c      ssmalu = .00000001 * SmallU
-c      ssmlu2 = ssmalu * ssmalu
-cc
-c      halfdx = .5 * deex
-c      qtrdx = .25 * deex
-c      dxinv = 1. / deex
-c      halfdxinv = .5 * dxinv
-c      dtbydx = dt * dxinv
-c      dxbydt = 1. / dtbydx
-c      halfdt = .5 * dt
-cc
-c      ifxpass = 0
-c      if ((ipass .eq. 1) .or. (ipass .eq. 6))   ifxpass = 1
-c      ifypass = 0
-c      if ((ipass .eq. 2) .or. (ipass .eq. 5))   ifypass = 1
-c      ifzpass = 0
-c      if ((ipass .eq. 3) .or. (ipass .eq. 4))   ifzpass = 1
-c      zpass = ifzpass
-c      lbrick = ibrick*ifxpass + jbrick*ifypass + kbrick*ifzpass
-c      twopie = 8. * atan (1.)
-c      twopi = twopie
-c      pi = .5 * twopi
-cc
+c
+c
+c     Scratch arrays for ppmintrf0vec:
+c
+      dimension          dal(nssq,nx+nghostcells)
+      dimension       absdal(nssq,nx+nghostcells)
+      dimension       dasppm(nssq,nx+nghostcells)
+      dimension       damnot(nssq,nx+nghostcells)
+      dimension       alsmth(nssq,nx+nghostcells)
+      dimension       alunsm(nssq,nx+nghostcells)
+c
+c
+c     Output arrays from Riemann0:
+c
+      dimension        uxavl(nssq,nx+nghostcells)
+      dimension       duxavl(nssq,nx+nghostcells)
+      dimension       sigmal(nssq,nx+nghostcells)
+c
+c
+c     Output arrays from Fluxes:
+c
+      dimension        dvoll(nssq,nx+nghostcells)
+      dimension       dmassl(nssq,nx+nghostcells)
+c
+c
+c     Output arrays from CellUpdate:
+c
+      dimension        rhonu(nssq,nx+nghostcells)
+c
+#if istrace
+      dimension             xldbg(1-nghostcells:nx*nbqx+nghostcells)
+      dimension             xrdbg(1-nghostcells:nx*nbqx+nghostcells)
+      dimension       rhodbg(nssq,1-nghostcells:nx*nbqx+nghostcells)
+      dimension        dmdbg(nssq,1-nghostcells:nx*nbqx+nghostcells)
+      dimension    cournodbg(nssq,1-nghostcells:nx*nbqx+nghostcells)
+      dimension    unsmthdbg(nssq,1-nghostcells:nx*nbqx+nghostcells)
+      dimension      rholdbg(nssq,1-nghostcells:nx*nbqx+nghostcells)
+      dimension      rhordbg(nssq,1-nghostcells:nx*nbqx+nghostcells)
+      dimension      drhodbg(nssq,1-nghostcells:nx*nbqx+nghostcells)
+      dimension      rho6dbg(nssq,1-nghostcells:nx*nbqx+nghostcells)
+      dimension     uxavldbg(nssq,1-nghostcells:nx*nbqx+nghostcells)
+      dimension    duxavldbg(nssq,1-nghostcells:nx*nbqx+nghostcells)
+      dimension    sigmaldbg(nssq,1-nghostcells:nx*nbqx+nghostcells)
+      dimension     dvolldbg(nssq,1-nghostcells:nx*nbqx+nghostcells)
+      dimension    dmassldbg(nssq,1-nghostcells:nx*nbqx+nghostcells)
+      dimension     rhonudbg(nssq,1-nghostcells:nx*nbqx+nghostcells)
+#endif
+c
+c
+c     Visualization arrays:
+c
+      dimension        adiab(nssq,nx+nghostcells)
+c
+c
+c     Scratch arrays:
+c
+      dimension     thing01(nssq,nx)
+      dimension     thing02(nssq,nx)
+c
+c
+c     Scratch arraylets:
+c
+      dimension     thngy01(nssq), thngy02(nssq), thngy03(nssq)
+      dimension     thngy04(nssq), thngy05(nssq), thngy06(nssq)
+c
+      dimension      thngy1(nssq),  thngy2(nssq),        s(nssq)
+      dimension       almon(nssq),   armon(nssq), unsmooth(nssq)
+c
+      dimension      thingl(nssq),  dthing(nssq),   thing6(nssq)
+c
+c
+      real*8   flops,adds,amults,recips,cvmgms,sqrts,rsqrts,exps,oop
+      dimension        ii(1-nx-nghostcells:0)
+      dimension       iis(nx)
+c
+c
+c
+c
+c
+c
+c     It is imperative that all the working data for this routine be on
+c     the stack if OpenMP is to deliver the proper performance.
+c     Introducing a "save" statement, which puts everything on the heap,
+c     is a disaster if we are using OpenMP.  That requires of course
+c     that we put in a "threadprivate" statement, which gives correct
+c     results but not correct performance.  This appears to be inexplic-
+c     able.  It could be related to OpenMP's not keeping its threads
+c     locked onto processor cores, as it should do.  Regardless of where
+c     this working storage is placed in memory, on a cache-based CPU it
+c     should all be cache resident.  Hence there is some bad interaction
+c     of OpenMP and the hardware.  The slow down for putting this data
+c     on the heap is a factor of 2.  Incredible.
+c
+c
+c
+      myifdebug = ifdebug
+c
+      flops = flopcounts(1)
+      adds = flopcounts(2)
+      amults = flopcounts(3)
+      recips = flopcounts(4)
+      cvmgms = flopcounts(5)
+      sqrts = flopcounts(6)
+      rsqrts = flopcounts(7)
+      exps = flopcounts(8)
+c
+c
+      third = 1. / 3.
+      sixth = .5 * third
+      forthd = 4. * third
+      twelth = .25 * third
+      fftnth = .2 * third
+      smlfrc = .005
+      small = .000002
+      almost1 = .999998
+      smaller = .0000001
+c
+      crterr = .1
+      ferrfc = 10.
+c
+      stpner = 20.
+      crtrat = .05
+      smlrat = .1
+c
+c
+      GammaAir = 1.4
+      smlvol = smaller * deex
+      smallmass = smlvol * smlrho
+c
+c
+c      ssmalu = .01 * SmallU
+      smlusq = smallu * smallu
+      ssmalu = .00000001 * SmallU
+      ssmlu2 = ssmalu * ssmalu
+c
+      halfdx = .5 * deex
+      qtrdx = .25 * deex
+      dxinv = 1. / deex
+      halfdxinv = .5 * dxinv
+      dtbydx = dt * dxinv
+      dxbydt = 1. / dtbydx
+      halfdt = .5 * dt
+c
+      ifxpass = 0
+      if ((ipass .eq. 1) .or. (ipass .eq. 6))   ifxpass = 1
+      ifypass = 0
+      if ((ipass .eq. 2) .or. (ipass .eq. 5))   ifypass = 1
+      ifzpass = 0
+      if ((ipass .eq. 3) .or. (ipass .eq. 4))   ifzpass = 1
+      zpass = ifzpass
+      lbrick = ibrick*ifxpass + jbrick*ifypass + kbrick*ifzpass
+      twopie = 8. * atan (1.)
+      twopi = twopie
+      pi = .5 * twopi
+c
 c      icoff = - ny*nz
 c      do kcube = 1,nsugarcubes
-c         do k = 1,nsugar*2
-c         zfcube(k,kcube) = zzf(k,kcube)
-c         enddo
+         do k = 1,nsugar*2
+         zfcube(k,kcube) = zzf(k,kcube)
+         enddo
 c      do jcube = 1,nsugarcubes
-c         do j = 1,nsugar*2
-c         ybcube(j,jcube) = yyb(j,jcube)
-c         enddo
-c      icoff = icoff + ny*nz
-c      jk = 0
+         do j = 1,nsugar*2
+         ybcube(j,jcube) = yyb(j,jcube)
+         enddo
+      icoff = icoff + ny*nz
+      jk = 0
 c      do kk = 1,nz
 c      zz = .5 * (zfcube(kk,kcube) + zfcube(kk+1,kcube))
 c!DIR$ SIMD
 cc!DEC$ VECTOR ALIGNED
 c      do jj = 1,ny
-c      jk = jk + 1
-c      ym(icoff+jk) = .5 * (ybcube(jj,jcube) + ybcube(jj+1,jcube))
-c      zm(icoff+jk) = zz
+      jk = jk + 1
+      ym(icoff+jk) = .5 * (ybcube(jj,jcube) + ybcube(jj+1,jcube))
+      zm(icoff+jk) = zz
 c      enddo
 c      enddo
 c      enddo
