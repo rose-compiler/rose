@@ -239,7 +239,7 @@ void ConstraintSet::addConstraint(Constraint c) {
 	  }
 	}
 	// all remaining constraints can be removed (can only be inqualities)
-	deleteConstraints(c.lhsVar());
+	deleteConstConstraints(c.lhsVar());
 	set<Constraint>::insert(Constraint(Constraint::EQ_VAR_CONST,c.lhsVar(),c.rhsValCppCapsule()));
 	return;
   }
@@ -386,8 +386,15 @@ ConstraintSet ConstraintSet::deleteVarConstraints(VariableId varId) {
   return *this;
 }
 
+void ConstraintSet::deleteConstConstraints(VariableId varId) {
+  // now, remove all other constraints with variable varId
+  for(ConstraintSet::iterator i=begin();i!=end();++i) {
+	if((*i).lhsVar()==varId && (*i).isVarValOp())
+	  removeConstraint(i);
+  }
+}
+
 void ConstraintSet::deleteConstraints(VariableId varId) {
-#if 1
   // ensure we delete equalities before all other constraints (removing equalities keeps information alive)
   for(ConstraintSet::iterator i=begin();i!=end();++i) {
 	if(((*i).op()==Constraint::EQ_VAR_VAR)) {
@@ -399,7 +406,6 @@ void ConstraintSet::deleteConstraints(VariableId varId) {
 	  }
 	}
   }
-#endif
   // now, remove all other constraints with variable varId
   for(ConstraintSet::iterator i=begin();i!=end();++i) {
 	if((*i).lhsVar()==varId)

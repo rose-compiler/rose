@@ -64,6 +64,7 @@ class ConstraintSet : public set<Constraint> {
   string toString() const;
   ConstraintSet deleteVarConstraints(VariableId varId);
   void deleteConstraints(VariableId varId);
+  void deleteConstConstraints(VariableId varId);
   ConstraintSet invertedConstraints();
   void invertConstraints();
   //! duplicates constraints for par2 variable and adds them for par1 variable.

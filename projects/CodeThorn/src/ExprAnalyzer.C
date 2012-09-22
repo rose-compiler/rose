@@ -200,7 +200,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState eS
 			// rhs is not considered due to short-circuit AND semantics
 		  }
 		  if(lhsResult.result.isTrue() && rhsResult.result.isFalse()) {
-			res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints.invertedConstraints();
+			// nothing to do
 		  }
 		  if(lhsResult.result.isTrue() && rhsResult.result.isTrue()) {
 			res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
@@ -224,7 +224,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState eS
 			res.exprConstraints=lhsResult.exprConstraints;
 		  }
 		  if(lhsResult.result.isFalse() && rhsResult.result.isFalse()) {
-			res.exprConstraints=lhsResult.exprConstraints.invertedConstraints()+rhsResult.exprConstraints.invertedConstraints();
+			// nothing to do
 		  }
 		  if(lhsResult.result.isFalse() && rhsResult.result.isTrue()) {
 			res.exprConstraints=lhsResult.exprConstraints.invertedConstraints()+rhsResult.exprConstraints;
