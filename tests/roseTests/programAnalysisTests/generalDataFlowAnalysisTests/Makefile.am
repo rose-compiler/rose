@@ -45,12 +45,13 @@ INCLUDES = $(ROSE_INCLUDES) \
 #    src/midend/programAnalysis/generalDataFlowAnalysis
 # directory.
 # This test program does not require the rest of ROSE so it can be handled locally
-bin_PROGRAMS  = constantPropagationTest taintedFlowAnalysisTest liveDeadVarAnalysisTest
+bin_PROGRAMS  = constantPropagationTest taintedFlowAnalysisTest liveDeadVarAnalysisTest pointerAliasAnalysisTest
 # bin_PROGRAMS  = constantPropagationTest 
 
 liveDeadVarAnalysisTest_SOURCES = liveDeadVarAnalysisTest.C
 constantPropagationTest_SOURCES = constantPropagation.C constantPropagationTest.C
 taintedFlowAnalysisTest_SOURCES = taintedFlowAnalysis.C taintedFlowAnalysisTest.C
+pointerAliasAnalysisTest_SOURCES = pointerAliasAnalysis.C pointerAliasAnalysisTest.C
 
 # testCallGraph_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 # LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
@@ -75,7 +76,18 @@ LDADD = $(ROSE_LIBS)
 CXX_LOCAL_LIVENESS_PASS = \
     test1.C \
     test4.C \
-    test5.C
+    test5.C \
+    test6.C 
+
+CXX_LOCAL_CONSTANT_PROPAGATION_PASS = \
+   cp_test1.C
+
+CXX_LOCAL_POINTER_ALIASANALYSIS_PASS = \
+   test_ptr1.C \
+   test_ptr2.C \
+   test_ptr3.C \
+   test_ptr4.C \
+   test_ptr5.C
 
 # DQ (/14/2011): Use the tests directly so that we can isolate the fialing tests.
 # include $(srcdir)/../../../CompileTests/Cxx_tests/Makefile-pass.inc
@@ -1392,6 +1404,8 @@ ALL_TESTCODES = $(TESTCODES_REQUIRED_TO_PASS)
 ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0 --edg:restrict
 
 CXX_LIVENESS_FILES = ${CXX_LOCAL_LIVENESS_PASS:.C=.CXX-o}
+CXX_CONSTANT_PROPAGATION_FILES = ${CXX_LOCAL_CONSTANT_PROPAGATION_PASS:.C=.CXX-o}
+CXX_POINTER_ALIASANALYSIS_FILES = ${CXX_LOCAL_POINTER_ALIASANALYSIS_PASS:.C=.CXX-o}
 CXX_FILES = ${TESTCODES_REQUIRED_TO_PASS:.C=.CXX-o}
 C_FILES   = ${EXAMPLE_C_TESTCODES_VERIFIED_TO_PASS:.C=.C-o}
 C99_FILES = ${C99_TESTCODES_REQUIRED_TO_PASS:.c=.C99-o}
@@ -1407,6 +1421,12 @@ $(TEST_Objects): $(TEST_TRANSLATOR) $(TESTCODES)
 
 $(CXX_LIVENESS_FILES):liveDeadVarAnalysisTest 
 	./liveDeadVarAnalysisTest $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.CXX-o=.C) && touch $@
+
+$(CXX_CONSTANT_PROPAGATION_FILES):constantPropagationTest
+	././constantPropagationTest $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.CXX-o=.C) && touch $@
+
+$(CXX_POINTER_ALIASANALYSIS_FILES):pointerAliasAnalysisTest
+	././pointerAliasAnalysisTest $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.CXX-o=.C) && touch $@
 
 $(CXX_FILES): $(TEST_TRANSLATOR)
 	$(TEST_TRANSLATOR) $(ROSE_FLAGS) -I$(srcdir)/../../../CompileTests/Cxx_tests $(TESTCODE_INCLUDES) -c $(srcdir)/../../../CompileTests/Cxx_tests/$(@:.CXX-o=.C) && touch $@
@@ -1431,11 +1451,14 @@ $(F77_FILES): $(TEST_TRANSLATOR)
 $(F03_FILES): $(TEST_TRANSLATOR)
 	$(TEST_TRANSLATOR) $(ROSE_FLAGS) -rose:skip_syntax_check -rose:skipfinalCompileStep -rose:f2003 -c $(srcdir)/../../../CompileTests/Fortran_tests/$(@:.F03-o=.f03) && touch $@
 
-check-liveness:$(CXX_LIVENESS_FILES)
+# A dedicated rule to just test liveness analysis
+verify-liveness:$(CXX_LIVENESS_FILES)
+verify-constantpropagation:$(CXX_CONSTANT_PROPAGATION_FILES)
+verify-pointerAliasAnalysis:$(CXX_POINTER_ALIASANALYSIS_FILES)
 
 # DQ (9/22/2011): All of the test codes are from other directories, so we don't what them in the EXTRA_DIST rule.
 # EXTRA_DIST = $(TESTCODES)
-EXTRA_DIST = constantPropagation.h taintedFlowAnalysis.h $(CXX_LOCAL_LIVENESS_PASS)
+EXTRA_DIST = constantPropagation.h taintedFlowAnalysis.h pointerAliasAnalysis.h $(CXX_LOCAL_LIVENESS_PASS) $(CXX_LOCAL_CONSTANT_PROPAGATION_PASS) $(CXX_LOCAL_POINTER_ALIASANALYSIS_PASS)
 
 check-cxx: $(CXX_FILES)
 check-c: $(C_FILES)
@@ -1448,7 +1471,7 @@ check-f03: $(F03_FILES)
 if !ROSE_BUILD_OS_IS_OSX
 # Note: C++ language support implies C, C++, and C99 support.
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
-check-c_languages: check-cxx check-c check-c99 check-liveness
+check-c_languages: check-cxx check-c check-c99 verify-liveness verify-constantpropagation verify-pointerAliasAnalysis
 else
 check-c_languages: 
 endif

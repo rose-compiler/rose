@@ -4756,23 +4756,6 @@ SgAsmFunction::append_block( SgAsmBlock* operand )
    }
 */
 
-SgAsmBlock *
-SgAsmFunction::get_entry_block() const {
-        SgAsmStatementPtrList::const_iterator si = p_statementList.begin();
-        return si==p_statementList.end() ? NULL : isSgAsmBlock(*si);
-}
-
-
-#if 0
-// DQ (4/29/2010): Added function to return string for function reason field (for debugging).
-// [RPM 2011-11-03]: Removed. Use stringifySgAsmFunctionFunctionReason() instead since it is automatically generated.
-string
-SgAsmFunction::get_functionReasonString ()
-   {
-     ...
-   }
-#endif
-
 // DQ (4/29/2010): Added function to support scoring functions as likely valid functions (work with CERT).
 SgAsmFunction::function_calling_convention_enum
 SgAsmFunction::get_functionCallingConvention() const

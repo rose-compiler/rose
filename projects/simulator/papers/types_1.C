@@ -168,7 +168,7 @@ public:
         SMTSolver *solver;
         MemoryCellComparator(const T<32> &address, SMTSolver *solver=NULL): address(address), solver(solver) {}
         bool operator()(const MemoryCell &elmt) {
-            return elmt.get_address().get_expression()->equal_to(address.get_expression(), solver);
+            return elmt.address().get_expression()->equal_to(address.get_expression(), solver);
         }
     };
 
@@ -185,40 +185,43 @@ public:
     bool merge(const PtrState &other, SMTSolver *smt_solver) {
 
         // Merge registers
-        size_t nchanges = this->ip.add_defining_instructions(other.ip.get_defining_instructions());
-        for (size_t i=0; i<this->n_gprs; ++i) {
-            nchanges += this->gpr[i].add_defining_instructions(other.gpr[i].get_defining_instructions());
-            if (!this->gpr[i].get_expression()->equal_to(other.gpr[i].get_expression(), smt_solver))
-                this->gpr[i].set_expression(T<32>()); // new, unknown value
+        size_t nchanges = this->registers.ip.add_defining_instructions(other.registers.ip.get_defining_instructions());
+        for (size_t i=0; i<this->registers.n_gprs; ++i) {
+            nchanges += this->registers.gpr[i].add_defining_instructions(other.registers.gpr[i].get_defining_instructions());
+            if (!this->registers.gpr[i].get_expression()->equal_to(other.registers.gpr[i].get_expression(), smt_solver))
+                this->registers.gpr[i].set_expression(T<32>()); // new, unknown value
         }
-        for (size_t i=0; i<this->n_segregs; ++i) {
-            nchanges += this->segreg[i].add_defining_instructions(other.gpr[i].get_defining_instructions());
-            if (!this->segreg[i].get_expression()->equal_to(other.segreg[i].get_expression(), smt_solver))
-                this->segreg[i].set_expression(T<16>()); // new, unknown value
+        for (size_t i=0; i<this->registers.n_segregs; ++i) {
+            nchanges += this->registers.segreg[i].add_defining_instructions(other.registers.gpr[i].get_defining_instructions());
+            if (!this->registers.segreg[i].get_expression()->equal_to(other.registers.segreg[i].get_expression(), smt_solver))
+                this->registers.segreg[i].set_expression(T<16>()); // new, unknown value
         }
-        for (size_t i=0; i<this->n_flags; ++i) {
-            nchanges += this->flag[i].add_defining_instructions(other.gpr[i].get_defining_instructions());
-            if (!this->flag[i].get_expression()->equal_to(other.flag[i].get_expression(), smt_solver))
-                this->flag[i].set_expression(T<1>()); // new, unknown value
+        for (size_t i=0; i<this->registers.n_flags; ++i) {
+            nchanges += this->registers.flag[i].add_defining_instructions(other.registers.gpr[i].get_defining_instructions());
+            if (!this->registers.flag[i].get_expression()->equal_to(other.registers.flag[i].get_expression(), smt_solver))
+                this->registers.flag[i].set_expression(T<1>()); // new, unknown value
         }
 
         // Merge memory
-        for (typename Super::Memory::const_iterator mi=other.mem.begin(); mi!=other.mem.end(); ++mi) {
-            typename Super::Memory::iterator found = std::find_if(this->mem.begin(), this->mem.end(),
-                                                                  MemoryCellComparator(mi->get_address(), smt_solver));
-            if (found==this->mem.end()) {
-                this->mem.push_back(*mi);
+        for (typename Super::Memory::CellList::const_iterator mi=other.memory.cell_list.begin();
+             mi!=other.memory.cell_list.end();
+             ++mi) {
+            typename Super::Memory::CellList::iterator found = std::find_if(this->memory.cell_list.begin(),
+                                                                            this->memory.cell_list.end(),
+                                                                            MemoryCellComparator(mi->address(), smt_solver));
+            if (found==this->memory.cell_list.end()) {
+                this->memory.cell_list.push_back(*mi);
                 ++nchanges;
             } else {
                 /* The address */
-                nchanges += found->get_address().add_defining_instructions(mi->get_address().get_defining_instructions());
-                if (!found->get_address().get_expression()->equal_to(mi->get_address().get_expression(), smt_solver))
-                    found->get_address().set_expression(T<32>()); // new, unknown value
+                nchanges += found->address().add_defining_instructions(mi->address().get_defining_instructions());
+                if (!found->address().get_expression()->equal_to(mi->address().get_expression(), smt_solver))
+                    found->address().set_expression(T<32>()); // new, unknown value
 
                 /* The data */
-                nchanges += found->get_data().add_defining_instructions(mi->get_data().get_defining_instructions());
-                if (!found->get_data().get_expression()->equal_to(mi->get_data().get_expression(), smt_solver))
-                    found->get_data().set_expression(T<32>()); // new, unknown value
+                nchanges += found->value().add_defining_instructions(mi->value().get_defining_instructions());
+                if (!found->value().get_expression()->equal_to(mi->value().get_expression(), smt_solver))
+                    found->value().set_expression(T<8>()); // new, unknown value
             }
         }
 
@@ -610,7 +613,7 @@ public:
 
     // Provide a memory oracle.  When reading memory we could have two approaches.  A simple approach would be to first do a
     // readMemory() from the superclass and if the obtained value is symbolic, follow it with a writeMemory() to the
-    // superclass.  Howerver, this has the problem that a readMemory() is also responsible for updating the initial memory
+    // superclass.  However, this has the problem that a readMemory() is also responsible for updating the initial memory
     // state (it's done this way so we don't have to store an initial value for every possible memory address--we only store
     // the values for memory locations that are read without having first been written.)  The initial state ends up containing
     // symbolic values rather than the concrete values we would have liked.
@@ -627,7 +630,7 @@ public:
             info.m->more("%s", ss.str().c_str());
         }
         ValueType<nBits> dflt = info.is_pointer(addr, this->get_solver()) ? random_pointer<nBits>() : random_integer<nBits>();
-        return super::template mem_read(this->get_state(), addr, dflt);
+        return super::template mem_read(this->get_state(), addr, &dflt);
     }
 
     // Return a random pointer
@@ -816,7 +819,7 @@ public:
             // initializer.
             typedef X86InstructionSemantics<PtrAnalysis::InitialPolicy, ValueType> InitSemantics;
             PtrAnalysis::InitialPolicy init_policy;
-            init_policy.get_state().gpr[x86_gpr_sp] = ValueType<32>(analysis_stack_va, "esp@init");
+            init_policy.get_state().registers.gpr[x86_gpr_sp] = ValueType<32>(analysis_stack_va, "esp@init");
 
 
             // Run the PtrAnalysis and OracleAnalysis repeatedly with different starting addresses
@@ -858,14 +861,14 @@ public:
 
                     // Initialize some registers
                     SymbolicSemantics::State<ValueType> &state = init_policy.get_state();
-                    for (size_t i=0; i<state.n_gprs; ++i) {
+                    for (size_t i=0; i<state.registers.n_gprs; ++i) {
                         if (i!=x86_gpr_sp && i!=x86_gpr_bp)
-                            state.gpr[i] = ValueType<32>((uint64_t)rand() & 0xffffffffull);
+                            state.registers.gpr[i] = ValueType<32>((uint64_t)rand() & 0xffffffffull);
                     }
-                    for (size_t i=0; i<state.n_segregs; ++i)
-                        state.segreg[i] = args.thread->policy.get_state().segreg[i];
-                    for (size_t i=0; i<state.n_flags; ++i)
-                        state.flag[i] = ValueType<1>((uint64_t)rand() & 1ull);
+                    for (size_t i=0; i<state.registers.n_segregs; ++i)
+                        state.registers.segreg[i] = args.thread->policy.get_concrete_state().registers.segreg[i];
+                    for (size_t i=0; i<state.registers.n_flags; ++i)
+                        state.registers.flag[i] = ValueType<1>((uint64_t)rand() & 1ull);
 
                     m->mesg("%s: MemoryOracle at virtual address 0x%08"PRIx64" (%zu of %zu), iteration %zu",
                             name, analysis_addr, n+1, std::max(randomize, (size_t)1), iter);

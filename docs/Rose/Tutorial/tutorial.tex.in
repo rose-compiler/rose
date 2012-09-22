@@ -16,6 +16,7 @@
 \usepackage{moreverb}
 
 \usepackage{hyperref}
+
 \hypersetup {
 colorlinks= true,
 urlcolor=blue,
@@ -268,6 +269,7 @@ ROSE.}
 \normalsize{This part exemplifies the use of existing ROSE analyses and how
 to build customized analyses using ROSE.}
 }
+\input{GenericDFA}
 \input{loopRecognition}
 \input{virtualCFG}
 \input{buildCFG}

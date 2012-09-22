@@ -4257,10 +4257,11 @@ HEADER_INITIALIZED_NAME_START
        //   virtual void set_file_info(Sg_File_Info* X);
 
        // DQ (2/6/2007): Added support to get the symbol from the declaration (via the symbol table in the scope)
-      //! Get the associated SgSymbol from the symbol table located in the scope
+      //! Get the associated SgSymbol from the symbol table located in the scope, without considering possible prev_decl_item. Internal use only. Users should use search_for_symbol_from_symbol_table() instead.
           SgSymbol* get_symbol_from_symbol_table() const;
 
        // PC (10/1/2009): Added support to get the symbol from the correct associated declaration
+       //! User interface for retrieving the associated symbol. It searches through the possible chain of prev_decl_item.
           SgSymbol* search_for_symbol_from_symbol_table() const;
 
 #if ALT_FIXUP_COPY
@@ -5287,6 +5288,12 @@ HEADER_APPLICATION_PROJECT_START
 
           bool get_Java_only (void) const;
           void set_Java_only (bool value);
+          std::list<std::string> get_Java_classpath (void) const;
+          void set_Java_classpath (std::list<std::string> param);
+          std::list<std::string> get_Java_sourcepath (void) const;
+          void set_Java_sourcepath (std::list<std::string> param);
+          std::string get_Java_destdir (void) const;
+          void set_Java_destdir (std::string param);
 
        // DQ (2/4/2009): This is now a data member at the SgProject and so is automatically generated asa member function.
        // bool get_binary_only (void) const;
@@ -12976,6 +12983,45 @@ SgProject::get_Java_only (void) const
      return result;
    }
 
+void
+SgProject::set_Java_classpath (std::list<std::string> param)
+   {
+     p_Java_classpath = param;
+   }
+
+std::list<std::string>
+SgProject::get_Java_classpath (void) const
+   {
+     return p_Java_classpath;
+   }
+   
+void
+SgProject::set_Java_sourcepath (std::list<std::string> param)
+   {
+     p_Java_sourcepath = param;
+   }
+
+std::list<std::string>
+SgProject::get_Java_sourcepath (void) const
+   {
+     return p_Java_sourcepath;
+   }
+   
+void
+SgProject::set_Java_destdir (std::string param)
+   {
+     p_Java_destdir = param;
+   }
+
+std::string
+SgProject::get_Java_destdir (void) const
+   {
+    // If modifying, check stripJavaCommandLineOptions in cmdline.cpp    
+    if (p_Java_destdir == "") {
+      return ROSE::getWorkingDirectory();
+    }
+    return p_Java_destdir;
+   }
 
 #if 0
 // DQ (2/4/2009): This is now a data member at the SgProject and so is automatically generated asa member function.

@@ -3807,7 +3807,7 @@ SgFunctionType* generateImplicitFunctionType( string functionName)
    }
 
 
-void
+SgAttributeSpecificationStatement*
 buildAttributeSpecificationStatement ( SgAttributeSpecificationStatement::attribute_spec_enum kind, Token_t *label, Token_t *sourcePositionToken )
    {
   // We can't call build_implicit_program_statement_if_required() since it is defined in the c_action_<name> functions.
@@ -4003,6 +4003,9 @@ buildAttributeSpecificationStatement ( SgAttributeSpecificationStatement::attrib
 
   // Set the numeric label if it exists
      setStatementNumericLabel(attributeSpecificationStatement,label);
+
+     // DXN (02/08/2012): to facilitate the handling of the computed attribute specification statement in FortranParserActionRose
+     return attributeSpecificationStatement;
 
   // printf ("In buildAttributeSpecificationStatement(): attributeSpecificationStatement: start = %d end = %d \n",attributeSpecificationStatement->get_startOfConstruct()->get_line(),attributeSpecificationStatement->get_endOfConstruct()->get_line());
    }

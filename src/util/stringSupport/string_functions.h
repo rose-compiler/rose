@@ -155,6 +155,8 @@ namespace StringUtility
       //! Generate a string from a vector of strings
            std::string listToString ( const std::vector<std::string> & X, bool separateStrings = false );
 
+           std::list<std::string> tokenize ( std::string X, char delim );
+
        //! Remove redundant lines (substrings must be separated by "\n". FIXME (spelling)
            std::string removeRedundentSubstrings ( std::string X ); // sic
       //! Remove redundant lines containing special substrings of form string#. FIXME (spelling)
@@ -223,7 +225,8 @@ namespace StringUtility
            std::string stripFileSuffixFromFileName     ( const std::string & fileNameWithSuffix ); 
            //! Get the absolute path from the relative path
            std::string getAbsolutePathFromRelativePath ( const std::string & relativePath, bool printErrorIfAny /* = false */ );       
-           //! Get the file name suffix (extension), fileName could be either base name or name with full path
+           //! Get the file name suffix (extension) without the leading dot, fileName could be either base name or name with full path. 
+           // If no dot is found in the input fileName, the function just returns the original fileName
            std::string fileNameSuffix                  ( const std::string & fileName );          
 
   // True only if this is a valid C++ source file name extension (suffix). Duplicate of CommandlineProcessing::isCppFileNameSuffix(). 

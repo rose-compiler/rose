@@ -18,7 +18,8 @@ warn_no_tests:
 #  DOCUMENTATION, CONFIGURATION, ETC
 ###############################################################################################################################
 
-EXTRA_DIST += README test_status.txt internal_tests.conf syscall_tests.conf pthread_tests.conf RSIM.dxy
+EXTRA_DIST += README test_status.txt internal_tests.conf syscall_tests.conf pthread_tests.conf RSIM.dxy \
+	USED_HEADER_FILES.C demos/MultiDomainDemo.h demos/RiscTracingPolicy.h
 
 ###############################################################################################################################
 #  SIMULATOR LIBRARY
@@ -34,7 +35,6 @@ libRSIM_la_SOURCES =				\
 	RSIM_Futex.C				\
 	RSIM_Linux32.C				\
 	RSIM_Process.C				\
-	RSIM_SemanticPolicy.C			\
 	RSIM_SignalHandling.C			\
 	RSIM_Simulator.C			\
 	RSIM_Thread.C				\
@@ -47,7 +47,9 @@ include_HEADERS +=				\
 	RSIM_Futex.h				\
 	RSIM_Linux32.h				\
 	RSIM_Process.h				\
-	RSIM_SemanticPolicy.h			\
+	RSIM_SemanticsSettings.h		\
+	RSIM_SemanticsInner.h			\
+	RSIM_SemanticsOuter.h			\
 	RSIM_SignalHandling.h			\
 	RSIM_Simulator.h			\
 	RSIM_Templates.h			\
@@ -80,7 +82,6 @@ RSIM_Client.o: RSIM_Client.c RSIM_Client.h
 # Do not install RSIM_Private.h -- it is only used during compilation.
 EXTRA_DIST += RSIM_Private.h
 noinst_PROGRAMS += x86sim
-include_HEADERS += x86sim.h
 x86sim_SOURCES = x86sim.C
 x86sim_CPPFLAGS = $(ROSE_INCLUDES) -DX86_VDSO_PATH_1='"$(srcdir)"' -DX86_VDSO_PATH_2='"$(include_dir)"'
 x86sim_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS) 
@@ -233,6 +234,14 @@ noinst_PROGRAMS += Intervals
 Intervals_SOURCES = demos/Intervals.C
 Intervals_CPPFLAGS = $(ROSE_INCLUDES)
 Intervals_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+#------------------------------------------------------------------------------------------------------------------------------
+# Example of using an SMT solver in lock step with the simulator
+noinst_PROGRAMS += smt_example
+smt_example_SOURCES = demos/smt_example.C
+smt_example_CPPFLAGS = $(ROSE_INCLUDES)
+smt_example_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
 
 ###############################################################################################################################
 #  SUPPORT PROGRAMS FOR PAPERS

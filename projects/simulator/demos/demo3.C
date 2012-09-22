@@ -98,15 +98,15 @@ public:
                 uint64_t arg1_varno = arg1_leaf->get_name();
                 InternalNodePtr expr = InternalNode::create(32, OP_EQ, policy.readRegister<32>("eax").get_expression(), target);
                 std::cout <<"using an SMT solver to find a solution to f(x) = " <<target <<"...\n";
-                if (smt_solver.satisfiable(expr)) {
-                    LeafNodePtr arg1_value = smt_solver.get_definition(arg1_varno)->isLeafNode();
+                if (SMTSolver::SAT_YES==smt_solver.satisfiable(expr)) {
+                    LeafNodePtr arg1_value = smt_solver.evidence_for_variable(arg1_varno)->isLeafNode();
                     if (arg1_value) {
                         std::cout <<"  solution is x = " <<arg1_value <<"\n";
                     } else {
                         std::cout <<"  satisfiable, but no solution found\n";
                     }
                 } else {
-                    std::cout <<"  not satisfiable.\n";
+                    std::cout <<"  not satisfiable, or unknown.\n";
                 }
             }
 

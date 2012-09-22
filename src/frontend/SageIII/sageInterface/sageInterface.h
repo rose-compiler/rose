@@ -348,6 +348,9 @@ struct hash_nodeptr
    \brief Not sure the classifications right now
  */
 
+   //! Extract a SgPragmaDeclaration's leading keyword . For example "#pragma omp parallel" has a keyword of "omp".
+   std::string extractPragmaKeyword(const SgPragmaDeclaration *);
+
    //! Check if a node is SgOmp*Statement
    bool isOmpStatement(SgNode* );
    /*! \brief Return true if function is overloaded.
@@ -749,7 +752,7 @@ SgType* getArrayElementType(SgType* t);
 SgType* getElementType(SgType* t);
 
 
-/// \brief  returns the array dimensions in an array as defined for @arrtype
+/// \brief  returns the array dimensions in an array as defined for arrtype
 /// \param  arrtype the type of a C/C++ array
 /// \return an array that contains an expression indicating each dimension's size.
 ///         OWNERSHIP of the expressions is TRANSFERED TO the CALLER (which
@@ -768,9 +771,9 @@ SgType* getElementType(SgType* t);
 std::vector<SgExpression*>
 get_C_array_dimensions(const SgArrayType& arrtype);
 
-/// \brief  returns the array dimensions in an array as defined for @arrtype
+/// \brief  returns the array dimensions in an array as defined for arrtype
 /// \param  arrtype the type of a C/C++ array
-/// \param  varref  a reference to an array variable (the variable of type @arrtype)
+/// \param  varref  a reference to an array variable (the variable of type arrtype)
 /// \return an array that contains an expression indicating each dimension's size.
 ///         OWNERSHIP of the expressions is TRANSFERED TO the CALLER (which
 ///         becomes responsible for freeing the expressions).
@@ -1551,11 +1554,6 @@ SgCommaOpExp *insertAfterUsingCommaOp (SgExpression* new_exp, SgExpression* anch
 ///          the initialized name is NULL.
 /// \param   definingDeclaration the defining function declaration of f
 /// \param   newName the name of function f`
-/// \pre     definingDeclaration must be a defining declaration of a
-///          free standing function.
-///          typeid(SgFunctionDeclaration) == typeid(definingDeclaration)
-///          i.e., this function is NOT implemented for class member functions,
-///          template functions, procedures, etc.
 /// \details f's new body becomes { f`(...); } and { int res = f`(...); return res; }
 ///          for functions returning void and a value, respectively.
 ///          two function declarations are inserted in f's enclosing scope
@@ -1572,12 +1570,17 @@ SgCommaOpExp *insertAfterUsingCommaOp (SgExpression* new_exp, SgExpression* anch
 ///          The definition of f` is the next entry in the
 ///          statement list; the forward declaration of f` is the previous
 ///          entry in the statement list.
+/// \pre     definingDeclaration must be a defining declaration of a
+///          free standing function.
+///          typeid(SgFunctionDeclaration) == typeid(definingDeclaration)
+///          i.e., this function is NOT implemented for class member functions,
+///          template functions, procedures, etc.
 std::pair<SgStatement*, SgInitializedName*>
 wrapFunction(SgFunctionDeclaration& definingDeclaration, SgName newName);
 
 /// \overload
 /// \tparam  NameGen functor that generates a new name based on the old name.
-///          interface: SgName @nameGen(const SgName&)
+///          interface: SgName nameGen(const SgName&)
 /// \param   nameGen name generator
 /// \brief   see wrapFunction for details
 template <class NameGen>

@@ -56,9 +56,14 @@ namespace BinaryAnalysis {
              *  instruction semantics. */
             class SEMANTIC_NO_PRINT_HELPER {};
 
-            /** Represents one location in memory.  Each memory cell has an address, data, and size in bytes.  It also
-             *  maintains two boolean values to track whether a cell has been clobbered by a possibly-aliasing write, and how
-             *  the cell was initialized.
+            /******************************************************************************************************************
+             *                                  MemoryCell
+             ******************************************************************************************************************/
+
+            /** Represents one location in memory.
+             *
+             *  Each memory cell has an address, data, and size in bytes.  It also maintains two boolean values to track
+             *  whether a cell has been clobbered by a possibly-aliasing write, and how the cell was initialized.
              *
              *  When a memory state is created, every memory location will be given a unique value. However, it's not practicle
              *  to store a value for every possible memory address, yet we want the following example to work correctly:
@@ -165,20 +170,14 @@ namespace BinaryAnalysis {
 
             };
 
+            /******************************************************************************************************************
+             *                                  RegisterStateX86
+             ******************************************************************************************************************/
 
-            /** Base class for x86 virtual machine states.
-             *
-             *  Binary semantic analysis usually progresses one instruction at a time--one starts with an initial state and the
-             *  act of processing an instruction modifies the state.  The StateX86 is the base class class for the semantic
-             *  states of various instruction semantic policies.  It contains storage for all the machine registers and a
-             *  vector of MemoryCell objects to represent memory. */
-            template<
-                template <template <size_t> class ValueType> class MemoryCell,
-                template <size_t> class ValueType>
-            class StateX86 {
+            /** The set of all registers and their values. */
+            template <template <size_t> class ValueType>
+            class RegisterStateX86 {
             public:
-                typedef std::vector<MemoryCell<ValueType> > Memory;
-
                 static const size_t n_gprs = 8;             /**< Number of general-purpose registers in this state. */
                 static const size_t n_segregs = 6;          /**< Number of segmentation registers in this state. */
                 static const size_t n_flags = 32;           /**< Number of flag registers in this state. */
@@ -187,10 +186,7 @@ namespace BinaryAnalysis {
                 ValueType<32> gpr[n_gprs];                  /**< General-purpose registers */
                 ValueType<16> segreg[n_segregs];            /**< Segmentation registers. */
                 ValueType<1> flag[n_flags];                 /**< Control/status flags (i.e., FLAG register). */
-                Memory mem;                                 /**< Core memory. */
 
-                /** Initialize state.  The state is initialized using the ValueType default constructor and the memory vector
-                 * is emptied. */
                 void clear() {
                     ip = ValueType<32>();
                     for (size_t i=0; i<n_gprs; ++i)
@@ -199,12 +195,9 @@ namespace BinaryAnalysis {
                         segreg[i] = ValueType<16>();
                     for (size_t i=0; i<n_flags; ++i)
                         flag[i] = ValueType<1>();
-                    mem.clear();
                 }
 
-                /** Initialize all registers to zero.  This is done with the ValueType((uint64_t)0) constructor. Memory is not
-                 * affected. */
-                void zero_registers() {
+                void zero() {
                     static const uint64_t z = 0;
                     ip = ValueType<32>(z);
                     for (size_t i=0; i<n_gprs; ++i)
@@ -215,16 +208,11 @@ namespace BinaryAnalysis {
                         flag[i] = ValueType<1>(z);
                 }
 
-                /** Clear all memory locations.  This just empties the memory vector. */
-                void clear_memory() {
-                    mem.clear();
-                }
-
                 /** Print the register contents. This emits one line per register and contains the register name and its value.
                  *  The @p ph argument is a templatized PrintHelper that is simply passed as the second argument of the
                  *  underlying print methods for the ValueType. */
                 template<typename PrintHelper>
-                void print_registers(std::ostream &o, const std::string prefix="", PrintHelper *ph=NULL) const {
+                void print(std::ostream &o, const std::string prefix="", PrintHelper *ph=NULL) const {
                     std::ios_base::fmtflags orig_flags = o.flags();
                     try {
                         for (size_t i=0; i<n_gprs; ++i) {
@@ -251,6 +239,52 @@ namespace BinaryAnalysis {
                     }
                     o.flags(orig_flags);
                 }
+            };
+
+            /******************************************************************************************************************
+             *                                  StateX86
+             ******************************************************************************************************************/
+
+            /** Base class for x86 virtual machine states.
+             *
+             *  Binary semantic analysis usually progresses one instruction at a time--one starts with an initial state and the
+             *  act of processing an instruction modifies the state.  The StateX86 is the base class class for the semantic
+             *  states of various instruction semantic policies.  It contains storage for all the machine registers and a
+             *  vector of MemoryCell objects to represent memory. */
+            template<
+                template <template <size_t> class ValueType> class MemoryCell,
+                template <size_t> class ValueType>
+            class StateX86 {
+            public:
+                RegisterStateX86<ValueType> registers;
+                typedef std::list<MemoryCell<ValueType> > Memory;
+                Memory memory;
+
+                /** Initialize state.  The state is initialized using the ValueType default constructor and the memory vector
+                 * is emptied. */
+                void clear() {
+                    registers.clear();
+                    clear_memory();
+                }
+
+                /** Initialize all registers to zero.  This is done with the ValueType((uint64_t)0) constructor. Memory is not
+                 * affected. */
+                void zero_registers() {
+                    registers.zero();
+                }
+
+                /** Clear all memory locations.  This just empties the memory vector. */
+                void clear_memory() {
+                    memory.clear();
+                }
+
+                /** Print the register contents. This emits one line per register and contains the register name and its value.
+                 *  The @p ph argument is a templatized PrintHelper that is simply passed as the second argument of the
+                 *  underlying print methods for the ValueType. */
+                template<typename PrintHelper>
+                void print_registers(std::ostream &o, const std::string prefix="", PrintHelper *ph=NULL) const {
+                    registers.print(o, prefix, ph);
+                }
 
                 /** Print memory contents.  This simply calls the MemoryCell::print method for each memory cell. The @p ph
                  * argument is a templatized PrintHelper that's just passed as the second argument to the underlying print
@@ -259,8 +293,8 @@ namespace BinaryAnalysis {
                 void print_memory(std::ostream &o, const std::string prefix="", PrintHelper *ph=NULL) const {
                     std::ios_base::fmtflags orig_flags = o.flags();
                     try {
-                        for (typename Memory::const_iterator mi=mem.begin(); mi!=mem.end(); ++mi)
-                            (*mi).print(o, prefix, ph);
+                        for (typename Memory::const_iterator mi=memory.begin(); mi!=memory.end(); ++mi)
+                            mi->print(o, prefix, ph);
                     } catch (...) {
                         o.flags(orig_flags);
                         throw;
@@ -276,11 +310,7 @@ namespace BinaryAnalysis {
                     o <<prefix <<"registers:\n";
                     print_registers(o, prefix+"    ", ph);
                     o <<prefix <<"memory:\n";
-                    if (mem.empty()) {
-                        o <<prefix <<"    (empty)\n";
-                    } else {
-                        print_memory(o, prefix+"    ", ph);
-                    }
+                    print_memory(o, prefix+"    ", ph);
                 }
 
                 /** Prints a semantic policy state.  This is the same as calling the StateX86's print() method with an empty
@@ -290,6 +320,10 @@ namespace BinaryAnalysis {
                     return o;
                 }
             };
+
+            /******************************************************************************************************************
+             *                                  Policy
+             ******************************************************************************************************************/
 
             /** Base class for most instruction semantics policies.  Policies can be derived from the base class or they may
              *  implement the same interface.   The policy is responsible for defining the semantics of the RISC-like

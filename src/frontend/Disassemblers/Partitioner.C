@@ -230,9 +230,9 @@ Partitioner::discover_jump_table(BasicBlock *bb, bool do_create, ExtentMap *tabl
     RegisterValueType eip = policy.readRegister<32>(semantics.REG_EIP);
     size_t entry_size = 4; // FIXME: bytes per jump table entry
     if (!eip.is_known()) {
-        for (size_t i=0; i<policy.get_state().mem.size(); ++i) {
-            if (policy.get_state().mem[i].get_data()==eip && !policy.get_state().mem[i].get_address().is_known()) {
-                rose_addr_t base_va = policy.get_state().mem[i].get_address().offset;
+        for (Policy::StateType::Memory::iterator mi=policy.get_state().memory.begin(); mi!=policy.get_state().memory.end(); ++mi) {
+            if (mi->get_data()==eip && !mi->get_address().is_known()) {
+                rose_addr_t base_va = mi->get_address().offset;
                 size_t nentries = 0;
                 while (1) {
                     uint8_t buf[entry_size];

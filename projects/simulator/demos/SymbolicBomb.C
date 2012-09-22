@@ -48,7 +48,7 @@ public:
 
     // Define the instruction decoder in terms of the multi-domain semantics
     typedef BinaryAnalysis::InstructionSemantics::X86InstructionSemantics<
-        MultiSemantics::Policy,
+        MultiSemantics::Policy<MultiSemantics::State, MultiSemantics::ValueType>,
         MultiSemantics::ValueType
         > DecoderX86;
 
@@ -98,7 +98,7 @@ public:
     analyze_function(RSIM_Thread *thread, SgAsmFunction *func, RTS_Message *m) {
         m->more("%s: analyzing function \"%s\" at 0x%08"PRIx64"\n", cb_name, func->get_name().c_str(), func->get_entry_va());
         RSIM_Process *proc = thread->get_process();
-        MultiSemantics::Policy policy;
+        MultiSemantics::Policy<MultiSemantics::State, MultiSemantics::ValueType> policy;
         DecoderX86 decoder(policy);
 
         // Execution starts at the function entry address.
@@ -148,7 +148,7 @@ public:
             std::ostringstream ss;
             ss <<e;
             m->more("%s: decoder exception: %s\n", cb_name, ss.str().c_str());
-        } catch (const MultiSemantics::Policy::Exception &e) {
+        } catch (const MultiSemantics::Policy<MultiSemantics::State, MultiSemantics::ValueType>::Exception &e) {
             std::ostringstream ss;
             ss <<e;
             m->more("%s: decoder policy exception: %s\n", cb_name, ss.str().c_str());
@@ -171,7 +171,7 @@ public:
     // Counts nodes across all registers.  Note that for x86, some registers have multiple names depending on the part of the
     // physical register being referenced.  Therefore, by counting the complexity of each named register, we're counting most
     // physical registers multiple times.  That's fine, as long as we're consistent.
-    size_t symbolic_state_complexity(MultiSemantics::Policy &policy) {
+    size_t symbolic_state_complexity(MultiSemantics::Policy<MultiSemantics::State, MultiSemantics::ValueType> &policy) {
         const RegisterDictionary::Entries &regs = policy.get_register_dictionary()->get_registers();
         ExprNodeCounter visitor;
         for (RegisterDictionary::Entries::const_iterator ri=regs.begin(); ri!=regs.end(); ++ri) {
@@ -184,7 +184,7 @@ public:
                     case 32: symbolic_expr_complexity(policy.readRegister<32>(reg), &visitor); break;
                     default: /*skip these registers*/                                          break;
                 }
-            } catch (const MultiSemantics::Policy::Exception &e) {
+            } catch (const MultiSemantics::Policy<MultiSemantics::State, MultiSemantics::ValueType>::Exception &e) {
                 // register is probably not implemented in the state object, so skip it
             }
         }

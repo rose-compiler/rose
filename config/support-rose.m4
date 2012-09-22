@@ -154,7 +154,7 @@ if test "x$enableval" = "xyes" ; then
        ],
        [AC_MSG_RESULT([done])],
        gcc_version=`gcc -dumpversion`
-       [AC_MSG_FAILURE([your GCC $gcc_version version is currently NOT supported by ROSE])])
+       [AC_MSG_FAILURE([your GCC $gcc_version version is currently NOT supported by ROSE. GCC 4.0.x to 4.4.x is supported now.])])
       AC_LANG_POP([C])
 else
     AC_MSG_RESULT([skipping])
@@ -164,6 +164,7 @@ fi
   ROSE_SUPPORT_COMPASS2
   ROSE_SUPPORT_GMP
   ROSE_SUPPORT_ISL
+  ROSE_SUPPORT_MPI
 
 ##
 #########################################################################################
@@ -330,13 +331,7 @@ AM_CONDITIONAL(ROSE_USE_NEW_EDG_INTERFACE, [test "x$enable_new_edg_interface" = 
 AM_CONDITIONAL(ROSE_USE_EDG_VERSION_4, [test "x$enable_edg_version4" = xyes])
 AM_CONDITIONAL(ROSE_USE_EDG_VERSION_4_3, [test "x$enable_edg_version43" = xyes])
 
-AC_ARG_ENABLE(clang-frontend, AS_HELP_STRING([--enable-clang-frontend], [Use Clang frontend instead of EDG]))
-AM_CONDITIONAL(ROSE_USE_CLANG_FRONTEND, [test "x$enable_clang_frontend" = xyes])
-if test "x$enable_clang_frontend" = "xyes"; then
-  ROSE_SUPPORT_CLANG
-else
-  AC_MSG_NOTICE([Clang frontend support disabled])
-fi
+ROSE_SUPPORT_CLANG
 
 # DQ (1/4/2009) Added support for optional GNU language extensions in new EDG/ROSE interface.
 # This value will be substituted into EDG/4.0/src/rose_lang_feat.h in the future (not used at present!)
@@ -499,7 +494,8 @@ AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_45,test "x$rose_boost_version" = "x104
 AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_46,test "x$rose_boost_version" = "x104600" -o "x$_version" = "x1.46")
 AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_46,test "x$rose_boost_version" = "x104601" -o "x$_version" = "x1.46")
 AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_47,test "x$rose_boost_version" = "x104700" -o "x$_version" = "x1.47")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_48,test "x$rose_boost_version" = "x104800" -o "x$_version" = "x1.48")
+# not ready
+#AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_48,test "x$rose_boost_version" = "x104800" -o "x$_version" = "x1.48")
 
 # DQ (10/18/2010): Error checking for Boost version.
 if test "x$rose_boost_version" = "x103600" -o "x$_version" = "x1.36" \
@@ -514,12 +510,13 @@ if test "x$rose_boost_version" = "x103600" -o "x$_version" = "x1.36" \
    -o "x$rose_boost_version" = "x104500" -o "x$_version" = "x1.45" \
    -o "x$rose_boost_version" = "x104600" -o "x$_version" = "x1.46" \
    -o "x$rose_boost_version" = "x104601" -o "x$_version" = "x1.46" \
-   -o "x$rose_boost_version" = "x104700" -o "x$_version" = "x1.47" \
-   -o "x$rose_boost_version" = "x104800" -o "x$_version" = "x1.48"
+   -o "x$rose_boost_version" = "x104700" -o "x$_version" = "x1.47" 
+# Not ready   
+#   -o "x$rose_boost_version" = "x104800" -o "x$_version" = "x1.48"
 then
     echo "Reasonable version of Boost found!"
 else
-    ROSE_MSG_ERROR([Unsupported version of Boost: '$_version' ('$rose_boost_version')])
+    ROSE_MSG_ERROR([Unsupported version of Boost: '$_version' ('$rose_boost_version'). Only 1.36 to 1.47 is supported now.])
 fi
 
 # DQ (12/22/2008): Fix boost configure to handle OS with older version of Boost that will
@@ -1058,6 +1055,9 @@ if test x$edg_opencl = xtrue; then
   AC_MSG_WARN([Add OpenCL specific headers to the include-staging directory.])
   GENERATE_OPENCL_SPECIFIC_HEADERS
 fi
+
+# support for Unified Parallel Runtime, check for CUDA and OpenCL
+ROSE_SUPPORT_UPR
 
 # *********************************************************************
 # Option to control internal support of PPL (Parma Polyhedron Library)
@@ -1896,6 +1896,18 @@ src/3rdPartyLibraries/qrose/Components/Common/icons/Makefile
 src/3rdPartyLibraries/qrose/Components/QueryBox/Makefile
 src/3rdPartyLibraries/qrose/Components/SourceBox/Makefile
 src/3rdPartyLibraries/qrose/Components/TreeBox/Makefile
+src/3rdPartyLibraries/UPR/Makefile
+src/3rdPartyLibraries/UPR/docs/Makefile
+src/3rdPartyLibraries/UPR/docs/doxygen/Makefile
+src/3rdPartyLibraries/UPR/docs/doxygen/doxy.conf
+src/3rdPartyLibraries/UPR/examples/Makefile
+src/3rdPartyLibraries/UPR/examples/cuda/Makefile
+src/3rdPartyLibraries/UPR/examples/opencl/Makefile
+src/3rdPartyLibraries/UPR/examples/xomp/Makefile
+src/3rdPartyLibraries/UPR/include/Makefile
+src/3rdPartyLibraries/UPR/include/UPR/Makefile
+src/3rdPartyLibraries/UPR/lib/Makefile
+src/3rdPartyLibraries/UPR/tools/Makefile
 src/ROSETTA/Makefile
 src/ROSETTA/src/Makefile
 src/frontend/Makefile
@@ -2024,6 +2036,7 @@ projects/MPI_Tools/MPIDeterminismAnalysis/Makefile
 projects/MacroRewrapper/Makefile
 projects/Makefile
 projects/OpenMP_Analysis/Makefile
+projects/OpenMP_Checker/Makefile
 projects/OpenMP_Translator/Makefile
 projects/OpenMP_Translator/includes/Makefile
 projects/OpenMP_Translator/tests/Makefile
@@ -2149,6 +2162,9 @@ projects/ManyCoreRuntime/docs/Makefile
 projects/mint/Makefile
 projects/mint/src/Makefile
 projects/mint/tests/Makefile
+projects/Fortran_to_C/Makefile
+projects/Fortran_to_C/src/Makefile
+projects/Fortran_to_C/tests/Makefile
 projects/traceAnalysis/Makefile
 projects/PolyhedralModel/Makefile
 projects/PolyhedralModel/src/Makefile
@@ -2286,8 +2302,6 @@ tests/roseTests/utilTests/Makefile
 tests/roseTests/fileLocation_tests/Makefile
 tests/roseTests/graph_tests/Makefile
 tests/roseTests/mergeTraversal_tests/Makefile
-tests/roseTests/cudaTests/Makefile
-tests/roseTests/openclTests/Makefile
 tests/translatorTests/Makefile
 tutorial/Makefile
 tutorial/exampleMakefile

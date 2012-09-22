@@ -78,14 +78,16 @@ namespace SignAnalysisExample {
      * consists of the registers and memory. We're assuming an i386. See also ROSE's <Registers.h> */
     class State {
     public:
-        static const size_t n_gprs = 8;         /**< Number of general purpose registers */
-        static const size_t n_segregs = 6;      /**< Number of 16-bit segmentation descriptor registers */
-        static const size_t n_flags = 32;       /**< We treat EFLAGS as individual 1-bit (unsigned) values */
+        struct {
+            static const size_t n_gprs = 8;         /**< Number of general purpose registers */
+            static const size_t n_segregs = 6;      /**< Number of 16-bit segmentation descriptor registers */
+            static const size_t n_flags = 32;       /**< We treat EFLAGS as individual 1-bit (unsigned) values */
 
-        ValueType<32> ip;                       /**< Instruction pointer */
-        ValueType<32> gpr[n_gprs];              /**< General purpose registers */
-        ValueType<32> segreg[n_segregs];        /**< Segmentation registers */
-        ValueType<1> flag[n_flags];             /**< Bits of EFLAGS */
+            ValueType<32> ip;                       /**< Instruction pointer */
+            ValueType<32> gpr[n_gprs];              /**< General purpose registers */
+            ValueType<32> segreg[n_segregs];        /**< Segmentation registers */
+            ValueType<1> flag[n_flags];             /**< Bits of EFLAGS */
+        } registers;
 
         /** Memory cells are <address,value> pairs.  Addresses belong to the same domain as values, therefore we have only
          * three possible addresses: negative, zero, positive.  This makes it impossible to determine the next instruction
@@ -95,13 +97,13 @@ namespace SignAnalysisExample {
         /** Prints state.  Prints all registers and the three memory locations.  The values are printed as "0", "+", and/or "-"
          *  depending on their sign. */
         void print(std::ostream &o) const {
-            for (size_t i=0; i<n_gprs; i++)
-                o <<gprToString((X86GeneralPurposeRegister)i) <<"=" <<gpr[i] <<" ";
-            for (size_t i=0; i<n_segregs; i++)
-                o <<segregToString((X86SegmentRegister)i) <<"=" <<segreg[i] <<" ";
-            o <<"ip=" <<ip <<" ";
-            for (size_t i=0; i<n_flags; i++)
-                o <<flagToString((X86Flag)i) <<"=" <<flag[i] <<" ";
+            for (size_t i=0; i<registers.n_gprs; i++)
+                o <<gprToString((X86GeneralPurposeRegister)i) <<"=" <<registers.gpr[i] <<" ";
+            for (size_t i=0; i<registers.n_segregs; i++)
+                o <<segregToString((X86SegmentRegister)i) <<"=" <<registers.segreg[i] <<" ";
+            o <<"ip=" <<registers.ip <<" ";
+            for (size_t i=0; i<registers.n_flags; i++)
+                o <<flagToString((X86Flag)i) <<"=" <<registers.flag[i] <<" ";
             o <<"mem[0]=" <<memory[0] <<" ";
             o <<"mem[+]=" <<memory[1] <<" ";
             o <<"mem[-]=" <<memory[2] << std::endl;
@@ -170,7 +172,7 @@ namespace SignAnalysisExample {
         }
 
         void startInstruction(SgAsmInstruction *insn) {
-            cur_state.ip = ValueType<32>(insn->get_address());
+            cur_state.registers.ip = ValueType<32>(insn->get_address());
         }
 
         void finishInstruction(SgAsmInstruction*) {}

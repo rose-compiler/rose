@@ -88,9 +88,10 @@ enum RTS_Layer {
     RTS_LAYER_DONTCARE = 0,
 
     /* ROSE library layers, 100-199 */
-    RTS_LAYER_ROSE_CALLBACKS_LIST_OBJ   = 100,          /**< ROSE_Callbacks::List */
-    RTS_LAYER_RTS_MESSAGE_CLASS         = 105,          /**< RTS_Message */
-    RTS_LAYER_DISASSEMBLER_CLASS        = 110,          /**< Disassembler */
+    RTS_LAYER_ROSE_CALLBACKS_LIST_OBJ   = 100,          /**< ROSE_Callbacks::List class */
+    RTS_LAYER_RTS_MESSAGE_CLASS         = 105,          /**< RTS_Message class */
+    RTS_LAYER_DISASSEMBLER_CLASS        = 110,          /**< Disassembler class */
+    RTS_LAYER_ROSE_SMT_SOLVERS          = 115,          /**< SMTSolver class */
 
     /* Simulator layers (see projects/simulator), 200-220
      *

@@ -75,13 +75,11 @@ using namespace BinaryAnalysis::InstructionSemantics;
                 solver->set_linkage(YicesSolver::LM_LIBRARY);
                 set_solver(solver);
 #           endif
+                //solver->set_debug(stderr);
         }
         void dump(SgAsmInstruction *insn) {
             std::cout <<unparseInstructionWithAddress(insn) <<"\n";
-            get_state().print<BaseSemantics::SEMANTIC_NO_PRINT_HELPER>(std::cout, "    ");
-            std::cout <<"    ip = ";
-            std::cout <<get_ip();
-            std::cout <<"\n";
+            print(std::cout, "    ");
         }
     };
 #elif 5==POLICY_SELECTOR
@@ -99,7 +97,7 @@ using namespace BinaryAnalysis::InstructionSemantics;
         SymbolicSemantics::ValueType, SymbolicSemantics::State, SymbolicSemantics::Policy                                      \
         >
 #   define TestValueTemplate TestSemanticsScope::ValueType
-    struct TestPolicy: public TestSemanticsScope::Policy {
+    struct TestPolicy: public TestSemanticsScope::Policy<TestSemanticsScope::State, TestSemanticsScope::ValueType> {
         void dump(SgAsmInstruction *insn) {
             std::cout <<unparseInstructionWithAddress(insn) <<"\n"
                       <<*this;

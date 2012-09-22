@@ -1,0 +1,5 @@
+
+SUBDIRS=doxygen
+
+doc: html
+

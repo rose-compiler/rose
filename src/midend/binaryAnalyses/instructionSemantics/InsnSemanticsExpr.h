@@ -33,6 +33,7 @@ namespace InsnSemanticsExpr {
         OP_NEGATE,              /**< Arithmetic negation. One operand. */
         OP_NOOP,                /**< No operation. Used only by the default constructor. */
         OP_OR,                  /**< Boolean OR. Operands are all Boolean (1-bit) values. See also OP_BV_OR. */
+        OP_READ,                /**< Read a value from memory.  Arguments are the memory state and the address expression. */
         OP_ROL,                 /**< Rotate left. Rotate bits of B left by A bits.  0 <= A < width(B). */
         OP_ROR,                 /**< Rotate right. Rotate bits of B right by A bits. 0 <= B < width(B).  */
         OP_SDIV,                /**< Signed division. Two operands, A/B. Result width is width(A). */
@@ -55,6 +56,7 @@ namespace InsnSemanticsExpr {
         OP_ULT,                 /**< Unsigned less-than. Two operands of equal width. Result is Boolean (1-bit vector). */
         OP_UMOD,                /**< Unsigned modulus. Two operands, A%B. Result width is width(B). */
         OP_UMUL,                /**< Unsigned multiplication. Two operands, A*B. Result width is width(A)+width(B). */
+        OP_WRITE,               /**< Write (update) memory with a new value. Arguments are memory, address and value. */
         OP_ZEROP,               /**< Equal to zero. One operand. Result is a single bit, set iff A is equal to zero. */
     };
 
@@ -167,6 +169,11 @@ namespace InsnSemanticsExpr {
             add_child(b);
             add_child(c);
         }
+        InternalNode(size_t nbits, Operator op, const std::vector<TreeNodePtr> &children, std::string comment="")
+            : TreeNode(nbits, comment), op(op) {
+            for (size_t i=0; i<children.size(); ++i)
+                add_child(children[i]);
+        }
 
     public:
         /** Create a new expression node. Use these class methods instead of c'tors. */
@@ -186,6 +193,11 @@ namespace InsnSemanticsExpr {
         static InternalNodePtr create(size_t nbits, Operator op, const TreeNodePtr &a, const TreeNodePtr &b, const TreeNodePtr &c,
                                       const std::string comment="") {
             InternalNodePtr retval(new InternalNode(nbits, op, a, b, c, comment));
+            return retval;
+        }
+        static InternalNodePtr create(size_t nbits, Operator op, const std::vector<TreeNodePtr> &children,
+                                      const std::string comment="") {
+            InternalNodePtr retval(new InternalNode(nbits, op, children, comment));
             return retval;
         }
         /** @} */
@@ -211,27 +223,34 @@ namespace InsnSemanticsExpr {
         size_t size() const { return children.size(); }
 
         /** Returns the specified child. */
-        TreeNodePtr child(size_t idx) const { return children[idx]; }
+        TreeNodePtr child(size_t idx) const { assert(idx<children.size()); return children[idx]; }
 
         /** Returns the operator. */
         Operator get_operator() const { return op; }
 
-        /** Appends @p child as a new child of this node. The reference count for the root of the child is incremented; the
-         *  child expression is not copied. */
+    protected:
+        /** Appends @p child as a new child of this node. The modification is done in place, so one must be careful that this
+         *  node is not part of other expressions.  It is safe to call add_child() on a node that was just created and not used
+         *  anywhere yet. */
         void add_child(const TreeNodePtr &child);
     };
 
-    /** Leaf node of an expression tree for instruction semantics. A leaf node is either a known value or a free variable. */
+    /** Leaf node of an expression tree for instruction semantics.
+     *
+     *  A leaf node is either a known bit vector value, a free bit vector variable, or a memory state. */
     class LeafNode: public TreeNode {
     private:
-        bool known;                         /**< True if the value is known; false for variables. */
+        enum LeafType { CONSTANT, BITVECTOR, MEMORY };
+        LeafType leaf_type;
         union {
             uint64_t ival;                  /**< Integer (unsigned) value when 'known' is true; unused msb are zero */
             uint64_t name;                  /**< Variable ID number when 'known' is false. */
         };
 
         // Private to help prevent creating pointers to leaf nodes.  See create_* methods instead.
-        LeafNode(std::string comment=""): TreeNode(32, comment), known(true), ival(0) {}
+        LeafNode(std::string comment=""): TreeNode(32, comment), leaf_type(CONSTANT), ival(0) {}
+
+        static uint64_t name_counter;
 
     public:
         /** Construct a new free variable with a specified number of significant bits. */
@@ -241,11 +260,21 @@ namespace InsnSemanticsExpr {
          *  size will be zeroed. */
         static LeafNodePtr create_integer(size_t nbits, uint64_t n, std::string comment="");
 
+        /** Construct a new memory state.  A memory state is a function that maps an address of specified size to a value of
+         *  specified size. */
+        static LeafNodePtr create_memory(size_t nbits, std::string comment="");
+
         /* see superclass, where this is pure virtual */
         virtual bool is_known() const;
 
         /* see superclass, where this is pure virtual */
         virtual uint64_t get_value() const;
+
+        /** Is the node a bitvector variable? */
+        virtual bool is_variable() const;
+
+        /** Does the node represent memory? */
+        virtual bool is_memory() const;
 
         /** Returns the name of a free variable.  The output functions print variables as "vN" where N is an integer. It is
          *  this N that this method returns.  It should only be invoked on leaf nodes for which is_known() returns false. */

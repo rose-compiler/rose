@@ -247,9 +247,9 @@ bool IntraUniDirectionalDataflow::propagateStateToNextNode(
                 Dbg::dbg << "\n        Propagating to Next Node: "<<nextNode.getNode()<<"["<<nextNode.getNode()->class_name()<<" | "<<Dbg::escape(nextNode.getNode()->unparseToString())<<"]"<<endl;
                 int j;
                 for(j=0, itC = curNodeState.begin(); itC != curNodeState.end(); itC++, j++)
-                        Dbg::dbg << "        Cur node: Lattice "<<j<<": \n            "<<(*itC)->str("            ")<<endl;
+                        Dbg::dbg << "        Current node: Lattice "<<j<<": \n            "<<(*itC)->str("            ")<<endl;
                 for(j=0, itN = nextNodeState.begin(); itN != nextNodeState.end(); itN++, j++)
-                        Dbg::dbg << "        Next node: Lattice "<<j<<": \n            "<<(*itN)->str("            ")<<endl;
+                        Dbg::dbg << "        Next/Descendant node: Lattice before propagation "<<j<<": \n            "<<(*itN)->str("            ")<<endl;
         }
 
         // Update forward info above nextNode from the forward info below curNode.
@@ -263,7 +263,11 @@ bool IntraUniDirectionalDataflow::propagateStateToNextNode(
                 // Finite Lattices can use the regular meet operator, while infinite Lattices
                 // must also perform widening to ensure convergence.
                 if((*itN)->finiteLattice())
+                {
+                        if(analysisDebugLevel>=1)
+                           Dbg::dbg << "        Finite lattice: using regular meetUpdate from current'lattic into next node's lattice... "<<endl;
                         modified = (*itN)->meetUpdate(*itC) || modified;
+                }
                 else
                 {
                         //InfiniteLattice* meetResult = (InfiniteLattice*)itN->second->meet(itC->second);
@@ -282,15 +286,15 @@ bool IntraUniDirectionalDataflow::propagateStateToNextNode(
         if(analysisDebugLevel>=1) {
                 if(modified)
                 {
-                        Dbg::dbg << "        Next node's in-data modified. Adding..."<<endl;
+                        Dbg::dbg << "        Next node's lattice *modified* by the propagation. "<<endl;
                         int j=0;
                         for(itN = nextNodeState.begin(); itN != nextNodeState.end(); itN++, j++)
                         {
-                                Dbg::dbg << "        Propagated: Lattice "<<j<<": \n            "<<(*itN)->str("            ")<<endl;
+                                Dbg::dbg << "        Modified lattice "<<j<<": \n            "<<(*itN)->str("            ")<<endl;
                         }
                 }
                 else
-                        Dbg::dbg << "        No modification on this node"<<endl;
+                        Dbg::dbg << "        Next node's lattice is *unchanged* by the propagation. "<<endl;
         }
 
         return modified;
@@ -756,7 +760,7 @@ bool ContextInsensitiveInterProceduralDataflow::transfer(
                         { printf("argParamMap[%s] = %s \n", it->first.str().c_str(), it->second.str().c_str()); }*/
                         remappedL->remapVars(argParamMap, callee);
                 
-                        //Dbg::dbg << "      remappedL=["<<calleeL<<"] "<<remappedL->str("        ")<<endl;
+                        Dbg::dbg << "      remappedL=["<<calleeL<<"] "<<remappedL->str("        ")<<endl;
                         
                         // update the callee's Lattice with the new information at the call site
                         modified = calleeL->meetUpdate(remappedL) || modified;
@@ -798,7 +802,7 @@ bool ContextInsensitiveInterProceduralDataflow::transfer(
                         // Create a copy of the current lattice, remapped for the callee function's variables
                         Lattice* remappedL = calleeL->copy();
                         if(analysisDebugLevel>=1)
-                                Dbg::dbg << "      remappedL-after=["<<remappedL<<"] "<<calleeL->str("        ")<<endl;
+                                Dbg::dbg << "      remappedL-after=["<<remappedL<<"] "<<calleeL->str("        ")<<endl << remappedL->str(" ")<<endl;
                         map<varID, varID> paramArgByRefMap;
                         FunctionState::setParamArgByRefMap(call, paramArgByRefMap);
                         /*Dbg::dbg << "#paramArgByRefMap="<<paramArgByRefMap.size()<<endl;
@@ -807,7 +811,7 @@ bool ContextInsensitiveInterProceduralDataflow::transfer(
                         remappedL->remapVars(paramArgByRefMap, func);
                         
                         //Dbg::dbg << "      callerL-after=["<<callerL<<"] "<<callerL->str("        ")<<endl;
-                        //Dbg::dbg << "      +remappedL-after=["<<remappedL<<"] "<<remappedL->str("        ")<<endl;
+                        Dbg::dbg << "      +remappedL-after=["<<remappedL<<"] "<<remappedL->str("        ")<<endl;
                         
                         // update the caller's Lattice with the new information at the call site
                         callerL->incorporateVars(remappedL);

@@ -23,6 +23,7 @@ SUBDIRS = \
 	MPI_Tools \
 	MacroRewrapper \
 	OpenMP_Analysis \
+        OpenMP_Checker \
 	QtDesignerPlugins \
 	RoseQt \
 	arrayOptimization \
@@ -40,9 +41,11 @@ SUBDIRS = \
 	RTC \
 	PowerAwareCompiler \
 	ManyCoreRuntime \
+	Fortran_to_C \
 	mint \
 	extractMPISkeleton \
 	$(OPTIONAL_PROJECTS)
+
 
 if ROSE_WITH_ISL
   SUBDIRS += RosePolly
