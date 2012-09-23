@@ -13,13 +13,13 @@ apt-get install ghc libghc6-missingh-dev libghc6-quickcheck2-dev
 module Main where
 import Prelude
 import System.IO
+import System.IO.Error
 import System.Process
-import System
 import Text.Printf
 import Test.QuickCheck
 import Test.QuickCheck.Monadic
 import Data.String.Utils
-import Char
+import Data.Char
 import Control.Concurrent
 
 data LTL = In Char
@@ -45,8 +45,8 @@ instance Arbitrary RersData where
             n    <- choose (size `max` 1, maxlength)
             vals <- vectorOf n (choose (minval, maxval))
             return (RersData vals)
-          minval = 20
-          maxval = 25
+          minval = 1
+          maxval = 7
           maxlength = 20
   shrink (RersData vals) = map RersData (shrink vals)
 
@@ -68,37 +68,49 @@ prop_holds formula input =
 actualOutput :: RersData -> IO [State]
 actualOutput (RersData input) = do
   printf "> ./machine %s (len=%d)\n" (map rersChar input) (length input)
-  (stdin, stdout, stderr, pid) <- runInteractiveCommand "./machine.exe"
+  -- unbuffer is part of GNU? expect and forces a command to use
+  -- unbuffered I/O by emulating a terminal
+  (stdin, stdout, stderr, pid) <- runInteractiveCommand "unbuffer -p ./machine.exe"
   mapM_ (flip hSetBinaryMode False) [stdin, stdout, stderr]
   hSetBuffering stdin LineBuffering
   hSetBuffering stdout NoBuffering
-    
   -- fork off a thread to read from stderr, so our process doesn't
   -- block if it writes to it
-  forkIO $ do err <- hGetContents stderr; return ()
-  
-  printf "> running ...\n"
-  output <- action stdin stdout input
-  printf "> output = %s\n" (show output)
-  terminateProcess pid
-
-  --printf "exitcode = %s, stdout=%s, stderr=%s"  (show exitcode)  stdout  stderr
-  return output
+  forkIO $ do err <- hGetContents stderr; printf err; return ()
+  result <- try $ action stdin stdout input
+  case result of 
+    Left _ -> do 
+      --printf "I/O Error\n"
+      terminateProcess pid
+      return []
+    Right output -> do 
+      printf "> output = %s\n" (show output)
+      terminateProcess pid
+      return output
   where inputStr = join "\n" (map show input)
         parse string = map (\s -> (read s)::Int) (split "\n" string)
-        
-        -- assuming that len(input) == len(output)
+
         action _ _ [] = do return []
         action stdin stdout (input:is) = do 
-          printf "in %s\n" (show input)
-          forkIO (hPutStrLn stdin (show input))
-          reply <- hGetLine stdout
-          printf "out %s\n" (reply)
-          res <- action stdin stdout is
-          return $ (StIn (rersChar input)) : (StOut (rersChar (read reply))) : res
+          hPutStrLn stdin (show input)
+          hFlush stdin
+          --printf "in %s\n" (show input) 
+
+          -- make a best effort to synchronize input and output. It's
+          -- really impossible because a given input may or may not
+          -- trigger an output.
+          hasOutput <- hWaitForInput stdout 250
+          if hasOutput then do
+                reply <- hGetLine stdout
+                printf "out %s\n" (reply)
+                res <- action stdin stdout is
+                return $ (StIn (rersChar input)) : (StOut (rersChar (read reply))) : res
+          else do
+                res <- action stdin stdout is
+                return $ (StIn (rersChar input)) : res
 
 rersChar :: Int -> Char
-rersChar i = chr (i+(ord 'A'))
+rersChar i = chr (i+(ord 'A')-1)
 
 -- verify that an LTL formula holds for a given chain of states
 holds :: LTL -> [State] -> Bool
@@ -114,6 +126,7 @@ holds (a `U`   b) states = (holds b states) || ((holds a states) && (holds (X (a
 holds (a `R`   b) states = (holds b states) && ((holds a states) || (holds (X (a `R` b)) states))
 holds (a `WU`  b) states = (states == []) ||
                            (holds b states) || ((holds a states) && (holds (X (a `U` b)) states))
+holds _ [] = True
 holds _ _ = False
 
 #include "formulae.hs"
@@ -124,5 +137,6 @@ main = do mapM printResult (allbutlast formulae)
 
 printResult :: LTL -> IO ()
 printResult f = do
+  printf "===================================================\n"
   printf "checking %s\n" (show f)
   quickCheck (prop_holds f)
