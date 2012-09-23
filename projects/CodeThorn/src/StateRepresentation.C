@@ -45,7 +45,11 @@ string InputOutput::toString() const {
 }
 
 bool operator<(const InputOutput& c1, const InputOutput& c2) {
-  return c1.op<c2.op || ((c1.op==c2.op) && (c1.var<c2.var)) || ((c1.var==c2.var) && (AType::strictWeakOrderingIsSmaller(c1.val,c2.val)));
+  if(c1.op!=c2.op)
+	return c1.op<c2.op;
+  if(!(c1.var==c2.var))
+	return c1.var<c2.var;
+  return AType::strictWeakOrderingIsSmaller(c1.val,c2.val);
 }
 
 bool operator==(const InputOutput& c1, const InputOutput& c2) {
@@ -211,11 +215,15 @@ string StateSet::toString() {
 }
 
 // define order for EState elements (necessary for EStateSet)
-#if 1
 bool operator<(const EState& c1, const EState& c2) {
-  return (c1.label<c2.label) || ((c1.label==c2.label) && (c1.state<c2.state)) || (c1.state==c2.state && c1.constraints()<c2.constraints()) || ((c1.constraints()==c2.constraints()) && (c1.io<c2.io));
+  if(c1.label!=c2.label)
+	return (c1.label<c2.label);
+  if(c1.state!=c2.state)
+	return (c1.state<c2.state);
+  if(c1.constraints()!=c2.constraints())
+	return (c1.constraints()<c2.constraints());
+  return c1.io<c2.io;
 }
-#endif
 
 bool operator==(const EState& c1, const EState& c2) {
   bool result=((c1.label==c2.label) && (c1.state==c2.state));
@@ -229,7 +237,6 @@ bool operator==(const EState& c1, const EState& c2) {
 bool operator!=(const EState& c1, const EState& c2) {
   return !(c1==c2);
 }
-
 
 EStateId EStateSet::eStateId(const EState* eState) {
   return eStateId(*eState);
@@ -268,8 +275,51 @@ EStateSet::ProcessingResult EStateSet::processEState(EState s) {
   if(const EState* existingEStatePtr=eStatePtr(s)) {
 	return make_pair(true,existingEStatePtr);
   } else {
+#ifdef ESTATESET_REF
 	push_back(s);
+#else
+	insert(s);
+#endif
 	const EState* existingEStatePtr=eStatePtr(s);
+	if(!existingEStatePtr) {
+	  bool operator_less(const EState& c1, const EState& c2);
+
+	  // generate error description
+	  int cnt=0;
+	  bool violationfound=false;
+	  int cnttested=0;
+	  for(EStateSet::iterator i=begin();i!=end();++i) {
+		for(EStateSet::iterator k=i;k!=end();++k) {
+		  EStateSet::iterator j=k;
+		  j++;
+		  if(j!=end()) {
+			if(!((*i)<(*j))) {
+			  cerr << "Violation found at: "<<cnt<<":"<<endl;
+			  cerr << (*i).toString()<<endl;
+			  cerr << "< (violated)"<<endl;
+			  cerr << (*j).toString()<<endl;
+			  cerr << endl;
+			  cerr << "i<j:"<<((*i)<(*j))<<endl;
+			  cerr << "j<i:"<<((*j)<(*i))<<endl;
+			  cerr << "i==j:"<<((*i)==(*j))<<endl;
+			  cerr << "----------------"<<endl;
+			  cerr << "currentEState:"<<s.toString()<<endl;
+			  cerr << "----------------"<<endl;
+				
+			}
+			if(((*i)==(*j))) {
+			  cerr << "Violation found at: "<<cnt<<":"<<endl;
+			  cerr << (*i).toString()<<endl;
+			  cerr << "!= (violated)"<<endl;
+			  cerr << (*j).toString()<<endl;
+			}
+			cnttested++;
+		  }
+		  cnt++;
+		}
+	  }
+	  cerr << "Counted: "<<cnt<<" Tested:"<<cnttested<<endl;
+	}
 	assert(existingEStatePtr);
 	return make_pair(false,existingEStatePtr);
   }
@@ -278,11 +328,6 @@ EStateSet::ProcessingResult EStateSet::processEState(EState s) {
 
 bool EStateSet::eStateExists(EState& s) {
   return eStatePtr(s)!=0;
-}
-
-void EStateSet::addNewEState(EState newEState) { 
-  assert(eStatePtr(newEState)==0);
-  push_back(newEState);
 }
 
 int EStateSet::numberOfIoTypeEStates(InputOutput::OpType op) {
@@ -295,7 +340,7 @@ int EStateSet::numberOfIoTypeEStates(InputOutput::OpType op) {
 } 
 
 const EState* EStateSet::eStatePtr(EState& s) {
-#if 1
+#ifdef ESTATESET_REF
   // we use this as the find algorithm cannot be used for this data structure yet.
   for(EStateSet::iterator i=begin();i!=end();++i) {
 	if(*i==s)
@@ -340,7 +385,6 @@ string TransitionGraph::toString() const {
 	s+=(*i).toString()+"\n";
 	cnt++;
   }
-  cout << "Size: "<<size()<<" Count: "<<cnt<<endl;
   assert(cnt==size());
   return s;
 }

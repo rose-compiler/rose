@@ -231,7 +231,12 @@ int main( int argc, char * argv[] ) {
 #ifdef STATESET_REF
   cout << "INFO: CodeThorn 1.1. (RC1): Slow reference implementation (using STATESET_REF)."<<endl;
 #else
-  cout << "INFO: CodeThorn 1.1 (RC1): Fast sequential implementation."<<endl;
+  cout << "INFO: CodeThorn 1.1 (RC1): Fast sequential implementation (STATE_SET)."<<endl;
+#endif
+#ifdef STATESET_REF
+  cout << "INFO: CodeThorn 1.1. (RC1): Slow reference implementation (using ESTATESET_REF)."<<endl;
+#else
+  cout << "INFO: CodeThorn 1.1 (RC1): Fast sequential implementation (ESTATE_SET)."<<endl;
 #endif
   // Build the AST used by ROSE
   cout << "INIT: Parsing and creating AST."<<endl;

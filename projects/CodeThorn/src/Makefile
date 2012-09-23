@@ -1,7 +1,7 @@
 # MS: makefile for local development with installed version of ROSE.
 
 # for building the reference implementation use:
-# make codethornref REFKNOBS="-DSTATESET_REF"
+# make codethornref REFKNOBS="-DSTATESET_REF -DESTATE_REF" 
 
 TOOLNAME3 = codethorn
 MYDATE = `date +%Y_%m_%d`

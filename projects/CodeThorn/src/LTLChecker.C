@@ -336,7 +336,9 @@ public:
       return false;
 
     BoolLattice r = BoolLattice(Top()) || joined_preds;
-    ConstraintSet constraints = estate->getConstraints();
+	assert(estate);
+	assert(estate->constraints());
+    ConstraintSet constraints = *estate->constraints();
     for (set<VariableId>::const_iterator ivar = input_vars.begin();
 	 ivar != input_vars.end(); ++ivar) {
       r = r || is_eq(estate, constraints, *ivar, c);
@@ -352,6 +354,8 @@ public:
 			   const ConstraintSet& constraints, 
 			   const VariableId& v, 
 			   int c) {
+	assert(estate);
+	assert(estate->constraints());
     const ConstIntLattice& lval = estate->constraints()->varConstIntLatticeValue(v);
     //cerr<<endl<<"ivar == "<<(*v)->variableName()<<endl;
     //cerr<<estate->constraints.toString()<<endl;
@@ -364,7 +368,6 @@ public:
       return BoolLattice(Top());
     }
   }
-
   // Implementation status: IN PROGRESS
   // NOTE: This is extremely taylored to the RERS challenge benchmarks.
   void visit(const InputSymbol* expr) {
@@ -657,7 +660,7 @@ Checker::Checker(EStateSet& ess, TransitionGraph& _tg)
   }
   start = estate_label[transitionGraph.begin()->source];
 
-#if 1
+#if 0
   // Optimization
   collapse_transition_graph(full_graph, g);
 #else

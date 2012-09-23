@@ -1,6 +1,8 @@
 #ifndef STATE_REPRESENTATION_H
 #define STATE_REPRESENTATION_H
 
+#define ESTATE_REF
+
 /*************************************************************
  * Copyright: (C) 2012 by Markus Schordan                    *
  * Author   : Markus Schordan                                *
@@ -34,8 +36,6 @@ class State : public map<VariableId,CppCapsuleAValue> {
   void deleteVar(VariableId varname);
   long memorySize() const;
 };
-
-//#define FAST_STATESET
 
 #ifdef STATESET_REF
 class StateSet : public list<State> {
@@ -109,15 +109,28 @@ class EState {
 //bool operator==(const pair<VariableId,AValue>& elem1, const pair<VariableId,AValue>& elem2);
 
 // define order for EState elements (necessary for EStateSet)
+#ifndef ESTATESET_REF
 bool operator<(const EState& c1, const EState& c2);
 bool operator==(const EState& c1, const EState& c2);
 bool operator!=(const EState& c1, const EState& c2);
+#endif
 
+struct EStateLessComp {
+  bool operator()(const EState& c1, const EState& c2) {
+	return c1<c2;
+  }
+};
+
+
+
+#ifdef ESTATESET_REF
 class EStateSet : public list<EState> {
+#else
+  class EStateSet : public set<EState> {
+#endif
  public:
  EStateSet():_constraintSetMaintainer(0){}
   typedef pair<bool,const EState*> ProcessingResult;
-  void addNewEState(EState newEState); // obsolete (only used in internal tests)
   bool eStateExists(EState& s);
   ProcessingResult processEState(EState newEState);
   const EState* processNewEState(EState& s);

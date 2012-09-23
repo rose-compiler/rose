@@ -205,8 +205,10 @@ void checkTypes() {
 	  nocheck("!(cs1<cs2)",!(cs1<cs2));
 	  nocheck("cs1>cs2",(cs2<cs1));
 	  EStateSet es;
-	  es.addNewEState(EState(1,&s,&cs1));
-	  es.addNewEState(EState(1,&s,&cs2));
+	  EState es1=EState(1,&s,&cs1);
+	  es.processNewOrExistingEState(es1);
+	  EState es2=EState(1,&s,&cs2);
+	  es.processNewOrExistingEState(es2);
 	  check("es.size()==2",es.size()==2);
 	  {
 	  Constraint c5(Constraint::EQ_VAR_CONST,var_y,10);
@@ -333,11 +335,24 @@ void checkTypes() {
 	check("es1!=es2",es1!=es2);
 	check("es2!=es3",es1!=es3);
 	check("es1!=es3",es2!=es3);
-	nocheck("es2<es1",es2<es1);
-	nocheck("!(es1<es2)",!(es1<es2));
+#ifdef ESTATESET_REF
+	nocheck("es1<es2",es2<es1);
+	nocheck("!(es2<es1)",!(es1<es2));
+#else
+	check("es1<es2",es1<es2);
+	check("!(es2<es1)",!(es2<es1));
+#endif
+
 	check("!(es1==es2)",!(es1==es2));
+
+#ifdef ESTATESET_REF
 	nocheck("es1<es3",es1<es3);
 	nocheck("es2<es3",es2<es3);
+#else
+	check("es1<es3",es1<es3);
+	check("es2<es3",es2<es3);
+#endif
+
 	check("es2==es2",es2==es2);
 	check("=> eStateSet.size() == 0",eStateSet.size() == 0);
 
