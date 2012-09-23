@@ -115,7 +115,7 @@ string Constraint::opToString() const {
   }
 }
 
-bool ConstraintSet::deqConstraintExists() {
+bool ConstraintSet::deqConstraintExists() const {
   for(ConstraintSet::iterator i=begin();i!=end();++i) {
 	if((*i).op()==Constraint::DEQ_VAR_CONST)
 	  return true;
@@ -459,4 +459,21 @@ ConstraintSetMaintainer::ProcessingResult ConstraintSetMaintainer::processConstr
 	return make_pair(false,existingConstraintSetPtr);
   }
   assert(0);
+}
+
+long ConstraintSet::memorySize() const {
+  long mem=0;
+  for(ConstraintSet::iterator i=begin();i!=end();++i) {
+	mem+=sizeof(*i);
+  }
+  return mem+sizeof(*this);
+}
+long ConstraintSetMaintainer::memorySize() const {
+  long mem=0;
+  for(ConstraintSetMaintainer::const_iterator i=begin();
+	  i!=end();
+	  ++i) {
+	mem+=(*i).memorySize();
+  }
+  return mem+sizeof(*this);
 }

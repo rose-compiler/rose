@@ -75,6 +75,32 @@ string State::toString() const {
   return ss.str();
 }
 
+long EStateSet::memorySize() const {
+  long mem=0;
+  for(EStateSet::const_iterator i=begin();i!=end();++i) {
+	mem+=(*i).memorySize();
+  }
+  return mem+sizeof(*this);
+}
+long StateSet::memorySize() const {
+  long mem=0;
+  for(StateSet::const_iterator i=begin();i!=end();++i) {
+	mem+=(*i).memorySize();
+  }
+  return mem+sizeof(*this);
+}
+
+long State::memorySize() const {
+  long mem=0;
+  for(State::const_iterator i=begin();i!=end();++i) {
+	mem+=sizeof(*i);
+  }
+  return mem+sizeof(*this);
+}
+long EState::memorySize() const {
+  return sizeof(*this);
+}
+
 void State::deleteVar(VariableId varId) {
   for(State::iterator i=begin();i!=end();++i) {
 	if((*i).first==varId)
@@ -187,14 +213,14 @@ string StateSet::toString() {
 // define order for EState elements (necessary for EStateSet)
 #if 1
 bool operator<(const EState& c1, const EState& c2) {
-  return (c1.label<c2.label) || ((c1.label==c2.label) && (c1.state<c2.state)) || (c1.state==c2.state && c1.constraints<c2.constraints) || ((c1.constraints==c2.constraints) && (c1.io<c2.io));
+  return (c1.label<c2.label) || ((c1.label==c2.label) && (c1.state<c2.state)) || (c1.state==c2.state && c1.constraints()<c2.constraints()) || ((c1.constraints()==c2.constraints()) && (c1.io<c2.io));
 }
 #endif
 
 bool operator==(const EState& c1, const EState& c2) {
   bool result=((c1.label==c2.label) && (c1.state==c2.state));
   if(boolOptions["precision-equality-constraints"])
-	result = result && (c1.constraints==c2.constraints);
+	result = result && (c1.constraints()==c2.constraints());
   if(boolOptions["precision-equality-io"])
 	result = result && (c1.io==c2.io);
   return result;
@@ -226,6 +252,8 @@ string EStateSet::eStateIdString(const EState* eState) {
 }
 
 const EState* EStateSet::processNewEState(EState& s) {
+  assert(s.state);
+  assert(s.constraints());
   ProcessingResult res=processEState(s);
   assert(res.first==false);
   return res.second;
@@ -312,6 +340,8 @@ string TransitionGraph::toString() const {
 	s+=(*i).toString()+"\n";
 	cnt++;
   }
+  cout << "Size: "<<size()<<" Count: "<<cnt<<endl;
+  assert(cnt==size());
   return s;
 }
 
@@ -343,7 +373,11 @@ string EState::toString() const {
 	ss <<state->toString();
   else
 	ss <<"NULL";
-  ss <<", constraints="<<constraints.toString();
+  if(constraints()) {
+	ss <<", constraints="<<constraints()->toString();
+  } else {
+	ss <<", NULL";
+  }
   ss <<", io="<<io.toString();
   ss<<")";
   return ss.str();

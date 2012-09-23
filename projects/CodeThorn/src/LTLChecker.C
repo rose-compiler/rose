@@ -352,7 +352,7 @@ public:
 			   const ConstraintSet& constraints, 
 			   const VariableId& v, 
 			   int c) {
-    const ConstIntLattice& lval = estate->constraints.varConstIntLatticeValue(v);
+    const ConstIntLattice& lval = estate->constraints()->varConstIntLatticeValue(v);
     //cerr<<endl<<"ivar == "<<(*v)->variableName()<<endl;
     //cerr<<estate->constraints.toString()<<endl;
     //cerr<<lval.toString()<<endl;

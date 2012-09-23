@@ -78,12 +78,13 @@ class ConstraintSet : public set<Constraint> {
   void removeConstraint(Constraint c);
   //! implemented by method removeConstraint
   void removeConstraint(ConstraintSet::iterator i);
-  bool deqConstraintExists();
+  bool deqConstraintExists() const;
   void addAssignEqVarVar(VariableId, VariableId);
   void addEqVarVar(VariableId, VariableId);
   void removeEqVarVar(VariableId, VariableId);
   ConstraintSet& operator+=(ConstraintSet& s2);
   //ConstraintSet operator+(ConstraintSet& s2);
+  long memorySize() const;
 };
 ConstraintSet operator+(ConstraintSet s1, ConstraintSet s2);
 //bool operator==(const ConstraintSet& s1, const ConstraintSet& s2);
@@ -98,6 +99,8 @@ class ConstraintSetMaintainer : public list<ConstraintSet> {
   const ConstraintSet* processNewConstraintSet(ConstraintSet& s);
   const ConstraintSet* processNewOrExistingConstraintSet(ConstraintSet& s);
   string toString();
+  long numberOfConstraintSets() { return size();}
+  long memorySize() const;
  private:
   const ConstraintSet* constraintSetPtr(ConstraintSet& s);
 };

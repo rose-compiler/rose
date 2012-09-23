@@ -90,6 +90,10 @@ class Analyzer {
   const EState* processNewEState(EState& s);
   const EState* processNewOrExistingEState(EState& s);
   EStateSet::ProcessingResult processEState(EState& s);
+  const ConstraintSet* processNewOrExistingConstraintSet(ConstraintSet& cset);
+  const EState* processNewOrExistingEState(Label label, State state, ConstraintSet cset);
+  EState createEState(Label label, State state, ConstraintSet cset);
+
  public:
   bool isEmptyWorkList() { return eStateWorkList.size()==0;}
   const EState* topWorkList() { return eStateWorkList.top();}
@@ -114,7 +118,7 @@ class Analyzer {
   StateSet* getStateSet() { return &stateSet; }
   EStateSet* getEStateSet() { return &eStateSet; }
   TransitionGraph* getTransitionGraph() { return &transitionGraph; }
-
+  ConstraintSetMaintainer* getConstraintSetMaintainer() { return &constraintSetMaintainer; }
   //private: TODO
   Flow flow;
   SgNode* startFunRoot;
@@ -137,10 +141,10 @@ class Analyzer {
   EStateWorkList eStateWorkList;
   EStateSet eStateSet;
   StateSet stateSet;
+  ConstraintSetMaintainer constraintSetMaintainer;
   TransitionGraph transitionGraph;
   set<const EState*> transitionSourceEStateSetOfLabel(Label lab);
   int displayDiff;
 };
 
 #endif
-

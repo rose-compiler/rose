@@ -32,6 +32,7 @@ class State : public map<VariableId,CppCapsuleAValue> {
   string varValueToString(VariableId varname) const;
   string toString() const;
   void deleteVar(VariableId varname);
+  long memorySize() const;
 };
 
 //#define FAST_STATESET
@@ -51,6 +52,7 @@ class StateSet : public set<State> {
   StateId stateId(const State* state);
   StateId stateId(const State state);
   string stateIdString(const State* state);
+  long memorySize() const;
  private:
   const State* statePtr(State& s);
 };
@@ -79,18 +81,23 @@ bool operator!=(const InputOutput& c1, const InputOutput& c2);
 
 class EState {
  public:
- EState():label(0),state(0){}
+ EState():label(0),state(0),_constraints(0){}
  EState(Label label, const State* state):label(label),state(state){}
- EState(Label label, const State* state, ConstraintSet cset):label(label),state(state),constraints(cset){}
+ EState(Label label, const State* state, const ConstraintSet* csetptr):label(label),state(state),_constraints(csetptr){}
   Label getLabel() const { return label; }
   const State* getState() const { return state; }
-  const ConstraintSet& getConstraints() const { return constraints; }
+  //! deprecated, use constraints() instead.
+  const ConstraintSet& getConstraints() const { return *_constraints; }
   const InputOutput& getInputOutput() const { return io; }
   string toString() const;
+  const ConstraintSet* constraints() const { return _constraints; }
+  long memorySize() const;
   // MS: following entries will be made private
   Label label;
   const State* state;
-  ConstraintSet constraints;  // MS: will become a pointer to ConstraintSet
+ private:
+  const ConstraintSet* _constraints;
+ public:
   InputOutput io;
 };
 
@@ -108,6 +115,7 @@ bool operator!=(const EState& c1, const EState& c2);
 
 class EStateSet : public list<EState> {
  public:
+ EStateSet():_constraintSetMaintainer(0){}
   typedef pair<bool,const EState*> ProcessingResult;
   void addNewEState(EState newEState); // obsolete (only used in internal tests)
   bool eStateExists(EState& s);
@@ -119,8 +127,10 @@ class EStateSet : public list<EState> {
   EStateId eStateId(const EState eState);
   string eStateIdString(const EState* eState);
   int numberOfIoTypeEStates(InputOutput::OpType);
+  long memorySize() const;
  private:
   const EState* eStatePtr(EState& s);
+  ConstraintSetMaintainer* _constraintSetMaintainer; 
 };
 
 class Transition {

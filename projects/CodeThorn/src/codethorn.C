@@ -265,24 +265,30 @@ int main( int argc, char * argv[] ) {
   double totalRunTime=timer.getElapsedTimeInMilliSec();
 
   long stateSetSize=analyzer.getStateSet()->size();
-  long stateSetBytes=stateSetSize*sizeof(State);
+  long stateSetBytes=analyzer.getStateSet()->memorySize();
   long eStateSetSize=analyzer.getEStateSet()->size();
-  long eStateSetBytes=eStateSetSize*sizeof(EState);
+  long eStateSetBytes=analyzer.getEStateSet()->memorySize();
   long transitionGraphSize=analyzer.getTransitionGraph()->size();
   long transitionGraphBytes=transitionGraphSize*sizeof(Transition);
+  long numOfconstraintSets=analyzer.getConstraintSetMaintainer()->numberOfConstraintSets();
+  long constraintSetsBytes=analyzer.getConstraintSetMaintainer()->memorySize();
 
   cout << "Number of stdin-estates        : "<<color("cyan")<<(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDIN_VAR))<<color("white")<<endl;
   cout << "Number of stdout-estates       : "<<color("cyan")<<(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDOUT_VAR))<<color("white")<<endl;
   cout << "Number of stderr-estates       : "<<color("cyan")<<(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDERR_VAR))<<color("white")<<endl;
   cout << "Number of failed-assert-estates: "<<color("cyan")<<(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::FAILED_ASSERT))<<color("white")<<endl;
-  cout << "Number of states     : "<<color("magenta")<<stateSetSize<<color("white")<<" (memory: "<<color("magenta")<<stateSetBytes<<color("white")<<" bytes)"<<endl;
-  cout << "Number of estates    : "<<color("cyan")<<eStateSetSize<<color("white")<<" (memory: "<<color("cyan")<<eStateSetBytes<<color("white")<<" bytes)"<<endl;
-  cout << "Number of transitions: "<<color("blue")<<transitionGraphSize<<color("white")<<" (memory: "<<color("blue")<<transitionGraphBytes<<color("white")<<" bytes)"<<endl;
-  cout << "Memory total         : "<<color("green")<<stateSetBytes+eStateSetBytes+transitionGraphBytes<<" bytes"<<color("normal")<<endl;
+  cout << "=============================================================="<<endl;
+  cout << "Number of states               : "<<color("magenta")<<stateSetSize<<color("white")<<" (memory: "<<color("magenta")<<stateSetBytes<<color("white")<<" bytes)"<<endl;
+  cout << "Number of estates              : "<<color("cyan")<<eStateSetSize<<color("white")<<" (memory: "<<color("cyan")<<eStateSetBytes<<color("white")<<" bytes)"<<endl;
+  cout << "Number of transitions          : "<<color("blue")<<transitionGraphSize<<color("white")<<" (memory: "<<color("blue")<<transitionGraphBytes<<color("white")<<" bytes)"<<endl;
+  cout << "Number of constraint sets      : "<<color("yellow")<<numOfconstraintSets<<color("white")<<" (memory: "<<color("yellow")<<constraintSetsBytes<<color("white")<<" bytes)"<<endl;
+  cout << "=============================================================="<<endl;
+  cout << "Memory total         : "<<color("green")<<stateSetBytes+eStateSetBytes+transitionGraphBytes+constraintSetsBytes<<" bytes"<<color("normal")<<endl;
   if(totalRunTime<1000.0) 
 	cout << "Time total           : "<<color("green")<<totalRunTime<<" ms"<<color("normal")<<endl;
   else
 	cout << "Time total           : "<<color("green")<<totalRunTime/1000.0<<" seconds"<<color("normal")<<endl;
+  cout << "=============================================================="<<endl;
   // we only generate a visualization if #estates<=1000
   if(eStateSetSize>2500) {
 	cout << "Number of eStates > 2500. Not generating visualization."<<endl;
