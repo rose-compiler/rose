@@ -1,8 +1,8 @@
-int f1(int x) {
-  return x;
+int f1(int x3) {
+  return x3;
 }
-int f2(int x) {
-  x=6;
+int f2(int x2) {
+  x2=6;
   return 2;
 }
 

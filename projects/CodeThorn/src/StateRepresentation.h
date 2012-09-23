@@ -1,6 +1,8 @@
 #ifndef STATE_REPRESENTATION_H
 #define STATE_REPRESENTATION_H
 
+#define ESTATE_REF
+
 /*************************************************************
  * Copyright: (C) 2012 by Markus Schordan                    *
  * Author   : Markus Schordan                                *
@@ -32,9 +34,14 @@ class State : public map<VariableId,CppCapsuleAValue> {
   string varValueToString(VariableId varname) const;
   string toString() const;
   void deleteVar(VariableId varname);
+  long memorySize() const;
 };
 
+#ifdef STATESET_REF
 class StateSet : public list<State> {
+#else
+class StateSet : public set<State> {
+#endif
  public:
   typedef pair<bool, const State*> ProcessingResult;
   bool stateExists(State& s);
@@ -45,6 +52,7 @@ class StateSet : public list<State> {
   StateId stateId(const State* state);
   StateId stateId(const State state);
   string stateIdString(const State* state);
+  long memorySize() const;
  private:
   const State* statePtr(State& s);
 };
@@ -73,18 +81,23 @@ bool operator!=(const InputOutput& c1, const InputOutput& c2);
 
 class EState {
  public:
- EState():label(0),state(0){}
+ EState():label(0),state(0),_constraints(0){}
  EState(Label label, const State* state):label(label),state(state){}
- EState(Label label, const State* state, ConstraintSet cset):label(label),state(state),constraints(cset){}
+ EState(Label label, const State* state, const ConstraintSet* csetptr):label(label),state(state),_constraints(csetptr){}
   Label getLabel() const { return label; }
   const State* getState() const { return state; }
-  const ConstraintSet& getConstraints() const { return constraints; }
+  //! deprecated, use constraints() instead.
+  const ConstraintSet& getConstraints() const { return *_constraints; }
   const InputOutput& getInputOutput() const { return io; }
   string toString() const;
+  const ConstraintSet* constraints() const { return _constraints; }
+  long memorySize() const;
   // MS: following entries will be made private
   Label label;
   const State* state;
-  ConstraintSet constraints;  // MS: will become a pointer to ConstraintSet
+ private:
+  const ConstraintSet* _constraints;
+ public:
   InputOutput io;
 };
 
@@ -96,12 +109,27 @@ class EState {
 //bool operator==(const pair<VariableId,AValue>& elem1, const pair<VariableId,AValue>& elem2);
 
 // define order for EState elements (necessary for EStateSet)
+#ifndef ESTATESET_REF
 bool operator<(const EState& c1, const EState& c2);
 bool operator==(const EState& c1, const EState& c2);
 bool operator!=(const EState& c1, const EState& c2);
+#endif
 
+struct EStateLessComp {
+  bool operator()(const EState& c1, const EState& c2) {
+	return c1<c2;
+  }
+};
+
+
+
+#ifdef ESTATESET_REF
 class EStateSet : public list<EState> {
+#else
+  class EStateSet : public set<EState> {
+#endif
  public:
+ EStateSet():_constraintSetMaintainer(0){}
   typedef pair<bool,const EState*> ProcessingResult;
   bool eStateExists(EState& s);
   ProcessingResult processEState(EState newEState);
@@ -112,9 +140,10 @@ class EStateSet : public list<EState> {
   EStateId eStateId(const EState eState);
   string eStateIdString(const EState* eState);
   int numberOfIoTypeEStates(InputOutput::OpType);
-  void addNewEState(EState newEState);
+  long memorySize() const;
  private:
   const EState* eStatePtr(EState& s);
+  ConstraintSetMaintainer* _constraintSetMaintainer; 
 };
 
 class Transition {

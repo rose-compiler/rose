@@ -115,7 +115,7 @@ string Constraint::opToString() const {
   }
 }
 
-bool ConstraintSet::deqConstraintExists() {
+bool ConstraintSet::deqConstraintExists() const {
   for(ConstraintSet::iterator i=begin();i!=end();++i) {
 	if((*i).op()==Constraint::DEQ_VAR_CONST)
 	  return true;
@@ -239,7 +239,7 @@ void ConstraintSet::addConstraint(Constraint c) {
 	  }
 	}
 	// all remaining constraints can be removed (can only be inqualities)
-	deleteConstraints(c.lhsVar());
+	deleteConstConstraints(c.lhsVar());
 	set<Constraint>::insert(Constraint(Constraint::EQ_VAR_CONST,c.lhsVar(),c.rhsValCppCapsule()));
 	return;
   }
@@ -386,8 +386,15 @@ ConstraintSet ConstraintSet::deleteVarConstraints(VariableId varId) {
   return *this;
 }
 
+void ConstraintSet::deleteConstConstraints(VariableId varId) {
+  // now, remove all other constraints with variable varId
+  for(ConstraintSet::iterator i=begin();i!=end();++i) {
+	if((*i).lhsVar()==varId && (*i).isVarValOp())
+	  removeConstraint(i);
+  }
+}
+
 void ConstraintSet::deleteConstraints(VariableId varId) {
-#if 1
   // ensure we delete equalities before all other constraints (removing equalities keeps information alive)
   for(ConstraintSet::iterator i=begin();i!=end();++i) {
 	if(((*i).op()==Constraint::EQ_VAR_VAR)) {
@@ -399,7 +406,6 @@ void ConstraintSet::deleteConstraints(VariableId varId) {
 	  }
 	}
   }
-#endif
   // now, remove all other constraints with variable varId
   for(ConstraintSet::iterator i=begin();i!=end();++i) {
 	if((*i).lhsVar()==varId)
@@ -419,3 +425,55 @@ string ConstraintSet::toString() const {
   return ss.str();
 }
 
+bool ConstraintSetMaintainer::constraintSetExists(ConstraintSet& s) {
+  return constraintSetPtr(s)!=0;
+}
+
+const ConstraintSet* ConstraintSetMaintainer::constraintSetPtr(ConstraintSet& s) {
+  // we use this as the find algorithm cannot be used for this data structure yet.
+  for(ConstraintSetMaintainer::iterator i=begin();i!=end();++i) {
+	if(*i==s)
+	  return &*i;
+  }
+  return 0;
+}
+
+const ConstraintSet* ConstraintSetMaintainer::processNewConstraintSet(ConstraintSet& s) {
+  ProcessingResult res=processConstraintSet(s);
+  assert(res.first==false);
+  return res.second;
+}
+
+const ConstraintSet* ConstraintSetMaintainer::processNewOrExistingConstraintSet(ConstraintSet& s) {
+  ProcessingResult res=processConstraintSet(s);
+  return res.second;
+}
+
+ConstraintSetMaintainer::ProcessingResult ConstraintSetMaintainer::processConstraintSet(ConstraintSet s) {
+  if(const ConstraintSet* existingConstraintSetPtr=constraintSetPtr(s)) {
+	return make_pair(true,existingConstraintSetPtr);
+  } else {
+	push_back(s);
+	const ConstraintSet* existingConstraintSetPtr=constraintSetPtr(s);
+	assert(existingConstraintSetPtr);
+	return make_pair(false,existingConstraintSetPtr);
+  }
+  assert(0);
+}
+
+long ConstraintSet::memorySize() const {
+  long mem=0;
+  for(ConstraintSet::iterator i=begin();i!=end();++i) {
+	mem+=sizeof(*i);
+  }
+  return mem+sizeof(*this);
+}
+long ConstraintSetMaintainer::memorySize() const {
+  long mem=0;
+  for(ConstraintSetMaintainer::const_iterator i=begin();
+	  i!=end();
+	  ++i) {
+	mem+=(*i).memorySize();
+  }
+  return mem+sizeof(*this);
+}

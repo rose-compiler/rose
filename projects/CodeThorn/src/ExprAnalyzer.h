@@ -41,19 +41,21 @@ class SingleEvalResultConstInt {
 class ExprAnalyzer {
  public:
   SingleEvalResult eval(SgNode* node,EState eState);
-  // old version: SingleEvalResultConstInt evalConstInt(SgNode* node,EState eState, bool useConstraints, bool safeConstraintPropagation);
+  //! Evaluates an expression using ConstIntLattice and returns a list of all evaluation-results.
+  //! There can be multiple results if one of the variables was bound to top as we generate
+  //! two different states and corresponding constraints in this case, one representing the
+  //! true-case the other one repreenting the false-case.
+  //! When the option useConstraints is set to false constraints are not used when determing the
+  //! values of top-variables. 
   list<SingleEvalResultConstInt> evalConstInt(SgNode* node,EState eState, bool useConstraints, bool safeConstraintPropagation);
-  //! extracts constraints which might be extractable
-  ConstraintSet determineExtractableConstraints(SgNode* node, EState& eState);
-
-  //! evaluates an expression (whithout maintaining state information)
-  AValue pureEvalConstInt(SgNode* node,EState& eState);
-  // returns true if node is a VarRefExp and sets varName=name, otherwise false and varName="$".
+  //! returns true if node is a VarRefExp and sets varName=name, otherwise false and varName="$".
   static bool variable(SgNode* node,VariableName& varName);
-  // returns true if node is a VarRefExp and sets varId=id, otherwise false and varId=0.
+  //! returns true if node is a VarRefExp and sets varId=id, otherwise false and varId=0.
   static bool variable(SgNode* node,VariableId& varId);
 
-
+ private:
+  //! evaluates an expression (whithout maintaining state information)
+  AValue pureEvalConstInt(SgNode* node,EState& eState);
 };
 
 #endif

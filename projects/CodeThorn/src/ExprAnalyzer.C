@@ -32,12 +32,6 @@ bool ExprAnalyzer::variable(SgNode* node, VariableId& varId) {
   }
 }
 
-ConstraintSet ExprAnalyzer::determineExtractableConstraints(SgNode* node, EState& eState) {
-  ConstraintSet extractableCSet;
-  // TODO: extract 
-  return extractableCSet;
-}
-
 //////////////////////////////////////////////////////////////////////
 // EVAL BOOL
 //////////////////////////////////////////////////////////////////////
@@ -200,7 +194,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState eS
 			// rhs is not considered due to short-circuit AND semantics
 		  }
 		  if(lhsResult.result.isTrue() && rhsResult.result.isFalse()) {
-			res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints.invertedConstraints();
+			// nothing to do
 		  }
 		  if(lhsResult.result.isTrue() && rhsResult.result.isTrue()) {
 			res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
@@ -224,7 +218,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState eS
 			res.exprConstraints=lhsResult.exprConstraints;
 		  }
 		  if(lhsResult.result.isFalse() && rhsResult.result.isFalse()) {
-			res.exprConstraints=lhsResult.exprConstraints.invertedConstraints()+rhsResult.exprConstraints.invertedConstraints();
+			// nothing to do
 		  }
 		  if(lhsResult.result.isFalse() && rhsResult.result.isTrue()) {
 			res.exprConstraints=lhsResult.exprConstraints.invertedConstraints()+rhsResult.exprConstraints;
@@ -323,7 +317,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState eS
 	  res.result=state2[varId].getValue();
 	  if(res.result.isTop() && useConstraints) {
 		// in case of TOP we try to extract a possibly more precise value from the constraints
-		AType::ConstIntLattice val=res.eState.constraints.varConstIntLatticeValue(varId);
+		AType::ConstIntLattice val=res.eState.constraints()->varConstIntLatticeValue(varId);
 		//if(!val.isTop())
 		// TODO: we will want to monitor this for statistics!
 		//  cout << "DEBUG: extracing more precise value from constraints: "<<res.result.toString()<<" ==> "<<val.toString()<<endl;
@@ -348,7 +342,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState eS
 // PURE EVAL CONSTINT
 //////////////////////////////////////////////////////////////////////
 AValue ExprAnalyzer::pureEvalConstInt(SgNode* node,EState& eState) {
-  ConstraintSet cset=eState.constraints;
+  ConstraintSet cset=*eState.constraints();
   AValue res;
   // initialize with default values from argument(s)
   res=AType::ConstIntLattice(AType::Bot());

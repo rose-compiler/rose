@@ -205,8 +205,10 @@ void checkTypes() {
 	  nocheck("!(cs1<cs2)",!(cs1<cs2));
 	  nocheck("cs1>cs2",(cs2<cs1));
 	  EStateSet es;
-	  es.addNewEState(EState(1,&s,cs1));
-	  es.addNewEState(EState(1,&s,cs2));
+	  EState es1=EState(1,&s,&cs1);
+	  es.processNewOrExistingEState(es1);
+	  EState es2=EState(1,&s,&cs2);
+	  es.processNewOrExistingEState(es2);
 	  check("es.size()==2",es.size()==2);
 	  {
 	  Constraint c5(Constraint::EQ_VAR_CONST,var_y,10);
@@ -306,17 +308,26 @@ void checkTypes() {
 	const State* stateptr4=stateSet.processNewOrExistingState(s4); // version 1
 	check("obtain pointer to s4 from stateSet and check !=0",stateptr4!=0);
 
+#if 1
 	EStateSet eStateSet;
 	EState es3;
-	es1.label=1;
-	es1.state=stateptr1;
-	es1.constraints.addConstraint(Constraint(Constraint::NEQ_VAR_CONST,x,1));
-	es2.label=1;
-	es2.state=stateptr1;
-	es2.constraints.addConstraint(Constraint(Constraint::EQ_VAR_CONST,x,1));
-	es3.label=3;
-	es3.state=stateptr4;
-	es3.constraints.addConstraint(Constraint(Constraint::NEQ_VAR_CONST,x,1));
+	ConstraintSetMaintainer csm;
+
+	ConstraintSet cs1;
+	cs1.addConstraint(Constraint(Constraint::NEQ_VAR_CONST,x,1));
+	const ConstraintSet* cs1ptr=csm.processNewOrExistingConstraintSet(cs1);
+	es1=EState(1,stateptr1,cs1ptr);
+	
+	ConstraintSet cs2;
+	cs2.addConstraint(Constraint(Constraint::EQ_VAR_CONST,x,1));
+	const ConstraintSet* cs2ptr=csm.processNewOrExistingConstraintSet(cs2);
+	es2=EState(1,stateptr1,cs2ptr);
+
+	ConstraintSet cs3;
+	cs3.addConstraint(Constraint(Constraint::NEQ_VAR_CONST,x,1));
+	const ConstraintSet* cs3ptr=csm.processNewOrExistingConstraintSet(cs3);
+	es3=EState(3,stateptr4,cs3ptr);
+
 	check("check es1 does not exist in eStateSet",eStateSet.eStateExists(es1)==0);
 	check("check es2 does not exist in eStateSet",eStateSet.eStateExists(es2)==0);
 	check("check es3 does not exist in eStateSet",eStateSet.eStateExists(es3)==0);
@@ -324,11 +335,24 @@ void checkTypes() {
 	check("es1!=es2",es1!=es2);
 	check("es2!=es3",es1!=es3);
 	check("es1!=es3",es2!=es3);
-	nocheck("es2<es1",es2<es1);
-	nocheck("!(es1<es2)",!(es1<es2));
+#ifdef ESTATESET_REF
+	nocheck("es1<es2",es2<es1);
+	nocheck("!(es2<es1)",!(es1<es2));
+#else
+	check("es1<es2",es1<es2);
+	check("!(es2<es1)",!(es2<es1));
+#endif
+
 	check("!(es1==es2)",!(es1==es2));
+
+#ifdef ESTATESET_REF
 	nocheck("es1<es3",es1<es3);
 	nocheck("es2<es3",es2<es3);
+#else
+	check("es1<es3",es1<es3);
+	check("es2<es3",es2<es3);
+#endif
+
 	check("es2==es2",es2==es2);
 	check("=> eStateSet.size() == 0",eStateSet.size() == 0);
 
@@ -353,6 +377,7 @@ void checkTypes() {
 	check("es3 exists in eStateSet",eStateSet.eStateExists(es3));
 	check("=> eStateSet.size() == 3",eStateSet.size() == 3);
 	checkLargeSets();
+#endif
  }
 #if 0
   // MS: TODO: rewrite the following test to new check format
