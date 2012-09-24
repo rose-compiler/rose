@@ -102,9 +102,9 @@ int main( int argc, char * argv[] ) {
      "Supported options");
 
   desc.add_options()
-    ("help", "produce this help message")
+    ("help,h", "produce this help message")
     ("rose-help", "show help for compiler frontend options")
-    ("version", "display the version")
+    ("version,v", "display the version")
     ("internal-checks", "run internal consistency checks (without input program)")
     ("verify", po::value< string >(), "verify all LTL formulae in the file [arg]")
     ("tg1-estate-address", po::value< string >(), "transition graph 1: visualize address [=yes|no]")
@@ -127,6 +127,22 @@ int main( int argc, char * argv[] ) {
   po::store(po::command_line_parser(argc, argv).
 	    options(desc).allow_unregistered().run(), args);
   po::notify(args);
+
+  if (args.count("help")) {
+    cout << desc << "\n";
+    return 0;
+  }
+
+  if (args.count("rose-help")) {
+    argv[1] = strdup("--help");
+  }
+
+  if (args.count("version")) {
+    cout << "CodeThorn version 1.1 [RC1]\n";
+    cout << "Written by Markus Schordan and Adrian Prantl\n";
+    cout << "2012\n";
+    return 0;
+  }
 
   boolOptions.init(argc,argv);
   boolOptions.registerOption("tg1-estate-address",false);
@@ -154,22 +170,6 @@ int main( int argc, char * argv[] ) {
 	  return 0;
   }
   
-  if (args.count("help")) {
-    cout << desc << "\n";
-    return 0;
-  }
-
-  if (args.count("rose-help")) {
-    argv[1] = strdup("--help");
-  }
-
-  if (args.count("version")) {
-    cout << "CodeThorn version 1.1 [RC1]\n";
-    cout << "Written by Markus Schordan and Adrian Prantl\n";
-    cout << "2012\n";
-    return 0;
-  }
-
   if (args.count("verify")) {
     ltl_file = args["verify"].as<string>();
 	for (int i=1; i<argc; ++i) {

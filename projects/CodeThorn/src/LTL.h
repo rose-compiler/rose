@@ -13,9 +13,9 @@ extern LTL::Formula* ltl_val;
 extern bool ltl_eof;
 extern short ltl_label;
 
-/// \title Linear Temporal Logic (LTL) Abstract syntax tree (AST)
+/// Linear Temporal Logic (LTL) Abstract syntax tree (AST)
 ///
-/// \license
+/// \authors <pre>
 ///
 /// Copyright (c) 2012 Lawrence Livermore National Security, LLC.
 /// Produced at the Lawrence Livermore National Laboratory
@@ -27,6 +27,8 @@ extern short ltl_label;
 /// This file is part of ROSE. For details, see http://www.rosecompiler.org/.
 /// Please read the COPYRIGHT file for Our Notice and for the BSD License.
 /// 
+/// </pre>
+///
 /// \date 2012
 /// \author Adrian Prantl
 namespace LTL {
