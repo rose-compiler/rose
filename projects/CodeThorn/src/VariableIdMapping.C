@@ -183,3 +183,6 @@ bool operator<(VariableId id1, VariableId id2) {
 bool operator==(VariableId id1, VariableId id2) {
   return id1.getSymbol()==id2.getSymbol();
 }
+bool operator!=(VariableId id1, VariableId id2) {
+  return !(id1==id2);
+}

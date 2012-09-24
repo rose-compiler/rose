@@ -168,6 +168,7 @@ int main( int argc, char * argv[] ) {
 	("precision-bool",po::value< string >(),"use precise top with bool-(and/or) operators (used in LTL)")
 	("precision-intbool",po::value< string >(),"use precise top with intbool-(and/or) operators (used in int-analyzer)")
 	("precision-exact-constraints",po::value< string >(),"use precise constraint extraction (experimental)")
+	("tg-ltl-reduced",po::value< string >(),"compute LTL-reduced transition graph")
 	;
 
   po::store(po::command_line_parser(argc, argv).
@@ -189,6 +190,7 @@ int main( int argc, char * argv[] ) {
   boolOptions.registerOption("precision-bool",true);
   boolOptions.registerOption("precision-intbool",true);
   boolOptions.registerOption("precision-exact-constraints",false);
+  boolOptions.registerOption("tg-ltl-reduced",false);
   boolOptions.processOptions();
   cout<<boolOptions.toString();
 

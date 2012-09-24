@@ -86,11 +86,13 @@ string InterFlow::toString() const {
 }
 
 bool operator<(const InterEdge& e1, const InterEdge& e2) {
-  return e1.call<e2.call 
-	|| (e1.call==e2.call && e1.entry<e2.entry)
-	|| (e1.entry==e2.entry && e1.exit<e2.exit)
-	|| (e1.exit==e2.exit && e1.callReturn<e2.callReturn)
-	;
+  if(e1.call!=e2.call) 
+	return e1.call<e2.call;
+  if(e1.entry!=e2.entry)
+	return e1.entry<e2.entry;
+  if(e1.exit!=e2.exit)
+	return e1.exit<e2.exit;
+  return e1.callReturn<e2.callReturn;
 }
 
 bool operator==(const InterEdge& e1, const InterEdge& e2) {
@@ -284,7 +286,9 @@ bool operator==(const Edge& e1, const Edge& e2) {
   return e1.source==e2.source && e1.type==e2.type && e1.target==e2.target;
 }
 bool operator<(const Edge& e1, const Edge& e2) {
-  return e1.source<e2.source || (e1.source==e2.source && e1.target<e2.target);
+  if(e1.source!=e2.source)
+	return e1.source<e2.source;
+  return e1.target<e2.target;
 }
 
 Flow::Flow():_dotOptionDisplayLabel(true),_dotOptionDisplayStmt(true){

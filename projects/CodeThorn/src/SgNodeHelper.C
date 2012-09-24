@@ -323,6 +323,14 @@ SgNode* SgNodeHelper::getParent(SgNode* node) {
   return node;
 }
 
+bool SgNodeHelper::isLoopCond(SgNode* node) {
+  SgNode* parent=node->get_parent();
+  if(isSgWhileStmt(parent)||isSgDoWhileStmt(parent)||isSgForStatement(parent))
+	return SgNodeHelper::getCond(parent)==node && node!=0;
+  else
+	return false;
+}
+
 bool SgNodeHelper::isCond(SgNode* node) {
   SgNode* parent=node->get_parent();
   if(isSgIfStmt(parent)||isSgWhileStmt(parent)||isSgDoWhileStmt(parent)||isSgForStatement(parent)||isSgConditionalExp(parent))

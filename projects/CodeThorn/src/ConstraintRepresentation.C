@@ -50,23 +50,21 @@ bool Constraint::isDisequation() const {
 }
 
 bool operator<(const Constraint& c1, const Constraint& c2) {
-  if(c1.lhsVar()<c2.lhsVar())
-	return true;
-  if(c1.lhsVar()==c2.lhsVar() && c1.op()<c2.op())
-	return true;
-  if(c1.op()==c2.op()) {
-	switch(c1.op()) {
-	case Constraint::EQ_VAR_CONST:
-	case Constraint::NEQ_VAR_CONST:
-	case Constraint::DEQ_VAR_CONST:
-	  return (c1.rhsValCppCapsule()<c2.rhsValCppCapsule());
-	case Constraint::EQ_VAR_VAR:
-	case Constraint::NEQ_VAR_VAR:
-	case Constraint::DEQ_VAR_VAR:
-	  return (c1.rhsVar()<c2.rhsVar());
-	}
+  if(c1.lhsVar()!=c2.lhsVar())
+	return c1.lhsVar()<c2.lhsVar();
+  if(c1.op()!=c2.op())
+	return c1.op()<c2.op();
+  switch(c1.op()) {
+  case Constraint::EQ_VAR_CONST:
+  case Constraint::NEQ_VAR_CONST:
+  case Constraint::DEQ_VAR_CONST:
+	return (c1.rhsValCppCapsule()<c2.rhsValCppCapsule());
+  case Constraint::EQ_VAR_VAR:
+  case Constraint::NEQ_VAR_VAR:
+  case Constraint::DEQ_VAR_VAR:
+	return (c1.rhsVar()<c2.rhsVar());
   }
-  return false;
+  throw "Error: Constraint::operator< failed.";
 }
 
 bool operator==(const Constraint& c1, const Constraint& c2) {

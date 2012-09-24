@@ -10,7 +10,7 @@
 
 string color(string);
 
-Analyzer::Analyzer():startFunRoot(0),cfanalyzer(0) {
+Analyzer::Analyzer():startFunRoot(0),cfanalyzer(0){
 }
 
 set<string> Analyzer::variableIdsToVariableNames(set<VariableId> s) {
@@ -20,6 +20,7 @@ set<string> Analyzer::variableIdsToVariableNames(set<VariableId> s) {
   }
   return res;
 }
+
 string Analyzer::nodeToString(SgNode* node) {
   string textual;
   if(node->attributeExists("info"))
@@ -85,6 +86,38 @@ EState Analyzer::createEState(Label label, State state, ConstraintSet cset) {
   const ConstraintSet* newConstraintSetPtr=processNewOrExistingConstraintSet(cset);
   EState eState=EState(label,newStatePtr,newConstraintSetPtr);
   return eState;
+}
+
+bool Analyzer::isLTLrelevantLabel(Label label) {
+  Labeler* lab=getLabeler();
+  if(lab->isFunctionEntryLabel(label)
+	 || lab->isFunctionExitLabel(label)
+	 || lab->isFunctionCallLabel(label)
+	 || lab->isFunctionCallReturnLabel(label)
+	 ){
+	return true;
+  }
+  if(SgNodeHelper::isLoopCond(lab->getNode(label))) {
+	return true;
+  }
+  if(SgNodeHelper::isCond(lab->getNode(label))) {
+	return true;
+  }
+#if 0
+  if(lab->isBlockBeginLabel(label)||lab->isBlockEndLabel(label))
+	return false;
+  // assignment
+  if(SgExprStatement* exprStmt=isSgExprStatement(getLabeler()->getNode(label))) {
+	SgNode* node=SgNodeHelper::getExprStmtChild(exprStmt);
+	if(isSgAssignOp(node)) {
+	  if(isSgVarRefExp(SgNodeHelper::getLhs(node)) && isSgIntVal(SgNodeHelper::getRhs(node))) {
+		cout << "DEBUG: ltl-irrelevant node: "<<SgNodeHelper::nodeToString(node)<<endl;
+		return false;
+	  }
+	}
+  }
+#endif
+  return false;
 }
 
 void Analyzer::runSolver1() {
@@ -605,8 +638,6 @@ void Analyzer::initializeSolver1(std::string functionToStartAt,SgNode* root) {
   } else {
 	cout << "INIT: no global scope.";
   }	
-
-  // TODO: delete global vars which are not used in the analyzed program (not necessary in PState)
 
   const EState* currentEState=processNewEState(eState);
   assert(currentEState);
