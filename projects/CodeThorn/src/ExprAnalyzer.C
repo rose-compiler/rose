@@ -120,7 +120,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState eS
 		  // record new constraint
 		  VariableId varId;
 		  if(variable(lhs,varId) && rhsResult.isConstInt()) {
-			// only add the equality constraint if no constant is bound to the respective variable
+			// if var is top add two states with opposing constraints
 			if(!res.eState.state->varIsConst(varId)) {
 			  SingleEvalResultConstInt tmpres1=res;
 			  SingleEvalResultConstInt tmpres2=res;
@@ -190,10 +190,12 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState eS
 		case V_SgAndOp: {
 		  res.result=(lhsResult.result&&rhsResult.result);
 		  if(lhsResult.result.isFalse()) {
-			res.exprConstraints=lhsResult.exprConstraints.invertedConstraints();
+			//res.exprConstraints=lhsResult.exprConstraints.invertedConstraints();
+			res.exprConstraints=lhsResult.exprConstraints;
 			// rhs is not considered due to short-circuit AND semantics
 		  }
 		  if(lhsResult.result.isTrue() && rhsResult.result.isFalse()) {
+			//res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints.invertedConstraints();
 			// nothing to do
 		  }
 		  if(lhsResult.result.isTrue() && rhsResult.result.isTrue()) {
@@ -218,10 +220,12 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState eS
 			res.exprConstraints=lhsResult.exprConstraints;
 		  }
 		  if(lhsResult.result.isFalse() && rhsResult.result.isFalse()) {
-			// nothing to do
+			res.exprConstraints=lhsResult.exprConstraints.invertedConstraints()+rhsResult.exprConstraints.invertedConstraints();
+			res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
 		  }
 		  if(lhsResult.result.isFalse() && rhsResult.result.isTrue()) {
-			res.exprConstraints=lhsResult.exprConstraints.invertedConstraints()+rhsResult.exprConstraints;
+			//res.exprConstraints=lhsResult.exprConstraints.invertedConstraints()+rhsResult.exprConstraints;
+			res.exprConstraints=rhsResult.exprConstraints;
 		  }
 		  // in case of top we do not propagate constraints
 		  if(lhsResult.result.isTop() && !safeConstraintPropagation) {
@@ -246,7 +250,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState eS
   if(dynamic_cast<SgUnaryOp*>(node)) {
 	SgNode* child=SgNodeHelper::getFirstChild(node);
 	list<SingleEvalResultConstInt> operandResultList=evalConstInt(child,eState,useConstraints,safeConstraintPropagation);
-	assert(operandResultList.size()==1);
+	//assert(operandResultList.size()==1);
 	list<SingleEvalResultConstInt> resultList;
 	for(list<SingleEvalResultConstInt>::iterator oiter=operandResultList.begin();
 		oiter!=operandResultList.end();
@@ -256,7 +260,8 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState eS
 	  case V_SgNotOp:
 		res.result=!operandResult.result;
 		// we propagate the inverted constraints
-		res.exprConstraints=operandResult.exprConstraints.invertedConstraints();
+		//res.exprConstraints=operandResult.exprConstraints.invertedConstraints();
+		res.exprConstraints=operandResult.exprConstraints;
 		resultList.push_back(res);
 	  break;
 	  case V_SgCastExp: {
