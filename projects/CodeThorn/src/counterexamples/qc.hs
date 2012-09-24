@@ -59,15 +59,8 @@ instance Arbitrary RersData where
             return (RersData vals)
           minval = 1
           maxval = 7
-          maxlength = 20
+          maxlength = 6
   shrink (RersData vals) = map RersData (shrink vals)
-
--- prop_holds :: LTL -> RersData -> Bool
--- prop_holds formula input =
---   -- FIXME: is there a more elegant way to do this???
---   if input == RersData [] then True
---   else holds formula states
---        where states = unsafePerformIO (actualOutput input)
 
 prop_holds :: LTL -> RersData -> Property
 prop_holds formula input =
@@ -96,9 +89,10 @@ actualOutput (RersData input) = do
       terminateProcess pid
       return []
     Right output -> do 
-      printf "> output = %s\n" (show output)
+      prettyprint output
       terminateProcess pid
       return output
+  
   where inputStr = join "\n" (map show input)
         parse string = map (\s -> (read s)::Int) (split "\n" string)
 
@@ -111,15 +105,23 @@ actualOutput (RersData input) = do
           -- make a best effort to synchronize input and output. It's
           -- really impossible because a given input may or may not
           -- trigger an output.
-          hasOutput <- hWaitForInput stdout 250
-          if hasOutput then do
-                reply <- hGetLine stdout
-                printf "out %s\n" (reply)
-                res <- action stdin stdout is
-                return $ (StIn (rersChar input)) : (StOut (rersChar (read reply))) : res
-          else do
-                res <- action stdin stdout is
-                return $ (StIn (rersChar input)) : res
+          hasOutput <- hWaitForInput stdout 33 -- milliseconds
+          if hasOutput then 
+            do reply <- hGetLine stdout
+               --printf "out %s\n" (reply)
+               res <- action stdin stdout is
+               return $ (StIn (rersChar input)) : (StOut (rersChar (read reply))) : res
+            else do 
+               res <- action stdin stdout is
+               return $ (StIn (rersChar input)) : res
+
+prettyprint output = do
+  printf "> "
+  mapM_ pp output
+  printf "\n"
+  return ()
+    where pp (StIn  c) = do printf "\ESC[33m%c\ESC[39m" c; return ()
+          pp (StOut c) = do printf "\ESC[35m%c\ESC[39m" c; return ()
 
 rersChar :: Int -> Char
 rersChar i = chr (i+(ord 'A')-1)
