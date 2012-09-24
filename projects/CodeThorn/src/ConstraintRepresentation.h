@@ -7,6 +7,9 @@
  * License  : see file LICENSE in the CodeThorn distribution *
  *************************************************************/
 
+//#define CSET_MAINTAINER_LIST
+#define CSET_MAINTAINER_SET
+
 #include <set>
 #include <map>
 #include <utility>
@@ -87,11 +90,16 @@ class ConstraintSet : public set<Constraint> {
   long memorySize() const;
 };
 ConstraintSet operator+(ConstraintSet s1, ConstraintSet s2);
+bool operator<(const ConstraintSet& s1, const ConstraintSet& s2);
 //bool operator==(const ConstraintSet& s1, const ConstraintSet& s2);
-//bool operator<(const ConstraintSet& s1, const ConstraintSet& s2);
 //bool operator!=(const ConstraintSet& s1, const ConstraintSet& s2);
 
+#ifdef CSET_MAINTAINER_LIST
 class ConstraintSetMaintainer : public list<ConstraintSet> {
+#endif
+#ifdef CSET_MAINTAINER_SET
+class ConstraintSetMaintainer : public set<ConstraintSet> {
+#endif
  public:
   typedef pair<bool,const ConstraintSet*> ProcessingResult;
   bool constraintSetExists(ConstraintSet& s);

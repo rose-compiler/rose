@@ -54,15 +54,21 @@ bool operator<(const Constraint& c1, const Constraint& c2) {
 	return c1.lhsVar()<c2.lhsVar();
   if(c1.op()!=c2.op())
 	return c1.op()<c2.op();
-  switch(c1.op()) {
-  case Constraint::EQ_VAR_CONST:
-  case Constraint::NEQ_VAR_CONST:
-  case Constraint::DEQ_VAR_CONST:
-	return (c1.rhsValCppCapsule()<c2.rhsValCppCapsule());
-  case Constraint::EQ_VAR_VAR:
-  case Constraint::NEQ_VAR_VAR:
-  case Constraint::DEQ_VAR_VAR:
-	return (c1.rhsVar()<c2.rhsVar());
+  if(c1.op()==c2.op()) {
+	switch(c1.op()) {
+	case Constraint::EQ_VAR_CONST:
+	case Constraint::NEQ_VAR_CONST:
+	case Constraint::DEQ_VAR_CONST:
+	  return (c1.rhsValCppCapsule()<c2.rhsValCppCapsule());
+	case Constraint::EQ_VAR_VAR:
+	case Constraint::NEQ_VAR_VAR:
+	case Constraint::DEQ_VAR_VAR:
+	  return (c1.rhsVar()<c2.rhsVar());
+	default:
+	  throw "Error: Constraint::operator< unknown operator in constraint.";
+	}
+  } else {
+	return false;
   }
   throw "Error: Constraint::operator< failed.";
 }
@@ -451,8 +457,16 @@ ConstraintSetMaintainer::ProcessingResult ConstraintSetMaintainer::processConstr
   if(const ConstraintSet* existingConstraintSetPtr=constraintSetPtr(s)) {
 	return make_pair(true,existingConstraintSetPtr);
   } else {
+#ifdef CSET_MAINTAINER_LIST
 	push_back(s);
+#endif
+#ifdef CSET_MAINTAINER_SET
+	insert(s);
+#endif
 	const ConstraintSet* existingConstraintSetPtr=constraintSetPtr(s);
+	if(!existingConstraintSetPtr) {
+	  cout << "Problematic element:"<<s.toString()<<endl;
+	}
 	assert(existingConstraintSetPtr);
 	return make_pair(false,existingConstraintSetPtr);
   }
@@ -475,3 +489,43 @@ long ConstraintSetMaintainer::memorySize() const {
   }
   return mem+sizeof(*this);
 }
+
+// this is NOT the usual subset relation (we need a strict weak ordering)
+#if 1
+// strict weak ordering on two sets
+bool operator<(const ConstraintSet& s1, const ConstraintSet& s2) {
+  if(s1.size()!=s2.size())
+	return s1.size()<s2.size();
+  ConstraintSet::iterator i=s1.begin();
+  ConstraintSet::iterator j=s2.begin();
+  while(i!=s1.end() && j!=s2.end()) {
+	if(*i!=*j) {
+	  return *i<*j;
+	} else {
+	  ++i;++j;
+	}
+  }
+  assert(i==s1.end() && j==s2.end());
+  return false; // both are equal
+}
+#endif
+
+#if 0
+bool operator==(const ConstraintSet& s1, const ConstraintSet& s2) {
+  if(s1.size()==s2.size()) {
+	ConstraintSet::iterator i=s1.begin(),j=s2.begin();
+	while(i!=s1.end()) {
+	  if(*i!=*j)
+		return false;
+	  i++;j++;
+	}
+	assert(i==s1.end() && j==s2.end()); // must hold for sets of equal size
+	return true;
+  } else {
+	return false;
+  }
+}
+bool operator!=(const ConstraintSet& s1, const ConstraintSet& s2) {
+  return !(s1==s2);
+}
+#endif

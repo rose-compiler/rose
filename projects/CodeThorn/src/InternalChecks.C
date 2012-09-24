@@ -200,10 +200,14 @@ void checkTypes() {
 	  cs1.addConstraint(c3);
 	  cs2.addConstraint(c1);
 	  cs2.addConstraint(c3);
+	  //cout << "cs1:"<<cs1.toString()<<endl;
+	  //cout << "cs2:"<<cs2.toString()<<endl;
 	  check("cs1!=cs2",cs1!=cs2);
 	  check("!(cs1==cs2)",!(cs1==cs2));
-	  nocheck("!(cs1<cs2)",!(cs1<cs2));
-	  nocheck("cs1>cs2",(cs2<cs1));
+#ifdef CSET_MAINTAINER_SET
+	  check("!(cs1<cs2)",!(cs1<cs2));
+	  check("cs1>cs2",(cs2<cs1));
+#endif
 	  EStateSet es;
 	  EState es1=EState(1,&s,&cs1);
 	  es.processNewOrExistingEState(es1);
@@ -265,8 +269,8 @@ void checkTypes() {
 	check("s0 < s1",(s0<s1)==true);
 	check("s0 < s2",(s0<s2)==true);
 	check("!(s1 == s2)",(s1==s2)==false);
-	check("s1 < s2",(s1<s2));
-	check("!(s2 < s1)",!(s2<s1));
+	check("s1 < s2)",s1<s2);
+	check("!(s2 < s1))",!(s2<s1));
 	check("var x in state s3",s3.varExists(x)==true);
 	check("s3[x]==501",((s3[x].getValue())==val2).isTrue()==true);
 	check("!(s1==s2)",(!(s1==s2))==true);
