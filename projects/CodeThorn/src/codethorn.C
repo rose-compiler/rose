@@ -250,6 +250,16 @@ int main( int argc, char * argv[] ) {
 	cout << "Time total           : "<<color("green")<<totalRunTime/1000.0<<" seconds"<<color("normal")<<endl;
   cout << "=============================================================="<<endl;
   // we only generate a visualization if #estates<=1000
+
+  cout << "FAILED-ASSERT Nodes are: ";
+  LabelSet lset=analyzer.getTransitionGraph()->labelSetOfIoOperations(InputOutput::FAILED_ASSERT);
+  for(LabelSet::iterator i=lset.begin();i!=lset.end();++i) {
+	if(i!=lset.begin())
+	  cout<<", ";
+	cout << *i;
+  }
+  cout<<endl;
+  
   if(eStateSetSize>2500) {
 	cout << "Number of eStates > 2500. Not generating visualization."<<endl;
   } else {
@@ -277,6 +287,7 @@ int main( int argc, char * argv[] ) {
     
     write_file("cfg.dot", analyzer.flow.toDot(analyzer.cfanalyzer->getLabeler()));
     cout << "generated cfg.dot."<<endl;
+
   }
 
 #if 0
