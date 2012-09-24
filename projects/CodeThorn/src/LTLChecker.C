@@ -365,12 +365,13 @@ public:
 	assert(estate);
 	assert(estate->constraints());
     const ConstIntLattice& lval = estate->constraints()->varConstIntLatticeValue(v);
-    cerr<<endl<<"ivar == "<<v.variableName()<<endl;
-    cerr<<constraints.toString()<<endl;
-    cerr<<lval.toString()<<endl;
+    //cerr<<endl<<"ivar == "<<v.variableName()<<endl;
+    //cerr<<constraints.toString()<<endl;
     if (lval.isConstInt()) {
-      cerr<<(bool)(c == lval.getIntValue()+'A')<<endl;
-      return c == lval.getIntValue()+'A';
+      // A=1, B=2
+      //cerr<<(char)c<<" == "<<(char)(lval.getIntValue()+'A'-1)<<"? "
+      //    <<(bool)(c == lval.getIntValue()+'A'-1)<<endl;
+      return c == lval.getIntValue()+'A'-1;
     }
     else {
       return BoolLattice(Top());
@@ -396,7 +397,8 @@ public:
       const AType::ConstIntLattice& lval = estate->io.val;
       //cerr<<lval.toString()<<endl;
       assert(lval.isConstInt());
-      return c == lval.getIntValue()+'A';
+      // U=21, Z=26
+      return c == lval.getIntValue()+'A'-1;
     }
     case InputOutput::STDOUT_VAR: {
       const State& prop_state = *estate->state;
@@ -406,7 +408,7 @@ public:
       assert(prop_state.varIsConst(estate->io.var));
       AValue aval = const_cast<State&>(prop_state)[estate->io.var].getValue();
       //cerr<<aval<<endl;
-      return c == aval.getIntValue()+'A';
+      return c == aval.getIntValue()+'A'-1;
     }
     default:
       if (joined_preds.isBot())

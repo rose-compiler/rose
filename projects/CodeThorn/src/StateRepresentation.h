@@ -58,9 +58,10 @@ class StateSet : public set<State> {
 };
 
 
-/* Input: a value val is read into a variable var
-   Output: either a variable or a value is written
-*/
+/**
+ * Input: a value val is read into a variable var
+ * Output: either a variable or a value is written
+ */
 class InputOutput {
  public:
  InputOutput():op(NONE),var(VariableId(0)){ val=AType::Bot();}
@@ -86,7 +87,7 @@ class EState {
  EState(Label label, const State* state, const ConstraintSet* csetptr):label(label),state(state),_constraints(csetptr){}
   Label getLabel() const { return label; }
   const State* getState() const { return state; }
-  //! deprecated, use constraints() instead.
+  /// \deprecated, use constraints() instead.
   const ConstraintSet& getConstraints() const { return *_constraints; }
   const InputOutput& getInputOutput() const { return io; }
   string toString() const;

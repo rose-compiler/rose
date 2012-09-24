@@ -9,13 +9,13 @@
 int calculate_output(int input) {
   if(input==1 && f==7) {
 	f=6;
-	return 22; // W (unreachable!)
+	return 23; // W (unreachable!)
   } else if(input==1 && f==6) {
 	f=5;
-	return 23; // X
+	return 24; // X
   } else if(f==5) {
 	f=4;
-	return 24; // Y
+	return 25; // Y
   } else if(f==4) {
 	f=3;
   }
