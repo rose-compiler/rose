@@ -8,14 +8,16 @@ int f= 6;
 int calculate_output2(int input) {
   if(input==21) {
 	return 23;
-  } else {
-	assert(0);
+  } 
+  if(f==6 && input==22) {
+  error_1: assert(0);
   }
+  return 1;
 }
 
 int calculate_output(int input) {
   if(input==21 && f==6) {
-	assert(0);
+  error_2: assert(0);
   }
   return calculate_output2(input);
 }

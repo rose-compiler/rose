@@ -170,6 +170,7 @@ class TransitionGraph : public list<Transition> {
   set<const EState*> eStateSetOfLabel(Label lab);
   void add(Transition trans);
   string toString() const;
+  LabelSet labelSetOfIoOperations(InputOutput::OpType op);
  private:
   int numberOfNodes;
 };

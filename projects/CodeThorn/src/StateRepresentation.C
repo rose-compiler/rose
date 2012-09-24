@@ -363,6 +363,17 @@ string Transition::toString() const {
   return string("(")+s1+", "+s2+", "+s3+")";
 }
 
+LabelSet TransitionGraph::labelSetOfIoOperations(InputOutput::OpType op) {
+  LabelSet lset;
+  // the target node records the effect of the edge-operation on the source node.
+  for(TransitionGraph::iterator i=begin();i!=end();++i) {
+	if((*i).target->io.op==op) {
+	  lset.insert((*i).source->label);
+	}
+  }
+  return lset;
+} 
+
 void TransitionGraph::add(Transition trans) {
   for(TransitionGraph::iterator i=begin();i!=end();++i) {
 	if(trans==*i)
