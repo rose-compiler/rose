@@ -12,6 +12,7 @@
 // This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
 // Interestingly it must be at the top of the list of include files.
 #include "rose_config.h"
+#include "fortran_support.h"
 
 #ifdef _MSC_VER
 #define strncasecmp _strnicmp
@@ -1249,7 +1250,7 @@ FortranCodeGeneration_locatedNode::unparseAttributeSpecificationStatement(SgStat
                ROSE_ASSERT(commonBlockObject);
                string blockName = commonBlockObject->get_block_name();
 //               std::cout << "commonblock:" << commonBlockObject << blockName << std::endl;
-               if(blockName.compare(outputName) == 0)
+               if(matchingName(blockName,outputName))
                 {
                   outputName = "/" + outputName + "/";
                   break;

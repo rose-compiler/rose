@@ -37,7 +37,8 @@ x10CodeGenerationPath=$(srcdir)/unparser/X10CodeGeneration#
 ###############################################################################
 
 INCLUDES=\
-	$(ROSE_INCLUDES)
+	$(ROSE_INCLUDES) \
+	-I${top_builddir}/src/3rdPartyLibraries/fortran-parser
 
 
 noinst_LTLIBRARIES = libbackend.la
