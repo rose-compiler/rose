@@ -195,7 +195,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState eS
 			// rhs is not considered due to short-circuit AND semantics
 		  }
 		  if(lhsResult.result.isTrue() && rhsResult.result.isFalse()) {
-			//res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints.invertedConstraints();
+			res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
 			// nothing to do
 		  }
 		  if(lhsResult.result.isTrue() && rhsResult.result.isTrue()) {
@@ -220,12 +220,12 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState eS
 			res.exprConstraints=lhsResult.exprConstraints;
 		  }
 		  if(lhsResult.result.isFalse() && rhsResult.result.isFalse()) {
-			res.exprConstraints=lhsResult.exprConstraints.invertedConstraints()+rhsResult.exprConstraints.invertedConstraints();
+			//res.exprConstraints=lhsResult.exprConstraints.invertedConstraints()+rhsResult.exprConstraints.invertedConstraints();
 			res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
 		  }
 		  if(lhsResult.result.isFalse() && rhsResult.result.isTrue()) {
 			//res.exprConstraints=lhsResult.exprConstraints.invertedConstraints()+rhsResult.exprConstraints;
-			res.exprConstraints=rhsResult.exprConstraints;
+			res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
 		  }
 		  // in case of top we do not propagate constraints
 		  if(lhsResult.result.isTop() && !safeConstraintPropagation) {

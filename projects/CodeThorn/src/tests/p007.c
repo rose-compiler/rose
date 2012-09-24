@@ -10,7 +10,8 @@ int main() {
   int input;
   int output1,output2;
   scanf("%d",&input);
-  if(!x==1 && !input==1)
+  // first argument is false, due to short-circuit eval is !(input==1) not evaluated
+  if(!(x==1) && !(input==1))
 	output1=1;
   else
 	output1=2;
