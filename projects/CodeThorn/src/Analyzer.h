@@ -74,6 +74,7 @@ class Analyzer {
   const EState* addToWorkListIfNew(EState eState);
   void recordTransition(const EState* sourceState, Edge e, const EState* targetState);
   void printStatusMessage();
+  bool isLTLrelevantLabel(Label label);
   const EState* takeFromWorkList() {
 	if(eStateWorkList.size()==0)
 	  return 0;

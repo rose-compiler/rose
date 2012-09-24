@@ -83,6 +83,7 @@ class VariableId {
 
 bool operator<(VariableId id1, VariableId id2);
 bool operator==(VariableId id1, VariableId id2);
+bool operator!=(VariableId id1, VariableId id2);
 
 #endif
 
