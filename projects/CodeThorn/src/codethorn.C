@@ -107,22 +107,31 @@ int main( int argc, char * argv[] ) {
     ("version,v", "display the version")
     ("internal-checks", "run internal consistency checks (without input program)")
     ("verify", po::value< string >(), "verify all LTL formulae in the file [arg]")
+    ("csv", po::value< string >(), "output LTL verification results into a CSV file [arg]")
     ("tg1-estate-address", po::value< string >(), "transition graph 1: visualize address [=yes|no]")
     ("tg1-estate-id", po::value< string >(), "transition graph 1: visualize estate-id [=yes|no]")
-	("tg1-estate-properties", po::value< string >(), "transition graph 1: visualize all estate-properties [=yes|no]")
+    ("tg1-estate-properties", po::value< string >(), 
+     "transition graph 1: visualize all estate-properties [=yes|no]")
     ("tg2-estate-address", po::value< string >(), "transition graph 2: visualize address [=yes|no]")
     ("tg2-estate-id", po::value< string >(), "transition graph 2: visualize estate-id [=yes|no]")
-    ("tg2-estate-properties", po::value< string >(),"transition graph 2: visualize all estate-properties [=yes|no]")
-	("colors",po::value< string >(),"use colors in output [=yes|no]")
-	("report-stdout",po::value< string >(),"report stdout estates during analysis [=yes|no]")
-	("report-failed-assert",po::value< string >(),"report failed assert estates during analysis [=yes|no]")
-	("precision-equality-constraints",po::value< string >(),"(experimental) use constraints for determining estate equality [=yes|no]")
-	("precision-equality-io",po::value< string >(),"(experimental) use constraints for determining estate equality [=yes|no]")
-	("precision-bool",po::value< string >(),"use precise top with bool-(and/or) operators (used in LTL)")
-	("precision-intbool",po::value< string >(),"use precise top with intbool-(and/or) operators (used in int-analyzer)")
-	("precision-exact-constraints",po::value< string >(),"use precise constraint extraction (experimental)")
-	("tg-ltl-reduced",po::value< string >(),"compute LTL-reduced transition graph")
-	;
+    ("tg2-estate-properties", po::value< string >(),
+     "transition graph 2: visualize all estate-properties [=yes|no]")
+    ("colors",po::value< string >(),"use colors in output [=yes|no]")
+    ("report-stdout",po::value< string >(),"report stdout estates during analysis [=yes|no]")
+    ("report-failed-assert",po::value< string >(),
+     "report failed assert estates during analysis [=yes|no]")
+    ("precision-equality-constraints",po::value< string >(),
+     "(experimental) use constraints for determining estate equality [=yes|no]")
+    ("precision-equality-io",po::value< string >(),
+     "(experimental) use constraints for determining estate equality [=yes|no]")
+    ("precision-bool",po::value< string >(),
+     "use precise top with bool-(and/or) operators (used in LTL)")
+    ("precision-intbool",po::value< string >(),
+     "use precise top with intbool-(and/or) operators (used in int-analyzer)")
+    ("precision-exact-constraints",po::value< string >(),
+     "use precise constraint extraction (experimental)")
+    ("tg-ltl-reduced",po::value< string >(),"compute LTL-reduced transition graph")
+    ;
 
   po::store(po::command_line_parser(argc, argv).
 	    options(desc).allow_unregistered().run(), args);
@@ -173,7 +182,8 @@ int main( int argc, char * argv[] ) {
   if (args.count("verify")) {
     ltl_file = args["verify"].as<string>();
 	for (int i=1; i<argc; ++i) {
-	  if (string(argv[i]) == "--verify") {
+	  if ((string(argv[i]) == "--verify") || 
+	      (string(argv[i]) == "--csv")) {
 		// do not confuse ROSE frontend
 		argv[i] = strdup("");
 		assert(i+1<argc);
@@ -319,6 +329,16 @@ int main( int argc, char * argv[] ) {
     LTL::Checker checker(*analyzer.getEStateSet(),
 			 *analyzer.getTransitionGraph());
     ltl_input = fopen(ltl_file.c_str(), "r");
+
+    ofstream* csv = NULL;
+    if (args.count("csv")) {
+      csv = new ofstream();
+      // use binary and \r\n tp enforce DOS line endings
+      // http://tools.ietf.org/html/rfc4180
+      csv->open(args["csv"].as<string>().c_str(), ios::trunc|ios::binary);
+      *csv << "Index,\"LTL formula\",Result,Confidence\r\n";
+    }
+
     while ( !ltl_eof) {
       try { 
 	ltl_label = 0;
@@ -346,40 +366,49 @@ int main( int argc, char * argv[] ) {
       }  
 	  
       ++n;
-      cout<<endl<<"Verifying formula "<<color("white")<<string(*ltl_val)<<color("normal")<<"."<<endl;
+      string formula = *ltl_val;
+      cout<<endl<<"Verifying formula "<<color("white")<<formula<<color("normal")<<"."<<endl;
+      if (csv) *csv << n <<",\"" <<formula<<"\",";
       try {
 	AType::BoolLattice result = checker.verify(*ltl_val);
 	if (result.isTrue()) {
 	  ++n_yes;
 	  cout<<color("green")<<"YES"<<color("normal")<<endl;
+	  if (csv) *csv << "YES,9\r\n";
 	} else if (result.isFalse()) {
 	  ++n_no;
 	  cout<<color("cyan")<<"NO"<<color("normal")<<endl;
+	  if (csv) *csv << "NO,9\r\n";
 	} else {
 	  ++n_undecided;
 	  cout<<color("magenta")<<"UNDECIDED"<<color("normal")<<endl;
+	  if (csv) *csv << "UNDECIDED,0,\r\n";
 	}
       } catch(const char* str) {
 	++n_failed;
 	cerr << "Exception raised: " << str << endl;
-	cout<<color("red")<<"FAILED"<<color("normal")<<endl;
+	cout<<color("red")<<"ERROR"<<color("normal")<<endl;
+	if (csv) *csv << "ERROR,0,\r\n";
       } catch(string str) {
 	++n_failed;
 	cerr << "Exception raised: " << str << endl;
-	cout<<color("red")<<"FAILED"<<color("normal")<<endl;
+	cout<<color("red")<<"ERROR"<<color("normal")<<endl;
+	if (csv) *csv << "ERROR,0,\r\n";
       } catch(...) {
 	++n_failed;
-	cout<<color("red")<<"FAILED"<<color("normal")<<endl;
+	cout<<color("red")<<"ERROR"<<color("normal")<<endl;
+	if (csv) *csv << "ERROR,0,\r\n";
       }  
     }
+    if (csv) delete csv;
     fclose(ltl_input);
     assert(n_yes+n_no+n_undecided+n_failed == n);
     cout<<"\nStatistics "<<endl
         <<"========== "<<endl
 	<<n_yes      <<"/"<<n<<color("green")  <<" YES, "       <<color("normal") 	
-	<<n_no       <<"/"<<n<<color("cyan")   <<" NO, "	       <<color("normal") 	
+	<<n_no       <<"/"<<n<<color("cyan")   <<" NO, "        <<color("normal") 	
 	<<n_undecided<<"/"<<n<<color("magenta")<<" UNDECIDED, " <<color("normal") 	
-	<<n_failed   <<"/"<<n<<color("red")    <<" FAILED"      <<color("normal") 	
+	<<n_failed   <<"/"<<n<<color("red")    <<" ERROR"       <<color("normal") 	
 	<<endl;
 
   } 

@@ -76,7 +76,7 @@ check: $(TOOLNAME3)
 	./$(TOOLNAME3) --edg:no_warnings tests/rers_mini1.c    --verify tests/rers_mini1.ltl
 
 test: $(TOOLNAME3)
-	./$(TOOLNAME3) --edg:no_warnings tests/rers/Problem1.c    --verify tests/rers/properties1.txt
+	./$(TOOLNAME3) --edg:no_warnings tests/rers/Problem1.c --verify tests/rers/properties1.txt --csv Problem1.csv
 
 
 RERS=Problem1.log Problem2.log Problem3.log
@@ -86,7 +86,8 @@ rers: $(RERS)
 # parallel tests with make -j<N> test
 %.log: tests/rers/%.c $(TOOLNAME3) Makefile
 	./$(TOOLNAME3) --edg:no_warnings $< \
-	     --verify $(patsubst tests/rers/Problem%.c,tests/rers/properties%.txt,$<) >$@
+	     --verify $(patsubst tests/rers/Problem%.c,tests/rers/properties%.txt,$<) \
+	     --csv    $(patsubst tests/rers/Problem%.c,Problem%.csv,$<) >$@
 
 docs:
 	doxygen Doxyfile
