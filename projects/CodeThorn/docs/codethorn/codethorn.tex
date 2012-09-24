@@ -1,0 +1,100 @@
+\documentclass[natbib]{article}
+\usepackage{microtype}
+\usepackage{lmodern}
+\usepackage{url}
+\usepackage{xspace}
+\usepackage{calc}
+\usepackage{enumerate}
+\usepackage{listings}
+\usepackage{rotating}
+\usepackage{colortbl}
+\usepackage{pifont}
+\usepackage{tikz}
+%\usetikzlibrary{shapes,shadows,arrows,calc,positioning,fit,matrix,mindmap,trees}
+%\usepackage{pgfplots}
+%\usepackage{pgfplotstable}
+\usepackage{booktabs}
+\usepackage{natbib}
+\usepackage{colortbl}
+% pantone colors
+
+% More sensible defaults akin to \sloppy
+% \tolerance 1414
+% \hbadness 1414
+% \emergencystretch 1.5em
+% \hfuzz 0.3pt
+% \widowpenalty=10000
+% \clubpenalty=10000
+% \vfuzz
+% \hfuzz
+% \raggedbottom
+
+
+\newcommand{\st}{\textit{s.\,t.}\xspace}
+\newcommand{\eg}{\textit{e.\,g.}\xspace}
+\newcommand{\ie}{\textit{i.\,e.}\xspace}
+\newcommand{\cf}{\textit{cf.}\xspace}
+
+\newcommand{\blackarrow}{{\color{black} \Pisymbol{pzd}{217}}}
+\newcommand{\redarrow}{{\color{DarkRed} \Pisymbol{pzd}{217}}}
+\newcommand{\minibox}[2]{\begin{minipage}{#1}\raggedright #2\end{minipage}}
+
+\lstset{
+  language=C,
+  basicstyle=\small,%\scriptsize, %\footnotesize\ttfamily,
+  keywordstyle={\bf},
+  keywordstyle={[2]\it},%\color{Blue!40!black}},
+  breaklines=true,
+  identifierstyle=,
+  stringstyle=\bf,
+  commentstyle=\it\color{black!80},
+  captionpos=b,
+  numbers=left,
+  stepnumber=3,
+  columns=fullflexible
+}
+
+\begin{document}
+\title{The CodeThorn Program Analyzer}
+
+\author{
+\small
+\begin{tabular}{ll}
+Markus Schordan                        & Adrian Prantl\\
+University of Applied Computer Science & Center for Applied Scientific Computing\\
+Vienna                                 & Lawrence Livermore National Laboratory\\
+\texttt{schordan@technikum-wien.at}   & \texttt{adrian@llnl.gov}\\
+\end{tabular}
+}
+\date{\today}
+
+\maketitle
+
+\begin{abstract}
+  CodeThorn.
+\end{abstract}
+
+%-------------------------------------------------------------------------
+
+\newcommand{\fixme}[1]{\begin{tikzpicture}
+\node[bottom color=red!80!white, top color=red!70!black, rounded corners,
+      font=\bf\color{white}\footnotesize] {
+  \begin{minipage}{.75\columnwidth}
+    FIXME\\
+    #1
+  \end{minipage}
+};
+\end{tikzpicture}
+}
+
+\section{Introduction}
+\label{sec:intro}
+\fixme{write an introduction}
+
+\input{stg}
+\input{ltl}
+
+\bibliographystyle{unsrtnat}
+\bibliography{codethorn}
+
+\end{document}
