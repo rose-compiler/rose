@@ -1,13 +1,25 @@
 {-- -*- coding: utf-8 -*-
 
-Written by 2012 by Adrian Prantl <adrian@llnl.gov>
+Copyright (c) 2012 Lawrence Livermore National Security, LLC.
+Produced at the Lawrence Livermore National Laboratory
+Written by Adrian Prantl <adrian@llnl.gov>.
+
+UCRL-CODE-155962.
+All rights reserved.
+
+This file is part of ROSE. For details, see http://www.rosecompiler.org/.
+Please read the COPYRIGHT file for Our Notice and for the BSD License.
+
+------------------------------------------------------------------------
 
 This program is supposed to find counterexamples for a list of LTL
 formulae by actually executing the state machine (compiled rers
 program) with "random" input.
 
 Dependencies:
-apt-get install ghc libghc6-missingh-dev libghc6-quickcheck2-dev
+apt-get install ghc libghc6-missingh-dev libghc6-quickcheck2-dev expect-dev
+
+------------------------------------------------------------------------
 
 --}
 module Main where

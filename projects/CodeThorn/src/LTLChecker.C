@@ -3,7 +3,15 @@
 #include <stack>
 #include <queue>
 
-// Written 2012 by Adrian Prantl <adrian@llnl.gov>.
+// Copyright (c) 2012 Lawrence Livermore National Security, LLC.
+// Produced at the Lawrence Livermore National Laboratory
+// Written by Adrian Prantl <adrian@llnl.gov>.
+//
+// UCRL-CODE-155962.
+// All rights reserved.
+//
+// This file is part of ROSE. For details, see http://www.rosecompiler.org/.
+// Please read the COPYRIGHT file for Our Notice and for the BSD License.
 
 using namespace LTL;
 
@@ -165,7 +173,7 @@ public:
  * * monotone(?) operators (X, F, E, WU, U), these require a
  *   fixpoint iteration over the entire transition graph.
  *
- * TODO: Are there better anmes for these classes?
+ * TODO: Are there better names for these classes?
  * JOINS should have the same information
  */
 class Verifier: public BottomUpVisitor {
@@ -357,11 +365,11 @@ public:
 	assert(estate);
 	assert(estate->constraints());
     const ConstIntLattice& lval = estate->constraints()->varConstIntLatticeValue(v);
-    //cerr<<endl<<"ivar == "<<(*v)->variableName()<<endl;
-    //cerr<<estate->constraints.toString()<<endl;
-    //cerr<<lval.toString()<<endl;
+    cerr<<endl<<"ivar == "<<v.variableName()<<endl;
+    cerr<<constraints.toString()<<endl;
+    cerr<<lval.toString()<<endl;
     if (lval.isConstInt()) {
-      //cerr<<(bool)(c == lval.getIntValue()+'A')<<endl;
+      cerr<<(bool)(c == lval.getIntValue()+'A')<<endl;
       return c == lval.getIntValue()+'A';
     }
     else {

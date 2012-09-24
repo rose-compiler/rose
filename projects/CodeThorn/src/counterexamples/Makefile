@@ -1,4 +1,5 @@
-all: rers_mini1.log Problem1.log
+all: 
+	$(MAKE) -j1 rers_mini1.log Problem1.log
 
 clean:
 	rm -f *.exe formulae.hs *.o *.hi qc

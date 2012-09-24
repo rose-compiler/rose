@@ -2,7 +2,15 @@
 #ifndef __LTLCHECKER_H__
 #define __LTLCHECKER_H__
 
-// Written 2012 by Adrian Prantl <adrian@llnl.gov>.
+// Copyright (c) 2012 Lawrence Livermore National Security, LLC.
+// Produced at the Lawrence Livermore National Laboratory
+// Written by Adrian Prantl <adrian@llnl.gov>.
+//
+// UCRL-CODE-155962.
+// All rights reserved.
+//
+// This file is part of ROSE. For details, see http://www.rosecompiler.org/.
+// Please read the COPYRIGHT file for Our Notice and for the BSD License.
 
 #include "StateRepresentation.h"
 #include "AType.h"
