@@ -520,6 +520,7 @@ public:
     short e1 = expr->expr1->label;
 
     BoolLattice global = true;
+    cerr<<"fixme: what's the rationale behind TOP here?"<<endl;
     FOR_EACH_STATE(state, label) {
       global = global && props[e1];
       // TOP and TRUE are seen as valid
@@ -529,9 +530,9 @@ public:
       }
     }
 
-    // propagate the global result to all states
+    // propagate the global result to all states, but keep Bot as is
     {  FOR_EACH_STATE(state, label)
-	props[e] = global;
+	props[e] = props[e1].isBot() ? Bot() : global;
     }
   }
 
