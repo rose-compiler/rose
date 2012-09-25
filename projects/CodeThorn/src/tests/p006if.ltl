@@ -1,23 +1,18 @@
-(G ! oI)
-output I does never occur
-----------------------------------------
-(G ! oA)
-output A does never occur
 ----------------------------------------
 (G ! oA)
 output A does never occur
 ----------------------------------------
 (G ! oB)
-output A does never occur
+output B does never occur
 ----------------------------------------
-(G ! oC)
-output A does never occur
+(!(G ! oC))
+output C does not never occur
 ----------------------------------------
 (G ! oD)
-output A does never occur
+output D does never occur
 ----------------------------------------
-(G ! oH)
-output A does never occur
+(G ! oE)
+output E does never occur
 ----------------------------------------
 (G (! iC | (F oF)))
 output F responds to input C

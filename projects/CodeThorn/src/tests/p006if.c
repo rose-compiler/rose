@@ -1,8 +1,8 @@
 /*
 
-3 -> 6
-7 -> 7
-x -> 5 when x!=3 and x!=7
+3 -> 6 : c->f
+7 -> 7 : g->g
+x -> 5 when x!=3 and x!=7 : x->e when x!=c and x!=g
  
  */
 #include <stdio.h>
