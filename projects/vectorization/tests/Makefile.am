@@ -12,6 +12,7 @@ TESTCODES_REQUIRED_TO_PASS = \
 	conditionalStmt4.c \
 	conditionalStmt5.c \
 	scalarPromotionExtraction.c \
+	mathFunction.c \
 	FMA.c
 
 COMPARE_CODES = \
@@ -24,6 +25,7 @@ COMPARE_CODES = \
 	rose_conditionalStmt4.c \
 	rose_conditionalStmt5.c \
 	rose_scalarPromotionExtraction.c \
+	rose_mathFunction.c \
 	rose_FMA.c
 
 TEST_OUTPUTS = $(TESTCODES_REQUIRED_TO_PASS:.c=)
@@ -47,7 +49,7 @@ $(COMPARE_OUTPUTS):
 check-local:
 if ROSE_BUILD_C_LANGUAGE_SUPPORT
 	@$(MAKE) $(TEST_OUTPUTS)
-#	@$(MAKE) $(COMPARE_OUTPUTS)
+	@$(MAKE) $(COMPARE_OUTPUTS)
 else
 	@echo "Skipping tests"
 endif

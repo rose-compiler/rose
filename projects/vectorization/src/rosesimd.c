@@ -578,3 +578,171 @@ int32_t _SIMD_extract_epi32(__SIMDi a, int32_t i)
   return *(((int32_t*)&a)+i);
 #endif
 }
+
+/*
+  Sqrt
+*/
+__SIMD _SIMD_sqrt_ps(__SIMD a)
+{
+#ifdef  USE_SSE
+  return _mm_sqrt_ps(a);
+#elif defined USE_AVX
+  return _mm256_sqrt_ps(a);
+#elif defined USE_IBM
+  return vec_sqrt(a);
+#endif
+}
+
+__SIMDd _SIMD_sqrt_pd(__SIMDd a)
+{
+#ifdef  USE_SSE
+  return _mm_sqrt_pd(a);
+#elif defined USE_AVX
+  return _mm256_sqrt_pd(a);
+#elif defined USE_IBM
+  return vec_sqrt(a);
+#endif
+}
+
+// SIMD abs
+__SIMD _SIMD_abs_ps(__SIMD a)
+{
+#ifdef  USE_SSE
+  return _mm_andnot_ps(_mm_set1_ps(-0.0f), a); 
+#elif defined USE_AVX
+  return _mm256_andnot_ps(_mm256_set1_ps(-0.0f), a); 
+#elif defined USE_IBM
+  return vec_abs(a);
+#endif
+}
+
+__SIMDd _SIMD_abs_pd(__SIMDd a)
+{
+#ifdef  USE_SSE
+  return _mm_andnot_pd(_mm_set1_pd(-0.0f), a); 
+#elif defined USE_AVX
+  return _mm256_andnot_pd(_mm256_set1_pd(-0.0f), a);
+#elif defined USE_IBM
+  return vec_abs(a);
+#endif
+}
+
+__SIMDi _SIMD_abs_epi32(__SIMDi a)
+{
+#ifdef  USE_SSE
+  return _mm_andnot_si128(_mm_set1_epi32(-0), a);
+#elif defined USE_AVX
+  return _mm256_andnot_si256(_mm256_set1_epi32(-0), a);
+#elif defined USE_IBM
+  return vec_abs(a);
+#endif
+}
+
+// SIMD max
+__SIMD _SIMD_max_ps(__SIMD a, __SIMD b)
+{
+#ifdef  USE_SSE
+  return _mm_max_ps(a,b); 
+#elif defined USE_AVX
+  return _mm256_max_ps(a,b); 
+#elif defined USE_IBM
+  return vec_max(a,b);
+#endif
+}
+
+__SIMDd _SIMD_max_pd(__SIMDd a, __SIMDd b)
+{
+#ifdef  USE_SSE
+  return _mm_max_pd(a,b); 
+#elif defined USE_AVX
+  return _mm256_max_pd(a,b); 
+#elif defined USE_IBM
+  return vec_max(a,b);
+#endif
+}
+
+__SIMDi _SIMD_max_epi32(__SIMDi a, __SIMDi b)
+{
+#ifdef  USE_SSE4.1
+  return _mm_max_epi32(a,b); 
+#elif defined USE_AVX
+  return _mm256_max_epi32(a,b); 
+#elif defined USE_IBM
+  return vec_max(a,b);
+#endif
+}
+
+// SIMD min
+__SIMD _SIMD_min_ps(__SIMD a, __SIMD b)
+{
+#ifdef  USE_SSE
+  return _mm_min_ps(a,b); 
+#elif defined USE_AVX
+  return _mm256_min_ps(a,b); 
+#elif defined USE_IBM
+  return vec_min(a,b);
+#endif
+}
+
+__SIMDd _SIMD_min_pd(__SIMDd a, __SIMDd b)
+{
+#ifdef  USE_SSE
+  return _mm_min_pd(a,b); 
+#elif defined USE_AVX
+  return _mm256_min_pd(a,b); 
+#elif defined USE_IBM
+  return vec_min(a,b);
+#endif
+}
+
+__SIMDi _SIMD_min_epi32(__SIMDi a, __SIMDi b)
+{
+#ifdef  USE_SSE4.1
+  return _mm_min_epi32(a,b); 
+#elif defined USE_AVX
+  return _mm256_min_epi32(a,b); 
+#elif defined USE_IBM
+  return vec_min(a,b);
+#endif
+}
+
+// SIMD sin
+__SIMD _SIMD_sin_ps(__SIMD a)
+{
+#ifdef  USE_SSE
+  return sin_ps(a); 
+#elif defined USE_AVX
+  return sin256_ps(a); 
+#endif
+}
+
+// SIMD cos
+__SIMD _SIMD_cos_ps(__SIMD a)
+{
+#ifdef  USE_SSE
+  return cos_ps(a); 
+#elif defined USE_AVX
+  return cos256_ps(a); 
+#endif
+}
+
+// SIMD log
+__SIMD _SIMD_log_ps(__SIMD a)
+{
+#ifdef  USE_SSE
+  return log_ps(a); 
+#elif defined USE_AVX
+  return log256_ps(a); 
+#endif
+}
+
+// SIMD exp
+__SIMD _SIMD_exp_ps(__SIMD a)
+{
+#ifdef  USE_SSE
+  return exp_ps(a); 
+#elif defined USE_AVX
+  return exp256_ps(a); 
+#endif
+}
+

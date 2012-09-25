@@ -14,9 +14,12 @@ int main()
   float tmp;
   __SIMD tmp_SIMD;
   int n = 16;
+  __SIMDi n_SIMD;
   void *cmpReturn_11;
   b_SIMD = ((__SIMD *)b);
   a_SIMD = ((__SIMD *)a);
+  tmp_SIMD = _SIMD_splats_ps(tmp);
+  n_SIMD = _SIMD_splats_epi32(n);
   for (i_nom_1 = 0, i_nom_1_strip_9 = i_nom_1; i_nom_1 <= n - 1; (i_nom_1 += 4 , i_nom_1_strip_9 += 1)) {
 /* if statement is converted into vectorizaed conditional statement */
     _SIMD_cmpeq_ps(tmp_SIMD,_SIMD_splats_ps(0.f),&cmpReturn_11);

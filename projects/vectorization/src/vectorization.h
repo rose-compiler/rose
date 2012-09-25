@@ -35,13 +35,16 @@ namespace SIMDVectorization
   void updateLoopIteration(SgForStatement*, int);
 
 //  vectorize unary operations insize vectorizable loop
-  void vectorizeUnaryOp(SgStatement*);
+  void vectorizeUnaryOp(SgUnaryOp*);
 
 //  vectorize binary operations insize vectorizable loop
-  void vectorizeBinaryOp(SgStatement*);
+  void vectorizeBinaryOp(SgBinaryOp*);
 
 //  vectorize ifStmt inside vectorizable loop 
-  void vectorizeConditionalStmt(SgStatement*);
+  void vectorizeConditionalStmt(SgIfStmt*);
+
+//  vectorize function call inside vectorizable loop 
+  void vectorizeFunctionCall(SgFunctionCallExp*);
 
 //  translate ifStmt inside vectorizable loop 
   void translateIfStmt(SgIfStmt*, std::map<SgName,conditionalStmts*>&);

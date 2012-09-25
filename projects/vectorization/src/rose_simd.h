@@ -16,12 +16,14 @@ __SIMDd is for the double.
 #ifdef  USE_SSE
 // By default we support SSE2, and turn on the -msse2 GCC compiler flag 
 #include <emmintrin.h>
+#include "sse_mathfun.h"
 typedef  __m128   __SIMD; 
 typedef  __m128i  __SIMDi; 
 typedef  __m128d  __SIMDd; 
 
 #elif defined USE_AVX
 #include <avxintrin.h>
+#include "avx_mathfun.h"
 typedef  __m256   __SIMD; 
 typedef  __m256i  __SIMDi; 
 typedef  __m256d  __SIMDd; 
@@ -129,6 +131,30 @@ extern void  _SIMD_cmpge_pd(__SIMDd, __SIMDd, void**);
 extern float   _SIMD_extract_ps(__SIMD, int32_t);
 extern double  _SIMD_extract_pd(__SIMDd, int32_t);
 extern int32_t _SIMD_extract_epi32(__SIMDi, int32_t);
+
+// SIMD sqrt
+extern __SIMD   _SIMD_sqrt_ps(__SIMD);
+extern __SIMDd  _SIMD_sqrt_pd(__SIMDd);
+
+// SIMD abs
+extern __SIMD  _SIMD_abs_ps(__SIMD);
+extern __SIMDd _SIMD_abs_pd(__SIMDd);
+extern __SIMDi _SIMD_abs_epi32(__SIMDi);
+
+// SIMD max
+extern __SIMD  _SIMD_max_ps(__SIMD, __SIMD);
+extern __SIMDd _SIMD_max_pd(__SIMDd, __SIMDd);
+extern __SIMDi _SIMD_max_epi32(__SIMDi, __SIMDi);
+
+// SIMD max
+extern __SIMD  _SIMD_min_ps(__SIMD, __SIMD);
+extern __SIMDd _SIMD_min_pd(__SIMDd, __SIMDd);
+extern __SIMDi _SIMD_min_epi32(__SIMDi, __SIMDi);
+
+extern __SIMD   _SIMD_sin_ps(__SIMD);
+extern __SIMD   _SIMD_cos_ps(__SIMD);
+extern __SIMD   _SIMD_log_ps(__SIMD);
+extern __SIMD   _SIMD_exp_ps(__SIMD);
 
 #ifdef __cplusplus
 }

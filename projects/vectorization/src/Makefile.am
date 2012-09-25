@@ -24,7 +24,9 @@ vectorization_SOURCES=\
 	vectorization.C
 
 include_HEADERS=\
-	rose_simd.h 
+	rose_simd.h\
+	sse_mathfun.h\ 
+	avx_mathfun.h
 
 # -msse and -msse2 are enabled for x86-64 compiler by default.
 # they have to be enabled on i386 - i686 compilers.
@@ -32,4 +34,4 @@ libsimd_la_CPPFLAGS = -msse -msse2
 lib_LTLIBRARIES = libsimd.la
 libsimd_la_SOURCES = rosesimd.c
 
-EXTRA_DIST = rose_simd.h
+EXTRA_DIST = rose_simd.h sse_mathfun.h avx_mathfun.h

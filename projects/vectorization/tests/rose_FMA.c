@@ -15,6 +15,7 @@ int main()
   float c[16UL];
   __SIMD *c_SIMD;
   int n = 16;
+  __SIMDi n_SIMD;
   float as;
   __SIMD as_SIMD;
   float bs;
@@ -24,12 +25,15 @@ int main()
   c_SIMD = ((__SIMD *)c);
   b_SIMD = ((__SIMD *)b);
   a_SIMD = ((__SIMD *)a);
+  n_SIMD = _SIMD_splats_epi32(n);
+  as_SIMD = _SIMD_splats_ps(as);
+  bs_SIMD = _SIMD_splats_ps(bs);
   for (i_nom_1 = 0, i_nom_1_strip_11 = i_nom_1; i_nom_1 <= n - 1; (i_nom_1 += 4 , i_nom_1_strip_11 += 1)) {
     a_SIMD[i_nom_1_strip_11] = _SIMD_madd_ps(a_SIMD[i_nom_1_strip_11],b_SIMD[i_nom_1_strip_11],c_SIMD[i_nom_1_strip_11]);
     a_SIMD[i_nom_1_strip_11] = _SIMD_msub_ps(a_SIMD[i_nom_1_strip_11],b_SIMD[i_nom_1_strip_11],c_SIMD[i_nom_1_strip_11]);
     a_SIMD[i_nom_1_strip_11] = _SIMD_madd_ps(a_SIMD[i_nom_1_strip_11],b_SIMD[i_nom_1_strip_11],c_SIMD[i_nom_1_strip_11]);
-    a_SIMD[i_nom_1_strip_11] = -_SIMD_msub_ps(a_SIMD[i_nom_1_strip_11],b_SIMD[i_nom_1_strip_11],c_SIMD[i_nom_1_strip_11]);
-    cs_SIMD = _SIMD_madd_ps(as_SIMD,bs_SIMD,_SIMD_splats_ps(1));
+    a_SIMD[i_nom_1_strip_11] = _SIMD_neg_ps(_SIMD_msub_ps(a_SIMD[i_nom_1_strip_11],b_SIMD[i_nom_1_strip_11],c_SIMD[i_nom_1_strip_11]));
+    cs_SIMD = (_SIMD_madd_pd(as_SIMD,bs_SIMD,_SIMD_splats_pd(1.)));
   }
   return 0;
 }

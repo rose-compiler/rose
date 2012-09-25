@@ -1,4 +1,5 @@
 #include "vectorization.h"
+#include "SIMDAnalysis.h"
 #include "CommandOptions.h"
 #include "AstInterface.h"
 #include "AstInterface_ROSE.h"
@@ -166,8 +167,8 @@ void SIMDVectorization::translateOperand(SgExpression* operand)
         SgVarRefExp* newOperand = buildVarRefExp(SIMDName, getScope(operand));
         newOperand->set_parent(operand->get_parent());
         replaceExpression(operand, newOperand, false);
+        break;
       }
-      break;
     case V_SgPntrArrRefExp:
       {
         SgPntrArrRefExp* pntrArrRefExp = isSgPntrArrRefExp(operand);
@@ -186,7 +187,6 @@ void SIMDVectorization::translateOperand(SgExpression* operand)
         SgDeclarationStatement* arrayDeclarationStmt = arraySymbol->get_declaration()->get_declaration();
         string arrayName = arraySymbol->get_name().getString();
         string SIMDName = arrayName + "_SIMD";
-
         if(lookupSymbolInParentScopes(SIMDName,getScope(operand)) == NULL)
         {
           /* 
@@ -248,12 +248,16 @@ void SIMDVectorization::translateOperand(SgExpression* operand)
         */
         SgVarRefExp* newOperand = buildVarRefExp(SIMDName, getScope(arrayRefExp));
         replaceExpression(arrayRefExp, newOperand, false);
-
+        break;
       }
-      break;
+    case V_SgCastExp:
+      {
+        translateOperand(isSgCastExp(operand)->get_operand());
+        break;
+      }
     case V_SgIntVal:
     case V_SgFloatVal:
-    case V_SgCastExp:
+    case V_SgDoubleVal:
       {
         string suffix = "";
         suffix = getSIMDOpSuffix(operand->get_type());
@@ -263,13 +267,12 @@ void SIMDVectorization::translateOperand(SgExpression* operand)
                                                              SIMDAddArgs, 
                                                              getScope(operand));
         replaceExpression(operand, SIMDSplats); 
+        break;
       }
-      break;
     default:
       {
         // By default, we don't change anything for the operands. 
       }
-      break;
   }
 }
 
@@ -279,15 +282,9 @@ void SIMDVectorization::translateOperand(SgExpression* operand)
   We implement translations for the basic arithmetic operator first.
 */
 /******************************************************************************************************************************/
-void SIMDVectorization::vectorizeUnaryOp(SgStatement* loopBody)
+void SIMDVectorization::vectorizeUnaryOp(SgUnaryOp* unaryOp)
 {
-  SgScopeStatement* scope = loopBody->get_scope();
-  Rose_STL_Container<SgNode*> unaryOpList = NodeQuery::querySubTree (loopBody,V_SgUnaryOp);
-  for (Rose_STL_Container<SgNode*>::iterator i = unaryOpList.begin(); i != unaryOpList.end(); i++)
-  {
-    SgUnaryOp* unaryOp = isSgUnaryOp(*i);
-    ROSE_ASSERT(unaryOp);
-
+  SgScopeStatement* scope = getScope(unaryOp);
     string suffix = getSIMDOpSuffix(unaryOp->get_type());
 
     switch(unaryOp->variantT())
@@ -300,8 +297,8 @@ void SIMDVectorization::vectorizeUnaryOp(SgStatement* loopBody)
           unaryOp->set_operand(NULL);
           replaceExpression(unaryOp, SIMDExp, false);
           translateOperand(operand);  
+          break;
         }
-        break;
       case V_SgUnaryAddOp:
         // We should be able to remove the "+".
         {
@@ -309,15 +306,15 @@ void SIMDVectorization::vectorizeUnaryOp(SgStatement* loopBody)
           unaryOp->set_operand(NULL);
           replaceExpression(unaryOp, operand, false);
           translateOperand(operand);  
+          break;
         }
-        break;
       case V_SgMinusMinusOp:
       case V_SgPlusPlusOp:
+      case V_SgCastExp:
         break;
       case V_SgNotOp:
       case V_SgAddressOfOp:
       case V_SgBitComplementOp:
-      case V_SgCastExp:
       case V_SgConjugateOp:
       case V_SgExpressionRoot:
       case V_SgPointerDerefExp:
@@ -329,7 +326,6 @@ void SIMDVectorization::vectorizeUnaryOp(SgStatement* loopBody)
           cerr<<"warning, unhandled unaryOp in vectorizeUnaryOp: "<< unaryOp->class_name()<<endl;
         }
     }
-  }
 }
 
 /******************************************************************************************************************************/
@@ -338,15 +334,9 @@ void SIMDVectorization::vectorizeUnaryOp(SgStatement* loopBody)
   We implement translations for the basic arithmetic operator first.
 */
 /******************************************************************************************************************************/
-void SIMDVectorization::vectorizeBinaryOp(SgStatement* loopBody)
+void SIMDVectorization::vectorizeBinaryOp(SgBinaryOp* binaryOp)
 {
-  SgScopeStatement* scope = loopBody->get_scope();
-  Rose_STL_Container<SgNode*> binaryOpList = NodeQuery::querySubTree (loopBody,V_SgBinaryOp);
-  for (Rose_STL_Container<SgNode*>::iterator i = binaryOpList.begin(); i != binaryOpList.end(); i++)
-  {
-    SgBinaryOp* binaryOp = isSgBinaryOp(*i);
-    ROSE_ASSERT(binaryOp);
-
+  SgScopeStatement* scope = getScope(binaryOp);
     string suffix = getSIMDOpSuffix(binaryOp->get_type());
 
     switch(binaryOp->variantT())
@@ -354,33 +344,44 @@ void SIMDVectorization::vectorizeBinaryOp(SgStatement* loopBody)
       case V_SgAddOp:
         {
           translateBinaryOp(binaryOp, scope, "_SIMD_add"+suffix);
+          break;
         }
-        break;
       case V_SgSubtractOp:
         {
           translateBinaryOp(binaryOp, scope, "_SIMD_sub"+suffix);
+          break;
         }
-        break;
       case V_SgMultiplyOp:
         {
           translateBinaryOp(binaryOp, scope, "_SIMD_mul"+suffix);
+          break;
         }
-        break;
       case V_SgDivideOp:
         {
           translateBinaryOp(binaryOp, scope, "_SIMD_div"+suffix);
+          break;
         }
-        break;
       case V_SgAssignOp:
         {
           translateOperand(binaryOp->get_lhs_operand()); 
           translateOperand(binaryOp->get_rhs_operand()); 
+          break;
         }
-        break;
-      case V_SgAndOp:
       case V_SgBitAndOp:
+        {
+          translateBinaryOp(binaryOp, scope, "_SIMD_and"+suffix);
+          break;
+        }
       case V_SgBitOrOp:
+        {
+          translateBinaryOp(binaryOp, scope, "_SIMD_or"+suffix);
+          break;
+        }
       case V_SgBitXorOp:
+        {
+          translateBinaryOp(binaryOp, scope, "_SIMD_xor"+suffix);
+          break;
+        }
       case V_SgEqualityOp:
       case V_SgGreaterOrEqualOp:
       case V_SgGreaterThanOp:
@@ -393,13 +394,13 @@ void SIMDVectorization::vectorizeBinaryOp(SgStatement* loopBody)
           // We simply change their operands, then leave it for vectorizeConditionalStmt to handle
           translateOperand(binaryOp->get_lhs_operand()); 
           translateOperand(binaryOp->get_rhs_operand()); 
+          break;
         }
-        break;
       case V_SgCompoundAssignOp:
         {
           cout << "support for " << binaryOp->class_name() << " is under construction" << endl;
+          break;
         }
-        break;
       case V_SgPntrArrRefExp:
         break;
       default:
@@ -407,8 +408,6 @@ void SIMDVectorization::vectorizeBinaryOp(SgStatement* loopBody)
           cerr<<"warning, unhandled binaryOp in vectorizeBinaryOp: "<< binaryOp->class_name()<<endl;
         }
     }
-    
-  }
 }
 
 /******************************************************************************************************************************/
@@ -432,14 +431,8 @@ void SIMDVectorization::vectorizeBinaryOp(SgStatement* loopBody)
   reference: http://publib.boulder.ibm.com/infocenter/comphelp/v8v101/index.jsp?topic=%2Fcom.ibm.xlf101a.doc%2Fxlflr%2Fcvmgx.htm
 */
 /******************************************************************************************************************************/
-void SIMDVectorization::vectorizeConditionalStmt(SgStatement* loopBody)
+void SIMDVectorization::vectorizeConditionalStmt(SgIfStmt* ifStmt)
 {
-  //SgScopeStatement* scope = loopBody->get_scope();
-  Rose_STL_Container<SgIfStmt*> ifStmtList = SageInterface::querySubTree<SgIfStmt>(loopBody);
-  for (Rose_STL_Container<SgIfStmt*>::iterator i = ifStmtList.begin(); i != ifStmtList.end(); ++i)
-  {
-    SgIfStmt* ifStmt = *i;
-    ROSE_ASSERT(ifStmt);
 
     // Create a map table for each ifStmt.
     map<SgName, SIMDVectorization::conditionalStmts*> conditionStmtTable;
@@ -478,8 +471,7 @@ void SIMDVectorization::vectorizeConditionalStmt(SgStatement* loopBody)
     }
 
     // Now we have both true and false statements in the table.
-    translateIfStmt(*i, conditionStmtTable);
-  }
+    translateIfStmt(ifStmt, conditionStmtTable);
 }
 
 /******************************************************************************************************************************/
@@ -500,33 +492,33 @@ void SIMDVectorization::translateIfStmt(SgIfStmt* ifStmt, std::map<SgName,condit
     case V_SgEqualityOp:
       {
         conditionFunctionName += "eq";
+        break;
       }
-      break;
     case V_SgGreaterOrEqualOp:
       {
         conditionFunctionName += "ge";
+        break;
       }
-      break;
     case V_SgGreaterThanOp:
       {
         conditionFunctionName += "gt";
+        break;
       }
-      break;
     case V_SgLessOrEqualOp:
       {
         conditionFunctionName += "le";
+        break;
       }
-      break;
     case V_SgLessThanOp:
       {
         conditionFunctionName += "lt";
+        break;
       }
-      break;
     case V_SgNotEqualOp:
       {
         conditionFunctionName += "ne";
+        break;
       }
-      break;
     default:
       {
         cerr << "unhandled conditional operation " << conditionOp->class_name() << endl;
@@ -626,8 +618,8 @@ void SIMDVectorization::insertConditionalStmtTable(SgStatement* stmt, std::map<S
         lhsExp = assignOp->get_lhs_operand();
         trueExp = assignOp->get_rhs_operand();
         falseExp = assignOp->get_lhs_operand();
+        break;
       }
-      break;
     case V_SgPntrArrRefExp:
       {
         SgPntrArrRefExp* tmp = isSgPntrArrRefExp(assignOp->get_lhs_operand());
@@ -637,8 +629,8 @@ void SIMDVectorization::insertConditionalStmtTable(SgStatement* stmt, std::map<S
         lhsExp = assignOp->get_lhs_operand();
         trueExp = assignOp->get_rhs_operand();
         falseExp = assignOp->get_lhs_operand();
+        break;
       }
-      break;
     default:
       {
         cerr << "LHS is not SgVarRefExp or SgPntrArrRefExp" << endl;
@@ -695,8 +687,8 @@ void SIMDVectorization::updateConditionalStmtTable(SgStatement* stmt, std::map<S
         name = isSgVarRefExp(assignOp->get_lhs_operand())->get_symbol()->get_name();
         trueExp = assignOp->get_lhs_operand();
         falseExp = assignOp->get_rhs_operand();
+        break;
       }
-      break;
     case V_SgPntrArrRefExp:
       {
         SgPntrArrRefExp* tmp = isSgPntrArrRefExp(assignOp->get_lhs_operand());
@@ -706,8 +698,8 @@ void SIMDVectorization::updateConditionalStmtTable(SgStatement* stmt, std::map<S
         lhsExp = assignOp->get_lhs_operand();
         trueExp = assignOp->get_lhs_operand();
         falseExp = assignOp->get_rhs_operand();
+        break;
       }
-      break;
     default:
       {
         cerr << "LHS is not SgVarRefExp or SgPntrArrRefExp" << endl;
@@ -805,7 +797,7 @@ void SIMDVectorization::stripmineLoop(SgForStatement* forStatement, int VF)
 
   /* 
     Create outerloop for the stripmined loop.  
-    If the index name is i, the outerput loop index is i_stripminedLoop_#, with the line number for surfix.
+    If the index name is i, the outerput loop index is i_stripminedLoop_#, with the line number for suffix.
   */
   int forStatementLineNumber = forStatement->get_file_info()->get_line();
   ostringstream convert;
@@ -1033,7 +1025,7 @@ void SIMDVectorization::updateLoopIteration(SgForStatement* forStatement, int VF
 
   /* 
     Create outerloop for the stripmined loop.  
-    If the index name is i, the outerput loop index is i_stripminedLoop_#, with the line number for surfix.
+    If the index name is i, the outerput loop index is i_stripminedLoop_#, with the line number for suffix.
   */
   int forStatementLineNumber = forStatement->get_file_info()->get_line();
   ostringstream convert;
@@ -1080,29 +1072,34 @@ void SIMDVectorization::updateLoopIteration(SgForStatement* forStatement, int VF
 
 void SIMDVectorization::scalarVariableConversion(SgForStatement* forStatement, std::set<SgInitializedName*> liveIns, std::set<SgInitializedName*> liveOuts)
 {
-//  
-// getLoopIndexVariable won't support here because there are multiple initialization statements.
-  SgStatementPtrList initStmtList = forStatement->get_init_stmt();
-  for(SgStatementPtrList::iterator i = initStmtList.begin(); i!=initStmtList.end(); ++i)
-  {
-    SgExpression* expr = isSgExprStatement(*i)->get_expression();
-    ROSE_ASSERT(expr);
-    SgVarRefExp* varRef = isSgVarRefExp(isSgBinaryOp(expr)->get_lhs_operand());
-    ROSE_ASSERT(varRef);
-    SgInitializedName* indexName = isSgInitializedName(varRef->get_symbol()->get_declaration());
-    ROSE_ASSERT(indexName);
-    std::set<SgInitializedName*>::iterator it = liveIns.find(indexName);
-    if(it != liveIns.end()) 
-    {
-      if (SgProject::get_verbose() > 2)
-        cout << "remove index " << indexName->get_name() << "from LiveIns" << endl;
-      liveIns.erase(it);
-    }
-  }
+//  for(std::set< SgInitializedName *>::iterator i=liveIns.begin(); i!=liveIns.end(); ++i)
+//  {
+//    cout << "in: " << (*i)->get_name() << endl;
+//  }
+//  for(std::set< SgInitializedName *>::iterator i=liveOuts.begin(); i!=liveOuts.end(); ++i)
+//  {
+//    cout << "out: " << (*i)->get_name() << endl;
+//  }
+
+
 // Insert the promotion statement for the scalars used in the vector loop.
-  for(std::set< SgInitializedName *>::iterator i=liveIns.begin(); i!=liveIns.end(); ++i)
+  for(std::set< SgInitializedName *>::iterator i=liveIns.begin(), i_next = i ; i!=liveIns.end(); i = i_next)
   {
-    if(isScalarType((*i)->get_typeptr()))
+    ++i_next;
+    if(SIMDAnalysis::isLoopIndexVariable((*i),forStatement))
+    {
+      liveIns.erase(i);
+      if (SgProject::get_verbose() > 2)
+      {
+        SgVariableSymbol* symbol = isSgVariableSymbol((*i)->get_symbol_from_symbol_table());
+        ROSE_ASSERT(symbol);
+        SgDeclarationStatement* scalarDeclarationStmt = symbol->get_declaration()->get_declaration();
+        ROSE_ASSERT(scalarDeclarationStmt);
+        string scalarName = symbol->get_name().getString();
+        std::cout << "remove from LiveIns:" << scalarName << std::endl;
+      }
+    }
+    else if(isScalarType((*i)->get_typeptr()))
     {
       SgVariableSymbol* symbol = isSgVariableSymbol((*i)->get_symbol_from_symbol_table());
       ROSE_ASSERT(symbol);
@@ -1129,11 +1126,26 @@ void SIMDVectorization::scalarVariableConversion(SgForStatement* forStatement, s
       insertStatementBefore(forStatement, promotionStmt);
     }
   }
-  
+
+ 
 // insert the extraction statement at the end of the vector loop
-  for(std::set< SgInitializedName *>::iterator i=liveOuts.begin(); i!=liveOuts.end(); ++i)
+  for(std::set< SgInitializedName *>::iterator i=liveOuts.begin(), i_next = i; i!=liveOuts.end(); i = i_next)
   {
-    if(isScalarType((*i)->get_typeptr()))
+    ++i_next;
+    if(SIMDAnalysis::isLoopIndexVariable((*i),forStatement))
+    {
+      liveOuts.erase(i);
+      if (SgProject::get_verbose() > 2)
+      {
+        SgVariableSymbol* symbol = isSgVariableSymbol((*i)->get_symbol_from_symbol_table());
+        ROSE_ASSERT(symbol);
+        SgDeclarationStatement* scalarDeclarationStmt = symbol->get_declaration()->get_declaration();
+        ROSE_ASSERT(scalarDeclarationStmt);
+        string scalarName = symbol->get_name().getString();
+        std::cout << "remove from LiveOuts:" << scalarName << std::endl;
+      }
+    }
+    else if(isScalarType((*i)->get_typeptr()))
     {
       SgVariableSymbol* symbol = isSgVariableSymbol((*i)->get_symbol_from_symbol_table());
       ROSE_ASSERT(symbol);
@@ -1161,14 +1173,6 @@ void SIMDVectorization::scalarVariableConversion(SgForStatement* forStatement, s
     }
   }
 
-//  for(std::set< SgInitializedName *>::iterator i=liveIns.begin(); i!=liveIns.end(); ++i)
-//  {
-//    cout << "in: " << (*i)->get_name() << endl;
-//  }
-//  for(std::set< SgInitializedName *>::iterator i=liveOuts.begin(); i!=liveOuts.end(); ++i)
-//  {
-//    cout << "out: " << (*i)->get_name() << endl;
-//  }
 }
 
 /******************************************************************************************************************************/
@@ -1213,4 +1217,71 @@ string SIMDVectorization::getSIMDOpSuffix(SgType* opType)
   return suffix;
 }
 
+bool convertMathFunctionName(SgName inputName, SgName* output, SgType* inputType)
+{
+  const char* charPtr = inputName.str();
+  if((strncmp(charPtr, "max",3) == 0) )
+    *output = "_SIMD_max";
+  else if((strncmp(charPtr, "min",3) == 0) )
+    *output = "_SIMD_min";
+  else if((strncmp(charPtr, "abs",3) == 0) )
+    *output = "_SIMD_abs";
+  else if((strncmp(charPtr, "sqrt",4) == 0) )
+    *output = "_SIMD_sqrt";
+  else if((strncmp(charPtr, "log",3) == 0) )
+    *output = "_SIMD_log";
+  else if((strncmp(charPtr, "exp",3) == 0) )
+    *output = "_SIMD_exp";
+  else if((strncmp(charPtr, "sin",3) == 0) )
+    *output = "_SIMD_sin";
+  else if((strncmp(charPtr, "cos",3) == 0) )
+    *output = "_SIMD_cos";
+  else
+  {
+    return false;
+  }
+  return true;
+}
+
+void SIMDVectorization::vectorizeFunctionCall(SgFunctionCallExp* funcCallExp)
+{
+  SgScopeStatement* scope = getScope(funcCallExp);
+  SgFunctionRefExp* functionRefExp = isSgFunctionRefExp(funcCallExp->get_function());
+  ROSE_ASSERT(functionRefExp); 
+  SgExprListExp* exprListExp = funcCallExp->get_args();
+  
+  SgName functionName = functionRefExp->get_symbol()->get_name();
+
+  SgFunctionCallExp* newFunctionCallExp = NULL;
+  SgType* returnType = funcCallExp->get_type();
+  if(isSgCastExp(funcCallExp->get_parent()))
+  {
+    SgCastExp* castExp = isSgCastExp(funcCallExp->get_parent());
+    returnType = castExp->get_type();
+  }
+  SgName newFunctionName;
+  if(convertMathFunctionName(functionName, &newFunctionName, returnType))
+  {
+    newFunctionName += getSIMDOpSuffix(returnType); 
+    SgExprListExp* newExprListExp = deepCopy(exprListExp);
+    
+    newFunctionCallExp = buildFunctionCallExp(newFunctionName, deepCopy(funcCallExp->get_type()), newExprListExp, scope);
+    ROSE_ASSERT(newFunctionCallExp);
+    //insertSystemHeader("math.h",scope);
+    replaceExpression(funcCallExp, newFunctionCallExp,false);
+    SgExpressionPtrList operandList = newExprListExp->get_expressions();
+    for(SgExpressionPtrList::iterator i = operandList.begin(); i!=operandList.end(); ++i)
+    {
+      translateOperand(*i);
+    }
+  }
+  else
+  {
+    if(functionName.getString().find("_SIMD_") == string::npos)
+    { 
+      cerr << "function " << functionName << " is not supported in vector loop !" << endl;
+      ROSE_ASSERT(false);
+    }
+  }
+}
 

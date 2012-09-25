@@ -72,6 +72,74 @@ void transformTraversal::visit(SgNode* n)
   }
 }
 
+class vectorizeLoopTraversal : public AstSimpleProcessing
+{
+  public:
+    virtual void visit(SgNode* n);
+};
+
+void vectorizeLoopTraversal::visit(SgNode* n)
+{
+  switch(n->variantT())
+  {
+      case V_SgAddOp:
+      case V_SgSubtractOp:
+      case V_SgMultiplyOp:
+      case V_SgDivideOp:
+      case V_SgAssignOp:
+      case V_SgBitAndOp:
+      case V_SgBitOrOp:
+      case V_SgBitXorOp:
+      case V_SgEqualityOp:
+      case V_SgGreaterOrEqualOp:
+      case V_SgGreaterThanOp:
+      case V_SgLessOrEqualOp:
+      case V_SgLessThanOp:
+      case V_SgNotEqualOp:
+      case V_SgCompoundAssignOp:
+      case V_SgPntrArrRefExp:
+      case V_SgAndOp:
+      case V_SgExponentiationOp:
+      {
+        SgBinaryOp* binaryOp = isSgBinaryOp(n);
+        vectorizeBinaryOp(binaryOp);
+        break;
+      }
+      case V_SgMinusOp:
+      case V_SgUnaryAddOp:
+      case V_SgMinusMinusOp:
+      case V_SgPlusPlusOp:
+      case V_SgNotOp:
+      case V_SgAddressOfOp:
+      case V_SgBitComplementOp:
+      case V_SgCastExp:
+      case V_SgConjugateOp:
+      case V_SgExpressionRoot:
+      case V_SgPointerDerefExp:
+      case V_SgRealPartOp:
+      case V_SgThrowOp:
+      case V_SgUserDefinedUnaryOp:
+      {
+        SgUnaryOp* unaryOp = isSgUnaryOp(n);
+        vectorizeUnaryOp(unaryOp);
+        break;
+      }
+    case V_SgIfStmt:
+      {
+        SgIfStmt* ifStmt = isSgIfStmt(n);
+        vectorizeConditionalStmt(ifStmt);
+        break;
+      }
+    case V_SgFunctionCallExp:
+      {
+        SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(n);
+        vectorizeFunctionCall(functionCallExp);
+        break;
+      }
+    default:
+      {}
+  }
+}
 
 void parseSIMDOption(vector<string> & inputCommandLine, vector<string> & argv)
 {
@@ -232,7 +300,6 @@ int main( int argc, char * argv[] )
   }
 //  defuse = new DefUseAnalysis(project);
 //  defuse->run(false);
-    generateAstGraph(project,8000,"_tmp");
 
 // clear the vector, and redo the memory traversal to collect new loop list
   loopList.clear();
@@ -254,9 +321,14 @@ int main( int argc, char * argv[] )
       scalarVariableConversion(forStatement, liveIns, liveOuts);
 
       translateMultiplyAccumulateOperation(loopBody);
-      vectorizeBinaryOp(loopBody);
-      vectorizeUnaryOp(loopBody);
-      vectorizeConditionalStmt(loopBody);
+  
+
+      vectorizeLoopTraversal innerLoopTransformation;
+      innerLoopTransformation.traverse(loopBody,postorder);
+    
+      //vectorizeBinaryOp(loopBody);
+      //vectorizeUnaryOp(loopBody);
+      //vectorizeConditionalStmt(loopBody);
     }
   }
 
