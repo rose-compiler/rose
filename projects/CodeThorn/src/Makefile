@@ -84,7 +84,7 @@ rers: $(RERS)
 
 # parallel tests with make -j<N> test
 %.log: tests/rers/%.c $(TOOLNAME3) Makefile
-	time ./$(TOOLNAME3) --edg:no_warnings $< \
+	./$(TOOLNAME3) --edg:no_warnings --colors=no $< \
 	     --verify $(patsubst tests/rers/Problem%.c,tests/rers/properties%.txt,$<) \
 	     --csv    $(patsubst tests/rers/Problem%.c,Problem%.csv,$<) >$@
 
