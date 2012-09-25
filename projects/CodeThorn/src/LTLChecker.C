@@ -520,6 +520,7 @@ public:
     short e1 = expr->expr1->label;
 
     BoolLattice global = true;
+    cerr<<"fixme: what's the rationale behind TOP here?"<<endl;
     FOR_EACH_STATE(state, label) {
       global = global && props[e1];
       // TOP and TRUE are seen as valid
