@@ -119,6 +119,15 @@ string Constraint::opToString() const {
   }
 }
 
+void Constraint::swapVars() {
+  if(!isVarVarOp()) {
+	throw "Error: Constraint::swapVars on non var-var constraint.";
+  }
+  VariableId tmp=_lhsVar;
+  _lhsVar=_rhsVar;
+  _rhsVar=tmp;
+}
+
 bool ConstraintSet::deqConstraintExists() const {
   for(ConstraintSet::iterator i=begin();i!=end();++i) {
 	if((*i).op()==Constraint::DEQ_VAR_CONST)
@@ -220,9 +229,30 @@ void  ConstraintSet::duplicateConstConstraints(VariableId lhsVarId, VariableId r
 
 
 void ConstraintSet::addConstraint(Constraint c) {
-  // we have to look which version of constraint already exists (it can only be at most one)
+  // we have to look which version of constraint already exists (it can only be 
+  // a) at most one equality constraint or b) arbitrary many inequality constraints or c) one disequality)
+  // we do not check for x=y constraints
+
+  // TODO1: do not add x!=k if {y!=k, x==y}
+  // TODO1a: compute set of inequality-constants for given variable and DO consider all equations
+  // TODO1b: compute set of equality-constants for given variable and DO consider all equations
+  // TODO2: if {x==k, x==y} then y!=k ==> x##y}
+  // TODO3: introduce generic disequality: x##0 (0 is dummy) for any disequality which is created
+  if(c.isVarVarOp()) {
+	if(c.lhsVar()==c.rhsVar()) {
+	  // we do not add an x=x constraint
+	  return;
+	}
+	if(c.lhsVar()<c.rhsVar()) {
+	  // ordering is OK, nothing to do
+	} else {
+	  // ordering is not OK, swap (y=x ==> x=y)
+	  c.swapVars();
+	}
+  }
   switch(c.op()) {
   case Constraint::EQ_VAR_CONST: {
+	// adding equality constraint
 	if(constraintExists(Constraint::DEQ_VAR_CONST,c.lhsVar(),c.rhsValCppCapsule()))
 	  return;
 	if(constraintExists(Constraint::NEQ_VAR_CONST,c.lhsVar(),c.rhsValCppCapsule())) {
@@ -242,17 +272,28 @@ void ConstraintSet::addConstraint(Constraint c) {
 		return;
 	  }
 	}
-	// all remaining constraints can be removed (can only be inqualities)
+	// all remaining const-constraints can be removed (can only be inequalities)
 	deleteConstConstraints(c.lhsVar());
 	set<Constraint>::insert(Constraint(Constraint::EQ_VAR_CONST,c.lhsVar(),c.rhsValCppCapsule()));
 	return;
   }
   case Constraint::NEQ_VAR_CONST: {
+	// we attempt to insert x!=k
+
+	// check for existing disequality first
 	if(constraintExists(Constraint::DEQ_VAR_CONST,c.lhsVar(),c.rhsValCppCapsule()))
 	  return;
+	// check if x==k exists. If yes, introduce x##k
 	if(constraintExists(Constraint::EQ_VAR_CONST,c.lhsVar(),c.rhsValCppCapsule())) {
 	  removeConstraint(Constraint(Constraint::EQ_VAR_CONST,c.lhsVar(),c.rhsValCppCapsule()));
 	  set<Constraint>::insert(Constraint(Constraint::DEQ_VAR_CONST,c.lhsVar(),c.rhsValCppCapsule()));
+	  return;
+	}
+	// search for some x==m (where m must be different to k (otherwise we would have found it above))
+	ConstraintSet::iterator i=findSpecific(Constraint::EQ_VAR_CONST,c.lhsVar());
+	if(i!=end()) {
+	  assert(!((*i).rhsValCppCapsule() == c.rhsValCppCapsule()));
+	  // we have found an equation x==m with m!=k ==> do not insert x!=k constraint (do nothing)
 	  return;
 	}
 	break;

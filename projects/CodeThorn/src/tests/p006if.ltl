@@ -1,0 +1,28 @@
+(G ! oI)
+output I does never occur
+----------------------------------------
+(G ! oA)
+output A does never occur
+----------------------------------------
+(G ! oA)
+output A does never occur
+----------------------------------------
+(G ! oB)
+output A does never occur
+----------------------------------------
+(G ! oC)
+output A does never occur
+----------------------------------------
+(G ! oD)
+output A does never occur
+----------------------------------------
+(G ! oH)
+output A does never occur
+----------------------------------------
+(G (! iC | (F oF)))
+output F responds to input C
+----------------------------------------
+(G (! iG | (F oG)))
+output G responds to input G
+----------------------------------------
+
