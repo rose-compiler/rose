@@ -94,8 +94,6 @@ actualOutput (RersData input) = do
       return output
   
   where inputStr = join "\n" (map show input)
-        parse string = map (\s -> (read s)::Int) (split "\n" string)
-
         action _ _ [] = do return []
         action stdin stdout (input:is) = do 
           hPutStrLn stdin (show input)
@@ -106,14 +104,22 @@ actualOutput (RersData input) = do
           -- really impossible because a given input may or may not
           -- trigger an output.
           hasOutput <- hWaitForInput stdout 33 -- milliseconds
+          res <- action stdin stdout is
           if hasOutput then 
             do reply <- hGetLine stdout
-               --printf "out %s\n" (reply)
-               res <- action stdin stdout is
-               return $ (StIn (rersChar input)) : (StOut (rersChar (read reply))) : res
+               case (readMaybe reply)::(Maybe Int) of 
+                 Just i -> do --printf "out %d\n" (i::Int)
+                              return $ (StIn (rersChar input)) : (StOut (rersChar i)) : res
+                 _      -> do --printf "I/O Error\n"
+                              return $ (StIn (rersChar input)) : res
             else do 
-               res <- action stdin stdout is
                return $ (StIn (rersChar input)) : res
+
+readMaybe :: (Read a) => String -> Maybe a
+readMaybe s = case [x | (x,t) <- reads s, ("","") <- lex t] of
+  [x] -> Just x
+  _   -> Nothing
+
 
 prettyprint output = do
   printf "> "
@@ -128,19 +134,20 @@ rersChar i = chr (i+(ord 'A')-1)
 
 -- verify that an LTL formula holds for a given chain of states
 holds :: LTL -> [State] -> Bool
-holds     (In  c) ((StIn  stc):_) = (c == stc)
-holds     (Out c) ((StOut stc):_) = (c == stc)
-holds     (Not a) states = not (holds a states)
+holds (In  c) ((StIn  stc):_) = (c == stc)
+holds (Out c) ((StOut stc):_) = (c == stc)
+holds (In  c) ((StOut stc):states) = holds (In  c) states
+holds (Out c) ((StIn  stc):states) = holds (Out c) states
 holds       (X a) (_:states) = holds a states
 holds       (F a) states = (holds a states) || (holds (X (G a)) states)
 holds       (G a) states = (holds a states) && (holds (X (G a)) states)
+holds     (Not a) states = not (holds a states)
 holds (a `And` b) states = (holds a states) && (holds b states)
 holds (a `Or`  b) states = (holds a states) || (holds b states)
 holds (a `U`   b) states = (holds b states) || ((holds a states) && (holds (X (a `U` b)) states))
 holds (a `R`   b) states = (holds b states) && ((holds a states) || (holds (X (a `R` b)) states))
 holds (a `WU`  b) states = (states == []) ||
-                           (holds b states) || ((holds a states) && (holds (X (a `U` b)) states))
-holds _ [] = True
+                           (holds b states) || ((holds a states) && (holds (X (a `WU` b)) states))
 holds _ _ = False
 
 #include "formulae.hs"
