@@ -336,7 +336,7 @@ int main( int argc, char * argv[] ) {
       // use binary and \r\n tp enforce DOS line endings
       // http://tools.ietf.org/html/rfc4180
       csv->open(args["csv"].as<string>().c_str(), ios::trunc|ios::binary);
-      *csv << "Index,\"LTL formula\",Result,Confidence\r\n";
+      *csv << "Index;\"LTL formula\";Result;Confidence\r\n";
     }
 
     while ( !ltl_eof) {
@@ -368,36 +368,36 @@ int main( int argc, char * argv[] ) {
       ++n;
       string formula = *ltl_val;
       cout<<endl<<"Verifying formula "<<color("white")<<formula<<color("normal")<<"."<<endl;
-      if (csv) *csv << n <<",\"" <<formula<<"\",";
+      if (csv) *csv << n <<";\"" <<formula<<"\";";
       try {
 	AType::BoolLattice result = checker.verify(*ltl_val);
 	if (result.isTrue()) {
 	  ++n_yes;
 	  cout<<color("green")<<"YES"<<color("normal")<<endl;
-	  if (csv) *csv << "YES,9\r\n";
+	  if (csv) *csv << "YES;9\r\n";
 	} else if (result.isFalse()) {
 	  ++n_no;
 	  cout<<color("cyan")<<"NO"<<color("normal")<<endl;
-	  if (csv) *csv << "NO,9\r\n";
+	  if (csv) *csv << "NO;9\r\n";
 	} else {
 	  ++n_undecided;
-	  cout<<color("magenta")<<"UNDECIDED"<<color("normal")<<endl;
-	  if (csv) *csv << "UNDECIDED,0,\r\n";
+	  cout<<color("magenta")<<"UNKNOWN"<<color("normal")<<endl;
+	  if (csv) *csv << "UNKNOWN;0\r\n";
 	}
       } catch(const char* str) {
 	++n_failed;
 	cerr << "Exception raised: " << str << endl;
 	cout<<color("red")<<"ERROR"<<color("normal")<<endl;
-	if (csv) *csv << "ERROR,0,\r\n";
+	if (csv) *csv << "ERROR;0\r\n";
       } catch(string str) {
 	++n_failed;
 	cerr << "Exception raised: " << str << endl;
 	cout<<color("red")<<"ERROR"<<color("normal")<<endl;
-	if (csv) *csv << "ERROR,0,\r\n";
+	if (csv) *csv << "ERROR;0\r\n";
       } catch(...) {
 	++n_failed;
 	cout<<color("red")<<"ERROR"<<color("normal")<<endl;
-	if (csv) *csv << "ERROR,0,\r\n";
+	if (csv) *csv << "ERROR;0\r\n";
       }  
     }
     if (csv) delete csv;
@@ -407,7 +407,7 @@ int main( int argc, char * argv[] ) {
         <<"========== "<<endl
 	<<n_yes      <<"/"<<n<<color("green")  <<" YES, "       <<color("normal") 	
 	<<n_no       <<"/"<<n<<color("cyan")   <<" NO, "        <<color("normal") 	
-	<<n_undecided<<"/"<<n<<color("magenta")<<" UNDECIDED, " <<color("normal") 	
+	<<n_undecided<<"/"<<n<<color("magenta")<<" UNKNOWN, "   <<color("normal") 	
 	<<n_failed   <<"/"<<n<<color("red")    <<" ERROR"       <<color("normal") 	
 	<<endl;
 
