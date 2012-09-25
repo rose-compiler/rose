@@ -424,11 +424,18 @@ void Fortran_to_C::fixFortranSymbolTable(SgNode* root, bool hasReturnVariable)
         else
         {
           SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(localVariableInitailizedName->get_parent());
-          SgStatementPtrList statementList = basicBlock->get_statements();
+          /*
+            We add the declaration to the scope that encloses the SginitializedName.  Therefore, it's garanteed that no duplicated
+            variable declaration would appear.
+            TODO:  We need to see more example to decide if we need to put all the declarations in the top scope.
+          */
+          SgBasicBlock* localScope = isSgBasicBlock(getScope(localVariableInitailizedName));
+          ROSE_ASSERT(localScope);
+          SgStatementPtrList statementList = localScope->get_statements();
           Rose_STL_Container<SgStatement*>::iterator it;
           it = find(statementList.begin(),statementList.end(),variableDeclaration);
           if(it == statementList.end()){
-            basicBlock->get_statements().insert(basicBlock->get_statements().begin(), variableDeclaration);
+            localScope->get_statements().insert(localScope->get_statements().begin(), variableDeclaration);
           }
         }
       }
