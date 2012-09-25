@@ -42,6 +42,7 @@ class Constraint {
   bool isInequation() const;
   bool isDisequation() const;
   void negate();
+  void swapVars();
  private:
   string opToString() const;
   ConstraintOp _op;
