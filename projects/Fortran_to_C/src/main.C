@@ -140,6 +140,23 @@ void f2cTraversal::visit(SgNode* n)
         translateImplicitFunctionCallExp(functionCallExp);
         break;
       }
+<<<<<<< HEAD
+=======
+    case V_SgExponentiationOp:
+      {
+        SgExponentiationOp* expOp = isSgExponentiationOp(n);
+        ROSE_ASSERT(expOp);
+        translateExponentiationOp(expOp);
+        break;
+      }
+    case V_SgFloatVal:
+      {
+        SgFloatVal* floatVal = isSgFloatVal(n);
+        ROSE_ASSERT(floatVal);
+        translateDoubleVal(floatVal);
+        break;
+      }
+>>>>>>> dd05ede... (09/25/2012) support double value representation
     case V_SgCommonBlock:
       {
         SgCommonBlock* commonBlock = isSgCommonBlock(n);
