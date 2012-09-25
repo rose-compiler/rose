@@ -7100,6 +7100,26 @@ void SageInterface::replaceExpression(SgExpression* oldExp, SgExpression* newExp
                   ROSE_ASSERT(false);
           }
   }
+  else if (isSgFortranDo(parent))
+  {
+    SgFortranDo* fortranDo = isSgFortranDo(parent);
+    if(oldExp == fortranDo->get_initialization())
+    {
+      fortranDo->set_initialization(newExp);
+    }
+    else if(oldExp == fortranDo->get_bound())
+    {
+      fortranDo->set_bound(newExp);
+    }
+    else if(oldExp == fortranDo->get_increment())
+    {
+      fortranDo->set_increment(newExp);
+    }
+    else
+    {
+      ROSE_ASSERT(false);
+    }
+  }
  else{
   cerr<<"SageInterface::replaceExpression(). Unhandled parent expression type of SageIII enum value: " <<parent->class_name()<<endl;
   ROSE_ASSERT(false);
