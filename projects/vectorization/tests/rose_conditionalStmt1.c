@@ -5,7 +5,7 @@
 
 int main()
 {
-  int i_nom_1_strip_8;
+  int i_nom_1_strip_9;
   int i_nom_1;
   float a[16UL];
   __SIMD *a_SIMD;
@@ -13,14 +13,16 @@ int main()
   __SIMD tmp_SIMD;
   int n = 16;
   __SIMDi n_SIMD;
-  void *cmpReturn_10;
+  
+#pragma SIMD
+  void *cmpReturn_11;
   a_SIMD = ((__SIMD *)a);
   tmp_SIMD = _SIMD_splats_ps(tmp);
   n_SIMD = _SIMD_splats_epi32(n);
-  for (i_nom_1 = 0, i_nom_1_strip_8 = i_nom_1; i_nom_1 <= n - 1; (i_nom_1 += 4 , i_nom_1_strip_8 += 1)) {
+  for (i_nom_1 = 0, i_nom_1_strip_9 = i_nom_1; i_nom_1 <= n - 1; (i_nom_1 += 4 , i_nom_1_strip_9 += 1)) {
 /* if statement is converted into vectorizaed conditional statement */
-    _SIMD_cmpeq_ps(tmp_SIMD,_SIMD_splats_ps(0.f),&cmpReturn_10);
-    a_SIMD[i_nom_1_strip_8] = _SIMD_sel_ps(a_SIMD[i_nom_1_strip_8],_SIMD_splats_ps(0.f),&cmpReturn_10);
+    _SIMD_cmpeq_ps(tmp_SIMD,_SIMD_splats_ps(0.f),&cmpReturn_11);
+    a_SIMD[i_nom_1_strip_9] = _SIMD_sel_ps(a_SIMD[i_nom_1_strip_9],_SIMD_splats_ps(0.f),&cmpReturn_11);
   }
   return 0;
 }

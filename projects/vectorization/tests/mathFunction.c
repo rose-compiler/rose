@@ -6,6 +6,7 @@ int main(){
   float a[16];
   float b[16];
   int n = 16;
+#pragma SIMD
   for (int i=0;i<n;i++)
   {
     b[i] = sin(a[i]);

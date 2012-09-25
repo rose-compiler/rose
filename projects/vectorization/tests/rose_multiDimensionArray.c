@@ -5,10 +5,8 @@
 
 int main()
 {
-  int i_nom_3_strip_12;
-  int i_nom_3;
-  int j_nom_2;
-  int k_nom_1;
+  int i_nom_1_strip_13;
+  int i_nom_1;
   float a[64UL][32UL][16UL];
   __SIMD (*a_SIMD)[32UL][16UL / 4];
   float b[32UL][16UL];
@@ -18,12 +16,14 @@ int main()
   c_SIMD = ((__SIMD *)c);
   b_SIMD = ((__SIMD (*)[16UL / 4])b);
   a_SIMD = ((__SIMD (*)[32UL][16UL / 4])a);
-  for (k_nom_1 = 0; k_nom_1 <= 63; k_nom_1 += 1) {
-    for (j_nom_2 = 0; j_nom_2 <= 31; j_nom_2 += 1) {
-      for (i_nom_3 = 0, i_nom_3_strip_12 = i_nom_3; i_nom_3 <= 15; (i_nom_3 += 4 , i_nom_3_strip_12 += 1)) {
-        a_SIMD[k_nom_1][j_nom_2][i_nom_3_strip_12] = _SIMD_splats_ps(5.f);
-        b_SIMD[j_nom_2][i_nom_3_strip_12] = _SIMD_splats_ps(2.f);
-        c_SIMD[i_nom_3_strip_12] = _SIMD_splats_ps(4.f);
+  for (int k = 0; k < 64; k++) {
+    for (int j = 0; j < 32; j++) {
+      
+#pragma SIMD
+      for (i_nom_1 = 0, i_nom_1_strip_13 = i_nom_1; i_nom_1 <= 15; (i_nom_1 += 4 , i_nom_1_strip_13 += 1)) {
+        a_SIMD[k][j][i_nom_1_strip_13] = _SIMD_splats_ps(5.f);
+        b_SIMD[j][i_nom_1_strip_13] = _SIMD_splats_ps(2.f);
+        c_SIMD[i_nom_1_strip_13] = _SIMD_splats_ps(4.f);
       }
     }
   }

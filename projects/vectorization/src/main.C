@@ -39,6 +39,22 @@ vector<SgForStatement*> loopList;
 */
 int VF = 4;
 
+bool isSIMDDirectiveAttached(SgStatement* stmt)
+{
+  SgPragmaDeclaration* pragmaStmt = isSgPragmaDeclaration(SageInterface::getPreviousStatement(stmt));
+  if(pragmaStmt != NULL)
+  {
+    SgPragma* pragma = isSgPragma(pragmaStmt->get_pragma());
+    ROSE_ASSERT(pragma); 
+    if (SgProject::get_verbose() > 2)
+      cout << "pragma: " << pragma->get_pragma() << endl;
+
+    if(pragma->get_pragma().find("SIMD") != string::npos)
+      return true;
+  }
+  return false;
+}
+
 // memory pool traversal for variable declaration
 class loopTraversal : public ROSE_VisitorPattern
 {
@@ -48,7 +64,8 @@ class loopTraversal : public ROSE_VisitorPattern
 
 void loopTraversal::visit(SgForStatement* loop)
 {
-  loopList.push_back(loop);
+  if(isSIMDDirectiveAttached(loop))
+    loopList.push_back(loop);
 }
 
 class transformTraversal : public AstSimpleProcessing
@@ -141,53 +158,6 @@ void vectorizeLoopTraversal::visit(SgNode* n)
   }
 }
 
-void parseSIMDOption(vector<string> & inputCommandLine, vector<string> & argv)
-{
-  // *******************************************************************
-  // phlin (6/25/2012)  Handle SSE/AVX option
-  // *******************************************************************
-     if ( CommandlineProcessing::isOption(argv,"-m","sse4.2",false) == true )
-        {
-       // printf ("In build_EDG_CommandLine(): Option -msse4.2 found (compile only)! \n");
-          inputCommandLine.push_back("-D__SSE3__");
-          inputCommandLine.push_back("-D__SSSE3__");
-          inputCommandLine.push_back("-D__SSE4__");
-          inputCommandLine.push_back("-D__SSE4_1__");
-          inputCommandLine.push_back("-D__SSE4_2__");
-        }
-
-     if ( CommandlineProcessing::isOption(argv,"-m","sse4.1",false) == true )
-        {
-       // printf ("In build_EDG_CommandLine(): Option -msse4.1 found (compile only)! \n");
-          inputCommandLine.push_back("-D__SSE3__");
-          inputCommandLine.push_back("-D__SSSE3__");
-          inputCommandLine.push_back("-D__SSE4__");
-          inputCommandLine.push_back("-D__SSE4_1__");
-        }
-
-     if ( CommandlineProcessing::isOption(argv,"-m","sse4",false) == true )
-        {
-       // printf ("In build_EDG_CommandLine(): Option -msse4 found (compile only)! \n");
-          inputCommandLine.push_back("-D__SSE3__");
-          inputCommandLine.push_back("-D__SSSE3__");
-          inputCommandLine.push_back("-D__SSE4__");
-        }
-
-     if ( CommandlineProcessing::isOption(argv,"-m","sse3",false) == true )
-        {
-       // printf ("In build_EDG_CommandLine(): Option -msse3 found (compile only)! \n");
-          inputCommandLine.push_back("-D__SSE3__");
-          inputCommandLine.push_back("-D__SSSE3__");
-        }
-
-     if ( CommandlineProcessing::isOption(argv,"-m","avx",false) == true )
-        {
-       // AVX doesn't need any special option here.
-       // printf ("In build_EDG_CommandLine(): Option -mavx found (compile only)! \n");
-        }
-
-}
-
 
 void build_SIMD_CommandLine(vector<string> & inputCommandLine, vector<string> & argv)
 {
@@ -236,7 +206,6 @@ void build_SIMD_CommandLine(vector<string> & inputCommandLine, vector<string> & 
 
 }
 
-
 int main( int argc, char * argv[] )
 {
   Rose_STL_Container<std::string> localCopy_argv = CommandlineProcessing::generateArgListFromArgcArgv(argc, argv);
@@ -251,30 +220,6 @@ int main( int argc, char * argv[] )
   if (SgProject::get_verbose() > 2)
     generateAstGraph(project,8000,"_orig");
 
-/* Generate data dependence graph
-  ArrayAnnotation* annot = ArrayAnnotation::get_inst(); 
-  ArrayInterface array_interface(*annot);
-  
-  Rose_STL_Container<SgNode*> forLoopList = NodeQuery::querySubTree (project,V_SgForStatement);
-  for (Rose_STL_Container<SgNode*>::iterator i = forLoopList.begin(); i != forLoopList.end(); i++)
-  {
-    SageInterface::forLoopNormalization(isSgForStatement(*i));
-    // Prepare AstInterface: implementation and head pointer
-    AstInterfaceImpl faImpl_2 = AstInterfaceImpl(*i);
-    CPPAstInterface fa(&faImpl_2);
-    AstNodePtr head = AstNodePtrImpl(*i);
-    //AstNodePtr head = AstNodePtrImpl(body);
-    fa.SetRoot(head);
-
-    LoopTransformInterface::set_astInterface(fa);
-    LoopTransformInterface::set_arrayInfo(&array_interface);
-    LoopTransformInterface::set_aliasInfo(&array_interface);
-    LoopTransformInterface::set_sideEffectInfo(annot);
-    LoopTreeDepCompCreate* comp = new LoopTreeDepCompCreate(head);// TODO when to release this?
-    comp->DumpDep();
-  }
-*/
-  
 // Normalize the loop to identify FMA operation.
   normalizeExpression(project);
 // Add required header files for ROSE vectorization framework.
@@ -293,7 +238,6 @@ int main( int argc, char * argv[] )
     SgForStatement* forStatement = isSgForStatement(*i);
     SageInterface::forLoopNormalization(forStatement);
     if(isInnermostLoop(forStatement) && isStrideOneLoop(forStatement)){
-      //stripmineLoop(forStatement,4);
       updateLoopIteration(forStatement,VF);
       normalizeCompoundAssignOp(forStatement);
     }
@@ -322,13 +266,8 @@ int main( int argc, char * argv[] )
 
       translateMultiplyAccumulateOperation(loopBody);
   
-
       vectorizeLoopTraversal innerLoopTransformation;
       innerLoopTransformation.traverse(loopBody,postorder);
-    
-      //vectorizeBinaryOp(loopBody);
-      //vectorizeUnaryOp(loopBody);
-      //vectorizeConditionalStmt(loopBody);
     }
   }
 

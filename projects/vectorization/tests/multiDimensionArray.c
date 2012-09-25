@@ -9,6 +9,7 @@ int main(){
   {
   for (int j=0;j<32;j++)
   {
+#pragma SIMD
   for (int i=0;i<16;i++)
   {
     a[k][j][i] = 5.f;

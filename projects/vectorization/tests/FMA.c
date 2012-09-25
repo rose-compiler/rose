@@ -8,6 +8,7 @@ int main(){
   float c[16];
   int n = 16;
   float as,bs,cs;
+#pragma SIMD
   for (int i=0;i<n;i++)
   {
     a[i] = a[i] * b[i] + c[i];
