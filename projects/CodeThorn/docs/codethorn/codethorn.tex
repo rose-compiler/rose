@@ -62,8 +62,8 @@
 \small
 \begin{tabular}{ll}
 Markus Schordan                        & Adrian Prantl\\
-University of Applied Computer Science & Center for Applied Scientific Computing\\
-Vienna                                 & Lawrence Livermore National Laboratory\\
+Institute of Computer Science          & Center for Applied Scientific Computing\\
+UAS Technikum Wien                     & Lawrence Livermore National Laboratory\\
 \texttt{schordan@technikum-wien.at}   & \texttt{adrian@llnl.gov}\\
 \end{tabular}
 }
@@ -90,7 +90,21 @@ Vienna                                 & Lawrence Livermore National Laboratory\
 
 \section{Introduction}
 \label{sec:intro}
-\fixme{write an introduction}
+\fixme{write a better introduction} 
+
+CodeThorn is a tool for analyzing C/C++ programs, combining approaches
+from data flow analysis, constraint-based analysis, and model
+checking.
+
+The main focus in the development of CodeThorn is the exploration of
+program analysis algorithms in combining above approaches. Therefore
+the target language is currently restricted to a small (WHILE language like)
+subset of C with functions.
+
+The implemented base approach is an instance of a general
+framework. The analysis is an interprocedural flow-sensitive
+analysis. Different forms of context information are currently
+investigated.
 
 \input{stg}
 \input{ltl}

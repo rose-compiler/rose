@@ -266,11 +266,10 @@ void checkTypes() {
 	check("var x==500",((s1[x].getValue()==val1)).isTrue()==true);
 	check("var y exists in state s2",s2.varExists(y)==true);
 	check("var y==501",((s2[y].getValue()==val2)).isTrue()==true);
-	check("s0 < s1",(s0<s1)==true);
-	check("s0 < s2",(s0<s2)==true);
+	//check("s0 < s1",(s0<s1)==true);
+	//check("s0 < s2",(s0<s2)==true);
 	check("!(s1 == s2)",(s1==s2)==false);
-	check("s1 < s2)",s1<s2);
-	check("!(s2 < s1))",!(s2<s1));
+	check("s1<s2 xor s2<s1)",(s1<s2)^(s2<s1));
 	check("var x in state s3",s3.varExists(x)==true);
 	check("s3[x]==501",((s3[x].getValue())==val2).isTrue()==true);
 	check("!(s1==s2)",(!(s1==s2))==true);
