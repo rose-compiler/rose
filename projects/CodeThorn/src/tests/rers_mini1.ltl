@@ -72,13 +72,13 @@ X does never follow after Y
 ----------------------------------------
 
 17
-(G ! iX)
-input X will never occur
+!(G ! iX)
+input X is never handled. Although it is never tested for, it is still part of the catch-all case.
 ----------------------------------------
 
 18
 (F iA)
-input A will occur
+input A will be handled
 ----------------------------------------
 
 19
@@ -91,7 +91,7 @@ X and W happen not at the same time
 
 21
 Checking for equivalence: A == B === A&B | (!A & !B)
-((! (X oY) & X (! oY)) | (!(! (X oY)) & !(X (! oY))))
+(G ((! (X oY) & X (! oY)) | (!(! (X oY)) & !(X (! oY)))))
 equivalence !X A == X !A, for A=oY
 
 22

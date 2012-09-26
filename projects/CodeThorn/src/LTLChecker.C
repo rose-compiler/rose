@@ -342,6 +342,12 @@ public:
 
 # define NOP do{} while(0)
 
+  /// verify that two constraints are consistent, ie. not true and false
+  static bool consistent(BoolLattice a, BoolLattice b) {
+    if ((a.isTrue() || a.isFalse()) && (b.isTrue() || b.isFalse())) return false;
+    else return true;
+  }
+
 
   static void updateInputVar(const EState* estate, set<VariableId>& input_vars) {
     if (estate->io.op == InputOutput::STDIN_VAR) {
@@ -355,7 +361,7 @@ public:
 				  int c, BoolLattice joined_preds) {
     updateInputVar(estate, input_vars);
     if (input_vars.empty())
-      return false;
+      return Bot();
 
     BoolLattice r = BoolLattice(Top()) || joined_preds;
 	assert(estate);
@@ -363,10 +369,14 @@ public:
     ConstraintSet constraints = *estate->constraints();
     for (set<VariableId>::const_iterator ivar = input_vars.begin();
 	 ivar != input_vars.end(); ++ivar) {
-      r = r || is_eq(estate, constraints, *ivar, c);
+      // main input variable
+      r = is_neq(estate, constraints, *ivar, c);
       for (ConstraintSet::iterator eqvv = constraints.findSpecific(Constraint::EQ_VAR_VAR, *ivar);
 	   eqvv != constraints.end(); ++eqvv) {
-	r = r || is_eq(estate, constraints, eqvv->rhsVar(), c);
+	// aliased input variable
+	BoolLattice r1 = is_neq(estate, constraints, eqvv->rhsVar(), c);
+	assert(consistent(r, r1));
+	r = r1;
       }
     }
     return r;
@@ -387,8 +397,11 @@ public:
       //    <<(bool)(c == lval.getIntValue()+'A'-1)<<endl;
       return c == lval.getIntValue()+'A'-1;
     }
+    if (lval.isTop()) // In ConstIntLattice, Top means ALL values, so we report True
+      return true;
     else {
-      return BoolLattice(Top());
+      assert(lval.isBot());
+      return BoolLattice(Top()); // Bool Top, however, means UNKNOWN
     }
   }
 
@@ -411,18 +424,22 @@ public:
 				     int c, BoolLattice joined_preds) {
     updateInputVar(estate, input_vars);
     if (input_vars.empty())
-      return false;
+      return Bot();
 
-    BoolLattice r = BoolLattice(Top()) || joined_preds;
-	assert(estate);
-	assert(estate->constraints());
+    BoolLattice r = joined_preds.isBot() ? Top() : joined_preds;
+    assert(estate);
+    assert(estate->constraints());
     ConstraintSet constraints = *estate->constraints();
     for (set<VariableId>::const_iterator ivar = input_vars.begin();
 	 ivar != input_vars.end(); ++ivar) {
-      r = r || is_neq(estate, constraints, *ivar, c);
+      // main input variable
+      r = is_neq(estate, constraints, *ivar, c);
       for (ConstraintSet::iterator eqvv = constraints.findSpecific(Constraint::EQ_VAR_VAR, *ivar);
 	   eqvv != constraints.end(); ++eqvv) {
-	r = r || is_neq(estate, constraints, eqvv->rhsVar(), c);
+	// aliased input variable
+	BoolLattice r1 = is_neq(estate, constraints, eqvv->rhsVar(), c);
+	assert(consistent(r, r1));
+	r = r1;
       }
     }
     return r;
@@ -450,8 +467,13 @@ public:
 	if (neqvc->rhsVal().getIntValue()+'A'-1 == c)
 	  return true;
       }
-    }    
-    return BoolLattice(Top());
+    }
+    if (lval.isTop()) // In ConstIntLattice, Top means ALL values, so NOT(c) cannot be true
+      return false;
+    else {
+      assert(lval.isBot());
+      return BoolLattice(Top()); // Bool Top, however, means UNKNOWN
+    }
   }
 
   // Implementation status: IN PROGRESS
@@ -464,7 +486,6 @@ public:
 	     &&,                                                    // join
 	     isNegInputState(state, input_vars, expr->c, joined_preds) // calc
 	     );
-
   }
 
   /// return True iff that state is an Oc operation
@@ -488,9 +509,10 @@ public:
       return c == aval.getIntValue()+'A'-1;
     }
     default:
-      if (joined_preds.isBot())
-	return Top();
-      else return joined_preds;
+      //if (joined_preds.isBot())
+      //return Top(); // flip Bot to Top to ensure termination
+      //else
+      return joined_preds;
     }
   }
 
@@ -501,20 +523,27 @@ public:
    * Think about ``oA U oB''.
    *
    * PLEASE NOTE: We therefore define oX to be true until oY occurs
-   *
+   *   * if there is no output, we return false
+   * 
    * Implementation status: DONE
    */
   void visit(const OutputSymbol* expr) {
     short e = expr->label;
+
+    FOR_EACH_STATE(state, label)
+      props[e] = isOutputState(state, expr->c, Bot());
+
+#if 0
     // propagate the O predicate until we reach the next O predicate
     fixpoint(Bot(),                                        // init
 	     &&,                                           // join
 	     isOutputState(state, expr->c, joined_preds)   // calc
 	     );
 
-    // we set Bot nodes to Top to ensure termination. Fix it here
+    // we set Bot nodes to Top to ensure termination. Fix it here.
     FOR_EACH_STATE(state, label)
-      if (props[e].isTop()) props[e] = Bot();
+      if (props[e].isTop()) props[e] = false;
+#endif
   }
 
   /// return True iff that state is a !Oc operation
@@ -544,26 +573,26 @@ public:
       return c != aval.getIntValue()+'A'-1;
     }
     default:
-      if (joined_preds.isBot())
-	return Top();
-      else return joined_preds;
+      //if (joined_preds.isBot())
+      //return Top();
+      //else 
+      return joined_preds;
     }
   }
 
   /**
-   * Caveat: Although the LTL semantics say so, we can't start on
-   * the start node. Maybe at the first I/O node?
-   *
-   * Think about ``oA U oB''.
-   *
-   * PLEASE NOTE: We therefore define oX to be true until oY occurs
+   * Negated version of OutputSymbol
    *
    * Implementation status: DONE
    */
   void visit(const NegOutputSymbol* expr) {
     short e = expr->label;
+    FOR_EACH_STATE(state, label)
+      props[e] = isNegOutputState(state, expr->c, Bot());
+
+#if 0
     // propagate the O predicate until we reach the next O predicate
-    fixpoint(Bot(),                                        // init
+    fixpoint(true,                                         // init
 	     &&,                                           // join
 	     isNegOutputState(state, expr->c, joined_preds)   // calc
 	     );
@@ -634,7 +663,7 @@ public:
     short e = expr->label;
     short e1 = expr->expr1->label;
 
-    bw_fixpoint(/* init */      Bot(),
+    bw_fixpoint(/* init */      false,
 		/* start */     !props[e1].isBot(),
 		/* join */      ||,
 		/* calc  */     props[e1] || joined_succs,
