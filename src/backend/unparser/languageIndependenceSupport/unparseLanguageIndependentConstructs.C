@@ -2199,8 +2199,26 @@ UnparseLanguageIndependentConstructs::unparseBoolVal(SgExpression* expr, SgUnpar
   // Note that the getProject() function will use the parent pointers to traverse back to the SgProject node
      bool C_language_support = false;
      SgFile* file = TransformationSupport::getFile(expr);
+
+#if 1
+     printf ("In unparseBoolVal(): resolving file to be %p \n",file);
+#endif
+
      if (file == NULL)
         {
+       // DQ (9/15/2012): We have added a mechanism for the language to be specified directly.
+       // C_language_support = true;
+          if (info.get_language() != SgFile::e_default_output_language)
+             {
+#if 1
+               printf ("In unparseBoolVal(): The output language has been specified directly info.get_language() = %d \n");
+#endif
+               C_language_support = (info.get_language() == SgFile::e_C_output_language);
+             }
+            else
+             {
+               C_language_support = true;
+             }
 #if 0
           printf ("Warning: getting the SgFile from SgBoolValExp() expr = %p (trace back to SgFile failed, assuming C language support) \n",expr);
           ROSE_ASSERT(expr->get_file_info() != NULL);
@@ -2212,7 +2230,7 @@ UnparseLanguageIndependentConstructs::unparseBoolVal(SgExpression* expr, SgUnpar
              {
                printf ("templateArgument->get_type()                  = %p \n",templateArgument->get_type());
                printf ("templateArgument->get_expression()            = %p \n",templateArgument->get_expression());
-               printf ("templateArgument->get_templateInstantiation() = %p \n",templateArgument->get_templateInstantiation());
+            // printf ("templateArgument->get_templateInstantiation() = %p \n",templateArgument->get_templateInstantiation());
              }
             else
              {
@@ -2220,7 +2238,6 @@ UnparseLanguageIndependentConstructs::unparseBoolVal(SgExpression* expr, SgUnpar
                expr->get_parent()->get_file_info()->display("location of problem bool expression (parent)");
              }
 #endif
-          C_language_support = true;
         }
        else
         {
@@ -2230,6 +2247,7 @@ UnparseLanguageIndependentConstructs::unparseBoolVal(SgExpression* expr, SgUnpar
 
      if (unp->opt.get_num_opt() || (C_language_support == true))
         {
+       // The C language does not support boolean values (C99 does, as I recall)
        // we want to print the boolean values as numerical values
        // DQ (11/29/2009): get_value() returns an "int" and MSVC issues a warning for mixed type predicates.
        // if (bool_val->get_value() == true)
@@ -2244,6 +2262,8 @@ UnparseLanguageIndependentConstructs::unparseBoolVal(SgExpression* expr, SgUnpar
         }
        else
         {
+       // This is the C++ case (and any language supporting boolean values).
+
        // print them as "true" or "false"
        // DQ (11/29/2009): get_value() returns an "int" and MSVC issues a warning for mixed type predicates.
        // if (bool_val->get_value() == true)

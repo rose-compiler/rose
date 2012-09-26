@@ -1583,6 +1583,13 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                labelWithSourceCode += string("\\n  name = ") + defaultType->get_name().str() + "  ";
              }
 
+          SgTemplateType* templateType = isSgTemplateType(node);
+          if (templateType != NULL)
+             {
+            // printf ("Graph this node (%s) \n",node->class_name().c_str());
+               labelWithSourceCode += string("\\n  name = ") + templateType->get_name().str() + "  " + "position = " + StringUtility::numberToString(templateType->get_template_parameter_position()) + " ";
+             }
+
        // labelWithSourceCode = string("\\n  ") + StringUtility::numberToString(node) + "  ";
           labelWithSourceCode += string("\\n  ") + StringUtility::numberToString(node) + "  ";
 
@@ -1688,7 +1695,8 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                   {
                     SgTemplateArgument* templateArgument = isSgTemplateArgument(node);
                     additionalNodeOptions = "shape=circle,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=1,color=\"blue\",fillcolor=yellow,fontname=\"7x13bold\",fontcolor=black,style=filled";
-                    string typeString  = (templateArgument->get_argumentType() == SgTemplateArgument::argument_undefined) ? "argument_undefined" : "!isForward";
+                 // string typeString  = (templateArgument->get_argumentType() == SgTemplateArgument::argument_undefined) ? "argument_undefined" : "!isForward";
+                    string typeString;
                     switch (templateArgument->get_argumentType())
                        {
                          case SgTemplateArgument::argument_undefined:
@@ -1723,6 +1731,45 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
 
                     labelWithSourceCode = string("\\n  ") + typeString + 
                                           string("\\n  ") + StringUtility::numberToString(templateArgument) + "  ";
+                    break;
+                  }
+
+            // DQ (9/21/2012): Added visualization support for template parameters.
+               case V_SgTemplateParameter:
+                  {
+                    SgTemplateParameter* templateParameter = isSgTemplateParameter(node);
+                    additionalNodeOptions = "shape=circle,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=1,color=\"blue\",fillcolor=blue,fontname=\"7x13bold\",fontcolor=black,style=filled";
+
+                    string typeString;
+                    switch (templateParameter->get_parameterType())
+                       {
+                         case SgTemplateParameter::parameter_undefined:
+                              typeString = "parameter_undefined";
+                              break;
+
+                         case SgTemplateParameter::type_parameter:
+                              typeString = "type_parameter";
+                              typeString += string("\\n type = ") + templateParameter->get_type()->unparseToString();
+                              typeString += string("\\n type = ") + StringUtility::numberToString(templateParameter->get_type()) + "  ";
+                              break;
+
+                         case SgTemplateParameter::nontype_parameter:
+                              typeString = "nontype_parameter";
+                              break;
+
+                         case SgTemplateParameter::template_parameter:
+                              typeString = "template_parameter";
+                              break;
+
+                         default:
+                            {
+                              printf ("Error: default reached in case V_SgTemplateParameter: templateParameter->get_argumentType() = %d \n",templateParameter->get_parameterType());
+                              ROSE_ASSERT(false);
+                            }
+                       }
+
+                    labelWithSourceCode = string("\\n  ") + typeString + 
+                                          string("\\n  ") + StringUtility::numberToString(templateParameter) + "  ";
                     break;
                   }
 

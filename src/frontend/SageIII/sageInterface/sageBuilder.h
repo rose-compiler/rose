@@ -737,6 +737,23 @@ buildFunctionParameterList_nfi(SgFunctionParameterTypeList * paraTypeList);
 // DQ (2/11/2012): Added support to set the template name in function template instantations (member and non-member).
 void setTemplateNameInTemplateInstantiations( SgFunctionDeclaration* func, const SgName & name );
 
+// DQ (9/13/2012): Need to set the parents of SgTemplateArgument IR nodes now that they are passed in as part of the SageBuilder API.
+void setTemplateArgumentParents( SgDeclarationStatement* decl );
+void testTemplateArgumentParents( SgDeclarationStatement* decl );
+SgTemplateArgumentPtrList* getTemplateArgumentList( SgDeclarationStatement* decl );
+
+// DQ (9/16/2012): Added function to support setting the template parameters and setting their parents (and for any relevant declaration).
+void testTemplateParameterParents( SgDeclarationStatement* decl );
+void setTemplateParameterParents( SgDeclarationStatement* decl );
+SgTemplateParameterPtrList* getTemplateParameterList( SgDeclarationStatement* decl );
+
+// DQ (9/16/2012): Added function to support setting the template arguments and setting their parents (and for any relevant declaration).
+void setTemplateArgumentsInDeclaration               ( SgDeclarationStatement* decl, SgTemplateArgumentPtrList* templateArgumentsList_input );
+void setTemplateSpecializationArgumentsInDeclaration ( SgDeclarationStatement* decl, SgTemplateArgumentPtrList* templateSpecializationArgumentsList_input );
+void setTemplateParametersInDeclaration              ( SgDeclarationStatement* decl, SgTemplateParameterPtrList* templateParametersList_input );
+
+
+
 // DQ (1/21/2009): This is a support function called by the buildNondefiningFunctionDeclaration() and 
 // buildNondefiningMemberFunctionDeclaration() functions.  Since we constructe the function type in 
 // the support function and require either a SgFunctionType or SgMemberFunctionType, we need to to pass in 
@@ -933,6 +950,7 @@ SgForInitStatement * buildForInitStatement_nfi(SgStatementPtrList & statements);
 SgForStatement * buildForStatement(SgStatement* initialize_stmt,  SgStatement * test, SgExpression * increment, SgStatement * loop_body, SgStatement * else_body = NULL);
 SgForStatement * buildForStatement_nfi(SgStatement* initialize_stmt, SgStatement * test, SgExpression * increment, SgStatement * loop_body, SgStatement * else_body = NULL);
 SgForStatement * buildForStatement_nfi(SgForInitStatement * init_stmt, SgStatement * test, SgExpression * increment, SgStatement * loop_body, SgStatement * else_body = NULL);
+void buildForStatement_nfi(SgForStatement* result, SgForInitStatement * init_stmt, SgStatement * test, SgExpression * increment, SgStatement * loop_body, SgStatement * else_body = NULL);
 
 //! Build a UPC forall statement
 SgUpcForAllStatement * buildUpcForAllStatement_nfi(SgStatement* initialize_stmt, SgStatement * test, SgExpression * increment, SgExpression* affinity, SgStatement * loop_body);
@@ -1039,7 +1057,9 @@ SgTemplateClassDefinition* buildTemplateClassDefinition(SgTemplateClassDeclarati
 
 // #ifdef ROSE_USE_NEW_EDG_INTERFACE
 // DQ (11/29/2011): Adding template declaration support to the AST.
-SgTemplateClassDeclaration* buildNondefiningTemplateClassDeclaration_nfi(const SgName& name, SgClassDeclaration::class_types kind, SgScopeStatement* scope);
+// SgTemplateClassDeclaration* buildNondefiningTemplateClassDeclaration_nfi(const SgName& name, SgClassDeclaration::class_types kind, SgScopeStatement* scope);
+SgTemplateClassDeclaration* buildNondefiningTemplateClassDeclaration_nfi(const SgName& name, SgClassDeclaration::class_types kind, SgScopeStatement* scope, 
+                                                                         SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateSpecializationArgumentList);
 // #endif
 
 // DQ (11/7/2009): Added functions to build C++ class.
@@ -1084,7 +1104,9 @@ SgClassDeclaration * buildClassDeclaration_nfi(const SgName& name, SgClassDeclar
 
 // #ifdef ROSE_USE_NEW_EDG_INTERFACE
 // DQ (11/19/2011): Added to support template class declaration using EDG 4.x support (to support the template declarations directly in the AST).
-SgTemplateClassDeclaration* buildTemplateClassDeclaration_nfi(const SgName& name, SgClassDeclaration::class_types kind, SgScopeStatement* scope, SgTemplateClassDeclaration* nonDefiningDecl );
+// SgTemplateClassDeclaration* buildTemplateClassDeclaration_nfi(const SgName& name, SgClassDeclaration::class_types kind, SgScopeStatement* scope, SgTemplateClassDeclaration* nonDefiningDecl );
+SgTemplateClassDeclaration* buildTemplateClassDeclaration_nfi(const SgName& name, SgClassDeclaration::class_types kind, SgScopeStatement* scope, SgTemplateClassDeclaration* nonDefiningDecl, 
+                                                              SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateSpecializationArgumentList );
 // #endif
 
 //! Build an enum, It is also a declaration statement in SAGE III

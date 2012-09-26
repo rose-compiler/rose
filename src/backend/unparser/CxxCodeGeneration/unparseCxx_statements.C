@@ -3414,8 +3414,8 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
 #if 0
      printf ("Inside of unparseVarDeclStmt(%p) \n",stmt);
-     ROSE_ASSERT(info.get_current_scope() != NULL);
-     printf ("An the current scope is (from info): info.get_current_scope() = %p = %s = %s \n",info.get_current_scope(),info.get_current_scope()->class_name().c_str(),SageInterface::get_name(info.get_current_scope()).c_str());
+  // ROSE_ASSERT(info.get_current_scope() != NULL);
+  // printf ("An the current scope is (from info): info.get_current_scope() = %p = %s = %s \n",info.get_current_scope(),info.get_current_scope()->class_name().c_str(),SageInterface::get_name(info.get_current_scope()).c_str());
      curprint ( string("\n /* Inside of unparseVarDeclStmt() */ \n"));
 #endif
 
@@ -3626,7 +3626,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
             // DQ (11/28/2004): Added to support new design
                tmp_init = decl_item->get_initializer();
 #if 0
-               printf ("tmp_type = %p = %s \n",tmp_type,tmp_type->class_name().c_str());
+               printf ("In unparseVarDeclStmt(): tmp_type = %p = %s \n",tmp_type,tmp_type->class_name().c_str());
 #endif
                SgNamedType *namedType = isSgNamedType(tmp_type->findBaseType());
             // SgDeclarationStatement* declStmt = (namedType) ? namedType->get_declaration() : NULL;
@@ -3640,7 +3640,9 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                   {
                  // DQ (10/5/2004): This controls the unparsing of the class definition
                  // when unparsing the type within this variable declaration.
-                 // printf ("In unparseVarDeclStmt(): outputTypeDefinition = %s \n",outputTypeDefinition ? "true" : "false");
+#if 0
+                    printf ("In unparseVarDeclStmt(): outputTypeDefinition = %s \n",outputTypeDefinition ? "true" : "false");
+#endif
                     if (outputTypeDefinition == true)
                        {
                       // printf ("In unparseVarDeclStmt(): Use the defining declaration as a basis for the variable declaration \n");
@@ -3650,8 +3652,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                          if (declStmt == NULL)
                             {
 #if 0
-                              printf ("namedType->get_declaration() = %p = %s \n",
-                                   namedType->get_declaration(),namedType->get_declaration()->sage_class_name());
+                              printf ("namedType->get_declaration() = %p = %s \n",namedType->get_declaration(),namedType->get_declaration()->class_name().c_str());
 #endif
                            // it is likely an enum declaration which does not yet use the defing vs. non-defining mechanisms
                            // so just set it to the currently available declaration (since for enums there is only one!)
@@ -3782,8 +3783,9 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                ninfo_for_type.set_name_qualification_length(decl_item->get_name_qualification_length_for_type());
                ninfo_for_type.set_global_qualification_required(decl_item->get_global_qualification_required_for_type());
                ninfo_for_type.set_type_elaboration_required(decl_item->get_type_elaboration_required_for_type());
-
-            // printf ("Inside of unparseVarDeclStmt: calling unparseType() tmp_type = %p = %s \n",tmp_type,tmp_type->class_name().c_str());
+#if 0
+               printf ("Inside of unparseVarDeclStmt: calling unparseType() tmp_type = %p = %s \n",tmp_type,tmp_type->class_name().c_str());
+#endif
             // unp->u_type->unparseType(tmp_type, ninfo2);
                ROSE_ASSERT(isSgType(tmp_type) != NULL);
 

@@ -26,6 +26,9 @@ fixupAstSymbolTablesToSupportAliasedSymbols (SgNode* node)
 
   // I think the default should be preorder so that the interfaces would be more uniform
      astFixupTraversal.traverse(node,preorder);
+#else
+  // DQ (9/22/2012): Allow this to be commented out so that we can see the AST graph of the initial conditions.
+     printf ("ERROR: COMMENTED OUT CALL TO FixupAstSymbolTablesToSupportAliasedSymbols traversal \n");
 #endif
    }
 
@@ -36,6 +39,10 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
    {
      ROSE_ASSERT(referencedScope != NULL);
      ROSE_ASSERT(currentScope    != NULL);
+
+#if ALIAS_SYMBOL_DEBUGGING
+     printf ("In injectSymbolsFromReferencedScopeIntoCurrentScope(): referencedScope = %p = %s currentScope = %p = %s accessLevel = %d \n",referencedScope,referencedScope->class_name().c_str(),currentScope,currentScope->class_name().c_str(),accessLevel);
+#endif
 
      SgSymbolTable* symbolTable = referencedScope->get_symbol_table();
      ROSE_ASSERT(symbolTable != NULL);
@@ -84,6 +91,19 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
              {
 #if ALIAS_SYMBOL_DEBUGGING
                printf ("WARNING: Not clear if we want to nest SgAliasSymbol inside of SgAliasSymbol \n");
+#endif
+            // DQ (9/22/2012): We need to avoid building chains of SgAliasSymbol (to simplify the representation in the AST).
+               while (isSgAliasSymbol(symbol) != NULL)
+                  {
+#if ALIAS_SYMBOL_DEBUGGING
+                    printf (" --- Iterating to root of alias: symbol = %p = %s \n",symbol,symbol->class_name().c_str());
+#endif
+                    symbol = isSgAliasSymbol(symbol)->get_alias();
+                    ROSE_ASSERT(symbol != NULL);
+                  }
+
+#if ALIAS_SYMBOL_DEBUGGING
+               printf ("Resolved aliased symbol to root symbol: symbol = %p = %s \n",symbol,symbol->class_name().c_str());
 #endif
              }
 
@@ -340,7 +360,9 @@ void
 FixupAstSymbolTablesToSupportAliasedSymbols::visit ( SgNode* node )
    {
   // DQ (11/24/2007): Output the current IR node for debugging the traversal of the Fortran AST.
-  // printf ("node = %s \n",node->class_name().c_str());
+#if ALIAS_SYMBOL_DEBUGGING
+     printf ("In FixupAstSymbolTablesToSupportAliasedSymbols::visit() node = %p = %s \n",node,node->class_name().c_str());
+#endif
 
   // DQ (7/23/2011): New support for linking namespaces sharing the same name (mangled name).
   // std::map<SgName,std::vector<SgNamespaceDefinition*> > namespaceMap;

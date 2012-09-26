@@ -278,7 +278,7 @@ Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList& t
 #if 1
   // DQ (8/24/2012): Print this out a little less often; but still enough so that we know to fix this later.
      static int counter = 0;
-     if (counter++ % 100 == 0)
+     if (counter++ % 1 == 0)
         {
           printf ("In Unparse_ExprStmt::unparseTemplateArgumentList(): CRITICAL FUNCTION TO BE REFACTORED \n");
         }
@@ -512,7 +512,7 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
    {
      ROSE_ASSERT(templateArgument != NULL);
 #if 0
-     printf ("In unparseTemplateArgument (%p) \n",templateArgument);
+     printf ("In unparseTemplateArgument(%p) \n",templateArgument);
 #endif
 #if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES
      printf ("Unparse TemplateArgument (%p) \n",templateArgument);
@@ -603,7 +603,9 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
                ROSE_ASSERT(newInfo.get_reference_node_for_qualification() != NULL);
                printf ("newInfo.get_reference_node_for_qualification() = %p = %s \n",newInfo.get_reference_node_for_qualification(),newInfo.get_reference_node_for_qualification()->class_name().c_str());
 #endif
-
+#if 0
+               printf ("In unparseTemplateArgument(): case SgTemplateArgument::type_argument: templateArgument->get_name_qualification_length() = %d \n",templateArgument->get_name_qualification_length());
+#endif
             // DQ (5/28/2011): We have to handle the name qualification directly since types can be qualified 
             // different and so it depends upon where the type is referenced.  Thus the qualified name is 
             // stored in a map to the IR node that references the type.
