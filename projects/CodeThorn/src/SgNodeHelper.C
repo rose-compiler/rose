@@ -237,6 +237,14 @@ SgFunctionDefinition* SgNodeHelper::determineFunctionDefinition(SgFunctionCallEx
   assert(funDef!=0);
 }
 
+string SgNodeHelper::getLabelName(SgNode* node) {
+  if(!isSgLabelStatement(node))
+	throw "SgNodeHelper::getLabelName: improper node operation.";
+  string labelName=node->unparseToString();
+  // strip off trailing ":"
+  return labelName.substr(0,labelName.size()-1);
+}
+
 SgExpressionPtrList& SgNodeHelper::getFunctionCallActualParameterList(SgNode* node) {
   if(!isSgFunctionCallExp(node))
 	throw "SgNodeHelper::getFunctionCallActualParameterList: improper node operation.";

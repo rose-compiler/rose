@@ -90,232 +90,77 @@ void checkProgram(SgNode* root) {
   }
 }
 
-int main( int argc, char * argv[] ) {
-  string ltl_file;
-  try {
-	Timer timer;
-	timer.start();
-
-  // Command line option handling.
-  po::options_description desc
-    ("CodeThorn 1.1 [RC1]\n"
-     "Supported options");
-
-  desc.add_options()
-    ("help,h", "produce this help message")
-    ("rose-help", "show help for compiler frontend options")
-    ("version,v", "display the version")
-    ("internal-checks", "run internal consistency checks (without input program)")
-    ("verify", po::value< string >(), "verify all LTL formulae in the file [arg]")
-    ("csv", po::value< string >(), "output LTL verification results into a CSV file [arg]")
-    ("tg1-estate-address", po::value< string >(), "transition graph 1: visualize address [=yes|no]")
-    ("tg1-estate-id", po::value< string >(), "transition graph 1: visualize estate-id [=yes|no]")
-    ("tg1-estate-properties", po::value< string >(), 
-     "transition graph 1: visualize all estate-properties [=yes|no]")
-    ("tg2-estate-address", po::value< string >(), "transition graph 2: visualize address [=yes|no]")
-    ("tg2-estate-id", po::value< string >(), "transition graph 2: visualize estate-id [=yes|no]")
-    ("tg2-estate-properties", po::value< string >(),
-     "transition graph 2: visualize all estate-properties [=yes|no]")
-    ("colors",po::value< string >(),"use colors in output [=yes|no]")
-    ("report-stdout",po::value< string >(),"report stdout estates during analysis [=yes|no]")
-    ("report-failed-assert",po::value< string >(),
-     "report failed assert estates during analysis [=yes|no]")
-    ("precision-equality-constraints",po::value< string >(),
-     "(experimental) use constraints for determining estate equality [=yes|no]")
-    ("precision-equality-io",po::value< string >(),
-     "(experimental) use constraints for determining estate equality [=yes|no]")
-    ("precision-bool",po::value< string >(),
-     "use precise top with bool-(and/or) operators (used in LTL)")
-    ("precision-intbool",po::value< string >(),
-     "use precise top with intbool-(and/or) operators (used in int-analyzer)")
-    ("precision-exact-constraints",po::value< string >(),
-     "use precise constraint extraction (experimental)")
-    ("tg-ltl-reduced",po::value< string >(),"compute LTL-reduced transition graph")
-    ;
-
-  po::store(po::command_line_parser(argc, argv).
-	    options(desc).allow_unregistered().run(), args);
-  po::notify(args);
-
-  if (args.count("help")) {
-    cout << desc << "\n";
-    return 0;
-  }
-
-  if (args.count("rose-help")) {
-    argv[1] = strdup("--help");
-  }
-
-  if (args.count("version")) {
-    cout << "CodeThorn version 1.1 [RC1]\n";
-    cout << "Written by Markus Schordan and Adrian Prantl\n";
-    cout << "2012\n";
-    return 0;
-  }
-
-  boolOptions.init(argc,argv);
-  boolOptions.registerOption("tg1-estate-address",false);
-  boolOptions.registerOption("tg1-estate-id",false);
-  boolOptions.registerOption("tg1-estate-properties",true);
-  boolOptions.registerOption("tg2-estate-address",false);
-  boolOptions.registerOption("tg2-estate-id",true);
-  boolOptions.registerOption("tg2-estate-properties",false);
-  boolOptions.registerOption("colors",true);
-  boolOptions.registerOption("report-stdout",false);
-  boolOptions.registerOption("report-failed-assert",false);
-  boolOptions.registerOption("precision-equality-constraints",true);
-  boolOptions.registerOption("precision-equality-io",true);
-  boolOptions.registerOption("precision-bool",true);
-  boolOptions.registerOption("precision-intbool",true);
-  boolOptions.registerOption("precision-exact-constraints",false);
-  boolOptions.registerOption("tg-ltl-reduced",false);
-  boolOptions.processOptions();
-  cout<<boolOptions.toString();
-
-  if (args.count("internal-checks")) {
-	if(internalChecks(argc,argv)==false)
-	  return 1;
-	else
-	  return 0;
-  }
+void generateAssertsCsvFile(Analyzer& analyzer, SgProject* sageProject, string filename) {
+  ofstream* csv = NULL;
+  csv = new ofstream();
+  // use binary and \r\n tp enforce DOS line endings
+  // http://tools.ietf.org/html/rfc4180
+  csv->open(filename.c_str(), ios::trunc|ios::binary);
+  *csv << "Index;\"Assert Error Label\";ReachabilityResult;Confidence\r\n";
   
-  if (args.count("verify")) {
-    ltl_file = args["verify"].as<string>();
-	for (int i=1; i<argc; ++i) {
-	  if ((string(argv[i]) == "--verify") || 
-	      (string(argv[i]) == "--csv")) {
-		// do not confuse ROSE frontend
-		argv[i] = strdup("");
-		assert(i+1<argc);
-		argv[i+1] = strdup("");
-	  }
-	}
-  }
-
-  // print version information
-#ifdef STATESET_REF
-  cout << "INFO: CodeThorn 1.1. (RC1): Slow reference implementation (using STATESET_REF)."<<endl;
-#else
-  cout << "INFO: CodeThorn 1.1 (RC1): Fast sequential implementation (STATE_SET)."<<endl;
-#endif
-#ifdef STATESET_REF
-  cout << "INFO: CodeThorn 1.1. (RC1): Slow reference implementation (using ESTATESET_REF)."<<endl;
-#else
-  cout << "INFO: CodeThorn 1.1 (RC1): Fast sequential implementation (ESTATE_SET)."<<endl;
-#endif
-  // Build the AST used by ROSE
-  cout << "INIT: Parsing and creating AST."<<endl;
-  SgProject* sageProject = frontend(argc,argv);
-  
-  cout << "INIT: Running ROSE AST tests."<<endl;
-  // Run internal consistency tests on AST
-  AstTests::runAllTests(sageProject);
-
-  SgNode* root=sageProject;
-  checkProgram(root);
-
-  cout << "INIT: Running variable<->symbol mapping check."<<endl;
-
-  VariableIdMapping varIdMap;
-  varIdMap.computeVariableSymbolMapping(sageProject);
-  cout << "STATUS: Variable<->Symbol mapping created."<<endl;
-  if(!varIdMap.isUniqueVariableSymbolMapping()) {
-	cerr << "WARNING: Variable<->Symbol mapping not bijective."<<endl;
-	//varIdMap.reportUniqueVariableSymbolMappingViolations();
-  }
-  cout << "INIT: creating solver."<<endl;
-  Analyzer analyzer;
-  analyzer.initializeSolver1("main",root);
-
-  cout << "=============================================================="<<endl;
-  analyzer.runSolver1();
-  //  cout << analyzer.stateSetToString(final);
-  cout << "=============================================================="<<endl;
-  timer.stop();
-  double totalRunTime=timer.getElapsedTimeInMilliSec();
-
-  long stateSetSize=analyzer.getStateSet()->size();
-  long stateSetBytes=analyzer.getStateSet()->memorySize();
-  long eStateSetSize=analyzer.getEStateSet()->size();
-  long eStateSetBytes=analyzer.getEStateSet()->memorySize();
-  long transitionGraphSize=analyzer.getTransitionGraph()->size();
-  long transitionGraphBytes=transitionGraphSize*sizeof(Transition);
-  long numOfconstraintSets=analyzer.getConstraintSetMaintainer()->numberOfConstraintSets();
-  long constraintSetsBytes=analyzer.getConstraintSetMaintainer()->memorySize();
-
-  cout << "Number of stdin-estates        : "<<color("cyan")<<(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDIN_VAR))<<color("white")<<endl;
-  cout << "Number of stdout-estates       : "<<color("cyan")<<(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDOUT_VAR))<<color("white")<<endl;
-  cout << "Number of stderr-estates       : "<<color("cyan")<<(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDERR_VAR))<<color("white")<<endl;
-  cout << "Number of failed-assert-estates: "<<color("cyan")<<(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::FAILED_ASSERT))<<color("white")<<endl;
-  cout << "=============================================================="<<endl;
-  cout << "Number of states               : "<<color("magenta")<<stateSetSize<<color("white")<<" (memory: "<<color("magenta")<<stateSetBytes<<color("white")<<" bytes)"<<endl;
-  cout << "Number of estates              : "<<color("cyan")<<eStateSetSize<<color("white")<<" (memory: "<<color("cyan")<<eStateSetBytes<<color("white")<<" bytes)"<<endl;
-  cout << "Number of transitions          : "<<color("blue")<<transitionGraphSize<<color("white")<<" (memory: "<<color("blue")<<transitionGraphBytes<<color("white")<<" bytes)"<<endl;
-  cout << "Number of constraint sets      : "<<color("yellow")<<numOfconstraintSets<<color("white")<<" (memory: "<<color("yellow")<<constraintSetsBytes<<color("white")<<" bytes)"<<endl;
-  cout << "=============================================================="<<endl;
-  cout << "Memory total         : "<<color("green")<<stateSetBytes+eStateSetBytes+transitionGraphBytes+constraintSetsBytes<<" bytes"<<color("normal")<<endl;
-  if(totalRunTime<1000.0) 
-	cout << "Time total           : "<<color("green")<<totalRunTime<<" ms"<<color("normal")<<endl;
-  else
-	cout << "Time total           : "<<color("green")<<totalRunTime/1000.0<<" seconds"<<color("normal")<<endl;
-  cout << "=============================================================="<<endl;
-  // we only generate a visualization if #estates<=1000
-
-  cout << "FAILED-ASSERT Nodes are: ";
   LabelSet lset=analyzer.getTransitionGraph()->labelSetOfIoOperations(InputOutput::FAILED_ASSERT);
-  for(LabelSet::iterator i=lset.begin();i!=lset.end();++i) {
-	if(i!=lset.begin())
-	  cout<<", ";
-	cout << *i;
+  list<pair<SgLabelStatement*,SgNode*> > assertNodes=analyzer.listOfLabeledAssertNodes(sageProject);
+  int cnt=1;
+  for(list<pair<SgLabelStatement*,SgNode*> >::iterator i=assertNodes.begin();i!=assertNodes.end();++i) {
+	*csv << cnt 
+		 << ";"
+		 << SgNodeHelper::getLabelName((*i).first)
+		 <<";"
+	  ;
+	Label lab=analyzer.getLabeler()->getLabel((*i).second);
+	if(lset.find(lab)!=lset.end()) {
+	  *csv << "YES;9";
+	} else {
+	  *csv << "NO;9";
+	}
+	*csv << "\r\n";
+	cnt++;
   }
-  cout<<endl;
-  
-  if(eStateSetSize>2500) {
-	cout << "Number of eStates > 2500. Not generating visualization."<<endl;
-  } else {
-    Visualizer visualizer(analyzer.getLabeler(),analyzer.getFlow(),analyzer.getStateSet(),analyzer.getEStateSet(),analyzer.getTransitionGraph());
-    string dotFile="digraph G {\n";
-    dotFile+=visualizer.transitionGraphToDot();
-    dotFile+="}\n";
-    write_file("transitiongraph1.dot", dotFile);
-    cout << "generated transitiongraph1.dot."<<endl;
-    string dotFile3=visualizer.foldedTransitionGraphToDot();
-    write_file("transitiongraph2.dot", dotFile3);
-    cout << "generated transitiongraph2.dot."<<endl;
+  if (csv) delete csv;
+}
 
-	string datFile1=(analyzer.getTransitionGraph())->toString();
-	write_file("transitiongraph1.dat", datFile1);
-    cout << "generated transitiongraph1.dat."<<endl;
-
-    assert(analyzer.startFunRoot);
-    //analyzer.generateAstNodeInfo(analyzer.startFunRoot);
-    //dotFile=astTermWithNullValuesToDot(analyzer.startFunRoot);
-    analyzer.generateAstNodeInfo(sageProject);
-    dotFile=functionAstTermsWithNullValuesToDot(sageProject);
-    write_file("ast.dot", dotFile);
-    cout << "generated ast.dot."<<endl;
-    
-    write_file("cfg.dot", analyzer.flow.toDot(analyzer.cfanalyzer->getLabeler()));
-    cout << "generated cfg.dot."<<endl;
-
+void printAsserts(Analyzer& analyzer, SgProject* sageProject) {
+  LabelSet lset=analyzer.getTransitionGraph()->labelSetOfIoOperations(InputOutput::FAILED_ASSERT);
+  list<pair<SgLabelStatement*,SgNode*> > assertNodes=analyzer.listOfLabeledAssertNodes(sageProject);
+  for(list<pair<SgLabelStatement*,SgNode*> >::iterator i=assertNodes.begin();i!=assertNodes.end();++i) {
+	cout << "assert: "
+		 << SgNodeHelper::getLabelName((*i).first)
+	  //	 << SgNodeHelper::nodeToString((*i).second)<< " : "
+	  ;
+	cout << ": ";
+	Label lab=analyzer.getLabeler()->getLabel((*i).second);
+	if(lset.find(lab)!=lset.end()) {
+	  cout << color("green")<<"YES (REACHABLE)"<<color("normal");
+	}
+	else {
+	  cout << color("cyan")<<"NO (UNREACHABLE)"<<color("normal");
+	}
+	cout << endl;
   }
+}
 
-#if 0
-  {
-    cout << "MAP:"<<endl;
-    cout << analyzer.getLabeler()->toString();
+void printAssertStatistics(Analyzer& analyzer, SgProject* sageProject) {
+  LabelSet lset=analyzer.getTransitionGraph()->labelSetOfIoOperations(InputOutput::FAILED_ASSERT);
+  list<pair<SgLabelStatement*,SgNode*> > assertNodes=analyzer.listOfLabeledAssertNodes(sageProject);
+  int reachable=0;
+  int unreachable=0;
+  for(list<pair<SgLabelStatement*,SgNode*> >::iterator i=assertNodes.begin();i!=assertNodes.end();++i) {
+	Label lab=analyzer.getLabeler()->getLabel((*i).second);
+	if(lset.find(lab)!=lset.end())
+	  reachable++;
+	else
+	  unreachable++;
   }
-#endif
+  int n=assertNodes.size();
+  assert(reachable+unreachable == n);
+  cout<<"Assert reachability statistics: "
+	  <<reachable          <<"/"<<n<<color("green")  <<" YES"       <<color("normal")<<", " 	
+	  <<unreachable        <<"/"<<n<<color("cyan")   <<" NO "       <<color("normal") 	
+	  <<endl
+	;
+}
 
-#if 0
-  // check output var to be constant in transition graph
-  TransitionGraph* tg=analyzer.getTransitionGraph();
-  for(TransitionGraph::iterator i=tg->begin();i!=tg->end();++i) {
-	const EState* es1=(*i).source;
-	assert(es1->io.op==InputOutput::STDOUT_VAR && es1->state->varIsConst(es1->io.var));
-  }
-#endif
-
+void generateLTLOutput(Analyzer& analyzer, string ltl_file) {
   //
   // Verification
   //
@@ -331,11 +176,11 @@ int main( int argc, char * argv[] ) {
     ltl_input = fopen(ltl_file.c_str(), "r");
 
     ofstream* csv = NULL;
-    if (args.count("csv")) {
+    if (args.count("csv-ltl")) {
       csv = new ofstream();
       // use binary and \r\n tp enforce DOS line endings
       // http://tools.ietf.org/html/rfc4180
-      csv->open(args["csv"].as<string>().c_str(), ios::trunc|ios::binary);
+      csv->open(args["csv-ltl"].as<string>().c_str(), ios::trunc|ios::binary);
       *csv << "Index;\"LTL formula\";Result;Confidence\r\n";
     }
 
@@ -412,6 +257,250 @@ int main( int argc, char * argv[] ) {
 	<<endl;
 
   } 
+}
+
+
+int main( int argc, char * argv[] ) {
+  string ltl_file;
+  try {
+	Timer timer;
+	timer.start();
+
+  // Command line option handling.
+  po::options_description desc
+    ("CodeThorn 1.1 [RC1]\n"
+     "Supported options");
+
+  desc.add_options()
+    ("help,h", "produce this help message")
+    ("rose-help", "show help for compiler frontend options")
+    ("version,v", "display the version")
+    ("internal-checks", "run internal consistency checks (without input program)")
+    ("verify", po::value< string >(), "verify all LTL formulae in the file [arg]")
+    ("csv-ltl", po::value< string >(), "output LTL verification results into a CSV file [arg]")
+    ("csv-assert", po::value< string >(), "output assert reachability results into a CSV file [arg]")
+    ("tg1-estate-address", po::value< string >(), "transition graph 1: visualize address [=yes|no]")
+    ("tg1-estate-id", po::value< string >(), "transition graph 1: visualize estate-id [=yes|no]")
+    ("tg1-estate-properties", po::value< string >(), 
+     "transition graph 1: visualize all estate-properties [=yes|no]")
+    ("tg2-estate-address", po::value< string >(), "transition graph 2: visualize address [=yes|no]")
+    ("tg2-estate-id", po::value< string >(), "transition graph 2: visualize estate-id [=yes|no]")
+    ("tg2-estate-properties", po::value< string >(),
+     "transition graph 2: visualize all estate-properties [=yes|no]")
+    ("colors",po::value< string >(),"use colors in output [=yes|no]")
+    ("report-stdout",po::value< string >(),"report stdout estates during analysis [=yes|no]")
+    ("report-failed-assert",po::value< string >(),
+     "report failed assert estates during analysis [=yes|no]")
+    ("precision-equality-constraints",po::value< string >(),
+     "(experimental) use constraints for determining estate equality [=yes|no]")
+    ("precision-equality-io",po::value< string >(),
+     "(experimental) use constraints for determining estate equality [=yes|no]")
+    ("precision-bool",po::value< string >(),
+     "use precise top with bool-(and/or) operators (used in LTL)")
+    ("precision-intbool",po::value< string >(),
+     "use precise top with intbool-(and/or) operators (used in int-analyzer)")
+    ("precision-exact-constraints",po::value< string >(),
+     "use precise constraint extraction (experimental)")
+    ("tg-ltl-reduced",po::value< string >(),"compute LTL-reduced transition graph")
+    ;
+
+  po::store(po::command_line_parser(argc, argv).
+	    options(desc).allow_unregistered().run(), args);
+  po::notify(args);
+
+  if (args.count("help")) {
+    cout << desc << "\n";
+    return 0;
+  }
+
+  if (args.count("rose-help")) {
+    argv[1] = strdup("--help");
+  }
+
+  if (args.count("version")) {
+    cout << "CodeThorn version 1.1 [RC1]\n";
+    cout << "Written by Markus Schordan and Adrian Prantl\n";
+    cout << "2012\n";
+    return 0;
+  }
+
+  boolOptions.init(argc,argv);
+  boolOptions.registerOption("tg1-estate-address",false);
+  boolOptions.registerOption("tg1-estate-id",false);
+  boolOptions.registerOption("tg1-estate-properties",true);
+  boolOptions.registerOption("tg2-estate-address",false);
+  boolOptions.registerOption("tg2-estate-id",true);
+  boolOptions.registerOption("tg2-estate-properties",false);
+  boolOptions.registerOption("colors",true);
+  boolOptions.registerOption("report-stdout",false);
+  boolOptions.registerOption("report-failed-assert",false);
+  boolOptions.registerOption("precision-equality-constraints",true);
+  boolOptions.registerOption("precision-equality-io",true);
+  boolOptions.registerOption("precision-bool",true);
+  boolOptions.registerOption("precision-intbool",true);
+  boolOptions.registerOption("precision-exact-constraints",false);
+  boolOptions.registerOption("tg-ltl-reduced",false);
+  boolOptions.processOptions();
+  cout<<boolOptions.toString();
+
+  if (args.count("internal-checks")) {
+	if(internalChecks(argc,argv)==false)
+	  return 1;
+	else
+	  return 0;
+  }
+  
+  // clean up verify and csv-ltl option in argv
+  if (args.count("verify")) {
+    ltl_file = args["verify"].as<string>();
+	for (int i=1; i<argc; ++i) {
+	  if ((string(argv[i]) == "--verify") || 
+	      (string(argv[i]) == "--csv-ltl")) {
+		// do not confuse ROSE frontend
+		argv[i] = strdup("");
+		assert(i+1<argc);
+		argv[i+1] = strdup("");
+	  }
+	}
+  }
+
+  // clean up csv-assert option in argv
+  for (int i=1; i<argc; ++i) {
+	if (string(argv[i]) == "--csv-assert") {
+	  // do not confuse ROSE frontend
+	  argv[i] = strdup("");
+	  assert(i+1<argc);
+		argv[i+1] = strdup("");
+	}
+  }
+
+  // print version information
+#ifdef STATESET_REF
+  cout << "INFO: CodeThorn 1.1. (RC1): Slow reference implementation (using STATESET_REF)."<<endl;
+#else
+  cout << "INFO: CodeThorn 1.1 (RC1): Fast sequential implementation (STATE_SET)."<<endl;
+#endif
+#ifdef STATESET_REF
+  cout << "INFO: CodeThorn 1.1. (RC1): Slow reference implementation (using ESTATESET_REF)."<<endl;
+#else
+  cout << "INFO: CodeThorn 1.1 (RC1): Fast sequential implementation (ESTATE_SET)."<<endl;
+#endif
+  // Build the AST used by ROSE
+  cout << "INIT: Parsing and creating AST."<<endl;
+  SgProject* sageProject = frontend(argc,argv);
+  
+  cout << "INIT: Running ROSE AST tests."<<endl;
+  // Run internal consistency tests on AST
+  AstTests::runAllTests(sageProject);
+
+  SgNode* root=sageProject;
+  checkProgram(root);
+
+  cout << "INIT: Running variable<->symbol mapping check."<<endl;
+
+  VariableIdMapping varIdMap;
+  varIdMap.computeVariableSymbolMapping(sageProject);
+  cout << "STATUS: Variable<->Symbol mapping created."<<endl;
+  if(!varIdMap.isUniqueVariableSymbolMapping()) {
+	cerr << "WARNING: Variable<->Symbol mapping not bijective."<<endl;
+	//varIdMap.reportUniqueVariableSymbolMappingViolations();
+  }
+  cout << "INIT: creating solver."<<endl;
+  Analyzer analyzer;
+  analyzer.initializeSolver1("main",root);
+
+  cout << "=============================================================="<<endl;
+  analyzer.runSolver1();
+  timer.stop();
+  //  cout << analyzer.stateSetToString(final);
+  cout << "=============================================================="<<endl;
+  printAsserts(analyzer,sageProject);
+  if (args.count("csv-assert")) {
+	string filename=args["csv-assert"].as<string>().c_str();
+	generateAssertsCsvFile(analyzer,sageProject,filename);
+  }
+  cout << "=============================================================="<<endl;
+  if (ltl_file.size()) {
+	generateLTLOutput(analyzer,ltl_file);
+	cout << "=============================================================="<<endl;
+  }
+  printAssertStatistics(analyzer,sageProject);
+  cout << "=============================================================="<<endl;
+
+  double totalRunTime=timer.getElapsedTimeInMilliSec();
+
+  long stateSetSize=analyzer.getStateSet()->size();
+  long stateSetBytes=analyzer.getStateSet()->memorySize();
+  long eStateSetSize=analyzer.getEStateSet()->size();
+  long eStateSetBytes=analyzer.getEStateSet()->memorySize();
+  long transitionGraphSize=analyzer.getTransitionGraph()->size();
+  long transitionGraphBytes=transitionGraphSize*sizeof(Transition);
+  long numOfconstraintSets=analyzer.getConstraintSetMaintainer()->numberOfConstraintSets();
+  long constraintSetsBytes=analyzer.getConstraintSetMaintainer()->memorySize();
+
+  cout << "Number of stdin-estates        : "<<color("cyan")<<(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDIN_VAR))<<color("white")<<endl;
+  cout << "Number of stdout-estates       : "<<color("cyan")<<(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDOUT_VAR))<<color("white")<<endl;
+  cout << "Number of stderr-estates       : "<<color("cyan")<<(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDERR_VAR))<<color("white")<<endl;
+  cout << "Number of failed-assert-estates: "<<color("cyan")<<(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::FAILED_ASSERT))<<color("white")<<endl;
+  cout << "=============================================================="<<endl;
+  cout << "Number of states               : "<<color("magenta")<<stateSetSize<<color("white")<<" (memory: "<<color("magenta")<<stateSetBytes<<color("white")<<" bytes)"<<endl;
+  cout << "Number of estates              : "<<color("cyan")<<eStateSetSize<<color("white")<<" (memory: "<<color("cyan")<<eStateSetBytes<<color("white")<<" bytes)"<<endl;
+  cout << "Number of transitions          : "<<color("blue")<<transitionGraphSize<<color("white")<<" (memory: "<<color("blue")<<transitionGraphBytes<<color("white")<<" bytes)"<<endl;
+  cout << "Number of constraint sets      : "<<color("yellow")<<numOfconstraintSets<<color("white")<<" (memory: "<<color("yellow")<<constraintSetsBytes<<color("white")<<" bytes)"<<endl;
+  cout << "=============================================================="<<endl;
+  cout << "Memory total         : "<<color("green")<<stateSetBytes+eStateSetBytes+transitionGraphBytes+constraintSetsBytes<<" bytes"<<color("normal")<<endl;
+  if(totalRunTime<1000.0) 
+	cout << "Time total           : "<<color("green")<<totalRunTime<<" ms"<<color("normal")<<endl;
+  else
+	cout << "Time total           : "<<color("green")<<totalRunTime/1000.0<<" seconds"<<color("normal")<<endl;
+  cout << "=============================================================="<<endl;
+
+  if(eStateSetSize>2500) {
+	cout << "Number of eStates > 2500. Not generating visualization."<<endl;
+  } else {
+    Visualizer visualizer(analyzer.getLabeler(),analyzer.getFlow(),analyzer.getStateSet(),analyzer.getEStateSet(),analyzer.getTransitionGraph());
+    string dotFile="digraph G {\n";
+    dotFile+=visualizer.transitionGraphToDot();
+    dotFile+="}\n";
+    write_file("transitiongraph1.dot", dotFile);
+    cout << "generated transitiongraph1.dot."<<endl;
+    string dotFile3=visualizer.foldedTransitionGraphToDot();
+    write_file("transitiongraph2.dot", dotFile3);
+    cout << "generated transitiongraph2.dot."<<endl;
+
+	string datFile1=(analyzer.getTransitionGraph())->toString();
+	write_file("transitiongraph1.dat", datFile1);
+    cout << "generated transitiongraph1.dat."<<endl;
+
+    assert(analyzer.startFunRoot);
+    //analyzer.generateAstNodeInfo(analyzer.startFunRoot);
+    //dotFile=astTermWithNullValuesToDot(analyzer.startFunRoot);
+    analyzer.generateAstNodeInfo(sageProject);
+    dotFile=functionAstTermsWithNullValuesToDot(sageProject);
+    write_file("ast.dot", dotFile);
+    cout << "generated ast.dot."<<endl;
+    
+    write_file("cfg.dot", analyzer.flow.toDot(analyzer.cfanalyzer->getLabeler()));
+    cout << "generated cfg.dot."<<endl;
+
+  }
+
+#if 0
+  {
+    cout << "MAP:"<<endl;
+    cout << analyzer.getLabeler()->toString();
+  }
+#endif
+
+#if 0
+  // check output var to be constant in transition graph
+  TransitionGraph* tg=analyzer.getTransitionGraph();
+  for(TransitionGraph::iterator i=tg->begin();i!=tg->end();++i) {
+	const EState* es1=(*i).source;
+	assert(es1->io.op==InputOutput::STDOUT_VAR && es1->state->varIsConst(es1->io.var));
+  }
+#endif
+
 
   // reset terminal
   cout<<color("normal")<<"done."<<endl;

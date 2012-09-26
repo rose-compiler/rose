@@ -133,9 +133,13 @@ class Analyzer {
   set<string> variableIdsToVariableNames(set<VariableId>);
 
   bool isAssertExpr(SgNode* node);
-  //! adds a specific constraint to an existing eState which is checked by isFailedAsserEState and determines a failed-assert eState
   bool isFailedAssertEState(const EState* eState);
+  //! adds a specific code to the io-info of an eState which is checked by isFailedAsserEState and determines a failed-assert eState. Note that the actual assert (and its label) is associated with the previous eState (this information can therefore be obtained from a transition-edge in the transition graph).
   EState createFailedAssertEState(const EState eState, Label target);
+  //! list of all asserts in a program
+  list<SgNode*> listOfAssertNodes(SgProject *root);
+  //! rers-specific error_x: assert(0) version 
+  list<pair<SgLabelStatement*,SgNode*> > listOfLabeledAssertNodes(SgProject *root);
  private:
   ExprAnalyzer exprAnalyzer;
   VariableIdMapping variableIdMapping;

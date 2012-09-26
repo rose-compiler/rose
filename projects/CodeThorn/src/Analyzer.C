@@ -249,6 +249,43 @@ EState Analyzer::createFailedAssertEState(EState eState, Label target) {
 	  return newEState;
 }
 
+list<SgNode*> Analyzer::listOfAssertNodes(SgProject* root) {
+  list<SgNode*> assertNodes;
+  list<SgFunctionDefinition*> funDefs=SgNodeHelper::listOfFunctionDefinitions(root);
+  for(list<SgFunctionDefinition*>::iterator i=funDefs.begin();
+	  i!=funDefs.end();
+	  ++i) {
+	MyAst ast(*i);
+	for(MyAst::iterator j=ast.begin();j!=ast.end();++j) {
+	  if(isAssertExpr(*j)) {
+		assertNodes.push_back(*j);
+	  }
+	}
+  }
+  return assertNodes;
+}
+
+list<pair<SgLabelStatement*,SgNode*> > Analyzer::listOfLabeledAssertNodes(SgProject* root) {
+  list<pair<SgLabelStatement*,SgNode*> > assertNodes;
+  list<SgFunctionDefinition*> funDefs=SgNodeHelper::listOfFunctionDefinitions(root);
+  for(list<SgFunctionDefinition*>::iterator i=funDefs.begin();
+	  i!=funDefs.end();
+	  ++i) {
+	MyAst ast(*i);
+	MyAst::iterator prev=ast.begin();
+	for(MyAst::iterator j=ast.begin();j!=ast.end();++j) {
+	  if(isAssertExpr(*j)) {
+		if(prev!=j && isSgLabelStatement(*prev)) {
+		  SgLabelStatement* labStmt=isSgLabelStatement(*prev);
+		  assertNodes.push_back(make_pair(labStmt,*j));
+		}
+	  }
+	  prev=j;
+	}
+  }
+  return assertNodes;
+}
+
 const State* Analyzer::processNewState(State& s) {
   return stateSet.processNewState(s);
 }
