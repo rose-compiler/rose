@@ -8,7 +8,8 @@
 #include<cassert>
 
 #include<algorithm>      // swap()
-#include<setalgo.h>
+
+#include "SetAlgo.h"
 
 namespace br_stl {
 
