@@ -1,7 +1,7 @@
 #ifndef STATE_REPRESENTATION_H
 #define STATE_REPRESENTATION_H
 
-#define ESTATE_REF
+#define USER_DEFINED_STATE_COMP
 
 /*************************************************************
  * Copyright: (C) 2012 by Markus Schordan                    *

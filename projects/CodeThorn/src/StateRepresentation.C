@@ -13,7 +13,6 @@
 
 // it is not necessary to define comparison-ops for State, but
 // the ordering appears to be implementation dependent (but consistent)
-#define USER_DEFINED_STATE_COMP
 
 using namespace std;
 
