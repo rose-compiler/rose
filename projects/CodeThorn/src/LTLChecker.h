@@ -41,7 +41,7 @@ namespace LTL {
     /// verify the LTL formula f
     AType::BoolLattice verify(const Formula& f);
 
-    void collapse_transition_graph(BoostTransitionGraph &g, BoostTransitionGraph &reduced) const;
+    Label collapse_transition_graph(BoostTransitionGraph &g, BoostTransitionGraph &reduced) const;
 
   protected:
     Label start;

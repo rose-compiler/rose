@@ -82,6 +82,20 @@ public:
      <<" = "<<props[e]<<"\"];\n  ";
     return newAttr(node);
   }
+  IAttr visit(const NegInputSymbol* expr, IAttr a)  {
+    short e = expr->label;
+    int node = newNode(a);
+    s<<node<<" ["<<color(props[e])<<",label=\"¬Input "<<string(1, expr->c)
+     <<" = "<<props[e]<<"\"];\n  ";
+    return newAttr(node);
+  }
+  IAttr visit(const NegOutputSymbol* expr, IAttr a) {
+    short e = expr->label;
+    int node = newNode(a);
+    s<<node<<" ["<<color(props[e])<<",label=\"¬Output "<<string(1, expr->c)
+     <<" = "<<props[e]<<"\"];\n  ";
+    return newAttr(node);
+  }
   IAttr visit(const Not* expr, IAttr a) {
     short e = expr->label;
     short e1 = expr->expr1->label;
@@ -790,9 +804,9 @@ Checker::Checker(EStateSet& ess, TransitionGraph& _tg)
   }
   start = estate_label[transitionGraph.begin()->source];
 
-#if 0
+#if 1
   // Optimization
-  collapse_transition_graph(full_graph, g);
+  start = collapse_transition_graph(full_graph, g);
 #else
   g = full_graph;
 #endif
@@ -808,7 +822,7 @@ Checker::Checker(EStateSet& ess, TransitionGraph& _tg)
  *
  * Creates reduced_eStateSet
  */
-void Checker::collapse_transition_graph(BoostTransitionGraph& g, 
+Label Checker::collapse_transition_graph(BoostTransitionGraph& g, 
 					BoostTransitionGraph& reduced) const {
   Label n = 0;
   Label renumbered[num_vertices(g)];
@@ -853,12 +867,14 @@ void Checker::collapse_transition_graph(BoostTransitionGraph& g,
     Label src = source(*ei, g);
     Label tgt = target(*ei, g);
     add_edge(renumbered[src], renumbered[tgt], reduced);
+    //cerr<<renumbered[src]<<endl;
+    //cerr<<renumbered[tgt]<<endl;
     reduced[renumbered[src]] = g[src];
     reduced[renumbered[tgt]] = g[tgt];
   }
 
   //cerr<<"## done "<<endl<<endl;
-
+  return renumbered[start];
 }
 
 
@@ -942,10 +958,14 @@ Checker::verify(const Formula& f)
     Label label = workset.front(); workset.pop();
     const EState* state = g[label];
 
-    // Return the first result at an O node
+    // Return the first result at an I/O node
     // FIXME: not always correct, obviously. See comment above.
-    if (state->io.op == InputOutput::STDOUT_CONST ||
-	state->io.op == InputOutput::STDOUT_VAR) {
+    switch (state->io.op) {
+    case InputOutput::STDOUT_CONST:
+    case InputOutput::STDOUT_VAR:
+    case InputOutput::STDERR_VAR:
+    case InputOutput::STDERR_CONST:
+    case InputOutput::STDIN_VAR:
       return v.ltl_properties[label][e.label];
     }
 
