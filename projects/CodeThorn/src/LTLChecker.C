@@ -571,6 +571,7 @@ public:
     // we set Bot nodes to Top to ensure termination. Fix it here
     FOR_EACH_STATE(state, label)
       if (props[e].isTop()) props[e] = Bot();
+#endif
   }
 
   /**
@@ -633,11 +634,11 @@ public:
     short e = expr->label;
     short e1 = expr->expr1->label;
 
-    bw_fixpoint(/* init */      false,
-		/* start */     props[e1].isTrue(),
+    bw_fixpoint(/* init */      Bot(),
+		/* start */     !props[e1].isBot(),
 		/* join */      ||,
 		/* calc  */     props[e1] || joined_succs,
-		/* otherwise */ props[e] = false,
+		/* otherwise */ Top(),
 		/* debug */     NOP //cerr<<props[e1]<<" || "<<joined_succs<<endl;
 		);
   }
@@ -645,28 +646,23 @@ public:
   /**
    * G φ (globally): φ has to hold always (including now)
    *
-   * True, iff for each state we have TOP or TRUE
+   * I'm interpreting this as all states following the current one,
+   * ignoring the past.
+   *
+   * True, iff for each state we have TRUE
    * Implementation status: DONE
    */
   void visit(const Globally* expr) {
     short e = expr->label;
     short e1 = expr->expr1->label;
 
-    BoolLattice global = true;
-    cerr<<"fixme: what's the rationale behind TOP here?"<<endl;
-    FOR_EACH_STATE(state, label) {
-      global = global && props[e1];
-      // TOP and TRUE are seen as valid
-      if (global.isFalse()) {
-	//cerr<<"global failed at "<<label<<endl;
-	break;
-      }
-    }
-
-    // propagate the global result to all states, but keep Bot as is
-    {  FOR_EACH_STATE(state, label)
-	props[e] = props[e1].isBot() ? Bot() : global;
-    }
+    bw_fixpoint(/* init */      Bot(),
+		/* start */     !props[e1].isBot(),
+		/* join */      &&,
+		/* calc  */     props[e1] && joined_succs,
+		/* otherwise */ Top(),
+		/* debug */     NOP //cerr<<props[e1]<<" && "<<joined_succs<<endl;
+		);
   }
 
   // Implementation status: DONE
