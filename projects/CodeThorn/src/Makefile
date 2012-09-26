@@ -78,7 +78,10 @@ check: $(TOOLNAME3)
 	./$(TOOLNAME3) --edg:no_warnings tests/rers_mini1.c    --verify tests/rers_mini1.ltl
 
 test: $(TOOLNAME3)
-	./$(TOOLNAME3) --edg:no_warnings tests/rers/Problem1.c --verify tests/rers/properties1.txt --csv Problem1.csv
+	./$(TOOLNAME3) --edg:no_warnings tests/rers/Problem1.c \
+	               --verify tests/rers/properties1.txt \
+	               --csv-assert Problem1-assert.csv \
+	               --csv-ltl Problem1-ltl.csv
 
 
 RERS=$(patsubst %,Problem%.log, $(shell seq 13))
@@ -88,7 +91,8 @@ rers: $(RERS)
 %.log: tests/rers/%.c $(TOOLNAME3) Makefile
 	./$(TOOLNAME3) --edg:no_warnings --colors=no $< \
 	     --verify $(patsubst tests/rers/Problem%.c,tests/rers/properties%.txt,$<) \
-	     --csv    $(patsubst tests/rers/Problem%.c,Problem%.csv,$<) >$@
+	     --csv-ltl $(patsubst tests/rers/Problem%.c,Problem%-ltl.csv,$<) \
+	     --csv-assert $(patsubst tests/rers/Problem%.c,Problem%-assert.csv,$<) >$@
 
 docs:
 	doxygen Doxyfile
