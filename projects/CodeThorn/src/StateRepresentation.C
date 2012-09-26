@@ -11,6 +11,10 @@
 #include "CollectionOperators.h"
 #include "CommandLineOptions.h"
 
+// it is not necessary to define comparison-ops for State, but
+// the ordering appears to be implementation dependent (but consistent)
+#define USER_DEFINED_STATE_COMP
+
 using namespace std;
 
 void InputOutput::recordVariable(OpType op0,VariableId varId) {
@@ -464,3 +468,42 @@ string EStateSet::toString() {
   return ss.str();
 }
 
+#ifdef USER_DEFINED_STATE_COMP
+bool operator<(const State& s1, const State& s2) {
+  if(s1.size()!=s2.size())
+	return s1.size()<s2.size();
+  State::const_iterator i=s1.begin();
+  State::const_iterator j=s2.begin();
+  while(i!=s1.end() && j!=s2.end()) {
+	if(*i!=*j) {
+	  return *i<*j;
+	} else {
+	  ++i;++j;
+	}
+  }
+  assert(i==s1.end() && j==s2.end());
+  return false; // both are equal
+}
+#if 0
+bool operator==(const State& c1, const State& c2) {
+  if(c1.size()==c2.size()) {
+	State::const_iterator i=c1.begin();
+	State::const_iterator j=c2.begin();
+	while(i!=c1.end()) {
+	  if(!((*i).first==(*j).first))
+		return false;
+	  if(!((*i).second==(*j).second))
+		return false;
+	  ++i;++j;
+	}
+	return true;
+  } else {
+	return false;
+  }
+}
+
+bool operator!=(const State& c1, const State& c2) {
+  return !(c1==c2);
+}
+#endif
+#endif

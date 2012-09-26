@@ -103,11 +103,13 @@ class EState {
 };
 
 // define order for State elements (necessary for StateSet)
-//bool operator<(const State& c1, const State& c2);
-//bool operator==(const State& c1, const State& c2);
-//bool operator!=(const State& c1, const State& c2);
-//bool operator<(const State::value_type& elem1, const State::value_type& elem2);
-//bool operator==(const pair<VariableId,AValue>& elem1, const pair<VariableId,AValue>& elem2);
+#ifdef  USER_DEFINED_STATE_COMP
+bool operator<(const State& c1, const State& c2);
+#if 0
+bool operator==(const State& c1, const State& c2);
+bool operator!=(const State& c1, const State& c2);
+#endif
+#endif
 
 // define order for EState elements (necessary for EStateSet)
 #ifndef ESTATESET_REF
