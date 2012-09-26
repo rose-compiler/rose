@@ -12,16 +12,16 @@ output D does never occur
 output D does never occur
 ----------------------------------------
 (!(G ! oE))
-output F does not never occur
+output E does not never occur
 ----------------------------------------
 (!(G ! oF))
 output F does not never occur
 ----------------------------------------
 (!(G ! oG))
-output F does not never occur
+output G does not never occur
 ----------------------------------------
 (G ! oH)
-output D does never occur
+output H does never occur
 ----------------------------------------
 (G (! iC | (F oF)))
 output F responds to input C
