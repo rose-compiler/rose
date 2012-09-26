@@ -55,6 +55,9 @@ bool operator<(const Constraint& c1, const Constraint& c2);
 bool operator==(const Constraint& c1, const Constraint& c2);
 bool operator!=(const Constraint& c1, const Constraint& c2);
 
+// we use only one disequality constraint to mark constraint set representing non-reachable states
+#define DISEQUALITYCONSTRAINT Constraint(Constraint::DEQ_VAR_CONST,0,AType::CppCapsuleConstIntLattice(AType::ConstIntLattice(0)))
+
 class ConstraintSet : public set<Constraint> {
  public:
   bool constraintExists(Constraint::ConstraintOp op, VariableId varId, CppCapsuleAValue intVal) const;
@@ -62,6 +65,7 @@ class ConstraintSet : public set<Constraint> {
   bool constraintExists(Constraint::ConstraintOp op) const;
   ConstraintSet constraintsWithOp(Constraint::ConstraintOp op) const;
   bool constraintExists(const Constraint& c) const;
+  bool disequalityExists() const;
   ConstraintSet::iterator findSpecific(Constraint::ConstraintOp op, VariableId varId) const;
   ConstraintSet findSpecificSet(Constraint::ConstraintOp op, VariableId varId) const;
   AType::ConstIntLattice varConstIntLatticeValue(const VariableId varId) const;
@@ -77,6 +81,7 @@ class ConstraintSet : public set<Constraint> {
 
   void addConstraint(Constraint c);
   //! erase simply deletes the Constraint from the constraint set (in difference, removeConstraint reorganizes the constraints)
+  void addDisequality();
   void eraseConstraint(Constraint c);
   //! remove transfers information to other vars if the constraint to be deleted is x=y. It tries to keep information alive by transfering it to other variables if possible)
   void removeConstraint(Constraint c);

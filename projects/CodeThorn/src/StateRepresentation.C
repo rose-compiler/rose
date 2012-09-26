@@ -390,9 +390,11 @@ string TransitionGraph::toString() const {
   string s;
   int cnt=0;
   for(TransitionGraph::const_iterator i=begin();i!=end();++i) {
+#if 0
 	stringstream ss;
 	ss<<cnt;
 	s+="Transition["+ss.str()+"]=";
+#endif
 	s+=(*i).toString()+"\n";
 	cnt++;
   }

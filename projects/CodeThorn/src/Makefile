@@ -30,6 +30,8 @@ YACC                  = bison
 
 OBJECT_FILES=MyAst.o AstTerm.o Labeler.o SgNodeHelper.o VariableIdMapping.o CFAnalyzer.o AType.o ExprAnalyzer.o ConstraintRepresentation.o StateRepresentation.o Analyzer.o Visualizer.o Timer.o LanguageRestrictor.o LTLParser.o LTLChecker.o CommandLineOptions.o InternalChecks.o Miscellaneous.o
 
+REGRESSION_DATA_DIR=regressiondata
+
 OBJECT_FILES_EXPERIMENTAL=BoostGraphIntegration.o
 
 # Default make rule to use
@@ -147,3 +149,16 @@ bsps: codethorn
 
 dist:
 	tar cvzf codethorn_$(MYDATE).tgz *.C *cpp *.h *.lxx *.yxx tests/*.C tests/*.c Makefile*
+
+regressiontest: $(TOOLNAME3)
+	./$(TOOLNAME3) --csv tmp_rers_Problem4_csv.txt --verify tests/rers/properties4.txt tests/rers/Problem4.c
+	diff transitiongraph1.dat $(REGRESSION_DATA_DIR)/rers_Problem4_transitiongraph1.dat
+	diff tmp_rers_Problem4_csv.txt $(REGRESSION_DATA_DIR)/rers_Problem4_csv.txt
+	@echo "-----------------------"
+	@echo "Regression test PASSED."
+	@echo "-----------------------"
+
+# use with caution
+generateregressiondata:
+	./$(TOOLNAME3) --csv $(REGRESSION_DATA_DIR)/rers_Problem4_csv.txt --verify tests/rers/properties4.txt tests/rers/Problem4.c
+	cp transitiongraph1.dat $(REGRESSION_DATA_DIR)/rers_Problem4_transitiongraph1.dat

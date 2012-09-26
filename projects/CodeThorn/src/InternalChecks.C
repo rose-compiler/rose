@@ -176,7 +176,7 @@ void checkTypes() {
 	check("c3:constraintExists(DEQ_VAR_CONST,z,1) == true",cs.constraintExists(Constraint::DEQ_VAR_CONST,var_z,1));
 	cs.addConstraint(c4);
 	//cout << "CS:"<<cs.toString()<<endl;
-	check("insert y==2; => constraintExists(DEQ_VAR_CONST,y,2) == true",cs.constraintExists(Constraint::DEQ_VAR_CONST,var_y,2));
+	check("insert y==2; => disequalityExists() == true",cs.disequalityExists());
 	check("c1!=c2",c1!=c2);
 	check("c1!=c3",c1!=c3);
 	check("c2!=c3",c2!=c3);
