@@ -1,2 +1,106 @@
-\section{Verifying LTL formulae}
-\fixme{write this section}
+% !TEX root = codethorn.tex
+\section{Verifying LTL formul\ae}
+
+\newcommand{\ffalse}{\ensuremath{\mathit{false}}}
+\newcommand{\ttrue}{\ensuremath{\mathit{true}}}
+
+At its heart CodeThorn uses a dataflow-based approach to verify LTL
+formul\ae\ on the State Transition Graph. The algortihm consists of
+two layers. At the outer layer, the abstract syntax tree of the
+formula is traversed in bottom-up order. Every subexpression of the
+LTL formula found by the traversal is reduced to a single value in the
+Boolean lattice (\cf Fig.~\ref{fig:bool_lattice}) for each state in
+the State Transition Graph . This evaluation is performed using a
+dataflow analysis, which represents the inner layer of the alorithm.
+
+\begin{figure}
+  \centering
+   \begin{tikzpicture}[scale=.9]
+    \small
+    \node (top) {$\top$} 
+    child {node (-1)    {\ffalse}}
+    child {node (0)     {}
+      edge from parent[draw=none]
+      child {node (bot) {$\bot$} 
+      edge from parent[draw=none]
+      }
+    }
+    child {node (1)    {\ttrue}} 
+    ; 
+    \draw (-1)    -- (bot);
+    \draw (1)     -- (bot);
+  \end{tikzpicture} 
+  \caption{Boolean lattice the LTL formul\ae are reduced to}
+  \label{fig:bool_lattice}
+\end{figure}
+
+\newcommand{\state}{\ensuremath{\mathit{s}}}
+\newcommand{\STG}{\ensuremath{\mathrm{STG}}}
+\newcommand{\States}{\ensuremath{\mathit{States}}}
+\newcommand{\prop}[1]{\ensuremath{p_{\state,#1}}} 
+\newcommand{\propp}[1]{\ensuremath{p_{\state',#1}}} 
+\newcommand{\G}{\ensuremath{\mathrm{G}}}
+\newcommand{\F}{\ensuremath{\mathrm{F}}}
+\newcommand{\X}{\ensuremath{\mathrm{X}}}
+\newcommand{\R}{\ensuremath{\mathrm{R}}}
+\newcommand{\U}{\ensuremath{\mathrm{U}}}
+\newcommand{\WU}{\ensuremath{\mathrm{WU}}}
+
+The remainder of this section will discuss how the transfer functions
+for each element of the LTL grammar are defined. We are using the
+following notational conventions. The
+$\STG={\mathit{States},\mathit{Transitions},\mathit{Start}}$ is the
+(reduced) State Transition Graph (or Kripke Model
+\citep[pg. 27ff]{Clarke1999}). For each state \state\ we have an array of $n$
+properties \prop{i}, $i \in [0\dots n]$, where $n+1$ is the number of
+sub-expressions in the LTL formula.
+
+\subsection{Boolean Operators: \texttt{!}, \texttt{\&}, \texttt{|}}
+The boolean operators in LTL have the least computationally complex
+transfer functions as their effect is only local.
+\begin{align*}
+e &= !a  & \forall\state\in\States\colon\prop{e} &:= \neg\prop{a}\\
+e &= a \& b & \forall\state\in\States\colon\prop{e} &:= \prop{a} \cap \prop{b}\\
+e &= a | b & \forall\state\in\States\colon\prop{e} &:= \prop{a} \cup \prop{b}\\
+\end{align*}
+
+\subsection{The G operator}
+The global operator $\G a$ yields true iff the subexpression $a$ is true at
+all states.
+
+\[ e = \G a \qquad \forall\state\in\States\colon\prop{e} :=\bigcap_{\state\prime\in\States}{\propp{a}} \]
+
+\subsection{The X operator}
+The next operator $X a$ yields true iff $a$ is true in the next state.
+\[ e = \X a \qquad\forall\state\in\States\colon\prop{e}:=\bigcap_{\state\prime\in succ(\state)}{\propp{a}} \]
+
+\subsection{The operators F, R, U, and WU}
+These operators are computationally more intensive, since we need to
+perform a fix point search over the entire state transition graph. Backward.
+\begin{tabular}{rlllll}
+\toprule
+operator & $\mathit{init}$ & $\mathit{start}$ & $\mathit{join}$ &
+$\mathit{calc}$ & $\mathit{otherwise}$ \\\midrule
+
+$e = \F a$  & $\ffalse$ & $(\prop{a}==true)$ & $\cup$ & 
+$\prop{a}\cup\bigcup_{\state\prime\in succ(\state)}{\prop{e}}$ &\\
+
+$e = a \R b$ & $\bot$ & $(\prop{b}==true)$ & $\cap$ &
+$\prop{b} \cap \prop{a} \cup \bigcap_{\state\prime\in succ(\state)}{\prop{e}}$\\
+
+$e = a \U b$ & $\ffalse$ & $(\neg\prop{b}==bot)$ &
+$\cup$ & $\prop{a} \cup\bigcap_{\state\prime\in succ(\state)}{\prop{e}}$ & $\ffalse$\\
+
+$e = a \WU b$ & $\bot$ & $(\prop{a}==true)$ & $\cup$ &
+$\prop{a} \cup \bigcup_{\state\prime\in succ(\state)}{\prop{e}}$\\\bottomrule
+\end{tabular}
+
+
+\subsection{Handling I/O nodes}
+\begin{itemize}
+\item are propagated to the next I/O state of the same type
+\end{itemize}
+
+\subsection{Reducing the State Transition Graph}
+
+\subsection{Debugging: Finding counterexamples}
