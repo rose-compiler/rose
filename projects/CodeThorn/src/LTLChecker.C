@@ -362,8 +362,8 @@ public:
 			   const ConstraintSet& constraints, 
 			   const VariableId& v, 
 			   int c) {
-	assert(estate);
-	assert(estate->constraints());
+    assert(estate);
+    assert(estate->constraints());
     const ConstIntLattice& lval = estate->constraints()->varConstIntLatticeValue(v);
     //cerr<<endl<<"ivar == "<<v.variableName()<<endl;
     //cerr<<constraints.toString()<<endl;
@@ -377,6 +377,7 @@ public:
       return BoolLattice(Top());
     }
   }
+
   // Implementation status: IN PROGRESS
   // NOTE: This is extremely taylored to the RERS challenge benchmarks.
   void visit(const InputSymbol* expr) {
@@ -386,6 +387,68 @@ public:
     fixpoint(Bot(),                                                 // init
 	     &&,                                                    // join
 	     isInputState(state, input_vars, expr->c, joined_preds) // calc
+	     );
+
+  }
+
+  /// return True iff that state is an !Ic operation
+  static BoolLattice isNegInputState(const EState* estate, 
+				     set<VariableId>& input_vars,
+				     int c, BoolLattice joined_preds) {
+    updateInputVar(estate, input_vars);
+    if (input_vars.empty())
+      return false;
+
+    BoolLattice r = BoolLattice(Top()) || joined_preds;
+	assert(estate);
+	assert(estate->constraints());
+    ConstraintSet constraints = *estate->constraints();
+    for (set<VariableId>::const_iterator ivar = input_vars.begin();
+	 ivar != input_vars.end(); ++ivar) {
+      r = r || is_neq(estate, constraints, *ivar, c);
+      for (ConstraintSet::iterator eqvv = constraints.findSpecific(Constraint::EQ_VAR_VAR, *ivar);
+	   eqvv != constraints.end(); ++eqvv) {
+	r = r || is_neq(estate, constraints, eqvv->rhsVar(), c);
+      }
+    }
+    return r;
+  }
+
+  static BoolLattice is_neq(const EState* estate, 
+			    const ConstraintSet& constraints, 
+			    const VariableId& v, 
+			    int c) {
+    assert(estate);
+    assert(estate->constraints());
+    const ConstIntLattice& lval = estate->constraints()->varConstIntLatticeValue(v);
+    //cerr<<endl<<"ivar == "<<v.variableName()<<endl;
+    //cerr<<constraints.toString()<<endl;
+    if (lval.isConstInt()) {
+      // A=1, B=2
+      //cerr<<(char)c<<" == "<<(char)(lval.getIntValue()+'A'-1)<<"? "
+      //    <<(bool)(c == lval.getIntValue()+'A'-1)<<endl;
+      return c != lval.getIntValue()+'A'-1;
+    }
+    else {
+      // input != c constraint?
+      for (ConstraintSet::iterator neqvc = constraints.findSpecific(Constraint::NEQ_VAR_CONST, v);
+	   neqvc != constraints.end(); ++neqvc) {
+	if (neqvc->rhsVal().getIntValue()+'A'-1 == c)
+	  return true;
+      }
+    }    
+    return BoolLattice(Top());
+  }
+
+  // Implementation status: IN PROGRESS
+  // NOTE: This is extremely taylored to the RERS challenge benchmarks.
+  void visit(const NegInputSymbol* expr) {
+    short e = expr->label;
+    set<VariableId> input_vars;
+
+    fixpoint(Bot(),                                                 // init
+	     &&,                                                    // join
+	     isNegInputState(state, input_vars, expr->c, joined_preds) // calc
 	     );
 
   }
@@ -433,6 +496,62 @@ public:
     fixpoint(Bot(),                                        // init
 	     &&,                                           // join
 	     isOutputState(state, expr->c, joined_preds)   // calc
+	     );
+
+    // we set Bot nodes to Top to ensure termination. Fix it here
+    FOR_EACH_STATE(state, label)
+      if (props[e].isTop()) props[e] = Bot();
+  }
+
+  /// return True iff that state is a !Oc operation
+  static BoolLattice isNegOutputState(const EState* estate, int c, BoolLattice joined_preds) {
+    switch (estate->io.op) {
+    case InputOutput::STDOUT_CONST: {
+      const AType::ConstIntLattice& lval = estate->io.val;
+      //cerr<<lval.toString()<<endl;
+      assert(lval.isConstInt());
+      // U=21, Z=26
+      return c != lval.getIntValue()+'A'-1;
+    }
+    case InputOutput::STDOUT_VAR: {
+      // is there a output != c constraint?
+      ConstraintSet constraints = *estate->constraints();
+      for (ConstraintSet::iterator neqvc = 
+	     constraints.findSpecific(Constraint::NEQ_VAR_CONST, estate->io.var);
+	   neqvc != constraints.end(); ++neqvc) {
+	if (neqvc->rhsVal().getIntValue()+'A'-1 == c)
+	  return true;
+      }
+
+      // output == c constraint?
+      const State& prop_state = *estate->state;
+      assert(prop_state.varIsConst(estate->io.var));
+      AValue aval = const_cast<State&>(prop_state)[estate->io.var].getValue();
+      return c != aval.getIntValue()+'A'-1;
+    }
+    default:
+      if (joined_preds.isBot())
+	return Top();
+      else return joined_preds;
+    }
+  }
+
+  /**
+   * Caveat: Although the LTL semantics say so, we can't start on
+   * the start node. Maybe at the first I/O node?
+   *
+   * Think about ``oA U oB''.
+   *
+   * PLEASE NOTE: We therefore define oX to be true until oY occurs
+   *
+   * Implementation status: DONE
+   */
+  void visit(const NegOutputSymbol* expr) {
+    short e = expr->label;
+    // propagate the O predicate until we reach the next O predicate
+    fixpoint(Bot(),                                        // init
+	     &&,                                           // join
+	     isNegOutputState(state, expr->c, joined_preds)   // calc
 	     );
 
     // we set Bot nodes to Top to ensure termination. Fix it here

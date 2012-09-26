@@ -88,10 +88,23 @@ lit:
 
 un_expr:
   lit        		{ $$ = $1; }
-| '!' un_expr %prec NOT { $$ = new LTL::Not($2); }
 | 'X' un_expr %prec X	{ $$ = new LTL::Next($2); }
 | 'F' un_expr %prec F	{ $$ = new LTL::Eventually($2); }
 | 'G' un_expr %prec G	{ $$ = new LTL::Globally($2); }
+| '!' un_expr %prec NOT { 
+  switch ($2->type) {
+  case LTL::e_InputSymbol:
+    $$ = new LTL::NegInputSymbol(static_cast<LTL::InputSymbol*>($2)->c); 
+    delete $2;
+    break;
+  case LTL::e_OutputSymbol:
+    $$ = new LTL::NegOutputSymbol(static_cast<LTL::OutputSymbol*>($2)->c); 
+    delete $2;
+    break;
+  default:
+    $$ = new LTL::Not($2);
+  }
+}
 
 bin_expr:
 | un_expr                        { $$ = $1; }

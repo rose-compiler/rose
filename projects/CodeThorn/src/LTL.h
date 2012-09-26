@@ -39,6 +39,8 @@ namespace LTL {
   class Expr;
   class InputSymbol;
   class OutputSymbol;
+  class NegInputSymbol;
+  class NegOutputSymbol;
   class Not;
   class Next;
   class Eventually;
@@ -49,6 +51,12 @@ namespace LTL {
   class WeakUntil;
   class Release;
 
+  enum NodeType { 
+    e_Error=0, 
+    e_InputSymbol, e_OutputSymbol, e_NegInputSymbol, e_NegOutputSymbol, 
+    e_Not, e_Next, e_Eventually, e_Globally, e_And, e_Or, e_Until,
+    e_WeakUntil, e_Release };
+
   /**
    * Abstract visitor pattern Visitor base class for LTL expressions.
    */
@@ -56,6 +64,8 @@ namespace LTL {
   public:
     virtual void visit(const InputSymbol* e) {}
     virtual void visit(const OutputSymbol* e) {}
+    virtual void visit(const NegInputSymbol* e) {}
+    virtual void visit(const NegOutputSymbol* e) {}
     virtual void visit(const Not* e) {}
     virtual void visit(const Next* e) {}
     virtual void visit(const Eventually* e) {}
@@ -73,17 +83,19 @@ namespace LTL {
    */
   class TopDownVisitor {
   public:
-    virtual IAttr visit(const InputSymbol* e,  IAttr a) { return a; }
-    virtual IAttr visit(const OutputSymbol* e, IAttr a) { return a; }
-    virtual IAttr visit(const Not* e,          IAttr a) { return a; }
-    virtual IAttr visit(const Next* e,         IAttr a) { return a; }
-    virtual IAttr visit(const Eventually* e,   IAttr a) { return a; }
-    virtual IAttr visit(const Globally* e,     IAttr a) { return a; }
-    virtual IAttr visit(const And* e,          IAttr a) { return a; }
-    virtual IAttr visit(const Or* e,           IAttr a) { return a; }
-    virtual IAttr visit(const Until* e,        IAttr a) { return a; }
-    virtual IAttr visit(const WeakUntil* e,    IAttr a) { return a; }
-    virtual IAttr visit(const Release* e,      IAttr a) { return a; }
+    virtual IAttr visit(const InputSymbol* e,     IAttr a) { return a; }
+    virtual IAttr visit(const OutputSymbol* e,    IAttr a) { return a; }
+    virtual IAttr visit(const NegInputSymbol* e,  IAttr a) { return a; }
+    virtual IAttr visit(const NegOutputSymbol* e, IAttr a) { return a; }
+    virtual IAttr visit(const Not* e,             IAttr a) { return a; }
+    virtual IAttr visit(const Next* e,            IAttr a) { return a; }
+    virtual IAttr visit(const Eventually* e,      IAttr a) { return a; }
+    virtual IAttr visit(const Globally* e,        IAttr a) { return a; }
+    virtual IAttr visit(const And* e,             IAttr a) { return a; }
+    virtual IAttr visit(const Or* e,              IAttr a) { return a; }
+    virtual IAttr visit(const Until* e,           IAttr a) { return a; }
+    virtual IAttr visit(const WeakUntil* e,       IAttr a) { return a; }
+    virtual IAttr visit(const Release* e,         IAttr a) { return a; }
   };
 
 #define LTL_ATOMIC_VISITOR						\
@@ -118,7 +130,8 @@ namespace LTL {
   public:
     short label;
     std::string id;
-    Expr(std::string _id="not implemented"): id(_id) {}
+    enum NodeType type;
+    Expr(std::string _id="not implemented", NodeType _type=e_Error): id(_id), type(_type) {}
     virtual operator std::string () const { return id; }
     virtual void accept(BottomUpVisitor& v) const = 0;
     virtual void accept(TopDownVisitor& v, IAttr a) const = 0;
@@ -127,7 +140,7 @@ namespace LTL {
   class UnaryExpr : public Expr {
   public:
     Expr *expr1;
-    UnaryExpr(std::string _id, Expr *e): expr1(e), Expr(_id) {
+    UnaryExpr(std::string _id, NodeType _type, Expr *e): expr1(e), Expr(_id, _type) {
       assert(e);
       label = ltl_label++;
     }
@@ -141,7 +154,8 @@ namespace LTL {
   class BinaryExpr : public Expr {
   public:
     Expr *expr1, *expr2;
-    BinaryExpr(std::string _id, Expr *e1, Expr *e2): expr1(e1), expr2(e2), Expr(_id) {
+    BinaryExpr(std::string _id, NodeType _type, Expr *e1, Expr *e2): 
+      expr1(e1), expr2(e2), Expr(_id, _type) {
       assert(e1 && e2);
       label = ltl_label++;
     }
@@ -157,6 +171,7 @@ namespace LTL {
     char c;
     InputSymbol(int _c) { 
       label = ltl_label++;
+      type = e_InputSymbol;
       c = (char)_c; 
       id = "input("+std::string(1, c)+")"; 
     }
@@ -168,69 +183,91 @@ namespace LTL {
     char c;
     OutputSymbol(int _c) { 
       label = ltl_label++;
+      type = e_OutputSymbol;
       c = (char)_c;
       id = "output("+std::string(1, c)+")"; 
     }
     LTL_ATOMIC_VISITOR
   };
+
+  /// special case for !iX
+  class NegInputSymbol : public InputSymbol {
+  public:
+    NegInputSymbol(int _c) : InputSymbol(_c) {
+      type = e_NegInputSymbol;
+      id = "neg_input("+std::string(1, c)+")"; 
+    }
+    LTL_ATOMIC_VISITOR
+  };
+
+  /// special case for !oX
+  class NegOutputSymbol : public OutputSymbol {
+  public:
+    NegOutputSymbol(int _c) : OutputSymbol(_c) {
+      type = e_NegOutputSymbol;
+      id = "neg_output("+std::string(1, c)+")"; 
+    }
+    LTL_ATOMIC_VISITOR
+  };
+
                     
   class Not : public UnaryExpr {
   public:
-    Not(Expr *e) : UnaryExpr("not", e) {}
+    Not(Expr *e) : UnaryExpr("not", e_Not, e) {}
     LTL_UNARY_VISITOR
   };
 
   /// X / ○ operator
   class Next : public UnaryExpr {
   public:
-    Next(Expr *e) : UnaryExpr("next", e) {}
+    Next(Expr *e) : UnaryExpr("next", e_Next, e) {}
     LTL_UNARY_VISITOR
   };
 
   /// F / ◇ operator
   class Eventually : public UnaryExpr {
   public:
-    Eventually(Expr *e) : UnaryExpr("eventually", e) {}
+    Eventually(Expr *e) : UnaryExpr("eventually", e_Eventually, e) {}
     LTL_UNARY_VISITOR
   };
 
   /// G / □ operator
   class Globally : public UnaryExpr {
   public:
-    Globally(Expr *e) : UnaryExpr("globally", e) {}
+    Globally(Expr *e) : UnaryExpr("globally", e_Globally, e) {}
     LTL_UNARY_VISITOR
   };
                     
   class And : public BinaryExpr {
   public:
-    And(Expr *e1, Expr *e2) : BinaryExpr("and", e1, e2) {}
+    And(Expr *e1, Expr *e2) : BinaryExpr("and", e_And, e1, e2) {}
     LTL_BINARY_VISITOR
   };
 
   class Or : public BinaryExpr {
   public:
-    Or(Expr *e1, Expr *e2) : BinaryExpr("or", e1, e2) {}
+    Or(Expr *e1, Expr *e2) : BinaryExpr("or", e_Or, e1, e2) {}
     LTL_BINARY_VISITOR
   };
 
   /// U operator
   class Until : public BinaryExpr {
   public:
-    Until(Expr *e1, Expr *e2) : BinaryExpr("until", e1, e2) {}
+    Until(Expr *e1, Expr *e2) : BinaryExpr("until", e_Until, e1, e2) {}
     LTL_BINARY_VISITOR
   };
 
   /// WU / weak U operator
   class WeakUntil : public BinaryExpr {
   public:
-    WeakUntil(Expr *e1, Expr *e2) : BinaryExpr("weakUntil", e1, e2) {}
+    WeakUntil(Expr *e1, Expr *e2) : BinaryExpr("weakUntil", e_WeakUntil, e1, e2) {}
     LTL_BINARY_VISITOR
   };
 
   /// R operator
   class Release : public BinaryExpr {
   public:
-    Release(Expr *e1, Expr *e2) : BinaryExpr("release", e1, e2) {}
+    Release(Expr *e1, Expr *e2) : BinaryExpr("release", e_Release, e1, e2) {}
     LTL_BINARY_VISITOR
   };
 
