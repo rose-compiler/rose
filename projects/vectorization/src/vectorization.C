@@ -64,6 +64,8 @@ void SIMDVectorization::insertSIMDDataType(SgGlobal* globalScope)
 /******************************************************************************************************************************/
 void SIMDVectorization::translateBinaryOp(SgBinaryOp* binaryOp, SgScopeStatement* scope, SgName name)
 {
+  if(isSgPntrArrRefExp(binaryOp->get_parent()) != NULL)
+    return;
   SgExpression* lhs = binaryOp->get_lhs_operand();
   ROSE_ASSERT(lhs);
   SgExpression* rhs = binaryOp->get_rhs_operand();
@@ -253,17 +255,23 @@ void SIMDVectorization::translateOperand(SgExpression* operand)
     case V_SgCastExp:
       {
         translateOperand(isSgCastExp(operand)->get_operand());
+        replaceExpression(operand, deepCopy(isSgCastExp(operand)->get_operand()),false);
         break;
       }
     case V_SgIntVal:
     case V_SgFloatVal:
     case V_SgDoubleVal:
       {
+        SgType* valType = operand->get_type();
+        if(isSgCastExp(operand->get_parent()) != NULL)
+        {
+          valType = isSgCastExp(operand->get_parent())->get_type();
+        }
         string suffix = "";
-        suffix = getSIMDOpSuffix(operand->get_type());
+        suffix = getSIMDOpSuffix(valType);
         SgName functionName = SgName("_SIMD_splats"+suffix);
         SgExprListExp* SIMDAddArgs = buildExprListExp(deepCopy(operand));
-        SgFunctionCallExp* SIMDSplats = buildFunctionCallExp(functionName,operand->get_type(), 
+        SgFunctionCallExp* SIMDSplats = buildFunctionCallExp(functionName,valType, 
                                                              SIMDAddArgs, 
                                                              getScope(operand));
         replaceExpression(operand, SIMDSplats); 
