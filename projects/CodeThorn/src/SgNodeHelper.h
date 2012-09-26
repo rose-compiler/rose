@@ -54,6 +54,9 @@ namespace SgNodeHelper {
   //! returns the last Statement of SgBasicBlock (throws exception if numChildren==0)
   SgNode* getLastOfBlock(SgNode* node);
 
+  //! returns the label name of a SgLabelStatement without trailing ":"
+  string getLabelName(SgNode* node);
+
   //! returns function name of SgFunctionDefinition, SgFunctionDeclaration, SgFunctionCall.
   string getFunctionName(SgNode* node);
 

@@ -30,6 +30,8 @@ YACC                  = bison
 
 OBJECT_FILES=MyAst.o AstTerm.o Labeler.o SgNodeHelper.o VariableIdMapping.o CFAnalyzer.o AType.o ExprAnalyzer.o ConstraintRepresentation.o StateRepresentation.o Analyzer.o Visualizer.o Timer.o LanguageRestrictor.o LTLParser.o LTLChecker.o CommandLineOptions.o InternalChecks.o Miscellaneous.o
 
+REGRESSION_DATA_DIR=regressiondata
+
 OBJECT_FILES_EXPERIMENTAL=BoostGraphIntegration.o
 
 # Default make rule to use
@@ -113,6 +115,7 @@ clean:
 	rm -f viz/*
 	rm -f bsps/*
 	rm -f LTLParser.tab.c++
+	rm -f tmp_rers*
 
 distclean: clean
 	rm -f *.tgz
@@ -147,3 +150,20 @@ bsps: codethorn
 
 dist:
 	tar cvzf codethorn_$(MYDATE).tgz *.C *cpp *.h *.lxx *.yxx tests/*.C tests/*.c Makefile*
+
+regressiontest: $(TOOLNAME3)
+	./$(TOOLNAME3) --csv-assert tmp_rers_Problem4_assert_csv.txt --csv-ltl tmp_rers_Problem4_ltl_csv.txt --verify tests/rers/properties4.txt tests/rers/Problem4.c
+	diff transitiongraph1.dat $(REGRESSION_DATA_DIR)/rers_Problem4_transitiongraph1.dat
+	diff tmp_rers_Problem4_ltl_csv.txt $(REGRESSION_DATA_DIR)/rers_Problem4_ltl_csv.txt
+	diff tmp_rers_Problem4_assert_csv.txt $(REGRESSION_DATA_DIR)/rers_Problem4_assert_csv.txt
+	@echo "-----------------------"
+	@echo "Regression test PASSED."
+	@echo "-----------------------"
+
+asserttest: $(TOOLNAME3)
+	./$(TOOLNAME3) --edg:no_warnings tests/asserttest2.c --csv-assert assert_csv.txt
+
+# use with caution
+generateregressiondata:
+	./$(TOOLNAME3) --csv-assert $(REGRESSION_DATA_DIR)/rers_Problem4_assert_csv.txt --csv-ltl $(REGRESSION_DATA_DIR)/rers_Problem4_ltl_csv.txt --verify tests/rers/properties4.txt tests/rers/Problem4.c 
+	cp transitiongraph1.dat $(REGRESSION_DATA_DIR)/rers_Problem4_transitiongraph1.dat

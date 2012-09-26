@@ -96,6 +96,8 @@ Constraint::Constraint(ConstraintOp op0,VariableId lhs, VariableId rhs):_op(op0)
 
 string Constraint::toString() const {
   stringstream ss;
+  if(isDisequation())
+	return "$##0";
   if(isVarVarOp())
 	ss<<lhsVar().longVariableName()<<(*this).opToString()<<rhsVar().longVariableName();
   else {
@@ -159,7 +161,7 @@ ConstraintSet ConstraintSet::invertedConstraints() {
 	  result.addConstraint(Constraint(Constraint::EQ_VAR_CONST,c.lhsVar(),c.rhsVal()));
 	  break;
 	case Constraint::DEQ_VAR_CONST:
-	  result.addConstraint(Constraint(Constraint::DEQ_VAR_CONST,c.lhsVar(),c.rhsVal())); // unchanged
+	  result.addDisequality();
 	  break;
 	  // we do not extract VAR_VAR constraints from expressions. We only invert constraint sets which have been extracted from expressions.
 	  // therefore VAR_VAR constraints are not supposed to be inverted.
@@ -171,7 +173,7 @@ ConstraintSet ConstraintSet::invertedConstraints() {
 	  result.addConstraint(Constraint(Constraint::EQ_VAR_VAR,c.lhsVar(),c.rhsVar()));
 	  break;
 	case Constraint::DEQ_VAR_VAR:
-	  result.addConstraint(Constraint(Constraint::DEQ_VAR_VAR,c.lhsVar(),c.rhsVar())); // unchanged
+	  result.addDisequality();
 	  break;
 #endif
 	default:
@@ -227,16 +229,27 @@ void  ConstraintSet::duplicateConstConstraints(VariableId lhsVarId, VariableId r
   }
 }
 
+bool ConstraintSet::disequalityExists() const {
+  ConstraintSet::iterator i=find(DISEQUALITYCONSTRAINT);
+  if(i!=end())
+	return true;
+  else
+	return false;
+}
+void ConstraintSet::addDisequality() {
+  addConstraint(DISEQUALITYCONSTRAINT);
+}
 
 void ConstraintSet::addConstraint(Constraint c) {
   // we have to look which version of constraint already exists (it can only be 
   // a) at most one equality constraint or b) arbitrary many inequality constraints or c) one disequality)
   // we do not check for x=y constraints
 
-  // TODO1: do not add x!=k if {y!=k, x==y}
-  // TODO1a: compute set of inequality-constants for given variable and DO consider all equations
-  // TODO1b: compute set of equality-constants for given variable and DO consider all equations
-  // TODO2: if {x==k, x==y} then y!=k ==> x##y}
+  // TODO1-2: currently not necessary as we propagate all constriants when a x=y is added to a constraint set.
+  //   TODO1: do not add x!=k if {y!=k, x==y}
+  //   TODO1a: compute set of inequality-constants for given variable and DO consider all equations
+  //   TODO1b: compute set of equality-constants for given variable and DO consider all equations
+  //   TODO2: if {x==k, x==y} then y!=k ==> x##y}
   // TODO3: introduce generic disequality: x##0 (0 is dummy) for any disequality which is created
   if(c.isVarVarOp()) {
 	if(c.lhsVar()==c.rhsVar()) {
@@ -253,11 +266,11 @@ void ConstraintSet::addConstraint(Constraint c) {
   switch(c.op()) {
   case Constraint::EQ_VAR_CONST: {
 	// adding equality constraint
-	if(constraintExists(Constraint::DEQ_VAR_CONST,c.lhsVar(),c.rhsValCppCapsule()))
+	if(disequalityExists())
 	  return;
 	if(constraintExists(Constraint::NEQ_VAR_CONST,c.lhsVar(),c.rhsValCppCapsule())) {
 	  removeConstraint(Constraint(Constraint::NEQ_VAR_CONST,c.lhsVar(),c.rhsValCppCapsule()));
-	  set<Constraint>::insert(Constraint(Constraint::DEQ_VAR_CONST,c.lhsVar(),c.rhsValCppCapsule()));
+	  addDisequality();
 	  return;
 	}
 	ConstraintSet::iterator i=findSpecific(Constraint::EQ_VAR_CONST,c.lhsVar());
@@ -265,7 +278,7 @@ void ConstraintSet::addConstraint(Constraint c) {
 	  if(!((*i).rhsValCppCapsule()==c.rhsValCppCapsule())) {
 		// other x==num exists with num!=c.num ==> DEQ
 		removeConstraint(*i);
-		set<Constraint>::insert(Constraint(Constraint::DEQ_VAR_CONST,c.lhsVar(),c.rhsValCppCapsule()));
+		addDisequality();
 		return;
 	  } else {
 		// nothing todo (same constraint already exists)
@@ -281,12 +294,12 @@ void ConstraintSet::addConstraint(Constraint c) {
 	// we attempt to insert x!=k
 
 	// check for existing disequality first
-	if(constraintExists(Constraint::DEQ_VAR_CONST,c.lhsVar(),c.rhsValCppCapsule()))
+	if(disequalityExists())
 	  return;
 	// check if x==k exists. If yes, introduce x##k
 	if(constraintExists(Constraint::EQ_VAR_CONST,c.lhsVar(),c.rhsValCppCapsule())) {
 	  removeConstraint(Constraint(Constraint::EQ_VAR_CONST,c.lhsVar(),c.rhsValCppCapsule()));
-	  set<Constraint>::insert(Constraint(Constraint::DEQ_VAR_CONST,c.lhsVar(),c.rhsValCppCapsule()));
+	  addDisequality();
 	  return;
 	}
 	// search for some x==m (where m must be different to k (otherwise we would have found it above))
@@ -299,9 +312,10 @@ void ConstraintSet::addConstraint(Constraint c) {
 	break;
   }
   case Constraint::DEQ_VAR_CONST:
-	removeConstraint(Constraint(Constraint::EQ_VAR_CONST,c.lhsVar(),c.rhsValCppCapsule()));
-	removeConstraint(Constraint(Constraint::NEQ_VAR_CONST,c.lhsVar(),c.rhsValCppCapsule()));
-	set<Constraint>::insert(Constraint(Constraint::DEQ_VAR_CONST,c.lhsVar(),c.rhsValCppCapsule()));
+	//removeConstraint(Constraint(Constraint::EQ_VAR_CONST,c.lhsVar(),c.rhsValCppCapsule()));
+	//removeConstraint(Constraint(Constraint::NEQ_VAR_CONST,c.lhsVar(),c.rhsValCppCapsule()));
+	//set<Constraint>::insert(Constraint(Constraint::DEQ_VAR_CONST,c.lhsVar(),c.rhsValCppCapsule()));
+	set<Constraint>::insert(c);
 	return;
   case Constraint::EQ_VAR_VAR:
 	// TODO: maintain consistency wenn x=y is inserted but constraints of x and y are in conflict
@@ -382,17 +396,8 @@ bool ConstraintSet::constraintExists(Constraint::ConstraintOp op, VariableId var
 }
 
 bool ConstraintSet::constraintExists(const Constraint& tmp) const { 
-#if 1
-  // we use this as the find algorithm does not properly work yet (TODO: investigate)
-  for(ConstraintSet::iterator i=begin();i!=end();++i) {
-	if(*i==tmp)
-	  return true;
-  }
-  return false;
-#else
   ConstraintSet::const_iterator foundElemIter=find(tmp);
   return foundElemIter!=end();
-#endif
 }
 
 ConstraintSet ConstraintSet::findSpecificSet(Constraint::ConstraintOp op, VariableId varId) const {
