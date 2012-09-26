@@ -1248,7 +1248,7 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputU
             // leave it NULL and hand this case downstream!
                inheritedAttributeInfo.set_current_scope(NULL);
              }
-#if 1
+
           const SgTemplateArgument* templateArgument = isSgTemplateArgument(astNode);
           if (templateArgument != NULL)
              {
@@ -1256,11 +1256,15 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputU
             // printf ("Exiting to debug case of SgTemplateArgument \n");
             // ROSE_ASSERT(false);
 
+#if 0
+       // DQ (9/15/2012): Commented this out since while we build the AST we don't have parents of classes set (until the class declaration is attached to the AST).
                SgScopeStatement* scope = templateArgument->get_scope();
             // printf ("SgTemplateArgument case: scope = %p = %s \n",scope,scope->class_name().c_str());
                inheritedAttributeInfo.set_current_scope(scope);
-             }
+#else
+               printf ("Skipping set of inheritedAttributeInfo.set_current_scope(scope); for SgTemplateArgument \n");
 #endif
+             }
        // stmt->get_startOfConstruct()->display("In unparseStatement(): info.get_current_scope() == NULL: debug");
        // ROSE_ASSERT(false);
         }

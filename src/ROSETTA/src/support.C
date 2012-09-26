@@ -518,6 +518,13 @@ Grammar::setUpSupport ()
      Unparse_Info.setDataPrototype("int","nestingLevel","= 0",
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 
+  // DQ (9/15/2012): Added support to specify the language directly (required to unparse SgBoolVal in some cases where 
+  // they are used in SgTemplateParameters in a SgTemplateInstantiation which would be constrcuted before having its
+  // parent set (thus not allowing the unparseBoolVal() to call TransformationSupport::getFile(expr) and find the 
+  // associated SgFile IR node). This is only an issue during AST construction.
+     Unparse_Info.setDataPrototype("SgFile::outputLanguageOption_enum","language","= SgFile::e_default_output_language",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+
      BaseClass.setFunctionPrototype           ( "HEADER_BASECLASS", "../Grammar/Support.code");
      ExpBaseClass.setFunctionPrototype           ( "HEADER_EXP_BASE_CLASS", "../Grammar/Support.code");
 

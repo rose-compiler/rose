@@ -1142,6 +1142,8 @@ SageInterface::get_name ( const SgScopeStatement* scope )
                name = get_name(isSgClassDefinition(scope)->get_declaration());
                break;
 
+       // DQ (9/8/2012): Added missing case for SgTemplateFunctionDefinition.
+          case V_SgTemplateFunctionDefinition:
           case V_SgFunctionDefinition:
                name = get_name(isSgFunctionDefinition(scope)->get_declaration());
                break;
@@ -1171,7 +1173,7 @@ SageInterface::get_name ( const SgScopeStatement* scope )
                break;
 
           default:
-               printf ("Error: undefined scope in SageInterface::get_name(): node = %s \n",scope->class_name().c_str());
+               printf ("Error: undefined case (SgScopeStatement) in SageInterface::get_name(): node = %s \n",scope->class_name().c_str());
                ROSE_ASSERT(false);
                break;
         }

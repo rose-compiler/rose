@@ -2844,6 +2844,11 @@ SgTemplateType::get_mangled(void) const
 
      SgName mangled_name = get_name();
 
+  // DQ (9/21/2012): Add the pointer value for the first undefined declaration as a way to make this a unique mangled value.
+  // We need to asspciate template template arguments with their associated declarations and not just there name.
+  // See test2012_217.C (return types of functions should be different, have different mangled names, for each function).
+  // mangled_name += StringUtility::numberToString(this->get_declaration());
+
 #if 0
     printf ("In SgTemplateType::get_mangled(): this = %p mangled_name = %s \n",this,mangled_name.str());
 #endif
@@ -5011,7 +5016,7 @@ SgClassType::createType(SgDeclarationStatement* cd, SgExpression* optional_fortr
        // DQ (3/14/2012): Note that the new template support allows that classDeclaration is non-null (since template classes are derived from non-template classes).
           ROSE_ASSERT(classDeclaration != NULL);
 #if 0
-          printf ("Inside of SgClassType::createType(): cd = %p = %s = %s newType = %p \n",cd,cd->class_name().c_str(),classDeclaration->get_name().str(),newType);
+          printf ("Inside of SgClassType::createType(): cd = %p = %s = %s newType = %p = %s \n",cd,cd->class_name().c_str(),classDeclaration->get_name().str(),newType,newType->class_name().c_str());
 #endif
           SgScopeStatement* currentScope = getCurrentScope();
 #if 0
@@ -5062,6 +5067,9 @@ SgClassType::createType(SgDeclarationStatement* cd, SgExpression* optional_fortr
             // DQ (7/30/2010): If valid pointer then we are in the process of building the C/C++/Fortran AST.
             // SgType* t = currentScope->get_type_table()->lookup_type(name);
                SgType* t = currentScope->get_type_table()->lookup_type(name);
+#if 0
+               printf ("Inside of SgClassType::createType(): after calling lookup_type(): t = %p = %s \n",t,(t != NULL) ? t->class_name().c_str() : "null");
+#endif
                if (t == NULL)
                   {
                  // If the type is not in the type table then insert it so that we can reuse it.
@@ -5724,7 +5732,7 @@ SgModifierType::insertModifierTypeIntoTypeTable( SgModifierType* result )
   // this by testing that at least one type modifier flag was set, not done yet.
      SgName name = result->get_mangled();
 
-#if 1
+#if 0
      printf ("insertModifierTypeIntoTypeTable(): result is modifier type to base_type = %p = %s name = %s \n",result->get_base_type(),result->get_base_type()->class_name().c_str(),name.str());
 #endif
 
@@ -5743,7 +5751,7 @@ SgModifierType::insertModifierTypeIntoTypeTable( SgModifierType* result )
           ROSE_ASSERT(root_type != NULL);
           if (handledUsingLocalTable(root_type) == false)
              {
-#if 1
+#if 0
                printf ("insertModifierTypeIntoTypeTable(): Mangled type name for $CLASSNAME = %s (does NOT exist in type table) interting it... \n",name.str());
 #endif
                get_globalTypeTable()->insert_type(name,result);
@@ -5751,7 +5759,7 @@ SgModifierType::insertModifierTypeIntoTypeTable( SgModifierType* result )
             else
              {
             // For now we can skip this case and then later use the local type table from the scope of the declaration.
-#if 1
+#if 0
                printf ("insertModifierTypeIntoTypeTable(): Skip putting the SgModifierType into the global type table for specific root types = %s name = %s \n",root_type->class_name().c_str(),name.str());
 #endif
              }
@@ -5767,7 +5775,7 @@ SgModifierType::insertModifierTypeIntoTypeTable( SgModifierType* result )
        // ROSE_ASSERT(false);
 
        // If it is already present in the type table then delete the type (so that it will remain unique).
-#if 1
+#if 0
            printf ("insertModifierTypeIntoTypeTable(): Mangled type name for SgModifierType = %s t = %p = %s (already exists in type table) \n",name.str(),t,t->class_name().c_str());
            printf ("insertModifierTypeIntoTypeTable(): t = %p result = %p \n",t,result);
 #endif
@@ -5787,7 +5795,7 @@ SgModifierType::insertModifierTypeIntoTypeTable( SgModifierType* result )
         // not a SgModifierType.
            if (isSgModifierType(t) != NULL)
              {
-#if 1
+#if 0
                printf ("insertModifierTypeIntoTypeTable(): Reset result (the return variabel) to be the SgModifier found in the type table (t = %p) \n",t);
 #endif
                result = isSgModifierType(t);

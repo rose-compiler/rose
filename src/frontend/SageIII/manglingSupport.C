@@ -549,24 +549,25 @@ mangleFunctionName (const SgName& n, const SgName& ret_type_name )
   }
 
 string
-mangleTemplateArgsToString (const SgTemplateArgumentPtrList::const_iterator b,
-                            const SgTemplateArgumentPtrList::const_iterator e)
-  {
-    ostringstream mangled_name;
-    bool is_first = true;
-    for (SgTemplateArgumentPtrList::const_iterator i = b; i != e; ++i)
-      {
-        if (is_first)
-          is_first = false;
-        else // !is_first, so insert a "comma"
-          mangled_name << "__sep__";
-        
-        const SgTemplateArgument* arg = *i;
-        ROSE_ASSERT (arg);
-        mangled_name << arg->get_mangled_name().getString();
-      }
-    return mangled_name.str ();
-  }
+mangleTemplateArgsToString (const SgTemplateArgumentPtrList::const_iterator b,const SgTemplateArgumentPtrList::const_iterator e)
+   {
+     ostringstream mangled_name;
+     bool is_first = true;
+     for (SgTemplateArgumentPtrList::const_iterator i = b; i != e; ++i)
+        {
+          if (is_first)
+               is_first = false;
+            else // !is_first, so insert a "comma"
+               mangled_name << "__sep__";
+
+          const SgTemplateArgument* arg = *i;
+          ROSE_ASSERT (arg != NULL);
+
+          mangled_name << arg->get_mangled_name().getString();
+        }
+
+     return mangled_name.str ();
+   }
 
 #if 0
 // DQ (2/7/2006): This function is not used or required.

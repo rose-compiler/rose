@@ -1969,6 +1969,8 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
                break;
              }
 
+       // DQ (9/8/2012): Added missing case for SgTemplateFunctionDefinition.
+          case V_SgTemplateFunctionDefinition:
           case V_SgFunctionDefinition:
              {
             // printf ("addAssociatedNodes(): ignoring this case of node = %p = %s = %s \n",node,node->class_name().c_str(),SageInterface::get_name(node).c_str());

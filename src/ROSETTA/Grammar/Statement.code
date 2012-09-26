@@ -292,8 +292,9 @@ HEADER_SCOPE_STATEMENT_START
           SgTemplateSymbol*  lookup_template_symbol   (const SgName& n) const;
 
        // DQ (12/12/2011): Added support for template declarations in the AST.
-          SgTemplateClassSymbol* lookup_template_class_symbol    (const SgName& n) const;
-
+       // SgTemplateClassSymbol* lookup_template_class_symbol    (const SgName& n) const;
+          SgTemplateClassSymbol* lookup_template_class_symbol    (const SgName& n, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateSpecializationArgumentList) const;
+ 
        // DQ (8/22/2012): If we have template arguments then we have a chance to disambiguate SgTemplateInstantiationDecl IR nodes based on the
        // arguments which would otherwise require qulified names (which are difficult to robustly support using as the AST is being constructed).
           SgClassSymbol*         lookup_nontemplate_class_symbol (const SgName& n, SgTemplateArgumentPtrList* templateArgumentsList) const;
@@ -2445,6 +2446,9 @@ HEADER_TEMPLATE_CLASS_DECLARATION_STATEMENT_START
                e_template_parameter /*!< type parameter in a template declaration */
              };
 
+       // DQ (9/10/2012): Added general name mangling for new template class declaration IR node.
+          virtual SgName get_mangled_name(void) const;
+
 
 HEADER_TEMPLATE_CLASS_DECLARATION_STATEMENT_END
 
@@ -4367,7 +4371,7 @@ SgScopeStatement::lookup_namespace_symbol ( const SgName & n ) const
 
 
 SgTemplateSymbol*
-SgScopeStatement::lookup_template_symbol(const SgName& n) const
+SgScopeStatement::lookup_template_symbol (const SgName& n) const
    {
      assert (p_symbol_table != NULL);
      return p_symbol_table->find_template(n);
@@ -4375,17 +4379,20 @@ SgScopeStatement::lookup_template_symbol(const SgName& n) const
 
 // DQ (12/12/2011): Added support for template declarations in the AST.
 SgTemplateClassSymbol*
-SgScopeStatement::lookup_template_class_symbol    (const SgName& n) const
+SgScopeStatement::lookup_template_class_symbol (const SgName& n, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateSpecializationArgumentList ) const
    {
      assert (p_symbol_table != NULL);
-     return p_symbol_table->find_template_class(n);
+
+  // DQ (9/9/2012): Added template parameter list 
+  // return p_symbol_table->find_template_class(n);
+     return p_symbol_table->find_template_class(n, templateParameterList, templateSpecializationArgumentList);
    }
 
 // DQ (8/22/2012): If we have template arguments then we have a chance to disambiguate SgTemplateInstantiationDecl IR nodes based on the
 // arguments which would otherwise require qulified names (which are difficult to robustly support using as the AST is being constructed).
 // DQ (12/12/2011): Added support for template declarations in the AST.
 SgClassSymbol*
-SgScopeStatement::lookup_nontemplate_class_symbol    (const SgName& n, SgTemplateArgumentPtrList* templateArgumentsList) const
+SgScopeStatement::lookup_nontemplate_class_symbol (const SgName& n, SgTemplateArgumentPtrList* templateArgumentsList) const
    {
      assert (p_symbol_table != NULL);
      return p_symbol_table->find_nontemplate_class(n,templateArgumentsList);
@@ -13764,6 +13771,37 @@ SgTemplateClassDeclaration::post_construction_initialization()
    {
   // DQ (12/21/2011): This is not what we want for the newer design with SgTemplateVariableDeclaration derived from SgVariableDeclaration.
   // this->set_template_kind(e_template_class);
+   }
+
+// DQ (9/10/2012): Added general name mangling for new template class declaration IR node.
+SgName
+SgTemplateClassDeclaration::get_mangled_name(void) const
+   {
+  // SgName mangled_name = SgClassDeclaration::get_mangled_name() + "__num_template_parameters_" + StringUtility::numberToString(get_templateParameters().size());
+     SgName mangled_name = this->get_templateName() + "__num_template_parameters_" + StringUtility::numberToString(get_templateParameters().size());
+
+  // DQ (9/12/2012): Added support for partial specialization.
+     if (this->get_templateSpecializationArguments().empty() == false)
+        {
+       // Add template specialization arguments to the mangled name.
+          mangled_name += "__template_partial_specialization";
+
+          SgTemplateArgumentPtrList::const_iterator i = this->get_templateSpecializationArguments().begin();
+          while (i != this->get_templateSpecializationArguments().end())
+             {
+               SgName suffix = (*i)->get_mangled_name();
+               mangled_name += "__" + suffix;
+               i++;
+             }
+
+          mangled_name += "__";
+        }
+
+#if 0
+     printf ("In SgTemplateClassDeclaration::get_mangled_name(): mangled_name = %s \n",mangled_name.str());
+#endif
+
+     return mangled_name;
    }
 
 SOURCE_TEMPLATE_CLASS_DECLARATION_STATEMENT_END

@@ -366,6 +366,15 @@ else
 fi
 AC_SUBST(ROSE_SUPPORT_MICROSOFT_EXTENSIONS)
 
+# DQ (9/16/2012): Added support for debugging output of new EDG/ROSE connection.  More specifically 
+# if this is not enabled then it skips the use of output spew in the new EDG/ROSE connection code.
+AC_ARG_ENABLE(debug_output_for_new_edg_interface,
+    AS_HELP_STRING([--enable-debug_output_for_new_edg_interface], [Enable debugging output (spew) of new EDG/ROSE connection]))
+AM_CONDITIONAL(ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION, [test "x$enable_debug_output_for_new_edg_interface" = xyes])
+if test "x$enable_debug_output_for_new_edg_interface" = "xyes"; then
+  AC_MSG_WARN([Using this mode causes large volumes of output spew (internal debugging only)!])
+  AC_DEFINE([ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION], [], [Controls large volumes of output spew useful for debugging new EDG/ROSE connection code])
+fi
 
 # DQ (8/18/2009): Removed this conditional macro.
 # DQ (4/23/2009): Added support for commandline specification of using new graph IR nodes.

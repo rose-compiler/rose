@@ -856,7 +856,7 @@ void
 Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
    {
 #if 0
-     printf ("Inside of Unparse_Type::unparseClassType \n");
+      printf ("Inside of Unparse_Type::unparseClassType type = %p \n",type);
 #endif
 
 #if 0
@@ -873,7 +873,9 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
      SgClassDeclaration *decl = isSgClassDeclaration(class_type->get_declaration());
      ROSE_ASSERT(decl != NULL);
 
-  // printf ("In Unparse_Type::unparseClassType(): decl = %p = %s \n",decl,decl->class_name().c_str());
+#if 0
+     printf ("In Unparse_Type::unparseClassType(): decl = %p = %s \n",decl,decl->class_name().c_str());
+#endif
 
      if (decl->get_definition() == NULL)
         {
@@ -883,9 +885,20 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
           if (decl->get_definingDeclaration() != NULL)
              {
                ROSE_ASSERT(decl->get_definingDeclaration() != NULL);
+#if 1
+#if 0
+               printf ("In Unparse_Type::unparseClassType(): Resetting decl to be the defining declaration from decl = %p to decl = %p \n",decl,decl->get_definingDeclaration());
+#endif
+            // DQ (9/23/2012): Original version of code.
                decl = isSgClassDeclaration(decl->get_definingDeclaration());
                ROSE_ASSERT(decl != NULL);
                ROSE_ASSERT(decl->get_definition() != NULL);
+#else
+            // DQ (9/23/2012): I think that we want to always using the non-defining declaration, since that is the declaration with name 
+            // qualification computed for the possible template arguments. Then again, should the name qualification be attached to the 
+            // template arguments (for either the defining or nondefining declaration).
+               printf ("In Unparse_Type::unparseClassType(): Skipping the reset of decl = %p to be the defining declaration = %p \n",decl,decl->get_definingDeclaration());
+#endif
              }
             else
              {
@@ -1091,6 +1104,9 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
                             {
                            // Handle case of class template instantiation (code located in unparse_stmt.C)
                            // curprint ("/* Calling unparseTemplateName */ \n ");
+#if 0
+                              printf ("In unparseClassType: calling unparseTemplateName() for templateInstantiationDeclaration = %p \n",templateInstantiationDeclaration);
+#endif
                               unp->u_exprStmt->unparseTemplateName(templateInstantiationDeclaration,info);
                            // curprint ("/* DONE: Calling unparseTemplateName */ \n ");
                             }
