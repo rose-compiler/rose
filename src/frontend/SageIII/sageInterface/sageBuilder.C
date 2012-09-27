@@ -412,43 +412,47 @@ SageBuilder::getTemplateArgumentList( SgDeclarationStatement* decl )
                templateArgumentsList = &(isSgTemplateInstantiationDecl(decl)->get_templateArguments());
                break;
              }
-
+       
+#ifdef ROSE_USE_NEW_EDG_INTERFACE
           case V_SgTemplateClassDeclaration:
              {
                templateArgumentsList = &(isSgTemplateClassDeclaration(decl)->get_templateSpecializationArguments());
                break;
              }
-
+#endif
           case V_SgTemplateInstantiationFunctionDecl:
              {
                templateArgumentsList = &(isSgTemplateInstantiationFunctionDecl(decl)->get_templateArguments());
                break;
              }
 
+#ifdef ROSE_USE_NEW_EDG_INTERFACE
           case V_SgTemplateFunctionDeclaration:
              {
                templateArgumentsList = &(isSgTemplateFunctionDeclaration(decl)->get_templateSpecializationArguments());
                break;
              }
-
+#endif
           case V_SgTemplateInstantiationMemberFunctionDecl:
              {
                templateArgumentsList = &(isSgTemplateInstantiationMemberFunctionDecl(decl)->get_templateArguments());
                break;
              }
 
+#ifdef ROSE_USE_NEW_EDG_INTERFACE
           case V_SgTemplateMemberFunctionDeclaration:
              {
                templateArgumentsList = &(isSgTemplateMemberFunctionDeclaration(decl)->get_templateSpecializationArguments());
                break;
              }
-
+#endif
+#ifdef ROSE_USE_NEW_EDG_INTERFACE
           case V_SgTemplateVariableDeclaration:
              {
                templateArgumentsList = &(isSgTemplateVariableDeclaration(decl)->get_templateSpecializationArguments());
                break;
              }
-
+#endif
           default:
              {
                printf ("setTemplateArgumentParents(): Default reched in switch: decl = %p = %s \n",decl,decl->class_name().c_str());

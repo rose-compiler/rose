@@ -2446,9 +2446,12 @@ HEADER_TEMPLATE_CLASS_DECLARATION_STATEMENT_START
                e_template_parameter /*!< type parameter in a template declaration */
              };
 
+// DQ (9/26/2012): We can't use these macros in the header files else they would require the rose_config.h 
+// file to be defined for all user source code (which we can't allow for portability reasons).
+// #ifdef ROSE_USE_NEW_EDG_INTERFACE
        // DQ (9/10/2012): Added general name mangling for new template class declaration IR node.
           virtual SgName get_mangled_name(void) const;
-
+// #endif
 
 HEADER_TEMPLATE_CLASS_DECLARATION_STATEMENT_END
 
@@ -13777,6 +13780,7 @@ SgTemplateClassDeclaration::post_construction_initialization()
 SgName
 SgTemplateClassDeclaration::get_mangled_name(void) const
    {
+#ifdef ROSE_USE_NEW_EDG_INTERFACE
   // SgName mangled_name = SgClassDeclaration::get_mangled_name() + "__num_template_parameters_" + StringUtility::numberToString(get_templateParameters().size());
      SgName mangled_name = this->get_templateName() + "__num_template_parameters_" + StringUtility::numberToString(get_templateParameters().size());
 
@@ -13796,6 +13800,14 @@ SgTemplateClassDeclaration::get_mangled_name(void) const
 
           mangled_name += "__";
         }
+#else
+  // SgName mangled_name = SgClassDeclaration::get_name() + "__num_template_parameters_" + StringUtility::numberToString(get_templateParameters().size());
+     printf ("For EDG 3.3: mangled_name might not be set propoerly for SgTemplateClassDeclaration::get_mangled_name() \n");
+     SgName mangled_name = "";
+
+     printf ("ERROR: SgTemplateClassDeclaration::get_mangled_name() function should not be called for this IR node (IR node not used in EDG 3.3 compatability). \n");
+     ROSE_ASSERT(false);
+#endif
 
 #if 0
      printf ("In SgTemplateClassDeclaration::get_mangled_name(): mangled_name = %s \n",mangled_name.str());
