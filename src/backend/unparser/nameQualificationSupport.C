@@ -3031,8 +3031,9 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                               ROSE_ASSERT(declarationForReferencedNameSet != NULL);
 
                            // DQ (8/4/2012): We would like to refactor this code (I think).
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
                               printf ("Name qualification for SgFunctionDeclaration: I think this should be using the defined function xxx so that we isolate references to the referencedNameSet \n");
-
+#endif
                               if (referencedNameSet.find(declarationForReferencedNameSet) == referencedNameSet.end())
                                  {
                                 // No global qualification is required.

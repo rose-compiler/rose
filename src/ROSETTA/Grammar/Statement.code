@@ -7006,11 +7006,13 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
                                           // SgTemplateType* templateType = isSgTemplateType(argumentType);
 #if 1
                                           // DQ (8/26/2012): Decrease the volume of warnings from this part of the code.
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
                                              static int count = 0;
                                              if (count++ % 100 == 0)
                                                 {
                                                   printf ("In SgDeclarationStatement::resetTemplateNameSupport(): case SgTemplateArgument::type_argument: Found a SgTemplateType ... (nothing done in this case) \n");
                                                 }
+#endif
 #else
                                              printf ("In SgDeclarationStatement::resetTemplateNameSupport(): case SgTemplateArgument::type_argument: Found a SgTemplateType ... (nothing done in this case) \n");
 #endif
@@ -7069,7 +7071,9 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
 
                                          default:
                                            {
-                                             printf ("Default reached in switch over SgTemplateArgument::type_argument (argumentType = %p = %s) \n",argumentType,argumentType->sage_class_name());
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+                                             printf ("Default reached in switch over SgTemplateArgument::type_argument (argumentType = %p = %s) \n",argumentType,argumentType->class_name().c_str());
+#endif
                                           // ROSE_ASSERT(false);
                                            }
                                       }
@@ -7082,8 +7086,7 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
                                    ROSE_ASSERT((*i)->get_expression() != NULL);
 #if 0
                                    SgExpression* argumentExpression = (*i)->get_expression();
-                                   printf ("SgTemplateArgument::nontype_argument: argumentExpression = %p = %s \n",
-                                        argumentExpression,argumentExpression->sage_class_name());
+                                   printf ("SgTemplateArgument::nontype_argument: argumentExpression = %p = %s \n",argumentExpression,argumentExpression->sage_class_name());
 #endif
                                    break;
                                  }
