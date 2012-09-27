@@ -41,7 +41,7 @@ namespace AType {
 /*!
   \brief Implements semantic functions of a boolean lattice.
   \date 2012
-  \author Markus Schordan
+  \author Markus Schordan, Adrian Prantl
   \details All lattice domain operators are implemented as overloaded functions.
  */
 class BoolLattice {
@@ -59,7 +59,11 @@ class BoolLattice {
   BoolLattice operator!();
   BoolLattice operator||(BoolLattice other);
   BoolLattice operator&&(BoolLattice other);
-  // operator= : C++ default used
+  /// least upper bound
+  BoolLattice lub(BoolLattice other);
+  /// greatest lower bound
+  BoolLattice glb(BoolLattice other);
+  /// operator= : C++ default used
   bool operator==(BoolLattice other) const;
   bool operator!=(BoolLattice other) const;
   string toString() const;

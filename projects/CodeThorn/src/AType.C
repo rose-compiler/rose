@@ -111,6 +111,35 @@ AType::BoolLattice AType::BoolLattice::operator&&(AType::BoolLattice other) {
   if(isFalse() && other.isFalse()) return false;
   throw "Error: BoolLattice operation&& failed.";
 }
+
+AType::BoolLattice AType::BoolLattice::lub(AType::BoolLattice other) {
+  // all TOP cases
+  if(isTop()   || other.isTop())   return Top();
+  // all BOT cases
+  if(value==BOT)                   return other;
+  if(other.value==BOT)             return *this;
+  // usual bool cases
+  if(isTrue()  && other.isTrue())  return true;
+  if(isTrue()  && other.isFalse()) return Top();
+  if(isFalse() && other.isTrue())  return Top();
+  if(isFalse() && other.isFalse()) return false;
+  throw "Error: BoolLattice lub failed.";
+}
+
+AType::BoolLattice AType::BoolLattice::glb(AType::BoolLattice other) {
+  // all BOT cases
+  if(isBot()   || other.isBot())   return Bot();
+  // all BOT cases
+  if(value==TOP)                   return other;
+  if(other.value==TOP)             return *this;
+  // usual bool cases
+  if(isTrue()  && other.isTrue())  return true;
+  if(isTrue()  && other.isFalse()) return Bot();
+  if(isFalse() && other.isTrue())  return Bot();
+  if(isFalse() && other.isFalse()) return false;
+  throw "Error: BoolLattice lub failed.";
+}
+
 // operator= : C++ default used
 // operator== : C++ default used
 string AType::BoolLattice::toString() const {
