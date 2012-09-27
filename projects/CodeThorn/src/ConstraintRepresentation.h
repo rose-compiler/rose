@@ -96,11 +96,31 @@ class ConstraintSet : public set<Constraint> {
   //ConstraintSet operator+(ConstraintSet& s2);
   long memorySize() const;
 };
+
+class ConstraintSetHashFun {
+   public:
+    ConstraintSetHashFun(long prime=99991) : tabSize(prime) {}
+    long operator()(ConstraintSet cs) const {
+	  unsigned int hash=1;
+	  for(ConstraintSet::iterator i=cs.begin();i!=cs.end();++i) {
+		// use the symbol-ptr of lhsVar for hashing (we are a friend).
+		if(!(*i).isDisequation()) {
+		  hash*=(long)((*i).lhsVar().getSymbol());
+		}
+	  }
+	  if(hash<0)
+		hash=-hash;
+	  return long(hash) % tabSize;
+	}
+	  long tableSize() const { return tabSize;}
+   private:
+    long tabSize;
+};
+
 ConstraintSet operator+(ConstraintSet s1, ConstraintSet s2);
 bool operator<(const ConstraintSet& s1, const ConstraintSet& s2);
 //bool operator==(const ConstraintSet& s1, const ConstraintSet& s2);
 //bool operator!=(const ConstraintSet& s1, const ConstraintSet& s2);
-
 
 #ifdef CSET_MAINTAINER_LIST
 class ConstraintSetMaintainer : public list<ConstraintSet> {
@@ -109,7 +129,6 @@ class ConstraintSetMaintainer : public list<ConstraintSet> {
 class ConstraintSetMaintainer : public set<ConstraintSet> {
 #endif
 #ifdef CSET_MAINTAINER_HSET
-#include "HashFun.h"
 #include "HSet.h"
 using namespace br_stl;
 class ConstraintSetMaintainer : public HSet<ConstraintSet, ConstraintSetHashFun> {

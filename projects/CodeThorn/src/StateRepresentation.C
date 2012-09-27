@@ -178,6 +178,9 @@ StateSet::ProcessingResult StateSet::processState(State& s) {
 #ifdef STATE_MAINTAINER_SET
 	insert(s);
 #endif
+#ifdef STATE_MAINTAINER_HSET
+	insert(s);
+#endif
 	const State* existingStatePtr=statePtr(s);
 	assert(existingStatePtr);
 	return make_pair(false,existingStatePtr);
@@ -194,6 +197,13 @@ const State* StateSet::statePtr(State& s) {
   return 0;
 #endif
 #ifdef STATE_MAINTAINER_SET
+  StateSet::iterator i=find(s);
+  if(i==end())
+	return 0;
+  else
+	return &*i;
+#endif
+#ifdef STATE_MAINTAINER_HSET
   StateSet::iterator i=find(s);
   if(i==end())
 	return 0;
@@ -286,6 +296,9 @@ EStateSet::ProcessingResult EStateSet::processEState(EState s) {
 #ifdef ESTATE_MAINTAINER_SET
 	insert(s);
 #endif
+#ifdef ESTATE_MAINTAINER_HSET
+	insert(s);
+#endif
 	const EState* existingEStatePtr=eStatePtr(s);
 	if(!existingEStatePtr) {
 	  bool operator_less(const EState& c1, const EState& c2);
@@ -355,6 +368,13 @@ const EState* EStateSet::eStatePtr(EState& s) {
   return 0;
 #endif
 #ifdef ESTATE_MAINTAINER_SET
+  EStateSet::iterator i=find(s);
+  if(i==end())
+	return 0;
+  else
+	return &*i;
+#endif
+#ifdef ESTATE_MAINTAINER_HSET
   EStateSet::iterator i=find(s);
   if(i==end())
 	return 0;
