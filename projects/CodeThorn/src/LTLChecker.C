@@ -663,7 +663,7 @@ public:
 
     bw_fixpoint(/* init */      Bot(),
 		/* start */     !props[e1].isBot(),
-		/* join */      AND,
+		/* join */      LUB,
 		/* transfer  */ props[e1] || joined_succs,
 		/* debug */     NOP //cerr<<props[e1]<<" || "<<joined_succs<<endl;
 		);
@@ -684,7 +684,7 @@ public:
 
     bw_fixpoint(/* init */      Bot(),
 		/* start */     !props[e1].isBot(),
-		/* join */      AND,
+		/* join */      LUB,
 		/* transfer  */ props[e1] && joined_succs,
 		/* debug */     NOP //cerr<<props[e1]<<" && "<<joined_succs<<endl;
 		);
@@ -790,7 +790,7 @@ public:
 
     bw_fixpoint(/* init */      Bot(),
 		/* start */     props[e2].isTrue(),
-		/* join */      AND,
+		/* join */      LUB,
 		/* transfer */  props[e2] && (props[e1] || joined_succs),
 		/* debug */     NOP
 		);
