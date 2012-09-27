@@ -33,6 +33,7 @@ using namespace SIMDVectorization;
 using namespace SIMDNormalization;
 using namespace SIMDAnalysis;
 vector<SgForStatement*> loopList;
+std::map<SgExprStatement*, vector<SgStatement*> > insertList;
 /* 
   VF is the vector factor, usually is the SIMD width.  
   We set it up here for the ealy stage development.
@@ -269,6 +270,15 @@ int main( int argc, char * argv[] )
       vectorizeLoopTraversal innerLoopTransformation;
       innerLoopTransformation.traverse(loopBody,postorder);
     }
+  }
+
+  /*
+    This map contains the translated true and false statements for the if statement inside vector loop.  
+    We insert these statements here to avoid the issue cause by post-order transeversal.
+  */
+  for(map<SgExprStatement*, vector<SgStatement*> >::iterator i=insertList.begin(); i != insertList.end(); ++i)
+  {
+    SageInterface::insertStatementListAfter((*i).first, (*i).second);
   }
 
   if (SgProject::get_verbose() > 2)

@@ -11,6 +11,7 @@ TESTCODES_REQUIRED_TO_PASS = \
 	conditionalStmt3.c \
 	conditionalStmt4.c \
 	conditionalStmt5.c \
+	conditionalStmt6.c \
 	scalarPromotionExtraction.c \
 	mathFunction.c \
 	directive.c \
@@ -25,6 +26,7 @@ COMPARE_CODES = \
 	rose_conditionalStmt3.c \
 	rose_conditionalStmt4.c \
 	rose_conditionalStmt5.c \
+	rose_conditionalStmt6.c \
 	rose_scalarPromotionExtraction.c \
 	rose_mathFunction.c \
 	rose_directive.c \

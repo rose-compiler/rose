@@ -17,6 +17,7 @@ using namespace SIMDVectorization;
 */
 /******************************************************************************************************************************/
 extern int VF;
+extern std::map<SgExprStatement*, vector<SgStatement*> > insertList;
 
 void SIMDVectorization::addHeaderFile(SgProject* project)
 {
@@ -580,8 +581,15 @@ void SIMDVectorization::translateIfStmt(SgIfStmt* ifStmt, std::map<SgName,condit
                                                           scope);
     ifConditionStmtList.push_back(buildAssignStatement(ifStmtData->getLhsExpr(),SIMDCmpFunctionCall));
   }
-  insertStatementListAfter(ifStmt, ifConditionStmtList); 
+  /*
+     Because of the postorder traversal, inserting statements after the current
+     statement would cause problem. 
+     The true, and false block in this if statement are already translated. Insert the new asignment
+     statement after will make the vectorizeBinaryOp to translate it again.
+  */
+  //insertStatementListAfter(ifStmt, ifConditionStmtList); 
   replaceStatement(ifStmt, cmpFunctionCallStmt,true);
+  insertList.insert(pair<SgExprStatement*, vector<SgStatement*> >(cmpFunctionCallStmt,ifConditionStmtList));
   buildComment(cmpFunctionCallStmt,
                "if statement is converted into vectorizaed conditional statement",
                PreprocessingInfo::before, PreprocessingInfo::C_StyleComment);
