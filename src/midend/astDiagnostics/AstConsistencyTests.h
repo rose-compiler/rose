@@ -520,7 +520,7 @@ class TestForReferencesToDeletedNodes : public ROSE_VisitTraversal
 class TestForParentsMatchingASTStructure: public AstPrePostProcessing
    {
   // DQ (3/19/2012): This is a test from Robb that I want to use uniformally in the AST.
-  // This has been used to catch several location in the AST where parents were not set
+  // This has been used to catch several locations in the AST where parents were not set
   // as they are defined to be set in the AST (based on a traversal).  So this test is
   // an important addition to the EDG 4.3 work to fix a number of the bugs in the EDG 3.3
   // work and define a cleaner representation of the AST.

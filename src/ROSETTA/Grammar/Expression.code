@@ -4091,6 +4091,16 @@ SgPointerDerefExp::get_type() const
                break;
              }
 
+       // DQ (9/27/2012): The dereference of a function type is a function call so the type is it's return type (I think)
+          case V_SgMemberFunctionType:
+             {
+               SgMemberFunctionType* memberFunctionType = isSgMemberFunctionType(someType);
+            // returnType = functionType->get_return_type();
+               returnType = memberFunctionType;
+               break;
+             }
+
+
 #if 0
        // DQ (10/3/2006): I think this is no longer required, since we fixed the case of sizeof taking an 
        // expression (not required to be an lvalue)!

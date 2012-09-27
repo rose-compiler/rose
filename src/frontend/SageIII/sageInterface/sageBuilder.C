@@ -6478,7 +6478,9 @@ SageBuilder::buildForStatement_nfi(SgForStatement* result, SgForInitStatement * 
         {
        // delete result->get_for_init_stmt();
        // result->set_for_init_stmt(NULL);
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
           printf ("Error: In SgForStatement, SgForInitStatement is already set result->get_for_init_stmt() = %p = %s \n",result->get_for_init_stmt(),result->get_for_init_stmt()->class_name().c_str());
+#endif
        // ROSE_ASSERT(false);
         }
 
