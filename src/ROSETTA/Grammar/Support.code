@@ -15905,7 +15905,9 @@ SgTemplateArgument::get_mangled_name (void) const
                   }
                  else
                   {
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
                     printf ("WARNING: In SgTemplateArgument::get_mangled_name(): parent declaration is not handled: this->get_parent() = %p = %s \n",parent,parent->class_name().c_str());
+#endif
                   }
 
                mangled_name << mangled_type.str();

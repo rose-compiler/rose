@@ -652,7 +652,9 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                       else
                        {
                       // DQ (5/3/2012): Make it a warning to detect templateDeclaration == NULL.
-                         printf ("WARNING: templateDeclaration == NULL (this is a recent EDG 4.3 issue). \n");
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+                         printf ("WARNING: In FixupAstDefiningAndNondefiningDeclarations: templateDeclaration == NULL (this is a recent EDG 4.3 issue). \n");
+#endif
                        }
                   }
 

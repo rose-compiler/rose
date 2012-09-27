@@ -993,8 +993,10 @@ StatementListInsertChild( SgStatement *parent, Rose_STL_Container<Elemtype*>& l,
                                  {
                                    ROSE_ASSERT(parent != NULL);
                                    ROSE_ASSERT(n->get_parent());
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
                                    printf ("In Cxx_Grammar.h StatementListInsertChild(): n->get_parent() != NULL and is set incorrectly to %p = %s for statement = %p = %s it will be set to parent = %p = %s \n",
                                         n,n->class_name().c_str(),n->get_parent(),n->get_parent()->class_name().c_str(),parent,parent->class_name().c_str());
+#endif
                                  }
                             }
 

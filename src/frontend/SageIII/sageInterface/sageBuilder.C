@@ -6301,7 +6301,9 @@ SageBuilder::buildForInitStatement_nfi(SgStatementPtrList & statements)
 
      for (SgStatementPtrList::iterator it = result->get_init_stmt().begin(); it != result->get_init_stmt().end(); it++)
         {
+#if 0
           printf ("In buildForInitStatement_nfi(): set the parent for it = %p = %s \n",*it,(*it)->class_name().c_str());
+#endif
           (*it)->set_parent(result);
         }
 
@@ -6335,12 +6337,16 @@ SgForStatement * SageBuilder::buildForStatement(SgStatement* initialize_stmt, Sg
   // into for statement. Or else, there will be two semicolons after unparsing.
      if (SgForInitStatement* for_init_stmt = isSgForInitStatement(initialize_stmt))
         {
+#if 0
           printf ("Handled a proper SgForInitStatement as input! \n");
+#endif
        // DQ (7/30/2011): We have to delete the the SgForInitStatement build within the SgForStatement::post_constructor_initialization()
        // to avoid causing errors in the AST consistancy checking later.
           if (result->get_for_init_stmt() != NULL)
              {
+#if 0
                printf ("Deleting the old one build in SgForStatement::post_constructor_initialization() \n");
+#endif
                delete result->get_for_init_stmt();
                result->set_for_init_stmt(NULL);
              }
@@ -6412,6 +6418,7 @@ SgForStatement * SageBuilder::buildForStatement_nfi(SgStatement* initialize_stmt
   return result;
 }
 
+
 SgForStatement*
 SageBuilder::buildForStatement_nfi(SgForInitStatement * init_stmt, SgStatement * test, SgExpression * increment, SgStatement * loop_body, SgStatement * else_body)
    {
@@ -6439,6 +6446,7 @@ SageBuilder::buildForStatement_nfi(SgForInitStatement * init_stmt, SgStatement *
 
      return result;
    }
+
 
 void
 SageBuilder::buildForStatement_nfi(SgForStatement* result, SgForInitStatement * init_stmt, SgStatement * test, SgExpression * increment, SgStatement * loop_body, SgStatement * else_body)
@@ -6494,6 +6502,7 @@ SageBuilder::buildForStatement_nfi(SgForStatement* result, SgForInitStatement * 
      result->set_else_body(else_body);
    }
 
+
 //! Based on the contribution from Pradeep Srinivasa@ LANL
 //Liao, 8/27/2008
 SgUpcForAllStatement * SageBuilder::buildUpcForAllStatement_nfi(SgStatement* initialize_stmt, SgStatement * test, SgExpression * increment, SgExpression* affinity, SgStatement * loop_body)
@@ -6516,6 +6525,7 @@ SgUpcForAllStatement * SageBuilder::buildUpcForAllStatement_nfi(SgStatement* ini
 
   return result;
 }
+
 
 SgUpcForAllStatement * SageBuilder::buildUpcForAllStatement_nfi(SgForInitStatement * init_stmt, SgStatement * test, SgExpression * increment, SgExpression* affinity, SgStatement * loop_body)
 {
