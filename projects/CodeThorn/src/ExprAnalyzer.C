@@ -92,11 +92,14 @@ list<SingleEvalResultConstInt> listify(SingleEvalResultConstInt res) {
 
 list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState eState, bool useConstraints, bool safeConstraintPropagation) {
   assert(eState.state); // ensure state exists
+  cout << "EVAL CONST INT:"<<endl;
   SingleEvalResultConstInt res;
   // initialize with default values from argument(s)
   res.eState=eState;
   res.result=AType::ConstIntLattice(AType::Bot());
   if(dynamic_cast<SgBinaryOp*>(node)) {
+	cout << "BinaryOp:"<<SgNodeHelper::nodeToString(node)<<endl;
+
 	SgNode* lhs=SgNodeHelper::getLhs(node);
 	list<SingleEvalResultConstInt> lhsResultList=evalConstInt(lhs,eState,useConstraints,safeConstraintPropagation);
 	SgNode* rhs=SgNodeHelper::getRhs(node);
@@ -112,7 +115,8 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState eS
 		  ++riter) {
 		SingleEvalResultConstInt lhsResult=*liter;
 		SingleEvalResultConstInt rhsResult=*riter;
-		
+
+		cout << "SWITCH ON:"<<SgNodeHelper::nodeToString(node)<<endl;
 		switch(node->variantT()) {
 		case V_SgEqualityOp: {
 		  res.result=(lhsResult.result==rhsResult.result);
@@ -237,6 +241,32 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState eS
 		  resultList.push_back(res);
 		  break;
 		}
+		case V_SgSubtractOp: {
+		  res.result=(lhsResult.result-rhsResult.result);
+		  res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
+		  resultList.push_back(res);
+		  break;
+		}
+		case V_SgMultiplyOp: {
+		  res.result=(lhsResult.result*rhsResult.result);
+		  res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
+		  resultList.push_back(res);
+		  break;
+		}
+		case V_SgDivideOp: {
+		  res.result=(lhsResult.result/rhsResult.result);
+		  res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
+		  resultList.push_back(res);
+		  break;
+		}
+#if 0
+		case V_SgModOp: {
+		  res.result=(lhsResult.result%rhsResult.result);
+		  res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
+		  resultList.push_back(res);
+		  break;
+		}
+#endif
 		default:
 		  cerr << "Binary Op:"<<SgNodeHelper::nodeToString(node)<<endl;
 		  throw "Error: evalConstInt::binary operation failed.";
@@ -273,12 +303,15 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState eS
 		resultList.push_back(res);
 		break;
 	  }
+		// unary minus
 	  case V_SgMinusOp: {
 		res.result=-operandResult.result; // using overloaded operator
 		res.exprConstraints=operandResult.exprConstraints;
 		resultList.push_back(res);
 		break;
 	  }
+
+
 	  default:
 		cerr << "@NODE:"<<node->sage_class_name()<<endl;
 		throw "Error: evalConstInt::unary operation failed.";

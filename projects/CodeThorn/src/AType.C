@@ -165,21 +165,6 @@ AType::ConstIntLattice AType::ConstIntLattice::operator!() {
   return tmp;
 }
 
-AType::ConstIntLattice AType::ConstIntLattice::operator-() {
-  AType::ConstIntLattice tmp;
-  switch(valueType) {
-  case AType::ConstIntLattice::CONSTINT: 
-	tmp.valueType=AType::ConstIntLattice::CONSTINT;
-	tmp.intValue=-intValue; // unary minus
-	break;
-  case AType::ConstIntLattice::TOP: tmp=Top();break;
-  case AType::ConstIntLattice::BOT: tmp=Bot();break;
-  default:
-	throw "Error: ConstIntLattice operation '!' failed.";
-  }
-  return tmp;
-}
-
 
 AType::ConstIntLattice AType::ConstIntLattice::operator||(ConstIntLattice other) {
   AType::ConstIntLattice tmp;
@@ -325,3 +310,72 @@ AType::ConstIntLattice::ValueType AType::ConstIntLattice::getValueType() const {
 int AType::ConstIntLattice::getIntValue() const { 
   return intValue;
 }
+
+// arithmetic operators
+AType::ConstIntLattice AType::ConstIntLattice::operator-() {
+  AType::ConstIntLattice tmp;
+  switch(valueType) {
+  case AType::ConstIntLattice::CONSTINT: 
+	tmp.valueType=AType::ConstIntLattice::CONSTINT;
+	tmp.intValue=-intValue; // unary minus
+	break;
+  case AType::ConstIntLattice::TOP: tmp=Top();break;
+  case AType::ConstIntLattice::BOT: tmp=Bot();break;
+  default:
+	throw "Error: ConstIntLattice operation '!' failed.";
+  }
+  return tmp;
+}
+
+AType::ConstIntLattice AType::operator+(AType::ConstIntLattice& a,AType::ConstIntLattice& b) {
+  cout << "Addition:"<<a.getIntValue()<<"+"<<b.getIntValue()<<"=>"<<a.getIntValue()+b.getIntValue()<<endl;
+
+  if(a.isTop() || b.isTop())
+	return Top();
+  if(a.isBot())
+	return b;
+  if(b.isBot())
+	return a;
+  return a.getIntValue()+b.getIntValue();
+}
+AType::ConstIntLattice AType::operator-(AType::ConstIntLattice& a,AType::ConstIntLattice& b) {
+  cout << "Subtraction:"<<a.getIntValue()<<"-"<<b.getIntValue()<<"=>"<<a.getIntValue()-b.getIntValue()<<endl;
+  if(a.isTop() || b.isTop())
+	return Top();
+  if(a.isBot())
+	return b;
+  if(b.isBot())
+	return a;
+  return a.getIntValue()-b.getIntValue();
+}
+AType::ConstIntLattice AType::operator*(AType::ConstIntLattice& a,AType::ConstIntLattice& b) {
+  cout << "Mul:"<<a.getIntValue()<<"-"<<b.getIntValue()<<"=>"<<a.getIntValue()*b.getIntValue()<<endl;
+  if(a.isTop() || b.isTop())
+	return Top();
+  if(a.isBot())
+	return b;
+  if(b.isBot())
+	return a;
+  return a.getIntValue()*b.getIntValue();
+}
+AType::ConstIntLattice AType::operator/(AType::ConstIntLattice& a,AType::ConstIntLattice& b) {
+  cout << "Div:"<<a.getIntValue()<<"-"<<b.getIntValue()<<"=>"<<a.getIntValue()/b.getIntValue()<<endl;
+  if(a.isTop() || b.isTop())
+	return Top();
+  if(a.isBot())
+	return b;
+  if(b.isBot())
+	return a;
+  return a.getIntValue()/b.getIntValue();
+}
+AType::ConstIntLattice AType::operator%(AType::ConstIntLattice& a,AType::ConstIntLattice& b) {
+  cout << "Mod:"<<a.getIntValue()<<"-"<<b.getIntValue()<<"=>"<<a.getIntValue()%b.getIntValue()<<endl;
+  if(a.isTop() || b.isTop())
+	return Top();
+  if(a.isBot())
+	return b;
+  if(b.isBot())
+	return a;
+  return a.getIntValue()%b.getIntValue();
+}
+

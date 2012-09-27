@@ -114,6 +114,13 @@ class ConstIntLattice {
   int intValue;
   ValueType valueType;
 };
+// arithmetic operators
+ AType::ConstIntLattice operator+(AType::ConstIntLattice& a,AType::ConstIntLattice& b);
+ AType::ConstIntLattice operator-(AType::ConstIntLattice& a,AType::ConstIntLattice& b);
+ AType::ConstIntLattice operator*(AType::ConstIntLattice& a,AType::ConstIntLattice& b);
+ AType::ConstIntLattice operator/(AType::ConstIntLattice& a,AType::ConstIntLattice& b);
+ AType::ConstIntLattice operator%(AType::ConstIntLattice& a,AType::ConstIntLattice& b);
+
 
  ostream& operator<<(ostream& os, ConstIntLattice& toStream);
 

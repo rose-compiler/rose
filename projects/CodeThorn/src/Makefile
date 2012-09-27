@@ -133,6 +133,7 @@ bsps: codethorn
 	cp viz/cfg.jpg bsps/basictest10f_cfg.jpg
 	cp viz/transitiongraph1.jpg bsps/basictest10f_transitiongraph1.jpg
 	cp viz/transitiongraph2.jpg bsps/basictest10f_transitiongraph2.jpg
+	ps2pdf bsps/basictest10f_transitiongraph2.ps bsps/basictest10f_transitiongraph2.pdf
 	./codethorn tests/basictest15.C && make viz && make vizjpg
 	cp tests/basictest15.C bsps
 	cp viz/cfg.ps bsps/basictest15_cfg.ps
@@ -142,6 +143,7 @@ bsps: codethorn
 	cp viz/cfg.jpg bsps/basictest15_cfg.jpg
 	cp viz/transitiongraph1.jpg bsps/basictest15_transitiongraph1.jpg
 	cp viz/transitiongraph2.jpg bsps/basictest15_transitiongraph2.jpg
+	ps2pdf bsps/basictest15_transitiongraph2.ps bsps/basictest15_transitiongraph2.pdf
 
 	./codethorn tests/rers/Problem1.c
 	cp tests/rers/Problem1.c bsps

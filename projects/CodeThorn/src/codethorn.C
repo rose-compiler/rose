@@ -81,6 +81,12 @@ void checkProgram(SgNode* root) {
   vs.insert(V_SgStringVal);
   vs.insert(V_SgAddressOfOp);
 
+  // rers Problems 10-13
+  // arithmetic operators
+  vs.insert(V_SgSubtractOp);
+  vs.insert(V_SgMultiplyOp);
+  vs.insert(V_SgDivideOp);
+  vs.insert(V_SgModOp);
   lr.setAstNodeVariantSet(vs,true);
   cout << "INIT: Running CodeThorn language restrictor."<<endl;
   bool valid=lr.checkIfAstIsAllowed(root);
