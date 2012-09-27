@@ -487,27 +487,27 @@ int s256()
 	return 0;
 }
 
-//int s258()
-//{
-//
-////	scalar and array expansion
-////	wrap-around scalar under an if
-//
-//
-//	float s;
-//	for (int nl = 0; nl < ntimes/10; nl++) {
-//		s = 0.;
-//#pragma SIMD
-//		for (int i = 0; i < LEN; ++i) {
-//			if (a[i] > 0.) {
-//				s = d[i] * d[i];
-//			}
-//			b[i] = s * c[i] + d[i];
-//			e[i] = (s + (float)1.) * aa[0][i];
-//		}
-//	}
-//	return 0;
-//}
+int s258()
+{
+
+//	scalar and array expansion
+//	wrap-around scalar under an if
+
+
+	float s;
+	for (int nl = 0; nl < ntimes/10; nl++) {
+		s = 0.;
+#pragma SIMD
+		for (int i = 0; i < LEN; ++i) {
+			if (a[i] > 0.) {
+				s = d[i] * d[i];
+			}
+			b[i] = s * c[i] + d[i];
+			e[i] = (s + (float)1.) * aa[0][i];
+		}
+	}
+	return 0;
+}
 
 int s261()
 {
@@ -549,23 +549,23 @@ int s271()
 	return 0;
 }
 
-//int s272(float t)
-//{
-//
-////	control flow
-////	loop with independent conditional
-//
-//	for (int nl = 0; nl < ntimes; nl++) {
-//#pragma SIMD
-//		for (int i = 0; i < LEN; i++) {
-//			if (e[i] >= t) {
-//				a[i] += c[i] * d[i];
-//				b[i] += c[i] * c[i];
-//			}
-//		}
-//	}
-//	return 0;
-//}
+int s272(float t)
+{
+
+//	control flow
+//	loop with independent conditional
+
+	for (int nl = 0; nl < ntimes; nl++) {
+#pragma SIMD
+		for (int i = 0; i < LEN; i++) {
+			if (e[i] >= t) {
+				a[i] += c[i] * d[i];
+				b[i] += c[i] * c[i];
+			}
+		}
+	}
+	return 0;
+}
 
 int s273()
 {

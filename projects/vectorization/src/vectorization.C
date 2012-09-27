@@ -156,7 +156,7 @@ void SIMDVectorization::translateOperand(SgExpression* operand)
 
         string scalarName = variableSymbol->get_name().getString();
         if (SgProject::get_verbose() > 2)
-          std::cout << "scalar:" << scalarName << std::endl;
+          std::cout << "translateOperand sees scalar:" << scalarName << std::endl;
         // Create new SIMD variable that stores the same scalar value in all its data elements
         string SIMDName = scalarName + "_SIMD";
 
@@ -164,8 +164,19 @@ void SIMDVectorization::translateOperand(SgExpression* operand)
         if(lookupSymbolInParentScopes(SIMDName,getScope(operand)) == NULL)
         {
           SIMDType = getSIMDType(variableSymbol->get_type(),getScope(operand)); 
-          SgVariableDeclaration* SIMDDeclarationStmt = buildVariableDeclaration(SIMDName,SIMDType,NULL,variableSymbol->get_scope());        
-          insertStatement(scalarDeclarationStmt,SIMDDeclarationStmt,false,true);
+          /*
+             This is the case that operand is one of the function parameter
+          */
+          if(isSgFunctionParameterList(scalarDeclarationStmt) != NULL)
+          {
+            SgVariableDeclaration* SIMDDeclarationStmt = buildVariableDeclaration(SIMDName,SIMDType,NULL,getEnclosingFunctionDefinition(operand));
+            insertStatementAfterLastDeclaration(SIMDDeclarationStmt,getEnclosingFunctionDefinition(operand));
+          }
+          else
+          {
+            SgVariableDeclaration* SIMDDeclarationStmt = buildVariableDeclaration(SIMDName,SIMDType,NULL,variableSymbol->get_scope());        
+            insertStatement(scalarDeclarationStmt,SIMDDeclarationStmt,false,true);
+          }
         }
         SgVarRefExp* newOperand = buildVarRefExp(SIMDName, getScope(operand));
         newOperand->set_parent(operand->get_parent());
@@ -1123,14 +1134,25 @@ void SIMDVectorization::scalarVariableConversion(SgForStatement* forStatement, s
       ROSE_ASSERT(scalarDeclarationStmt);
       string scalarName = symbol->get_name().getString();
       if (SgProject::get_verbose() > 2)
-        std::cout << "scalar:" << scalarName << std::endl;
+        std::cout << "scalarVariableConversion sees scalar:" << scalarName << std::endl;
       // Create new SIMD variable that stores the same scalar value in all its data elements
       string SIMDName = scalarName + "_SIMD";
       SgType* SIMDType = getSIMDType(symbol->get_type(),getScope(forStatement)); 
       if(lookupSymbolInParentScopes(SIMDName,getScope(forStatement)) == NULL)
       {
-        SgVariableDeclaration* SIMDDeclarationStmt = buildVariableDeclaration(SIMDName,SIMDType,NULL,symbol->get_scope());        
-        insertStatement(scalarDeclarationStmt,SIMDDeclarationStmt,false,true);
+        /*
+           This is the case that variable is one of the function parameter
+        */
+        if(isSgFunctionParameterList(scalarDeclarationStmt) != NULL)
+        {
+          SgVariableDeclaration* SIMDDeclarationStmt = buildVariableDeclaration(SIMDName,SIMDType,NULL,getEnclosingFunctionDefinition(forStatement));
+          insertStatementAfterLastDeclaration(SIMDDeclarationStmt,getEnclosingFunctionDefinition(forStatement));
+        }
+        else
+        {
+          SgVariableDeclaration* SIMDDeclarationStmt = buildVariableDeclaration(SIMDName,SIMDType,NULL,symbol->get_scope());
+          insertStatement(scalarDeclarationStmt,SIMDDeclarationStmt,false,true);
+        }
       }
       string promoteFuncName = "_SIMD_splats" + getSIMDOpSuffix(symbol->get_type());
       SgFunctionCallExp* callScalarPromotion = buildFunctionCallExp(promoteFuncName, 

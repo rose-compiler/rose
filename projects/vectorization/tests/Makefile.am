@@ -4,6 +4,7 @@ DIFF=diff
 
 TESTCODES_REQUIRED_TO_PASS = \
 	simpleArithmetic.c \
+	simpleArithmetic2.c \
 	simpleIntegerArithmetic.c \
 	multiDimensionArray.c \
 	conditionalStmt1.c \
@@ -19,6 +20,7 @@ TESTCODES_REQUIRED_TO_PASS = \
 
 COMPARE_CODES = \
 	rose_simpleArithmetic.c \
+	rose_simpleArithmetic2.c \
 	rose_simpleIntegerArithmetic.c \
 	rose_multiDimensionArray.c \
 	rose_conditionalStmt1.c \
