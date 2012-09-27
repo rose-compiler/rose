@@ -1,0 +1,101 @@
+Index;"LTL formula";Result;Confidence
+1;"or(globally(neg_output(Z)), until(neg_output(Z), and(output(U), neg_output(Z))))";YES;9
+2;"globally(or(neg_input(C), eventually(output(Z))))";UNKNOWN;0
+3;"or(globally(neg_output(W)), eventually(and(output(W), eventually(output(U)))))";YES;9
+4;"globally(or(neg_input(E), eventually(output(Y))))";UNKNOWN;0
+5;"globally(or(not(and(input(B), neg_output(U))), or(globally(neg_output(V)), until(neg_output(V), output(U)))))";UNKNOWN;0
+6;"or(globally(neg_output(V)), until(neg_output(V), output(X)))";UNKNOWN;0
+7;"or(globally(neg_output(W)), eventually(and(output(W), eventually(output(U)))))";YES;9
+8;"or(globally(neg_output(U)), until(neg_output(U), and(output(X), neg_output(U))))";UNKNOWN;0
+9;"globally(or(not(and(input(D), neg_output(Z))), until(neg_output(Z), and(output(X), neg_output(Z)))))";YES;9
+10;"globally(or(not(and(output(U), neg_output(W))), until(neg_output(W), and(output(Z), neg_output(W)))))";YES;9
+11;"globally(or(not(and(and(input(C), neg_output(V)), eventually(output(V)))), until(neg_output(Z), output(V))))";YES;9
+12;"globally(or(not(and(input(F), neg_output(Z))), until(neg_output(Z), and(output(W), neg_output(Z)))))";YES;9
+13;"globally(neg_output(U))";UNKNOWN;0
+14;"or(globally(neg_input(C)), until(neg_input(C), and(output(Z), neg_input(C))))";UNKNOWN;0
+15;"or(globally(neg_input(B)), until(neg_input(B), and(output(X), neg_input(B))))";UNKNOWN;0
+16;"globally(or(neg_input(B), globally(neg_output(X))))";UNKNOWN;0
+17;"globally(or(not(and(input(D), neg_input(F))), until(neg_input(F), and(output(Z), neg_input(F)))))";UNKNOWN;0
+18;"globally(neg_output(X))";UNKNOWN;0
+19;"or(globally(neg_output(Z)), until(neg_output(Z), or(globally(output(Z)), until(output(Z), or(globally(neg_output(Z)), until(neg_output(Z), or(globally(output(Z)), until(output(Z), globally(neg_output(Z))))))))))";YES;9
+20;"or(globally(neg_output(U)), until(neg_output(U), output(Z)))";UNKNOWN;0
+21;"or(globally(neg_input(C)), until(neg_input(C), and(output(Y), neg_input(C))))";UNKNOWN;0
+22;"globally(or(neg_input(A), globally(neg_output(X))))";UNKNOWN;0
+23;"or(globally(neg_output(U)), until(neg_output(U), and(output(V), neg_output(U))))";UNKNOWN;0
+24;"globally(or(neg_input(A), eventually(output(V))))";UNKNOWN;0
+25;"or(globally(neg_output(Z)), eventually(and(output(Z), eventually(output(V)))))";YES;9
+26;"or(globally(neg_input(C)), eventually(and(input(C), eventually(output(W)))))";UNKNOWN;0
+27;"or(not(eventually(input(F))), until(neg_output(Y), or(input(E), input(F))))";UNKNOWN;0
+28;"globally(or(not(and(input(C), neg_input(D))), or(globally(neg_output(U)), until(neg_output(U), input(D)))))";UNKNOWN;0
+29;"or(globally(neg_output(U)), until(neg_output(U), output(Z)))";UNKNOWN;0
+30;"globally(or(not(and(and(input(A), neg_input(B)), eventually(input(B)))), until(neg_output(Y), input(B))))";YES;9
+31;"or(not(eventually(input(D))), until(and(neg_output(X), neg_input(D)), or(input(D), until(and(output(X), neg_input(D)), or(input(D), until(and(neg_output(X), neg_input(D)), or(input(D), until(and(output(X), neg_input(D)), or(input(D), until(neg_output(X), input(D)))))))))))";UNKNOWN;0
+32;"globally(neg_output(Z))";YES;9
+33;"globally(or(neg_output(W), eventually(output(V))))";YES;9
+34;"globally(or(not(and(input(C), neg_output(X))), or(globally(neg_output(X)), until(neg_output(X), and(output(Z), neg_output(X))))))";UNKNOWN;0
+35;"or(globally(neg_output(X)), until(neg_output(X), or(globally(output(X)), until(output(X), or(globally(neg_output(X)), until(neg_output(X), or(globally(output(X)), until(output(X), globally(neg_output(X))))))))))";YES;9
+36;"globally(or(not(and(and(input(F), neg_output(V)), eventually(output(V)))), until(neg_output(Z), output(V))))";YES;9
+37;"globally(or(neg_input(F), eventually(output(U))))";UNKNOWN;0
+38;"or(globally(neg_output(W)), until(neg_output(W), or(globally(output(W)), until(output(W), or(globally(neg_output(W)), until(neg_output(W), or(globally(output(W)), until(output(W), globally(neg_output(W))))))))))";YES;9
+39;"or(globally(neg_output(U)), until(neg_output(U), or(globally(output(U)), until(output(U), or(globally(neg_output(U)), until(neg_output(U), or(globally(output(U)), until(output(U), globally(neg_output(U))))))))))";YES;9
+40;"or(globally(neg_output(X)), until(neg_output(X), output(Y)))";UNKNOWN;0
+41;"or(globally(neg_output(X)), eventually(and(output(X), eventually(output(U)))))";UNKNOWN;0
+42;"or(globally(neg_output(W)), until(neg_output(W), and(output(U), neg_output(W))))";YES;9
+43;"or(globally(neg_output(Y)), until(neg_output(Y), input(B)))";YES;9
+44;"globally(or(not(and(input(F), neg_input(E))), or(globally(neg_output(Y)), until(neg_output(Y), input(E)))))";UNKNOWN;0
+45;"globally(or(not(and(input(A), neg_output(Y))), until(neg_output(Y), and(output(U), neg_output(Y)))))";UNKNOWN;0
+46;"globally(neg_output(W))";YES;9
+47;"eventually(output(W))";NO;9
+48;"globally(or(neg_output(Z), eventually(output(X))))";YES;9
+49;"globally(or(not(and(output(Z), neg_output(X))), until(neg_output(X), and(output(U), neg_output(X)))))";YES;9
+50;"or(not(eventually(output(X))), until(neg_output(U), or(output(Z), output(X))))";UNKNOWN;0
+51;"globally(or(not(and(output(U), neg_input(D))), until(neg_input(D), and(output(V), neg_input(D)))))";UNKNOWN;0
+52;"or(globally(neg_output(X)), until(neg_output(X), input(D)))";UNKNOWN;0
+53;"or(globally(neg_input(C)), until(neg_input(C), and(output(U), neg_input(C))))";UNKNOWN;0
+54;"globally(or(not(and(input(B), neg_output(X))), or(globally(neg_output(W)), until(neg_output(W), output(X)))))";YES;9
+55;"or(globally(neg_output(W)), until(neg_output(W), and(output(Y), neg_output(W))))";YES;9
+56;"or(globally(neg_output(V)), until(neg_output(V), and(output(X), neg_output(V))))";UNKNOWN;0
+57;"or(not(eventually(input(B))), until(neg_output(U), or(output(X), input(B))))";UNKNOWN;0
+58;"or(globally(neg_output(W)), until(neg_output(W), input(D)))";YES;9
+59;"eventually(output(Z))";NO;9
+60;"eventually(output(V))";UNKNOWN;0
+61;"or(globally(neg_input(F)), until(neg_input(F), and(output(Z), neg_input(F))))";UNKNOWN;0
+62;"or(globally(neg_output(Y)), until(neg_output(Y), or(globally(output(Y)), until(output(Y), or(globally(neg_output(Y)), until(neg_output(Y), or(globally(output(Y)), until(output(Y), globally(neg_output(Y))))))))))";YES;9
+63;"globally(or(not(and(and(input(D), neg_output(U)), eventually(output(U)))), until(neg_output(V), output(U))))";UNKNOWN;0
+64;"globally(or(not(and(and(output(U), neg_output(X)), eventually(output(X)))), until(neg_output(W), output(X))))";YES;9
+65;"or(globally(neg_output(Y)), eventually(and(output(Y), eventually(output(W)))))";UNKNOWN;0
+66;"or(not(eventually(output(U))), until(and(neg_output(Z), neg_output(U)), or(output(U), until(and(output(Z), neg_output(U)), or(output(U), until(and(neg_output(Z), neg_output(U)), or(output(U), until(and(output(Z), neg_output(U)), or(output(U), until(neg_output(Z), output(U)))))))))))";YES;9
+67;"or(not(eventually(output(X))), until(neg_output(Y), or(input(B), output(X))))";YES;9
+68;"or(not(eventually(output(X))), until(and(neg_output(V), neg_output(X)), or(output(X), until(and(output(V), neg_output(X)), or(output(X), until(and(neg_output(V), neg_output(X)), or(output(X), until(and(output(V), neg_output(X)), or(output(X), until(neg_output(V), output(X)))))))))))";YES;9
+69;"globally(or(not(and(input(B), neg_output(X))), or(globally(neg_output(Y)), until(neg_output(Y), output(X)))))";UNKNOWN;0
+70;"globally(or(not(and(and(output(W), neg_input(E)), eventually(input(E)))), until(neg_output(Z), input(E))))";YES;9
+71;"globally(or(not(and(and(output(Z), neg_input(F)), eventually(input(F)))), until(neg_output(U), input(F))))";YES;9
+72;"or(globally(neg_output(Z)), until(neg_output(Z), and(output(X), neg_output(Z))))";YES;9
+73;"globally(or(not(and(input(F), neg_input(D))), or(globally(neg_output(X)), until(neg_output(X), input(D)))))";UNKNOWN;0
+74;"or(globally(neg_output(W)), until(neg_output(W), or(globally(output(W)), until(output(W), or(globally(neg_output(W)), until(neg_output(W), or(globally(output(W)), until(output(W), globally(neg_output(W))))))))))";YES;9
+75;"globally(or(not(and(output(Z), neg_input(D))), until(neg_input(D), and(output(U), neg_input(D)))))";YES;9
+76;"globally(or(neg_output(X), globally(neg_output(Y))))";UNKNOWN;0
+77;"or(globally(neg_output(W)), until(neg_output(W), input(B)))";YES;9
+78;"or(globally(neg_input(E)), until(neg_input(E), and(output(V), neg_input(E))))";UNKNOWN;0
+79;"or(globally(neg_input(E)), eventually(and(input(E), eventually(output(U)))))";UNKNOWN;0
+80;"or(not(eventually(output(W))), until(and(neg_output(X), neg_output(W)), or(output(W), until(and(output(X), neg_output(W)), or(output(W), until(and(neg_output(X), neg_output(W)), or(output(W), until(and(output(X), neg_output(W)), or(output(W), until(neg_output(X), output(W)))))))))))";YES;9
+81;"or(globally(neg_output(Z)), until(neg_output(Z), input(A)))";YES;9
+82;"or(globally(neg_output(Y)), until(neg_output(Y), input(A)))";UNKNOWN;0
+83;"globally(or(not(and(input(C), neg_output(Z))), until(neg_output(Z), and(output(Y), neg_output(Z)))))";YES;9
+84;"globally(or(not(and(input(D), neg_output(V))), or(globally(neg_output(X)), until(neg_output(X), output(V)))))";UNKNOWN;0
+85;"eventually(output(V))";UNKNOWN;0
+86;"globally(or(neg_input(E), eventually(output(U))))";UNKNOWN;0
+87;"globally(neg_output(X))";UNKNOWN;0
+88;"or(globally(neg_output(U)), until(neg_output(U), and(output(Z), neg_output(U))))";UNKNOWN;0
+89;"globally(or(not(and(output(W), neg_output(V))), or(globally(neg_output(V)), until(neg_output(V), and(output(U), neg_output(V))))))";YES;9
+90;"or(globally(neg_output(Z)), until(neg_output(Z), input(E)))";YES;9
+91;"or(globally(neg_output(X)), until(neg_output(X), output(W)))";UNKNOWN;0
+92;"globally(or(not(and(and(output(Y), neg_input(C)), eventually(input(C)))), until(neg_output(W), input(C))))";YES;9
+93;"or(globally(neg_output(Z)), eventually(and(output(Z), eventually(output(Y)))))";YES;9
+94;"globally(or(neg_input(A), globally(neg_output(U))))";UNKNOWN;0
+95;"globally(or(not(and(input(B), neg_output(Y))), or(globally(neg_output(Y)), until(neg_output(Y), and(output(W), neg_output(Y))))))";UNKNOWN;0
+96;"globally(or(not(and(and(output(W), neg_input(A)), eventually(input(A)))), until(neg_output(X), input(A))))";YES;9
+97;"globally(or(not(and(input(F), neg_input(C))), or(globally(neg_output(Z)), until(neg_output(Z), input(C)))))";YES;9
+98;"globally(or(not(and(input(D), neg_input(B))), or(globally(neg_input(B)), until(neg_input(B), and(output(X), neg_input(B))))))";UNKNOWN;0
+99;"globally(or(not(and(output(X), neg_output(Z))), or(globally(neg_output(Z)), until(neg_output(Z), and(output(Y), neg_output(Z))))))";YES;9
+100;"or(globally(neg_input(A)), until(neg_input(A), and(output(U), neg_input(A))))";UNKNOWN;0
