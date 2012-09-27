@@ -275,7 +275,7 @@ Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList& t
   // The other two are in edgRose.C in function: appendTemplateArgumentsToName()
   // and in Statement.code: SgDeclarationStatement::resetTemplateNameSupport().
 
-#if 1
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
   // DQ (8/24/2012): Print this out a little less often; but still enough so that we know to fix this later.
      static int counter = 0;
      if (counter++ % 1 == 0)
@@ -1249,15 +1249,16 @@ Unparse_ExprStmt::unparseFuncRefSupport(SgExpression* expr, SgUnparse_Info& info
        // set the length difference between "operator" and function
           diff = strlen(func_name.c_str()) - strlen("operator");
 
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
           printf ("Found an operator: func_name = %s \n",func_name.c_str());
-
+#endif
        // DQ (1/6/2006): trap out cases of global new and delete functions called 
        // using ("::operator new" or "::operator delete" syntax).  In these cases 
        // the function are treated as normal function calls and not classified in 
        // the AST as SgNewExp and SgDeleteExp.  See test2006_04.C.
           bool isNewOperator    =  (strncmp(func_name.c_str(), "operator new", 12) == 0)    ? true : false;
           bool isDeleteOperator =  (strncmp(func_name.c_str(), "operator delete", 15) == 0) ? true : false;
-#if 1
+#if 0
           printf ("isNewOperator    = %s \n",isNewOperator    ? "true" : "false");
           printf ("isDeleteOperator = %s \n",isDeleteOperator ? "true" : "false");
 #endif
@@ -1379,11 +1380,13 @@ Unparse_ExprStmt::unparseFuncRefSupport(SgExpression* expr, SgUnparse_Info& info
   // printDebugInfo("unparseFuncRef, Function Name: ", false); printDebugInfo(func_name.c_str(), true);
    }
 
+
 void
 Unparse_ExprStmt::unparseMFuncRef ( SgExpression* expr, SgUnparse_Info& info )
    {
      unparseMFuncRefSupport<SgMemberFunctionRefExp>(expr,info);
    }
+
 
 template <class T>
 void

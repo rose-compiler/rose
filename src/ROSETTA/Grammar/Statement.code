@@ -12396,7 +12396,9 @@ SgEnumDeclaration::get_mangled_name (void) const
             // mangleQualifiersString = mangleQualifiers(get_scope());
                if (get_scope() == NULL)
                   {
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
                     printf ("WARNING: SgEnumDeclaration::get_mangled_name(): get_scope() == NULL, mangleQualifiers will be incomplete (empty) \n");
+#endif
                   }
                  else
                   {
@@ -13530,8 +13532,9 @@ SgTypedefDeclaration::get_mangled_name (void) const
        // mangleQualifiersString = mangleQualifiers(get_scope());
           if (get_scope() == NULL)
              {
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
                printf ("WARNING: SgTypedefDeclaration::get_mangled_name(): get_scope() == NULL, mangleQualifiers will be incomplete (empty) \n");
-
+#endif
             // DQ (3/20/2012): Added for debugging.
             // ROSE_ASSERT(false);
              }

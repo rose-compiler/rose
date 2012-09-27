@@ -2648,7 +2648,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
      SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(n);
      if (variableDeclaration != NULL)
         {
-#if 1
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
        // DQ (8/24/2012): Allow this to be output a little less often.
        // DQ (8/4/2012): Why is this case procesed if the SgInitializedNames are processed sperately (this appears to be redundant with that).
           static int counter = 0;
@@ -4761,7 +4761,9 @@ NameQualificationTraversal::setNameQualification(SgInitializedName* initializedN
   // if (skipGlobalQualification == true && qualifier == "::")
      if (skipGlobalQualification == true)
         {
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
           printf ("In NameQualificationTraversal::setNameQualification(SgInitializedName* initializedName): skipGlobalQualification has caused global qualification to be ignored \n");
+#endif
           qualifier = "";
 
           outputNameQualificationLength = 0;
@@ -5088,7 +5090,9 @@ NameQualificationTraversal::setNameQualification(SgTemplateArgument* templateArg
        // if (defining_templateArgument != NULL)
           if (defining_templateArgument != NULL && defining_templateArgument != templateArgument)
              {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                printf ("Insert qualified name = %s for defining_templateArgument = %p \n",qualifier.c_str(),defining_templateArgument);
+#endif
                qualifiedNameMapForTypes.insert(std::pair<SgNode*,std::string>(defining_templateArgument,qualifier));
              }
         }
@@ -5406,7 +5410,9 @@ NameQualificationTraversal::setNameQualificationSupport(SgScopeStatement* scope,
   // This is a bug in the inlining support where the symbol tables are not setup just right.
      if (qualifierString.substr(0,2) == "0x")
         {
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
           printf ("WARNING: Detected qualified name generated from pointer value 0x..., reset to empty string (inlining does not fixup symbol tables) \n");
+#endif
           qualifierString = "";
         }
      ROSE_ASSERT(qualifierString.substr(0,2) != "0x");

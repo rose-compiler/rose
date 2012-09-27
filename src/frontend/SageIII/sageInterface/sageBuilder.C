@@ -583,11 +583,15 @@ SageBuilder::setTemplateArgumentParents( SgDeclarationStatement* decl )
                          SgDeclarationStatement* declaration = isSgDeclarationStatement(parent);
                          if (declaration != NULL)
                             {
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
                               printf ("In setTemplateArgumentParents(): Template argument already set to declaration = %p = %s \n",declaration,declaration->class_name().c_str());
+#endif
                             }
                            else
                             {
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
                               printf ("Error: In setTemplateArgumentParents(): I think it is an error for the template argument parent to be set to %p = %s \n",parent,parent->class_name().c_str());
+#endif
                             }
                        }
                   }
@@ -1613,7 +1617,7 @@ SageBuilder::buildMemberFunctionType(SgType* return_type, SgFunctionParameterTyp
        // DQ (3/22/2012): Added assertion.
           ROSE_ASSERT(typeInTable != funcType);
 
-#if 1
+#if 0
        // DQ (4/25/2012): While debugging let's skip calling delete so that the slot in the memory pool will not be reused.
           printf ("(debugging) Skipping delete of funcType = %p = %s \n",funcType,funcType->class_name().c_str());
 #else
@@ -1708,10 +1712,12 @@ SageBuilder::buildMemberFunctionType(SgType* return_type, SgFunctionParameterTyp
      if (typeList != NULL)
         {
           SgTypePtrList & typeListArgs = typeList->get_arguments();
+#if 0
           for (SgTypePtrList::iterator i = typeListArgs.begin(); i != typeListArgs.end(); i++)
              {
                printf ("   --- type argument = %p = %s \n",*i,(*i)->class_name().c_str());
              }
+#endif
         }
        else
         {
@@ -1821,7 +1827,7 @@ SageBuilder::buildMemberFunctionType(SgType* return_type, SgFunctionParameterTyp
        // DQ (3/22/2012): Added assertion.
           ROSE_ASSERT(typeInTable != funcType);
 
-#if 1
+#if 0
        // DQ (4/25/2012): While debugging let's skip calling delete so that the slot in the memory pool will not be reused.
           printf ("(debugging) Skipping delete of funcType = %p = %s \n",funcType,funcType->class_name().c_str());
 #else
@@ -1951,7 +1957,9 @@ checkThatNoTemplateInstantiationIsDeclaredInTemplateDefinitionScope ( SgDeclarat
   // non-null in the get_class_scope() member function.
      if (isSgMemberFunctionDeclaration(func) != NULL)
         {
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
           printf ("WARNING: setting parent of function to match scope by default \n");
+#endif
           func->set_parent(scope);
 
           ROSE_ASSERT(scope != NULL);
@@ -2683,7 +2691,9 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
        // since  stack scope is totally optional in SageBuilder.
           if (scope != SageBuilder::topScopeStack())
              {
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
                printf ("Warning: SageBuilder::buildNondefiningFunctionDeclaration_T(): scope parameter may not be the same as the topScopeStack() (e.g. for member functions) \n");
+#endif
              }
         }
 
@@ -3006,7 +3016,9 @@ SageBuilder::buildNondefiningMemberFunctionDeclaration (const SgName & name, SgT
   // SgMemberFunctionDeclaration * result = buildNondefiningFunctionDeclaration_T <SgMemberFunctionDeclaration> (name,return_type,paralist, /* isMemberFunction = */ true,scope,decoratorList,functionConstVolatileFlags);
      SgMemberFunctionDeclaration * result = NULL;
 
+#if 0
      printf ("In buildNondefiningMemberFunctionDeclaration(): buildTemplateInstantiation = %s \n",buildTemplateInstantiation ? "true" : "false");
+#endif
 
      if (buildTemplateInstantiation == true)
         {
@@ -3025,7 +3037,8 @@ SageBuilder::buildNondefiningMemberFunctionDeclaration (const SgName & name, SgT
   // set definingdecl for SgCtorInitializerList
      SgCtorInitializerList* ctor = result->get_CtorInitializerList();
      ROSE_ASSERT(ctor != NULL);
-  // required ty AstConsistencyTests.C:TestAstForProperlySetDefiningAndNondefiningDeclarations()
+
+  // required in AstConsistencyTests.C:TestAstForProperlySetDefiningAndNondefiningDeclarations()
      ctor->set_definingDeclaration(ctor);
      ctor->set_firstNondefiningDeclaration(ctor);
 
@@ -3267,11 +3280,15 @@ SageBuilder::buildNondefiningMemberFunctionDeclaration (const SgName & name, SgM
 
      // DQ (1/5/2009): This is not always true (should likely use SageBuilder::topScopeStack() instead)
      if (SageBuilder::topScopeStack()!= NULL) // This comparison only makes sense when topScopeStack() returns non-NULL value
-       // since  stack scope is totally optional in SageBuilder.
-       if (scope != SageBuilder::topScopeStack())
-       {
-         printf ("Warning: SageBuilder::buildNondefiningFunctionDeclaration_T(): scope parameter may not be the same as the topScopeStack() (e.g. for member functions) \n");
-       }
+        {
+       // Since stack scope is totally optional in SageBuilder.
+          if (scope != SageBuilder::topScopeStack())
+             {
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+               printf ("Warning: SageBuilder::buildNondefiningFunctionDeclaration_T(): scope parameter may not be the same as the topScopeStack() (e.g. for member functions) \n");
+#endif
+             }
+        }
 
      func->set_parent(scope);
 
@@ -3441,9 +3458,9 @@ SageBuilder::buildDefiningMemberFunctionDeclaration (const SgName & name, SgType
 
        // result = buildDefiningFunctionDeclaration_T <SgTemplateInstantiationMemberFunctionDecl> (name,return_type,paralist,/* isMemberFunction = */ true,scope,decoratorList,functionConstVolatileFlags,templateInstantiationMemberFunctionDecl);
           result = buildDefiningFunctionDeclaration_T <SgTemplateInstantiationMemberFunctionDecl> (name, return_type, paralist, /* isMemberFunction = */ true, scope, decoratorList, functionConstVolatileFlags, templateInstantiationMemberFunctionDecl, templateArgumentsList);
-
+#if 0
           printf ("In SageBuilder::buildDefiningMemberFunctionDeclaration(): isSgTemplateInstantiationMemberFunctionDecl(result)->get_templateName() = %s \n",isSgTemplateInstantiationMemberFunctionDecl(result)->get_templateName().str());
-
+#endif
           ROSE_ASSERT(isSgTemplateInstantiationMemberFunctionDecl(result) != NULL);
           ROSE_ASSERT(isSgTemplateInstantiationMemberFunctionDecl(result)->get_templateName().is_null() == false);
         }
@@ -3489,7 +3506,10 @@ SageBuilder::buildDefiningFunctionDeclaration_T(const SgName & XXX_name, SgType*
   // We want to have the non-defining declaration already exist before calling this function.
   // We could still build a higher level function that built both together.  Or we could provide two versions
   // named differently (from this one) and depricate this function...which I like much better.
+
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
      printf ("WARNING: This function for building defining function declarations has different semantics from that of the function to build defining class declarations. \n");
+#endif
 
      if (scope == NULL)
         {
@@ -7682,7 +7702,7 @@ SgModifierType* SageBuilder::buildModifierType(SgType* base_type /* = NULL*/)
 
      if (result != result2)
         {
-#if 1
+#if 0
        // DQ (9/3/2012): While debugging let's skip calling delete so that the slot in the memory pool will not be reused.
           printf ("(debugging) In SageBuilder::buildModifierType(): Skipping delete of SgModifierType = %p = %s \n",result,result->class_name().c_str());
 #else
@@ -7722,11 +7742,11 @@ SgModifierType* SageBuilder::buildConstType(SgType* base_type /*=NULL*/)
 
      if (result != result2)
         {
-#if 1
+#if 0
           printf ("In SageBuilder::buildConstType(result = %p) using type from type table (result2 = %p) deleting result = %p (skipping delete) \n",result,result2,result);
 #endif
 
-#if 1
+#if 0
        // DQ (9/3/2012): While debugging let's skip calling delete so that the slot in the memory pool will not be reused.
           printf ("(debugging) In SageBuilder::buildConstType(): Skipping delete of SgModifierType = %p = %s \n",result,result->class_name().c_str());
 #else
@@ -7758,7 +7778,7 @@ SageBuilder::buildFortranKindType(SgType* base_type, SgExpression* kindExpressio
 
      if (result != result2)
         {
-#if 1
+#if 0
        // DQ (9/3/2012): While debugging let's skip calling delete so that the slot in the memory pool will not be reused.
           printf ("(debugging) In SageBuilder::buildFortranKindType(): Skipping delete of SgModifierType = %p = %s \n",result,result->class_name().c_str());
 #else
@@ -7791,7 +7811,7 @@ SgModifierType* SageBuilder::buildVolatileType(SgType* base_type /*=NULL*/)
      SgModifierType * result2 = SgModifierType::insertModifierTypeIntoTypeTable(result);
      if (result != result2)
         {
-#if 1
+#if 0
        // DQ (9/3/2012): While debugging let's skip calling delete so that the slot in the memory pool will not be reused.
           printf ("(debugging) In SageBuilder::buildVolatileType(): Skipping delete of SgModifierType = %p = %s \n",result,result->class_name().c_str());
 #else
@@ -7827,7 +7847,7 @@ SgModifierType* SageBuilder::buildRestrictType(SgType* base_type)
      SgModifierType * result2 = SgModifierType::insertModifierTypeIntoTypeTable(result);
      if (result != result2)
         {
-#if 1
+#if 0
        // DQ (9/3/2012): While debugging let's skip calling delete so that the slot in the memory pool will not be reused.
           printf ("(debugging) In SageBuilder::buildRestrictType(): Skipping delete of SgModifierType = %p = %s \n",result,result->class_name().c_str());
 #else
@@ -7860,7 +7880,7 @@ SgModifierType* SageBuilder::buildUpcStrictType(SgType* base_type /*=NULL*/)
      SgModifierType *result2 = SgModifierType::insertModifierTypeIntoTypeTable(result);
      if (result != result2)
         {
-#if 1
+#if 0
        // DQ (9/3/2012): While debugging let's skip calling delete so that the slot in the memory pool will not be reused.
           printf ("(debugging) In SageBuilder::buildUpcStrictType(): Skipping delete of SgModifierType = %p = %s \n",result,result->class_name().c_str());
 #else
@@ -7893,7 +7913,7 @@ SgModifierType* SageBuilder::buildUpcRelaxedType(SgType* base_type /*=NULL*/)
      SgModifierType * result2 = SgModifierType::insertModifierTypeIntoTypeTable(result);
      if (result != result2)
         {
-#if 1
+#if 0
        // DQ (9/3/2012): While debugging let's skip calling delete so that the slot in the memory pool will not be reused.
           printf ("(debugging) In SageBuilder::buildUpcRelaxedType(): Skipping delete of SgModifierType = %p = %s \n",result,result->class_name().c_str());
 #else
@@ -7930,7 +7950,7 @@ SgModifierType* SageBuilder::buildUpcSharedType(SgType* base_type /*=NULL*/, lon
      SgModifierType * result2 = SgModifierType::insertModifierTypeIntoTypeTable(result);
      if (result != result2)
         {
-#if 1
+#if 0
        // DQ (9/3/2012): While debugging let's skip calling delete so that the slot in the memory pool will not be reused.
           printf ("(debugging) In SageBuilder::buildUpcSharedType(): Skipping delete of SgModifierType = %p = %s \n",result,result->class_name().c_str());
 #else
@@ -8235,7 +8255,7 @@ SageBuilder::buildNondefiningClassDeclaration_nfi(const SgName& XXX_name, SgClas
         }
 #endif
 
-#if 1
+#if 0
      printf ("SageBuilder::buildNondefiningClassDeclaration_nfi(): (and setting source position) nondefdecl = %p \n",nondefdecl);
 #endif
 
@@ -8285,8 +8305,9 @@ SageBuilder::buildNondefiningClassDeclaration_nfi(const SgName& XXX_name, SgClas
        // SgClassSymbol* mysymbol = scope->lookup_nontemplate_class_symbol(nameWithTemplateArguments);
           SgClassSymbol* mysymbol = scope->lookup_nontemplate_class_symbol(nameWithTemplateArguments,templateArgumentsList);
 
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
           printf ("In SageBuilder::buildNondefiningClassDeclaration(): mysymbol = %p = %s \n",mysymbol,(mysymbol != NULL) ? mysymbol->class_name().c_str() : "null");
-
+#endif
           if (mysymbol != NULL)
              {
                firstNondefdecl = isSgClassDeclaration(mysymbol->get_declaration());
@@ -8300,18 +8321,21 @@ SageBuilder::buildNondefiningClassDeclaration_nfi(const SgName& XXX_name, SgClas
 
                if (nondefdecl->get_type() == NULL)
                   {
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
                     printf ("In SageBuilder::buildNondefiningClassDeclaration(): Why are we creating a new type instead of reusing the type (firstNondefdecl->get_type() = %p) from the firstNondefdecl = %p \n",firstNondefdecl->get_type(),firstNondefdecl);
-
+#endif
                  // Note: It would be better to just call: "nondefdecl->set_type(firstNondefdecl->get_type());"
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
                     printf ("NOTE: Call nondefdecl->set_type(firstNondefdecl->get_type()); instead of nondefdecl->set_type(SgClassType::createType(firstNondefdecl)); \n");
-
+#endif
                  // DQ (3/22/2012): Be careful to use the same declaration as from the symbol.
                  // nondefdecl->set_type(SgClassType::createType(nondefdecl));
                     nondefdecl->set_type(SgClassType::createType(firstNondefdecl));
                     ROSE_ASSERT(nondefdecl->get_type() != NULL);
 
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
                     printf ("In SageBuilder::buildNondefiningClassDeclaration(): nondefdecl->get_type() = %p = %s \n",nondefdecl->get_type(),nondefdecl->get_type()->class_name().c_str());
-
+#endif
                  // DQ (9/4/2012): Added assertion.
                     ROSE_ASSERT(nondefdecl->get_type() == firstNondefdecl->get_type());
                   }
@@ -8416,8 +8440,9 @@ SageBuilder::buildNondefiningClassDeclaration_nfi(const SgName& XXX_name, SgClas
                     nondefdecl->set_type(SgClassType::createType(nondefdecl));
                   }
 
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
                printf ("NOTE: In buildNondefiningClassDeclaration_nfi(): 2nd time this is a performance issue (maybe) to call the lookup_nontemplate_class_symbol() again \n");
-
+#endif
             // DQ (8/22/2012): Use the template arguments to further disambiguate names that would 
             // not include name qualification on template arguments.
             // DQ (12/27/2011): Added new test.
@@ -8443,7 +8468,9 @@ SageBuilder::buildNondefiningClassDeclaration_nfi(const SgName& XXX_name, SgClas
 
      ROSE_ASSERT(nondefdecl->get_parent() != NULL);
 
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
      printf ("NOTE: In buildNondefiningClassDeclaration_nfi(): 3rd time this is a performance issue (maybe) to call the lookup_nontemplate_class_symbol() again \n");
+#endif
 
   // DQ (8/22/2012): Use the template arguments to further disambiguate names that would not include name qualification on template arguments.
   // DQ (12/27/2011): Added new test.
@@ -9005,7 +9032,7 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
 
 
   // Note that the nonDefiningDecl pointer does not appear to be used.
-#if 1
+#if 0
       printf ("WARNING: In SageBuilder::buildClassDeclaration_nfi(): the nonDefiningDecl pointer = %p (input parameter) does not appear to be used. \n",nonDefiningDecl);
 #endif
 
@@ -9058,7 +9085,7 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
      SgClassSymbol* mysymbol = NULL;
      if (scope != NULL)
         {
-#if 1
+#if 0
           printf ("Looking up the SgClassSymbol in scope = %p = %s nameWithTemplateArguments = %s \n",scope,scope->class_name().c_str(),nameWithTemplateArguments.str());
 #endif
 
@@ -9078,7 +9105,7 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
        // printf ("Warning: In SageBuilder::buildClassDeclaration_nfi(): scope == NULL \n");
         }
 
-#if 1
+#if 0
      printf ("In SageBuilder::buildClassDeclaration_nfi(): mysymbol = %p \n",mysymbol);
 #endif
 
@@ -9103,31 +9130,37 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
        // ROSE_ASSERT(nondefdecl->get_parent() != NULL);
           if (nondefdecl->get_parent() == NULL)
              {
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
                printf ("In SageBuilder::buildClassDeclaration_nfi(): Note that nondefdecl->get_parent() == NULL, this might be OK. \n");
+#endif
              }
 
        // DQ (9/7/2012): I think this might be the root of a problem in the haskell tests (ROSE compiling ROSE).
           if (nondefdecl->get_definingDeclaration() != NULL)
              {
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
                printf ("ERROR: Non defining declaration nondefdecl = %p = %s already has a defining declaration, so we would be build another nondefdecl->get_definingDeclaration() = %p = %s \n",
                     nondefdecl,nondefdecl->class_name().c_str(),nondefdecl->get_definingDeclaration(),nondefdecl->get_definingDeclaration()->class_name().c_str());
-
+#endif
                SgClassDeclaration* nondefining_classDeclaration = isSgClassDeclaration(nondefdecl);
                ROSE_ASSERT(nondefining_classDeclaration != NULL);
                SgClassDeclaration* defining_classDeclaration = isSgClassDeclaration(nondefdecl->get_definingDeclaration());
                ROSE_ASSERT(defining_classDeclaration != NULL);
 
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
                printf ("In SageBuilder::buildClassDeclaration_nfi(): nondefining_classDeclaration: scope = %p = %s name = %s \n",
                     nondefining_classDeclaration->get_scope(),nondefining_classDeclaration->get_scope()->class_name().c_str(),nondefining_classDeclaration->get_name().str());
                printf ("In SageBuilder::buildClassDeclaration_nfi(): defining_classDeclaration:    scope = %p = %s name = %s \n",
                     defining_classDeclaration->get_scope(),defining_classDeclaration->get_scope()->class_name().c_str(),defining_classDeclaration->get_name().str());
+#endif
 #if 0
                printf ("Error: In SageBuilder::buildClassDeclaration_nfi(): exiting as part of test \n");
                ROSE_ASSERT(false);
 #endif
             // DQ (9/24/2012): This only appears to happen for large tests (e.g. ROSE compiling ROSE), alow it for the moment and look into this later.
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
                printf ("WARNING: In SageBuilder::buildClassDeclaration_nfi(): but a defining declaration was found to have already been built (might be an error), so returning it defining_classDeclaration = %p \n",defining_classDeclaration);
-
+#endif
                return defining_classDeclaration;
              }
 
@@ -9140,7 +9173,7 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
         }
        else // build a nondefnining declaration if it does not exist
         {
-#if 1
+#if 0
           printf ("In In SageBuilder::buildClassDeclaration_nfi(): building a nondefnining declaration if it does not exist \n");
 #endif
        // DQ (1/25/2009): We only want to build a new declaration if we can't reuse the existing declaration.
@@ -9176,14 +9209,16 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
                isSgTemplateInstantiationDecl(nondefdecl)->get_templateArguments() = *templateArgumentsList;
 
             // DQ (9/13/2012): Set the parents of the template arguments (if not already set, to the first non-defining declaration).
-               printf ("Calling setTemplateArgumentParents(): nondefdecl = %p = %s \n",nondefdecl,nondefdecl->class_name().c_str());
+            // printf ("Calling setTemplateArgumentParents(): nondefdecl = %p = %s \n",nondefdecl,nondefdecl->class_name().c_str());
                setTemplateArgumentParents(nondefdecl);
-               printf ("DONE: Calling setTemplateArgumentParents(): nondefdecl = %p = %s \n",nondefdecl,nondefdecl->class_name().c_str());
+            // printf ("DONE: Calling setTemplateArgumentParents(): nondefdecl = %p = %s \n",nondefdecl,nondefdecl->class_name().c_str());
 
                testTemplateArgumentParents(nondefdecl);
 #endif
             // DQ (6/6/2012): Generate the name without the template arguments.
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
                printf ("Warning: In buildClassDeclaration_nfi(): calling set_templateName(nameWithTemplateArguments = %s) for nondefining declaration \n",nameWithTemplateArguments.str());
+#endif
             // isSgTemplateInstantiationDecl(nondefdecl)->set_templateName(name);
             // isSgTemplateInstantiationDecl(nondefdecl)->set_templateName("SETME_NONDEFINING_DECL<>");
             // isSgTemplateInstantiationDecl(nondefdecl)->set_templateName(name);
@@ -9192,7 +9227,7 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
             // DQ (6/6/2012): I don't think we want this test any more (should apply only to the result of get_templateName()).
             // DQ (5/31/2012): Find locations where this is set and include template syntax.
             // ROSE_ASSERT(name.getString().find('<') == string::npos);
-               printf ("Commented out test for: name.getString().find('<') == string::npos (should apply only to the result of get_templateName() \n");
+            // printf ("Commented out test for: name.getString().find('<') == string::npos (should apply only to the result of get_templateName() \n");
 
                ROSE_ASSERT(isSgTemplateInstantiationDecl(nondefdecl)->get_templateName().is_null() == false);
 
@@ -9200,7 +9235,9 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
             // if (isSgTemplateInstantiationDecl(nondefdecl)->get_templateName().getString().find('>') == string::npos)
                if (hasTemplateSyntax(isSgTemplateInstantiationDecl(nondefdecl)->get_templateName()) == false);
                   {
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
                     printf ("WARNING: No template syntax present in name of template class instantiation (nondefdecl) \n");
+#endif
                   }
             // ROSE_ASSERT(isSgTemplateInstantiationDecl(nondefdecl)->get_templateName().getString().find('>') != string::npos);
 
@@ -9210,7 +9247,7 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
             else
              {
             // We know that the name without template arguments should be used here (but they are the same).
-#if 1
+#if 0
                printf ("WARNING: In buildClassDeclaration_nfi(): Are we building a new SgClassDeclaration as a nondefining declaration when we should be using the nonDefiningDecl = %p \n",nonDefiningDecl);
 #endif
             // nondefdecl = new SgClassDeclaration(name,kind,NULL,NULL);
@@ -9263,8 +9300,8 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
           ROSE_ASSERT(nondefdecl->get_type() != NULL);
           if (nondefdecl->get_type()->get_declaration() != nondefdecl)
              {
-               printf ("nondefdecl->get_type() = %p = %s \n",nondefdecl->get_type(),nondefdecl->get_type()->class_name().c_str());
-               printf ("nondefdecl = %p = %s nondefdecl->get_type()->get_declaration() = %p = %s \n",nondefdecl,nondefdecl->class_name().c_str(),nondefdecl->get_type()->get_declaration(),nondefdecl->get_type()->get_declaration()->class_name().c_str());
+               printf ("ERROR: nondefdecl->get_type() = %p = %s \n",nondefdecl->get_type(),nondefdecl->get_type()->class_name().c_str());
+               printf ("ERROR: nondefdecl = %p = %s nondefdecl->get_type()->get_declaration() = %p = %s \n",nondefdecl,nondefdecl->class_name().c_str(),nondefdecl->get_type()->get_declaration(),nondefdecl->get_type()->get_declaration()->class_name().c_str());
              }
           ROSE_ASSERT(nondefdecl->get_type()->get_declaration() == nondefdecl);
 
@@ -9413,7 +9450,9 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
        // DQ (3/22/2012): Make sure there is template syntax present.
           if (isSgTemplateInstantiationDecl(defdecl)->get_templateName().getString().find('>') == string::npos)
              {
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
                printf ("WARNING: No template syntax present in name of template class instantiation (defdecl) \n");
+#endif
              }
        // ROSE_ASSERT(isSgTemplateInstantiationDecl(defdecl)->get_templateName().getString().find('>') != string::npos);
 #if 0
@@ -9491,10 +9530,12 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
             // DQ (3/15/2012): Make this conditional upon the types not already being equal.
                if (nondefdecl->get_type() != defdecl->get_type())
                   {
+#if 0
                     printf ("Deleting defdecl->get_type() = %p = %s (using type from nondefdecl = %p) \n",defdecl->get_type(),defdecl->get_type()->class_name().c_str(),nondefdecl);
                     printf ("Skipping delete of %p to maintain unique type pointers \n",defdecl->get_type());
-                 // delete (defdecl->get_type());
-
+#else
+                    delete defdecl->get_type();
+#endif
                  // DQ (3/15/2012): This will be reset below.
                     defdecl->set_type(NULL);
 #if 0
@@ -10258,7 +10299,9 @@ SageBuilder::buildTemplateClassDeclaration_nfi(const SgName& XXX_name, SgClassDe
 #if 1
        // Do this after the scope has been set!
        // DQ (12/4/2011): Now we want to enable this so that the SgClassType will be available from a SgTemplateClassDeclaration.
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
           printf ("In buildTemplateClassDeclaration_nfi(): nondefdecl->get_type() = %p \n",nondefdecl->get_type());
+#endif
           if (nondefdecl->get_type() == NULL)
              {
             // nondefdecl->set_type(SgClassType::createType(nondefdecl));
@@ -10351,6 +10394,7 @@ SageBuilder::buildTemplateClassDeclaration_nfi(const SgName& XXX_name, SgClassDe
   // used in a defining declaration).
      nondefdecl->setForward();
 
+#if 0
      if (scope != NULL)  // put into fixStructDeclaration() or alike later on
         {
        // fixStructDeclaration(defdecl,scope);
@@ -10359,6 +10403,7 @@ SageBuilder::buildTemplateClassDeclaration_nfi(const SgName& XXX_name, SgClassDe
           printf ("***** WARNING *****: Commented out call to fixStructDeclaration() \n");
        // ROSE_ASSERT(false);
         }
+#endif
 
      ROSE_ASSERT(defdecl->get_definingDeclaration() == defdecl);
      ROSE_ASSERT(defdecl->get_firstNondefiningDeclaration() != defdecl->get_definingDeclaration());

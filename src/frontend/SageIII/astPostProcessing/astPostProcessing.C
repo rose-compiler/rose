@@ -156,8 +156,9 @@ void postProcessingSupport (SgNode* node)
   // fixups should be required, some are still required.
      if (doPostprocessing == false)
         {
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
           printf ("Postprocessing AST build using new EDG/Sage Translation Interface. \n");
-
+#endif
        // DQ (5/1/2012): After EDG/ROSE translation, there should be no IR nodes marked as transformations.
           detectTransformations(node);
 
@@ -238,8 +239,9 @@ void postProcessingSupport (SgNode* node)
        // DQ (5/2/2012): After EDG/ROSE translation, there should be no IR nodes marked as transformations.
           detectTransformations(node);
 
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
           printf ("DONE: Postprocessing AST build using new EDG/Sage Translation Interface. \n");
-
+#endif
           return;
         }
 #endif // ROSE_USE_NEW_EDG_INTERFACE -- do postprocessing unconditionally when the old EDG interface is used

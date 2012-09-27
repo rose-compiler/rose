@@ -756,7 +756,9 @@ MarkTemplateInstantiationsForOutput::ProcessClassTemplateDeclarations ( set<SgDe
           bool isfirstNondefiningDeclaration = firstNondefiningDeclaration == NULL ? false : (*i == firstNondefiningDeclaration);
        // first debug the member functions!
 
+#if 0
           printf ("In ProcessClassTemplateDeclarations() set element = %p = %s \n",*i,(*i)->class_name().c_str());
+#endif
 
           SgTemplateInstantiationDecl* classInstantiation = isSgTemplateInstantiationDecl(*i);
           if (classInstantiation != NULL)
@@ -807,7 +809,7 @@ MarkTemplateInstantiationsForOutput::ProcessClassTemplateDeclarations ( set<SgDe
 #endif
                     if (isSpecialization == true)
                        {
-#if 1
+#if 0
                          printf ("Calling markForOutputInCodeGeneration on classInstantiation = %p = %s \n",classInstantiation,classInstantiation->class_name().c_str());
 #endif
                          markForOutputInCodeGeneration (classInstantiation);

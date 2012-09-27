@@ -1706,7 +1706,7 @@ resetParentPointersInMemoryPool(SgNode* node)
      TimingPerformance timer ("Reset parent pointers in memory pool:");
 
      ROSE_ASSERT(node != NULL);
-     printf ("In resetParentPointersInMemoryPool() : node = %p = %s \n",node,node->class_name().c_str());
+  // printf ("In resetParentPointersInMemoryPool() : node = %p = %s \n",node,node->class_name().c_str());
 
      SgGlobal* globalScope = NULL;
      SgProject* project = isSgProject(node);

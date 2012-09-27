@@ -4879,7 +4879,9 @@ void
 SageInterface::setSourcePosition( SgLocatedNode* locatedNode )
    {
   // DQ (5/1/2012): Older depricated function.
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
      printf ("+++++ Depricated function setSourcePosition() (use setSourcePositionToDefault() instead) \n");
+#endif
      setSourcePositionToDefault(locatedNode);
    }
 #endif
@@ -5018,7 +5020,10 @@ void
 SageInterface::setOneSourcePositionForTransformation(SgNode *node)
    {
   // DQ (5/1/2012): Older depricated function.
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
      printf ("+++++ Depricated function (use setSourcePositionAsTransformation() instead) (no using internal source position mode) \n");
+#endif
+
   // setSourcePositionAsTransformation(node);
      setSourcePosition(node);
    }
@@ -10194,7 +10199,9 @@ void SageInterface::fixFunctionDeclaration(SgFunctionDeclaration* stmt, SgScopeS
        {
       // DQ (3/5/2012): This is a problem for test2012_13.C (test code taken from test2004_42.C).
       // fTable->set_parent(getGlobalScope(scope));
+#if 0
          printf ("WARNING: Skip setting the scope of the SgFunctionTypeTable scope = %p = %s \n",scope,scope->class_name().c_str());
+#endif
          fTable->set_parent(getGlobalScope(scope));
        }
 
