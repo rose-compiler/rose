@@ -1,0 +1,1 @@
+./codethorn tests/rers/Problem$1.c --verify tests/rers/properties$1.txt --csv-ltl CodeThorn_Problem$1_ltl_csv.txt --csv-assert CodeThorn_Problem$1_assert_csv.txt
