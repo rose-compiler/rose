@@ -92,13 +92,12 @@ list<SingleEvalResultConstInt> listify(SingleEvalResultConstInt res) {
 
 list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState eState, bool useConstraints, bool safeConstraintPropagation) {
   assert(eState.state); // ensure state exists
-  cout << "EVAL CONST INT:"<<endl;
   SingleEvalResultConstInt res;
   // initialize with default values from argument(s)
   res.eState=eState;
   res.result=AType::ConstIntLattice(AType::Bot());
   if(dynamic_cast<SgBinaryOp*>(node)) {
-	cout << "BinaryOp:"<<SgNodeHelper::nodeToString(node)<<endl;
+	//cout << "BinaryOp:"<<SgNodeHelper::nodeToString(node)<<endl;
 
 	SgNode* lhs=SgNodeHelper::getLhs(node);
 	list<SingleEvalResultConstInt> lhsResultList=evalConstInt(lhs,eState,useConstraints,safeConstraintPropagation);
@@ -116,7 +115,6 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState eS
 		SingleEvalResultConstInt lhsResult=*liter;
 		SingleEvalResultConstInt rhsResult=*riter;
 
-		cout << "SWITCH ON:"<<SgNodeHelper::nodeToString(node)<<endl;
 		switch(node->variantT()) {
 		case V_SgEqualityOp: {
 		  res.result=(lhsResult.result==rhsResult.result);

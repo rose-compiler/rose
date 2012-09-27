@@ -8,7 +8,7 @@
  *************************************************************/
 
 //#define CSET_MAINTAINER_LIST
-#define CSET_MAINTAINER_SET
+//#define CSET_MAINTAINER_SET
 //#define CSET_MAINTAINER_HSET
 
 #include <set>

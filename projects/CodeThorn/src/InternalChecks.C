@@ -338,20 +338,22 @@ void checkTypes() {
 	check("es1!=es2",es1!=es2);
 	check("es2!=es3",es1!=es3);
 	check("es1!=es3",es2!=es3);
-#ifdef ESTATESET_REF
+#ifdef ESTATE_MAINTAINER_LIST
 	nocheck("es1<es2",es2<es1);
 	nocheck("!(es2<es1)",!(es1<es2));
-#else
+#endif
+#ifdef ESTATE_MAINTAINER_SET
 	check("es1<es2",es1<es2);
 	check("!(es2<es1)",!(es2<es1));
 #endif
 
 	check("!(es1==es2)",!(es1==es2));
 
-#ifdef ESTATESET_REF
+#ifdef ESTATE_MAINTAINER_LIST
 	nocheck("es1<es3",es1<es3);
 	nocheck("es2<es3",es2<es3);
-#else
+#endif
+#ifdef ESTATE_MAINTAINER_SET
 	check("es1<es3",es1<es3);
 	check("es2<es3",es2<es3);
 #endif

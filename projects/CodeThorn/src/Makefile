@@ -1,7 +1,6 @@
 # MS: makefile for local development with installed version of ROSE.
 
 # for building the reference implementation use:
-# make codethornref REFKNOBS="-DSTATESET_REF -DESTATE_REF" 
 
 TOOLNAME3 = codethorn
 MYDATE = `date +%Y_%m_%d`
@@ -22,7 +21,11 @@ ROSE_LIBS = -Wl,-rpath -Wl,$(ROSE_LIB_DIR) -L $(ROSE_LIB_DIR) -lrose
 
 # Location of ROSE's libtool (it's only in the compilation path)
 
-CPPFLAGS              = $(REFKNOBS) -O3 -march=native -ftree-vectorize -ggdb
+#KNOBS = -DSTATE_MAINTAINER_LIST -DESTATE_MAINTAINER_LIST -DCSET_MAINTAINER_LIST
+KNOBS = -DSTATE_MAINTAINER_SET -DESTATE_MAINTAINER_SET -DCSET_MAINTAINER_SET
+#KNOBS = -DSTATE_MAINTAINER_SET -DESTATE_MAINTAINER_SET -DCSET_MAINTAINER_HSET
+
+CPPFLAGS              = $(KNOBS) -O3 -march=native -ftree-vectorize -ggdb
 #CXXCPPFLAGS           = @CXXCPPFLAGS@
 CXXFLAGS              = -Wno-deprecated
 LDFLAGS               = 

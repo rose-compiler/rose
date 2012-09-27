@@ -3,6 +3,12 @@
 
 #define USER_DEFINED_STATE_COMP
 
+//#define STATE_MAINTAINER_LIST
+//#define STATE_MAINTAINER_SET
+
+//#define ESTATE_MAINTAINER_LIST
+//#define ESTATE_MAINTAINER_SET
+
 /*************************************************************
  * Copyright: (C) 2012 by Markus Schordan                    *
  * Author   : Markus Schordan                                *
@@ -37,9 +43,10 @@ class State : public map<VariableId,CppCapsuleAValue> {
   long memorySize() const;
 };
 
-#ifdef STATESET_REF
+#ifdef STATE_MAINTAINER_LIST
 class StateSet : public list<State> {
-#else
+#endif
+#ifdef STATE_MAINTAINER_SET
 class StateSet : public set<State> {
 #endif
  public:
@@ -112,7 +119,7 @@ bool operator!=(const State& c1, const State& c2);
 #endif
 
 // define order for EState elements (necessary for EStateSet)
-#ifndef ESTATESET_REF
+#ifndef ESTATE_MAINTAINER_LIST
 bool operator<(const EState& c1, const EState& c2);
 bool operator==(const EState& c1, const EState& c2);
 bool operator!=(const EState& c1, const EState& c2);
@@ -124,11 +131,10 @@ struct EStateLessComp {
   }
 };
 
-
-
-#ifdef ESTATESET_REF
+#ifdef ESTATE_MAINTAINER_LIST
 class EStateSet : public list<EState> {
-#else
+#endif
+#ifdef ESTATE_MAINTAINER_SET
   class EStateSet : public set<EState> {
 #endif
  public:
