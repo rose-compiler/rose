@@ -72,13 +72,13 @@ X does never follow after Y
 ----------------------------------------
 
 17
-(G ! iX)
-input X will never occur
+(!(G ! iX))
+input X is never handled. Although it is never tested for, it is still part of the catch-all case.
 ----------------------------------------
 
 18
 (F iA)
-input A will occur
+input A will be handled
 ----------------------------------------
 
 19
@@ -91,27 +91,27 @@ X and W happen not at the same time
 
 21
 Checking for equivalence: A == B === A&B | (!A & !B)
-((! (X oY) & X (! oY)) | (!(! (X oY)) & !(X (! oY))))
+(G ((! (X oY) & X (! oY)) | (!(! (X oY)) & !(X (! oY)))))
 equivalence !X A == X !A, for A=oY
 
 22
-((! (F oY) & G (! oY)) | (!(! (F oY)) & !(G (! oY))))
+(G ((! (F oY) & G (! oY)) | (!(! (F oY)) & !(G (! oY)))))
 equivalence !F A == G !A, for A=oY
 
 23
-((! (G oY) & F (! oY)) | (!(! (G oY)) & !(F (! oY))))
+(G ((! (G oY) & F (! oY)) | (!(! (G oY)) & !(F (! oY)))))
 equivalence !G A == F !A, for A=oY
 
 24
-(((! (oY U oX)) & (!oY R !oX)) | ((!!(oY U oX)) & !(!oY R !oX)))
+(G (((! (oY U oX)) & (!oY R !oX)) | ((!!(oY U oX)) & !(!oY R !oX))))
 equivalence ! A U B == !A R !B
 
 25
-(((! (oY R oX)) & (!oY U !oX)) | ((!!(oY R oX)) & !(!oY U !oX)))
+(G (((! (oY R oX)) & (!oY U !oX)) | ((!!(oY R oX)) & !(!oY U !oX))))
 equivalence ! A R B == !A U !B
 
 26
-(((oY R oX) & (!(!oY U !oX))) | ((!(oY R oX)) & !!(!oY U !oX)))
+(G (((oY R oX) & (!(!oY U !oX))) | ((!(oY R oX)) & !!(!oY U !oX))))
 equivalence A R B == !(!A U !B)
 
 27
@@ -126,3 +126,7 @@ output Y occurs after output X
 (!((G ! oY) | (F (oY & (F oX)))))
 NOT: output X occurs after output Y
 
+30
+(G (! iA | (F oY)))
+output Y responds to input A
+----------------------------------------
