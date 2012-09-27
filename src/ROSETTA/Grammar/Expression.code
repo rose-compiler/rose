@@ -3255,11 +3255,13 @@ SgFunctionCallExp::get_type() const
         {
 #if 1
        // DQ (8/26/2012): Decrease the volume of warnings from this part of the code.
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
           static int count = 0;
           if (count++ % 100 == 0)
              {
                printf ("Warning: unexpected type found for likelyFunctionType = %p = %s \n",likelyFunctionType,likelyFunctionType->class_name().c_str());
              }
+#endif
 #else
           printf ("Warning: unexpected type found for likelyFunctionType = %p = %s \n",likelyFunctionType,likelyFunctionType->class_name().c_str());
 #endif
@@ -4080,6 +4082,14 @@ SgPointerDerefExp::get_type() const
                break;
              }
 #endif
+
+       // DQ (9/27/2012): Added case to avoid falling through the default case (more template support).
+          case V_SgTemplateType:
+             {
+            // DQ (9/27/2012): I think that this is the correct handling of the return value generation.
+               returnType = someType;
+               break;
+             }
 
 #if 0
        // DQ (10/3/2006): I think this is no longer required, since we fixed the case of sizeof taking an 

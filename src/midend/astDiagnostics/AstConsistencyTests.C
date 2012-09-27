@@ -1012,8 +1012,9 @@ TestAstProperties::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttribu
                          ROSE_ASSERT(varRefExp != NULL);
 
                       // Unclear what should be checked here, for now allow this as an acceptable case.
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
                          printf ("Warning: EDG 4.0 specific case, found unusual case of SgVarRefExp returned from SgFunctionCallExp::get_function() member function \n");
-
+#endif
                          break;
                        }
 #endif
@@ -1025,11 +1026,13 @@ TestAstProperties::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttribu
                       // Unclear what should be checked here, for now allow this as an acceptable case.
 #if 1
                       // DQ (8/26/2012): Decrease the volume of warnings from this part of the code.
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
                          static int count = 0;
                          if (count++ % 100 == 0)
                             {
                               printf ("Warning: EDG 4.0 specific case, found unusual case of SgIntVal returned from SgFunctionCallExp::get_function() member function \n");
                             }
+#endif
 #else
                          printf ("Warning: EDG 4.0 specific case, found unusual case of SgIntVal returned from SgFunctionCallExp::get_function() member function \n");
 #endif
@@ -1042,7 +1045,9 @@ TestAstProperties::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttribu
                     case V_SgFunctionCallExp:
                        {
                       // Unclear what should be checked here, for now allow this as an acceptable case.
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
                          printf ("Warning: EDG 4.0 specific case, found unusual case of SgFunctionCallExp returned from SgFunctionCallExp::get_function() member function \n");
+#endif
                          break;
                        }
 #endif
@@ -1052,7 +1057,9 @@ TestAstProperties::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttribu
                     case V_SgConstructorInitializer:
                        {
                       // Unclear what should be checked here, for now allow this as an acceptable case.
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
                          printf ("Warning: EDG 4.0 specific case, found unusual case of SgConstructorInitializer returned from SgFunctionCallExp::get_function() member function \n");
+#endif
                          break;
                        }
 #endif
@@ -1061,7 +1068,9 @@ TestAstProperties::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttribu
                     case V_SgTemplateMemberFunctionRefExp:
                        {
                       // Unclear what should be checked here, for now allow this as an acceptable case.
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
                          printf ("Warning: EDG 4.0 specific case, found unusual case of SgTemplateMemberFunctionRefExp returned from SgFunctionCallExp::get_type() member function \n");
+#endif
                          break;
                        }
 #endif
@@ -1128,11 +1137,13 @@ TestAstProperties::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttribu
                       // Unclear what should be checked here, for now allow this as an acceptable case.
 #if 1
                       // DQ (8/26/2012): Decrease the volume of warnings from this part of the code.
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
                          static int count = 0;
                          if (count++ % 100 == 0)
                             {
                               printf ("Warning: EDG 4.0 specific case, found unusual case of SgTypeInt returned from SgFunctionCallExp::get_type() member function \n");
                             }
+#endif
 #else
                          printf ("Warning: EDG 4.0 specific case, found unusual case of SgTypeInt returned from SgFunctionCallExp::get_type() member function \n");
 #endif
@@ -1144,7 +1155,9 @@ TestAstProperties::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttribu
                     case V_SgTemplateType:
                        {
                       // Unclear what should be checked here, for now allow this as an acceptable case.
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
                          printf ("Warning: EDG 4.0 specific case, found unusual case of SgTemplateType returned from SgFunctionCallExp::get_type() member function \n");
+#endif
                          break;
                        }
 #endif
@@ -1153,7 +1166,9 @@ TestAstProperties::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttribu
                     case V_SgClassType:
                        {
                       // Unclear what should be checked here, for now allow this as an acceptable case.
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
                          printf ("Warning: EDG 4.0 specific case, found unusual case of SgClassType returned from SgFunctionCallExp::get_type() member function \n");
+#endif
                          break;
                        }
 #endif
@@ -1162,7 +1177,9 @@ TestAstProperties::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttribu
                     case V_SgReferenceType:
                        {
                       // Unclear what should be checked here, for now allow this as an acceptable case.
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
                          printf ("Warning: EDG 4.0 specific case, found unusual case of SgReferenceType returned from SgFunctionCallExp::get_type() member function \n");
+#endif
                          break;
                        }
 #endif
@@ -1536,7 +1553,9 @@ TestAstTemplateProperties::visit ( SgNode* astNode )
             // It might be that the function template does not exist but that the class template containing the function template is available.
                if (s->get_templateDeclaration() == NULL)
                   {
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
                     printf ("ERROR: s->get_templateDeclaration() == NULL (s = %p = SgTemplateInstantiationFunctionDecl) \n",s);
+#endif
                   }
              // ROSE_ASSERT (s->get_templateDeclaration() != NULL);
 
@@ -1546,9 +1565,11 @@ TestAstTemplateProperties::visit ( SgNode* astNode )
                  // (only the instantiations are possibly marked as compiler generated).
                     if (s->get_templateDeclaration()->get_file_info()->isCompilerGenerated() == true && SgProject::get_verbose() > 0)
                        {
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
                          printf ("Warning: SgTemplateInstantiationFunctionDecl's original template declaration %s is marked as compiler generated: \n", s->get_templateDeclaration()->get_qualified_name().str());
                          s->get_startOfConstruct()->display("SgTemplateInstantiationFunctionDecl debug");
                          s->get_templateDeclaration()->get_startOfConstruct()->display("SgTemplateDecl debug");
+#endif
                        }
                  // ROSE_ASSERT (s->get_templateDeclaration()->get_file_info()->isCompilerGenerated() == false);
                   }
@@ -1564,7 +1585,9 @@ TestAstTemplateProperties::visit ( SgNode* astNode )
             // DQ (5/3/2012): Allow this for now, but make it a warning.
                if (s->get_templateDeclaration() == NULL)
                   {
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
                     printf ("WARNING: case V_SgTemplateInstantiationMemberFunctionDecl: templateDeclaration == NULL (some templates are unavailable in EDG). \n");
+#endif
                   }
             // ROSE_ASSERT (s->get_templateDeclaration() != NULL);
 
@@ -1661,8 +1684,10 @@ TestAstTemplateProperties::visit ( SgNode* astNode )
                                 // This is NOT a data member of the templated class (or nested class of a templated class)
                                    if (variableDeclaration->get_specialization() != SgClassDeclaration::e_no_specialization)
                                       {
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
                                         printf ("Note: AST ConsistancyTest: variableDeclaration->get_specialization() = %d != SgClassDeclaration::e_no_specialization  (variableDeclaration = %p) \n",variableDeclaration->get_specialization(),variableDeclaration);
                                         variableDeclaration->get_file_info()->display("variableDeclaration->get_specialization() != SgClassDeclaration::e_no_specialization");
+#endif
                                       }
                                 // DQ (6/30/2005): Commented out to focus more on KULL, output a warning for now!
                                 // ROSE_ASSERT(variableDeclaration->get_specialization() == SgClassDeclaration::e_no_specialization);
