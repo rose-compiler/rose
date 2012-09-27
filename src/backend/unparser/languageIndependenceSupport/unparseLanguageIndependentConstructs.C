@@ -2200,7 +2200,7 @@ UnparseLanguageIndependentConstructs::unparseBoolVal(SgExpression* expr, SgUnpar
      bool C_language_support = false;
      SgFile* file = TransformationSupport::getFile(expr);
 
-#if 1
+#if 0
      printf ("In unparseBoolVal(): resolving file to be %p \n",file);
 #endif
 
@@ -2210,7 +2210,7 @@ UnparseLanguageIndependentConstructs::unparseBoolVal(SgExpression* expr, SgUnpar
        // C_language_support = true;
           if (info.get_language() != SgFile::e_default_output_language)
              {
-#if 1
+#if 0
                printf ("In unparseBoolVal(): The output language has been specified directly info.get_language() = %d \n");
 #endif
                C_language_support = (info.get_language() == SgFile::e_C_output_language);
@@ -2253,11 +2253,11 @@ UnparseLanguageIndependentConstructs::unparseBoolVal(SgExpression* expr, SgUnpar
        // if (bool_val->get_value() == true)
           if (bool_val->get_value() != 0)
              {
-               curprint ( "1");
+               curprint("1");
              }
             else
              {
-               curprint (  "0");
+               curprint("0");
              }
         }
        else
@@ -2269,11 +2269,11 @@ UnparseLanguageIndependentConstructs::unparseBoolVal(SgExpression* expr, SgUnpar
        // if (bool_val->get_value() == true)
           if (bool_val->get_value() != 0)
              {
-               curprint (  "true");
+               curprint("true");
              }
             else
              {
-               curprint (  "false");
+               curprint("false");
              }
         }
    }

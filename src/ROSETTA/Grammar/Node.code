@@ -2541,7 +2541,9 @@ SgNode::set_parent ( SgNode* parent )
   // I think this should be always be true, so let's inforce it (this happends for test2005_64.C)
      if ( ( variantT() == V_SgClassDeclaration ) && ( parent != NULL && parent->variantT() == V_SgFunctionParameterList ) )
         {
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
           printf ("Warning: Found case in set_parent() where this is a SgClassDeclaration and parent is a SgFunctionParameterList \n");
+#endif
        // get_file_info()->display("Warning: Found case in set_parent() where this is a SgClassDeclaration and parent is a SgFunctionParameterList");
         }
   // ROSE_ASSERT( ( variantT() != V_SgClassDeclaration ) || ( parent->variantT() != V_SgFunctionParameterList ) );
@@ -2555,7 +2557,9 @@ SgNode::set_parent ( SgNode* parent )
 
      if ( ( variantT() == V_SgClassDeclaration ) && ( parent != NULL && parent->variantT() == V_SgGlobal ) )
         {
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
           printf ("Warning: Found case in set_parent() where this is a SgClassDeclaration and parent is a SgGlobal \n");
+#endif
        // get_file_info()->display("Warning: Found case in set_parent() where this is a SgClassDeclaration and parent is a SgFunctionParameterList");
         }
   // ROSE_ASSERT( ( variantT() != V_SgClassDeclaration ) || ( parent->variantT() != V_SgGlobal ) );

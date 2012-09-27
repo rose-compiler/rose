@@ -1572,7 +1572,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
 
                     default:
                        {
-#if 1
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
                          printf ("Skipping any possability of attaching a comment/directive after a %s \n",n->class_name().c_str());
                       // ROSE_ASSERT(false);
 #endif

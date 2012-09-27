@@ -230,6 +230,9 @@ mangleQualifiersToString (const SgScopeStatement* scope)
         {
           switch (scope->variantT ())
              {
+            // DQ (9/27/2012): Added this case to be the same as that for SgClassDefinition (removed case below).
+               case V_SgTemplateClassDefinition:
+
                case V_SgClassDefinition:
                case V_SgTemplateInstantiationDefn:
                   {
@@ -292,6 +295,22 @@ mangleQualifiersToString (const SgScopeStatement* scope)
                     break;
                   }
 
+               case V_SgTemplateFunctionDefinition:
+                  {
+#if 1
+                 // DQ (8/26/2012): Decrease the volume of warnings from this part of the code.
+                    static int count = 0;
+                    if (count++ % 100 == 0)
+                       {
+                         printf ("WARNING: In mangleQualifiersToString(const SgScopeStatement*): Case SgTemplateFunctionDefinition not implemented \n");
+                       }
+#else
+                    printf ("WARNING: In mangleQualifiersToString(const SgScopeStatement*): Case SgTemplateFunctionDefinition not implemented \n");
+#endif
+                    break;
+                  }
+
+#if 0
             // DQ (5/12/2012): Implement this case later, but it does not cause anything to fail presently (I think).
                case V_SgTemplateClassDefinition:
                   {
@@ -307,6 +326,7 @@ mangleQualifiersToString (const SgScopeStatement* scope)
 #endif
                     break;
                   }
+#endif
 
             // DQ (3/14/2012): I think that defaults should be resurced for errors, and not proper handling of unexpected cases.
                default: // Embed the class name for subsequent debugging.

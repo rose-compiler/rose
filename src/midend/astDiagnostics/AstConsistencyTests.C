@@ -1648,7 +1648,9 @@ TestAstTemplateProperties::visit ( SgNode* astNode )
                          if (templateClassDefinition != NULL)
                             {
                            // Special case...debugging new use of SgTemplateClassDefinition.
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
                               printf ("AST ConsistancyTest: TestAstTemplateProperties Found a case of SgTemplateClassDefinition (case not handled) \n");
+#endif
                             }
                            else
                             {
@@ -4264,7 +4266,7 @@ TestParentPointersInMemoryPool::visit(SgNode* node)
                     SgNode* parent = support->get_parent();
                     if (parent == NULL)
                        {
-#if 1
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
                          printf ("Warning: detected SgTemplateParameter without parent set properly at %p = %s parent is currently NULL \n",support,support->class_name().c_str());
 #endif
                        }
@@ -4753,17 +4755,21 @@ TestChildPointersInMemoryPool::visit( SgNode *node )
                          if (templateInstantiationDecl != NULL)
                             {
                            // DQ (3/6/2007): This is soemthing to investigate.
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
                               printf ("SgTemplateArgument is not in parent's child list, node: %p = %s = %s parent: %p = %s = %s \n",
                                    node,node->class_name().c_str(),SageInterface::get_name(node).c_str(),parent,parent->class_name().c_str(),SageInterface::get_name(parent).c_str());
                               printf ("templateInstantiationDecl->get_definingDeclaration() = %p templateInstantiationDecl->get_firstNondefiningDeclaration() = %p \n",
                                    templateInstantiationDecl->get_definingDeclaration(),templateInstantiationDecl->get_firstNondefiningDeclaration());
                               templateInstantiationDecl->get_file_info()->display("case V_SgTemplateArgument: location: debug");
+#endif
                             }
                            else
                             {
                            // DQ (3/6/2007): This is always a case we want to warn about!
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
                               printf ("SgTemplateArgument is not in parent's child list, node: %p = %s = %s parent: %p = %s = %s \n",
                                    node,node->class_name().c_str(),SageInterface::get_name(node).c_str(),parent,parent->class_name().c_str(),SageInterface::get_name(parent).c_str());
+#endif
                             }
                          break;
                        }

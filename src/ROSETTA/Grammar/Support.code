@@ -16145,7 +16145,10 @@ SgTemplateArgument::get_qualified_name_prefix() const
   //    SgBaseClass
   //    SgTemplateArgument
 
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+  // DQ (9/27/2012): This does appear to be called in processing test2004_127.C.
      printf ("This is not called see the function: SgTemplateArgument::get_qualified_name_prefix_for_type() \n");
+#endif
 
   // DQ (5/28/2011): We have to handle the name qualification directly since types can be qualified 
   // different and so it depends upon where the type is referenced.  Thus the qualified name is 
