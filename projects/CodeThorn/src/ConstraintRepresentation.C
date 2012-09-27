@@ -475,7 +475,7 @@ string ConstraintSet::toString() const {
   return ss.str();
 }
 
-bool ConstraintSetMaintainer::constraintSetExists(ConstraintSet& s) {
+bool ConstraintSetMaintainer::exists(ConstraintSet& s) {
   return constraintSetPtr(s)!=0;
 }
 
@@ -507,6 +507,9 @@ ConstraintSetMaintainer::ProcessingResult ConstraintSetMaintainer::processConstr
 	push_back(s);
 #endif
 #ifdef CSET_MAINTAINER_SET
+	insert(s);
+#endif
+#ifdef CSET_MAINTAINER_HSET
 	insert(s);
 #endif
 	const ConstraintSet* existingConstraintSetPtr=constraintSetPtr(s);

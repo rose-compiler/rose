@@ -70,16 +70,19 @@ class VariableId {
   friend class VariableIdMapping;
   friend bool operator<(VariableId id1, VariableId id2);
   friend bool operator==(VariableId id1, VariableId id2);
+  friend class ConstraintSetHashFun; // TODO: investigate why getSymbol needs to be public
  public:
   VariableId();
   string toString() const;
   string variableName() const;
   string longVariableName() const;
   VariableId(SgSymbol* sym);
- private:
-  SgSymbol* getSymbol() const;
+ public:
+  SgSymbol* getSymbol() const; // only public because of ContraintSetHashFun
+ private: 
   SgSymbol* sym;
 };
+
 
 bool operator<(VariableId id1, VariableId id2);
 bool operator==(VariableId id1, VariableId id2);

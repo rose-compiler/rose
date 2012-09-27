@@ -385,6 +385,10 @@ int main( int argc, char * argv[] ) {
 #else
   cout << "INFO: CodeThorn 1.1 (RC1): Fast sequential implementation (ESTATE_SET)."<<endl;
 #endif
+#ifdef CSET_MAINTAINER_HSET
+  cout << "INFO: CodeThorn 1.1. (RC1): using constraint-set hash-set implementation."<<endl;
+#endif
+
   // Build the AST used by ROSE
   cout << "INIT: Parsing and creating AST."<<endl;
   SgProject* sageProject = frontend(argc,argv);
