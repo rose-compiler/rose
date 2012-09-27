@@ -758,6 +758,8 @@ public:
    * Implementation status: DONE
    */
   void visit(const WeakUntil* expr) {
+    assert(false);
+    
     short e = expr->label;
     short e1 = expr->expr1->label;
     short e2 = expr->expr2->label;

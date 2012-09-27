@@ -111,8 +111,11 @@ bin_expr:
 | bin_expr '&' un_expr %prec AND { $$ = new LTL::And($1, $3); }
 | bin_expr '|' un_expr %prec OR	 { $$ = new LTL::Or($1, $3); }
 | bin_expr 'U' un_expr %prec U	 { $$ = new LTL::Until($1, $3); }
-| bin_expr WU  un_expr %prec WU	 { $$ = new LTL::WeakUntil($1, $3); }
 | bin_expr 'R' un_expr %prec R	 { $$ = new LTL::Release($1, $3); }
+| bin_expr WU  un_expr %prec WU	 { 
+  /*$$ = new LTL::WeakUntil($1, $3); */
+  $$ = new LTL::Or(new LTL::Globally($1), new LTL::Until($1, $3));
+}
 
 %%
 
