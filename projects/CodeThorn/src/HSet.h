@@ -13,6 +13,8 @@
 
 namespace br_stl {
 
+#define USE_SET_CHAINS
+
 // hash set class
 template<class Key, class hashFun>
 class HSet {
@@ -21,7 +23,12 @@ class HSet {
     typedef Key value_type;
 
     // define more readable denominations
-    typedef std::list<value_type> list_type;
+#ifdef USE_SET_CHAINS
+	typedef std::set<value_type> list_type;
+#else
+	typedef std::list<value_type> list_type;
+#endif
+
     typedef std::vector<list_type*> vector_type;
 
     class iterator;
@@ -185,8 +192,16 @@ class HSet {
         size_type address = hf(k);     // calculate address
         if(!v[address])
            return iterator();          // not existent
-        typename list_type::iterator temp =  v[address]->begin();
 
+
+#ifdef USE_SET_CHAINS
+		typename list_type::iterator temp =  v[address]->find(k);
+		if(temp!=v[address]->end())
+		  return iterator(temp,address,&v); //found
+		else
+		  return iterator();
+#else
+        typename list_type::iterator temp =  v[address]->begin();
         // find k in the list
         while(temp != v[address]->end())
           if(*temp == k)
@@ -194,6 +209,7 @@ class HSet {
           else ++temp;
 
         return iterator();
+#endif
     }
 
 /* Subscript operator only in map, but not in set
@@ -216,7 +232,11 @@ class HSet {
             size_type address = hf(P);
             if(!v[address])
                v[address] = new list_type;
+#ifdef USE_SET_CHAINS
+            v[address]->insert(P);
+#else
             v[address]->push_front(P);
+#endif
             temp = find(P); // redefine temp
             inserted = true;
             ++count;

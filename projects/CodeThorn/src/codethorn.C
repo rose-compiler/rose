@@ -81,6 +81,12 @@ void checkProgram(SgNode* root) {
   vs.insert(V_SgStringVal);
   vs.insert(V_SgAddressOfOp);
 
+  // rers Problems 10-13
+  // arithmetic operators
+  vs.insert(V_SgSubtractOp);
+  vs.insert(V_SgMultiplyOp);
+  vs.insert(V_SgDivideOp);
+  vs.insert(V_SgModOp);
   lr.setAstNodeVariantSet(vs,true);
   cout << "INIT: Running CodeThorn language restrictor."<<endl;
   bool valid=lr.checkIfAstIsAllowed(root);
@@ -375,18 +381,34 @@ int main( int argc, char * argv[] ) {
   }
 
   // print version information
-#ifdef STATESET_REF
-  cout << "INFO: CodeThorn 1.1. (RC1): Slow reference implementation (using STATESET_REF)."<<endl;
-#else
-  cout << "INFO: CodeThorn 1.1 (RC1): Fast sequential implementation (STATE_SET)."<<endl;
+#ifdef STATE_MAINTAINER_LIST
+  cout << "INFO: using list implementation for State."<<endl;
 #endif
-#ifdef STATESET_REF
-  cout << "INFO: CodeThorn 1.1. (RC1): Slow reference implementation (using ESTATESET_REF)."<<endl;
-#else
-  cout << "INFO: CodeThorn 1.1 (RC1): Fast sequential implementation (ESTATE_SET)."<<endl;
+#ifdef ESTATE_MAINTAINER_LIST
+  cout << "INFO: using list implementation for EState."<<endl;
+#endif
+#ifdef CSET_MAINTAINER_LIST
+  cout << "INFO: using list implementation for ConstraintSet."<<endl;
+#endif
+
+#ifdef STATE_MAINTAINER_SET
+  cout << "INFO: using ordered-set implementation for State."<<endl;
+#endif
+#ifdef ESTATE_MAINTAINER_SET
+  cout << "INFO: using ordered-set implementation for EState."<<endl;
+#endif
+#ifdef CSET_MAINTAINER_SET
+  cout << "INFO: using ordered-set implementation for ConstraintSet."<<endl;
+#endif
+
+#ifdef STATE_MAINTAINER_HSET
+  cout << "INFO: using hash-set implementation for State."<<endl;
+#endif
+#ifdef ESTATE_MAINTAINER_HSET
+  cout << "INFO: using hash-set implementation for EState."<<endl;
 #endif
 #ifdef CSET_MAINTAINER_HSET
-  cout << "INFO: CodeThorn 1.1. (RC1): using constraint-set hash-set implementation."<<endl;
+  cout << "INFO: using hash-set implementation for ConstraintSet."<<endl;
 #endif
 
   // Build the AST used by ROSE

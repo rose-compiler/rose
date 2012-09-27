@@ -172,9 +172,13 @@ StateSet::ProcessingResult StateSet::processState(State& s) {
 	assert(existingStatePtr);
 	return make_pair(true,existingStatePtr);
   } else {
-#ifdef STATESET_REF
+#ifdef STATE_MAINTAINER_LIST
 	push_back(s);
-#else
+#endif
+#ifdef STATE_MAINTAINER_SET
+	insert(s);
+#endif
+#ifdef STATE_MAINTAINER_HSET
 	insert(s);
 #endif
 	const State* existingStatePtr=statePtr(s);
@@ -185,13 +189,21 @@ StateSet::ProcessingResult StateSet::processState(State& s) {
 }
 
 const State* StateSet::statePtr(State& s) {
-#ifdef STATESET_REF
+#ifdef STATE_MAINTAINER_LIST
   for(StateSet::iterator i=begin();i!=end();++i) {
 	if(*i==s)
 	  return &*i;
   }
   return 0;
-#else
+#endif
+#ifdef STATE_MAINTAINER_SET
+  StateSet::iterator i=find(s);
+  if(i==end())
+	return 0;
+  else
+	return &*i;
+#endif
+#ifdef STATE_MAINTAINER_HSET
   StateSet::iterator i=find(s);
   if(i==end())
 	return 0;
@@ -278,9 +290,13 @@ EStateSet::ProcessingResult EStateSet::processEState(EState s) {
   if(const EState* existingEStatePtr=eStatePtr(s)) {
 	return make_pair(true,existingEStatePtr);
   } else {
-#ifdef ESTATESET_REF
+#ifdef ESTATE_MAINTAINER_LIST
 	push_back(s);
-#else
+#endif
+#ifdef ESTATE_MAINTAINER_SET
+	insert(s);
+#endif
+#ifdef ESTATE_MAINTAINER_HSET
 	insert(s);
 #endif
 	const EState* existingEStatePtr=eStatePtr(s);
@@ -343,14 +359,22 @@ int EStateSet::numberOfIoTypeEStates(InputOutput::OpType op) {
 } 
 
 const EState* EStateSet::eStatePtr(EState& s) {
-#ifdef ESTATESET_REF
+#ifdef ESTATE_MAINTAINER_LIST
   // we use this as the find algorithm cannot be used for this data structure yet.
   for(EStateSet::iterator i=begin();i!=end();++i) {
 	if(*i==s)
 	  return &*i;
   }
   return 0;
-#else
+#endif
+#ifdef ESTATE_MAINTAINER_SET
+  EStateSet::iterator i=find(s);
+  if(i==end())
+	return 0;
+  else
+	return &*i;
+#endif
+#ifdef ESTATE_MAINTAINER_HSET
   EStateSet::iterator i=find(s);
   if(i==end())
 	return 0;

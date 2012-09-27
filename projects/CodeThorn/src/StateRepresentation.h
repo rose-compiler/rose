@@ -3,6 +3,12 @@
 
 #define USER_DEFINED_STATE_COMP
 
+//#define STATE_MAINTAINER_LIST
+//#define STATE_MAINTAINER_SET
+
+//#define ESTATE_MAINTAINER_LIST
+//#define ESTATE_MAINTAINER_SET
+
 /*************************************************************
  * Copyright: (C) 2012 by Markus Schordan                    *
  * Author   : Markus Schordan                                *
@@ -37,10 +43,34 @@ class State : public map<VariableId,CppCapsuleAValue> {
   long memorySize() const;
 };
 
-#ifdef STATESET_REF
+class StateHashFun {
+   public:
+    StateHashFun(long prime=99991) : tabSize(prime) {}
+    long operator()(State s) const {
+	  unsigned int hash=1;
+	  for(State::iterator i=s.begin();i!=s.end();++i) {
+		hash*=(long)((*i).first.getSymbol());
+	  }
+	  if(hash<0)
+		hash=-hash;
+	  return long(hash) % tabSize;
+	}
+	  long tableSize() const { return tabSize;}
+   private:
+    long tabSize;
+};
+
+#ifdef STATE_MAINTAINER_LIST
 class StateSet : public list<State> {
-#else
+#endif
+#ifdef STATE_MAINTAINER_SET
 class StateSet : public set<State> {
+#endif
+#ifdef STATE_MAINTAINER_HSET
+#include "HashFun.h"
+#include "HSet.h"
+using namespace br_stl;
+	class StateSet : public HSet<State,StateHashFun> {
 #endif
  public:
   typedef pair<bool, const State*> ProcessingResult;
@@ -56,7 +86,6 @@ class StateSet : public set<State> {
  private:
   const State* statePtr(State& s);
 };
-
 
 /**
  * Input: a value val is read into a variable var
@@ -78,7 +107,6 @@ class InputOutput {
 bool operator<(const InputOutput& c1, const InputOutput& c2);
 bool operator==(const InputOutput& c1, const InputOutput& c2);
 bool operator!=(const InputOutput& c1, const InputOutput& c2);
-
 
 class EState {
  public:
@@ -112,7 +140,7 @@ bool operator!=(const State& c1, const State& c2);
 #endif
 
 // define order for EState elements (necessary for EStateSet)
-#ifndef ESTATESET_REF
+#ifndef ESTATE_MAINTAINER_LIST
 bool operator<(const EState& c1, const EState& c2);
 bool operator==(const EState& c1, const EState& c2);
 bool operator!=(const EState& c1, const EState& c2);
@@ -124,12 +152,40 @@ struct EStateLessComp {
   }
 };
 
+class EStateHashFun {
+   public:
+    EStateHashFun(long prime=9999991) : tabSize(prime) {}
+    long operator()(EState s) const {
+	  unsigned int hash=1;
+	  hash*=(long)s.getLabel();
+	  hash*=(long)s.getState();
+#if 0
+	  for(ConstraintSet::iterator i=cs.begin();i!=cs.end();++i) {
+		// use the symbol-ptr of lhsVar for hashing (we are a friend).
+		if(!(*i).isDisequation()) {
+		  hash*=(long)((*i).lhsVar().getSymbol());
+		}
+	  }
+#endif
+	  if(hash<0)
+		hash=-hash;
+	  return long(hash) % tabSize;
+	}
+	long tableSize() const { return tabSize;}
+   private:
+    long tabSize;
+};
 
-
-#ifdef ESTATESET_REF
+#ifdef ESTATE_MAINTAINER_LIST
 class EStateSet : public list<EState> {
-#else
+#endif
+#ifdef ESTATE_MAINTAINER_SET
   class EStateSet : public set<EState> {
+#endif
+#ifdef ESTATE_MAINTAINER_HSET
+#include "HSet.h"
+using namespace br_stl;
+	class EStateSet : public HSet<EState,EStateHashFun> {
 #endif
  public:
  EStateSet():_constraintSetMaintainer(0){}

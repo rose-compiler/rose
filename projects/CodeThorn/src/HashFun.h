@@ -19,22 +19,6 @@ class HashFun {
     long tabSize;
 };
 
-class ConstraintSetHashFun {
-   public:
-    ConstraintSetHashFun(long prime=1009) : tabSize(prime) {}
-    long operator()(ConstraintSet cs) const {
-	  long hash=1;
-	  for(ConstraintSet::iterator i=cs.begin();i!=cs.end();++i) {
-		// use the symbol-ptr of lhsVar for hashing (we are a friend).
-		if(!(*i).isDisequation())
-		  hash*=(long)((*i).lhsVar().getSymbol());
-	  }
-	  return long(hash) % tabSize;
-    }
-    long tableSize() const { return tabSize;}
-   private:
-    long tabSize;
-};
 
 
 } // namespace br_stl

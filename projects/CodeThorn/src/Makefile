@@ -1,7 +1,6 @@
 # MS: makefile for local development with installed version of ROSE.
 
 # for building the reference implementation use:
-# make codethornref REFKNOBS="-DSTATESET_REF -DESTATE_REF" 
 
 TOOLNAME3 = codethorn
 MYDATE = `date +%Y_%m_%d`
@@ -22,7 +21,11 @@ ROSE_LIBS = -Wl,-rpath -Wl,$(ROSE_LIB_DIR) -L $(ROSE_LIB_DIR) -lrose
 
 # Location of ROSE's libtool (it's only in the compilation path)
 
-CPPFLAGS              = $(REFKNOBS) -O3 -march=native -ftree-vectorize -ggdb
+#KNOBS = -DSTATE_MAINTAINER_LIST -DESTATE_MAINTAINER_LIST -DCSET_MAINTAINER_LIST
+#KNOBS = -DSTATE_MAINTAINER_SET -DESTATE_MAINTAINER_SET -DCSET_MAINTAINER_SET
+KNOBS = -DSTATE_MAINTAINER_HSET -DESTATE_MAINTAINER_HSET -DCSET_MAINTAINER_HSET
+
+CPPFLAGS              = $(KNOBS) -O3 -march=native -ftree-vectorize -ggdb
 #CXXCPPFLAGS           = @CXXCPPFLAGS@
 CXXFLAGS              = -Wno-deprecated
 LDFLAGS               = 
@@ -137,6 +140,7 @@ bsps: codethorn
 	cp viz/cfg.jpg bsps/basictest10f_cfg.jpg
 	cp viz/transitiongraph1.jpg bsps/basictest10f_transitiongraph1.jpg
 	cp viz/transitiongraph2.jpg bsps/basictest10f_transitiongraph2.jpg
+	ps2pdf bsps/basictest10f_transitiongraph2.ps bsps/basictest10f_transitiongraph2.pdf
 	./codethorn tests/basictest15.C && make viz && make vizjpg
 	cp tests/basictest15.C bsps
 	cp viz/cfg.ps bsps/basictest15_cfg.ps
@@ -146,6 +150,7 @@ bsps: codethorn
 	cp viz/cfg.jpg bsps/basictest15_cfg.jpg
 	cp viz/transitiongraph1.jpg bsps/basictest15_transitiongraph1.jpg
 	cp viz/transitiongraph2.jpg bsps/basictest15_transitiongraph2.jpg
+	ps2pdf bsps/basictest15_transitiongraph2.ps bsps/basictest15_transitiongraph2.pdf
 
 	./codethorn tests/rers/Problem1.c
 	cp tests/rers/Problem1.c bsps
@@ -156,10 +161,10 @@ dist:
 	tar cvzf codethorn_$(MYDATE).tgz *.C *cpp *.h *.lxx *.yxx tests/*.C tests/*.c Makefile*
 
 regressiontest: $(TOOLNAME3)
-	./$(TOOLNAME3) --csv-assert tmp_rers_Problem4_assert_csv.txt --csv-ltl tmp_rers_Problem4_ltl_csv.txt --verify tests/rers/properties4.txt tests/rers/Problem4.c
-	diff transitiongraph1.dat $(REGRESSION_DATA_DIR)/rers_Problem4_transitiongraph1.dat
-	diff tmp_rers_Problem4_ltl_csv.txt $(REGRESSION_DATA_DIR)/rers_Problem4_ltl_csv.txt
-	diff tmp_rers_Problem4_assert_csv.txt $(REGRESSION_DATA_DIR)/rers_Problem4_assert_csv.txt
+	./$(TOOLNAME3) --csv-assert tmp_rers_Problem1_assert_csv.txt --csv-ltl tmp_rers_Problem1_ltl_csv.txt --verify tests/rers/properties1.txt tests/rers/Problem1.c
+	diff transitiongraph1.dat $(REGRESSION_DATA_DIR)/rers_Problem1_transitiongraph1.dat
+	diff tmp_rers_Problem1_ltl_csv.txt $(REGRESSION_DATA_DIR)/rers_Problem1_ltl_csv.txt
+	diff tmp_rers_Problem1_assert_csv.txt $(REGRESSION_DATA_DIR)/rers_Problem1_assert_csv.txt
 	@echo "-----------------------"
 	@echo "Regression test PASSED."
 	@echo "-----------------------"
@@ -169,5 +174,5 @@ asserttest: $(TOOLNAME3)
 
 # use with caution
 generateregressiondata:
-	./$(TOOLNAME3) --csv-assert $(REGRESSION_DATA_DIR)/rers_Problem4_assert_csv.txt --csv-ltl $(REGRESSION_DATA_DIR)/rers_Problem4_ltl_csv.txt --verify tests/rers/properties4.txt tests/rers/Problem4.c 
-	cp transitiongraph1.dat $(REGRESSION_DATA_DIR)/rers_Problem4_transitiongraph1.dat
+	./$(TOOLNAME3) --csv-assert $(REGRESSION_DATA_DIR)/rers_Problem1_assert_csv.txt --csv-ltl $(REGRESSION_DATA_DIR)/rers_Problem1_ltl_csv.txt --verify tests/rers/properties1.txt tests/rers/Problem1.c 
+	cp transitiongraph1.dat $(REGRESSION_DATA_DIR)/rers_Problem1_transitiongraph1.dat
