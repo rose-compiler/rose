@@ -9,6 +9,7 @@
 
 //#define CSET_MAINTAINER_LIST
 #define CSET_MAINTAINER_SET
+//#define CSET_MAINTAINER_HSET
 
 #include <set>
 #include <map>
@@ -100,15 +101,22 @@ bool operator<(const ConstraintSet& s1, const ConstraintSet& s2);
 //bool operator==(const ConstraintSet& s1, const ConstraintSet& s2);
 //bool operator!=(const ConstraintSet& s1, const ConstraintSet& s2);
 
+
 #ifdef CSET_MAINTAINER_LIST
 class ConstraintSetMaintainer : public list<ConstraintSet> {
 #endif
 #ifdef CSET_MAINTAINER_SET
 class ConstraintSetMaintainer : public set<ConstraintSet> {
 #endif
+#ifdef CSET_MAINTAINER_HSET
+#include "HashFun.h"
+#include "HSet.h"
+using namespace br_stl;
+class ConstraintSetMaintainer : public HSet<ConstraintSet, ConstraintSetHashFun> {
+#endif
  public:
   typedef pair<bool,const ConstraintSet*> ProcessingResult;
-  bool constraintSetExists(ConstraintSet& s);
+  bool exists(ConstraintSet& s);
   ProcessingResult processConstraintSet(ConstraintSet newConstraintSet);
   const ConstraintSet* processNewConstraintSet(ConstraintSet& s);
   const ConstraintSet* processNewOrExistingConstraintSet(ConstraintSet& s);
