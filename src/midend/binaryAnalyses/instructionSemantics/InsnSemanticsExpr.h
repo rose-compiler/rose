@@ -301,9 +301,9 @@ namespace InsnSemanticsExpr {
         /* see superclass, where this is pure virtual */
         virtual void depth_first_visit(Visitor*) const;
     };
+
+    std::ostream& operator<<(std::ostream &o, const InsnSemanticsExpr::TreeNode &node);
 };
 
-
-std::ostream& operator<<(std::ostream &o, const InsnSemanticsExpr::TreeNode &node);
 
 #endif

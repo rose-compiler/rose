@@ -267,7 +267,7 @@ InsnSemanticsExpr::LeafNode::depth_first_visit(Visitor *v) const
 }
 
 std::ostream&
-operator<<(std::ostream &o, const InsnSemanticsExpr::TreeNode &node) {
+InsnSemanticsExpr::operator<<(std::ostream &o, const TreeNode &node) {
     node.print(o);
     return o;
 }
