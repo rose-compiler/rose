@@ -5,13 +5,13 @@
 \newcommand{\ttrue}{\ensuremath{\mathit{true}}}
 
 At its heart CodeThorn uses a dataflow-based approach to verify LTL
-formul\ae\ on the State Transition Graph. The algortihm consists of
+formul\ae\ on the State Transition Graph. The algorithm consists of
 two layers. At the outer layer, the abstract syntax tree of the
-formula is traversed in bottom-up order. Every subexpression of the
+formula is traversed in bottom-up order. Every sub-expression of the
 LTL formula found by the traversal is reduced to a single value in the
 Boolean lattice (\cf Fig.~\ref{fig:bool_lattice}) for each state in
-the State Transition Graph . This evaluation is performed using a
-dataflow analysis, which represents the inner layer of the alorithm.
+the State Transition Graph. This evaluation is performed using a
+dataflow analysis, which represents the inner layer of the algorithm.
 
 \begin{figure}
   \centering
@@ -30,7 +30,7 @@ dataflow analysis, which represents the inner layer of the alorithm.
     \draw (-1)    -- (bot);
     \draw (1)     -- (bot);
   \end{tikzpicture} 
-  \caption{Boolean lattice the LTL formul\ae are reduced to}
+  \caption{Boolean lattice the LTL formul\ae\ are reduced to}
   \label{fig:bool_lattice}
 \end{figure}
 
@@ -45,6 +45,10 @@ dataflow analysis, which represents the inner layer of the alorithm.
 \newcommand{\R}{\ensuremath{\mathrm{R}}}
 \newcommand{\U}{\ensuremath{\mathrm{U}}}
 \newcommand{\WU}{\ensuremath{\mathrm{WU}}}
+
+\subsection{A minimum-fixpoint approximation}
+The approach we are using is extremely fast, but it computes only an
+approximation (a safe upper bound in the Boolean lattice) of the precise verification result. 
 
 The remainder of this section will discuss how the transfer functions
 for each element of the LTL grammar are defined. We are using the
