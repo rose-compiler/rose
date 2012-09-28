@@ -14,21 +14,23 @@ if __name__ == '__main__':
         description='compare counterexample output with rers csv output',
         epilog='Please report bugs to <adrian@llnl.gov>.')
 
-    cmdline.add_argument('--csv', metavar='<ltl.csv>', type=file,
-                         help='LTL CSV data')
+    cmdline.add_argument('--csv', metavar='<ltl.csv>', type=file, help='LTL CSV data')
+    cmdline.add_argument('--log', metavar='<counterexamples.log>', type=file, help='qc log output')
+    cmdline.add_argument('--verbose', action='store_true', help='verbose mode')
 
-    cmdline.add_argument('--log', metavar='<counterexamples.log>', type=file,
-                         help='qc log output')
+    args = cmdline.parse_args()
+    if not args.csv: print 'no csv input specified!'; exit(1)
+    if not args.log: print 'no log input specified!'; exit(1)
 
-    cmdline_args = cmdline.parse_args()
-    if not cmdline_args.csv: print 'no csv input specified!'; exit(1)
-    if not cmdline_args.log: print 'no log input specified!'; exit(1)
-
-    filename = cmdline_args.log.name
+    filename = args.log.name
 
     status = 0
     next_counterexample = -1
-    for line in cmdline_args.csv.readlines()[1:]:
+    correct      = 0
+    inconsistent = 0
+    unverified   = 0
+    unknown      = 0
+    for line in args.csv.readlines()[1:]:
         idx, formula, result, confidence = line.split(';')
         n = int(idx)
         boundscheck(n)
@@ -36,7 +38,7 @@ if __name__ == '__main__':
         if next_counterexample < n:
             # skip to next coutnerexample
             while 1:
-                qc_line = cmdline_args.log.readline()
+                qc_line = args.log.readline()
                 if qc_line == "": # EOF
                     exit(status)
                 if qc_line.find("FALSE, found counterexample") <> -1:
@@ -49,8 +51,26 @@ if __name__ == '__main__':
                 print "** INCONSISTENCY"
                 print "  ", line
                 print "  ", qc_line
-            if result == "NO":
-                print "%d consistent"%n
-            if result == "UNKNOWN":
+                inconsistent += 1
+            elif result == "NO":
+                if (args.verbose): print "%d consistent"%n
+                correct += 1
+            elif result == "UNKNOWN":
                 print "%d UNKNOWN, but counterexample exists"%n
+                unknown += 1
+        else:   
+            if (args.verbose): print "%d consistent, but unverified"%n
+            if result == "UNKNOWN":
+                unknown += 1
+            else: 
+                unverified += 1
+
+    assert(correct+inconsistent+unverified+unknown == n)
+    red = '\033[91m'
+    reset = '\033[39m'
+    print
+    print "Statistics"
+    print "=========="
+    print "%d/%d Consistent, %s%d/%d Inconsistent%s, %d/%d Unverified, %d/%d Unknown" % (
+        correct, n, red, inconsistent, n, reset, unverified, n, unknown, n)
         
