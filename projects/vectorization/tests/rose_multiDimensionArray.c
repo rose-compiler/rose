@@ -8,14 +8,11 @@ int main()
   int i_nom_1_strip_13;
   int i_nom_1;
   float a[64UL][32UL][16UL];
-  __SIMD (*a_SIMD)[32UL][16UL / 4];
+  __SIMD (*a_SIMD)[32UL][16UL / 4] = (__SIMD (*)[32UL][16UL / 4])a;
   float b[32UL][16UL];
-  __SIMD (*b_SIMD)[16UL / 4];
+  __SIMD (*b_SIMD)[16UL / 4] = (__SIMD (*)[16UL / 4])b;
   float c[16UL];
-  __SIMD *c_SIMD;
-  c_SIMD = ((__SIMD *)c);
-  b_SIMD = ((__SIMD (*)[16UL / 4])b);
-  a_SIMD = ((__SIMD (*)[32UL][16UL / 4])a);
+  __SIMD *c_SIMD = (__SIMD *)c;
   for (int k = 0; k < 64; k++) {
     for (int j = 0; j < 32; j++) {
       

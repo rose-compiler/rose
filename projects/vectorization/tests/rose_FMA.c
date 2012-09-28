@@ -9,11 +9,11 @@ int main()
   int i_nom_1_strip_12;
   int i_nom_1;
   float a[16UL];
-  __SIMD *a_SIMD;
+  __SIMD *a_SIMD = (__SIMD *)a;
   float b[16UL];
-  __SIMD *b_SIMD;
+  __SIMD *b_SIMD = (__SIMD *)b;
   float c[16UL];
-  __SIMD *c_SIMD;
+  __SIMD *c_SIMD = (__SIMD *)c;
   int n = 16;
   __SIMDi n_SIMD;
   float as;
@@ -24,9 +24,6 @@ int main()
   __SIMD cs_SIMD;
   
 #pragma SIMD
-  c_SIMD = ((__SIMD *)c);
-  b_SIMD = ((__SIMD *)b);
-  a_SIMD = ((__SIMD *)a);
   n_SIMD = _SIMD_splats_epi32(n);
   as_SIMD = _SIMD_splats_ps(as);
   bs_SIMD = _SIMD_splats_ps(bs);

@@ -247,15 +247,15 @@ void SIMDVectorization::translateOperand(SgExpression* operand)
           }
           newType = buildPointerType(baseType);
 
-          // VariableDeclaration for this pointer, that points to the array space
-          SgVariableDeclaration* SIMDDeclarationStmt = buildVariableDeclaration(SIMDName,newType,NULL,arraySymbol->get_scope());        
+          /* 
+            VariableDeclaration for this pointer, that points to the array space
+            The assignInitializer should take care of the assignment, and no further pointer assignment is needed.
+          */
+          SgVariableDeclaration* SIMDDeclarationStmt = buildVariableDeclaration(SIMDName,
+                                                                                newType,
+                                                                                buildAssignInitializer(buildCastExp(buildVarRefExp(arraySymbol),newType,SgCastExp::e_C_style_cast ),newType),
+                                                                                arraySymbol->get_scope());        
           insertStatement(arrayDeclarationStmt,SIMDDeclarationStmt,false,true);
-          // define the pointer and make sure it points to the beginning of the array
-          SgExprStatement* pointerAssignment = buildAssignStatement(buildVarRefExp(SIMDDeclarationStmt),
-                                                                    buildCastExp(buildVarRefExp(arraySymbol), 
-                                                                    newType, 
-                                                                    SgCastExp::e_C_style_cast ));
-          insertStatementAfterLastDeclaration(pointerAssignment,getEnclosingFunctionDefinition(operand));
         }
         /* 
           we have the SIMD pointer, we can use this as the operand in the SIMD intrinsic functions.

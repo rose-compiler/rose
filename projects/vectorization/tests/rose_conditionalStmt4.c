@@ -8,9 +8,9 @@ int main()
   int i_nom_1_strip_10;
   int i_nom_1;
   float a[16UL];
-  __SIMD *a_SIMD;
+  __SIMD *a_SIMD = (__SIMD *)a;
   float b[16UL];
-  __SIMD *b_SIMD;
+  __SIMD *b_SIMD = (__SIMD *)b;
   float tmp;
   __SIMD tmp_SIMD;
   int n = 16;
@@ -18,8 +18,6 @@ int main()
   
 #pragma SIMD
   void *cmpReturn_12;
-  b_SIMD = ((__SIMD *)b);
-  a_SIMD = ((__SIMD *)a);
   tmp_SIMD = _SIMD_splats_ps(tmp);
   n_SIMD = _SIMD_splats_epi32(n);
   for (i_nom_1 = 0, i_nom_1_strip_10 = i_nom_1; i_nom_1 <= n - 1; (i_nom_1 += 4 , i_nom_1_strip_10 += 1)) {

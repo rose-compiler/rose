@@ -9,9 +9,9 @@ int main()
   float d = 5.f;
   __SIMD d_SIMD;
   float dim[16UL];
-  __SIMD *dim_SIMD;
+  __SIMD *dim_SIMD = (__SIMD *)dim;
   float dim2[16UL];
-  __SIMD *dim2_SIMD;
+  __SIMD *dim2_SIMD = (__SIMD *)dim2;
   
 #pragma SIMD
   d_SIMD = _SIMD_splats_ps(d);
@@ -21,8 +21,6 @@ int main()
   d = _SIMD_extract_ps(d_SIMD,3);
   
 #pragma SIMD
-  dim2_SIMD = ((__SIMD *)dim2);
-  dim_SIMD = ((__SIMD *)dim);
   for (i_nom_2 = 0, i_nom_2_strip_11 = i_nom_2; i_nom_2 <= 15; (i_nom_2 += 4 , i_nom_2_strip_11 += 1)) {
     d_SIMD = dim_SIMD[i_nom_2_strip_11];
     dim2_SIMD[i_nom_2_strip_11] = d_SIMD;
