@@ -168,10 +168,12 @@ Unparse_ExprStmt::unparseTemplateParameterValue(SgExpression* expr, SgUnparse_In
      SgTemplateParameterVal* template_parameter_value = isSgTemplateParameterVal(expr);
      ROSE_ASSERT(template_parameter_value != NULL);
 
+#if 0
      printf ("In unparseTemplateParameterValue(): template_parameter_value->get_template_parameter_position() = %d \n",template_parameter_value->get_template_parameter_position());
      printf ("In unparseTemplateParameterValue(): template_parameter_value->get_valueString()                 = %s \n",template_parameter_value->get_valueString().c_str());
 
      printf ("In unparseTemplateParameterValue(): Output the SgTemplateParameterVal valueString = %s \n",template_parameter_value->get_valueString().c_str());
+#endif
 
      curprint(template_parameter_value->get_valueString());
 

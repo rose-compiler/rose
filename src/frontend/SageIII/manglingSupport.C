@@ -258,6 +258,9 @@ mangleQualifiersToString (const SgScopeStatement* scope)
                     break;
                   }
 
+            // DQ (9/27/2012): Added this case to be the same as that for SgFunctionDefinition (removed case below).
+               case V_SgTemplateFunctionDefinition:
+
                case V_SgFunctionDefinition:
                   {
                  // 'scope' is part of scope for locally defined classes
@@ -295,21 +298,24 @@ mangleQualifiersToString (const SgScopeStatement* scope)
                     break;
                   }
 
+#if 0
                case V_SgTemplateFunctionDefinition:
                   {
 #if 1
                  // DQ (8/26/2012): Decrease the volume of warnings from this part of the code.
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
                     static int count = 0;
                     if (count++ % 100 == 0)
                        {
                          printf ("WARNING: In mangleQualifiersToString(const SgScopeStatement*): Case SgTemplateFunctionDefinition not implemented \n");
                        }
+#endif
 #else
                     printf ("WARNING: In mangleQualifiersToString(const SgScopeStatement*): Case SgTemplateFunctionDefinition not implemented \n");
 #endif
                     break;
                   }
-
+#endif
 #if 0
             // DQ (5/12/2012): Implement this case later, but it does not cause anything to fail presently (I think).
                case V_SgTemplateClassDefinition:

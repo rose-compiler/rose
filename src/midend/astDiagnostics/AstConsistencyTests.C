@@ -4126,8 +4126,10 @@ TestParentPointersInMemoryPool::visit(SgNode* node)
         {
           if (locatedNode->get_parent() == NULL)
              {
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
                printf ("Error: locatedNode->get_parent() == NULL locatedNode = %p = %s \n",locatedNode,locatedNode->class_name().c_str());
             // printf ("Error: locatedNode->get_parent() == NULL locatedNode = %p = %s = %s \n",locatedNode,locatedNode->class_name().c_str(),SageInterface::get_name(locatedNode));
+#endif
              }
 
        // DQ (3/3/2012): Commented this out test (for debugging purposes only).

@@ -4438,11 +4438,9 @@ NameQualificationTraversal::setNameQualification ( SgBaseClass* baseClass, SgCla
 
      string qualifier = setNameQualificationSupport(classDeclaration->get_scope(),amountOfNameQualificationRequired, outputNameQualificationLength, outputGlobalQualification, outputTypeEvaluation);
 
-#if 1
      baseClass->set_global_qualification_required(outputGlobalQualification);
      baseClass->set_name_qualification_length(outputNameQualificationLength);
      baseClass->set_type_elaboration_required(outputTypeEvaluation);
-#endif
 
   // There should be no type evaluation required for a variable reference, as I recall.
      ROSE_ASSERT(outputTypeEvaluation == false);
@@ -4495,7 +4493,9 @@ NameQualificationTraversal::setNameQualification ( SgFunctionDeclaration* functi
   // test2012_57.C is an example of this issue.
      if (outputGlobalQualification == true && functionDeclaration->get_declarationModifier().isFriend() == true)
         {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           printf ("WARNING: We can't specify global qualification of friend function (qualifier reset to be empty string) \n");
+#endif
 
        // Note that I think this might only be an issue where outputNameQualificationLength == 0.
           ROSE_ASSERT (outputNameQualificationLength == 0);
@@ -4506,11 +4506,9 @@ NameQualificationTraversal::setNameQualification ( SgFunctionDeclaration* functi
           qualifier = "";
         }
 
-#if 1
      functionDeclaration->set_global_qualification_required(outputGlobalQualification);
      functionDeclaration->set_name_qualification_length(outputNameQualificationLength);
      functionDeclaration->set_type_elaboration_required(outputTypeEvaluation);
-#endif
 
   // There should be no type evaluation required for a variable reference, as I recall.
      ROSE_ASSERT(outputTypeEvaluation == false);
@@ -4576,11 +4574,9 @@ NameQualificationTraversal::setNameQualificationReturnType ( SgFunctionDeclarati
   // setNameQualificationSupport(functionDeclaration->get_scope(),amountOfNameQualificationRequired, outputNameQualificationLength, outputGlobalQualification, outputTypeEvaluation);
      string qualifier = setNameQualificationSupport(declaration->get_scope(),amountOfNameQualificationRequired, outputNameQualificationLength, outputGlobalQualification, outputTypeEvaluation);
 
-#if 1
      functionDeclaration->set_global_qualification_required_for_return_type(outputGlobalQualification);
      functionDeclaration->set_name_qualification_length_for_return_type(outputNameQualificationLength);
      functionDeclaration->set_type_elaboration_required_for_return_type(outputTypeEvaluation);
-#endif
 
   // There should be no type evaluation required for a variable reference, as I recall.
      ROSE_ASSERT(outputTypeEvaluation == false);
@@ -4633,11 +4629,9 @@ NameQualificationTraversal::setNameQualification ( SgUsingDeclarationStatement* 
 
      string qualifier = setNameQualificationSupport(declaration->get_scope(),amountOfNameQualificationRequired, outputNameQualificationLength, outputGlobalQualification, outputTypeEvaluation);
 
-#if 1
      usingDeclaration->set_global_qualification_required(outputGlobalQualification);
      usingDeclaration->set_name_qualification_length(outputNameQualificationLength);
      usingDeclaration->set_type_elaboration_required(outputTypeEvaluation);
-#endif
 
   // There should be no type evaluation required for a variable reference, as I recall.
      ROSE_ASSERT(outputTypeEvaluation == false);
@@ -4673,11 +4667,9 @@ NameQualificationTraversal::setNameQualification ( SgUsingDeclarationStatement* 
 
      string qualifier = setNameQualificationSupport(associatedInitializedName->get_scope(),amountOfNameQualificationRequired, outputNameQualificationLength, outputGlobalQualification, outputTypeEvaluation);
 
-#if 1
      usingDeclaration->set_global_qualification_required(outputGlobalQualification);
      usingDeclaration->set_name_qualification_length(outputNameQualificationLength);
      usingDeclaration->set_type_elaboration_required(outputTypeEvaluation);
-#endif
 
   // There should be no type evaluation required for a variable reference, as I recall.
      ROSE_ASSERT(outputTypeEvaluation == false);
@@ -4712,11 +4704,9 @@ NameQualificationTraversal::setNameQualification ( SgUsingDirectiveStatement* us
 
      string qualifier = setNameQualificationSupport(declaration->get_scope(),amountOfNameQualificationRequired, outputNameQualificationLength, outputGlobalQualification, outputTypeEvaluation);
 
-#if 1
      usingDirective->set_global_qualification_required(outputGlobalQualification);
      usingDirective->set_name_qualification_length(outputNameQualificationLength);
      usingDirective->set_type_elaboration_required(outputTypeEvaluation);
-#endif
 
   // There should be no type evaluation required for a variable reference, as I recall.
      ROSE_ASSERT(outputTypeEvaluation == false);
@@ -4778,11 +4768,9 @@ NameQualificationTraversal::setNameQualification(SgInitializedName* initializedN
 #endif
         }
 
-#if 1
      initializedName->set_global_qualification_required_for_type(outputGlobalQualification);
      initializedName->set_name_qualification_length_for_type(outputNameQualificationLength);
      initializedName->set_type_elaboration_required_for_type(outputTypeEvaluation);
-#endif
 
   // There should be no type evaluation required for a variable reference, as I recall.
      ROSE_ASSERT(outputTypeEvaluation == false);
@@ -4816,10 +4804,10 @@ NameQualificationTraversal::setNameQualification(SgInitializedName* initializedN
              {
                i->second = qualifier;
 
-#if 1
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
                printf ("WARNING: name in qualifiedNameMapForTypes already exists and is different... \n");
-            // ROSE_ASSERT(false);
 #endif
+            // ROSE_ASSERT(false);
              }
         }
    }
@@ -4837,11 +4825,9 @@ NameQualificationTraversal::setNameQualification(SgVariableDeclaration* variable
   // setNameQualificationSupport(functionDeclaration->get_scope(),amountOfNameQualificationRequired, outputNameQualificationLength, outputGlobalQualification, outputTypeEvaluation);
      string qualifier = setNameQualificationSupport(declaration->get_scope(),amountOfNameQualificationRequired, outputNameQualificationLength, outputGlobalQualification, outputTypeEvaluation);
 
-#if 1
      variableDeclaration->set_global_qualification_required(outputGlobalQualification);
      variableDeclaration->set_name_qualification_length(outputNameQualificationLength);
      variableDeclaration->set_type_elaboration_required(outputTypeEvaluation);
-#endif
 
   // There should be no type evaluation required for a variable reference, as I recall.
      ROSE_ASSERT(outputTypeEvaluation == false);
@@ -4879,11 +4865,9 @@ NameQualificationTraversal::setNameQualification(SgTypedefDeclaration* typedefDe
   // setNameQualificationSupport(functionDeclaration->get_scope(),amountOfNameQualificationRequired, outputNameQualificationLength, outputGlobalQualification, outputTypeEvaluation);
      string qualifier = setNameQualificationSupport(declaration->get_scope(),amountOfNameQualificationRequired, outputNameQualificationLength, outputGlobalQualification, outputTypeEvaluation);
 
-#if 1
      typedefDeclaration->set_global_qualification_required_for_base_type(outputGlobalQualification);
      typedefDeclaration->set_name_qualification_length_for_base_type(outputNameQualificationLength);
      typedefDeclaration->set_type_elaboration_required_for_base_type(outputTypeEvaluation);
-#endif
 
   // There should be no type evaluation required for a variable reference, as I recall.
      ROSE_ASSERT(outputTypeEvaluation == false);
@@ -5227,11 +5211,9 @@ NameQualificationTraversal::setNameQualification(SgClassDeclaration* classDeclar
   // setNameQualificationSupport(functionDeclaration->get_scope(),amountOfNameQualificationRequired, outputNameQualificationLength, outputGlobalQualification, outputTypeEvaluation);
      string qualifier = setNameQualificationSupport(classDeclaration->get_scope(),amountOfNameQualificationRequired, outputNameQualificationLength, outputGlobalQualification, outputTypeEvaluation);
 
-#if 1
      classDeclaration->set_global_qualification_required(outputGlobalQualification);
      classDeclaration->set_name_qualification_length(outputNameQualificationLength);
      classDeclaration->set_type_elaboration_required(outputTypeEvaluation);
-#endif
 
   // There should be no type evaluation required for a variable reference, as I recall.
      ROSE_ASSERT(outputTypeEvaluation == false);
