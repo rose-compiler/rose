@@ -94,6 +94,7 @@ class Analyzer {
   const ConstraintSet* processNewOrExistingConstraintSet(ConstraintSet& cset);
   const EState* processNewOrExistingEState(Label label, State state, ConstraintSet cset);
   EState createEState(Label label, State state, ConstraintSet cset);
+  EState createEState(Label label, State state, ConstraintSet cset, InputOutput io);
 
  public:
   bool isEmptyWorkList() { return eStateWorkList.size()==0;}

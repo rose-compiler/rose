@@ -190,7 +190,15 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState eS
 		  break;
 		}
 		case V_SgAndOp: {
+		  //cout << "SgAndOp: "<<lhsResult.result.toString()<<"&&"<<rhsResult.result.toString()<<" ==> ";
 		  res.result=(lhsResult.result&&rhsResult.result);
+		  //cout << res.result.toString()<<endl;
+#if 0
+		  cout << lhsResult.exprConstraints.toString();
+		  cout << "&&";
+		  cout << rhsResult.exprConstraints.toString();
+		  cout << " == > ";
+#endif
 		  if(lhsResult.result.isFalse()) {
 			//res.exprConstraints=lhsResult.exprConstraints.invertedConstraints();
 			res.exprConstraints=lhsResult.exprConstraints;
@@ -212,6 +220,8 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState eS
 			res.exprConstraints+=rhsResult.exprConstraints;
 		  }
 		  resultList.push_back(res);
+		  //		  cout << res.exprConstraints.toString();
+		  //cout << endl;
 		  break;
 		}
 		case V_SgOrOp: {
