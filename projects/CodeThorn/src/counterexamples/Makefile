@@ -1,16 +1,20 @@
-all: 
-	$(MAKE) -j1 rers_mini1.log Problem1.log
+all: clean
+	$(MAKE) -j1 rers_mini1.log 
+	$(MAKE) -j1 Problem1.log
+
+RERS=$(patsubst %,Problem%.log, $(shell seq 13))
+rers: $(RERS)
 
 clean:
 	rm -f *.exe formulae.hs *.o *.hi qc
 
 %.log: %.hs %.exe
 #       these filenames are hardcoded for now
-	cp $< formulae.hs
-	cp $(patsubst %.hs,%.exe, $<) machine.exe
+	mv $< formulae.hs
+	mv $(patsubst %.hs,%.exe, $<) machine.exe
 
 	ghc -cpp -threaded --make -o qc qc.hs
-	./qc # >$@
+	./qc >$@
 
 %.exe: ../tests/%.c
 	gcc -O3 $< -o $@
