@@ -1785,14 +1785,14 @@ Unparse_ExprStmt::unparseTemplateInstantiationMemberFunctionDeclStmt (SgStatemen
        // if ( declarationFileName == currentFileName && templateInstantiationMemberFunctionDeclaration->get_file_info()->isOutputInCodeGeneration() == true)
           if ( templateInstantiationMemberFunctionDeclaration->get_file_info()->isOutputInCodeGeneration() == true )
              {
-#if 1
+#if 0
                printf ("Declaration appears in the current source file. \n");
 #endif
                outputMemberFunctionTemplateInstantiation = true;
              }
             else
              {
-#if 1
+#if 0
                printf ("Declaration does NOT appear in the current source file (templateInstantiationMemberFunctionDeclaration = %p = %s) \n",
                     templateInstantiationMemberFunctionDeclaration, templateInstantiationMemberFunctionDeclaration->get_qualified_name().str());
                printf ("   isSpecialization() = %s \n",templateInstantiationMemberFunctionDeclaration->isSpecialization() ? "true" : "false");
@@ -1800,7 +1800,7 @@ Unparse_ExprStmt::unparseTemplateInstantiationMemberFunctionDeclStmt (SgStatemen
              }
         }
 
-#if 1
+#if 0
      printf ("Inside of unparseTemplateInstantiationMemberFunctionDeclStmt(): outputMemberFunctionTemplateInstantiation = %s \n",outputMemberFunctionTemplateInstantiation ? "true" : "false");
 #endif
 
@@ -1855,7 +1855,7 @@ Unparse_ExprStmt::unparseTemplateInstantiationMemberFunctionDeclStmt (SgStatemen
         }
        else
         {
-#if 1
+#if 0
           curprint ( string("/* Skipped output of member function declaration (name = ") + templateInstantiationMemberFunctionDeclaration->get_templateName().getString() + string(") */ \n") );
 #endif
 #if PRINT_DEVELOPER_WARNINGS

@@ -2057,7 +2057,9 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
   // ROSE_ASSERT(SageInterface::hasTemplateSyntax(XXX_name) == false);
      if (SageInterface::hasTemplateSyntax(nameWithoutTemplateArguments) == true)
         {
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
           printf ("Warning: In buildNondefiningFunctionDeclaration_T(): nameWithoutTemplateArguments = %s nameWithTemplateArguments = %s \n",nameWithoutTemplateArguments.str(),nameWithTemplateArguments.str());
+#endif
         }
   // DQ (7/27/2012): There are reasons why this can fail: e.g. for functions with names such as:
   // "operator std::auto_ptr_ref<_Tp1>" which is a user defined conversion operator to one class from another.
@@ -5507,7 +5509,10 @@ SgVarRefExp *
 SageBuilder::buildVarRefExp(const SgName& name, SgScopeStatement* scope/*=NULL*/)
    {
      ROSE_ASSERT(scope != NULL);
+
+#if 0
      printf ("In SageBuilder::buildVarRefExp(): scope = %p = %s = %s \n",scope,scope->class_name().c_str(),get_name(scope).c_str());
+#endif
 
      if (scope == NULL)
           scope = SageBuilder::topScopeStack();
@@ -5548,7 +5553,9 @@ SageBuilder::buildVarRefExp(const SgName& name, SgScopeStatement* scope/*=NULL*/
           varSymbol = new SgVariableSymbol(name1);
 
        // DQ (4/2/2012): Output a warning:
+#if 0
           printf ("WARNING: In SageBuilder::buildVarRefExp(): symbol not found so we built a SgVariableSymbol = %p (but not put into symbol table) \n",varSymbol);
+#endif
         }
 
      if (varSymbol == NULL)
@@ -9825,7 +9832,9 @@ SageBuilder::buildNondefiningTemplateClassDeclaration_nfi(const SgName& XXX_name
        // DQ (9/10/2012): Test the just built template with its template parameters.
           if (nondefdecl->get_templateParameters().size() == 0)
              {
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
                printf ("WARNING: In buildNondefiningTemplateClassDeclaration_nfi(): (part 1) nondefdecl->get_templateParameters().size() == 0: OK for nested classes/structs in template declarations nondefdecl = %p \n",nondefdecl);
+#endif
              }
        // ROSE_ASSERT(nondefdecl->get_templateParameters().size() > 0);
 
@@ -9893,7 +9902,9 @@ SageBuilder::buildNondefiningTemplateClassDeclaration_nfi(const SgName& XXX_name
        // DQ (9/10/2012): Test the just built template with its template parameters.
           if (nondefdecl->get_templateParameters().size() == 0)
              {
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
                printf ("WARNING: In buildNondefiningTemplateClassDeclaration_nfi(): (part 2) nondefdecl->get_templateParameters().size() == 0: OK for nested classes/structs in template declarations nondefdecl = %p \n",nondefdecl);
+#endif
              }
        // ROSE_ASSERT(nondefdecl->get_templateParameters().size() > 0);
 
@@ -10146,7 +10157,9 @@ SageBuilder::buildTemplateClassDeclaration_nfi(const SgName& XXX_name, SgClassDe
   // DQ (9/10/2012): Test the just built template with its template parameters.
      if (defdecl->get_templateParameters().size() == 0)
         {
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
           printf ("WARNING: In buildTemplateClassDeclaration_nfi(): defdecl->get_templateParameters().size() == 0: OK for nested classes/structs in template declarations defdecl = %p \n",defdecl);
+#endif
         }
   // ROSE_ASSERT(defdecl->get_templateParameters().size() > 0);
 
@@ -10271,7 +10284,9 @@ SageBuilder::buildTemplateClassDeclaration_nfi(const SgName& XXX_name, SgClassDe
        // ROSE_ASSERT(nondefdecl->get_templateParameters().size() > 0);
           if (nondefdecl->get_templateParameters().size() == 0)
              {
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
                printf ("WARNING: In buildTemplateClassDeclaration_nfi(): nondefdecl->get_templateParameters().size() == 0: OK for nested classes/structs in template declarations nondefdecl = %p \n",nondefdecl);
+#endif
              }
        // ROSE_ASSERT(nondefdecl->get_templateParameters().size() > 0);
 
