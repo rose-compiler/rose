@@ -789,7 +789,7 @@ public:
     short e2 = expr->expr2->label;
 
     bw_fixpoint(/* init */      Bot(),
-		/* start */     props[e2].isTrue(),
+		/* start */     !props[e2].isBot(),
 		/* join */      LUB,
 		/* transfer */  props[e2] && (props[e1] || joined_succs),
 		/* debug */     NOP
