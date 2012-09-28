@@ -462,14 +462,16 @@ void SIMDVectorization::vectorizeConditionalStmt(SgIfStmt* ifStmt)
       SgBasicBlock* basicBlock = isSgBasicBlock(ifStmt->get_true_body());
       ROSE_ASSERT(basicBlock);
       SgStatementPtrList stmtList = basicBlock->get_statements();
-      for(Rose_STL_Container<SgStatement*>::iterator stmtIter = stmtList.begin(); stmtIter != stmtList.end(); ++stmtIter)
+      Rose_STL_Container<SgStatement*>::iterator stmtIter;
+      int index;
+      for(stmtIter = stmtList.begin(), index = 0; stmtIter != stmtList.end(); ++stmtIter, ++index)
       {
-        insertConditionalStmtTable(*stmtIter,conditionStmtTable);
+        insertConditionalStmtTable(*stmtIter,conditionStmtTable, index);
       }
     }
     else
     {
-      insertConditionalStmtTable(ifStmt->get_true_body(),conditionStmtTable);
+      insertConditionalStmtTable(ifStmt->get_true_body(),conditionStmtTable, 0);
     }
     // Now handle the false_body, if there is one
     if(ifStmt->get_false_body() != NULL)
@@ -580,7 +582,7 @@ void SIMDVectorization::translateIfStmt(SgIfStmt* ifStmt, std::map<SgName,condit
   SgExprStatement* cmpFunctionCallStmt = buildExprStatement(SIMDCmpFunctionCall);
 
   // Create a list of statement that will replace the original true and false basicBlcok. 
-  vector<SgStatement*> ifConditionStmtList;
+  vector<SgStatement*> ifConditionStmtList(table.size(), NULL);
   for(map<SgName,conditionalStmts*>::iterator i=table.begin(); i != table.end(); ++i)
   {
     SgType* lhsType = lookupSymbolInParentScopes((*i).first,scope)->get_type();
@@ -590,7 +592,7 @@ void SIMDVectorization::translateIfStmt(SgIfStmt* ifStmt, std::map<SgName,condit
     SgFunctionCallExp* SIMDCmpFunctionCall = buildFunctionCallExp(SIMDSelName,lhsType, 
                                                           SIMDSelArgs, 
                                                           scope);
-    ifConditionStmtList.push_back(buildAssignStatement(ifStmtData->getLhsExpr(),SIMDCmpFunctionCall));
+    ifConditionStmtList[ifStmtData->getIndex()] =buildAssignStatement(ifStmtData->getLhsExpr(),SIMDCmpFunctionCall);
   }
   /*
      Because of the postorder traversal, inserting statements after the current
@@ -621,7 +623,7 @@ void SIMDVectorization::translateIfStmt(SgIfStmt* ifStmt, std::map<SgName,condit
   We insert d as the true case for b, and b itself as the false case for b.
 */
 /******************************************************************************************************************************/
-void SIMDVectorization::insertConditionalStmtTable(SgStatement* stmt, std::map<SgName,conditionalStmts*>& table)
+void SIMDVectorization::insertConditionalStmtTable(SgStatement* stmt, std::map<SgName,conditionalStmts*>& table, int index)
 {
   SgName name = NULL;
   SgExpression* lhsExp = NULL;
@@ -664,7 +666,7 @@ void SIMDVectorization::insertConditionalStmtTable(SgStatement* stmt, std::map<S
         ROSE_ASSERT(false);
       }
   }
-  conditionalStmts* condition = new conditionalStmts(lhsExp, trueExp, falseExp);
+  conditionalStmts* condition = new conditionalStmts(lhsExp, trueExp, falseExp, index);
   table.insert(pair<SgName,conditionalStmts*>(name,condition)); 
 }
 
@@ -736,7 +738,7 @@ void SIMDVectorization::updateConditionalStmtTable(SgStatement* stmt, std::map<S
   conditionalStmts* condition = NULL;
   if(table.find(name) == table.end())
   {
-    condition = new conditionalStmts(lhsExp, trueExp, falseExp);
+    condition = new conditionalStmts(lhsExp, trueExp, falseExp, table.size());
     table.insert(pair<SgName,conditionalStmts*>(name,condition)); 
   }
   else
@@ -747,11 +749,12 @@ void SIMDVectorization::updateConditionalStmtTable(SgStatement* stmt, std::map<S
 }
 
 
-SIMDVectorization::conditionalStmts::conditionalStmts(SgExpression* lhsName, SgExpression* rhsTrue, SgExpression* rhsFalse)
+SIMDVectorization::conditionalStmts::conditionalStmts(SgExpression* lhsName, SgExpression* rhsTrue, SgExpression* rhsFalse, int i)
 {
   lhsExpr = lhsName;
   trueExpr = rhsTrue;
   falseExpr = rhsFalse;
+  index = i;
 }
 
 void SIMDVectorization::conditionalStmts::updateFalseStmt(SgExpression* rhsFalse)
@@ -774,6 +777,10 @@ SgExpression* SIMDVectorization::conditionalStmts::getFalseExpr()
   return falseExpr;
 }
 
+int SIMDVectorization::conditionalStmts::getIndex()
+{
+  return index;
+}
 /******************************************************************************************************************************/
 /*
   VF, passed into this function, is the vector factor, and usually represents the SIMD width.

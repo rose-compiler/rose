@@ -14,15 +14,21 @@ namespace SIMDVectorization
     SgExpression* lhsExpr;
     SgExpression* trueExpr;
     SgExpression* falseExpr;
+    /* 
+      We use map as container to store the conditionalStmt data.
+      This index is used to keep its insertion order.
+    */
+    int index;
     
     public:
-    conditionalStmts(SgExpression*,SgExpression*,SgExpression*);
+    conditionalStmts(SgExpression*,SgExpression*,SgExpression*,int);
     conditionalStmts();
     ~conditionalStmts();
     void updateFalseStmt(SgExpression*);
     SgExpression* getLhsExpr(); 
     SgExpression* getTrueExpr(); 
     SgExpression* getFalseExpr(); 
+    int getIndex(); 
   };
 
 //  Add the SIMD header files, rose_simd.h, to the output file.
@@ -74,7 +80,7 @@ namespace SIMDVectorization
   void scalarVariableConversion(SgForStatement*, std::set<SgInitializedName*>, std::set<SgInitializedName*>);
 
 // Add expression for true statement into ConditionalStmtTable
-  void insertConditionalStmtTable(SgStatement*, std::map<SgName,conditionalStmts*>&);
+  void insertConditionalStmtTable(SgStatement*, std::map<SgName,conditionalStmts*>&, int);
   void updateConditionalStmtTable(SgStatement*, std::map<SgName,conditionalStmts*>&);
 }
 
