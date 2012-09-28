@@ -13,6 +13,13 @@
 
 #define USE_SSE 1
 
+__SIMD  cmpResult;
+__SIMDd cmpResultd;
+__SIMDi cmpResulti;
+
+/*
+  V_SgAddOp
+*/
 __SIMD _SIMD_add_ps(__SIMD a, __SIMD b)
 {
 #ifdef  USE_SSE
@@ -392,162 +399,150 @@ __SIMDd _SIMD_sel_pd(__SIMDd a, __SIMDd b, void** resultPtr)
 // a == b
 void _SIMD_cmpeq_ps(__SIMD a, __SIMD b, void** resultPtr)
 {
-  __SIMD* result = (__SIMD*)malloc(sizeof(__SIMD));
-  *resultPtr = result;
+  *resultPtr = &cmpResult;
 #ifdef  USE_SSE
-  *result = _mm_cmpeq_ps(a,b);
+  cmpResult = _mm_cmpeq_ps(a,b);
 #elif defined USE_AVX
-  *result = _mm256_cmp_ps(a,b,0);
+  cmpResult = _mm256_cmp_ps(a,b,0);
 #elif defined USE_IBM
-  *result = vec_cmpeq(a,b);
+  cmpResult = vec_cmpeq(a,b);
 #endif
 }
 
 void _SIMD_cmpeq_pd(__SIMDd a, __SIMDd b, void** resultPtr)
 {
-  __SIMDd* result = (__SIMDd*)malloc(sizeof(__SIMDd));
-  *resultPtr = result;
+  *resultPtr = &cmpResultd;
 #ifdef  USE_SSE
-  *result = _mm_cmpeq_pd(a,b);
+  cmpResultd = _mm_cmpeq_pd(a,b);
 #elif defined USE_AVX
-  *result = _mm256_cmp(a,b,0);
+  cmpResultd = _mm256_cmp(a,b,0);
 #elif defined USE_IBM
-  *result = vec_cmpeq(a,b);
+  cmpResultd = vec_cmpeq(a,b);
 #endif
 }
 
 // a != b
 void _SIMD_cmpne_ps(__SIMD a, __SIMD b, void** resultPtr)
 {
-  __SIMD* result = (__SIMD*)malloc(sizeof(__SIMD));
-  *resultPtr = result;
+  *resultPtr = &cmpResult;
 #ifdef  USE_SSE
-  *result = _mm_cmpneq_ps(a,b);
+  cmpResult = _mm_cmpneq_ps(a,b);
 #elif defined USE_AVX
-  *result = _mm256_cmp_ps(a,b,4);
+  cmpResult = _mm256_cmp_ps(a,b,4);
 #elif defined USE_IBM
-  *result = vec_xor(vec_cmpeq(a,b));
+  cmpResult = vec_xor(vec_cmpeq(a,b));
 #endif
 }
 
 void _SIMD_cmpne_pd(__SIMDd a, __SIMDd b, void** resultPtr)
 {
-  __SIMDd* result = (__SIMDd*)malloc(sizeof(__SIMDd));
-  *resultPtr = result;
+  *resultPtr = &cmpResultd;
 #ifdef  USE_SSE
-  *result = _mm_cmpneq_pd(a,b);
+  cmpResultd = _mm_cmpneq_pd(a,b);
 #elif defined USE_AVX
-  *result = _mm256_cmpneq_pd(a,b,4);
+  cmpResultd = _mm256_cmpneq_pd(a,b,4);
 #elif defined USE_IBM
-  *result = vec_xor(vec_cmpeq(a,b));
+  cmpResultd = vec_xor(vec_cmpeq(a,b));
 #endif
 }
 
 // a < b
 void _SIMD_cmplt_ps(__SIMD a, __SIMD b, void** resultPtr)
 {
-  __SIMD* result = (__SIMD*)malloc(sizeof(__SIMD));
-  *resultPtr = result;
+  *resultPtr = &cmpResult;
 #ifdef  USE_SSE
-  *result = _mm_cmplt_ps(a,b);
+  cmpResult = _mm_cmplt_ps(a,b);
 #elif defined USE_AVX
-  *result = _mm256_cmp_ps(a,b,17);
+  cmpResult = _mm256_cmp_ps(a,b,17);
 #elif defined USE_IBM
-  *result = vec_cmplt(a,b);
+  cmpResult = vec_cmplt(a,b);
 #endif
 }
 
 void _SIMD_cmplt_pd(__SIMDd a, __SIMDd b, void** resultPtr)
 {
-  __SIMDd* result = (__SIMDd*)malloc(sizeof(__SIMDd));
-  *resultPtr = result;
+  *resultPtr = &cmpResultd;
 #ifdef  USE_SSE
-  *result = _mm_cmplt_pd(a,b);
+  cmpResultd = _mm_cmplt_pd(a,b);
 #elif defined USE_AVX
-  *result = _mm256_cmp(a,b,17);
+  cmpResultd = _mm256_cmp(a,b,17);
 #elif defined USE_IBM
-  *result = vec_cmplt(a,b);
+  cmpResultd = vec_cmplt(a,b);
 #endif
 }
 
 // a <= b
 void _SIMD_cmple_ps(__SIMD a, __SIMD b, void** resultPtr)
 {
-  __SIMD* result = (__SIMD*)malloc(sizeof(__SIMD));
-  *resultPtr = result;
+  *resultPtr = &cmpResult;
 #ifdef  USE_SSE
-  *result = _mm_cmple_ps(a,b);
+  cmpResult = _mm_cmple_ps(a,b);
 #elif defined USE_AVX
-  *result = _mm256_cmp_ps(a,b,18);
+  cmpResult = _mm256_cmp_ps(a,b,18);
 #elif defined USE_IBM
-  *result = vec_cmple(a,b);
+  cmpResult = vec_cmple(a,b);
 #endif
 }
 
 void _SIMD_cmple_pd(__SIMDd a, __SIMDd b, void** resultPtr)
 {
-  __SIMDd* result = (__SIMDd*)malloc(sizeof(__SIMDd));
-  *resultPtr = result;
+  *resultPtr = &cmpResultd;
 #ifdef  USE_SSE
-  *result = _mm_cmple_pd(a,b);
+  cmpResultd = _mm_cmple_pd(a,b);
 #elif defined USE_AVX
-  *result = _mm256_cmp(a,b,18);
+  cmpResultd = _mm256_cmp(a,b,18);
 #elif defined USE_IBM
-  *result = vec_cmple(a,b);
+  cmpResultd = vec_cmple(a,b);
 #endif
 }
 
 // a > b
 void _SIMD_cmpgt_ps(__SIMD a, __SIMD b, void** resultPtr)
 {
-  __SIMD* result = (__SIMD*)malloc(sizeof(__SIMD));
-  *resultPtr = result;
+  *resultPtr = &cmpResult;
 #ifdef  USE_SSE
-  *result = _mm_cmpgt_ps(a,b);
+  cmpResult = _mm_cmpgt_ps(a,b);
 #elif defined USE_AVX
-  *result = _mm256_cmp_ps(a,b,30);
+  cmpResult = _mm256_cmp_ps(a,b,30);
 #elif defined USE_IBM
-  *result = vec_cmpgt(a,b);
+  cmpResult = vec_cmpgt(a,b);
 #endif
 }
 
 void _SIMD_cmpgt_pd(__SIMDd a, __SIMDd b, void** resultPtr)
 {
-  __SIMDd* result = (__SIMDd*)malloc(sizeof(__SIMDd));
-  *resultPtr = result;
+  *resultPtr = &cmpResultd;
 #ifdef  USE_SSE
-  *result = _mm_cmple_pd(a,b);
+  cmpResultd = _mm_cmple_pd(a,b);
 #elif defined USE_AVX
-  *result = _mm256_cmp(a,b,30);
+  cmpResultd = _mm256_cmp(a,b,30);
 #elif defined USE_IBM
-  *result = vec_cmpgt(a,b);
+  cmpResultd = vec_cmpgt(a,b);
 #endif
 }
 
 // a >= b
 void _SIMD_cmpge_ps(__SIMD a, __SIMD b, void** resultPtr)
 {
-  __SIMD* result = (__SIMD*)malloc(sizeof(__SIMD));
-  *resultPtr = result;
+  *resultPtr = &cmpResult;
 #ifdef  USE_SSE
-  *result = _mm_cmpge_ps(a,b);
+  cmpResult = _mm_cmpge_ps(a,b);
 #elif defined USE_AVX
-  *result = _mm256_cmp_ps(a,b,29);
+  cmpResult = _mm256_cmp_ps(a,b,29);
 #elif defined USE_IBM
-  *result = vec_cmpge(a,b);
+  cmpResult = vec_cmpge(a,b);
 #endif
 }
 
 void _SIMD_cmpge_pd(__SIMDd a, __SIMDd b, void** resultPtr)
 {
-  __SIMDd* result = (__SIMDd*)malloc(sizeof(__SIMDd));
-  *resultPtr = result;
+  *resultPtr = &cmpResultd;
 #ifdef  USE_SSE
-  *result = _mm_cmpge_pd(a,b);
+  cmpResultd = _mm_cmpge_pd(a,b);
 #elif defined USE_AVX
-  *result = _mm256_cmp(a,b,29);
+  cmpResultd = _mm256_cmp(a,b,29);
 #elif defined USE_IBM
-  *result = vec_cmpge(a,b);
+  cmpResultd = vec_cmpge(a,b);
 #endif
 }
 
