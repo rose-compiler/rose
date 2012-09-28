@@ -120,7 +120,7 @@ specification for the \F, \R, and \U operators.
 \toprule
 Operator & $\mathit{init}$ & $\mathit{start?}$ & $\mathit{join}$ & $\mathit{calc}$ \\\midrule
 
-$e = \F a$    & $\bot$ & $(\prop{a}\neq\bot)$ & $\lub$ & $\prop{a}\cup\comb}$ \\
+$e = \F a$    & $\bot$ & $(\prop{a}\neq\bot)$ & $\lub$ & $\prop{a}\cup\comb$ \\
 $e = a\ \R b$ & $\bot$ & $(\prop{b}\neq\bot)$ & $\lub$ & $\prop{b}\cap(\prop{a}\cup\comb)$\\
 $e = a\ \U b$ & $\bot$ & $(\prop{b}\neq\bot)$ & $\lub$ & $\prop{b}\cup(\prop{a}\cap\comb)$\\
 \bottomrule
@@ -131,11 +131,23 @@ The WU operator is syntactically rewritten into the equivalent
 \[ e = a\ \WU b\quad\equiv\quad \G a \vee (a\ \U b) \]
 expression.
 
-\subsubsection{Handling I/O nodes}
+\subsubsection{Handling Output states}
 \begin{itemize}
 \item are propagated to the next I/O state of the same type
 \end{itemize}
 
+\subsubsection{Handling Output states}
+We use the IO attribute in the \STG to determine whether a state is an
+output state. If the state has a \verb|STDOUT_CONST| or
+\verb|STDOUT_VAR| attribute, and, in the latter case, the variable
+being output is constrained to an integer value, the property \verb|O|
+$\mathit{value}$ is \ttrue. If the state performs I/O, but the
+constraints are inconclusive, all \verb|O| properties are $\top$,
+otherwise, $\bot$. The \STG treats assertions as I/O, which implies
+that dead ends in the input program (paths without traditional I/O
+leading to an exit) will be reported as performing no I/O at all.
+
+Negated I/O
 \subsection{Reducing the State Transition Graph}
 
 \subsection{Debugging: Finding counterexamples}
