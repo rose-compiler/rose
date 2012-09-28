@@ -637,7 +637,7 @@ public:
       GraphTraits::out_edge_iterator out_i, out_end;
       for (tie(out_i, out_end) = out_edges(label, g); out_i != out_end; ++out_i) {
 	Label succ = target(*out_i, g);
-	joined_succs = joined_succs && ltl_properties[label][e1];
+	joined_succs = (joined_succs LUB ltl_properties[label][e1]);
       }
       props[e] = joined_succs;
     }
@@ -734,7 +734,7 @@ public:
 
     bw_fixpoint(/* init */      Bot(),
 		/* start */     !props[e2].isBot(),
-		/* join */      AND,
+		/* join */      LUB,
 		/* transfer */  (props[e2] || (props[e1] && joined_succs)) || false,
 		/* debug */     NOP
 		//cerr<<props[e2]<<" || ("<<props[e1]<<" && "<<joined_succs<<")"<<endl
@@ -766,7 +766,7 @@ public:
 
     bw_fixpoint(/* init */	Bot(),
 		/* start */	!props[e2].isBot(),
-		/* join */	AND,
+		/* join */	LUB,
 		/* transfer */	props[e2] || (props[e1] && joined_succs),
 		/* debug */     NOP
 		);
