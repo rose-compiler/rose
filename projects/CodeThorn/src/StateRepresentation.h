@@ -140,17 +140,19 @@ bool operator!=(const State& c1, const State& c2);
 #endif
 
 // define order for EState elements (necessary for EStateSet)
-#ifndef ESTATE_MAINTAINER_LIST
+//#ifndef ESTATE_MAINTAINER_LIST
 bool operator<(const EState& c1, const EState& c2);
 bool operator==(const EState& c1, const EState& c2);
 bool operator!=(const EState& c1, const EState& c2);
-#endif
+//#endif
 
+//#ifndef ESTATE_MAINTAINER_LIST
 struct EStateLessComp {
   bool operator()(const EState& c1, const EState& c2) {
 	return c1<c2;
   }
 };
+//#endif
 
 class EStateHashFun {
    public:

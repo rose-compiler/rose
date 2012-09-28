@@ -314,6 +314,7 @@ int main( int argc, char * argv[] ) {
      "use precise constraint extraction (experimental) [=yes|no]")
     ("tg-ltl-reduced",po::value< string >(),"compute on-the-fly LTL-reduced transition graph (not available)[=yes|no]")
     ("viz",po::value< string >(),"generate visualizations (dot) outputs [=yes|no]")
+    ("update-input-var",po::value< string >(),"For testing purposes only. Default is Yes. [=yes|no]")
     ;
 
   po::store(po::command_line_parser(argc, argv).
@@ -353,6 +354,7 @@ int main( int argc, char * argv[] ) {
   boolOptions.registerOption("precision-exact-constraints",false);
   boolOptions.registerOption("tg-ltl-reduced",false);
   boolOptions.registerOption("viz",false);
+  boolOptions.registerOption("update-input-var",true);
   boolOptions.processOptions();
   cout<<boolOptions.toString();
 

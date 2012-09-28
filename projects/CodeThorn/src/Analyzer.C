@@ -87,6 +87,11 @@ EState Analyzer::createEState(Label label, State state, ConstraintSet cset) {
   EState eState=EState(label,newStatePtr,newConstraintSetPtr);
   return eState;
 }
+EState Analyzer::createEState(Label label, State state, ConstraintSet cset, InputOutput io) {
+  EState eState=createEState(label,state,cset);
+  eState.io=io;
+  return eState;
+}
 
 bool Analyzer::isLTLrelevantLabel(Label label) {
   Labeler* lab=getLabeler();
@@ -318,7 +323,6 @@ list<EState> elistify(EState res) {
   return resList;
 }
 
-
 list<EState> Analyzer::transferFunction(Edge edge, const EState* eState) {
   assert(edge.source==eState->label);
   // we do not pass information on the local edge
@@ -492,7 +496,16 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* eState) {
 		   SgSymbol* sym=SgNodeHelper::getSymbolOfVariable(varRefExp);
 		   assert(sym);
 		   VariableId varId=VariableId(sym);
+
+		   // update state (remove all existing constraint on that variable and set it to top)
+		   State newState=*currentEState.state;
+		   ConstraintSet newCSet=*currentEState.constraints();
+		   if(boolOptions["update-input-var"]) {
+			 newState[varId]=AType::Top();
+			 newCSet.deleteConstraints(varId);
+		   }
 		   newio.recordVariable(InputOutput::STDIN_VAR,varId);
+		   return elistify(createEState(edge.target,newState,newCSet,newio));
 		 } else {
 		   cerr<<"Error: unsupported number of scanf arguments. Currently scanf with exactly one variable of the form scanf(\"%d\",&v) is supported."<<endl;
 		   exit(1);
@@ -535,7 +548,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* eState) {
 		   exit(1);
 		 }
 	   }
-	   // for all other external functions are use identity as transfer function
+	   // for all other external functions we use identity as transfer function
 	   EState newEState=currentEState;
 	   newEState.io=newio;
 	   newEState.label=edge.target;

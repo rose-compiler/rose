@@ -244,6 +244,8 @@ void ConstraintSet::addConstraint(Constraint c) {
   // we have to look which version of constraint already exists (it can only be 
   // a) at most one equality constraint or b) arbitrary many inequality constraints or c) one disequality)
   // we do not check for x=y constraints
+  if(disequalityExists())
+	return;
 
   // TODO1-2: currently not necessary as we propagate all constriants when a x=y is added to a constraint set.
   //   TODO1: do not add x!=k if {y!=k, x==y}
@@ -256,23 +258,27 @@ void ConstraintSet::addConstraint(Constraint c) {
 	  // we do not add an x=x constraint
 	  return;
 	}
+#if 0
 	if(c.lhsVar()<c.rhsVar()) {
 	  // ordering is OK, nothing to do
 	} else {
 	  // ordering is not OK, swap (y=x ==> x=y)
 	  c.swapVars();
 	}
+#endif
   }
   switch(c.op()) {
+	// attempt to insert x==k
   case Constraint::EQ_VAR_CONST: {
-	// adding equality constraint
 	if(disequalityExists())
 	  return;
+	// if x!=k exists ==> ##
 	if(constraintExists(Constraint::NEQ_VAR_CONST,c.lhsVar(),c.rhsValCppCapsule())) {
 	  removeConstraint(Constraint(Constraint::NEQ_VAR_CONST,c.lhsVar(),c.rhsValCppCapsule()));
 	  addDisequality();
 	  return;
 	}
+	// search for x==? (there can only be at most one equation on x)
 	ConstraintSet::iterator i=findSpecific(Constraint::EQ_VAR_CONST,c.lhsVar());
 	if(i!=end()) {
 	  if(!((*i).rhsValCppCapsule()==c.rhsValCppCapsule())) {
@@ -319,7 +325,7 @@ void ConstraintSet::addConstraint(Constraint c) {
 	return;
   case Constraint::EQ_VAR_VAR:
 	// TODO: maintain consistency wenn x=y is inserted but constraints of x and y are in conflict
-	// currently we only add x=y for a fresh variable y on parameter passing
+	// currently we only add x=y for a fresh variable y on parameter passing and therefore this is OK.
 	set<Constraint>::insert(Constraint(Constraint::EQ_VAR_VAR,c.lhsVar(),c.rhsVar()));
 	return;
   default:
