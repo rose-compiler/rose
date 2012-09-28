@@ -34,6 +34,7 @@ using namespace SIMDNormalization;
 using namespace SIMDAnalysis;
 vector<SgForStatement*> loopList;
 std::map<SgExprStatement*, vector<SgStatement*> > insertList;
+std::map<std::string, std::string> constantValMap;
 /* 
   VF is the vector factor, usually is the SIMD width.  
   We set it up here for the ealy stage development.

@@ -24,6 +24,7 @@ int main()
   __SIMD cs_SIMD;
   
 #pragma SIMD
+  __SIMD __constant0__ = _SIMD_splats_ps(1.f);
   n_SIMD = _SIMD_splats_epi32(n);
   as_SIMD = _SIMD_splats_ps(as);
   bs_SIMD = _SIMD_splats_ps(bs);
@@ -32,7 +33,7 @@ int main()
     a_SIMD[i_nom_1_strip_12] = _SIMD_msub_ps(a_SIMD[i_nom_1_strip_12],b_SIMD[i_nom_1_strip_12],c_SIMD[i_nom_1_strip_12]);
     a_SIMD[i_nom_1_strip_12] = _SIMD_madd_ps(a_SIMD[i_nom_1_strip_12],b_SIMD[i_nom_1_strip_12],c_SIMD[i_nom_1_strip_12]);
     a_SIMD[i_nom_1_strip_12] = _SIMD_neg_ps(_SIMD_msub_ps(a_SIMD[i_nom_1_strip_12],b_SIMD[i_nom_1_strip_12],c_SIMD[i_nom_1_strip_12]));
-    cs_SIMD = _SIMD_madd_pd(as_SIMD,bs_SIMD,_SIMD_splats_pd(1.));
+    cs_SIMD = _SIMD_madd_ps(as_SIMD,bs_SIMD,__constant0__);
   }
   return 0;
 }

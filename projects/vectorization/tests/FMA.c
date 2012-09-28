@@ -15,6 +15,6 @@ int main(){
     a[i] = a[i] * b[i] - c[i];
     a[i] = c[i] + a[i] * b[i];
     a[i] = c[i] - a[i] * b[i];
-    cs = 1. + as * bs;  
+    cs = 1.f + as * bs;  
   }
 }

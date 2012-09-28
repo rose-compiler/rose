@@ -18,6 +18,7 @@ using namespace SIMDVectorization;
 /******************************************************************************************************************************/
 extern int VF;
 extern std::map<SgExprStatement*, vector<SgStatement*> > insertList;
+extern std::map<std::string, std::string> constantValMap;
 
 void SIMDVectorization::addHeaderFile(SgProject* project)
 {
@@ -143,6 +144,7 @@ SgType* SIMDVectorization::getSIMDType(SgType* variableType, SgScopeStatement* s
 void SIMDVectorization::translateOperand(SgExpression* operand)
 {
   SgType* SIMDType = NULL;
+  string constantValString;
   switch(operand->variantT())
   {
     case V_SgVarRefExp:
@@ -271,22 +273,45 @@ void SIMDVectorization::translateOperand(SgExpression* operand)
         break;
       }
     case V_SgIntVal:
+        {
+          if(isSgIntVal(operand) != NULL)
+            constantValString = isSgIntVal(operand)->get_valueString();
+        }
     case V_SgFloatVal:
+        {
+          if(isSgFloatVal(operand) != NULL)
+            constantValString = isSgFloatVal(operand)->get_valueString();
+        }
     case V_SgDoubleVal:
       {
+        if(isSgDoubleVal(operand) != NULL)
+          constantValString = isSgDoubleVal(operand)->get_valueString();
         SgType* valType = operand->get_type();
         if(isSgCastExp(operand->get_parent()) != NULL)
         {
           valType = isSgCastExp(operand->get_parent())->get_type();
         }
-        string suffix = "";
-        suffix = getSIMDOpSuffix(valType);
-        SgName functionName = SgName("_SIMD_splats"+suffix);
-        SgExprListExp* SIMDAddArgs = buildExprListExp(deepCopy(operand));
-        SgFunctionCallExp* SIMDSplats = buildFunctionCallExp(functionName,valType, 
-                                                             SIMDAddArgs, 
-                                                             getScope(operand));
-        replaceExpression(operand, SIMDSplats); 
+        if(constantValMap.find(constantValString) == constantValMap.end())
+        {
+          string constantName = generateUniqueVariableName(getEnclosingFunctionDefinition(operand),"constant");
+          string suffix = "";
+          suffix = getSIMDOpSuffix(valType);
+          SgType* SIMDType = getSIMDType(valType, getScope(operand));
+          SgName functionName = SgName("_SIMD_splats"+suffix);
+          SgExprListExp* SIMDAddArgs = buildExprListExp(deepCopy(operand));
+          SgFunctionCallExp* SIMDSplats = buildFunctionCallExp(functionName,SIMDType, 
+                                                               SIMDAddArgs, 
+                                                               getScope(operand));
+          SgAssignInitializer* constantInitializer = buildAssignInitializer(SIMDSplats,SIMDType);
+          SgVariableDeclaration* constantValDecl = buildVariableDeclaration(constantName,
+                                                                            SIMDType,
+                                                                            constantInitializer,
+                                                                            getEnclosingFunctionDefinition(operand));
+          insertStatementAfterLastDeclaration(constantValDecl,getEnclosingFunctionDefinition(operand));
+          constantValMap.insert(pair<string,string>(constantValString,constantName)); 
+        }
+        SgVarRefExp* constantVarRefExp = buildVarRefExp(constantValMap.find(constantValString)->second,getScope(operand));
+        replaceExpression(operand, constantVarRefExp); 
         break;
       }
     default:
