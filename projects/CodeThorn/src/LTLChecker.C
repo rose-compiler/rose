@@ -546,7 +546,7 @@ public:
   void visit(const OutputSymbol* expr) {
     short e = expr->label;
     bw_fixpoint(/* init */     Top(),
-		/* start */    false,
+		/* start */    state->io.op != InputOutput::NONE,
 		/* join */     GLB,
 		/* transfer */ isOutputState(state, expr->c, isEndpoint(label), joined_succs),
 		/* debug */    NOP/*cerr<<"out("<<string(1,expr->c)<<")"<<endl*/);
@@ -595,7 +595,7 @@ public:
   void visit(const NegOutputSymbol* expr) {
     short e = expr->label;
     bw_fixpoint(/* init */     Top(),
-		/* start */    false,
+		/* start */    state->io.op != InputOutput::NONE,
 		/* join */     GLB,
 		/* transfer */ isNegOutputState(state, expr->c, isEndpoint(label), joined_succs),
 		/* debug */    NOP/*cerr<<"neg_out("<<string(1,expr->c)<<")"<<endl*/);

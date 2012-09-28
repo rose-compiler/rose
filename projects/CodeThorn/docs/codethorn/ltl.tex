@@ -79,7 +79,7 @@ The global operator $\G a$ yields true iff the sub-expression $a$ is
 true at all states. The transfer function is defined as follows:
 
 \[ e = \G a\colon\qquad\forall\state\in\States\colon\prop{e}
-:=\Lub_{\state\prime\in succ(\state)}{\propp{a}} \]
+:=\prop{a}\cap\Lub_{\state\prime\in succ(\state)}{\propp{e}} \]
 
 Since we only want to handle all-quantified LTL expressions, it is
 safe to join the information from multiple paths using the \lub
@@ -95,13 +95,22 @@ not all is lost for these states. For example, $\top \vee \ttrue
 possible for these unknown states to still be overruled by other
 states for which we do have a precise result.
 
+To calculate the solution of the transfer function over the entire
+\STG, we perform a fixpoint search over the entire graph; this is
+implemented as a backwards-directed dataflow analysis. Fist,
+every state is initialized to $\bot$. The join operator is $\lub$. The
+transfer function uses the Boolean lattice $\cap$ operation to combine
+$a$ with the results of the joined successors. The fixpoint working
+set is initialized to all final states $\in\STG$ plus all states where
+$e\neq\bot$, because the \STG may contain infinite loops that are
+otherwise not reachable from a final state. 	
+
 \subsubsection{The X operator}
 The next operator $X a$ yields true iff $a$ is true in the next state.
-\[ e = \X a \qquad\forall\state\in\States\colon\prop{e}:=\bigcap_{\state\prime\in succ(\state)}{\propp{a}} \]
+\[ e = \X a\colon\qquad\forall\state\in\States\colon\prop{e}
+:=\Lub_{\state\prime\in succ(\state)}{\propp{a}} \]
 
-\subsubsection{The operators F, R, U, and WU}
-These operators are computationally more intensive, since we need to
-perform a fix point search over the entire state transition graph. Backward.
+\subsubsection{The F operator}
 \begin{tabular}{rlllll}
 \toprule
 operator & $\mathit{init}$ & $\mathit{start}$ & $\mathit{join}$ &
