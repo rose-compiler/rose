@@ -97,6 +97,10 @@ rers: $(RERS)
 	     --csv-ltl $(patsubst tests/rers/Problem%.c,Problem%-ltl.csv,$<) \
 	     --csv-assert $(patsubst tests/rers/Problem%.c,Problem%-assert.csv,$<) >$@
 
+
+validate:
+	cd regressiondata && python validate.py --log Problem1.log --csv rers_Problem1_ltl_csv.txt
+
 docs:
 	doxygen Doxyfile
 
