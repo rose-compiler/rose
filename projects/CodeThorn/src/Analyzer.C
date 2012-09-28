@@ -374,7 +374,10 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* eState) {
 		cset.addAssignEqVarVar(formalParameterVarId,actualParameterVarId);
 	  }
 	  // general case: the actual argument is an arbitrary expression (including a single variable)
-	  list<SingleEvalResultConstInt> evalResultList=exprAnalyzer.evalConstInt(actualParameterExpr,currentEState,true, true);
+	  // we use for the third parameter "false": do not use constraints when extracting values
+	  // consequently, formalparam=actualparam remains top, even if constraints are available, which
+	  // would allow to extract a constant value (or a range (if relational constraints are added))
+	  list<SingleEvalResultConstInt> evalResultList=exprAnalyzer.evalConstInt(actualParameterExpr,currentEState,false, true);
 	  assert(evalResultList.size()>0);
 	  list<SingleEvalResultConstInt>::iterator resultListIter=evalResultList.begin();
 	  SingleEvalResultConstInt evalResult=*resultListIter;
@@ -382,6 +385,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* eState) {
 		cerr<<"Error: We currently do not support multi-state generating operators in function call parameters (yet)."<<endl;
 		exit(1);
 	  }
+	  //TODO: investigate: this turns top variables into variables with concrete value in state - do we want this?
 	  newState[formalParameterVarId]=evalResult.value();
 	  ++i;++j;
 	}
@@ -624,7 +628,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* eState) {
 			cset.deleteConstraints(lhsVar);
 		  eStateList.push_back(createEState(edge.target,newState,cset));
 		} else {
-		  cerr << "Error: analyzeAssignOp: unrecognized expression on lhs."<<endl;
+		  cerr << "Error: transferfunction:SgAssignOp: unrecognized expression on lhs."<<endl;
 		  exit(1);
 		}
 	  }

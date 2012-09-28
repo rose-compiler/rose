@@ -14,7 +14,6 @@ void f() {
 }
 
 int main() {
-  int x; // fake
   x=1;
   while(1)
 	f();
