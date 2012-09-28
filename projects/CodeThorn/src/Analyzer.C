@@ -374,9 +374,9 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* eState) {
 		cset.addAssignEqVarVar(formalParameterVarId,actualParameterVarId);
 	  }
 	  // general case: the actual argument is an arbitrary expression (including a single variable)
-	  // we use for the third parameter "false": do not use constraints when extracting values
-	  // consequently, formalparam=actualparam remains top, even if constraints are available, which
-	  // would allow to extract a constant value (or a range (if relational constraints are added))
+	  // we use for the third parameter "false": do not use constraints when extracting values.
+	  // Consequently, formalparam=actualparam remains top, even if constraints are available, which
+	  // would allow to extract a constant value (or a range (when relational constraints are added)).
 	  list<SingleEvalResultConstInt> evalResultList=exprAnalyzer.evalConstInt(actualParameterExpr,currentEState,false, true);
 	  assert(evalResultList.size()>0);
 	  list<SingleEvalResultConstInt>::iterator resultListIter=evalResultList.begin();
