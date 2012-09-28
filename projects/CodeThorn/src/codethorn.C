@@ -59,7 +59,6 @@ void checkProgram(SgNode* root) {
   vs.insert(V_SgEqualityOp);
   vs.insert(V_SgIntVal);
   vs.insert(V_SgVariableDeclaration);
-  vs.insert(V_SgAddOp);
   vs.insert(V_SgReturnStmt);
   vs.insert(V_SgAssignInitializer);
   vs.insert(V_SgBoolValExp);
@@ -83,10 +82,16 @@ void checkProgram(SgNode* root) {
 
   // rers Problems 10-13
   // arithmetic operators
+  vs.insert(V_SgAddOp);
   vs.insert(V_SgSubtractOp);
   vs.insert(V_SgMultiplyOp);
   vs.insert(V_SgDivideOp);
   vs.insert(V_SgModOp);
+  vs.insert(V_SgGreaterOrEqualOp);
+  vs.insert(V_SgLessThanOp);
+  vs.insert(V_SgGreaterThanOp);
+  vs.insert(V_SgLessOrEqualOp);
+
   lr.setAstNodeVariantSet(vs,true);
   cout << "INIT: Running CodeThorn language restrictor."<<endl;
   bool valid=lr.checkIfAstIsAllowed(root);
@@ -302,12 +307,13 @@ int main( int argc, char * argv[] ) {
     ("precision-equality-io",po::value< string >(),
      "(experimental) use constraints for determining estate equality [=yes|no]")
     ("precision-bool",po::value< string >(),
-     "use precise top with bool-(and/or) operators (used in LTL)")
+     "use precise top with bool-(and/or) operators (used in LTL) [=yes|no]")
     ("precision-intbool",po::value< string >(),
-     "use precise top with intbool-(and/or) operators (used in int-analyzer)")
+     "use precise top with intbool-(and/or) operators (used in int-analyzer) [=yes|no]")
     ("precision-exact-constraints",po::value< string >(),
-     "use precise constraint extraction (experimental)")
-    ("tg-ltl-reduced",po::value< string >(),"compute LTL-reduced transition graph")
+     "use precise constraint extraction (experimental) [=yes|no]")
+    ("tg-ltl-reduced",po::value< string >(),"compute on-the-fly LTL-reduced transition graph (not available)[=yes|no]")
+    ("viz",po::value< string >(),"generate visualizations (dot) outputs [=yes|no]")
     ;
 
   po::store(po::command_line_parser(argc, argv).
@@ -346,6 +352,7 @@ int main( int argc, char * argv[] ) {
   boolOptions.registerOption("precision-intbool",true);
   boolOptions.registerOption("precision-exact-constraints",false);
   boolOptions.registerOption("tg-ltl-reduced",false);
+  boolOptions.registerOption("viz",false);
   boolOptions.processOptions();
   cout<<boolOptions.toString();
 
@@ -481,9 +488,7 @@ int main( int argc, char * argv[] ) {
 	cout << "Time total           : "<<color("green")<<totalRunTime/1000.0<<" seconds"<<color("normal")<<endl;
   cout << "=============================================================="<<endl;
 
-  if(eStateSetSize>2500) {
-	cout << "Number of eStates > 2500. Not generating visualization."<<endl;
-  } else {
+  if(boolOptions["viz"]) {
     Visualizer visualizer(analyzer.getLabeler(),analyzer.getFlow(),analyzer.getStateSet(),analyzer.getEStateSet(),analyzer.getTransitionGraph());
     string dotFile="digraph G {\n";
     dotFile+=visualizer.transitionGraphToDot();
@@ -508,7 +513,6 @@ int main( int argc, char * argv[] ) {
     
     write_file("cfg.dot", analyzer.flow.toDot(analyzer.cfanalyzer->getLabeler()));
     cout << "generated cfg.dot."<<endl;
-
   }
 
 #if 0

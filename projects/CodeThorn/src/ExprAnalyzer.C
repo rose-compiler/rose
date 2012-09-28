@@ -239,6 +239,12 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState eS
 		  resultList.push_back(res);
 		  break;
 		}
+		case V_SgAddOp: {
+		  res.result=(lhsResult.result+rhsResult.result);
+		  res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
+		  resultList.push_back(res);
+		  break;
+		}
 		case V_SgSubtractOp: {
 		  res.result=(lhsResult.result-rhsResult.result);
 		  res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
@@ -257,21 +263,42 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState eS
 		  resultList.push_back(res);
 		  break;
 		}
-#if 0
 		case V_SgModOp: {
 		  res.result=(lhsResult.result%rhsResult.result);
 		  res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
 		  resultList.push_back(res);
 		  break;
 		}
-#endif
+		case V_SgGreaterOrEqualOp: {
+		  res.result=(lhsResult.result>=rhsResult.result);
+		  res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
+		  resultList.push_back(res);
+		  break;
+		}
+		case V_SgGreaterThanOp: {
+		  res.result=(lhsResult.result>rhsResult.result);
+		  res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
+		  resultList.push_back(res);
+		  break;
+		}
+		case V_SgLessThanOp: {
+		  res.result=(lhsResult.result<rhsResult.result);
+		  res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
+		  resultList.push_back(res);
+		  break;
+		}
+		case V_SgLessOrEqualOp: {
+		  res.result=(lhsResult.result<=rhsResult.result);
+		  res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
+		  resultList.push_back(res);
+		  break;
+		}
 		default:
 		  cerr << "Binary Op:"<<SgNodeHelper::nodeToString(node)<<endl;
 		  throw "Error: evalConstInt::binary operation failed.";
 		}
 	  }
 	}
-	//assert(resultList.size()==1);
 	return resultList;
   }
   
