@@ -34,21 +34,26 @@ dataflow analysis, which represents the inner layer of the algorithm.
   \label{fig:bool_lattice}
 \end{figure}
 
-\newcommand{\state}{\ensuremath{\mathit{s}}}
-\newcommand{\STG}{\ensuremath{\mathrm{STG}}}
-\newcommand{\States}{\ensuremath{\mathit{States}}}
-\newcommand{\prop}[1]{\ensuremath{p_{\state,#1}}} 
-\newcommand{\propp}[1]{\ensuremath{p_{\state',#1}}} 
-\newcommand{\G}{\ensuremath{\mathrm{G}}}
-\newcommand{\F}{\ensuremath{\mathrm{F}}}
-\newcommand{\X}{\ensuremath{\mathrm{X}}}
-\newcommand{\R}{\ensuremath{\mathrm{R}}}
-\newcommand{\U}{\ensuremath{\mathrm{U}}}
-\newcommand{\WU}{\ensuremath{\mathrm{WU}}}
+\newcommand{\lub}{\ensuremath{\sqcup}\xspace}
+\newcommand{\Lub}{\ensuremath{\bigsqcup}\xspace}
+\newcommand{\state}{\ensuremath{\mathit{s}}\xspace}
+\newcommand{\STG}{\ensuremath{\mathrm{STG}}\xspace}
+\newcommand{\States}{\ensuremath{\mathit{States}}\xspace}
+\newcommand{\prop}[1]{\ensuremath{p_{\state,#1}}\xspace} 
+\newcommand{\propp}[1]{\ensuremath{p_{\state',#1}}\xspace} 
+\newcommand{\G}{\ensuremath{\mathrm{G}}\ }
+\newcommand{\F}{\ensuremath{\mathrm{F}}\ }
+\newcommand{\X}{\ensuremath{\mathrm{X}}\ }
+\newcommand{\R}{\ensuremath{\mathrm{R}}\ }
+\newcommand{\U}{\ensuremath{\mathrm{U}}\ }
+\newcommand{\WU}{\ensuremath{\mathrm{WU}\ }}
 
-\subsection{A minimum-fixpoint approximation}
+\subsection{A minimum-fixpoint approximation for all-quantified LTL expressions}
 The approach we are using is extremely fast, but it computes only an
-approximation (a safe upper bound in the Boolean lattice) of the precise verification result. 
+approximation (a safe upper bound in the Boolean lattice) of the
+precise verification result. The approximation happens whenever
+multiple paths join at a state, in which case the least upper bound
+\lub\ of the results from the individual paths is propagated.
 
 The remainder of this section will discuss how the transfer functions
 for each element of the LTL grammar are defined. We are using the
@@ -59,26 +64,42 @@ $\STG={\mathit{States},\mathit{Transitions},\mathit{Start}}$ is the
 properties \prop{i}, $i \in [0\dots n]$, where $n+1$ is the number of
 sub-expressions in the LTL formula.
 
-\subsection{Boolean Operators: \texttt{!}, \texttt{\&}, \texttt{|}}
-The boolean operators in LTL have the least computationally complex
-transfer functions as their effect is only local.
+\subsubsection{Boolean Operators: \texttt{!}, \texttt{\&}, \texttt{|}}
+The Boolean operators over LTL expressions have the least
+computationally complex transfer functions as their effect is only
+local to each state.
 \begin{align*}
 e &= !a  & \forall\state\in\States\colon\prop{e} &:= \neg\prop{a}\\
 e &= a \& b & \forall\state\in\States\colon\prop{e} &:= \prop{a} \cap \prop{b}\\
 e &= a | b & \forall\state\in\States\colon\prop{e} &:= \prop{a} \cup \prop{b}\\
 \end{align*}
 
-\subsection{The G operator}
-The global operator $\G a$ yields true iff the subexpression $a$ is true at
-all states.
+\subsubsection{The G operator}
+The global operator $\G a$ yields true iff the sub-expression $a$ is
+true at all states. The transfer function is defined as follows:
 
-\[ e = \G a \qquad \forall\state\in\States\colon\prop{e} :=\bigcap_{\state\prime\in\States}{\propp{a}} \]
+\[ e = \G a\colon\qquad\forall\state\in\States\colon\prop{e}
+:=\Lub_{\state\prime\in succ(\state)}{\propp{a}} \]
 
-\subsection{The X operator}
+Since we only want to handle all-quantified LTL expressions, it is
+safe to join the information from multiple paths using the \lub
+operator: If all successors of a node share the yield the same result,
+by induction, all paths starting at \state have identical results at
+every node, thus we can merge their heads at \state. If the results of
+the successors diverge, \state will go to $\top$, (the safe
+approximation) and the result at \state is unknown.
+
+Due to the way the logical operations on Boolean lattice are defined,
+not all is lost for these states. For example, $\top \vee \ttrue
+\equiv \ttrue$ and $\top \wedge \ffalse \equiv \ffalse$, so it is
+possible for these unknown states to still be overruled by other
+states for which we do have a precise result.
+
+\subsubsection{The X operator}
 The next operator $X a$ yields true iff $a$ is true in the next state.
 \[ e = \X a \qquad\forall\state\in\States\colon\prop{e}:=\bigcap_{\state\prime\in succ(\state)}{\propp{a}} \]
 
-\subsection{The operators F, R, U, and WU}
+\subsubsection{The operators F, R, U, and WU}
 These operators are computationally more intensive, since we need to
 perform a fix point search over the entire state transition graph. Backward.
 \begin{tabular}{rlllll}
@@ -100,7 +121,7 @@ $\prop{a} \cup \bigcup_{\state\prime\in succ(\state)}{\prop{e}}$\\\bottomrule
 \end{tabular}
 
 
-\subsection{Handling I/O nodes}
+\subsubsection{Handling I/O nodes}
 \begin{itemize}
 \item are propagated to the next I/O state of the same type
 \end{itemize}
