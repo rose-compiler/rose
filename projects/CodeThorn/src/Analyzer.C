@@ -606,11 +606,35 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* eState) {
 	}
 
 	if(isSgAssignOp(nextNodeToAnalyze2)) {
-	  // analyze assignment and return new eState
-	  // currentEState
+	  // TODO: this here is new: investigate
+#if 1
+	  SgNode* lhs=SgNodeHelper::getLhs(nextNodeToAnalyze2);
+	  SgNode* rhs=SgNodeHelper::getRhs(nextNodeToAnalyze2);
+	  list<SingleEvalResultConstInt> res=exprAnalyzer.evalConstInt(rhs,currentEState,true,true);
+	  list<EState> eStateList;
+	  for(list<SingleEvalResultConstInt>::iterator i=res.begin();i!=res.end();++i) {
+		VariableId lhsVar;
+		bool isLhsVar=ExprAnalyzer::variable(lhs,lhsVar);
+		if(isLhsVar) {
+		  EState eState=(*i).eState;
+		  State newState=*eState.state;
+		  ConstraintSet cset=*eState.constraints();
+		  newState[lhsVar]=(*i).result;
+		  if(!(*i).result.isTop())
+			cset.deleteConstraints(lhsVar);
+		  eStateList.push_back(createEState(edge.target,newState,cset));
+		} else {
+		  cerr << "Error: analyzeAssignOp: unrecognized expression on lhs."<<endl;
+		  exit(1);
+		}
+	  }
+	  return eStateList;
+#else
+	  // old version
 	  ConstraintSet cset=*currentEState.constraints();
 	  State newState=analyzeAssignOp(*currentEState.state,nextNodeToAnalyze2,cset);
 	  return elistify(createEState(edge.target,newState,cset));
+#endif
 	}
   }
   // nothing to analyze, just create new eState (from same State) with target label of edge
@@ -697,9 +721,9 @@ set<const EState*> Analyzer::transitionSourceEStateSetOfLabel(Label lab) {
 // TODO: x=x eliminates constraints of x but it should not.
 State Analyzer::analyzeAssignRhs(State currentState,VariableId lhsVar, SgNode* rhs, ConstraintSet& cset) {
   assert(isSgExpression(rhs));
+  AValue rhsIntVal=AType::Top();
   bool isRhsIntVal=false;
   bool isRhsVar=false;
-  AValue rhsIntVal=AType::Top();
 
   // TODO: -1 is OK, but not -(-1); yet.
   if(SgMinusOp* minusOp=isSgMinusOp(rhs)) {
@@ -709,6 +733,7 @@ State Analyzer::analyzeAssignRhs(State currentState,VariableId lhsVar, SgNode* r
 	  isRhsIntVal=true;
 	}
   }
+  
 
   // extracted info: isRhsIntVal:rhsIntVal 
   if(SgIntVal* intValNode=isSgIntVal(rhs)) {
@@ -780,7 +805,6 @@ State Analyzer::analyzeAssignOp(State currentState,SgNode* node,ConstraintSet& c
   isLhsVar=ExprAnalyzer::variable(lhs,lhsVar);
   if(isLhsVar) {
 	newState=analyzeAssignRhs(currentState, lhsVar, rhs, cset);
-	
 	return newState;
   }
   cerr << "WARNING: analyzeAssignOp: unrecognized expression on lhs."<<endl;
