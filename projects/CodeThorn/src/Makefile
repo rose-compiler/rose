@@ -165,7 +165,7 @@ dist:
 	tar cvzf codethorn_$(MYDATE).tgz *.C *cpp *.h *.lxx *.yxx tests/*.C tests/*.c Makefile*
 
 regressiontest: $(TOOLNAME3)
-	./$(TOOLNAME3) --csv-assert tmp_rers_Problem1_assert_csv.txt --csv-ltl tmp_rers_Problem1_ltl_csv.txt --verify tests/rers/properties1.txt tests/rers/Problem1.c
+	./$(TOOLNAME3) --csv-assert tmp_rers_Problem1_assert_csv.txt --csv-ltl tmp_rers_Problem1_ltl_csv.txt --verify tests/rers/properties1.txt --viz=yes tests/rers/Problem1.c
 	diff transitiongraph1.dat $(REGRESSION_DATA_DIR)/rers_Problem1_transitiongraph1.dat
 	diff tmp_rers_Problem1_ltl_csv.txt $(REGRESSION_DATA_DIR)/rers_Problem1_ltl_csv.txt
 	diff tmp_rers_Problem1_assert_csv.txt $(REGRESSION_DATA_DIR)/rers_Problem1_assert_csv.txt
@@ -178,5 +178,5 @@ asserttest: $(TOOLNAME3)
 
 # use with caution
 generateregressiondata:
-	./$(TOOLNAME3) --csv-assert $(REGRESSION_DATA_DIR)/rers_Problem1_assert_csv.txt --csv-ltl $(REGRESSION_DATA_DIR)/rers_Problem1_ltl_csv.txt --verify tests/rers/properties1.txt tests/rers/Problem1.c 
+	./$(TOOLNAME3) --csv-assert $(REGRESSION_DATA_DIR)/rers_Problem1_assert_csv.txt --csv-ltl $(REGRESSION_DATA_DIR)/rers_Problem1_ltl_csv.txt --verify tests/rers/properties1.txt --viz=yes tests/rers/Problem1.c 
 	cp transitiongraph1.dat $(REGRESSION_DATA_DIR)/rers_Problem1_transitiongraph1.dat
