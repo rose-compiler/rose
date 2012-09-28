@@ -57,6 +57,7 @@ instance Arbitrary RersData where
             n    <- choose (size `min` 1, maxlength)
             vals <- vectorOf n (choose ('A', 'G'))
             return (RersData vals)
+            --return (RersData ['G', 'B', 'B'])
           maxlength = 6
   
   shrink (RersData vals) = map RersData (shrink' vals)
@@ -108,17 +109,22 @@ actualOutput (RersData input) = do
           -- make a best effort to synchronize input and output. It's
           -- really impossible because a given input may or may not
           -- trigger an output.
-          hasOutput <- hWaitForInput m_out 33 -- milliseconds
-          res <- action m_in m_out is
+          hasOutput <- hWaitForInput m_out 25 -- milliseconds
           if hasOutput then 
             do reply <- hGetLine m_out
                case (readMaybe reply)::(Maybe Int) of 
-                 Just i -> do --printf "out %d\n" (i::Int)
+                 Just i -> do --printf "out %c\n" (rersChar (i::Int))
+                              res <- action m_in m_out is
                               return $ (StIn input) : (StOut (rersChar i)) : res
-                 _      -> do --printf "I/O Error\n"
+                 _      -> do --printf "I/O Error: '%s'\n" reply
+                              res <- action m_in m_out is
                               return $ (StIn input) : res
             else do 
+               --printf "no output\n"
+               res <- action m_in m_out is
                return $ (StIn input) : res
+          
+
 
 readMaybe :: (Read a) => String -> Maybe a
 readMaybe s = case [x | (x,t) <- reads s, ("","") <- lex t] of
@@ -159,7 +165,7 @@ holds (a `WU`  b) states = holds ((G a) `Or` (a `U` b)) states
 holds _ _ = False
 
 #include "formulae.hs"
-formulae' = [ ( Not (F (Out 'W') )), None]
+formulae' = [ WU (Not (Out 'Y')) (In 'B'), None]
 -- last element of formulae is always None, ignore it
 main = do mapM printResult (zip (allbutlast formulae) [1..])
             where allbutlast list = take ((length list)-1) list
