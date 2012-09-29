@@ -221,15 +221,15 @@ public:
    *
    * FIXME: rewrite this as a template
    */
-# define fixpoint(INIT, JOIN, TRANSFER) {					\
+# define fixpoint(INIT, JOIN, TRANSFER) {				\
     FOR_EACH_STATE(state, label)					\
       props[e] = INIT;							\
 									\
-    stack<Label> workset;						\
+    queue<Label> workset;						\
     workset.push(start);						\
 									\
     while (!workset.empty()) {						\
-      Label label = workset.top(); workset.pop();			\
+      Label label = workset.front(); workset.pop();			\
       /*cerr<<"Visiting state "<<label<<endl;*/				\
       const EState* state = g[label];					\
       assert(state);							\
@@ -258,7 +258,7 @@ public:
 	for (tie(out_i, out_end) = out_edges(label, g); out_i != out_end; ++out_i) { \
 	  Label succ = target(*out_i, g);				\
 	  /*cerr<<"  succ: "<<succ<<endl;*/				\
-	  workset.push(succ);						\
+	  workset.push(succ);					\
 	}								\
       } else {								\
 	/*cerr<<"FIX!"<<endl;*/						\
@@ -280,14 +280,12 @@ public:
    * the working set with all exit nodes AND all nodes where START == true.
    *
    * \param INIT  initial value of each node
-   * \param START condition that decides whether a node is in
-   *              the initial workset
    * \param JOIN  join operator
    * \param TRANSFER  dataflow equation
    *
    * FIXME: rewrite this as a template
    */
-# define bw_fixpoint(INIT, START, JOIN, TRANSFER, DEBUG) {		\
+# define bw_fixpoint(INIT, JOIN, TRANSFER, DEBUG) {			\
     /* ensure that INIT is the neutral element */			\
     assert((BoolLattice(true)  JOIN INIT) == true);			\
     assert((BoolLattice(false) JOIN INIT) == false);			\
@@ -295,17 +293,13 @@ public:
     assert((BoolLattice(Top()) JOIN INIT) == Top());			\
 									\
 									\
-    stack<Label> workset(endpoints);					\
+    queue<Label> workset(endpoints);					\
     FOR_EACH_STATE(state, label) {					\
       props[e] = INIT;							\
-      if (START) {							\
-	/*cerr<<"start: "<<label<<endl;*/				\
-	workset.push(label);						\
-      }									\
     }									\
 									\
     while (!workset.empty()) {						\
-      Label label = workset.top(); workset.pop();			\
+      Label label = workset.front(); workset.pop();			\
       /*cerr<<"Visiting state "<<label<<endl;*/				\
       const EState* state = g[label];					\
       assert(state);							\
@@ -326,7 +320,7 @@ public:
       /*assert(props.find(e->expr1) != props.end());*/			\
       BoolLattice old_val = props[e];					\
 									\
-      props[e] = (old_val JOIN TRANSFER);					\
+      props[e] = (old_val JOIN TRANSFER);				\
 									\
       DEBUG;								\
 									\
@@ -339,7 +333,7 @@ public:
 	for (tie(in_i, in_end) = in_edges(label, g); in_i != in_end; ++in_i) { \
 	  Label pred = source(*in_i, g);				\
 	  /*cerr<<"  pred: "<<pred<<endl;*/				\
-	  workset.push(pred);						\
+	  workset.push(pred);					\
 	}								\
       } else {								\
 	/*cerr<<"FIX!"<<endl;*/						\
@@ -546,7 +540,7 @@ public:
   void visit(const OutputSymbol* expr) {
     short e = expr->label;
     bw_fixpoint(/* init */     Top(),
-		/* start */    state->io.op != InputOutput::NONE,
+		///* start */    state->io.op != InputOutput::NONE,
 		/* join */     GLB,
 		/* transfer */ isOutputState(state, expr->c, isEndpoint(label), joined_succs),
 		/* debug */    NOP/*cerr<<"out("<<string(1,expr->c)<<")"<<endl*/);
@@ -595,7 +589,7 @@ public:
   void visit(const NegOutputSymbol* expr) {
     short e = expr->label;
     bw_fixpoint(/* init */     Top(),
-		/* start */    state->io.op != InputOutput::NONE,
+		///* start */    state->io.op != InputOutput::NONE,
 		/* join */     GLB,
 		/* transfer */ isNegOutputState(state, expr->c, isEndpoint(label), joined_succs),
 		/* debug */    NOP/*cerr<<"neg_out("<<string(1,expr->c)<<")"<<endl*/);
@@ -662,7 +656,7 @@ public:
     short e1 = expr->expr1->label;
 
     bw_fixpoint(/* init */      Bot(),
-		/* start */     !props[e1].isBot(),
+		///* start */     !props[e1].isBot(),
 		/* join */      LUB,
 		/* transfer  */ props[e1] || joined_succs,
 		/* debug */     NOP //cerr<<props[e1]<<" || "<<joined_succs<<endl;
@@ -683,7 +677,7 @@ public:
     short e1 = expr->expr1->label;
 
     bw_fixpoint(/* init */      Bot(),
-		/* start */     !props[e1].isBot(),
+		///* start */     !props[e1].isBot(),
 		/* join */      LUB,
 		/* transfer  */ props[e1] && joined_succs,
 		/* debug */     NOP //cerr<<props[e1]<<" && "<<joined_succs<<endl;
@@ -733,11 +727,11 @@ public:
     short e2 = expr->expr2->label;
 
     bw_fixpoint(/* init */      Bot(),
-		/* start */     !props[e2].isBot(),
+		///* start */     (!props[e1].isBot() || !props[e2].isBot()),
 		/* join */      LUB,
 		/* transfer */  (props[e2] || (props[e1] && joined_succs)) || false,
 		/* debug */     NOP
-		//cerr<<props[e2]<<" || ("<<props[e1]<<" && "<<joined_succs<<")"<<endl
+		//cerr<<label<<": "<<((props[e2] || (props[e1] && joined_succs)) || false).toString()<<" == "<<props[e2]<<" || ("<<props[e1]<<" && "<<joined_succs<<")"<<endl
 		);
   }
 
@@ -765,7 +759,7 @@ public:
     short e2 = expr->expr2->label;
 
     bw_fixpoint(/* init */	Bot(),
-		/* start */	!props[e2].isBot(),
+		///* start */	!props[e2].isBot(),
 		/* join */	LUB,
 		/* transfer */	props[e2] || (props[e1] && joined_succs),
 		/* debug */     NOP
@@ -789,7 +783,7 @@ public:
     short e2 = expr->expr2->label;
 
     bw_fixpoint(/* init */      Bot(),
-		/* start */     !props[e2].isBot(),
+		///* start */     (!props[e1].isBot() || !props[e2].isBot()),
 		/* join */      LUB,
 		/* transfer */  props[e2] && (props[e1] || joined_succs),
 		/* debug */     NOP
