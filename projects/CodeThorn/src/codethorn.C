@@ -107,22 +107,24 @@ void generateAssertsCsvFile(Analyzer& analyzer, SgProject* sageProject, string f
   // use binary and \r\n tp enforce DOS line endings
   // http://tools.ietf.org/html/rfc4180
   csv->open(filename.c_str(), ios::trunc|ios::binary);
-  *csv << "Index;\"Assert Error Label\";ReachabilityResult;Confidence\r\n";
+  //*csv << "Index;\"Assert Error Label\";ReachabilityResult;Confidence\r\n";
   
   LabelSet lset=analyzer.getTransitionGraph()->labelSetOfIoOperations(InputOutput::FAILED_ASSERT);
   list<pair<SgLabelStatement*,SgNode*> > assertNodes=analyzer.listOfLabeledAssertNodes(sageProject);
   int cnt=1;
   for(list<pair<SgLabelStatement*,SgNode*> >::iterator i=assertNodes.begin();i!=assertNodes.end();++i) {
-	*csv << cnt 
-		 << ";"
-		 << SgNodeHelper::getLabelName((*i).first)
-		 <<";"
+	string name=SgNodeHelper::getLabelName((*i).first);
+	if(name=="globalError")
+	  name="error_60";
+	name=name.substr(6,name.size()-6);
+	*csv << name
+		 <<","
 	  ;
 	Label lab=analyzer.getLabeler()->getLabel((*i).second);
 	if(lset.find(lab)!=lset.end()) {
-	  *csv << "YES;9";
+	  *csv << "yes,9";
 	} else {
-	  *csv << "NO;9";
+	  *csv << "no,9";
 	}
 	*csv << "\r\n";
 	cnt++;
@@ -192,7 +194,7 @@ void generateLTLOutput(Analyzer& analyzer, string ltl_file) {
       // use binary and \r\n tp enforce DOS line endings
       // http://tools.ietf.org/html/rfc4180
       csv->open(args["csv-ltl"].as<string>().c_str(), ios::trunc|ios::binary);
-      *csv << "Index;\"LTL formula\";Result;Confidence\r\n";
+      //*csv << "Index;\"LTL formula\";Result;Confidence\r\n";
     }
 
     while ( !ltl_eof) {
@@ -224,27 +226,28 @@ void generateLTLOutput(Analyzer& analyzer, string ltl_file) {
       ++n;
       string formula = *ltl_val;
       cout<<endl<<"Verifying formula "<<color("white")<<formula<<color("normal")<<"."<<endl;
-      if (csv) *csv << n <<";\"" <<formula<<"\";";
+      //if (csv) *csv << n <<";\"" <<formula<<"\";";
+	  if (csv) *csv << n+60 <<",";
       try {
 	AType::BoolLattice result = checker.verify(*ltl_val);
 	if (result.isTrue()) {
 	  ++n_yes;
 	  cout<<color("green")<<"YES"<<color("normal")<<endl;
-	  if (csv) *csv << "YES;9\r\n";
+	  if (csv) *csv << "yes,9\r\n";
 	} else if (result.isFalse()) {
 	  ++n_no;
 	  cout<<color("cyan")<<"NO"<<color("normal")<<endl;
-	  if (csv) *csv << "NO;9\r\n";
+	  if (csv) *csv << "no,9\r\n";
 	} else {
 	  ++n_undecided;
 	  cout<<color("magenta")<<"UNKNOWN"<<color("normal")<<endl;
-	  if (csv) *csv << "UNKNOWN;0\r\n";
+	  if (csv) *csv << "unknown,0\r\n";
 	}
       } catch(const char* str) {
 	++n_failed;
 	cerr << "Exception raised: " << str << endl;
 	cout<<color("red")<<"ERROR"<<color("normal")<<endl;
-	if (csv) *csv << "ERROR;0\r\n";
+	if (csv) *csv << "error,0\r\n";
       } catch(string str) {
 	++n_failed;
 	cerr << "Exception raised: " << str << endl;
@@ -270,6 +273,41 @@ void generateLTLOutput(Analyzer& analyzer, string ltl_file) {
   } 
 }
 
+string readableruntime(double time) {
+  stringstream s;
+  if(time<1000.0) {
+	s<<time<<" ms";
+	return s.str();
+  } else {
+	time=time/1000;
+  }
+  if(time<60) {
+	s<<time<<" secs"; 
+	return s.str();
+  } else {
+	time=time/60;
+  }
+  if(time<60) {
+	s<<time<<" mins"; 
+	return s.str();
+  } else {
+	time=time/60;
+  }
+  if(time<24) {
+	s<<time<<" hours"; 
+	return s.str();
+  } else {
+	time=time/24;
+  }
+  if(time<30) {
+	s<<time<<" days"; 
+	return s.str();
+  } else {
+	time=time/30;
+  }
+  s<<time<<" months"; 
+  return s.str();
+}
 
 int main( int argc, char * argv[] ) {
   string ltl_file;
@@ -290,6 +328,8 @@ int main( int argc, char * argv[] ) {
     ("verify", po::value< string >(), "verify all LTL formulae in the file [arg]")
     ("csv-ltl", po::value< string >(), "output LTL verification results into a CSV file [arg]")
     ("csv-assert", po::value< string >(), "output assert reachability results into a CSV file [arg]")
+    ("csv-assert-live", po::value< string >(), "output assert reachability results during analysis into a CSV file [arg]")
+    ("csv-stats",po::value< string >(),"output statistics into a CSV file [arg]")
     ("tg1-estate-address", po::value< string >(), "transition graph 1: visualize address [=yes|no]")
     ("tg1-estate-id", po::value< string >(), "transition graph 1: visualize estate-id [=yes|no]")
     ("tg1-estate-properties", po::value< string >(), 
@@ -305,7 +345,7 @@ int main( int argc, char * argv[] ) {
     ("precision-equality-constraints",po::value< string >(),
      "(experimental) use constraints for determining estate equality [=yes|no]")
     ("precision-equality-io",po::value< string >(),
-     "(experimental) use constraints for determining estate equality [=yes|no]")
+     "(experimental) use io for determining estate equality [=yes|no]")
     ("precision-bool",po::value< string >(),
      "use precise top with bool-(and/or) operators (used in LTL) [=yes|no]")
     ("precision-intbool",po::value< string >(),
@@ -315,6 +355,7 @@ int main( int argc, char * argv[] ) {
     ("tg-ltl-reduced",po::value< string >(),"compute on-the-fly LTL-reduced transition graph (not available)[=yes|no]")
     ("viz",po::value< string >(),"generate visualizations (dot) outputs [=yes|no]")
     ("update-input-var",po::value< string >(),"For testing purposes only. Default is Yes. [=yes|no]")
+    ("run-rose-tests",po::value< string >(),"Run ROSE AST tests. [=yes|no]")
     ;
 
   po::store(po::command_line_parser(argc, argv).
@@ -355,6 +396,7 @@ int main( int argc, char * argv[] ) {
   boolOptions.registerOption("tg-ltl-reduced",false);
   boolOptions.registerOption("viz",false);
   boolOptions.registerOption("update-input-var",true);
+  boolOptions.registerOption("run-rose-tests",true);
   boolOptions.processOptions();
   cout<<boolOptions.toString();
 
@@ -378,10 +420,13 @@ int main( int argc, char * argv[] ) {
 	  }
 	}
   }
-
+  string csv_assert_live_file;
+  if(args.count("csv-assert-live")) {
+	csv_assert_live_file=args["csv-assert-live"].as<string>();
+  }
   // clean up csv-assert option in argv
   for (int i=1; i<argc; ++i) {
-	if (string(argv[i]) == "--csv-assert") {
+	if (string(argv[i]) == "--csv-assert" || string(argv[i])=="--csv-stats" || string(argv[i])=="--csv-assert-live") {
 	  // do not confuse ROSE frontend
 	  argv[i] = strdup("");
 	  assert(i+1<argc);
@@ -423,13 +468,17 @@ int main( int argc, char * argv[] ) {
   // Build the AST used by ROSE
   cout << "INIT: Parsing and creating AST."<<endl;
   SgProject* sageProject = frontend(argc,argv);
+  double frontEndRunTime=timer.getElapsedTimeInMilliSec();
   
-  cout << "INIT: Running ROSE AST tests."<<endl;
-  // Run internal consistency tests on AST
-  AstTests::runAllTests(sageProject);
+  if(boolOptions["run-rose-tests"]) {
+	cout << "INIT: Running ROSE AST tests."<<endl;
+	// Run internal consistency tests on AST
+	AstTests::runAllTests(sageProject);
+  }
 
   SgNode* root=sageProject;
   checkProgram(root);
+  timer.start();
 
   cout << "INIT: Running variable<->symbol mapping check."<<endl;
 
@@ -442,11 +491,15 @@ int main( int argc, char * argv[] ) {
   }
   cout << "INIT: creating solver."<<endl;
   Analyzer analyzer;
+  analyzer._csv_assert_live_file=csv_assert_live_file;
   analyzer.initializeSolver1("main",root);
+  analyzer.initLabeledAssertNodes(sageProject);
+  double initRunTime=timer.getElapsedTimeInMilliSec();
 
+  timer.start();
   cout << "=============================================================="<<endl;
   analyzer.runSolver1();
-  timer.stop();
+  double analysisRunTime=timer.getElapsedTimeInMilliSec();
   //  cout << analyzer.stateSetToString(final);
   cout << "=============================================================="<<endl;
   printAsserts(analyzer,sageProject);
@@ -455,14 +508,16 @@ int main( int argc, char * argv[] ) {
 	generateAssertsCsvFile(analyzer,sageProject,filename);
   }
   cout << "=============================================================="<<endl;
+  timer.start();
   if (ltl_file.size()) {
 	generateLTLOutput(analyzer,ltl_file);
 	cout << "=============================================================="<<endl;
   }
+  double ltlRunTime=timer.getElapsedTimeInMilliSec();
   printAssertStatistics(analyzer,sageProject);
   cout << "=============================================================="<<endl;
 
-  double totalRunTime=timer.getElapsedTimeInMilliSec();
+  double totalRunTime=frontEndRunTime+initRunTime+ analysisRunTime+ltlRunTime;
 
   long stateSetSize=analyzer.getStateSet()->size();
   long stateSetBytes=analyzer.getStateSet()->memorySize();
@@ -483,12 +538,33 @@ int main( int argc, char * argv[] ) {
   cout << "Number of transitions          : "<<color("blue")<<transitionGraphSize<<color("white")<<" (memory: "<<color("blue")<<transitionGraphBytes<<color("white")<<" bytes)"<<endl;
   cout << "Number of constraint sets      : "<<color("yellow")<<numOfconstraintSets<<color("white")<<" (memory: "<<color("yellow")<<constraintSetsBytes<<color("white")<<" bytes)"<<endl;
   cout << "=============================================================="<<endl;
-  cout << "Memory total         : "<<color("green")<<stateSetBytes+eStateSetBytes+transitionGraphBytes+constraintSetsBytes<<" bytes"<<color("normal")<<endl;
-  if(totalRunTime<1000.0) 
-	cout << "Time total           : "<<color("green")<<totalRunTime<<" ms"<<color("normal")<<endl;
-  else
-	cout << "Time total           : "<<color("green")<<totalRunTime/1000.0<<" seconds"<<color("normal")<<endl;
+  long totalMemory=stateSetBytes+eStateSetBytes+transitionGraphBytes+constraintSetsBytes;
+  cout << "Memory total         : "<<color("green")<<totalMemory<<" bytes"<<color("normal")<<endl;
+  cout << "Time total           : "<<color("green")<<readableruntime(totalRunTime)<<color("normal")<<endl;
   cout << "=============================================================="<<endl;
+
+  if(args.count("csv-stats")) {
+	string filename=args["csv-stats"].as<string>().c_str();
+	stringstream text;
+	text<<"Sizes,"<<stateSetSize<<", "
+		<<eStateSetSize<<", "
+		<<transitionGraphSize<<", "
+		<<numOfconstraintSets<<endl;
+	text<<"Memory,"<<stateSetBytes<<", "
+		<<eStateSetBytes<<", "
+		<<transitionGraphBytes<<", "
+		<<constraintSetsBytes<<", "
+		<<totalMemory<<endl;
+	text<<"Runtime,"
+		<<readableruntime(frontEndRunTime)<<", "
+		<<readableruntime(initRunTime)<<", "
+		<<readableruntime(analysisRunTime)<<", "
+		<<readableruntime(ltlRunTime)<<", "
+		<<readableruntime(totalRunTime)<<endl;
+	  ;
+	  write_file(filename,text.str());
+  }
+  
 
   if(boolOptions["viz"]) {
     Visualizer visualizer(analyzer.getLabeler(),analyzer.getFlow(),analyzer.getStateSet(),analyzer.getEStateSet(),analyzer.getTransitionGraph());

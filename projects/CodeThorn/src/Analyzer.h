@@ -141,6 +141,19 @@ class Analyzer {
   list<SgNode*> listOfAssertNodes(SgProject *root);
   //! rers-specific error_x: assert(0) version 
   list<pair<SgLabelStatement*,SgNode*> > listOfLabeledAssertNodes(SgProject *root);
+  void initLabeledAssertNodes(SgProject* root) {
+	_assertNodes=listOfLabeledAssertNodes(root);
+  }
+  string labelNameOfAssertLabel(Label lab) {
+	string labelName;
+	for(list<pair<SgLabelStatement*,SgNode*> >::iterator i=_assertNodes.begin();i!=_assertNodes.end();++i)
+	  if(lab==getLabeler()->getLabel((*i).second))
+		labelName=SgNodeHelper::getLabelName((*i).first);
+	assert(labelName.size()>0);
+	return labelName;
+  }
+  list<pair<SgLabelStatement*,SgNode*> > _assertNodes;
+  string _csv_assert_live_file;
  private:
   ExprAnalyzer exprAnalyzer;
   VariableIdMapping variableIdMapping;

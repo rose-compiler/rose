@@ -281,24 +281,32 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState eS
 		}
 		case V_SgGreaterOrEqualOp: {
 		  res.result=(lhsResult.result>=rhsResult.result);
+		  if(res.result.isTop())
+			throw "Error: Top found in relational operator (not supported yet).";
 		  res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
 		  resultList.push_back(res);
 		  break;
 		}
 		case V_SgGreaterThanOp: {
 		  res.result=(lhsResult.result>rhsResult.result);
+		  if(res.result.isTop())
+			throw "Error: Top found in relational operator (not supported yet).";
 		  res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
 		  resultList.push_back(res);
 		  break;
 		}
 		case V_SgLessThanOp: {
 		  res.result=(lhsResult.result<rhsResult.result);
+		  if(res.result.isTop())
+			throw "Error: Top found in relational operator (not supported yet).";
 		  res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
 		  resultList.push_back(res);
 		  break;
 		}
 		case V_SgLessOrEqualOp: {
 		  res.result=(lhsResult.result<=rhsResult.result);
+		  if(res.result.isTop())
+			throw "Error: Top found in relational operator (not supported yet).";
 		  res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
 		  resultList.push_back(res);
 		  break;

@@ -83,28 +83,28 @@ namespace LTL {
    */
   class TopDownVisitor {
   public:
-    virtual IAttr visit(const InputSymbol* e,     IAttr a) { return a; }
-    virtual IAttr visit(const OutputSymbol* e,    IAttr a) { return a; }
-    virtual IAttr visit(const NegInputSymbol* e,  IAttr a) { return a; }
-    virtual IAttr visit(const NegOutputSymbol* e, IAttr a) { return a; }
-    virtual IAttr visit(const Not* e,             IAttr a) { return a; }
-    virtual IAttr visit(const Next* e,            IAttr a) { return a; }
-    virtual IAttr visit(const Eventually* e,      IAttr a) { return a; }
-    virtual IAttr visit(const Globally* e,        IAttr a) { return a; }
-    virtual IAttr visit(const And* e,             IAttr a) { return a; }
-    virtual IAttr visit(const Or* e,              IAttr a) { return a; }
-    virtual IAttr visit(const Until* e,           IAttr a) { return a; }
-    virtual IAttr visit(const WeakUntil* e,       IAttr a) { return a; }
-    virtual IAttr visit(const Release* e,         IAttr a) { return a; }
+    virtual IAttr visit(InputSymbol* e,	    IAttr a) { return a; }
+    virtual IAttr visit(OutputSymbol* e,    IAttr a) { return a; }
+    virtual IAttr visit(NegInputSymbol* e,  IAttr a) { return a; }
+    virtual IAttr visit(NegOutputSymbol* e, IAttr a) { return a; }
+    virtual IAttr visit(Not* e,		    IAttr a) { return a; }
+    virtual IAttr visit(Next* e,	    IAttr a) { return a; }
+    virtual IAttr visit(Eventually* e,	    IAttr a) { return a; }
+    virtual IAttr visit(Globally* e,	    IAttr a) { return a; }
+    virtual IAttr visit(And* e,		    IAttr a) { return a; }
+    virtual IAttr visit(Or* e,		    IAttr a) { return a; }
+    virtual IAttr visit(Until* e,	    IAttr a) { return a; }
+    virtual IAttr visit(WeakUntil* e,	    IAttr a) { return a; }
+    virtual IAttr visit(Release* e,	    IAttr a) { return a; }
   };
 
 #define LTL_ATOMIC_VISITOR						\
   void accept(BottomUpVisitor& v)         const { v.visit(this); }	\
-  void accept(TopDownVisitor& v, IAttr a) const { v.visit(this, a); }
+  void accept(TopDownVisitor& v, IAttr a)       { v.visit(this, a); }
 
 #define LTL_UNARY_VISITOR						\
   void accept(BottomUpVisitor& v)         const { expr1->accept(v); v.visit(this); } \
-  void accept(TopDownVisitor& v, IAttr a) const { expr1->accept(v, v.visit(this, a)); }
+  void accept(TopDownVisitor& v, IAttr a)       { expr1->accept(v, v.visit(this, a)); }
 
 #define LTL_BINARY_VISITOR					\
   void accept(BottomUpVisitor& v) const					\
@@ -114,7 +114,7 @@ namespace LTL {
     v.visit(this);						\
   }								\
 								\
-  void accept(TopDownVisitor& v, IAttr a) const			\
+  void accept(TopDownVisitor& v, IAttr a)			\
   {								\
     IAttr a1 = v.visit(this, a);				\
     expr1->accept(v, a1);					\
@@ -128,13 +128,14 @@ namespace LTL {
    */
   class Expr {
   public:
+    bool quantified;
     short label;
     std::string id;
     enum NodeType type;
     Expr(std::string _id="not implemented", NodeType _type=e_Error): id(_id), type(_type) {}
     virtual operator std::string () const { return id; }
     virtual void accept(BottomUpVisitor& v) const = 0;
-    virtual void accept(TopDownVisitor& v, IAttr a) const = 0;
+    virtual void accept(TopDownVisitor& v, IAttr a) = 0;
   };
 
   class UnaryExpr : public Expr {
@@ -280,13 +281,14 @@ namespace LTL {
   public:
     /**
      * Construct a new formula and make sure all atomic expressions are properly quantified.
+     * As a side effect, the quantified attribute of each expression node is set.
      *
      * Note: this may be a misconception, but I do not understand what
      * "oX" is supposed to mean if it is encountered
      * unquantified. E.g., what's the difference between "oX" and "G
      * oX", otherwise?
      */
-    Formula(const Expr& e1) :e(e1), expr_size(ltl_label) {
+    Formula(Expr& e1) :e(e1), expr_size(ltl_label) {
       class WellFormedVisitor: public TopDownVisitor {
       public:
         struct Attr: public InheritedAttribute { 
@@ -298,25 +300,37 @@ namespace LTL {
         static Attr* getAttr(IAttr a) { return static_cast<Attr*>(a.get()); }
         static IAttr newAttr(bool b)  { return IAttr((InheritedAttribute*)new Attr(b)); }
 
-        IAttr visit(const InputSymbol* e, IAttr a) {
+        IAttr visit(InputSymbol* e, IAttr a) {
+	  e->quantified=getAttr(a)->quantified; 
           if (!getAttr(a)->quantified) throw "unquantified input operation"; 
           return a;
         }
-        IAttr visit(const OutputSymbol* e, IAttr a) {
+        IAttr visit(OutputSymbol* e, IAttr a) {
+	  e->quantified=getAttr(a)->quantified; 
+          if (!getAttr(a)->quantified) throw "unquantified output operation";
+          return a;
+        }
+        IAttr visit(NegInputSymbol* e, IAttr a) {
+	  e->quantified=getAttr(a)->quantified; 
+          if (!getAttr(a)->quantified) throw "unquantified input operation"; 
+          return a;
+        }
+        IAttr visit(NegOutputSymbol* e, IAttr a) {
+	  e->quantified=getAttr(a)->quantified; 
           if (!getAttr(a)->quantified) throw "unquantified output operation";
           return a;
         }
 
-        IAttr visit(const Next* e,       IAttr a) { return newAttr(true); }
-        IAttr visit(const Eventually* e, IAttr a) { return newAttr(true); }
-        IAttr visit(const Globally* e,   IAttr a) { return newAttr(true); }
-        IAttr visit(const Until* e,      IAttr a) { return newAttr(true); }
-        IAttr visit(const WeakUntil* e,  IAttr a) { return newAttr(true); }
-        IAttr visit(const Release* e,    IAttr a) { return newAttr(true); }
+        IAttr visit(Next* e,       IAttr a) { e->quantified=getAttr(a)->quantified; return newAttr(true); }
+        IAttr visit(Eventually* e, IAttr a) { e->quantified=getAttr(a)->quantified; return newAttr(true); }
+        IAttr visit(Globally* e,   IAttr a) { e->quantified=getAttr(a)->quantified; return newAttr(true); }
+        IAttr visit(Until* e,      IAttr a) { e->quantified=getAttr(a)->quantified; return newAttr(true); }
+        IAttr visit(WeakUntil* e,  IAttr a) { e->quantified=getAttr(a)->quantified; return newAttr(true); }
+        IAttr visit(Release* e,    IAttr a) { e->quantified=getAttr(a)->quantified; return newAttr(true); }
 
-        IAttr visit(const Not* e,        IAttr a) { return a; }
-        IAttr visit(const And* e,        IAttr a) { return a; }
-        IAttr visit(const Or* e,         IAttr a) { return a; }
+        IAttr visit(Not* e,        IAttr a) { e->quantified=getAttr(a)->quantified; return a; }
+        IAttr visit(And* e,        IAttr a) { e->quantified=getAttr(a)->quantified; return a; }
+        IAttr visit(Or* e,         IAttr a) { e->quantified=getAttr(a)->quantified; return a; }
 
       };
 
@@ -329,7 +343,7 @@ namespace LTL {
     short size() const { return expr_size; }
 
   protected:
-    const Expr& e;
+    Expr& e;
     short expr_size;
   };
 

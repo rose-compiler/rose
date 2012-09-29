@@ -244,8 +244,7 @@ void ConstraintSet::addConstraint(Constraint c) {
   // a) at most one equality constraint or b) arbitrary many inequality constraints or c) one disequality)
   // we do not check for x=y constraints
   if(disequalityExists())
-	return;
-
+	  return;
   // TODO1-2: currently not necessary as we propagate all constriants when a x=y is added to a constraint set.
   //   TODO1: do not add x!=k if {y!=k, x==y}
   //   TODO1a: compute set of inequality-constants for given variable and DO consider all equations
