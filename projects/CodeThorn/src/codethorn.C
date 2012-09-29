@@ -420,12 +420,10 @@ int main( int argc, char * argv[] ) {
 	  }
 	}
   }
-
   string csv_assert_live_file;
   if(args.count("csv-assert-live")) {
 	csv_assert_live_file=args["csv-assert-live"].as<string>();
   }
-
   // clean up csv-assert option in argv
   for (int i=1; i<argc; ++i) {
 	if (string(argv[i]) == "--csv-assert" || string(argv[i])=="--csv-stats" || string(argv[i])=="--csv-assert-live") {
@@ -493,7 +491,9 @@ int main( int argc, char * argv[] ) {
   }
   cout << "INIT: creating solver."<<endl;
   Analyzer analyzer;
+  analyzer.csv_assert_live_file=csv_assert_live_file;
   analyzer.initializeSolver1("main",root);
+  analyzer.initLabeledAssertNodes(sageProject);
   double initRunTime=timer.getElapsedTimeInMilliSec();
 
   timer.start();
@@ -540,13 +540,7 @@ int main( int argc, char * argv[] ) {
   cout << "=============================================================="<<endl;
   long totalMemory=stateSetBytes+eStateSetBytes+transitionGraphBytes+constraintSetsBytes;
   cout << "Memory total         : "<<color("green")<<totalMemory<<" bytes"<<color("normal")<<endl;
-
-
-
-  if(totalRunTime<1000.0) 
-	cout << "Time total           : "<<color("green")<<totalRunTime<<" ms"<<color("normal")<<endl;
-  else
-	cout << "Time total           : "<<color("green")<<totalRunTime/1000.0<<" seconds"<<color("normal")<<endl;
+  cout << "Time total           : "<<color("green")<<readableruntime(totalRunTime)<<color("normal")<<endl;
   cout << "=============================================================="<<endl;
 
   if(args.count("csv-stats")) {
