@@ -360,7 +360,6 @@ int EStateSet::numberOfIoTypeEStates(InputOutput::OpType op) {
 
 const EState* EStateSet::eStatePtr(EState& s) {
 #ifdef ESTATE_MAINTAINER_LIST
-  // we use this as the find algorithm cannot be used for this data structure yet.
   for(EStateSet::iterator i=begin();i!=end();++i) {
 	if(*i==s)
 	  return &*i;
