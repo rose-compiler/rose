@@ -159,6 +159,7 @@ holds       (G a) states = (holds a states) && (holds (X (G a)) states)
 holds     (Not a) states = not (holds a states)
 holds (a `And` b) states = (holds a states) && (holds b states)
 holds (a `Or`  b) states = (holds a states) || (holds b states)
+holds (a `U`   b)     [] = True
 holds (a `U`   b) states = (holds b states) || ((holds a states) && (holds (X (a `U` b)) states))
 holds (a `R`   b) states = (holds b states) && ((holds a states) || (holds (X (a `R` b)) states))
 holds (a `WU`  b) states = holds ((G a) `Or` (a `U` b)) states
