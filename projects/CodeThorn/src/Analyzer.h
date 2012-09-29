@@ -66,7 +66,6 @@ class Analyzer {
   static string nodeToString(SgNode* node);
   void initializeSolver1(std::string functionToStartAt,SgNode* root);
 
-  State analyzeAssignOp(State state,SgNode* node,ConstraintSet& cset);
   State analyzeAssignRhs(State currentState,VariableId lhsVar, SgNode* rhs,ConstraintSet& cset);
   EState analyzeVariableDeclaration(SgVariableDeclaration* nextNodeToAnalyze1,EState currentEState, Label targetLabel);
   list<EState> transferFunction(Edge edge, const EState* eState);

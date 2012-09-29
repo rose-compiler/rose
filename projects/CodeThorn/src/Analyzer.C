@@ -638,8 +638,6 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* eState) {
 	}
 
 	if(isSgAssignOp(nextNodeToAnalyze2)) {
-	  // TODO: this here is new: investigate
-#if 1
 	  SgNode* lhs=SgNodeHelper::getLhs(nextNodeToAnalyze2);
 	  SgNode* rhs=SgNodeHelper::getRhs(nextNodeToAnalyze2);
 	  list<SingleEvalResultConstInt> res=exprAnalyzer.evalConstInt(rhs,currentEState,true,true);
@@ -661,12 +659,6 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* eState) {
 		}
 	  }
 	  return eStateList;
-#else
-	  // old version
-	  ConstraintSet cset=*currentEState.constraints();
-	  State newState=analyzeAssignOp(*currentEState.state,nextNodeToAnalyze2,cset);
-	  return elistify(createEState(edge.target,newState,cset));
-#endif
 	}
   }
   // nothing to analyze, just create new eState (from same State) with target label of edge
@@ -766,7 +758,6 @@ State Analyzer::analyzeAssignRhs(State currentState,VariableId lhsVar, SgNode* r
 	  isRhsIntVal=true;
 	}
   }
-  
 
   // extracted info: isRhsIntVal:rhsIntVal 
   if(SgIntVal* intValNode=isSgIntVal(rhs)) {
@@ -818,30 +809,6 @@ State Analyzer::analyzeAssignRhs(State currentState,VariableId lhsVar, SgNode* r
   // make sure, we only create/propagate contraints if a non-const value is assigned or if a variable is on the rhs.
   if(!rhsIntVal.isTop() && !isRhsVar)
 	cset.deleteConstraints(lhsVar);
-  return newState;
-}
-
-State Analyzer::analyzeAssignOp(State currentState,SgNode* node,ConstraintSet& cset) {
-  if(node==0) {
-	cerr << "WARNING: analyzeAssignOp: null pointer found (ignoring)"<<endl;
-	return currentState;
-  }
-  State newState;
-  assert(isSgAssignOp(node));
-  bool isLhsVar=false;
-  bool isRhsVar=false;
-	
-  VariableId lhsVar;
-
-  SgNode* lhs=SgNodeHelper::getLhs(node);
-  SgNode* rhs=SgNodeHelper::getRhs(node);
-  isLhsVar=ExprAnalyzer::variable(lhs,lhsVar);
-  if(isLhsVar) {
-	newState=analyzeAssignRhs(currentState, lhsVar, rhs, cset);
-	return newState;
-  }
-  cerr << "WARNING: analyzeAssignOp: unrecognized expression on lhs."<<endl;
-  newState=currentState;
   return newState;
 }
 
