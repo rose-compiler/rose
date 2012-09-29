@@ -30,9 +30,10 @@ if __name__ == '__main__':
     inconsistent = 0
     unverified   = 0
     unknown      = 0
-    for line in args.csv.readlines()[1:]:
-        idx, formula, result, confidence = line.split(';')
-        n = int(idx)
+    for line in args.csv.readlines(): # OLD FORMAT [1:]:
+        # OLD FORMAT idx, formula, result, confidence = line.split(';')
+        idx, result, confidence = line.split(',')
+        n = int(idx)-60
         boundscheck(n)
 
         if next_counterexample < n:
@@ -47,24 +48,24 @@ if __name__ == '__main__':
                     break
 
         if n == next_counterexample:
-            if result == "YES":
+            if result == "yes":
                 print "** INCONSISTENCY"
                 print "  ", line
                 print "  ", qc_line
                 inconsistent += 1
-            elif result == "NO":
+            elif result == "no":
                 if (args.verbose): print "%d consistent"%n
                 correct += 1
-            elif result == "UNKNOWN":
+            elif result == "unknown":
                 print "%d UNKNOWN, but counterexample exists"%n
                 unknown += 1
         else:   
             if (args.verbose): print "%d consistent, but unverified"%n
-            if result == "UNKNOWN":
+            if result == "unknown":
                 unknown += 1
             else: 
                 unverified += 1
-
+    print correct,inconsistent,unverified,unknown,n
     assert(correct+inconsistent+unverified+unknown == n)
     red = '\033[91m'
     reset = '\033[39m'
