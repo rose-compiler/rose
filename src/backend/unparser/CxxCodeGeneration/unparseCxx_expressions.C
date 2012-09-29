@@ -3375,8 +3375,25 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
   /* code inserted from specification */
 
      SgUnparse_Info newinfo(info);
+
+  // DQ (9/29/2012): We don't want to use the explicit "{}" inside of function argument lists (see C test code: test2012_10.c).
+     bool need_explicit_braces = aggr_init->get_need_explicit_braces();
      if (aggr_init->get_need_explicit_braces())
-      curprint ( "{");
+        {
+          SgExprListExp* expressionList = isSgExprListExp(aggr_init->get_parent());
+          if (expressionList != NULL)
+             {
+               SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(expressionList->get_parent());
+               if (functionCallExp != NULL)
+                  {
+                    need_explicit_braces = false;
+                  }
+             }
+        }
+
+  // if (aggr_init->get_need_explicit_braces())
+     if (need_explicit_braces == true)
+          curprint ("{");
 
      SgExpressionPtrList& list = aggr_init->get_initializers()->get_expressions();
      size_t last_index = list.size() -1;
@@ -3413,8 +3430,10 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
        }
      }
      unparseAttachedPreprocessingInfo(aggr_init, info, PreprocessingInfo::inside);
-     if (aggr_init->get_need_explicit_braces())
-      curprint ( "}");
+
+  // if (aggr_init->get_need_explicit_braces())
+     if (need_explicit_braces == true)
+          curprint ( "}");
    }
 
 void
