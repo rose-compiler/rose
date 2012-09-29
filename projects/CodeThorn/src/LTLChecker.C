@@ -675,13 +675,22 @@ public:
   void visit(const Globally* expr) {
     short e = expr->label;
     short e1 = expr->expr1->label;
-
-    bw_fixpoint(/* init */      Bot(),
-		///* start */     !props[e1].isBot(),
-		/* join */      LUB,
-		/* transfer  */ props[e1] && joined_succs,
-		/* debug */     NOP //cerr<<props[e1]<<" && "<<joined_succs<<endl;
-		);
+    
+    if (expr->quantified) {
+      bw_fixpoint(/* init */      Bot(),
+		  ///* start */     !props[e1].isBot(),
+		  /* join */      LUB,
+		  /* transfer  */ props[e1] && joined_succs,
+		  /* debug */     NOP //cerr<<props[e1]<<" && "<<joined_succs<<endl;
+		  );
+    } else {
+      bw_fixpoint(/* init */      Bot(),
+		  ///* start */     !props[e1].isBot(),
+		  /* join */      AND, // this allows for improved precision in the case of an All-quantified G node, which is, by, default, any outermost G node
+		  /* transfer  */ props[e1] && joined_succs,
+		  /* debug */     NOP //cerr<<props[e1]<<" && "<<joined_succs<<endl;
+		  );
+    };
   }
 
   // Implementation status: DONE
@@ -937,7 +946,7 @@ Checker::verify(const Formula& f)
     }
     FOR_EACH_STATE(state, l) {
       Visualizer viz(v.ltl_properties, l);
-      e.accept(viz, Visualizer::newAttr(l));
+      const_cast<Expr&>(e).accept(viz, Visualizer::newAttr(l));
       s<<l<<" [label=\""<<l;
       if (show_node_detail) {
 	s<<":";
