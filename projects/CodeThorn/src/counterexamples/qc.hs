@@ -109,7 +109,7 @@ actualOutput (RersData input) = do
           -- make a best effort to synchronize input and output. It's
           -- really impossible because a given input may or may not
           -- trigger an output.
-          hasOutput <- hWaitForInput m_out 25 -- milliseconds
+          hasOutput <- hWaitForInput m_out 33 -- milliseconds
           if hasOutput then 
             do reply <- hGetLine m_out
                case (readMaybe reply)::(Maybe Int) of 
