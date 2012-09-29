@@ -68,35 +68,35 @@ public:
     if (lval.isBot())   return  "color=gainsboro";
   }
 
-  IAttr visit(const InputSymbol* expr, IAttr a)  {
+  IAttr visit(InputSymbol* expr, IAttr a)  {
     short e = expr->label;
     int node = newNode(a);
     s<<node<<" ["<<color(props[e])<<",label=\"Input "<<string(1, expr->c)
      <<" = "<<props[e]<<"\"];\n  ";
     return newAttr(node);
   }
-  IAttr visit(const OutputSymbol* expr, IAttr a) {
+  IAttr visit(OutputSymbol* expr, IAttr a) {
     short e = expr->label;
     int node = newNode(a);
     s<<node<<" ["<<color(props[e])<<",label=\"Output "<<string(1, expr->c)
      <<" = "<<props[e]<<"\"];\n  ";
     return newAttr(node);
   }
-  IAttr visit(const NegInputSymbol* expr, IAttr a)  {
+  IAttr visit(NegInputSymbol* expr, IAttr a)  {
     short e = expr->label;
     int node = newNode(a);
     s<<node<<" ["<<color(props[e])<<",label=\"¬Input "<<string(1, expr->c)
      <<" = "<<props[e]<<"\"];\n  ";
     return newAttr(node);
   }
-  IAttr visit(const NegOutputSymbol* expr, IAttr a) {
+  IAttr visit(NegOutputSymbol* expr, IAttr a) {
     short e = expr->label;
     int node = newNode(a);
     s<<node<<" ["<<color(props[e])<<",label=\"¬Output "<<string(1, expr->c)
      <<" = "<<props[e]<<"\"];\n  ";
     return newAttr(node);
   }
-  IAttr visit(const Not* expr, IAttr a) {
+  IAttr visit(Not* expr, IAttr a) {
     short e = expr->label;
     short e1 = expr->expr1->label;
     int node = newNode(a);
@@ -104,31 +104,31 @@ public:
      <<" = "<<"!"<<props[e1]<<"\"];\n  ";
     return newAttr(node);
   }
-  IAttr visit(const Next* expr, IAttr a) {
+  IAttr visit(Next* expr, IAttr a) {
     short e = expr->label;
     short e1 = expr->expr1->label;
     int node = newNode(a);
-    s<<node<<" ["<<color(props[e])<<",label=\""<<"("<<props[e]
+    s<<node<<" [shape=circle,"<<color(props[e])<<",label=\""<<"("<<props[e]
      <<" = "<<"X "<<props[e1]<<")\"];\n  ";
     return newAttr(node);
   }
-  IAttr visit(const Eventually* expr, IAttr a) {
+  IAttr visit(Eventually* expr, IAttr a) {
     short e = expr->label;
     short e1 = expr->expr1->label;
     int node = newNode(a);
-    s<<node<<" ["<<color(props[e])<<",label=\""<<"("<<props[e]
+    s<<node<<" [shape=diamond,"<<color(props[e])<<",label=\""<<"("<<props[e]
      <<" = "<<"F "<<props[e1]<<")\"];\n  ";
     return newAttr(node);
   }
-  IAttr visit(const Globally* expr, IAttr a) {
+  IAttr visit(Globally* expr, IAttr a) {
     short e = expr->label;
     short e1 = expr->expr1->label;
     int node = newNode(a);
-    s<<node<<" ["<<color(props[e])<<",label=\""<<"("<<props[e]
+    s<<node<<" [shape=box,"<<color(props[e])<<",label=\""<<"("<<props[e]
      <<" = "<<"G "<<props[e1]<<")\"];\n  ";
     return newAttr(node);
   }
-  IAttr visit(const And* expr, IAttr a) {
+  IAttr visit(And* expr, IAttr a) {
     short e = expr->label;
     short e1 = expr->expr1->label;
     short e2 = expr->expr2->label;
@@ -137,7 +137,7 @@ public:
      <<" = "<<props[e1]<<" & "<<props[e2]<<")\"];\n  ";
     return newAttr(node);
   }
-  IAttr visit(const Or* expr, IAttr a) {
+  IAttr visit(Or* expr, IAttr a) {
     short e = expr->label;
     short e1 = expr->expr1->label;
     short e2 = expr->expr2->label;
@@ -146,7 +146,7 @@ public:
      <<" = "<<props[e1]<<" | "<<props[e2]<<")\"];\n  ";
     return newAttr(node);
   }
-  IAttr visit(const Until* expr, IAttr a)	{
+  IAttr visit(Until* expr, IAttr a)	{
     short e = expr->label;
     short e1 = expr->expr1->label;
     short e2 = expr->expr2->label;
@@ -155,7 +155,7 @@ public:
      <<" = "<<props[e1]<<" U "<<props[e2]<<")\"];\n  ";
     return newAttr(node);
   }
-  IAttr visit(const WeakUntil* expr, IAttr a) {
+  IAttr visit(WeakUntil* expr, IAttr a) {
     short e = expr->label;
     short e1 = expr->expr1->label;
     short e2 = expr->expr2->label;
@@ -164,7 +164,7 @@ public:
      <<" = "<<props[e1]<<" WU "<<props[e2]<<")\"];\n  ";
     return newAttr(node);
   }
-  IAttr visit(const Release* expr, IAttr a) {
+  IAttr visit(Release* expr, IAttr a) {
     short e = expr->label;
     short e1 = expr->expr1->label;
     short e2 = expr->expr2->label;
@@ -834,10 +834,18 @@ Checker::Checker(EStateSet& ess, TransitionGraph& _tg)
 #endif
 
   FOR_EACH_STATE(state, label) {
-    if (out_degree(label, g) == 0) {
-      endpoints.push_back(label);
+    //if (out_degree(label, g) == 0) {
+     // endpoints.push_back(label);
       //cerr<<label<<endl;
+    //}
+    bool endstate = true;
+    GraphTraits::out_edge_iterator out_i, out_end;
+    for (tie(out_i, out_end) = out_edges(label, g); out_i != out_end; ++out_i) {
+      Label succ = target(*out_i, g);
+      endstate = endstate && (succ==label);
     }
+    if (endstate) 
+      endpoints.push_back(label);
   }
 
   //FOR_EACH_STATE(state, label) {
@@ -852,7 +860,7 @@ Checker::Checker(EStateSet& ess, TransitionGraph& _tg)
  * Creates reduced_eStateSet
  */
 Label Checker::collapse_transition_graph(BoostTransitionGraph& g, 
-					BoostTransitionGraph& reduced) const {
+					 BoostTransitionGraph& reduced) const {
   Label n = 0;
   Label renumbered[num_vertices(g)];
 
@@ -860,7 +868,7 @@ Label Checker::collapse_transition_graph(BoostTransitionGraph& g,
     //cerr<<label<<endl;
     assert(g[label]);
     if (( in_degree(label, g) >= 1) && // keep start
-	(out_degree(label, g) >= 1) && // keep exits
+	(out_degree(label, g) >= 0) && // DO NOT keep exits
 	(g[label]->io.op == InputOutput::NONE)) {
       //cerr<<"-- removing "<<label <<endl;//g[label]->toString()<<endl;
 
