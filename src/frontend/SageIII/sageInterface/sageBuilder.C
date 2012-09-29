@@ -1711,8 +1711,8 @@ SageBuilder::buildMemberFunctionType(SgType* return_type, SgFunctionParameterTyp
 
      if (typeList != NULL)
         {
-          SgTypePtrList & typeListArgs = typeList->get_arguments();
 #if 0
+          SgTypePtrList & typeListArgs = typeList->get_arguments();
           for (SgTypePtrList::iterator i = typeListArgs.begin(); i != typeListArgs.end(); i++)
              {
                printf ("   --- type argument = %p = %s \n",*i,(*i)->class_name().c_str());
@@ -7841,16 +7841,90 @@ SgModifierType* SageBuilder::buildVolatileType(SgType* base_type /*=NULL*/)
      return result2;
    }
 
+string
+generate_type_list (SgType* type)
+   {
+  // This function generates a list of types for each level of the type structure.
+     string returnString;
+
+     unsigned char bit_array = (SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_REFERENCE_TYPE | SgType::STRIP_POINTER_TYPE | SgType::STRIP_ARRAY_TYPE | SgType::STRIP_TYPEDEF_TYPE);
+
+     SgType* currentType = type;
+
+     SgModifierType*  modType     = NULL;
+     SgPointerType*   pointType   = NULL;
+     SgReferenceType* refType     = NULL;
+     SgArrayType*     arrayType   = NULL;
+     SgTypedefType*   typedefType = NULL;
+
+     while (currentType != NULL)
+        {
+          returnString += currentType->class_name();
+#if 0
+          printf ("In generate_type_list(): returnString = %s \n",returnString.c_str());
+#endif
+       // type = type->findBaseType();
+          if ( (bit_array & SgType::STRIP_MODIFIER_TYPE) && (modType = isSgModifierType(currentType)) )
+             {
+               currentType = modType->get_base_type();
+             }
+            else
+             {
+               if ( (bit_array & SgType::STRIP_REFERENCE_TYPE) &&  (refType = isSgReferenceType(currentType)) )
+                  {
+                    currentType = refType->get_base_type();
+                  }
+                 else
+                  {
+                    if ( (bit_array & SgType::STRIP_POINTER_TYPE) && (pointType = isSgPointerType(currentType)) )
+                       {
+                         currentType = pointType->get_base_type();
+                       }
+                      else
+                       {
+                         if ( (bit_array & SgType::STRIP_ARRAY_TYPE) && (arrayType = isSgArrayType(currentType)) )
+                            {
+                              currentType = arrayType->get_base_type();
+                            }
+                           else
+                            {
+                              if ( (bit_array & SgType::STRIP_TYPEDEF_TYPE) && (typedefType = isSgTypedefType(currentType)) )
+                                 {
+                                // DQ (6/21/2005): Added support for typedef types to be uncovered by findBaseType()
+                                   currentType = typedefType->get_base_type();
+                                 }
+                                else
+                                 {
+                                // Exit the while(true){} loop!
+                                   break;
+                                 }
+                            }
+                       }
+                  }
+             }
+
+          if (type != NULL)
+               returnString += " , ";
+        }
+
+     return returnString;
+   }
+
 // DQ (7/29/2010): Changed return type from SgType to SgModifierType
   //! Build a restrict type.
 SgModifierType* SageBuilder::buildRestrictType(SgType* base_type)
    {
      ROSE_ASSERT(base_type != NULL);
-     if (!isSgPointerType(base_type) && !isSgReferenceType(base_type))
+
+  // DQ (9/28/2012): Added that the base type could be an array (see test2012_03.c (C test code)).
+  // if (!isSgPointerType(base_type) && !isSgReferenceType(base_type))
+     if (!isSgPointerType(base_type) && !isSgReferenceType(base_type) && !isSgArrayType(base_type))
         {
-          printf("Base type of restrict type must be a pointer or reference type.\n");
+          printf("ERROR: Base type of restrict type must be a pointer or reference type base_type = %p = %s \n",base_type,base_type->class_name().c_str());
+          printf ("  --- generate_type_list() = %s \n",generate_type_list(base_type).c_str());
           ROSE_ASSERT(false);
         }
+
      SgModifierType *result = new SgModifierType(base_type);
      ROSE_ASSERT(result!=NULL);
 

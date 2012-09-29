@@ -526,11 +526,28 @@ int GetOperatorVariant(SgExpression* expr) {
   case V_SgArrowExp:
    {
        SgExpression *mfunc = isSgBinaryOp(func)->get_rhs_operand();
+
+    // DQ (9/28/2012): Added assertion.
+       ROSE_ASSERT(mfunc != NULL);
+
        if (mfunc->variantT() == V_SgPseudoDestructorRefExp)
             return V_SgFunctionCallExp;
-       SgMemberFunctionRefExp* mfunc_ref =
-             isSgMemberFunctionRefExp(mfunc);
-       assert (mfunc_ref != 0);
+
+    // DQ (9/28/2012): This could be a variable (pointer to function).
+       SgVarRefExp* var_ref = isSgVarRefExp(mfunc);
+       if (var_ref != NULL)
+          return (int)V_SgVarRefExp;
+
+       SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(mfunc);
+
+    // DQ (9/28/2012): Added debug support.
+       if (mfunc_ref == NULL)
+          {
+            printf ("ERROR: mfunc = %p = %s \n",mfunc,mfunc->class_name().c_str());
+            mfunc->get_startOfConstruct()->display("Error in GetOperatorVariant() in modified_sage.C (unparser): debug");
+          }
+       ROSE_ASSERT(mfunc_ref != NULL);
+
        name = mfunc_ref->get_symbol()->get_name();
        break;
    }
@@ -589,6 +606,7 @@ int GetOperatorVariant(SgExpression* expr) {
        return -1;
      }
 }
+
 
 SgExpression* GetFirstOperand(SgExpression* expr) {
   SgFunctionCallExp* func_call = isSgFunctionCallExp(expr);
