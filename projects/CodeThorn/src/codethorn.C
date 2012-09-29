@@ -396,7 +396,7 @@ int main( int argc, char * argv[] ) {
   boolOptions.registerOption("tg-ltl-reduced",false);
   boolOptions.registerOption("viz",false);
   boolOptions.registerOption("update-input-var",true);
-  boolOptions.registerOption("run-rose-tests",false);
+  boolOptions.registerOption("run-rose-tests",true);
   boolOptions.processOptions();
   cout<<boolOptions.toString();
 
@@ -491,7 +491,7 @@ int main( int argc, char * argv[] ) {
   }
   cout << "INIT: creating solver."<<endl;
   Analyzer analyzer;
-  analyzer.csv_assert_live_file=csv_assert_live_file;
+  analyzer._csv_assert_live_file=csv_assert_live_file;
   analyzer.initializeSolver1("main",root);
   analyzer.initLabeledAssertNodes(sageProject);
   double initRunTime=timer.getElapsedTimeInMilliSec();

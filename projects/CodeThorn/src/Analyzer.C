@@ -152,14 +152,14 @@ void Analyzer::runSolver1() {
 		  if(boolOptions["report-failed-assert"]) {
 			cout << "REPORT: failed-assert: "<<newEStatePtr->toString()<<endl;
 		  }
-		  if(csv_assert_live_file.size()>0) {
+		  if(_csv_assert_live_file.size()>0) {
 			string name=labelNameOfAssertLabel(currentEStatePtr->label);
 			if(name=="globalError")
 			  name="error_60";
 			name=name.substr(6,name.size()-6);
 			std::ofstream fout;
 			// csv_assert_live_file is the member-variable of analyzer
-			fout.open(csv_assert_live_file.c_str(),ios::app);    // open file for appending
+			fout.open(_csv_assert_live_file.c_str(),ios::app);    // open file for appending
 			assert (!fout.fail( ));
 			fout << name << ",yes,9"<<endl;
 			cout << "REACHABLE ASSERT FOUND: "<< name << ",yes,9"<<endl;

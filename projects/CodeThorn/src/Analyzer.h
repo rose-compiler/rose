@@ -153,7 +153,7 @@ class Analyzer {
 	return labelName;
   }
   list<pair<SgLabelStatement*,SgNode*> > _assertNodes;
-  string csv_assert_live_file;
+  string _csv_assert_live_file;
  private:
   ExprAnalyzer exprAnalyzer;
   VariableIdMapping variableIdMapping;
