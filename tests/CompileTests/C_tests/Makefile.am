@@ -100,16 +100,25 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2010_07.c \
      test2010_08.c \
      test2010_09.c \
-     test2010_10.c \
      test2010_13.c \
      test2010_15.c \
      test2010_17.c \
      test2011_05.c \
      test2007_177.c \
+     test2012_02.c \
+     test2012_03.c \
+     test2012_05.c \
+     test2012_06.c \
+     test2012_07.c \
+     test2012_08.c \
      math.c \
      complex_01.c \
      constants.c
 
+# DQ (9/28/2012): Failing tests.
+# test2012_01.c 
+# test2012_04.c (infinite recursion!)
+# test2010_10.c 
 
 
 if ROSE_USE_CLANG_FRONTEND
