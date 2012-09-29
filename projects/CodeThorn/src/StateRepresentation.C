@@ -181,9 +181,9 @@ StateSet::ProcessingResult StateSet::processState(State& s) {
 #ifdef STATE_MAINTAINER_HSET
 	insert(s);
 #endif
-	const State* existingStatePtr=statePtr(s);
-	assert(existingStatePtr);
-	return make_pair(false,existingStatePtr);
+	const State* existingStatePtr1=statePtr(s);
+	assert(existingStatePtr1);
+	return make_pair(false,existingStatePtr1);
   }
   assert(0);
 }
@@ -299,8 +299,8 @@ EStateSet::ProcessingResult EStateSet::processEState(EState s) {
 #ifdef ESTATE_MAINTAINER_HSET
 	insert(s);
 #endif
-	const EState* existingEStatePtr=eStatePtr(s);
-	if(!existingEStatePtr) {
+	const EState* existingEStatePtr1=eStatePtr(s);
+	if(!existingEStatePtr1) {
 	  bool operator_less(const EState& c1, const EState& c2);
 
 	  // generate error description
@@ -339,8 +339,8 @@ EStateSet::ProcessingResult EStateSet::processEState(EState s) {
 	  }
 	  cerr << "Counted: "<<cnt<<" Tested:"<<cnttested<<endl;
 	}
-	assert(existingEStatePtr);
-	return make_pair(false,existingEStatePtr);
+	assert(existingEStatePtr1);
+	return make_pair(false,existingEStatePtr1);
   }
   assert(0);
 }

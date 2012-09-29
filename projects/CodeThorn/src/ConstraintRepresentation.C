@@ -5,7 +5,6 @@
  *************************************************************/
 
 #include "ConstraintRepresentation.h"
-
 #include <algorithm>
 #include <iostream>
 #include "CollectionOperators.h"
@@ -518,12 +517,12 @@ ConstraintSetMaintainer::ProcessingResult ConstraintSetMaintainer::processConstr
 #ifdef CSET_MAINTAINER_HSET
 	insert(s);
 #endif
-	const ConstraintSet* existingConstraintSetPtr=constraintSetPtr(s);
-	if(!existingConstraintSetPtr) {
+	const ConstraintSet* existingConstraintSetPtr1=constraintSetPtr(s);
+	if(!existingConstraintSetPtr1) {
 	  cout << "Problematic element:"<<s.toString()<<endl;
 	}
-	assert(existingConstraintSetPtr);
-	return make_pair(false,existingConstraintSetPtr);
+	assert(existingConstraintSetPtr1);
+	return make_pair(false,existingConstraintSetPtr1);
   }
   assert(0);
 }
