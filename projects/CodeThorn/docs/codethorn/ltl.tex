@@ -4,14 +4,15 @@
 \newcommand{\ffalse}{\ensuremath{\mathit{false}}}
 \newcommand{\ttrue}{\ensuremath{\mathit{true}}}
 
-At its heart CodeThorn uses a dataflow-based approach to verify LTL
-formul\ae\ on the State Transition Graph. The algorithm consists of
-two layers. At the outer layer, the abstract syntax tree of the
-formula is traversed in bottom-up order. Every sub-expression of the
-LTL formula found by the traversal is reduced to a single value in the
-Boolean lattice (\cf Fig.~\ref{fig:bool_lattice}) for each state in
-the State Transition Graph. This evaluation is performed using a
-dataflow analysis, which represents the inner layer of the algorithm.
+The current LTL formula checker in CodeThorn is an experiment in how
+far a simple dataflow-based approach implemented on the State
+Transition Graph can go. The algorithm consists of two layers. At the
+outer layer, the abstract syntax tree of the formula is traversed in
+bottom-up order. Every sub-expression of the LTL formula found by the
+traversal is reduced to a single value in the Boolean lattice (\cf
+Fig.~\ref{fig:bool_lattice}) for each state in the State Transition
+Graph. This evaluation is performed using a dataflow analysis, which
+represents the inner layer of the algorithm.
 
 \begin{figure}
   \centering
@@ -41,12 +42,13 @@ dataflow analysis, which represents the inner layer of the algorithm.
 \newcommand{\States}{\ensuremath{\mathit{States}}\xspace}
 \newcommand{\prop}[1]{\ensuremath{p_{\state,#1}}\xspace} 
 \newcommand{\propp}[1]{\ensuremath{p_{\state',#1}}\xspace} 
-\newcommand{\G}{\ensuremath{\mathrm{G}}\ }
-\newcommand{\F}{\ensuremath{\mathrm{F}}\ }
-\newcommand{\X}{\ensuremath{\mathrm{X}}\ }
-\newcommand{\R}{\ensuremath{\mathrm{R}}\ }
-\newcommand{\U}{\ensuremath{\mathrm{U}}\ }
-\newcommand{\WU}{\ensuremath{\mathrm{WU}\ }}
+\newcommand{\G}{\ensuremath{\mathrm{G}}\xspace}
+\newcommand{\F}{\ensuremath{\mathrm{F}}\xspace}
+\newcommand{\X}{\ensuremath{\mathrm{X}}\xspace}
+\newcommand{\R}{\ensuremath{\mathrm{R}}\xspace}
+\newcommand{\U}{\ensuremath{\mathrm{U}}\xspace}
+\newcommand{\WU}{\ensuremath{\mathrm{WU}\xspace}}
+\newcommand{\comb}{\ensuremath{\mathit{succs}}\xspace}
 
 \subsection{A minimum-fixpoint approximation for all-quantified LTL expressions}
 The approach we are using is extremely fast, but it computes only an
@@ -110,31 +112,42 @@ The next operator $X a$ yields true iff $a$ is true in the next state.
 \[ e = \X a\colon\qquad\forall\state\in\States\colon\prop{e}
 :=\Lub_{\state\prime\in succ(\state)}{\propp{a}} \]
 
-\subsubsection{The F operator}
-\begin{tabular}{rlllll}
+\subsubsection{The F, R, and U operators}
+The following table shows the backwards-directed dataflow
+specification for the \F, \R, and \U operators.
+
+\begin{tabular}{lllll}
 \toprule
-operator & $\mathit{init}$ & $\mathit{start}$ & $\mathit{join}$ &
-$\mathit{calc}$ & $\mathit{otherwise}$ \\\midrule
+Operator & $\mathit{init}$ & $\mathit{start?}$ & $\mathit{join}$ & $\mathit{calc}$ \\\midrule
 
-$e = \F a$  & $\ffalse$ & $(\prop{a}==true)$ & $\cup$ & 
-$\prop{a}\cup\bigcup_{\state\prime\in succ(\state)}{\prop{e}}$ &\\
-
-$e = a \R b$ & $\bot$ & $(\prop{b}==true)$ & $\cap$ &
-$\prop{b} \cap \prop{a} \cup \bigcap_{\state\prime\in succ(\state)}{\prop{e}}$\\
-
-$e = a \U b$ & $\ffalse$ & $(\neg\prop{b}==bot)$ &
-$\cup$ & $\prop{a} \cup\bigcap_{\state\prime\in succ(\state)}{\prop{e}}$ & $\ffalse$\\
-
-$e = a \WU b$ & $\bot$ & $(\prop{a}==true)$ & $\cup$ &
-$\prop{a} \cup \bigcup_{\state\prime\in succ(\state)}{\prop{e}}$\\\bottomrule
+$e = \F a$    & $\bot$ & $(\prop{a}\neq\bot)$ & $\lub$ & $\prop{a}\cup\comb$ \\
+$e = a\ \R b$ & $\bot$ & $(\prop{b}\neq\bot)$ & $\lub$ & $\prop{b}\cap(\prop{a}\cup\comb)$\\
+$e = a\ \U b$ & $\bot$ & $(\prop{b}\neq\bot)$ & $\lub$ & $\prop{b}\cup(\prop{a}\cap\comb)$\\
+\bottomrule
 \end{tabular}
 
+\subsubsection{The WU operator}
+The WU operator is syntactically rewritten into the equivalent
+\[ e = a\ \WU b\quad\equiv\quad \G a \vee (a\ \U b) \]
+expression.
 
-\subsubsection{Handling I/O nodes}
+\subsubsection{Handling Output states}
 \begin{itemize}
 \item are propagated to the next I/O state of the same type
 \end{itemize}
 
+\subsubsection{Handling Output states}
+We use the IO attribute in the \STG to determine whether a state is an
+output state. If the state has a \verb|STDOUT_CONST| or
+\verb|STDOUT_VAR| attribute, and, in the latter case, the variable
+being output is constrained to an integer value, the property \verb|O|
+$\mathit{value}$ is \ttrue. If the state performs I/O, but the
+constraints are inconclusive, all \verb|O| properties are $\top$,
+otherwise, $\bot$. The \STG treats assertions as I/O, which implies
+that dead ends in the input program (paths without traditional I/O
+leading to an exit) will be reported as performing no I/O at all.
+
+Negated I/O
 \subsection{Reducing the State Transition Graph}
 
 \subsection{Debugging: Finding counterexamples}

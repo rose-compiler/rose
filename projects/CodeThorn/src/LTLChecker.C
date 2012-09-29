@@ -789,7 +789,7 @@ public:
     short e2 = expr->expr2->label;
 
     bw_fixpoint(/* init */      Bot(),
-		/* start */     props[e2].isTrue(),
+		/* start */     !props[e2].isBot(),
 		/* join */      LUB,
 		/* transfer */  props[e2] && (props[e1] || joined_succs),
 		/* debug */     NOP
@@ -856,25 +856,23 @@ Label Checker::collapse_transition_graph(BoostTransitionGraph& g,
   FOR_EACH_STATE(state, label) {
     //cerr<<label<<endl;
     assert(g[label]);
-    if (( in_degree(label, g) == 1) &&
-	(out_degree(label, g) == 1) &&
+    if (( in_degree(label, g) >= 1) && // keep start
+	(out_degree(label, g) >= 1) && // keep exits
 	(g[label]->io.op == InputOutput::NONE)) {
       //cerr<<"-- removing "<<label <<endl;//g[label]->toString()<<endl;
 
-      if ( in_degree(label, g) == out_degree(label, g) ) {
-	// patch pred <--> succ
-	GraphTraits::in_edge_iterator in_i, in_end;
-	tie(in_i, in_end) = in_edges(label, g);
-	assert(in_i != in_end);
+      // patch pred <--> succ
+      GraphTraits::in_edge_iterator in_i, in_end;			
+      for (tie(in_i, in_end) = in_edges(label, g); in_i != in_end; ++in_i) { 
 	Label pred = source(*in_i, g);
 
 	GraphTraits::out_edge_iterator out_i, out_end;
-	tie(out_i, out_end) = out_edges(label, g);
-	assert(out_i != out_end);
-	Label succ = target(*out_i, g);
+	for (tie(out_i, out_end) = out_edges(label, g); out_i != out_end; ++out_i) {
+	  Label succ = target(*out_i, g);
 	
-	//cerr<<"-- connecting "<<pred<<" and "<<succ<<endl;
-	add_edge(pred, succ, g);
+	  //cerr<<"-- connecting "<<pred<<" and "<<succ<<endl;
+	  add_edge(pred, succ, g);
+	}
       }
       // remove state
       clear_vertex(label, g);
@@ -888,16 +886,17 @@ Label Checker::collapse_transition_graph(BoostTransitionGraph& g,
   }
 
   // Build a copy of the graph without the orphaned states
+  //cerr<<"digraph g {"<<endl;
   GraphTraits::edge_iterator ei, ei_end;
   for (tie(ei, ei_end) = edges(g); ei != ei_end; ++ei) {
     Label src = source(*ei, g);
     Label tgt = target(*ei, g);
     add_edge(renumbered[src], renumbered[tgt], reduced);
-    //cerr<<renumbered[src]<<endl;
-    //cerr<<renumbered[tgt]<<endl;
+    //cerr<<renumbered[src]<<" -> "<<renumbered[tgt]<<";"<<endl;
     reduced[renumbered[src]] = g[src];
     reduced[renumbered[tgt]] = g[tgt];
   }
+  //cerr<<"}"<<endl;
 
   //cerr<<"## done "<<endl<<endl;
   return renumbered[start];
