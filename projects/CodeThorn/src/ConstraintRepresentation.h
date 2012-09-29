@@ -108,8 +108,6 @@ class ConstraintSetHashFun {
 		  hash*=(long)((*i).lhsVar().getSymbol());
 		}
 	  }
-	  if(hash<0)
-		hash=-hash;
 	  return long(hash) % tabSize;
 	}
 	  long tableSize() const { return tabSize;}

@@ -182,15 +182,15 @@ void Analyzer::runSolver1() {
 const EState* Analyzer::addToWorkListIfNew(EState eState) {
   EStateSet::ProcessingResult res=processEState(eState);
   if(res.first==false) {
-	const EState* newStatePtr=res.second;
-	assert(newStatePtr);
-	addToWorkList(newStatePtr);
-	return newStatePtr;
+	const EState* newEStatePtr=res.second;
+	assert(newEStatePtr);
+	addToWorkList(newEStatePtr);
+	return newEStatePtr;
   } else {
 	//cout << "DEBUG: State already exists. Not added:"<<eState.toString()<<endl;
-	const EState* existingStatePtr=res.second;
-	assert(existingStatePtr);
-	return existingStatePtr;
+	const EState* existingEStatePtr=res.second;
+	assert(existingEStatePtr);
+	return existingEStatePtr;
   }
 }
 
