@@ -71,7 +71,9 @@ prop_holds formula input =
   where test = do states <- run $ actualOutput input
                   assert $ holds' formula states
         holds' _ [] = True
-        holds' f ss = holds f ss
+        holds' f ss = let res <- holds f ss in 
+                      if res == Top then True -- ignore
+                      else res
 
 
 -- execute the actual program to get its output
@@ -146,24 +148,54 @@ rersInt :: Char -> Int
 rersInt c = (ord c) - (ord 'A')+1
 
 -- verify that an LTL formula holds for a given chain of states
-holds :: LTL -> [State] -> Bool
+--holds :: LTL -> [State] -> Bool
+--holds (In  c) ((StIn  stc):_) = (c == stc)
+--holds (Out c) ((StOut stc):_) = (c == stc)
+--holds (In  c) ((StOut stc):states) = holds (In  c) states
+--holds (Out c) ((StIn  stc):states) = holds (Out c) states
+--holds       (X a) (_:states) = holds a states
+--holds       (F a)     [] = False
+--holds       (F a) states = (holds a states) || (holds (X (F a)) states)
+--holds       (G a)     [] = True
+--holds       (G a) states = (holds a states) && (holds (X (G a)) states)
+--holds     (Not a) states = not (holds a states)
+--holds (a `And` b) states = (holds a states) && (holds b states)
+--holds (a `Or`  b) states = (holds a states) || (holds b states)
+--holds (a `U`   b)     [] = True
+--holds (a `U`   b) states = (holds b states) || ((holds a states) && (holds (X (a `U` b)) states))
+--holds (a `R`   b) states = (holds b states) && ((holds a states) || (holds (X (a `R` b)) states))
+--holds (a `WU`  b) states = holds ((G a) `Or` (a `U` b)) states
+--holds _ _ = False
+holds :: LTL -> [State] -> BoolLattice
 holds (In  c) ((StIn  stc):_) = (c == stc)
 holds (Out c) ((StOut stc):_) = (c == stc)
 holds (In  c) ((StOut stc):states) = holds (In  c) states
 holds (Out c) ((StIn  stc):states) = holds (Out c) states
 holds       (X a) (_:states) = holds a states
-holds       (F a)     [] = False
-holds       (F a) states = (holds a states) || (holds (X (F a)) states)
-holds       (G a)     [] = True
-holds       (G a) states = (holds a states) && (holds (X (G a)) states)
+holds       (F a) states = (holds a states) ||| (holds (X (F a)) states)
+holds       (G a) states = (holds a states) &&& (holds (X (G a)) states)
 holds     (Not a) states = not (holds a states)
-holds (a `And` b) states = (holds a states) && (holds b states)
-holds (a `Or`  b) states = (holds a states) || (holds b states)
-holds (a `U`   b)     [] = True
-holds (a `U`   b) states = (holds b states) || ((holds a states) && (holds (X (a `U` b)) states))
-holds (a `R`   b) states = (holds b states) && ((holds a states) || (holds (X (a `R` b)) states))
+holds (a `And` b) states = (holds a states) &&& (holds b states)
+holds (a `Or`  b) states = (holds a states) ||| (holds b states)
+holds (a `U`   b) states = (holds b states) ||| ((holds a states) &&& (holds (X (a `U` b)) states))
+holds (a `R`   b) states = (holds b states) &&& ((holds a states) ||| (holds (X (a `R` b)) states))
 holds (a `WU`  b) states = holds ((G a) `Or` (a `U` b)) states
-holds _ _ = False
+holds _ _ = Top
+
+-- because of lazy evaluation, these should short-circuit
+(|||) :: BoolLattice -> BoolLattice -> BoolLattice
+(|||) True   _    = True
+(|||) _     True  = True
+(|||) False False = False
+(|||) Top   False = Top
+(|||) False Top   = Top
+
+(&&&) :: BoolLattice -> BoolLattice -> BoolLattice
+(&&&) False _     = False
+(&&&) _     False = False
+(&&&) True  True  = True
+(&&&) Top   True  = Top
+(&&&) True  Top   = Top
 
 #include "formulae.hs"
 formulae' = [ WU (Not (Out 'Y')) (In 'B'), None]
