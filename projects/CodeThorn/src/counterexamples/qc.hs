@@ -49,16 +49,17 @@ data LTL = In Char
 
 data State = StIn Char | StOut Char deriving (Eq, Show)
 newtype RersData = RersData [Char] deriving (Eq, Show)
+data BoolLattice = FFalse | TTrue | Top
 
 -- Test input data generator
 instance Arbitrary RersData where
   arbitrary = sized input
     where input size = do
-            n    <- choose (size `min` 1, maxlength)
+            n    <- choose (size `min` 4, maxlength)
             vals <- vectorOf n (choose ('A', 'G'))
             return (RersData vals)
             --return (RersData ['G', 'B', 'B'])
-          maxlength = 6
+          maxlength = 12
   
   shrink (RersData vals) = map RersData (shrink' vals)
     where 
@@ -71,10 +72,11 @@ prop_holds formula input =
   where test = do states <- run $ actualOutput input
                   assert $ holds' formula states
         holds' _ [] = True
-        holds' f ss = let res <- holds f ss in 
-                      if res == Top then True -- ignore
-                      else res
-
+        holds' f ss = case holds f ss of
+                         Top -> True -- ignore
+                         TTrue -> True
+                         FFalse -> False
+                         
 
 -- execute the actual program to get its output
 actualOutput :: RersData -> IO [State]
@@ -166,15 +168,16 @@ rersInt c = (ord c) - (ord 'A')+1
 --holds (a `R`   b) states = (holds b states) && ((holds a states) || (holds (X (a `R` b)) states))
 --holds (a `WU`  b) states = holds ((G a) `Or` (a `U` b)) states
 --holds _ _ = False
+
 holds :: LTL -> [State] -> BoolLattice
-holds (In  c) ((StIn  stc):_) = (c == stc)
-holds (Out c) ((StOut stc):_) = (c == stc)
+holds (In  c) ((StIn  stc):_) = lift (c == stc)
+holds (Out c) ((StOut stc):_) = lift (c == stc)
 holds (In  c) ((StOut stc):states) = holds (In  c) states
 holds (Out c) ((StIn  stc):states) = holds (Out c) states
 holds       (X a) (_:states) = holds a states
 holds       (F a) states = (holds a states) ||| (holds (X (F a)) states)
 holds       (G a) states = (holds a states) &&& (holds (X (G a)) states)
-holds     (Not a) states = not (holds a states)
+holds     (Not a) states = nnot (holds a states)
 holds (a `And` b) states = (holds a states) &&& (holds b states)
 holds (a `Or`  b) states = (holds a states) ||| (holds b states)
 holds (a `U`   b) states = (holds b states) ||| ((holds a states) &&& (holds (X (a `U` b)) states))
@@ -184,18 +187,29 @@ holds _ _ = Top
 
 -- because of lazy evaluation, these should short-circuit
 (|||) :: BoolLattice -> BoolLattice -> BoolLattice
-(|||) True   _    = True
-(|||) _     True  = True
-(|||) False False = False
-(|||) Top   False = Top
-(|||) False Top   = Top
+(|||) TTrue  _      = TTrue
+(|||) _      TTrue  = TTrue
+(|||) FFalse FFalse = FFalse
+(|||) Top    FFalse = Top
+(|||) FFalse Top    = Top
+(|||) Top    Top    = Top
+
+
+lift :: Bool -> BoolLattice
+lift True = TTrue
+lift False = FFalse
 
 (&&&) :: BoolLattice -> BoolLattice -> BoolLattice
-(&&&) False _     = False
-(&&&) _     False = False
-(&&&) True  True  = True
-(&&&) Top   True  = Top
-(&&&) True  Top   = Top
+(&&&) FFalse _      = FFalse
+(&&&) _      FFalse = FFalse
+(&&&) TTrue  TTrue  = TTrue
+(&&&) Top    TTrue  = Top
+(&&&) TTrue  Top    = Top
+(&&&) Top    Top    = Top
+
+nnot Top = Top
+nnot TTrue = FFalse
+nnot FFalse = TTrue
 
 #include "formulae.hs"
 formulae' = [ WU (Not (Out 'Y')) (In 'B'), None]
