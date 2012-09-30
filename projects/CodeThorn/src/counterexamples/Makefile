@@ -1,6 +1,20 @@
-all: clean
-	$(MAKE) -j1 rers_mini1.log 
-	$(MAKE) -j1 Problem1.log
+all:
+	$(MAKE) clean && $(MAKE) -j1 Problem1.log
+	$(MAKE) clean && $(MAKE) -j1 Problem2.log
+	$(MAKE) clean && $(MAKE) -j1 Problem3.log
+	$(MAKE) clean && $(MAKE) -j1 Problem4.log
+	$(MAKE) clean && $(MAKE) -j1 Problem5.log
+	$(MAKE) clean && $(MAKE) -j1 Problem6.log
+	$(MAKE) clean && $(MAKE) -j1 Problem7.log
+	$(MAKE) clean && $(MAKE) -j1 Problem8.log
+	$(MAKE) clean && $(MAKE) -j1 Problem9.log
+	$(MAKE) clean && $(MAKE) -j1 Problem10.log
+	$(MAKE) clean && $(MAKE) -j1 Problem11.log
+	$(MAKE) clean && $(MAKE) -j1 Problem12.log
+	$(MAKE) clean && $(MAKE) -j1 Problem13.log
+
+csv:
+	for i in `seq 13`; do awk -f log2csv.awk <Problem$$i.log >Problem$$i-ltl-qc.csv; done
 
 RERS=$(patsubst %,Problem%.log, $(shell seq 13))
 rers: $(RERS)
