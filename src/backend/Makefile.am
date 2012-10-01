@@ -37,7 +37,7 @@ x10CodeGenerationPath=$(srcdir)/unparser/X10CodeGeneration#
 ###############################################################################
 
 INCLUDES=\
-	$(ROSE_INCLUDES) 
+	$(ROSE_INCLUDES)
 
 
 noinst_LTLIBRARIES = libbackend.la
