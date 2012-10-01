@@ -1,0 +1,7 @@
+# Test configuration file (see "scripts/rth_run.pl --help" for details)
+# This config file simply runs some command specified via the "CMD=" command-line arg, looks at
+# its exit status, and verifies that its standard output exactly matches the contents of the
+# file specified by the "ANS=" command-line arg.
+
+cmd = ${VALGRIND} ${CMD}
+answer = ${ANS}
