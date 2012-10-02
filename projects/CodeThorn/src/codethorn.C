@@ -317,7 +317,7 @@ int main( int argc, char * argv[] ) {
 
   // Command line option handling.
   po::options_description desc
-    ("CodeThorn 1.1 [RC1]\n"
+    ("CodeThorn V1.1\n"
      "Supported options");
 
   desc.add_options()
@@ -372,7 +372,7 @@ int main( int argc, char * argv[] ) {
   }
 
   if (args.count("version")) {
-    cout << "CodeThorn version 1.1 [RC1]\n";
+    cout << "CodeThorn version 1.1\n";
     cout << "Written by Markus Schordan and Adrian Prantl\n";
     cout << "2012\n";
     return 0;
