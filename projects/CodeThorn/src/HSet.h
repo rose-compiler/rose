@@ -104,10 +104,9 @@ class HSet {
           equal: */
 
        bool operator==(const iterator& x) const {
-           return pVec && x.pVec && current == x.current
-                || !pVec && !x.pVec;
+		 return (pVec && x.pVec && (current == x.current)) || (!pVec && !x.pVec);
        }  
-
+	   
        bool operator!=(const iterator& x) const {
           return !operator==(x);
        }
