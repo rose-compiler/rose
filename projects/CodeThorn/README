@@ -1,19 +1,29 @@
 ----------------------------------------------------------------------------
-CodeThorn 1.0 Alpha
+CodeThorn 1.1 (2012-09-30)
 ----------------------------------------------------------------------------
 
-CodeThorn is a tool for analyzing C/C++ programs, combining approaches
-from data flow analysis, constraint-based analysis, and model
-checking.
+CodeThorn is a tool for program analysis and verification. It analyzes
+C/C++ programs, combining approaches from data flow analysis,
+constraint-based analysis, and model checking.
 
 The main focus in the development of CodeThorn is the exploration of
-program analysis algorithms in combining above approaches. Therefore
-the target language is currently restricted to a small (while-like)
-subset of C++ with functions.
+program analysis algorithms and approaches in program verification in
+combining above approaches. Therefore the target language is
+currently kept small and restircted to a small subset of C/C++.
 
 The implemented base approach is an instance of a general framework. The
 analysis is an interprocedural flow-sensitive analysis. Different
 forms of context information are currently investigated.
+
+CodeThorn 1.1 is based on the ROSE (LLNL) compiler framework and can
+analyse a subset of C/C++. Verification is supported with liner time
+logic formulae to specify properties of the input/output behaviour of
+a given program. Based on the results of a static analysis, the
+formulae are automatically proven to be true or false. Fur the
+currently supported subset no annotations are required by the user.
+
+Codethorn generates the results of the analysis either as textual
+output or as dot graphs (visualization).
 
 CodeThorn generates several visualizations of analysis results as dot output:
 
@@ -42,6 +52,31 @@ CodeThorn generates several visualizations of analysis results as dot output:
 
    "make viz" invokes dot to translate all visualizations to ps files. The ps files
    are stored in the directory "viz".
+
+Data output formats:
+
+1) The state transition graph is generated in a readable textual
+representation (dat file)Q
+2) Analyzer statistics and Timing information (csv file)
+
+----------------------------------------------------------------------------
+DOCUMENTATION:
+----------------------------------------------------------------------------
+
+run "make docs". A doxygen documentation is generated as
+docs/doxygen/html/index.html
+
+----------------------------------------------------------------------------
+AUTHORS:
+----------------------------------------------------------------------------
+
+The authors of CodeThorn 1.1 are Markus Schordan and Adrian Prantl. 
+
+----------------------------------------------------------------------------
+VERSION:
+----------------------------------------------------------------------------
+
+see VERSION_HISTORY.
 
 ----------------------------------------------------------------------------
 AVAILABILITY:
@@ -89,10 +124,3 @@ LICENSE
 We use a similar license as the ROSE project. CodeThorn is
 maintained as a subproject of ROSE. See COPYING.
 
-----------------------------------------------------------------------------
-ALPHA ISSUES
-----------------------------------------------------------------------------
-
-* operator? is not finished yet. 
-* variable id mappings are not used yet.
-* i/o operations are not recorded in system state(s) yet.
