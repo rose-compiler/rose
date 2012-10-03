@@ -479,53 +479,6 @@ string ConstraintSet::toString() const {
   return ss.str();
 }
 
-bool ConstraintSetMaintainer::exists(ConstraintSet& s) {
-  return ptr(s)!=0;
-}
-
-const ConstraintSet* ConstraintSetMaintainer::ptr(ConstraintSet& s) {
-  // we use this as the find algorithm cannot be used for this data structure yet.
-  for(ConstraintSetMaintainer::iterator i=begin();i!=end();++i) {
-	if(*i==s)
-	  return &*i;
-  }
-  return 0;
-}
-
-const ConstraintSet* ConstraintSetMaintainer::processNew(ConstraintSet& s) {
-  ProcessingResult res=process(s);
-  assert(res.first==false);
-  return res.second;
-}
-
-const ConstraintSet* ConstraintSetMaintainer::processNewOrExisting(ConstraintSet& s) {
-  ProcessingResult res=process(s);
-  return res.second;
-}
-
-ConstraintSetMaintainer::ProcessingResult ConstraintSetMaintainer::process(ConstraintSet s) {
-  if(const ConstraintSet* existingConstraintSetPtr=ptr(s)) {
-	return make_pair(true,existingConstraintSetPtr);
-  } else {
-#ifdef CSET_MAINTAINER_LIST
-	push_back(s);
-#endif
-#ifdef CSET_MAINTAINER_SET
-	insert(s);
-#endif
-#ifdef CSET_MAINTAINER_HSET
-	insert(s);
-#endif
-	const ConstraintSet* existingConstraintSetPtr1=ptr(s);
-	if(!existingConstraintSetPtr1) {
-	  cout << "Problematic element:"<<s.toString()<<endl;
-	}
-	assert(existingConstraintSetPtr1);
-	return make_pair(false,existingConstraintSetPtr1);
-  }
-  assert(0);
-}
-
 long ConstraintSet::memorySize() const {
   long mem=0;
   for(ConstraintSet::iterator i=begin();i!=end();++i) {
@@ -533,18 +486,7 @@ long ConstraintSet::memorySize() const {
   }
   return mem+sizeof(*this);
 }
-long ConstraintSetMaintainer::memorySize() const {
-  long mem=0;
-  for(ConstraintSetMaintainer::const_iterator i=begin();
-	  i!=end();
-	  ++i) {
-	mem+=(*i).memorySize();
-  }
-  return mem+sizeof(*this);
-}
 
-// this is NOT the usual subset relation (we need a strict weak ordering)
-#if 1
 // strict weak ordering on two sets
 bool operator<(const ConstraintSet& s1, const ConstraintSet& s2) {
   if(s1.size()!=s2.size())
@@ -561,7 +503,6 @@ bool operator<(const ConstraintSet& s1, const ConstraintSet& s2) {
   assert(i==s1.end() && j==s2.end());
   return false; // both are equal
 }
-#endif
 
 #if 0
 bool operator==(const ConstraintSet& s1, const ConstraintSet& s2) {

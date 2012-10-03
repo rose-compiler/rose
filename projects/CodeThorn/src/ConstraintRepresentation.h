@@ -126,22 +126,14 @@ class ConstraintSetMaintainer : public list<ConstraintSet> {
 #ifdef CSET_MAINTAINER_SET
 class ConstraintSetMaintainer : public set<ConstraintSet> {
 #endif
+
 #ifdef CSET_MAINTAINER_HSET
-#include "HSet.h"
-using namespace br_stl;
-class ConstraintSetMaintainer : public HSet<ConstraintSet, ConstraintSetHashFun> {
-#endif
+#include "HSetMaintainer.h"
+class ConstraintSetMaintainer : public HSetMaintainer<ConstraintSet, ConstraintSetHashFun> {
  public:
-  typedef pair<bool,const ConstraintSet*> ProcessingResult;
-  bool exists(ConstraintSet& s);
-  ProcessingResult process(ConstraintSet newConstraintSet);
-  const ConstraintSet* processNew(ConstraintSet& s);
-  const ConstraintSet* processNewOrExisting(ConstraintSet& s);
-  string toString();
-  long numberOf() { return size();}
-  long memorySize() const;
- private:
-  const ConstraintSet* ptr(ConstraintSet& s);
+	  typedef HSetMaintainer<ConstraintSet, ConstraintSetHashFun>::ProcessingResult ProcessingResult;
+	  string toString();
 };
+#endif
 
 #endif

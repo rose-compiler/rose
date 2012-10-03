@@ -181,7 +181,7 @@ void Analyzer::runSolver1() {
 
 const EState* Analyzer::addToWorkListIfNew(EState eState) {
   EStateSet::ProcessingResult res=process(eState);
-  if(res.first==false) {
+  if(res.first==true) {
 	const EState* newEStatePtr=res.second;
 	assert(newEStatePtr);
 	addToWorkList(newEStatePtr);

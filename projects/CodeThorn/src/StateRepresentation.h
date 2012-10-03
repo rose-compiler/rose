@@ -62,24 +62,19 @@ class StateSet : public set<State> {
 #endif
 #ifdef STATE_MAINTAINER_HSET
 #include "HashFun.h"
-#include "HSet.h"
-using namespace br_stl;
-	class StateSet : public HSet<State,StateHashFun> {
+#include "HSetMaintainer.h"
+	class StateSet : public HSetMaintainer<State,StateHashFun> {
+	public:
+	  typedef HSetMaintainer<State,StateHashFun>::ProcessingResult ProcessingResult;
+	  string toString();
+	  StateId stateId(const State* state);
+	  StateId stateId(const State state);
+	  string stateIdString(const State* state);
+	private:
+	  const State* ptr(State& s);
+	};
 #endif
- public:
-  typedef pair<bool, const State*> ProcessingResult;
-  bool stateExists(State& s);
-  ProcessingResult process(State& s);
-  const State* processNew(State& s);
-  const State* processNewOrExisting(State& s);
-  string toString();
-  StateId stateId(const State* state);
-  StateId stateId(const State state);
-  string stateIdString(const State* state);
-  long memorySize() const;
- private:
-  const State* ptr(State& s);
-};
+
 
 /**
  * Input: a value val is read into a variable var
@@ -134,19 +129,15 @@ bool operator!=(const State& c1, const State& c2);
 #endif
 
 // define order for EState elements (necessary for EStateSet)
-//#ifndef ESTATE_MAINTAINER_LIST
 bool operator<(const EState& c1, const EState& c2);
 bool operator==(const EState& c1, const EState& c2);
 bool operator!=(const EState& c1, const EState& c2);
-//#endif
 
-//#ifndef ESTATE_MAINTAINER_LIST
 struct EStateLessComp {
   bool operator()(const EState& c1, const EState& c2) {
 	return c1<c2;
   }
 };
-//#endif
 
 class EStateHashFun {
    public:
@@ -172,34 +163,22 @@ class EStateHashFun {
     long tabSize;
 };
 
-#ifdef ESTATE_MAINTAINER_LIST
-class EStateSet : public list<EState> {
-#endif
-#ifdef ESTATE_MAINTAINER_SET
-  class EStateSet : public set<EState> {
-#endif
 #ifdef ESTATE_MAINTAINER_HSET
-#include "HSet.h"
-using namespace br_stl;
-	class EStateSet : public HSet<EState,EStateHashFun> {
-#endif
- public:
- EStateSet():_constraintSetMaintainer(0){}
-  typedef pair<bool,const EState*> ProcessingResult;
-  bool eStateExists(EState& s);
-  ProcessingResult process(EState newEState);
-  const EState* processNew(EState& s);
-  const EState* processNewOrExisting(EState& s);
+#include "HSetMaintainer.h"
+  class EStateSet : public HSetMaintainer<EState,EStateHashFun> {
+  public:
+ EStateSet():HSetMaintainer<EState,EStateHashFun>(),_constraintSetMaintainer(0){}
+	public:
+  typedef HSetMaintainer<EState,EStateHashFun>::ProcessingResult ProcessingResult;
   string toString();
   EStateId eStateId(const EState* eState);
   EStateId eStateId(const EState eState);
   string eStateIdString(const EState* eState);
   int numberOfIoTypeEStates(InputOutput::OpType);
-  long memorySize() const;
  private:
-  const EState* ptr(EState& s);
   ConstraintSetMaintainer* _constraintSetMaintainer; 
 };
+#endif
 
 class Transition {
  public:
