@@ -85,13 +85,13 @@ class Analyzer {
   /*! if state exists in stateSet, a pointer to the existing state is returned otherwise 
 	a new state is entered into stateSet and a pointer to it is returned.
   */
-  const State* processNewState(State& s);
-  const State* processNewOrExistingState(State& s);
-  const EState* processNewEState(EState& s);
-  const EState* processNewOrExistingEState(EState& s);
-  EStateSet::ProcessingResult processEState(EState& s);
-  const ConstraintSet* processNewOrExistingConstraintSet(ConstraintSet& cset);
-  const EState* processNewOrExistingEState(Label label, State state, ConstraintSet cset);
+  const State* processNew(State& s);
+  const State* processNewOrExisting(State& s);
+  const EState* processNew(EState& s);
+  const EState* processNewOrExisting(EState& s);
+  EStateSet::ProcessingResult process(EState& s);
+  const ConstraintSet* processNewOrExisting(ConstraintSet& cset);
+  const EState* processNewOrExisting(Label label, State state, ConstraintSet cset);
   EState createEState(Label label, State state, ConstraintSet cset);
   EState createEState(Label label, State state, ConstraintSet cset, InputOutput io);
 

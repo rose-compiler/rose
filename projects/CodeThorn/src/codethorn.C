@@ -525,7 +525,7 @@ int main( int argc, char * argv[] ) {
   long eStateSetBytes=analyzer.getEStateSet()->memorySize();
   long transitionGraphSize=analyzer.getTransitionGraph()->size();
   long transitionGraphBytes=transitionGraphSize*sizeof(Transition);
-  long numOfconstraintSets=analyzer.getConstraintSetMaintainer()->numberOfConstraintSets();
+  long numOfconstraintSets=analyzer.getConstraintSetMaintainer()->numberOf();
   long constraintSetsBytes=analyzer.getConstraintSetMaintainer()->memorySize();
 
   cout << "Number of stdin-estates        : "<<color("cyan")<<(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDIN_VAR))<<color("white")<<endl;

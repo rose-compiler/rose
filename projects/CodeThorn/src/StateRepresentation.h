@@ -3,12 +3,6 @@
 
 #define USER_DEFINED_STATE_COMP
 
-//#define STATE_MAINTAINER_LIST
-//#define STATE_MAINTAINER_SET
-
-//#define ESTATE_MAINTAINER_LIST
-//#define ESTATE_MAINTAINER_SET
-
 /*************************************************************
  * Copyright: (C) 2012 by Markus Schordan                    *
  * Author   : Markus Schordan                                *
@@ -75,16 +69,16 @@ using namespace br_stl;
  public:
   typedef pair<bool, const State*> ProcessingResult;
   bool stateExists(State& s);
-  ProcessingResult processState(State& s);
-  const State* processNewState(State& s);
-  const State* processNewOrExistingState(State& s);
+  ProcessingResult process(State& s);
+  const State* processNew(State& s);
+  const State* processNewOrExisting(State& s);
   string toString();
   StateId stateId(const State* state);
   StateId stateId(const State state);
   string stateIdString(const State* state);
   long memorySize() const;
  private:
-  const State* statePtr(State& s);
+  const State* ptr(State& s);
 };
 
 /**
@@ -193,9 +187,9 @@ using namespace br_stl;
  EStateSet():_constraintSetMaintainer(0){}
   typedef pair<bool,const EState*> ProcessingResult;
   bool eStateExists(EState& s);
-  ProcessingResult processEState(EState newEState);
-  const EState* processNewEState(EState& s);
-  const EState* processNewOrExistingEState(EState& s);
+  ProcessingResult process(EState newEState);
+  const EState* processNew(EState& s);
+  const EState* processNewOrExisting(EState& s);
   string toString();
   EStateId eStateId(const EState* eState);
   EStateId eStateId(const EState eState);
@@ -203,7 +197,7 @@ using namespace br_stl;
   int numberOfIoTypeEStates(InputOutput::OpType);
   long memorySize() const;
  private:
-  const EState* eStatePtr(EState& s);
+  const EState* ptr(EState& s);
   ConstraintSetMaintainer* _constraintSetMaintainer; 
 };
 

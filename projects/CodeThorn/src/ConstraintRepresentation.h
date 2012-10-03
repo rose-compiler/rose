@@ -134,14 +134,14 @@ class ConstraintSetMaintainer : public HSet<ConstraintSet, ConstraintSetHashFun>
  public:
   typedef pair<bool,const ConstraintSet*> ProcessingResult;
   bool exists(ConstraintSet& s);
-  ProcessingResult processConstraintSet(ConstraintSet newConstraintSet);
-  const ConstraintSet* processNewConstraintSet(ConstraintSet& s);
-  const ConstraintSet* processNewOrExistingConstraintSet(ConstraintSet& s);
+  ProcessingResult process(ConstraintSet newConstraintSet);
+  const ConstraintSet* processNew(ConstraintSet& s);
+  const ConstraintSet* processNewOrExisting(ConstraintSet& s);
   string toString();
-  long numberOfConstraintSets() { return size();}
+  long numberOf() { return size();}
   long memorySize() const;
  private:
-  const ConstraintSet* constraintSetPtr(ConstraintSet& s);
+  const ConstraintSet* ptr(ConstraintSet& s);
 };
 
 #endif

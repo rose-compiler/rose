@@ -480,10 +480,10 @@ string ConstraintSet::toString() const {
 }
 
 bool ConstraintSetMaintainer::exists(ConstraintSet& s) {
-  return constraintSetPtr(s)!=0;
+  return ptr(s)!=0;
 }
 
-const ConstraintSet* ConstraintSetMaintainer::constraintSetPtr(ConstraintSet& s) {
+const ConstraintSet* ConstraintSetMaintainer::ptr(ConstraintSet& s) {
   // we use this as the find algorithm cannot be used for this data structure yet.
   for(ConstraintSetMaintainer::iterator i=begin();i!=end();++i) {
 	if(*i==s)
@@ -492,19 +492,19 @@ const ConstraintSet* ConstraintSetMaintainer::constraintSetPtr(ConstraintSet& s)
   return 0;
 }
 
-const ConstraintSet* ConstraintSetMaintainer::processNewConstraintSet(ConstraintSet& s) {
-  ProcessingResult res=processConstraintSet(s);
+const ConstraintSet* ConstraintSetMaintainer::processNew(ConstraintSet& s) {
+  ProcessingResult res=process(s);
   assert(res.first==false);
   return res.second;
 }
 
-const ConstraintSet* ConstraintSetMaintainer::processNewOrExistingConstraintSet(ConstraintSet& s) {
-  ProcessingResult res=processConstraintSet(s);
+const ConstraintSet* ConstraintSetMaintainer::processNewOrExisting(ConstraintSet& s) {
+  ProcessingResult res=process(s);
   return res.second;
 }
 
-ConstraintSetMaintainer::ProcessingResult ConstraintSetMaintainer::processConstraintSet(ConstraintSet s) {
-  if(const ConstraintSet* existingConstraintSetPtr=constraintSetPtr(s)) {
+ConstraintSetMaintainer::ProcessingResult ConstraintSetMaintainer::process(ConstraintSet s) {
+  if(const ConstraintSet* existingConstraintSetPtr=ptr(s)) {
 	return make_pair(true,existingConstraintSetPtr);
   } else {
 #ifdef CSET_MAINTAINER_LIST
@@ -516,7 +516,7 @@ ConstraintSetMaintainer::ProcessingResult ConstraintSetMaintainer::processConstr
 #ifdef CSET_MAINTAINER_HSET
 	insert(s);
 #endif
-	const ConstraintSet* existingConstraintSetPtr1=constraintSetPtr(s);
+	const ConstraintSet* existingConstraintSetPtr1=ptr(s);
 	if(!existingConstraintSetPtr1) {
 	  cout << "Problematic element:"<<s.toString()<<endl;
 	}
