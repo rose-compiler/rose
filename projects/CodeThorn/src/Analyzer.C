@@ -74,17 +74,17 @@ void Analyzer::addToWorkList(const EState* eState) {
   eStateWorkList.push(eState); 
 }
 
-const EState* Analyzer::processNewOrExistingEState(Label label, State state, ConstraintSet cset) {
-  const State* newStatePtr=processNewOrExistingState(state);
-  const ConstraintSet* newConstraintSetPtr=processNewOrExistingConstraintSet(cset);
-  EState newEState=EState(label,newStatePtr,newConstraintSetPtr);
-  const EState* newEStatePtr=eStateSet.processNewOrExistingEState(newEState);
+const EState* Analyzer::processNewOrExisting(Label label, State state, ConstraintSet cset) {
+  const State* newStatePtr=processNewOrExisting(state);
+  const ConstraintSet* newPtr=processNewOrExisting(cset);
+  EState newEState=EState(label,newStatePtr,newPtr);
+  const EState* newEStatePtr=eStateSet.processNewOrExisting(newEState);
   return newEStatePtr;
 }
 
 EState Analyzer::createEState(Label label, State state, ConstraintSet cset) {
-  const State* newStatePtr=processNewOrExistingState(state);
-  const ConstraintSet* newConstraintSetPtr=processNewOrExistingConstraintSet(cset);
+  const State* newStatePtr=processNewOrExisting(state);
+  const ConstraintSet* newConstraintSetPtr=processNewOrExisting(cset);
   EState eState=EState(label,newStatePtr,newConstraintSetPtr);
   return eState;
 }
@@ -147,7 +147,7 @@ void Analyzer::runSolver1() {
 		}
 		if(newEState.label!=NO_ESTATE && (!newEState.constraints()->deqConstraintExists()) && (isFailedAssertEState(&newEState))) {
 		  // failed-assert end-state: do not add to work list but do add it to the transition graph
-		  const EState* newEStatePtr=processNewOrExistingEState(newEState);
+		  const EState* newEStatePtr=processNewOrExisting(newEState);
 		  recordTransition(currentEStatePtr,*i,newEStatePtr);		
 		  if(boolOptions["report-failed-assert"]) {
 			cout << "REPORT: failed-assert: "<<newEStatePtr->toString()<<endl;
@@ -180,8 +180,8 @@ void Analyzer::runSolver1() {
 }
 
 const EState* Analyzer::addToWorkListIfNew(EState eState) {
-  EStateSet::ProcessingResult res=processEState(eState);
-  if(res.first==false) {
+  EStateSet::ProcessingResult res=process(eState);
+  if(res.first==true) {
 	const EState* newEStatePtr=res.second;
 	assert(newEStatePtr);
 	addToWorkList(newEStatePtr);
@@ -306,28 +306,28 @@ list<pair<SgLabelStatement*,SgNode*> > Analyzer::listOfLabeledAssertNodes(SgProj
   return assertNodes;
 }
 
-const State* Analyzer::processNewState(State& s) {
-  return stateSet.processNewState(s);
+const State* Analyzer::processNew(State& s) {
+  return stateSet.processNew(s);
 }
 
-const State* Analyzer::processNewOrExistingState(State& s) {
-  return stateSet.processNewOrExistingState(s);
+const State* Analyzer::processNewOrExisting(State& s) {
+  return stateSet.processNewOrExisting(s);
 }
 
-const EState* Analyzer::processNewEState(EState& s) {
-  return eStateSet.processNewEState(s);
+const EState* Analyzer::processNew(EState& s) {
+  return eStateSet.processNew(s);
 }
 
-const EState* Analyzer::processNewOrExistingEState(EState& s) {
-  return eStateSet.processNewOrExistingEState(s);
+const EState* Analyzer::processNewOrExisting(EState& s) {
+  return eStateSet.processNewOrExisting(s);
 }
 
-const ConstraintSet* Analyzer::processNewOrExistingConstraintSet(ConstraintSet& cset) {
-  return constraintSetMaintainer.processNewOrExistingConstraintSet(cset);
+const ConstraintSet* Analyzer::processNewOrExisting(ConstraintSet& cset) {
+  return constraintSetMaintainer.processNewOrExisting(cset);
 }
 
-EStateSet::ProcessingResult Analyzer::processEState(EState& s) {
-  return eStateSet.processEState(s);
+EStateSet::ProcessingResult Analyzer::process(EState& s) {
+  return eStateSet.process(s);
 }
 
 list<EState> elistify(EState res) {
@@ -692,12 +692,12 @@ void Analyzer::initializeSolver1(std::string functionToStartAt,SgNode* root) {
 
   // create empty state
   State emptyState;
-  const State* emptyStateStored=processNewState(emptyState);
+  const State* emptyStateStored=processNew(emptyState);
   assert(emptyStateStored);
   cout << "INIT: Empty state(stored): "<<emptyStateStored->toString()<<endl;
   assert(cfanalyzer);
   ConstraintSet cset;
-  const ConstraintSet* emptycsetstored=constraintSetMaintainer.processNewOrExistingConstraintSet(cset);
+  const ConstraintSet* emptycsetstored=constraintSetMaintainer.processNewOrExisting(cset);
   EState eState(cfanalyzer->getLabel(startFunRoot),emptyStateStored,emptycsetstored);
   
   if(SgProject* project=isSgProject(root)) {
@@ -725,7 +725,7 @@ void Analyzer::initializeSolver1(std::string functionToStartAt,SgNode* root) {
 	cout << "INIT: no global scope.";
   }	
 
-  const EState* currentEState=processNewEState(eState);
+  const EState* currentEState=processNew(eState);
   assert(currentEState);
   //cout << "INIT: "<<eStateSet.toString()<<endl;
   addToWorkList(currentEState);
