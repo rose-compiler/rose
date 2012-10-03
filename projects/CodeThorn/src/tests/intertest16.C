@@ -9,7 +9,7 @@ void f(int y) {
 int g(int gy) {
   int local_gy=0;
   local_gy=gy;
-  return local_gy; // will assign 10 to main::z but should not remove constraints of main::y
+  return local_gy; 
 }
 
 int h() {

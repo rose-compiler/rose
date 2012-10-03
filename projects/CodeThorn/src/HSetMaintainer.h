@@ -4,7 +4,7 @@
 #include "HSet.h"
 using namespace br_stl;
 
-#define HSET_MAINTAINER_DEBUG_MODE
+//#define HSET_MAINTAINER_DEBUG_MODE
 
 template<typename KeyType,typename HashFun>
 class HSetMaintainer : public HSet<KeyType,HashFun> {
