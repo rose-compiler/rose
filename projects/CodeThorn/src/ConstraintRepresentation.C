@@ -16,10 +16,9 @@ void Constraint::negate() {
   switch(op()) {
   case EQ_VAR_CONST: _op=NEQ_VAR_CONST;break;
   case NEQ_VAR_CONST: _op=EQ_VAR_CONST;break;
-  case DEQ_VAR_CONST: break;
   case EQ_VAR_VAR: _op=NEQ_VAR_VAR;break;
   case NEQ_VAR_VAR: _op=EQ_VAR_VAR;break;
-  case DEQ_VAR_VAR: break;
+  case DEQ: break;
   default:
 	cerr<< "Error: unkown constraint operator."<<endl;
 	exit(1);
@@ -27,16 +26,30 @@ void Constraint::negate() {
 }
 
 Constraint::ConstraintOp Constraint::op() const { return _op; }
-VariableId Constraint::lhsVar() const { return _lhsVar; }
-VariableId Constraint::rhsVar() const { return _rhsVar; }
-AValue Constraint::rhsVal() const { return _intVal.getValue(); }
+VariableId Constraint::lhsVar() const {
+  return _lhsVar; 
+}
+
+VariableId Constraint::rhsVar() const {
+  if(isVarVarOp())
+	return _rhsVar;
+  else
+	throw "Error: Constraint::rhsVal failed.";
+}
+
+AValue Constraint::rhsVal() const {
+  if(isVarValOp())
+	return _intVal.getValue(); 
+  else
+	throw "Error: Constraint::rhsVal failed.";
+}
 CppCapsuleAValue Constraint::rhsValCppCapsule() const { return _intVal; }
 
 bool Constraint::isVarVarOp() const {
-	return (_op==EQ_VAR_VAR || _op==NEQ_VAR_VAR || _op==DEQ_VAR_VAR);
+	return (_op==EQ_VAR_VAR || _op==NEQ_VAR_VAR);
   }
 bool Constraint::isVarValOp() const {
-  return (_op==EQ_VAR_CONST || _op==NEQ_VAR_CONST || _op==DEQ_VAR_CONST);
+  return (_op==EQ_VAR_CONST || _op==NEQ_VAR_CONST);
 }
 bool Constraint::isEquation() const {
   return (_op==EQ_VAR_VAR || _op==EQ_VAR_CONST);
@@ -45,7 +58,7 @@ bool Constraint::isInequation() const {
   return (_op==NEQ_VAR_VAR || _op==NEQ_VAR_CONST);
 }
 bool Constraint::isDisequation() const {
-  return (_op==DEQ_VAR_VAR || _op==DEQ_VAR_CONST);
+  return ( _op==DEQ);
 }
 
 bool operator<(const Constraint& c1, const Constraint& c2) {
@@ -57,11 +70,10 @@ bool operator<(const Constraint& c1, const Constraint& c2) {
 	switch(c1.op()) {
 	case Constraint::EQ_VAR_CONST:
 	case Constraint::NEQ_VAR_CONST:
-	case Constraint::DEQ_VAR_CONST:
+	case Constraint::DEQ:
 	  return (c1.rhsValCppCapsule()<c2.rhsValCppCapsule());
 	case Constraint::EQ_VAR_VAR:
 	case Constraint::NEQ_VAR_VAR:
-	case Constraint::DEQ_VAR_VAR:
 	  return (c1.rhsVar()<c2.rhsVar());
 	default:
 	  throw "Error: Constraint::operator< unknown operator in constraint.";
@@ -113,7 +125,7 @@ string Constraint::opToString() const {
   case EQ_VAR_VAR:
   case EQ_VAR_CONST: return "==";
   case NEQ_VAR_CONST: return "!=";
-  case DEQ_VAR_CONST: return "##";
+  case DEQ: return "##";
   default:
 	cerr << "Error: Constraint: unknown operator"<<endl;
 	exit(1);
@@ -131,7 +143,7 @@ void Constraint::swapVars() {
 
 bool ConstraintSet::deqConstraintExists() const {
   for(ConstraintSet::iterator i=begin();i!=end();++i) {
-	if((*i).op()==Constraint::DEQ_VAR_CONST)
+	if((*i).op()==Constraint::DEQ)
 	  return true;
   }
   return false;
@@ -159,7 +171,7 @@ ConstraintSet ConstraintSet::invertedConstraints() {
 	case Constraint::NEQ_VAR_CONST:
 	  result.addConstraint(Constraint(Constraint::EQ_VAR_CONST,c.lhsVar(),c.rhsVal()));
 	  break;
-	case Constraint::DEQ_VAR_CONST:
+	case Constraint::DEQ:
 	  result.addDisequality();
 	  break;
 	  // we do not extract VAR_VAR constraints from expressions. We only invert constraint sets which have been extracted from expressions.
@@ -170,9 +182,6 @@ ConstraintSet ConstraintSet::invertedConstraints() {
 	  break;
 	case Constraint::NEQ_VAR_VAR:
 	  result.addConstraint(Constraint(Constraint::EQ_VAR_VAR,c.lhsVar(),c.rhsVar()));
-	  break;
-	case Constraint::DEQ_VAR_VAR:
-	  result.addDisequality();
 	  break;
 #endif
 	default:
@@ -196,7 +205,7 @@ void ConstraintSet::invertConstraints() {
 	  removeConstraint(c); // we remove c from the set (but c remains unchanged and available)
 	  addConstraint(Constraint(Constraint::EQ_VAR_CONST,c.lhsVar(),c.rhsValCppCapsule()));
 	  break;
-	case Constraint::DEQ_VAR_CONST:
+	case Constraint::DEQ:
 	  // remains unchanged
 	  break;
 	default:
@@ -315,10 +324,7 @@ void ConstraintSet::addConstraint(Constraint c) {
 	}
 	break;
   }
-  case Constraint::DEQ_VAR_CONST:
-	//removeConstraint(Constraint(Constraint::EQ_VAR_CONST,c.lhsVar(),c.rhsValCppCapsule()));
-	//removeConstraint(Constraint(Constraint::NEQ_VAR_CONST,c.lhsVar(),c.rhsValCppCapsule()));
-	//set<Constraint>::insert(Constraint(Constraint::DEQ_VAR_CONST,c.lhsVar(),c.rhsValCppCapsule()));
+  case Constraint::DEQ:
 	set<Constraint>::insert(c);
 	return;
   case Constraint::EQ_VAR_VAR:

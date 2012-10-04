@@ -27,7 +27,7 @@
 */
 class Constraint {
  public:
-  enum ConstraintOp {EQ_VAR_CONST,NEQ_VAR_CONST,DEQ_VAR_CONST, EQ_VAR_VAR, NEQ_VAR_VAR, DEQ_VAR_VAR};
+  enum ConstraintOp {EQ_VAR_CONST,NEQ_VAR_CONST,DEQ_VAR_CONST, EQ_VAR_VAR, NEQ_VAR_VAR, DEQ_VAR_VAR, DEQ};
   Constraint(ConstraintOp op0,VariableId lhs, AValue rhs);
   Constraint(ConstraintOp op0,VariableId lhs, CppCapsuleAValue rhs);
   Constraint(ConstraintOp op0,VariableId lhs, VariableId rhs);
@@ -57,7 +57,7 @@ bool operator==(const Constraint& c1, const Constraint& c2);
 bool operator!=(const Constraint& c1, const Constraint& c2);
 
 // we use only one disequality constraint to mark constraint set representing non-reachable states
-#define DISEQUALITYCONSTRAINT Constraint(Constraint::DEQ_VAR_CONST,0,AType::CppCapsuleConstIntLattice(AType::ConstIntLattice(0)))
+#define DISEQUALITYCONSTRAINT Constraint(Constraint::DEQ,0,AType::CppCapsuleConstIntLattice(AType::ConstIntLattice(0)))
 
 class ConstraintSet : public set<Constraint> {
  public:
