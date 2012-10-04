@@ -82,21 +82,6 @@ string State::toString() const {
   return ss.str();
 }
 
-long EStateSet::memorySize() const {
-  long mem=0;
-  for(EStateSet::const_iterator i=begin();i!=end();++i) {
-	mem+=(*i).memorySize();
-  }
-  return mem+sizeof(*this);
-}
-long StateSet::memorySize() const {
-  long mem=0;
-  for(StateSet::const_iterator i=begin();i!=end();++i) {
-	mem+=(*i).memorySize();
-  }
-  return mem+sizeof(*this);
-}
-
 long State::memorySize() const {
   long mem=0;
   for(State::const_iterator i=begin();i!=end();++i) {
@@ -156,66 +141,6 @@ string StateSet::stateIdString(const State* state) {
   return ss.str();
 }
 
-const State* StateSet::processNewState(State& s) {
-  ProcessingResult res=processState(s);
-  assert(res.first==false);
-  return res.second;
-}
-
-const State* StateSet::processNewOrExistingState(State& s) {
-  ProcessingResult res=StateSet::processState(s);
-  return res.second;
-}
-
-StateSet::ProcessingResult StateSet::processState(State& s) {
-  if(const State* existingStatePtr=statePtr(s)) {
-	assert(existingStatePtr);
-	return make_pair(true,existingStatePtr);
-  } else {
-#ifdef STATE_MAINTAINER_LIST
-	push_back(s);
-#endif
-#ifdef STATE_MAINTAINER_SET
-	insert(s);
-#endif
-#ifdef STATE_MAINTAINER_HSET
-	insert(s);
-#endif
-	const State* existingStatePtr1=statePtr(s);
-	assert(existingStatePtr1);
-	return make_pair(false,existingStatePtr1);
-  }
-  assert(0);
-}
-
-const State* StateSet::statePtr(State& s) {
-#ifdef STATE_MAINTAINER_LIST
-  for(StateSet::iterator i=begin();i!=end();++i) {
-	if(*i==s)
-	  return &*i;
-  }
-  return 0;
-#endif
-#ifdef STATE_MAINTAINER_SET
-  StateSet::iterator i=find(s);
-  if(i==end())
-	return 0;
-  else
-	return &*i;
-#endif
-#ifdef STATE_MAINTAINER_HSET
-  StateSet::iterator i=find(s);
-  if(i==end())
-	return 0;
-  else
-	return &*i;
-#endif
-}
-
-bool StateSet::stateExists(State& s) {
-  return statePtr(s)!=0;
-}
-
 string StateSet::toString() {
   stringstream ss;
   ss << "@"<<this<<": StateSet={";
@@ -273,82 +198,6 @@ string EStateSet::eStateIdString(const EState* eState) {
   return ss.str();
 }
 
-const EState* EStateSet::processNewEState(EState& s) {
-  assert(s.state);
-  assert(s.constraints());
-  ProcessingResult res=processEState(s);
-  assert(res.first==false);
-  return res.second;
-}
-
-const EState* EStateSet::processNewOrExistingEState(EState& s) {
-  ProcessingResult res=processEState(s);
-  return res.second;
-}
-
-EStateSet::ProcessingResult EStateSet::processEState(EState s) {
-  if(const EState* existingEStatePtr=eStatePtr(s)) {
-	return make_pair(true,existingEStatePtr);
-  } else {
-#ifdef ESTATE_MAINTAINER_LIST
-	push_back(s);
-#endif
-#ifdef ESTATE_MAINTAINER_SET
-	insert(s);
-#endif
-#ifdef ESTATE_MAINTAINER_HSET
-	insert(s);
-#endif
-	const EState* existingEStatePtr1=eStatePtr(s);
-	if(!existingEStatePtr1) {
-	  bool operator_less(const EState& c1, const EState& c2);
-
-	  // generate error description
-	  int cnt=0;
-	  bool violationfound=false;
-	  int cnttested=0;
-	  for(EStateSet::iterator i=begin();i!=end();++i) {
-		for(EStateSet::iterator k=i;k!=end();++k) {
-		  EStateSet::iterator j=k;
-		  j++;
-		  if(j!=end()) {
-			if(!((*i)<(*j))) {
-			  cerr << "Violation found at: "<<cnt<<":"<<endl;
-			  cerr << (*i).toString()<<endl;
-			  cerr << "< (violated)"<<endl;
-			  cerr << (*j).toString()<<endl;
-			  cerr << endl;
-			  cerr << "i<j:"<<((*i)<(*j))<<endl;
-			  cerr << "j<i:"<<((*j)<(*i))<<endl;
-			  cerr << "i==j:"<<((*i)==(*j))<<endl;
-			  cerr << "----------------"<<endl;
-			  cerr << "currentEState:"<<s.toString()<<endl;
-			  cerr << "----------------"<<endl;
-				
-			}
-			if(((*i)==(*j))) {
-			  cerr << "Violation found at: "<<cnt<<":"<<endl;
-			  cerr << (*i).toString()<<endl;
-			  cerr << "!= (violated)"<<endl;
-			  cerr << (*j).toString()<<endl;
-			}
-			cnttested++;
-		  }
-		  cnt++;
-		}
-	  }
-	  cerr << "Counted: "<<cnt<<" Tested:"<<cnttested<<endl;
-	}
-	assert(existingEStatePtr1);
-	return make_pair(false,existingEStatePtr1);
-  }
-  assert(0);
-}
-
-bool EStateSet::eStateExists(EState& s) {
-  return eStatePtr(s)!=0;
-}
-
 int EStateSet::numberOfIoTypeEStates(InputOutput::OpType op) {
   int counter=0;
   for(EStateSet::iterator i=begin();i!=end();++i) {
@@ -357,30 +206,6 @@ int EStateSet::numberOfIoTypeEStates(InputOutput::OpType op) {
   }
   return counter;
 } 
-
-const EState* EStateSet::eStatePtr(EState& s) {
-#ifdef ESTATE_MAINTAINER_LIST
-  for(EStateSet::iterator i=begin();i!=end();++i) {
-	if(*i==s)
-	  return &*i;
-  }
-  return 0;
-#endif
-#ifdef ESTATE_MAINTAINER_SET
-  EStateSet::iterator i=find(s);
-  if(i==end())
-	return 0;
-  else
-	return &*i;
-#endif
-#ifdef ESTATE_MAINTAINER_HSET
-  EStateSet::iterator i=find(s);
-  if(i==end())
-	return 0;
-  else
-	return &*i;
-#endif
-}
 
 string Transition::toString() const {
   string s1=source->toString();

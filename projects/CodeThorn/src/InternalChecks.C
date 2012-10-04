@@ -210,9 +210,9 @@ void checkTypes() {
 #endif
 	  EStateSet es;
 	  EState es1=EState(1,&s,&cs1);
-	  es.processNewOrExistingEState(es1);
+	  es.processNewOrExisting(es1);
 	  EState es2=EState(1,&s,&cs2);
-	  es.processNewOrExistingEState(es2);
+	  es.processNewOrExisting(es2);
 	  check("es.size()==2",es.size()==2);
 	  {
 	  Constraint c5(Constraint::EQ_VAR_CONST,var_y,10);
@@ -281,34 +281,34 @@ void checkTypes() {
 	s1[x]=val2;
 	check("s1.size()==1",s1.size()==1);
 
-	stateSet.processState(s0);
+	stateSet.process(s0);
 	check("empty state s0 inserted in stateSet => size of stateSet == 1",stateSet.size()==1);
-	stateSet.processState(s1);
+	stateSet.process(s1);
 	check("s1 inserted in stateSet => size of stateSet == 2",stateSet.size()==2);
-	stateSet.processState(s1);
+	stateSet.process(s1);
 	check("s1 reinserted in stateSet => size remains the same",stateSet.size()==2);
-	stateSet.processState(s2);
+	stateSet.process(s2);
 	check("s2 inserted => size of stateSet == 3",stateSet.size()==3);
 
-	const State* stateptr0=stateSet.processNewOrExistingState(s0); // version 1
+	const State* stateptr0=stateSet.processNewOrExisting(s0); // version 1
 	check("obtain pointer to s0 from stateSet and check !=0",stateptr0!=0);
 	check("check pointer refers indeed to s0 (operator==)",(*stateptr0)==s0);
-	const State* stateptr1=stateSet.processNewOrExistingState(s1); // version 1
+	const State* stateptr1=stateSet.processNewOrExisting(s1); // version 1
 	check("obtain pointer to s1 from stateSet and check !=0",stateptr1!=0);
-	const State* stateptr2=stateSet.processNewOrExistingState(s2); // version 1
+	const State* stateptr2=stateSet.processNewOrExisting(s2); // version 1
 	check("obtain pointer to s2 from stateSet and check !=0",stateptr2!=0);
-	check("check stateExists(s0)",stateSet.stateExists(s0));
-	check("check stateExists(s1)",stateSet.stateExists(s1));
-	check("check stateExists(s2)",stateSet.stateExists(s2));
-	check("check stateExists(s5) does not exist",!stateSet.stateExists(s5));
+	check("check state.exists(s0)",stateSet.exists(s0));
+	check("check state.exists(s1)",stateSet.exists(s1));
+	check("check state.exists(s2)",stateSet.exists(s2));
+	check("check state.exists(s5) does not exist",!stateSet.exists(s5));
 	check("constint-strictWeak-equality-1",strictWeakOrderingIsEqual(val1,val2)==false);
 	check("constint-strictWeak-smaller-1",strictWeakOrderingIsSmaller(val1,val2)==true);
 
 	s4[x]=valtop;
 	check("created s4; inserted x=top; s4[x].getValue.isTop",s4[x].getValue().isTop());	
-	stateSet.processNewOrExistingState(s4);
+	stateSet.processNewOrExisting(s4);
 	check("inserted s4 => size of stateSet == 4",stateSet.size()==4);	
-	const State* stateptr4=stateSet.processNewOrExistingState(s4); // version 1
+	const State* stateptr4=stateSet.processNewOrExisting(s4); // version 1
 	check("obtain pointer to s4 from stateSet and check !=0",stateptr4!=0);
 
 #if 1
@@ -318,22 +318,22 @@ void checkTypes() {
 
 	ConstraintSet cs1;
 	cs1.addConstraint(Constraint(Constraint::NEQ_VAR_CONST,x,1));
-	const ConstraintSet* cs1ptr=csm.processNewOrExistingConstraintSet(cs1);
+	const ConstraintSet* cs1ptr=csm.processNewOrExisting(cs1);
 	es1=EState(1,stateptr1,cs1ptr);
 	
 	ConstraintSet cs2;
 	cs2.addConstraint(Constraint(Constraint::EQ_VAR_CONST,x,1));
-	const ConstraintSet* cs2ptr=csm.processNewOrExistingConstraintSet(cs2);
+	const ConstraintSet* cs2ptr=csm.processNewOrExisting(cs2);
 	es2=EState(1,stateptr1,cs2ptr);
 
 	ConstraintSet cs3;
 	cs3.addConstraint(Constraint(Constraint::NEQ_VAR_CONST,x,1));
-	const ConstraintSet* cs3ptr=csm.processNewOrExistingConstraintSet(cs3);
+	const ConstraintSet* cs3ptr=csm.processNewOrExisting(cs3);
 	es3=EState(3,stateptr4,cs3ptr);
 
-	check("check es1 does not exist in eStateSet",eStateSet.eStateExists(es1)==0);
-	check("check es2 does not exist in eStateSet",eStateSet.eStateExists(es2)==0);
-	check("check es3 does not exist in eStateSet",eStateSet.eStateExists(es3)==0);
+	check("check es1 does not exist in eStateSet",eStateSet.exists(es1)==0);
+	check("check es2 does not exist in eStateSet",eStateSet.exists(es2)==0);
+	check("check es3 does not exist in eStateSet",eStateSet.exists(es3)==0);
 
 	check("es1!=es2",es1!=es2);
 	check("es2!=es3",es1!=es3);
@@ -361,25 +361,25 @@ void checkTypes() {
 	check("es2==es2",es2==es2);
 	check("=> eStateSet.size() == 0",eStateSet.size() == 0);
 
-	check("es1 does not exist in eStateSet",!eStateSet.eStateExists(es2));
-	eStateSet.processNewOrExistingEState(es1);
-	const EState* estateptr1=eStateSet.processNewOrExistingEState(es1);
+	check("es1 does not exist in eStateSet",!eStateSet.exists(es2));
+	eStateSet.processNewOrExisting(es1);
+	const EState* estateptr1=eStateSet.processNewOrExisting(es1);
 	check("add es1 and obtain pointer to es1 from eStateSet and check !=0",estateptr1!=0);
-	check("es1 exists in eStateSet",eStateSet.eStateExists(es1));
+	check("es1 exists in eStateSet",eStateSet.exists(es1));
 	check("=> eStateSet.size() == 1",eStateSet.size() == 1);
 
-	check("es2 does not exist in eStateSet",!eStateSet.eStateExists(es2));
-	eStateSet.processNewOrExistingEState(es2);
-	const EState* estateptr2=eStateSet.processNewOrExistingEState(es2);
+	check("es2 does not exist in eStateSet",!eStateSet.exists(es2));
+	eStateSet.processNewOrExisting(es2);
+	const EState* estateptr2=eStateSet.processNewOrExisting(es2);
 	check("add es2 and obtain pointer to es2 from eStateSet and check !=0",estateptr2!=0);
-	check("es2 exists in eStateSet",eStateSet.eStateExists(es2));
+	check("es2 exists in eStateSet",eStateSet.exists(es2));
 	check("=> eStateSet.size() == 2",eStateSet.size() == 2);
 
-	check("es3 does not exist in eStateSet",!eStateSet.eStateExists(es3));
-	eStateSet.processNewOrExistingEState(es3);
-	const EState* estateptr3=eStateSet.processNewOrExistingEState(es3);
+	check("es3 does not exist in eStateSet",!eStateSet.exists(es3));
+	eStateSet.processNewOrExisting(es3);
+	const EState* estateptr3=eStateSet.processNewOrExisting(es3);
 	check("add es3 and obtain pointer to es3 from eStateSet and check !=0",estateptr3!=0);
-	check("es3 exists in eStateSet",eStateSet.eStateExists(es3));
+	check("es3 exists in eStateSet",eStateSet.exists(es3));
 	check("=> eStateSet.size() == 3",eStateSet.size() == 3);
 	checkLargeSets();
 #endif
