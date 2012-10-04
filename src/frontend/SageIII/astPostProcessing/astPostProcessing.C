@@ -230,6 +230,14 @@ void postProcessingSupport (SgNode* node)
        // printf ("Exiting after calling resetTemplateNames() \n");
        // ROSE_ASSERT(false);
 
+       // DQ (10/4/2012): Added this pass to support command line option to control use of constant folding 
+       // (fixes bug pointed out by Liao).
+       // DQ (9/14/2011): Process the AST to remove constant folded values held in the expression trees.
+       // This step defines a consistant AST more suitable for analysis since only the constant folded
+       // values will be visited.  However, the default should be to save the original expression trees
+       // and remove the constant folded values since this represents the original code.
+          resetConstantFoldedValues(node);
+
        // This resets the isModified flag on each IR node so that we can record 
        // where transformations are done in the AST.  If any transformations on
        // the AST are done, even just building it, this step should be the final
