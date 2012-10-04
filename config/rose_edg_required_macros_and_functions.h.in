@@ -13,6 +13,9 @@
 #define SKIP_ROSE_BUILTIN_DECLARATIONS
 #endif
 
+/* DQ (9/28/2012): define away __restrict as a test for C support (temporary nginx application handling). */
+#define __restrict
+
 /* This macro can be defined using "-DSKIP_ROSE_BUILTIN_DECLARATIONS" to avoid ROSE
    builtin functions required for compatability with the user selected backend compiler 
 */
