@@ -474,7 +474,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* eState) {
 	  AValue evalResult=newState[returnVarId].getValue();
 	  newState[lhsVarId]=evalResult;
 
-	  cset.moveConstConstraints(lhsVarId, returnVarId); // duplicate constraints of $return to lhsVar
+	  cset.deleteAndMoveConstConstraints(returnVarId,lhsVarId); // duplicate constraints of $return to lhsVar
 	  newState.deleteVar(returnVarId); // remove $return from state
 	  cset.deleteConstraints(returnVarId); // remove constraints of $return
 

@@ -12,6 +12,8 @@
 
 using namespace std;
 
+bool NMConstraints=false;
+
 void Constraint::negate() {
   switch(op()) {
   case EQ_VAR_CONST: _op=NEQ_VAR_CONST;break;
@@ -34,7 +36,7 @@ VariableId Constraint::rhsVar() const {
   if(isVarVarOp())
 	return _rhsVar;
   else
-	throw "Error: Constraint::rhsVal failed.";
+	throw "Error: Constraint::rhsVar failed.";
 }
 
 AValue Constraint::rhsVal() const {
@@ -142,17 +144,28 @@ void Constraint::swapVars() {
 }
 
 bool ConstraintSet::deqConstraintExists() const {
-  for(ConstraintSet::iterator i=begin();i!=end();++i) {
-	if((*i).op()==Constraint::DEQ)
-	  return true;
-  }
-  return false;
+  ConstraintSet::iterator i=find(DISEQUALITYCONSTRAINT);
+  return i!=end();
 }
 
+
+
 void ConstraintSet::addAssignEqVarVar(VariableId lhsVar, VariableId rhsVar) {
-  //TODO: check for const-sets
-  moveConstConstraints(lhsVar, rhsVar); // duplication direction from right to left (as in an assignment)
-  addConstraint(Constraint(Constraint::EQ_VAR_VAR,lhsVar,rhsVar));
+
+#if 0
+  if(NMConstraints) {
+	if(lhsVar>rhsVar)
+	  swap(&lhsVar,&rhsVar);
+	// check for const-sets
+
+	ConstraintSet s1=findSpecificSet(Constraint::EQ_VAR_CONST,lhsVar);
+	ConstraintSet s2=findSpecificSet(Constraint::EQ_VAR_CONST,rhsVar);
+  } else 
+#endif
+	{
+	  deleteAndMoveConstConstraints(rhsVar,lhsVar); // move removes all constraints on target var. arg1rhsVar->arg2lhsVar
+	  addConstraint(Constraint(Constraint::EQ_VAR_VAR,lhsVar,rhsVar));
+	}
 }
 void ConstraintSet::removeEqVarVar(VariableId lhsVar, VariableId rhsVar) {
   //TODO: move const-constraints if necessary
@@ -214,14 +227,14 @@ void ConstraintSet::invertConstraints() {
   }
 }
 
-void  ConstraintSet::moveConstConstraints(VariableId lhsVarId, VariableId rhsVarId) {
-  if(lhsVarId==rhsVarId)
+void  ConstraintSet::deleteAndMoveConstConstraints(VariableId fromVarId, VariableId toVarId) {
+  if(fromVarId==toVarId)
 	return; // duplication not necessary
-  deleteConstraints(lhsVarId);
+  deleteConstraints(toVarId);
   for(ConstraintSet::iterator i=begin();i!=end();++i) {
 	Constraint c=*i;
-	if(c.isVarValOp() && c.lhsVar()==rhsVarId) {
-	  addConstraint(Constraint(c.op(),lhsVarId,c.rhsValCppCapsule()));
+	if(c.isVarValOp() && c.lhsVar()==fromVarId) {
+	  addConstraint(Constraint(c.op(),toVarId,c.rhsValCppCapsule()));
 	}
   }
 }
@@ -277,8 +290,6 @@ void ConstraintSet::addConstraint(Constraint c) {
   switch(c.op()) {
 	// attempt to insert x==k
   case Constraint::EQ_VAR_CONST: {
-	if(disequalityExists())
-	  return;
 	// if x!=k exists ==> ##
 	if(constraintExists(Constraint::NEQ_VAR_CONST,c.lhsVar(),c.rhsValCppCapsule())) {
 	  removeConstraint(Constraint(Constraint::NEQ_VAR_CONST,c.lhsVar(),c.rhsValCppCapsule()));
@@ -306,9 +317,6 @@ void ConstraintSet::addConstraint(Constraint c) {
   case Constraint::NEQ_VAR_CONST: {
 	// we attempt to insert x!=k
 
-	// check for existing disequality first
-	if(disequalityExists())
-	  return;
 	// check if x==k exists. If yes, introduce x##k
 	if(constraintExists(Constraint::EQ_VAR_CONST,c.lhsVar(),c.rhsValCppCapsule())) {
 	  removeConstraint(Constraint(Constraint::EQ_VAR_CONST,c.lhsVar(),c.rhsValCppCapsule()));
@@ -325,7 +333,11 @@ void ConstraintSet::addConstraint(Constraint c) {
 	break;
   }
   case Constraint::DEQ:
-	set<Constraint>::insert(c);
+	// erase all existing elements
+	for(set<Constraint>::iterator i=begin();i!=end();++i) {
+	  set<Constraint>::erase(*i);
+	}
+	set<Constraint>::insert(DISEQUALITYCONSTRAINT);
 	return;
   case Constraint::EQ_VAR_VAR:
 	// TODO: maintain consistency wenn x=y is inserted but constraints of x and y are in conflict

@@ -27,7 +27,7 @@
 */
 class Constraint {
  public:
-  enum ConstraintOp {EQ_VAR_CONST,NEQ_VAR_CONST,DEQ_VAR_CONST, EQ_VAR_VAR, NEQ_VAR_VAR, DEQ_VAR_VAR, DEQ};
+  enum ConstraintOp {EQ_VAR_CONST,NEQ_VAR_CONST, EQ_VAR_VAR, NEQ_VAR_VAR, DEQ};
   Constraint(ConstraintOp op0,VariableId lhs, AValue rhs);
   Constraint(ConstraintOp op0,VariableId lhs, CppCapsuleAValue rhs);
   Constraint(ConstraintOp op0,VariableId lhs, VariableId rhs);
@@ -77,7 +77,7 @@ class ConstraintSet : public set<Constraint> {
   ConstraintSet invertedConstraints();
   void invertConstraints();
   //! duplicates constraints for par2 variable and adds them for par1 variable.
-  void moveConstConstraints(VariableId lhsVarId, VariableId rhsVarId);
+  void deleteAndMoveConstConstraints(VariableId lhsVarId, VariableId rhsVarId);
   void duplicateConstConstraints(VariableId lhsVarId, VariableId rhsVarId);
 
   void addConstraint(Constraint c);
@@ -95,6 +95,7 @@ class ConstraintSet : public set<Constraint> {
   ConstraintSet& operator+=(ConstraintSet& s2);
   //ConstraintSet operator+(ConstraintSet& s2);
   long memorySize() const;
+ private:
 };
 
 class ConstraintSetHashFun {
