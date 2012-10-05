@@ -36,7 +36,8 @@ libastPostProcessing_la_SOURCES      = \
      normalizeTypedefSequenceLists.C \
      fixupConstantFoldedValues.C \
      detectTransformations.C \
-     fixupTypeReferences.C
+     fixupTypeReferences.C \
+     fixupSelfReferentialMacros.C
 
 libastPostProcessing_la_LIBADD       = 
 libastPostProcessing_la_DEPENDENCIES = 
@@ -72,7 +73,8 @@ include_HEADERS = \
      normalizeTypedefSequenceLists.h \
      fixupConstantFoldedValues.h \
      detectTransformations.h \
-     fixupTypeReferences.h
+     fixupTypeReferences.h \
+     fixupSelfReferentialMacros.h
 
 EXTRA_DIST = CMakeLists.txt
 

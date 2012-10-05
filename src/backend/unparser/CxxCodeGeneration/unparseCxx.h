@@ -438,6 +438,8 @@ class Unparse_ExprStmt : public UnparseLanguageIndependentConstructs
       // DQ (7/21/2012): New IR node (only seen in C++11 so far).
          void unparseTemplateParameterValue(SgExpression* expr, SgUnparse_Info& info);
 
+      // DQ (10/5/2012): Added support for GNU type attributes.
+         void unparseTypeAttributes ( SgDeclarationStatement* declaration );
    };
 
 #endif

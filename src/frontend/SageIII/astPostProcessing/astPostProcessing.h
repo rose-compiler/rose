@@ -57,6 +57,9 @@
 // This post processing effects test2012_190.C and test2007_141.C.
 #include "fixupTypeReferences.h"
 
+// DQ (10/5/2012): Fixup known macros that might expand into a recursive mess in the unparsed code.
+#include "fixupSelfReferentialMacros.h"
+
 
 /*! \brief Postprocessing that is not likely to be handled in the EDG/Sage III translation.
  */

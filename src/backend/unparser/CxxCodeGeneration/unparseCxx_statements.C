@@ -4397,6 +4397,10 @@ Unparse_ExprStmt::unparseClassDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                   }
              }
         }
+
+#if 0
+     curprint ("/* Leaving unparseClassDeclStmt */ \n");
+#endif
    }
 
 void
@@ -4606,8 +4610,47 @@ Unparse_ExprStmt::unparseClassDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
      ninfo.set_current_context(NULL);
      ninfo.set_current_context(saved_context);
 
-  // curprint ( string("/* Leaving unparseClassDefnStmt */ \n";
+     unparseTypeAttributes(classdefn_stmt->get_declaration());
+
+#if 0
+     curprint ("/* Leaving unparseClassDefnStmt */ \n");
   // printf ("Leaving unparseClassDefnStmt \n");
+#endif
+   }
+
+
+void
+Unparse_ExprStmt::unparseTypeAttributes ( SgDeclarationStatement* declaration )
+   {
+  // DQ (10/4/2012): Added support for transparent unions.
+     ROSE_ASSERT(declaration != NULL);
+
+     bool isGnuAttributeTransparentUnion = declaration->get_declarationModifier().get_typeModifier().isGnuAttributeTransparentUnion();
+
+  // If this came from a type then declaration is the first nondefining declaration (see test2012_10_4.c).
+     bool definingDeclaration_isGnuAttributeTransparentUnion = false;
+     if (declaration->get_definingDeclaration() != NULL)
+          definingDeclaration_isGnuAttributeTransparentUnion = declaration->get_definingDeclaration()->get_declarationModifier().get_typeModifier().isGnuAttributeTransparentUnion();
+
+     if (definingDeclaration_isGnuAttributeTransparentUnion == true)
+        isGnuAttributeTransparentUnion = true;
+
+#if 0
+     printf ("In unparseTypeAttributes(): declaration = %p = %s isGnuAttributeTransparentUnion() = %s \n",declaration,declaration->class_name().c_str(),isGnuAttributeTransparentUnion ? "true" : "false");
+#endif
+
+  // This should only be set for unions.
+     if (isGnuAttributeTransparentUnion == true)
+        {
+#if 0
+       // The declaration can sometimes be a typedef declaration, so we can't test this.
+          SgClassDeclaration* classDeclaration = isSgClassDeclaration(declaration);
+          ROSE_ASSERT(classDeclaration != NULL);
+          ROSE_ASSERT(classDeclaration->get_class_type() == SgClassDeclaration::e_union);
+          ROSE_ASSERT(classDeclaration->get_class_type() == SgClassDeclaration::e_union);
+#endif
+          curprint(" __attribute__((__transparent_union__))");
+        }
    }
 
 
@@ -5436,10 +5479,12 @@ Unparse_ExprStmt::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
           curprint ( string("\n/* Done: Output base type (second part) */ \n"));
 #endif
 
+#if 0
           if (!info.SkipSemiColon())
              {
                curprint ( string(";"));
              }
+#endif
         }
        else
         {
@@ -5644,13 +5689,34 @@ Unparse_ExprStmt::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
        // curprint ( string("\n/* unp->u_type->unparseTypeDefStmt: After second part of type */ \n";
        // printf ("After 2nd part of type \n");
 
+#if 0
           if (!info.SkipSemiColon())
              {
                curprint ( string(";"));
              }
+#endif
+        }
+
+#if 0
+     printf ("In unparseTypedefStmt(): outputTypeDefinition = %s \n",outputTypeDefinition ? "true" : "false");
+#endif
+     if (outputTypeDefinition == true)
+        {
+#if 0
+          printf ("In unparseTypedefStmt(): typedef_stmt = %p = %s \n",typedef_stmt,typedef_stmt->class_name().c_str());
+#endif
+          unparseTypeAttributes(typedef_stmt);
+        }
+
+     if (!info.SkipSemiColon())
+        {
+          curprint(";");
         }
 
   // info.display ("At base of unp->u_type->unparseTypeDefStmt()");
+#if 0
+     curprint ("/* Leaving unparseTypedefStmt */ \n");
+#endif
    }
 
 void
