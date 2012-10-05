@@ -238,6 +238,9 @@ void postProcessingSupport (SgNode* node)
        // and remove the constant folded values since this represents the original code.
           resetConstantFoldedValues(node);
 
+       // DQ (10/5/2012): Fixup known macros that might expand into a recursive mess in the unparsed code.
+          fixupSelfReferentialMacrosInAST(node);
+
        // This resets the isModified flag on each IR node so that we can record 
        // where transformations are done in the AST.  If any transformations on
        // the AST are done, even just building it, this step should be the final
