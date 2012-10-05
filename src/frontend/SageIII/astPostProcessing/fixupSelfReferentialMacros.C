@@ -33,18 +33,18 @@ FixupSelfReferentialMacrosInAST::visit ( SgNode* node )
                     SgClassDeclaration* targetClassDeclaration = isSgClassDeclaration(classType->get_declaration());
                     SgName className = targetClassDeclaration->get_name();
 
-                    printf ("In FixupSelfReferentialMacrosInAST::visit(): Found a class declaration name = %s \n",className.str());
+                 // printf ("In FixupSelfReferentialMacrosInAST::visit(): Found a class declaration name = %s \n",className.str());
 
                     if (className == "sigaction")
                        {
-                         printf ("In FixupSelfReferentialMacrosInAST::visit(): Found a sigaction type \n");
+                      // printf ("In FixupSelfReferentialMacrosInAST::visit(): Found a sigaction type \n");
 
                       // Note we could also check that the declaration came from a known header file.
                          SgStatement* associatedStatement = isSgStatement(initializedName->get_parent());
                          if (associatedStatement != NULL)
                             {
                            // Add a macro to undefine the "#define sa_handler __sigaction_handler.sa_handler" macro.
-                              printf ("In FixupSelfReferentialMacrosInAST::visit(): Add a macro to undefine the macro #define sa_handler __sigaction_handler.sa_handler \n");
+                           // printf ("In FixupSelfReferentialMacrosInAST::visit(): Add a macro to undefine the macro #define sa_handler __sigaction_handler.sa_handler \n");
 
                            // PreprocessingInfo* macro = new PreprocessingInfo(DirectiveType, const std::string & inputString,const std::string & filenameString, int line_no , int col_no,int nol, RelativePositionType relPos );
 
@@ -58,7 +58,7 @@ FixupSelfReferentialMacrosInAST::visit ( SgNode* node )
 
                               PreprocessingInfo* macro = new PreprocessingInfo(directiveType,macroString,filenameString,line_no,col_no,nol,relPos);
 
-                              printf ("Attaching CPP directive %s to IR node %p as attributes. \n",PreprocessingInfo::directiveTypeName(macro->getTypeOfDirective()).c_str(),associatedStatement);
+                           // printf ("Attaching CPP directive %s to IR node %p as attributes. \n",PreprocessingInfo::directiveTypeName(macro->getTypeOfDirective()).c_str(),associatedStatement);
                               associatedStatement->addToAttachedPreprocessingInfo(macro);
 #if 0
                               printf ("Exiting as a test! \n");
