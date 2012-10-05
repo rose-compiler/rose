@@ -864,3 +864,6 @@ Push to main repository:
    Push the submodule:
       git push origin HEAD:merged-builder
 
+Command required to push new branch (both for ROSE head and EDG submodule):
+      git push origin HEAD:refs/heads/dquinlan/dq-edg4x-rc
+
