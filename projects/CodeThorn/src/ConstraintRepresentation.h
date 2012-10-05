@@ -66,7 +66,6 @@ class ConstraintSet : public set<Constraint> {
   bool constraintExists(Constraint::ConstraintOp op) const;
   ConstraintSet constraintsWithOp(Constraint::ConstraintOp op) const;
   bool constraintExists(const Constraint& c) const;
-  bool disequalityExists() const;
   ConstraintSet::iterator findSpecific(Constraint::ConstraintOp op, VariableId varId) const;
   ConstraintSet findSpecificSet(Constraint::ConstraintOp op, VariableId varId) const;
   AType::ConstIntLattice varConstIntLatticeValue(const VariableId varId) const;
@@ -80,18 +79,25 @@ class ConstraintSet : public set<Constraint> {
   void deleteAndMoveConstConstraints(VariableId lhsVarId, VariableId rhsVarId);
   void duplicateConstConstraints(VariableId lhsVarId, VariableId rhsVarId);
 
+  //! maintains consistency of set and creates DIS if inconsistent constraints are added
   void addConstraint(Constraint c);
-  //! erase simply deletes the Constraint from the constraint set (in difference, removeConstraint reorganizes the constraints)
-  void addDisequality();
-  void eraseConstraint(Constraint c);
   //! remove transfers information to other vars if the constraint to be deleted is x=y. It tries to keep information alive by transfering it to other variables if possible)
   void removeConstraint(Constraint c);
   //! implemented by method removeConstraint
   void removeConstraint(ConstraintSet::iterator i);
+
+  void addDisequality();
+  bool disequalityExists() const;
   bool deqConstraintExists() const;
+
+  //! Does not check for consistency. Raw erasure of constraint.
+  void eraseConstraint(Constraint c);
+
   void addAssignEqVarVar(VariableId, VariableId);
   void addEqVarVar(VariableId, VariableId);
   void removeEqVarVar(VariableId, VariableId);
+
+  long numberOfConstConstraints(VariableId);
   ConstraintSet& operator+=(ConstraintSet& s2);
   //ConstraintSet operator+(ConstraintSet& s2);
   long memorySize() const;

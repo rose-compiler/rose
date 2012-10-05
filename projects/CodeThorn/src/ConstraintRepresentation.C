@@ -168,7 +168,6 @@ void ConstraintSet::addAssignEqVarVar(VariableId lhsVar, VariableId rhsVar) {
 	}
 }
 void ConstraintSet::removeEqVarVar(VariableId lhsVar, VariableId rhsVar) {
-  //TODO: move const-constraints if necessary
   removeConstraint(Constraint(Constraint::EQ_VAR_VAR,lhsVar,rhsVar));
 }
 
@@ -188,7 +187,7 @@ ConstraintSet ConstraintSet::invertedConstraints() {
 	  result.addDisequality();
 	  break;
 	  // we do not extract VAR_VAR constraints from expressions. We only invert constraint sets which have been extracted from expressions.
-	  // therefore VAR_VAR constraints are not supposed to be inverted.
+	  // therefore VAR_VAR constraints are not supposed to be inverted (we throw an exception in this case)
 #if 0
 	case Constraint::EQ_VAR_VAR:
 	  result.addConstraint(Constraint(Constraint::NEQ_VAR_VAR,c.lhsVar(),c.rhsVar()));
@@ -239,23 +238,26 @@ void  ConstraintSet::deleteAndMoveConstConstraints(VariableId fromVarId, Variabl
   }
 }
 
-void  ConstraintSet::duplicateConstConstraints(VariableId lhsVarId, VariableId rhsVarId) {
-  if(lhsVarId==rhsVarId)
+void  ConstraintSet::duplicateConstConstraints(VariableId varId1, VariableId varId2) {
+  if(varId1==varId2)
 	return; // duplication not necessary
+  // we duplicate constraints for both variables
   for(ConstraintSet::iterator i=begin();i!=end();++i) {
 	Constraint c=*i;
-	if(c.isVarValOp() && c.lhsVar()==rhsVarId) {
-	  addConstraint(Constraint(c.op(),lhsVarId,c.rhsValCppCapsule()));
+	if(c.isVarValOp()) {
+	  if(c.lhsVar()==varId1) {
+		addConstraint(Constraint(c.op(),varId2,c.rhsValCppCapsule()));
+	  }
+	  if(c.lhsVar()==varId2) {
+		addConstraint(Constraint(c.op(),varId1,c.rhsValCppCapsule()));
+	  }
 	}
   }
 }
 
 bool ConstraintSet::disequalityExists() const {
   ConstraintSet::iterator i=find(DISEQUALITYCONSTRAINT);
-  if(i!=end())
-	return true;
-  else
-	return false;
+  return i!=end();
 }
 void ConstraintSet::addDisequality() {
   addConstraint(DISEQUALITYCONSTRAINT);
@@ -357,15 +359,39 @@ void ConstraintSet::eraseConstraint(Constraint c) {
 
 void ConstraintSet::removeConstraint(Constraint c) {
   if(c.op()==Constraint::EQ_VAR_VAR) {
+	eraseConstraint(c);
 	// ensure we do not loose information because of dropping x=y
 	// example: x!=1,y!=2,x=y => x!=1,x!=2,y!=1,y!=2
-	duplicateConstConstraints(c.lhsVar(), c.rhsVar()); // duplication direction from right to left (as in an assignment)
-	duplicateConstConstraints(c.rhsVar(), c.lhsVar()); // duplication direction from right to left (as in an assignment)
-	eraseConstraint(c);
+	long lsetsize=numberOfConstConstraints(c.lhsVar());
+	long rsetsize=numberOfConstConstraints(c.rhsVar());
+
+	// check consistency of normalized form: only one variable of an equality can have const-constraints
+	if(lsetsize>0 && rsetsize>0) {
+	  cerr<< "Error removeConstraint:: equality lsetsize>0 && rsetsize>0 : "<<endl;
+	  cerr << "Constraint to remove: "<< c.toString()<<endl;
+	  cerr << "lhsvar: "<<(c.lhsVar().variableName())<<":"<<c.lhsVar().toString()<<endl;
+	  cerr << "rhsvar: "<<(c.rhsVar().variableName())<<":"<<c.rhsVar().toString()<<endl;
+	  cerr << "lsetsize: "<<lsetsize<<" rsetsize: "<<rsetsize<<endl;
+	  cerr << "ConstraintSet: "<< toString()<<endl;
+	  exit(1);
+	}
+	if(lsetsize>0 || rsetsize>0) {
+	  duplicateConstConstraints(c.lhsVar(), c.rhsVar());
+	}
+	// for a consistent set it must hold: removing an equation cannot create an inconsistent set
+	assert(!disequalityExists());
   } else {
-	// all other cases
+	// all other cases (currently this includes removing DEQ)
 	eraseConstraint(c);
   }
+}
+
+long ConstraintSet::numberOfConstConstraints(VariableId var) {
+  long cnt=0;
+  for(ConstraintSet::iterator i=begin();i!=end();++i) {
+	if((*i).isVarValOp() && (*i).lhsVar()==var) cnt++;
+  }
+  return cnt;
 }
 
 void ConstraintSet::removeConstraint(ConstraintSet::iterator i) {
