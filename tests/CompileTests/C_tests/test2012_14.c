@@ -1,9 +1,9 @@
 // ngx_process_combined.c
 
-# 1 "src/os/unix/ngx_process.c"
-# 1 "<built-in>"
-# 1 "<command-line>"
-# 1 "src/os/unix/ngx_process.c"
+// # 1 "src/os/unix/ngx_process.c"
+// # 1 "<built-in>"
+// # 1 "<command-line>"
+// # 1 "src/os/unix/ngx_process.c"
 
 
 
@@ -11,50 +11,50 @@
 
 
 
-# 1 "src/core/ngx_config.h" 1
-# 12 "src/core/ngx_config.h"
-# 1 "objs/ngx_auto_headers.h" 1
-# 13 "src/core/ngx_config.h" 2
-# 26 "src/core/ngx_config.h"
-# 1 "src/os/unix/ngx_linux_config.h" 1
-# 18 "src/os/unix/ngx_linux_config.h"
-# 1 "/usr/include/sys/types.h" 1 3 4
-# 27 "/usr/include/sys/types.h" 3 4
-# 1 "/usr/include/features.h" 1 3 4
-# 329 "/usr/include/features.h" 3 4
-# 1 "/usr/include/sys/cdefs.h" 1 3 4
-# 313 "/usr/include/sys/cdefs.h" 3 4
-# 1 "/usr/include/bits/wordsize.h" 1 3 4
-# 314 "/usr/include/sys/cdefs.h" 2 3 4
-# 330 "/usr/include/features.h" 2 3 4
-# 352 "/usr/include/features.h" 3 4
-# 1 "/usr/include/gnu/stubs.h" 1 3 4
+// # 1 "src/core/ngx_config.h" 1
+// # 12 "src/core/ngx_config.h"
+// # 1 "objs/ngx_auto_headers.h" 1
+// # 13 "src/core/ngx_config.h" 2
+// # 26 "src/core/ngx_config.h"
+// # 1 "src/os/unix/ngx_linux_config.h" 1
+// # 18 "src/os/unix/ngx_linux_config.h"
+// # 1 "/usr/include/sys/types.h" 1 3 4
+// # 27 "/usr/include/sys/types.h" 3 4
+// # 1 "/usr/include/features.h" 1 3 4
+// # 329 "/usr/include/features.h" 3 4
+// # 1 "/usr/include/sys/cdefs.h" 1 3 4
+// # 313 "/usr/include/sys/cdefs.h" 3 4
+// # 1 "/usr/include/bits/wordsize.h" 1 3 4
+// # 314 "/usr/include/sys/cdefs.h" 2 3 4
+// # 330 "/usr/include/features.h" 2 3 4
+// # 352 "/usr/include/features.h" 3 4
+// # 1 "/usr/include/gnu/stubs.h" 1 3 4
 
 
 
-# 1 "/usr/include/bits/wordsize.h" 1 3 4
-# 5 "/usr/include/gnu/stubs.h" 2 3 4
+// # 1 "/usr/include/bits/wordsize.h" 1 3 4
+// # 5 "/usr/include/gnu/stubs.h" 2 3 4
 
 
 
 
-# 1 "/usr/include/gnu/stubs-64.h" 1 3 4
-# 10 "/usr/include/gnu/stubs.h" 2 3 4
-# 353 "/usr/include/features.h" 2 3 4
-# 28 "/usr/include/sys/types.h" 2 3 4
+// # 1 "/usr/include/gnu/stubs-64.h" 1 3 4
+// # 10 "/usr/include/gnu/stubs.h" 2 3 4
+// # 353 "/usr/include/features.h" 2 3 4
+// # 28 "/usr/include/sys/types.h" 2 3 4
 
 
 
-# 1 "/usr/include/bits/types.h" 1 3 4
-# 28 "/usr/include/bits/types.h" 3 4
-# 1 "/usr/include/bits/wordsize.h" 1 3 4
-# 29 "/usr/include/bits/types.h" 2 3 4
+// # 1 "/usr/include/bits/types.h" 1 3 4
+// # 28 "/usr/include/bits/types.h" 3 4
+// # 1 "/usr/include/bits/wordsize.h" 1 3 4
+// # 29 "/usr/include/bits/types.h" 2 3 4
 
 
-# 1 "/nfs/apps/gcc/4.2.4/lib/gcc/x86_64-unknown-linux-gnu/4.2.4/include/stddef.h" 1 3 4
-# 214 "/nfs/apps/gcc/4.2.4/lib/gcc/x86_64-unknown-linux-gnu/4.2.4/include/stddef.h" 3 4
+// # 1 "/nfs/apps/gcc/4.2.4/lib/gcc/x86_64-unknown-linux-gnu/4.2.4/include/stddef.h" 1 3 4
+// # 214 "/nfs/apps/gcc/4.2.4/lib/gcc/x86_64-unknown-linux-gnu/4.2.4/include/stddef.h" 3 4
 typedef long unsigned int size_t;
-# 32 "/usr/include/bits/types.h" 2 3 4
+// # 32 "/usr/include/bits/types.h" 2 3 4
 
 
 typedef unsigned char __u_char;
@@ -81,9 +81,9 @@ typedef unsigned long int __uint64_t;
 
 typedef long int __quad_t;
 typedef unsigned long int __u_quad_t;
-# 134 "/usr/include/bits/types.h" 3 4
-# 1 "/usr/include/bits/typesizes.h" 1 3 4
-# 135 "/usr/include/bits/types.h" 2 3 4
+// # 134 "/usr/include/bits/types.h" 3 4
+// # 1 "/usr/include/bits/typesizes.h" 1 3 4
+// # 135 "/usr/include/bits/types.h" 2 3 4
 
 
 typedef unsigned long int __dev_t;
@@ -145,7 +145,7 @@ typedef long int __intptr_t;
 
 
 typedef unsigned int __socklen_t;
-# 32 "/usr/include/sys/types.h" 2 3 4
+// # 32 "/usr/include/sys/types.h" 2 3 4
 
 
 
@@ -238,27 +238,27 @@ typedef __caddr_t caddr_t;
 
 
 typedef __key_t key_t;
-# 133 "/usr/include/sys/types.h" 3 4
-# 1 "/usr/include/time.h" 1 3 4
-# 59 "/usr/include/time.h" 3 4
+// # 133 "/usr/include/sys/types.h" 3 4
+// # 1 "/usr/include/time.h" 1 3 4
+// # 59 "/usr/include/time.h" 3 4
 
 
 typedef __clock_t clock_t;
 
 
 
-# 75 "/usr/include/time.h" 3 4
+// # 75 "/usr/include/time.h" 3 4
 
 
 typedef __time_t time_t;
 
 
 
-# 93 "/usr/include/time.h" 3 4
+// # 93 "/usr/include/time.h" 3 4
 typedef __clockid_t clockid_t;
-# 105 "/usr/include/time.h" 3 4
+// # 105 "/usr/include/time.h" 3 4
 typedef __timer_t timer_t;
-# 134 "/usr/include/sys/types.h" 2 3 4
+// # 134 "/usr/include/sys/types.h" 2 3 4
 
 
 
@@ -272,15 +272,15 @@ typedef __suseconds_t suseconds_t;
 
 
 
-# 1 "/nfs/apps/gcc/4.2.4/lib/gcc/x86_64-unknown-linux-gnu/4.2.4/include/stddef.h" 1 3 4
-# 148 "/usr/include/sys/types.h" 2 3 4
+// # 1 "/nfs/apps/gcc/4.2.4/lib/gcc/x86_64-unknown-linux-gnu/4.2.4/include/stddef.h" 1 3 4
+// # 148 "/usr/include/sys/types.h" 2 3 4
 
 
 
 typedef unsigned long int ulong;
 typedef unsigned short int ushort;
 typedef unsigned int uint;
-# 195 "/usr/include/sys/types.h" 3 4
+// # 195 "/usr/include/sys/types.h" 3 4
 typedef int int8_t __attribute__ ((__mode__ (__QI__)));
 typedef int int16_t __attribute__ ((__mode__ (__HI__)));
 typedef int int32_t __attribute__ ((__mode__ (__SI__)));
@@ -293,22 +293,22 @@ typedef unsigned int u_int32_t __attribute__ ((__mode__ (__SI__)));
 typedef unsigned int u_int64_t __attribute__ ((__mode__ (__DI__)));
 
 typedef int register_t __attribute__ ((__mode__ (__word__)));
-# 217 "/usr/include/sys/types.h" 3 4
-# 1 "/usr/include/endian.h" 1 3 4
-# 37 "/usr/include/endian.h" 3 4
-# 1 "/usr/include/bits/endian.h" 1 3 4
-# 38 "/usr/include/endian.h" 2 3 4
-# 218 "/usr/include/sys/types.h" 2 3 4
+// # 217 "/usr/include/sys/types.h" 3 4
+// # 1 "/usr/include/endian.h" 1 3 4
+// # 37 "/usr/include/endian.h" 3 4
+// # 1 "/usr/include/bits/endian.h" 1 3 4
+// # 38 "/usr/include/endian.h" 2 3 4
+// # 218 "/usr/include/sys/types.h" 2 3 4
 
 
-# 1 "/usr/include/sys/select.h" 1 3 4
-# 31 "/usr/include/sys/select.h" 3 4
-# 1 "/usr/include/bits/select.h" 1 3 4
-# 32 "/usr/include/sys/select.h" 2 3 4
+// # 1 "/usr/include/sys/select.h" 1 3 4
+// # 31 "/usr/include/sys/select.h" 3 4
+// # 1 "/usr/include/bits/select.h" 1 3 4
+// # 32 "/usr/include/sys/select.h" 2 3 4
 
 
-# 1 "/usr/include/bits/sigset.h" 1 3 4
-# 23 "/usr/include/bits/sigset.h" 3 4
+// # 1 "/usr/include/bits/sigset.h" 1 3 4
+// # 23 "/usr/include/bits/sigset.h" 3 4
 typedef int __sig_atomic_t;
 
 
@@ -318,7 +318,7 @@ typedef struct
   {
     unsigned long int __val[(1024 / (8 * sizeof (unsigned long int)))];
   } __sigset_t;
-# 35 "/usr/include/sys/select.h" 2 3 4
+// # 35 "/usr/include/sys/select.h" 2 3 4
 
 
 
@@ -328,26 +328,26 @@ typedef __sigset_t sigset_t;
 
 
 
-# 1 "/usr/include/time.h" 1 3 4
-# 121 "/usr/include/time.h" 3 4
+// # 1 "/usr/include/time.h" 1 3 4
+// # 121 "/usr/include/time.h" 3 4
 struct timespec
   {
     __time_t tv_sec;
     long int tv_nsec;
   };
-# 45 "/usr/include/sys/select.h" 2 3 4
+// # 45 "/usr/include/sys/select.h" 2 3 4
 
-# 1 "/usr/include/bits/time.h" 1 3 4
-# 69 "/usr/include/bits/time.h" 3 4
+// # 1 "/usr/include/bits/time.h" 1 3 4
+// # 69 "/usr/include/bits/time.h" 3 4
 struct timeval
   {
     __time_t tv_sec;
     __suseconds_t tv_usec;
   };
-# 47 "/usr/include/sys/select.h" 2 3 4
-# 55 "/usr/include/sys/select.h" 3 4
+// # 47 "/usr/include/sys/select.h" 2 3 4
+// # 55 "/usr/include/sys/select.h" 3 4
 typedef long int __fd_mask;
-# 67 "/usr/include/sys/select.h" 3 4
+// # 67 "/usr/include/sys/select.h" 3 4
 typedef struct
   {
 
@@ -367,14 +367,14 @@ typedef struct
 
 
 typedef __fd_mask fd_mask;
-# 99 "/usr/include/sys/select.h" 3 4
+// # 99 "/usr/include/sys/select.h" 3 4
 
-# 109 "/usr/include/sys/select.h" 3 4
+// # 109 "/usr/include/sys/select.h" 3 4
 extern int select (int __nfds, fd_set *__restrict __readfds,
      fd_set *__restrict __writefds,
      fd_set *__restrict __exceptfds,
      struct timeval *__restrict __timeout);
-# 121 "/usr/include/sys/select.h" 3 4
+// # 121 "/usr/include/sys/select.h" 3 4
 extern int pselect (int __nfds, fd_set *__restrict __readfds,
       fd_set *__restrict __writefds,
       fd_set *__restrict __exceptfds,
@@ -383,11 +383,11 @@ extern int pselect (int __nfds, fd_set *__restrict __readfds,
 
 
 
-# 221 "/usr/include/sys/types.h" 2 3 4
+// # 221 "/usr/include/sys/types.h" 2 3 4
 
 
-# 1 "/usr/include/sys/sysmacros.h" 1 3 4
-# 29 "/usr/include/sys/sysmacros.h" 3 4
+// # 1 "/usr/include/sys/sysmacros.h" 1 3 4
+// # 29 "/usr/include/sys/sysmacros.h" 3 4
 __extension__
 extern __inline unsigned int gnu_dev_major (unsigned long long int __dev)
      __attribute__ ((__nothrow__));
@@ -419,13 +419,13 @@ __attribute__ ((__nothrow__)) gnu_dev_makedev (unsigned int __major, unsigned in
    | (((unsigned long long int) (__minor & ~0xff)) << 12)
    | (((unsigned long long int) (__major & ~0xfff)) << 32));
 }
-# 224 "/usr/include/sys/types.h" 2 3 4
+// # 224 "/usr/include/sys/types.h" 2 3 4
 
 
 
 
 typedef __blksize_t blksize_t;
-# 248 "/usr/include/sys/types.h" 3 4
+// # 248 "/usr/include/sys/types.h" 3 4
 typedef __blkcnt64_t blkcnt_t;
 
 
@@ -448,11 +448,11 @@ typedef __fsfilcnt64_t fsfilcnt64_t;
 
 
 
-# 1 "/usr/include/bits/pthreadtypes.h" 1 3 4
-# 23 "/usr/include/bits/pthreadtypes.h" 3 4
-# 1 "/usr/include/bits/wordsize.h" 1 3 4
-# 24 "/usr/include/bits/pthreadtypes.h" 2 3 4
-# 50 "/usr/include/bits/pthreadtypes.h" 3 4
+// # 1 "/usr/include/bits/pthreadtypes.h" 1 3 4
+// # 23 "/usr/include/bits/pthreadtypes.h" 3 4
+// # 1 "/usr/include/bits/wordsize.h" 1 3 4
+// # 24 "/usr/include/bits/pthreadtypes.h" 2 3 4
+// # 50 "/usr/include/bits/pthreadtypes.h" 3 4
 typedef unsigned long int pthread_t;
 
 
@@ -469,7 +469,7 @@ typedef struct __pthread_internal_list
   struct __pthread_internal_list *__prev;
   struct __pthread_internal_list *__next;
 } __pthread_list_t;
-# 76 "/usr/include/bits/pthreadtypes.h" 3 4
+// # 76 "/usr/include/bits/pthreadtypes.h" 3 4
 typedef union
 {
   struct __pthread_mutex_s
@@ -486,7 +486,7 @@ typedef union
 
     int __spins;
     __pthread_list_t __list;
-# 101 "/usr/include/bits/pthreadtypes.h" 3 4
+// # 101 "/usr/include/bits/pthreadtypes.h" 3 4
   } __data;
   char __size[40];
   long int __align;
@@ -555,7 +555,7 @@ typedef union
 
     unsigned int __flags;
   } __data;
-# 187 "/usr/include/bits/pthreadtypes.h" 3 4
+// # 187 "/usr/include/bits/pthreadtypes.h" 3 4
   char __size[56];
   long int __align;
 } pthread_rwlock_t;
@@ -586,21 +586,21 @@ typedef union
   char __size[4];
   int __align;
 } pthread_barrierattr_t;
-# 271 "/usr/include/sys/types.h" 2 3 4
+// # 271 "/usr/include/sys/types.h" 2 3 4
 
 
 
-# 19 "src/os/unix/ngx_linux_config.h" 2
-# 1 "/usr/include/sys/time.h" 1 3 4
-# 27 "/usr/include/sys/time.h" 3 4
-# 1 "/usr/include/time.h" 1 3 4
-# 28 "/usr/include/sys/time.h" 2 3 4
+// # 19 "src/os/unix/ngx_linux_config.h" 2
+// # 1 "/usr/include/sys/time.h" 1 3 4
+// # 27 "/usr/include/sys/time.h" 3 4
+// # 1 "/usr/include/time.h" 1 3 4
+// # 28 "/usr/include/sys/time.h" 2 3 4
 
-# 1 "/usr/include/bits/time.h" 1 3 4
-# 30 "/usr/include/sys/time.h" 2 3 4
-# 39 "/usr/include/sys/time.h" 3 4
+// # 1 "/usr/include/bits/time.h" 1 3 4
+// # 30 "/usr/include/sys/time.h" 2 3 4
+// # 39 "/usr/include/sys/time.h" 3 4
 
-# 57 "/usr/include/sys/time.h" 3 4
+// # 57 "/usr/include/sys/time.h" 3 4
 struct timezone
   {
     int tz_minuteswest;
@@ -608,7 +608,7 @@ struct timezone
   };
 
 typedef struct timezone *__restrict __timezone_ptr_t;
-# 73 "/usr/include/sys/time.h" 3 4
+// # 73 "/usr/include/sys/time.h" 3 4
 extern int gettimeofday (struct timeval *__restrict __tv,
     __timezone_ptr_t __tz) __attribute__ ((__nothrow__)) __attribute__ ((__nonnull__ (1)));
 
@@ -694,27 +694,27 @@ extern int futimes (int __fd, __const struct timeval __tvp[2]) __attribute__ ((_
 
 extern int futimesat (int __fd, __const char *__file,
         __const struct timeval __tvp[2]) __attribute__ ((__nothrow__));
-# 191 "/usr/include/sys/time.h" 3 4
+// # 191 "/usr/include/sys/time.h" 3 4
 
-# 20 "src/os/unix/ngx_linux_config.h" 2
-# 1 "/usr/include/unistd.h" 1 3 4
-# 28 "/usr/include/unistd.h" 3 4
+// # 20 "src/os/unix/ngx_linux_config.h" 2
+// # 1 "/usr/include/unistd.h" 1 3 4
+// # 28 "/usr/include/unistd.h" 3 4
 
-# 173 "/usr/include/unistd.h" 3 4
-# 1 "/usr/include/bits/posix_opt.h" 1 3 4
-# 174 "/usr/include/unistd.h" 2 3 4
+// # 173 "/usr/include/unistd.h" 3 4
+// # 1 "/usr/include/bits/posix_opt.h" 1 3 4
+// # 174 "/usr/include/unistd.h" 2 3 4
 
 
 
-# 1 "/usr/include/bits/environments.h" 1 3 4
-# 23 "/usr/include/bits/environments.h" 3 4
-# 1 "/usr/include/bits/wordsize.h" 1 3 4
-# 24 "/usr/include/bits/environments.h" 2 3 4
-# 178 "/usr/include/unistd.h" 2 3 4
-# 197 "/usr/include/unistd.h" 3 4
-# 1 "/nfs/apps/gcc/4.2.4/lib/gcc/x86_64-unknown-linux-gnu/4.2.4/include/stddef.h" 1 3 4
-# 198 "/usr/include/unistd.h" 2 3 4
-# 238 "/usr/include/unistd.h" 3 4
+// # 1 "/usr/include/bits/environments.h" 1 3 4
+// # 23 "/usr/include/bits/environments.h" 3 4
+// # 1 "/usr/include/bits/wordsize.h" 1 3 4
+// # 24 "/usr/include/bits/environments.h" 2 3 4
+// # 178 "/usr/include/unistd.h" 2 3 4
+// # 197 "/usr/include/unistd.h" 3 4
+// # 1 "/nfs/apps/gcc/4.2.4/lib/gcc/x86_64-unknown-linux-gnu/4.2.4/include/stddef.h" 1 3 4
+// # 198 "/usr/include/unistd.h" 2 3 4
+// # 238 "/usr/include/unistd.h" 3 4
 typedef __intptr_t intptr_t;
 
 
@@ -723,7 +723,7 @@ typedef __intptr_t intptr_t;
 
 
 typedef __socklen_t socklen_t;
-# 258 "/usr/include/unistd.h" 3 4
+// # 258 "/usr/include/unistd.h" 3 4
 extern int access (__const char *__name, int __type) __attribute__ ((__nothrow__)) __attribute__ ((__nonnull__ (1)));
 
 
@@ -743,7 +743,7 @@ extern int eaccess (__const char *__name, int __type)
 
 extern int faccessat (int __fd, __const char *__file, int __type, int __flag)
      __attribute__ ((__nothrow__)) __attribute__ ((__nonnull__ (2))) ;
-# 304 "/usr/include/unistd.h" 3 4
+// # 304 "/usr/include/unistd.h" 3 4
 extern __off64_t lseek (int __fd, __off64_t __offset, int __whence) __asm__ ("" "lseek64") __attribute__ ((__nothrow__));
 
 
@@ -774,12 +774,12 @@ extern ssize_t read (int __fd, void *__buf, size_t __nbytes) ;
 
 
 extern ssize_t write (int __fd, __const void *__buf, size_t __n) ;
-# 355 "/usr/include/unistd.h" 3 4
+// # 355 "/usr/include/unistd.h" 3 4
 extern ssize_t pread (int __fd, void *__buf, size_t __nbytes, __off64_t __offset) __asm__ ("" "pread64") ;
 
 
 extern ssize_t pwrite (int __fd, __const void *__buf, size_t __nbytes, __off64_t __offset) __asm__ ("" "pwrite64") ;
-# 371 "/usr/include/unistd.h" 3 4
+// # 371 "/usr/include/unistd.h" 3 4
 extern ssize_t pread64 (int __fd, void *__buf, size_t __nbytes,
    __off64_t __offset) ;
 
@@ -794,9 +794,9 @@ extern ssize_t pwrite64 (int __fd, __const void *__buf, size_t __n,
 
 
 extern int pipe (int __pipedes[2]) __attribute__ ((__nothrow__)) ;
-# 393 "/usr/include/unistd.h" 3 4
+// # 393 "/usr/include/unistd.h" 3 4
 extern unsigned int alarm (unsigned int __seconds) __attribute__ ((__nothrow__));
-# 405 "/usr/include/unistd.h" 3 4
+// # 405 "/usr/include/unistd.h" 3 4
 extern unsigned int sleep (unsigned int __seconds);
 
 
@@ -813,7 +813,7 @@ extern __useconds_t ualarm (__useconds_t __value, __useconds_t __interval)
 
 
 extern int usleep (__useconds_t __useconds);
-# 429 "/usr/include/unistd.h" 3 4
+// # 429 "/usr/include/unistd.h" 3 4
 extern int pause (void);
 
 
@@ -847,7 +847,7 @@ extern int chdir (__const char *__path) __attribute__ ((__nothrow__)) __attribut
 
 
 extern int fchdir (int __fd) __attribute__ ((__nothrow__)) ;
-# 471 "/usr/include/unistd.h" 3 4
+// # 471 "/usr/include/unistd.h" 3 4
 extern char *getcwd (char *__buf, size_t __size) __attribute__ ((__nothrow__)) ;
 
 
@@ -931,8 +931,8 @@ extern void _exit (int __status) __attribute__ ((__noreturn__));
 
 
 
-# 1 "/usr/include/bits/confname.h" 1 3 4
-# 26 "/usr/include/bits/confname.h" 3 4
+// # 1 "/usr/include/bits/confname.h" 1 3 4
+// # 26 "/usr/include/bits/confname.h" 3 4
 enum
   {
     _PC_LINK_MAX,
@@ -1509,7 +1509,7 @@ enum
     _CS_POSIX_V6_LPBIG_OFFBIG_LINTFLAGS
 
   };
-# 555 "/usr/include/unistd.h" 2 3 4
+// # 555 "/usr/include/unistd.h" 2 3 4
 
 
 extern long int pathconf (__const char *__path, int __name)
@@ -1537,7 +1537,7 @@ extern __pid_t getppid (void) __attribute__ ((__nothrow__));
 
 
 extern __pid_t getpgrp (void) __attribute__ ((__nothrow__));
-# 591 "/usr/include/unistd.h" 3 4
+// # 591 "/usr/include/unistd.h" 3 4
 extern __pid_t __getpgid (__pid_t __pid) __attribute__ ((__nothrow__));
 
 extern __pid_t getpgid (__pid_t __pid) __attribute__ ((__nothrow__));
@@ -1548,9 +1548,9 @@ extern __pid_t getpgid (__pid_t __pid) __attribute__ ((__nothrow__));
 
 
 extern int setpgid (__pid_t __pid, __pid_t __pgid) __attribute__ ((__nothrow__));
-# 617 "/usr/include/unistd.h" 3 4
+// # 617 "/usr/include/unistd.h" 3 4
 extern int setpgrp (void) __attribute__ ((__nothrow__));
-# 634 "/usr/include/unistd.h" 3 4
+// # 634 "/usr/include/unistd.h" 3 4
 extern __pid_t setsid (void) __attribute__ ((__nothrow__));
 
 
@@ -1746,11 +1746,11 @@ extern int getlogin_r (char *__name, size_t __name_len) __attribute__ ((__nonnul
 
 
 extern int setlogin (__const char *__name) __attribute__ ((__nothrow__)) __attribute__ ((__nonnull__ (1)));
-# 837 "/usr/include/unistd.h" 3 4
-# 1 "/usr/include/getopt.h" 1 3 4
-# 59 "/usr/include/getopt.h" 3 4
+// # 837 "/usr/include/unistd.h" 3 4
+// # 1 "/usr/include/getopt.h" 1 3 4
+// # 59 "/usr/include/getopt.h" 3 4
 extern char *optarg;
-# 73 "/usr/include/getopt.h" 3 4
+// # 73 "/usr/include/getopt.h" 3 4
 extern int optind;
 
 
@@ -1761,10 +1761,10 @@ extern int opterr;
 
 
 extern int optopt;
-# 152 "/usr/include/getopt.h" 3 4
+// # 152 "/usr/include/getopt.h" 3 4
 extern int getopt (int ___argc, char *const *___argv, const char *__shortopts)
        __attribute__ ((__nothrow__));
-# 838 "/usr/include/unistd.h" 2 3 4
+// # 838 "/usr/include/unistd.h" 2 3 4
 
 
 
@@ -1842,7 +1842,7 @@ extern int chroot (__const char *__path) __attribute__ ((__nothrow__)) __attribu
 
 
 extern char *getpass (__const char *__prompt) __attribute__ ((__nonnull__ (1)));
-# 923 "/usr/include/unistd.h" 3 4
+// # 923 "/usr/include/unistd.h" 3 4
 extern int fsync (int __fd);
 
 
@@ -1864,7 +1864,7 @@ extern int getpagesize (void) __attribute__ ((__nothrow__)) __attribute__ ((__co
 
 
 extern int getdtablesize (void) __attribute__ ((__nothrow__));
-# 952 "/usr/include/unistd.h" 3 4
+// # 952 "/usr/include/unistd.h" 3 4
 extern int truncate (__const char *__file, __off64_t __length) __asm__ ("" "truncate64") __attribute__ ((__nothrow__)) __attribute__ ((__nonnull__ (1))) ;
 
 
@@ -1875,7 +1875,7 @@ extern int truncate (__const char *__file, __off64_t __length) __asm__ ("" "trun
 
 extern int truncate64 (__const char *__file, __off64_t __length)
      __attribute__ ((__nothrow__)) __attribute__ ((__nonnull__ (1))) ;
-# 973 "/usr/include/unistd.h" 3 4
+// # 973 "/usr/include/unistd.h" 3 4
 extern int ftruncate (int __fd, __off64_t __length) __asm__ ("" "ftruncate64") __attribute__ ((__nothrow__)) ;
 
 
@@ -1884,7 +1884,7 @@ extern int ftruncate (int __fd, __off64_t __length) __asm__ ("" "ftruncate64") _
 
 
 extern int ftruncate64 (int __fd, __off64_t __length) __attribute__ ((__nothrow__)) ;
-# 990 "/usr/include/unistd.h" 3 4
+// # 990 "/usr/include/unistd.h" 3 4
 extern int brk (void *__addr) __attribute__ ((__nothrow__)) ;
 
 
@@ -1892,9 +1892,9 @@ extern int brk (void *__addr) __attribute__ ((__nothrow__)) ;
 
 
 extern void *sbrk (intptr_t __delta) __attribute__ ((__nothrow__));
-# 1011 "/usr/include/unistd.h" 3 4
+// # 1011 "/usr/include/unistd.h" 3 4
 extern long int syscall (long int __sysno, ...) __attribute__ ((__nothrow__));
-# 1037 "/usr/include/unistd.h" 3 4
+// # 1037 "/usr/include/unistd.h" 3 4
 extern int lockf (int __fd, int __cmd, __off64_t __len) __asm__ ("" "lockf64") ;
 
 
@@ -1903,7 +1903,7 @@ extern int lockf (int __fd, int __cmd, __off64_t __len) __asm__ ("" "lockf64") ;
 
 
 extern int lockf64 (int __fd, int __cmd, __off64_t __len) ;
-# 1065 "/usr/include/unistd.h" 3 4
+// # 1065 "/usr/include/unistd.h" 3 4
 extern int fdatasync (int __fildes);
 
 
@@ -1934,30 +1934,30 @@ extern void swab (__const void *__restrict __from, void *__restrict __to,
 
 
 extern char *ctermid (char *__s) __attribute__ ((__nothrow__));
-# 1103 "/usr/include/unistd.h" 3 4
+// # 1103 "/usr/include/unistd.h" 3 4
 
-# 21 "src/os/unix/ngx_linux_config.h" 2
-# 1 "/nfs/apps/gcc/4.2.4/lib/gcc/x86_64-unknown-linux-gnu/4.2.4/include/stdarg.h" 1 3 4
-# 43 "/nfs/apps/gcc/4.2.4/lib/gcc/x86_64-unknown-linux-gnu/4.2.4/include/stdarg.h" 3 4
+// # 21 "src/os/unix/ngx_linux_config.h" 2
+// # 1 "/nfs/apps/gcc/4.2.4/lib/gcc/x86_64-unknown-linux-gnu/4.2.4/include/stdarg.h" 1 3 4
+// # 43 "/nfs/apps/gcc/4.2.4/lib/gcc/x86_64-unknown-linux-gnu/4.2.4/include/stdarg.h" 3 4
 typedef __builtin_va_list __gnuc_va_list;
-# 105 "/nfs/apps/gcc/4.2.4/lib/gcc/x86_64-unknown-linux-gnu/4.2.4/include/stdarg.h" 3 4
+// # 105 "/nfs/apps/gcc/4.2.4/lib/gcc/x86_64-unknown-linux-gnu/4.2.4/include/stdarg.h" 3 4
 typedef __gnuc_va_list va_list;
-# 22 "src/os/unix/ngx_linux_config.h" 2
-# 1 "/nfs/apps/gcc/4.2.4/lib/gcc/x86_64-unknown-linux-gnu/4.2.4/include/stddef.h" 1 3 4
-# 152 "/nfs/apps/gcc/4.2.4/lib/gcc/x86_64-unknown-linux-gnu/4.2.4/include/stddef.h" 3 4
+// # 22 "src/os/unix/ngx_linux_config.h" 2
+// # 1 "/nfs/apps/gcc/4.2.4/lib/gcc/x86_64-unknown-linux-gnu/4.2.4/include/stddef.h" 1 3 4
+// # 152 "/nfs/apps/gcc/4.2.4/lib/gcc/x86_64-unknown-linux-gnu/4.2.4/include/stddef.h" 3 4
 typedef long int ptrdiff_t;
-# 326 "/nfs/apps/gcc/4.2.4/lib/gcc/x86_64-unknown-linux-gnu/4.2.4/include/stddef.h" 3 4
+// # 326 "/nfs/apps/gcc/4.2.4/lib/gcc/x86_64-unknown-linux-gnu/4.2.4/include/stddef.h" 3 4
 typedef int wchar_t;
-# 23 "src/os/unix/ngx_linux_config.h" 2
-# 1 "/usr/include/stdio.h" 1 3 4
-# 30 "/usr/include/stdio.h" 3 4
+// # 23 "src/os/unix/ngx_linux_config.h" 2
+// # 1 "/usr/include/stdio.h" 1 3 4
+// # 30 "/usr/include/stdio.h" 3 4
 
 
 
 
-# 1 "/nfs/apps/gcc/4.2.4/lib/gcc/x86_64-unknown-linux-gnu/4.2.4/include/stddef.h" 1 3 4
-# 35 "/usr/include/stdio.h" 2 3 4
-# 44 "/usr/include/stdio.h" 3 4
+// # 1 "/nfs/apps/gcc/4.2.4/lib/gcc/x86_64-unknown-linux-gnu/4.2.4/include/stddef.h" 1 3 4
+// # 35 "/usr/include/stdio.h" 2 3 4
+// # 44 "/usr/include/stdio.h" 3 4
 
 
 typedef struct _IO_FILE FILE;
@@ -1966,26 +1966,26 @@ typedef struct _IO_FILE FILE;
 
 
 
-# 62 "/usr/include/stdio.h" 3 4
+// # 62 "/usr/include/stdio.h" 3 4
 typedef struct _IO_FILE __FILE;
-# 72 "/usr/include/stdio.h" 3 4
-# 1 "/usr/include/libio.h" 1 3 4
-# 32 "/usr/include/libio.h" 3 4
-# 1 "/usr/include/_G_config.h" 1 3 4
-# 14 "/usr/include/_G_config.h" 3 4
-# 1 "/nfs/apps/gcc/4.2.4/lib/gcc/x86_64-unknown-linux-gnu/4.2.4/include/stddef.h" 1 3 4
-# 355 "/nfs/apps/gcc/4.2.4/lib/gcc/x86_64-unknown-linux-gnu/4.2.4/include/stddef.h" 3 4
+// # 72 "/usr/include/stdio.h" 3 4
+// # 1 "/usr/include/libio.h" 1 3 4
+// # 32 "/usr/include/libio.h" 3 4
+// # 1 "/usr/include/_G_config.h" 1 3 4
+// # 14 "/usr/include/_G_config.h" 3 4
+// # 1 "/nfs/apps/gcc/4.2.4/lib/gcc/x86_64-unknown-linux-gnu/4.2.4/include/stddef.h" 1 3 4
+// # 355 "/nfs/apps/gcc/4.2.4/lib/gcc/x86_64-unknown-linux-gnu/4.2.4/include/stddef.h" 3 4
 typedef unsigned int wint_t;
-# 15 "/usr/include/_G_config.h" 2 3 4
-# 24 "/usr/include/_G_config.h" 3 4
-# 1 "/usr/include/wchar.h" 1 3 4
-# 48 "/usr/include/wchar.h" 3 4
-# 1 "/nfs/apps/gcc/4.2.4/lib/gcc/x86_64-unknown-linux-gnu/4.2.4/include/stddef.h" 1 3 4
-# 49 "/usr/include/wchar.h" 2 3 4
+// # 15 "/usr/include/_G_config.h" 2 3 4
+// # 24 "/usr/include/_G_config.h" 3 4
+// # 1 "/usr/include/wchar.h" 1 3 4
+// # 48 "/usr/include/wchar.h" 3 4
+// # 1 "/nfs/apps/gcc/4.2.4/lib/gcc/x86_64-unknown-linux-gnu/4.2.4/include/stddef.h" 1 3 4
+// # 49 "/usr/include/wchar.h" 2 3 4
 
-# 1 "/usr/include/bits/wchar.h" 1 3 4
-# 51 "/usr/include/wchar.h" 2 3 4
-# 76 "/usr/include/wchar.h" 3 4
+// # 1 "/usr/include/bits/wchar.h" 1 3 4
+// # 51 "/usr/include/wchar.h" 2 3 4
+// # 76 "/usr/include/wchar.h" 3 4
 typedef struct
 {
   int __count;
@@ -1995,7 +1995,7 @@ typedef struct
     char __wchb[4];
   } __value;
 } __mbstate_t;
-# 25 "/usr/include/_G_config.h" 2 3 4
+// # 25 "/usr/include/_G_config.h" 2 3 4
 
 typedef struct
 {
@@ -2007,18 +2007,18 @@ typedef struct
   __off64_t __pos;
   __mbstate_t __state;
 } _G_fpos64_t;
-# 44 "/usr/include/_G_config.h" 3 4
-# 1 "/usr/include/gconv.h" 1 3 4
-# 28 "/usr/include/gconv.h" 3 4
-# 1 "/usr/include/wchar.h" 1 3 4
-# 48 "/usr/include/wchar.h" 3 4
-# 1 "/nfs/apps/gcc/4.2.4/lib/gcc/x86_64-unknown-linux-gnu/4.2.4/include/stddef.h" 1 3 4
-# 49 "/usr/include/wchar.h" 2 3 4
-# 29 "/usr/include/gconv.h" 2 3 4
+// # 44 "/usr/include/_G_config.h" 3 4
+// # 1 "/usr/include/gconv.h" 1 3 4
+// # 28 "/usr/include/gconv.h" 3 4
+// # 1 "/usr/include/wchar.h" 1 3 4
+// # 48 "/usr/include/wchar.h" 3 4
+// # 1 "/nfs/apps/gcc/4.2.4/lib/gcc/x86_64-unknown-linux-gnu/4.2.4/include/stddef.h" 1 3 4
+// # 49 "/usr/include/wchar.h" 2 3 4
+// # 29 "/usr/include/gconv.h" 2 3 4
 
 
-# 1 "/nfs/apps/gcc/4.2.4/lib/gcc/x86_64-unknown-linux-gnu/4.2.4/include/stddef.h" 1 3 4
-# 32 "/usr/include/gconv.h" 2 3 4
+// # 1 "/nfs/apps/gcc/4.2.4/lib/gcc/x86_64-unknown-linux-gnu/4.2.4/include/stddef.h" 1 3 4
+// # 32 "/usr/include/gconv.h" 2 3 4
 
 
 
@@ -2165,7 +2165,7 @@ typedef struct __gconv_info
   struct __gconv_step *__steps;
   __extension__ struct __gconv_step_data __data [];
 } *__gconv_t;
-# 45 "/usr/include/_G_config.h" 2 3 4
+// # 45 "/usr/include/_G_config.h" 2 3 4
 typedef union
 {
   struct __gconv_info __cd;
@@ -2180,10 +2180,10 @@ typedef int _G_int16_t __attribute__ ((__mode__ (__HI__)));
 typedef int _G_int32_t __attribute__ ((__mode__ (__SI__)));
 typedef unsigned int _G_uint16_t __attribute__ ((__mode__ (__HI__)));
 typedef unsigned int _G_uint32_t __attribute__ ((__mode__ (__SI__)));
-# 33 "/usr/include/libio.h" 2 3 4
-# 167 "/usr/include/libio.h" 3 4
+// # 33 "/usr/include/libio.h" 2 3 4
+// # 167 "/usr/include/libio.h" 3 4
 struct _IO_jump_t; struct _IO_FILE;
-# 177 "/usr/include/libio.h" 3 4
+// # 177 "/usr/include/libio.h" 3 4
 typedef void _IO_lock_t;
 
 
@@ -2197,7 +2197,7 @@ struct _IO_marker {
 
 
   int _pos;
-# 200 "/usr/include/libio.h" 3 4
+// # 200 "/usr/include/libio.h" 3 4
 };
 
 
@@ -2208,7 +2208,7 @@ enum __codecvt_result
   __codecvt_error,
   __codecvt_noconv
 };
-# 268 "/usr/include/libio.h" 3 4
+// # 268 "/usr/include/libio.h" 3 4
 struct _IO_FILE {
   int _flags;
 
@@ -2249,9 +2249,9 @@ struct _IO_FILE {
 
 
   _IO_lock_t *_lock;
-# 316 "/usr/include/libio.h" 3 4
+// # 316 "/usr/include/libio.h" 3 4
   __off64_t _offset;
-# 325 "/usr/include/libio.h" 3 4
+// # 325 "/usr/include/libio.h" 3 4
   void *__pad1;
   void *__pad2;
   void *__pad3;
@@ -2273,7 +2273,7 @@ struct _IO_FILE_plus;
 extern struct _IO_FILE_plus _IO_2_1_stdin_;
 extern struct _IO_FILE_plus _IO_2_1_stdout_;
 extern struct _IO_FILE_plus _IO_2_1_stderr_;
-# 361 "/usr/include/libio.h" 3 4
+// # 361 "/usr/include/libio.h" 3 4
 typedef __ssize_t __io_read_fn (void *__cookie, char *__buf, size_t __nbytes);
 
 
@@ -2332,7 +2332,7 @@ extern int __overflow (_IO_FILE *, int);
 extern wint_t __wunderflow (_IO_FILE *);
 extern wint_t __wuflow (_IO_FILE *);
 extern wint_t __woverflow (_IO_FILE *, wint_t);
-# 451 "/usr/include/libio.h" 3 4
+// # 451 "/usr/include/libio.h" 3 4
 extern int _IO_getc (_IO_FILE *__fp);
 extern int _IO_putc (int __c, _IO_FILE *__fp);
 extern int _IO_feof (_IO_FILE *__fp) __attribute__ ((__nothrow__));
@@ -2347,7 +2347,7 @@ extern int _IO_peekc_locked (_IO_FILE *__fp);
 extern void _IO_flockfile (_IO_FILE *) __attribute__ ((__nothrow__));
 extern void _IO_funlockfile (_IO_FILE *) __attribute__ ((__nothrow__));
 extern int _IO_ftrylockfile (_IO_FILE *) __attribute__ ((__nothrow__));
-# 481 "/usr/include/libio.h" 3 4
+// # 481 "/usr/include/libio.h" 3 4
 extern int _IO_vfscanf (_IO_FILE * __restrict, const char * __restrict,
    __gnuc_va_list, int *__restrict);
 extern int _IO_vfprintf (_IO_FILE *__restrict, const char *__restrict,
@@ -2359,8 +2359,8 @@ extern __off64_t _IO_seekoff (_IO_FILE *, __off64_t, int, int);
 extern __off64_t _IO_seekpos (_IO_FILE *, __off64_t, int);
 
 extern void _IO_free_backup_area (_IO_FILE *) __attribute__ ((__nothrow__));
-# 73 "/usr/include/stdio.h" 2 3 4
-# 86 "/usr/include/stdio.h" 3 4
+// # 73 "/usr/include/stdio.h" 2 3 4
+// # 86 "/usr/include/stdio.h" 3 4
 
 
 
@@ -2370,9 +2370,9 @@ typedef _G_fpos64_t fpos_t;
 
 
 typedef _G_fpos64_t fpos64_t;
-# 138 "/usr/include/stdio.h" 3 4
-# 1 "/usr/include/bits/stdio_lim.h" 1 3 4
-# 139 "/usr/include/stdio.h" 2 3 4
+// # 138 "/usr/include/stdio.h" 3 4
+// # 1 "/usr/include/bits/stdio_lim.h" 1 3 4
+// # 139 "/usr/include/stdio.h" 2 3 4
 
 
 
@@ -2400,7 +2400,7 @@ extern int renameat (int __oldfd, __const char *__old, int __newfd,
 
 
 
-# 174 "/usr/include/stdio.h" 3 4
+// # 174 "/usr/include/stdio.h" 3 4
 extern FILE *tmpfile (void) __asm__ ("" "tmpfile64");
 
 
@@ -2419,7 +2419,7 @@ extern char *tmpnam (char *__s) __attribute__ ((__nothrow__));
 
 
 extern char *tmpnam_r (char *__s) __attribute__ ((__nothrow__));
-# 203 "/usr/include/stdio.h" 3 4
+// # 203 "/usr/include/stdio.h" 3 4
 extern char *tempnam (__const char *__dir, __const char *__pfx)
      __attribute__ ((__nothrow__)) __attribute__ ((__malloc__));
 
@@ -2437,15 +2437,15 @@ extern int fclose (FILE *__stream);
 
 extern int fflush (FILE *__stream);
 
-# 228 "/usr/include/stdio.h" 3 4
+// # 228 "/usr/include/stdio.h" 3 4
 extern int fflush_unlocked (FILE *__stream);
-# 238 "/usr/include/stdio.h" 3 4
+// # 238 "/usr/include/stdio.h" 3 4
 extern int fcloseall (void);
 
 
 
 
-# 259 "/usr/include/stdio.h" 3 4
+// # 259 "/usr/include/stdio.h" 3 4
 extern FILE *fopen (__const char *__restrict __filename, __const char *__restrict __modes) __asm__ ("" "fopen64");
 
 extern FILE *freopen (__const char *__restrict __filename, __const char *__restrict __modes, FILE *__restrict __stream) __asm__ ("" "freopen64");
@@ -2637,10 +2637,10 @@ extern int getc (FILE *__stream);
 
 extern int getchar (void);
 
-# 460 "/usr/include/stdio.h" 3 4
+// # 460 "/usr/include/stdio.h" 3 4
 extern int getc_unlocked (FILE *__stream);
 extern int getchar_unlocked (void);
-# 471 "/usr/include/stdio.h" 3 4
+// # 471 "/usr/include/stdio.h" 3 4
 extern int fgetc_unlocked (FILE *__stream);
 
 
@@ -2662,7 +2662,7 @@ extern int putc (int __c, FILE *__stream);
 
 extern int putchar (int __c);
 
-# 504 "/usr/include/stdio.h" 3 4
+// # 504 "/usr/include/stdio.h" 3 4
 extern int fputc_unlocked (int __c, FILE *__stream);
 
 
@@ -2701,10 +2701,10 @@ extern char *fgets (char *__restrict __s, int __n, FILE *__restrict __stream)
 
 extern char *gets (char *__s) ;
 
-# 550 "/usr/include/stdio.h" 3 4
+// # 550 "/usr/include/stdio.h" 3 4
 extern char *fgets_unlocked (char *__restrict __s, int __n,
         FILE *__restrict __stream) ;
-# 566 "/usr/include/stdio.h" 3 4
+// # 566 "/usr/include/stdio.h" 3 4
 extern __ssize_t __getdelim (char **__restrict __lineptr,
           size_t *__restrict __n, int __delimiter,
           FILE *__restrict __stream) ;
@@ -2758,10 +2758,10 @@ extern size_t fread (void *__restrict __ptr, size_t __size,
 extern size_t fwrite (__const void *__restrict __ptr, size_t __size,
         size_t __n, FILE *__restrict __s) ;
 
-# 627 "/usr/include/stdio.h" 3 4
+// # 627 "/usr/include/stdio.h" 3 4
 extern int fputs_unlocked (__const char *__restrict __s,
       FILE *__restrict __stream);
-# 638 "/usr/include/stdio.h" 3 4
+// # 638 "/usr/include/stdio.h" 3 4
 extern size_t fread_unlocked (void *__restrict __ptr, size_t __size,
          size_t __n, FILE *__restrict __stream) ;
 extern size_t fwrite_unlocked (__const void *__restrict __ptr, size_t __size,
@@ -2786,7 +2786,7 @@ extern long int ftell (FILE *__stream) ;
 
 extern void rewind (FILE *__stream);
 
-# 682 "/usr/include/stdio.h" 3 4
+// # 682 "/usr/include/stdio.h" 3 4
 extern int fseeko (FILE *__stream, __off64_t __off, int __whence) __asm__ ("" "fseeko64");
 
 
@@ -2799,7 +2799,7 @@ extern __off64_t ftello (FILE *__stream) __asm__ ("" "ftello64");
 
 
 
-# 707 "/usr/include/stdio.h" 3 4
+// # 707 "/usr/include/stdio.h" 3 4
 extern int fgetpos (FILE *__restrict __stream, fpos_t *__restrict __pos) __asm__ ("" "fgetpos64");
 
 extern int fsetpos (FILE *__stream, __const fpos_t *__pos) __asm__ ("" "fsetpos64");
@@ -2847,15 +2847,15 @@ extern void perror (__const char *__s);
 
 
 
-# 1 "/usr/include/bits/sys_errlist.h" 1 3 4
-# 27 "/usr/include/bits/sys_errlist.h" 3 4
+// # 1 "/usr/include/bits/sys_errlist.h" 1 3 4
+// # 27 "/usr/include/bits/sys_errlist.h" 3 4
 extern int sys_nerr;
 extern __const char *__const sys_errlist[];
 
 
 extern int _sys_nerr;
 extern __const char *__const _sys_errlist[];
-# 755 "/usr/include/stdio.h" 2 3 4
+// # 755 "/usr/include/stdio.h" 2 3 4
 
 
 
@@ -2866,7 +2866,7 @@ extern int fileno (FILE *__stream) __attribute__ ((__nothrow__)) ;
 
 
 extern int fileno_unlocked (FILE *__stream) __attribute__ ((__nothrow__)) ;
-# 774 "/usr/include/stdio.h" 3 4
+// # 774 "/usr/include/stdio.h" 3 4
 extern FILE *popen (__const char *__command, __const char *__modes) ;
 
 
@@ -2915,25 +2915,25 @@ extern int ftrylockfile (FILE *__stream) __attribute__ ((__nothrow__)) ;
 
 
 extern void funlockfile (FILE *__stream) __attribute__ ((__nothrow__));
-# 844 "/usr/include/stdio.h" 3 4
+// # 844 "/usr/include/stdio.h" 3 4
 
-# 24 "src/os/unix/ngx_linux_config.h" 2
-# 1 "/usr/include/stdlib.h" 1 3 4
-# 33 "/usr/include/stdlib.h" 3 4
-# 1 "/nfs/apps/gcc/4.2.4/lib/gcc/x86_64-unknown-linux-gnu/4.2.4/include/stddef.h" 1 3 4
-# 34 "/usr/include/stdlib.h" 2 3 4
-
-
+// # 24 "src/os/unix/ngx_linux_config.h" 2
+// # 1 "/usr/include/stdlib.h" 1 3 4
+// # 33 "/usr/include/stdlib.h" 3 4
+// # 1 "/nfs/apps/gcc/4.2.4/lib/gcc/x86_64-unknown-linux-gnu/4.2.4/include/stddef.h" 1 3 4
+// # 34 "/usr/include/stdlib.h" 2 3 4
 
 
 
 
 
 
-# 1 "/usr/include/bits/waitflags.h" 1 3 4
-# 43 "/usr/include/stdlib.h" 2 3 4
-# 1 "/usr/include/bits/waitstatus.h" 1 3 4
-# 67 "/usr/include/bits/waitstatus.h" 3 4
+
+
+// # 1 "/usr/include/bits/waitflags.h" 1 3 4
+// # 43 "/usr/include/stdlib.h" 2 3 4
+// # 1 "/usr/include/bits/waitstatus.h" 1 3 4
+// # 67 "/usr/include/bits/waitstatus.h" 3 4
 union wait
   {
     int w_status;
@@ -2966,14 +2966,14 @@ union wait
 
       } __wait_stopped;
   };
-# 44 "/usr/include/stdlib.h" 2 3 4
-# 68 "/usr/include/stdlib.h" 3 4
+// # 44 "/usr/include/stdlib.h" 2 3 4
+// # 68 "/usr/include/stdlib.h" 3 4
 typedef union
   {
     union wait *__uptr;
     int *__iptr;
   } __WAIT_STATUS __attribute__ ((__transparent_union__));
-# 96 "/usr/include/stdlib.h" 3 4
+// # 96 "/usr/include/stdlib.h" 3 4
 
 
 typedef struct
@@ -3003,7 +3003,7 @@ __extension__ typedef struct
   } lldiv_t;
 
 
-# 140 "/usr/include/stdlib.h" 3 4
+// # 140 "/usr/include/stdlib.h" 3 4
 extern size_t __ctype_get_mb_cur_max (void) __attribute__ ((__nothrow__)) ;
 
 
@@ -3083,9 +3083,9 @@ extern unsigned long long int strtoull (__const char *__restrict __nptr,
      char **__restrict __endptr, int __base)
      __attribute__ ((__nothrow__)) __attribute__ ((__nonnull__ (1))) ;
 
-# 236 "/usr/include/stdlib.h" 3 4
-# 1 "/usr/include/xlocale.h" 1 3 4
-# 28 "/usr/include/xlocale.h" 3 4
+// # 236 "/usr/include/stdlib.h" 3 4
+// # 1 "/usr/include/xlocale.h" 1 3 4
+// # 28 "/usr/include/xlocale.h" 3 4
 typedef struct __locale_struct
 {
 
@@ -3099,7 +3099,7 @@ typedef struct __locale_struct
 
   const char *__names[13];
 } *__locale_t;
-# 237 "/usr/include/stdlib.h" 2 3 4
+// # 237 "/usr/include/stdlib.h" 2 3 4
 
 
 
@@ -3182,13 +3182,13 @@ extern unsigned long long int __strtoull_internal (__const char *
          char **__restrict __endptr,
          int __base, int __group)
      __attribute__ ((__nothrow__)) __attribute__ ((__nonnull__ (1))) ;
-# 429 "/usr/include/stdlib.h" 3 4
+// # 429 "/usr/include/stdlib.h" 3 4
 extern char *l64a (long int __n) __attribute__ ((__nothrow__)) ;
 
 
 extern long int a64l (__const char *__s)
      __attribute__ ((__nothrow__)) __attribute__ ((__pure__)) __attribute__ ((__nonnull__ (1))) ;
-# 445 "/usr/include/stdlib.h" 3 4
+// # 445 "/usr/include/stdlib.h" 3 4
 extern long int random (void) __attribute__ ((__nothrow__));
 
 
@@ -3356,10 +3356,10 @@ extern void cfree (void *__ptr) __attribute__ ((__nothrow__));
 
 
 
-# 1 "/usr/include/alloca.h" 1 3 4
-# 25 "/usr/include/alloca.h" 3 4
-# 1 "/nfs/apps/gcc/4.2.4/lib/gcc/x86_64-unknown-linux-gnu/4.2.4/include/stddef.h" 1 3 4
-# 26 "/usr/include/alloca.h" 2 3 4
+// # 1 "/usr/include/alloca.h" 1 3 4
+// # 25 "/usr/include/alloca.h" 3 4
+// # 1 "/nfs/apps/gcc/4.2.4/lib/gcc/x86_64-unknown-linux-gnu/4.2.4/include/stddef.h" 1 3 4
+// # 26 "/usr/include/alloca.h" 2 3 4
 
 
 
@@ -3374,7 +3374,7 @@ extern void *alloca (size_t __size) __attribute__ ((__nothrow__));
 
 
 
-# 613 "/usr/include/stdlib.h" 2 3 4
+// # 613 "/usr/include/stdlib.h" 2 3 4
 
 
 
@@ -3452,9 +3452,9 @@ extern int unsetenv (__const char *__name) __attribute__ ((__nothrow__));
 
 
 extern int clearenv (void) __attribute__ ((__nothrow__));
-# 698 "/usr/include/stdlib.h" 3 4
+// # 698 "/usr/include/stdlib.h" 3 4
 extern char *mktemp (char *__template) __attribute__ ((__nothrow__)) __attribute__ ((__nonnull__ (1))) ;
-# 712 "/usr/include/stdlib.h" 3 4
+// # 712 "/usr/include/stdlib.h" 3 4
 extern int mkstemp (char *__template) __asm__ ("" "mkstemp64")
      __attribute__ ((__nonnull__ (1))) ;
 
@@ -3463,7 +3463,7 @@ extern int mkstemp (char *__template) __asm__ ("" "mkstemp64")
 
 
 extern int mkstemp64 (char *__template) __attribute__ ((__nonnull__ (1))) ;
-# 729 "/usr/include/stdlib.h" 3 4
+// # 729 "/usr/include/stdlib.h" 3 4
 extern char *mkdtemp (char *__template) __attribute__ ((__nothrow__)) __attribute__ ((__nonnull__ (1))) ;
 
 
@@ -3483,7 +3483,7 @@ extern int system (__const char *__command) ;
 
 extern char *canonicalize_file_name (__const char *__name)
      __attribute__ ((__nothrow__)) __attribute__ ((__nonnull__ (1))) ;
-# 756 "/usr/include/stdlib.h" 3 4
+// # 756 "/usr/include/stdlib.h" 3 4
 extern char *realpath (__const char *__restrict __name,
          char *__restrict __resolved) __attribute__ ((__nothrow__)) ;
 
@@ -3539,7 +3539,7 @@ __extension__ extern lldiv_t lldiv (long long int __numer,
         long long int __denom)
      __attribute__ ((__nothrow__)) __attribute__ ((__const__)) ;
 
-# 821 "/usr/include/stdlib.h" 3 4
+// # 821 "/usr/include/stdlib.h" 3 4
 extern char *ecvt (double __value, int __ndigit, int *__restrict __decpt,
      int *__restrict __sign) __attribute__ ((__nothrow__)) __attribute__ ((__nonnull__ (3, 4))) ;
 
@@ -3618,7 +3618,7 @@ extern size_t wcstombs (char *__restrict __s,
 
 
 extern int rpmatch (__const char *__response) __attribute__ ((__nothrow__)) __attribute__ ((__nonnull__ (1))) ;
-# 909 "/usr/include/stdlib.h" 3 4
+// # 909 "/usr/include/stdlib.h" 3 4
 extern int getsubopt (char **__restrict __optionp,
         char *__const *__restrict __tokens,
         char **__restrict __valuep)
@@ -3673,61 +3673,61 @@ extern int getpt (void);
 
 extern int getloadavg (double __loadavg[], int __nelem)
      __attribute__ ((__nothrow__)) __attribute__ ((__nonnull__ (1)));
-# 977 "/usr/include/stdlib.h" 3 4
+// # 977 "/usr/include/stdlib.h" 3 4
 
-# 25 "src/os/unix/ngx_linux_config.h" 2
-# 1 "/usr/include/errno.h" 1 3 4
-# 32 "/usr/include/errno.h" 3 4
-
-
-
-
-# 1 "/usr/include/bits/errno.h" 1 3 4
-# 25 "/usr/include/bits/errno.h" 3 4
-# 1 "/usr/include/linux/errno.h" 1 3 4
-
-
-
-# 1 "/usr/include/asm/errno.h" 1 3 4
+// # 25 "src/os/unix/ngx_linux_config.h" 2
+// # 1 "/usr/include/errno.h" 1 3 4
+// # 32 "/usr/include/errno.h" 3 4
 
 
 
 
-# 1 "/usr/include/asm-x86_64/errno.h" 1 3 4
+// # 1 "/usr/include/bits/errno.h" 1 3 4
+// # 25 "/usr/include/bits/errno.h" 3 4
+// # 1 "/usr/include/linux/errno.h" 1 3 4
 
 
 
-# 1 "/usr/include/asm-generic/errno.h" 1 3 4
+// # 1 "/usr/include/asm/errno.h" 1 3 4
 
 
 
-# 1 "/usr/include/asm-generic/errno-base.h" 1 3 4
-# 5 "/usr/include/asm-generic/errno.h" 2 3 4
-# 5 "/usr/include/asm-x86_64/errno.h" 2 3 4
-# 6 "/usr/include/asm/errno.h" 2 3 4
-# 5 "/usr/include/linux/errno.h" 2 3 4
-# 26 "/usr/include/bits/errno.h" 2 3 4
-# 43 "/usr/include/bits/errno.h" 3 4
+
+// # 1 "/usr/include/asm-x86_64/errno.h" 1 3 4
+
+
+
+// # 1 "/usr/include/asm-generic/errno.h" 1 3 4
+
+
+
+// # 1 "/usr/include/asm-generic/errno-base.h" 1 3 4
+// # 5 "/usr/include/asm-generic/errno.h" 2 3 4
+// # 5 "/usr/include/asm-x86_64/errno.h" 2 3 4
+// # 6 "/usr/include/asm/errno.h" 2 3 4
+// # 5 "/usr/include/linux/errno.h" 2 3 4
+// # 26 "/usr/include/bits/errno.h" 2 3 4
+// # 43 "/usr/include/bits/errno.h" 3 4
 extern int *__errno_location (void) __attribute__ ((__nothrow__)) __attribute__ ((__const__));
-# 37 "/usr/include/errno.h" 2 3 4
-# 55 "/usr/include/errno.h" 3 4
+// # 37 "/usr/include/errno.h" 2 3 4
+// # 55 "/usr/include/errno.h" 3 4
 extern char *program_invocation_name, *program_invocation_short_name;
 
 
 
 
-# 69 "/usr/include/errno.h" 3 4
+// # 69 "/usr/include/errno.h" 3 4
 typedef int error_t;
-# 26 "src/os/unix/ngx_linux_config.h" 2
-# 1 "/usr/include/string.h" 1 3 4
-# 28 "/usr/include/string.h" 3 4
+// # 26 "src/os/unix/ngx_linux_config.h" 2
+// # 1 "/usr/include/string.h" 1 3 4
+// # 28 "/usr/include/string.h" 3 4
 
 
 
 
 
-# 1 "/nfs/apps/gcc/4.2.4/lib/gcc/x86_64-unknown-linux-gnu/4.2.4/include/stddef.h" 1 3 4
-# 34 "/usr/include/string.h" 2 3 4
+// # 1 "/nfs/apps/gcc/4.2.4/lib/gcc/x86_64-unknown-linux-gnu/4.2.4/include/stddef.h" 1 3 4
+// # 34 "/usr/include/string.h" 2 3 4
 
 
 
@@ -3807,7 +3807,7 @@ extern size_t strxfrm (char *__restrict __dest,
          __const char *__restrict __src, size_t __n)
      __attribute__ ((__nothrow__)) __attribute__ ((__nonnull__ (2)));
 
-# 121 "/usr/include/string.h" 3 4
+// # 121 "/usr/include/string.h" 3 4
 extern int strcoll_l (__const char *__s1, __const char *__s2, __locale_t __l)
      __attribute__ ((__nothrow__)) __attribute__ ((__pure__)) __attribute__ ((__nonnull__ (1, 2, 3)));
 
@@ -3827,7 +3827,7 @@ extern char *strdup (__const char *__s)
 
 extern char *strndup (__const char *__string, size_t __n)
      __attribute__ ((__nothrow__)) __attribute__ ((__malloc__)) __attribute__ ((__nonnull__ (1)));
-# 165 "/usr/include/string.h" 3 4
+// # 165 "/usr/include/string.h" 3 4
 
 
 extern char *strchr (__const char *__s, int __c)
@@ -3921,7 +3921,7 @@ extern size_t strnlen (__const char *__string, size_t __maxlen)
 
 extern char *strerror (int __errnum) __attribute__ ((__nothrow__));
 
-# 281 "/usr/include/string.h" 3 4
+// # 281 "/usr/include/string.h" 3 4
 extern char *strerror_r (int __errnum, char *__buf, size_t __buflen)
      __attribute__ ((__nothrow__)) __attribute__ ((__nonnull__ (2)));
 
@@ -4029,19 +4029,19 @@ extern void *memfrob (void *__s, size_t __n) __attribute__ ((__nothrow__)) __att
 
 
 extern char *basename (__const char *__filename) __attribute__ ((__nothrow__)) __attribute__ ((__nonnull__ (1)));
-# 426 "/usr/include/string.h" 3 4
+// # 426 "/usr/include/string.h" 3 4
 
-# 27 "src/os/unix/ngx_linux_config.h" 2
-# 1 "/usr/include/signal.h" 1 3 4
-# 31 "/usr/include/signal.h" 3 4
+// # 27 "src/os/unix/ngx_linux_config.h" 2
+// # 1 "/usr/include/signal.h" 1 3 4
+// # 31 "/usr/include/signal.h" 3 4
 
 
-# 1 "/usr/include/bits/sigset.h" 1 3 4
-# 103 "/usr/include/bits/sigset.h" 3 4
+// # 1 "/usr/include/bits/sigset.h" 1 3 4
+// # 103 "/usr/include/bits/sigset.h" 3 4
 extern int __sigismember (__const __sigset_t *, int);
 extern int __sigaddset (__sigset_t *, int);
 extern int __sigdelset (__sigset_t *, int);
-# 34 "/usr/include/signal.h" 2 3 4
+// # 34 "/usr/include/signal.h" 2 3 4
 
 
 
@@ -4051,10 +4051,10 @@ extern int __sigdelset (__sigset_t *, int);
 
 typedef __sig_atomic_t sig_atomic_t;
 
-# 58 "/usr/include/signal.h" 3 4
-# 1 "/usr/include/bits/signum.h" 1 3 4
-# 59 "/usr/include/signal.h" 2 3 4
-# 75 "/usr/include/signal.h" 3 4
+// # 58 "/usr/include/signal.h" 3 4
+// # 1 "/usr/include/bits/signum.h" 1 3 4
+// # 59 "/usr/include/signal.h" 2 3 4
+// # 75 "/usr/include/signal.h" 3 4
 typedef void (*__sighandler_t) (int);
 
 
@@ -4074,7 +4074,7 @@ extern __sighandler_t sysv_signal (int __sig, __sighandler_t __handler)
 
 extern __sighandler_t signal (int __sig, __sighandler_t __handler)
      __attribute__ ((__nothrow__));
-# 104 "/usr/include/signal.h" 3 4
+// # 104 "/usr/include/signal.h" 3 4
 
 
 
@@ -4113,11 +4113,11 @@ extern int gsignal (int __sig) __attribute__ ((__nothrow__));
 
 
 extern void psignal (int __sig, __const char *__s);
-# 153 "/usr/include/signal.h" 3 4
+// # 153 "/usr/include/signal.h" 3 4
 extern int __sigpause (int __sig_or_mask, int __is_sig);
-# 162 "/usr/include/signal.h" 3 4
+// # 162 "/usr/include/signal.h" 3 4
 extern int sigpause (int __sig) __asm__ ("__xpg_sigpause");
-# 181 "/usr/include/signal.h" 3 4
+// # 181 "/usr/include/signal.h" 3 4
 extern int sigblock (int __mask) __attribute__ ((__nothrow__)) __attribute__ ((__deprecated__));
 
 
@@ -4125,7 +4125,7 @@ extern int sigsetmask (int __mask) __attribute__ ((__nothrow__)) __attribute__ (
 
 
 extern int siggetmask (void) __attribute__ ((__nothrow__)) __attribute__ ((__deprecated__));
-# 196 "/usr/include/signal.h" 3 4
+// # 196 "/usr/include/signal.h" 3 4
 typedef __sighandler_t sighandler_t;
 
 
@@ -4139,14 +4139,14 @@ typedef __sighandler_t sig_t;
 
 
 
-# 1 "/usr/include/time.h" 1 3 4
-# 210 "/usr/include/signal.h" 2 3 4
+// # 1 "/usr/include/time.h" 1 3 4
+// # 210 "/usr/include/signal.h" 2 3 4
 
 
-# 1 "/usr/include/bits/siginfo.h" 1 3 4
-# 25 "/usr/include/bits/siginfo.h" 3 4
-# 1 "/usr/include/bits/wordsize.h" 1 3 4
-# 26 "/usr/include/bits/siginfo.h" 2 3 4
+// # 1 "/usr/include/bits/siginfo.h" 1 3 4
+// # 25 "/usr/include/bits/siginfo.h" 3 4
+// # 1 "/usr/include/bits/wordsize.h" 1 3 4
+// # 26 "/usr/include/bits/siginfo.h" 2 3 4
 
 
 
@@ -4159,7 +4159,7 @@ typedef union sigval
     int sival_int;
     void *sival_ptr;
   } sigval_t;
-# 51 "/usr/include/bits/siginfo.h" 3 4
+// # 51 "/usr/include/bits/siginfo.h" 3 4
 typedef struct siginfo
   {
     int si_signo;
@@ -4218,7 +4218,7 @@ typedef struct siginfo
    } _sigpoll;
       } _sifields;
   } siginfo_t;
-# 129 "/usr/include/bits/siginfo.h" 3 4
+// # 129 "/usr/include/bits/siginfo.h" 3 4
 enum
 {
   SI_ASYNCNL = -60,
@@ -4346,7 +4346,7 @@ enum
   POLL_HUP
 
 };
-# 273 "/usr/include/bits/siginfo.h" 3 4
+// # 273 "/usr/include/bits/siginfo.h" 3 4
 typedef struct sigevent
   {
     sigval_t sigev_value;
@@ -4386,7 +4386,7 @@ enum
   SIGEV_THREAD_ID = 4
 
 };
-# 213 "/usr/include/signal.h" 2 3 4
+// # 213 "/usr/include/signal.h" 2 3 4
 
 
 
@@ -4420,8 +4420,8 @@ extern int sigorset (sigset_t *__set, __const sigset_t *__left,
 
 
 
-# 1 "/usr/include/bits/sigaction.h" 1 3 4
-# 25 "/usr/include/bits/sigaction.h" 3 4
+// # 1 "/usr/include/bits/sigaction.h" 1 3 4
+// # 25 "/usr/include/bits/sigaction.h" 3 4
 struct sigaction
   {
 
@@ -4449,7 +4449,7 @@ struct sigaction
 
     void (*sa_restorer) (void);
   };
-# 247 "/usr/include/signal.h" 2 3 4
+// # 247 "/usr/include/signal.h" 2 3 4
 
 
 extern int sigprocmask (int __how, __const sigset_t *__restrict __set,
@@ -4499,7 +4499,7 @@ extern int sigtimedwait (__const sigset_t *__restrict __set,
 
 extern int sigqueue (__pid_t __pid, int __sig, __const union sigval __val)
      __attribute__ ((__nothrow__));
-# 304 "/usr/include/signal.h" 3 4
+// # 304 "/usr/include/signal.h" 3 4
 extern __const char *__const _sys_siglist[65];
 extern __const char *__const sys_siglist[65];
 
@@ -4512,16 +4512,16 @@ struct sigvec
     int sv_flags;
 
   };
-# 328 "/usr/include/signal.h" 3 4
+// # 328 "/usr/include/signal.h" 3 4
 extern int sigvec (int __sig, __const struct sigvec *__vec,
      struct sigvec *__ovec) __attribute__ ((__nothrow__));
 
 
 
-# 1 "/usr/include/bits/sigcontext.h" 1 3 4
-# 26 "/usr/include/bits/sigcontext.h" 3 4
-# 1 "/usr/include/bits/wordsize.h" 1 3 4
-# 27 "/usr/include/bits/sigcontext.h" 2 3 4
+// # 1 "/usr/include/bits/sigcontext.h" 1 3 4
+// # 26 "/usr/include/bits/sigcontext.h" 3 4
+// # 1 "/usr/include/bits/wordsize.h" 1 3 4
+// # 27 "/usr/include/bits/sigcontext.h" 2 3 4
 
 struct _fpreg
 {
@@ -4540,7 +4540,7 @@ struct _xmmreg
 {
   __uint32_t element[4];
 };
-# 109 "/usr/include/bits/sigcontext.h" 3 4
+// # 109 "/usr/include/bits/sigcontext.h" 3 4
 struct _fpstate
 {
 
@@ -4588,15 +4588,15 @@ struct sigcontext
   struct _fpstate * fpstate;
   unsigned long __reserved1 [8];
 };
-# 334 "/usr/include/signal.h" 2 3 4
+// # 334 "/usr/include/signal.h" 2 3 4
 
 
 extern int sigreturn (struct sigcontext *__scp) __attribute__ ((__nothrow__));
-# 346 "/usr/include/signal.h" 3 4
+// # 346 "/usr/include/signal.h" 3 4
 extern int siginterrupt (int __sig, int __interrupt) __attribute__ ((__nothrow__));
 
-# 1 "/usr/include/bits/sigstack.h" 1 3 4
-# 26 "/usr/include/bits/sigstack.h" 3 4
+// # 1 "/usr/include/bits/sigstack.h" 1 3 4
+// # 26 "/usr/include/bits/sigstack.h" 3 4
 struct sigstack
   {
     void *ss_sp;
@@ -4612,23 +4612,23 @@ enum
   SS_DISABLE
 
 };
-# 50 "/usr/include/bits/sigstack.h" 3 4
+// # 50 "/usr/include/bits/sigstack.h" 3 4
 typedef struct sigaltstack
   {
     void *ss_sp;
     int ss_flags;
     size_t ss_size;
   } stack_t;
-# 349 "/usr/include/signal.h" 2 3 4
+// # 349 "/usr/include/signal.h" 2 3 4
 
 
-# 1 "/usr/include/sys/ucontext.h" 1 3 4
-# 23 "/usr/include/sys/ucontext.h" 3 4
-# 1 "/usr/include/signal.h" 1 3 4
-# 24 "/usr/include/sys/ucontext.h" 2 3 4
-# 1 "/usr/include/bits/wordsize.h" 1 3 4
-# 25 "/usr/include/sys/ucontext.h" 2 3 4
-# 33 "/usr/include/sys/ucontext.h" 3 4
+// # 1 "/usr/include/sys/ucontext.h" 1 3 4
+// # 23 "/usr/include/sys/ucontext.h" 3 4
+// # 1 "/usr/include/signal.h" 1 3 4
+// # 24 "/usr/include/sys/ucontext.h" 2 3 4
+// # 1 "/usr/include/bits/wordsize.h" 1 3 4
+// # 25 "/usr/include/sys/ucontext.h" 2 3 4
+// # 33 "/usr/include/sys/ucontext.h" 3 4
 typedef long int greg_t;
 
 
@@ -4740,7 +4740,7 @@ typedef struct ucontext
     __sigset_t uc_sigmask;
     struct _libc_fpstate __fpregs_mem;
   } ucontext_t;
-# 352 "/usr/include/signal.h" 2 3 4
+// # 352 "/usr/include/signal.h" 2 3 4
 
 
 
@@ -4776,15 +4776,15 @@ extern __sighandler_t sigset (int __sig, __sighandler_t __disp) __attribute__ ((
 
 
 
-# 1 "/usr/include/bits/sigthread.h" 1 3 4
-# 31 "/usr/include/bits/sigthread.h" 3 4
+// # 1 "/usr/include/bits/sigthread.h" 1 3 4
+// # 31 "/usr/include/bits/sigthread.h" 3 4
 extern int pthread_sigmask (int __how,
        __const __sigset_t *__restrict __newmask,
        __sigset_t *__restrict __oldmask)__attribute__ ((__nothrow__));
 
 
 extern int pthread_kill (pthread_t __threadid, int __signo) __attribute__ ((__nothrow__));
-# 388 "/usr/include/signal.h" 2 3 4
+// # 388 "/usr/include/signal.h" 2 3 4
 
 
 
@@ -4798,17 +4798,17 @@ extern int __libc_current_sigrtmax (void) __attribute__ ((__nothrow__));
 
 
 
-# 28 "src/os/unix/ngx_linux_config.h" 2
-# 1 "/usr/include/pwd.h" 1 3 4
-# 28 "/usr/include/pwd.h" 3 4
+// # 28 "src/os/unix/ngx_linux_config.h" 2
+// # 1 "/usr/include/pwd.h" 1 3 4
+// # 28 "/usr/include/pwd.h" 3 4
 
 
 
 
 
-# 1 "/nfs/apps/gcc/4.2.4/lib/gcc/x86_64-unknown-linux-gnu/4.2.4/include/stddef.h" 1 3 4
-# 34 "/usr/include/pwd.h" 2 3 4
-# 50 "/usr/include/pwd.h" 3 4
+// # 1 "/nfs/apps/gcc/4.2.4/lib/gcc/x86_64-unknown-linux-gnu/4.2.4/include/stddef.h" 1 3 4
+// # 34 "/usr/include/pwd.h" 2 3 4
+// # 50 "/usr/include/pwd.h" 3 4
 struct passwd
 {
   char *pw_name;
@@ -4819,7 +4819,7 @@ struct passwd
   char *pw_dir;
   char *pw_shell;
 };
-# 73 "/usr/include/pwd.h" 3 4
+// # 73 "/usr/include/pwd.h" 3 4
 extern void setpwent (void);
 
 
@@ -4833,7 +4833,7 @@ extern void endpwent (void);
 
 
 extern struct passwd *getpwent (void);
-# 95 "/usr/include/pwd.h" 3 4
+// # 95 "/usr/include/pwd.h" 3 4
 extern struct passwd *fgetpwent (FILE *__stream);
 
 
@@ -4857,7 +4857,7 @@ extern struct passwd *getpwuid (__uid_t __uid);
 
 
 extern struct passwd *getpwnam (__const char *__name);
-# 140 "/usr/include/pwd.h" 3 4
+// # 140 "/usr/include/pwd.h" 3 4
 extern int getpwent_r (struct passwd *__restrict __resultbuf,
          char *__restrict __buffer, size_t __buflen,
          struct passwd **__restrict __result);
@@ -4872,27 +4872,27 @@ extern int getpwnam_r (__const char *__restrict __name,
          struct passwd *__restrict __resultbuf,
          char *__restrict __buffer, size_t __buflen,
          struct passwd **__restrict __result);
-# 164 "/usr/include/pwd.h" 3 4
+// # 164 "/usr/include/pwd.h" 3 4
 extern int fgetpwent_r (FILE *__restrict __stream,
    struct passwd *__restrict __resultbuf,
    char *__restrict __buffer, size_t __buflen,
    struct passwd **__restrict __result);
-# 181 "/usr/include/pwd.h" 3 4
+// # 181 "/usr/include/pwd.h" 3 4
 extern int getpw (__uid_t __uid, char *__buffer);
 
 
 
-# 29 "src/os/unix/ngx_linux_config.h" 2
-# 1 "/usr/include/grp.h" 1 3 4
-# 28 "/usr/include/grp.h" 3 4
+// # 29 "src/os/unix/ngx_linux_config.h" 2
+// # 1 "/usr/include/grp.h" 1 3 4
+// # 28 "/usr/include/grp.h" 3 4
 
 
 
 
 
-# 1 "/nfs/apps/gcc/4.2.4/lib/gcc/x86_64-unknown-linux-gnu/4.2.4/include/stddef.h" 1 3 4
-# 34 "/usr/include/grp.h" 2 3 4
-# 43 "/usr/include/grp.h" 3 4
+// # 1 "/nfs/apps/gcc/4.2.4/lib/gcc/x86_64-unknown-linux-gnu/4.2.4/include/stddef.h" 1 3 4
+// # 34 "/usr/include/grp.h" 2 3 4
+// # 43 "/usr/include/grp.h" 3 4
 struct group
   {
     char *gr_name;
@@ -4900,7 +4900,7 @@ struct group
     __gid_t gr_gid;
     char **gr_mem;
   };
-# 63 "/usr/include/grp.h" 3 4
+// # 63 "/usr/include/grp.h" 3 4
 extern void setgrent (void);
 
 
@@ -4914,9 +4914,9 @@ extern void endgrent (void);
 
 
 extern struct group *getgrent (void);
-# 85 "/usr/include/grp.h" 3 4
+// # 85 "/usr/include/grp.h" 3 4
 extern struct group *fgetgrent (FILE *__stream);
-# 95 "/usr/include/grp.h" 3 4
+// # 95 "/usr/include/grp.h" 3 4
 extern int putgrent (__const struct group *__restrict __p,
        FILE *__restrict __f);
 
@@ -4932,7 +4932,7 @@ extern struct group *getgrgid (__gid_t __gid);
 
 
 extern struct group *getgrnam (__const char *__name);
-# 133 "/usr/include/grp.h" 3 4
+// # 133 "/usr/include/grp.h" 3 4
 extern int getgrent_r (struct group *__restrict __resultbuf,
          char *__restrict __buffer, size_t __buflen,
          struct group **__restrict __result);
@@ -4954,33 +4954,33 @@ extern int getgrnam_r (__const char *__restrict __name,
          struct group *__restrict __resultbuf,
          char *__restrict __buffer, size_t __buflen,
          struct group **__restrict __result);
-# 163 "/usr/include/grp.h" 3 4
+// # 163 "/usr/include/grp.h" 3 4
 extern int fgetgrent_r (FILE *__restrict __stream,
    struct group *__restrict __resultbuf,
    char *__restrict __buffer, size_t __buflen,
    struct group **__restrict __result);
-# 175 "/usr/include/grp.h" 3 4
-# 1 "/nfs/apps/gcc/4.2.4/lib/gcc/x86_64-unknown-linux-gnu/4.2.4/include/stddef.h" 1 3 4
-# 176 "/usr/include/grp.h" 2 3 4
+// # 175 "/usr/include/grp.h" 3 4
+// # 1 "/nfs/apps/gcc/4.2.4/lib/gcc/x86_64-unknown-linux-gnu/4.2.4/include/stddef.h" 1 3 4
+// # 176 "/usr/include/grp.h" 2 3 4
 
 
 extern int setgroups (size_t __n, __const __gid_t *__groups) __attribute__ ((__nothrow__));
-# 188 "/usr/include/grp.h" 3 4
+// # 188 "/usr/include/grp.h" 3 4
 extern int getgrouplist (__const char *__user, __gid_t __group,
     __gid_t *__groups, int *__ngroups);
-# 199 "/usr/include/grp.h" 3 4
+// # 199 "/usr/include/grp.h" 3 4
 extern int initgroups (__const char *__user, __gid_t __group);
 
 
 
 
-# 30 "src/os/unix/ngx_linux_config.h" 2
-# 1 "/usr/include/dirent.h" 1 3 4
-# 28 "/usr/include/dirent.h" 3 4
+// # 30 "src/os/unix/ngx_linux_config.h" 2
+// # 1 "/usr/include/dirent.h" 1 3 4
+// # 28 "/usr/include/dirent.h" 3 4
 
-# 62 "/usr/include/dirent.h" 3 4
-# 1 "/usr/include/bits/dirent.h" 1 3 4
-# 23 "/usr/include/bits/dirent.h" 3 4
+// # 62 "/usr/include/dirent.h" 3 4
+// # 1 "/usr/include/bits/dirent.h" 1 3 4
+// # 23 "/usr/include/bits/dirent.h" 3 4
 struct dirent
   {
 
@@ -5004,8 +5004,8 @@ struct dirent64
     unsigned char d_type;
     char d_name[256];
   };
-# 63 "/usr/include/dirent.h" 2 3 4
-# 98 "/usr/include/dirent.h" 3 4
+// # 63 "/usr/include/dirent.h" 2 3 4
+// # 98 "/usr/include/dirent.h" 3 4
 enum
   {
     DT_UNKNOWN = 0,
@@ -5027,7 +5027,7 @@ enum
     DT_WHT = 14
 
   };
-# 128 "/usr/include/dirent.h" 3 4
+// # 128 "/usr/include/dirent.h" 3 4
 typedef struct __dirstream DIR;
 
 
@@ -5051,7 +5051,7 @@ extern DIR *fdopendir (int __fd);
 
 
 extern int closedir (DIR *__dirp) __attribute__ ((__nonnull__ (1)));
-# 166 "/usr/include/dirent.h" 3 4
+// # 166 "/usr/include/dirent.h" 3 4
 extern struct dirent *readdir (DIR *__dirp) __asm__ ("" "readdir64")
      __attribute__ ((__nonnull__ (1)));
 
@@ -5061,9 +5061,9 @@ extern struct dirent *readdir (DIR *__dirp) __asm__ ("" "readdir64")
 
 
 extern struct dirent64 *readdir64 (DIR *__dirp) __attribute__ ((__nonnull__ (1)));
-# 190 "/usr/include/dirent.h" 3 4
+// # 190 "/usr/include/dirent.h" 3 4
 extern int readdir_r (DIR *__restrict __dirp, struct dirent *__restrict __entry, struct dirent **__restrict __result) __asm__ ("" "readdir64_r") __attribute__ ((__nonnull__ (1, 2, 3)));
-# 201 "/usr/include/dirent.h" 3 4
+// # 201 "/usr/include/dirent.h" 3 4
 extern int readdir64_r (DIR *__restrict __dirp,
    struct dirent64 *__restrict __entry,
    struct dirent64 **__restrict __result)
@@ -5095,31 +5095,31 @@ extern int dirfd (DIR *__dirp) __attribute__ ((__nothrow__)) __attribute__ ((__n
 
 
 
-# 1 "/usr/include/bits/posix1_lim.h" 1 3 4
-# 153 "/usr/include/bits/posix1_lim.h" 3 4
-# 1 "/usr/include/bits/local_lim.h" 1 3 4
-# 36 "/usr/include/bits/local_lim.h" 3 4
-# 1 "/usr/include/linux/limits.h" 1 3 4
-# 37 "/usr/include/bits/local_lim.h" 2 3 4
-# 154 "/usr/include/bits/posix1_lim.h" 2 3 4
-# 233 "/usr/include/dirent.h" 2 3 4
-# 243 "/usr/include/dirent.h" 3 4
-# 1 "/nfs/apps/gcc/4.2.4/lib/gcc/x86_64-unknown-linux-gnu/4.2.4/include/stddef.h" 1 3 4
-# 244 "/usr/include/dirent.h" 2 3 4
-# 257 "/usr/include/dirent.h" 3 4
+// # 1 "/usr/include/bits/posix1_lim.h" 1 3 4
+// # 153 "/usr/include/bits/posix1_lim.h" 3 4
+// # 1 "/usr/include/bits/local_lim.h" 1 3 4
+// # 36 "/usr/include/bits/local_lim.h" 3 4
+// # 1 "/usr/include/linux/limits.h" 1 3 4
+// # 37 "/usr/include/bits/local_lim.h" 2 3 4
+// # 154 "/usr/include/bits/posix1_lim.h" 2 3 4
+// # 233 "/usr/include/dirent.h" 2 3 4
+// # 243 "/usr/include/dirent.h" 3 4
+// # 1 "/nfs/apps/gcc/4.2.4/lib/gcc/x86_64-unknown-linux-gnu/4.2.4/include/stddef.h" 1 3 4
+// # 244 "/usr/include/dirent.h" 2 3 4
+// # 257 "/usr/include/dirent.h" 3 4
 extern int scandir (__const char *__restrict __dir, struct dirent ***__restrict __namelist, int (*__selector) (__const struct dirent *), int (*__cmp) (__const void *, __const void *)) __asm__ ("" "scandir64") __attribute__ ((__nonnull__ (1, 2)));
-# 271 "/usr/include/dirent.h" 3 4
+// # 271 "/usr/include/dirent.h" 3 4
 extern int scandir64 (__const char *__restrict __dir,
         struct dirent64 ***__restrict __namelist,
         int (*__selector) (__const struct dirent64 *),
         int (*__cmp) (__const void *, __const void *))
      __attribute__ ((__nonnull__ (1, 2)));
-# 284 "/usr/include/dirent.h" 3 4
+// # 284 "/usr/include/dirent.h" 3 4
 extern int alphasort (__const void *__e1, __const void *__e2) __asm__ ("" "alphasort64") __attribute__ ((__nothrow__)) __attribute__ ((__pure__)) __attribute__ ((__nonnull__ (1, 2)));
-# 293 "/usr/include/dirent.h" 3 4
+// # 293 "/usr/include/dirent.h" 3 4
 extern int alphasort64 (__const void *__e1, __const void *__e2)
      __attribute__ ((__nothrow__)) __attribute__ ((__pure__)) __attribute__ ((__nonnull__ (1, 2)));
-# 304 "/usr/include/dirent.h" 3 4
+// # 304 "/usr/include/dirent.h" 3 4
 extern int versionsort (__const void *__e1, __const void *__e2) __asm__ ("" "versionsort64") __attribute__ ((__nothrow__))
 
 
@@ -5132,9 +5132,9 @@ extern int versionsort (__const void *__e1, __const void *__e2) __asm__ ("" "ver
 
 extern int versionsort64 (__const void *__e1, __const void *__e2)
      __attribute__ ((__nothrow__)) __attribute__ ((__pure__)) __attribute__ ((__nonnull__ (1, 2)));
-# 330 "/usr/include/dirent.h" 3 4
+// # 330 "/usr/include/dirent.h" 3 4
 extern __ssize_t getdirentries (int __fd, char *__restrict __buf, size_t __nbytes, __off64_t *__restrict __basep) __asm__ ("" "getdirentries64") __attribute__ ((__nothrow__)) __attribute__ ((__nonnull__ (2, 4)));
-# 341 "/usr/include/dirent.h" 3 4
+// # 341 "/usr/include/dirent.h" 3 4
 extern __ssize_t getdirentries64 (int __fd, char *__restrict __buf,
       size_t __nbytes,
       __off64_t *__restrict __basep)
@@ -5144,11 +5144,11 @@ extern __ssize_t getdirentries64 (int __fd, char *__restrict __buf,
 
 
 
-# 31 "src/os/unix/ngx_linux_config.h" 2
-# 1 "/usr/include/glob.h" 1 3 4
-# 24 "/usr/include/glob.h" 3 4
+// # 31 "src/os/unix/ngx_linux_config.h" 2
+// # 1 "/usr/include/glob.h" 1 3 4
+// # 24 "/usr/include/glob.h" 3 4
 
-# 88 "/usr/include/glob.h" 3 4
+// # 88 "/usr/include/glob.h" 3 4
 struct stat;
 
 typedef struct
@@ -5204,7 +5204,7 @@ typedef struct
 
 
   } glob64_t;
-# 166 "/usr/include/glob.h" 3 4
+// # 166 "/usr/include/glob.h" 3 4
 extern int glob (__const char *__restrict __pattern, int __flags, int (*__errfunc) (__const char *, int), glob_t *__restrict __pglob) __asm__ ("" "glob64") __attribute__ ((__nothrow__));
 
 
@@ -5219,20 +5219,20 @@ extern int glob64 (__const char *__restrict __pattern, int __flags,
      glob64_t *__restrict __pglob) __attribute__ ((__nothrow__));
 
 extern void globfree64 (glob64_t *__pglob) __attribute__ ((__nothrow__));
-# 189 "/usr/include/glob.h" 3 4
+// # 189 "/usr/include/glob.h" 3 4
 extern int glob_pattern_p (__const char *__pattern, int __quote) __attribute__ ((__nothrow__));
 
 
 
-# 32 "src/os/unix/ngx_linux_config.h" 2
-# 1 "/usr/include/sys/vfs.h" 1 3 4
+// # 32 "src/os/unix/ngx_linux_config.h" 2
+// # 1 "/usr/include/sys/vfs.h" 1 3 4
 
 
 
-# 1 "/usr/include/sys/statfs.h" 1 3 4
-# 26 "/usr/include/sys/statfs.h" 3 4
-# 1 "/usr/include/bits/statfs.h" 1 3 4
-# 25 "/usr/include/bits/statfs.h" 3 4
+// # 1 "/usr/include/sys/statfs.h" 1 3 4
+// # 26 "/usr/include/sys/statfs.h" 3 4
+// # 1 "/usr/include/bits/statfs.h" 1 3 4
+// # 25 "/usr/include/bits/statfs.h" 3 4
 struct statfs
   {
     long int f_type;
@@ -5271,7 +5271,7 @@ struct statfs64
     long int f_frsize;
     long int f_spare[5];
   };
-# 27 "/usr/include/sys/statfs.h" 2 3 4
+// # 27 "/usr/include/sys/statfs.h" 2 3 4
 
 
 
@@ -5291,7 +5291,7 @@ extern int statfs (__const char *__file, struct statfs *__buf) __asm__ ("" "stat
 
 extern int statfs64 (__const char *__file, struct statfs64 *__buf)
      __attribute__ ((__nothrow__)) __attribute__ ((__nonnull__ (1, 2)));
-# 55 "/usr/include/sys/statfs.h" 3 4
+// # 55 "/usr/include/sys/statfs.h" 3 4
 extern int fstatfs (int __fildes, struct statfs *__buf) __asm__ ("" "fstatfs64") __attribute__ ((__nothrow__)) __attribute__ ((__nonnull__ (2)));
 
 
@@ -5304,38 +5304,38 @@ extern int fstatfs64 (int __fildes, struct statfs64 *__buf)
 
 
 
-# 4 "/usr/include/sys/vfs.h" 2 3 4
-# 33 "src/os/unix/ngx_linux_config.h" 2
+// # 4 "/usr/include/sys/vfs.h" 2 3 4
+// # 33 "src/os/unix/ngx_linux_config.h" 2
 
-# 1 "/usr/include/sys/uio.h" 1 3 4
-# 26 "/usr/include/sys/uio.h" 3 4
+// # 1 "/usr/include/sys/uio.h" 1 3 4
+// # 26 "/usr/include/sys/uio.h" 3 4
 
 
 
-# 1 "/usr/include/bits/uio.h" 1 3 4
-# 44 "/usr/include/bits/uio.h" 3 4
+// # 1 "/usr/include/bits/uio.h" 1 3 4
+// # 44 "/usr/include/bits/uio.h" 3 4
 struct iovec
   {
     void *iov_base;
     size_t iov_len;
   };
-# 30 "/usr/include/sys/uio.h" 2 3 4
-# 40 "/usr/include/sys/uio.h" 3 4
+// # 30 "/usr/include/sys/uio.h" 2 3 4
+// # 40 "/usr/include/sys/uio.h" 3 4
 extern ssize_t readv (int __fd, __const struct iovec *__iovec, int __count);
-# 50 "/usr/include/sys/uio.h" 3 4
+// # 50 "/usr/include/sys/uio.h" 3 4
 extern ssize_t writev (int __fd, __const struct iovec *__iovec, int __count);
 
 
-# 35 "src/os/unix/ngx_linux_config.h" 2
-# 1 "/usr/include/sys/stat.h" 1 3 4
-# 37 "/usr/include/sys/stat.h" 3 4
-# 1 "/usr/include/time.h" 1 3 4
-# 38 "/usr/include/sys/stat.h" 2 3 4
-# 103 "/usr/include/sys/stat.h" 3 4
+// # 35 "src/os/unix/ngx_linux_config.h" 2
+// # 1 "/usr/include/sys/stat.h" 1 3 4
+// # 37 "/usr/include/sys/stat.h" 3 4
+// # 1 "/usr/include/time.h" 1 3 4
+// # 38 "/usr/include/sys/stat.h" 2 3 4
+// # 103 "/usr/include/sys/stat.h" 3 4
 
 
-# 1 "/usr/include/bits/stat.h" 1 3 4
-# 43 "/usr/include/bits/stat.h" 3 4
+// # 1 "/usr/include/bits/stat.h" 1 3 4
+// # 43 "/usr/include/bits/stat.h" 3 4
 struct stat
   {
     __dev_t st_dev;
@@ -5371,13 +5371,13 @@ struct stat
     __blksize_t st_blksize;
 
     __blkcnt_t st_blocks;
-# 88 "/usr/include/bits/stat.h" 3 4
+// # 88 "/usr/include/bits/stat.h" 3 4
     struct timespec st_atim;
     struct timespec st_mtim;
     struct timespec st_ctim;
-# 103 "/usr/include/bits/stat.h" 3 4
+// # 103 "/usr/include/bits/stat.h" 3 4
     long int __unused[3];
-# 112 "/usr/include/bits/stat.h" 3 4
+// # 112 "/usr/include/bits/stat.h" 3 4
   };
 
 
@@ -5418,14 +5418,14 @@ struct stat64
     struct timespec st_atim;
     struct timespec st_mtim;
     struct timespec st_ctim;
-# 164 "/usr/include/bits/stat.h" 3 4
+// # 164 "/usr/include/bits/stat.h" 3 4
     long int __unused[3];
 
 
 
   };
-# 106 "/usr/include/sys/stat.h" 2 3 4
-# 215 "/usr/include/sys/stat.h" 3 4
+// # 106 "/usr/include/sys/stat.h" 2 3 4
+// # 215 "/usr/include/sys/stat.h" 3 4
 extern int stat (__const char *__restrict __file, struct stat *__restrict __buf) __asm__ ("" "stat64") __attribute__ ((__nothrow__))
 
      __attribute__ ((__nonnull__ (1, 2)));
@@ -5440,13 +5440,13 @@ extern int fstat (int __fd, struct stat *__buf) __asm__ ("" "fstat64") __attribu
 extern int stat64 (__const char *__restrict __file,
      struct stat64 *__restrict __buf) __attribute__ ((__nothrow__)) __attribute__ ((__nonnull__ (1, 2)));
 extern int fstat64 (int __fd, struct stat64 *__buf) __attribute__ ((__nothrow__)) __attribute__ ((__nonnull__ (2)));
-# 241 "/usr/include/sys/stat.h" 3 4
+// # 241 "/usr/include/sys/stat.h" 3 4
 extern int fstatat (int __fd, __const char *__restrict __file, struct stat *__restrict __buf, int __flag) __asm__ ("" "fstatat64") __attribute__ ((__nothrow__)) __attribute__ ((__nonnull__ (2, 3)));
-# 250 "/usr/include/sys/stat.h" 3 4
+// # 250 "/usr/include/sys/stat.h" 3 4
 extern int fstatat64 (int __fd, __const char *__restrict __file,
         struct stat64 *__restrict __buf, int __flag)
      __attribute__ ((__nothrow__)) __attribute__ ((__nonnull__ (2, 3)));
-# 263 "/usr/include/sys/stat.h" 3 4
+// # 263 "/usr/include/sys/stat.h" 3 4
 extern int lstat (__const char *__restrict __file, struct stat *__restrict __buf) __asm__ ("" "lstat64") __attribute__ ((__nothrow__))
 
 
@@ -5538,7 +5538,7 @@ extern int mkfifo (__const char *__path, __mode_t __mode)
 
 extern int mkfifoat (int __fd, __const char *__path, __mode_t __mode)
      __attribute__ ((__nothrow__)) __attribute__ ((__nonnull__ (2)));
-# 391 "/usr/include/sys/stat.h" 3 4
+// # 391 "/usr/include/sys/stat.h" 3 4
 extern int __fxstat (int __ver, int __fildes, struct stat *__stat_buf) __asm__ ("" "__fxstat64") __attribute__ ((__nothrow__))
 
      __attribute__ ((__nonnull__ (3)));
@@ -5549,7 +5549,7 @@ extern int __lxstat (int __ver, __const char *__filename, struct stat *__stat_bu
 
      __attribute__ ((__nonnull__ (2, 3)));
 extern int __fxstatat (int __ver, int __fildes, __const char *__filename, struct stat *__stat_buf, int __flag) __asm__ ("" "__fxstatat64") __attribute__ ((__nothrow__)) __attribute__ ((__nonnull__ (3, 4)));
-# 413 "/usr/include/sys/stat.h" 3 4
+// # 413 "/usr/include/sys/stat.h" 3 4
 extern int __fxstat64 (int __ver, int __fildes, struct stat64 *__stat_buf)
      __attribute__ ((__nothrow__)) __attribute__ ((__nonnull__ (3)));
 extern int __xstat64 (int __ver, __const char *__filename,
@@ -5614,23 +5614,23 @@ __attribute__ ((__nothrow__)) mknodat (int __fd, __const char *__path, __mode_t 
 {
   return __xmknodat (0, __fd, __path, __mode, &__dev);
 }
-# 515 "/usr/include/sys/stat.h" 3 4
+// # 515 "/usr/include/sys/stat.h" 3 4
 
-# 36 "src/os/unix/ngx_linux_config.h" 2
-# 1 "/usr/include/fcntl.h" 1 3 4
-# 30 "/usr/include/fcntl.h" 3 4
-
-
+// # 36 "src/os/unix/ngx_linux_config.h" 2
+// # 1 "/usr/include/fcntl.h" 1 3 4
+// # 30 "/usr/include/fcntl.h" 3 4
 
 
-# 1 "/usr/include/bits/fcntl.h" 1 3 4
-# 25 "/usr/include/bits/fcntl.h" 3 4
-# 1 "/usr/include/bits/wordsize.h" 1 3 4
-# 26 "/usr/include/bits/fcntl.h" 2 3 4
 
-# 1 "/usr/include/bits/uio.h" 1 3 4
-# 28 "/usr/include/bits/fcntl.h" 2 3 4
-# 155 "/usr/include/bits/fcntl.h" 3 4
+
+// # 1 "/usr/include/bits/fcntl.h" 1 3 4
+// # 25 "/usr/include/bits/fcntl.h" 3 4
+// # 1 "/usr/include/bits/wordsize.h" 1 3 4
+// # 26 "/usr/include/bits/fcntl.h" 2 3 4
+
+// # 1 "/usr/include/bits/uio.h" 1 3 4
+// # 28 "/usr/include/bits/fcntl.h" 2 3 4
+// # 155 "/usr/include/bits/fcntl.h" 3 4
 struct flock
   {
     short int l_type;
@@ -5654,7 +5654,7 @@ struct flock64
     __off64_t l_len;
     __pid_t l_pid;
   };
-# 222 "/usr/include/bits/fcntl.h" 3 4
+// # 222 "/usr/include/bits/fcntl.h" 3 4
 
 
 
@@ -5685,10 +5685,10 @@ extern int tee (int __fdin, int __fdout, size_t __len, unsigned int __flags)
 
 
 
-# 35 "/usr/include/fcntl.h" 2 3 4
-# 76 "/usr/include/fcntl.h" 3 4
+// # 35 "/usr/include/fcntl.h" 2 3 4
+// # 76 "/usr/include/fcntl.h" 3 4
 extern int fcntl (int __fd, int __cmd, ...);
-# 88 "/usr/include/fcntl.h" 3 4
+// # 88 "/usr/include/fcntl.h" 3 4
 extern int open (__const char *__file, int __oflag, ...) __asm__ ("" "open64")
      __attribute__ ((__nonnull__ (1)));
 
@@ -5697,7 +5697,7 @@ extern int open (__const char *__file, int __oflag, ...) __asm__ ("" "open64")
 
 
 extern int open64 (__const char *__file, int __oflag, ...) __attribute__ ((__nonnull__ (1)));
-# 113 "/usr/include/fcntl.h" 3 4
+// # 113 "/usr/include/fcntl.h" 3 4
 extern int openat (int __fd, __const char *__file, int __oflag, ...) __asm__ ("" "openat64") __attribute__ ((__nonnull__ (2)));
 
 
@@ -5707,7 +5707,7 @@ extern int openat (int __fd, __const char *__file, int __oflag, ...) __asm__ (""
 
 extern int openat64 (int __fd, __const char *__file, int __oflag, ...)
      __attribute__ ((__nonnull__ (2)));
-# 133 "/usr/include/fcntl.h" 3 4
+// # 133 "/usr/include/fcntl.h" 3 4
 extern int creat (__const char *__file, __mode_t __mode) __asm__ ("" "creat64") __attribute__ ((__nonnull__ (1)));
 
 
@@ -5716,7 +5716,7 @@ extern int creat (__const char *__file, __mode_t __mode) __asm__ ("" "creat64") 
 
 
 extern int creat64 (__const char *__file, __mode_t __mode) __attribute__ ((__nonnull__ (1)));
-# 180 "/usr/include/fcntl.h" 3 4
+// # 180 "/usr/include/fcntl.h" 3 4
 extern int posix_fadvise (int __fd, __off64_t __offset, __off64_t __len, int __advise) __asm__ ("" "posix_fadvise64") __attribute__ ((__nothrow__));
 
 
@@ -5727,7 +5727,7 @@ extern int posix_fadvise (int __fd, __off64_t __offset, __off64_t __len, int __a
 
 extern int posix_fadvise64 (int __fd, __off64_t __offset, __off64_t __len,
        int __advise) __attribute__ ((__nothrow__));
-# 201 "/usr/include/fcntl.h" 3 4
+// # 201 "/usr/include/fcntl.h" 3 4
 extern int posix_fallocate (int __fd, __off64_t __offset, __off64_t __len) __asm__ ("" "posix_fallocate64");
 
 
@@ -5741,17 +5741,17 @@ extern int posix_fallocate64 (int __fd, __off64_t __offset, __off64_t __len);
 
 
 
-# 37 "src/os/unix/ngx_linux_config.h" 2
+// # 37 "src/os/unix/ngx_linux_config.h" 2
 
-# 1 "/usr/include/sys/wait.h" 1 3 4
-# 29 "/usr/include/sys/wait.h" 3 4
+// # 1 "/usr/include/sys/wait.h" 1 3 4
+// # 29 "/usr/include/sys/wait.h" 3 4
 
 
 
-# 1 "/usr/include/sys/resource.h" 1 3 4
-# 25 "/usr/include/sys/resource.h" 3 4
-# 1 "/usr/include/bits/resource.h" 1 3 4
-# 33 "/usr/include/bits/resource.h" 3 4
+// # 1 "/usr/include/sys/resource.h" 1 3 4
+// # 25 "/usr/include/sys/resource.h" 3 4
+// # 1 "/usr/include/bits/resource.h" 1 3 4
+// # 33 "/usr/include/bits/resource.h" 3 4
 enum __rlimit_resource
 {
 
@@ -5827,7 +5827,7 @@ enum __rlimit_resource
 
 
 };
-# 129 "/usr/include/bits/resource.h" 3 4
+// # 129 "/usr/include/bits/resource.h" 3 4
 typedef __rlim64_t rlim_t;
 
 
@@ -5873,8 +5873,8 @@ enum __rusage_who
 };
 
 
-# 1 "/usr/include/bits/time.h" 1 3 4
-# 175 "/usr/include/bits/resource.h" 2 3 4
+// # 1 "/usr/include/bits/time.h" 1 3 4
+// # 175 "/usr/include/bits/resource.h" 2 3 4
 
 
 struct rusage
@@ -5934,7 +5934,7 @@ enum __priority_which
   PRIO_USER = 2
 
 };
-# 26 "/usr/include/sys/resource.h" 2 3 4
+// # 26 "/usr/include/sys/resource.h" 2 3 4
 
 
 
@@ -5951,7 +5951,7 @@ enum __priority_which
 typedef enum __rlimit_resource __rlimit_resource_t;
 typedef enum __rusage_who __rusage_who_t;
 typedef enum __priority_which __priority_which_t;
-# 55 "/usr/include/sys/resource.h" 3 4
+// # 55 "/usr/include/sys/resource.h" 3 4
 extern int getrlimit (__rlimit_resource_t __resource, struct rlimit *__rlimits) __asm__ ("" "getrlimit64") __attribute__ ((__nothrow__));
 
 
@@ -5961,7 +5961,7 @@ extern int getrlimit (__rlimit_resource_t __resource, struct rlimit *__rlimits) 
 
 extern int getrlimit64 (__rlimit_resource_t __resource,
    struct rlimit64 *__rlimits) __attribute__ ((__nothrow__));
-# 74 "/usr/include/sys/resource.h" 3 4
+// # 74 "/usr/include/sys/resource.h" 3 4
 extern int setrlimit (__rlimit_resource_t __resource, __const struct rlimit *__rlimits) __asm__ ("" "setrlimit64") __attribute__ ((__nothrow__));
 
 
@@ -5990,27 +5990,27 @@ extern int setpriority (__priority_which_t __which, id_t __who, int __prio)
      __attribute__ ((__nothrow__));
 
 
-# 33 "/usr/include/sys/wait.h" 2 3 4
-# 102 "/usr/include/sys/wait.h" 3 4
+// # 33 "/usr/include/sys/wait.h" 2 3 4
+// # 102 "/usr/include/sys/wait.h" 3 4
 typedef enum
 {
   P_ALL,
   P_PID,
   P_PGID
 } idtype_t;
-# 116 "/usr/include/sys/wait.h" 3 4
+// # 116 "/usr/include/sys/wait.h" 3 4
 extern __pid_t wait (__WAIT_STATUS __stat_loc);
-# 139 "/usr/include/sys/wait.h" 3 4
+// # 139 "/usr/include/sys/wait.h" 3 4
 extern __pid_t waitpid (__pid_t __pid, int *__stat_loc, int __options);
 
 
 
-# 1 "/usr/include/bits/siginfo.h" 1 3 4
-# 25 "/usr/include/bits/siginfo.h" 3 4
-# 1 "/usr/include/bits/wordsize.h" 1 3 4
-# 26 "/usr/include/bits/siginfo.h" 2 3 4
-# 144 "/usr/include/sys/wait.h" 2 3 4
-# 155 "/usr/include/sys/wait.h" 3 4
+// # 1 "/usr/include/bits/siginfo.h" 1 3 4
+// # 25 "/usr/include/bits/siginfo.h" 3 4
+// # 1 "/usr/include/bits/wordsize.h" 1 3 4
+// # 26 "/usr/include/bits/siginfo.h" 2 3 4
+// # 144 "/usr/include/sys/wait.h" 2 3 4
+// # 155 "/usr/include/sys/wait.h" 3 4
 extern int waitid (idtype_t __idtype, __id_t __id, siginfo_t *__infop,
      int __options);
 
@@ -6041,22 +6041,22 @@ extern __pid_t wait4 (__pid_t __pid, __WAIT_STATUS __stat_loc, int __options,
 
 
 
-# 39 "src/os/unix/ngx_linux_config.h" 2
-# 1 "/usr/include/sys/mman.h" 1 3 4
-# 26 "/usr/include/sys/mman.h" 3 4
-# 1 "/nfs/apps/gcc/4.2.4/lib/gcc/x86_64-unknown-linux-gnu/4.2.4/include/stddef.h" 1 3 4
-# 27 "/usr/include/sys/mman.h" 2 3 4
-# 42 "/usr/include/sys/mman.h" 3 4
-# 1 "/usr/include/bits/mman.h" 1 3 4
-# 43 "/usr/include/sys/mman.h" 2 3 4
+// # 39 "src/os/unix/ngx_linux_config.h" 2
+// # 1 "/usr/include/sys/mman.h" 1 3 4
+// # 26 "/usr/include/sys/mman.h" 3 4
+// # 1 "/nfs/apps/gcc/4.2.4/lib/gcc/x86_64-unknown-linux-gnu/4.2.4/include/stddef.h" 1 3 4
+// # 27 "/usr/include/sys/mman.h" 2 3 4
+// # 42 "/usr/include/sys/mman.h" 3 4
+// # 1 "/usr/include/bits/mman.h" 1 3 4
+// # 43 "/usr/include/sys/mman.h" 2 3 4
 
 
 
 
 
-# 62 "/usr/include/sys/mman.h" 3 4
+// # 62 "/usr/include/sys/mman.h" 3 4
 extern void * mmap (void *__addr, size_t __len, int __prot, int __flags, int __fd, __off64_t __offset) __asm__ ("" "mmap64") __attribute__ ((__nothrow__));
-# 71 "/usr/include/sys/mman.h" 3 4
+// # 71 "/usr/include/sys/mman.h" 3 4
 extern void *mmap64 (void *__addr, size_t __len, int __prot,
        int __flags, int __fd, __off64_t __offset) __attribute__ ((__nothrow__));
 
@@ -6112,7 +6112,7 @@ extern int munlockall (void) __attribute__ ((__nothrow__));
 
 extern int mincore (void *__start, size_t __len, unsigned char *__vec)
      __attribute__ ((__nothrow__));
-# 134 "/usr/include/sys/mman.h" 3 4
+// # 134 "/usr/include/sys/mman.h" 3 4
 extern void *mremap (void *__addr, size_t __old_len, size_t __new_len,
        int __flags, ...) __attribute__ ((__nothrow__));
 
@@ -6130,16 +6130,16 @@ extern int shm_open (__const char *__name, int __oflag, mode_t __mode);
 extern int shm_unlink (__const char *__name);
 
 
-# 40 "src/os/unix/ngx_linux_config.h" 2
+// # 40 "src/os/unix/ngx_linux_config.h" 2
 
-# 1 "/usr/include/sched.h" 1 3 4
-# 29 "/usr/include/sched.h" 3 4
-# 1 "/usr/include/time.h" 1 3 4
-# 30 "/usr/include/sched.h" 2 3 4
+// # 1 "/usr/include/sched.h" 1 3 4
+// # 29 "/usr/include/sched.h" 3 4
+// # 1 "/usr/include/time.h" 1 3 4
+// # 30 "/usr/include/sched.h" 2 3 4
 
 
-# 1 "/usr/include/bits/sched.h" 1 3 4
-# 65 "/usr/include/bits/sched.h" 3 4
+// # 1 "/usr/include/bits/sched.h" 1 3 4
+// # 65 "/usr/include/bits/sched.h" 3 4
 struct sched_param
   {
     int __sched_priority;
@@ -6168,7 +6168,7 @@ struct __sched_param
   {
     int __sched_priority;
   };
-# 104 "/usr/include/bits/sched.h" 3 4
+// # 104 "/usr/include/bits/sched.h" 3 4
 typedef unsigned long int __cpu_mask;
 
 
@@ -6180,7 +6180,7 @@ typedef struct
 {
   __cpu_mask __bits[1024 / (8 * sizeof (__cpu_mask))];
 } cpu_set_t;
-# 33 "/usr/include/sched.h" 2 3 4
+// # 33 "/usr/include/sched.h" 2 3 4
 
 
 
@@ -6212,7 +6212,7 @@ extern int sched_get_priority_min (int __algorithm) __attribute__ ((__nothrow__)
 
 
 extern int sched_rr_get_interval (__pid_t __pid, struct timespec *__t) __attribute__ ((__nothrow__));
-# 76 "/usr/include/sched.h" 3 4
+// # 76 "/usr/include/sched.h" 3 4
 extern int sched_setaffinity (__pid_t __pid, size_t __cpusetsize,
          __const cpu_set_t *__cpuset) __attribute__ ((__nothrow__));
 
@@ -6222,54 +6222,54 @@ extern int sched_getaffinity (__pid_t __pid, size_t __cpusetsize,
 
 
 
-# 42 "src/os/unix/ngx_linux_config.h" 2
+// # 42 "src/os/unix/ngx_linux_config.h" 2
 
-# 1 "/usr/include/sys/socket.h" 1 3 4
-# 25 "/usr/include/sys/socket.h" 3 4
-
-
-
-
-# 1 "/nfs/apps/gcc/4.2.4/lib/gcc/x86_64-unknown-linux-gnu/4.2.4/include/stddef.h" 1 3 4
-# 30 "/usr/include/sys/socket.h" 2 3 4
+// # 1 "/usr/include/sys/socket.h" 1 3 4
+// # 25 "/usr/include/sys/socket.h" 3 4
 
 
 
 
-
-# 1 "/usr/include/bits/socket.h" 1 3 4
-# 29 "/usr/include/bits/socket.h" 3 4
-# 1 "/nfs/apps/gcc/4.2.4/lib/gcc/x86_64-unknown-linux-gnu/4.2.4/include/stddef.h" 1 3 4
-# 30 "/usr/include/bits/socket.h" 2 3 4
-
-# 1 "/nfs/apps/gcc/4.2.4/lib/gcc/x86_64-unknown-linux-gnu/4.2.4/include/limits.h" 1 3 4
-# 11 "/nfs/apps/gcc/4.2.4/lib/gcc/x86_64-unknown-linux-gnu/4.2.4/include/limits.h" 3 4
-# 1 "/nfs/apps/gcc/4.2.4/lib/gcc/x86_64-unknown-linux-gnu/4.2.4/include/syslimits.h" 1 3 4
+// # 1 "/nfs/apps/gcc/4.2.4/lib/gcc/x86_64-unknown-linux-gnu/4.2.4/include/stddef.h" 1 3 4
+// # 30 "/usr/include/sys/socket.h" 2 3 4
 
 
 
 
 
+// # 1 "/usr/include/bits/socket.h" 1 3 4
+// # 29 "/usr/include/bits/socket.h" 3 4
+// # 1 "/nfs/apps/gcc/4.2.4/lib/gcc/x86_64-unknown-linux-gnu/4.2.4/include/stddef.h" 1 3 4
+// # 30 "/usr/include/bits/socket.h" 2 3 4
 
-# 1 "/nfs/apps/gcc/4.2.4/lib/gcc/x86_64-unknown-linux-gnu/4.2.4/include/limits.h" 1 3 4
-# 122 "/nfs/apps/gcc/4.2.4/lib/gcc/x86_64-unknown-linux-gnu/4.2.4/include/limits.h" 3 4
-# 1 "/usr/include/limits.h" 1 3 4
-# 149 "/usr/include/limits.h" 3 4
-# 1 "/usr/include/bits/posix2_lim.h" 1 3 4
-# 150 "/usr/include/limits.h" 2 3 4
+// # 1 "/nfs/apps/gcc/4.2.4/lib/gcc/x86_64-unknown-linux-gnu/4.2.4/include/limits.h" 1 3 4
+// # 11 "/nfs/apps/gcc/4.2.4/lib/gcc/x86_64-unknown-linux-gnu/4.2.4/include/limits.h" 3 4
+// # 1 "/nfs/apps/gcc/4.2.4/lib/gcc/x86_64-unknown-linux-gnu/4.2.4/include/syslimits.h" 1 3 4
 
 
 
-# 1 "/usr/include/bits/xopen_lim.h" 1 3 4
-# 34 "/usr/include/bits/xopen_lim.h" 3 4
-# 1 "/usr/include/bits/stdio_lim.h" 1 3 4
-# 35 "/usr/include/bits/xopen_lim.h" 2 3 4
-# 154 "/usr/include/limits.h" 2 3 4
-# 123 "/nfs/apps/gcc/4.2.4/lib/gcc/x86_64-unknown-linux-gnu/4.2.4/include/limits.h" 2 3 4
-# 8 "/nfs/apps/gcc/4.2.4/lib/gcc/x86_64-unknown-linux-gnu/4.2.4/include/syslimits.h" 2 3 4
-# 12 "/nfs/apps/gcc/4.2.4/lib/gcc/x86_64-unknown-linux-gnu/4.2.4/include/limits.h" 2 3 4
-# 32 "/usr/include/bits/socket.h" 2 3 4
-# 41 "/usr/include/bits/socket.h" 3 4
+
+
+
+// # 1 "/nfs/apps/gcc/4.2.4/lib/gcc/x86_64-unknown-linux-gnu/4.2.4/include/limits.h" 1 3 4
+// # 122 "/nfs/apps/gcc/4.2.4/lib/gcc/x86_64-unknown-linux-gnu/4.2.4/include/limits.h" 3 4
+// # 1 "/usr/include/limits.h" 1 3 4
+// # 149 "/usr/include/limits.h" 3 4
+// # 1 "/usr/include/bits/posix2_lim.h" 1 3 4
+// # 150 "/usr/include/limits.h" 2 3 4
+
+
+
+// # 1 "/usr/include/bits/xopen_lim.h" 1 3 4
+// # 34 "/usr/include/bits/xopen_lim.h" 3 4
+// # 1 "/usr/include/bits/stdio_lim.h" 1 3 4
+// # 35 "/usr/include/bits/xopen_lim.h" 2 3 4
+// # 154 "/usr/include/limits.h" 2 3 4
+// # 123 "/nfs/apps/gcc/4.2.4/lib/gcc/x86_64-unknown-linux-gnu/4.2.4/include/limits.h" 2 3 4
+// # 8 "/nfs/apps/gcc/4.2.4/lib/gcc/x86_64-unknown-linux-gnu/4.2.4/include/syslimits.h" 2 3 4
+// # 12 "/nfs/apps/gcc/4.2.4/lib/gcc/x86_64-unknown-linux-gnu/4.2.4/include/limits.h" 2 3 4
+// # 32 "/usr/include/bits/socket.h" 2 3 4
+// # 41 "/usr/include/bits/socket.h" 3 4
 enum __socket_type
 {
   SOCK_STREAM = 1,
@@ -6290,11 +6290,11 @@ enum __socket_type
 
 
 };
-# 142 "/usr/include/bits/socket.h" 3 4
-# 1 "/usr/include/bits/sockaddr.h" 1 3 4
-# 29 "/usr/include/bits/sockaddr.h" 3 4
+// # 142 "/usr/include/bits/socket.h" 3 4
+// # 1 "/usr/include/bits/sockaddr.h" 1 3 4
+// # 29 "/usr/include/bits/sockaddr.h" 3 4
 typedef unsigned short int sa_family_t;
-# 143 "/usr/include/bits/socket.h" 2 3 4
+// # 143 "/usr/include/bits/socket.h" 2 3 4
 
 
 struct sockaddr
@@ -6302,7 +6302,7 @@ struct sockaddr
     sa_family_t sa_family;
     char sa_data[14];
   };
-# 162 "/usr/include/bits/socket.h" 3 4
+// # 162 "/usr/include/bits/socket.h" 3 4
 struct sockaddr_storage
   {
     sa_family_t ss_family;
@@ -6387,10 +6387,10 @@ struct cmsghdr
     __extension__ unsigned char __cmsg_data [];
 
   };
-# 263 "/usr/include/bits/socket.h" 3 4
+// # 263 "/usr/include/bits/socket.h" 3 4
 extern struct cmsghdr *__cmsg_nxthdr (struct msghdr *__mhdr,
           struct cmsghdr *__cmsg) __attribute__ ((__nothrow__));
-# 290 "/usr/include/bits/socket.h" 3 4
+// # 290 "/usr/include/bits/socket.h" 3 4
 enum
   {
     SCM_RIGHTS = 0x01
@@ -6411,25 +6411,25 @@ struct ucred
 };
 
 
-# 1 "/usr/include/asm/socket.h" 1 3 4
+// # 1 "/usr/include/asm/socket.h" 1 3 4
 
 
 
 
-# 1 "/usr/include/asm-x86_64/socket.h" 1 3 4
+// # 1 "/usr/include/asm-x86_64/socket.h" 1 3 4
 
 
 
-# 1 "/usr/include/asm/sockios.h" 1 3 4
+// # 1 "/usr/include/asm/sockios.h" 1 3 4
 
 
 
 
-# 1 "/usr/include/asm-x86_64/sockios.h" 1 3 4
-# 6 "/usr/include/asm/sockios.h" 2 3 4
-# 5 "/usr/include/asm-x86_64/socket.h" 2 3 4
-# 6 "/usr/include/asm/socket.h" 2 3 4
-# 311 "/usr/include/bits/socket.h" 2 3 4
+// # 1 "/usr/include/asm-x86_64/sockios.h" 1 3 4
+// # 6 "/usr/include/asm/sockios.h" 2 3 4
+// # 5 "/usr/include/asm-x86_64/socket.h" 2 3 4
+// # 6 "/usr/include/asm/socket.h" 2 3 4
+// # 311 "/usr/include/bits/socket.h" 2 3 4
 
 
 
@@ -6438,7 +6438,7 @@ struct linger
     int l_onoff;
     int l_linger;
   };
-# 36 "/usr/include/sys/socket.h" 2 3 4
+// # 36 "/usr/include/sys/socket.h" 2 3 4
 
 
 
@@ -6461,7 +6461,7 @@ enum
   SHUT_RDWR
 
 };
-# 87 "/usr/include/sys/socket.h" 3 4
+// # 87 "/usr/include/sys/socket.h" 3 4
 typedef union { struct sockaddr *__restrict __sockaddr__; struct sockaddr_at *__restrict __sockaddr_at__; struct sockaddr_ax25 *__restrict __sockaddr_ax25__; struct sockaddr_dl *__restrict __sockaddr_dl__; struct sockaddr_eon *__restrict __sockaddr_eon__; struct sockaddr_in *__restrict __sockaddr_in__; struct sockaddr_in6 *__restrict __sockaddr_in6__; struct sockaddr_inarp *__restrict __sockaddr_inarp__; struct sockaddr_ipx *__restrict __sockaddr_ipx__; struct sockaddr_iso *__restrict __sockaddr_iso__; struct sockaddr_ns *__restrict __sockaddr_ns__; struct sockaddr_un *__restrict __sockaddr_un__; struct sockaddr_x25 *__restrict __sockaddr_x25__;
        } __SOCKADDR_ARG __attribute__ ((__transparent_union__));
 
@@ -6491,7 +6491,7 @@ extern int bind (int __fd, __CONST_SOCKADDR_ARG __addr, socklen_t __len)
 
 extern int getsockname (int __fd, __SOCKADDR_ARG __addr,
    socklen_t *__restrict __len) __attribute__ ((__nothrow__));
-# 124 "/usr/include/sys/socket.h" 3 4
+// # 124 "/usr/include/sys/socket.h" 3 4
 extern int connect (int __fd, __CONST_SOCKADDR_ARG __addr, socklen_t __len);
 
 
@@ -6521,7 +6521,7 @@ extern ssize_t recv (int __fd, void *__buf, size_t __n, int __flags);
 extern ssize_t sendto (int __fd, __const void *__buf, size_t __n,
          int __flags, __CONST_SOCKADDR_ARG __addr,
          socklen_t __addr_len);
-# 161 "/usr/include/sys/socket.h" 3 4
+// # 161 "/usr/include/sys/socket.h" 3 4
 extern ssize_t recvfrom (int __fd, void *__restrict __buf, size_t __n,
     int __flags, __SOCKADDR_ARG __addr,
     socklen_t *__restrict __addr_len);
@@ -6561,7 +6561,7 @@ extern int setsockopt (int __fd, int __level, int __optname,
 
 
 extern int listen (int __fd, int __n) __attribute__ ((__nothrow__));
-# 209 "/usr/include/sys/socket.h" 3 4
+// # 209 "/usr/include/sys/socket.h" 3 4
 extern int accept (int __fd, __SOCKADDR_ARG __addr,
      socklen_t *__restrict __addr_len);
 
@@ -6585,16 +6585,16 @@ extern int sockatmark (int __fd) __attribute__ ((__nothrow__));
 
 
 extern int isfdtype (int __fd, int __fdtype) __attribute__ ((__nothrow__));
-# 240 "/usr/include/sys/socket.h" 3 4
+// # 240 "/usr/include/sys/socket.h" 3 4
 
-# 44 "src/os/unix/ngx_linux_config.h" 2
-# 1 "/usr/include/netinet/in.h" 1 3 4
-# 23 "/usr/include/netinet/in.h" 3 4
-# 1 "/usr/include/stdint.h" 1 3 4
-# 28 "/usr/include/stdint.h" 3 4
-# 1 "/usr/include/bits/wordsize.h" 1 3 4
-# 29 "/usr/include/stdint.h" 2 3 4
-# 49 "/usr/include/stdint.h" 3 4
+// # 44 "src/os/unix/ngx_linux_config.h" 2
+// # 1 "/usr/include/netinet/in.h" 1 3 4
+// # 23 "/usr/include/netinet/in.h" 3 4
+// # 1 "/usr/include/stdint.h" 1 3 4
+// # 28 "/usr/include/stdint.h" 3 4
+// # 1 "/usr/include/bits/wordsize.h" 1 3 4
+// # 29 "/usr/include/stdint.h" 2 3 4
+// # 49 "/usr/include/stdint.h" 3 4
 typedef unsigned char uint8_t;
 typedef unsigned short int uint16_t;
 
@@ -6603,7 +6603,7 @@ typedef unsigned int uint32_t;
 
 
 typedef unsigned long int uint64_t;
-# 66 "/usr/include/stdint.h" 3 4
+// # 66 "/usr/include/stdint.h" 3 4
 typedef signed char int_least8_t;
 typedef short int int_least16_t;
 typedef int int_least32_t;
@@ -6620,24 +6620,24 @@ typedef unsigned short int uint_least16_t;
 typedef unsigned int uint_least32_t;
 
 typedef unsigned long int uint_least64_t;
-# 91 "/usr/include/stdint.h" 3 4
+// # 91 "/usr/include/stdint.h" 3 4
 typedef signed char int_fast8_t;
 
 typedef long int int_fast16_t;
 typedef long int int_fast32_t;
 typedef long int int_fast64_t;
-# 104 "/usr/include/stdint.h" 3 4
+// # 104 "/usr/include/stdint.h" 3 4
 typedef unsigned char uint_fast8_t;
 
 typedef unsigned long int uint_fast16_t;
 typedef unsigned long int uint_fast32_t;
 typedef unsigned long int uint_fast64_t;
-# 123 "/usr/include/stdint.h" 3 4
+// # 123 "/usr/include/stdint.h" 3 4
 typedef unsigned long int uintptr_t;
-# 135 "/usr/include/stdint.h" 3 4
+// # 135 "/usr/include/stdint.h" 3 4
 typedef long int intmax_t;
 typedef unsigned long int uintmax_t;
-# 24 "/usr/include/netinet/in.h" 2 3 4
+// # 24 "/usr/include/netinet/in.h" 2 3 4
 
 
 
@@ -6755,7 +6755,7 @@ struct in_addr
   {
     in_addr_t s_addr;
   };
-# 193 "/usr/include/netinet/in.h" 3 4
+// # 193 "/usr/include/netinet/in.h" 3 4
 struct in6_addr
   {
     union
@@ -6771,7 +6771,7 @@ struct in6_addr
 
 extern const struct in6_addr in6addr_any;
 extern const struct in6_addr in6addr_loopback;
-# 219 "/usr/include/netinet/in.h" 3 4
+// # 219 "/usr/include/netinet/in.h" 3 4
 struct sockaddr_in
   {
     sa_family_t sin_family;
@@ -6890,9 +6890,9 @@ struct group_filter
 
     struct sockaddr_storage gf_slist[1];
 };
-# 345 "/usr/include/netinet/in.h" 3 4
-# 1 "/usr/include/bits/in.h" 1 3 4
-# 82 "/usr/include/bits/in.h" 3 4
+// # 345 "/usr/include/netinet/in.h" 3 4
+// # 1 "/usr/include/bits/in.h" 1 3 4
+// # 82 "/usr/include/bits/in.h" 3 4
 struct ip_opts
   {
     struct in_addr ip_dst;
@@ -6914,8 +6914,8 @@ struct in_pktinfo
     struct in_addr ipi_spec_dst;
     struct in_addr ipi_addr;
   };
-# 346 "/usr/include/netinet/in.h" 2 3 4
-# 354 "/usr/include/netinet/in.h" 3 4
+// # 346 "/usr/include/netinet/in.h" 2 3 4
+// # 354 "/usr/include/netinet/in.h" 3 4
 extern uint32_t ntohl (uint32_t __netlong) __attribute__ ((__nothrow__)) __attribute__ ((__const__));
 extern uint16_t ntohs (uint16_t __netshort)
      __attribute__ ((__nothrow__)) __attribute__ ((__const__));
@@ -6927,18 +6927,18 @@ extern uint16_t htons (uint16_t __hostshort)
 
 
 
-# 1 "/usr/include/bits/byteswap.h" 1 3 4
-# 27 "/usr/include/bits/byteswap.h" 3 4
-# 1 "/usr/include/bits/wordsize.h" 1 3 4
-# 28 "/usr/include/bits/byteswap.h" 2 3 4
-# 366 "/usr/include/netinet/in.h" 2 3 4
-# 428 "/usr/include/netinet/in.h" 3 4
+// # 1 "/usr/include/bits/byteswap.h" 1 3 4
+// # 27 "/usr/include/bits/byteswap.h" 3 4
+// # 1 "/usr/include/bits/wordsize.h" 1 3 4
+// # 28 "/usr/include/bits/byteswap.h" 2 3 4
+// # 366 "/usr/include/netinet/in.h" 2 3 4
+// # 428 "/usr/include/netinet/in.h" 3 4
 extern int bindresvport (int __sockfd, struct sockaddr_in *__sock_in) __attribute__ ((__nothrow__));
 
 
 extern int bindresvport6 (int __sockfd, struct sockaddr_in6 *__sock_in)
      __attribute__ ((__nothrow__));
-# 456 "/usr/include/netinet/in.h" 3 4
+// # 456 "/usr/include/netinet/in.h" 3 4
 struct in6_pktinfo
   {
     struct in6_addr ipi6_addr;
@@ -7035,9 +7035,9 @@ extern int setsourcefilter (int __s, uint32_t __interface_addr,
 
 
 
-# 45 "src/os/unix/ngx_linux_config.h" 2
-# 1 "/usr/include/netinet/tcp.h" 1 3 4
-# 89 "/usr/include/netinet/tcp.h" 3 4
+// # 45 "src/os/unix/ngx_linux_config.h" 2
+// # 1 "/usr/include/netinet/tcp.h" 1 3 4
+// # 89 "/usr/include/netinet/tcp.h" 3 4
 struct tcphdr
   {
     u_int16_t source;
@@ -7054,7 +7054,7 @@ struct tcphdr
     u_int16_t ack:1;
     u_int16_t urg:1;
     u_int16_t res2:2;
-# 118 "/usr/include/netinet/tcp.h" 3 4
+// # 118 "/usr/include/netinet/tcp.h" 3 4
     u_int16_t window;
     u_int16_t check;
     u_int16_t urg_ptr;
@@ -7075,7 +7075,7 @@ enum
   TCP_LISTEN,
   TCP_CLOSING
 };
-# 176 "/usr/include/netinet/tcp.h" 3 4
+// # 176 "/usr/include/netinet/tcp.h" 3 4
 enum tcp_ca_state
 {
   TCP_CA_Open = 0,
@@ -7122,9 +7122,9 @@ struct tcp_info
   u_int32_t tcpi_advmss;
   u_int32_t tcpi_reordering;
 };
-# 46 "src/os/unix/ngx_linux_config.h" 2
-# 1 "/usr/include/arpa/inet.h" 1 3 4
-# 31 "/usr/include/arpa/inet.h" 3 4
+// # 46 "src/os/unix/ngx_linux_config.h" 2
+// # 1 "/usr/include/arpa/inet.h" 1 3 4
+// # 31 "/usr/include/arpa/inet.h" 3 4
 
 
 
@@ -7199,13 +7199,13 @@ extern char *inet_nsap_ntoa (int __len, __const unsigned char *__cp,
 
 
 
-# 47 "src/os/unix/ngx_linux_config.h" 2
-# 1 "/usr/include/netdb.h" 1 3 4
-# 33 "/usr/include/netdb.h" 3 4
-# 1 "/usr/include/rpc/netdb.h" 1 3 4
-# 42 "/usr/include/rpc/netdb.h" 3 4
-# 1 "/nfs/apps/gcc/4.2.4/lib/gcc/x86_64-unknown-linux-gnu/4.2.4/include/stddef.h" 1 3 4
-# 43 "/usr/include/rpc/netdb.h" 2 3 4
+// # 47 "src/os/unix/ngx_linux_config.h" 2
+// # 1 "/usr/include/netdb.h" 1 3 4
+// # 33 "/usr/include/netdb.h" 3 4
+// # 1 "/usr/include/rpc/netdb.h" 1 3 4
+// # 42 "/usr/include/rpc/netdb.h" 3 4
+// # 1 "/nfs/apps/gcc/4.2.4/lib/gcc/x86_64-unknown-linux-gnu/4.2.4/include/stddef.h" 1 3 4
+// # 43 "/usr/include/rpc/netdb.h" 2 3 4
 
 
 
@@ -7236,23 +7236,23 @@ extern int getrpcent_r (struct rpcent *__result_buf, char *__buffer,
 
 
 
-# 34 "/usr/include/netdb.h" 2 3 4
+// # 34 "/usr/include/netdb.h" 2 3 4
 
 
 
 
-# 1 "/usr/include/bits/siginfo.h" 1 3 4
-# 25 "/usr/include/bits/siginfo.h" 3 4
-# 1 "/usr/include/bits/wordsize.h" 1 3 4
-# 26 "/usr/include/bits/siginfo.h" 2 3 4
-# 39 "/usr/include/netdb.h" 2 3 4
+// # 1 "/usr/include/bits/siginfo.h" 1 3 4
+// # 25 "/usr/include/bits/siginfo.h" 3 4
+// # 1 "/usr/include/bits/wordsize.h" 1 3 4
+// # 26 "/usr/include/bits/siginfo.h" 2 3 4
+// # 39 "/usr/include/netdb.h" 2 3 4
 
-# 1 "/usr/include/time.h" 1 3 4
-# 41 "/usr/include/netdb.h" 2 3 4
+// # 1 "/usr/include/time.h" 1 3 4
+// # 41 "/usr/include/netdb.h" 2 3 4
 
 
-# 1 "/usr/include/bits/netdb.h" 1 3 4
-# 27 "/usr/include/bits/netdb.h" 3 4
+// # 1 "/usr/include/bits/netdb.h" 1 3 4
+// # 27 "/usr/include/bits/netdb.h" 3 4
 struct netent
 {
   char *n_name;
@@ -7260,8 +7260,8 @@ struct netent
   int n_addrtype;
   uint32_t n_net;
 };
-# 44 "/usr/include/netdb.h" 2 3 4
-# 54 "/usr/include/netdb.h" 3 4
+// # 44 "/usr/include/netdb.h" 2 3 4
+// # 54 "/usr/include/netdb.h" 3 4
 
 
 
@@ -7270,7 +7270,7 @@ struct netent
 
 
 extern int *__h_errno_location (void) __attribute__ ((__nothrow__)) __attribute__ ((__const__));
-# 88 "/usr/include/netdb.h" 3 4
+// # 88 "/usr/include/netdb.h" 3 4
 extern void herror (__const char *__str) __attribute__ ((__nothrow__));
 
 
@@ -7322,9 +7322,9 @@ extern struct hostent *gethostbyaddr (__const void *__addr, __socklen_t __len,
 
 
 extern struct hostent *gethostbyname (__const char *__name);
-# 149 "/usr/include/netdb.h" 3 4
+// # 149 "/usr/include/netdb.h" 3 4
 extern struct hostent *gethostbyname2 (__const char *__name, int __af);
-# 161 "/usr/include/netdb.h" 3 4
+// # 161 "/usr/include/netdb.h" 3 4
 extern int gethostent_r (struct hostent *__restrict __result_buf,
     char *__restrict __buf, size_t __buflen,
     struct hostent **__restrict __result,
@@ -7348,7 +7348,7 @@ extern int gethostbyname2_r (__const char *__restrict __name, int __af,
         char *__restrict __buf, size_t __buflen,
         struct hostent **__restrict __result,
         int *__restrict __h_errnop);
-# 192 "/usr/include/netdb.h" 3 4
+// # 192 "/usr/include/netdb.h" 3 4
 extern void setnetent (int __stay_open);
 
 
@@ -7376,7 +7376,7 @@ extern struct netent *getnetbyaddr (uint32_t __net, int __type);
 
 
 extern struct netent *getnetbyname (__const char *__name);
-# 231 "/usr/include/netdb.h" 3 4
+// # 231 "/usr/include/netdb.h" 3 4
 extern int getnetent_r (struct netent *__restrict __result_buf,
    char *__restrict __buf, size_t __buflen,
    struct netent **__restrict __result,
@@ -7439,7 +7439,7 @@ extern struct servent *getservbyname (__const char *__name,
 
 
 extern struct servent *getservbyport (int __port, __const char *__proto);
-# 303 "/usr/include/netdb.h" 3 4
+// # 303 "/usr/include/netdb.h" 3 4
 extern int getservent_r (struct servent *__restrict __result_buf,
     char *__restrict __buf, size_t __buflen,
     struct servent **__restrict __result);
@@ -7496,7 +7496,7 @@ extern struct protoent *getprotobyname (__const char *__name);
 
 
 extern struct protoent *getprotobynumber (int __proto);
-# 369 "/usr/include/netdb.h" 3 4
+// # 369 "/usr/include/netdb.h" 3 4
 extern int getprotoent_r (struct protoent *__restrict __result_buf,
      char *__restrict __buf, size_t __buflen,
      struct protoent **__restrict __result);
@@ -7510,7 +7510,7 @@ extern int getprotobynumber_r (int __proto,
           struct protoent *__restrict __result_buf,
           char *__restrict __buf, size_t __buflen,
           struct protoent **__restrict __result);
-# 390 "/usr/include/netdb.h" 3 4
+// # 390 "/usr/include/netdb.h" 3 4
 extern int setnetgrent (__const char *__netgroup);
 
 
@@ -7520,11 +7520,11 @@ extern int setnetgrent (__const char *__netgroup);
 
 
 extern void endnetgrent (void);
-# 407 "/usr/include/netdb.h" 3 4
+// # 407 "/usr/include/netdb.h" 3 4
 extern int getnetgrent (char **__restrict __hostp,
    char **__restrict __userp,
    char **__restrict __domainp);
-# 418 "/usr/include/netdb.h" 3 4
+// # 418 "/usr/include/netdb.h" 3 4
 extern int innetgr (__const char *__netgroup, __const char *__host,
       __const char *__user, __const char *domain);
 
@@ -7538,38 +7538,38 @@ extern int getnetgrent_r (char **__restrict __hostp,
      char **__restrict __userp,
      char **__restrict __domainp,
      char *__restrict __buffer, size_t __buflen);
-# 446 "/usr/include/netdb.h" 3 4
+// # 446 "/usr/include/netdb.h" 3 4
 extern int rcmd (char **__restrict __ahost, unsigned short int __rport,
    __const char *__restrict __locuser,
    __const char *__restrict __remuser,
    __const char *__restrict __cmd, int *__restrict __fd2p);
-# 458 "/usr/include/netdb.h" 3 4
+// # 458 "/usr/include/netdb.h" 3 4
 extern int rcmd_af (char **__restrict __ahost, unsigned short int __rport,
       __const char *__restrict __locuser,
       __const char *__restrict __remuser,
       __const char *__restrict __cmd, int *__restrict __fd2p,
       sa_family_t __af);
-# 474 "/usr/include/netdb.h" 3 4
+// # 474 "/usr/include/netdb.h" 3 4
 extern int rexec (char **__restrict __ahost, int __rport,
     __const char *__restrict __name,
     __const char *__restrict __pass,
     __const char *__restrict __cmd, int *__restrict __fd2p);
-# 486 "/usr/include/netdb.h" 3 4
+// # 486 "/usr/include/netdb.h" 3 4
 extern int rexec_af (char **__restrict __ahost, int __rport,
        __const char *__restrict __name,
        __const char *__restrict __pass,
        __const char *__restrict __cmd, int *__restrict __fd2p,
        sa_family_t __af);
-# 500 "/usr/include/netdb.h" 3 4
+// # 500 "/usr/include/netdb.h" 3 4
 extern int ruserok (__const char *__rhost, int __suser,
       __const char *__remuser, __const char *__locuser);
-# 510 "/usr/include/netdb.h" 3 4
+// # 510 "/usr/include/netdb.h" 3 4
 extern int ruserok_af (__const char *__rhost, int __suser,
          __const char *__remuser, __const char *__locuser,
          sa_family_t __af);
-# 522 "/usr/include/netdb.h" 3 4
+// # 522 "/usr/include/netdb.h" 3 4
 extern int rresvport (int *__alport);
-# 531 "/usr/include/netdb.h" 3 4
+// # 531 "/usr/include/netdb.h" 3 4
 extern int rresvport_af (int *__alport, sa_family_t __af);
 
 
@@ -7601,7 +7601,7 @@ struct gaicb
   int __return;
   int __unused[5];
 };
-# 631 "/usr/include/netdb.h" 3 4
+// # 631 "/usr/include/netdb.h" 3 4
 extern int getaddrinfo (__const char *__restrict __name,
    __const char *__restrict __service,
    __const struct addrinfo *__restrict __req,
@@ -7621,10 +7621,10 @@ extern int getnameinfo (__const struct sockaddr *__restrict __sa,
    socklen_t __salen, char *__restrict __host,
    socklen_t __hostlen, char *__restrict __serv,
    socklen_t __servlen, unsigned int __flags);
-# 661 "/usr/include/netdb.h" 3 4
+// # 661 "/usr/include/netdb.h" 3 4
 extern int getaddrinfo_a (int __mode, struct gaicb *__list[__restrict],
      int __ent, struct sigevent *__restrict __sig);
-# 672 "/usr/include/netdb.h" 3 4
+// # 672 "/usr/include/netdb.h" 3 4
 extern int gai_suspend (__const struct gaicb *__const __list[], int __ent,
    __const struct timespec *__timeout);
 
@@ -7636,9 +7636,9 @@ extern int gai_cancel (struct gaicb *__gaicbp) __attribute__ ((__nothrow__));
 
 
 
-# 48 "src/os/unix/ngx_linux_config.h" 2
-# 1 "/usr/include/sys/un.h" 1 3 4
-# 27 "/usr/include/sys/un.h" 3 4
+// # 48 "src/os/unix/ngx_linux_config.h" 2
+// # 1 "/usr/include/sys/un.h" 1 3 4
+// # 27 "/usr/include/sys/un.h" 3 4
 
 
 
@@ -7647,28 +7647,28 @@ struct sockaddr_un
     sa_family_t sun_family;
     char sun_path[108];
   };
-# 45 "/usr/include/sys/un.h" 3 4
+// # 45 "/usr/include/sys/un.h" 3 4
 
-# 49 "src/os/unix/ngx_linux_config.h" 2
+// # 49 "src/os/unix/ngx_linux_config.h" 2
 
-# 1 "/usr/include/time.h" 1 3 4
-# 31 "/usr/include/time.h" 3 4
-
-
+// # 1 "/usr/include/time.h" 1 3 4
+// # 31 "/usr/include/time.h" 3 4
 
 
 
 
 
 
-# 1 "/nfs/apps/gcc/4.2.4/lib/gcc/x86_64-unknown-linux-gnu/4.2.4/include/stddef.h" 1 3 4
-# 40 "/usr/include/time.h" 2 3 4
+
+
+// # 1 "/nfs/apps/gcc/4.2.4/lib/gcc/x86_64-unknown-linux-gnu/4.2.4/include/stddef.h" 1 3 4
+// # 40 "/usr/include/time.h" 2 3 4
 
 
 
-# 1 "/usr/include/bits/time.h" 1 3 4
-# 44 "/usr/include/time.h" 2 3 4
-# 132 "/usr/include/time.h" 3 4
+// # 1 "/usr/include/bits/time.h" 1 3 4
+// # 44 "/usr/include/time.h" 2 3 4
+// # 132 "/usr/include/time.h" 3 4
 
 
 struct tm
@@ -7707,7 +7707,7 @@ struct itimerspec
 
 
 struct sigevent;
-# 181 "/usr/include/time.h" 3 4
+// # 181 "/usr/include/time.h" 3 4
 
 
 
@@ -7825,7 +7825,7 @@ extern long int timezone;
 
 
 extern int stime (__const time_t *__when) __attribute__ ((__nothrow__));
-# 312 "/usr/include/time.h" 3 4
+// # 312 "/usr/include/time.h" 3 4
 extern time_t timegm (struct tm *__tp) __attribute__ ((__nothrow__));
 
 
@@ -7833,7 +7833,7 @@ extern time_t timelocal (struct tm *__tp) __attribute__ ((__nothrow__));
 
 
 extern int dysize (int __year) __attribute__ ((__nothrow__)) __attribute__ ((__const__));
-# 327 "/usr/include/time.h" 3 4
+// # 327 "/usr/include/time.h" 3 4
 extern int nanosleep (__const struct timespec *__requested_time,
         struct timespec *__remaining);
 
@@ -7881,22 +7881,22 @@ extern int timer_gettime (timer_t __timerid, struct itimerspec *__value)
 
 
 extern int timer_getoverrun (timer_t __timerid) __attribute__ ((__nothrow__));
-# 389 "/usr/include/time.h" 3 4
+// # 389 "/usr/include/time.h" 3 4
 extern int getdate_err;
-# 398 "/usr/include/time.h" 3 4
+// # 398 "/usr/include/time.h" 3 4
 extern struct tm *getdate (__const char *__string);
-# 412 "/usr/include/time.h" 3 4
+// # 412 "/usr/include/time.h" 3 4
 extern int getdate_r (__const char *__restrict __string,
         struct tm *__restrict __resbufp);
 
 
 
-# 51 "src/os/unix/ngx_linux_config.h" 2
-# 1 "/usr/include/malloc.h" 1 3 4
-# 24 "/usr/include/malloc.h" 3 4
-# 1 "/nfs/apps/gcc/4.2.4/lib/gcc/x86_64-unknown-linux-gnu/4.2.4/include/stddef.h" 1 3 4
-# 25 "/usr/include/malloc.h" 2 3 4
-# 46 "/usr/include/malloc.h" 3 4
+// # 51 "src/os/unix/ngx_linux_config.h" 2
+// # 1 "/usr/include/malloc.h" 1 3 4
+// # 24 "/usr/include/malloc.h" 3 4
+// # 1 "/nfs/apps/gcc/4.2.4/lib/gcc/x86_64-unknown-linux-gnu/4.2.4/include/stddef.h" 1 3 4
+// # 25 "/usr/include/malloc.h" 2 3 4
+// # 46 "/usr/include/malloc.h" 3 4
 
 
 
@@ -7955,7 +7955,7 @@ struct mallinfo {
 
 
 extern struct mallinfo mallinfo (void) __attribute__ ((__nothrow__));
-# 130 "/usr/include/malloc.h" 3 4
+// # 130 "/usr/include/malloc.h" 3 4
 extern int mallopt (int __param, int __val) __attribute__ ((__nothrow__));
 
 
@@ -7997,42 +7997,42 @@ extern void __malloc_check_init (void) __attribute__ ((__nothrow__));
 
 
 
-# 52 "src/os/unix/ngx_linux_config.h" 2
-# 1 "/nfs/apps/gcc/4.2.4/lib/gcc/x86_64-unknown-linux-gnu/4.2.4/include/limits.h" 1 3 4
-# 53 "src/os/unix/ngx_linux_config.h" 2
-# 1 "/usr/include/sys/ioctl.h" 1 3 4
-# 24 "/usr/include/sys/ioctl.h" 3 4
+// # 52 "src/os/unix/ngx_linux_config.h" 2
+// # 1 "/nfs/apps/gcc/4.2.4/lib/gcc/x86_64-unknown-linux-gnu/4.2.4/include/limits.h" 1 3 4
+// # 53 "src/os/unix/ngx_linux_config.h" 2
+// # 1 "/usr/include/sys/ioctl.h" 1 3 4
+// # 24 "/usr/include/sys/ioctl.h" 3 4
 
 
 
-# 1 "/usr/include/bits/ioctls.h" 1 3 4
-# 24 "/usr/include/bits/ioctls.h" 3 4
-# 1 "/usr/include/asm/ioctls.h" 1 3 4
-
-
-
-
-# 1 "/usr/include/asm-x86_64/ioctls.h" 1 3 4
-
-
-
-# 1 "/usr/include/asm/ioctl.h" 1 3 4
+// # 1 "/usr/include/bits/ioctls.h" 1 3 4
+// # 24 "/usr/include/bits/ioctls.h" 3 4
+// # 1 "/usr/include/asm/ioctls.h" 1 3 4
 
 
 
 
-# 1 "/usr/include/asm-x86_64/ioctl.h" 1 3 4
-# 1 "/usr/include/asm-generic/ioctl.h" 1 3 4
-# 1 "/usr/include/asm-x86_64/ioctl.h" 2 3 4
-# 6 "/usr/include/asm/ioctl.h" 2 3 4
-# 5 "/usr/include/asm-x86_64/ioctls.h" 2 3 4
-# 6 "/usr/include/asm/ioctls.h" 2 3 4
-# 25 "/usr/include/bits/ioctls.h" 2 3 4
-# 28 "/usr/include/sys/ioctl.h" 2 3 4
+// # 1 "/usr/include/asm-x86_64/ioctls.h" 1 3 4
 
 
-# 1 "/usr/include/bits/ioctl-types.h" 1 3 4
-# 28 "/usr/include/bits/ioctl-types.h" 3 4
+
+// # 1 "/usr/include/asm/ioctl.h" 1 3 4
+
+
+
+
+// # 1 "/usr/include/asm-x86_64/ioctl.h" 1 3 4
+// # 1 "/usr/include/asm-generic/ioctl.h" 1 3 4
+// # 1 "/usr/include/asm-x86_64/ioctl.h" 2 3 4
+// # 6 "/usr/include/asm/ioctl.h" 2 3 4
+// # 5 "/usr/include/asm-x86_64/ioctls.h" 2 3 4
+// # 6 "/usr/include/asm/ioctls.h" 2 3 4
+// # 25 "/usr/include/bits/ioctls.h" 2 3 4
+// # 28 "/usr/include/sys/ioctl.h" 2 3 4
+
+
+// # 1 "/usr/include/bits/ioctl-types.h" 1 3 4
+// # 28 "/usr/include/bits/ioctl-types.h" 3 4
 struct winsize
   {
     unsigned short int ws_row;
@@ -8051,15 +8051,15 @@ struct termio
     unsigned char c_line;
     unsigned char c_cc[8];
 };
-# 31 "/usr/include/sys/ioctl.h" 2 3 4
+// # 31 "/usr/include/sys/ioctl.h" 2 3 4
 
 
 
 
 
 
-# 1 "/usr/include/sys/ttydefaults.h" 1 3 4
-# 38 "/usr/include/sys/ioctl.h" 2 3 4
+// # 1 "/usr/include/sys/ttydefaults.h" 1 3 4
+// # 38 "/usr/include/sys/ioctl.h" 2 3 4
 
 
 
@@ -8067,18 +8067,18 @@ struct termio
 extern int ioctl (int __fd, unsigned long int __request, ...) __attribute__ ((__nothrow__));
 
 
-# 54 "src/os/unix/ngx_linux_config.h" 2
-# 1 "/usr/include/sys/sysctl.h" 1 3 4
-# 24 "/usr/include/sys/sysctl.h" 3 4
-# 1 "/nfs/apps/gcc/4.2.4/lib/gcc/x86_64-unknown-linux-gnu/4.2.4/include/stddef.h" 1 3 4
-# 25 "/usr/include/sys/sysctl.h" 2 3 4
-# 44 "/usr/include/sys/sysctl.h" 3 4
-# 1 "/usr/include/linux/sysctl.h" 1 3 4
-# 21 "/usr/include/linux/sysctl.h" 3 4
-# 1 "/usr/include/linux/kernel.h" 1 3 4
-# 22 "/usr/include/linux/sysctl.h" 2 3 4
-# 1 "/usr/include/linux/types.h" 1 3 4
-# 23 "/usr/include/linux/sysctl.h" 2 3 4
+// # 54 "src/os/unix/ngx_linux_config.h" 2
+// # 1 "/usr/include/sys/sysctl.h" 1 3 4
+// # 24 "/usr/include/sys/sysctl.h" 3 4
+// # 1 "/nfs/apps/gcc/4.2.4/lib/gcc/x86_64-unknown-linux-gnu/4.2.4/include/stddef.h" 1 3 4
+// # 25 "/usr/include/sys/sysctl.h" 2 3 4
+// # 44 "/usr/include/sys/sysctl.h" 3 4
+// # 1 "/usr/include/linux/sysctl.h" 1 3 4
+// # 21 "/usr/include/linux/sysctl.h" 3 4
+// # 1 "/usr/include/linux/kernel.h" 1 3 4
+// # 22 "/usr/include/linux/sysctl.h" 2 3 4
+// # 1 "/usr/include/linux/types.h" 1 3 4
+// # 23 "/usr/include/linux/sysctl.h" 2 3 4
 
 struct file;
 struct completion;
@@ -9059,8 +9059,8 @@ enum
  ABI_TRACE=5,
  ABI_FAKE_UTSNAME=6,
 };
-# 45 "/usr/include/sys/sysctl.h" 2 3 4
-# 64 "/usr/include/sys/sysctl.h" 3 4
+// # 45 "/usr/include/sys/sysctl.h" 2 3 4
+// # 64 "/usr/include/sys/sysctl.h" 3 4
 
 
 
@@ -9068,9 +9068,9 @@ extern int sysctl (int *__name, int __nlen, void *__oldval,
      size_t *__oldlenp, void *__newval, size_t __newlen) __attribute__ ((__nothrow__));
 
 
-# 55 "src/os/unix/ngx_linux_config.h" 2
-# 1 "/usr/include/crypt.h" 1 3 4
-# 30 "/usr/include/crypt.h" 3 4
+// # 55 "src/os/unix/ngx_linux_config.h" 2
+// # 1 "/usr/include/crypt.h" 1 3 4
+// # 30 "/usr/include/crypt.h" 3 4
 
 
 
@@ -9115,14 +9115,14 @@ extern void encrypt_r (char *__block, int __edflag,
 
 
 
-# 56 "src/os/unix/ngx_linux_config.h" 2
-# 1 "/usr/include/sys/utsname.h" 1 3 4
-# 28 "/usr/include/sys/utsname.h" 3 4
+// # 56 "src/os/unix/ngx_linux_config.h" 2
+// # 1 "/usr/include/sys/utsname.h" 1 3 4
+// # 28 "/usr/include/sys/utsname.h" 3 4
 
 
-# 1 "/usr/include/bits/utsname.h" 1 3 4
-# 31 "/usr/include/sys/utsname.h" 2 3 4
-# 49 "/usr/include/sys/utsname.h" 3 4
+// # 1 "/usr/include/bits/utsname.h" 1 3 4
+// # 31 "/usr/include/sys/utsname.h" 2 3 4
+// # 49 "/usr/include/sys/utsname.h" 3 4
 struct utsname
   {
 
@@ -9148,32 +9148,32 @@ struct utsname
 
 
   };
-# 82 "/usr/include/sys/utsname.h" 3 4
+// # 82 "/usr/include/sys/utsname.h" 3 4
 extern int uname (struct utsname *__name) __attribute__ ((__nothrow__));
 
 
 
-# 57 "src/os/unix/ngx_linux_config.h" 2
+// # 57 "src/os/unix/ngx_linux_config.h" 2
 
 
-# 1 "objs/ngx_auto_config.h" 1
-# 60 "src/os/unix/ngx_linux_config.h" 2
+// # 1 "objs/ngx_auto_config.h" 1
+// # 60 "src/os/unix/ngx_linux_config.h" 2
 
 
 
-# 1 "/usr/include/semaphore.h" 1 3 4
-# 30 "/usr/include/semaphore.h" 3 4
-# 1 "/usr/include/bits/semaphore.h" 1 3 4
-# 24 "/usr/include/bits/semaphore.h" 3 4
-# 1 "/usr/include/bits/wordsize.h" 1 3 4
-# 25 "/usr/include/bits/semaphore.h" 2 3 4
-# 40 "/usr/include/bits/semaphore.h" 3 4
+// # 1 "/usr/include/semaphore.h" 1 3 4
+// # 30 "/usr/include/semaphore.h" 3 4
+// # 1 "/usr/include/bits/semaphore.h" 1 3 4
+// # 24 "/usr/include/bits/semaphore.h" 3 4
+// # 1 "/usr/include/bits/wordsize.h" 1 3 4
+// # 25 "/usr/include/bits/semaphore.h" 2 3 4
+// # 40 "/usr/include/bits/semaphore.h" 3 4
 typedef union
 {
   char __size[32];
   long int __align;
 } sem_t;
-# 31 "/usr/include/semaphore.h" 2 3 4
+// # 31 "/usr/include/semaphore.h" 2 3 4
 
 
 
@@ -9221,15 +9221,15 @@ extern int sem_getvalue (sem_t *__restrict __sem, int *__restrict __sval)
 
 
 
-# 64 "src/os/unix/ngx_linux_config.h" 2
+// # 64 "src/os/unix/ngx_linux_config.h" 2
 
 
 
 
-# 1 "/usr/include/sys/prctl.h" 1 3 4
-# 23 "/usr/include/sys/prctl.h" 3 4
-# 1 "/usr/include/linux/prctl.h" 1 3 4
-# 24 "/usr/include/sys/prctl.h" 2 3 4
+// # 1 "/usr/include/sys/prctl.h" 1 3 4
+// # 23 "/usr/include/sys/prctl.h" 3 4
+// # 1 "/usr/include/linux/prctl.h" 1 3 4
+// # 24 "/usr/include/sys/prctl.h" 2 3 4
 
 
 
@@ -9237,15 +9237,15 @@ extern int sem_getvalue (sem_t *__restrict __sem, int *__restrict __sval)
 extern int prctl (int __option, ...) __attribute__ ((__nothrow__));
 
 
-# 69 "src/os/unix/ngx_linux_config.h" 2
+// # 69 "src/os/unix/ngx_linux_config.h" 2
 
 
 
 
-# 1 "/usr/include/sys/sendfile.h" 1 3 4
-# 26 "/usr/include/sys/sendfile.h" 3 4
+// # 1 "/usr/include/sys/sendfile.h" 1 3 4
+// # 26 "/usr/include/sys/sendfile.h" 3 4
 
-# 38 "/usr/include/sys/sendfile.h" 3 4
+// # 38 "/usr/include/sys/sendfile.h" 3 4
 extern ssize_t sendfile (int __out_fd, int __in_fd, __off64_t *__offset, size_t __count) __asm__ ("" "sendfile64") __attribute__ ((__nothrow__));
 
 
@@ -9259,10 +9259,10 @@ extern ssize_t sendfile64 (int __out_fd, int __in_fd, __off64_t *__offset,
 
 
 
-# 74 "src/os/unix/ngx_linux_config.h" 2
-# 86 "src/os/unix/ngx_linux_config.h"
-# 1 "/usr/include/sys/epoll.h" 1 3 4
-# 26 "/usr/include/sys/epoll.h" 3 4
+// # 74 "src/os/unix/ngx_linux_config.h" 2
+// # 86 "src/os/unix/ngx_linux_config.h"
+// # 1 "/usr/include/sys/epoll.h" 1 3 4
+// # 26 "/usr/include/sys/epoll.h" 3 4
 enum EPOLL_EVENTS
   {
     EPOLLIN = 0x001,
@@ -9290,7 +9290,7 @@ enum EPOLL_EVENTS
     EPOLLET = (1 << 31)
 
   };
-# 61 "/usr/include/sys/epoll.h" 3 4
+// # 61 "/usr/include/sys/epoll.h" 3 4
 typedef union epoll_data
 {
   void *ptr;
@@ -9313,25 +9313,25 @@ struct epoll_event
 
 
 extern int epoll_create (int __size) __attribute__ ((__nothrow__));
-# 91 "/usr/include/sys/epoll.h" 3 4
+// # 91 "/usr/include/sys/epoll.h" 3 4
 extern int epoll_ctl (int __epfd, int __op, int __fd,
         struct epoll_event *__event) __attribute__ ((__nothrow__));
-# 105 "/usr/include/sys/epoll.h" 3 4
+// # 105 "/usr/include/sys/epoll.h" 3 4
 extern int epoll_wait (int __epfd, struct epoll_event *__events,
          int __maxevents, int __timeout);
 
 
-# 87 "src/os/unix/ngx_linux_config.h" 2
-# 115 "src/os/unix/ngx_linux_config.h"
+// # 87 "src/os/unix/ngx_linux_config.h" 2
+// # 115 "src/os/unix/ngx_linux_config.h"
 extern char **environ;
-# 27 "src/core/ngx_config.h" 2
-# 78 "src/core/ngx_config.h"
+// # 27 "src/core/ngx_config.h" 2
+// # 78 "src/core/ngx_config.h"
 typedef intptr_t ngx_int_t;
 typedef uintptr_t ngx_uint_t;
 typedef intptr_t ngx_flag_t;
-# 9 "src/os/unix/ngx_process.c" 2
-# 1 "src/core/ngx_core.h" 1
-# 12 "src/core/ngx_core.h"
+// # 9 "src/os/unix/ngx_process.c" 2
+// # 1 "src/core/ngx_core.h" 1
+// # 12 "src/core/ngx_core.h"
 typedef struct ngx_module_s ngx_module_t;
 typedef struct ngx_conf_s ngx_conf_t;
 typedef struct ngx_cycle_s ngx_cycle_t;
@@ -9348,20 +9348,20 @@ typedef struct ngx_connection_s ngx_connection_t;
 
 typedef void (*ngx_event_handler_pt)(ngx_event_t *ev);
 typedef void (*ngx_connection_handler_pt)(ngx_connection_t *c);
-# 39 "src/core/ngx_core.h"
-# 1 "src/os/unix/ngx_errno.h" 1
-# 13 "src/os/unix/ngx_errno.h"
-# 1 "src/core/ngx_core.h" 1
-# 14 "src/os/unix/ngx_errno.h" 2
+// # 39 "src/core/ngx_core.h"
+// # 1 "src/os/unix/ngx_errno.h" 1
+// # 13 "src/os/unix/ngx_errno.h"
+// # 1 "src/core/ngx_core.h" 1
+// # 14 "src/os/unix/ngx_errno.h" 2
 
 
 typedef int ngx_err_t;
-# 71 "src/os/unix/ngx_errno.h"
+// # 71 "src/os/unix/ngx_errno.h"
 u_char *ngx_strerror(ngx_err_t err, u_char *errstr, size_t size);
 ngx_int_t ngx_strerror_init(void);
-# 40 "src/core/ngx_core.h" 2
-# 1 "src/os/unix/ngx_atomic.h" 1
-# 97 "src/os/unix/ngx_atomic.h"
+// # 40 "src/core/ngx_core.h" 2
+// # 1 "src/os/unix/ngx_atomic.h" 1
+// # 97 "src/os/unix/ngx_atomic.h"
 typedef long ngx_atomic_int_t;
 typedef unsigned long ngx_atomic_uint_t;
 
@@ -9372,13 +9372,13 @@ typedef unsigned long ngx_atomic_uint_t;
 
 
 typedef volatile ngx_atomic_uint_t ngx_atomic_t;
-# 307 "src/os/unix/ngx_atomic.h"
+// # 307 "src/os/unix/ngx_atomic.h"
 void ngx_spinlock(ngx_atomic_t *lock, ngx_atomic_int_t value, ngx_uint_t spin);
-# 41 "src/core/ngx_core.h" 2
-# 1 "src/os/unix/ngx_thread.h" 1
-# 42 "src/core/ngx_core.h" 2
-# 1 "src/core/ngx_rbtree.h" 1
-# 16 "src/core/ngx_rbtree.h"
+// # 41 "src/core/ngx_core.h" 2
+// # 1 "src/os/unix/ngx_thread.h" 1
+// # 42 "src/core/ngx_core.h" 2
+// # 1 "src/core/ngx_rbtree.h" 1
+// # 16 "src/core/ngx_rbtree.h"
 typedef ngx_uint_t ngx_rbtree_key_t;
 typedef ngx_int_t ngx_rbtree_key_int_t;
 
@@ -9405,7 +9405,7 @@ struct ngx_rbtree_s {
     ngx_rbtree_node_t *sentinel;
     ngx_rbtree_insert_pt insert;
 };
-# 51 "src/core/ngx_rbtree.h"
+// # 51 "src/core/ngx_rbtree.h"
 void ngx_rbtree_insert( ngx_rbtree_t *tree,
     ngx_rbtree_node_t *node);
 void ngx_rbtree_delete( ngx_rbtree_t *tree,
@@ -9414,7 +9414,7 @@ void ngx_rbtree_insert_value(ngx_rbtree_node_t *root, ngx_rbtree_node_t *node,
     ngx_rbtree_node_t *sentinel);
 void ngx_rbtree_insert_timer_value(ngx_rbtree_node_t *root,
     ngx_rbtree_node_t *node, ngx_rbtree_node_t *sentinel);
-# 73 "src/core/ngx_rbtree.h"
+// # 73 "src/core/ngx_rbtree.h"
 static inline ngx_rbtree_node_t *
 ngx_rbtree_min(ngx_rbtree_node_t *node, ngx_rbtree_node_t *sentinel)
 {
@@ -9424,21 +9424,21 @@ ngx_rbtree_min(ngx_rbtree_node_t *node, ngx_rbtree_node_t *sentinel)
 
     return node;
 }
-# 43 "src/core/ngx_core.h" 2
-# 1 "src/os/unix/ngx_time.h" 1
-# 16 "src/os/unix/ngx_time.h"
+// # 43 "src/core/ngx_core.h" 2
+// # 1 "src/os/unix/ngx_time.h" 1
+// # 16 "src/os/unix/ngx_time.h"
 typedef ngx_rbtree_key_t ngx_msec_t;
 typedef ngx_rbtree_key_int_t ngx_msec_int_t;
 
 typedef struct tm ngx_tm_t;
-# 56 "src/os/unix/ngx_time.h"
+// # 56 "src/os/unix/ngx_time.h"
 void ngx_timezone_update(void);
 void ngx_localtime(time_t s, ngx_tm_t *tm);
 void ngx_libc_localtime(time_t s, struct tm *tm);
 void ngx_libc_gmtime(time_t s, struct tm *tm);
-# 44 "src/core/ngx_core.h" 2
-# 1 "src/os/unix/ngx_socket.h" 1
-# 17 "src/os/unix/ngx_socket.h"
+// # 44 "src/core/ngx_core.h" 2
+// # 1 "src/os/unix/ngx_socket.h" 1
+// # 17 "src/os/unix/ngx_socket.h"
 typedef int ngx_socket_t;
 
 
@@ -9449,12 +9449,12 @@ typedef int ngx_socket_t;
 
 int ngx_nonblocking(ngx_socket_t s);
 int ngx_blocking(ngx_socket_t s);
-# 41 "src/os/unix/ngx_socket.h"
+// # 41 "src/os/unix/ngx_socket.h"
 int ngx_tcp_nopush(ngx_socket_t s);
 int ngx_tcp_push(ngx_socket_t s);
-# 45 "src/core/ngx_core.h" 2
-# 1 "src/core/ngx_string.h" 1
-# 16 "src/core/ngx_string.h"
+// # 45 "src/core/ngx_core.h" 2
+// # 1 "src/core/ngx_string.h" 1
+// # 16 "src/core/ngx_string.h"
 typedef struct {
     size_t len;
     u_char *data;
@@ -9477,9 +9477,9 @@ typedef struct {
 
     u_char *data;
 } ngx_variable_value_t;
-# 50 "src/core/ngx_string.h"
+// # 50 "src/core/ngx_string.h"
 void ngx_strlow(u_char *dst, u_char *src, size_t n);
-# 65 "src/core/ngx_string.h"
+// # 65 "src/core/ngx_string.h"
 static inline u_char *
 ngx_strlchr(u_char *p, u_char *last, u_char c)
 {
@@ -9494,7 +9494,7 @@ ngx_strlchr(u_char *p, u_char *last, u_char c)
 
     return ((void *)0);
 }
-# 147 "src/core/ngx_string.h"
+// # 147 "src/core/ngx_string.h"
 u_char *ngx_cpystrn(u_char *dst, u_char *src, size_t n);
 u_char *ngx_pstrdup(ngx_pool_t *pool, ngx_str_t *src);
 u_char * ngx_sprintf(u_char *buf, const char *fmt, ...);
@@ -9539,7 +9539,7 @@ ngx_int_t ngx_decode_base64url(ngx_str_t *dst, ngx_str_t *src);
 uint32_t ngx_utf8_decode(u_char **p, size_t n);
 size_t ngx_utf8_length(u_char *p, size_t n);
 u_char *ngx_utf8_cpystrn(u_char *dst, u_char *src, size_t n, size_t len);
-# 204 "src/core/ngx_string.h"
+// # 204 "src/core/ngx_string.h"
 uintptr_t ngx_escape_uri(u_char *dst, u_char *src, size_t size,
     ngx_uint_t type);
 void ngx_unescape_uri(u_char **dst, u_char **src, size_t size, ngx_uint_t type);
@@ -9560,9 +9560,9 @@ ngx_str_node_t *ngx_str_rbtree_lookup(ngx_rbtree_t *rbtree, ngx_str_t *name,
 
 void ngx_sort(void *base, size_t n, size_t size,
     ngx_int_t (*cmp)(const void *, const void *));
-# 46 "src/core/ngx_core.h" 2
-# 1 "src/os/unix/ngx_files.h" 1
-# 16 "src/os/unix/ngx_files.h"
+// # 46 "src/core/ngx_core.h" 2
+// # 1 "src/os/unix/ngx_files.h" 1
+// # 16 "src/os/unix/ngx_files.h"
 typedef int ngx_fd_t;
 typedef struct stat ngx_file_info_t;
 typedef ino_t ngx_file_uniq_t;
@@ -9594,7 +9594,7 @@ typedef struct {
     ngx_log_t *log;
     ngx_uint_t test;
 } ngx_glob_t;
-# 112 "src/os/unix/ngx_files.h"
+// # 112 "src/os/unix/ngx_files.h"
 ngx_fd_t ngx_open_tempfile(u_char *name, ngx_uint_t persistent,
     ngx_uint_t access);
 
@@ -9612,18 +9612,18 @@ ssize_t ngx_write_file(ngx_file_t *file, u_char *buf, size_t size,
 
 ssize_t ngx_write_chain_to_file(ngx_file_t *file, ngx_chain_t *ce,
     off_t offset, ngx_pool_t *pool);
-# 139 "src/os/unix/ngx_files.h"
+// # 139 "src/os/unix/ngx_files.h"
 static inline ssize_t
 ngx_write_fd(ngx_fd_t fd, void *buf, size_t n)
 {
     return write(fd, buf, n);
 }
-# 164 "src/os/unix/ngx_files.h"
+// # 164 "src/os/unix/ngx_files.h"
 ngx_int_t ngx_set_file_time(u_char *name, ngx_fd_t fd, time_t s);
-# 188 "src/os/unix/ngx_files.h"
+// # 188 "src/os/unix/ngx_files.h"
 ngx_int_t ngx_create_file_mapping(ngx_file_mapping_t *fm);
 void ngx_close_file_mapping(ngx_file_mapping_t *fm);
-# 225 "src/os/unix/ngx_files.h"
+// # 225 "src/os/unix/ngx_files.h"
 ngx_int_t ngx_open_dir(ngx_str_t *name, ngx_dir_t *dir);
 
 
@@ -9633,14 +9633,14 @@ ngx_int_t ngx_open_dir(ngx_str_t *name, ngx_dir_t *dir);
 
 
 ngx_int_t ngx_read_dir(ngx_dir_t *dir);
-# 255 "src/os/unix/ngx_files.h"
+// # 255 "src/os/unix/ngx_files.h"
 static inline ngx_int_t
 ngx_de_info(u_char *name, ngx_dir_t *dir)
 {
     dir->type = 0;
     return stat((const char *) name, &dir->info);
 }
-# 295 "src/os/unix/ngx_files.h"
+// # 295 "src/os/unix/ngx_files.h"
 ngx_int_t ngx_open_glob(ngx_glob_t *gl);
 
 ngx_int_t ngx_read_glob(ngx_glob_t *gl, ngx_str_t *name);
@@ -9650,18 +9650,18 @@ void ngx_close_glob(ngx_glob_t *gl);
 ngx_err_t ngx_trylock_fd(ngx_fd_t fd);
 ngx_err_t ngx_lock_fd(ngx_fd_t fd);
 ngx_err_t ngx_unlock_fd(ngx_fd_t fd);
-# 321 "src/os/unix/ngx_files.h"
+// # 321 "src/os/unix/ngx_files.h"
 ngx_int_t ngx_read_ahead(ngx_fd_t fd, size_t n);
-# 334 "src/os/unix/ngx_files.h"
+// # 334 "src/os/unix/ngx_files.h"
 ngx_int_t ngx_directio_on(ngx_fd_t fd);
 
 
 ngx_int_t ngx_directio_off(ngx_fd_t fd);
-# 357 "src/os/unix/ngx_files.h"
+// # 357 "src/os/unix/ngx_files.h"
 size_t ngx_fs_bsize(u_char *name);
-# 47 "src/core/ngx_core.h" 2
-# 1 "src/os/unix/ngx_shmem.h" 1
-# 16 "src/os/unix/ngx_shmem.h"
+// # 47 "src/core/ngx_core.h" 2
+// # 1 "src/os/unix/ngx_shmem.h" 1
+// # 16 "src/os/unix/ngx_shmem.h"
 typedef struct {
     u_char *addr;
     size_t size;
@@ -9673,18 +9673,18 @@ typedef struct {
 
 ngx_int_t ngx_shm_alloc(ngx_shm_t *shm);
 void ngx_shm_free(ngx_shm_t *shm);
-# 48 "src/core/ngx_core.h" 2
-# 1 "src/os/unix/ngx_process.h" 1
-# 12 "src/os/unix/ngx_process.h"
-# 1 "src/os/unix/ngx_setaffinity.h" 1
-# 14 "src/os/unix/ngx_setaffinity.h"
+// # 48 "src/core/ngx_core.h" 2
+// # 1 "src/os/unix/ngx_process.h" 1
+// # 12 "src/os/unix/ngx_process.h"
+// # 1 "src/os/unix/ngx_setaffinity.h" 1
+// # 14 "src/os/unix/ngx_setaffinity.h"
 void ngx_setaffinity(uint64_t cpu_affinity, ngx_log_t *log);
-# 13 "src/os/unix/ngx_process.h" 2
-# 1 "src/os/unix/ngx_setproctitle.h" 1
-# 37 "src/os/unix/ngx_setproctitle.h"
+// # 13 "src/os/unix/ngx_process.h" 2
+// # 1 "src/os/unix/ngx_setproctitle.h" 1
+// # 37 "src/os/unix/ngx_setproctitle.h"
 ngx_int_t ngx_init_setproctitle(ngx_log_t *log);
 void ngx_setproctitle(char *title);
-# 14 "src/os/unix/ngx_process.h" 2
+// # 14 "src/os/unix/ngx_process.h" 2
 
 
 typedef pid_t ngx_pid_t;
@@ -9716,13 +9716,13 @@ typedef struct {
     char *const *argv;
     char *const *envp;
 } ngx_exec_ctx_t;
-# 63 "src/os/unix/ngx_process.h"
+// # 63 "src/os/unix/ngx_process.h"
 ngx_pid_t ngx_spawn_process(ngx_cycle_t *cycle,
     ngx_spawn_proc_pt proc, void *data, char *name, ngx_int_t respawn);
 ngx_pid_t ngx_execute(ngx_cycle_t *cycle, ngx_exec_ctx_t *ctx);
 ngx_int_t ngx_init_signals(ngx_log_t *log);
 void ngx_debug_point(void);
-# 77 "src/os/unix/ngx_process.h"
+// # 77 "src/os/unix/ngx_process.h"
 extern int ngx_argc;
 extern char **ngx_argv;
 extern char **ngx_os_argv;
@@ -9732,24 +9732,24 @@ extern ngx_socket_t ngx_channel;
 extern ngx_int_t ngx_process_slot;
 extern ngx_int_t ngx_last_process;
 extern ngx_process_t ngx_processes[1024];
-# 49 "src/core/ngx_core.h" 2
-# 1 "src/os/unix/ngx_user.h" 1
-# 16 "src/os/unix/ngx_user.h"
+// # 49 "src/core/ngx_core.h" 2
+// # 1 "src/os/unix/ngx_user.h" 1
+// # 16 "src/os/unix/ngx_user.h"
 typedef uid_t ngx_uid_t;
 typedef gid_t ngx_gid_t;
 
 
 ngx_int_t ngx_libc_crypt(ngx_pool_t *pool, u_char *key, u_char *salt,
     u_char **encrypted);
-# 50 "src/core/ngx_core.h" 2
-# 1 "src/core/ngx_parse.h" 1
-# 16 "src/core/ngx_parse.h"
+// # 50 "src/core/ngx_core.h" 2
+// # 1 "src/core/ngx_parse.h" 1
+// # 16 "src/core/ngx_parse.h"
 ssize_t ngx_parse_size(ngx_str_t *line);
 off_t ngx_parse_offset(ngx_str_t *line);
 ngx_int_t ngx_parse_time(ngx_str_t *line, ngx_uint_t is_sec);
-# 51 "src/core/ngx_core.h" 2
-# 1 "src/core/ngx_log.h" 1
-# 45 "src/core/ngx_log.h"
+// # 51 "src/core/ngx_core.h" 2
+// # 1 "src/core/ngx_log.h" 1
+// # 45 "src/core/ngx_log.h"
 typedef u_char *(*ngx_log_handler_pt) (ngx_log_t *log, u_char *buf, size_t len);
 
 
@@ -9770,17 +9770,17 @@ struct ngx_log_s {
 
     char *action;
 };
-# 79 "src/core/ngx_log.h"
+// # 79 "src/core/ngx_log.h"
 void ngx_log_error_core(ngx_uint_t level, ngx_log_t *log, ngx_err_t err,
     const char *fmt, ...);
-# 222 "src/core/ngx_log.h"
+// # 222 "src/core/ngx_log.h"
 ngx_log_t *ngx_log_init(u_char *prefix);
 ngx_log_t *ngx_log_create(ngx_cycle_t *cycle, ngx_str_t *name);
 char *ngx_log_set_levels(ngx_conf_t *cf, ngx_log_t *log);
 void ngx_log_abort(ngx_err_t err, const char *fmt, ...);
 void ngx_log_stderr(ngx_err_t err, const char *fmt, ...);
 u_char *ngx_log_errno(u_char *buf, u_char *last, ngx_err_t err);
-# 239 "src/core/ngx_log.h"
+// # 239 "src/core/ngx_log.h"
 static inline void
 ngx_write_stderr(char *text)
 {
@@ -9790,20 +9790,20 @@ ngx_write_stderr(char *text)
 
 extern ngx_module_t ngx_errlog_module;
 extern ngx_uint_t ngx_use_stderr;
-# 52 "src/core/ngx_core.h" 2
-# 1 "src/os/unix/ngx_alloc.h" 1
-# 16 "src/os/unix/ngx_alloc.h"
+// # 52 "src/core/ngx_core.h" 2
+// # 1 "src/os/unix/ngx_alloc.h" 1
+// # 16 "src/os/unix/ngx_alloc.h"
 void *ngx_alloc(size_t size, ngx_log_t *log);
 void *ngx_calloc(size_t size, ngx_log_t *log);
-# 31 "src/os/unix/ngx_alloc.h"
+// # 31 "src/os/unix/ngx_alloc.h"
 void *ngx_memalign(size_t alignment, size_t size, ngx_log_t *log);
-# 40 "src/os/unix/ngx_alloc.h"
+// # 40 "src/os/unix/ngx_alloc.h"
 extern ngx_uint_t ngx_pagesize;
 extern ngx_uint_t ngx_pagesize_shift;
 extern ngx_uint_t ngx_cacheline_size;
-# 53 "src/core/ngx_core.h" 2
-# 1 "src/core/ngx_palloc.h" 1
-# 30 "src/core/ngx_palloc.h"
+// # 53 "src/core/ngx_core.h" 2
+// # 1 "src/core/ngx_palloc.h" 1
+// # 30 "src/core/ngx_palloc.h"
 typedef void (*ngx_pool_cleanup_pt)(void *data);
 
 typedef struct ngx_pool_cleanup_s ngx_pool_cleanup_t;
@@ -9867,9 +9867,9 @@ ngx_pool_cleanup_t *ngx_pool_cleanup_add(ngx_pool_t *p, size_t size);
 void ngx_pool_run_cleanup_file(ngx_pool_t *p, ngx_fd_t fd);
 void ngx_pool_cleanup_file(void *data);
 void ngx_pool_delete_file(void *data);
-# 54 "src/core/ngx_core.h" 2
-# 1 "src/core/ngx_buf.h" 1
-# 16 "src/core/ngx_buf.h"
+// # 54 "src/core/ngx_core.h" 2
+// # 1 "src/core/ngx_buf.h" 1
+// # 16 "src/core/ngx_buf.h"
 typedef void * ngx_buf_tag_t;
 
 typedef struct ngx_buf_s ngx_buf_t;
@@ -9972,7 +9972,7 @@ typedef struct {
     ngx_pool_t *pool;
     off_t limit;
 } ngx_chain_writer_ctx_t;
-# 138 "src/core/ngx_buf.h"
+// # 138 "src/core/ngx_buf.h"
 ngx_buf_t *ngx_create_temp_buf(ngx_pool_t *pool, size_t size);
 ngx_chain_t *ngx_create_chain_of_bufs(ngx_pool_t *pool, ngx_bufs_t *bufs);
 
@@ -9995,22 +9995,22 @@ ngx_int_t ngx_chain_add_copy(ngx_pool_t *pool, ngx_chain_t **chain,
 ngx_chain_t *ngx_chain_get_free_buf(ngx_pool_t *p, ngx_chain_t **free);
 void ngx_chain_update_chains(ngx_pool_t *p, ngx_chain_t **free,
     ngx_chain_t **busy, ngx_chain_t **out, ngx_buf_tag_t tag);
-# 55 "src/core/ngx_core.h" 2
-# 1 "src/core/ngx_queue.h" 1
-# 16 "src/core/ngx_queue.h"
+// # 55 "src/core/ngx_core.h" 2
+// # 1 "src/core/ngx_queue.h" 1
+// # 16 "src/core/ngx_queue.h"
 typedef struct ngx_queue_s ngx_queue_t;
 
 struct ngx_queue_s {
     ngx_queue_t *prev;
     ngx_queue_t *next;
 };
-# 107 "src/core/ngx_queue.h"
+// # 107 "src/core/ngx_queue.h"
 ngx_queue_t *ngx_queue_middle(ngx_queue_t *queue);
 void ngx_queue_sort(ngx_queue_t *queue,
     ngx_int_t (*cmp)(const ngx_queue_t *, const ngx_queue_t *));
-# 56 "src/core/ngx_core.h" 2
-# 1 "src/core/ngx_array.h" 1
-# 16 "src/core/ngx_array.h"
+// # 56 "src/core/ngx_core.h" 2
+// # 1 "src/core/ngx_array.h" 1
+// # 16 "src/core/ngx_array.h"
 struct ngx_array_s {
     void *elts;
     ngx_uint_t nelts;
@@ -10046,9 +10046,9 @@ ngx_array_init(ngx_array_t *array, ngx_pool_t *pool, ngx_uint_t n, size_t size)
 
     return 0;
 }
-# 57 "src/core/ngx_core.h" 2
-# 1 "src/core/ngx_list.h" 1
-# 16 "src/core/ngx_list.h"
+// # 57 "src/core/ngx_core.h" 2
+// # 1 "src/core/ngx_list.h" 1
+// # 16 "src/core/ngx_list.h"
 typedef struct ngx_list_part_s ngx_list_part_t;
 
 struct ngx_list_part_s {
@@ -10086,11 +10086,11 @@ ngx_list_init(ngx_list_t *list, ngx_pool_t *pool, ngx_uint_t n, size_t size)
 
     return 0;
 }
-# 80 "src/core/ngx_list.h"
+// # 80 "src/core/ngx_list.h"
 void *ngx_list_push(ngx_list_t *list);
-# 58 "src/core/ngx_core.h" 2
-# 1 "src/core/ngx_hash.h" 1
-# 16 "src/core/ngx_hash.h"
+// # 58 "src/core/ngx_core.h" 2
+// # 1 "src/core/ngx_hash.h" 1
+// # 16 "src/core/ngx_hash.h"
 typedef struct {
     void *value;
     u_short len;
@@ -10138,7 +10138,7 @@ typedef struct {
     ngx_pool_t *pool;
     ngx_pool_t *temp_pool;
 } ngx_hash_init_t;
-# 75 "src/core/ngx_hash.h"
+// # 75 "src/core/ngx_hash.h"
 typedef struct {
     ngx_uint_t hsize;
 
@@ -10184,9 +10184,9 @@ ngx_uint_t ngx_hash_strlow(u_char *dst, u_char *src, size_t n);
 ngx_int_t ngx_hash_keys_array_init(ngx_hash_keys_arrays_t *ha, ngx_uint_t type);
 ngx_int_t ngx_hash_add_key(ngx_hash_keys_arrays_t *ha, ngx_str_t *key,
     void *value, ngx_uint_t flags);
-# 59 "src/core/ngx_core.h" 2
-# 1 "src/core/ngx_file.h" 1
-# 16 "src/core/ngx_file.h"
+// # 59 "src/core/ngx_core.h" 2
+// # 1 "src/core/ngx_file.h" 1
+// # 16 "src/core/ngx_file.h"
 struct ngx_file_s {
     ngx_fd_t fd;
     ngx_str_t name;
@@ -10320,9 +10320,9 @@ char *ngx_conf_set_access_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf);
 
 extern ngx_atomic_t *ngx_temp_number;
 extern ngx_atomic_int_t ngx_random_number;
-# 60 "src/core/ngx_core.h" 2
-# 1 "src/core/ngx_crc.h" 1
-# 18 "src/core/ngx_crc.h"
+// # 60 "src/core/ngx_core.h" 2
+// # 1 "src/core/ngx_crc.h" 1
+// # 18 "src/core/ngx_crc.h"
 static inline uint32_t
 ngx_crc(u_char *data, size_t len)
 {
@@ -10342,9 +10342,9 @@ ngx_crc(u_char *data, size_t len)
 
     return sum;
 }
-# 61 "src/core/ngx_core.h" 2
-# 1 "src/core/ngx_crc32.h" 1
-# 16 "src/core/ngx_crc32.h"
+// # 61 "src/core/ngx_core.h" 2
+// # 1 "src/core/ngx_crc32.h" 1
+// # 16 "src/core/ngx_crc32.h"
 extern uint32_t *ngx_crc32_table_short;
 extern uint32_t ngx_crc32_table256[];
 
@@ -10406,19 +10406,19 @@ ngx_crc32_update(uint32_t *crc, u_char *p, size_t len)
 
 
 ngx_int_t ngx_crc32_table_init(void);
-# 62 "src/core/ngx_core.h" 2
-# 1 "src/core/ngx_murmurhash.h" 1
-# 16 "src/core/ngx_murmurhash.h"
+// # 62 "src/core/ngx_core.h" 2
+// # 1 "src/core/ngx_murmurhash.h" 1
+// # 16 "src/core/ngx_murmurhash.h"
 uint32_t ngx_murmur_hash2(u_char *data, size_t len);
-# 63 "src/core/ngx_core.h" 2
+// # 63 "src/core/ngx_core.h" 2
 
-# 1 "src/core/ngx_regex.h" 1
-# 15 "src/core/ngx_regex.h"
-# 1 "/usr/include/pcre.h" 1 3 4
-# 181 "/usr/include/pcre.h" 3 4
+// # 1 "src/core/ngx_regex.h" 1
+// # 15 "src/core/ngx_regex.h"
+// # 1 "/usr/include/pcre.h" 1 3 4
+// # 181 "/usr/include/pcre.h" 3 4
 struct real_pcre;
 typedef struct real_pcre pcre;
-# 196 "/usr/include/pcre.h" 3 4
+// # 196 "/usr/include/pcre.h" 3 4
 typedef struct pcre_extra {
   unsigned long int flags;
   void *study_data;
@@ -10450,13 +10450,13 @@ typedef struct pcre_callout_block {
   int next_item_length;
 
 } pcre_callout_block;
-# 235 "/usr/include/pcre.h" 3 4
+// # 235 "/usr/include/pcre.h" 3 4
 extern void *(*pcre_malloc)(size_t);
 extern void (*pcre_free)(void *);
 extern void *(*pcre_stack_malloc)(size_t);
 extern void (*pcre_stack_free)(void *);
 extern int (*pcre_callout)(pcre_callout_block *);
-# 250 "/usr/include/pcre.h" 3 4
+// # 250 "/usr/include/pcre.h" 3 4
 extern pcre *pcre_compile(const char *, int, const char **, int *,
                   const unsigned char *);
 extern pcre *pcre_compile2(const char *, int, int *, const char **,
@@ -10486,7 +10486,7 @@ extern const unsigned char *pcre_maketables(void);
 extern int pcre_refcount(pcre *, int);
 extern pcre_extra *pcre_study(const pcre *, int, const char **);
 extern const char *pcre_version(void);
-# 16 "src/core/ngx_regex.h" 2
+// # 16 "src/core/ngx_regex.h" 2
 
 
 
@@ -10529,10 +10529,10 @@ ngx_int_t ngx_regex_compile(ngx_regex_compile_t *rc);
 
 
 ngx_int_t ngx_regex_exec_array(ngx_array_t *a, ngx_str_t *s, ngx_log_t *log);
-# 65 "src/core/ngx_core.h" 2
+// # 65 "src/core/ngx_core.h" 2
 
-# 1 "src/core/ngx_radix_tree.h" 1
-# 18 "src/core/ngx_radix_tree.h"
+// # 1 "src/core/ngx_radix_tree.h" 1
+// # 18 "src/core/ngx_radix_tree.h"
 typedef struct ngx_radix_node_s ngx_radix_node_t;
 
 struct ngx_radix_node_s {
@@ -10559,9 +10559,9 @@ ngx_int_t ngx_radix32tree_insert(ngx_radix_tree_t *tree,
 ngx_int_t ngx_radix32tree_delete(ngx_radix_tree_t *tree,
     uint32_t key, uint32_t mask);
 uintptr_t ngx_radix32tree_find(ngx_radix_tree_t *tree, uint32_t key);
-# 67 "src/core/ngx_core.h" 2
-# 1 "src/core/ngx_times.h" 1
-# 16 "src/core/ngx_times.h"
+// # 67 "src/core/ngx_core.h" 2
+// # 1 "src/core/ngx_times.h" 1
+// # 16 "src/core/ngx_times.h"
 typedef struct {
     time_t sec;
     ngx_uint_t msec;
@@ -10595,9 +10595,9 @@ extern volatile ngx_str_t ngx_cached_http_log_iso8601;
 
 
 extern volatile ngx_msec_t ngx_current_msec;
-# 68 "src/core/ngx_core.h" 2
-# 1 "src/core/ngx_shmtx.h" 1
-# 16 "src/core/ngx_shmtx.h"
+// # 68 "src/core/ngx_core.h" 2
+// # 1 "src/core/ngx_shmtx.h" 1
+// # 16 "src/core/ngx_shmtx.h"
 typedef struct {
     ngx_atomic_t lock;
 
@@ -10629,9 +10629,9 @@ ngx_uint_t ngx_shmtx_trylock(ngx_shmtx_t *mtx);
 void ngx_shmtx_lock(ngx_shmtx_t *mtx);
 void ngx_shmtx_unlock(ngx_shmtx_t *mtx);
 ngx_uint_t ngx_shmtx_force_unlock(ngx_shmtx_t *mtx, ngx_pid_t pid);
-# 69 "src/core/ngx_core.h" 2
-# 1 "src/core/ngx_slab.h" 1
-# 16 "src/core/ngx_slab.h"
+// # 69 "src/core/ngx_core.h" 2
+// # 1 "src/core/ngx_slab.h" 1
+// # 16 "src/core/ngx_slab.h"
 typedef struct ngx_slab_page_s ngx_slab_page_t;
 
 struct ngx_slab_page_s {
@@ -10668,14 +10668,14 @@ void *ngx_slab_alloc(ngx_slab_pool_t *pool, size_t size);
 void *ngx_slab_alloc_locked(ngx_slab_pool_t *pool, size_t size);
 void ngx_slab_free(ngx_slab_pool_t *pool, void *p);
 void ngx_slab_free_locked(ngx_slab_pool_t *pool, void *p);
-# 70 "src/core/ngx_core.h" 2
-# 1 "src/core/ngx_inet.h" 1
-# 43 "src/core/ngx_inet.h"
+// # 70 "src/core/ngx_core.h" 2
+// # 1 "src/core/ngx_inet.h" 1
+// # 43 "src/core/ngx_inet.h"
 typedef struct {
     in_addr_t addr;
     in_addr_t mask;
 } ngx_in_cidr_t;
-# 59 "src/core/ngx_inet.h"
+// # 59 "src/core/ngx_inet.h"
 typedef struct {
     ngx_uint_t family;
     union {
@@ -10735,9 +10735,9 @@ ngx_int_t ngx_parse_addr(ngx_pool_t *pool, ngx_addr_t *addr, u_char *text,
     size_t len);
 ngx_int_t ngx_parse_url(ngx_pool_t *pool, ngx_url_t *u);
 ngx_int_t ngx_inet_resolve_host(ngx_pool_t *pool, ngx_url_t *u);
-# 71 "src/core/ngx_core.h" 2
-# 1 "src/core/ngx_cycle.h" 1
-# 25 "src/core/ngx_cycle.h"
+// # 71 "src/core/ngx_core.h" 2
+// # 1 "src/core/ngx_cycle.h" 1
+// # 25 "src/core/ngx_cycle.h"
 typedef struct ngx_shm_zone_s ngx_shm_zone_t;
 
 typedef ngx_int_t (*ngx_shm_zone_init_pt) (ngx_shm_zone_t *zone, void *data);
@@ -10850,12 +10850,12 @@ extern ngx_array_t ngx_old_cycles;
 extern ngx_module_t ngx_core_module;
 extern ngx_uint_t ngx_test_config;
 extern ngx_uint_t ngx_quiet_mode;
-# 72 "src/core/ngx_core.h" 2
+// # 72 "src/core/ngx_core.h" 2
 
 
 
-# 1 "src/os/unix/ngx_process_cycle.h" 1
-# 30 "src/os/unix/ngx_process_cycle.h"
+// # 1 "src/os/unix/ngx_process_cycle.h" 1
+// # 30 "src/os/unix/ngx_process_cycle.h"
 typedef struct {
     ngx_event_handler_pt handler;
     char *name;
@@ -10885,9 +10885,9 @@ extern sig_atomic_t ngx_noaccept;
 extern sig_atomic_t ngx_reconfigure;
 extern sig_atomic_t ngx_reopen;
 extern sig_atomic_t ngx_change_binary;
-# 76 "src/core/ngx_core.h" 2
-# 1 "src/core/ngx_conf_file.h" 1
-# 78 "src/core/ngx_conf_file.h"
+// # 76 "src/core/ngx_core.h" 2
+// # 1 "src/core/ngx_conf_file.h" 1
+// # 78 "src/core/ngx_conf_file.h"
 struct ngx_command_s {
     ngx_str_t name;
     ngx_uint_t type;
@@ -10907,7 +10907,7 @@ struct ngx_open_file_s {
     u_char *buffer;
     u_char *pos;
     u_char *last;
-# 105 "src/core/ngx_conf_file.h"
+// # 105 "src/core/ngx_conf_file.h"
 };
 
 
@@ -11027,7 +11027,7 @@ typedef struct {
 
 char * ngx_conf_deprecated(ngx_conf_t *cf, void *post, void *data);
 char *ngx_conf_check_num_bounds(ngx_conf_t *cf, void *post, void *data);
-# 318 "src/core/ngx_conf_file.h"
+// # 318 "src/core/ngx_conf_file.h"
 char *ngx_conf_param(ngx_conf_t *cf);
 char *ngx_conf_parse(ngx_conf_t *cf, ngx_str_t *filename);
 
@@ -11056,9 +11056,9 @@ char *ngx_conf_set_bitmask_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf);
 
 extern ngx_uint_t ngx_max_module;
 extern ngx_module_t *ngx_modules[];
-# 77 "src/core/ngx_core.h" 2
-# 1 "src/core/ngx_resolver.h" 1
-# 36 "src/core/ngx_resolver.h"
+// # 77 "src/core/ngx_core.h" 2
+// # 1 "src/core/ngx_resolver.h" 1
+// # 36 "src/core/ngx_resolver.h"
 typedef struct {
     ngx_connection_t *connection;
     struct sockaddr *sockaddr;
@@ -11169,9 +11169,9 @@ void ngx_resolve_name_done(ngx_resolver_ctx_t *ctx);
 ngx_int_t ngx_resolve_addr(ngx_resolver_ctx_t *ctx);
 void ngx_resolve_addr_done(ngx_resolver_ctx_t *ctx);
 char *ngx_resolver_strerror(ngx_int_t err);
-# 78 "src/core/ngx_core.h" 2
-# 1 "src/core/ngx_open_file_cache.h" 1
-# 19 "src/core/ngx_open_file_cache.h"
+// # 78 "src/core/ngx_core.h" 2
+// # 1 "src/core/ngx_open_file_cache.h" 1
+// # 19 "src/core/ngx_open_file_cache.h"
 typedef struct {
     ngx_fd_t fd;
     ngx_file_uniq_t uniq;
@@ -11280,9 +11280,9 @@ ngx_open_file_cache_t *ngx_open_file_cache_init(ngx_pool_t *pool,
     ngx_uint_t max, time_t inactive);
 ngx_int_t ngx_open_cached_file(ngx_open_file_cache_t *cache, ngx_str_t *name,
     ngx_open_file_info_t *of, ngx_pool_t *pool);
-# 79 "src/core/ngx_core.h" 2
-# 1 "src/os/unix/ngx_os.h" 1
-# 19 "src/os/unix/ngx_os.h"
+// # 79 "src/core/ngx_core.h" 2
+// # 1 "src/os/unix/ngx_os.h" 1
+// # 19 "src/os/unix/ngx_os.h"
 typedef ssize_t (*ngx_recv_pt)(ngx_connection_t *c, u_char *buf, size_t size);
 typedef ssize_t (*ngx_recv_chain_pt)(ngx_connection_t *c, ngx_chain_t *in);
 typedef ssize_t (*ngx_send_pt)(ngx_connection_t *c, u_char *buf, size_t size);
@@ -11313,7 +11313,7 @@ ssize_t ngx_udp_unix_recv(ngx_connection_t *c, u_char *buf, size_t size);
 ssize_t ngx_unix_send(ngx_connection_t *c, u_char *buf, size_t size);
 ngx_chain_t *ngx_writev_chain(ngx_connection_t *c, ngx_chain_t *in,
     off_t limit);
-# 59 "src/os/unix/ngx_os.h"
+// # 59 "src/os/unix/ngx_os.h"
 extern ngx_os_io_t ngx_os_io;
 extern ngx_int_t ngx_ncpu;
 extern ngx_int_t ngx_max_sockets;
@@ -11326,16 +11326,16 @@ extern ngx_uint_t ngx_tcp_nodelay_and_tcp_nopush;
 
 
 
-# 1 "src/os/unix/ngx_linux.h" 1
-# 12 "src/os/unix/ngx_linux.h"
+// # 1 "src/os/unix/ngx_linux.h" 1
+// # 12 "src/os/unix/ngx_linux.h"
 ngx_chain_t *ngx_linux_sendfile_chain(ngx_connection_t *c, ngx_chain_t *in,
     off_t limit);
 
 extern int ngx_linux_rtsig_max;
-# 72 "src/os/unix/ngx_os.h" 2
-# 80 "src/core/ngx_core.h" 2
-# 1 "src/core/ngx_connection.h" 1
-# 16 "src/core/ngx_connection.h"
+// # 72 "src/os/unix/ngx_os.h" 2
+// # 80 "src/core/ngx_core.h" 2
+// # 1 "src/core/ngx_connection.h" 1
+// # 16 "src/core/ngx_connection.h"
 typedef struct ngx_listening_s ngx_listening_t;
 
 struct ngx_listening_s {
@@ -11395,7 +11395,7 @@ struct ngx_listening_s {
     unsigned deferred_accept:1;
     unsigned delete_deferred:1;
     unsigned add_deferred:1;
-# 83 "src/core/ngx_connection.h"
+// # 83 "src/core/ngx_connection.h"
 };
 
 
@@ -11482,7 +11482,7 @@ struct ngx_connection_s {
     unsigned sndlowat:1;
     unsigned tcp_nodelay:2;
     unsigned tcp_nopush:2;
-# 182 "src/core/ngx_connection.h"
+// # 182 "src/core/ngx_connection.h"
 };
 
 
@@ -11501,12 +11501,12 @@ ngx_connection_t *ngx_get_connection(ngx_socket_t s, ngx_log_t *log);
 void ngx_free_connection(ngx_connection_t *c);
 
 void ngx_reusable_connection(ngx_connection_t *c, ngx_uint_t reusable);
-# 81 "src/core/ngx_core.h" 2
-# 92 "src/core/ngx_core.h"
+// # 81 "src/core/ngx_core.h" 2
+// # 92 "src/core/ngx_core.h"
 void ngx_cpuinfo(void);
-# 10 "src/os/unix/ngx_process.c" 2
-# 1 "src/event/ngx_event.h" 1
-# 30 "src/event/ngx_event.h"
+// # 10 "src/os/unix/ngx_process.c" 2
+// # 1 "src/event/ngx_event.h" 1
+// # 30 "src/event/ngx_event.h"
 typedef struct {
     ngx_uint_t lock;
 
@@ -11560,12 +11560,12 @@ struct ngx_event_s {
 
 
     unsigned posted_ready:1;
-# 114 "src/event/ngx_event.h"
+// # 114 "src/event/ngx_event.h"
     unsigned available:1;
 
 
     ngx_event_handler_pt handler;
-# 130 "src/event/ngx_event.h"
+// # 130 "src/event/ngx_event.h"
     ngx_uint_t index;
 
     ngx_log_t *log;
@@ -11577,12 +11577,12 @@ struct ngx_event_s {
 
     unsigned channel:1;
     unsigned resolver:1;
-# 167 "src/event/ngx_event.h"
+// # 167 "src/event/ngx_event.h"
     ngx_event_t *next;
     ngx_event_t **prev;
-# 190 "src/event/ngx_event.h"
+// # 190 "src/event/ngx_event.h"
 };
-# 224 "src/event/ngx_event.h"
+// # 224 "src/event/ngx_event.h"
 typedef struct {
     ngx_int_t (*add)(ngx_event_t *ev, ngx_int_t event, ngx_uint_t flags);
     ngx_int_t (*del)(ngx_event_t *ev, ngx_int_t event, ngx_uint_t flags);
@@ -11603,9 +11603,9 @@ typedef struct {
 
 
 extern ngx_event_actions_t ngx_event_actions;
-# 455 "src/event/ngx_event.h"
+// # 455 "src/event/ngx_event.h"
 extern ngx_os_io_t ngx_io;
-# 468 "src/event/ngx_event.h"
+// # 468 "src/event/ngx_event.h"
 typedef struct {
     ngx_uint_t connections;
     ngx_uint_t use;
@@ -11642,7 +11642,7 @@ extern ngx_uint_t ngx_accept_events;
 extern ngx_uint_t ngx_accept_mutex_held;
 extern ngx_msec_t ngx_accept_mutex_delay;
 extern ngx_int_t ngx_accept_disabled;
-# 523 "src/event/ngx_event.h"
+// # 523 "src/event/ngx_event.h"
 extern sig_atomic_t ngx_event_timer_alarm;
 extern ngx_uint_t ngx_event_flags;
 extern ngx_module_t ngx_events_module;
@@ -11662,7 +11662,7 @@ u_char *ngx_accept_log_error(ngx_log_t *log, u_char *buf, size_t len);
 void ngx_process_events_and_timers(ngx_cycle_t *cycle);
 ngx_int_t ngx_handle_read_event(ngx_event_t *rev, ngx_uint_t flags);
 ngx_int_t ngx_handle_write_event(ngx_event_t *wev, size_t lowat);
-# 551 "src/event/ngx_event.h"
+// # 551 "src/event/ngx_event.h"
 ngx_int_t ngx_send_lowat(ngx_connection_t *c, size_t lowat);
 
 
@@ -11670,10 +11670,10 @@ ngx_int_t ngx_send_lowat(ngx_connection_t *c, size_t lowat);
 
 
 
-# 1 "src/event/ngx_event_timer.h" 1
-# 14 "src/event/ngx_event_timer.h"
-# 1 "src/event/ngx_event.h" 1
-# 15 "src/event/ngx_event_timer.h" 2
+// # 1 "src/event/ngx_event_timer.h" 1
+// # 14 "src/event/ngx_event_timer.h"
+// # 1 "src/event/ngx_event.h" 1
+// # 15 "src/event/ngx_event_timer.h" 2
 
 
 
@@ -11759,9 +11759,9 @@ ngx_event_add_timer(ngx_event_t *ev, ngx_msec_t timer)
 
     ev->timer_set = 1;
 }
-# 559 "src/event/ngx_event.h" 2
-# 1 "src/event/ngx_event_posted.h" 1
-# 62 "src/event/ngx_event_posted.h"
+// # 559 "src/event/ngx_event.h" 2
+// # 1 "src/event/ngx_event_posted.h" 1
+// # 62 "src/event/ngx_event_posted.h"
 void ngx_event_process_posted(ngx_cycle_t *cycle,
     ngx_event_t **posted);
 void ngx_wakeup_worker_thread(ngx_cycle_t *cycle);
@@ -11773,9 +11773,9 @@ void ngx_wakeup_worker_thread(ngx_cycle_t *cycle);
 
 extern ngx_event_t *ngx_posted_accept_events;
 extern ngx_event_t *ngx_posted_events;
-# 560 "src/event/ngx_event.h" 2
-# 1 "src/event/ngx_event_busy_lock.h" 1
-# 16 "src/event/ngx_event_busy_lock.h"
+// # 560 "src/event/ngx_event.h" 2
+// # 1 "src/event/ngx_event_busy_lock.h" 1
+// # 16 "src/event/ngx_event_busy_lock.h"
 typedef struct ngx_event_busy_lock_ctx_s ngx_event_busy_lock_ctx_t;
 
 struct ngx_event_busy_lock_ctx_s {
@@ -11823,10 +11823,10 @@ void ngx_event_busy_unlock(ngx_event_busy_lock_t *bl,
     ngx_event_busy_lock_ctx_t *ctx);
 void ngx_event_busy_lock_cancel(ngx_event_busy_lock_t *bl,
     ngx_event_busy_lock_ctx_t *ctx);
-# 561 "src/event/ngx_event.h" 2
-# 11 "src/os/unix/ngx_process.c" 2
-# 1 "src/os/unix/ngx_channel.h" 1
-# 17 "src/os/unix/ngx_channel.h"
+// # 561 "src/event/ngx_event.h" 2
+// # 11 "src/os/unix/ngx_process.c" 2
+// # 1 "src/os/unix/ngx_channel.h" 1
+// # 17 "src/os/unix/ngx_channel.h"
 typedef struct {
      ngx_uint_t command;
      ngx_pid_t pid;
@@ -11842,7 +11842,7 @@ ngx_int_t ngx_read_channel(ngx_socket_t s, ngx_channel_t *ch, size_t size,
 ngx_int_t ngx_add_channel_event(ngx_cycle_t *cycle, ngx_fd_t fd,
     ngx_int_t event, ngx_event_handler_pt handler);
 void ngx_close_channel(ngx_fd_t *fd, ngx_log_t *log);
-# 12 "src/os/unix/ngx_process.c" 2
+// # 12 "src/os/unix/ngx_process.c" 2
 
 
 typedef struct {
@@ -12193,7 +12193,7 @@ ngx_signal_handler(int signo)
 
         case 12:
             if (getppid() > 1 || ngx_new_binary > 0) {
-# 370 "src/os/unix/ngx_process.c"
+// # 370 "src/os/unix/ngx_process.c"
                 action = ", ignoring";
                 ignore = 1;
                 break;
@@ -12300,7 +12300,7 @@ ngx_process_get_status(void)
             if (err == 10 && one) {
                 return;
             }
-# 496 "src/os/unix/ngx_process.c"
+// # 496 "src/os/unix/ngx_process.c"
             if ((ngx_cycle->log)->log_level >= 2) ngx_log_error_core(2, ngx_cycle->log, err, "waitpid() failed");
 
             return;
@@ -12322,7 +12322,7 @@ ngx_process_get_status(void)
         if ((((__extension__ ({ union { __typeof(status) __in; int __i; } __u; __u.__in = (status); __u.__i; }))) & 0x7f)) {
 
             if ((ngx_cycle->log)->log_level >= 2) ngx_log_error_core(2, ngx_cycle->log, 0, "%s %P exited on signal %d%s", process, pid, (((__extension__ ({ union { __typeof(status) __in; int __i; } __u; __u.__in = (status); __u.__i; }))) & 0x7f), (((__extension__ ({ union { __typeof(status) __in; int __i; } __u; __u.__in = (status); __u.__i; }))) & 0x80) ? " (core dumped)" : "");
-# 526 "src/os/unix/ngx_process.c"
+// # 526 "src/os/unix/ngx_process.c"
         } else {
             if ((ngx_cycle->log)->log_level >= 6) ngx_log_error_core(6, ngx_cycle->log, 0, "%s %P exited with code %d", process, pid, ((((__extension__ ({ union { __typeof(status) __in; int __i; } __u; __u.__in = (status); __u.__i; }))) & 0xff00) >> 8));
 

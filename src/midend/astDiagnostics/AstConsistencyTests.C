@@ -1075,6 +1075,24 @@ TestAstProperties::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttribu
                        }
 #endif
 
+#ifdef ROSE_USE_EDG_VERSION_4
+                 // DQ (10/5/2012): This case is required for test2012_15.c.
+                    case V_SgPntrArrRefExp:
+                       {
+                      // Unclear what should be checked here, for now allow this as an acceptable case.
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+                         printf ("Warning: EDG 4.x specific case, found unusual case of SgPntrArrRefExp returned from SgFunctionCallExp::get_type() member function \n");
+                      // printf ("Investigate this location in the code: \n");
+                      // functionExpression->get_startOfConstruct()->display("Warning: EDG 4.x specific case, found unusual case of SgPntrArrRefExp returned from SgFunctionCallExp::get_type() member function: debug");
+#endif
+#if 0
+                         printf ("Exiting as a test! \n");
+                         ROSE_ASSERT(false);
+#endif
+                         break;
+                       }
+#endif
+
                     default:
                        {
                          printf ("Error case default in switch (functionExpression = %s) \n",functionExpression->class_name().c_str());
