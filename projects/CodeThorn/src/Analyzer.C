@@ -141,11 +141,11 @@ void Analyzer::runSolver1() {
 		  nesListIter!=newEStateList.end();
 		  ++nesListIter) {
 		EState newEState=*nesListIter;
-		if(newEState.label!=NO_ESTATE && (!newEState.constraints()->deqConstraintExists()) &&(!isFailedAssertEState(&newEState))) {
+		if(newEState.label!=NO_ESTATE && (!newEState.constraints()->disequalityExists()) &&(!isFailedAssertEState(&newEState))) {
 		  const EState* newEStatePtr=addToWorkListIfNew(newEState);
 		  recordTransition(currentEStatePtr,*i,newEStatePtr);
 		}
-		if(newEState.label!=NO_ESTATE && (!newEState.constraints()->deqConstraintExists()) && (isFailedAssertEState(&newEState))) {
+		if(newEState.label!=NO_ESTATE && (!newEState.constraints()->disequalityExists()) && (isFailedAssertEState(&newEState))) {
 		  // failed-assert end-state: do not add to work list but do add it to the transition graph
 		  const EState* newEStatePtr=processNewOrExisting(newEState);
 		  recordTransition(currentEStatePtr,*i,newEStatePtr);		
@@ -344,7 +344,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* eState) {
   if(edge.type==EDGE_LOCAL) {
 	EState noEState;
 	noEState.label=NO_ESTATE;
-	// TODO: return empty list?
+	// TODO: investigate: with could also return an empty list here
 	return elistify(noEState);
   }
   EState currentEState=*eState;
@@ -404,11 +404,12 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* eState) {
 		cerr<<"Error: We currently do not support multi-state generating operators in function call parameters (yet)."<<endl;
 		exit(1);
 	  }
-	  //TODO: investigate: this turns top variables into variables with concrete value in state - do we want this?
+	  // above evalConstInt does not use constraints (par3==false). Therefore top vars remain top vars (which is what we want here)
 	  newState[formalParameterVarId]=evalResult.value();
 	  ++i;++j;
 	}
-	assert(i==formalParameters.end() && j==actualParameters.end()); // must hold if #fparams==#aparams (TODO: default values)
+	// assert must hold if #formal-params==#actual-params (TODO: default values)
+	assert(i==formalParameters.end() && j==actualParameters.end()); 
 	// ad 4
 	return elistify(createEState(edge.target,newState,cset));
   }

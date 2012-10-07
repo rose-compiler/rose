@@ -143,13 +143,6 @@ void Constraint::swapVars() {
   _rhsVar=tmp;
 }
 
-bool ConstraintSet::deqConstraintExists() const {
-  ConstraintSet::iterator i=find(DISEQUALITYCONSTRAINT);
-  return i!=end();
-}
-
-
-
 void ConstraintSet::addAssignEqVarVar(VariableId lhsVar, VariableId rhsVar) {
 
 #if 0
@@ -265,7 +258,7 @@ void ConstraintSet::addDisequality() {
 
 void ConstraintSet::addConstraint(Constraint c) {
   // we have to look which version of constraint already exists (it can only be 
-  // a) at most one equality constraint or b) arbitrary many inequality constraints or c) one disequality)
+  // a) at most one equality constraint or b) arbitrary many inequality constraints or c) disequality)
   // we do not check for x=y constraints
   if(disequalityExists())
 	  return;
@@ -274,17 +267,16 @@ void ConstraintSet::addConstraint(Constraint c) {
   //   TODO1a: compute set of inequality-constants for given variable and DO consider all equations
   //   TODO1b: compute set of equality-constants for given variable and DO consider all equations
   //   TODO2: if {x==k, x==y} then y!=k ==> x##y}
-  // TODO3: introduce generic disequality: x##0 (0 is dummy) for any disequality which is created
   if(c.isVarVarOp()) {
 	if(c.lhsVar()==c.rhsVar()) {
 	  // we do not add an x=x constraint
 	  return;
 	}
-#if 0
+#if 1
 	if(c.lhsVar()<c.rhsVar()) {
 	  // ordering is OK, nothing to do
 	} else {
-	  // ordering is not OK, swap (y=x ==> x=y)
+	  // normalization: ordering is not OK, swap (y=x ==> x=y)
 	  c.swapVars();
 	}
 #endif
@@ -294,7 +286,6 @@ void ConstraintSet::addConstraint(Constraint c) {
   case Constraint::EQ_VAR_CONST: {
 	// if x!=k exists ==> ##
 	if(constraintExists(Constraint::NEQ_VAR_CONST,c.lhsVar(),c.rhsValCppCapsule())) {
-	  removeConstraint(Constraint(Constraint::NEQ_VAR_CONST,c.lhsVar(),c.rhsValCppCapsule()));
 	  addDisequality();
 	  return;
 	}
@@ -303,7 +294,6 @@ void ConstraintSet::addConstraint(Constraint c) {
 	if(i!=end()) {
 	  if(!((*i).rhsValCppCapsule()==c.rhsValCppCapsule())) {
 		// other x==num exists with num!=c.num ==> DEQ
-		removeConstraint(*i);
 		addDisequality();
 		return;
 	  } else {

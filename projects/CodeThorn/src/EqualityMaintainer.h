@@ -1,0 +1,29 @@
+#ifndef EQUALITY_MAINTAINER_H
+#define EQUALITY_MAINTAINER_H
+
+#include <list>
+#include <set>
+#include <string>
+
+using namespace std;
+
+template<typename T>
+class EqualityMaintainer {
+ public:
+  void addEquality(T var1, T var2);
+  bool removeEquality(T var1, T var2);
+  /* according to normalization criterion: the dedicated element is
+	 the element which binds all associated constraints of equal
+	 elements. Equal elements are those for which an equality
+	 constraint exists.
+  */
+  T determineDedicatedElement(T var);
+  bool equalityExists(T var1, T var2);
+  string toString();
+ private:
+  list< set<T> > equality;
+};
+
+#include "EqualityMaintainer.C"
+
+#endif

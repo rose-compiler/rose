@@ -88,7 +88,6 @@ class ConstraintSet : public set<Constraint> {
 
   void addDisequality();
   bool disequalityExists() const;
-  bool deqConstraintExists() const;
 
   //! Does not check for consistency. Raw erasure of constraint.
   void eraseConstraint(Constraint c);
