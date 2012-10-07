@@ -1065,6 +1065,7 @@ test2012_220.C \
 test2012_221.C \
 test2012_222.C \
 test2012_223.C \
+test2012_224.C \
 test2012_225.C \
 test_int_lexemes.C \
 test_int_lexemes_donot_pass.C \
