@@ -10,6 +10,7 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2006_127.c \
      test2006_143.c \
      test2012_20.c \
+     test2012_23.c \
      complex_01.c \
      bool.c \
      constants.c 
