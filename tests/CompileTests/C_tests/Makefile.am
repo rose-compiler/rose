@@ -125,6 +125,7 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2012_21.c \
      test2012_22.c \
      test2012_24.c \
+     test2012_26.c \
      math.c \
      complex_01.c \
      constants.c
@@ -136,6 +137,7 @@ TESTCODES_REQUIRED_TO_PASS = \
 # This is a C99 test code (moved to the C99_tests directory.
 # test2012_20.c 
 # test2012_23.c
+# test2012_25.c
 
 
 if ROSE_USE_CLANG_FRONTEND
