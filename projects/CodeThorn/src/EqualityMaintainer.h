@@ -15,10 +15,13 @@ class EqualityMaintainer {
   /* according to normalization criterion: the dedicated element is
 	 the element which binds all associated constraints of equal
 	 elements. Equal elements are those for which an equality
-	 constraint exists.
+	 constraint exists (transitive closure).
   */
-  T determineDedicatedElement(T var);
-  bool equalityExists(T var1, T var2);
+  T determineDedicatedElement(const T var) const;
+  bool equalityExists(const T var1, const T var2) const;
+  //! return all equal elements (including the element itself)
+  set<T> equalElements(const T var) const;
+
   string toString();
  private:
   list< set<T> > equality;

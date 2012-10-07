@@ -517,8 +517,8 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* eState) {
 		   State newState=*currentEState.state;
 		   ConstraintSet newCSet=*currentEState.constraints();
 		   if(boolOptions["update-input-var"]) {
-			 newState[varId]=AType::Top();
 			 newCSet.deleteConstraints(varId);
+			 newState[varId]=AType::Top();
 		   }
 		   newio.recordVariable(InputOutput::STDIN_VAR,varId);
 		   return elistify(createEState(edge.target,newState,newCSet,newio));

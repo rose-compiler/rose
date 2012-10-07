@@ -15,10 +15,17 @@
 #include <map>
 #include <utility>
 #include <string>
+#include <list>
 #include "Labeler.h"
 #include "CFAnalyzer.h"
 #include "AType.h"
 #include "VariableIdMapping.h"
+#include "EqualityMaintainer.h"
+
+using namespace std;
+
+typedef list<AValue> ListOfAValue;
+typedef set<VariableId> SetOfVariableId;
 
 /*
   EQ_VAR_CONST : equal (==)
@@ -68,15 +75,27 @@ class ConstraintSet : public set<Constraint> {
   bool constraintExists(const Constraint& c) const;
   ConstraintSet::iterator findSpecific(Constraint::ConstraintOp op, VariableId varId) const;
   ConstraintSet findSpecificSet(Constraint::ConstraintOp op, VariableId varId) const;
-  AType::ConstIntLattice varConstIntLatticeValue(const VariableId varId) const;
   string toString() const;
   ConstraintSet deleteVarConstraints(VariableId varId);
+
+  //! returns concrete int-value if equality exists, otherwise Top.
+  AType::ConstIntLattice varConstIntLatticeValue(const VariableId varId) const;
+  //! returns set of concrete values for which an equality is stored 
+  //! (there can be at most one), otherwise the set is empty. 
+  //! Note that top may exist as explicit equality if it was added as such.
+  ListOfAValue getEqVarConst(const VariableId varId) const;
+  //! returns set of concrete values for which an inequality exists
+  ListOfAValue getNeqVarConst(const VariableId varId) const;
+  SetOfVariableId getEqVars(const VariableId varId) const;
+
   void deleteConstraints(VariableId varId);
   void deleteConstConstraints(VariableId varId);
   ConstraintSet invertedConstraints();
   void invertConstraints();
   //! duplicates constraints for par2 variable and adds them for par1 variable.
   void deleteAndMoveConstConstraints(VariableId lhsVarId, VariableId rhsVarId);
+  //! moves const-constraints from "fromVar" to "toVar". Does maintain consistency, set may be become DEQ.
+  void moveConstConstraints(VariableId fromVar, VariableId toVar);
   void duplicateConstConstraints(VariableId lhsVarId, VariableId rhsVarId);
 
   //! maintains consistency of set and creates DIS if inconsistent constraints are added
@@ -89,9 +108,6 @@ class ConstraintSet : public set<Constraint> {
   void addDisequality();
   bool disequalityExists() const;
 
-  //! Does not check for consistency. Raw erasure of constraint.
-  void eraseConstraint(Constraint c);
-
   void addAssignEqVarVar(VariableId, VariableId);
   void addEqVarVar(VariableId, VariableId);
   void removeEqVarVar(VariableId, VariableId);
@@ -101,6 +117,9 @@ class ConstraintSet : public set<Constraint> {
   //ConstraintSet operator+(ConstraintSet& s2);
   long memorySize() const;
  private:
+  //! Does not check for consistency. Raw erasure of constraint.
+  void eraseConstraint(Constraint c);
+  EqualityMaintainer<VariableId> equalityMaintainer;
 };
 
 class ConstraintSetHashFun {

@@ -70,8 +70,8 @@ bool EqualityMaintainer<T>::removeEquality(T var1, T var2) {
 }
 
 template<typename T>
-T EqualityMaintainer<T>::determineDedicatedElement(T var) {
-  for(typename list<set<T> >::iterator i=equality.begin();i!=equality.end();++i) {
+T EqualityMaintainer<T>::determineDedicatedElement(const T var) const {
+  for(typename list<set<T> >::const_iterator i=equality.begin();i!=equality.end();++i) {
 	if((*i).find(var)!=(*i).end()) {
 	  // variable exists in this set. Because the set is sorted, the
 	  // dedicated var is the very first one in the set and we can use
@@ -85,10 +85,18 @@ T EqualityMaintainer<T>::determineDedicatedElement(T var) {
 
 
 template<typename T>
-bool EqualityMaintainer<T>::equalityExists(T var1, T var2) {
+bool EqualityMaintainer<T>::equalityExists(const T var1, const T var2) const {
   // both vars must exist in same set
   // alternativly: both vars must have the same associated dedicated var
   return determineDedicatedElement(var1)==determineDedicatedElement(var2);
+}
+
+template<typename T>
+set<T> EqualityMaintainer<T>::equalElements(const T var) const {
+  for(typename list<set<T> >::const_iterator i=equality.begin();i!=equality.end();++i) {
+	if((*i).find(var)!=(*i).end())
+	  return *i;
+  }  
 }
 
 template<typename T>

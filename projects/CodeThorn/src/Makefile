@@ -170,11 +170,17 @@ asserttest: $(TOOLNAME3)
 
 regressiontest: $(TOOLNAME3)
 	./$(TOOLNAME3) --csv-assert tmp_rers_mini1_assert_csv.txt --csv-ltl tmp_rers_mini1_ltl_csv.txt --verify tests/rers_mini1.ltl --viz=yes tests/rers_mini1.c
-	diff transitiongraph1.dat $(REGRESSION_DATA_DIR)/rers_mini1_transitiongraph1.dat
-	diff tmp_rers_mini1_ltl_csv.txt $(REGRESSION_DATA_DIR)/rers_mini1_ltl_csv.txt
 	diff tmp_rers_mini1_assert_csv.txt $(REGRESSION_DATA_DIR)/rers_mini1_assert_csv.txt
 	@echo "-----------------------"
-	@echo "Regression test PASSED."
+	@echo "Regression assert test PASSED."
+	@echo "-----------------------"
+	diff tmp_rers_mini1_ltl_csv.txt $(REGRESSION_DATA_DIR)/rers_mini1_ltl_csv.txt
+	@echo "-----------------------"
+	@echo "Regression LTL test PASSED."
+	@echo "-----------------------"
+	diff transitiongraph1.dat $(REGRESSION_DATA_DIR)/rers_mini1_transitiongraph1.dat
+	@echo "-----------------------"
+	@echo "All regression tests PASSED."
 	@echo "-----------------------"
 
 # use with caution
