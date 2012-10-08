@@ -141,11 +141,11 @@ void Analyzer::runSolver1() {
 		  nesListIter!=newEStateList.end();
 		  ++nesListIter) {
 		EState newEState=*nesListIter;
-		if(newEState.label!=NO_ESTATE && (!newEState.constraints()->deqConstraintExists()) &&(!isFailedAssertEState(&newEState))) {
+		if(newEState.label!=NO_ESTATE && (!newEState.constraints()->disequalityExists()) &&(!isFailedAssertEState(&newEState))) {
 		  const EState* newEStatePtr=addToWorkListIfNew(newEState);
 		  recordTransition(currentEStatePtr,*i,newEStatePtr);
 		}
-		if(newEState.label!=NO_ESTATE && (!newEState.constraints()->deqConstraintExists()) && (isFailedAssertEState(&newEState))) {
+		if(newEState.label!=NO_ESTATE && (!newEState.constraints()->disequalityExists()) && (isFailedAssertEState(&newEState))) {
 		  // failed-assert end-state: do not add to work list but do add it to the transition graph
 		  const EState* newEStatePtr=processNewOrExisting(newEState);
 		  recordTransition(currentEStatePtr,*i,newEStatePtr);		
@@ -344,7 +344,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* eState) {
   if(edge.type==EDGE_LOCAL) {
 	EState noEState;
 	noEState.label=NO_ESTATE;
-	// TODO: return empty list?
+	// TODO: investigate: with could also return an empty list here
 	return elistify(noEState);
   }
   EState currentEState=*eState;
@@ -404,11 +404,12 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* eState) {
 		cerr<<"Error: We currently do not support multi-state generating operators in function call parameters (yet)."<<endl;
 		exit(1);
 	  }
-	  //TODO: investigate: this turns top variables into variables with concrete value in state - do we want this?
+	  // above evalConstInt does not use constraints (par3==false). Therefore top vars remain top vars (which is what we want here)
 	  newState[formalParameterVarId]=evalResult.value();
 	  ++i;++j;
 	}
-	assert(i==formalParameters.end() && j==actualParameters.end()); // must hold if #fparams==#aparams (TODO: default values)
+	// assert must hold if #formal-params==#actual-params (TODO: default values)
+	assert(i==formalParameters.end() && j==actualParameters.end()); 
 	// ad 4
 	return elistify(createEState(edge.target,newState,cset));
   }
@@ -446,7 +447,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* eState) {
 	  for(set<VariableId>::iterator i=vars.begin();i!=vars.end();++i) {
 		VariableId varId=*i;
 		newState.deleteVar(varId);
-		cset.deleteConstraints(varId);
+		cset.removeAllConstraintsOfVar(varId);
 	  }
 	  // ad 3)
 	  return elistify(createEState(edge.target,newState,cset));
@@ -474,9 +475,15 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* eState) {
 	  AValue evalResult=newState[returnVarId].getValue();
 	  newState[lhsVarId]=evalResult;
 
-	  cset.moveConstConstraints(lhsVarId, returnVarId); // duplicate constraints of $return to lhsVar
+	  // CAUTION! (new semantics!)
+	  #if 1
+	  cset.addAssignEqVarVar(lhsVarId,returnVarId);
+	  #else
+	  cset.deleteAndMoveConstConstraints(returnVarId,lhsVarId); // duplicate constraints of $return to lhsVar
+	  #endif
+
 	  newState.deleteVar(returnVarId); // remove $return from state
-	  cset.deleteConstraints(returnVarId); // remove constraints of $return
+	  cset.removeAllConstraintsOfVar(returnVarId); // remove constraints of $return
 
 	  return elistify(createEState(edge.target,newState,cset));
 	}
@@ -485,7 +492,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* eState) {
 	  State newState=*currentEState.state;
 	  VariableId returnVarId=variableIdMapping.createUniqueTemporaryVariableId(string("$return"));
 	  newState.deleteVar(returnVarId);
-	  cset.deleteConstraints(returnVarId); // remove constraints of $return
+	  cset.removeAllConstraintsOfVar(returnVarId); // remove constraints of $return
 	  //ConstraintSet cset=*currentEState.constraints; ???
 	  return elistify(createEState(edge.target,newState,cset));
 	}
@@ -516,8 +523,8 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* eState) {
 		   State newState=*currentEState.state;
 		   ConstraintSet newCSet=*currentEState.constraints();
 		   if(boolOptions["update-input-var"]) {
+			 newCSet.removeAllConstraintsOfVar(varId);
 			 newState[varId]=AType::Top();
-			 newCSet.deleteConstraints(varId);
 		   }
 		   newio.recordVariable(InputOutput::STDIN_VAR,varId);
 		   return elistify(createEState(edge.target,newState,newCSet,newio));
@@ -607,7 +614,6 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* eState) {
 			newCSet=*evalResult.eState.constraints()+evalResult.exprConstraints;
 		  } else if(edge.type==EDGE_FALSE) {
 			ConstraintSet s1=*evalResult.eState.constraints();
-			//ConstraintSet s2=evalResult.exprConstraints.invertedConstraints();
 			ConstraintSet s2=evalResult.exprConstraints;
 			newCSet=s1+s2;
 		  }
@@ -651,7 +657,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* eState) {
 		  ConstraintSet cset=*eState.constraints();
 		  newState[lhsVar]=(*i).result;
 		  if(!(*i).result.isTop())
-			cset.deleteConstraints(lhsVar);
+			cset.removeAllConstraintsOfVar(lhsVar);
 		  eStateList.push_back(createEState(edge.target,newState,cset));
 		} else {
 		  cerr << "Error: transferfunction:SgAssignOp: unrecognized expression on lhs."<<endl;
@@ -797,7 +803,7 @@ State Analyzer::analyzeAssignRhs(State currentState,VariableId lhsVar, SgNode* r
 	  // update of existing variable with new value
 	  newState[lhsVar]=rhsIntVal;
 	  if(!rhsIntVal.isTop() && !isRhsVar)
-		cset.deleteConstraints(lhsVar);
+		cset.removeAllConstraintsOfVar(lhsVar);
 	  return newState;
 	}
   } else {
@@ -808,7 +814,7 @@ State Analyzer::analyzeAssignRhs(State currentState,VariableId lhsVar, SgNode* r
   }
   // make sure, we only create/propagate contraints if a non-const value is assigned or if a variable is on the rhs.
   if(!rhsIntVal.isTop() && !isRhsVar)
-	cset.deleteConstraints(lhsVar);
+	cset.removeAllConstraintsOfVar(lhsVar);
   return newState;
 }
 

@@ -154,6 +154,7 @@ string AType::BoolLattice::toString() const {
 }
 
 AType::ConstIntLattice::ConstIntLattice():valueType(AType::ConstIntLattice::BOT) {}
+
 AType::ConstIntLattice::ConstIntLattice(bool val) {
   if(val) {
 	valueType=AType::ConstIntLattice::CONSTINT;
@@ -163,6 +164,7 @@ AType::ConstIntLattice::ConstIntLattice(bool val) {
 	intValue=0;
   }
 }
+
 // type conversion
 AType::ConstIntLattice::ConstIntLattice(Top e) {valueType=AType::ConstIntLattice::TOP;}
 // type conversion

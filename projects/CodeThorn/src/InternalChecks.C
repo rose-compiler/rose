@@ -163,23 +163,61 @@ void checkTypes() {
 
 	Constraint c1(Constraint::EQ_VAR_CONST,var_x,1);
 	Constraint c2(Constraint::NEQ_VAR_CONST,var_y,2);
-	Constraint c3(Constraint::DEQ_VAR_CONST,var_z,1);
-	Constraint c4(Constraint::EQ_VAR_CONST,var_y,2);
+	Constraint c3=DISEQUALITYCONSTRAINT;
+	Constraint c4=Constraint(Constraint::EQ_VAR_CONST,var_y,2);
 	ConstraintSet cs;
 	cs.addConstraint(c1);
 	cs.addConstraint(c2);
-	cs.addConstraint(c3);
-	check("inserted 3 different constraints, size of constraint set == 3",cs.size()==3);
+	check("inserted 2 different constraints, size of constraint set == 3",cs.size()==2);
 	check("c1:constraintExists(EQ_VAR_CONST,x,1) == true",cs.constraintExists(Constraint::EQ_VAR_CONST,var_x,1));
 	check("c1:constraintExists(NEQ_VAR_CONST,x,1) == false",!cs.constraintExists(Constraint::NEQ_VAR_CONST,var_x,1));
 	check("c2:constraintExists(NEQ_VAR_CONST,y,2) == true",cs.constraintExists(Constraint::NEQ_VAR_CONST,var_y,2));
-	check("c3:constraintExists(DEQ_VAR_CONST,z,1) == true",cs.constraintExists(Constraint::DEQ_VAR_CONST,var_z,1));
+	check("c3:isDisequality==false",cs.disequalityExists()==false);
 	cs.addConstraint(c4);
 	//cout << "CS:"<<cs.toString()<<endl;
 	check("insert y==2; => disequalityExists() == true",cs.disequalityExists());
+	cs.addConstraint(c3);
+	check("added disequality => disequalityExists() == true",cs.disequalityExists());
+	check("Disequality exists <=> size()==1",cs.size()==1);
 	check("c1!=c2",c1!=c2);
 	check("c1!=c3",c1!=c3);
 	check("c2!=c3",c2!=c3);
+
+	{
+	  // check for equalities 
+	  {
+		Constraint c1(Constraint::EQ_VAR_CONST,var_x,1);
+		Constraint c2=Constraint(Constraint::EQ_VAR_CONST,var_y,2);
+		ConstraintSet cs1;
+		cs1.addConstraint(c1);
+		cs1.addConstraint(c2);
+		cout << "cs1:"<<cs1.toString()<<endl;
+		Constraint c5(Constraint::EQ_VAR_VAR,var_x,var_y);
+		cs1.addConstraint(c5);
+		cout << "cs1:"<<cs1.toString()<<endl;
+		check("cs1.disequalityExists()==true",cs1.disequalityExists());
+	  }
+	  {
+		Constraint c1(Constraint::NEQ_VAR_CONST,var_x,1);
+		Constraint c2=Constraint(Constraint::NEQ_VAR_CONST,var_x,2);
+		Constraint c3=Constraint(Constraint::NEQ_VAR_CONST,var_y,3);
+		ConstraintSet cs1;
+		cs1.addConstraint(c1);
+		cs1.addConstraint(c2);
+		cs1.addConstraint(c3);
+		Constraint c5(Constraint::EQ_VAR_VAR,var_x,var_y);
+		cs1.addConstraint(c5);
+		check("c5:constraintExists(EQ_VAR_VAR,x,y) == true",cs1.constraintExists(Constraint(Constraint::EQ_VAR_VAR,var_x,var_y)));	
+
+		check("c1:constraintExists(EQ_VAR_CONST,x,1) == false",cs1.constraintExists(Constraint::EQ_VAR_CONST,var_x,1)==false);
+		check("c1:constraintExists(NEQ_VAR_CONST,x,1) == true",cs1.constraintExists(Constraint::NEQ_VAR_CONST,var_x,1)==true);
+		check("c1:constraintExists(EQ_VAR_CONST,y,2) == false",cs1.constraintExists(Constraint::EQ_VAR_CONST,var_y,2)==false);
+		check("c1:constraintExists(NEQ_VAR_CONST,y,2) == true",cs1.constraintExists(Constraint::NEQ_VAR_CONST,var_y,2)==true);
+		cs1.removeAllConstraintsOfVar(var_x);
+		cs1.removeAllConstraintsOfVar(var_y);
+		cs1.removeAllConstraintsOfVar(var_x);
+	  }
+	}
 	ConstraintSet cs1;
 	cs1.addConstraint(c1);
 	ConstraintSet cs2;

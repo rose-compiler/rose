@@ -13,6 +13,12 @@
 // This file is part of ROSE. For details, see http://www.rosecompiler.org/.
 // Please read the COPYRIGHT file for Our Notice and for the BSD License.
 
+// MS: TODO: all uses of findSpecific must be replaced to use: 
+// ListOfAValue ConstraintSet::getEqVarConst(VariableId) or varConstIntLatticeValue(VariableId)
+// ListOfAValue ConstraintSet::getNeqVarConst(VariableId)
+// SetOfVariableId ConstraintSet::getEqVars(VariableId)
+// (findSpecific will be made private as low-level function, does not maintain new high-level semantics)
+
 using namespace LTL;
 
 #define FOR_EACH_TRANSITION(TRANSITION)				     \
@@ -379,15 +385,17 @@ public:
 	assert(estate->constraints());
     ConstraintSet constraints = *estate->constraints();
     for (set<VariableId>::const_iterator ivar = input_vars.begin();
-	 ivar != input_vars.end(); ++ivar) {
+		 ivar != input_vars.end();
+		 ++ivar) {
       // main input variable
       r = is_eq(estate, constraints, *ivar, c);
       for (ConstraintSet::iterator eqvv = constraints.findSpecific(Constraint::EQ_VAR_VAR, *ivar);
-	   eqvv != constraints.end(); ++eqvv) {
-	// aliased input variable
-	BoolLattice r1 = is_eq(estate, constraints, eqvv->rhsVar(), c);
-	assert(consistent(r, r1));
-	r = r1;
+		   eqvv != constraints.end();
+		   ++eqvv) {
+		// aliased input variable
+		BoolLattice r1 = is_eq(estate, constraints, eqvv->rhsVar(), c);
+		assert(consistent(r, r1));
+		r = r1;
       }
     }
     return r;
@@ -443,24 +451,26 @@ public:
     assert(estate->constraints());
     ConstraintSet constraints = *estate->constraints();
     for (set<VariableId>::const_iterator ivar = input_vars.begin();
-	 ivar != input_vars.end(); ++ivar) {
+		 ivar != input_vars.end(); 
+		 ++ivar) {
       // main input variable
       r = is_neq(estate, constraints, *ivar, c);
       for (ConstraintSet::iterator eqvv = constraints.findSpecific(Constraint::EQ_VAR_VAR, *ivar);
-	   eqvv != constraints.end(); ++eqvv) {
-	// aliased input variable
-	BoolLattice r1 = is_neq(estate, constraints, eqvv->rhsVar(), c);
-	assert(consistent(r, r1));
-	r = r1;
+		   eqvv != constraints.end();
+		   ++eqvv) {
+		// aliased input variable
+		BoolLattice r1 = is_neq(estate, constraints, eqvv->rhsVar(), c);
+		assert(consistent(r, r1));
+		r = r1;
       }
     }
     return r;
   }
 
   static BoolLattice is_neq(const EState* estate, 
-			    const ConstraintSet& constraints, 
-			    const VariableId& v, 
-			    int c) {
+							const ConstraintSet& constraints, 
+							const VariableId& v, 
+							int c) {
     assert(estate);
     assert(estate->constraints());
     const ConstIntLattice& lval = estate->constraints()->varConstIntLatticeValue(v);
@@ -471,9 +481,10 @@ public:
     else {
       // input != c constraint?
       for (ConstraintSet::iterator neqvc = constraints.findSpecific(Constraint::NEQ_VAR_CONST, v);
-	   neqvc != constraints.end(); ++neqvc) {
-	if (c == rersChar(neqvc->rhsVal().getIntValue()))
-	  return true;
+		   neqvc != constraints.end(); 
+		   ++neqvc) {
+		if (c == rersChar(neqvc->rhsVal().getIntValue()))
+		  return true;
       }
     }
     if (lval.isTop()) // In ConstIntLattice, Top means ALL values
@@ -561,12 +572,13 @@ public:
       // is there a output != c constraint?
       ConstraintSet constraints = *estate->constraints();
       for (ConstraintSet::iterator neqvc = 
-	     constraints.findSpecific(Constraint::NEQ_VAR_CONST, estate->io.var);
-	   neqvc != constraints.end(); ++neqvc) {
-	if (c == rersChar(neqvc->rhsVal().getIntValue()))
-	  return true;
+			 constraints.findSpecific(Constraint::NEQ_VAR_CONST, estate->io.var);
+		   neqvc != constraints.end();
+		   ++neqvc) {
+		if (c == rersChar(neqvc->rhsVal().getIntValue()))
+		  return true;
       }
-
+	  
       // output == c constraint?
       const State& prop_state = *estate->state;
       assert(prop_state.varIsConst(estate->io.var));
