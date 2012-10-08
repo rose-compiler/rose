@@ -51,6 +51,7 @@ class Constraint {
   bool isDisequation() const;
   void negate();
   void swapVars();
+  void setLhsVar(VariableId lhs) { _lhsVar=lhs; } 
  private:
   string opToString() const;
   ConstraintOp _op;
@@ -73,10 +74,14 @@ class ConstraintSet : public set<Constraint> {
   bool constraintExists(Constraint::ConstraintOp op) const;
   ConstraintSet constraintsWithOp(Constraint::ConstraintOp op) const;
   bool constraintExists(const Constraint& c) const;
+
+  // deprecated
   ConstraintSet::iterator findSpecific(Constraint::ConstraintOp op, VariableId varId) const;
+  // deprecated
   ConstraintSet findSpecificSet(Constraint::ConstraintOp op, VariableId varId) const;
+
+
   string toString() const;
-  ConstraintSet deleteVarConstraints(VariableId varId);
 
   //! returns concrete int-value if equality exists, otherwise Top.
   AType::ConstIntLattice varConstIntLatticeValue(const VariableId varId) const;
@@ -88,37 +93,44 @@ class ConstraintSet : public set<Constraint> {
   ListOfAValue getNeqVarConst(const VariableId varId) const;
   SetOfVariableId getEqVars(const VariableId varId) const;
 
-  void deleteConstraints(VariableId varId);
-  void deleteConstConstraints(VariableId varId);
-  ConstraintSet invertedConstraints();
-  void invertConstraints();
-  //! duplicates constraints for par2 variable and adds them for par1 variable.
-  void deleteAndMoveConstConstraints(VariableId lhsVarId, VariableId rhsVarId);
-  //! moves const-constraints from "fromVar" to "toVar". Does maintain consistency, set may be become DEQ.
-  void moveConstConstraints(VariableId fromVar, VariableId toVar);
-  void duplicateConstConstraints(VariableId lhsVarId, VariableId rhsVarId);
-
   //! maintains consistency of set and creates DIS if inconsistent constraints are added
   void addConstraint(Constraint c);
+
   //! remove transfers information to other vars if the constraint to be deleted is x=y. It tries to keep information alive by transfering it to other variables if possible)
   void removeConstraint(Constraint c);
   //! implemented by method removeConstraint
   void removeConstraint(ConstraintSet::iterator i);
+
+  void removeAllConstraintsOfVar(VariableId varId);
+
+  ConstraintSet invertedConstraints();
+  void invertConstraints();
+  //! duplicates constraints for par2 variable and adds them for par1 variable.
 
   void addDisequality();
   bool disequalityExists() const;
 
   void addAssignEqVarVar(VariableId, VariableId);
   void addEqVarVar(VariableId, VariableId);
-  void removeEqVarVar(VariableId, VariableId);
+  //void removeEqualitiesOfVar(VariableId);
 
   long numberOfConstConstraints(VariableId);
   ConstraintSet& operator+=(ConstraintSet& s2);
   //ConstraintSet operator+(ConstraintSet& s2);
   long memorySize() const;
+  void deleteAndMoveConstConstraints(VariableId lhsVarId, VariableId rhsVarId);
+  void moveConstConstraints(VariableId fromVar, VariableId toVar);
  private:
-  //! Does not check for consistency. Raw erasure of constraint.
+  //! modifies internal representation
+  void insertConstraint(Constraint c);
+  //! modifies internal representation
   void eraseConstraint(Constraint c);
+  void eraseConstraint(set<Constraint>::iterator i);
+  //! modifies internal representation
+  void eraseEqWithLhsVar(VariableId);
+  void duplicateConstConstraints(VariableId lhsVarId, VariableId rhsVarId);
+  //! moves const-constraints from "fromVar" to "toVar". Does maintain consistency, set may be become DEQ.
+  void eraseConstConstraints(VariableId);
   EqualityMaintainer<VariableId> equalityMaintainer;
 };
 

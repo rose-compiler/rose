@@ -47,23 +47,15 @@ void EqualityMaintainer<T>::addEquality(T var1, T var2) {
 }
 
 template<typename T>
-bool EqualityMaintainer<T>::removeEquality(T var1, T var2) {
-  // determine vars and remove them (ensure that both vars exist in the same set) otherwise throw exception
+bool EqualityMaintainer<T>::removeEqualities(T var) {
   for(typename list<set<T> >::iterator i=equality.begin();i!=equality.end();++i) {
-	int found=0;
 	typename set<T>::const_iterator j1;
-	typename set<T>::const_iterator j2;
-	if((j1=(*i).find(var1))!=(*i).end()) {
-	  found+=1;
-	}
-	if((j2=(*i).find(var2))!=(*i).end()) {
-	  found+=1;
-	}
-	switch(found) {
-	case 0: continue;
-	case 1: throw "Error: EqualityMaintainer::removeEquality: operation failed. Attempted to remove equality from different equality-classes.";
-	case 2: (*i).erase(*j1); (*i).erase(*j2); if((*i).size()<=1){equality.erase(i);} return true;
-	default: throw "Error: EqualityMaintainer::removeEquality: programmatic error.";
+	if((j1=(*i).find(var))!=(*i).end()) {
+	  (*i).erase(*j1);
+	  if((*i).size()<=1) {
+		equality.erase(i);
+	  }
+	  return true;
 	}
   }
   return false;
@@ -96,7 +88,15 @@ set<T> EqualityMaintainer<T>::equalElements(const T var) const {
   for(typename list<set<T> >::const_iterator i=equality.begin();i!=equality.end();++i) {
 	if((*i).find(var)!=(*i).end())
 	  return *i;
-  }  
+  }
+  set<T> s; // empty set
+  s.insert(var);
+  return s;
+}
+
+template<typename T>
+int EqualityMaintainer<T>::numberOfEqualElements(const T var) const {
+  return equalElements(var).size();
 }
 
 template<typename T>
