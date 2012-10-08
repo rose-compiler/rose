@@ -13,11 +13,6 @@
 // This file is part of ROSE. For details, see http://www.rosecompiler.org/.
 // Please read the COPYRIGHT file for Our Notice and for the BSD License.
 
-// MS: TODO: all uses of findSpecific must be replaced to use: 
-// ListOfAValue ConstraintSet::getEqVarConst(VariableId) or varConstIntLatticeValue(VariableId)
-// ListOfAValue ConstraintSet::getNeqVarConst(VariableId)
-// SetOfVariableId ConstraintSet::getEqVars(VariableId)
-// (findSpecific will be made private as low-level function, does not maintain new high-level semantics)
 
 using namespace LTL;
 
@@ -357,7 +352,7 @@ public:
 
   /// verify that two constraints are consistent, ie. not true and false
   static bool consistent(BoolLattice a, BoolLattice b) {
-    if ((a.isTrue() || a.isFalse()) && (b.isTrue() || b.isFalse())) return false;
+    if ((a.isTrue() && b.isFalse()) || (b.isTrue() && a.isFalse())) return false;
     else return true;
   }
 
@@ -381,48 +376,36 @@ public:
       return Bot();
 
     BoolLattice r = BoolLattice(Top()) || joined_preds;
-	assert(estate);
-	assert(estate->constraints());
+    assert(estate);
+    assert(estate->constraints());
     ConstraintSet constraints = *estate->constraints();
     for (set<VariableId>::const_iterator ivar = input_vars.begin();
-		 ivar != input_vars.end();
-		 ++ivar) {
+	 ivar != input_vars.end();
+	 ++ivar) {
       // main input variable
-      r = is_eq(estate, constraints, *ivar, c);
-      for (ConstraintSet::iterator eqvv = constraints.findSpecific(Constraint::EQ_VAR_VAR, *ivar);
-		   eqvv != constraints.end();
-		   ++eqvv) {
-		// aliased input variable
-		BoolLattice r1 = is_eq(estate, constraints, eqvv->rhsVar(), c);
-		assert(consistent(r, r1));
-		r = r1;
-      }
+      BoolLattice r1 = is_eq(constraints, *ivar, c);
+      assert(consistent(r, r1));
+      r = r1;
     }
     return r;
   }
 
-  static BoolLattice is_eq(const EState* estate, 
-			   const ConstraintSet& constraints, 
+  static BoolLattice is_eq(const ConstraintSet& constraints, 
 			   const VariableId& v, 
 			   int c) {
-    assert(estate);
-    assert(estate->constraints());
-    const ConstIntLattice& lval = estate->constraints()->varConstIntLatticeValue(v);
-    //cerr<<endl<<"ivar == "<<v.variableName()<<endl;
-    //cerr<<constraints.toString()<<endl;
-    if (lval.isConstInt()) {
-      // A=1, B=2
-      //cerr<<(char)c<<" == "<<(char)(rersChar(lval.getIntValue()))<<"? "
-      //    <<(bool)(c == rersChar(lval.getIntValue()))<<endl;
-      return c == rersChar(lval.getIntValue());
+    ListOfAValue l = constraints.getEqVarConst(v);
+    for (ListOfAValue::iterator lval = l.begin(); lval != l.end(); ++lval) {
+      //cerr<<endl<<"ivar == "<<v.variableName()<<endl;
+      //cerr<<constraints.toString()<<endl;
+      if (lval->isConstInt()) {
+	// A=1, B=2
+	//cerr<<(char)c<<" == "<<(char)(rersChar(lval->getIntValue()))<<"? "
+	//    <<(bool)(c == rersChar(lval->getIntValue()))<<endl;
+	return c == rersChar(lval->getIntValue());
+      }
     }
-    if (lval.isTop()) // In ConstIntLattice, Top means ALL values
-      return Top();
-    else {
-      assert(lval.isBot());
-      assert(false);
-      return Bot(); // Bool Top, however, means UNKNOWN
-    }
+    // In ConstIntLattice, Top means ALL values
+    return Top(); // Bool Top, however, means UNKNOWN
   }
 
   // Implementation status: IN PROGRESS
@@ -453,47 +436,35 @@ public:
     for (set<VariableId>::const_iterator ivar = input_vars.begin();
 		 ivar != input_vars.end(); 
 		 ++ivar) {
-      // main input variable
-      r = is_neq(estate, constraints, *ivar, c);
-      for (ConstraintSet::iterator eqvv = constraints.findSpecific(Constraint::EQ_VAR_VAR, *ivar);
-		   eqvv != constraints.end();
-		   ++eqvv) {
-		// aliased input variable
-		BoolLattice r1 = is_neq(estate, constraints, eqvv->rhsVar(), c);
-		assert(consistent(r, r1));
-		r = r1;
-      }
+      // This will really only work with one input variable (that one may be aliased, though)
+      BoolLattice r1 = is_neq(constraints, *ivar, c);
+      assert(consistent(r, r1));
+      r = r1;
     }
     return r;
   }
 
-  static BoolLattice is_neq(const EState* estate, 
-							const ConstraintSet& constraints, 
-							const VariableId& v, 
-							int c) {
-    assert(estate);
-    assert(estate->constraints());
-    const ConstIntLattice& lval = estate->constraints()->varConstIntLatticeValue(v);
-    if (lval.isConstInt()) {
-      // A=1, B=2
-      return c != rersChar(lval.getIntValue());
-    }
-    else {
-      // input != c constraint?
-      for (ConstraintSet::iterator neqvc = constraints.findSpecific(Constraint::NEQ_VAR_CONST, v);
-		   neqvc != constraints.end(); 
-		   ++neqvc) {
-		if (c == rersChar(neqvc->rhsVal().getIntValue()))
-		  return true;
+  static BoolLattice is_neq(const ConstraintSet& constraints, 
+			    const VariableId& v, 
+			    int c) {
+    // var == c
+    ListOfAValue l = constraints.getEqVarConst(v);
+    for (ListOfAValue::iterator lval = l.begin(); lval != l.end(); ++lval) {
+      if (lval->isConstInt()) {
+	// A=1, B=2
+	return c != rersChar(lval->getIntValue());
       }
     }
-    if (lval.isTop()) // In ConstIntLattice, Top means ALL values
-      return Top();   // Bool Top, however, means UNKNOWN
-    else {
-      assert(lval.isBot());
-      assert(false);
-      return Top();
+    // var != c
+    l = constraints.getNeqVarConst(v);
+    for (ListOfAValue::iterator lval = l.begin(); lval != l.end(); ++lval) {
+      if (lval->isConstInt())
+	if (c == rersChar(lval->getIntValue()))
+	  return true;
     }
+    
+    // In ConstIntLattice, Top means ALL values
+    return Top();   // Bool Top, however, means UNKNOWN
   }
 
   // Implementation status: IN PROGRESS
@@ -569,14 +540,14 @@ public:
       return c != rersChar(lval.getIntValue());
     }
     case InputOutput::STDOUT_VAR: {
-      // is there a output != c constraint?
-      ConstraintSet constraints = *estate->constraints();
-      for (ConstraintSet::iterator neqvc = 
-			 constraints.findSpecific(Constraint::NEQ_VAR_CONST, estate->io.var);
-		   neqvc != constraints.end();
-		   ++neqvc) {
-		if (c == rersChar(neqvc->rhsVal().getIntValue()))
-		  return true;
+      // is there an output != c constraint?
+
+      // var != c
+      ListOfAValue l = estate->getConstraints().getNeqVarConst(estate->io.var);
+      for (ListOfAValue::iterator lval = l.begin(); lval != l.end(); ++lval) {
+	if (lval->isConstInt())
+	  if (c == rersChar(lval->getIntValue()))
+	    return true;
       }
 	  
       // output == c constraint?
