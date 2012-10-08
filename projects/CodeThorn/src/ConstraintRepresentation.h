@@ -80,7 +80,6 @@ class ConstraintSet : public set<Constraint> {
   // deprecated
   ConstraintSet findSpecificSet(Constraint::ConstraintOp op, VariableId varId) const;
 
-
   string toString() const;
 
   //! returns concrete int-value if equality exists, otherwise Top.
@@ -95,17 +94,10 @@ class ConstraintSet : public set<Constraint> {
 
   //! maintains consistency of set and creates DIS if inconsistent constraints are added
   void addConstraint(Constraint c);
-
-  //! remove transfers information to other vars if the constraint to be deleted is x=y. It tries to keep information alive by transfering it to other variables if possible)
-  void removeConstraint(Constraint c);
-  //! implemented by method removeConstraint
-  void removeConstraint(ConstraintSet::iterator i);
-
   void removeAllConstraintsOfVar(VariableId varId);
 
-  ConstraintSet invertedConstraints();
-  void invertConstraints();
-  //! duplicates constraints for par2 variable and adds them for par1 variable.
+  ConstraintSet invertedConstraints(); // only correct for single constraints 
+  void invertConstraints();            // only correct for single constraints 
 
   void addDisequality();
   bool disequalityExists() const;
@@ -118,9 +110,10 @@ class ConstraintSet : public set<Constraint> {
   ConstraintSet& operator+=(ConstraintSet& s2);
   //ConstraintSet operator+(ConstraintSet& s2);
   long memorySize() const;
+
+ private:
   void deleteAndMoveConstConstraints(VariableId lhsVarId, VariableId rhsVarId);
   void moveConstConstraints(VariableId fromVar, VariableId toVar);
- private:
   //! modifies internal representation
   void insertConstraint(Constraint c);
   //! modifies internal representation

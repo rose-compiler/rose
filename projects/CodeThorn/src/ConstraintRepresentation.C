@@ -156,19 +156,8 @@ void ConstraintSet::addEqVarVar(VariableId lhsVar, VariableId rhsVar) {
   addConstraint(Constraint(Constraint::EQ_VAR_VAR,lhsVar,rhsVar));
 }
 
-#if 0
-void ConstraintSet::removeEqualitiesOfVar(VariableId var) {
-  equalityMaintainer.removeEqualities(var);
-  for(ConstraintSet::iterator i=begin();i!=end();++i) {
-	if((*i).op()==Constraint::EQ_VAR_VAR) {
-	  if((*i).lhsVar()==var || (*i).rhsVar()==var)
-		eraseConstraint(*i);
-	}
-  }
-}
-#endif
-
 ConstraintSet ConstraintSet::invertedConstraints() {
+  cerr << "WARNING: inverting constraints is not finished yet."<<endl;
   ConstraintSet result;
   // TODO: ensure that only a single equality constraint is inverted, otherwise this would be not correct.
   for(ConstraintSet::iterator i=begin();i!=end();++i) {
@@ -191,18 +180,19 @@ ConstraintSet ConstraintSet::invertedConstraints() {
 }
 
 void ConstraintSet::invertConstraints() {
+  cerr << "WARNING: inverting constraints is not finished yet."<<endl;
   for(ConstraintSet::iterator i=begin();i!=end();++i) {
 	Constraint c=*i;
 	switch(c.op()) {
 	case Constraint::EQ_VAR_CONST:
 	  // c ist const because it is an element in a sorted set
-	  removeConstraint(c); // we remove c from the set (but c remains unchanged and available)
-	  addConstraint(Constraint(Constraint::NEQ_VAR_CONST,c.lhsVar(),c.rhsValCppCapsule()));
+	  eraseConstraint(c); // we remove c from the set (but c remains unchanged and available)
+	  insertConstraint(Constraint(Constraint::NEQ_VAR_CONST,c.lhsVar(),c.rhsValCppCapsule()));
 	  break;
 	case Constraint::NEQ_VAR_CONST:
 	  // c ist const because it is an element in a sorted set
-	  removeConstraint(c); // we remove c from the set (but c remains unchanged and available)
-	  addConstraint(Constraint(Constraint::EQ_VAR_CONST,c.lhsVar(),c.rhsValCppCapsule()));
+	  eraseConstraint(c); // we remove c from the set (but c remains unchanged and available)
+	  insertConstraint(Constraint(Constraint::EQ_VAR_CONST,c.lhsVar(),c.rhsValCppCapsule()));
 	  break;
 	case Constraint::DEQ:
 	  // remains unchanged
@@ -396,55 +386,12 @@ void ConstraintSet::eraseEqWithLhsVar(VariableId v) {
   }
 }
 
-void ConstraintSet::removeConstraint(Constraint c) {
-  if(c.op()==Constraint::EQ_VAR_VAR) {
-	cerr<< "Error: attempt to remove EQ_VAR_VAR constraint. Use removeEqualities instead."<<endl;
-	exit(1);
-#if 0
-	if(getEqVars(c.lhsVar()).size()==2) {
-	  // if only 2: the only equation
-	  // if>2: removing of one equation has no effect
-	  // ensure we do not loose information because of dropping x=y
-	  // example: x!=1,x=y (y!=k cannot exist because of normalization) => x!=1,y!=1
-	  long lsetsize=numberOfConstConstraints(c.lhsVar());
-	  long rsetsize=numberOfConstConstraints(c.rhsVar());
-	  
-	  // check consistency of normalized form: only one variable of an equality can have const-constraints
-	  if(lsetsize>0 && rsetsize>0) {
-		cerr<< "Error removeConstraint:: equality lsetsize>0 && rsetsize>0 : "<<endl;
-		cerr << "Constraint to remove: "<< c.toString()<<endl;
-		cerr << "lhsvar: "<<(c.lhsVar().variableName())<<":"<<c.lhsVar().toString()<<endl;
-		cerr << "rhsvar: "<<(c.rhsVar().variableName())<<":"<<c.rhsVar().toString()<<endl;
-		cerr << "lsetsize: "<<lsetsize<<" rsetsize: "<<rsetsize<<endl;
-		cerr << "ConstraintSet: "<< toString()<<endl;
-		exit(1);
-	  }
-	  eraseConstraint(c);
-	  equalityMaintainer.removeEqualities(c.lhsVar());
-	  equalityMaintainer.removeEqualities(c.rhsVar());
-	  if(lsetsize>0 || rsetsize>0) {
-		duplicateConstConstraints(c.lhsVar(), c.rhsVar());
-	  }
-	  // for a consistent set it must hold: removing an equation cannot create an inconsistent set
-	  assert(!disequalityExists());
-	}
-#endif
-  } else {
-	// all other cases (currently this includes removing DEQ)
-	eraseConstraint(c);
-  }
-}
-
 long ConstraintSet::numberOfConstConstraints(VariableId var) {
   long cnt=0;
   for(ConstraintSet::iterator i=begin();i!=end();++i) {
 	if((*i).isVarValOp() && (*i).lhsVar()==var) cnt++;
   }
   return cnt;
-}
-
-void ConstraintSet::removeConstraint(ConstraintSet::iterator i) {
-  removeConstraint(*i);
 }
 
 #if 1

@@ -200,7 +200,6 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState eS
 		  cout << " == > ";
 #endif
 		  if(lhsResult.result.isFalse()) {
-			//res.exprConstraints=lhsResult.exprConstraints.invertedConstraints();
 			res.exprConstraints=lhsResult.exprConstraints;
 			// rhs is not considered due to short-circuit AND semantics
 		  }
@@ -232,11 +231,9 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState eS
 			res.exprConstraints=lhsResult.exprConstraints;
 		  }
 		  if(lhsResult.result.isFalse() && rhsResult.result.isFalse()) {
-			//res.exprConstraints=lhsResult.exprConstraints.invertedConstraints()+rhsResult.exprConstraints.invertedConstraints();
 			res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
 		  }
 		  if(lhsResult.result.isFalse() && rhsResult.result.isTrue()) {
-			//res.exprConstraints=lhsResult.exprConstraints.invertedConstraints()+rhsResult.exprConstraints;
 			res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
 		  }
 		  // in case of top we do not propagate constraints
@@ -332,8 +329,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState eS
 	  switch(node->variantT()) {
 	  case V_SgNotOp:
 		res.result=!operandResult.result;
-		// we propagate the inverted constraints
-		//res.exprConstraints=operandResult.exprConstraints.invertedConstraints();
+		// we do NOT invert the constraints, instead we negate the operand result (TODO: investigate)
 		res.exprConstraints=operandResult.exprConstraints;
 		resultList.push_back(res);
 	  break;

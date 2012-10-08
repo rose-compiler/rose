@@ -614,7 +614,6 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* eState) {
 			newCSet=*evalResult.eState.constraints()+evalResult.exprConstraints;
 		  } else if(edge.type==EDGE_FALSE) {
 			ConstraintSet s1=*evalResult.eState.constraints();
-			//ConstraintSet s2=evalResult.exprConstraints.invertedConstraints();
 			ConstraintSet s2=evalResult.exprConstraints;
 			newCSet=s1+s2;
 		  }
