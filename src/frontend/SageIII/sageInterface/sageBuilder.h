@@ -17,7 +17,8 @@
   \authors Chunhua Liao (last modified 2/12/2008)
   
 */
-namespace SageBuilder{
+namespace SageBuilder 
+{
 
 #if 0
 //---------------------AST creation/building/construction-----------------

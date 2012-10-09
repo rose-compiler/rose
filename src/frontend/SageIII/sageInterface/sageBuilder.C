@@ -259,21 +259,21 @@ void SageBuilder::popScopeStack()
 }
 
 SgScopeStatement* SageBuilder::topScopeStack()
-{
-// DQ (9/28/2009): Test if this is an empty stack, and if so return NULL (ScopeStack.back() should be undefined for this case).
-   if (ScopeStack.empty() == true)
-      return NULL;
+   {
+  // DQ (9/28/2009): Test if this is an empty stack, and if so return NULL (ScopeStack.back() should be undefined for this case).
+     if (ScopeStack.empty() == true)
+         return NULL;
 
-// DQ (9/28/2009): This is part of testing for GNU 4.0.x (other versions of g++ work fine).
-  SgScopeStatement* tempScope = ScopeStack.back();
-  if (tempScope != NULL)
-     {
-       tempScope->class_name();
-     }
+  // DQ (9/28/2009): This is part of testing for GNU 4.0.x (other versions of g++ work fine).
+     SgScopeStatement* tempScope = ScopeStack.back();
+     if (tempScope != NULL)
+        {
+          tempScope->class_name();
+        }
 
-//return ScopeStack.back();
-  return tempScope;
-}
+  // return ScopeStack.back();
+     return tempScope;
+   }
 
 
 SgScopeStatement*
@@ -292,14 +292,14 @@ SageBuilder::getGlobalScopeFromScopeStack()
    }
 
 bool SageBuilder::emptyScopeStack()
-{
-  return ScopeStack.empty();
-}
+   {
+     return ScopeStack.empty();
+   }
 
 void SageBuilder::clearScopeStack()
-{
-  ScopeStack.clear();
-}
+   {
+     ScopeStack.clear();
+   }
 
 
 

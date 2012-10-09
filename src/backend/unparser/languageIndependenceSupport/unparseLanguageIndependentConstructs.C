@@ -3874,10 +3874,13 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr) {
     //        function pointers initialisation).
           case V_SgFunctionRefExp:    return 0;
 
-#if 0
-       // Template
-          case V_:              return 0;
-#endif
+       // DQ (10/8/2012): Unclear if this is the correct precedence for this GNU specific feature.
+       // Note that this setting is equivalent to what was being returned, so I expect it is fine since it represents no change.
+          case V_SgStatementExpression: return 0;
+
+       // DQ (10/8/2012): Unclear if this is the correct precedence for this GNU specific feature.
+       // Note that this setting is equivalent to what was being returned, so I expect it is fine since it represents no change.
+          case V_SgVarRefExp:           return 0;
 
           default:
              {
