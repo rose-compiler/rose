@@ -111,8 +111,8 @@ GPUs).
 
 CodeThorn has grown out of both those application areas, from
 analyzing and optimizing source-to-source HPC applications \cite{MS-QSMK04CPA} with
-ROSE-based tools \cite{ROSEWEBSITE,MS-SCAM05} and analysing embedded systems
-software with SATIrE (which integrates ROSE and PAG \cite{PAG}) and
+ROSE-based tools \cite{RoseWWW,MS-SCAM05} and analysing embedded systems
+software with SATIrE \cite{SatireWWW} (which integrates ROSE and PAG \cite{martin-pag}) and
 which has been applied in performing loop bound analysis (TuBound \cite{Prantl:SK08}, \cite{Kirner:SOSYM2010}) timiing
 analysis (e.g. WCET challenge 2008/9 \cite{Prantl:WCET2009}).
 
@@ -127,8 +127,8 @@ We currently restrict the input language to a small subset of C as we
 are also using it when normalizing compute intensive code for
 optimizations. The RERS 2012 subset is therefore well suited for our
 initial version. Future work will include porting our analyses from
-SATIrE to CodeThorn (e.g. shape analysis \cite{shapeanalysis},
-points-to analysis \cite{pointstoanalysis}, interval analysis \cite{intervalanalysis}).
+SATIrE to CodeThorn (e.g. shape analysis \cite{scam2011},
+points-to analysis, interval analysis).
 
 In CodeThorn (in its present version 1.1) we integrate three approaches:
 
@@ -146,8 +146,8 @@ and performance of each of the approaches on the overall results, and
 in particular the opportunities we see emerge and limitations we
 currently face in respect to verfication. We believe that insights
 gained in the work on the RERS challenge-problems will transfer to
-analyses as we shall use them in above mentioned areas of HPC and
-embedded systems.
+analyses as we shall use them in above mentioned areas of analyzing HPC and
+embedded systems applications.
 
 \input{stg}
 \input{ltl}
