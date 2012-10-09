@@ -865,7 +865,10 @@ SgLocatedNode::addToAttachedPreprocessingInfo(
      SgFunctionParameterList* functionParameterList = isSgFunctionParameterList(this);
      if (functionParameterList != NULL)
         {
+#if 0
+       // DQ (10/8/2012): Commented out to provide less output spew.
           printf ("SgFunctionParameterList are not typically associated with comments or CPP directives \n");
+#endif
           ROSE_ASSERT(get_startOfConstruct() != NULL);
           ROSE_ASSERT(get_endOfConstruct() != NULL);
         }

@@ -3,6 +3,10 @@
 #include "rose_attributes_list.h"
 #include "stringify.h"
 
+// DQ (10/14/2010):  This should only be included by source files that require it.
+// This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
+#include "rose_config.h"
+
 // DQ (11/28/2009): I think this is equivalent to "USE_ROSE"
 // #if CAN_NOT_COMPILE_WITH_ROSE != true
 // #if (CAN_NOT_COMPILE_WITH_ROSE == 0)
@@ -1789,8 +1793,10 @@ ROSEAttributesList::isCppDirective( const string & line, PreprocessingInfo::Dire
                ROSE_ASSERT(false);
                cppDeclarationKind = PreprocessingInfo::CpreprocessorUnknownDeclaration;
 #else
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
                printf ("Warning: ROSEAttributesList::isCppDirective() found unknown cppIndentifier = %s\n Extracted from a line: =%s\n",
                         cppIndentifier.c_str(), line.c_str());
+#endif
                cppDeclarationKind = PreprocessingInfo::CpreprocessorUnknownDeclaration;
 #endif               
              }

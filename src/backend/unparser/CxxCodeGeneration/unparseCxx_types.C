@@ -95,7 +95,9 @@ string get_type_name(SgType* t)
             // if (SgProject::get_C_only() == true)
                if (SageInterface::is_C_language() == true)
                   {
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
                     printf ("Warning: SgTypeBool used for C application (reserved for use in C99 and C++) \n");
+#endif
                   }
             // ROSE_ASSERT(SgProject::get_C_only() == false);
             // return (SgProject::get_C99_only() == true) ? "_Bool" : "bool";

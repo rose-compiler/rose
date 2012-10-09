@@ -2212,7 +2212,10 @@ Unparse_ExprStmt::unparseForStmt(SgStatement* stmt, SgUnparse_Info& info)
         }
        else
         {
+#if 0
+       // DQ (10/8/2012): Commented out to avoid output spew.
           printf ("Warning in unparseForStmt(): for_stmt->get_for_init_stmt() == NULL \n");
+#endif
           curprint("; ");
         }
      newinfo.unset_inConditional();
@@ -6047,7 +6050,10 @@ Unparse_ExprStmt::unparseUpcForAllStatement(SgStatement* stmt, SgUnparse_Info& i
         }
        else
         {
+#if 0
+       // DQ (10/8/2012): Commented out to avoid output spew.
           printf ("Warning in unparseForStmt(): for_stmt->get_for_init_stmt() == NULL \n");
+#endif
           curprint ( string("; "));
         }
      newinfo.unset_inConditional();
