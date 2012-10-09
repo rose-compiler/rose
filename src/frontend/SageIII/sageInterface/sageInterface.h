@@ -1140,6 +1140,10 @@ std::vector<SgBreakStmt*> findBreakStmts(SgStatement* code, const std::string& f
  *  ancestors, to find the first node matching the specified or derived type.  If @p includingSelf is true then the
  *  starting node, @p astNode, is returned if its type matches, otherwise the search starts at the parent of @p astNode.
  *
+ *  For the purposes of this function, the parent (P) of an SgDeclarationStatement node (N) is considered to be the first
+ *  non-defining declaration of N if N has both a defining declaration and a first non-defining declaration and the defining
+ *  declaration is different than the first non-defining declaration.
+ *
  *  If no ancestor of the requisite type of subtypes is found then this function returns a null pointer.
  *
  *  If @p astNode is the null pointer, then the return value is a null pointer. That is, if there is no node, then there cannot
@@ -1147,122 +1151,29 @@ std::vector<SgBreakStmt*> findBreakStmts(SgStatement* code, const std::string& f
 template <typename NodeType>
 NodeType* getEnclosingNode(const SgNode* astNode, const bool includingSelf = false)
    {
-     if (NULL == astNode)
-        {
-          return NULL;
-        }
+       // Find the parent of specified type, but watch out for cycles in the ancestry (which would cause an infinite loop).
+       // Cast away const because isSg* functions aren't defined for const node pointers; and our return is not const.
+       SgNode *node = const_cast<SgNode*>(!astNode || includingSelf ? astNode : astNode->get_parent());
+       std::set<const SgNode*> seen; // nodes we've seen, in order to detect cycles
+       while (node) {
+           if (NodeType *found = dynamic_cast<NodeType*>(node))
+               return found;
 
-     if ( (includingSelf ) && (dynamic_cast<const NodeType*>(astNode)) )
-        {
-          return const_cast<NodeType*>(dynamic_cast<const NodeType*> (astNode));
-        }
+           // FIXME: Cycle detection could be moved elsewhere so we don't need to do it on every call. [RPM 2012-10-09]
+           ROSE_ASSERT(seen.insert(node).second);
 
-  // DQ (3/5/2012): Check for reference to self...
-     ROSE_ASSERT(astNode->get_parent() != astNode);
-
-     SgNode* parent = astNode->get_parent();
-
-  // DQ (3/5/2012): Check for loops that will cause infinite loops.
-     SgNode* previouslySeenParent = parent;
-     bool foundCycle = false;
-     while ( (foundCycle == false) && (parent != NULL) && (!dynamic_cast<const NodeType*>(parent)) )
-        {
-          ROSE_ASSERT(parent->get_parent() != parent);
-#if 0
-          printf ("In getEnclosingNode(): parent = %p = %s \n",parent,parent->class_name().c_str());
-#endif
-          parent = parent->get_parent();
-
-       // DQ (3/5/2012): Check for loops that will cause infinite loops.
-       // ROSE_ASSERT(parent != previouslySeenParent);
-          if (parent == previouslySeenParent)
-             {
-               foundCycle = true;
-             }
-        }
-
-#if 0
-     printf ("previouslySeenParent = %p = %s \n",previouslySeenParent,previouslySeenParent->class_name().c_str());
-#endif
-
-     parent = previouslySeenParent;
-
-     SgDeclarationStatement* declarationStatement = isSgDeclarationStatement(parent);
-     if (declarationStatement != NULL)
-        {
-#if 0
-          printf ("Found a SgDeclarationStatement \n");
-#endif
-          SgDeclarationStatement* definingDeclaration         = declarationStatement->get_definingDeclaration();
-          SgDeclarationStatement* firstNondefiningDeclaration = declarationStatement->get_firstNondefiningDeclaration();
-
-#if 0
-          printf (" --- declarationStatement         = %p \n",declarationStatement);
-          printf (" --- definingDeclaration          = %p \n",definingDeclaration);
-          if (definingDeclaration != NULL && definingDeclaration->get_parent() != NULL)
-               printf (" --- definingDeclaration ->get_parent()         = %p = %s \n",definingDeclaration->get_parent(),definingDeclaration->get_parent()->class_name().c_str());
-          printf (" --- firstNondefiningDeclaration  = %p \n",firstNondefiningDeclaration);
-          if (firstNondefiningDeclaration != NULL && firstNondefiningDeclaration->get_parent() != NULL)
-               printf (" --- firstNondefiningDeclaration ->get_parent() = %p = %s \n",firstNondefiningDeclaration->get_parent(),firstNondefiningDeclaration->get_parent()->class_name().c_str());
-#endif
-          if (definingDeclaration != NULL && declarationStatement != firstNondefiningDeclaration)
-             {
-#if 0
-               printf ("Found a nondefining declaration so use the non-defining declaration instead \n");
-#endif
-               parent = firstNondefiningDeclaration;
-             }
-        }
-
-#if 0
-     printf ("reset: previouslySeenParent = %p = %s \n",previouslySeenParent,previouslySeenParent->class_name().c_str());
-#endif
-
-  // DQ (10/9/2012): Robb has suggested this change to fix the binary analysis work.
-  // if (foundCycle == true)
-     if (foundCycle == false)
-        {
-          while ( (parent != NULL) && (!dynamic_cast<const NodeType*>(parent)) )
-             {
-               ROSE_ASSERT(parent->get_parent() != parent);
-#if 0
-               printf ("In getEnclosingNode() (2nd try): parent = %p = %s \n",parent,parent->class_name().c_str());
-#endif
-               SgDeclarationStatement* declarationStatement = isSgDeclarationStatement(parent);
-               if (declarationStatement != NULL)
-                  {
-#if 0
-                    printf ("Found a SgDeclarationStatement \n");
-#endif
-                    SgDeclarationStatement* definingDeclaration         = declarationStatement->get_definingDeclaration();
-                    SgDeclarationStatement* firstNondefiningDeclaration = declarationStatement->get_firstNondefiningDeclaration();
-#if 0
-                    printf (" --- declarationStatement                       = %p \n",declarationStatement);
-
-                    printf (" --- definingDeclaration                        = %p \n",definingDeclaration);
-                    if (definingDeclaration != NULL && definingDeclaration->get_parent() != NULL)
-                         printf (" --- definingDeclaration ->get_parent()         = %p = %s \n",definingDeclaration->get_parent(),definingDeclaration->get_parent()->class_name().c_str());
-
-                    printf (" --- firstNondefiningDeclaration                = %p \n",firstNondefiningDeclaration);
-                    if (firstNondefiningDeclaration != NULL && firstNondefiningDeclaration->get_parent() != NULL)
-                         printf (" --- firstNondefiningDeclaration ->get_parent() = %p = %s \n",firstNondefiningDeclaration->get_parent(),firstNondefiningDeclaration->get_parent()->class_name().c_str());
-#endif
-                    if (definingDeclaration != NULL && declarationStatement != firstNondefiningDeclaration)
-                       {
-#if 0
-                         printf ("Found a nondefining declaration so use the firstNondefining declaration instead \n");
-#endif
-                         parent = firstNondefiningDeclaration;
-                       }
-                  }
-               parent = parent->get_parent();
-
-            // DQ (3/5/2012): Check for loops that will cause infinite loops.
-               ROSE_ASSERT(parent != previouslySeenParent);
-             }
-        }
-
-     return const_cast<NodeType*>(dynamic_cast<const NodeType*> (parent));
+           // Traverse to parent (declaration statements are a special case)
+           if (SgDeclarationStatement *declarationStatement = isSgDeclarationStatement(node)) {
+               SgDeclarationStatement *definingDeclaration = declarationStatement->get_definingDeclaration();
+               SgDeclarationStatement *firstNondefiningDeclaration = declarationStatement->get_firstNondefiningDeclaration();
+               if (definingDeclaration && firstNondefiningDeclaration && declarationStatement != firstNondefiningDeclaration) {
+                   node = firstNondefiningDeclaration;
+               }
+           } else {
+               node = node->get_parent();
+           }
+       }
+       return NULL;
    }
 
 //! Get the closest scope from astNode. Return astNode if it is already a scope.
