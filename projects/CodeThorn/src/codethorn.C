@@ -356,6 +356,7 @@ int main( int argc, char * argv[] ) {
     ("viz",po::value< string >(),"generate visualizations (dot) outputs [=yes|no]")
     ("update-input-var",po::value< string >(),"For testing purposes only. Default is Yes. [=yes|no]")
     ("run-rose-tests",po::value< string >(),"Run ROSE AST tests. [=yes|no]")
+    ("reduce-cfg",po::value< string >(),"Reduce CFG nodes which are not relevant for the analysis. [=yes|no]")
     ;
 
   po::store(po::command_line_parser(argc, argv).
@@ -397,6 +398,7 @@ int main( int argc, char * argv[] ) {
   boolOptions.registerOption("viz",false);
   boolOptions.registerOption("update-input-var",true);
   boolOptions.registerOption("run-rose-tests",true);
+  boolOptions.registerOption("reduce-cfg",true);
   boolOptions.processOptions();
   cout<<boolOptions.toString();
 
