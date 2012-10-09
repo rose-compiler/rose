@@ -117,7 +117,7 @@ bool
 UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, string sourceFilename, SgUnparse_Info& info )
    {
   // If the filename of the statement and the input filename are the same then 
-  // the return result is true.  IF not then we have to look to see if there
+  // the return result is true.  IF not, then we have to look to see if there
   // was a "#line xx "filename"" macro that was used (to explain the difference).
 
      ROSE_ASSERT (stmt != NULL);
@@ -134,10 +134,35 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
   // constructed as a transformation then the file info objects would have been marked as
   // part of a transforamtion and this fix would not have been required.  At some point this
   // can be improved.  So this is a fine temporary fix for now.
-     if (StringUtility::fileNameSuffix(sourceFilename)=="rmod") 
+     if (StringUtility::fileNameSuffix(sourceFilename) == "rmod") 
         {
        // If we are to unparse a module into the .rmod file this this is ALWAYS true
           return true;
+        }
+#if 0
+     printf ("sourceFilename = %s \n",sourceFilename.c_str());
+#endif
+
+  // DQ (10/8/2012): We want to allow ROSE to work with autoconf tests.  The nature
+  // of these tests are that they have a #line directive "#line 1227 "configure"" 
+  // and are in a file called: "conftest.c" and in some cases have a include file 
+  // named: "confdef.h".
+     if (StringUtility::stripPathFromFileName(sourceFilename) == "conftest.c") 
+        {
+          ROSE_ASSERT(stmt->get_file_info() != NULL);
+          string statementfilename = stmt->get_file_info()->get_filenameString();
+#if 0
+          printf ("statementfilename = %s \n",statementfilename.c_str());
+#endif
+       // Note that the #line directive will cause the statement's source file position 
+       // to match that of the filename in the line directive.
+          if (statementfilename == "configure")
+             {
+#if 0
+               printf ("In statementFromFile(): Detected an autocon generated file used to test aspects of the system as part of an application's build system stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+#endif
+               return true;
+             }
         }
 
      if (unp->opt.get_unparse_includes_opt() == true)
