@@ -688,8 +688,12 @@ void Analyzer::initializeSolver1(std::string functionToStartAt,SgNode* root) {
   Labeler* labeler= new Labeler(root);
   cout << "INIT: Creating CFAnalyzer."<<endl;
   cfanalyzer=new CFAnalyzer(labeler);
-  cout << "INIT: Building CFG."<<endl;
+  cout << "INIT: Building CFGs."<<endl;
   flow=cfanalyzer->flow(root);
+  if(boolOptions["reduce-cfg"]) {
+	int cnt=cfanalyzer->reduceBlockBeginNodes(flow);
+	cout << "INIT: CFG reduction OK. (eliminated "<<cnt<<" nodes)"<<endl;
+  }
   cout << "INIT: Intra-Flow OK. (size: " << flow.size() << " edges)"<<endl;
   InterFlow interFlow=cfanalyzer->interFlow(flow);
   cout << "INIT: Inter-Flow OK. (size: " << interFlow.size()*2 << " edges)"<<endl;

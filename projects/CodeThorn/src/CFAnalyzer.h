@@ -85,6 +85,7 @@ class CFAnalyzer {
   // computes from existing intra-procedural flow graph(s) the inter-procedural call information
   InterFlow interFlow(Flow& flow); 
   void intraInterFlow(Flow&, InterFlow&);
+  int reduceBlockBeginNodes(Flow& flow);
  private:
   Labeler* labeler;
 };	

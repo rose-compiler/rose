@@ -1,0 +1,103 @@
+
+\input{ctheader}
+\ptsize{10}
+\input{formalisms3}
+\input{programanalysismacros3}
+
+\title{CodeThorn 1.2}
+\subtitle{Conceptual Overview\\(in preparation)}
+%\author{{\large Markus Schordan}}
+%\institution{Institut ....}
+%\slideCaption{\textit{Markus Schordan \hspace{4.5cm} \today} \hspace{4.5cm}}
+%\hypersetup{colorlinks=true,linkcolor=red}
+
+\begin{document}
+\maketitle
+
+% beamer options [...]: fragile,shrink=N (N in percent to shrink slide), squeeze (reduce gaps)
+%\logo{\includegraphics[height=0.5cm]{logo}}
+
+\begin{frame}{Questions of Interest}
+\begin{itemize}
+\item How can we specify and verify the input/output behavior of a program?
+\item What is relevant structural information about a program?
+\item What are good methods for filtering or querying the computed program information?
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Scope of Program Information}
+\begin{itemize}
+\item Intra-procedural information
+\item Inter-procedural information
+\item Program slices
+\item Patterns
+\begin{itemize}
+\item design pattern
+\item data access pattern
+\item Communication pattern
+\end{itemize}
+\item Program representation
+\item Program states and transitions
+\item Input/Output behavior (linear time logic formulae)
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}{Program Structures as Graphs}
+\begin{itemize}
+\item Abstract syntax tree (AST)
+\item Inheritance hierarchy (tree/DAG)
+\item Flow graphs
+\begin{itemize}
+\item Control flow graph
+\item Control dependence graph
+\item Data flow graph
+\item Data dependence graph
+\end{itemize}
+\item Call graph
+\item Collaboration graph
+\item Coupling graph
+\item Program dependence graph
+\item State transition graph
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Folded State Transition Graph}
+
+\includegraphics[width=0.4\columnwidth]{../manual/gfx/basictest10f_transitiongraph2}
+% container size: 1000
+% itertions: 100
+% time in milliseconds?
+
+\vspace{-0.3cm}
+{
+\scriptsize
+\begin{block}{Edges}
+\begin{itemize}
+\item Cycles: Blue edges: backward edges (for identical system states)
+\item Green/red edges: true/false edges
+\item Black: forward edges
+\end{itemize}
+\end{block}
+}
+
+\end{frame}
+
+\begin{frame}{Infrastructure: ROSE}
+
+\begin{block}{Supported Languages}
+C, C++, OpenMP, UPC, Java, and Fortran. 
+\end{block}
+
+\begin{block}{Scope}
+For building custom tools for static analysis, program optimization, arbitrary program transformation, domain-specific optimizations, complex loop optimizations, performance analysis, and cyber-security.
+\end{block}
+
+\begin{block}{Availability: http://www.rosecompiler.org}
+Open source, BSD-License.
+\end{block}
+\end{frame}
+
+\end{document}
+

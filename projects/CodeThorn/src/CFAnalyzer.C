@@ -456,6 +456,32 @@ Flow CFAnalyzer::flow(SgNode* s1, SgNode* s2) {
   return flow12;
 }
 
+int CFAnalyzer::reduceBlockBeginNodes(Flow& flow) {
+  LabelSet labs=flow.nodeLabels();
+  int cnt=0;
+  for(LabelSet::iterator i=labs.begin();i!=labs.end();++i) {
+	if(isSgBasicBlock(getNode(*i))) {
+	  cnt++;
+	  Flow inFlow=flow.inEdges(*i);
+	  Flow outFlow=flow.outEdges(*i);
+	  assert(inFlow.size()<=1);
+	  assert(outFlow.size()<=1);
+	  // inedge: (n1,b)
+	  // outedge: (b,n2)
+	  // remove(n1,b)
+	  // remove(b,n2)
+	  // insert(n1,n2)
+	  Edge e1=*inFlow.begin();
+	  Edge e2=*outFlow.begin();
+	  Edge newEdge=Edge(e1.source,e1.type,e2.target);
+	  flow.erase(e1);
+	  flow.erase(e2);
+	  flow.insert(newEdge);
+	}
+  }
+  return cnt;
+}
+
 void CFAnalyzer::intraInterFlow(Flow& flow, InterFlow& interFlow) {
   for(InterFlow::iterator i=interFlow.begin();i!=interFlow.end();++i) {
 	if((*i).entry==Labeler::NO_LABEL && (*i).exit==Labeler::NO_LABEL) {
