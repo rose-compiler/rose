@@ -1714,26 +1714,39 @@ resetParentPointersInMemoryPool(SgNode* node)
      SgProject* project = isSgProject(node);
      if (project != NULL)
         {
-           SgFile* file = (*project)[0];
+          SgFile* file = (*project)[0];
+
           SgSourceFile* sourceFile = isSgSourceFile(file);
-          ROSE_ASSERT(sourceFile != NULL);
 
-          globalScope = sourceFile->get_globalScope();
+       // DQ (10/9/2012): Robb points out that this is a problem for the binary analysis.
+       // ROSE_ASSERT(sourceFile != NULL);
+          if (sourceFile != NULL)
+             {
+               globalScope = sourceFile->get_globalScope();
+             }
+
+          ROSE_ASSERT(globalScope != NULL || isSgBinaryComposite(file) != NULL);
         }
-     ROSE_ASSERT(globalScope != NULL);
 
-     ResetParentPointersInMemoryPool t(globalScope);
+  // ROSE_ASSERT(globalScope != NULL);
 
-     ROSE_ASSERT(t.globalScope != NULL);
+  // DQ (10/9/2012): Make this conditional upon having found a valid SgGlobal (not the case for a binary file).
+     if (globalScope != NULL)
+        {
+          ResetParentPointersInMemoryPool t(globalScope);
 
-     t.traverseMemoryPool();
+          ROSE_ASSERT(t.globalScope != NULL);
 
-  // JJW: Moved this down because it requires that some non-Sg_File_Info
-  // parent pointers have been set
-  // Reset parents of any remaining unset Sg_File_Info object first
-     resetFileInfoParentPointersInMemoryPool();
+          t.traverseMemoryPool();
+
+       // JJW: Moved this down because it requires that some non-Sg_File_Info
+       // parent pointers have been set
+       // Reset parents of any remaining unset Sg_File_Info object first
+          resetFileInfoParentPointersInMemoryPool();
+        }
 
    }
+
      
 void
 ResetParentPointersInMemoryPool::visit(SgNode* node)

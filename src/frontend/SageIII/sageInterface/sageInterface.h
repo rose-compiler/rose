@@ -1218,7 +1218,9 @@ NodeType* getEnclosingNode(const SgNode* astNode, const bool includingSelf = fal
      printf ("reset: previouslySeenParent = %p = %s \n",previouslySeenParent,previouslySeenParent->class_name().c_str());
 #endif
 
-     if (foundCycle == true)
+  // DQ (10/9/2012): Robb has suggested this change to fix the binary analysis work.
+  // if (foundCycle == true)
+     if (foundCycle == false)
         {
           while ( (parent != NULL) && (!dynamic_cast<const NodeType*>(parent)) )
              {
