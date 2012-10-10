@@ -541,10 +541,10 @@ int main( int argc, char * argv[] ) {
   cout << "Number of stderr-estates       : "<<color("cyan")<<(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDERR_VAR))<<color("white")<<endl;
   cout << "Number of failed-assert-estates: "<<color("cyan")<<(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::FAILED_ASSERT))<<color("white")<<endl;
   cout << "=============================================================="<<endl;
-  cout << "Number of states               : "<<color("magenta")<<stateSetSize<<color("white")<<" (memory: "<<color("magenta")<<stateSetBytes<<color("white")<<" bytes)"<<" ("<<"load-factor: "<<stateSetLoadFactor<<  "/ max-collisions: "<<stateSetMaxCollisions<<")"<<endl;
-  cout << "Number of estates              : "<<color("cyan")<<eStateSetSize<<color("white")<<" (memory: "<<color("cyan")<<eStateSetBytes<<color("white")<<" bytes)"<<" ("<<"load-factor: "<<eStateSetLoadFactor<<  "/ max-collisions: "<<eStateSetMaxCollisions<<")"<<endl;
+  cout << "Number of states               : "<<color("magenta")<<stateSetSize<<color("white")<<" (memory: "<<color("magenta")<<stateSetBytes<<color("white")<<" bytes)"<<" ("<<""<<stateSetLoadFactor<<  "/ "<<stateSetMaxCollisions<<")"<<endl;
+  cout << "Number of estates              : "<<color("cyan")<<eStateSetSize<<color("white")<<" (memory: "<<color("cyan")<<eStateSetBytes<<color("white")<<" bytes)"<<" ("<<""<<eStateSetLoadFactor<<  "/ "<<eStateSetMaxCollisions<<")"<<endl;
   cout << "Number of transitions          : "<<color("blue")<<transitionGraphSize<<color("white")<<" (memory: "<<color("blue")<<transitionGraphBytes<<color("white")<<" bytes)"<<endl;
-  cout << "Number of constraint sets      : "<<color("yellow")<<numOfconstraintSets<<color("white")<<" (memory: "<<color("yellow")<<constraintSetsBytes<<color("white")<<" bytes)"<<" ("<<"load-factor: "<<constraintSetsLoadFactor<<  "/ max-collisions: "<<constraintSetsMaxCollisions<<")"<<endl;
+  cout << "Number of constraint sets      : "<<color("yellow")<<numOfconstraintSets<<color("white")<<" (memory: "<<color("yellow")<<constraintSetsBytes<<color("white")<<" bytes)"<<" ("<<""<<constraintSetsLoadFactor<<  "/ "<<constraintSetsMaxCollisions<<")"<<endl;
   cout << "=============================================================="<<endl;
   long totalMemory=stateSetBytes+eStateSetBytes+transitionGraphBytes+constraintSetsBytes;
   cout << "Memory total         : "<<color("green")<<totalMemory<<" bytes"<<color("normal")<<endl;
@@ -583,6 +583,8 @@ int main( int argc, char * argv[] ) {
 		<<stateSetLoadFactor<<", "
 		<<eStateSetLoadFactor<<", "
 		<<constraintSetsLoadFactor<<endl;
+	write_file(filename,text.str());
+    cout << "generated "<<filename<<endl;
   }
   
 
