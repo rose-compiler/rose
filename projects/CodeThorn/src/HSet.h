@@ -22,14 +22,14 @@ class HSet {
     typedef size_t size_type;
     typedef Key value_type;
 
-    // define more readable denominations
 #ifdef USE_SET_CHAINS
-	typedef std::set<value_type> list_type;
+	 //MS:2012
+	typedef std::set<value_type> chain_type;
 #else
-	typedef std::list<value_type> list_type;
+	typedef std::list<value_type> chain_type;
 #endif
 
-    typedef std::vector<list_type*> vector_type;
+    typedef std::vector<chain_type*> vector_type;
 
     class iterator;
     typedef iterator const_iterator;
@@ -38,7 +38,7 @@ class HSet {
     class iterator {
       friend class HSet<Key, hashFun>;
       private:
-       typename list_type::iterator current;
+       typename chain_type::iterator current;
        typedef std::forward_iterator_tag iterator_category;
        size_type Address;
        const vector_type *pVec;
@@ -48,7 +48,7 @@ class HSet {
        :  pVec(0) {
        }
 
-       iterator(typename list_type::iterator LI,
+       iterator(typename chain_type::iterator LI,
                 size_type A,  const vector_type *C)
        : current(LI), Address(A), pVec(C) {
        }
@@ -194,13 +194,13 @@ class HSet {
 
 
 #ifdef USE_SET_CHAINS
-		typename list_type::iterator temp =  v[address]->find(k);
+		typename chain_type::iterator temp =  v[address]->find(k);
 		if(temp!=v[address]->end())
 		  return iterator(temp,address,&v); //found
 		else
 		  return iterator();
 #else
-        typename list_type::iterator temp =  v[address]->begin();
+        typename chain_type::iterator temp =  v[address]->begin();
         // find k in the list
         while(temp != v[address]->end())
           if(*temp == k)
@@ -230,7 +230,7 @@ class HSet {
         if(!temp)  {// not present
             size_type address = hf(P);
             if(!v[address])
-               v[address] = new list_type;
+               v[address] = new chain_type;
 #ifdef USE_SET_CHAINS
             v[address]->insert(P);
 #else
@@ -278,7 +278,7 @@ class HSet {
        if(!v[address])
           return 0;         // not present
 
-       typename list_type::iterator temp =  v[address]->begin();
+       typename chain_type::iterator temp =  v[address]->begin();
 
        /* In the following loop, the list is searched. An iterator
           called pos is used to remember the current position for the
@@ -286,7 +286,7 @@ class HSet {
 
        while(temp != v[address]->end()) {
           if(*temp == k) {
-             typename list_type::iterator pos = temp++;
+             typename chain_type::iterator pos = temp++;
 
              v[address]->erase(pos);
              // pos is now undefined
@@ -355,6 +355,10 @@ class HSet {
 		   max=(*i)->size();
 	   }
 	   return max;
+	 }
+	 //MS:2012
+	 double load_factor() {
+	   return (double)count/(double)v.size();
 	 }
 };
 

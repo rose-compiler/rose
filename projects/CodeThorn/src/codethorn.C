@@ -524,24 +524,27 @@ int main( int argc, char * argv[] ) {
   long stateSetSize=analyzer.getStateSet()->size();
   long stateSetBytes=analyzer.getStateSet()->memorySize();
   long stateSetMaxCollisions=analyzer.getStateSet()->maxCollisions();
+  long stateSetLoadFactor=analyzer.getStateSet()->loadFactor();
   long eStateSetSize=analyzer.getEStateSet()->size();
   long eStateSetBytes=analyzer.getEStateSet()->memorySize();
   long eStateSetMaxCollisions=analyzer.getEStateSet()->maxCollisions();
+  double eStateSetLoadFactor=analyzer.getEStateSet()->loadFactor();
   long transitionGraphSize=analyzer.getTransitionGraph()->size();
   long transitionGraphBytes=transitionGraphSize*sizeof(Transition);
   long numOfconstraintSets=analyzer.getConstraintSetMaintainer()->numberOf();
   long constraintSetsBytes=analyzer.getConstraintSetMaintainer()->memorySize();
   long constraintSetsMaxCollisions=analyzer.getConstraintSetMaintainer()->maxCollisions();
+  double constraintSetsLoadFactor=analyzer.getConstraintSetMaintainer()->loadFactor();
 
   cout << "Number of stdin-estates        : "<<color("cyan")<<(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDIN_VAR))<<color("white")<<endl;
   cout << "Number of stdout-estates       : "<<color("cyan")<<(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDOUT_VAR))<<color("white")<<endl;
   cout << "Number of stderr-estates       : "<<color("cyan")<<(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDERR_VAR))<<color("white")<<endl;
   cout << "Number of failed-assert-estates: "<<color("cyan")<<(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::FAILED_ASSERT))<<color("white")<<endl;
   cout << "=============================================================="<<endl;
-  cout << "Number of states               : "<<color("magenta")<<stateSetSize<<color("white")<<" (memory: "<<color("magenta")<<stateSetBytes<<color("white")<<" bytes)"<<" ("<<" max-collisions: "<<stateSetMaxCollisions<<")"<<endl;
-  cout << "Number of estates              : "<<color("cyan")<<eStateSetSize<<color("white")<<" (memory: "<<color("cyan")<<eStateSetBytes<<color("white")<<" bytes)"<<" ("<<" max-collisions: "<<eStateSetMaxCollisions<<")"<<endl;
+  cout << "Number of states               : "<<color("magenta")<<stateSetSize<<color("white")<<" (memory: "<<color("magenta")<<stateSetBytes<<color("white")<<" bytes)"<<" ("<<"load-factor: "<<stateSetLoadFactor<<  "/ max-collisions: "<<stateSetMaxCollisions<<")"<<endl;
+  cout << "Number of estates              : "<<color("cyan")<<eStateSetSize<<color("white")<<" (memory: "<<color("cyan")<<eStateSetBytes<<color("white")<<" bytes)"<<" ("<<"load-factor: "<<eStateSetLoadFactor<<  "/ max-collisions: "<<eStateSetMaxCollisions<<")"<<endl;
   cout << "Number of transitions          : "<<color("blue")<<transitionGraphSize<<color("white")<<" (memory: "<<color("blue")<<transitionGraphBytes<<color("white")<<" bytes)"<<endl;
-  cout << "Number of constraint sets      : "<<color("yellow")<<numOfconstraintSets<<color("white")<<" (memory: "<<color("yellow")<<constraintSetsBytes<<color("white")<<" bytes)"<<" ("<<" max-collisions: "<<constraintSetsMaxCollisions<<")"<<endl;
+  cout << "Number of constraint sets      : "<<color("yellow")<<numOfconstraintSets<<color("white")<<" (memory: "<<color("yellow")<<constraintSetsBytes<<color("white")<<" bytes)"<<" ("<<"load-factor: "<<constraintSetsLoadFactor<<  "/ max-collisions: "<<constraintSetsMaxCollisions<<")"<<endl;
   cout << "=============================================================="<<endl;
   long totalMemory=stateSetBytes+eStateSetBytes+transitionGraphBytes+constraintSetsBytes;
   cout << "Memory total         : "<<color("green")<<totalMemory<<" bytes"<<color("normal")<<endl;
@@ -576,6 +579,10 @@ int main( int argc, char * argv[] ) {
 		<<stateSetMaxCollisions<<", "
 		<<eStateSetMaxCollisions<<", "
 		<<constraintSetsMaxCollisions<<endl;
+	text<<"hashset-loadfactors,"
+		<<stateSetLoadFactor<<", "
+		<<eStateSetLoadFactor<<", "
+		<<constraintSetsLoadFactor<<endl;
   }
   
 

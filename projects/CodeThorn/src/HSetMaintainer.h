@@ -57,6 +57,10 @@ public:
 	return HSetMaintainer<KeyType,HashFun>::max_collisions();
   }
 
+  double loadFactor() {
+	return HSetMaintainer<KeyType,HashFun>::load_factor();
+  }
+
   long memorySize() const {
 	long mem=0;
 	for(typename HSetMaintainer<KeyType,HashFun>::const_iterator i
