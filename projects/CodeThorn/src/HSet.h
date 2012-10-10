@@ -346,6 +346,16 @@ class HSet {
         Symmetric_Difference(*this, S, *this);
         return *this;
      }
+
+	 //MS:2012
+	 size_type max_collisions() {
+	   size_type max=0;
+	   for(typename vector_type::iterator i=v.begin();i!=v.end();++i) {
+		 if((*i)&&(*i)->size()>max)
+		   max=(*i)->size();
+	   }
+	   return max;
+	 }
 };
 
 // binary operators

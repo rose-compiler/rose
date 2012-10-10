@@ -134,8 +134,12 @@ class ConstraintSetHashFun {
 	  unsigned int hash=1;
 	  for(ConstraintSet::iterator i=cs.begin();i!=cs.end();++i) {
 		// use the symbol-ptr of lhsVar for hashing (we are a friend).
-		if(!(*i).isDisequation()) {
-		  hash*=(long)((*i).lhsVar().getSymbol());
+		if((*i).isVarValOp())
+		  hash=((hash<<8)+((long)(*i).rhsValCppCapsule().getValue().getIntValue()))^hash;
+		else if((*i).isVarVarOp()) {
+		  hash=((hash<<8)+((long)((*i).rhsVar().getSymbol())))^hash;
+		} else {
+		  hash=0; // DEQ
 		}
 	  }
 	  return long(hash) % tabSize;

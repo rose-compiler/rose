@@ -52,6 +52,11 @@ public:
 	return res.second;
   }
   long numberOf() { return HSetMaintainer<KeyType,HashFun>::size(); }
+
+  long maxCollisions() {
+	return HSetMaintainer<KeyType,HashFun>::max_collisions();
+  }
+
   long memorySize() const {
 	long mem=0;
 	for(typename HSetMaintainer<KeyType,HashFun>::const_iterator i

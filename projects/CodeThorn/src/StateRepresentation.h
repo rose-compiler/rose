@@ -43,10 +43,8 @@ class StateHashFun {
     long operator()(State s) const {
 	  unsigned int hash=1;
 	  for(State::iterator i=s.begin();i!=s.end();++i) {
-		hash*=(long)((*i).first.getSymbol());
+		hash=((hash<<8)+((long)(*i).second.getValue().getIntValue()))^hash;
 	  }
-	  if(hash<0)
-		hash=-hash;
 	  return long(hash) % tabSize;
 	}
 	  long tableSize() const { return tabSize;}
@@ -144,18 +142,7 @@ class EStateHashFun {
     EStateHashFun(long prime=9999991) : tabSize(prime) {}
     long operator()(EState s) const {
 	  unsigned int hash=1;
-	  hash*=(long)s.getLabel();
-	  hash*=(long)s.getState();
-#if 0
-	  for(ConstraintSet::iterator i=cs.begin();i!=cs.end();++i) {
-		// use the symbol-ptr of lhsVar for hashing (we are a friend).
-		if(!(*i).isDisequation()) {
-		  hash*=(long)((*i).lhsVar().getSymbol());
-		}
-	  }
-#endif
-	  if(hash<0)
-		hash=-hash;
+	  hash=(long)s.getLabel()*(((long)s.getState())+1)*(((long)s.constraints())+1);
 	  return long(hash) % tabSize;
 	}
 	long tableSize() const { return tabSize;}
