@@ -84,6 +84,49 @@
 
 \end{frame}
 
+\begin{frame}[fragile]
+\frametitle{General Program Analysis Algorithm}
+{
+\scriptsize
+\begin{algorithm}[H]
+\SetLine
+\KwIn{ICFG}
+\KwOut{Transition Graph G}
+
+%\ForEach{Task $i$}{
+%\ForEach{Processor $j$}{
+%Calculate EW($i$,$j$)\;
+%\If{EW($i$,$j$) $\le$ EW($a$,$b$)}{
+%$a$ = $i$\;
+%$b$ = $j$\;
+%}
+%}
+%}
+
+$S_1$=init(ICFG) \Comment{the initial state computed from global scope and initial ICFG node}
+$W$=$\{(S_0,a_0,S_1)\}$; \Comment{with $S_0$ being the empty state, $S_1$ the initial state,}\\
+\Comment{and $a_0$ the initial transition annotation}\\
+$T_G$=$\emptyset$; \Comment{the set of computed transitions}\\
+\While{W $\neq$ $\emptyset$}{
+  ($S$,$a$,$S'$):=$head(W)$; \Comment{$a$ corresponds to the respective ICFG edge type}\\
+  $W$:=tail($W$)\;
+  $T$:=transfer(($S$,$a$,$S'$))\;
+  \ForEach{$t$ $\in$  $T$}{
+    \uIf{$t$ $\notin$ $T_G$}{
+        $W$:=$W$ $\cup$ $\{t\}$\;
+    }\Else{
+         $G$:=$G$ $\cup$ $\{t\}$\;
+    }
+  } 
+}
+%\caption{Algorithm for computing the state transition graph}
+\label{alg:general}
+\end{algorithm}
+}
+\end{frame}
+
+\input{ltl_presentation.tex}
+
 \begin{frame}{Infrastructure: ROSE}
 
 \begin{block}{Supported Languages}

@@ -3,13 +3,24 @@
 \documentclass[12pt]{beamer}
 \usetheme{Copenhagen}
 
+\usefonttheme{structurebold} 
+
+\setbeamertemplate{blocks}[rounded][shadow=true] 
+% itemize levels
+\setbeamertemplate{itemize item}{\scriptsize\raise1.25pt\hbox{\donotcoloroutermaths$\blacksquare$}}
+\setbeamertemplate{itemize subitem}{\tiny\raise1.5pt\hbox{\donotcoloroutermaths$\blacktriangleright$}}
+%\setbeamertemplate{itemize subitem}{--}
+\setbeamertemplate{itemize subsubitem}{\tiny\raise1.5pt\hbox{\donotcoloroutermaths$\star$}}
+% enumerate levels
+\setbeamertemplate{enumerate item}{\insertenumlabel.}
+\setbeamertemplate{enumerate subitem}{\insertenumlabel.\insertsubenumlabel}
+\setbeamertemplate{enumerate subsubitem}{\insertenumlabel.\insertsubenumlabel.\insertsubsubenumlabel}
+\setbeamertemplate{enumerate mini template}{\insertenumlabel}
+
 \setbeamertemplate{navigation symbols}{}
+%\setbeamertemplate{items}[ball]
 \setbeamersize{text margin left=6mm, text margin right=6mm}
 
-% serif structureitalicserif structurebold structuresmallcapsserif
-
-\usefonttheme{structurebold}
-\setbeamertemplate{blocks}[rounded][shadow=true] 
 
 %\useoutertheme{infolines}
 \author{Markus Schordan and Adrian Prantl} 
@@ -32,6 +43,27 @@
 %\usepackage{psfig}
 %\usepackage{epsf}
 \usepackage{graphicx}
+
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage{cite}
+%\usepackage[cmex10]{amsmath}   % for \split etc.
+%\usepackage[usenames]{color}
+\usepackage{graphicx}
+%\usepackage{array}  % for tables
+\usepackage{mdwtab}
+\usepackage{rotating}  % for tables
+\usepackage{multicol}  % for tables
+\usepackage{multirow}  % for tables
+\usepackage{verbatim}
+\usepackage{algorithmicx}
+\usepackage{algorithm2e}
+%\usepackage[ruled]{algorithm}
+%\usepackage{algpseudocode}
+\usepackage{picture}
+\usepackage[final]{pdfpages}
+\usepackage{setspace}
+\usepackage{alltt} % for fixed-width font sourcecode figures
 
 % making bitmap graphics in PDF look good
 % ps2pdf -dAutoFilterColorImages=false -dColorImageFilter=/FlateEncode
@@ -116,3 +148,5 @@
 %\rightFOOT{RIGHT}
 %\centerFOOT{\today}
 
+%fake
+%\newcommand{\textsc}[1]{} % 
