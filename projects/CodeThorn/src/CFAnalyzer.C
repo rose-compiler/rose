@@ -285,6 +285,9 @@ LabelSet CFAnalyzer::finalLabels(SgNode* node) {
 bool operator==(const Edge& e1, const Edge& e2) {
   return e1.source==e2.source && e1.type==e2.type && e1.target==e2.target;
 }
+bool operator!=(const Edge& e1, const Edge& e2) {
+  return !(e1==e2);
+}
 bool operator<(const Edge& e1, const Edge& e2) {
   if(e1.source!=e2.source)
 	return e1.source<e2.source;

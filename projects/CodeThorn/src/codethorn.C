@@ -357,6 +357,7 @@ int main( int argc, char * argv[] ) {
     ("update-input-var",po::value< string >(),"For testing purposes only. Default is Yes. [=yes|no]")
     ("run-rose-tests",po::value< string >(),"Run ROSE AST tests. [=yes|no]")
     ("reduce-cfg",po::value< string >(),"Reduce CFG nodes which are not relevant for the analysis. [=yes|no]")
+    ("threads",po::value< int >(),"Run analyzer in parallel using <arg> threads (experimental)")
     ;
 
   po::store(po::command_line_parser(argc, argv).
@@ -426,9 +427,13 @@ int main( int argc, char * argv[] ) {
   if(args.count("csv-assert-live")) {
 	csv_assert_live_file=args["csv-assert-live"].as<string>();
   }
+  int numberOfThreadsToUse=1;
+  if(args.count("threads")) {
+	numberOfThreadsToUse=args["threads"].as<int>();
+  }
   // clean up csv-assert option in argv
   for (int i=1; i<argc; ++i) {
-	if (string(argv[i]) == "--csv-assert" || string(argv[i])=="--csv-stats" || string(argv[i])=="--csv-assert-live") {
+	if (string(argv[i]) == "--csv-assert" || string(argv[i])=="--csv-stats" || string(argv[i])=="--csv-assert-live"|| string(argv[i])=="--threads") {
 	  // do not confuse ROSE frontend
 	  argv[i] = strdup("");
 	  assert(i+1<argc);
@@ -494,6 +499,7 @@ int main( int argc, char * argv[] ) {
   cout << "INIT: creating solver."<<endl;
   Analyzer analyzer;
   analyzer._csv_assert_live_file=csv_assert_live_file;
+  analyzer._numberOfThreadsToUse=numberOfThreadsToUse;
   analyzer.initializeSolver1("main",root);
   analyzer.initLabeledAssertNodes(sageProject);
   double initRunTime=timer.getElapsedTimeInMilliSec();
@@ -502,6 +508,8 @@ int main( int argc, char * argv[] ) {
   cout << "=============================================================="<<endl;
   analyzer.runSolver1();
   double analysisRunTime=timer.getElapsedTimeInMilliSec();
+  long removed=analyzer.getTransitionGraph()->removeDuplicates();
+  cout << "Transitions removed: "<<removed<<endl;
   //  cout << analyzer.stateSetToString(final);
   cout << "=============================================================="<<endl;
   printAsserts(analyzer,sageProject);
@@ -541,10 +549,10 @@ int main( int argc, char * argv[] ) {
   cout << "Number of stderr-estates       : "<<color("cyan")<<(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDERR_VAR))<<color("white")<<endl;
   cout << "Number of failed-assert-estates: "<<color("cyan")<<(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::FAILED_ASSERT))<<color("white")<<endl;
   cout << "=============================================================="<<endl;
-  cout << "Number of states               : "<<color("magenta")<<stateSetSize<<color("white")<<" (memory: "<<color("magenta")<<stateSetBytes<<color("white")<<" bytes)"<<" ("<<""<<stateSetLoadFactor<<  "/ "<<stateSetMaxCollisions<<")"<<endl;
-  cout << "Number of estates              : "<<color("cyan")<<eStateSetSize<<color("white")<<" (memory: "<<color("cyan")<<eStateSetBytes<<color("white")<<" bytes)"<<" ("<<""<<eStateSetLoadFactor<<  "/ "<<eStateSetMaxCollisions<<")"<<endl;
+  cout << "Number of states               : "<<color("magenta")<<stateSetSize<<color("white")<<" (memory: "<<color("magenta")<<stateSetBytes<<color("white")<<" bytes)"<<" ("<<""<<stateSetLoadFactor<<  "/"<<stateSetMaxCollisions<<")"<<endl;
+  cout << "Number of estates              : "<<color("cyan")<<eStateSetSize<<color("white")<<" (memory: "<<color("cyan")<<eStateSetBytes<<color("white")<<" bytes)"<<" ("<<""<<eStateSetLoadFactor<<  "/"<<eStateSetMaxCollisions<<")"<<endl;
   cout << "Number of transitions          : "<<color("blue")<<transitionGraphSize<<color("white")<<" (memory: "<<color("blue")<<transitionGraphBytes<<color("white")<<" bytes)"<<endl;
-  cout << "Number of constraint sets      : "<<color("yellow")<<numOfconstraintSets<<color("white")<<" (memory: "<<color("yellow")<<constraintSetsBytes<<color("white")<<" bytes)"<<" ("<<""<<constraintSetsLoadFactor<<  "/ "<<constraintSetsMaxCollisions<<")"<<endl;
+  cout << "Number of constraint sets      : "<<color("yellow")<<numOfconstraintSets<<color("white")<<" (memory: "<<color("yellow")<<constraintSetsBytes<<color("white")<<" bytes)"<<" ("<<""<<constraintSetsLoadFactor<<  "/"<<constraintSetsMaxCollisions<<")"<<endl;
   cout << "=============================================================="<<endl;
   long totalMemory=stateSetBytes+eStateSetBytes+transitionGraphBytes+constraintSetsBytes;
   cout << "Memory total         : "<<color("green")<<totalMemory<<" bytes"<<color("normal")<<endl;

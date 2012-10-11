@@ -8,10 +8,11 @@
 #include "CollectionOperators.h"
 #include "CommandLineOptions.h"
 #include <fstream>
+#include <unistd.h>
 
 string color(string);
 
-Analyzer::Analyzer():startFunRoot(0),cfanalyzer(0){
+Analyzer::Analyzer():startFunRoot(0),cfanalyzer(0),displayDiff(1000) {
 }
 
 set<string> Analyzer::variableIdsToVariableNames(set<VariableId> s) {
@@ -37,22 +38,19 @@ void Analyzer::recordTransition(const EState* sourceState, Edge e, const EState*
   transitionGraph.add(Transition(sourceState,e,targetState));
 }
 
-void Analyzer::printStatusMessage() {
-  static long int lastNumEStates=displayDiff;
+void Analyzer::printStatusMessage(bool forceDisplay) {
+#if 0
   if(isEmptyWorkList()) {
-	//cout << "Empty Work List: empty."<<endl;
+	//cerr << "Status: work list empty."<<endl;
 	return;
   }
-  const EState* topWorkListeState=topWorkList();
-  if(topWorkListeState) {
-	//cout << "DEBUG: Working on: "<<topWorkList()->toString()<<endl;
-  } else {
-	cerr << "INTERNAL ERROR: null pointer in work list. Bailing out. "<<endl;
-	exit(1);
-  }
+#endif
+
+#pragma critical section
+  {
 	// report we are alife
-  if((eStateSet.size()-lastNumEStates)>=displayDiff) {
-	lastNumEStates=eStateSet.size();
+  long diff=eStateSet.size()%displayDiff;
+  if(diff==0||forceDisplay) {
 	cout<<color("white")<<"Number of states/estates/transitions: ";
 	cout<<color("magenta")<<stateSet.size()
 		<<color("white")<<"/"
@@ -65,20 +63,25 @@ void Analyzer::printStatusMessage() {
 	cout<<endl;
   }
 }
+}
 
 void Analyzer::addToWorkList(const EState* eState) { 
+#pragma omp critical
+  {
   if(!eState) {
 	cerr<<"INTERNAL ERROR: null pointer added to work list."<<endl;
 	exit(1);
   }
   eStateWorkList.push(eState); 
+  }
 }
 
 const EState* Analyzer::processNewOrExisting(Label label, State state, ConstraintSet cset) {
+  const EState* newEStatePtr;
   const State* newStatePtr=processNewOrExisting(state);
   const ConstraintSet* newPtr=processNewOrExisting(cset);
   EState newEState=EState(label,newStatePtr,newPtr);
-  const EState* newEStatePtr=eStateSet.processNewOrExisting(newEState);
+  newEStatePtr=eStateSet.processNewOrExisting(newEState);
   return newEStatePtr;
 }
 
@@ -126,31 +129,120 @@ bool Analyzer::isLTLrelevantLabel(Label label) {
   return false;
 }
 
+// We want to avoid calling critical sections from critical sections.
+// therefore all worklist functions do not use each other.
+bool Analyzer::isEmptyWorkList() { 
+  bool res;
+  #pragma omp critical
+  {
+  bool res=eStateWorkList.size()==0;
+  }
+  return res;
+}
+const EState* Analyzer::topWorkList() {
+  const EState* eState=0;
+#pragma omp critical
+  {
+	if(eStateWorkList.size()>0)
+	  eState=eStateWorkList.top();
+  }
+  return eState;
+}
+const EState* Analyzer::popWorkList() {
+  const EState* eState=0;
+  #pragma omp critical
+  {
+	if(eStateWorkList.size()>0)
+	  eState=eStateWorkList.top();
+	if(eState)
+	  eStateWorkList.pop();
+  }
+  return eState;
+}
+const EState* Analyzer::takeFromWorkList() {
+  const EState* co=0;
+#pragma omp critical
+  {
+  if(eStateWorkList.size()>0) {
+	co=eStateWorkList.top();
+	eStateWorkList.pop();
+  }
+  }
+  return co;
+}
+
 void Analyzer::runSolver1() {
-  displayDiff=0;
-  while(!isEmptyWorkList()) {
-	printStatusMessage();
-	displayDiff=1000;
+  omp_set_num_threads(_numberOfThreadsToUse);
+  omp_set_dynamic(_numberOfThreadsToUse);
+  int threadNum=-1;
+  int retries=5;
+  // if all threads set it true (and have work left) we shall finish
+  bool finalizer[_numberOfThreadsToUse];
+  for(int i=0;i<_numberOfThreadsToUse;++i) {
+	finalizer[i]=false;
+  }
+  
+#pragma omp parallel private(threadNum),shared(finalizer)
+  {
+	threadNum=omp_get_thread_num();
+  while(1) {
+	bool finish=true;
+	for(int i=0;i<_numberOfThreadsToUse;i++) {
+	  finish=finish&&finalizer[i];
+	}
+	if(finish) {
+	  //cerr << "We are done. Thread "<<threadNum<<" says good bye."<<endl;
+	  break;
+	}
 	const EState* currentEStatePtr=popWorkList();
+	if(!currentEStatePtr) {
+	  //cerr<<"STATUS: thread "<<threadNum<<" signals to be finished."<<endl;
+	  finalizer[threadNum]=true;
+	  continue;
+	}
+	
 	assert(currentEStatePtr);
+	finalizer[threadNum]=false; // in case the thread wanted to quit before, he now resumes duties
+
+	printStatusMessage(false);
+
 	Flow edgeSet=flow.outEdges(currentEStatePtr->label);
 	//cerr << "DEBUG: edgeSet size:"<<edgeSet.size()<<endl;
+#if 0
+	Flow::iterator i=edgeSet.begin();
+	int edgeNum=edgeSet.size();
+	vector<const Edge*> edgeVec(edgeNum);
+	for(int edge_i=0;edge_i<edgeNum;++edge_i) {
+	  edgeVec[edge_i]=&(*i++);
+	}
+    #pragma omp parallel for
+	for(int edge_i=0; edge_i<edgeNum;edge_i++) {
+	  Edge e=*edgeVec[edge_i]; // *i
+#else
 	for(Flow::iterator i=edgeSet.begin();i!=edgeSet.end();++i) {
-	  list<EState> newEStateList=transferFunction(*i,currentEStatePtr);
+	  Edge e=*i;
+#endif
+	  list<EState> newEStateList;
+ 	  newEStateList=transferFunction(e,currentEStatePtr);
 	  for(list<EState>::iterator nesListIter=newEStateList.begin();
 		  nesListIter!=newEStateList.end();
 		  ++nesListIter) {
 		EState newEState=*nesListIter;
 		if(newEState.label!=NO_ESTATE && (!newEState.constraints()->disequalityExists()) &&(!isFailedAssertEState(&newEState))) {
 		  const EState* newEStatePtr=addToWorkListIfNew(newEState);
-		  recordTransition(currentEStatePtr,*i,newEStatePtr);
+		  recordTransition(currentEStatePtr,e,newEStatePtr);
 		}
 		if(newEState.label!=NO_ESTATE && (!newEState.constraints()->disequalityExists()) && (isFailedAssertEState(&newEState))) {
 		  // failed-assert end-state: do not add to work list but do add it to the transition graph
-		  const EState* newEStatePtr=processNewOrExisting(newEState);
-		  recordTransition(currentEStatePtr,*i,newEStatePtr);		
+		  const EState* newEStatePtr;
+		  newEStatePtr=processNewOrExisting(newEState);
+		  recordTransition(currentEStatePtr,e,newEStatePtr);		
+
 		  if(boolOptions["report-failed-assert"]) {
+          #pragma omp cricitcal
+		  {
 			cout << "REPORT: failed-assert: "<<newEStatePtr->toString()<<endl;
+		  }
 		  }
 		  if(_csv_assert_live_file.size()>0) {
 			string name=labelNameOfAssertLabel(currentEStatePtr->label);
@@ -159,6 +251,8 @@ void Analyzer::runSolver1() {
 			name=name.substr(6,name.size()-6);
 			std::ofstream fout;
 			// csv_assert_live_file is the member-variable of analyzer
+          #pragma omp cricitcal
+		  {
 			fout.open(_csv_assert_live_file.c_str(),ios::app);    // open file for appending
 			assert (!fout.fail( ));
 			fout << name << ",yes,9"<<endl;
@@ -166,16 +260,18 @@ void Analyzer::runSolver1() {
 
 			fout.close(); 
 		  }
+		  } // if
 		}
 		if(newEState.label==NO_STATE) {
 		  //cerr << "DEBUG: NO_ESTATE (transition not recorded)"<<endl;
 		  //cerr << "INFO: found final state."<<endl;
 		}
 	  } // end of loop on transfer function return-estates
-	}
-  }
-  displayDiff=0;
-  printStatusMessage();
+	} // parallel for
+  }//cerr<<"DEBUG: parallel for finished."<<endl;
+  cerr<< "par-for finished."<<endl;
+  } // while
+  printStatusMessage(true);
   cout << "analysis finished (worklist is empty)."<<endl;
 }
 
@@ -309,7 +405,6 @@ list<pair<SgLabelStatement*,SgNode*> > Analyzer::listOfLabeledAssertNodes(SgProj
 const State* Analyzer::processNew(State& s) {
   return stateSet.processNew(s);
 }
-
 const State* Analyzer::processNewOrExisting(State& s) {
   return stateSet.processNewOrExisting(s);
 }

@@ -18,6 +18,9 @@ public:
   //! <const KeyType*,true> if new element was inserted
   //! <const KeyType*,false> if element already existed
   ProcessingResult process(KeyType key) {
+	ProcessingResult res2;
+	#pragma omp critical
+	{
 	std::pair<typename HSetMaintainer::iterator, bool> res;
 	res=insert(key);
 #ifdef HSET_MAINTAINER_DEBUG_MODE
@@ -33,7 +36,9 @@ public:
 	}
 	cerr << "HSET insert OK"<<endl;
 #endif
-	return make_pair(res.second,&(*res.first));
+	res2=make_pair(res.second,&(*res.first));
+	}
+	return res2;
   }
   const KeyType* processNew(KeyType& s) {
 	//std::pair<typename HSetMaintainer::iterator, bool> res=process(s);

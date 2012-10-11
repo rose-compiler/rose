@@ -226,16 +226,62 @@ LabelSet TransitionGraph::labelSetOfIoOperations(InputOutput::OpType op) {
 } 
 
 void TransitionGraph::add(Transition trans) {
+#if 0
   for(TransitionGraph::iterator i=begin();i!=end();++i) {
-	if(trans==*i)
+	if(trans==*i) {
+	  cerr<<"Error: Attempting to add same transition again."<<endl;
+	  cerr<<"Transition:"<<trans.toString()<<endl;
 	  return;
+	}
   }
+#endif
+  #pragma omp critical
+  {
   push_back(trans);
+  }
 }
 
-bool operator==(Transition& t1, Transition& t2) {
+bool operator==(const Transition& t1, const Transition& t2) {
   return t1.source==t2.source && t1.edge==t2.edge && t1.target==t2.target;
 }
+
+bool operator!=(const Transition& t1, const Transition& t2) {
+  return !(t1==t2);
+}
+
+bool operator<(const Transition& t1, const Transition& t2) {
+  if(t1.source!=t2.source)
+	return t1.source<t2.source;
+  if(t1.edge!=t2.edge)
+	return t1.edge<t2.edge;
+  return t1.target<t2.target;
+}
+
+
+long TransitionGraph::removeDuplicates() {
+  long cnt=0;
+  set<Transition> s;
+#if 0
+  // lambda expression is not supported by g++4.4
+  remove_if([&](Transition n) {
+	  return (s.find(n) == s.end()) ? (s.insert(n), false) : true;
+	});
+#else
+  for(TransitionGraph::iterator i=begin();i!=end();) {
+	if(s.find(*i)==s.end()) { 
+	  s.insert(*i); 
+	  ++i;
+	} else {
+	  TransitionGraph::iterator i2=i;
+	  ++i;
+	  erase(i2);
+	  cnt++;
+	}
+  }
+#endif
+  return cnt;
+}
+
 
 string TransitionGraph::toString() const {
   string s;

@@ -13,6 +13,8 @@
 #include <string>
 #include <sstream>
 
+#include <omp.h>
+
 #include "rose.h"
 
 #include "AstTerm.h"
@@ -72,15 +74,9 @@ class Analyzer {
   void addToWorkList(const EState* eState);
   const EState* addToWorkListIfNew(EState eState);
   void recordTransition(const EState* sourceState, Edge e, const EState* targetState);
-  void printStatusMessage();
+  void printStatusMessage(bool);
   bool isLTLrelevantLabel(Label label);
-  const EState* takeFromWorkList() {
-	if(eStateWorkList.size()==0)
-	  return 0;
-	const EState* co=eStateWorkList.top();
-	eStateWorkList.pop();
-	return co;
-  }
+  const EState* takeFromWorkList();
  private:
   /*! if state exists in stateSet, a pointer to the existing state is returned otherwise 
 	a new state is entered into stateSet and a pointer to it is returned.
@@ -96,13 +92,9 @@ class Analyzer {
   EState createEState(Label label, State state, ConstraintSet cset, InputOutput io);
 
  public:
-  bool isEmptyWorkList() { return eStateWorkList.size()==0;}
-  const EState* topWorkList() { return eStateWorkList.top();}
-  const EState* popWorkList() {
-	const EState* s=topWorkList();
-	eStateWorkList.pop();
-	return s;
-  }
+  bool isEmptyWorkList();
+  const EState* topWorkList();
+  const EState* popWorkList();
   SgNode* getCond(SgNode* node);
   void generateAstNodeInfo(SgNode* node);
 
@@ -152,7 +144,9 @@ class Analyzer {
 	return labelName;
   }
   list<pair<SgLabelStatement*,SgNode*> > _assertNodes;
-  string _csv_assert_live_file;
+  string _csv_assert_live_file; // to become private
+  int _numberOfThreadsToUse; // to become private
+  void setDisplayDiff(int diff) { displayDiff=diff; }
  private:
   ExprAnalyzer exprAnalyzer;
   VariableIdMapping variableIdMapping;

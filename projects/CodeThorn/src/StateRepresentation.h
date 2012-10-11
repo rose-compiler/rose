@@ -178,7 +178,9 @@ public:
 
 };
 
-bool operator==(Transition& t1, Transition& t2);
+bool operator==(const Transition& t1, const Transition& t2);
+bool operator!=(const Transition& t1, const Transition& t2);
+bool operator<(const Transition& t1, const Transition& t2);
 
 class EStateList : public list<EState> {
  public:
@@ -192,6 +194,8 @@ class TransitionGraph : public list<Transition> {
   void add(Transition trans);
   string toString() const;
   LabelSet labelSetOfIoOperations(InputOutput::OpType op);
+  // eliminates all duplicates of edges
+  long removeDuplicates();
  private:
   int numberOfNodes;
 };
