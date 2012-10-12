@@ -174,7 +174,7 @@ const EState* Analyzer::takeFromWorkList() {
 
 void Analyzer::runSolver1() {
   int Statusprint=_displayDiff;
-  long prevStateSetSize=eStateSet.size();
+  long prevStateSetSize=_displayDiff+1; // force immediate report at start
   omp_set_num_threads(_numberOfThreadsToUse);
   omp_set_dynamic(1);
   int threadNum;
