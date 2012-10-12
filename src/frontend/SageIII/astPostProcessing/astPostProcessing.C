@@ -236,7 +236,12 @@ void postProcessingSupport (SgNode* node)
        // This step defines a consistant AST more suitable for analysis since only the constant folded
        // values will be visited.  However, the default should be to save the original expression trees
        // and remove the constant folded values since this represents the original code.
+#if 1
           resetConstantFoldedValues(node);
+#else
+       // DQ (10/11/2012): This is helpful to allow us to see both expression trees in the AST for debugging.
+          printf ("Skipping AST Postprocessing resetConstantFoldedValues() \n");
+#endif
 
        // DQ (10/5/2012): Fixup known macros that might expand into a recursive mess in the unparsed code.
           fixupSelfReferentialMacrosInAST(node);
