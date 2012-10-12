@@ -299,11 +299,11 @@ string readableruntime(double time) {
   } else {
 	time=time/24;
   }
-  if(time<30) {
+  if(time<31) {
 	s<<time<<" days"; 
 	return s.str();
   } else {
-	time=time/30;
+	time=time/(((double)(365*3+366))/12*4);
   }
   s<<time<<" months"; 
   return s.str();
@@ -351,8 +351,8 @@ int main( int argc, char * argv[] ) {
     ("precision-intbool",po::value< string >(),
      "use precise top with intbool-(and/or) operators (used in int-analyzer) [=yes|no]")
     ("precision-exact-constraints",po::value< string >(),
-     "use precise constraint extraction (experimental) [=yes|no]")
-    ("tg-ltl-reduced",po::value< string >(),"compute on-the-fly LTL-reduced transition graph (not available)[=yes|no]")
+     "(experimental) use precise constraint extraction [=yes|no]")
+    ("(experimental) tg-ltl-reduced",po::value< string >(),"compute on-the-fly LTL-reduced transition graph [=yes|no]")
     ("viz",po::value< string >(),"generate visualizations (dot) outputs [=yes|no]")
     ("update-input-var",po::value< string >(),"For testing purposes only. Default is Yes. [=yes|no]")
     ("run-rose-tests",po::value< string >(),"Run ROSE AST tests. [=yes|no]")
@@ -405,6 +405,7 @@ int main( int argc, char * argv[] ) {
   boolOptions.registerOption("update-input-var",true);
   boolOptions.registerOption("run-rose-tests",true);
   boolOptions.registerOption("reduce-cfg",true);
+  boolOptions.registerOption("print-all-options",true);
 
   boolOptions.registerOption("ltl-output-dot",false);
   boolOptions.registerOption("ltl-show-derivation",true);
@@ -412,7 +413,7 @@ int main( int argc, char * argv[] ) {
   boolOptions.registerOption("ltl-collapsed-graph",false);
 
   boolOptions.processOptions();
-  cout<<boolOptions.toString();
+  //cout<<boolOptions.toString(); // prints all options
 
   if (args.count("internal-checks")) {
 	if(internalChecks(argc,argv)==false)
