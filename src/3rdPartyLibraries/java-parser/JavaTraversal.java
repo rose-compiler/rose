@@ -30,8 +30,9 @@ class JavaTraversal implements Callable<Boolean> {
     // This class generates a DOT file of the ECJ AST.  It is not used for any ROSE specific translation
     // of the AST.  As a result it should be renamed.
 
-    // Not clear what this means!
-    static Main main;
+// TODO: remove this !!!	
+// Not clear what this means!
+// static Main main;
     static BufferedWriter out;
 
     static int verboseLevel = 0;
@@ -127,6 +128,7 @@ class JavaTraversal implements Callable<Boolean> {
 
         }
         catch (Exception e) {
+        	e.printStackTrace();
             System.err.println("Error: " + e.getMessage());
         }
     }
@@ -970,11 +972,11 @@ class JavaTraversal implements Callable<Boolean> {
              if (commandlineErrorLevel > 0)
                  System.out.println("ROSE Argument found: " + args[j]);
 
-            // String matchingString = "--rose";
+            // String matchingString = "-rose";
             // Java substring uses index 0 ... 5 (the upper bound "6" is not used.
             // System.out.println("     substring = " + arg.substring(0,6) + " matchingString = " + matchingString);
             // if (arg.substring(0,6) == matchingString.substring(0,6))
-            if (args[j].startsWith("--rose:verbose") == true) {
+            if (args[j].startsWith("-rose:verbose") == true) {
                 if (commandlineErrorLevel > 0)
                     System.out.println("Clear this ROSE specific argument #" + j + ": " + args[j]);
 
@@ -996,10 +998,11 @@ class JavaTraversal implements Callable<Boolean> {
                         System.out.println("integer value = " + verboseLevel);
                 }
                 catch (NumberFormatException nfe) {
+                	nfe.printStackTrace();
                     System.out.println("NumberFormatException: " + nfe.getMessage());
 
                     // It might be better to rethrow the exception
-                    System.out.println("Error: --rose:verbose option specified with out an integer value: veboseLevelString = " + veboseLevelString);
+                    System.out.println("Error: -rose:verbose option specified with out an integer value: veboseLevelString = " + veboseLevelString);
                     System.exit(1);
                 }
             }
@@ -1026,6 +1029,116 @@ class JavaTraversal implements Callable<Boolean> {
         return args;
     }
 
+    /**
+     * Compile the source files specified and all its dependent source files and generate
+     * all the associatd class files.
+     *  
+     * @param args
+     */
+    static void compile(String args[]) {
+        if (verboseLevel > 0)
+            System.out.println("Compiling ...");
+
+        // This line of code will run, but the first use of "main" fails ...working now!
+        Main main = new Main(new PrintWriter(System.out), new PrintWriter(System.err), true/*systemExit*/,  null/*options*/, null/*progress*/);
+
+        //
+        try {
+            main.configure(args);
+        }
+        catch (Exception e) {
+        	e.printStackTrace();
+            System.err.println("Error in main.configure(args): " + e.getMessage()); 
+            System.exit(1);
+        }
+        main.compilerOptions = new CompilerOptions(main.options);
+        main.compilerOptions.performMethodsFullRecovery = false;
+        main.compilerOptions.performStatementsRecovery = false;
+     // main.compilerOptions.verbose = true;
+
+        main.batchCompiler =  new Compiler(main.getLibraryAccess(),
+                                           main.getHandlingPolicy(),
+                                           main.compilerOptions,
+                                           main.getBatchRequestor(),
+                                           main.getProblemFactory(),
+                                           null,
+                                           main.progress
+                                          );
+
+        ICompilationUnit[] sourceUnits = main.getCompilationUnits();
+        int maxUnits = sourceUnits.length;
+        if (verboseLevel > 2)
+            System.out.println("We got " + maxUnits + " compilation units");
+        main.batchCompiler.totalUnits = 0;
+        main.batchCompiler.unitsToProcess = new CompilationUnitDeclaration[maxUnits];
+
+        main.batchCompiler.compile(sourceUnits); // generate all class files that are needed for these source units.
+        return;
+    }
+
+    /**
+     * Compile and generate an AST for each input file specified in args.
+     * 
+     * @param args
+     */
+    static Main generateAst(String args[]) {
+        Main main = new Main(new PrintWriter(System.out), new PrintWriter(System.err), true/*systemExit*/,  null/*options*/, null/*progress*/);
+
+        // This is the last message printed to the console ...
+        if (verboseLevel > 0)
+            System.out.println("(2) test 1 .... (note call to main.configure(args); fails silently)");
+
+        // DQ (4/1/2011): Added try...catch to debug command line handling.
+        // We want to support the ECJ command line options where possible.
+        // This line of code will fail when run with unknown arguments...working now only with just the filename as an argument!
+        // main.configure(args);
+        try {
+            main.configure(args);
+        }
+        catch (Exception e) {
+        	e.printStackTrace();
+            System.err.println("(2) Error in main.configure(args): " + e.getMessage()); 
+            System.exit(1);
+        }
+
+        main.compilerOptions = new CompilerOptions(main.options);
+        main.compilerOptions.performMethodsFullRecovery = false;
+        main.compilerOptions.performStatementsRecovery = false;
+     // main.compilerOptions.verbose = true;
+
+        main.batchCompiler =  new Compiler(main.getLibraryAccess(),
+                                           main.getHandlingPolicy(),
+                                           main.compilerOptions,
+                                           main.getBatchRequestor(),
+                                           main.getProblemFactory(),
+                                           null,
+                                           main.progress
+                                          );
+
+        /* tps : handle compilation units--------------------------------------------- */
+        ICompilationUnit[] sourceUnits = main.getCompilationUnits();
+        int maxUnits = sourceUnits.length;
+// TODO: REMOVE THIS!
+//System.out.println("maxUnits = " + maxUnits);
+
+        main.batchCompiler.totalUnits = 0;
+        main.batchCompiler.unitsToProcess = new CompilationUnitDeclaration[maxUnits];
+        main.batchCompiler.internalBeginToCompile(sourceUnits, maxUnits);
+
+        try {
+            // writing to the DOT file
+            FileWriter fstream = new FileWriter("ast.dot");
+            out = new BufferedWriter(fstream);
+            out.write("Digraph G {\n");
+        }
+        catch (Exception e) {
+        	e.printStackTrace();
+            System.err.println("Error: " + e.getMessage()); 
+        }
+
+        return main;
+    }
+    
     // This is the "main" function called from the outside (via the JVM from ROSE).
     public static void main(String args[]) {
         /* tps : set up and configure ---------------------------------------------- */
@@ -1041,104 +1154,19 @@ class JavaTraversal implements Callable<Boolean> {
 //for (int i = 0; i < args.length; i++)
 //System.out.println("ROSE Filtered Argument " + i + ": " + args[i]);
 
-        if (verboseLevel > 0)
-            System.out.println("Compiling ...");
-
-        // This line of code will run, but the first use of "main" fails ...working now!
-        main = new Main(new PrintWriter(System.out), new PrintWriter(System.err), true/*systemExit*/,  null/*options*/, null/*progress*/);
-
-        // This is the last message printed to the console ...
-        if (verboseLevel > 0)
-            System.out.println("test 1 .... (note call to main.configure(args); fails silently)");
-
-        // DQ (4/1/2011): Added try...catch to debug command line handling.
-        // We want to support the ECJ command line options where possible.
-        // This line of code will fail when run with unknown arguments...working now only with just the filename as an argument!
-        // main.configure(args);
-        try {
-            main.configure(args);
-        }
-        catch (Exception e) {
-             System.err.println("Error in main.configure(args): " + e.getMessage()); 
-             System.exit(1);
-        }
-
-        if (verboseLevel > 0)
-            System.out.println("test 2 ...");
-
-        FileSystem environment = main.getLibraryAccess();
-
-        if (verboseLevel > 0)
-            System.out.println("test 3 ...");
-
-        main.compilerOptions = new CompilerOptions(main.options);
-        main.compilerOptions.performMethodsFullRecovery = false;
-        main.compilerOptions.performStatementsRecovery = false;
-
-        if (verboseLevel > 2)
-            System.out.println("test 4 ...");
-
-        main.batchCompiler =  new Compiler(environment,
-                                           main.getHandlingPolicy(),
-                                           main.compilerOptions,
-                                           main.getBatchRequestor(),
-                                           main.getProblemFactory(),
-                                           null,
-                                           main.progress
-                                          );
-
-        if (verboseLevel > 2)
-            System.out.println("test 5 ...");
-
-        /* tps : handle compilation units--------------------------------------------- */
-        ICompilationUnit[] sourceUnits = main.getCompilationUnits();
-        int maxUnits = sourceUnits.length;
-        main.batchCompiler.totalUnits = 0;
-        main.batchCompiler.unitsToProcess = new CompilationUnitDeclaration[maxUnits];
-
-        /* tps : Debug: print Compilation units --------------------------- */
-        if (verboseLevel > 2)
-            System.out.println("We got "+maxUnits+" compilation units");
-
-        CompilationUnit[] units = main.getCompilationUnits();
-
-        if (verboseLevel > 2) {
-            System.out.println("Nr of Compilation Units : "+units.length);
-
-            for (CompilationUnit myunit : units) {
-                 System.out.println("File : "+myunit);
-            }
-        }
-
-        /* tps : start parsing ------------------------------------------------------- */
-        main.batchCompiler.internalBeginToCompile(sourceUnits, maxUnits);
-        // main.batchCompiler.compile(sourceUnits);
-
-// TODO: REMOVE THIS !
-//        JavaTraversal jt = new JavaTraversal();
-//        jt.invokeINIT();
-        try {
-            // writing to the DOT file
-            FileWriter fstream = new FileWriter("ast.dot");
-            out = new BufferedWriter(fstream);
-            out.write("Digraph G {\n");
-        }
-        catch (Exception e) {
-            System.err.println("Error: " + e.getMessage()); 
-        }
-
-        /* tps : compile the files and produce class files --------------------------- */
-        // ProcessTaskManager processingTask = null;
-
-        if (verboseLevel > 2)
-            System.out.println("test 6 ...");
-
+        compile(args); // generate all necessary classfiles
+        Main main = generateAst(args); // get compiler to generate AST.
+        Compiler batchCompiler = main.batchCompiler; // get compiler to generate AST.
+        int maxUnits = main.getCompilationUnits().length;
+// TODO: REMOVE THIS!        
+//System.out.println("maxUnits = " + maxUnits);
+        
         // Calling the parser to build the ROSE AST from a traversal of the ECJ AST.
         try {
             if (verboseLevel > 2)
                 System.out.println("test 7 ...");
 
-            JavaParser.cactionCompilationUnitList(main.batchCompiler.totalUnits, args);
+            JavaParser.cactionCompilationUnitList(maxUnits, args);
 
             if (verboseLevel > 2)
                 System.out.println("test 8 ...");
@@ -1156,15 +1184,21 @@ class JavaTraversal implements Callable<Boolean> {
             JavaParserSupport java_parser_support = new JavaParserSupport(classpath, verboseLevel);
 
 // TODO: REMOVE THIS !
-//System.out.println("Getting started - Preprocessing " + main.batchCompiler.totalUnits + " units");
-            for (int i = 0; i < main.batchCompiler.totalUnits; i++) {
-                CompilationUnitDeclaration unit = main.batchCompiler.unitsToProcess[i];
+//System.out.println();            
+//System.out.println("Getting started - Preprocessing " + batchCompiler.totalUnits + " units");
+            //
+            // Note the original commented out limit.  This is wrong!  We only want to process
+            // the source files that were specified by the user and not the ones that were 
+            // pulled in by closure.
+            //
+            for (int i = 0; i < maxUnits /*batchCompiler.totalUnits*/; i++) {
+                CompilationUnitDeclaration unit = batchCompiler.unitsToProcess[i];
                 assert(unit != null);
 
                 if (verboseLevel > 2)
-                    System.out.println("calling main.batchCompiler.process(unit, i) ...");
+                    System.out.println("calling batchCompiler.process(unit, i) ..." + new String(unit.getFileName()));
 
-                main.batchCompiler.process(unit, i);
+                batchCompiler.process(unit, i);
 
                 java_parser_support.preprocess(unit);
             }
@@ -1175,8 +1209,9 @@ class JavaTraversal implements Callable<Boolean> {
             // We only process the main unit to prevent the Unparser from generating multiple
             // compilation units in the same file.
             //
-            /* for ( */ int i = 0; /* i < main.batchCompiler.totalUnits; i++)*/ {
-                CompilationUnitDeclaration unit = main.batchCompiler.unitsToProcess[i];
+            /* for ( */ int i = 0; /* i < main.batchCompiler.totalUnits; i++)*/
+            {
+                CompilationUnitDeclaration unit = batchCompiler.unitsToProcess[i];
                 try {
 
 // TODO: REMOVE THIS !
@@ -1201,6 +1236,7 @@ System.out.println("About to traverse " + new String(unit.getFileName()));
                         System.out.println("test 10 ...");
                 }
                 catch (Exception e) {
+                	e.printStackTrace();
                     System.err.println("Error in JavaTraversal::main() (nested catch before finally): " + e.getMessage());
 
                     // This should output the call stack.
@@ -1210,13 +1246,14 @@ System.out.println("About to traverse " + new String(unit.getFileName()));
                     // cleanup compilation unit result
                     unit.cleanUp();
                 }
-                main.batchCompiler.unitsToProcess[i] = null; // release reference to processed unit declaration
-                main.batchCompiler.stats.lineCount += unit.compilationResult.lineSeparatorPositions.length;
-                main.batchCompiler.requestor.acceptResult(unit.compilationResult.tagAsAccepted());
+                batchCompiler.unitsToProcess[i] = null; // release reference to processed unit declaration
+                batchCompiler.stats.lineCount += unit.compilationResult.lineSeparatorPositions.length;
+                batchCompiler.requestor.acceptResult(unit.compilationResult.tagAsAccepted());
             }
         }
         catch (Exception e) {
             // DQ (11/1/2010): Added more aggressive termination of program...
+        	e.printStackTrace();
             System.err.println("Error in JavaTraversal::main(): " + e.getMessage());
             // System.exit(1);
 
@@ -1234,6 +1271,7 @@ System.out.println("About to traverse " + new String(unit.getFileName()));
             out.close();
         } 
         catch (Exception e) {
+        	e.printStackTrace();
             System.err.println("Error: " + e.getMessage());
         }
 

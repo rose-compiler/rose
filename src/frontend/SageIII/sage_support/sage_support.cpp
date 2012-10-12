@@ -8,6 +8,7 @@
  *  Dependencies
  *---------------------------------------------------------------------------*/
 #include "sage_support.h"
+#include <algorithm>
 
 #ifdef __INSURE__
 // Provide a dummy function definition to support linking with Insure++.
@@ -3521,21 +3522,46 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
   // build the Fotran AST using the existing SgFile.
      extern SgSourceFile* OpenFortranParser_globalFilePointer;
 
-  // printf ("######################### Inside of SgSourceFile::build_Java_AST() ############################ \n");
-
      ROSE_ASSERT(get_requires_C_preprocessor() == false);
 
-  // *******************************************************
+ // If the classpath was specified, add it to the list of options here.
+   string classpath = "";
+   list<string> classpath_list = get_project()->get_Java_classpath();
+   if (classpath_list.size()) {
+           list<string>::iterator i = classpath_list.begin();
+           classpath = (*i);
+           for (i++; i != classpath_list.end(); i++) {
+                   classpath += ":";
+                   classpath += (*i);
+           }
+   }
+
+   // Extract java's rose arguments
+   //TODO better handling of -rose:java variants
+   Rose_STL_Container<string> javaRoseOptionList =
+               CommandlineProcessing::generateOptionListWithDeclaredParameters(argv,"-rose:java:");
+
+   string sourceString;
+   if (!CommandlineProcessing::isOptionWithParameter(javaRoseOptionList, "", "source", sourceString, false)) {
+       sourceString = "1.6";
+   }
+
+   string targetString;
+   if (!CommandlineProcessing::isOptionWithParameter(javaRoseOptionList, "", "target", targetString, false)) {
+       targetString = "1.6";
+   }
+
+
+
+   // *******************************************************
+   // Build syntax checking command line call
+   // *******************************************************
 
   // DQ (9/19/2011): This is what I thought, but it does not appear to be true or we tie into ECJ at the
   // the wrong location so that we don't get any syntax checking.  So we need to introduce a pass using
   // the backend compiler to support the syntax checking for Java.
   // DQ (10/11/2010): We don't need syntax checking because ECJ will do that.
-  // bool syntaxCheckInputCode = (get_skip_syntax_check() == false);
-  // bool syntaxCheckInputCode = false;
      bool syntaxCheckInputCode = (get_skip_syntax_check() == false);
-  // printf ("In build_Java_AST(): syntaxCheckInputCode = %s \n",syntaxCheckInputCode ? "true" : "false");
-
      if (syntaxCheckInputCode == true)
         {
        // Introduce tracking of performance of ROSE.
@@ -3548,71 +3574,51 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
                printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ Setting up Java Syntax check @@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
                printf ("BACKEND_JAVA_COMPILER_NAME_WITH_PATH = %s \n",backendJavaCompiler.c_str());
              }
-
+       // Start building the javac command line
           vector<string> javaCommandLine;
           javaCommandLine.push_back(backendJavaCompiler);
 
-       // Use "-d ." option to force class files to be generated in the current directory (instead of the source directory.
-       // this semantics matches the support of the other languages in ROSE and privents "make check" from trying to write
-       // to the source directory which is an error.  It might be different from the samantics of the SUN javac and other 
-       // java compilers.  I am unclear on this point.
-
-       // Use C system function to get the current directory.
-       // char currentDirectory[PATH_MAX];
-       // char currentDirectory[MAX_PATH];
-          char currentDirectory[8096];
-          getcwd(currentDirectory, sizeof(currentDirectory));
-          string currentDirectoryString = currentDirectory;
-
-       // DQ (7/20/2011): We can't build a striang with spaces, I don't know why.  Each part of the option 
-       // for "-sourcepath <path>" or "-d <path>" must be pushed onto the javaCommandLine seperately.
-
+       // DQ (7/20/2011):Each part of the option for "-sourcepath <path>" or "-d <path>"
+       // must be pushed onto the javaCommandLine separately.
           if ( get_verbose() > 2 )
                javaCommandLine.push_back("-verbose");
 
-       // Better to use "-d" than to specify the "-sourcepath" option.  I think.
-       // javaCommandLine.push_back("-sourcepath");
-       // javaCommandLine.push_back(StringUtility::getPathFromFileName(get_sourceFileNameWithPath()));
+       // Always push the source information
+          javaCommandLine.push_back("-source");
+          javaCommandLine.push_back(sourceString);
+
+       // We invoke javac to check the syntax of the input program
+       // Since it doesn generates classes, we create a separate folder
+       // just to make sure this gets contained somewhere.
+          string backendClassOutput = "javac-syntax-check-classes";
           javaCommandLine.push_back("-d");
-          javaCommandLine.push_back(currentDirectoryString);
-
-          if (get_output_warnings() == true)
-             {
-            // Specify warnings for javac compiler.
-               if (backendJavaCompiler == "javac")
-                  {
-                    javaCommandLine.push_back("-Xlint");
+          javaCommandLine.push_back(backendClassOutput);
+          if(mkdir(backendClassOutput.c_str(),0777)==-1) {
+                  if(errno != EEXIST) {
+                          printf ("Can't create destination folder for syntax checking\n");
+                          ROSE_ASSERT(false);
                   }
-                 else
-                  {
-                    printf ("Currently only the javac compiler backend is supported backendCompilerSystem = %s \n",backendJavaCompiler.c_str());
-                    ROSE_ASSERT(false);
-                  }
-             }
+          }
 
-#if 0
-          if (get_verbose() > 2)
-             {
-               printf ("Checking syntax of input program using javac: syntaxCheckingCommandline = %s \n",CommandlineProcessing::generateStringFromArgList(javaCommandLine,false,false).c_str());
-             }
-#endif
-       // Call the OS with the commandline defined by: syntaxCheckingCommandline
+          javaCommandLine.push_back("-classpath");
+          javaCommandLine.push_back(classpath);
+
+          // Specify warnings for javac compiler.
+          if (backendJavaCompiler == "javac")
+          {
+                  if (get_output_warnings() == true) {
+                          javaCommandLine.push_back("-Xlint");
+                  } else {
+                          javaCommandLine.push_back("-Xlint:none");
+                  }
+          }
+          else
+          {
+                  printf ("Currently only the javac compiler backend is supported backendCompilerSystem = %s \n",backendJavaCompiler.c_str());
+                  ROSE_ASSERT(false);
+          }
+
           javaCommandLine.push_back(get_sourceFileNameWithPath());
-
-       //
-       // If the classpath was specified, add it to the list of options here.
-       //
-         list<string> classpath_list = get_project() -> get_Java_classpath();
-         if (classpath_list.size()) {
-             list<string>::iterator i = classpath_list.begin();
-             string classpath = (*i);
-             for (i++; i != classpath_list.end(); i++) {
-                 classpath += ":";
-                 classpath += (*i);
-             }
-             javaCommandLine.push_back("-classpath");
-             javaCommandLine.push_back(classpath);
-         }
 
        // At this point we have the full command line with the source file name
           if (get_verbose() > 1)
@@ -3621,19 +3627,12 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
              }
 
           int returnValueForSyntaxCheckUsingBackendCompiler = 0;
-
-// Note the both the Fortran and Java support require the Jave JVM support (which is what USE_GFORTRAN_IN_ROSE implies).
-#if USE_GFORTRAN_IN_ROSE
+          // Call the OS with the commandline defined by: syntaxCheckingCommandline
           returnValueForSyntaxCheckUsingBackendCompiler = systemFromVector (javaCommandLine);
-#else
-       // ROSE can be configured withouth Java support, in which case it is not an error to avoid the syntax checking of a java file.
-          printf ("backend java compiler (javac) unavailable ... (not an error: ROSE has been configured this way) \n");
-#endif
 
        // Check that there are no errors, I think that warnings are ignored!
           if (returnValueForSyntaxCheckUsingBackendCompiler != 0)
              {
-            // printf ("Syntax errors detected in input java program ... \n");
                printf ("Syntax errors detected in input java program ... status = %d \n",returnValueForSyntaxCheckUsingBackendCompiler);
 
             // We should define some convention for error codes returned by ROSE
@@ -3645,192 +3644,67 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
              {
                printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@ DONE: Setting up Java Syntax check @@@@@@@@@@@@@@@@@@@@@@@@@ \n");
              }
-
-#if 0
-       // Debugging code.
-          printf ("Exiting as a test ... (after syntax check) \n");
-          ROSE_ASSERT(false);
-#endif
         }
 
   // *******************************************************
-
-
-  // Build the classpath list for Java support.
-     const string classpath = build_classpath();
-
-  // This is part of debugging output to call OFP and output the list of parser actions that WOULD be called.
-  // printf ("get_output_parser_actions() = %s \n",get_output_parser_actions() ? "true" : "false");
-  // if (false)
      if (get_output_parser_actions() == true)
         {
           printf("Sorry, not implemented: output_parser_actions option is not supported for Java yet. \n");
           ROSE_ASSERT(false);
-
-       // DQ (1/19/2008): New version of OFP requires different calling syntax.
-       // string OFPCommandLineString = std::string("java parser.java.FortranMain") + " --dump " + get_sourceFileNameWithPath();
-          vector<string> OFPCommandLine;
-          OFPCommandLine.push_back(JAVA_JVM_PATH);
-          OFPCommandLine.push_back(classpath);
-          OFPCommandLine.push_back("JavaTraversal");
-       // OFPCommandLine.push_back("--dump");
-
-#if 0
-          printf ("output_parser_actions: OFPCommandLine = %s \n",CommandlineProcessing::generateStringFromArgList(OFPCommandLine,false,false).c_str());
-#endif
-
-       // Some security checking here could be helpful!!!
-       // Run OFP with the --dump option so that we can get the parset actions (used only for internal debugging support).
-          int errorCode = systemFromVector(OFPCommandLine);
-
-          if (errorCode != 0)
-             {
-               printf ("Running ECJ ONLY causes an error (errorCode = %d) \n",errorCode);
-               ROSE_ASSERT(false);
-             }
-
-       // If this was selected as an option then we can stop here (rather than call ECJ again).
-       // printf ("--- get_exit_after_parser() = %s \n",get_exit_after_parser() ? "true" : "false");
-          if (get_exit_after_parser() == true)
-             {
-               printf ("Exiting after parsing... \n");
-               exit(0);
-             }
-
-       // End of option handling to generate list of OPF parser actions.
         }
 
   // Option to just run the parser (not constructing the AST) and quit.
-  // printf ("get_exit_after_parser() = %s \n",get_exit_after_parser() ? "true" : "false");
      if (get_exit_after_parser() == true)
         {
-           int errorCode = 0;
+          printf("Sorry, not implemented: get_exit_after_parser option is not supported for Java yet. \n");
+          ROSE_ASSERT(false);
+        }
 
-          if (errorCode != 0)
-             {
-               printf ("Using option -rose:exit_after_parser (errorCode = %d) \n",errorCode);
-               ROSE_ASSERT(false);
-             }
-          printf ("Skipping all processing after parsing java (ECJ) ... (get_exit_after_parser() == true) errorCode = %d \n",errorCode);
-       // exit(0);
-
-          ROSE_ASSERT(errorCode == 0);
-          return errorCode;
-       }
+     // *******************************************************
+     // Build the call to the ECJ frontend
+     // *******************************************************
 
   // Note that for the ECJ JVM support, the filename must appear last on the command line.
   // I think it is only an intermediate test before actually calling ECJ that requires 
   // this so it could be relaxed with a bit of work.
      vector<string> frontEndCommandLine;
-
      frontEndCommandLine.push_back(argv[0]);
 
-  // DQ (10/20/2010): This is what we want in the Fortran support, but not for the Java support.
-  // frontEndCommandLine.push_back("--class");
-  // frontEndCommandLine.push_back("JavaTraversal");
-
-#if 0
-  // Debugging output
-     get_project()->display("Calling SgProject display");
-     display("Calling SgFile display");
-#endif
-
   // Added an option to the ECJ command line to support different levels of output from the Java side of the house.
-     string verboseOptionString = "--rose:verbose " + StringUtility::numberToString(SgProject::get_verbose());
+     string verboseOptionString = "-rose:verbose " + StringUtility::numberToString(SgProject::get_verbose());
      if (SgProject::get_verbose() > 0)
         {
           printf ("Debugging option to Java ECJ translation (java code) to build ROSE AST: verboseOptionString = %s \n",verboseOptionString.c_str());
         }
      frontEndCommandLine.push_back(verboseOptionString);
 
-  // frontEndCommandLine.push_back("-d none");
-#if 1
-  // DQ (4/1/2011): Add "-d" option to prevent java "class" files from being generated into the source tree.
-  // Since we implement a source-to-source compiler, we don't need these to be generated. Note that this
-  // must be inserted as two seperate strings to have it work properly.
-     frontEndCommandLine.push_back("-d");
-     frontEndCommandLine.push_back("none");
-#else
-  // DQ (4/2/2011): Specify the current directory as the location for the generated *.class files.
-  // Upon later consideration this is the option that I think I want to pass the the backend compiler, not the frontend.
-     frontEndCommandLine.push_back("-d");
-     frontEndCommandLine.push_back(".");
-#endif
-
-  // DQ (4/1/2011): Added ecj option handling (similar to how EDG option handling is supported).
-  // This allows ECJ specific option to be set on the command line for ROSE translators.
-
   // *******************************************************************
-  // Handle general ecj options (-xxx)
+  // Handle java rose options we need to transmit to ecj
+  // !! Warning !! ECJ does not accept '--' prefixed options.
   // *******************************************************************
+     frontEndCommandLine.push_back("-source");
+     frontEndCommandLine.push_back(sourceString);
 
-  // Strip out all the -ecj:xxx options and put them into the ecj command line as -xxx
+     frontEndCommandLine.push_back("-target");
+     frontEndCommandLine.push_back(targetString);
 
-  // Resets modifiedArgc and allocates memory to modifiedArgv
-     Rose_STL_Container<string> ecjOptionList = CommandlineProcessing::generateOptionList (argv,"-ecj:");
-     CommandlineProcessing::addListToCommandLine(frontEndCommandLine,"-",ecjOptionList);
-
-  // Test for explicit specification of support for Java version number.
-     bool redundantVersionSpecification = false;
-     if ( (find(ecjOptionList.begin(),ecjOptionList.end(),"1.3") != ecjOptionList.end()) ||
-          (find(ecjOptionList.begin(),ecjOptionList.end(),"1.4") != ecjOptionList.end()) ||
-          (find(ecjOptionList.begin(),ecjOptionList.end(),"1.5") != ecjOptionList.end()) ||
-          (find(ecjOptionList.begin(),ecjOptionList.end(),"1.6") != ecjOptionList.end()) ||
-          (find(ecjOptionList.begin(),ecjOptionList.end(),"1.7") != ecjOptionList.end()) )
-        {
-       // If any of these were specified explicitly then don't set the default version on the ECJ command line redundantly (an error detected by ECJ).
-          redundantVersionSpecification = true;
-        }
-
-  // *******************************************************************
-  // Handle general ecj options (--xxx)
-  // *******************************************************************
-
-  // Strip out all the -ecj:xxx options and put them into the ecj command line as --xxx
-
-  // Resets modifiedArgc and allocates memory to modifiedArgv
-     ecjOptionList = CommandlineProcessing::generateOptionList (argv,"--ecj:");
-     CommandlineProcessing::addListToCommandLine(frontEndCommandLine,"--",ecjOptionList);
-
-  // *******************************************************************
-  // Handle general ecj options (-xxx abc)
-  // *******************************************************************
-
-  // Handle ecj options taking a parameter (string or integer)
-     ecjOptionList = CommandlineProcessing::generateOptionWithNameParameterList (argv,"-ecj_parameter:");
-     CommandlineProcessing::addListToCommandLine(frontEndCommandLine,"-",ecjOptionList);
-
-  // *******************************************************************
-  // Handle general ecj options (--xxx abc)
-  // *******************************************************************
-
-  // Handle ecj options taking a parameter (string or integer)
-     ecjOptionList = CommandlineProcessing::generateOptionWithNameParameterList (argv,"--ecj_parameter:");
-     CommandlineProcessing::addListToCommandLine(frontEndCommandLine,"--",ecjOptionList);
-
-  // Set the default Java version to be supported in ROSE:
-  // DQ (8/20/2011): Make the default for ROSE to use Java version 1.6 since our syntax checking
-  // and backend compiler is using javac 1.6 (thought this could be upgraded to 1.7 at any point).
-  // Since the langauge does not change between 1.5 and 1.7, this should not be an issue for ROSE.
-     if (redundantVersionSpecification == false)
-        {
-          frontEndCommandLine.push_back("-1.6");
-        }
-
-  //
-  // If the classpath was specified, add it to the list of options here.
-  //
-     list<string> classpath_list = get_project() -> get_Java_classpath();
-     if (classpath_list.size()) {
-         list<string>::iterator i = classpath_list.begin();
-         string classpath = (*i);
-         for (i++; i != classpath_list.end(); i++) {
-             classpath += ":";
-             classpath += (*i);
+         if (!get_output_warnings()) {
+                 frontEndCommandLine.push_back("-nowarn");
          }
+
+     // This is to specify where ecj should output the .class it is temporarily generating.
+     // Check if -decj has already been provided, if not default to ecj-classes.
+     string ecjDestDir;
+         if (!CommandlineProcessing::isOptionWithParameter(javaRoseOptionList, "", "decj", ecjDestDir, false)) {
+                 ecjDestDir = "ecj-classes/";
+         }
+         frontEndCommandLine.push_back("-d");
+         frontEndCommandLine.push_back(ecjDestDir);
+
+     // Setup the classpath and append the classes folder ecj outputs its temporary files to
+     // Note: it is important to append since we do not want to override any user provided paths
          frontEndCommandLine.push_back("-classpath");
-         frontEndCommandLine.push_back(classpath);
-     }
+         frontEndCommandLine.push_back(classpath + ":" + ecjDestDir);
 
   // Java does not use include files, so we can enforce this.
      ROSE_ASSERT(get_project()->get_includeDirectorySpecifierList().empty() == true);
@@ -3838,16 +3712,12 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
   // Add the source file as the last argument on the command line (checked by intermediate testing before calling ECJ).
      frontEndCommandLine.push_back(get_sourceFileNameWithPath());
 
-#if 1
      if ( get_verbose() > 0 )
           printf ("Java numberOfCommandLineArguments = %zu frontEndCommandLine = %s \n",inputCommandLine.size(),CommandlineProcessing::generateStringFromArgList(frontEndCommandLine,false,false).c_str());
-#endif
 
-     int openJavaParser_argc    = 0;
-     char** openJavaParser_argv = NULL;
-     CommandlineProcessing::generateArgcArgvFromList(frontEndCommandLine,openJavaParser_argc,openJavaParser_argv);
-
-  // printf ("openFortranParser_argc = %d openFortranParser_argv = %s \n",openFortranParser_argc,CommandlineProcessing::generateStringFromArgList(openFortranParser_argv,false,false).c_str());
+     int ecjArgc = 0;
+     char** ecjArgv = NULL;
+     CommandlineProcessing::generateArgcArgvFromList(frontEndCommandLine,ecjArgc,ecjArgv);
 
   // DQ (8/19/2007): Setup the global pointer used to pass the SgFile to which the Open Fortran Parser
   // should attach the AST.  This is a bit ugly, but the parser interface only takes a commandline so it
@@ -3863,13 +3733,12 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
   // this may be fixed in Java version 6, but this is a hope, it has not been tested.  Java version 6 does
   // appear to fix the problem with zlib (we think) and this appears to be a similar problem).
      int frontendErrorLevel = 1;
-
      printf ("********************************************************************************************** \n");
-     printf ("Fortran support using the JVM is incompatable with the use of the SSL library (fails in jvm).  \n");
-     printf ("To enable the use of Fortran support in ROSE don't use --enable-ssl on configure command line. \n");
+     printf ("Java support using the JVM is incompatable with the use of the SSL library (fails in jvm).  \n");
+     printf ("To enable the use of Java support in ROSE don't use --enable-ssl on configure command line. \n");
      printf ("********************************************************************************************** \n");
 #else
-     int frontendErrorLevel = openJavaParser_main (openJavaParser_argc, openJavaParser_argv);
+     int frontendErrorLevel = openJavaParser_main (ecjArgc, ecjArgv);
 #endif
 
      if ( get_verbose() > 0 )
@@ -3878,13 +3747,10 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
   // Reset this global pointer after we are done (just to be safe and avoid it being used later and causing strange bugs).
      OpenFortranParser_globalFilePointer = NULL;
 
-  // printf ("######################### Leaving SgSourceFile::build_Java_AST() ############################ \n");
-
      return frontendErrorLevel;
 #else
      fprintf(stderr, "Java language parser not supported \n");
      ROSE_ASSERT(false);
-
      return -1;
 #endif
    }
@@ -4542,10 +4408,7 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
         }
 
   // Build the commandline to hand off to the C++/C compiler
-     vector<string> compilerNameString = buildCompilerCommandLineOptions (argv,fileNameIndex, compilerName );
-  // ROSE_ASSERT (compilerNameString != NULL);
-
-  // printf ("SgFile::compileOutput(): compilerNameString = \n%s\n",CommandlineProcessing::generateStringFromArgList(compilerNameString,false,false).c_str());
+     vector<string> compilerCmdLine = buildCompilerCommandLineOptions (argv,fileNameIndex, compilerName );
 
      int returnValueForCompiler = 0;
 
@@ -4560,29 +4423,43 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
           if ( get_verbose() > 1 )
              {
                printf ("calling systemFromVector() \n");
-               printf ("Number of command line arguments: %zu\n", compilerNameString.size());
-               for (size_t i = 0; i < compilerNameString.size(); ++i)
+               printf ("Number of command line arguments: %zu\n", compilerCmdLine.size());
+               for (size_t i = 0; i < compilerCmdLine.size(); ++i)
                   {
-                    printf ("Backend compiler arg[%zu]: = %s\n", i, compilerNameString[i].c_str());
+                    printf ("Backend compiler arg[%zu]: = %s\n", i, compilerCmdLine[i].c_str());
                   }
                printf("End of command line for backend compiler\n");
 
             // I need the exact command line used to compile the generate code with the backendcompiler (so that I can reuse it to test the generated code).
-               printf ("SgFile::compileOutput(): compilerNameString = \n%s\n",CommandlineProcessing::generateStringFromArgList(compilerNameString,false,false).c_str());
+               printf ("SgFile::compileOutput(): compilerCmdLine = \n%s\n",CommandlineProcessing::generateStringFromArgList(compilerCmdLine,false,false).c_str());
              }
-#if 0
-       // Call the backend compiler. For Fortran inputs, if ROSE is configured with Java this can cause the backend fortran compiler to be called.
-       // driscoll6 (8/11/11) debugging java backend
           if (get_Java_only() == true) {
-               printf ("SgFile::compileOutput(): debugging java backend: compilerNameString = %s\n",CommandlineProcessing::generateStringFromArgList(compilerNameString,false,false).c_str());
-              returnValueForCompiler = 0;
-          } else {
-              returnValueForCompiler = systemFromVector (compilerNameString);
+                  // If the user specified a class destination folder through -rose:java:d
+                  // we try to create it now, if operation fail because it exists already, proceed.
+                  vector<string>::iterator itInput = find(compilerCmdLine.begin(), compilerCmdLine.end(), "-d");
+                  if (itInput != compilerCmdLine.end()) {
+                          itInput++;
+                          string destDirName = *itInput;
+                          if(mkdir(destDirName.c_str(),0777) == -1) {
+                                  if(errno != EEXIST) {
+                                          printf ("Can't create javac destination folder\n");
+                                          ROSE_ASSERT(false);
+                                  }
+                          }
+                  }
+                  // Insert warning flags to command line
+                  if (BACKEND_JAVA_COMPILER_NAME_WITH_PATH == "javac") {
+                          string warningOpt = "-Xlint";
+                          if (!get_output_warnings()) {
+                                  warningOpt = "-Xlint:none";
+                          }
+                          // Insert after the first element which should be the backend name
+                          compilerCmdLine.insert(compilerCmdLine.begin()+1, warningOpt);
+                  }
           }
-#else
        // DQ (2/20/2013): The timer used in TimingPerformance is now fixed to properly record elapsed wall clock time.
-          returnValueForCompiler = systemFromVector (compilerNameString);
-#endif
+          //CAVE3 double check that is correct and hsouldn't be compilerCmdLine
+           returnValueForCompiler = systemFromVector (compilerNameString);
         }
        else
         {

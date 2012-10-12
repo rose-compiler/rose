@@ -105,8 +105,6 @@ TESTCODES_REQUIRED_TO_PASS = \
      cave3_if1.java \
      cave3_import0.java \
      cave3_import1.java \
-     cave3_import2.java \
-     cave3_import3.java \
      cave3_instanceof0.java \
      cave3_labelDecl0.java \
      cave3_labelDecl1.java \
@@ -150,6 +148,8 @@ TESTCODES_REQUIRED_TO_PASS_FAILING_BACKEND_COMPILE = \
 TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_6 = \
      cave3_assert0.java \
      cave3_assert1.java \
+     cave3_import2.java \
+     cave3_import3.java \
      cave3_foreach0.java \
      cave3_foreach1.java
 
@@ -399,7 +399,7 @@ $(TESTCODE_CURRENTLY_FAILING)
 # ROSE_FLAGS = -rose:java -rose:verbose 0 -rose:skipfinalCompileStep
 # ROSE_FLAGS = -rose:verbose 0 -rose:skipfinalCompileStep -rose:skip_syntax_check
 # ROSE_FLAGS = -rose:verbose 0 -rose:skipfinalCompileStep
-ROSE_FLAGS = -rose:verbose 0
+ROSE_FLAGS = -rose:java:d javac-output-classes -rose:verbose 0
 ROSE_FLAGS_SKIP_FINAL_COMPILATION = -rose:verbose 0 -rose:skipfinalCompileStep
 
 
@@ -431,14 +431,14 @@ $(TEST_Objects): $(testTranslator) ../../testTranslator ../../testGraphGeneratio
 	@echo "Test using Java 1.6 (default) version support."
 	$(testTranslator) $(ROSE_FLAGS) $(srcdir)/$(@:.o=.java)
 	@echo "Test using Java 1.4 version support."
-	$(testTranslator) -ecj:1.4 $(ROSE_FLAGS) $(srcdir)/$(@:.o=.java)
+	$(testTranslator) -rose:java:source 1.4 -rose:java:target 1.4 $(ROSE_FLAGS) $(srcdir)/$(@:.o=.java)
 
 # Tests that pass all but the final compilation using the backend compiler (javac)
 $(TESTCODES_REQUIRED_TO_PASS_FAILING_BACKEND_COMPILE_Objects): $(testTranslator) ../../testTranslator ../../testGraphGeneration
 	@echo "Test using Java 1.6 (default) version support."
 	$(testTranslator) $(ROSE_FLAGS_SKIP_FINAL_COMPILATION) $(srcdir)/$(@:.o=.java)
 	@echo "Test using Java 1.4 version support."
-	$(testTranslator) -ecj:1.4 $(ROSE_FLAGS_SKIP_FINAL_COMPILATION) $(srcdir)/$(@:.o=.java)
+	$(testTranslator) -rose:java:source 1.4 -rose:java:target 1.4 $(ROSE_FLAGS_SKIP_FINAL_COMPILATION) $(srcdir)/$(@:.o=.java)
 
 # Tests that pass all but the final compilation using the backend compiler (javac)
 $(TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_6_Objects): $(testTranslator) ../../testTranslator ../../testGraphGeneration
@@ -496,7 +496,7 @@ testWithoutJavaSpecification: $(testTranslator)
 
 # Test using the specification of Java 1.7 compatability.
 testJava_option: $(testTranslator)
-	$(testTranslator) -ecj:1.7 -rose:verbose 0 -rose:skipfinalCompileStep -c $(srcdir)/test2011_44.java
+	$(testTranslator) -rose:java:source 1.6 -rose:java:target 1.6 -rose:verbose 0 -rose:skipfinalCompileStep -c $(srcdir)/test2011_44.java
 
 # Build a rule to allow running all tests in parallel...
 extraTests: testWithJavaSpecification testWithoutJavaSpecification testECJ_help_option testJava_option graphWithFileInfo

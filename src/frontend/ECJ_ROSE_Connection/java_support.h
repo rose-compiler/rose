@@ -4,6 +4,7 @@
 extern SgGlobal *globalScope;
 extern SgClassType *ObjectClassType;
 extern SgClassType *StringClassType;
+extern SgClassType *ClassClassType;
 extern SgClassDefinition *ObjectClassDefinition;
 
 extern int initializerCount;
@@ -23,8 +24,11 @@ extern SgSourceFile *OpenFortranParser_globalFilePointer;
 extern SgArrayType *getUniqueArrayType(SgType *, int);
 extern SgPointerType *getUniquePointerType(SgType *, int);
 
+std::string getPrimitiveTypeName(SgType *);
+std::string getArrayTypeName(SgPointerType *);
 std::string getFullyQualifiedName(SgClassDefinition *);
-std::string getFullyQualifiedName(SgClassType *);
+std::string getFullyQualifiedTypeName(SgClassType *);
+std::string getTypeName(SgType *);
 
 std::string normalize(std::string str);
 
@@ -408,8 +412,10 @@ bool        convertJavaBooleanToCxxBoolean(JNIEnv *env, const jboolean &java_boo
 SgMemberFunctionDeclaration *buildNonDefiningMemberFunction(const SgName &inputName, SgClassDefinition *classDefinition, int num_arguments);
 SgMemberFunctionDeclaration *buildDefiningMemberFunction   (const SgName &inputName, SgClassDefinition *classDefinition, int num_arguments);
 
-SgMemberFunctionDeclaration *lookupMemberFunctionDeclarationInClassScope(SgClassDefinition *classDefinition, const SgName &inputName, int num_arguments);
-SgMemberFunctionSymbol *lookupFunctionSymbolInClassScope(SgClassDefinition *classDefinition, const SgName &inputName, const std::list<SgType *> &);
+SgMemberFunctionDeclaration *lookupMemberFunctionDeclarationInClassScope(SgClassDefinition *classDefinition, const SgName &function_name, int num_arguments);
+SgMemberFunctionDeclaration *lookupMemberFunctionDeclarationInClassScope(SgClassDefinition *classDefinition, const SgName &function_name, const std::list<SgType *> &);
+SgMemberFunctionDeclaration *findMemberFunctionDeclarationInClass(SgClassDefinition *classDefinition, const SgName &function_name, const std::list<SgType *>& types);
+SgMemberFunctionSymbol *findFunctionSymbolInClass(SgClassDefinition *classDefinition, const SgName &function_name, const std::list<SgType *> &);
 
 SgClassDeclaration *buildJavaClass (const SgName &className, SgScopeStatement *scope);
 
@@ -440,8 +446,8 @@ SgClassDefinition *getCurrentClassDefinition();
 SgName processNameOfRawType(SgName name);
 
 //! Support for identification of symbols using simple names in a given scope.
-SgClassSymbol *lookupSimpleNameTypeInClassScope(const SgName &name, SgClassDefinition *classDefinition);
-SgVariableSymbol *lookupSimpleNameVariableInClassScope(const SgName &name, SgClassDefinition *classDefinition);
+SgClassSymbol *lookupSimpleNameTypeInClass(const SgName &name, SgClassDefinition *classDefinition);
+SgVariableSymbol *lookupSimpleNameVariableInClass(const SgName &name, SgClassDefinition *classDefinition);
 
 //! Support for identification of symbols using simple names.
 SgVariableSymbol *lookupVariableByName(const SgName &name);

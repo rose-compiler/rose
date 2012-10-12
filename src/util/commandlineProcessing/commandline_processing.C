@@ -20,54 +20,6 @@ using namespace std;
 
 Rose_STL_Container<std::string> CommandlineProcessing::extraCppSourceFileSuffixes;
 
-#if 0
-// DQ (10/6/2008): (comment added) This function is replaced by:
-// "bool CommandlineProcessing::isOptionTakingSecondParameter( string argument )"
-// defined in sageSupport.C.
-
-bool
-CommandlineProcessing::isOptionTakingFileName( string argument )
-   {
-     bool result = false;
-  // printf ("In CommandlineProcessing::isOptionTakingFileName(): argument = %s \n",argument.c_str());
-
-  // List any rose options that take source filenames here, so that they can avoid 
-  // being confused with the source file name that is to be read by EDG and translated.
-
-  // DQ (1/6/2008): Added another test for a rose option that takes a filename
-     if ( argument == "-o" ||                               // Used to specify output file to compiler
-          argument == "-opt" ||                             // Used in loopProcessor
-          argument == "-rose:output" ||                     // Used to specify output file to ROSE
-          argument == "-rose:o" ||                          // Used to specify output file to ROSE (alternative to -rose:output)
-          argument == "-rose:compilationPerformanceFile" || // Use to output performance information about ROSE compilation phases
-          argument == "-rose:verbose" ||                    // Used to specify output of internal information about ROSE phases
-          argument == "-rose:test" ||
-          argument == "-rose:backendCompileFormat" ||
-          argument == "-rose:outputFormat" ||
-          argument == "-edg_parameter:" ||
-          argument == "--edg_parameter:" ||
-          argument == "-rose:generateSourcePositionCodes" ||
-          argument == "-rose:embedColorCodesInGeneratedCode" ||
-          argument == "-rose:instantiation" ||
-          argument == "-rose:includeCommentsAndDirectives" ||
-          argument == "-rose:includeCommentsAndDirectivesFrom" ||
-          argument == "-rose:excludeCommentsAndDirectives" ||
-          argument == "-rose:excludeCommentsAndDirectivesFrom" ||
-          argument == "-rose:includePath" ||
-          argument == "-rose:excludePath" ||
-          argument == "-rose:includeFile" ||
-          argument == "-rose:excludeFile" ||
-          argument == "-rose:astMergeCommandFile" )
-        {
-          result = true;
-        }
-
-  // printf ("In CommandlineProcessing::isOptionTakingFileName(): argument = %s result = %s \n",argument.c_str(),result ? "true" : "false");
-
-     return result;
-   }
-#endif
-
 // DQ (7/8/2005): 
 Rose_STL_Container<string>
 CommandlineProcessing::generateArgListFromString ( string commandline )
@@ -349,50 +301,46 @@ CommandlineProcessing::removeAllFileNamesExcept ( vector<string> & argv, Rose_ST
    }
 
 Rose_STL_Container<string>
-CommandlineProcessing::generateOptionList ( Rose_STL_Container<string> & argList, string inputPrefix )
+CommandlineProcessing::generateOptionList (const Rose_STL_Container<string> & argList, string inputPrefix )
    {
   // This function returns a list of options using the inputPrefix (with the 
-  // inputPrefix stripped off). It also modified the input argList to remove
-  // those options from the argList returned by reference (modified).
-
-  // printf ("Input argList = \n%s \n",StringUtility::listToString(argList).c_str());
-
+  // inputPrefix stripped off). It does NOT modify the argList passed as a reference.
      Rose_STL_Container<string> optionList;
-  // Rose_STL_Container<string> deleteList;
      unsigned int prefixLength = inputPrefix.length();
-     for (Rose_STL_Container<string>::iterator i = argList.begin(); i != argList.end(); i++)
+     for (Rose_STL_Container<string>::const_iterator i = argList.begin(); i != argList.end(); i++)
         {
           if ( (*i).substr(0,prefixLength) == inputPrefix )
              {
             // get the rest of the string as the option
                string option = (*i).substr(prefixLength);
                optionList.push_back(option);
-               if (option == "classpath" || option == "cp" && i < argList.end()) { // if a classpath grap the next argument
-                   optionList.push_back(*(++i));
-               }
-
-            // keep track of elements so that they can be deleted later (after exit from loop over the eleents)
-            // deleteList.push_back(*i);
              }
         }
-#if 0
-  // remove the elements identified in the previous loop
-     for (Rose_STL_Container<string>::iterator i = deleteList.begin(); i != deleteList.end(); i++)
-        {
-       // DQ (9/25/2007): Moved to use of std::vector instead of std::list
-       // argList.remove(*i);
-          argList.erase(i);
-        }
-#else
-  // DQ (9/25/2007): Moved to use of std::vector instead of std::list
-  // argList.erase(deleteList.begin(),deleteList.end());
-  // argList.clear();
-#endif
-
-  // printf ("return value: optionList = \n%s \n",StringUtility::listToString(optionList).c_str());
-
      return optionList;
    }
+
+Rose_STL_Container<string>
+CommandlineProcessing::generateOptionListWithDeclaredParameters (const Rose_STL_Container<string> & argList, string inputPrefix )
+   {
+  // This function returns a list of options using the inputPrefix (with the inputPrefix stripped off).
+     Rose_STL_Container<string> optionList;
+     unsigned int prefixLength = inputPrefix.length();
+     for (Rose_STL_Container<string>::const_iterator     i = argList.begin(); i != argList.end(); i++)
+        {
+          if ( (*i).substr(0,prefixLength) == inputPrefix )
+             {
+            // get the rest of the string as the option
+               string option = (*i).substr(prefixLength);
+               optionList.push_back(option);
+               if (isOptionTakingSecondParameter(*i)) {
+                   i++;
+                   optionList.push_back(*i);
+               }
+             }
+        }
+     return optionList;
+   }
+
 
 Rose_STL_Container<string>
 CommandlineProcessing::generateOptionWithNameParameterList ( Rose_STL_Container<string> & argList, string inputPrefix , string newPrefix )
