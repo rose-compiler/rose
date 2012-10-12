@@ -1,5 +1,5 @@
 -------------------------------
-V1.0 2012-xx-xx Markus Schordan
+V1.0 2012-08-27 Markus Schordan
 -------------------------------
 
 * Construction of inter-procedural control flow graph:
@@ -111,5 +111,21 @@ new features:
     line options allow to select arbitrary combinations of visualized
     data.
   - extended visualizations with IO operations and failed-asserts
+
+* Several new command line options (all authors)
+
+-------------------------------------------------
+V1.2 2012-10-12 Markus Schordan and Adrian Prantl
+-------------------------------------------------
+new major features:
+
+* Normalized Minimal Constraint sets (Markus Schordan)
+  - constraints sets are now normalized
+
+* Parallel analyzer (Markus Schordan)
+  - the analyzer can be run in parallel now, supporting multi-core
+  systems using OpenMP threads. The number of threads can be specified
+  as command line option --threads=<NUM> where NUM is the number of
+  threads.
 
 * Several new command line options (all authors)

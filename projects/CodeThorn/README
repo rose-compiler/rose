@@ -1,5 +1,5 @@
 ----------------------------------------------------------------------------
-CodeThorn 1.1 (2012-09-30)
+CodeThorn 1.2 (2012-10-12)
 ----------------------------------------------------------------------------
 
 CodeThorn is a tool for program analysis and verification. It analyzes
@@ -15,7 +15,7 @@ The implemented base approach is an instance of a general framework. The
 analysis is an interprocedural flow-sensitive analysis. Different
 forms of context information are currently investigated.
 
-CodeThorn 1.1 is based on the ROSE (LLNL) compiler framework and can
+CodeThorn 1.2 is based on the ROSE (LLNL) compiler framework and can
 analyse a subset of C/C++. Verification is supported with liner time
 logic formulae to specify properties of the input/output behaviour of
 a given program. Based on the results of a static analysis, the
@@ -53,11 +53,21 @@ CodeThorn generates several visualizations of analysis results as dot output:
    "make viz" invokes dot to translate all visualizations to ps files. The ps files
    are stored in the directory "viz".
 
+
 Data output formats:
 
-1) The state transition graph is generated in a readable textual
-representation (dat file)Q
-2) Analyzer statistics and Timing information (csv file)
+1) The state transition graph (STG) is generated as an external data
+file (for further processing by other analysis tools). The system
+states include all computed information about the program.
+2) Results of LTL verification and reachability analysis of specific
+program locations (CSV file)
+3) Analyzer statistics and timing information (CSV file)
+
+
+Multi-Core Support:
+
+CodeThorn 1.2 can be run in parallel using the command line option
+--threads=<NUM> where NUM is the number of used OpenMP threads.
 
 ----------------------------------------------------------------------------
 DOCUMENTATION:
@@ -70,7 +80,7 @@ docs/doxygen/html/index.html
 AUTHORS:
 ----------------------------------------------------------------------------
 
-The authors of CodeThorn 1.1 are Markus Schordan and Adrian Prantl. 
+The authors of CodeThorn 1.2 are Markus Schordan and Adrian Prantl. 
 
 ----------------------------------------------------------------------------
 VERSION:
