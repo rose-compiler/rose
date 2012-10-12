@@ -58,8 +58,8 @@ RSIM_Thread::id()
     sprintf(buf1, "%1.3f", elapsed);
 
     char buf2[64];
-    int n = snprintf(buf2, sizeof(buf2), "0x%08"PRIx64"[%zu]: ",
-                     policy.readRegister<32>(policy.reg_eip).known_value(), policy.get_ninsns());
+    uint64_t eip = policy.readRegister<32>(policy.reg_eip).is_known() ? policy.readRegister<32>(policy.reg_eip).known_value() : 0;
+    int n = snprintf(buf2, sizeof(buf2), "0x%08"PRIx64"[%zu]: ", eip, policy.get_ninsns());
     assert(n>=0 && (size_t)n<sizeof(buf2)-1);
     memset(buf2+n, ' ', sizeof(buf2)-n);
     buf2[std::max(n, 21)] = '\0';
