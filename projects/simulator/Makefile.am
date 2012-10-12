@@ -246,7 +246,7 @@ smt_example_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 # Multi-domain demo that enables/disables sub-domains and converts values from one sub-domain to another.  This is meant to
 # serve as an example for Andreas and Earl that they can modify to suit their needs.
 noinst_PROGRAMS += MultiWithConversion
-EXTRA_DIST += demos/MultiWithConversion.h demos/MultiWithConversionTpl.h
+EXTRA_DIST += demos/MultiWithConversion.h demos/MultiWithConversionTpl.h demos/RobinTpl.h
 MultiWithConversion_SOURCES = demos/MultiWithConversion.C
 MultiWithConversion_CPPFLAGS = $(ROSE_INCLUDES)
 MultiWithConversion_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)

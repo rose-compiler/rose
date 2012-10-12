@@ -1,5 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Demonstrates multi-domain semantics with conversions between the values.                             __THIS_HEADER_IS_USED__
+// RobinTpl.h contains the functions related to domain selection and conversion.
 //
 // The basic idea is to make some minor changes to the simulator source code (mostly in RSIM_SemanticsSettings.h) so that the
 // simulator will use a semantic domain that we define in this file.  Our semantic domain is ROSE's MultiSemantics (see ROSE
@@ -59,32 +60,48 @@ typedef RSIM_SEMANTICS_OUTER_0_POLICY<RSIM_SEMANTICS_OUTER_0_STATE, RSIM_SEMANTI
 typedef RSIM_SEMANTICS_OUTER_1_POLICY<RSIM_SEMANTICS_OUTER_1_STATE, RSIM_SEMANTICS_OUTER_1_VTYPE> IntervalPolicy;
 typedef RSIM_SEMANTICS_OUTER_2_POLICY<RSIM_SEMANTICS_OUTER_2_STATE, RSIM_SEMANTICS_OUTER_2_VTYPE> SymbolicPolicy;
 
-// Mixed-interpretation memory.  Addresses are symbolic expressions and values are value-identifiers.
+// Functions that convert a value from one domain to another.
+template <template <size_t> class ValueType, size_t nBits>
+CONCRETE_VALUE<nBits> convert_to_concrete(const ValueType<nBits> &value);
+template <template <size_t> class ValueType, size_t nBits>
+INTERVAL_VALUE<nBits> convert_to_interval(const ValueType<nBits> &value);
+template <template <size_t> class ValueType, size_t nBits>
+SYMBOLIC_VALUE<nBits> convert_to_symbolic(const ValueType<nBits> &value);
+
+class Exception {
+public:
+    Exception(const std::string &mesg): mesg(mesg) {}
+    std::string mesg;
+};
+
+// Mixed-interpretation memory.  Addresses are symbolic expressions and values are multi-domain.  We'll override the
+// multi-domain policy's memory access functions to use this state rather than chaining to the memory states associated with
+// the sub-policies.
 template <template <size_t> class ValueType>
 class State: public RSIM_Semantics::OuterState<ValueType> {
 public:
-    typedef std::pair<uint64_t, ValueType<8> > MemoryCell;      // pair of symbolic variable number and multi-value
-    typedef std::map<uint64_t, ValueType<8> > MemoryCells;
-    MemoryCells memvals;                                        // mapping from symbolic variable number to multi-value
-    InsnSemanticsExpr::TreeNodePtr mccarthy_ss;                 // McCarthy expression for the current stack segment memory state
-    InsnSemanticsExpr::TreeNodePtr mccarthy_ds;                 // McCarthy expression for the current data segment memory state
-
-    State() {
-        mccarthy_ss = InsnSemanticsExpr::LeafNode::create_memory(8, "empty stack segment memory");
-        mccarthy_ds = InsnSemanticsExpr::LeafNode::create_memory(8, "empty data segment memory");
-    }
+    typedef std::pair<SYMBOLIC_VALUE<32>, ValueType<8> > MemoryCell;
+    typedef std::list<MemoryCell> MemoryCells;                  // list of memory cells in reverse chronological order
+    MemoryCells stack_cells;                                    // memory state for stack memory (accessed via SS register)
+    MemoryCells data_cells;                                     // memory state for anything that non-stack (e.g., DS register)
+    BinaryAnalysis::InstructionSemantics::BaseSemantics::RegisterStateX86<RSIM_SEMANTICS_VTYPE> registers;
 
     // Write a single byte to memory
     void mem_write_byte(X86SegmentRegister sr, const SYMBOLIC_VALUE<32> &addr, const ValueType<8> &value);
 
-    // Read a single byte from memory
-    ValueType<8> mem_read_byte(X86SegmentRegister sr, const SYMBOLIC_VALUE<32> &addr);
+    // Read a single byte from memory.  The active_policies is the bit mask of sub-policies that are currently active. The
+    // optional SMT solver is used to prove hypotheses about symbolic expressions (like memory addresses).
+    ValueType<8> mem_read_byte(X86SegmentRegister sr, const SYMBOLIC_VALUE<32> &addr, unsigned active_policies, SMTSolver *solver);
 
-    // Given a free memory variable, return the associated multi-value.
-    ValueType<8> get_memval(InsnSemanticsExpr::LeafNodePtr);
+    // Returns true if two memory addresses can be equal.
+    static bool may_alias(const SYMBOLIC_VALUE<32> &addr1, const SYMBOLIC_VALUE<32> &addr2, SMTSolver *solver);
+
+    // Returns true if two memory address are equivalent.
+    static bool must_alias(const SYMBOLIC_VALUE<32> &addr1, const SYMBOLIC_VALUE<32> &addr2, SMTSolver *solver);
 
     // Printing
-    void print(std::ostream&) const;
+    template<size_t nBits> void show_value(std::ostream&, const std::string &hdg, const ValueType<nBits>&, unsigned domains) const;
+    void print(std::ostream&, unsigned domain_mask=0x07) const;
     friend std::ostream& operator<<(std::ostream &o, const State &state) {
         state.print(o);
         return o;
@@ -107,12 +124,12 @@ public:
 
     const char *name;                                   // name to use in diagnostic messages
     bool triggered;                                     // Have we turned on any of our domains yet?
-    unsigned allowed_policies;                          // domains that we can allow to be active (after we're triggered)
     State<ValueType> state;                             // the mixed-semantic state (symbolic address, multi-value)
+    unsigned active_policies;                           // Policies that should be active *during* an instruction
 
     // "Inherit" super class' constructors (assuming no c++11)
     Policy(RSIM_Thread *thread)
-        : Super(thread), name(NULL), triggered(false), allowed_policies(0x07) {
+        : Super(thread), name(NULL), triggered(false), active_policies(0x07) {
         init();
     }
 
@@ -125,7 +142,7 @@ public:
     // documentation.
     RTS_Message *trace();
 
-    // Calling this method will cause all our subdomains (the "allowed_policies") to be activated and the simulator will branch
+    // Calling this method will cause all our subdomains to be activated and the simulator will branch
     // to the specified target_va.
     void trigger(rose_addr_t target_va);
 
@@ -169,8 +186,18 @@ public:
     template<size_t nBits>
     void writeMemory(X86SegmentRegister sr, ValueType<32> addr, const ValueType<nBits> &data, const ValueType<1> &cond);
 
+    // We need to hook into register access because we might need to convert values from one domain to another.
+    template<size_t nBits>
+    ValueType<nBits> readRegister(const char *regname);
+    template<size_t nBits>
+    ValueType<nBits> readRegister(const RegisterDescriptor &reg);
+    template<size_t nBits>
+    void writeRegister(const char *regname, const ValueType<nBits> &val);
+    template<size_t nBits>
+    void writeRegister(const RegisterDescriptor &reg, const ValueType<nBits> &val);
+
     // Print the states for each sub-domain and our own state containing the mixed semantics memory.
-    void print(std::ostream&) const;
+    void print(std::ostream&, bool abbreviated=false) const;
     friend std::ostream& operator<<(std::ostream &o, const Policy &p) {
         p.print(o);
         return o;
