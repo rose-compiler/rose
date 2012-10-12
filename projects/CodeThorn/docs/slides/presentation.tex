@@ -16,7 +16,7 @@
 
 % beamer options [...]: fragile,shrink=N (N in percent to shrink slide), squeeze (reduce gaps)
 %\logo{\includegraphics[height=0.5cm]{logo}}
-
+\ignore{
 \begin{frame}{Questions of Interest}
 \begin{itemize}
 \item How can we specify and verify the input/output behavior of a program?
@@ -60,6 +60,31 @@
 \item Program dependence graph
 \item State transition graph
 \end{itemize}
+\end{frame}
+} % end of ignore
+
+\begin{frame}{Analysis Overview}
+
+\begin{block}{Five Phases}
+\begin{enumerate}
+\item Syntactic and semantic analysis of the input program (ROSE).
+\item Control flow analysis.
+\item General Data Flow analysis.
+\begin{itemize}
+\item During this analysis the state transition graph is computed.
+\end{itemize}
+\item LTL-Checking. 
+\begin{itemize}
+\item Input to the LTL-Checking phase is the state transition graph and the LTL-formulae.
+\end{itemize}
+\item Reporting of analysis results. 
+\begin{itemize}
+\item Assert reachability is computed based on the transition graph.
+\item Results for LTL-formulae are computed solely by the LTL-checker.
+\end{itemize}
+\end{enumerate}
+
+\end{block}
 \end{frame}
 
 \begin{frame}[fragile]
@@ -123,6 +148,197 @@ $T_G$=$\emptyset$; \Comment{the set of computed transitions}\\
 \label{alg:general}
 \end{algorithm}
 }
+\end{frame}
+
+\begin{frame}{Properties of the Analysis}
+\begin{itemize}
+\item The C files of the RERS-problems are used unmodified.
+\item The data-flow analysis does not require information about possible input values of a
+  given program. 
+\begin{itemize}
+\item All information, which is then represented in the
+  transition graph, is extraced from the program code. 
+
+\item The set of all
+  possible input values is represented by the extracted constraint
+  sets (as they are backpropagated from called functions to the
+  main-function). 
+\item The possible output values are represented in the
+  property state as computed for the output operation (printf).
+\end{itemize}
+\item The LTL-Checker only depends on the extracted state transition graph.
+\item We do not provide manually any information to the analyzer.
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}{System State (Nodes in the TG)}
+
+\begin{block}{System State}
+A system state consists of
+\begin{itemize}
+\item a label (lab), 
+\item a property state (pstate),
+\item a constraint set (cset),
+\item and an IO property (io).
+\end{itemize}
+
+PState = Var $\rightarrow$ Val where Val is a lifted integer set.\\
+SState = Lab $\times$ PState $\times$ ConstraintSet $\times$ IO\\
+\end{block}
+
+\begin{block}{Representation in Memory with unique Id}
+\begin{itemize}
+\item Label: num
+\item PState: VarId $\rightarrow$ Val
+\item SState: Label $\times$ PStateId $\times$ ConstraintSetId $\times$ IOId
+\end{itemize}
+\end{block}
+
+
+\end{frame}
+
+\begin{frame}{Normalized Minimal Constraint Sets}
+\begin{block}{Minimal Constraint Set}
+A minimal constraint set (MCS) is a representation of
+information about the variables and values with a minimal number of operators.
+\end{block}
+
+\begin{block}{Normalized}
+For any combination of operators and operands there exists exactly one representation as constraint set.
+\end{block}
+
+\begin{block}{Importance of Properties}
+\begin{itemize}
+\item Determining equality of system states
+\item Reducing memory consumption
+\end{itemize}
+\end{block}
+
+\end{frame}
+
+\begin{frame}{Normalized Minimal Constraint Set Rules}
+\begin{itemize}
+\item If an equality $x=c$ exists, then no inequality $x\neq c$ on x can exist.
+\item There can exist at most on equality $x=c$ on the same variable.
+\item Multiple inequalities $x \neq c_i$ can exist for a given variable.
+\item If there exists at least one inequality $x\neq c_i$ then no equality $x=c_j$ can exist ($i\neq j$).
+\item If there exist equalities $x_0=x_1$,$x_0=x_2$$...$ then one of the variables is the {\em dedicated variable} $x_0$.
+\item For any set of variable-equalities all inequalities are associated with the dedicated variable.
+\item If the dedicated variable is removed from the set then all constraints are remapped.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Normalized Minimal Constraint Set}
+
+\begin{block}{Example}
+
+\begin{itemize}
+\item $C_1=\{x\neq 1, x\neq 2, x=y, x=z\}_x$ 
+\begin{itemize}
+\item Remove $x$ $\Rightarrow$ : $\{y\neq 1, y\neq 2, y=z\}_y$
+\item Remove $z$ $\Rightarrow$ : $\{y\neq 1, y\neq \}_{\circ}$
+\item add $y=z$ $\Rightarrow$ : $\{y\neq 1, y\neq, y=z\}_y$
+\item add $x=z$ $\Rightarrow$ : $\{x\neq 1, x\neq 2, x=y, x=z\}_x=C_1$
+\end{itemize}
+\end{itemize}
+
+\end{block}
+
+\end{frame}
+
+\begin{frame}{Representation in Memory}
+
+\begin{block}{Maintainer}
+Assigns memory and id to each
+\begin{itemize}
+\item Property State
+\item Constraint Set
+\item System State (includes PState and CSet)
+\end{itemize}
+
+Label and IO are maintained separately.
+\end{block}
+
+\begin{block}{Transition}
+A transition is represented as $(S,a,S')$ where $S$ and $S'$ are system states and $a$
+is an annotation representing the edge-type of the corresponding ICFG edge.
+\end{block}
+
+\end{frame}
+
+\begin{frame}{Results}
+\begin{center}
+\vspace{-0.2cm}
+\begin{tabular}{|c|l|l|}\hline
+P & ASSERT & LTL \\\hline\hline
+1 & W:yes+no+unknown      & W (+B:no)\\\hline
+2 & W:yes+no+unknown     & W (+B:no)\\\hline
+3 & W:yes+no+unknown     & W (+B:no)\\\hline
+4 & W:yes+no+unknown     & W (+B:no)\\\hline
+5 & W:yes+no+unknown     & (W) (+B:no)\\\hline
+6 & W:yes+no+unknown     & W (+B:no) \\\hline
+7 & W*:yes     & B:no    \\\hline
+8 & W*:yes     & B:no    \\\hline
+9 & W*:yes     & B:no    \\\hline
+10 & W*:yes     & B:no    \\\hline
+11 & W*:yes     & B:no    \\\hline
+12 & W*:yes     & B:no    \\\hline
+13 & W*:yes     & B:no    \\\hline
+14 & W*:yes     & B:no    \\\hline
+\end{tabular}
+\end{center}
+\end{frame}
+
+\begin{frame}{Statistics}
+\begin{center}
+\begin{tabular}{|c|r|r|r|r|}\hline
+Problem & \#PStates &\#SStates &\#Trans &\#CSets \\\hline\hline
+1 &1134 & 20946 & 21194 & 32 \\\hline
+2 &736 & 15261 & 15443 & 33 \\\hline
+3 &1012 & 41207 & 41466 & 32 \\\hline
+4 &10260 & 1125843 & 1127863 & 68 \\\hline
+5 &21803 & 3466688 & 3469608 & 95 \\\hline
+6 &14506 & 1665785 & 1668109 & 81 \\\hline
+\end{tabular}
+\end{center}
+\end{frame}
+
+\begin{frame}{Measurements (Run-Time)}
+\begin{center}
+\begin{tabular}{|c|r|c|}\hline
+Problem& Analysis Time & Threads\\\hline\hline
+1& 4.1044 secs & 12\\\hline
+2& 3.1855 secs& 12\\\hline
+3& 10.3215 secs& 12\\\hline
+4& 3.3922 mins& 12\\\hline
+5& 8.4049 mins& 12\\\hline
+6& 5.8696 mins& 12\\\hline
+\end{tabular}
+
+\vspace{0.5cm}
+CodeThorn 1.2: Multi-threaded analyzer (OpenMP)
+Machine: Intel Core i7 CPU X980 @ 3.33 GHz
+\end{center}
+
+\end{frame}
+
+\begin{frame}{Measurements (Memory)}
+\begin{center}
+\begin{tabular}{|c|r|r|r|r|r|}\hline
+P& PStates & SStates &Trans &CSets& Total \\\hline\hline
+1 &253,048 & 1,005,448 & 678,208 & 5,192 & 1,941,896\\\hline
+2 &152,728 & 732,568 & 494,176 & 5,064 & 1,384,536\\\hline
+3 &589,320 & 1,977,976 & 1,326,912 & 5,128 & 3,899,336\\\hline
+4 &2,659,448 & 54,040,504 & 36,091,616 & 12,936 & 92,804,504\\\hline
+5 &6,279,896 & 166,401,064 & 111,027,456 & 21,544 & 283,729,960\\\hline
+6 &8,946,088 & 79,957,720 & 53,379,488 & 15,592 & 142,298,888\\\hline
+\end{tabular}
+\end{center}
+
+\vspace{0.5cm}
+* preliminary measurements
+
 \end{frame}
 
 \input{ltl_presentation.tex}
