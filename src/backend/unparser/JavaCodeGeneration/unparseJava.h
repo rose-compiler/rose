@@ -65,7 +65,9 @@ class Unparse_Java : public UnparseLanguageIndependentConstructs
        // expression trees from contant folding)
           virtual void unparseStringVal               (SgExpression* expr, SgUnparse_Info& info);  
 
-       // JJW -- these need C-specific suffixes
+       // these need Java-specific treatment
+          virtual void unparseWCharVal                (SgExpression* expr, SgUnparse_Info& info);  
+
           virtual void unparseUIntVal                 (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseLongIntVal              (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseLongLongIntVal          (SgExpression* expr, SgUnparse_Info& info);    
@@ -236,6 +238,11 @@ class Unparse_Java : public UnparseLanguageIndependentConstructs
           virtual void unparseModifierType(SgModifierType* type, SgUnparse_Info& info);
 
           virtual void unparseJavaParameterizedType(SgJavaParameterizedType* type, SgUnparse_Info& info);
+
+          virtual bool requiresParentheses(SgExpression* expr, SgUnparse_Info& info);
+          virtual void unparseExpression(SgExpression* expr, SgUnparse_Info& info);
+          virtual void unparseUnaryExpr(SgExpression* expr, SgUnparse_Info& info);
+          virtual void unparseBinaryExpr(SgExpression* expr, SgUnparse_Info& info);
    };
 
 #endif

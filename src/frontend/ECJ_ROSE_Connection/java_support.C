@@ -19,6 +19,7 @@ using namespace std;
 SgGlobal *globalScope = NULL;
 SgClassType *ObjectClassType = NULL;
 SgClassType *StringClassType = NULL;
+SgClassType *ClassClassType = NULL;
 SgClassDefinition *ObjectClassDefinition = NULL;
 
 int initializerCount = 0;
@@ -86,6 +87,55 @@ bool isCompatibleTypes(SgType *source_type, SgType *target_type) {
     return source_type == target_type;
 }
 
+string getPrimitiveTypeName(SgType *type) {
+    string type_name;
+
+    if (isSgTypeBool(type)) {
+        type_name = "boolean";
+    }
+    else if (isSgTypeSignedChar(type)) {
+        type_name = "byte";
+    }
+    else if (isSgTypeWchar(type)) {
+        type_name = "char";
+    }
+    else if (isSgTypeInt(type)) {
+        type_name = "int";
+    }
+    else if (isSgTypeShort(type)) {
+        type_name = "short";
+    }
+    else if (isSgTypeFloat(type)) {
+        type_name = "float";
+    }
+    else if (isSgTypeLong(type)) {
+        type_name = "long";
+    }
+    else if (isSgTypeDouble(type)) {
+        type_name = "double";
+    }
+    else if (isSgTypeVoid(type)) {
+        type_name = "void";
+    }
+    else ROSE_ASSERT(false);
+
+    return type_name;
+}
+
+string getArrayTypeName(SgPointerType *pointer_type) {
+    string name;
+    SgType *base_type = pointer_type -> get_base_type();
+    SgPointerType *sub_array = isSgPointerType(base_type);
+    if (sub_array) {
+        name = getArrayTypeName(sub_array);
+    }
+    else {
+        SgClassType *class_type = isSgClassType(base_type);
+        name = (class_type ? getFullyQualifiedTypeName(class_type) : getPrimitiveTypeName(base_type));
+    }
+    return name  + "[]";
+}
+
 string getFullyQualifiedName(SgClassDefinition *definition) {
     if (definition -> attributeExists("namespace")) {
         AstRegExAttribute *attribute = (AstRegExAttribute *) definition -> getAttribute("namespace");
@@ -103,7 +153,7 @@ string getFullyQualifiedName(SgClassDefinition *definition) {
     return "";
 }
 
-string getFullyQualifiedName(SgClassType *class_type) {
+string getFullyQualifiedTypeName(SgClassType *class_type) {
     AstRegExAttribute *attribute = (AstRegExAttribute *) class_type -> getAttribute("name");
     if (! attribute) {
         SgClassDeclaration *declaration = isSgClassDeclaration(class_type -> get_declaration());
@@ -119,6 +169,14 @@ string getFullyQualifiedName(SgClassType *class_type) {
     return attribute -> expression;
 }
 
+string getTypeName(SgType *type) {
+    SgClassType *class_type = isSgClassType(type);
+    SgPointerType *pointer_type = isSgPointerType(type);
+    return (class_type ? getFullyQualifiedTypeName(class_type)
+                       : pointer_type ? getArrayTypeName(pointer_type)
+                                      : getPrimitiveTypeName(type));
+}
+
 //
 // Replace newline character by its escape character sequence.
 //
@@ -131,6 +189,12 @@ string normalize(string source) {
         switch(*it) {
             case '\n':
                 target += "\\n";
+                break;
+            case '\r':
+                target += "\\r";
+                break;
+            case '\\':
+                target += "\\\\";
                 break;
             default:
                 target += (*it);
@@ -668,11 +732,33 @@ SgMemberFunctionDeclaration *buildDefiningMemberFunction(const SgName &inputName
 }
 
 
+/**
+ * Although iterating over the methods this way appears to violate the Java spec rule that instructs
+ * the compiler to "...get the list of methods seen from the class and get the most specific one...",
+ * it is in fact correct since ECJ has already chosen the correct function and what we are doing
+ * here is to look for a "perfect" mach with the function that was chosen.
+ */
+SgMemberFunctionDeclaration *findMemberFunctionDeclarationInClass(SgClassDefinition *classDefinition, const SgName &function_name, const list<SgType *>& formal_types) {
+// TODO: REMOVE THIS!
+//cout << "***Looking for declaration of " << function_name << " in " << classDefinition->get_qualified_name() << endl;
+    SgMemberFunctionDeclaration *function_declaration = lookupMemberFunctionDeclarationInClassScope(classDefinition, function_name, formal_types);
+    if (function_declaration == NULL) {
+        const SgBaseClassPtrList &inheritance = classDefinition->get_inheritances();
+        for (SgBaseClassPtrList::const_iterator it = inheritance.begin(); function_declaration == NULL && it != inheritance.end(); it++) { // Iterate over super class, if any, then the interfaces, if any.
+            SgClassDeclaration *decl = (*it) -> get_base_class();
+            function_declaration = findMemberFunctionDeclarationInClass(decl -> get_definition(), function_name, formal_types);
+        }
+    }
+    return function_declaration;
+}
 
 /**
  * Lookup a member function in current class only (doesn't look in super and interfaces classes)
  */
-SgMemberFunctionDeclaration *lookupMemberFunctionDeclarationInClass(SgClassDefinition *classDefinition, const SgName &function_name, const list<SgType *>& types) {
+SgMemberFunctionDeclaration *lookupMemberFunctionDeclarationInClassScope(SgClassDefinition *classDefinition, const SgName &function_name, const list<SgType *>& types) {
+// TODO: REMOVE THIS!
+//cout << "Looking for function " << function_name << endl;
+//cout.flush();
     int num_arguments = types.size();
     SgMemberFunctionDeclaration *function_declaration = NULL;
     vector<SgDeclarationStatement *> declarations = classDefinition -> get_members();
@@ -680,22 +766,41 @@ SgMemberFunctionDeclaration *lookupMemberFunctionDeclarationInClass(SgClassDefin
         SgDeclarationStatement *declaration = declarations[i];
         function_declaration = isSgMemberFunctionDeclaration(declaration);
         if (function_declaration && function_declaration -> get_name() == function_name) {
+// TODO: REMOVE THIS!
+//cout << "Found a name match for " << function_name << endl;
+//cout.flush();
             vector<SgInitializedName *> args = function_declaration -> get_args();
             if (args.size() == num_arguments) {
+// TODO: REMOVE THIS!
+//cout << "The number of arguments match for " << function_name << endl;
+//cout.flush();
                 list<SgType *>::const_iterator j = types.begin();
                 int k;
                 for (k = 0; k < num_arguments; k++, j++) {
                     SgType *type = (*j);
                     if (! isCompatibleTypes(type, args[k] -> get_type())) {
+// TODO: REMOVE THIS!
+//cout << "Argument " << k << " does not match for " << function_name << " : "
+//<< getTypeName(type) << " and " << getTypeName(args[k] -> get_type())
+//<< endl;
+//cout.flush();
                         // Not all types are compatible, continue to look
                         break;
                     }
+// TODO: REMOVE THIS!
+//cout << "Arguments " << k << " match for " << function_name << endl;
+//cout.flush();
                 }
 
                 if (k == num_arguments) {// all the arguments match?
                     break;
                 }
             }
+// TODO: REMOVE THIS!
+//else{
+//cout << "The number of arguments does not match for " << function_name << endl;
+//cout.flush();
+//}
         }
     }
 
@@ -720,7 +825,7 @@ SgMemberFunctionDeclaration *lookupMemberFunctionDeclarationInClassScope(SgClass
     ROSE_ASSERT(return_type != NULL);
 
     SgMemberFunctionDeclaration *function_declaration = NULL;
-    function_declaration = lookupMemberFunctionDeclarationInClass(classDefinition, function_name, types);
+    function_declaration = lookupMemberFunctionDeclarationInClassScope(classDefinition, function_name, types);
 
     //
     // Release space used for these extraneous Initialized variables!
@@ -740,51 +845,28 @@ SgMemberFunctionDeclaration *lookupMemberFunctionDeclarationInClassScope(SgClass
     return function_declaration;
 }
 
-SgMemberFunctionSymbol *lookupFunctionSymbolInClassScope(SgClassDefinition *classDefinition, const SgName &function_name, const list<SgType *> &formal_types) {
-  ROSE_ASSERT(classDefinition != NULL);
+SgMemberFunctionSymbol *findFunctionSymbolInClass(SgClassDefinition *classDefinition, const SgName &function_name, const list<SgType *> &formal_types) {
+    ROSE_ASSERT(classDefinition != NULL);
 
-  std::list<SgType *>::iterator type_it;
-
-// TODO: REMOVE THIS
-//  cout << "Looking for " << function_name << " in " << classDefinition->get_qualified_name() << endl;
-
-  SgMemberFunctionDeclaration *function_declaration = NULL;
-  list<SgClassDeclaration *> workList;
-  workList.push_front(classDefinition->get_declaration());
-  //TODO This way of iterating the transitive closure is wrong, according to the java spec
-  // we should get the list of methods seen from the class and get the most specific one.
-  while ((function_declaration == NULL) && !workList.empty()) {
-    SgClassDeclaration * classDeclaration = workList.front();
-    SgClassDefinition * classDefinition = classDeclaration->get_definition(); // get the super class definition
-    function_declaration = lookupMemberFunctionDeclarationInClass(classDefinition, function_name, formal_types);
-    // If nothing has been found get the inheritance list of current class
-    // and add all at the end of the worklist (breadth-first search)
+    SgMemberFunctionDeclaration *function_declaration = findMemberFunctionDeclarationInClass(classDefinition, function_name, formal_types);
     if (function_declaration == NULL) {
-      const SgBaseClassPtrList & inheritance = classDefinition->get_inheritances();
-// TODO: REMOVE THIS
-// cout << "Pushing super/interfaces for " << function_name << " size " << inheritance.size() << endl;
-      SgBaseClassPtrList::const_iterator it;
-      for(it = inheritance.begin();
-          it != inheritance.end();
-          it++) {
-        // Retrieve SgClassDeclaration from SgBaseClass
-        SgClassDeclaration * decl = (*it)->get_base_class();
-// TODO: REMOVE THIS
-// cout << "Pushing super/interfaces for " << function_name << " in " << decl->get_qualified_name() << endl;
-        workList.push_back(decl);
-      }
+        function_declaration = lookupMemberFunctionDeclarationInClassScope(ObjectClassDefinition, function_name, formal_types);
     }
-    workList.pop_front();
-  }
 
-  ROSE_ASSERT(function_declaration);
+// TODO: REMOVE THIS !
+if(!function_declaration){
+cout << "Could not find function " << function_name << " in " << classDefinition -> get_qualified_name()
+<< endl;
+cout.flush();
+}
+    ROSE_ASSERT(function_declaration);
 
-  SgSymbol *symbol =  function_declaration -> get_symbol_from_symbol_table();
-  ROSE_ASSERT(symbol);
-  SgMemberFunctionSymbol *function_symbol = isSgMemberFunctionSymbol(symbol);
-  ROSE_ASSERT(function_symbol);
+    SgSymbol *symbol =  function_declaration -> get_symbol_from_symbol_table();
+    ROSE_ASSERT(symbol);
+    SgMemberFunctionSymbol *function_symbol = isSgMemberFunctionSymbol(symbol);
+    ROSE_ASSERT(function_symbol);
 
-  return function_symbol;
+    return function_symbol;
 }
 
 
@@ -1262,7 +1344,7 @@ SgName stripQualifiers (const SgName &classNameWithQualification) {
 //
 //
 //
-SgClassSymbol *lookupSimpleNameTypeInClassScope(const SgName &name, SgClassDefinition *classDefinition) {
+SgClassSymbol *lookupSimpleNameTypeInClass(const SgName &name, SgClassDefinition *classDefinition) {
     ROSE_ASSERT(classDefinition);
     ROSE_ASSERT(classDefinition -> get_declaration());
 
@@ -1277,7 +1359,7 @@ SgClassSymbol *lookupSimpleNameTypeInClassScope(const SgName &name, SgClassDefin
 //     << classDefinition -> get_qualified_name()
 //     << endl;
 //cout.flush();
-        symbol = lookupSimpleNameTypeInClassScope(name, classDefinition);
+        symbol = lookupSimpleNameTypeInClass(name, classDefinition);
     }
 
     if (symbol == NULL) {
@@ -1288,7 +1370,7 @@ SgClassSymbol *lookupSimpleNameTypeInClassScope(const SgName &name, SgClassDefin
 }
 
 
-SgVariableSymbol *lookupSimpleNameVariableInClassScope(const SgName &name, SgClassDefinition *classDefinition) {
+SgVariableSymbol *lookupSimpleNameVariableInClass(const SgName &name, SgClassDefinition *classDefinition) {
     ROSE_ASSERT(classDefinition);
     ROSE_ASSERT(classDefinition -> get_declaration());
 
@@ -1303,7 +1385,7 @@ SgVariableSymbol *lookupSimpleNameVariableInClassScope(const SgName &name, SgCla
 //     << classDefinition -> get_qualified_name()
 //     << endl;
 //cout.flush();
-        symbol = lookupSimpleNameVariableInClassScope(name, classDefinition);
+        symbol = lookupSimpleNameVariableInClass(name, classDefinition);
     }
 
     if (symbol == NULL) {
@@ -1336,7 +1418,7 @@ SgVariableSymbol *lookupVariableByName(const SgName &name) {
 //     << endl;
 //cout.flush();
         symbol = (isSgClassDefinition(*i)
-                      ? lookupSimpleNameVariableInClassScope(name, (SgClassDefinition *) (*i))
+                      ? lookupSimpleNameVariableInClass(name, (SgClassDefinition *) (*i))
                       : (*i) -> lookup_symbol(name));
         if ((*i) == ::globalScope)
             break;
@@ -1420,7 +1502,7 @@ SgType *lookupTypeByName(SgName &package_name, SgName &type_name, int num_dimens
 //     << endl;
 //cout.flush();
                 type_symbol = (isSgClassDefinition(*i)
-                              ? lookupSimpleNameTypeInClassScope((*name), (SgClassDefinition *) (*i))
+                              ? lookupSimpleNameTypeInClass((*name), (SgClassDefinition *) (*i))
                               : (*i) -> lookup_class_symbol(*name));
                 if ((*i) == ::globalScope)
                     break;
@@ -1499,7 +1581,7 @@ SgType *lookupTypeByName(SgName &package_name, SgName &type_name, int num_dimens
 //     << definition -> get_qualified_name()
 //     << endl;
 //cout.flush();
-            type_symbol = lookupSimpleNameTypeInClassScope((*name), definition);
+            type_symbol = lookupSimpleNameTypeInClass((*name), definition);
             ROSE_ASSERT(type_symbol);
         }
 
@@ -1507,7 +1589,7 @@ SgType *lookupTypeByName(SgName &package_name, SgName &type_name, int num_dimens
 
         SgClassType *class_type = isSgClassType(type);
         ROSE_ASSERT(class_type);
-        getFullyQualifiedName(class_type);
+        getFullyQualifiedTypeName(class_type);
     }
 
     //

@@ -7,6 +7,7 @@
 #include "ecj.h"
 
 using std::string;
+using namespace std;
 
 static jmethodID jofp_get_method(int, const char*, const char*);
 
@@ -51,7 +52,7 @@ static int jofp_invoke(int argc, char **argv) {
     int retval = 0;
 
     jobjectArray args;
- 
+
     /* Create a Java String[] out of argv (everything after the first arg).  */
     args = jserver_getJavaStringArray(argc, argv);
 

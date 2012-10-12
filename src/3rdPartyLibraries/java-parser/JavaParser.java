@@ -43,8 +43,10 @@ class JavaParser  implements Callable<Boolean> {
     public static native void cactionCompilationUnitList(int argc, String[] argv);
     public static native void cactionCompilationUnitListEnd();
     public static native void cactionSetupObject();
-    public static native void cactionSetupString();
-
+    public static native void cactionSetupStringAndClassTypes();
+    
+    public static native void cactionParenthesizedExpression(int paren_count);
+                              
     // These are used in the ecjASTVisitor (which is derived from the ECJ ASTVisitor class).
     public static native void cactionCompilationUnitDeclaration(String package_name, String filename, JavaToken jToken);
     public static native void cactionCompilationUnitDeclarationEnd(int java_numberOfStatements, JavaToken jToken);
@@ -107,6 +109,7 @@ class JavaParser  implements Callable<Boolean> {
     public static native void cactionCastExpressionEnd(JavaToken jToken);
     public static native void cactionCharLiteral(char value, JavaToken jToken);
     public static native void cactionClassLiteralAccess(JavaToken jToken);
+    public static native void cactionClassLiteralAccessEnd(JavaToken jToken);
     public static native void cactionClinit(JavaToken jToken);
     public static native void cactionConditionalExpression(JavaToken jToken);
     public static native void cactionConditionalExpressionEnd(JavaToken jToken);
@@ -151,7 +154,7 @@ class JavaParser  implements Callable<Boolean> {
     // public static native void cactionImportReference(String path , int java_ContainsWildcard );
     public static native void cactionImportReference(boolean java_is_static, String package_name, String type_name, String name_suffix, boolean java_ContainsWildcard, JavaToken jToken);
 
-    public static native void cactionInitializer(boolean java_is_static, JavaToken jToken);
+    public static native void cactionInitializer(boolean java_is_static, String name, JavaToken jToken);
     public static native void cactionInitializerEnd(JavaToken jToken);
     public static native void cactionInstanceOfExpression(JavaToken jToken);
     public static native void cactionInstanceOfExpressionEnd(JavaToken jToken);
@@ -208,9 +211,13 @@ class JavaParser  implements Callable<Boolean> {
     public static native void cactionPrefixExpressionEnd(int java_operator_kind, JavaToken jToken);
     public static native void cactionQualifiedAllocationExpression(JavaToken jToken);
     public static native void cactionQualifiedSuperReference(JavaToken jToken);
+    public static native void cactionQualifiedSuperReferenceEnd(JavaToken jToken);
     public static native void cactionQualifiedSuperReferenceClassScope(JavaToken jToken);
+    public static native void cactionQualifiedSuperReferenceClassScopeEnd(JavaToken jToken);
     public static native void cactionQualifiedThisReference(JavaToken jToken);
+    public static native void cactionQualifiedThisReferenceEnd(JavaToken jToken);
     public static native void cactionQualifiedThisReferenceClassScope(JavaToken jToken);
+    public static native void cactionQualifiedThisReferenceClassScopeEnd(JavaToken jToken);
     public static native void cactionQualifiedTypeReference(JavaToken jToken);
     public static native void cactionQualifiedTypeReferenceClassScope(JavaToken jToken);
 
@@ -250,23 +257,21 @@ class JavaParser  implements Callable<Boolean> {
     public static native void cactionWildcard(JavaToken jToken);
     public static native void cactionWildcardClassScope(JavaToken jToken);
 
-    //
-    // I am trying to rewrite these funstions but I am keeping the old versions for now.
-    //
-    public static native void cactionBuildImplicitClassSupportStart(String className);
-    public static native void cactionBuildImplicitClassSupportEnd(int java_numberOfStatements, String className);
-    public static native void cactionBuildImplicitMethodSupport(String methodName, int num_arguments);
-    public static native void cactionBuildImplicitFieldSupport(String fieldName);
+// TODO: REMOVE THIS !!!
+//    public static native void cactionBuildImplicitClassSupportStart(String className);
+//    public static native void cactionBuildImplicitClassSupportEnd(int java_numberOfStatements, String className);
+//    public static native void cactionBuildImplicitMethodSupport(String methodName, int num_arguments);
+//    public static native void cactionBuildImplicitFieldSupport(String fieldName);
     
-    public static native void cactionInsertClassStart(String className);
-    public static native void cactionInsertClassEnd(String className);
+    public static native void cactionInsertClassStart(String className, JavaToken jToken);
+    public static native void cactionInsertClassEnd(String className, JavaToken jToken);
 
-
-    public static native void cactionBuildClassSupportStart(String className, boolean is_interface);
-    public static native void cactionBuildClassExtendsAndImplementsSupport(boolean has_super_class, int num_interfaces);
-    public static native void cactionBuildClassSupportEnd(String className);
-    public static native void cactionBuildMethodSupport(String methodName, boolean is_constructor, boolean is_abstract, boolean is_native, int num_arguments);
-    public static native void cactionBuildFieldSupport(String fieldName);
+    public static native void cactionBuildClassSupportStart(String className, boolean is_interface, JavaToken jToken);
+    public static native void cactionBuildClassExtendsAndImplementsSupport(boolean has_super_class, int num_interfaces, JavaToken jToken);
+    public static native void cactionBuildClassSupportEnd(String className, JavaToken jToken);
+    public static native void cactionBuildMethodSupport(String methodName, boolean is_constructor, boolean is_abstract, boolean is_native, int num_arguments, JavaToken jToken);
+    public static native void cactionBuildFieldSupport(String fieldName, JavaToken jToken);
+    public static native void cactionBuildInitializerSupport(boolean is_static, String name, JavaToken jToken);
 
     // Added new support functions for Argument IR nodes.
     public static native void cactionArgumentName(String name);

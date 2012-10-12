@@ -956,12 +956,12 @@ Unparse_Java::unparseClassDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      }
 
      if (bases.size() - first_index > 0) {
-         curprint(" implements ");
+         curprint(classdecl_stmt -> get_explicit_interface() ? " extends " : " implements ");
          for (int i = first_index; i < bases.size(); i++) {
              SgBaseClass *interface = isSgBaseClass(bases[i]);
              ROSE_ASSERT(interface -> get_base_class() -> get_explicit_interface());
              unparseBaseClass(interface, info);
-             if (i + 1 > bases.size()) {
+             if (i + 1 < bases.size()) {
                  curprint(", ");
              }
          }
