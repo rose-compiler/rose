@@ -12,7 +12,7 @@
 
 string color(string);
 
-Analyzer::Analyzer():startFunRoot(0),cfanalyzer(0),_displayDiff(1000),_numberOfThreadsToUse(1) {
+Analyzer::Analyzer():startFunRoot(0),cfanalyzer(0),_displayDiff(10000),_numberOfThreadsToUse(1) {
 }
 
 set<string> Analyzer::variableIdsToVariableNames(set<VariableId> s) {
@@ -192,7 +192,7 @@ void Analyzer::runSolver1() {
   if(workers==0)
 	break; // we are done
 
-  if((eStateSet.size()-prevStateSetSize)>_displayDiff) {
+  if((_displayDiff && eStateSet.size()-prevStateSetSize)>_displayDiff) {
 	printStatusMessage(true);
 	prevStateSetSize=eStateSet.size();
   }
