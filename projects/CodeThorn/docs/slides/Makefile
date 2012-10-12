@@ -1,8 +1,8 @@
 all: presentation.pdf
 
 presentation.pdf: ctheader.tex presentation.tex ltl_presentation.tex
-	pdflatex presentation
-	pdflatex presentation
+	pdflatex -halt-on-error presentation
+	pdflatex -halt-on-error presentation
 
 clean:
 	rm -f presentation.pdf

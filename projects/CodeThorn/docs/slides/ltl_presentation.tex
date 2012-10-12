@@ -1,15 +1,66 @@
-\begin{frame}{Linear Time Logic Formulae Verification}
+\newcommand{\lub}{\ensuremath{\sqcup}\xspace}
+\newcommand{\Lub}{\ensuremath{\bigsqcup}\xspace}
+\newcommand{\state}{\ensuremath{\mathit{s}}\xspace}
+\newcommand{\STG}{\ensuremath{\mathrm{STG}}\xspace}
+\newcommand{\States}{\ensuremath{\mathit{States}}\xspace}
+\newcommand{\prop}[1]{\ensuremath{p_{\state,#1}}\xspace} 
+\newcommand{\propp}[1]{\ensuremath{p_{\state',#1}}\xspace} 
+\newcommand{\G}{\ensuremath{\mathrm{G}}\xspace}
+\newcommand{\F}{\ensuremath{\mathrm{F}}\xspace}
+\newcommand{\X}{\ensuremath{\mathrm{X}}\xspace}
+\newcommand{\R}{\ensuremath{\mathrm{R}}\xspace}
+\newcommand{\U}{\ensuremath{\mathrm{U}}\xspace}
+\newcommand{\WU}{\ensuremath{\mathrm{WU}\xspace}}
+\newcommand{\comb}{\ensuremath{\mathit{succs}}\xspace}
 
-\begin{block}{Input}
-State Transition Graph
-\end{block}
 
-\begin{block}{Algorithm}
-Fixed-point algorithm
-\end{block}
+\begin{frame}{Linear Time Logic Formul\ae\ Verification}
 
-\begin{block}{Output}
-Formulae true, false, or unknown.
-\end{block}
+  \begin{block}{Data-flow based approach}
+    \begin{itemize}
+    \item[-] lossy approximation (upper bound in Boolean lattice)
+    \item[+] Very fast
+    \end{itemize}
+  \end{block}
 
+  \begin{block}{Algorithm 1/2}
+    Fixed-point algorithm
+    \scriptsize
+    \begin{algorithm}[H]
+      \SetLine
+      \KwIn{State Transition Graph}
+      \KwOut{Formulae true, false, or unknown.}
+
+      $G_1$=collapse(STG) \Comment{remove all non-I/O nodes and all exit (=assert) nodes}\\
+      eval(LTL)\;
+    \end{algorithm}
+  \end{block}
+\end{frame}
+
+\begin{frame}{Linear Time Logic Formul\ae\ Verification 2}
+  \begin{block}{Output}
+
+    \scriptsize
+  \begin{algorithm}[H]
+    \SetLine
+    \KwIn{State Transition Graph, LTL expression}
+    \KwOut{$\state\in\States\rightarrow$ BoolLattice}
+    \textbf{function} eval(LTL)\\
+    \Begin{
+        \Switch{LTL}{
+          \lCase{a \& b}{$\colon\quad\forall\state\in\States\colon$ eval(a) $\cap$ eval(b)}\\
+          \lCase{a $|$ b}{$\colon\quad\forall\state\in\States\colon$ eval(a) $\cup$ eval(b)}\\
+          \lCase{!a}{$\colon\quad\forall\state\in\States\colon \neg$ eval(a)}\\
+          \lCase{\X a}{$\colon\quad\forall\state\in\States\colon\Lub_{\state\prime\in succ(\state)}$eval(a)}\\
+          \lCase{\G a}{$\colon\quad$fix($\bot$, \lub, eval(a) $\cap$ \comb)}\\
+          \lCase{\F a}{$\colon\quad$fix($\bot$, \lub, eval(a) $\cup$ \comb)}\\
+          \lCase{a \R b}{$\colon\quad $fix($\bot$, \lub, eval(b)$\cap$(eval(a)$\cup\comb$))}\\
+          \lCase{a \U b}{$\colon\quad $fix($\bot$, \lub, eval(b)$\cup$(eval(a)$\cap\comb$))}\\
+          \lCase{a \WU\ b}{eval(G a $|$ (a \U b))}\\
+        }
+      }
+      
+      \caption{eval}
+    \end{algorithm}
+  \end{block}
 \end{frame}
