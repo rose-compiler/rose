@@ -2,6 +2,7 @@
 #include "AType.h"
 #include <stack>
 #include <queue>
+#include "CommandLineOptions.h"
 
 // Copyright (c) 2012 Lawrence Livermore National Security, LLC.
 // Produced at the Lawrence Livermore National Laboratory
@@ -908,10 +909,10 @@ Checker::verify(const Formula& f)
   // Visualization:
   // generate dot output for debugging
   // TODO: implement these flags as cmdline options
-  bool ltl_output_dot = true;
-  bool show_derivation = true;
-  bool show_node_detail = true;
-  bool collapsed_graph = false;
+  bool ltl_output_dot = boolOptions["ltl-output-dot"];//  true;
+  bool show_derivation = boolOptions["ltl-show-derivation"];//  true;
+  bool show_node_detail = boolOptions["ltl-show-node-detail"];//  true;
+  bool collapsed_graph = boolOptions["ltl-collapsed-graph"];//  false
 
   if (ltl_output_dot) {
     stringstream s;

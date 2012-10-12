@@ -12,7 +12,7 @@
 
 string color(string);
 
-Analyzer::Analyzer():startFunRoot(0),cfanalyzer(0),displayDiff(1000) {
+Analyzer::Analyzer():startFunRoot(0),cfanalyzer(0),_displayDiff(1000),_numberOfThreadsToUse(1) {
 }
 
 set<string> Analyzer::variableIdsToVariableNames(set<VariableId> s) {
@@ -46,13 +46,13 @@ void Analyzer::printStatusMessage(bool forceDisplay) {
   }
 #endif
 
-#pragma critical section
   {
 	// report we are alife
-  long diff=eStateSet.size()%displayDiff;
+  long diff=eStateSet.size()%_displayDiff;
+  stringstream ss;
   if(diff==0||forceDisplay) {
-	cout<<color("white")<<"Number of states/estates/transitions: ";
-	cout<<color("magenta")<<stateSet.size()
+	ss  <<color("white")<<"Number of states/estates/trans/csets: ";
+	ss  <<color("magenta")<<stateSet.size()
 		<<color("white")<<"/"
 		<<color("cyan")<<eStateSet.size()
 		<<color("white")<<"/"
@@ -60,7 +60,8 @@ void Analyzer::printStatusMessage(bool forceDisplay) {
 		<<color("white")<<"/"
 		<<color("yellow")<<constraintSetMaintainer.size()
 		<<color("white")<<"";
-	cout<<endl;
+	ss<<endl;
+	cout<<ss.str();
   }
 }
 }
@@ -173,42 +174,38 @@ const EState* Analyzer::takeFromWorkList() {
 
 void Analyzer::runSolver1() {
   omp_set_num_threads(_numberOfThreadsToUse);
-  omp_set_dynamic(_numberOfThreadsToUse);
-  int threadNum=-1;
-  int retries=5;
-  // if all threads set it true (and have work left) we shall finish
-  bool finalizer[_numberOfThreadsToUse];
-  for(int i=0;i<_numberOfThreadsToUse;++i) {
-	finalizer[i]=false;
+  omp_set_dynamic(1);
+  int threadNum;
+  const EState* workVector[256];
+  if(_numberOfThreadsToUse>256) {
+	throw "Error: number of threads exceeds 256.";
   }
-  
-#pragma omp parallel private(threadNum),shared(finalizer)
+  while(1)
   {
-	threadNum=omp_get_thread_num();
-  while(1) {
-	bool finish=true;
-	for(int i=0;i<_numberOfThreadsToUse;i++) {
-	  finish=finish&&finalizer[i];
-	}
-	if(finish) {
-	  //cerr << "We are done. Thread "<<threadNum<<" says good bye."<<endl;
+  int workers;
+  for(workers=0;workers<_numberOfThreadsToUse;++workers) {
+	if(!(workVector[workers]=popWorkList()))
 	  break;
-	}
-	const EState* currentEStatePtr=popWorkList();
-	if(!currentEStatePtr) {
-	  //cerr<<"STATUS: thread "<<threadNum<<" signals to be finished."<<endl;
-	  finalizer[threadNum]=true;
-	  continue;
-	}
-	
-	assert(currentEStatePtr);
-	finalizer[threadNum]=false; // in case the thread wanted to quit before, he now resumes duties
+  }
+  if(workers==0)
+	break; // we are done
 
+  #pragma omp parallel for private(threadNum),shared(workVector)
+  for(int j=0;j<workers;++j) {
+	threadNum=omp_get_thread_num();
+	const EState* currentEStatePtr=workVector[j];
+	if(!currentEStatePtr) {
+	  cerr<<"Error: thread "<<threadNum<<" finished prematurely. Bailing out. "<<endl;
+	  assert(threadNum>=0 && threadNum<=_numberOfThreadsToUse);
+	  exit(1);
+	}
+	assert(currentEStatePtr);
 	printStatusMessage(false);
 
 	Flow edgeSet=flow.outEdges(currentEStatePtr->label);
 	//cerr << "DEBUG: edgeSet size:"<<edgeSet.size()<<endl;
-#if 0
+#if 1
+	// we can simplify this by adding the proper function to Flow.
 	Flow::iterator i=edgeSet.begin();
 	int edgeNum=edgeSet.size();
 	vector<const Edge*> edgeVec(edgeNum);
@@ -267,9 +264,8 @@ void Analyzer::runSolver1() {
 		  //cerr << "INFO: found final state."<<endl;
 		}
 	  } // end of loop on transfer function return-estates
-	} // parallel for
-  }//cerr<<"DEBUG: parallel for finished."<<endl;
-  cerr<< "par-for finished."<<endl;
+	} // edgeset-parallel for
+	} // worklist-parallel for
   } // while
   printStatusMessage(true);
   cout << "analysis finished (worklist is empty)."<<endl;

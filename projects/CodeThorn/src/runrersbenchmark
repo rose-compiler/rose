@@ -1,4 +1,4 @@
-./codethorn tests/rers/Problem$1.c --verify tests/rers/properties$1.txt --csv-ltl CodeThorn_Problem$1_ltl_csv.txt --csv-assert CodeThorn_Problem$1_assert_csv.txt --edg:no_warnings --csv-stats CodeThorn_Problem$1_stats_csv.txt --csv-assert-live CodeThorn_Problem$1_assert_live_csv.txt
+./codethorn tests/rers/Problem$1.c --verify tests/rers/properties$1.txt --csv-ltl CodeThorn_Problem$1_ltl_csv.txt --csv-assert CodeThorn_Problem$1_assert_csv.txt --edg:no_warnings --csv-stats CodeThorn_Problem$1_stats_csv.txt --csv-assert-live CodeThorn_Problem$1_assert_live_csv.txt --threads=1
 sort -u CodeThorn_Problem$1_assert_live_csv.txt > CodeThorn_Problem$1_results_additional.txt
 sort -g CodeThorn_Problem$1_assert_csv.txt > CodeThorn_Problem$1_results.txt
 cat CodeThorn_Problem$1_ltl_csv.txt >> CodeThorn_Problem$1_results.txt

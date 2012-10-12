@@ -358,6 +358,11 @@ int main( int argc, char * argv[] ) {
     ("run-rose-tests",po::value< string >(),"Run ROSE AST tests. [=yes|no]")
     ("reduce-cfg",po::value< string >(),"Reduce CFG nodes which are not relevant for the analysis. [=yes|no]")
     ("threads",po::value< int >(),"Run analyzer in parallel using <arg> threads (experimental)")
+    ("display-diff",po::value< int >(),"Print statistics every <arg> computed estates.")
+	("ltl-output-dot",po::value< string >(),"LTL visualization: generate dot output.")
+	("ltl-show-derivation",po::value< string >(),"LTL visualization: show derivation in dot output.")
+	("ltl-show-node-detail",po::value< string >(),"LTL visualization: show node detail in dot output.")
+	("ltl-collapsed-graph",po::value< string >(),"LTL visualization: show collapsed graph in dot output.")
     ;
 
   po::store(po::command_line_parser(argc, argv).
@@ -400,6 +405,12 @@ int main( int argc, char * argv[] ) {
   boolOptions.registerOption("update-input-var",true);
   boolOptions.registerOption("run-rose-tests",true);
   boolOptions.registerOption("reduce-cfg",true);
+
+  boolOptions.registerOption("ltl-output-dot",false);
+  boolOptions.registerOption("ltl-show-derivation",true);
+  boolOptions.registerOption("ltl-show-node-detail",true);
+  boolOptions.registerOption("ltl-collapsed-graph",false);
+
   boolOptions.processOptions();
   cout<<boolOptions.toString();
 
@@ -431,9 +442,13 @@ int main( int argc, char * argv[] ) {
   if(args.count("threads")) {
 	numberOfThreadsToUse=args["threads"].as<int>();
   }
+  int displayDiff=1000;
+  if(args.count("display-diff")) {
+	displayDiff=args["display-diff"].as<int>();
+  }
   // clean up csv-assert option in argv
   for (int i=1; i<argc; ++i) {
-	if (string(argv[i]) == "--csv-assert" || string(argv[i])=="--csv-stats" || string(argv[i])=="--csv-assert-live"|| string(argv[i])=="--threads") {
+	if (string(argv[i]) == "--csv-assert" || string(argv[i])=="--csv-stats" || string(argv[i])=="--csv-assert-live"|| string(argv[i])=="--threads" || string(argv[i])=="--display-diff") {
 	  // do not confuse ROSE frontend
 	  argv[i] = strdup("");
 	  assert(i+1<argc);
@@ -499,7 +514,8 @@ int main( int argc, char * argv[] ) {
   cout << "INIT: creating solver."<<endl;
   Analyzer analyzer;
   analyzer._csv_assert_live_file=csv_assert_live_file;
-  analyzer._numberOfThreadsToUse=numberOfThreadsToUse;
+  analyzer.setNumberOfThreadsToUse(numberOfThreadsToUse);
+  analyzer.setDisplayDiff(displayDiff);
   analyzer.initializeSolver1("main",root);
   analyzer.initLabeledAssertNodes(sageProject);
   double initRunTime=timer.getElapsedTimeInMilliSec();
@@ -509,7 +525,7 @@ int main( int argc, char * argv[] ) {
   analyzer.runSolver1();
   double analysisRunTime=timer.getElapsedTimeInMilliSec();
   long removed=analyzer.getTransitionGraph()->removeDuplicates();
-  cout << "Transitions removed: "<<removed<<endl;
+  cout << "Transitions reduced: "<<removed<<endl;
   //  cout << analyzer.stateSetToString(final);
   cout << "=============================================================="<<endl;
   printAsserts(analyzer,sageProject);
@@ -591,6 +607,7 @@ int main( int argc, char * argv[] ) {
 		<<stateSetLoadFactor<<", "
 		<<eStateSetLoadFactor<<", "
 		<<constraintSetsLoadFactor<<endl;
+	text<<"threads,"<<numberOfThreadsToUse<<endl;
 	write_file(filename,text.str());
     cout << "generated "<<filename<<endl;
   }

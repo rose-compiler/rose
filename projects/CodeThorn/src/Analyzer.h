@@ -145,8 +145,8 @@ class Analyzer {
   }
   list<pair<SgLabelStatement*,SgNode*> > _assertNodes;
   string _csv_assert_live_file; // to become private
-  int _numberOfThreadsToUse; // to become private
-  void setDisplayDiff(int diff) { displayDiff=diff; }
+  void setDisplayDiff(int diff) { _displayDiff=diff; }
+  void setNumberOfThreadsToUse(int n) { _numberOfThreadsToUse=n; }
  private:
   ExprAnalyzer exprAnalyzer;
   VariableIdMapping variableIdMapping;
@@ -156,7 +156,8 @@ class Analyzer {
   ConstraintSetMaintainer constraintSetMaintainer;
   TransitionGraph transitionGraph;
   set<const EState*> transitionSourceEStateSetOfLabel(Label lab);
-  int displayDiff;
+  int _displayDiff;
+  int _numberOfThreadsToUse;
 };
 
 #endif
