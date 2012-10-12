@@ -39,6 +39,7 @@ void Analyzer::recordTransition(const EState* sourceState, Edge e, const EState*
 }
 
 void Analyzer::printStatusMessage(bool forceDisplay) {
+  // forceDisplay currently only turns on or off
 #if 0
   if(isEmptyWorkList()) {
 	//cerr << "Status: work list empty."<<endl;
@@ -48,9 +49,8 @@ void Analyzer::printStatusMessage(bool forceDisplay) {
 
   {
 	// report we are alife
-  long diff=eStateSet.size()%_displayDiff;
   stringstream ss;
-  if(diff==0||forceDisplay) {
+  if(forceDisplay) {
 	ss  <<color("white")<<"Number of states/estates/trans/csets: ";
 	ss  <<color("magenta")<<stateSet.size()
 		<<color("white")<<"/"
@@ -173,6 +173,8 @@ const EState* Analyzer::takeFromWorkList() {
 }
 
 void Analyzer::runSolver1() {
+  int Statusprint=_displayDiff;
+  long prevStateSetSize=eStateSet.size();
   omp_set_num_threads(_numberOfThreadsToUse);
   omp_set_dynamic(1);
   int threadNum;
@@ -190,6 +192,10 @@ void Analyzer::runSolver1() {
   if(workers==0)
 	break; // we are done
 
+  if((eStateSet.size()-prevStateSetSize)>_displayDiff) {
+	printStatusMessage(true);
+	prevStateSetSize=eStateSet.size();
+  }
   #pragma omp parallel for private(threadNum),shared(workVector)
   for(int j=0;j<workers;++j) {
 	threadNum=omp_get_thread_num();
@@ -200,7 +206,6 @@ void Analyzer::runSolver1() {
 	  exit(1);
 	}
 	assert(currentEStatePtr);
-	printStatusMessage(false);
 
 	Flow edgeSet=flow.outEdges(currentEStatePtr->label);
 	//cerr << "DEBUG: edgeSet size:"<<edgeSet.size()<<endl;
