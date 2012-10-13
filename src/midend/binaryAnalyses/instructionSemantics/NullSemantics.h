@@ -252,6 +252,13 @@ namespace BinaryAnalysis { // documented elsewhere
                     return ValueType<nBitsA>();
                 }
 
+                /** Extend (or shrink) from @p FromLen bits to @p ToLen bits by adding or removing high-order bits from the
+                 *  input. Added bits are always zeros. */
+                template <size_t FromLen, size_t ToLen>
+                ValueType<ToLen> unsignedExtend(const ValueType<FromLen> &a) {
+                    return ValueType<ToLen>();
+                }
+
                 /** Sign extends a value. */
                 template<size_t From, size_t To>
                 ValueType<To> signExtend(const ValueType<From> &a) {

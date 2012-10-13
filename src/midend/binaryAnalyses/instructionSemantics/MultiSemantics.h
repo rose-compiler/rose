@@ -877,6 +877,17 @@ namespace BinaryAnalysis {                      // documented elsewhere
                     return retval;
                 }
 
+                /** Extend (or shrink) from @p FromLen bits to @p ToLen bits by adding or removing high-order bits from the
+                 *  input. Added bits are always zeros. */
+                template <size_t From, size_t To>
+                ValueType<To> unsignedExtend(const ValueType<From> &a) {
+                    ValueType<To> retval;
+                    before();
+                    CALL_SUBS_1b(unsignedExtend<From, To>, retval, a);
+                    after();
+                    return retval;
+                }
+
                 /** See NullSemantics::Policy::signExtend() */
                 template<size_t From, size_t To>
                 ValueType<To> signExtend(const ValueType<From> &a) {
