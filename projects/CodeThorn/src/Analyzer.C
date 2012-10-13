@@ -192,7 +192,7 @@ void Analyzer::runSolver1() {
   if(workers==0)
 	break; // we are done
 
-  if((_displayDiff && eStateSet.size()-prevStateSetSize)>_displayDiff) {
+  if((_displayDiff && (eStateSet.size()-prevStateSetSize)>_displayDiff)) {
 	printStatusMessage(true);
 	prevStateSetSize=eStateSet.size();
   }
