@@ -443,7 +443,7 @@ int main( int argc, char * argv[] ) {
   if(args.count("threads")) {
 	numberOfThreadsToUse=args["threads"].as<int>();
   }
-  int displayDiff=1000;
+  int displayDiff=5000;
   if(args.count("display-diff")) {
 	displayDiff=args["display-diff"].as<int>();
   }
