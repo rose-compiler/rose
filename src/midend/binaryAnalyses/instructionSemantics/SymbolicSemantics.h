@@ -906,6 +906,7 @@ namespace BinaryAnalysis {              // documented elsewhere
     instruction.  x86 \"REP\" instructions might be the culprit: ROSE\n\
     instruction semantics treat them as a tiny loop, updating the policy's EIP\n\
     depending on whether the loop is to be taken again, or not.\n");
+                        std::cerr <<"ip = " <<cur_state.registers.ip <<"\n";
                         assert(cur_state.registers.ip.known_value()==insn->get_address()); // redundant, used for error mesg
                         abort(); // we must fail even when optimized
                     }
