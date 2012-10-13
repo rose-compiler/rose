@@ -175,6 +175,10 @@ static CFGNode getNodeJustAfterInContainer(SgNode* n) {
     ROSE_ASSERT (decl);
     return CFGNode(decl->get_definition(), 2);
   }
+
+// DQ (10/12/2012): Added assertion.
+  ROSE_ASSERT(parent != NULL);
+
   unsigned int idx = parent->cfgFindNextChildIndex(n);
   if ( idx > parent->cfgIndexForEnd() ) {
       if (SgProject::get_verbose() >= 3) {
@@ -2759,6 +2763,29 @@ SgExpression::cfgIsIndexInteresting(unsigned int idx) const {
 
 unsigned int
 SgExpression::cfgFindChildIndex(SgNode* n) {
+
+// DQ (10/12/2012): Debugging the CFG with the new EDG 4.x C11/C++11 work.
+   ROSE_ASSERT(this != NULL);
+
+// DQ (10/12/2012): Debugging the CFG with the new EDG 4.x C11/C++11 work.
+   if (isSgBoolValExp(this) != NULL)
+      {
+        SgBoolValExp* value = isSgBoolValExp(this);
+        printf ("value->get_value() = %s \n",value->get_value() ? "true" : "false");
+        ROSE_ASSERT(value->get_originalExpressionTree() == NULL);
+
+        this->get_startOfConstruct()->display("SgExpression::cfgFindChildIndex() should never have a SgBoolValExp at this point: debug");
+
+        SgNode* parent = this->get_parent();
+        while (parent != NULL)
+           {
+             if (parent->get_file_info() != NULL)
+                  parent->get_file_info()->display("SgExpression::cfgFindChildIndex() parent: should never have a SgBoolValExp at this point: debug");
+
+             parent = parent->get_parent();
+           }
+      }
+
     // Default -- overridden in some cases
     size_t idx = this->get_childIndex(n);
     ROSE_ASSERT (idx != (size_t)(-1)); // Not found

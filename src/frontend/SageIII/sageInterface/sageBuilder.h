@@ -943,9 +943,12 @@ inline SgIfStmt * buildIfStmt(SgExpression* conditional, SgStatement * true_body
 SgIfStmt* buildIfStmt_nfi(SgStatement* conditional, SgStatement * true_body, SgStatement * false_body);
 
 //! Build a for init statement
-SgForInitStatement * buildForInitStatement();
-SgForInitStatement * buildForInitStatement(const SgStatementPtrList & statements);
-SgForInitStatement * buildForInitStatement_nfi(SgStatementPtrList & statements);
+SgForInitStatement* buildForInitStatement();
+SgForInitStatement* buildForInitStatement(const SgStatementPtrList & statements);
+SgForInitStatement* buildForInitStatement_nfi(SgStatementPtrList & statements);
+
+// DQ (10/12/2012): Added new function for a single statement.
+SgForInitStatement* buildForInitStatement( SgStatement* statement );
 
 //!Build a for statement, assume none of the arguments is NULL
 SgForStatement * buildForStatement(SgStatement* initialize_stmt,  SgStatement * test, SgExpression * increment, SgStatement * loop_body, SgStatement * else_body = NULL);

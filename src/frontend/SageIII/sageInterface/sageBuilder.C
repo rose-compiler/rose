@@ -6287,6 +6287,19 @@ SgForInitStatement * SageBuilder::buildForInitStatement() {
   return new SgForInitStatement();
 }
 
+// DQ (10/12/2012): Added specific API to handle simple (single) statement.
+SgForInitStatement*
+SageBuilder::buildForInitStatement( SgStatement* statement )
+   {
+     SgForInitStatement* forInit = new SgForInitStatement();
+     ROSE_ASSERT(forInit != NULL);
+
+     ROSE_ASSERT(statement != NULL);
+     forInit->append_init_stmt(statement);
+
+     return forInit;
+   }
+
 SgForInitStatement * SageBuilder::buildForInitStatement(const SgStatementPtrList & statements) 
 {
   SgForInitStatement * result = new SgForInitStatement();

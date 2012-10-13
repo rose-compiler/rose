@@ -976,6 +976,7 @@ NodeQuery::querySubTree (SgNode * subTree, roseFunctionPointerOneParameter eleme
 #if 0
      printf ("Inside of NodeQuery::querySubTree #4 \n");
 #endif
+
      return  AstQueryNamespace::querySubTree(subTree,std::ptr_fun(elementReturnType),defineQueryType);
    }
 
@@ -988,7 +989,7 @@ Rose_STL_Container<SgNode*> NodeQuery::queryNodeList ( Rose_STL_Container<SgNode
 
 Rose_STL_Container<SgNode*> NodeQuery::queryNodeList ( Rose_STL_Container<SgNode*> nodeList, SgNode * targetNode, TypeOfQueryTypeTwoParameters elementReturnType )
    {
-     return AstQueryNamespace::queryRange(nodeList.begin(), nodeList.end(),std::bind2nd(getFunction(elementReturnType), targetNode));
+     return AstQueryNamespace::queryRange(nodeList.begin(), nodeList.end(), std::bind2nd(getFunction(elementReturnType), targetNode));
    }
 
 // DQ (4/8/2004): Added query based on vector of variants
@@ -999,7 +1000,8 @@ NodeQuerySynthesizedAttributeType NodeQuery::querySubTree ( SgNode * subTree, Va
 #if 0
      printf ("Inside of NodeQuery::querySubTree #5 \n");
 #endif
-     AstQueryNamespace::querySubTree(subTree, boost::bind(querySolverGrammarElementFromVariantVector, _1,targetVariantVector,&returnList), defineQueryType);
+
+     AstQueryNamespace::querySubTree(subTree, boost::bind(querySolverGrammarElementFromVariantVector, _1, targetVariantVector, &returnList), defineQueryType);
 
      return returnList;
    }
@@ -1008,7 +1010,7 @@ NodeQuerySynthesizedAttributeType NodeQuery::queryNodeList ( NodeQuerySynthesize
    {
      NodeQuerySynthesizedAttributeType returnList;
 
-     AstQueryNamespace::queryRange(nodeList.begin(), nodeList.end(), boost::bind(querySolverGrammarElementFromVariantVector, _1,targetVariantVector,&returnList));
+     AstQueryNamespace::queryRange(nodeList.begin(), nodeList.end(), boost::bind(querySolverGrammarElementFromVariantVector, _1, targetVariantVector, &returnList));
 
      return returnList;
    }
@@ -1019,6 +1021,7 @@ NodeQuerySynthesizedAttributeType NodeQuery::querySubTree ( SgNode * subTree, Va
 #if 0
      printf ("Inside of NodeQuery::querySubTree #6 \n");
 #endif
+
      return NodeQuery::querySubTree(subTree, VariantVector(targetVariant), defineQueryType);
    }
 
@@ -1030,10 +1033,10 @@ NodeQuerySynthesizedAttributeType NodeQuery::queryNodeList ( NodeQuerySynthesize
 #if 0
 // DQ (3/14/207): Older version using a return type of std::list
 class TypeQueryDummyFunctionalTest :  public std::unary_function<SgNode*, std::list<SgNode*> > 
-{
-  public:
-    result_type operator()(SgNode* node );
-};
+   {
+     public:
+          result_type operator()(SgNode* node );
+   };
 
 TypeQueryDummyFunctionalTest::result_type
 TypeQueryDummyFunctionalTest::operator()(SgNode* node )

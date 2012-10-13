@@ -198,11 +198,9 @@ namespace NodeQuery
    *******************************************************************************************/
   template<typename NodeFunctional>
   typename NodeFunctional::result_type 
-   querySubTree ( SgNode * subTree, 
-             NodeFunctional pred, AstQueryNamespace::QueryDepth defineQueryType = AstQueryNamespace::AllNodes)
+  querySubTree ( SgNode * subTree, NodeFunctional pred, AstQueryNamespace::QueryDepth defineQueryType = AstQueryNamespace::AllNodes)
      {
-               return AstQueryNamespace::querySubTree(subTree,pred,defineQueryType);
-
+       return AstQueryNamespace::querySubTree(subTree,pred,defineQueryType);
      };
   // get the SgNode's conforming to the test in querySolverFunction or
   // get the SgNode's conforming to the test in the TypeOfQueryTypeOneParamter the user specify.
@@ -216,15 +214,9 @@ namespace NodeQuery
    * preimplemented function 'elementReturnType'.
    *******************************************************************************************/
   ROSE_DLL_API NodeQuerySynthesizedAttributeType
-  querySubTree 
-    (SgNode * subTree,
-     TypeOfQueryTypeOneParameter elementReturnType,
-     AstQueryNamespace::QueryDepth defineQueryType =
-     AstQueryNamespace::AllNodes);
+  querySubTree (SgNode* subTree, TypeOfQueryTypeOneParameter elementReturnType, AstQueryNamespace::QueryDepth defineQueryType = AstQueryNamespace::AllNodes);
 
-  NodeQuerySynthesizedAttributeType queryNodeList
-    (NodeQuerySynthesizedAttributeType nodeList,
-     TypeOfQueryTypeOneParameter elementReturnType);
+  NodeQuerySynthesizedAttributeType queryNodeList (NodeQuerySynthesizedAttributeType nodeList, TypeOfQueryTypeOneParameter elementReturnType);
 
    /********************************************************************************************
    *
@@ -234,14 +226,10 @@ namespace NodeQuery
    * returns a list of all SgNodes in the sub-tree of the variable 'subTree' found by the 
    * function 'elementReturnType'.
    *******************************************************************************************/
-   ROSE_DLL_API NodeQuerySynthesizedAttributeType
-   querySubTree 
-    (SgNode * subTree,
-     roseFunctionPointerOneParameter elementReturnType,
-     AstQueryNamespace::QueryDepth defineQueryType =
-     AstQueryNamespace::AllNodes);
+  ROSE_DLL_API NodeQuerySynthesizedAttributeType
+  querySubTree (SgNode* subTree, roseFunctionPointerOneParameter elementReturnType, AstQueryNamespace::QueryDepth defineQueryType = AstQueryNamespace::AllNodes);
 
-  Rose_STL_Container< SgNode * > queryNodeList (Rose_STL_Container< SgNode * >nodeList, Rose_STL_Container< SgNode * >(*querySolverFunction) (SgNode *) );
+  Rose_STL_Container<SgNode*> queryNodeList (Rose_STL_Container<SgNode*> nodeList, Rose_STL_Container<SgNode*> (*querySolverFunction) (SgNode*) );
 
   // get the SgNode's conforming to the test in querySolverFunction or
   // get the SgNode's conforming to the test in the TypeOfQueryTypeTwoParamters the user specify.
@@ -255,17 +243,9 @@ namespace NodeQuery
    * function 'querySolverFunction' given a second argument 'traversal'.
    *******************************************************************************************/
   ROSE_DLL_API NodeQuerySynthesizedAttributeType
-  querySubTree
-    (SgNode * subTree,
-     SgNode * traversal,
-     roseFunctionPointerTwoParameters querySolverFunction,
-     AstQueryNamespace::QueryDepth defineQueryType =
-     AstQueryNamespace::AllNodes);
+  querySubTree (SgNode* subTree, SgNode* traversal, roseFunctionPointerTwoParameters querySolverFunction, AstQueryNamespace::QueryDepth defineQueryType = AstQueryNamespace::AllNodes);
 
-  NodeQuerySynthesizedAttributeType queryNodeList
-    (NodeQuerySynthesizedAttributeType nodeList,
-     SgNode * targetNode,
-     roseFunctionPointerTwoParameters querySolverFunction);
+  NodeQuerySynthesizedAttributeType queryNodeList (NodeQuerySynthesizedAttributeType nodeList, SgNode * targetNode, roseFunctionPointerTwoParameters querySolverFunction);
 
    /********************************************************************************************
    *
@@ -276,18 +256,11 @@ namespace NodeQuery
    * preimplemented function 'elementReturnType' given a second argument 'traversal'.
    *******************************************************************************************/
   ROSE_DLL_API NodeQuerySynthesizedAttributeType
-  querySubTree
-    (SgNode * subTree,
-     SgNode * traversal,
-     TypeOfQueryTypeTwoParameters elementReturnType,
-     AstQueryNamespace::QueryDepth defineQueryType =
-     AstQueryNamespace::AllNodes);
+  querySubTree (SgNode * subTree, SgNode * traversal, TypeOfQueryTypeTwoParameters elementReturnType, AstQueryNamespace::QueryDepth defineQueryType = AstQueryNamespace::AllNodes);
 
-  NodeQuerySynthesizedAttributeType queryNodeList
-    (NodeQuerySynthesizedAttributeType nodeList,
-     SgNode * targetNode, TypeOfQueryTypeTwoParameters elementReturnType);
+  NodeQuerySynthesizedAttributeType 
+  queryNodeList (NodeQuerySynthesizedAttributeType nodeList, SgNode* targetNode, TypeOfQueryTypeTwoParameters elementReturnType);
 
-  
   // DQ (3/26/2004): Added query based on variant
    /********************************************************************************************
    *
@@ -298,60 +271,57 @@ namespace NodeQuery
    * of SgNode VariantT 'targetVariant'.
    *******************************************************************************************/
   ROSE_DLL_API NodeQuerySynthesizedAttributeType
-  querySubTree
-    (SgNode * subTree,
-     VariantT targetVariant,
-     AstQueryNamespace::QueryDepth defineQueryType = AstQueryNamespace::AllNodes);
+  querySubTree (SgNode * subTree, VariantT targetVariant, AstQueryNamespace::QueryDepth defineQueryType = AstQueryNamespace::AllNodes);
 
   NodeQuerySynthesizedAttributeType
-  queryNodeList
-    (NodeQuerySynthesizedAttributeType,
-     VariantT targetVariant);
+  queryNodeList (NodeQuerySynthesizedAttributeType, VariantT targetVariant);
 
   // Liao, 8/27/2009, a more generic nodeList query, not just for nodes of type SgNode*
+  template <typename T>
+  Rose_STL_Container <T*>
+  queryNodeList ( Rose_STL_Container <T*> queryList, VariantVector targetVector)
+     {
+       Rose_STL_Container <T*> result;
+    // Rose_STL_Container <T*>::iterator iter; // not recognized ??
+       size_t i=0;
+       for (i = 0; i < queryList.size(); i++)
+          {
+            SgNode* node = dynamic_cast<SgNode*> (queryList[i]);
+            ROSE_ASSERT(node != NULL);
+            for (VariantVector::const_iterator iter = targetVector.begin(); iter != targetVector.end(); iter++)
+               {
+                 if (node->variantT() == *iter)
+                    {
+                      result.push_back(queryList[i]);
+                      break;
+                    }
+               }
+          }
+
+       return result;
+     }
+
+  // Single VariantT
   template <typename T> 
-  Rose_STL_Container <T* >
-  queryNodeList ( Rose_STL_Container <T* > queryList, VariantVector targetVector)
-  {
-    Rose_STL_Container <T* > result;
-    //Rose_STL_Container <T*>::iterator iter; // not recognized ??
-    size_t i=0;
-    for (i= 0; i<queryList.size(); i++)
-    {
-      SgNode* node = dynamic_cast<SgNode*> (queryList[i]);
-      ROSE_ASSERT(node != NULL);
-      for (VariantVector::const_iterator iter = targetVector.begin();
-            iter != targetVector.end(); iter++)
-      {
-        if (node->variantT() == *iter)
-        {
-          result.push_back(queryList[i]);
-          break;
-        }
-      }
-    }
-    return result;
-  }
-  // Single VariantT 
-  template <typename T> 
-  Rose_STL_Container <T* >
-  queryNodeList ( Rose_STL_Container <T* > queryList, VariantT targetVariant)
-  {
-    return queryNodeList<T>( queryList, VariantVector(targetVariant));
+  Rose_STL_Container <T*>
+  queryNodeList ( Rose_STL_Container <T*> queryList, VariantT targetVariant)
+     {
+       return queryNodeList<T>( queryList, VariantVector(targetVariant));
 #if 0    
-    Rose_STL_Container <T* > result;
-    //Rose_STL_Container <T*>::iterator iter; // not recognized ??
-    size_t i=0;
-    for (i= 0; i<queryList.size(); i++)
-    {
-      SgNode* node = dynamic_cast<SgNode*> (queryList[i]);
-      ROSE_ASSERT(node != NULL);
-      if (node->variantT() == targetVariant)
-        result.push_back(queryList[i]);
-    }
-    return result;
-#endif    
-  }
+       Rose_STL_Container <T*> result;
+    // Rose_STL_Container <T*>::iterator iter; // not recognized ??
+       size_t i=0;
+       for (i= 0; i<queryList.size(); i++)
+          {
+            SgNode* node = dynamic_cast<SgNode*> (queryList[i]);
+            ROSE_ASSERT(node != NULL);
+            if (node->variantT() == targetVariant)
+                 result.push_back(queryList[i]);
+          }
+
+       return result;
+#endif
+     }
 
 
   // DQ (4/8/2004): Added query based on vector of variants
@@ -363,18 +333,14 @@ namespace NodeQuery
    * reutnrs a list of all SgNodes us the AST sub-tree of the variable 'subTree' conforming to the
    * variants in VariantVector.
    *********************************************************************************************/
-  ROSE_DLL_API NodeQuerySynthesizedAttributeType  querySubTree
-    (SgNode * subTree,
-     VariantVector targetVariantVector,
-     AstQueryNamespace::QueryDepth defineQueryType =
-     AstQueryNamespace::AllNodes);
+  ROSE_DLL_API NodeQuerySynthesizedAttributeType
+  querySubTree (SgNode * subTree, VariantVector targetVariantVector, AstQueryNamespace::QueryDepth defineQueryType = AstQueryNamespace::AllNodes);
 
   // DQ (3/25/2004): Added to support more general form of query based on variant value
-  NodeQuerySynthesizedAttributeType queryNodeList
-    ( NodeQuerySynthesizedAttributeType,
-      VariantVector);
+  NodeQuerySynthesizedAttributeType queryNodeList ( NodeQuerySynthesizedAttributeType, VariantVector);
 
-  void mergeList (Rose_STL_Container< SgNode * >&nodeList, const Rose_STL_Container< SgNode * >&localList);
+  void
+  mergeList (Rose_STL_Container<SgNode*> & nodeList, const Rose_STL_Container<SgNode*> & localList);
 
 
  /********************************************************************************
@@ -388,9 +354,9 @@ namespace NodeQuery
   template<typename NodeFunctional>
   NodeQuerySynthesizedAttributeType
   queryMemoryPool(NodeFunctional nodeFunc , VariantVector* targetVariantVector = NULL)
-                {
-        return AstQueryNamespace::queryMemoryPool(nodeFunc,targetVariantVector);
-                }
+     {
+       return AstQueryNamespace::queryMemoryPool(nodeFunc,targetVariantVector);
+     }
 
 
   /********************************************************************************
@@ -402,10 +368,8 @@ namespace NodeQuery
    * performa the action specified by the second argument and return a NodeQuerySynthesizedAttributeType.
    ********************************************************************************/
   NodeQuerySynthesizedAttributeType
-  queryMemoryPool
-    (
-     SgNode * traversal,
-     roseFunctionPointerTwoParameters querySolverFunction, VariantVector* targetVariantVector);
+  queryMemoryPool (SgNode* traversal, roseFunctionPointerTwoParameters querySolverFunction, VariantVector* targetVariantVector);
+
 
 /********************************************************************************
  * The function
@@ -416,10 +380,8 @@ namespace NodeQuery
  * performa the action specified by the second argument and return a NodeQuerySynthesizedAttributeType.
  ********************************************************************************/
   NodeQuerySynthesizedAttributeType
-  queryMemoryPool
-    (
-     SgNode * traversal,
-     roseFunctionPointerOneParameter querySolverFunction, VariantVector* targetVariantVector = NULL);
+  queryMemoryPool (SgNode * traversal, roseFunctionPointerOneParameter querySolverFunction, VariantVector* targetVariantVector = NULL);
+
 
 /********************************************************************************
  * The function
@@ -432,11 +394,8 @@ namespace NodeQuery
  ********************************************************************************/
 
   NodeQuerySynthesizedAttributeType
-  queryMemoryPool
-    (
-     SgNode * traversal,
-     TypeOfQueryTypeTwoParameters elementReturnType,
-     VariantVector* targetVariantVector = NULL);
+  queryMemoryPool (SgNode * traversal, TypeOfQueryTypeTwoParameters elementReturnType, VariantVector* targetVariantVector = NULL);
+
 
 /********************************************************************************
  * The function
@@ -449,10 +408,8 @@ namespace NodeQuery
  ********************************************************************************/
 
   NodeQuerySynthesizedAttributeType
-  queryMemoryPool
-    (
-     TypeOfQueryTypeOneParameter elementReturnType,
-     VariantVector* targetVariantVector = NULL);
+  queryMemoryPool (TypeOfQueryTypeOneParameter elementReturnType, VariantVector* targetVariantVector = NULL);
+
 
 /********************************************************************************
  * The function
@@ -460,8 +417,8 @@ namespace NodeQuery
  *             queryMemoryPool(VariantVector& targetVariantVector);
  * will return every node in the AST with a corresponding variant in the VariantVector.
  ********************************************************************************/
-   DefaultNodeFunctional::result_type 
-             queryMemoryPool(VariantVector& targetVariantVector);
+  DefaultNodeFunctional::result_type 
+  queryMemoryPool(VariantVector& targetVariantVector);
 
 
 // END NAMESPACE NodeQuery2

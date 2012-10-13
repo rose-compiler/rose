@@ -47,8 +47,12 @@ void resetConstantFoldedValues( SgNode* node )
         }
 #endif
 
+  // printf ("In resetConstantFoldedValues(): makeASTConstantFoldingExpressionConsistant = %s \n",makeASTConstantFoldingExpressionConsistant ? "true" : "false");
+
      if (makeASTConstantFoldingExpressionConsistant == true)
         {
+       // printf ("In resetConstantFoldedValues(): makeASTConstantFoldingExpressionConsistant_useOriginalExpressionTrees = %s \n",makeASTConstantFoldingExpressionConsistant_useOriginalExpressionTrees ? "true" : "false");
+
           if (makeASTConstantFoldingExpressionConsistant_useOriginalExpressionTrees == true)
              {
             // We want this to be the default for ROSE, since it matches what is output by the unparser and thus what 
@@ -56,8 +60,8 @@ void resetConstantFoldedValues( SgNode* node )
 
             // DQ (9/17/2011): This case fails dozens of test codes!
             // However, this case fails lot of tests codes due to the verification of all OriginalExpressionTree pointer 
-            // to be NULL and the name qualification tests (which fail as a result of the transofmations to eliminate the 
-            // constant folded expressions and instead use the original tepression trees).
+            // to be NULL and the name qualification tests (which fail as a result of the transformations to eliminate the 
+            // constant folded expressions and instead use the original expression trees).
 
             // printf ("WARNING: Testing current default to replace constant folded value with the original expression tree (future default setting for ROSE). \n");
 
@@ -211,7 +215,8 @@ void removeConstantFoldedValue( SgNode* node )
      RemoveConstantFoldedValueViaParent astFixupTraversal_2;
      astFixupTraversal_2.traverseMemoryPool();
 
-#if 0
+  // DQ (10/12/2012): Turn on the verification that expression trees have been removed...previously commented out.
+#if 1
      VerifyOriginalExpressionTreesSetToNull verifyFixup;
      verifyFixup.traverseMemoryPool();
 #endif
@@ -477,6 +482,8 @@ RemoveConstantFoldedValueViaParent::visit ( SgNode* node )
   // DQ (3/11/2006): Set NULL pointers where we would like to have none.
   // printf ("In RemoveConstantFoldedValueViaParent::visit(): node = %s \n",node->class_name().c_str());
 
+  // DQ (10/12/2012): Turn this on so that we can detect failing IR nodes (failing later) that have valid originalExpressionTrees.
+  // DQ (10/12/2012): Turn this back off because it appears to fail...
 #if 0
      SgExpression* exp = isSgExpression(node);
      if (exp != NULL)
@@ -604,7 +611,7 @@ void verifyOriginalExpressionTreesSetToNull( SgNode* node )
      DetectOriginalExpressionTreeTraversal t1;
      t1.traverse(node,preorder);
 
-  // This is a traveersal over the expreesion trees in array types and bitfield expressions.
+  // This is a traversal over the expreesion trees in array types and bitfield expressions.
   // This is a simpler test to pass since it will not visit orphaned expression trees.
      DetectHiddenOriginalExpressionTreeTraversal t2;
      t2.traverseMemoryPool();
