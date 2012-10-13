@@ -23,7 +23,8 @@ int main (void)
 
 #ifndef __INTEL_COMPILER
   // This is now to specify imaginary numbers in EDG, not supported in GNU, so
-  // the code generation using GNU aas a backend drops the "_Imaginary" prefix.
+  // the code generation using GNU as a backend drops the "_Imaginary" prefix.
+     __imag__ float           c99_imaginary = 0.0;
      _Imaginary float       x_edg_imaginary = 0.0;
      _Imaginary double      y_edg_imaginary = 0.0;
      _Imaginary long double z_edg_imaginary = 0.0;

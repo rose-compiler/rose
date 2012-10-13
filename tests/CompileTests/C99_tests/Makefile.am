@@ -12,14 +12,12 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2012_20.c \
      test2012_23.c \
      complex_01.c \
+     complex_03.c \
      bool.c \
      constants.c 
 
 # DQ (10/6/2012): This is a failing test for the new edg 4.x work.
 # test2008_01.c 
-
-# Failing tests when using EDG 4.3 based support in ROSE.
-# complex_03.c 
 
 else
 TESTCODES_REQUIRED_TO_PASS = \

@@ -563,15 +563,25 @@ was just float or double for complex<float> or complex<double>.
 
   #define __complex__
   #define __real__ 
-  #define __imag__
+  #define __imag__ 
 
 /* DQ (9/26/2006): Plum Hall uses this for C++ code, but I think that we have define it away */
   #define _Complex
+
+/* DQ (10/13/2012): Added to support complex with EDG 4.x work (defines away _Imaginary, I
+   don't like this fix).  This is required when constant folding is turned off.
+ */
+/* #define _Imaginary __imag__ */
 #else
 /* This works for both C and C99 modes */
   #define __complex__ _Complex
-  #define __real__ 
+  #define __real__
   #define __imag__
+
+/* DQ (10/13/2012): Added to support complex with EDG 4.x work (defines away _Imaginary, I
+   don't like this fix).  This is required when constant folding is turned off.
+ */
+  #define _Imaginary __imag__
 #endif
 
 /* gcc uses the C99 name _Complex_I in <complex.h>, but our EDG doesn't handle

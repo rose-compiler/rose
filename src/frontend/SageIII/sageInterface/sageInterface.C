@@ -5042,8 +5042,9 @@ SageInterface::setSourcePositionAsTransformation(SgNode *node)
 
      ROSE_ASSERT(node != NULL);
 
+  // DQ (10/12/2012): Commented out since we are past AST regression tests passing and now trying to get this work checked in.
      printf ("In SageInterface::setSourcePositionAsTransformation() for node = %p = %s (make this an error while debugging AST construction) \n",node,node->class_name().c_str());
-     ROSE_ASSERT(false);
+  // ROSE_ASSERT(false);
 
      SgLocatedNode*     locatedNode = isSgLocatedNode(node);
      SgExpression*      expression  = isSgExpression(node);
