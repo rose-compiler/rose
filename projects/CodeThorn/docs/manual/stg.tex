@@ -10,11 +10,11 @@ The analysis is performed in five phases
 \item Reporting of analysis results. Assert reachability is computed based on the transition graph. Results for LTL-formulae are computed solely by the LTL-checker.
 \end{enumerate}
 
-Important properties of the perfomed RERS analysis are
+Important properties of the perfomed analysis are
 
 \begin{itemize}
-\item The C files of the RERS-problems are used unmofided (we did not edit or alter the files in any way). 
-\item The data-flow analysis is unaware of possible input values of a
+\item The C files can be used unmofided (header files are analyzed as well).
+\item The data-flow analysis does not require information about possible input values of a
   given program. All information, which is then represented in the
   transition graph, is extraced from the program code. The set of all
   possible input values is represented by the extracted constraint
@@ -29,7 +29,7 @@ Important properties of the perfomed RERS analysis are
 
 A system state consists of a label (lab), a property state (pstate), a constraint set (cset), an IO property (io).
 
-PState = Var x Val where Val is either a constant or top. Val is a lifted integer set.
+PState = Var $\rightarrow$ Val where Val is either a constant or top. Val is a lifted integer set.
 SState = Lab x PState x Constraints x IO
 
 Constraints is a set of constraints (see above).
@@ -44,8 +44,8 @@ Hence, the analysis information is represented as:
 
 \begin{itemize}
 \item Label: num
-\item PState: set of VarId x ValId
-\item SState: set of Label x PStateId x ConstraintId x IOId
+\item PState: VarId $\rightarrow$ Val
+\item SState: Label $\times$ PStateId $\times$ ConstraintId $\times$ IOId
 \end{itemize}
 
 \subsection{Property States}
@@ -53,9 +53,10 @@ Hence, the analysis information is represented as:
 \fixme{describe property states, const-int-lattice}
 
 \subsection{Minimal Constraint Sets}
-A minimal constraint set (MCS) is a minimal representation of
-information about the values of variables and relations beetween the
-variables with a minimal number of operators. The minimal number is
+A minimal constraint set (MCS) is a representation of
+information about the variables and values with a minimal number of operators.
+
+ The minimal number is
 important for using a minimal amount of memory and for a proper
 sorting criteria to be used in a sorted data structure (see section Implementation \ref{section-implementation})
 
