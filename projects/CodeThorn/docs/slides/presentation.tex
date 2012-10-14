@@ -5,7 +5,7 @@
 \input{programanalysismacros3}
 
 \title{CodeThorn 1.2}
-\subtitle{Conceptual Overview\\(in preparation)}
+\subtitle{Conceptual Overview}
 %\author{{\large Markus Schordan}}
 %\institution{Institut ....}
 %\slideCaption{\textit{Markus Schordan \hspace{4.5cm} \today} \hspace{4.5cm}}
@@ -16,52 +16,6 @@
 
 % beamer options [...]: fragile,shrink=N (N in percent to shrink slide), squeeze (reduce gaps)
 %\logo{\includegraphics[height=0.5cm]{logo}}
-\ignore{
-\begin{frame}{Questions of Interest}
-\begin{itemize}
-\item How can we specify and verify the input/output behavior of a program?
-\item What is relevant structural information about a program?
-\item What are good methods for filtering or querying the computed program information?
-\end{itemize}
-\end{frame}
-
-\begin{frame}{Scope of Program Information}
-\begin{itemize}
-\item Intra-procedural information
-\item Inter-procedural information
-\item Program slices
-\item Patterns
-\begin{itemize}
-\item design pattern
-\item data access pattern
-\item Communication pattern
-\end{itemize}
-\item Program representation
-\item Program states and transitions
-\item Input/Output behavior (linear time logic formulae)
-\end{itemize}
-
-\end{frame}
-
-\begin{frame}{Program Structures as Graphs}
-\begin{itemize}
-\item Abstract syntax tree (AST)
-\item Inheritance hierarchy (tree/DAG)
-\item Flow graphs
-\begin{itemize}
-\item Control flow graph
-\item Control dependence graph
-\item Data flow graph
-\item Data dependence graph
-\end{itemize}
-\item Call graph
-\item Collaboration graph
-\item Coupling graph
-\item Program dependence graph
-\item State transition graph
-\end{itemize}
-\end{frame}
-} % end of ignore
 
 \begin{frame}{Analysis Overview}
 
@@ -85,71 +39,32 @@
 \end{enumerate}
 
 \end{block}
+
+{\footnotesize
+Timeline: 22-Jun-2012(Start),27-Aug-2012(V1.0),30-Sep-2012(V1.1),12-Oct-2012(V1.2)
+}
 \end{frame}
 
-\begin{frame}[fragile]
-\frametitle{Folded State Transition Graph}
+\begin{frame}{Infrastructure: ROSE}
 
-\includegraphics[width=0.4\columnwidth]{../manual/gfx/basictest10f_transitiongraph2}
-% container size: 1000
-% itertions: 100
-% time in milliseconds?
-
-\vspace{-0.3cm}
-{
-\scriptsize
-\begin{block}{Edges}
-\begin{itemize}
-\item Cycles: Blue edges: backward edges (for identical system states)
-\item Green/red edges: true/false edges
-\item Black: forward edges
-\end{itemize}
+\begin{block}{Supported Languages}
+C, C++, OpenMP, UPC, Java, and Fortran. 
 \end{block}
-}
 
+\begin{block}{Scope}
+For building custom tools for static analysis, program optimization, arbitrary program transformation, domain-specific optimizations, complex loop optimizations, performance analysis, and cyber-security.
+\end{block}
+
+\begin{block}{Availability: http://www.rosecompiler.org}
+Open source, BSD-License.\\
+http://www.rosecompiler.org
+\end{block}
 \end{frame}
 
-\begin{frame}[fragile]
-\frametitle{General Program Analysis Algorithm}
-{
-\scriptsize
-\begin{algorithm}[H]
-\SetLine
-\KwIn{ICFG}
-\KwOut{Transition Graph G}
 
-%\ForEach{Task $i$}{
-%\ForEach{Processor $j$}{
-%Calculate EW($i$,$j$)\;
-%\If{EW($i$,$j$) $\le$ EW($a$,$b$)}{
-%$a$ = $i$\;
-%$b$ = $j$\;
-%}
-%}
-%}
 
-$S_1$=init(ICFG) \Comment{the initial state computed from global scope and initial ICFG node}
-$W$=$\{(S_0,a_0,S_1)\}$; \Comment{with $S_0$ being the empty state, $S_1$ the initial state,}\\
-\Comment{and $a_0$ the initial transition annotation}\\
-$T_G$=$\emptyset$; \Comment{the set of computed transitions}\\
-\While{W $\neq$ $\emptyset$}{
-  ($S$,$a$,$S'$):=$head(W)$; \Comment{$a$ corresponds to the respective ICFG edge type}\\
-  $W$:=tail($W$)\;
-  $T$:=transfer(($S$,$a$,$S'$))\;
-  \ForEach{$t$ $\in$  $T$}{
-    \uIf{$t$ $\notin$ $T_G$}{
-        $W$:=$W$ $\cup$ $\{t\}$\;
-    }\Else{
-         $G$:=$G$ $\cup$ $\{t\}$\;
-    }
-  } 
-}
-%\caption{Algorithm for computing the state transition graph}
-\label{alg:general}
-\end{algorithm}
-}
-\end{frame}
 
+\ignore{
 \begin{frame}{Properties of the Analysis}
 \begin{itemize}
 \item The C files of the RERS-problems are used unmodified.
@@ -169,18 +84,18 @@ $T_G$=$\emptyset$; \Comment{the set of computed transitions}\\
 \item The LTL-Checker only depends on the extracted state transition graph.
 \item We do not provide manually any information to the analyzer.
 \end{itemize}
-
 \end{frame}
+}
 
-\begin{frame}{System State (Nodes in the TG)}
+\begin{frame}{System State (Nodes in the Transition G.)}
 
 \begin{block}{System State}
 A system state consists of
 \begin{itemize}
-\item a label (lab), 
-\item a property state (pstate),
-\item a constraint set (cset),
-\item and an IO property (io).
+\item a label, 
+\item a property state,
+\item a constraint set,
+\item and an IO property.
 \end{itemize}
 
 PState = Var $\rightarrow$ Val where Val is a lifted integer set.\\
@@ -198,26 +113,26 @@ SState = Lab $\times$ PState $\times$ ConstraintSet $\times$ IO\\
 
 \end{frame}
 
-\begin{frame}{Normalized Minimal Constraint Sets}
-\begin{block}{Minimal Constraint Set}
+\begin{frame}{Minimal Normalized Constraint Sets}
+\begin{block}{Minimal}
 A minimal constraint set (MCS) is a representation of
 information about the variables and values with a minimal number of operators.
 \end{block}
 
 \begin{block}{Normalized}
-For any combination of operators and operands there exists exactly one representation as constraint set.
+For information defined by any combination of operators and operands there exists exactly one constraint set.
 \end{block}
 
 \begin{block}{Importance of Properties}
 \begin{itemize}
-\item Determining equality of system states
-\item Reducing memory consumption
+\item Determination of system state equality
+\item Reduction of memory consumption
 \end{itemize}
 \end{block}
 
 \end{frame}
 
-\begin{frame}{Normalized Minimal Constraint Set Rules}
+\begin{frame}{Minimal Normalized Constraint Set Rules}
 \begin{itemize}
 \item If an equality $x=c$ exists, then no inequality $x\neq c$ on x can exist.
 \item There can exist at most on equality $x=c$ on the same variable.
@@ -229,7 +144,7 @@ For any combination of operators and operands there exists exactly one represent
 \end{itemize}
 \end{frame}
 
-\begin{frame}{Normalized Minimal Constraint Set}
+\begin{frame}{Minimal Normalized Constraint Set}
 
 \begin{block}{Example}
 
@@ -237,8 +152,8 @@ For any combination of operators and operands there exists exactly one represent
 \item $C_1=\{x\neq 1, x\neq 2, x=y, x=z\}_x$ 
 \begin{itemize}
 \item Remove $x$ $\Rightarrow$ : $\{y\neq 1, y\neq 2, y=z\}_y$
-\item Remove $z$ $\Rightarrow$ : $\{y\neq 1, y\neq \}_{\circ}$
-\item add $y=z$ $\Rightarrow$ : $\{y\neq 1, y\neq, y=z\}_y$
+\item Remove $z$ $\Rightarrow$ : $\{y\neq 1, y\neq 2\}_{\circ}$
+\item add $y=z$ $\Rightarrow$ : $\{y\neq 1, y\neq 2, y=z\}_y$
 \item add $x=z$ $\Rightarrow$ : $\{x\neq 1, x\neq 2, x=y, x=z\}_x=C_1$
 \end{itemize}
 \end{itemize}
@@ -247,6 +162,7 @@ For any combination of operators and operands there exists exactly one represent
 
 \end{frame}
 
+\ignore{
 \begin{frame}{Representation in Memory}
 
 \begin{block}{Maintainer}
@@ -264,8 +180,151 @@ Label and IO are maintained separately.
 A transition is represented as $(S,a,S')$ where $S$ and $S'$ are system states and $a$
 is an annotation representing the edge-type of the corresponding ICFG edge.
 \end{block}
+\end{frame}
+}
+
+\begin{frame}[fragile]
+\frametitle{Example}
+{\scriptsize
+\begin{verbatim}
+int a1=1;
+int calculate_output(int input1) {
+  if(input1==2 && a1==2) {
+    return 21;
+  } else if(input1!=3) {
+    return 22;
+  } else {
+  error_1: assert(0);
+  }
+}
+
+int main() {
+  int output = -1;
+  while(1) {
+    int input;
+    scanf("%d", &input);        
+    output = calculate_output(input);
+    printf("%d\n", output);
+  }
+  return 0;
+}
+\end{verbatim}
+}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Folded State Transition Graph}
+
+\begin{center}
+\includegraphics[height=0.65\columnwidth]{example1gfx1/transitiongraph2}
+\end{center}
+
+\ignore{
+\vspace{-0.3cm}
+{
+\scriptsize
+\begin{block}{Edges}
+\begin{itemize}
+\item Cycles: Blue edges: backward edges (for identical system states)
+\item Green/red edges: true/false edges
+\item Black: forward edges
+\end{itemize}
+\end{block}
+}
+}
 
 \end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Example with Computed Constraints}
+{\scriptsize
+\begin{verbatim}
+int a1=1;
+int calculate_output(int input1) {
+  if(input1==2 && a1==2) {
+    return 21;
+  } else if(input1!=3) {
+    return 22;
+  } else {
+  error_1: assert(0);
+  }
+}
+
+int main() {
+  int output = -1;
+  while(1) {
+    int input;
+    scanf("%d", &input);        
+    output = calculate_output(input);
+    printf("%d\n", output);
+    // State={(a1,1),(output,22),(input,top)},constraints={input!=2,input!=3}
+    // State={(a1,1),(output,22),(input,top)},constraints={input==2}
+  }
+  return 0;
+}
+\end{verbatim}
+}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Base Analysis Algorithm}
+{
+\scriptsize
+\begin{algorithm}[H]
+\SetLine
+\KwIn{ICFG}
+\KwOut{Transition Graph G}
+
+$s_0$=init(ICFG) \Comment{the initial system state computed from global scope and initial ICFG node}
+$W$=$\{s_0\}$; \Comment{with $S_0$ being the initial state}\\
+$T_G$=$\emptyset$; \Comment{the set of computed transitions}\\
+$S_G$=$\emptyset$; \Comment{the set of computed system states}\\
+\While{W $\neq$ $\emptyset$}{
+  $s$:=$head(W)$;
+  $W$:=tail($W$)\;
+  E:=out\_edges(label(s))\;
+  \ForEach{$e$ $\in$  $E$}{
+    S':=transfer($e$,s); \Comment{computes a set of states from a single state}\\
+    \ForEach{$s'$ $\in$  $S'$}{
+      \If{$s'$ $\notin$ $S_G$ and not exit\_state($s'$)}{
+          $W$:=$W$ $\cup$ $\{s'\}$\;
+          $S_G$:=$S_G$ $\cup$ $\{s'\}$\;
+      }
+      $T_G$:=$T_G$ $\cup$ $\{(s,e,s')\}$\;
+    }
+  } 
+}
+%\caption{Algorithm for computing the state transition graph}
+\label{alg:general}
+\end{algorithm}
+}
+{
+\footnotesize
+Variations can use meet operator(s).
+}
+\end{frame}
+
+\input{ltl_presentation.tex}
+
+\begin{frame}{Black-Box Testing}
+\begin{block}{LTL}
+\begin{itemize}
+\item (! oV WU oX)
+\item output V does never occur before output X
+\end{itemize}
+\end{block}
+
+\begin{block}{Test}
+\begin{itemize}
+
+\item checking WU (Not (Out 'V')) (Out 'X')
+\item  BFVFVDVAXCV *Failed!* BFVDVAXCV BDVAXCV BVAXC ACX BCV CU B Falsifiable (after 11 tests and 4 shrinks):  RersData "BC"
+\item 6 FALSE, found counterexample
+\end{itemize}
+\end{block}
+
+\end{frame}
+
 
 \begin{frame}{Results}
 \begin{center}
@@ -301,6 +360,10 @@ Problem & \#PStates &\#SStates &\#Trans &\#CSets \\\hline\hline
 5 &21803 & 3466688 & 3469608 & 95 \\\hline
 6 &14506 & 1665785 & 1668109 & 81 \\\hline
 \end{tabular}
+
+\vspace{0.6cm}
+Unique representaions during analysis.\\
+Stored in memory only once.
 \end{center}
 \end{frame}
 
@@ -317,8 +380,9 @@ Problem& Analysis Time & Threads\\\hline\hline
 \end{tabular}
 
 \vspace{0.5cm}
-CodeThorn 1.2: Multi-threaded analyzer (OpenMP)
-Machine: Intel Core i7 CPU X980 @ 3.33 GHz
+CodeThorn 1.2: Multi-threaded analyzer (OpenMP)\\
+Machine: Intel Core i7 CPU X980 @ 3.33 GHz (6 cores)\\
+Run-Time includes all operations (parsing, AST construction, etc.) 
 \end{center}
 
 \end{frame}
@@ -341,22 +405,29 @@ P& PStates & SStates &Trans &CSets& Total \\\hline\hline
 
 \end{frame}
 
-\input{ltl_presentation.tex}
+\begin{frame}{Conclusions}
 
-\begin{frame}{Infrastructure: ROSE}
-
-\begin{block}{Supported Languages}
-C, C++, OpenMP, UPC, Java, and Fortran. 
+\begin{block}{Properties of Analysis Information}
+\begin{itemize}
+\item Propery States represent the effects of assignments
+\item ConstraintSets represent information extracted from conditions
+\item Unique representation of constraint information 
+\begin{itemize}
+\item ``The number of pairs $<PState,ConstraintSets>$ as recorded in system states is an exact number for a given program''
+\end{itemize}
+\end{itemize}
 \end{block}
 
-\begin{block}{Scope}
-For building custom tools for static analysis, program optimization, arbitrary program transformation, domain-specific optimizations, complex loop optimizations, performance analysis, and cyber-security.
+\begin{block}{Future Work}
+\begin{itemize}
+\item Extend constraint sets with terms (finite constants?).
+\item Store system states for only a subset of program labels.
+\item Use the same algorithm that we use for program analysis for LTL verification.
+\end{itemize}
 \end{block}
 
-\begin{block}{Availability: http://www.rosecompiler.org}
-Open source, BSD-License.
-\end{block}
 \end{frame}
+
 
 \end{document}
 
