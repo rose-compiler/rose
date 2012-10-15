@@ -20,7 +20,15 @@ all:
 	$(MAKE) clean && $(MAKE) -j1 Problem19.log
 
 csv:
-	for i in `seq 19`; do awk -f log2csv.awk <Problem$$i.log >Problem$$i-ltl-qc.csv; done
+	for i in `seq 19`; do \
+	  awk -f log2csv.awk <Problem$$i.log >Problem$$i-ltl-qc.csv; \
+          echo "merge exisiting and newly found results: $$i"; \
+	  touch Problem$$i-assert.csv; \
+	  cat Problem$$i-ltl-qc.csv Problem$$i-assert.csv Problem$$i-qc.csv \
+              | sort -n | uniq >tmp.csv ; \
+	  mv tmp.csv Problem$$i-qc.csv ; \
+          cp Problem$$i-qc.csv ../regressiondata/ ; \
+        done
 
 RERS=$(patsubst %,Problem%.log, $(shell seq 13))
 rers: $(RERS)
