@@ -12,9 +12,15 @@ all:
 	$(MAKE) clean && $(MAKE) -j1 Problem11.log
 	$(MAKE) clean && $(MAKE) -j1 Problem12.log
 	$(MAKE) clean && $(MAKE) -j1 Problem13.log
+	$(MAKE) clean && $(MAKE) -j1 Problem14.log
+	$(MAKE) clean && $(MAKE) -j1 Problem15.log
+	$(MAKE) clean && $(MAKE) -j1 Problem16.log
+	$(MAKE) clean && $(MAKE) -j1 Problem17.log
+	$(MAKE) clean && $(MAKE) -j1 Problem18.log
+	$(MAKE) clean && $(MAKE) -j1 Problem19.log
 
 csv:
-	for i in `seq 13`; do awk -f log2csv.awk <Problem$$i.log >Problem$$i-ltl-qc.csv; done
+	for i in `seq 19`; do awk -f log2csv.awk <Problem$$i.log >Problem$$i-ltl-qc.csv; done
 
 RERS=$(patsubst %,Problem%.log, $(shell seq 13))
 rers: $(RERS)
