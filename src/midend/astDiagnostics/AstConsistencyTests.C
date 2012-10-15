@@ -2256,7 +2256,7 @@ TestAstForUniqueNodesInAST::visit ( SgNode* node )
 
           printf ("Error: found a shared IR node = %p = %s in the AST. \n",node,node->class_name().c_str());
 
-#if 1
+#if 0
           ROSE_ASSERT(false);
 #else
        // DQ (4/26/2012): debugging... (test2012_67.C)

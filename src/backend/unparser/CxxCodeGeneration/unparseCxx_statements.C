@@ -3486,7 +3486,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
   // printDebugInfo("entering unp->u_sage->printSpecifier1", true);
 #endif
 
-     unp->u_sage->printSpecifier1(vardecl_stmt, ninfo); 
+     unp->u_sage->printSpecifier1(vardecl_stmt, ninfo);
 
 #if 0
      printf ("DONE: Calling unp->u_sage->printSpecifier1() \n");
@@ -3530,7 +3530,10 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
   // the current variable declaration (e.g. struct A { int x; } a;).  In this case we have to output the base type with
   // its definition.
      bool outputTypeDefinition = vardecl_stmt->get_variableDeclarationContainsBaseTypeDefiningDeclaration();
-  // printf ("outputTypeDefinition = %s \n",(outputTypeDefinition == true) ? "true" : "false");
+
+#if 0
+     printf ("outputTypeDefinition = %s \n",(outputTypeDefinition == true) ? "true" : "false");
+#endif
 
   // if (p != vardecl_stmt->get_variables().end())
      SgInitializedNamePtrList::iterator p = vardecl_stmt->get_variables().begin();
