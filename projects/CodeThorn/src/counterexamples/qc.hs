@@ -58,8 +58,8 @@ instance Arbitrary RersData where
             n    <- choose (size `min` 4, maxlength)
             vals <- vectorOf n (choose ('A', 'G'))
             return (RersData vals)
-            --return (RersData ['G', 'B', 'B'])
-          maxlength = 12
+            --return (RersData ['A', 'B', 'C', 'D', 'E'])
+          maxlength = 32
   
   shrink (RersData vals) = map RersData (shrink' vals)
     where 
@@ -92,8 +92,8 @@ actualOutput (RersData input) = do
   -- block if it writes to it
   forkIO $ do err <- hGetContents m_err; printf err; return ()
   result <- try $ action m_in m_out input
-  case result of 
-    Left _ -> do 
+  case result of
+    Left _ -> do
       --printf "I/O Error\n"
       terminateProcess pid
       return []
@@ -138,12 +138,12 @@ readMaybe s = case [x | (x,t) <- reads s, ("","") <- lex t] of
 
 prettyprint :: [State] -> IO ()
 prettyprint output = do
-  printf " "
+  putStr " "
   mapM_ pp output
   --printf "\n"
   return ()
-    where pp (StIn  c) = do printf "\ESC[33m%c\ESC[39m" c; return ()
-          pp (StOut c) = do printf "\ESC[35m%c\ESC[39m" c; return ()
+    where pp (StIn  c) = do putStr "\ESC[33m"; putStr [c]; putStr "\ESC[39m"; return ()
+          pp (StOut c) = do putStr "\ESC[35m"; putStr [c]; putStr "\ESC[39m"; return ()
 
 rersChar :: Int -> Char
 rersChar i = chr (i+(ord 'A')-1)
