@@ -191,10 +191,8 @@ void checkTypes() {
 		ConstraintSet cs1;
 		cs1.addConstraint(c1);
 		cs1.addConstraint(c2);
-		cout << "cs1:"<<cs1.toString()<<endl;
 		Constraint c5(Constraint::EQ_VAR_VAR,var_x,var_y);
 		cs1.addConstraint(c5);
-		cout << "cs1:"<<cs1.toString()<<endl;
 		check("cs1.disequalityExists()==true",cs1.disequalityExists());
 	  }
 	  {
@@ -238,8 +236,6 @@ void checkTypes() {
 	  cs1.addConstraint(c3);
 	  cs2.addConstraint(c1);
 	  cs2.addConstraint(c3);
-	  //cout << "cs1:"<<cs1.toString()<<endl;
-	  //cout << "cs2:"<<cs2.toString()<<endl;
 	  check("cs1!=cs2",cs1!=cs2);
 	  check("!(cs1==cs2)",!(cs1==cs2));
 #ifdef CSET_MAINTAINER_SET

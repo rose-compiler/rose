@@ -526,7 +526,7 @@ int main( int argc, char * argv[] ) {
   analyzer.runSolver1();
   double analysisRunTime=timer.getElapsedTimeInMilliSec();
   long removed=analyzer.getTransitionGraph()->removeDuplicates();
-  cout << "Transitions reduced: "<<removed<<endl;
+  //cout << "Transitions reduced: "<<removed<<endl;
   //  cout << analyzer.stateSetToString(final);
   cout << "=============================================================="<<endl;
   printAsserts(analyzer,sageProject);

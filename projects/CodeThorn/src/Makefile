@@ -169,16 +169,17 @@ asserttest: $(TOOLNAME3)
 	./$(TOOLNAME3) --edg:no_warnings tests/asserttest2.c --csv-assert assert_csv.txt
 
 regressiontest: $(TOOLNAME3)
-	./$(TOOLNAME3) --csv-assert tmp_rers_mini1_assert_csv.txt --csv-ltl tmp_rers_mini1_ltl_csv.txt --verify tests/rers_mini1.ltl --viz=yes tests/rers_mini1.c
-	diff tmp_rers_mini1_assert_csv.txt $(REGRESSION_DATA_DIR)/rers_mini1_assert_csv.txt
+	@./$(TOOLNAME3) --csv-assert tmp_rers_mini1_assert_csv.txt --csv-ltl tmp_rers_mini1_ltl_csv.txt --verify tests/rers_mini1.ltl --viz=yes tests/rers_mini1.c
 	@echo "-----------------------"
+	@sort -u tmp_rers_mini1_assert_csv.txt > tmp2_rers_mini1_assert_csv.txt 
+	@diff tmp2_rers_mini1_assert_csv.txt $(REGRESSION_DATA_DIR)/rers_mini1_assert_csv.txt
 	@echo "Regression assert test PASSED."
-	@echo "-----------------------"
-	diff tmp_rers_mini1_ltl_csv.txt $(REGRESSION_DATA_DIR)/rers_mini1_ltl_csv.txt
-	@echo "-----------------------"
+	@diff tmp_rers_mini1_ltl_csv.txt $(REGRESSION_DATA_DIR)/rers_mini1_ltl_csv.txt
 	@echo "Regression LTL test PASSED."
-	@echo "-----------------------"
-	diff transitiongraph1.dat $(REGRESSION_DATA_DIR)/rers_mini1_transitiongraph1.dat
+	@sort -u transitiongraph1.dat > rg1.dat
+	@sort -u $(REGRESSION_DATA_DIR)/rers_mini1_transitiongraph1.dat > rg2.dat
+	@diff rg1.dat rg2.dat
+	@echo "Regression transition graph test PASSED."
 	@echo "-----------------------"
 	@echo "All regression tests PASSED."
 	@echo "-----------------------"
@@ -186,4 +187,5 @@ regressiontest: $(TOOLNAME3)
 # use with caution
 generateregressiondata:
 	./$(TOOLNAME3) --csv-assert $(REGRESSION_DATA_DIR)/rers_mini1_assert_csv.txt --csv-ltl $(REGRESSION_DATA_DIR)/rers_mini1_ltl_csv.txt --verify tests/rers_mini1.ltl --viz=yes tests/rers_mini1.c 
-	cp transitiongraph1.dat $(REGRESSION_DATA_DIR)/rers_mini1_transitiongraph1.dat
+	sort -u transitiongraph1.dat > tmp_transitiongraph1.dat
+	cp tmp_transitiongraph1.dat $(REGRESSION_DATA_DIR)/rers_mini1_transitiongraph1.dat

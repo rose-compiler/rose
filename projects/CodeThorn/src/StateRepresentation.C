@@ -192,6 +192,13 @@ EStateId EStateSet::eStateId(const EState eState) {
   return NO_ESTATE;
 }
 
+Transition TransitionGraph::getStartTransition() {
+  for(TransitionGraph::iterator i=begin();i!=end();++i) {
+	if((*i).source->label==startLabel)
+	  return *i;
+  }
+}
+
 string EStateSet::eStateIdString(const EState* eState) {
   stringstream ss;
   ss<<eStateId(eState);
@@ -226,18 +233,9 @@ LabelSet TransitionGraph::labelSetOfIoOperations(InputOutput::OpType op) {
 } 
 
 void TransitionGraph::add(Transition trans) {
-#if 0
-  for(TransitionGraph::iterator i=begin();i!=end();++i) {
-	if(trans==*i) {
-	  cerr<<"Error: Attempting to add same transition again."<<endl;
-	  cerr<<"Transition:"<<trans.toString()<<endl;
-	  return;
-	}
-  }
-#endif
   #pragma omp critical
   {
-  push_back(trans);
+	insert(trans);
   }
 }
 
