@@ -799,16 +799,23 @@ Checker::Checker(EStateSet& ess, TransitionGraph& _tg)
   BoostTransitionGraph full_graph(ess.size());
 
   FOR_EACH_TRANSITION(t) {
-    Label src = estate_label[&(*t->source)];
-    Label tgt = estate_label[&(*t->target)];
+    Label src = estate_label[((*t).source)];
+    Label tgt = estate_label[((*t).target)];
     add_edge(src, tgt, full_graph);
-    full_graph[src] = t->source;
-    full_graph[tgt] = t->target;
+    full_graph[src] = (*t).source;
+    full_graph[tgt] = (*t).target;
     //cerr<<src<<"("<<t->source<<") -- "<<tgt<<"("<<t->target<<")"<<endl;
     assert(full_graph[src]);
     assert(full_graph[tgt]);
   }
-  start = estate_label[transitionGraph.begin()->source];
+  //start = estate_label[transitionGraph.begin()->source];
+  start = estate_label[transitionGraph.getStartTransition().source];
+#if 0
+  cout << "DEBUG: START"<<transitionGraph.begin()->source
+	   <<", news: "<<transitionGraph.getStartTransition().source
+	   <<", newt: "<<transitionGraph.getStartTransition().target
+	   <<endl;
+#endif
 
 #if 1
   // Optimization

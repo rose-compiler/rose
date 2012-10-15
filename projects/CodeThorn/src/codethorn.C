@@ -443,7 +443,7 @@ int main( int argc, char * argv[] ) {
   if(args.count("threads")) {
 	numberOfThreadsToUse=args["threads"].as<int>();
   }
-  int displayDiff=1000;
+  int displayDiff=5000;
   if(args.count("display-diff")) {
 	displayDiff=args["display-diff"].as<int>();
   }
@@ -526,7 +526,7 @@ int main( int argc, char * argv[] ) {
   analyzer.runSolver1();
   double analysisRunTime=timer.getElapsedTimeInMilliSec();
   long removed=analyzer.getTransitionGraph()->removeDuplicates();
-  cout << "Transitions reduced: "<<removed<<endl;
+  //cout << "Transitions reduced: "<<removed<<endl;
   //  cout << analyzer.stateSetToString(final);
   cout << "=============================================================="<<endl;
   printAsserts(analyzer,sageProject);

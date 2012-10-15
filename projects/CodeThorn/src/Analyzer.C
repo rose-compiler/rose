@@ -258,7 +258,7 @@ void Analyzer::runSolver1() {
 			fout.open(_csv_assert_live_file.c_str(),ios::app);    // open file for appending
 			assert (!fout.fail( ));
 			fout << name << ",yes,9"<<endl;
-			cout << "REACHABLE ASSERT FOUND: "<< name << ",yes,9"<<endl;
+			//cout << "REACHABLE ASSERT FOUND: "<< name << ",yes,9"<<endl;
 
 			fout.close(); 
 		  }
@@ -804,7 +804,9 @@ void Analyzer::initializeSolver1(std::string functionToStartAt,SgNode* root) {
   assert(cfanalyzer);
   ConstraintSet cset;
   const ConstraintSet* emptycsetstored=constraintSetMaintainer.processNewOrExisting(cset);
-  EState eState(cfanalyzer->getLabel(startFunRoot),emptyStateStored,emptycsetstored);
+  Label startLabel=cfanalyzer->getLabel(startFunRoot);
+  transitionGraph.setStartLabel(startLabel);
+  EState eState(startLabel,emptyStateStored,emptycsetstored);
   
   if(SgProject* project=isSgProject(root)) {
 	cout << "STATUS: Number of global variables: ";

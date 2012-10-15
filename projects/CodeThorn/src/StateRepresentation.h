@@ -178,6 +178,19 @@ public:
 
 };
 
+class TransitionHashFun {
+   public:
+    TransitionHashFun(long prime=99991) : tabSize(prime) {}
+    long operator()(Transition s) const {
+	  unsigned int hash=1;
+	  hash=((((long)s.source)+1)<<8)+(long)s.target*(long)s.edge.type;
+	  return long(hash) % tabSize;
+	}
+	  long tableSize() const { return tabSize;}
+	  private:
+    long tabSize;
+};
+
 bool operator==(const Transition& t1, const Transition& t2);
 bool operator!=(const Transition& t1, const Transition& t2);
 bool operator<(const Transition& t1, const Transition& t2);
@@ -187,7 +200,7 @@ class EStateList : public list<EState> {
   string toString();
 };
 
-class TransitionGraph : public list<Transition> {
+class TransitionGraph : public HSet<Transition,TransitionHashFun> {
  public:
   set<const EState*> transitionSourceEStateSetOfLabel(Label lab);
   set<const EState*> eStateSetOfLabel(Label lab);
@@ -196,8 +209,12 @@ class TransitionGraph : public list<Transition> {
   LabelSet labelSetOfIoOperations(InputOutput::OpType op);
   // eliminates all duplicates of edges
   long removeDuplicates();
+  Label getStartLabel() { return startLabel; }
+  void setStartLabel(Label lab) { startLabel=lab; }
+  Transition getStartTransition();
  private:
   int numberOfNodes;
+  Label startLabel;
 };
 
 
