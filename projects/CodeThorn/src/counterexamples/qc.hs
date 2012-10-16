@@ -58,8 +58,8 @@ instance Arbitrary RersData where
             n    <- choose (size `min` 4, maxlength)
             vals <- vectorOf n (choose ('A', 'G'))
             return (RersData vals)
-            --return (RersData ['G', 'B', 'B'])
-          maxlength = 12
+            --return (RersData ['A', 'B', 'C', 'D', 'E'])
+          maxlength = 32
   
   shrink (RersData vals) = map RersData (shrink' vals)
     where 
@@ -92,8 +92,8 @@ actualOutput (RersData input) = do
   -- block if it writes to it
   forkIO $ do err <- hGetContents m_err; printf err; return ()
   result <- try $ action m_in m_out input
-  case result of 
-    Left _ -> do 
+  case result of
+    Left _ -> do
       --printf "I/O Error\n"
       terminateProcess pid
       return []
@@ -136,38 +136,19 @@ readMaybe s = case [x | (x,t) <- reads s, ("","") <- lex t] of
   _   -> Nothing
 
 
+prettyprint :: [State] -> IO ()
 prettyprint output = do
-  printf " "
+  putStr " "
   mapM_ pp output
   --printf "\n"
   return ()
-    where pp (StIn  c) = do printf "\ESC[33m%c\ESC[39m" c; return ()
-          pp (StOut c) = do printf "\ESC[35m%c\ESC[39m" c; return ()
+    where pp (StIn  c) = do putStr "\ESC[33m"; putStr [c]; putStr "\ESC[39m"; return ()
+          pp (StOut c) = do putStr "\ESC[35m"; putStr [c]; putStr "\ESC[39m"; return ()
 
 rersChar :: Int -> Char
 rersChar i = chr (i+(ord 'A')-1)
 rersInt :: Char -> Int
 rersInt c = (ord c) - (ord 'A')+1
-
--- verify that an LTL formula holds for a given chain of states
---holds :: LTL -> [State] -> Bool
---holds (In  c) ((StIn  stc):_) = (c == stc)
---holds (Out c) ((StOut stc):_) = (c == stc)
---holds (In  c) ((StOut stc):states) = holds (In  c) states
---holds (Out c) ((StIn  stc):states) = holds (Out c) states
---holds       (X a) (_:states) = holds a states
---holds       (F a)     [] = False
---holds       (F a) states = (holds a states) || (holds (X (F a)) states)
---holds       (G a)     [] = True
---holds       (G a) states = (holds a states) && (holds (X (G a)) states)
---holds     (Not a) states = not (holds a states)
---holds (a `And` b) states = (holds a states) && (holds b states)
---holds (a `Or`  b) states = (holds a states) || (holds b states)
---holds (a `U`   b)     [] = True
---holds (a `U`   b) states = (holds b states) || ((holds a states) && (holds (X (a `U` b)) states))
---holds (a `R`   b) states = (holds b states) && ((holds a states) || (holds (X (a `R` b)) states))
---holds (a `WU`  b) states = holds ((G a) `Or` (a `U` b)) states
---holds _ _ = False
 
 holds :: LTL -> [State] -> BoolLattice
 holds (In  c) ((StIn  stc):_) = lift (c == stc)
