@@ -231,7 +231,10 @@ void Analyzer::runSolver1() {
 		  ++nesListIter) {
 		EState newEState=*nesListIter;
 		if(newEState.label!=NO_ESTATE && (!newEState.constraints()->disequalityExists()) &&(!isFailedAssertEState(&newEState))) {
-		  const EState* newEStatePtr=addToWorkListIfNew(newEState);
+		  HSetMaintainer<EState,EStateHashFun>::ProcessingResult pres=eStateSet.process(newEState);
+		  const EState* newEStatePtr=pres.second;
+		  if(pres.first==true)
+			addToWorkList(newEStatePtr);			
 		  recordTransition(currentEStatePtr,e,newEStatePtr);
 		}
 		if(newEState.label!=NO_ESTATE && (!newEState.constraints()->disequalityExists()) && (isFailedAssertEState(&newEState))) {

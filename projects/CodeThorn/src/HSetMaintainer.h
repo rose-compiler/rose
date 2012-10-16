@@ -15,8 +15,8 @@ public:
 	i=HSetMaintainer<KeyType,HashFun>::find(s);
 	return i!=HSetMaintainer<KeyType,HashFun>::end();
   }
-  //! <const KeyType*,true> if new element was inserted
-  //! <const KeyType*,false> if element already existed
+  //! <true,const KeyType> if new element was inserted
+  //! <false,const KeyType> if element already existed
   ProcessingResult process(KeyType key) {
 	ProcessingResult res2;
 	#pragma omp critical
