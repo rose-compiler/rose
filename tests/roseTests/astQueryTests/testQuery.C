@@ -1,121 +1,102 @@
-// Example ROSE Translator: used for testing ROSE infrastructure
+// Tests src/midend/astQuery/{nodeQuery,nameQuery,numberQuery}
 
 #include "rose.h"
+#include "stringify.h"
 
 using namespace std;
 
-#if 1
-void
-printNodeList ( const list<SgNode*> & localList )
-   {
-  // Supporting function for querySolverGrammarElementFromVariantVector
-     int counter = 0;
-     printf ("Output node list: \n");
-     for (list<SgNode*>::const_iterator i = localList.begin(); i != localList.end(); i++)
-        {
-          printf ("   list element #%d = %s \n",counter,(*i)->sage_class_name());
-          counter++;
-        }
-   }
+/** Show an error message about a node. */
+static void
+emit_node_mesg(SgNode *node, const std::string &mesg="")
+{
+    Sg_File_Info *loc = isSgLocatedNode(node) ? isSgLocatedNode(node)->get_startOfConstruct() : NULL;
+    std::string filename = loc ? loc->get_filenameString() : "__UNKNOWN_FILE__";
+    int lno = loc ? loc->get_line() : 0;
+    int cno = loc ? loc->get_col() : 0;
+    std::cerr <<filename <<":" <<lno <<"." <<cno <<": " <<(mesg.empty() ? "error" : mesg) <<"\n";
+}
 
-void
-printNodeList ( const list<string> & localList )
-   {
-  // Supporting function for querySolverGrammarElementFromVariantVector
-     int counter = 0;
-     printf ("Output node list: \n");
-     for (list<string>::const_iterator i = localList.begin(); i != localList.end(); i++)
-        {
-          printf ("   list element #%d = %s \n",counter,(*i).c_str());
-          counter++;
-        }
-   }
-#endif
-
-
+/** Checks that all nodes in the list are unique. Emit errors about duplicate items. Returns the number of duplicates. */
+static size_t
+check_unique(const NodeQuerySynthesizedAttributeType &nodes, const std::string &title)
+{
+    std::set<SgNode*> set;
+    std::vector<SgNode*> dups;
+    for (NodeQuerySynthesizedAttributeType::const_iterator ni=nodes.begin(); ni!=nodes.end(); ++ni) {
+        if (!set.insert(*ni).second)
+            dups.push_back(*ni);
+    }
+    if (!dups.empty()) {
+        std::cerr <<"Duplicate nodes returned for the \"" <<title <<"\" test:\n";
+        for (std::vector<SgNode*>::const_iterator di=dups.begin(); di!=dups.end(); ++di)
+            emit_node_mesg(*di, "appears multiple times in list");
+    }
+    return dups.size();
+}
 
 int
-main( int argc, char * argv[] ) 
-   {
-  // Build the AST used by ROSE
-     SgProject* project = frontend(argc,argv);
-  // Run internal consistancy tests on AST
-     AstTests::runAllTests(project);
+main(int argc, char *argv[])
+{
+    SgProject* project = frontend(argc,argv);
+    AstTests::runAllTests(project); // run internal consistency tests on the AST
 
-  // DQ (9/12/2009): At least with GNU 4.3 and 4.4 the validValue should be 95!
-  // DQ (12/5/2007): This value changed as a result of more builtin functions being added.
-  // DQ (1/19/2007): I think this value changed as a result of a bug fix in ROSE (variant handling fix in sage_gen_be.C)
-  // const int validValue = 55;
-  // const unsigned int validValue = 89;
-  // const unsigned int validValue = 91;
-  // const unsigned int validValue = 95;
-     unsigned int validValue = 0;
-#if __GNUC__ == 3
-  // validValue = 92;
-     validValue = 423;
-#endif
-#if __GNUC__ == 4 && __GNUC_MINOR__ <= 2
-  // validValue = 92;
-  // validValue = 413;
-     validValue = 423;
-#endif
-#if __GNUC__ == 4 && __GNUC_MINOR__ > 2
-//   validValue = 94;
-//   validValue = 415;
-     validValue = 425;
-#endif
+    size_t nerrors = 0;
+    std::string separator = std::string(80, '-') + "\n";
 
-     NodeQuerySynthesizedAttributeType returnList = NodeQuery::querySubTree(project, V_SgFunctionDeclaration);
-     if (returnList.size() != validValue)
-        {
-          printf ("Number of SgFunctionDeclaration IR nodes = %zu \n",returnList.size());
+    std::cerr <<separator <<"Testing NodeQuery::querySubTree for all SgFunctionDeclaration nodes\n";
+    NodeQuerySynthesizedAttributeType funcDecls = NodeQuery::querySubTree(project, V_SgFunctionDeclaration);
+    std::cerr <<"found " <<funcDecls.size() <<" function declaration nodes\n";
+    nerrors += check_unique(funcDecls, "querySubTree SgFunctionDeclaration");
+    for (NodeQuerySynthesizedAttributeType::const_iterator ni=funcDecls.begin(); ni!=funcDecls.end(); ++ni) {
+        if (!isSgFunctionDeclaration(*ni)) {
+            emit_node_mesg(*ni, "not a function declaration");
+            ++nerrors;
         }
-     ROSE_ASSERT(returnList.size() == validValue);
-     NodeQuerySynthesizedAttributeType returnListQueryList = NodeQuery::queryNodeList(returnList, V_SgFunctionDeclaration);
-     if (returnListQueryList.size() != validValue)
-        {
-          printf ("Number of SgFunctionDeclaration IR nodes = %zu \n",returnListQueryList.size());
-        }
-     ROSE_ASSERT(returnListQueryList.size() == validValue);
-     NameQuerySynthesizedAttributeType returnListNames = NameQuery::querySubTree(project, NameQuery::FunctionDeclarationNames);
-  // printNodeList(returnListNames);
-     if (returnListNames.size() != validValue)
-        {
-          printf ("Number of FunctionDeclarationNames IR nodes = %zu \n",returnListNames.size());
-        }
-     ROSE_ASSERT(returnListNames.size() == validValue);
-     NameQuerySynthesizedAttributeType returnListNamesNodeList = NameQuery::queryNodeList(returnList,NameQuery::FunctionDeclarationNames);
-     if (returnListNamesNodeList.size() != validValue)
-        {
-          printf ("Number of FunctionDeclarationNames IR nodes = %zu \n",returnListNamesNodeList.size());
-        }
-     ROSE_ASSERT(returnListNamesNodeList.size() == validValue);
-     NumberQuerySynthesizedAttributeType returnListNumber = NumberQuery::querySubTree(project,NumberQuery::NumberOfArgsInConstructor);
-     if (returnListNumber.size() != 1)
-        {
-          printf ("Number of NumberOfArgsInConstructor IR nodes = %zu \n",returnListNumber.size());
-        }
-     ROSE_ASSERT(returnListNumber.size() == 1);
-     
-#if 0
-  // Insert your own manipulation of the AST here...
-     printf ("\n\n");
-     printf ("************************** \n");
-     printf ("Generate list of types ... \n");
-     list<SgNode*> nodeList = NodeQuery::querySubTree (project,V_SgType);
-     printNodeList(nodeList);
-     printf ("*** Sort list *** \n");
-     nodeList.sort();
-     nodeList.unique();
-     printNodeList(nodeList);
-     printf ("DONE: Generate list of types ... \n");
-     printf ("************************** \n\n\n");
+    }
+    ROSE_ASSERT(0==nerrors); // optional, to exit early
 
-  // DQ (7/20/2004): temporary call to help debug traversal on all regression tests
-  // NodeQuery::generateListOfTypes (sageProject);
-#endif
+    std::cerr <<separator <<"Testing NodeQuery::queryNodeList for all SgFunctionDeclaration nodes\n";
+    NodeQuerySynthesizedAttributeType funcDecls2 = NodeQuery::queryNodeList(funcDecls, V_SgFunctionDeclaration);
+    std::cerr <<"found " <<funcDecls2.size() <<" function declaration nodes\n";
+    nerrors += check_unique(funcDecls2, "queryNodeList SgFunctionDeclaration");
+    for (NodeQuerySynthesizedAttributeType::const_iterator ni=funcDecls2.begin(); ni!=funcDecls2.end(); ++ni) {
+        if (!isSgFunctionDeclaration(*ni)) {
+            emit_node_mesg(*ni, "not a function declaration");
+            ++nerrors;
+        }
+    }
+    ROSE_ASSERT(0==nerrors); // optional, to exit early
 
-  // Generate source code from AST and call the vendor's compiler
-     return backend(project);
-   }
+    std::cerr <<separator <<"Testing NameQuery::querySubTree for FunctionDeclarationNames\n";
+    NameQuerySynthesizedAttributeType funcNames = NameQuery::querySubTree(project, NameQuery::FunctionDeclarationNames);
+    std::cerr <<"found " <<funcNames.size() <<" function declaration names\n";
+    if (funcNames.size() != funcDecls.size()) {
+        std::cerr <<"number of function declaration names (" <<funcNames.size() <<")"
+                  <<" does not match number of function declaration nodes (" <<funcDecls.size() <<")\n";
+        ++nerrors;
+    }
+    ROSE_ASSERT(0==nerrors); // optional, to exit early
 
+    std::cerr <<separator <<"Testing NameQuery::queryNodeList for FunctionDeclarationNames\n";
+    NameQuerySynthesizedAttributeType funcNames2 = NameQuery::queryNodeList(funcDecls, NameQuery::FunctionDeclarationNames);
+    std::cerr <<"found " <<funcNames2.size() <<" function declaration names\n";
+    if (funcNames2.size() != funcDecls.size()) {
+        std::cerr <<"number of function declaration names (" <<funcNames2.size() <<")"
+                  <<" does not match number of function declaration nodes (" <<funcDecls.size() <<")\n";
+        ++nerrors;
+    }
+    ROSE_ASSERT(0==nerrors); // optional, to exit early
+
+    std::cerr <<separator <<"Testing NumberQuery::querySubTree for NumberOfArgsInConstructor\n";
+    NumberQuerySynthesizedAttributeType ctorArgCounts = NumberQuery::querySubTree(project,
+                                                                                  NumberQuery::NumberOfArgsInConstructor);
+    std::cerr <<"found " <<ctorArgCounts.size() <<" results\n";
+    if (ctorArgCounts.size() != 1) {
+        std::cerr <<"should have found only one result\n";
+        ++nerrors;
+    }
+    ROSE_ASSERT(0==nerrors); // optional, to exit early
+
+    // It is not necessary to call backend for this test; that functionality is tested elsewhere.
+    return nerrors ? 1 : 0;
+}
