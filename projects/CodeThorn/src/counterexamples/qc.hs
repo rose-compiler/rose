@@ -59,7 +59,7 @@ instance Arbitrary RersData where
             vals <- vectorOf n (choose ('A', 'G'))
             return (RersData vals)
             --return (RersData ['A', 'B', 'C', 'D', 'E'])
-          maxlength = 32
+          maxlength = 128
   
   shrink (RersData vals) = map RersData (shrink' vals)
     where 
