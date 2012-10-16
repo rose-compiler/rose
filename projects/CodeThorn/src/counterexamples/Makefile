@@ -23,8 +23,8 @@ csv:
 	for i in `seq 19`; do \
 	  awk -f log2csv.awk <Problem$$i.log >Problem$$i-ltl-qc.csv; \
           echo "merge exisiting and newly found results: $$i"; \
-	  touch Problem$$i-assert.csv CodeThorn_Problem$$i_assert_live_csv.txt; \
-	  cat Problem$$i-ltl-qc.csv Problem$$i-assert.csv Problem$$i-qc.csv CodeThorn_Problem$$i_assert_live_csv.txt \
+	  touch Problem$$i-assert.csv; \
+	  cat Problem$$i-ltl-qc.csv Problem$$i-assert.csv Problem$$i-qc.csv \
               | sort -n | uniq >tmp.csv ; \
 	  mv tmp.csv Problem$$i-qc.csv ; \
           cp Problem$$i-qc.csv ../regressiondata/ ; \
