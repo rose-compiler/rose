@@ -3785,8 +3785,10 @@ void UnparseLanguageIndependentConstructs::unparseOmpGenericStatement (SgStateme
 
 } // end unparseOmpGenericStatement
 
+
 PrecedenceSpecifier
-UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr) {
+UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr)
+   {
   // DQ (11/24/2007): This is a redundant mechanism for computing the precedence of expressions
 #if PRINT_DEVELOPER_WARNINGS
      printf ("This is a redundant mechanism for computing the precedence of expressions \n");
@@ -3907,16 +3909,20 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr) {
        // Note that this setting is equivalent to what was being returned, so I expect it is fine since it represents no change.
           case V_SgVarRefExp:           return 0;
 
+       // DQ (10/17/2012): Added support for SgDesignatedInitializer.
+          case V_SgDesignatedInitializer: return 0;
+
           default:
              {
 #if PRINT_DEVELOPER_WARNINGS | 1
-               printf ("Warning: GetPrecedence() in modified_sage.C: Undefined expression variant = %d = %s \n",variant,Cxx_GrammarTerminalNames[variant].name.c_str());
+               printf ("Warning: GetPrecedence() in unparseLanguageIndependentConstructs.C: Undefined expression variant = %d = %s \n",variant,Cxx_GrammarTerminalNames[variant].name.c_str());
 #endif
              }
         }
 
      return 0;
-}
+   }
+
 
 AssociativitySpecifier
 UnparseLanguageIndependentConstructs::getAssociativity(SgExpression* expr) {

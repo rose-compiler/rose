@@ -9026,11 +9026,14 @@ SageInterface::appendStatementList(const std::vector<SgStatement*>& stmts, SgSco
        // appendStatement(stmts[i], scope);
           if (stmts[i]->get_parent() != NULL)
              {
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+               printf ("In appendStatementList(): stmts[i = %zu] will be added to scope (because stmts[i]->get_parent() != NULL (= %p = %s) \n",i,stmts[i]->get_parent(),stmts[i]->get_parent()->class_name().c_str());
+#endif
                appendStatement(stmts[i], scope);
              }
             else
              {
-               printf ("WARNING: In appendStatementList(): stmts[i = %zu] not added to scope (stmts[i]->get_parent() == NULL) \n",i);
+               printf ("WARNING: In appendStatementList(): stmts[i = %zu] not added to scope (because stmts[i]->get_parent() == NULL) \n",i);
              }
         }
    }

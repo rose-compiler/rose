@@ -2891,7 +2891,7 @@ Unparse_ExprStmt::unparseCastOp(SgExpression* expr, SgUnparse_Info& info)
           cast_op = isSgCastExp(expressionTree);
 #if 0
        // ROSE_ASSERT(cast_op != NULL);
-          //if (cast_op == NULL)
+       // if (cast_op == NULL)
           if (cast_op != NULL) // Liao, 11/2/2010, we should use the original expression tree here!!
              {
             // Jeremiah has submitted the following example: int x[2]; char* y = (char*)x + 1; and the expressionTree is just "x+1".
@@ -2900,8 +2900,10 @@ Unparse_ExprStmt::unparseCastOp(SgExpression* expr, SgUnparse_Info& info)
             // Don't continue processing this as a cast!
                return;
              }
-           else 
+            else 
+             {
                cast_op = isSgCastExp(expr); // restore to the original non-null value otherwise
+             }
 #else
        // Liao, 11/8/2010, we should now always unparse the original expression tree, regardless its Variant_T value
           unparseExpression(expressionTree,info);
@@ -2921,6 +2923,36 @@ Unparse_ExprStmt::unparseCastOp(SgExpression* expr, SgUnparse_Info& info)
   // curprint ("/* nameQualifier = " + nameQualifier + " */ \n");
      newinfo.set_reference_node_for_qualification(cast_op);
 #endif
+
+  // DQ (10/17/2012): This is the explicitly set boolean value which indicates that a class declaration is buried inside
+  // the current cast expression's reference to a type (e.g. "(((union ABC { int __in; int __i; }) { .__in = 42 }).__i);").
+  // In this case we have to output the base type with its definition.
+     bool outputTypeDefinition = cast_op->get_castContainsBaseTypeDefiningDeclaration();
+
+#if 0
+     printf ("In unparseCastOp(expr = %p): outputTypeDefinition = %s \n",expr,(outputTypeDefinition == true) ? "true" : "false");
+#endif
+
+     if (outputTypeDefinition == true)
+        {
+       // DQ (10/11/2006): As part of new implementation of qualified names we now default to the generation of all qualified names unless they are skipped.
+       // newinfo.set_SkipQualifiedNames();
+
+       // DQ (10/17/2012): Added new code not present where this is handled for SgVariableDeclaration IR nodes.
+          newinfo.unset_SkipDefinition();
+
+       // DQ (5/23/2007): Commented these out since they are not applicable for statement expressions (see test2007_51.C).
+       // DQ (10/5/2004): If this is a defining declaration then make sure that we don't skip the definition
+          ROSE_ASSERT(newinfo.SkipClassDefinition() == false);
+          ROSE_ASSERT(newinfo.SkipEnumDefinition()  == false);
+          ROSE_ASSERT(newinfo.SkipDefinition()      == false);
+        }
+       else
+        {
+          newinfo.set_SkipDefinition();
+          ROSE_ASSERT(newinfo.SkipClassDefinition() == true);
+          ROSE_ASSERT(newinfo.SkipEnumDefinition() == true);
+        }
 
      bool addParens = false;
      switch(cast_op->cast_type())
@@ -3021,6 +3053,9 @@ Unparse_ExprStmt::unparseCastOp(SgExpression* expr, SgUnparse_Info& info)
                     expr->get_startOfConstruct()->display("expr->get_startOfConstruct(): debug");
                   }
 #endif
+#if 0
+               printf ("cast_op->get_startOfConstruct()->isCompilerGenerated() = %s \n",cast_op->get_startOfConstruct()->isCompilerGenerated() ? "true" : "false");
+#endif
             // DQ (2/28/2005): Only output the cast if it is NOT compiler generated (implicit in the source code)
             // this avoids redundant casts in the output code and avoid errors in the generated code caused by an 
             // implicit cast to a private type (see test2005_12.C).
@@ -3032,15 +3067,22 @@ Unparse_ExprStmt::unparseCastOp(SgExpression* expr, SgUnparse_Info& info)
                  // curprint ( "\n /* explicit cast: cast_op->get_operand_i() = " + cast_op->get_operand_i()->class_name() + " */ \n");
                     if (cast_op->get_operand_i()->variant() != STRING_VAL)
                        {
-                      // it is not a string, so we always cast
-                      // curprint ( "/* unparseCastOp SgCastExp::c_cast_e nonstring */ "; 
-                         curprint ( "(");
+                      // It is not a string, so we always cast
+                      // curprint("/* unparseCastOp SgCastExp::c_cast_e nonstring */ ");
 
+                         curprint("(");
+#if 1
+                      // DQ (10/17/2012): We have to separate these out if we want to output the defining declarations.
+                         newinfo.set_isTypeFirstPart();
+                         unp->u_type->unparseType(cast_op->get_type(), newinfo);
+                         newinfo.set_isTypeSecondPart();
+                         unp->u_type->unparseType(cast_op->get_type(), newinfo);
+#else
                       // DQ (1/14/2006): p_expression_type is no longer stored (type is computed instead)
                       // unp->u_type->unparseType(cast_op->get_expression_type(), newinfo);
                          unp->u_type->unparseType(cast_op->get_type(), newinfo);
-
-                         curprint ( ")");
+#endif
+                         curprint(")");
                        }
                  // cast_op->get_operand_i()->variant() == STRING_VAL
                  // it is a string, so now check if the cast is not a "const char* "
@@ -3065,7 +3107,7 @@ Unparse_ExprStmt::unparseCastOp(SgExpression* expr, SgUnparse_Info& info)
                   }
                  else
                   {
-                 // curprint ( "/* compiler generated cast not output */";
+                    curprint("/* compiler generated cast not output */");
                   }
                break; 
              }

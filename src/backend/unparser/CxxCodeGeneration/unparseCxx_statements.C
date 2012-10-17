@@ -3634,6 +3634,13 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 #if 0
                printf ("In unparseVarDeclStmt(): tmp_type = %p = %s \n",tmp_type,tmp_type->class_name().c_str());
 #endif
+
+
+            // DQ (10/17/2012): I am not clear why we need the "declStmt" variable, since it does not appear to be used for anything important.
+            // In particular it appears that we carefully construct it to be either the defining or non-defining declaration; but I don't see why.
+            // I recall in the past that this was an important subject for handling the output of class definitions in types, but I don't see 
+            // that below.  So maybe this part of the code could be greatly simplified.
+
                SgNamedType *namedType = isSgNamedType(tmp_type->findBaseType());
             // SgDeclarationStatement* declStmt = (namedType) ? namedType->get_declaration() : NULL;
                SgDeclarationStatement* declStmt = NULL;
@@ -4097,7 +4104,8 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                     ninfo.set_SkipBaseType();
                curprint ( string(","));
              }
-         unparseAttachedPreprocessingInfo(decl_item, ninfo, PreprocessingInfo::after);    
+
+          unparseAttachedPreprocessingInfo(decl_item, ninfo, PreprocessingInfo::after);    
         }
 
   // curprint ( string("\n/* Handle bit fields specifiers (if any) */ \n"));
