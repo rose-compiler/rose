@@ -1,7 +1,7 @@
 #/!bin/sh
 # transform a list of LTL formulae from stdin into a haskell datatype
 echo "formulae = ["
-grep '^[\(]' | \
+grep '^[\(]' $1 | \
     sed -e 's/^/    /g' \
         -e 's/$/,/g' \
         -e 's/ *& */) `And` (/g' \
@@ -17,3 +17,9 @@ grep '^[\(]' | \
         -e "s/ *i\([A-Z]\) */ In '\1' /g" 
 
 echo "    None]"
+echo "frequencies = ["
+grep -o i[A-G] $1 |sort |uniq -c|sed -e "s/ *\(.\+\) i\(.\) */  (\1, elements ['\2']),/g"
+echo "  (0, elements ['Z'])]"
+echo
+echo "machine = \"./Problem"`echo $1| egrep -o '[0-9]+'`".exe\""
+echo
