@@ -23,16 +23,18 @@ apt-get install ghc libghc6-missingh-dev libghc6-quickcheck2-dev expect-dev
 
 --}
 module Main where
+import Control.Concurrent
+import Data.Char
+import Data.String.Utils
 import Prelude
 import System.IO
 import System.IO.Error
+import System.IO.Unsafe
 import System.Process
-import Text.Printf
 import Test.QuickCheck
+import Test.QuickCheck.Gen
 import Test.QuickCheck.Monadic
-import Data.String.Utils
-import Data.Char
-import Control.Concurrent
+import Text.Printf
 
 data LTL = In Char
          | Out Char
@@ -55,11 +57,21 @@ data BoolLattice = FFalse | TTrue | Top
 instance Arbitrary RersData where
   arbitrary = sized input
     where input size = do
-            n    <- choose (size `min` 4, maxlength)
-            vals <- vectorOf n (choose ('A', 'G'))
-            return (RersData vals)
-            --return (RersData ['A', 'B', 'C', 'D', 'E'])
-          maxlength = 128
+            --n    <- choose (size `min` 4, maxlength)
+            --vals <- vectorOf n (choose ('A','G'))
+            --vals <- vectorOf size (frequency frequencies)
+            --return (RersData vals)
+            vals <- grow (size) []
+            return $ RersData $ reverse $ vals
+
+          grow 0 xs = do return xs
+          grow size xs = do
+            -- unsafePerformIO $ printf "grow %d %s\n" size (show xs)
+            x <- frequency frequencies
+            let r = unsafePerformIO $ actualOutput $ RersData (reverse (x:xs)) in
+              if r == [] then grow (size-1) (take ((length xs) `div` 4) xs)
+                else grow (size-1) (x:xs)
+          --maxlength = 8
   
   shrink (RersData vals) = map RersData (shrink' vals)
     where 
@@ -81,29 +93,40 @@ prop_holds formula input =
 -- execute the actual program to get its output
 actualOutput :: RersData -> IO [State]
 actualOutput (RersData input) = do
-  --printf "> ./machine %s (len=%d)\n" input (length input)
+  -- printf "> ./machine %s (len=%d)\n" input (length input)
   -- unbuffer is part of GNU? expect and forces a command to use
   -- unbuffered I/O by emulating a terminal
-  (m_in, m_out, m_err, pid) <- runInteractiveCommand "unbuffer -p ./machine.exe"
+  (m_in, m_out, m_err, pid) <- runInteractiveCommand $ "unbuffer -p "++machine
   mapM_ (flip hSetBinaryMode False) [m_in, m_out, m_err]
   hSetBuffering m_in LineBuffering
   hSetBuffering m_out NoBuffering
+  hSetBuffering m_err NoBuffering
   -- fork off a thread to read from m_err, so our process doesn't
   -- block if it writes to it
-  forkIO $ do err <- hGetContents m_err; printf err; return ()
+  -- ... unbuffer redirects err&>out
+  -- hasErrOutput <- newEmptyMVar
+  -- forkIO $ do err <- hGetContents m_err; putMVar hasErrOutput err; return ()
   result <- try $ action m_in m_out input
+  mapM_ hClose [m_in, m_out, m_err]
+  terminateProcess pid
+  --err <- takeMVar hasErrOutput
   case result of
     Left _ -> do
-      --printf "I/O Error\n"
-      terminateProcess pid
+      --printf "**I/O Error\n"
       return []
-    Right output -> do 
-      prettyprint output
-      hFlush stdout
-      terminateProcess pid
-      return output
+    Right output -> do
+      --printf "**ERR: %s\n" err
+      if True then -- ignore traces which wrote to stderr
+        do
+          prettyprint output
+          terminateProcess pid
+          hFlush stdout -- flush the *console*, so the user gets to watch our progress
+          return output
+        else do return []
+
   
   where inputStr = join "\n" (map show input)
+        timeout = 50 -- milliseconds
         action _ _ [] = do return []
         action m_in m_out (input:is) = do 
           hPutStrLn m_in (show (rersInt input))
@@ -113,7 +136,7 @@ actualOutput (RersData input) = do
           -- make a best effort to synchronize input and output. It's
           -- really impossible because a given input may or may not
           -- trigger an output.
-          hasOutput <- hWaitForInput m_out 33 -- milliseconds
+          hasOutput <- hWaitForInput m_out timeout 
           if hasOutput then 
             do reply <- hGetLine m_out
                case (readMaybe reply)::(Maybe Int) of 
@@ -121,13 +144,13 @@ actualOutput (RersData input) = do
                               res <- action m_in m_out is
                               return $ (StIn input) : (StOut (rersChar i)) : res
                  _      -> do --printf "I/O Error: '%s'\n" reply
-                              res <- action m_in m_out is
-                              return $ (StIn input) : res
+                              ioError $ userError "invalid input"
+                              --res <- action m_in m_out is
+                              --return $ (StIn input) : res
             else do 
                --printf "no output\n"
                res <- action m_in m_out is
                return $ (StIn input) : res
-          
 
 
 readMaybe :: (Read a) => String -> Maybe a
@@ -192,17 +215,21 @@ nnot Top = Top
 nnot TTrue = FFalse
 nnot FFalse = TTrue
 
-#include "formulae.hs"
+#include LTL_FILE
 formulae' = [ WU (Not (Out 'Y')) (In 'B'), None]
 -- last element of formulae is always None, ignore it
-main = do mapM printResult (zip (allbutlast formulae) [1..])
-            where allbutlast list = take ((length list)-1) list
+main = do 
+  --testData <- sample' 13 (arbitrary::(Gen RersData))
+  --print testData
+  mapM printResult (zip (allbutlast formulae) [1..])
+    where allbutlast list = take ((length list)-1) list
 
 printResult :: (LTL, Int) -> IO ()
 printResult (f, n) = do
   printf "===================================================\n"
   printf "checking %s\n[ " (show f)
-  result <- quickCheckResult (prop_holds f)
+  sample (arbitrary::(Gen RersData))
+  result <- quickCheckWithResult stdArgs { maxSuccess = 5, maxDiscard = 5 } (prop_holds f)
   printf " ]\n"
   case result of
     Failure _ _ _ _ -> printf "%d FALSE, found counterexample\n" n
