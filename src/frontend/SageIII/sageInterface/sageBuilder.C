@@ -4323,7 +4323,7 @@ SgIntVal* SageBuilder::buildIntValHex(int value)
 
 SgIntVal* SageBuilder::buildIntVal_nfi(int value, const string& str)
    {
-     SgIntVal* intValue= new SgIntVal(value,str);
+     SgIntVal* intValue = new SgIntVal(value,str);
      ROSE_ASSERT(intValue);
      setOneSourcePositionNull(intValue);
 #if 0
