@@ -385,23 +385,31 @@ struct X86InstructionSemantics {
         // the OF flag is set to 0 if the most-significant bit of the result is the same as the CF flag (that is, the top two
         // bits of the original operand were the same); otherwise, it is set to 1.  For the SAR instruction, the OF flag is
         // cleared for all 1-bit shifts.  For the SHR instruction, the OF flag is set to the most-significant bit of the
-        // original operand.
+        // original operand."  Later, it states that "the OF flag is affected only for 1-bit shifts; otherwise it is
+        // undefined."  We're assuming that the statement "if the count is 0, then the flags are not affected" takes
+        // precedence.
         WordType<1> newOF;
         switch (kind) {
             case x86_shr:
                 newOF = policy.ite(isOneBitShift,
                                    extract<operandBits-1, operandBits>(operand),
-                                   readRegister<1>(REG_OF));
+                                   policy.ite(isZeroShiftCount, 
+                                              readRegister<1>(REG_OF),
+                                              policy.undefined_()));
                 break;
             case x86_sar:
                 newOF = policy.ite(isOneBitShift,
                                    policy.false_(),
-                                   readRegister<1>(REG_OF));
+                                   policy.ite(isZeroShiftCount,
+                                              readRegister<1>(REG_OF),
+                                              policy.undefined_()));
                 break;
             case x86_shl:
                 newOF = policy.ite(isOneBitShift,
                                    policy.xor_(newCF, extract<operandBits-1, operandBits>(retval)),
-                                   readRegister<1>(REG_OF));
+                                   policy.ite(isZeroShiftCount,
+                                              readRegister<1>(REG_OF),
+                                              policy.undefined_()));
                 break;
             default: // to shut up compiler warnings even though we would have aborted by now.
                 abort();
