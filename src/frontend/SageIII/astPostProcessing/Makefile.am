@@ -10,6 +10,8 @@ libastPostProcessing_la_SOURCES      = \
      markForOutputInCodeGeneration.C \
      processTemplateHandlingOptions.C \
      checkIsModifiedFlag.C \
+     checkIsFrontendSpecificFlag.C \
+     checkIsCompilerGeneratedFlag.C \
      fixupTemplateInstantiations.C \
      markTemplateInstantiationsForOutput.C \
      resetParentPointers.C \
@@ -49,6 +51,8 @@ include_HEADERS = \
      markTemplateSpecializationsForOutput.h \
      resetTemplateNames.h \
      checkIsModifiedFlag.h \
+     checkIsFrontendSpecificFlag.h \
+     checkIsCompilerGeneratedFlag.h \
      fixupSymbolTables.h \
      markForOutputInCodeGeneration.h \
      processTemplateHandlingOptions.h \

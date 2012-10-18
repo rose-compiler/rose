@@ -246,6 +246,11 @@ void postProcessingSupport (SgNode* node)
        // DQ (10/5/2012): Fixup known macros that might expand into a recursive mess in the unparsed code.
           fixupSelfReferentialMacrosInAST(node);
 
+       // Make sure that frontend-specific and compiler-generated AST nodes are marked as such. These two must run in this
+       // order since checkIsCompilerGenerated depends on correct values of compiler-generated flags.
+          checkIsFrontendSpecificFlag(node);
+          checkIsCompilerGeneratedFlag(node);
+
        // This resets the isModified flag on each IR node so that we can record 
        // where transformations are done in the AST.  If any transformations on
        // the AST are done, even just building it, this step should be the final
@@ -580,6 +585,9 @@ void postProcessingSupport (SgNode* node)
   // and remove the constant folded values since this represents the original code.  This mechanism
   // will provide a default when it is more fully implemented.
      resetConstantFoldedValues(node);
+
+  // Make sure that compiler-generated AST nodes are marked for Sg_File_Info::isCompilerGenerated().
+     checkIsCompilerGeneratedFlag(node);
 
   // DQ (5/22/2005): Nearly all AST fixup should be done before this closing step
   // QY: check the isModified flag
