@@ -3071,6 +3071,11 @@ Unparse_ExprStmt::unparseCastOp(SgExpression* expr, SgUnparse_Info& info)
                       // curprint("/* unparseCastOp SgCastExp::c_cast_e nonstring */ ");
 
                          curprint("(");
+#if 0
+                         printf ("In unparseCastOp(): calling newinfo.unset_SkipSemiColon() \n");
+#endif
+                      // DQ (10/18/2012): Added to unset ";" usage in defining declaration.
+                         newinfo.unset_SkipSemiColon();
 #if 1
                       // DQ (10/17/2012): We have to separate these out if we want to output the defining declarations.
                          newinfo.set_isTypeFirstPart();
@@ -3107,7 +3112,9 @@ Unparse_ExprStmt::unparseCastOp(SgExpression* expr, SgUnparse_Info& info)
                   }
                  else
                   {
+#if 0
                     curprint("/* compiler generated cast not output */");
+#endif
                   }
                break; 
              }

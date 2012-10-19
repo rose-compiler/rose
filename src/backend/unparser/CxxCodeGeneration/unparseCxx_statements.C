@@ -2556,7 +2556,7 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 #endif
           SgClassDefinition *cdefn = isSgClassDefinition(funcdecl_stmt->get_parent());
 
-          if (cdefn && cdefn->get_declaration()->get_class_type()==SgClassDeclaration::e_class)
+          if (cdefn && cdefn->get_declaration()->get_class_type() == SgClassDeclaration::e_class)
                ninfo.set_CheckAccess();
 
        // printf ("Comment out call to get_suppress_atomic(funcdecl_stmt) \n");
@@ -3415,11 +3415,11 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 void
 Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
-#if 0
+#if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES
      printf ("Inside of unparseVarDeclStmt(%p) \n",stmt);
   // ROSE_ASSERT(info.get_current_scope() != NULL);
   // printf ("An the current scope is (from info): info.get_current_scope() = %p = %s = %s \n",info.get_current_scope(),info.get_current_scope()->class_name().c_str(),SageInterface::get_name(info.get_current_scope()).c_str());
-     curprint ( string("\n /* Inside of unparseVarDeclStmt() */ \n"));
+     curprint("\n /* Inside of unparseVarDeclStmt() */ \n");
 #endif
 
      SgVariableDeclaration* vardecl_stmt = isSgVariableDeclaration(stmt);
@@ -3532,7 +3532,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      bool outputTypeDefinition = vardecl_stmt->get_variableDeclarationContainsBaseTypeDefiningDeclaration();
 
 #if 0
-     printf ("outputTypeDefinition = %s \n",(outputTypeDefinition == true) ? "true" : "false");
+     printf ("Inside of unparseVarDeclStmt(): outputTypeDefinition = %s \n",(outputTypeDefinition == true) ? "true" : "false");
 #endif
 
   // if (p != vardecl_stmt->get_variables().end())
@@ -4131,11 +4131,16 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
   // curprint ( string("\n/* START: Close off the statement with a \";\" */ \n";
 
   // Close off the statement with a ";"
+  // DQ (10/18/2012): In the case of a condirional the point of skipping the ";" is to permit multiple declarations, 
+  // this should be handled at a different level (if possible).  This change is required for test2012_47.c.
+  // This breaks other test codes, but the grainularity of the specification of output of ";" and where the 
+  // set_SkipSemiColon() function is called is now more precise.  So the other codes now pass.
   // DQ (7/12/2006): Bug fix reported by Peter Collingbourne
   // if (!ninfo.inEnumDecl() && !ninfo.inArgList() && !ninfo.SkipSemiColon())
-     if (!ninfo.inEnumDecl() && !ninfo.inArgList() && !ninfo.inConditional() && !ninfo.SkipSemiColon())
+  // if (!ninfo.inEnumDecl() && !ninfo.inArgList() && !ninfo.inConditional() && !ninfo.SkipSemiColon())
+     if (!ninfo.inEnumDecl() && !ninfo.inArgList() && !ninfo.SkipSemiColon())
         {
-          curprint ( string(";"));
+          curprint(";");
         }
 
   // curprint ( string("\n/* END: Close off the statement with a \";\" */ \n";
@@ -4222,8 +4227,9 @@ Unparse_ExprStmt::unparseClassDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
   // info.display("Inside of unparseClassDeclStmt");
 
-  // printf ("At top of unparseClassDeclStmt name = %s \n",classdecl_stmt->get_name().str());
-
+#if 0
+     printf ("At top of unparseClassDeclStmt name = %s \n",classdecl_stmt->get_name().str());
+#endif
 #if 0
      printf ("In Unparse_ExprStmt::unparseClassDeclStmt(): classdecl_stmt = %p isForward() = %s info.SkipClassDefinition() = %s name = %s \n",
           classdecl_stmt,(classdecl_stmt->isForward() == true) ? "true" : "false",
@@ -4237,7 +4243,9 @@ Unparse_ExprStmt::unparseClassDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      if (!classdecl_stmt->isForward() && classdecl_stmt->get_definition() && !info.SkipClassDefinition())
         {
           SgUnparse_Info ninfox(class_info);
-
+#if 0
+          printf ("In unparseClassDeclStmt(): calling ninfox.unset_SkipSemiColon() \n");
+#endif
           ninfox.unset_SkipSemiColon();
 
        // DQ (6/13/2007): Set to null before resetting to non-null value 
@@ -4417,11 +4425,14 @@ Unparse_ExprStmt::unparseClassDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 #endif
    }
 
+
 void
 Unparse_ExprStmt::unparseClassDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
-  // printf ("Inside of unparseClassDefnStmt \n");
-  // curprint ( string("/* Inside of unparseClassDefnStmt */ \n";
+#if 0
+     printf ("Inside of unparseClassDefnStmt \n");
+     curprint("/* Inside of unparseClassDefnStmt */ \n");
+#endif
 
      SgClassDefinition* classdefn_stmt = isSgClassDefinition(stmt);
      ROSE_ASSERT(classdefn_stmt != NULL);
@@ -4627,8 +4638,8 @@ Unparse_ExprStmt::unparseClassDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
      unparseTypeAttributes(classdefn_stmt->get_declaration());
 
 #if 0
-     curprint ("/* Leaving unparseClassDefnStmt */ \n");
-  // printf ("Leaving unparseClassDefnStmt \n");
+     curprint("/* Leaving unparseClassDefnStmt */ \n");
+     printf ("Leaving unparseClassDefnStmt \n");
 #endif
    }
 
@@ -4941,22 +4952,43 @@ void Unparse_ExprStmt::unparseLabelStmt(SgStatement* stmt, SgUnparse_Info& info)
    }
 
 void
-Unparse_ExprStmt::unparseWhileStmt(SgStatement* stmt, SgUnparse_Info& info) {
-  SgWhileStmt* while_stmt = isSgWhileStmt(stmt);
-  ROSE_ASSERT(while_stmt != NULL);
+Unparse_ExprStmt::unparseWhileStmt(SgStatement* stmt, SgUnparse_Info& info)
+   {
+     SgWhileStmt* while_stmt = isSgWhileStmt(stmt);
+     ROSE_ASSERT(while_stmt != NULL);
 
-  curprint ( string("while" ) + "(");
-  info.set_inConditional();
-  
-  unparseStatement(while_stmt->get_condition(), info);
-  info.unset_inConditional();
-  curprint ( string(")"));
-  if(while_stmt->get_body()) {
-    unp->cur.format(while_stmt->get_body(), info, FORMAT_BEFORE_NESTED_STATEMENT);
-    unparseStatement(while_stmt->get_body(), info);
-    unp->cur.format(while_stmt->get_body(), info, FORMAT_AFTER_NESTED_STATEMENT);
-  }
-  else if (!info.SkipSemiColon()) { curprint ( string(";")); }
+     curprint("while(");
+
+  // DQ (10/19/2012): We now want to have more control over where ";" is output.
+  // See test2012_47.c for an example of there this can't be explicitly handled 
+  // for all parts of a conditional. In this case we call unset_SkipSemiColon()
+  // in SgClassDefinition so that they will be output properly there.
+  // Build a specific SgUnparse_Info to support the conditional.
+  // info.set_inConditional();
+  // info.set_inConditional();
+  // unparseStatement(while_stmt->get_condition(), info);
+  // info.unset_inConditional();
+
+     SgUnparse_Info ninfo(info);
+     ninfo.set_inConditional();
+     ninfo.set_SkipSemiColon();
+     unparseStatement(while_stmt->get_condition(), ninfo);
+
+     curprint(")");
+
+     if (while_stmt->get_body())
+        {
+          unp->cur.format(while_stmt->get_body(), info, FORMAT_BEFORE_NESTED_STATEMENT);
+          unparseStatement(while_stmt->get_body(), info);
+          unp->cur.format(while_stmt->get_body(), info, FORMAT_AFTER_NESTED_STATEMENT);
+        }
+       else
+        {
+          if (!info.SkipSemiColon())
+             {
+               curprint ( string(";"));
+             }
+        }
 
 }
 

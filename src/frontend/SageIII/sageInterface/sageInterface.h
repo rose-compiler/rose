@@ -1210,7 +1210,9 @@ NodeType* getEnclosingNode(const SgNode* astNode, const bool includingSelf = fal
 #if 0
                printf ("Found a nondefining declaration so use the non-defining declaration instead \n");
 #endif
-               parent = firstNondefiningDeclaration;
+            // DQ (10/19/2012): Use the defining declaration instead.
+            // parent = firstNondefiningDeclaration;
+               parent = definingDeclaration;
              }
         }
 
@@ -1218,15 +1220,28 @@ NodeType* getEnclosingNode(const SgNode* astNode, const bool includingSelf = fal
      printf ("reset: previouslySeenParent = %p = %s \n",previouslySeenParent,previouslySeenParent->class_name().c_str());
 #endif
 
+  // DQ (10/19/2012): This branch is just to document the cycle that was previously detected, it is for 
+  // debugging only. Thus it ony make sense for it to be executed when "(foundCycle == true)".  However, 
+  // this will have to be revisited later since it appears clear that it is a problem for the binary analysis 
+  // work when it is visited for this case.  Since the cycle is detected, but there is no assertion on the
+  // cycle, we don't exit when a cycle is identified (which is the point of the code below). 
+  // Note also that I have fixed the code (above and below) to only chase pointers through defining 
+  // declarations (where they exist), this is important since non-defining declarations can be almost
+  // anywhere (and thus chasing them can make it appear that there are cycles where there are none 
+  // (I think); test2012_234.C demonstrates an example of this.
   // DQ (10/9/2012): Robb has suggested this change to fix the binary analysis work.
   // if (foundCycle == true)
      if (foundCycle == false)
         {
+
+
           while ( (parent != NULL) && (!dynamic_cast<const NodeType*>(parent)) )
              {
                ROSE_ASSERT(parent->get_parent() != parent);
 #if 0
                printf ("In getEnclosingNode() (2nd try): parent = %p = %s \n",parent,parent->class_name().c_str());
+               if (parent->get_file_info() != NULL)
+                    parent->get_file_info()->display("In getEnclosingNode() (2nd try): debug");
 #endif
                SgDeclarationStatement* declarationStatement = isSgDeclarationStatement(parent);
                if (declarationStatement != NULL)
@@ -1237,7 +1252,7 @@ NodeType* getEnclosingNode(const SgNode* astNode, const bool includingSelf = fal
                     SgDeclarationStatement* definingDeclaration         = declarationStatement->get_definingDeclaration();
                     SgDeclarationStatement* firstNondefiningDeclaration = declarationStatement->get_firstNondefiningDeclaration();
 #if 0
-                    printf (" --- declarationStatement                       = %p \n",declarationStatement);
+                    printf (" --- declarationStatement                       = %p = %s \n",declarationStatement,(declarationStatement != NULL) ? declarationStatement->class_name().c_str() : "null");
 
                     printf (" --- definingDeclaration                        = %p \n",definingDeclaration);
                     if (definingDeclaration != NULL && definingDeclaration->get_parent() != NULL)
@@ -1252,13 +1267,22 @@ NodeType* getEnclosingNode(const SgNode* astNode, const bool includingSelf = fal
 #if 0
                          printf ("Found a nondefining declaration so use the firstNondefining declaration instead \n");
 #endif
-                         parent = firstNondefiningDeclaration;
+                      // DQ (10/19/2012): Use the defining declaration instead.
+                      // parent = firstNondefiningDeclaration;
+                         parent = definingDeclaration;
                        }
                   }
+
                parent = parent->get_parent();
 
+#if 1
             // DQ (3/5/2012): Check for loops that will cause infinite loops.
                ROSE_ASSERT(parent != previouslySeenParent);
+#else
+               printf ("WARNING::WARNING::WARNING commented out assertion for parent != previouslySeenParent \n");
+               if (parent == previouslySeenParent)
+                    break;
+#endif
              }
         }
 
