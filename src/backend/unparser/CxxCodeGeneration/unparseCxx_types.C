@@ -1166,6 +1166,11 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
                     SgDeclarationStatementPtrList::iterator pp = classdefn_stmt->get_members().begin();
                     while (pp != classdefn_stmt->get_members().end())
                        {
+                      // DQ (10/18/2012): If this is in the context of a conditional then the ";" will be supressed.
+                      // We could explicitly output a ";" in this case if required.
+#if 0
+                         printf ("In unparseClassType: ninfo.isSkipSemiColon() = %s \n",ninfo.SkipSemiColon() ? "true" : "false");
+#endif
                          unp->u_exprStmt->unparseStatement((*pp), ninfo);
                          pp++;
                        }

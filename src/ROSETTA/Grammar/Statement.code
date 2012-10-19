@@ -3447,13 +3447,21 @@ SgStatement::remove_statement(SgStatement *target)
 void 
 SgStatement::insert_statement(SgStatement* target, SgStatement* newstmt, bool inFront)
    {
+#if 0
+     printf ("In SgStatement::insert_statement(): insert newstmt = %p = %s before/after target = %p = %s \n",newstmt,newstmt->class_name().c_str(),target,target->class_name().c_str());
+#endif
+
      bool r = insert_child( target, newstmt, inFront, false);
      assert(r);
    }
 
 void
 SgStatement::insert_statement(SgStatement* target, const SgStatementPtrList& newstmtList, bool inFront)
-   {  
+   {
+#if 0
+      printf ("In SgStatement::insert_statement(): insert newstmtList.size() = %zu before/after target = %p = %s \n",newstmtList.size(),target,target->class_name().c_str());
+#endif
+
      SgBasicBlock* tmp = new SgBasicBlock();
      tmp->get_statements() = newstmtList;
      bool r = insert_child( target, tmp, inFront, true);
@@ -3488,6 +3496,10 @@ SgStatement::replace_statement(SgStatement* target, const SgStatementPtrList& ne
 void
 SgStatement::insert_statement_from_basicBlock(SgStatement* target, SgStatement* newstmt, bool inFront)
    {
+#if 0
+     printf ("In SgStatement::insert_statement_from_basicBlock(): insert newstmt = %p = %s before/after target = %p = %s \n",newstmt,newstmt->class_name().c_str(),target,target->class_name().c_str());
+#endif
+
      bool r = insert_child( target, newstmt, inFront, true);
      assert(r);
    }
@@ -11019,7 +11031,9 @@ SgVariableDeclaration::compute_baseTypeDefiningDeclaration() const
        // ROSE_ASSERT(p_baseTypeDefiningDeclaration == NULL);
           if (p_baseTypeDefiningDeclaration != NULL)
              {
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
                printf ("Warning: In SgVariableDeclaration::compute_baseTypeDefiningDeclaration(): p_baseTypeDefiningDeclaration != NULL but returning NULL \n");
+#endif
              }
 
           return NULL;

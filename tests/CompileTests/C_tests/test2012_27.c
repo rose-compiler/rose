@@ -15,11 +15,12 @@ cherokee_server_handle_panic()
 
 		42;
 		
-		LOG_CRITICAL (CHEROKEE_ERROR_SERVER_PANIC, cmd.buf, val);
+//		LOG_CRITICAL (CHEROKEE_ERROR_SERVER_PANIC, cmd.buf, val);
 		42;
 	}
 
-	cherokee_buffer_mrproper (&cmd);
+//	cherokee_buffer_mrproper (&cmd);
+		42;
 fin:
 	abort();
 }

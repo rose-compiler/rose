@@ -8908,6 +8908,7 @@ void SageInterface::setPragma(SgPragmaDeclaration* decl, SgPragma *pragma)
   pragma->set_parent(decl);
 }
 
+
 //! SageInterface::appendStatement()
 //TODO should we ensureBasicBlockAsScope(scope) ? like ensureBasicBlockAsParent(targetStmt);
 //It might be well legal to append the first and only statement in a scope!
@@ -8925,6 +8926,9 @@ void SageInterface::appendStatement(SgStatement *stmt, SgScopeStatement* scope)
 
      if (scope == NULL)
         {
+#if 0
+          printf ("   --- scope was not specified as input! \n");
+#endif
           scope = SageBuilder::topScopeStack();
         }
 
@@ -8983,6 +8987,10 @@ void SageInterface::appendStatement(SgStatement *stmt, SgScopeStatement* scope)
              }
         }
 
+#if 0
+     printf ("   --- skipAddingStatement = %s \n",skipAddingStatement ? "true" : "false");
+#endif
+
      if (skipAddingStatement == false)
         {
        // catch-all for statement fixup
@@ -8994,6 +9002,9 @@ void SageInterface::appendStatement(SgStatement *stmt, SgScopeStatement* scope)
        //-----------------------
        // append the statement finally
        // scope->append_statement (stmt);
+#if 0
+          printf ("   --- calling insertStatementInScope(): scope = %p = %s stmt = %p = %s \n",scope,scope->class_name().c_str(),stmt,stmt->class_name().c_str());
+#endif
           scope->insertStatementInScope(stmt,false);
           stmt->set_parent(scope); // needed?
         }
@@ -9014,26 +9025,27 @@ void SageInterface::appendStatement(SgStatement *stmt, SgScopeStatement* scope)
 #endif
    }
 
+
 void
 SageInterface::appendStatementList(const std::vector<SgStatement*>& stmts, SgScopeStatement* scope) 
    {
      for (size_t i = 0; i < stmts.size(); ++i)
         {
-#if 0
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
           printf ("In appendStatementList(): stmts[i = %zu] = %p = %s \n",i,stmts[i],stmts[i]->class_name().c_str());
-          printf ("In appendStatementList(): stmts[i = %zu]->get_parent() = %p \n",i,stmts[i]->get_parent());
+       // printf ("In appendStatementList(): stmts[i = %zu]->get_parent() = %p \n",i,stmts[i]->get_parent());
 #endif
        // appendStatement(stmts[i], scope);
           if (stmts[i]->get_parent() != NULL)
              {
 #ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
-               printf ("In appendStatementList(): stmts[i = %zu] will be added to scope (because stmts[i]->get_parent() != NULL (= %p = %s) \n",i,stmts[i]->get_parent(),stmts[i]->get_parent()->class_name().c_str());
+               printf ("   --- In appendStatementList(): stmts[i = %zu] will be added to scope (because stmts[i]->get_parent() != NULL (= %p = %s) \n",i,stmts[i]->get_parent(),stmts[i]->get_parent()->class_name().c_str());
 #endif
                appendStatement(stmts[i], scope);
              }
             else
              {
-               printf ("WARNING: In appendStatementList(): stmts[i = %zu] not added to scope (because stmts[i]->get_parent() == NULL) \n",i);
+               printf ("   --- WARNING: In appendStatementList(): stmts[i = %zu] not added to scope (because stmts[i]->get_parent() == NULL) \n",i);
              }
         }
    }
@@ -9116,6 +9128,10 @@ void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStm
           cerr<<"Empty parent pointer for target statement. May be caused by the wrong order of target and new statements in insertStatement(targetStmt, newStmt)"<<endl;
           ROSE_ASSERT(parent);
         }
+
+#if 1
+     printf ("In SageInterface::insertStatement(): insert newStmt = %p = %s before/after targetStmt = %p = %s \n",newStmt,newStmt->class_name().c_str(),targetStmt,targetStmt->class_name().c_str());
+#endif
 
   // Liao 3/2/2012. The semantics of ensureBasicBlockAsParent() are messy. input targetStmt may be
   // returned as it is if it is already a basic block as a body of if/while/catch/ etc.

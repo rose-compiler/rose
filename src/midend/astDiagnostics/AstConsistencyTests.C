@@ -2239,7 +2239,7 @@ TestAstForUniqueNodesInAST::visit ( SgNode* node )
      ROSE_ASSERT(node != NULL);
 
 #if 0
-     printf ("TestAstForUniqueNodesInAST::visit (): IR node = %p = %s in the AST. \n",node,node->class_name().c_str());
+     printf ("In TestAstForUniqueNodesInAST::visit (): IR node = %p = %s in the AST. \n",node,node->class_name().c_str());
 #endif
 
      if (astNodeSet.find(node) != astNodeSet.end())
@@ -2257,10 +2257,35 @@ TestAstForUniqueNodesInAST::visit ( SgNode* node )
           printf ("Error: found a shared IR node = %p = %s in the AST. \n",node,node->class_name().c_str());
 
 #if 0
+       // DQ (10/19/2012): This fails for a collection of C++ codes only:
+       // test2011_121.C
+       // test2011_141.C
+       // test2011_142.C
+       // test2005_142.C
+       // test2009_41.C
+       // test2006_124.C
+       // test2005_128.C
+       // test2005_34.C
+       // test2004_129.C
+       // test2004_130.C
+       // test2004_85.C
+       // test2004_127.C
+       // test2005_103.C
+       // test2005_42.C
+       // test2006_84.C
+       // test2005_35.C
+       // test2006_141.C
+       // inputBug317.C
+       // test2005_161.C
+       // test2004_120.C
+       // This is a result of new work to support class/struct/union declarations output in unusual
+       // location in some exmaples from C applications that have been a focus lately.
+       // I might want to fix this up later after the dust settles.  These appear to be unusual cases.
+
           ROSE_ASSERT(false);
 #else
        // DQ (4/26/2012): debugging... (test2012_67.C)
-          printf ("Commented out this error to view the dot file \n");
+          printf ("In TestAstForUniqueNodesInAST::visit (): Commented out this error to view the dot file \n");
 #endif
         }
 #if 0

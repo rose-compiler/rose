@@ -5786,7 +5786,7 @@ extern int fstat (int __fd, struct stat *__buf) __asm__ ("" "fstat64") __attribu
 
 extern int stat64 (__const char *__restrict __file,
      struct stat64 *__restrict __buf) __attribute__ ((__nothrow__)) __attribute__ ((__nonnull__ (1, 2)));
-extern int fstat64 (int __fd, struct stat64 *__buf) __attribute__ ((__nothrow__)) __attribute__ ((__nonnull__ (2)));
+ extern int fstat64 (int __fd, struct stat64 *__buf) __attribute__ ((__nothrow__)) __attribute__ ((__nonnull__ (2)));
 // # 245 "/usr/include/sys/stat.h" 3 4
 extern int fstatat (int __fd, __const char *__restrict __file, struct stat *__restrict __buf, int __flag) __asm__ ("" "fstatat64") __attribute__ ((__nothrow__))
 
@@ -5812,7 +5812,7 @@ extern int lstat (__const char *__restrict __file, struct stat *__restrict __buf
 
 
 extern int lstat64 (__const char *__restrict __file,
-      struct stat64 *__restrict __buf)
+     struct stat64 *__restrict __buf)
      __attribute__ ((__nothrow__)) __attribute__ ((__nonnull__ (1, 2)));
 
 
@@ -5991,7 +5991,8 @@ __attribute__ ((__nothrow__)) mknodat (int __fd, __const char *__path, __mode_t 
 
 
 
-
+#if 0
+// DQ (10/19/2012): these had to be removed from the "gcc -E" processed file.
 extern __inline int
 __attribute__ ((__nothrow__)) stat64 (__const char *__path, struct stat64 *__statbuf)
 {
@@ -6019,7 +6020,7 @@ __attribute__ ((__nothrow__)) fstatat64 (int __fd, __const char *__filename, str
 {
   return __fxstatat64 (1, __fd, __filename, __statbuf, __flag);
 }
-
+#endif
 
 
 
@@ -12838,7 +12839,6 @@ ngx_os_signal_process(ngx_cycle_t *cycle, char *name, ngx_int_t pid)
 
     for (sig = signals; sig->signo != 0; sig++) {
         if (__extension__ ({ size_t __s1_len, __s2_len; (__builtin_constant_p ((const char *) name) && __builtin_constant_p ((const char *) sig->name) && (__s1_len = strlen ((const char *) name), __s2_len = strlen ((const char *) sig->name), (!((size_t)(const void *)(((const char *) name) + 1) - (size_t)(const void *)((const char *) name) == 1) || __s1_len >= 4) && (!((size_t)(const void *)(((const char *) sig->name) + 1) - (size_t)(const void *)((const char *) sig->name) == 1) || __s2_len >= 4)) ? __builtin_strcmp ((const char *) name, (const char *) sig->name) : (__builtin_constant_p ((const char *) name) && ((size_t)(const void *)(((const char *) name) + 1) - (size_t)(const void *)((const char *) name) == 1) && (__s1_len = strlen ((const char *) name), __s1_len < 4) ? (__builtin_constant_p ((const char *) sig->name) && ((size_t)(const void *)(((const char *) sig->name) + 1) - (size_t)(const void *)((const char *) sig->name) == 1) ? __builtin_strcmp ((const char *) name, (const char *) sig->name) : (__extension__ ({ __const unsigned char *__s2 = (__const unsigned char *) (__const char *) ((const char *) sig->name); register int __result = (((__const unsigned char *) (__const char *) ((const char *) name))[0] - __s2[0]); if (__s1_len > 0 && __result == 0) { __result = (((__const unsigned char *) (__const char *) ((const char *) name))[1] - __s2[1]); if (__s1_len > 1 && __result == 0) { __result = (((__const unsigned char *) (__const char *) ((const char *) name))[2] - __s2[2]); if (__s1_len > 2 && __result == 0) __result = (((__const unsigned char *) (__const char *) ((const char *) name))[3] - __s2[3]); } } __result; }))) : (__builtin_constant_p ((const char *) sig->name) && ((size_t)(const void *)(((const char *) sig->name) + 1) - (size_t)(const void *)((const char *) sig->name) == 1) && (__s2_len = strlen ((const char *) sig->name), __s2_len < 4) ? (__builtin_constant_p ((const char *) name) && ((size_t)(const void *)(((const char *) name) + 1) - (size_t)(const void *)((const char *) name) == 1) ? __builtin_strcmp ((const char *) name, (const char *) sig->name) : (__extension__ ({ __const unsigned char *__s1 = (__const unsigned char *) (__const char *) ((const char *) name); register int __result = __s1[0] - ((__const unsigned char *) (__const char *) ((const char *) sig->name))[0]; if (__s2_len > 0 && __result == 0) { __result = (__s1[1] - ((__const unsigned char *) (__const char *) ((const char *) sig->name))[1]); if (__s2_len > 1 && __result == 0) { __result = (__s1[2] - ((__const unsigned char *) (__const char *) ((const char *) sig->name))[2]); if (__s2_len > 2 && __result == 0) __result = (__s1[3] - ((__const unsigned char *) (__const char *) ((const char *) sig->name))[3]); } } __result; }))) : __builtin_strcmp ((const char *) name, (const char *) sig->name)))); }) == 0) {
-
             if (kill(pid, sig->signo) != -1) {
                 return 0;
             }

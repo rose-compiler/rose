@@ -84,6 +84,7 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2006_114.c \
      test2006_133.c \
      test2006_135.c \
+     test2007_177.c \
      test2008_01.c \
      test2008_02.c \
      test2009_01.c \
@@ -104,7 +105,7 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2010_15.c \
      test2010_17.c \
      test2011_05.c \
-     test2007_177.c \
+     test2012_01.c \
      test2012_02.c \
      test2012_03.c \
      test2012_05.c \
@@ -126,6 +127,7 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2012_22.c \
      test2012_24.c \
      test2012_26.c \
+     test2012_32.c \
      test2012_33.c \
      test2012_34.c \
      test2012_35.c \
@@ -136,15 +138,29 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2012_40.c \
      test2012_41.c \
      test2012_46.c \
+     test2012_47.c \
+     test2012_48.c \
+     test2012_49.c \
+     test2012_50.c \
+     test2012_51.c \
+     test2012_52.c \
+     test2012_53.c \
+     test2012_54.c \
+     test2012_55.c \
+     test2012_56.c \
      math.c \
      complex_01.c \
      constants.c
 
 # DQ (9/28/2012): Failing tests.
-# test2012_01.c 
 # test2012_04.c (infinite recursion!)
+# test2012_30.c (break statement not unparsed in loop)
+# test2012_42.c (more complex (original) case of test2012_43.c)
+# test2012_43.c (macro for compile-time assertions)
+# test2012_44.c 
+# test2012_45.c 
 
-# This is a C99 test code (moved to the C99_tests directory.
+# This is a C99 test code (moved to the C99_tests directory).
 # test2012_20.c 
 # test2012_23.c
 # test2012_25.c
