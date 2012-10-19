@@ -132,8 +132,9 @@ namespace RSIM_Semantics {
 
         /* See ROSE's NullSemantics. Redefined here so that we don't end up with non-concrete values in the simulator
          * state. This is called by X86InstructionSemantics for the x86 AND instruction to set AF flag. */
-        ValueType<1> undefined_() {
-            return ValueType<1>(1);
+        template<size_t nBits>
+        ValueType<nBits> undefined_() {
+            return ValueType<nBits>(1);
         }
 
         /* Called by X86InstructionSemantics for the HLT instruction. See ROSE's NullSemantics. */
