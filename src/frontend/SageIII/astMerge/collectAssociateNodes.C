@@ -511,6 +511,8 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
             // DQ (2/6/2007): Some builtin functions (e.g. __builtin_expect()) generate a function type that can't be found
                if (functionTypeSymbol == NULL)
                   {
+#if 0
+                 // DQ (10/20/2012): Commented out this output spew, not all functions require a definition (see test2012_57.c, for example).
                     printf ("Note: no function type was found for functionDeclaration = %p = %s = %s \n",functionDeclaration,functionDeclaration->class_name().c_str(),SageInterface::get_name(functionDeclaration).c_str());
 #if 1
                     printf ("Error: functionType->get_mangled() = %s not found in symbol table \n",functionType->get_mangled().str());
@@ -524,6 +526,7 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
                     ROSE_ASSERT(functionDeclaration->get_startOfConstruct()->isCompilerGenerated() == true);
 #else
                     printf ("Commented out test (assertion) of functionDeclaration->get_startOfConstruct()->isCompilerGenerated() == true \n");
+#endif
 #endif
                   }
                  else

@@ -15,5 +15,6 @@ enum { I_RING_SIZE = 4 };
 // I have confirmed that ROSE properly compiles this (it is represented properly in the AST), but unparses it as:
 //    extern int (*_gl_verify_function2())[!(!(sizeof(struct )))];
 // because who would have expected a class definition in the input argument to the sizeof() function... or at least I didn't...but I will fix this...
-verify (1 <= I_RING_SIZE);
+// verify (1 <= I_RING_SIZE);
 
+extern int (*_gl_verify_function18 (void)) [(!!sizeof (struct { unsigned int _gl_verify_error_if_negative: (1 <= I_RING_SIZE) ? 1 : -1; }))];

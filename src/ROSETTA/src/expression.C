@@ -1450,6 +1450,11 @@ Grammar::setUpExpressions ()
      SizeOfOp.setDataPrototype("bool","global_qualification_required","= false",
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (10/17/2012): Added information to trigger output of the defining declaration of the type (see test2012_57.c).
+  // We need to control the output of the defining declaration in some interesting places where it can be specified.
+     SizeOfOp.setDataPrototype("bool","sizeOfContainsBaseTypeDefiningDeclaration","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
   // DQ (7/18/2011): This is structurally similar to the SizeOfOp in that it takes a type operand
   // and we have to save the expression type explicitly (I think).
      JavaInstanceOfOp.setFunctionPrototype ( "HEADER_JAVA_INSTANCEOF_OPERATOR", "../Grammar/Expression.code" );

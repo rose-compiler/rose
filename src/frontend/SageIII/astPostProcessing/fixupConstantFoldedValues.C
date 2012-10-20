@@ -722,7 +722,9 @@ VerifyOriginalExpressionTreesSetToNull::visit ( SgNode* node )
 
           if (originalExpressionTree != NULL)
              {
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
                printf ("Error: there is a valid originalExpressionTree = %p = %s on node = %p = %s \n",originalExpressionTree,originalExpressionTree->class_name().c_str(),exp,exp->class_name().c_str());
+#endif
              }
 #if 0
           ROSE_ASSERT(originalExpressionTree == NULL);
@@ -750,8 +752,10 @@ VerifyOriginalExpressionTreesSetToNull::visit ( SgNode* node )
                   }
                ROSE_ASSERT(isSgArrayType(parent) != NULL || isSgVariableDefinition(parent) != NULL);
 #else
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
                printf ("In VerifyOriginalExpressionTreesSetToNull(): originalExpressionTree = %p = %s on node = %p = %s Ingoring originalExpressionTree != NULL \n",
                     originalExpressionTree,originalExpressionTree->class_name().c_str(),exp,exp->class_name().c_str());
+#endif
 #endif
              }
         }
