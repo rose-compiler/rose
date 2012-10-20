@@ -249,7 +249,9 @@ FixupAstSymbolTables::visit ( SgNode* node )
                            // ROSE_ASSERT(definingDeclarationType == declarationType);
                               if (definingDeclarationType != declarationType)
                                  {
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
                                    printf ("In fixupSymbolTables.C: Note that definingDeclarationType != declarationType \n");
+#endif
                                  }
                             }
 

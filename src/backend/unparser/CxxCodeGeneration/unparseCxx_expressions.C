@@ -2628,6 +2628,15 @@ Unparse_ExprStmt::unparseSizeOfOp(SgExpression* expr, SgUnparse_Info & info)
      SgSizeOfOp* sizeof_op = isSgSizeOfOp(expr);
      ROSE_ASSERT(sizeof_op != NULL);
 
+  // DQ (10/19/2012): This is the explicitly set boolean value which indicates that a class declaration is buried inside
+  // the current cast expression's reference to a type (e.g. "(((union ABC { int __in; int __i; }) { .__in = 42 }).__i);").
+  // In this case we have to output the base type with its definition.
+     bool outputTypeDefinition = sizeof_op->get_sizeOfContainsBaseTypeDefiningDeclaration();
+
+#if 0
+     printf ("In unparseSizeOfOp(expr = %p): outputTypeDefinition = %s \n",expr,(outputTypeDefinition == true) ? "true" : "false");
+#endif
+
      curprint ( "sizeof(");
      if (sizeof_op->get_operand_expr() != NULL)
         {
@@ -2646,10 +2655,53 @@ Unparse_ExprStmt::unparseSizeOfOp(SgExpression* expr, SgUnparse_Info & info)
        // DQ (6/2/2011): Added support for name qualification of types reference via sizeof operator.
           info2.set_reference_node_for_qualification(sizeof_op);
 
-          unp->u_type->unparseType(sizeof_op->get_operand_type(), info2);
+       // DQ (10/19/2012): Modified to support output of the type's defining declaration (see test2012_57.c).
+       // unp->u_type->unparseType(sizeof_op->get_operand_type(), info2);
+
+          SgUnparse_Info newinfo(info2);
+
+          if (outputTypeDefinition == true)
+             {
+            // DQ (10/11/2006): As part of new implementation of qualified names we now default to the generation of all qualified names unless they are skipped.
+            // newinfo.set_SkipQualifiedNames();
+
+            // DQ (10/17/2012): Added new code not present where this is handled for SgVariableDeclaration IR nodes.
+               newinfo.unset_SkipDefinition();
+
+            // DQ (5/23/2007): Commented these out since they are not applicable for statement expressions (see test2007_51.C).
+            // DQ (10/5/2004): If this is a defining declaration then make sure that we don't skip the definition
+               ROSE_ASSERT(newinfo.SkipClassDefinition() == false);
+               ROSE_ASSERT(newinfo.SkipEnumDefinition()  == false);
+               ROSE_ASSERT(newinfo.SkipDefinition()      == false);
+             }
+            else
+             {
+               newinfo.set_SkipDefinition();
+               ROSE_ASSERT(newinfo.SkipClassDefinition() == true);
+               ROSE_ASSERT(newinfo.SkipEnumDefinition() == true);
+             }
+
+#if 0
+          printf ("In unparseSizeOfOp(): calling newinfo.unset_SkipSemiColon() \n");
+#endif
+       // DQ (10/18/2012): Added to unset ";" usage in defining declaration.
+          newinfo.unset_SkipSemiColon();
+#if 1
+       // DQ (10/17/2012): We have to separate these out if we want to output the defining declarations.
+          newinfo.set_isTypeFirstPart();
+          unp->u_type->unparseType(sizeof_op->get_operand_type(), newinfo);
+          newinfo.set_isTypeSecondPart();
+          unp->u_type->unparseType(sizeof_op->get_operand_type(), newinfo);
+#else
+       // DQ (1/14/2006): p_expression_type is no longer stored (type is computed instead)
+       // unp->u_type->unparseType(cast_op->get_expression_type(), newinfo);
+       // unp->u_type->unparseType(cast_op->get_type(), newinfo);
+          unp->u_type->unparseType(sizeof_op->get_operand_type(), newinfo);
+#endif
         }
      curprint ( ")");
    }
+
 
 void
 Unparse_ExprStmt::unparseUpcLocalSizeOfOp(SgExpression* expr, SgUnparse_Info & info)
