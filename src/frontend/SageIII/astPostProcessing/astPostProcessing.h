@@ -25,6 +25,8 @@
 #include "markBackendCompilerSpecificFunctions.h"
 #include "fixupNullPointers.h"
 #include "checkIsModifiedFlag.h"
+#include "checkIsFrontendSpecificFlag.h"
+#include "checkIsCompilerGeneratedFlag.h"
 #include "fixupNames.h"
 #include "fixupTypes.h"
 #include "fixupConstructorPreinitializationLists.h"

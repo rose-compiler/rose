@@ -1140,6 +1140,10 @@ std::vector<SgBreakStmt*> findBreakStmts(SgStatement* code, const std::string& f
  *  ancestors, to find the first node matching the specified or derived type.  If @p includingSelf is true then the
  *  starting node, @p astNode, is returned if its type matches, otherwise the search starts at the parent of @p astNode.
  *
+ *  For the purposes of this function, the parent (P) of an SgDeclarationStatement node (N) is considered to be the first
+ *  non-defining declaration of N if N has both a defining declaration and a first non-defining declaration and the defining
+ *  declaration is different than the first non-defining declaration.
+ *
  *  If no ancestor of the requisite type of subtypes is found then this function returns a null pointer.
  *
  *  If @p astNode is the null pointer, then the return value is a null pointer. That is, if there is no node, then there cannot
@@ -1147,6 +1151,11 @@ std::vector<SgBreakStmt*> findBreakStmts(SgStatement* code, const std::string& f
 template <typename NodeType>
 NodeType* getEnclosingNode(const SgNode* astNode, const bool includingSelf = false)
    {
+#if 1
+  // DQ (10/20/2012): This is the older version of this implementation.  Until I am sure that
+  // the newer version (below) is what we want to use I will resolve this conflict by keeping
+  // the previousl version in place.
+
      if (NULL == astNode)
         {
           return NULL;
@@ -1287,6 +1296,35 @@ NodeType* getEnclosingNode(const SgNode* astNode, const bool includingSelf = fal
         }
 
      return const_cast<NodeType*>(dynamic_cast<const NodeType*> (parent));
+#else
+  // DQ (10/20/2012): Using Robb's newer version with my modification to use the definingDeclaration rather than firstNondefiningDeclaration (below).
+
+       // Find the parent of specified type, but watch out for cycles in the ancestry (which would cause an infinite loop).
+       // Cast away const because isSg* functions aren't defined for const node pointers; and our return is not const.
+       SgNode *node = const_cast<SgNode*>(!astNode || includingSelf ? astNode : astNode->get_parent());
+       std::set<const SgNode*> seen; // nodes we've seen, in order to detect cycles
+       while (node) {
+           if (NodeType *found = dynamic_cast<NodeType*>(node))
+               return found;
+
+           // FIXME: Cycle detection could be moved elsewhere so we don't need to do it on every call. [RPM 2012-10-09]
+           ROSE_ASSERT(seen.insert(node).second);
+
+           // Traverse to parent (declaration statements are a special case)
+           if (SgDeclarationStatement *declarationStatement = isSgDeclarationStatement(node)) {
+               SgDeclarationStatement *definingDeclaration = declarationStatement->get_definingDeclaration();
+               SgDeclarationStatement *firstNondefiningDeclaration = declarationStatement->get_firstNondefiningDeclaration();
+               if (definingDeclaration && firstNondefiningDeclaration && declarationStatement != firstNondefiningDeclaration) {
+                // DQ (10/19/2012): Use the defining declaration instead.
+                // node = firstNondefiningDeclaration;
+                   node = definingDeclaration;
+               }
+           } else {
+               node = node->get_parent();
+           }
+       }
+       return NULL;
+#endif
    }
 
 //! Get the closest scope from astNode. Return astNode if it is already a scope.

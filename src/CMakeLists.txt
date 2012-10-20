@@ -766,6 +766,8 @@ ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astPostProcessing/astPostProcessing.C
      ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astPostProcessing/markForOutputInCodeGeneration.C 
      ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astPostProcessing/processTemplateHandlingOptions.C 
      ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astPostProcessing/checkIsModifiedFlag.C 
+     ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astPostProcessing/checkIsFrontendSpecificFlag.C 
+     ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astPostProcessing/checkIsCompilerGeneratedFlag.C 
      ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astPostProcessing/fixupTemplateInstantiations.C 
      ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astPostProcessing/markTemplateInstantiationsForOutput.C 
      ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astPostProcessing/resetParentPointers.C 
