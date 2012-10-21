@@ -492,7 +492,7 @@ public:
       return c == rersChar(lval.getIntValue());
     }
     case InputOutput::STDOUT_VAR: {
-      const PState& prop_state = *estate->pstate;
+      const PState& prop_state = *estate->pstate();
       //cerr<<estate->toString()<<endl;
       //cerr<<prop_state.varValueToString(estate->io.var)<<" lval="<<lval.toString()<<endl;
       assert(prop_state.varIsConst(estate->io.var));
@@ -544,7 +544,7 @@ public:
       // is there an output != c constraint?
 
       // var != c
-      ListOfAValue l = estate->getConstraints().getNeqVarConst(estate->io.var);
+      ListOfAValue l = estate->constraints()->getNeqVarConst(estate->io.var);
       for (ListOfAValue::iterator lval = l.begin(); lval != l.end(); ++lval) {
 	if (lval->isConstInt())
 	  if (c == rersChar(lval->getIntValue()))
@@ -552,7 +552,7 @@ public:
       }
 	  
       // output == c constraint?
-      const PState& prop_state = *estate->pstate;
+      const PState& prop_state = *estate->pstate();
       assert(prop_state.varIsConst(estate->io.var));
       AValue aval = const_cast<PState&>(prop_state)[estate->io.var].getValue();
       return c != rersChar(aval.getIntValue());
@@ -992,11 +992,19 @@ Checker::verify(const Formula& f)
     case InputOutput::STDOUT_VAR:
     case InputOutput::STDERR_VAR:
     case InputOutput::STDERR_CONST:
-    case InputOutput::STDIN_VAR:
+    case InputOutput::STDIN_VAR: {
       //cerr<<label<<": "<<v.ltl_properties[label][e.label]<<endl;
       BoolLattice result = v.ltl_properties[label][e.label];
       //assert(!result.isBot());
       return result;
+	}
+    case InputOutput::NONE: {
+	  // MS: missing case
+	  //cerr << "WARNING: LTLChecker: IO: op:NONE."<<endl;
+	  break;
+	}
+	default:
+	  throw "Error: STLChecker: unknown io operator.";
     }
 
     /* add each successor to workset */

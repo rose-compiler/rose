@@ -173,9 +173,9 @@ string Visualizer::foldedTransitionGraphToDot() {
   for(TransitionGraph::iterator j=transitionGraph->begin();j!=transitionGraph->end();++j) {
 	const EState* source=(*j).source;
 	const EState* target=(*j).target;
-	ss <<"L"<<Labeler::labelToString(source->label)<<":"<<"\"P"<<estateSet->estateId(source)<<"\""
+	ss <<"L"<<Labeler::labelToString(source->label())<<":"<<"\"P"<<estateSet->estateId(source)<<"\""
 	   <<"->"
-	   <<"L"<<Labeler::labelToString(target->label)<<":"<<"\"P"<<estateSet->estateId(target)<<"\"";
+	   <<"L"<<Labeler::labelToString(target->label())<<":"<<"\"P"<<estateSet->estateId(target)<<"\"";
 	if((*j).edge.type==EDGE_TRUE) ss<<"[color=green]";
 	if((*j).edge.type==EDGE_FALSE) ss<<"[color=red]";
 	if((*j).edge.type==EDGE_BACKWARD) ss<<"[color=blue]";

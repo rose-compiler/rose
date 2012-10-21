@@ -91,7 +91,7 @@ list<SingleEvalResultConstInt> listify(SingleEvalResultConstInt res) {
 
 
 list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState estate, bool useConstraints, bool safeConstraintPropagation) {
-  assert(estate.pstate); // ensure state exists
+  assert(estate.pstate()); // ensure state exists
   SingleEvalResultConstInt res;
   // initialize with default values from argument(s)
   res.estate=estate;
@@ -123,7 +123,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
 		  VariableId varId;
 		  if(variable(lhs,varId) && rhsResult.isConstInt()) {
 			// if var is top add two states with opposing constraints
-			if(!res.estate.pstate->varIsConst(varId)) {
+			if(!res.estate.pstate()->varIsConst(varId)) {
 			  SingleEvalResultConstInt tmpres1=res;
 			  SingleEvalResultConstInt tmpres2=res;
 			  tmpres1.exprConstraints.addConstraint(Constraint(Constraint::EQ_VAR_CONST,varId,rhsResult.value()));
@@ -138,7 +138,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
 		  }
 		  if(lhsResult.isConstInt() && variable(rhs,varId)) {
 			// only add the equality constraint if no constant is bound to the respective variable
-			if(!res.estate.pstate->varIsConst(varId)) {
+			if(!res.estate.pstate()->varIsConst(varId)) {
 			  SingleEvalResultConstInt tmpres1=res;
 			  SingleEvalResultConstInt tmpres2=res;
 			  tmpres1.exprConstraints.addConstraint(Constraint(Constraint::EQ_VAR_CONST,varId,lhsResult.value()));
@@ -160,7 +160,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
 		  VariableId varId;
 		  if(variable(lhs,varId) && rhsResult.isConstInt()) {
 			// only add the equality constraint if no constant is bound to the respective variable
-			if(!res.estate.pstate->varIsConst(varId)) {
+			if(!res.estate.pstate()->varIsConst(varId)) {
 			  SingleEvalResultConstInt tmpres1=res;
 			  SingleEvalResultConstInt tmpres2=res;
 			  tmpres1.exprConstraints.addConstraint(Constraint(Constraint::NEQ_VAR_CONST,varId,rhsResult.value()));
@@ -174,7 +174,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
 		  }
 		  if(lhsResult.isConstInt() && variable(rhs,varId)) {
 			// only add the equality constraint if no constant is bound to the respective variable
-			if(!res.estate.pstate->varIsConst(varId)) {
+			if(!res.estate.pstate()->varIsConst(varId)) {
 			  SingleEvalResultConstInt tmpres1=res;
 			  SingleEvalResultConstInt tmpres2=res;
 			  tmpres1.exprConstraints.addConstraint(Constraint(Constraint::NEQ_VAR_CONST,varId,lhsResult.value()));
@@ -388,7 +388,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
 	VariableId varId;
 	bool isVar=ExprAnalyzer::variable(node,varId);
 	assert(isVar);
-	const PState* pstate=estate.pstate;
+	const PState* pstate=estate.pstate();
 	if(pstate->varExists(varId)) {
 	  PState pstate2=*pstate; // also removes constness
 	  res.result=pstate2[varId].getValue();
@@ -437,7 +437,7 @@ AValue ExprAnalyzer::pureEvalConstInt(SgNode* node,EState& estate) {
 	  VariableId varId;
 	  if((variable(lhs,varId) && rhsResult.isConstInt()) || (lhsResult.isConstInt() && variable(rhs,varId))) {
 		// only add the equality constraint if no constant is bound to the respective variable
-		if(!estate.pstate->varIsConst(varId)) {
+		if(!estate.pstate()->varIsConst(varId)) {
 		  Constraint newConstraint=Constraint(Constraint::NEQ_VAR_CONST,varId,rhsResult);
 		  if(cset.constraintExists(newConstraint)) {
 			return true; // existing constraint allows to assume this fact as true 
@@ -452,7 +452,7 @@ AValue ExprAnalyzer::pureEvalConstInt(SgNode* node,EState& estate) {
 	  VariableId varId;
 	  if((variable(lhs,varId) && rhsResult.isConstInt()) || (lhsResult.isConstInt() && variable(rhs,varId))) {
 		// only add the inequality constraint if no constant is bound to the respective variable
-		if(!estate.pstate->varIsConst(varId)) {
+		if(!estate.pstate()->varIsConst(varId)) {
 		  Constraint newConstraint=Constraint(Constraint::NEQ_VAR_CONST,varId,rhsResult);
 		  if(cset.constraintExists(newConstraint)) {
 			// override result of evaluation based on existent constraint
@@ -532,7 +532,7 @@ AValue ExprAnalyzer::pureEvalConstInt(SgNode* node,EState& estate) {
 	VariableId varId;
 	bool isVar=ExprAnalyzer::variable(node,varId);
 	assert(isVar);
-	const PState* pstate=estate.pstate;
+	const PState* pstate=estate.pstate();
 	if(pstate->varExists(varId)) {
 	  PState pstate2=*pstate; // also removes constness
 	  res=pstate2[varId].getValue();

@@ -207,7 +207,7 @@ void Analyzer::runSolver1() {
 	}
 	assert(currentEStatePtr);
 
-	Flow edgeSet=flow.outEdges(currentEStatePtr->label);
+	Flow edgeSet=flow.outEdges(currentEStatePtr->label());
 	//cerr << "DEBUG: edgeSet size:"<<edgeSet.size()<<endl;
 #if 1
 	// we can simplify this by adding the proper function to Flow.
@@ -230,14 +230,14 @@ void Analyzer::runSolver1() {
 		  nesListIter!=newEStateList.end();
 		  ++nesListIter) {
 		EState newEState=*nesListIter;
-		if(newEState.label!=NO_ESTATE && (!newEState.constraints()->disequalityExists()) &&(!isFailedAssertEState(&newEState))) {
+		if(newEState.label()!=NO_ESTATE && (!newEState.constraints()->disequalityExists()) &&(!isFailedAssertEState(&newEState))) {
 		  HSetMaintainer<EState,EStateHashFun>::ProcessingResult pres=estateSet.process(newEState);
 		  const EState* newEStatePtr=pres.second;
 		  if(pres.first==true)
 			addToWorkList(newEStatePtr);			
 		  recordTransition(currentEStatePtr,e,newEStatePtr);
 		}
-		if(newEState.label!=NO_ESTATE && (!newEState.constraints()->disequalityExists()) && (isFailedAssertEState(&newEState))) {
+		if(newEState.label()!=NO_ESTATE && (!newEState.constraints()->disequalityExists()) && (isFailedAssertEState(&newEState))) {
 		  // failed-assert end-state: do not add to work list but do add it to the transition graph
 		  const EState* newEStatePtr;
 		  newEStatePtr=processNewOrExisting(newEState);
@@ -250,7 +250,7 @@ void Analyzer::runSolver1() {
 		  }
 		  }
 		  if(_csv_assert_live_file.size()>0) {
-			string name=labelNameOfAssertLabel(currentEStatePtr->label);
+			string name=labelNameOfAssertLabel(currentEStatePtr->label());
 			if(name=="globalError")
 			  name="error_60";
 			name=name.substr(6,name.size()-6);
@@ -267,7 +267,7 @@ void Analyzer::runSolver1() {
 		  }
 		  } // if
 		}
-		if(newEState.label==NO_STATE) {
+		if(newEState.label()==NO_STATE) {
 		  //cerr << "DEBUG: NO_ESTATE (transition not recorded)"<<endl;
 		  //cerr << "INFO: found final state."<<endl;
 		}
@@ -309,11 +309,11 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
 	  if(SgAssignInitializer* assignInitializer=isSgAssignInitializer(initializer)) {
 		//cout << "initalizer found:"<<endl;
 		SgExpression* rhs=assignInitializer->get_operand_i();
-		PState newPState=analyzeAssignRhs(*currentEState.pstate,initDeclVarId,rhs,cset);
+		PState newPState=analyzeAssignRhs(*currentEState.pstate(),initDeclVarId,rhs,cset);
 		return createEState(targetLabel,newPState,cset);
 	  } else {
 		//cout << "no initializer (OK)."<<endl;
-		PState newPState=*currentEState.pstate;
+		PState newPState=*currentEState.pstate();
 		newPState[initDeclVarId]=AType::Top();
 		return createEState(targetLabel,newPState,cset);
 	  }
@@ -365,7 +365,7 @@ bool Analyzer::isFailedAssertEState(const EState* estate) {
 EState Analyzer::createFailedAssertEState(EState estate, Label target) {
   	  EState newEState=estate;
 	  newEState.io.recordFailedAssert();
-	  newEState.label=target;
+	  newEState.setLabel(target);
 	  return newEState;
 }
 
@@ -438,16 +438,16 @@ list<EState> elistify(EState res) {
 }
 
 list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
-  assert(edge.source==estate->label);
+  assert(edge.source==estate->label());
   // we do not pass information on the local edge
   if(edge.type==EDGE_LOCAL) {
 	EState noEState;
-	noEState.label=NO_ESTATE;
-	// TODO: investigate: with could also return an empty list here
+	noEState.setLabel(NO_ESTATE);
+	// TODO: investigate: we could also return an empty list here
 	return elistify(noEState);
   }
   EState currentEState=*estate;
-  PState currentPState=*currentEState.pstate;
+  PState currentPState=*currentEState.pstate();
   ConstraintSet cset=*currentEState.constraints();
   // 1. we handle the edge as outgoing edge
   SgNode* nextNodeToAnalyze1=cfanalyzer->getNode(edge.source);
@@ -516,7 +516,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
   if(isSgReturnStmt(nextNodeToAnalyze1) && !SgNodeHelper::Pattern::matchReturnStmtFunctionCallExp(nextNodeToAnalyze1)) {
 	SgNode* expr=SgNodeHelper::getFirstChild(nextNodeToAnalyze1);
 	ConstraintSet cset=*currentEState.constraints();
-	PState newPState=analyzeAssignRhs(*(currentEState.pstate),
+	PState newPState=analyzeAssignRhs(*(currentEState.pstate()),
 									variableIdMapping.createUniqueTemporaryVariableId(string("$return")),
 									expr,
 									cset);
@@ -536,7 +536,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
 	  set<SgVariableDeclaration*> varDecls=SgNodeHelper::localVariableDeclarationsOfFunction(funDef);
 	  // ad 2)
 	  ConstraintSet cset=*currentEState.constraints();
-	  PState newPState=*(currentEState.pstate);
+	  PState newPState=*(currentEState.pstate());
 	  set<VariableId> localVars=determineVariableIdsOfVariableDeclarations(varDecls);
 	  SgInitializedNamePtrList& formalParamInitNames=SgNodeHelper::getFunctionDefinitionFormalParameterList(funDef);
 	  set<VariableId> formalParams=determineVariableIdsOfSgInitializedNames(formalParamInitNames);
@@ -559,7 +559,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
 	// case 1: return f(); pass estate trough
 	if(SgNodeHelper::Pattern::matchReturnStmtFunctionCallExp(nextNodeToAnalyze1)) {
 	  EState newEState=currentEState;
-	  newEState.label=edge.target;
+	  newEState.setLabel(edge.target);
 	  return elistify(newEState);
 	}
 	// case 2: x=f(); bind variable x to value of $return
@@ -568,7 +568,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
 	  VariableId lhsVarId;
 	  bool isLhsVar=ExprAnalyzer::variable(lhs,lhsVarId);
 	  assert(isLhsVar); // must hold
-	  PState newPState=*currentEState.pstate;
+	  PState newPState=*currentEState.pstate();
 	  // we only create this variable here to be able to find an existing $return variable!
 	  VariableId returnVarId=variableIdMapping.createUniqueTemporaryVariableId(string("$return"));
 	  AValue evalResult=newPState[returnVarId].getValue();
@@ -583,7 +583,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
 	}
 	// case 3: f(); remove $return from state (discard value)
 	if(SgNodeHelper::Pattern::matchExprStmtFunctionCallExp(nextNodeToAnalyze1)) {
-	  PState newPState=*currentEState.pstate;
+	  PState newPState=*currentEState.pstate();
 	  VariableId returnVarId=variableIdMapping.createUniqueTemporaryVariableId(string("$return"));
 	  newPState.deleteVar(returnVarId);
 	  cset.removeAllConstraintsOfVar(returnVarId); // remove constraints of $return
@@ -614,7 +614,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
 		   VariableId varId=VariableId(sym);
 
 		   // update state (remove all existing constraint on that variable and set it to top)
-		   PState newPState=*currentEState.pstate;
+		   PState newPState=*currentEState.pstate();
 		   ConstraintSet newCSet=*currentEState.constraints();
 		   if(boolOptions["update-input-var"]) {
 			 newCSet.removeAllConstraintsOfVar(varId);
@@ -667,7 +667,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
 	   // for all other external functions we use identity as transfer function
 	   EState newEState=currentEState;
 	   newEState.io=newio;
-	   newEState.label=edge.target;
+	   newEState.setLabel(edge.target);
 	   return elistify(newEState);
 	}
   }
@@ -676,7 +676,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
 	 ||edge.type==EDGE_EXTERNAL
 	 ||edge.type==EDGE_CALLRETURN) {
 	EState newEState=currentEState;
-	newEState.label=edge.target;
+	newEState.setLabel(edge.target);
 	return elistify(newEState);
   }
   
@@ -702,7 +702,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
 		if((evalResult.isTrue() && edge.type==EDGE_TRUE) || (evalResult.isFalse() && edge.type==EDGE_FALSE) || evalResult.isTop()) {
 		  // pass on EState
 		  newLabel=edge.target;
-		  newPState=*evalResult.estate.pstate;
+		  newPState=*evalResult.estate.pstate();
 		  // merge with collected constraints of expr (exprConstraints), and invert for false branch
 		  if(edge.type==EDGE_TRUE) {
 			newCSet=*evalResult.estate.constraints()+evalResult.exprConstraints;
@@ -727,7 +727,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
 	  exit(1);
 	  // we currently only handle ConditionalExpressions as used in asserts (handled above)
 	  ConstraintSet cset=*currentEState.constraints();
-	  PState newPState=*currentEState.pstate;
+	  PState newPState=*currentEState.pstate();
 	  return elistify(createEState(edge.target,newPState,cset));
 	}
 
@@ -741,7 +741,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
 		bool isLhsVar=ExprAnalyzer::variable(lhs,lhsVar);
 		if(isLhsVar) {
 		  EState estate=(*i).estate;
-		  PState newPState=*estate.pstate;
+		  PState newPState=*estate.pstate();
 		  ConstraintSet cset=*estate.constraints();
 		  newPState[lhsVar]=(*i).result;
 		  if(!(*i).result.isTop())
@@ -758,7 +758,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
   // nothing to analyze, just create new estate (from same State) with target label of edge
   // can be same state if edge is a backedge to same cfg node
   EState newEState=currentEState;
-  newEState.label=edge.target;
+  newEState.setLabel(edge.target);
   return elistify(newEState);
 }
 
@@ -816,7 +816,7 @@ void Analyzer::initializeSolver1(std::string functionToStartAt,SgNode* root) {
 	int filteredVars=0;
 	for(list<SgVariableDeclaration*>::iterator i=globalVars.begin();i!=globalVars.end();++i) {
 	  if(setOfUsedVars.find(variableIdMapping.variableId(*i))!=setOfUsedVars.end())
-		estate=analyzeVariableDeclaration(*i,estate,estate.label);
+		estate=analyzeVariableDeclaration(*i,estate,estate.label());
 	  else
 		filteredVars++;
 	}
@@ -836,7 +836,7 @@ void Analyzer::initializeSolver1(std::string functionToStartAt,SgNode* root) {
 set<const EState*> Analyzer::transitionSourceEStateSetOfLabel(Label lab) {
   set<const EState*> estateSet;
   for(TransitionGraph::iterator j=transitionGraph.begin();j!=transitionGraph.end();++j) {
-	if((*j).source->label==lab)
+	if((*j).source->label()==lab)
 	  estateSet.insert((*j).source);
   }
   return estateSet;

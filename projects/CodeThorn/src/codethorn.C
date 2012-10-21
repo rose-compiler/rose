@@ -653,7 +653,11 @@ int main( int argc, char * argv[] ) {
   TransitionGraph* tg=analyzer.getTransitionGraph();
   for(TransitionGraph::iterator i=tg->begin();i!=tg->end();++i) {
 	const EState* es1=(*i).source;
-	assert(es1->io.op==InputOutput::STDOUT_VAR && es1->pstate->varIsConst(es1->io.var));
+	InputOutput myio=es1->io;
+	assert(myio.op==InputOutput::STDOUT_VAR 
+		   && 
+		   es1->pstate->varIsConst(es1->io.var)
+		   );
   }
 #endif
 

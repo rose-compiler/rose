@@ -155,18 +155,18 @@ string PStateSet::toString() {
 }
 
 // define order for EState elements (necessary for EStateSet)
-bool operator<(const EState& c1, const EState& c2) {
-  if(c1.label!=c2.label)
-	return (c1.label<c2.label);
-  if(c1.pstate!=c2.pstate)
-	return (c1.pstate<c2.pstate);
-  if(c1.constraints()!=c2.constraints())
-	return (c1.constraints()<c2.constraints());
-  return c1.io<c2.io;
+bool operator<(const EState& e1, const EState& e2) {
+  if(e1.label()!=e2.label())
+	return (e1.label()<e2.label());
+  if(e1.pstate()!=e2.pstate())
+	return (e1.pstate()<e2.pstate());
+  if(e1.constraints()!=e2.constraints())
+	return (e1.constraints()<e2.constraints());
+  return e1.io<e2.io;
 }
 
 bool operator==(const EState& c1, const EState& c2) {
-  bool result=((c1.label==c2.label) && (c1.pstate==c2.pstate));
+  bool result=((c1.label()==c2.label()) && (c1.pstate()==c2.pstate()));
   if(boolOptions["precision-equality-constraints"])
 	result = result && (c1.constraints()==c2.constraints());
   if(boolOptions["precision-equality-io"])
@@ -178,11 +178,11 @@ bool operator!=(const EState& c1, const EState& c2) {
   return !(c1==c2);
 }
 
-EStateId EStateSet::estateId(const EState* estate) {
+EStateId EStateSet::estateId(const EState* estate) const {
   return estateId(*estate);
 }
 
-EStateId EStateSet::estateId(const EState estate) {
+EStateId EStateSet::estateId(const EState estate) const {
   EStateId id=0;
   for(EStateSet::iterator i=begin();i!=end();++i) {
 	if(estate==*i)
@@ -194,18 +194,18 @@ EStateId EStateSet::estateId(const EState estate) {
 
 Transition TransitionGraph::getStartTransition() {
   for(TransitionGraph::iterator i=begin();i!=end();++i) {
-	if((*i).source->label==startLabel)
+	if((*i).source->label()==_startLabel)
 	  return *i;
   }
 }
 
-string EStateSet::estateIdString(const EState* estate) {
+string EStateSet::estateIdString(const EState* estate) const {
   stringstream ss;
   ss<<estateId(estate);
   return ss.str();
 }
 
-int EStateSet::numberOfIoTypeEStates(InputOutput::OpType op) {
+int EStateSet::numberOfIoTypeEStates(InputOutput::OpType op) const {
   int counter=0;
   for(EStateSet::iterator i=begin();i!=end();++i) {
 	if((*i).io.op==op)
@@ -226,7 +226,7 @@ LabelSet TransitionGraph::labelSetOfIoOperations(InputOutput::OpType op) {
   // the target node records the effect of the edge-operation on the source node.
   for(TransitionGraph::iterator i=begin();i!=end();++i) {
 	if((*i).target->io.op==op) {
-	  lset.insert((*i).source->label);
+	  lset.insert((*i).source->label());
 	}
   }
   return lset;
@@ -300,7 +300,7 @@ string TransitionGraph::toString() const {
 set<const EState*> TransitionGraph::transitionSourceEStateSetOfLabel(Label lab) {
   set<const EState*> estateSet;
   for(TransitionGraph::iterator j=begin();j!=end();++j) {
-	if((*j).source->label==lab)
+	if((*j).source->label()==lab)
 	  estateSet.insert((*j).source);
   }
   return estateSet;
@@ -309,9 +309,9 @@ set<const EState*> TransitionGraph::transitionSourceEStateSetOfLabel(Label lab) 
 set<const EState*> TransitionGraph::estateSetOfLabel(Label lab) {
   set<const EState*> estateSet;
   for(TransitionGraph::iterator j=begin();j!=end();++j) {
-	if((*j).source->label==lab)
+	if((*j).source->label()==lab)
 	  estateSet.insert((*j).source);
-	if((*j).target->label==lab)
+	if((*j).target->label()==lab)
 	  estateSet.insert((*j).target);
   }
   return estateSet;
@@ -320,9 +320,9 @@ set<const EState*> TransitionGraph::estateSetOfLabel(Label lab) {
 string EState::toString() const {
   stringstream ss;
   ss << "EState";
-  ss << "("<<label<<", ";
-  if(pstate)
-	ss <<pstate->toString();
+  ss << "("<<label()<<", ";
+  if(pstate())
+	ss <<pstate()->toString();
   else
 	ss <<"NULL";
   if(constraints()) {
@@ -347,7 +347,7 @@ string EStateList::toString() {
   return ss.str();
 }
 
-string EStateSet::toString() {
+string EStateSet::toString() const {
   stringstream ss;
   ss<<"EStateSet={";
   for(EStateSet::iterator i=begin();
