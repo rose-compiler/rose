@@ -12,6 +12,7 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2012_20.c \
      test2012_23.c \
      test2012_25.c \
+     test2012_58.c \
      complex_01.c \
      complex_03.c \
      bool.c \

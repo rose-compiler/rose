@@ -217,7 +217,7 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
           int ending_col  = locatedNode->get_endOfConstruct()->get_col();
 
        // DQ (8/6/2012): Added support for endOfConstruct().
-          cout << "Visiting SgStatement node: " << line << ", " << col << " (ending " << ending_line << ":" << ending_col << ") -> ";
+          cout << "Visiting SgStatement node (starting: " << line << ":" << col << ") (ending " << ending_line << ":" << ending_col << ") -> ";
           cout << getVariantName(locatedNode->variantT()) << endl;
         }
 #if 0

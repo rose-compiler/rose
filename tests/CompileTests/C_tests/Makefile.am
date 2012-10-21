@@ -149,6 +149,9 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2012_55.c \
      test2012_56.c \
      test2012_57.c \
+     test2012_60.c \
+     test2012_61.c \
+     test2012_62.c \
      math.c \
      complex_01.c \
      constants.c
@@ -160,11 +163,13 @@ TESTCODES_REQUIRED_TO_PASS = \
 # test2012_43.c (macro for compile-time assertions)
 # test2012_44.c 
 # test2012_45.c 
+# test2012_59.c (C-style comment in quoted string (inside of #if-def comment, so should be ignored) 
 
 # This is a C99 test code (moved to the C99_tests directory).
 # test2012_20.c 
 # test2012_23.c
 # test2012_25.c
+# test2012_58.c 
 
 
 if ROSE_USE_CLANG_FRONTEND

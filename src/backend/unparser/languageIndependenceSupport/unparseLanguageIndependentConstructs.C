@@ -311,7 +311,7 @@ UnparseLanguageIndependentConstructs::printOutComments ( SgLocatedNode* locatedN
 
      if (comments != NULL)
         {
-          printf ("Found attached comments (at %p of type: %s): \n",locatedNode,locatedNode->sage_class_name());
+          printf ("Found attached comments (at %p of type: %s): \n",locatedNode,locatedNode->class_name().c_str());
           AttachedPreprocessingInfoType::iterator i;
           for (i = comments->begin(); i != comments->end(); i++)
              {
@@ -569,13 +569,47 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
         }
 
      if( unparseLineReplacement(stmt,info) )
-       return;
+        {
+          return;
+        }
 
   // curprint("/* Calling unparseAttachedPreprocessingInfo */ \n ");
 
   // Markus Kowarschik: This is the new code to unparse directives before the current statement
   // AS(05/20/09): LineReplacement should replace a statement with a line. Override unparsing of subtree.
-     unparseAttachedPreprocessingInfo(stmt, info, PreprocessingInfo::before);
+  // unparseAttachedPreprocessingInfo(stmt, info, PreprocessingInfo::before);
+
+  // DQ (10/20/2012): Note that function definitions need to be processed as a special case (unparsing CCP directived handled directly).
+  //    1) UnparseLanguageIndependentConstructs::unparseStatement() (with SgFunctionDeclaration)
+  //    2) unparseLanguageSpecificStatement() (with SgFunctionDeclaration)
+  //    3) unparseFuncDeclStmt() (with SgFunctionDeclaration)
+  //    4) unparse CPP directives on: funcdecl_stmt->get_parameterList()
+  //    5) Calling UnparseLanguageIndependentConstructs::unparseStatement()
+  //    6) unparseFuncDefnStmt()
+  //    7) unparse CPP directives on: funcdecl_stmt->get_parameterList()
+  //    8) calling unparseFuncDeclStmt
+  //    9) calling unparse for funcdefn_stmt->get_body()
+  //   10) then trailing comments and CPP directives are output on the body, the function definition, and the function declaration (in that order).
+     bool skipOutputOfPreprocessingInfo = (isSgFunctionDefinition(stmt) != NULL);
+#if 0
+     printf ("In unparseStatement(): skipOutputOfPreprocessingInfo = %s \n",skipOutputOfPreprocessingInfo ? "true" : "false");
+#endif
+     if (skipOutputOfPreprocessingInfo == false)
+        {
+#if 0
+          printf ("In unparseStatement(): Output the comments and CCP directives for the SgStatement stmt = %p = %s (before) \n",stmt,stmt->class_name().c_str());
+#endif
+          unparseAttachedPreprocessingInfo(stmt, info, PreprocessingInfo::before);
+#if 0
+          printf ("DONE: In unparseStatement(): Output the comments and CCP directives for the SgStatement stmt = %p = %s (before) \n",stmt,stmt->class_name().c_str());
+#endif
+        }
+       else
+        {
+#if 0
+          printf ("In unparseStatement(): skipping output of comments and CCP directives for SgStatement stmt = %p = %s (before) \n",stmt,stmt->class_name().c_str());
+#endif
+        }
 
      outputCompilerGeneratedStatements(info);
 
@@ -801,7 +835,13 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
      unp->cur.format(stmt, info, FORMAT_AFTER_STMT);
 
   // Markus Kowarschik: This is the new code to unparse directives after the current statement
+#if 0
+     printf ("Output the comments and CCP directives for the SgStatement stmt = %p = %s (after) \n",stmt,stmt->class_name().c_str());
+#endif
      unparseAttachedPreprocessingInfo(stmt, info, PreprocessingInfo::after);
+#if 0
+     printf ("DONE: Output the comments and CCP directives for the SgStatement stmt = %p = %s (after) \n",stmt,stmt->class_name().c_str());
+#endif
 
   // DQ (5/31/2005): special handling for compiler generated statements
      if (isSgGlobal(stmt) != NULL)
@@ -1309,7 +1349,7 @@ bool UnparseLanguageIndependentConstructs::unparseLineReplacement(
   }
 
 #if 0
-  info.display("In Unparse_ExprStmt::unparseAttachedPreprocessingInfo()");
+  info.display("In Unparse_ExprStmt::unparseLineReplacement()");
 #endif
 
   // Traverse the container of PreprocessingInfo objects
@@ -1379,7 +1419,7 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
    PreprocessingInfo::RelativePositionType whereToUnparse)
    {
   // Get atached preprocessing info
-     AttachedPreprocessingInfoType *prepInfoPtr= stmt->getAttachedPreprocessingInfo();
+     AttachedPreprocessingInfoType *prepInfoPtr = stmt->getAttachedPreprocessingInfo();
 
 #if 0
   // Debugging added by DQ (only output debug information if comments/directives exist for this statement).
@@ -1408,7 +1448,9 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
      if (prepInfoPtr == NULL)
         {
        // There's no preprocessing info attached to the current statement
-       // printf ("No comments or CPP directives associated with this statement ... \n");
+#if 0
+          printf ("No comments or CPP directives associated with this statement ... \n");
+#endif
           return;
         }
 
@@ -1416,7 +1458,9 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
      if ( info.SkipComments() && info.SkipCPPDirectives() )
         {
        // There's no preprocessing info attached to the current statement
-       // printf ("Skipping output or comments and CPP directives \n");
+#if 0
+          printf ("Skipping output or comments and CPP directives \n");
+#endif
           return;
         }
 
