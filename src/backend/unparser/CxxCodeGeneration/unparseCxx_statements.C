@@ -432,7 +432,9 @@ Unparse_ExprStmt::unparseFunctionArgs(SgFunctionDeclaration* funcdecl_stmt, SgUn
          //  are outside of the parameter list
          // See example code: tests/CompileTests/C_tests/test2010_10.c
           if (funcdecl_stmt->get_oldStyleDefinition() == false)
-             unparseAttachedPreprocessingInfo(*p, info, PreprocessingInfo::before);
+             {
+               unparseAttachedPreprocessingInfo(*p, info, PreprocessingInfo::before);
+             }
           unparseFunctionParameterDeclaration (funcdecl_stmt,*p,false,info);
 
        // Move to the next argument
@@ -560,7 +562,9 @@ Unparse_ExprStmt::unparse_helper(SgFunctionDeclaration* funcdecl_stmt, SgUnparse
                unp->u_sage->curprint_newline();
           while ( p != funcdecl_stmt->get_args().end() )
              {
+               printf ("Output the comments and CCP directives for the SgInitializedName function args = %p \n",*p);
                unparseAttachedPreprocessingInfo(*p, info, PreprocessingInfo::before);
+               printf ("DONE: Output the comments and CCP directives for the SgInitializedName function args = %p \n",*p);
             // Output declarations for function parameters (using old-style K&R syntax)
             // printf ("Output declarations for function parameters (using old-style K&R syntax) \n");
                unparseFunctionParameterDeclaration(funcdecl_stmt,*p,true,ninfo2);
@@ -2422,16 +2426,16 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      curprint ( string("\n/* Inside of Unparse_ExprStmt::unparseFuncDeclStmt (" ) + StringUtility::numberToString(stmt) 
                 + "): class_name() = " + stmt->class_name().c_str() + " */ \n");
 
-     stmt->get_startOfConstruct()->display("Inside of unparseFuncDeclStmt(): START debug");
-     stmt->get_endOfConstruct()  ->display("Inside of unparseFuncDeclStmt(): END   debug");
+  // stmt->get_startOfConstruct()->display("Inside of unparseFuncDeclStmt(): START debug");
+  // stmt->get_endOfConstruct()  ->display("Inside of unparseFuncDeclStmt(): END   debug");
 
   // info.display("Inside of unparseFuncDeclStmt()");
 #endif
 
   // printf ("In unparseFuncDeclStmt(): info.get_current_scope() = %p = %s \n",info.get_current_scope(),info.get_current_scope()->class_name().c_str());
 
-//    if (stmt->get_startOfConstruct()->isOutputInCodeGeneration()==false)
-//      return;
+  // if (stmt->get_startOfConstruct()->isOutputInCodeGeneration()==false)
+  //      return;
 
      SgFunctionDeclaration* funcdecl_stmt = isSgFunctionDeclaration(stmt);
      ROSE_ASSERT(funcdecl_stmt != NULL);
@@ -2498,7 +2502,25 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
             StringUtility::numberToString(funcdecl_stmt->get_definingDeclaration()) + " */");
      curprint ( string("\n/* Unparser comment: funcdecl_stmt->get_firstNondefiningDeclaration() = " ) + 
             StringUtility::numberToString(funcdecl_stmt->get_firstNondefiningDeclaration()) + " */");
-     curprint ( string("\n/* */");
+     curprint("\n/* */");
+#endif
+
+#if 0
+  // DQ (10/20/2012): Unparse any comments of directives attached to the SgFunctionParameterList
+     ROSE_ASSERT (funcdecl_stmt != NULL);
+     printf ("Output comments and CCP directives for funcdecl_stmt->get_parameterList() \n");
+     if (funcdecl_stmt->get_parameterList() != NULL)
+        {
+          printf ("Output the comments and CCP directives for the SgFunctionDeclaration funcdecl_stmt = %p \n",funcdecl_stmt);
+
+          printf ("funcdecl_stmt                                    = %p \n",funcdecl_stmt);
+          printf ("funcdecl_stmt->get_firstNondefiningDeclaration() = %p \n",funcdecl_stmt->get_firstNondefiningDeclaration());
+          printf ("funcdecl_stmt->get_definingDeclaration()         = %p \n",funcdecl_stmt->get_definingDeclaration());
+          printf ("funcdecl_stmt->get_parameterList()               = %p \n",funcdecl_stmt->get_parameterList());
+
+          unparseAttachedPreprocessingInfo(funcdecl_stmt->get_parameterList(), info, PreprocessingInfo::before);
+          printf ("DONE: Output the comments and CCP directives for the SgFunctionDeclaration funcdecl_stmt = %p \n",funcdecl_stmt);
+        }
 #endif
 
   /* EXCEPTION HANDLING: Forward Declarations */
@@ -2809,7 +2831,7 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
   // DQ (1/23/03) Added option to support rewrite mechanism (generation of declarations)
      if (info.AddSemiColonAfterDeclaration())
         {
-          curprint ( string(";"));
+          curprint (";");
         }
 
 #if 0
@@ -2838,9 +2860,23 @@ Unparse_ExprStmt::unparseFuncDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
 
   // Unparse any comments of directives attached to the SgFunctionParameterList
      ROSE_ASSERT (funcdefn_stmt->get_declaration() != NULL);
+#if 0
+     printf ("Unparse comments and CCP directives at funcdefn_stmt->get_declaration()->get_parameterList() \n");
+#endif
      if (funcdefn_stmt->get_declaration()->get_parameterList() != NULL)
         {
+#if 0
+          printf ("Output the comments and CCP directives for the SgFunctionDefinition funcdefn_stmt = %p \n",funcdefn_stmt);
+
+          printf ("funcdefn_stmt->get_declaration()                                    = %p \n",funcdefn_stmt->get_declaration());
+          printf ("funcdefn_stmt->get_declaration()->get_firstNondefiningDeclaration() = %p \n",funcdefn_stmt->get_declaration()->get_firstNondefiningDeclaration());
+          printf ("funcdefn_stmt->get_declaration()->get_definingDeclaration()         = %p \n",funcdefn_stmt->get_declaration()->get_definingDeclaration());
+          printf ("funcdefn_stmt->get_declaration()->get_parameterList()               = %p \n",funcdefn_stmt->get_declaration()->get_parameterList());
+#endif
           unparseAttachedPreprocessingInfo(funcdefn_stmt->get_declaration()->get_parameterList(), info, PreprocessingInfo::before);
+#if 0
+          printf ("DONE: Output the comments and CCP directives for the SgFunctionDefinition funcdefn_stmt = %p \n",funcdefn_stmt);
+#endif
         }
 
      info.set_SkipFunctionDefinition();
@@ -2856,7 +2892,7 @@ Unparse_ExprStmt::unparseFuncDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
 
 #if 0
      printf ("Inside of Unparse_ExprStmt::unparseFuncDefnStmt: calling unparseMFuncDeclStmt or unparseFuncDeclStmt \n");
-     curprint ( string("/* Inside of Unparse_ExprStmt::unparseFuncDefnStmt: calling unparseMFuncDeclStmt or unparseFuncDeclStmt */"));
+     curprint ("/* Inside of Unparse_ExprStmt::unparseFuncDefnStmt: calling unparseMFuncDeclStmt or unparseFuncDeclStmt */");
 #endif
 
   // DQ (10/11/2006): As part of new implementation of qualified names we now default to the generation of all qualified names unless they are skipped.
@@ -2888,12 +2924,16 @@ Unparse_ExprStmt::unparseFuncDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
 
 #if 0
      printf ("Inside of Unparse_ExprStmt::unparseFuncDefnStmt: output the function body \n");
-     curprint ( string("/* Inside of Unparse_ExprStmt::unparseFuncDefnStmt: output the function body */"));
+     curprint ("/* Inside of Unparse_ExprStmt::unparseFuncDefnStmt: output the function body */");
 #endif
 
      info.unset_SkipFunctionDefinition();
      SgUnparse_Info ninfo(info);
   
+  // DQ (10/20/2012): Ouput the comments and CPP directives on the function definition.
+  // Note must be outside of SkipFunctionDefinition to be output.
+     unparseAttachedPreprocessingInfo(funcdefn_stmt, info, PreprocessingInfo::before);
+
   // now the body of the function
      if (funcdefn_stmt->get_body())
         {
@@ -2901,15 +2941,19 @@ Unparse_ExprStmt::unparseFuncDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
         }
        else
         {
-          curprint ( string("{}"));
+          curprint ("{}");
 
        // DQ (9/22/2004): I think this is an error!
           printf ("Error: Should be an error to not have a function body in the AST \n");
           ROSE_ASSERT(false);
         }
 
+  // DQ (10/20/2012): Not clear if this is in the correct location (shouldn't it be BEFORE the function body?).
   // Unparse any comments of directives attached to the SgFunctionParameterList
      unparseAttachedPreprocessingInfo(funcdefn_stmt->get_declaration()->get_parameterList(), info, PreprocessingInfo::after);
+
+  // DQ (10/20/2012): Ouput the comments and CPP directives on the function definition.
+     unparseAttachedPreprocessingInfo(funcdefn_stmt, info, PreprocessingInfo::after);
    }
 
 
@@ -2949,7 +2993,7 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      ROSE_ASSERT(mfuncdecl_stmt != NULL);
 
 #if 0
-     curprint ( string("\n/* Inside of Unparse_ExprStmt::unparseMFuncDeclStmt */ \n") ); 
+     curprint ("\n/* Inside of Unparse_ExprStmt::unparseMFuncDeclStmt */ \n"); 
 #endif
 
 #if OUTPUT_DEBUGGING_FUNCTION_NAME
@@ -2966,12 +3010,12 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
   //        mfuncdecl_stmt->get_from_template() + " */";
      curprint ( string("\n/* Unparser comment: mfuncdecl_stmt->get_definition() = " ) + StringUtility::numberToString(mfuncdecl_stmt->get_definition()) + " */");
 #if 0
-     curprint ( string("\n/* Unparser comment: mfuncdecl_stmt->get_definition_ref() = " ) + StringUtility::numberToString(mfuncdecl_stmt->get_definition_ref()) + " */");
-     curprint ( string("\n/* Unparser comment: mfuncdecl_stmt->get_forwardDefinition() = " ) + StringUtility::numberToString(mfuncdecl_stmt->get_forwardDefinition()) + " */");
+     curprint ("\n/* Unparser comment: mfuncdecl_stmt->get_definition_ref() = " ) + StringUtility::numberToString(mfuncdecl_stmt->get_definition_ref()) + " */");
+     curprint ("\n/* Unparser comment: mfuncdecl_stmt->get_forwardDefinition() = " ) + StringUtility::numberToString(mfuncdecl_stmt->get_forwardDefinition()) + " */");
 #endif
-     curprint ( string("\n/* Unparser comment: mfuncdecl_stmt->get_definingDeclaration() = " ) + StringUtility::numberToString(mfuncdecl_stmt->get_definingDeclaration()) + " */");
-     curprint ( string("\n/* Unparser comment: mfuncdecl_stmt->get_firstNondefiningDeclaration() = " ) + StringUtility::numberToString(mfuncdecl_stmt->get_firstNondefiningDeclaration()) + " */");
-     curprint ( string("\n/* */");
+     curprint ("\n/* Unparser comment: mfuncdecl_stmt->get_definingDeclaration() = " ) + StringUtility::numberToString(mfuncdecl_stmt->get_definingDeclaration()) + " */");
+     curprint ("\n/* Unparser comment: mfuncdecl_stmt->get_firstNondefiningDeclaration() = " ) + StringUtility::numberToString(mfuncdecl_stmt->get_firstNondefiningDeclaration()) + " */");
+     curprint ("\n/* */");
 #endif
 
   // DQ (12/3/2007): This causes a bug in the output of access level (public, protected, private)
