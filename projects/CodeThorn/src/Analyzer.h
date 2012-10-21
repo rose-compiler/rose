@@ -68,12 +68,12 @@ class Analyzer {
   static string nodeToString(SgNode* node);
   void initializeSolver1(std::string functionToStartAt,SgNode* root);
 
-  State analyzeAssignRhs(State currentState,VariableId lhsVar, SgNode* rhs,ConstraintSet& cset);
+  PState analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode* rhs,ConstraintSet& cset);
   EState analyzeVariableDeclaration(SgVariableDeclaration* nextNodeToAnalyze1,EState currentEState, Label targetLabel);
   list<EState> transferFunction(Edge edge, const EState* eState);
   void addToWorkList(const EState* eState);
   const EState* addToWorkListIfNew(EState eState);
-  void recordTransition(const EState* sourceState, Edge e, const EState* targetState);
+  void recordTransition(const EState* sourceEState, Edge e, const EState* targetEState);
   void printStatusMessage(bool);
   bool isLTLrelevantLabel(Label label);
   const EState* takeFromWorkList();
@@ -81,15 +81,15 @@ class Analyzer {
   /*! if state exists in stateSet, a pointer to the existing state is returned otherwise 
 	a new state is entered into stateSet and a pointer to it is returned.
   */
-  const State* processNew(State& s);
-  const State* processNewOrExisting(State& s);
+  const PState* processNew(PState& s);
+  const PState* processNewOrExisting(PState& s);
   const EState* processNew(EState& s);
   const EState* processNewOrExisting(EState& s);
   EStateSet::ProcessingResult process(EState& s);
   const ConstraintSet* processNewOrExisting(ConstraintSet& cset);
-  const EState* processNewOrExisting(Label label, State state, ConstraintSet cset);
-  EState createEState(Label label, State state, ConstraintSet cset);
-  EState createEState(Label label, State state, ConstraintSet cset, InputOutput io);
+  const EState* processNewOrExisting(Label label, PState state, ConstraintSet cset);
+  EState createEState(Label label, PState pstate, ConstraintSet cset);
+  EState createEState(Label label, PState pstate, ConstraintSet cset, InputOutput io);
 
  public:
   bool isEmptyWorkList();
@@ -108,7 +108,7 @@ class Analyzer {
   // access  functions for computed information
   Labeler* getLabeler() { return cfanalyzer->getLabeler(); }
   Flow* getFlow() { return &flow; }
-  StateSet* getStateSet() { return &stateSet; }
+  PStateSet* getPStateSet() { return &pstateSet; }
   EStateSet* getEStateSet() { return &eStateSet; }
   TransitionGraph* getTransitionGraph() { return &transitionGraph; }
   ConstraintSetMaintainer* getConstraintSetMaintainer() { return &constraintSetMaintainer; }
@@ -143,16 +143,16 @@ class Analyzer {
 	assert(labelName.size()>0);
 	return labelName;
   }
-  list<pair<SgLabelStatement*,SgNode*> > _assertNodes;
-  string _csv_assert_live_file; // to become private
   void setDisplayDiff(int diff) { _displayDiff=diff; }
   void setNumberOfThreadsToUse(int n) { _numberOfThreadsToUse=n; }
+  list<pair<SgLabelStatement*,SgNode*> > _assertNodes;
+  string _csv_assert_live_file; // to become private
  private:
   ExprAnalyzer exprAnalyzer;
   VariableIdMapping variableIdMapping;
   EStateWorkList eStateWorkList;
   EStateSet eStateSet;
-  StateSet stateSet;
+  PStateSet pstateSet;
   ConstraintSetMaintainer constraintSetMaintainer;
   TransitionGraph transitionGraph;
   set<const EState*> transitionSourceEStateSetOfLabel(Label lab);

@@ -11,7 +11,7 @@
 #include "CollectionOperators.h"
 #include "CommandLineOptions.h"
 
-// it is not necessary to define comparison-ops for State, but
+// it is not necessary to define comparison-ops for Pstate, but
 // the ordering appears to be implementation dependent (but consistent)
 
 using namespace std;
@@ -63,10 +63,10 @@ bool operator!=(const InputOutput& c1, const InputOutput& c2) {
   return !(c1==c2);
 }
 
-string State::toString() const {
+string PState::toString() const {
   stringstream ss;
   ss << "State="<< "{";
-  for(State::const_iterator j=begin();j!=end();++j) {
+  for(PState::const_iterator j=begin();j!=end();++j) {
 	if(j!=begin()) ss<<", ";
 	ss<<"(";
     ss <<(*j).first.longVariableName();
@@ -82,9 +82,9 @@ string State::toString() const {
   return ss.str();
 }
 
-long State::memorySize() const {
+long PState::memorySize() const {
   long mem=0;
-  for(State::const_iterator i=begin();i!=end();++i) {
+  for(PState::const_iterator i=begin();i!=end();++i) {
 	mem+=sizeof(*i);
   }
   return mem+sizeof(*this);
@@ -93,59 +93,59 @@ long EState::memorySize() const {
   return sizeof(*this);
 }
 
-void State::deleteVar(VariableId varId) {
-  for(State::iterator i=begin();i!=end();++i) {
+void PState::deleteVar(VariableId varId) {
+  for(PState::iterator i=begin();i!=end();++i) {
 	if((*i).first==varId)
 	  erase(i);
   }
 }
 
-bool State::varExists(VariableId varId) const {
-  State::const_iterator i=find(varId);
+bool PState::varExists(VariableId varId) const {
+  PState::const_iterator i=find(varId);
   return !(i==end());
 }
 
-bool State::varIsConst(VariableId varId) const {
-  State::const_iterator i=find(varId);
+bool PState::varIsConst(VariableId varId) const {
+  PState::const_iterator i=find(varId);
   if(i!=end()) {
 	AValue val=(*i).second.getValue();
 	return val.isConstInt();
   } else {
-	throw "Error: State::varIsConst : variable does not exist.";
+	throw "Error: PState::varIsConst : variable does not exist.";
   }
 }
 
-string State::varValueToString(VariableId varId) const {
+string PState::varValueToString(VariableId varId) const {
   stringstream ss;
-  AValue val=((*(const_cast<State*>(this)))[varId]).getValue();
+  AValue val=((*(const_cast<PState*>(this)))[varId]).getValue();
   return val.toString();
 }
 
-StateId StateSet::stateId(const State* state) {
-  return stateId(*state);
+PStateId PStateSet::pstateId(const PState* pstate) {
+  return pstateId(*pstate);
 }
 
-StateId StateSet::stateId(const State state) {
-  StateId id=0;
-  for(StateSet::iterator i=begin();i!=end();++i) {
-	if(state==*i)
+PStateId PStateSet::pstateId(const PState pstate) {
+  PStateId id=0;
+  for(PStateSet::iterator i=begin();i!=end();++i) {
+	if(pstate==*i)
 	  return id;
 	id++;
   }
   return NO_STATE;
 }
 
-string StateSet::stateIdString(const State* state) {
+string PStateSet::pstateIdString(const PState* pstate) {
   stringstream ss;
-  ss<<stateId(state);
+  ss<<pstateId(pstate);
   return ss.str();
 }
 
-string StateSet::toString() {
+string PStateSet::toString() {
   stringstream ss;
-  ss << "@"<<this<<": StateSet={";
+  ss << "@"<<this<<": PStateSet={";
   int si=0;
-  for(StateSet::iterator i=begin();i!=end();++i) {
+  for(PStateSet::iterator i=begin();i!=end();++i) {
 	if(i!=begin())
 	  ss<<", ";
     ss << "S"<<si++<<": "<<(*i).toString();
@@ -158,15 +158,15 @@ string StateSet::toString() {
 bool operator<(const EState& c1, const EState& c2) {
   if(c1.label!=c2.label)
 	return (c1.label<c2.label);
-  if(c1.state!=c2.state)
-	return (c1.state<c2.state);
+  if(c1.pstate!=c2.pstate)
+	return (c1.pstate<c2.pstate);
   if(c1.constraints()!=c2.constraints())
 	return (c1.constraints()<c2.constraints());
   return c1.io<c2.io;
 }
 
 bool operator==(const EState& c1, const EState& c2) {
-  bool result=((c1.label==c2.label) && (c1.state==c2.state));
+  bool result=((c1.label==c2.label) && (c1.pstate==c2.pstate));
   if(boolOptions["precision-equality-constraints"])
 	result = result && (c1.constraints()==c2.constraints());
   if(boolOptions["precision-equality-io"])
@@ -321,8 +321,8 @@ string EState::toString() const {
   stringstream ss;
   ss << "EState";
   ss << "("<<label<<", ";
-  if(state)
-	ss <<state->toString();
+  if(pstate)
+	ss <<pstate->toString();
   else
 	ss <<"NULL";
   if(constraints()) {
@@ -359,12 +359,12 @@ string EStateSet::toString() {
   return ss.str();
 }
 
-#ifdef USER_DEFINED_STATE_COMP
-bool operator<(const State& s1, const State& s2) {
+#ifdef USER_DEFINED_PSTATE_COMP
+bool operator<(const PState& s1, const PState& s2) {
   if(s1.size()!=s2.size())
 	return s1.size()<s2.size();
-  State::const_iterator i=s1.begin();
-  State::const_iterator j=s2.begin();
+  PState::const_iterator i=s1.begin();
+  PState::const_iterator j=s2.begin();
   while(i!=s1.end() && j!=s2.end()) {
 	if(*i!=*j) {
 	  return *i<*j;
@@ -376,10 +376,10 @@ bool operator<(const State& s1, const State& s2) {
   return false; // both are equal
 }
 #if 0
-bool operator==(const State& c1, const State& c2) {
+bool operator==(const PState& c1, const PState& c2) {
   if(c1.size()==c2.size()) {
-	State::const_iterator i=c1.begin();
-	State::const_iterator j=c2.begin();
+	PState::const_iterator i=c1.begin();
+	PState::const_iterator j=c2.begin();
 	while(i!=c1.end()) {
 	  if(!((*i).first==(*j).first))
 		return false;
@@ -393,7 +393,7 @@ bool operator==(const State& c1, const State& c2) {
   }
 }
 
-bool operator!=(const State& c1, const State& c2) {
+bool operator!=(const PState& c1, const PState& c2) {
   return !(c1==c2);
 }
 #endif

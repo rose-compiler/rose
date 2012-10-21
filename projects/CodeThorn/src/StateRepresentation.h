@@ -1,7 +1,7 @@
-#ifndef STATE_REPRESENTATION_H
-#define STATE_REPRESENTATION_H
+#ifndef ALL_STATE_REPRESENTATION_H
+#define ALL_STATE_REPRESENTATION_H
 
-#define USER_DEFINED_STATE_COMP
+#define USER_DEFINED_PSTATE_COMP
 
 /*************************************************************
  * Copyright: (C) 2012 by Markus Schordan                    *
@@ -21,13 +21,13 @@
 
 using namespace std;
 
-typedef int StateId;
+typedef int PStateId;
 typedef int EStateId;
 typedef string VariableName;
-class State;
-typedef set<const State*> StatePtrSet;
+class PState;
+typedef set<const PState*> PStatePtrSet;
 
-class State : public map<VariableId,CppCapsuleAValue> {
+class PState : public map<VariableId,CppCapsuleAValue> {
  public:
   bool varExists(VariableId varname) const;
   bool varIsConst(VariableId varname) const;
@@ -37,12 +37,12 @@ class State : public map<VariableId,CppCapsuleAValue> {
   long memorySize() const;
 };
 
-class StateHashFun {
+class PStateHashFun {
    public:
-    StateHashFun(long prime=99991) : tabSize(prime) {}
-    long operator()(State s) const {
+    PStateHashFun(long prime=99991) : tabSize(prime) {}
+    long operator()(PState s) const {
 	  unsigned int hash=1;
-	  for(State::iterator i=s.begin();i!=s.end();++i) {
+	  for(PState::iterator i=s.begin();i!=s.end();++i) {
 		hash=((hash<<8)+((long)(*i).second.getValue().getIntValue()))^hash;
 	  }
 	  return long(hash) % tabSize;
@@ -52,24 +52,24 @@ class StateHashFun {
     long tabSize;
 };
 
-#ifdef STATE_MAINTAINER_LIST
-class StateSet : public list<State> {
+#ifdef PSTATE_MAINTAINER_LIST
+class PStateSet : public list<PState> {
 #endif
-#ifdef STATE_MAINTAINER_SET
-class StateSet : public set<State> {
+#ifdef PSTATE_MAINTAINER_SET
+class PStateSet : public set<PState> {
 #endif
-#ifdef STATE_MAINTAINER_HSET
+#ifdef PSTATE_MAINTAINER_HSET
 #include "HashFun.h"
 #include "HSetMaintainer.h"
-	class StateSet : public HSetMaintainer<State,StateHashFun> {
+	class PStateSet : public HSetMaintainer<PState,PStateHashFun> {
 	public:
-	  typedef HSetMaintainer<State,StateHashFun>::ProcessingResult ProcessingResult;
+	  typedef HSetMaintainer<PState,PStateHashFun>::ProcessingResult ProcessingResult;
 	  string toString();
-	  StateId stateId(const State* state);
-	  StateId stateId(const State state);
-	  string stateIdString(const State* state);
+	  PStateId pstateId(const PState* pstate);
+	  PStateId pstateId(const PState pstate);
+	  string pstateIdString(const PState* pstate);
 	private:
-	  const State* ptr(State& s);
+	  const PState* ptr(PState& s);
 	};
 #endif
 
@@ -97,11 +97,11 @@ bool operator!=(const InputOutput& c1, const InputOutput& c2);
 
 class EState {
  public:
- EState():label(0),state(0),_constraints(0){}
- EState(Label label, const State* state):label(label),state(state){}
- EState(Label label, const State* state, const ConstraintSet* csetptr):label(label),state(state),_constraints(csetptr){}
+ EState():label(0),pstate(0),_constraints(0){}
+ EState(Label label, const PState* pstate):label(label),pstate(pstate){}
+ EState(Label label, const PState* pstate, const ConstraintSet* csetptr):label(label),pstate(pstate),_constraints(csetptr){}
   Label getLabel() const { return label; }
-  const State* getState() const { return state; }
+  const PState* getPState() const { return pstate; }
   /// \deprecated, use constraints() instead.
   const ConstraintSet& getConstraints() const { return *_constraints; }
   const InputOutput& getInputOutput() const { return io; }
@@ -110,19 +110,19 @@ class EState {
   long memorySize() const;
   // MS: following entries will be made private
   Label label;
-  const State* state;
+  const PState* pstate;
  private:
   const ConstraintSet* _constraints;
  public:
   InputOutput io;
 };
 
-// define order for State elements (necessary for StateSet)
-#ifdef  USER_DEFINED_STATE_COMP
-bool operator<(const State& c1, const State& c2);
+// define order for PState elements (necessary for PStateSet)
+#ifdef  USER_DEFINED_PSTATE_COMP
+bool operator<(const PState& c1, const PState& c2);
 #if 0
-bool operator==(const State& c1, const State& c2);
-bool operator!=(const State& c1, const State& c2);
+bool operator==(const PState& c1, const PState& c2);
+bool operator!=(const PState& c1, const PState& c2);
 #endif
 #endif
 
@@ -142,7 +142,7 @@ class EStateHashFun {
     EStateHashFun(long prime=9999991) : tabSize(prime) {}
     long operator()(EState s) const {
 	  unsigned int hash=1;
-	  hash=(long)s.getLabel()*(((long)s.getState())+1)*(((long)s.constraints())+1);
+	  hash=(long)s.getLabel()*(((long)s.getPState())+1)*(((long)s.constraints())+1);
 	  return long(hash) % tabSize;
 	}
 	long tableSize() const { return tabSize;}
@@ -216,6 +216,5 @@ class TransitionGraph : public HSet<Transition,TransitionHashFun> {
   int numberOfNodes;
   Label startLabel;
 };
-
 
 #endif

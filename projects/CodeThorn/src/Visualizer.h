@@ -17,31 +17,31 @@ class Visualizer {
  public:
   Visualizer();
   Visualizer(Analyzer* analyzer);
-  Visualizer(Labeler* l, Flow* f, StateSet* ss, EStateSet* ess, TransitionGraph* tg);
+  Visualizer(Labeler* l, Flow* f, PStateSet* ss, EStateSet* ess, TransitionGraph* tg);
   void setOptionTransitionGraphDotHtmlNode(bool);
   void setLabeler(Labeler* x);
   void setFlow(Flow* x);
-  void setStateSet(StateSet* x);
+  void setPStateSet(PStateSet* x);
   void setEStateSet(EStateSet* x);
   void setTransitionGraph(TransitionGraph* x);
   void createMappings();
-  string stateToString(const State* state);
-  string stateToDotString(const State* state);
-  string eStateToString(const EState* state);
-  string eStateToDotString(const EState* state);
+  string pstateToString(const PState* pstate);
+  string pstateToDotString(const PState* pstate);
+  string eStateToString(const EState* estate);
+  string eStateToDotString(const EState* estate);
   string transitionGraphDotHtmlNode(Label lab);
   string transitionGraphToDot();
   string foldedTransitionGraphToDot();
  private:
   Labeler* labeler;
   Flow* flow;
-  StateSet* stateSet;
+  PStateSet* pstateSet;
   EStateSet* eStateSet;
   TransitionGraph* transitionGraph;
   
-  bool optionStateObjectAddress;
-  bool optionStateId;
-  bool optionStateProperties;
+  bool optionPStateObjectAddress;
+  bool optionPStateId;
+  bool optionPStateProperties;
   bool optionEStateObjectAddress;
   bool optionEStateId;
   bool optionEStateProperties;

@@ -458,8 +458,8 @@ int main( int argc, char * argv[] ) {
   }
 
   // print version information
-#ifdef STATE_MAINTAINER_LIST
-  cout << "INFO: using list implementation for State."<<endl;
+#ifdef PSTATE_MAINTAINER_LIST
+  cout << "INFO: using list implementation for PState."<<endl;
 #endif
 #ifdef ESTATE_MAINTAINER_LIST
   cout << "INFO: using list implementation for EState."<<endl;
@@ -468,8 +468,8 @@ int main( int argc, char * argv[] ) {
   cout << "INFO: using list implementation for ConstraintSet."<<endl;
 #endif
 
-#ifdef STATE_MAINTAINER_SET
-  cout << "INFO: using ordered-set implementation for State."<<endl;
+#ifdef PSTATE_MAINTAINER_SET
+  cout << "INFO: using ordered-set implementation for PState."<<endl;
 #endif
 #ifdef ESTATE_MAINTAINER_SET
   cout << "INFO: using ordered-set implementation for EState."<<endl;
@@ -478,8 +478,8 @@ int main( int argc, char * argv[] ) {
   cout << "INFO: using ordered-set implementation for ConstraintSet."<<endl;
 #endif
 
-#ifdef STATE_MAINTAINER_HSET
-  cout << "INFO: using hash-set implementation for State."<<endl;
+#ifdef PSTATE_MAINTAINER_HSET
+  cout << "INFO: using hash-set implementation for PState."<<endl;
 #endif
 #ifdef ESTATE_MAINTAINER_HSET
   cout << "INFO: using hash-set implementation for EState."<<endl;
@@ -527,7 +527,7 @@ int main( int argc, char * argv[] ) {
   double analysisRunTime=timer.getElapsedTimeInMilliSec();
   long removed=analyzer.getTransitionGraph()->removeDuplicates();
   //cout << "Transitions reduced: "<<removed<<endl;
-  //  cout << analyzer.stateSetToString(final);
+  //  cout << analyzer.pstateSetToString(final);
   cout << "=============================================================="<<endl;
   printAsserts(analyzer,sageProject);
   if (args.count("csv-assert")) {
@@ -546,10 +546,10 @@ int main( int argc, char * argv[] ) {
 
   double totalRunTime=frontEndRunTime+initRunTime+ analysisRunTime+ltlRunTime;
 
-  long stateSetSize=analyzer.getStateSet()->size();
-  long stateSetBytes=analyzer.getStateSet()->memorySize();
-  long stateSetMaxCollisions=analyzer.getStateSet()->maxCollisions();
-  long stateSetLoadFactor=analyzer.getStateSet()->loadFactor();
+  long pstateSetSize=analyzer.getPStateSet()->size();
+  long pstateSetBytes=analyzer.getPStateSet()->memorySize();
+  long pstateSetMaxCollisions=analyzer.getPStateSet()->maxCollisions();
+  long pstateSetLoadFactor=analyzer.getPStateSet()->loadFactor();
   long eStateSetSize=analyzer.getEStateSet()->size();
   long eStateSetBytes=analyzer.getEStateSet()->memorySize();
   long eStateSetMaxCollisions=analyzer.getEStateSet()->maxCollisions();
@@ -566,12 +566,12 @@ int main( int argc, char * argv[] ) {
   cout << "Number of stderr-estates       : "<<color("cyan")<<(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDERR_VAR))<<color("white")<<endl;
   cout << "Number of failed-assert-estates: "<<color("cyan")<<(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::FAILED_ASSERT))<<color("white")<<endl;
   cout << "=============================================================="<<endl;
-  cout << "Number of states               : "<<color("magenta")<<stateSetSize<<color("white")<<" (memory: "<<color("magenta")<<stateSetBytes<<color("white")<<" bytes)"<<" ("<<""<<stateSetLoadFactor<<  "/"<<stateSetMaxCollisions<<")"<<endl;
+  cout << "Number of pstates               : "<<color("magenta")<<pstateSetSize<<color("white")<<" (memory: "<<color("magenta")<<pstateSetBytes<<color("white")<<" bytes)"<<" ("<<""<<pstateSetLoadFactor<<  "/"<<pstateSetMaxCollisions<<")"<<endl;
   cout << "Number of estates              : "<<color("cyan")<<eStateSetSize<<color("white")<<" (memory: "<<color("cyan")<<eStateSetBytes<<color("white")<<" bytes)"<<" ("<<""<<eStateSetLoadFactor<<  "/"<<eStateSetMaxCollisions<<")"<<endl;
   cout << "Number of transitions          : "<<color("blue")<<transitionGraphSize<<color("white")<<" (memory: "<<color("blue")<<transitionGraphBytes<<color("white")<<" bytes)"<<endl;
   cout << "Number of constraint sets      : "<<color("yellow")<<numOfconstraintSets<<color("white")<<" (memory: "<<color("yellow")<<constraintSetsBytes<<color("white")<<" bytes)"<<" ("<<""<<constraintSetsLoadFactor<<  "/"<<constraintSetsMaxCollisions<<")"<<endl;
   cout << "=============================================================="<<endl;
-  long totalMemory=stateSetBytes+eStateSetBytes+transitionGraphBytes+constraintSetsBytes;
+  long totalMemory=pstateSetBytes+eStateSetBytes+transitionGraphBytes+constraintSetsBytes;
   cout << "Memory total         : "<<color("green")<<totalMemory<<" bytes"<<color("normal")<<endl;
   cout << "Time total           : "<<color("green")<<readableruntime(totalRunTime)<<color("normal")<<endl;
   cout << "=============================================================="<<endl;
@@ -579,11 +579,11 @@ int main( int argc, char * argv[] ) {
   if(args.count("csv-stats")) {
 	string filename=args["csv-stats"].as<string>().c_str();
 	stringstream text;
-	text<<"Sizes,"<<stateSetSize<<", "
+	text<<"Sizes,"<<pstateSetSize<<", "
 		<<eStateSetSize<<", "
 		<<transitionGraphSize<<", "
 		<<numOfconstraintSets<<endl;
-	text<<"Memory,"<<stateSetBytes<<", "
+	text<<"Memory,"<<pstateSetBytes<<", "
 		<<eStateSetBytes<<", "
 		<<transitionGraphBytes<<", "
 		<<constraintSetsBytes<<", "
@@ -601,11 +601,11 @@ int main( int argc, char * argv[] ) {
 		<<ltlRunTime<<", "
 		<<totalRunTime<<endl;
 	text<<"hashset-collisions,"
-		<<stateSetMaxCollisions<<", "
+		<<pstateSetMaxCollisions<<", "
 		<<eStateSetMaxCollisions<<", "
 		<<constraintSetsMaxCollisions<<endl;
 	text<<"hashset-loadfactors,"
-		<<stateSetLoadFactor<<", "
+		<<pstateSetLoadFactor<<", "
 		<<eStateSetLoadFactor<<", "
 		<<constraintSetsLoadFactor<<endl;
 	text<<"threads,"<<numberOfThreadsToUse<<endl;
@@ -615,7 +615,7 @@ int main( int argc, char * argv[] ) {
   
 
   if(boolOptions["viz"]) {
-    Visualizer visualizer(analyzer.getLabeler(),analyzer.getFlow(),analyzer.getStateSet(),analyzer.getEStateSet(),analyzer.getTransitionGraph());
+    Visualizer visualizer(analyzer.getLabeler(),analyzer.getFlow(),analyzer.getPStateSet(),analyzer.getEStateSet(),analyzer.getTransitionGraph());
     string dotFile="digraph G {\n";
     dotFile+=visualizer.transitionGraphToDot();
     dotFile+="}\n";
@@ -653,7 +653,7 @@ int main( int argc, char * argv[] ) {
   TransitionGraph* tg=analyzer.getTransitionGraph();
   for(TransitionGraph::iterator i=tg->begin();i!=tg->end();++i) {
 	const EState* es1=(*i).source;
-	assert(es1->io.op==InputOutput::STDOUT_VAR && es1->state->varIsConst(es1->io.var));
+	assert(es1->io.op==InputOutput::STDOUT_VAR && es1->pstate->varIsConst(es1->io.var));
   }
 #endif
 

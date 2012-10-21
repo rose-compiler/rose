@@ -91,7 +91,7 @@ list<SingleEvalResultConstInt> listify(SingleEvalResultConstInt res) {
 
 
 list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState eState, bool useConstraints, bool safeConstraintPropagation) {
-  assert(eState.state); // ensure state exists
+  assert(eState.pstate); // ensure state exists
   SingleEvalResultConstInt res;
   // initialize with default values from argument(s)
   res.eState=eState;
@@ -123,7 +123,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState eS
 		  VariableId varId;
 		  if(variable(lhs,varId) && rhsResult.isConstInt()) {
 			// if var is top add two states with opposing constraints
-			if(!res.eState.state->varIsConst(varId)) {
+			if(!res.eState.pstate->varIsConst(varId)) {
 			  SingleEvalResultConstInt tmpres1=res;
 			  SingleEvalResultConstInt tmpres2=res;
 			  tmpres1.exprConstraints.addConstraint(Constraint(Constraint::EQ_VAR_CONST,varId,rhsResult.value()));
@@ -138,7 +138,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState eS
 		  }
 		  if(lhsResult.isConstInt() && variable(rhs,varId)) {
 			// only add the equality constraint if no constant is bound to the respective variable
-			if(!res.eState.state->varIsConst(varId)) {
+			if(!res.eState.pstate->varIsConst(varId)) {
 			  SingleEvalResultConstInt tmpres1=res;
 			  SingleEvalResultConstInt tmpres2=res;
 			  tmpres1.exprConstraints.addConstraint(Constraint(Constraint::EQ_VAR_CONST,varId,lhsResult.value()));
@@ -160,7 +160,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState eS
 		  VariableId varId;
 		  if(variable(lhs,varId) && rhsResult.isConstInt()) {
 			// only add the equality constraint if no constant is bound to the respective variable
-			if(!res.eState.state->varIsConst(varId)) {
+			if(!res.eState.pstate->varIsConst(varId)) {
 			  SingleEvalResultConstInt tmpres1=res;
 			  SingleEvalResultConstInt tmpres2=res;
 			  tmpres1.exprConstraints.addConstraint(Constraint(Constraint::NEQ_VAR_CONST,varId,rhsResult.value()));
@@ -174,7 +174,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState eS
 		  }
 		  if(lhsResult.isConstInt() && variable(rhs,varId)) {
 			// only add the equality constraint if no constant is bound to the respective variable
-			if(!res.eState.state->varIsConst(varId)) {
+			if(!res.eState.pstate->varIsConst(varId)) {
 			  SingleEvalResultConstInt tmpres1=res;
 			  SingleEvalResultConstInt tmpres2=res;
 			  tmpres1.exprConstraints.addConstraint(Constraint(Constraint::NEQ_VAR_CONST,varId,lhsResult.value()));
@@ -388,10 +388,10 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState eS
 	VariableId varId;
 	bool isVar=ExprAnalyzer::variable(node,varId);
 	assert(isVar);
-	const State* state=eState.state;
-	if(state->varExists(varId)) {
-	  State state2=*state; // also removes constness
-	  res.result=state2[varId].getValue();
+	const PState* pstate=eState.pstate;
+	if(pstate->varExists(varId)) {
+	  PState pstate2=*pstate; // also removes constness
+	  res.result=pstate2[varId].getValue();
 	  if(res.result.isTop() && useConstraints) {
 		// in case of TOP we try to extract a possibly more precise value from the constraints
 		AType::ConstIntLattice val=res.eState.constraints()->varConstIntLatticeValue(varId);
@@ -403,7 +403,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState eS
 	  return listify(res);
 	} else {
 	  res.result=AType::Top();
-	  cerr << "WARNING: variable not in State (var="<<varId.longVariableName()<<"). Initialized with top."<<endl;
+	  cerr << "WARNING: variable not in PState (var="<<varId.longVariableName()<<"). Initialized with top."<<endl;
 	  return listify(res);
 	}
 	break;
@@ -437,7 +437,7 @@ AValue ExprAnalyzer::pureEvalConstInt(SgNode* node,EState& eState) {
 	  VariableId varId;
 	  if((variable(lhs,varId) && rhsResult.isConstInt()) || (lhsResult.isConstInt() && variable(rhs,varId))) {
 		// only add the equality constraint if no constant is bound to the respective variable
-		if(!eState.state->varIsConst(varId)) {
+		if(!eState.pstate->varIsConst(varId)) {
 		  Constraint newConstraint=Constraint(Constraint::NEQ_VAR_CONST,varId,rhsResult);
 		  if(cset.constraintExists(newConstraint)) {
 			return true; // existing constraint allows to assume this fact as true 
@@ -452,7 +452,7 @@ AValue ExprAnalyzer::pureEvalConstInt(SgNode* node,EState& eState) {
 	  VariableId varId;
 	  if((variable(lhs,varId) && rhsResult.isConstInt()) || (lhsResult.isConstInt() && variable(rhs,varId))) {
 		// only add the inequality constraint if no constant is bound to the respective variable
-		if(!eState.state->varIsConst(varId)) {
+		if(!eState.pstate->varIsConst(varId)) {
 		  Constraint newConstraint=Constraint(Constraint::NEQ_VAR_CONST,varId,rhsResult);
 		  if(cset.constraintExists(newConstraint)) {
 			// override result of evaluation based on existent constraint
@@ -532,10 +532,10 @@ AValue ExprAnalyzer::pureEvalConstInt(SgNode* node,EState& eState) {
 	VariableId varId;
 	bool isVar=ExprAnalyzer::variable(node,varId);
 	assert(isVar);
-	const State* state=eState.state;
-	if(state->varExists(varId)) {
-	  State state2=*state; // also removes constness
-	  res=state2[varId].getValue();
+	const PState* pstate=eState.pstate;
+	if(pstate->varExists(varId)) {
+	  PState pstate2=*pstate; // also removes constness
+	  res=pstate2[varId].getValue();
 	  if(res.isTop()) {
 		// in case of TOP we try to extract a possibly more precise value from the constraints
 		AValue val=cset.varConstIntLatticeValue(varId);

@@ -492,11 +492,11 @@ public:
       return c == rersChar(lval.getIntValue());
     }
     case InputOutput::STDOUT_VAR: {
-      const State& prop_state = *estate->state;
+      const PState& prop_state = *estate->pstate;
       //cerr<<estate->toString()<<endl;
       //cerr<<prop_state.varValueToString(estate->io.var)<<" lval="<<lval.toString()<<endl;
       assert(prop_state.varIsConst(estate->io.var));
-      AValue aval = const_cast<State&>(prop_state)[estate->io.var].getValue();
+      AValue aval = const_cast<PState&>(prop_state)[estate->io.var].getValue();
       //cerr<<aval<<endl;
       return c == rersChar(aval.getIntValue());
     }
@@ -552,9 +552,9 @@ public:
       }
 	  
       // output == c constraint?
-      const State& prop_state = *estate->state;
+      const PState& prop_state = *estate->pstate;
       assert(prop_state.varIsConst(estate->io.var));
-      AValue aval = const_cast<State&>(prop_state)[estate->io.var].getValue();
+      AValue aval = const_cast<PState&>(prop_state)[estate->io.var].getValue();
       return c != rersChar(aval.getIntValue());
     }
     default:

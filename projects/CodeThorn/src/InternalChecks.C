@@ -86,7 +86,7 @@ void check(string checkIdentifier, bool checkResult, bool check=true) {
 
 void checkTypes() {
   VariableIdMapping variableIdMapping;
-  State s1;
+  PState s1;
   cout << "RUNNING CHECKS:"<<endl;
   VariableId var_x=variableIdMapping.createUniqueTemporaryVariableId("x");
   {
@@ -230,7 +230,7 @@ void checkTypes() {
 	  Constraint c4b(Constraint::EQ_VAR_CONST,var_y,3);
 	  ConstraintSet cs1;
 	  ConstraintSet cs2;
-	  State s;
+	  PState s;
 	  cs1.addConstraint(c1);
 	  cs1.addConstraint(c2);
 	  cs1.addConstraint(c3);
@@ -274,76 +274,76 @@ void checkTypes() {
   }
   {
 	cout << "------------------------------------------"<<endl;
-	cout << "RUNNING CHECKS FOR STATE AND STATESET:"<<endl;
+	cout << "RUNNING CHECKS FOR PSTATE AND PSTATESET:"<<endl;
 	VariableIdMapping variableIdMapping;
 	EState es1;
 	EState es2;
-	State s0;
-	State s1;
-	State s2;
-	State s3;
-	State s5;
+	PState s0;
+	PState s1;
+	PState s2;
+	PState s3;
+	PState s5;
 	AValue valtop=AType::Top();
 	AValue val1=500;
 	AValue val2=501;
-	StateSet stateSet;
+	PStateSet pstateSet;
 	VariableId x=variableIdMapping.createUniqueTemporaryVariableId("x");
 	VariableId y=variableIdMapping.createUniqueTemporaryVariableId("y");
-	check("var x not in state1",s1.varExists(x)==false);
-	check("var y not in state2",s2.varExists(y)==false);
+	check("var x not in pstate1",s1.varExists(x)==false);
+	check("var y not in pstate2",s2.varExists(y)==false);
 	s1[x]=val1;
 	s2[y]=val2;
 	s3[x]=val2;
 	s5[x]=valtop;
 	s5[y]=valtop;
-	check("var x exists in state s1",s1.varExists(x)==true);
+	check("var x exists in pstate s1",s1.varExists(x)==true);
 	check("var x==500",((s1[x].getValue()==val1)).isTrue()==true);
-	check("var y exists in state s2",s2.varExists(y)==true);
+	check("var y exists in pstate s2",s2.varExists(y)==true);
 	check("var y==501",((s2[y].getValue()==val2)).isTrue()==true);
 	//check("s0 < s1",(s0<s1)==true);
 	//check("s0 < s2",(s0<s2)==true);
 	check("!(s1 == s2)",(s1==s2)==false);
 	check("s1<s2 xor s2<s1)",(s1<s2)^(s2<s1));
-	check("var x in state s3",s3.varExists(x)==true);
+	check("var x in pstate s3",s3.varExists(x)==true);
 	check("s3[x]==501",((s3[x].getValue())==val2).isTrue()==true);
 	check("!(s1==s2)",(!(s1==s2))==true);
 	check("!(s1==s3)",(!(s1==s3))==true);
 	check("!(s2==s3)",(!(s2==s3))==true);
-	State s4=s1;
+	PState s4=s1;
 	check("s1==s4",(s1==s4)==true);
 
 	s1[x]=val2;
 	check("s1.size()==1",s1.size()==1);
 
-	stateSet.process(s0);
-	check("empty state s0 inserted in stateSet => size of stateSet == 1",stateSet.size()==1);
-	stateSet.process(s1);
-	check("s1 inserted in stateSet => size of stateSet == 2",stateSet.size()==2);
-	stateSet.process(s1);
-	check("s1 reinserted in stateSet => size remains the same",stateSet.size()==2);
-	stateSet.process(s2);
-	check("s2 inserted => size of stateSet == 3",stateSet.size()==3);
+	pstateSet.process(s0);
+	check("empty pstate s0 inserted in pstateSet => size of pstateSet == 1",pstateSet.size()==1);
+	pstateSet.process(s1);
+	check("s1 inserted in pstateSet => size of pstateSet == 2",pstateSet.size()==2);
+	pstateSet.process(s1);
+	check("s1 reinserted in pstateSet => size remains the same",pstateSet.size()==2);
+	pstateSet.process(s2);
+	check("s2 inserted => size of pstateSet == 3",pstateSet.size()==3);
 
-	const State* stateptr0=stateSet.processNewOrExisting(s0); // version 1
-	check("obtain pointer to s0 from stateSet and check !=0",stateptr0!=0);
-	check("check pointer refers indeed to s0 (operator==)",(*stateptr0)==s0);
-	const State* stateptr1=stateSet.processNewOrExisting(s1); // version 1
-	check("obtain pointer to s1 from stateSet and check !=0",stateptr1!=0);
-	const State* stateptr2=stateSet.processNewOrExisting(s2); // version 1
-	check("obtain pointer to s2 from stateSet and check !=0",stateptr2!=0);
-	check("check state.exists(s0)",stateSet.exists(s0));
-	check("check state.exists(s1)",stateSet.exists(s1));
-	check("check state.exists(s2)",stateSet.exists(s2));
-	check("check state.exists(s5) does not exist",!stateSet.exists(s5));
+	const PState* pstateptr0=pstateSet.processNewOrExisting(s0); // version 1
+	check("obtain pointer to s0 from pstateSet and check !=0",pstateptr0!=0);
+	check("check pointer refers indeed to s0 (operator==)",(*pstateptr0)==s0);
+	const PState* pstateptr1=pstateSet.processNewOrExisting(s1); // version 1
+	check("obtain pointer to s1 from pstateSet and check !=0",pstateptr1!=0);
+	const PState* pstateptr2=pstateSet.processNewOrExisting(s2); // version 1
+	check("obtain pointer to s2 from pstateSet and check !=0",pstateptr2!=0);
+	check("check pstate.exists(s0)",pstateSet.exists(s0));
+	check("check pstate.exists(s1)",pstateSet.exists(s1));
+	check("check pstate.exists(s2)",pstateSet.exists(s2));
+	check("check pstate.exists(s5) does not exist",!pstateSet.exists(s5));
 	check("constint-strictWeak-equality-1",strictWeakOrderingIsEqual(val1,val2)==false);
 	check("constint-strictWeak-smaller-1",strictWeakOrderingIsSmaller(val1,val2)==true);
 
 	s4[x]=valtop;
 	check("created s4; inserted x=top; s4[x].getValue.isTop",s4[x].getValue().isTop());	
-	stateSet.processNewOrExisting(s4);
-	check("inserted s4 => size of stateSet == 4",stateSet.size()==4);	
-	const State* stateptr4=stateSet.processNewOrExisting(s4); // version 1
-	check("obtain pointer to s4 from stateSet and check !=0",stateptr4!=0);
+	pstateSet.processNewOrExisting(s4);
+	check("inserted s4 => size of pstateSet == 4",pstateSet.size()==4);	
+	const PState* pstateptr4=pstateSet.processNewOrExisting(s4); // version 1
+	check("obtain pointer to s4 from pstateSet and check !=0",pstateptr4!=0);
 
 #if 1
 	EStateSet eStateSet;
@@ -353,17 +353,17 @@ void checkTypes() {
 	ConstraintSet cs1;
 	cs1.addConstraint(Constraint(Constraint::NEQ_VAR_CONST,x,1));
 	const ConstraintSet* cs1ptr=csm.processNewOrExisting(cs1);
-	es1=EState(1,stateptr1,cs1ptr);
+	es1=EState(1,pstateptr1,cs1ptr);
 	
 	ConstraintSet cs2;
 	cs2.addConstraint(Constraint(Constraint::EQ_VAR_CONST,x,1));
 	const ConstraintSet* cs2ptr=csm.processNewOrExisting(cs2);
-	es2=EState(1,stateptr1,cs2ptr);
+	es2=EState(1,pstateptr1,cs2ptr);
 
 	ConstraintSet cs3;
 	cs3.addConstraint(Constraint(Constraint::NEQ_VAR_CONST,x,1));
 	const ConstraintSet* cs3ptr=csm.processNewOrExisting(cs3);
-	es3=EState(3,stateptr4,cs3ptr);
+	es3=EState(3,pstateptr4,cs3ptr);
 
 	check("check es1 does not exist in eStateSet",eStateSet.exists(es1)==0);
 	check("check es2 does not exist in eStateSet",eStateSet.exists(es2)==0);
@@ -434,11 +434,11 @@ void checkTypes() {
 	es2.constraints.addConstraint(Constraint(Constraint::NEQ_VAR_CONST,var_x,1));
 	cout << "empty EState with label and constraint es1: "<<es1.toString()<<endl;
 	cout << "empty EState with label and constraint es2: "<<es2.toString()<<endl;
-	State s;
-	es1.state=&s;
-	es2.state=&s;
-	cout << "empty EState with label, empty state, and constraint es1: "<<es1.toString()<<endl;
-	cout << "empty EState with label, empty state, and constraint es2: "<<es2.toString()<<endl;
+	PState s;
+	es1.pstate=&s;
+	es2.pstate=&s;
+	cout << "empty EState with label, empty pstate, and constraint es1: "<<es1.toString()<<endl;
+	cout << "empty EState with label, empty pstate, and constraint es2: "<<es2.toString()<<endl;
 	bool testres=(es1==es2);
 	if(testres)
 	  cout << "es1==es2: "<<testres<< "(not as expected: FAIL)"<<endl;
