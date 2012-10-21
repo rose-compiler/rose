@@ -35,29 +35,29 @@ bool ExprAnalyzer::variable(SgNode* node, VariableId& varId) {
 //////////////////////////////////////////////////////////////////////
 // EVAL BOOL
 //////////////////////////////////////////////////////////////////////
-SingleEvalResult ExprAnalyzer::eval(SgNode* node,EState eState) {
+SingleEvalResult ExprAnalyzer::eval(SgNode* node,EState estate) {
   SingleEvalResult tmp;
-  tmp.eState=eState;
+  tmp.estate=estate;
   switch(node->variantT()) {
   case V_SgAndOp: {
 	SgNode* lhs=SgNodeHelper::getLhs(node);
-	SingleEvalResult lhsResult=eval(lhs,eState);
+	SingleEvalResult lhsResult=eval(lhs,estate);
 	SgNode* rhs=SgNodeHelper::getRhs(node);
-	SingleEvalResult rhsResult=eval(rhs,eState);
+	SingleEvalResult rhsResult=eval(rhs,estate);
 	tmp.result=lhsResult.result&&rhsResult.result;
 	return tmp;
   }
   case V_SgOrOp: {
 	SgNode* lhs=SgNodeHelper::getLhs(node);
-	SingleEvalResult lhsResult=eval(lhs,eState);
+	SingleEvalResult lhsResult=eval(lhs,estate);
 	SgNode* rhs=SgNodeHelper::getRhs(node);
-	SingleEvalResult rhsResult=eval(rhs,eState);
+	SingleEvalResult rhsResult=eval(rhs,estate);
 	tmp.result=lhsResult.result||rhsResult.result;
 	return tmp;
   }
   case V_SgNotOp: {
 	SgNode* child=SgNodeHelper::getFirstChild(node);
-	SingleEvalResult operandResult=eval(child,eState);
+	SingleEvalResult operandResult=eval(child,estate);
 	tmp.result=!operandResult.result;
 	return tmp;
   }
@@ -90,19 +90,19 @@ list<SingleEvalResultConstInt> listify(SingleEvalResultConstInt res) {
 }
 
 
-list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState eState, bool useConstraints, bool safeConstraintPropagation) {
-  assert(eState.pstate); // ensure state exists
+list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState estate, bool useConstraints, bool safeConstraintPropagation) {
+  assert(estate.pstate); // ensure state exists
   SingleEvalResultConstInt res;
   // initialize with default values from argument(s)
-  res.eState=eState;
+  res.estate=estate;
   res.result=AType::ConstIntLattice(AType::Bot());
   if(dynamic_cast<SgBinaryOp*>(node)) {
 	//cout << "BinaryOp:"<<SgNodeHelper::nodeToString(node)<<endl;
 
 	SgNode* lhs=SgNodeHelper::getLhs(node);
-	list<SingleEvalResultConstInt> lhsResultList=evalConstInt(lhs,eState,useConstraints,safeConstraintPropagation);
+	list<SingleEvalResultConstInt> lhsResultList=evalConstInt(lhs,estate,useConstraints,safeConstraintPropagation);
 	SgNode* rhs=SgNodeHelper::getRhs(node);
-	list<SingleEvalResultConstInt> rhsResultList=evalConstInt(rhs,eState,useConstraints,safeConstraintPropagation);
+	list<SingleEvalResultConstInt> rhsResultList=evalConstInt(rhs,estate,useConstraints,safeConstraintPropagation);
 	//assert(lhsResultList.size()==1);
 	//assert(rhsResultList.size()==1);
 	list<SingleEvalResultConstInt> resultList;
@@ -123,7 +123,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState eS
 		  VariableId varId;
 		  if(variable(lhs,varId) && rhsResult.isConstInt()) {
 			// if var is top add two states with opposing constraints
-			if(!res.eState.pstate->varIsConst(varId)) {
+			if(!res.estate.pstate->varIsConst(varId)) {
 			  SingleEvalResultConstInt tmpres1=res;
 			  SingleEvalResultConstInt tmpres2=res;
 			  tmpres1.exprConstraints.addConstraint(Constraint(Constraint::EQ_VAR_CONST,varId,rhsResult.value()));
@@ -138,7 +138,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState eS
 		  }
 		  if(lhsResult.isConstInt() && variable(rhs,varId)) {
 			// only add the equality constraint if no constant is bound to the respective variable
-			if(!res.eState.pstate->varIsConst(varId)) {
+			if(!res.estate.pstate->varIsConst(varId)) {
 			  SingleEvalResultConstInt tmpres1=res;
 			  SingleEvalResultConstInt tmpres2=res;
 			  tmpres1.exprConstraints.addConstraint(Constraint(Constraint::EQ_VAR_CONST,varId,lhsResult.value()));
@@ -160,7 +160,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState eS
 		  VariableId varId;
 		  if(variable(lhs,varId) && rhsResult.isConstInt()) {
 			// only add the equality constraint if no constant is bound to the respective variable
-			if(!res.eState.pstate->varIsConst(varId)) {
+			if(!res.estate.pstate->varIsConst(varId)) {
 			  SingleEvalResultConstInt tmpres1=res;
 			  SingleEvalResultConstInt tmpres2=res;
 			  tmpres1.exprConstraints.addConstraint(Constraint(Constraint::NEQ_VAR_CONST,varId,rhsResult.value()));
@@ -174,7 +174,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState eS
 		  }
 		  if(lhsResult.isConstInt() && variable(rhs,varId)) {
 			// only add the equality constraint if no constant is bound to the respective variable
-			if(!res.eState.pstate->varIsConst(varId)) {
+			if(!res.estate.pstate->varIsConst(varId)) {
 			  SingleEvalResultConstInt tmpres1=res;
 			  SingleEvalResultConstInt tmpres2=res;
 			  tmpres1.exprConstraints.addConstraint(Constraint(Constraint::NEQ_VAR_CONST,varId,lhsResult.value()));
@@ -319,7 +319,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState eS
   
   if(dynamic_cast<SgUnaryOp*>(node)) {
 	SgNode* child=SgNodeHelper::getFirstChild(node);
-	list<SingleEvalResultConstInt> operandResultList=evalConstInt(child,eState,useConstraints,safeConstraintPropagation);
+	list<SingleEvalResultConstInt> operandResultList=evalConstInt(child,estate,useConstraints,safeConstraintPropagation);
 	//assert(operandResultList.size()==1);
 	list<SingleEvalResultConstInt> resultList;
 	for(list<SingleEvalResultConstInt>::iterator oiter=operandResultList.begin();
@@ -338,7 +338,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState eS
 		SgCastExp* castExp=isSgCastExp(node);
 		// TODO: model effect of cast when sub language is extended
 		res.exprConstraints=operandResult.exprConstraints;
-		//return evalConstInt(SgNodeHelper::getFirstChild(castExp),eState,useConstraints,safeConstraintPropagation);
+		//return evalConstInt(SgNodeHelper::getFirstChild(castExp),estate,useConstraints,safeConstraintPropagation);
 		resultList.push_back(res);
 		break;
 	  }
@@ -388,13 +388,13 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState eS
 	VariableId varId;
 	bool isVar=ExprAnalyzer::variable(node,varId);
 	assert(isVar);
-	const PState* pstate=eState.pstate;
+	const PState* pstate=estate.pstate;
 	if(pstate->varExists(varId)) {
 	  PState pstate2=*pstate; // also removes constness
 	  res.result=pstate2[varId].getValue();
 	  if(res.result.isTop() && useConstraints) {
 		// in case of TOP we try to extract a possibly more precise value from the constraints
-		AType::ConstIntLattice val=res.eState.constraints()->varConstIntLatticeValue(varId);
+		AType::ConstIntLattice val=res.estate.constraints()->varConstIntLatticeValue(varId);
 		//if(!val.isTop())
 		// TODO: we will want to monitor this for statistics!
 		//  cout << "DEBUG: extracing more precise value from constraints: "<<res.result.toString()<<" ==> "<<val.toString()<<endl;
@@ -418,17 +418,17 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState eS
 //////////////////////////////////////////////////////////////////////
 // PURE EVAL CONSTINT
 //////////////////////////////////////////////////////////////////////
-AValue ExprAnalyzer::pureEvalConstInt(SgNode* node,EState& eState) {
-  ConstraintSet cset=*eState.constraints();
+AValue ExprAnalyzer::pureEvalConstInt(SgNode* node,EState& estate) {
+  ConstraintSet cset=*estate.constraints();
   AValue res;
   // initialize with default values from argument(s)
   res=AType::ConstIntLattice(AType::Bot());
 
   if(dynamic_cast<SgBinaryOp*>(node)) {
 	SgNode* lhs=SgNodeHelper::getLhs(node);
-	AValue lhsResult=pureEvalConstInt(lhs,eState);
+	AValue lhsResult=pureEvalConstInt(lhs,estate);
 	SgNode* rhs=SgNodeHelper::getRhs(node);
-	AValue rhsResult=pureEvalConstInt(rhs,eState);
+	AValue rhsResult=pureEvalConstInt(rhs,estate);
 
 	switch(node->variantT()) {
 	case V_SgEqualityOp: {
@@ -437,7 +437,7 @@ AValue ExprAnalyzer::pureEvalConstInt(SgNode* node,EState& eState) {
 	  VariableId varId;
 	  if((variable(lhs,varId) && rhsResult.isConstInt()) || (lhsResult.isConstInt() && variable(rhs,varId))) {
 		// only add the equality constraint if no constant is bound to the respective variable
-		if(!eState.pstate->varIsConst(varId)) {
+		if(!estate.pstate->varIsConst(varId)) {
 		  Constraint newConstraint=Constraint(Constraint::NEQ_VAR_CONST,varId,rhsResult);
 		  if(cset.constraintExists(newConstraint)) {
 			return true; // existing constraint allows to assume this fact as true 
@@ -452,7 +452,7 @@ AValue ExprAnalyzer::pureEvalConstInt(SgNode* node,EState& eState) {
 	  VariableId varId;
 	  if((variable(lhs,varId) && rhsResult.isConstInt()) || (lhsResult.isConstInt() && variable(rhs,varId))) {
 		// only add the inequality constraint if no constant is bound to the respective variable
-		if(!eState.pstate->varIsConst(varId)) {
+		if(!estate.pstate->varIsConst(varId)) {
 		  Constraint newConstraint=Constraint(Constraint::NEQ_VAR_CONST,varId,rhsResult);
 		  if(cset.constraintExists(newConstraint)) {
 			// override result of evaluation based on existent constraint
@@ -486,14 +486,14 @@ AValue ExprAnalyzer::pureEvalConstInt(SgNode* node,EState& eState) {
   }
   if(dynamic_cast<SgUnaryOp*>(node)) {
 	SgNode* child=SgNodeHelper::getFirstChild(node);
-	AValue operandResult=pureEvalConstInt(child,eState);
+	AValue operandResult=pureEvalConstInt(child,estate);
 	switch(node->variantT()) {
 	case V_SgNotOp:
 	  res=!operandResult;
 	  return res;
 	case V_SgCastExp: {
 	  SgCastExp* castExp=isSgCastExp(node);
-	  return pureEvalConstInt(SgNodeHelper::getFirstChild(castExp),eState);
+	  return pureEvalConstInt(SgNodeHelper::getFirstChild(castExp),estate);
 	}
 	case V_SgMinusOp: {
 	  res=-operandResult; // using overloaded operator
@@ -532,7 +532,7 @@ AValue ExprAnalyzer::pureEvalConstInt(SgNode* node,EState& eState) {
 	VariableId varId;
 	bool isVar=ExprAnalyzer::variable(node,varId);
 	assert(isVar);
-	const PState* pstate=eState.pstate;
+	const PState* pstate=estate.pstate;
 	if(pstate->varExists(varId)) {
 	  PState pstate2=*pstate; // also removes constness
 	  res=pstate2[varId].getValue();

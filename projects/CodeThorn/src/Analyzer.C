@@ -54,7 +54,7 @@ void Analyzer::printStatusMessage(bool forceDisplay) {
 	ss  <<color("white")<<"Number of states/estates/trans/csets: ";
 	ss  <<color("magenta")<<pstateSet.size()
 		<<color("white")<<"/"
-		<<color("cyan")<<eStateSet.size()
+		<<color("cyan")<<estateSet.size()
 		<<color("white")<<"/"
 		<<color("blue")<<transitionGraph.size()
 		<<color("white")<<"/"
@@ -66,14 +66,14 @@ void Analyzer::printStatusMessage(bool forceDisplay) {
 }
 }
 
-void Analyzer::addToWorkList(const EState* eState) { 
+void Analyzer::addToWorkList(const EState* estate) { 
 #pragma omp critical
   {
-  if(!eState) {
+  if(!estate) {
 	cerr<<"INTERNAL ERROR: null pointer added to work list."<<endl;
 	exit(1);
   }
-  eStateWorkList.push(eState); 
+  estateWorkList.push(estate); 
   }
 }
 
@@ -82,20 +82,20 @@ const EState* Analyzer::processNewOrExisting(Label label, PState pstate, Constra
   const PState* newPStatePtr=processNewOrExisting(pstate);
   const ConstraintSet* newCSetPtr=processNewOrExisting(cset);
   EState newEState=EState(label,newPStatePtr,newCSetPtr);
-  newEStatePtr=eStateSet.processNewOrExisting(newEState);
+  newEStatePtr=estateSet.processNewOrExisting(newEState);
   return newEStatePtr;
 }
 
 EState Analyzer::createEState(Label label, PState pstate, ConstraintSet cset) {
   const PState* newPStatePtr=processNewOrExisting(pstate);
   const ConstraintSet* newConstraintSetPtr=processNewOrExisting(cset);
-  EState eState=EState(label,newPStatePtr,newConstraintSetPtr);
-  return eState;
+  EState estate=EState(label,newPStatePtr,newConstraintSetPtr);
+  return estate;
 }
 EState Analyzer::createEState(Label label, PState pstate, ConstraintSet cset, InputOutput io) {
-  EState eState=createEState(label,pstate,cset);
-  eState.io=io;
-  return eState;
+  EState estate=createEState(label,pstate,cset);
+  estate.io=io;
+  return estate;
 }
 
 bool Analyzer::isLTLrelevantLabel(Label label) {
@@ -136,37 +136,37 @@ bool Analyzer::isEmptyWorkList() {
   bool res;
   #pragma omp critical
   {
-  bool res=eStateWorkList.size()==0;
+  bool res=estateWorkList.size()==0;
   }
   return res;
 }
 const EState* Analyzer::topWorkList() {
-  const EState* eState=0;
+  const EState* estate=0;
 #pragma omp critical
   {
-	if(eStateWorkList.size()>0)
-	  eState=eStateWorkList.top();
+	if(estateWorkList.size()>0)
+	  estate=estateWorkList.top();
   }
-  return eState;
+  return estate;
 }
 const EState* Analyzer::popWorkList() {
-  const EState* eState=0;
+  const EState* estate=0;
   #pragma omp critical
   {
-	if(eStateWorkList.size()>0)
-	  eState=eStateWorkList.top();
-	if(eState)
-	  eStateWorkList.pop();
+	if(estateWorkList.size()>0)
+	  estate=estateWorkList.top();
+	if(estate)
+	  estateWorkList.pop();
   }
-  return eState;
+  return estate;
 }
 const EState* Analyzer::takeFromWorkList() {
   const EState* co=0;
 #pragma omp critical
   {
-  if(eStateWorkList.size()>0) {
-	co=eStateWorkList.top();
-	eStateWorkList.pop();
+  if(estateWorkList.size()>0) {
+	co=estateWorkList.top();
+	estateWorkList.pop();
   }
   }
   return co;
@@ -192,9 +192,9 @@ void Analyzer::runSolver1() {
   if(workers==0)
 	break; // we are done
 
-  if((_displayDiff && (eStateSet.size()-prevStateSetSize)>_displayDiff)) {
+  if((_displayDiff && (estateSet.size()-prevStateSetSize)>_displayDiff)) {
 	printStatusMessage(true);
-	prevStateSetSize=eStateSet.size();
+	prevStateSetSize=estateSet.size();
   }
   #pragma omp parallel for private(threadNum),shared(workVector)
   for(int j=0;j<workers;++j) {
@@ -231,7 +231,7 @@ void Analyzer::runSolver1() {
 		  ++nesListIter) {
 		EState newEState=*nesListIter;
 		if(newEState.label!=NO_ESTATE && (!newEState.constraints()->disequalityExists()) &&(!isFailedAssertEState(&newEState))) {
-		  HSetMaintainer<EState,EStateHashFun>::ProcessingResult pres=eStateSet.process(newEState);
+		  HSetMaintainer<EState,EStateHashFun>::ProcessingResult pres=estateSet.process(newEState);
 		  const EState* newEStatePtr=pres.second;
 		  if(pres.first==true)
 			addToWorkList(newEStatePtr);			
@@ -279,15 +279,15 @@ void Analyzer::runSolver1() {
   cout << "analysis finished (worklist is empty)."<<endl;
 }
 
-const EState* Analyzer::addToWorkListIfNew(EState eState) {
-  EStateSet::ProcessingResult res=process(eState);
+const EState* Analyzer::addToWorkListIfNew(EState estate) {
+  EStateSet::ProcessingResult res=process(estate);
   if(res.first==true) {
 	const EState* newEStatePtr=res.second;
 	assert(newEStatePtr);
 	addToWorkList(newEStatePtr);
 	return newEStatePtr;
   } else {
-	//cout << "DEBUG: EState already exists. Not added:"<<eState.toString()<<endl;
+	//cout << "DEBUG: EState already exists. Not added:"<<estate.toString()<<endl;
 	const EState* existingEStatePtr=res.second;
 	assert(existingEStatePtr);
 	return existingEStatePtr;
@@ -358,12 +358,12 @@ bool Analyzer::isAssertExpr(SgNode* node) {
   return false;
 }
 
-bool Analyzer::isFailedAssertEState(const EState* eState) {
-  return eState->io.op==InputOutput::FAILED_ASSERT;
+bool Analyzer::isFailedAssertEState(const EState* estate) {
+  return estate->io.op==InputOutput::FAILED_ASSERT;
 }
 
-EState Analyzer::createFailedAssertEState(EState eState, Label target) {
-  	  EState newEState=eState;
+EState Analyzer::createFailedAssertEState(EState estate, Label target) {
+  	  EState newEState=estate;
 	  newEState.io.recordFailedAssert();
 	  newEState.label=target;
 	  return newEState;
@@ -414,11 +414,11 @@ const PState* Analyzer::processNewOrExisting(PState& s) {
 }
 
 const EState* Analyzer::processNew(EState& s) {
-  return eStateSet.processNew(s);
+  return estateSet.processNew(s);
 }
 
 const EState* Analyzer::processNewOrExisting(EState& s) {
-  return eStateSet.processNewOrExisting(s);
+  return estateSet.processNewOrExisting(s);
 }
 
 const ConstraintSet* Analyzer::processNewOrExisting(ConstraintSet& cset) {
@@ -426,7 +426,7 @@ const ConstraintSet* Analyzer::processNewOrExisting(ConstraintSet& cset) {
 }
 
 EStateSet::ProcessingResult Analyzer::process(EState& s) {
-  return eStateSet.process(s);
+  return estateSet.process(s);
 }
 
 list<EState> elistify(EState res) {
@@ -437,8 +437,8 @@ list<EState> elistify(EState res) {
   return resList;
 }
 
-list<EState> Analyzer::transferFunction(Edge edge, const EState* eState) {
-  assert(edge.source==eState->label);
+list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
+  assert(edge.source==estate->label);
   // we do not pass information on the local edge
   if(edge.type==EDGE_LOCAL) {
 	EState noEState;
@@ -446,7 +446,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* eState) {
 	// TODO: investigate: with could also return an empty list here
 	return elistify(noEState);
   }
-  EState currentEState=*eState;
+  EState currentEState=*estate;
   PState currentPState=*currentEState.pstate;
   ConstraintSet cset=*currentEState.constraints();
   // 1. we handle the edge as outgoing edge
@@ -462,7 +462,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* eState) {
 	// 1) obtain actual parameters from source
 	// 2) obtain formal parameters from target
 	// 3) eval each actual parameter and assign result to formal parameter in state
-	// 4) create new eState
+	// 4) create new estate
 
 	// ad 1)
 	SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(getLabeler()->getNode(edge.source));
@@ -556,7 +556,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* eState) {
 	}
   }
   if(getLabeler()->isFunctionCallReturnLabel(edge.source)) {
-	// case 1: return f(); pass eState trough
+	// case 1: return f(); pass estate trough
 	if(SgNodeHelper::Pattern::matchReturnStmtFunctionCallExp(nextNodeToAnalyze1)) {
 	  EState newEState=currentEState;
 	  newEState.label=edge.target;
@@ -640,7 +640,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* eState) {
 		   newio.recordVariable(InputOutput::STDOUT_VAR,varId);
 		   assert(newio.var==varId);
 		   if(boolOptions["report-stdout"]) {
-			 cout << "REPORT: stdout:"<<varId.toString()<<":"<<eState->toString()<<endl;
+			 cout << "REPORT: stdout:"<<varId.toString()<<":"<<estate->toString()<<endl;
 		   }
 
 		 } else {
@@ -702,12 +702,12 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* eState) {
 		if((evalResult.isTrue() && edge.type==EDGE_TRUE) || (evalResult.isFalse() && edge.type==EDGE_FALSE) || evalResult.isTop()) {
 		  // pass on EState
 		  newLabel=edge.target;
-		  newPState=*evalResult.eState.pstate;
+		  newPState=*evalResult.estate.pstate;
 		  // merge with collected constraints of expr (exprConstraints), and invert for false branch
 		  if(edge.type==EDGE_TRUE) {
-			newCSet=*evalResult.eState.constraints()+evalResult.exprConstraints;
+			newCSet=*evalResult.estate.constraints()+evalResult.exprConstraints;
 		  } else if(edge.type==EDGE_FALSE) {
-			ConstraintSet s1=*evalResult.eState.constraints();
+			ConstraintSet s1=*evalResult.estate.constraints();
 			ConstraintSet s2=evalResult.exprConstraints;
 			newCSet=s1+s2;
 		  }
@@ -735,27 +735,27 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* eState) {
 	  SgNode* lhs=SgNodeHelper::getLhs(nextNodeToAnalyze2);
 	  SgNode* rhs=SgNodeHelper::getRhs(nextNodeToAnalyze2);
 	  list<SingleEvalResultConstInt> res=exprAnalyzer.evalConstInt(rhs,currentEState,true,true);
-	  list<EState> eStateList;
+	  list<EState> estateList;
 	  for(list<SingleEvalResultConstInt>::iterator i=res.begin();i!=res.end();++i) {
 		VariableId lhsVar;
 		bool isLhsVar=ExprAnalyzer::variable(lhs,lhsVar);
 		if(isLhsVar) {
-		  EState eState=(*i).eState;
-		  PState newPState=*eState.pstate;
-		  ConstraintSet cset=*eState.constraints();
+		  EState estate=(*i).estate;
+		  PState newPState=*estate.pstate;
+		  ConstraintSet cset=*estate.constraints();
 		  newPState[lhsVar]=(*i).result;
 		  if(!(*i).result.isTop())
 			cset.removeAllConstraintsOfVar(lhsVar);
-		  eStateList.push_back(createEState(edge.target,newPState,cset));
+		  estateList.push_back(createEState(edge.target,newPState,cset));
 		} else {
 		  cerr << "Error: transferfunction:SgAssignOp: unrecognized expression on lhs."<<endl;
 		  exit(1);
 		}
 	  }
-	  return eStateList;
+	  return estateList;
 	}
   }
-  // nothing to analyze, just create new eState (from same State) with target label of edge
+  // nothing to analyze, just create new estate (from same State) with target label of edge
   // can be same state if edge is a backedge to same cfg node
   EState newEState=currentEState;
   newEState.label=edge.target;
@@ -798,7 +798,7 @@ void Analyzer::initializeSolver1(std::string functionToStartAt,SgNode* root) {
   const ConstraintSet* emptycsetstored=constraintSetMaintainer.processNewOrExisting(cset);
   Label startLabel=cfanalyzer->getLabel(startFunRoot);
   transitionGraph.setStartLabel(startLabel);
-  EState eState(startLabel,emptyPStateStored,emptycsetstored);
+  EState estate(startLabel,emptyPStateStored,emptycsetstored);
   
   if(SgProject* project=isSgProject(root)) {
 	cout << "STATUS: Number of global variables: ";
@@ -816,7 +816,7 @@ void Analyzer::initializeSolver1(std::string functionToStartAt,SgNode* root) {
 	int filteredVars=0;
 	for(list<SgVariableDeclaration*>::iterator i=globalVars.begin();i!=globalVars.end();++i) {
 	  if(setOfUsedVars.find(variableIdMapping.variableId(*i))!=setOfUsedVars.end())
-		eState=analyzeVariableDeclaration(*i,eState,eState.label);
+		estate=analyzeVariableDeclaration(*i,estate,estate.label);
 	  else
 		filteredVars++;
 	}
@@ -825,7 +825,7 @@ void Analyzer::initializeSolver1(std::string functionToStartAt,SgNode* root) {
 	cout << "INIT: no global scope.";
   }	
 
-  const EState* currentEState=processNew(eState);
+  const EState* currentEState=processNew(estate);
   assert(currentEState);
   //cout << "INIT: "<<eStateSet.toString()<<endl;
   addToWorkList(currentEState);
@@ -834,12 +834,12 @@ void Analyzer::initializeSolver1(std::string functionToStartAt,SgNode* root) {
 }
 
 set<const EState*> Analyzer::transitionSourceEStateSetOfLabel(Label lab) {
-  set<const EState*> eStateSet;
+  set<const EState*> estateSet;
   for(TransitionGraph::iterator j=transitionGraph.begin();j!=transitionGraph.end();++j) {
 	if((*j).source->label==lab)
-	  eStateSet.insert((*j).source);
+	  estateSet.insert((*j).source);
   }
-  return eStateSet;
+  return estateSet;
 }
 
 // TODO: this function is obsolete (to delete)

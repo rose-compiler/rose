@@ -158,9 +158,9 @@ class EStateHashFun {
 	public:
   typedef HSetMaintainer<EState,EStateHashFun>::ProcessingResult ProcessingResult;
   string toString();
-  EStateId eStateId(const EState* eState);
-  EStateId eStateId(const EState eState);
-  string eStateIdString(const EState* eState);
+  EStateId estateId(const EState* estate);
+  EStateId estateId(const EState estate);
+  string estateIdString(const EState* estate);
   int numberOfIoTypeEStates(InputOutput::OpType);
  private:
   ConstraintSetMaintainer* _constraintSetMaintainer; 
@@ -203,7 +203,7 @@ class EStateList : public list<EState> {
 class TransitionGraph : public HSet<Transition,TransitionHashFun> {
  public:
   set<const EState*> transitionSourceEStateSetOfLabel(Label lab);
-  set<const EState*> eStateSetOfLabel(Label lab);
+  set<const EState*> estateSetOfLabel(Label lab);
   void add(Transition trans);
   string toString() const;
   LabelSet labelSetOfIoOperations(InputOutput::OpType op);

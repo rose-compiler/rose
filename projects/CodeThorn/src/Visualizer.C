@@ -19,7 +19,7 @@ Visualizer::Visualizer():
   labeler(0),
   flow(0),
   pstateSet(0),
-  eStateSet(0),
+  estateSet(0),
   transitionGraph(0)
 {}
 
@@ -44,7 +44,7 @@ Visualizer::Visualizer(Labeler* l, Flow* f, PStateSet* ss, EStateSet* ess, Trans
   labeler(l),
   flow(f),
   pstateSet(ss),
-  eStateSet(ess),
+  estateSet(ess),
   transitionGraph(tg)
 {}
 
@@ -52,7 +52,7 @@ void Visualizer::setOptionTransitionGraphDotHtmlNode(bool x) {optionTransitionGr
 void Visualizer::setLabeler(Labeler* x) { labeler=x; }
 void Visualizer::setFlow(Flow* x) { flow=x; }
 void Visualizer::setPStateSet(PStateSet* x) { pstateSet=x; }
-void Visualizer::setEStateSet(EStateSet* x) { eStateSet=x; }
+void Visualizer::setEStateSet(EStateSet* x) { estateSet=x; }
 void Visualizer::setTransitionGraph(TransitionGraph* x) { transitionGraph=x; }
 
 string Visualizer::pstateToString(const PState* pstate) {
@@ -73,21 +73,21 @@ string Visualizer::pstateToString(const PState* pstate) {
   return ss.str();
 }
 
-string Visualizer::eStateToString(const EState* eState) {
+string Visualizer::estateToString(const EState* estate) {
   stringstream ss;
   bool pstateAddressSeparator=false;
   if((tg1&&boolOptions["tg1-estate-address"])||(tg2&&boolOptions["tg2-estate-address"])) {
-	ss<<"@"<<eState;
+	ss<<"@"<<estate;
 	pstateAddressSeparator=true;
   }	
   if((tg1&&boolOptions["tg1-estate-id"])||(tg2&&boolOptions["tg2-estate-id"])) {
 	if(pstateAddressSeparator) {
 	  ss<<":";
 	}
-	ss<<"ES"<<eStateSet->eStateId(eState);
+	ss<<"ES"<<estateSet->estateId(estate);
   }
   if((tg1&&boolOptions["tg1-estate-properties"])||(tg2&&boolOptions["tg2-estate-properties"])) {
-	ss<<eState->toString();
+	ss<<estate->toString();
   } 
   return ss.str();
 }
@@ -96,8 +96,8 @@ string Visualizer::pstateToDotString(const PState* pstate) {
   return string("\""+SgNodeHelper::doubleQuotedEscapedString(pstateToString(pstate))+"\"");
 }
 
-string Visualizer::eStateToDotString(const EState* eState) {
-  return string("\""+SgNodeHelper::doubleQuotedEscapedString(eStateToString(eState))+"\"");
+string Visualizer::estateToDotString(const EState* estate) {
+  return string("\""+SgNodeHelper::doubleQuotedEscapedString(estateToString(estate))+"\"");
 }
 
 string Visualizer::transitionGraphDotHtmlNode(Label lab) {
@@ -112,8 +112,8 @@ string Visualizer::transitionGraphDotHtmlNode(Label lab) {
   s+="</TD>\n";
 
   string sinline;
-  set<const EState*> eStateSetOfLabel=transitionGraph->eStateSetOfLabel(lab);
-  for(set<const EState*>::iterator j=eStateSetOfLabel.begin();j!=eStateSetOfLabel.end();++j) {
+  set<const EState*> estateSetOfLabel=transitionGraph->estateSetOfLabel(lab);
+  for(set<const EState*>::iterator j=estateSetOfLabel.begin();j!=estateSetOfLabel.end();++j) {
 	// decide on color first
 	string textcolor="black";
 	string bgcolor="lightgrey";
@@ -121,8 +121,8 @@ string Visualizer::transitionGraphDotHtmlNode(Label lab) {
 	if((*j)->io.op==InputOutput::STDOUT_VAR) bgcolor="orange";
 	if((*j)->io.op==InputOutput::STDERR_VAR) bgcolor="orangered";
 	if((*j)->io.op==InputOutput::FAILED_ASSERT) {bgcolor="black";textcolor="white";}
-	sinline+="<TD BGCOLOR=\""+bgcolor+"\" PORT=\"P"+eStateSet->eStateIdString(*j)+"\">";
-	sinline+="<FONT COLOR=\""+textcolor+"\">"+eStateToString(*j)+"</FONT>";
+	sinline+="<TD BGCOLOR=\""+bgcolor+"\" PORT=\"P"+estateSet->estateIdString(*j)+"\">";
+	sinline+="<FONT COLOR=\""+textcolor+"\">"+estateToString(*j)+"</FONT>";
 	sinline+="</TD>";
   }
   if(sinline=="") {
@@ -140,7 +140,7 @@ string Visualizer::transitionGraphDotHtmlNode(Label lab) {
 string Visualizer::transitionGraphToDot() {
   stringstream ss;
   for(TransitionGraph::iterator j=transitionGraph->begin();j!=transitionGraph->end();++j) {
-	ss <<"\""<<eStateToString((*j).source)<<"\""<< "->" <<"\""<<eStateToString((*j).target)<<"\"";
+	ss <<"\""<<estateToString((*j).source)<<"\""<< "->" <<"\""<<estateToString((*j).target)<<"\"";
     ss <<" [label=\""<<SgNodeHelper::nodeToString(labeler->getNode((*j).edge.source))<<"\"]"<<";"<<endl;
   }
   return ss.str();
@@ -151,7 +151,7 @@ string Visualizer::transitionGraphToDot() {
   tg1=true;
   stringstream ss;
   for(TransitionGraph::iterator j=transitionGraph->begin();j!=transitionGraph->end();++j) {
-	ss <<"\""<<eStateToString((*j).source)<<"\""<< "->" <<"\""<<eStateToString((*j).target)<<"\"";
+	ss <<"\""<<estateToString((*j).source)<<"\""<< "->" <<"\""<<estateToString((*j).target)<<"\"";
     ss <<" [label=\""<<SgNodeHelper::nodeToString(labeler->getNode((*j).edge.source));
 	ss <<"["<<(*j).edge.typeToString()<<"]";
 	ss <<"\"]"<<";"<<endl;
@@ -173,9 +173,9 @@ string Visualizer::foldedTransitionGraphToDot() {
   for(TransitionGraph::iterator j=transitionGraph->begin();j!=transitionGraph->end();++j) {
 	const EState* source=(*j).source;
 	const EState* target=(*j).target;
-	ss <<"L"<<Labeler::labelToString(source->label)<<":"<<"\"P"<<eStateSet->eStateId(source)<<"\""
+	ss <<"L"<<Labeler::labelToString(source->label)<<":"<<"\"P"<<estateSet->estateId(source)<<"\""
 	   <<"->"
-	   <<"L"<<Labeler::labelToString(target->label)<<":"<<"\"P"<<eStateSet->eStateId(target)<<"\"";
+	   <<"L"<<Labeler::labelToString(target->label)<<":"<<"\"P"<<estateSet->estateId(target)<<"\"";
 	if((*j).edge.type==EDGE_TRUE) ss<<"[color=green]";
 	if((*j).edge.type==EDGE_FALSE) ss<<"[color=red]";
 	if((*j).edge.type==EDGE_BACKWARD) ss<<"[color=blue]";

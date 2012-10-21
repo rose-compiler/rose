@@ -178,14 +178,14 @@ bool operator!=(const EState& c1, const EState& c2) {
   return !(c1==c2);
 }
 
-EStateId EStateSet::eStateId(const EState* eState) {
-  return eStateId(*eState);
+EStateId EStateSet::estateId(const EState* estate) {
+  return estateId(*estate);
 }
 
-EStateId EStateSet::eStateId(const EState eState) {
+EStateId EStateSet::estateId(const EState estate) {
   EStateId id=0;
   for(EStateSet::iterator i=begin();i!=end();++i) {
-	if(eState==*i)
+	if(estate==*i)
 	  return id;
 	id++;
   }
@@ -199,9 +199,9 @@ Transition TransitionGraph::getStartTransition() {
   }
 }
 
-string EStateSet::eStateIdString(const EState* eState) {
+string EStateSet::estateIdString(const EState* estate) {
   stringstream ss;
-  ss<<eStateId(eState);
+  ss<<estateId(estate);
   return ss.str();
 }
 
@@ -298,23 +298,23 @@ string TransitionGraph::toString() const {
 }
 
 set<const EState*> TransitionGraph::transitionSourceEStateSetOfLabel(Label lab) {
-  set<const EState*> eStateSet;
+  set<const EState*> estateSet;
   for(TransitionGraph::iterator j=begin();j!=end();++j) {
 	if((*j).source->label==lab)
-	  eStateSet.insert((*j).source);
+	  estateSet.insert((*j).source);
   }
-  return eStateSet;
+  return estateSet;
 }
 
-set<const EState*> TransitionGraph::eStateSetOfLabel(Label lab) {
-  set<const EState*> eStateSet;
+set<const EState*> TransitionGraph::estateSetOfLabel(Label lab) {
+  set<const EState*> estateSet;
   for(TransitionGraph::iterator j=begin();j!=end();++j) {
 	if((*j).source->label==lab)
-	  eStateSet.insert((*j).source);
+	  estateSet.insert((*j).source);
 	if((*j).target->label==lab)
-	  eStateSet.insert((*j).target);
+	  estateSet.insert((*j).target);
   }
-  return eStateSet;
+  return estateSet;
 }
 
 string EState::toString() const {

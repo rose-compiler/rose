@@ -24,8 +24,8 @@ using namespace LTL;
 
 #define FOR_EACH_ESTATE(STATE, LABEL)				     \
   Label LABEL=0;                                                     \
-  for (EStateSet::const_iterator STATE=eStateSet.begin();	     \
-       STATE != eStateSet.end();				     \
+  for (EStateSet::const_iterator STATE=estateSet.begin();	     \
+       STATE != estateSet.end();				     \
        ++STATE, ++LABEL)
 
 #define FOR_EACH_STATE(STATE, LABEL)					\
@@ -193,7 +193,7 @@ public:
  * JOINS should have the same information
  */
 class Verifier: public BottomUpVisitor {
-  EStateSet& eStateSet;
+  EStateSet& estateSet;
   BoostTransitionGraph& g;
   deque<Label>& endpoints;
   Label start;
@@ -205,7 +205,7 @@ public:
 
   Verifier(EStateSet& ess, BoostTransitionGraph& btg, deque<Label>& exits,
 	   Label start_label, Label max_label, short expr_size)
-    : eStateSet(ess), g(btg), endpoints(exits), start(start_label) {
+    : estateSet(ess), g(btg), endpoints(exits), start(start_label) {
     // reserve a result map for each label
     // it maps an analysis result to each sub-expression of the ltl formula
     ltl_properties.resize(max_label);
@@ -787,7 +787,7 @@ public:
 
 Checker::Checker(EStateSet& ess, TransitionGraph& _tg)
   : transitionGraph(_tg),
-    eStateSet(ess)
+    estateSet(ess)
 {
   // Build our own customized Transition graph
   int i = 0;
@@ -848,7 +848,7 @@ Checker::Checker(EStateSet& ess, TransitionGraph& _tg)
  * Optimization: remove all nodes that are non-I/O and not relevant to
  * the control flow
  *
- * Creates reduced_eStateSet
+ * Creates reduced_estateSet
  */
 Label Checker::collapse_transition_graph(BoostTransitionGraph& g, 
 					 BoostTransitionGraph& reduced) const {
@@ -909,7 +909,7 @@ BoolLattice
 Checker::verify(const Formula& f)
 {
   // Verify!
-  Verifier v(eStateSet, g, endpoints, start, num_vertices(g), f.size());
+  Verifier v(estateSet, g, endpoints, start, num_vertices(g), f.size());
   const Expr& e = f;
   e.accept(v);
 

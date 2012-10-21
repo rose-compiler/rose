@@ -27,8 +27,8 @@ class Visualizer {
   void createMappings();
   string pstateToString(const PState* pstate);
   string pstateToDotString(const PState* pstate);
-  string eStateToString(const EState* estate);
-  string eStateToDotString(const EState* estate);
+  string estateToString(const EState* estate);
+  string estateToDotString(const EState* estate);
   string transitionGraphDotHtmlNode(Label lab);
   string transitionGraphToDot();
   string foldedTransitionGraphToDot();
@@ -36,7 +36,7 @@ class Visualizer {
   Labeler* labeler;
   Flow* flow;
   PStateSet* pstateSet;
-  EStateSet* eStateSet;
+  EStateSet* estateSet;
   TransitionGraph* transitionGraph;
   
   bool optionPStateObjectAddress;

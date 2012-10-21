@@ -70,9 +70,9 @@ class Analyzer {
 
   PState analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode* rhs,ConstraintSet& cset);
   EState analyzeVariableDeclaration(SgVariableDeclaration* nextNodeToAnalyze1,EState currentEState, Label targetLabel);
-  list<EState> transferFunction(Edge edge, const EState* eState);
-  void addToWorkList(const EState* eState);
-  const EState* addToWorkListIfNew(EState eState);
+  list<EState> transferFunction(Edge edge, const EState* estate);
+  void addToWorkList(const EState* estate);
+  const EState* addToWorkListIfNew(EState estate);
   void recordTransition(const EState* sourceEState, Edge e, const EState* targetEState);
   void printStatusMessage(bool);
   bool isLTLrelevantLabel(Label label);
@@ -109,7 +109,7 @@ class Analyzer {
   Labeler* getLabeler() { return cfanalyzer->getLabeler(); }
   Flow* getFlow() { return &flow; }
   PStateSet* getPStateSet() { return &pstateSet; }
-  EStateSet* getEStateSet() { return &eStateSet; }
+  EStateSet* getEStateSet() { return &estateSet; }
   TransitionGraph* getTransitionGraph() { return &transitionGraph; }
   ConstraintSetMaintainer* getConstraintSetMaintainer() { return &constraintSetMaintainer; }
   //private: TODO
@@ -125,9 +125,9 @@ class Analyzer {
   set<string> variableIdsToVariableNames(set<VariableId>);
 
   bool isAssertExpr(SgNode* node);
-  bool isFailedAssertEState(const EState* eState);
-  //! adds a specific code to the io-info of an eState which is checked by isFailedAsserEState and determines a failed-assert eState. Note that the actual assert (and its label) is associated with the previous eState (this information can therefore be obtained from a transition-edge in the transition graph).
-  EState createFailedAssertEState(const EState eState, Label target);
+  bool isFailedAssertEState(const EState* estate);
+  //! adds a specific code to the io-info of an estate which is checked by isFailedAsserEState and determines a failed-assert estate. Note that the actual assert (and its label) is associated with the previous estate (this information can therefore be obtained from a transition-edge in the transition graph).
+  EState createFailedAssertEState(const EState estate, Label target);
   //! list of all asserts in a program
   list<SgNode*> listOfAssertNodes(SgProject *root);
   //! rers-specific error_x: assert(0) version 
@@ -150,8 +150,8 @@ class Analyzer {
  private:
   ExprAnalyzer exprAnalyzer;
   VariableIdMapping variableIdMapping;
-  EStateWorkList eStateWorkList;
-  EStateSet eStateSet;
+  EStateWorkList estateWorkList;
+  EStateSet estateSet;
   PStateSet pstateSet;
   ConstraintSetMaintainer constraintSetMaintainer;
   TransitionGraph transitionGraph;

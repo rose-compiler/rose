@@ -47,7 +47,7 @@ namespace LTL {
     Label start;
     BoostTransitionGraph g;
     TransitionGraph& transitionGraph;
-    EStateSet& eStateSet;
+    EStateSet& estateSet;
     /// the final states in the transition graph
     deque<Label> endpoints;
   };
