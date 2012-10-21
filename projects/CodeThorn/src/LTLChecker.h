@@ -12,7 +12,7 @@
 // This file is part of ROSE. For details, see http://www.rosecompiler.org/.
 // Please read the COPYRIGHT file for Our Notice and for the BSD License.
 
-#include "StateRepresentation.h"
+#include "StateRepresentations.h"
 #include "AType.h"
 #include "LTL.h"
 #include <map>

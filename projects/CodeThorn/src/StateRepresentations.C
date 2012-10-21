@@ -4,7 +4,7 @@
  * License  : see file LICENSE in the CodeThorn distribution *
  *************************************************************/
 
-#include "StateRepresentation.h"
+#include "StateRepresentations.h"
 #include "ExprAnalyzer.h"
 #include "AType.h"
 #include <algorithm>

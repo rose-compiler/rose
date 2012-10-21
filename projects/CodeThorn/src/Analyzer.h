@@ -23,7 +23,7 @@
 #include "MyAst.h"
 #include "SgNodeHelper.h"
 #include "ExprAnalyzer.h"
-#include "StateRepresentation.h"
+#include "StateRepresentations.h"
 
 // we use INT_MIN, INT_MAX
 #include "limits.h"

@@ -9,7 +9,7 @@
 
 #include "Labeler.h"
 #include "CFAnalyzer.h"
-#include "StateRepresentation.h"
+#include "StateRepresentations.h"
 #include "Analyzer.h"
 #include "CommandLineOptions.h"
 

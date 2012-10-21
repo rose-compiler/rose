@@ -8,7 +8,7 @@
 #include "SgNodeHelper.h"
 #include "Labeler.h"
 #include "VariableIdMapping.h"
-#include "StateRepresentation.h"
+#include "StateRepresentations.h"
 #include "Analyzer.h"
 #include "LanguageRestrictor.h"
 #include "Timer.h"
