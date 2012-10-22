@@ -1074,6 +1074,11 @@ test2012_229.C \
 test2012_230.C \
 test2012_231.C \
 test2012_232.C \
+test2012_233.C \
+test2012_234.C \
+test2012_235.C \
+test2012_236.C \
+test2012_237.C \
 test_int_lexemes.C \
 test_int_lexemes_donot_pass.C \
 test_simple_int.C \

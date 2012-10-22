@@ -3,7 +3,7 @@
 extern
 const struct eproto {
 // const char *s;
-// short p;
+   short p;
 } eproto_db[];
 
 

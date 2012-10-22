@@ -12,8 +12,7 @@ typedef struct
   char *name;
   a_ptr_to_test_function pass;
   a_ptr_to_test_function cross_pass;
-}
-testcall;
+} testcall;
 
 static testcall alltests[] = {
 //#include "feasible_test.h"

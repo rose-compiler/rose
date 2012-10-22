@@ -1,13 +1,15 @@
 #if 1
    #include "test2012_63.h"
 #else
+
+// Un-named struct containing named nested struct.
 struct
    {
      int rla_flags;
   // This has to be in a struct (named or un-named) to demonstrate the bug.
      struct rlalink 
         {
-           int x;
+          int x;
         } rla_link[1];
    } un_rla;
 #endif

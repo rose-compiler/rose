@@ -1356,9 +1356,9 @@ Unparse_ExprStmt::unparseTemplateInstantiationDeclStmt (SgStatement* stmt, SgUnp
        //      static void set_instantiation_required_for_template_class_members (a_type_ptr class_type)
        // I am not currently sure how to make this happen, but it should involve the *.ti 
        // files (I guess).
-
+#if 0
           printf ("In unparseTemplateInstantiationDeclStmt(): Calling unparseClassDeclStmt to unparse the SgTemplateInstantiationDecl \n");
-
+#endif
 #if 0
        // This case is not supported if member functions or static data members are present in the class
        // (could generate code which would compile but not link!).
@@ -1400,14 +1400,14 @@ Unparse_ExprStmt::unparseTemplateInstantiationDeclStmt (SgStatement* stmt, SgUnp
         {
           if ( templateInstantiationDeclaration->get_file_info()->isOutputInCodeGeneration() == true )
              {
-#if PRINT_DEVELOPER_WARNINGS || true
+#if PRINT_DEVELOPER_WARNINGS
                printf ("In unparseTemplateInstantiationDeclStmt(): Class template is marked for output in the current source file. \n");
 #endif
                outputClassTemplateInstantiation = true;
              }
             else
              {
-#if PRINT_DEVELOPER_WARNINGS || true
+#if PRINT_DEVELOPER_WARNINGS
                printf ("In unparseTemplateInstantiationDeclStmt(): Class template is NOT marked for output in the current source file. \n");
 #endif
              }
@@ -1462,7 +1462,9 @@ Unparse_ExprStmt::unparseTemplateInstantiationDeclStmt (SgStatement* stmt, SgUnp
           bool locatedInNamespace = (namespaceDefinition != NULL);
 
        // DQ (8/2/2012): Set this to be always false for the new EDG 4.x work (see test2004_112.C).
+#if 0
           printf ("In unparseTemplateInstantiationDeclStmt(): Setting locatedInNamespace (work around from 2005) to false \n");
+#endif
           locatedInNamespace = false;
 
        // printf ("locatedInNamespace = %s \n",locatedInNamespace ? "true" : "false");
@@ -1487,14 +1489,15 @@ Unparse_ExprStmt::unparseTemplateInstantiationDeclStmt (SgStatement* stmt, SgUnp
         }
        else
         {
-          curprint ( string("/* Skipped output of template class declaration (name = " ) + templateInstantiationDeclaration->get_qualified_name().str() + ") */ \n");
-
+#if 0
+          curprint("/* Skipped output of template class declaration (name = " + templateInstantiationDeclaration->get_qualified_name().str() + ") */ \n");
+#endif
        // If not transformed then we only want to output the template (and usually only the 
        // name of the template specialization) in variable declarations and the like.
        // These locations control the output of the template specialization explicitly 
        // through the SgUnparse_Info object (default for outputClassTemplateName is false). 
 #if 0
-          printf ("info.outputClassTemplateName() = %s \n",info.outputClassTemplateName() ? "true" : "false");
+          printf("info.outputClassTemplateName() = %s \n",info.outputClassTemplateName() ? "true" : "false");
 #endif
           if ( info.outputClassTemplateName() == true )
              {
@@ -1508,7 +1511,7 @@ Unparse_ExprStmt::unparseTemplateInstantiationDeclStmt (SgStatement* stmt, SgUnp
             // unparseClassDeclStmt(classDeclaration,info);
 
             // Output the qualified template name
-               curprint ( templateInstantiationDeclaration->get_qualified_name().str());
+               curprint(templateInstantiationDeclaration->get_qualified_name().str());
              }
         }
 
@@ -3576,7 +3579,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      bool outputTypeDefinition = vardecl_stmt->get_variableDeclarationContainsBaseTypeDefiningDeclaration();
 
 #if 0
-     printf ("Inside of unparseVarDeclStmt(): outputTypeDefinition = %s \n",(outputTypeDefinition == true) ? "true" : "false");
+     printf ("In unparseVarDeclStmt(): vardecl_stmt = %p outputTypeDefinition = %s \n",vardecl_stmt,(outputTypeDefinition == true) ? "true" : "false");
 #endif
 
   // if (p != vardecl_stmt->get_variables().end())
@@ -5421,7 +5424,10 @@ Unparse_ExprStmt::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
   // the current variable declaration (e.g. struct A { int x; } a;).  In this case we have to output the base type with
   // its definition.
      bool outputTypeDefinition = typedef_stmt->get_typedefBaseTypeContainsDefiningDeclaration();
-  // printf ("outputTypeDefinition = %s \n",(outputTypeDefinition == true) ? "true" : "false");
+
+#if 0
+     printf ("In unparseTypeDefStmt(): typedef_stmt = %p outputTypeDefinition = %s \n",typedef_stmt,(outputTypeDefinition == true) ? "true" : "false");
+#endif
 
      if (!info.inEmbeddedDecl())
         {
