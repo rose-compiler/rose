@@ -4050,52 +4050,91 @@ Unparse_ExprStmt::unparseVarArgCopyOp(SgExpression* expr, SgUnparse_Info& info)
      curprint ( ")" );
    }
 
+
 void
 Unparse_ExprStmt::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Info & info)
    {
- // Liao, fixing bug 355, 6/16/2009
- // for multidimensional array's designated initializer, don't emit '=' until it reaches the last dimension
- // TODO this is not the ultimate fix: EDG uses nested tree for multidimensional array's designated initializer
- // while ROSE's SgDesignatedInitializer is designed to have a flat list for designators 
- // But the EDG_SAGE_connect part generated nested ROSE AST tree following EDG's IR tree.
-    bool lastDesignator = true; 
-    bool isArrayElementDesignator = false;
+  // Liao, fixing bug 355, 6/16/2009
+  // for multidimensional array's designated initializer, don't emit '=' until it reaches the last dimension
+  // TODO this is not the ultimate fix: EDG uses nested tree for multidimensional array's designated initializer
+  // while ROSE's SgDesignatedInitializer is designed to have a flat list for designators 
+  // But the EDG_SAGE_connect part generated nested ROSE AST tree following EDG's IR tree.
+     bool lastDesignator           = true; 
+     bool isArrayElementDesignator = false;
 
-     SgDesignatedInitializer* di = isSgDesignatedInitializer(expr);
-     const SgExpressionPtrList& designators = di->get_designatorList()->get_expressions();
-     for (size_t i = 0; i < designators.size(); ++i) {
-       SgExpression* designator = designators[i];
-       if (isSgVarRefExp(designator)) {
-         // A struct field
-         curprint ( "." );
-         unparseVarRef(designator, info);
-       } else if (isSgValueExp(designator)) {
-         curprint ( "[" );
-         unparseValue(designator, info);
-         curprint ( "]" );
-         isArrayElementDesignator = true;
-       }
-     }
-     // check if the current designator is the last one within an aggregate initializer
-     // e.g. double grid[3] [4] = { [0][1]=8};
-     // [0] is not the last one, [1] is.  Only emit '=' after [1].
-     // The reference code is gen_designator() in cp_gen_be.c
-    if (isSgAggregateInitializer(expr->get_parent()->get_parent()))
-    {
-      SgInitializer* child_init = di->get_memberInit();
-      if (isSgAggregateInitializer(child_init))
-      {
-        //grab the first one
-        SgExpression* grand_child = (isSgAggregateInitializer(child_init)->get_initializers()->get_expressions())[0];
-        if (isSgDesignatedInitializer(grand_child))
-          lastDesignator = false;
-      }
-    }
-    // Don't emit '=' if it is an array element and is not the last designator
-    if (!(isArrayElementDesignator&&!lastDesignator))
-      curprint ( " = " );
-     unparseExpression(di->get_memberInit(), info);
+#if 0
+     printf ("In unparseDesignatedInitializer: expr = %p expr->startOfConstruct(): \n",expr);
+     expr->get_startOfConstruct()->display("In unparseDesignatedInitializer: debug");
+#endif
+
+  // DQ (10/22/2012): Only output the SgDesignatedInitializer if it is not compiler generated or if it is compiler generated, only if it is marked to be output.
+     bool outputDesignatedInitializer = (expr->get_startOfConstruct()->isCompilerGenerated() == false);
+     if (expr->get_startOfConstruct()->isCompilerGenerated() == true && expr->get_startOfConstruct()->isOutputInCodeGeneration() == false)
+        outputDesignatedInitializer = false;
+
+#if 0
+     printf ("In unparseDesignatedInitializer: outputDesignatedInitializer = %s \n",outputDesignatedInitializer ? "true" : "false");
+#endif
+
+     if (outputDesignatedInitializer == true)
+        {
+       // The SgDesignatedInitializer is generally compiler generated, but not always wanted as output (see test2012_74.c).
+          SgDesignatedInitializer* di = isSgDesignatedInitializer(expr);
+          const SgExpressionPtrList& designators = di->get_designatorList()->get_expressions();
+          for (size_t i = 0; i < designators.size(); ++i)
+             {
+               SgExpression* designator = designators[i];
+               if (isSgVarRefExp(designator))
+                  {
+                 // A struct field
+                    curprint ( "." );
+                    unparseVarRef(designator, info);
+                  }
+                 else
+                  {
+                    if (isSgValueExp(designator))
+                       {
+                         curprint ( "[" );
+                         unparseValue(designator, info);
+                         curprint ( "]" );
+                         isArrayElementDesignator = true;
+                       }
+                  }
+             }
+
+       // check if the current designator is the last one within an aggregate initializer
+       // e.g. double grid[3] [4] = { [0][1]=8};
+       // [0] is not the last one, [1] is.  Only emit '=' after [1].
+       // The reference code is gen_designator() in cp_gen_be.c
+          if (isSgAggregateInitializer(expr->get_parent()->get_parent()))
+             {
+               SgInitializer* child_init = di->get_memberInit();
+               if (isSgAggregateInitializer(child_init))
+                  {
+                 // grab the first one
+                    SgExpression* grand_child = (isSgAggregateInitializer(child_init)->get_initializers()->get_expressions())[0];
+                    if (isSgDesignatedInitializer(grand_child))
+                         lastDesignator = false;
+                  }
+             }
+
+       // Don't emit '=' if it is an array element and is not the last designator
+          if ( !(isArrayElementDesignator && !lastDesignator) )
+               curprint (" = ");
+
+          unparseExpression(di->get_memberInit(), info);
+        }
+       else
+        {
+       // This is the case taken for the test2012_74.c test code.
+#if 0
+          printf ("This SgDesignatedInitializer is compiler generated and should not be output \n");
+#endif
+          SgDesignatedInitializer* di = isSgDesignatedInitializer(expr);
+          unparseExpression(di->get_memberInit(), info);
+        }
    }
+
 
 void
 Unparse_ExprStmt::unparsePseudoDtorRef(SgExpression* expr, SgUnparse_Info & info)
