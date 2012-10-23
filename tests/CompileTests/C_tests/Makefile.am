@@ -165,6 +165,8 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2012_73.c \
      test2012_74.c \
      test2012_75.c \
+     test2012_76.c \
+     test2012_77.c \
      math.c \
      complex_01.c \
      constants.c
