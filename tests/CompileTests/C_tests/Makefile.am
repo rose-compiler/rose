@@ -164,6 +164,7 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2012_72.c \
      test2012_73.c \
      test2012_74.c \
+     test2012_75.c \
      math.c \
      complex_01.c \
      constants.c
@@ -343,7 +344,7 @@ test2008_02.o: $(srcdir)/test2008_02.c
 
 EXTRA_DIST = $(ALL_TESTCODES) builtin-types.def callee.c caller.c c-common.def \
              test2006_134.h test2010_08.h predict.def test2010_15.h \
-             test2009_18.c test2009_20.c grep_verify.h
+             test2009_18.c test2009_20.c grep_verify.h test2012_75.h
 
 copyFiles:
 	cp $(srcdir)/*.h $(top_srcdir)/tests/CompileTests/C_tests

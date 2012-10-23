@@ -1,5 +1,6 @@
 // This file demonstrates an error in the output of the final "#endif"
 // of code that is not used (the macro "TESTING" is not defined).
+// From: wget-1.14/src/utils.c
 
 void foobar()
    {
