@@ -145,9 +145,12 @@ class Analyzer {
   }
   void setDisplayDiff(int diff) { _displayDiff=diff; }
   void setNumberOfThreadsToUse(int n) { _numberOfThreadsToUse=n; }
+  void insertInputVarValue(int i) { _inputVarValues.insert(i); }
+  int numberOfInputVarValues() { return _inputVarValues.size(); }
   list<pair<SgLabelStatement*,SgNode*> > _assertNodes;
   string _csv_assert_live_file; // to become private
  private:
+  set<int> _inputVarValues;
   ExprAnalyzer exprAnalyzer;
   VariableIdMapping variableIdMapping;
   EStateWorkList estateWorkList;

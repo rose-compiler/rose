@@ -23,7 +23,6 @@
 
 namespace po = boost::program_options;
 
-
 bool CodeThornLanguageRestrictor::checkIfAstIsAllowed(SgNode* node) {
   MyAst ast(node);
   for(MyAst::iterator i=ast.begin();i!=ast.end();++i) {
@@ -363,6 +362,9 @@ int main( int argc, char * argv[] ) {
 	("ltl-show-derivation",po::value< string >(),"LTL visualization: show derivation in dot output.")
 	("ltl-show-node-detail",po::value< string >(),"LTL visualization: show node detail in dot output.")
 	("ltl-collapsed-graph",po::value< string >(),"LTL visualization: show collapsed graph in dot output.")
+	("input-var-values",po::value< string >(),"specify a set of input values (e.g. \"{1,2,3}\")")
+    ("input-var-values-as-constraints",po::value<string >(),"represent input var values as constraints (otherwise as constants in PState)")
+	("print-all-options",po::value< string >(),"print all yes/no command line options.")
     ;
 
   po::store(po::command_line_parser(argc, argv).
@@ -405,22 +407,28 @@ int main( int argc, char * argv[] ) {
   boolOptions.registerOption("update-input-var",true);
   boolOptions.registerOption("run-rose-tests",true);
   boolOptions.registerOption("reduce-cfg",true);
-  boolOptions.registerOption("print-all-options",true);
+  boolOptions.registerOption("print-all-options",false);
 
   boolOptions.registerOption("ltl-output-dot",false);
   boolOptions.registerOption("ltl-show-derivation",true);
   boolOptions.registerOption("ltl-show-node-detail",true);
   boolOptions.registerOption("ltl-collapsed-graph",false);
+  boolOptions.registerOption("input-var-values-as-constraints",false);
 
   boolOptions.processOptions();
-  //cout<<boolOptions.toString(); // prints all options
 
+  if(boolOptions["print-all-options"]) {
+	cout<<boolOptions.toString(); // prints all bool options
+  }
+  
   if (args.count("internal-checks")) {
 	if(internalChecks(argc,argv)==false)
 	  return 1;
 	else
 	  return 0;
   }
+
+  Analyzer analyzer;
   
   // clean up verify and csv-ltl option in argv
   if (args.count("verify")) {
@@ -435,21 +443,54 @@ int main( int argc, char * argv[] ) {
 	  }
 	}
   }
-  string csv_assert_live_file;
   if(args.count("csv-assert-live")) {
-	csv_assert_live_file=args["csv-assert-live"].as<string>();
+	analyzer._csv_assert_live_file=args["csv-assert-live"].as<string>();
   }
+
+  if(args.count("input-var-values")) {
+	string setstring=args["input-var-values"].as<string>();
+	cout << "STATUS: input-var-values="<<setstring<<endl;
+	stringstream ss(setstring);
+	if(ss.peek()=='{')
+	  ss.ignore();
+	else
+	  throw "Error: option input-var-values: wrong input format (at start).";
+	int i;
+	while(ss>>i) {
+	  //cout << "DEBUG: input-var-string:i:"<<i<<" peek:"<<ss.peek()<<endl;	
+	  analyzer.insertInputVarValue(i);
+	  if(ss.peek()==','||ss.peek()==' ')
+		ss.ignore();
+	}
+#if 0
+	if(ss.peek()=='}')
+	  ss.ignore();
+	else
+	  throw "Error: option input-var-values: wrong input format (at end).";
+#endif
+  }
+
   int numberOfThreadsToUse=1;
   if(args.count("threads")) {
 	numberOfThreadsToUse=args["threads"].as<int>();
   }
-  int displayDiff=5000;
+  analyzer.setNumberOfThreadsToUse(numberOfThreadsToUse);
+
   if(args.count("display-diff")) {
+	int displayDiff;
 	displayDiff=args["display-diff"].as<int>();
+	analyzer.setDisplayDiff(displayDiff);
   }
-  // clean up csv-assert option in argv
+
+  // clean up string-options in argv
   for (int i=1; i<argc; ++i) {
-	if (string(argv[i]) == "--csv-assert" || string(argv[i])=="--csv-stats" || string(argv[i])=="--csv-assert-live"|| string(argv[i])=="--threads" || string(argv[i])=="--display-diff") {
+	if (string(argv[i]) == "--csv-assert" 
+		|| string(argv[i])=="--csv-stats" 
+		|| string(argv[i])=="--csv-assert-live"
+		|| string(argv[i])=="--threads" 
+		|| string(argv[i])=="--display-diff"
+		|| string(argv[i])=="--input-var-values"
+		) {
 	  // do not confuse ROSE frontend
 	  argv[i] = strdup("");
 	  assert(i+1<argc);
@@ -513,10 +554,6 @@ int main( int argc, char * argv[] ) {
 	//varIdMap.reportUniqueVariableSymbolMappingViolations();
   }
   cout << "INIT: creating solver."<<endl;
-  Analyzer analyzer;
-  analyzer._csv_assert_live_file=csv_assert_live_file;
-  analyzer.setNumberOfThreadsToUse(numberOfThreadsToUse);
-  analyzer.setDisplayDiff(displayDiff);
   analyzer.initializeSolver1("main",root);
   analyzer.initLabeledAssertNodes(sageProject);
   double initRunTime=timer.getElapsedTimeInMilliSec();
@@ -566,7 +603,7 @@ int main( int argc, char * argv[] ) {
   cout << "Number of stderr-estates       : "<<color("cyan")<<(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDERR_VAR))<<color("white")<<endl;
   cout << "Number of failed-assert-estates: "<<color("cyan")<<(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::FAILED_ASSERT))<<color("white")<<endl;
   cout << "=============================================================="<<endl;
-  cout << "Number of pstates               : "<<color("magenta")<<pstateSetSize<<color("white")<<" (memory: "<<color("magenta")<<pstateSetBytes<<color("white")<<" bytes)"<<" ("<<""<<pstateSetLoadFactor<<  "/"<<pstateSetMaxCollisions<<")"<<endl;
+  cout << "Number of pstates              : "<<color("magenta")<<pstateSetSize<<color("white")<<" (memory: "<<color("magenta")<<pstateSetBytes<<color("white")<<" bytes)"<<" ("<<""<<pstateSetLoadFactor<<  "/"<<pstateSetMaxCollisions<<")"<<endl;
   cout << "Number of estates              : "<<color("cyan")<<eStateSetSize<<color("white")<<" (memory: "<<color("cyan")<<eStateSetBytes<<color("white")<<" bytes)"<<" ("<<""<<eStateSetLoadFactor<<  "/"<<eStateSetMaxCollisions<<")"<<endl;
   cout << "Number of transitions          : "<<color("blue")<<transitionGraphSize<<color("white")<<" (memory: "<<color("blue")<<transitionGraphBytes<<color("white")<<" bytes)"<<endl;
   cout << "Number of constraint sets      : "<<color("yellow")<<numOfconstraintSets<<color("white")<<" (memory: "<<color("yellow")<<constraintSetsBytes<<color("white")<<" bytes)"<<" ("<<""<<constraintSetsLoadFactor<<  "/"<<constraintSetsMaxCollisions<<")"<<endl;
