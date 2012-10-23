@@ -851,39 +851,38 @@ Unparse_Java::unparseNewOp(SgExpression* expr, SgUnparse_Info& info)
      /*
      unp->u_type->unparseType(new_op->get_specified_type(), newinfo);
      */
-     if (isSgArrayType(new_op->get_specified_type())) {
-         unparseType(isSgArrayType(new_op->get_specified_type()) -> get_base_type(), info);
-         ROSE_ASSERT(new_op -> get_constructor_args());
-         SgConstructorInitializer *init = new_op -> get_constructor_args();
-         ROSE_ASSERT(init);
-         vector<SgExpression *> args = init -> get_args() -> get_expressions();
-         for (int i = 0; i < args.size(); i++) {
-             curprint ("[");
-             unparseExpression(args[i], info);
-             curprint("]");
-         }
-         // TODO: Process intializers, if any!!!
-     }
-     else if (isSgPointerType(new_op->get_specified_type())) {
+     if (isSgPointerType(new_op->get_specified_type())) {
          SgPointerType *pointer_type = isSgPointerType(new_op->get_specified_type());
          while(isSgPointerType(pointer_type -> get_base_type())) { // find the base type...
              pointer_type = isSgPointerType(pointer_type -> get_base_type());
          }
          unparseType(pointer_type -> get_base_type(), info);
 
+         bool has_aggregate_initializer = new_op -> attributeExists("initializer");
          SgConstructorInitializer *init = new_op -> get_constructor_args();
          ROSE_ASSERT(init);
          vector<SgExpression *> args = init -> get_args() -> get_expressions();
          for (int i = 0; i < args.size(); i++) {
              curprint ("[");
-             unparseExpression(args[i], info);
+             if (! has_aggregate_initializer) {
+                 unparseExpression(args[i], info);
+             }
              curprint("]");
          }
-         // TODO: Process intializers, if any!!!
+
+         //
+         // If this array allocation expression contains an aggregate initializer process it now.
+         //
+         if (has_aggregate_initializer) {
+             AstSgNodeAttribute *attribute = (AstSgNodeAttribute *) new_op -> getAttribute("initializer");
+             SgAggregateInitializer *initializer = isSgAggregateInitializer(attribute -> node);
+             ROSE_ASSERT(initializer);
+             unparseAggrInit(initializer, info);
+         }
      }
      else {
          unparseType(new_op->get_specified_type(), info);
-         curprint ( "(");
+         curprint ("(");
          ROSE_ASSERT(new_op -> get_constructor_args());
          SgConstructorInitializer *init = new_op -> get_constructor_args();
          ROSE_ASSERT(init);
@@ -893,7 +892,17 @@ Unparse_Java::unparseNewOp(SgExpression* expr, SgUnparse_Info& info)
              if (i + 1 < args.size())
                  curprint(", ");
          }
-         curprint ( ")");
+         curprint (")");
+
+         //
+         // If this is an allocation expression for an anonymous class, output the body of the class.
+         //
+         if (new_op -> attributeExists("body")) {
+             AstSgNodeAttribute *attribute = (AstSgNodeAttribute *) new_op -> getAttribute("body");
+             SgClassDeclaration *class_declaration = isSgClassDeclaration(attribute -> node);
+             ROSE_ASSERT(class_declaration);
+             unparseClassDefnStmt(class_declaration -> get_definition(), info);
+         }
      }
 
   // printf ("DONE: new_op->get_type()->sage_class_name() = %s \n",new_op->get_type()->sage_class_name());

@@ -31,7 +31,6 @@ import java.lang.reflect.*;
 // DQ (8/13/2011): Used to support modifier handling.
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFileConstants;
 
-
 class ecjASTVisitor extends ExtendedASTVisitor {
     //
     // Keep track of how many anonymous types is associated with a top-level type declaration.
@@ -120,7 +119,7 @@ class ecjASTVisitor extends ExtendedASTVisitor {
         if (node instanceof Expression) {
             int paren_count = (node.bits & ASTNode.ParenthesizedMASK) >> ASTNode.ParenthesizedSHIFT;
             if (paren_count > 0) {
-            	JavaParser.cactionParenthesizedExpression(paren_count);
+                JavaParser.cactionParenthesizedExpression(paren_count);
             }
         }
 
@@ -136,12 +135,6 @@ class ecjASTVisitor extends ExtendedASTVisitor {
         // Get the list of type members in sorted order.
         //
         ASTNode node_list[] = javaParserSupport.orderedClassMembers.get(node);
-// TODO: REMOVE THIS !
-if (node_list == null) {
-	System.out.println("Could not find member list for " + node.binding.debugName());
-	if (node.binding.isAnonymousType())
-		System.out.println("aha!!!");
-}
         assert(node_list != null);
         if (node_list.length > 0) {
             ASTNode member = node_list[0];
@@ -149,8 +142,20 @@ if (node_list == null) {
         }
         else TypesWithNoBody.add(node);
 
-        JavaParser.cactionTypeDeclaration(javaParserSupport.getPackageName(node.binding),
-                                          javaParserSupport.getTypeName(node.binding),
+        JavaParserSupport.LocalOrAnonymousType special_type = javaParserSupport.localOrAnonymousType.get(node);
+        String package_name = (special_type == null
+                                      ? javaParserSupport.getPackageName(node.binding)
+                                      : special_type.package_name
+                              ),
+               typename = (special_type == null
+                                  ? javaParserSupport.getTypeName(node.binding)
+                                  : special_type.isAnonymous()
+                                           ? special_type.typename
+                                           : special_type.simplename
+                          );
+
+        JavaParser.cactionTypeDeclaration(package_name,
+                                          typename,
                                           node.kind(node.modifiers) == TypeDeclaration.INTERFACE_DECL,
                                           (node.binding != null && node.binding.isAbstract()),
                                           (node.binding != null && node.binding.isFinal()),
@@ -240,11 +245,6 @@ if (node_list == null) {
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Inside of exit (AllocationExpression,BlockScope)");
 
-// TODO: REMOVE generateType
-/*        
-        // Generate the associated type ...
-        javaParserSupport.generateType(node.type);
-*/
         if (javaParserSupport.verboseLevel > 0) 
             System.out.println("The Allocation type is bound to type " + node.type.resolvedType.debugName());
 
@@ -316,8 +316,6 @@ if (node_list == null) {
             System.out.println(" modifiers = " + node.modifiers);
         }
 
-// TODO: REMOVE generateType
-//        javaParserSupport.generateType(node.type);
         JavaParser.cactionArgument(name, catchArguments.contains(node), javaParserSupport.createJavaToken(node));
         
         if (javaParserSupport.verboseLevel > 0)
@@ -331,9 +329,11 @@ if (node_list == null) {
             System.out.println("Leaving exit (Argument,BlockScope)");
 
         String nameString = new String(node.name);
-              
+
+        boolean is_final = node.binding.isFinal();
+
         boolean is_catch_argument = catchArguments.contains(node);
-        JavaParser.cactionArgumentEnd(nameString, is_catch_argument, javaParserSupport.createJavaToken(node));
+        JavaParser.cactionArgumentEnd(nameString, is_catch_argument, is_final, javaParserSupport.createJavaToken(node));
 
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Leaving exit (Argument,BlockScope)");
@@ -374,11 +374,10 @@ if (node_list == null) {
                  node.dimensions[i].traverse(this, scope);
             else JavaParser.cactionIntLiteral(0, "0", javaParserSupport.createJavaToken(node));
         }
-        if (node.initializer != null)
+        if (node.initializer != null) {
             node.initializer.traverse(this, scope);
+        }
 
-// TODO: REMOVE generateType
-//        javaParserSupport.generateType(node.type);
         JavaParser.cactionArrayAllocationExpression(javaParserSupport.createJavaToken(node));
         
         if (javaParserSupport.verboseLevel > 0)
@@ -391,7 +390,7 @@ if (node_list == null) {
         // do nothing by default
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Leaving exit (ArrayAllocationExpression,BlockScope)");
-
+        
         JavaParser.cactionArrayAllocationExpressionEnd(node.type.toString(),
                                                        node.dimensions == null ? 0 : node.dimensions.length,
                                                        node.initializer != null,
@@ -493,15 +492,6 @@ if (node_list == null) {
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Inside of enter (ArrayTypeReference,BlockScope)");
 
-// TODO: REMOVE generateType
-/*
-        if (node.resolvedType != null) {
-            javaParserSupport.generateType(node);
-        }
-        else {
-            System.out.println("Sorry, not implemented SingleTypeReference: node.resolvedType == NULL");
-        }
-*/
         ArrayBinding arrayType = (ArrayBinding) node.resolvedType;
         TypeBinding baseType = arrayType.leafComponentType;
 
@@ -531,15 +521,6 @@ if (node_list == null) {
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Inside of enter (ArrayTypeReference,ClassScope)");
 
-// TODO: REMOVE generateType
-/*
-        if (node.resolvedType != null) {
-            javaParserSupport.generateType(node);
-        }
-        else {
-            System.out.println("Sorry, not implemented SingleTypeReference: node.resolvedType == NULL");
-        }
-*/
         ArrayBinding arrayType = (ArrayBinding) node.resolvedType;
         TypeBinding baseType = arrayType.leafComponentType;
 
@@ -664,8 +645,6 @@ if (node_list == null) {
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("numberOfStatements = " + numberOfStatements);
 
-        // DQ (9/30/2011): We need to pass the number of statments so that we can pop 
-        // a precise number of statements off of the stack (and not the whole stack).
         JavaParser.cactionBlockEnd(numberOfStatements, javaParserSupport.createJavaToken(node));
 
         //
@@ -824,8 +803,6 @@ if (node_list == null) {
         StringBuffer packageReference = new StringBuffer();
         for (int i = 0, tokenArrayLength = scope.currentPackageName.length; i < tokenArrayLength; i++) {
             String tokenString = new String(scope.currentPackageName[i]);
-// TODO: REMOVE generateType
-//System.out.println("     --- packageReference tokens = " + tokenString);
 
             if (i > 0) {
                 packageReference.append('.');
@@ -961,13 +938,6 @@ if (node_list == null) {
             // System.out.println("     --- method typeParameters (empty) = " + node.typeParameters);
         }
 
-// TODO: REMOVE this !!!
-//        if (javaParserSupport.verboseLevel > 2)
-//            System.out.println("Push void as a return type for now (will be ignored because this is a constructor)");
-//
-//        if (javaParserSupport.verboseLevel > 2)
-//            System.out.println("DONE: Push void as a return type for now (will be ignored because this is a constructor)");
-//
         JavaParser.cactionConstructorDeclaration(name, javaParserSupport.createJavaToken(node));
 
         if (javaParserSupport.verboseLevel > 0)
@@ -1210,9 +1180,6 @@ if (node_list == null) {
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Inside of exit (FieldDeclaration,BlockScope)");
 
-        // I think that it is enough that this is set via the LocalDeclaration.
-        // boolean isFinal = node.binding.isFinal();
-
         boolean isPrivate   = (node.binding != null && node.binding.isPrivate());
         boolean isProtected = (node.binding != null && node.binding.isProtected());
         boolean isPublic    = (node.binding != null && node.binding.isPublic());
@@ -1227,39 +1194,6 @@ if (node_list == null) {
         boolean hasInitializer = (node.initialization != null) ? true : false;
 
         String name = new String(node.name);
-
-        // String selectorName = new String(node.selector);
-        // System.out.println("node.name = " + selectorName);
-        // System.out.println("node.modfiers = " + node.modfiers);
-
-        if (javaParserSupport.verboseLevel > 0) {
-            System.out.println("node.name                     = " + name);
-            System.out.println("node.binding                  = " + node.binding);
-            System.out.println("node.binding.type             = " + node.binding.type);
-            System.out.println("node.binding.type.id          = " + node.binding.type.id);
-            System.out.println("node.binding.type.debugName() = " + node.binding.type.debugName());
-            System.out.println("node.type                     = " + node.type);
-
-            System.out.println("isPrivate                     = " + isPrivate);
-            System.out.println("isProtected                   = " + isProtected);
-            System.out.println("isPublic                      = " + isPublic);
-
-            System.out.println("isVolatile                    = " + isVolatile);
-            System.out.println("isSynthetic                   = " + isSynthetic);
-            System.out.println("isStatic                      = " + isStatic);
-            System.out.println("isTransient                   = " + isTransient);
-            System.out.println("isFinal                       = " + isFinal);
-
-            System.out.println("hasInitializer                = " + hasInitializer);
-        }
-
-
-        // DQ (8/13/2011): This information is stored in the FieldReference...(not clear how to get it).
-        // boolean isPrivate = (node.binding != null && !node.binding.isPrivate()) ? true : false;
-
-        // Build the variable declaration using the type from the astJavaTypeStack.
-        // Note that this may have to handle an array of names or be even more complex in the future.
-        // JavaParser.cactionLocalDeclaration(name,isFinal);
 
         JavaParser.cactionFieldDeclarationEnd(name,hasInitializer,isFinal,isPrivate,isProtected,isPublic,isVolatile,isSynthetic,isStatic,isTransient, javaParserSupport.createJavaToken(node));
 
@@ -2031,7 +1965,6 @@ if (node_list == null) {
     //*                                                        *
     //**********************************************************
 
-
     public boolean enter(LabeledStatement node, BlockScope scope) {
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Inside of enter (LabeledStatement,BlockScope)");
@@ -2075,29 +2008,7 @@ if (node_list == null) {
 
         String name = new String(node.name);
 
-        // String selectorName = new String(node.selector);
-        // System.out.println("node.name = " + selectorName);
-        // System.out.println("node.modfiers = " + node.modfiers);
-
-        if (javaParserSupport.verboseLevel > 0) {
-            System.out.println("node.name                     = " + name);
-            System.out.println("node.binding                  = " + node.binding);
-            System.out.println("node.binding.type             = " + node.binding.type);
-            System.out.println("node.binding.type.id          = " + node.binding.type.id);
-            System.out.println("node.binding.type.debugName() = " + node.binding.type.debugName());
-            System.out.println("node.type                     = " + node.type);
-        }
-
-        // Construct the type (it should already be present on the astJavaTypeStack).
-
-        // DQ (7/18/2011): Switch to using the different generateType() function (taking a TypeReference).
-        // javaParserSupport.generateType(node.binding.type);
-        // javaParserSupport.generateType(node.type);
-
         boolean isFinal = node.binding.isFinal();
-
-        // DQ (8/13/2011): This information is stored in the FieldReference...(not clear how to get it).
-        // boolean isPrivate = (node.binding != null && !node.binding.isPrivate()) ? true : false;
 
         // Build the variable declaration using the type from the astJavaTypeStack.
         // Note that this may have to handle an array of names or be even more complex in the future.
@@ -2166,10 +2077,6 @@ if (node_list == null) {
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Inside of enter (MessageSend,BlockScope)");
 
-        // JavaParser.cactionMessageSend("abc");
-//        javaParserSupport.sourcePosition(node);
-//System.out.println("Computed Source Position");
-
         String method_name                 = new String(node.selector);
         String associatedClassVariableName = node.receiver.toString();
 
@@ -2189,23 +2096,12 @@ if (node_list == null) {
         //
         javaParserSupport.preprocessClass(node.actualReceiverType);
 
-        // This is an error for test2001_04.java when println is found since it is not located in "java.lang" but is in java.io"
-        // Maybe we need to process ""java.lang.System" and "java.io.String" and a few other classes explicitly.
-        // javaParserSupport.buildImplicitClassSupport("java.lang." + associatedClassName);
-        // javaParserSupport.buildImplicitClassSupport("java.io." + associatedClassName);
-        // javaParserSupport.buildImplicitClassSupport("java.lang.System");
-        // System.out.println("DONE: Calling buildImplicitClassSupport for associatedClassName = " + associatedClassName);
+        JavaParser.cactionMessageSend(javaParserSupport.getPackageName(node.actualReceiverType),
+                                      javaParserSupport.getTypeName(node.actualReceiverType),
+                                      method_name,
+                                      javaParserSupport.createJavaToken(node));
 
-        // System.out.println("Exiting after test...");
-        // System.exit(1);
-
-        // JavaParser.cactionMessageSend(name,associatedClassVariableName, javaParserSupport.createJavaToken(node));
-         JavaParser.cactionMessageSend(javaParserSupport.getPackageName(node.actualReceiverType),
-                                       javaParserSupport.getTypeName(node.actualReceiverType),
-                                       method_name,
-                                       javaParserSupport.createJavaToken(node));
-
-         if (javaParserSupport.verboseLevel > 0)
+        if (javaParserSupport.verboseLevel > 0)
             System.out.println("Leaving enter (MessageSend,BlockScope)");
 
         return true; // do nothing by node, keep traversing
@@ -2225,10 +2121,19 @@ if (node_list == null) {
             }
         }
 
+        String package_name = javaParserSupport.getPackageName(node.actualReceiverType),
+               typename = javaParserSupport.getTypeName(node.actualReceiverType);
+        int num_dimensions = 0;
+        if (node.actualReceiverType instanceof ArrayBinding) { // if the type is an Array type
+            num_dimensions = ((ArrayBinding) node.actualReceiverType).dimensions;
+            typename = typename.substring(0, typename.indexOf('[')); // remove [] ...[] suffixes.
+        }
+
         String method_name = new String(node.selector);
         JavaParser.cactionMessageSendEnd(node.binding.isStatic(),
-                                         javaParserSupport.getPackageName(node.actualReceiverType),
-                                         javaParserSupport.getTypeName(node.actualReceiverType),
+                                         package_name,
+                                         typename,
+                                         num_dimensions,
                                          method_name,
                                          node.typeArguments == null ? 0 : node.typeArguments.length,
                                          node.arguments == null ? 0 : node.arguments.length,
@@ -2250,8 +2155,6 @@ if (node_list == null) {
             MethodHeaderDelimiters.put(node.statements[0], node);
         }
 
-        // char [] name = node.selector;
-        // System.out.println("Inside of enter (MethodDeclaration,ClassScope) method name = " + name);
         String name = new String(node.selector);
         if (javaParserSupport.verboseLevel > 0) {
             System.out.println("Inside of enter (MethodDeclaration,ClassScope) method name = " + name);
@@ -2281,15 +2184,8 @@ if (node_list == null) {
         if (javaParserSupport.verboseLevel > 2)
             System.out.println("Process the return type = " + node.returnType);
 
-// TODO: REMOVE generateType
-        // Build the return type in ROSE and push it onto the stack (astJavaTypeStack).
-//        javaParserSupport.generateType(node.returnType);
-
         if (javaParserSupport.verboseLevel > 2)
             System.out.println("DONE: Process the return type = " + node.returnType);
-
-        // System.out.println("Exiting to test error handling! \n");
-        // System.exit(0);
 
         // Setup the function modifiers
         boolean isAbstract = node.isAbstract();
@@ -2515,7 +2411,6 @@ if (node_list == null) {
         // We need to find the qualified name for the associated type name (it should be unique).
         // This has to be handled on the Java side...
 
-//      String qualifiedTypeName = javaParserSupport.hashmapOfQualifiedNamesOfClasses.get(name);
         String qualifiedTypeName = node.resolvedType.debugName();
 
         if (javaParserSupport.verboseLevel > 0)
@@ -2614,7 +2509,19 @@ if (node_list == null) {
     }
 
     public void exit(QualifiedAllocationExpression node, BlockScope scope) {
-        // do nothing  by default
+        if (javaParserSupport.verboseLevel > 0)
+            System.out.println("Leaving exit (QualifiedAllocationExpression,BlockScope)");
+
+        if (javaParserSupport.verboseLevel > 0) 
+            System.out.println("The Allocation type is bound to type " + node.type.resolvedType.debugName());
+
+        javaParserSupport.preprocessClass(node.type.resolvedType);
+        
+        JavaParser.cactionQualifiedAllocationExpressionEnd(node.type.toString(),
+                                                           node.arguments == null ? 0 : node.arguments.length,
+                                                           node.anonymousType != null,
+                                                           javaParserSupport.createJavaToken(node));
+
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Leaving exit (QualifiedAllocationExpression,BlockScope)");
     }
@@ -2754,16 +2661,6 @@ if (node_list == null) {
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Inside of enter (QualifiedTypeReference,BlockScope)");
 
-// TODO: REMOVE generateType
-/*
-        if (node.resolvedType != null) {
-            javaParserSupport.generateType(node);
-        }
-        else {
-            System.out.println("Sorry, not implemented SingleTypeReference: node.resolvedType == NULL");
-        }
-*/
-
         if (node.resolvedType.isClass() || node.resolvedType.isInterface()) {
             if (javaParserSupport.verboseLevel > 0)
                 System.out.println("The qualified type referenced is bound to type " + node.resolvedType.debugName());        
@@ -2791,16 +2688,6 @@ if (node_list == null) {
     public boolean enter(QualifiedTypeReference node, ClassScope scope) {
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Inside of enter (QualifiedTypeReference,ClassScope)");
-
-// TODO: REMOVE generateType
-/*
-        if (node.resolvedType != null) {
-            javaParserSupport.generateType(node);
-        }
-        else {
-            System.out.println("Sorry, not implemented SingleTypeReference: node.resolvedType == NULL");
-        }
-*/
 
         if (node.resolvedType.isClass() || node.resolvedType.isInterface()) {
             if (javaParserSupport.verboseLevel > 0)
@@ -2945,21 +2832,11 @@ if (node_list == null) {
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Inside of enter (SingleTypeReference,BlockScope)");
 
-// TODO: REMOVE generateType
-/*
-        if (node.resolvedType != null) {
-            javaParserSupport.generateType(node);
-        }
-        else {
-            System.out.println("Sorry, not implemented SingleTypeReference: node.resolvedType == NULL");
-        }
-*/
         if (node.resolvedType.isClass() || node.resolvedType.isInterface()) { 
             if (javaParserSupport.verboseLevel > 0)
                 System.out.println("(1) The single type referenced is bound to type " + node.resolvedType.debugName());
             javaParserSupport.preprocessClass(node.resolvedType);
         }
-// else System.out.println("The type " + node.resolvedType.debugName() + " is not a type");
 
         String package_name = javaParserSupport.getPackageName(node.resolvedType);
         String  type_name = javaParserSupport.getTypeName(node.resolvedType);
@@ -2983,15 +2860,6 @@ if (node_list == null) {
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Inside of enter (SingleTypeReference,BlockScope)");
          
-// TODO: REMOVE generateType
-/*
-        if (node.resolvedType != null) {
-            javaParserSupport.generateType(node);
-        }
-        else {
-            System.out.println("Sorry, not implemented SingleTypeReference: node.resolvedType == NULL");
-        }
-*/
         if (node.resolvedType.isClass() || node.resolvedType.isInterface()) {
             if (javaParserSupport.verboseLevel > 0)
                 System.out.println("(2) The single type referenced is bound to type " + node.resolvedType.debugName());        
@@ -3022,16 +2890,11 @@ if (node_list == null) {
 
         // System.out.println("Inside of enter (StringLiteral,BlockScope): node = " + node);
         String literal = new String(node.source());
-// TODO: REMOVE THIS !
-//System.out.println("Inside of enter (StringLiteral,BlockScope): node = " + literal);
 
         JavaParser.cactionStringLiteral(literal, javaParserSupport.createJavaToken(node));
 
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Leaving enter (StringLiteral,BlockScope)");
-
-        // System.out.println("Exiting at base of visit (StringLiteral,BlockScope)");
-        // System.exit(1);
 
         return true; // do nothing by node, keep traversing
     }
@@ -3226,59 +3089,31 @@ if (node_list == null) {
     }
 
     //
-    // TODO: In the case of a local class declaration, we need to invoke traverseClass to
-    // perform a prepass over the class member declarations to set up the symbol table. The
-    // same thing needs to happen for anonymous classes. 
+    // Local and Anonymous types are processed here.
     //
     public boolean enter(TypeDeclaration node, BlockScope scope) {
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("visit TypeDeclaration -- BlockScope");
 
         assert(node.binding instanceof LocalTypeBinding); 
-        
-        LocalTypeBinding binding = (LocalTypeBinding) node.binding;
 
-        assert(binding.enclosingMethod != null || binding.enclosingType != null);
-        ReferenceBinding enclosing_type_binding = (binding.enclosingMethod != null
-                                                          ? binding.enclosingMethod.declaringClass
-                                                          : binding.enclosingType);
-        String enclosing_type_name = javaParserSupport.getTypeName(enclosing_type_binding).replace('.', '$');
-        String typename = enclosing_type_name + "$";
-        int count = 0;
-        if (binding.isAnonymousType()) {
-            if (anonymousClassCounter.containsKey(enclosing_type_name))
-                count = anonymousClassCounter.get(enclosing_type_name);
-            typename = typename + (count + 1);
+        //
+        // First, preprocess the symbol table information of the type in question.
+        //
+        JavaParserSupport.LocalOrAnonymousType special_type = javaParserSupport.localOrAnonymousType.get(node);
+
+        Class cls = special_type.cls;
+        if (node.binding.isAnonymousType()) {
+            JavaParser.cactionPushPackage(special_type.package_name);
+            javaParserSupport.insertClasses(cls);
+            javaParserSupport.traverseClass(cls);
+            JavaParser.cactionPopPackage();
         }
         else {
-            String simple_type_name = binding.debugName();
-            if (! localClassCounter.containsKey(enclosing_type_name)) {
-                localClassCounter.put(enclosing_type_name, new HashMap<String, Integer>());
-            }
-            if (localClassCounter.get(enclosing_type_name).containsKey(simple_type_name))
-                count = localClassCounter.get(enclosing_type_name).get(simple_type_name);
-            localClassCounter.get(enclosing_type_name).put(simple_type_name, new Integer(count));
-            typename = typename + (count + 1) + simple_type_name;
+            javaParserSupport.insertClasses(cls);
+            javaParserSupport.traverseClass(cls);
         }
 
-        System.out.println("***LIMIT: Local or Anonymous type ! \"Yet supported\"");
-        System.exit(1);
-// TODO: Anonymous and local class declaration stuff !?
-System.out.println("The type name is " + typename);
-        		Class cls = javaParserSupport.getClassForName(typename);
-        String class_name = cls.getName();
-        String simple_name = cls.getSimpleName();
-// TODO: REMOVE THIS
-System.out.println("The class name is " + class_name +
-                   ";  The simple class name is " + simple_name);
-        assert(cls.getEnclosingClass() == null); // not an inner class
-//        insertType(class_package, cls); // keep track of top-level classes that have been seen
-//            identifyUserDefinedTypes(cls, node);
-// TODO: REMOVE THIS
-System.out.println("Successfully looked up type name: " + typename);
-System.exit(1);
-
-        
         enterTypeDeclaration(node);
         
         if (javaParserSupport.verboseLevel > 0)
@@ -3293,7 +3128,8 @@ System.exit(1);
 
         exitTypeDeclaration(node);
 
-        System.out.println("Leaving exit (TypeDeclaration,BlockScope)");
+        if (javaParserSupport.verboseLevel > 0)
+            System.out.println("Leaving exit (TypeDeclaration,BlockScope)");
     }
 
 

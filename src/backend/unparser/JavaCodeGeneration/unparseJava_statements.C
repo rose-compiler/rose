@@ -206,6 +206,7 @@ Unparse_Java::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_Info
         if (printNewline) unp->cur.insert_newline();
    }
 
+// TODO: Remove this!
 /*
 void
 Unparse_Java::unparseGlobalStmt (SgStatement* stmt, SgUnparse_Info& info)
@@ -610,6 +611,10 @@ void Unparse_Java::unparseForEachStmt(SgStatement* stmt, SgUnparse_Info& info) {
 
 void
 Unparse_Java::unparseInitializedName(SgInitializedName* init_name, SgUnparse_Info& info) {
+    if (init_name -> attributeExists("final")) {
+        curprint("final ");
+    }
+
     unparseType(init_name->get_type(), info);
     curprint(" ");
     unparseName(init_name->get_name(), info);
@@ -902,6 +907,10 @@ Unparse_Java::unparseClassDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
      SgClassDeclaration *classdecl_stmt = isSgClassDeclaration(stmt);
      ROSE_ASSERT(classdecl_stmt != NULL);
+
+     if (classdecl_stmt -> attributeExists("anonymous")) { // Do not output Anonymous classes!
+         return;
+     }
 
      //
      // If this Class was used to simulate a Java package that contains user-defined types,

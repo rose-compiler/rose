@@ -65,15 +65,12 @@ class JavaParser  implements Callable<Boolean> {
     public static native void cactionMethodDeclarationEnd(int numberOfStatements, JavaToken jToken);
     public static native void cactionTypeReference(String package_name, String type_name, JavaToken jToken);
     public static native void cactionArgument(String argumentName, boolean is_catch_argument, JavaToken jToken);
-    public static native void cactionArgumentEnd(String argumentName, boolean is_catch_argument, JavaToken jToken);
+    public static native void cactionArgumentEnd(String argumentName, boolean is_catch_argument, boolean is_final, JavaToken jToken);
     public static native void cactionArrayTypeReference(String package_name, String type_name, int numberOfDimensions, JavaToken jToken);
     public static native void cactionArrayTypeReferenceEnd(String filename, int numberOfDimensions, JavaToken jToken);
     public static native void cactionMessageSend(String packageName, String typeName, String functionName, JavaToken jToken);
+    public static native void cactionMessageSendEnd(boolean java_is_static, String packageName, String typeName, int num_dimensions, String functionName, int numTypeArguments, int numArguments, JavaToken jToken);
 
-    public static native void cactionMessageSendEnd(boolean java_is_static, String packageName, String typeName, String functionName, int numTypeArguments, int numArguments, JavaToken jToken);
-
-// TODO: Remove this !    
-//    public static native void cactionQualifiedNameReference(String package_name, String type_prefix, String type_name, String name, JavaToken jToken);
     public static native void cactionStringLiteral(String value, JavaToken jToken);
 
     public static native void cactionAllocationExpression(JavaToken jToken);
@@ -128,8 +125,6 @@ class JavaParser  implements Callable<Boolean> {
     public static native void cactionExtendedStringLiteral(String value, JavaToken jToken);
     public static native void cactionFalseLiteral(JavaToken jToken);
 
-    // public static native void cactionFieldDeclaration(String variableName, boolean java_hasInitializer, boolean java_is_final, boolean java_is_private, boolean java_is_protected, boolean java_is_public, boolean java_is_volatile, boolean java_is_synthetic, boolean java_is_static, boolean java_is_transient, JavaToken jToken);
-    // public static native void cactionFieldDeclarationEnd(String variableName, boolean java_hasInitializer, JavaToken jToken);
     public static native void cactionFieldDeclarationEnd(String variableName, boolean java_hasInitializer, boolean java_is_final, boolean java_is_private, boolean java_is_protected, boolean java_is_public, boolean java_is_volatile, boolean java_is_synthetic, boolean java_is_static, boolean java_is_transient, JavaToken jToken);
 
     public static native void cactionFieldReference(String field_name, JavaToken jToken);
@@ -148,10 +143,6 @@ class JavaParser  implements Callable<Boolean> {
     public static native void cactionIfStatement(JavaToken jToken);
     public static native void cactionIfStatementEnd(boolean has_false_body, JavaToken jToken);
 
-    // DQ (4/16/2011): I can't seem to get Boolean values to pass through the JNI C++ interface (so I will use an integer since that works fine).
-    // public static native void cactionImportReference(String path);
-    // public static native void cactionImportReference(String path , Boolean inputContainsWildcard );
-    // public static native void cactionImportReference(String path , int java_ContainsWildcard );
     public static native void cactionImportReference(boolean java_is_static, String package_name, String type_name, String name_suffix, boolean java_ContainsWildcard, JavaToken jToken);
 
     public static native void cactionInitializer(boolean java_is_static, String name, JavaToken jToken);
@@ -190,7 +181,6 @@ class JavaParser  implements Callable<Boolean> {
 
     public static native void cactionLocalDeclaration(String variableName, boolean java_is_final, JavaToken jToken);
     public static native void cactionLocalDeclarationEnd(String variableName, boolean is_initialized, boolean java_is_final, JavaToken jToken);
-    //     public static native void cactionLocalDeclarationInitialization(JavaToken jToken);
 
     public static native void cactionLongLiteral(long value, String source, JavaToken jToken);
     public static native void cactionMarkerAnnotation(JavaToken jToken);
@@ -210,6 +200,7 @@ class JavaParser  implements Callable<Boolean> {
     public static native void cactionPrefixExpression(JavaToken jToken);
     public static native void cactionPrefixExpressionEnd(int java_operator_kind, JavaToken jToken);
     public static native void cactionQualifiedAllocationExpression(JavaToken jToken);
+    public static native void cactionQualifiedAllocationExpressionEnd(String nameOfType, int numberArguments, boolean isAnonymous, JavaToken jToken);
     public static native void cactionQualifiedSuperReference(JavaToken jToken);
     public static native void cactionQualifiedSuperReferenceEnd(JavaToken jToken);
     public static native void cactionQualifiedSuperReferenceClassScope(JavaToken jToken);
@@ -257,16 +248,10 @@ class JavaParser  implements Callable<Boolean> {
     public static native void cactionWildcard(JavaToken jToken);
     public static native void cactionWildcardClassScope(JavaToken jToken);
 
-// TODO: REMOVE THIS !!!
-//    public static native void cactionBuildImplicitClassSupportStart(String className);
-//    public static native void cactionBuildImplicitClassSupportEnd(int java_numberOfStatements, String className);
-//    public static native void cactionBuildImplicitMethodSupport(String methodName, int num_arguments);
-//    public static native void cactionBuildImplicitFieldSupport(String fieldName);
-    
     public static native void cactionInsertClassStart(String className, JavaToken jToken);
     public static native void cactionInsertClassEnd(String className, JavaToken jToken);
 
-    public static native void cactionBuildClassSupportStart(String className, boolean is_interface, JavaToken jToken);
+    public static native void cactionBuildClassSupportStart(String className, String externalName, boolean is_interface, boolean is_anonymous, JavaToken jToken);
     public static native void cactionBuildClassExtendsAndImplementsSupport(boolean has_super_class, int num_interfaces, JavaToken jToken);
     public static native void cactionBuildClassSupportEnd(String className, JavaToken jToken);
     public static native void cactionBuildMethodSupport(String methodName, boolean is_constructor, boolean is_abstract, boolean is_native, int num_arguments, JavaToken jToken);
@@ -276,13 +261,6 @@ class JavaParser  implements Callable<Boolean> {
     // Added new support functions for Argument IR nodes.
     public static native void cactionArgumentName(String name);
     public static native void cactionArgumentModifiers(int modifiers);
-
-// TODO: REMOVE THIS    
-    // Type support
-//    public static native void cactionGenerateType(String package_name, String typeName, int num_dimensions);
-    //     public static native void cactionGenerateClassType(String className, int num_dimensions);
-    // Build an array type using the base type that will be found on the astJavaTypeStack.
-    //     public static native void cactionGenerateArrayType();
 
     // Support for primative types.
     public static native void generateBooleanType();
@@ -322,13 +300,4 @@ class JavaParser  implements Callable<Boolean> {
         // return Boolean.valueOf(error);
         return Boolean.TRUE;
     } // end call()
-
-    // REMOVE THIS!!!
-    /*
-    // DQ (10/30/2010): Added boolean value to report error to C++ calling program (similar to OFP).
-    public static boolean getError() {
-        return JavaTraversal.hasErrorOccurred;
-    }
-    */
-    // End of JavaParser class
 }
