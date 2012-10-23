@@ -198,4 +198,20 @@ class AstRegExAttribute : public AstAttribute
           AstRegExAttribute(const std::string & s);
    };
 
+// PC (10/21/2012): Added new kind of attribute for handling regex trees.
+/*!
+ *  \brief Attribute corresponding to an SgNode.
+ *
+ *  A SgNode attribute may be used to "dynamically add" an SgNode field to
+ * an AST node.
+ */
+class AstSgNodeAttribute : public AstAttribute
+   {
+     public:
+          SgNode *node;
+
+          AstSgNodeAttribute();
+          AstSgNodeAttribute(SgNode *node);
+   };
+
 #endif

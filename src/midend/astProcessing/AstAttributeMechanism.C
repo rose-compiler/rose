@@ -256,3 +256,17 @@ AstRegExAttribute::AstRegExAttribute(const std::string & s)
    {
      expression = s;
    }
+
+// ********************************************
+//              AstRegExAttribute
+// ********************************************
+
+AstSgNodeAttribute::AstSgNodeAttribute()
+   : node(NULL)
+   {
+   }
+
+AstSgNodeAttribute::AstSgNodeAttribute(SgNode * node_) 
+   : node(node_)
+   {
+   }

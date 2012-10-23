@@ -374,8 +374,6 @@ extern ScopeStack /* std::list<SgScopeStatement*> */ astJavaScopeStack;
 // Global list of implicit classes
 extern std::list<SgName> astJavaImplicitClassList;
 
-std::list<SgStatement*> pop_from_stack_and_reverse(std::list<SgStatement*> &l, int nb_pop);
-
 /* Create a token from a JavaToken jni object. Also converts JavaSourceCodeInformation to C */
 Token_t *create_token(JNIEnv *env, jobject jToken);
 
@@ -419,15 +417,11 @@ SgMemberFunctionSymbol *findFunctionSymbolInClass(SgClassDefinition *classDefini
 
 SgClassDeclaration *buildJavaClass (const SgName &className, SgScopeStatement *scope);
 
-// Build a simple class in the current scope and set the scope to be the class definition.
-void buildClass (const SgName &className, Token_t *token);
-void buildImplicitClass (const SgName &className);
-void buildClassSupport (const SgName &className, bool implicitClass, Token_t *token);
-
 SgVariableDeclaration *buildSimpleVariableDeclaration(const SgName &name, SgType *type);
 
 std::list<SgName> generateQualifierList (const SgName &classNameWithQualification);
-SgName stripQualifiers (const SgName &classNameWithQualification);
+// TODO: Remove this !
+//SgName stripQualifiers (const SgName &classNameWithQualification);
 
 bool isCompatibleTypes(SgType *source, SgType *target);
 
@@ -436,8 +430,8 @@ SgClassSymbol *lookupSymbolFromQualifiedName(std::string className);
 
 SgType *lookupTypeByName(SgName &packageName, SgName &typeName, int num_dimensions);
 
-
-SgClassType *lookupTypeFromQualifiedName(std::string className);
+// TODO: Remove this!
+//SgClassType *lookupTypeFromQualifiedName(std::string className);
 
 //! Support to get current class scope.
 SgClassDefinition *getCurrentClassDefinition();
@@ -451,15 +445,6 @@ SgVariableSymbol *lookupSimpleNameVariableInClass(const SgName &name, SgClassDef
 
 //! Support for identification of symbols using simple names.
 SgVariableSymbol *lookupVariableByName(const SgName &name);
-
-//! Support for identification of symbols using qualified names (used by the import statement).
-SgSymbol *lookupSymbolInParentScopesUsingQualifiedName(SgName qualifiedName, SgScopeStatement *currentScope);
-
-//! charles4: Support for identification of symbols using qualified names (used by the import statement).
-//SgSymbol *FindSymbolInParentScopesUsingQualifiedName(SgName qualifiedName, SgScopeStatement *currentScope);
-
-//! charles4: 02/15/2012 
-//SgSymbol *lookupSymbolInParentScopesUsingSimpleName(SgName name, SgScopeStatement *currentScope);
 
 //! Refactored support to extraction of associated scope from symbol (where possible, i.e. SgClassSymbol, etc.).
 SgScopeStatement *get_scope_from_symbol(SgSymbol *returnSymbol);
