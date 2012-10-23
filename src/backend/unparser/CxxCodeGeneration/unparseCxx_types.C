@@ -914,6 +914,7 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
 #if 0
      printf ("info.isWithType()       = %s \n",(info.isWithType()       == true) ? "true" : "false");
      printf ("info.SkipBaseType()     = %s \n",(info.SkipBaseType()     == true) ? "true" : "false");
+     printf ("info.isTypeFirstPart()  = %s \n",(info.isTypeFirstPart()  == true) ? "true" : "false");
      printf ("info.isTypeSecondPart() = %s \n",(info.isTypeSecondPart() == true) ? "true" : "false");
 #endif
 
@@ -1121,6 +1122,15 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
 #endif
 
                   }
+             }
+            else
+             {
+            // DQ (10/23/2012): Added support for types of references to un-named class/struct/unions to always include their definitions.
+#if 0
+               printf ("In unparseClassType: This is an un-named class declaration: decl = %p name = %s (need to output its class definition) decl->get_definition() = %p \n",decl,decl->get_name().str(),decl->get_definition());
+               printf ("In unparseClassType: Detected un-nmed class declaration: Calling  unset_SkipClassDefinition() \n");
+#endif
+               info.unset_SkipClassDefinition();
              }
         }
 
