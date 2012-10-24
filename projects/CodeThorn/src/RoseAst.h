@@ -2,13 +2,19 @@
 #ifndef ROSE_AST_H
 #define ROSE_AST_H
 
+/*************************************************************
+ * Copyright: (C) 2012 Markus Schordan                       *
+ * Author   : Markus Schordan                                *
+ * License  : see file LICENSE in the CodeThorn distribution *
+ *************************************************************/
+
 #include <stack>
 #include "roseInternal.h"
 
 /*! 
 
   \author Markus Schordan
-  \date 2004, 2012
+  \date 2012
   \brief ROSE AST Interface providing an AST iterator and some AST specific functions.
 
  */
@@ -30,7 +36,7 @@ class RoseAst {
   /*! \brief AST iterator: STL-compliant forward-iterator for traversing AST nodes
      in preorder. 
 	 \author Markus Schordan
-	 \date 2004, 2012
+	 \date 2012
 	 \details For the iterator it can be selected whether null values should be traversed
      or not (by using the function withoutNullValues/withNullValues). By
      default null values are traversed.

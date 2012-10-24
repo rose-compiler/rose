@@ -1,8 +1,8 @@
-/* Author: Markus Schordan, 2004, 2012.
-   ROSE AST Interface, providing:
-   - AST iterator
-   - some auxiliary functions
- */
+/*************************************************************
+ * Copyright: (C) 2012 Markus Schordan                       *
+ * Author   : Markus Schordan                                *
+ * License  : see file LICENSE in the CodeThorn distribution *
+ *************************************************************/
 
 #include "sage3basic.h"
 #include "RoseAst.h"

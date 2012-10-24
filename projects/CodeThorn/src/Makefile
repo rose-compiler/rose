@@ -126,7 +126,7 @@ clean:
 	rm -f viz/*
 	rm -f bsps/*
 	rm -f LTLParser.tab.c++
-	rm -f tmp_rers*
+	rm -f tmp*
 
 distclean: clean
 	rm -f *.tgz
