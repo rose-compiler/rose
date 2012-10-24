@@ -14,7 +14,7 @@
 // This file is part of ROSE. For details, see http://www.rosecompiler.org/.
 // Please read the COPYRIGHT file for Our Notice and for the BSD License.
 
-
+using namespace CodeThorn;
 using namespace LTL;
 
 #define FOR_EACH_TRANSITION(TRANSITION)				     \
@@ -905,8 +905,8 @@ Label Checker::collapse_transition_graph(BoostTransitionGraph& g,
 }
 
 
-BoolLattice
-Checker::verify(const Formula& f)
+AType::BoolLattice
+CodeThorn::LTL::Checker::verify(const Formula& f)
 {
   // Verify!
   Verifier v(estateSet, g, endpoints, start, num_vertices(g), f.size());
@@ -914,8 +914,6 @@ Checker::verify(const Formula& f)
   e.accept(v);
 
   // Visualization:
-  // generate dot output for debugging
-  // TODO: implement these flags as cmdline options
   bool ltl_output_dot = boolOptions["ltl-output-dot"];//  true;
   bool show_derivation = boolOptions["ltl-show-derivation"];//  true;
   bool show_node_detail = boolOptions["ltl-show-node-detail"];//  true;

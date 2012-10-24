@@ -16,28 +16,28 @@
 class Visualizer {
  public:
   Visualizer();
-  Visualizer(Analyzer* analyzer);
-  Visualizer(Labeler* l, Flow* f, PStateSet* ss, EStateSet* ess, TransitionGraph* tg);
+  Visualizer(CodeThorn::Analyzer* analyzer);
+  Visualizer(CodeThorn::Labeler* l, CodeThorn::Flow* f, CodeThorn::PStateSet* ss, CodeThorn::EStateSet* ess, CodeThorn::TransitionGraph* tg);
   void setOptionTransitionGraphDotHtmlNode(bool);
-  void setLabeler(Labeler* x);
-  void setFlow(Flow* x);
-  void setPStateSet(PStateSet* x);
-  void setEStateSet(EStateSet* x);
-  void setTransitionGraph(TransitionGraph* x);
+  void setLabeler(CodeThorn::Labeler* x);
+  void setFlow(CodeThorn::Flow* x);
+  void setPStateSet(CodeThorn::PStateSet* x);
+  void setEStateSet(CodeThorn::EStateSet* x);
+  void setTransitionGraph(CodeThorn::TransitionGraph* x);
   void createMappings();
-  string pstateToString(const PState* pstate);
-  string pstateToDotString(const PState* pstate);
-  string estateToString(const EState* estate);
-  string estateToDotString(const EState* estate);
-  string transitionGraphDotHtmlNode(Label lab);
+  string pstateToString(const CodeThorn::PState* pstate);
+  string pstateToDotString(const CodeThorn::PState* pstate);
+  string estateToString(const CodeThorn::EState* estate);
+  string estateToDotString(const CodeThorn::EState* estate);
+  string transitionGraphDotHtmlNode(CodeThorn::Label lab);
   string transitionGraphToDot();
   string foldedTransitionGraphToDot();
  private:
-  Labeler* labeler;
-  Flow* flow;
-  PStateSet* pstateSet;
-  EStateSet* estateSet;
-  TransitionGraph* transitionGraph;
+  CodeThorn::Labeler* labeler;
+  CodeThorn::Flow* flow;
+  CodeThorn::PStateSet* pstateSet;
+  CodeThorn::EStateSet* estateSet;
+  CodeThorn::TransitionGraph* transitionGraph;
   
   bool optionPStateObjectAddress;
   bool optionPStateId;

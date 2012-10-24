@@ -11,6 +11,8 @@
 #include "SgNodeHelper.h"
 #include "Labeler.h"
 
+namespace CodeThorn {
+
 enum EdgeType { EDGE_UNKNOWN, EDGE_FORWARD, EDGE_BACKWARD, EDGE_TRUE, EDGE_FALSE, EDGE_LOCAL, EDGE_CALL, EDGE_CALLRETURN, EDGE_EXTERNAL };
 
 class Edge {
@@ -90,5 +92,7 @@ class CFAnalyzer {
  private:
   Labeler* labeler;
 };	
+
+} // end of namespace CodeThorn
 
 #endif

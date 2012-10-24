@@ -12,7 +12,7 @@
 #include "Analyzer.h"
 #include "LanguageRestrictor.h"
 #include "Timer.h"
-#include "LTL.h"
+//#include "LTL.h"
 #include "LTLChecker.h"
 #include <cstdio>
 #include <cstring>
@@ -22,6 +22,8 @@
 #include "Miscellaneous.h"
 
 namespace po = boost::program_options;
+
+using namespace CodeThorn;
 
 bool CodeThornLanguageRestrictor::checkIfAstIsAllowed(SgNode* node) {
   RoseAst ast(node);
@@ -173,6 +175,7 @@ void printAssertStatistics(Analyzer& analyzer, SgProject* sageProject) {
 }
 
 void generateLTLOutput(Analyzer& analyzer, string ltl_file) {
+  extern CodeThorn::LTL::Formula* ltl_val;
   //
   // Verification
   //
@@ -183,7 +186,7 @@ void generateLTLOutput(Analyzer& analyzer, string ltl_file) {
   int n_failed = 0;
 
   if (ltl_file.size()) {
-    LTL::Checker checker(*analyzer.getEStateSet(),
+	CodeThorn::LTL::Checker checker(*analyzer.getEStateSet(),
 			 *analyzer.getTransitionGraph());
     ltl_input = fopen(ltl_file.c_str(), "r");
 
@@ -422,7 +425,7 @@ int main( int argc, char * argv[] ) {
   }
   
   if (args.count("internal-checks")) {
-	if(internalChecks(argc,argv)==false)
+	if(CodeThorn::internalChecks(argc,argv)==false)
 	  return 1;
 	else
 	  return 0;

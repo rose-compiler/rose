@@ -13,6 +13,8 @@
 
 using namespace std;
 
+namespace CodeThorn {
+
 /*!
   \brief Several abstract types implementing abstract semantics.
   \details These types are used by the analyzer for computing abstract values according the semantics of the respective domain.
@@ -162,5 +164,7 @@ typedef AType::ConstIntLattice AValue;
 typedef AType::CppCapsuleConstIntLattice CppCapsuleAValue; 
 typedef AType::CppCapsuleConstIntLatticeLessComparator CppCapsuleAValueLessComp; 
 typedef AType::ConstIntLatticeCmp AValueCmp; 
+
+}
 
 #endif

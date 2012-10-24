@@ -7,6 +7,8 @@
  * License  : see file LICENSE in the CodeThorn distribution *
  *************************************************************/
 
+namespace CodeThorn {
+
 // set intersection
 template<typename T>
 std::set<T> operator*(std::set<T>& s1, std::set<T>& s2) {
@@ -52,5 +54,6 @@ bool operator<(std::set<T> const& s1, std::set<T> const& s2) {
   return true;
 }
 
+} // end of namespace CodeThorn
 
 #endif

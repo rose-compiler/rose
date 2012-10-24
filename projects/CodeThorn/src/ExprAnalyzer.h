@@ -15,6 +15,8 @@
 
 using namespace std;
 
+namespace CodeThorn {
+
 class SingleEvalResult {
  public:
   EState estate;
@@ -57,5 +59,7 @@ class ExprAnalyzer {
   //! evaluates an expression (whithout maintaining state information)
   AValue pureEvalConstInt(SgNode* node,EState& estate);
 };
+
+} // end of namespace CodeThorn
 
 #endif

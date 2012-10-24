@@ -15,6 +15,9 @@ using namespace std;
 
 #define NO_STATE -3
 #define NO_ESTATE -4
+
+namespace CodeThorn {
+
 typedef signed int Label;
 
 class LabelSet : public set<Label> {
@@ -81,5 +84,7 @@ class Labeler {
  private:
   vector<SgNode*> labelNodeMapping;
 };
+
+} // end of namespace CodeThorn
 
 #endif

@@ -24,10 +24,23 @@ using namespace std;
 typedef int PStateId;
 typedef int EStateId;
 
-class PState;
-typedef set<const PState*> PStatePtrSet;
+#include "HashFun.h"
+#include "HSetMaintainer.h"
 
-class PState : public map<VariableId,CppCapsuleAValue> {
+//using namespace CodeThorn;
+
+using CodeThorn::VariableId;
+using CodeThorn::CppCapsuleAValue;
+using CodeThorn::HSetMaintainer;
+using CodeThorn::Label;
+using CodeThorn::ConstraintSet;
+using CodeThorn::ConstraintSetMaintainer;
+using CodeThorn::Edge;
+using CodeThorn::HSet;
+
+namespace CodeThorn {
+
+class PState : public map<VariableId,CodeThorn::CppCapsuleAValue> {
  public:
   bool varExists(VariableId varname) const;
   bool varIsConst(VariableId varname) const;
@@ -36,6 +49,8 @@ class PState : public map<VariableId,CppCapsuleAValue> {
   void deleteVar(VariableId varname);
   long memorySize() const;
 };
+
+typedef set<const PState*> PStatePtrSet;
 
 class PStateHashFun {
    public:
@@ -52,27 +67,16 @@ class PStateHashFun {
     long tabSize;
 };
 
-#ifdef PSTATE_MAINTAINER_LIST
-class PStateSet : public list<PState> {
-#endif
-#ifdef PSTATE_MAINTAINER_SET
-class PStateSet : public set<PState> {
-#endif
-#ifdef PSTATE_MAINTAINER_HSET
-#include "HashFun.h"
-#include "HSetMaintainer.h"
-	class PStateSet : public HSetMaintainer<PState,PStateHashFun> {
-	public:
-	  typedef HSetMaintainer<PState,PStateHashFun>::ProcessingResult ProcessingResult;
-	  string toString();
-	  PStateId pstateId(const PState* pstate);
-	  PStateId pstateId(const PState pstate);
-	  string pstateIdString(const PState* pstate);
-	private:
-	  const PState* ptr(PState& s);
-	};
-#endif
-
+class PStateSet : public CodeThorn::HSetMaintainer<PState,PStateHashFun> {
+ public:
+  typedef CodeThorn::HSetMaintainer<PState,PStateHashFun>::ProcessingResult ProcessingResult;
+  string toString();
+  PStateId pstateId(const PState* pstate);
+  PStateId pstateId(const PState pstate);
+  string pstateIdString(const PState* pstate);
+ private:
+  const PState* ptr(PState& s);
+};
 
 /**
  * Input: a value val is read into a variable var
@@ -80,14 +84,14 @@ class PStateSet : public set<PState> {
  */
 class InputOutput {
  public:
- InputOutput():op(NONE),var(VariableId(0)){ val=AType::Bot();}
+ InputOutput():op(NONE),var(VariableId(0)){ val=CodeThorn::AType::Bot();}
   enum OpType {NONE,STDIN_VAR,STDOUT_VAR,STDOUT_CONST,STDERR_VAR,STDERR_CONST, FAILED_ASSERT};
   OpType op;
   VariableId var;
-  AType::ConstIntLattice val;
+  CodeThorn::AType::ConstIntLattice val;
   string toString() const;
   void recordVariable(OpType op, VariableId varId);
-  void recordConst(OpType op, AType::ConstIntLattice val);
+  void recordConst(OpType op, CodeThorn::AType::ConstIntLattice val);
   void recordFailedAssert();
 };
 
@@ -150,12 +154,10 @@ class EStateHashFun {
     long tabSize;
 };
 
-#ifdef ESTATE_MAINTAINER_HSET
-#include "HSetMaintainer.h"
-  class EStateSet : public HSetMaintainer<EState,EStateHashFun> {
-  public:
+class EStateSet : public HSetMaintainer<EState,EStateHashFun> {
+ public:
  EStateSet():HSetMaintainer<EState,EStateHashFun>(),_constraintSetMaintainer(0){}
-	public:
+ public:
   typedef HSetMaintainer<EState,EStateHashFun>::ProcessingResult ProcessingResult;
   string toString() const;
   EStateId estateId(const EState* estate) const;
@@ -165,7 +167,6 @@ class EStateHashFun {
  private:
   ConstraintSetMaintainer* _constraintSetMaintainer; 
 };
-#endif
 
 class Transition {
  public:
@@ -202,12 +203,12 @@ class EStateList : public list<EState> {
 
 class TransitionGraph : public HSet<Transition,TransitionHashFun> {
  public:
- TransitionGraph():_startLabel(Labeler::NO_LABEL),numberOfNodes(0){}
+ TransitionGraph():_startLabel(CodeThorn::Labeler::NO_LABEL),numberOfNodes(0){}
   set<const EState*> transitionSourceEStateSetOfLabel(Label lab);
   set<const EState*> estateSetOfLabel(Label lab);
   void add(Transition trans);
   string toString() const;
-  LabelSet labelSetOfIoOperations(InputOutput::OpType op);
+  CodeThorn::LabelSet labelSetOfIoOperations(InputOutput::OpType op);
   // eliminates all duplicates of edges
   long removeDuplicates();
   Label getStartLabel() { return _startLabel; }
@@ -217,5 +218,7 @@ class TransitionGraph : public HSet<Transition,TransitionHashFun> {
   int numberOfNodes;
   Label _startLabel;
 };
+
+} // namespace CodeThorn
 
 #endif

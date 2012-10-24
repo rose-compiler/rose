@@ -17,6 +17,8 @@
 #include <cassert>
 #include "LTL.h"
 
+using namespace CodeThorn;
+
 // Scanner function
 int ltl_lex(void);
 void ltl_error (char const *msg);

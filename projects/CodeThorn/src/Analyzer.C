@@ -5,12 +5,14 @@
  *************************************************************/
 
 #include "Analyzer.h"
-#include "CollectionOperators.h"
 #include "CommandLineOptions.h"
 #include <fstream>
 #include <unistd.h>
+#include "Miscellaneous.h"
 
-string color(string);
+using namespace CodeThorn;
+
+#include "CollectionOperators.h"
 
 Analyzer::Analyzer():startFunRoot(0),cfanalyzer(0),_displayDiff(10000),_numberOfThreadsToUse(1) {
 }

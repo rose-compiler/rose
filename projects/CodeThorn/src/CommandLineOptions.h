@@ -9,6 +9,8 @@
 
 using namespace std;
 
+//namespace po = boost::program_options;
+
 class BoolOptions {
 public:
   BoolOptions();
@@ -24,8 +26,7 @@ private:
   map<string,bool> mapping;
 };
 
-namespace po = boost::program_options;
 extern BoolOptions boolOptions; // defined in CommandLineOptions.C
-extern po::variables_map args; // defined in CommandLineOptions.C
+extern boost::program_options::variables_map args; // defined in CommandLineOptions.C
 
 #endif

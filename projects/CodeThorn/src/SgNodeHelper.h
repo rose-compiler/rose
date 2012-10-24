@@ -13,6 +13,8 @@
 
 using namespace std;
 
+namespace CodeThorn {
+
 /*! \brief Functions for simplifying access to SgNode information
 
   * \author Markus Schordan
@@ -215,5 +217,7 @@ namespace SgNodeHelper {
   } // end of namespace Pattern
 
 } // end of namespace SgNodeHelper
+
+} // end of namespace CodeThorn
 
 #endif

@@ -6,6 +6,8 @@
 
 #include "VariableIdMapping.h"
 
+using namespace CodeThorn;
+
 void VariableIdMapping::computeVariableSymbolMapping(SgProject* project) {
 
   list<SgGlobal*> globList=SgNodeHelper::listOfSgGlobal(project);
@@ -177,12 +179,12 @@ VariableId::longVariableName() const {
   return variableName();
 }
 
-bool operator<(VariableId id1, VariableId id2) {
+bool CodeThorn::operator<(VariableId id1, VariableId id2) {
   return id1.getSymbol()<id2.getSymbol();
 }
-bool operator==(VariableId id1, VariableId id2) {
+bool CodeThorn::operator==(VariableId id1, VariableId id2) {
   return id1.getSymbol()==id2.getSymbol();
 }
-bool operator!=(VariableId id1, VariableId id2) {
+bool CodeThorn::operator!=(VariableId id1, VariableId id2) {
   return !(id1==id2);
 }

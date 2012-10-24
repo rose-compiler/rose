@@ -6,6 +6,8 @@
 #include "Labeler.h"
 #include "AstTerm.h"
 
+using namespace CodeThorn;
+
 Edge::Edge():source(0),type(EDGE_UNKNOWN),target(0){
 }
 Edge::Edge(Label source0,EdgeType type0,Label target0):source(source0),type(type0),target(target0){
@@ -85,7 +87,7 @@ string InterFlow::toString() const {
   return res;
 }
 
-bool operator<(const InterEdge& e1, const InterEdge& e2) {
+bool CodeThorn::operator<(const InterEdge& e1, const InterEdge& e2) {
   if(e1.call!=e2.call) 
 	return e1.call<e2.call;
   if(e1.entry!=e2.entry)
@@ -95,7 +97,7 @@ bool operator<(const InterEdge& e1, const InterEdge& e2) {
   return e1.callReturn<e2.callReturn;
 }
 
-bool operator==(const InterEdge& e1, const InterEdge& e2) {
+bool CodeThorn::operator==(const InterEdge& e1, const InterEdge& e2) {
   return e1.call==e2.call
     && e1.entry==e2.entry
     && e1.exit==e2.exit
@@ -103,7 +105,7 @@ bool operator==(const InterEdge& e1, const InterEdge& e2) {
 	;
 }
 
-bool operator!=(const InterEdge& e1, const InterEdge& e2) {
+bool CodeThorn::operator!=(const InterEdge& e1, const InterEdge& e2) {
   return !(e1==e2);
 }
 
@@ -282,13 +284,13 @@ LabelSet CFAnalyzer::finalLabels(SgNode* node) {
    }
 }
 
-bool operator==(const Edge& e1, const Edge& e2) {
+bool CodeThorn::operator==(const Edge& e1, const Edge& e2) {
   return e1.source==e2.source && e1.type==e2.type && e1.target==e2.target;
 }
-bool operator!=(const Edge& e1, const Edge& e2) {
+bool CodeThorn::operator!=(const Edge& e1, const Edge& e2) {
   return !(e1==e2);
 }
-bool operator<(const Edge& e1, const Edge& e2) {
+bool CodeThorn::operator<(const Edge& e1, const Edge& e2) {
   if(e1.source!=e2.source)
 	return e1.source<e2.source;
   return e1.target<e2.target;

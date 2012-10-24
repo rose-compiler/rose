@@ -11,6 +11,7 @@
 
 
 using namespace std;
+using namespace CodeThorn;
 
 void Constraint::negate() {
   switch(op()) {
@@ -61,7 +62,7 @@ bool Constraint::isDisequation() const {
   return ( _op==DEQ);
 }
 
-bool operator<(const Constraint& c1, const Constraint& c2) {
+bool CodeThorn::operator<(const Constraint& c1, const Constraint& c2) {
   if(c1.lhsVar()!=c2.lhsVar())
 	return c1.lhsVar()<c2.lhsVar();
   if(c1.op()!=c2.op())
@@ -84,7 +85,7 @@ bool operator<(const Constraint& c1, const Constraint& c2) {
   throw "Error: Constraint::operator< failed.";
 }
 
-bool operator==(const Constraint& c1, const Constraint& c2) {
+bool CodeThorn::operator==(const Constraint& c1, const Constraint& c2) {
   return 
 	c1.lhsVar()==c2.lhsVar() && c1.op()==c2.op() 
 	&& ((c1.isVarValOp() && (c1.rhsValCppCapsule()==c2.rhsValCppCapsule()))
@@ -94,7 +95,7 @@ bool operator==(const Constraint& c1, const Constraint& c2) {
 	;
 }
 
-bool operator!=(const Constraint& c1, const Constraint& c2) {
+bool CodeThorn::operator!=(const Constraint& c1, const Constraint& c2) {
   return !(c1==c2);
 }
 
@@ -395,7 +396,7 @@ long ConstraintSet::numberOfConstConstraints(VariableId var) {
 }
 
 #if 1
-ConstraintSet operator+(ConstraintSet s1, ConstraintSet s2) {
+ConstraintSet CodeThorn::operator+(ConstraintSet s1, ConstraintSet s2) {
   ConstraintSet result=s1;
   for(ConstraintSet::iterator i2=s2.begin();i2!=s2.end();++i2)
 	result.addConstraint(*i2);
@@ -555,7 +556,7 @@ long ConstraintSet::memorySize() const {
 }
 
 // strict weak ordering on two sets
-bool operator<(const ConstraintSet& s1, const ConstraintSet& s2) {
+bool CodeThorn::operator<(const ConstraintSet& s1, const ConstraintSet& s2) {
   if(s1.size()!=s2.size())
 	return s1.size()<s2.size();
   ConstraintSet::iterator i=s1.begin();

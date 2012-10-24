@@ -24,6 +24,8 @@
 
 using namespace std;
 
+namespace CodeThorn {
+
 typedef list<AValue> ListOfAValue;
 typedef set<VariableId> SetOfVariableId;
 
@@ -163,11 +165,13 @@ class ConstraintSetMaintainer : public set<ConstraintSet> {
 
 #ifdef CSET_MAINTAINER_HSET
 #include "HSetMaintainer.h"
-class ConstraintSetMaintainer : public HSetMaintainer<ConstraintSet, ConstraintSetHashFun> {
+	class ConstraintSetMaintainer : public CodeThorn::HSetMaintainer<ConstraintSet, ConstraintSetHashFun> {
  public:
-	  typedef HSetMaintainer<ConstraintSet, ConstraintSetHashFun>::ProcessingResult ProcessingResult;
+	  typedef CodeThorn::HSetMaintainer<ConstraintSet, ConstraintSetHashFun>::ProcessingResult ProcessingResult;
 	  string toString();
 };
 #endif
+
+} // end of namespace CodeThorn
 
 #endif

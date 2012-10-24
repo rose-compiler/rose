@@ -15,8 +15,12 @@
 
 using namespace std;
 
+namespace CodeThorn {
+
 void write_file(std::string filename, std::string data);
 string int_to_string(int x);
 string color(string name);
+
+} // end of namespace CodeThorn
 
 #endif

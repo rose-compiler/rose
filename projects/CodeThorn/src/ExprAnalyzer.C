@@ -6,6 +6,8 @@
 
 #include "ExprAnalyzer.h"
 
+using namespace CodeThorn;
+
 bool ExprAnalyzer::variable(SgNode* node, string& varName) {
   if(SgVarRefExp* varref=isSgVarRefExp(node)) {
 	// found variable

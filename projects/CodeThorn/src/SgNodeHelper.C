@@ -8,6 +8,7 @@
 #include <list>
 
 using namespace std;
+using namespace CodeThorn;
 
 SgExpression* SgNodeHelper::getInitializerExpressionOfVariableDeclaration(SgVariableDeclaration* decl) {
   SgInitializedName* initName=SgNodeHelper::getInitializedNameOfVariableDeclaration(decl);

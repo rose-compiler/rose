@@ -14,6 +14,8 @@
 
 using namespace std;
 
+namespace CodeThorn {
+
 class VariableId;
 typedef string VariableName;
 
@@ -88,5 +90,6 @@ bool operator<(VariableId id1, VariableId id2);
 bool operator==(VariableId id1, VariableId id2);
 bool operator!=(VariableId id1, VariableId id2);
 
-#endif
+} // end of namespace CodeThorn
 
+#endif

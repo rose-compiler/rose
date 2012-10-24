@@ -14,10 +14,13 @@
 
 #include "StateRepresentations.h"
 #include "AType.h"
-#include "LTL.h"
 #include <map>
 #include <boost/graph/graph_traits.hpp>
 #include <boost/graph/adjacency_list.hpp>
+#include "LTL.h"
+//using LTL::Formula;
+
+namespace CodeThorn {
 
 namespace LTL {
   using namespace boost;
@@ -39,7 +42,7 @@ namespace LTL {
   public:
     Checker(EStateSet& ess, TransitionGraph& g);
     /// verify the LTL formula f
-    AType::BoolLattice verify(const Formula& f);
+    BoolLattice verify(const CodeThorn::LTL::Formula& f);
 
     Label collapse_transition_graph(BoostTransitionGraph &g, BoostTransitionGraph &reduced) const;
 
@@ -52,6 +55,8 @@ namespace LTL {
     deque<Label> endpoints;
   };
 
-};
+} // end of namespace LTL
+
+} // end of namespace CodeThorn
 
 #endif

@@ -12,6 +12,8 @@
 
 using namespace std;
 
+using namespace CodeThorn;
+
 ostream& AType::operator<<(ostream& os, BoolLattice& toStream) {
   os << toStream.toString();
   return os;

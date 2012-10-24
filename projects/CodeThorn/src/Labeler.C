@@ -9,6 +9,8 @@
 #include "AstTerm.h"
 #include <sstream>
 
+using namespace CodeThorn;
+
 Labeler::Labeler(SgNode* start) {
   createLabels(start);
 }

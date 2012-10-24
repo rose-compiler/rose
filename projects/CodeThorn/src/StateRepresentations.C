@@ -15,6 +15,7 @@
 // the ordering appears to be implementation dependent (but consistent)
 
 using namespace std;
+using namespace CodeThorn;
 
 void InputOutput::recordVariable(OpType op0,VariableId varId) {
   op=op0;
@@ -47,7 +48,7 @@ string InputOutput::toString() const {
   return str;
 }
 
-bool operator<(const InputOutput& c1, const InputOutput& c2) {
+bool CodeThorn::operator<(const InputOutput& c1, const InputOutput& c2) {
   if(c1.op!=c2.op)
 	return c1.op<c2.op;
   if(!(c1.var==c2.var))
@@ -55,11 +56,11 @@ bool operator<(const InputOutput& c1, const InputOutput& c2) {
   return AType::strictWeakOrderingIsSmaller(c1.val,c2.val);
 }
 
-bool operator==(const InputOutput& c1, const InputOutput& c2) {
+bool CodeThorn::operator==(const InputOutput& c1, const InputOutput& c2) {
   return c1.op==c2.op && c1.var==c2.var && (AType::strictWeakOrderingIsEqual(c1.val,c2.val));
 }
 
-bool operator!=(const InputOutput& c1, const InputOutput& c2) {
+bool CodeThorn::operator!=(const InputOutput& c1, const InputOutput& c2) {
   return !(c1==c2);
 }
 
@@ -155,7 +156,7 @@ string PStateSet::toString() {
 }
 
 // define order for EState elements (necessary for EStateSet)
-bool operator<(const EState& e1, const EState& e2) {
+bool CodeThorn::operator<(const EState& e1, const EState& e2) {
   if(e1.label()!=e2.label())
 	return (e1.label()<e2.label());
   if(e1.pstate()!=e2.pstate())
@@ -165,7 +166,7 @@ bool operator<(const EState& e1, const EState& e2) {
   return e1.io<e2.io;
 }
 
-bool operator==(const EState& c1, const EState& c2) {
+bool CodeThorn::operator==(const EState& c1, const EState& c2) {
   bool result=((c1.label()==c2.label()) && (c1.pstate()==c2.pstate()));
   if(boolOptions["precision-equality-constraints"])
 	result = result && (c1.constraints()==c2.constraints());
@@ -174,7 +175,7 @@ bool operator==(const EState& c1, const EState& c2) {
   return result;
 }
 
-bool operator!=(const EState& c1, const EState& c2) {
+bool CodeThorn::operator!=(const EState& c1, const EState& c2) {
   return !(c1==c2);
 }
 
@@ -239,15 +240,15 @@ void TransitionGraph::add(Transition trans) {
   }
 }
 
-bool operator==(const Transition& t1, const Transition& t2) {
+bool CodeThorn::operator==(const Transition& t1, const Transition& t2) {
   return t1.source==t2.source && t1.edge==t2.edge && t1.target==t2.target;
 }
 
-bool operator!=(const Transition& t1, const Transition& t2) {
+bool CodeThorn::operator!=(const Transition& t1, const Transition& t2) {
   return !(t1==t2);
 }
 
-bool operator<(const Transition& t1, const Transition& t2) {
+bool CodeThorn::operator<(const Transition& t1, const Transition& t2) {
   if(t1.source!=t2.source)
 	return t1.source<t2.source;
   if(t1.edge!=t2.edge)
@@ -360,7 +361,7 @@ string EStateSet::toString() const {
 }
 
 #ifdef USER_DEFINED_PSTATE_COMP
-bool operator<(const PState& s1, const PState& s2) {
+bool CodeThorn::operator<(const PState& s1, const PState& s2) {
   if(s1.size()!=s2.size())
 	return s1.size()<s2.size();
   PState::const_iterator i=s1.begin();
@@ -376,7 +377,7 @@ bool operator<(const PState& s1, const PState& s2) {
   return false; // both are equal
 }
 #if 0
-bool operator==(const PState& c1, const PState& c2) {
+bool CodeThorn::operator==(const PState& c1, const PState& c2) {
   if(c1.size()==c2.size()) {
 	PState::const_iterator i=c1.begin();
 	PState::const_iterator j=c2.begin();
@@ -393,7 +394,7 @@ bool operator==(const PState& c1, const PState& c2) {
   }
 }
 
-bool operator!=(const PState& c1, const PState& c2) {
+bool CodeThorn::operator!=(const PState& c1, const PState& c2) {
   return !(c1==c2);
 }
 #endif

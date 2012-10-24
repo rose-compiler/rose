@@ -4,12 +4,8 @@
 
 #include <boost/shared_ptr.hpp>
 
-namespace LTL { class Formula; }
-
-// global variables from Bison
 extern FILE* ltl_input;
 extern int ltl_parse();
-extern LTL::Formula* ltl_val;
 extern bool ltl_eof;
 extern short ltl_label;
 
@@ -31,6 +27,7 @@ extern short ltl_label;
 ///
 /// \date 2012
 /// \author Adrian Prantl
+namespace CodeThorn {
 namespace LTL {
   
   /// Inherited Attribute for visitor pattern
@@ -347,6 +344,8 @@ namespace LTL {
     short expr_size;
   };
 
-};
+} // namespace LTL
+ 
+} // namespace CodeThorn
 
 #endif

@@ -19,17 +19,17 @@
 #include "Analyzer.h"
 #include "Visualizer.h"
 #include "LanguageRestrictor.h"
+#include "Miscellaneous.h"
 
 using namespace std;
 
-/* general auxiliary functions */
-string int_to_string(int x);
-void write_file(std::string filename, std::string data);
-string color(string name);
+namespace CodeThorn {
 
 class CodeThornLanguageRestrictor : public LanguageRestrictor {
 public:
   bool checkIfAstIsAllowed(SgNode* node);
 };
+
+} // end of namespace CodeThorn
 
 #endif

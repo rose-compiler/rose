@@ -5,21 +5,22 @@
  *************************************************************/
 
 #include "Miscellaneous.h"
+#include "CommandLineOptions.h"
 
-void write_file(std::string filename, std::string data) {
+void CodeThorn::write_file(std::string filename, std::string data) {
   std::ofstream myfile;
   myfile.open(filename.c_str(),std::ios::out);
   myfile << data;
   myfile.close();
 }
 
-string int_to_string(int x) {
+string CodeThorn::int_to_string(int x) {
   stringstream ss;
   ss << x;
   return ss.str();
 }
 
-string color(string name) {
+string CodeThorn::color(string name) {
   if(!boolOptions["colors"]) 
 	return "";
   string c="\33[";

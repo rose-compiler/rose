@@ -20,6 +20,9 @@
 #include <map>
 #include "InternalChecks.h"
 
+using namespace CodeThorn;
+using CodeThorn::color;
+
 void checkTypes();
 void checkLanguageRestrictor(int argc, char *argv[]);
 void checkLargeSets();
@@ -29,7 +32,7 @@ void check(string checkIdentifier, bool checkResult, bool check);
 // intentionally global
 bool checkresult=true;
 
-bool internalChecks(int argc, char *argv[]) {
+bool CodeThorn::internalChecks(int argc, char *argv[]) {
   try {
 	// checkTypes() writes into checkresult
 	checkTypes();

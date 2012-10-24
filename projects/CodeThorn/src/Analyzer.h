@@ -30,6 +30,8 @@
 
 using namespace std;
 
+namespace CodeThorn {
+
 #define DEBUGPRINT_STMT 0x1
 #define DEBUGPRINT_STATE 0x2
 #define DEBUGPRINT_STATEMOD 0x4
@@ -162,5 +164,7 @@ class Analyzer {
   int _displayDiff;
   int _numberOfThreadsToUse;
 };
+
+} // end of namespace CodeThorn
 
 #endif
