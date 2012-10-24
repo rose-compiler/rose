@@ -10,7 +10,7 @@
 #include "rose.h"
 #include <string>
 #include "SgNodeHelper.h"
-#include "MyAst.h"
+#include "RoseAst.h"
 
 using namespace std;
 

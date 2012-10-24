@@ -7,7 +7,7 @@
  *********************************/
 
 #include "rose.h"
-#include "MyAst.h"
+#include "RoseAst.h"
 #include <typeinfo>
 
 using namespace std;
@@ -19,6 +19,6 @@ std::string astTermWithNullValuesToDot(SgNode* root);
 std::string astTermWithoutNullValuesToDot(SgNode* root);
 std::string dotFragmentToDot(string fragment);
 std::string astTermWithNullValuesToDotFragment(SgNode* root) ;
-std::string astTermToDot(MyAst::iterator start, MyAst::iterator end);
+std::string astTermToDot(RoseAst::iterator start, RoseAst::iterator end);
 std::string functionAstTermsWithNullValuesToDot(SgNode* root);
 #endif

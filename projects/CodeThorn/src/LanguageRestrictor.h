@@ -10,7 +10,7 @@
 #include "rose.h"
 #include <set>
 #include <string>
-#include "MyAst.h"
+#include "RoseAst.h"
 
 using namespace std;
 

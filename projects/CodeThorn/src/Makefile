@@ -31,7 +31,7 @@ CXXFLAGS              = -Wno-deprecated
 LDFLAGS               = 
 YACC                  = bison
 
-OBJECT_FILES=MyAst.o AstTerm.o Labeler.o SgNodeHelper.o VariableIdMapping.o CFAnalyzer.o AType.o ExprAnalyzer.o ConstraintRepresentation.o StateRepresentations.o Analyzer.o Visualizer.o Timer.o LanguageRestrictor.o LTLParser.o LTLChecker.o CommandLineOptions.o InternalChecks.o Miscellaneous.o
+OBJECT_FILES=RoseAst.o AstTerm.o Labeler.o SgNodeHelper.o VariableIdMapping.o CFAnalyzer.o AType.o ExprAnalyzer.o ConstraintRepresentation.o StateRepresentations.o Analyzer.o Visualizer.o Timer.o LanguageRestrictor.o LTLParser.o LTLChecker.o CommandLineOptions.o InternalChecks.o Miscellaneous.o
 
 REGRESSION_DATA_DIR=regressiondata
 
@@ -56,7 +56,7 @@ LTLParser.o: LTLParser.y++ LTL.h
 	$(BISON) -p ltl_ $<
 	$(CXX) -o $@ $(CXXFLAGS) $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) LTLParser.tab.c++ -c
 
-Analyzer.o : CollectionOperators.h Analyzer.h AstTerm.h Labeler.h CFAnalyzer.h MyAst.h SgNodeHelper.h ExprAnalyzer.h StateRepresentations.h Analyzer.C
+Analyzer.o : CollectionOperators.h Analyzer.h AstTerm.h Labeler.h CFAnalyzer.h RoseAst.h SgNodeHelper.h ExprAnalyzer.h StateRepresentations.h Analyzer.C
 
 codethorn.o: codethorn.C codethorn.h LTL.h
 LTLChecker.o: LTLChecker.C LTLChecker.h LTL.h

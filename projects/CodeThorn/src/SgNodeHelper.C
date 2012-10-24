@@ -4,7 +4,7 @@
 
 #include "SgNodeHelper.h"
 #include "limits.h"
-#include "MyAst.h"
+#include "RoseAst.h"
 #include <list>
 
 using namespace std;
@@ -70,8 +70,8 @@ list<SgVariableDeclaration*> SgNodeHelper::listOfGlobalVars(SgProject* project) 
 
 list<SgFunctionDefinition*> SgNodeHelper::listOfFunctionDefinitions(SgProject* project) {
   list<SgFunctionDefinition*> funDefList;
-  MyAst ast(project);
-  for(MyAst::iterator i=ast.begin();i!=ast.end();++i) {
+  RoseAst ast(project);
+  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
 	if(SgFunctionDefinition* funDef=isSgFunctionDefinition(*i)) {
 	  funDefList.push_back(funDef);
 	}
@@ -83,8 +83,8 @@ list<SgVarRefExp*> SgNodeHelper::listOfUsedVarsInFunctions(SgProject* project) {
   list<SgVarRefExp*> varRefExpList;
   list<SgFunctionDefinition*> funDefList=SgNodeHelper::listOfFunctionDefinitions(project);
   for(list<SgFunctionDefinition*>::iterator i=funDefList.begin();i!=funDefList.end();++i) {
-	MyAst ast(*i);
-	for(MyAst::iterator i=ast.begin();i!=ast.end();++i) {
+	RoseAst ast(*i);
+	for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
 	  if(SgVarRefExp* varRefExp=isSgVarRefExp(*i))
 		varRefExpList.push_back(varRefExp);
 	}
@@ -219,8 +219,8 @@ SgFunctionDefinition* SgNodeHelper::determineFunctionDefinition(SgFunctionCallEx
 	}
 	assert(root);
 	// 2) search in AST for the right definition now
-	MyAst ast(root);
-	for(MyAst::iterator i=ast.begin();i!=ast.end();++i) {
+	RoseAst ast(root);
+	for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
 	  if(SgFunctionDeclaration* funDecl2=isSgFunctionDeclaration(*i)) {
 		if(!SgNodeHelper::isForwardFunctionDeclaration(funDecl2)) {
 		  if(funDecl2->search_for_symbol_from_symbol_table()
@@ -261,8 +261,8 @@ SgInitializedNamePtrList& SgNodeHelper::getFunctionDefinitionFormalParameterList
 
 set<SgVariableDeclaration*> SgNodeHelper::localVariableDeclarationsOfFunction(SgFunctionDefinition* funDef) {
   set<SgVariableDeclaration*> localVarDecls;
-  MyAst ast(funDef);
-  for(MyAst::iterator i=ast.begin();i!=ast.end();++i) {
+  RoseAst ast(funDef);
+  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
 	if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(*i)) {
 	  localVarDecls.insert(varDecl);
 	}
@@ -305,8 +305,8 @@ SgFunctionCallExp* SgNodeHelper::Pattern::matchExprStmtAssignOpVarRefExpFunction
 
 set<SgNode*> SgNodeHelper::LoopRelevantBreakStmtNodes(SgNode* node) {
   set<SgNode*> breakNodes;
-  MyAst ast(node);
-  MyAst::iterator i=ast.begin();
+  RoseAst ast(node);
+  RoseAst::iterator i=ast.begin();
   ++i; // go to first child
   while(i!=ast.end()) {
 	if(isSgBreakStmt(*i))

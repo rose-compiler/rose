@@ -8,8 +8,8 @@
 
 LanguageRestrictor::VariantSet LanguageRestrictor::computeVariantSetOfProvidedAst(SgNode* node) {
   LanguageRestrictor::VariantSet vset;
-  MyAst ast(node);
-  for(MyAst::iterator i=ast.begin();i!=ast.end();++i) {
+  RoseAst ast(node);
+  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
 	vset.insert((*i)->variantT());
   }
   return vset;
@@ -97,8 +97,8 @@ bool LanguageRestrictor::isAllowedAstNode(SgNode* node) {
 }
 
 bool LanguageRestrictor::checkIfAstIsAllowed(SgNode* node) {
-  MyAst ast(node);
-  for(MyAst::iterator i=ast.begin();i!=ast.end();++i) {
+  RoseAst ast(node);
+  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
 	if(!isAllowedAstNode(*i)) {
 	  cerr << "Error: Unsupported language construct found: " << (*i)->sage_class_name() << endl;
 	  return false;

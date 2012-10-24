@@ -20,7 +20,7 @@
 #include "AstTerm.h"
 #include "Labeler.h"
 #include "CFAnalyzer.h"
-#include "MyAst.h"
+#include "RoseAst.h"
 #include "SgNodeHelper.h"
 #include "ExprAnalyzer.h"
 #include "StateRepresentations.h"

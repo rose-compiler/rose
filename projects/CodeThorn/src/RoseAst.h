@@ -1,6 +1,6 @@
 
-#ifndef MYAST_H
-#define MYAST_H
+#ifndef ROSE_AST_H
+#define ROSE_AST_H
 
 #include <stack>
 #include "roseInternal.h"
@@ -12,7 +12,7 @@
   \brief ROSE AST Interface providing an AST iterator and some AST specific functions.
 
  */
-class MyAst {
+class RoseAst {
  public:
   typedef SgNode elementType;
   typedef elementType* pointer;
@@ -22,7 +22,7 @@ class MyAst {
   // no default constructor
 
   //! Defines the root node of an AST subtree. All operations are specific to this subtree.
-  MyAst(SgNode* astNode); 
+  RoseAst(SgNode* astNode); 
 
   //! operator '*' allows to access AST nodes we iterate on (including null values)
   //SgNode* operator*();
@@ -110,7 +110,7 @@ class MyAst {
 
   private:
     static const int ROOT_NODE_INDEX=-2;
-    friend class MyAst;
+    friend class RoseAst;
     typedef struct {SgNode* node; int index;} stack_element;
     std::stack<stack_element> _stack;
     SgNode* access_node_by_parent_and_index(SgNode* p, int index) const;

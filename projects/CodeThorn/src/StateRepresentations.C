@@ -5,9 +5,9 @@
  *************************************************************/
 
 #include "StateRepresentations.h"
+#include <algorithm>
 #include "ExprAnalyzer.h"
 #include "AType.h"
-#include <algorithm>
 #include "CollectionOperators.h"
 #include "CommandLineOptions.h"
 

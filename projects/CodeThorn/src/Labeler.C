@@ -51,8 +51,8 @@ int Labeler::isLabelRelevantNode(SgNode* node) {
 }
 
 void Labeler::createLabels(SgNode* node) {
-  MyAst ast(node);
-  for(MyAst::iterator i=ast.begin();i!=ast.end();++i) {
+  RoseAst ast(node);
+  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
 	if(int num=isLabelRelevantNode(*i)) {
 	  for(int j=0;j<num;j++) {
 		labelNodeMapping.push_back(*i);

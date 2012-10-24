@@ -9,7 +9,7 @@
 
 #include <set>
 #include "rose.h"
-#include "MyAst.h"
+#include "RoseAst.h"
 
 using namespace std;
 

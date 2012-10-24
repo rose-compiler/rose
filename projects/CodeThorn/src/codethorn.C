@@ -24,8 +24,8 @@
 namespace po = boost::program_options;
 
 bool CodeThornLanguageRestrictor::checkIfAstIsAllowed(SgNode* node) {
-  MyAst ast(node);
-  for(MyAst::iterator i=ast.begin();i!=ast.end();++i) {
+  RoseAst ast(node);
+  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
 	if(!isAllowedAstNode(*i)) {
 	  cerr << "Error: Unsupported language construct found: " << (*i)->sage_class_name() << endl;
 	  // report first error and return

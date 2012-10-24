@@ -10,8 +10,8 @@ void VariableIdMapping::computeVariableSymbolMapping(SgProject* project) {
 
   list<SgGlobal*> globList=SgNodeHelper::listOfSgGlobal(project);
   for(list<SgGlobal*>::iterator k=globList.begin();k!=globList.end();++k) {
-	MyAst ast(*k);
-	for(MyAst::iterator i=ast.begin();i!=ast.end();++i) {
+	RoseAst ast(*k);
+	for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
 	  SgSymbol* sym=0;
 	  bool found=false;
 	  if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(*i)) {

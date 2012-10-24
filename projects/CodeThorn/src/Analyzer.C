@@ -368,8 +368,8 @@ list<SgNode*> Analyzer::listOfAssertNodes(SgProject* root) {
   for(list<SgFunctionDefinition*>::iterator i=funDefs.begin();
 	  i!=funDefs.end();
 	  ++i) {
-	MyAst ast(*i);
-	for(MyAst::iterator j=ast.begin();j!=ast.end();++j) {
+	RoseAst ast(*i);
+	for(RoseAst::iterator j=ast.begin();j!=ast.end();++j) {
 	  if(isAssertExpr(*j)) {
 		assertNodes.push_back(*j);
 	  }
@@ -384,9 +384,9 @@ list<pair<SgLabelStatement*,SgNode*> > Analyzer::listOfLabeledAssertNodes(SgProj
   for(list<SgFunctionDefinition*>::iterator i=funDefs.begin();
 	  i!=funDefs.end();
 	  ++i) {
-	MyAst ast(*i);
-	MyAst::iterator prev=ast.begin();
-	for(MyAst::iterator j=ast.begin();j!=ast.end();++j) {
+	RoseAst ast(*i);
+	RoseAst::iterator prev=ast.begin();
+	for(RoseAst::iterator j=ast.begin();j!=ast.end();++j) {
 	  if(isAssertExpr(*j)) {
 		if(prev!=j && isSgLabelStatement(*prev)) {
 		  SgLabelStatement* labStmt=isSgLabelStatement(*prev);
@@ -784,7 +784,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
 
 void Analyzer::initializeSolver1(std::string functionToStartAt,SgNode* root) {
   std::string funtofind=functionToStartAt;
-  MyAst completeast(root);
+  RoseAst completeast(root);
   startFunRoot=completeast.findFunctionByName(funtofind);
   if(startFunRoot==0) { 
     std::cerr << "Function '"<<funtofind<<"' not found.\n"; exit(1);
@@ -933,8 +933,8 @@ PState Analyzer::analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode
 }
 
 void Analyzer::initAstNodeInfo(SgNode* node) {
-  MyAst ast(node);
-  for(MyAst::iterator i=ast.begin();i!=ast.end();++i) {
+  RoseAst ast(node);
+  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
 	AstNodeInfo* attr=new AstNodeInfo();
 	(*i)->addNewAttribute("info",attr);
   }
@@ -946,8 +946,8 @@ void Analyzer::generateAstNodeInfo(SgNode* node) {
 	cerr << "Error: DFAnalyzer: no cfanalyzer found."<<endl;
 	exit(1);
   }
-  MyAst ast(node);
-  for(MyAst::iterator i=ast.begin().withoutNullValues();i!=ast.end();++i) {
+  RoseAst ast(node);
+  for(RoseAst::iterator i=ast.begin().withoutNullValues();i!=ast.end();++i) {
 	assert(*i);
 	AstNodeInfo* attr=dynamic_cast<AstNodeInfo*>((*i)->getAttribute("info"));
 	if(attr) {

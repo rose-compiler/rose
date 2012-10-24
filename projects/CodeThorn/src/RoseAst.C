@@ -5,22 +5,22 @@
  */
 
 #include "sage3basic.h"
-#include "MyAst.h"
+#include "RoseAst.h"
 
 /* AST functions */
 
-MyAst::MyAst(SgNode* astNode):_startNode(astNode) {
+RoseAst::RoseAst(SgNode* astNode):_startNode(astNode) {
   /* only initializer list required */
 }
 
 SgNode* 
-MyAst::parent(SgNode* astNode) {
+RoseAst::parent(SgNode* astNode) {
   return astNode->get_parent();
 }
 
 SgFunctionDefinition*
-MyAst::findFunctionByName(std::string name) {
-  for(MyAst::iterator i=begin();i!=end();++i) {
+RoseAst::findFunctionByName(std::string name) {
+  for(RoseAst::iterator i=begin();i!=end();++i) {
     if(SgFunctionDefinition* fundef=isSgFunctionDefinition(*i)) {
       if(SgFunctionDeclaration* fundecl=fundef->get_declaration()) {
 	SgName fname=fundecl->get_name();
@@ -32,13 +32,13 @@ MyAst::findFunctionByName(std::string name) {
   return 0; // no function found with this name
 }
 
-SgNode* MyAst::iterator::parent() const {
+SgNode* RoseAst::iterator::parent() const {
   return _stack.top().node;
 }
 
 /* iterator functions */
 
-MyAst::iterator::iterator()
+RoseAst::iterator::iterator()
   :
   _startNode(0), // 0 is not traversed, due to the empty stack the default iterator is a past-the-end iterator
   _skipChildrenOnForward(false),
@@ -46,7 +46,7 @@ MyAst::iterator::iterator()
 {
 }
 
-MyAst::iterator::iterator(SgNode* x)
+RoseAst::iterator::iterator(SgNode* x)
   : 
   _startNode(x), 
   _skipChildrenOnForward(false),
@@ -58,10 +58,10 @@ MyAst::iterator::iterator(SgNode* x)
   _stack.push(e);
 }
 
-int MyAst::iterator::stack_size() const { return _stack.size(); }
-bool MyAst::iterator::is_past_the_end() const { return _stack.size()==0; }
+int RoseAst::iterator::stack_size() const { return _stack.size(); }
+bool RoseAst::iterator::is_past_the_end() const { return _stack.size()==0; }
 
-bool MyAst::iterator::operator==(const iterator& x) const { 
+bool RoseAst::iterator::operator==(const iterator& x) const { 
   if(is_past_the_end() != x.is_past_the_end())
     return false;
   if(is_past_the_end() && x.is_past_the_end()) 
@@ -79,11 +79,11 @@ bool MyAst::iterator::operator==(const iterator& x) const {
   return true;
 }
 
-bool MyAst::iterator::operator!=(const iterator& x) const { 
+bool RoseAst::iterator::operator!=(const iterator& x) const { 
   return !(*this==x);
 }
 
-SgNode* MyAst::iterator::operator*() const { 
+SgNode* RoseAst::iterator::operator*() const { 
   if(_stack.size()==0)
     throw std::out_of_range("Ast::iterator: past-the-end access");
   // access node by index
@@ -96,31 +96,31 @@ SgNode* MyAst::iterator::operator*() const {
 }
 
 int 
-MyAst::iterator::num_children(SgNode* p) const {
+RoseAst::iterator::num_children(SgNode* p) const {
   if(p)
     return p->get_numberOfTraversalSuccessors();
   else
     return 0;
 }
 
-MyAst::iterator MyAst::iterator::operator++(int) {
+RoseAst::iterator RoseAst::iterator::operator++(int) {
   iterator tmp = *this;
   ++*this;
   return tmp;
 }
 
-MyAst::iterator
-MyAst::begin() { 
+RoseAst::iterator
+RoseAst::begin() { 
   return iterator(_startNode);
 }
 
-MyAst::iterator
-MyAst::end() { 
+RoseAst::iterator
+RoseAst::end() { 
   return iterator();
 }
 
 std::string
-MyAst::iterator::current_node_id() const {
+RoseAst::iterator::current_node_id() const {
   stack_element e=_stack.top();
   std::stringstream ss;
   if(operator*()==0) {
@@ -134,7 +134,7 @@ MyAst::iterator::current_node_id() const {
 }
 
 std::string
-MyAst::iterator::parent_node_id() const {
+RoseAst::iterator::parent_node_id() const {
   stack_element e=_stack.top();
   std::stringstream ss;
   ss << parent(); // MS: a parent cannot be null, therefore the address is sufficient.
@@ -142,7 +142,7 @@ MyAst::iterator::parent_node_id() const {
 }
 
 void
-MyAst::iterator::print_top_element() const {
+RoseAst::iterator::print_top_element() const {
   if(_stack.size()==0) {
     std::cout << "STACK-TOP-ELEMENT: none (empty)" << std::endl;
   } else {
@@ -151,8 +151,8 @@ MyAst::iterator::print_top_element() const {
   }
 }
 
-MyAst::iterator&
-MyAst::iterator::operator++() {
+RoseAst::iterator&
+RoseAst::iterator::operator++() {
   // check if we are already past the end
   if(is_past_the_end())
     return *this;
@@ -210,7 +210,7 @@ MyAst::iterator::operator++() {
 }
 
 SgNode*
-MyAst::iterator::access_node_by_parent_and_index(SgNode* p, int index) const {
+RoseAst::iterator::access_node_by_parent_and_index(SgNode* p, int index) const {
   int numChildren=num_children(p);
   if(index>=numChildren) {
     std::stringstream ss;
@@ -223,20 +223,20 @@ MyAst::iterator::access_node_by_parent_and_index(SgNode* p, int index) const {
   return node;
 }
 
-void MyAst::iterator::skipChildrenOnForward() {
+void RoseAst::iterator::skipChildrenOnForward() {
   _skipChildrenOnForward=true;
 } 
 
-MyAst::iterator& 
-MyAst::iterator::withoutNullValues() {
+RoseAst::iterator& 
+RoseAst::iterator::withoutNullValues() {
   if(_stack.size()!=1 && (_stack.top().node!=_startNode))
     throw "Ast::iterator: unallowed mode change.";
   _withNullValues=false; 
   return *this;
 } 
 
-MyAst::iterator& 
-MyAst::iterator::withNullValues() {
+RoseAst::iterator& 
+RoseAst::iterator::withNullValues() {
   if(_stack.size()!=1 && (_stack.top().node!=_startNode))
     throw "Ast::iterator: unallowed mode change.";
   _withNullValues=true; 
@@ -244,15 +244,15 @@ MyAst::iterator::withNullValues() {
 } 
 
 bool
-MyAst::iterator::is_at_root() const {
+RoseAst::iterator::is_at_root() const {
   return !is_past_the_end() && _stack.size()>0 && _stack.top().node==_startNode;
 }
 
-bool MyAst::iterator::is_at_first_child() const {
+bool RoseAst::iterator::is_at_first_child() const {
   return _stack.top().index==0;
 }
 
-bool MyAst::iterator::is_at_last_child() const {
+bool RoseAst::iterator::is_at_last_child() const {
   stack_element e=_stack.top();
   return e.index==num_children(e.node)-1 && e.index!=ROOT_NODE_INDEX;
 }

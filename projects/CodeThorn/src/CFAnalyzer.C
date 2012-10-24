@@ -512,10 +512,10 @@ Flow CFAnalyzer::flow(SgNode* node) {
   }
 
   if(isSgProject(node)||isSgFileList(node)||isSgGlobal(node)||isSgSourceFile(node)) {
-	MyAst ast(node);
+	RoseAst ast(node);
 	Flow tmpEdgeSet;
 	// search for all functions and union flow for all functions
-	for(MyAst::iterator i=ast.begin();i!=ast.end();++i) {
+	for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
 	  if(isSgFunctionDefinition(*i)) {
 		i.skipChildrenOnForward();
 		cout << "STATUS: Generating flow for function "<<SgNodeHelper::getFunctionName(*i)<<endl;

@@ -62,10 +62,10 @@ std::string astTermWithNullValuesToString(SgNode* node) {
 }
 
 std::string astTermWithoutNullValuesToDot(SgNode* root) {
-  MyAst ast(root);
+  RoseAst ast(root);
   std::stringstream ss;
   ss << "digraph G {\n";
-  for(MyAst::iterator i=ast.begin().withoutNullValues();i!=ast.end();++i) {
+  for(RoseAst::iterator i=ast.begin().withoutNullValues();i!=ast.end();++i) {
     ss << "\"" << *i <<"\""<< "[label=\"" << nodeTypeName(*i)<< "\"];"<<std::endl;
     if(*i!=root) {
       ss << "\""<<i.parent() << "\"" << " -> " << "\"" << *i << "\""<<";" << std::endl; 
@@ -76,9 +76,9 @@ std::string astTermWithoutNullValuesToDot(SgNode* root) {
 }
 
 std::string functionAstTermsWithNullValuesToDot(SgNode* root) {
-  MyAst ast(root);
+  RoseAst ast(root);
   string fragments;
-  for(MyAst::iterator i=ast.begin();i!=ast.end();++i) {
+  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
 	if(isSgFunctionDefinition(*i)) {
 	  fragments+=astTermWithNullValuesToDotFragment(*i);
 	}
@@ -102,9 +102,9 @@ std::string astTermWithNullValuesToDot(SgNode* root) {
 }
 
 std::string astTermWithNullValuesToDotFragment(SgNode* root) {
-  MyAst ast(root);
+  RoseAst ast(root);
   std::stringstream ss;
-  for(MyAst::iterator i=ast.begin().withNullValues();i!=ast.end();++i) {
+  for(RoseAst::iterator i=ast.begin().withNullValues();i!=ast.end();++i) {
     ss << "\"" << *i <<"\""
 	   << "[label=\"" << nodeTypeName(*i);
 	if(*i && (*i)->attributeExists("info")) {
@@ -122,13 +122,13 @@ std::string astTermWithNullValuesToDotFragment(SgNode* root) {
   return ss.str();
 }
 
-std::string astTermToDot(MyAst::iterator start, MyAst::iterator end) {
+std::string astTermToDot(RoseAst::iterator start, RoseAst::iterator end) {
   std::stringstream ss;
   SgNode* root=*start;
   long int visitCnt=1;
   ss << "digraph G {\n";
   std::string prevNode="";
-  for(MyAst::iterator i=start;i!=end;++i) {
+  for(RoseAst::iterator i=start;i!=end;++i) {
     ss << "\"" << i.current_node_id() <<"\""<< "[label=\"" << visitCnt++ << ":";
     ss << nodeTypeName(*i);
     ss << "\"";
