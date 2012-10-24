@@ -784,7 +784,7 @@ BEGIN NORMAL;
 <STRING_LIT>[^\\"\n]    {/*eat anything that is not a newline or a backslash or a doublequote*/ preproc_column_num+=strlen(yytext); }
 <STRING_LIT>\\[^\"\n]   {/*if the backslash is followed by anything other than a newline or doublequote, eat them. */ preproc_column_num+=strlen(yytext); }
 <STRING_LIT>\\\"        {/*if a backslash preceeds the doublequote, eat both.*/ preproc_column_num+=strlen(yytext); }
-<STRING_LIT>\\\n        {/*if a backslash preceeds the newline, eat both, donot increment preproc_line_num.*/ preproc_column_num+=strlen(yytext); }
+<STRING_LIT>\\\n        {/*if a backslash preceeds the newline, eat both and inc line number.*/ preproc_column_num+=strlen(yytext); preproc_line_num++; }
 <STRING_LIT>\"          { /* if it is a doublequote, end the STRING_LIT state.*/ BEGIN NORMAL; }
 <STRING_LIT>\n          { /* count the newlines */ preproc_line_num++; }
 
