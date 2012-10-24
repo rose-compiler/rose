@@ -617,7 +617,7 @@ whitespace              [[:blank:]]+
 lineprefix              ^{whitespace}*"#"{whitespace}*
 macrokeyword            "include"|"define"|"undef"|"line"|"error"|"warning"|"if"|"ifdef"|"ifndef"|"elif"|"else"|"endif"
 mlinkagespecification   ^{whitespace}*"extern"{whitespace}*(("\"C\"")|("\"C++\"")){whitespacenl}*"{"
-%s NORMAL CXX_COMMENT C_COMMENT STRING_LIT MACRO C_COMMENT_INMACRO
+%s NORMAL CXX_COMMENT C_COMMENT STRING_LIT CHAR_LIT MACRO C_COMMENT_INMACRO
 %%
 %{
 int preproc_line_num = 1;
@@ -776,17 +776,31 @@ BEGIN NORMAL;
         /*Add code here to attach the whitespace before newlines (and general lineprefix code) */
 <NORMAL>\n                      { preproc_line_num++; preproc_column_num=1; } 
 <NORMAL>"\""                    { /*preproc_line_num+=num_of_newlines(yytext);*/ preproc_column_num+=strlen(yytext); BEGIN STRING_LIT;}
-                            /*<NORMAL>"\'"                      { preproc_line_num+=num_of_newlines(yytext); preproc_column_num+=strlen(yytext); BEGIN CHAR_LIT;}*/
-                            /*<NORMAL>"'"                       { preproc_line_num+=num_of_newlines(yytext); preproc_column_num+=strlen(yytext); BEGIN CHAR_LIT;}*/
+<NORMAL>"'"                     { /*preproc_line_num+=num_of_newlines(yytext);*/ preproc_column_num+=strlen(yytext); BEGIN CHAR_LIT;}
 <NORMAL>.                       { preproc_column_num++; }
 
-        /*Actions for a string literal.*/
-<STRING_LIT>[^\\"\n]    {/*eat anything that is not a newline or a backslash or a doublequote*/ preproc_column_num+=strlen(yytext); }
-<STRING_LIT>\\[^\"\n]   {/*if the backslash is followed by anything other than a newline or doublequote, eat them. */ preproc_column_num+=strlen(yytext); }
-<STRING_LIT>\\\"        {/*if a backslash preceeds the doublequote, eat both.*/ preproc_column_num+=strlen(yytext); }
-<STRING_LIT>\\\n        {/*if a backslash preceeds the newline, eat both and inc line number.*/ preproc_column_num+=strlen(yytext); preproc_line_num++; }
-<STRING_LIT>\"          { /* if it is a doublequote, end the STRING_LIT state.*/ BEGIN NORMAL; }
-<STRING_LIT>\n          { /* count the newlines */ preproc_line_num++; }
+
+
+
+                        /* Actions for character literals. Since the part between single quote can be more than one
+                         * character of input (e.g., '\\', '\'', '\n', '\012', etc) we parse them sort of like strings. */
+<CHAR_LIT>\\\n                  {/*eat escaped linefeed*/       preproc_line_num++; preproc_column_num=1; }
+<CHAR_LIT>\\.                   {/*eat escaped something*/      preproc_column_num+=strlen(yytext); }
+<CHAR_LIT>[^'\n\\]              {/*eat non-special characters*/ preproc_column_num+=strlen(yytext); }
+<CHAR_LIT>\n                    {/*eat linefeed*/               preproc_line_num++; preproc_column_num=1; }
+<CHAR_LIT>"'"                   {/*end of character literal*/   preproc_column_num+=strlen(yytext); BEGIN NORMAL; }
+
+
+
+                        /* Actions for string literals. */
+<STRING_LIT>\\\n                {/*eat escaped linefeed*/       preproc_line_num++; preproc_column_num=1; }
+<STRING_LIT>\\.                 {/*eat escaped something*/      preproc_column_num+=strlen(yytext); }
+<STRING_LIT>[^\"\n\\]           {/*eat non-special characters*/ preproc_column_num+=strlen(yytext); }
+<STRING_LIT>\n                  {/*eat linefeed*/               preproc_line_num++; preproc_column_num=1; }
+<STRING_LIT>"\""                {/*end of string literal*/      preproc_column_num+=strlen(yytext); BEGIN NORMAL; }
+
+
+
 
         /*Actions for a C++ style comment.*/
 <CXX_COMMENT>[^\\\n]    { /* eat anything that is not a backslash or a newline*/ commentString += yytext;}
