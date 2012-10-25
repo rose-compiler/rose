@@ -3,11 +3,14 @@
 # for building the reference implementation use:
 
 TOOLNAME3 = codethorn
+TOOLNAME2 = ast_demo
+
 MYDATE = `date +%Y_%m_%d`
 
 CC                    = gcc-4.4
 CXX                   = g++-4.4
 BISON                 = bison
+FLEX                  = flex
 
 # Location of include directory after "make install" (set as environment variable)
 #ROSE_INCLUDE_DIR = 
@@ -31,14 +34,14 @@ CXXFLAGS              = -Wno-deprecated
 LDFLAGS               = 
 YACC                  = bison
 
-OBJECT_FILES=RoseAst.o AstTerm.o Labeler.o SgNodeHelper.o VariableIdMapping.o CFAnalyzer.o AType.o ExprAnalyzer.o ConstraintRepresentation.o StateRepresentations.o Analyzer.o Visualizer.o Timer.o LanguageRestrictor.o LTLParser.o LTLChecker.o CommandLineOptions.o InternalChecks.o Miscellaneous.o
+OBJECT_FILES=RoseAst.o AstTerm.o Labeler.o SgNodeHelper.o VariableIdMapping.o CFAnalyzer.o AType.o ExprAnalyzer.o ConstraintRepresentation.o StateRepresentations.o Analyzer.o Visualizer.o Timer.o LanguageRestrictor.o LTLParser.o LTLChecker.o CommandLineOptions.o InternalChecks.o Miscellaneous.o MatchOperation.o AstMatching.o matcherparser.o matcherlexer.o
 
 REGRESSION_DATA_DIR=regressiondata
 
 OBJECT_FILES_EXPERIMENTAL=BoostGraphIntegration.o
 
 # Default make rule to use
-all: $(TOOLNAME3)
+all: $(TOOLNAME3) $(TOOLNAME2) matcher_demo
 	@if [ x$${ROSE_IN_BUILD_TREE:+present} = xpresent ]; then echo "ROSE_IN_BUILD_TREE should not be set" >&2; exit 1; fi
 
 
@@ -56,6 +59,16 @@ LTLParser.o: LTLParser.y++ LTL.h
 	$(BISON) -p ltl_ $<
 	$(CXX) -o $@ $(CXXFLAGS) $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) LTLParser.tab.c++ -c
 
+matcherparser.h matcherparser.o: matcherparser.yxx
+	$(BISON) -p matcher --defines=matcherparser.h matcherparser.yxx -omatcherparser.C
+	$(CXX) -o $@ $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) -I. matcherparser.C -c
+
+matcherlexer.o: matcherlexer.lxx matcherparser.h
+	$(FLEX) -Pmatcher -omatcherlexer.C matcherlexer.lxx
+	$(CXX) -o $@ $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) -I. matcherlexer.C -c
+
+AstMatching.o : matcherparser_decls.h MatchOperation.h RoseAst.h AstMatching.h AstMatching.C
+
 Analyzer.o : CollectionOperators.h Analyzer.h AstTerm.h Labeler.h CFAnalyzer.h RoseAst.h SgNodeHelper.h ExprAnalyzer.h StateRepresentations.h Analyzer.C
 
 codethorn.o: codethorn.C codethorn.h LTL.h
@@ -65,13 +78,17 @@ LTLChecker.o: LTLChecker.C LTLChecker.h LTL.h
 	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $< -c 
 
 $(TOOLNAME3): $(TOOLNAME3).C  $(TOOLNAME3).h $(OBJECT_FILES) $(TOOLNAME3).o
-	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES) $(TOOLNAME3).o -o$(TOOLNAME3)
+	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES) $(TOOLNAME3).o -lfl -o$(TOOLNAME3)
 
-$(TOOLNAME3)seq: $(TOOLNAME3).C  $(TOOLNAME3).h $(OBJECT_FILES) $(TOOLNAME3).o
-	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES) $(TOOLNAME3).o -o$(TOOLNAME3)seq
+$(TOOLNAME2): $(TOOLNAME2).C RoseAst.h RoseAst.C AstTerm.h AstTerm.C SgNodeHelper.h SgNodeHelper.C $(TOOLNAME2).C
+	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) -L$(ROSE_LIB_DIR) -lrose $(TOOLNAME2).C -o$(TOOLNAME2) 
 
 xxtest: xxtest.C $(OBJECT_FILES)
 	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES) xxtest.C -oxxtest
+
+#MS: not finished yet
+matcher_demo: matcher_demo.C $(OBJECT_FILES) matcherparser.o matcherlexer.o
+	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES) matcher_demo.C -omatcher_demo
 
 check: $(TOOLNAME3)
 	./$(TOOLNAME3) --internal-checks
@@ -80,12 +97,15 @@ check: $(TOOLNAME3)
 	@echo ================================================================
 	./$(TOOLNAME3) --edg:no_warnings tests/rers_mini1.c    --verify tests/rers_mini1.ltl
 
+checkdemos:
+	./matcher_demo tests/basictest5.C < tests/matchexpressions/test1.mat
+	./ast_demo tests/basictest5.C
+
 test: $(TOOLNAME3)
 	./$(TOOLNAME3) --edg:no_warnings tests/rers/Problem1.c \
 	               --verify tests/rers/properties1.txt \
 	               --csv-assert Problem1-assert.csv \
 	               --csv-ltl Problem1-ltl.csv
-
 
 RERS=$(patsubst %,Problem%.log, $(shell seq 13))
 rers: $(RERS)
@@ -127,6 +147,8 @@ clean:
 	rm -f bsps/*
 	rm -f LTLParser.tab.c++
 	rm -f tmp*
+	rm -f matcherparser.C
+	rm -f matcherlexer.C
 
 distclean: clean
 	rm -f *.tgz
