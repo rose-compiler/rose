@@ -31,12 +31,10 @@ typedef int EStateId;
 
 using CodeThorn::VariableId;
 using CodeThorn::CppCapsuleAValue;
-using CodeThorn::HSetMaintainer;
 using CodeThorn::Label;
 using CodeThorn::ConstraintSet;
 using CodeThorn::ConstraintSetMaintainer;
 using CodeThorn::Edge;
-using CodeThorn::HSet;
 
 namespace CodeThorn {
 
@@ -67,9 +65,9 @@ class PStateHashFun {
     long tabSize;
 };
 
-class PStateSet : public CodeThorn::HSetMaintainer<PState,PStateHashFun> {
+class PStateSet : public HSetMaintainer<PState,PStateHashFun> {
  public:
-  typedef CodeThorn::HSetMaintainer<PState,PStateHashFun>::ProcessingResult ProcessingResult;
+  typedef HSetMaintainer<PState,PStateHashFun>::ProcessingResult ProcessingResult;
   string toString();
   PStateId pstateId(const PState* pstate);
   PStateId pstateId(const PState pstate);

@@ -28,7 +28,7 @@ set<string> Analyzer::variableIdsToVariableNames(set<VariableId> s) {
 string Analyzer::nodeToString(SgNode* node) {
   string textual;
   if(node->attributeExists("info"))
-	 textual=node->getAttribute("info")->toString()+":";
+	textual=node->getAttribute("info")->toString()+":";
   return textual+SgNodeHelper::nodeToString(node);
 }
 
@@ -42,19 +42,19 @@ void Analyzer::recordTransition(const EState* sourceState, Edge e, const EState*
 
 void Analyzer::printStatusMessage(bool forceDisplay) {
   // forceDisplay currently only turns on or off
-
+  
   // report we are alife
   stringstream ss;
   if(forceDisplay) {
-	ss  <<color("white")<<"Number of states/estates/trans/csets: ";
-	ss  <<color("magenta")<<pstateSet.size()
-		<<color("white")<<"/"
-		<<color("cyan")<<estateSet.size()
-		<<color("white")<<"/"
-		<<color("blue")<<transitionGraph.size()
-		<<color("white")<<"/"
-		<<color("yellow")<<constraintSetMaintainer.size()
-		<<color("white")<<"";
+	ss <<color("white")<<"Number of states/estates/trans/csets: ";
+	ss <<color("magenta")<<pstateSet.size()
+	   <<color("white")<<"/"
+	   <<color("cyan")<<estateSet.size()
+	   <<color("white")<<"/"
+	   <<color("blue")<<transitionGraph.size()
+	   <<color("white")<<"/"
+	   <<color("yellow")<<constraintSetMaintainer.size()
+	   <<color("white")<<"";
 	ss<<endl;
 	cout<<ss.str();
   }
@@ -63,11 +63,11 @@ void Analyzer::printStatusMessage(bool forceDisplay) {
 void Analyzer::addToWorkList(const EState* estate) { 
 #pragma omp critical
   {
-  if(!estate) {
-	cerr<<"INTERNAL ERROR: null pointer added to work list."<<endl;
-	exit(1);
-  }
-  estateWorkList.push(estate); 
+	if(!estate) {
+	  cerr<<"INTERNAL ERROR: null pointer added to work list."<<endl;
+	  exit(1);
+	}
+	estateWorkList.push(estate); 
   }
 }
 
@@ -85,6 +85,7 @@ EState Analyzer::createEState(Label label, PState pstate, ConstraintSet cset) {
   EState estate=EState(label,newPStatePtr,newConstraintSetPtr);
   return estate;
 }
+
 EState Analyzer::createEState(Label label, PState pstate, ConstraintSet cset, InputOutput io) {
   EState estate=createEState(label,pstate,cset);
   estate.io=io;
@@ -274,94 +275,94 @@ void Analyzer::runSolver1() {
   cout << "analysis finished (worklist is empty)."<<endl;
 }
   
-  const EState* Analyzer::addToWorkListIfNew(EState estate) {
-	EStateSet::ProcessingResult res=process(estate);
-	if(res.first==true) {
-	  const EState* newEStatePtr=res.second;
-	  assert(newEStatePtr);
-	  addToWorkList(newEStatePtr);
-	  return newEStatePtr;
-	} else {
-	  //cout << "DEBUG: EState already exists. Not added:"<<estate.toString()<<endl;
-	  const EState* existingEStatePtr=res.second;
-	  assert(existingEStatePtr);
-	  return existingEStatePtr;
-	}
+const EState* Analyzer::addToWorkListIfNew(EState estate) {
+  EStateSet::ProcessingResult res=process(estate);
+  if(res.first==true) {
+	const EState* newEStatePtr=res.second;
+	assert(newEStatePtr);
+	addToWorkList(newEStatePtr);
+	return newEStatePtr;
+  } else {
+	//cout << "DEBUG: EState already exists. Not added:"<<estate.toString()<<endl;
+	const EState* existingEStatePtr=res.second;
+	assert(existingEStatePtr);
+	return existingEStatePtr;
   }
-  
-  EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState currentEState, Label targetLabel) {
-	//cout << "INFO1: we are at "<<astTermWithNullValuesToString(nextNodeToAnalyze1)<<endl;
-	SgNode* initName0=decl->get_traversalSuccessorByIndex(1); // get-InitializedName
-	if(initName0) {
-	  if(SgInitializedName* initName=isSgInitializedName(initName0)) {
-		SgSymbol* initDeclVar=initName->search_for_symbol_from_symbol_table();
-		VariableId initDeclVarId=VariableId(initDeclVar);
-		SgName initDeclVarName=initDeclVar->get_name();
-		string initDeclVarNameString=initDeclVarName.getString();
-		//cout << "INIT-DECLARATION: var:"<<initDeclVarNameString<<"=";
-		SgInitializer* initializer=initName->get_initializer();
-		ConstraintSet cset=*currentEState.constraints();
-		if(SgAssignInitializer* assignInitializer=isSgAssignInitializer(initializer)) {
-		  //cout << "initalizer found:"<<endl;
-		  SgExpression* rhs=assignInitializer->get_operand_i();
-		  PState newPState=analyzeAssignRhs(*currentEState.pstate(),initDeclVarId,rhs,cset);
-		  return createEState(targetLabel,newPState,cset);
-		} else {
-		  //cout << "no initializer (OK)."<<endl;
-		  PState newPState=*currentEState.pstate();
-		  newPState[initDeclVarId]=AType::Top();
-		  return createEState(targetLabel,newPState,cset);
-		}
+}
+
+EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState currentEState, Label targetLabel) {
+  //cout << "INFO1: we are at "<<astTermWithNullValuesToString(nextNodeToAnalyze1)<<endl;
+  SgNode* initName0=decl->get_traversalSuccessorByIndex(1); // get-InitializedName
+  if(initName0) {
+	if(SgInitializedName* initName=isSgInitializedName(initName0)) {
+	  SgSymbol* initDeclVar=initName->search_for_symbol_from_symbol_table();
+	  VariableId initDeclVarId=VariableId(initDeclVar);
+	  SgName initDeclVarName=initDeclVar->get_name();
+	  string initDeclVarNameString=initDeclVarName.getString();
+	  //cout << "INIT-DECLARATION: var:"<<initDeclVarNameString<<"=";
+	  SgInitializer* initializer=initName->get_initializer();
+	  ConstraintSet cset=*currentEState.constraints();
+	  if(SgAssignInitializer* assignInitializer=isSgAssignInitializer(initializer)) {
+		//cout << "initalizer found:"<<endl;
+		SgExpression* rhs=assignInitializer->get_operand_i();
+		PState newPState=analyzeAssignRhs(*currentEState.pstate(),initDeclVarId,rhs,cset);
+		return createEState(targetLabel,newPState,cset);
 	  } else {
-		cerr << "Error: in declaration (@initializedName) no variable found ... bailing out."<<endl;
-		exit(1);
+		//cout << "no initializer (OK)."<<endl;
+		PState newPState=*currentEState.pstate();
+		newPState[initDeclVarId]=AType::Top();
+		return createEState(targetLabel,newPState,cset);
 	  }
 	} else {
-	  cerr << "Error: in declaration: no variable found ... bailing out."<<endl;
+	  cerr << "Error: in declaration (@initializedName) no variable found ... bailing out."<<endl;
 	  exit(1);
 	}
+  } else {
+	cerr << "Error: in declaration: no variable found ... bailing out."<<endl;
+	exit(1);
   }
-  
-  set<VariableId> Analyzer::determineVariableIdsOfVariableDeclarations(set<SgVariableDeclaration*> varDecls) {
-	set<VariableId> resultSet;
-	for(set<SgVariableDeclaration*>::iterator i=varDecls.begin();i!=varDecls.end();++i) {
-	  SgSymbol* sym=SgNodeHelper::getSymbolOfVariableDeclaration(*i);
-	  if(sym) {
-		resultSet.insert(VariableId(sym));
-	  }
+}
+
+set<VariableId> Analyzer::determineVariableIdsOfVariableDeclarations(set<SgVariableDeclaration*> varDecls) {
+  set<VariableId> resultSet;
+  for(set<SgVariableDeclaration*>::iterator i=varDecls.begin();i!=varDecls.end();++i) {
+	SgSymbol* sym=SgNodeHelper::getSymbolOfVariableDeclaration(*i);
+	if(sym) {
+	  resultSet.insert(VariableId(sym));
 	}
-	return resultSet;
   }
-  
-  set<VariableId> Analyzer::determineVariableIdsOfSgInitializedNames(SgInitializedNamePtrList& namePtrList) {
-	set<VariableId> resultSet;
-	for(SgInitializedNamePtrList::iterator i=namePtrList.begin();i!=namePtrList.end();++i) {
-	  SgSymbol* sym=SgNodeHelper::getSymbolOfInitializedName(*i);
-	  if(sym) {
-		resultSet.insert(VariableId(sym));
-	  }
+  return resultSet;
+}
+
+set<VariableId> Analyzer::determineVariableIdsOfSgInitializedNames(SgInitializedNamePtrList& namePtrList) {
+  set<VariableId> resultSet;
+  for(SgInitializedNamePtrList::iterator i=namePtrList.begin();i!=namePtrList.end();++i) {
+	SgSymbol* sym=SgNodeHelper::getSymbolOfInitializedName(*i);
+	if(sym) {
+	  resultSet.insert(VariableId(sym));
 	}
-	return resultSet;
   }
-  
-  bool Analyzer::isAssertExpr(SgNode* node) {
-	if(isSgExprStatement(node)) {
-	  node=SgNodeHelper::getExprStmtChild(node);
-	  if(isSgConditionalExp(node))
-		return true;
-	}
-	return false;
+  return resultSet;
+}
+
+bool Analyzer::isAssertExpr(SgNode* node) {
+  if(isSgExprStatement(node)) {
+	node=SgNodeHelper::getExprStmtChild(node);
+	if(isSgConditionalExp(node))
+	  return true;
   }
-  
-  bool Analyzer::isFailedAssertEState(const EState* estate) {
+  return false;
+}
+
+bool Analyzer::isFailedAssertEState(const EState* estate) {
   return estate->io.op==InputOutput::FAILED_ASSERT;
 }
 
 EState Analyzer::createFailedAssertEState(EState estate, Label target) {
-  	  EState newEState=estate;
-	  newEState.io.recordFailedAssert();
-	  newEState.setLabel(target);
-	  return newEState;
+  EState newEState=estate;
+  newEState.io.recordFailedAssert();
+  newEState.setLabel(target);
+  return newEState;
 }
 
 list<SgNode*> Analyzer::listOfAssertNodes(SgProject* root) {

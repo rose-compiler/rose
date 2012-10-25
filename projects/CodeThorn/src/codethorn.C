@@ -501,37 +501,6 @@ int main( int argc, char * argv[] ) {
 	}
   }
 
-  // print version information
-#ifdef PSTATE_MAINTAINER_LIST
-  cout << "INFO: using list implementation for PState."<<endl;
-#endif
-#ifdef ESTATE_MAINTAINER_LIST
-  cout << "INFO: using list implementation for EState."<<endl;
-#endif
-#ifdef CSET_MAINTAINER_LIST
-  cout << "INFO: using list implementation for ConstraintSet."<<endl;
-#endif
-
-#ifdef PSTATE_MAINTAINER_SET
-  cout << "INFO: using ordered-set implementation for PState."<<endl;
-#endif
-#ifdef ESTATE_MAINTAINER_SET
-  cout << "INFO: using ordered-set implementation for EState."<<endl;
-#endif
-#ifdef CSET_MAINTAINER_SET
-  cout << "INFO: using ordered-set implementation for ConstraintSet."<<endl;
-#endif
-
-#ifdef PSTATE_MAINTAINER_HSET
-  cout << "INFO: using hash-set implementation for PState."<<endl;
-#endif
-#ifdef ESTATE_MAINTAINER_HSET
-  cout << "INFO: using hash-set implementation for EState."<<endl;
-#endif
-#ifdef CSET_MAINTAINER_HSET
-  cout << "INFO: using hash-set implementation for ConstraintSet."<<endl;
-#endif
-
   // Build the AST used by ROSE
   cout << "INIT: Parsing and creating AST."<<endl;
   SgProject* sageProject = frontend(argc,argv);

@@ -241,10 +241,8 @@ void checkTypes() {
 	  cs2.addConstraint(c3);
 	  check("cs1!=cs2",cs1!=cs2);
 	  check("!(cs1==cs2)",!(cs1==cs2));
-#ifdef CSET_MAINTAINER_SET
 	  check("!(cs1<cs2)",!(cs1<cs2));
 	  check("cs1>cs2",(cs2<cs1));
-#endif
 	  EStateSet es;
 	  EState es1=EState(1,&s,&cs1);
 	  es.processNewOrExisting(es1);

@@ -7,10 +7,6 @@
  * License  : see file LICENSE in the CodeThorn distribution *
  *************************************************************/
 
-//#define CSET_MAINTAINER_LIST
-//#define CSET_MAINTAINER_SET
-//#define CSET_MAINTAINER_HSET
-
 #include <set>
 #include <map>
 #include <utility>
@@ -21,6 +17,7 @@
 #include "AType.h"
 #include "VariableIdMapping.h"
 #include "EqualityMaintainer.h"
+#include "HSetMaintainer.h"
 
 using namespace std;
 
@@ -32,7 +29,9 @@ typedef set<VariableId> SetOfVariableId;
 /*
   EQ_VAR_CONST : equal (==)
   NEQ_VAR_CONST: not equal (!=)
-  DEQ_VAR_CONST: disequal (both, EQ and NEQ)
+  EQ_VAR_VAR   : equal (==)
+  NEQ_VAR_VAR  : not equal (==) [not supported yet]
+  DEQ          : (##)
 */
 class Constraint {
  public:
@@ -156,22 +155,12 @@ bool operator<(const ConstraintSet& s1, const ConstraintSet& s2);
 //bool operator==(const ConstraintSet& s1, const ConstraintSet& s2);
 //bool operator!=(const ConstraintSet& s1, const ConstraintSet& s2);
 
-#ifdef CSET_MAINTAINER_LIST
-class ConstraintSetMaintainer : public list<ConstraintSet> {
-#endif
-#ifdef CSET_MAINTAINER_SET
-class ConstraintSetMaintainer : public set<ConstraintSet> {
-#endif
-
-#ifdef CSET_MAINTAINER_HSET
-#include "HSetMaintainer.h"
-	class ConstraintSetMaintainer : public CodeThorn::HSetMaintainer<ConstraintSet, ConstraintSetHashFun> {
+ class ConstraintSetMaintainer : public HSetMaintainer<ConstraintSet, ConstraintSetHashFun> {
  public:
-	  typedef CodeThorn::HSetMaintainer<ConstraintSet, ConstraintSetHashFun>::ProcessingResult ProcessingResult;
-	  string toString();
-};
-#endif
-
+  typedef HSetMaintainer<ConstraintSet, ConstraintSetHashFun>::ProcessingResult ProcessingResult;
+  string toString();
+ };
+ 
 } // end of namespace CodeThorn
 
 #endif

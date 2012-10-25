@@ -26,7 +26,8 @@ ROSE_LIBS = -Wl,-rpath -Wl,$(ROSE_LIB_DIR) -L $(ROSE_LIB_DIR) -lrose
 
 #KNOBS = -DPSTATE_MAINTAINER_LIST -DESTATE_MAINTAINER_LIST -DCSET_MAINTAINER_LIST
 #KNOBS = -DPSTATE_MAINTAINER_SET -DESTATE_MAINTAINER_SET -DCSET_MAINTAINER_SET
-KNOBS = -DPSTATE_MAINTAINER_HSET -DESTATE_MAINTAINER_HSET -DCSET_MAINTAINER_HSET
+#KNOBS = -DPSTATE_MAINTAINER_HSET -DESTATE_MAINTAINER_HSET -DCSET_MAINTAINER_HSET
+KNOBS = 
 
 CPPFLAGS              = $(KNOBS) -O3 -march=native -ftree-vectorize -ggdb $(EXTRA_INCLUDES) -fopenmp
 #CXXCPPFLAGS           = @CXXCPPFLAGS@
@@ -97,7 +98,7 @@ check: $(TOOLNAME3)
 	@echo ================================================================
 	./$(TOOLNAME3) --edg:no_warnings tests/rers_mini1.c    --verify tests/rers_mini1.ltl
 
-checkdemos:
+checkdemos: matcher_demo ast_demo
 	./matcher_demo tests/basictest5.C < tests/matchexpressions/test1.mat
 	./ast_demo tests/basictest5.C
 
