@@ -3,4 +3,4 @@
 
 # The line ending in this file is part of the test!
 rers_mini1_ltl_csv.txt: disable UnixLineTermination
-rers_mini1_assert.txt: disable UnixLineTermination
+rers_mini1_assert_csv.txt: disable UnixLineTermination

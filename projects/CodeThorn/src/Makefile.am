@@ -56,7 +56,6 @@ codethorn_SOURCES = \
   SetAlgo.h                        \
   SgNodeHelper.C                   \
   SgNodeHelper.h                   \
-  ShowSeq.h                        \
   StateRepresentations.C           \
   StateRepresentations.h           \
   Timer.cpp                        \
@@ -84,11 +83,10 @@ REGRESSION_DATA_DIR=regressiondata
 .PHONY: codethorn-dist viz bsps docs test checkdemos
 
 #MS: not finished yet. Flip comments for the next couple of lines to test it
-#EXTRA_DIST += matcher_demo.C matcherlexer.lxx matcherparser.yxx matcherparser_decls.h MatchOperation.C MatchOperation.h AstMatching.C AstMatching.h iterator_test.C
 matcher_demo_LDADD = -lrose libmatcher.la
 matcher_demo_SOURCES = matcher_demo.C Timer.cpp RoseAst.C AstTerm.C
 
-iterator_test_SOURCES = iterator_test.C 
+iterator_test_SOURCES = iterator_test.C ShowSeq.h
 iterator_test_LDADD = -lrose libmatcher.la
 
 check-local:
@@ -204,7 +202,7 @@ generateregressiondata:
 	sort -u transitiongraph1.dat > tmp_transitiongraph1.dat
 	cp tmp_transitiongraph1.dat $(REGRESSION_DATA_DIR)/rers_mini1_transitiongraph1.dat
 
-COUNTEREXAMPLES = ltl2haskell.sh Makefile qc.hs log2csv.awk
+COUNTEREXAMPLES = counterexamples/ltl2haskell.sh counterexamples/Makefile counterexamples/qc.hs counterexamples/log2csv.awk
 
 TESTS= \
     tests/asserttest1.c \
