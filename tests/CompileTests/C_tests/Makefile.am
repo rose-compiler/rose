@@ -167,6 +167,19 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2012_75.c \
      test2012_76.c \
      test2012_77.c \
+     test2012_81.c \
+     test2012_82.c \
+     test2012_83.c \
+     test2012_84.c \
+     test2012_85.c \
+     test2012_86.c \
+     test2012_87.c \
+     test2012_88.c \
+     test2012_89.c \
+     test2012_90.c \
+     test2012_91.c \
+     test2012_92.c \
+     test2012_93.c \
      math.c \
      complex_01.c \
      constants.c
@@ -179,6 +192,9 @@ TESTCODES_REQUIRED_TO_PASS = \
 # test2012_44.c 
 # test2012_45.c 
 # test2012_59.c (C-style comment in quoted string (inside of #if-def comment, so should be ignored) 
+# test2012_78.c (variable with initializer using #include file to provide value (classic source-to-source issue))
+# test2012_79.c (test code demonstrating an outstanding error (generated before focusing on switch support))
+# test2012_80.c (same as test2012_79.c)
 
 # This is a C99 test code (moved to the C99_tests directory).
 # test2012_20.c 
