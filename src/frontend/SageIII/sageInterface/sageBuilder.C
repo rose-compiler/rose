@@ -247,16 +247,25 @@ void SageBuilder::pushScopeStack (SgNode* node)
   // DQ (9/26/2012): Added assertion.
      ROSE_ASSERT(stmt != NULL);
 
+#if 0
+     printf ("Inside of SageBuilder::pushScopeStack(scope = %p = %s) \n",stmt,stmt->class_name().c_str());
+#endif
+
      pushScopeStack(stmt);
    }
 
 
 void SageBuilder::popScopeStack()
-{
-// we want to warning users  double freeing happens
-//  if (!ScopeStack.empty())
-  ScopeStack.pop_back();
-}
+   {
+  // we want to warning users  double freeing happens
+  // if (!ScopeStack.empty())
+
+#if 0
+     printf ("Inside of SageBuilder::popScopeStack() \n");
+#endif
+
+     ScopeStack.pop_back();
+   }
 
 SgScopeStatement* SageBuilder::topScopeStack()
    {

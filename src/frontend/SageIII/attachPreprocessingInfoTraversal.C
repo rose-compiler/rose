@@ -1437,6 +1437,25 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                             break;
                           }
 
+                 // DQ (10/25/2012): Added new case.  I expect this might be important for test2012_78.c
+                    case V_SgInitializedName:
+                          {
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+                            printf ("In AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(): Added new support for preprocessing info to be added after the SgInitializedName. \n");
+#endif
+                            ROSE_ASSERT(locatedNode->get_endOfConstruct() != NULL);
+
+                            SgInitializedName *initializedName = isSgInitializedName(n);
+                            ROSE_ASSERT(initializedName != NULL);
+
+                            bool reset_start_index = false;
+                            iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber
+                              ( previousLocNodePtr, lineOfClosingBrace, PreprocessingInfo::after, reset_start_index, currentListOfAttributes );
+
+                            previousLocatedNodeMap[currentFileNameId] = initializedName;
+                            break;
+                          }
+
                     case V_SgClassDefinition:
                           {
                             ROSE_ASSERT (locatedNode->get_endOfConstruct() != NULL);
