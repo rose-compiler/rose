@@ -9,12 +9,7 @@
 #include "rose.h"
 #include "AstMatching.h"
 #include "AstTerm.h"
-
-#include "RoseAst.C"
-#include "AstTerm.C"
-
-// simple measurements only
-#include "Timer.cpp"
+#include "Timer.h"
 
 using namespace std;
 

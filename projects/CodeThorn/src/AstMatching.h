@@ -15,6 +15,9 @@
 #include <set>
 
 class SgNode;
+
+namespace CodeThorn {
+
 class MatchOperation;
 
 class AstMatching {
@@ -38,5 +41,7 @@ class AstMatching {
   MatchOperationList* _matchOperationsSequence;
   MatchStatus _status;
 };
+
+} // namespace CodeThorn
 
 #endif

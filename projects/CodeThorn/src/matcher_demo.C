@@ -7,10 +7,12 @@
 #include <iostream>
 #include <fstream>
 #include "rose.h"
-#include "AstMatching.h"
 #include "AstTerm.h"
+#include "AstMatching.h"
 
 #include "Timer.h"
+
+using namespace CodeThorn;
 
 class TestTraversal : public AstSimpleProcessing {
 public:

@@ -21,7 +21,6 @@ typedef RoseAst::iterator SingleMatchMarkedLocation;
 typedef std::list<SingleMatchMarkedLocation> SingleMatchMarkedLocations;
 typedef std::list<SingleMatchVarBindings> MatchResult;
 
-
 class MatchOpSequence;
 
 struct SingleMatchResult {
@@ -175,7 +174,8 @@ class MatchOpDotDot : public MatchOperation {
 typedef MatchOpSequence MatchOperationList; // TODO: eliminate type alias
 typedef std::list<MatchOperationList*> MatchOperationListList;
 
-#include "matcherparser.h" // we are using yytokentype
+#include "matcherparser.h" // we are using yytokentype in MatchOpBinaryOp
+
 
 class MatchOpBinaryOp : public MatchOperation {
  public:

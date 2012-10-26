@@ -6,6 +6,8 @@
 
 #include "AstMatching.h"
 
+using namespace CodeThorn;
+
 AstMatching::AstMatching():_matchExpression(""),_root(0) { 
   //_allMatchVarBindings=new std::list<SingleMatchVarBindings>; 
 }

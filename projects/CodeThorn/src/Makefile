@@ -68,6 +68,8 @@ matcherlexer.o: matcherlexer.lxx matcherparser.h
 	$(FLEX) -Pmatcher -omatcherlexer.C matcherlexer.lxx
 	$(CXX) -o $@ $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) -I. matcherlexer.C -c
 
+MatchOperation.o : matcherparser_decls.h MatchOperation.h MatchOperation.C matcherparser.h
+
 AstMatching.o : matcherparser_decls.h MatchOperation.h RoseAst.h AstMatching.h AstMatching.C
 
 Analyzer.o : CollectionOperators.h Analyzer.h AstTerm.h Labeler.h CFAnalyzer.h RoseAst.h SgNodeHelper.h ExprAnalyzer.h StateRepresentations.h Analyzer.C
@@ -81,8 +83,8 @@ LTLChecker.o: LTLChecker.C LTLChecker.h LTL.h
 $(TOOLNAME3): $(TOOLNAME3).C  $(TOOLNAME3).h $(OBJECT_FILES) $(TOOLNAME3).o
 	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES) $(TOOLNAME3).o -lfl -o$(TOOLNAME3)
 
-$(TOOLNAME2): $(TOOLNAME2).C RoseAst.h RoseAst.C AstTerm.h AstTerm.C SgNodeHelper.h SgNodeHelper.C $(TOOLNAME2).C
-	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) -L$(ROSE_LIB_DIR) -lrose $(TOOLNAME2).C -o$(TOOLNAME2) 
+$(TOOLNAME2): $(TOOLNAME2).C $(OBJECT_FILES)
+	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES) $(TOOLNAME2).C -o$(TOOLNAME2)
 
 xxtest: xxtest.C $(OBJECT_FILES)
 	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES) xxtest.C -oxxtest
@@ -101,6 +103,13 @@ check: $(TOOLNAME3)
 checkdemos: matcher_demo ast_demo
 	./matcher_demo tests/basictest5.C < tests/matchexpressions/test1.mat
 	./ast_demo tests/basictest5.C
+
+checkall: check regressiontest checkdemos
+	@echo
+	@echo "=================="
+	@echo "All checks passed."
+	@echo "=================="
+	@echo
 
 test: $(TOOLNAME3)
 	./$(TOOLNAME3) --edg:no_warnings tests/rers/Problem1.c \
