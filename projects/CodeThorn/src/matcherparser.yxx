@@ -81,32 +81,32 @@ where_clause: WHERE where_expression
 
 where_expression:
 		where_expression_operand C_EQ where_expression_operand
-		{ $$=new MatchOpBinaryOp(C_EQ,$1,$3); }
+		{ $$=new MatchOpBinaryOp((enum yytokentype)C_EQ,$1,$3); }
 		| where_expression_operand C_NEQ where_expression_operand 
-		{ $$=new MatchOpBinaryOp(C_NEQ,$1,$3); }
+		{ $$=new MatchOpBinaryOp((enum yytokentype)C_NEQ,$1,$3); }
 		| where_expression_operand EQ where_expression_operand
-		{ $$=new MatchOpBinaryOp(EQ,$1,$3); }
+		{ $$=new MatchOpBinaryOp((enum yytokentype)EQ,$1,$3); }
 		| where_expression_operand NEQ where_expression_operand
-		{ $$=new MatchOpBinaryOp(NEQ,$1,$3); }
+		{ $$=new MatchOpBinaryOp((enum yytokentype)NEQ,$1,$3); }
 		| where_expression_operand AND where_expression_operand
-		{ $$=new MatchOpBinaryOp(AND,$1,$3); }
+		{ $$=new MatchOpBinaryOp((enum yytokentype)AND,$1,$3); }
 		| where_expression_operand OR where_expression_operand
-		{ $$=new MatchOpBinaryOp(OR,$1,$3); }
+		{ $$=new MatchOpBinaryOp((enum yytokentype)OR,$1,$3); }
 		| where_expression_operand XOR where_expression_operand
-		{ $$=new MatchOpBinaryOp(XOR,$1,$3); }
+		{ $$=new MatchOpBinaryOp((enum yytokentype)XOR,$1,$3); }
 		| NOT where_expression_operand
-		{ $$=new MatchOpUnaryOp(NOT,$2); }
+		{ $$=new MatchOpUnaryOp((enum yytokentype)NOT,$2); }
 		| '(' where_expression ')'
 		{ $$=$2; }
 		| TRUE
-		{ $$=new MatchOpConstant(TRUE); }
+		{ $$=new MatchOpConstant((enum yytokentype)TRUE); }
 		| FALSE
-		{ $$=new MatchOpConstant(FALSE); }
+		{ $$=new MatchOpConstant((enum yytokentype)FALSE); }
 		;
 
 where_expression_operand:
 		NULL_NODE
-		{ $$=new MatchOpConstant(NULL_NODE); }
+		{ $$=new MatchOpConstant((enum yytokentype)NULL_NODE); }
 		| VARIABLE
 		{ $$=new MatchOpAccessVariable($1); }
 		| VARIABLE '.' IDENT

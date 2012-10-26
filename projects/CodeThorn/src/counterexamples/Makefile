@@ -47,7 +47,7 @@ clean:
 	F=$(patsubst ../tests/rers/%.c,%,$<) && \
 	cat $< | sed 's/error_\([0-9]\+\): assert(0);/FILE* f=fopen("'$$F'-assert.csv","aw");fprintf(f,"%d,yes,9\\n",\1);fclose(f); error_\1: assert(0);/g' >>$(patsubst ../tests/rers/%.c,_tmp%.c,$<)
 	gcc -O3 $(patsubst ../tests/rers/%.c,_tmp%.c,$<) -o $@
-	rm $(patsubst ../tests/rers/%.c,_tmp%.c,$<)
+	#rm $(patsubst ../tests/rers/%.c,_tmp%.c,$<)
 	sh ltl2haskell.sh \
             $(patsubst ../tests/rers/Problem%.c,../tests/rers/properties%.txt,$<) \
           > $(patsubst %.exe,%.hs,$@)

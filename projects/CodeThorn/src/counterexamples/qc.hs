@@ -61,7 +61,7 @@ instance Arbitrary RersData where
             --vals <- vectorOf n (choose ('A','G'))
             --vals <- vectorOf size (frequency frequencies)
             --return (RersData vals)
-            vals <- grow (size) []
+            vals <- grow (4) []
             return $ RersData $ reverse $ vals
 
           grow 0 xs = do return xs
@@ -69,7 +69,9 @@ instance Arbitrary RersData where
             -- unsafePerformIO $ printf "grow %d %s\n" size (show xs)
             x <- frequency frequencies
             let r = unsafePerformIO $ actualOutput $ RersData (reverse (x:xs)) in
-              if r == [] then grow (size-1) (take ((length xs) `div` 4) xs)
+              if r == [] then
+                if length xs > 3 then do return xs
+                  else grow (size-1) (xs)
                 else grow (size-1) (x:xs)
           --maxlength = 8
   
@@ -229,7 +231,7 @@ printResult (f, n) = do
   printf "===================================================\n"
   printf "checking %s\n[ " (show f)
   sample (arbitrary::(Gen RersData))
-  result <- quickCheckWithResult stdArgs { maxSuccess = 5, maxDiscard = 5 } (prop_holds f)
+  result <- quickCheckWithResult stdArgs { maxSuccess = 10, maxDiscard = 10 } (prop_holds f)
   printf " ]\n"
   case result of
     Failure _ _ _ _ -> printf "%d FALSE, found counterexample\n" n
