@@ -180,6 +180,12 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2012_91.c \
      test2012_92.c \
      test2012_93.c \
+     test2012_94.c \
+     test2012_95.c \
+     test2012_96.c \
+     test2012_97.c \
+     test2012_98.c \
+     test2012_99.c \
      math.c \
      complex_01.c \
      constants.c
@@ -201,6 +207,7 @@ TESTCODES_REQUIRED_TO_PASS = \
 # test2012_23.c
 # test2012_25.c
 # test2012_58.c 
+# test2012_100.c 
 
 
 if ROSE_USE_CLANG_FRONTEND
