@@ -155,7 +155,7 @@ string Visualizer::transitionGraphToDot() {
   for(TransitionGraph::iterator j=transitionGraph->begin();j!=transitionGraph->end();++j) {
 	ss <<"\""<<estateToString((*j).source)<<"\""<< "->" <<"\""<<estateToString((*j).target)<<"\"";
     ss <<" [label=\""<<SgNodeHelper::nodeToString(labeler->getNode((*j).edge.source));
-	ss <<"["<<(*j).edge.typeToString()<<"]";
+	ss <<"["<<(*j).edge.typesToString()<<"]";
 	ss <<"\"]"<<";"<<endl;
   }
   tg1=false;
@@ -178,9 +178,12 @@ string Visualizer::foldedTransitionGraphToDot() {
 	ss <<"L"<<Labeler::labelToString(source->label())<<":"<<"\"P"<<estateSet->estateId(source)<<"\""
 	   <<"->"
 	   <<"L"<<Labeler::labelToString(target->label())<<":"<<"\"P"<<estateSet->estateId(target)<<"\"";
-	if((*j).edge.type==EDGE_TRUE) ss<<"[color=green]";
-	if((*j).edge.type==EDGE_FALSE) ss<<"[color=red]";
-	if((*j).edge.type==EDGE_BACKWARD) ss<<"[color=blue]";
+	if((*j).edge.isType(EDGE_BACKWARD)) 
+	  ss<<"[color=blue]";
+	else {
+	  if((*j).edge.isType(EDGE_TRUE)) ss<<"[color=green]";
+	  if((*j).edge.isType(EDGE_FALSE)) ss<<"[color=red]";
+	}
 	ss << ";"<<endl;
     //ss <<" [label=\""<<SgNodeHelper::nodeToString(getLabeler()->getNode((*j).edge.source))<<"\"]"<<";"<<endl;
   }

@@ -436,7 +436,7 @@ list<EState> elistify(EState res) {
 list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
   assert(edge.source==estate->label());
   // we do not pass information on the local edge
-  if(edge.type==EDGE_LOCAL) {
+  if(edge.isType(EDGE_LOCAL)) {
 	EState noEState;
 	noEState.setLabel(NO_ESTATE);
 	// TODO: investigate: we could also return an empty list here
@@ -454,7 +454,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
 	return elistify(createFailedAssertEState(currentEState,edge.target));
   }
 
-  if(edge.type==EDGE_CALL) {
+  if(edge.isType(EDGE_CALL)) {
 	// 1) obtain actual parameters from source
 	// 2) obtain formal parameters from target
 	// 3) eval each actual parameter and assign result to formal parameter in state
@@ -587,7 +587,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
 	  return elistify(createEState(edge.target,newPState,cset));
 	}
   }
-  if(edge.type==EDGE_EXTERNAL) {
+  if(edge.isType(EDGE_EXTERNAL)) {
 	if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze1) ) {
 	   string fName=SgNodeHelper::getFunctionName(funCall);
 	   SgExpressionPtrList& actualParams=SgNodeHelper::getFunctionCallActualParameterList(funCall);
@@ -696,8 +696,8 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
   }
   // special case external call
   if(SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze1) 
-	 ||edge.type==EDGE_EXTERNAL
-	 ||edge.type==EDGE_CALLRETURN) {
+	 ||edge.isType(EDGE_EXTERNAL)
+	 ||edge.isType(EDGE_CALLRETURN)) {
 	EState newEState=currentEState;
 	newEState.setLabel(edge.target);
 	return elistify(newEState);
@@ -714,7 +714,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
 	Label newLabel;
 	PState newPState;
 	ConstraintSet newCSet;
-	if(edge.type==EDGE_TRUE || edge.type==EDGE_FALSE) {
+	if(edge.isType(EDGE_TRUE) || edge.isType(EDGE_FALSE)) {
 	  list<SingleEvalResultConstInt> evalResultList=exprAnalyzer.evalConstInt(nextNodeToAnalyze2,currentEState,true,true);
 	  //assert(evalResultList.size()==1);
 	  list<EState> newEStateList;
@@ -722,14 +722,14 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
 		  i!=evalResultList.end();
 		  ++i) {
 		SingleEvalResultConstInt evalResult=*i;
-		if((evalResult.isTrue() && edge.type==EDGE_TRUE) || (evalResult.isFalse() && edge.type==EDGE_FALSE) || evalResult.isTop()) {
+		if((evalResult.isTrue() && edge.isType(EDGE_TRUE)) || (evalResult.isFalse() && edge.isType(EDGE_FALSE)) || evalResult.isTop()) {
 		  // pass on EState
 		  newLabel=edge.target;
 		  newPState=*evalResult.estate.pstate();
 		  // merge with collected constraints of expr (exprConstraints), and invert for false branch
-		  if(edge.type==EDGE_TRUE) {
+		  if(edge.isType(EDGE_TRUE)) {
 			newCSet=*evalResult.estate.constraints()+evalResult.exprConstraints;
-		  } else if(edge.type==EDGE_FALSE) {
+		  } else if(edge.isType(EDGE_FALSE)) {
 			ConstraintSet s1=*evalResult.estate.constraints();
 			ConstraintSet s2=evalResult.exprConstraints;
 			newCSet=s1+s2;

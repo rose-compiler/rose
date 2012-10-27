@@ -19,13 +19,23 @@ class Edge {
  public:
   Edge();
   Edge(Label source0,EdgeType type0,Label target0);
+  Edge(Label source0,set<EdgeType> type0,Label target0);
   string toString() const;
   string toStringNoType() const;
-  string toDot();
-  string typeToString() const;
+  string toDot() const;
+  //string typeToString() const;
+  string typesToString() const;
+  static string typeToString(EdgeType et);
   Label source;
-  EdgeType type;
+  //EdgeType type;
   Label target;
+  bool isType(EdgeType et) const;
+  void addType(EdgeType et);
+  void removeType(EdgeType et);
+  set<EdgeType> types() const;
+  long hash() const;
+ private:
+  set<EdgeType> _types;
 };
 
 bool operator==(const Edge& e1, const Edge& e2);

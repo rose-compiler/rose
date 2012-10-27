@@ -10,14 +10,55 @@
 
 using namespace CodeThorn;
 
-Edge::Edge():source(0),type(EDGE_UNKNOWN),target(0){
+Edge::Edge():source(0),target(0){
 }
-Edge::Edge(Label source0,EdgeType type0,Label target0):source(source0),type(type0),target(target0){
+Edge::Edge(Label source0,EdgeType et,Label target0):source(source0),target(target0){
+  _types.insert(et);
+}
+Edge::Edge(Label source0,set<EdgeType> tset,Label target0):source(source0),target(target0){
+  _types=tset;
+}
+
+bool Edge::isType(EdgeType et) const {
+  if(et==EDGE_UNKNOWN) {
+	return _types.size()==0;
+  } else {
+	return _types.find(et)!=_types.end();
+  }
+}
+
+set<EdgeType> Edge::types() const {
+  set<EdgeType> tmp_types;
+  if(_types.size()==0) {
+	tmp_types.insert(EDGE_UNKNOWN);
+	return tmp_types;
+  } else {
+	return _types;
+  }
+}
+
+// one-to-one hash, provided bitsof(long)>=max_enum(_types)
+long Edge::hash() const {
+  long h=0;
+  for(set<EdgeType>::iterator i=_types.begin();i!=_types.end();++i) {
+	h+=(1<<*i);
+  }
+}
+
+void Edge::addType(EdgeType et) {
+  _types.insert(et);;
+}
+
+void Edge::removeType(EdgeType et) {
+  set<EdgeType>::const_iterator iter =_types.find(et);
+  if(iter!=_types.end()) {
+	_types.erase(iter);
+  }
 }
 
 string Edge::toString() const {
   stringstream ss;
-  ss << "Edge"<<"("<<source<<","<<typeToString()<<","<<target<<")";
+  ss << "Edge"<<"("<<source<<","<<typesToString()<<","<<target<<")";
   return ss.str();
 }
 string Edge::toStringNoType() const {
@@ -26,8 +67,31 @@ string Edge::toStringNoType() const {
   return ss.str();
 }
 
+string Edge::typesToString() const {
+  stringstream ss;
+  ss<<"{";
+  if(_types.size()==0) {
+	ss<<typeToString(EDGE_UNKNOWN);
+  } else {
+	set<EdgeType>::iterator i=_types.begin();
+	ss<<typeToString(*i);
+	++i;
+	while(i!=_types.end()) {
+	  ss<< ", "<<typeToString(*i);
+	}
+  }
+  ss<<"}";
+  return ss.str();
+}
+
+#if 0
 string Edge::typeToString() const {
-  switch(type) {
+  typeToString(type);
+}
+#endif
+
+string Edge::typeToString(EdgeType et) {
+  switch(et) {
   case EDGE_UNKNOWN: return "unknown";
   case EDGE_FORWARD: return "forward"; // forward edges are obvious.
   case EDGE_BACKWARD: return "backward";
@@ -44,10 +108,10 @@ string Edge::typeToString() const {
   return ""; // dead code. just to provide some return value to avoid false positive compiler warnings
 }
 
-string Edge::toDot() {
+string Edge::toDot() const {
   stringstream ss;
   ss<<source<<"->"<<target;
-  ss<<" [label=\""<<typeToString()<<"\""<<"]";
+  ss<<" [label=\""<<typesToString()<<"\""<<"]";
   return ss.str();
 }
 
@@ -287,7 +351,7 @@ LabelSet CFAnalyzer::finalLabels(SgNode* node) {
 }
 
 bool CodeThorn::operator==(const Edge& e1, const Edge& e2) {
-  return e1.source==e2.source && e1.type==e2.type && e1.target==e2.target;
+  return e1.source==e2.source && e1.types()==e2.types() && e1.target==e2.target;
 }
 bool CodeThorn::operator!=(const Edge& e1, const Edge& e2) {
   return !(e1==e2);
@@ -480,7 +544,7 @@ int CFAnalyzer::reduceBlockBeginNodes(Flow& flow) {
 	  // insert(n1,n2)
 	  Edge e1=*inFlow.begin();
 	  Edge e2=*outFlow.begin();
-	  Edge newEdge=Edge(e1.source,e1.type,e2.target);
+	  Edge newEdge=Edge(e1.source,e1.types(),e2.target);
 	  flow.erase(e1);
 	  flow.erase(e2);
 	  flow.insert(newEdge);

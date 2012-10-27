@@ -182,7 +182,7 @@ class TransitionHashFun {
     TransitionHashFun(long prime=99991) : tabSize(prime) {}
     long operator()(Transition s) const {
 	  unsigned int hash=1;
-	  hash=((((long)s.source)+1)<<8)+(long)s.target*(long)s.edge.type;
+	  hash=((((long)s.source)+1)<<8)+(long)s.target*(long)s.edge.hash();
 	  return long(hash) % tabSize;
 	}
 	  long tableSize() const { return tabSize;}
