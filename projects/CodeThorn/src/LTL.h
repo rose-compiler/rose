@@ -3,6 +3,9 @@
 #define __LTL_H__
 
 #include <boost/shared_ptr.hpp>
+#include <string>
+#include <iostream>
+#include <sstream>
 
 extern FILE* ltl_input;
 extern int ltl_parse();

@@ -1,0 +1,6 @@
+# Control file for ROSE policy checking.  See scripts/policies/Policies.pm for syntax.
+
+
+# The line ending in this file is part of the test!
+rers_mini1_ltl_csv.txt: disable UnixLineTermination
+rers_mini1_assert_csv.txt: disable UnixLineTermination

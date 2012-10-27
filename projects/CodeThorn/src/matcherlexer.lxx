@@ -20,7 +20,8 @@
 %option 8bit
 %option noreject
 %option never-interactive
-
+/* make ylwrap happy */
+%option outfile="lex.yy.c"
 
 digit                   [0-9]
 letter                  [a-zA-Z_]
