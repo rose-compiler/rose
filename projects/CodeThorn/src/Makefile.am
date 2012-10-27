@@ -42,8 +42,10 @@ codethorn_SOURCES = \
   InternalChecks.C                 \
   InternalChecks.h                 \
   LTL.h                            \
-  LTLChecker.C                     \
-  LTLChecker.h                     \
+  LTLCheckerFixpoint.C             \
+  LTLCheckerFixpoint.h             \
+  LTLCheckerUnified.C              \
+  LTLCheckerUnified.h              \
   LTLParser.y++                    \
   Labeler.C                        \
   Labeler.h                        \

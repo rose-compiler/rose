@@ -12,8 +12,8 @@
 #include "Analyzer.h"
 #include "LanguageRestrictor.h"
 #include "Timer.h"
-//#include "LTL.h"
-#include "LTLChecker.h"
+#include "LTLCheckerFixpoint.h"
+#include "LTLCheckerUnified.h"
 #include <cstdio>
 #include <cstring>
 #include <boost/program_options.hpp>
@@ -186,8 +186,8 @@ void generateLTLOutput(Analyzer& analyzer, string ltl_file) {
   int n_failed = 0;
 
   if (ltl_file.size()) {
-	CodeThorn::LTL::Checker checker(*analyzer.getEStateSet(),
-			 *analyzer.getTransitionGraph());
+	CodeThorn::FixpointLTL::Checker checker(*analyzer.getEStateSet(),
+						*analyzer.getTransitionGraph());
     ltl_input = fopen(ltl_file.c_str(), "r");
 
     ofstream* csv = NULL;

@@ -1,6 +1,6 @@
 // -*- C++ -*-
-#ifndef __LTLCHECKER_H__
-#define __LTLCHECKER_H__
+#ifndef __LTLCHECKERFIXPOINT_H__
+#define __LTLCHECKERFIXPOINT_H__
 
 // Copyright (c) 2012 Lawrence Livermore National Security, LLC.
 // Produced at the Lawrence Livermore National Laboratory
@@ -18,11 +18,10 @@
 #include <boost/graph/graph_traits.hpp>
 #include <boost/graph/adjacency_list.hpp>
 #include "LTL.h"
-//using LTL::Formula;
 
 namespace CodeThorn {
 
-namespace LTL {
+namespace FixpointLTL {
   using namespace boost;
   using namespace std;
   using namespace AType;
@@ -31,7 +30,6 @@ namespace LTL {
   typedef adjacency_list<vecS, vecS, bidirectionalS, const EState*> BoostTransitionGraph;
   typedef adjacency_list<listS, listS, bidirectionalS, const EState*> MutableBoostTransitionGraph;
   typedef graph_traits<BoostTransitionGraph> GraphTraits;
-
 
   /**
    * A dataflow-based checker for LTL formulae.
@@ -50,7 +48,7 @@ namespace LTL {
     Label start;
     BoostTransitionGraph g;
     TransitionGraph& transitionGraph;
-    EStateSet& estateSet;
+    EStateSet& eStateSet;
     /// the final states in the transition graph
     deque<Label> endpoints;
   };
