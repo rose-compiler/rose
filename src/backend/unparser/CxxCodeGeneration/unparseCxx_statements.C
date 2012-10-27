@@ -5267,7 +5267,24 @@ Unparse_ExprStmt::unparseAsmStmt(SgStatement* stmt, SgUnparse_Info& info)
 
           printf ("Warning: Sorry, C language ASM statement skipped (parsed and built in AST, but not output by the code generation phase (unparser)) \n");
 
-          curprint ( "/* C language ASM statement skipped (in code generation phase) */ ");
+       // DQ (10/25/2012): This needs to be made a bit more sophisticated (tailored to the type of associated scope in the source code).
+       // DQ (10/23/2012): If we skip the ASM statment then include an expression statement to take it's place.
+       // curprint ( "/* C language ASM statement skipped (in code generation phase) */ ");
+       // curprint ( "/* C language ASM statement skipped (in code generation phase) */ \"compiled using -rose:skip_unparse_asm_commands\"; ");
+          SgScopeStatement* associatedScope = stmt->get_scope();
+          ROSE_ASSERT(associatedScope != NULL);
+
+          if (associatedScope->containsOnlyDeclarations() == true)
+             {
+            // Output a simple string.
+               curprint ( "/* C language ASM statement skipped (in code generation phase) */ ");
+             }
+            else
+             {
+            // We might need a expression statement to properly close off another statement (e.g. a "if" statement).
+               curprint ( "/* C language ASM statement skipped (in code generation phase) */ \"compiled using -rose:skip_unparse_asm_commands\"; ");
+             }
+
           return;
         }
 
