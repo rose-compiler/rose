@@ -940,7 +940,9 @@ Unparse_ExprStmt::unparseAsmOp (SgExpression* expr, SgUnparse_Info& info)
        else
         {
        // The modifier is part of the constraint, and it is output in the constraintString when recordRawAsmOperandDescriptions() == true.
+#if 0
           printf ("asmOp->get_constraintString() = %s \n",asmOp->get_constraintString().c_str());
+#endif
           curprint ( asmOp->get_constraintString() );
         }
 
