@@ -626,7 +626,7 @@ int main( int argc, char * argv[] ) {
 
   if(boolOptions["viz"]) {
     Visualizer visualizer(analyzer.getLabeler(),analyzer.getFlow(),analyzer.getPStateSet(),analyzer.getEStateSet(),analyzer.getTransitionGraph());
-	cout << "generating transitiongraph1.dot ..."<<endl;
+	cout << "generating graphviz files:"<<endl;
     string dotFile="digraph G {\n";
     dotFile+=visualizer.transitionGraphToDot();
     dotFile+="}\n";

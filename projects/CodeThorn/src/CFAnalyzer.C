@@ -49,7 +49,22 @@ long Edge::hash() const {
 }
 
 void Edge::addType(EdgeType et) {
-  _types.insert(et);;
+  // perform some consistency checks
+  bool ok=true;
+  switch(et) {
+  case EDGE_FORWARD: if(isType(EDGE_BACKWARD)) ok=false;break;
+  case EDGE_BACKWARD: if(isType(EDGE_FORWARD)) ok=false;break;
+  case EDGE_TRUE: if(isType(EDGE_FALSE)) ok=false;break;
+  case EDGE_FALSE: if(isType(EDGE_TRUE)) ok=false;break;
+  default:
+	;// anything else is ok
+  }
+  if(ok)
+	_types.insert(et);
+  else {
+	cerr << "Error: inconsistent icfg-edge annotation:" << toString() <<endl;
+	exit(1);
+  }
 }
 
 void Edge::removeType(EdgeType et) {
@@ -588,6 +603,38 @@ void CFAnalyzer::intraInterFlow(Flow& flow, InterFlow& interFlow) {
   }
 }
 
+Flow CFAnalyzer::WhileAndDoWhileLoopFlow(SgNode* node, 
+										 Flow edgeSet,
+										 EdgeType edgeTypeParam1,
+										 EdgeType edgeTypeParam2) {
+  if(!(isSgWhileStmt(node) || isSgDoWhileStmt(node))) {
+	throw "Error: WhileAndDoWhileLoopFlow: unsupported loop construct.";
+  }
+  SgNode* condNode=SgNodeHelper::getCond(node);
+  Label condLabel=getLabel(condNode);
+  SgNode* bodyNode=SgNodeHelper::getLoopBody(node);
+  assert(bodyNode);
+  Edge edge=Edge(condLabel,EDGE_TRUE,initialLabel(bodyNode));
+  edge.addType(edgeTypeParam1);
+  Flow flowB=flow(bodyNode);
+  LabelSet finalSetB=finalLabels(bodyNode);
+  edgeSet+=flowB;
+  edgeSet.insert(edge);
+  // back edges
+  for(LabelSet::iterator i=finalSetB.begin();i!=finalSetB.end();++i) {
+	Edge e;
+	if(SgNodeHelper::isCond(labeler->getNode(*i))) {
+	  e=Edge(*i,EDGE_FALSE,condLabel);
+	  e.addType(edgeTypeParam2);
+	} else {
+	  e=Edge(*i,edgeTypeParam2,condLabel);
+	}
+	edgeSet.insert(e);
+  }
+  return edgeSet;
+}
+
+
 Flow CFAnalyzer::flow(SgNode* node) {
   assert(node);
 
@@ -687,6 +734,12 @@ Flow CFAnalyzer::flow(SgNode* node) {
 	}
 	return edgeSet;
   }
+#if 1
+  case V_SgWhileStmt: 
+	return WhileAndDoWhileLoopFlow(node,edgeSet,EDGE_FORWARD,EDGE_BACKWARD);
+  case V_SgDoWhileStmt: 
+	return WhileAndDoWhileLoopFlow(node,edgeSet,EDGE_BACKWARD,EDGE_FORWARD);
+#else
   case V_SgWhileStmt: {
 	SgNode* condNode=SgNodeHelper::getCond(node);
 	Label condLabel=getLabel(condNode);
@@ -705,8 +758,7 @@ Flow CFAnalyzer::flow(SgNode* node) {
 		e=Edge(*i,EDGE_FALSE,condLabel);
 		e.addType(EDGE_BACKWARD);
 	  } else {
-		if(true || !isSgBreakStmt(labeler->getNode(*i))) // break nodes not to be exluded
-		  e=Edge(*i,EDGE_BACKWARD,condLabel);
+		e=Edge(*i,EDGE_BACKWARD,condLabel);
 	  }
 	  edgeSet.insert(e);
 	}
@@ -730,13 +782,14 @@ Flow CFAnalyzer::flow(SgNode* node) {
 		e=Edge(*i,EDGE_FALSE,condLabel);
 		e.addType(EDGE_FORWARD);
 	  } else {
-		if(true || !isSgBreakStmt(labeler->getNode(*i))) // break nodes not to be exluded
-		  e=Edge(*i,EDGE_FORWARD,condLabel);
+		e=Edge(*i,EDGE_FORWARD,condLabel);
 	  }
 	  edgeSet.insert(e);
 	}
 	return edgeSet;
   }
+#endif
+
   case V_SgBasicBlock: {
 	size_t len=node->get_numberOfTraversalSuccessors();
 	if(len==0) {

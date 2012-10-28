@@ -102,6 +102,7 @@ class CFAnalyzer {
   void intraInterFlow(Flow&, InterFlow&);
   int reduceBlockBeginNodes(Flow& flow);
  private:
+  Flow WhileAndDoWhileLoopFlow(SgNode* node, Flow edgeSet, EdgeType param1, EdgeType param2);
   Labeler* labeler;
 };	
 
