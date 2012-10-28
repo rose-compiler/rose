@@ -12,6 +12,9 @@ using namespace CodeThorn;
 
 Edge::Edge():source(0),target(0){
 }
+Edge::Edge(Label source0,Label target0):source(source0),target(target0){
+  // _types is an empty set by default 
+}
 Edge::Edge(Label source0,EdgeType et,Label target0):source(source0),target(target0){
   _types.insert(et);
 }
@@ -73,11 +76,12 @@ string Edge::typesToString() const {
   if(_types.size()==0) {
 	ss<<typeToString(EDGE_UNKNOWN);
   } else {
-	set<EdgeType>::iterator i=_types.begin();
-	ss<<typeToString(*i);
-	++i;
-	while(i!=_types.end()) {
-	  ss<< ", "<<typeToString(*i);
+	for(set<EdgeType>::iterator i=_types.begin();
+		i!=_types.end();
+		++i) {
+	  if(i!=_types.begin())
+		ss<< ", ";
+	  ss<<typeToString(*i);
 	}
   }
   ss<<"}";
@@ -108,10 +112,18 @@ string Edge::typeToString(EdgeType et) {
   return ""; // dead code. just to provide some return value to avoid false positive compiler warnings
 }
 
+// color: true/false has higher priority than forward/backward.
 string Edge::toDot() const {
   stringstream ss;
   ss<<source<<"->"<<target;
-  ss<<" [label=\""<<typesToString()<<"\""<<"]";
+  ss<<" [label=\""<<typesToString()<<"\"";
+  if(isType(EDGE_TRUE)) 
+	ss<<" color=green ";
+  else if(isType(EDGE_FALSE)) 
+	ss<<" color=red ";
+  else if(isType(EDGE_BACKWARD)) 
+	ss<<" color=blue ";
+  ss<<"]";
   return ss.str();
 }
 
@@ -517,11 +529,11 @@ Flow CFAnalyzer::flow(SgNode* s1, SgNode* s2) {
   LabelSet finalSets1=finalLabels(s1);
   Label initLabel2=initialLabel(s2);
   for(LabelSet::iterator i=finalSets1.begin();i!=finalSets1.end();++i) {
-	Edge e;
-	if(SgNodeHelper::isCond(labeler->getNode(*i))) // special case (all TRUE edges are created explicitly)
-	  e=Edge(*i,EDGE_FALSE,initLabel2);
-	else
-	  e=Edge(*i,EDGE_FORWARD,initLabel2);
+	Edge e(*i,initLabel2);
+	if(SgNodeHelper::isCond(labeler->getNode(*i))) { // special case (all TRUE edges are created explicitly)
+	  e.addType(EDGE_FALSE);
+	}
+	e.addType(EDGE_FORWARD);
 	flow12.insert(e);
   }
   return flow12;
@@ -655,12 +667,14 @@ Flow CFAnalyzer::flow(SgNode* node) {
 	Label condLabel=getLabel(nodeC);
 	SgNode* nodeTB=SgNodeHelper::getTrueBranch(node);
 	Edge edgeTB=Edge(condLabel,EDGE_TRUE,initialLabel(nodeTB));
+	edgeTB.addType(EDGE_FORWARD);
 	edgeSet.insert(edgeTB);
 	Flow flowTB=flow(nodeTB);
 	edgeSet+=flowTB;
 	if(SgNode* nodeFB=SgNodeHelper::getFalseBranch(node)) {
 	  Flow flowFB=flow(nodeFB);
 	  Edge edgeFB=Edge(condLabel,EDGE_FALSE,initialLabel(nodeFB));
+	  edgeFB.addType(EDGE_FORWARD);
 	  edgeSet.insert(edgeFB);
 	  edgeSet+=flowFB;
 	}
@@ -672,6 +686,7 @@ Flow CFAnalyzer::flow(SgNode* node) {
 	SgNode* bodyNode=SgNodeHelper::getLoopBody(node);
 	assert(bodyNode);
 	Edge edge=Edge(condLabel,EDGE_TRUE,initialLabel(bodyNode));
+	edge.addType(EDGE_FORWARD);
 	Flow flowB=flow(bodyNode);
 	LabelSet finalSetB=finalLabels(bodyNode);
 	edgeSet+=flowB;
@@ -681,6 +696,7 @@ Flow CFAnalyzer::flow(SgNode* node) {
 	  Edge e;
 	  if(SgNodeHelper::isCond(labeler->getNode(*i))) {
 		e=Edge(*i,EDGE_FALSE,condLabel);
+		e.addType(EDGE_BACKWARD);
 	  } else {
 		if(true || !isSgBreakStmt(labeler->getNode(*i))) // break nodes not to be exluded
 		  e=Edge(*i,EDGE_BACKWARD,condLabel);

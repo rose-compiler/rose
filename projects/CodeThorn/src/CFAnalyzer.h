@@ -18,6 +18,7 @@ enum EdgeType { EDGE_UNKNOWN, EDGE_FORWARD, EDGE_BACKWARD, EDGE_TRUE, EDGE_FALSE
 class Edge {
  public:
   Edge();
+  Edge(Label source0,Label target0);
   Edge(Label source0,EdgeType type0,Label target0);
   Edge(Label source0,set<EdgeType> type0,Label target0);
   string toString() const;
