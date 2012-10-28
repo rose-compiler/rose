@@ -1962,41 +1962,53 @@ Unparse_ExprStmt::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
 
 // Determine how many "else {}"'s an outer if that has an else clause needs to
 // prevent dangling if problems
-static size_t countElsesNeededToPreventDangling(SgStatement* s) {
+static size_t countElsesNeededToPreventDangling(SgStatement* s)
+   {
   // The basic rule here is that anything that has a defined end marker
   // (i.e., cannot end with an unmatched if statement) returns 0, everything
   // else (except if) gets the correct number of elses from its body
-  switch (s->variantT()) {
-    case V_SgCaseOptionStmt: return countElsesNeededToPreventDangling(isSgCaseOptionStmt(s)->get_body());
-    case V_SgCatchStatementSeq: {
-      SgCatchStatementSeq* cs = isSgCatchStatementSeq(s);
-      const SgStatementPtrList& seq = cs->get_catch_statement_seq();
-      ROSE_ASSERT (!seq.empty());
-      return countElsesNeededToPreventDangling(seq.back());
-    }
-    case V_SgDefaultOptionStmt: return countElsesNeededToPreventDangling(isSgCaseOptionStmt(s)->get_body());
-    case V_SgLabelStatement: return countElsesNeededToPreventDangling(isSgLabelStatement(s)->get_statement());
-    case V_SgCatchOptionStmt: return countElsesNeededToPreventDangling(isSgCatchOptionStmt(s)->get_body());
-    case V_SgForStatement: return countElsesNeededToPreventDangling(isSgForStatement(s)->get_loop_body());
-    case V_SgIfStmt: {
-      SgIfStmt* ifs = isSgIfStmt(s);
-      if (ifs->get_false_body() != NULL) {
-        return 0;
-      } else {
-        return countElsesNeededToPreventDangling(ifs->get_true_body()) + 1;
-      }
-    }
-    case V_SgWhileStmt: return countElsesNeededToPreventDangling(isSgWhileStmt(s)->get_body());
-    case V_SgSwitchStatement: ROSE_ASSERT(isSgBasicBlock(isSgSwitchStatement(s)->get_body())); return 0;
-    default: return 0;
-  }
-}
+     switch (s->variantT())
+        {
+          case V_SgCaseOptionStmt: return countElsesNeededToPreventDangling(isSgCaseOptionStmt(s)->get_body());
+          case V_SgCatchStatementSeq:
+             {
+               SgCatchStatementSeq* cs = isSgCatchStatementSeq(s);
+               const SgStatementPtrList& seq = cs->get_catch_statement_seq();
+               ROSE_ASSERT (!seq.empty());
+               return countElsesNeededToPreventDangling(seq.back());
+             }
+          case V_SgDefaultOptionStmt: return countElsesNeededToPreventDangling(isSgCaseOptionStmt(s)->get_body());
+          case V_SgLabelStatement: return countElsesNeededToPreventDangling(isSgLabelStatement(s)->get_statement());
+          case V_SgCatchOptionStmt: return countElsesNeededToPreventDangling(isSgCatchOptionStmt(s)->get_body());
+          case V_SgForStatement: return countElsesNeededToPreventDangling(isSgForStatement(s)->get_loop_body());
+          case V_SgIfStmt:
+             {
+               SgIfStmt* ifs = isSgIfStmt(s);
+               if (ifs->get_false_body() != NULL)
+                  {
+                    return 0;
+                  } 
+                 else
+                  {
+                    return countElsesNeededToPreventDangling(ifs->get_true_body()) + 1;
+                  }
+             }
+          case V_SgWhileStmt: return countElsesNeededToPreventDangling(isSgWhileStmt(s)->get_body());
+          case V_SgSwitchStatement: ROSE_ASSERT(isSgBasicBlock(isSgSwitchStatement(s)->get_body())); return 0;
+
+          default: 
+               return 0;
+        }
+   }
+
 
 void Unparse_ExprStmt::unparseIfStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
   // DQ (12/13/2005): I don't like this implementation with the while loop...
 
-  // printf ("Unparse if statement stmt = %p \n",stmt);
+#if 0
+     printf ("In unparseIfStmt(): unparse if statement stmt = %p \n",stmt);
+#endif
 
      SgIfStmt* if_stmt = isSgIfStmt(stmt);
      assert (if_stmt != NULL);
@@ -2035,14 +2047,15 @@ void Unparse_ExprStmt::unparseIfStmt(SgStatement* stmt, SgUnparse_Info& info)
           if ( (tmp_stmt = if_stmt->get_false_body()) )
              {
                size_t elsesNeededForInnerIfs = countElsesNeededToPreventDangling(if_stmt->get_true_body());
-               for (size_t i = 0; i < elsesNeededForInnerIfs; ++i) {
-                 curprint ( string(" else {}") ); // Ensure this else does not match an inner if statement
-               }
+               for (size_t i = 0; i < elsesNeededForInnerIfs; ++i) 
+                  {
+                    curprint ( string(" else {}") ); // Ensure this else does not match an inner if statement
+                  }
                unp->cur.format(if_stmt, info, FORMAT_BEFORE_STMT);
                curprint ( string("else "));
                if_stmt = isSgIfStmt(tmp_stmt);
                if (if_stmt == NULL) {
-                 unp->cur.format(tmp_stmt, info, FORMAT_BEFORE_NESTED_STATEMENT);
+                    unp->cur.format(tmp_stmt, info, FORMAT_BEFORE_NESTED_STATEMENT);
 
               // curprint ( string("\n/* Unparse the if false body */ \n") );
               // Unparse using base class function so we get any required comments and CPP directives.
@@ -4935,10 +4948,15 @@ Unparse_ExprStmt::unparseExprStmt(SgStatement* stmt, SgUnparse_Info& info)
              }
    }
 
+
 void Unparse_ExprStmt::unparseLabelStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
      SgLabelStatement* label_stmt = isSgLabelStatement(stmt);
      ROSE_ASSERT(label_stmt != NULL);
+
+#if 0
+     printf ("Inside of unparseLabelStmt(label_stmt = %p) \n",label_stmt);
+#endif
 
      curprint ( string(label_stmt->get_label().str()) + ":");
 
@@ -4952,51 +4970,146 @@ void Unparse_ExprStmt::unparseLabelStmt(SgStatement* stmt, SgUnparse_Info& info)
   // but g++ is particular on this subtle point.  So we should make the unparser figure this out.
   // curprint ( string(" ;";
 
+#if 0
+  // DQ (10/28/2012): Added debugging code for test2012_100.c.
+     if (label_stmt->get_parent() == NULL)
+        {
+          printf ("ERROR: label_stmt->get_parent() == NULL \n");
+          label_stmt->get_startOfConstruct()->display("ERROR: label_stmt->get_parent() == NULL");
+        }
+     ROSE_ASSERT(label_stmt->get_parent() != NULL);
+
+  // DQ (10/28/2012): Added debugging code for test2012_100.c.
+     if (isSgScopeStatement(label_stmt->get_parent()) == NULL)
+        {
+          printf ("ERROR: label_stmt->get_parent() = %p = %s but is not a SgScopeStatement \n",label_stmt->get_parent(),label_stmt->get_parent()->class_name().c_str());
+          label_stmt->get_startOfConstruct()->display("ERROR: label_stmt->get_parent() == NULL");
+        }
+  // ROSE_ASSERT(isSgScopeStatement(label_stmt->get_parent()) != NULL);
+#endif
+
+     ROSE_ASSERT(label_stmt->get_parent() != NULL);
+
   // DQ (10/25/2007): Modified handling of labels so that they explicitly include a scope set to the 
   // SgFunctionDefinition. SgLabelSymbol objects are also now placed into the SgFunctionDefinition's 
   // symbol table.
   // SgScopeStatement* scope = label_stmt->get_scope();
      SgScopeStatement* scope = isSgScopeStatement(label_stmt->get_parent());
-     ROSE_ASSERT(scope != NULL);
+  // ROSE_ASSERT(scope != NULL);
 
-  // In C and C++, labels can't be places where only declarations are allowed so we know to get the 
-  // Statement list instead of the declaration list.
-     ROSE_ASSERT(scope->containsOnlyDeclarations() == false);
-     SgStatementPtrList & statementList = scope->getStatementList();
+  // SgStatementPtrList & statementList = scope->getStatementList();
+     SgStatementPtrList* statementList = NULL;
+
+     bool allocatedStatementList = false;
+     if (scope != NULL)
+        {
+       // In C and C++, labels can't be places where only declarations are allowed so we know to get the 
+       // Statement list instead of the declaration list.
+          ROSE_ASSERT(scope->containsOnlyDeclarations() == false);
+
+       // DQ (10/27/2012): This is called as part of processing test2012_104.c.  So I guess we have to support it...
+          SgIfStmt* ifStatement = isSgIfStmt(scope);
+
+          if (ifStatement != NULL)
+             {
+            // The test2012_116.c and the smaller test2012_117.c demonstate and example of a label attached to one side of a conditional.
+#if 0
+               printf ("We can't implment this calling the getStatementList() from the SgIfStmt scope (becasue there are two lists (one for the TRUE branch and one for the FALSE branch). \n");
+               ifStatement->get_startOfConstruct()->display("We can't implment this calling the getStatementList() from the SgIfStmt scope: debug");
+               bool label_is_on_true_branch = (stmt == ifStatement->get_true_body());
+               printf ("label_is_on_true_branch = %s \n",label_is_on_true_branch ? "true" : "false");
+#endif
+               statementList = new SgStatementPtrList();
+               ROSE_ASSERT(statementList != NULL);
+
+               allocatedStatementList = true;
+
+               statementList->push_back(ifStatement->get_true_body());
+               statementList->push_back(ifStatement->get_false_body());
+#if 0
+               printf ("statementList->size() = %zu \n",statementList->size());
+#endif
+             }
+            else
+             {
+               statementList = &(scope->getStatementList());
+             }
+        }
+       else
+        {
+       // This is going to be the trivial case of only the label statement itself in the statementList.
+          statementList = new SgStatementPtrList();
+          ROSE_ASSERT(statementList != NULL);
+
+          allocatedStatementList = true;
+
+          statementList->push_back(label_stmt);
+        }
+
+     ROSE_ASSERT(statementList != NULL);
 
   // Find the label in the parent scope
-     SgStatementPtrList::iterator positionOfLabel = find(statementList.begin(),statementList.end(),label_stmt);
+     SgStatementPtrList::iterator positionOfLabel = find(statementList->begin(),statementList->end(),label_stmt);
 
   // Verify that we found the label in the scope
   // ROSE_ASSERT(positionOfLabel != SgStatementPtrList::npos);
-     if (positionOfLabel == statementList.end())
+     if (positionOfLabel == statementList->end())
         {
-          printf ("Found label = %p = %s at end of scope! \n",label_stmt,label_stmt->get_label().str());
+          printf ("ERROR: Found label = %p = %s at end of scope! \n",label_stmt,label_stmt->get_label().str());
           label_stmt->get_startOfConstruct()->display("positionOfLabel == statementList.end()");
-          ROSE_ASSERT(positionOfLabel != statementList.end());
+          ROSE_ASSERT(positionOfLabel != statementList->end());
         }
        else
         {
        // ROSE_ASSERT(positionOfLabel != statementList.end());
           ROSE_ASSERT(*positionOfLabel == label_stmt);
-
-       // printf ("label_stmt->get_label() = %p = %s \n",label_stmt,label_stmt->get_label().str());
-
+#if 0
+          printf ("label_stmt->get_label() = %p = %s \n",label_stmt,label_stmt->get_label().str());
+#endif
+       // DQ (10/27/2012): I think it is a bug to increment positionOfLabel.
        // Increment past the label to see what is next (but don't count SgNullStatements)
-          positionOfLabel++;
-          while ( ( positionOfLabel != statementList.end() ) && ( (*positionOfLabel)->variantT() == V_SgNullStatement ) )
+       // positionOfLabel++;
+
+          while ( ( positionOfLabel != statementList->end() ) && ( (*positionOfLabel)->variantT() == V_SgNullStatement ) )
              {
             // printf ("Found a SgNullStatement (skipping over it) *positionOfLabel = %p = %s \n",*positionOfLabel,(*positionOfLabel)->class_name().c_str());
                positionOfLabel++;
              }
 
        // If we are at the end (just past the last statement) then we need the ";" 
-          if (positionOfLabel == statementList.end())
+          if (positionOfLabel == statementList->end())
              {
+#if 0
+               printf ("Note: positionOfLabel == statementList->end(): so output a closing semi-colon \n");
+#endif
                curprint ( string(";"));
              }
         }
+
+  // If this is memory that we allocated on the heap then call delete.
+     if (allocatedStatementList == true)
+        {
+          delete statementList;
+          statementList = NULL;
+        }
+
+#if 0
+     printf ("Unparse the associated label's statement (if it is available) label_stmt->get_statement() = %p = %s \n",
+          label_stmt->get_statement(),label_stmt->get_statement() != NULL ? label_stmt->get_statement()->class_name().c_str() : "null");
+#endif
+
+  // DQ (10/27/2012): Unparse the associated statement to the label.
+  // Note that in the edg33 version of ROSE this was always a SgNullStatement, this is corrected in the design with the edg4x work.
+     if (label_stmt->get_statement() != NULL)
+        {
+          unparseStatement(label_stmt->get_statement(), info);
+        }
+
+#if 0
+     printf ("Leaving unparseLabelStmt(label_stmt = %p) \n",label_stmt);
+#endif
    }
+
 
 void
 Unparse_ExprStmt::unparseWhileStmt(SgStatement* stmt, SgUnparse_Info& info)
