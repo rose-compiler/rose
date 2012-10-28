@@ -5194,6 +5194,7 @@ SgScopeStatement::getStatementList ()
 #endif
 
                printf ("getStatementList() return value not defined for SgIfStmt containing true and false bodies (use generateStatementList() to form copy of merges lists) \n");
+               printf ("NOTE: This error has been generated when C99 code was incorrectly assumed to be C89 (e.g. compiled without the correct flag) code (see test2012_104.c on edg4x branch)\n");
                ROSE_ASSERT(false);
                break;
              }
