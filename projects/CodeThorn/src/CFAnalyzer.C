@@ -112,17 +112,23 @@ string Edge::typeToString(EdgeType et) {
   return ""; // dead code. just to provide some return value to avoid false positive compiler warnings
 }
 
+string Edge::color() const {
+  if(isType(EDGE_BACKWARD)) 
+	return "blue";
+  else if(isType(EDGE_TRUE)) 
+	return "green";
+  else if(isType(EDGE_FALSE)) 
+	return "red";
+  return "black";
+}
+
+
 // color: true/false has higher priority than forward/backward.
 string Edge::toDot() const {
   stringstream ss;
   ss<<source<<"->"<<target;
   ss<<" [label=\""<<typesToString()<<"\"";
-  if(isType(EDGE_TRUE)) 
-	ss<<" color=green ";
-  else if(isType(EDGE_FALSE)) 
-	ss<<" color=red ";
-  else if(isType(EDGE_BACKWARD)) 
-	ss<<" color=blue ";
+  ss<<" color="<<color()<<" ";
   ss<<"]";
   return ss.str();
 }
@@ -266,12 +272,12 @@ Label CFAnalyzer::initialLabel(SgNode* node) {
   case V_SgWhileStmt:
 	node=SgNodeHelper::getCond(node);
 	return labeler->getLabel(node);
+  case V_SgDoWhileStmt:
+	node=SgNodeHelper::getLoopBody(node);
+	return labeler->getLabel(node);
   case V_SgBasicBlock:
    return labeler->getLabel(node);
-   //  case V_SgFunctionCallExp:
-   //return labeler->functionCallLabel(node);
-	
-  case V_SgDoWhileStmt: // TODO
+
   case V_SgForStatement: // TODO 
 
   default:
@@ -331,6 +337,7 @@ LabelSet CFAnalyzer::finalLabels(SgNode* node) {
 	}
 	return finalSet;
   }
+  case V_SgDoWhileStmt:
   case V_SgWhileStmt: {
 	SgNode* condNode=SgNodeHelper::getCond(node);
 	finalSet.insert(labeler->getLabel(condNode));
@@ -354,7 +361,6 @@ LabelSet CFAnalyzer::finalLabels(SgNode* node) {
 	finalSet.insert(labeler->functionCallReturnLabel(node));
 	return finalSet;
 
-  case V_SgDoWhileStmt: // TODO
   case V_SgForStatement: // TODO
 	
   default:
@@ -547,19 +553,20 @@ int CFAnalyzer::reduceBlockBeginNodes(Flow& flow) {
 	  cnt++;
 	  Flow inFlow=flow.inEdges(*i);
 	  Flow outFlow=flow.outEdges(*i);
-	  assert(inFlow.size()<=1);
 	  assert(outFlow.size()<=1);
-	  // inedge: (n1,b)
+	  // inedges: (n1,b)
 	  // outedge: (b,n2)
 	  // remove(n1,b)
 	  // remove(b,n2)
 	  // insert(n1,n2)
-	  Edge e1=*inFlow.begin();
-	  Edge e2=*outFlow.begin();
-	  Edge newEdge=Edge(e1.source,e1.types(),e2.target);
-	  flow.erase(e1);
-	  flow.erase(e2);
-	  flow.insert(newEdge);
+	  for(Flow::iterator initer=inFlow.begin();initer!=inFlow.end();++initer) {
+		Edge e1=*initer;
+		Edge e2=*outFlow.begin();
+		Edge newEdge=Edge(e1.source,e1.types(),e2.target);
+		flow.erase(e1);
+		flow.erase(e2);
+		flow.insert(newEdge);
+	  }
 	}
   }
   return cnt;
@@ -705,6 +712,31 @@ Flow CFAnalyzer::flow(SgNode* node) {
 	}
 	return edgeSet;
   }
+  case V_SgDoWhileStmt: {
+	SgNode* condNode=SgNodeHelper::getCond(node);
+	Label condLabel=getLabel(condNode);
+	SgNode* bodyNode=SgNodeHelper::getLoopBody(node);
+	assert(bodyNode);
+	Edge edge=Edge(condLabel,EDGE_TRUE,initialLabel(bodyNode));
+	edge.addType(EDGE_BACKWARD);
+	Flow flowB=flow(bodyNode);
+	LabelSet finalSetB=finalLabels(bodyNode);
+	edgeSet+=flowB;
+	edgeSet.insert(edge);
+	// back edges
+	for(LabelSet::iterator i=finalSetB.begin();i!=finalSetB.end();++i) {
+	  Edge e;
+	  if(SgNodeHelper::isCond(labeler->getNode(*i))) {
+		e=Edge(*i,EDGE_FALSE,condLabel);
+		e.addType(EDGE_FORWARD);
+	  } else {
+		if(true || !isSgBreakStmt(labeler->getNode(*i))) // break nodes not to be exluded
+		  e=Edge(*i,EDGE_FORWARD,condLabel);
+	  }
+	  edgeSet.insert(e);
+	}
+	return edgeSet;
+  }
   case V_SgBasicBlock: {
 	size_t len=node->get_numberOfTraversalSuccessors();
 	if(len==0) {
@@ -728,7 +760,7 @@ Flow CFAnalyzer::flow(SgNode* node) {
 	edgeSet.insert(edge);
 	return edgeSet;
   }
-  case V_SgDoWhileStmt: // TODO
+
   case V_SgForStatement: // TODO
 	
   default:

@@ -52,6 +52,7 @@ void checkProgram(SgNode* root) {
   vs.insert(V_SgExprStatement);
   vs.insert(V_SgIfStmt);
   vs.insert(V_SgWhileStmt);
+  vs.insert(V_SgDoWhileStmt);
   vs.insert(V_SgBreakStmt);
   vs.insert(V_SgAndOp);
   vs.insert(V_SgOrOp);

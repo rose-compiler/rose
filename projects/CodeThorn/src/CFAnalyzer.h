@@ -34,6 +34,7 @@ class Edge {
   void addType(EdgeType et);
   void removeType(EdgeType et);
   set<EdgeType> types() const;
+  string color() const;
   long hash() const;
  private:
   set<EdgeType> _types;

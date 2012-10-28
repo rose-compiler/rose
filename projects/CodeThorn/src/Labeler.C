@@ -35,6 +35,7 @@ int Labeler::isLabelRelevantNode(SgNode* node) {
 	  return 1;
   case V_SgIfStmt:
   case V_SgWhileStmt:
+  case V_SgDoWhileStmt:
   case V_SgBreakStmt:
   case V_SgVariableDeclaration:
   case V_SgLabelStatement:
