@@ -14,6 +14,8 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2012_25.c \
      test2012_58.c \
      test2012_100.c \
+     test2012_104.c \
+     test2012_105.c \
      complex_01.c \
      complex_03.c \
      bool.c \
@@ -21,6 +23,7 @@ TESTCODES_REQUIRED_TO_PASS = \
 
 # DQ (10/6/2012): This is a failing test for the new edg 4.x work.
 # test2008_01.c 
+# test2012_106.c
 
 else
 TESTCODES_REQUIRED_TO_PASS = \
@@ -53,7 +56,9 @@ ROSE_FLAGS = -rose:verbose 0 -rose:C99 --edg:no_warnings -w --edg:restrict
 PASSING_TEST_Objects = ${TESTCODES:.c=.o}
 TEST_Objects = ${ALL_TESTCODES:.c=.o}
 
-$(TEST_Objects): ../../testTranslator $(srcdir)/$(@:.o=.C)
+# DQ (10/27/2012): Removed the dependency on the object files to avoid recompiling all files.
+# $(TEST_Objects): ../../testTranslator $(srcdir)/$(@:.o=.c)
+$(TEST_Objects): ../../testTranslator
 	../../testTranslator $(ROSE_FLAGS) -c $(srcdir)/$(@:.o=.c)
 
 ../../testTranslator:

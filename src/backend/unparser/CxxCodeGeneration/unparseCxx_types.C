@@ -99,9 +99,14 @@ string get_type_name(SgType* t)
                     printf ("Warning: SgTypeBool used for C application (reserved for use in C99 and C++) \n");
 #endif
                   }
+
+            // DQ (10/27/2012): Modified to generate consistant with C applications used with GNU.
+            // I'm not sure if this is a great idea, but it appears to be more consistant with the 
+            // larger scale C applications that we are seeing.
             // ROSE_ASSERT(SgProject::get_C_only() == false);
             // return (SgProject::get_C99_only() == true) ? "_Bool" : "bool";
-               return (SageInterface::is_C99_language() == true) ? "_Bool" : "bool";
+            // return (SageInterface::is_C99_language() == true) ? "_Bool" : "bool";
+               return (SageInterface::is_C99_language() == true || SageInterface::is_C_language() == true) ? "_Bool" : "bool";
              }
 
        // DQ (8/27/2006): Now this is finally done better!

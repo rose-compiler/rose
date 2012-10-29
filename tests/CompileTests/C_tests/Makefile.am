@@ -187,9 +187,35 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2012_97.c \
      test2012_98.c \
      test2012_99.c \
+     test2012_100.c \
+     test2012_104.c \
+     test2012_105.c \
+     test2012_106.c \
+     test2012_107.c \
+     test2012_108.c \
+     test2012_109.c \
+     test2012_110.c \
+     test2012_111.c \
+     test2012_112.c \
+     test2012_113.c \
+     test2012_114.c \
+     test2012_115.c \
+     test2012_116.c \
+     test2012_117.c \
+     test2012_118.c \
+     test2012_119.c \
+     test2012_120.c \
+     test2012_121.c \
+     test2012_122.c \
+     test2012_123.c \
+     test2012_124.c \
+     test2012_125.c \
+     test2012_126.c \
+     test2012_127.c \
      math.c \
      complex_01.c \
      constants.c
+
 
 # DQ (9/28/2012): Failing tests.
 # test2012_04.c (infinite recursion!)
@@ -198,17 +224,26 @@ TESTCODES_REQUIRED_TO_PASS = \
 # test2012_43.c (macro for compile-time assertions)
 # test2012_44.c 
 # test2012_45.c 
-# test2012_59.c (C-style comment in quoted string (inside of #if-def comment, so should be ignored) 
+# test2012_59.c (C-style comment in quoted string (inside of #if-def comment, so should be ignored)
 # test2012_78.c (variable with initializer using #include file to provide value (classic source-to-source issue))
 # test2012_79.c (test code demonstrating an outstanding error (generated before focusing on switch support))
 # test2012_80.c (same as test2012_79.c)
+# test2012_101.c (example of failing test from zsh : jobs.c file)
+# test2012_102.c (example of failing test from zsh : module.c file)
+# test2012_103.c (example of failing test from zsh : params.c file)
+# test2012_107.c (fails to unparse "..." in function type)
+# test2012_128.c (label attached to case option statement is a current bug, but not yet found in application code)
 
-# This is a C99 test code (moved to the C99_tests directory).
+
+# This is a C99 test code (moved to the C99_tests directory). (These are not really C99 codes, I thought they were).
 # test2012_20.c 
 # test2012_23.c
 # test2012_25.c
 # test2012_58.c 
 # test2012_100.c 
+# test2012_104.c
+# test2012_105.c 
+# test2012_106.c 
 
 
 if ROSE_USE_CLANG_FRONTEND
