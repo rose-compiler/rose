@@ -190,6 +190,7 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2012_104.c \
      test2012_105.c \
      test2012_106.c \
+     test2012_107.c \
      test2012_108.c \
      test2012_109.c \
      test2012_110.c \
