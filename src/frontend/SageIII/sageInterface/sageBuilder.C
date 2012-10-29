@@ -5517,8 +5517,6 @@ SageBuilder::buildVarRefExp(const std::string& varName, SgScopeStatement* scope)
 SgVarRefExp *
 SageBuilder::buildVarRefExp(const SgName& name, SgScopeStatement* scope/*=NULL*/)
    {
-     ROSE_ASSERT(scope != NULL);
-
 #if 0
      printf ("In SageBuilder::buildVarRefExp(): scope = %p = %s = %s \n",scope,scope->class_name().c_str(),get_name(scope).c_str());
 #endif
