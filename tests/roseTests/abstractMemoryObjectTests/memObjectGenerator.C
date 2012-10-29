@@ -79,7 +79,12 @@ int main(int argc, char * argv[])
       Pointer* pointer = dynamic_cast<Pointer*> (mem_obj);
       if(pointer) {
           std::cout << "test Pointer->getDereference() .. " <<endl;
-          cout << pointer->getDereference()->toString() << std::endl;
+          ObjSet *ptr_deref = pointer->getDereference();
+          if (ptr_deref!=NULL) {
+              cout << ptr_deref->toString() << std::endl;
+          } else {
+              cout << "NULL (AbstractMemoryObject::createAliasedObjSet() is not fully implemented)" <<std::endl;
+          }
       }
 
     }
