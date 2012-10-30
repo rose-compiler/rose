@@ -11,9 +11,7 @@ MYDATE = $(shell date +%Y_%m_%d)
 
 INCLUDES = $(ROSE_INCLUDES) -I$(top_builddir)
 
-#KNOBS = -DPSTATE_MAINTAINER_LIST -DESTATE_MAINTAINER_LIST -DCSET_MAINTAINER_LIST
-#KNOBS = -DPSTATE_MAINTAINER_SET  -DESTATE_MAINTAINER_SET  -DCSET_MAINTAINER_SET
-#KNOBS = -DPSTATE_MAINTAINER_HSET -DESTATE_MAINTAINER_HSET -DCSET_MAINTAINER_HSET
+# in V1.2 there are no KNOBS
 KNOBS = 
 
 codethorn_CXXFLAGS = $(KNOBS) -fopenmp # -O3 -march=native -ftree-vectorize
@@ -96,7 +94,7 @@ check-local:
 	@echo ================================================================
 	@echo CHECK: all of the following formulae should evaluate to "YES"!
 	@echo ================================================================
-	./codethorn --edg:no_warnings tests/rers_mini1.c    --verify tests/rers_mini1.ltl
+	./codethorn --edg:no_warnings $(srcdir)/tests/rers_mini1.c    --verify $(srcdir)/tests/rers_mini1.ltl
 
 checkdemos: 
 	./matcher_demo tests/basictest5.C < tests/matchexpressions/test1.mat
@@ -108,11 +106,12 @@ test:
 	               --csv-assert Problem1-assert.csv \
 	               --csv-ltl Problem1-ltl.csv
 
-RERS=$(patsubst %,Problem%.log, $(shell seq 19))
+# MS: 1-6 is reasonable for V1.2
+RERS=$(patsubst %,Problem%.log, $(shell seq 6))
 rers: $(RERS)
 
 # parallel tests with make -j<N> test
-%.log: tests/rers/%.c $(TOOLNAME3) Makefile
+%.log: $(srcdir)/tests/rers/%.c $(TOOLNAME3) Makefile
 	./codethorn --edg:no_warnings --colors=no $< \
 	     --verify $(patsubst $(srcdir)/tests/rers/Problem%.c,$(srcdir)/tests/rers/properties%.txt,$<) \
 	     --csv-ltl $(patsubst $(srcdir)/tests/rers/Problem%.c,Problem%-ltl.csv,$<) \
