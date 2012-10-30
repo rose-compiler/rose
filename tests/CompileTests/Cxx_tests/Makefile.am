@@ -1088,6 +1088,7 @@ inputForLoopLocator.C \
 inputBug317.C \
 inputBug327.C \
 X.C \
+dynamic_cast.C \
 $(NEW_PASSING_FILES)
 
 # DQ (3/23/2012): New passing files
