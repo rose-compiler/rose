@@ -97,8 +97,8 @@ check-local:
 	./codethorn --edg:no_warnings $(srcdir)/tests/rers_mini1.c    --verify $(srcdir)/tests/rers_mini1.ltl
 
 checkdemos: 
-	./matcher_demo tests/basictest5.C < tests/matchexpressions/test1.mat
-	./ast_demo tests/basictest5.C
+	./matcher_demo $(srcdir)/tests/basictest5.C < $(srcdir)/tests/matchexpressions/test1.mat
+	./ast_demo $(srcdir)/tests/basictest5.C
 
 test:
 	./codethorn --edg:no_warnings $(srcdir)/tests/rers/Problem1.c \
