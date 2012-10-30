@@ -327,7 +327,7 @@ struct X86InstructionSemantics {
         WordType<1> isZeroShiftCount = policy.equalToZero(maskedShiftCount);
 
         // Do the actual shift, according to instruction kind.
-        WordType<operandBits> retval;
+        WordType<operandBits> retval = undefined_<operandBits>(); // not all policies define a default c'tor
         switch (kind) {
             case x86_shr:
                 retval = policy.shiftRight(operand, maskedShiftCount);
@@ -388,7 +388,7 @@ struct X86InstructionSemantics {
         // original operand."  Later, it states that "the OF flag is affected only for 1-bit shifts; otherwise it is
         // undefined."  We're assuming that the statement "if the count is 0, then the flags are not affected" takes
         // precedence.
-        WordType<1> newOF;
+        WordType<1> newOF = undefined_<1>();
         switch (kind) {
             case x86_shr:
                 newOF = policy.ite(isOneBitShift,
