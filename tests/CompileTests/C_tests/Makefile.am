@@ -187,6 +187,7 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2012_98.c \
      test2012_99.c \
      test2012_100.c \
+     test2012_101.c \
      test2012_104.c \
      test2012_105.c \
      test2012_106.c \
@@ -211,6 +212,8 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2012_125.c \
      test2012_126.c \
      test2012_127.c \
+     test2012_129.c \
+     test2012_130.c \
      math.c \
      complex_01.c \
      constants.c
@@ -227,10 +230,10 @@ TESTCODES_REQUIRED_TO_PASS = \
 # test2012_78.c (variable with initializer using #include file to provide value (classic source-to-source issue))
 # test2012_79.c (test code demonstrating an outstanding error (generated before focusing on switch support))
 # test2012_80.c (same as test2012_79.c)
-# test2012_101.c (example of failing test from zsh : jobs.c file)
+# test2012_101.c (example of failing test from zsh : jobs.c file: NOW FIXED)
 # test2012_102.c (example of failing test from zsh : module.c file)
 # test2012_103.c (example of failing test from zsh : params.c file)
-# test2012_107.c (fails to unparse "..." in function type)
+# test2012_107.c (fails to unparse "..." in function type: NOW FIXED)
 # test2012_128.c (label attached to case option statement is a current bug, but not yet found in application code)
 
 
