@@ -28,13 +28,57 @@ namespace UnifiedLTL {
   using namespace AType;
 
   typedef adjacency_list<vecS, vecS, bidirectionalS, const EState*> BoostTransitionGraph;
-  typedef pair< const EState*, BoolLattice > LTLState;
-  typedef vector<LTLState> LTLStates;
-  typedef adjacency_list<listS, listS, bidirectionalS> LTLTransitionGraph;
   typedef graph_traits<BoostTransitionGraph> GraphTraits;
   typedef GraphTraits::vertex_descriptor Vertex;
-  typedef pair < map<LTLState, Vertex>, LTLTransitionGraph > LTLStateTransitionGraph;
-  typedef vector < LTLStateTransitionGraph > LTLProperties;
+
+  /**
+   * This is pretty cool: We are solving the LTL formula as if it were
+   * written in a postfix notation and store the intermediate results
+   * on a stack. It's a little like the Forth execution model.
+   * For equality comparisons we are only using the top of
+   * stack, because we do not care about the history.
+   */
+  class LTLState {
+  public:
+    const EState* estate;
+    stack<BoolLattice> valstack;
+
+    LTLState() : estate(NULL) { }
+    LTLState(const EState* s, stack<BoolLattice> v) : estate(s), valstack(v) {}
+    LTLState(const EState* s, BoolLattice top) : estate(s){ valstack.push(top); }
+    bool operator==(LTLState& other) const { 
+      return (estate == other.estate) &&
+	( !valstack.empty()
+	  ? valstack.top() == other.valstack.top()
+	  : true );
+    }
+    bool operator<(LTLState other) const { 
+      if (estate == other.estate) {
+	return ( !valstack.empty()
+		 ? valstack.top() < other.valstack.top()
+		 : false );
+      } else {
+	return estate < other.estate;
+      }
+    }
+  };
+
+  typedef adjacency_list<listS, listS, bidirectionalS, LTLState> LTLTransitionGraph;
+  typedef graph_traits<LTLTransitionGraph> LTLGraphTraits;
+  typedef LTLGraphTraits::vertex_descriptor LTLVertex;
+  typedef LTLGraphTraits::edge_descriptor LTLEdge;
+  typedef map<LTLState, LTLVertex> LTLStateMap;
+
+  class LTLStateTransitionGraph {
+  public:
+    LTLStateTransitionGraph() {}
+    LTLStateTransitionGraph(LTLStateMap m, LTLTransitionGraph tg) 
+      : vertex(m), g(tg) {}
+    LTLStateMap vertex;
+    LTLTransitionGraph g;
+  };
+
+  typedef queue<LTLVertex> LTLWorklist;
 
   /**
    * A dataflow-based checker for LTL formulae.
@@ -47,7 +91,7 @@ namespace UnifiedLTL {
     /// verify the LTL formula f
     BoolLattice verify(const CodeThorn::LTL::Formula& f);
 
-    LTLState collapse_transition_graph(BoostTransitionGraph &g, LTLTransitionGraph &reduced) const;
+    Label collapse_transition_graph(BoostTransitionGraph &g, BoostTransitionGraph &reduced) const;
 
   protected:
     Label start;

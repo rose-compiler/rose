@@ -68,6 +68,28 @@ bool AType::BoolLattice::operator!=(AType::BoolLattice other) const {
   return other.value != value;
 }
 
+bool AType::BoolLattice::operator<(BoolLattice other) const {
+  if (isBot()) {
+    if (other.isBot()) return false;
+    return true;
+  }
+  if (isFalse()) {
+    if (other.isBot())   return false;
+    if (other.isFalse()) return false;
+    return true;
+  }
+  if (isTrue()) {
+    if (other.isBot())   return false;
+    if (other.isFalse()) return false;
+    if (other.isTrue()) return false;
+    return true;
+  }
+  if (isTop()) {
+    return false;
+  }
+  throw "Error: BoolLattice operation< failed.";
+}
+
 AType::BoolLattice AType::BoolLattice::operator||(AType::BoolLattice other) {
   AType::BoolLattice tmp;
   // all TOP cases
