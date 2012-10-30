@@ -268,6 +268,7 @@ TESTS= \
     tests/p004.c \
     tests/p005.c \
     tests/p005-transitiongraph1.dat \
+    tests/p006.c \
     tests/p006if.c \
     tests/p006if.ltl \
     tests/p006loop2.c \
@@ -280,12 +281,18 @@ TESTS= \
     tests/p009.ltl \
     tests/properties007.txt \
     tests/properties008.txt \
+    tests/equalitytest1.c \
     tests/rers_mini1.c \
     tests/rers_mini1.ltl \
     tests/rers_mini2.c \
+    tests/rers_mini3.c \
     tests/rers_mini4.c \
     tests/rers_mini5b.c \
     tests/rers_mini5.c \
+    tests/rers_mini6.c \
+    tests/rers_mini7.c \
+    tests/test_dowhile1.c \
+    tests/test_dowhile2.c \
     tests/test.ltl \
      \
     tests/matchexpressions/test1.mat \
@@ -335,3 +342,5 @@ TESTS= \
     tests/rers/properties7.txt \
     tests/rers/properties8.txt \
     tests/rers/properties9.txt
+
+# xxtest.C # MS: intentionally here as comment
