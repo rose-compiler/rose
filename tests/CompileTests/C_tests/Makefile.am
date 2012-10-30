@@ -215,7 +215,12 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2012_127.c \
      test2012_129.c \
      test2012_130.c \
+     test2012_131.c \
+     test2012_133.c \
      test2012_135.c \
+     test2012_136.c \
+     test2012_137.c \
+     test2012_139.c \
      math.c \
      complex_01.c \
      constants.c
@@ -237,7 +242,10 @@ TESTCODES_REQUIRED_TO_PASS = \
 # test2012_103.c (example of failing test from zsh : params.c file)
 # test2012_107.c (fails to unparse "..." in function type: NOW FIXED)
 # test2012_128.c (label attached to case option statement is a current bug, but not yet found in application code)
-
+# test2012_132.c (this has a overly complex duff's device like switch statement that I have rewritten to put the
+#                 default case at the same scope as the other case option statements. Adding this level of support
+#                 to the switch statment support in ROSE is deferred to later. test2012_137.c is a required test
+#                 code to pass; so that we can test the rewritten version of the switch.
 
 # This is a C99 test code (moved to the C99_tests directory). (These are not really C99 codes, I thought they were).
 # test2012_20.c 

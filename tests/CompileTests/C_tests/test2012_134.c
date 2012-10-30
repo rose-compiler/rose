@@ -6032,7 +6032,6 @@ struct lconv
 
 
 
-
 extern char *setlocale (int __category, __const char *__locale) __attribute__ ((__nothrow__));
 
 
@@ -14566,3 +14565,5 @@ autofeatures(const char *cmdnam, const char *module, char **features,
 
     return ret;
 }
+
+
