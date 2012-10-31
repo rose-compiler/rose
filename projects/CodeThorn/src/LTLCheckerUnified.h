@@ -46,6 +46,7 @@ namespace UnifiedLTL {
     LTLState() : estate(NULL) { }
     LTLState(const EState* s, stack<BoolLattice> v) : estate(s), valstack(v) {}
     LTLState(const EState* s, BoolLattice top) : estate(s){ valstack.push(top); }
+    LTLState(const LTLState& copy) :estate(copy.estate), valstack(copy.valstack) {}
     bool operator==(LTLState& other) const { 
       return (estate == other.estate) &&
 	( !valstack.empty()
@@ -98,8 +99,6 @@ namespace UnifiedLTL {
     BoostTransitionGraph g;
     TransitionGraph& transitionGraph;
     EStateSet& eStateSet;
-    /// the final states in the transition graph
-    deque<Label> endpoints;
   };
 
 } // end of namespace LTL
