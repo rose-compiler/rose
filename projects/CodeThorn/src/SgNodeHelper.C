@@ -348,6 +348,19 @@ bool SgNodeHelper::isCond(SgNode* node) {
 	return false;
 }
 
+bool SgNodeHelper::isPrefixIncDecOp(SgNode* node) {
+  if(isSgPlusPlusOp(node)||isSgMinusMinusOp(node))
+	return static_cast<SgUnaryOp*>(node)->isLValue()==true;
+  else
+	return false;
+}
+bool SgNodeHelper::isPostfixIncDecOp(SgNode* node) {
+  if(isSgPlusPlusOp(node)||isSgMinusMinusOp(node))
+	return static_cast<SgUnaryOp*>(node)->isLValue()==false;
+  else
+	return false;
+}
+
 SgStatementPtrList& SgNodeHelper::getForInitList(SgNode* node) {
   if(SgForStatement* forstmt=isSgForStatement(node)) {
 	return forstmt->get_init_stmt();
