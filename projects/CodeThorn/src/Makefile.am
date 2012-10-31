@@ -292,7 +292,8 @@ TESTS= \
     tests/rers_mini7.c \
     tests/test_dowhile1.c \
     tests/test_dowhile2.c \
-    tests/test.ltl \
+    tests/test_for1.c \
+    tests/test_for2.c \
      \
     tests/matchexpressions/test1.mat \
     tests/matchexpressions/test2.mat \
@@ -342,4 +343,6 @@ TESTS= \
     tests/rers/properties8.txt \
     tests/rers/properties9.txt
 
+# MS: does not exist
+#    tests/test.ltl \
 # xxtest.C # MS: intentionally here as comment

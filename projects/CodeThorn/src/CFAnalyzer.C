@@ -262,6 +262,10 @@ Labeler* CFAnalyzer::getLabeler() {
 Label CFAnalyzer::initialLabel(SgNode* node) {
   assert(node);
 
+  // special case of incExpr in SgForStatement
+  if(SgNodeHelper::isForIncExpr(node))
+	return labeler->getLabel(node);
+
   // special case of function call
   if(SgNodeHelper::Pattern::matchFunctionCall(node))
 	return labeler->getLabel(node);
@@ -292,9 +296,19 @@ Label CFAnalyzer::initialLabel(SgNode* node) {
 	return labeler->getLabel(node);
   case V_SgBasicBlock:
    return labeler->getLabel(node);
-
-  case V_SgForStatement: // TODO 
-
+   // TODO: for(emptyInitList;S;S) {}
+  case V_SgForStatement: {
+	SgStatementPtrList& stmtPtrList=SgNodeHelper::getForInitList(node);
+	if(stmtPtrList.size()==0) {
+	  // empty initializer list (hence, an initialization stmt cannot be initial stmt of for)
+	  cout << "INFO: for-stmt: initializer-list is empty."<<endl;
+	  cerr << "ERROR: we are bailing out. This case is not implemented yet."<<endl;
+	  exit(1);
+	}
+	assert(stmtPtrList.size()>0);
+	node=*stmtPtrList.begin();
+	return labeler->getLabel(node);
+  }
   default:
 	cerr << "Error: Unknown node in CodeThorn::CFAnalyzer::initialLabel: "<<node->sage_class_name()<<endl; exit(1);
   }
@@ -304,6 +318,12 @@ LabelSet CFAnalyzer::finalLabels(SgNode* node) {
   assert(node);
   assert(labeler->isLabelRelevantNode(node));
   LabelSet finalSet;
+
+  // special case of incExpr in SgForStatement
+  if(SgNodeHelper::isForIncExpr(node)) {
+	finalSet.insert(labeler->getLabel(node));
+	return finalSet;
+  }
 
   // special case of function call
   if(SgNodeHelper::Pattern::matchFunctionCall(node)) {
@@ -352,6 +372,7 @@ LabelSet CFAnalyzer::finalLabels(SgNode* node) {
 	}
 	return finalSet;
   }
+  case V_SgForStatement:
   case V_SgDoWhileStmt:
   case V_SgWhileStmt: {
 	SgNode* condNode=SgNodeHelper::getCond(node);
@@ -376,8 +397,6 @@ LabelSet CFAnalyzer::finalLabels(SgNode* node) {
 	finalSet.insert(labeler->functionCallReturnLabel(node));
 	return finalSet;
 
-  case V_SgForStatement: // TODO
-	
   default:
 	cerr << "Error: Unknown node in CodeThorn::CFAnalyzer::finalLabels: "<<node->sage_class_name()<<endl; exit(1);
    }
@@ -568,12 +587,17 @@ int CFAnalyzer::reduceBlockBeginNodes(Flow& flow) {
 	  cnt++;
 	  Flow inFlow=flow.inEdges(*i);
 	  Flow outFlow=flow.outEdges(*i);
-	  assert(outFlow.size()<=1);
-	  // inedges: (n1,b)
-	  // outedge: (b,n2)
-	  // remove(n1,b)
-	  // remove(b,n2)
-	  // insert(n1,n2)
+
+	  // multiple out-edges not supported yet
+	  assert(outFlow.size()<=1); 
+
+	  /* description of essential operations:
+	   *   inedges: (n_i,b)
+	   *   outedge: (b,n2) 
+	   *   remove(n_i,b)
+	   *   remove(b,n2)
+	   *   insert(n1,n2)
+	   */
 	  for(Flow::iterator initer=inFlow.begin();initer!=inFlow.end();++initer) {
 		Edge e1=*initer;
 		Edge e2=*outFlow.begin();
@@ -620,7 +644,7 @@ Flow CFAnalyzer::WhileAndDoWhileLoopFlow(SgNode* node,
   LabelSet finalSetB=finalLabels(bodyNode);
   edgeSet+=flowB;
   edgeSet.insert(edge);
-  // back edges
+  // back edges in while (forward edges in do-while)
   for(LabelSet::iterator i=finalSetB.begin();i!=finalSetB.end();++i) {
 	Edge e;
 	if(SgNodeHelper::isCond(labeler->getNode(*i))) {
@@ -814,7 +838,76 @@ Flow CFAnalyzer::flow(SgNode* node) {
 	return edgeSet;
   }
 
-  case V_SgForStatement: // TODO
+  case V_SgForStatement: {
+	SgStatementPtrList& stmtPtrList=SgNodeHelper::getForInitList(node);
+	int len=stmtPtrList.size();
+	if(len==0) {
+	  // empty initializer list (hence, an initialization stmt cannot be initial stmt of for)
+	  cout << "INFO: for-stmt: initializer-list is empty."<<endl;
+	  cerr << "Error: empty for-stmt initializer not supported yet."<<endl;
+	  exit(1);
+	}
+	assert(len>0);
+	SgNode* lastNode=0;
+	if(len==1) {
+	  SgNode* onlyStmt=*stmtPtrList.begin();
+	  Flow onlyFlow=flow(onlyStmt);
+	  edgeSet+=onlyFlow;
+	  lastNode=onlyStmt;
+	} else {
+	  assert(stmtPtrList.size()>=2);
+	  for(SgStatementPtrList::iterator i=stmtPtrList.begin();
+		  i!=stmtPtrList.end();
+		  ++i) {
+		SgNode* node1=*i;
+		SgStatementPtrList::iterator i2=i;
+		i2++;
+		SgNode* node2=*i2;
+		Flow flow12=flow(node1,node2);
+		edgeSet+=flow12;
+		i2++;
+		if(i2==stmtPtrList.end()) {
+		  lastNode=node2;
+		  break;
+		}		
+	  }
+	}
+	SgNode* condNode=SgNodeHelper::getCond(node);
+	if(!condNode)
+	  throw "Error: for-loop: empty condition not supported yet.";
+	Flow flowInitToCond=flow(lastNode,condNode);
+	edgeSet+=flowInitToCond;
+	Label condLabel=getLabel(condNode);
+	SgNode* bodyNode=SgNodeHelper::getLoopBody(node);
+	assert(bodyNode);
+	Edge edge=Edge(condLabel,EDGE_TRUE,initialLabel(bodyNode));
+	edge.addType(EDGE_FORWARD);
+	Flow flowB=flow(bodyNode);
+	LabelSet finalSetB=finalLabels(bodyNode);
+	edgeSet+=flowB;
+	edgeSet.insert(edge);
+	// back edges
+	for(LabelSet::iterator i=finalSetB.begin();i!=finalSetB.end();++i) {
+	  SgExpression* incExp=SgNodeHelper::getForIncExpr(node);
+	  if(!incExp)
+		throw "Error: for-loop: empty incExpr not supported yet.";
+	  assert(incExp);
+	  Label incExpLabel=getLabel(incExp);
+	  assert(incExpLabel!=Labeler::NO_LABEL);
+	  Edge e1,e2;
+	  if(SgNodeHelper::isCond(labeler->getNode(*i))) {
+		e1=Edge(*i,EDGE_FALSE,incExpLabel);
+		e1.addType(EDGE_FORWARD);
+		e2=Edge(incExpLabel,EDGE_BACKWARD,condLabel);
+	  } else {
+		e1=Edge(*i,EDGE_FORWARD,incExpLabel);
+		e2=Edge(incExpLabel,EDGE_BACKWARD,condLabel);
+	  }
+	  edgeSet.insert(e1);
+	  edgeSet.insert(e2);
+	}
+	return edgeSet;
+  }
 	
   default:
 	cerr << "Error: Unknown node in CodeThorn::CFAnalyzer::flow: "<<node->sage_class_name()<<endl; 

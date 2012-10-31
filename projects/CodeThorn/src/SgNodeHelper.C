@@ -348,6 +348,30 @@ bool SgNodeHelper::isCond(SgNode* node) {
 	return false;
 }
 
+SgStatementPtrList& SgNodeHelper::getForInitList(SgNode* node) {
+  if(SgForStatement* forstmt=isSgForStatement(node)) {
+	return forstmt->get_init_stmt();
+  }
+  // SgForInitStatement
+  throw "SgNodeHelper::getForInitList: improper node operation.";
+}
+SgExpression* SgNodeHelper::getForIncExpr(SgNode* node) {
+  if(SgForStatement* forstmt=isSgForStatement(node)) {
+	return forstmt->get_increment();
+  }
+  // SgForInitStatement
+  throw "SgNodeHelper::getForIncExpr: improper node operation.";
+}
+bool SgNodeHelper::isForIncExpr(SgNode* node) {
+  if(SgForStatement* sgFor=isSgForStatement(SgNodeHelper::getParent(node))) {
+	if(node==sgFor->get_increment()) {
+	  return true;
+	}
+  }
+  return false;
+}
+
+
 SgNode* SgNodeHelper::getCond(SgNode* node) {
   if(SgConditionalExp*  condexp=isSgConditionalExp(node)) {
 	return condexp->get_conditional_exp();

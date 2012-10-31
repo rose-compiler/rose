@@ -32,8 +32,6 @@ bool CodeThornLanguageRestrictor::checkIfAstIsAllowed(SgNode* node) {
 	  cerr << "Error: Unsupported language construct found: " << (*i)->sage_class_name() << endl;
 	  // report first error and return
 	  switch((*i)->variantT()) {
-	  V_SgDoWhileStmt: cerr << "Error info: cfg construction for do-while-statement not supported yet."<<endl; break;
-	  V_SgForStatement: cerr << "Error info: cfg construction for for-statement not supported yet."<<endl; break;
 	  V_SgContinueStmt: cerr << "Error info: cfg construction for continue-statement not supported yet."<<endl; break;
 	  }
 	  return false;
@@ -53,6 +51,10 @@ void checkProgram(SgNode* root) {
   vs.insert(V_SgIfStmt);
   vs.insert(V_SgWhileStmt);
   vs.insert(V_SgDoWhileStmt);
+
+  vs.insert(V_SgForInitStatement);
+  vs.insert(V_SgForStatement);
+
   vs.insert(V_SgBreakStmt);
   vs.insert(V_SgAndOp);
   vs.insert(V_SgOrOp);

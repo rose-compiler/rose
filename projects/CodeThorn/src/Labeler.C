@@ -19,6 +19,14 @@ Labeler::Labeler(SgNode* start) {
 int Labeler::isLabelRelevantNode(SgNode* node) {
   if(node==0) 
 	return 0;
+
+  /* special case: the incExpr in a SgForStatement is a raw SgExpression
+   * hence, the root can be any unary or binary node. We therefore perform
+   * a lookup in the AST to check whether we are inside a SgForStatement
+   */
+  if(SgNodeHelper::isForIncExpr(node))
+	return 1;
+
   switch(node->variantT()) {
   case V_SgFunctionCallExp:
   case V_SgBasicBlock:
@@ -36,6 +44,8 @@ int Labeler::isLabelRelevantNode(SgNode* node) {
   case V_SgIfStmt:
   case V_SgWhileStmt:
   case V_SgDoWhileStmt:
+  case V_SgForStatement:
+	//  case V_SgForInitStatement: // TODO: investigate: we might not need this
   case V_SgBreakStmt:
   case V_SgVariableDeclaration:
   case V_SgLabelStatement:

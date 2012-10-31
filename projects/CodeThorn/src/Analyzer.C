@@ -708,8 +708,13 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
 	return elistify(analyzeVariableDeclaration(decl,currentEState, edge.target));
   }
 
-  if(isSgExprStatement(nextNodeToAnalyze1)) {
-	SgNode* nextNodeToAnalyze2=SgNodeHelper::getExprStmtChild(nextNodeToAnalyze1);
+  if(isSgExprStatement(nextNodeToAnalyze1) || SgNodeHelper::isForIncExpr(nextNodeToAnalyze1)) {
+	SgNode* nextNodeToAnalyze2;
+	if(isSgExprStatement(nextNodeToAnalyze1))
+	  nextNodeToAnalyze2=SgNodeHelper::getExprStmtChild(nextNodeToAnalyze1);
+	if(SgNodeHelper::isForIncExpr(nextNodeToAnalyze1)) {
+	  nextNodeToAnalyze2=nextNodeToAnalyze1;
+	}
 	assert(nextNodeToAnalyze2);
 	Label newLabel;
 	PState newPState;

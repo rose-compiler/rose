@@ -38,6 +38,18 @@ namespace SgNodeHelper {
   /*! computes for a given node at which scope nesting level this node is in its AST */
   int scopeNestingLevel(SgNode* node);
 
+  //! returns the initializer-list of For.
+  SgStatementPtrList& getForInitList(SgNode* node);
+  //! returns the incr/derc-expr of For.
+  SgExpression* getForIncExpr(SgNode* node);
+
+  //! determines whether a node is the root node of an AST representing the inc-expr
+  //! in a SgForStatement. This function is helpful to deal with this special case
+  //! in the ROSE AST where an expression does not have a root node which can be
+  //! easily determined to be a root node of an expression (i.e. here it can be *any* binary or unary node
+  //! in constrast to all other expressions in the ROSE AST which are either a SgExprStatement or have a SgExpressionRoot node.
+  bool isForIncExpr(SgNode* node);
+
   //! returns the root node representing the AST of the condition of If, While, DoWhile, For, CondOperator (does not handle switch).
   SgNode* getCond(SgNode* node);
 
@@ -77,7 +89,7 @@ namespace SgNodeHelper {
 
 	 case 3: no definition is available.  (e.g. this is the case for
 	 linked stdlib functions). In this case a null-pointer is
-	 returned. This can only be determined after case 2 has been
+	 returned. This is determined after case 2 has been
 	 checked.
   */
   SgFunctionDefinition* determineFunctionDefinition(SgFunctionCallExp* fCall);
@@ -179,7 +191,7 @@ namespace SgNodeHelper {
   SgNode* getRhs(SgNode* node);
   
   /*! returns the parent of a node. Essentially a wrapper function of the ROSE get_parent() function, but throws
-	 an expection if no parent exists. For SgProject node  no exception is thrown if no parent exists because it is the root node of a ROSE AST. 
+	 an exception if no parent exists. For SgProject node  no exception is thrown if no parent exists because it is the root node of a ROSE AST. 
   */
   SgNode* getParent(SgNode* node);
 
