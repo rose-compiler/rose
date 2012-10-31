@@ -68,6 +68,7 @@ class BoolLattice {
   /// operator= : C++ default used
   bool operator==(BoolLattice other) const;
   bool operator!=(BoolLattice other) const;
+  bool operator<(BoolLattice other) const;
   string toString() const;
   friend ostream& operator<<(ostream& os, const BoolLattice& toStream);
  private:
