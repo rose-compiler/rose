@@ -244,7 +244,7 @@ int main( int argc, char * argv[] )
   }  
   
   if (allTests==true) {
-    bool debug =false;
+    bool debug =true;
     size_t startNr = 0;
     size_t stopNr = (size_t)(-1);
     if (argc>2) {
