@@ -178,6 +178,9 @@ namespace SgNodeHelper {
   //! returns the child of SgExpressionRoot (which is guaranteed to be unique and to exist)
   SgNode* getExprRootChild(SgNode* node);
 
+  //! returns the child of a SgUnaryExp (which is guaranteed to be unique and to exist)
+  SgNode* getUnaryOpChild(SgNode* node);
+
   /*! returns the number of children as int (intentionally not as t_size)
 	 ensures that the number of children fits into an int, otherwise throws exception.
   */

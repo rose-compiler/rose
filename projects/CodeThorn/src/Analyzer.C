@@ -759,6 +759,47 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
 	  return elistify(createEState(edge.target,newPState,cset));
 	}
 
+	if(SgNodeHelper::isPrefixIncDecOp(nextNodeToAnalyze2)
+	   || SgNodeHelper::isPostfixIncDecOp(nextNodeToAnalyze2)) {
+	  SgNode* nextNodeToAnalyze3=SgNodeHelper::getUnaryOpChild(nextNodeToAnalyze2);
+	  VariableId var;
+	  if(ExprAnalyzer::variable(nextNodeToAnalyze3,var)) {
+
+		list<SingleEvalResultConstInt> res=exprAnalyzer.evalConstInt(nextNodeToAnalyze3,currentEState,true,true);
+		assert(res.size()==1); // must hold for currently supported limited form of ++,--
+		list<SingleEvalResultConstInt>::iterator i=res.begin();
+		EState estate=(*i).estate;
+		PState newPState=*estate.pstate();
+		ConstraintSet cset=*estate.constraints();
+
+		AType::ConstIntLattice varVal=newPState[var].getValue();
+		AType::ConstIntLattice const1=1;
+		switch(nextNodeToAnalyze2->variantT()) {		  
+		case V_SgPlusPlusOp:
+		  varVal=varVal+const1; // overloaded binary + operator
+		  break;
+		case V_SgMinusMinusOp:
+		  varVal=varVal-const1; // overloaded binary - operator
+		  break;
+		default:
+		  cerr << "Operator-AST:"<<astTermToMultiLineString(nextNodeToAnalyze2,2)<<endl;
+		  cerr << "Operator:"<<SgNodeHelper::nodeToString(nextNodeToAnalyze2)<<endl;
+		  cerr << "Operand:"<<SgNodeHelper::nodeToString(nextNodeToAnalyze3)<<endl;
+		  cerr<<"Error: programmatic error in handling of inc/dec operators."<<endl;
+		  exit(1);
+		}
+		newPState[var]=varVal;
+
+		if(!(*i).result.isTop())
+		  cset.removeAllConstraintsOfVar(var);
+		list<EState> estateList;
+		estateList.push_back(createEState(edge.target,newPState,cset));
+		return estateList;
+	  } else {
+		throw "Error: currently inc/dec operators are only supported for variables.";
+	  }
+	}
+	
 	if(isSgAssignOp(nextNodeToAnalyze2)) {
 	  SgNode* lhs=SgNodeHelper::getLhs(nextNodeToAnalyze2);
 	  SgNode* rhs=SgNodeHelper::getRhs(nextNodeToAnalyze2);
@@ -870,7 +911,8 @@ set<const EState*> Analyzer::transitionSourceEStateSetOfLabel(Label lab) {
   return estateSet;
 }
 
-// TODO: this function is obsolete (to delete)
+// TODO: this function should be implemented with a call of ExprAnalyzer::evalConstInt
+// TODO: currently all rhs which are not a variable are evaluated to top by this function
 // TODO: x=x eliminates constraints of x but it should not.
 PState Analyzer::analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode* rhs, ConstraintSet& cset) {
   assert(isSgExpression(rhs));

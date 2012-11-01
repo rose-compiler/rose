@@ -505,6 +505,15 @@ SgNode* SgNodeHelper::getExprStmtChild(SgNode* node) {
   return SgNodeHelper::getFirstChild(node);
 }
 
+
+SgNode* SgNodeHelper::getUnaryOpChild(SgNode* node) {
+  if(!dynamic_cast<SgUnaryOp*>(node)) {
+	cerr << "Error: improper type in getUnaryOpChild ("<<node->class_name()<<")"<<endl;
+	exit(1);
+  }
+  return SgNodeHelper::getFirstChild(node);
+}
+
 SgNode* SgNodeHelper::getFirstChild(SgNode* node) {
   int len=SgNodeHelper::numChildren(node);
   if(len>0)

@@ -98,6 +98,10 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
   // initialize with default values from argument(s)
   res.estate=estate;
   res.result=AType::ConstIntLattice(AType::Bot());
+  if(SgNodeHelper::isPostfixIncDecOp(node)) {
+	cout << "INFO: incdec-op found!"<<endl;
+  }
+
   if(dynamic_cast<SgBinaryOp*>(node)) {
 	//cout << "BinaryOp:"<<SgNodeHelper::nodeToString(node)<<endl;
 
@@ -312,7 +316,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
 		}
 		default:
 		  cerr << "Binary Op:"<<SgNodeHelper::nodeToString(node)<<endl;
-		  throw "Error: evalConstInt::binary operation failed.";
+		  throw "Error: evalConstInt::unkown binary operatio.";
 		}
 	  }
 	}
@@ -336,11 +340,10 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
 		resultList.push_back(res);
 	  break;
 	  case V_SgCastExp: {
-		// no constraint handling necessary, as all constraints get computed and propagated for child
 		SgCastExp* castExp=isSgCastExp(node);
 		// TODO: model effect of cast when sub language is extended
+		res.result=operandResult.result;
 		res.exprConstraints=operandResult.exprConstraints;
-		//return evalConstInt(SgNodeHelper::getFirstChild(castExp),estate,useConstraints,safeConstraintPropagation);
 		resultList.push_back(res);
 		break;
 	  }
@@ -351,11 +354,9 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
 		resultList.push_back(res);
 		break;
 	  }
-
-
 	  default:
 		cerr << "@NODE:"<<node->sage_class_name()<<endl;
-		throw "Error: evalConstInt::unary operation failed.";
+		throw "Error: evalConstInt::unknown unary operation.";
 	  } // end switch
 	}
 	return  resultList;

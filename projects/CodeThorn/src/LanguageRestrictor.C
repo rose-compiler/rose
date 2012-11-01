@@ -100,7 +100,7 @@ bool LanguageRestrictor::checkIfAstIsAllowed(SgNode* node) {
   RoseAst ast(node);
   for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
 	if(!isAllowedAstNode(*i)) {
-	  cerr << "Error: Unsupported language construct found: " << (*i)->sage_class_name() << endl;
+	  cerr << "Language-Restrictor: excluded language construct found: " << (*i)->sage_class_name() << endl;
 	  return false;
 	}
   }
