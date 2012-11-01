@@ -1,5 +1,5 @@
 
-int main()
+int foo()
 {
   int i=0;
   int* p;
@@ -8,4 +8,5 @@ int main()
    int x = i;
    *p = x;
  }
+ return 0;
 } 
