@@ -4243,20 +4243,45 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
             // This string at least has a quote
             // unsigned int endingQuote   = i->rfind("\"");
                std::string::size_type endingQuote   = i->rfind("\"");
-
+#if 0
+               printf ("startingQuote = %zu endingQuote = %zu \n",startingQuote,endingQuote);
+#endif
             // There should be a double quote on both ends of the string
                ROSE_ASSERT (endingQuote != std::string::npos);
 
-               std::string quotedSubstring = i->substr(startingQuote,endingQuote);
+            // DQ (11/1/2012): Fixed bug in use of STL string::substr() function (2nd parameter should be the size, not the end position).
+            // std::string quotedSubstring = i->substr(startingQuote,endingQuote);
             // printf ("quotedSubstring = %s \n",quotedSubstring.c_str());
-
-               std::string fixedQuotedSubstring = std::string("\\\"") + quotedSubstring + std::string("\\\"");
-            // printf ("fixedQuotedSubstring = %s \n",fixedQuotedSubstring.c_str());
-
+            // std::string quotedSubstringWithoutQuotes = i->substr(startingQuote,endingQuote);
+               std::string::size_type substringWithoutQuotesSize = ((endingQuote-1) - (startingQuote+1)) + 1;
+#if 0
+               printf ("substringWithoutQuotesSize = %zu \n",substringWithoutQuotesSize);
+#endif
+            // Generate the string without quotes so that we can rebuild the quoted string.
+            // This is more critical if there were escpes before the quotes in the original string.
+               std::string quotedSubstringWithoutQuotes = i->substr(startingQuote+1,substringWithoutQuotesSize);
+#if 0
+               printf ("quotedSubstringWithoutQuotes = %s \n",quotedSubstringWithoutQuotes.c_str());
+#endif
+            // DQ (11/1/2012): Robb has suggested using single quote instead of double quotes here.
+            // This is a problem for the processing of mutt (large C application).  But I didn't have 
+            // to do this to get it to work properly.  It still might be a good alternative.
+            // std::string fixedQuotedSubstring = std::string("\\\"") + quotedSubstring + std::string("\\\"");
+            // std::string fixedQuotedSubstring = std::string("\\\'") + quotedSubstring + std::string("\\\'");
+            // std::string fixedQuotedSubstring = std::string("\'") + quotedSubstring + std::string("\'");
+            // std::string fixedQuotedSubstring = std::string("\\'") + quotedSubstring + std::string("\\'");
+            // std::string fixedQuotedSubstring = std::string("\\") + quotedSubstringWithoutQuotes + std::string("\\");
+            // std::string fixedQuotedSubstring = std::string("\\\"") + quotedSubstringWithoutQuotes + std::string("\\\"");
+               std::string fixedQuotedSubstring = std::string("\"") + quotedSubstringWithoutQuotes + std::string("\"");
+#if 0
+               printf ("fixedQuotedSubstring = %s \n",fixedQuotedSubstring.c_str());
+#endif
             // Now replace the quotedSubstring with the fixedQuotedSubstring
+            // i->replace(startingQuote,endingQuote,fixedQuotedSubstring);
                i->replace(startingQuote,endingQuote,fixedQuotedSubstring);
-
-            // printf ("Modified argument = %s \n",(*i).c_str());
+#if 0
+               printf ("Modified argument = %s \n",(*i).c_str());
+#endif
              }
         }
 

@@ -388,6 +388,11 @@ $(TEST_Objects): ../../testTranslator
 test2005_168.o: $(srcdir)/test2005_168.c
 	$(testTranslator) $(ROSE_FLAGS) -I$(top_srcdir)/src/util/commandlineProcessing -c $(srcdir)/test2005_168.c
 
+# DQ (11/1/2012): Added test code to test string concatination using a value defined 
+# via a macro specified on the command line. This tests the string quoting mechanism.
+test2012_145.o: $(srcdir)/test2012_145.c
+	$(testTranslator) $(ROSE_FLAGS) -DSTRING_MACRO=\"some_text\" -c $(srcdir)/test2012_145.c
+
 $(TEST_Exe_Objects): %.o: $(srcdir)/%.c $(testTranslator)
 	$(testTranslator) $(ROSE_FLAGS) -c $<
 
@@ -434,6 +439,7 @@ check-local:
 #	These C programs must be called externally to the test codes in the "TESTCODES" make variable
 	@$(MAKE) $(PASSING_TEST_Objects)
 #	@$(MAKE) caller.o caller.out
+	@$(MAKE) test2012_145.o
 	@echo "*********************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests/C_tests: make check rule complete (terminated normally) ******"
 	@echo "*********************************************************************************************"
