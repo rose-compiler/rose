@@ -162,6 +162,13 @@ CallGraphBuilder::buildCallGraph(Predicate pred)
     GetOneFuncDeclarationPerFunction defFunc;
     Rose_STL_Container<SgNode *> allFunctions = NodeQuery::queryMemoryPool(defFunc, &vv);
 
+    // We don't want to see SgTemplateMemberFunctionDeclaration objects since it doesn't make sense to do control flow analysis
+    // over templates, but rather only over template instantiations. [RPM 2012-10-26]
+    for (Rose_STL_Container<SgNode*>::iterator fi=allFunctions.begin(); fi!=allFunctions.end(); ++fi)
+        if (isSgTemplateMemberFunctionDeclaration(*fi))
+            *fi = NULL;
+    allFunctions.erase(std::remove(allFunctions.begin(), allFunctions.end(), (SgNode*)NULL), allFunctions.end());
+
     ClassHierarchyWrapper classHierarchy(project);
     Rose_STL_Container<SgNode *>::iterator i = allFunctions.begin();
 
