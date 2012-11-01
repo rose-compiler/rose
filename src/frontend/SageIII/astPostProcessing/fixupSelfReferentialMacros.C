@@ -77,3 +77,74 @@ FixupSelfReferentialMacrosInAST::visit ( SgNode* node )
 
    }
 
+
+
+extern std::set<SgVariableDeclaration*> nodesAddedWithinFieldUseSet;
+
+void fixupEdgBugDuplicateVariablesInAST()
+   {
+  // DQ (3/11/2006): Introduce tracking of performance of ROSE.
+     TimingPerformance timer1 ("Fixup known EDG bug where some variable declarations are dropped from the source sequence lists:");
+
+     std::set<SgVariableDeclaration*> declarations_to_remove;
+
+  // Loop over all variables added using the convert_field_use() function.
+     std::set<SgVariableDeclaration*>::iterator i = nodesAddedWithinFieldUseSet.begin();
+     while (i != nodesAddedWithinFieldUseSet.end())
+        {
+          SgVariableDeclaration* var_decl = *i;
+          SgName name = var_decl->get_variables()[0]->get_name();
+
+          SgClassDefinition* classDefinition = isSgClassDefinition(var_decl->get_parent());
+          ROSE_ASSERT(classDefinition != NULL);
+
+          std::vector<SgDeclarationStatement*> & members = classDefinition->get_members();
+
+       // Loop over all data members in the class.
+          std::vector<SgDeclarationStatement*>::iterator j = members.begin();
+          while (j != members.end())
+             {
+               SgVariableDeclaration* possible_matching_variable_declaration = isSgVariableDeclaration(*j);
+               if (possible_matching_variable_declaration != NULL && possible_matching_variable_declaration != var_decl)
+                  {
+                    if (possible_matching_variable_declaration->get_variables()[0]->get_name() == name)
+                       {
+#if 0
+                         printf ("matching variable declaration found for name = %s \n",name.str());
+#endif
+                         declarations_to_remove.insert(var_decl);
+                       }
+                  }
+ 
+               j++;
+             }
+
+          i++;
+        }
+
+  // Now remove all of the variable declarations that we detected to be duplicates.
+     std::set<SgVariableDeclaration*>::iterator k = declarations_to_remove.begin();
+     while (k != declarations_to_remove.end())
+        {
+          SgDeclarationStatement* var_decl = *k;
+
+          SgClassDefinition* classDefinition = isSgClassDefinition(var_decl->get_parent());
+          ROSE_ASSERT(classDefinition != NULL);
+
+          std::vector<SgDeclarationStatement*> myvector;
+          myvector.push_back(*k);
+
+          std::vector<SgDeclarationStatement*> & members = classDefinition->get_members();
+
+       // members.erase(*k);
+       // members.erase(myvector.begin(),myvector.end());
+
+       // This is the remove/erase idiom.
+          members.erase(remove(members.begin(), members.end(), *k), members.end());
+
+          k++;
+        }
+
+   }
+
+

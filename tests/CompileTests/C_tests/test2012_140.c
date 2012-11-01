@@ -2,7 +2,7 @@ void foo() {
 #if 1
 "x";
 #endif
-#if 0
+#if 1
 "'";
 #if 1
 "\"";
