@@ -1,6 +1,11 @@
 #include "sage3basic.h"
 #include "fixupSelfReferentialMacros.h"
 
+// DQ (10/14/2010):  This should only be included by source files that require it.
+// This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
+#include "rose_config.h"
+
+
 void fixupSelfReferentialMacrosInAST( SgNode* node )
    {
   // DQ (3/11/2006): Introduce tracking of performance of ROSE.
@@ -79,6 +84,9 @@ FixupSelfReferentialMacrosInAST::visit ( SgNode* node )
 
 
 
+#ifdef ROSE_USE_NEW_EDG_INTERFACE
+
+// The definition of this variable is only available to the EDG 4.x work.
 extern std::set<SgVariableDeclaration*> nodesAddedWithinFieldUseSet;
 
 void fixupEdgBugDuplicateVariablesInAST()
@@ -147,4 +155,5 @@ void fixupEdgBugDuplicateVariablesInAST()
 
    }
 
+#endif
 
