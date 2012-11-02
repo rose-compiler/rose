@@ -1,5 +1,5 @@
 int global;
-int main()
+int foo()
 {
   global=1;
   return 0;

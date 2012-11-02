@@ -284,7 +284,7 @@ sub help {
 	     `pod2text $0 2>/dev/null` ||
 	     `sed -ne '/^=pod/,/^=cut/p' $0 2>/dev/null`;
   die "$0: see source file for documentation" unless $_;
-  if (open LESS, "|less") {
+  if (open LESS, "|less -R") {
     print LESS $_;
     close LESS;
   } else {
