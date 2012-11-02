@@ -859,11 +859,12 @@ void Unparse_Type::unparseNameType(SgType* type, SgUnparse_Info& info)
    }
 #endif
 
+
 void
 Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
    {
 #if 0
-      printf ("Inside of Unparse_Type::unparseClassType type = %p \n",type);
+     printf ("Inside of Unparse_Type::unparseClassType type = %p \n",type);
 #endif
 
 #if 0
@@ -909,7 +910,9 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
              }
             else
              {
-            // printf ("Can't find a class declaration with an attached definition! \n");
+#if 0
+               printf ("Can't find a class declaration with an attached definition! \n");
+#endif
              }
         }
 
@@ -1001,6 +1004,9 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
                nm = decl->get_name();
              }
             else
+
+#error "DEAD CODE!"
+
              {
             // Else if this is a declaration in a variable declaration, then we do want to output a generated name.
             // We could also mark the declaration for the cases where this is required. See test2012_141.C for this case.
@@ -1150,6 +1156,9 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
              {
             // DQ (8/17/2006): Handle the case where the definition does not exist (there may still be a pointer to the type).
                SgClassDefinition* classdefn_stmt = decl->get_definition();
+#if 0
+               printf ("In unparseClassType: for decl = %p = %s we want to output the class definition = %p \n",decl,decl->class_name().c_str(),classdefn_stmt);
+#endif
                if (classdefn_stmt != NULL)
                   {
                     SgUnparse_Info ninfo(info);
@@ -1172,19 +1181,21 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
 
                     ninfo.set_isUnsetAccess();
                     curprint ( "{");
-                 // printf ("In unparseClassType: classdefn_stmt = %p \n",classdefn_stmt);
                     if (classdefn_stmt == NULL)
                        {
                          printf ("Error: In unparseClassType(): classdefn_stmt = NULL cdecl = %p = %s \n",decl,decl->get_name().str());
                        }
                     ROSE_ASSERT(classdefn_stmt != NULL);
+#if 0
+                    printf ("In unparseClassType: classdefn_stmt = %p classdefn_stmt->get_members().size() = %zu \n",classdefn_stmt, classdefn_stmt->get_members().size());
+#endif
                     SgDeclarationStatementPtrList::iterator pp = classdefn_stmt->get_members().begin();
                     while (pp != classdefn_stmt->get_members().end())
                        {
                       // DQ (10/18/2012): If this is in the context of a conditional then the ";" will be supressed.
                       // We could explicitly output a ";" in this case if required.
 #if 0
-                         printf ("In unparseClassType: ninfo.isSkipSemiColon() = %s \n",ninfo.SkipSemiColon() ? "true" : "false");
+                         printf ("In unparseClassType: output member declaration: %p ninfo.isSkipSemiColon() = %s \n",*pp,ninfo.SkipSemiColon() ? "true" : "false");
 #endif
                          unp->u_exprStmt->unparseStatement((*pp), ninfo);
                          pp++;
@@ -1206,6 +1217,13 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
                     ninfo.set_current_context(NULL);
                     ninfo.set_current_context(saved_context);
                   }
+                 else
+                  {
+#if 0
+                    printf ("classdefn_stmt not found for decl = %p \n",decl);
+#endif
+                  }
+               
             // GB (09/18/2007): If the class definition is unparsed, also unparse its attached preprocessing info.
                if (cDefiningDecl != NULL)
                   {

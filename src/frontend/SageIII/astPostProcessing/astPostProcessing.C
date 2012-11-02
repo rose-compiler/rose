@@ -159,6 +159,9 @@ void postProcessingSupport (SgNode* node)
 #ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
           printf ("Postprocessing AST build using new EDG/Sage Translation Interface. \n");
 #endif
+       // DQ (10/31/2012): Added fixup for EDG bug which drops variable declarations of some source sequence lists.
+          fixupEdgBugDuplicateVariablesInAST();
+
        // DQ (5/1/2012): After EDG/ROSE translation, there should be no IR nodes marked as transformations.
           detectTransformations(node);
 
