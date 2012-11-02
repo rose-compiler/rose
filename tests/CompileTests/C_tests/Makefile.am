@@ -226,6 +226,9 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2012_142.c \
      test2012_143.c \
      test2012_144.c \
+     test2012_146.c \
+     test2012_147.c \
+     test2012_148.c \
      math.c \
      complex_01.c \
      constants.c
@@ -251,6 +254,8 @@ TESTCODES_REQUIRED_TO_PASS = \
 #                 default case at the same scope as the other case option statements. Adding this level of support
 #                 to the switch statment support in ROSE is deferred to later. test2012_137.c is a required test
 #                 code to pass; so that we can test the rewritten version of the switch.
+# test2012_145.c NOT A FAILING test, but tested below with -D options.
+
 
 # This is a C99 test code (moved to the C99_tests directory). (These are not really C99 codes, I thought they were).
 # test2012_20.c 
