@@ -195,7 +195,7 @@ public:
 class Verifier: public BottomUpVisitor {
   EStateSet& eStateSet;
   LTLStateTransitionGraph stg;
-  deque<Label>& endpoints;
+  deque<const EState*> endpoints;
   Label start;
   // this map contains the label of every LTL expression
   map<const Expr*, Label> expr_label;
@@ -203,9 +203,9 @@ class Verifier: public BottomUpVisitor {
 public:
   LTLStateTransitionGraph ltl_stg;
 
-  Verifier(EStateSet& ess, BoostTransitionGraph& g, deque<Label>& exits,
+  Verifier(EStateSet& ess, BoostTransitionGraph& g,
 	   Label start_label, Label max_label, short expr_size)
-    : eStateSet(ess), endpoints(exits), start(start_label) {
+    : eStateSet(ess), start(start_label) {
     // reserve a result map for each label
     // it maps an analysis result to each sub-expression of the ltl formula
 
@@ -226,6 +226,14 @@ public:
 	       stg.vertex[LTLState(g[tgt], Bot())], 
 	       stg.g);
     }
+
+    // keep track of all endpoints
+    LTLGraphTraits::vertex_iterator lvi, lvi_end;
+    for (tie(lvi, lvi_end) = vertices(stg.g); lvi != lvi_end; ++lvi) {
+      if (out_degree(*lvi, stg.g) == 0)
+	endpoints.push_back(stg.g[*lvi].estate);
+    }
+
   }
 
   /**
@@ -391,37 +399,35 @@ public:
    *
    * transfer(a, next)
    */
-  template <typename Transfer>
-  void analyze1(short e,
-		Transfer transfer,
-		LTLStateTransitionGraph& stg)  {
-    LTLWorklist worklist(endpoints);
+  template<class TransferFunctor>
+  void analyze(LTLStateTransitionGraph& stg, TransferFunctor transfer)  {
+    LTLWorklist worklist;//(endpoints);
 
     LTLGraphTraits::vertex_iterator vi, vi_end;
     for (tie(vi, vi_end) = vertices(stg.g); vi != vi_end; ++vi) {
       LTLState state = stg.g[*vi];
 
       // start at all fixpoints
-      BoolLattice p = transfer(state);
-      if (!p.isTop()) {
+      transfer(state, Bot());
+      if (!state.valstack.top().isBot()) {
 	worklist.push(stg.vertex[state]);
       }
     }
 
     while (!worklist.empty()) {
       LTLVertex v = worklist.front(); worklist.pop();
-      /*cerr<<"Visiting state "<<state<<endl;*/
+      cerr<<"Visiting state "<<stg.g[v].estate<<endl;
 
       /* Merge result of incoming edges */				
       /* init to neutral element in lattice */				
       BoolLattice joined_succs = Bot();					
 
       /* for each successor */
-      GraphTraits::out_edge_iterator out_i, out_end;
+      LTLGraphTraits::out_edge_iterator out_i, out_end;
       for (tie(out_i, out_end) = out_edges(v, stg.g); out_i != out_end; ++out_i) {
 	LTLVertex succ = target(*out_i, stg.g);
 	BoolLattice succ_prop = stg.g[succ].valstack.top();
-	/*cerr<<"  succ: "<<succ<<" = "<<succ_prop<<endl;*/
+	cerr<<"  succ: "<<succ<<" = "<<succ_prop<<endl;
 
 	BoolLattice lub = joined_succs.lub(succ_prop);
 	if ((joined_succs.isFalse() && succ_prop.isTrue()) ||
@@ -431,47 +437,45 @@ public:
 
 	  // Make a new state v', so we can calculate precise results
 	  // for both paths
-	  finish_transfer(e, transfer, v, succ_prop, stg, worklist);
+	  finish_transfer(transfer, v, succ_prop, stg, worklist);
 	} else {
 	  joined_succs = lub;
 	}
       }
 
-      finish_transfer(e, transfer, v, joined_succs, stg, worklist);
+      finish_transfer(transfer, v, joined_succs, stg, worklist);
 
     }
   }
 
+  struct AllEdges { bool operator() (LTLEdge e) { return true; } };
+
   /// this is essentially the second half of the function above call
   /// the transfer function and add all predecessors/successors to the
   /// worklist
-  template <typename Transfer>
-  void finish_transfer(short e,
-		       Transfer transfer,
+  template <class TransferFunctor>
+  void finish_transfer(TransferFunctor transfer,
 		       LTLVertex v, BoolLattice joined_succs, 
 		       LTLStateTransitionGraph& stg, LTLWorklist& worklist) {
     LTLState old_state = stg.g[v];
-    BoolLattice val = transfer(old_state, joined_succs);
+    LTLState new_state = transfer(old_state, joined_succs);
     // create a new state in lieu of the old state, and cut off the old state
-    LTLState updated_state = old_state;
-    updated_state.valstack.top() = val;
-    LTLVertex v_prime = add_state_if_new(updated_state, stg);
+    LTLVertex v_prime = add_state_if_new(new_state, stg);
     //stg.vertex[updated_state] = v;
     //stg.g[v] = updated_state;
     
-    if (v_prime != v) {
-      class { bool operator() (LTLEdge e) { return true; } } all;
-      remove_in_edge_if(v, all, stg.g);
-      // This is probably legal, because we didn't change anything:
-      return;
-    }
+    //if (v_prime != v) {
+    //  remove_in_edge_if(v, AllEdges(), stg.g);
+    //  // This is probably legal, because we didn't change anything:
+    //  return;
+    //}
 
     // for each predecessor
     LTLGraphTraits::in_edge_iterator in_i, in_end;
     for (tie(in_i, in_end) = in_edges(v, stg.g); in_i != in_end; ++in_i) {
       LTLVertex pred = source(*in_i, stg.g);
 
-      //cerr<<" succ: "<<succ<<" = "<<succ_prop<<endl;
+      cerr<<" succ(really pred): "<<stg.g[pred].estate<<" = .."<<endl;
       add_edge_if_new(pred, v_prime, stg);
       worklist.push(pred);
     }
@@ -479,11 +483,8 @@ public:
 
 
   /// tell if a state is an exit node
-  bool isEndpoint(Label l) {
-    for (deque<Label>::iterator i = endpoints.begin();
-	 i != endpoints.end(); ++i)
-      if (*i == l) return true;
-    return false;
+  bool isEndpoint(const EState* es) const {
+    return find(endpoints.begin(), endpoints.end(), es) != endpoints.end();
   }
 
   /// verify that two constraints are consistent, ie. not true and false
@@ -655,14 +656,34 @@ public:
    *
    * Implementation status: DONE
    */
+  struct TransferO {
+      TransferO(const Verifier& v, const OutputSymbol* e) : verifier(v), expr(e) {}
+      const Verifier& verifier;
+      const OutputSymbol* expr;
+      LTLState operator() (const LTLState& s, const BoolLattice& joined_succs ) const { 
+	LTLState newstate(s);
+	cerr<<"Ttransfer O: "<<newstate.valstack.top()<<" --> ";
+	newstate.valstack.pop();
+	newstate.valstack.push(isOutputState(s.estate, 
+					     expr->c, 
+					     verifier.isEndpoint(s.estate), 
+					     joined_succs));
+	cerr<<newstate.valstack.top()<<endl;
+	return newstate;
+      }
+    }; 
   void visit(const OutputSymbol* expr) {
-    short e = expr->label;
+    analyze(stg, TransferO(*this, expr));
+
+
+  //    short e = expr->label;
 //    bw_fixpoint(/* init */     Bot(),
 //                ///* start */    state->io.op != InputOutput::NONE,
 //                /* join */     LUB,
 //                /* transfer */ isOutputState(state, expr->c, isEndpoint(label), joined_succs),
 //                /* debug */    NOP/*cerr<<"out("<<string(1,expr->c)<<")"<<endl*/);
   }
+ 
 
   /// return True iff that state is a !Oc operation
   static BoolLattice isNegOutputState(const EState* estate, int c, bool endpoint,
@@ -791,9 +812,18 @@ public:
    * True, iff for each state we have TRUE
    * Implementation status: DONE
    */
+  struct TransferG {
+    LTLState operator() (const LTLState& s, const BoolLattice& joined_succs ) const { 
+      LTLState newstate(s);
+      BoolLattice e1 = newstate.valstack.top(); newstate.valstack.pop();
+      cerr<<"transfer G: "<<newstate.valstack.top()<<" --> ";
+      newstate.valstack.push(e1 && joined_succs);
+      cerr<<newstate.valstack.top()<<endl;
+      return newstate;
+    } 
+  };
   void visit(const Globally* expr) {
-    short e = expr->label;
-    short e1 = expr->expr1->label;
+    analyze(stg, TransferG());
 
 //    if (expr->quantified) {
 //      bw_fixpoint(/* init */      Bot(),
@@ -957,21 +987,6 @@ Checker::Checker(EStateSet& ess, TransitionGraph& _tg)
   g = full_graph;
 #endif
 
-  FOR_EACH_STATE(state, label) {
-    //if (out_degree(label, g) == 0) {
-     // endpoints.push_back(label);
-      //cerr<<label<<endl;
-    //}
-    bool endstate = true;
-    GraphTraits::out_edge_iterator out_i, out_end;
-    for (tie(out_i, out_end) = out_edges(label, g); out_i != out_end; ++out_i) {
-      Label succ = target(*out_i, g);
-      endstate = endstate && (succ==label);
-    }
-    if (endstate)
-      endpoints.push_back(label);
-  }
-
   //FOR_EACH_STATE(state, label) {
   //  cerr<<label<<": "<<state->toString()<<endl;
   //}
@@ -1042,7 +1057,7 @@ BoolLattice
 Checker::verify(const Formula& f)
 {
   // Verify!
-  Verifier v(eStateSet, g, endpoints, start, num_vertices(g), f.size());
+  Verifier v(eStateSet, g, start, num_vertices(g), f.size());
   const Expr& e = f;
   e.accept(v);
 #if 0

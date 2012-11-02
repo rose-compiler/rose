@@ -104,5 +104,6 @@ bool LanguageRestrictor::checkIfAstIsAllowed(SgNode* node) {
 	  return false;
 	}
   }
+  return true;
 }
 
