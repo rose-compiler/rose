@@ -1,6 +1,6 @@
 #include "sage3basic.h"
 #include "fixupCxxSymbolTablesToSupportAliasingSymbols.h"
-
+#include <string>
 #define ALIAS_SYMBOL_DEBUGGING 0
 
 void
@@ -57,7 +57,7 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
         {
        // If this is a class definition, then we need to make sure that we only for alias symbols for those declarations.
 #if ALIAS_SYMBOL_DEBUGGING
-          printf ("Injection of symbols from a class definition needs to respect access privledge (private, protected, public) declarations \n");
+          printf ("Injection of symbols from a class definition needs to respect access priviledge (private, protected, public) declarations \n");
 #endif
         }
 
@@ -155,10 +155,57 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
                             {
                            // not clear what to do here...
                            // I think we need more symbol table support for detecting matching symbols.
-                           // I think we also need more alias symbol specfic query support.
+                           // I think we also need more alias symbol specific query support.
                               break;
                             }
 
+                         case V_SgEnumSymbol:
+                         case V_SgVariableSymbol:
+                         case V_SgTemplateClassSymbol:
+                         case V_SgClassSymbol:
+                         case V_SgTemplateFunctionSymbol:
+                         case V_SgTemplateMemberFunctionSymbol:
+                         case V_SgFunctionSymbol:
+                         case V_SgMemberFunctionSymbol:
+                         case V_SgTypedefSymbol:
+                         case V_SgEnumFieldSymbol:
+                         case V_SgNamespaceSymbol:
+                         case V_SgTemplateSymbol:
+                         case V_SgLabelSymbol:
+                         {
+                           // Liao, 10/31/2012. 
+                           // Using lookup_function_symbol () etc. is not good enough since it returns the first match only.
+                           // There might be multiple hits. We have to go through them all instead of checking only the first hit
+                              alreadyExists = false; // reset to be false
+                             // using less expensive equal_range(), which can be O(logN) instead of O(N)
+                              // This matters since this function is called inside another loop with complexity of O(N) already.
+                              rose_hash_multimap * internal_table = currentScope->get_symbol_table()->get_table();
+                              ROSE_ASSERT (internal_table != NULL);
+                              std::pair<rose_hash_multimap::iterator, rose_hash_multimap::iterator> range = internal_table ->equal_range (name);
+                              for (rose_hash_multimap::iterator i = range.first; i != range.second; ++i)
+                              {
+                                SgSymbol * orig_current_symbol = i->second; 
+                                ROSE_ASSERT (orig_current_symbol != NULL);
+                                // strip off alias symbols
+                                SgSymbol * non_alias_symbol = orig_current_symbol; 
+                                while (isSgAliasSymbol(non_alias_symbol))
+                                {
+                                  non_alias_symbol = isSgAliasSymbol(non_alias_symbol) ->get_alias();
+                                  ROSE_ASSERT (non_alias_symbol != NULL);
+                                }
+                                SgNode* associatedDeclaration = i->second->get_symbol_basis();
+                                assert(associatedDeclaration != NULL);
+                                // same basis and same symbol type
+                                // The assumption is that no two symbols can share the same basis declaration TODO double check this!
+                                if (associatedDeclaration == symbolBasis && (non_alias_symbol->variantT() == symbol->variantT()))
+                                {
+                                  alreadyExists = true;
+                                  break;
+                                }
+                              } // end for
+                              break;
+                           }
+#if 0 // uniform handling by code above now
                          case V_SgEnumSymbol:
                             {
                            // alreadyExists = (currentScope->lookup_enum_symbol(name) != NULL);
@@ -187,7 +234,6 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
 
                       // DQ (2/12/2012): Not clear if this is the best way to add this support.
                          case V_SgTemplateClassSymbol:
-
                          case V_SgClassSymbol:
                             {
                            // alreadyExists = (currentScope->lookup_class_symbol(name) != NULL);
@@ -234,7 +280,7 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
                          case V_SgFunctionSymbol:
                          case V_SgMemberFunctionSymbol:
                             {
-                           // alreadyExists = (currentScope->lookup_function_symbol(name) != NULL);
+                            // alreadyExists = (currentScope->lookup_function_symbol(name) != NULL);
                               SgFunctionSymbol* tmpSymbol = currentScope->lookup_function_symbol(name);
                               if (tmpSymbol != NULL)
                                  {
@@ -242,9 +288,8 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
                                    ROSE_ASSERT(tmpSymbolBasis != NULL);
                                    alreadyExists = (tmpSymbolBasis == symbolBasis);
                                  }
-                              break;
+                             break;
                             }
-
                          case V_SgTypedefSymbol:
                             {
                            // alreadyExists = (currentScope->lookup_typedef_symbol(name) != NULL);
@@ -257,7 +302,6 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
                                  }
                               break;
                             }
-
                          case V_SgEnumFieldSymbol:
                             {
                            // alreadyExists = (currentScope->lookup_enum_field_symbol(name) != NULL);
@@ -310,6 +354,7 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
                               break;
                             }
 
+#endif
                          default:
                               printf ("Error: default reached in switch symbol = %p = %s \n",symbol,symbol->class_name().c_str());
                               ROSE_ASSERT(false);
