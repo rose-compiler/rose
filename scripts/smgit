@@ -92,6 +92,17 @@ useful in an environment with submodules.
                 --squash and --no-squash. The default is that merges are
                 always committed.
 
+   push         Pushes in the submodules, but uses the submodule
+                source ref that corresponds to the ref that would be
+                checked out in the submodule by "smgit checkout" of
+                that ref in the parent.  In other words, a command like
+                  git push origin bugfix:matzke/bugfix-rc
+                runs as in in the root module, but in the submodule
+                "bugfix" is replaced by the commit that would be
+                checked out in the submodule after doing an
+                "smgit checkout bugfix" (the checkout doesn't
+                actually occur though).
+
    debug        Prints some information about the repository that is
                 useful for debugging problems with smgit.
 
@@ -2215,11 +2226,12 @@ sub do_pull {
 # When a top-level branch is specified (such as "smgit push origin rpm-bugfixes-rc") then instead of trying to push
 # rpm-bugfixes-rc in each submodule, we push the submodule branch that would be checked out by "smgit checkout rpm-bugfixes-rc".
 sub do_push {
-  my($all, $mirror, $dry_run, $porcelain, $tags, $receive_pack, $exec, $conditional_repo, $thin, $verbose, $quiet);
+  my($all, $mirror, $dry_run, $porcelain, $tags, $receive_pack, $exec, $conditional_repo, $thin, $verbose, $quiet, $force);
   GetOptionsFromArray(\@_,
 		      "all"=>\$all, "mirror"=>\$mirror, "n|dry-run"=>\$dry_run, "porcelain"=>\$porcelain,
 		      "tags"=>\$tags, "receive-pack=s"=>\$receive_pack, "exec=s"=>\$exec, "f|force"=>\&unsupported,
-		      "repo=s"=>\$conditional_repo, "thin!"=>\$thin, "v|verbose"=>\$verbose, "q|quiet"=>\$quiet) or exit 1;
+		      "repo=s"=>\$conditional_repo, "thin!"=>\$thin, "v|verbose"=>\$verbose, "q|quiet"=>\$quiet,
+		      "f|force"=>\$force) or exit 1;
   die "$arg0: push: incorrect usage\n" unless @_ <= 2;
   my($repo,$refspec) = @_;
 
@@ -2243,43 +2255,34 @@ sub do_push {
     if ($path eq "." || !$refspec) {
       push @gitargs, $refspec if $refspec;
       git "push", @gitargs;
-    } elsif ($refspec =~ /:/) {
-      die "$arg0: push with refspec \"$refspec\" is not implemented yet.\n";
-    } else {
-      # We're in a submodule and are pushing a refspec which is a simple branch name.  Instead of pushing the specified branch
-      # (which is a branch of the super module and might not exist here), we push the submodule branch that would have been
-      # checked out by "smgit checkout <branch>".  See switch_to_branch().
-      my($sha1_to_push) = git1 {cd=>".."}, "rev-parse", "$refspec:$path" or die;
-      my %refs = map {@$_} refs; # hash indexed by ref name
-      my $branch_to_push;
-
-      # We have nothing to push if the $sha1_to_push is already an ancestor of one of the appropriate remote branches. We do
-      # this first because it might save us some time.
-      for my $refname (sort keys %refs) {
-	next unless $refname =~ /^refs\/remotes\/$repo\/(.*)/;
-	if (merge_base($sha1_to_push, $refname) eq $sha1_to_push) {
-	  $branch_to_push = "NONE";
-	  last;
-	}
-      }
-
-      # Find a local branch head at $sha1_to_push and push that branch to a remote of the same name, creating the remote
-      # branch if necessary.
-      unless ($branch_to_push) {
-	for my $refname (sort keys %refs) {
-	  if ($refname =~ /^refs\/heads\/(.*)/ && $refs{$refname} eq $sha1_to_push) {
-	    $branch_to_push = $1;
-	    last;
-	  }
-	}
-      }
-
-      die "$arg0: could not find suitable submodule branch to push\n" unless $branch_to_push;
-      if ($branch_to_push eq "NONE") {
-	print "nothing to push ($sha1_to_push is already present on remote)\n";
+    } elsif (my($dstref) = $refspec =~ /^\+?:(.+)/) {
+      if ($force) {
+	$dstref = "refs/heads/".$dstref unless $dstref =~ /^refs\//;
+	git "push", @gitargs, ":$dstref";
       } else {
-	git "push", @gitargs, $branch_to_push;
+	warn "$arg0: refusing to delete $refspec in submodule (add \"--force\" if you really want that)\n";
       }
+    } else {
+      my($force,$srcref,$dstref);
+      if ($refspec =~ /^(\+?)(.+?):(.*)$/) {
+	($force,$srcref,$dstref) = ($1,$2,$3)
+      } elsif ($refspec =~ /^(\+?)(.+)$/) {
+	($force,$srcref,$dstref) = ($1,$2,$2);
+      } else {
+	die "$arg0: maformed refspec: $refspec\n";
+      }
+      if ($force) {
+	warn "$arg0: disallowing non-fast-forward pushing in submodules\n";
+      }
+
+      # $srcref is from the parent module; replace it with the submodule ref that would be checked out in the parent.
+      $srcref = git1 {cd=>".."}, "rev-parse", "$srcref:$path" or die;
+
+      # If the remote ref doesn't start with "refs/heads/" then we probably need to add that.  But this means smgit can't be used
+      # to push to other things.  Oh well.
+      $dstref = "refs/heads/".$dstref unless $dstref =~ /^refs\//;
+
+      git "push", @gitargs, "$srcref:$dstref"
     }
   };
 
