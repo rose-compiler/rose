@@ -1,5 +1,5 @@
 
-int main(int argc,char ** argv)
+int foo(int argc,char ** argv)
 {
   int i;
   while(i<10) {

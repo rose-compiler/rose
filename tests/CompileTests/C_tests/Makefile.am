@@ -188,6 +188,7 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2012_98.c \
      test2012_99.c \
      test2012_100.c \
+     test2012_101.c \
      test2012_104.c \
      test2012_105.c \
      test2012_106.c \
@@ -212,6 +213,22 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2012_125.c \
      test2012_126.c \
      test2012_127.c \
+     test2012_129.c \
+     test2012_130.c \
+     test2012_131.c \
+     test2012_133.c \
+     test2012_135.c \
+     test2012_136.c \
+     test2012_137.c \
+     test2012_139.c \
+     test2012_140.c \
+     test2012_141.c \
+     test2012_142.c \
+     test2012_143.c \
+     test2012_144.c \
+     test2012_146.c \
+     test2012_147.c \
+     test2012_148.c \
      math.c \
      complex_01.c \
      constants.c
@@ -228,11 +245,16 @@ TESTCODES_REQUIRED_TO_PASS = \
 # test2012_78.c (variable with initializer using #include file to provide value (classic source-to-source issue))
 # test2012_79.c (test code demonstrating an outstanding error (generated before focusing on switch support))
 # test2012_80.c (same as test2012_79.c)
-# test2012_101.c (example of failing test from zsh : jobs.c file)
+# test2012_101.c (example of failing test from zsh : jobs.c file: NOW FIXED)
 # test2012_102.c (example of failing test from zsh : module.c file)
 # test2012_103.c (example of failing test from zsh : params.c file)
-# test2012_107.c (fails to unparse "..." in function type)
+# test2012_107.c (fails to unparse "..." in function type: NOW FIXED)
 # test2012_128.c (label attached to case option statement is a current bug, but not yet found in application code)
+# test2012_132.c (this has a overly complex duff's device like switch statement that I have rewritten to put the
+#                 default case at the same scope as the other case option statements. Adding this level of support
+#                 to the switch statment support in ROSE is deferred to later. test2012_137.c is a required test
+#                 code to pass; so that we can test the rewritten version of the switch.
+# test2012_145.c NOT A FAILING test, but tested below with -D options.
 
 
 # This is a C99 test code (moved to the C99_tests directory). (These are not really C99 codes, I thought they were).
@@ -371,6 +393,11 @@ $(TEST_Objects): ../../testTranslator
 test2005_168.o: $(srcdir)/test2005_168.c
 	$(testTranslator) $(ROSE_FLAGS) -I$(top_srcdir)/src/util/commandlineProcessing -c $(srcdir)/test2005_168.c
 
+# DQ (11/1/2012): Added test code to test string concatination using a value defined 
+# via a macro specified on the command line. This tests the string quoting mechanism.
+test2012_145.o: $(srcdir)/test2012_145.c
+	$(testTranslator) $(ROSE_FLAGS) -DSTRING_MACRO=\"some_text\" -c $(srcdir)/test2012_145.c
+
 $(TEST_Exe_Objects): %.o: $(srcdir)/%.c $(testTranslator)
 	$(testTranslator) $(ROSE_FLAGS) -c $<
 
@@ -417,6 +444,7 @@ check-local:
 #	These C programs must be called externally to the test codes in the "TESTCODES" make variable
 	@$(MAKE) $(PASSING_TEST_Objects)
 #	@$(MAKE) caller.o caller.out
+	@$(MAKE) test2012_145.o
 	@echo "*********************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests/C_tests: make check rule complete (terminated normally) ******"
 	@echo "*********************************************************************************************"

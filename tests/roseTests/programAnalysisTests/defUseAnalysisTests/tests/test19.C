@@ -6,11 +6,11 @@ void setMe()
   global2=3;
 }
 
-main()
+int foo()
 {
   int a;
   setMe();
   a=global;
   global2=0;
-  
+  return 0;
 }

@@ -3118,7 +3118,9 @@ Unparse_ExprStmt::unparseCastOp(SgExpression* expr, SgUnparse_Info& info)
                   {
                  // (P *) expr
                  // check if the expression that we are casting is not a string
-                 // curprint ( "\n /* explicit cast: cast_op->get_operand_i() = " + cast_op->get_operand_i()->class_name() + " */ \n");
+#if 0
+                    curprint ( "\n /* explicit cast: cast_op->get_operand_i() = " + cast_op->get_operand_i()->class_name() + " */ \n");
+#endif
                     if (cast_op->get_operand_i()->variant() != STRING_VAL)
                        {
                       // It is not a string, so we always cast
@@ -3126,7 +3128,7 @@ Unparse_ExprStmt::unparseCastOp(SgExpression* expr, SgUnparse_Info& info)
 
                          curprint("(");
 #if 0
-                         printf ("In unparseCastOp(): calling newinfo.unset_SkipSemiColon() \n");
+                         printf ("In unparseCastOp(): output cast to associated type \n");
 #endif
                       // DQ (10/18/2012): Added to unset ";" usage in defining declaration.
                          newinfo.unset_SkipSemiColon();
@@ -3138,6 +3140,7 @@ Unparse_ExprStmt::unparseCastOp(SgExpression* expr, SgUnparse_Info& info)
                          unp->u_type->unparseType(cast_op->get_type(), newinfo);
 #else
                       // DQ (1/14/2006): p_expression_type is no longer stored (type is computed instead)
+#error "DEAD CODE!"
                       // unp->u_type->unparseType(cast_op->get_expression_type(), newinfo);
                          unp->u_type->unparseType(cast_op->get_type(), newinfo);
 #endif

@@ -4476,28 +4476,29 @@ int SgProject::link ( std::string linkerName )
      // remove all original file names
      Rose_STL_Container<string> sourceFilenames = get_sourceFileNameList();
      for (Rose_STL_Container<string>::iterator i = sourceFilenames.begin(); i != sourceFilenames.end(); i++)
-     {
+        {
 #if USE_ABSOLUTE_PATHS_IN_SOURCE_FILE_LIST
 #error "USE_ABSOLUTE_PATHS_IN_SOURCE_FILE_LIST is not supported yet"
        // DQ (9/1/2006): Check for use of absolute path and convert filename to absolute path if required
-       bool usesAbsolutePath = ((*i)[0] == '/');
-       if (usesAbsolutePath == false)
-       {
-         string targetSourceFileToRemove = StringUtility::getAbsolutePathFromRelativePath(*i);
-                   printf ("Converting source file to absolute path to search for it and remove it! targetSourceFileToRemove = %s \n",targetSourceFileToRemove.c_str());
-         argcArgvList.remove(targetSourceFileToRemove);
-       }
-       else
-       {
-         argcArgvList.remove(*i);
-       }
+          bool usesAbsolutePath = ((*i)[0] == '/');
+          if (usesAbsolutePath == false)
+             {
+               string targetSourceFileToRemove = StringUtility::getAbsolutePathFromRelativePath(*i);
+               printf ("Converting source file to absolute path to search for it and remove it! targetSourceFileToRemove = %s \n",targetSourceFileToRemove.c_str());
+               argcArgvList.remove(targetSourceFileToRemove);
+             }
+            else
+             {
+               argcArgvList.remove(*i);
+             }
 #else
-       if (find(argcArgvList.begin(),argcArgvList.end(),*i) != argcArgvList.end())
-       {
-         argcArgvList.erase(find(argcArgvList.begin(),argcArgvList.end(),*i));
-       }
+          if (find(argcArgvList.begin(),argcArgvList.end(),*i) != argcArgvList.end())
+             {
+               argcArgvList.erase(find(argcArgvList.begin(),argcArgvList.end(),*i));
+             }
 #endif
-     }
+        }
+
      // fix double quoted strings
      // DQ (4/14/2005): Fixup quoted strings in args fix "-DTEST_STRING_MACRO="Thu Apr 14 08:18:33 PDT 2005"
      // to be -DTEST_STRING_MACRO=\""Thu Apr 14 08:18:33 PDT 2005"\"  This is a problem in the compilation of
@@ -4505,25 +4506,30 @@ int SgProject::link ( std::string linkerName )
      // problem is that /usr/apps/kull/tools/mpig++-3.4.1 is a wrapper for a shell script /usr/local/bin/mpiCC
      // which does not tend to observe quotes well.  The solution is to add additional escaped quotes.
      for (Rose_STL_Container<string>::iterator i = argcArgvList.begin(); i != argcArgvList.end(); i++)
-     {
-       std::string::size_type startingQuote = i->find("\"");
-       if (startingQuote != std::string::npos)
-       {
-         std::string::size_type endingQuote   = i->rfind("\"");
+        {
+          std::string::size_type startingQuote = i->find("\"");
+          if (startingQuote != std::string::npos)
+             {
+               std::string::size_type endingQuote   = i->rfind("\"");
 
-         // There should be a double quote on both ends of the string
-         ROSE_ASSERT (endingQuote != std::string::npos);
+            // There should be a double quote on both ends of the string
+               ROSE_ASSERT (endingQuote != std::string::npos);
 
-         std::string quotedSubstring = i->substr(startingQuote,endingQuote);
+               std::string quotedSubstring = i->substr(startingQuote,endingQuote);
 
-         std::string fixedQuotedSubstring = std::string("\\\"") + quotedSubstring + std::string("\\\"");
+            // DQ (11/1/2012): Robb has suggested using single quote instead of double quotes here.
+            // This is a problem for the processing of mutt (large C application) (but we can figure 
+            // out the link command after the compile command).
+            // std::string fixedQuotedSubstring = std::string("\\\"") + quotedSubstring + std::string("\\\"");
+            // std::string fixedQuotedSubstring = std::string("\\\'") + quotedSubstring + std::string("\\\'");
+               std::string fixedQuotedSubstring = std::string("\\\"") + quotedSubstring + std::string("\\\"");
 
-         // Now replace the quotedSubstring with the fixedQuotedSubstring
-         i->replace(startingQuote,endingQuote,fixedQuotedSubstring);
+            // Now replace the quotedSubstring with the fixedQuotedSubstring
+               i->replace(startingQuote,endingQuote,fixedQuotedSubstring);
 
-         // printf ("Modified argument = %s \n",(*i).c_str());
-       }
-     }
+               printf ("Modified argument = %s \n",(*i).c_str());
+             }
+        }
 
   // Call the compile
      int errorCode = link ( argcArgvList, linkerName );
