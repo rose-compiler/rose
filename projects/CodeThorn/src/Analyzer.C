@@ -92,35 +92,124 @@ EState Analyzer::createEState(Label label, PState pstate, ConstraintSet cset, In
   return estate;
 }
 
-bool Analyzer::isLTLrelevantLabel(Label label) {
-  Labeler* lab=getLabeler();
-  if(lab->isFunctionEntryLabel(label)
-	 || lab->isFunctionExitLabel(label)
-	 || lab->isFunctionCallLabel(label)
-	 || lab->isFunctionCallReturnLabel(label)
-	 ){
-	return true;
-  }
-  if(SgNodeHelper::isLoopCond(lab->getNode(label))) {
-	return true;
-  }
-  if(SgNodeHelper::isCond(lab->getNode(label))) {
-	return true;
-  }
-#if 0
-  if(lab->isBlockBeginLabel(label)||lab->isBlockEndLabel(label))
-	return false;
-  // assignment
-  if(SgExprStatement* exprStmt=isSgExprStatement(getLabeler()->getNode(label))) {
-	SgNode* node=SgNodeHelper::getExprStmtChild(exprStmt);
-	if(isSgAssignOp(node)) {
-	  if(isSgVarRefExp(SgNodeHelper::getLhs(node)) && isSgIntVal(SgNodeHelper::getRhs(node))) {
-		cout << "DEBUG: ltl-irrelevant node: "<<SgNodeHelper::nodeToString(node)<<endl;
-		return false;
+bool Analyzer::isLTLRelevantLabel(Label label) {
+  return isStdInLabel(label)
+	|| isStdOutLabel(label)
+	|| isStdErrLabel(label)
+	|| isTerminationRelevantLabel(label)
+	;
+}
+
+SgVarRefExp* Analyzer::isSingleVarScanf(SgNode* node) {
+  SgNode* nextNodeToAnalyze1=node;
+  if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze1) ) {
+	string fName=SgNodeHelper::getFunctionName(funCall);
+	SgExpressionPtrList& actualParams=SgNodeHelper::getFunctionCallActualParameterList(funCall);
+	if(fName=="scanf") {
+	  if(actualParams.size()==2) {
+		SgAddressOfOp* addressOp=isSgAddressOfOp(actualParams[1]);
+		if(!addressOp) {
+		  cerr<<"Error: unsupported scanf argument #2 (no address operator found). Currently only scanf with exactly one variable of the form scanf(\"%d\",&v) is supported."<<endl;
+		  exit(1);
+		}
+		SgVarRefExp* varRefExp=isSgVarRefExp(SgNodeHelper::getFirstChild(addressOp));
+		if(!varRefExp) {
+		  cerr<<"Error: unsupported scanf argument #2 (no variable found). Currently only scanf with exactly one variable of the form scanf(\"%d\",&v) is supported."<<endl;
+		  exit(1);
+		}
+		// matched: SgAddressOfOp(SgVarRefExp())
+		return varRefExp;
+	  } else {
+		  cerr<<"Error: unsupported number of arguments of scanf. Currently only scanf with exactly one variable of the form scanf(\"%d\",&v) is supported."<<endl;
+		  exit(1);
 	  }
 	}
   }
-#endif
+  return 0;
+}
+
+SgVarRefExp* Analyzer::isSingleVarPrintf(SgNode* node) {
+  SgNode* nextNodeToAnalyze1=node;
+  if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze1) ) {
+	string fName=SgNodeHelper::getFunctionName(funCall);
+	SgExpressionPtrList& actualParams=SgNodeHelper::getFunctionCallActualParameterList(funCall);
+	if(fName=="printf") {
+	  if(actualParams.size()==2) {
+		SgVarRefExp* varRefExp=isSgVarRefExp(actualParams[1]);
+		if(!varRefExp) {
+		  cerr<<"Error: unsupported print argument #2 (no variable found). Currently printf with exactly one variable of the form printf(\"...%d...\",v) is supported."<<endl;
+		  exit(1);
+		}
+		return varRefExp;
+	  } else {
+		cerr<<"Error: unsupported number of printf arguments. Currently printf with exactly one variable of the form printf(\"...%d...\",v) is supported."<<endl;
+		exit(1);
+	  }
+	}
+  }	
+  return 0;
+}
+
+SgVarRefExp* Analyzer::isSingleVarFPrintf(SgNode* node) {
+  SgNode* nextNodeToAnalyze1=node;
+  if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze1) ) {
+	string fName=SgNodeHelper::getFunctionName(funCall);
+	SgExpressionPtrList& actualParams=SgNodeHelper::getFunctionCallActualParameterList(funCall);
+	if(fName=="fprintf") {
+	  if(actualParams.size()==3) {
+		SgVarRefExp* varRefExp=isSgVarRefExp(actualParams[2]);
+		if(!varRefExp) {
+			 cerr<<"Error: unsupported fprint argument #3 (no variable found). Currently printf with exactly one variable of the form fprintf(stream,\"...%d...\",v) is supported."<<endl;
+			 exit(1);
+		}
+		return varRefExp;
+	  } else {
+		cerr<<"Error: unsupported number of fprintf arguments. Currently printf with exactly one variable of the form fprintf(stream,\"...%d...\",v) is supported."<<endl;
+		exit(1);
+	  }
+	}
+  }
+  return 0;
+}
+	
+bool Analyzer::isStdOutLabel(Label label, VariableId* id) {
+  if(SgVarRefExp* varRefExp=isSingleVarPrintf(getLabeler()->getNode(label))) {
+	SgSymbol* sym=SgNodeHelper::getSymbolOfVariable(varRefExp);
+	assert(sym);
+	if(id)
+	  *id=VariableId(sym);
+	return true;
+  }
+  return false;
+}
+
+bool Analyzer::isStdInLabel(Label label, VariableId* id) {
+  if(SgVarRefExp* varRefExp=isSingleVarScanf(getLabeler()->getNode(label))) {
+	SgSymbol* sym=SgNodeHelper::getSymbolOfVariable(varRefExp);
+	assert(sym);
+	if(id)
+	  *id=VariableId(sym);
+	return true;
+  }
+  return false;
+}
+
+bool Analyzer::isStdErrLabel(Label label, VariableId* id) {
+  if(SgVarRefExp* varRefExp=isSingleVarFPrintf(getLabeler()->getNode(label))) {
+	SgSymbol* sym=SgNodeHelper::getSymbolOfVariable(varRefExp);
+	assert(sym);
+	if(id)
+	  *id=VariableId(sym);
+	return true;
+  }
+  return false;
+}
+
+bool Analyzer::isTerminationRelevantLabel(Label label) {
+  Labeler* lab=getLabeler();
+  if(SgNodeHelper::isLoopCond(lab->getNode(label))) {
+	return true;
+  }
   return false;
 }
 
@@ -587,113 +676,72 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
 	  return elistify(createEState(edge.target,newPState,cset));
 	}
   }
+
   if(edge.isType(EDGE_EXTERNAL)) {
-	if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze1) ) {
-	   string fName=SgNodeHelper::getFunctionName(funCall);
-	   SgExpressionPtrList& actualParams=SgNodeHelper::getFunctionCallActualParameterList(funCall);
-	   InputOutput newio;
-	   if(fName=="scanf") {
-		 if(actualParams.size()==2) {
-		   SgAddressOfOp* addressOp=isSgAddressOfOp(actualParams[1]);
-		   if(!addressOp) {
-			 cerr<<"Error: unsupported scanf argument #2 (no address operator found). Currently scanf with exactly one variable of the form scanf(\"%d\",&v) is supported."<<endl;
-			 exit(1);
-		   }
-		   SgVarRefExp* varRefExp=isSgVarRefExp(SgNodeHelper::getFirstChild(addressOp));
-		   if(!varRefExp) {
-			 cerr<<"Error: unsupported scanf argument #2 (no variable found). Currently scanf with exactly one variable of the form scanf(\"%d\",&v) is supported."<<endl;
-			 exit(1);
-		   }
-		   // matched: SgAddressOfOp(SgVarRefExp())
-		   SgSymbol* sym=SgNodeHelper::getSymbolOfVariable(varRefExp);
-		   assert(sym);
-		   VariableId varId=VariableId(sym);
-
-		   if(_inputVarValues.size()>0) {
-			 // update state (remove all existing constraint on that variable and set it to top)
-			 PState newPState=*currentEState.pstate();
-			 ConstraintSet newCSet=*currentEState.constraints();
-			 newCSet.removeAllConstraintsOfVar(varId);
-			 list<EState> resList;
-			 for(set<int>::iterator i=_inputVarValues.begin();i!=_inputVarValues.end();++i) {
-			   PState newPState=*currentEState.pstate();
-			   if(boolOptions["input-var-values-as-constraints"]) {
-				 newCSet.removeAllConstraintsOfVar(varId);
-				 newPState[varId]=AType::Top();
-				 newCSet.addConstraint(Constraint(Constraint::EQ_VAR_CONST,varId,AType::ConstIntLattice(*i)));
-				 assert(newCSet.size()>0);
-			   } else {
-				 newCSet.removeAllConstraintsOfVar(varId);
-				 newPState[varId]=AType::ConstIntLattice(*i);
-			   }
-			   newio.recordVariable(InputOutput::STDIN_VAR,varId);
-			   EState estate=createEState(edge.target,newPState,newCSet,newio);
-			   resList.push_back(estate);
-			 }
-			 //cout << "DEBUG: created "<<_inputVarValues.size()<<" input states."<<endl;
-			 return resList;
-
-		   } else {
-			 // update state (remove all existing constraint on that variable and set it to top)
-			 PState newPState=*currentEState.pstate();
-			 ConstraintSet newCSet=*currentEState.constraints();
-			 if(boolOptions["update-input-var"]) {
-			   newCSet.removeAllConstraintsOfVar(varId);
-			   newPState[varId]=AType::Top();
-			 }
-			 newio.recordVariable(InputOutput::STDIN_VAR,varId);
-			 return elistify(createEState(edge.target,newPState,newCSet,newio));
-		   }
-
-		 } else {
-		   cerr<<"Error: unsupported number of scanf arguments. Currently scanf with exactly one variable of the form scanf(\"%d\",&v) is supported."<<endl;
-		   exit(1);
-		 }
-	   }
-	   if(fName=="printf") {
-		 if(actualParams.size()==2) {
-		   SgVarRefExp* varRefExp=isSgVarRefExp(actualParams[1]);
-		   if(!varRefExp) {
-			 cerr<<"Error: unsupported print argument #2 (no variable found). Currently printf with exactly one variable of the form printf(\"...%d...\",v) is supported."<<endl;
-			 exit(1);
-		   }
-		   SgSymbol* sym=SgNodeHelper::getSymbolOfVariable(varRefExp);
-		   assert(sym);
-		   VariableId varId=VariableId(sym);
-		   newio.recordVariable(InputOutput::STDOUT_VAR,varId);
-		   assert(newio.var==varId);
-		   if(boolOptions["report-stdout"]) {
-			 cout << "REPORT: stdout:"<<varId.toString()<<":"<<estate->toString()<<endl;
-		   }
-
-		 } else {
-		   cerr<<"Error: unsupported number of printf arguments. Currently printf with exactly one variable of the form printf(\"...%d...\",v) is supported."<<endl;
-		   exit(1);
-		 }
-	   }
-	   if(fName=="fprintf") {
-		 if(actualParams.size()==3) {
-		   SgVarRefExp* varRefExp=isSgVarRefExp(actualParams[2]);
-		   if(!varRefExp) {
-			 cerr<<"Error: unsupported fprint argument #3 (no variable found). Currently printf with exactly one variable of the form fprintf(stream,\"...%d...\",v) is supported."<<endl;
-			 exit(1);
-		   }
-		   SgSymbol* sym=SgNodeHelper::getSymbolOfVariable(varRefExp);
-		   assert(sym);
-		   VariableId varId=VariableId(sym);
-		   newio.recordVariable(InputOutput::STDERR_VAR,varId);
-		 } else {
-		   cerr<<"Error: unsupported number of fprintf arguments. Currently printf with exactly one variable of the form fprintf(stream,\"...%d...\",v) is supported."<<endl;
-		   exit(1);
-		 }
-	   }
-	   // for all other external functions we use identity as transfer function
-	   EState newEState=currentEState;
-	   newEState.io=newio;
-	   newEState.setLabel(edge.target);
-	   return elistify(newEState);
+	InputOutput newio;
+	Label lab=getLabeler()->getLabel(nextNodeToAnalyze1);
+	VariableId varId;
+	if(isStdInLabel(lab,&varId)) {
+	  if(_inputVarValues.size()>0) {
+		// update state (remove all existing constraint on that variable and set it to top)
+		PState newPState=*currentEState.pstate();
+		ConstraintSet newCSet=*currentEState.constraints();
+		newCSet.removeAllConstraintsOfVar(varId);
+		list<EState> resList;
+		for(set<int>::iterator i=_inputVarValues.begin();i!=_inputVarValues.end();++i) {
+		  PState newPState=*currentEState.pstate();
+		  if(boolOptions["input-var-values-as-constraints"]) {
+			newCSet.removeAllConstraintsOfVar(varId);
+			newPState[varId]=AType::Top();
+			newCSet.addConstraint(Constraint(Constraint::EQ_VAR_CONST,varId,AType::ConstIntLattice(*i)));
+			assert(newCSet.size()>0);
+		  } else {
+			newCSet.removeAllConstraintsOfVar(varId);
+			newPState[varId]=AType::ConstIntLattice(*i);
+		  }
+		  newio.recordVariable(InputOutput::STDIN_VAR,varId);
+		  EState estate=createEState(edge.target,newPState,newCSet,newio);
+		  resList.push_back(estate);
+		}
+		//cout << "DEBUG: created "<<_inputVarValues.size()<<" input states."<<endl;
+		return resList;
+	  } else {
+		// without specified input values (default mode: analysis performed for all possible input values)
+		// update state (remove all existing constraint on that variable and set it to top)
+		PState newPState=*currentEState.pstate();
+		ConstraintSet newCSet=*currentEState.constraints();
+		if(boolOptions["update-input-var"]) {
+		  newCSet.removeAllConstraintsOfVar(varId);
+		  newPState[varId]=AType::Top();
+		}
+		newio.recordVariable(InputOutput::STDIN_VAR,varId);
+		return elistify(createEState(edge.target,newPState,newCSet,newio));
+	  }
 	}
+	if(isStdOutLabel(lab,&varId)) {
+	  newio.recordVariable(InputOutput::STDOUT_VAR,varId);
+	  assert(newio.var==varId);
+	  if(boolOptions["report-stdout"]) {
+		cout << "REPORT: stdout:"<<varId.toString()<<":"<<estate->toString()<<endl;
+	  }
+	}
+	if(isStdErrLabel(lab,&varId)) {
+	  newio.recordVariable(InputOutput::STDERR_VAR,varId);
+	  assert(newio.var==varId);
+	  if(boolOptions["report-stderr"]) {
+		cout << "REPORT: stderr:"<<varId.toString()<<":"<<estate->toString()<<endl;
+	  }
+	}
+
+	// for all other external functions we use identity as transfer function
+	EState newEState=currentEState;
+	newEState.io=newio;
+	newEState.setLabel(edge.target);
+	return elistify(newEState);
   }
+
+
+
   // special case external call
   if(SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze1) 
 	 ||edge.isType(EDGE_EXTERNAL)

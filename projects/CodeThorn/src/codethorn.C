@@ -348,6 +348,7 @@ int main( int argc, char * argv[] ) {
      "transition graph 2: visualize all estate-properties [=yes|no]")
     ("colors",po::value< string >(),"use colors in output [=yes|no]")
     ("report-stdout",po::value< string >(),"report stdout estates during analysis [=yes|no]")
+    ("report-stderr",po::value< string >(),"report stderr estates during analysis [=yes|no]")
     ("report-failed-assert",po::value< string >(),
      "report failed assert estates during analysis [=yes|no]")
     ("precision-equality-constraints",po::value< string >(),
@@ -405,6 +406,7 @@ int main( int argc, char * argv[] ) {
   boolOptions.registerOption("tg2-estate-properties",false);
   boolOptions.registerOption("colors",true);
   boolOptions.registerOption("report-stdout",false);
+  boolOptions.registerOption("report-stderr",false);
   boolOptions.registerOption("report-failed-assert",false);
   boolOptions.registerOption("precision-equality-constraints",true);
   boolOptions.registerOption("precision-equality-io",true);
