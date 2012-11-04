@@ -236,6 +236,17 @@ namespace SgNodeHelper {
 	SgFunctionCallExp* matchExprStmtFunctionCallExp(SgNode *);
 	//! tests pattern SgExprStatement(SgAssignOp(VarRefExp,FunctionCallExp)) and returns pointer to FunctionCallExp, otherwise 0.
 	SgFunctionCallExp* matchExprStmtAssignOpVarRefExpFunctionCallExp(SgNode *);
+
+	//! tests pattern SgFunctionCall(...) where the name of the function is scanf with 2 params
+	SgVarRefExp* matchSingleVarScanf(SgNode* node);
+	//! tests pattern SgFunctionCall(...) where the name of the function is printf with 2 params
+	SgVarRefExp* matchSingleVarPrintf(SgNode* node);
+	//! tests pattern SgFunctionCall(...) where the name of the function is fprintf with 3 params
+	SgVarRefExp* matchSingleVarFPrintf(SgNode* node);
+
+	//! tests pattern for an assert
+	bool matchAssertExpr(SgNode* node);
+
   } // end of namespace Pattern
 
 } // end of namespace SgNodeHelper

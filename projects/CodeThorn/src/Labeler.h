@@ -10,6 +10,7 @@
 #include <set>
 #include "rose.h"
 #include "RoseAst.h"
+#include "VariableIdMapping.h"
 
 using namespace std;
 
@@ -81,6 +82,10 @@ class Labeler {
   bool isBlockEndLabel(Label lab);
   bool isFunctionCallLabel(Label lab);
   bool isFunctionCallReturnLabel(Label lab);
+  bool isStdInLabel(Label label, VariableId* id=0);
+  bool isStdOutLabel(Label label, VariableId* id=0);
+  bool isStdErrLabel(Label label, VariableId* id=0);
+
  private:
   vector<SgNode*> labelNodeMapping;
 };

@@ -119,6 +119,12 @@ string Visualizer::transitionGraphDotHtmlNode(Label lab) {
 	// decide on color first
 	string textcolor="black";
 	string bgcolor="lightgrey";
+
+	if(labeler->isStdInLabel((*j)->label())) bgcolor="dodgerblue";
+	if(labeler->isStdOutLabel((*j)->label())) bgcolor="orange";
+	if(labeler->isStdErrLabel((*j)->label())) bgcolor="orangered";
+	if(SgNodeHelper::Pattern::matchAssertExpr(labeler->getNode((*j)->label()))) {bgcolor="black";textcolor="white";}
+
 	if((*j)->io.op==InputOutput::STDIN_VAR) bgcolor="dodgerblue";
 	if((*j)->io.op==InputOutput::STDOUT_VAR) bgcolor="orange";
 	if((*j)->io.op==InputOutput::STDERR_VAR) bgcolor="orangered";
@@ -128,7 +134,7 @@ string Visualizer::transitionGraphDotHtmlNode(Label lab) {
 	sinline+="</TD>";
   }
   if(sinline=="") {
-	sinline="<TD>empty</TD>";
+	// sinline="<TD>empty</TD>";
 	// instead of generating empty nodes we do not generate anything for empty nodes
 	return "";
   }
@@ -182,7 +188,11 @@ string Visualizer::foldedTransitionGraphToDot() {
 	   <<"->"
 	   <<"L"<<Labeler::labelToString(target->label())<<":"<<"\"P"<<estateSet->estateId(target)<<"\"";
 
-	ss<<"[color="<<(*j).edge.color()<<"]";
+	ss<<"[";
+	ss<<"color="<<(*j).edge.color();
+	ss<<" ";
+	ss<<"style="<<(*j).edge.dotEdgeStyle();
+	ss<<"]";
 	ss<<";"<<endl;
     //ss <<" [label=\""<<SgNodeHelper::nodeToString(getLabeler()->getNode((*j).edge.source))<<"\"]"<<";"<<endl;
   }

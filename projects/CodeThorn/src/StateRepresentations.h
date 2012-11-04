@@ -112,6 +112,7 @@ class EState {
   //void setIO(InputOutput io) { io=io;} TODO: investigate
   const PState* pstate() const { return _pstate; }
   const ConstraintSet* constraints() const { return _constraints; }
+
   InputOutput io;
  private:
   Label _label;

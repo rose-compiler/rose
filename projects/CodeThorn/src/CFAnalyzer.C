@@ -148,6 +148,13 @@ string Edge::toDot() const {
   return ss.str();
 }
 
+string Edge::dotEdgeStyle() const {
+  if(isType(EDGE_EXTERNAL)) 
+	return "dotted";
+  else if(isType(EDGE_CALL) || isType(EDGE_CALLRETURN)) 
+	return "dashed";
+  return "solid";
+}
 InterEdge::InterEdge(Label call, Label entry, Label exit, Label callReturn):
   call(call),
   entry(entry),
