@@ -6542,6 +6542,7 @@ resetTemplateNamesInScope ( SgScopeStatement* scope )
 
           switch(scope->variantT())
              {
+               case V_SgTemplateFunctionDefinition: // Liao, 11/2/2012
                case V_SgFunctionDefinition:
                   {
                  // Nothing to do here, I think, unless we have to reset template function names
