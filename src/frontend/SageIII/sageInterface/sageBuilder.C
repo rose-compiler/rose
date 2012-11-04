@@ -1026,13 +1026,14 @@ SageBuilder::buildVariableDeclaration (const SgName & name, SgType* type, SgInit
 SgVariableDeclaration* 
 SageBuilder::buildVariableDeclaration_nfi (const SgName & name, SgType* type, SgInitializer * varInit, SgScopeStatement* scope)
  //(const SgName & name, SgType* type, SgInitializer * varInit= NULL, SgScopeStatement* scope = NULL)
-{
-  if (scope == NULL) {
-      scope = SageBuilder::topScopeStack();
-  }
+   {
+     if (scope == NULL) 
+        {
+          scope = SageBuilder::topScopeStack();
+        }
 
-  ROSE_ASSERT (scope != NULL);
-  ROSE_ASSERT(type != NULL);
+     ROSE_ASSERT (scope != NULL);
+     ROSE_ASSERT(type != NULL);
 
 #if 0
      SgVariableDeclaration * varDecl = new SgVariableDeclaration(name, type, varInit);
@@ -1066,6 +1067,12 @@ SageBuilder::buildVariableDeclaration_nfi (const SgName & name, SgType* type, Sg
              }
         }
 #endif
+
+  // DQ (11/3/2012): The SgInitializedName inside the SgVariableDeclaration must have valid source position object (even if default initialized).
+     SgInitializedName* variable = getFirstInitializedName(varDecl);
+     ROSE_ASSERT(variable != NULL);
+     setSourcePosition(variable);
+
      ROSE_ASSERT(varDecl != NULL);
 
      varDecl->set_firstNondefiningDeclaration(varDecl);
@@ -1149,6 +1156,11 @@ SageBuilder::buildTemplateVariableDeclaration_nfi (const SgName & name, SgType* 
      ROSE_ASSERT(varDecl);
 
      varDecl->set_firstNondefiningDeclaration(varDecl);
+
+  // DQ (11/3/2012): The SgInitializedName inside the SgVariableDeclaration must have valid source position object (even if default initialized).
+     SgInitializedName* variable = getFirstInitializedName(varDecl);
+     ROSE_ASSERT(variable != NULL);
+     setSourcePosition(variable);
 
 #if 1
      if (name != "")
@@ -4805,22 +4817,28 @@ T* SageBuilder::buildUnaryExpression(SgExpression* operand)
 }
 
 template <class T>
-T* SageBuilder::buildUnaryExpression_nfi(SgExpression* operand) {
-  SgExpression* myoperand=operand;
-  T* result = new T(myoperand, NULL);
-  ROSE_ASSERT(result);   
-  if (myoperand!=NULL) 
-  { 
-    myoperand->set_parent(result);
-  // set lvalue, it asserts operand!=NULL 
-    markLhsValues(result);
-  }
-  result->set_startOfConstruct(NULL);
-  result->set_endOfConstruct(NULL);
-  result->set_operatorPosition(NULL);
-  result->set_need_paren(false);
-  return result; 
-}
+T* SageBuilder::buildUnaryExpression_nfi(SgExpression* operand)
+   {
+     SgExpression* myoperand = operand;
+     T* result = new T(myoperand, NULL);
+     ROSE_ASSERT(result);   
+
+     if (myoperand != NULL) 
+        {
+          myoperand->set_parent(result);
+       // set lvalue, it asserts operand!=NULL 
+          markLhsValues(result);
+        }
+
+  // DQ (11/2/2012): Modified to reflect call to function that defines source position policy.
+  // result->set_startOfConstruct(NULL);
+  // result->set_endOfConstruct(NULL);
+  // result->set_operatorPosition(NULL);
+     setSourcePosition(result);
+
+     result->set_need_paren(false);
+     return result; 
+   }
 
 #define BUILD_UNARY_DEF(suffix) \
   Sg##suffix* SageBuilder::build##suffix##_nfi(SgExpression* op) \
@@ -5004,28 +5022,35 @@ T* SageBuilder::buildBinaryExpression(SgExpression* lhs, SgExpression* rhs)
   return result;
 
 }
+
 template <class T>
 T* SageBuilder::buildBinaryExpression_nfi(SgExpression* lhs, SgExpression* rhs)
-{
-  SgExpression* mylhs, *myrhs;
-  mylhs = lhs;
-  myrhs = rhs;
-  T* result = new T(mylhs,myrhs, NULL);
-  ROSE_ASSERT(result);
-  if (mylhs!=NULL) 
-  {
-   mylhs->set_parent(result);
-  // set lvalue
-    markLhsValues(result);
-  }
-  if (myrhs!=NULL) myrhs->set_parent(result);
-  result->set_startOfConstruct(NULL);
-  result->set_endOfConstruct(NULL);
-  result->set_operatorPosition(NULL);
-  result->set_need_paren(false);
-  return result;
+   {
+     SgExpression* mylhs, *myrhs;
+     mylhs = lhs;
+     myrhs = rhs;
+     T* result = new T(mylhs,myrhs, NULL);
+     ROSE_ASSERT(result);
+     if (mylhs!=NULL) 
+        {
+          mylhs->set_parent(result);
+       // set lvalue
+          markLhsValues(result);
+        }
 
-}
+     if (myrhs!=NULL) myrhs->set_parent(result);
+
+  // DQ (11/2/2012): Modified to reflect call to function that defines source position policy.
+  // result->set_startOfConstruct(NULL);
+  // result->set_endOfConstruct(NULL);
+  // result->set_operatorPosition(NULL);
+     setSourcePosition(result);
+
+     result->set_need_paren(false);
+
+     return result;
+   }
+
 #define BUILD_BINARY_DEF(suffix) \
   Sg##suffix* SageBuilder::build##suffix##_nfi(SgExpression* lhs, SgExpression* rhs) \
   { \
@@ -5147,18 +5172,18 @@ SgNullExpression* SageBuilder::buildNullExpression() {
 }
 
 SgAssignInitializer * SageBuilder::buildAssignInitializer(SgExpression * operand_i /*= NULL*/, SgType * expression_type /* = NULL */)
-{
-  SgAssignInitializer* result = new SgAssignInitializer(operand_i, expression_type);
-  ROSE_ASSERT(result);
-  if (operand_i!=NULL) 
-  { 
-    operand_i->set_parent(result);
-  // set lvalue, it asserts operand!=NULL 
-    markLhsValues(result);
-  }
-  setOneSourcePositionForTransformation(result);
-  return result; 
-}
+   {
+     SgAssignInitializer* result = new SgAssignInitializer(operand_i, expression_type);
+     ROSE_ASSERT(result);
+     if (operand_i!=NULL) 
+        {
+          operand_i->set_parent(result);
+       // set lvalue, it asserts operand!=NULL 
+          markLhsValues(result);
+        }
+     setOneSourcePositionForTransformation(result);
+     return result; 
+   }
 
 SgAssignInitializer * SageBuilder::buildAssignInitializer_nfi(SgExpression * operand_i /*= NULL*/, SgType * expression_type /* = UNLL */)
    {
@@ -5170,9 +5195,13 @@ SgAssignInitializer * SageBuilder::buildAssignInitializer_nfi(SgExpression * ope
        // set lvalue, it asserts operand!=NULL 
           markLhsValues(result);
         }
-     result->set_startOfConstruct(NULL);
-     result->set_endOfConstruct(NULL);
-     result->set_operatorPosition(NULL);
+
+  // DQ (11/2/2012): Set the source positon using our standard approach.
+  // result->set_startOfConstruct(NULL);
+  // result->set_endOfConstruct(NULL);
+  // result->set_operatorPosition(NULL);
+     setSourcePosition(result);
+
      result->set_need_paren(false);
 
      return result; 
@@ -5288,21 +5317,23 @@ SageBuilder::buildConstructorInitializer_nfi(
 
      SgConstructorInitializer* result = new SgConstructorInitializer( declaration, args, expression_type, need_name, need_qualifier, need_parenthesis_after_name, associated_class_unknown );
      ROSE_ASSERT(result != NULL);
+
+     setOneSourcePositionNull(result);
+
      if (args != NULL)
         {
           args->set_parent(result);
         }
 
-#if 0
+  // DQ (11/4/2012): This is required and appears to work fine now.
   // DQ (11/23/2011): Fixup the expression list (but this does not appear to work...)
      if (result->get_args()->get_startOfConstruct() == NULL)
        {
+#if 0
          printf ("In buildConstructorInitializer_nfi(): Fixup the source position of result->get_args() \n");
+#endif
          setOneSourcePositionNull(result->get_args());
        }
-#endif
-
-     setOneSourcePositionNull(result);
 
      return result;
    }
@@ -6290,9 +6321,16 @@ SgIfStmt * SageBuilder::buildIfStmt_nfi(SgStatement* conditional, SgStatement * 
    }
 
 // charles4 10/14/2011:  Vanilla allocation. Use prepend_init_stmt and append_init_stmt to populate afterward.
-SgForInitStatement * SageBuilder::buildForInitStatement() {
-  return new SgForInitStatement();
-}
+SgForInitStatement * SageBuilder::buildForInitStatement() 
+   {
+  // return new SgForInitStatement();
+     SgForInitStatement* result = new SgForInitStatement();
+
+  // DQ (11/3/2012): Added call to set file info to default settings.
+     setSourcePosition(result);
+
+     return result;
+   }
 
 // DQ (10/12/2012): Added specific API to handle simple (single) statement.
 SgForInitStatement*
@@ -6303,6 +6341,9 @@ SageBuilder::buildForInitStatement( SgStatement* statement )
 
      ROSE_ASSERT(statement != NULL);
      forInit->append_init_stmt(statement);
+
+  // DQ (11/3/2012): Added call to set file info to default settings.
+     setSourcePosition(forInit);
 
      return forInit;
    }
@@ -6333,6 +6374,9 @@ SageBuilder::buildForInitStatement_nfi(SgStatementPtrList & statements)
 #endif
           (*it)->set_parent(result);
         }
+
+  // DQ (11/3/2012): Added call to set file info to default settings.
+     setSourcePosition(result);
 
      return result;
    }
@@ -6417,33 +6461,35 @@ SgForStatement * SageBuilder::buildForStatement(SgStatement* initialize_stmt, Sg
 
 //! Based on the contribution from Pradeep Srinivasa@ LANL
 //Liao, 8/27/2008
-SgForStatement * SageBuilder::buildForStatement_nfi(SgStatement* initialize_stmt, SgStatement * test, SgExpression * increment, SgStatement * loop_body, SgStatement * else_body)
-{
-  SgForStatement * result = new SgForStatement(test,increment, loop_body);
-  ROSE_ASSERT(result);
+SgForStatement*
+SageBuilder::buildForStatement_nfi(SgStatement* initialize_stmt, SgStatement * test, SgExpression * increment, SgStatement * loop_body, SgStatement * else_body)
+   {
+     SgForStatement * result = new SgForStatement(test, increment, loop_body);
+     ROSE_ASSERT(result);
 
- // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
-  if (symbol_table_case_insensitive_semantics == true)
-       result->setCaseInsensitive(true);
+  // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
+     if (symbol_table_case_insensitive_semantics == true)
+          result->setCaseInsensitive(true);
 
-  setOneSourcePositionNull(result);
-  if (test) test->set_parent(result);
-  if (loop_body) loop_body->set_parent(result);
-  if (increment) increment->set_parent(result);
+     setOneSourcePositionNull(result);
+     if (test)      test->set_parent(result);
+     if (loop_body) loop_body->set_parent(result);
+     if (increment) increment->set_parent(result);
+     if (else_body) else_body->set_parent(result);
 
-  if (else_body) else_body->set_parent(result);
-  result->set_else_body(else_body);
+     result->set_else_body(else_body);
 
-  if (initialize_stmt != NULL) {
-    SgForInitStatement* init_stmt = result->get_for_init_stmt();
-    ROSE_ASSERT(init_stmt);
-    setOneSourcePositionNull(init_stmt);
-    init_stmt->append_init_stmt(initialize_stmt);
-    initialize_stmt->set_parent(init_stmt);
-  }
+     if (initialize_stmt != NULL)
+        {
+          SgForInitStatement* init_stmt = result->get_for_init_stmt();
+          ROSE_ASSERT(init_stmt);
+          setOneSourcePositionNull(init_stmt);
+          init_stmt->append_init_stmt(initialize_stmt);
+          initialize_stmt->set_parent(init_stmt);
+        }
 
-  return result;
-}
+     return result;
+   }
 
 
 SgForStatement*
@@ -6489,6 +6535,7 @@ SageBuilder::buildForStatement_nfi(SgForStatement* result, SgForInitStatement * 
   // ROSE_ASSERT(increment != NULL);
   // ROSE_ASSERT(loop_body != NULL);
 
+#if 0
   // DQ (9/26/2012): It might be that these should always be set.
 #if 0
      if (result->get_for_init_stmt() == NULL)
@@ -6503,6 +6550,11 @@ SageBuilder::buildForStatement_nfi(SgForStatement* result, SgForInitStatement * 
   // This test might make it impossible for us to use this function in SgForStatement* SageBuilder::buildForStatement_nfi()
      if (result->get_for_init_stmt() != NULL)
         {
+          if (init_stmt != result->get_for_init_stmt())
+             {
+               delete result->get_for_init_stmt();
+               result->set_for_init_stmt(NULL);
+             }
        // delete result->get_for_init_stmt();
        // result->set_for_init_stmt(NULL);
 #ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
@@ -6510,12 +6562,44 @@ SageBuilder::buildForStatement_nfi(SgForStatement* result, SgForInitStatement * 
 #endif
        // ROSE_ASSERT(false);
         }
+#endif
+#endif
+
+  // DQ (11/4/2012): I have added support for remove existing subtrees if they are different from what is provided as input.
+     if (result->get_for_init_stmt() != NULL && init_stmt != result->get_for_init_stmt())
+        {
+          delete result->get_for_init_stmt();
+          result->set_for_init_stmt(NULL);
+        }
+
+     if (result->get_test() != NULL && test != result->get_test())
+        {
+          delete result->get_test();
+          result->set_test(NULL);
+        }
+
+     if (result->get_increment() != NULL && increment != result->get_increment())
+        {
+          delete result->get_increment();
+          result->set_increment(NULL);
+        }
+
+     if (result->get_loop_body() != NULL && loop_body != result->get_loop_body())
+        {
+          delete result->get_loop_body();
+          result->set_loop_body(NULL);
+        }
+
+     if (result->get_else_body() != NULL && else_body != result->get_else_body())
+        {
+          delete result->get_else_body();
+          result->set_else_body(NULL);
+        }
 
      result->set_for_init_stmt(init_stmt);
      result->set_test(test);
      result->set_increment(increment);
      result->set_loop_body(loop_body);
-#endif
 
   // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
      if (symbol_table_case_insensitive_semantics == true)
@@ -6529,6 +6613,11 @@ SageBuilder::buildForStatement_nfi(SgForStatement* result, SgForInitStatement * 
 
      if (else_body) init_stmt->set_parent(result);
      result->set_else_body(else_body);
+
+     ROSE_ASSERT(result->get_for_init_stmt() != NULL);
+     ROSE_ASSERT(result->get_test()          != NULL);
+     ROSE_ASSERT(result->get_increment()     != NULL);
+     ROSE_ASSERT(result->get_loop_body()     != NULL);
    }
 
 
@@ -7225,23 +7314,41 @@ SgTryStmt* SageBuilder::buildTryStmt(SgStatement* body,
                                      SgCatchOptionStmt* catch2,
                                      SgCatchOptionStmt* catch3,
                                      SgCatchOptionStmt* catch4
-                                     ) {
-    ROSE_ASSERT(body != NULL);
-    SgTryStmt* try_stmt = new SgTryStmt(body);
-    body->set_parent(try_stmt);
+                                     )
+   {
+     ROSE_ASSERT(body != NULL);
+     SgTryStmt* try_stmt = new SgTryStmt(body);
+     body->set_parent(try_stmt);
 
-    if (catch0 != NULL) try_stmt->append_catch_statement(catch0);
-    if (catch1 != NULL) try_stmt->append_catch_statement(catch1);
-    if (catch2 != NULL) try_stmt->append_catch_statement(catch2);
-    if (catch3 != NULL) try_stmt->append_catch_statement(catch3);
-    if (catch4 != NULL) try_stmt->append_catch_statement(catch4);
+  // DQ (11/3/2012): Added setting default source position info.
+     setSourcePosition(try_stmt);
 
-    return try_stmt;
-}
+     if (try_stmt->get_catch_statement_seq_root() != NULL)
+        {
+          if (try_stmt->get_catch_statement_seq_root()->get_startOfConstruct() == NULL)
+             {
+               ROSE_ASSERT(try_stmt->get_catch_statement_seq_root()->get_endOfConstruct() == NULL);
+               setSourcePosition(try_stmt->get_catch_statement_seq_root());
+             }
+
+          ROSE_ASSERT(try_stmt->get_catch_statement_seq_root()->get_startOfConstruct() != NULL);
+          ROSE_ASSERT(try_stmt->get_catch_statement_seq_root()->get_endOfConstruct()   != NULL);
+        }
+
+     if (catch0 != NULL) try_stmt->append_catch_statement(catch0);
+     if (catch1 != NULL) try_stmt->append_catch_statement(catch1);
+     if (catch2 != NULL) try_stmt->append_catch_statement(catch2);
+     if (catch3 != NULL) try_stmt->append_catch_statement(catch3);
+     if (catch4 != NULL) try_stmt->append_catch_statement(catch4);
+
+     return try_stmt;
+   }
+
 
 // charles4 09/16/2011
 //! Build a try statement (used for Java)
-SgTryStmt *SageBuilder::buildTryStmt(SgBasicBlock *try_body, SgBasicBlock *finally_body) {
+SgTryStmt *SageBuilder::buildTryStmt(SgBasicBlock *try_body, SgBasicBlock *finally_body)
+   {
     //
     // charles4 09/23/2011 - Note that when an SgTryStmt is allocated, its constructor
     // preallocates a SgCatchStementSeq for the field p_catch_statement_sequence_root.
@@ -7253,10 +7360,13 @@ SgTryStmt *SageBuilder::buildTryStmt(SgBasicBlock *try_body, SgBasicBlock *final
     SgTryStmt* try_stmt = new SgTryStmt(try_body);
     try_body -> set_parent(try_stmt);
 
+  // DQ (11/3/2012): Added setting default source position info.
+     setSourcePosition(try_stmt);
+
     if (finally_body) {
         try_stmt -> set_finally_body(finally_body);
         finally_body -> set_parent(try_stmt);
-    }
+   }
 
     return try_stmt;
 }
@@ -7265,6 +7375,9 @@ SgTryStmt *SageBuilder::buildTryStmt(SgBasicBlock *try_body, SgBasicBlock *final
 // ! Build an initial sequence of Catch blocks containing 0 or 1 element.
 SgCatchStatementSeq *SageBuilder::buildCatchStatementSeq(SgCatchOptionStmt *catch_option_stmt) {
     SgCatchStatementSeq *catch_statement_sequence = new SgCatchStatementSeq();
+
+  // DQ (11/3/2012): Added setting default source position info.
+     setSourcePosition(catch_statement_sequence);
 
     if (catch_option_stmt) {
         catch_statement_sequence -> append_catch_statement(catch_option_stmt);
@@ -9808,6 +9921,7 @@ SageBuilder::buildTemplateClassDeclaration ( SgName name, SgScopeStatement* scop
    }
 #endif
 
+
 #ifdef ROSE_USE_NEW_EDG_INTERFACE
 SgTemplateClassDefinition*
 SageBuilder::buildTemplateClassDefinition(SgTemplateClassDeclaration *d /*= NULL*/ )
@@ -9834,10 +9948,11 @@ SageBuilder::buildTemplateClassDefinition(SgTemplateClassDeclaration *d /*= NULL
   }
 #endif
 
+
 #ifdef ROSE_USE_NEW_EDG_INTERFACE
 // SgTemplateClassDeclaration * SageBuilder::buildTemplateClassDeclaration_nfi(SgName & name, SgClassDeclaration::class_types kind, SgScopeStatement* scope, SgTemplateClassDeclaration* nonDefiningDecl )
 // SgTemplateClassDeclaration * SageBuilder::buildNondefiningTemplateClassDeclaration_nfi(const SgName& name, SgClassDeclaration::class_types kind, SgScopeStatement* scope )
-SgTemplateClassDeclaration * 
+SgTemplateClassDeclaration*
 SageBuilder::buildNondefiningTemplateClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaration::class_types kind, SgScopeStatement* scope, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateSpecializationArgumentList )
    {
      if (scope == NULL)
@@ -10104,6 +10219,9 @@ SageBuilder::buildNondefiningTemplateClassDeclaration_nfi(const SgName& XXX_name
         }
 
   // defdecl->set_firstNondefiningDeclaration(nondefdecl);
+
+  // DQ (11/3/2012): Setup the default source position information.
+     setSourcePosition(nondefdecl);
 
 #if 0
   // DQ (11/20/2011): SgTemplateClassDeclaration IR nodes don't have a SgType associated with them (template declarations don't have a type in C++, I think).

@@ -40,6 +40,9 @@ FixupNullPointersInAST::visit ( SgNode* node )
                if (forStatement->get_for_init_stmt() == NULL)
                   {
 #if 1
+#if 1
+                     printf ("In FixupNullPointersInAST::visit(): forStatement->get_for_init_stmt() == NULL: Building SgNullExpression with source position from generateDefaultFileInfoForCompilerGeneratedNode() \n");
+#endif
                     SgForInitStatement* forInitStatement = new SgForInitStatement(Sg_File_Info::generateDefaultFileInfoForCompilerGeneratedNode());
                     ROSE_ASSERT(forInitStatement != NULL);
                     forStatement->set_for_init_stmt(forInitStatement);
@@ -59,6 +62,9 @@ FixupNullPointersInAST::visit ( SgNode* node )
             // is not an expression in C or C++).
                if (forStatement->get_test() == NULL)
                   {
+#if 1
+                     printf ("In FixupNullPointersInAST::visit(): forStatement->get_test() == NULL: Building SgNullExpression with source position from generateDefaultFileInfoForCompilerGeneratedNode() \n");
+#endif
                     SgNullStatement* nullStatement = new SgNullStatement(Sg_File_Info::generateDefaultFileInfoForCompilerGeneratedNode());
                     ROSE_ASSERT(nullStatement != NULL);
                     forStatement->set_test(nullStatement);
@@ -74,6 +80,9 @@ FixupNullPointersInAST::visit ( SgNode* node )
                  // ROSE_ASSERT(expressionRoot != NULL);
                  // forStatement->set_increment_expr_root(expressionRoot);
                  // expressionRoot->set_parent(forStatement);
+#if 1
+                     printf ("In FixupNullPointersInAST::visit(): forStatement->get_increment() == NULL: Building SgNullExpression with source position from generateDefaultFileInfoForCompilerGeneratedNode() \n");
+#endif
                     SgExpression* expression = new SgNullExpression(Sg_File_Info::generateDefaultFileInfoForCompilerGeneratedNode());
                     ROSE_ASSERT(expression != NULL);
                     forStatement->set_increment(expression);

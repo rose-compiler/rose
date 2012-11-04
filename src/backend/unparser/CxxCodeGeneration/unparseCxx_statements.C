@@ -5244,19 +5244,21 @@ Unparse_ExprStmt::unparseCatchStmt(SgStatement* stmt, SgUnparse_Info& info)
         {
           SgUnparse_Info ninfo(info);
           ninfo.set_inVarDecl();
-
+#if 0
        // DQ (12/8/2011): debugging catch parameter...
           curprint ( string("/* START: variable declaration */ "));
           printf ("In unparseCatchStmt(): catch_statement->get_condition() = %p = %s \n",catch_statement->get_condition(),catch_statement->get_condition()->class_name().c_str());
-
+#endif
           catch_statement->get_condition()->get_file_info()->display("catch condition in unparseCatchStmt(): debug");
 
        // DQ (5/6/2004): this does not unparse correctly if the ";" is included
           ninfo.set_SkipSemiColon();
           ninfo.set_SkipClassSpecifier();
           unparseStatement(catch_statement->get_condition(), ninfo);
+#if 0
           curprint ( string("/* END: variable declaration */ "));
        // printf ("DONE: In unparseCatchStmt(): catch_statement->get_condition() = %p = %s \n",catch_statement->get_condition(),catch_statement->get_condition()->class_name().c_str());
+#endif
         }
 
      curprint ( string(")"));

@@ -5009,9 +5009,61 @@ SageInterface::setSourcePositionToDefault( T* node )
                printf ("ERROR: endOfConstruct not set for locatedNode = %p = %s \n",node,node->class_name().c_str());
              }
 
-          ROSE_ASSERT(node->get_endOfConstruct()   != NULL);
           ROSE_ASSERT(node->get_startOfConstruct() != NULL);
+          ROSE_ASSERT(node->get_endOfConstruct()   != NULL);
           ROSE_ASSERT(node->get_endOfConstruct() != NULL && node->get_startOfConstruct() != NULL);
+        }
+
+  // DQ (11/2/2012): This is an important fix to support the new EDG 4.x branch.
+  // Note that because the unparser will use the function isFromAnotherFile() in the unparsing
+  // of expressions, specifically: SgAggregateInitializer, SgCompoundInitializer, and anything 
+  // in their expression lists (which could be any expression).   The isFromAnotherFile() will
+  // use the get_file_info() function on the SgExpression IR nodes and the data from that 
+  // Sg_File_Info object to determine if that expression subtree should be unparsed.  This 
+  // expression level grainularity of unparsing capability is extremely useful in handling
+  // now #includes and other CPP directives are woven back into the AST.  But since the
+  // get_file_info() function is used, and it returns the value of get_operatorPosition(),
+  // it is critically important to have correct data in the SgExpression::p_operatorPosition
+  // Sg_File_Info object (it counts more that the startOfConstruct and endOfConstruct
+  // Sg_File_Info objects in controling what expressions are unparsed.  So we have to set these
+  // up for all expressions (since any SgExpression could appear in the list contained in 
+  // a SgAggregateInitializer or SgCompoundInitializer.
+
+  // DQ (11/2/2012): Set the operator source position information to default values.
+  // This will trigger it to be reset to valid source position information in the front-end.
+     SgExpression* expression = isSgExpression(node);
+     if (expression != NULL)
+        {
+#if 0
+          SgBinaryOp* binaryOp = isSgBinaryOp(expression);
+          if (binaryOp != NULL)
+             {
+               if (binaryOp->get_operatorPosition() == NULL)
+                  {
+                    Sg_File_Info* operator_fileInfo = Sg_File_Info::generateDefaultFileInfo();
+                    operator_fileInfo->setSourcePositionUnavailableInFrontend();
+                    operator_fileInfo->setOutputInCodeGeneration();
+                    binaryOp->set_operatorPosition(operator_fileInfo);
+
+                 // This is equivalent to: "operator_fileInfo->set_parent(binaryOp);"
+                    binaryOp->get_operatorPosition()->set_parent(binaryOp);
+                  }
+             }
+#else
+       // Setup all of the SgExpression operatorPosition pointers to default objects.
+          if (expression->get_operatorPosition() == NULL)
+             {
+               Sg_File_Info* operator_fileInfo = Sg_File_Info::generateDefaultFileInfo();
+               operator_fileInfo->setSourcePositionUnavailableInFrontend();
+               operator_fileInfo->setOutputInCodeGeneration();
+               expression->set_operatorPosition(operator_fileInfo);
+
+            // This is equivalent to: "operator_fileInfo->set_parent(binaryOp);"
+            // expression->get_operatorPosition()->set_parent(expression);
+               operator_fileInfo->set_parent(expression);
+               ROSE_ASSERT(expression->get_operatorPosition()->get_parent() == expression);
+             }
+#endif
         }
    }
 

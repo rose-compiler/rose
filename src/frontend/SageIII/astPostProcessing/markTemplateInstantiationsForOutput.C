@@ -44,6 +44,7 @@ MarkTemplateInstantiationsForOutput::BuildSetOfRequiredTemplateDeclarations ( Sg
 
   // First call to traverse is a traversal of the whole AST
      declarationFixupTraversal.traverse(node,inheritedAttribute);
+
 #if 0
      printf ("Declarations collected form first phase of processing (size = %zu): \n",declarationFixupTraversal.listOfTemplateDeclarationsToOutput.size());
      list<SgDeclarationStatement*>::iterator i = declarationFixupTraversal.listOfTemplateDeclarationsToOutput.begin();
@@ -276,12 +277,12 @@ ProcessMemberFunctionTemplateDeclarations ( set<SgDeclarationStatement*> setOfRe
                  // if ( isSpecialization == true )
                     if ( (isSpecialization == true) || (isDefinedInClass == true) )
                        {
-#if 1
+#if 0
                          printf ("Found a specialization in the current file, mark the specialization for output (on line = %d) \n",templateDeclaration->get_file_info()->get_line());
 #endif
                       // I assume this is a definition if we are marking it for output!
                       // ROSE_ASSERT(memberFunctionInstantiation->get_definition() != NULL);
-#if 1
+#if 0
                          printf ("Calling markForOutputInCodeGeneration() for memberFunctionInstantiation = %p = %s \n",memberFunctionInstantiation,memberFunctionInstantiation->class_name().c_str());
 #endif
                       // Mark this for output later when we generate code!
@@ -335,7 +336,7 @@ ProcessMemberFunctionTemplateDeclarations ( set<SgDeclarationStatement*> setOfRe
                               if (processMemberFunction == true)
                                  {
                                 // This is not a constructor prototype so it is OK to output the prototype
-#if 1
+#if 0
                                    printf ("Calling markForOutputInCodeGeneration(memberFunctionInstantiation = %p) \n",memberFunctionInstantiation);
 #endif
                                 // Mark this for output later when we generate code!
@@ -701,13 +702,26 @@ MarkTemplateInstantiationsForOutput::ProcessFunctionTemplateDeclarations ( set<S
             // At least one of these should be true!
                ROSE_ASSERT ( isfirstNondefiningDeclaration == true || isDefiningDeclaration == true );
 
+#if 0
+               printf ("functionInstantiation->get_templateDeclaration() = %p \n",functionInstantiation->get_templateDeclaration());
+#endif
+
             // If the template declaration is in the current file then we need not output the instantiation (skip marking instantiation for output!)
 #ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
                SgDeclarationStatement* templateDeclaration = functionInstantiation->get_templateDeclaration();
 #else
                SgTemplateDeclaration* templateDeclaration = functionInstantiation->get_templateDeclaration();
 #endif
-               ROSE_ASSERT(templateDeclaration != NULL);
+
+            // DQ (11/3/2012): Changed this assertion to a conditional.
+            // Looking at the code for where the template declaration is set, it seems reasonable that it might 
+            // not be found since p->assoc_template == NULL. However it seems that there are other ways to find 
+            // it.  This is written about in a note in setTemplateOrTemplateInstantiationFunctionGeneration().
+               printf ("In ProcessFunctionTemplateDeclarations(): COMMENTED OUT ASSERTION (templateDeclaration != NULL) to generate AST graph \n");
+            // ROSE_ASSERT(templateDeclaration != NULL);
+#if 1
+               if (templateDeclaration != NULL)
+                  {
 #if 0
             // printf ("templateDeclaration = %p = %s \n",templateDeclaration,templateDeclaration->get_name().str());
                printf ("templateDeclaration = %p = %s \n",templateDeclaration,templateDeclaration->class_name().c_str());
@@ -733,6 +747,10 @@ MarkTemplateInstantiationsForOutput::ProcessFunctionTemplateDeclarations ( set<S
                          markForOutputInCodeGeneration (functionInstantiation);
                        }
                   }
+                  }
+#else
+               printf ("In ProcessFunctionTemplateDeclarations(): COMMENTED OUT ASSERTION (templateDeclaration != NULL) to generate AST graph \n");
+#endif
              }
         }
    }

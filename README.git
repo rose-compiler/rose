@@ -867,3 +867,12 @@ Push to main repository:
 Command required to push new branch (both for ROSE head and EDG submodule):
       git push origin HEAD:refs/heads/dquinlan/dq-edg4x-rc
 
+New smgit commands for any branch (including edg4x):
+
+   Update from master:
+      smgit fetch origin
+      smgit merge origin/master
+
+   Commit:
+      smgit commit -am "[EDG 4.4 and C11] Fixed more bugs..."
+

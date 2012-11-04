@@ -430,6 +430,9 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
   // Take the input list and add any additional IR nodes that should be associated 
   // (but not have been in the AST traversal used to build the initial (input) list).
 
+  // DQ (11/3/2012): Added assertion.
+     ROSE_ASSERT(node != NULL);
+
   // This list will be merged with the input list (returned by reference).
   // set<SgNode*> nodeList;
 #if 0
@@ -558,7 +561,19 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
                SgTemplateInstantiationFunctionDecl* templateInstantiationFunctionDeclaration = isSgTemplateInstantiationFunctionDecl(functionDeclaration);
                if (templateInstantiationFunctionDeclaration != NULL)
                   {
-                    addAssociatedNodes(templateInstantiationFunctionDeclaration->get_templateDeclaration(),nodeList,markMemberNodesDefinedToBeDeleted);
+                 // DQ (11/3/2012): Added assertion.
+                    if (templateInstantiationFunctionDeclaration->get_templateDeclaration() == NULL)
+                       {
+                         printf ("ERROR: templateInstantiationFunctionDeclaration->get_templateDeclaration() == NULL: templateInstantiationFunctionDeclaration = %p \n",templateInstantiationFunctionDeclaration);
+                       }
+                 // ROSE_ASSERT(templateInstantiationFunctionDeclaration->get_templateDeclaration() != NULL);
+
+                 // DQ (11/3/2012): This is failing with the new source code position implementation.  Skipp adding nodes that we cant reference...
+                 // addAssociatedNodes(templateInstantiationFunctionDeclaration->get_templateDeclaration(),nodeList,markMemberNodesDefinedToBeDeleted);
+                    if (templateInstantiationFunctionDeclaration->get_templateDeclaration() != NULL)
+                       {
+                         addAssociatedNodes(templateInstantiationFunctionDeclaration->get_templateDeclaration(),nodeList,markMemberNodesDefinedToBeDeleted);
+                       }
                   }
 
             // Note that this step might remove a symbol that is shared, but I think not!
