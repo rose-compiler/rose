@@ -10893,7 +10893,9 @@ Sg_File_Info* Sg_File_Info::generateDefaultFileInfo()
   // printf ("Sg_File_Info::generateDefaultFileInfo(): This function is depricated and is an error to call! \n");
   // assert(false);
 
-  // printf ("Calling Sg_File_Info::generateDefaultFileInfo(): returnValue = %p \n",returnValue);
+#if 0
+     printf ("In Sg_File_Info::generateDefaultFileInfo() return = %p \n",returnValue);
+#endif
 
      return returnValue;
    }
@@ -10913,6 +10915,10 @@ Sg_File_Info* Sg_File_Info::generateDefaultFileInfoForTransformationNode()
 
      returnValue->set_file_id( TRANSFORMATION_FILE_ID );
 
+#if 0
+     printf ("In Sg_File_Info::generateDefaultFileInfoForTransformationNode() return = %p \n",returnValue);
+#endif
+
      return returnValue;
    }
 
@@ -10925,6 +10931,10 @@ Sg_File_Info* Sg_File_Info::generateFileInfoForTransformationNode( int file_id )
 
      returnValue->set_file_id( file_id );
 
+#if 0
+     printf ("In Sg_File_Info::generateFileInfoForTransformationNode(file_id = %d) return = %p \n",file_id,returnValue);
+#endif
+
      return returnValue;
    }
 
@@ -10936,6 +10946,10 @@ Sg_File_Info* Sg_File_Info::generateFileInfoForTransformationNode( string filena
      Sg_File_Info* returnValue = generateDefaultFileInfoForTransformationNode();
 
      returnValue->set_filenameString( filename );
+
+#if 0
+     printf ("In Sg_File_Info::generateFileInfoForTransformationNode(filename = %s) return = %p \n",filename.c_str(),returnValue);
+#endif
 
      return returnValue;
    }
@@ -10950,6 +10964,10 @@ Sg_File_Info* Sg_File_Info::generateDefaultFileInfoForCompilerGeneratedNode()
 
      returnValue->set_file_id( COMPILER_GENERATED_FILE_ID );
 
+#if 0
+     printf ("In Sg_File_Info::generateDefaultFileInfoForCompilerGeneratedNode() return = %p \n",returnValue);
+#endif
+
      return returnValue;
    }
 
@@ -10958,6 +10976,10 @@ Sg_File_Info* Sg_File_Info::generateDefaultFileInfoForCompilerGeneratedNode()
 Sg_File_Info &
 Sg_File_Info::operator= ( const Sg_File_Info & X )
    {
+#if 0
+     printf ("In Sg_File_Info::operator=(): get_parent() = %p = %s \n",get_parent(),(get_parent() != NULL) ? get_parent()->class_name().c_str() : "null");
+#endif
+
      p_file_id                = X.p_file_id;
      p_line                   = X.p_line;
      p_col                    = X.p_col;
@@ -11228,6 +11250,10 @@ Sg_File_Info::Sg_File_Info ()
    {
      assert(this != NULL);
 
+#if 0
+     printf ("In Sg_File_Info::Sg_File_Info() this = %p \n",this);
+#endif
+
   // Default constructor used for making copies of subtrees
      p_line                   = 0;
      p_col                    = 0;
@@ -11251,6 +11277,10 @@ Sg_File_Info::Sg_File_Info ( const std::string & filename, int line, int col )
    : p_line(line), p_col(col)
    {
      assert(this != NULL);
+
+#if 0
+     printf ("In Sg_File_Info::Sg_File_Info(filename = %s, line = %d, col = %d) \n",filename.c_str(),line,col);
+#endif
 
   // DQ (10/22/2007): Fixed to permit "" to be a valid filename
   // DQ (5/11/2006): Allow "NULL_FILE" as a name (used within ROSE) to map to the NULL_FILE_ID 
@@ -11294,7 +11324,7 @@ Sg_File_Info::Sg_File_Info(const Sg_File_Info & X)
      assert (p_col >= 0);
 
 #if 0
-     printf ("Sg_File_Info copy constructor(const Sg_File_Info) = %p \n",this);
+     printf ("Sg_File_Info copy constructor(const Sg_File_Info = %p) = %p \n",&X,this);
   // display("In copy constructor");
 #endif
 
@@ -11340,6 +11370,10 @@ Sg_File_Info::Sg_File_Info( int file_id, int line, int column )
      p_classificationBitField(0)
    {
      assert(this != NULL);
+
+#if 0
+     printf ("In Sg_File_Info::Sg_File_Info(file_id = %d, line = %d, column = %d) this = %p \n",file_id,line,column,this);
+#endif
 
      assert (p_col >= 0);
 

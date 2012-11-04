@@ -3397,49 +3397,71 @@ Unparse_ExprStmt::unparseTypeRef(SgExpression* expr, SgUnparse_Info& info)
 void Unparse_ExprStmt::unparseVConst(SgExpression* expr, SgUnparse_Info& info) {}
 void Unparse_ExprStmt::unparseExprInit(SgExpression* expr, SgUnparse_Info& info) {}
 
+
 // Liao 11/3/2010
 // Sometimes initializers can from an included file
-//  SgAssignInitializer -> SgCastExp ->SgCastExp ->SgIntVal
+//    SgAssignInitializer -> SgCastExp ->SgCastExp ->SgIntVal
 // We should not unparse them
 // This function will check if the nth initializer is from a different file from the aggregate initializer
 static bool isFromAnotherFile (SgLocatedNode* lnode)
-{
-  bool result = false;
-  ROSE_ASSERT (lnode != NULL);
+   {
+     bool result = false;
+     ROSE_ASSERT (lnode != NULL);
+
+#if 0
+     printf ("TOP of isFromAnotherFile(SgLocatedNode* lnode = %p = %s): result = %s \n",lnode,lnode->class_name().c_str(),result ? "true" : "false");
+#endif
+
   // Liao 11/22/2010, a workaround for enum value constant assign initializer
   // EDG passes the source location information of the original declaration of the enum value, not the location for the value's reference
   // So SgAssignInitializer has wrong file info.
   // In this case, we look down to the actual SgEnumVal for the file info instead of looking at its ancestor SgAssignInitializer  
-  SgAssignInitializer *a_initor = isSgAssignInitializer (lnode);
-  if (a_initor)
-  {
-    result = false;
-    SgExpression * leaf_child = a_initor->get_operand_i();
-    while (SgCastExp * cast_op = isSgCastExp(leaf_child))
-    { 
-      // redirect to original expression tree if possible
-      if (cast_op->get_originalExpressionTree() != NULL)
-        leaf_child = cast_op->get_originalExpressionTree();
-      else
-        leaf_child = cast_op->get_operand_i();
-    }
-    //if (isSgEnumVal(leaf_child))
-    lnode = leaf_child;
-  }
+     SgAssignInitializer *a_initor = isSgAssignInitializer (lnode);
+     if (a_initor != NULL)
+        {
+          result = false;
+          SgExpression * leaf_child = a_initor->get_operand_i();
+          while (SgCastExp * cast_op = isSgCastExp(leaf_child))
+             {
+            // redirect to original expression tree if possible
+               if (cast_op->get_originalExpressionTree() != NULL)
+                    leaf_child = cast_op->get_originalExpressionTree();
+                 else
+                    leaf_child = cast_op->get_operand_i();
+             }
 
-  SgFile* cur_file = SageInterface::getEnclosingFileNode(lnode);
-  if (cur_file != NULL)
-  {
-    // normal file info 
-    if (lnode->get_file_info()->isTransformation() == false &&  lnode->get_file_info()->isCompilerGenerated() ==false)
-    {
-      if (lnode->get_file_info()->get_filenameString() != "" && cur_file->get_file_info()->get_filenameString() != lnode->get_file_info()->get_filenameString())
-        result = true;
-    }
-  } // 
+       // if (isSgEnumVal(leaf_child))
+          lnode = leaf_child;
+        }
 
-  return result;
-}
+  // DQ (11/2/2012): This seems like it could be kind of expensive for each expression...
+     SgFile* cur_file = SageInterface::getEnclosingFileNode(lnode);
+     if (cur_file != NULL)
+        {
+       // normal file info 
+          if (lnode->get_file_info()->isTransformation() == false &&  lnode->get_file_info()->isCompilerGenerated() == false)
+             {
+               if (lnode->get_file_info()->get_filenameString() != "" && cur_file->get_file_info()->get_filenameString() != lnode->get_file_info()->get_filenameString())
+                  {
+                    result = true;
+#if 0
+                    printf ("In isFromAnotherFile(SgLocatedNode* lnode): lnode->get_file_info()        = %p \n",lnode->get_file_info());
+                    printf ("In isFromAnotherFile(SgLocatedNode* lnode): lnode->get_startOfConstruct() = %p \n",lnode->get_startOfConstruct());
+                    printf ("In isFromAnotherFile(SgLocatedNode* lnode): lnode->get_endOfConstruct()   = %p \n",lnode->get_endOfConstruct());
+                    lnode->get_file_info()->display("In isFromAnotherFile(): get_file_info(): returning TRUE: debug");
+                    lnode->get_startOfConstruct()->display("In isFromAnotherFile(): get_startOfConstruct(): returning TRUE: debug");
+#endif
+                  }
+             }
+        }
+
+#if 0
+     printf ("In isFromAnotherFile(SgLocatedNode* lnode = %p = %s): result = %s \n",lnode,lnode->class_name().c_str(),result ? "true" : "false");
+#endif
+
+     return result;
+   }
+
 
 #if 0
 static bool isFromAnotherFile(SgAggregateInitializer * aggr_init, size_t n)
@@ -3480,14 +3502,23 @@ static bool isFromAnotherFile(SgAggregateInitializer * aggr_init, size_t n)
   return result; 
 }
 #endif
+
+
 void
 Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
    {
-    // Skip the entire thing if the initializer is from an included file
-     if (isFromAnotherFile (expr))
-       return;
      SgAggregateInitializer* aggr_init = isSgAggregateInitializer(expr);
      ROSE_ASSERT(aggr_init != NULL);
+
+  // Skip the entire thing if the initializer is from an included file
+     if (isFromAnotherFile (expr))
+        {
+#if 1
+          printf ("In unparseAggrInit(): This SgAggregateInitializer (aggr_init = %p) is from another file so its subtree will not be output in the generated code \n",aggr_init);
+#endif
+          return;
+        }
+
   /* code inserted from specification */
 
      SgUnparse_Info newinfo(info);
@@ -3535,16 +3566,22 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
         }
 #endif
      for (size_t index =0; index < list.size(); index ++)
-     {
-       //bool skipUnparsing = isFromAnotherFile(aggr_init,index);
-       bool skipUnparsing = isFromAnotherFile(list[index]);
-       if (!skipUnparsing)
-       {
-         unparseExpression(list[index], newinfo);
-         if (index!= last_index)
-           curprint ( ", ");
-       }
-     }
+        {
+       // bool skipUnparsing = isFromAnotherFile(aggr_init,index);
+          bool skipUnparsing = isFromAnotherFile(list[index]);
+          if (!skipUnparsing)
+             {
+               unparseExpression(list[index], newinfo);
+               if (index!= last_index)
+                    curprint ( ", ");
+             }
+            else
+             {
+#if 1
+               printf ("In unparseAggrInit(): (aggr_init = %p) list[index = %zu] = %p = %s is from another file so its subtree will not be output in the generated code \n",aggr_init,index,list[index],list[index]->class_name().c_str());
+#endif
+             }
+        }
      unparseAttachedPreprocessingInfo(aggr_init, info, PreprocessingInfo::inside);
 
   // if (aggr_init->get_need_explicit_braces())
@@ -3552,15 +3589,21 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
           curprint ( "}");
    }
 
+
 void
 Unparse_ExprStmt::unparseCompInit(SgExpression* expr, SgUnparse_Info& info)
    {
-    // Skip the entire thing if the initializer is from an included file
-     if (isFromAnotherFile (expr))
-       return;
      SgCompoundInitializer* comp_init = isSgCompoundInitializer(expr);
      ROSE_ASSERT(comp_init != NULL);
-  /* code inserted from specification */
+
+  // Skip the entire thing if the initializer is from an included file
+     if (isFromAnotherFile (expr))
+        {
+#if 1
+          printf ("In unparseCompInit(): This SgCompoundInitializer (comp_init = %p) is from another file so its subtree will not be output in the generated code \n",comp_init);
+#endif
+          return;
+        }
 
      SgUnparse_Info newinfo(info);
 
@@ -3569,20 +3612,27 @@ Unparse_ExprStmt::unparseCompInit(SgExpression* expr, SgUnparse_Info& info)
      SgExpressionPtrList& list = comp_init->get_initializers()->get_expressions();
      size_t last_index = list.size() -1;
      for (size_t index =0; index < list.size(); index ++)
-     {
-       //bool skipUnparsing = isFromAnotherFile(aggr_init,index);
-       bool skipUnparsing = isFromAnotherFile(list[index]);
-       if (!skipUnparsing)
-       {
-         unparseExpression(list[index], newinfo);
-         if (index!= last_index)
-           curprint ( ", ");
-       }
-     }
-     unparseAttachedPreprocessingInfo(comp_init, info, PreprocessingInfo::inside);
+        {
+       // bool skipUnparsing = isFromAnotherFile(aggr_init,index);
+          bool skipUnparsing = isFromAnotherFile(list[index]);
+          if (!skipUnparsing)
+             {
+               unparseExpression(list[index], newinfo);
+               if (index!= last_index)
+                    curprint ( ", ");
+             }
+            else
+             {
+#if 1
+               printf ("In unparseCompInit(): (comp_init = %p) list[index = %zu] = %p = %s is from another file so its subtree will not be output in the generated code \n",comp_init,index,list[index],list[index]->class_name().c_str());
+#endif
+             }
+        }
 
+     unparseAttachedPreprocessingInfo(comp_init, info, PreprocessingInfo::inside);
      curprint ( ")");
    }
+
 
 void
 Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
