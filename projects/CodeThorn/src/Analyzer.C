@@ -92,35 +92,21 @@ EState Analyzer::createEState(Label label, PState pstate, ConstraintSet cset, In
   return estate;
 }
 
-bool Analyzer::isLTLrelevantLabel(Label label) {
+bool Analyzer::isLTLRelevantLabel(Label label) {
+  return getLabeler()->isStdInLabel(label)
+	|| getLabeler()->isStdOutLabel(label)
+	|| getLabeler()->isStdErrLabel(label)
+	|| isTerminationRelevantLabel(label)
+	;
+}
+
+	
+
+bool Analyzer::isTerminationRelevantLabel(Label label) {
   Labeler* lab=getLabeler();
-  if(lab->isFunctionEntryLabel(label)
-	 || lab->isFunctionExitLabel(label)
-	 || lab->isFunctionCallLabel(label)
-	 || lab->isFunctionCallReturnLabel(label)
-	 ){
-	return true;
-  }
   if(SgNodeHelper::isLoopCond(lab->getNode(label))) {
 	return true;
   }
-  if(SgNodeHelper::isCond(lab->getNode(label))) {
-	return true;
-  }
-#if 0
-  if(lab->isBlockBeginLabel(label)||lab->isBlockEndLabel(label))
-	return false;
-  // assignment
-  if(SgExprStatement* exprStmt=isSgExprStatement(getLabeler()->getNode(label))) {
-	SgNode* node=SgNodeHelper::getExprStmtChild(exprStmt);
-	if(isSgAssignOp(node)) {
-	  if(isSgVarRefExp(SgNodeHelper::getLhs(node)) && isSgIntVal(SgNodeHelper::getRhs(node))) {
-		cout << "DEBUG: ltl-irrelevant node: "<<SgNodeHelper::nodeToString(node)<<endl;
-		return false;
-	  }
-	}
-  }
-#endif
   return false;
 }
 
@@ -345,14 +331,17 @@ set<VariableId> Analyzer::determineVariableIdsOfSgInitializedNames(SgInitialized
   return resultSet;
 }
 
+#if 0
 bool Analyzer::isAssertExpr(SgNode* node) {
   if(isSgExprStatement(node)) {
 	node=SgNodeHelper::getExprStmtChild(node);
+	// TODO: refine this to also check for name, paramters, etc.
 	if(isSgConditionalExp(node))
 	  return true;
   }
   return false;
 }
+#endif
 
 bool Analyzer::isFailedAssertEState(const EState* estate) {
   return estate->io.op==InputOutput::FAILED_ASSERT;
@@ -373,7 +362,7 @@ list<SgNode*> Analyzer::listOfAssertNodes(SgProject* root) {
 	  ++i) {
 	RoseAst ast(*i);
 	for(RoseAst::iterator j=ast.begin();j!=ast.end();++j) {
-	  if(isAssertExpr(*j)) {
+	  if(SgNodeHelper::Pattern::matchAssertExpr(*j)) {
 		assertNodes.push_back(*j);
 	  }
 	}
@@ -390,7 +379,7 @@ list<pair<SgLabelStatement*,SgNode*> > Analyzer::listOfLabeledAssertNodes(SgProj
 	RoseAst ast(*i);
 	RoseAst::iterator prev=ast.begin();
 	for(RoseAst::iterator j=ast.begin();j!=ast.end();++j) {
-	  if(isAssertExpr(*j)) {
+	  if(SgNodeHelper::Pattern::matchAssertExpr(*j)) {
 		if(prev!=j && isSgLabelStatement(*prev)) {
 		  SgLabelStatement* labStmt=isSgLabelStatement(*prev);
 		  assertNodes.push_back(make_pair(labStmt,*j));
@@ -400,6 +389,14 @@ list<pair<SgLabelStatement*,SgNode*> > Analyzer::listOfLabeledAssertNodes(SgProj
 	}
   }
   return assertNodes;
+}
+
+InputOutput::OpType Analyzer::ioOp(const EState* estate) const {
+  Label lab=estate->label();
+  if(getLabeler()->isStdInLabel(lab)) return InputOutput::STDIN_VAR;
+  if(getLabeler()->isStdOutLabel(lab)) return InputOutput::STDOUT_VAR;
+  if(getLabeler()->isStdErrLabel(lab)) return InputOutput::STDERR_VAR;
+  return InputOutput::NONE;
 }
 
 const PState* Analyzer::processNew(PState& s) {
@@ -450,7 +447,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
   SgNode* targetNode=cfanalyzer->getNode(edge.target);
   assert(nextNodeToAnalyze1);
   // handle assert(0)
-  if(isAssertExpr(nextNodeToAnalyze1)) {
+  if(SgNodeHelper::Pattern::matchAssertExpr(nextNodeToAnalyze1)) {
 	return elistify(createFailedAssertEState(currentEState,edge.target));
   }
 
@@ -587,113 +584,72 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
 	  return elistify(createEState(edge.target,newPState,cset));
 	}
   }
+
   if(edge.isType(EDGE_EXTERNAL)) {
-	if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze1) ) {
-	   string fName=SgNodeHelper::getFunctionName(funCall);
-	   SgExpressionPtrList& actualParams=SgNodeHelper::getFunctionCallActualParameterList(funCall);
-	   InputOutput newio;
-	   if(fName=="scanf") {
-		 if(actualParams.size()==2) {
-		   SgAddressOfOp* addressOp=isSgAddressOfOp(actualParams[1]);
-		   if(!addressOp) {
-			 cerr<<"Error: unsupported scanf argument #2 (no address operator found). Currently scanf with exactly one variable of the form scanf(\"%d\",&v) is supported."<<endl;
-			 exit(1);
-		   }
-		   SgVarRefExp* varRefExp=isSgVarRefExp(SgNodeHelper::getFirstChild(addressOp));
-		   if(!varRefExp) {
-			 cerr<<"Error: unsupported scanf argument #2 (no variable found). Currently scanf with exactly one variable of the form scanf(\"%d\",&v) is supported."<<endl;
-			 exit(1);
-		   }
-		   // matched: SgAddressOfOp(SgVarRefExp())
-		   SgSymbol* sym=SgNodeHelper::getSymbolOfVariable(varRefExp);
-		   assert(sym);
-		   VariableId varId=VariableId(sym);
-
-		   if(_inputVarValues.size()>0) {
-			 // update state (remove all existing constraint on that variable and set it to top)
-			 PState newPState=*currentEState.pstate();
-			 ConstraintSet newCSet=*currentEState.constraints();
-			 newCSet.removeAllConstraintsOfVar(varId);
-			 list<EState> resList;
-			 for(set<int>::iterator i=_inputVarValues.begin();i!=_inputVarValues.end();++i) {
-			   PState newPState=*currentEState.pstate();
-			   if(boolOptions["input-var-values-as-constraints"]) {
-				 newCSet.removeAllConstraintsOfVar(varId);
-				 newPState[varId]=AType::Top();
-				 newCSet.addConstraint(Constraint(Constraint::EQ_VAR_CONST,varId,AType::ConstIntLattice(*i)));
-				 assert(newCSet.size()>0);
-			   } else {
-				 newCSet.removeAllConstraintsOfVar(varId);
-				 newPState[varId]=AType::ConstIntLattice(*i);
-			   }
-			   newio.recordVariable(InputOutput::STDIN_VAR,varId);
-			   EState estate=createEState(edge.target,newPState,newCSet,newio);
-			   resList.push_back(estate);
-			 }
-			 //cout << "DEBUG: created "<<_inputVarValues.size()<<" input states."<<endl;
-			 return resList;
-
-		   } else {
-			 // update state (remove all existing constraint on that variable and set it to top)
-			 PState newPState=*currentEState.pstate();
-			 ConstraintSet newCSet=*currentEState.constraints();
-			 if(boolOptions["update-input-var"]) {
-			   newCSet.removeAllConstraintsOfVar(varId);
-			   newPState[varId]=AType::Top();
-			 }
-			 newio.recordVariable(InputOutput::STDIN_VAR,varId);
-			 return elistify(createEState(edge.target,newPState,newCSet,newio));
-		   }
-
-		 } else {
-		   cerr<<"Error: unsupported number of scanf arguments. Currently scanf with exactly one variable of the form scanf(\"%d\",&v) is supported."<<endl;
-		   exit(1);
-		 }
-	   }
-	   if(fName=="printf") {
-		 if(actualParams.size()==2) {
-		   SgVarRefExp* varRefExp=isSgVarRefExp(actualParams[1]);
-		   if(!varRefExp) {
-			 cerr<<"Error: unsupported print argument #2 (no variable found). Currently printf with exactly one variable of the form printf(\"...%d...\",v) is supported."<<endl;
-			 exit(1);
-		   }
-		   SgSymbol* sym=SgNodeHelper::getSymbolOfVariable(varRefExp);
-		   assert(sym);
-		   VariableId varId=VariableId(sym);
-		   newio.recordVariable(InputOutput::STDOUT_VAR,varId);
-		   assert(newio.var==varId);
-		   if(boolOptions["report-stdout"]) {
-			 cout << "REPORT: stdout:"<<varId.toString()<<":"<<estate->toString()<<endl;
-		   }
-
-		 } else {
-		   cerr<<"Error: unsupported number of printf arguments. Currently printf with exactly one variable of the form printf(\"...%d...\",v) is supported."<<endl;
-		   exit(1);
-		 }
-	   }
-	   if(fName=="fprintf") {
-		 if(actualParams.size()==3) {
-		   SgVarRefExp* varRefExp=isSgVarRefExp(actualParams[2]);
-		   if(!varRefExp) {
-			 cerr<<"Error: unsupported fprint argument #3 (no variable found). Currently printf with exactly one variable of the form fprintf(stream,\"...%d...\",v) is supported."<<endl;
-			 exit(1);
-		   }
-		   SgSymbol* sym=SgNodeHelper::getSymbolOfVariable(varRefExp);
-		   assert(sym);
-		   VariableId varId=VariableId(sym);
-		   newio.recordVariable(InputOutput::STDERR_VAR,varId);
-		 } else {
-		   cerr<<"Error: unsupported number of fprintf arguments. Currently printf with exactly one variable of the form fprintf(stream,\"...%d...\",v) is supported."<<endl;
-		   exit(1);
-		 }
-	   }
-	   // for all other external functions we use identity as transfer function
-	   EState newEState=currentEState;
-	   newEState.io=newio;
-	   newEState.setLabel(edge.target);
-	   return elistify(newEState);
+	InputOutput newio;
+	Label lab=getLabeler()->getLabel(nextNodeToAnalyze1);
+	VariableId varId;
+	if(getLabeler()->isStdInLabel(lab,&varId)) {
+	  if(_inputVarValues.size()>0) {
+		// update state (remove all existing constraint on that variable and set it to top)
+		PState newPState=*currentEState.pstate();
+		ConstraintSet newCSet=*currentEState.constraints();
+		newCSet.removeAllConstraintsOfVar(varId);
+		list<EState> resList;
+		for(set<int>::iterator i=_inputVarValues.begin();i!=_inputVarValues.end();++i) {
+		  PState newPState=*currentEState.pstate();
+		  if(boolOptions["input-var-values-as-constraints"]) {
+			newCSet.removeAllConstraintsOfVar(varId);
+			newPState[varId]=AType::Top();
+			newCSet.addConstraint(Constraint(Constraint::EQ_VAR_CONST,varId,AType::ConstIntLattice(*i)));
+			assert(newCSet.size()>0);
+		  } else {
+			newCSet.removeAllConstraintsOfVar(varId);
+			newPState[varId]=AType::ConstIntLattice(*i);
+		  }
+		  newio.recordVariable(InputOutput::STDIN_VAR,varId);
+		  EState estate=createEState(edge.target,newPState,newCSet,newio);
+		  resList.push_back(estate);
+		}
+		//cout << "DEBUG: created "<<_inputVarValues.size()<<" input states."<<endl;
+		return resList;
+	  } else {
+		// without specified input values (default mode: analysis performed for all possible input values)
+		// update state (remove all existing constraint on that variable and set it to top)
+		PState newPState=*currentEState.pstate();
+		ConstraintSet newCSet=*currentEState.constraints();
+		if(boolOptions["update-input-var"]) {
+		  newCSet.removeAllConstraintsOfVar(varId);
+		  newPState[varId]=AType::Top();
+		}
+		newio.recordVariable(InputOutput::STDIN_VAR,varId);
+		return elistify(createEState(edge.target,newPState,newCSet,newio));
+	  }
 	}
+	if(getLabeler()->isStdOutLabel(lab,&varId)) {
+	  newio.recordVariable(InputOutput::STDOUT_VAR,varId);
+	  assert(newio.var==varId);
+	  if(boolOptions["report-stdout"]) {
+		cout << "REPORT: stdout:"<<varId.toString()<<":"<<estate->toString()<<endl;
+	  }
+	}
+	if(getLabeler()->isStdErrLabel(lab,&varId)) {
+	  newio.recordVariable(InputOutput::STDERR_VAR,varId);
+	  assert(newio.var==varId);
+	  if(boolOptions["report-stderr"]) {
+		cout << "REPORT: stderr:"<<varId.toString()<<":"<<estate->toString()<<endl;
+	  }
+	}
+
+	// for all other external functions we use identity as transfer function
+	EState newEState=currentEState;
+	newEState.io=newio;
+	newEState.setLabel(edge.target);
+	return elistify(newEState);
   }
+
+
+
   // special case external call
   if(SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze1) 
 	 ||edge.isType(EDGE_EXTERNAL)
@@ -759,6 +715,47 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
 	  return elistify(createEState(edge.target,newPState,cset));
 	}
 
+	if(SgNodeHelper::isPrefixIncDecOp(nextNodeToAnalyze2)
+	   || SgNodeHelper::isPostfixIncDecOp(nextNodeToAnalyze2)) {
+	  SgNode* nextNodeToAnalyze3=SgNodeHelper::getUnaryOpChild(nextNodeToAnalyze2);
+	  VariableId var;
+	  if(ExprAnalyzer::variable(nextNodeToAnalyze3,var)) {
+
+		list<SingleEvalResultConstInt> res=exprAnalyzer.evalConstInt(nextNodeToAnalyze3,currentEState,true,true);
+		assert(res.size()==1); // must hold for currently supported limited form of ++,--
+		list<SingleEvalResultConstInt>::iterator i=res.begin();
+		EState estate=(*i).estate;
+		PState newPState=*estate.pstate();
+		ConstraintSet cset=*estate.constraints();
+
+		AType::ConstIntLattice varVal=newPState[var].getValue();
+		AType::ConstIntLattice const1=1;
+		switch(nextNodeToAnalyze2->variantT()) {		  
+		case V_SgPlusPlusOp:
+		  varVal=varVal+const1; // overloaded binary + operator
+		  break;
+		case V_SgMinusMinusOp:
+		  varVal=varVal-const1; // overloaded binary - operator
+		  break;
+		default:
+		  cerr << "Operator-AST:"<<astTermToMultiLineString(nextNodeToAnalyze2,2)<<endl;
+		  cerr << "Operator:"<<SgNodeHelper::nodeToString(nextNodeToAnalyze2)<<endl;
+		  cerr << "Operand:"<<SgNodeHelper::nodeToString(nextNodeToAnalyze3)<<endl;
+		  cerr<<"Error: programmatic error in handling of inc/dec operators."<<endl;
+		  exit(1);
+		}
+		newPState[var]=varVal;
+
+		if(!(*i).result.isTop())
+		  cset.removeAllConstraintsOfVar(var);
+		list<EState> estateList;
+		estateList.push_back(createEState(edge.target,newPState,cset));
+		return estateList;
+	  } else {
+		throw "Error: currently inc/dec operators are only supported for variables.";
+	  }
+	}
+	
 	if(isSgAssignOp(nextNodeToAnalyze2)) {
 	  SgNode* lhs=SgNodeHelper::getLhs(nextNodeToAnalyze2);
 	  SgNode* rhs=SgNodeHelper::getRhs(nextNodeToAnalyze2);
@@ -870,7 +867,8 @@ set<const EState*> Analyzer::transitionSourceEStateSetOfLabel(Label lab) {
   return estateSet;
 }
 
-// TODO: this function is obsolete (to delete)
+// TODO: this function should be implemented with a call of ExprAnalyzer::evalConstInt
+// TODO: currently all rhs which are not a variable are evaluated to top by this function
 // TODO: x=x eliminates constraints of x but it should not.
 PState Analyzer::analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode* rhs, ConstraintSet& cset) {
   assert(isSgExpression(rhs));

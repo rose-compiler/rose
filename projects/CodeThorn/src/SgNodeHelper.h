@@ -115,6 +115,13 @@ namespace SgNodeHelper {
   //! is true if 'node' is the root node of the AST representing the condition of If, While, DoWhile, For, CondExp. (does not handle switch).
   bool isCond(SgNode* node);
 
+  //! return true for --Expr and ++Expr, otherwise false.
+  bool isPrefixIncDecOp(SgNode* node);
+
+  //! return true for Expr-- and Expr--, otherwise false;
+  bool isPostfixIncDecOp(SgNode* node);
+  
+
   //! returns the SgSymbol* of the variable in a variable declaration
   SgSymbol* getSymbolOfVariableDeclaration(SgVariableDeclaration* decl);
 
@@ -171,6 +178,9 @@ namespace SgNodeHelper {
   //! returns the child of SgExpressionRoot (which is guaranteed to be unique and to exist)
   SgNode* getExprRootChild(SgNode* node);
 
+  //! returns the child of a SgUnaryExp (which is guaranteed to be unique and to exist)
+  SgNode* getUnaryOpChild(SgNode* node);
+
   /*! returns the number of children as int (intentionally not as t_size)
 	 ensures that the number of children fits into an int, otherwise throws exception.
   */
@@ -226,6 +236,17 @@ namespace SgNodeHelper {
 	SgFunctionCallExp* matchExprStmtFunctionCallExp(SgNode *);
 	//! tests pattern SgExprStatement(SgAssignOp(VarRefExp,FunctionCallExp)) and returns pointer to FunctionCallExp, otherwise 0.
 	SgFunctionCallExp* matchExprStmtAssignOpVarRefExpFunctionCallExp(SgNode *);
+
+	//! tests pattern SgFunctionCall(...) where the name of the function is scanf with 2 params
+	SgVarRefExp* matchSingleVarScanf(SgNode* node);
+	//! tests pattern SgFunctionCall(...) where the name of the function is printf with 2 params
+	SgVarRefExp* matchSingleVarPrintf(SgNode* node);
+	//! tests pattern SgFunctionCall(...) where the name of the function is fprintf with 3 params
+	SgVarRefExp* matchSingleVarFPrintf(SgNode* node);
+
+	//! tests pattern for an assert
+	bool matchAssertExpr(SgNode* node);
+
   } // end of namespace Pattern
 
 } // end of namespace SgNodeHelper

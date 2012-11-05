@@ -10,6 +10,89 @@
 using namespace std;
 using namespace CodeThorn;
 
+SgVarRefExp* SgNodeHelper::Pattern::matchSingleVarScanf(SgNode* node) {
+  SgNode* nextNodeToAnalyze1=node;
+  if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze1) ) {
+	string fName=SgNodeHelper::getFunctionName(funCall);
+	SgExpressionPtrList& actualParams=SgNodeHelper::getFunctionCallActualParameterList(funCall);
+	if(fName=="scanf") {
+	  if(actualParams.size()==2) {
+		SgAddressOfOp* addressOp=isSgAddressOfOp(actualParams[1]);
+		if(!addressOp) {
+		  cerr<<"Error: unsupported scanf argument #2 (no address operator found). Currently only scanf with exactly one variable of the form scanf(\"%d\",&v) is supported."<<endl;
+		  exit(1);
+		}
+		SgVarRefExp* varRefExp=isSgVarRefExp(SgNodeHelper::getFirstChild(addressOp));
+		if(!varRefExp) {
+		  cerr<<"Error: unsupported scanf argument #2 (no variable found). Currently only scanf with exactly one variable of the form scanf(\"%d\",&v) is supported."<<endl;
+		  exit(1);
+		}
+		// matched: SgAddressOfOp(SgVarRefExp())
+		return varRefExp;
+	  } else {
+		  cerr<<"Error: unsupported number of arguments of scanf. Currently only scanf with exactly one variable of the form scanf(\"%d\",&v) is supported."<<endl;
+		  exit(1);
+	  }
+	}
+  }
+  return 0;
+}
+
+SgVarRefExp* SgNodeHelper::Pattern::matchSingleVarPrintf(SgNode* node) {
+  SgNode* nextNodeToAnalyze1=node;
+  if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze1) ) {
+	string fName=SgNodeHelper::getFunctionName(funCall);
+	SgExpressionPtrList& actualParams=SgNodeHelper::getFunctionCallActualParameterList(funCall);
+	if(fName=="printf") {
+	  if(actualParams.size()==2) {
+		SgVarRefExp* varRefExp=isSgVarRefExp(actualParams[1]);
+		if(!varRefExp) {
+		  cerr<<"Error: unsupported print argument #2 (no variable found). Currently printf with exactly one variable of the form printf(\"...%d...\",v) is supported."<<endl;
+		  exit(1);
+		}
+		return varRefExp;
+	  } else {
+		cerr<<"Error: unsupported number of printf arguments. Currently printf with exactly one variable of the form printf(\"...%d...\",v) is supported."<<endl;
+		exit(1);
+	  }
+	}
+  }	
+  return 0;
+}
+
+SgVarRefExp* SgNodeHelper::Pattern::matchSingleVarFPrintf(SgNode* node) {
+  SgNode* nextNodeToAnalyze1=node;
+  if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze1) ) {
+	string fName=SgNodeHelper::getFunctionName(funCall);
+	SgExpressionPtrList& actualParams=SgNodeHelper::getFunctionCallActualParameterList(funCall);
+	if(fName=="fprintf") {
+	  if(actualParams.size()==3) {
+		SgVarRefExp* varRefExp=isSgVarRefExp(actualParams[2]);
+		if(!varRefExp) {
+			 cerr<<"Error: unsupported fprint argument #3 (no variable found). Currently printf with exactly one variable of the form fprintf(stream,\"...%d...\",v) is supported."<<endl;
+			 exit(1);
+		}
+		return varRefExp;
+	  } else {
+		cerr<<"Error: unsupported number of fprintf arguments. Currently printf with exactly one variable of the form fprintf(stream,\"...%d...\",v) is supported."<<endl;
+		exit(1);
+	  }
+	}
+  }
+  return 0;
+}
+
+bool SgNodeHelper::Pattern::matchAssertExpr(SgNode* node) {
+  if(isSgExprStatement(node)) {
+	node=SgNodeHelper::getExprStmtChild(node);
+	// TODO: refine this to also check for name, paramters, etc.
+	if(isSgConditionalExp(node))
+	  return true;
+  }
+  return false;
+}
+
+
 SgExpression* SgNodeHelper::getInitializerExpressionOfVariableDeclaration(SgVariableDeclaration* decl) {
   SgInitializedName* initName=SgNodeHelper::getInitializedNameOfVariableDeclaration(decl);
   SgInitializer* initializer=initName->get_initializer();
@@ -348,6 +431,19 @@ bool SgNodeHelper::isCond(SgNode* node) {
 	return false;
 }
 
+bool SgNodeHelper::isPrefixIncDecOp(SgNode* node) {
+  if(isSgPlusPlusOp(node)||isSgMinusMinusOp(node))
+	return static_cast<SgUnaryOp*>(node)->isLValue()==true;
+  else
+	return false;
+}
+bool SgNodeHelper::isPostfixIncDecOp(SgNode* node) {
+  if(isSgPlusPlusOp(node)||isSgMinusMinusOp(node))
+	return static_cast<SgUnaryOp*>(node)->isLValue()==false;
+  else
+	return false;
+}
+
 SgStatementPtrList& SgNodeHelper::getForInitList(SgNode* node) {
   if(SgForStatement* forstmt=isSgForStatement(node)) {
 	return forstmt->get_init_stmt();
@@ -487,6 +583,15 @@ string SgNodeHelper::getFunctionName(SgNode* node) {
 SgNode* SgNodeHelper::getExprStmtChild(SgNode* node) {
   if(!isSgExprStatement(node)) {
 	cerr << "Error: improper type in getExprStmtChild ("<<node->class_name()<<")"<<endl;
+	exit(1);
+  }
+  return SgNodeHelper::getFirstChild(node);
+}
+
+
+SgNode* SgNodeHelper::getUnaryOpChild(SgNode* node) {
+  if(!dynamic_cast<SgUnaryOp*>(node)) {
+	cerr << "Error: improper type in getUnaryOpChild ("<<node->class_name()<<")"<<endl;
 	exit(1);
   }
   return SgNodeHelper::getFirstChild(node);

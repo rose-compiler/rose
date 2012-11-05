@@ -29,7 +29,7 @@ bool CodeThornLanguageRestrictor::checkIfAstIsAllowed(SgNode* node) {
   RoseAst ast(node);
   for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
 	if(!isAllowedAstNode(*i)) {
-	  cerr << "Error: Unsupported language construct found: " << (*i)->sage_class_name() << endl;
+	  cerr << "Language-Restrictor: excluded language construct found: " << (*i)->sage_class_name() << endl;
 	  // report first error and return
 	  switch((*i)->variantT()) {
 	  V_SgContinueStmt: cerr << "Error info: cfg construction for continue-statement not supported yet."<<endl; break;
@@ -68,8 +68,11 @@ void checkProgram(SgNode* root) {
   vs.insert(V_SgBoolValExp);
   vs.insert(V_SgLabelStatement);
   vs.insert(V_SgNullStatement);
-  vs.insert(V_SgConditionalExp); // TODO (assignments not handled!)
+  vs.insert(V_SgConditionalExp); // TODO: case if inside expressions
   vs.insert(V_SgMinusOp);
+
+  vs.insert(V_SgPlusPlusOp);
+  vs.insert(V_SgMinusMinusOp);
 
   // inter-procedural
   vs.insert(V_SgFunctionCallExp);
@@ -348,6 +351,7 @@ int main( int argc, char * argv[] ) {
      "transition graph 2: visualize all estate-properties [=yes|no]")
     ("colors",po::value< string >(),"use colors in output [=yes|no]")
     ("report-stdout",po::value< string >(),"report stdout estates during analysis [=yes|no]")
+    ("report-stderr",po::value< string >(),"report stderr estates during analysis [=yes|no]")
     ("report-failed-assert",po::value< string >(),
      "report failed assert estates during analysis [=yes|no]")
     ("precision-equality-constraints",po::value< string >(),
@@ -404,6 +408,7 @@ int main( int argc, char * argv[] ) {
   boolOptions.registerOption("tg2-estate-properties",false);
   boolOptions.registerOption("colors",true);
   boolOptions.registerOption("report-stdout",false);
+  boolOptions.registerOption("report-stderr",false);
   boolOptions.registerOption("report-failed-assert",false);
   boolOptions.registerOption("precision-equality-constraints",true);
   boolOptions.registerOption("precision-equality-io",true);
@@ -682,10 +687,13 @@ int main( int argc, char * argv[] ) {
   
   } catch(char* str) {
 	cerr << "*Exception raised: " << str << endl;
+	return 1;
   } catch(const char* str) {
 	cerr << "Exception raised: " << str << endl;
+	return 1;
   } catch(string str) {
 	cerr << "Exception raised: " << str << endl;
+	return 1;
  }
   return 0;
 }

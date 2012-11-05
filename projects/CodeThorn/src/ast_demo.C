@@ -10,8 +10,10 @@
 #include "AstMatching.h"
 #include "AstTerm.h"
 #include "Timer.h"
+#include "SgNodeHelper.h"
 
 using namespace std;
+using namespace CodeThorn;
 
 class TestTraversal : public AstSimpleProcessing {
 public:
@@ -52,15 +54,16 @@ int main( int argc, char * argv[] ) {
   // obtain pointer to main function (if no main function is found, the pointer is 0)
   SgNode* functionRoot=ast.findFunctionByName("main");
   RoseAst functionAst(functionRoot);
-  //cout << "TERM INFO OUTPUT: START\n";
-  //cout << astTermToMultiLineString(root,0);
-  //cout << "TERM INFO OUTPUT: END\n";
 
   // create AST term as string and write on stdout
   string astAsString;
-  astAsString=astTermWithNullValuesToString(functionRoot);
+  #if 1
+  astAsString=astTermToMultiLineString(functionRoot,4);
+  #else
+  astAsString=astTermWithNullToString(functionRoot);
+  #endif
   cout<<endl;
-  cout << "AST: "<<astAsString<<endl;
+  cout << "AST of main function:\n"<<astAsString<<endl;
   cout<<endl;
 
   // create dot-file as string using the RoseAst::iterator
@@ -94,8 +97,5 @@ int main( int argc, char * argv[] ) {
   cout << "ROSE AST checks  : " << measurementAstChecks << " ms"<<endl;
   cout << "iter-with-null   : "<<iteratorMeasurementTimeWithNull << " ms"<<endl;
   cout << "iter-without-null: "<<iteratorMeasurementTimeWithoutNull << " ms"<<endl;
-
-
-
   return 0;
 }

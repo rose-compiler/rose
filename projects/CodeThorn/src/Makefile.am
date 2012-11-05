@@ -294,6 +294,7 @@ TESTS= \
     tests/test_dowhile2.c \
     tests/test_for1.c \
     tests/test_for2.c \
+    tests/test_for3.c \
      \
     tests/matchexpressions/test1.mat \
     tests/matchexpressions/test2.mat \

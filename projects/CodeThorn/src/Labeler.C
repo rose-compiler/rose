@@ -208,3 +208,36 @@ std::string Labeler::toString() {
   }
   return ss.str();
 }
+
+bool Labeler::isStdOutLabel(Label label, VariableId* id) {
+  if(SgVarRefExp* varRefExp=SgNodeHelper::Pattern::matchSingleVarPrintf(getNode(label))) {
+	SgSymbol* sym=SgNodeHelper::getSymbolOfVariable(varRefExp);
+	assert(sym);
+	if(id)
+	  *id=VariableId(sym);
+	return true;
+  }
+  return false;
+}
+
+bool Labeler::isStdInLabel(Label label, VariableId* id) {
+  if(SgVarRefExp* varRefExp=SgNodeHelper::Pattern::matchSingleVarScanf(getNode(label))) {
+	SgSymbol* sym=SgNodeHelper::getSymbolOfVariable(varRefExp);
+	assert(sym);
+	if(id)
+	  *id=VariableId(sym);
+	return true;
+  }
+  return false;
+}
+
+bool Labeler::isStdErrLabel(Label label, VariableId* id) {
+  if(SgVarRefExp* varRefExp=SgNodeHelper::Pattern::matchSingleVarFPrintf(getNode(label))) {
+	SgSymbol* sym=SgNodeHelper::getSymbolOfVariable(varRefExp);
+	assert(sym);
+	if(id)
+	  *id=VariableId(sym);
+	return true;
+  }
+  return false;
+}

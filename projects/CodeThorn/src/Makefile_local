@@ -203,7 +203,7 @@ asserttest: $(TOOLNAME3)
 
 regressiontest: $(TOOLNAME3)
 	@./$(TOOLNAME3) --csv-assert tmp_rers_mini1_assert_csv.txt --csv-ltl tmp_rers_mini1_ltl_csv.txt --verify tests/rers_mini1.ltl --viz=yes tests/rers_mini1.c
-	@echo "-----------------------"
+	@echo "----------------------------------------"
 	@sort -u tmp_rers_mini1_assert_csv.txt > tmp2_rers_mini1_assert_csv.txt 
 	@diff tmp2_rers_mini1_assert_csv.txt $(REGRESSION_DATA_DIR)/rers_mini1_assert_csv.txt
 	@echo "Regression assert test PASSED."
@@ -213,9 +213,9 @@ regressiontest: $(TOOLNAME3)
 	@sort -u $(REGRESSION_DATA_DIR)/rers_mini1_transitiongraph1.dat > rg2.dat
 	@diff rg1.dat rg2.dat
 	@echo "Regression transition graph test PASSED."
-	@echo "-----------------------"
+	@echo "----------------------------------------"
 	@echo "All regression tests PASSED."
-	@echo "-----------------------"
+	@echo "----------------------------------------"
 
 # use with caution
 generateregressiondata:

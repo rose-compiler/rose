@@ -77,7 +77,8 @@ class Analyzer {
   const EState* addToWorkListIfNew(EState estate);
   void recordTransition(const EState* sourceEState, Edge e, const EState* targetEState);
   void printStatusMessage(bool);
-  bool isLTLrelevantLabel(Label label);
+  bool isLTLRelevantLabel(Label label);
+  bool isTerminationRelevantLabel(Label label);
   const EState* takeFromWorkList();
  private:
   /*! if state exists in stateSet, a pointer to the existing state is returned otherwise 
@@ -105,15 +106,16 @@ class Analyzer {
 
   //! The analyzer requires a CFAnalyzer to obtain the ICFG.
   void setCFAnalyzer(CFAnalyzer* cf) { cfanalyzer=cf; }
-  CFAnalyzer* getCFAnalyzer() { return cfanalyzer; }
+  CFAnalyzer* getCFAnalyzer() const { return cfanalyzer; }
 
   // access  functions for computed information
-  Labeler* getLabeler() { return cfanalyzer->getLabeler(); }
+  Labeler* getLabeler() const { return cfanalyzer->getLabeler(); }
   Flow* getFlow() { return &flow; }
   PStateSet* getPStateSet() { return &pstateSet; }
   EStateSet* getEStateSet() { return &estateSet; }
   TransitionGraph* getTransitionGraph() { return &transitionGraph; }
   ConstraintSetMaintainer* getConstraintSetMaintainer() { return &constraintSetMaintainer; }
+
   //private: TODO
   Flow flow;
   SgNode* startFunRoot;
@@ -126,7 +128,7 @@ class Analyzer {
 
   set<string> variableIdsToVariableNames(set<VariableId>);
 
-  bool isAssertExpr(SgNode* node);
+  //bool isAssertExpr(SgNode* node);
   bool isFailedAssertEState(const EState* estate);
   //! adds a specific code to the io-info of an estate which is checked by isFailedAsserEState and determines a failed-assert estate. Note that the actual assert (and its label) is associated with the previous estate (this information can therefore be obtained from a transition-edge in the transition graph).
   EState createFailedAssertEState(const EState estate, Label target);
@@ -145,12 +147,19 @@ class Analyzer {
 	assert(labelName.size()>0);
 	return labelName;
   }
+
+  InputOutput::OpType ioOp(const EState* estate) const;
+
   void setDisplayDiff(int diff) { _displayDiff=diff; }
   void setNumberOfThreadsToUse(int n) { _numberOfThreadsToUse=n; }
   void insertInputVarValue(int i) { _inputVarValues.insert(i); }
   int numberOfInputVarValues() { return _inputVarValues.size(); }
   list<pair<SgLabelStatement*,SgNode*> > _assertNodes;
   string _csv_assert_live_file; // to become private
+
+
+
+
  private:
   set<int> _inputVarValues;
   ExprAnalyzer exprAnalyzer;

@@ -17,9 +17,9 @@ std::string nodeTypeName(SgNode* node) {
   }
 }
 
-std::string astTermToMultiLineString(SgNode* node,int tab) {
+std::string astTermToMultiLineString(SgNode* node,int tab, int pos) {
   std::string tabstring;
-  for(int t=0;t<tab;t++) tabstring+=" ";
+  for(int t=0;t<pos;t++) tabstring+=" ";
 
   if(node==0) 
     return tabstring+"null";
@@ -29,7 +29,7 @@ std::string astTermToMultiLineString(SgNode* node,int tab) {
   // address debug output
   std::stringstream ss;
   ss<<node;
-  s+="@"+ss.str();
+  //s+="@"+ss.str();
 
   int arity=node->get_numberOfTraversalSuccessors();
   if(arity>0) {
@@ -37,7 +37,7 @@ std::string astTermToMultiLineString(SgNode* node,int tab) {
     for(int i=0; i<arity;i++) {
       SgNode* child = node->get_traversalSuccessorByIndex(i);   
       if(i!=0) s+=",\n";
-      s+=astTermToMultiLineString(child,tab+1);
+      s+=astTermToMultiLineString(child,tab,pos+tab);
     }
     s+="\n"+tabstring+")";
   }
