@@ -40,6 +40,7 @@ namespace UnifiedLTL {
     const EState* estate;
     vector<BoolLattice> valstack;
     BoolLattice val;  /// result of the current iteration
+    vector<BoolLattice> debug; // stores all intermediate results for the dot output
 
     LTLState() : estate(NULL), val(Bot()) { valstack.push_back(Bot()); }
     //LTLState(const EState* s, vector<BoolLattice> v) : estate(s), valstack(v) {}

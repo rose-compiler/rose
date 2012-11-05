@@ -58,17 +58,17 @@ void add_edge_if_new(LTLVertex src, LTLVertex tgt, LTLTransitionGraph& g) {
 }
 
 
-#if 0
+#if 1
 /**
  * DOT visualization of the LTL Checker result
  */
-class Visualizer: public TopDownVisitor {
+class UVisualizer: public TopDownVisitor {
 public:
-  Visualizer(LTLProperties& p, Label state)
-    : ltl_properties(p), label(state), n(1234567) {}
-  LTLProperties& ltl_properties;
-  Label label;
+  UVisualizer(LTLState& st, int l)
+    : state(st), n(1234567), label(l) {}
+  LTLState& state;
   stringstream s;
+  int label;
   int n; // consecutive labeling of dot node
   static const int shift = 16777216;
 
@@ -93,61 +93,63 @@ public:
   IAttr visit(InputSymbol* expr, IAttr a)  {
     short e = expr->label;
     int node = newNode(a);
-    s<<node<<" ["<</*color(props[e])<<*/",label=\"Input "<<string(1, expr->c)
-     <<" = "<</*props[e]<<*/"\"];\n  ";
+    s<<node<<" ["<<color(state.debug[e])<<",label=\"Input "<<string(1, expr->c)
+     <<" = "<<state.debug[e]<<"\"];\n  ";
     return newAttr(node);
   }
   IAttr visit(OutputSymbol* expr, IAttr a) {
     short e = expr->label;
     int node = newNode(a);
-    s<<node<<" ["<</*color(props[e])<<*/",label=\"Output "<<string(1, expr->c)
-     <<" = "<</*props[e]<<*/"\"];\n  ";
+    cerr<<state.debug.size()<<endl;
+    cerr<<e<<endl;
+    s<<node<<" ["<<color(state.debug[e])<<",label=\"Output "<<string(1, expr->c)
+     <<" = "<<state.debug[e]<<"\"];\n  ";
     return newAttr(node);
   }
   IAttr visit(NegInputSymbol* expr, IAttr a)  {
     short e = expr->label;
     int node = newNode(a);
-    s<<node<<" ["<</*color(props[e])<<*/",label=\"¬Input "<<string(1, expr->c)
-     <<" = "<</*props[e]<<*/"\"];\n  ";
+    s<<node<<" ["<<color(state.debug[e])<<",label=\"¬Input "<<string(1, expr->c)
+     <<" = "<<state.debug[e]<<"\"];\n  ";
     return newAttr(node);
   }
   IAttr visit(NegOutputSymbol* expr, IAttr a) {
     short e = expr->label;
     int node = newNode(a);
-    s<<node<<" ["<</*color(props[e])<<*/",label=\"¬Output "<<string(1, expr->c)
-     <<" = "<</*props[e]<<*/"\"];\n  ";
+    s<<node<<" ["<<color(state.debug[e])<<",label=\"¬Output "<<string(1, expr->c)
+     <<" = "<<state.debug[e]<<"\"];\n  ";
     return newAttr(node);
   }
   IAttr visit(Not* expr, IAttr a) {
     short e = expr->label;
     short e1 = expr->expr1->label;
     int node = newNode(a);
-    s<<node<<" ["<</*color(props[e])<<*/",label=\""/*<<props[e]*/
-     <<" = "<<"!"<</*color(props[e1])<<*/"\"];\n  ";
+    s<<node<<" ["<<color(state.debug[e])<<",label=\""<<state.debug[e]
+     <<" = "<<"!"<<state.debug[e1]<<"\"];\n  ";
     return newAttr(node);
   }
   IAttr visit(Next* expr, IAttr a) {
     short e = expr->label;
     short e1 = expr->expr1->label;
     int node = newNode(a);
-    s<<node<<" [shape=circle,"<</*color(props[e])<<*/",label=\""<<"("/*<<props[e]*/
-     <<" = "<<"X "<</*color(props[e1])<<*/")\"];\n  ";
+    s<<node<<" [shape=circle,"<<color(state.debug[e])<<",label=\""<<"("<<state.debug[e]
+     <<" = "<<"X "<<state.debug[e1]<<")\"];\n  ";
     return newAttr(node);
   }
   IAttr visit(Eventually* expr, IAttr a) {
     short e = expr->label;
     short e1 = expr->expr1->label;
     int node = newNode(a);
-    s<<node<<" [shape=diamond,"<</*color(props[e])<<*/",label=\""<<"("/*<<props[e]*/
-     <<" = "<<"F "<</*color(props[e1])<<*/")\"];\n  ";
+    s<<node<<" [shape=diamond,"<<color(state.debug[e])<<",label=\""<<"("<<state.debug[e]
+     <<" = "<<"F "<<state.debug[e1]<<")\"];\n  ";
     return newAttr(node);
   }
   IAttr visit(Globally* expr, IAttr a) {
     short e = expr->label;
     short e1 = expr->expr1->label;
     int node = newNode(a);
-    s<<node<<" [shape=box,"<</*color(props[e])<<*/",label=\""<<"("/*<<props[e]*/
-     <<" = "<<"G "<</*color(props[e1])<<*/")\"];\n  ";
+    s<<node<<" [shape=box,"<<color(state.debug[e])<<",label=\""<<"("<<state.debug[e]
+     <<" = "<<"G "<<state.debug[e1]<<")\"];\n  ";
     return newAttr(node);
   }
   IAttr visit(And* expr, IAttr a) {
@@ -155,8 +157,8 @@ public:
     short e1 = expr->expr1->label;
     short e2 = expr->expr2->label;
     int node = newNode(a);
-    s<<node<<" ["<</*color(props[e])<<*/",label=\""<<"("/*<<props[e]*/
-     <<" = "<</*color(props[e1])<<*/" & "<</*color(props[e2])<<*/")\"];\n  ";
+    s<<node<<" ["<<color(state.debug[e])<<",label=\""<<"("<<state.debug[e]
+     <<" = "<<state.debug[e1]<<" & "<<color(state.debug[e2])<<")\"];\n  ";
     return newAttr(node);
   }
   IAttr visit(Or* expr, IAttr a) {
@@ -164,8 +166,8 @@ public:
     short e1 = expr->expr1->label;
     short e2 = expr->expr2->label;
     int node = newNode(a);
-    s<<node<<" ["<</*color(props[e])<<*/",label=\""<<"("/*<<props[e]*/
-     <<" = "<</*color(props[e1])<<*/" | "<</*color(props[e2])<<*/")\"];\n  ";
+    s<<node<<" ["<<color(state.debug[e])<<",label=\""<<"("<<state.debug[e]
+     <<" = "<<state.debug[e1]<<" | "<<color(state.debug[e2])<<")\"];\n  ";
     return newAttr(node);
   }
   IAttr visit(Until* expr, IAttr a)	{
@@ -173,8 +175,8 @@ public:
     short e1 = expr->expr1->label;
     short e2 = expr->expr2->label;
     int node = newNode(a);
-    s<<node<<" ["<</*color(props[e])<<*/",label=\""<<"("/*<<props[e]*/
-     <<" = "<</*color(props[e1])<<*/" U "<</*color(props[e2])<<*/")\"];\n  ";
+    s<<node<<" ["<<color(state.debug[e])<<",label=\""<<"("<<state.debug[e]
+     <<" = "<<state.debug[e1]<<" U "<<color(state.debug[e2])<<")\"];\n  ";
     return newAttr(node);
   }
   IAttr visit(WeakUntil* expr, IAttr a) {
@@ -182,8 +184,8 @@ public:
     short e1 = expr->expr1->label;
     short e2 = expr->expr2->label;
     int node = newNode(a);
-    s<<node<<" ["<</*color(props[e])<<*/",label=\""<<"("/*<<props[e]*/
-     <<" = "<</*color(props[e1])<<*/" WU "<</*color(props[e2])<<*/")\"];\n  ";
+    s<<node<<" ["<<color(state.debug[e])<<",label=\""<<"("<<state.debug[e]
+     <<" = "<<state.debug[e1]<<" WU "<<color(state.debug[e2])<<")\"];\n  ";
     return newAttr(node);
   }
   IAttr visit(Release* expr, IAttr a) {
@@ -191,8 +193,8 @@ public:
     short e1 = expr->expr1->label;
     short e2 = expr->expr2->label;
     int node = newNode(a);
-    s<<node<<" ["<</*color(props[e])<<*/",label=\""<<"("/*<<props[e]*/
-     <<" = "<</*color(props[e1])<<*/" R "<</*color(props[e2])<<*/")\"];\n  ";
+    s<<node<<" ["<<color(state.debug[e])<<",label=\""<<"("<<state.debug[e]
+     <<" = "<<state.debug[e1]<<" R "<<color(state.debug[e2])<<")\"];\n  ";
     return newAttr(node);
   }
 };
@@ -204,6 +206,7 @@ ostream& UnifiedLTL::operator<<(ostream& os, const LTLState& s) {
        i != s.valstack.end(); ++i) {
     os<<*i<<" ";
   }
+  //os<<", "<<s.debug;
   os<<"])";
   return os;
 }
@@ -267,14 +270,6 @@ public:
   }
 
 
-# define NOP do{} while(0)
-# define AND &&
-  // Apologies for this. Really, can a macro be any more dirty!?
-# define LUB ).lub(
-# define GLB ).glb(
-
-
-
   LTLVertex add_state_if_new(LTLState new_state, //queue<LTLVertex>& workset,
 			     LTLStateTransitionGraph& stg) {
     LTLStateMap::iterator i = stg.vertex.find(new_state);
@@ -322,7 +317,7 @@ public:
       state.val = Bot();
       stg.g[*vi] = state;
       stg.vertex[state] = *vi;
-      //assert(state.valstack.back()
+      assert(state.valstack.size() >= nargs);
 
       // start at all fixpoints
       //LTLState s = transfer(state, Bot());
@@ -394,6 +389,7 @@ public:
 	state.valstack.pop_back(); 
       cerr<<"==="<<state.val<<endl;
       state.push(state.val);
+      state.debug.push_back(state.val);
       stg.g[*vi] = state;
       stg.vertex[state] = *vi;
     }
@@ -580,7 +576,7 @@ public:
       if (endpoint)
 	return false;
 
-      return joined_succs;
+      return Bot(); //joined_succs;
     }
   }
 
@@ -604,9 +600,9 @@ public:
       BoolLattice old_val = s.val; 
       BoolLattice new_val = isOutputState(s.estate, expr->c, 
 					  verifier.isEndpoint(s.estate), joined_succs);
+      cerr<<"  O(old="<<old_val<<", succ="<<joined_succs<<") = "<<new_val<<endl;
       assert(new_val.lub(old_val) == new_val); // only move up in the lattice!
       newstate.val = new_val;
-      cerr<<"  O(old="<<old_val<<", succ="<<joined_succs<<") = "<<new_val<<endl;
       return newstate;
     }
   }; 
@@ -647,7 +643,7 @@ public:
       if (endpoint)
 	return true;
 
-      return joined_succs;
+      return Bot();//joined_succs;
     }
   }
 
@@ -1072,16 +1068,13 @@ UChecker::verify(const Formula& f)
     s<<"digraph G {\n";
     s<<"node[shape=rectangle, color=lightsteelblue, style=filled];\n  ";
 
-
-    LTLGraphTraits::edge_iterator ei, ei_end;
-    for (tie(ei, ei_end) = edges(v.stg.g); ei != ei_end; ++ei) {
-      s<<"\""<<source(*ei, v.stg.g)<<"\" -> \""<<target(*ei, v.stg.g)<<"\";\n";
-    }
-
+    map<LTLVertex, int> label;
+    int l = 0;
     LTLGraphTraits::vertex_iterator vi, vi_end;
-    for (tie(vi, vi_end) = vertices(v.stg.g); vi != vi_end; ++vi) {
+    for (tie(vi, vi_end) = vertices(v.stg.g); vi != vi_end; ++vi, ++l) {
       LTLState state = v.stg.g[*vi];
-      s<<"\""<<*vi<<"\" [label=\""<<state<<"\"";
+      label[*vi] = l;
+      s<<l<<" [label=\""<<state<<"\"";
       switch (state.estate->io.op) {
       case InputOutput::STDIN_VAR:
 	s<<"shape=rectangle, color=gold, style=filled";
@@ -1093,23 +1086,43 @@ UChecker::verify(const Formula& f)
       default: break;
       }
       s<<"];\n  ";
-    }
-    // FOR_EACH_STATE(state, l) {
-    //   Visualizer viz(v.ltl_properties, l);
-    //   const_cast<Expr&>(e).accept(viz, Visualizer::newAttr(l));
-    //   s<<l<<" [label=\""<<l;
-    //   if (show_node_detail) {
-    // 	s<<":";
-    // 	if (collapsed_graph) {
 
-    // 	} else s<<state->toString();
-    //   }
-    //   s<<"\"] ;\n";
-    //   s<<"subgraph ltl_"<<l<<" {\n";
-    //   s<<"  node[shape=rectangle, style=filled];\n  ";
-    //   if (show_derivation) s<<viz.s.str();
-    //   s<<"}\n";
-    // }
+      // LTL visualization
+      UVisualizer viz(state, l);
+      const_cast<Expr&>(e).accept(viz, UVisualizer::newAttr(l));
+      s<<"subgraph ltl_"<<l<<" {\n";
+      s<<"  node[shape=rectangle, style=filled];\n  ";
+      if (show_derivation) s<<viz.s.str();
+      s<<"}\n";
+
+    }
+
+    LTLGraphTraits::edge_iterator ei, ei_end;
+    for (tie(ei, ei_end) = edges(v.stg.g); ei != ei_end; ++ei) {
+      s<<label[source(*ei, v.stg.g)]<<" -> "<<label[target(*ei, v.stg.g)]<<";\n";
+    }
+
+
+// 
+//    // LTL visualization
+//    int l = 0;
+//    for (tie(vi, vi_end) = vertices(v.stg.g); vi != vi_end; ++vi, ++l) {
+//      LTLState& state = v.stg.g[*vi];
+//      UVisualizer viz(state, l);
+//      const_cast<Expr&>(e).accept(viz, UVisualizer::newAttr(l));
+//      s<<l<<" [label=\""<<l;
+//      if (show_node_detail) {
+// 	s<<":";
+// 	if (collapsed_graph) {
+// 
+// 	} else s<<state;
+//      }
+//      s<<"\"] ;\n";
+//      s<<"subgraph ltl_"<<l<<" {\n";
+//      s<<"  node[shape=rectangle, style=filled];\n  ";
+//      if (show_derivation) s<<viz.s.str();
+//      s<<"}\n";
+//    }
     s<<"}\n";
 
     ofstream myfile;
