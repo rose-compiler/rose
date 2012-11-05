@@ -212,6 +212,7 @@ namespace LTL {
   };
 
                     
+  /// ! / ¬ operator
   class Not : public UnaryExpr {
   public:
     Not(Expr *e) : UnaryExpr("not", e_Not, e) {}

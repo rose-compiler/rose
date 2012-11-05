@@ -100,8 +100,6 @@ public:
   IAttr visit(OutputSymbol* expr, IAttr a) {
     short e = expr->label;
     int node = newNode(a);
-    cerr<<state.debug.size()<<endl;
-    cerr<<e<<endl;
     s<<node<<" ["<<color(state.debug[e])<<",label=\"Output "<<string(1, expr->c)
      <<" = "<<state.debug[e]<<"\"];\n  ";
     return newAttr(node);
@@ -124,6 +122,10 @@ public:
     short e = expr->label;
     short e1 = expr->expr1->label;
     int node = newNode(a);
+    //cerr<<"e="<<e<<endl;
+    //cerr<<"e1="<<e1<<endl;
+    //cerr<<"state.debug[e]="<<state.debug[e]<<endl;
+    //cerr<<"state.debug[e1]="<<state.debug[e1]<<endl;
     s<<node<<" ["<<color(state.debug[e])<<",label=\""<<state.debug[e]
      <<" = "<<"!"<<state.debug[e1]<<"\"];\n  ";
     return newAttr(node);
@@ -423,12 +425,12 @@ public:
   /// return True iff that state is an Oc operation
   static BoolLattice isInputState(const EState* estate,
 				  set<VariableId>& input_vars,
-				  int c, BoolLattice joined_preds) {
+				  int c, BoolLattice succ_val) {
     updateInputVar(estate, input_vars);
     if (input_vars.empty())
       return Bot();
 
-    BoolLattice r = BoolLattice(Top()) || joined_preds;
+    BoolLattice r = Bot();
     assert(estate);
     assert(estate->constraints());
     ConstraintSet constraints = *estate->constraints();
@@ -440,7 +442,10 @@ public:
       assert(consistent(r, r1));
       r = r1;
     }
-    return r;
+    if (r.isBot())
+      return succ_val;
+    else
+      return r;
   }
 
   static BoolLattice is_eq(const ConstraintSet& constraints,
@@ -468,14 +473,14 @@ public:
     TransferI(const UVerifier& v, const InputSymbol* e) : verifier(v), expr(e) {}
     const UVerifier& verifier;
     const InputSymbol* expr;
-    LTLState operator() (const LTLState& s, BoolLattice joined_succs ) { 
+    LTLState operator() (const LTLState& s, BoolLattice succ_val ) { 
       LTLState newstate(s);
       BoolLattice old_val = s.val; 
       BoolLattice new_val = 
-	isInputState(s.estate, input_vars, expr->c, joined_succs);
+	isInputState(s.estate, input_vars, expr->c, succ_val);
       assert(new_val.lub(old_val) == new_val); // only move up in the lattice!
       newstate.val = new_val;
-      cerr<<"  I(old="<<old_val<<", succ="<<joined_succs<<") = "<<new_val<<endl;
+      cerr<<"  I(old="<<old_val<<", succ="<<succ_val<<") = "<<new_val<<endl;
       return newstate;
     }
   }; 
@@ -486,12 +491,14 @@ public:
   /// return True iff that state is an !Ic operation
   static BoolLattice isNegInputState(const EState* estate,
 				     set<VariableId>& input_vars,
-				     int c, BoolLattice joined_preds) {
+				     int c, BoolLattice succ_val) {
     updateInputVar(estate, input_vars);
     if (input_vars.empty())
       return Bot();
 
-    BoolLattice r = joined_preds.isBot() ? Top() : joined_preds;
+    BoolLattice r = Bot();
+
+    //cerr<<"succ_val = "<<succ_val<<endl;
     assert(estate);
     assert(estate->constraints());
     ConstraintSet constraints = *estate->constraints();
@@ -500,10 +507,16 @@ public:
 		 ++ivar) {
       // This will really only work with one input variable (that one may be aliased, though)
       BoolLattice r1 = is_neq(constraints, *ivar, c);
+      //cerr<<"r = "<<r<<endl;
+      //cerr<<"r1 = "<<r1<<endl;
       assert(consistent(r, r1));
       r = r1;
     }
-    return r;
+
+    if (r.isBot())
+      return succ_val;
+    else
+      return r;
   }
 
   static BoolLattice is_neq(const ConstraintSet& constraints,
@@ -536,14 +549,14 @@ public:
     TransferNI(const UVerifier& v, const InputSymbol* e) : verifier(v), expr(e) {}
     const UVerifier& verifier;
     const InputSymbol* expr;
-    LTLState operator() (const LTLState& s, BoolLattice joined_succs ) { 
+    LTLState operator() (const LTLState& s, BoolLattice succ_val ) { 
       LTLState newstate(s);
       BoolLattice old_val = s.val; 
       BoolLattice new_val = 
-	isNegInputState(s.estate, input_vars, expr->c, joined_succs);
+	isNegInputState(s.estate, input_vars, expr->c, succ_val);
       assert(new_val.lub(old_val) == new_val); // only move up in the lattice!
       newstate.val = new_val;
-      cerr<<"  NI(old="<<old_val<<", succ="<<joined_succs<<") = "<<new_val<<endl;
+      cerr<<"  ¬I(old="<<old_val<<", succ="<<succ_val<<") = "<<new_val<<endl;
       return newstate;
     }
   }; 
@@ -553,7 +566,7 @@ public:
 
   /// return True iff that state is an Oc operation
   static BoolLattice isOutputState(const EState* estate, int c, bool endpoint,
-				   BoolLattice joined_succs) {
+				   BoolLattice succ_val) {
     switch (estate->io.op) {
     case InputOutput::STDOUT_CONST: {
       const AType::ConstIntLattice& lval = estate->io.val;
@@ -576,7 +589,7 @@ public:
       if (endpoint)
 	return false;
 
-      return Bot(); //joined_succs;
+      return Bot(); //succ_val;
     }
   }
 
@@ -595,12 +608,12 @@ public:
     TransferO(const UVerifier& v, const OutputSymbol* e) : verifier(v), expr(e) {}
     const UVerifier& verifier;
     const OutputSymbol* expr;
-    LTLState operator() (const LTLState& s, BoolLattice joined_succs ) const { 
+    LTLState operator() (const LTLState& s, BoolLattice succ_val ) const { 
       LTLState newstate(s);
       BoolLattice old_val = s.val; 
       BoolLattice new_val = isOutputState(s.estate, expr->c, 
-					  verifier.isEndpoint(s.estate), joined_succs);
-      cerr<<"  O(old="<<old_val<<", succ="<<joined_succs<<") = "<<new_val<<endl;
+					  verifier.isEndpoint(s.estate), succ_val);
+      cerr<<"  O(old="<<old_val<<", succ="<<succ_val<<") = "<<new_val<<endl;
       assert(new_val.lub(old_val) == new_val); // only move up in the lattice!
       newstate.val = new_val;
       return newstate;
@@ -613,7 +626,7 @@ public:
 
   /// return True iff that state is a !Oc operation
   static BoolLattice isNegOutputState(const EState* estate, int c, bool endpoint,
-				      BoolLattice joined_succs) {
+				      BoolLattice succ_val) {
     switch (estate->io.op) {
     case InputOutput::STDOUT_CONST: {
       const AType::ConstIntLattice& lval = estate->io.val;
@@ -643,7 +656,7 @@ public:
       if (endpoint)
 	return true;
 
-      return Bot();//joined_succs;
+      return Bot();//succ_val;
     }
   }
 
@@ -656,14 +669,14 @@ public:
     TransferNO(const UVerifier& v, const OutputSymbol* e) : verifier(v), expr(e) {}
     const UVerifier& verifier;
     const OutputSymbol* expr;
-    LTLState operator() (const LTLState& s, BoolLattice joined_succs ) const { 
+    LTLState operator() (const LTLState& s, BoolLattice succ_val ) const { 
       LTLState newstate(s);
       BoolLattice old_val = s.val; 
       BoolLattice new_val = 
-	isNegOutputState(s.estate, expr->c, verifier.isEndpoint(s.estate), joined_succs);
+	isNegOutputState(s.estate, expr->c, verifier.isEndpoint(s.estate), succ_val);
       assert(new_val.lub(old_val) == new_val); // only move up in the lattice!
       newstate.val = new_val;
-      cerr<<"  !O(old="<<old_val<<", succ="<<joined_succs<<") = "<<new_val<<endl;
+      cerr<<"  ¬O(old="<<old_val<<", succ="<<succ_val<<") = "<<new_val<<endl;
       return newstate;
     }
   }; 
@@ -677,14 +690,14 @@ public:
    * Implementation status: DONE
    */
   struct TransferNot {
-    LTLState operator() (const LTLState& s, BoolLattice joined_succs ) const { 
+    LTLState operator() (const LTLState& s, BoolLattice succ_val ) const { 
       LTLState newstate(s);
       BoolLattice old_val = s.val;
       BoolLattice e1 = s.top();
       BoolLattice new_val = old_val.lub(!e1);
       assert(new_val.lub(old_val) == new_val); // only move up in the lattice!
       newstate.val = new_val;
-      cerr<<"  G(old="<<old_val<<", e1="<<e1<<", succ="<<joined_succs<<") = "<<new_val<<endl;
+      cerr<<"  G(old="<<old_val<<", e1="<<e1<<", succ="<<succ_val<<") = "<<new_val<<endl;
       return newstate;
     } 
   };
@@ -705,21 +718,20 @@ public:
    *
    * Implementation status: DONE
    */
+  struct TransferX {
+    LTLState operator() (const LTLState& s, BoolLattice succ_val ) const { 
+      LTLState newstate(s);
+      BoolLattice old_val = s.val;
+      BoolLattice e1 = s.top();
+      BoolLattice new_val = old_val.lub(succ_val);
+      assert(new_val.lub(old_val) == new_val); // only move up in the lattice!
+      newstate.val = new_val;
+      cerr<<"  X(old="<<old_val<<", e1="<<e1<<", succ="<<succ_val<<") = "<<new_val<<endl;
+      return newstate;
+    } 
+  };
   void visit(const Next* expr) {
-    short e = expr->label;
-    short e1 = expr->expr1->label;
-
-    //FOR_EACH_STATE(state, label) {
-    //  BoolLattice joined_succs = Bot();
-    //
-    //  /* for each successor */
-    //  GraphTraits::out_edge_iterator out_i, out_end;
-    //  for (tie(out_i, out_end) = out_edges(label, g); out_i != out_end; ++out_i) {
-    //    Label succ = target(*out_i, g);
-    //    joined_succs = (joined_succs LUB ltl_properties[label][e1]);
-    //  }
-    //  props[e] = joined_succs;
-    //}
+    analyze(stg, TransferX(), 1);
   }
 
   /**
@@ -737,26 +749,19 @@ public:
    * Implementation status: DONE
    */
   struct TransferF {
-    LTLState operator() (const LTLState& s, BoolLattice joined_succs ) const { 
+    LTLState operator() (const LTLState& s, BoolLattice succ_val ) const { 
       LTLState newstate(s);
       BoolLattice old_val = s.val;
       BoolLattice e1 = s.top();
-      BoolLattice new_val = old_val.lub(e1 || joined_succs);
+      BoolLattice new_val = old_val.lub(e1 || succ_val);
       assert(new_val.lub(old_val) == new_val); // only move up in the lattice!
       newstate.val = new_val;
-      cerr<<"  F(old="<<old_val<<", e1="<<e1<<", succ="<<joined_succs<<") = "<<new_val<<endl;
+      cerr<<"  F(old="<<old_val<<", e1="<<e1<<", succ="<<succ_val<<") = "<<new_val<<endl;
       return newstate;
     } 
   };
   void visit(const Eventually* expr) {
     analyze(stg, TransferF(), 1);
-
-    //bw_fixpoint(/* init */      Bot(),
-    //            ///* start */     !props[e1].isBot(),
-    //            /* join */      LUB,
-    //            /* transfer  */ props[e1] || joined_succs,
-    //            /* debug */     NOP //cerr<<props[e1]<<" || "<<joined_succs<<endl;
-    //            );
   }
 
   /**
@@ -770,38 +775,24 @@ public:
    */
 
   struct TransferG {
-    LTLState operator() (const LTLState& s, BoolLattice joined_succs ) const { 
+    LTLState operator() (const LTLState& s, BoolLattice succ_val ) const { 
       LTLState newstate(s);
       BoolLattice old_val = s.val;
       BoolLattice e1 = s.top();
-      BoolLattice new_val = old_val.lub(e1 && joined_succs);
+      BoolLattice new_val = old_val.lub(e1 && succ_val);
       assert(new_val.lub(old_val) == new_val); // only move up in the lattice!
       newstate.val = new_val;
-      cerr<<"  G(old="<<old_val<<", e1="<<e1<<", succ="<<joined_succs<<") = "<<new_val<<endl;
+      cerr<<"  G(old="<<old_val<<", e1="<<e1<<", succ="<<succ_val<<") = "<<new_val<<endl;
       return newstate;
     } 
   };
   void visit(const Globally* expr) {
     analyze(stg, TransferG(), 1);
-
-//    if (expr->quantified) {
-//      bw_fixpoint(/* init */      Bot(),
-//                  /* transfer  */ props[e1] && joined_succs,
-//                  /* debug */     NOP //cerr<<props[e1]<<" && "<<joined_succs<<endl;
-//                  );
-//    } else {
-//      bw_fixpoint(/* init */      Bot(),
-//                ///* start */     !props[e1].isBot(),
-//                /* join */      AND, // this allows for improved precision in the case of an All-quantified G node, which is, by, default, any outermost G node
-//                /* transfer  */ props[e1] && joined_succs,
-//                /* debug */     NOP //cerr<<props[e1]<<" && "<<joined_succs<<endl;
-//                );
-//    };
   }
 
   // Implementation status: DONE
  struct TransferAnd {
-    LTLState operator() (const LTLState& s, BoolLattice joined_succs ) const { 
+    LTLState operator() (const LTLState& s, BoolLattice succ_val ) const { 
       LTLState newstate(s);
       BoolLattice old_val = s.val;
       BoolLattice e1 = s.over();
@@ -811,19 +802,17 @@ public:
       newstate.val = new_val;
       cerr<<"  And(old="<<old_val
 	  <<", e1="<<e1<<", e2="<<e1
-	  <<", succ="<<joined_succs<<") = "<<new_val<<endl;
+	  <<", succ="<<succ_val<<") = "<<new_val<<endl;
       return newstate;
     } 
   };
   void visit(const And* expr) {
     analyze(stg, TransferAnd(), 2);
-    //  FOR_EACH_STATE(state, label)
-    //  props[e] = props[e1] && props[e2];
   }
 
   // Implementation status: DONE
  struct TransferOr {
-    LTLState operator() (const LTLState& s, BoolLattice joined_succs ) const { 
+    LTLState operator() (const LTLState& s, BoolLattice succ_val ) const { 
       LTLState newstate(s);
       BoolLattice old_val = s.val;
       BoolLattice e1 = s.over();
@@ -833,15 +822,12 @@ public:
       newstate.val = new_val;
       cerr<<"  Or(old="<<old_val
 	  <<", e1="<<e1<<", e2="<<e1
-	  <<", succ="<<joined_succs<<") = "<<new_val<<endl;
+	  <<", succ="<<succ_val<<") = "<<new_val<<endl;
       return newstate;
     } 
   };
   void visit(const Or* expr) {
     analyze(stg, TransferOr(), 2);
-
-    //FOR_EACH_STATE(state, label)
-    //  props[e] = props[e1] || props[e2];
   }
 
   /**
@@ -862,29 +848,22 @@ public:
    * Implementation status: DONE
    */
  struct TransferU {
-    LTLState operator() (const LTLState& s, BoolLattice joined_succs ) const { 
+    LTLState operator() (const LTLState& s, BoolLattice succ_val ) const { 
       LTLState newstate(s);
       BoolLattice old_val = s.val;
       BoolLattice e1 = s.over();
       BoolLattice e2 = s.top();
-      BoolLattice new_val = old_val.lub(e2 || (e1 && joined_succs));
+      BoolLattice new_val = old_val.lub(e2 || (e1 && succ_val));
       assert(new_val.lub(old_val) == new_val); // only move up in the lattice!
       newstate.val = new_val;
       cerr<<"  Until(old="<<old_val
 	  <<", e1="<<e1<<", e2="<<e1
-	  <<", succ="<<joined_succs<<") = "<<new_val<<endl;
+	  <<", succ="<<succ_val<<") = "<<new_val<<endl;
       return newstate;
     } 
   };
   void visit(const Until* expr) {
     analyze(stg, TransferU(), 2);
-//    bw_fixpoint(/* init */      Bot(),
-//                ///* start */     (!props[e1].isBot() || !props[e2].isBot()),
-//                /* join */      LUB,
-//                /* transfer */  (props[e2] || (props[e1] && joined_succs)) || false,
-//                /* debug */     NOP
-//                //cerr<<label<<": "<<((props[e2] || (props[e1] && joined_succs)) || false).toString()<<" == "<<props[e2]<<" || ("<<props[e1]<<" && "<<joined_succs<<")"<<endl
-//                );
   }
 
   /**
@@ -916,29 +895,22 @@ public:
    * Implementation status: DONE
    */
  struct TransferR {
-    LTLState operator() (const LTLState& s, BoolLattice joined_succs ) const { 
+    LTLState operator() (const LTLState& s, BoolLattice succ_val ) const { 
       LTLState newstate(s);
       BoolLattice old_val = s.val;
       BoolLattice e1 = s.over();
       BoolLattice e2 = s.top();
-      BoolLattice new_val = old_val.lub(e2 && (e1 || joined_succs));
+      BoolLattice new_val = old_val.lub(e2 && (e1 || succ_val));
       assert(new_val.lub(old_val) == new_val); // only move up in the lattice!
       newstate.val = new_val;
       cerr<<"  Until(old="<<old_val
 	  <<", e1="<<e1<<", e2="<<e1
-	  <<", succ="<<joined_succs<<") = "<<new_val<<endl;
+	  <<", succ="<<succ_val<<") = "<<new_val<<endl;
       return newstate;
     } 
   };
   void visit(const Release* expr) {
     analyze(stg, TransferR(), 2);
-
-   // bw_fixpoint(/* init */      Bot(),
-   //             ///* start */     (!props[e1].isBot() || !props[e2].isBot()),
-   //             /* join */      LUB,
-   //             /* transfer */  props[e2] && (props[e1] || joined_succs),
-   //             /* debug */     NOP
-   //             );
   }
 };
 
