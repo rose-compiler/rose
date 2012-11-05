@@ -13,23 +13,23 @@ related to signal handling. we have to detect variables of
 this type and then undefine all of these. 
 
 These are from sigaction.h (included by signal.h):
-# define sa_handler	__sigaction_handler.sa_handler
-# define sa_sigaction	__sigaction_handler.sa_sigaction
+# define sa_handler     __sigaction_handler.sa_handler
+# define sa_sigaction   __sigaction_handler.sa_sigaction
 
 These are from siginfo.h (included by signal.h):
-# define si_pid		_sifields._kill.si_pid
-# define si_uid		_sifields._kill.si_uid
-# define si_timerid	_sifields._timer.si_tid
-# define si_overrun	_sifields._timer.si_overrun
-# define si_status	_sifields._sigchld.si_status
-# define si_utime	_sifields._sigchld.si_utime
-# define si_stime	_sifields._sigchld.si_stime
-# define si_value	_sifields._rt.si_sigval
-# define si_int		_sifields._rt.si_sigval.sival_int
-# define si_ptr		_sifields._rt.si_sigval.sival_ptr
-# define si_addr	_sifields._sigfault.si_addr
-# define si_band	_sifields._sigpoll.si_band
-# define si_fd		_sifields._sigpoll.si_fd
+# define si_pid         _sifields._kill.si_pid
+# define si_uid         _sifields._kill.si_uid
+# define si_timerid     _sifields._timer.si_tid
+# define si_overrun     _sifields._timer.si_overrun
+# define si_status      _sifields._sigchld.si_status
+# define si_utime       _sifields._sigchld.si_utime
+# define si_stime       _sifields._sigchld.si_stime
+# define si_value       _sifields._rt.si_sigval
+# define si_int         _sifields._rt.si_sigval.sival_int
+# define si_ptr         _sifields._rt.si_sigval.sival_ptr
+# define si_addr        _sifields._sigfault.si_addr
+# define si_band        _sifields._sigpoll.si_band
+# define si_fd          _sifields._sigpoll.si_fd
 
 */
 
