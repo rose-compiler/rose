@@ -147,7 +147,7 @@ namespace LTL {
     }
     operator std::string () const {
       std::stringstream s;
-      s << id << "(" << std::string(*expr1) << ")" ;
+      s << id << "(" << std::string(*expr1) << ")";//^"<<label;
       return s.str();
     }
   };
@@ -162,7 +162,7 @@ namespace LTL {
     }
     operator std::string () const {
       std::stringstream s;
-      s << id << "(" << std::string(*expr1) << ", " << std::string(*expr2) << ")" ;
+      s << id << "(" << std::string(*expr1) << ", " << std::string(*expr2) << ")";//^"<<label;
       return s.str();
     }
   };
@@ -174,7 +174,9 @@ namespace LTL {
       label = ltl_label++;
       type = e_InputSymbol;
       c = (char)_c; 
-      id = "input("+std::string(1, c)+")"; 
+      std::stringstream s;
+      s << "input("<<std::string(1, c)<<")";//^"<<label;
+      id = s.str();
     }
     LTL_ATOMIC_VISITOR
   };
@@ -186,7 +188,9 @@ namespace LTL {
       label = ltl_label++;
       type = e_OutputSymbol;
       c = (char)_c;
-      id = "output("+std::string(1, c)+")"; 
+      std::stringstream s;
+      s << "output("<<std::string(1, c)<<")";//^"<<label;
+      id = s.str();
     }
     LTL_ATOMIC_VISITOR
   };
@@ -196,7 +200,9 @@ namespace LTL {
   public:
     NegInputSymbol(int _c) : InputSymbol(_c) {
       type = e_NegInputSymbol;
-      id = "neg_input("+std::string(1, c)+")"; 
+      std::stringstream s;
+      s << "neg_input("<<std::string(1, c)<<")";//^"<<label;
+      id = s.str();
     }
     LTL_ATOMIC_VISITOR
   };
@@ -206,7 +212,9 @@ namespace LTL {
   public:
     NegOutputSymbol(int _c) : OutputSymbol(_c) {
       type = e_NegOutputSymbol;
-      id = "neg_output("+std::string(1, c)+")"; 
+      std::stringstream s;
+      s << "neg_output("<<std::string(1, c)<<")";//^"<<label;
+      id = s.str();
     }
     LTL_ATOMIC_VISITOR
   };

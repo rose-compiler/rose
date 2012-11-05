@@ -51,9 +51,9 @@ void add_edge_if_new(LTLVertex src, LTLVertex tgt, LTLTransitionGraph& g) {
   tie(_edge, b) = edge(src, tgt, g);
   if (!b) add_edge(src, tgt, g);
   else {
-    cerr<<"edge between"
-	<<g[src].estate->toString()<<" and "
-	<<g[src].estate->toString()<<" already existed."<<endl;
+//    cerr<<"edge between"
+// 	<<g[src].estate->toString()<<" and "
+// 	<<g[src].estate->toString()<<" already existed."<<endl;
   }
 }
 
@@ -121,11 +121,11 @@ public:
   IAttr visit(Not* expr, IAttr a) {
     short e = expr->label;
     short e1 = expr->expr1->label;
-    int node = newNode(a);
     //cerr<<"e="<<e<<endl;
     //cerr<<"e1="<<e1<<endl;
     //cerr<<"state.debug[e]="<<state.debug[e]<<endl;
     //cerr<<"state.debug[e1]="<<state.debug[e1]<<endl;
+    int node = newNode(a);
     s<<node<<" ["<<color(state.debug[e])<<",label=\""<<state.debug[e]
      <<" = "<<"!"<<state.debug[e1]<<"\"];\n  ";
     return newAttr(node);
@@ -280,7 +280,7 @@ public:
       stg.vertex[new_state] = v;
       stg.g[v] = new_state;
       //workset.push(v);
-      cerr<<"** added new node "<<new_state<<endl;
+      //cerr<<"** added new node "<<new_state<<endl;
       return v;
     } else {
       // if we have identical valstacks and different vals this should rather be an update!      
@@ -289,7 +289,7 @@ public:
       s.val = s.val.lub(new_state.val);
       stg.g[v] = s;
       // don't need to update vertex[], because val is not used by operator<
-      cerr<<"** merged states "<<new_state<<endl;
+      //cerr<<"** merged states "<<new_state<<endl;
       return v;
     }
   }
@@ -309,7 +309,7 @@ public:
   void analyze(LTLStateTransitionGraph& stg, TransferFunctor transfer, short nargs)  {
     LTLWorklist worklist;//(endpoints);
 
-    cerr<<"analyze() initializing..."<<endl;
+    //cerr<<"analyze() initializing..."<<endl;
     LTLGraphTraits::vertex_iterator vi, vi_end;
     for (tie(vi, vi_end) = vertices(stg.g); vi != vi_end; ++vi) {
       // push bot to the top of the LTL stack and update the vertex map
@@ -334,7 +334,7 @@ public:
 
     while (!worklist.empty()) {
       LTLVertex v = worklist.front(); worklist.pop();
-      cerr<<"Visiting state "<<stg.g[v].estate<<endl;
+      //cerr<<"Visiting state "<<stg.g[v].estate<<endl;
 
       /* for each successor */
       LTLWorklist succs;
@@ -347,9 +347,8 @@ public:
       }
       while (!succs.empty()) {
 	LTLVertex succ = succs.front(); succs.pop();
-	cerr<<"  succ: "<<succ; 
 	BoolLattice succ_val = stg.g[succ].top();
-	cerr<<" = "<<succ_val<<endl;
+	//cerr<<"  succ: "<<succ<<" = "<<succ_val<<endl;
 
 	// Always make a new state v', so we can calculate precise
 	// results for both paths.  If a v' and v'' should later turn
@@ -359,7 +358,7 @@ public:
 	bool fixpoint = ( (new_state == old_state) && (new_state.val == old_state.val));
 
 	if (fixpoint) {
-	  cerr<<"reached fixpoint!"<<endl;
+	  //cerr<<"reached fixpoint!"<<endl;
 	} else {
 	  // create a new state in lieu of  the old state, and cut off the old state
 	  LTLVertex v_prime = add_state_if_new(new_state, stg);
@@ -374,7 +373,7 @@ public:
 	  for (tie(in_i, in_end) = in_edges(v, stg.g); in_i != in_end; ++in_i) {
 	    LTLVertex pred = source(*in_i, stg.g);
 	    
-	    cerr<<" succ(really pred): "<<stg.g[pred].estate<<" = .."<<endl;
+	    //cerr<<" succ(really pred): "<<stg.g[pred].estate<<" = .."<<endl;
 	    add_edge_if_new(pred, v_prime, stg.g);
 	    if (v_prime != v) remove_edge(v, succ, stg.g);
 	    worklist.push(pred);
@@ -383,13 +382,13 @@ public:
       }
     }
 
-    cerr<<"storing results"<<endl;
+    //cerr<<"storing results"<<endl;
     for (tie(vi, vi_end) = vertices(stg.g); vi != vi_end; ++vi) {
       LTLState state = stg.g[*vi];
       stg.vertex.erase(state);
       for (int i = 0; i<nargs; ++i)
 	state.valstack.pop_back(); 
-      cerr<<"==="<<state.val<<endl;
+      //cerr<<"==="<<state.val<<endl;
       state.push(state.val);
       state.debug.push_back(state.val);
       stg.g[*vi] = state;
@@ -480,7 +479,7 @@ public:
 	isInputState(s.estate, input_vars, expr->c, succ_val);
       assert(new_val.lub(old_val) == new_val); // only move up in the lattice!
       newstate.val = new_val;
-      cerr<<"  I(old="<<old_val<<", succ="<<succ_val<<") = "<<new_val<<endl;
+      //cerr<<"  I(old="<<old_val<<", succ="<<succ_val<<") = "<<new_val<<endl;
       return newstate;
     }
   }; 
@@ -556,7 +555,7 @@ public:
 	isNegInputState(s.estate, input_vars, expr->c, succ_val);
       assert(new_val.lub(old_val) == new_val); // only move up in the lattice!
       newstate.val = new_val;
-      cerr<<"  ¬I(old="<<old_val<<", succ="<<succ_val<<") = "<<new_val<<endl;
+      //cerr<<"  ¬I(old="<<old_val<<", succ="<<succ_val<<") = "<<new_val<<endl;
       return newstate;
     }
   }; 
@@ -613,7 +612,7 @@ public:
       BoolLattice old_val = s.val; 
       BoolLattice new_val = isOutputState(s.estate, expr->c, 
 					  verifier.isEndpoint(s.estate), succ_val);
-      cerr<<"  O(old="<<old_val<<", succ="<<succ_val<<") = "<<new_val<<endl;
+      //cerr<<"  O(old="<<old_val<<", succ="<<succ_val<<") = "<<new_val<<endl;
       assert(new_val.lub(old_val) == new_val); // only move up in the lattice!
       newstate.val = new_val;
       return newstate;
@@ -676,7 +675,7 @@ public:
 	isNegOutputState(s.estate, expr->c, verifier.isEndpoint(s.estate), succ_val);
       assert(new_val.lub(old_val) == new_val); // only move up in the lattice!
       newstate.val = new_val;
-      cerr<<"  ¬O(old="<<old_val<<", succ="<<succ_val<<") = "<<new_val<<endl;
+      //cerr<<"  ¬O(old="<<old_val<<", succ="<<succ_val<<") = "<<new_val<<endl;
       return newstate;
     }
   }; 
@@ -697,7 +696,7 @@ public:
       BoolLattice new_val = old_val.lub(!e1);
       assert(new_val.lub(old_val) == new_val); // only move up in the lattice!
       newstate.val = new_val;
-      cerr<<"  G(old="<<old_val<<", e1="<<e1<<", succ="<<succ_val<<") = "<<new_val<<endl;
+      //cerr<<"  G(old="<<old_val<<", e1="<<e1<<", succ="<<succ_val<<") = "<<new_val<<endl;
       return newstate;
     } 
   };
@@ -726,7 +725,7 @@ public:
       BoolLattice new_val = old_val.lub(succ_val);
       assert(new_val.lub(old_val) == new_val); // only move up in the lattice!
       newstate.val = new_val;
-      cerr<<"  X(old="<<old_val<<", e1="<<e1<<", succ="<<succ_val<<") = "<<new_val<<endl;
+      //cerr<<"  X(old="<<old_val<<", e1="<<e1<<", succ="<<succ_val<<") = "<<new_val<<endl;
       return newstate;
     } 
   };
@@ -756,7 +755,7 @@ public:
       BoolLattice new_val = old_val.lub(e1 || succ_val);
       assert(new_val.lub(old_val) == new_val); // only move up in the lattice!
       newstate.val = new_val;
-      cerr<<"  F(old="<<old_val<<", e1="<<e1<<", succ="<<succ_val<<") = "<<new_val<<endl;
+      //cerr<<"  F(old="<<old_val<<", e1="<<e1<<", succ="<<succ_val<<") = "<<new_val<<endl;
       return newstate;
     } 
   };
@@ -782,7 +781,7 @@ public:
       BoolLattice new_val = old_val.lub(e1 && succ_val);
       assert(new_val.lub(old_val) == new_val); // only move up in the lattice!
       newstate.val = new_val;
-      cerr<<"  G(old="<<old_val<<", e1="<<e1<<", succ="<<succ_val<<") = "<<new_val<<endl;
+      //cerr<<"  G(old="<<old_val<<", e1="<<e1<<", succ="<<succ_val<<") = "<<new_val<<endl;
       return newstate;
     } 
   };
@@ -800,9 +799,9 @@ public:
       BoolLattice new_val = old_val.lub(e1 && e2);
       assert(new_val.lub(old_val) == new_val); // only move up in the lattice!
       newstate.val = new_val;
-      cerr<<"  And(old="<<old_val
-	  <<", e1="<<e1<<", e2="<<e1
-	  <<", succ="<<succ_val<<") = "<<new_val<<endl;
+      //cerr<<"  And(old="<<old_val
+      // 	  <<", e1="<<e1<<", e2="<<e1
+      // 	  <<", succ="<<succ_val<<") = "<<new_val<<endl;
       return newstate;
     } 
   };
@@ -820,9 +819,9 @@ public:
       BoolLattice new_val = old_val.lub(e1 || e2);
       assert(new_val.lub(old_val) == new_val); // only move up in the lattice!
       newstate.val = new_val;
-      cerr<<"  Or(old="<<old_val
-	  <<", e1="<<e1<<", e2="<<e1
-	  <<", succ="<<succ_val<<") = "<<new_val<<endl;
+      //cerr<<"  Or(old="<<old_val
+      // 	  <<", e1="<<e1<<", e2="<<e1
+      // 	  <<", succ="<<succ_val<<") = "<<new_val<<endl;
       return newstate;
     } 
   };
@@ -856,9 +855,9 @@ public:
       BoolLattice new_val = old_val.lub(e2 || (e1 && succ_val));
       assert(new_val.lub(old_val) == new_val); // only move up in the lattice!
       newstate.val = new_val;
-      cerr<<"  Until(old="<<old_val
-	  <<", e1="<<e1<<", e2="<<e1
-	  <<", succ="<<succ_val<<") = "<<new_val<<endl;
+      //cerr<<"  Until(old="<<old_val
+      // 	  <<", e1="<<e1<<", e2="<<e1
+      // 	  <<", succ="<<succ_val<<") = "<<new_val<<endl;
       return newstate;
     } 
   };
@@ -903,9 +902,9 @@ public:
       BoolLattice new_val = old_val.lub(e2 && (e1 || succ_val));
       assert(new_val.lub(old_val) == new_val); // only move up in the lattice!
       newstate.val = new_val;
-      cerr<<"  Until(old="<<old_val
-	  <<", e1="<<e1<<", e2="<<e1
-	  <<", succ="<<succ_val<<") = "<<new_val<<endl;
+      //cerr<<"  Until(old="<<old_val
+      // 	  <<", e1="<<e1<<", e2="<<e1
+      // 	  <<", succ="<<succ_val<<") = "<<new_val<<endl;
       return newstate;
     } 
   };
@@ -1010,7 +1009,7 @@ Label UChecker::collapse_transition_graph(BoostTransitionGraph& g,
     Label src = source(*ei, g);
     Label tgt = target(*ei, g);
     add_edge_if_new1(renumbered[src], renumbered[tgt], reduced);
-    cerr<<renumbered[src]<<" -> "<<renumbered[tgt]<<";"<<endl;
+    //cerr<<renumbered[src]<<" -> "<<renumbered[tgt]<<";"<<endl;
     reduced[renumbered[src]] = g[src];
     reduced[renumbered[tgt]] = g[tgt];
   }
@@ -1061,6 +1060,8 @@ UChecker::verify(const Formula& f)
 
       // LTL visualization
       UVisualizer viz(state, l);
+      //cerr<<state.debug.size()<<" == "<<ltl_label<<endl;
+      assert(state.debug.size() == ltl_label);
       const_cast<Expr&>(e).accept(viz, UVisualizer::newAttr(l));
       s<<"subgraph ltl_"<<l<<" {\n";
       s<<"  node[shape=rectangle, style=filled];\n  ";
@@ -1074,27 +1075,6 @@ UChecker::verify(const Formula& f)
       s<<label[source(*ei, v.stg.g)]<<" -> "<<label[target(*ei, v.stg.g)]<<";\n";
     }
 
-
-// 
-//    // LTL visualization
-//    int l = 0;
-//    for (tie(vi, vi_end) = vertices(v.stg.g); vi != vi_end; ++vi, ++l) {
-//      LTLState& state = v.stg.g[*vi];
-//      UVisualizer viz(state, l);
-//      const_cast<Expr&>(e).accept(viz, UVisualizer::newAttr(l));
-//      s<<l<<" [label=\""<<l;
-//      if (show_node_detail) {
-// 	s<<":";
-// 	if (collapsed_graph) {
-// 
-// 	} else s<<state;
-//      }
-//      s<<"\"] ;\n";
-//      s<<"subgraph ltl_"<<l<<" {\n";
-//      s<<"  node[shape=rectangle, style=filled];\n  ";
-//      if (show_derivation) s<<viz.s.str();
-//      s<<"}\n";
-//    }
     s<<"}\n";
 
     ofstream myfile;
