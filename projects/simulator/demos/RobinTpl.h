@@ -62,12 +62,7 @@ domains_for_instruction(Policy *policy, SgAsmx86Instruction *insn)
 
     if (true) {
         /* DEBUGGING, but still compile the real stuff [RPM 2012-10-12] */
-        static size_t ncalls = 0;
-        switch (ncalls++ % 3) {
-            case 0: retval = INTERVAL.mask; break;
-            case 1: retval = CONCRETE.mask; break;
-            case 2: retval = SYMBOLIC.mask; break;
-        }
+        return SYMBOLIC.mask;
     } else {
         // You can enable all policies at once if you like.
         retval = CONCRETE.mask | INTERVAL.mask | SYMBOLIC.mask;
@@ -83,8 +78,11 @@ domains_for_instruction(Policy *policy, SgAsmx86Instruction *insn)
         }
 
         // You can set the policy based on the kind of x86 instruction.
-        if (x86_int == insn->get_kind())
+        if (x86_int == insn->get_kind()) {
             retval = CONCRETE.mask;
+        } else if (x86InstructionIsConditionalFlagControlTransfer(insn)) {
+            retval = SYMBOLIC.mask;
+        }
 
         // You can hard-code to use a sigle policy, such as when you're debugging
         retval = INTERVAL.mask;
@@ -117,7 +115,34 @@ domains_for_instruction(Policy *policy, SgAsmx86Instruction *insn)
     return retval;
 }
 
-
+/** Handles certain if-then-else operations.
+ *
+ *  This function is called to obtain the result for all if-then-else RISC operations where the caller determined that the
+ *  condition could be either true and false.  Normally, if the condition is either true or false but not both, the result
+ *  would be either @p a or @p b; this function is to handle the unknown case.  The @p cond is the Boolean condition and is
+ *  defined in the symbolic domain (among others). */
+template<class Policy, template <size_t nBits> class ValueType, size_t nBits>
+ValueType<nBits>
+ite_merge(Policy *policy, const ValueType<1> &cond, const ValueType<nBits> &a, const ValueType<nBits> &b)
+{
+    if (true) {
+        // Here's how you might choose one or the other at random.  We use our own linear congruential generator so we get
+        // reproducible results.
+        static unsigned long long x=0;
+        x = (25214903917ull*x+11) % 0x0000ffffffffffffull;  // 48 bits
+        bool bit = 0 != (x &        0x0000010000000000ull); // arbitrary bit; higher order bits have longer periods
+        if (bit) {
+            policy->trace()->mesg("Robin: ite_merge: choosing first alternative");
+            return a;
+        } else {
+            policy->trace()->mesg("Robin: ite_merge: choosing second alternative");
+            return b;
+        }
+    } else {
+        // Here's how you would do the default thing.
+        return policy->Policy::Super::ite(cond, a, b);
+    }
+}
 
 /** Gets called after every x86 instruction.
  *

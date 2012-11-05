@@ -161,6 +161,10 @@ public:
     template<size_t nBits>
     ValueType<nBits> xor_(const ValueType<nBits> &a, const ValueType<nBits> &b);
 
+    // We want to get control of if-then-else operations so that the condition can be evaluated in symbolic context.
+    template<size_t nBits>
+    ValueType<nBits> ite(const ValueType<1> &cond, const ValueType<nBits> &a, const ValueType<nBits> &b);
+
     // Functor that counts nodes in a symbolic expression tree.
     struct ExprNodeCounter: public InsnSemanticsExpr::Visitor {
         size_t nnodes;

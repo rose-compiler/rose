@@ -138,6 +138,49 @@ Policy<State, ValueType>::xor_(const ValueType<nBits> &a, const ValueType<nBits>
 }
 
 MULTI_DOMAIN_TEMPLATE
+template<size_t nBits>
+ValueType<nBits>
+Policy<State, ValueType>::ite(const ValueType<1> &cond, const ValueType<nBits> &a, const ValueType<nBits> &b)
+{
+    using namespace InsnSemanticsExpr;
+
+    if (!triggered) {
+        return Super::ite(cond, a, b);
+    } else {
+        // Convert the condition to symbolic if we don't already have a symbolic value.
+        ValueType<1> new_cond = cond;
+        ValueType<nBits> new_a = a;
+        ValueType<nBits> new_b = b;
+        if (!new_cond.is_valid(SYMBOLIC)) {
+            SYMBOLIC_VALUE<1> symbolic_cond = convert_to_symbolic(new_cond);
+            new_cond.set_subvalue(SYMBOLIC, symbolic_cond);
+        }
+
+        SMTSolver *solver = this->get_policy(SYMBOLIC).get_solver();
+        assert(solver);
+
+        // Can the condition ever be true?
+        TreeNodePtr assert_true = InternalNode::create(1, OP_EQ, cond.get_subvalue(SYMBOLIC).get_expression(),
+                                                       LeafNode::create_integer(1, 1));
+        bool can_be_true = SMTSolver::SAT_NO != solver->satisfiable(assert_true);
+
+        // Can the condition ever be false?
+        TreeNodePtr assert_false = InternalNode::create(1, OP_EQ, cond.get_subvalue(SYMBOLIC).get_expression(),
+                                                        LeafNode::create_integer(1, 0));
+        bool can_be_false = SMTSolver::SAT_NO != solver->satisfiable(assert_false);
+
+        if (can_be_true && !can_be_false) {
+            return a;
+        } else if (!can_be_true && can_be_false) {
+            return b;
+        } else {
+            assert(can_be_true || can_be_false);
+            return Robin::ite_merge(this, new_cond, a, b);
+        }
+    }
+}
+
+MULTI_DOMAIN_TEMPLATE
 size_t
 Policy<State, ValueType>::symbolic_state_complexity()
 {
