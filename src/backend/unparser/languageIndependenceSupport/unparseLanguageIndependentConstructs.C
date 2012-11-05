@@ -2590,14 +2590,17 @@ UnparseLanguageIndependentConstructs::unparseUShortVal(SgExpression* expr, SgUnp
 #endif
    }
 
+
 void
 UnparseLanguageIndependentConstructs::unparseEnumVal(SgExpression* expr, SgUnparse_Info& info)
    {
      SgEnumVal* enum_val = isSgEnumVal(expr);
      ROSE_ASSERT(enum_val != NULL);
 
-  // printf ("In Unparse_ExprStmt::unparseEnumVal: info.inEnumDecl() = %s \n",info.inEnumDecl() ? "true" : "false");
-  // curprint ( "\n/* In Unparse_ExprStmt::unparseEnumVal: info.inEnumDecl() = " + (info.inEnumDecl() ? "true" : "false") + " */\n ";
+#if 0
+     printf ("In Unparse_ExprStmt::unparseEnumVal: info.inEnumDecl() = %s \n",info.inEnumDecl() ? "true" : "false");
+     curprint("\n/* In Unparse_ExprStmt::unparseEnumVal() */\n");
+#endif
 
   // todo: optimize this so that the qualified name is only printed when necessary.
      if (info.inEnumDecl() == true)
@@ -2666,14 +2669,30 @@ UnparseLanguageIndependentConstructs::unparseEnumVal(SgExpression* expr, SgUnpar
                printf ("Warning in Unparser::unparseEnumVal(): no associated enum declaration specificed for enum value = %s \n",enum_val->get_name().str());
              }
 
+#if 0
        // printf ("In Unparse_ExprStmt::unparseEnumVal: classdefn = %s pointer \n",classdefn ? "VALID" : "NULL");
-
+          printf ("In Unparse_ExprStmt::unparseEnumVal: enum_val->get_name().is_null() = %s \n",enum_val->get_name().is_null() ? "true" : "false");
+#endif
        // DQ (8/31/2012): We need to allow for values that would not be mapped to enum names and in this case 
        // are output as enum values (see test2012_202.C for an example of this).
        // DQ (6/18/2006): Identify the case of an un-named enum, would be an error if we unparsed this directly.
        // ROSE_ASSERT (enum_val->get_name().is_null() == false);
        // curprint (  enum_val->get_name().str());
-          if (enum_val->get_name().is_null() == false)
+
+       // DQ (11/4/2012): Detect if this is a generated name with an cast from an un-named type (we can't output these names).
+          SgName enum_value_name = enum_val->get_name();
+          SgName substring = enum_value_name.head(strlen("__anonymous_"));
+          bool isGeneratedName = (substring == "__anonymous_");
+#if 0
+          printf ("enum_value_name = %s \n",enum_value_name.str());
+          printf ("substring = %s \n",substring.str());
+          printf ("isGeneratedName = %s \n",isGeneratedName ? "true" : "false");
+#endif
+
+       // DQ (11/4/2012): Never output a generated name since it will cause link failures 
+       // (and frequently also interpretation as implicit function calls in C).
+       // if (enum_val->get_name().is_null() == false)
+          if ( (enum_val->get_name().is_null() == false) && (isGeneratedName == false) )
              {
             // This is the typical case.
                curprint(enum_val->get_name().str());
@@ -2683,7 +2702,13 @@ UnparseLanguageIndependentConstructs::unparseEnumVal(SgExpression* expr, SgUnpar
                curprint(tostring(enum_val->get_value()));
              }
         }
+
+#if 0
+     printf ("Leaving Unparse_ExprStmt::unparseEnumVal: info.inEnumDecl() = %s \n",info.inEnumDecl() ? "true" : "false");
+     curprint("\n/* Leaving Unparse_ExprStmt::unparseEnumVal() */\n");
+#endif
    }
+
 
 void 
 UnparseLanguageIndependentConstructs::unparseIntVal(SgExpression* expr, SgUnparse_Info& info)
@@ -2705,6 +2730,7 @@ UnparseLanguageIndependentConstructs::unparseIntVal(SgExpression* expr, SgUnpars
           curprint(int_val->get_valueString());
         }
    }
+
 
 void
 UnparseLanguageIndependentConstructs::unparseUIntVal(SgExpression* expr, SgUnparse_Info& info)

@@ -3439,7 +3439,8 @@ static bool isFromAnotherFile (SgLocatedNode* lnode)
      if (cur_file != NULL)
         {
        // normal file info 
-          if (lnode->get_file_info()->isTransformation() == false &&  lnode->get_file_info()->isCompilerGenerated() == false)
+       // if (lnode->get_file_info()->isTransformation() == false && lnode->get_file_info()->isCompilerGenerated() == false)
+          if (lnode->get_file_info()->isTransformation() == false && lnode->get_file_info()->isOutputInCodeGeneration() == false)
              {
                if (lnode->get_file_info()->get_filenameString() != "" && cur_file->get_file_info()->get_filenameString() != lnode->get_file_info()->get_filenameString())
                   {
@@ -3453,6 +3454,28 @@ static bool isFromAnotherFile (SgLocatedNode* lnode)
 #endif
                   }
              }
+        }
+
+  // DQ (11/4/2012): This is a bit too mcuh trouble to support at the moment. I'm am getting tired of fighting it.
+  // This is causing too many things to not be unparsed and needs to be iterated on when we are a bit further along
+  // and under less pressure.  this support for expression level selection of what to unparse is only addrressing
+  // a narrow part of the unparsing of expressions.  I understand that this is an attempt to support the case where
+  // an initializer list comes from an include file, but that is a bit more of an advanced concept that I don't 
+  // want to be forced to support presently (it also have many details and only general cases of this problem can
+  // be addressed since we don't have the parse tree (and I don't want to query the tokens)).
+     if (result == true)
+        {
+       // Let this warning be output, but infrequently...
+          static int counter = 1;
+
+          if (counter++ % 100 == 0)
+             {
+               printf ("Note: In unparseCxx_expressions.C: isFromAnotherFile(): forcing this function to return false for initializer list unparsing \n");
+#if 0
+               printf ("Leaving isFromAnotherFile(SgLocatedNode* lnode = %p = %s): result = %s \n",lnode,lnode->class_name().c_str(),result ? "true" : "false");
+#endif
+             }
+          result = false;
         }
 
 #if 0
@@ -3897,6 +3920,9 @@ Unparse_ExprStmt::unparseAssnInit(SgExpression* expr, SgUnparse_Info& info)
      printf ("In unparseAssnInit(): assn_init->get_is_explicit_cast() = %s \n",(assn_init->get_is_explicit_cast() == true) ? "true" : "false");
      printf ("In unparseAssnInit(): assn_init->get_operand() = %p = %s \n",assn_init->get_operand(),assn_init->get_operand()->class_name().c_str());
 #endif
+#if 0
+     curprint("/* In unparseAssnInit() */ "); 
+#endif
 
      if (assn_init->get_is_explicit_cast() == true)
         {
@@ -3919,6 +3945,10 @@ Unparse_ExprStmt::unparseAssnInit(SgExpression* expr, SgUnparse_Info& info)
                unparseExpression(assn_init->get_operand(), info);
              }
         }
+
+#if 0
+     curprint("/* Leaving unparseAssnInit() */ "); 
+#endif
    }
 
 void

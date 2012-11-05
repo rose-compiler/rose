@@ -124,10 +124,17 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2012_17.c \
      test2012_18.c \
      test2012_19.c \
+     test2012_20.c \
      test2012_21.c \
      test2012_22.c \
+     test2012_23.c \
      test2012_24.c \
+     test2012_25.c \
      test2012_26.c \
+     test2012_27.c \
+     test2012_28.c \
+     test2012_29.c \
+     test2012_30.c \
      test2012_32.c \
      test2012_33.c \
      test2012_34.c \
@@ -138,6 +145,8 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2012_39.c \
      test2012_40.c \
      test2012_41.c \
+     test2012_42.c \
+     test2012_43.c \
      test2012_46.c \
      test2012_47.c \
      test2012_48.c \
@@ -150,6 +159,8 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2012_55.c \
      test2012_56.c \
      test2012_57.c \
+     test2012_58.c \
+     test2012_59.c \
      test2012_60.c \
      test2012_61.c \
      test2012_62.c \
@@ -168,6 +179,8 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2012_75.c \
      test2012_76.c \
      test2012_77.c \
+     test2012_79.c \
+     test2012_80.c \
      test2012_81.c \
      test2012_82.c \
      test2012_83.c \
@@ -189,6 +202,8 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2012_99.c \
      test2012_100.c \
      test2012_101.c \
+     test2012_102.c \
+     test2012_103.c \
      test2012_104.c \
      test2012_105.c \
      test2012_106.c \
@@ -236,6 +251,9 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2012_152.c \
      test2012_153.c \
      test2012_154.c \
+     test2012_156.c \
+     test2012_157.c \
+     test2012_158.c \
      math.c \
      complex_01.c \
      constants.c
@@ -441,7 +459,7 @@ test2008_02.o: $(srcdir)/test2008_02.c
 EXTRA_DIST = $(ALL_TESTCODES) builtin-types.def callee.c caller.c c-common.def \
              test2006_134.h test2010_08.h predict.def test2010_15.h \
              test2009_18.c test2009_20.c grep_verify.h test2012_75.h \
-             test2012_78.h test2012_155.h
+             test2012_78.h test2012_155.h test2012_156.h
 
 copyFiles:
 	cp $(srcdir)/*.h $(top_srcdir)/tests/CompileTests/C_tests
