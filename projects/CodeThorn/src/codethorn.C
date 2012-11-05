@@ -189,8 +189,10 @@ void generateLTLOutput(Analyzer& analyzer, string ltl_file) {
   int n_failed = 0;
 
   if (ltl_file.size()) {
-	CodeThorn::FixpointLTL::Checker checker(*analyzer.getEStateSet(),
-						*analyzer.getTransitionGraph());
+    //CodeThorn::FixpointLTL::Checker checker(*analyzer.getEStateSet(),
+    // 					    *analyzer.getTransitionGraph());
+    CodeThorn::UnifiedLTL::UChecker checker(*analyzer.getEStateSet(),
+					   *analyzer.getTransitionGraph());
     ltl_input = fopen(ltl_file.c_str(), "r");
 
     ofstream* csv = NULL;
@@ -199,7 +201,7 @@ void generateLTLOutput(Analyzer& analyzer, string ltl_file) {
       // use binary and \r\n tp enforce DOS line endings
       // http://tools.ietf.org/html/rfc4180
       csv->open(args["csv-ltl"].as<string>().c_str(), ios::trunc|ios::binary);
-      //*csv << "Index;\"LTL formula\";Result;Confidence\r\n";
+      *csv << "Index;\"LTL formula\";Result;Confidence\r\n";
     }
 
     while ( !ltl_eof) {
@@ -323,6 +325,7 @@ int main( int argc, char * argv[] ) {
   // Command line option handling.
   po::options_description desc
     ("CodeThorn V1.2\n"
+     "Written by Markus Schordan and Adrian Prantl 2012\n"
      "Supported options");
 
   desc.add_options()
@@ -388,8 +391,7 @@ int main( int argc, char * argv[] ) {
 
   if (args.count("version")) {
     cout << "CodeThorn version 1.2\n";
-    cout << "Written by Markus Schordan and Adrian Prantl\n";
-    cout << "2012\n";
+    cout << "Written by Markus Schordan and Adrian Prantl 2012\n";
     return 0;
   }
 

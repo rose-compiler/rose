@@ -14,12 +14,12 @@ using namespace std;
 
 using namespace CodeThorn;
 
-ostream& AType::operator<<(ostream& os, BoolLattice& toStream) {
+ostream& AType::operator<<(ostream& os, const BoolLattice& toStream) {
   os << toStream.toString();
   return os;
 }
 
-ostream& AType::operator<<(ostream& os, ConstIntLattice& toStream) {
+ostream& AType::operator<<(ostream& os, const ConstIntLattice& toStream) {
   os << toStream.toString();
   return os;
 }
@@ -173,7 +173,8 @@ string AType::BoolLattice::toString() const {
   case TRUE: return "true";
   case FALSE: return "false";
   default:
-	throw "Error: BoolLattice::toString operation failed.";
+    cerr<<"VALUE = "<<value<<endl;
+    throw "Error: BoolLattice::toString operation failed.";
   }
 }
 
