@@ -217,6 +217,7 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2012_130.c \
      test2012_131.c \
      test2012_133.c \
+     test2012_134.c \
      test2012_135.c \
      test2012_136.c \
      test2012_137.c \
@@ -261,6 +262,7 @@ TESTCODES_REQUIRED_TO_PASS = \
 #                 to the switch statment support in ROSE is deferred to later. test2012_137.c is a required test
 #                 code to pass; so that we can test the rewritten version of the switch.
 # test2012_145.c NOT A FAILING test, but tested below with -D options.
+# test2012_155.c (array with initializer using #include file to provide value (classic source-to-source issue))
 
 
 # This is a C99 test code (moved to the C99_tests directory). (These are not really C99 codes, I thought they were).
@@ -438,7 +440,8 @@ test2008_02.o: $(srcdir)/test2008_02.c
 
 EXTRA_DIST = $(ALL_TESTCODES) builtin-types.def callee.c caller.c c-common.def \
              test2006_134.h test2010_08.h predict.def test2010_15.h \
-             test2009_18.c test2009_20.c grep_verify.h test2012_75.h
+             test2009_18.c test2009_20.c grep_verify.h test2012_75.h \
+             test2012_78.h test2012_155.h
 
 copyFiles:
 	cp $(srcdir)/*.h $(top_srcdir)/tests/CompileTests/C_tests

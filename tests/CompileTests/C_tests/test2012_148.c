@@ -3,6 +3,8 @@ void foobar()
      int x;
      switch(x)
         {
+           char *t, *tend;
+		unsigned int t0;
           int variable_top_of_switch = 0;
           int a;
           int b;
