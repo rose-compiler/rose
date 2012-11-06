@@ -257,6 +257,10 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2012_159.c \
      test2012_162.c \
      test2012_163.c \
+     test2012_164.c \
+     test2012_165.c \
+     test2012_166.c \
+     test2012_167.c \
      math.c \
      complex_01.c \
      constants.c

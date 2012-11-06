@@ -1449,9 +1449,13 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
   // This was a bug mistakenly reported by Isaac
      ROSE_ASSERT(decl_stmt->get_declarationModifier().get_storageModifier().get_modifier() >= 0);
 
+#if 0
+     printf ("In printSpecifier2(): decl_stmt = %p decl_stmt->get_declarationModifier().get_storageModifier().isStatic() = %s \n",decl_stmt,decl_stmt->get_declarationModifier().get_storageModifier().isStatic() ? "true" : "false");
+#endif
+
      if (decl_stmt->get_declarationModifier().get_storageModifier().isStatic())
         {
-          curprint( "static ");
+          curprint("static ");
         }
 
   // if (unp->opt.get_extern_opt())
