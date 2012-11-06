@@ -312,19 +312,30 @@ struct X86InstructionSemantics {
                                  policy.ite(readRegister<1>(REG_DF), number<32>(-N), number<32>(N))));
     }
 
-    /** Implements the SHR, SAR, SHL, and SAL instructions for various operand sizes.  The shift amount is always 8 bits wide
-     *  in the instruction, but the semantics mask off all but the low-order bits, keeping 5 bits in 32-bit mode and 7 bits in
-     *  64-bit mode (indicated by the shiftSignificantBits template argument).   The semantics of SHL and SAL are identical (in
-     *  fact, ROSE doesn't even define x86_sal). */
+    /** Implements the SHR, SAR, SHL, SAL, SHRD, and SHLD instructions for various operand sizes.  The shift amount is always 8
+     *  bits wide in the instruction, but the semantics mask off all but the low-order bits, keeping 5 bits in 32-bit mode and
+     *  7 bits in 64-bit mode (indicated by the shiftSignificantBits template argument).  The semantics of SHL and SAL are
+     *  identical (in fact, ROSE doesn't even define x86_sal). The @p source_bits argument contains the bits to be shifted into
+     *  the result and is used only for SHRD and SHLD instructions. */
     template<size_t operandBits, size_t shiftSignificantBits>
     WordType<operandBits> shift_semantics(X86InstructionKind kind, const WordType<operandBits> &operand,
-                                          const WordType<8> &total_shift) {
-        assert(x86_shr==kind || x86_sar==kind || x86_shl==kind);
+                                          const WordType<operandBits> &source_bits, const WordType<8> &total_shift) {
+        assert(x86_shr==kind || x86_sar==kind || x86_shl==kind || x86_shld==kind || x86_shrd==kind);
 
         // The 8086 does not mask the shift count; processors starting with the 80286 (including virtual-8086 mode) do
         // mask.  The effect (other than timing) is the same either way.
         WordType<shiftSignificantBits> maskedShiftCount = extract<0, shiftSignificantBits>(total_shift);
         WordType<1> isZeroShiftCount = policy.equalToZero(maskedShiftCount);
+
+        // isLargeShift is true if the (unmasked) amount by which to shift is greater than or equal to the size in
+        // bits of the destination operand.
+        assert(shiftSignificantBits<8);
+        WordType<1> isLargeShift = policy.invert(policy.equalToZero(extract<shiftSignificantBits, 8>(total_shift)));
+
+        // isOneBitShift is true if the (masked) amount by which to shift is equal to one.
+        uintmax_t m = ((uintmax_t)1 << shiftSignificantBits) - 1;
+        WordType<shiftSignificantBits> mask = number<shiftSignificantBits>(m); // -1 in modulo arithmetic
+        WordType<1> isOneBitShift = policy.equalToZero(policy.add(maskedShiftCount, mask));
 
         // Do the actual shift, according to instruction kind.
         WordType<operandBits> retval = undefined_<operandBits>(); // not all policies define a default c'tor
@@ -338,18 +349,33 @@ struct X86InstructionSemantics {
             case x86_shl:
                 retval = policy.shiftLeft(operand, maskedShiftCount);
                 break;
+            case x86_shrd:
+                retval = policy.ite(isLargeShift,
+                                    undefined_<operandBits>(),
+                                    policy.or_(policy.shiftRight(operand, maskedShiftCount),
+                                               policy.ite(isZeroShiftCount,
+                                                          number<operandBits>(0),
+                                                          policy.shiftLeft(source_bits, policy.negate(maskedShiftCount)))));
+                break;
+            case x86_shld:
+                retval = policy.ite(isLargeShift,
+                                    undefined_<operandBits>(),
+                                    policy.or_(policy.shiftLeft(operand, maskedShiftCount),
+                                               policy.ite(isZeroShiftCount,
+                                                          number<operandBits>(0),
+                                                          policy.shiftRight(source_bits, policy.negate(maskedShiftCount)))));
+                break;
             default:
                 abort();
         }
 
-        // AF is undefined if the shift count is non-zero, otherwise unchanged.  The Intel manual is not clear
-        // whether the determination is by original count or masked count.  We assume the latter.
-        writeRegister(REG_AF, policy.ite(isZeroShiftCount, readRegister<1>(REG_AF), policy.undefined_<1>()));
+        // The AF flag is undefined if a shift occurs.  The documentation for SHL, SHR, and SAR are somewhat ambiguous about
+        // this, but the documentation for SHLD and SHRD is more specific.  We assume that both sets of shift instructions
+        // behave the same way.
+        writeRegister(REG_AF, policy.ite(isZeroShiftCount, readRegister<1>(REG_AF), undefined_<1>()));
 
         // What is the last bit shifted off the operand?  If we're right shifting by N bits, then the original operand N-1 bit
         // is what should make it into the final CF; if we're left shifting by N bits then we need bit operandBits-N.
-        uintmax_t m = ((uintmax_t)1 << shiftSignificantBits) - 1;
-        WordType<shiftSignificantBits> mask = number<shiftSignificantBits>(m); // -1 in modulo arithmetic
         WordType<shiftSignificantBits> bitPosition;
         if (x86_shr==kind || x86_sar==kind) {
             bitPosition = policy.add(maskedShiftCount, mask);
@@ -359,14 +385,6 @@ struct X86InstructionSemantics {
                                                 number<shiftSignificantBits>(1)));
         }
         WordType<1> shifted_off = extract<0, 1>(policy.shiftRight(operand, bitPosition));
-
-        // isLargeShift is true if the (unmasked) amount by which to shift is greater than or equal to the size in
-        // bits of the destination operand.
-        assert(shiftSignificantBits<8);
-        WordType<1> isLargeShift = policy.invert(policy.equalToZero(extract<shiftSignificantBits, 8>(total_shift)));
-
-        // isOneBitShift is true if the (masked) amount by which to shift is equal to one.
-        WordType<1> isOneBitShift = policy.equalToZero(policy.add(maskedShiftCount, mask));
 
         // New carry flag value.  From the Intel manual, the CF flag is "undefined for SHL and SHR [and SAL] instructions where
         // the count is greater than or equal to the size (in bits) of the destination operand", and "if the count is 0, the
@@ -381,13 +399,14 @@ struct X86InstructionSemantics {
                                                    shifted_off));
         writeRegister(REG_CF, newCF);
 
-        // Ajust the overflow flag.  From the Intel manual, "The OF flag is affected only on 1-bit shifts.  For left shifts,
-        // the OF flag is set to 0 if the most-significant bit of the result is the same as the CF flag (that is, the top two
-        // bits of the original operand were the same); otherwise, it is set to 1.  For the SAR instruction, the OF flag is
-        // cleared for all 1-bit shifts.  For the SHR instruction, the OF flag is set to the most-significant bit of the
-        // original operand."  Later, it states that "the OF flag is affected only for 1-bit shifts; otherwise it is
-        // undefined."  We're assuming that the statement "if the count is 0, then the flags are not affected" takes
-        // precedence.
+        // Ajust the overflow flag.  From the Intel manual for the SHL, SHR, and SAR instructions, "The OF flag is affected
+        // only on 1-bit shifts.  For left shifts, the OF flag is set to 0 if the most-significant bit of the result is the
+        // same as the CF flag (that is, the top two bits of the original operand were the same); otherwise, it is set to 1.
+        // For the SAR instruction, the OF flag is cleared for all 1-bit shifts.  For the SHR instruction, the OF flag is set
+        // to the most-significant bit of the original operand."  Later, it states that "the OF flag is affected only for 1-bit
+        // shifts; otherwise it is undefined."  We're assuming that the statement "if the count is 0, then the flags are not
+        // affected" takes precedence. For SHLD and SHRD it says, "for a 1-bit shift, the OF flag is set if a sign changed
+        // occurred; otherwise it is cleared. For shifts greater than 1 bit, the OF flag is undefined."
         WordType<1> newOF = undefined_<1>();
         switch (kind) {
             case x86_shr:
@@ -405,6 +424,8 @@ struct X86InstructionSemantics {
                                               undefined_<1>()));
                 break;
             case x86_shl:
+            case x86_shld:
+            case x86_shrd:
                 newOF = policy.ite(isOneBitShift,
                                    policy.xor_(newCF, extract<operandBits-1, operandBits>(retval)),
                                    policy.ite(isZeroShiftCount,
@@ -1306,17 +1327,20 @@ struct X86InstructionSemantics {
             case x86_shr: {
                 switch (numBytesInAsmType(operands[0]->get_type())) {
                     case 1: {
-                        WordType<8> output = shift_semantics<8, 5>(kind, read8(operands[0]), read8(operands[1]));
+                        WordType<8> output = shift_semantics<8, 5>(kind, read8(operands[0]), undefined_<8>(),
+                                                                   read8(operands[1]));
                         write8(operands[0], output);
                         break;
                     }
                     case 2: {
-                        WordType<16> output = shift_semantics<16, 5>(kind, read16(operands[0]), read8(operands[1]));
+                        WordType<16> output = shift_semantics<16, 5>(kind, read16(operands[0]), undefined_<16>(),
+                                                                     read8(operands[1]));
                         write16(operands[0], output);
                         break;
                     }
                     case 4: {
-                        WordType<32> output = shift_semantics<32, 5>(kind, read32(operands[0]), read8(operands[1]));
+                        WordType<32> output = shift_semantics<32, 5>(kind, read32(operands[0]), undefined_<32>(),
+                                                                     read8(operands[1]));
                         write32(operands[0], output);
                         break;
                     }
