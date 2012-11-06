@@ -160,7 +160,7 @@ public:
     short e2 = expr->expr2->label;
     int node = newNode(a);
     s<<node<<" ["<<color(state.debug[e])<<",label=\""<<"("<<state.debug[e]
-     <<" = "<<state.debug[e1]<<" & "<<color(state.debug[e2])<<")\"];\n  ";
+     <<" = "<<state.debug[e1]<<" & "<<state.debug[e2]<<")\"];\n  ";
     return newAttr(node);
   }
   IAttr visit(Or* expr, IAttr a) {
@@ -169,7 +169,7 @@ public:
     short e2 = expr->expr2->label;
     int node = newNode(a);
     s<<node<<" ["<<color(state.debug[e])<<",label=\""<<"("<<state.debug[e]
-     <<" = "<<state.debug[e1]<<" | "<<color(state.debug[e2])<<")\"];\n  ";
+     <<" = "<<state.debug[e1]<<" | "<<state.debug[e2]<<")\"];\n  ";
     return newAttr(node);
   }
   IAttr visit(Until* expr, IAttr a)	{
@@ -178,7 +178,7 @@ public:
     short e2 = expr->expr2->label;
     int node = newNode(a);
     s<<node<<" ["<<color(state.debug[e])<<",label=\""<<"("<<state.debug[e]
-     <<" = "<<state.debug[e1]<<" U "<<color(state.debug[e2])<<")\"];\n  ";
+     <<" = "<<state.debug[e1]<<" U "<<state.debug[e2]<<")\"];\n  ";
     return newAttr(node);
   }
   IAttr visit(WeakUntil* expr, IAttr a) {
@@ -187,7 +187,7 @@ public:
     short e2 = expr->expr2->label;
     int node = newNode(a);
     s<<node<<" ["<<color(state.debug[e])<<",label=\""<<"("<<state.debug[e]
-     <<" = "<<state.debug[e1]<<" WU "<<color(state.debug[e2])<<")\"];\n  ";
+     <<" = "<<state.debug[e1]<<" WU "<<state.debug[e2]<<")\"];\n  ";
     return newAttr(node);
   }
   IAttr visit(Release* expr, IAttr a) {
@@ -196,7 +196,7 @@ public:
     short e2 = expr->expr2->label;
     int node = newNode(a);
     s<<node<<" ["<<color(state.debug[e])<<",label=\""<<"("<<state.debug[e]
-     <<" = "<<state.debug[e1]<<" R "<<color(state.debug[e2])<<")\"];\n  ";
+     <<" = "<<state.debug[e1]<<" R "<<state.debug[e2]<<")\"];\n  ";
     return newAttr(node);
   }
 };
@@ -286,7 +286,7 @@ public:
       // if we have identical valstacks and different vals this should rather be an update!      
       LTLVertex v = (*i).second;
       LTLState s = stg.g[v];
-      s.val = s.val.lub(new_state.val);
+      s.val = new_state.val;
       stg.g[v] = s;
       // don't need to update vertex[], because val is not used by operator<
       //cerr<<"** merged states "<<new_state<<endl;
@@ -332,8 +332,8 @@ public:
       LTLVertex v = worklist.front(); worklist.pop();
 
       bool verbose = false;
-      //if (nargs==1&&(stg.g[v].estate->label() == 634 ||stg.g[v].estate->label() == 623))
-      //verbose = true;
+      //if (nargs==1 && (stg.g[v].estate->label() == 644))
+      // 	verbose = true;
 
       if (verbose) cerr<<"\n** Visiting state "<<v<<","<<stg.g[v]<<endl;
       if (verbose) {
@@ -380,7 +380,7 @@ public:
 	  LTLVertex v_prime = add_state_if_new(new_state, stg);
 	  //stg.vertex[updated_state] = v;
 	  //stg.g[v] = updated_state;
-	  if (verbose) cerr<<old_state<< " <--> "<<new_state<<endl;
+	  if (verbose) cerr<<"  OLD: "<<old_state<< "\n  NEW: "<<new_state<<endl;
 	  assert (v_prime != v || (new_state.val != old_state.val));
 	  add_edge_if_new(v_prime, succ, stg.g);
 
@@ -774,8 +774,8 @@ public:
       LTLState newstate(s);
       BoolLattice old_val = s.val;
       BoolLattice e1 = s.top();
-      BoolLattice new_val = old_val.lub(e1 || succ_val);
-      assert(new_val.lub(old_val) == new_val); // only move up in the lattice!
+      BoolLattice new_val = old_val || e1 || succ_val;
+      //assert(new_val.lub(old_val) == new_val); // only move up in the lattice!
       newstate.val = new_val;
       if (verbose) cerr<<"  F(old="<<old_val<<", e1="<<e1<<", succ="<<succ_val<<") = "<<new_val<<endl;
       return newstate;
@@ -838,8 +838,8 @@ public:
       BoolLattice old_val = s.val;
       BoolLattice e1 = s.over();
       BoolLattice e2 = s.top();
-      BoolLattice new_val = old_val.lub(e1 || e2);
-      assert(new_val.lub(old_val) == new_val); // only move up in the lattice!
+      BoolLattice new_val = old_val || e1 || e2;
+      //assert(new_val.lub(old_val) == new_val); // only move up in the lattice!
       newstate.val = new_val;
       if (verbose) cerr<<"  Or(old="<<old_val
 		       <<", e1="<<e1<<", e2="<<e1
