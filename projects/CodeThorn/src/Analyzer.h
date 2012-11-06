@@ -88,9 +88,11 @@ class Analyzer {
   const PState* processNewOrExisting(PState& s);
   const EState* processNew(EState& s);
   const EState* processNewOrExisting(EState& s);
+
   EStateSet::ProcessingResult process(EState& s);
+  EStateSet::ProcessingResult process(Label label, PState pstate, ConstraintSet cset, InputOutput io);
   const ConstraintSet* processNewOrExisting(ConstraintSet& cset);
-  const EState* processNewOrExisting(Label label, PState state, ConstraintSet cset);
+
   EState createEState(Label label, PState pstate, ConstraintSet cset);
   EState createEState(Label label, PState pstate, ConstraintSet cset, InputOutput io);
 
@@ -156,9 +158,6 @@ class Analyzer {
   int numberOfInputVarValues() { return _inputVarValues.size(); }
   list<pair<SgLabelStatement*,SgNode*> > _assertNodes;
   string _csv_assert_live_file; // to become private
-
-
-
 
  private:
   set<int> _inputVarValues;

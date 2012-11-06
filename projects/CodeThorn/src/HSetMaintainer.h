@@ -17,10 +17,19 @@ class HSetMaintainer : public HSet<KeyType,HashFun> {
 public:
   typedef pair<bool,const KeyType*> ProcessingResult;
   bool exists(KeyType& s) { 
+	return determine(s)!=0;
+  }
+
+  KeyType* determine(KeyType& s) { 
 	typename HSetMaintainer<KeyType,HashFun>::iterator i;
 	i=HSetMaintainer<KeyType,HashFun>::find(s);
-	return i!=HSetMaintainer<KeyType,HashFun>::end();
+	if(i!=HSetMaintainer<KeyType,HashFun>::end()) {
+	  return const_cast<KeyType*>(&(*i));
+	} else {
+	  return 0;
+	}
   }
+
   //! <true,const KeyType> if new element was inserted
   //! <false,const KeyType> if element already existed
   ProcessingResult process(KeyType key) {

@@ -102,6 +102,7 @@ class EState {
  EState():_label(0),_pstate(0),_constraints(0){}
  EState(Label label, const PState* pstate):_label(label),_pstate(pstate),_constraints(0){}
  EState(Label label, const PState* pstate, const ConstraintSet* cset):_label(label),_pstate(pstate),_constraints(cset){}
+ EState(Label label, const PState* pstate, const ConstraintSet* cset, InputOutput io):_label(label),_pstate(pstate),_constraints(cset),io(io){}
 
   string toString() const;
   long memorySize() const;
@@ -112,6 +113,7 @@ class EState {
   //void setIO(InputOutput io) { io=io;} TODO: investigate
   const PState* pstate() const { return _pstate; }
   const ConstraintSet* constraints() const { return _constraints; }
+
 
   InputOutput io;
  private:

@@ -361,7 +361,7 @@ int main( int argc, char * argv[] ) {
      "use precise top with intbool-(and/or) operators (used in int-analyzer) [=yes|no]")
     ("precision-exact-constraints",po::value< string >(),
      "(experimental) use precise constraint extraction [=yes|no]")
-    ("(experimental) tg-ltl-reduced",po::value< string >(),"compute on-the-fly LTL-reduced transition graph [=yes|no]")
+    ("tg-ltl-reduced",po::value< string >(),"(experimental) compute LTL-reduced transition graph based on a subset of computed estates [=yes|no]")
     ("viz",po::value< string >(),"generate visualizations (dot) outputs [=yes|no]")
     ("update-input-var",po::value< string >(),"For testing purposes only. Default is Yes. [=yes|no]")
     ("run-rose-tests",po::value< string >(),"Run ROSE AST tests. [=yes|no]")

@@ -32,6 +32,7 @@ class Visualizer {
   string transitionGraphDotHtmlNode(CodeThorn::Label lab);
   string transitionGraphToDot();
   string foldedTransitionGraphToDot();
+  string estateIdStringWithTemporaries(const CodeThorn::EState* estate);
  private:
   CodeThorn::Labeler* labeler;
   CodeThorn::Flow* flow;

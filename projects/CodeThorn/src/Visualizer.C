@@ -86,7 +86,7 @@ string Visualizer::estateToString(const EState* estate) {
 	if(pstateAddressSeparator) {
 	  ss<<":";
 	}
-	ss<<"ES"<<estateSet->estateId(estate);
+	ss<<estateIdStringWithTemporaries(estate);
   }
   if((tg1&&boolOptions["tg1-estate-properties"])||(tg2&&boolOptions["tg2-estate-properties"])) {
 	ss<<estate->toString();
@@ -129,7 +129,7 @@ string Visualizer::transitionGraphDotHtmlNode(Label lab) {
 	if((*j)->io.op==InputOutput::STDOUT_VAR) bgcolor="orange";
 	if((*j)->io.op==InputOutput::STDERR_VAR) bgcolor="orangered";
 	//if((*j)->io.op==InputOutput::FAILED_ASSERT) {bgcolor="black";textcolor="white";}
-	sinline+="<TD BGCOLOR=\""+bgcolor+"\" PORT=\"P"+estateSet->estateIdString(*j)+"\">";
+	sinline+="<TD BGCOLOR=\""+bgcolor+"\" PORT=\"P"+estateIdStringWithTemporaries(*j)+"\">";
 	sinline+="<FONT COLOR=\""+textcolor+"\">"+estateToString(*j)+"</FONT>";
 	sinline+="</TD>";
   }
@@ -173,6 +173,17 @@ string Visualizer::transitionGraphToDot() {
   return ss.str();
 }
 
+string Visualizer::estateIdStringWithTemporaries(const EState* estate) {
+  stringstream ss;
+  EStateId estateId=estateSet->estateId(estate);
+  if(estateId!=NO_ESTATE) {
+	ss<<"ES"<<estateSet->estateId(estate);
+  } else {
+	ss<<"TMPES"<<estate;
+  }
+  return ss.str();
+}
+
 string Visualizer::foldedTransitionGraphToDot() {
   tg2=true;
   stringstream ss;
@@ -187,9 +198,11 @@ string Visualizer::foldedTransitionGraphToDot() {
 	const EState* source=(*j).source;
 	const EState* target=(*j).target;
 	if((*j).target->io.op==InputOutput::FAILED_ASSERT) continue;
-	ss <<"L"<<Labeler::labelToString(source->label())<<":"<<"\"P"<<estateSet->estateId(source)<<"\""
-	   <<"->"
-	   <<"L"<<Labeler::labelToString(target->label())<<":"<<"\"P"<<estateSet->estateId(target)<<"\"";
+	ss <<"L"<<Labeler::labelToString(source->label())<<":";
+	ss <<"\"P"<<estateIdStringWithTemporaries(source)<<"\"";
+	ss <<"->";
+	ss <<"L"<<Labeler::labelToString(target->label())<<":";
+	ss <<"\"P"<<estateIdStringWithTemporaries(target)<<"\"";
 
 	ss<<"[";
 	ss<<"color="<<(*j).edge.color();

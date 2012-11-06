@@ -71,14 +71,6 @@ void Analyzer::addToWorkList(const EState* estate) {
   }
 }
 
-const EState* Analyzer::processNewOrExisting(Label label, PState pstate, ConstraintSet cset) {
-  const PState* newPStatePtr=processNewOrExisting(pstate);
-  const ConstraintSet* newCSetPtr=processNewOrExisting(cset);
-  EState newEState=EState(label,newPStatePtr,newCSetPtr);
-  const EState* newEStatePtr=estateSet.processNewOrExisting(newEState);
-  return newEStatePtr;
-}
-
 EState Analyzer::createEState(Label label, PState pstate, ConstraintSet cset) {
   const PState* newPStatePtr=processNewOrExisting(pstate);
   const ConstraintSet* newConstraintSetPtr=processNewOrExisting(cset);
@@ -99,8 +91,6 @@ bool Analyzer::isLTLRelevantLabel(Label label) {
 	|| isTerminationRelevantLabel(label)
 	;
 }
-
-	
 
 bool Analyzer::isTerminationRelevantLabel(Label label) {
   Labeler* lab=getLabeler();
@@ -209,7 +199,7 @@ void Analyzer::runSolver1() {
 			  ++nesListIter) {
 			EState newEState=*nesListIter;
 			if(newEState.label()!=NO_ESTATE && (!newEState.constraints()->disequalityExists()) &&(!isFailedAssertEState(&newEState))) {
-			  HSetMaintainer<EState,EStateHashFun>::ProcessingResult pres=estateSet.process(newEState);
+			  HSetMaintainer<EState,EStateHashFun>::ProcessingResult pres=process(newEState);
 			  const EState* newEStatePtr=pres.second;
 			  if(pres.first==true)
 				addToWorkList(newEStatePtr);			
@@ -418,8 +408,51 @@ const ConstraintSet* Analyzer::processNewOrExisting(ConstraintSet& cset) {
   return constraintSetMaintainer.processNewOrExisting(cset);
 }
 
-EStateSet::ProcessingResult Analyzer::process(EState& s) {
-  return estateSet.process(s);
+EStateSet::ProcessingResult Analyzer::process(EState& estate) {
+  if(boolOptions["tg-ltl-reduced"]) {
+	// experimental passing of params (we can avoid the copying)
+	return process(estate.label(),*estate.pstate(),*estate.constraints(),estate.io);
+  } else {
+	return estateSet.process(estate);
+  }
+}
+
+EStateSet::ProcessingResult Analyzer::process(Label label, PState pstate, ConstraintSet cset, InputOutput io) {
+  if(isLTLRelevantLabel(label)) {
+	const PState* newPStatePtr=processNewOrExisting(pstate);
+	const ConstraintSet* newCSetPtr=processNewOrExisting(cset);
+	EState newEState=EState(label,newPStatePtr,newCSetPtr);
+	return estateSet.process(newEState);
+  } else {
+	//cout << "INFO: allocating temporary estate."<<endl;
+	// the following checks are not neccessary but ensure that we reuse pstates and constraint sets
+	const PState* newPStatePtr=pstateSet.determine(pstate);
+	PState* newPStatePtr2=0;
+	if(!newPStatePtr) {
+	  newPStatePtr2=new PState();
+	  *newPStatePtr2=pstate;
+	} else {
+	  newPStatePtr2=const_cast<PState*>(newPStatePtr);
+	}
+	ConstraintSet* newCSetPtr=constraintSetMaintainer.determine(cset);
+	if(!newCSetPtr) {
+	  newCSetPtr=new ConstraintSet();
+	  *newCSetPtr=cset;
+	}	
+	EState newEState=EState(label,newPStatePtr,newCSetPtr,io);
+	const EState* newEStatePtr=estateSet.determine(newEState);
+	if(!newEStatePtr) {
+	  // new estate (was not stored but was not inserted (this case does not exist for maintained state)
+	  // therefore we handle it as : has been inserted (hence, all tmp-states are considered to be not equal)
+	  newEStatePtr=new EState(label,newPStatePtr,newCSetPtr,io);
+	  return make_pair(true,newEStatePtr);
+	} else {
+	  return make_pair(false,newEStatePtr);
+	}
+
+	return estateSet.process(newEState);
+  }
+  throw "Error: Analyzer::processNewOrExisting: programmatic error.";
 }
 
 list<EState> elistify(EState res) {
