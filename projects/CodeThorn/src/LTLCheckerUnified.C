@@ -774,6 +774,7 @@ public:
       LTLState newstate(s);
       BoolLattice old_val = s.val;
       BoolLattice e1 = s.top();
+      // TODO: I'm not sure about the correct way to combine old_val with the new one
       BoolLattice new_val = old_val || e1 || succ_val;
       //assert(new_val.lub(old_val) == new_val); // only move up in the lattice!
       newstate.val = new_val;
@@ -800,8 +801,9 @@ public:
       LTLState newstate(s);
       BoolLattice old_val = s.val;
       BoolLattice e1 = s.top();
-      BoolLattice new_val = old_val.lub(e1 && succ_val);
-      assert(new_val.lub(old_val) == new_val); // only move up in the lattice!
+      // TODO: I'm not sure about the correct way to combine old_val with the new one
+      BoolLattice new_val = old_val && e1 && succ_val;
+      //assert(new_val.lub(old_val) == new_val); // only move up in the lattice!
       newstate.val = new_val;
       if (verbose) cerr<<"  G(old="<<old_val<<", e1="<<e1<<", succ="<<succ_val<<") = "<<new_val<<endl;
       return newstate;
@@ -818,7 +820,7 @@ public:
       BoolLattice old_val = s.val;
       BoolLattice e1 = s.over();
       BoolLattice e2 = s.top();
-      BoolLattice new_val = old_val.lub(e1 && e2);
+      BoolLattice new_val = old_val && e1 && e2;
       assert(new_val.lub(old_val) == new_val); // only move up in the lattice!
       newstate.val = new_val;
       if (verbose) cerr<<"  And(old="<<old_val
@@ -874,8 +876,8 @@ public:
       BoolLattice old_val = s.val;
       BoolLattice e1 = s.over();
       BoolLattice e2 = s.top();
-      BoolLattice new_val = old_val.lub(e2 || (e1 && succ_val));
-      assert(new_val.lub(old_val) == new_val); // only move up in the lattice!
+      BoolLattice new_val = old_val && (e2 || (e1 && succ_val));
+      //assert(new_val.lub(old_val) == new_val); // only move up in the lattice!
       newstate.val = new_val;
       if (verbose) cerr<<"  Until(old="<<old_val
 		       <<", e1="<<e1<<", e2="<<e1
@@ -921,8 +923,8 @@ public:
       BoolLattice old_val = s.val;
       BoolLattice e1 = s.over();
       BoolLattice e2 = s.top();
-      BoolLattice new_val = old_val.lub(e2 && (e1 || succ_val));
-      assert(new_val.lub(old_val) == new_val); // only move up in the lattice!
+      BoolLattice new_val = old_val || (e2 && (e1 || succ_val));
+      //assert(new_val.lub(old_val) == new_val); // only move up in the lattice!
       newstate.val = new_val;
       if (verbose) cerr<<"  Until(old="<<old_val
 		       <<", e1="<<e1<<", e2="<<e1
