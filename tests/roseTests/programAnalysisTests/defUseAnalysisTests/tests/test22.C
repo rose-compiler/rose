@@ -1,6 +1,6 @@
 
 void func()
    {
-     for (; int b = 1; );
-     do ; while (0); 
+     for (1; int b = 1; ) 1;
+     do 1; while (0); 
    }

@@ -271,7 +271,7 @@ int main( int argc, char * argv[] )
       results.insert(pair<string,int>("a", 8));
       results.insert(pair<string,int>("a", 17));    
       results.insert(pair<string,int>("c", 18));
-      testOneFunction("::main",argvList, debug, 21, results,useresults);
+      testOneFunction("::foo",argvList, debug, 21, results,useresults);
     }
 
     if (startNr<=2 && 2<=stopNr) {
@@ -281,7 +281,7 @@ int main( int argc, char * argv[] )
       results.insert(pair<string,int>("a", 8));
       results.insert(pair<string,int>("a", 17));    
       results.insert(pair<string,int>("c", 18));
-      testOneFunction("::main",argvList, debug, 19, results,useresults);
+      testOneFunction("::foo",argvList, debug, 21, results,useresults);
     }
 
     if (startNr<=3 && 3<=stopNr) {
@@ -289,7 +289,7 @@ int main( int argc, char * argv[] )
       argvList[1]=srcdir+"tests/test3.C";
       results.clear();       useresults.clear();
       results.insert(pair<string,int>("d", 15));
-      testOneFunction("::main", argvList, debug, 17, results,useresults);
+      testOneFunction("::foo", argvList, debug, 17, results,useresults);
     }
 
     if (startNr<=4 && 4<=stopNr) {
@@ -297,7 +297,7 @@ int main( int argc, char * argv[] )
       argvList[1]=srcdir+"tests/test4.C";
       results.clear();       useresults.clear();
       results.insert(pair<string,int>("::globalvar", 12));
-      testOneFunction("::main", argvList, debug, 14, results, useresults);
+      testOneFunction("::foo", argvList, debug, 14, results, useresults);
     }
 
     if (startNr<=5 && 5<=stopNr) {
@@ -307,7 +307,7 @@ int main( int argc, char * argv[] )
       results.insert(pair<string,int>("x", 10));
       results.insert(pair<string,int>("y", 16));    
       useresults.insert(pair<string,int>("x", 13));    
-      testOneFunction("::main", argvList, debug, 18, results, useresults);
+      testOneFunction("::foo", argvList, debug, 18, results, useresults);
     }
 
     if (startNr<=6 && 6<=stopNr) {
@@ -320,7 +320,7 @@ int main( int argc, char * argv[] )
       results.insert(pair<string,int>("z", 10));    
       useresults.insert(pair<string,int>("x", 16));    
       useresults.insert(pair<string,int>("z", 22));    
-      testOneFunction("::main", argvList, debug, 26, results,useresults);
+      testOneFunction("::foo", argvList, debug, 26, results,useresults);
     }
 
     if (startNr<=7 && 7<=stopNr) {
@@ -331,7 +331,7 @@ int main( int argc, char * argv[] )
       results.insert(pair<string,int>("i", 15));
       useresults.insert(pair<string,int>("i", 8));    
       useresults.insert(pair<string,int>("i", 14));    
-      testOneFunction("::main", argvList, debug, 16, results,useresults);
+      testOneFunction("::foo", argvList, debug, 16, results,useresults);
     }
 
     if (startNr<=8 && 8<=stopNr) {
@@ -344,7 +344,7 @@ int main( int argc, char * argv[] )
       useresults.insert(pair<string,int>("i", 15));    
       useresults.insert(pair<string,int>("p", 26));    
       useresults.insert(pair<string,int>("x", 28));    
-      testOneFunction("::main", argvList, debug, 31, results,useresults);
+      testOneFunction("::foo", argvList, debug, 31, results,useresults);
     }
 
     if (startNr<=9 && 9<=stopNr) {
@@ -356,7 +356,7 @@ int main( int argc, char * argv[] )
       results.insert(pair<string,int>("i", 31));
       useresults.insert(pair<string,int>("i", 15));    
       // useresults.insert(pair<string,int>("array", 20)); // tps: fixed this    
-      testOneFunction("::main", argvList, debug, 30, results,useresults);
+      testOneFunction("::foo", argvList, debug, 30, results,useresults);
     }
 
     if (startNr<=10 && 10<=stopNr) {
@@ -366,7 +366,7 @@ int main( int argc, char * argv[] )
       results.insert(pair<string,int>("z", 13));
       results.insert(pair<string,int>("z", 22));
       results.insert(pair<string,int>("res", 23));
-      testOneFunction("::main", argvList, debug, 25, results,useresults);
+      testOneFunction("::foo", argvList, debug, 25, results,useresults);
       results.clear();  useresults.clear();
       results.insert(pair<string,int>("x", 3));
       results.insert(pair<string,int>("y", 4));
@@ -387,7 +387,7 @@ int main( int argc, char * argv[] )
       results.insert(pair<string,int>("j", 40)); //41
       results.insert(pair<string,int>("j", 77));
       //      results.insert(pair<string,int>("res", 42));
-      testOneFunction("::main", argvList, debug, 76, results,useresults);
+      testOneFunction("::foo", argvList, debug, 76, results,useresults);
       results.clear();  useresults.clear();
       testOneFunction("::f1", argvList, debug, 76, results,useresults);
       results.clear();  useresults.clear();
@@ -402,7 +402,7 @@ int main( int argc, char * argv[] )
       argvList[1]=srcdir+"tests/test13.C";
       results.clear();  useresults.clear();
       results.insert(pair<string,int>("::global", 7));
-      testOneFunction("::main", argvList, debug, 9, results,useresults);
+      testOneFunction("::foo", argvList, debug, 9, results,useresults);
     }
 
     if (startNr<=14 && 14<=stopNr) {
@@ -411,7 +411,7 @@ int main( int argc, char * argv[] )
       results.clear();  useresults.clear();
       results.insert(pair<string,int>("a", 12));
       results.insert(pair<string,int>("b", 6));
-      testOneFunction("::main", argvList, debug, 14, results,useresults);
+      testOneFunction("::foo", argvList, debug, 14, results,useresults);
     }
 
     if (startNr<=15 && 15<=stopNr) {
@@ -422,7 +422,7 @@ int main( int argc, char * argv[] )
       results.insert(pair<string,int>("i", 26));
       results.insert(pair<string,int>("index", 26));
       results.insert(pair<string,int>("index", 8));
-      testOneFunction("::main", argvList, debug, 26, results,useresults);
+      testOneFunction("::foo", argvList, debug, 26, results,useresults);
     }
 
     if (startNr<=18 && 18<=stopNr) {
@@ -438,7 +438,7 @@ int main( int argc, char * argv[] )
       results.insert(pair<string,int>("e", 41));
       useresults.insert(pair<string,int>("i", 15));    
       useresults.insert(pair<string,int>("x", 28));    
-      testOneFunction("::main", argvList, debug, 48, results,useresults);
+      testOneFunction("::foo", argvList, debug, 48, results,useresults);
     }
 
     if (startNr<=19 && 19<=stopNr) {
@@ -449,7 +449,7 @@ int main( int argc, char * argv[] )
       results.insert(pair<string,int>("::global", 8));
       results.insert(pair<string,int>("::global2", 28));
       results.insert(pair<string,int>("a", 24));
-      testOneFunction("::main", argvList, debug, 30, results,useresults);
+      testOneFunction("::foo", argvList, debug, 30, results,useresults);
       results.clear();  useresults.clear();
       results.insert(pair<string,int>("::global", 8));
       results.insert(pair<string,int>("::global2", 12));
@@ -460,34 +460,30 @@ int main( int argc, char * argv[] )
       std::cout <<"------------------------------ TESTCASE 20 -----------------------------------------\n";
       argvList[1]=srcdir+"tests/test20.C";
       results.clear();      useresults.clear();
-   // DQ (9/24/2011): We have a different value of nodes within the new replacement of constant folded values with the original expression trees.
-   // testOneFunction("::bar",argvList, debug, 8, results,useresults);
-      testOneFunction("::bar",argvList, debug, 7, results,useresults);
+      testOneFunction("::bar", argvList, debug, 8, results, useresults);
     }
 
     if (startNr<=21 && 21<=stopNr) {
       std::cout <<"------------------------------ TESTCASE 21 -----------------------------------------\n";
       argvList[1]=srcdir+"tests/test21.C";
       results.clear();      useresults.clear();
-      testOneFunction("::func",argvList, debug, 10, results,useresults);
+      testOneFunction("::func",argvList, debug, 13, results,useresults);
     }
 
     if (startNr<=22 && 22<=stopNr) {
       std::cout <<"------------------------------ TESTCASE 22 -----------------------------------------\n";
       argvList[1]=srcdir+"tests/test22.C";
       results.clear();      useresults.clear();
-      results.insert(pair<string,int>("b", 7));
-   // DQ (9/24/2011): We have a different value of nodes within the new replacement of constant folded values with the original expression trees.
-   // testOneFunction("::func",argvList, debug, 16, results,useresults);
-      testOneFunction("::func",argvList, debug, 15, results,useresults);
+      results.insert(pair<string,int>("b", 9));
+      testOneFunction("::func",argvList, debug, 19, results,useresults);
     }
 
     if (startNr<=23 && 23<=stopNr) {
       std::cout <<"------------------------------ TESTCASE 23 -----------------------------------------\n";
       argvList[1]=srcdir+"tests/test23.C";
       results.clear();      useresults.clear();
-      results.insert(pair<string,int>("a",12));
-      testOneFunction("::func",argvList, debug, 33, results,useresults);
+      results.insert(pair<string,int>("a",16));
+      testOneFunction("::func",argvList, debug, 44, results,useresults);
     }
 
     if (startNr<=24 && 24<=stopNr) {
