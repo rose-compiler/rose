@@ -265,6 +265,7 @@ namespace OmpSupport
     ROSE_ASSERT(result);
     return result;
   }
+
   // Sara Royuela ( Nov 2, 2012 ): Check for clause parameters that can be defined in macros
   // This adds support for the use of macro definitions in OpenMP clauses
   // We need a traversal over SgExpression to support macros in any possition of an "assignment_expr"
@@ -277,10 +278,12 @@ namespace OmpSupport
   SgVarRefExpVisitor::SgVarRefExpVisitor()
         : expressions()
   {}
+
   std::vector<SgVarRefExp*> SgVarRefExpVisitor::get_expressions()
   {
       return expressions;
   }
+
   void SgVarRefExpVisitor::visit(SgNode* node)
   {
       SgVarRefExp* expr = isSgVarRefExp(node);
@@ -289,6 +292,7 @@ namespace OmpSupport
           expressions.push_back(expr);
       }
   }
+
   SgExpression* checkOmpExpressionClause( SgExpression* clause_expression, SgGlobal* global )
   {
       ROSE_ASSERT(clause_expression != NULL);
@@ -326,7 +330,7 @@ namespace OmpSupport
                                           macro_name_init_pos++;
                                       unsigned int macro_name_end_pos = define_macro.find(" ", macro_name_init_pos);
                                       std::string macro_name = define_macro.substr(macro_name_init_pos, macro_name_end_pos-macro_name_init_pos);
-                                  
+                                      
                                       if(macro_name==clause_name.getString())
                                       { // Clause is defined in a macro
                                           size_t comma = define_macro.find(",");
@@ -340,13 +344,13 @@ namespace OmpSupport
                                                     define_macro[macro_value_end_pos]!=' ' && define_macro[macro_value_end_pos]!='\n')
                                                   macro_value_end_pos++;
                                               std::string macro_value = define_macro.substr(macro_value_init_pos, macro_value_end_pos-macro_value_init_pos);
-                                                                                   
+                                              
                                               // Check whether the value is a valid integer
                                               std::string::const_iterator it = macro_value.begin();
                                               while (it != macro_value.end() && std::isdigit(*it))
                                                   ++it;
                                               ROSE_ASSERT(!macro_value.empty() && it == macro_value.end());
-                                
+                                              
                                               int macro_int_value = atoi(macro_value.c_str());
                                               clause_value = buildIntVal(macro_int_value);
                                           }
@@ -361,7 +365,7 @@ namespace OmpSupport
           }
           else
           {
-              printf("error in buildOmpExpressionClause(): unacceptable parameter in OpenMP clause\n");
+              printf("error in checkOmpExpressionClause(): no expression found in an expression clause\n");
               ROSE_ASSERT(false);
           }
       }
