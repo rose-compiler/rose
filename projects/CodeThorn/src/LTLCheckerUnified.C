@@ -208,7 +208,7 @@ ostream& UnifiedLTL::operator<<(ostream& os, const LTLState& s) {
        i != s.valstack.end(); ++i) {
     os<<*i<<" ";
   }
-  //os<<", "<<s.debug;
+  os<<", "<<s.val;
   os<<"])";
   return os;
 }
@@ -321,11 +321,7 @@ public:
       stg.vertex[state] = *vi;
       assert(state.valstack.size() >= nargs);
 
-      // start at all fixpoints
-      //LTLState s = transfer(state, Bot());
-      //if (!s.valstack.back().isBot()) {
       worklist.push(stg.vertex[state]);
-	//}
     }
 
     if (worklist.empty()) {
@@ -334,7 +330,26 @@ public:
 
     while (!worklist.empty()) {
       LTLVertex v = worklist.front(); worklist.pop();
-      //cerr<<"Visiting state "<<stg.g[v].estate<<endl;
+
+      bool verbose = false;
+      //if (nargs==1&&(stg.g[v].estate->label() == 634 ||stg.g[v].estate->label() == 623))
+      //verbose = true;
+
+      if (verbose) cerr<<"\n** Visiting state "<<v<<","<<stg.g[v]<<endl;
+      if (verbose) {
+	deque<LTLVertex> tmp;
+	cerr<<"  worklist = [";
+	while(!worklist.empty()) {
+	  LTLVertex i = worklist.front(); worklist.pop();
+	  tmp.push_back(i);
+	  cerr<<" "<<i;
+	}
+	while(!tmp.empty()) {
+	  LTLVertex i = tmp.front(); tmp.pop_front();
+	  worklist.push(i);
+	}
+	cerr<<" ]"<<endl;
+      }
 
       /* for each successor */
       LTLWorklist succs;
@@ -347,24 +362,25 @@ public:
       }
       while (!succs.empty()) {
 	LTLVertex succ = succs.front(); succs.pop();
-	BoolLattice succ_val = stg.g[succ].top();
-	//cerr<<"  succ: "<<succ<<" = "<<succ_val<<endl;
+	BoolLattice succ_val = stg.g[succ].val;
+	if (verbose) cerr<<"  succ: "<<succ<<", "<<stg.g[succ]<<" = "<<succ_val<<endl;
 
 	// Always make a new state v', so we can calculate precise
 	// results for both paths.  If a v' and v'' should later turn
 	// out to be identical, they will automatically be merged.
 	LTLState old_state = stg.g[v];
-	LTLState new_state = transfer(old_state, succ_val);
+	LTLState new_state = transfer(old_state, succ_val, verbose);
 	bool fixpoint = ( (new_state == old_state) && (new_state.val == old_state.val));
 
 	if (fixpoint) {
-	  //cerr<<"reached fixpoint!"<<endl;
+	  if (verbose) cerr<<"reached fixpoint!"<<endl;
+	  assert(stg.g[v].val == new_state.val);
 	} else {
 	  // create a new state in lieu of  the old state, and cut off the old state
 	  LTLVertex v_prime = add_state_if_new(new_state, stg);
 	  //stg.vertex[updated_state] = v;
 	  //stg.g[v] = updated_state;
-	  //cerr<<old_state<< " <--> "<<new_state<<endl;
+	  if (verbose) cerr<<old_state<< " <--> "<<new_state<<endl;
 	  assert (v_prime != v || (new_state.val != old_state.val));
 	  add_edge_if_new(v_prime, succ, stg.g);
 
@@ -373,10 +389,16 @@ public:
 	  for (tie(in_i, in_end) = in_edges(v, stg.g); in_i != in_end; ++in_i) {
 	    LTLVertex pred = source(*in_i, stg.g);
 	    
-	    //cerr<<" succ(really pred): "<<stg.g[pred].estate<<" = .."<<endl;
+	    if (verbose) cerr<<"  pred: "<<pred<<","<<stg.g[pred]<<" = "<<stg.g[pred].val<<endl;
+	    if (v_prime != v) remove_edge(v, pred, stg.g);
 	    add_edge_if_new(pred, v_prime, stg.g);
-	    if (v_prime != v) remove_edge(v, succ, stg.g);
 	    worklist.push(pred);
+
+	    //boost::graph_traits<LTLTransitionGraph>::edge_descriptor _edge;
+	    //bool b;
+	    //tie(_edge, b) = edge(pred, v_prime, stg.g);
+	    //assert(b);
+	    //assert(stg.g[v_prime].val==new_state.val);
 	  }
 	}
       }
@@ -472,14 +494,14 @@ public:
     TransferI(const UVerifier& v, const InputSymbol* e) : verifier(v), expr(e) {}
     const UVerifier& verifier;
     const InputSymbol* expr;
-    LTLState operator() (const LTLState& s, BoolLattice succ_val ) { 
+    LTLState operator() (const LTLState& s, BoolLattice succ_val, bool verbose ) { 
       LTLState newstate(s);
       BoolLattice old_val = s.val; 
       BoolLattice new_val = 
 	isInputState(s.estate, input_vars, expr->c, succ_val);
       assert(new_val.lub(old_val) == new_val); // only move up in the lattice!
       newstate.val = new_val;
-      //cerr<<"  I(old="<<old_val<<", succ="<<succ_val<<") = "<<new_val<<endl;
+      if (verbose) cerr<<"  I(old="<<old_val<<", succ="<<succ_val<<") = "<<new_val<<endl;
       return newstate;
     }
   }; 
@@ -548,14 +570,14 @@ public:
     TransferNI(const UVerifier& v, const InputSymbol* e) : verifier(v), expr(e) {}
     const UVerifier& verifier;
     const InputSymbol* expr;
-    LTLState operator() (const LTLState& s, BoolLattice succ_val ) { 
+    LTLState operator() (const LTLState& s, BoolLattice succ_val, bool verbose ) { 
       LTLState newstate(s);
       BoolLattice old_val = s.val; 
       BoolLattice new_val = 
 	isNegInputState(s.estate, input_vars, expr->c, succ_val);
       assert(new_val.lub(old_val) == new_val); // only move up in the lattice!
       newstate.val = new_val;
-      //cerr<<"  ¬I(old="<<old_val<<", succ="<<succ_val<<") = "<<new_val<<endl;
+      if (verbose) cerr<<"  ¬I(old="<<old_val<<", succ="<<succ_val<<") = "<<new_val<<endl;
       return newstate;
     }
   }; 
@@ -607,7 +629,7 @@ public:
     TransferO(const UVerifier& v, const OutputSymbol* e) : verifier(v), expr(e) {}
     const UVerifier& verifier;
     const OutputSymbol* expr;
-    LTLState operator() (const LTLState& s, BoolLattice succ_val ) const { 
+    LTLState operator() (const LTLState& s, BoolLattice succ_val, bool verbose ) const { 
       LTLState newstate(s);
       BoolLattice old_val = s.val; 
       BoolLattice new_val = isOutputState(s.estate, expr->c, 
@@ -668,14 +690,14 @@ public:
     TransferNO(const UVerifier& v, const OutputSymbol* e) : verifier(v), expr(e) {}
     const UVerifier& verifier;
     const OutputSymbol* expr;
-    LTLState operator() (const LTLState& s, BoolLattice succ_val ) const { 
+    LTLState operator() (const LTLState& s, BoolLattice succ_val, bool verbose ) const { 
       LTLState newstate(s);
       BoolLattice old_val = s.val; 
       BoolLattice new_val = 
 	isNegOutputState(s.estate, expr->c, verifier.isEndpoint(s.estate), succ_val);
       assert(new_val.lub(old_val) == new_val); // only move up in the lattice!
       newstate.val = new_val;
-      //cerr<<"  ¬O(old="<<old_val<<", succ="<<succ_val<<") = "<<new_val<<endl;
+      if (verbose) cerr<<"  ¬O(old="<<old_val<<", succ="<<succ_val<<") = "<<new_val<<endl;
       return newstate;
     }
   }; 
@@ -689,14 +711,14 @@ public:
    * Implementation status: DONE
    */
   struct TransferNot {
-    LTLState operator() (const LTLState& s, BoolLattice succ_val ) const { 
+    LTLState operator() (const LTLState& s, BoolLattice succ_val, bool verbose ) const { 
       LTLState newstate(s);
       BoolLattice old_val = s.val;
       BoolLattice e1 = s.top();
       BoolLattice new_val = old_val.lub(!e1);
       assert(new_val.lub(old_val) == new_val); // only move up in the lattice!
       newstate.val = new_val;
-      //cerr<<"  G(old="<<old_val<<", e1="<<e1<<", succ="<<succ_val<<") = "<<new_val<<endl;
+      if (verbose) cerr<<"  G(old="<<old_val<<", e1="<<e1<<", succ="<<succ_val<<") = "<<new_val<<endl;
       return newstate;
     } 
   };
@@ -718,14 +740,14 @@ public:
    * Implementation status: DONE
    */
   struct TransferX {
-    LTLState operator() (const LTLState& s, BoolLattice succ_val ) const { 
+    LTLState operator() (const LTLState& s, BoolLattice succ_val, bool verbose ) const { 
       LTLState newstate(s);
       BoolLattice old_val = s.val;
       BoolLattice e1 = s.top();
       BoolLattice new_val = old_val.lub(succ_val);
       assert(new_val.lub(old_val) == new_val); // only move up in the lattice!
       newstate.val = new_val;
-      //cerr<<"  X(old="<<old_val<<", e1="<<e1<<", succ="<<succ_val<<") = "<<new_val<<endl;
+      if (verbose) cerr<<"  X(old="<<old_val<<", e1="<<e1<<", succ="<<succ_val<<") = "<<new_val<<endl;
       return newstate;
     } 
   };
@@ -748,14 +770,14 @@ public:
    * Implementation status: DONE
    */
   struct TransferF {
-    LTLState operator() (const LTLState& s, BoolLattice succ_val ) const { 
+    LTLState operator() (const LTLState& s, BoolLattice succ_val, bool verbose ) const { 
       LTLState newstate(s);
       BoolLattice old_val = s.val;
       BoolLattice e1 = s.top();
       BoolLattice new_val = old_val.lub(e1 || succ_val);
       assert(new_val.lub(old_val) == new_val); // only move up in the lattice!
       newstate.val = new_val;
-      //cerr<<"  F(old="<<old_val<<", e1="<<e1<<", succ="<<succ_val<<") = "<<new_val<<endl;
+      if (verbose) cerr<<"  F(old="<<old_val<<", e1="<<e1<<", succ="<<succ_val<<") = "<<new_val<<endl;
       return newstate;
     } 
   };
@@ -774,14 +796,14 @@ public:
    */
 
   struct TransferG {
-    LTLState operator() (const LTLState& s, BoolLattice succ_val ) const { 
+    LTLState operator() (const LTLState& s, BoolLattice succ_val, bool verbose ) const { 
       LTLState newstate(s);
       BoolLattice old_val = s.val;
       BoolLattice e1 = s.top();
       BoolLattice new_val = old_val.lub(e1 && succ_val);
       assert(new_val.lub(old_val) == new_val); // only move up in the lattice!
       newstate.val = new_val;
-      //cerr<<"  G(old="<<old_val<<", e1="<<e1<<", succ="<<succ_val<<") = "<<new_val<<endl;
+      if (verbose) cerr<<"  G(old="<<old_val<<", e1="<<e1<<", succ="<<succ_val<<") = "<<new_val<<endl;
       return newstate;
     } 
   };
@@ -791,7 +813,7 @@ public:
 
   // Implementation status: DONE
  struct TransferAnd {
-    LTLState operator() (const LTLState& s, BoolLattice succ_val ) const { 
+    LTLState operator() (const LTLState& s, BoolLattice succ_val, bool verbose ) const { 
       LTLState newstate(s);
       BoolLattice old_val = s.val;
       BoolLattice e1 = s.over();
@@ -799,9 +821,9 @@ public:
       BoolLattice new_val = old_val.lub(e1 && e2);
       assert(new_val.lub(old_val) == new_val); // only move up in the lattice!
       newstate.val = new_val;
-      //cerr<<"  And(old="<<old_val
-      // 	  <<", e1="<<e1<<", e2="<<e1
-      // 	  <<", succ="<<succ_val<<") = "<<new_val<<endl;
+      if (verbose) cerr<<"  And(old="<<old_val
+		       <<", e1="<<e1<<", e2="<<e1
+		       <<", succ="<<succ_val<<") = "<<new_val<<endl;
       return newstate;
     } 
   };
@@ -811,7 +833,7 @@ public:
 
   // Implementation status: DONE
  struct TransferOr {
-    LTLState operator() (const LTLState& s, BoolLattice succ_val ) const { 
+    LTLState operator() (const LTLState& s, BoolLattice succ_val, bool verbose ) const { 
       LTLState newstate(s);
       BoolLattice old_val = s.val;
       BoolLattice e1 = s.over();
@@ -819,9 +841,9 @@ public:
       BoolLattice new_val = old_val.lub(e1 || e2);
       assert(new_val.lub(old_val) == new_val); // only move up in the lattice!
       newstate.val = new_val;
-      //cerr<<"  Or(old="<<old_val
-      // 	  <<", e1="<<e1<<", e2="<<e1
-      // 	  <<", succ="<<succ_val<<") = "<<new_val<<endl;
+      if (verbose) cerr<<"  Or(old="<<old_val
+		       <<", e1="<<e1<<", e2="<<e1
+		       <<", succ="<<succ_val<<") = "<<new_val<<endl;
       return newstate;
     } 
   };
@@ -847,7 +869,7 @@ public:
    * Implementation status: DONE
    */
  struct TransferU {
-    LTLState operator() (const LTLState& s, BoolLattice succ_val ) const { 
+    LTLState operator() (const LTLState& s, BoolLattice succ_val, bool verbose ) const { 
       LTLState newstate(s);
       BoolLattice old_val = s.val;
       BoolLattice e1 = s.over();
@@ -855,9 +877,9 @@ public:
       BoolLattice new_val = old_val.lub(e2 || (e1 && succ_val));
       assert(new_val.lub(old_val) == new_val); // only move up in the lattice!
       newstate.val = new_val;
-      //cerr<<"  Until(old="<<old_val
-      // 	  <<", e1="<<e1<<", e2="<<e1
-      // 	  <<", succ="<<succ_val<<") = "<<new_val<<endl;
+      if (verbose) cerr<<"  Until(old="<<old_val
+		       <<", e1="<<e1<<", e2="<<e1
+		       <<", succ="<<succ_val<<") = "<<new_val<<endl;
       return newstate;
     } 
   };
@@ -894,7 +916,7 @@ public:
    * Implementation status: DONE
    */
  struct TransferR {
-    LTLState operator() (const LTLState& s, BoolLattice succ_val ) const { 
+    LTLState operator() (const LTLState& s, BoolLattice succ_val, bool verbose ) const { 
       LTLState newstate(s);
       BoolLattice old_val = s.val;
       BoolLattice e1 = s.over();
@@ -902,9 +924,9 @@ public:
       BoolLattice new_val = old_val.lub(e2 && (e1 || succ_val));
       assert(new_val.lub(old_val) == new_val); // only move up in the lattice!
       newstate.val = new_val;
-      //cerr<<"  Until(old="<<old_val
-      // 	  <<", e1="<<e1<<", e2="<<e1
-      // 	  <<", succ="<<succ_val<<") = "<<new_val<<endl;
+      if (verbose) cerr<<"  Until(old="<<old_val
+		       <<", e1="<<e1<<", e2="<<e1
+		       <<", succ="<<succ_val<<") = "<<new_val<<endl;
       return newstate;
     } 
   };
@@ -1052,7 +1074,7 @@ UChecker::verify(const Formula& f)
 	break;
       case InputOutput::STDOUT_VAR:
       case InputOutput::STDOUT_CONST:
-	s<<"shape=rectangle, color=indigo, style=filled";
+	s<<"shape=rectangle, color=slateblue, style=filled";
 	break;
       default: break;
       }
