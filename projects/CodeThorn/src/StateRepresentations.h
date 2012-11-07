@@ -116,6 +116,8 @@ class EState {
 
 
   InputOutput io;
+  InputOutput::OpType ioOp(Labeler*) const;
+
  private:
   Label _label;
   const PState* _pstate;
@@ -202,11 +204,15 @@ class EStateList : public list<EState> {
   string toString();
 };
 
+
+
 class TransitionGraph : public HSet<Transition,TransitionHashFun> {
  public:
- TransitionGraph():_startLabel(CodeThorn::Labeler::NO_LABEL),numberOfNodes(0){}
+  typedef set<const Transition*> TransitionPtrSet;
+ TransitionGraph():_startLabel(CodeThorn::Labeler::NO_LABEL),_numberOfNodes(0){}
   set<const EState*> transitionSourceEStateSetOfLabel(Label lab);
   set<const EState*> estateSetOfLabel(Label lab);
+  set<const EState*> estateSet();
   void add(Transition trans);
   string toString() const;
   CodeThorn::LabelSet labelSetOfIoOperations(InputOutput::OpType op);
@@ -215,8 +221,15 @@ class TransitionGraph : public HSet<Transition,TransitionHashFun> {
   Label getStartLabel() { return _startLabel; }
   void setStartLabel(Label lab) { _startLabel=lab; }
   Transition getStartTransition();
+
+  //! reduces all non-maintained estates and unions edge-annotations. Additionally the edge-annotation "EDGE_INTRA_PATH" or "EDGE_INTER_PATH" is added. Returns number of reduced estates.
+  void reduceEStates(set<const EState*>& toReduce);
+  void reduceEState(const EState* estate);
+  TransitionPtrSet inEdges(const EState* estate);
+  TransitionPtrSet outEdges(const EState* estate);
+
  private:
-  int numberOfNodes;
+  int _numberOfNodes; // not used yet
   Label _startLabel;
 };
 

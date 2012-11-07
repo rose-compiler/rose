@@ -85,16 +85,33 @@ EState Analyzer::createEState(Label label, PState pstate, ConstraintSet cset, In
 }
 
 bool Analyzer::isLTLRelevantLabel(Label label) {
-  return getLabeler()->isStdInLabel(label)
+  bool t=getLabeler()->isStdInLabel(label)
 	|| getLabeler()->isStdOutLabel(label)
 	|| getLabeler()->isStdErrLabel(label)
 	|| isTerminationRelevantLabel(label)
 	;
+  //cout << "INFO: L"<<label<<": "<<SgNodeHelper::nodeToString(getLabeler()->getNode(label))<< "LTL: "<<t<<endl;
+  return t;
+}
+
+set<const EState*> Analyzer::nonLTLRelevantEStates() {
+  set<const EState*> res;
+  set<const EState*> allestates=transitionGraph.estateSet();
+  for(set<const EState*>::iterator i=allestates.begin();i!=allestates.end();++i) {
+	if(!isLTLRelevantLabel((*i)->label())) {
+	  res.insert(*i);
+	  if(!estateSet.estateId(*i)==NO_ESTATE) {
+		cerr<< "WARNING: estateId: "<<estateSet.estateId(*i)<<endl;
+	  }
+	}
+  }
+  return res;
 }
 
 bool Analyzer::isTerminationRelevantLabel(Label label) {
   Labeler* lab=getLabeler();
   if(SgNodeHelper::isLoopCond(lab->getNode(label))) {
+	//cout << "DEBUG: is termination relevant node: "<<SgNodeHelper::nodeToString(lab->getNode(label))<<endl;
 	return true;
   }
   return false;
@@ -194,6 +211,7 @@ void Analyzer::runSolver1() {
 #endif
 		  list<EState> newEStateList;
 		  newEStateList=transferFunction(e,currentEStatePtr);
+		  //cout << "DEBUG: transfer at edge:"<<e.toString()<<" succ="<<newEStateList.size()<< endl;
 		  for(list<EState>::iterator nesListIter=newEStateList.begin();
 			  nesListIter!=newEStateList.end();
 			  ++nesListIter) {
@@ -400,8 +418,15 @@ const EState* Analyzer::processNew(EState& s) {
   return estateSet.processNew(s);
 }
 
-const EState* Analyzer::processNewOrExisting(EState& s) {
-  return estateSet.processNewOrExisting(s);
+const EState* Analyzer::processNewOrExisting(EState& estate) {
+  if(boolOptions["tg-ltl-reduced"]) {
+	// experimental passing of params (we can avoid the copying)
+	EStateSet::ProcessingResult res=process(estate.label(),*estate.pstate(),*estate.constraints(),estate.io);
+	assert(res.second);
+	return res.second;
+  } else {
+	return estateSet.processNewOrExisting(estate);
+  }
 }
 
 const ConstraintSet* Analyzer::processNewOrExisting(ConstraintSet& cset) {
@@ -418,14 +443,15 @@ EStateSet::ProcessingResult Analyzer::process(EState& estate) {
 }
 
 EStateSet::ProcessingResult Analyzer::process(Label label, PState pstate, ConstraintSet cset, InputOutput io) {
-  if(isLTLRelevantLabel(label)) {
+  if(isLTLRelevantLabel(label) || io.op!=InputOutput::NONE) {
 	const PState* newPStatePtr=processNewOrExisting(pstate);
 	const ConstraintSet* newCSetPtr=processNewOrExisting(cset);
-	EState newEState=EState(label,newPStatePtr,newCSetPtr);
+	EState newEState=EState(label,newPStatePtr,newCSetPtr,io); // found bug (io was missing)
 	return estateSet.process(newEState);
   } else {
 	//cout << "INFO: allocating temporary estate."<<endl;
 	// the following checks are not neccessary but ensure that we reuse pstates and constraint sets
+#if 0
 	const PState* newPStatePtr=pstateSet.determine(pstate);
 	PState* newPStatePtr2=0;
 	if(!newPStatePtr) {
@@ -435,16 +461,25 @@ EStateSet::ProcessingResult Analyzer::process(Label label, PState pstate, Constr
 	  newPStatePtr2=const_cast<PState*>(newPStatePtr);
 	}
 	ConstraintSet* newCSetPtr=constraintSetMaintainer.determine(cset);
+	ConstraintSet* newCSetPtr2;
 	if(!newCSetPtr) {
-	  newCSetPtr=new ConstraintSet();
-	  *newCSetPtr=cset;
-	}	
-	EState newEState=EState(label,newPStatePtr,newCSetPtr,io);
+	  newCSetPtr2=new ConstraintSet();
+	  *newCSetPtr2=cset;
+	} else {
+	  newCSetPtr2=const_cast<ConstraintSet*>(newCSetPtr);
+	}
+#else
+	PState* newPStatePtr2=new PState();
+	*newPStatePtr2=pstate;
+	ConstraintSet* newCSetPtr2=new ConstraintSet();
+	*newCSetPtr2=cset;
+#endif
+	EState newEState=EState(label,newPStatePtr2,newCSetPtr2,io);
 	const EState* newEStatePtr=estateSet.determine(newEState);
 	if(!newEStatePtr) {
 	  // new estate (was not stored but was not inserted (this case does not exist for maintained state)
 	  // therefore we handle it as : has been inserted (hence, all tmp-states are considered to be not equal)
-	  newEStatePtr=new EState(label,newPStatePtr,newCSetPtr,io);
+	  newEStatePtr=new EState(label,newPStatePtr2,newCSetPtr2,io);
 	  return make_pair(true,newEStatePtr);
 	} else {
 	  return make_pair(false,newEStatePtr);

@@ -78,6 +78,7 @@ class Analyzer {
   void recordTransition(const EState* sourceEState, Edge e, const EState* targetEState);
   void printStatusMessage(bool);
   bool isLTLRelevantLabel(Label label);
+  set<const EState*> nonLTLRelevantEStates();
   bool isTerminationRelevantLabel(Label label);
   const EState* takeFromWorkList();
  private:

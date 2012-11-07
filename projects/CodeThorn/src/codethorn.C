@@ -174,8 +174,9 @@ void printAssertStatistics(Analyzer& analyzer, SgProject* sageProject) {
   int n=assertNodes.size();
   assert(reachable+unreachable == n);
   cout<<"Assert reachability statistics: "
-	  <<reachable          <<"/"<<n<<color("green")  <<" YES"       <<color("normal")<<", " 	
-	  <<unreachable        <<"/"<<n<<color("cyan")   <<" NO "       <<color("normal") 	
+	  <<color("normal")<<"YES: "<<color("green")<<reachable
+	  <<color("normal")<<", NO: " <<color("cyan")<<unreachable
+	  <<color("normal")<<", TOTAL: " <<n
 	  <<endl
 	;
 }
@@ -550,8 +551,17 @@ int main( int argc, char * argv[] ) {
   if (args.count("csv-assert")) {
 	string filename=args["csv-assert"].as<string>().c_str();
 	generateAssertsCsvFile(analyzer,sageProject,filename);
+	cout << "=============================================================="<<endl;
   }
-  cout << "=============================================================="<<endl;
+  if(boolOptions["tg-ltl-reduced"]) {
+	cout << "(Experimental) Reducing transition graph ..."<<endl;
+	set<const EState*> xestates=analyzer.nonLTLRelevantEStates();
+	cout << "Size of transition graph before reduction: "<<analyzer.getTransitionGraph()->size()<<endl;
+	cout << "Number of EStates to be reduced: "<<xestates.size()<<endl;
+	analyzer.getTransitionGraph()->reduceEStates(xestates);
+	cout << "Size of transition graph after reduction : "<<analyzer.getTransitionGraph()->size()<<endl;
+	cout << "=============================================================="<<endl;
+  }
   timer.start();
   if (ltl_file.size()) {
 	generateLTLOutput(analyzer,ltl_file);
@@ -658,6 +668,12 @@ int main( int argc, char * argv[] ) {
     write_file("cfg.dot", analyzer.flow.toDot(analyzer.cfanalyzer->getLabeler()));
     cout << "generated cfg.dot."<<endl;
   }
+
+#if 0
+  {
+	cout << "EStateSet:\n"<<analyzer.getEStateSet()->toString()<<endl;
+  }
+#endif
 
 #if 0
   {

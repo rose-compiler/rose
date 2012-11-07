@@ -206,6 +206,14 @@ string EStateSet::estateIdString(const EState* estate) const {
   return ss.str();
 }
 
+CodeThorn::InputOutput::OpType EState::ioOp(Labeler* labeler) const {
+  Label lab=label();
+  if(labeler->isStdInLabel(lab)) return InputOutput::STDIN_VAR;
+  if(labeler->isStdOutLabel(lab)) return InputOutput::STDOUT_VAR;
+  if(labeler->isStdErrLabel(lab)) return InputOutput::STDERR_VAR;
+  return InputOutput::NONE;
+}
+
 int EStateSet::numberOfIoTypeEStates(InputOutput::OpType op) const {
   int counter=0;
   for(EStateSet::iterator i=begin();i!=end();++i) {
@@ -232,6 +240,55 @@ LabelSet TransitionGraph::labelSetOfIoOperations(InputOutput::OpType op) {
   }
   return lset;
 } 
+
+void TransitionGraph::reduceEStates(set<const EState*>& toReduce) {
+  for(set<const EState*>::const_iterator i=toReduce.begin();i!=toReduce.end();++i) { 
+	reduceEState(*i);
+  }
+}
+
+// MS: we definitely need to cache all the results or use a proper graph structure
+TransitionGraph::TransitionPtrSet TransitionGraph::inEdges(const EState* estate) {
+  TransitionGraph::TransitionPtrSet in;
+  for(TransitionGraph::const_iterator i=begin();i!=end();++i) {
+	if(estate==(*i).target)
+	  in.insert(&(*i));
+  }
+  return in;
+}
+
+// MS: we definitely need to cache all the results or use a proper graph structure
+TransitionGraph::TransitionPtrSet TransitionGraph::outEdges(const EState* estate) {
+  TransitionGraph::TransitionPtrSet out;
+  for(TransitionGraph::const_iterator i=begin();i!=end();++i) {
+	if(estate==(*i).source)
+	  out.insert(&(*i));
+  }
+  return out;
+}
+
+void TransitionGraph::reduceEState(const EState* estate) {
+  /* description of essential operations:
+   *   inedges: (n_i,b)
+   *   outedges: (b,n_j) 
+   *   insert(ni,t,nj) where t=union(t(n_i))+union(t(n_j))+{EDGE_PATH}
+   *   remove(n_i,b)
+   *   remove(b,n_j)
+   *   delete b
+   
+   * ea: (n1,cfge,n2) == ((l1,p1,c1,io1),(l1,t12,l2),(l2,p2,c2,io2))
+   * eb: (n2,cfge,n3) == ((l2,p2,c2,io2),(l2,t23,l3),(l3,p3,c3,io3))
+   * ==> (n1,cfge',n3) == ((l1,p1,c1,io1),(l1,{t12,t13,EDGE_PATH}},l3),(l3,p3,c3,io3))
+   
+   */
+  TransitionGraph::TransitionPtrSet in=inEdges(estate);
+  TransitionGraph::TransitionPtrSet out=outEdges(estate);
+  if(in.size()!=0) {
+	//cout<< "INFO: would be eliminating: node: "<<estate<<", #in="<<in.size()<<", #out="<<out.size()<<endl;
+  } else {
+	cout<< "INFO: not eliminating node because #in==0: node: "<<estate<<", #in="<<in.size()<<", #out="<<out.size()<<endl;
+  }
+}
 
 void TransitionGraph::add(Transition trans) {
   #pragma omp critical
@@ -261,7 +318,7 @@ long TransitionGraph::removeDuplicates() {
   long cnt=0;
   set<Transition> s;
 #if 0
-  // lambda expression is not supported by g++4.4
+  // MS: unfortunately lambda expression is not supported by g++4.4
   remove_if([&](Transition n) {
 	  return (s.find(n) == s.end()) ? (s.insert(n), false) : true;
 	});
@@ -313,6 +370,16 @@ set<const EState*> TransitionGraph::estateSetOfLabel(Label lab) {
 	if((*j).source->label()==lab)
 	  estateSet.insert((*j).source);
 	if((*j).target->label()==lab)
+	  estateSet.insert((*j).target);
+  }
+  return estateSet;
+}
+
+// later, we may want to maintain this set with every graph-operation (turning the linear access to constant)
+set<const EState*> TransitionGraph::estateSet() {
+  set<const EState*> estateSet;
+  for(TransitionGraph::iterator j=begin();j!=end();++j) {
+	  estateSet.insert((*j).source);
 	  estateSet.insert((*j).target);
   }
   return estateSet;
