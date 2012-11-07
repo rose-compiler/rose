@@ -142,24 +142,21 @@ openmp_directive : parallel_directive
                  | simd_directive
                  ;
 
-parallel_directive
-                : /* # pragma */ OMP PARALLEL
-                  { ompattribute = buildOmpAttribute(e_parallel,gNode,true);
-                    omptype = e_parallel; 
-                  }
-                  parallel_clause_optseq 
-                ;
+parallel_directive : /* #pragma */ OMP PARALLEL {
+                       ompattribute = buildOmpAttribute(e_parallel,gNode,true);
+                       omptype = e_parallel; 
+                     }
+                     parallel_clause_optseq 
+                   ;
 
-parallel_clause_optseq
-                : /* empty */
-                | parallel_clause_seq
-                ;
+parallel_clause_optseq : /* empty */
+                       | parallel_clause_seq
+                       ;
 
-parallel_clause_seq
-                : parallel_clause
-                | parallel_clause_seq parallel_clause
-                | parallel_clause_seq ',' parallel_clause
-                ;
+parallel_clause_seq : parallel_clause
+                    | parallel_clause_seq parallel_clause
+                    | parallel_clause_seq ',' parallel_clause
+                    ;
 
 parallel_clause : unique_parallel_clause 
                 | data_default_clause
@@ -171,120 +168,123 @@ parallel_clause : unique_parallel_clause
                 | num_threads_clause
                 ;
 
-unique_parallel_clause : COPYIN { 
+unique_parallel_clause : IF { 
+                           ompattribute->addClause(e_if);
+                           omptype = e_if;
+                         } '(' expression ')' { 
+                           addExpression("");
+                         }
+                       | NUM_THREADS { 
+                           ompattribute->addClause(e_num_threads);
+                           omptype = e_num_threads;
+                         } '(' expression ')' { 
+                           addExpression("");
+                         }
+                       | COPYIN { 
                            ompattribute->addClause(e_copyin);
                            omptype = e_copyin;
                          } '(' {b_within_variable_list = true;} variable_list ')' {b_within_variable_list = false;}
                 ; 
 
-for_directive   : /* # pragma */ OMP FOR
-                   { 
-                   ompattribute = buildOmpAttribute(e_for,gNode,true); 
-                   }
-                   for_clause_optseq
-                ;
+for_directive : /* #pragma */ OMP FOR { 
+                  ompattribute = buildOmpAttribute(e_for,gNode,true); 
+                }
+                for_clause_optseq
+              ;
 
-for_clause_optseq: /* empty*/
-                | for_clause_seq
-                ;
+for_clause_optseq : /* empty */
+                  | for_clause_seq
+                  ;
 
-for_clause_seq  : for_clause
-                | for_clause_seq for_clause
-                | for_clause_seq ',' for_clause
-                ;
+for_clause_seq : for_clause
+               | for_clause_seq for_clause
+               | for_clause_seq ',' for_clause
+               ;
 
-for_clause      : unique_for_clause 
-                | data_privatization_clause
-                | data_privatization_in_clause
-                | data_privatization_out_clause
-                | data_reduction_clause
-                | NOWAIT { 
-                           ompattribute->addClause(e_nowait);
-                           //Not correct since nowait cannot have expression or var_list
-                           //omptype =e_nowait;
-                         }
-                ;
+for_clause : unique_for_clause 
+           | data_privatization_clause
+           | data_privatization_in_clause
+           | data_privatization_out_clause
+           | data_reduction_clause
+           | NOWAIT { 
+               ompattribute->addClause(e_nowait);
+               //Not correct since nowait cannot have expression or var_list
+               //omptype =e_nowait;
+             }
+           ;
 
-unique_for_clause
-                : ORDERED { 
-                            ompattribute->addClause(e_ordered_clause);
-                          }
-                | SCHEDULE '(' schedule_kind ')'
-                  { 
-                    ompattribute->addClause(e_schedule);
-                    ompattribute->setScheduleKind(static_cast<omp_construct_enum>($3));
-                    omptype = e_schedule;
-                  } 
-                | SCHEDULE '(' schedule_kind ','
-                  { 
-                    ompattribute->addClause(e_schedule);
-                    ompattribute->setScheduleKind(static_cast<omp_construct_enum>($3));
-                    omptype = e_schedule;
-                  } expression ')'
-                         { addExpression("");}
-                | COLLAPSE 
-                  {
-                    ompattribute->addClause(e_collapse);
-                    omptype = e_collapse;
-                  }
-                  '(' expression ')'
-                         { addExpression("");}
-                ;
+unique_for_clause : ORDERED { 
+                      ompattribute->addClause(e_ordered_clause);
+                    }
+                  | SCHEDULE '(' schedule_kind ')' { 
+                      ompattribute->addClause(e_schedule);
+                      ompattribute->setScheduleKind(static_cast<omp_construct_enum>($3));
+                      omptype = e_schedule;
+                    } 
+                  | SCHEDULE '(' schedule_kind ',' { 
+                      ompattribute->addClause(e_schedule);
+                      ompattribute->setScheduleKind(static_cast<omp_construct_enum>($3));
+                      omptype = e_schedule;
+                    } expression ')' { 
+                      addExpression("");
+                    }
+                  | COLLAPSE {
+                      ompattribute->addClause(e_collapse);
+                      omptype = e_collapse;
+                    } '(' expression ')' { 
+                      addExpression("");
+                    }
+                  ;
 
-schedule_kind   : STATIC  { $$ = e_schedule_static; }
-                | DYNAMIC { $$ = e_schedule_dynamic; }
-                | GUIDED  { $$ = e_schedule_guided; }
-                | AUTO    { $$ = e_schedule_auto; }
-                | RUNTIME { $$ = e_schedule_runtime; }
-                ;
+schedule_kind : STATIC  { $$ = e_schedule_static; }
+              | DYNAMIC { $$ = e_schedule_dynamic; }
+              | GUIDED  { $$ = e_schedule_guided; }
+              | AUTO    { $$ = e_schedule_auto; }
+              | RUNTIME { $$ = e_schedule_runtime; }
+              ;
 
-sections_directive
-                : /* # pragma */ OMP SECTIONS
-                  { ompattribute = buildOmpAttribute(e_sections,gNode, true); }
-                  sections_clause_optseq
-                ;
+sections_directive : /* #pragma */ OMP SECTIONS { 
+                       ompattribute = buildOmpAttribute(e_sections,gNode, true); 
+                     } sections_clause_optseq
+                   ;
 
-sections_clause_optseq
-                : /* empty*/
-                | sections_clause_seq
-                ;
+sections_clause_optseq : /* empty */
+                       | sections_clause_seq
+                       ;
 
-sections_clause_seq     
-                : sections_clause
-                | sections_clause_seq sections_clause
-                | sections_clause_seq ',' sections_clause
-                ;
+sections_clause_seq : sections_clause
+                    | sections_clause_seq sections_clause
+                    | sections_clause_seq ',' sections_clause
+                    ;
 
 sections_clause : data_privatization_clause
                 | data_privatization_in_clause
                 | data_privatization_out_clause
                 | data_reduction_clause
-                | NOWAIT { 
-                           ompattribute->addClause(e_nowait);
-                         }
+                | NOWAIT {
+                    ompattribute->addClause(e_nowait);
+                  }
                 ;
 
-section_directive
-                : /* # pragma */  OMP SECTION
-                  { ompattribute = buildOmpAttribute(e_section,gNode,true); }
-                ;
+section_directive : /* #pragma */  OMP SECTION { 
+                      ompattribute = buildOmpAttribute(e_section,gNode,true); 
+                    }
+                  ;
 
-single_directive: /* # pragma */ OMP SINGLE
-                  { ompattribute = buildOmpAttribute(e_single,gNode,true); 
-                    omptype = e_single; }
-                   single_clause_optseq
-                ;
+single_directive : /* #pragma */ OMP SINGLE { 
+                     ompattribute = buildOmpAttribute(e_single,gNode,true); 
+                     omptype = e_single; 
+                   } single_clause_optseq
+                 ;
 
-single_clause_optseq
-                : /* empty*/
-                | single_clause_seq
-                ;
+single_clause_optseq : /* empty */
+                     | single_clause_seq
+                     ;
 
-single_clause_seq
-                : single_clause
-                | single_clause_seq single_clause
-                | single_clause_seq ',' single_clause
-                ;
+single_clause_seq : single_clause
+                  | single_clause_seq single_clause
+                  | single_clause_seq ',' single_clause
+                  ;
 
 single_clause : unique_single_clause
               | data_privatization_clause
@@ -385,132 +385,130 @@ master_directive : /* #pragma */ OMP MASTER {
                      ompattribute = buildOmpAttribute(e_master, gNode, true);}
                  ;
 
-critical_directive
-                : /* # pragma */ OMP CRITICAL
-                  {
-                  ompattribute = buildOmpAttribute(e_critical, gNode, true); 
-                  }
-                  region_phraseopt
-                ;
+critical_directive : /* #pragma */ OMP CRITICAL {
+                       ompattribute = buildOmpAttribute(e_critical, gNode, true); 
+                     } region_phraseopt
+                   ;
 
-region_phraseopt: /* empty */
-                | region_phrase
-                ;
+region_phraseopt : /* empty */
+                 | region_phrase
+                 ;
 
 /* This used to use IDENTIFIER, but our lexer does not ever return that:
  * Things that'd match it are, instead, ID_EXPRESSION. So use that here.
  * named critical section
  */
-region_phrase   : '(' ID_EXPRESSION ')'
-                    { 
-                      ompattribute->setCriticalName((const char*)$2);
-                    }
-                ;
+region_phrase : '(' ID_EXPRESSION ')' { 
+                  ompattribute->setCriticalName((const char*)$2);
+                }
+              ;
 
-barrier_directive
-                : /* # pragma */ OMP BARRIER
-                 { ompattribute = buildOmpAttribute(e_barrier,gNode, true); }
-                ;
+barrier_directive : /* #pragma */ OMP BARRIER { 
+                      ompattribute = buildOmpAttribute(e_barrier,gNode, true); }
+                  ;
 
-taskwait_directive : /* #pragma */ OMP TASKWAIT
-                  { ompattribute = buildOmpAttribute(e_taskwait, gNode, true); } 
-                ;
+taskwait_directive : /* #pragma */ OMP TASKWAIT { 
+                       ompattribute = buildOmpAttribute(e_taskwait, gNode, true); } 
+                   ;
 
-atomic_directive: /* # pragma */ OMP ATOMIC
-                  { ompattribute = buildOmpAttribute(e_atomic,gNode, true); }
-                ;
-
-flush_directive : /* # pragma */ OMP FLUSH
-                 { ompattribute = buildOmpAttribute(e_flush,gNode, true);
-                   omptype = e_flush; }
-                flush_varsopt
-                ;
-
-flush_varsopt   : /* empty */
-                | flush_vars
-                ;
-
-flush_vars      : '(' {b_within_variable_list = true;} variable_list ')' {b_within_variable_list =false;}
-                ;
-
-ordered_directive
-                : /* # pragma */ OMP ORDERED
-                  { ompattribute = buildOmpAttribute(e_ordered_directive,gNode, true); }
-                ;
-
-threadprivate_directive
-                : /* # pragma */ OMP THREADPRIVATE
-                  { ompattribute = buildOmpAttribute(e_threadprivate,gNode, true); 
-                    omptype = e_threadprivate; }
-                 '(' {b_within_variable_list = true;} variable_list ')' {b_within_variable_list =false;}
-                ;
-
-data_default_clause
-                :DEFAULT '(' SHARED ')'
-                  { 
-                    ompattribute->addClause(e_default);
-                    ompattribute->setDefaultValue(e_default_shared); 
-                  }
-                 | DEFAULT '(' NONE ')'
-                  {
-                    ompattribute->addClause(e_default);
-                    ompattribute->setDefaultValue(e_default_none);
-                  }
+atomic_directive : /* #pragma */ OMP ATOMIC { 
+                     ompattribute = buildOmpAttribute(e_atomic,gNode, true); }
                  ;
-data_privatization_clause :  PRIVATE
-                  { ompattribute->addClause(e_private); omptype = e_private;}
-                  '(' {b_within_variable_list = true;} variable_list ')' {b_within_variable_list =false;}
+
+flush_directive : /* #pragma */ OMP FLUSH {
+                    ompattribute = buildOmpAttribute(e_flush,gNode, true);
+                    omptype = e_flush; 
+                  } flush_varsopt
                 ;
 
-data_privatization_in_clause: FIRSTPRIVATE
-                  { ompattribute->addClause(e_firstprivate); 
-                    omptype = e_firstprivate;}
-                  '(' {b_within_variable_list = true;} variable_list ')' {b_within_variable_list =false;}
-                ;
+flush_varsopt : /* empty */
+              | flush_vars
+              ;
 
-data_privatization_out_clause: LASTPRIVATE
-                  { ompattribute->addClause(e_lastprivate); 
-                    omptype = e_lastprivate;}
-                  '(' {b_within_variable_list = true;} variable_list ')' {b_within_variable_list =false;}
-                ;
+flush_vars : '(' {b_within_variable_list = true;} variable_list ')' {b_within_variable_list = false;}
+           ;
 
-data_sharing_clause: SHARED
-                  { ompattribute->addClause(e_shared); omptype = e_shared; }
-                   '(' {b_within_variable_list = true;} variable_list ')' {b_within_variable_list =false;}
-                ;
+ordered_directive : /* #pragma */ OMP ORDERED { 
+                      ompattribute = buildOmpAttribute(e_ordered_directive,gNode, true); 
+                    }
+                  ;
 
-data_reduction_clause: REDUCTION
-                  { ompattribute->addClause(e_reduction);}
-                  '(' reduction_operator ':' {b_within_variable_list = true;} variable_list ')' {b_within_variable_list =false;}
-                ;
+threadprivate_directive : /* #pragma */ OMP THREADPRIVATE {
+                            ompattribute = buildOmpAttribute(e_threadprivate,gNode, true); 
+                            omptype = e_threadprivate; 
+                          } '(' {b_within_variable_list = true;} variable_list ')' {b_within_variable_list = false;}
+                        ;
 
-reduction_operator
-                : '+' {
+data_default_clause : DEFAULT '(' SHARED ')' { 
+                        ompattribute->addClause(e_default);
+                        ompattribute->setDefaultValue(e_default_shared); 
+                      }
+                    | DEFAULT '(' NONE ')' {
+                        ompattribute->addClause(e_default);
+                        ompattribute->setDefaultValue(e_default_none);
+                      }
+                    ;
+                    
+data_privatization_clause : PRIVATE {
+                              ompattribute->addClause(e_private); omptype = e_private;
+                            } '(' {b_within_variable_list = true;} variable_list ')' {b_within_variable_list = false;}
+                          ;
+
+data_privatization_in_clause : FIRSTPRIVATE { 
+                                 ompattribute->addClause(e_firstprivate); 
+                                 omptype = e_firstprivate;
+                               } '(' {b_within_variable_list = true;} variable_list ')' {b_within_variable_list = false;}
+                             ;
+
+data_privatization_out_clause : LASTPRIVATE { 
+                                  ompattribute->addClause(e_lastprivate); 
+                                  omptype = e_lastprivate;
+                                } '(' {b_within_variable_list = true;} variable_list ')' {b_within_variable_list = false;}
+                              ;
+
+data_sharing_clause : SHARED {
+                        ompattribute->addClause(e_shared); omptype = e_shared; 
+                      } '(' {b_within_variable_list = true;} variable_list ')' {b_within_variable_list = false;}
+                    ;
+
+data_reduction_clause : REDUCTION { 
+                          ompattribute->addClause(e_reduction);
+                        } '(' reduction_operator ':' {b_within_variable_list = true;} variable_list ')' {b_within_variable_list = false;}
+                      ;
+
+reduction_operator : '+' {
                        ompattribute->setReductionOperator(e_reduction_plus); 
                        omptype = e_reduction_plus; /*variables are stored for each operator*/
-                       }
-                | '*' {ompattribute->setReductionOperator(e_reduction_mul);  
+                     }
+                   | '*' {
+                       ompattribute->setReductionOperator(e_reduction_mul);  
                        omptype = e_reduction_mul;
-                      }
-                | '-' {ompattribute->setReductionOperator(e_reduction_minus); 
+                     }
+                   | '-' {
+                       ompattribute->setReductionOperator(e_reduction_minus); 
                        omptype = e_reduction_minus;
                       }
-                | '&' {ompattribute->setReductionOperator(e_reduction_bitand);  
+                   | '&' {
+                       ompattribute->setReductionOperator(e_reduction_bitand);  
                        omptype = e_reduction_bitand;
                       }
-                | '^' {ompattribute->setReductionOperator(e_reduction_bitxor);  
+                   | '^' {
+                       ompattribute->setReductionOperator(e_reduction_bitxor);  
                        omptype = e_reduction_bitxor;
                       }
-                | '|' {ompattribute->setReductionOperator(e_reduction_bitor);  
+                   | '|' {
+                       ompattribute->setReductionOperator(e_reduction_bitor);  
                        omptype = e_reduction_bitor;
                       }
-                | LOGAND /* && */ {ompattribute->setReductionOperator(e_reduction_logand);  
-                                   omptype = e_reduction_logand;
-                                  }
-                | LOGOR /* || */ { ompattribute->setReductionOperator(e_reduction_logor); 
-                                   omptype = e_reduction_logor;
-                                 }
-                ;
+                   | LOGAND /* && */ {
+                       ompattribute->setReductionOperator(e_reduction_logand);  
+                       omptype = e_reduction_logand;
+                     }
+                   | LOGOR /* || */ {
+                       ompattribute->setReductionOperator(e_reduction_logor); 
+                       omptype = e_reduction_logor;
+                     }
+                   ;
 
 target_data_directive: /* pragma */ OMP TARGET DATA {
                        ompattribute = buildOmpAttribute(e_target_data, gNode,true);
@@ -655,331 +653,316 @@ linear_clause : LINEAR {
 /* Sara Royuela, 04/27/2012
  * Extending grammar to accept conditional expressions, arithmetic and bitwise expressions and member accesses
  */
-expression: assignment_expr
+expression : assignment_expr
 
-assignment_expr
-        : conditional_expr
-        | logical_or_expr 
-        | unary_expr '=' assignment_expr 
-        {
-          current_exp = SageBuilder::buildAssignOp(
+assignment_expr : conditional_expr
+                | logical_or_expr 
+                | unary_expr '=' assignment_expr  {
+                    current_exp = SageBuilder::buildAssignOp(
                       (SgExpression*)($1),
-                      (SgExpression*)($3)); 
-          $$ = current_exp;
-        }
-        | unary_expr RIGHT_ASSIGN2 assignment_expr 
-        {
-          current_exp = SageBuilder::buildRshiftAssignOp(
+                      (SgExpression*)($3)
+                    ); 
+                    $$ = current_exp;
+                  }
+                | unary_expr RIGHT_ASSIGN2 assignment_expr {
+                    current_exp = SageBuilder::buildRshiftAssignOp(
                       (SgExpression*)($1),
-                      (SgExpression*)($3)); 
-          $$ = current_exp;
-        }
-        | unary_expr LEFT_ASSIGN2 assignment_expr 
-        {
-          current_exp = SageBuilder::buildLshiftAssignOp(
+                      (SgExpression*)($3)
+                    ); 
+                    $$ = current_exp;
+                  }
+                | unary_expr LEFT_ASSIGN2 assignment_expr {
+                    current_exp = SageBuilder::buildLshiftAssignOp(
                       (SgExpression*)($1),
-                      (SgExpression*)($3)); 
-          $$ = current_exp;
-        }
-        | unary_expr ADD_ASSIGN2 assignment_expr 
-        {
-          current_exp = SageBuilder::buildPlusAssignOp(
+                      (SgExpression*)($3)
+                    ); 
+                    $$ = current_exp;
+                  }
+                | unary_expr ADD_ASSIGN2 assignment_expr {
+                    current_exp = SageBuilder::buildPlusAssignOp(
                       (SgExpression*)($1),
-                      (SgExpression*)($3)); 
-          $$ = current_exp;
-        }
-        | unary_expr SUB_ASSIGN2 assignment_expr 
-        {
-          current_exp = SageBuilder::buildMinusAssignOp(
+                      (SgExpression*)($3)
+                    ); 
+                    $$ = current_exp;
+                  }
+                | unary_expr SUB_ASSIGN2 assignment_expr {
+                    current_exp = SageBuilder::buildMinusAssignOp(
                       (SgExpression*)($1),
-                      (SgExpression*)($3)); 
-          $$ = current_exp;
-        }
-        | unary_expr MUL_ASSIGN2 assignment_expr 
-        {
-          current_exp = SageBuilder::buildMultAssignOp(
+                      (SgExpression*)($3)
+                    ); 
+                    $$ = current_exp;
+                  }
+                | unary_expr MUL_ASSIGN2 assignment_expr {
+                    current_exp = SageBuilder::buildMultAssignOp(
                       (SgExpression*)($1),
-                      (SgExpression*)($3)); 
-          $$ = current_exp;
-        }
+                      (SgExpression*)($3)
+                    ); 
+                    $$ = current_exp;
+                  }
+                | unary_expr DIV_ASSIGN2 assignment_expr {
+                    current_exp = SageBuilder::buildDivAssignOp(
+                      (SgExpression*)($1),
+                      (SgExpression*)($3)
+                    ); 
+                    $$ = current_exp;
+                  }
+                | unary_expr MOD_ASSIGN2 assignment_expr {
+                    current_exp = SageBuilder::buildModAssignOp(
+                      (SgExpression*)($1),
+                      (SgExpression*)($3)
+                    ); 
+                    $$ = current_exp;
+                  }
+                | unary_expr AND_ASSIGN2 assignment_expr {
+                    current_exp = SageBuilder::buildAndAssignOp(
+                      (SgExpression*)($1),
+                      (SgExpression*)($3)
+                    ); 
+                    $$ = current_exp;
+                  }
+                | unary_expr XOR_ASSIGN2 assignment_expr {
+                    current_exp = SageBuilder::buildXorAssignOp(
+                      (SgExpression*)($1),
+                      (SgExpression*)($3)
+                    ); 
+                    $$ = current_exp;
+                  }
+                | unary_expr OR_ASSIGN2 assignment_expr {
+                    current_exp = SageBuilder::buildIorAssignOp(
+                      (SgExpression*)($1),
+                      (SgExpression*)($3)
+                    ); 
+                    $$ = current_exp;
+                  }
+                ;
 
-        | unary_expr DIV_ASSIGN2 assignment_expr 
-        {
-          current_exp = SageBuilder::buildDivAssignOp(
-                      (SgExpression*)($1),
-                      (SgExpression*)($3)); 
-          $$ = current_exp;
-        }
-        | unary_expr MOD_ASSIGN2 assignment_expr 
-        {
-          current_exp = SageBuilder::buildModAssignOp(
-                      (SgExpression*)($1),
-                      (SgExpression*)($3)); 
-          $$ = current_exp;
-        }
-        | unary_expr AND_ASSIGN2 assignment_expr 
-        {
-          current_exp = SageBuilder::buildAndAssignOp(
-                      (SgExpression*)($1),
-                      (SgExpression*)($3)); 
-          $$ = current_exp;
-        }
+conditional_expr : logical_or_expr '?' assignment_expr ':' assignment_expr {
+                     current_exp = SageBuilder::buildConditionalExp(
+                       (SgExpression*)($1),
+                       (SgExpression*)($3),
+                       (SgExpression*)($5)
+                     );
+                     $$ = current_exp;
+                   }
+                 ;
 
-        | unary_expr XOR_ASSIGN2 assignment_expr 
-        {
-          current_exp = SageBuilder::buildXorAssignOp(
+logical_or_expr : logical_and_expr
+                | logical_or_expr LOGOR logical_and_expr {
+                    current_exp = SageBuilder::buildOrOp(
                       (SgExpression*)($1),
-                      (SgExpression*)($3)); 
-          $$ = current_exp;
-        }
-        | unary_expr OR_ASSIGN2 assignment_expr 
-        {
-          current_exp = SageBuilder::buildIorAssignOp(
-                      (SgExpression*)($1),
-                      (SgExpression*)($3)); 
-          $$ = current_exp;
-        }
-        ;
+                      (SgExpression*)($3)
+                    );
+                    $$ = current_exp;
+                  }
+                ;
 
-conditional_expr
-        : logical_or_expr '?' assignment_expr ':' assignment_expr
-        {
-          current_exp = SageBuilder::buildConditionalExp(
-                      (SgExpression*)($1),
-                      (SgExpression*)($3),
-                      (SgExpression*)($5));
-          $$ = current_exp;
-        }
-        ;
+logical_and_expr : inclusive_or_expr
+                 | logical_and_expr LOGAND inclusive_or_expr {
+                     current_exp = SageBuilder::buildAndOp(
+                       (SgExpression*)($1),
+                       (SgExpression*)($3)
+                     );
+                   $$ = current_exp;
+                 }
+                 ;
 
-logical_or_expr
-        : logical_and_expr
-        | logical_or_expr LOGOR logical_and_expr
-          {
-            current_exp = SageBuilder::buildOrOp(
-                      (SgExpression*)($1),
-                      (SgExpression*)($3));
-            $$ = current_exp;
-          }
-          ;
+inclusive_or_expr : exclusive_or_expr
+                  | inclusive_or_expr '|' exclusive_or_expr {
+                      current_exp = SageBuilder::buildBitOrOp(
+                        (SgExpression*)($1),
+                        (SgExpression*)($3)
+                      );
+                      $$ = current_exp;
+                    }
+                  ;
 
-logical_and_expr
-        : inclusive_or_expr
-        | logical_and_expr LOGAND inclusive_or_expr
-          {
-            current_exp = SageBuilder::buildAndOp(
-                      (SgExpression*)($1),
-                      (SgExpression*)($3));
-            $$ = current_exp;
-          }
-          ;
+exclusive_or_expr : and_expr
+                  | exclusive_or_expr '^' and_expr {
+                      current_exp = SageBuilder::buildBitXorOp(
+                        (SgExpression*)($1),
+                        (SgExpression*)($3)
+                      );
+                      $$ = current_exp;
+                    }
+                  ;
 
-inclusive_or_expr
-          : exclusive_or_expr
-          | inclusive_or_expr '|' exclusive_or_expr
-          {
-            current_exp = SageBuilder::buildBitOrOp(
-                      (SgExpression*)($1),
-                      (SgExpression*)($3));
-            $$ = current_exp;
-          }
-          ;
+and_expr : equality_expr
+         | and_expr '&' equality_expr {
+             current_exp = SageBuilder::buildBitAndOp(
+               (SgExpression*)($1),
+               (SgExpression*)($3)
+             );
+             $$ = current_exp;
+           }
+         ;  
 
-exclusive_or_expr
-          : and_expr
-          | exclusive_or_expr '^' and_expr
-          {
-            current_exp = SageBuilder::buildBitXorOp(
-                      (SgExpression*)($1),
-                      (SgExpression*)($3));
-            $$ = current_exp;
-          }
-          ;  
-
-and_expr
-          : equality_expr
-          | and_expr '&' equality_expr
-          {
-            current_exp = SageBuilder::buildBitAndOp(
-                      (SgExpression*)($1),
-                      (SgExpression*)($3));
-            $$ = current_exp;
-          }
-          ;  
-
-equality_expr
-        : relational_expr
-        | equality_expr EQ_OP2 relational_expr
-        {
-          current_exp = SageBuilder::buildEqualityOp(
-                      (SgExpression*)($1),
-                      (SgExpression*)($3)); 
-          $$ = current_exp;
-        }
-        | equality_expr NE_OP2 relational_expr
-        {
-          current_exp = SageBuilder::buildNotEqualOp(
-                      (SgExpression*)($1),
-                      (SgExpression*)($3)); 
-          $$ = current_exp;
-        }
-        ;
+equality_expr : relational_expr
+              | equality_expr EQ_OP2 relational_expr {
+                  current_exp = SageBuilder::buildEqualityOp(
+                    (SgExpression*)($1),
+                    (SgExpression*)($3)
+                  ); 
+                  $$ = current_exp;
+                }
+              | equality_expr NE_OP2 relational_expr {
+                  current_exp = SageBuilder::buildNotEqualOp(
+                    (SgExpression*)($1),
+                    (SgExpression*)($3)
+                  ); 
+                  $$ = current_exp;
+                }
+              ;
               
-relational_expr
-                : shift_expr
-                | relational_expr '<' shift_expr 
-                { 
+relational_expr : shift_expr
+                | relational_expr '<' shift_expr { 
                     current_exp = SageBuilder::buildLessThanOp(
                       (SgExpression*)($1),
-                      (SgExpression*)($3)); 
+                      (SgExpression*)($3)
+                    ); 
                     $$ = current_exp; 
-                  //  std::cout<<"debug: buildLessThanOp():\n"<<current_exp->unparseToString()<<std::endl;
-                }
-                | relational_expr '>' shift_expr
-                {
+                  // std::cout<<"debug: buildLessThanOp():\n"<<current_exp->unparseToString()<<std::endl;
+                  }
+                | relational_expr '>' shift_expr {
                     current_exp = SageBuilder::buildGreaterThanOp(
                       (SgExpression*)($1),
-                      (SgExpression*)($3)); 
+                      (SgExpression*)($3)
+                    ); 
                     $$ = current_exp; 
-                }
-                | relational_expr LE_OP2 shift_expr
-                {
+                  }
+                | relational_expr LE_OP2 shift_expr {
                     current_exp = SageBuilder::buildLessOrEqualOp(
                       (SgExpression*)($1),
-                      (SgExpression*)($3)); 
+                      (SgExpression*)($3)
+                    ); 
                     $$ = current_exp; 
-                }
-                | relational_expr GE_OP2 shift_expr
-                {
+                  }
+                | relational_expr GE_OP2 shift_expr {
                     current_exp = SageBuilder::buildGreaterOrEqualOp(
                       (SgExpression*)($1),
-                      (SgExpression*)($3)); 
+                      (SgExpression*)($3)
+                    );
                     $$ = current_exp; 
-                }
+                  }
                 ;
 
-shift_expr
-                : additive_expr
-                | shift_expr SHRIGHT additive_expr
-                {
-                    current_exp = SageBuilder::buildRshiftOp(
-                      (SgExpression*)($1),
-                      (SgExpression*)($3)); 
-                    $$ = current_exp; 
-                }
-                | shift_expr SHLEFT additive_expr
-                {
-                    current_exp = SageBuilder::buildLshiftOp(
-                      (SgExpression*)($1),
-                      (SgExpression*)($3)); 
-                    $$ = current_exp; 
-                };
+shift_expr : additive_expr
+           | shift_expr SHRIGHT additive_expr {
+               current_exp = SageBuilder::buildRshiftOp(
+                 (SgExpression*)($1),
+                 (SgExpression*)($3)
+               ); 
+               $$ = current_exp; 
+             }
+           | shift_expr SHLEFT additive_expr {
+               current_exp = SageBuilder::buildLshiftOp(
+                 (SgExpression*)($1),
+                 (SgExpression*)($3)
+               ); 
+               $$ = current_exp; 
+             }
+           ;
 
-additive_expr
-                : multiplicative_expr
-                | additive_expr '+' multiplicative_expr
-                {
-                    current_exp = SageBuilder::buildAddOp(
-                      (SgExpression*)($1),
-                      (SgExpression*)($3)); 
-                    $$ = current_exp; 
+additive_expr : multiplicative_expr
+              | additive_expr '+' multiplicative_expr {
+                  current_exp = SageBuilder::buildAddOp(
+                    (SgExpression*)($1),
+                    (SgExpression*)($3)
+                  ); 
+                  $$ = current_exp; 
                 }
-                | additive_expr '-' multiplicative_expr
-                {
-                    current_exp = SageBuilder::buildSubtractOp(
-                      (SgExpression*)($1),
-                      (SgExpression*)($3)); 
-                    $$ = current_exp; 
+              | additive_expr '-' multiplicative_expr {
+                  current_exp = SageBuilder::buildSubtractOp(
+                    (SgExpression*)($1),
+                    (SgExpression*)($3)
+                  ); 
+                  $$ = current_exp; 
                 }
-                ;
+              ;
 
-multiplicative_expr
-                : primary_expr
-                | additive_expr '*' multiplicative_expr
-                {
-                    current_exp = SageBuilder::buildMultiplyOp(
-                      (SgExpression*)($1),
-                      (SgExpression*)($3)); 
-                    $$ = current_exp; 
-                }
-                | additive_expr '/' multiplicative_expr
-                {
-                    current_exp = SageBuilder::buildDivideOp(
-                      (SgExpression*)($1),
-                      (SgExpression*)($3)); 
-                    $$ = current_exp; 
-                }
-                | additive_expr '%' multiplicative_expr
-                {
-                    current_exp = SageBuilder::buildModOp(
-                      (SgExpression*)($1),
-                      (SgExpression*)($3)); 
-                    $$ = current_exp; 
-                }                
-                ;
+multiplicative_expr : primary_expr
+                    | additive_expr '*' multiplicative_expr {
+                        current_exp = SageBuilder::buildMultiplyOp(
+                          (SgExpression*)($1),
+                          (SgExpression*)($3)
+                        ); 
+                        $$ = current_exp; 
+                      }
+                    | additive_expr '/' multiplicative_expr {
+                        current_exp = SageBuilder::buildDivideOp(
+                          (SgExpression*)($1),
+                          (SgExpression*)($3)
+                        ); 
+                        $$ = current_exp; 
+                      }
+                    | additive_expr '%' multiplicative_expr {
+                        current_exp = SageBuilder::buildModOp(
+                          (SgExpression*)($1),
+                          (SgExpression*)($3)
+                        ); 
+                        $$ = current_exp; 
+                      }
+                    ;
 
-primary_expr
-                : unary_expr
-                | '(' expression ')'
-                {
-                  $$ = current_exp;
-                } 
-                | incr_expr;
-                ;
+primary_expr : unary_expr
+             | '(' expression ')' {
+                 $$ = current_exp;
+               } 
+             | incr_expr;
+             ;
 
-incr_expr
-                : PLUSPLUS unary_expr
-                {
-                    current_exp = SageBuilder::buildPlusPlusOp(
-                      (SgExpression*)($2),
-                      SgUnaryOp::prefix); 
-                    $$ = current_exp; 
-                }
-                | unary_expr PLUSPLUS
-                {
-                    current_exp = SageBuilder::buildPlusPlusOp(
-                      (SgExpression*)($1),
-                      SgUnaryOp::postfix); 
-                    $$ = current_exp; 
-                }
-                | MINUSMINUS unary_expr
-                {
-                    current_exp = SageBuilder::buildMinusMinusOp(
-                      (SgExpression*)($2),
-                      SgUnaryOp::prefix); 
-                    $$ = current_exp; 
-                }
-                | unary_expr MINUSMINUS
-                {
-                    current_exp = SageBuilder::buildMinusMinusOp(
-                      (SgExpression*)($1),
-                      SgUnaryOp::postfix); 
-                    $$ = current_exp; 
-                }
-                ;
-  
+incr_expr : PLUSPLUS unary_expr {
+              current_exp = SageBuilder::buildPlusPlusOp(
+                (SgExpression*)($2),
+                SgUnaryOp::prefix
+              ); 
+              $$ = current_exp; 
+            }
+          | unary_expr PLUSPLUS {
+              current_exp = SageBuilder::buildPlusPlusOp(
+                (SgExpression*)($1),
+                SgUnaryOp::postfix
+              ); 
+              $$ = current_exp; 
+            }
+          | MINUSMINUS unary_expr {
+              current_exp = SageBuilder::buildMinusMinusOp(
+                (SgExpression*)($2),
+                SgUnaryOp::prefix
+              ); 
+              $$ = current_exp; 
+            }
+          | unary_expr MINUSMINUS {
+              current_exp = SageBuilder::buildMinusMinusOp(
+                (SgExpression*)($1),
+                SgUnaryOp::postfix
+              ); 
+              $$ = current_exp; 
+            }
+          ;
 
-unary_expr
-                : ICONSTANT 
-                {
-                    current_exp = SageBuilder::buildIntVal($1); 
-                    $$ = current_exp; 
-                }
-                | ID_EXPRESSION 
-                { 
-                    current_exp = SageBuilder::buildVarRefExp(
-                      (const char*)($1),SageInterface::getScope(gNode)); 
-                    $$ = current_exp; 
-                }
-                ;
+unary_expr : ICONSTANT {
+               current_exp = SageBuilder::buildIntVal($1); 
+               $$ = current_exp; 
+             }
+           | ID_EXPRESSION { 
+               current_exp = SageBuilder::buildVarRefExp(
+                 (const char*)($1),SageInterface::getScope(gNode)
+               ); 
+               $$ = current_exp; 
+             }
+           ;
                 
 /* ----------------------end for parsing expressions ------------------*/
-/*  in C
-    variable-list: identifier
-                 | variable-list , identifier 
 
+/*  in C
+variable-list : identifier
+              | variable-list , identifier 
 */
 
+/* in C++ (we use the C++ version) */ 
+variable_list : ID_EXPRESSION { if (!addVar((const char*)$1)) YYABORT; }
+              | variable_list ',' ID_EXPRESSION { if (!addVar((const char*)$3)) YYABORT; }
+              ;
 
 /* in C++ (we use the C++ version) */ 
 variable_list : id_expression_opt_dimension
@@ -1013,20 +996,19 @@ dimension_field: '[' expression {lower_exp = current_exp; }
                   ']'
                ;
 %%
-
 int yyerror(const char *s) {
-        printf("%s!\n", s);
-        return 0;
+    printf("%s!\n", s);
+    return 0;
 }
 
 
 OmpAttribute* getParsedDirective() {
-        return ompattribute;
+    return ompattribute;
 }
 
 void omp_parser_init(SgNode* aNode, const char* str) {
-        omp_lexer_init(str);
-        gNode = aNode;
+    omp_lexer_init(str);
+    gNode = aNode;
 }
 
 static bool addVar(const char* var)  {
@@ -1037,9 +1019,9 @@ static bool addVar(const char* var)  {
 // The ROSE's string-based AST construction is not stable,
 // pass real expressions as SgExpression, Liao
 static bool addExpression(const char* expr) {
-        //ompattribute->addExpression(omptype,std::string(expr),NULL);
-//  std::cout<<"debug: current expression is:"<<current_exp->unparseToString()<<std::endl;
-      ompattribute->addExpression(omptype,std::string(expr),current_exp);
-        return true;
+    // ompattribute->addExpression(omptype,std::string(expr),NULL);
+    // std::cout<<"debug: current expression is:"<<current_exp->unparseToString()<<std::endl;
+    ompattribute->addExpression(omptype,std::string(expr),current_exp);
+    return true;
 }
 
