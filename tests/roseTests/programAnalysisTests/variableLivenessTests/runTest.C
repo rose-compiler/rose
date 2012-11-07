@@ -369,7 +369,7 @@ int main( int argc, char * argv[] )
       results.clear();      outputResults.clear();
       vector<string> as;
       results.insert(pair<int,  vector<string> >( make_pair(8, as )));
-      testOneFunction("::main",argvList, debug, 25, results,outputResults);
+      testOneFunction("::foo",argvList, debug, 25, results,outputResults);
     }
 
     if (startNr<=2 && 2<=stopNr) {
@@ -378,7 +378,7 @@ int main( int argc, char * argv[] )
       results.clear();      outputResults.clear();
       vector<string> as;
       results.insert(pair<int,  vector<string> >( make_pair(8, as )));
-      testOneFunction("::main",argvList, debug, 23, results,outputResults);
+      testOneFunction("::foo",argvList, debug, 25, results,outputResults);
     }
 
     if (startNr<=3 && 3<=stopNr) {
@@ -400,7 +400,7 @@ int main( int argc, char * argv[] )
       vector<string> out(arrout,arrout+1);
       outputResults.insert(pair<int,  vector<string> >( make_pair(8, out )));
 
-      testOneFunction("::main", argvList, debug, 18, results,outputResults);
+      testOneFunction("::foo", argvList, debug, 18, results,outputResults);
     }
 
     if (startNr<=4 && 4<=stopNr) {
@@ -418,7 +418,7 @@ int main( int argc, char * argv[] )
       results.insert(pair<int,  vector<string> >( make_pair(7, in7v )));
       vector<string> out7;
       outputResults.insert(pair<int,  vector<string> >( make_pair(7, out7 )));
-      testOneFunction("::main", argvList, debug, 12, results, outputResults);
+      testOneFunction("::foo", argvList, debug, 12, results, outputResults);
     }
 
 
@@ -437,7 +437,7 @@ int main( int argc, char * argv[] )
       vector<string> out14;
       outputResults.insert(pair<int,  vector<string> >( make_pair(14, in14 )));
 
-      testOneFunction("::main", argvList, debug, 20, results, outputResults);
+      testOneFunction("::foo", argvList, debug, 20, results, outputResults);
     }
 
     if (startNr<=6 && 6<=stopNr) {
@@ -450,7 +450,7 @@ int main( int argc, char * argv[] )
       vector<string> out22;
       outputResults.insert(pair<int,  vector<string> >( make_pair(22, out22 )));
 
-      testOneFunction("::main", argvList, debug, 29, results,outputResults);
+      testOneFunction("::foo", argvList, debug, 29, results,outputResults);
     }
 
 
@@ -464,7 +464,7 @@ int main( int argc, char * argv[] )
       string out12[] = {"i"};
       vector<string> out12v(out12,out12+1);
       outputResults.insert(pair<int,  vector<string> >( make_pair(12, out12v )));
-      testOneFunction("::main", argvList, debug, 17, results,outputResults);
+      testOneFunction("::foo", argvList, debug, 17, results,outputResults);
     }
 
     if (startNr<=8 && 8<=stopNr) {
@@ -474,10 +474,7 @@ int main( int argc, char * argv[] )
       string out12[] = {"i","p","x"};
       vector<string> out12v(out12,out12+3);
       outputResults.insert(pair<int,  vector<string> >( make_pair(20, out12v )));
-
-   // DQ (1/16/2011): More types added when doing AST query.
-   // testOneFunction("::main", argvList, debug, 36, results,outputResults);
-      testOneFunction("::main", argvList, debug, 37, results,outputResults);
+      testOneFunction("::foo", argvList, debug, 37, results,outputResults);
     }
 
     if (startNr<=9 && 9<=stopNr) {
@@ -494,10 +491,7 @@ int main( int argc, char * argv[] )
       string out12[] = {"i"};
       vector<string> out12v(out12,out12+1);
       outputResults.insert(pair<int,  vector<string> >( make_pair(12, out12v )));
-
-   // DQ (1/16/2011): More types added when doing AST query.
-   // testOneFunction("::main", argvList, debug, 33, results,outputResults);
-      testOneFunction("::main", argvList, debug, 34, results,outputResults);
+      testOneFunction("::foo", argvList, debug, 34, results,outputResults);
     }
 
     if (startNr<=10 && 10<=stopNr) {
@@ -518,31 +512,28 @@ int main( int argc, char * argv[] )
       std::cout <<"------------------------------ TESTCASE 13 -----------------------------------------\n";
       argvList[1]=srcdir+"tests/test13.C";
       results.clear();  outputResults.clear();
-      testOneFunction("::main", argvList, debug, 7, results,outputResults);
+      testOneFunction("::foo", argvList, debug, 7, results,outputResults);
     }
 
     if (startNr<=14 && 14<=stopNr) {
       std::cout <<"------------------------------ TESTCASE 14 -----------------------------------------\n";
       argvList[1]=srcdir+"tests/test14.C";
       results.clear();  outputResults.clear();
-      testOneFunction("::main", argvList, debug, 15, results,outputResults);
+      testOneFunction("::f", argvList, debug, 13, results,outputResults);
     }
 
     if (startNr<=15 && 15<=stopNr) {
       std::cout <<"------------------------------ TESTCASE 15 -----------------------------------------\n";
       argvList[1]=srcdir+"tests/test15.C";
       results.clear();  outputResults.clear();
-      testOneFunction("::main", argvList, debug, 27, results,outputResults);
+      testOneFunction("::foo", argvList, debug, 27, results,outputResults);
     }
 
     if (startNr<=18 && 18<=stopNr) {
       std::cout <<"------------------------------ TESTCASE 18 -----------------------------------------\n";
       argvList[1]=srcdir+"tests/test18.C";
       results.clear();  outputResults.clear();
-
-   // DQ (1/16/2011): More types added when doing AST query.
-   // testOneFunction("::main", argvList, debug, 56, results,outputResults);
-      testOneFunction("::main", argvList, debug, 57, results,outputResults);
+      testOneFunction("::foo", argvList, debug, 57, results,outputResults);
     }
 
     if (startNr<=19 && 19<=stopNr) {
@@ -556,26 +547,20 @@ int main( int argc, char * argv[] )
       std::cout <<"------------------------------ TESTCASE 20 -----------------------------------------\n";
       argvList[1]=srcdir+"tests/test20.C";
       results.clear();      outputResults.clear();
-   // DQ (9/24/2011): We have a different value of nodes within the new replacement of constant folded values with the original
-   // expression trees.
-   // testOneFunction("::bar",argvList, debug, 8, results,outputResults);
-      testOneFunction("::bar",argvList, debug, 7, results,outputResults);
+      testOneFunction("::bar",argvList, debug, 8, results,outputResults);
     }
 
     if (startNr<=21 && 21<=stopNr) {
       std::cout <<"------------------------------ TESTCASE 21 -----------------------------------------\n";
       argvList[1]=srcdir+"tests/test21.C";
       results.clear();      outputResults.clear();
-      testOneFunction("::func",argvList, debug, 11, results,outputResults);
+      testOneFunction("::func",argvList, debug, 14, results,outputResults);
     }
 
     if (startNr<=22 && 22<=stopNr) {
       std::cout <<"------------------------------ TESTCASE 22 -----------------------------------------\n";
       argvList[1]=srcdir+"tests/test22.C";
       results.clear();      outputResults.clear();
-   // DQ (9/24/2011): We have a different value of nodes within the new replacement of constant folded values with the original
-   // expression trees.
-   // testOneFunction("::func",argvList, debug, 18, results,outputResults);
       testOneFunction("::func",argvList, debug, 17, results,outputResults);
     }
 
@@ -583,35 +568,22 @@ int main( int argc, char * argv[] )
       std::cout <<"------------------------------ TESTCASE 23 -----------------------------------------\n";
       argvList[1]=srcdir+"tests/test23.C";
       results.clear();      outputResults.clear();
-      testOneFunction("::func",argvList, debug, 37, results,outputResults);
+      testOneFunction("::func",argvList, debug, 51, results,outputResults);
     }
 
     if (startNr<=24 && 24<=stopNr) {
       std::cout <<"------------------------------ TESTCASE 24 -----------------------------------------\n";
       argvList[1]=srcdir+"tests/inputlivenessAnalysis.C";
       results.clear();  outputResults.clear();
-
-   // DQ (1/16/2011): More types added when doing AST query.
-   // testOneFunction("::main", argvList, debug, 71, results,outputResults);
-      testOneFunction("::main", argvList, debug, 73, results,outputResults);
+      testOneFunction("::foo", argvList, debug, 73, results,outputResults);
     }
 
     if (startNr<=25 && 25<=stopNr) {
       std::cout <<"------------------------------ TESTCASE 25 -----------------------------------------\n";
       argvList[1]=srcdir+"tests/jacobi_seq.C";
       results.clear();  outputResults.clear();
-   // DQ (9/24/2011): We have a different value of nodes within the new replacement of constant folded values with the original
-   // expression trees.
-   // DQ (9/22/2011): Restoring to original test so that I can introduce changes to the original expression tree handling 
-   // more gradually as part of debugging a few failing test codes (like this one).
-   // DQ (9/19/2011): Changed to reflect work to eliminate the original expression tree and make the AST more consistant.
-   // Not sure if this should be changed since I tried to restore the original work before the change to fixup constant
-   // folding and yet I still get different results now.
-   // testOneFunction("::jacobi", argvList, debug, 264, results,outputResults);
-   // testOneFunction("::jacobi", argvList, debug, 274, results,outputResults);
-   // testOneFunction("::jacobi", argvList, debug, 264, results,outputResults);
       testOneFunction("::jacobi", argvList, debug, 261, results,outputResults);
-      testOneFunction("::main", argvList, debug, 24, results,outputResults);
+      testOneFunction("::foo", argvList, debug, 24, results,outputResults);
     }
   }
   argvList.clear();

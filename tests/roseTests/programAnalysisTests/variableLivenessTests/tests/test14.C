@@ -1,7 +1,7 @@
 
 #define foo 100
 
-int main() {
+int f() {
   int a,b;
   a = (foo + b);
 }
