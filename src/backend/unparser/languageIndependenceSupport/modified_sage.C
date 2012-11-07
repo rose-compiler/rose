@@ -1207,6 +1207,10 @@ Unparse_MOD_SAGE::outputExternLinkageSpecifier ( SgDeclarationStatement* decl_st
      ROSE_ASSERT(decl_stmt != NULL);
 
 #if 0
+     printf ("Inside of outputExternLinkageSpecifier() decl_stmt = %p = %s decl_stmt->isExternBrace() = %s \n",decl_stmt,decl_stmt->class_name().c_str(),decl_stmt->isExternBrace() ? "true" : "false");
+     printf ("   --- decl_stmt->isExternBrace()                                            = %s \n",decl_stmt->isExternBrace() ? "true" : "false");
+     printf ("   --- decl_stmt->get_declarationModifier().get_storageModifier().isExtern() = %s \n",decl_stmt->get_declarationModifier().get_storageModifier().isExtern() ? "true" : "false");
+     printf ("   --- decl_stmt->get_linkage().empty()                                      = %s \n",decl_stmt->get_linkage().empty() ? "true" : "false");
      curprint ("\n/* Inside of outputExternLinkageSpecifier() */ \n ");
 #endif
 
