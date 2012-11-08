@@ -10,7 +10,15 @@
 #include "LivenessAnalysis.h"
 #include <string>
 #include <iostream>
+#if 1 /*DEBUGGING [Robb Matzke 2012-11-07]*/
+#include "stringify.h"
+#endif
 using namespace std;
+
+static bool
+is_type_node(SgNode *node) {
+    return isSgType(node)!=NULL;
+}
 
 void testOneFunction( std::string funcParamName,
 		      vector<string> argvList,
@@ -58,6 +66,11 @@ void testOneFunction( std::string funcParamName,
       dfaFunctions.push_back(rem_source);
 
     NodeQuerySynthesizedAttributeType nodes = NodeQuery::querySubTree(func, V_SgNode);
+
+    // Edg3 mistakenly adds SgType nodes to the AST; Edg4 adds some also, but fewer.  So we just remove them all. They
+    // make no difference in the variable-liveness analysis anyway.
+    nodes.erase(std::remove_if(nodes.begin(), nodes.end(), is_type_node), nodes.end());
+
     SgFunctionDeclaration* decl = isSgFunctionDeclaration(func->get_declaration());
     ROSE_ASSERT(decl);
     Rose_STL_Container<SgInitializedName*> args = decl->get_parameterList()->get_args();
@@ -369,7 +382,7 @@ int main( int argc, char * argv[] )
       results.clear();      outputResults.clear();
       vector<string> as;
       results.insert(pair<int,  vector<string> >( make_pair(8, as )));
-      testOneFunction("::foo",argvList, debug, 25, results,outputResults);
+      testOneFunction("::foo",argvList, debug, 21, results,outputResults);
     }
 
     if (startNr<=2 && 2<=stopNr) {
@@ -378,7 +391,7 @@ int main( int argc, char * argv[] )
       results.clear();      outputResults.clear();
       vector<string> as;
       results.insert(pair<int,  vector<string> >( make_pair(8, as )));
-      testOneFunction("::foo",argvList, debug, 25, results,outputResults);
+      testOneFunction("::foo",argvList, debug, 21, results,outputResults);
     }
 
     if (startNr<=3 && 3<=stopNr) {
@@ -400,7 +413,7 @@ int main( int argc, char * argv[] )
       vector<string> out(arrout,arrout+1);
       outputResults.insert(pair<int,  vector<string> >( make_pair(8, out )));
 
-      testOneFunction("::foo", argvList, debug, 18, results,outputResults);
+      testOneFunction("::foo", argvList, debug, 16, results,outputResults);
     }
 
     if (startNr<=4 && 4<=stopNr) {
@@ -437,7 +450,7 @@ int main( int argc, char * argv[] )
       vector<string> out14;
       outputResults.insert(pair<int,  vector<string> >( make_pair(14, in14 )));
 
-      testOneFunction("::foo", argvList, debug, 20, results, outputResults);
+      testOneFunction("::foo", argvList, debug, 17, results, outputResults);
     }
 
     if (startNr<=6 && 6<=stopNr) {
@@ -450,7 +463,7 @@ int main( int argc, char * argv[] )
       vector<string> out22;
       outputResults.insert(pair<int,  vector<string> >( make_pair(22, out22 )));
 
-      testOneFunction("::foo", argvList, debug, 29, results,outputResults);
+      testOneFunction("::foo", argvList, debug, 26, results,outputResults);
     }
 
 
@@ -464,7 +477,7 @@ int main( int argc, char * argv[] )
       string out12[] = {"i"};
       vector<string> out12v(out12,out12+1);
       outputResults.insert(pair<int,  vector<string> >( make_pair(12, out12v )));
-      testOneFunction("::foo", argvList, debug, 17, results,outputResults);
+      testOneFunction("::foo", argvList, debug, 16, results,outputResults);
     }
 
     if (startNr<=8 && 8<=stopNr) {
@@ -474,7 +487,7 @@ int main( int argc, char * argv[] )
       string out12[] = {"i","p","x"};
       vector<string> out12v(out12,out12+3);
       outputResults.insert(pair<int,  vector<string> >( make_pair(20, out12v )));
-      testOneFunction("::foo", argvList, debug, 37, results,outputResults);
+      testOneFunction("::foo", argvList, debug, 31, results,outputResults);
     }
 
     if (startNr<=9 && 9<=stopNr) {
@@ -491,7 +504,7 @@ int main( int argc, char * argv[] )
       string out12[] = {"i"};
       vector<string> out12v(out12,out12+1);
       outputResults.insert(pair<int,  vector<string> >( make_pair(12, out12v )));
-      testOneFunction("::foo", argvList, debug, 34, results,outputResults);
+      testOneFunction("::foo", argvList, debug, 30, results,outputResults);
     }
 
     if (startNr<=10 && 10<=stopNr) {
@@ -519,21 +532,21 @@ int main( int argc, char * argv[] )
       std::cout <<"------------------------------ TESTCASE 14 -----------------------------------------\n";
       argvList[1]=srcdir+"tests/test14.C";
       results.clear();  outputResults.clear();
-      testOneFunction("::f", argvList, debug, 13, results,outputResults);
+      testOneFunction("::f", argvList, debug, 11, results,outputResults);
     }
 
     if (startNr<=15 && 15<=stopNr) {
       std::cout <<"------------------------------ TESTCASE 15 -----------------------------------------\n";
       argvList[1]=srcdir+"tests/test15.C";
       results.clear();  outputResults.clear();
-      testOneFunction("::foo", argvList, debug, 27, results,outputResults);
+      testOneFunction("::foo", argvList, debug, 22, results,outputResults);
     }
 
     if (startNr<=18 && 18<=stopNr) {
       std::cout <<"------------------------------ TESTCASE 18 -----------------------------------------\n";
       argvList[1]=srcdir+"tests/test18.C";
       results.clear();  outputResults.clear();
-      testOneFunction("::foo", argvList, debug, 57, results,outputResults);
+      testOneFunction("::foo", argvList, debug, 48, results,outputResults);
     }
 
     if (startNr<=19 && 19<=stopNr) {
@@ -547,28 +560,28 @@ int main( int argc, char * argv[] )
       std::cout <<"------------------------------ TESTCASE 20 -----------------------------------------\n";
       argvList[1]=srcdir+"tests/test20.C";
       results.clear();      outputResults.clear();
-      testOneFunction("::bar",argvList, debug, 8, results,outputResults);
+      testOneFunction("::bar",argvList, debug, 7, results,outputResults);
     }
 
     if (startNr<=21 && 21<=stopNr) {
       std::cout <<"------------------------------ TESTCASE 21 -----------------------------------------\n";
       argvList[1]=srcdir+"tests/test21.C";
       results.clear();      outputResults.clear();
-      testOneFunction("::func",argvList, debug, 14, results,outputResults);
+      testOneFunction("::func",argvList, debug, 12, results,outputResults);
     }
 
     if (startNr<=22 && 22<=stopNr) {
       std::cout <<"------------------------------ TESTCASE 22 -----------------------------------------\n";
       argvList[1]=srcdir+"tests/test22.C";
       results.clear();      outputResults.clear();
-      testOneFunction("::func",argvList, debug, 17, results,outputResults);
+      testOneFunction("::func",argvList, debug, 18, results,outputResults);
     }
 
     if (startNr<=23 && 23<=stopNr) {
       std::cout <<"------------------------------ TESTCASE 23 -----------------------------------------\n";
       argvList[1]=srcdir+"tests/test23.C";
       results.clear();      outputResults.clear();
-      testOneFunction("::func",argvList, debug, 51, results,outputResults);
+      testOneFunction("::func",argvList, debug, 44, results,outputResults);
     }
 
     if (startNr<=24 && 24<=stopNr) {
@@ -582,7 +595,7 @@ int main( int argc, char * argv[] )
       std::cout <<"------------------------------ TESTCASE 25 -----------------------------------------\n";
       argvList[1]=srcdir+"tests/jacobi_seq.C";
       results.clear();  outputResults.clear();
-      testOneFunction("::jacobi", argvList, debug, 261, results,outputResults);
+      testOneFunction("::jacobi", argvList, debug, 248, results,outputResults);
       testOneFunction("::foo", argvList, debug, 24, results,outputResults);
     }
   }
