@@ -205,7 +205,7 @@ generateregressiondata:
 
 COUNTEREXAMPLES = counterexamples/ltl2haskell.sh counterexamples/Makefile counterexamples/qc.hs counterexamples/log2csv.awk
 
-TESTS= \
+CODETHORN_TESTS= \
     tests/asserttest1.c \
     tests/asserttest2.c \
     tests/basictest0.C \

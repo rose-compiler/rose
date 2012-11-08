@@ -68,6 +68,7 @@ class BoolLattice {
   /// operator= : C++ default used
   bool operator==(BoolLattice other) const;
   bool operator!=(BoolLattice other) const;
+  /// for sorting only!
   bool operator<(BoolLattice other) const;
   string toString() const;
   friend ostream& operator<<(ostream& os, const BoolLattice& toStream);
@@ -75,7 +76,7 @@ class BoolLattice {
   ValueType value;
 };
 
- ostream& operator<<(ostream& os, BoolLattice& toStream);
+ ostream& operator<<(ostream& os, const BoolLattice& toStream);
 
  class ConstIntLattice;
 
@@ -132,7 +133,7 @@ class ConstIntLattice {
  AType::ConstIntLattice operator%(AType::ConstIntLattice& a,AType::ConstIntLattice& b);
 
 
- ostream& operator<<(ostream& os, ConstIntLattice& toStream);
+ ostream& operator<<(ostream& os, const ConstIntLattice& toStream);
 
   /*! \brief Comparison class, allowing to use ConstIntLattice in ordered containers (e.g. set)
 	\date 2012

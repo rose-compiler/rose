@@ -35,35 +35,47 @@ namespace UnifiedLTL {
    * This is pretty cool: We are solving the LTL formula as if it were
    * written in a postfix notation and store the intermediate results
    * on a stack. It's a little like the Forth execution model.
-   * For equality comparisons we are only using the top of
-   * stack, because we do not care about the history.
    */
-  class LTLState {
-  public:
+  struct LTLState {
     const EState* estate;
-    stack<BoolLattice> valstack;
+    vector<BoolLattice> valstack;
+    BoolLattice val;  /// result of the current iteration
+    vector<BoolLattice> debug; // stores all intermediate results for the dot output
 
-    LTLState() : estate(NULL) { }
-    LTLState(const EState* s, stack<BoolLattice> v) : estate(s), valstack(v) {}
-    LTLState(const EState* s, BoolLattice top) : estate(s){ valstack.push(top); }
-    LTLState(const LTLState& copy) :estate(copy.estate), valstack(copy.valstack) {}
+    LTLState() : estate(NULL), val(Bot()) { valstack.push_back(Bot()); }
+    //LTLState(const EState* s, vector<BoolLattice> v) : estate(s), valstack(v) {}
+    LTLState(const EState* s, BoolLattice top) : estate(s), val(top) { }
+    
+    BoolLattice top()  const { return valstack.back(); }
+    BoolLattice over() const { return valstack[valstack.size()-2]; }
+    BoolLattice pop()  { 
+      BoolLattice val = valstack.back(); 
+      valstack.pop_back(); 
+      return val; 
+    }
+    void push(BoolLattice val) { valstack.push_back(val); }
+
+    //LTLState(const LTLState& copy) :estate(copy.estate), valstack(copy.valstack) {}
     bool operator==(LTLState& other) const { 
-      return (estate == other.estate) &&
-	( !valstack.empty()
-	  ? valstack.top() == other.valstack.top()
-	  : true );
+      //cerr<<"?  "<<*this<<"\n== "<<other<<"\n=> "<< (estate == other.estate)<<" && "<<(valstack == other.valstack)<<endl;
+      return (estate == other.estate) && (valstack == other.valstack);
     }
     bool operator<(LTLState other) const { 
       if (estate == other.estate) {
-	return ( !valstack.empty()
-		 ? valstack.top() < other.valstack.top()
-		 : false );
+	//if (val == other.val)
+	  return valstack < other.valstack;
+	  //else 
+	  //return val < other.val;
       } else {
 	return estate < other.estate;
       }
     }
+    friend ostream& operator<<(ostream& os, const LTLState& s);
   };
 
+  ostream& operator<<(ostream& os, const LTLState& s);
+  
+  // For the LTLTransitionGraph we need a mutable version!
   typedef adjacency_list<listS, listS, bidirectionalS, LTLState> LTLTransitionGraph;
   typedef graph_traits<LTLTransitionGraph> LTLGraphTraits;
   typedef LTLGraphTraits::vertex_descriptor LTLVertex;
@@ -86,9 +98,9 @@ namespace UnifiedLTL {
    * \date 2012
    * \author Adrian Prantl
    */
-  class Checker {
+  class UChecker {
   public:
-    Checker(EStateSet& ess, TransitionGraph& g);
+    UChecker(EStateSet& ess, TransitionGraph& g);
     /// verify the LTL formula f
     BoolLattice verify(const CodeThorn::LTL::Formula& f);
 
