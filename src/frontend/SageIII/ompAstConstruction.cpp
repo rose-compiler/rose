@@ -265,25 +265,26 @@ namespace OmpSupport
     ROSE_ASSERT(result);
     return result;
   }
-
+    
+  
   // Sara Royuela ( Nov 2, 2012 ): Check for clause parameters that can be defined in macros
   // This adds support for the use of macro definitions in OpenMP clauses
   // We need a traversal over SgExpression to support macros in any possition of an "assignment_expr"
-  // F.i.: #define THREADS_1 16
-  // #define THREADS_2 8
-  // int main( int arg, char** argv ) {
-  // #pragma omp parallel num_threads( THREADS_1 + THREADS_2 )
-  // {}
-  // }
+  // F.i.:   #define THREADS_1 16
+  //         #define THREADS_2 8
+  //         int main( int arg, char** argv ) {
+  //         #pragma omp parallel num_threads( THREADS_1 + THREADS_2 )
+  //           {}
+  //         }
   SgVarRefExpVisitor::SgVarRefExpVisitor()
         : expressions()
   {}
-
+  
   std::vector<SgVarRefExp*> SgVarRefExpVisitor::get_expressions()
   {
       return expressions;
   }
-
+  
   void SgVarRefExpVisitor::visit(SgNode* node)
   {
       SgVarRefExp* expr = isSgVarRefExp(node);
@@ -292,7 +293,7 @@ namespace OmpSupport
           expressions.push_back(expr);
       }
   }
-
+  
   SgExpression* checkOmpExpressionClause( SgExpression* clause_expression, SgGlobal* global )
   {
       ROSE_ASSERT(clause_expression != NULL);
@@ -313,7 +314,7 @@ namespace OmpSupport
                       SgDeclarationStatement * declaration = *it;
                       AttachedPreprocessingInfoType * preproc_info = declaration->getAttachedPreprocessingInfo();
                       if( preproc_info != NULL )
-                      { // There is preprocessed info attached to the current node
+                      {   // There is preprocessed info attached to the current node
                           for(AttachedPreprocessingInfoType::iterator current_preproc_info = preproc_info->begin();
                               current_preproc_info != preproc_info->end(); current_preproc_info++)
                           {
@@ -324,7 +325,7 @@ namespace OmpSupport
                                   // Parse the macro: we are only interested in macros with the form #define MACRO_NAME MACRO_VALUE
                                   size_t parenthesis = define_macro.find("(");
                                   if(parenthesis == string::npos)
-                                  { // Non function macro
+                                  {   // Non function macro
                                       unsigned int macro_name_init_pos = (unsigned int)(define_macro.find("define")) + 6;
                                       while(macro_name_init_pos<define_macro.size() && define_macro[macro_name_init_pos]==' ')
                                           macro_name_init_pos++;
@@ -332,22 +333,22 @@ namespace OmpSupport
                                       std::string macro_name = define_macro.substr(macro_name_init_pos, macro_name_end_pos-macro_name_init_pos);
                                       
                                       if(macro_name==clause_name.getString())
-                                      { // Clause is defined in a macro
+                                      {   // Clause is defined in a macro
                                           size_t comma = define_macro.find(",");
-                                          if(comma == string::npos); // Macros like "#define MACRO_NAME VALUE1, VALUE2" are not accepted
-                                          { // We create here an expression with the value of the clause defined in the macro
+                                          if(comma == string::npos);       // Macros like "#define MACRO_NAME VALUE1, VALUE2" are not accepted
+                                          {   // We create here an expression with the value of the clause defined in the macro
                                               unsigned int macro_value_init_pos = macro_name_end_pos + 1;
                                               while(macro_value_init_pos<define_macro.size() && define_macro[macro_value_init_pos]==' ')
                                                   macro_value_init_pos++;
-                                              unsigned int macro_value_end_pos = macro_value_init_pos;
-                                              while(macro_value_end_pos<define_macro.size() &&
+                                              unsigned int macro_value_end_pos = macro_value_init_pos; 
+                                              while(macro_value_end_pos<define_macro.size() && 
                                                     define_macro[macro_value_end_pos]!=' ' && define_macro[macro_value_end_pos]!='\n')
-                                                  macro_value_end_pos++;
+                                                  macro_value_end_pos++;        
                                               std::string macro_value = define_macro.substr(macro_value_init_pos, macro_value_end_pos-macro_value_init_pos);
                                               
                                               // Check whether the value is a valid integer
                                               std::string::const_iterator it = macro_value.begin();
-                                              while (it != macro_value.end() && std::isdigit(*it))
+                                              while (it != macro_value.end() && std::isdigit(*it)) 
                                                   ++it;
                                               ROSE_ASSERT(!macro_value.empty() && it == macro_value.end());
                                               
