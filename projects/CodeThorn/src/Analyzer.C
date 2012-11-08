@@ -446,7 +446,7 @@ EStateSet::ProcessingResult Analyzer::process(Label label, PState pstate, Constr
   if(isLTLRelevantLabel(label) || io.op!=InputOutput::NONE) {
 	const PState* newPStatePtr=processNewOrExisting(pstate);
 	const ConstraintSet* newCSetPtr=processNewOrExisting(cset);
-	EState newEState=EState(label,newPStatePtr,newCSetPtr,io); // found bug (io was missing)
+	EState newEState=EState(label,newPStatePtr,newCSetPtr,io);
 	return estateSet.process(newEState);
   } else {
 	//cout << "INFO: allocating temporary estate."<<endl;
