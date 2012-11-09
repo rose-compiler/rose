@@ -332,7 +332,7 @@ public:
       LTLVertex v = worklist.front(); worklist.pop();
 
       bool verbose = false;
-      //if (nargs==1 && (stg.g[v].estate->label() == 644))
+      //if (nargs==0 && (stg.g[v].estate->label() == 621))
       // 	verbose = true;
 
       if (verbose) cerr<<"\n** Visiting state "<<v<<","<<stg.g[v]<<endl;
@@ -360,10 +360,18 @@ public:
 	// iterator by adding/removing edges
 	succs.push(succ);
       }
-      while (!succs.empty()) {
-	LTLVertex succ = succs.front(); succs.pop();
-	BoolLattice succ_val = stg.g[succ].val;
-	if (verbose) cerr<<"  succ: "<<succ<<", "<<stg.g[succ]<<" = "<<succ_val<<endl;
+
+      bool endpoint = succs.empty();
+
+      while (endpoint || !succs.empty()) {
+	// if this is an endpoint with no successors, set succ_val to ⊥.
+	LTLVertex succ;
+	BoolLattice succ_val = Bot();
+	if (!endpoint) {
+	  succ = succs.front(); succs.pop();
+	  succ_val = stg.g[succ].val;
+	  if (verbose) cerr<<"  succ: "<<succ<<", "<<stg.g[succ]<<" = "<<succ_val<<endl;
+	}
 
 	// Always make a new state v', so we can calculate precise
 	// results for both paths.  If a v' and v'' should later turn
@@ -382,7 +390,7 @@ public:
 	  //stg.g[v] = updated_state;
 	  if (verbose) cerr<<"  OLD: "<<old_state<< "\n  NEW: "<<new_state<<endl;
 	  assert (v_prime != v || (new_state.val != old_state.val));
-	  add_edge_if_new(v_prime, succ, stg.g);
+	  if (!endpoint) add_edge_if_new(v_prime, succ, stg.g);
 
 	  // for each predecessor
 	  LTLGraphTraits::in_edge_iterator in_i, in_end;
@@ -401,6 +409,8 @@ public:
 	    //assert(stg.g[v_prime].val==new_state.val);
 	  }
 	}
+	// no successors for endpoints anyway
+	if (endpoint) break;
       }
     }
 
@@ -1120,7 +1130,7 @@ UChecker::verify(const Formula& f)
   for (tie(lvi, lvi_end) = vertices(v.stg.g); lvi != lvi_end; ++lvi) {
     LTLState s = v.stg.g[*lvi];
     if (in_degree(*lvi, v.stg.g) == 0) {
-      cerr<<"Value at START = "<<s.valstack.back()<<endl;
+      //cerr<<"Value at START = "<<s.valstack.back()<<endl;
       b = b && s.valstack.back();
     }
   }

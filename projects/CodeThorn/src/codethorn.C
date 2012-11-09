@@ -205,7 +205,7 @@ void generateLTLOutput(Analyzer& analyzer, string ltl_file) {
       // use binary and \r\n tp enforce DOS line endings
       // http://tools.ietf.org/html/rfc4180
       csv->open(args["csv-ltl"].as<string>().c_str(), ios::trunc|ios::binary);
-      *csv << "Index;\"LTL formula\";Result;Confidence\r\n";
+      //*csv << "Index,\"LTL formula\",Result,Confidence\r\n";
     }
 
     while ( !ltl_eof) {
@@ -263,11 +263,11 @@ void generateLTLOutput(Analyzer& analyzer, string ltl_file) {
 	++n_failed;
 	cerr << "Exception raised: " << str << endl;
 	cout<<color("red")<<"ERROR"<<color("normal")<<endl;
-	if (csv) *csv << "ERROR;0\r\n";
+	if (csv) *csv << "error,0\r\n";
       } catch(...) {
 	++n_failed;
 	cout<<color("red")<<"ERROR"<<color("normal")<<endl;
-	if (csv) *csv << "ERROR;0\r\n";
+	if (csv) *csv << "error,0\r\n";
       }  
     }
     if (csv) delete csv;
