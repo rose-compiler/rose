@@ -254,6 +254,13 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2012_156.c \
      test2012_157.c \
      test2012_158.c \
+     test2012_159.c \
+     test2012_162.c \
+     test2012_163.c \
+     test2012_164.c \
+     test2012_165.c \
+     test2012_166.c \
+     test2012_167.c \
      math.c \
      complex_01.c \
      constants.c
@@ -264,8 +271,8 @@ TESTCODES_REQUIRED_TO_PASS = \
 # test2012_30.c (break statement not unparsed in loop)
 # test2012_42.c (more complex (original) case of test2012_43.c)
 # test2012_43.c (macro for compile-time assertions)
-# test2012_44.c 
-# test2012_45.c 
+# test2012_44.c (asm issue stat64 undefined after compilation)
+# test2012_45.c (same problems at test2012_44.c)
 # test2012_59.c (C-style comment in quoted string (inside of #if-def comment, so should be ignored)
 # test2012_78.c (variable with initializer using #include file to provide value (classic source-to-source issue))
 # test2012_79.c (test code demonstrating an outstanding error (generated before focusing on switch support))
@@ -281,6 +288,16 @@ TESTCODES_REQUIRED_TO_PASS = \
 #                 code to pass; so that we can test the rewritten version of the switch.
 # test2012_145.c NOT A FAILING test, but tested below with -D options.
 # test2012_155.c (array with initializer using #include file to provide value (classic source-to-source issue))
+# test2012_160.c (application code with label on default case option statement: full size)
+# test2012_161.c (small test code demonstrating bug in test2012_160.c)
+
+# Failing tests of interest relative to C application codes:
+# test2012_128
+# test2012_31
+# test2012_132
+# test2012_138
+# test2012_159
+
 
 
 # This is a C99 test code (moved to the C99_tests directory). (These are not really C99 codes, I thought they were).

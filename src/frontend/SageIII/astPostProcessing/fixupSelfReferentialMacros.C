@@ -6,6 +6,33 @@
 #include "rose_config.h"
 
 
+
+/*
+There are a collection of self referential macros in C, all 
+related to signal handling. we have to detect variables of
+this type and then undefine all of these. 
+
+These are from sigaction.h (included by signal.h):
+# define sa_handler     __sigaction_handler.sa_handler
+# define sa_sigaction   __sigaction_handler.sa_sigaction
+
+These are from siginfo.h (included by signal.h):
+# define si_pid         _sifields._kill.si_pid
+# define si_uid         _sifields._kill.si_uid
+# define si_timerid     _sifields._timer.si_tid
+# define si_overrun     _sifields._timer.si_overrun
+# define si_status      _sifields._sigchld.si_status
+# define si_utime       _sifields._sigchld.si_utime
+# define si_stime       _sifields._sigchld.si_stime
+# define si_value       _sifields._rt.si_sigval
+# define si_int         _sifields._rt.si_sigval.sival_int
+# define si_ptr         _sifields._rt.si_sigval.sival_ptr
+# define si_addr        _sifields._sigfault.si_addr
+# define si_band        _sifields._sigpoll.si_band
+# define si_fd          _sifields._sigpoll.si_fd
+
+*/
+
 void fixupSelfReferentialMacrosInAST( SgNode* node )
    {
   // DQ (3/11/2006): Introduce tracking of performance of ROSE.
@@ -15,6 +42,25 @@ void fixupSelfReferentialMacrosInAST( SgNode* node )
 
   // I think the default should be preorder so that the interfaces would be more uniform
      astFixupTraversal.traverse(node,preorder);
+   }
+
+void
+addMacro(SgStatement* associatedStatement, std::string macroString, PreprocessingInfo::DirectiveType directiveType)
+   {
+  // DQ (11/5/2012): Fixup for test2012_17.c and test2012_163.c
+  // This function handled the details of adding a macro associated with the input string to the specfied SgStatement.
+
+     std::string filenameString = "macro_call_fixupSelfReferentialMacrosInAST";
+     int line_no = 1;
+     int col_no  = 1;
+     int nol     = 1;
+     PreprocessingInfo::RelativePositionType relPos = PreprocessingInfo::before;
+
+  // DQ (11/5/2012): the fix for test2012_163.c (sudo) requires another macro...
+     PreprocessingInfo* macro = new PreprocessingInfo(directiveType,macroString,filenameString,line_no,col_no,nol,relPos);
+
+  // printf ("Attaching CPP directive %s to IR node %p as attributes. \n",PreprocessingInfo::directiveTypeName(macro->getTypeOfDirective()).c_str(),associatedStatement);
+     associatedStatement->addToAttachedPreprocessingInfo(macro);
    }
 
 
@@ -40,7 +86,8 @@ FixupSelfReferentialMacrosInAST::visit ( SgNode* node )
 
                  // printf ("In FixupSelfReferentialMacrosInAST::visit(): Found a class declaration name = %s \n",className.str());
 
-                    if (className == "sigaction")
+                 // For sudo_exec_pty.c also look for siginfo
+                    if (className == "sigaction" || className == "siginfo")
                        {
                       // printf ("In FixupSelfReferentialMacrosInAST::visit(): Found a sigaction type \n");
 
@@ -54,21 +101,27 @@ FixupSelfReferentialMacrosInAST::visit ( SgNode* node )
                            // PreprocessingInfo* macro = new PreprocessingInfo(DirectiveType, const std::string & inputString,const std::string & filenameString, int line_no , int col_no,int nol, RelativePositionType relPos );
 
                               PreprocessingInfo::DirectiveType directiveType = PreprocessingInfo::CpreprocessorUndefDeclaration;
-                              std::string macroString = "#undef sa_handler\n";
-                              std::string filenameString = "macro_call_fixupSelfReferentialMacrosInAST";
-                              int line_no = 1;
-                              int col_no  = 1;
-                              int nol     = 1;
-                              PreprocessingInfo::RelativePositionType relPos = PreprocessingInfo::before;
 
-                              PreprocessingInfo* macro = new PreprocessingInfo(directiveType,macroString,filenameString,line_no,col_no,nol,relPos);
+                           // We are puting out all macros anytime we see either type.  This might be too much...
 
-                           // printf ("Attaching CPP directive %s to IR node %p as attributes. \n",PreprocessingInfo::directiveTypeName(macro->getTypeOfDirective()).c_str(),associatedStatement);
-                              associatedStatement->addToAttachedPreprocessingInfo(macro);
-#if 0
-                              printf ("Exiting as a test! \n");
-                              ROSE_ASSERT(false);
-#endif
+                           // From the sigaction.h file (included by signal.h):
+                              addMacro(associatedStatement,"#undef sa_handler\n",directiveType);
+                              addMacro(associatedStatement,"#undef sa_sigaction\n",directiveType);
+
+                           // From the siginfo.h file (included by signal.h):
+                              addMacro(associatedStatement,"#undef si_pid\n",    directiveType);
+                              addMacro(associatedStatement,"#undef si_uid\n",    directiveType);
+                              addMacro(associatedStatement,"#undef si_timerid\n",directiveType);
+                              addMacro(associatedStatement,"#undef si_overrun\n",directiveType);
+                              addMacro(associatedStatement,"#undef si_status\n", directiveType);
+                              addMacro(associatedStatement,"#undef si_utime\n",  directiveType);
+                              addMacro(associatedStatement,"#undef si_stime\n",  directiveType);
+                              addMacro(associatedStatement,"#undef si_value\n",  directiveType);
+                              addMacro(associatedStatement,"#undef si_int\n",    directiveType);
+                              addMacro(associatedStatement,"#undef si_ptr\n",    directiveType);
+                              addMacro(associatedStatement,"#undef si_addr\n",   directiveType);
+                              addMacro(associatedStatement,"#undef si_band\n",   directiveType);
+                              addMacro(associatedStatement,"#undef si_fd\n",     directiveType);
                             }
                        }
                   }
