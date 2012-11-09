@@ -280,17 +280,57 @@ namespace OmpSupport
         : expressions()
   {}
   
-  std::vector<SgVarRefExp*> SgVarRefExpVisitor::get_expressions()
+  std::vector<SgExpression*> SgVarRefExpVisitor::get_expressions()
   {
       return expressions;
   }
   
   void SgVarRefExpVisitor::visit(SgNode* node)
   {
-      SgVarRefExp* expr = isSgVarRefExp(node);
+      SgExpression* expr = isSgVarRefExp(node);
       if(expr != NULL)
       {
           expressions.push_back(expr);
+      }
+  }
+  
+  void replace_expression_with_macro_value( std::string define_macro, SgExpression* current_exp, bool& macro_replaced )
+  {
+      // Parse the macro: we are only interested in macros with the form #define MACRO_NAME MACRO_VALUE
+      size_t parenthesis = define_macro.find("(");
+      if(parenthesis == string::npos)
+      {   // Non function macro
+          unsigned int macro_name_init_pos = (unsigned int)(define_macro.find("define")) + 6;
+          while(macro_name_init_pos<define_macro.size() && define_macro[macro_name_init_pos]==' ')
+              macro_name_init_pos++;
+          unsigned int macro_name_end_pos = define_macro.find(" ", macro_name_init_pos);
+          std::string macro_name = define_macro.substr(macro_name_init_pos, macro_name_end_pos-macro_name_init_pos);
+                                  
+          if(macro_name == isSgVarRefExp(current_exp)->get_symbol()->get_name().getString())
+          {   // Clause is defined in a macro
+              size_t comma = define_macro.find(",");
+              if(comma == string::npos);       // Macros like "#define MACRO_NAME VALUE1, VALUE2" are not accepted
+              {   // We create here an expression with the value of the clause defined in the macro
+                  unsigned int macro_value_init_pos = macro_name_end_pos + 1;
+                  while(macro_value_init_pos<define_macro.size() && define_macro[macro_value_init_pos]==' ')
+                      macro_value_init_pos++;
+                  unsigned int macro_value_end_pos = macro_value_init_pos; 
+                  while(macro_value_end_pos<define_macro.size() && 
+                        define_macro[macro_value_end_pos]!=' ' && define_macro[macro_value_end_pos]!='\n')
+                      macro_value_end_pos++;        
+                  std::string macro_value = define_macro.substr(macro_value_init_pos, macro_value_end_pos-macro_value_init_pos);
+                  
+                  // Check whether the value is a valid integer
+                  std::string::const_iterator it = macro_value.begin();
+                  while (it != macro_value.end() && std::isdigit(*it)) 
+                      ++it;
+                  ROSE_ASSERT(!macro_value.empty() && it == macro_value.end());
+                  
+                  int macro_int_value = atoi(macro_value.c_str());
+                  SageInterface::replaceExpression(current_exp, buildIntVal(macro_int_value));
+                  macro_replaced = true;
+              }
+          }
       }
   }
   
@@ -302,14 +342,16 @@ namespace OmpSupport
       {
           SgVarRefExpVisitor v;
           v.traverse(clause_expression, preorder);
-          std::vector<SgVarRefExp*> expressions = v.get_expressions();
+          std::vector<SgExpression*> expressions = v.get_expressions();
           if( !expressions.empty() )
           {
+              bool macro_replaced;
               SgDeclarationStatementPtrList& declarations = global->get_declarations();
               while( !expressions.empty() )
               {
-                  SgName clause_name = expressions.back()->get_symbol()->get_name( );
-                  for(SgDeclarationStatementPtrList::iterator it = declarations.begin(); it != declarations.end(); ++it)
+                  macro_replaced = false;
+                  SgExpression* current_exp = expressions.back();
+                  for(SgDeclarationStatementPtrList::iterator it = declarations.begin(); it != declarations.end() && !macro_replaced; ++it) 
                   {
                       SgDeclarationStatement * declaration = *it;
                       AttachedPreprocessingInfoType * preproc_info = declaration->getAttachedPreprocessingInfo();
@@ -320,47 +362,41 @@ namespace OmpSupport
                           {
                               if((*current_preproc_info)->getTypeOfDirective() == PreprocessingInfo::CpreprocessorDefineDeclaration)
                               {
-                                  std::string define_macro = (*current_preproc_info)->getString();
-
-                                  // Parse the macro: we are only interested in macros with the form #define MACRO_NAME MACRO_VALUE
-                                  size_t parenthesis = define_macro.find("(");
-                                  if(parenthesis == string::npos)
-                                  {   // Non function macro
-                                      unsigned int macro_name_init_pos = (unsigned int)(define_macro.find("define")) + 6;
-                                      while(macro_name_init_pos<define_macro.size() && define_macro[macro_name_init_pos]==' ')
-                                          macro_name_init_pos++;
-                                      unsigned int macro_name_end_pos = define_macro.find(" ", macro_name_init_pos);
-                                      std::string macro_name = define_macro.substr(macro_name_init_pos, macro_name_end_pos-macro_name_init_pos);
-                                      
-                                      if(macro_name==clause_name.getString())
-                                      {   // Clause is defined in a macro
-                                          size_t comma = define_macro.find(",");
-                                          if(comma == string::npos);       // Macros like "#define MACRO_NAME VALUE1, VALUE2" are not accepted
-                                          {   // We create here an expression with the value of the clause defined in the macro
-                                              unsigned int macro_value_init_pos = macro_name_end_pos + 1;
-                                              while(macro_value_init_pos<define_macro.size() && define_macro[macro_value_init_pos]==' ')
-                                                  macro_value_init_pos++;
-                                              unsigned int macro_value_end_pos = macro_value_init_pos; 
-                                              while(macro_value_end_pos<define_macro.size() && 
-                                                    define_macro[macro_value_end_pos]!=' ' && define_macro[macro_value_end_pos]!='\n')
-                                                  macro_value_end_pos++;        
-                                              std::string macro_value = define_macro.substr(macro_value_init_pos, macro_value_end_pos-macro_value_init_pos);
-                                              
-                                              // Check whether the value is a valid integer
-                                              std::string::const_iterator it = macro_value.begin();
-                                              while (it != macro_value.end() && std::isdigit(*it)) 
-                                                  ++it;
-                                              ROSE_ASSERT(!macro_value.empty() && it == macro_value.end());
-                                              
-                                              int macro_int_value = atoi(macro_value.c_str());
-                                              clause_value = buildIntVal(macro_int_value);
-                                          }
+                                  replace_expression_with_macro_value( (*current_preproc_info)->getString(), current_exp, macro_replaced );
+                              }
+                          }
+                      }
+                  }
+                  
+                  // When a macro is defined in a header without any statement, the preprocessed information is attached to the SgFile
+                  if(!macro_replaced)
+                  {
+                      SgProject* project = SageInterface::getProject();
+                      int n_files = project->numberOfFiles();
+                      for(int it_f=0; it_f<n_files && !macro_replaced; it_f++)
+                      {
+                          SgFile& file = project->get_file(it_f);
+                          ROSEAttributesListContainerPtr file_preproc_info = file.get_preprocessorDirectivesAndCommentsList();
+                          if( file_preproc_info != NULL )
+                          {
+                              std::map<std::string, ROSEAttributesList*> preproc_info_map =  file_preproc_info->getList();
+                              for(std::map<std::string, ROSEAttributesList*>::iterator it_map=preproc_info_map.begin(); 
+                                  it_map!=preproc_info_map.end() && !macro_replaced; it_map++)
+                              {
+                                  std::vector<PreprocessingInfo*> preproc_info_list = it_map->second->getList();
+                                  for(std::vector<PreprocessingInfo*>::iterator current_preproc_info=preproc_info_list.begin(); 
+                                      current_preproc_info!=preproc_info_list.end() && !macro_replaced; current_preproc_info++)
+                                  {
+                                      if((*current_preproc_info)->getTypeOfDirective() == PreprocessingInfo::CpreprocessorDefineDeclaration)
+                                      {
+                                          replace_expression_with_macro_value( (*current_preproc_info)->getString(), current_exp, macro_replaced);
                                       }
                                   }
                               }
                           }
                       }
                   }
+                  
                   expressions.pop_back();
               }
           }
@@ -382,36 +418,36 @@ namespace OmpSupport
       return NULL;
     SgOmpExpressionClause * result = NULL ;
     
-    SgGlobal* file = SageInterface::getGlobalScope( att->getNode() );
+    SgGlobal* global = SageInterface::getGlobalScope( att->getNode() );
     switch (clause_type)
     {
       case e_collapse:
         {
-          SgExpression* collapse_param = checkOmpExpressionClause( att->getExpression(e_collapse).second, file );
+          SgExpression* collapse_param = checkOmpExpressionClause( att->getExpression(e_collapse).second, global );
           result = new SgOmpCollapseClause(collapse_param);
           break;
         }
       case e_if:
         {
-          SgExpression* if_param = checkOmpExpressionClause( att->getExpression(e_if).second, file );
+          SgExpression* if_param = checkOmpExpressionClause( att->getExpression(e_if).second, global );
           result = new SgOmpIfClause(if_param);
           break;
         }
       case e_num_threads:
         {
-          SgExpression* num_threads_param = checkOmpExpressionClause( att->getExpression(e_num_threads).second, file );
+          SgExpression* num_threads_param = checkOmpExpressionClause( att->getExpression(e_num_threads).second, global );
           result = new SgOmpNumThreadsClause(num_threads_param);
           break;
         }
       case e_device:
         {
-          SgExpression* param = checkOmpExpressionClause( att->getExpression(e_device).second, file );
+          SgExpression* param = checkOmpExpressionClause( att->getExpression(e_device).second, global );
           result = new SgOmpDeviceClause(param);
           break;
         }
       case e_safelen:
         {
-          SgExpression* param = checkOmpExpressionClause( att->getExpression(e_safelen).second, file );
+          SgExpression* param = checkOmpExpressionClause( att->getExpression(e_safelen).second, global );
           result = new SgOmpDeviceClause(param);
           break;
         }
