@@ -480,22 +480,29 @@ public:
   }
 
   static BoolLattice is_eq(const ConstraintSet& constraints,
-			   const VariableId& v,
-			   int c) {
+			    const VariableId& v,
+			    int c) {
+    // var == c
     ListOfAValue l = constraints.getEqVarConst(v);
     for (ListOfAValue::iterator lval = l.begin(); lval != l.end(); ++lval) {
-      //cerr<<endl<<"ivar == "<<v.variableName()<<endl;
-      //cerr<<constraints.toString()<<endl;
       if (lval->isConstInt()) {
 	// A=1, B=2
-	//cerr<<(char)c<<" == "<<(char)(rersChar(lval->getIntValue()))<<"? "
-	//    <<(bool)(c == rersChar(lval->getIntValue()))<<endl;
 	return c == rersChar(lval->getIntValue());
       }
     }
+    // var != c
+    l = constraints.getNeqVarConst(v);
+    for (ListOfAValue::iterator lval = l.begin(); lval != l.end(); ++lval) {
+      if (lval->isConstInt()) {
+	return (c != rersChar(lval->getIntValue()));
+      }
+    }
+
     // In ConstIntLattice, Top means ALL values
-    return Top(); // Bool Top, however, means UNKNOWN
+    return Top();   // Bool Top, however, means UNKNOWN
   }
+
+
 
   // Implementation status: IN PROGRESS
   // NOTE: This is extremely taylored to the RERS challenge benchmarks.
@@ -537,7 +544,7 @@ public:
 		 ivar != input_vars.end();
 		 ++ivar) {
       // This will really only work with one input variable (that one may be aliased, though)
-      BoolLattice r1 = is_neq(constraints, *ivar, c);
+      BoolLattice r1 = !is_eq(constraints, *ivar, c);
       //cerr<<"r = "<<r<<endl;
       //cerr<<"r1 = "<<r1<<endl;
       assert(consistent(r, r1));
@@ -548,29 +555,6 @@ public:
       return succ_val;
     else
       return r;
-  }
-
-  static BoolLattice is_neq(const ConstraintSet& constraints,
-			    const VariableId& v,
-			    int c) {
-    // var == c
-    ListOfAValue l = constraints.getEqVarConst(v);
-    for (ListOfAValue::iterator lval = l.begin(); lval != l.end(); ++lval) {
-      if (lval->isConstInt()) {
-	// A=1, B=2
-	return c != rersChar(lval->getIntValue());
-      }
-    }
-    // var != c
-    l = constraints.getNeqVarConst(v);
-    for (ListOfAValue::iterator lval = l.begin(); lval != l.end(); ++lval) {
-      if (lval->isConstInt())
-	if (c == rersChar(lval->getIntValue()))
-	  return true;
-    }
-
-    // In ConstIntLattice, Top means ALL values
-    return Top();   // Bool Top, however, means UNKNOWN
   }
 
   // Implementation status: IN PROGRESS
@@ -1134,6 +1118,7 @@ UChecker::verify(const Formula& f)
       b = b && s.valstack.back();
     }
   }
+  cerr<<"Number of LTL states: "<<num_vertices(v.stg.g)<<endl;
   return b;
 }
 
