@@ -332,8 +332,8 @@ public:
       LTLVertex v = worklist.front(); worklist.pop();
 
       bool verbose = false;
-      //if (nargs==0 && (stg.g[v].estate->label() == 621))
-      // 	verbose = true;
+      if (nargs==1 && (stg.g[v].estate->label() == 634))
+       	verbose = true;
 
       if (verbose) cerr<<"\n** Visiting state "<<v<<","<<stg.g[v]<<endl;
       if (verbose) {
