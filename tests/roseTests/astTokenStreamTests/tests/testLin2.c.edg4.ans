@@ -1,0 +1,78 @@
+Unparsed: SgFunctionDeclaration int foo(){double A4;double MmP;double lP;double Lambdasun;A4 = Lambdasun - 0.1114041 * A4 - Lambdasun - 360.0 * floor((Lambdasun - 0.1114041 * A4 - Lambdasun) / 360.0);return 0;}
+          SgFunctionDeclaration SgFunctionParameterList SgFunctionDefinition SgBasicBlock SgVariableDeclaration SgInitializedName SgVariableDeclaration SgInitializedName SgVariableDeclaration SgInitializedName SgVariableDeclaration SgInitializedName SgExprStatement SgVarRefExp SgAssignOp SgVarRefExp SgSubtractOp SgDoubleVal 0.1114041 SgMultiplyOp SgVarRefExp SgSubtractOp SgVarRefExp SgSubtractOp SgDoubleVal 360.0 SgMultiplyOp SgFunctionRefExp SgFunctionCallExp SgVarRefExp SgSubtractOp SgDoubleVal 0.1114041 SgMultiplyOp SgVarRefExp SgSubtractOp SgVarRefExp SgDivideOp SgDoubleVal 360.0 SgExprListExp SgReturnStmt SgIntVal 0 
+Unparsed: SgFunctionParameterList 
+          SgFunctionParameterList 
+Unparsed: SgFunctionDefinition int foo(){double A4;double MmP;double lP;double Lambdasun;A4 = Lambdasun - 0.1114041 * A4 - Lambdasun - 360.0 * floor((Lambdasun - 0.1114041 * A4 - Lambdasun) / 360.0);return 0;}
+          SgFunctionDefinition SgBasicBlock SgVariableDeclaration SgInitializedName SgVariableDeclaration SgInitializedName SgVariableDeclaration SgInitializedName SgVariableDeclaration SgInitializedName SgExprStatement SgVarRefExp SgAssignOp SgVarRefExp SgSubtractOp SgDoubleVal 0.1114041 SgMultiplyOp SgVarRefExp SgSubtractOp SgVarRefExp SgSubtractOp SgDoubleVal 360.0 SgMultiplyOp SgFunctionRefExp SgFunctionCallExp SgVarRefExp SgSubtractOp SgDoubleVal 0.1114041 SgMultiplyOp SgVarRefExp SgSubtractOp SgVarRefExp SgDivideOp SgDoubleVal 360.0 SgExprListExp SgReturnStmt SgIntVal 0 
+Unparsed: SgBasicBlock {double A4;double MmP;double lP;double Lambdasun;A4 = Lambdasun - 0.1114041 * A4 - Lambdasun - 360.0 * floor((Lambdasun - 0.1114041 * A4 - Lambdasun) / 360.0);return 0;}
+          SgBasicBlock SgVariableDeclaration SgInitializedName SgVariableDeclaration SgInitializedName SgVariableDeclaration SgInitializedName SgVariableDeclaration SgInitializedName SgExprStatement SgVarRefExp SgAssignOp SgVarRefExp SgSubtractOp SgDoubleVal 0.1114041 SgMultiplyOp SgVarRefExp SgSubtractOp SgVarRefExp SgSubtractOp SgDoubleVal 360.0 SgMultiplyOp SgFunctionRefExp SgFunctionCallExp SgVarRefExp SgSubtractOp SgDoubleVal 0.1114041 SgMultiplyOp SgVarRefExp SgSubtractOp SgVarRefExp SgDivideOp SgDoubleVal 360.0 SgExprListExp SgReturnStmt SgIntVal 0 
+Unparsed: SgVariableDeclaration double A4;
+          SgVariableDeclaration SgInitializedName 
+Unparsed: SgInitializedName A4
+          SgInitializedName 
+Unparsed: SgVariableDeclaration double MmP;
+          SgVariableDeclaration SgInitializedName 
+Unparsed: SgInitializedName MmP
+          SgInitializedName 
+Unparsed: SgVariableDeclaration double lP;
+          SgVariableDeclaration SgInitializedName 
+Unparsed: SgInitializedName lP
+          SgInitializedName 
+Unparsed: SgVariableDeclaration double Lambdasun;
+          SgVariableDeclaration SgInitializedName 
+Unparsed: SgInitializedName Lambdasun
+          SgInitializedName 
+Unparsed: SgExprStatement A4 = Lambdasun - 0.1114041 * A4 - Lambdasun - 360.0 * floor((Lambdasun - 0.1114041 * A4 - Lambdasun) / 360.0);
+          SgExprStatement SgVarRefExp SgAssignOp SgVarRefExp SgSubtractOp SgDoubleVal 0.1114041 SgMultiplyOp SgVarRefExp SgSubtractOp SgVarRefExp SgSubtractOp SgDoubleVal 360.0 SgMultiplyOp SgFunctionRefExp SgFunctionCallExp SgVarRefExp SgSubtractOp SgDoubleVal 0.1114041 SgMultiplyOp SgVarRefExp SgSubtractOp SgVarRefExp SgDivideOp SgDoubleVal 360.0 SgExprListExp 
+Unparsed: SgAssignOp A4 = Lambdasun - 0.1114041 * A4 - Lambdasun - 360.0 * floor((Lambdasun - 0.1114041 * A4 - Lambdasun) / 360.0)
+          SgVarRefExp SgAssignOp SgVarRefExp SgSubtractOp SgDoubleVal 0.1114041 SgMultiplyOp SgVarRefExp SgSubtractOp SgVarRefExp SgSubtractOp SgDoubleVal 360.0 SgMultiplyOp SgFunctionRefExp SgFunctionCallExp SgVarRefExp SgSubtractOp SgDoubleVal 0.1114041 SgMultiplyOp SgVarRefExp SgSubtractOp SgVarRefExp SgDivideOp SgDoubleVal 360.0 SgExprListExp 
+Unparsed: SgVarRefExp A4
+          SgVarRefExp 
+Unparsed: SgSubtractOp Lambdasun - 0.1114041 * A4 - Lambdasun - 360.0 * floor((Lambdasun - 0.1114041 * A4 - Lambdasun) / 360.0)
+          SgVarRefExp SgSubtractOp SgDoubleVal 0.1114041 SgMultiplyOp SgVarRefExp SgSubtractOp SgVarRefExp SgSubtractOp SgDoubleVal 360.0 SgMultiplyOp SgFunctionRefExp SgFunctionCallExp SgVarRefExp SgSubtractOp SgDoubleVal 0.1114041 SgMultiplyOp SgVarRefExp SgSubtractOp SgVarRefExp SgDivideOp SgDoubleVal 360.0 SgExprListExp 
+Unparsed: SgSubtractOp Lambdasun - 0.1114041 * A4 - Lambdasun
+          SgVarRefExp SgSubtractOp SgDoubleVal 0.1114041 SgMultiplyOp SgVarRefExp SgSubtractOp SgVarRefExp 
+Unparsed: SgSubtractOp Lambdasun - 0.1114041 * A4
+          SgVarRefExp SgSubtractOp SgDoubleVal 0.1114041 SgMultiplyOp SgVarRefExp 
+Unparsed: SgVarRefExp Lambdasun
+          SgVarRefExp 
+Unparsed: SgMultiplyOp 0.1114041 * A4
+          SgDoubleVal 0.1114041 SgMultiplyOp SgVarRefExp 
+Unparsed: SgDoubleVal 0.1114041
+          SgDoubleVal 0.1114041 
+Unparsed: SgVarRefExp A4
+          SgVarRefExp 
+Unparsed: SgVarRefExp Lambdasun
+          SgVarRefExp 
+Unparsed: SgMultiplyOp 360.0 * floor((Lambdasun - 0.1114041 * A4 - Lambdasun) / 360.0)
+          SgDoubleVal 360.0 SgMultiplyOp SgFunctionRefExp SgFunctionCallExp SgVarRefExp SgSubtractOp SgDoubleVal 0.1114041 SgMultiplyOp SgVarRefExp SgSubtractOp SgVarRefExp SgDivideOp SgDoubleVal 360.0 SgExprListExp 
+Unparsed: SgDoubleVal 360.0
+          SgDoubleVal 360.0 
+Unparsed: SgFunctionCallExp floor((Lambdasun - 0.1114041 * A4 - Lambdasun) / 360.0)
+          SgFunctionCallExp SgFunctionRefExp SgVarRefExp SgSubtractOp SgDoubleVal 0.1114041 SgMultiplyOp SgVarRefExp SgSubtractOp SgVarRefExp SgDivideOp SgDoubleVal 360.0 SgExprListExp 
+Unparsed: SgFunctionRefExp floor
+          SgFunctionRefExp 
+Unparsed: SgExprListExp (Lambdasun - 0.1114041 * A4 - Lambdasun) / 360.0
+          SgVarRefExp SgSubtractOp SgDoubleVal 0.1114041 SgMultiplyOp SgVarRefExp SgSubtractOp SgVarRefExp SgDivideOp SgDoubleVal 360.0 SgExprListExp 
+Unparsed: SgDivideOp (Lambdasun - 0.1114041 * A4 - Lambdasun) / 360.0
+          SgVarRefExp SgSubtractOp SgDoubleVal 0.1114041 SgMultiplyOp SgVarRefExp SgSubtractOp SgVarRefExp SgDivideOp SgDoubleVal 360.0 
+Unparsed: SgSubtractOp (Lambdasun - 0.1114041 * A4 - Lambdasun)
+          SgVarRefExp SgSubtractOp SgDoubleVal 0.1114041 SgMultiplyOp SgVarRefExp SgSubtractOp SgVarRefExp 
+Unparsed: SgSubtractOp Lambdasun - 0.1114041 * A4
+          SgVarRefExp SgSubtractOp SgDoubleVal 0.1114041 SgMultiplyOp SgVarRefExp 
+Unparsed: SgVarRefExp Lambdasun
+          SgVarRefExp 
+Unparsed: SgMultiplyOp 0.1114041 * A4
+          SgDoubleVal 0.1114041 SgMultiplyOp SgVarRefExp 
+Unparsed: SgDoubleVal 0.1114041
+          SgDoubleVal 0.1114041 
+Unparsed: SgVarRefExp A4
+          SgVarRefExp 
+Unparsed: SgVarRefExp Lambdasun
+          SgVarRefExp 
+Unparsed: SgDoubleVal 360.0
+          SgDoubleVal 360.0 
+Unparsed: SgReturnStmt return 0;
+          SgReturnStmt SgIntVal 0 
+Unparsed: SgIntVal 0
+          SgIntVal 0 
