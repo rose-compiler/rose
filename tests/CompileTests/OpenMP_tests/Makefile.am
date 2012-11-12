@@ -59,6 +59,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	lockarray.c \
 	loop1.c \
 	lu_factorization.c \
+	macroIds.c \
 	master.c \
 	masterSingle.c \
 	matrix_vector.c \
