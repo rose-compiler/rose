@@ -880,21 +880,21 @@ additive_expr : multiplicative_expr
               ;
 
 multiplicative_expr : primary_expr
-                    | additive_expr '*' multiplicative_expr {
+                    | multiplicative_expr '*' additive_expr {
                         current_exp = SageBuilder::buildMultiplyOp(
                           (SgExpression*)($1),
                           (SgExpression*)($3)
                         ); 
                         $$ = current_exp; 
                       }
-                    | additive_expr '/' multiplicative_expr {
+                    | multiplicative_expr '/' additive_expr {
                         current_exp = SageBuilder::buildDivideOp(
                           (SgExpression*)($1),
                           (SgExpression*)($3)
                         ); 
                         $$ = current_exp; 
                       }
-                    | additive_expr '%' multiplicative_expr {
+                    | multiplicative_expr '%' additive_expr {
                         current_exp = SageBuilder::buildModOp(
                           (SgExpression*)($1),
                           (SgExpression*)($3)
