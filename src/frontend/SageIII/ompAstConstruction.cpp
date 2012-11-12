@@ -294,50 +294,55 @@ namespace OmpSupport
       }
   }
   
-  void replace_expression_with_macro_value( std::string define_macro, SgExpression* current_exp, bool& macro_replaced )
+  SgExpression* replace_expression_with_macro_value( std::string define_macro, SgExpression* old_exp, 
+                                                     bool& macro_replaced, omp_construct_enum clause_type )
   {
+      SgExpression* newExp = old_exp;
       // Parse the macro: we are only interested in macros with the form #define MACRO_NAME MACRO_VALUE
       size_t parenthesis = define_macro.find("(");
       if(parenthesis == string::npos)
       {   // Non function macro
-          unsigned int macro_name_init_pos = (unsigned int)(define_macro.find("define")) + 6;
-          while(macro_name_init_pos<define_macro.size() && define_macro[macro_name_init_pos]==' ')
-              macro_name_init_pos++;
-          unsigned int macro_name_end_pos = define_macro.find(" ", macro_name_init_pos);
-          std::string macro_name = define_macro.substr(macro_name_init_pos, macro_name_end_pos-macro_name_init_pos);
+          unsigned int macroNameInitPos = (unsigned int)(define_macro.find("define")) + 6;
+          while(macroNameInitPos<define_macro.size() && define_macro[macroNameInitPos]==' ')
+              macroNameInitPos++;
+          unsigned int macroNameEndPos = define_macro.find(" ", macroNameInitPos);
+          std::string macroName = define_macro.substr(macroNameInitPos, macroNameEndPos-macroNameInitPos);
                                   
-          if(macro_name == isSgVarRefExp(current_exp)->get_symbol()->get_name().getString())
+          if(macroName == isSgVarRefExp(old_exp)->get_symbol()->get_name().getString())
           {   // Clause is defined in a macro
               size_t comma = define_macro.find(",");
               if(comma == string::npos);       // Macros like "#define MACRO_NAME VALUE1, VALUE2" are not accepted
               {   // We create here an expression with the value of the clause defined in the macro
-                  unsigned int macro_value_init_pos = macro_name_end_pos + 1;
-                  while(macro_value_init_pos<define_macro.size() && define_macro[macro_value_init_pos]==' ')
-                      macro_value_init_pos++;
-                  unsigned int macro_value_end_pos = macro_value_init_pos; 
-                  while(macro_value_end_pos<define_macro.size() && 
-                        define_macro[macro_value_end_pos]!=' ' && define_macro[macro_value_end_pos]!='\n')
-                      macro_value_end_pos++;        
-                  std::string macro_value = define_macro.substr(macro_value_init_pos, macro_value_end_pos-macro_value_init_pos);
+                  unsigned int macroValueInitPos = macroNameEndPos + 1;
+                  while(macroValueInitPos<define_macro.size() && define_macro[macroValueInitPos]==' ')
+                      macroValueInitPos++;
+                  unsigned int macroValueEndPos = macroValueInitPos; 
+                  while(macroValueEndPos<define_macro.size() && 
+                        define_macro[macroValueEndPos]!=' ' && define_macro[macroValueEndPos]!='\n')
+                      macroValueEndPos++;        
+                  std::string macroValue = define_macro.substr(macroValueInitPos, macroValueEndPos-macroValueInitPos);
                   
                   // Check whether the value is a valid integer
-                  std::string::const_iterator it = macro_value.begin();
-                  while (it != macro_value.end() && std::isdigit(*it)) 
+                  std::string::const_iterator it = macroValue.begin();
+                  while (it != macroValue.end() && std::isdigit(*it)) 
                       ++it;
-                  ROSE_ASSERT(!macro_value.empty() && it == macro_value.end());
+                  ROSE_ASSERT(!macroValue.empty() && it == macroValue.end());
                   
-                  int macro_int_value = atoi(macro_value.c_str());
-                  SageInterface::replaceExpression(current_exp, buildIntVal(macro_int_value));
+                  newExp = buildIntVal(atoi(macroValue.c_str()));
+                  if(!isSgPragmaDeclaration(old_exp->get_parent()))
+                      replaceExpression(old_exp, newExp);
                   macro_replaced = true;
               }
           }
       }
+      return newExp;
   }
   
-  SgExpression* checkOmpExpressionClause( SgExpression* clause_expression, SgGlobal* global )
+  SgExpression* checkOmpExpressionClause( SgExpression* clause_expression, SgGlobal* global, omp_construct_enum clause_type )
   {
+      SgExpression* newExp = clause_expression;
       ROSE_ASSERT(clause_expression != NULL);
-      SgExpression* clause_value = clause_expression;
+      bool returnNewExpression = false;
       if( isSgTypeUnknown( clause_expression->get_type( ) ) )
       {
           SgVarRefExpVisitor v;
@@ -345,51 +350,57 @@ namespace OmpSupport
           std::vector<SgExpression*> expressions = v.get_expressions();
           if( !expressions.empty() )
           {
-              bool macro_replaced;
+              if( expressions.size() == 1 )
+              {   // create the new expression and return it
+                  // otherwise, replace the expression and return the original, which is now modified 
+                  returnNewExpression = true;
+              }
+              
+              bool macroReplaced;
               SgDeclarationStatementPtrList& declarations = global->get_declarations();
               while( !expressions.empty() )
               {
-                  macro_replaced = false;
-                  SgExpression* current_exp = expressions.back();
-                  for(SgDeclarationStatementPtrList::iterator it = declarations.begin(); it != declarations.end() && !macro_replaced; ++it) 
+                  macroReplaced = false;
+                  SgExpression* oldExp = expressions.back();
+                  for(SgDeclarationStatementPtrList::iterator declIt = declarations.begin(); declIt != declarations.end() && !macroReplaced; ++declIt) 
                   {
-                      SgDeclarationStatement * declaration = *it;
-                      AttachedPreprocessingInfoType * preproc_info = declaration->getAttachedPreprocessingInfo();
-                      if( preproc_info != NULL )
+                      SgDeclarationStatement * declaration = *declIt;
+                      AttachedPreprocessingInfoType * preprocInfo = declaration->getAttachedPreprocessingInfo();
+                      if( preprocInfo != NULL )
                       {   // There is preprocessed info attached to the current node
-                          for(AttachedPreprocessingInfoType::iterator current_preproc_info = preproc_info->begin();
-                              current_preproc_info != preproc_info->end(); current_preproc_info++)
+                          for(AttachedPreprocessingInfoType::iterator infoIt = preprocInfo->begin(); 
+                              infoIt != preprocInfo->end() && !macroReplaced; infoIt++)
                           {
-                              if((*current_preproc_info)->getTypeOfDirective() == PreprocessingInfo::CpreprocessorDefineDeclaration)
+                              if((*infoIt)->getTypeOfDirective() == PreprocessingInfo::CpreprocessorDefineDeclaration)
                               {
-                                  replace_expression_with_macro_value( (*current_preproc_info)->getString(), current_exp, macro_replaced );
+                                  newExp = replace_expression_with_macro_value( (*infoIt)->getString(), oldExp, macroReplaced, clause_type );
                               }
                           }
                       }
                   }
                   
                   // When a macro is defined in a header without any statement, the preprocessed information is attached to the SgFile
-                  if(!macro_replaced)
+                  if(!macroReplaced)
                   {
                       SgProject* project = SageInterface::getProject();
-                      int n_files = project->numberOfFiles();
-                      for(int it_f=0; it_f<n_files && !macro_replaced; it_f++)
+                      int nFiles = project->numberOfFiles();
+                      for(int fileIt=0; fileIt<nFiles && !macroReplaced; fileIt++)
                       {
-                          SgFile& file = project->get_file(it_f);
-                          ROSEAttributesListContainerPtr file_preproc_info = file.get_preprocessorDirectivesAndCommentsList();
-                          if( file_preproc_info != NULL )
+                          SgFile& file = project->get_file(fileIt);
+                          ROSEAttributesListContainerPtr filePreprocInfo = file.get_preprocessorDirectivesAndCommentsList();
+                          if( filePreprocInfo != NULL )
                           {
-                              std::map<std::string, ROSEAttributesList*> preproc_info_map =  file_preproc_info->getList();
-                              for(std::map<std::string, ROSEAttributesList*>::iterator it_map=preproc_info_map.begin(); 
-                                  it_map!=preproc_info_map.end() && !macro_replaced; it_map++)
+                              std::map<std::string, ROSEAttributesList*> preprocInfoMap =  filePreprocInfo->getList();
+                              for(std::map<std::string, ROSEAttributesList*>::iterator mapIt=preprocInfoMap.begin(); 
+                                  mapIt!=preprocInfoMap.end() && !macroReplaced; mapIt++)
                               {
-                                  std::vector<PreprocessingInfo*> preproc_info_list = it_map->second->getList();
-                                  for(std::vector<PreprocessingInfo*>::iterator current_preproc_info=preproc_info_list.begin(); 
-                                      current_preproc_info!=preproc_info_list.end() && !macro_replaced; current_preproc_info++)
+                                  std::vector<PreprocessingInfo*> preprocInfoList = mapIt->second->getList();
+                                  for(std::vector<PreprocessingInfo*>::iterator infoIt=preprocInfoList.begin(); 
+                                      infoIt!=preprocInfoList.end() && !macroReplaced; infoIt++)
                                   {
-                                      if((*current_preproc_info)->getTypeOfDirective() == PreprocessingInfo::CpreprocessorDefineDeclaration)
+                                      if((*infoIt)->getTypeOfDirective() == PreprocessingInfo::CpreprocessorDefineDeclaration)
                                       {
-                                          replace_expression_with_macro_value( (*current_preproc_info)->getString(), current_exp, macro_replaced);
+                                          newExp = replace_expression_with_macro_value( (*infoIt)->getString(), oldExp, macroReplaced, clause_type );
                                       }
                                   }
                               }
@@ -407,7 +418,7 @@ namespace OmpSupport
           }
       }
       
-      return clause_value;
+      return (returnNewExpression ? newExp : clause_expression);
   }
 
   //Build if clause
@@ -423,31 +434,31 @@ namespace OmpSupport
     {
       case e_collapse:
         {
-          SgExpression* collapse_param = checkOmpExpressionClause( att->getExpression(e_collapse).second, global );
-          result = new SgOmpCollapseClause(collapse_param);
+          SgExpression* collapseParam = checkOmpExpressionClause( att->getExpression(e_collapse).second, global, e_collapse );
+          result = new SgOmpCollapseClause(collapseParam);
           break;
         }
       case e_if:
         {
-          SgExpression* if_param = checkOmpExpressionClause( att->getExpression(e_if).second, global );
-          result = new SgOmpIfClause(if_param);
+          SgExpression* ifParam = checkOmpExpressionClause( att->getExpression(e_if).second, global, e_if );
+          result = new SgOmpIfClause(ifParam);
           break;
         }
       case e_num_threads:
         {
-          SgExpression* num_threads_param = checkOmpExpressionClause( att->getExpression(e_num_threads).second, global );
-          result = new SgOmpNumThreadsClause(num_threads_param);
+          SgExpression* numThreadsParam = checkOmpExpressionClause( att->getExpression(e_num_threads).second, global, e_num_threads );
+          result = new SgOmpNumThreadsClause(numThreadsParam);
           break;
         }
       case e_device:
         {
-          SgExpression* param = checkOmpExpressionClause( att->getExpression(e_device).second, global );
+          SgExpression* param = checkOmpExpressionClause( att->getExpression(e_device).second, global, e_device );
           result = new SgOmpDeviceClause(param);
           break;
         }
       case e_safelen:
         {
-          SgExpression* param = checkOmpExpressionClause( att->getExpression(e_safelen).second, global );
+          SgExpression* param = checkOmpExpressionClause( att->getExpression(e_safelen).second, global, e_safelen );
           result = new SgOmpDeviceClause(param);
           break;
         }
@@ -879,7 +890,7 @@ namespace OmpSupport
   }
 
   //! Get the affected structured block from an OmpAttribute
-  SgStatement* getOpenMPBlockFromOmpAttribte (OmpAttribute* att)
+  SgStatement* getOpenMPBlockFromOmpAttribute (OmpAttribute* att)
   {
     SgStatement* result = NULL;
     ROSE_ASSERT(att != NULL);
@@ -993,8 +1004,7 @@ namespace OmpSupport
   // handle body and optional clauses for it
   SgOmpBodyStatement * buildOmpBodyStatement(OmpAttribute* att)
   {
-    SgStatement* body = getOpenMPBlockFromOmpAttribte(att);
-    ROSE_ASSERT (body != NULL);
+    SgStatement* body = getOpenMPBlockFromOmpAttribute(att);
     //Must remove the body from its previous parent first before attaching it 
     //to the new parent statement.
     // We want to keep its preprocessing information during this relocation
@@ -1131,7 +1141,7 @@ namespace OmpSupport
   SgOmpParallelStatement* buildOmpParallelStatementFromCombinedDirectives(OmpAttribute* att)
   {
     ROSE_ASSERT(att != NULL);
-    SgStatement* body = getOpenMPBlockFromOmpAttribte(att);
+    SgStatement* body = getOpenMPBlockFromOmpAttribute(att);
     //Must remove the body from its previous parent
     removeStatement(body);
     ROSE_ASSERT(body != NULL);
