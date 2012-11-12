@@ -198,6 +198,7 @@ Transition TransitionGraph::getStartTransition() {
 	if((*i).source->label()==_startLabel)
 	  return *i;
   }
+  throw "TransitionGraph: no start transition found.";
 }
 
 string EStateSet::estateIdString(const EState* estate) const {
@@ -341,7 +342,7 @@ long TransitionGraph::removeDuplicates() {
 
 string TransitionGraph::toString() const {
   string s;
-  int cnt=0;
+  size_t cnt=0;
   for(TransitionGraph::const_iterator i=begin();i!=end();++i) {
 #if 0
 	stringstream ss;

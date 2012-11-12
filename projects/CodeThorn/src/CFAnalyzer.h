@@ -13,7 +13,7 @@
 
 namespace CodeThorn {
 
-enum EdgeType { EDGE_UNKNOWN, EDGE_FORWARD, EDGE_BACKWARD, EDGE_TRUE, EDGE_FALSE, EDGE_LOCAL, EDGE_CALL, EDGE_CALLRETURN, EDGE_EXTERNAL };
+  enum EdgeType { EDGE_UNKNOWN=0, EDGE_FORWARD, EDGE_BACKWARD, EDGE_TRUE, EDGE_FALSE, EDGE_LOCAL, EDGE_CALL, EDGE_CALLRETURN, EDGE_EXTERNAL, EDGE_PATH };
 
 class Edge {
  public:
@@ -32,8 +32,10 @@ class Edge {
   Label target;
   bool isType(EdgeType et) const;
   void addType(EdgeType et);
+  void addTypes(set<EdgeType> ets);
   void removeType(EdgeType et);
   set<EdgeType> types() const;
+  long typesCode() const;
   string color() const;
   string dotEdgeStyle() const;
   long hash() const;

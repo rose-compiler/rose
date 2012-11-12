@@ -128,7 +128,6 @@ string SgNodeHelper::symbolToString(SgSymbol* symbol) {
 
 list<SgGlobal*> SgNodeHelper::listOfSgGlobal(SgProject* project) {
   list<SgGlobal*> globalList;
-  SgFileList* fileList=project->get_fileList_ptr();
   int numFiles=project->numberOfFiles();
   for(int i=0;i<numFiles;++i) {
 	SgFile* file=(*project)[i];
@@ -229,7 +228,7 @@ SgNodeHelper::getSymbolOfInitializedName(SgInitializedName* initName) {
 }
 
 string SgNodeHelper::uniqueLongVariableName(SgNode* node) {
-  SgSymbol* sym;
+  SgSymbol* sym=0;
   bool found=false;
   if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(node)) {
 	sym=SgNodeHelper::getSymbolOfVariableDeclaration(varDecl);
@@ -240,7 +239,8 @@ string SgNodeHelper::uniqueLongVariableName(SgNode* node) {
 	found=true;
   }
   if(found) {
-	if(sym==0) return "$error:symbol==0$";
+	if(sym==0)
+	  throw "SgNodeHelper::uniqueLongVariableName: sym==0.";
 	string name=SgNodeHelper::symbolToString(sym);
 	// we search from the SgSymbol (which is somewhere found in the AST). Even if it is in the symbol table
 	// we will still find the right function!
@@ -282,9 +282,11 @@ int SgNodeHelper::scopeNestingLevel(SgNode* node) {
 }
 
 bool SgNodeHelper::isForwardFunctionDeclaration(SgNode* node) {
-  if(SgFunctionDeclaration* funDecl=isSgFunctionDeclaration(node))
-	if(SgFunctionDefinition* funDef=funDecl->get_definition())
+  if(SgFunctionDeclaration* funDecl=isSgFunctionDeclaration(node)) {
+	SgFunctionDefinition* funDef=funDecl->get_definition();
+	if(funDef)
 	  return false;
+  }
   return true;
 }
 
@@ -319,6 +321,7 @@ SgFunctionDefinition* SgNodeHelper::determineFunctionDefinition(SgFunctionCallEx
 	return 0;
   }
   assert(funDef!=0);
+  return funDef;
 }
 
 string SgNodeHelper::getLabelName(SgNode* node) {
@@ -543,7 +546,7 @@ SgNode* SgNodeHelper::getLastOfBlock(SgNode* node) {
 
 string SgNodeHelper::doubleQuotedEscapedString(string s1) {
   string s2;
-  for(int i=0;i<s1.size();++i) {
+  for(size_t i=0;i<s1.size();++i) {
 	if(s1[i]=='"')
 	  s2+="\\\"";
 	else
@@ -562,7 +565,7 @@ string SgNodeHelper::nodeToString(SgNode* node) {
 }
 
 string SgNodeHelper::getFunctionName(SgNode* node) {
-  SgFunctionDeclaration* fundecl;
+  SgFunctionDeclaration* fundecl=0;
   if(SgFunctionDefinition* fundef=isSgFunctionDefinition(node)) {
 	node=fundef->get_declaration();
   }

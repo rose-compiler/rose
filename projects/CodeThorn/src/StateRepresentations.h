@@ -113,15 +113,14 @@ class EState {
   //void setIO(InputOutput io) { io=io;} TODO: investigate
   const PState* pstate() const { return _pstate; }
   const ConstraintSet* constraints() const { return _constraints; }
-
-
-  InputOutput io;
   InputOutput::OpType ioOp(Labeler*) const;
 
  private:
   Label _label;
   const PState* _pstate;
   const ConstraintSet* _constraints;
+ public:
+  InputOutput io;
 };
 
 // define order for PState elements (necessary for PStateSet)
@@ -229,8 +228,8 @@ class TransitionGraph : public HSet<Transition,TransitionHashFun> {
   TransitionPtrSet outEdges(const EState* estate);
 
  private:
-  int _numberOfNodes; // not used yet
   Label _startLabel;
+  int _numberOfNodes; // not used yet
 };
 
 } // namespace CodeThorn

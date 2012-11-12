@@ -13,7 +13,7 @@ using namespace CodeThorn;
 Edge::Edge():source(0),target(0){
 }
 Edge::Edge(Label source0,Label target0):source(source0),target(target0){
-  // _types is an empty set by default 
+  // _types is an empty set by default (we may want to use EDGE_UNKNOWN instead)
 }
 Edge::Edge(Label source0,EdgeType et,Label target0):source(source0),target(target0){
   _types.insert(et);
@@ -31,39 +31,37 @@ bool Edge::isType(EdgeType et) const {
 }
 
 set<EdgeType> Edge::types() const {
-  set<EdgeType> tmp_types;
-  if(_types.size()==0) {
-	tmp_types.insert(EDGE_UNKNOWN);
-	return tmp_types;
-  } else {
-	return _types;
-  }
-}
-
-// one-to-one hash, provided bitsof(long)>=max_enum(_types)
-long Edge::hash() const {
-  long h=0;
-  for(set<EdgeType>::iterator i=_types.begin();i!=_types.end();++i) {
-	h+=(1<<*i);
-  }
+  return _types;
 }
 
 void Edge::addType(EdgeType et) {
   // perform some consistency checks
   bool ok=true;
-  switch(et) {
-  case EDGE_FORWARD: if(isType(EDGE_BACKWARD)) ok=false;break;
-  case EDGE_BACKWARD: if(isType(EDGE_FORWARD)) ok=false;break;
-  case EDGE_TRUE: if(isType(EDGE_FALSE)) ok=false;break;
-  case EDGE_FALSE: if(isType(EDGE_TRUE)) ok=false;break;
-  default:
-	;// anything else is ok
+  // for EDGE_PATH we allow any combination, otherwise we check
+  if(!isType(EDGE_PATH) && !et==EDGE_PATH) {
+	switch(et) {
+	case EDGE_FORWARD: if(isType(EDGE_BACKWARD)) ok=false;break;
+	case EDGE_BACKWARD: if(isType(EDGE_FORWARD)) ok=false;break;
+	case EDGE_TRUE: if(isType(EDGE_FALSE)) ok=false;break;
+	case EDGE_FALSE: if(isType(EDGE_TRUE)) ok=false;break;
+	default:
+	  ;// anything else is ok
+	}
   }
   if(ok)
 	_types.insert(et);
   else {
 	cerr << "Error: inconsistent icfg-edge annotation:" << toString() <<endl;
 	exit(1);
+  }
+}
+
+void Edge::addTypes(set<EdgeType> ets) {
+  if(ets.find(EDGE_PATH)!=ets.end()) {
+	addType(EDGE_PATH);
+  }
+  for(set<EdgeType>::iterator i=ets.begin();i!=ets.end();++i) {
+	addType(*i);
   }
 }
 
@@ -277,6 +275,9 @@ Label CFAnalyzer::initialLabel(SgNode* node) {
   if(SgNodeHelper::Pattern::matchFunctionCall(node))
 	return labeler->getLabel(node);
 
+  if(!labeler->isLabelRelevantNode(node)) {
+	cerr << "Error: not label relevant node "<<node->sage_class_name()<<endl;
+  }
   assert(labeler->isLabelRelevantNode(node));
   switch (node->variantT()) {
   case V_SgFunctionDeclaration:
@@ -410,16 +411,41 @@ LabelSet CFAnalyzer::finalLabels(SgNode* node) {
 }
 
 bool CodeThorn::operator==(const Edge& e1, const Edge& e2) {
-  return e1.source==e2.source && e1.types()==e2.types() && e1.target==e2.target;
+  assert(&e1);
+  assert(&e2);
+  return e1.source==e2.source && e1.typesCode()==e2.typesCode() && e1.target==e2.target;
 }
 bool CodeThorn::operator!=(const Edge& e1, const Edge& e2) {
   return !(e1==e2);
 }
 bool CodeThorn::operator<(const Edge& e1, const Edge& e2) {
+  assert(&e1);
+  assert(&e2);
+  //cout<<"DEBUG: comparing edges: typesCode<("<<e1.typesCode()<<","<<e2.typesCode()<<")"<<endl;
   if(e1.source!=e2.source)
 	return e1.source<e2.source;
-  return e1.target<e2.target;
+  if(e1.target!=e2.target)
+	return e1.target<e2.target;
+  return e1.typesCode()<e2.typesCode();
 }
+
+long Edge::typesCode() const {
+  long h=1;
+  //cout << "DEBUG: Edge::typesCode START h=";
+  for(set<EdgeType>::iterator i=_types.begin();i!=_types.end();++i) {
+	h+=(1<<*i);
+	//cout <<"("<<*i<<","<<h<<")";
+  }
+  //cout << "END "<<endl;
+  return h;
+}
+
+long Edge::hash() const {
+  //cout << "DEBUG: hash():";
+  return typesCode();
+}
+
+
 
 Flow::Flow():_dotOptionDisplayLabel(true),_dotOptionDisplayStmt(true){
 }
@@ -672,7 +698,7 @@ Flow CFAnalyzer::flow(SgNode* node) {
   Flow edgeSet;
   if(node==0)
 	return edgeSet;
-  if(SgFunctionDeclaration* funDecl=isSgFunctionDeclaration(node)) {
+  if(isSgFunctionDeclaration(node)) {
 	return edgeSet;
   }
 
@@ -692,7 +718,7 @@ Flow CFAnalyzer::flow(SgNode* node) {
   }
   
   // special case of function call pattern
-  if(SgNode* fcall=SgNodeHelper::Pattern::matchFunctionCall(node)) {
+  if(SgNodeHelper::Pattern::matchFunctionCall(node)) {
 	// we add the 'local' edge when intraInter flow is computed (it may also be an 'external' edge)
 #if 0
 	Label callLabel=labeler->functionCallLabel(node);
@@ -701,7 +727,7 @@ Flow CFAnalyzer::flow(SgNode* node) {
 #endif
 	// add special case edge for callReturn to returnNode SgReturnStmt(SgFunctionCallExp) 
 	// edge: SgFunctionCallExp.callReturn->init(SgReturnStmt)
-	if(SgNode* fcall2=SgNodeHelper::Pattern::matchReturnStmtFunctionCallExp(node)) {
+	if(SgNodeHelper::Pattern::matchReturnStmtFunctionCallExp(node)) {
 	  Label callReturnLabel=labeler->functionCallReturnLabel(node);
 	  Label returnStmtLabel=labeler->functionCallReturnLabel(node)+1;
 	  edgeSet.insert(Edge(callReturnLabel,EDGE_FORWARD,returnStmtLabel));

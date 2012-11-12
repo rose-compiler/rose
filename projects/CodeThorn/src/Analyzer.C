@@ -101,7 +101,7 @@ set<const EState*> Analyzer::nonLTLRelevantEStates() {
 	if(!isLTLRelevantLabel((*i)->label())) {
 	  res.insert(*i);
 	  if(!estateSet.estateId(*i)==NO_ESTATE) {
-		cerr<< "WARNING: estateId: "<<estateSet.estateId(*i)<<endl;
+		cerr<< "WARNING: no estate :estateId="<<estateSet.estateId(*i)<<endl;
 	  }
 	}
   }
@@ -123,7 +123,7 @@ bool Analyzer::isEmptyWorkList() {
   bool res;
   #pragma omp critical
   {
-  bool res=estateWorkList.size()==0;
+	res=estateWorkList.size()==0;
   }
   return res;
 }
@@ -162,12 +162,12 @@ const EState* Analyzer::takeFromWorkList() {
 #define PARALLELIZE_BRANCHES
 
 void Analyzer::runSolver1() {
-  int Statusprint=_displayDiff;
-  long prevStateSetSize=_displayDiff+1; // force immediate report at start
+  size_t prevStateSetSize=0; // force immediate report at start
   omp_set_num_threads(_numberOfThreadsToUse);
   omp_set_dynamic(1);
   int threadNum;
   vector<const EState*> workVector(_numberOfThreadsToUse);
+  printStatusMessage(true);
   while(1) {
 	int workers;
 	for(workers=0;workers<_numberOfThreadsToUse;++workers) {
@@ -177,7 +177,7 @@ void Analyzer::runSolver1() {
 	if(workers==0)
 	  break; // we are done
 	
-	if((_displayDiff && (estateSet.size()-prevStateSetSize)>_displayDiff)) {
+	if(_displayDiff && (estateSet.size()>(prevStateSetSize+_displayDiff))) {
 	  printStatusMessage(true);
 	  prevStateSetSize=estateSet.size();
 	}
@@ -216,21 +216,22 @@ void Analyzer::runSolver1() {
 			  nesListIter!=newEStateList.end();
 			  ++nesListIter) {
 			EState newEState=*nesListIter;
-			if(newEState.label()!=NO_ESTATE && (!newEState.constraints()->disequalityExists()) &&(!isFailedAssertEState(&newEState))) {
+			assert(newEState.label()!=Labeler::NO_LABEL);
+			if((!newEState.constraints()->disequalityExists()) &&(!isFailedAssertEState(&newEState))) {
 			  HSetMaintainer<EState,EStateHashFun>::ProcessingResult pres=process(newEState);
 			  const EState* newEStatePtr=pres.second;
 			  if(pres.first==true)
 				addToWorkList(newEStatePtr);			
 			  recordTransition(currentEStatePtr,e,newEStatePtr);
 			}
-			if(newEState.label()!=NO_ESTATE && (!newEState.constraints()->disequalityExists()) && (isFailedAssertEState(&newEState))) {
+			if((!newEState.constraints()->disequalityExists()) && (isFailedAssertEState(&newEState))) {
 			  // failed-assert end-state: do not add to work list but do add it to the transition graph
 			  const EState* newEStatePtr;
 			  newEStatePtr=processNewOrExisting(newEState);
 			  recordTransition(currentEStatePtr,e,newEStatePtr);		
 			  
 			  if(boolOptions["report-failed-assert"]) {
-#pragma omp cricitcal
+#pragma omp critical
 				{
 				  cout << "REPORT: failed-assert: "<<newEStatePtr->toString()<<endl;
 				}
@@ -242,7 +243,7 @@ void Analyzer::runSolver1() {
 				name=name.substr(6,name.size()-6);
 				std::ofstream fout;
 				// csv_assert_live_file is the member-variable of analyzer
-#pragma omp cricitcal
+#pragma omp critical
 				{
 				  fout.open(_csv_assert_live_file.c_str(),ios::app);    // open file for appending
 				  assert (!fout.fail( ));
@@ -252,10 +253,6 @@ void Analyzer::runSolver1() {
 				  fout.close(); 
 				}
 			  } // if
-			}
-			if(newEState.label()==NO_STATE) {
-			  //cerr << "DEBUG: NO_ESTATE (transition not recorded)"<<endl;
-			  //cerr << "INFO: found final state."<<endl;
 			}
 		  } // end of loop on transfer function return-estates
 #ifdef PARALLELIZE_BRANCHES
@@ -490,6 +487,10 @@ EStateSet::ProcessingResult Analyzer::process(Label label, PState pstate, Constr
   throw "Error: Analyzer::processNewOrExisting: programmatic error.";
 }
 
+list<EState> elistify() {
+  list<EState> resList;
+  return resList;
+}
 list<EState> elistify(EState res) {
   //assert(res.state);
   //assert(res.constraints());
@@ -502,17 +503,13 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
   assert(edge.source==estate->label());
   // we do not pass information on the local edge
   if(edge.isType(EDGE_LOCAL)) {
-	EState noEState;
-	noEState.setLabel(NO_ESTATE);
-	// TODO: investigate: we could also return an empty list here
-	return elistify(noEState);
+	return elistify();
   }
   EState currentEState=*estate;
   PState currentPState=*currentEState.pstate();
   ConstraintSet cset=*currentEState.constraints();
   // 1. we handle the edge as outgoing edge
   SgNode* nextNodeToAnalyze1=cfanalyzer->getNode(edge.source);
-  SgNode* targetNode=cfanalyzer->getNode(edge.target);
   assert(nextNodeToAnalyze1);
   // handle assert(0)
   if(SgNodeHelper::Pattern::matchAssertExpr(nextNodeToAnalyze1)) {
@@ -548,7 +545,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
 	  // pattern: call: f(x), callee: f(int y) => constraints of x are propagated to y
 	  VariableId actualParameterVarId;
 	  assert(actualParameterExpr);
-	  if(bool isActualParamterVar=ExprAnalyzer::variable(actualParameterExpr,actualParameterVarId)) {
+	  if(ExprAnalyzer::variable(actualParameterExpr,actualParameterVarId)) {
 		// propagate constraint from actualParamterVarId to formalParameterVarId
 		cset.addAssignEqVarVar(formalParameterVarId,actualParameterVarId);
 	  }
@@ -733,7 +730,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
   }
 
   if(isSgExprStatement(nextNodeToAnalyze1) || SgNodeHelper::isForIncExpr(nextNodeToAnalyze1)) {
-	SgNode* nextNodeToAnalyze2;
+	SgNode* nextNodeToAnalyze2=0;
 	if(isSgExprStatement(nextNodeToAnalyze1))
 	  nextNodeToAnalyze2=SgNodeHelper::getExprStmtChild(nextNodeToAnalyze1);
 	if(SgNodeHelper::isForIncExpr(nextNodeToAnalyze1)) {
@@ -763,13 +760,10 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
 			ConstraintSet s2=evalResult.exprConstraints;
 			newCSet=s1+s2;
 		  }
-		} else {
-		  // we determined not to be on an execution path, therefore return EState with NO_ESTATE
-		  newLabel=NO_ESTATE;
-		}
-		// build LIST of results of newEState
-		if(newLabel!=NO_ESTATE)
 		  newEStateList.push_back(createEState(newLabel,newPState,newCSet));
+		} else {
+		  // we determined not to be on an execution path, therefore do nothing (do not add any result to resultlist)
+		}
 	  }
 	  // return LIST
 	  return newEStateList;
@@ -946,7 +940,7 @@ PState Analyzer::analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode
 
   // TODO: -1 is OK, but not -(-1); yet.
   if(SgMinusOp* minusOp=isSgMinusOp(rhs)) {
-	if(SgIntVal* intValNode=isSgIntVal(SgNodeHelper::getFirstChild(rhs))) {
+	if(SgIntVal* intValNode=isSgIntVal(SgNodeHelper::getFirstChild(minusOp))) {
 	  // found integer on rhs
 	  rhsIntVal=-((int)intValNode->get_value());
 	  isRhsIntVal=true;
@@ -962,7 +956,7 @@ PState Analyzer::analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode
   // allow single var on rhs
   if(SgVarRefExp* varRefExp=isSgVarRefExp(rhs)) {
 	VariableId rhsVarId;
-	isRhsVar=ExprAnalyzer::variable(rhs,rhsVarId);
+	isRhsVar=ExprAnalyzer::variable(varRefExp,rhsVarId);
 	assert(isRhsVar);
 	// x=y: constraint propagation for var1=var2 assignments
 	// we do not perform this operation on assignments yet, as the constraint set could become inconsistent.
@@ -1025,7 +1019,7 @@ void Analyzer::generateAstNodeInfo(SgNode* node) {
 	assert(*i);
 	AstNodeInfo* attr=dynamic_cast<AstNodeInfo*>((*i)->getAttribute("info"));
 	if(attr) {
-	  if(cfanalyzer->getLabel(*i)>0) {
+	  if(cfanalyzer->getLabel(*i)!=Labeler::NO_LABEL) {
 		attr->setLabel(cfanalyzer->getLabel(*i));
 		attr->setInitialLabel(cfanalyzer->initialLabel(*i));
 		attr->setFinalLabels(cfanalyzer->finalLabels(*i));

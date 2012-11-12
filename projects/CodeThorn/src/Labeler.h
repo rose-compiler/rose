@@ -19,7 +19,7 @@ using namespace std;
 
 namespace CodeThorn {
 
-typedef signed int Label;
+typedef size_t Label;
 
 class LabelSet : public set<Label> {
  public:
@@ -51,7 +51,7 @@ LabelSet& operator+=(LabelSet& s2) {
 
 class Labeler {
  public:
-  static const int NO_LABEL=-1;
+  static const Label NO_LABEL=-1;
 
   Labeler(SgNode* start);
   static string labelToString(Label lab);

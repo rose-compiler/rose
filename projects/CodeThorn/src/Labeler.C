@@ -88,7 +88,7 @@ string Labeler::labelToString(Label lab) {
 */
 Label Labeler::getLabel(SgNode* node) {
   //std::cout << "MappingSize:"<<labelNodeMapping.size()<<std::endl;
-  for(int i=0;i<labelNodeMapping.size();++i) {
+  for(Label i=0;i<labelNodeMapping.size();++i) {
 	if(labelNodeMapping[i]==node) {
 	  return i;
 	}
@@ -203,7 +203,7 @@ SgNode*	Labeler::getNode(Label label) {
 
 std::string Labeler::toString() {
   std::stringstream ss;
-  for(int i=0;i<labelNodeMapping.size();++i) {
+  for(Label i=0;i<labelNodeMapping.size();++i) {
 	ss << i<< ":"<<labelNodeMapping[i]->sage_class_name()<<endl;
   }
   return ss.str();

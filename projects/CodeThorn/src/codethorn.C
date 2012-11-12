@@ -31,12 +31,13 @@ bool CodeThornLanguageRestrictor::checkIfAstIsAllowed(SgNode* node) {
 	if(!isAllowedAstNode(*i)) {
 	  cerr << "Language-Restrictor: excluded language construct found: " << (*i)->sage_class_name() << endl;
 	  // report first error and return
-	  switch((*i)->variantT()) {
-	  V_SgContinueStmt: cerr << "Error info: cfg construction for continue-statement not supported yet."<<endl; break;
+	  if((*i)->variantT()==V_SgContinueStmt) {
+		cerr << "cfg construction for continue-statement not supported yet."<<endl; break;
 	  }
 	  return false;
 	}
   }
+  return true;
 }
 
 void checkProgram(SgNode* root) {
@@ -545,7 +546,7 @@ int main( int argc, char * argv[] ) {
   cout << "=============================================================="<<endl;
   analyzer.runSolver1();
   double analysisRunTime=timer.getElapsedTimeInMilliSec();
-  long removed=analyzer.getTransitionGraph()->removeDuplicates();
+  //long removed=analyzer.getTransitionGraph()->removeDuplicates();
   //cout << "Transitions reduced: "<<removed<<endl;
   //  cout << analyzer.pstateSetToString(final);
   cout << "=============================================================="<<endl;

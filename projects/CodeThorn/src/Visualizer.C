@@ -15,14 +15,14 @@
 using namespace CodeThorn;
 
 Visualizer::Visualizer():
-  tg1(false),
-  tg2(false),
-  optionTransitionGraphDotHtmlNode(true),
   labeler(0),
   flow(0),
   pstateSet(0),
   estateSet(0),
-  transitionGraph(0)
+  transitionGraph(0),
+  tg1(false),
+  tg2(false),
+  optionTransitionGraphDotHtmlNode(true)
 {}
 
 //! The analyzer provides all necessary information
@@ -40,14 +40,14 @@ Visualizer::Visualizer(Analyzer* analyzer):
 
   //! For providing specific information. For some visualizations not all information is required. The respective set-function can be used as well to set specific program information (this allows to also visualize computed subsets of information (such as post-processed transition graphs etc.).
 Visualizer::Visualizer(Labeler* l, Flow* f, PStateSet* ss, EStateSet* ess, TransitionGraph* tg):
-  tg1(false),
-  tg2(false),
-  optionTransitionGraphDotHtmlNode(true),
   labeler(l),
   flow(f),
   pstateSet(ss),
   estateSet(ess),
-  transitionGraph(tg)
+  transitionGraph(tg),
+  tg1(false),
+  tg2(false),
+  optionTransitionGraphDotHtmlNode(true)
 {}
 
 void Visualizer::setOptionTransitionGraphDotHtmlNode(bool x) {optionTransitionGraphDotHtmlNode=x;}
@@ -183,7 +183,7 @@ string Visualizer::estateIdStringWithTemporaries(const EState* estate) {
   if(estateId!=NO_ESTATE) {
 	ss<<"ES"<<estateSet->estateId(estate);
   } else {
-	ss<<"TMPES"<<estate;
+	ss<<"TES"<<estate;
   }
   return ss.str();
 }

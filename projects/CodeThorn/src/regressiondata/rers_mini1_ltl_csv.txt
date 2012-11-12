@@ -1,21 +1,20 @@
-Index;"LTL formula";Result;Confidence
 61,yes,9
 62,yes,9
 63,yes,9
 64,yes,9
 65,yes,9
-66,yes,9
+66,no,9
 67,yes,9
 68,yes,9
 69,yes,9
 70,yes,9
 71,yes,9
 72,yes,9
-73,yes,9
-74,no,9
+73,no,9
+74,yes,9
 75,yes,9
 76,yes,9
-77,unknown,0
+77,yes,9
 78,yes,9
 79,yes,9
 80,yes,9
@@ -28,4 +27,4 @@ Index;"LTL formula";Result;Confidence
 87,yes,9
 88,yes,9
 89,no,9
-90,unknown,0
+90,no,9

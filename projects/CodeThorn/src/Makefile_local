@@ -31,7 +31,7 @@ KNOBS =
 
 CPPFLAGS              = $(KNOBS) -O3 -march=native -ftree-vectorize -ggdb $(EXTRA_INCLUDES) -fopenmp
 #CXXCPPFLAGS           = @CXXCPPFLAGS@
-CXXFLAGS              = -Wno-deprecated
+CXXFLAGS              = -Wno-deprecated -Wall
 LDFLAGS               = 
 YACC                  = bison
 
@@ -60,13 +60,16 @@ LTLParser.o: LTLParser.y++ LTL.h
 	$(BISON) -p ltl_ $<
 	$(CXX) -o $@ $(CXXFLAGS) $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) LTLParser.tab.c++ -c
 
-matcherparser.h matcherparser.o: matcherparser.yxx
-	$(BISON) -p matcher --defines=matcherparser.h matcherparser.yxx -omatcherparser.C
+matcherparser.h: matcherparser.yxx
+	$(BISON) -p matcher --defines=matcherparser.h matcherparser.yxx
+matcherparser.C: matcherparser.yxx
+	$(BISON) -p matcher matcherparser.yxx -omatcherparser.C
+matcherparser.o: matcherparser.h matcherparser.C
 	$(CXX) -o $@ $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) -I. matcherparser.C -c
 
 matcherlexer.o: matcherlexer.lxx matcherparser.h
 #	$(FLEX) -Pmatcher -omatcherlexer.C matcherlexer.lxx
-	$(FLEX) -Pmatcher -t matcherlexer.lxx > matcherlexer.C # flex 2.5.35 bug workaround (this bug shows how rediculous software development can ever get)
+	$(FLEX) -Pmatcher -t matcherlexer.lxx > matcherlexer.C # flex 2.5.35 bug workaround
 	$(CXX) -o $@ $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) -I. matcherlexer.C -c
 
 MatchOperation.o : matcherparser_decls.h MatchOperation.h MatchOperation.C matcherparser.h
@@ -160,6 +163,7 @@ clean:
 	rm -f tmp*
 	rm -f matcherparser.C
 	rm -f matcherlexer.C
+	rm -f matcherparser.tab.cxx
 
 distclean: clean
 	rm -f *.tgz

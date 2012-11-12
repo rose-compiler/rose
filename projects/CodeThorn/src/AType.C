@@ -297,7 +297,7 @@ bool AType::strictWeakOrderingIsEqual(const AType::ConstIntLattice& c1, const AT
   return c1.getValueType()==c2.getValueType();
 }
 bool AType::ConstIntLatticeCmp::operator()(const AType::ConstIntLattice& c1, const AType::ConstIntLattice& c2) const {
-  AType::strictWeakOrderingIsSmaller(c1,c2);
+  return AType::strictWeakOrderingIsSmaller(c1,c2);
 }
 
 bool AType::CppCapsuleConstIntLatticeLessComparator::operator()(const AType::CppCapsuleConstIntLattice& c1, const AType::CppCapsuleConstIntLattice& c2) const {
