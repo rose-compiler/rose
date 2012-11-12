@@ -1511,27 +1511,9 @@ struct X86InstructionSemantics {
                         break;
                     }
                     case 4: {
-                        Word(32) op1 = read32(operands[0]);
-                        Word(32) op2 = read32(operands[1]);
-                        Word(32) output1 = policy.shiftRight(op1, shiftCount);
-                        Word(32) output2 = policy.ite(policy.equalToZero(shiftCount),
-                                                      number<32>(0),
-                                                      policy.shiftLeft(op2, policy.negate(shiftCount)));
-                        Word(32) output = policy.or_(output1, output2);
-                        Word(1) newCf = policy.ite(policy.equalToZero(shiftCount),
-                                                   readRegister<1>(REG_CF),
-                                                   extract<0, 1>(policy.shiftRight(op1, policy.add(shiftCount, number<5>(31)))));
-                        writeRegister(REG_CF, newCf);
-                        Word(1) newOf = policy.ite(policy.equalToZero(shiftCount),
-                                                   readRegister<1>(REG_OF), 
-                                                   policy.xor_(extract<31, 32>(output),
-                                                               extract<31, 32>(op1)));
-                        writeRegister(REG_OF, newOf);
+                        WordType<32> output = shift_semantics<32, 5>(kind, read32(operands[0]), read32(operands[1]),
+                                                                     read8(operands[2]));
                         write32(operands[0], output);
-                        setFlagsForResult<32>(output);
-                        writeRegister(REG_AF, policy.ite(policy.equalToZero(shiftCount),
-                                                       readRegister<1>(REG_AF),
-                                                       undefined_<1>()));
                         break;
                     }
                     default:
