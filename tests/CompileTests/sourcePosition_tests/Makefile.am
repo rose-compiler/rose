@@ -652,6 +652,8 @@ VALGRIND =
 PASSING_TEST_Objects = ${TESTCODES:.C=.o}
 TEST_Objects = ${ALL_TESTCODES:.C=.o}
 
+ROSE_FLAGS = --edg:no_warnings -w
+
 ## Include the path to A++ and the transformation specification
 TESTCODE_INCLUDES = -I$(top_srcdir)/tests/CompileTests/A++Code
 
@@ -663,6 +665,14 @@ $(TEST_Objects): statements
 	echo "Copy the file to the local build tree so that the tview program can access it with the generated .highlight file ..."
 	cp $(srcdir)/../Cxx_tests/$(@:.o=.C) $(@:.o=.C)
 	$(VALGRIND) ./statements $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir)/../Cxx_tests -c $(@:.o=.C)
+
+# DQ (11/11/2012): Example command-line to run tview on generated file in current directory.
+# Must be in the source directory and this there is no absolute path to the build_dir so this 
+# test is not really easy to make.  Not really important, maybe we can think about this later.
+# java tview /home/dquinlan/ROSE/ROSE_CompileTree/git-LINUX-64bit-4.2.4-dq-edg4x-rc/tests/CompileTests/sourcePosition_tests/test2001_01.C
+# test:
+#	cd $(top_srcdir)/src/roseIndependentSupport/tview; pwd; ls; java tview /home/dquinlan/ROSE/ROSE_CompileTree/git-LINUX-64bit-4.2.4-dq-edg4x-rc/tests/CompileTests/sourcePosition_tests/test2001_01.C
+#	cd $(top_srcdir)/src/roseIndependentSupport/tview; pwd; ls; java tview $(top_builddir)/tests/CompileTests/sourcePosition_tests/test2001_01.C
 
 check-local:
 	@echo "Tests the source position information held within the AST."
