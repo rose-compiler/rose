@@ -1504,27 +1504,9 @@ struct X86InstructionSemantics {
                 Word(5) shiftCount = extract<0, 5>(read8(operands[2]));
                 switch (numBytesInAsmType(operands[0]->get_type())) {
                     case 2: {
-                        Word(16) op1 = read16(operands[0]);
-                        Word(16) op2 = read16(operands[1]);
-                        Word(16) output1 = policy.shiftRight(op1, shiftCount);
-                        Word(16) output2 = policy.ite(policy.equalToZero(shiftCount),
-                                                      number<16>(0),
-                                                      policy.shiftLeft(op2, policy.negate(shiftCount)));
-                        Word(16) output = policy.or_(output1, output2);
-                        Word(1) newCf = policy.ite(policy.equalToZero(shiftCount),
-                                                   readRegister<1>(REG_CF),
-                                                   extract<0, 1>(policy.shiftRight(op1, policy.add(shiftCount, number<5>(15)))));
-                        writeRegister(REG_CF, newCf);
-                        Word(1) newOf = policy.ite(policy.equalToZero(shiftCount),
-                                                   readRegister<1>(REG_OF), 
-                                                   policy.xor_(extract<15, 16>(output),
-                                                               extract<15, 16>(op1)));
-                        writeRegister(REG_OF, newOf);
+                        WordType<16> output = shift_semantics<16, 5>(kind, read16(operands[0]), read16(operands[1]),
+                                                                    read8(operands[2]));
                         write16(operands[0], output);
-                        setFlagsForResult<16>(output);
-                        writeRegister(REG_AF, policy.ite(policy.equalToZero(shiftCount),
-                                                       readRegister<1>(REG_AF),
-                                                       undefined_<1>()));
                         break;
                     }
                     case 4: {
