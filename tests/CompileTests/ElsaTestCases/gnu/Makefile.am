@@ -69,6 +69,10 @@ bugs/gb0001.c\
 bugs/gb0002.c\
 bugs/gb0004.c
 
+# DQ (11/11/2012): Added support to build testTranslator if it has not been built yet.
+$(TRANSLATOR_EXECUTABLE):
+	cd $(top_builddir)/tests/; $(MAKE) testTranslator
+
 # Build the list of object files
 TEST_Objects = ${TESTCODES:.cc=.o}
 

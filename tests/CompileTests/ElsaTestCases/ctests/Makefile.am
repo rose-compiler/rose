@@ -64,6 +64,10 @@ t0024.c\
 t0025.c\
 t0026.c
 
+# DQ (11/11/2012): Added support to build testTranslator if it has not been built yet.
+$(TRANSLATOR_EXECUTABLE):
+	cd $(top_builddir)/tests/; $(MAKE) testTranslator
+
 TEST_Objects = ${C_TESTCODES:.c=.o}
 
 ROSE_FLAGS = -rose:C --edg:no_warnings -w

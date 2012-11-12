@@ -1078,6 +1078,8 @@ test2012_236.C \
 test2012_237.C \
 test2012_238.C \
 test2012_239.C \
+test2012_240.C \
+test2012_241.C \
 test_int_lexemes.C \
 test_int_lexemes_donot_pass.C \
 test_simple_int.C \

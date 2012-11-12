@@ -60,8 +60,6 @@ t0066.cc\
 t0067.cc\
 t0070.cc
 
-# Failing test with edg4x work (only one left):
-# t0051.cc
 
 # Will it never end!  g++ version 4.0.2 fails to pass
 # this test with the ROSE generated code. They to pass 
@@ -843,12 +841,18 @@ t0124.cc
 #t0127.cc\
 #t0132.cc
 
+
+# DQ (11/11/2012): Added support to build testTranslator if it has not been built yet.
+$(TRANSLATOR_EXECUTABLE):
+	cd $(top_builddir)/tests/; $(MAKE) testTranslator
+
 # Build the list of object files
 TEST_Objects = ${TESTCODES:.cc=.o}
 
 ROSE_FLAGS = --edg:no_warnings -w
 
-TRANSLATOR_EXECUTABLE = $(top_builddir)/tests/testTranslator 
+# TRANSLATOR_EXECUTABLE = $(top_builddir)/tests/testTranslator 
+TRANSLATOR_EXECUTABLE = ../../testTranslator
 TEST_TRANSLATOR = $(TRANSLATOR_EXECUTABLE) $(ROSE_FLAGS)
 
 ## Include the path to A++ and the transformation specification
