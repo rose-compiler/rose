@@ -15,7 +15,13 @@ void resetConstantFoldedValues( SgNode* node )
 
   // This is a temporary option, if false then we pass all tests and are consitant with historical configurations 
   // of the ROSE AST, but it is inconsistant so we want to fix that (because it causes control flow problems).
+#if 1
+  // DQ (11/5/2012): Original value
      bool makeASTConstantFoldingExpressionConsistant = true;
+#else
+  // DQ (11/5/2012): An experimental value while I play with the original expression trees.
+     bool makeASTConstantFoldingExpressionConsistant = false;
+#endif
 
   // This will become an input option in the near future.  Once they can be supported through all of the test codes.
   // The default is to use the original expression trees and replace the saved constant folded values in the AST.
@@ -93,8 +99,12 @@ void resetConstantFoldedValues( SgNode* node )
             // the constant folded values are mostly useful for purposes of analysis.
                removeOriginalExpressionTrees(node);
              }
+
+       // DQ (11/5/2012): I think this should be here rather than outside of this (put it back the way it was).
+       // verifyOriginalExpressionTreesSetToNull(node);
         }
 
+  // DQ (11/5/2012): Moved to inside of conditional (put this back the way it was).
      verifyOriginalExpressionTreesSetToNull(node);
    }
 

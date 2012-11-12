@@ -60,6 +60,9 @@ t0066.cc\
 t0067.cc\
 t0070.cc
 
+# Failing test with edg4x work (only one left):
+# t0051.cc
+
 # Will it never end!  g++ version 4.0.2 fails to pass
 # this test with the ROSE generated code. They to pass 
 # with g++ version 3.3.2.

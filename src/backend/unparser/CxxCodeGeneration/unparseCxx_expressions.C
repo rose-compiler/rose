@@ -1456,17 +1456,18 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
      printf ("mfunc_ref->get_need_qualifier() = %s \n",(mfunc_ref->get_need_qualifier() == true) ? "true" : "false");
 #endif
 
+  // DQ (11/7/2012): This is important for Elsa test code t0051.cc and now also test2012_240.C (putting it back).
   // DQ (3/28/2012): I think this is a bug left over from the previous implementation of support for name qualification.
   // if (mfunc_ref->get_need_qualifier() == true)
-
-     SgFunctionCallExp* functionCall = isSgFunctionCallExp(mfunc_ref->get_parent());
-     if (functionCall != NULL)
+  // SgFunctionCallExp* functionCall = isSgFunctionCallExp(mfunc_ref->get_parent());
+  // if (functionCall != NULL)
+     if (mfunc_ref->get_need_qualifier() == true)
         {
        // check if this is a iostream operator function and the value of the overload opt is false
-
+#if 0
           printf ("unp->opt.get_overload_opt()        = %s \n",unp->opt.get_overload_opt() ? "true" : "false");
           printf ("unp->u_sage->isOperator(mfunc_ref) = %s \n",unp->u_sage->isOperator(mfunc_ref) ? "true" : "false");
-
+#endif
        // DQ (12/28/2005): Changed to check for more general overloaded operators (e.g. operator[])
        // if (!unp->opt.get_overload_opt() && isIOStreamOperator(mfunc_ref));
           if (unp->opt.get_overload_opt() == false && unp->u_sage->isOperator(mfunc_ref) == true)
@@ -1475,18 +1476,14 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
              }
             else
              {
-               curprint("\n /* Output the qualified class name */ \n");
-
-            // printf ("In unparseMFuncRef(): Qualified names of member function reference expressions are not handled yet! \n");
 #if 0
-            // DQ (10/11/2006): I don't think that we want the fully qualified name, just the class name!
-            // curprint (  cdecl->get_qualified_name().str() + "::";
-               curprint (  string(decl->get_name().str()) + "::");
-            // curprint ( "\n /* DONE: Output the qualified class name */ \n";
-#else
+               curprint("\n /* Output the qualified class name */ \n");
+#endif
+            // printf ("In unparseMFuncRef(): Qualified names of member function reference expressions are not handled yet! \n");
             // DQ (6/1/2011): Use the newly generated qualified names.
                SgName nameQualifier = mfunc_ref->get_qualified_name_prefix();
                curprint (nameQualifier);
+#if 0
                printf ("Output name qualification for SgMemberFunctionDeclaration: nameQualifier = %s \n",nameQualifier.str());
 #endif
                print_colons = true;
