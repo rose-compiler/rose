@@ -1207,6 +1207,10 @@ Unparse_MOD_SAGE::outputExternLinkageSpecifier ( SgDeclarationStatement* decl_st
      ROSE_ASSERT(decl_stmt != NULL);
 
 #if 0
+     printf ("Inside of outputExternLinkageSpecifier() decl_stmt = %p = %s decl_stmt->isExternBrace() = %s \n",decl_stmt,decl_stmt->class_name().c_str(),decl_stmt->isExternBrace() ? "true" : "false");
+     printf ("   --- decl_stmt->isExternBrace()                                            = %s \n",decl_stmt->isExternBrace() ? "true" : "false");
+     printf ("   --- decl_stmt->get_declarationModifier().get_storageModifier().isExtern() = %s \n",decl_stmt->get_declarationModifier().get_storageModifier().isExtern() ? "true" : "false");
+     printf ("   --- decl_stmt->get_linkage().empty()                                      = %s \n",decl_stmt->get_linkage().empty() ? "true" : "false");
      curprint ("\n/* Inside of outputExternLinkageSpecifier() */ \n ");
 #endif
 
@@ -1449,9 +1453,13 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
   // This was a bug mistakenly reported by Isaac
      ROSE_ASSERT(decl_stmt->get_declarationModifier().get_storageModifier().get_modifier() >= 0);
 
+#if 0
+     printf ("In printSpecifier2(): decl_stmt = %p decl_stmt->get_declarationModifier().get_storageModifier().isStatic() = %s \n",decl_stmt,decl_stmt->get_declarationModifier().get_storageModifier().isStatic() ? "true" : "false");
+#endif
+
      if (decl_stmt->get_declarationModifier().get_storageModifier().isStatic())
         {
-          curprint( "static ");
+          curprint("static ");
         }
 
   // if (unp->opt.get_extern_opt())
