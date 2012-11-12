@@ -195,9 +195,10 @@ EStateId EStateSet::estateId(const EState estate) const {
 
 Transition TransitionGraph::getStartTransition() {
   for(TransitionGraph::iterator i=begin();i!=end();++i) {
-	if((*i).source->label()==_startLabel)
+	if((*i).source->label()==getStartLabel())
 	  return *i;
   }
+  throw "TransitionGraph: no start transition found.";
 }
 
 string EStateSet::estateIdString(const EState* estate) const {
@@ -241,7 +242,7 @@ LabelSet TransitionGraph::labelSetOfIoOperations(InputOutput::OpType op) {
   return lset;
 } 
 
-void TransitionGraph::reduceEStates(set<const EState*>& toReduce) {
+void TransitionGraph::reduceEStates(set<const EState*> toReduce) {
   for(set<const EState*>::const_iterator i=toReduce.begin();i!=toReduce.end();++i) { 
 	reduceEState(*i);
   }
@@ -341,7 +342,7 @@ long TransitionGraph::removeDuplicates() {
 
 string TransitionGraph::toString() const {
   string s;
-  int cnt=0;
+  size_t cnt=0;
   for(TransitionGraph::const_iterator i=begin();i!=end();++i) {
 #if 0
 	stringstream ss;
@@ -373,6 +374,76 @@ set<const EState*> TransitionGraph::estateSetOfLabel(Label lab) {
 	  estateSet.insert((*j).target);
   }
   return estateSet;
+}
+
+bool TransitionGraph::checkConsistency() {
+  bool ok=true;
+  size_t cnt=0;
+  TransitionGraph* tg=this;
+  for(TransitionGraph::const_iterator i=tg->begin();i!=tg->end();++i) {
+	cnt++;
+  }
+  if(cnt!=tg->size()) {
+	cerr<< "Error: TransitionGraph: size()==" <<tg->size()<< ", count=="<<cnt<<endl;
+	ok=false;
+  }
+  assert(cnt==tg->size());
+  cout << "checkTransitionGraph:"<<ok<<" size:"<<size()<<endl;
+  return ok;
+}
+
+void TransitionGraph::reduceEState2(const EState* estate) {
+  /* description of essential operations:
+   *   inedges: (n_i,b)
+   *   outedges: (b,n_j) 
+   *   insert(ni,t,nj) where t=union(t(n_i))+union(t(n_j))+{EDGE_PATH}
+   *   remove(n_i,b)
+   *   remove(b,n_j)
+   *   delete b
+   
+   * ea: (n1,cfge,n2) == ((l1,p1,c1,io1),(l1,t12,l2),(l2,p2,c2,io2))
+   * eb: (n2,cfge,n3) == ((l2,p2,c2,io2),(l2,t23,l3),(l3,p3,c3,io3))
+   * ==> (n1,cfge',n3) == ((l1,p1,c1,io1),(l1,{t12,t13,EDGE_PATH}},l3),(l3,p3,c3,io3))
+   
+   */
+  assert(estate);
+  TransitionGraph::TransitionPtrSet in=inEdges(estate);
+  TransitionGraph::TransitionPtrSet out=outEdges(estate);
+  if(false || (in.size()!=0 && out.size()!=0)) {
+	cout<< estate->toString()<<endl;
+	set<Transition> newTransitions;
+	for(TransitionPtrSet::iterator i=in.begin();i!=in.end();++i) {
+	  for(TransitionPtrSet::iterator j=out.begin();j!=out.end();++j) {
+		Edge newEdge((*i)->source->label(),(*j)->target->label());
+		newEdge.addTypes((*i)->edge.types());
+		newEdge.addTypes((*j)->edge.types());
+		Transition t((*i)->source,newEdge,(*j)->target);
+		newTransitions.insert(t);
+		assert(newTransitions.find(t)!=newTransitions.end());
+	  }
+	}
+	cout << "DEBUG: number of new transitions: "<<newTransitions.size()<<endl;
+	// 1. remove all old transitions
+	for(TransitionPtrSet::iterator i=in.begin();i!=in.end();++i) {
+	  bool check11=(find(**i)!=end());
+	  assert(check11);
+	  this->erase(**i);
+	  bool check13=(find(**i)==end());
+	  assert(check13);
+	}
+	for(TransitionPtrSet::iterator j=out.begin();j!=out.end();++j) {
+	  this->erase(**j);
+	  assert(this->find(**j)==end());
+	}
+	// 2. add new transitions
+	for(set<Transition>::iterator k=newTransitions.begin();k!=newTransitions.end();++k) {
+	  this->add(*k);
+	  assert(find(*k)!=end());
+	}
+	assert(newTransitions.size()<=in.size()*out.size());
+  } else {
+	cout<< "INFO: not eliminating node because #in==0 or #out==0: node: "<<estate<<", #in="<<in.size()<<", #out="<<out.size()<<endl;
+  }
 }
 
 // later, we may want to maintain this set with every graph-operation (turning the linear access to constant)

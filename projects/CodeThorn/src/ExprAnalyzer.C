@@ -77,6 +77,8 @@ SingleEvalResult ExprAnalyzer::eval(SgNode* node,EState estate) {
 	}
 	break;
   }
+  default:
+	throw "ExprAnalyzer::eval: unknown operator.";
   } // end of switch
   tmp.result=AType::Top();
   return tmp;
@@ -340,8 +342,8 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
 		resultList.push_back(res);
 	  break;
 	  case V_SgCastExp: {
-		SgCastExp* castExp=isSgCastExp(node);
 		// TODO: model effect of cast when sub language is extended
+		//SgCastExp* castExp=isSgCastExp(node);
 		res.result=operandResult.result;
 		res.exprConstraints=operandResult.exprConstraints;
 		resultList.push_back(res);

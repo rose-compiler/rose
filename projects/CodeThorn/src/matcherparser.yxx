@@ -210,7 +210,7 @@ term		: ident_or_any '(' expression_list ')'
 			$$=$1;
 
 			// search for MatchOpDotDot
-			int dotdot_pos=0;
+			size_t dotdot_pos=0;
 			for(MatchOperationListList::iterator i=$3->begin();i!=$3->end();++i) {
 			  for(MatchOperationList::iterator j=(*i)->begin();j!=(*i)->end();++j) {
 			    if(dynamic_cast<MatchOpDotDot*>(*j)) {

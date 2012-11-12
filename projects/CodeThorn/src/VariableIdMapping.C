@@ -43,7 +43,7 @@ void VariableIdMapping::computeVariableSymbolMapping(SgProject* project) {
 
 // Check if computed variable symbol mapping is bijective
 bool VariableIdMapping::isUniqueVariableSymbolMapping() {
-  int numOfPairs=checkSet.size();
+  size_t numOfPairs=checkSet.size();
   set<string> nameSet;
   set<SgSymbol*> symbolSet;
   bool mappingOK=true;
@@ -51,7 +51,7 @@ bool VariableIdMapping::isUniqueVariableSymbolMapping() {
 	nameSet.insert((*i).first);
 	symbolSet.insert((*i).second);
   }
-  return ((nameSet.size()==checkSet.size()) && (symbolSet.size()==checkSet.size())&& mappingOK);
+  return ((nameSet.size()==numOfPairs) && (symbolSet.size()==numOfPairs)&& mappingOK);
 }
 
 void VariableIdMapping::reportUniqueVariableSymbolMappingViolations() {
@@ -86,7 +86,7 @@ string VariableIdMapping::variableName(VariableId varId) {
 
 string VariableIdMapping::uniqueLongVariableName(VariableId varId) {
   if(!isTemporaryVariableId(varId)) {
-	variableName(varId);
+	return variableName(varId);
 	//return SgNodeHelper::uniqueLongVariableName(getSymbol(varId));
   } else {
 	return "$$$tmp"+variableName(varId);

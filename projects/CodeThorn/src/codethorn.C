@@ -22,7 +22,6 @@
 #include "Miscellaneous.h"
 
 namespace po = boost::program_options;
-
 using namespace CodeThorn;
 
 bool CodeThornLanguageRestrictor::checkIfAstIsAllowed(SgNode* node) {
@@ -31,12 +30,13 @@ bool CodeThornLanguageRestrictor::checkIfAstIsAllowed(SgNode* node) {
 	if(!isAllowedAstNode(*i)) {
 	  cerr << "Language-Restrictor: excluded language construct found: " << (*i)->sage_class_name() << endl;
 	  // report first error and return
-	  switch((*i)->variantT()) {
-	  V_SgContinueStmt: cerr << "Error info: cfg construction for continue-statement not supported yet."<<endl; break;
+	  if((*i)->variantT()==V_SgContinueStmt) {
+		cerr << "cfg construction for continue-statement not supported yet."<<endl; break;
 	  }
 	  return false;
 	}
   }
+  return true;
 }
 
 void checkProgram(SgNode* root) {
@@ -366,6 +366,7 @@ int main( int argc, char * argv[] ) {
     ("precision-exact-constraints",po::value< string >(),
      "(experimental) use precise constraint extraction [=yes|no]")
     ("tg-ltl-reduced",po::value< string >(),"(experimental) compute LTL-reduced transition graph based on a subset of computed estates [=yes|no]")
+    ("semantic-fold",po::value< string >(),"(experimental) computes semantically folded transition graph [=yes|no]")
     ("viz",po::value< string >(),"generate visualizations (dot) outputs [=yes|no]")
     ("update-input-var",po::value< string >(),"For testing purposes only. Default is Yes. [=yes|no]")
     ("run-rose-tests",po::value< string >(),"Run ROSE AST tests. [=yes|no]")
@@ -417,6 +418,8 @@ int main( int argc, char * argv[] ) {
   boolOptions.registerOption("precision-intbool",true);
   boolOptions.registerOption("precision-exact-constraints",false);
   boolOptions.registerOption("tg-ltl-reduced",false);
+  boolOptions.registerOption("semantic-fold",false);
+
   boolOptions.registerOption("viz",false);
   boolOptions.registerOption("update-input-var",true);
   boolOptions.registerOption("run-rose-tests",true);
@@ -512,6 +515,11 @@ int main( int argc, char * argv[] ) {
 	}
   }
 
+  if(boolOptions["semantic-fold"] && numberOfThreadsToUse>1) {
+	cerr << "ERROR: semantic-fold is currently restricted to 1 thread only. Change number of threads from "<<numberOfThreadsToUse<< " to 1."<<endl;
+	exit(1);
+  }
+
   // Build the AST used by ROSE
   cout << "INIT: Parsing and creating AST."<<endl;
   SgProject* sageProject = frontend(argc,argv);
@@ -543,9 +551,15 @@ int main( int argc, char * argv[] ) {
 
   timer.start();
   cout << "=============================================================="<<endl;
-  analyzer.runSolver1();
+  if(boolOptions["semantic-fold"]) {
+	cerr<<"Option semantic-fold is not activated yet."<<endl;
+	exit(1);
+	//analyzer.runSolver2();
+  } else {
+	analyzer.runSolver1();
+  }
   double analysisRunTime=timer.getElapsedTimeInMilliSec();
-  long removed=analyzer.getTransitionGraph()->removeDuplicates();
+  //long removed=analyzer.getTransitionGraph()->removeDuplicates();
   //cout << "Transitions reduced: "<<removed<<endl;
   //  cout << analyzer.pstateSetToString(final);
   cout << "=============================================================="<<endl;

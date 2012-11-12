@@ -55,7 +55,7 @@ class AstNodeInfo : public AstAttribute {
   LabelSet finalLabelsSet;
 };
 
-typedef stack<const EState*> EStateWorkList;
+typedef list<const EState*> EStateWorkList;
 
 class Analyzer {
   friend class Visualizer;
@@ -81,6 +81,14 @@ class Analyzer {
   set<const EState*> nonLTLRelevantEStates();
   bool isTerminationRelevantLabel(Label label);
   const EState* takeFromWorkList();
+
+  // 5 experimental functions
+  void semanticFoldingOfTransitionGraph();
+  bool consistentEStateSet();
+  bool isConsistentEStatePtrSet(set<const EState*> estatePtrSet);
+  bool isInWorkList(const EState* estate);
+  bool checkTransitionGraph();
+
  private:
   /*! if state exists in stateSet, a pointer to the existing state is returned otherwise 
 	a new state is entered into stateSet and a pointer to it is returned.
@@ -106,6 +114,7 @@ class Analyzer {
 
   //! requires init
   void runSolver1();
+  void runSolver2();
 
   //! The analyzer requires a CFAnalyzer to obtain the ICFG.
   void setCFAnalyzer(CFAnalyzer* cf) { cfanalyzer=cf; }

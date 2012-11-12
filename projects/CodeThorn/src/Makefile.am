@@ -14,7 +14,7 @@ INCLUDES = $(ROSE_INCLUDES) -I$(top_builddir)
 # in V1.2 there are no KNOBS
 KNOBS = 
 
-codethorn_CXXFLAGS = $(KNOBS) -fopenmp # -O3 -march=native -ftree-vectorize
+codethorn_CXXFLAGS = $(KNOBS) -fopenmp -Wall # -O3 -march=native -ftree-vectorize
 codethorn_LDADD = -lfl -lrose
 codethorn_YFLAGS = -p ltl_ # yacc flags for LTL parser
 codethorn_SOURCES = \

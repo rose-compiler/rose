@@ -158,7 +158,6 @@ MatchOpArityCheck::performOperation(MatchStatus&  status, RoseAst::iterator& i, 
     size_t nodeArity=node->get_numberOfTraversalSuccessors();
     if(status.debug)
       std::cout<<"("<<_minarity<<":"<<_maxarity<<","<<nodeArity<<")";
-    bool arityok=true;
     return (nodeArity>=_minarity && nodeArity<=_maxarity);
   } else {
     if(status.debug)

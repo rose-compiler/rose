@@ -40,6 +40,8 @@ class Visualizer {
   CodeThorn::EStateSet* estateSet;
   CodeThorn::TransitionGraph* transitionGraph;
   
+  bool tg1; // is true when we are visualizing transition graph 1, otherwise false.
+  bool tg2; // is true when we are visualizing transition graph 2, otherwise false.
   bool optionPStateObjectAddress;
   bool optionPStateId;
   bool optionPStateProperties;
@@ -48,8 +50,6 @@ class Visualizer {
   bool optionEStateProperties;
   bool optionTransitionGraphDotHtmlNode;
 
-  bool tg1; // is true when we are visualizing transition graph 1, otherwise false.
-  bool tg2; // is true when we are visualizing transition graph 2, otherwise false.
 };
 
 #endif
