@@ -3112,32 +3112,34 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
   // JJW (12/11/2008):  add --edg_base_dir as a new ROSE-set flag
      vector<string> commandLine;
 
-#if 1
   // DQ (11/1/2011): This is not enough to support C++ code (e.g. "limits" header file).
-#ifdef ROSE_USE_NEW_EDG_INTERFACE
 
-  // Note that the new EDG/Sage interface does not require a generated set of header files specific to ROSE.
-     commandLine.push_back("--edg_base_dir");
 
-  // DQ (12/29/2008): Added support for EDG version 4.0 (constains design changes that break a number of things in the pre-version 4.0 work)
-#ifdef ROSE_USE_EDG_VERSION_4
-  // DQ (2/1/2010): I think this needs to reference the source tree (to pickup src/frontend/CxxFrontend/EDG/EDG_4.0/lib/predefined_macros.txt).
-  // DQ (12/21/2009): The locaion of the EDG directory has been changed now that it is a submodule in our git repository.
-  // commandLine.push_back(findRoseSupportPathFromBuild("src/frontend/CxxFrontend/EDG_4.0/lib", "share"));
-  // commandLine.push_back(findRoseSupportPathFromBuild("src/frontend/CxxFrontend/EDG/EDG_4.0/lib", "share"));
 
-  // DQ (11/1/2011): Fix to use EDG 4.3
-  // commandLine.push_back(findRoseSupportPathFromSource("src/frontend/CxxFrontend/EDG/EDG_4.0/lib", "share"));
-     commandLine.push_back(findRoseSupportPathFromSource("src/frontend/CxxFrontend/EDG/EDG_4.3/lib", "share"));
-#else
-  // DQ (2/1/2010): I think this needs to reference the source tree (to pickup src/frontend/CxxFrontend/EDG/EDG_4.0/lib/predefined_macros.txt).
-  // DQ (12/21/2009): The locaion of the EDG directory has been changed now that it is a submodule in our git repository.
-  // commandLine.push_back(findRoseSupportPathFromBuild("src/frontend/CxxFrontend/EDG_3.10/lib", "share"));
-     commandLine.push_back(findRoseSupportPathFromBuild("src/frontend/CxxFrontend/EDG/EDG_3.10/lib", "share"));
-  // commandLine.push_back(findRoseSupportPathFromSource("src/frontend/CxxFrontend/EDG/EDG_3.10/lib", "share"));
-#endif
-#endif
-#endif
+    //--------------------------------------------------------------------------
+    // TOO (11/12/2012) - Refactor to use generic EDG version.
+    // DQ  (11/1/2011)  - Fix to use EDG 4.3
+    //
+    // Note that the new EDG/Sage interface does not require a generated set of
+    // header files specific to ROSE.
+    //
+    commandLine.push_back("--edg_base_dir");
+    {
+        // Examples: 3.10, 4.3, 4.4
+        std::stringstream sstream;
+        sstream
+            << ROSE_EDG_MAJOR_VERSION_NUMBER
+            << "."
+            << ROSE_EDG_MINOR_VERSION_NUMBER;
+
+        std::string edg_version(sstream.str());
+
+        commandLine.push_back(
+            findRoseSupportPathFromSource(
+                "src/frontend/CxxFrontend/EDG/EDG_" + edg_version + "/lib",
+                "share"));
+    }
+
 
   // display("Called from SgFile::build_EDG_CommandLine");
 
