@@ -11608,6 +11608,9 @@ Sg_File_Info::set_line(int line)
    {
      assert (this != NULL);
      p_line = line;
+     if (isTransformation() || isCompilerGenerated())
+       if (line !=0) // Liao, 11/12/2012. get_line() won't return the value being set!!
+         printf ("warning: Sg_File_Info::set_line() tried to set non-zero line number to a transformation or compiler generated file info obj.");
    }
 
 int
