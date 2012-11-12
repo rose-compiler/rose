@@ -248,6 +248,12 @@ void TransitionGraph::reduceEStates(set<const EState*> toReduce) {
   }
 }
 
+void TransitionGraph::reduceEStates2(set<const EState*> toReduce) {
+  for(set<const EState*>::const_iterator i=toReduce.begin();i!=toReduce.end();++i) { 
+	reduceEState2(*i);
+  }
+}
+
 // MS: we definitely need to cache all the results or use a proper graph structure
 TransitionGraph::TransitionPtrSet TransitionGraph::inEdges(const EState* estate) {
   TransitionGraph::TransitionPtrSet in;
@@ -409,7 +415,7 @@ void TransitionGraph::reduceEState2(const EState* estate) {
   assert(estate);
   TransitionGraph::TransitionPtrSet in=inEdges(estate);
   TransitionGraph::TransitionPtrSet out=outEdges(estate);
-  if(false || (in.size()!=0 && out.size()!=0)) {
+  if(in.size()!=0 /*&& out.size()!=0*/) {
 	cout<< estate->toString()<<endl;
 	set<Transition> newTransitions;
 	for(TransitionPtrSet::iterator i=in.begin();i!=in.end();++i) {
@@ -423,24 +429,30 @@ void TransitionGraph::reduceEState2(const EState* estate) {
 	  }
 	}
 	cout << "DEBUG: number of new transitions: "<<newTransitions.size()<<endl;
-	// 1. remove all old transitions
-	for(TransitionPtrSet::iterator i=in.begin();i!=in.end();++i) {
-	  bool check11=(find(**i)!=end());
-	  assert(check11);
-	  this->erase(**i);
-	  bool check13=(find(**i)==end());
-	  assert(check13);
-	}
-	for(TransitionPtrSet::iterator j=out.begin();j!=out.end();++j) {
-	  this->erase(**j);
-	  assert(this->find(**j)==end());
-	}
+
 	// 2. add new transitions
 	for(set<Transition>::iterator k=newTransitions.begin();k!=newTransitions.end();++k) {
 	  this->add(*k);
 	  assert(find(*k)!=end());
 	}
 	assert(newTransitions.size()<=in.size()*out.size());
+
+#if 1
+	// 1. remove all old transitions
+	for(TransitionPtrSet::iterator i=in.begin();i!=in.end();++i) {
+	  
+	  TransitionGraph::iterator it1=find(**i);
+	  //cout << "DEBUG: FOUND: "<<(*it1).toString()<<endl;
+	  this->erase(*it1);
+	}
+#endif
+#if 1
+	for(TransitionPtrSet::iterator j=out.begin();j!=out.end();++j) {
+	  this->erase(**j);
+
+	}
+#endif
+
   } else {
 	cout<< "INFO: not eliminating node because #in==0 or #out==0: node: "<<estate<<", #in="<<in.size()<<", #out="<<out.size()<<endl;
   }

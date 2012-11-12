@@ -1094,7 +1094,7 @@ void Analyzer::semanticFoldingOfTransitionGraph() {
   cout << "Size of transition graph before folding: "<<getTransitionGraph()->size()<<endl;
   cout << "Number of EStates to be eliminated in transition graph: "<<xestates.size()<<endl;
   checkTransitionGraph();
-  getTransitionGraph()->reduceEStates(xestates);
+  getTransitionGraph()->reduceEStates2(xestates);
   cout << "Size of transition graph after folding : "<<getTransitionGraph()->size()<<endl;
   checkTransitionGraph();
 
