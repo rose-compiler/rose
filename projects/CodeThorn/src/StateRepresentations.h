@@ -217,15 +217,17 @@ class TransitionGraph : public HSet<Transition,TransitionHashFun> {
   CodeThorn::LabelSet labelSetOfIoOperations(InputOutput::OpType op);
   // eliminates all duplicates of edges
   long removeDuplicates();
-  Label getStartLabel() { return _startLabel; }
+  Label getStartLabel() { assert(_startLabel!=Labeler::NO_LABEL); return _startLabel; }
   void setStartLabel(Label lab) { _startLabel=lab; }
   Transition getStartTransition();
 
-  //! reduces all non-maintained estates and unions edge-annotations. Additionally the edge-annotation "EDGE_INTRA_PATH" or "EDGE_INTER_PATH" is added. Returns number of reduced estates.
-  void reduceEStates(set<const EState*>& toReduce);
+  //! reduces all non-maintained estates and unions edge-annotations. Adds edge-annotation PATH. Returns number of reduced estates.
+  void reduceEStates(set<const EState*> toReduce);
   void reduceEState(const EState* estate);
+  void reduceEState2(const EState* estate); // used for semantic folding
   TransitionPtrSet inEdges(const EState* estate);
   TransitionPtrSet outEdges(const EState* estate);
+  bool checkConsistency();
 
  private:
   Label _startLabel;

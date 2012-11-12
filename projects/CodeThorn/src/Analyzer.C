@@ -67,7 +67,7 @@ void Analyzer::addToWorkList(const EState* estate) {
 	  cerr<<"INTERNAL ERROR: null pointer added to work list."<<endl;
 	  exit(1);
 	}
-	estateWorkList.push(estate); 
+	estateWorkList.push_back(estate); 
   }
 }
 
@@ -123,7 +123,7 @@ bool Analyzer::isEmptyWorkList() {
   bool res;
   #pragma omp critical
   {
-	res=estateWorkList.size()==0;
+	res=(estateWorkList.size()==0);
   }
   return res;
 }
@@ -132,7 +132,7 @@ const EState* Analyzer::topWorkList() {
 #pragma omp critical
   {
 	if(estateWorkList.size()>0)
-	  estate=estateWorkList.top();
+	  estate=*estateWorkList.begin();
   }
   return estate;
 }
@@ -141,9 +141,9 @@ const EState* Analyzer::popWorkList() {
   #pragma omp critical
   {
 	if(estateWorkList.size()>0)
-	  estate=estateWorkList.top();
+	  estate=*estateWorkList.begin();
 	if(estate)
-	  estateWorkList.pop();
+	  estateWorkList.pop_front();
   }
   return estate;
 }
@@ -152,8 +152,8 @@ const EState* Analyzer::takeFromWorkList() {
 #pragma omp critical
   {
   if(estateWorkList.size()>0) {
-	co=estateWorkList.top();
-	estateWorkList.pop();
+	co=*estateWorkList.begin();
+	estateWorkList.pop_front();
   }
   }
   return co;
@@ -1033,4 +1033,215 @@ void Analyzer::generateAstNodeInfo(SgNode* node) {
 	else cout<<": no attribute!"<<endl;
 #endif
   }
+}
+
+// experimental functions
+bool Analyzer::checkTransitionGraph() {
+  set<const EState*> ess=transitionGraph.estateSet();
+  bool ok=isConsistentEStatePtrSet(ess);
+  ok=ok && getTransitionGraph()->checkConsistency();
+  return ok;
+}
+bool Analyzer::consistentEStateSet() {
+  for(EStateSet::iterator i=estateSet.begin();i!=estateSet.end();++i) {
+	if(estateSet.estateId(*i)==NO_ESTATE || (*i).label()==Labeler::NO_LABEL) {
+	  cerr<< "ERROR: estateSet inconsistent. "<<endl;
+	  cerr << "  label   :"<<(*i).label()<<endl;
+	  cerr<< "   estateId: "<<estateSet.estateId(*i)<<endl;
+	  return false;
+	}
+  }
+  cout << "INFO: estateSet of size "<<estateSet.size()<<" consistent."<<endl;
+  return true;
+}
+
+bool Analyzer::isConsistentEStatePtrSet(set<const EState*> estatePtrSet)  {
+  for(set<const EState*>::iterator i=estatePtrSet.begin();i!=estatePtrSet.end();++i) {
+	if(estateSet.estateId(*i)==NO_ESTATE || (*i)->label()==Labeler::NO_LABEL) {
+	  cerr<< "ERROR: estatePtrSet inconsistent. "<<endl;
+	  cerr << "  label   :"<<(*i)->label()<<endl;
+	  cerr<< "   estateId: "<<estateSet.estateId(*i)<<endl;
+	  return false;
+	}
+  }
+  cout << "INFO: estatePtrSet of size "<<estatePtrSet.size()<<" consistent."<<endl;
+  return true;
+}
+bool Analyzer::isInWorkList(const EState* estate) {
+  for(EStateWorkList::iterator i=estateWorkList.begin();i!=estateWorkList.end();++i) {
+	if(*i==estate) return true;
+  }
+  return false;
+}
+
+void Analyzer::semanticFoldingOfTransitionGraph() {
+  //#pragma omp critical // in conflict with TransitionGraph.add ...
+  {
+  cout << "STATUS: (Experimental) semantic folding of transition graph ..."<<endl;
+  assert(consistentEStateSet());
+  set<const EState*> xestates0=nonLTLRelevantEStates();
+  cout << "STATUS: P1"<<endl;
+  // filter for worklist
+  set<const EState*> xestates;
+  for(set<const EState*>::iterator i=xestates0.begin();i!=xestates0.end();++i) {
+	assert(*i);
+	if(!isInWorkList(*i))
+	  xestates.insert(*i);
+  }
+  if(xestates0.size()!=xestates.size()) {
+	cout << "INFO: Successfully avoided reducing node(s) which are in the work list."<<endl;
+  }
+  cout << "Size of transition graph before folding: "<<getTransitionGraph()->size()<<endl;
+  cout << "Number of EStates to be eliminated in transition graph: "<<xestates.size()<<endl;
+  checkTransitionGraph();
+  getTransitionGraph()->reduceEStates(xestates);
+  cout << "Size of transition graph after folding : "<<getTransitionGraph()->size()<<endl;
+  checkTransitionGraph();
+
+  list<const EState*> toDelete;
+  // we need to determine first the elements to be deleted in a separate data structure because
+  // we cannot delete elements in a HSet while iterating on its elements.
+  for(EStateSet::iterator i=estateSet.begin();i!=estateSet.end();++i) {
+	Label lab=(*i).label();
+	assert(lab!=Labeler::NO_LABEL);
+	if(!isLTLRelevantLabel(lab)) {
+	  toDelete.push_back(&(*i));
+	}
+  }
+  #if 0
+  cout << "STATUS: folding estates: from " <<estateSet.size()<< " to "<< estateSet.size()-toDelete.size() << " ... "<<flush;
+  for(list<const EState*>::iterator i=toDelete.begin();i!=toDelete.end();++i) {
+	//cout << "reducing estate" << (*i)->toString()<<endl;
+	//cout << "Reducing label "<<(*i)->label()<<endl;
+	bool res=estateSet.remove(*i);
+	assert(res==true);
+	consistentEStateSet();
+	checkTransitionGraph();
+  }
+  #else
+  cout << "STATUS: NOT folding estates: from " <<estateSet.size()<< " to "<< estateSet.size()-toDelete.size() << " ... "<<flush;
+  #endif
+   cout << "done."<<endl;
+   assert(consistentEStateSet());
+ }
+}
+
+void Analyzer::runSolver2() {
+  size_t prevStateSetSize=_displayDiff+1; // force immediate report at start
+#ifdef _OPENMP
+  omp_set_num_threads(_numberOfThreadsToUse);
+  omp_set_dynamic(1);
+#endif
+  int threadNum;
+  vector<const EState*> workVector(_numberOfThreadsToUse);
+  while(1) {
+	bool analyzedReductionTriggerNode=false;
+	int workers;
+	for(workers=0;workers<_numberOfThreadsToUse;++workers) {
+	  if(!(workVector[workers]=popWorkList()))
+		break;
+	}
+	if(workers==0)
+	  break; // we are done
+
+	if(_displayDiff && (estateSet.size()>(prevStateSetSize+_displayDiff))) {
+	  printStatusMessage(true);
+	  prevStateSetSize=estateSet.size();
+	}
+#pragma omp parallel for private(threadNum),shared(workVector)
+	for(int j=0;j<workers;++j) {
+#ifdef _OPENMP
+	  threadNum=omp_get_thread_num();
+#endif
+	  const EState* currentEStatePtr=workVector[j];
+	  if(!currentEStatePtr) {
+		cerr<<"Error: thread "<<threadNum<<" finished prematurely. Bailing out. "<<endl;
+		assert(threadNum>=0 && threadNum<=_numberOfThreadsToUse);
+		exit(1);
+	  }
+	  assert(currentEStatePtr);
+	  
+	  Flow edgeSet=flow.outEdges(currentEStatePtr->label());
+#ifdef PARALLELIZE_BRANCHES
+	  // we can simplify this by adding the proper function to Flow.
+	  Flow::iterator i=edgeSet.begin();
+	  int edgeNum=edgeSet.size();
+	  vector<const Edge*> edgeVec(edgeNum);
+	  for(int edge_i=0;edge_i<edgeNum;++edge_i) {
+		edgeVec[edge_i]=&(*i++);
+	  }
+#pragma omp parallel for
+	  for(int edge_i=0; edge_i<edgeNum;edge_i++) {
+		Edge e=*edgeVec[edge_i]; // *i
+#else
+		for(Flow::iterator i=edgeSet.begin();i!=edgeSet.end();++i) {
+		  Edge e=*i;
+#endif
+		  list<EState> newEStateList;
+		  newEStateList=transferFunction(e,currentEStatePtr);
+		  if(isTerminationRelevantLabel(e.source))
+			analyzedReductionTriggerNode=true;
+		  for(list<EState>::iterator nesListIter=newEStateList.begin();
+			  nesListIter!=newEStateList.end();
+			  ++nesListIter) {
+			EState newEState=*nesListIter;
+			if(newEState.label()!=Labeler::NO_LABEL && (!newEState.constraints()->disequalityExists()) &&(!isFailedAssertEState(&newEState))) {
+			  HSetMaintainer<EState,EStateHashFun>::ProcessingResult pres=process(newEState);
+			  const EState* newEStatePtr=pres.second;
+			  if(pres.first==true)
+				addToWorkList(newEStatePtr);			
+			  if(true || !boolOptions["semantic-fold"])
+				recordTransition(currentEStatePtr,e,newEStatePtr);
+			}
+			if(newEState.label()!=Labeler::NO_LABEL && (!newEState.constraints()->disequalityExists()) && (isFailedAssertEState(&newEState))) {
+			  // failed-assert end-state: do not add to work list but do add it to the transition graph
+			  const EState* newEStatePtr;
+			  newEStatePtr=processNewOrExisting(newEState);
+			  recordTransition(currentEStatePtr,e,newEStatePtr);		
+			  
+			  if(boolOptions["report-failed-assert"]) {
+#pragma omp critical
+				{
+				  cout << "REPORT: failed-assert: "<<newEStatePtr->toString()<<endl;
+				}
+			  }
+			  if(_csv_assert_live_file.size()>0) {
+				string name=labelNameOfAssertLabel(currentEStatePtr->label());
+				if(name=="globalError")
+				  name="error_60";
+				name=name.substr(6,name.size()-6);
+				std::ofstream fout;
+				// csv_assert_live_file is the member-variable of analyzer
+#pragma omp critical
+				{
+				  fout.open(_csv_assert_live_file.c_str(),ios::app);    // open file for appending
+				  assert (!fout.fail( ));
+				  fout << name << ",yes,9"<<endl;
+				  //cout << "REACHABLE ASSERT FOUND: "<< name << ",yes,9"<<endl;
+				  
+				  fout.close(); 
+				}
+			  } // if
+			}
+			if(newEState.label()==Labeler::NO_LABEL) {
+			  //cerr << "INFO: found final state."<<endl;
+			}
+		  } // end of loop on transfer function return-estates
+#ifdef PARALLELIZE_BRANCHES
+		} // edgeset-parallel for
+#else
+	  } // just for proper auto-formatting in emacs
+#endif
+	} // worklist-parallel for
+	if(boolOptions["semantic-fold"]) {
+	  if(analyzedReductionTriggerNode) {
+		semanticFoldingOfTransitionGraph();
+	  }
+	}
+  } // while
+  if(boolOptions["semantic-fold"]) {
+	semanticFoldingOfTransitionGraph(); // final fold
+  }
+  printStatusMessage(true);
+  cout << "analysis finished (worklist is empty)."<<endl;
 }
