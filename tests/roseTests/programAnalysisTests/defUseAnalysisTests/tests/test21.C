@@ -1,4 +1,4 @@
 void func()
    {
-     for (; int b = 1; );
+     for (1; int b = 1; ) 1;
    }

@@ -1,9 +1,9 @@
 void func()
    {
-     for (; ;);
-     for (int a = 0; ;);
+     for (1; 1; 1) 1;
+     for (int a = 0; 1; 1) 1;
 
-     for (; ;) {
-       for (int a = 0; ;);
+     for (1; 1; 1) {
+       for (int a = 0; 1; 1) 1;
      }
    }
