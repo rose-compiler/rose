@@ -6595,10 +6595,25 @@ SgSymbolTable::insert ( const SgName & nm , SgSymbol *sp )
 #endif
 
 #if 1
+   // Liao 11/12/2012: Fortran numeric label symbol is different: a label "05" is stored as a numeric value of 5 so naive comparison will fail.
+   // we have to handle this case specially.
+   SgLabelSymbol * ls = isSgLabelSymbol(sp); 
+   bool special_handled = false;
+   if (ls != NULL)
+   {
+     SgStatement* fortran_stmt = ls->get_fortran_statement();
+     if (fortran_stmt != NULL)
+     {
+       int label_value = atoi (nm.getString().c_str());
+       assert (label_value == ls->get_numeric_label_value());
+       special_handled = true;
+     }
+   } 
+    
   // DQ (12/3/2011): Turning on symbol table checking.
   // #if SYMBOL_TABLE_ERROR_CHECKING
   // DQ (2/14/2007): Added error checking!
-     if (nm != sp->get_name())
+     if (!special_handled && (nm != sp->get_name()))
         {
           printf ("Warning: symbol name does not match name used to input associated symbol into symbol table! sp = %p = %s nm = \"%s\" sp->get_name() = \"%s\" \n",sp,sp->class_name().c_str(),nm.str(),sp->get_name().str());
 
@@ -11165,7 +11180,7 @@ Sg_File_Info::display( const std::string label ) const
    {
      assert(this != NULL);
 
-     printf ("Inside of Sg_File_Info::display(%s) \n",label.c_str());
+     printf ("Inside of Sg_File_Info::display(%s) of this pointer = %p \n",label.c_str(), this);
      printf ("     isTransformation                      = %s \n",isTransformation()    == true ? "true (part of a transformation)" : "false");
      printf ("     isCompilerGenerated                   = %s \n",isCompilerGenerated() == true ? "true (no position information)" : "false");
      printf ("     isOutputInCodeGeneration              = %s \n",isOutputInCodeGeneration() == true ? "true (output in code generator)" : "false");
@@ -11181,6 +11196,13 @@ Sg_File_Info::display( const std::string label ) const
           printf ("     filename = %s \n",get_filename());
           printf ("     line     = %d  column = %d \n",get_line(),get_col());
         }
+      else // Liao, 11/12/2012, more information for debugging
+      {
+        printf("filename and line, column info should be invalid for transformation or compiler generated objects\n");
+        printf("we print their values anyway for your reference\n");
+        printf ("     filename = %s \n",get_filename());
+        printf ("     line     = %d  column = %d \n",get_line(),get_col());
+      }
 
   // DQ (6/17/2005): Way to get extra debugging information, if the
   // substring "debug" is found then extra information is output
