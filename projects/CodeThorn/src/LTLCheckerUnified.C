@@ -271,21 +271,28 @@ public:
 			     LTLWorklist& worklist) {
     LTLStateMap::iterator i = stg.vertex.find(new_state);
     if (i == stg.vertex.end()) {
+      for (i=stg.vertex.begin(); i != stg.vertex.end(); ++i) {
+	LTLState s = (*i).first;
+	assert(! (s == new_state));
+	//cerr<<"! -----------------"<<s<<"\n";
+      }
+
+
       LTLVertex v = add_vertex(stg.g);
       stg.vertex[new_state] = v;
       stg.g[v] = new_state;
       worklist.push(v);
-      //cerr<<"** added new node "<<new_state<<endl;
+      cerr<<"** added new node "<<new_state<<endl;
       return v;
     } else {
-      //// if we have identical valstacks and different vals this should rather be an update!      
       LTLVertex v = (*i).second;
+      //cerr<<"** merged states "<<new_state<<endl;
+      return v;
+      //// if we have identical valstacks and different vals this should rather be an update!      
       //LTLState s = stg.g[v];
       //s.val = new_state.val;
       //stg.g[v] = s;
       // don't need to update vertex[], because val is not used by operator<
-      //cerr<<"** merged states "<<new_state<<endl;
-      return v;
     }
   }
 
@@ -306,22 +313,28 @@ public:
     set<LTLVertex> endpoints;
 
     //cerr<<"analyze() initializing..."<<endl;
+    stg.vertex.clear();
     LTLGraphTraits::vertex_iterator vi, vi_end;
     for (tie(vi, vi_end) = vertices(stg.g); vi != vi_end; ++vi) {
       // push bot to the top of the LTL stack and update the vertex map
-      
       LTLState state = stg.g[*vi];
-      stg.vertex.erase(state);
       state.val = Bot();
       stg.g[*vi] = state;
+      cerr<<state<<", "<<*vi<<endl;
+      size_t old = stg.vertex.size();
       stg.vertex[state] = *vi;
+      assert(stg.vertex.size()==old+1);
       assert(state.valstack.size() >= nargs);
-      
+   
       if (out_degree(*vi, stg.g) == 0) 
 	endpoints.insert(*vi);
 
       worklist.push(stg.vertex[state]);
     }
+
+    cerr<<stg.vertex.size()<<endl;
+    cerr<<num_vertices(stg.g)<<endl;
+    assert(stg.vertex.size() == num_vertices(stg.g));
 
     if (worklist.empty()) {
       cerr<<"** WARNING: empty worklist!"<<endl;
@@ -428,14 +441,16 @@ public:
     //cerr<<"storing results"<<endl;
     for (tie(vi, vi_end) = vertices(stg.g); vi != vi_end; ++vi) {
       LTLState state = stg.g[*vi];
-      stg.vertex.erase(state);
+      //stg.vertex.erase(state);
+      // Pop arguments
       for (int i = 0; i<nargs; ++i)
 	state.valstack.pop_back(); 
-      //cerr<<"==="<<state.val<<endl;
+      // Push result
       state.push(state.val);
       state.debug.push_back(state.val);
       stg.g[*vi] = state;
-      stg.vertex[state] = *vi;
+      //stg.vertex[state] = *vi;
+      //cerr<<"==="<<state.val<<endl;
     }
 
   }
@@ -1063,6 +1078,8 @@ Label UChecker::collapse_transition_graph(BoostTransitionGraph& g,
   //cerr<<"}"<<endl;
 
   //cerr<<"## done "<<endl<<endl;
+  cerr<<"Number of EStates: "<<num_vertices(g)<<endl;
+  cerr<<"Number of LTLStates: "<<num_vertices(reduced)<<endl;
   return renumbered[start];
 }
 
@@ -1092,7 +1109,7 @@ UChecker::verify(const Formula& f)
     for (tie(vi, vi_end) = vertices(v.stg.g); vi != vi_end; ++vi, ++l) {
       LTLState state = v.stg.g[*vi];
       label[*vi] = l;
-      s<<l<<" [label=\""<<state<<"\"";
+      s<<l<<" [label=\""<<state<<"\", ";
       switch (state.estate->io.op) {
       case InputOutput::STDIN_VAR:
 	s<<"shape=rectangle, color=gold, style=filled";
