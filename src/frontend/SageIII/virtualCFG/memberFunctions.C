@@ -59,8 +59,10 @@ template <class NodeT, class EdgeT>
 void makeEdge(NodeT from, NodeT to, vector<EdgeT>& result) {
   // Makes a CFG edge, adding appropriate labels
   SgNode* fromNode = from.getNode();
+  ROSE_ASSERT (fromNode != NULL);
   unsigned int fromIndex = from.getIndex();
   SgNode* toNode = to.getNode();
+  ROSE_ASSERT (toNode != NULL);
   // unsigned int toIndex = to.getIndex();
 
   // Exit early if the edge should not exist because of a control flow discontinuity
@@ -1472,6 +1474,7 @@ SgReturnStmt::cfgOutEdges(unsigned int idx)
      if (exitingFunctionNow)
         {
           SgFunctionDefinition* enclosingFunc = SageInterface::getEnclosingProcedure(this);
+          ROSE_ASSERT (enclosingFunc != NULL);
           makeEdge(CFGNode(this, idx), CFGNode(enclosingFunc, 3), result);
         }
        else
@@ -3280,9 +3283,14 @@ SgPseudoDestructorRefExp::cfgInEdges(unsigned int idx)
     std::vector<CFGEdge> result;
     switch (idx) {
         case 0:
+// Liao 10/3/2012, we no longer keep both folded and original expressions in the same AST
+// Original expression trees are either totally removed OR used to replace the folded expressions
+// In either case, we should not dive into original expression trees in virtual CFG
+#if 0
             if (get_originalExpressionTree())
                 makeEdge(CFGNode(this, idx), get_originalExpressionTree()->cfgForBeginning(), result);
             else 
+#endif
                 makeEdge(CFGNode(this, idx), CFGNode(this, idx+1), result);
             break;
         case 1:
@@ -3301,9 +3309,14 @@ SgPseudoDestructorRefExp::cfgInEdges(unsigned int idx)
             makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result);
             break;
         case 1:
+// Liao 10/3/2012, we no longer keep both folded and original expressions in the same AST        
+// Original expression trees are either totally removed OR used to replace the folded expressions
+// In either case, we should not dive into original expression trees in virtual CFG
+#if 0 
             if (get_originalExpressionTree())
                 makeEdge(get_originalExpressionTree()->cfgForEnd(), CFGNode(this, idx), result);
             else
+#endif              
                 makeEdge(CFGNode(this, idx-1), CFGNode(this, idx), result);
             break;
         default:
