@@ -224,6 +224,7 @@ class TransitionGraph : public HSet<Transition,TransitionHashFun> {
   //! reduces all non-maintained estates and unions edge-annotations. Adds edge-annotation PATH. Returns number of reduced estates.
   void reduceEStates(set<const EState*> toReduce);
   void reduceEState(const EState* estate);
+  void reduceEStates2(set<const EState*> toReduce);
   void reduceEState2(const EState* estate); // used for semantic folding
   TransitionPtrSet inEdges(const EState* estate);
   TransitionPtrSet outEdges(const EState* estate);

@@ -552,9 +552,9 @@ int main( int argc, char * argv[] ) {
   timer.start();
   cout << "=============================================================="<<endl;
   if(boolOptions["semantic-fold"]) {
-	cerr<<"Option semantic-fold is not activated yet."<<endl;
-	exit(1);
-	//analyzer.runSolver2();
+	//cerr<<"Option semantic-fold is not activated yet."<<endl;
+	//exit(1);
+	analyzer.runSolver2();
   } else {
 	analyzer.runSolver1();
   }
