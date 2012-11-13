@@ -121,6 +121,14 @@ nodeColor( SgStatement* statement )
                     returnString = "lightred";
                     break;
 
+            // DQ (11/11/2012): Added support for newer IR nodes in edg4x work.
+               case V_SgTemplateMemberFunctionDeclaration:
+               case V_SgTemplateClassDeclaration:
+               case V_SgTemplateFunctionDeclaration:
+               case V_SgTemplateVariableDeclaration:
+                    returnString = "red";
+                    break;
+
                default:
                     returnString = "ERROR DEFAULT REACHED";
                     printf ("Default reached in nodeColor() exiting ... (%s) \n",declarationStatement->class_name().c_str());
@@ -159,6 +167,12 @@ nodeColor( SgStatement* statement )
                case V_SgSwitchStatement:
                case V_SgCatchOptionStmt:
                     returnString = "black";
+                    break;
+
+            // DQ (11/11/2012): Added support for newer IR nodes in edg4x work.
+               case V_SgTemplateClassDefinition:
+               case V_SgTemplateFunctionDefinition:
+                    returnString = "red";
                     break;
 
                default:
@@ -370,6 +384,11 @@ nodeColor( SgExpression* expression )
                case V_SgWcharVal:
                case V_SgStringVal:
                     returnString = "black";
+                    break;
+
+            // DQ (11/11/2012): Added support for newer IR nodes in edg4x work.
+               case V_SgTemplateParameterVal:
+                    returnString = "red";
                     break;
 
                default:
@@ -619,8 +638,6 @@ visitorTraversal::visit(SgNode* n)
           dataFile << startingLineNumber << "," << startingColumnNumber << "," << color << "," << endingLineNumber << "," << endingColumnNumber << endl;
 
         }
-
-
    }
 
 
