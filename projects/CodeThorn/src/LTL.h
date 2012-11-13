@@ -10,7 +10,7 @@
 extern FILE* ltl_input;
 extern int ltl_parse();
 extern bool ltl_eof;
-extern short ltl_label;
+extern unsigned short ltl_label;
 
 /// Linear Temporal Logic (LTL) Abstract syntax tree (AST)
 ///
@@ -141,7 +141,7 @@ namespace LTL {
   class UnaryExpr : public Expr {
   public:
     Expr *expr1;
-    UnaryExpr(std::string _id, NodeType _type, Expr *e): expr1(e), Expr(_id, _type) {
+    UnaryExpr(std::string _id, NodeType _type, Expr *e): Expr(_id, _type), expr1(e) {
       assert(e);
       label = ltl_label++;
     }
@@ -156,7 +156,7 @@ namespace LTL {
   public:
     Expr *expr1, *expr2;
     BinaryExpr(std::string _id, NodeType _type, Expr *e1, Expr *e2): 
-      expr1(e1), expr2(e2), Expr(_id, _type) {
+      Expr(_id, _type), expr1(e1), expr2(e2) {
       assert(e1 && e2);
       label = ltl_label++;
     }

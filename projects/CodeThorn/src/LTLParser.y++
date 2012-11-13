@@ -29,7 +29,7 @@ void ltl_error (char const *msg);
 
 // Scanner variables
 bool ltl_eof = false;
-short ltl_label = 0;
+unsigned short ltl_label = 0;
 static int ltl_pos = 0;
 static int ltl_line = 1;
 static int ltl_next_char = EOF;

@@ -58,14 +58,13 @@ void add_edge_if_new(LTLVertex src, LTLVertex tgt, LTLTransitionGraph& g) {
 }
 
 
-#if 1
 /**
  * DOT visualization of the LTL Checker result
  */
 class UVisualizer: public TopDownVisitor {
 public:
   UVisualizer(LTLState& st, int l)
-    : state(st), n(1234567), label(l) {}
+    : state(st), label(l), n(1234567) {}
   LTLState& state;
   stringstream s;
   int label;
