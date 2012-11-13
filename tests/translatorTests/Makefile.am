@@ -112,8 +112,11 @@ EXTRA_DIST = \
 
 check-local:
 #	@$(MAKE) testbug125 testqualifiedName testTranslator2010_01_test
-	@$(MAKE) testbug125 testqualifiedName test_ompVariableCollecting
-	@$(MAKE) testTranslator2010_02_test
+#	@$(MAKE) testbug125 testqualifiedName test_ompVariableCollecting
+#	@$(MAKE) testbug125 
+#	@$(MAKE) testqualifiedName
+#	@$(MAKE) test_ompVariableCollecting
+#	@$(MAKE) testTranslator2010_02_test
 	@echo "****************************************************************************************"
 	@echo "****** ROSE/tests/translatorTests: make check rule complete (terminated normally) ******"
 	@echo "****************************************************************************************"

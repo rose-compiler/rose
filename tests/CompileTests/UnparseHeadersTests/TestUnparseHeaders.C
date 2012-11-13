@@ -2,17 +2,17 @@
 
 #include "UnparseHeadersTransformVisitor.h"
 
-int main(int argc, char* argv[]) {
+int main(int argc, char* argv[])
+   {
+     ROSE_ASSERT(argc > 1);
 
-    ROSE_ASSERT(argc > 1);
-
-    SgProject* projectNode = frontend(argc, argv);
+     SgProject* projectNode = frontend(argc,argv);
     
-    //AstTests::runAllTests(projectNode);
+  // AstTests::runAllTests(projectNode);
 
-    UnparseHeadersTransformVisitor transformVisitor;
-    transformVisitor.traverse(projectNode, preorder);
+     UnparseHeadersTransformVisitor transformVisitor;
+     transformVisitor.traverse(projectNode, preorder);
 
-    return backend(projectNode);
-    
-}
+     return backend(projectNode);
+   }
+
