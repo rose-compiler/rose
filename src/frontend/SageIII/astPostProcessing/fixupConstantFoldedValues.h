@@ -9,6 +9,9 @@
 // ******************************************
 // This is the API function we use externally
 // ******************************************
+//! This function acts in two different ways
+//  Remove originalExpressionTree, which is used to preserver the original expression tree before constant folding applied by EDG 
+//  Or replace folded expressions with their original expression trees
 void resetConstantFoldedValues( SgNode* node );
 
 
