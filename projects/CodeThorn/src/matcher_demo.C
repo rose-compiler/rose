@@ -31,6 +31,7 @@ int main( int argc, char * argv[] ) {
   char matchexpression[80];
   printf("Enter match-expression: ");
   int numScanned=scanf("%s",matchexpression);
+  assert(numScanned==1);
 
   bool measurementmode=false;
   if(matchexpression[0]=='.') measurementmode=true;
@@ -150,6 +151,7 @@ int main( int argc, char * argv[] ) {
 		std::cout << "  VAR: " << (*vars_iter).first << "=" << astTermWithNullValuesToString(matchedTerm) << " @" << matchedTerm << std::endl;
 	  }
 	  std::cout << std::endl;
+	  std::cout << "Matching time: "<<matchingMeasurementTime<<endl;
 	}
 	m.printMarkedLocations();
 	m.printMatchOperationsSequence();
