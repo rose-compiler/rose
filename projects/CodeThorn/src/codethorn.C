@@ -355,10 +355,6 @@ int main( int argc, char * argv[] ) {
     ("report-stderr",po::value< string >(),"report stderr estates during analysis [=yes|no]")
     ("report-failed-assert",po::value< string >(),
      "report failed assert estates during analysis [=yes|no]")
-    ("precision-equality-constraints",po::value< string >(),
-     "(experimental) use constraints for determining estate equality [=yes|no]")
-    ("precision-equality-io",po::value< string >(),
-     "(experimental) use io for determining estate equality [=yes|no]")
     ("precision-bool",po::value< string >(),
      "use precise top with bool-(and/or) operators (used in LTL) [=yes|no]")
     ("precision-intbool",po::value< string >(),
@@ -412,8 +408,6 @@ int main( int argc, char * argv[] ) {
   boolOptions.registerOption("report-stdout",false);
   boolOptions.registerOption("report-stderr",false);
   boolOptions.registerOption("report-failed-assert",false);
-  boolOptions.registerOption("precision-equality-constraints",true);
-  boolOptions.registerOption("precision-equality-io",true);
   boolOptions.registerOption("precision-bool",true);
   boolOptions.registerOption("precision-intbool",true);
   boolOptions.registerOption("precision-exact-constraints",false);

@@ -167,12 +167,10 @@ bool CodeThorn::operator<(const EState& e1, const EState& e2) {
 }
 
 bool CodeThorn::operator==(const EState& c1, const EState& c2) {
-  bool result=((c1.label()==c2.label()) && (c1.pstate()==c2.pstate()));
-  if(boolOptions["precision-equality-constraints"])
-	result = result && (c1.constraints()==c2.constraints());
-  if(boolOptions["precision-equality-io"])
-	result = result && (c1.io==c2.io);
-  return result;
+  return (c1.label()==c2.label())
+	&& (c1.pstate()==c2.pstate())
+	&& (c1.constraints()==c2.constraints())
+	&& (c1.io==c2.io);
 }
 
 bool CodeThorn::operator!=(const EState& c1, const EState& c2) {
