@@ -39,7 +39,7 @@ namespace UnifiedLTL {
   struct LTLState {
     const EState* estate;
     vector<BoolLattice> valstack;
-    BoolLattice val;  /// result of the current iteration
+    BoolLattice val;  /// result of the current iteration, will become the next top of stack
     vector<BoolLattice> debug; // stores all intermediate results for the dot output
 
     LTLState() : estate(NULL), val(Bot()) { valstack.push_back(Bot()); }
@@ -58,14 +58,14 @@ namespace UnifiedLTL {
     //LTLState(const LTLState& copy) :estate(copy.estate), valstack(copy.valstack) {}
     bool operator==(LTLState& other) const { 
       //cerr<<"?  "<<*this<<"\n== "<<other<<"\n=> "<< (estate == other.estate)<<" && "<<(valstack == other.valstack)<<endl;
-      return (estate == other.estate) && (valstack == other.valstack);
+      return (estate == other.estate) && (valstack == other.valstack) && (val == other.val);
     }
     bool operator<(LTLState other) const { 
       if (estate == other.estate) {
-	//if (val == other.val)
+	if (val == other.val)
 	  return valstack < other.valstack;
-	  //else 
-	  //return val < other.val;
+	else 
+	  return val < other.val;
       } else {
 	return estate < other.estate;
       }

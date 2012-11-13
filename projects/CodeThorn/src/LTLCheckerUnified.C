@@ -87,6 +87,7 @@ public:
     if (lval.isFalse()) return  "color=crimson";
     if (lval.isTop())   return  "color=red";
     if (lval.isBot())   return  "color=gainsboro";
+    throw "error";
   }
 
   IAttr visit(InputSymbol* expr, IAttr a)  {
@@ -199,7 +200,6 @@ public:
     return newAttr(node);
   }
 };
-#endif
 
 ostream& UnifiedLTL::operator<<(ostream& os, const LTLState& s) {
   os << "LTLState(" << s.estate->toString() << ", [ ";
@@ -218,11 +218,6 @@ ostream& UnifiedLTL::operator<<(ostream& os, const LTLState& s) {
  * bottom-up and verifying all the properties as we move upwards.
  *   This requires up to N fixpoint iterations over the transition
  * graph, where N is the number of sub-expressions in f.
- *
- * We distinguish two kinds of LTL operators:
- * * constant(?) operators (!, &, |, iX, oX, G)
- * * monotone(?) operators (X, F, E, WU, U), these require a
- *   fixpoint iteration over the entire transition graph.
  *
  * TODO: Are there better names for these classes?
  * JOINS should have the same information
@@ -272,21 +267,22 @@ public:
 
 
   LTLVertex add_state_if_new(LTLState new_state, //queue<LTLVertex>& workset,
-			     LTLStateTransitionGraph& stg) {
+			     LTLStateTransitionGraph& stg,
+			     LTLWorklist& worklist) {
     LTLStateMap::iterator i = stg.vertex.find(new_state);
     if (i == stg.vertex.end()) {
       LTLVertex v = add_vertex(stg.g);
       stg.vertex[new_state] = v;
       stg.g[v] = new_state;
-      //workset.push(v);
+      worklist.push(v);
       //cerr<<"** added new node "<<new_state<<endl;
       return v;
     } else {
-      // if we have identical valstacks and different vals this should rather be an update!      
+      //// if we have identical valstacks and different vals this should rather be an update!      
       LTLVertex v = (*i).second;
-      LTLState s = stg.g[v];
-      s.val = new_state.val;
-      stg.g[v] = s;
+      //LTLState s = stg.g[v];
+      //s.val = new_state.val;
+      //stg.g[v] = s;
       // don't need to update vertex[], because val is not used by operator<
       //cerr<<"** merged states "<<new_state<<endl;
       return v;
@@ -305,8 +301,9 @@ public:
    * transfer(a, next)
    */
   template<class TransferFunctor>
-  void analyze(LTLStateTransitionGraph& stg, TransferFunctor transfer, short nargs)  {
-    LTLWorklist worklist;//(endpoints);
+  void analyze(LTLStateTransitionGraph& stg, TransferFunctor transfer, unsigned short nargs)  {
+    LTLWorklist worklist;
+    set<LTLVertex> endpoints;
 
     //cerr<<"analyze() initializing..."<<endl;
     LTLGraphTraits::vertex_iterator vi, vi_end;
@@ -319,6 +316,9 @@ public:
       stg.g[*vi] = state;
       stg.vertex[state] = *vi;
       assert(state.valstack.size() >= nargs);
+      
+      if (out_degree(*vi, stg.g) == 0) 
+	endpoints.insert(*vi);
 
       worklist.push(stg.vertex[state]);
     }
@@ -328,89 +328,101 @@ public:
     }
 
     while (!worklist.empty()) {
-      LTLVertex v = worklist.front(); worklist.pop();
+      LTLVertex succ = worklist.front(); worklist.pop();
 
       bool verbose = false;
-      if (nargs==1 && (stg.g[v].estate->label() == 634))
-       	verbose = true;
+      //if (nargs==1 && ((stg.g[v].estate->label() == 634)))
+      // 	verbose = true; 
+      //verbose=true;
 
-      if (verbose) cerr<<"\n** Visiting state "<<v<<","<<stg.g[v]<<endl;
-      if (verbose) {
-	deque<LTLVertex> tmp;
-	cerr<<"  worklist = [";
-	while(!worklist.empty()) {
-	  LTLVertex i = worklist.front(); worklist.pop();
-	  tmp.push_back(i);
-	  cerr<<" "<<i;
-	}
-	while(!tmp.empty()) {
-	  LTLVertex i = tmp.front(); tmp.pop_front();
-	  worklist.push(i);
-	}
-	cerr<<" ]"<<endl;
+      if (in_degree(succ, stg.g) == 0) {
+	// Endpoint
+	LTLState old_state = stg.g[succ];
+	LTLState new_state = transfer(old_state, Bot(), verbose);	
+	stg.g[succ] = new_state;
+	stg.vertex[new_state] = succ;
+      }
+      
+      // Store all successors in the temporary list vs because our
+      // actions destroy the iterator
+      LTLWorklist vs;
+      LTLGraphTraits::in_edge_iterator in_i, in_end;
+      for (tie(in_i, in_end) = in_edges(succ, stg.g); in_i != in_end; ++in_i) {
+	vs.push(source(*in_i, stg.g));
       }
 
-      /* for each successor */
-      LTLWorklist succs;
-      LTLGraphTraits::out_edge_iterator out_i, out_end;
-      for (tie(out_i, out_end) = out_edges(v, stg.g); out_i != out_end; ++out_i) {
-	LTLVertex succ = target(*out_i, stg.g);
-	// store it in a local worklist because we will invalidate the
-	// iterator by adding/removing edges
-	succs.push(succ);
-      }
+      // for each predecessor
+      while (!vs.empty()) {
+	LTLVertex v = vs.front(); vs.pop();
 
-      bool endpoint = succs.empty();
-
-      while (endpoint || !succs.empty()) {
-	// if this is an endpoint with no successors, set succ_val to ⊥.
-	LTLVertex succ;
-	BoolLattice succ_val = Bot();
-	if (!endpoint) {
-	  succ = succs.front(); succs.pop();
-	  succ_val = stg.g[succ].val;
-	  if (verbose) cerr<<"  succ: "<<succ<<", "<<stg.g[succ]<<" = "<<succ_val<<endl;
-	}
+	if (verbose) cerr<<"\n** Visiting state "<<v<<","<<stg.g[v]<<endl;
+	//if (verbose) {
+	//  deque<LTLVertex> tmp;
+	//  cerr<<"  worklist = [";
+	//  while(!worklist.empty()) {
+	//    LTLVertex i = worklist.front(); worklist.pop();
+	//    tmp.push_back(i);
+	//    cerr<<" "<<i;
+	//  }
+	//  while(!tmp.empty()) {
+	//    LTLVertex i = tmp.front(); tmp.pop_front();
+	//    worklist.push(i);
+	//  }
+	//  cerr<<" ]"<<endl;
+	//}
 
 	// Always make a new state v', so we can calculate precise
 	// results for both paths.  If a v' and v'' should later turn
 	// out to be identical, they will automatically be merged.
 	LTLState old_state = stg.g[v];
-	LTLState new_state = transfer(old_state, succ_val, verbose);
-	bool fixpoint = ( (new_state == old_state) && (new_state.val == old_state.val));
-
+	LTLState new_state = transfer(old_state, stg.g[succ].val, verbose);
+	bool fixpoint = (new_state == old_state);
+	
 	if (fixpoint) {
 	  if (verbose) cerr<<"reached fixpoint!"<<endl;
 	  assert(stg.g[v].val == new_state.val);
 	} else {
-	  // create a new state in lieu of  the old state, and cut off the old state
-	  LTLVertex v_prime = add_state_if_new(new_state, stg);
-	  //stg.vertex[updated_state] = v;
-	  //stg.g[v] = updated_state;
-	  if (verbose) cerr<<"  OLD: "<<old_state<< "\n  NEW: "<<new_state<<endl;
-	  assert (v_prime != v || (new_state.val != old_state.val));
-	  if (!endpoint) add_edge_if_new(v_prime, succ, stg.g);
+	  // create a new state in lieu of the old state, and cut off the old state
+	  LTLVertex v_prime = add_state_if_new(new_state, stg, worklist);
 
-	  // for each predecessor
-	  LTLGraphTraits::in_edge_iterator in_i, in_end;
-	  for (tie(in_i, in_end) = in_edges(v, stg.g); in_i != in_end; ++in_i) {
-	    LTLVertex pred = source(*in_i, stg.g);
-	    
-	    if (verbose) cerr<<"  pred: "<<pred<<","<<stg.g[pred]<<" = "<<stg.g[pred].val<<endl;
-	    if (v_prime != v) remove_edge(v, pred, stg.g);
-	    add_edge_if_new(pred, v_prime, stg.g);
-	    worklist.push(pred);
+	  if (verbose && v != v_prime) cerr<<"  OLD: "<<old_state<< "\n  NEW: "<<new_state<<endl;
+	  //assert (v_prime != v || (new_state.val != old_state.val));
+	  if (verbose) cerr<<"  v: "<<v<<","<<stg.g[v]<<" = "<<stg.g[v].val<<endl;
 
-	    //boost::graph_traits<LTLTransitionGraph>::edge_descriptor _edge;
-	    //bool b;
-	    //tie(_edge, b) = edge(pred, v_prime, stg.g);
-	    //assert(b);
-	    //assert(stg.g[v_prime].val==new_state.val);
+	  // Add edge from new state to successor
+	  if (succ == v)
+	    add_edge_if_new(v_prime, v_prime, stg.g);
+	  else
+	    add_edge_if_new(v_prime, succ, stg.g);
+
+	  // Add edge from predecessor to new state
+	  if (v_prime != v) {
+	    LTLGraphTraits::in_edge_iterator in_i, in_end;
+	    for (tie(in_i, in_end) = in_edges(v, stg.g); in_i != in_end; ++in_i) {
+	      LTLVertex pred = source(*in_i, stg.g);
+	      add_edge_if_new(pred, v_prime, stg.g);
+	    }
 	  }
+
+	  // Cut off the old state
+	  if (v_prime != v) 
+	    remove_edge(v, succ, stg.g);
 	}
-	// no successors for endpoints anyway
-	if (endpoint) break;
       }
+    }
+
+    //if(verbose)
+    cerr<<"Number of LTLStates: "<<num_vertices(stg.g)<<endl;
+    // remove orphaned vertices
+    LTLWorklist orphans;
+    for (tie(vi, vi_end) = vertices(stg.g); vi != vi_end; ++vi) {
+      if ((out_degree(*vi, stg.g) == 0) && (endpoints.count(*vi) == 0)) 
+	orphans.push(*vi);
+    }
+    while (!orphans.empty()) {
+      LTLVertex v = orphans.front(); orphans.pop();
+      clear_vertex(v, stg.g);
+      remove_vertex(v, stg.g);
     }
 
     //cerr<<"storing results"<<endl;
@@ -425,6 +437,7 @@ public:
       stg.g[*vi] = state;
       stg.vertex[state] = *vi;
     }
+
   }
 
   struct AllEdges { bool operator() (LTLEdge e) { return true; } };
@@ -456,7 +469,6 @@ public:
   static BoolLattice isInputState(const EState* estate,
 				  set<VariableId>& input_vars,
 				  int c, BoolLattice succ_val) {
-    updateInputVar(estate, input_vars);
     if (input_vars.empty())
       return Bot();
 
@@ -507,7 +519,15 @@ public:
   // NOTE: This is extremely taylored to the RERS challenge benchmarks.
   struct TransferI {
     set<VariableId> input_vars;
-    TransferI(const UVerifier& v, const InputSymbol* e) : verifier(v), expr(e) {}
+    TransferI(const UVerifier& v, const InputSymbol* e, const LTLStateTransitionGraph stg) 
+      : verifier(v), expr(e) 
+    {
+      // first scan the entire STG for input vars
+      LTLGraphTraits::vertex_iterator vi, vi_end;
+      for (tie(vi, vi_end) = vertices(stg.g); vi != vi_end; ++vi) {
+	updateInputVar(stg.g[*vi].estate, input_vars);
+      }
+    }
     const UVerifier& verifier;
     const InputSymbol* expr;
     LTLState operator() (const LTLState& s, BoolLattice succ_val, bool verbose ) { 
@@ -522,14 +542,13 @@ public:
     }
   }; 
   void visit(const InputSymbol* expr) {
-    analyze(stg, TransferI(*this, expr), 0);
+    analyze(stg, TransferI(*this, expr, stg), 0);
   }
 
   /// return True iff that state is an !Ic operation
   static BoolLattice isNegInputState(const EState* estate,
 				     set<VariableId>& input_vars,
 				     int c, BoolLattice succ_val) {
-    updateInputVar(estate, input_vars);
     if (input_vars.empty())
       return Bot();
 
@@ -560,7 +579,15 @@ public:
   // NOTE: This is extremely taylored to the RERS challenge benchmarks.
   struct TransferNI {
     set<VariableId> input_vars;
-    TransferNI(const UVerifier& v, const InputSymbol* e) : verifier(v), expr(e) {}
+    TransferNI(const UVerifier& v, const InputSymbol* e, const LTLStateTransitionGraph stg) 
+      : verifier(v), expr(e) 
+    {
+      // first scan the entire STG for input vars
+      LTLGraphTraits::vertex_iterator vi, vi_end;
+      for (tie(vi, vi_end) = vertices(stg.g); vi != vi_end; ++vi) {
+	updateInputVar(stg.g[*vi].estate, input_vars);
+      }
+    }
     const UVerifier& verifier;
     const InputSymbol* expr;
     LTLState operator() (const LTLState& s, BoolLattice succ_val, bool verbose ) { 
@@ -575,7 +602,7 @@ public:
     }
   }; 
   void visit(const NegInputSymbol* expr) {
-    analyze(stg, TransferNI(*this, expr), 0);
+    analyze(stg, TransferNI(*this, expr, stg), 0);
   }
 
   /// return True iff that state is an Oc operation
@@ -768,7 +795,7 @@ public:
       BoolLattice old_val = s.val;
       BoolLattice e1 = s.top();
       // TODO: I'm not sure about the correct way to combine old_val with the new one
-      BoolLattice new_val = old_val || e1 || succ_val;
+      BoolLattice new_val = /*old_val ||*/ e1 || succ_val;
       //assert(new_val.lub(old_val) == new_val); // only move up in the lattice!
       newstate.val = new_val;
       if (verbose) cerr<<"  F(old="<<old_val<<", e1="<<e1<<", succ="<<succ_val<<") = "<<new_val<<endl;
@@ -795,7 +822,9 @@ public:
       BoolLattice old_val = s.val;
       BoolLattice e1 = s.top();
       // TODO: I'm not sure about the correct way to combine old_val with the new one
-      BoolLattice new_val = old_val && e1 && succ_val;
+      // And my current intuition is that it is safe to ignore it, since it
+      // will be propagated back to this node, if we have a loop, anyway.
+      BoolLattice new_val = /*old_val &&*/ e1 && succ_val;
       //assert(new_val.lub(old_val) == new_val); // only move up in the lattice!
       newstate.val = new_val;
       if (verbose) cerr<<"  G(old="<<old_val<<", e1="<<e1<<", succ="<<succ_val<<") = "<<new_val<<endl;
@@ -813,7 +842,7 @@ public:
       BoolLattice old_val = s.val;
       BoolLattice e1 = s.over();
       BoolLattice e2 = s.top();
-      BoolLattice new_val = old_val && e1 && e2;
+      BoolLattice new_val = /*old_val &&*/ e1 && e2;
       assert(new_val.lub(old_val) == new_val); // only move up in the lattice!
       newstate.val = new_val;
       if (verbose) cerr<<"  And(old="<<old_val
@@ -833,7 +862,7 @@ public:
       BoolLattice old_val = s.val;
       BoolLattice e1 = s.over();
       BoolLattice e2 = s.top();
-      BoolLattice new_val = old_val || e1 || e2;
+      BoolLattice new_val = /*old_val ||*/ e1 || e2;
       //assert(new_val.lub(old_val) == new_val); // only move up in the lattice!
       newstate.val = new_val;
       if (verbose) cerr<<"  Or(old="<<old_val
@@ -869,7 +898,7 @@ public:
       BoolLattice old_val = s.val;
       BoolLattice e1 = s.over();
       BoolLattice e2 = s.top();
-      BoolLattice new_val = old_val && (e2 || (e1 && succ_val));
+      BoolLattice new_val = /*old_val &&*/ (e2 || (e1 && succ_val));
       //assert(new_val.lub(old_val) == new_val); // only move up in the lattice!
       newstate.val = new_val;
       if (verbose) cerr<<"  Until(old="<<old_val
@@ -916,7 +945,7 @@ public:
       BoolLattice old_val = s.val;
       BoolLattice e1 = s.over();
       BoolLattice e2 = s.top();
-      BoolLattice new_val = old_val || (e2 && (e1 || succ_val));
+      BoolLattice new_val = /*old_val ||*/ (e2 && (e1 || succ_val));
       //assert(new_val.lub(old_val) == new_val); // only move up in the lattice!
       newstate.val = new_val;
       if (verbose) cerr<<"  Until(old="<<old_val
@@ -955,7 +984,8 @@ UChecker::UChecker(EStateSet& ess, TransitionGraph& _tg)
     assert(full_graph[tgt]);
   }
   //start = estate_label[transitionGraph.begin()->source];
-  start = estate_label[transitionGraph.getStartTransition().source];
+  Transition st = transitionGraph.getStartTransition();
+  start = estate_label[st.source];
 #if 0
   cout << "DEBUG: START"<<transitionGraph.begin()->source
 	   <<", news: "<<transitionGraph.getStartTransition().source
@@ -1048,8 +1078,8 @@ UChecker::verify(const Formula& f)
   // Visualization:
   bool ltl_output_dot = boolOptions["ltl-output-dot"];//  true;
   bool show_derivation = boolOptions["ltl-show-derivation"];//  true;
-  bool show_node_detail = boolOptions["ltl-show-node-detail"];//  true;
-  bool collapsed_graph = boolOptions["ltl-collapsed-graph"];//  false
+  //bool show_node_detail = boolOptions["ltl-show-node-detail"];//  true;
+  //bool collapsed_graph = boolOptions["ltl-collapsed-graph"];//  false
 
   if (ltl_output_dot) {
     stringstream s;
