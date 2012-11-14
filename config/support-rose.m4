@@ -295,6 +295,7 @@ if test "x$edg_major_version_number" = "x3"; then
          exit 1
       fi
       enable_new_edg_interface=yes
+      enable_edg_version3=yes
       AC_DEFINE([ROSE_USE_NEW_EDG_INTERFACE], [], [Whether to use the new interface to EDG])
    fi
 else
@@ -337,9 +338,11 @@ ROSE_EDG_MINOR_VERSION_NUMBER=$edg_minor_version_number
 AC_SUBST(ROSE_EDG_MAJOR_VERSION_NUMBER)
 AC_SUBST(ROSE_EDG_MINOR_VERSION_NUMBER)
 
+
 # DQ (2/3/2010): I would like to not have to use these and use the new 
 # ROSE_EDG_MAJOR_VERSION_NUMBER and ROSE_EDG_MINOR_VERSION_NUMBER instead.
 AM_CONDITIONAL(ROSE_USE_NEW_EDG_INTERFACE, [test "x$enable_new_edg_interface" = xyes])
+AM_CONDITIONAL(ROSE_USE_EDG_VERSION_3, [test "x$enable_edg_version3" = xyes])
 AM_CONDITIONAL(ROSE_USE_EDG_VERSION_4, [test "x$enable_edg_version4" = xyes])
 AM_CONDITIONAL(ROSE_USE_EDG_VERSION_4_3, [test "x$enable_edg_version43" = xyes])
 AM_CONDITIONAL(ROSE_USE_EDG_VERSION_4_4, [test "x$enable_edg_version44" = xyes])

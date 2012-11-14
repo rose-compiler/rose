@@ -9,6 +9,10 @@ t0002.c\
 t0003.c\
 t0004.c
 
+# DQ (11/11/2012): Added support to build testTranslator if it has not been built yet.
+$(TRANSLATOR_EXECUTABLE):
+	cd $(top_builddir)/tests/; $(MAKE) testTranslator
+
 # Build the list of object files
 TEST_Objects = ${C_TESTCODES:.c=.o}
 

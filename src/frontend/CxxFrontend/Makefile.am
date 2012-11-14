@@ -117,7 +117,7 @@ upload_edg_binary:
 #clean-local:
 #	rm -rf roseBinaryEDG-3-3-*.tar.gz
 
-else 
+else
 #------------------- no EDG sources
 
 all-am: EDG/libroseEDG.la
@@ -139,6 +139,17 @@ EDG/libroseEDG.la: $(BINARY_EDG_DIRNAME).tar.gz
 	  echo "ERROR: am__untar set to false! (am__untar == $(am__untar)) Can't untar $(BINARY_EDG_DIRNAME).tar.gz) -- this should have been caught by configure" >&2 && \
 	  exit 1; \
 	fi
+
+# TOO (11/12/2012) - EDG 4.x needs the `predefined_macros.txt` file to be
+#                    installed when EDG is distributed as a binary. The
+#                    current logic searches in the ${PREFIX}/share directory
+#                    for this file.
+#
+if !ROSE_USE_EDG_VERSION_3
+predefined_macrosdir = $(datadir)
+predefined_macros_DATA = \
+	EDG/EDG_$(ROSE_EDG_MAJOR_VERSION_NUMBER).$(ROSE_EDG_MINOR_VERSION_NUMBER)/lib/predefined_macros.txt
+endif
 
 CLEANFILES = EDG/libroseEDG.la
 clean-local:

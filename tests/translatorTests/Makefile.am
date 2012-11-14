@@ -21,6 +21,7 @@ noinst_PROGRAMS = \
    testTranslator2010_01 \
    testTranslator2010_02 \
    testTranslator2010_03 \
+   testTranslator2012_01 \
    ompVariableCollecting \
    label_stmt_file_info_translator
 
@@ -35,6 +36,7 @@ testTranslator2010_01_SOURCES = testTranslator2010_01.C
 testTranslator2010_02_SOURCES = testTranslator2010_02.C
 testTranslator2010_03_SOURCES = testTranslator2010_03.C
 ompVariableCollecting_SOURCES = ompVariableCollecting.C
+testTranslator2012_01_SOURCES = testTranslator2012_01.C
 
 label_stmt_file_info_translator_SOURCES = label_stmt_file_info_translator.C
 
@@ -47,10 +49,16 @@ VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-l
 
 VALGRIND =
 
-testbug125: bug125 
+# DQ (11/11/2012): This tests the PDF generater on a large program (includes STL string).
+testbug125: test125.pdf 
+
+test125.pdf: bug125 
 	./bug125 -c $(srcdir)/inputbug125.C
 
-testqualifiedName: qualifiedName
+# testqualifiedName: qualifiedName
+testqualifiedName: jacobi.o
+
+jacobi.o: qualifiedName
 	./qualifiedName -c $(top_srcdir)/projects/autoTuning/tests/jacobi.c
 
 test_testDataMemberOfConst: testDataMemberOfConst
@@ -86,12 +94,29 @@ testTranslator2010_03_test: testTranslator2010_03
 test_label_stmt_file_info_translator: label_stmt_file_info_translator
 	./label_stmt_file_info_translator -rose:verbose 0 -c $(srcdir)/input_label_stmt_file_info_translator.C
 
-EXTRA_DIST = CMakeLists.txt inputbug125.C input_testTranslator2010_2.C input_testTranslator2010_3.C input_ompVariableCollecting.C input_label_stmt_file_info_translator.C
+testTranslator2012_01_test: testTranslator2012_01
+	./testTranslator2012_01 -rose:verbose 0 $(srcdir)/input_testTranslator2012_01a.C $(srcdir)/input_testTranslator2012_01b.C
+
+
+
+
+EXTRA_DIST = \
+   CMakeLists.txt \
+   inputbug125.C \
+   input_testTranslator2010_2.C \
+   input_testTranslator2010_3.C \
+   input_ompVariableCollecting.C \
+   input_label_stmt_file_info_translator.C \
+   input_testTranslator2012_01a.C \
+   input_testTranslator2012_01a.C
 
 check-local:
 #	@$(MAKE) testbug125 testqualifiedName testTranslator2010_01_test
-	@$(MAKE) testbug125 testqualifiedName test_ompVariableCollecting
-	@$(MAKE) testTranslator2010_02_test
+#	@$(MAKE) testbug125 testqualifiedName test_ompVariableCollecting
+#	@$(MAKE) testbug125 
+#	@$(MAKE) testqualifiedName
+#	@$(MAKE) test_ompVariableCollecting
+#	@$(MAKE) testTranslator2010_02_test
 	@echo "****************************************************************************************"
 	@echo "****** ROSE/tests/translatorTests: make check rule complete (terminated normally) ******"
 	@echo "****************************************************************************************"
