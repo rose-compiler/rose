@@ -18785,7 +18785,16 @@ void c_action_label(Token_t * lbl)
         ROSE_ASSERT(keyword1 != NULL);
         resetEndingSourcePosition(astScopeStack.front(), keyword1);
 
-        ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct()->get_line() != astScopeStack.front()->get_startOfConstruct()->get_line());
+        if (astScopeStack.front()->get_endOfConstruct()->get_line() == astScopeStack.front()->get_startOfConstruct()->get_line())
+        {
+           printf ("astScopeStack.front() = %p = %s \n",astScopeStack.front(),astScopeStack.front()->class_name().c_str());
+           printf ("start file info:\n");
+           astScopeStack.front()->get_startOfConstruct()->display();
+           printf ("end file info:\n");
+           astScopeStack.front()->get_endOfConstruct()->display();
+           printf ("start line = %d end line = %d \n",  astScopeStack.front()->get_startOfConstruct()->get_line(), astScopeStack.front()->get_endOfConstruct()->get_line());
+           ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct()->get_line() != astScopeStack.front()->get_startOfConstruct()->get_line());
+        }
 
         // Pop off the function body (SgBasicBlock)
         ROSE_ASSERT(astScopeStack.empty() == false);

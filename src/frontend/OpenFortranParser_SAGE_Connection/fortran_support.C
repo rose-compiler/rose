@@ -93,7 +93,11 @@ setSourcePosition( SgLocatedNode* locatedNode )
      ROSE_ASSERT(locatedNode->get_startOfConstruct() == NULL);
 
   // Call a mechanism defined in the SageInterface support
-     SageInterface::setSourcePosition(locatedNode);
+   //  SageInterface::setSourcePosition(locatedNode);
+   //  Liao, 11/12/2012. The semantics of SageInterface::setSourcePosition() has changed, which now relies on an internal model variable 
+   //  (default to transformation generated file info, which does not fit to this context).
+   //  So we directly use the real function we want: set to default position info.
+     SageInterface::setSourcePositionToDefault(locatedNode);
    }
 
 void
@@ -586,12 +590,16 @@ void resetEndingSourcePosition( SgLocatedNode* targetLocatedNode, int newLineNum
      printf ("targetLocatedNode = %s get_startOfConstruct()->get_line() = %d \n",targetLocatedNode->class_name().c_str(),targetLocatedNode->get_startOfConstruct()->get_line());
      printf ("targetLocatedNode = %s get_endOfConstruct()->get_line()   = %d \n",targetLocatedNode->class_name().c_str(),targetLocatedNode->get_endOfConstruct()->get_line());
 #endif
-
+     // Liao, 11/12/2012. We don't expect transformation or compiler generated file info.
+     ROSE_ASSERT (targetLocatedNode->get_endOfConstruct()->isTransformation()!= true);
+     ROSE_ASSERT (targetLocatedNode->get_endOfConstruct()->isCompilerGenerated()!= true);
      int oldLineNumber = targetLocatedNode->get_endOfConstruct()->get_line();
      if (newLineNumber > oldLineNumber)
         {
        // printf ("Resetting the ending line number from %d to %d \n",oldLineNumber,newLineNumber);
           targetLocatedNode->get_endOfConstruct()->set_line(newLineNumber);
+          // this  fails if file info is compiler generated or transformation generated. (get_line() always return zero )
+          ROSE_ASSERT (targetLocatedNode->get_endOfConstruct()->get_line () == newLineNumber);
 
        // If this is a different filename then change the filename as well.
           string currentFilename = getCurrentFilename();
@@ -602,7 +610,10 @@ void resetEndingSourcePosition( SgLocatedNode* targetLocatedNode, int newLineNum
                printf ("##### targetLocatedNode->get_endOfConstruct()->get_filenameString() = %s \n",targetLocatedNode->get_endOfConstruct()->get_filenameString().c_str());
 #endif
                targetLocatedNode->get_startOfConstruct()->set_filenameString(currentFilename);
+               ROSE_ASSERT (targetLocatedNode->get_startOfConstruct()->get_filenameString() == currentFilename);
+
                targetLocatedNode->get_endOfConstruct()->set_filenameString(currentFilename);
+               ROSE_ASSERT (targetLocatedNode->get_endOfConstruct()->get_filenameString() == currentFilename);
              }
         }
 

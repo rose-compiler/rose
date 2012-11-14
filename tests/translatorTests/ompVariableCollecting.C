@@ -16,6 +16,7 @@ int main(int argc, char * argv[])
   {
     SgVarRefExp *vRef = isSgVarRefExp((*i));
     cout<<"varRefExp: "<< vRef->unparseToString()<<endl;
+    vRef->get_file_info()->display();
   }
 
   // We expect two references 

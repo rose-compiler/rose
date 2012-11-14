@@ -38,6 +38,10 @@ START_OF_FAILED_TESTS_USING_ROSE = \
 7.3.4d.cc\
 8.2.7a.cc
 
+# DQ (11/11/2012): Added support to build testTranslator if it has not been built yet.
+$(TRANSLATOR_EXECUTABLE):
+	cd $(top_builddir)/tests/; $(MAKE) testTranslator
+
 # Build the list of object files
 TEST_Objects = ${TESTCODES:.cc=.o}
 
