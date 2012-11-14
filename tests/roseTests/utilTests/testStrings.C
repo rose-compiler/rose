@@ -250,6 +250,125 @@ test_prefixLines()
     return retval;
 }
 
+static bool
+test_makeOneLine()
+{
+    using namespace StringUtility;
+    std::string s;
+
+    // These test that the input does not change if it is only one line to start with.
+    s = makeOneLine("hello world");
+    bool test_a1 = 0 == s.compare("hello world");
+    assert(test_a1);
+
+    s = makeOneLine("   hello world");
+    bool test_a2 = 0 == s.compare("   hello world");
+    assert(test_a2);
+
+    s = makeOneLine("hello world   ");
+    bool test_a3 = 0 == s.compare("hello world   ");
+    assert(test_a3);
+
+    s = makeOneLine("hello   world");
+    bool test_a4 = 0 == s.compare("hello   world");
+    assert(test_a4);
+
+    bool batch_a = test_a1 && test_a2 && test_a3 && test_a4;
+
+    // These test cases with internal line termination and no white space around the line termination
+    s = makeOneLine("hello\nworld");
+    bool test_b1 = 0 == s.compare("hello world");
+    assert(test_b1);
+
+    s = makeOneLine("hello\n\nworld");
+    bool test_b2 = 0 == s.compare("hello world");
+    assert(test_b2);
+
+    s = makeOneLine("hello\rworld");
+    bool test_b3 = 0 == s.compare("hello world");
+    assert(test_b3);
+
+    s = makeOneLine("hello\n\rworld");
+    bool test_b4 = 0 == s.compare("hello world");
+    assert(test_b4);
+
+    bool batch_b = test_b1 && test_b2 && test_b3 && test_b4;
+
+    // These test line termination at the beginning and end of the string.
+    s = makeOneLine("\nhello world");
+    bool test_c1 = 0 == s.compare("hello world");
+    assert(test_c1);
+
+    s = makeOneLine("  \n  hello world");
+    bool test_c2 = 0 == s.compare("hello world");
+    assert(test_c2);
+
+    s = makeOneLine("\n\nhello world");
+    bool test_c3 = 0 == s.compare("hello world");
+    assert(test_c3);
+
+    s = makeOneLine("hello world\n");
+    bool test_c4 = 0 == s.compare("hello world");
+    assert(test_c4);
+
+    s = makeOneLine("hello world  \n  ");
+    bool test_c5 = 0 == s.compare("hello world");
+    assert(test_c5);
+
+    s = makeOneLine("hello world\n\n");
+    bool test_c6 = 0 == s.compare("hello world");
+    assert(test_c6);
+
+    bool batch_c = test_c1 && test_c2 && test_c3 && test_c4 && test_c5 && test_c6;
+
+    // These test multi-line cases with surrounding white space
+    s = makeOneLine("hello\n  world");
+    bool test_d1 = 0 == s.compare("hello world");
+    assert(test_d1);
+
+    s = makeOneLine("hello  \nworld");
+    bool test_d2 = 0 == s.compare("hello world");
+    assert(test_d2);
+
+    s = makeOneLine("hello  \n  world");
+    bool test_d3 = 0 == s.compare("hello world");
+    assert(test_d3);
+
+    s = makeOneLine("hello  \n\n world");
+    bool test_d4 = 0 == s.compare("hello world");
+    assert(test_d4);
+
+    bool batch_d = test_d1 && test_d2 && test_d3 & test_d4;
+
+    // These test blank lines (lines with just white space)
+    s = makeOneLine("hello\n   \nworld");
+    bool test_e1 = 0 == s.compare("hello world");
+    assert(test_e1);
+
+    s = makeOneLine("hello  \n  \n  world");
+    bool test_e2 = 0 == s.compare("hello world");
+    assert(test_e2);
+
+    bool batch_e = test_e1 && test_e2;
+
+    // These test user-defined replacement strings
+    s = makeOneLine("hello\nworld", "[]");
+    bool test_f1 = 0 == s.compare("hello[]world");
+    assert(test_f1);
+
+    s = makeOneLine("\nhello\n  \n  world\n", "[]");
+    bool test_f2 = 0 == s.compare("hello[]world");
+    assert(test_f2);
+
+    s = makeOneLine("hello\n\n\n\n\nworld\n\n\n", "\n");
+    bool test_f3 = 0 == s.compare("hello\nworld");
+    assert(test_f3);
+
+    bool batch_f = test_f1 && test_f2 && test_f3;
+
+    return batch_a && batch_b && batch_c && batch_d && batch_e && batch_f;
+}
+
 // WARNING: This "test" doesn't really test anything. It just calls the functions and spits out results without checking that
 //          the results are valid.
 static bool
@@ -303,6 +422,8 @@ main()
     nfailures += test_isLineTerminated() ? 0 : 1;
 
     nfailures += test_prefixLines() ? 0 : 1;
+
+    nfailures += test_makeOneLine() ? 0 : 1;
 
     return 0==nfailures;
 }
