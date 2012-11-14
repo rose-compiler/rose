@@ -4077,7 +4077,13 @@ SageBuilder::buildDefiningFunctionDeclaration(const SgName& name, SgType* return
 SgFunctionDeclaration*
 SageBuilder::buildDefiningFunctionDeclaration(const SgName& name, SgType* return_type, SgFunctionParameterList* parameter_list, SgScopeStatement* scope)
    {
-     return buildDefiningFunctionDeclaration (name,return_type,parameter_list,scope,NULL,false,NULL,NULL);
+  // DQ (11/12/2012): Note that this function is not used in the AST construction in the EDG/ROSE interface.
+
+  // DQ (11/12/2012): Building a defining declaration from scratch now requires a non-defiing declaration to exist.
+     SgFunctionDeclaration* nondefininfDeclaration = buildNondefiningFunctionDeclaration(name,return_type,parameter_list,scope,NULL);
+
+  // return buildDefiningFunctionDeclaration (name,return_type,parameter_list,scope,NULL,false,NULL,NULL);
+     return buildDefiningFunctionDeclaration (name,return_type,parameter_list,scope,NULL,false,nondefininfDeclaration,NULL);
    }
 
 
