@@ -219,6 +219,7 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
        // DQ (8/6/2012): Added support for endOfConstruct().
           cout << "Visiting SgStatement node (starting: " << line << ":" << col << ") (ending " << ending_line << ":" << ending_col << ") -> ";
           cout << getVariantName(locatedNode->variantT()) << endl;
+          cout << "-----> Filename: " << locatedNode->get_file_info()->get_filename() << endl;
         }
 #if 0
      printf("-----> Address: %p\n", locatedNode);
@@ -1048,7 +1049,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
         }
 #endif
 
-  // DQ (8/6/2012): Allow those associated with the declaration and non inside of the template declaration.
+  // DQ (8/6/2012): Allow those associated with the declaration and not inside of the template declaration.
      ROSE_ASSERT(n != NULL);
   // printf ("In AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute(): n = %p = %s \n",n,n->class_name().c_str());
      SgDeclarationStatement* templateDeclaration = isSgTemplateFunctionDeclaration(n);
@@ -1153,6 +1154,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                lineOfClosingBrace = OneBillion;
              }
 #if 0
+          printf ("isCompilerGeneratedOrTransformation   = %s \n",isCompilerGeneratedOrTransformation ? "true" : "false");
           printf ("currentFileNameId = %d fileIdForOriginOfCurrentLocatedNode = %d \n",currentFileNameId,fileIdForOriginOfCurrentLocatedNode);
           printf ("currentFileName for currentFileNameId = %s \n",Sg_File_Info::getFilenameFromID(currentFileNameId).c_str());
 #endif
@@ -1180,6 +1182,12 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
             // Note that since this is for the original file, the list of attributes should already be in the map.
             // Note that values of currentFileNameId < 0 are for IR nodes that don't have a mapped source position
             // (e.g. compiler generated, unknown, etc.).
+               if ( !(processAllIncludeFiles == false || ((currentFileNameId < 0) || (attributeMapForAllFiles.find(currentFileNameId) != attributeMapForAllFiles.end()))) )
+                  {
+                    printf ("processAllIncludeFiles = %s \n",processAllIncludeFiles ? "true" : "false");
+                    printf ("currentFileNameId = %d \n",currentFileNameId);
+                    printf ("attributeMapForAllFiles.find(currentFileNameId) != attributeMapForAllFiles.end() = %s \n",attributeMapForAllFiles.find(currentFileNameId) != attributeMapForAllFiles.end() ? "true" : "false");
+                  }
                ROSE_ASSERT(processAllIncludeFiles == false || ((currentFileNameId < 0) || (attributeMapForAllFiles.find(currentFileNameId) != attributeMapForAllFiles.end())));
 
             // ROSEAttributesList* currentListOfAttributes = attributeMapForAllFiles[currentFileNameId];
@@ -1305,9 +1313,18 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                             ROSE_ASSERT(previousLocatedNodeMap.size() == startIndexMap.size());
 
                          // negara1 (08/12/2011): We reached the last AST node, so its safe to insert nodes for header files bodies.
-                            for (list<pair<SgIncludeDirectiveStatement*, SgStatement*> >::const_iterator it = statementsToInsertBefore.begin(); it != statementsToInsertBefore.end(); it++) {
-                                SageInterface::insertStatementBefore(it -> second, it -> first, false);
-                            }
+                            for (list<pair<SgIncludeDirectiveStatement*, SgStatement*> >::const_iterator it = statementsToInsertBefore.begin(); it != statementsToInsertBefore.end(); it++) 
+                               {
+                                 ROSE_ASSERT(it->second != NULL);
+                                 printf ("Target it->second = %p = %s \n",it->second,it->second->class_name().c_str());
+                                 it->second->get_file_info()->display("it->second: debug");
+
+                                 ROSE_ASSERT(it->first != NULL);
+                                 printf ("Target it->first = %p = %s \n",it->first,it->first->class_name().c_str());
+                                 it->first->get_file_info()->display("it->first: debug");
+
+                                 SageInterface::insertStatementBefore(it->second, it->first, false);
+                               }
                             for (list<pair<SgIncludeDirectiveStatement*, SgStatement*> >::const_iterator it = statementsToInsertAfter.begin(); it != statementsToInsertAfter.end(); it++) {
                                 SgClassDefinition* classDefinition = isSgClassDefinition(it -> second);
                                 if (classDefinition != NULL) {
@@ -1591,9 +1608,16 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
 
                     default:
                        {
+                      // DQ (11/11/2012): Added assertion.
+                         ROSE_ASSERT(n != NULL);
+
 #ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
                          printf ("Skipping any possability of attaching a comment/directive after a %s \n",n->class_name().c_str());
                       // ROSE_ASSERT(false);
+#endif
+#if DEBUG_ATTACH_PREPROCESSING_INFO
+                         ROSE_ASSERT(n->get_file_info() != NULL);
+                         n->get_file_info()->display("Skipping any possability of attaching a comment/directive: debug");
 #endif
                        }
                   }
