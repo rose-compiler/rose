@@ -81,7 +81,7 @@ bool AType::BoolLattice::operator<(BoolLattice other) const {
   if (isTrue()) {
     if (other.isBot())   return false;
     if (other.isFalse()) return false;
-    if (other.isTrue()) return false;
+    if (other.isTrue())  return false;
     return true;
   }
   if (isTop()) {

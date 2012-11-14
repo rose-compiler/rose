@@ -70,6 +70,7 @@ public:
     if (lval.isFalse()) return  "color=crimson";
     if (lval.isTop())   return  "color=red";
     if (lval.isBot())   return  "color=gainsboro";
+    throw "error";
   }
 
   IAttr visit(InputSymbol* expr, IAttr a)  {
@@ -616,7 +617,7 @@ public:
       /* for each successor */
       GraphTraits::out_edge_iterator out_i, out_end;
       for (tie(out_i, out_end) = out_edges(label, g); out_i != out_end; ++out_i) {
-	Label succ = target(*out_i, g);
+	//Label succ = target(*out_i, g);
 	joined_succs = (joined_succs LUB ltl_properties[label][e1]);
       }
       props[e] = joined_succs;
@@ -987,11 +988,13 @@ Checker::verify(const Formula& f)
     case InputOutput::STDOUT_VAR:
     case InputOutput::STDERR_VAR:
     case InputOutput::STDERR_CONST:
-    case InputOutput::STDIN_VAR:
+    case InputOutput::STDIN_VAR: {
       //cerr<<label<<": "<<v.ltl_properties[label][e.label]<<endl;
       BoolLattice result = v.ltl_properties[label][e.label];
       //assert(!result.isBot());
       return result;
+    }
+    default: ;
     }
 
     /* add each successor to workset */
