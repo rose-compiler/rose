@@ -142,6 +142,9 @@ class HSet {
 
     HSet(hashFun f = hashFun())
     : v(f.tableSize(),0), hf(f), count(0) {
+	  for(long i=0;i<f.tableSize();++i) {
+		v[i]=0;
+	  }
     }
 
     HSet(const HSet& S) {
@@ -188,7 +191,7 @@ class HSet {
        found or the list has been completely processed: */
 
     iterator find(const Key& k) const {
-        size_type address = hf(k);     // calculate address
+        long address = hf(k);     // calculate address
         if(!v[address])
            return iterator();          // not existent
 

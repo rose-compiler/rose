@@ -40,6 +40,8 @@ namespace CodeThorn {
 
 class PState : public map<VariableId,CodeThorn::CppCapsuleAValue> {
  public:
+	PState() {
+	}
   bool varExists(VariableId varname) const;
   bool varIsConst(VariableId varname) const;
   string varValueToString(VariableId varname) const;
@@ -56,7 +58,7 @@ class PStateHashFun {
     long operator()(PState s) const {
 	  unsigned int hash=1;
 	  for(PState::iterator i=s.begin();i!=s.end();++i) {
-		hash=((hash<<8)+((long)(*i).second.getValue().getIntValue()))^hash;
+		hash=((hash<<8)+((long)(*i).second.getValue().hash()))^hash;
 	  }
 	  return long(hash) % tabSize;
 	}
@@ -73,7 +75,6 @@ class PStateSet : public HSetMaintainer<PState,PStateHashFun> {
   PStateId pstateId(const PState pstate);
   string pstateIdString(const PState* pstate);
  private:
-  const PState* ptr(PState& s);
 };
 
 /**
@@ -99,7 +100,7 @@ bool operator!=(const InputOutput& c1, const InputOutput& c2);
 
 class EState {
  public:
- EState():_label(0),_pstate(0),_constraints(0){}
+ EState():_label(Labeler::NO_LABEL),_pstate(0),_constraints(0){}
  EState(Label label, const PState* pstate):_label(label),_pstate(pstate),_constraints(0){}
  EState(Label label, const PState* pstate, const ConstraintSet* cset):_label(label),_pstate(pstate),_constraints(cset){}
  EState(Label label, const PState* pstate, const ConstraintSet* cset, InputOutput io):_label(label),_pstate(pstate),_constraints(cset),io(io){}

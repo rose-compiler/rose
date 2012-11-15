@@ -886,6 +886,7 @@ void Analyzer::initializeSolver1(std::string functionToStartAt,SgNode* root) {
   Label startLabel=cfanalyzer->getLabel(startFunRoot);
   transitionGraph.setStartLabel(startLabel);
   EState estate(startLabel,emptyPStateStored,emptycsetstored);
+  cerr << "DEBUG: CHECKPOINT 1"<<endl;
   
   if(SgProject* project=isSgProject(root)) {
 	cout << "STATUS: Number of global variables: ";

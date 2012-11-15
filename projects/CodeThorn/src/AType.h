@@ -121,9 +121,10 @@ class ConstIntLattice {
   friend ostream& operator<<(ostream& os, const ConstIntLattice& toStream);
   ValueType getValueType() const;
   int getIntValue() const;
+  long hash() const;
  private:
-  int intValue;
   ValueType valueType;
+  int intValue;
 };
 // arithmetic operators
  AType::ConstIntLattice operator+(AType::ConstIntLattice& a,AType::ConstIntLattice& b);

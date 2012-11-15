@@ -9,6 +9,7 @@
 #include "assert.h"
 #include "CommandLineOptions.h"
 #include <iostream>
+#include <climits>
 
 using namespace std;
 
@@ -178,8 +179,10 @@ string AType::BoolLattice::toString() const {
   }
 }
 
-AType::ConstIntLattice::ConstIntLattice():valueType(AType::ConstIntLattice::BOT) {}
+// default constructor
+AType::ConstIntLattice::ConstIntLattice():valueType(AType::ConstIntLattice::BOT),intValue(0) {}
 
+// type conversion
 AType::ConstIntLattice::ConstIntLattice(bool val) {
   if(val) {
 	valueType=AType::ConstIntLattice::CONSTINT;
@@ -191,16 +194,25 @@ AType::ConstIntLattice::ConstIntLattice(bool val) {
 }
 
 // type conversion
-AType::ConstIntLattice::ConstIntLattice(Top e) {valueType=AType::ConstIntLattice::TOP;}
+AType::ConstIntLattice::ConstIntLattice(Top e) {valueType=AType::ConstIntLattice::TOP;intValue=0;}
 // type conversion
-AType::ConstIntLattice::ConstIntLattice(Bot e) {valueType=AType::ConstIntLattice::BOT;}
+AType::ConstIntLattice::ConstIntLattice(Bot e) {valueType=AType::ConstIntLattice::BOT;intValue=0;}
 // type conversion
 AType::ConstIntLattice::ConstIntLattice(int x) {valueType=AType::ConstIntLattice::CONSTINT;intValue=x;}
+
+
 bool AType::ConstIntLattice::isTop() const {return valueType==AType::ConstIntLattice::TOP;}
 bool AType::ConstIntLattice::isTrue() const {return valueType==AType::ConstIntLattice::CONSTINT && intValue!=0;}
 bool AType::ConstIntLattice::isFalse() const {return valueType==AType::ConstIntLattice::CONSTINT && intValue==0;}
 bool AType::ConstIntLattice::isBot() const {return valueType==AType::ConstIntLattice::BOT;}
 bool AType::ConstIntLattice::isConstInt() const {return valueType==AType::ConstIntLattice::CONSTINT;}
+
+long AType::ConstIntLattice::hash() const {
+  if(isTop()) return LONG_MAX;
+  if(isBot()) return LONG_MIN;
+  if(isConstInt()) return getIntValue();
+  throw "Error: ConstIntLattice hash: unknown value.";
+}
 
 AType::ConstIntLattice AType::ConstIntLattice::operator!() {
   AType::ConstIntLattice tmp;
@@ -397,7 +409,12 @@ AType::ConstIntLattice::ValueType AType::ConstIntLattice::getValueType() const {
 }
 
 int AType::ConstIntLattice::getIntValue() const { 
-  return intValue;
+  if(valueType!=CONSTINT) {
+	cerr << "ConstIntLattice: valueType="<<valueType<<endl;
+	throw "Error: ConstIntLattice::getIntValue operation failed.";
+  }
+  else 
+	return intValue;
 }
 
 // arithmetic operators
@@ -423,6 +440,7 @@ AType::ConstIntLattice AType::operator+(AType::ConstIntLattice& a,AType::ConstIn
 	return b;
   if(b.isBot())
 	return a;
+  assert(a.isConstInt() && b.isConstInt());
   return a.getIntValue()+b.getIntValue();
 }
 AType::ConstIntLattice AType::operator-(AType::ConstIntLattice& a,AType::ConstIntLattice& b) {
@@ -432,6 +450,7 @@ AType::ConstIntLattice AType::operator-(AType::ConstIntLattice& a,AType::ConstIn
 	return b;
   if(b.isBot())
 	return a;
+  assert(a.isConstInt() && b.isConstInt());
   return a.getIntValue()-b.getIntValue();
 }
 AType::ConstIntLattice AType::operator*(AType::ConstIntLattice& a,AType::ConstIntLattice& b) {
@@ -441,6 +460,7 @@ AType::ConstIntLattice AType::operator*(AType::ConstIntLattice& a,AType::ConstIn
 	return b;
   if(b.isBot())
 	return a;
+  assert(a.isConstInt() && b.isConstInt());
   return a.getIntValue()*b.getIntValue();
 }
 AType::ConstIntLattice AType::operator/(AType::ConstIntLattice& a,AType::ConstIntLattice& b) {
@@ -450,6 +470,7 @@ AType::ConstIntLattice AType::operator/(AType::ConstIntLattice& a,AType::ConstIn
 	return b;
   if(b.isBot())
 	return a;
+  assert(a.isConstInt() && b.isConstInt());
   return a.getIntValue()/b.getIntValue();
 }
 AType::ConstIntLattice AType::operator%(AType::ConstIntLattice& a,AType::ConstIntLattice& b) {
@@ -459,6 +480,7 @@ AType::ConstIntLattice AType::operator%(AType::ConstIntLattice& a,AType::ConstIn
 	return b;
   if(b.isBot())
 	return a;
+  assert(a.isConstInt() && b.isConstInt());
   return a.getIntValue()%b.getIntValue();
 }
 

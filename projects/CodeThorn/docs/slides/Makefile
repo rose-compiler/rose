@@ -13,11 +13,12 @@ clean:
 CTDIR=../../src
 
 examples:
-	${CTDIR}/codethorn ${CTDIR}/tests/rers_mini6.c --tg2-estate-properties=no --viz=yes
+	${CTDIR}/codethorn ${CTDIR}/tests/rers_mini8.c --tg2-estate-properties=no --viz=yes
 	cp *.dot example1gfx1
 	dot example1gfx1/transitiongraph2.dot -Tpng -oexample1gfx1/transitiongraph2.png
 	dot example1gfx1/transitiongraph2.dot -Tps -oexample1gfx1/transitiongraph2.ps
-	${CTDIR}/codethorn ${CTDIR}/tests/rers_mini6.c --tg2-estate-properties=yes --viz=yes
+#	${CTDIR}/codethorn ${CTDIR}/tests/rers_mini8.c --tg2-estate-properties=yes --viz=yes --semantic-fold=yes
+	${CTDIR}/codethorn ${CTDIR}/tests/rers_mini8.c --tg2-estate-properties=no --viz=yes --semantic-fold=yes
 	cp *.dot example1gfx2
 	dot example1gfx2/transitiongraph2.dot -Tpng -oexample1gfx2/transitiongraph2.png
 	dot example1gfx2/transitiongraph2.dot -Tps -oexample1gfx2/transitiongraph2.ps
