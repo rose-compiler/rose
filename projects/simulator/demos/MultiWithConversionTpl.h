@@ -44,6 +44,7 @@ Policy<State, ValueType>::trigger(rose_addr_t target_va)
     this->set_active_policies(CONCRETE.mask | INTERVAL.mask | SYMBOLIC.mask);
     triggered = true;
     this->writeRegister("eip", RSIM_SEMANTICS_VTYPE<32>(target_va));
+    Robin::analysis_starting(this, target_va);
 }
 
 MULTI_DOMAIN_TEMPLATE

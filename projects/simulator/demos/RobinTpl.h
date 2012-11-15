@@ -44,6 +44,15 @@ convert_to_symbolic(const ValueType<nBits> &value)
     return SYMBOLIC_VALUE<nBits>();
 }
 
+/** Called once when analysis starts. */
+template<class Policy>
+void
+analysis_starting(Policy *policy, rose_addr_t target_va)
+{
+    // Choose an arbitrary concrete value for the initial stack pointer
+    RSIM_SEMANTICS_VTYPE<32> esp(0x80000000); // stack grows down
+    policy->writeRegister("esp", esp);
+}
 
 /** Determines domains in which an x86 instruction executes.
  *
