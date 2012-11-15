@@ -149,7 +149,7 @@ namespace StringUtility
            std::string listToString ( const std::list<int> & X, bool separateStrings = false );
       //! Generate a string from a list of strings
            std::string listToString ( const std::list<std::string> & X, bool separateStrings = false );
-      //! Generate a list of strings from a string (list elements are delimited by "\n")
+      //! Generate a list of strings from a string (list elements are delimited by "\n"). \sa prefixLines().
            std::list<std::string> stringToList ( const std::string & X );
 
       //! Generate a string from a vector of strings
@@ -442,6 +442,16 @@ namespace StringUtility
 
        /** Returns true if the string ends with line termination. */
        bool isLineTerminated(const std::string &s);
+
+       /** Converts a multi-line string to a single line.  This function converts a multi-line string to a single line by
+        *  replacing line-feeds and carriage-returns (and their surrounding white space) with a user-supplied replacement
+        *  string (that defaults to a single space). Line termination (and it's surrounding white space) that appears at the
+        *  front or back of the input string is removed without replacing it.
+        *
+        *  See roseTests/utilTests/stringTests.C for lots of examples.
+        *
+        *  A new string is returned. */
+       std::string makeOneLine(const std::string &s, std::string replacement=" ");
 
    };
 
