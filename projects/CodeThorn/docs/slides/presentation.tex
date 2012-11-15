@@ -189,27 +189,29 @@ is an annotation representing the edge-type of the corresponding ICFG edge.
 
 \begin{frame}[fragile]
 \frametitle{Example}
+\vspace{-0.3cm}
 {\scriptsize
 \begin{verbatim}
 int a1=1;
 int calculate_output(int input1) {
   if(input1==2 && a1==2) {
     return 21;
-  } else if(input1!=3) {
+  } else if(input1==3) {
     return 22;
+  } else if(input1!=4) {
+    return 23;
   } else {
-  error_1: assert(0);
+    error_1: assert(0);
   }
 }
-
 int main() {
-  int output = -1;
-  while(1) {
-    int input;
-    scanf("%d", &input);        
-    output = calculate_output(input);
-    printf("%d\n", output);
-  }
+    int output = -1;
+    while(1) {
+        int input;
+        scanf("%d", &input);        
+        output = calculate_output(input);
+        printf("%d\n", output);
+    } 
   return 0;
 }
 \end{verbatim}
@@ -217,7 +219,7 @@ int main() {
 \end{frame}
 
 \begin{frame}[fragile]
-\frametitle{Folded State Transition Graph}
+\frametitle{State Transition Graph}
 
 \begin{center}
 \includegraphics[height=0.65\columnwidth]{example1gfx1/transitiongraph2}
@@ -240,35 +242,60 @@ int main() {
 \end{frame}
 
 \begin{frame}[fragile]
-\frametitle{Example with Computed Constraints}
+\frametitle{Example}
+\vspace{-0.3cm}
 {\scriptsize
 \begin{verbatim}
 int a1=1;
 int calculate_output(int input1) {
   if(input1==2 && a1==2) {
     return 21;
-  } else if(input1!=3) {
+  } else if(input1==3) {
     return 22;
+  } else if(input1!=4) {
+    return 23;
   } else {
-  error_1: assert(0);
+    error_1: assert(0);
   }
 }
-
 int main() {
-  int output = -1;
-  while(1) {
-    int input;
-    scanf("%d", &input);        
-    output = calculate_output(input);
-    printf("%d\n", output);
-    // State={(a1,1),(output,22),(input,top)},constraints={input!=2,input!=3}
-    // State={(a1,1),(output,22),(input,top)},constraints={input==2}
-  }
-  return 0;
-}
+    int output = -1;
+    while(1) {
+        int input;
+        scanf("%d", &input);        
+        output = calculate_output(input);
+        printf("%d\n", output);
+        // State={(a1,1), (output,22), (input,top)}, constraints={input==3}
+        // State={(a1,1), (output,23), (input,top)}, constraints={input==2}
+        // State={(a1,1), (output,23), (input,top)}, 
+        //                         constraints={input!=2,input!=3,input!=4}
+    } return 0;}
 \end{verbatim}
 }
 \end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Semantically Folded State Transition Graph}
+
+\begin{center}
+\includegraphics[height=0.45\columnwidth]{example1gfx2/transitiongraph2}
+\end{center}
+
+\vspace{-0.3cm}
+{
+\scriptsize
+\begin{block}{Semantic Folding}
+\begin{itemize}
+\item Fold-trigger nodes determined by separate fold-trigger analysis
+\item Folding during analysis without loss of information
+\item Unfold operation recomputes information between fold-trigger notes on execution paths.
+\end{itemize}
+\end{block}
+}
+
+
+\end{frame}
+
 
 \begin{frame}[fragile]
 \frametitle{Base Analysis Algorithm}
@@ -366,7 +393,7 @@ Problem & \#PStates &\#SStates &\#Trans &\#CSets \\\hline\hline
 \end{tabular}
 
 \vspace{0.6cm}
-Unique representaions during analysis.\\
+Unique representations during analysis.\\
 Stored in memory only once.
 \end{center}
 \end{frame}
