@@ -95,9 +95,10 @@ long EState::memorySize() const {
 }
 
 void PState::deleteVar(VariableId varId) {
-  for(PState::iterator i=begin();i!=end();++i) {
-	if((*i).first==varId)
-	  erase(i);
+  for(PState::iterator i=begin();i!=end();) {
+    PState::iterator del = i++;
+    if((*del).first==varId)
+      erase(del);
   }
 }
 

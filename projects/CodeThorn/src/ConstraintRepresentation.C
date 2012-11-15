@@ -182,8 +182,9 @@ ConstraintSet ConstraintSet::invertedConstraints() {
 
 void ConstraintSet::invertConstraints() {
   cerr << "WARNING: inverting constraints is not finished yet."<<endl;
-  for(ConstraintSet::iterator i=begin();i!=end();++i) {
+  for(ConstraintSet::iterator i=begin();i!=end();) {
 	Constraint c=*i;
+	++i;
 	switch(c.op()) {
 	case Constraint::EQ_VAR_CONST:
 	  // c ist const because it is an element in a sorted set
@@ -217,10 +218,11 @@ void  ConstraintSet::moveConstConstraints(VariableId fromVarId, VariableId toVar
 }
 
 void ConstraintSet::eraseConstConstraints(VariableId varId)  {
-  for(ConstraintSet::iterator i=begin();i!=end();++i) {
-	if((*i).isVarValOp() && (*i).lhsVar()==varId) {
-	  eraseConstraint(i);
-	}
+  for(ConstraintSet::iterator i=begin();i!=end();) {
+    ConstraintSet::iterator del = i++;
+    if((*del).isVarValOp() && (*del).lhsVar()==varId) {
+      eraseConstraint(del);
+    }
   }
 }
 
@@ -322,9 +324,7 @@ void ConstraintSet::addConstraint(Constraint c) {
   }
   case Constraint::DEQ:
 	// erase all existing constraints
-	for(set<Constraint>::iterator i=begin();i!=end();++i) {
-	  set<Constraint>::erase(*i);
-	}
+        set<Constraint>::clear();
 	set<Constraint>::insert(DISEQUALITYCONSTRAINT);
 	return;
 
@@ -381,9 +381,11 @@ void ConstraintSet::insertConstraint(Constraint c) {
   set<Constraint>::insert(c);
 }
 void ConstraintSet::eraseEqWithLhsVar(VariableId v) {
-  for(set<Constraint>::iterator i=begin();i!=end();++i) {
-	if((*i).op()==Constraint::EQ_VAR_VAR && (*i).lhsVar()==v)
-	  eraseConstraint(*i);
+  for(set<Constraint>::iterator i=begin();i!=end();) {
+    set<Constraint>::iterator del = i;
+    ++i;
+    if((*del).op()==Constraint::EQ_VAR_VAR && (*del).lhsVar()==v)
+      eraseConstraint(del);
   }
 }
 
@@ -527,11 +529,12 @@ void ConstraintSet::removeAllConstraintsOfVar(VariableId varId) {
   }
   // remove all constraints of varId
   equalityMaintainer.removeEqualities(varId);
-  for(ConstraintSet::iterator i=begin();i!=end();++i) {
-	if((*i).isVarValOp() && (*i).lhsVar()==varId)
-	  eraseConstraint(i);
-	if((*i).isVarVarOp() && ((*i).lhsVar()==varId||(*i).rhsVar()==varId))
-	  eraseConstraint(i);
+  for(ConstraintSet::iterator i=begin();i!=end();) {
+        ConstraintSet::iterator del = i++;
+	if((*del).isVarValOp() && (*del).lhsVar()==varId)
+	  eraseConstraint(del);
+	else if((*del).isVarVarOp() && ((*del).lhsVar()==varId||(*del).rhsVar()==varId))
+	  eraseConstraint(del);
   }
 }
 
