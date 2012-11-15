@@ -263,6 +263,7 @@ void checkTypes() {
 	cout << "------------------------------------------"<<endl;
 	cout << "RUNNING CHECKS FOR CPPCAPSULECONSTINTLATTICE:"<<endl;
 	AType::CppCapsuleConstIntLattice cap1(1);
+	cout << "DEBUG: "<<cap1.toString()<<endl;
 	check("cap1 == 1",cap1.getValue().getIntValue()==1);
 	AType::CppCapsuleConstIntLattice cap2;
 	cap2.setValue(AType::Top());
@@ -335,7 +336,7 @@ void checkTypes() {
 	check("check pstate.exists(s0)",pstateSet.exists(s0));
 	check("check pstate.exists(s1)",pstateSet.exists(s1));
 	check("check pstate.exists(s2)",pstateSet.exists(s2));
-	check("check pstate.exists(s5) does not exist",!pstateSet.exists(s5));
+	check("check !pstate.exists(s5) [s5 does not exist]",!pstateSet.exists(s5));
 	check("constint-strictWeak-equality-1",strictWeakOrderingIsEqual(val1,val2)==false);
 	check("constint-strictWeak-smaller-1",strictWeakOrderingIsSmaller(val1,val2)==true);
 

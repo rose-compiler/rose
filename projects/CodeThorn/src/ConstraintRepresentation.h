@@ -136,7 +136,7 @@ class ConstraintSetHashFun {
 	  for(ConstraintSet::iterator i=cs.begin();i!=cs.end();++i) {
 		// use the symbol-ptr of lhsVar for hashing (we are a friend).
 		if((*i).isVarValOp())
-		  hash=((hash<<8)+((long)(*i).rhsValCppCapsule().getValue().getIntValue()))^hash;
+		  hash=((hash<<8)+((long)(*i).rhsValCppCapsule().getValue().hash()))^hash;
 		else if((*i).isVarVarOp()) {
 		  hash=((hash<<8)+((long)((*i).rhsVar().getSymbol())))^hash;
 		} else {
