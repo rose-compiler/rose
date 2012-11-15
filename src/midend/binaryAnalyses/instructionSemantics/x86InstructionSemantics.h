@@ -673,7 +673,8 @@ struct X86InstructionSemantics {
         Word(1) p67 = policy.xor_(extract<6, 7>(w), extract<7, 8>(w));
         Word(1) p0123 = policy.xor_(p01, p23);
         Word(1) p4567 = policy.xor_(p45, p67);
-        return policy.invert(policy.xor_(p0123, p4567));
+        Word(1) pall = policy.xor_(p0123, p4567);
+        return policy.invert(pall);
     }
 
     /* Sets flags: parity, sign, and zero */
