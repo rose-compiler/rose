@@ -1,7 +1,7 @@
 int f1() {return 1;}
 int f2(int *x, int y, int z) { return 2;}
 
-int main()
+int foo()
 {
   int z = f1();
   int* p = &z;
@@ -11,5 +11,6 @@ int main()
        *p = f2(&z, 5, z);
     }
   }
-  int res = *p; 
+  int res = *p;
+  return 0;
 } 

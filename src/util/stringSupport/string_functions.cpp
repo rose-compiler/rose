@@ -1521,6 +1521,29 @@ StringUtility::isLineTerminated(const std::string &s)
     return !s.empty() && ('\n'==s[s.size()-1] || '\r'==s[s.size()-1]);
 }
 
+std::string
+StringUtility::makeOneLine(const std::string &s, std::string replacement)
+{
+    std::string result, spaces;
+    bool eat_spaces = false;
+    for (size_t i=0; i<s.size(); ++i) {
+        if ('\n'==s[i] || '\r'==s[i]) {
+            spaces = result.empty() ? "" : replacement;
+            eat_spaces = true;
+        } else if (isspace(s[i])) {
+            if (!eat_spaces)
+                spaces += s[i];
+        } else {
+            result += spaces + s[i];
+            spaces = "";
+            eat_spaces = false;
+        }
+    }
+    if (!eat_spaces)
+        result += spaces;
+    return result;
+}
+
 void
 StringUtility::add_to_reason_string(std::string &result, bool isset, bool do_pad,
                                     const std::string &abbr, const std::string &full)

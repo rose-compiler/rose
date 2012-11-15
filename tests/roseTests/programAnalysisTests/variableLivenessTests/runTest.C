@@ -1,7 +1,8 @@
 /******************************************
- * Category: DFA
- * Application to test the Def-Use Analysis
- * created by tps in Feb 2007
+ * Category: Variable liveness analysis
+ * Application to test the Variable liveness analysis
+ * Created by tps in Feb 2007
+ * Apparently largely cut-n-pasted from ../defUseAnalysisTests/runTest.C
  *****************************************/
 
 #include "rose.h"
@@ -9,119 +10,15 @@
 #include "LivenessAnalysis.h"
 #include <string>
 #include <iostream>
+#if 1 /*DEBUGGING [Robb Matzke 2012-11-07]*/
+#include "stringify.h"
+#endif
 using namespace std;
 
-void testOneFunctionDEFUSE( std::string funcParamName,
-			    vector<string> argvList,
-			    bool debug, int nrOfNodes,
-			    multimap <string, int> results,
-			    multimap <string, int> useresults) {
-  cout << " \n\n------------------------------------------\nrunning (defuse)... " << argvList[1] << endl;
-  // Build the AST used by ROSE
-  SgProject* project = frontend(argvList);
-  // Call the Def-Use Analysis
-  DFAnalysis* defuse = new DefUseAnalysis(project);
-  int val = defuse->run(debug);
-  std::cout << "Analysis run is : " << (val ?  "failure" : "success" ) << " " << val << std::endl;
-  ROSE_ASSERT(val!=1);
-  if (val==1) exit(1);
-
-  if (debug==false)
-    defuse->dfaToDOT();
-
-  //std::list<SgNode*> vars = NodeQuery::querySubTree(project, V_SgFunctionDefinition);
-  //std::list<SgNode*>::const_iterator i = vars.begin();
-  NodeQuerySynthesizedAttributeType vars = NodeQuery::querySubTree(project, V_SgFunctionDefinition);
-  NodeQuerySynthesizedAttributeType::const_iterator i = vars.begin();
-  for (; i!=vars.end();++i) {
-    SgFunctionDefinition* func = isSgFunctionDefinition(*i);
-    std::string name = func->class_name();
-    string funcName = func->get_declaration()->get_qualified_name().str();
-    int maxNodes = defuse->getDefSize();
-    int nodeNr = defuse->getIntForSgNode(func);
-    if (nodeNr == -1)
-      continue;
-    //cout << " checking function : " << funcName << endl;
-    if (funcName!=funcParamName)
-      continue;
-
-    cout << "\n------------------------\nchecking for " << name << " -- " << funcName << " -- " << nodeNr << endl;
-    if (maxNodes!=nrOfNodes) {
-      cerr << " Error: Test " << argvList[1] << " should have " << nrOfNodes << " nodes. found: " << maxNodes << endl;
-      abort();
-    }
-    cout << " Test has nodes:  " << nrOfNodes <<  endl;
-
-    cout <<"\nChecking all definitions ... " << endl;
-    // check nodes in multimap
-    std::vector <std::pair < SgInitializedName*, SgNode*> > map = defuse->getDefMultiMapFor(func);
-    if (map.size()>0) {
-      std::vector < std::pair <SgInitializedName*, SgNode*> >::const_iterator j = map.begin();
-      unsigned int hit=0;
-      for (;j!=map.end();++j) {
-	SgInitializedName* in_node = j->first;
-	SgNode* node = j->second;
-	string name= in_node->get_qualified_name().str();
-	cout << " ... checking :  " << name << endl;
-	multimap <string, int>::const_iterator k =results.begin();
-	for (;k!=results.end();++k) {
-	  string resName = k->first;
-	  int resNr = k->second;
-	  int tableNr = defuse->getIntForSgNode(node);
-	  if (name==resName)
-	    cout << " ... defNr: " << resNr << "  inTable: " << tableNr <<  endl;
-	  if (name==resName && tableNr==resNr) {
-	    hit++;
-	    cout << " Hit " << hit << "/" << results.size() << " - (" << name << "," << resNr << ")" << endl;
-	  }
-	}
-
-      }
-      if (hit!=results.size()) {
-	cout << " Error: No hit! ... DFA values of node " << nrOfNodes << " are not correct! " << endl;
-	exit(1);
-      }
-    } else {
-      if (results.size()!=0) {
-	cout << " Error: Test node " << defuse->getIntForSgNode(func) << " should have a multimap. " << endl;
-	exit(1);
-      }
-    }
-
-    cout <<"\nChecking all uses ... " << endl;
-    // check nodes in multimap
-    map = defuse->getUseMultiMapFor(func);
-    if (map.size()>0) {
-      std::vector <std::pair <SgInitializedName*, SgNode*> >::const_iterator j = map.begin();
-      size_t hit=0;
-      for (;j!=map.end();++j) {
-	SgInitializedName* in_node = j->first;
-	SgNode* node = j->second;
-	string name= in_node->get_qualified_name().str();
-	cout << " ... checking :  " << name << endl;
-	multimap <string, int>::const_iterator k =useresults.begin();
-	for (;k!=useresults.end();++k) {
-	  string resName = k->first;
-	  int resNr = k->second;
-	  int tableNr = defuse->getIntForSgNode(node);
-	  if (name==resName)
-	    cout << " ... defNr: " << resNr << "  inTable: " << tableNr <<  endl;
-	  if (name==resName && tableNr==resNr) {
-	    hit++;
-	    cout << " Hit " << hit << "/" << useresults.size() << " - (" << name << "," << resNr << ")" << endl;
-	  }
-	}
-
-      }
-      if (hit!=useresults.size()) {
-	cout << " Error: No hit! ... DFA values of node " << nrOfNodes << " are not correct! " << endl;
-	exit(1);
-      }
-    } // if
-  }
-  std::cout << "Analysis test is success." << std::endl;
+static bool
+is_type_node(SgNode *node) {
+    return isSgType(node)!=NULL;
 }
-
 
 void testOneFunction( std::string funcParamName,
 		      vector<string> argvList,
@@ -169,6 +66,11 @@ void testOneFunction( std::string funcParamName,
       dfaFunctions.push_back(rem_source);
 
     NodeQuerySynthesizedAttributeType nodes = NodeQuery::querySubTree(func, V_SgNode);
+
+    // Edg3 mistakenly adds SgType nodes to the AST; Edg4 adds some also, but fewer.  So we just remove them all. They
+    // make no difference in the variable-liveness analysis anyway.
+    nodes.erase(std::remove_if(nodes.begin(), nodes.end(), is_type_node), nodes.end());
+
     SgFunctionDeclaration* decl = isSgFunctionDeclaration(func->get_declaration());
     ROSE_ASSERT(decl);
     Rose_STL_Container<SgInitializedName*> args = decl->get_parameterList()->get_args();
@@ -215,8 +117,9 @@ void testOneFunction( std::string funcParamName,
 	int resNr = k->first;
 	vector<string> results = k->second;
 	if (debug)
-      	  cerr << "   ... containing nodes : " << results.size() << " node: " << node->class_name() << "   tableNr : " << tableNr <<
-	    "  resNr : " << resNr << endl;
+      	  cerr << "   ... containing nodes : " << results.size() << " node: " << node->class_name()
+               << "   tableNr : " << tableNr
+               << "  resNr : " << resNr << endl;
 	if (tableNr==resNr) {
 	  std::sort(results.begin(), results.end());
 	  if (results==inName) {
@@ -250,7 +153,8 @@ void testOneFunction( std::string funcParamName,
 	    hitIn++;
 	  }
 	  if (debug)
-	    cout << " nodeNr: " << tableNr << ".  ResultSize IN should be:" << results.size() << " -  resultSize is: " << in.size()
+	    cout << " nodeNr: " << tableNr << ".  ResultSize IN should be:" << results.size()
+                 << " -  resultSize is: " << in.size()
                  << "  foundMatches == : " << hitIn << "/" << resultsIn.size() << endl;
         }
       }
@@ -294,7 +198,8 @@ void testOneFunction( std::string funcParamName,
 	    hitOut++;
 	  }
 	  if (debug)
-	    cout << " nodeNr: " << tableNr << ".  ResultSize OUT should be:" << results.size() << " -  resultSize is: " << out.size()
+	    cout << " nodeNr: " << tableNr << ".  ResultSize OUT should be:" << results.size()
+                 << " -  resultSize is: " << out.size()
                  << "  foundMatches == : " << hitOut << "/" << resultsOut.size() << endl;
         }
       }
@@ -446,20 +351,15 @@ int main( int argc, char * argv[] )
   }
 
   if (allTests==true) {
-    bool debug =false;
-    string startNr = "";
-    if (argc>2)
-      startNr = argv[2];
-    bool testAll = false;
-    int startNrInt = 0;
-    if (startNr=="")
-      testAll=true;
-    else  {
-      startNrInt = strToInt(startNr);
-      testAll=false;
+    bool debug =true;
+    size_t startNr = 0;
+    size_t stopNr = (size_t)(-1);
+    if (argc>2) {
+        startNr = strtol(argv[2], NULL, 0);
+        if (argc>3) {
+            stopNr = strtol(argv[3], NULL, 0);
+        }
     }
-    if (debug)
-      cout << "start: " << startNrInt << "  all: " << testAll << endl;
 
     argvList.resize(2);
     argvList[0]=argv[0];
@@ -471,295 +371,31 @@ int main( int argc, char * argv[] )
     std::string srcdir = srcdirVar;
     srcdir += "/";
 
-    if (debug)
-      cerr << " RUNNING VARIABLE ANALYSIS (DEFUSE) TESTS -- NR: " << startNrInt << endl;
-
     // -------------------------------------- use-def tests
-    {
-      multimap <string, int> useresults;
-      multimap <string, int> resultsMe;
-
-      if (startNrInt==1 || testAll) {
-	// ------------------------------ TESTCASE 1 -----------------------------------------
-	argvList[1]=srcdir+"tests/test1.C";
-	resultsMe.clear();      useresults.clear();
-	resultsMe.insert(pair<string,int>("a", 8));
-	resultsMe.insert(pair<string,int>("a", 17));
-	resultsMe.insert(pair<string,int>("c", 18));
-	testOneFunctionDEFUSE("::main",argvList, debug, 21, resultsMe,useresults);
-      }
-
-      if (startNrInt==2 || testAll) {
-	// ------------------------------ TESTCASE 2 -----------------------------------------
-	argvList[1]=srcdir+"tests/test2.C";
-	resultsMe.clear();      useresults.clear();
-	resultsMe.insert(pair<string,int>("a", 8));
-	resultsMe.insert(pair<string,int>("a", 17));
-	resultsMe.insert(pair<string,int>("c", 18));
-	testOneFunctionDEFUSE("::main",argvList, debug, 19, resultsMe,useresults);
-      }
-
-      if (startNrInt==3 || testAll) {
-	// ------------------------------ TESTCASE 3 -----------------------------------------
-	argvList[1]=srcdir+"tests/test3.C";
-	resultsMe.clear();       useresults.clear();
-	resultsMe.insert(pair<string,int>("d", 15));
-	testOneFunctionDEFUSE("::main", argvList, debug, 17, resultsMe,useresults);
-      }
-
-      if (startNrInt==4 || testAll) {
-	// ------------------------------ TESTCASE 4 -----------------------------------------
-	argvList[1]=srcdir+"tests/test4.C";
-	resultsMe.clear();       useresults.clear();
-	resultsMe.insert(pair<string,int>("::globalvar", 12));
-	testOneFunctionDEFUSE("::main", argvList, debug, 14, resultsMe, useresults);
-      }
-
-      if (startNrInt==5 || testAll) {
-	// ------------------------------ TESTCASE 5 -----------------------------------------
-	argvList[1]=srcdir+"tests/test5.C";
-	resultsMe.clear();       useresults.clear();
-	resultsMe.insert(pair<string,int>("x", 10));
-	resultsMe.insert(pair<string,int>("y", 16));
-	useresults.insert(pair<string,int>("x", 13));
-	testOneFunctionDEFUSE("::main", argvList, debug, 18, resultsMe, useresults);
-      }
-
-      if (startNrInt==6 || testAll) {
-	// ------------------------------ TESTCASE 6 -----------------------------------------
-	argvList[1]=srcdir+"tests/test6.C";
-	resultsMe.clear();  useresults.clear();
-	resultsMe.insert(pair<string,int>("x", 14));
-	resultsMe.insert(pair<string,int>("x", 25));
-	resultsMe.insert(pair<string,int>("z", 26));
-	resultsMe.insert(pair<string,int>("z", 10));
-	useresults.insert(pair<string,int>("x", 16));
-	useresults.insert(pair<string,int>("z", 22));
-	testOneFunctionDEFUSE("::main", argvList, debug, 26, resultsMe,useresults);
-      }
-
-      if (startNrInt==7 || testAll) {
-	// ------------------------------ TESTCASE 7 -----------------------------------------
-	argvList[1]=srcdir+"tests/test7.C";
-	resultsMe.clear();  useresults.clear();
-	resultsMe.insert(pair<string,int>("i", 6));
-	resultsMe.insert(pair<string,int>("i", 15));
-	useresults.insert(pair<string,int>("i", 8));
-	useresults.insert(pair<string,int>("i", 14));
-	testOneFunctionDEFUSE("::main", argvList, debug, 16, resultsMe,useresults);
-      }
-
-      if (startNrInt==8 || testAll) {
-	// ------------------------------ TESTCASE 8 -----------------------------------------
-	argvList[1]=srcdir+"tests/test8.C";
-	resultsMe.clear();  useresults.clear();
-	resultsMe.insert(pair<string,int>("x", 24));
-	resultsMe.insert(pair<string,int>("i", 12));
-	resultsMe.insert(pair<string,int>("i", 32));
-	useresults.insert(pair<string,int>("i", 15));
-	useresults.insert(pair<string,int>("p", 26));
-	useresults.insert(pair<string,int>("x", 28));
-	testOneFunctionDEFUSE("::main", argvList, debug, 31, resultsMe,useresults);
-      }
-
-      if (startNrInt==9 || testAll) {
-	// ------------------------------ TESTCASE 9 -----------------------------------------
-	argvList[1]=srcdir+"tests/test9.C";
-	resultsMe.clear();  useresults.clear();
-	resultsMe.insert(pair<string,int>("array", 4));
-	resultsMe.insert(pair<string,int>("i", 12));
-	resultsMe.insert(pair<string,int>("i", 31));
-	useresults.insert(pair<string,int>("i", 15));
-	// useresults.insert(pair<string,int>("array", 20)); // tps: fixed this
-	testOneFunctionDEFUSE("::main", argvList, debug, 30, resultsMe,useresults);
-      }
-
-      if (startNrInt==10 || testAll) {
-	// ------------------------------ TESTCASE 10 -----------------------------------------
-	argvList[1]=srcdir+"tests/test10.C";
-	resultsMe.clear();  useresults.clear();
-	resultsMe.insert(pair<string,int>("z", 13));
-	resultsMe.insert(pair<string,int>("z", 22));
-	resultsMe.insert(pair<string,int>("res", 23));
-	testOneFunctionDEFUSE("::main", argvList, debug, 25, resultsMe,useresults);
-	resultsMe.clear();  useresults.clear();
-	resultsMe.insert(pair<string,int>("x", 3));
-	resultsMe.insert(pair<string,int>("y", 4));
-	resultsMe.insert(pair<string,int>("z", 5));
-	testOneFunctionDEFUSE("::f2", argvList, debug, 25, resultsMe,useresults);
-      }
-
-      if (startNrInt==11 || testAll) {
-	// ------------------------------ TESTCASE 11 -----------------------------------------
-	argvList[1]=srcdir+"tests/test11.C";
-	resultsMe.clear();  useresults.clear();
-	resultsMe.insert(pair<string,int>("z", 19));
-	resultsMe.insert(pair<string,int>("z", 63));
-	resultsMe.insert(pair<string,int>("z", 73));
-	resultsMe.insert(pair<string,int>("p", 24));
-	resultsMe.insert(pair<string,int>("i", 28));
-	resultsMe.insert(pair<string,int>("i", 56));
-	resultsMe.insert(pair<string,int>("j", 40)); //41
-	resultsMe.insert(pair<string,int>("j", 77));
-	//      resultsMe.insert(pair<string,int>("res", 42));
-	testOneFunctionDEFUSE("::main", argvList, debug, 76, resultsMe,useresults);
-	resultsMe.clear();  useresults.clear();
-	testOneFunctionDEFUSE("::f1", argvList, debug, 76, resultsMe,useresults);
-	resultsMe.clear();  useresults.clear();
-	resultsMe.insert(pair<string,int>("x", 7));
-	resultsMe.insert(pair<string,int>("y", 8));
-	resultsMe.insert(pair<string,int>("z", 9));
-	testOneFunctionDEFUSE("::f2", argvList, debug, 76, resultsMe,useresults);
-      }
-
-      if (startNrInt==13 || testAll) {
-	// ------------------------------ TESTCASE 13 -----------------------------------------
-	argvList[1]=srcdir+"tests/test13.C";
-	resultsMe.clear();  useresults.clear();
-	resultsMe.insert(pair<string,int>("::global", 7));
-	testOneFunctionDEFUSE("::main", argvList, debug, 9, resultsMe,useresults);
-      }
-
-      if (startNrInt==14 || testAll) {
-	// ------------------------------ TESTCASE 14 -----------------------------------------
-	argvList[1]=srcdir+"tests/test14.C";
-	resultsMe.clear();  useresults.clear();
-	resultsMe.insert(pair<string,int>("a", 12));
-	resultsMe.insert(pair<string,int>("b", 6));
-	testOneFunctionDEFUSE("::main", argvList, debug, 14, resultsMe,useresults);
-      }
-
-      if (startNrInt==15 || testAll) {
-	// ------------------------------ TESTCASE 15 -----------------------------------------
-	argvList[1]=srcdir+"tests/test15.C";
-	resultsMe.clear();  useresults.clear();
-	resultsMe.insert(pair<string,int>("i", 12));
-	resultsMe.insert(pair<string,int>("i", 26));
-	resultsMe.insert(pair<string,int>("index", 26));
-	resultsMe.insert(pair<string,int>("index", 8));
-	testOneFunctionDEFUSE("::main", argvList, debug, 26, resultsMe,useresults);
-      }
-
-      if (startNrInt==18 || testAll) {
-	// ------------------------------ TESTCASE 18 -----------------------------------------
-	argvList[1]=srcdir+"tests/test18.C";
-	resultsMe.clear();  useresults.clear();
-	resultsMe.insert(pair<string,int>("i", 12));
-	resultsMe.insert(pair<string,int>("i", 49));
-	resultsMe.insert(pair<string,int>("p", 8));
-	resultsMe.insert(pair<string,int>("p", 46));
-	resultsMe.insert(pair<string,int>("x", 24));
-	resultsMe.insert(pair<string,int>("z", 39));
-	resultsMe.insert(pair<string,int>("e", 41));
-	useresults.insert(pair<string,int>("i", 15));
-	useresults.insert(pair<string,int>("x", 28));
-	testOneFunctionDEFUSE("::main", argvList, debug, 48, resultsMe,useresults);
-      }
-
-      if (startNrInt==19 || testAll) {
-	// ------------------------------ TESTCASE 19 -----------------------------------------
-	argvList[1]=srcdir+"tests/test19.C";
-	resultsMe.clear();  useresults.clear();
-	resultsMe.insert(pair<string,int>("::global", 2));
-	resultsMe.insert(pair<string,int>("::global", 8));
-	resultsMe.insert(pair<string,int>("::global2", 28));
-	resultsMe.insert(pair<string,int>("a", 24));
-	testOneFunctionDEFUSE("::main", argvList, debug, 30, resultsMe,useresults);
-	resultsMe.clear();  useresults.clear();
-	resultsMe.insert(pair<string,int>("::global", 8));
-	resultsMe.insert(pair<string,int>("::global2", 12));
-	testOneFunctionDEFUSE("::setMe", argvList, debug, 30, resultsMe,useresults);
-      }
-
-      if (startNrInt==20 || testAll) {
-	// ------------------------------ TESTCASE 1 -----------------------------------------
-	argvList[1]=srcdir+"tests/test20.C";
-	resultsMe.clear();      useresults.clear();
-// DQ (9/24/2011): We have a different value of nodes within the new replacement of constant folded values with the original expression trees.
-// testOneFunctionDEFUSE("::bar",argvList, debug, 8, resultsMe,useresults);
-	testOneFunctionDEFUSE("::bar",argvList, debug, 7, resultsMe,useresults);
-      }
-
-      if (startNrInt==21 || testAll) {
-	// ------------------------------ TESTCASE 1 -----------------------------------------
-	argvList[1]=srcdir+"tests/test21.C";
-	resultsMe.clear();      useresults.clear();
-	testOneFunctionDEFUSE("::func",argvList, debug, 10, resultsMe,useresults);
-      }
-
-      if (startNrInt==22 || testAll) {
-	// ------------------------------ TESTCASE 1 -----------------------------------------
-	argvList[1]=srcdir+"tests/test22.C";
-	resultsMe.clear();      useresults.clear();
-	resultsMe.insert(pair<string,int>("b", 7));
-// DQ (9/24/2011): We have a different value of nodes within the new replacement of constant folded values with the original expression trees.
-// testOneFunctionDEFUSE("::func",argvList, debug, 16, resultsMe,useresults);
-	testOneFunctionDEFUSE("::func",argvList, debug, 15, resultsMe,useresults);
-      }
-
-      if (startNrInt==23 || testAll) {
-	// ------------------------------ TESTCASE 1 -----------------------------------------
-	argvList[1]=srcdir+"tests/test23.C";
-	resultsMe.clear();      useresults.clear();
-	resultsMe.insert(pair<string,int>("a",12));
-	testOneFunctionDEFUSE("::func",argvList, debug, 33, resultsMe,useresults);
-      }
-
-      if (startNrInt==24 || testAll) {
-	// ------------------------------ TESTCASE 24 -----------------------------------------
-	argvList[1]=srcdir+"tests/inputlivenessAnalysis.C";
-	resultsMe.clear();      useresults.clear();
-	testOneFunctionDEFUSE("::func",argvList, debug, 30, resultsMe,useresults);
-      }
-
-      if (startNrInt==25 || testAll) {
-	// ------------------------------ TESTCASE 24 -----------------------------------------
-	argvList[1]=srcdir+"tests/jacobi_seq.C";
-	resultsMe.clear();  useresults.clear();
-// DQ (9/24/2011): We have a different value of nodes within the new replacement of constant folded values with the original expression trees.
-// testOneFunctionDEFUSE("::jacobi", argvList, debug, 563, resultsMe,useresults);
-	testOneFunctionDEFUSE("::jacobi", argvList, debug, 554, resultsMe,useresults);
-// testOneFunctionDEFUSE("::main", argvList, debug, 563, resultsMe,useresults);
-	testOneFunctionDEFUSE("::main", argvList, debug, 554, resultsMe,useresults);
-      }
-    }
-
+    // Removed because they've already been tested by ../defUseAnalysisTests. [Robb Matzke 2012-11-06]
     // -------------------------------------- use-def tests
-
-
-
-
-
-
-
-
-
-
-
 
     // -------------------------------------- variable live tests
-
-
-    if (startNrInt==1 || testAll) {
-      // ------------------------------ TESTCASE 1 -----------------------------------------
+    if (startNr<=1 && 1<=stopNr) {
+      std::cout <<"------------------------------ TESTCASE 1 -----------------------------------------\n";
       argvList[1]=srcdir+"tests/test1.C";
       results.clear();      outputResults.clear();
       vector<string> as;
       results.insert(pair<int,  vector<string> >( make_pair(8, as )));
-      testOneFunction("::main",argvList, debug, 25, results,outputResults);
+      testOneFunction("::foo",argvList, debug, 21, results,outputResults);
     }
 
-    if (startNrInt==2 || testAll) {
-      // ------------------------------ TESTCASE 2 -----------------------------------------
+    if (startNr<=2 && 2<=stopNr) {
+      std::cout <<"------------------------------ TESTCASE 2 -----------------------------------------\n";
       argvList[1]=srcdir+"tests/test2.C";
       results.clear();      outputResults.clear();
       vector<string> as;
       results.insert(pair<int,  vector<string> >( make_pair(8, as )));
-      testOneFunction("::main",argvList, debug, 23, results,outputResults);
+      testOneFunction("::foo",argvList, debug, 21, results,outputResults);
     }
 
-    if (startNrInt==3 || testAll) {
-      // ------------------------------ TESTCASE 3 -----------------------------------------
+    if (startNr<=3 && 3<=stopNr) {
+      std::cout <<"------------------------------ TESTCASE 3 -----------------------------------------\n";
       argvList[1]=srcdir+"tests/test3.C";
       results.clear();       outputResults.clear();
 
@@ -777,11 +413,11 @@ int main( int argc, char * argv[] )
       vector<string> out(arrout,arrout+1);
       outputResults.insert(pair<int,  vector<string> >( make_pair(8, out )));
 
-      testOneFunction("::main", argvList, debug, 18, results,outputResults);
+      testOneFunction("::foo", argvList, debug, 16, results,outputResults);
     }
 
-    if (startNrInt==4 || testAll) {
-      // ------------------------------ TESTCASE 4 -----------------------------------------
+    if (startNr<=4 && 4<=stopNr) {
+      std::cout <<"------------------------------ TESTCASE 4 -----------------------------------------\n";
       argvList[1]=srcdir+"tests/test4.C";
       results.clear();       outputResults.clear();
       vector<string> in4;
@@ -795,12 +431,12 @@ int main( int argc, char * argv[] )
       results.insert(pair<int,  vector<string> >( make_pair(7, in7v )));
       vector<string> out7;
       outputResults.insert(pair<int,  vector<string> >( make_pair(7, out7 )));
-      testOneFunction("::main", argvList, debug, 12, results, outputResults);
+      testOneFunction("::foo", argvList, debug, 12, results, outputResults);
     }
 
 
-    if (startNrInt==5 || testAll) {
-      // ------------------------------ TESTCASE 5 -----------------------------------------
+    if (startNr<=5 && 5<=stopNr) {
+      std::cout <<"------------------------------ TESTCASE 5 -----------------------------------------\n";
       argvList[1]=srcdir+"tests/test5.C";
       results.clear();       outputResults.clear();
       vector<string> in4;
@@ -814,11 +450,11 @@ int main( int argc, char * argv[] )
       vector<string> out14;
       outputResults.insert(pair<int,  vector<string> >( make_pair(14, in14 )));
 
-      testOneFunction("::main", argvList, debug, 20, results, outputResults);
+      testOneFunction("::foo", argvList, debug, 17, results, outputResults);
     }
 
-    if (startNrInt==6 || testAll) {
-      // ------------------------------ TESTCASE 6 -----------------------------------------
+    if (startNr<=6 && 6<=stopNr) {
+      std::cout <<"------------------------------ TESTCASE 6 -----------------------------------------\n";
       argvList[1]=srcdir+"tests/test6.C";
       results.clear();  outputResults.clear();
       string in22[] = {"z"};
@@ -827,12 +463,12 @@ int main( int argc, char * argv[] )
       vector<string> out22;
       outputResults.insert(pair<int,  vector<string> >( make_pair(22, out22 )));
 
-      testOneFunction("::main", argvList, debug, 29, results,outputResults);
+      testOneFunction("::foo", argvList, debug, 26, results,outputResults);
     }
 
 
-    if (startNrInt==7 || testAll) {
-      // ------------------------------ TESTCASE 7 -----------------------------------------
+    if (startNr<=7 && 7<=stopNr) {
+      std::cout <<"------------------------------ TESTCASE 7 -----------------------------------------\n";
       argvList[1]=srcdir+"tests/test7.C";
       results.clear();  outputResults.clear();
       string in8[] = {"i"};
@@ -841,24 +477,21 @@ int main( int argc, char * argv[] )
       string out12[] = {"i"};
       vector<string> out12v(out12,out12+1);
       outputResults.insert(pair<int,  vector<string> >( make_pair(12, out12v )));
-      testOneFunction("::main", argvList, debug, 17, results,outputResults);
+      testOneFunction("::foo", argvList, debug, 16, results,outputResults);
     }
 
-    if (startNrInt==8 || testAll) {
-      // ------------------------------ TESTCASE 8 -----------------------------------------
+    if (startNr<=8 && 8<=stopNr) {
+      std::cout <<"------------------------------ TESTCASE 8 -----------------------------------------\n";
       argvList[1]=srcdir+"tests/test8.C";
       results.clear();  outputResults.clear();
       string out12[] = {"i","p","x"};
       vector<string> out12v(out12,out12+3);
       outputResults.insert(pair<int,  vector<string> >( make_pair(20, out12v )));
-
-   // DQ (1/16/2011): More types added when doing AST query.
-   // testOneFunction("::main", argvList, debug, 36, results,outputResults);
-      testOneFunction("::main", argvList, debug, 37, results,outputResults);
+      testOneFunction("::foo", argvList, debug, 31, results,outputResults);
     }
 
-    if (startNrInt==9 || testAll) {
-      // ------------------------------ TESTCASE 9 -----------------------------------------
+    if (startNr<=9 && 9<=stopNr) {
+      std::cout <<"------------------------------ TESTCASE 9 -----------------------------------------\n";
       argvList[1]=srcdir+"tests/test9.C";
       results.clear();  outputResults.clear();
 
@@ -871,121 +504,99 @@ int main( int argc, char * argv[] )
       string out12[] = {"i"};
       vector<string> out12v(out12,out12+1);
       outputResults.insert(pair<int,  vector<string> >( make_pair(12, out12v )));
-
-   // DQ (1/16/2011): More types added when doing AST query.
-   // testOneFunction("::main", argvList, debug, 33, results,outputResults);
-      testOneFunction("::main", argvList, debug, 34, results,outputResults);
+      testOneFunction("::foo", argvList, debug, 30, results,outputResults);
     }
 
-    if (startNrInt==10 || testAll) {
-      // ------------------------------ TESTCASE 10 -----------------------------------------
+    if (startNr<=10 && 10<=stopNr) {
+      std::cout <<"------------------------------ TESTCASE 10 -----------------------------------------\n";
       argvList[1]=srcdir+"tests/test10.C";
       results.clear();  outputResults.clear();
       testOneFunction("::f2", argvList, debug, 6, results,outputResults);
     }
 
-    if (startNrInt==11 || testAll) {
-      // ------------------------------ TESTCASE 11 -----------------------------------------
+    if (startNr<=11 && 11<=stopNr) {
+      std::cout <<"------------------------------ TESTCASE 11 -----------------------------------------\n";
       argvList[1]=srcdir+"tests/test11.C";
       results.clear();  outputResults.clear();
       testOneFunction("::f2", argvList, debug, 6, results,outputResults);
     }
 
-    if (startNrInt==13 || testAll) {
-      // ------------------------------ TESTCASE 13 -----------------------------------------
+    if (startNr<=13 && 13<=stopNr) {
+      std::cout <<"------------------------------ TESTCASE 13 -----------------------------------------\n";
       argvList[1]=srcdir+"tests/test13.C";
       results.clear();  outputResults.clear();
-      testOneFunction("::main", argvList, debug, 7, results,outputResults);
+      testOneFunction("::foo", argvList, debug, 7, results,outputResults);
     }
 
-    if (startNrInt==14 || testAll) {
-      // ------------------------------ TESTCASE 14 -----------------------------------------
+    if (startNr<=14 && 14<=stopNr) {
+      std::cout <<"------------------------------ TESTCASE 14 -----------------------------------------\n";
       argvList[1]=srcdir+"tests/test14.C";
       results.clear();  outputResults.clear();
-      testOneFunction("::main", argvList, debug, 15, results,outputResults);
+      testOneFunction("::f", argvList, debug, 11, results,outputResults);
     }
 
-    if (startNrInt==15 || testAll) {
-      // ------------------------------ TESTCASE 15 -----------------------------------------
+    if (startNr<=15 && 15<=stopNr) {
+      std::cout <<"------------------------------ TESTCASE 15 -----------------------------------------\n";
       argvList[1]=srcdir+"tests/test15.C";
       results.clear();  outputResults.clear();
-      testOneFunction("::main", argvList, debug, 27, results,outputResults);
+      testOneFunction("::foo", argvList, debug, 22, results,outputResults);
     }
 
-    if (startNrInt==18 || testAll) {
-      // ------------------------------ TESTCASE 18 -----------------------------------------
+    if (startNr<=18 && 18<=stopNr) {
+      std::cout <<"------------------------------ TESTCASE 18 -----------------------------------------\n";
       argvList[1]=srcdir+"tests/test18.C";
       results.clear();  outputResults.clear();
-
-   // DQ (1/16/2011): More types added when doing AST query.
-   // testOneFunction("::main", argvList, debug, 56, results,outputResults);
-      testOneFunction("::main", argvList, debug, 57, results,outputResults);
+      testOneFunction("::foo", argvList, debug, 48, results,outputResults);
     }
 
-    if (startNrInt==19 || testAll) {
-      // ------------------------------ TESTCASE 19 -----------------------------------------
+    if (startNr<=19 && 19<=stopNr) {
+      std::cout <<"------------------------------ TESTCASE 19 -----------------------------------------\n";
       argvList[1]=srcdir+"tests/test19.C";
       results.clear();  outputResults.clear();
       testOneFunction("::setMe", argvList, debug, 9, results,outputResults);
     }
 
-    if (startNrInt==20 || testAll) {
-      // ------------------------------ TESTCASE 20 -----------------------------------------
+    if (startNr<=20 && 20<=stopNr) {
+      std::cout <<"------------------------------ TESTCASE 20 -----------------------------------------\n";
       argvList[1]=srcdir+"tests/test20.C";
       results.clear();      outputResults.clear();
-   // DQ (9/24/2011): We have a different value of nodes within the new replacement of constant folded values with the original expression trees.
-   // testOneFunction("::bar",argvList, debug, 8, results,outputResults);
       testOneFunction("::bar",argvList, debug, 7, results,outputResults);
     }
 
-    if (startNrInt==21 || testAll) {
-      // ------------------------------ TESTCASE 21 -----------------------------------------
+    if (startNr<=21 && 21<=stopNr) {
+      std::cout <<"------------------------------ TESTCASE 21 -----------------------------------------\n";
       argvList[1]=srcdir+"tests/test21.C";
       results.clear();      outputResults.clear();
-      testOneFunction("::func",argvList, debug, 11, results,outputResults);
+      testOneFunction("::func",argvList, debug, 12, results,outputResults);
     }
 
-    if (startNrInt==22 || testAll) {
-      // ------------------------------ TESTCASE 22 -----------------------------------------
+    if (startNr<=22 && 22<=stopNr) {
+      std::cout <<"------------------------------ TESTCASE 22 -----------------------------------------\n";
       argvList[1]=srcdir+"tests/test22.C";
       results.clear();      outputResults.clear();
-   // DQ (9/24/2011): We have a different value of nodes within the new replacement of constant folded values with the original expression trees.
-   // testOneFunction("::func",argvList, debug, 18, results,outputResults);
-      testOneFunction("::func",argvList, debug, 17, results,outputResults);
+      testOneFunction("::func",argvList, debug, 18, results,outputResults);
     }
 
-    if (startNrInt==23 || testAll) {
-      // ------------------------------ TESTCASE 23 -----------------------------------------
+    if (startNr<=23 && 23<=stopNr) {
+      std::cout <<"------------------------------ TESTCASE 23 -----------------------------------------\n";
       argvList[1]=srcdir+"tests/test23.C";
       results.clear();      outputResults.clear();
-      testOneFunction("::func",argvList, debug, 37, results,outputResults);
+      testOneFunction("::func",argvList, debug, 44, results,outputResults);
     }
 
-    if (startNrInt==24 || testAll) {
-      // ------------------------------ TESTCASE 24 -----------------------------------------
+    if (startNr<=24 && 24<=stopNr) {
+      std::cout <<"------------------------------ TESTCASE 24 -----------------------------------------\n";
       argvList[1]=srcdir+"tests/inputlivenessAnalysis.C";
       results.clear();  outputResults.clear();
-
-   // DQ (1/16/2011): More types added when doing AST query.
-   // testOneFunction("::main", argvList, debug, 71, results,outputResults);
-      testOneFunction("::main", argvList, debug, 73, results,outputResults);
+      testOneFunction("::foo", argvList, debug, 73, results,outputResults);
     }
 
-    if (startNrInt==25 || testAll) {
-      // ------------------------------ TESTCASE 25 -----------------------------------------
+    if (startNr<=25 && 25<=stopNr) {
+      std::cout <<"------------------------------ TESTCASE 25 -----------------------------------------\n";
       argvList[1]=srcdir+"tests/jacobi_seq.C";
       results.clear();  outputResults.clear();
-   // DQ (9/24/2011): We have a different value of nodes within the new replacement of constant folded values with the original expression trees.
-   // DQ (9/22/2011): Restoring to original test so that I can introduce changes to the original expression tree handling 
-   // more gradually as part of debugging a few failing test codes (like this one).
-   // DQ (9/19/2011): Changed to reflect work to eliminate the original expression tree and make the AST more consistant.
-   // Not sure if this should be changed since I tried to restore the original work before the change to fixup constant
-   // folding and yet I still get different results now.
-   // testOneFunction("::jacobi", argvList, debug, 264, results,outputResults);
-   // testOneFunction("::jacobi", argvList, debug, 274, results,outputResults);
-   // testOneFunction("::jacobi", argvList, debug, 264, results,outputResults);
-      testOneFunction("::jacobi", argvList, debug, 261, results,outputResults);
-      testOneFunction("::main", argvList, debug, 24, results,outputResults);
+      testOneFunction("::jacobi", argvList, debug, 248, results,outputResults);
+      testOneFunction("::foo", argvList, debug, 24, results,outputResults);
     }
   }
   argvList.clear();

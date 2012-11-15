@@ -1,51 +1,25 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
-
-# To keep compile commands tidy, please ONLY put required include flags here.
 INCLUDES = $(ROSE_INCLUDES)
 
-## Don't use the repository in ../src
-CXX_TEMPLATE_REPOSITORY_PATH = .
-
-# This test program does not require the rest of ROSE so it can be handled locally
-bin_PROGRAMS  = runTest
-
+noinst_PROGRAMS = runTest
 runTest_SOURCES = runTest.C
-
-# testCallGraph_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 runTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 
-TESTCODES =  test1.C
+# Tests are numbered in runTest.C, and each test uses a hard-coded specimen.  Rather than duplicate the specimen-selecting
+# logic of runTest.C in this makefile, we'll just make sure that each test depends on all the available specimens.
+SPECIMEN_NUMBERS = $(shell seq 1 11) 13 14 15 $(shell seq 18 25)
+SPECIMEN_NAMES = $(shell ls $(srcdir)/tests/test*.C)
+TEST_CONFIG=$(srcdir)/runTest.conf
+EXTRA_DIST = tests $(TEST_CONFIG)
 
-# Build the list of object files
-TEST_Objects = ${TESTCODES:.C=.o}
+TEST_TARGETS = $(addprefix runTest_, $(addsuffix .passed, $(SPECIMEN_NUMBERS)))
+$(TEST_TARGETS): runTest_%.passed: runTest $(SPECIMEN_NAMES) $(TEST_CONFIG)
+	@tnum="$@"; tnum="$${tnum%.passed}"; tnum="$${tnum#runTest_}"; $(RTH_RUN) TESTNUM=$$tnum $(TEST_CONFIG) $@
 
-#ROSE_FLAGS = -rose:verbose 2
-# ROSE_FLAGS = 
-
-TEST_TRANSLATOR = ./runTest all $(ROSE_FLAGS) > output
-TESTCODE_INCLUDES =
-
-# DQ (7/12/2004): Modified to run with make -j4 options
-$(TEST_Objects): runTest $(TESTCODES) 
-	@echo "Compiling test code using $(TEST_TRANSLATOR) ..."
-	env SRCDIR="$(srcdir)" $(TEST_TRANSLATOR)
-
-EXTRA_DIST = $(TESTCODES) tests
-
-# DQ (7/25/2005): The current changes to the AST break these test programs:
-check-local:
-if USING_GNU_COMPILER
-#	This fails for the Intel icc or icpc compiler (restrict pointers are unparsed differently which causes dif to fail).
-	@$(MAKE) $(TEST_Objects)
-endif
-	@echo "*********************************************************************************************************************"
-	@echo "*** ROSE/tests/roseTests/programAnalysisTests/defUseAnalysisTests: make check rule complete (terminated normally) ***"
-	@echo "*********************************************************************************************************************"
-
+check-local: $(TEST_TARGETS)
 
 clean-local:
-	rm -rf $(CXX_TEMPLATE_OBJECTS) *.o rose_*.C *.dot Templates.DB ii_files ti_files DATABASE DATABASE.dot output *.pdf
-
-distclean-local:
-	rm -rf Templates.DB 
-
+	rm -rf $(MOSTLYCLEANFILES)
+	rm -rf dfa.dot cfg.dot var.dot varFix.dot
+	rm -rf $(TEST_TARGETS) $(TEST_TARGETS:.passed=.failed)
+	rm -rf $(TEST_TARGETS:.passed=.err) $(TEST_TARGETS:.passed=.out)

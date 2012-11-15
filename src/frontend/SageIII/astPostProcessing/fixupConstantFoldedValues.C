@@ -2,8 +2,7 @@
 
 #include "fixupConstantFoldedValues.h"
 
-// This removes the original expression tree from value expressions where it has been constant folded by EDG.
-
+//! This removes the original expression tree from value expressions where it has been constant folded by EDG.
 void resetConstantFoldedValues( SgNode* node )
    {
   // This is the initial default, it will be changed later to be an optional behavior.
@@ -13,8 +12,8 @@ void resetConstantFoldedValues( SgNode* node )
   // original expression tree should always of never used as part of analysis, but not both
   // the constant folded value AND the original expression tree.
 
-  // This is a temporary option, if false then we pass all tests and are consitant with historical configurations 
-  // of the ROSE AST, but it is inconsistant so we want to fix that (because it causes control flow problems).
+  // This is a temporary option, if false then we pass all tests and are consistent with historical configurations 
+  // of the ROSE AST, but it is inconsistent so we want to fix that (because it causes control flow problems).
 #if 1
   // DQ (11/5/2012): Original value
      bool makeASTConstantFoldingExpressionConsistant = true;
@@ -26,11 +25,11 @@ void resetConstantFoldedValues( SgNode* node )
   // This will become an input option in the near future.  Once they can be supported through all of the test codes.
   // The default is to use the original expression trees and replace the saved constant folded values in the AST.
   // Note that having both can lead to some confusion (e.g. in the control flow graph and analysis, so we select one
-  // (no constant foled values) and make it an option to have the other (using constant folded values)).  Note also
-  // This this is EDG's definition of constant folding which is fairly agressive.
+  // (no constant folded values) and make it an option to have the other (using constant folded values)).  Note also
+  // This this is EDG's definition of constant folding which is fairly aggressive.
      bool makeASTConstantFoldingExpressionConsistant_useOriginalExpressionTrees = true;
 
-  // Constant folding is optional and can be specificed as an optional parameter to "frontend()" function.
+  // Constant folding is optional and can be specified as an optional parameter to "frontend()" function.
   // If set it sets a flag in the SgProject IR node.
      SgProject* project = isSgProject(node);
      if (project != NULL)
@@ -77,17 +76,17 @@ void resetConstantFoldedValues( SgNode* node )
             // the constant folded value and then (because of recent changes to the AST traversal) the variables
             // in the array types index expression is not processed for name qualification.  
             // We need to either: 
-            //    1) uniformally define the how constants are replaced (everywhere) with their original expressions, or
+            //    1) uniformly define the how constants are replaced (everywhere) with their original expressions, or
             //    2) fix the name qualification to look into the original expression trees explicitly.
             // or both.
-            // Note: If we fix #1 then we will not have to worry about #2, also I think that #1 defines a consistant 
-            // AST, where as #2 pushes the name qualification to simple work on the nonconsistant AST.
+            // Note: If we fix #1 then we will not have to worry about #2, also I think that #1 defines a consistent 
+            // AST, where as #2 pushes the name qualification to simple work on the non-consistent AST.
                removeConstantFoldedValue(node);
              }
             else
              {
             // DQ (9/17/2011): This case fails only 2 test codes. Where the constant folded expression is unparsed but 
-            // does not generate the correct code.  This may be a separate issue to invistigate after we get the original 
+            // does not generate the correct code.  This may be a separate issue to investigate after we get the original 
             // expression trees to be used (and the constant folding overridden; the other face below).
 
             // DQ (9/18/2011): Leave this warning message in place for now (we will likely remove it later).
@@ -718,7 +717,7 @@ VerifyOriginalExpressionTreesSetToNull::visit ( SgNode* node )
   // can't be reached we can eliminate the original expression tree.  The bug in ROSE is that there
   // is an orphaned expression tree not that there is a remaining original expression tree.
 
-  // We need a mechansim to detect nodes that exist in the AST and are not pointed to by any other 
+  // We need a mechanism to detect nodes that exist in the AST and are not pointed to by any other 
   // IR node (and then we have to decide if parent pointers count).
 
      ROSE_ASSERT(node != NULL);
@@ -736,12 +735,12 @@ VerifyOriginalExpressionTreesSetToNull::visit ( SgNode* node )
                printf ("Error: there is a valid originalExpressionTree = %p = %s on node = %p = %s \n",originalExpressionTree,originalExpressionTree->class_name().c_str(),exp,exp->class_name().c_str());
 #endif
              }
-#if 0
+#if 0 // Liao debugging 11/13/2012
           ROSE_ASSERT(originalExpressionTree == NULL);
 #endif
 
        // Allow us to ignore the cases of originalExpressionTrees hidden in array types.
-       // I want to narrow down the fialing tests codes to eliminate this case which is handled seperately.
+       // I want to narrow down the failing tests codes to eliminate this case which is handled separately.
 
           if (originalExpressionTree != NULL)
              {

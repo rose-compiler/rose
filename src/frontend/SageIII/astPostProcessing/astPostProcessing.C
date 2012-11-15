@@ -236,7 +236,7 @@ void postProcessingSupport (SgNode* node)
        // DQ (10/4/2012): Added this pass to support command line option to control use of constant folding 
        // (fixes bug pointed out by Liao).
        // DQ (9/14/2011): Process the AST to remove constant folded values held in the expression trees.
-       // This step defines a consistant AST more suitable for analysis since only the constant folded
+       // This step defines a consistent AST more suitable for analysis since only the constant folded
        // values will be visited.  However, the default should be to save the original expression trees
        // and remove the constant folded values since this represents the original code.
 #if 1

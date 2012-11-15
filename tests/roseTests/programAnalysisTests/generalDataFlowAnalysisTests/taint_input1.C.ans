@@ -1,0 +1,5 @@
+Function "F1" returns tainted value
+Function "F2" returns tainted value
+Function "F3" returns tainted value
+Function "F4" returns tainted value
+Function "F5" returns tainted value

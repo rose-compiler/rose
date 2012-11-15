@@ -1,4 +1,4 @@
-int main()
+int foo()
 {
  int array[10];
  int i=0;
@@ -6,4 +6,5 @@ int main()
  {
    array[i]=i+1;
  }
+ return 0;
 } 
