@@ -485,6 +485,24 @@ string EState::toString() const {
   return ss.str();
 }
 
+string EState::toStringLn() const {
+  stringstream ss;
+  ss << "EState";
+  ss << "("<<label()<<", \\n       ";
+  if(pstate())
+	ss <<pstate()->toString();
+  else
+	ss <<"NULL";
+  if(constraints()) {
+	ss <<",\\n        constraints="<<constraints()->toString();
+  } else {
+	ss <<",\\n        NULL";
+  }
+  ss <<",\\n        io="<<io.toString();
+  ss<<"\\n)";
+  return ss.str();
+}
+
 string EStateList::toString() {
   stringstream ss;
   ss<<"EStateWorkList=[";
