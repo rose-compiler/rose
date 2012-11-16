@@ -632,8 +632,25 @@ namespace OmpSupport
 #endif
     SgPragmaDeclaration* pragmadecl = att->getPragmaDeclaration();
     result = getNextStatement(pragmadecl);
-    //  ROSE_ASSERT(result!=NULL);
-    // Not all pragma decl has a structured body!!
+    // Not all pragma decl has a structured body. We check those which do have one
+    // TODO: more types to be checked
+    if (c_clause_type == e_task || 
+        c_clause_type == e_parallel||
+        c_clause_type == e_for||
+        c_clause_type == e_do||
+        c_clause_type == e_workshare||
+        c_clause_type == e_sections||
+        c_clause_type == e_section||
+        c_clause_type == e_single||
+        c_clause_type == e_master||
+        c_clause_type == e_critical||
+        c_clause_type == e_parallel_for||
+        c_clause_type == e_parallel_do||
+        c_clause_type == e_atomic
+       )
+    {
+      ROSE_ASSERT(result!=NULL);
+    }
     return result;
   }
 
@@ -687,6 +704,7 @@ namespace OmpSupport
   SgOmpBodyStatement * buildOmpBodyStatement(OmpAttribute* att)
   {
     SgStatement* body = getOpenMPBlockFromOmpAttribte(att);
+    ROSE_ASSERT (body != NULL);
     //Must remove the body from its previous parent first before attaching it 
     //to the new parent statement.
     // We want to keep its preprocessing information during this relocation
