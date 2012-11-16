@@ -14,14 +14,13 @@
 
 #include "StateRepresentations.h"
 #include "AType.h"
-#include <map>
+#include <boost/unordered_map.hpp>
 #include <boost/graph/graph_traits.hpp>
 #include <boost/graph/adjacency_list.hpp>
 #include "LTL.h"
 //using LTL::Formula;
 
 namespace CodeThorn {
-
 namespace UnifiedLTL {
   using namespace boost;
   using namespace std;
@@ -39,8 +38,8 @@ namespace UnifiedLTL {
   struct LTLState {
     const EState* estate;
     vector<BoolLattice> valstack;
-    BoolLattice val;  /// result of the current iteration, will become the next top of stack
-    vector<BoolLattice> debug; // stores all intermediate results for the dot output
+    BoolLattice val;     /// result of the current iteration, will become the next top of stack
+    vector<BoolLattice> debug; /// stores all intermediate results for the dot output
 
     LTLState() : estate(NULL), val(Bot()) { valstack.push_back(Bot()); }
     //LTLState(const EState* s, vector<BoolLattice> v) : estate(s), valstack(v) {}
@@ -72,7 +71,15 @@ namespace UnifiedLTL {
       return false;
     }
     friend ostream& operator<<(ostream& os, const LTLState& s);
+
+    string toHTML() const;
   };
+
+  /// Hash function for LTL States
+  inline std::size_t hash_value(CodeThorn::UnifiedLTL::LTLState const& s) {
+    // the idea is that there will be rarely more than 4 LTLStates with the same estate
+    return (size_t)s.estate;
+  }
 
   ostream& operator<<(ostream& os, const LTLState& s);
   
@@ -81,7 +88,7 @@ namespace UnifiedLTL {
   typedef graph_traits<LTLTransitionGraph> LTLGraphTraits;
   typedef LTLGraphTraits::vertex_descriptor LTLVertex;
   typedef LTLGraphTraits::edge_descriptor LTLEdge;
-  typedef map<LTLState, LTLVertex> LTLStateMap;
+  typedef boost::unordered_map<LTLState, LTLVertex> LTLStateMap;
 
   class LTLStateTransitionGraph {
   public:

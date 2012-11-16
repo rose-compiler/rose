@@ -477,21 +477,22 @@ string EState::toString() const {
   return ss.str();
 }
 
-string EState::toStringLn() const {
+string EState::toHTML() const {
   stringstream ss;
+  string nl = " <BR />\n";
   ss << "EState";
-  ss << "("<<label()<<", \\n       ";
+  ss << "("<<label()<<", "<<nl;
   if(pstate())
 	ss <<pstate()->toString();
   else
 	ss <<"NULL";
   if(constraints()) {
-	ss <<",\\n        constraints="<<constraints()->toString();
+	ss <<","<<nl<<" constraints="<<constraints()->toString();
   } else {
-	ss <<",\\n        NULL";
+	ss <<","<<nl<<" NULL";
   }
-  ss <<",\\n        io="<<io.toString();
-  ss<<"\\n)";
+  ss <<","<<nl<<" io="<<io.toString();
+  ss<<")"<<nl;
   return ss.str();
 }
 
