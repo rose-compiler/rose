@@ -95,10 +95,12 @@ long EState::memorySize() const {
 }
 
 void PState::deleteVar(VariableId varId) {
-  for(PState::iterator i=begin();i!=end();) {
-    PState::iterator del = i++;
-    if((*del).first==varId)
-      erase(del);
+  PState::iterator i=begin();
+  while(i!=end()) {
+    if((*i).first==varId)
+      erase(i++);
+	else
+	  ++i;
   }
 }
 
@@ -323,27 +325,17 @@ bool CodeThorn::operator<(const Transition& t1, const Transition& t2) {
 long TransitionGraph::removeDuplicates() {
   long cnt=0;
   set<Transition> s;
-#if 0
-  // MS: unfortunately lambda expression is not supported by g++4.4
-  remove_if([&](Transition n) {
-	  return (s.find(n) == s.end()) ? (s.insert(n), false) : true;
-	});
-#else
   for(TransitionGraph::iterator i=begin();i!=end();) {
 	if(s.find(*i)==s.end()) { 
 	  s.insert(*i); 
 	  ++i;
 	} else {
-	  TransitionGraph::iterator i2=i;
-	  ++i;
-	  erase(i2);
+	  erase(i++);
 	  cnt++;
 	}
   }
-#endif
   return cnt;
 }
-
 
 string TransitionGraph::toString() const {
   string s;

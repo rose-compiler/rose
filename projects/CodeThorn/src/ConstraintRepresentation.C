@@ -157,6 +157,7 @@ void ConstraintSet::addEqVarVar(VariableId lhsVar, VariableId rhsVar) {
   addConstraint(Constraint(Constraint::EQ_VAR_VAR,lhsVar,rhsVar));
 }
 
+#if 0
 ConstraintSet ConstraintSet::invertedConstraints() {
   cerr << "WARNING: inverting constraints is not finished yet."<<endl;
   ConstraintSet result;
@@ -204,6 +205,7 @@ void ConstraintSet::invertConstraints() {
 	}
   }
 }
+#endif 
 
 void  ConstraintSet::moveConstConstraints(VariableId fromVarId, VariableId toVarId) {
   if(fromVarId==toVarId)
@@ -218,11 +220,12 @@ void  ConstraintSet::moveConstConstraints(VariableId fromVarId, VariableId toVar
 }
 
 void ConstraintSet::eraseConstConstraints(VariableId varId)  {
-  for(ConstraintSet::iterator i=begin();i!=end();) {
-    ConstraintSet::iterator del = i++;
-    if((*del).isVarValOp() && (*del).lhsVar()==varId) {
-      eraseConstraint(del);
-    }
+  ConstraintSet::iterator i=begin();
+  while(i!=end()) {
+    if((*i).isVarValOp() && (*i).lhsVar()==varId)
+      eraseConstraint(i++);
+    else
+	  ++i;
   }
 }
 
@@ -324,7 +327,7 @@ void ConstraintSet::addConstraint(Constraint c) {
   }
   case Constraint::DEQ:
 	// erase all existing constraints
-        set<Constraint>::clear();
+	set<Constraint>::clear();
 	set<Constraint>::insert(DISEQUALITYCONSTRAINT);
 	return;
 
@@ -381,11 +384,12 @@ void ConstraintSet::insertConstraint(Constraint c) {
   set<Constraint>::insert(c);
 }
 void ConstraintSet::eraseEqWithLhsVar(VariableId v) {
-  for(set<Constraint>::iterator i=begin();i!=end();) {
-    set<Constraint>::iterator del = i;
-    ++i;
-    if((*del).op()==Constraint::EQ_VAR_VAR && (*del).lhsVar()==v)
-      eraseConstraint(del);
+  set<Constraint>::iterator i=begin();
+  while(i!=end()) {
+    if((*i).op()==Constraint::EQ_VAR_VAR && (*i).lhsVar()==v)
+      eraseConstraint(i++);
+	else
+	  ++i;
   }
 }
 
@@ -514,7 +518,7 @@ void ConstraintSet::removeAllConstraintsOfVar(VariableId varId) {
   bool isDedicatedVar=(equalityMaintainer.determineDedicatedElement(varId)==varId);
   set<VariableId> equalVars=equalityMaintainer.equalElements(varId);
   if(isDedicatedVar && (equalVars.size()>=2)) {
-	// find an element differet to the dedicated var (the 2nd element must be correct)
+	// find an element different to the dedicated var (the 2nd element must be correct)
 	set<VariableId>::iterator i=equalVars.begin();
 	++i;
 	assert(i!=equalVars.end());
@@ -529,12 +533,14 @@ void ConstraintSet::removeAllConstraintsOfVar(VariableId varId) {
   }
   // remove all constraints of varId
   equalityMaintainer.removeEqualities(varId);
-  for(ConstraintSet::iterator i=begin();i!=end();) {
-        ConstraintSet::iterator del = i++;
-	if((*del).isVarValOp() && (*del).lhsVar()==varId)
-	  eraseConstraint(del);
-	else if((*del).isVarVarOp() && ((*del).lhsVar()==varId||(*del).rhsVar()==varId))
-	  eraseConstraint(del);
+  ConstraintSet::iterator i=begin();
+  while(i!=end()) {
+	if((*i).isVarValOp() && (*i).lhsVar()==varId)
+	  eraseConstraint(i++);
+	else if((*i).isVarVarOp() && ((*i).lhsVar()==varId||(*i).rhsVar()==varId))
+	  eraseConstraint(i++);
+	else
+	  ++i;
   }
 }
 
