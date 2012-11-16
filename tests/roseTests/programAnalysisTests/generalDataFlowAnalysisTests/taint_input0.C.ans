@@ -1,0 +1,9 @@
+Function "A1" returns tainted value
+Function "A2" returns tainted value
+Function "A3" returns tainted value
+Function "B1" returns tainted value
+Function "B2" returns tainted value
+Function "B3" returns tainted value
+Function "C1" returns tainted value
+Function "C2" returns tainted value
+Function "C3" returns tainted value

@@ -42,7 +42,7 @@ ClassHierarchyWrapper::ClassHierarchyWrapper(SgNode *node)
      allCls.erase(std::remove(allCls.begin(), allCls.end(), (SgNode*)NULL), allCls.end());
      size_t vectorSizeAfterRemovingTemplates = allCls.size();
   // printf ("In ClassHierarchyWrapper(): Size after removing SgTemplateClassDefinition = %zu \n",vectorSizeAfterRemovingTemplates);
-#if 1
+#if 0
      printf ("In ClassHierarchyWrapper(): Modified size of vector of class definitions before = %zu after = %zu \n",vectorSizeBeforeRemovingTemplates,vectorSizeAfterRemovingTemplates);
 #endif
 

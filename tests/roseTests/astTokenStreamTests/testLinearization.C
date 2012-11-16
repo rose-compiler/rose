@@ -56,40 +56,8 @@ void VisitEveryNode::visit ( SgNode* node )
 
 int main( int argc, char * argv[] )
    {
-  // Build the AST used by ROSE
      SgProject* project = frontend(argc,argv);
-
-  // Assume that there is only one file
-     std::string filename;
-     for(int i = 0 ; i < project->numberOfFiles(); i++)
-     {
-       SgSourceFile* file = isSgSourceFile(&project->get_file(i));
-       if( file != NULL)
-         filename = file->getFileName();
-
-     };
-
-     ROSE_ASSERT(filename != "");
-
-     filename+=".linearization.out";
-     filename = StringUtility::stripPathFromFileName(filename);
-
-     ofstream myfile;
-     myfile.open (filename.c_str());
-
-     ROSE_ASSERT(myfile.is_open());
-     std::cout << "Outputing to the file " << filename << std::endl;
-
-
-
-
-
-     VisitEveryNode aNode(myfile);
+     VisitEveryNode aNode(std::cout);
      aNode.traverseInputFiles(project, preorder);
-
-
-
-//     return backend(project);
-
    };
 
