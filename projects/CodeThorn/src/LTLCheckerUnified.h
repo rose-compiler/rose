@@ -26,7 +26,7 @@ namespace UnifiedLTL {
   using namespace std;
   using namespace AType;
 
-  typedef adjacency_list<vecS, vecS, bidirectionalS, const EState*> BoostTransitionGraph;
+  typedef adjacency_list<hash_setS, vecS, bidirectionalS, const EState*> BoostTransitionGraph;
   typedef graph_traits<BoostTransitionGraph> GraphTraits;
   typedef GraphTraits::vertex_descriptor Vertex;
 
@@ -45,8 +45,8 @@ namespace UnifiedLTL {
     //LTLState(const EState* s, vector<BoolLattice> v) : estate(s), valstack(v) {}
     LTLState(const EState* s, BoolLattice top) : estate(s), val(top) { }
     
-    BoolLattice top()  const { return valstack.back(); }
-    BoolLattice over() const { return valstack[valstack.size()-2]; }
+    inline BoolLattice top()  const { return valstack.back(); }
+    inline BoolLattice over() const { return valstack[valstack.size()-2]; }
     BoolLattice pop()  { 
       BoolLattice val = valstack.back(); 
       valstack.pop_back(); 
@@ -54,12 +54,12 @@ namespace UnifiedLTL {
     }
     void push(BoolLattice val) { valstack.push_back(val); }
 
-    bool operator==(const LTLState& other) const { 
+    inline bool operator==(const LTLState& other) const { 
       //cerr<<"?  "<<*this<<"\n== "<<other<<"\n=> "
       // 	  << (estate == other.estate)<<" && "
       // 	  <<(valstack == other.valstack)<<" && "
       // 	  <<(val == other.val)<<endl;
-      return (val == other.val) && (valstack == other.valstack) && (*estate == *other.estate);
+      return (val == other.val) && (valstack == other.valstack) && (estate == other.estate);
     }
     bool operator<(const LTLState& other) const {
       if (val  < other.val) return true;
@@ -78,13 +78,13 @@ namespace UnifiedLTL {
   /// Hash function for LTL States
   inline std::size_t hash_value(CodeThorn::UnifiedLTL::LTLState const& s) {
     // the idea is that there will be rarely more than 4 LTLStates with the same estate
-    return (size_t)s.estate;
+    return (size_t)s.estate+(size_t)s.val.val();
   }
 
   ostream& operator<<(ostream& os, const LTLState& s);
   
   // For the LTLTransitionGraph we need a mutable version!
-  typedef adjacency_list<listS, listS, bidirectionalS, LTLState> LTLTransitionGraph;
+  typedef adjacency_list<hash_setS, listS, bidirectionalS, LTLState> LTLTransitionGraph;
   typedef graph_traits<LTLTransitionGraph> LTLGraphTraits;
   typedef LTLGraphTraits::vertex_descriptor LTLVertex;
   typedef LTLGraphTraits::edge_descriptor LTLEdge;

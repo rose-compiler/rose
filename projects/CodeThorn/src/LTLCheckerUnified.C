@@ -62,30 +62,34 @@ using namespace UnifiedLTL;
 /**
  * add an edge if it does not yet exist
  */
-static inline 
-void add_edge_if_new(LTLVertex src, LTLVertex tgt, LTLTransitionGraph& g) {
-  boost::graph_traits<LTLTransitionGraph>::edge_descriptor _edge;
-  bool b;
-  tie(_edge, b) = edge(src, tgt, g);
-  if (!b) add_edge(src, tgt, g);
-}
+//static 
+//void add_edge_if_new(LTLVertex src, LTLVertex tgt, LTLTransitionGraph& g, bool override=false) {
+//  if (override) { // fast-track if we know the result. The edge lookup is quite slow.
+//    add_edge(src, tgt, g);
+//  } else {
+//    boost::graph_traits<LTLTransitionGraph>::edge_descriptor _edge;
+//    bool b;
+//    tie(_edge, b) = edge(src, tgt, g);
+//    if (!b) add_edge(src, tgt, g);
+//  }
+//}
 
 /**
  * add an edge if it does not yet exist
  * FIXME: templatize this
  */
-static inline 
-void add_edge_if_new1(Label src, Label tgt, BoostTransitionGraph& g) {
-  boost::graph_traits<BoostTransitionGraph>::edge_descriptor _edge;
-  bool b;
-  tie(_edge, b) = edge(src, tgt, g);
-  if (!b) add_edge(src, tgt, g);
-}
+//static 
+//void add_edge_if_new1(Label src, Label tgt, BoostTransitionGraph& g) {
+//  boost::graph_traits<BoostTransitionGraph>::edge_descriptor _edge;
+//  bool b;
+//  tie(_edge, b) = edge(src, tgt, g);
+//  if (!b) add_edge(src, tgt, g);
+//}
 
 /**
  * is there an edge v->v?
  */
-static inline
+static
 bool selfcycle(LTLVertex v, LTLTransitionGraph& g) {
   LTLGraphTraits::out_edge_iterator out_i, out_end;
   for (tie(out_i, out_end) = out_edges(v, g); out_i != out_end; ++out_i) {
@@ -100,7 +104,7 @@ bool selfcycle(LTLVertex v, LTLTransitionGraph& g) {
 /**
  * \return all predecessors of v
  */
-static inline 
+static 
 LTLWorklist predecessors(const LTLVertex& v, const LTLTransitionGraph& g) {
   LTLWorklist preds;
   FOR_EACH_PREDECESSOR(pred, v, g) {
@@ -117,12 +121,12 @@ LTLWorklist predecessors(const LTLVertex& v, const LTLTransitionGraph& g) {
 class UVisualizer: public TopDownVisitor {
 public:
   UVisualizer(LTLState& st, int l)
-    : state(st), label(l), n(1234567) {}
+    : state(st), label(l), n(65536) {}
   LTLState& state;
   stringstream s;
   int label;
   int n; // consecutive labeling of dot node
-  static const int shift = 16777216;
+  static const int shift = 24;
 
   struct Attr: public InheritedAttribute {
     Attr(int i) : dot_label(i) {}
@@ -131,7 +135,7 @@ public:
   static Attr* get(IAttr a) { return static_cast<Attr*>(a.get()); }
   static IAttr newAttr(int n)  { return IAttr((InheritedAttribute*)new Attr(n)); }
   int newNode(IAttr a) {
-    int node = label*shift+n++;
+    int node = (label<<shift)+n++;
     s<<node<<" -> "<<get(a)->dot_label<<" [color=limegreen, weight=2, style=dashed];\n  ";
     return node;
   }
@@ -332,7 +336,11 @@ public:
   }
 
 
-  LTLVertex add_state_if_new(LTLState new_state, //queue<LTLVertex>& workset,
+  /**
+   * Look for an LTLVertex of new_state and return it,
+   * otherwise create a new LTLVertex and add it to worklist
+   */
+  LTLVertex add_state_if_new(LTLState new_state,
 			     LTLStateTransitionGraph& stg,
 			     LTLWorklist& worklist) {
     LTLStateMap::iterator i = stg.vertex.find(new_state);
@@ -465,14 +473,14 @@ public:
 
 	  // Add edge from new state to successor
 	  if (succ == v)
-	    add_edge_if_new(v_prime, v_prime, stg.g);
+	    add_edge(v_prime, v_prime, stg.g);
 	  else
-	    add_edge_if_new(v_prime, succ, stg.g);
+	    add_edge(v_prime, succ, stg.g);
 
 	  // Add edge from predecessor to new state
 	  if (v_prime != v) {
 	    FOR_EACH_PREDECESSOR(pred, v, stg.g)
-	      add_edge_if_new(pred, v_prime, stg.g);
+	      add_edge(pred, v_prime, stg.g);
 	    END_FOR;
 	  }
 
@@ -502,10 +510,10 @@ public:
       if (i != stg.vertex.end()) {
 	// merge them
 	FOR_EACH_PREDECESSOR(pred, v, stg.g)
-	  add_edge_if_new(pred, (*i).second, stg.g);
+	  add_edge(pred, (*i).second, stg.g);
 	END_FOR;
 	FOR_EACH_SUCCESSOR(succ, v, stg.g)
-	  add_edge_if_new((*i).second, succ, stg.g);
+	  add_edge((*i).second, succ, stg.g);
 	END_FOR;
 	clear_vertex(v, stg.g);
 	//cerr<<"STORE: merged "<<state<<"; "<<v<<" and "<<(*i).second<<endl;
@@ -1133,7 +1141,7 @@ Label UChecker::collapse_transition_graph(BoostTransitionGraph& g,
   for (tie(ei, ei_end) = edges(g); ei != ei_end; ++ei) {
     Label src = source(*ei, g);
     Label tgt = target(*ei, g);
-    add_edge_if_new1(renumbered[src], renumbered[tgt], reduced);
+    add_edge(renumbered[src], renumbered[tgt], reduced);
     //cerr<<renumbered[src]<<" -> "<<renumbered[tgt]<<";"<<endl;
     reduced[renumbered[src]] = g[src];
     reduced[renumbered[tgt]] = g[tgt];
@@ -1195,7 +1203,7 @@ UChecker::verify(const Formula& f)
       if (show_derivation) s<<viz.s.str();
       s<<"}\n";
 
-    } END_FOR
+    } END_FOR;
 
     LTLGraphTraits::edge_iterator ei, ei_end;
     for (tie(ei, ei_end) = edges(v.stg.g); ei != ei_end; ++ei) {
@@ -1210,7 +1218,7 @@ UChecker::verify(const Formula& f)
     fname << "ltl_output_" << n++ << ".dot";
     myfile.open(fname.str().c_str(), ios::out);
     myfile << s.str();
-    myfile.close();
+    myfile.close(); 
     cout<<"generated "<<fname.str()<<"."<<endl;
   }
 
@@ -1222,8 +1230,8 @@ UChecker::verify(const Formula& f)
   FOR_EACH_VERTEX(lv, v.stg.g) {
     LTLState s = v.stg.g[lv];
     if (in_degree(lv, v.stg.g) == 0) {
-      //cerr<<"Value at START = "<<s.valstack.back()<<endl;
-      b = b && s.valstack.back();
+      //cerr<<"Value at START = "<<s.valstack.top()<<endl;
+      b = b && s.top();
     }
   } END_FOR
   cerr<<"Number of LTL states: "<<num_vertices(v.stg.g)<<endl;
