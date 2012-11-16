@@ -90,7 +90,7 @@ int main( int argc, char * argv[] ) {
   cout << "Iteration Length: with null   : " << num1 << " nodes."<<endl;
   cout << "Iteration Length: without null: " << num2 << " nodes."<<endl;
   cout<<endl;
-  double ttm=timer.getElapsedTimeInMilliSec();
+  //double ttm=timer.getElapsedTimeInMilliSec();
   cout << "Measurement:"<<endl;
   //cout << "Trav:"<<ttm << ";";
   cout << "ROSE Frontend    : " << measurementFrontend << " ms"<<endl;

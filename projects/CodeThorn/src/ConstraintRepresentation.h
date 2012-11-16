@@ -97,8 +97,10 @@ class ConstraintSet : public set<Constraint> {
   void addConstraint(Constraint c);
   void removeAllConstraintsOfVar(VariableId varId);
 
+#if 0
   ConstraintSet invertedConstraints(); // only correct for single constraints 
   void invertConstraints();            // only correct for single constraints 
+#endif
 
   void addDisequality();
   bool disequalityExists() const;
