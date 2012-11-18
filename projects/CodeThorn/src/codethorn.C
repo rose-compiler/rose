@@ -196,7 +196,7 @@ void generateLTLOutput(Analyzer& analyzer, string ltl_file) {
     //CodeThorn::FixpointLTL::Checker checker(*analyzer.getEStateSet(),
     // 					    *analyzer.getTransitionGraph());
     CodeThorn::UnifiedLTL::UChecker checker(*analyzer.getEStateSet(),
-					   *analyzer.getTransitionGraph());
+					    *analyzer.getTransitionGraph());
     ltl_input = fopen(ltl_file.c_str(), "r");
 
     ofstream* csv = NULL;
@@ -355,8 +355,6 @@ int main( int argc, char * argv[] ) {
     ("report-stderr",po::value< string >(),"report stderr estates during analysis [=yes|no]")
     ("report-failed-assert",po::value< string >(),
      "report failed assert estates during analysis [=yes|no]")
-    ("precision-bool",po::value< string >(),
-     "use precise top with bool-(and/or) operators (used in LTL) [=yes|no]")
     ("precision-intbool",po::value< string >(),
      "use precise top with intbool-(and/or) operators (used in int-analyzer) [=yes|no]")
     ("precision-exact-constraints",po::value< string >(),
@@ -408,7 +406,6 @@ int main( int argc, char * argv[] ) {
   boolOptions.registerOption("report-stdout",false);
   boolOptions.registerOption("report-stderr",false);
   boolOptions.registerOption("report-failed-assert",false);
-  boolOptions.registerOption("precision-bool",true);
   boolOptions.registerOption("precision-intbool",true);
   boolOptions.registerOption("precision-exact-constraints",false);
   boolOptions.registerOption("tg-ltl-reduced",false);

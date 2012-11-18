@@ -477,6 +477,25 @@ string EState::toString() const {
   return ss.str();
 }
 
+string EState::toHTML() const {
+  stringstream ss;
+  string nl = " <BR />\n";
+  ss << "EState";
+  ss << "("<<label()<<", "<<nl;
+  if(pstate())
+	ss <<pstate()->toString();
+  else
+	ss <<"NULL";
+  if(constraints()) {
+	ss <<","<<nl<<" constraints="<<constraints()->toString();
+  } else {
+	ss <<","<<nl<<" NULL";
+  }
+  ss <<","<<nl<<" io="<<io.toString();
+  ss<<")"<<nl;
+  return ss.str();
+}
+
 string EStateList::toString() {
   stringstream ss;
   ss<<"EStateWorkList=[";

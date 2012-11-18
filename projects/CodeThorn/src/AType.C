@@ -94,16 +94,11 @@ bool AType::BoolLattice::operator<(BoolLattice other) const {
 AType::BoolLattice AType::BoolLattice::operator||(AType::BoolLattice other) {
   AType::BoolLattice tmp;
   // all TOP cases
-  if(!boolOptions["precision-bool"]) {
-	if(isTop()   || other.isTop())   return Top();
-  }
-  else {
-	if(isTop()   && other.isTop())   return Top();
-	if(isTop()   && other.isTrue())  return true;
-	if(isTrue()  && other.isTop())   return true;
-	if(isTop()   && other.isFalse()) return Top();
-	if(isFalse() && other.isTop())   return Top();
-  }
+  if(isTop()   && other.isTop())   return Top();
+  if(isTop()   && other.isTrue())  return true;
+  if(isTrue()  && other.isTop())   return true;
+  if(isTop()   && other.isFalse()) return Top();
+  if(isFalse() && other.isTop())   return Top();
   // all BOT cases
   if(value==BOT)                   return other;
   if(other.value==BOT)             return *this;
@@ -116,16 +111,12 @@ AType::BoolLattice AType::BoolLattice::operator||(AType::BoolLattice other) {
 }
 
 AType::BoolLattice AType::BoolLattice::operator&&(AType::BoolLattice other) {
-  if(!boolOptions["precision-bool"]) {
-	if(isTop()   || other.isTop())   return Top();
-  } else {
-	// all TOP cases
-	if(isTop()   && other.isTop())   return Top();
-	if(isTop()   && other.isTrue())  return Top();
-	if(isTrue()  && other.isTop())   return Top();
-	if(isTop()   && other.isFalse()) return false;
-	if(isFalse() && other.isTop())   return false;
-  }
+  // all TOP cases
+  if(isTop()   && other.isTop())   return Top();
+  if(isTop()   && other.isTrue())  return Top();
+  if(isTrue()  && other.isTop())   return Top();
+  if(isTop()   && other.isFalse()) return false;
+  if(isFalse() && other.isTop())   return false;
   // all BOT cases
   if(value==BOT)                   return other;
   if(other.value==BOT)             return *this;

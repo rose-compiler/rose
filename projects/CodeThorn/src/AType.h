@@ -71,6 +71,7 @@ class BoolLattice {
   /// for sorting only!
   bool operator<(BoolLattice other) const;
   string toString() const;
+  inline ValueType val() const { return value; }
   friend ostream& operator<<(ostream& os, const BoolLattice& toStream);
  private:
   ValueType value;
