@@ -101,12 +101,6 @@ string Edge::typesToString() const {
   return ss.str();
 }
 
-#if 0
-string Edge::typeToString() const {
-  typeToString(type);
-}
-#endif
-
 string Edge::typeToString(EdgeType et) {
   switch(et) {
   case EDGE_UNKNOWN: return "unknown";
@@ -787,62 +781,10 @@ Flow CFAnalyzer::flow(SgNode* node) {
 	}
 	return edgeSet;
   }
-#if 1
   case V_SgWhileStmt: 
 	return WhileAndDoWhileLoopFlow(node,edgeSet,EDGE_FORWARD,EDGE_BACKWARD);
   case V_SgDoWhileStmt: 
 	return WhileAndDoWhileLoopFlow(node,edgeSet,EDGE_BACKWARD,EDGE_FORWARD);
-#else
-  case V_SgWhileStmt: {
-	SgNode* condNode=SgNodeHelper::getCond(node);
-	Label condLabel=getLabel(condNode);
-	SgNode* bodyNode=SgNodeHelper::getLoopBody(node);
-	assert(bodyNode);
-	Edge edge=Edge(condLabel,EDGE_TRUE,initialLabel(bodyNode));
-	edge.addType(EDGE_FORWARD);
-	Flow flowB=flow(bodyNode);
-	LabelSet finalSetB=finalLabels(bodyNode);
-	edgeSet+=flowB;
-	edgeSet.insert(edge);
-	// back edges
-	for(LabelSet::iterator i=finalSetB.begin();i!=finalSetB.end();++i) {
-	  Edge e;
-	  if(SgNodeHelper::isCond(labeler->getNode(*i))) {
-		e=Edge(*i,EDGE_FALSE,condLabel);
-		e.addType(EDGE_BACKWARD);
-	  } else {
-		e=Edge(*i,EDGE_BACKWARD,condLabel);
-	  }
-	  edgeSet.insert(e);
-	}
-	return edgeSet;
-  }
-  case V_SgDoWhileStmt: {
-	SgNode* condNode=SgNodeHelper::getCond(node);
-	Label condLabel=getLabel(condNode);
-	SgNode* bodyNode=SgNodeHelper::getLoopBody(node);
-	assert(bodyNode);
-	Edge edge=Edge(condLabel,EDGE_TRUE,initialLabel(bodyNode));
-	edge.addType(EDGE_BACKWARD);
-	Flow flowB=flow(bodyNode);
-	LabelSet finalSetB=finalLabels(bodyNode);
-	edgeSet+=flowB;
-	edgeSet.insert(edge);
-	// back edges
-	for(LabelSet::iterator i=finalSetB.begin();i!=finalSetB.end();++i) {
-	  Edge e;
-	  if(SgNodeHelper::isCond(labeler->getNode(*i))) {
-		e=Edge(*i,EDGE_FALSE,condLabel);
-		e.addType(EDGE_FORWARD);
-	  } else {
-		e=Edge(*i,EDGE_FORWARD,condLabel);
-	  }
-	  edgeSet.insert(e);
-	}
-	return edgeSet;
-  }
-#endif
-
   case V_SgBasicBlock: {
 	size_t len=node->get_numberOfTraversalSuccessors();
 	if(len==0) {
