@@ -38,7 +38,7 @@ void Edge::addType(EdgeType et) {
   // perform some consistency checks
   bool ok=true;
   // for EDGE_PATH we allow any combination, otherwise we check
-  if(!isType(EDGE_PATH) && !et==EDGE_PATH) {
+  if(!isType(EDGE_PATH) && !(et==EDGE_PATH)) {
 	switch(et) {
 	case EDGE_FORWARD: if(isType(EDGE_BACKWARD)) ok=false;break;
 	case EDGE_BACKWARD: if(isType(EDGE_FORWARD)) ok=false;break;
@@ -421,7 +421,6 @@ bool CodeThorn::operator!=(const Edge& e1, const Edge& e2) {
 bool CodeThorn::operator<(const Edge& e1, const Edge& e2) {
   assert(&e1);
   assert(&e2);
-  //cout<<"DEBUG: comparing edges: typesCode<("<<e1.typesCode()<<","<<e2.typesCode()<<")"<<endl;
   if(e1.source!=e2.source)
 	return e1.source<e2.source;
   if(e1.target!=e2.target)
@@ -431,17 +430,13 @@ bool CodeThorn::operator<(const Edge& e1, const Edge& e2) {
 
 long Edge::typesCode() const {
   long h=1;
-  //cout << "DEBUG: Edge::typesCode START h=";
   for(set<EdgeType>::iterator i=_types.begin();i!=_types.end();++i) {
 	h+=(1<<*i);
-	//cout <<"("<<*i<<","<<h<<")";
   }
-  //cout << "END "<<endl;
   return h;
 }
 
 long Edge::hash() const {
-  //cout << "DEBUG: hash():";
   return typesCode();
 }
 
@@ -590,7 +585,6 @@ LabelSet Flow::succ(Label label) {
   return flow.targetLabels();
 }
 
-
 Flow CFAnalyzer::flow(SgNode* s1, SgNode* s2) {
   assert(s1);
   assert(s2);
@@ -691,7 +685,6 @@ Flow CFAnalyzer::WhileAndDoWhileLoopFlow(SgNode* node,
   return edgeSet;
 }
 
-
 Flow CFAnalyzer::flow(SgNode* node) {
   assert(node);
 
@@ -753,6 +746,9 @@ Flow CFAnalyzer::flow(SgNode* node) {
 	LabelSet funFinalLabels=finalLabels(node);
 	for(LabelSet::iterator i=funFinalLabels.begin();i!=funFinalLabels.end();++i) {
 	  Edge explicitEdge=Edge(*i,EDGE_FORWARD,labeler->functionExitLabel(node));
+	  if(SgNodeHelper::isLoopCond(labeler->getNode(*i))) {
+		explicitEdge.addType(EDGE_FALSE);
+	  }
 	  edgeSet.insert(explicitEdge);
 	}
 	return edgeSet;
