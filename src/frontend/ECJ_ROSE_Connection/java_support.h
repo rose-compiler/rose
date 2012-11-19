@@ -23,15 +23,20 @@ extern SgSourceFile *OpenFortranParser_globalFilePointer;
 
 extern SgArrayType *getUniqueArrayType(SgType *, int);
 extern SgPointerType *getUniquePointerType(SgType *, int);
+extern SgJavaParameterizedType *getUniqueParameterizedType(SgClassType *, SgTemplateParameterPtrList &);
 
-std::string getPrimitiveTypeName(SgType *);
-std::string getArrayTypeName(SgPointerType *);
-std::string getFullyQualifiedName(SgClassDefinition *);
-std::string getFullyQualifiedTypeName(SgClassType *);
-std::string getTypeName(SgType *);
+using namespace std;
 
-std::string normalize(std::string str);
+string getPrimitiveTypeName(SgType *);
+string getArrayTypeName(SgPointerType *);
+string getFullyQualifiedName(SgClassDefinition *);
+string getFullyQualifiedTypeName(SgClassType *);
+string getTypeName(SgType *);
 
+string normalize(string str);
+
+//
+// Attribute used to construct array types.
 //
 class AstArrayTypeAttribute : public AstAttribute {
 public:
@@ -44,6 +49,9 @@ public:
 
 
 //
+// Attribute used to construct pointer types.  These are not valid Java types. However,
+// they are required for multi-dimensional arrays in the Rose representation.
+//
 class AstPointerTypeAttribute : public AstAttribute {
 public:
     SgPointerType *pointerType;
@@ -54,13 +62,73 @@ public:
 };
 
 
+//
+// Attribute used to construct pointer types.  These are not valid Java types. However,
+// they are required for multi-dimensional arrays in the Rose representation.
+//
+class AstParameterizedTypeAttribute : public AstAttribute {
+private:
+    SgClassType *rawType;
+    list<SgJavaParameterizedType *> parameterizedTypes;
+
+public:
+    AstParameterizedTypeAttribute(SgClassType *rawType_) : rawType(rawType_) {}
+
+    SgJavaParameterizedType *findOrInsertParameterizedType(SgTemplateParameterPtrList &newArgs) {
+        //
+        // Keep track of parameterized types in a table so as not to duplicate them.
+        //
+        for (list<SgJavaParameterizedType *>::iterator type_it = parameterizedTypes.begin(); type_it != parameterizedTypes.end(); type_it++) {
+            SgTemplateParameterList *type_arg_list = (*type_it) -> get_type_list();
+            if (type_arg_list) {
+                SgTemplateParameterPtrList args = type_arg_list -> get_args();
+                if (args.size() == newArgs.size()) {
+                    SgTemplateParameterPtrList::iterator arg_it = args.begin(),
+                                                         newArg_it = newArgs.begin();
+                    for (; arg_it != args.end(); arg_it++, newArg_it++) {
+                        SgType *type1 = (*arg_it) -> get_type(),
+                               *type2 = (*newArg_it) -> get_type();
+                        if (type1 != type2) {
+                            break;
+                        }
+                    }
+
+                    if (arg_it == args.end()) { // Found a match!
+                        return (*type_it);
+                    }
+                }
+            }
+        }
+
+        //
+        // This parameterized type does not yet exist. Create it, store it in the table and return it.
+        //
+        SgClassDeclaration *classDeclaration = isSgClassDeclaration(rawType -> getAssociatedDeclaration());
+        ROSE_ASSERT(classDeclaration != NULL);
+        SgTemplateParameterList *typeParameterList = new SgTemplateParameterList();
+        typeParameterList -> set_args(newArgs);
+        SgJavaParameterizedType *parameterizedType = new SgJavaParameterizedType(classDeclaration, rawType, typeParameterList);
+
+        ROSE_ASSERT(parameterizedType != NULL);
+        ROSE_ASSERT(parameterizedType -> get_raw_type() != NULL);
+        ROSE_ASSERT(parameterizedType -> get_type_list() != NULL);
+
+        parameterizedTypes.push_front(parameterizedType);
+
+        return parameterizedType;
+    }
+};
+
+
+//
 // Global stack of expressions, types and statements
-class ComponentStack : private std::list<SgNode *> {
+//
+class ComponentStack : private list<SgNode *> {
 public:
     void push(SgNode *n) {
         if (SgProject::get_verbose() > 0) {
-            std::cerr << "***Pushing Component node " << n -> class_name() << std::endl; 
-            std::cerr.flush();
+            cerr << "***Pushing Component node " << n -> class_name() << endl; 
+            cerr.flush();
         }
         push_front(n);
     }
@@ -69,8 +137,8 @@ public:
         ROSE_ASSERT(size() > 0);
         SgNode *n = front();
         if (SgProject::get_verbose() > 0) {
-            std::cerr << "***Popping Component node " << n -> class_name() << std::endl;
-            std::cerr.flush();
+            cerr << "***Popping Component node " << n -> class_name() << endl;
+            cerr.flush();
         }
         pop_front();
         return n;
@@ -80,31 +148,31 @@ public:
 
     bool empty() { return (size() == 0); }
 
-    size_type size() { return std::list<SgNode*>::size(); }
+    size_type size() { return list<SgNode*>::size(); }
 
-    std::list<SgNode *>::iterator begin() {
-        return std::list<SgNode *>::begin();
+    list<SgNode *>::iterator begin() {
+        return list<SgNode *>::begin();
     }
 
-    std::list<SgNode *>::iterator end() {
-        return std::list<SgNode *>::end();
+    list<SgNode *>::iterator end() {
+        return list<SgNode *>::end();
     }
 
-    std::list<SgNode *>::reverse_iterator rbegin() {
-        return std::list<SgNode *>::rbegin();
+    list<SgNode *>::reverse_iterator rbegin() {
+        return list<SgNode *>::rbegin();
     }
 
-    std::list<SgNode *>::reverse_iterator rend() {
-        return std::list<SgNode *>::rend();
+    list<SgNode *>::reverse_iterator rend() {
+        return list<SgNode *>::rend();
     }
 
     SgExpression *popExpression() {
         SgNode *n = pop();
         if (! isSgExpression(n)) {
-            std::cerr << "Invalid attempt to pop a Component node of type "
+            cerr << "Invalid attempt to pop a Component node of type "
                      << n -> class_name()
                      << " as an SgExpression"
-                     << std::endl;
+                     << endl;
             ROSE_ASSERT(false);
         }
         return (SgExpression *) n;
@@ -114,19 +182,19 @@ public:
         SgNode *n = pop();
         if (isSgExpression(n)) {
             if (SgProject::get_verbose() > 0) {
-                std::cerr << "***Turning node "
+                cerr << "***Turning node "
                           << n -> class_name()
                           << " into a SgExprStatement"
-                          << std::endl;
+                          << endl;
             }
             // TODO: set source position for expr statement !!!?
             n = SageBuilder::buildExprStatement((SgExpression *) n);
         }
         else if (! isSgStatement(n)) {
-            std::cerr << "Invalid attempt to pop a Component node of type "
+            cerr << "Invalid attempt to pop a Component node of type "
                       << n -> class_name()
                       << " as an SgStatement"
-                      << std::endl;
+                      << endl;
             ROSE_ASSERT(false);
         }
         return (SgStatement *) n;
@@ -135,23 +203,25 @@ public:
     SgType *popType() {
         SgNode *n = pop();
         if (! isSgType(n)) {
-            std::cerr << "Invalid attempt to pop a Component node of type "
+            cerr << "Invalid attempt to pop a Component node of type "
                      << n -> class_name()
                      << " as an SgType"
-                     << std::endl;
+                     << endl;
             ROSE_ASSERT(false);
         }
         return (SgType *) n;
     }
 };
 
+//
 // Global stack of scope elements.
-class ScopeStack : private std::list<SgScopeStatement *> {
+//
+class ScopeStack : private list<SgScopeStatement *> {
 public:
     void push(SgScopeStatement *n) {
         if (SgProject::get_verbose() > 0) {
-            std::cerr << "***Pushing Stack node " << n -> class_name() << std::endl; 
-            std::cerr.flush();
+            cerr << "***Pushing Stack node " << n -> class_name() << endl; 
+            cerr.flush();
         }
         push_front(n);
     }
@@ -160,8 +230,8 @@ public:
         ROSE_ASSERT(size() > 0);
         SgScopeStatement *n = front();
         if (SgProject::get_verbose() > 0) {
-            std::cerr << "***Popping Stack node " << n -> class_name() << std::endl;
-            std::cerr.flush();
+            cerr << "***Popping Stack node " << n -> class_name() << endl;
+            cerr.flush();
         }
         pop_front();
         return n;
@@ -170,10 +240,10 @@ public:
     SgGlobal *popGlobal() {
         SgScopeStatement *n = pop();
         if (! isSgGlobal(n)) {
-            std::cerr << "Invalid attempt to pop a Stack node of type "
+            cerr << "Invalid attempt to pop a Stack node of type "
                      << n -> class_name()
                      << " as an SgGlobal"
-                     << std::endl;
+                     << endl;
             ROSE_ASSERT(false);
         }
         return (SgGlobal *) n;
@@ -182,10 +252,10 @@ public:
     SgNamespaceDefinitionStatement *popNamespaceDefinitionStatement() {
         SgScopeStatement *n = pop();
         if (! isSgNamespaceDefinitionStatement(n)) {
-            std::cerr << "Invalid attempt to pop a Stack node of type "
+            cerr << "Invalid attempt to pop a Stack node of type "
                      << n -> class_name()
                      << " as an SgNamespaceDefinitionStatement"
-                     << std::endl;
+                     << endl;
             ROSE_ASSERT(false);
         }
         return (SgNamespaceDefinitionStatement *) n;
@@ -194,17 +264,17 @@ public:
     SgClassDefinition *popPackage() {
         SgScopeStatement *n = pop();
         if (! isSgClassDefinition(n)) {
-            std::cerr << "Invalid attempt to pop a Stack node of type "
+            cerr << "Invalid attempt to pop a Stack node of type "
                      << n -> class_name()
                      << " as an SgClassDefinition"
-                     << std::endl;
+                     << endl;
             ROSE_ASSERT(false);
         }
         else if (! isSgClassDefinition(n) -> attributeExists("namespace")) {
-            std::cerr << "Invalid attempt to pop a Stack node of type "
+            cerr << "Invalid attempt to pop a Stack node of type "
                      << n -> class_name()
                      << " without the attribute \"namespace\" as a package"
-                     << std::endl;
+                     << endl;
             ROSE_ASSERT(false);
         }
         return (SgClassDefinition *) n;
@@ -213,10 +283,10 @@ public:
     SgClassDefinition *popClassDefinition() {
         SgScopeStatement *n = pop();
         if (! isSgClassDefinition(n)) {
-            std::cerr << "Invalid attempt to pop a Stack node of type "
+            cerr << "Invalid attempt to pop a Stack node of type "
                      << n -> class_name()
                      << " as an SgClassDefinition"
-                     << std::endl;
+                     << endl;
             ROSE_ASSERT(false);
         }
         return (SgClassDefinition *) n;
@@ -225,10 +295,10 @@ public:
     SgBasicBlock *popBasicBlock() {
         SgScopeStatement *n = pop();
         if (! isSgBasicBlock(n)) {
-            std::cerr << "Invalid attempt to pop a Stack node of type "
+            cerr << "Invalid attempt to pop a Stack node of type "
                      << n -> class_name()
                      << " as an SgBasicBlock"
-                     << std::endl;
+                     << endl;
             ROSE_ASSERT(false);
         }
         return (SgBasicBlock *) n;
@@ -237,10 +307,10 @@ public:
     SgIfStmt *popIfStmt() {
         SgScopeStatement *n = pop();
         if (! isSgIfStmt(n)) {
-            std::cerr << "Invalid attempt to pop a Stack node of type "
+            cerr << "Invalid attempt to pop a Stack node of type "
                      << n -> class_name()
                      << " as an SgIfStmt"
-                     << std::endl;
+                     << endl;
             ROSE_ASSERT(false);
         }
         return (SgIfStmt *) n;
@@ -249,10 +319,10 @@ public:
     SgSwitchStatement *popSwitchStatement() {
         SgScopeStatement *n = pop();
         if (! isSgSwitchStatement(n)) {
-            std::cerr << "Invalid attempt to pop a Stack node of type "
+            cerr << "Invalid attempt to pop a Stack node of type "
                      << n -> class_name()
                      << " as an SgSwitchStatement"
-                     << std::endl;
+                     << endl;
             ROSE_ASSERT(false);
         }
         return (SgSwitchStatement *) n;
@@ -261,10 +331,10 @@ public:
     SgCatchOptionStmt *popCatchOptionStmt() {
         SgScopeStatement *n = pop();
         if (! isSgCatchOptionStmt(n)) {
-            std::cerr << "Invalid attempt to pop a Stack node of type "
+            cerr << "Invalid attempt to pop a Stack node of type "
                      << n -> class_name()
                      << " as an SgCatchOptionStmt"
-                     << std::endl;
+                     << endl;
             ROSE_ASSERT(false);
         }
         return (SgCatchOptionStmt *) n;
@@ -273,10 +343,10 @@ public:
     SgWhileStmt *popWhileStmt() {
         SgScopeStatement *n = pop();
         if (! isSgWhileStmt(n)) {
-            std::cerr << "Invalid attempt to pop a Stack node of type "
+            cerr << "Invalid attempt to pop a Stack node of type "
                      << n -> class_name()
                      << " as an SgWhileStmt"
-                     << std::endl;
+                     << endl;
             ROSE_ASSERT(false);
         }
         return (SgWhileStmt *) n;
@@ -285,10 +355,10 @@ public:
     SgDoWhileStmt *popDoWhileStmt() {
         SgScopeStatement *n = pop();
         if (! isSgDoWhileStmt(n)) {
-            std::cerr << "Invalid attempt to pop a Stack node of type "
+            cerr << "Invalid attempt to pop a Stack node of type "
                      << n -> class_name()
                      << " as an SgDoWhileStmt"
-                     << std::endl;
+                     << endl;
             ROSE_ASSERT(false);
         }
         return (SgDoWhileStmt *) n;
@@ -297,10 +367,10 @@ public:
     SgForStatement *popForStatement() {
         SgScopeStatement *n = pop();
         if (! isSgForStatement(n)) {
-            std::cerr << "Invalid attempt to pop a Stack node of type "
+            cerr << "Invalid attempt to pop a Stack node of type "
                      << n -> class_name()
                      << " as an SgForStatement"
-                     << std::endl;
+                     << endl;
             ROSE_ASSERT(false);
         }
         return (SgForStatement *) n;
@@ -309,10 +379,10 @@ public:
     SgJavaForEachStatement *popJavaForEachStatement() {
         SgScopeStatement *n = pop();
         if (! isSgJavaForEachStatement(n)) {
-            std::cerr << "Invalid attempt to pop a Stack node of type "
+            cerr << "Invalid attempt to pop a Stack node of type "
                      << n -> class_name()
                      << " as an SgJavaForEachStatement"
-                     << std::endl;
+                     << endl;
             ROSE_ASSERT(false);
         }
         return (SgJavaForEachStatement *) n;
@@ -321,10 +391,10 @@ public:
     SgJavaLabelStatement *popJavaLabelStatement() {
         SgScopeStatement *n = pop();
         if (! isSgJavaLabelStatement(n)) {
-            std::cerr << "Invalid attempt to pop a Stack node of type "
+            cerr << "Invalid attempt to pop a Stack node of type "
                      << n -> class_name()
                      << " as an SgJavaLabelStatement"
-                     << std::endl;
+                     << endl;
             ROSE_ASSERT(false);
         }
         return (SgJavaLabelStatement *) n;
@@ -333,10 +403,10 @@ public:
     SgFunctionDefinition *popFunctionDefinition() {
         SgScopeStatement *n = pop();
         if (! isSgFunctionDefinition(n)) {
-            std::cerr << "Invalid attempt to pop a Stack node of type "
+            cerr << "Invalid attempt to pop a Stack node of type "
                      << n -> class_name()
                      << " as an SgFunctionDefinition"
-                     << std::endl;
+                     << endl;
             ROSE_ASSERT(false);
         }
         return (SgFunctionDefinition *) n;
@@ -346,22 +416,22 @@ public:
 
     bool empty() { return (size() == 0); }
 
-    size_type size() { return std::list<SgScopeStatement *>::size(); }
+    size_type size() { return list<SgScopeStatement *>::size(); }
 
-    std::list<SgScopeStatement *>::iterator begin() {
-        return std::list<SgScopeStatement *>::begin();
+    list<SgScopeStatement *>::iterator begin() {
+        return list<SgScopeStatement *>::begin();
     }
 
-    std::list<SgScopeStatement *>::iterator end() {
-        return std::list<SgScopeStatement *>::end();
+    list<SgScopeStatement *>::iterator end() {
+        return list<SgScopeStatement *>::end();
     }
 
-    std::list<SgScopeStatement *>::reverse_iterator rbegin() {
-        return std::list<SgScopeStatement *>::rbegin();
+    list<SgScopeStatement *>::reverse_iterator rbegin() {
+        return list<SgScopeStatement *>::rbegin();
     }
 
-    std::list<SgScopeStatement *>::reverse_iterator rend() {
-        return std::list<SgScopeStatement *>::rend();
+    list<SgScopeStatement *>::reverse_iterator rend() {
+        return list<SgScopeStatement *>::rend();
     }
 };
 
@@ -369,75 +439,41 @@ public:
 extern ComponentStack astJavaComponentStack;
 
 // Global stack of scopes
-extern ScopeStack /* std::list<SgScopeStatement*> */ astJavaScopeStack;
+extern ScopeStack astJavaScopeStack;
 
-// Global list of implicit classes
-extern std::list<SgName> astJavaImplicitClassList;
-
-/* Create a token from a JavaToken jni object. Also converts JavaSourceCodeInformation to C */
-Token_t *create_token(JNIEnv *env, jobject jToken);
-
-void pushAndSetSourceCodePosition(JavaSourceCodePosition *pos, SgLocatedNode *sgnode);
-
-// Duplicated setJavaSourcePosition signature.
-// Not sure why but JNI wasn't happy if posInfo was assigned to a default value
-void setJavaSourcePosition(SgLocatedNode *locatedNode);
 void setJavaSourcePosition(SgLocatedNode *locatedNode, JavaSourceCodePosition *posInfo);
-
-// DQ (8/16/2011): Added support using the jToken object.
 void setJavaSourcePosition(SgLocatedNode *locatedNode, JNIEnv *env, jobject jToken);
-
-// DQ (8/16/2011): Added support for marking nodes as compiler generated (implicit in Java).
-void setJavaCompilerGenerated(SgLocatedNode *locatedNode);
 void setJavaSourcePositionUnavailableInFrontend(SgLocatedNode *locatedNode);
-
-//! This is how Java implicit classes are marked so that they can be avoided in output.
-void setJavaFrontendSpecific(SgLocatedNode *locatedNode);
-
 
 // *********************************************
 
-std::string convertJavaPackageNameToCxxString(JNIEnv *env, const jstring &java_string);
-std::string convertJavaStringToCxxString(JNIEnv *env, const jstring &java_string);
-int         convertJavaIntegerToCxxInteger(JNIEnv *env, const jint    &java_integer);
-bool        convertJavaBooleanToCxxBoolean(JNIEnv *env, const jboolean &java_boolean);
+string convertJavaPackageNameToCxxString(JNIEnv *env, const jstring &java_string);
+string convertJavaStringToCxxString(JNIEnv *env, const jstring &java_string);
 
-// Specify the SgClassDefinition explicitly so that implicit classes are simpler to build.
-// SgMemberFunctionDeclaration *buildSimpleMemberFunction(const SgName &name);
-// SgMemberFunctionDeclaration *buildSimpleMemberFunction(const SgName &name, SgClassDefinition *classDefinition);
-
-// DQ (3/25/2011): These will replace buildSimpleMemberFunction shortly.
-SgMemberFunctionDeclaration *buildNonDefiningMemberFunction(const SgName &inputName, SgClassDefinition *classDefinition, int num_arguments);
-SgMemberFunctionDeclaration *buildDefiningMemberFunction   (const SgName &inputName, SgClassDefinition *classDefinition, int num_arguments);
-
+SgMemberFunctionDeclaration *buildDefiningMemberFunction   (const SgName &inputName, SgClassDefinition *classDefinition, int num_arguments, JNIEnv *env, jobject methodLoc, jobject argsLoc);
 SgMemberFunctionDeclaration *lookupMemberFunctionDeclarationInClassScope(SgClassDefinition *classDefinition, const SgName &function_name, int num_arguments);
-SgMemberFunctionDeclaration *lookupMemberFunctionDeclarationInClassScope(SgClassDefinition *classDefinition, const SgName &function_name, const std::list<SgType *> &);
-SgMemberFunctionDeclaration *findMemberFunctionDeclarationInClass(SgClassDefinition *classDefinition, const SgName &function_name, const std::list<SgType *>& types);
-SgMemberFunctionSymbol *findFunctionSymbolInClass(SgClassDefinition *classDefinition, const SgName &function_name, const std::list<SgType *> &);
+SgMemberFunctionDeclaration *lookupMemberFunctionDeclarationInClassScope(SgClassDefinition *classDefinition, const SgName &function_name, const list<SgType *> &);
+SgMemberFunctionDeclaration *findMemberFunctionDeclarationInClass(SgClassDefinition *classDefinition, const SgName &function_name, const list<SgType *>& types);
+SgMemberFunctionSymbol *findFunctionSymbolInClass(SgClassDefinition *classDefinition, const SgName &function_name, const list<SgType *> &);
 
-SgClassDeclaration *buildJavaClass (const SgName &className, SgScopeStatement *scope);
+SgClassDeclaration *buildJavaClass (const SgName &className, SgScopeStatement *scope, JNIEnv *env, jobject jToken);
 
 SgVariableDeclaration *buildSimpleVariableDeclaration(const SgName &name, SgType *type);
 
-std::list<SgName> generateQualifierList (const SgName &classNameWithQualification);
-// TODO: Remove this !
-//SgName stripQualifiers (const SgName &classNameWithQualification);
+list<SgName> generateQualifierList (const SgName &classNameWithQualification);
 
 bool isCompatibleTypes(SgType *source, SgType *target);
 
-// It might be that this function should take a "const SgName &" instead of a "std::string".
-SgClassSymbol *lookupSymbolFromQualifiedName(std::string className);
+// It might be that this function should take a "const SgName &" instead of a "string".
+SgClassSymbol *lookupSymbolFromQualifiedName(string className);
 
 SgType *lookupTypeByName(SgName &packageName, SgName &typeName, int num_dimensions);
 
-// TODO: Remove this!
-//SgClassType *lookupTypeFromQualifiedName(std::string className);
+//! Support to get current class scope.
+SgClassDefinition *getCurrentTypeDefinition();
 
 //! Support to get current class scope.
-SgClassDefinition *getCurrentClassDefinition();
-
-//! Strips off "#RAW" suffix from raw types (support for Java 1.5 and greater).
-SgName processNameOfRawType(SgName name);
+SgFunctionDefinition *getCurrentMethodDefinition();
 
 //! Support for identification of symbols using simple names in a given scope.
 SgClassSymbol *lookupSimpleNameTypeInClass(const SgName &name, SgClassDefinition *classDefinition);

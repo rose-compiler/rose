@@ -153,15 +153,6 @@ void Unparse_Java::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpar
     }
 
     //
-    // An Expression may contain a name suffix stored in the "suffix" attribute.
-    //
-    if (expr -> attributeExists("suffix")) {
-        curprint(".");
-        AstRegExAttribute *attribute = (AstRegExAttribute *) expr -> getAttribute("suffix");
-        curprint(attribute -> expression);
-    }
-
-    //
     // If this expression requires closing parentheses, emit them now.
     //
     if (parenthesis_attribute) { // Output the right paren
@@ -169,6 +160,15 @@ void Unparse_Java::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpar
         for (int i = 0; i < open_parentheses.size(); i++) {
             curprint (")");
         }
+    }
+
+    //
+    // An Expression may contain a name suffix stored in the "suffix" attribute.
+    //
+    if (expr -> attributeExists("suffix")) {
+        curprint(".");
+        AstRegExAttribute *attribute = (AstRegExAttribute *) expr -> getAttribute("suffix");
+        curprint(attribute -> expression);
     }
 }
 
@@ -807,7 +807,18 @@ Unparse_Java::unparseNewOp(SgExpression* expr, SgUnparse_Info& info)
         }
      */
 
-     curprint ( "new ");
+     //
+     // If this is an allocation expression for an anonymous class, output the body of the class.
+     //
+     if (new_op -> attributeExists("new_prefix")) {
+         AstSgNodeAttribute *attribute = (AstSgNodeAttribute *) new_op -> getAttribute("new_prefix");
+         SgExpression *prefix = isSgExpression(attribute -> node);
+         ROSE_ASSERT(prefix);
+         unparseExpression(prefix, info);
+         curprint(".");
+     }
+
+     curprint("new ");
 
   // curprint ( "\n /* Output any placement arguments */ \n";
      // charles4: 02/26/2012  I don't understand the importance of this code.
@@ -856,7 +867,15 @@ Unparse_Java::unparseNewOp(SgExpression* expr, SgUnparse_Info& info)
          while(isSgPointerType(pointer_type -> get_base_type())) { // find the base type...
              pointer_type = isSgPointerType(pointer_type -> get_base_type());
          }
-         unparseType(pointer_type -> get_base_type(), info);
+
+         if (new_op -> attributeExists("new_prefix") && isSgClassType(new_op->get_specified_type())) {
+             SgClassType *class_type = isSgClassType(pointer_type -> get_base_type());
+             ROSE_ASSERT(class_type);
+             curprint(class_type -> get_name().getString());
+         }
+         else {
+             unparseType(pointer_type -> get_base_type(), info);
+         }
 
          bool has_aggregate_initializer = new_op -> attributeExists("initializer");
          SgConstructorInitializer *init = new_op -> get_constructor_args();
@@ -881,7 +900,15 @@ Unparse_Java::unparseNewOp(SgExpression* expr, SgUnparse_Info& info)
          }
      }
      else {
-         unparseType(new_op->get_specified_type(), info);
+         if (new_op -> attributeExists("new_prefix") && isSgClassType(new_op->get_specified_type())) {
+             SgClassType *class_type = isSgClassType(new_op->get_specified_type());
+             ROSE_ASSERT(class_type);
+             curprint(class_type -> get_name().getString());
+         }
+         else {
+             unparseType(new_op->get_specified_type(), info);
+         }
+
          curprint ("(");
          ROSE_ASSERT(new_op -> get_constructor_args());
          SgConstructorInitializer *init = new_op -> get_constructor_args();
