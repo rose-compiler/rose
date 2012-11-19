@@ -543,18 +543,23 @@ int main( int argc, char * argv[] ) {
   timer.start();
   cout << "=============================================================="<<endl;
   if(boolOptions["semantic-fold"]) {
-	//cerr<<"Option semantic-fold is not activated yet."<<endl;
-	//exit(1);
 	analyzer.runSolver2();
   } else {
 	analyzer.runSolver1();
   }
   double analysisRunTime=timer.getElapsedTimeInMilliSec();
-  //long removed=analyzer.getTransitionGraph()->removeDuplicates();
-  //cout << "Transitions reduced: "<<removed<<endl;
-  //  cout << analyzer.pstateSetToString(final);
+
+  // since CT1.2 the ADT TransitionGraph ensures that no duplicates can exist
+#if 0
+  long removed=analyzer.getTransitionGraph()->removeDuplicates();
+  cout << "Transitions reduced: "<<removed<<endl;
+#endif
+
   cout << "=============================================================="<<endl;
-  printAsserts(analyzer,sageProject);
+  // TODO: reachability in presence of semantic folding
+  if(!boolOptions["semantic-fold"]) {
+	printAsserts(analyzer,sageProject);
+  }
   if (args.count("csv-assert")) {
 	string filename=args["csv-assert"].as<string>().c_str();
 	generateAssertsCsvFile(analyzer,sageProject,filename);
@@ -575,7 +580,12 @@ int main( int argc, char * argv[] ) {
 	cout << "=============================================================="<<endl;
   }
   double ltlRunTime=timer.getElapsedTimeInMilliSec();
-  printAssertStatistics(analyzer,sageProject);
+  // TODO: reachability in presence of semantic folding
+  if(boolOptions["semantic-fold"]) {
+	  cout << "NOTE: no reachability results with semantic folding (TODO)."<<endl;
+	} else {
+	  printAssertStatistics(analyzer,sageProject);
+	}
   cout << "=============================================================="<<endl;
 
   double totalRunTime=frontEndRunTime+initRunTime+ analysisRunTime+ltlRunTime;

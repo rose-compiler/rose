@@ -10,6 +10,7 @@
 #include "rose.h"
 #include "SgNodeHelper.h"
 #include "Labeler.h"
+#include "CommandLineOptions.h"
 
 namespace CodeThorn {
 

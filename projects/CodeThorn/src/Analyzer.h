@@ -84,7 +84,7 @@ class Analyzer {
 
   // 5 experimental functions
   void semanticFoldingOfTransitionGraph();
-  bool consistentEStateSet();
+  bool checkEStateSet();
   bool isConsistentEStatePtrSet(set<const EState*> estatePtrSet);
   bool isInWorkList(const EState* estate);
   bool checkTransitionGraph();

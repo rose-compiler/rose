@@ -38,7 +38,8 @@ void Edge::addType(EdgeType et) {
   // perform some consistency checks
   bool ok=true;
   // for EDGE_PATH we allow any combination, otherwise we check
-  if(!isType(EDGE_PATH) && !(et==EDGE_PATH)) {
+
+  if(!isType(EDGE_PATH) && !(et==EDGE_PATH) && !boolOptions["semantic-fold"]) {
 	switch(et) {
 	case EDGE_FORWARD: if(isType(EDGE_BACKWARD)) ok=false;break;
 	case EDGE_BACKWARD: if(isType(EDGE_FORWARD)) ok=false;break;
@@ -51,7 +52,7 @@ void Edge::addType(EdgeType et) {
   if(ok)
 	_types.insert(et);
   else {
-	cerr << "Error: inconsistent icfg-edge annotation:" << toString() <<endl;
+	cerr << "Error: inconsistent icfg-edge annotation: edge-annot: " << et << ", set: "<<toString() <<endl;
 	exit(1);
   }
 }

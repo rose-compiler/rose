@@ -195,11 +195,21 @@ EStateId EStateSet::estateId(const EState estate) const {
 }
 
 Transition TransitionGraph::getStartTransition() {
+  // we intentionally ensure that only exactly one start transition exists
+  TransitionGraph::iterator foundElementIter=end();
   for(TransitionGraph::iterator i=begin();i!=end();++i) {
-	if((*i).source->label()==getStartLabel())
-	  return *i;
+	if((*i).source->label()==getStartLabel()) {
+	  if(foundElementIter!=end()) {
+		cerr<< "Error: TransitionGraph: non-unique start transition."<<endl;
+		exit(1);
+	  }
+	  foundElementIter=i;
+	}
   }
-  throw "TransitionGraph: no start transition found.";
+  if(foundElementIter!=end())
+	return *foundElementIter;
+  else
+	throw "TransitionGraph: no start transition found.";
 }
 
 string EStateSet::estateIdString(const EState* estate) const {
@@ -385,7 +395,7 @@ bool TransitionGraph::checkConsistency() {
 	ok=false;
   }
   assert(cnt==tg->size());
-  cout << "checkTransitionGraph:"<<ok<<" size:"<<size()<<endl;
+  //cout << "checkTransitionGraph:"<<ok<<" size:"<<size()<<endl;
   return ok;
 }
 
@@ -407,7 +417,6 @@ void TransitionGraph::reduceEState2(const EState* estate) {
   TransitionGraph::TransitionPtrSet in=inEdges(estate);
   TransitionGraph::TransitionPtrSet out=outEdges(estate);
   if(in.size()!=0 /*&& out.size()!=0*/) {
-	cout<< estate->toString()<<endl;
 	set<Transition> newTransitions;
 	for(TransitionPtrSet::iterator i=in.begin();i!=in.end();++i) {
 	  for(TransitionPtrSet::iterator j=out.begin();j!=out.end();++j) {
@@ -419,7 +428,7 @@ void TransitionGraph::reduceEState2(const EState* estate) {
 		assert(newTransitions.find(t)!=newTransitions.end());
 	  }
 	}
-	cout << "DEBUG: number of new transitions: "<<newTransitions.size()<<endl;
+	//cout << "DEBUG: number of new transitions: "<<newTransitions.size()<<endl;
 
 	// 2. add new transitions
 	for(set<Transition>::iterator k=newTransitions.begin();k!=newTransitions.end();++k) {
@@ -427,14 +436,12 @@ void TransitionGraph::reduceEState2(const EState* estate) {
 	  assert(find(*k)!=end());
 	}
 	assert(newTransitions.size()<=in.size()*out.size());
-
 #if 1
 	// 1. remove all old transitions
 	for(TransitionPtrSet::iterator i=in.begin();i!=in.end();++i) {
-	  
-	  TransitionGraph::iterator it1=find(**i);
+	  //TransitionGraph::iterator it1=find(**i);
 	  //cout << "DEBUG: FOUND: "<<(*it1).toString()<<endl;
-	  this->erase(*it1);
+	  this->erase(**i);
 	}
 #endif
 #if 1
@@ -443,9 +450,8 @@ void TransitionGraph::reduceEState2(const EState* estate) {
 
 	}
 #endif
-
   } else {
-	cout<< "INFO: not eliminating node because #in==0 or #out==0: node: "<<estate<<", #in="<<in.size()<<", #out="<<out.size()<<endl;
+	//cout<< "DEBUG: not eliminating node because #in==0 or #out==0: node: "<<estate<<", #in="<<in.size()<<", #out="<<out.size()<<endl;
   }
 }
 
