@@ -457,7 +457,8 @@ long double __builtin_powil (long double __builtin__x, int __builtin__y);
 #define __is_pod sizeof 
 #define __is_polymorphic sizeof
 #define __is_union sizeof
-void* __builtin_memmove(void * target, const void * source, unsigned long long nBytes);
+//void* __builtin_memmove(void * target, const void * source, unsigned long long nBytes);
+void* __builtin_memmove(void * target, const void * source, unsigned long nBytes);
 void* __builtin_memchr(const  void * ptr, int value, unsigned long long num);
 void* __builtin_memcpy (void * destination, const void * source, unsigned long long num );
 int __builtin_memcmp ( const void * ptr1, const void * ptr2, unsigned long long num );
