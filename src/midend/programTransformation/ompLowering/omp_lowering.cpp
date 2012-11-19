@@ -2766,7 +2766,15 @@ std::map <SgVariableSymbol *, bool> collectVariableAppearance (SgNode* root)
     {
       SgCaseOptionStmt* option_stmt = buildCaseOptionStmt (buildIntVal(i), buildBasicBlock());
       // Move SgOmpSectionStatement's body to Case OptionStmt's body
-      SgBasicBlock * src_bb = isSgBasicBlock(isSgOmpSectionStatement(section_list[i])->get_body()); 
+      SgOmpSectionStatement* section_statement = isSgOmpSectionStatement(section_list[i]);
+      // Sara Royuela (Nov 19th, 2012)
+      // The section statement might not be a Basic Block if there is only one statement and it is not wrapped with braces
+      // In that case, we build here the Basic Block
+      SgBasicBlock * src_bb = isSgBasicBlock(section_statement->get_body());
+      if( src_bb == NULL )
+      {
+          src_bb = buildBasicBlock( section_statement->get_body() );
+      }
       SgBasicBlock * target_bb =  isSgBasicBlock(option_stmt->get_body());
       moveStatementsBetweenBlocks(src_bb , target_bb);
       appendStatement (buildBreakStmt(), target_bb);
