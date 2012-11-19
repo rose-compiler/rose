@@ -1092,6 +1092,7 @@ inputBug317.C \
 inputBug327.C \
 X.C \
 dynamic_cast.C \
+fstream.C \
 test2005_06.C \
 test2012_57.C \
 test2012_59.C \
