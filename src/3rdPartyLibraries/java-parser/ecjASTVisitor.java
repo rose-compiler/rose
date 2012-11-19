@@ -127,7 +127,46 @@ class ecjASTVisitor extends ExtendedASTVisitor {
     }
 
     // *************************************************
-    public void enterTypeDeclaration(TypeDeclaration node) {
+
+    private void enterSingleNameReference(SingleNameReference node) {
+        String varRefName = node.toString();
+        if (javaParserSupport.verboseLevel > 0) {
+            System.out.println("Building a variable reference for name = " + varRefName);
+            System.out.println("node.genericCast = " + node.genericCast);
+        }
+
+        if (node.binding instanceof TypeBinding) { // is this name a type?
+            TypeBinding type_binding = (TypeBinding) node.binding;
+            assert(type_binding.isClass() || type_binding.isInterface());
+            if (javaParserSupport.verboseLevel > 0) {
+                System.out.println("The Single name referenced " + varRefName + " is bound to type " + type_binding.debugName());
+            }
+            javaParserSupport.preprocessClass(type_binding);
+
+            JavaParser.cactionTypeReference(javaParserSupport.getPackageName(type_binding),
+                                            javaParserSupport.getTypeName(type_binding),
+                                            javaParserSupport.createJavaToken(node));
+        }
+        else { // the name is a variable
+            String package_name = "",
+                   type_name = "";
+
+            if (node.localVariableBinding() == null) { // not a local variable
+                TypeBinding type_binding = node.actualReceiverType;
+                assert(type_binding.isClass() || type_binding.isInterface());
+                if (javaParserSupport.verboseLevel > 0) {
+                    System.out.println("The  Single name referenced " + varRefName + " is bound to type " + type_binding.debugName());
+                }
+                javaParserSupport.preprocessClass(type_binding);
+                package_name = javaParserSupport.getPackageName(type_binding);
+                type_name = javaParserSupport.getTypeName(type_binding);
+            }
+
+            JavaParser.cactionSingleNameReference(package_name, type_name, varRefName, javaParserSupport.createJavaToken(node));
+        }
+    }
+
+    private void enterTypeDeclaration(TypeDeclaration node) {
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Inside of enterTypeDeclaration(node)");
 
@@ -214,7 +253,7 @@ class ecjASTVisitor extends ExtendedASTVisitor {
         }
     }
 
-    public void exitTypeDeclaration(TypeDeclaration node) {
+    private void exitTypeDeclaration(TypeDeclaration node) {
         String typename = new String(node.name);
         if (TypesWithNoBody.contains(node)) {
             if (javaParserSupport.verboseLevel > 1)
@@ -316,7 +355,12 @@ class ecjASTVisitor extends ExtendedASTVisitor {
             System.out.println(" modifiers = " + node.modifiers);
         }
 
-        JavaParser.cactionArgument(name, catchArguments.contains(node), javaParserSupport.createJavaToken(node));
+        if (catchArguments.contains(node)) {
+            JavaParser.cactionCatchArgument(name, javaParserSupport.createJavaToken(node));
+        }
+        else {
+            JavaParser.cactionArgument(name, javaParserSupport.createJavaToken(node));
+        }
         
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Leaving enter (Argument,BlockScope)");
@@ -332,8 +376,13 @@ class ecjASTVisitor extends ExtendedASTVisitor {
 
         boolean is_final = node.binding.isFinal();
 
-        boolean is_catch_argument = catchArguments.contains(node);
-        JavaParser.cactionArgumentEnd(nameString, is_catch_argument, is_final, javaParserSupport.createJavaToken(node));
+
+        if (catchArguments.contains(node)) {
+            JavaParser.cactionCatchArgumentEnd(nameString, is_final, javaParserSupport.createJavaToken(node));
+        }
+        else {
+            JavaParser.cactionArgumentEnd(nameString, is_final, javaParserSupport.createJavaToken(node));
+        }
 
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Leaving exit (Argument,BlockScope)");
@@ -344,8 +393,21 @@ class ecjASTVisitor extends ExtendedASTVisitor {
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Inside of enter (Argument,ClassScope)");
 
-        JavaParser.cactionArgumentClassScope("Argument_class_abc", javaParserSupport.createJavaToken(node));
+        String name = new String(node.name);
 
+        if (javaParserSupport.verboseLevel > 0) {
+            System.out.println(" name      = " + name);
+            System.out.println(" type      = " + node.type);
+            System.out.println(" modifiers = " + node.modifiers);
+        }
+
+        if (catchArguments.contains(node)) {
+            JavaParser.cactionCatchArgument(name, javaParserSupport.createJavaToken(node));
+        }
+        else {
+            JavaParser.cactionArgument(name, javaParserSupport.createJavaToken(node));
+        }
+        
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Leaving enter (Argument,ClassScope)");
 
@@ -353,7 +415,21 @@ class ecjASTVisitor extends ExtendedASTVisitor {
     }
 
     public void exit(Argument node,ClassScope scope) {
-        // do nothing by default
+        if (javaParserSupport.verboseLevel > 0)
+            System.out.println("Leaving exit (Argument,ClassScope)");
+
+        String nameString = new String(node.name);
+
+        boolean is_final = node.binding.isFinal();
+
+
+        if (catchArguments.contains(node)) {
+            JavaParser.cactionCatchArgumentEnd(nameString, is_final, javaParserSupport.createJavaToken(node));
+        }
+        else {
+            JavaParser.cactionArgumentEnd(nameString, is_final, javaParserSupport.createJavaToken(node));
+        }
+
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Leaving exit (Argument,ClassScope)");
     }
@@ -430,7 +506,13 @@ class ecjASTVisitor extends ExtendedASTVisitor {
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Inside of enter (ArrayQualifiedTypeReference,BlockScope)");
 
-        JavaParser.cactionArrayQualifiedTypeReference(javaParserSupport.createJavaToken(node));
+        ArrayBinding arrayType = (ArrayBinding) node.resolvedType;
+        TypeBinding baseType = arrayType.leafComponentType;
+
+        JavaParser.cactionArrayTypeReference(javaParserSupport.getPackageName(baseType),
+                                             javaParserSupport.getTypeName(baseType),
+                                             node.dimensions(),
+                                             javaParserSupport.createJavaToken(node));
 
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Leaving enter (ArrayQualifiedTypeReference,BlockScope)");
@@ -439,9 +521,10 @@ class ecjASTVisitor extends ExtendedASTVisitor {
     }
 
     public void exit(ArrayQualifiedTypeReference node, BlockScope scope) {
-        // do nothing by default
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Leaving exit (ArrayQualifiedTypeReference,BlockScope)");
+
+        // do nothing by default
     }
 
 
@@ -449,7 +532,13 @@ class ecjASTVisitor extends ExtendedASTVisitor {
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Inside of enter (ArrayQualifiedTypeReference,ClassScope)");
 
-        JavaParser.cactionArrayQualifiedTypeReferenceClassScope(javaParserSupport.createJavaToken(node));
+        ArrayBinding arrayType = (ArrayBinding) node.resolvedType;
+        TypeBinding baseType = arrayType.leafComponentType;
+
+        JavaParser.cactionArrayTypeReference(javaParserSupport.getPackageName(baseType),
+                                             javaParserSupport.getTypeName(baseType),
+                                             node.dimensions(),
+                                             javaParserSupport.createJavaToken(node));
 
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Leaving enter (ArrayQualifiedTypeReference,ClassScope)");
@@ -458,9 +547,10 @@ class ecjASTVisitor extends ExtendedASTVisitor {
     }
 
     public void exit(ArrayQualifiedTypeReference node, ClassScope scope) {
-        // do nothing by default
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Leaving exit (ArrayQualifiedTypeReference,ClassScope)");
+
+        // do nothing by default
     }
 
 
@@ -1239,7 +1329,7 @@ class ecjASTVisitor extends ExtendedASTVisitor {
 
         String fieldRefName = new String(node.token);
 
-        JavaParser.cactionFieldReferenceClassScope(fieldRefName, javaParserSupport.createJavaToken(node));
+        JavaParser.cactionFieldReference(fieldRefName, javaParserSupport.createJavaToken(node));
 
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Leaving enter (FieldReference,ClassScope)");
@@ -1254,7 +1344,7 @@ class ecjASTVisitor extends ExtendedASTVisitor {
 
         String fieldRefName = new String(node.token);
           
-        JavaParser.cactionFieldReferenceClassScopeEnd(fieldRefName, javaParserSupport.createJavaToken(node));
+        JavaParser.cactionFieldReferenceEnd(fieldRefName, javaParserSupport.createJavaToken(node));
 
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Leaving exit (FieldReference,BlockScope)");
@@ -1406,7 +1496,7 @@ class ecjASTVisitor extends ExtendedASTVisitor {
             package_name = importReferenceWithoutWildcard;
             type_name = "";
 
-            JavaParser.cactionPushPackage(package_name);
+            JavaParser.cactionPushPackage(package_name, javaParserSupport.createJavaToken(node));
             JavaParser.cactionPopPackage();
         }
         else {
@@ -2115,18 +2205,46 @@ class ecjASTVisitor extends ExtendedASTVisitor {
         // Push the types of the parameters of the method that was matched for this call so that the
         // translator can retrieve the exact method in question.
         //
-        if (node.binding.parameters != null) {
-            for (int i = 0; i < node.binding.parameters.length; i++) {
-                javaParserSupport.generateAndPushType(node.binding.parameters[i], javaParserSupport.createJavaToken(node));
+        MethodBinding method_binding = node.binding;
+/*
+        if (node.binding instanceof ParameterizedMethodBinding) {
+            ParameterizedMethodBinding parameterized_method_binding = (ParameterizedMethodBinding) node.binding;
+            ParameterizedTypeBinding parameterized_type_binding = (ParameterizedTypeBinding) parameterized_method_binding.declaringClass;
+LookupEnvironment env = parameterized_type_binding.environment();
+TypeBinding new_type_binding = env.convertToRawType(parameterized_type_binding, true);
+System.out.println("The RAW type " + new String(new_type_binding.readableName()) + " has type " + new_type_binding.getClass().getCanonicalName());
+if (new_type_binding instanceof RawTypeBinding) {
+	RawTypeBinding raw_type_binding = (RawTypeBinding) new_type_binding;
+            MethodBinding methods[] =  raw_type_binding.availableMethods(); // parameterized_type_binding.methods();
+            for (int i = 0; i < methods.length; i++) {
+            	if (new String(parameterized_method_binding.selector).equals(new String(methods[i].selector))) {
+            		if(parameterized_method_binding.areParameterErasuresEqual(methods[i])) {
+            			System.out.println("Aha !!!");
+            			method_binding = methods[i];
+            		}
+            	}
             }
+}
+System.out.println("I am here for " + node.binding.getClass().getCanonicalName());
+        }
+else System.out.println("I am NOT here for " + node.binding.getClass().getCanonicalName());
+*/
+//TypeBinding arguments[] = node.binding.parameters;
+//System.out.println("Method " + new String(method_binding.readableName()) + " has " + method_binding.parameters.length + " arguments");
+        TypeBinding arguments[] = method_binding.parameters;
+        for (int i = 0; i < arguments.length; i++) {
+            javaParserSupport.generateAndPushType(arguments[i], javaParserSupport.createJavaToken(node));
         }
 
         String package_name = javaParserSupport.getPackageName(node.actualReceiverType),
                typename = javaParserSupport.getTypeName(node.actualReceiverType);
         int num_dimensions = 0;
         if (node.actualReceiverType instanceof ArrayBinding) { // if the type is an Array type
-            num_dimensions = ((ArrayBinding) node.actualReceiverType).dimensions;
-            typename = typename.substring(0, typename.indexOf('[')); // remove [] ...[] suffixes.
+            ArrayBinding array_binding = (ArrayBinding) node.actualReceiverType;
+            num_dimensions = array_binding.dimensions;
+            TypeBinding base_binding = array_binding.leafComponentType;
+            assert(! (base_binding instanceof ArrayBinding));
+            typename = javaParserSupport.getTypeName(base_binding);
         }
 
         String method_name = new String(node.selector);
@@ -2326,7 +2444,7 @@ class ecjASTVisitor extends ExtendedASTVisitor {
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Inside of enter (ParameterizedQualifiedTypeReference,BlockScope)");
 
-        JavaParser.cactionParameterizedSingleTypeReference(javaParserSupport.createJavaToken(node));
+        JavaParser.cactionParameterizedTypeReference(javaParserSupport.createJavaToken(node));
 
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Leaving enter (ParameterizedQualifiedTypeReference,BlockScope)");
@@ -2335,9 +2453,8 @@ class ecjASTVisitor extends ExtendedASTVisitor {
     }
 
     public void exit(ParameterizedQualifiedTypeReference node, BlockScope scope) {
-        if (javaParserSupport.verboseLevel > 0)
-            System.out.println("Leaving exit (ParameterizedQualifiedTypeReference,BlockScope)");
-
+// TODO: remove this
+/*
         StringBuffer strbuf = new StringBuffer();
         for (int i = 0; i < node.tokens.length; i++) {
             strbuf.append(node.tokens[i]);
@@ -2345,24 +2462,36 @@ class ecjASTVisitor extends ExtendedASTVisitor {
                 strbuf.append(".");
         }
         String qualifiedTypeName = new String(strbuf);
-
+*/
         if (javaParserSupport.verboseLevel > 0)
-            System.out.println("At top of exit (ParameterizedSingleTypeReference,BlockScope) name = " + qualifiedTypeName);
+            System.out.println("At top of exit (ParameterizedQualifiedTypeReference,BlockScope) name = " + node.resolvedType.debugName());
         
+        if (node.resolvedType.isClass() || node.resolvedType.isInterface()) { 
+            if (javaParserSupport.verboseLevel > 0)
+                System.out.println("(01) The parameterized qualified type referenced is bound to type " + node.resolvedType.debugName());
+            javaParserSupport.preprocessClass(node.resolvedType);
+        }
+
+        String package_name = javaParserSupport.getPackageName(node.resolvedType);
+        String  type_name = javaParserSupport.getTypeName(node.resolvedType);
+
         //
         // TODO: Do this right !!!  This is a temporary patch !!!
         //
+        // PC:  I have no idea why the number of type arguments is not precise here!!!
+        // What is the purpose of these null elements in this array !!!???
+        //
         int num_type_arguments = 0;
         for (int i = 0; i < (node.typeArguments == null ? 0 : node.typeArguments.length); i++) {
-            if (node.typeArguments[i] != null)
+            if (node.typeArguments[i] != null) 
                 num_type_arguments++;
         }
 
-        JavaParser.cactionParameterizedSingleTypeReferenceEnd(qualifiedTypeName,
-                                                              num_type_arguments,
-                                                              javaParserSupport.createJavaToken(node));
-
-        // TODO: if this type is an array, take care of the dimensions !!!
+        JavaParser.cactionParameterizedTypeReferenceEnd(package_name,
+                                                        type_name,
+                                                        num_type_arguments,
+                                                        node.dimensions(),
+                                                        javaParserSupport.createJavaToken(node));
 
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Leaving exit (ParameterizedQualifiedTypeReference, BlockScope)");
@@ -2373,7 +2502,7 @@ class ecjASTVisitor extends ExtendedASTVisitor {
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Inside of enter (ParameterizedQualifiedTypeReference,ClassScope)");
 
-        JavaParser.cactionParameterizedSingleTypeReferenceClassScope(javaParserSupport.createJavaToken(node));
+        JavaParser.cactionParameterizedTypeReference(javaParserSupport.createJavaToken(node));
 
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Leaving enter (ParameterizedQualifiedTypeReference,ClassScope)");
@@ -2384,6 +2513,36 @@ class ecjASTVisitor extends ExtendedASTVisitor {
     public void exit(ParameterizedQualifiedTypeReference node, ClassScope scope) {
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Leaving exit (ParameterizedQualifiedTypeReference,ClassScope)");
+
+        if (node.resolvedType.isClass() || node.resolvedType.isInterface()) { 
+            if (javaParserSupport.verboseLevel > 0)
+                System.out.println("(01) The parameterized qualified type referenced is bound to type " + node.resolvedType.debugName());
+            javaParserSupport.preprocessClass(node.resolvedType);
+        }
+
+        String package_name = javaParserSupport.getPackageName(node.resolvedType);
+        String  type_name = javaParserSupport.getTypeName(node.resolvedType);
+        
+        //
+        // TODO: Do this right !!!  This is a temporary patch !!!
+        //
+        // PC:  I have no idea why the number of type arguments is not precise here!!!
+        // What is the purpose of these null elements in this array !!!???
+        //
+        int num_type_arguments = 0;
+        for (int i = 0; i < (node.typeArguments == null ? 0 : node.typeArguments.length); i++) {
+            if (node.typeArguments[i] != null) 
+                num_type_arguments++;
+        }
+
+        JavaParser.cactionParameterizedTypeReferenceEnd(package_name,
+                                                        type_name,
+                                                        num_type_arguments,
+                                                        node.dimensions(),
+                                                        javaParserSupport.createJavaToken(node));
+
+        if (javaParserSupport.verboseLevel > 0)
+            System.out.println("Leaving exit (ParameterizedQualifiedTypeReference,BlockScope)");
     }
 
 
@@ -2391,7 +2550,7 @@ class ecjASTVisitor extends ExtendedASTVisitor {
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Inside of enter (ParameterizedSingleTypeReference,BlockScope)");
 
-        JavaParser.cactionParameterizedSingleTypeReference(javaParserSupport.createJavaToken(node));
+        JavaParser.cactionParameterizedTypeReference(javaParserSupport.createJavaToken(node));
 
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Leaving enter (ParameterizedSingleTypeReference,BlockScope)");
@@ -2402,7 +2561,7 @@ class ecjASTVisitor extends ExtendedASTVisitor {
     public void exit(ParameterizedSingleTypeReference node, BlockScope scope) {
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("At top of exit (ParameterizedSingleTypeReference,BlockScope)");
-
+/*
         String name = new String(node.token);
 
         if (javaParserSupport.verboseLevel > 0)
@@ -2421,6 +2580,33 @@ class ecjASTVisitor extends ExtendedASTVisitor {
                                                               javaParserSupport.createJavaToken(node));
 
         // TODO: if this type is an array, take care of the dimensions !!!
+*/
+        if (node.resolvedType.isClass() || node.resolvedType.isInterface()) { 
+            if (javaParserSupport.verboseLevel > 0)
+                System.out.println("(01) The parameterized single type referenced is bound to type " + node.resolvedType.debugName());
+            javaParserSupport.preprocessClass(node.resolvedType);
+        }
+
+        String package_name = javaParserSupport.getPackageName(node.resolvedType);
+        String  type_name = javaParserSupport.getTypeName(node.resolvedType);
+        
+        //
+        // TODO: Do this right !!!  This is a temporary patch !!!
+        //
+        // PC:  I have no idea why the number of type arguments is not precise here!!!
+        // What is the purpose of these null elements in this array !!!???
+        //
+        int num_type_arguments = 0;
+        for (int i = 0; i < (node.typeArguments == null ? 0 : node.typeArguments.length); i++) {
+            if (node.typeArguments[i] != null) 
+                num_type_arguments++;
+        }
+
+        JavaParser.cactionParameterizedTypeReferenceEnd(package_name,
+                                                        type_name,
+                                                        num_type_arguments,
+                                                        node.dimensions(),
+                                                        javaParserSupport.createJavaToken(node));
 
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Leaving exit (ParameterizedSingleTypeReference,BlockScope)");
@@ -2431,7 +2617,7 @@ class ecjASTVisitor extends ExtendedASTVisitor {
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Inside of enter (ParameterizedSingleTypeReference,ClassScope)");
 
-        JavaParser.cactionParameterizedSingleTypeReferenceClassScope(javaParserSupport.createJavaToken(node));
+        JavaParser.cactionParameterizedTypeReference(javaParserSupport.createJavaToken(node));
 
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Leaving enter (ParameterizedSingleTypeReference,ClassScope)");
@@ -2441,6 +2627,36 @@ class ecjASTVisitor extends ExtendedASTVisitor {
 
     public void exit(ParameterizedSingleTypeReference node, ClassScope scope) {
         // do nothing  by default
+        if (javaParserSupport.verboseLevel > 0)
+            System.out.println("Leaving exit (ParameterizedSingleTypeReference,ClassScope)");
+
+        if (node.resolvedType.isClass() || node.resolvedType.isInterface()) { 
+            if (javaParserSupport.verboseLevel > 0)
+                System.out.println("(01) The parameterized single type referenced is bound to type " + node.resolvedType.debugName());
+            javaParserSupport.preprocessClass(node.resolvedType);
+        }
+
+        String package_name = javaParserSupport.getPackageName(node.resolvedType);
+        String  type_name = javaParserSupport.getTypeName(node.resolvedType);
+        
+        //
+        // TODO: Do this right !!!  This is a temporary patch !!!
+        //
+        // PC:  I have no idea why the number of type arguments is not precise here!!!
+        // What is the purpose of these null elements in this array !!!???
+        //
+        int num_type_arguments = 0;
+        for (int i = 0; i < (node.typeArguments == null ? 0 : node.typeArguments.length); i++) {
+            if (node.typeArguments[i] != null) 
+                num_type_arguments++;
+        }
+
+        JavaParser.cactionParameterizedTypeReferenceEnd(package_name,
+                                                        type_name,
+                                                        num_type_arguments,
+                                                        node.dimensions(),
+                                                        javaParserSupport.createJavaToken(node));
+
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Leaving exit (ParameterizedSingleTypeReference,ClassScope)");
     }
@@ -2518,6 +2734,7 @@ class ecjASTVisitor extends ExtendedASTVisitor {
         javaParserSupport.preprocessClass(node.type.resolvedType);
         
         JavaParser.cactionQualifiedAllocationExpressionEnd(node.type.toString(),
+                                                           node.enclosingInstance != null,
                                                            node.arguments == null ? 0 : node.arguments.length,
                                                            node.anonymousType != null,
                                                            javaParserSupport.createJavaToken(node));
@@ -2531,7 +2748,7 @@ class ecjASTVisitor extends ExtendedASTVisitor {
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Inside of enter (QualifiedNameReference, BlockScope)");
 
-        javaParserSupport.processQualifiedNameReference(node, javaParserSupport.createJavaToken(node));
+        javaParserSupport.processQualifiedNameReference(node);
 
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Leaving enter (QualifiedNameReference, BlockScope)");
@@ -2550,7 +2767,7 @@ class ecjASTVisitor extends ExtendedASTVisitor {
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Inside of enter (QualifiedNameReference, ClassScope)");
 
-        javaParserSupport.processQualifiedNameReference(node, javaParserSupport.createJavaToken(node));
+        javaParserSupport.processQualifiedNameReference(node);
 
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Leaving enter (QualifiedNameReference, ClassScope)");
@@ -2669,7 +2886,7 @@ class ecjASTVisitor extends ExtendedASTVisitor {
 
         String package_name = javaParserSupport.getPackageName(node.resolvedType);
         String  type_name = javaParserSupport.getTypeName(node.resolvedType);
-        
+
         JavaParser.cactionTypeReference(package_name, type_name, javaParserSupport.createJavaToken(node));
 
         if (javaParserSupport.verboseLevel > 0)
@@ -2760,41 +2977,7 @@ class ecjASTVisitor extends ExtendedASTVisitor {
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Inside of enter (SingleNameReference,BlockScope)");
 
-        String varRefName = node.toString();
-        if (javaParserSupport.verboseLevel > 0) {
-            System.out.println("Building a variable reference for name = " + varRefName);
-            System.out.println("node.genericCast = " + node.genericCast);
-        }
-
-        if (node.binding instanceof TypeBinding) { // is this name a type?
-            TypeBinding type_binding = (TypeBinding) node.binding;
-            assert(type_binding.isClass() || type_binding.isInterface());
-            if (javaParserSupport.verboseLevel > 0) {
-                System.out.println("The Single name referenced " + varRefName + " is bound to type " + type_binding.debugName());
-            }
-            javaParserSupport.preprocessClass(type_binding);
-
-            JavaParser.cactionTypeReference(javaParserSupport.getPackageName(type_binding),
-                                            javaParserSupport.getTypeName(type_binding),
-                                            javaParserSupport.createJavaToken(node));
-        }
-        else { // the name is a variable
-            String package_name = "",
-                   type_name = "";
-
-            if (node.localVariableBinding() == null) { // not a local variable
-                TypeBinding type_binding = node.actualReceiverType;
-                assert(type_binding.isClass() || type_binding.isInterface());
-                if (javaParserSupport.verboseLevel > 0) {
-                    System.out.println("The  Single name referenced " + varRefName + " is bound to type " + type_binding.debugName());
-                }
-                javaParserSupport.preprocessClass(type_binding);
-                package_name = javaParserSupport.getPackageName(type_binding);
-                type_name = javaParserSupport.getTypeName(type_binding);
-            }
-
-            JavaParser.cactionSingleNameReference(package_name, type_name, varRefName, javaParserSupport.createJavaToken(node));
-        }
+        enterSingleNameReference(node);
 
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Leaving enter (SingleNameReference,BlockScope)");
@@ -2813,7 +2996,7 @@ class ecjASTVisitor extends ExtendedASTVisitor {
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Inside of enter (SingleNameReference,ClassScope)");
 
-        JavaParser.cactionSingleNameReferenceClassScope(javaParserSupport.createJavaToken(node));
+        enterSingleNameReference(node);
 
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Leaving enter (SingleNameReference,ClassScope)");
@@ -3104,7 +3287,7 @@ class ecjASTVisitor extends ExtendedASTVisitor {
 
         Class cls = special_type.cls;
         if (node.binding.isAnonymousType()) {
-            JavaParser.cactionPushPackage(special_type.package_name);
+            JavaParser.cactionPushPackage(special_type.package_name, javaParserSupport.createJavaToken(node));
             javaParserSupport.insertClasses(cls);
             javaParserSupport.traverseClass(cls);
             JavaParser.cactionPopPackage();

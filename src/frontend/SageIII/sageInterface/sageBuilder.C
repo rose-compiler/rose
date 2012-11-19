@@ -7094,6 +7094,24 @@ SgAssertStmt* SageBuilder::buildAssertStmt(SgExpression* test)
   return result;
 }
 
+// DQ (7/18/2011): Added support for SgJavaInstanceOfOp
+//! This is part of Java specific operator support.
+SgJavaInstanceOfOp* SageBuilder::buildJavaInstanceOfOp(SgExpression* exp, SgType* type)
+   {
+     SgType* exp_type = SgTypeBool::createType();
+
+     SgJavaInstanceOfOp* result = new SgJavaInstanceOfOp(exp, type, exp_type);
+     ROSE_ASSERT(result);
+     if (exp != NULL)
+        {
+          exp->set_parent(result);
+          markLhsValues(result);
+        }
+
+     setOneSourcePositionForTransformation(result);
+     return result;
+   }
+
 SgAssertStmt* SageBuilder::buildAssertStmt(SgExpression* test, SgExpression* exceptionArgument)
 {
   SgAssertStmt* result = new SgAssertStmt(test);

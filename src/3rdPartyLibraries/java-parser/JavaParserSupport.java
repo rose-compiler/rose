@@ -39,7 +39,13 @@ class JavaParserSupport {
         return new JavaToken("Dummy JavaToken (see createJavaToken)", pos);
     }
 
-    //
+    public JavaToken createJavaToken(ASTNode lnode, ASTNode rnode) {
+        JavaSourcePositionInformation pos = this.posFactory.createPosInfo(lnode.sourceStart(), rnode.sourceEnd());
+        // For now we return dummy text
+        return new JavaToken("Dummy JavaToken (see createJavaToken)", pos);
+    }
+
+   //
     // Create a loader for finding classes.
     //
     public ClassLoader pathLoader = null;
@@ -340,13 +346,12 @@ class JavaParserSupport {
         //
         //
         if (unit.types == null) { // No units!?  ... then at least process the package.
-            JavaParser.cactionPushPackage(unitPackageName);
+            JavaParser.cactionPushPackage(unitPackageName, createJavaToken(unit));
             JavaParser.cactionPopPackage();
         }
         else {
             LocalTypeBinding[] localTypes = unit.localTypes;
             if (localTypes != null) {
-//System.out.println("This compilation unit contains " +  localTypes.length + " local or anonymous types");
                 for (int i = 0; i < localTypes.length; i++) {
                     if (localTypes[i] != null) {
                         SourceTypeBinding enclosing_type_binding = (SourceTypeBinding)
@@ -480,7 +485,9 @@ System.out.println("    Class Name           " + ": " + (cls == null ? "What!?" 
      * @param node
      * @param jToken
      */
-    void processQualifiedNameReference (QualifiedNameReference node, JavaToken jToken ) {
+    void processQualifiedNameReference(QualifiedNameReference node) {
+        JavaToken jToken = createJavaToken(node);
+
         int type_prefix_length = node.indexOfFirstFieldBinding - 1;
         TypeBinding type_binding = null;
         if (node.binding instanceof FieldBinding) {
@@ -568,7 +575,8 @@ System.out.println("    Class Name           " + ": " + (cls == null ? "What!?" 
             LocalOrAnonymousType special_type = localOrAnonymousType.get(node);
             return special_type.package_name;
         }
-        return binding.getPackage() != null ? new String(binding.getPackage().readableName()) : "";
+
+        return new String(binding.qualifiedPackageName());
     }
     
     /**
@@ -577,36 +585,24 @@ System.out.println("    Class Name           " + ": " + (cls == null ? "What!?" 
      * @return
      */
     public String getTypeName(TypeBinding binding) {
+        String type_name;
+        
         if (binding.isLocalType() || binding.isAnonymousType()) {
             TypeDeclaration node = ((SourceTypeBinding) binding).scope.referenceContext;
             assert(node != null);
             LocalOrAnonymousType special_type = localOrAnonymousType.get(node);
-            return special_type.isAnonymous() ? special_type.typename : special_type.simplename;
-        }
-
-        String debug_name = binding.debugName(),
-               type_name;
-    
-        if (binding.isRawType()) {
-            assert(debug_name.endsWith("#RAW"));
-            type_name = debug_name.substring(0, debug_name.length() - 4);
-        }
-        else if (binding.isLocalType()) {
-            type_name = debug_name;
+            type_name = special_type.isAnonymous() ? special_type.typename : special_type.simplename;
         }
         else {
-            String package_name = getPackageName(binding);
-            type_name = debug_name.substring(package_name.length() == 0 ? 0 : package_name.length() + 1);
-        }
+            type_name = new String(binding.qualifiedSourceName());
 
-        if (binding.isBoundParameterizedType()) {
-            System.out.println("*** Currenbtly, the translator only supports the 1.4 version of Java - Specify the options: -rose:java:source 1.4 -rose:java:target 1.4");
-            System.exit(1);
+             if (binding.isArrayType()) { // Remove the suffix:  DIMS X "[]"
+                 type_name = type_name.substring(0, type_name.length() - (binding.dimensions() * 2));
+             }
         }
 
         return type_name;
     }
-    
 
     /**
      * 
@@ -696,7 +692,12 @@ System.out.println("    Class Name           " + ": " + (cls == null ? "What!?" 
                 //
                 assert(symbolTable.get(package_name).get(simple_name) != null);
 
-                JavaParser.cactionPushPackage(package_name);
+                TypeDeclaration node = userTypeTable.get(cls);
+                assert(node == null); // TODO: simplify next statement if this is true!
+                JavaToken location = (node != null
+                                            ? createJavaToken(node)
+                                            : new JavaToken("Dummy JavaToken (see createJavaToken)", new JavaSourcePositionInformation(0)));
+                JavaParser.cactionPushPackage(package_name, location);
                 insertClasses(base_class);
                 traverseClass(base_class);
                 JavaParser.cactionPopPackage();
@@ -937,16 +938,18 @@ System.out.println("    Class Name           " + ": " + (cls == null ? "What!?" 
                     }
 
                     TypeVariableBinding type_bindings[] = method_binding.typeVariables;
-                    
+
+                    JavaToken args_location = null;
                     if (args != null) {
+                        args_location = createJavaToken(args[0], args[args.length - 1]); 
+
                         for (int j = 0; j < args.length; j++) {
                             Argument arg = args[j];
                             JavaToken arg_location = createJavaToken(arg);
                             generateAndPushType(arg.type.resolvedType, arg_location);
-                            JavaParser.cactionArgumentEnd(new String(args[j].name),
-                                                          false /* not a Catch argument */,
-                                                          arg.binding.isFinal(),
-                                                          arg_location);
+                            JavaParser.cactionBuildArgumentSupport(new String(args[j].name),
+                                                                   arg.binding.isFinal(),
+                                                                   arg_location);
                         }
                     }
 
@@ -960,6 +963,8 @@ System.out.println("    Class Name           " + ": " + (cls == null ? "What!?" 
                                                          method.isAbstract(),
                                                          method.isNative(),
                                                          args == null ? 0 : args.length,
+                                                         true, /* user-defined-method */
+                                                         args_location != null ? args_location : method_location,
                                                          method_location);
                 }
                 else assert(false);
@@ -999,10 +1004,9 @@ System.out.println("    Class Name           " + ": " + (cls == null ? "What!?" 
 
                 for (int j = 0; j < pvec.length; j++) {
                     generateAndPushType(pvec[j]);
-                    JavaParser.cactionArgumentEnd(ct.getName() + j,
-                                                  false /* not a Catch argument */,
-                                                  true, /* mark as final */ 
-                                                  location);
+                    JavaParser.cactionBuildArgumentSupport(ct.getName() + j,
+                                                           true, /* mark as final */ 
+                                                           location);
                 }
 
                 //
@@ -1014,6 +1018,8 @@ System.out.println("    Class Name           " + ": " + (cls == null ? "What!?" 
                                                      Modifier.isAbstract(ct.getModifiers()),
                                                      Modifier.isNative(ct.getModifiers()),
                                                      pvec == null ? 0 : pvec.length,
+                                                     false, /* class-defined-method */
+                                                     location,
                                                      location);
             }
             
@@ -1026,10 +1032,9 @@ System.out.println("    Class Name           " + ": " + (cls == null ? "What!?" 
 
                 for (int j = 0; j < pvec.length; j++) {
                     generateAndPushType(pvec[j]);
-                    JavaParser.cactionArgumentEnd(m.getName() + j,
-                                                  false /* not a Catch argument */,
-                                                  true, /* mark as final */ 
-                                                  location);
+                    JavaParser.cactionBuildArgumentSupport(m.getName() + j,
+                                                           true, /* mark as final */ 
+                                                           location);
                 }
 
                 //
@@ -1041,6 +1046,8 @@ System.out.println("    Class Name           " + ": " + (cls == null ? "What!?" 
                                                      Modifier.isAbstract(m.getModifiers()),
                                                      Modifier.isNative(m.getModifiers()),
                                                      pvec == null ? 0 : pvec.length,
+                                                     false, /* class-defined-method */
+                                                     location,
                                                      location);
             }
         }
@@ -1144,23 +1151,49 @@ System.out.println("    Class Name           " + ": " + (cls == null ? "What!?" 
      * @param type_binding
      */
     public void generateAndPushType(TypeBinding type_binding, JavaToken location) {
-        if (type_binding instanceof ArrayBinding) {
+        if (type_binding.isBoundParameterizedType()) {
+            ParameterizedTypeBinding param_type_binding = (ParameterizedTypeBinding) type_binding;
+            assert(param_type_binding != null);
+            assert(param_type_binding.arguments != null);
+            for (int i = 0; i < param_type_binding.arguments.length; i++) {
+                assert(param_type_binding.arguments[i] != null);
+                preprocessClass(param_type_binding.arguments[i]);
+                generateAndPushType(param_type_binding.arguments[i], location);
+            }
+
+            String package_name = getPackageName(param_type_binding),
+                   type_name = getTypeName(param_type_binding);
+            JavaParser.cactionParameterizedTypeReferenceEnd(package_name, type_name, param_type_binding.arguments.length, 0, location);
+        }
+        else if (type_binding instanceof ArrayBinding) {
             ArrayBinding arrayType = (ArrayBinding) type_binding;
-            TypeBinding baseType = arrayType.leafComponentType;
+            TypeBinding base_type_binding = arrayType.leafComponentType;
 
-            String package_name = getPackageName(baseType),
-                   type_name = getTypeName(baseType);
+            String package_name = getPackageName(base_type_binding),
+                   type_name = getTypeName(base_type_binding);
+            assert(! (base_type_binding instanceof ArrayBinding));
 
-            JavaParser.cactionArrayTypeReference(package_name, type_name, arrayType.dimensions(), location);
+            if (base_type_binding.isBoundParameterizedType()) {
+                ParameterizedTypeBinding param_type_binding = (ParameterizedTypeBinding) base_type_binding;
+                assert(param_type_binding != null);
+                assert(param_type_binding.arguments != null);
+                for (int i = 0; i < param_type_binding.arguments.length; i++) {
+                    preprocessClass(param_type_binding.arguments[i]);
+                    generateAndPushType(param_type_binding.arguments[i], location);
+                }
+
+                JavaParser.cactionParameterizedTypeReferenceEnd(package_name, type_name, param_type_binding.arguments.length, arrayType.dimensions(), location);
+            }
+            else {
+                JavaParser.cactionArrayTypeReference(package_name, type_name, arrayType.dimensions(), location);
+            }
         }
         else {
             String package_name = getPackageName(type_binding),
                    type_name = getTypeName(type_binding);
-
             JavaParser.cactionTypeReference(package_name, type_name, location);
         }
     }
-
 
 // -------------------------------------------------------------------------------------------
     
