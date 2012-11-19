@@ -2773,7 +2773,7 @@ std::map <SgVariableSymbol *, bool> collectVariableAppearance (SgNode* root)
       SgBasicBlock * src_bb = isSgBasicBlock(section_statement->get_body());
       if( src_bb == NULL )
       {
-          src_bb = buildBasicBlock( section_statement->get_body() );
+          src_bb = ensureBasicBlockAsBodyOfOmpBodyStmt( section_statement );
       }
       SgBasicBlock * target_bb =  isSgBasicBlock(option_stmt->get_body());
       moveStatementsBetweenBlocks(src_bb , target_bb);
