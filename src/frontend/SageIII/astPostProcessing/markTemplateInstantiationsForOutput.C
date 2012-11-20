@@ -717,7 +717,9 @@ MarkTemplateInstantiationsForOutput::ProcessFunctionTemplateDeclarations ( set<S
             // Looking at the code for where the template declaration is set, it seems reasonable that it might 
             // not be found since p->assoc_template == NULL. However it seems that there are other ways to find 
             // it.  This is written about in a note in setTemplateOrTemplateInstantiationFunctionGeneration().
+#if 0
                printf ("In ProcessFunctionTemplateDeclarations(): COMMENTED OUT ASSERTION (templateDeclaration != NULL) to generate AST graph \n");
+#endif
             // ROSE_ASSERT(templateDeclaration != NULL);
 #if 1
                if (templateDeclaration != NULL)
@@ -738,7 +740,9 @@ MarkTemplateInstantiationsForOutput::ProcessFunctionTemplateDeclarations ( set<S
                if (filenameOfTemplateDeclaration == currentFilename)
                   {
                     bool isSpecialization = functionInstantiation->isSpecialization();
+#if 0
                     printf ("In MarkTemplateInstantiationsForOutput::ProcessFunctionTemplateDeclarations(): isSpecialization = %s \n",isSpecialization ? "true" : "false");
+#endif
                     if (isSpecialization == true)
                        {
 #if 0
@@ -817,7 +821,9 @@ MarkTemplateInstantiationsForOutput::ProcessClassTemplateDeclarations ( set<SgDe
                if (filenameOfTemplateDeclaration == currentFilename)
                   {
                     bool isSpecialization = classInstantiation->isSpecialization();
+#if 0
                     printf ("MarkTemplateInstantiationsForOutput::ProcessClassTemplateDeclarations(): isSpecialization = %s \n",isSpecialization ? "true" : "false");
+#endif
 #if 0
                  // DQ (5/15/2012): Need to be careful about forcing this to be treated as a specialization if it is not explicitly a specialization in the source code (comment out).
                  // DQ (5/2/2012): Force this to be a specialization since it is used (the declaration was in the class but is not output that way in the template string).
