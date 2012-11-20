@@ -1082,6 +1082,20 @@ test2012_240.C \
 test2012_241.C \
 test2012_242.C \
 test2012_243.C \
+test2012_244.C \
+test2012_245.C \
+test2012_246a.C \
+test2012_246b.C \
+test2012_247.C \
+test2012_248.C \
+test2012_249.C \
+test2012_250.C \
+test2012_251.C \
+test2012_253.C \
+test2012_254.C \
+test2012_255.C \
+test2012_256.C \
+test2012_257.C \
 test_int_lexemes.C \
 test_int_lexemes_donot_pass.C \
 test_simple_int.C \
@@ -1105,6 +1119,9 @@ NEW_PASSING_FILES =
 TESTCODE_CURRENTLY_FAILING_ON_OSX = \
 test2011_06.C \
 test2004_35.C 
+
+# Variation of regression test that fails.
+# test2012_252.C 
 
 # DQ (12/29/2011): This passes but I had to handle a template constant parameter incorrectly in the AST to get past a problem in EDG (or my lack of understanding of an aspect of EDG).
 # test2011_191.C 
@@ -1650,7 +1667,7 @@ EXTRA_DIST = $(EXAMPLE_TESTCODES_REQUIRED_TO_PASS) $(TESTCODE_CURRENTLY_FAILING)
      test2005_159.h  test2005_160.h  test2005_75.h  test2005_88.h  test2006_36.h test2006_42.h test2006_187a.h \
      test2006_187b.h test2007_08.h test2007_41.h  test2007_42.h test2007_47.h test2007_48.h test2007_97.h \
      test2007_101.h test2007_136.h test2007_137.h test2007_160.h test2007_160a.h test2007_167.h \
-     test2008_11.h LogicalPath.cpp test2005_56.C test2010_25.h test2012_242.h
+     test2008_11.h LogicalPath.cpp test2005_56.C test2010_25.h test2012_242.h  
 
 # DQ (6/18/2008): All of these should be present...
 # confdefs.h     test2001_11.h   test2001_18B.h  test2003_12.h  test2003_25.h   test2005_154.h  test2005_159.h  test2005_26.h  test2005_88.h    test2006_187b.h  test2006_42.h   test2007_113.h  test2007_137.h   test2007_167.h  test2007_42.h  test2007_97.h
@@ -1684,11 +1701,22 @@ MPI_LOCATION = /home/dquinlan/ROSE/ROSE_TESTS/MPI_header_tests/MPI_header_tests_
 test_MPI_LAM:
 	../../testTranslator -rose:verbose 0 -I$(MPI_LOCATION)/LAM_MPI/include -c $(MPI_LOCATION)/tests/input.C
 
+test_multiple_files: $(srcdir)/test2012_246a.C $(srcdir)/test2012_246b.C
+	../../testTranslator -rose:verbose 0 $(srcdir)/test2012_246a.C $(srcdir)/test2012_246b.C 
+
 # DQ (7/24/2011): These test fail the AST IO but pass the compilation tests.  Debug these for AST File I/O separately.
 failingAST_IO_tests: test2011_113.o test2011_114.o test2011_116.o
 
 print_testcodes:
 	echo $(TESTCODES)
+
+
+# DQ (11/19/2012): HPCToolKit use.  This makes some significant assumptions on how we have setup HPCToolKit.
+hpctoolkit:
+	hpcrun -e WALLCLOCK -- ../../testTranslator --edg:no_warnings -w -rose:verbose 0 -rose:skip_unparse_asm_commands -I/home/dquinlan/ROSE/git-dq-edg4x-rc/tests/CompileTests/Cxx_tests -c /home/dquinlan/ROSE/git-dq-edg4x-rc/tests/CompileTests/Cxx_tests/testPerformance.C
+	hpcprof hpctoolkit-lt-testTranslator-measurements/lt-testTranslator-000000-000-0f802c45-7612-0.hpcrun
+	hpcviewer /home/dquinlan/ROSE/ROSE_CompileTree/git-LINUX-64bit-4.2.4-dq-edg4x-rc-debug_mode_off/tests/CompileTests/Cxx_tests/hpctoolkit-lt-testTranslator-database-11205 &
+
 
 check-local:
 if !ROSE_USE_NEW_EDG_INTERFACE
