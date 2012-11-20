@@ -1580,23 +1580,25 @@ VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-l
 # VALGRIND = valgrind $(VALGRIND_OPTIONS)
 VALGRIND =
 
+TEST_TRANSLATOR = ../../testTranslator
+
 # A number of tests require the path to the A++ include directory 
 # and a number of other tests require a path to the source directory.
 # Add the dependence upon the source file to trigger recompilation each time the makefile is run!
-# $(TEST_Objects): ../../testTranslator $(srcdir)/$(@:.o=.C)
-$(TEST_Objects): ../../testTranslator
+# $(TEST_Objects): $(TEST_TRANSLATOR) $(srcdir)/$(@:.o=.C)
+$(TEST_Objects):
 if !ROSE_USE_INSURE
-	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
+	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
 #	$(VALGRIND) ../../testParser $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
 #	$(VALGRIND) ../../testFrontEnd $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
 else
 #	DQ (4/22/2011): For Insure++ we want to get the filename into the names used for the report files.
-#	@if test ! -f "../../.libs/lt-testTranslator"; then echo "Can NOT find ../../.libs/lt-testTranslator"; ../../testTranslator --help > /dev/null; echo "Fixed"; fi
+#	@if test ! -f "../../.libs/lt-testTranslator"; then echo "Can NOT find ../../.libs/lt-testTranslator"; $(TEST_TRANSLATOR) --help > /dev/null; echo "Fixed"; fi
 #	cp ../../.libs/lt-testTranslator testTranslator_$(@:.o=)
 #	./testTranslator_$(@:.o=) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
 #	echo "Removing the just built copy of lt-testTranslator to save space..."
 #	rm -f testTranslator_$(@:.o=)
-	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
+	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
 endif
 
 # DQ (9/18/2011): This is testing the option to process the AST to use the constant folded values (contained in the AST).
@@ -1613,31 +1615,31 @@ testParser:../../testParser
 	$(VALGRIND) ../../testParser $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/test2001_01.C
 
 # This requires a special makefile rule
-test2005_56.o: ../../testTranslator
-	../../testTranslator $(ROSE_FLAGS) -DTEST_STRING_MACRO=\""Thu Apr 14 08:18:33 PDT 2005"\" -c $(srcdir)/test2005_56.C -o test2005_56.o
+test2005_56.o: $(TEST_TRANSLATOR)
+	$(TEST_TRANSLATOR) $(ROSE_FLAGS) -DTEST_STRING_MACRO=\""Thu Apr 14 08:18:33 PDT 2005"\" -c $(srcdir)/test2005_56.C -o test2005_56.o
 
-test2010_01.o: ../../testTranslator
+test2010_01.o: $(TEST_TRANSLATOR)
 	echo "Running boost specific test."
-	../../testTranslator $(ROSE_FLAGS) $(ROSE_INCLUDES) -c $(srcdir)/test2010_01.C -o test2010_01.o
+	$(TEST_TRANSLATOR) $(ROSE_FLAGS) $(ROSE_INCLUDES) -c $(srcdir)/test2010_01.C -o test2010_01.o
 
-test2010_02.o: ../../testTranslator
+test2010_02.o: $(TEST_TRANSLATOR)
 	echo "Running boost specific test."
-	../../testTranslator $(ROSE_FLAGS) -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/test2010_02.C -o test2010_02.o
+	$(TEST_TRANSLATOR) $(ROSE_FLAGS) -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/test2010_02.C -o test2010_02.o
 
-test2010_07.o: ../../testTranslator
+test2010_07.o: $(TEST_TRANSLATOR)
 	echo "Running boost specific test."
-#	../../testTranslator $(ROSE_FLAGS) -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/test2010_07.C -o test2010_07.o
-	../../testTranslator $(ROSE_FLAGS) -I$(top_builddir) -I$(top_srcdir)/src -I$(top_srcdir)/src/util -c $(srcdir)/test2010_07.C -o test2010_07.o
+#	$(TEST_TRANSLATOR) $(ROSE_FLAGS) -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/test2010_07.C -o test2010_07.o
+	$(TEST_TRANSLATOR) $(ROSE_FLAGS) -I$(top_builddir) -I$(top_srcdir)/src -I$(top_srcdir)/src/util -c $(srcdir)/test2010_07.C -o test2010_07.o
 
-test2010_08.o: ../../testTranslator
+test2010_08.o: $(TEST_TRANSLATOR)
 	echo "Running boost specific test."
-	../../testTranslator $(ROSE_FLAGS) -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/test2010_08.C -o test2010_08.o
+	$(TEST_TRANSLATOR) $(ROSE_FLAGS) -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/test2010_08.C -o test2010_08.o
 
-cpp_test2010_07: ../../testTranslator
+cpp_test2010_07: $(TEST_TRANSLATOR)
 	echo "Running boost specific test."
 	g++ -E -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/test2010_07.C
 
-../../testTranslator:
+$(TEST_TRANSLATOR):
 	cd ../..; $(MAKE) testTranslator
 
 ../../testTranslatorFoldedConstants:
@@ -1650,12 +1652,12 @@ cpp_test2010_07: ../../testTranslator
 CURRENT_DIRECTORY = `pwd`
 QMTEST_Objects = ${ALL_TESTCODES:.C=.qmt}
 
-$(QMTEST_Objects): ../../testTranslator
-	qm.sh f rose.RoseTest $(CURRENT_DIRECTORY)/../../testTranslator NULL $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.qmt=.C)
+$(QMTEST_Objects): $(TEST_TRANSLATOR)
+	qm.sh f rose.RoseTest $(CURRENT_DIRECTORY)/$(TEST_TRANSLATOR) NULL $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.qmt=.C)
 
 # This must be placed after the more general rule to work properly!
-test2005_56.qmt: ../../testTranslator
-	qm.sh f rose.RoseTest $(CURRENT_DIRECTORY)/../../testTranslator NULL $(ROSE_FLAGS) -DTEST_STRING_MACRO=\""Thu Apr 14 08:18:33 PDT 2005"\" -I$(srcdir) -c $(srcdir)/$(@:.qmt=.C)
+test2005_56.qmt: $(TEST_TRANSLATOR)
+	qm.sh f rose.RoseTest $(CURRENT_DIRECTORY)/$(TEST_TRANSLATOR) NULL $(ROSE_FLAGS) -DTEST_STRING_MACRO=\""Thu Apr 14 08:18:33 PDT 2005"\" -I$(srcdir) -c $(srcdir)/$(@:.qmt=.C)
 
 # Include makefile rules specific to QMTest
 include $(top_srcdir)/config/QMTest_makefile.inc
@@ -1678,29 +1680,29 @@ EXTRA_DIST = $(EXAMPLE_TESTCODES_REQUIRED_TO_PASS) $(TESTCODE_CURRENTLY_FAILING)
 # This was a bug specific to the normalization of source file names to absolute paths
 # DQ (12/11/2009): At the moment it is an failing test because "thisIsAnError" will be 
 # interpreted to be a file.
-testUsingBadCommandline: ../../testTranslator
+testUsingBadCommandline: $(TEST_TRANSLATOR)
 	echo "class A { int x; float y;}; int main() { int x=0; return x; }" > roseTestProgram.C; \
-	../../testTranslator -DthisIsOK -D thisIsAnError -rose:verbose 0 roseTestProgram.C
+	$(TEST_TRANSLATOR) -DthisIsOK -D thisIsAnError -rose:verbose 0 roseTestProgram.C
 
 # This was a bug specific to the normalization of source file names to absolute paths
-testBuildUsingNoPath: ../../testTranslator
+testBuildUsingNoPath: $(TEST_TRANSLATOR)
 	echo "class A { int x; float y;}; int main() { int x=0; return x; }" > roseTestProgram.C; \
-	../../testTranslator -rose:verbose 0 roseTestProgram.C
+	$(TEST_TRANSLATOR) -rose:verbose 0 roseTestProgram.C
 
 # This was a bug specific to the normalization of source file names to absolute paths
-testBuildUsingRelativePath: ../../testTranslator
+testBuildUsingRelativePath: $(TEST_TRANSLATOR)
 	echo "class A { int x; float y;}; int main() { int x=0; return x; }" > roseTestProgram.C; \
-	../../testTranslator -rose:verbose 0 ../Cxx_tests/roseTestProgram.C
+	$(TEST_TRANSLATOR) -rose:verbose 0 ../Cxx_tests/roseTestProgram.C
 
 # This was always worked but is the alternative to the normalization of source file names to absolute paths
-testBuildUsingAbsolutePath: ../../testTranslator
+testBuildUsingAbsolutePath: $(TEST_TRANSLATOR)
 	echo "class A { int x; float y;}; int main() { int x=0; return x; }" > roseTestProgram.C; \
-	../../testTranslator -rose:verbose 0 `pwd`/roseTestProgram.C
+	$(TEST_TRANSLATOR) -rose:verbose 0 `pwd`/roseTestProgram.C
 
 # DQ (10/23/2010): Added MPI tests that I can at least run locally to debug when Hudson MPI tests fail.
 MPI_LOCATION = /home/dquinlan/ROSE/ROSE_TESTS/MPI_header_tests/MPI_header_tests_64bit
 test_MPI_LAM:
-	../../testTranslator -rose:verbose 0 -I$(MPI_LOCATION)/LAM_MPI/include -c $(MPI_LOCATION)/tests/input.C
+	$(TEST_TRANSLATOR) -rose:verbose 0 -I$(MPI_LOCATION)/LAM_MPI/include -c $(MPI_LOCATION)/tests/input.C
 
 test_multiple_files: $(srcdir)/test2012_246a.C $(srcdir)/test2012_246b.C
 	../../testTranslator -rose:verbose 0 $(srcdir)/test2012_246a.C $(srcdir)/test2012_246b.C 
@@ -1748,3 +1750,82 @@ clean-local:
 	rm -f *.unfoldedConstants-o
 	rm -rf QMTest
 	rm -f *.int.c
+
+#------------------------------------------------------------------------------
+#                           Performance Timing Tests
+#------------------------------------------------------------------------------
+## Purpose
+#
+#  Enforce a time limit constraint on testcode compilation.
+#
+### Make Targets
+#
+#  Note: A testcode's object files are removed before running the individual
+#  steps in these make targets.
+#
+#### Default
+#
+#  $ make <testcode>.timed
+#
+#    Compiles <testcode> with a $TIMEOUT limit
+#
+#    E.g.  $ make test2005_35.timed
+#
+#  $ make check-performance-timing
+#
+#    Compiles all testcodes with a $TIMEOUT limit
+#
+#### Threshold
+#
+#  $ make <testcode>.timed_with_threshold
+#
+#    Compiles <testcode> with g++ and then uses the g++ compile time
+#    as a $TIMEOUT threshold to compile <testcode> with ROSE.
+#
+#    E.g.  $ make test2005_35.timed_with_threshold
+#
+#  $ make check-performance-timing-with-threshold
+#
+#    Compiles all testcodes with a $TIMEOUT limit calculated from
+#    the g++ compile time threshold.
+#
+### Environment Variables
+#
+#  TIMEOUT              Maximum time limit for the compilation of a <testcode>
+#  TIMEOUT_TOLERANCE    $gnu_time * $TIMEOUT_TOLERANCE (threshold tests only)
+#------------------------------------------------------------------------------
+TIMEOUT            ?= 60  # Default timeout value
+TIMEOUT_TOLERANCE  ?= 20  # Default timeout tolerance value for threshold
+                          # tests = $gnu_time * $TIMEOUT_TOLERANCE
+
+check-performance-timing:
+	@$(MAKE) $(PASSING_TEST_Objects:.o=.timed)
+
+check-performance-timing-with-threshold:
+	@$(MAKE) $(PASSING_TEST_Objects:.o=.timed_with_threshold)
+
+$(PASSING_TEST_Objects:.o=.timed):
+	rm -f $(@:.timed=.o) &&                                                        \
+	$(top_srcdir)/scripts/timeout.sh $(TIMEOUT) $(MAKE) $(@:.timed=.o) ||          \
+			(                                                                          \
+				test $$? -eq 124 &&                                                      \
+				echo "[ERROR] '$@' compilation timed out after '$(TIMEOUT)' seconds" &&  \
+				exit 1                                                                   \
+			)
+
+# 1. Time and Compile testcode with g++
+# 2. Compile with ROSE, using TIMEOUT relative to time results from g++
+#
+# Uses $(TESTCODES_REQUIRED_TO_PASS)
+#
+$(PASSING_TEST_Objects:.o=.timed_with_threshold):
+	rm -f $(@:.timed_with_threshold=.o) &&                                                   \
+	SECONDS=0 &&                                                                             \
+			$(MAKE) TEST_TRANSLATOR=g++ ROSE_FLAGS=  $(@:.timed_with_threshold=.o) &&            \
+	gnu_time="$$((($$SECONDS + 1)))" &&                                                      \
+	echo "[INFO] '$@' compiled with GNU in '$$gnu_time' seconds" &&                          \
+	rm -f $(@:.timed_with_threshold=.o) &&                                                   \
+	TIMEOUT="$$((($$gnu_time * $(TIMEOUT_TOLERANCE))))" &&                                   \
+	echo "[INFO] '$@' performance test is set to timeout after '$$TIMEOUT' seconds" &&       \
+	$(MAKE) TIMEOUT="$$TIMEOUT" $(@:.timed_with_threshold=.timed)
+
