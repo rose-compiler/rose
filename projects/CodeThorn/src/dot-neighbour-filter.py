@@ -34,7 +34,7 @@ if __name__ == '__main__':
     cmdline.add_argument('-i','--input',    metavar='<in.dot>',      type=file, help='input graph')
     cmdline.add_argument('-o','--output',   metavar='<out.dot>',                help='output graph')
     cmdline.add_argument('-c','--center',   metavar='<label>', nargs='+',       help='center node')
-    cmdline.add_argument('-n','--distance', metavar='<N>', default=3, type=int, help='distance N')
+    cmdline.add_argument('-d','--distance', metavar='<N>', default=3, type=int, help='distance N')
     cmdline.add_argument('-v','--verbose', action='store_true', help='verbose mode')
 
     args = cmdline.parse_args()
