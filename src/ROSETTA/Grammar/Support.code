@@ -6096,7 +6096,7 @@ hash_Name::operator()(const SgName & name) const
    }
 
 // DQ (2/19/2007): Added mechanism to turn off expensive error checking!
-#define SYMBOL_TABLE_ERROR_CHECKING 1
+#define SYMBOL_TABLE_ERROR_CHECKING 0
 
 // DQ (7/24/2005): Make this a constant in the function if it is not used elsewhere!
 // #define SYMTBL_INIT_SZ 16
@@ -6452,7 +6452,8 @@ SgSymbolTable::insert ( const SgName & nm , SgSymbol *sp )
   // ROSE_ASSERT(exists(nm) == false);
 #endif
 
-  // #if SYMBOL_TABLE_ERROR_CHECKING
+  // DQ (11/20/2012): Make error checking dependent upon SYMBOL_TABLE_ERROR_CHECKING macro.
+#if SYMBOL_TABLE_ERROR_CHECKING
   // SgFunctionTypeSymbol does not have a valid get_symbol_basis(), so skip this case!
      if (isSgFunctionTypeSymbol(sp) == NULL)
         {
@@ -6471,6 +6472,7 @@ SgSymbolTable::insert ( const SgName & nm , SgSymbol *sp )
 
   // DQ (3/10/2007): This is a simpler assertion equivalent to the one above but without generating any error output 
      ROSE_ASSERT(isSgFunctionTypeSymbol(sp) != NULL || sp->get_symbol_basis() != NULL);
+#endif
 
 #if 0
   // DQ (12/3/2011): Adding debugging support to output p_symbolSet.
@@ -6509,9 +6511,10 @@ SgSymbolTable::insert ( const SgName & nm , SgSymbol *sp )
         }
      ROSE_ASSERT(p_symbolSet.find(sp) == p_symbolSet.end());
 
-#if 1
+  // DQ (11/20/2012): Make error checking dependent upon SYMBOL_TABLE_ERROR_CHECKING macro.
+  // #if 1
   // DQ (12/3/2011): Turning on symbol table checking.
-  // #if SYMBOL_TABLE_ERROR_CHECKING
+#if SYMBOL_TABLE_ERROR_CHECKING
   // DQ (2/19/2007): These is no need to do both of these since exists(sp) is more complete test!
   // DQ (2/25/2007): except that it is helpful to know which one fails.
      assert(exists(nm,sp) == false);
@@ -6585,16 +6588,19 @@ SgSymbolTable::insert ( const SgName & nm , SgSymbol *sp )
   // slow) we implement a set of symbols to permit fast tests for existence.
      p_symbolSet.insert(sp);
 
-#if 1
+  // DQ (11/20/2012): Make error checking dependent upon SYMBOL_TABLE_ERROR_CHECKING macro.
+  // #if 1
   // DQ (12/3/2011): Turning on symbol table checking.
-  // #if SYMBOL_TABLE_ERROR_CHECKING
+#if SYMBOL_TABLE_ERROR_CHECKING
   // Error checking
      assert(exists(nm)    == true);
      assert(exists(nm,sp) == true);
      assert(exists(sp)    == true);
 #endif
 
-#if 1
+  // DQ (11/20/2012): Make error checking dependent upon SYMBOL_TABLE_ERROR_CHECKING macro.
+  // #if 1
+#if SYMBOL_TABLE_ERROR_CHECKING
    // Liao 11/12/2012: Fortran numeric label symbol is different: a label "05" is stored as a numeric value of 5 so naive comparison will fail.
    // we have to handle this case specially.
    SgLabelSymbol * ls = isSgLabelSymbol(sp); 
@@ -6893,8 +6899,9 @@ SgSymbolTable::remove( const SgSymbol* symbol )
 
      assert (p_table != NULL);
 
-#if 1
-  // #if SYMBOL_TABLE_ERROR_CHECKING
+  // DQ (11/20/2012): Make error checking dependent upon SYMBOL_TABLE_ERROR_CHECKING macro.
+  // #if 1
+#if SYMBOL_TABLE_ERROR_CHECKING
   // This is an expensive linear time search of the symbol table!
      assert(exists(symbol) == true);
 #endif
