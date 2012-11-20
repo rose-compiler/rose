@@ -124,6 +124,8 @@ string Visualizer::transitionGraphDotHtmlNode(Label lab) {
 	if(labeler->isStdOutLabel((*j)->label())) bgcolor="orange";
 	if(labeler->isStdErrLabel((*j)->label())) bgcolor="orangered";
 	if(SgNodeHelper::Pattern::matchAssertExpr(labeler->getNode((*j)->label()))) {bgcolor="black";textcolor="white";}
+	// check for start state
+	if(transitionGraph->getStartLabel()==(*j)->label()) {bgcolor="white";} 
 
 	// should not be necessary!
 #if 0

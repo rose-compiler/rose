@@ -85,10 +85,13 @@ EState Analyzer::createEState(Label label, PState pstate, ConstraintSet cset, In
 }
 
 bool Analyzer::isLTLRelevantLabel(Label label) {
-  bool t=getLabeler()->isStdInLabel(label)
-	|| getLabeler()->isStdOutLabel(label)
-	|| getLabeler()->isStdErrLabel(label)
-	|| isTerminationRelevantLabel(label)
+  bool t;
+  t=(getLabeler()->isStdInLabel(label)
+	 || getLabeler()->isStdOutLabel(label)
+	 || getLabeler()->isStdErrLabel(label)
+	 || isTerminationRelevantLabel(label)
+	 )
+	&& (getTransitionGraph()->getStartLabel()!=label) // for simplicity, we keep the start state
 	;
   //cout << "INFO: L"<<label<<": "<<SgNodeHelper::nodeToString(getLabeler()->getNode(label))<< "LTL: "<<t<<endl;
   return t;
@@ -100,7 +103,7 @@ set<const EState*> Analyzer::nonLTLRelevantEStates() {
   for(set<const EState*>::iterator i=allestates.begin();i!=allestates.end();++i) {
 	if(!isLTLRelevantLabel((*i)->label())) {
 	  res.insert(*i);
-	  if(!estateSet.estateId(*i)==NO_ESTATE) {
+	  if(estateSet.estateId(*i)==NO_ESTATE) {
 		cerr<< "WARNING: no estate :estateId="<<estateSet.estateId(*i)<<endl;
 	  }
 	}
@@ -1042,7 +1045,7 @@ bool Analyzer::checkTransitionGraph() {
   ok=ok && getTransitionGraph()->checkConsistency();
   return ok;
 }
-bool Analyzer::consistentEStateSet() {
+bool Analyzer::checkEStateSet() {
   for(EStateSet::iterator i=estateSet.begin();i!=estateSet.end();++i) {
 	if(estateSet.estateId(*i)==NO_ESTATE || (*i).label()==Labeler::NO_LABEL) {
 	  cerr<< "ERROR: estateSet inconsistent. "<<endl;
@@ -1077,53 +1080,41 @@ bool Analyzer::isInWorkList(const EState* estate) {
 void Analyzer::semanticFoldingOfTransitionGraph() {
   //#pragma omp critical // in conflict with TransitionGraph.add ...
   {
-  cout << "STATUS: (Experimental) semantic folding of transition graph ..."<<endl;
-  assert(consistentEStateSet());
+	//cout << "STATUS: (Experimental) semantic folding of transition graph ..."<<endl;
+	//assert(checkEStateSet());
   set<const EState*> xestates0=nonLTLRelevantEStates();
-  cout << "STATUS: P1"<<endl;
   // filter for worklist
   set<const EState*> xestates;
   for(set<const EState*>::iterator i=xestates0.begin();i!=xestates0.end();++i) {
 	assert(*i);
-	if(!isInWorkList(*i))
+	if(!isInWorkList(*i) && !(getTransitionGraph()->getStartLabel()==(*i)->label()))
 	  xestates.insert(*i);
   }
   if(xestates0.size()!=xestates.size()) {
-	cout << "INFO: Successfully avoided reducing node(s) which are in the work list."<<endl;
+	//cout << "INFO: Successfully avoided reducing node(s) which are in the work list."<<endl;
   }
-  cout << "Size of transition graph before folding: "<<getTransitionGraph()->size()<<endl;
-  cout << "Number of EStates to be eliminated in transition graph: "<<xestates.size()<<endl;
-  checkTransitionGraph();
-  getTransitionGraph()->reduceEStates2(xestates);
-  cout << "Size of transition graph after folding : "<<getTransitionGraph()->size()<<endl;
-  checkTransitionGraph();
 
-  list<const EState*> toDelete;
-  // we need to determine first the elements to be deleted in a separate data structure because
-  // we cannot delete elements in a HSet while iterating on its elements.
-  for(EStateSet::iterator i=estateSet.begin();i!=estateSet.end();++i) {
-	Label lab=(*i).label();
-	assert(lab!=Labeler::NO_LABEL);
-	if(!isLTLRelevantLabel(lab)) {
-	  toDelete.push_back(&(*i));
+  int tg_size_before_folding=getTransitionGraph()->size();
+  getTransitionGraph()->reduceEStates2(xestates);
+  int tg_size_after_folding=getTransitionGraph()->size();
+
+#if 1
+  for(set<const EState*>::iterator i=xestates.begin();i!=xestates.end();++i) {
+	bool res=estateSet.erase(**i);
+	if(res==false) {
+	  cerr<< "Error: Semantic folding of transition graph: no estate to delete."<<endl;
+	  exit(1);
 	}
   }
-  #if 0
-  cout << "STATUS: folding estates: from " <<estateSet.size()<< " to "<< estateSet.size()-toDelete.size() << " ... "<<flush;
-  for(list<const EState*>::iterator i=toDelete.begin();i!=toDelete.end();++i) {
-	//cout << "reducing estate" << (*i)->toString()<<endl;
-	//cout << "Reducing label "<<(*i)->label()<<endl;
-	bool res=estateSet.remove(*i);
-	assert(res==true);
-	consistentEStateSet();
-	checkTransitionGraph();
-  }
-  #else
-  cout << "STATUS: NOT folding estates: from " <<estateSet.size()<< " to "<< estateSet.size()-toDelete.size() << " ... "<<flush;
-  #endif
-   cout << "done."<<endl;
-   assert(consistentEStateSet());
- }
+  //assert(checkEStateSet());
+  //assert(checkTransitionGraph());
+#else
+  cout << "STATUS: NOT folding estates: from " <<estateSet.size()<< " to "<< estateSet.size()-xestates.size() << " ... "<<flush;
+#endif
+  if(tg_size_before_folding!=tg_size_after_folding)
+	cout << "STATUS: Folded transition graph from "<<tg_size_before_folding<<" to "<<tg_size_after_folding<<" transitions."<<endl;
+
+  } // end of omp pragma
 }
 
 void Analyzer::runSolver2() {
@@ -1244,4 +1235,5 @@ void Analyzer::runSolver2() {
   }
   printStatusMessage(true);
   cout << "analysis finished (worklist is empty)."<<endl;
+  assert(checkTransitionGraph());
 }

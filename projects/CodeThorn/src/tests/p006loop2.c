@@ -6,6 +6,7 @@ x -> 5 when x!=3 and x!=7
  
  */
 #include <stdio.h>
+#include <assert.h>
 
 int x=1;
 int a=1;
