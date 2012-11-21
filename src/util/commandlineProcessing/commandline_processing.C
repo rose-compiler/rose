@@ -271,6 +271,7 @@ CommandlineProcessing::removeAllFileNamesExcept ( vector<string> & argv, Rose_ST
      printf ("In removeAllFileNamesExcept (at top): filenameList = \n%s \n",StringUtility::listToString(filenameList).c_str());
 #endif
 
+#if 0 // Liao 11/15/2012. this code is confusing. 
      for (unsigned int i=0; i < argv.size(); i++)
         {
           string argString = argv[i];
@@ -308,6 +309,39 @@ CommandlineProcessing::removeAllFileNamesExcept ( vector<string> & argv, Rose_ST
                filenameIterator++;
              }
         }
+#endif
+    vector<string>::iterator argv_iter = argv.begin();
+    while (argv_iter != argv.end())
+    {
+      string argString = *(argv_iter);
+      bool shouldDelete = false; 
+
+      Rose_STL_Container<std::string>::iterator filenameIterator = filenameList.begin();
+      while (filenameIterator != filenameList.end())
+      {
+        // DQ (1/17/2009): This is a match with filenameIterator = a.out and argString = a.out.new!
+        // I think we only want to do anything about exact matches.
+        // if ( argString.substr(0,filenameIterator->size()) == *filenameIterator )
+        if ( argString == *filenameIterator )
+        {
+          if (*filenameIterator != exceptFilename)
+          {
+            shouldDelete = true;
+            break;
+          }
+        }
+        filenameIterator++;
+      } // end while filename iterator
+
+      if (shouldDelete)
+      {
+        //vector::erase() return a random access iterator pointing to the new location of the element that followed the last element erased by the function call
+        //Essentially, it returns an iterator points to next element. 
+        argv_iter = argv.erase (argv_iter);
+      }
+      else
+        argv_iter ++;
+    } // end while argv_iter
 
 #if 0
      printf ("Leaving removeAllFileNamesExcept (at bottom): argv         = \n%s \n",StringUtility::listToString(argv).c_str());
