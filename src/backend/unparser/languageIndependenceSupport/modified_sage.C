@@ -1467,7 +1467,9 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
   // if (decl_stmt->get_declarationModifier().get_storageModifier().isExtern() && !decl_stmt->get_linkage())
      if (decl_stmt->get_declarationModifier().get_storageModifier().isExtern() && decl_stmt->get_linkage().empty() == true)
         {
-       // printf ("In Unparse_MOD_SAGE::printSpecifier2(): Output the extern keyword \n");
+#if 0
+          printf ("In Unparse_MOD_SAGE::printSpecifier2(): Output the extern keyword \n");
+#endif
           curprint( "extern ");
         }
 

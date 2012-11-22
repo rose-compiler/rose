@@ -1398,20 +1398,11 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
    {
   // CH (4/7/2010): This issue is because of using a MSVC keyword 'cdecl' as a variable name
 
-//#ifndef _MSCx_VER
-//#pragma message ("WARNING: Commented out body of unparseMFuncRef()")
-//         printf ("Error: Commented out body of unparseMFuncRef() \n");
-//         ROSE_ASSERT(false);
-//#else
-
-  // SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(expr);
-  // T* mfunc_ref = isSgMemberFunctionRefExp(expr);
      T* mfunc_ref = dynamic_cast<T*>(expr);
      ROSE_ASSERT(mfunc_ref != NULL);
 
   // info.display("Inside of unparseMFuncRef");
 
-  // SgMemberFunctionDeclaration* mfd  = mfunc_ref->get_symbol_i()->get_declaration();
      SgMemberFunctionDeclaration* mfd  = mfunc_ref->get_symbol()->get_declaration();
      ROSE_ASSERT (mfd != NULL);
 
@@ -1521,12 +1512,26 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
      printf ("mfd->get_specialFunctionModifier().isConversion() = %s \n",(mfd->get_specialFunctionModifier().isConversion() == true) ? "true" : "false");
 #endif
 
+  // DQ (11/18/2012): Process the function name to remove any cases of ">>" from template names.
+     string targetString      = ">>";
+     string replacementString = "> >";
+     size_t found = func_name.find(targetString);
+     while (found != string::npos)
+        {
+          func_name.replace( found, targetString.length(), replacementString );
+          found = func_name.find( targetString );
+        }
+
+#if 0
+     printf ("In unparseMFuncRefSupport(): func_name after processing to remove >> references = %s \n",func_name.c_str());
+#endif
+
   // DQ (11/24/2004): unparse conversion operators ("operator X&();") as "result.operator X&()"
   // instead of "(X&) result" (which appears as a cast instead of a function call.
   // check that this an operator overloading function and that colons were not printed
   // if (!unp->opt.get_overload_opt() && !strncmp(func_name, "operator", 8) && !print_colons)
-     if (!unp->opt.get_overload_opt() &&
-          func_name.size() >= 8 && func_name.substr(0, 8) == "operator" && 
+     if (!unp->opt.get_overload_opt() && 
+         func_name.size() >= 8 && func_name.substr(0, 8) == "operator" && 
          !print_colons && 
          !mfd->get_specialFunctionModifier().isConversion())
         {
@@ -1566,8 +1571,8 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
                SgExpression* lhs = dotExpression->get_lhs_operand();
                ROSE_ASSERT(lhs != NULL);
 #if 0
-               printf ("lhs = %p = %s \n",lhs,lhs->sage_class_name());
-               curprint ( "\n /* lhs = " + StringUtility::numberToString(lhs) + " = " + lhs->sage_class_name() + " */ \n");
+               printf ("lhs = %p = %s \n",lhs,lhs->class_name().c_str());
+               curprint ( "\n /* lhs = " + StringUtility::numberToString(lhs) + " = " + lhs->class_name() + " */ \n");
 #endif
              }
         }
@@ -1658,9 +1663,8 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
      printf ("Leaving unparseMFuncRefSupport \n");
      curprint ("\n/* leaving unparseMFuncRefSupport */ \n");
 #endif
-
-//#endif
    }
+
 
 void
 Unparse_ExprStmt::unparseStringVal(SgExpression* expr, SgUnparse_Info& info)
@@ -3263,7 +3267,6 @@ Unparse_ExprStmt::unparseNewOp(SgExpression* expr, SgUnparse_Info& info)
 
   // printf ("In Unparse_ExprStmt::unparseNewOp: new_op->get_type()->class_name() = %s \n",new_op->get_type()->class_name().c_str());
 
-#if 1
   // DQ (3/26/2012): I think this is required because the type might be the only public way refer to the 
   // class (via a public typedef to a private class, so we can't use the constructor; except for it's args)
 
@@ -3272,7 +3275,6 @@ Unparse_ExprStmt::unparseNewOp(SgExpression* expr, SgUnparse_Info& info)
   // get_type() has been modified to return a pointer to new_op->get_specified_type().
   // unp->u_type->unparseType(new_op->get_type(), newinfo);
      unp->u_type->unparseType(new_op->get_specified_type(), newinfo);
-#endif
 
   // printf ("DONE: new_op->get_type()->class_name() = %s \n",new_op->get_type()->class_name().c_str());
 
@@ -3308,6 +3310,8 @@ Unparse_ExprStmt::unparseNewOp(SgExpression* expr, SgUnparse_Info& info)
      curprint ("\n /* Leaving Unparse_ExprStmt::unparseNewOp */ \n");
      printf ("Leaving Unparse_ExprStmt::unparseNewOp \n");
 #endif
+
+// #endif for CXX_IS_ROSE_CODE_GENERATION
 #endif
    }
 
@@ -3729,29 +3733,15 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
        // DQ (6/1/2011): It can't be this simple since con_init->get_declaration() 
        // can be NULL where in a struct there is no constructor defined.
 #if 0
-          if (con_init->get_declaration() != NULL)
-             {
-               nm = con_init->get_declaration()->get_qualified_name();
-             }
-#else
-#if 0
           printf ("con_init->get_declaration() = %s \n",con_init->get_declaration() ? "true" : "false");
        // curprint ( "\n /* con_init->get_declaration() = " + string(con_init->get_declaration() ? "valid" : "null") + " pointer */ \n");
 #endif
           if (con_init->get_declaration() != NULL)
              {
-#if 0
-            // printf ("con_init->get_need_qualifier() = %s \n",con_init->get_need_qualifier() ? "true" : "false");
-               if (con_init->get_need_qualifier())
-                    nm = con_init->get_declaration()->get_qualified_name();
-                 else
-                    nm = con_init->get_declaration()->get_name();
-#else
             // DQ (6/1/2011): Newest refactored support for name qualification.
             // nm = con_init->get_declaration()->get_qualified_name();
                SgName nameQualifier = con_init->get_qualified_name_prefix();
                nm = nameQualifier + con_init->get_declaration()->get_name();
-#endif
              }
             else
              {
@@ -3760,13 +3750,6 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
 #endif
                if (con_init->get_class_decl() != NULL)
                   {
-#if 0
-                 // printf ("con_init->get_need_qualifier() = %s \n",con_init->get_need_qualifier() ? "true" : "false");
-                    if (con_init->get_need_qualifier())
-                         nm = con_init->get_class_decl()->get_qualified_name();
-                      else
-                         nm = con_init->get_class_decl()->get_name();
-#else
                  // DQ (6/1/2011): Newest refactored support for name qualification.
                  // nm = con_init->get_class_decl()->get_qualified_name();
 
@@ -3775,9 +3758,7 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
                     printf ("In Unparse_ExprStmt::unparseConInit(): con_init->get_declaration() == NULL -- nameQualifier = %s \n",nameQualifier.str());
 #endif
                     nm = nameQualifier + con_init->get_class_decl()->get_name();
-#endif
                   }
-#if 1
               // DQ (8/4/2012): We need this case to handle tests such as test2012_162.C.
               // DQ (3/29/2012): For EDG 4.x it appear we need a bit more since both con_init->get_declaration() and con_init->get_class_decl() can be NULL (see test2012_52.C).
                  else
@@ -3790,9 +3771,7 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
 
                  // ROSE_ASSERT ( nm.is_null() == false );
                   }
-#endif
              }
-#endif
 
 #if 0
           printf ("In Unparse_ExprStmt::unparseConInit(): nm = %s \n",nm.str());
@@ -3865,7 +3844,9 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
        // We need this to avoid: doubleArray *arrayPtr1 = (new doubleArray 42); (where it should have been "(42)")
        // if (con_init->get_is_explicit_cast() == true)
        //      curprint ( "(";
-
+#if 0
+          curprint ( "/* output args */ ");
+#endif
           unparseExpression(con_init->get_args(), newinfo);
 
        // DQ (3/17/2005): Remove the parenthesis if we don't output the constructor name

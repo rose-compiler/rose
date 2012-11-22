@@ -120,6 +120,10 @@ SageBuilder::SourcePositionClassification SageBuilder::SourcePositionClassificat
 SageBuilder::SourcePositionClassification
 SageBuilder::getSourcePositionClassificationMode()
    {
+#if 0
+     printf ("In getSourcePositionClassificationMode(): returning mode = %s \n",display(SourcePositionClassificationMode).c_str());
+#endif
+
      return SourcePositionClassificationMode;
    }
 
@@ -128,6 +132,33 @@ void
 SageBuilder::setSourcePositionClassificationMode(SageBuilder::SourcePositionClassification X)
    {
      SourcePositionClassificationMode = X;
+   }
+
+string
+SageBuilder::display(SourcePositionClassification & scp)
+   {
+  // DQ (11/19/2012): This function is build to support debugging the value of the staticlly defined mode.
+
+     string s;
+     switch(scp)
+        {
+          case e_sourcePositionError:                s = "e_sourcePositionError";                break; 
+          case e_sourcePositionDefault:              s = "e_sourcePositionDefault";              break;
+          case e_sourcePositionTransformation:       s = "e_sourcePositionTransformation";       break;
+          case e_sourcePositionCompilerGenerated:    s = "e_sourcePositionCompilerGenerated";    break;
+          case e_sourcePositionNullPointers:         s = "e_sourcePositionNullPointers";         break;
+          case e_sourcePositionFrontendConstruction: s = "e_sourcePositionFrontendConstruction"; break;
+          case e_sourcePosition_last:                s = "e_sourcePosition_last";                break;
+
+          default:
+             {
+               printf ("Error: default reached in SageBuilder::display(SourcePositionClassification & scp): scp = %d \n",scp);
+               ROSE_ASSERT(false);
+             }
+           
+        }
+
+     return s;
    }
 
 
@@ -4887,18 +4918,22 @@ SgCastExp * SageBuilder::buildCastExp(SgExpression *  operand_i,
   return result;
 }
 
-SgNewExp * SageBuilder::buildNewExp(SgType* type, 
-                                    SgExprListExp* exprListExp, 
-                                    SgConstructorInitializer* constInit, 
-                                    SgExpression* expr, 
-                                    short int val, 
-                                    SgFunctionDeclaration* funcDecl)
-{
-  SgNewExp* result = new SgNewExp(type, exprListExp, constInit, expr, val, funcDecl);
-  ROSE_ASSERT(result);
-  setOneSourcePositionForTransformation(result);
-  return result;
-}
+SgNewExp*
+SageBuilder::buildNewExp ( SgType* specified_type, 
+                           SgExprListExp* placement_args, 
+                           SgConstructorInitializer* constructor_args, 
+                           SgExpression* builtin_args, 
+                        // FIXME: Change this from "short int" to "bool".
+                           short int need_global_specifier, 
+                           SgFunctionDeclaration* newOperatorDeclaration)
+   {
+  // DQ (11/18/2012): Modified parameter names to make this function more clear.
+     SgNewExp* result = new SgNewExp(specified_type, placement_args, constructor_args, builtin_args, need_global_specifier, newOperatorDeclaration);
+     ROSE_ASSERT(result);
+
+     setOneSourcePositionForTransformation(result);
+     return result;
+   }
 
 SgDeleteExp* SageBuilder::buildDeleteExp(SgExpression* variable,
                                          short is_array,
