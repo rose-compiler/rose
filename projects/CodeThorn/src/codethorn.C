@@ -555,9 +555,8 @@ int main( int argc, char * argv[] ) {
   }
 
   if(boolOptions["post-semantic-fold"]) {
-	cout << "Performing post semantic folding (this may take some time) ... "<<flush;
+	cout << "Performing post semantic folding (this may take some time):"<<endl;
 	analyzer.semanticFoldingOfTransitionGraph();
-	cout << "done."<<endl;
   }
   double analysisRunTime=timer.getElapsedTimeInMilliSec();
 
@@ -569,7 +568,7 @@ int main( int argc, char * argv[] ) {
 
   cout << "=============================================================="<<endl;
   // TODO: reachability in presence of semantic folding
-  if(!boolOptions["semantic-fold"]) {
+  if(!boolOptions["semantic-fold"] && !boolOptions["post-semantic-fold"]) {
 	printAsserts(analyzer,sageProject);
   }
   if (args.count("csv-assert")) {
@@ -593,8 +592,8 @@ int main( int argc, char * argv[] ) {
   }
   double ltlRunTime=timer.getElapsedTimeInMilliSec();
   // TODO: reachability in presence of semantic folding
-  if(boolOptions["semantic-fold"]) {
-	  cout << "NOTE: no reachability results with semantic folding (TODO)."<<endl;
+  if(boolOptions["semantic-fold"] || boolOptions["post-semantic-fold"]) {
+	  cout << "NOTE: no reachability results with semantic folding (not implemented yet)."<<endl;
 	} else {
 	  printAssertStatistics(analyzer,sageProject);
 	}
