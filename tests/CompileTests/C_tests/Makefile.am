@@ -109,6 +109,7 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2012_01.c \
      test2012_02.c \
      test2012_03.c \
+     test2012_04.c \
      test2012_05.c \
      test2012_06.c \
      test2012_07.c \
@@ -261,13 +262,14 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2012_165.c \
      test2012_166.c \
      test2012_167.c \
+     test2012_168.c \
      math.c \
      complex_01.c \
      constants.c
 
 
 # DQ (9/28/2012): Failing tests.
-# test2012_04.c (infinite recursion!)
+# test2012_04.c (infinite recursion!) (DQ: 11/21/2012: NOW FIXED)
 # test2012_30.c (break statement not unparsed in loop)
 # test2012_42.c (more complex (original) case of test2012_43.c)
 # test2012_43.c (macro for compile-time assertions)
