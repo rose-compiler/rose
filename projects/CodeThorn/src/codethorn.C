@@ -360,7 +360,8 @@ int main( int argc, char * argv[] ) {
     ("precision-exact-constraints",po::value< string >(),
      "(experimental) use precise constraint extraction [=yes|no]")
     ("tg-ltl-reduced",po::value< string >(),"(experimental) compute LTL-reduced transition graph based on a subset of computed estates [=yes|no]")
-    ("semantic-fold",po::value< string >(),"(experimental) computes semantically folded transition graph [=yes|no]")
+    ("semantic-fold",po::value< string >(),"compute semantically folded transition graph [=yes|no]")
+    ("post-semantic-fold",po::value< string >(),"compute semantically folded transition graph only after the complete transition graph has been computed. [=yes|no]")
     ("viz",po::value< string >(),"generate visualizations (dot) outputs [=yes|no]")
     ("update-input-var",po::value< string >(),"For testing purposes only. Default is Yes. [=yes|no]")
     ("run-rose-tests",po::value< string >(),"Run ROSE AST tests. [=yes|no]")
@@ -373,6 +374,7 @@ int main( int argc, char * argv[] ) {
 	("ltl-collapsed-graph",po::value< string >(),"LTL visualization: show collapsed graph in dot output.")
 	("input-var-values",po::value< string >(),"specify a set of input values (e.g. \"{1,2,3}\")")
     ("input-var-values-as-constraints",po::value<string >(),"represent input var values as constraints (otherwise as constants in PState)")
+    ("arith-top",po::value< string >(),"Arithmetic operations +,-,*,/,% always evaluate to top [=yes|no]")
 	("print-all-options",po::value< string >(),"print all yes/no command line options.")
     ;
 
@@ -410,6 +412,7 @@ int main( int argc, char * argv[] ) {
   boolOptions.registerOption("precision-exact-constraints",false);
   boolOptions.registerOption("tg-ltl-reduced",false);
   boolOptions.registerOption("semantic-fold",false);
+  boolOptions.registerOption("post-semantic-fold",false);
 
   boolOptions.registerOption("viz",false);
   boolOptions.registerOption("update-input-var",true);
@@ -422,6 +425,9 @@ int main( int argc, char * argv[] ) {
   boolOptions.registerOption("ltl-show-node-detail",true);
   boolOptions.registerOption("ltl-collapsed-graph",false);
   boolOptions.registerOption("input-var-values-as-constraints",false);
+
+  boolOptions.registerOption("arith-top",false);
+  boolOptions.registerOption("relop-constraints",false); // not accessible on command line yet
 
   boolOptions.processOptions();
 
@@ -546,6 +552,12 @@ int main( int argc, char * argv[] ) {
 	analyzer.runSolver2();
   } else {
 	analyzer.runSolver1();
+  }
+
+  if(boolOptions["post-semantic-fold"]) {
+	cout << "Performing post semantic folding (this may take some time) ... "<<flush;
+	analyzer.semanticFoldingOfTransitionGraph();
+	cout << "done."<<endl;
   }
   double analysisRunTime=timer.getElapsedTimeInMilliSec();
 
