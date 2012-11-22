@@ -163,6 +163,9 @@ void postProcessingSupport (SgNode* node)
           fixupEdgBugDuplicateVariablesInAST();
 
        // DQ (5/1/2012): After EDG/ROSE translation, there should be no IR nodes marked as transformations.
+       // Liao 11/21/2012. AstPostProcessing() is called within both Frontend and Midend
+       // so we have to detect the mode first before asserting no transformation generated file info objects
+       if (SageBuilder::SourcePositionClassificationMode !=SageBuilder::e_sourcePositionTransformation)
           detectTransformations(node);
 
        // DQ (8/12/2012): reset all of the type references (to intermediately generated types).
@@ -261,6 +264,9 @@ void postProcessingSupport (SgNode* node)
           checkIsModifiedFlag(node);
 
        // DQ (5/2/2012): After EDG/ROSE translation, there should be no IR nodes marked as transformations.
+       // Liao 11/21/2012. AstPostProcessing() is called within both Frontend and Midend
+       // so we have to detect the mode first before asserting no transformation generated file info objects
+       if (SageBuilder::SourcePositionClassificationMode !=SageBuilder::e_sourcePositionTransformation)
           detectTransformations(node);
 
 #ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION

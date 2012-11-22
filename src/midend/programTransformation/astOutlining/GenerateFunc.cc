@@ -68,15 +68,7 @@ createFuncSkeleton (const string& name, SgType* ret_type,
         }
        else
         {
-#ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
-       // DQ (8/28/2012): Generate a NULL pointer for now and fix that later.
-          func = NULL;
-
-          printf ("Need to use new SageBuilder API \n");
-          ROSE_ASSERT(false);
-#else
           func = SageBuilder::buildDefiningFunctionDeclaration(name,ret_type,params,scope);
-#endif
         }
 
      ROSE_ASSERT (func != NULL);
@@ -104,7 +96,8 @@ createInitName (const string& name, SgType* type,
 
 // DQ (2/24/2009): Added assertion.
   ROSE_ASSERT(name.empty() == false);
-  SgInitializedName* new_name = new SgInitializedName (ASTtools::newFileInfo (), sg_name, type, init,decl, scope, 0);
+  //SgInitializedName* new_name = new SgInitializedName (ASTtools::newFileInfo (), sg_name, type, init,decl, scope, 0);
+  SgInitializedName* new_name = new SgInitializedName (NULL, sg_name, type, init,decl, scope, 0);
   setOneSourcePositionForTransformation (new_name);
   ROSE_ASSERT (new_name);
   // Insert symbol
