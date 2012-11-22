@@ -882,7 +882,7 @@ SageBuilder::buildInitializedName ( const SgName & name, SgType* type, SgInitial
     scope->insert_symbol(name, symbol_1);
     initializedName->set_scope(scope);
 #endif 
-    setSourcePositionForTransformation(initializedName);
+    setSourcePositionAtRootAndAllChildren(initializedName);
     return initializedName;
 }
 
@@ -1014,7 +1014,7 @@ SageBuilder::buildVariableDeclaration (const SgName & name, SgType* type, SgInit
   ROSE_ASSERT((variableDefinition_original->get_startOfConstruct()) !=NULL);
   ROSE_ASSERT((variableDefinition_original->get_endOfConstruct())!=NULL);
 #endif
-  setSourcePositionForTransformation(varDecl);
+  setSourcePositionAtRootAndAllChildren(varDecl);
   //ROSE_ASSERT (isSgVariableDefinition(initName->get_declptr())->get_startOfConstruct()!=NULL);
   return varDecl;
 }
@@ -1454,7 +1454,7 @@ SageBuilder::buildFunctionParameterTypeList(SgFunctionParameterList * paralist)
      for(i = args.begin(); i != args.end(); i++)
           (typePtrList->get_arguments()).push_back( (*i)->get_type() );
 
-     setSourcePositionForTransformation(typePtrList);
+     setSourcePositionAtRootAndAllChildren(typePtrList);
 
      return typePtrList;
    }
@@ -1474,7 +1474,7 @@ SageBuilder::buildFunctionParameterTypeList (SgExprListExp * expList)
   {
     (typePtrList->get_arguments()).push_back( (*i)->get_type() );
   }
-  setSourcePositionForTransformation(typePtrList);
+  setSourcePositionAtRootAndAllChildren(typePtrList);
   return typePtrList;
 
 }
@@ -2011,8 +2011,6 @@ checkThatNoTemplateInstantiationIsDeclaredInTemplateDefinitionScope ( SgDeclarat
 // 4. fortran ?
 template <class actualFunction>
 actualFunction*
-// SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, bool isMemberFunction, SgScopeStatement* scope, SgExprListExp* decoratorList, unsigned int functionConstVolatileFlags, bool buildTemplateInstantiation)
-// SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, bool isMemberFunction, SgScopeStatement* scope, SgExprListExp* decoratorList, unsigned int functionConstVolatileFlags)
 SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgType* return_type, SgFunctionParameterList * paralist, bool isMemberFunction, SgScopeStatement* scope, SgExprListExp* decoratorList, unsigned int functionConstVolatileFlags, SgTemplateArgumentPtrList* templateArgumentsList)
    {
   // DQ (11/25/2011): This function has been modified to work when used with a SgTemplateFunctionDeclaration as a template argument.
@@ -2697,7 +2695,9 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
 
   // DQ (5/2/2012): Test this to make sure we have SgInitializedNames set properly.
      SageInterface::setSourcePosition(paralist);
-     detectTransformations_local(paralist);
+   // Liao 11/21/2012: we should assert no transformation only when the current model is NOT transformation    
+     if (SourcePositionClassificationMode !=e_sourcePositionTransformation)
+       detectTransformations_local(paralist);
 
   // DQ (12/14/2011): Moved this closer to top of function.
   // TODO double check if there are exceptions
@@ -2744,13 +2744,14 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
 
      ROSE_ASSERT(func->get_file_info() == NULL);
 
-  // set File_Info as transformation generated
-     setSourcePositionForTransformation(func);
+  // set File_Info as transformation generated or front end generated
+     setSourcePositionAtRootAndAllChildren(func);
 
      ROSE_ASSERT(func->get_file_info() != NULL);
 
-  // DQ (5/1/2012): Make sure that we don't have IR nodes marked as translformations.
-     detectTransformations_local(func);
+  // DQ (5/1/2012): Make sure that we don't have IR nodes marked as transformations.
+     if (SourcePositionClassificationMode !=e_sourcePositionTransformation)
+       detectTransformations_local(func);
 
   // printf ("In SageBuilder::buildNondefiningFunctionDeclaration_T(): generated function func = %p \n",func);
 
@@ -2804,6 +2805,7 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
 #endif
 
   // DQ (5/1/2012): Make sure that we don't have IR nodes marked as transformations.
+  if (SourcePositionClassificationMode !=e_sourcePositionTransformation) 
      detectTransformations_local(func);
 
      return func;  
@@ -2816,7 +2818,7 @@ SageBuilder::buildNondefiningFunctionDeclaration (const SgFunctionDeclaration* f
 {
 #if 1
 // DQ (7/26/2012): I am at least temporarily removing this function from the API.
-// Later if we need it, we can update it to reflect that passing fo the new 
+// Later if we need it, we can update it to reflect that passing for the new 
 // SgTemplateArgumentPtrList function parameter (part of the new API design).
 
    SgFunctionDeclaration* returnFunction = NULL;
@@ -2846,7 +2848,7 @@ SageBuilder::buildNondefiningFunctionDeclaration (const SgFunctionDeclaration* f
 // ROSE_ASSERT(returnFunction->get_definingDeclaration() == NULL);
   ROSE_ASSERT(returnFunction->get_firstNondefiningDeclaration() != NULL);
 
-  // Make sure that internal referneces are to the same file (else the symbol table information will not be consistant).
+  // Make sure that internal references are to the same file (else the symbol table information will not be consistent).
      if (scope != NULL)
         {
        // ROSE_ASSERT(returnFunction->get_parent() != NULL);
@@ -3099,6 +3101,7 @@ SageBuilder::buildNondefiningTemplateMemberFunctionDeclaration (const SgName & n
      ROSE_ASSERT(result != NULL);
 
   // DQ (5/1/2012): Make sure that we don't have IR nodes marked as translformations.
+   if (SourcePositionClassificationMode !=e_sourcePositionTransformation) 
      detectTransformations_local(result);
 
 #if 0
@@ -3176,8 +3179,9 @@ SageBuilder::buildNondefiningTemplateMemberFunctionDeclaration (const SgName & n
         }
      ROSE_ASSERT(scope->lookup_template_member_function_symbol(name,result->get_type()) != NULL);
 
-  // DQ (5/1/2012): Make sure that we don't have IR nodes marked as translformations.
-     detectTransformations_local(result);
+  // DQ (5/1/2012): Make sure that we don't have IR nodes marked as transformations.
+    if (SourcePositionClassificationMode !=e_sourcePositionTransformation)  
+      detectTransformations_local(result);
 
      return result;
    }
@@ -3325,7 +3329,7 @@ SageBuilder::buildNondefiningMemberFunctionDeclaration (const SgName & name, SgM
      func->setForward();
 
   // set File_Info as transformation generated
-     setSourcePositionForTransformation(func);
+     setSourcePositionAtRootAndAllChildren(func);
 
      return func;  
    }
@@ -3447,7 +3451,7 @@ SageBuilder::buildDefiningMemberFunctionDeclaration (const SgName & name, SgMemb
   func->set_scope(scope);
 
   // set File_Info as transformation generated
-  setSourcePositionForTransformation(func);
+  setSourcePositionAtRootAndAllChildren(func);
   return func;
 }
 #endif
@@ -3911,7 +3915,7 @@ SageBuilder::buildDefiningFunctionDeclaration_T(const SgName & XXX_name, SgType*
      checkThatNoTemplateInstantiationIsDeclaredInTemplateDefinitionScope(defining_func,scope);
 
   // set File_Info as transformation generated
-     setSourcePositionForTransformation(defining_func);
+     setSourcePositionAtRootAndAllChildren(defining_func);
 
   // DQ (2/11/2012): Enforce that the return type matches the specification to build a member function.
      if (isMemberFunction == true)
@@ -4079,7 +4083,7 @@ SageBuilder::buildDefiningFunctionDeclaration(const SgName& name, SgType* return
    {
   // DQ (11/12/2012): Note that this function is not used in the AST construction in the EDG/ROSE interface.
 
-  // DQ (11/12/2012): Building a defining declaration from scratch now requires a non-defiing declaration to exist.
+  // DQ (11/12/2012): Building a defining declaration from scratch now requires a non-defining declaration to exist.
      SgFunctionDeclaration* nondefininfDeclaration = buildNondefiningFunctionDeclaration(name,return_type,parameter_list,scope,NULL);
 
   // return buildDefiningFunctionDeclaration (name,return_type,parameter_list,scope,NULL,false,NULL,NULL);
@@ -5748,6 +5752,8 @@ SageBuilder::buildFunctionRefExp(const SgName& name,const SgType* funcType, SgSc
   SgFunctionType* func_type = isSgFunctionType(const_cast<SgType*>(funcType));
   ROSE_ASSERT(func_type);
 
+  bool isMemberFunc = isSgMemberFunctionType(func_type);
+
   if (scope == NULL)
     scope = SageBuilder::topScopeStack();
   ROSE_ASSERT(scope != NULL);
@@ -5755,36 +5761,16 @@ SageBuilder::buildFunctionRefExp(const SgName& name,const SgType* funcType, SgSc
   if (symbol==NULL) 
     // in rare cases when function calls are inserted before any prototypes exist
   {
-#if 0
-    // MiddleLevelRewrite::insert() does not merge content of headers into current AST
-    symbol = lookupFunctionSymbolInParentScopes(name,scope); //TODO relax the matching
-    if (symbol==NULL) {
-      // we require the declaration must exist before building a reference to it, or 
-      // at least user should insert the header containing the prototype information first
-      // using MiddleLevelRewrite::insert()
-      cout<<"Error! building a reference to function: "<<name.getString()<<" before it is being declared before!"<<endl;
-      ROSE_ASSERT(false);
-    }
-#else 
-    // MiddleLevelRewrite::insert() might conflict this part by generating a dangling function symbol 
-
-#if 1
-// DQ (7/26/2012): I am at least temporarily removing this function from the API.
-// Later if we need it, we can update it to reflect that passing of the new 
-// SgTemplateArgumentPtrList function parameter (part of the new API design).
-
-   SgFunctionDeclaration* funcDecl = NULL;
-   printf ("Error: buildFunctionRefExp(): This function should not be used! \n");
-   ROSE_ASSERT(false);
-#else
     SgType* return_type = func_type->get_return_type();
     SgFunctionParameterTypeList * paraTypeList = func_type->get_argument_list();
     SgFunctionParameterList *parList = buildFunctionParameterList(paraTypeList);
 
     SgGlobal* globalscope = getGlobalScope(scope);
 
-    SgFunctionDeclaration * funcDecl= buildNondefiningFunctionDeclaration(name,return_type,parList,globalscope);
-#endif
+    ROSE_ASSERT (isMemberFunc == false);  // Liao, 11/21/2012. We assume only regular functions can go into this if-body so we can insert them into global scope by default
+    //TODO: consider C++ template functions and Fortran functions
+    //SgFunctionDeclaration * funcDecl= buildNondefiningFunctionDeclaration(name,return_type,parList,globalscope);
+    SgFunctionDeclaration * funcDecl= buildNondefiningFunctionDeclaration_T <SgFunctionDeclaration>(name,return_type,parList,false,globalscope,NULL, false, NULL);
 
     funcDecl->get_declarationModifier().get_storageModifier().setExtern();
 
@@ -5797,7 +5783,6 @@ SageBuilder::buildFunctionRefExp(const SgName& name,const SgType* funcType, SgSc
 
     symbol = lookupFunctionSymbolInParentScopes(name,func_type,scope);
     ROSE_ASSERT(symbol);
-#endif
   }
   SgFunctionRefExp* func_ref = new SgFunctionRefExp(symbol,func_type);
   setOneSourcePositionForTransformation(func_ref);
@@ -6182,7 +6167,7 @@ SageBuilder::buildAssignStatement(SgExpression* lhs,SgExpression* rhs)
   SgExprStatement* exp = new SgExprStatement(assignOp);
   ROSE_ASSERT(exp);
    // some child nodes are transparently generated, using recursive setting is safer
-  setSourcePositionForTransformation(exp);
+  setSourcePositionAtRootAndAllChildren(exp);
   //setOneSourcePositionForTransformation(exp);
   assignOp->set_parent(exp);
   return exp;
@@ -6213,7 +6198,6 @@ SageBuilder::buildAssignStatement_ast_translate(SgExpression* lhs,SgExpression* 
 // (this version is required for the Java support where we have set source code position
 // information on the lhs and rhs and we don't want it to be reset as a transformation.
 // some child nodes are transparently generated, using recursive setting is safer
-// setSourcePositionForTransformation(exp);
   setOneSourcePositionForTransformation(exp);
   assignOp->set_parent(exp);
   return exp;
