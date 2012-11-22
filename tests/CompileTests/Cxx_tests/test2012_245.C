@@ -1,0 +1,3 @@
+#include <fstream>
+int foo();
+

@@ -9,6 +9,8 @@
 
 int main( int argc, char * argv[] )
    {
+     TimingPerformance timer ("main() execution time (sec) = ");
+
   // Generate the ROSE AST.
      SgProject* project = frontend(argc,argv);
 
@@ -24,6 +26,29 @@ int main( int argc, char * argv[] )
 
   // regenerate the source code and call the vendor 
   // compiler, only backend error code is reported.
-     return backend(project);
+  // return backend(project);
+     int exit_status = backend(project);
+
+  // Output any saved performance data (see ROSE/src/astDiagnostics/AstPerformance.h)
+  // AstPerformance::generateReportToFile(project->get_file(0).get_sourceFileNameWithPath(),project->get_compilationPerformanceFile());
+  // AstPerformance::generateReportToFile(project);
+     timer.generateReportToFile(project);
+
+#if 1
+  // DQ (12/12/2009): Allow output only when run in verbose mode to limit spew in testing.
+     if (SgProject::get_verbose() > 0)
+        {
+          int memoryUsageSize = memoryUsage();
+          printf ("Alternative output from memoryUsage() = %d \n",memoryUsageSize);
+
+          printf ("Calling AstNodeStatistics::traversalStatistics(project) \n");
+          std::cout << AstNodeStatistics::traversalStatistics(project);
+
+          printf ("Calling AstNodeStatistics::IRnodeUsageStatistics \n");
+          std::cout << AstNodeStatistics::IRnodeUsageStatistics();
+        }
+#endif
+
+     return exit_status;
    }
 

@@ -723,12 +723,44 @@ void AstNodeMemoryPoolStatistics::visit ( SgNode* node)
           IR_NODE_VISIT_CASE(SgLocatedNodeSupport)
           IR_NODE_VISIT_CASE(SgToken)
 
+#if 0
+Case not handled: SgTemplateMemberFunctionDeclaration 
+Case not handled: SgTemplateFunctionDeclaration 
+Case not handled: SgTemplateVariableDeclaration 
+Case not handled: SgTemplateClassDefinition 
+Case not handled: SgTemplateFunctionDefinition 
+Case not handled: SgTemplateMemberFunctionRefExp 
+No representative for SgShortVal found in memory pools 
+No representative for SgUnsignedCharVal found in memory pools 
+No representative for SgWcharVal found in memory pools 
+No representative for SgUnsignedShortVal found in memory pools 
+Case not handled: SgTemplateParameterVal 
+Case not handled: SgTemplateClassSymbol 
+Case not handled: SgTemplateFunctionSymbol 
+Case not handled: SgTemplateMemberFunctionSymbol 
+#endif
+
+       // DQ (11/19/2012): Added missing IR nodes.
+          IR_NODE_VISIT_CASE(SgTypeTable)
+          IR_NODE_VISIT_CASE(SgPartialFunctionType)
+          IR_NODE_VISIT_CASE(SgTemplateClassDeclaration)
+          IR_NODE_VISIT_CASE(SgTemplateMemberFunctionDeclaration)
+          IR_NODE_VISIT_CASE(SgTemplateFunctionDeclaration)
+          IR_NODE_VISIT_CASE(SgTemplateVariableDeclaration)
+          IR_NODE_VISIT_CASE(SgTemplateClassDefinition)
+          IR_NODE_VISIT_CASE(SgTemplateFunctionDefinition)
+          IR_NODE_VISIT_CASE(SgTemplateMemberFunctionRefExp)
+          IR_NODE_VISIT_CASE(SgTemplateParameterVal)
+          IR_NODE_VISIT_CASE(SgTemplateClassSymbol)
+          IR_NODE_VISIT_CASE(SgTemplateFunctionSymbol)
+          IR_NODE_VISIT_CASE(SgTemplateMemberFunctionSymbol)
+
        // IR_NODE_VISIT_CASE()
 
           default:
              {
 #if 1
-               printf ("Case not handled: %s \n",node->class_name().c_str());
+               printf ("Case not handled (must be added to src/midend/astDiagnostics/AstStatistics.C): %s \n",node->class_name().c_str());
 #endif
              }
         }

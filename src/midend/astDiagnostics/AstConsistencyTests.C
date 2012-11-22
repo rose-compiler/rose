@@ -5726,14 +5726,17 @@ TestForParentsMatchingASTStructure::preOrderVisit(SgNode *node)
         {
           if (NULL == node->get_parent())
              {
-               output << prefix << "node has null parent property but was reached by AST traversal\n";
+            // output << prefix << "node has null parent property but was reached by AST traversal\n";
+               printf ("In TestForParentsMatchingASTStructure::preOrderVisit(): (NULL == node->get_parent()): prefix = %s node's parent property does not match traversal parent\n",prefix.c_str());
+
                show_details_and_maybe_fail(node);
              } 
             else 
              {
                if (node->get_parent() != stack.back())
                   {
-                    output << prefix << "node's parent property does not match traversal parent\n";
+                 // output << prefix << "node's parent property does not match traversal parent\n";
+                    printf ("In TestForParentsMatchingASTStructure::preOrderVisit(): (node->get_parent() != stack.back()): prefix = %s node's parent property does not match traversal parent\n",prefix.c_str());
 
                     printf ("traversal parent = %p = %s \n",stack.back(),stack.back()->class_name().c_str());
                     SgNamespaceDefinitionStatement* namespaceDefinition = isSgNamespaceDefinitionStatement(stack.back());

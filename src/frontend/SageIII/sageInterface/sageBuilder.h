@@ -102,6 +102,9 @@ extern SourcePositionClassification SourcePositionClassificationMode;
 //! Get the current source position classification (defines how IR nodes built by the SageBuilder interface will be classified).
 SourcePositionClassification getSourcePositionClassificationMode();
 
+//! display function for debugging
+std::string display(SourcePositionClassification & scp);
+
 //! Set the current source position classification (defines how IR nodes built by the SageBuilder interface will be classified).
 void setSourcePositionClassificationMode(SourcePositionClassification X);
 

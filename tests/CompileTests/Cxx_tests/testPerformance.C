@@ -1,0 +1,2 @@
+#include<fstream>
+int foo();

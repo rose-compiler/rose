@@ -9003,16 +9003,17 @@ void SageInterface::appendStatement(SgStatement *stmt, SgScopeStatement* scope)
         }
 #endif
 
-#if 0 // This fix breaks other transformations.
-      // It is better to do this explicitly as needed before calling appendStatement();
+#if 0
+    // This fix breaks other transformations.
+    // It is better to do this explicitly as needed before calling appendStatement();
     // Liao 10/19/2010
     // In rare cases, we are moving the statement from its original scope to another scope
     // We have to remove it from its original scope before append it to the new scope
     SgNode* old_parent=  stmt->get_parent();
     if (old_parent)
-    {
-      removeStatement(stmt);
-    }
+       {
+         removeStatement(stmt);
+       }
 #endif
 
 #if 0
@@ -9067,8 +9068,15 @@ void SageInterface::appendStatement(SgStatement *stmt, SgScopeStatement* scope)
         }
 #endif
 
+  // DQ (11/19/2012): If we are building the AST within the front-end then don't do this expensive 
+  // fixup (we already set it properly in the AST construction within the frontend so we don't need 
+  // this).  Also since this is only operating within a single scope it is likely too specific to C 
+  // instead of addessing the details of C++ where functions can be placed in alternative scopes and 
+  // use name qualification).
   // update the links after insertion!
-     if (isSgFunctionDeclaration(stmt))
+  // if (isSgFunctionDeclaration(stmt))
+     SourcePositionClassification scp = getSourcePositionClassificationMode();
+     if ( (scp != e_sourcePositionFrontendConstruction) && (isSgFunctionDeclaration(stmt) != NULL) )
         {
           updateDefiningNondefiningLinks(isSgFunctionDeclaration(stmt),scope);
         }
@@ -9112,36 +9120,48 @@ SageInterface::appendStatementList(const std::vector<SgStatement*>& stmts, SgSco
    }
 
 //!SageInterface::prependStatement()
-  void SageInterface::prependStatement(SgStatement *stmt, SgScopeStatement* scope)
-  {
-    ROSE_ASSERT (stmt != NULL);
-   if (scope == NULL)
-      scope = SageBuilder::topScopeStack();
-    ROSE_ASSERT(scope != NULL);
-    //TODO handle side effect like SageBuilder::appendStatement() does
+void SageInterface::prependStatement(SgStatement *stmt, SgScopeStatement* scope)
+   {
+     ROSE_ASSERT (stmt != NULL);
+     if (scope == NULL)
+          scope = SageBuilder::topScopeStack();
+     ROSE_ASSERT(scope != NULL);
+  // TODO handle side effect like SageBuilder::appendStatement() does
 
-   // Must fix it before insert it into the scope,
-   // otherwise assertions in insertStatementInScope() would fail
-   fixStatement(stmt,scope);
+  // Must fix it before insert it into the scope,
+  // otherwise assertions in insertStatementInScope() would fail
+     fixStatement(stmt,scope);
 
-   scope->insertStatementInScope(stmt,true);
-   stmt->set_parent(scope); // needed?
-    // update the links after insertion!
-   if (isSgFunctionDeclaration(stmt))
-     updateDefiningNondefiningLinks(isSgFunctionDeclaration(stmt),scope);
+     scope->insertStatementInScope(stmt,true);
+     stmt->set_parent(scope); // needed?
 
-  } //prependStatement()
+  // DQ (11/19/2012): If we are building the AST within the front-end then don't do this expensive 
+  // fixup (we already set it properly in the AST construction within the frontend so we don't need 
+  // this).  Also since this is only operating within a single scope it is likely too specific to C 
+  // instead of addessing the details of C++ where functions can be placed in alternative scopes and 
+  // use name qualification).
+  // update the links after insertion!
+  // if (isSgFunctionDeclaration(stmt))
+     SourcePositionClassification scp = getSourcePositionClassificationMode();
+     if ( (scp != e_sourcePositionFrontendConstruction) && (isSgFunctionDeclaration(stmt) != NULL) )
+        {
+          updateDefiningNondefiningLinks(isSgFunctionDeclaration(stmt),scope);
+        }
 
-  void SageInterface::prependStatementList(const std::vector<SgStatement*>& stmts, SgScopeStatement* scope) {
-    for (size_t i = stmts.size(); i > 0; --i) {
-      prependStatement(stmts[i - 1], scope);
-    }
-  }
+   } // prependStatement()
+
+void SageInterface::prependStatementList(const std::vector<SgStatement*>& stmts, SgScopeStatement* scope)
+   {
+     for (size_t i = stmts.size(); i > 0; --i)
+        {
+          prependStatement(stmts[i - 1], scope);
+        }
+   }
 
   //! Check if a scope statement has a simple children statement list (SgStatementPtrList)
   //! so insert additional statements under the scope is straightforward and unambiguous .
   //! for example, SgBasicBlock has a simple statement list while IfStmt does not.
-  bool  SageInterface::hasSimpleChildrenList (SgScopeStatement* scope)
+bool  SageInterface::hasSimpleChildrenList (SgScopeStatement* scope)
 {
   bool rt = false;
   ROSE_ASSERT (scope != NULL);
@@ -9437,9 +9457,18 @@ void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStm
                         else
                            isSgStatement(parent)->insert_statement(targetStmt,newStmt,insertBefore);
 
+  // DQ (11/19/2012): If we are building the AST within the front-end then don't do this expensive 
+  // fixup (we already set it properly in the AST construction within the frontend so we don't need 
+  // this).  Also since this is only operating within a single scope it is likely too specific to C 
+  // instead of addessing the details of C++ where functions can be placed in alternative scopes and 
+  // use name qualification).
   // update the links after insertion!
-     if (isSgFunctionDeclaration(newStmt))
+  // if (isSgFunctionDeclaration(newStmt))
+     SourcePositionClassification scp = getSourcePositionClassificationMode();
+     if ( (scp != e_sourcePositionFrontendConstruction) && (isSgFunctionDeclaration(newStmt) != NULL) )
+        {
           updateDefiningNondefiningLinks(isSgFunctionDeclaration(newStmt),scope);
+        }
    }
 
   void SageInterface::insertStatementList(SgStatement *targetStmt, const std::vector<SgStatement*>& newStmts, bool insertBefore) {
@@ -10536,8 +10565,13 @@ void SageInterface::fixStatement(SgStatement* stmt, SgScopeStatement* scope)
  */
 void SageInterface::updateDefiningNondefiningLinks(SgFunctionDeclaration* func, SgScopeStatement* scope)
    {
-     ROSE_ASSERT(func&&scope);
+  // DQ (11/19/2012): Note that this appears to be an expensive function presently taking 22.5% of the total time 
+  // to process the tests/CompilerTests/Cxx_tests/rosePerformance.C file.  So this is a performance problem.
+
+     ROSE_ASSERT(func != NULL && scope != NULL);
+
      SgStatementPtrList stmtList, sameFuncList;
+
   // SgFunctionDeclaration* first_nondef = NULL;
   // Some annoying part of scope
      if (scope->containsOnlyDeclarations())
@@ -10585,8 +10619,10 @@ void SageInterface::updateDefiningNondefiningLinks(SgFunctionDeclaration* func, 
      for (j = stmtList.begin(); j != stmtList.end(); j++)
         {
           SgFunctionDeclaration* func_decl = isSgFunctionDeclaration(*j);
-          if (func_decl)
+          if (func_decl != NULL)
              {
+            // DQ (11/19/2012): This call to the isSameFunction() function is taking a total of 22.1% 
+            // of the total execution time of the tests/CompilerTests/Cxx_tests/rosePerformance.C file.
                if (isSameFunction(func_decl, func))
                   {
                  // Assume all defining functions have definingdeclaration links set properly already!!
