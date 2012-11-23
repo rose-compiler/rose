@@ -362,6 +362,7 @@ int main( int argc, char * argv[] ) {
     ("tg-ltl-reduced",po::value< string >(),"(experimental) compute LTL-reduced transition graph based on a subset of computed estates [=yes|no]")
     ("semantic-fold",po::value< string >(),"compute semantically folded transition graph [=yes|no]")
     ("post-semantic-fold",po::value< string >(),"compute semantically folded transition graph only after the complete transition graph has been computed. [=yes|no]")
+    ("report-semantic-fold",po::value< string >(),"report each folding operation with the respective number of estates. [=yes|no]")
     ("viz",po::value< string >(),"generate visualizations (dot) outputs [=yes|no]")
     ("update-input-var",po::value< string >(),"For testing purposes only. Default is Yes. [=yes|no]")
     ("run-rose-tests",po::value< string >(),"Run ROSE AST tests. [=yes|no]")
@@ -413,6 +414,7 @@ int main( int argc, char * argv[] ) {
   boolOptions.registerOption("tg-ltl-reduced",false);
   boolOptions.registerOption("semantic-fold",false);
   boolOptions.registerOption("post-semantic-fold",false);
+  boolOptions.registerOption("report-semantic-fold",false);
 
   boolOptions.registerOption("viz",false);
   boolOptions.registerOption("update-input-var",true);

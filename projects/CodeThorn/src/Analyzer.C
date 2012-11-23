@@ -46,7 +46,7 @@ void Analyzer::printStatusMessage(bool forceDisplay) {
   // report we are alife
   stringstream ss;
   if(forceDisplay) {
-	ss <<color("white")<<"Number of states/estates/trans/csets: ";
+	ss <<color("white")<<"Number of pstates/estates/trans/csets: ";
 	ss <<color("magenta")<<pstateSet.size()
 	   <<color("white")<<"/"
 	   <<color("cyan")<<estateSet.size()
@@ -103,9 +103,13 @@ set<const EState*> Analyzer::nonLTLRelevantEStates() {
   for(set<const EState*>::iterator i=allestates.begin();i!=allestates.end();++i) {
 	if(!isLTLRelevantLabel((*i)->label())) {
 	  res.insert(*i);
+
+	  // MS: deactivated this check because it impacts performance dramatically
+#if 0
 	  if(estateSet.estateId(*i)==NO_ESTATE) {
 		cerr<< "WARNING: no estate :estateId="<<estateSet.estateId(*i)<<endl;
 	  }
+#endif
 	}
   }
   return res;
@@ -1082,38 +1086,41 @@ void Analyzer::semanticFoldingOfTransitionGraph() {
   {
 	//cout << "STATUS: (Experimental) semantic folding of transition graph ..."<<endl;
 	//assert(checkEStateSet());
-  set<const EState*> xestates0=nonLTLRelevantEStates();
-  // filter for worklist
-  set<const EState*> xestates;
-  for(set<const EState*>::iterator i=xestates0.begin();i!=xestates0.end();++i) {
-	assert(*i);
-	if(!isInWorkList(*i) && !(getTransitionGraph()->getStartLabel()==(*i)->label()))
-	  xestates.insert(*i);
-  }
-  if(xestates0.size()!=xestates.size()) {
-	//cout << "INFO: Successfully avoided reducing node(s) which are in the work list."<<endl;
-  }
+	if(boolOptions["post-semantic-fold"])
+	  cout << "STATUS: computing states to fold."<<endl;
+	set<const EState*> xestates0=nonLTLRelevantEStates();
 
-  int tg_size_before_folding=getTransitionGraph()->size();
-  getTransitionGraph()->reduceEStates2(xestates);
-  int tg_size_after_folding=getTransitionGraph()->size();
-
-#if 1
-  for(set<const EState*>::iterator i=xestates.begin();i!=xestates.end();++i) {
-	bool res=estateSet.erase(**i);
-	if(res==false) {
-	  cerr<< "Error: Semantic folding of transition graph: no estate to delete."<<endl;
-	  exit(1);
+	// filter for worklist
+	set<const EState*> xestates;
+	for(set<const EState*>::iterator i=xestates0.begin();i!=xestates0.end();++i) {
+	  assert(*i);
+	  if(!isInWorkList(*i) && !(getTransitionGraph()->getStartLabel()==(*i)->label()))
+		xestates.insert(*i);
 	}
-  }
-  //assert(checkEStateSet());
-  //assert(checkTransitionGraph());
+	if(xestates0.size()!=xestates.size()) {
+	  //cout << "INFO: Successfully avoided reducing node(s) which are in the work list."<<endl;
+	}
+	
+	int tg_size_before_folding=getTransitionGraph()->size();
+	getTransitionGraph()->reduceEStates2(xestates);
+	int tg_size_after_folding=getTransitionGraph()->size();
+	
+#if 1
+	for(set<const EState*>::iterator i=xestates.begin();i!=xestates.end();++i) {
+	  bool res=estateSet.erase(**i);
+	  if(res==false) {
+		cerr<< "Error: Semantic folding of transition graph: no estate to delete."<<endl;
+		exit(1);
+	  }
+	}
+	//assert(checkEStateSet());
+	//assert(checkTransitionGraph());
 #else
-  cout << "STATUS: NOT folding estates: from " <<estateSet.size()<< " to "<< estateSet.size()-xestates.size() << " ... "<<flush;
+	cout << "STATUS: NOT folding estates: from " <<estateSet.size()<< " to "<< estateSet.size()-xestates.size() << " ... "<<flush;
 #endif
-  if(tg_size_before_folding!=tg_size_after_folding)
-	cout << "STATUS: Folded transition graph from "<<tg_size_before_folding<<" to "<<tg_size_after_folding<<" transitions."<<endl;
-
+	if(boolOptions["report-semantic-fold"] && tg_size_before_folding!=tg_size_after_folding)
+	  cout << "STATUS: Folded transition graph from "<<tg_size_before_folding<<" to "<<tg_size_after_folding<<" transitions."<<endl;
+	
   } // end of omp pragma
 }
 

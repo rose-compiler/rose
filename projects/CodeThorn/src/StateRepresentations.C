@@ -260,8 +260,15 @@ void TransitionGraph::reduceEStates(set<const EState*> toReduce) {
 }
 
 void TransitionGraph::reduceEStates2(set<const EState*> toReduce) {
+  size_t todo=toReduce.size();
+  if(boolOptions["post-semantic-fold"])
+	cout << "STATUS: remaining states to fold: "<<todo<<endl;
   for(set<const EState*>::const_iterator i=toReduce.begin();i!=toReduce.end();++i) { 
 	reduceEState2(*i);
+	todo--;
+	if(todo%10000==0 && boolOptions["post-semantic-fold"]) {
+	  cout << "STATUS: remaining states to fold: "<<todo<<endl;
+	}
   }
 }
 
@@ -472,7 +479,7 @@ void TransitionGraph::reduceEState2(const EState* estate) {
 		newEdge.addTypes((*j)->edge.types());
 		Transition t((*i)->source,newEdge,(*j)->target);
 		newTransitions.insert(t);
-		assert(newTransitions.find(t)!=newTransitions.end());
+		//assert(newTransitions.find(t)!=newTransitions.end());
 	  }
 	}
 	//cout << "DEBUG: number of new transitions: "<<newTransitions.size()<<endl;
@@ -480,7 +487,7 @@ void TransitionGraph::reduceEState2(const EState* estate) {
 	// 2. add new transitions
 	for(set<Transition>::iterator k=newTransitions.begin();k!=newTransitions.end();++k) {
 	  this->add(*k);
-	  assert(find(*k)!=end());
+	  //assert(find(*k)!=end());
 	}
 	assert(newTransitions.size()<=in.size()*out.size());
 #if 1
