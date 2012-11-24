@@ -193,10 +193,11 @@ void generateLTLOutput(Analyzer& analyzer, string ltl_file) {
   int n_failed = 0;
 
   if (ltl_file.size()) {
-    //CodeThorn::FixpointLTL::Checker checker(*analyzer.getEStateSet(),
-    // 					    *analyzer.getTransitionGraph());
-    CodeThorn::UnifiedLTL::UChecker checker(*analyzer.getEStateSet(),
-					    *analyzer.getTransitionGraph());
+    CodeThorn::FixpointLTL::Checker checker1(*analyzer.getEStateSet(),
+											 *analyzer.getTransitionGraph());
+    CodeThorn::UnifiedLTL::UChecker checker2(*analyzer.getEStateSet(),
+											 *analyzer.getTransitionGraph());
+
     ltl_input = fopen(ltl_file.c_str(), "r");
 
     ofstream* csv = NULL;
@@ -240,7 +241,13 @@ void generateLTLOutput(Analyzer& analyzer, string ltl_file) {
       //if (csv) *csv << n <<";\"" <<formula<<"\";";
 	  if (csv) *csv << n+60 <<",";
       try {
-	AType::BoolLattice result = checker.verify(*ltl_val);
+		AType::BoolLattice result;
+		switch(analyzer.getLTLVerifier()) {
+		case 1: result = checker1.verify(*ltl_val);break;
+		case 2: result = checker2.verify(*ltl_val);break;
+		default: cerr << "Error: unknown ltl-verifier specified with ltl-verifier option."<<endl;
+		  exit(1);
+		}
 	if (result.isTrue()) {
 	  ++n_yes;
 	  cout<<color("green")<<"YES"<<color("normal")<<endl;
@@ -338,6 +345,7 @@ int main( int argc, char * argv[] ) {
     ("version,v", "display the version")
     ("internal-checks", "run internal consistency checks (without input program)")
     ("verify", po::value< string >(), "verify all LTL formulae in the file [arg]")
+    ("ltl-verifier",po::value< int >(),"specify which ltl-verifier to use [=1|2]")
     ("csv-ltl", po::value< string >(), "output LTL verification results into a CSV file [arg]")
     ("csv-assert", po::value< string >(), "output assert reachability results into a CSV file [arg]")
     ("csv-assert-live", po::value< string >(), "output assert reachability results during analysis into a CSV file [arg]")
@@ -493,9 +501,12 @@ int main( int argc, char * argv[] ) {
   analyzer.setNumberOfThreadsToUse(numberOfThreadsToUse);
 
   if(args.count("display-diff")) {
-	int displayDiff;
-	displayDiff=args["display-diff"].as<int>();
+	int displayDiff=args["display-diff"].as<int>();
 	analyzer.setDisplayDiff(displayDiff);
+  }
+  if(args.count("ltl-verifier")) {
+	int ltlVerifier=args["ltl-verifier"].as<int>();
+	analyzer.setLTLVerifier(ltlVerifier);
   }
 
   // clean up string-options in argv
@@ -506,6 +517,7 @@ int main( int argc, char * argv[] ) {
 		|| string(argv[i])=="--threads" 
 		|| string(argv[i])=="--display-diff"
 		|| string(argv[i])=="--input-var-values"
+		|| string(argv[i])=="--ltl-verifier"
 		) {
 	  // do not confuse ROSE frontend
 	  argv[i] = strdup("");

@@ -14,7 +14,7 @@ using namespace CodeThorn;
 
 #include "CollectionOperators.h"
 
-Analyzer::Analyzer():startFunRoot(0),cfanalyzer(0),_displayDiff(10000),_numberOfThreadsToUse(1) {
+Analyzer::Analyzer():startFunRoot(0),cfanalyzer(0),_displayDiff(10000),_numberOfThreadsToUse(1),_ltlVerifier(2) {
 }
 
 set<string> Analyzer::variableIdsToVariableNames(set<VariableId> s) {
