@@ -432,7 +432,10 @@ AType::ConstIntLattice AType::operator+(AType::ConstIntLattice& a,AType::ConstIn
   if(b.isBot())
 	return a;
   assert(a.isConstInt() && b.isConstInt());
-  return a.getIntValue()+b.getIntValue();
+  if(boolOptions["arith-top"])
+	return AType::Top();
+  else
+	return a.getIntValue()+b.getIntValue();
 }
 AType::ConstIntLattice AType::operator-(AType::ConstIntLattice& a,AType::ConstIntLattice& b) {
   if(a.isTop() || b.isTop())
@@ -442,7 +445,10 @@ AType::ConstIntLattice AType::operator-(AType::ConstIntLattice& a,AType::ConstIn
   if(b.isBot())
 	return a;
   assert(a.isConstInt() && b.isConstInt());
-  return a.getIntValue()-b.getIntValue();
+  if(boolOptions["arith-top"])
+	return AType::Top();
+  else
+	return a.getIntValue()-b.getIntValue();
 }
 AType::ConstIntLattice AType::operator*(AType::ConstIntLattice& a,AType::ConstIntLattice& b) {
   if(a.isTop() || b.isTop())
@@ -452,7 +458,10 @@ AType::ConstIntLattice AType::operator*(AType::ConstIntLattice& a,AType::ConstIn
   if(b.isBot())
 	return a;
   assert(a.isConstInt() && b.isConstInt());
-  return a.getIntValue()*b.getIntValue();
+  if(boolOptions["arith-top"])
+	return AType::Top();
+  else
+	return a.getIntValue()*b.getIntValue();
 }
 AType::ConstIntLattice AType::operator/(AType::ConstIntLattice& a,AType::ConstIntLattice& b) {
   if(a.isTop() || b.isTop())
@@ -462,7 +471,10 @@ AType::ConstIntLattice AType::operator/(AType::ConstIntLattice& a,AType::ConstIn
   if(b.isBot())
 	return a;
   assert(a.isConstInt() && b.isConstInt());
-  return a.getIntValue()/b.getIntValue();
+  if(boolOptions["arith-top"])
+	return AType::Top();
+  else
+	return a.getIntValue()/b.getIntValue();
 }
 AType::ConstIntLattice AType::operator%(AType::ConstIntLattice& a,AType::ConstIntLattice& b) {
   if(a.isTop() || b.isTop())
@@ -472,6 +484,9 @@ AType::ConstIntLattice AType::operator%(AType::ConstIntLattice& a,AType::ConstIn
   if(b.isBot())
 	return a;
   assert(a.isConstInt() && b.isConstInt());
-  return a.getIntValue()%b.getIntValue();
+  if(boolOptions["arith-top"])
+	return AType::Top();
+  else
+	return a.getIntValue()%b.getIntValue();
 }
 

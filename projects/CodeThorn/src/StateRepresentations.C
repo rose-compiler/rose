@@ -4,8 +4,8 @@
  * License  : see file LICENSE in the CodeThorn distribution *
  *************************************************************/
 
-#include "StateRepresentations.h"
 #include <algorithm>
+#include "StateRepresentations.h"
 #include "ExprAnalyzer.h"
 #include "AType.h"
 #include "CollectionOperators.h"
@@ -260,29 +260,64 @@ void TransitionGraph::reduceEStates(set<const EState*> toReduce) {
 }
 
 void TransitionGraph::reduceEStates2(set<const EState*> toReduce) {
+  size_t todo=toReduce.size();
+  if(boolOptions["post-semantic-fold"])
+	cout << "STATUS: remaining states to fold: "<<todo<<endl;
   for(set<const EState*>::const_iterator i=toReduce.begin();i!=toReduce.end();++i) { 
 	reduceEState2(*i);
+	todo--;
+	if(todo%10000==0 && boolOptions["post-semantic-fold"]) {
+	  cout << "STATUS: remaining states to fold: "<<todo<<endl;
+	}
   }
 }
 
 // MS: we definitely need to cache all the results or use a proper graph structure
 TransitionGraph::TransitionPtrSet TransitionGraph::inEdges(const EState* estate) {
+  assert(estate);
+#if 1
+  return _inEdges[estate];
+#else
   TransitionGraph::TransitionPtrSet in;
   for(TransitionGraph::const_iterator i=begin();i!=end();++i) {
 	if(estate==(*i).target)
 	  in.insert(&(*i));
   }
+  TransitionGraph::TransitionPtrSet in2;
+  if(!(in==_inEdges[estate])) {
+	cerr<<"DEBUG: inEdges mismatch."<<endl;
+	cerr << "set1:";
+	for(TransitionGraph::TransitionPtrSet::iterator i=in.begin();i!=in.end();++i) {
+	  cerr << " "<<(*i)->toString()<<endl;
+	}
+	cerr <<endl;
+	in2=_inEdges[estate];
+	cerr << "set2:";
+	for(TransitionGraph::TransitionPtrSet::iterator i=in2.begin();i!=in2.end();++i) {
+	  cerr << " "<<(*i)->toString()<<endl;
+	}
+	cerr <<endl;
+	cerr<<"------------------------------------------------"<<endl;
+	exit(1);
+  }
   return in;
+#endif
 }
 
 // MS: we definitely need to cache all the results or use a proper graph structure
 TransitionGraph::TransitionPtrSet TransitionGraph::outEdges(const EState* estate) {
+  assert(estate);
+#if 1
+  return _outEdges[estate];
+#else
   TransitionGraph::TransitionPtrSet out;
   for(TransitionGraph::const_iterator i=begin();i!=end();++i) {
 	if(estate==(*i).source)
 	  out.insert(&(*i));
   }
+  assert(out==_outEdges[estate]);
   return out;
+#endif
 }
 
 void TransitionGraph::reduceEState(const EState* estate) {
@@ -308,13 +343,6 @@ void TransitionGraph::reduceEState(const EState* estate) {
   }
 }
 
-void TransitionGraph::add(Transition trans) {
-  #pragma omp critical
-  {
-	insert(trans);
-  }
-}
-
 bool CodeThorn::operator==(const Transition& t1, const Transition& t2) {
   return t1.source==t2.source && t1.edge==t2.edge && t1.target==t2.target;
 }
@@ -331,6 +359,32 @@ bool CodeThorn::operator<(const Transition& t1, const Transition& t2) {
   return t1.target<t2.target;
 }
 
+void TransitionGraph::add(Transition trans) {
+  #pragma omp critical
+  {
+	insert(trans);
+	const Transition* transp=determine(trans);
+	assert(transp!=0);
+	_inEdges[trans.target].insert(transp);
+	_outEdges[trans.source].insert(transp);
+  }
+}
+
+void TransitionGraph::erase(TransitionGraph::iterator transiter) {
+  const Transition* transp=determine(*transiter);
+  assert(transp!=0);
+  _inEdges[(*transiter).target].erase(transp);
+  _outEdges[(*transiter).source].erase(transp);
+  HSetMaintainer<Transition,TransitionHashFun>::erase(transiter);
+}
+
+void TransitionGraph::erase(const Transition trans) {
+  const Transition* transp=determine(trans);
+  assert(transp!=0);
+  _inEdges[trans.target].erase(transp);
+  _outEdges[trans.source].erase(transp);
+  HSetMaintainer<Transition,TransitionHashFun>::erase(trans);
+}
 
 long TransitionGraph::removeDuplicates() {
   long cnt=0;
@@ -425,7 +479,7 @@ void TransitionGraph::reduceEState2(const EState* estate) {
 		newEdge.addTypes((*j)->edge.types());
 		Transition t((*i)->source,newEdge,(*j)->target);
 		newTransitions.insert(t);
-		assert(newTransitions.find(t)!=newTransitions.end());
+		//assert(newTransitions.find(t)!=newTransitions.end());
 	  }
 	}
 	//cout << "DEBUG: number of new transitions: "<<newTransitions.size()<<endl;
@@ -433,21 +487,18 @@ void TransitionGraph::reduceEState2(const EState* estate) {
 	// 2. add new transitions
 	for(set<Transition>::iterator k=newTransitions.begin();k!=newTransitions.end();++k) {
 	  this->add(*k);
-	  assert(find(*k)!=end());
+	  //assert(find(*k)!=end());
 	}
 	assert(newTransitions.size()<=in.size()*out.size());
 #if 1
 	// 1. remove all old transitions
 	for(TransitionPtrSet::iterator i=in.begin();i!=in.end();++i) {
-	  //TransitionGraph::iterator it1=find(**i);
-	  //cout << "DEBUG: FOUND: "<<(*it1).toString()<<endl;
 	  this->erase(**i);
 	}
 #endif
 #if 1
 	for(TransitionPtrSet::iterator j=out.begin();j!=out.end();++j) {
 	  this->erase(**j);
-
 	}
 #endif
   } else {

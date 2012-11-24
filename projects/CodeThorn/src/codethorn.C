@@ -193,10 +193,11 @@ void generateLTLOutput(Analyzer& analyzer, string ltl_file) {
   int n_failed = 0;
 
   if (ltl_file.size()) {
-    //CodeThorn::FixpointLTL::Checker checker(*analyzer.getEStateSet(),
-    // 					    *analyzer.getTransitionGraph());
-    CodeThorn::UnifiedLTL::UChecker checker(*analyzer.getEStateSet(),
-					    *analyzer.getTransitionGraph());
+    CodeThorn::FixpointLTL::Checker checker1(*analyzer.getEStateSet(),
+											 *analyzer.getTransitionGraph());
+    CodeThorn::UnifiedLTL::UChecker checker2(*analyzer.getEStateSet(),
+											 *analyzer.getTransitionGraph());
+
     ltl_input = fopen(ltl_file.c_str(), "r");
 
     ofstream* csv = NULL;
@@ -240,7 +241,13 @@ void generateLTLOutput(Analyzer& analyzer, string ltl_file) {
       //if (csv) *csv << n <<";\"" <<formula<<"\";";
 	  if (csv) *csv << n+60 <<",";
       try {
-	AType::BoolLattice result = checker.verify(*ltl_val);
+		AType::BoolLattice result;
+		switch(analyzer.getLTLVerifier()) {
+		case 1: result = checker1.verify(*ltl_val);break;
+		case 2: result = checker2.verify(*ltl_val);break;
+		default: cerr << "Error: unknown ltl-verifier specified with ltl-verifier option."<<endl;
+		  exit(1);
+		}
 	if (result.isTrue()) {
 	  ++n_yes;
 	  cout<<color("green")<<"YES"<<color("normal")<<endl;
@@ -338,6 +345,7 @@ int main( int argc, char * argv[] ) {
     ("version,v", "display the version")
     ("internal-checks", "run internal consistency checks (without input program)")
     ("verify", po::value< string >(), "verify all LTL formulae in the file [arg]")
+    ("ltl-verifier",po::value< int >(),"specify which ltl-verifier to use [=1|2]")
     ("csv-ltl", po::value< string >(), "output LTL verification results into a CSV file [arg]")
     ("csv-assert", po::value< string >(), "output assert reachability results into a CSV file [arg]")
     ("csv-assert-live", po::value< string >(), "output assert reachability results during analysis into a CSV file [arg]")
@@ -360,7 +368,9 @@ int main( int argc, char * argv[] ) {
     ("precision-exact-constraints",po::value< string >(),
      "(experimental) use precise constraint extraction [=yes|no]")
     ("tg-ltl-reduced",po::value< string >(),"(experimental) compute LTL-reduced transition graph based on a subset of computed estates [=yes|no]")
-    ("semantic-fold",po::value< string >(),"(experimental) computes semantically folded transition graph [=yes|no]")
+    ("semantic-fold",po::value< string >(),"compute semantically folded transition graph [=yes|no]")
+    ("post-semantic-fold",po::value< string >(),"compute semantically folded transition graph only after the complete transition graph has been computed. [=yes|no]")
+    ("report-semantic-fold",po::value< string >(),"report each folding operation with the respective number of estates. [=yes|no]")
     ("viz",po::value< string >(),"generate visualizations (dot) outputs [=yes|no]")
     ("update-input-var",po::value< string >(),"For testing purposes only. Default is Yes. [=yes|no]")
     ("run-rose-tests",po::value< string >(),"Run ROSE AST tests. [=yes|no]")
@@ -373,6 +383,7 @@ int main( int argc, char * argv[] ) {
 	("ltl-collapsed-graph",po::value< string >(),"LTL visualization: show collapsed graph in dot output.")
 	("input-var-values",po::value< string >(),"specify a set of input values (e.g. \"{1,2,3}\")")
     ("input-var-values-as-constraints",po::value<string >(),"represent input var values as constraints (otherwise as constants in PState)")
+    ("arith-top",po::value< string >(),"Arithmetic operations +,-,*,/,% always evaluate to top [=yes|no]")
 	("print-all-options",po::value< string >(),"print all yes/no command line options.")
     ;
 
@@ -410,6 +421,8 @@ int main( int argc, char * argv[] ) {
   boolOptions.registerOption("precision-exact-constraints",false);
   boolOptions.registerOption("tg-ltl-reduced",false);
   boolOptions.registerOption("semantic-fold",false);
+  boolOptions.registerOption("post-semantic-fold",false);
+  boolOptions.registerOption("report-semantic-fold",false);
 
   boolOptions.registerOption("viz",false);
   boolOptions.registerOption("update-input-var",true);
@@ -422,6 +435,9 @@ int main( int argc, char * argv[] ) {
   boolOptions.registerOption("ltl-show-node-detail",true);
   boolOptions.registerOption("ltl-collapsed-graph",false);
   boolOptions.registerOption("input-var-values-as-constraints",false);
+
+  boolOptions.registerOption("arith-top",false);
+  boolOptions.registerOption("relop-constraints",false); // not accessible on command line yet
 
   boolOptions.processOptions();
 
@@ -485,9 +501,12 @@ int main( int argc, char * argv[] ) {
   analyzer.setNumberOfThreadsToUse(numberOfThreadsToUse);
 
   if(args.count("display-diff")) {
-	int displayDiff;
-	displayDiff=args["display-diff"].as<int>();
+	int displayDiff=args["display-diff"].as<int>();
 	analyzer.setDisplayDiff(displayDiff);
+  }
+  if(args.count("ltl-verifier")) {
+	int ltlVerifier=args["ltl-verifier"].as<int>();
+	analyzer.setLTLVerifier(ltlVerifier);
   }
 
   // clean up string-options in argv
@@ -498,6 +517,7 @@ int main( int argc, char * argv[] ) {
 		|| string(argv[i])=="--threads" 
 		|| string(argv[i])=="--display-diff"
 		|| string(argv[i])=="--input-var-values"
+		|| string(argv[i])=="--ltl-verifier"
 		) {
 	  // do not confuse ROSE frontend
 	  argv[i] = strdup("");
@@ -547,6 +567,11 @@ int main( int argc, char * argv[] ) {
   } else {
 	analyzer.runSolver1();
   }
+
+  if(boolOptions["post-semantic-fold"]) {
+	cout << "Performing post semantic folding (this may take some time):"<<endl;
+	analyzer.semanticFoldingOfTransitionGraph();
+  }
   double analysisRunTime=timer.getElapsedTimeInMilliSec();
 
   // since CT1.2 the ADT TransitionGraph ensures that no duplicates can exist
@@ -557,7 +582,7 @@ int main( int argc, char * argv[] ) {
 
   cout << "=============================================================="<<endl;
   // TODO: reachability in presence of semantic folding
-  if(!boolOptions["semantic-fold"]) {
+  if(!boolOptions["semantic-fold"] && !boolOptions["post-semantic-fold"]) {
 	printAsserts(analyzer,sageProject);
   }
   if (args.count("csv-assert")) {
@@ -581,8 +606,8 @@ int main( int argc, char * argv[] ) {
   }
   double ltlRunTime=timer.getElapsedTimeInMilliSec();
   // TODO: reachability in presence of semantic folding
-  if(boolOptions["semantic-fold"]) {
-	  cout << "NOTE: no reachability results with semantic folding (TODO)."<<endl;
+  if(boolOptions["semantic-fold"] || boolOptions["post-semantic-fold"]) {
+	  cout << "NOTE: no reachability results with semantic folding (not implemented yet)."<<endl;
 	} else {
 	  printAssertStatistics(analyzer,sageProject);
 	}

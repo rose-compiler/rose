@@ -30,6 +30,16 @@ public:
 	}
   }
 
+  const KeyType* determine(const KeyType& s) { 
+	typename HSetMaintainer<KeyType,HashFun>::iterator i;
+	i=HSetMaintainer<KeyType,HashFun>::find(s);
+	if(i!=HSetMaintainer<KeyType,HashFun>::end()) {
+	  return &(*i);
+	} else {
+	  return 0;
+	}
+  }
+
   //! <true,const KeyType> if new element was inserted
   //! <false,const KeyType> if element already existed
   ProcessingResult process(KeyType key) {

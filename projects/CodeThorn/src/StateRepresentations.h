@@ -207,7 +207,7 @@ class EStateList : public list<EState> {
 
 
 
-class TransitionGraph : public HSet<Transition,TransitionHashFun> {
+class TransitionGraph : public HSetMaintainer<Transition,TransitionHashFun> {
  public:
   typedef set<const Transition*> TransitionPtrSet;
  TransitionGraph():_startLabel(CodeThorn::Labeler::NO_LABEL),_numberOfNodes(0){}
@@ -222,6 +222,10 @@ class TransitionGraph : public HSet<Transition,TransitionHashFun> {
   Label getStartLabel() { assert(_startLabel!=Labeler::NO_LABEL); return _startLabel; }
   void setStartLabel(Label lab) { _startLabel=lab; }
   Transition getStartTransition();
+#if 1
+  void erase(TransitionGraph::iterator transiter);
+  void erase(const Transition trans);
+#endif
 
   //! reduces all non-maintained estates and unions edge-annotations. Adds edge-annotation PATH. Returns number of reduced estates.
   void reduceEStates(set<const EState*> toReduce);
@@ -235,6 +239,8 @@ class TransitionGraph : public HSet<Transition,TransitionHashFun> {
  private:
   Label _startLabel;
   int _numberOfNodes; // not used yet
+  map<const EState*,TransitionPtrSet > _inEdges;
+  map<const EState*,TransitionPtrSet > _outEdges;
 };
 
 } // namespace CodeThorn
