@@ -20,6 +20,24 @@ public:
 	return determine(s)!=0;
   }
 
+  size_t id(const KeyType& s) {
+	typename HSet<KeyType,HashFun>::const_iterator i=HSetMaintainer<KeyType,HashFun>::find(s);
+	if(i!=HSetMaintainer<KeyType,HashFun>::end()) {
+	  // in lack of operator '-' we compute the distance
+	  size_t pos=0;
+	  typename HSet<KeyType,HashFun>::const_iterator b=HSetMaintainer<KeyType,HashFun>::begin();
+	  while(b!=i) {
+		pos++;
+		++b;
+	  }
+	  return pos;
+	}
+	else
+	  throw "Error: unknown value. Maintainer cannot determine an id.";
+  }
+
+  typename HSetMaintainer<KeyType,HashFun>::iterator i;
+
   KeyType* determine(KeyType& s) { 
 	typename HSetMaintainer<KeyType,HashFun>::iterator i;
 	i=HSetMaintainer<KeyType,HashFun>::find(s);
