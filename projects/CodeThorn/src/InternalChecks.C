@@ -91,6 +91,11 @@ void checkTypes() {
   VariableIdMapping variableIdMapping;
   PState s1;
   cout << "RUNNING CHECKS:"<<endl;
+  {
+	// check temporary variables (create and delete)
+	VariableId var_tmp=variableIdMapping.createUniqueTemporaryVariableId("tmp");
+	variableIdMapping.deleteUniqueTemporaryVariableId(var_tmp);
+  }
   VariableId var_x=variableIdMapping.createUniqueTemporaryVariableId("x");
   {
 	cout << "------------------------------------------"<<endl;
