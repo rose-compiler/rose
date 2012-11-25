@@ -166,7 +166,7 @@ const EState* Analyzer::takeFromWorkList() {
   return co;
 }
 
-#define PARALLELIZE_BRANCHES
+//#define PARALLELIZE_BRANCHES
 
 void Analyzer::runSolver1() {
   size_t prevStateSetSize=0; // force immediate report at start
@@ -1186,8 +1186,7 @@ void Analyzer::runSolver2() {
 			  const EState* newEStatePtr=pres.second;
 			  if(pres.first==true)
 				addToWorkList(newEStatePtr);			
-			  if(true || !boolOptions["semantic-fold"])
-				recordTransition(currentEStatePtr,e,newEStatePtr);
+			  recordTransition(currentEStatePtr,e,newEStatePtr);
 			}
 			if(newEState.label()!=Labeler::NO_LABEL && (!newEState.constraints()->disequalityExists()) && (isFailedAssertEState(&newEState))) {
 			  // failed-assert end-state: do not add to work list but do add it to the transition graph
