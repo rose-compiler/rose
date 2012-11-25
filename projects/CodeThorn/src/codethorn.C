@@ -526,10 +526,12 @@ int main( int argc, char * argv[] ) {
 	}
   }
 
+#if 0
   if(boolOptions["semantic-fold"] && numberOfThreadsToUse>1) {
 	cerr << "ERROR: semantic-fold is currently restricted to 1 thread only. Change number of threads from "<<numberOfThreadsToUse<< " to 1."<<endl;
 	exit(1);
   }
+#endif
 
   // Build the AST used by ROSE
   cout << "INIT: Parsing and creating AST."<<endl;

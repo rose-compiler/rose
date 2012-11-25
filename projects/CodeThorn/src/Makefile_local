@@ -138,11 +138,12 @@ validate:
 docs:
 	doxygen Doxyfile
 
-viz: transitiongraph1.dot transitiongraph2.dot cfg.dot ast.dot
+vizps: transitiongraph1.dot transitiongraph2.dot cfg.dot ast.dot
 	dot -Tps transitiongraph1.dot -oviz/transitiongraph1.ps
 	dot -Tps transitiongraph2.dot -oviz/transitiongraph2.ps
 	dot -Tps cfg.dot -oviz/cfg.ps
 	dot -Gordering=out -Tps ast.dot -oviz/ast.ps
+
 vizjpg: transitiongraph1.dot transitiongraph2.dot cfg.dot ast.dot
 	dot -Tjpg transitiongraph1.dot -oviz/transitiongraph1.jpg
 	dot -Tjpg transitiongraph2.dot -oviz/transitiongraph2.jpg
@@ -172,7 +173,8 @@ distclean: clean
 	rm -f $(TOOLNAME3)ref
 
 bsps: codethorn
-	./codethorn tests/basictest10f.C && make viz && make vizjpg
+
+	./codethorn tests/basictest10f.C --viz=yes && make -f Makefile_local vizps && make -f Makefile_local vizjpg
 	cp tests/basictest10f.C bsps
 	cp viz/cfg.ps bsps/basictest10f_cfg.ps
 	cp viz/transitiongraph1.ps bsps/basictest10f_transitiongraph1.ps
@@ -182,7 +184,8 @@ bsps: codethorn
 	cp viz/transitiongraph1.jpg bsps/basictest10f_transitiongraph1.jpg
 	cp viz/transitiongraph2.jpg bsps/basictest10f_transitiongraph2.jpg
 	ps2pdf bsps/basictest10f_transitiongraph2.ps bsps/basictest10f_transitiongraph2.pdf
-	./codethorn tests/basictest15.C && make viz && make vizjpg
+
+	./codethorn tests/basictest15.C && make -f Makefile_local vizps && make -f Makefile_local vizjpg
 	cp tests/basictest15.C bsps
 	cp viz/cfg.ps bsps/basictest15_cfg.ps
 	cp viz/transitiongraph1.ps bsps/basictest15_transitiongraph1.ps
@@ -193,7 +196,18 @@ bsps: codethorn
 	cp viz/transitiongraph2.jpg bsps/basictest15_transitiongraph2.jpg
 	ps2pdf bsps/basictest15_transitiongraph2.ps bsps/basictest15_transitiongraph2.pdf
 
-	./codethorn tests/rers/Problem1.c
+	./codethorn tests/rers_mini8.c --viz=yes && make -f Makefile_local vizps && make -f Makefile_local vizjpg
+	cp tests/rers_mini8.c bsps
+	cp viz/cfg.ps bsps/rers_mini8_cfg.ps
+	cp viz/transitiongraph1.ps bsps/rers_mini8_transitiongraph1.ps
+	cp viz/transitiongraph2.ps bsps/rers_mini8_transitiongraph2.ps
+	cp viz/ast.jpg bsps/rers_mini8_ast.jpg
+	cp viz/cfg.jpg bsps/rers_mini8_cfg.jpg
+	cp viz/transitiongraph1.jpg bsps/rers_mini8_transitiongraph1.jpg
+	cp viz/transitiongraph2.jpg bsps/rers_mini8_transitiongraph2.jpg
+	ps2pdf bsps/rers_mini8_transitiongraph2.ps bsps/rers_mini8_transitiongraph2.pdf
+
+	./codethorn tests/rers/Problem1.c --viz=yes
 	cp tests/rers/Problem1.c bsps
 	dot -Tjpg transitiongraph2.dot -oviz/transitiongraph2.jpg
 	cp viz/transitiongraph2.jpg bsps/rers1_transitiongraph2.jpg
@@ -226,3 +240,8 @@ generateregressiondata:
 	./$(TOOLNAME3) --csv-assert $(REGRESSION_DATA_DIR)/rers_mini1_assert_csv.txt --csv-ltl $(REGRESSION_DATA_DIR)/rers_mini1_ltl_csv.txt --verify tests/rers_mini1.ltl --viz=yes tests/rers_mini1.c 
 	sort -u transitiongraph1.dat > tmp_transitiongraph1.dat
 	cp tmp_transitiongraph1.dat $(REGRESSION_DATA_DIR)/rers_mini1_transitiongraph1.dat
+
+projectsize:
+	@echo -n "Number of lines: "
+	@wc -l `ls *.h *.C -1 | grep -v parser | grep -v scanner | tr '\n' ' '` *.l?? *.y?? | grep total | cut -f2 -d" "
+

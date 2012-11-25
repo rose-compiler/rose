@@ -45,46 +45,20 @@ using namespace UnifiedLTL;
 #define END_FOR }}
 
 #define FOR_EACH_VERTEX(V, G) {						\
-  LTLGraphTraits::vertex_iterator V##i, V##i_end;			\
-  for (tie(V##i, V##i_end) = vertices(G); V##i != V##i_end; ++V##i) {	\
-    LTLVertex V = *V##i;
+  LTLGraphTraits::vertex_iterator i, i_end;			\
+  for (tie(i, i_end) = vertices(G); i != i_end; ++i) {	\
+    LTLVertex V = *i;
 
 #define FOR_EACH_PREDECESSOR(PRED, V, G) {				\
-  LTLGraphTraits::in_edge_iterator V##in_i, V##in_end;			\
-  for (tie(V##in_i, V##in_end) = in_edges(V, G); V##in_i != V##in_end; ++V##in_i ) { \
-    LTLVertex PRED = source(*V##in_i, G);
+  LTLGraphTraits::in_edge_iterator in_i, in_end;			\
+  for (tie(in_i, in_end) = in_edges(V, G); in_i != in_end; ++in_i ) { \
+    LTLVertex PRED = source(*in_i, G);
 
 #define FOR_EACH_SUCCESSOR(SUCC, V, G) {				\
-  LTLGraphTraits::out_edge_iterator V##out_i, V##out_end;			\
-  for (tie(V##out_i, V##out_end) = out_edges(V, G); V##out_i != V##out_end; ++V##out_i ) { \
-    LTLVertex SUCC = target(*V##out_i, G);
+  LTLGraphTraits::out_edge_iterator out_i, out_end;			\
+  for (tie(out_i, out_end) = out_edges(V, G); out_i != out_end; ++out_i ) { \
+    LTLVertex SUCC = target(*out_i, G);
 
-/**
- * add an edge if it does not yet exist
- */
-//static 
-//void add_edge_if_new(LTLVertex src, LTLVertex tgt, LTLTransitionGraph& g, bool override=false) {
-//  if (override) { // fast-track if we know the result. The edge lookup is quite slow.
-//    add_edge(src, tgt, g);
-//  } else {
-//    boost::graph_traits<LTLTransitionGraph>::edge_descriptor _edge;
-//    bool b;
-//    tie(_edge, b) = edge(src, tgt, g);
-//    if (!b) add_edge(src, tgt, g);
-//  }
-//}
-
-/**
- * add an edge if it does not yet exist
- * FIXME: templatize this
- */
-//static 
-//void add_edge_if_new1(Label src, Label tgt, BoostTransitionGraph& g) {
-//  boost::graph_traits<BoostTransitionGraph>::edge_descriptor _edge;
-//  bool b;
-//  tie(_edge, b) = edge(src, tgt, g);
-//  if (!b) add_edge(src, tgt, g);
-//}
 
 /**
  * is there an edge v->v?
@@ -283,6 +257,55 @@ string UnifiedLTL::LTLState::toHTML() const {
 }
 
 
+string visualize(const LTLStateTransitionGraph& stg, const Expr& e) {
+  bool show_derivation = boolOptions["ltl-show-derivation"];
+  stringstream s;
+  s<<"digraph G {\n";
+  s<<"node[shape=rectangle, color=lightsteelblue, style=filled];\n  ";
+
+  map<LTLVertex, int> label;
+  int l = 0;
+  FOR_EACH_VERTEX(vi, stg.g) {
+    LTLState state = stg.g[vi];
+    label[vi] = ++l;
+    s<<l<<" [label=<\n"<<state.toHTML()<<"\n>, ";
+    switch (state.estate->io.op) {
+    case InputOutput::STDIN_VAR:
+      s<<"shape=rectangle, color=gold, style=filled";
+      break;
+    case InputOutput::STDOUT_VAR:
+    case InputOutput::STDOUT_CONST:
+      s<<"shape=rectangle, color=slateblue, style=filled";
+      break;
+    default: break;
+    }
+    s<<"];\n  ";
+
+    // LTL visualization
+    UVisualizer viz(state, l);
+    s<<"subgraph ltl_"<<l<<" {\n";
+    s<<"  node[shape=rectangle, style=filled];\n  ";
+    if (show_derivation) {
+      assert(state.debug.size() == ltl_label);
+      const_cast<Expr&>(e).accept(viz, UVisualizer::newAttr(l));
+      s<<viz.s.str();
+    }
+    s<<"}\n";
+
+  } END_FOR;
+
+  LTLGraphTraits::edge_iterator ei, ei_end;
+  for (tie(ei, ei_end) = edges(stg.g); ei != ei_end; ++ei) {
+    s<<label[source(*ei, stg.g)]<<" -> "<<label[target(*ei, stg.g)]<<";\n";
+  }
+
+  s<<"}\n";
+
+  return s.str();
+}
+
+
+
 
 /**
  * We perform the verification of the LTL formula by traversing it
@@ -343,29 +366,61 @@ public:
   LTLVertex add_state_if_new(LTLState new_state,
 			     LTLStateTransitionGraph& stg,
 			     LTLWorklist& worklist) {
+    LTLVertex v;
     LTLStateMap::iterator i = stg.vertex.find(new_state);
     if (i == stg.vertex.end()) {
-#if 0
+#ifdef EXTRA_ASSERTS
       for (i=stg.vertex.begin(); i != stg.vertex.end(); ++i) {
 	LTLState s = (*i).first;
 	assert(! (s == new_state));
       }
-      FOR_EACH_VERTEX(v, stg.g) 
-	assert(!(stg.g[v] == new_state)); 
+      FOR_EACH_VERTEX(x, stg.g) 
+	assert(!(stg.g[x] == new_state)); 
       END_FOR
 #endif
-
-      LTLVertex v = add_vertex(stg.g);
+      // Create a new vertex
+      v = add_vertex(stg.g);
       stg.vertex[new_state] = v;
       stg.g[v] = new_state;
       worklist.push(v);
       //cerr<<"** added new node "<<v<<": "<<new_state<<endl;
-      return v;
     } else {
-      LTLVertex v = (*i).second;
+      v = (*i).second;
+
+#ifdef MERGE_TOP_STATES
+      if (new_state.val.isTrue() || new_state.val.isFalse()) {
+	// If there is both A and !A, create a single A=Top instead
+	LTLState neg_state = new_state;
+	neg_state.val = !new_state.val;
+	LTLStateMap::iterator j = stg.vertex.find(neg_state);
+	if (j != stg.vertex.end()) {
+	  LTLState top_state = new_state;
+	  top_state.val = Top();
+	  v = add_state_if_new(top_state, stg, worklist);
+
+	  FOR_EACH_PREDECESSOR(pred, (*i).second, stg.g)
+	    add_edge(pred, v, stg.g);
+	  END_FOR;
+	  FOR_EACH_SUCCESSOR(succ, (*i).second, stg.g)
+	    add_edge(v, succ, stg.g);
+	  END_FOR;
+	  clear_vertex((*i).second, stg.g);
+	  
+	  FOR_EACH_PREDECESSOR(pred, (*j).second, stg.g)
+	    add_edge(pred, v, stg.g);
+	  END_FOR;
+	  FOR_EACH_SUCCESSOR(succ, (*j).second, stg.g)
+	    add_edge(v, succ, stg.g);
+	  END_FOR;
+	  clear_vertex((*j).second, stg.g);
+	  
+	  //cerr<<"** 3-way merged states "<<top_state<<endl;
+	}
+      }
+#endif
       //cerr<<"** merged states "<<new_state<<endl;
-      return v;
     }
+    return v;
   }
 
   /**
@@ -380,7 +435,8 @@ public:
    * transfer(a, next)
    */
   template<class TransferFunctor>
-  void analyze(LTLStateTransitionGraph& stg, TransferFunctor transfer, unsigned short nargs)  {
+  void analyze(LTLStateTransitionGraph& stg, const Expr& e,
+	       TransferFunctor transfer, unsigned short nargs)  {
     LTLWorklist worklist;
     unordered_set<LTLVertex> endpoints;
 
@@ -389,7 +445,7 @@ public:
     FOR_EACH_VERTEX(v, stg.g) {
       // push bot to the top of the LTL stack and update the vertex map
       LTLState state = stg.g[v];
-      state.val = Top();
+      state.val = Bot();
       stg.g[v] = state;
       //cerr<<v<<": "<<state<<", "<<v<<endl;
       //size_t old = stg.vertex.size();
@@ -415,7 +471,6 @@ public:
 
     while (!worklist.empty()) {
       LTLVertex succ = worklist.front(); worklist.pop();
-
       bool verbose = false;
 
       // Endpoint handling
@@ -461,35 +516,63 @@ public:
 	bool fixpoint = (new_state == old_state);
 	
 	if (fixpoint) {
+
 	  if (verbose) cerr<<"reached fixpoint!"<<endl;
 	  assert(stg.g[v].val == new_state.val);
+
+	} else if (old_state.val.isBot()) {
+
+	  // performance shortcut: perform a strong update
+	  // this is legal because we ignore old_val in the transfer function
+	  // and it reduces the total number of nodes
+	  stg.vertex[new_state] = v;
+	  stg.g[v] = new_state;
+	  worklist.push(v);
+
 	} else {
+
 	  // create a new state in lieu of the old state, and cut off the old state
 	  LTLVertex v_prime = add_state_if_new(new_state, stg, worklist);
-
 	  if (verbose && v != v_prime) cerr<<"  OLD: "<<old_state<< "\n  NEW: "<<new_state<<endl;
 	  //assert (v_prime != v || (new_state.val != old_state.val));
 	  if (verbose) cerr<<"  v: "<<v<<","<<stg.g[v]<<" = "<<stg.g[v].val<<endl;
 
 	  // Add edge from new state to successor
-	  if (succ == v)
+	  if (succ == v) {
+	    // self-cycle
 	    add_edge(v_prime, v_prime, stg.g);
-	  else
+	    //cerr<<v_prime<<" -> "<<v_prime<<endl;
+	  } else if (v_prime != v) {
 	    add_edge(v_prime, succ, stg.g);
-
-	  // Add edge from predecessor to new state
-	  if (v_prime != v) {
-	    FOR_EACH_PREDECESSOR(pred, v, stg.g)
-	      add_edge(pred, v_prime, stg.g);
-	    END_FOR;
-	  }
-
-	  // Cut off the old state
-	  if (v_prime != v) {
+	    //cerr<<v_prime<<" -> "<<succ<<endl;
+	    
+	    // Cut off the old state
 	    remove_edge(v, succ, stg.g);
-	    // add the old state to the worklist because its premise changed
-	    worklist.push(v);
+
+	    // Add edge from predecessor to new state
+	    LTLWorklist preds = predecessors(v, stg.g);
+	    while(!preds.empty()) {
+	      LTLVertex pred = preds.front(); preds.pop();	      
+	      add_edge(pred, v_prime, stg.g);
+	      remove_edge(pred, v, stg.g);
+	      // add the v's predecessor to the worklist because v's premise changed
+	      worklist.push(pred);
+	    }
 	  }
+
+#ifdef ANIM_OUTPUT
+	  static int wait=0;
+	  if (++wait > 101000) {
+	    ofstream animfile;
+	    stringstream fname;
+	    static int n = 1;
+	    fname << "ltl_anim_" << n++ << ".dot";
+	    animfile.open(fname.str().c_str(), ios::out);
+	    animfile << visualize(stg, e);
+	    animfile.close(); 
+	    cout<<"generated "<<fname.str()<<"."<<endl;
+	  }
+#endif
 	}
       }
     }
@@ -522,7 +605,7 @@ public:
 	stg.vertex[state] = v;
       }
 
-    } END_FOR
+    } END_FOR;
 
     // remove orphaned vertices
     LTLWorklist orphans;
@@ -535,8 +618,12 @@ public:
     }
 
     ++progress;
-    cerr<<"Number of LTLStates: "<<num_vertices(stg.g)<<";\t"
-	<<(100*progress)/ltl_label<<"%"<<endl;
+    cout<<setw(16)<<num_vertices(stg.g)<<" ("
+	<<(100*progress)/ltl_label<<"%)"<<endl;
+  }
+
+  void show_progress(const Expr& expr) {
+    cout<<setw(16)<<expr.id;
   }
 
   ///tell if a state is an exit node
@@ -635,7 +722,8 @@ public:
     }
   }; 
   void visit(const InputSymbol* expr) {
-    analyze(stg, TransferI(expr, stg), 0);
+    show_progress(*expr);
+    analyze(stg, *expr, TransferI(expr, stg), 0);
   }
 
   /// return True iff that state is an !Ic operation
@@ -691,7 +779,8 @@ public:
     }
   }; 
   void visit(const NegInputSymbol* expr) {
-    analyze(stg, TransferNI(expr, stg), 0);
+    show_progress(*expr);
+    analyze(stg, *expr, TransferNI(expr, stg), 0);
   }
 
   /// return True iff that state is an Oc operation
@@ -749,7 +838,8 @@ public:
     }
   }; 
   void visit(const OutputSymbol* expr) {
-    analyze(stg, TransferO(expr), 0);
+    show_progress(*expr);
+    analyze(stg, *expr, TransferO(expr), 0);
   }
  
 
@@ -808,7 +898,8 @@ public:
     }
   }; 
   void visit(const NegOutputSymbol* expr) {
-    analyze(stg, TransferNO(expr), 0);
+    show_progress(*expr);
+    analyze(stg, *expr, TransferNO(expr), 0);
   }
 
   /**
@@ -829,7 +920,8 @@ public:
     } 
   };
   void visit(const Not* expr) {
-    analyze(stg, TransferNot(), 1);
+    show_progress(*expr);
+    analyze(stg, *expr, TransferNot(), 1);
   }
 
   /**
@@ -858,7 +950,8 @@ public:
     } 
   };
   void visit(const Next* expr) {
-    analyze(stg, TransferX(), 1);
+    show_progress(*expr);
+    analyze(stg, *expr, TransferX(), 1);
   }
 
   /**
@@ -889,7 +982,8 @@ public:
     } 
   };
   void visit(const Eventually* expr) {
-    analyze(stg, TransferF(), 1);
+    show_progress(*expr);
+    analyze(stg, *expr, TransferF(), 1);
   }
 
   /**
@@ -918,7 +1012,8 @@ public:
     } 
   };
   void visit(const Globally* expr) {
-    analyze(stg, TransferG(), 1);
+    show_progress(*expr);
+    analyze(stg, *expr, TransferG(), 1);
   }
 
   // Implementation status: DONE
@@ -938,7 +1033,8 @@ public:
     } 
   };
   void visit(const And* expr) {
-    analyze(stg, TransferAnd(), 2);
+    show_progress(*expr);
+    analyze(stg, *expr, TransferAnd(), 2);
   }
 
   // Implementation status: DONE
@@ -958,7 +1054,8 @@ public:
     } 
   };
   void visit(const Or* expr) {
-    analyze(stg, TransferOr(), 2);
+    show_progress(*expr);
+    analyze(stg, *expr, TransferOr(), 2);
   }
 
   /**
@@ -994,7 +1091,8 @@ public:
     } 
   };
   void visit(const Until* expr) {
-    analyze(stg, TransferU(), 2);
+    show_progress(*expr);
+    analyze(stg, *expr, TransferU(), 2);
   }
 
   /**
@@ -1041,7 +1139,8 @@ public:
     } 
   };
   void visit(const Release* expr) {
-    analyze(stg, TransferR(), 2);
+    show_progress(*expr);
+    analyze(stg, *expr, TransferR(), 2);
   }
 };
 
@@ -1161,68 +1260,25 @@ UChecker::verify(const Formula& f)
   // Verify!
   UVerifier v(eStateSet, g, start, num_vertices(g), f.size());
   const Expr& e = f;
+ 
+  cout<<setw(16)<<"expression"<<setw(16)<<"LTLStates"<<endl;
   e.accept(v);
 
   // Visualization:
   bool ltl_output_dot = boolOptions["ltl-output-dot"];//  true;
-  bool show_derivation = boolOptions["ltl-show-derivation"];//  true;
   //bool show_node_detail = boolOptions["ltl-show-node-detail"];//  true;
   //bool collapsed_graph = boolOptions["ltl-collapsed-graph"];//  false
 
   if (ltl_output_dot) {
-    stringstream s;
-    s<<"digraph G {\n";
-    s<<"node[shape=rectangle, color=lightsteelblue, style=filled];\n  ";
-
-    map<LTLVertex, int> label;
-    int l = 0;
-    FOR_EACH_VERTEX(vi, v.stg.g) {
-      LTLState state = v.stg.g[vi];
-      label[vi] = ++l;
-      s<<l<<" [label=<\n"<<state.toHTML()<<"\n>, ";
-      switch (state.estate->io.op) {
-      case InputOutput::STDIN_VAR:
-	s<<"shape=rectangle, color=gold, style=filled";
-	break;
-      case InputOutput::STDOUT_VAR:
-      case InputOutput::STDOUT_CONST:
-	s<<"shape=rectangle, color=slateblue, style=filled";
-	break;
-      default: break;
-      }
-      s<<"];\n  ";
-
-      // LTL visualization
-      UVisualizer viz(state, l);
-      //cerr<<v<<", "<<state<<endl;
-      //cerr<<"ltl_label = "<<ltl_label<<", state.debug.size() = "<<state.debug.size()<<endl;
-      assert(state.debug.size() == ltl_label);
-      const_cast<Expr&>(e).accept(viz, UVisualizer::newAttr(l));
-      s<<"subgraph ltl_"<<l<<" {\n";
-      s<<"  node[shape=rectangle, style=filled];\n  ";
-      if (show_derivation) s<<viz.s.str();
-      s<<"}\n";
-
-    } END_FOR;
-
-    LTLGraphTraits::edge_iterator ei, ei_end;
-    for (tie(ei, ei_end) = edges(v.stg.g); ei != ei_end; ++ei) {
-      s<<label[source(*ei, v.stg.g)]<<" -> "<<label[target(*ei, v.stg.g)]<<";\n";
-    }
-
-    s<<"}\n";
-
     ofstream myfile;
     stringstream fname;
     static int n = 1;
     fname << "ltl_output_" << n++ << ".dot";
     myfile.open(fname.str().c_str(), ios::out);
-    myfile << s.str();
+    myfile << visualize(v.stg, e);
     myfile.close(); 
     cout<<"generated "<<fname.str()<<"."<<endl;
   }
-
-
 
   // Find the disjunction of all start states; we are looking for
   // all-quantified LTL formulae only
@@ -1230,7 +1286,7 @@ UChecker::verify(const Formula& f)
   FOR_EACH_VERTEX(lv, v.stg.g) {
     LTLState s = v.stg.g[lv];
     if (in_degree(lv, v.stg.g) == 0) {
-      //cerr<<"Value at START = "<<s.valstack.top()<<endl;
+      //cerr<<"Value at START = "<<s.top()<<endl;
       b = b && s.top();
     }
   } END_FOR

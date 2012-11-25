@@ -66,7 +66,7 @@ bool CodeThorn::operator!=(const InputOutput& c1, const InputOutput& c2) {
 
 string PState::toString() const {
   stringstream ss;
-  ss << "State="<< "{";
+  ss << "PState="<< "{";
   for(PState::const_iterator j=begin();j!=end();++j) {
 	if(j!=begin()) ss<<", ";
 	ss<<"(";

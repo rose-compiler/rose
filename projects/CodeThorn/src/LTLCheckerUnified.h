@@ -59,7 +59,7 @@ namespace UnifiedLTL {
       // 	  << (estate == other.estate)<<" && "
       // 	  <<(valstack == other.valstack)<<" && "
       // 	  <<(val == other.val)<<endl;
-      return (val == other.val) && (valstack == other.valstack) && (estate == other.estate);
+      return (estate == other.estate) && (val == other.val) && (valstack == other.valstack);
     }
     bool operator<(const LTLState& other) const {
       if (val  < other.val) return true;

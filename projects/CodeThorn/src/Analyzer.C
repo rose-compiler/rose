@@ -51,7 +51,7 @@ void Analyzer::printStatusMessage(bool forceDisplay) {
 	   <<color("white")<<"/"
 	   <<color("cyan")<<estateSet.size()
 	   <<color("white")<<"/"
-	   <<color("blue")<<transitionGraph.size()
+	   <<color("blue")<<getTransitionGraph()->size()
 	   <<color("white")<<"/"
 	   <<color("yellow")<<constraintSetMaintainer.size()
 	   <<color("white")<<"";
@@ -166,7 +166,7 @@ const EState* Analyzer::takeFromWorkList() {
   return co;
 }
 
-#define PARALLELIZE_BRANCHES
+//#define PARALLELIZE_BRANCHES
 
 void Analyzer::runSolver1() {
   size_t prevStateSetSize=0; // force immediate report at start
@@ -1133,7 +1133,7 @@ void Analyzer::runSolver2() {
   int threadNum;
   vector<const EState*> workVector(_numberOfThreadsToUse);
   while(1) {
-	bool analyzedReductionTriggerNode=false;
+	int analyzedReductionTriggerNode=0;
 	int workers;
 	for(workers=0;workers<_numberOfThreadsToUse;++workers) {
 	  if(!(workVector[workers]=popWorkList()))
@@ -1142,11 +1142,7 @@ void Analyzer::runSolver2() {
 	if(workers==0)
 	  break; // we are done
 
-	if(_displayDiff && (estateSet.size()>(prevStateSetSize+_displayDiff))) {
-	  printStatusMessage(true);
-	  prevStateSetSize=estateSet.size();
-	}
-#pragma omp parallel for private(threadNum),shared(workVector)
+#pragma omp parallel for private(threadNum),shared(workVector,analyzedReductionTriggerNode)
 	for(int j=0;j<workers;++j) {
 #ifdef _OPENMP
 	  threadNum=omp_get_thread_num();
@@ -1177,8 +1173,10 @@ void Analyzer::runSolver2() {
 #endif
 		  list<EState> newEStateList;
 		  newEStateList=transferFunction(e,currentEStatePtr);
-		  if(isTerminationRelevantLabel(e.source))
-			analyzedReductionTriggerNode=true;
+		  if(isTerminationRelevantLabel(e.source)) {
+			#pragma omp atomic
+			analyzedReductionTriggerNode++;
+		  }
 		  for(list<EState>::iterator nesListIter=newEStateList.begin();
 			  nesListIter!=newEStateList.end();
 			  ++nesListIter) {
@@ -1188,8 +1186,7 @@ void Analyzer::runSolver2() {
 			  const EState* newEStatePtr=pres.second;
 			  if(pres.first==true)
 				addToWorkList(newEStatePtr);			
-			  if(true || !boolOptions["semantic-fold"])
-				recordTransition(currentEStatePtr,e,newEStatePtr);
+			  recordTransition(currentEStatePtr,e,newEStatePtr);
 			}
 			if(newEState.label()!=Labeler::NO_LABEL && (!newEState.constraints()->disequalityExists()) && (isFailedAssertEState(&newEState))) {
 			  // failed-assert end-state: do not add to work list but do add it to the transition graph
@@ -1232,9 +1229,13 @@ void Analyzer::runSolver2() {
 #endif
 	} // worklist-parallel for
 	if(boolOptions["semantic-fold"]) {
-	  if(analyzedReductionTriggerNode) {
+	  if(analyzedReductionTriggerNode>0) {
 		semanticFoldingOfTransitionGraph();
 	  }
+	}
+	if(_displayDiff && (estateSet.size()>(prevStateSetSize+_displayDiff))) {
+	  printStatusMessage(true);
+	  prevStateSetSize=estateSet.size();
 	}
   } // while
   if(boolOptions["semantic-fold"]) {

@@ -99,11 +99,37 @@ bool CodeThorn::operator!=(const Constraint& c1, const Constraint& c2) {
   return !(c1==c2);
 }
 
-Constraint::Constraint(ConstraintOp op0,VariableId lhs, AValue rhs):_op(op0),_lhsVar(lhs),_intVal(CppCapsuleAValue(rhs)) {
+Constraint::Constraint(ConstraintOp op0,VariableId lhs, AValue rhs):_op(op0),_lhsVar(lhs),_rhsVar(VariableId()),_intVal(CppCapsuleAValue(rhs)) {
+  switch(op0) {
+  case EQ_VAR_CONST:
+  case NEQ_VAR_CONST:
+  case DEQ:
+	return;
+  default:
+	cerr<<"Error: Constraint constructor for wrong operator."<<endl;
+	exit(1);
+  }
 } 
-Constraint::Constraint(ConstraintOp op0,VariableId lhs, CppCapsuleAValue rhs):_op(op0),_lhsVar(lhs),_intVal(rhs) {
+Constraint::Constraint(ConstraintOp op0,VariableId lhs, CppCapsuleAValue rhs):_op(op0),_lhsVar(lhs),_rhsVar(VariableId()),_intVal(rhs) {
+  switch(op0) {
+  case EQ_VAR_CONST:
+  case NEQ_VAR_CONST:
+  case DEQ:
+	return;
+  default:
+	cerr<<"Error: Constraint constructor for wrong operator."<<endl;
+	exit(1);
+  } 
 } 
-Constraint::Constraint(ConstraintOp op0,VariableId lhs, VariableId rhs):_op(op0),_lhsVar(lhs),_rhsVar(rhs) {
+Constraint::Constraint(ConstraintOp op0,VariableId lhs, VariableId rhs):_op(op0),_lhsVar(lhs),_rhsVar(rhs),_intVal(0) {
+  switch(op0) {
+  case EQ_VAR_VAR:
+  case NEQ_VAR_VAR:
+	return;
+  default:
+	cerr<<"Error: Constraint constructor for wrong operator."<<endl;
+	exit(1);
+  }
 } 
 
 string Constraint::toString() const {
@@ -210,8 +236,9 @@ void ConstraintSet::invertConstraints() {
 void  ConstraintSet::moveConstConstraints(VariableId fromVarId, VariableId toVarId) {
   if(fromVarId==toVarId)
 	return; // duplication not necessary
-  for(ConstraintSet::iterator i=begin();i!=end();++i) {
-	Constraint c=*i;
+  ConstraintSet::iterator i=begin();
+  while(i!=end()) {
+	Constraint c=*i++; // MS: increment MUST be done here
 	if(c.isVarValOp() && c.lhsVar()==fromVarId) {
 	  addConstraint(Constraint(c.op(),toVarId,c.rhsValCppCapsule()));
 	}

@@ -15,7 +15,7 @@
 75,yes,9
 76,yes,9
 77,unknown,0
-78,yes,9
+78,unknown,0
 79,yes,9
 80,yes,9
 81,unknown,0

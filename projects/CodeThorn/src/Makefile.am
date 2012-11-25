@@ -290,6 +290,9 @@ CODETHORN_TESTS= \
     tests/rers_mini5.c \
     tests/rers_mini6.c \
     tests/rers_mini7.c \
+    tests/rers_mini8.c \
+    tests/rers_mini9.c \
+    tests/rers_mini9.ltl \
     tests/test_dowhile1.c \
     tests/test_dowhile2.c \
     tests/test_for1.c \
