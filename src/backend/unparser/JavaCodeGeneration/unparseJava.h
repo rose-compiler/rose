@@ -221,6 +221,7 @@ class Unparse_Java : public UnparseLanguageIndependentConstructs
           virtual void unparseTypeVoid(SgTypeVoid* type, SgUnparse_Info& info);
 
           virtual void unparseBaseClass(SgBaseClass* base, SgUnparse_Info& info);
+          virtual void unparseParameterType(SgType *bound_type, SgUnparse_Info& info);
 
           virtual void unparseTypeWchar(SgTypeWchar* type, SgUnparse_Info& info);
           virtual void unparseTypeSignedChar(SgTypeSignedChar* type, SgUnparse_Info& info);
@@ -231,6 +232,7 @@ class Unparse_Java : public UnparseLanguageIndependentConstructs
           virtual void unparseTypeDouble(SgTypeDouble* type, SgUnparse_Info& info);
           virtual void unparseTypeBool(SgTypeBool* type, SgUnparse_Info& info);
 
+          virtual void unparseTypedefType(SgTypedefType* type, SgUnparse_Info& info);
           virtual void unparseClassType(SgClassType* type, SgUnparse_Info& info);
           virtual void unparseEnumType(SgEnumType* type, SgUnparse_Info& info);
           virtual void unparseArrayType(SgArrayType* type, SgUnparse_Info& info);

@@ -812,7 +812,7 @@ Unparse_Java::unparseNewOp(SgExpression* expr, SgUnparse_Info& info)
      //
      if (new_op -> attributeExists("new_prefix")) {
          AstSgNodeAttribute *attribute = (AstSgNodeAttribute *) new_op -> getAttribute("new_prefix");
-         SgExpression *prefix = isSgExpression(attribute -> node);
+         SgExpression *prefix = isSgExpression(attribute -> getNode());
          ROSE_ASSERT(prefix);
          unparseExpression(prefix, info);
          curprint(".");
@@ -894,7 +894,7 @@ Unparse_Java::unparseNewOp(SgExpression* expr, SgUnparse_Info& info)
          //
          if (has_aggregate_initializer) {
              AstSgNodeAttribute *attribute = (AstSgNodeAttribute *) new_op -> getAttribute("initializer");
-             SgAggregateInitializer *initializer = isSgAggregateInitializer(attribute -> node);
+             SgAggregateInitializer *initializer = isSgAggregateInitializer(attribute -> getNode());
              ROSE_ASSERT(initializer);
              unparseAggrInit(initializer, info);
          }
@@ -926,7 +926,7 @@ Unparse_Java::unparseNewOp(SgExpression* expr, SgUnparse_Info& info)
          //
          if (new_op -> attributeExists("body")) {
              AstSgNodeAttribute *attribute = (AstSgNodeAttribute *) new_op -> getAttribute("body");
-             SgClassDeclaration *class_declaration = isSgClassDeclaration(attribute -> node);
+             SgClassDeclaration *class_declaration = isSgClassDeclaration(attribute -> getNode());
              ROSE_ASSERT(class_declaration);
              unparseClassDefnStmt(class_declaration -> get_definition(), info);
          }

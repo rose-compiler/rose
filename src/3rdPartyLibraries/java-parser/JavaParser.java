@@ -63,7 +63,7 @@ class JavaParser  implements Callable<Boolean> {
     public static native void cactionMethodDeclaration(String name, JavaToken jToken);
     public static native void cactionMethodDeclarationHeader(String name, boolean java_is_abstract, boolean java_is_native, boolean java_is_static, boolean java_is_final, boolean java_is_synchronized, boolean java_is_public, boolean java_is_protected, boolean java_is_private, boolean java_is_strictfp, int numberOfTypeParameters, int numArguments, int numThrows, JavaToken jToken);
     public static native void cactionMethodDeclarationEnd(int numberOfStatements, JavaToken jToken);
-    public static native void cactionTypeReference(String package_name, String type_name, JavaToken jToken);
+    public static native void cactionTypeReference(String package_name, String type_name, boolean is_type_parameter, JavaToken jToken);
     public static native void cactionArgument(String argumentName, JavaToken jToken);
     public static native void cactionArgumentEnd(String argumentName, boolean is_final, JavaToken jToken);
     public static native void cactionCatchArgument(String argumentName, JavaToken jToken);
@@ -229,8 +229,8 @@ class JavaParser  implements Callable<Boolean> {
 
     public static native void cactionCatchBlockEnd(JavaToken jToken);
 
-    public static native void cactionTypeParameter(JavaToken jToken);
-    public static native void cactionTypeParameterClassScope(JavaToken jToken);
+    public static native void cactionTypeParameter(String name, JavaToken jToken);
+    public static native void cactionTypeParameterEnd(String name, int num_bounds, JavaToken jToken);
     public static native void cactionUnaryExpression(JavaToken jToken);
     public static native void cactionUnaryExpressionEnd(int java_operator_kind, JavaToken jToken);
     public static native void cactionWhileStatement(JavaToken jToken);
@@ -242,7 +242,8 @@ class JavaParser  implements Callable<Boolean> {
     public static native void cactionInsertClassEnd(String className, JavaToken jToken);
 
     public static native void cactionBuildClassSupportStart(String className, String externalName, boolean is_interface, boolean is_anonymous, JavaToken jToken);
-    public static native void cactionBuildClassExtendsAndImplementsSupport(boolean has_super_class, int num_interfaces, JavaToken jToken);
+    public static native void cactionBuildTypeParameter(String name, JavaToken jToken);
+    public static native void cactionBuildClassExtendsAndImplementsSupport(int num_type_parameters, boolean has_super_class, int num_interfaces, JavaToken jToken);
     public static native void cactionBuildClassSupportEnd(String className, JavaToken jToken);
     public static native void cactionBuildArgumentSupport(String name, boolean is_final, JavaToken jToken);
     public static native void cactionBuildMethodSupport(String methodName, boolean is_constructor, boolean is_abstract, boolean is_native, int num_arguments, boolean isUserDefined, JavaToken args_loc, JavaToken method_loc);

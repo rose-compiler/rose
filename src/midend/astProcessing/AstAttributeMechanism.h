@@ -207,11 +207,25 @@ class AstRegExAttribute : public AstAttribute
  */
 class AstSgNodeAttribute : public AstAttribute
    {
-     public:
           SgNode *node;
+
+     public:
+          SgNode *getNode();
 
           AstSgNodeAttribute();
           AstSgNodeAttribute(SgNode *node);
+   };
+
+class AstSgNodeListAttribute : public AstAttribute
+   {
+          std::vector<SgNode *> nodeList;
+
+     public:
+          std::vector<SgNode *> &getNodeList();
+          void addNode(SgNode *);
+
+          AstSgNodeListAttribute();
+          AstSgNodeListAttribute(std::vector<SgNode *> &);
    };
 
 #endif

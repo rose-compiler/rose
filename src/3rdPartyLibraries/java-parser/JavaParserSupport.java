@@ -176,6 +176,146 @@ class JavaParserSupport {
         symbolTable.get(package_name).put(type_name, type); 
     }
 
+    public Class findClass(String package_name, String type_name) {
+        HashMap<String, Class> table = symbolTable.get(package_name);
+        return (table == null ? null : table.get(type_name));
+    }
+
+    public Class findPrimitiveClass(BaseTypeBinding binding) {
+        if (binding == TypeBinding.INT)
+            return java.lang.Integer.TYPE;
+        else if (binding == TypeBinding.BYTE)
+            return java.lang.Byte.TYPE;
+        else if (binding == TypeBinding.SHORT)
+            return java.lang.Short.TYPE;
+        else if (binding == TypeBinding.CHAR)
+            return java.lang.Character.TYPE;
+        else if (binding == TypeBinding.LONG)
+            return java.lang.Long.TYPE;
+        else if (binding == TypeBinding.FLOAT)
+            return java.lang.Float.TYPE;
+        else if (binding == TypeBinding.DOUBLE)
+            return java.lang.Double.TYPE;
+        else if (binding == TypeBinding.BOOLEAN)
+            return java.lang.Boolean.TYPE;
+        else if (binding == TypeBinding.VOID)
+            return java.lang.Void.TYPE;
+        else if (binding == TypeBinding.NULL) {
+            System.out.println("Don't Know what to do with ECJ's Null type!");
+            System.exit(1);
+        }
+        System.out.println("Don't Know what to do with ECJ's " + binding.getClass().getCanonicalName());
+        System.exit(1);
+        return null;
+    }
+    
+    // TODO: See error statements below! 
+    public Class findClass(TypeBinding binding) {
+        if (binding instanceof BaseTypeBinding)
+            return findPrimitiveClass((BaseTypeBinding) binding);
+        else if (binding instanceof BinaryTypeBinding) {
+              System.out.println("What(1) !???" + ((BinaryTypeBinding)binding).debugName());
+//            System.exit(1);
+        }
+        else if (binding instanceof RawTypeBinding) {
+            System.out.println("What(2) !???" + ((RawTypeBinding)binding).debugName());
+//            System.exit(1);
+        }
+        else if (binding instanceof ParameterizedTypeBinding) {
+            System.out.println("What(3) !???" + ((ParameterizedTypeBinding)binding).debugName());
+//            System.exit(1);
+        }
+        else {
+            System.out.println("*** Don't know how to process binding type " +  binding.getClass().getCanonicalName());
+//            System.exit(1);
+        }
+
+        return getClassForName(getFullyQualifiedTypeName(binding));
+    }
+    
+    Method getRawMethod(ParameterizedMethodBinding parameterized_method_binding) {
+        ParameterizedTypeBinding parameterized_type_binding = (ParameterizedTypeBinding) parameterized_method_binding.declaringClass;
+        TypeBinding arguments[] = parameterized_method_binding.original().parameters;
+        String package_name = getPackageName(parameterized_type_binding),
+               type_name = getTypeName(parameterized_type_binding),
+               method_name = new String(parameterized_method_binding.selector);
+        Class<?> cls = findClass(package_name, type_name);
+        assert(cls != null);
+        Method methods[] = cls.getDeclaredMethods();
+        for (int i = 0; i < methods.length; i++) {
+            Method method = methods[i];
+            Type[] types = method.getGenericParameterTypes();
+            assert(types != null);
+            if (types.length == arguments.length && method_name.equals(method.getName())) {
+                int j = 0;
+                for (; j < types.length; j++) {
+                    assert(types[j] != null);
+                    if (types[j] instanceof TypeVariable){
+                        TypeVariable<?> type = (TypeVariable<?>) types[j];
+                        if (! type.getName().equals(arguments[j].debugName()))
+                            break;
+                    }
+                    else if (types[j] instanceof Class){
+                        Class class_arg = (Class) types[j];
+                        if (class_arg != findClass(arguments[j]))
+                            break;
+                    }
+                    else {
+                        System.out.println("Don't know what to do with parameter type " + types[j].getClass().getCanonicalName() + " in method " + method.getName() + " in type " + parameterized_type_binding.debugName());
+  //                      break;
+                    }
+                }
+                if (j == types.length) {
+                    return method;
+                }
+            }
+        }
+                
+        return null;
+    }
+
+
+    Constructor getRawConstructor(ParameterizedMethodBinding parameterized_constructor_binding) {
+        ParameterizedTypeBinding parameterized_type_binding = (ParameterizedTypeBinding) parameterized_constructor_binding.declaringClass;
+        TypeBinding arguments[] = parameterized_constructor_binding.original().parameters;
+        String package_name = getPackageName(parameterized_type_binding),
+               type_name = getTypeName(parameterized_type_binding),
+               constructor_name = new String(parameterized_constructor_binding.selector);
+        Class<?> cls = findClass(package_name, type_name);
+        assert(cls != null);
+        Constructor constructors[] = cls.getDeclaredConstructors();
+        for (int i = 0; i < constructors.length; i++) {
+            Constructor constructor = constructors[i];
+            Type[] types = constructor.getGenericParameterTypes();
+            assert(types != null);
+            if (types.length == arguments.length && constructor_name.equals(constructor.getName())) {
+                int j = 0;
+                for (; j < types.length; j++) {
+                    assert(types[j] != null);
+                    if (types[j] instanceof TypeVariable){
+                        TypeVariable<?> type = (TypeVariable<?>) types[j];
+                        if (! type.getName().equals(arguments[j].debugName()))
+                            break;
+                    }
+                    else if (types[j] instanceof Class){
+                        Class class_arg = (Class) types[j];
+                        if (class_arg != findClass(arguments[j]))
+                            break;
+                    }
+                    else {
+                        System.out.println("Don't know what to do with parameter type " + types[j].getClass().getCanonicalName() + " in constructor " + constructor.getName() + " in type " + parameterized_type_binding.debugName());
+//                        break;
+                    }
+                }
+                if (j == types.length) {
+                    return constructor;
+                }
+            }
+        }
+                
+        return null;
+    }
+
 
     Class getClassForName(String typename) {
         Class cls = null;
@@ -516,7 +656,7 @@ System.out.println("    Class Name           " + ": " + (cls == null ? "What!?" 
             Class cls = preprocessClass(type_binding);
             assert(cls != null);
 
-            JavaParser.cactionTypeReference(getPackageName(type_binding), getTypeName(type_binding), jToken);
+            JavaParser.cactionTypeReference(getPackageName(type_binding), getTypeName(type_binding), type_binding instanceof TypeVariableBinding, jToken);
 
             for (int i = type_prefix_length; i < node.tokens.length; i++) {
                 String field = new String(node.tokens[i]);
@@ -544,26 +684,8 @@ System.out.println("    Class Name           " + ": " + (cls == null ? "What!?" 
         }
     }
 
- 
-    /**
-     * 
-     */
-    public String qualifiedName(char [][]tokens) {
-        StringBuffer name = new StringBuffer();
-        for (int i = 0, tokenArrayLength = tokens.length; i < tokenArrayLength; i++) {
-            String tokenString = new String(tokens[i]);
 
-            if (i > 0) {
-                name.append('.');
-            }
-
-            name.append(tokenString);
-        }
-
-        return name.toString();
-    }
-    
-    /**
+     /**
      * 
      * @param binding
      * @return
@@ -737,13 +859,25 @@ System.out.println("    Class Name           " + ": " + (cls == null ? "What!?" 
         JavaParser.cactionInsertClassEnd(class_name, location);
     }
 
-
     /**
      * 
      * @param cls
      */
     public void traverseClass(Class cls) {
         assert(cls != null);
+// TODO: Remove this !!!
+/*        
+System.out.println();
+System.out.println("Processing class " + cls.getCanonicalName() + " with type parameters:");        
+TypeVariable<Class<?>>[] type_parameters = cls.getTypeParameters();
+if (type_parameters != null){
+    for (int i = 0; i < type_parameters.length; i++) {
+        TypeVariable<Class<?>> type_parameter = type_parameters[i];
+        System.out.println("    " + type_parameter.getName());
+    }
+}
+else System.out.println("NO type parameters!!!");
+*/
         TypeDeclaration node = userTypeTable.get(cls); // is this a user-defined type?
 
         LocalOrAnonymousType special_type = (node != null ? localOrAnonymousType.get(node) : null);
@@ -755,7 +889,7 @@ System.out.println("    Class Name           " + ": " + (cls == null ? "What!?" 
         String class_name = (special_type != null 
                                     ? (special_type.isAnonymous() ? special_type.typename : special_type.simplename)
                                     : cls.getSimpleName());
-        
+
         JavaParser.cactionBuildClassSupportStart(class_name,
                                                  (special_type == null ? "" : special_type.simplename), 
                                                  cls.isInterface(),
@@ -831,7 +965,26 @@ System.out.println("    Class Name           " + ": " + (cls == null ? "What!?" 
             generateAndPushType(interfacelist[i]);
         }
 
-        JavaParser.cactionBuildClassExtendsAndImplementsSupport((super_class != null), interfacelist.length, location);
+        TypeVariable<?> parameters[] = cls.getTypeParameters();
+// TODO: Remove this !!!
+/*
+if (parameters.length > 0) {
+System.out.print("Processing parameterized type " + cls.getSimpleName() + "<" + parameters[0].getName());
+for (int i = 1; i < parameters.length; i++) {
+    System.out.print(", " + parameters[i].getName());
+}
+System.out.println(">");
+}
+*/
+         //
+         // If this is a generic type, process its type parameters 
+         //
+         for (int i = 0; i < parameters.length; i++) {
+             TypeVariable<?> parameter = parameters[i];
+             JavaParser.cactionBuildTypeParameter(parameter.getName(), location);
+         }
+
+        JavaParser.cactionBuildClassExtendsAndImplementsSupport(parameters.length, (super_class != null), interfacelist.length, location);
 
         //
         // Process the inner classes. Note that the inner classes must be processed first in case
@@ -862,10 +1015,48 @@ System.out.println("    Class Name           " + ": " + (cls == null ? "What!?" 
             Constructor ct = ctorlist[i];
             if (ct.isSynthetic()) // skip synthetic constructors
                 continue;
+
             Class pvec[] = ct.getParameterTypes();
             for (int j = 0; j < pvec.length; j++) {
                 preprocessClass(pvec[j]);
             }
+// TODO: Remove this !!!            
+/*
+System.out.println();
+System.out.print("    Processing constructor " + ct.getName() + "(");
+Type[] types = ct.getGenericParameterTypes();
+if (types != null && types.length > 0) {
+    assert(pvec.length == types.length);
+    System.out.print("(" + pvec[0].getCanonicalName() + ") ");
+    if (types[0] == null)
+         System.out.print("*");
+    else if (types[0] instanceof TypeVariable<?>)
+         System.out.print(((TypeVariable<?>) types[0]).getName());
+    else if (types[0] instanceof Class)
+         System.out.print("+" + ((Class) types[0]).getName());
+    else System.out.print("-" + types[0].getClass().getCanonicalName());
+
+    for (int j = 1; j < types.length; j++) {
+        System.out.print(", ");
+//        System.out.print(types[j] == null ? "*" : (types[j] instanceof TypeVariable ? ((TypeVariable<?>) types[j]).getName() : types[j].getClass().getCanonicalName()));
+        System.out.print(", (" + pvec[j].getCanonicalName() + ") ");
+        if (types[j] == null)
+            System.out.print("*");
+        else if (types[j] instanceof TypeVariable){
+            TypeVariable<?> type = (TypeVariable<?>) types[j];
+            System.out.print("(" + type.getClass().getCanonicalName() + ") " + type.getName());
+        }
+        else if (types[j] instanceof Class){
+            System.out.print("+" + ((Class) types[j]).getName());
+        }
+        else {
+            System.out.print("-" + types[j].getClass().getCanonicalName());
+        }
+    }
+}
+else System.out.print("...");
+System.out.println(") in class " + cls.getCanonicalName());
+*/
         }
 
         //
@@ -875,14 +1066,58 @@ System.out.println("    Class Name           " + ": " + (cls == null ? "What!?" 
             Method m = methlist[i];
             if (m.isSynthetic()) // skip synthetic methods
                 continue;
+
             Class pvec[] = m.getParameterTypes();
 
             // Process the return type (add a class if this is not already in the ROSE AST).
             preprocessClass(m.getReturnType());
-
             for (int j = 0; j < pvec.length; j++) {
                 preprocessClass(pvec[j]);
             }
+// TODO: Remove this!
+/*            
+System.out.println();
+System.out.print("    Processing method " + m.getName() + "(");
+Type[] types = m.getGenericParameterTypes();
+if (types != null && types.length > 0) {
+    assert(pvec.length == types.length);
+    System.out.print("(" + pvec[0].getCanonicalName() + ") ");
+    if (types[0] == null)
+         System.out.print("*");
+    else if (types[0] instanceof TypeVariable<?>)
+         System.out.print(((TypeVariable<?>) types[0]).getName());
+    else if (types[0] instanceof Class)
+         System.out.print("+" + ((Class) types[0]).getName());
+    else System.out.print("-" + types[0].getClass().getCanonicalName());
+
+    for (int j = 1; j < types.length; j++) {
+        System.out.print(", (" + pvec[j].getCanonicalName() + ") ");
+//        System.out.print(types[j] == null ? "*" : (types[j] instanceof TypeVariable ? ((TypeVariable<?>) types[j]).getName() : types[j].getClass().getCanonicalName()));
+        if (types[j] == null)
+            System.out.print("*");
+        else if (types[j] instanceof TypeVariable){
+            TypeVariable<?> type = (TypeVariable<?>) types[j];
+            System.out.print("(" + type.getClass().getCanonicalName() + ") " + type.getName());
+        }
+        else if (types[j] instanceof Class){
+            System.out.print("+" + ((Class) types[j]).getName());
+        }
+        else {
+            System.out.print("-" + types[j].getClass().getCanonicalName());
+        }
+    }
+
+try {
+    Method method = cls.getDeclaredMethod(m.getName(), pvec);
+}
+catch (NoSuchMethodException e) {
+    System.out.println("Can't find method " + m.getName());
+    System.exit(1);
+}
+}
+else System.out.print("...");
+System.out.println(") in class " + cls.getCanonicalName());
+*/
         }        
     
         //
@@ -931,7 +1166,7 @@ System.out.println("    Class Name           " + ": " + (cls == null ? "What!?" 
                     MethodBinding method_binding = method.binding;
 
                     if (method.isConstructor()) {
-                        JavaParser.cactionTypeReference("", "void", method_location);
+                        JavaParser.cactionTypeReference("", "void", false /* not a TypeVariableBinding */, method_location);
                     }
                     else {
                         generateAndPushType(method_binding.returnType, method_location);
@@ -1000,7 +1235,7 @@ System.out.println("    Class Name           " + ": " + (cls == null ? "What!?" 
 
                 Class pvec[] = ct.getParameterTypes();
 
-                JavaParser.cactionTypeReference("", "void", location);
+                JavaParser.cactionTypeReference("", "void", false /* Not a TypeVariableBinding */, location);
 
                 for (int j = 0; j < pvec.length; j++) {
                     generateAndPushType(pvec[j]);
@@ -1127,18 +1362,18 @@ System.out.println("    Class Name           " + ": " + (cls == null ? "What!?" 
                        simple_name = cls.getSimpleName(),
                        package_name = getMainPackageName(cls, 3),
                        type_name = canonical_name.substring(package_name.length() == 0 ? 0 : package_name.length() + 1);
-                JavaParser.cactionTypeReference(package_name, type_name, location);
+                JavaParser.cactionTypeReference(package_name, type_name, false /* not a TypeBindingVariable */, location);
                 // System.out.println("Exiting as a test in generateType(Class) (case of proper class)");
                 // System.exit(1);
             }
         }
         else {
-            if (verboseLevel > 0)
-                System.out.println("Build a primitive type: int ");
-
             String type_name = cls.getName();
 
-            JavaParser.cactionTypeReference("", type_name, location);
+            if (verboseLevel > 0)
+                System.out.println("Build a primitive type: " + type_name);
+
+            JavaParser.cactionTypeReference("", type_name, false /* Not a TypeVariableBinding */, location);
         }
 
         if (verboseLevel > 0)
@@ -1191,7 +1426,7 @@ System.out.println("    Class Name           " + ": " + (cls == null ? "What!?" 
         else {
             String package_name = getPackageName(type_binding),
                    type_name = getTypeName(type_binding);
-            JavaParser.cactionTypeReference(package_name, type_name, location);
+            JavaParser.cactionTypeReference(package_name, type_name, type_binding instanceof TypeVariableBinding, location);
         }
     }
 

@@ -450,11 +450,11 @@ void setJavaSourcePositionUnavailableInFrontend(SgLocatedNode *locatedNode);
 string convertJavaPackageNameToCxxString(JNIEnv *env, const jstring &java_string);
 string convertJavaStringToCxxString(JNIEnv *env, const jstring &java_string);
 
-SgMemberFunctionDeclaration *buildDefiningMemberFunction   (const SgName &inputName, SgClassDefinition *classDefinition, int num_arguments, JNIEnv *env, jobject methodLoc, jobject argsLoc);
+SgMemberFunctionDeclaration *buildDefiningMemberFunction(const SgName &inputName, SgClassDefinition *classDefinition, int num_arguments, JNIEnv *env, jobject methodLoc, jobject argsLoc);
 SgMemberFunctionDeclaration *lookupMemberFunctionDeclarationInClassScope(SgClassDefinition *classDefinition, const SgName &function_name, int num_arguments);
-SgMemberFunctionDeclaration *lookupMemberFunctionDeclarationInClassScope(SgClassDefinition *classDefinition, const SgName &function_name, const list<SgType *> &);
-SgMemberFunctionDeclaration *findMemberFunctionDeclarationInClass(SgClassDefinition *classDefinition, const SgName &function_name, const list<SgType *>& types);
-SgMemberFunctionSymbol *findFunctionSymbolInClass(SgClassDefinition *classDefinition, const SgName &function_name, const list<SgType *> &);
+SgMemberFunctionDeclaration *lookupMemberFunctionDeclarationInClassScope(SgClassDefinition *classDefinition, const SgName &function_name, list<SgType *> &);
+SgMemberFunctionDeclaration *findMemberFunctionDeclarationInClass(SgClassDefinition *classDefinition, const SgName &function_name, list<SgType *>& types);
+SgMemberFunctionSymbol *findFunctionSymbolInClass(SgClassDefinition *classDefinition, const SgName &function_name, list<SgType *> &);
 
 SgClassDeclaration *buildJavaClass (const SgName &className, SgScopeStatement *scope, JNIEnv *env, jobject jToken);
 
