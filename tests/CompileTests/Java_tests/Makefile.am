@@ -140,6 +140,8 @@ TESTCODES_REQUIRED_TO_PASS_FAILING_BACKEND_COMPILE = \
 # This is where the Java generics tests are put (currently not required to pass all phases).
 TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_6 = \
      test2011_43.java \
+     test2011_44.java \
+     test2011_45.java \
      test2011_46.java \
      test2011_48.java \
      test2011_49.java \
@@ -160,9 +162,7 @@ TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_6 = \
      cave3_foreach7.java \
      cave3_labelBreak4.java
 
-TESTCODES_REQUIRED_TO_PASS_FAILING_FOR_JAVA_6 = \
-     test2011_44.java \
-     test2011_45.java
+TESTCODES_REQUIRED_TO_PASS_FAILING_FOR_JAVA_6 = 
 
 # Later we will move these tests to the gcjTestSuite subdirectory.
 GCJ_TESTCODES_REQUIRED_TO_PASS = \

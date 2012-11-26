@@ -40,6 +40,7 @@ Unparse_Java::unparseType(SgType* type, SgUnparse_Info& info)
 
           case V_SgArrayType:      unparseArrayType( isSgArrayType(type), info); break;
           case V_SgPointerType:    unparsePointerType( isSgPointerType(type), info); break;
+          case V_SgTypedefType:    unparseTypedefType( isSgTypedefType(type), info); break;
           case V_SgClassType:      unparseClassType( isSgClassType(type), info); break;
           case V_SgEnumType:       unparseEnumType( isSgEnumType(type), info); break;
           case V_SgModifierType:   unparseModifierType( isSgModifierType(type), info); break;
@@ -62,6 +63,13 @@ Unparse_Java::unparseModifierType(SgModifierType* type, SgUnparse_Info& info) {
 }
 
 void
+Unparse_Java::unparseTypedefType(SgTypedefType *type, SgUnparse_Info& info)
+   {
+     curprint(type -> get_name().getString());
+   }
+
+
+void
 Unparse_Java::unparseClassType(SgClassType *type, SgUnparse_Info& info)
    {
      //SgClassDeclaration *decl = isSgClassDeclaration(type->get_declaration());
@@ -74,9 +82,14 @@ Unparse_Java::unparseClassType(SgClassType *type, SgUnparse_Info& info)
      // "type -> get_qualified_name()" because the qualified name has been altered to remap
      // any use of the character '.' which is not a valid character for a variable name in ROSE.
      //
-     AstRegExAttribute *attribute = (AstRegExAttribute *) type -> getAttribute("name");
-     ROSE_ASSERT(attribute);
-     curprint(attribute -> expression);
+     if (type -> attributeExists("is_parameter_type")) {
+         curprint(type -> get_name().getString());
+     }
+     else {
+         AstRegExAttribute *attribute = (AstRegExAttribute *) type -> getAttribute("name");
+         ROSE_ASSERT(attribute);
+         curprint(attribute -> expression);
+     }
    }
 
 
@@ -119,6 +132,11 @@ Unparse_Java::unparseJavaParameterizedType(SgJavaParameterizedType* type, SgUnpa
                   {
                  // It might be that this branch should be an error for Java. But likely caught elsewhere in ROSE.
                   }
+
+                 if (i + 1 < type_list->get_args().size())
+                    {
+                      curprint(", ");
+                    }
              }
         }
 

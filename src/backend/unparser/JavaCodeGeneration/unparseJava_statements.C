@@ -950,6 +950,72 @@ Unparse_Java::unparseClassDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
      unparseName(classdecl_stmt->get_name(), info);
 
+     if (classdecl_stmt -> attributeExists("type_parameters")) {
+         AstSgNodeAttribute *attribute = (AstSgNodeAttribute *) classdecl_stmt -> getAttribute("type_parameters");
+         curprint("<");
+         SgTemplateParameterList *type_list = isSgTemplateParameterList(attribute -> getNode());
+         ROSE_ASSERT(type_list);
+         for (size_t i = 0; i < type_list -> get_args().size(); i++) {
+             SgClassType *parameter_type = isSgClassType(type_list -> get_args()[i] -> get_type());
+             ROSE_ASSERT(parameter_type);
+             curprint(parameter_type -> get_name().getString());
+             SgClassDeclaration *parameter_class_declaration = isSgClassDeclaration(parameter_type -> get_declaration() -> get_definingDeclaration());
+             ROSE_ASSERT(parameter_class_declaration);
+             SgClassDefinition *parameter_class_definition = parameter_class_declaration -> get_definition();
+             ROSE_ASSERT(parameter_class_definition);
+
+             SgBaseClassPtrList& bases = parameter_class_definition -> get_inheritances();
+
+             //
+             // TODO: This can't work for type parameters as an SgJavaParameterizedType is not mapped one-to-one and onto
+             //  with its associated SgClassDeclaration.  See alternate attributed ("parameter_type_bounds") code below.
+             //
+             /*
+             int first_index = 0;
+             if (bases.size() > 0) {
+                 SgBaseClass *super_class = isSgBaseClass(bases[0]);
+                 ROSE_ASSERT (super_class);
+                 if (! super_class -> get_base_class() -> get_explicit_interface()) {
+                     first_index++;
+                     curprint(" extends ");
+                     unparseParameterType(super_class, info);
+                 }
+             }
+             if (bases.size() - first_index > 0) {
+                 curprint(" & ");
+                 for (int i = first_index; i < bases.size(); i++) {
+                     SgBaseClass *interface = isSgBaseClass(bases[i]);
+                     ROSE_ASSERT(interface -> get_base_class() -> get_explicit_interface());
+                     unparseParameterType(interface, info);
+                     if (i + 1 < bases.size()) {
+                         curprint(", ");
+                     }
+                 }
+             }
+             */
+
+             AstSgNodeListAttribute *attribute = ( AstSgNodeListAttribute *) parameter_class_declaration -> getAttribute("parameter_type_bounds");
+             std::vector<SgNode *> &parm_list = attribute -> getNodeList();
+             ROSE_ASSERT(parm_list.size() == bases.size());
+             SgBaseClass *super_class = (parm_list.size() > 0 ? bases[0] : NULL);
+             for (int k = 0; k < parm_list.size(); k++) {
+                 SgType *type = isSgType(parm_list[k]);
+                 if (k == 0 && (! super_class -> get_base_class() -> get_explicit_interface())) {
+                     curprint(" extends ");
+                 }
+                 else {
+                     curprint(" & ");
+                 }
+                 unparseParameterType(type, info);
+             }
+
+             if (i + 1 < type_list->get_args().size()) {
+                 curprint(", ");
+             }
+         }
+         curprint(">");
+     }
+
      SgClassDefinition* class_def = classdecl_stmt->get_definition();
      ROSE_ASSERT(class_def != NULL);
      SgBaseClassPtrList& bases = class_def->get_inheritances();
@@ -1285,4 +1351,18 @@ Unparse_Java::unparseBaseClass(SgBaseClass* base, SgUnparse_Info& info) {
     ROSE_ASSERT(class_type);
     //unparseName(base_class->get_name(), info);
     unparseClassType(class_type, info);
+}
+
+
+void
+Unparse_Java::unparseParameterType(SgType *bound_type, SgUnparse_Info& info) {
+    ROSE_ASSERT(bound_type != NULL);
+
+    SgClassType *class_type = isSgClassType(bound_type);
+    SgJavaParameterizedType *parameterized_type = isSgJavaParameterizedType(bound_type);
+    ROSE_ASSERT(class_type || parameterized_type);
+
+    if (class_type)
+        unparseClassType(class_type, info);
+    else unparseJavaParameterizedType(parameterized_type, info);
 }

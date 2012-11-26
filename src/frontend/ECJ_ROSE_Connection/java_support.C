@@ -478,6 +478,7 @@ void memberFunctionSetup(SgName &name, SgClassDefinition *classDefinition, int n
         parameterlist -> append_arg(initializedName);
         initializedName -> set_parent(parameterlist);
     }
+// TODO: Remove this !!!
 /*
 cout << "Adding function " 
 << name
@@ -584,7 +585,7 @@ SgMemberFunctionDeclaration *buildDefiningMemberFunction(const SgName &inputName
  * it is in fact correct since ECJ has already chosen the correct function and what we are doing
  * here is to look for a "perfect" mach with the function that was chosen.
  */
-SgMemberFunctionDeclaration *findMemberFunctionDeclarationInClass(SgClassDefinition *classDefinition, const SgName &function_name, const list<SgType *>& formal_types) {
+SgMemberFunctionDeclaration *findMemberFunctionDeclarationInClass(SgClassDefinition *classDefinition, const SgName &function_name, list<SgType *>& formal_types) {
     SgMemberFunctionDeclaration *function_declaration = lookupMemberFunctionDeclarationInClassScope(classDefinition, function_name, formal_types);
     if (function_declaration == NULL) {
         const SgBaseClassPtrList &inheritance = classDefinition->get_inheritances();
@@ -599,7 +600,7 @@ SgMemberFunctionDeclaration *findMemberFunctionDeclarationInClass(SgClassDefinit
 /**
  * Lookup a member function in current class only (doesn't look in super and interfaces classes)
  */
-SgMemberFunctionDeclaration *lookupMemberFunctionDeclarationInClassScope(SgClassDefinition *classDefinition, const SgName &function_name, const list<SgType *>& types) {
+SgMemberFunctionDeclaration *lookupMemberFunctionDeclarationInClassScope(SgClassDefinition *classDefinition, const SgName &function_name, list<SgType *>& types) {
     int num_arguments = types.size();
     SgMemberFunctionDeclaration *function_declaration = NULL;
     vector<SgDeclarationStatement *> declarations = classDefinition -> get_members();
@@ -650,7 +651,7 @@ SgMemberFunctionDeclaration *lookupMemberFunctionDeclarationInClassScope(SgClass
     return function_declaration;
 }
 
-SgMemberFunctionSymbol *findFunctionSymbolInClass(SgClassDefinition *classDefinition, const SgName &function_name, const list<SgType *> &formal_types) {
+SgMemberFunctionSymbol *findFunctionSymbolInClass(SgClassDefinition *classDefinition, const SgName &function_name, list<SgType *> &formal_types) {
     ROSE_ASSERT(classDefinition != NULL);
 
     SgMemberFunctionDeclaration *function_declaration = findMemberFunctionDeclarationInClass(classDefinition, function_name, formal_types);
@@ -658,6 +659,23 @@ SgMemberFunctionSymbol *findFunctionSymbolInClass(SgClassDefinition *classDefini
         function_declaration = lookupMemberFunctionDeclarationInClassScope(ObjectClassDefinition, function_name, formal_types);
     }
 
+// TODO: Remove this !!!
+/*
+if (!function_declaration){
+cout << "Could not find function " << function_name.getString() << "(";
+std::list<SgType*>::iterator i = formal_types.begin();
+if (i != formal_types.end()) {
+cout << getTypeName(*i);
+for (i++; i != formal_types.end(); i++) {
+cout << ", " << getTypeName(*i);
+}
+}
+cout << ") in class " 
+<< classDefinition -> get_qualified_name()
+<< endl;
+cout.flush();
+}
+*/
     ROSE_ASSERT(function_declaration);
 
     SgSymbol *symbol =  function_declaration -> get_symbol_from_symbol_table();
@@ -877,7 +895,7 @@ SgType *lookupTypeByName(SgName &package_name, SgName &type_name, int num_dimens
     ROSE_ASSERT(! astJavaScopeStack.empty());
     ROSE_ASSERT(qualifiedTypeName.size());
 
-    SgClassSymbol *type_symbol = NULL;
+    SgClassSymbol *class_symbol = NULL;
 
     list<SgName>::iterator name = qualifiedTypeName.begin();
 
@@ -915,25 +933,26 @@ SgType *lookupTypeByName(SgName &package_name, SgName &type_name, int num_dimens
             // Note that in the case of a class, we recursively search the class as well as its
             // super class and interfaces.
             //
-            for (std::list<SgScopeStatement*>::iterator i = astJavaScopeStack.begin(); type_symbol == NULL && i != astJavaScopeStack.end(); i++)  {
-                type_symbol = (isSgClassDefinition(*i)
-                              ? lookupSimpleNameTypeInClass((*name), (SgClassDefinition *) (*i))
-                              : (*i) -> lookup_class_symbol(*name));
+            for (std::list<SgScopeStatement*>::iterator i = astJavaScopeStack.begin(); class_symbol == NULL && i != astJavaScopeStack.end(); i++)  {
+                class_symbol = (isSgClassDefinition(*i)
+                                    ? lookupSimpleNameTypeInClass((*name), (SgClassDefinition *) (*i))
+                                    : (*i) -> lookup_class_symbol(*name));
                 if ((*i) == ::globalScope)
                     break;
             }
 
             //
-            // If the type_symbol still has not been found, look for it in java.lang!
+            // If the class_symbol still has not been found, look for it in java.lang!
+            // At this point, the type_symbol in qustion must be a class_symbol.
             //
-            if (type_symbol == NULL) {
+            if (class_symbol == NULL) {
                 package_name = "java_lang";
                 SgClassSymbol *namespace_symbol = ::globalScope -> lookup_class_symbol(package_name);
                 ROSE_ASSERT(namespace_symbol);
                 SgClassDeclaration *declaration = (SgClassDeclaration *) namespace_symbol -> get_declaration() -> get_definingDeclaration();
                 SgClassDefinition *package = declaration -> get_definition();
                 ROSE_ASSERT(package);
-                type_symbol = package -> lookup_class_symbol(*name);
+                class_symbol = package -> lookup_class_symbol(*name);
             }
         }
     }
@@ -943,29 +962,35 @@ SgType *lookupTypeByName(SgName &package_name, SgName &type_name, int num_dimens
         SgClassDeclaration *declaration = (SgClassDeclaration *) namespace_symbol -> get_declaration() -> get_definingDeclaration();
         SgClassDefinition *package = declaration -> get_definition();
         ROSE_ASSERT(package);
-        type_symbol = package -> lookup_class_symbol(*name);
+        class_symbol = package -> lookup_class_symbol(*name);
     }
 
     //
-    // If we are dealing with an instantiable type, we only have a type_symbol at this point.
+    // If we are dealing with an instantiable type, we only have a class_symbol at this point.
     //
     if (type == NULL) { // not a primitive type
 // TODO: Remove this!!!
-if (! type_symbol){
+/*
+if (! class_symbol){
 cout << "No symbol found for " << package_name.str() << (package_name.getString().size() ? "." : "") << type_name.str() << endl;
 cout.flush();
 }
-        ROSE_ASSERT(type_symbol);
+else{
+cout << "Found symbol " << isSgClassType(class_symbol -> get_type()) -> get_qualified_name().str() << endl;
+cout.flush();
+}
+*/
+        ROSE_ASSERT(class_symbol);
 
         for (name++; name != qualifiedTypeName.end(); name++) {
-            SgClassDeclaration *declaration = isSgClassDeclaration(type_symbol -> get_declaration() -> get_definingDeclaration());
+            SgClassDeclaration *declaration = isSgClassDeclaration(class_symbol -> get_declaration() -> get_definingDeclaration());
             ROSE_ASSERT(declaration);
             SgClassDefinition *definition = declaration -> get_definition();
-            type_symbol = lookupSimpleNameTypeInClass((*name), definition);
-            ROSE_ASSERT(type_symbol);
+            class_symbol = lookupSimpleNameTypeInClass((*name), definition);
+            ROSE_ASSERT(class_symbol);
         }
 
-        type = type_symbol -> get_type();
+        type = class_symbol -> get_type();
 
         SgClassType *class_type = isSgClassType(type);
         ROSE_ASSERT(class_type);
