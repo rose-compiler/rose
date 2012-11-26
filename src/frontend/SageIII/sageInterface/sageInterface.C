@@ -5020,12 +5020,12 @@ SageInterface::setSourcePositionToDefault( T* node )
   // in their expression lists (which could be any expression).   The isFromAnotherFile() will
   // use the get_file_info() function on the SgExpression IR nodes and the data from that 
   // Sg_File_Info object to determine if that expression subtree should be unparsed.  This 
-  // expression level grainularity of unparsing capability is extremely useful in handling
+  // expression level granularity of unparsing capability is extremely useful in handling
   // now #includes and other CPP directives are woven back into the AST.  But since the
   // get_file_info() function is used, and it returns the value of get_operatorPosition(),
   // it is critically important to have correct data in the SgExpression::p_operatorPosition
   // Sg_File_Info object (it counts more that the startOfConstruct and endOfConstruct
-  // Sg_File_Info objects in controling what expressions are unparsed.  So we have to set these
+  // Sg_File_Info objects in controlling what expressions are unparsed.  So we have to set these
   // up for all expressions (since any SgExpression could appear in the list contained in 
   // a SgAggregateInitializer or SgCompoundInitializer.
 
@@ -5095,7 +5095,7 @@ SageInterface::setSourcePositionAsTransformation(SgNode *node)
      ROSE_ASSERT(node != NULL);
 
   // DQ (10/12/2012): Commented out since we are past AST regression tests passing and now trying to get this work checked in.
-     printf ("In SageInterface::setSourcePositionAsTransformation() for node = %p = %s (make this an error while debugging AST construction) \n",node,node->class_name().c_str());
+//     printf ("In SageInterface::setSourcePositionAsTransformation() for node = %p = %s (make this an error while debugging AST construction) \n",node,node->class_name().c_str());
   // ROSE_ASSERT(false);
 
      SgLocatedNode*     locatedNode = isSgLocatedNode(node);
@@ -5240,8 +5240,10 @@ SageInterface::setSourcePositionForTransformation(SgNode *root)
   // This is the semantically correct function to call.
   // setSourcePositionAtRootAndAllChildrenAsTransformation(root);
 
-  // DQ (5/2/2012): This is a test to replace the support we have to mark every thing as a transofmraiton with the new mechanism using source position modes.
+  // DQ (5/2/2012): This is a test to replace the support we have to mark every thing as a transformation with the new mechanism using source position modes.
   // setSourcePosition(root);
+  // Liao 11/21/2012. This function should only be called when the mode is transformation
+     ROSE_ASSERT(SageBuilder::SourcePositionClassificationMode == SageBuilder::e_sourcePositionTransformation);
      setSourcePositionAtRootAndAllChildren(root);
 #else
      Rose_STL_Container <SgNode*> nodeList= NodeQuery::querySubTree(root,V_SgNode);
@@ -5310,7 +5312,7 @@ SageInterface::setSourcePosition(SgNode* node)
 
           case e_sourcePositionDefault: // Default source position.
              {
-#if 1
+#if 0
                printf ("e_sourcePositionDefault in SageInterface::setSourcePosition() \n");
 #endif
                SgLocatedNode* locatedNode = isSgLocatedNode(node);
@@ -5330,7 +5332,7 @@ SageInterface::setSourcePosition(SgNode* node)
 
           case e_sourcePositionTransformation:       // Classify as a transformation.
              {
-#if 1
+#if 0
                printf ("e_sourcePositionTransformation in SageInterface::setSourcePosition() \n");
 #endif
             // setSourcePositionAtRootAndAllChildrenAsTransformation(node);
@@ -5350,7 +5352,7 @@ SageInterface::setSourcePosition(SgNode* node)
 
           case e_sourcePositionNullPointers:         // Set pointers to Sg_File_Info objects to NULL.
              {
-#if 1
+#if 0
                printf ("e_sourcePositionNullPointers in SageInterface::setSourcePosition() \n");
 #endif
                setSourcePositionPointersToNull(node);
@@ -5533,7 +5535,7 @@ SgStatement* SageInterface::getFirstStatement(SgScopeStatement *scope, bool incl
   else
   {
  // DQ Note: Do we really need to make a copy of the list just to return a pointer to the first entry?
-    SgStatementPtrList stmtList = scope->getStatementList();
+    SgStatementPtrList& stmtList = scope->getStatementList();
    if (includingCompilerGenerated)
     {
    // DQ Note: (stmtList.empty() == false) is a much faster test  O(1) than (stmtList.size() > 0), which is O(n).
@@ -8917,9 +8919,12 @@ static SgVariableSymbol * addArg(SgFunctionParameterList *paraList, SgInitialize
           initName->set_declptr(func_decl);
         }
 
+  // Liao 11/21/2012. Part of this function's work is to set scope for initName which is freshly created. So we should not assert
+  // that initName already has a scope.
+  //
   // DQ (12/4/2011): Added check...(fails for case of SgTypeEllipse).
   // ROSE_ASSERT(initName->get_scope() != NULL);
-     ROSE_ASSERT(initName->get_scope() != NULL || isSgTypeEllipse(initName->get_type()) != NULL);
+  //   ROSE_ASSERT(initName->get_scope() != NULL || isSgTypeEllipse(initName->get_type()) != NULL);
 
   // ROSE_ASSERT (scope); -- scope may not be set because the function declaration may not have been inserted anywhere
 
@@ -9205,7 +9210,7 @@ void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStm
           ROSE_ASSERT(parent);
         }
 
-#if 1
+#if 0
      printf ("In SageInterface::insertStatement(): insert newStmt = %p = %s before/after targetStmt = %p = %s \n",newStmt,newStmt->class_name().c_str(),targetStmt,targetStmt->class_name().c_str());
 #endif
 
@@ -9445,7 +9450,7 @@ void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStm
                        else if (SgOmpBodyStatement * p = isSgOmpBodyStatement (parent))
                        {
                          SgBasicBlock* newparent = buildBasicBlock (targetStmt);
-                         isSgOmpBodyStatement(parent)->set_body(newparent);
+                         p->set_body(newparent);
                          newparent->set_parent(parent);
                          insertStatement(targetStmt, newStmt,insertBefore);
                        }
