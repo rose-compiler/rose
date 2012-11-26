@@ -47,8 +47,9 @@ int main (int argc, char *argv[])
    SgVariableDeclaration *varDecl_j = buildVariableDeclaration
     (SgName ("j"), buildIntType());
 
- // insert before the last return statement
+ // insert after the first statement
   SgStatement* firstStmt = getFirstStatement(topScopeStack());
+  // void   insertStatement (SgStatement *targetStmt, SgStatement *newStmt, bool insertBefore=true, bool autoMovePreprocessingInfo=true)
   insertStatement(firstStmt,varDecl_j,false);
 
  //for reversed order building variable references and declarations

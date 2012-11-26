@@ -160,6 +160,9 @@ $(PASSING_C_TEST_Objects): %.o: $(srcdir)/%.c parseOmp
 $(PASSING_CXX_TEST_Objects): %.o: $(srcdir)/%.cpp parseOmp
 	./parseOmp ${ROSE_FLAGS} ${TESTCODE_INCLUDES} -c $<
 
+check-c:$(PASSING_C_TEST_Objects) 
+check-cxx:$(PASSING_CXX_TEST_Objects)
+
 ALL_TESTCODES = \
 $(C_TESTCODES_REQUIRED_TO_PASS) \
 $(CXX_TESTCODES_REQUIRED_TO_PASS) \

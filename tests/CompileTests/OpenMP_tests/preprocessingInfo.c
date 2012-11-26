@@ -1,3 +1,4 @@
+#include <stdio.h>
 int main (void)
 {
   int mits=5000;
