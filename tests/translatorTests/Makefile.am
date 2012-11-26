@@ -3,27 +3,34 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # To keep compile commands tidy, please ONLY put required include flags here.
 INCLUDES = $(ROSE_INCLUDES)
 
-# an better alternative to identityTranslator
-# Liao 1/29/2009
-bin_PROGRAMS = roseCompiler testDataMemberOfConst testFortranParameter testFortranProtected label_stmt_file_info_translator testConstDeclarations
-
-roseCompiler_SOURCES = roseCompiler.C
-
 # roseCompiler_DEPENDENCIES = $(REQUIRED_LIBS)
 # roseCompiler_LDADD  = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 DEPENDENCIES = $(REQUIRED_LIBS)
 LDADD  = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
+# most test translators should not be installed (noinst)
 # The bug numbers come from ROSE's SciDAC bug trackers
 noinst_PROGRAMS = \
-   bug125 \
-   qualifiedName \
-   testTranslator2010_01 \
-   testTranslator2010_02 \
-   testTranslator2010_03 \
-   testTranslator2012_01 \
-   ompVariableCollecting \
-   label_stmt_file_info_translator
+	bug125 \
+	qualifiedName \
+	testTranslator2010_01 \
+	testTranslator2010_02 \
+	testTranslator2010_03 \
+	testTranslator2012_01 \
+	ompVariableCollecting \
+	label_stmt_file_info_translator \
+	testDataMemberOfConst \
+	testFortranParameter \
+	testFortranProtected \
+	label_stmt_file_info_translator \
+	testConstDeclarations \
+	testPragmaInBody
+#
+# a better alternative to identityTranslator
+# Liao 1/29/2009
+bin_PROGRAMS = roseCompiler
+roseCompiler_SOURCES = roseCompiler.C
+
 
 # Example translators used in regression tests
 bug125_SOURCES = bug125.C
@@ -42,6 +49,7 @@ label_stmt_file_info_translator_SOURCES = label_stmt_file_info_translator.C
 
 # DQ (8/25/2011): Added test code to demonstrate where const is set in the AST.
 testConstDeclarations_SOURCES = testConstDeclarations.C
+testPragmaInBody_SOURCES = testPragmaInBody.C
 
 # LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 
@@ -50,55 +58,51 @@ VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-l
 VALGRIND =
 
 # DQ (11/11/2012): This tests the PDF generater on a large program (includes STL string).
-testbug125: test125.pdf 
-
 test125.pdf: bug125 
 	./bug125 -c $(srcdir)/inputbug125.C
 
 # testqualifiedName: qualifiedName
-testqualifiedName: jacobi.o
 
 jacobi.o: qualifiedName
 	./qualifiedName -c $(top_srcdir)/projects/autoTuning/tests/jacobi.c
 
-test_testDataMemberOfConst: testDataMemberOfConst
-	./testDataMemberOfConst $(srcdir)/../CompileTests/Cxx_tests/dataMemberOfConst.C -o /dev/null
+dataMemberOfConst.o: testDataMemberOfConst
+	./testDataMemberOfConst $(srcdir)/../CompileTests/Cxx_tests/dataMemberOfConst.C -o /dev/null && touch $@
 
-test_testFortranParameter: testFortranParameter
-	./testFortranParameter $(srcdir)/CompileTests/Fortran_tests/parameter.f -o /dev/null
+input_ompVariableCollecting.o: ompVariableCollecting
+	./ompVariableCollecting -I$(top_srcdir)/src/frontend/SageIII -rose:OpenMP:ast_only -c $(srcdir)/input_ompVariableCollecting.C && touch $@
 
-test_testFortranProtected: testFortranProtected
-	gfortran -c $(srcdir)/../CompileTests/Fortran_tests/protected_mod.f03
-	gdb --args .libs/testFortranProtected $(srcdir)/../CompileTests/Fortran_tests/protected.f03 -o /dev/null
+input_testConstDeclarations.o: testConstDeclarations
+	./testConstDeclarations $(srcdir)/input_testConstDeclarations.C && touch $@
 
-test_ompVariableCollecting: ompVariableCollecting
-	./ompVariableCollecting -I$(top_srcdir)/src/frontend/SageIII -rose:OpenMP:ast_only -c $(srcdir)/input_ompVariableCollecting.C
-
-test_testConstDeclarations: testConstDeclarations
-	./testConstDeclarations $(srcdir)/input_testConstDeclarations.C
-
-#testTranslator2010_01_test: testTranslator2010_01 
-#	./testTranslator2010_01 -rose:verbose 2
-# a few translators without input parameters to run	
 check_PROGRAMS = testTranslator2010_01
 TESTS = $(check_PROGRAMS) #test_testDataMemberOfConst test_testFortranParameter
 
-testTranslator2010_02_test: testTranslator2010_02 
-	./testTranslator2010_02 -rose:verbose 0 $(srcdir)/input_testTranslator2010_2.C
+# We have to touch input_testPragmaInBody.o since the translator does not invoke backend at all
+input_testPragmaInBody.o:testPragmaInBody
+	./testPragmaInBody -c $(srcdir)/input_testPragmaInBody.c  && touch $@
 
-testTranslator2010_03_test: testTranslator2010_03 
-	./testTranslator2010_03 -rose:verbose 0 $(srcdir)/input_testTranslator2010_3.C
+input_testTranslator2010_2.o: testTranslator2010_02 
+	./testTranslator2010_02 -rose:verbose 0 $(srcdir)/input_testTranslator2010_2.C && touch $@
+
+input_testTranslator2010_3.o: testTranslator2010_03 
+	./testTranslator2010_03 -c -rose:verbose 0 $(srcdir)/input_testTranslator2010_3.C && touch $@
 
 # DQ (2/4/2011): Added test code to evaluate line numbers of SgLabelStatement that
 # were previously marked as transforamtions and thus has line numbers == zero.
-test_label_stmt_file_info_translator: label_stmt_file_info_translator
-	./label_stmt_file_info_translator -rose:verbose 0 -c $(srcdir)/input_label_stmt_file_info_translator.C
+input_label_stmt_file_info_translator.o: label_stmt_file_info_translator
+	./label_stmt_file_info_translator -rose:verbose 0 -c $(srcdir)/input_label_stmt_file_info_translator.C && touch $@
 
-testTranslator2012_01_test: testTranslator2012_01
-	./testTranslator2012_01 -rose:verbose 0 $(srcdir)/input_testTranslator2012_01a.C $(srcdir)/input_testTranslator2012_01b.C
+input_testTranslator2012_01b.o: testTranslator2012_01
+	./testTranslator2012_01 -rose:verbose 0 $(srcdir)/input_testTranslator2012_01a.C $(srcdir)/input_testTranslator2012_01b.C && touch $@
 
+# Fortran tests
+parameter.o: testFortranParameter
+	./testFortranParameter $(srcdir)/CompileTests/Fortran_tests/parameter.f -o /dev/null && touch $@
 
-
+protected.o: testFortranProtected
+	gfortran -c $(srcdir)/../CompileTests/Fortran_tests/protected_mod.f03
+	gdb --args .libs/testFortranProtected $(srcdir)/../CompileTests/Fortran_tests/protected.f03 -o /dev/null && touch $@
 
 EXTRA_DIST = \
    CMakeLists.txt \
@@ -108,15 +112,37 @@ EXTRA_DIST = \
    input_ompVariableCollecting.C \
    input_label_stmt_file_info_translator.C \
    input_testTranslator2012_01a.C \
-   input_testTranslator2012_01a.C
+   input_testTranslator2012_01a.C \
+   input_testPragmaInBody.c
+
+if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
+check-cxx: \
+	test125.pdf \
+	jacobi.o \
+	input_ompVariableCollecting.o \
+	input_testConstDeclarations.o \
+	input_testTranslator2010_2.o \
+	input_testTranslator2010_3.o \
+	input_label_stmt_file_info_translator.o
+# TODO: FIX the following tests
+#Currently_Failing_Cxx_tests =
+#	dataMemberOfConst.o \
+#	input_testPragmaInBody.o
+
+else
+check-cxx:
+endif
+
+if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
+check-fortran: \
+	parameter.o \
+	protected.o
+else
+check-fortran:
+endif
 
 check-local:
-#	@$(MAKE) testbug125 testqualifiedName testTranslator2010_01_test
-#	@$(MAKE) testbug125 testqualifiedName test_ompVariableCollecting
-#	@$(MAKE) testbug125 
-#	@$(MAKE) testqualifiedName
-#	@$(MAKE) test_ompVariableCollecting
-#	@$(MAKE) testTranslator2010_02_test
+	@$(MAKE) check-cxx check-fortran
 	@echo "****************************************************************************************"
 	@echo "****** ROSE/tests/translatorTests: make check rule complete (terminated normally) ******"
 	@echo "****************************************************************************************"
