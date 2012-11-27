@@ -9,8 +9,8 @@ double abs(double x)
   }
 }
 #define n 50
-void printmatrix(double x[][50]);
-void initmatrix(double x[][50],double s);
+extern void printmatrix(double x[][50]);
+extern void initmatrix(double x[][50],double s);
 
 int main(int argc,char *argv[])
 {
@@ -41,17 +41,16 @@ int main(int argc,char *argv[])
       a[p_buf0][j] = t;
     }
     p[k] = p_buf0;
-    a_buf1 = a[k][k];
+    a_buf2 = a[k][k];
     for (i = 1 + k; i <= 49; i += 1) {
-      a[i][k] = a[i][k] / a_buf1;
+      a[i][k] = a[i][k] / a_buf2;
     }
     for (j = 1 + k; j <= 49; j += 1) {
-      a_buf2 = a[k][j];
+      a_buf1 = a[k][j];
       for (i = 1 + k; i <= 49; i += 1) {
-        a[i][j] = a[i][j] - a[i][k] * a_buf2;
+        a[i][j] = a[i][j] - a[i][k] * a_buf1;
       }
     }
   }
   printmatrix(a);
-  return 0;
 }
