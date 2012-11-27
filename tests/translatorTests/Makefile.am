@@ -119,6 +119,7 @@ if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 check-cxx: \
 	test125.pdf \
 	jacobi.o \
+	input_testPragmaInBody.o \
 	input_ompVariableCollecting.o \
 	input_testConstDeclarations.o \
 	input_testTranslator2010_2.o \
@@ -126,8 +127,7 @@ check-cxx: \
 	input_label_stmt_file_info_translator.o
 # TODO: FIX the following tests
 #Currently_Failing_Cxx_tests =
-#	dataMemberOfConst.o \
-#	input_testPragmaInBody.o
+#	dataMemberOfConst.o 
 
 else
 check-cxx:
