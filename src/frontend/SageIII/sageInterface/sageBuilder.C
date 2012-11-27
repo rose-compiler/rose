@@ -341,6 +341,19 @@ void SageBuilder::clearScopeStack()
      ScopeStack.clear();
    }
 
+bool SageBuilder::inSwitchScope()
+   {
+  // DQ (11/26/2012): This is used to turn off some pragma processing which is a problem in switch statements.
+     bool returnVar = false;
+     std::list<SgScopeStatement*>::iterator i;
+     for (i = ScopeStack.begin(); i != ScopeStack.end(); i++)
+        {
+          if (isSgSwitchStatement(*i) != NULL)
+               returnVar = true;
+        }
+
+     return returnVar;
+   }
 
 
 // *******************************************************************************
