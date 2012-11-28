@@ -49,6 +49,8 @@ void visitorTraversal::analyzePath(vector<VertexID>& pth) {
         if (isSgFunctionRefExp(path[k]->get_SgNode())) {
             SgFunctionRefExp* sfrd = isSgFunctionRefExp(path[k]->get_SgNode());
             SgFunctionDeclaration* fd = sfrd->getAssociatedFunctionDeclaration();
+            fd = isSgFunctionDeclaration(fd->get_definingDeclaration());
+            assert(fd!=NULL);
             SgFunctionDefinition* fdd = fd->get_definition();
             SgName sname = fdd->get_mangled_name();
             string sn = sname.getString();
