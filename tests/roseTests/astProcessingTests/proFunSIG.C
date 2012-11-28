@@ -39,40 +39,31 @@ class visitorTraversal : public SgGraphTraversal<CFGforT>
 
 
 void visitorTraversal::analyzePath(vector<VertexID>& pth) {
-       // ROSE_ASSERT(find(pathstore.begin(), pathstore.end(), pth) == pathstore.end());
-       // pathstore.push_back(pth);
-         //std::cout << "pathsize: " << pth.size() << std::endl;
-         //std::cout
-       std::vector<VertexID> pathR = pth;
-       std::vector<SgGraphNode*> path;
-       for (unsigned int j = 0; j < pathR.size(); j++) {
-           SgGraphNode* R = (*orig)[pathR[j]].sg;
-           path.push_back(R);
-       }
-       for (unsigned int k = 0; k < path.size(); k++) {
-            if (isSgFunctionRefExp(path[k]->get_SgNode())) {
-                SgFunctionRefExp* sfrd = isSgFunctionRefExp(path[k]->get_SgNode());
-                SgFunctionDeclaration* fd = sfrd->getAssociatedFunctionDeclaration();
-                SgFunctionDefinition* fdd = fd->get_definition();
-                SgName sname = fdd->get_mangled_name();
-                string sn = sname.getString();
-                if (find(defstr.begin(), defstr.end(), sn) == defstr.end()) {
+    std::vector<VertexID> pathR = pth;
+    std::vector<SgGraphNode*> path;
+    for (unsigned int j = 0; j < pathR.size(); j++) {
+        SgGraphNode* R = (*orig)[pathR[j]].sg;
+        path.push_back(R);
+    }
+    for (unsigned int k = 0; k < path.size(); k++) {
+        if (isSgFunctionRefExp(path[k]->get_SgNode())) {
+            SgFunctionRefExp* sfrd = isSgFunctionRefExp(path[k]->get_SgNode());
+            SgFunctionDeclaration* fd = sfrd->getAssociatedFunctionDeclaration();
+            SgFunctionDefinition* fdd = fd->get_definition();
+            SgName sname = fdd->get_mangled_name();
+            string sn = sname.getString();
+            if (find(defstr.begin(), defstr.end(), sn) == defstr.end()) {
                 defstr.push_back(sn);
                 defs.push_back(fdd);
                 std::cout << "found new sn: " << sn << std::endl;
-                }
-                else {
+            }
+            else {
                 std::cout << "found old sn: " << sn << std::endl;
-                }
-           }
-       }
-        #pragma omp atomic
-        paths++;
-        
-        //tltnodes += pth.size();
-        //paths++;
-        //std::cout << "paths: " << paths << std::endl;
-
+            }
+        }
+    }
+#pragma omp atomic
+    paths++;
 }
 
 double timeDifference(const struct timeval& end, const struct timeval& begin)
@@ -125,7 +116,7 @@ int main(int argc, char *argv[]) {
     SgIncidenceDirectedGraph* sgs[vis->defs.size()];
     myGraph* mgs[vis->defs.size()];
     visitorTraversal* visps[vis->defs.size()];
-    for (int i = 0; i < vis->defs.size(); i++) {
+    for (size_t i = 0; i < vis->defs.size(); i++) {
         ROSE_ASSERT(isSgFunctionDefinition(vis->defs[i]));
         cfgs[i] = new StaticCFG::CFG(isSgFunctionDefinition(vis->defs[i]));
         //ROSE_ASSERT(gpart != NULL);
