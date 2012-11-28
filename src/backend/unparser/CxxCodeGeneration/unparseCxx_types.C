@@ -137,7 +137,7 @@ string get_type_name(SgType* t)
 
           case T_DEFAULT:
              {
-#if 1
+#if 0
                printf ("Outp case T_DEFAULT: (int) \n");
 #endif
                return "int";
@@ -145,7 +145,7 @@ string get_type_name(SgType* t)
 
           case T_POINTER:
                 {
-#if 1
+#if 0
                   printf ("Outp case T_POINTER: \n");
 #endif
                   SgPointerType* pointer_type = isSgPointerType(t);
