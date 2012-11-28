@@ -116,6 +116,17 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                     break;
                   }
 #endif
+            // DQ (11/27/2012): I think we need to make this unique so that it will not be shared for now!
+               case V_SgTemplateType:
+                  {
+                    const SgTemplateType* templateType = isSgTemplateType(node);
+                    ROSE_ASSERT(templateType != NULL);
+
+                    key = "__template_type_";
+                    additionalSuffix = additionalSuffix + StringUtility::numberToString(templateType);
+                    break;
+                  }
+
             // All other types
                default:
                   {
@@ -223,7 +234,9 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                     break;
                   }
 
-            // ScopeStatements
+            // DQ (11/27/2012): Added support for new template IR nodes.
+               case V_SgTemplateClassDefinition:
+
                case V_SgClassDefinition:
                case V_SgTemplateInstantiationDefn:
                   {
@@ -254,6 +267,9 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
 
                     break;
                   }
+
+            // DQ (11/27/2012): Added support for new template IR nodes.
+               case V_SgTemplateFunctionDefinition:
 
                case V_SgFunctionDefinition:
                   {
@@ -299,6 +315,10 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                     key = key + StringUtility::numberToString(statement);
                     break;
                   }
+
+            // DQ (11/27/2012): Added support for new template IR nodes.
+               case V_SgTemplateFunctionDeclaration:
+               case V_SgTemplateMemberFunctionDeclaration:
 
                case V_SgFunctionDeclaration:
                case V_SgMemberFunctionDeclaration:
@@ -397,6 +417,9 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
 #endif
                     break;
                   }
+
+            // DQ (11/28/2012): Added support for new template variable declaration IR node.
+               case V_SgTemplateVariableDeclaration:
 
                case V_SgVariableDeclaration:
                   {
@@ -550,6 +573,8 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                     break;
                   }
 
+#if 0
+            // DQ (11/28/2012): Make this the same as the case for SgClassDeclaration.
             // DQ (3/28/2012): Added support for new template IR nodes.
                case V_SgTemplateClassDeclaration:
                   {
@@ -563,14 +588,15 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                     printf ("In SageInterface::generateUniqueName(): case V_SgTemplateClassDeclaration: FIX ME! \n");
                  // const SgDeclarationStatement* declaration = isSgDeclarationStatement(statement);
                  // key += declaration->get_mangled_name();
-                    key = "__key__" + StringUtility::numberToString(statement);
+                 // key = "__key__" + StringUtility::numberToString(statement);
+                    key = "__template_class_declaration__" + StringUtility::numberToString(statement);
 #if 0
                     printf ("In SageInterface::generateUniqueName(): case V_SgTemplateClassDeclaration: Sorry, not implemented! key = %s \n",key.c_str());
                     ROSE_ASSERT(false);
 #endif
                     break;
                   }
-                
+#endif
             // DQ (3/28/2012): We have a new design for the EDG 4.x support and the IR design no longer 
             // derives a SgTemplateClassDeclaration from a SgTemplateDeclaration, so this code does not work.
             // DQ (6/11/2011): Added support for new template IR nodes.
@@ -766,6 +792,9 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                     additionalSuffix = "__using_directive";
                     break;
                   }
+
+            // DQ (11/28/2012): Added support for new template IR nodes.
+               case V_SgTemplateClassDeclaration:
 
                case V_SgClassDeclaration:
                case V_SgTemplateInstantiationDecl:
@@ -1004,6 +1033,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                   }
 #endif
 
+
                default:
                   {
                  // ignore these cases
@@ -1226,6 +1256,30 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                     const SgAliasSymbol* aliasSymbol = isSgAliasSymbol (symbol);
                     key = aliasSymbol->get_name();
                     additionalSuffix = "__alias_symbol";
+                    break;
+                  }
+
+               case V_SgTemplateFunctionSymbol:
+                  {
+                    const SgTemplateFunctionSymbol* templateFunctionSymbol = isSgTemplateFunctionSymbol(symbol);
+                    key = templateFunctionSymbol->get_name();
+                    additionalSuffix = "__template_function_symbol";
+                    break;
+                  }
+
+               case V_SgTemplateMemberFunctionSymbol:
+                  {
+                    const SgTemplateMemberFunctionSymbol* templateMemberFunctionSymbol = isSgTemplateMemberFunctionSymbol(symbol);
+                    key = templateMemberFunctionSymbol->get_name();
+                    additionalSuffix = "__template_member_function_symbol";
+                    break;
+                  }
+
+               case V_SgTemplateClassSymbol:
+                  {
+                    const SgTemplateClassSymbol* templateClassSymbol = isSgTemplateClassSymbol(symbol);
+                    key = templateClassSymbol->get_name();
+                    additionalSuffix = "__template_class_symbol";
                     break;
                   }
 
@@ -1631,6 +1685,15 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                   {
                     key = "__unparse_info_";
                  // Make the key unique for each SgUnparse_Info object!
+                    key = key + StringUtility::numberToString(node);
+                    break;
+                  }
+
+            // DQ (11/27/2012): previously unhandled case ...this implementation makes each IR node unique (we might not want that later).
+               case V_SgTemplateParameter:
+                  {
+                    key = "__template_parameter_";
+                 // Make the key unique for each SgTemplateParameter object!
                     key = key + StringUtility::numberToString(node);
                     break;
                   }
