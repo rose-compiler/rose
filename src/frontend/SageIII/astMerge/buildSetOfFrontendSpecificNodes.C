@@ -95,6 +95,10 @@ getSetOfNonFrontendSpecificNodes()
               void visit (SgNode* n )
                  {
                    Sg_File_Info* fileInfo = NULL;
+
+                // DQ (11/28/2012): Added assertion.
+                   ROSE_ASSERT(n != NULL);
+
                    fileInfo = n->get_file_info();
 
 #if 0
@@ -109,6 +113,10 @@ getSetOfNonFrontendSpecificNodes()
                         if (fileInfo->isFrontendSpecific() == false)
                            {
                              nodeList.insert(n);
+
+                          // DQ (11/28/2012): Added assertion.
+                             ROSE_ASSERT(n != NULL);
+
                              addAssociatedNodes(n,nodeList,true);
                            }
                       }
