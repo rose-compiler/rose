@@ -296,7 +296,7 @@ SageInterface::getNonInstantiatonDeclarationForClass ( SgTemplateInstantiationMe
    }
 
 //! Liao, 11/9/2009
-  //! a better version for SgVariableDeclaration::set_baseTypeDefininingDeclaration(), handling all side effects automatically
+  //! A better version for SgVariableDeclaration::set_baseTypeDefininingDeclaration(), handling all side effects automatically
   //! Used to have a struct declaration embedded into a variable declaration
 void
 SageInterface::setBaseTypeDefiningDeclaration(SgVariableDeclaration* var_decl, SgDeclarationStatement *base_decl)
