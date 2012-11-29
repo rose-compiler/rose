@@ -2618,7 +2618,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
              }
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-       // DQ (9/23/2012): We need to handle the template arguments associate with this template instantation.
+       // DQ (9/23/2012): We need to handle the template arguments associate with this template instantiation.
           SgTemplateInstantiationDecl* templateClassInstantiationDeclaration = isSgTemplateInstantiationDecl(classDeclaration);
           if (templateClassInstantiationDeclaration != NULL)
              {

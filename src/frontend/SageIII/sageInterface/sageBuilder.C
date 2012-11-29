@@ -1370,6 +1370,20 @@ SageBuilder::buildTypedefDeclaration_nfi(const std::string& name, SgType* base_t
   // Set the source code position information.
      setOneSourcePositionNull(type_decl);
 
+  // Liao 11/29/2012, for typedef struct Frame {int x;} st_frame; We have to set parent for the struct.
+  // AstPostProcessing() has resetParentPointers(). But it is kind of too late.
+  if (SgClassDeclaration* base_class = isSgClassDeclaration(base_decl))
+  {
+    SgClassDeclaration* def_class = isSgClassDeclaration(base_class->get_definingDeclaration());
+    SgClassDeclaration* nondef_class = isSgClassDeclaration(base_class->get_firstNondefiningDeclaration());
+    if (def_class != NULL)
+      if (def_class->get_parent() == NULL)
+        def_class->set_parent(type_decl);
+    if (nondef_class != NULL)
+      if (nondef_class->get_parent() == NULL)
+        nondef_class->set_parent(type_decl);
+  }
+
   // Symbol and SgTypedefType should be associated with the first nondefining declaration
   // Create SgTypedefType
   // This is already included in the constructor
