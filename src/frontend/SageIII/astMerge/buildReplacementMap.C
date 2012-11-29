@@ -377,8 +377,17 @@ void ReplacementMapTraversal::visit ( SgNode* node)
                          duplicateNodeFromOriginalAST,duplicateNodeFromOriginalAST->class_name().c_str(),SageInterface::get_name(duplicateNodeFromOriginalAST).c_str());
                     printf ("generateUniqueName(node,false)                         = %s \n",generateUniqueName(node,false).c_str());
                     printf ("generateUniqueName(duplicateNodeFromOriginalAST,false) = %s \n",generateUniqueName(duplicateNodeFromOriginalAST,false).c_str());
-                    node->get_file_info()->display("node: IR nodes should not have been matched: debug");
-                    duplicateNodeFromOriginalAST->get_file_info()->display("duplicateNodeFromOriginalAST: IR nodes should not have been matched: debug");
+
+                    if (isSgType(node) == NULL)
+                       {
+                         ROSE_ASSERT(node->get_file_info() != NULL);
+                         node->get_file_info()->display("node: IR nodes should not have been matched: debug");
+                       }
+                    if (isSgType(duplicateNodeFromOriginalAST) == NULL)
+                       {
+                         ROSE_ASSERT(duplicateNodeFromOriginalAST->get_file_info() != NULL);
+                         duplicateNodeFromOriginalAST->get_file_info()->display("duplicateNodeFromOriginalAST: IR nodes should not have been matched: debug");
+                       }
                   }
                ROSE_ASSERT(node->variantT() == duplicateNodeFromOriginalAST->variantT());
 

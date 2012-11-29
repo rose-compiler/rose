@@ -553,7 +553,22 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
                     SgTemplateInstantiationMemberFunctionDecl* templateInstantiationMemberFunctionDeclaration = isSgTemplateInstantiationMemberFunctionDecl(memberFunctionDeclaration);
                     if (templateInstantiationMemberFunctionDeclaration != NULL)
                        {
+#if 0
+                         ROSE_ASSERT(templateInstantiationMemberFunctionDeclaration->get_templateDeclaration() != NULL);
                          addAssociatedNodes(templateInstantiationMemberFunctionDeclaration->get_templateDeclaration(),nodeList,markMemberNodesDefinedToBeDeleted);
+#else
+                      // DQ (11/28/2012): This new version of code allows the associated templateDeclaration to be NULL.
+                      // (I think this is required for the newer more general template support, or perhaps it is an error 
+                      // that needs to be addessed in the AST construction).
+                         if (templateInstantiationMemberFunctionDeclaration->get_templateDeclaration() != NULL)
+                            {
+                              addAssociatedNodes(templateInstantiationMemberFunctionDeclaration->get_templateDeclaration(),nodeList,markMemberNodesDefinedToBeDeleted);
+                            }
+                           else
+                            {
+                              printf ("WARNING: For templateInstantiationMemberFunctionDeclaration = %p templateInstantiationMemberFunctionDeclaration->get_templateDeclaration() == NULL \n");
+                            }
+#endif
                        }
                   }
 

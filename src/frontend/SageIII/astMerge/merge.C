@@ -787,7 +787,9 @@ int AstMergeSupport ( SgProject* project )
           bool skipFrontendSpecificIRnodes = true;
 
           if (SgProject::get_verbose() > 0)
+             {
                printf ("Calling mergeAST \n");
+             }
 
           mergeAST(project,skipFrontendSpecificIRnodes);
         }
