@@ -442,9 +442,9 @@ SgGraphTraversal<CFG>::
 bfsTraversePath(int begin, int end, CFG*& g, bool loop) {
 //perfdebug allows for examining the speed of traversal
     #ifdef PERFDEBUG
-    timeval tim;
-    gettimeofday(&tim, NULL);
-    double tim1 = tim.tv_sec+(tim.tv_usec/1000000.0);
+    //timeval tim;
+    //gettimeofday(&tim, NULL);
+    //double tim1 = tim.tv_sec+(tim.tv_usec/1000000.0);
     #endif
     bool recursedloop = loop;
     std::map<int, std::vector<std::vector<int> > > PtP;
@@ -710,9 +710,9 @@ int tg = getTarget(oeds[j], g);
     #ifdef PERFDEBUG
  //   timeval tim; 
     //std::cout << "begin: " << begin << " end: " << end << std::endl;
-    gettimeofday(&tim, NULL);
-    double tim2 = tim.tv_sec+(tim.tv_usec/1000000);
-    double timeRet = tim2 - tim1;
+    //gettimeofday(&tim, NULL);
+    //double tim2 = tim.tv_sec+(tim.tv_usec/1000000);
+    //double timeRet = tim2 - tim1;
     //std::cout << "bfs time elapsed: " << timeRet << std::endl;
     #endif
     return lps2;
@@ -736,7 +736,7 @@ std::set<std::vector<int> >
 SgGraphTraversal<CFG>::
 uTraversePath(int begin, int end, CFG*& g, bool loop, std::map<int, std::vector<std::vector<int> > >& globalLoopPaths) {
     //std::cout << "uTraverse" << std::endl;
-    int doubledpaths = 0;
+    //int doubledpaths = 0;
     int newmil = 1;
     //#ifdef LP
     //if (loop && loopStore.find(begin) != loopStore.end()) {
@@ -744,9 +744,9 @@ uTraversePath(int begin, int end, CFG*& g, bool loop, std::map<int, std::vector<
     //}
     //#endif
     #ifdef PERFDEBUG
-    timeval tim;
-    gettimeofday(&tim, NULL);
-    double t1 = tim.tv_sec+(tim.tv_usec/1000000);
+    //timeval tim;
+    //gettimeofday(&tim, NULL);
+    //double t1 = tim.tv_sec+(tim.tv_usec/1000000);
     #endif
     std::set<std::vector<int> > newpaths;
     std::set<std::vector<int> > npaths;
@@ -762,8 +762,8 @@ uTraversePath(int begin, int end, CFG*& g, bool loop, std::map<int, std::vector<
     //bool threadsafe = true;
     bool done = false;
     std::set<std::vector<int> > fts;
-    double ttfors = 0;
-    double tperms = 0;
+    //double ttfors = 0;
+    //double tperms = 0;
     while (true) {
         //std::cout << "paths.size() " << paths.size() << std::endl;
         if (paths.size() > 1000000) {
@@ -803,10 +803,10 @@ uTraversePath(int begin, int end, CFG*& g, bool loop, std::map<int, std::vector<
                     std::vector<int> takenLoops;
                     takenLoops.push_back(path[0]);
                     bool taken = false;
-                    timeval timfor;
+                    //timeval timfor;
                     int lost = 0;
-                    gettimeofday(&timfor, NULL);
-                    double t1for = timfor.tv_sec + (timfor.tv_usec/1000000); 
+                    //gettimeofday(&timfor, NULL);
+                    //double t1for = timfor.tv_sec + (timfor.tv_usec/1000000); 
                     for (unsigned int q = 1; q < path.size()-1; q++) {
                     //if (find(closures.begin(), closures.end(), path[q]) != closures.end()) {
                     if (globalLoopPaths.find(path[q]) != globalLoopPaths.end() /*&& find(lloops.begin(), lloops.end(), path[q]) != lloops.end()*/ && globalLoopPaths[path[q]].size() != 0 /*&& path[q] != begin && path[q] != end*/) {
@@ -847,16 +847,16 @@ uTraversePath(int begin, int end, CFG*& g, bool loop, std::map<int, std::vector<
                     //std::cout << "endpathcheck" << std::endl;
                     //std::cout << "rest" << std::endl;
                     //std::cout << "permnums: " << permnums << std::endl;
-                    gettimeofday(&timfor, NULL);
-                    double t2for = timfor.tv_sec + (timfor.tv_usec/1000000);
+                    //gettimeofday(&timfor, NULL);
+                    //double t2for = timfor.tv_sec + (timfor.tv_usec/1000000);
                     //double ttfor = t2for - t1for;
                     //#pragma omp atomic
                     //ttfors += ttfor;
                     
                     //std::set<std::vector<int> > movepaths2;
                     std::set<std::vector<int> > movepathscheck;
-                    timeval timperms;
-                    gettimeofday(&timperms, NULL);
+                    //timeval timperms;
+                    //gettimeofday(&timperms, NULL);
                    // double t1perm = timperms.tv_sec + (timperms.tv_usec/1000000);
                     std::vector<int> nvec;
                     std::vector<std::vector<int> > boxpaths(permnums, nvec);
@@ -893,25 +893,25 @@ uTraversePath(int begin, int end, CFG*& g, bool loop, std::map<int, std::vector<
                         unsigned int q2 = 0;
                         for (unsigned int q1 = 0; q1 < path.size(); q1++) {
                             if (q2 < qs.size()) {
-                            if (qs.size() != 0 && path[q1] == qs[q2] && q2 != pL.size()) {
-                               if (pL[q2] == -1) {
-                                   npath.push_back(path[q1]);
-                               }
-                               else {
-                               //   if (!stop) {
-                                   npath.insert(npath.end(), localLoops[path[q1]][pL[q2]].begin(), localLoops[path[q1]][pL[q2]].end());
-                                 //  }
-                               }
-                               q2++;
+                                if (qs.size() != 0 && (unsigned)path[q1] == qs[q2] && (size_t)q2 != pL.size()) {
+                                    if (pL[q2] == -1) {
+                                        npath.push_back(path[q1]);
+                                    }
+                                    else {
+                                        //   if (!stop) {
+                                        npath.insert(npath.end(), localLoops[path[q1]][pL[q2]].begin(),
+                                                     localLoops[path[q1]][pL[q2]].end());
+                                        //  }
+                                    }
+                                    q2++;
+                                }
+                                else {
+                                    npath.push_back(path[q1]);
+                                }
                             }
                             else {
-                               npath.push_back(path[q1]);
+                                npath.push_back(path[q1]);
                             }
-                            }
-                            else {
-                               npath.push_back(path[q1]);
-                            }
-                                
                         }
                         #ifdef FULLDEBUG
                         std::cout << "path: " << std::endl;
@@ -972,10 +972,10 @@ uTraversePath(int begin, int end, CFG*& g, bool loop, std::map<int, std::vector<
                        }
                         
                        evaledpaths += boxpaths.size();
-                      if (evaledpaths > newmil*100000) {
-                       //std::cout << "evaledpaths: " << evaledpaths << std::endl;
-                       newmil++;
-                        }
+                       if (evaledpaths > newmil*100000ull) {
+                           //std::cout << "evaledpaths: " << evaledpaths << std::endl;
+                           newmil++;
+                       }
                        // #pragma omp critical
                       // {
                        if (!loop) {
@@ -1056,7 +1056,7 @@ uTraversePath(int begin, int end, CFG*& g, bool loop, std::map<int, std::vector<
 
                     
                     #ifdef PERFDEBUG
-                    gettimeofday(&tim, NULL);
+                    //gettimeofday(&tim, NULL);
                    // double t2 = tim.tv_sec+(tim.tv_usec/1000000.0);
                    // double tperm = t2 - t1perm
                     //double tX = t2 - t1;
