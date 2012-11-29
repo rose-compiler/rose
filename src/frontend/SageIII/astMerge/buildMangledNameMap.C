@@ -104,6 +104,7 @@ MangledNameMapTraversal::MangledNameMapTraversal ( MangledNameMapType & m, SetOf
 #endif
    }
 
+
 bool
 MangledNameMapTraversal::shareableIRnode ( const SgNode* node )
    {
@@ -128,6 +129,19 @@ MangledNameMapTraversal::shareableIRnode ( const SgNode* node )
         {
           returnValue = false;
         }
+
+  // DQ (11/27/2012): For intial debugging turn off some of the new IR nodes that have been added to support template declarations.
+  // I now think this is redundant with the expression != NULL in the predicate above.
+     const SgTemplateMemberFunctionRefExp* templateMemberFunctionRefExp = isSgTemplateMemberFunctionRefExp(node);
+
+  // DQ (11/27/2012): Exclude these from being shared (they also don't have file info objects set).
+     const SgPartialFunctionType* partialFunctionType = isSgPartialFunctionType(node);
+
+     if (templateMemberFunctionRefExp != NULL || partialFunctionType != NULL)
+        {
+          returnValue = false;
+        }
+
 #if 0
      const SgTypedefDeclaration* typedefDeclaration   = isSgTypedefDeclaration(node);
 
@@ -202,6 +216,7 @@ MangledNameMapTraversal::shareableIRnode ( const SgNode* node )
 
      return returnValue;
    }
+
 
 void
 MangledNameMapTraversal::displayMagledNameMap ( MangledNameMapTraversal::MangledNameMapType & m )
@@ -319,7 +334,10 @@ void
 MangledNameMapTraversal::visit ( SgNode* node)
    {
      ROSE_ASSERT(node != NULL);
-  // printf ("MangledNameMapTraversal::visit: node = %s \n",node->class_name().c_str());
+
+#if 0
+     printf ("MangledNameMapTraversal::visit: node = %s \n",node->class_name().c_str());
+#endif
 
   // Keep track of the number of IR nodes visited
      numberOfNodes++;
@@ -343,6 +361,10 @@ MangledNameMapTraversal::visit ( SgNode* node)
         }
 
      bool sharable = shareableIRnode(node);
+
+#if 0
+     printf ("MangledNameMapTraversal::visit: node = %p = %s sharable = %s \n",node,node->class_name().c_str(),sharable ? "true" : "false");
+#endif
 
   // DQ (7/10/2010): This is a test of the AST merge to investigate robustness.
 #if 1
