@@ -204,7 +204,7 @@ rose_inputisUpcSharedType.upc:isUpcSharedType
 	./isUpcSharedType$(EXEEXT) $(TEST_CXXFLAGS) -rose:skipfinalCompileStep -rose:upc_threads 1 -c $(srcdir)/inputisUpcSharedType.upc
 
 rose_inputisUpcPhaseLessSharedType.upc:isUpcPhaseLessSharedType
-	./isUpcPhaseLessSharedType$(EXEEXT) $(TEST_CXXFLAGS) -rose:skipfinalCompileStep -rose:upc_threads 1-c $(srcdir)/inputisUpcPhaseLessSharedType.upc
+	./isUpcPhaseLessSharedType$(EXEEXT) $(TEST_CXXFLAGS) -rose:skipfinalCompileStep -rose:upc_threads 1 -c $(srcdir)/inputisUpcPhaseLessSharedType.upc
 
 rose_inputbuildLabelStatement.C:buildLabelStatement
 	./buildLabelStatement$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputbuildLabelStatement.C
