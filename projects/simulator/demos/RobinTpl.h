@@ -3,6 +3,8 @@
 // These functions are called from demos/MultiWithConversionTpl.h, but I'm splitting them into this file so you guys can find
 // the parts you need to modify.
 
+#include "rose_getline.h"
+
 namespace Robin {
 
 /** Convert a value to the concrete domain.
@@ -134,19 +136,42 @@ template<class Policy, template <size_t nBits> class ValueType, size_t nBits>
 ValueType<nBits>
 ite_merge(Policy *policy, const ValueType<1> &cond, const ValueType<nBits> &a, const ValueType<nBits> &b)
 {
-    if (true) {
+    if (false) {
         // Here's how you might choose one or the other at random.  We use our own linear congruential generator so we get
         // reproducible results.
         static unsigned long long x=0;
         x = (25214903917ull*x+11) % 0x0000ffffffffffffull;  // 48 bits
         bool bit = 0 != (x &        0x0000010000000000ull); // arbitrary bit; higher order bits have longer periods
-        if (bit) {
-            policy->trace()->mesg("Robin: ite_merge: choosing first alternative");
-            return a;
-        } else {
-            policy->trace()->mesg("Robin: ite_merge: choosing second alternative");
-            return b;
+        bit = !bit; // DEBUGGING: take the opposite side of the first branch [Robb Matzke 2012-11-14]
+        std::ostringstream ss;
+        ss <<"Robin: ite_merge: choosing " <<(bit?"first":"second") <<" alternative: " <<(bit?a:b);
+        policy->trace()->mesg("%s", ss.str().c_str());
+        return bit ? a : b;
+
+    } else if (true) {
+        // Here's how you might make the decision from a file.  The file contains lines where each line is either zero or
+        // non-zero to indicate whether the condition should be considered to be false or true, respectively.  Each time we hit
+        // this decision a line is consumed from the file.
+        static FILE *f = NULL;
+        if (!f) {
+            f = fopen("branch-predictions", "r");
+            if (!f) {
+                perror("branch-predictions");
+                assert(!"here");
+                abort();
+            }
         }
+        static char *buf = NULL;
+        static size_t bufsz = 0;
+        bool take = false;
+        if (rose_getline(&buf, &bufsz, f) > 0)
+            take = strtol(buf, NULL, 0);
+
+        std::ostringstream ss;
+        ss <<"Robin: ite_merge: choosing " <<(take?"first":"second") <<" alternative: " <<(take?a:b);
+        policy->trace()->mesg("%s", ss.str().c_str());
+        return take ? a : b;
+
     } else {
         // Here's how you would do the default thing.
         return policy->Policy::Super::ite(cond, a, b);
