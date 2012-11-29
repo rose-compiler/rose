@@ -103,6 +103,9 @@ Policy<State, ValueType>::finishInstruction(SgAsmInstruction *insn)
         this->get_policy(CONCRETE).writeRegister("eip", eip);
 
         Robin::after_instruction(this, isSgAsmx86Instruction(insn));
+
+        // The simulator needs to execute in the concrete domain between instructions. For instance, RSIM_Thread::main() needs
+        // to obtain a concrete value for the EIP register by calling the semantic policy's readRegister() method.
         this->set_active(CONCRETE);
     }
 
