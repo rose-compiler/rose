@@ -371,6 +371,7 @@ int main( int argc, char * argv[] ) {
     ("semantic-fold",po::value< string >(),"compute semantically folded transition graph [=yes|no]")
     ("post-semantic-fold",po::value< string >(),"compute semantically folded transition graph only after the complete transition graph has been computed. [=yes|no]")
     ("report-semantic-fold",po::value< string >(),"report each folding operation with the respective number of estates. [=yes|no]")
+    ("semantic-fold-threshold",po::value< int >(),"Set threshold with <arg> for semantic fold operation (experimental)")
     ("viz",po::value< string >(),"generate visualizations (dot) outputs [=yes|no]")
     ("update-input-var",po::value< string >(),"For testing purposes only. Default is Yes. [=yes|no]")
     ("run-rose-tests",po::value< string >(),"Run ROSE AST tests. [=yes|no]")
@@ -500,6 +501,10 @@ int main( int argc, char * argv[] ) {
   }
   analyzer.setNumberOfThreadsToUse(numberOfThreadsToUse);
 
+  if(args.count("semantic-fold-threshold")) {
+	int semanticFoldThreshold=args["semantic-fold-threshold"].as<int>();
+	analyzer.setSemanticFoldThreshold(semanticFoldThreshold);
+  }
   if(args.count("display-diff")) {
 	int displayDiff=args["display-diff"].as<int>();
 	analyzer.setDisplayDiff(displayDiff);

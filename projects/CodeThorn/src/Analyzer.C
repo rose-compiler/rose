@@ -14,7 +14,7 @@ using namespace CodeThorn;
 
 #include "CollectionOperators.h"
 
-Analyzer::Analyzer():startFunRoot(0),cfanalyzer(0),_displayDiff(10000),_numberOfThreadsToUse(1),_ltlVerifier(2) {
+Analyzer::Analyzer():startFunRoot(0),cfanalyzer(0),_displayDiff(10000),_numberOfThreadsToUse(1),_ltlVerifier(2),_semanticFoldThreshold(5000) {
 }
 
 set<string> Analyzer::variableIdsToVariableNames(set<VariableId> s) {
@@ -166,7 +166,7 @@ const EState* Analyzer::takeFromWorkList() {
   return co;
 }
 
-//#define PARALLELIZE_BRANCHES
+#define PARALLELIZE_BRANCHES
 
 void Analyzer::runSolver1() {
   size_t prevStateSetSize=0; // force immediate report at start
@@ -1132,8 +1132,8 @@ void Analyzer::runSolver2() {
 #endif
   int threadNum;
   vector<const EState*> workVector(_numberOfThreadsToUse);
+  int analyzedSemanticFoldingNode=0;
   while(1) {
-	int analyzedReductionTriggerNode=0;
 	int workers;
 	for(workers=0;workers<_numberOfThreadsToUse;++workers) {
 	  if(!(workVector[workers]=popWorkList()))
@@ -1142,7 +1142,7 @@ void Analyzer::runSolver2() {
 	if(workers==0)
 	  break; // we are done
 
-#pragma omp parallel for private(threadNum),shared(workVector,analyzedReductionTriggerNode)
+#pragma omp parallel for private(threadNum),shared(workVector,analyzedSemanticFoldingNode)
 	for(int j=0;j<workers;++j) {
 #ifdef _OPENMP
 	  threadNum=omp_get_thread_num();
@@ -1175,7 +1175,7 @@ void Analyzer::runSolver2() {
 		  newEStateList=transferFunction(e,currentEStatePtr);
 		  if(isTerminationRelevantLabel(e.source)) {
 			#pragma omp atomic
-			analyzedReductionTriggerNode++;
+			analyzedSemanticFoldingNode++;
 		  }
 		  for(list<EState>::iterator nesListIter=newEStateList.begin();
 			  nesListIter!=newEStateList.end();
@@ -1229,8 +1229,10 @@ void Analyzer::runSolver2() {
 #endif
 	} // worklist-parallel for
 	if(boolOptions["semantic-fold"]) {
-	  if(analyzedReductionTriggerNode>0) {
+	  if(analyzedSemanticFoldingNode>_semanticFoldThreshold) {
 		semanticFoldingOfTransitionGraph();
+		analyzedSemanticFoldingNode=0;
+		prevStateSetSize=estateSet.size();
 	  }
 	}
 	if(_displayDiff && (estateSet.size()>(prevStateSetSize+_displayDiff))) {
