@@ -163,6 +163,7 @@ class Analyzer {
   InputOutput::OpType ioOp(const EState* estate) const;
 
   void setDisplayDiff(int diff) { _displayDiff=diff; }
+  void setSemanticFoldThreshold(int t) { _semanticFoldThreshold=t; }
   void setLTLVerifier(int v) { _ltlVerifier=v; }
   int getLTLVerifier() { return _ltlVerifier; }
   void setNumberOfThreadsToUse(int n) { _numberOfThreadsToUse=n; }
@@ -184,6 +185,7 @@ class Analyzer {
   int _displayDiff;
   int _numberOfThreadsToUse;
   int _ltlVerifier;
+  int _semanticFoldThreshold;
 };
 
 } // end of namespace CodeThorn
