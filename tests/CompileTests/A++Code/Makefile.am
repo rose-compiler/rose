@@ -57,7 +57,9 @@ endif
 	@echo "****** ROSE/tests/CompileTests/A++Code: make check rule complete (terminated normally) ******"
 	@echo "*********************************************************************************************"
 
-$(TEST_Objects): $(TESTCODES)
+../../testTranslator:
+	@$(MAKE) -C ../../. testTranslator
+$(TEST_Objects): $(TESTCODES) ../../testTranslator
 	$(TEST_TRANSLATOR) $(ROSE_FLAGS) $(INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
 
 EXTRA_DIST = $(EXAMPLE_TESTCODES) \

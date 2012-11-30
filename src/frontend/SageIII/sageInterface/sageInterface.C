@@ -296,7 +296,7 @@ SageInterface::getNonInstantiatonDeclarationForClass ( SgTemplateInstantiationMe
    }
 
 //! Liao, 11/9/2009
-  //! a better version for SgVariableDeclaration::set_baseTypeDefininingDeclaration(), handling all side effects automatically
+  //! A better version for SgVariableDeclaration::set_baseTypeDefininingDeclaration(), handling all side effects automatically
   //! Used to have a struct declaration embedded into a variable declaration
 void
 SageInterface::setBaseTypeDefiningDeclaration(SgVariableDeclaration* var_decl, SgDeclarationStatement *base_decl)
@@ -9970,12 +9970,15 @@ void SageInterface::fixVariableDeclaration(SgVariableDeclaration* varDecl, SgSco
           initName->set_scope(requiredScope);
 
        // optional?
-       // DQ (7/9/2012): Don't set this since it will be set later (see test2012_107.C) (LATER) Puting this back (mark declarations to not be output as compiler generated -- and not to be output).
+       // DQ (7/9/2012): Don't set this since it will be set later (see test2012_107.C) (LATER) Putting this back (mark declarations to not be output as compiler generated -- and not to be output).
        // DQ (7/12/2012): This is not correct for C++, so don't set it here (unless we use the current scope instead of scope).
-       // Yes, let's set it to the current top of the scope stack.  This might be a problem if the scope stacj is not being used...
+       // Yes, let's set it to the current top of the scope stack.  This might be a problem if the scope stack is not being used...
        // varDecl->set_parent(scope);
+        if (topScopeStack() != NULL) 
+        {
           varDecl->set_parent(topScopeStack());
           ROSE_ASSERT(varDecl->get_parent() != NULL);
+        }
 
        // DQ (11/19/2011): C++ can have a different scope than that of the current scope.
        // symbol table

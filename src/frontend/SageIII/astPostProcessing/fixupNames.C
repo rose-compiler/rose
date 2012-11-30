@@ -260,6 +260,14 @@ ResetEmptyNames::visit(SgNode* node)
                  // This explicit marking makes the process of code generation safer.
                     definingDeclaration->set_isUnNamed(true);
 
+                 // Liao 11/29/2012. Now we enforce non-defining declaration's existence. We have to set its name also
+                    SgClassDeclaration* non_definingDeclaration = isSgClassDeclaration(definingDeclaration->get_firstNondefiningDeclaration ());
+                    if (non_definingDeclaration) 
+                    {
+                       non_definingDeclaration->set_name(new_name);
+                       non_definingDeclaration->set_isUnNamed(true);
+                    }
+
                  // DQ (3/17/2007): This should not be in the map, if it is then it was previously accessed and the name there is wrong.
                     if (SgNode::get_globalMangledNameMap().find(definingDeclaration) != SgNode::get_globalMangledNameMap().end())
                        {
@@ -537,11 +545,11 @@ ResetInconsistantNames::visit(SgNode* node)
      printf ("##### ResetInconsistantNames::visit(node = %p = %s) \n",node,node->sage_class_name());
 #endif
 
-  // These are the only IR nodes that have names that can be held twice, and thus be inconsistant,
+  // These are the only IR nodes that have names that can be held twice, and thus be inconsistent,
   // are declarations (which have defining and non-defining declarations.  Additionally,
   // there can be numerous non-defining declarations.  Sometimes these additional non-defining
   // declaration can hold the wrong name (e.g. "typedef struct { int state;} my_struct_typedef;"
-  // where an added non-defining clss declaration has the name "my_struct_typedef" instead of
+  // where an added non-defining class declaration has the name "my_struct_typedef" instead of
   // being empty.  This screws up the AST merge since then non-definining declarations of the 
   // same declaration will not merge to the same declaration.
      SgDeclarationStatement* declaration = isSgDeclarationStatement(node);
@@ -596,7 +604,12 @@ ResetInconsistantNames::visit(SgNode* node)
                       // DQ (3/17/2007): This should not be in the map, if it is then it was previously accessed and the name there is wrong.
                          ROSE_ASSERT(SgNode::get_globalMangledNameMap().find(declaration) == SgNode::get_globalMangledNameMap().end());
                        }
-
+// Liao, 11/29/2012. Let's see if it holds
+                  if (definingDeclaration!=NULL && nondefiningDeclaration != NULL)
+                  {
+                    ROSE_ASSERT (definingDeclaration ->get_name() == nondefiningDeclaration ->get_name()  );
+                    ROSE_ASSERT (definingDeclaration ->get_isUnNamed() == nondefiningDeclaration ->get_isUnNamed());
+                  }
 #if 0
                  // DQ (10/8/2006): These may not have been set yet so we can't test them!
                     if (nondefiningDeclaration != NULL)

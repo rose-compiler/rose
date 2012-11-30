@@ -52,7 +52,7 @@ void visitorTraversalFunc::analyzePath(std::vector<VertexID>& pathR) {
        path.push_back(R);
     }
     ROSE_ASSERT(isSgFunctionDefinition(path[0]->get_SgNode()));
-    int curr = 0;
+    //int curr = 0;
     //std::cout << "a vpath" << std::endl;
    // for (int q = 0; q < path.size(); q++) {
    //     std::cout << getGraphNodeType(path[q]) << std::endl;
@@ -201,10 +201,10 @@ void propagateFunctionCall(std::vector<SgGraphNode*> path, int i, int pathnum) {
             for (int qe = 0; qe < startingpoint; qe++) {
                 newpath.push_back(path[qe]);
             }
-            for (int qe2 = 0; qe2 < funcPaths[0].size(); qe2++) {
+            for (size_t qe2 = 0; qe2 < funcPaths[0].size(); qe2++) {
                 newpath.push_back(funcPaths[0][qe2]);
             }
-            for (int qe3 = startingpoint; qe3 < path.size(); qe3++) {
+            for (size_t qe3 = startingpoint; qe3 < path.size(); qe3++) {
                 newpath.push_back(path[qe3]);
             }
             //path = newpath; 
@@ -218,16 +218,16 @@ void propagateFunctionCall(std::vector<SgGraphNode*> path, int i, int pathnum) {
            if (funcPaths.size() == 1) {
             return;
            }
-            for (int qw = 1; qw < funcPaths.size(); qw++) {
+            for (size_t qw = 1; qw < funcPaths.size(); qw++) {
             //if (qw != pathnum) {
                 std::vector<SgGraphNode*> npath;// = oldpath;
           for (int qe = 0; qe < startingpoint; qe++) {
                 npath.push_back(path[qe]);
            }
-           for (int qe2 = 0; qe2 < funcPaths[qw].size(); qe2++) {
+           for (size_t qe2 = 0; qe2 < funcPaths[qw].size(); qe2++) {
                 npath.push_back(funcPaths[qw][qe2]);
             }
-            for (int qe3 = startingpoint; qe3 < path.size(); qe3++) {
+            for (size_t qe3 = startingpoint; qe3 < path.size(); qe3++) {
                 npath.push_back(path[qe3]);
             }
             calledMap[npath] = calledMap[newpath];
@@ -356,7 +356,7 @@ int getTarget(int& edge, newGraph*& g)
 
         void printHotness2(newGraph*& g)
         {
-            const newGraph* gc = g;
+            //const newGraph* gc = g;
             int currhot = 0;
             
             std::ofstream mf;
@@ -441,7 +441,7 @@ void visitorTraversal::analyzePath(std::vector<VertexID>& pathR) {
    openg = g;
    opencfg = cfg;
    openorig = orig; 
-   unsigned int i = 0;
+   //unsigned int i = 0;
     noAssert = false;
     rounds = 0;
     forFlag = false;
@@ -480,15 +480,15 @@ void visitorTraversal::analyzePath(std::vector<VertexID>& pathR) {
   //  fout << "************************\n";
   //  fout.close();
     //graphVertex[path[0]] = start;
-    yices_context ctx = yices_mk_context();
+    //yices_context ctx = yices_mk_context();
 bool noadd = false;
-int jjf = 0;
+size_t jjf = 0;
 paths.push_back(path);
 std::vector<SgNode*> called;
     while (jjf != paths.size()) {
         //std::cout << "propagating" << std::endl;
         std::vector<SgGraphNode*> pathc = paths[jjf];
-        int jj = 0;
+        size_t jj = 0;
         while (jj != pathc.size()) {
             if (isSgFunctionCallExp(pathc[jj]->get_SgNode()) && calledMap[pathc].find(jj) == calledMap[pathc].end() && opencfg->toCFGNode(pathc[jj]).getIndex() == 0) { //find(called.begin(), called.end(), pathc[jj]->get_SgNode()) == called.end()) {
              SgFunctionDeclaration* sgfd = isSgFunctionCallExp(pathc[jj]->get_SgNode())->getAssociatedFunctionDeclaration();
@@ -535,13 +535,13 @@ std::vector<SgNode*> called;
     pathnumber += paths.size();
     std::vector<SgNode*> ncalled;
 
-for (int q = 0; q < paths.size(); q++) {
+for (size_t q = 0; q < paths.size(); q++) {
    stringstream y;
    y << "yices" << qst + q << ".txt";
     ofstream fout;
     string fileSaver = "pathsets";
     fout.open(fileSaver.c_str(),ios::app);
-    for (int qr = 0; qr < paths[q].size(); qr++) {
+    for (size_t qr = 0; qr < paths[q].size(); qr++) {
          fout << getGraphNodeType(paths[q][qr]) << std::endl;
     }
     fout << "************************\n";
@@ -563,7 +563,7 @@ for (int q = 0; q < paths.size(); q++) {
     //for (int j = 0; j < 4; j++) {
     ROSE_ASSERT(path.front()->get_SgNode() == path.back()->get_SgNode());
     yices_context ctx = yices_mk_context();
-    yices_expr ye = evalFunction(path, ctx, true);
+    //yices_expr ye = evalFunction(path, ctx, true);
   //for (int j = 0; j < 4; j++) {
    // yices_model ym = yices_get_model(ctx);
   //yices_dump_context(ctx);
@@ -580,7 +580,7 @@ for (int q = 0; q < paths.size(); q++) {
     //if (unknownvdeclis.size() != 0) {
     for (int yy = 0; yy < 4; yy++) {
     std::cout << "unknownvdeclis.size(): " << unknownvdeclis.size() << std::endl;
-    for (int yy2 = 0; yy2 < unknownvdeclis.size(); yy2++) {
+    for (size_t yy2 = 0; yy2 < unknownvdeclis.size(); yy2++) {
     yices_var_decl vdecli = new yices_var_decl();
     vdecli = unknownvdeclis[yy2];
     SgInitializedName* sg = new SgInitializedName();
@@ -615,7 +615,7 @@ for (int q = 0; q < paths.size(); q++) {
     else {
        // yices_dump_context(ctx);
         yices_check(ctx);
-        yices_model m = yices_get_model(ctx);
+        //yices_model m = yices_get_model(ctx);
         std::cout << "*****************" << std::endl;
         std::cout << "consistent at yy: " << yy << std::endl;
         std::cout << "*****************" << std::endl;
@@ -652,10 +652,10 @@ qst += paths.size();
 
 yices_expr evalFunction(std::vector<SgGraphNode*> path, yices_context& ctx, bool mainFlag) {
     int i = 0;
-    bool noAssert = false;
-    int rounds = 0;
+    //bool noAssert = false;
+    //int rounds = 0;
     //bool forFlag = false;
-    int defscount = 0;
+    //int defscount = 0;
     //bool inconsistent = false;
     std::vector<SgGraphNode*> exprPath;
 /*
@@ -699,7 +699,7 @@ yices_expr evalFunction(std::vector<SgGraphNode*> path, yices_context& ctx, bool
 
     }
 */
-    while (i < path.size()) {
+    while (i < (int)path.size()) {
        // std::cout << "in evalFunction" << std::endl;
        // std::cout << "ith node: " << getGraphNodeType(path[i]) << "at i = " << i << std::endl;
        // std::cout << "path.size(): " << path.size() << std::endl;
@@ -750,7 +750,7 @@ yices_expr evalFunction(std::vector<SgGraphNode*> path, yices_context& ctx, bool
               retpath.push_back(path[j]);
             //  std::cout << "path[j]: " << getGraphNodeType(path[j]) << std::endl;
               j++;
-              if (j == path.size()) {
+              if (j == (int)path.size()) {
                   break;
               }
            }
@@ -794,7 +794,7 @@ yices_expr evalFunction(std::vector<SgGraphNode*> path, yices_context& ctx, bool
             //    k++;
            // }
            // exprPath.push_back(path[i]);
-            int check = 0;
+            size_t check = 0;
             while (check < path[i]->get_SgNode()->cfgIndexForEnd()) {//path[k]->get_SgNode() != path[i]->get_SgNode()) {
                 if (path[i]->get_SgNode() == path[k]->get_SgNode()) {
                     check++;
@@ -846,7 +846,7 @@ yices_expr evalFunction(std::vector<SgGraphNode*> path, yices_context& ctx, bool
           //  std::cout << "path[i+1]: " << getGraphNodeType(path[iorig+1]) << ", " << "path[i+2]: " << getGraphNodeType(path[iorig+2]) << std::endl;
           //  std::cout << "exitStmt" << std::endl; 
            // std::cout << "internals" << std::endl;
-            while (i < path.size() && path[i]->get_SgNode() != path[iorig]->get_SgNode()) {
+            while (i < (int)path.size() && path[i]->get_SgNode() != path[iorig]->get_SgNode()) {
                 if (isSgBasicBlock(path[i]->get_SgNode())) {
                     i++;
                 }
@@ -862,7 +862,8 @@ yices_expr evalFunction(std::vector<SgGraphNode*> path, yices_context& ctx, bool
             //std::cout << "end exitStmt" << std::endl;//end internals" << std::endl;
            // std::cout << "exitStmt" << std::endl;
            // std::cout << "internals" << std::endl;
-            while (i < path.size() && path[iorig]->get_SgNode() != path[i]->get_SgNode()){//!isSgWhileStmt(path[i]->get_SgNode())) {
+            while (i < (int)path.size() && path[iorig]->get_SgNode() != path[i]->get_SgNode()) {
+                //!isSgWhileStmt(path[i]->get_SgNode())) {
                // if (!isSgBasicBlock(path[i]->get_SgNode())) {
                 internals.push_back(path[i]);
                // }
@@ -904,7 +905,7 @@ yices_expr evalFunction(std::vector<SgGraphNode*> path, yices_context& ctx, bool
                     }
                     else {
                         yices_pop(ctx);
-                        yices_expr ev = evalFunction(internals, ctx, false);
+                        //yices_expr ev = evalFunction(internals, ctx, false);
                         //yices_expr eupdate = mainParse(update, ctx);
                         //yices_assert(ctx, eupdate);
                         //yices_expr ev = evalFunction(internals, ctx, false);
@@ -1005,13 +1006,13 @@ yices_expr evalFunction(std::vector<SgGraphNode*> path, yices_context& ctx, bool
                 
             }
             else {
-            while (path[j]->get_SgNode() != path[i]->get_SgNode() && j < path.size()-1) {
-              //  std::cout << "currj: " << getGraphNodeType(path[j]) << std::endl;
-               // if (!isSgBasicBlock(path[j]->get_SgNode())) {
-                internals.push_back(path[j]);
-               // }
-                j++;
-            }
+                while (path[j]->get_SgNode() != path[i]->get_SgNode() && j < (int)path.size()-1) {
+                    //  std::cout << "currj: " << getGraphNodeType(path[j]) << std::endl;
+                    // if (!isSgBasicBlock(path[j]->get_SgNode())) {
+                    internals.push_back(path[j]);
+                    // }
+                    j++;
+                }
             //std::cout << "currj: " << j << ", path.size(): " << path.size() << ", node type: " << getGraphNodeType(path[j]) << std::endl;
             j++;
            // std::cout << "XXXXXXXXXXXXXXXX" << std::endl;
@@ -1064,7 +1065,7 @@ yices_expr evalFunction(std::vector<SgGraphNode*> path, yices_context& ctx, bool
                     }
                     else {
                         yices_pop(ctx);
-                        yices_expr ev = evalFunction(internals, ctx, false);
+                        evalFunction(internals, ctx, false);
                         yices_expr eupdate = mainParse(update, ctx);
                         yices_assert(ctx, eupdate);
                         //yices_expr ev = evalFunction(internals, ctx, false);
@@ -1177,10 +1178,10 @@ yices_expr evalFunction(std::vector<SgGraphNode*> path, yices_context& ctx, bool
             CFGNode cn = opencfg->toCFGNode(path[kk+1]);
             std::vector<CFGEdge> ed = cn.inEdges();
             
-            int qw = 0;
+            //int qw = 0;
             EdgeConditionKind kn;
             CFGEdge needEdge;
-            for (int qt = 0; qt < ed.size(); qt++) {
+            for (size_t qt = 0; qt < ed.size(); qt++) {
                 if (ed[qt].source() == opencfg->toCFGNode(path[kk])) {
                     needEdge = ed[qt];
                     kn = needEdge.condition();
@@ -1236,16 +1237,16 @@ yices_expr evalFunction(std::vector<SgGraphNode*> path, yices_context& ctx, bool
                 fpath2.push_back(path[kk2]);
            //     }
                 kk2++;
-                if (kk2 == path.size()) {
+                if (kk2 == (int)path.size()) {
                     break;
                 }
                 
             }
            // std::cout << "kk2: " << getGraphNodeType(path[kk2]) << std::endl;
-            if (kk2 < path.size()) {
+           if (kk2 < (int)path.size()) {
             fpath2.push_back(path[kk2]);
             }
-            if (kk2 == path.size()) {
+           if (kk2 == (int)path.size()) {
                 //std::cout << "kk2 path: " << std::endl;
                // for (int u = kk+1; u < kk2; u++) {
                //     std::cout << getGraphNodeType(path[u]) << std::endl;
@@ -1443,7 +1444,7 @@ std::vector<int> breakTriple(std::vector<SgGraphNode*> expr) {
     SgNode* index = expr[0]->get_SgNode();
     std::vector<int> bounds(3, 0);
     bounds[0] = 0;
-    int i = 1;
+    size_t i = 1;
     while (expr[i]->get_SgNode() != index) {
         //std::cout << "expr[i]: " << cfg->toCFGNode(expr[i]).toString() << std::endl;
         ROSE_ASSERT(i < expr.size());
@@ -1509,7 +1510,7 @@ yices_expr mainParse(vector<SgGraphNode*> expr, yices_context& ctx) {
     //std::cout << "nodetype: " << typ << std::endl;
     //std::cout << "mainParse" << std::endl;
      rounds++;
-    bool yices = true;
+    //bool yices = true;
     std::stringstream stst;
     string parsed;
     //bool unknown_flag = false;
@@ -1529,8 +1530,8 @@ yices_expr mainParse(vector<SgGraphNode*> expr, yices_context& ctx) {
     if (isSgReturnStmt(expr[0]->get_SgNode())) {
         ROSE_ASSERT(isSgReturnStmt(expr.back()));
         std::vector<SgGraphNode*> toSolve;
-        for (int j = 1; j < expr.size()-1; j++) {
-                    toSolve.push_back(expr[j]);
+        for (size_t j = 1; j < expr.size()-1; j++) {
+            toSolve.push_back(expr[j]);
         }
         yices_expr ts = mainParse(toSolve, ctx);
         return ts;
@@ -1577,7 +1578,7 @@ yices_expr mainParse(vector<SgGraphNode*> expr, yices_context& ctx) {
        int i = 1;
        while (!isSgExprListExp(expr[i]->get_SgNode())) {
            i++;
-           if (i > expr.size()) {
+           if (i > (int)expr.size()) {
                ROSE_ASSERT(false);
                yices_expr empty = new yices_expr;
                return empty;
@@ -1587,12 +1588,12 @@ yices_expr mainParse(vector<SgGraphNode*> expr, yices_context& ctx) {
        int checks = 0;
        std::vector<yices_expr> argsyices;
        std::vector<SgGraphNode*> yexp;
-       while (checks != expr[i]->get_SgNode()->cfgIndexForEnd()) {
+       while (checks != (int)expr[i]->get_SgNode()->cfgIndexForEnd()) {
        //std::vector<SgGraphNode*> yexp;
        while (expr[j]->get_SgNode() != expr[i]->get_SgNode()) {
            yexp.push_back(expr[j]);
            j++;
-           if (j >= expr.size()) {
+           if (j >= (int)expr.size()) {
                ROSE_ASSERT(false);
                yices_expr empty = new yices_expr;
                return empty;
@@ -1616,7 +1617,7 @@ yices_expr mainParse(vector<SgGraphNode*> expr, yices_context& ctx) {
           //yices_expr argsaryyices[argsyices.size()];
        //   std::cout << "ufunc" << std::endl;
           yices_expr argsaryices[argsyices.size()];
-          for (int tt = 0; tt < argsyices.size(); tt++) {
+          for (size_t tt = 0; tt < argsyices.size(); tt++) {
           argsaryices[tt] = argsyices[tt];
           }
        
@@ -1677,7 +1678,7 @@ yices_expr mainParse(vector<SgGraphNode*> expr, yices_context& ctx) {
       // }
        //std::cout << "endpath" << std::endl;
        //std::cout << std::endl;
-       while (check2 < expr[k]->get_SgNode()->cfgIndexForEnd()) {
+       while (check2 < (int)expr[k]->get_SgNode()->cfgIndexForEnd()) {
        if (expr[k]->get_SgNode() == expr[j]->get_SgNode()) {
            check2++;
            //if (check2 >= expr[k]->get_SgNode()->cfgIndexForEnd()) {
@@ -1694,7 +1695,7 @@ yices_expr mainParse(vector<SgGraphNode*> expr, yices_context& ctx) {
       // std::cout << "funcLine.size(): " << funcLine.size() << std::endl;
        //std::cout << "formed funcLine" << std::endl;
        std::vector<SgGraphNode*> funcLine2;
-       for (int kk = 1; kk < funcLine.size()-1; kk++) {
+       for (size_t kk = 1; kk < funcLine.size()-1; kk++) {
            funcLine2.push_back(funcLine[kk]);
        }
        //std::cout << std::endl;
@@ -1825,12 +1826,12 @@ yices_expr mainParse(vector<SgGraphNode*> expr, yices_context& ctx) {
        // std::cout << "\n";
         std::vector<SgGraphNode*> vecX;
         std::map<int, std::vector<SgGraphNode*> > vec;
-        while (check < expr[0]->get_SgNode()->cfgIndexForEnd()) {
+        while (check < (int)expr[0]->get_SgNode()->cfgIndexForEnd()) {
             if (expr[0]->get_SgNode() == expr[i]->get_SgNode()) { 
                 vec[check] = vecX;
                 vecX.clear();
                 check++;
-                if (check == expr[0]->get_SgNode()->cfgIndexForEnd()) {
+                if (check == (int)expr[0]->get_SgNode()->cfgIndexForEnd()) {
                     break;
                 }
              }
@@ -1918,7 +1919,7 @@ yices_expr mainParse(vector<SgGraphNode*> expr, yices_context& ctx) {
         //parsed = stst.str();
     }
     else if (isSgPlusPlusOp(expr[0]->get_SgNode())) {
-        for (int i = 1; i < expr.size() - 1; i++) {
+        for (size_t i = 1; i < expr.size() - 1; i++) {
             vec1.push_back(expr[i]);
         }
         yices_expr e1 = mainParse(vec1, ctx);
@@ -1926,10 +1927,10 @@ yices_expr mainParse(vector<SgGraphNode*> expr, yices_context& ctx) {
         nvars++;
         funN << "V" << nvars;
        
-        char* fun = (char*) funN.str().c_str();
-        yices_type ty = yices_mk_type(ctx, "int");
-        yices_var_decl vdecl = yices_mk_var_decl(ctx, fun, ty);
-        yices_expr e2 = yices_mk_var_from_decl(ctx, vdecl);
+        //char* fun = (char*) funN.str().c_str();
+        //yices_type ty = yices_mk_type(ctx, "int");
+        //yices_var_decl vdecl = yices_mk_var_decl(ctx, fun, ty);
+        //yices_expr e2 = yices_mk_var_from_decl(ctx, vdecl);
         yices_expr arr[2];
         yices_expr en = yices_mk_num(ctx, 1);
         arr[0] = e1;
@@ -2071,19 +2072,19 @@ yices_expr mainParse(vector<SgGraphNode*> expr, yices_context& ctx) {
         //std::cout << "expr[2]: " << getGraphNodeType(expr[2]) << std::endl;
         if (!isSgVarRefExp(vec1[0])) {
          
-        while (/*expr[2]->get_SgNode() != expr[p]->get_SgNode()) { &&*/ check < expr[2]->get_SgNode()->cfgIndexForEnd()) {
-            if (expr[2]->get_SgNode() == expr[p]->get_SgNode()) {
-                check++;
-                if (check >= expr[2]->get_SgNode()->cfgIndexForEnd()) {
-                    break;
+            while (/*expr[2]->get_SgNode() != expr[p]->get_SgNode()) { &&*/ check < (int)expr[2]->get_SgNode()->cfgIndexForEnd()) {
+                if (expr[2]->get_SgNode() == expr[p]->get_SgNode()) {
+                    check++;
+                    if (check >= (int)expr[2]->get_SgNode()->cfgIndexForEnd()) {
+                        break;
+                    }
                 }
-            }
-            vec1.push_back(expr[p]);
-            p++;
+                vec1.push_back(expr[p]);
+                p++;
             //vec1.push_back(expr[p]);
          //   p++;
-        }
-        vec1.push_back(expr[p]);
+            }
+            vec1.push_back(expr[p]);
         }
         stringstream funN;
         string ss;
@@ -2125,7 +2126,7 @@ yices_expr mainParse(vector<SgGraphNode*> expr, yices_context& ctx) {
 
         //ROSE_ASSERT(e2 != NULL);
         //ret = yices_mk_eq(ctx,e1,e1);
-        yices_expr e2 = mainParse(vec1,ctx);
+        /*yices_expr e2 =*/ mainParse(vec1,ctx);
         if (unknown_flag || unknowns.find(isSgInitializedName(expr[0]->get_SgNode())) != unknowns.end()) {
             if (unknown_flag || unknowns.find(isSgInitializedName(expr[0]->get_SgNode())) != unknowns.end()) {
                 unknowns[isSgInitializedName(expr[0]->get_SgNode())] = vdecl;
@@ -2137,7 +2138,7 @@ yices_expr mainParse(vector<SgGraphNode*> expr, yices_context& ctx) {
                 if (usingNots) {
                     //std::cout << "uN" << std::endl;
                     ROSE_ASSERT(notMap.find(isSgInitializedName(expr[0]->get_SgNode())) != notMap.end());
-                        for (int j = 0; j < notMap[isSgInitializedName(expr[0]->get_SgNode())].size(); j++) {
+                        for (size_t j = 0; j < notMap[isSgInitializedName(expr[0]->get_SgNode())].size(); j++) {
                             int jv = notMap[isSgInitializedName(expr[0]->get_SgNode())][j];
                             yices_expr jvexpr =yices_mk_num(ctx, jv);
                             yices_expr ei = yices_mk_diseq(ctx, e1, jvexpr);
@@ -2178,7 +2179,7 @@ yices_expr mainParse(vector<SgGraphNode*> expr, yices_context& ctx) {
         std::vector<SgGraphNode*> expr2;
         //std::cout << "back node: " << getGraphNodeType(expr.back()) << std::endl;
         ROSE_ASSERT(isSgVariableDeclaration(expr.back()->get_SgNode()));
-        for (int tt = 1; tt < expr.size()-1; tt++) {
+        for (size_t tt = 1; tt < expr.size()-1; tt++) {
             expr2.push_back(expr[tt]);
         }
         yices_expr y2 = mainParse(expr2, ctx);
@@ -2232,11 +2233,11 @@ yices_expr mainParse(vector<SgGraphNode*> expr, yices_context& ctx) {
             ss << svs.getString();
             ss << nvars;
             char valTypeCh[valType.size()];
-            for (int k = 0; k < valType.size(); k++) {
+            for (size_t k = 0; k < valType.size(); k++) {
                 valTypeCh[k] = valType[k];
             }
             char nam[ss.str().size()];
-            for (int q = 0; q < ss.str().size(); q++) {
+            for (size_t q = 0; q < ss.str().size(); q++) {
                 nam[q] = ss.str()[q];
             }
             string fun = valType;
@@ -2267,7 +2268,7 @@ yices_expr mainParse(vector<SgGraphNode*> expr, yices_context& ctx) {
        
         ROSE_ASSERT(isSgExprStatement(expr.back()->get_SgNode()));
         std::vector<SgGraphNode*> nexpr;
-        for (int q = 1; q < expr.size()-1; q++) {
+        for (size_t q = 1; q < expr.size()-1; q++) {
             nexpr.push_back(expr[q]);
        }
         yices_expr y2 = mainParse(nexpr, ctx);
@@ -2469,7 +2470,7 @@ SgFunctionDefinition* mainDef = SageInterface::findMain(proj)->get_definition();
   }
   //std::cout << "funcs.size(): " << funcs.size() << std::endl;
   //ROSE_ASSERT(false);
-    int jj = 0;
+    //int jj = 0;
   for (unsigned int i = 0; i < funcs.size(); i++) {
      // if (funcs[i] != mainDef) {
       visitorTraversalFunc* visfunc = new visitorTraversalFunc();
@@ -2584,77 +2585,74 @@ for (int q = 0; q < paths.size(); q++) {
 
 
 
-/*
-
-int main(int argc, char *argv[]) {
-  pathnum = 0;
-  ipaths = 0;
-  SgProject* proj = frontend(argc,argv);
-  ROSE_ASSERT (proj != NULL);
-
-  SgFunctionDeclaration* mainDefDecl = SageInterface::findMain(proj);
-
-  SgFunctionDefinition* mainDef = mainDefDecl->get_definition();
-   visitorTraversal* vis = new visitorTraversal();
-   visitorTraversal* vis2 = new visitorTraversal();
-   nGraph = new newGraph();
-   //vis->nGraph = nGraph;
-   //newGraph* nnGraph = new newGraph();
-    StaticCFG::CFG* cfg1 = new StaticCFG::CFG(mainDef);
-   //cfg.buildFullCFG();
-    stringstream ss;
-    string fileName= StringUtility::stripPathFromFileName(mainDef->get_file_info()->get_filenameString());
-    string dotFileName1=fileName+"."+ mainDef->get_declaration()->get_name() +".dot";
-
-    cfgToDot(mainDef,dotFileName1);
-    //cfg->buildFullCFG();
-    //SgIncidenceDirectedGraph* cf = new SgIncidenceDirectedGraph();
-    SgIncidenceDirectedGraph* cf = cfg1->getGraph();
-    myGraph* mg = new myGraph();
-    mg = instantiateGraph(cf, *cfg1);
-    vis2->tltnodes = 0;
-    vis2->paths = 0;
-    vis->tltnodes = 0;
-    vis->paths = 0;
-    //vis->firstPrepGraph(constcfg);
-    vis->g = cf;
-    vis2->g = cf;
-    vis2->orig = mg;
-    cfg = cfg1;
-    vis->orig = mg;
-    vis->constructPathAnalyzer(mg, true);
-    std::cout << "constructed" << std::endl;
-    std::cout << "ipaths: " << ipaths << std::endl; 
-   // printHotness2(nGraph);
-   // std::cout << "mapped" << std::endl;i
-   std::vector<std::vector<int> > pts;
-   std::vector<int> ptsP;
-    //std::vector<SgExpressionStmt*> exprs = SageInterface::querySubTree<SgExpressionStmt>(proj);
-/*  
- for (int q1 = 0; q1 < exprs.size(); q1++) {
-      ptsP.clear();
-      for (int q2 = 0; q2 < exprs.size(); q2++) {
-          if (q1 != q2) {
-              vis->paths = 0;
-              vis->tltnodes = 0;
-              vis->constructPathAnalyzer(mg, exprs[q1], exprs[q2]);
-              std::cout << vis->paths << " between expr" << q1 << " and expr" << q2 << std::endl;
-              ptsP.push_back(vis->paths);
-          }
-          pts.push_back(ptsP);
-      }
-    }
-    for (int i = 0; i < pts.size(); i++) {
-        for (int j = 0; j < pts[i].size(); j++) {
-            std::cout << "between expr" << i << "and expr" << j << " there are " << pts[i][j] << std::endl;
-        }
-    }
-*/
-    //cfg.clearNodesAndEdges();
-    //std::cout << "finished" << std::endl;
-    //std::cout << "tltnodes: " << vis->tltnodes << " paths: " << vis->paths << std::endl;
-    //delete vis;
-//}
+// int main(int argc, char *argv[]) {
+//   pathnum = 0;
+//   ipaths = 0;
+//   SgProject* proj = frontend(argc,argv);
+//   ROSE_ASSERT (proj != NULL);
+// 
+//   SgFunctionDeclaration* mainDefDecl = SageInterface::findMain(proj);
+// 
+//   SgFunctionDefinition* mainDef = mainDefDecl->get_definition();
+//    visitorTraversal* vis = new visitorTraversal();
+//    visitorTraversal* vis2 = new visitorTraversal();
+//    nGraph = new newGraph();
+//    //vis->nGraph = nGraph;
+//    //newGraph* nnGraph = new newGraph();
+//     StaticCFG::CFG* cfg1 = new StaticCFG::CFG(mainDef);
+//    //cfg.buildFullCFG();
+//     stringstream ss;
+//     string fileName= StringUtility::stripPathFromFileName(mainDef->get_file_info()->get_filenameString());
+//     string dotFileName1=fileName+"."+ mainDef->get_declaration()->get_name() +".dot";
+// 
+//     cfgToDot(mainDef,dotFileName1);
+//     //cfg->buildFullCFG();
+//     //SgIncidenceDirectedGraph* cf = new SgIncidenceDirectedGraph();
+//     SgIncidenceDirectedGraph* cf = cfg1->getGraph();
+//     myGraph* mg = new myGraph();
+//     mg = instantiateGraph(cf, *cfg1);
+//     vis2->tltnodes = 0;
+//     vis2->paths = 0;
+//     vis->tltnodes = 0;
+//     vis->paths = 0;
+//     //vis->firstPrepGraph(constcfg);
+//     vis->g = cf;
+//     vis2->g = cf;
+//     vis2->orig = mg;
+//     cfg = cfg1;
+//     vis->orig = mg;
+//     vis->constructPathAnalyzer(mg, true);
+//     std::cout << "constructed" << std::endl;
+//     std::cout << "ipaths: " << ipaths << std::endl; 
+//    // printHotness2(nGraph);
+//    // std::cout << "mapped" << std::endl;i
+//    std::vector<std::vector<int> > pts;
+//    std::vector<int> ptsP;
+//     //std::vector<SgExpressionStmt*> exprs = SageInterface::querySubTree<SgExpressionStmt>(proj);
+//  for (int q1 = 0; q1 < exprs.size(); q1++) {
+//       ptsP.clear();
+//       for (int q2 = 0; q2 < exprs.size(); q2++) {
+//           if (q1 != q2) {
+//               vis->paths = 0;
+//               vis->tltnodes = 0;
+//               vis->constructPathAnalyzer(mg, exprs[q1], exprs[q2]);
+//               std::cout << vis->paths << " between expr" << q1 << " and expr" << q2 << std::endl;
+//               ptsP.push_back(vis->paths);
+//           }
+//           pts.push_back(ptsP);
+//       }
+//     }
+//     for (int i = 0; i < pts.size(); i++) {
+//         for (int j = 0; j < pts[i].size(); j++) {
+//             std::cout << "between expr" << i << "and expr" << j << " there are " << pts[i][j] << std::endl;
+//         }
+//     }
+// 
+//     //cfg.clearNodesAndEdges();
+//     //std::cout << "finished" << std::endl;
+//     //std::cout << "tltnodes: " << vis->tltnodes << " paths: " << vis->paths << std::endl;
+//     //delete vis;
+// //}
                                                                                                                                                                                                                                                                                                                                                                                                                                                             
 
 /*
