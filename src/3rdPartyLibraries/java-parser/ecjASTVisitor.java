@@ -69,6 +69,17 @@ class ecjASTVisitor extends ExtendedASTVisitor {
 
     // *************************************************
     public boolean preVisit(ASTNode node) {
+        if (javaParserSupport.verboseLevel > 1)
+            System.out.println("Pre-visiting " + node.getClass().getName());
+
+        if (node instanceof Javadoc) { // Ignore all Javadoc nodes!!!
+            return false;
+        }
+
+        if (node instanceof Annotation) { // Ignore all Annotation nodes!!!
+            return false;
+        }
+
         if (TypeHeaderDelimiters.containsKey(node)) {
             TypeDeclaration type = TypeHeaderDelimiters.get(node);
             if (javaParserSupport.verboseLevel > 1)
@@ -92,9 +103,6 @@ class ecjASTVisitor extends ExtendedASTVisitor {
                 javaParserSupport.processMethodDeclarationHeader((MethodDeclaration) method, javaParserSupport.createJavaToken(method)); 
             }
         }
-
-        if (javaParserSupport.verboseLevel > 1)
-            System.out.println("Pre-visiting " + node.getClass().getName());
 
         //
         // Ignore default constructors.
@@ -206,10 +214,10 @@ class ecjASTVisitor extends ExtendedASTVisitor {
                                           (node.binding != null && node.binding.isStrictfp()),
                                           javaParserSupport.createJavaToken(node));
 
-        if (node.javadoc != null) {
+        if (node.javadoc != null) { // Javadoc(s) are ignored for now. See preVisit(...)
             node.javadoc.traverse(this, node.scope);
         }
-        if (node.annotations != null) {
+        if (node.annotations != null) { // Annotations are ignored for now. See preVisit(...)
             int annotationsLength = node.annotations.length;
             for (int i = 0; i < annotationsLength; i++) {
                 node.annotations[i].traverse(this, node.staticInitializerScope);
@@ -373,16 +381,15 @@ class ecjASTVisitor extends ExtendedASTVisitor {
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Leaving exit (Argument,BlockScope)");
 
-        String nameString = new String(node.name);
+        String name = new String(node.name);
 
         boolean is_final = node.binding.isFinal();
 
-
         if (catchArguments.contains(node)) {
-            JavaParser.cactionCatchArgumentEnd(nameString, is_final, javaParserSupport.createJavaToken(node));
+            JavaParser.cactionCatchArgumentEnd(name, is_final, javaParserSupport.createJavaToken(node));
         }
         else {
-            JavaParser.cactionArgumentEnd(nameString, is_final, javaParserSupport.createJavaToken(node));
+            JavaParser.cactionArgumentEnd(name, is_final, javaParserSupport.createJavaToken(node));
         }
 
         if (javaParserSupport.verboseLevel > 0)
@@ -419,16 +426,15 @@ class ecjASTVisitor extends ExtendedASTVisitor {
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Leaving exit (Argument,ClassScope)");
 
-        String nameString = new String(node.name);
+        String name = new String(node.name);
 
-        boolean is_final = node.binding.isFinal();
-
+        boolean is_final = node.binding.isFinal(); 
 
         if (catchArguments.contains(node)) {
-            JavaParser.cactionCatchArgumentEnd(nameString, is_final, javaParserSupport.createJavaToken(node));
+            JavaParser.cactionCatchArgumentEnd(name, is_final, javaParserSupport.createJavaToken(node));
         }
         else {
-            JavaParser.cactionArgumentEnd(nameString, is_final, javaParserSupport.createJavaToken(node));
+            JavaParser.cactionArgumentEnd(name, is_final, javaParserSupport.createJavaToken(node));
         }
 
         if (javaParserSupport.verboseLevel > 0)
@@ -1016,17 +1022,13 @@ class ecjASTVisitor extends ExtendedASTVisitor {
             MethodHeaderDelimiters.put(node.statements[0], node);
         }
         
-        // argument types
+        //
+        // TODO: Do something !!!
+        //
         if (node.typeParameters != null) {
-            for (int i = 0, typeArgumentsLength = node.typeParameters.length; i < typeArgumentsLength; i++) {
-                System.out.println("     --- constructor typeParameters = " + node.typeParameters[i]);
-            }
-            // TODO: What TO DO?
-        }
-        else {
-            // For a function defined in the input program, the typeParameters array is empty, but the ECJ
-            // specific AST traversal will visit the type parameters. Not clear why this is organized like this.
-            // System.out.println("     --- method typeParameters (empty) = " + node.typeParameters);
+            System.out.println();
+            System.out.println("*** No support yet for constructor type parameters");
+            System.exit(1);
         }
 
         JavaParser.cactionConstructorDeclaration(name, javaParserSupport.createJavaToken(node));
@@ -1179,6 +1181,15 @@ class ecjASTVisitor extends ExtendedASTVisitor {
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Inside of enter (ExplicitConstructorCall,BlockScope)");
 
+        //
+        // TODO: Do something !!!
+        //
+        if (node.genericTypeArguments != null) {
+            System.out.println();
+            System.out.println("*** No support yet for constructor type arguments");
+            System.exit(1);
+        }
+
         JavaParser.cactionExplicitConstructorCall(javaParserSupport.createJavaToken(node));
           
         if (javaParserSupport.verboseLevel > 0)
@@ -1194,30 +1205,12 @@ class ecjASTVisitor extends ExtendedASTVisitor {
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("In visit (ExplicitConstructorCall,BlockScope): node.accessMode = " + node.accessMode);
 
-        //
-        // Push the types of the parameters of the method that was matched for this call so that the
-        // translator can retrieve the exact method in question.
-        //
-        if (node.binding instanceof ParameterizedMethodBinding && ((ParameterizedMethodBinding) node.binding).hasSubstitutedParameters()) {
-            ParameterizedMethodBinding parameterized_method_binding = (ParameterizedMethodBinding) node.binding;
-            Constructor constructor = javaParserSupport.getRawConstructor(parameterized_method_binding);
-            assert(constructor != null);
-            Class argument_types[] = constructor.getParameterTypes();
-            for (int i = 0; i < argument_types.length; i++) {
-                javaParserSupport.generateAndPushType(argument_types[i]);
-            }
-        }
-        else {
-            MethodBinding constructor_binding = node.binding;
-            TypeBinding argument_types[] = constructor_binding.parameters;
-            for (int i = 0; i < node.binding.parameters.length; i++) {
-                javaParserSupport.generateAndPushType(argument_types[i], javaParserSupport.createJavaToken(node));
-            }
-        }
+        pushRawMethodParameterTypes(node.binding, javaParserSupport.createJavaToken(node));
 
         JavaParser.cactionExplicitConstructorCallEnd(node.isImplicitSuper(),
                                                      node.isSuperAccess(),
                                                      node.qualification != null,
+                                                     node.binding.parameters.length,
                                                      node.typeArguments == null ? 0 : node.typeArguments.length,
                                                      node.arguments == null ? 0 : node.arguments.length,
                                                      javaParserSupport.createJavaToken(node));
@@ -2193,6 +2186,15 @@ class ecjASTVisitor extends ExtendedASTVisitor {
             System.out.println("     --- function call from class name (associatedClass)    = " + node.actualReceiverType.debugName());
         }
 
+        //
+        // TODO: Do something !!!
+        //
+        if (node.genericTypeArguments != null) {
+            System.out.println();
+            System.out.println("*** No support yet for method type arguments");
+            System.exit(1);
+        }
+
         // 
         // Make sure this class is available
         //
@@ -2213,128 +2215,8 @@ class ecjASTVisitor extends ExtendedASTVisitor {
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Inside of exit (MessageSend,BlockScope)");
 
-// TODO: Remove this !!!        
-/*
-        String package_name = javaParserSupport.getPackageName(node.actualReceiverType),
-               type_name = javaParserSupport.getTypeName(node.actualReceiverType),
-               method_name = new String(node.binding.selector);
+        pushRawMethodParameterTypes(node.binding, javaParserSupport.createJavaToken(node));
 
-System.out.println("Type " + node.actualReceiverType.debugName() + (node.actualReceiverType instanceof BinaryTypeBinding ? " is " : (" is not (" + node.actualReceiverType.getClass().getCanonicalName() + ")")) + " a binary type");
-if (node.actualReceiverType instanceof ParameterizedTypeBinding) {
-ParameterizedTypeBinding ptype_binding = (ParameterizedTypeBinding) node.actualReceiverType;
-System.out.println("The erasure type is (" + (ptype_binding.erasure().getClass().getCanonicalName() + ") ") + ptype_binding.erasure().debugName());
-System.out.println("The generic type is (" + (ptype_binding.genericType().getClass().getCanonicalName() + ") ") + ptype_binding.genericType().debugName());
-MethodBinding mbinding[] = ptype_binding.getMethods(node.binding.selector, node.binding.parameters.length);
-System.out.println("There are " + mbinding.length + " methods with the name " + method_name + " with " + node.binding.parameters.length + " arguments in type " + node.actualReceiverType.debugName());
-for (int i = 0; i < mbinding.length; i++) {
-    TypeBinding arguments[] = mbinding[0].parameters;
-    if (arguments.length > 0) {
-        System.out.println("Processing method " + method_name + ":");
-        for (int k = 0; k < arguments.length; k++) {
-            String arg_package_name = new String(arguments[k].qualifiedPackageName()),
-                   arg_type_name = new String(arguments[k].qualifiedSourceName());
-            if (arguments[k].isArrayType()) {
-                System.out.println("Can't process Array type parameters yet!");
-                System.exit(1);
-            }
-            System.out.println("    argument " + k + ": " + arguments[k].getClass().getCanonicalName() + ": " + arguments[k].debugName());
-        }
-    }
-}
-}
-
-        if (node.binding instanceof ParameterizedMethodBinding) {
-            ParameterizedMethodBinding parameterized_method_binding = (ParameterizedMethodBinding) node.binding;
-            if (parameterized_method_binding.hasSubstitutedParameters()) {
-                TypeBinding arguments[] = parameterized_method_binding.original().parameters; // node.binding.parameters;
-                Class parameterTypes[] = new Class[arguments.length];
-                if (arguments.length > 0) {
-                    System.out.println("Processing method " + method_name + ":");
-                    for (int i = 0; i < arguments.length; i++) {
-                        String arg_package_name = new String(arguments[i].qualifiedPackageName()),
-                               arg_type_name = new String(arguments[i].qualifiedSourceName());
-                        if (arguments[i].isArrayType()) {
-                            System.out.println("Can't process Array type parameters yet!");
-                            System.exit(1);
-                        }
-                        parameterTypes[i] = javaParserSupport.findClass(arg_package_name, arg_type_name);
-                        assert(parameterTypes[i] != null);
-                        System.out.println("    argument " + i + ": " + arguments[i].getClass().getCanonicalName() + ": " + arguments[i].debugName());
-                    }
-                }
-                Class<?> cls = javaParserSupport.findClass(package_name, type_name);
-                assert(cls != null);
-                try {
-                    Method method = cls.getDeclaredMethod(method_name, parameterTypes);
-                }
-                catch (NoSuchMethodException e) {
-                    System.out.println("***Can't find method " + method_name);
-                }
-                Method methods[] = cls.getDeclaredMethods();
-                for (int i = 0; i < methods.length; i++) {
-                    Method method = methods[i];
-                    Type[] types = method.getGenericParameterTypes();
-                    assert(types != null);
-                    if (types.length == arguments.length && method_name.equals(method.getName())) {
-                        int j = 0;
-                        for (; j < types.length; j++) {
-                            assert(types[j] != null);
-                            if (types[j] instanceof TypeVariable){
-                                TypeVariable<?> type = (TypeVariable<?>) types[j];
-                                if (! type.getName().equals(arguments[j].debugName()))
-                                    break;
-                            }
-                            else if (types[j] instanceof Class){
-                                Class class_arg = (Class) types[j];
-                                if (class_arg != javaParserSupport.findClass(arguments[j]))
-                                    break;
-                            }
-                            else {
-                                System.out.print("Don't know what to do with type " + types[j].getClass().getCanonicalName());
-                                break;
-                            }
-                        }
-                        if (j == types.length) {
-                            // Accept Method as a match !!!
-                            System.out.println("Found a match for method " + method_name + " with " + types.length + " arguments");
-                        }
-                    }
-                }
-                
-                System.exit(1);
-//                MethodBinding method_binding = parameterized_method_binding.original();
-//                TypeBinding arguments[] = method_binding.parameters;
-//                if (arguments.length > 0) {
-//                    System.out.print(arguments[0].getClass().getCanonicalName() + ": " + arguments[0].debugName());
-//                    for (int i = 1; i < arguments.length; i++) {
-//                        System.out.print(", " + arguments[i].getClass().getCanonicalName() + ": " + arguments[i].debugName());
-//                    }
-//                }
-            }
-else System.out.println("Method " + method_name + " has no substituted parameters");
-        }
-*/
-        //
-        // Push the types of the parameters of the method that was matched for this call so that the
-        // translator can retrieve the exact method in question.
-        //
-        if (node.binding instanceof ParameterizedMethodBinding && ((ParameterizedMethodBinding) node.binding).hasSubstitutedParameters()) {
-            ParameterizedMethodBinding parameterized_method_binding = (ParameterizedMethodBinding) node.binding;
-            Method method = javaParserSupport.getRawMethod(parameterized_method_binding);
-            assert(method != null);
-            Class argument_types[] = method.getParameterTypes();
-            for (int i = 0; i < argument_types.length; i++) {
-                javaParserSupport.generateAndPushType(argument_types[i]);
-            }
-        }
-        else {
-            MethodBinding method_binding = node.binding;
-            TypeBinding argument_types[] = method_binding.parameters;
-            for (int i = 0; i < argument_types.length; i++) {
-                javaParserSupport.generateAndPushType(argument_types[i], javaParserSupport.createJavaToken(node));
-            }
-        }
-        
         String package_name = javaParserSupport.getPackageName(node.actualReceiverType),
                type_name = javaParserSupport.getTypeName(node.actualReceiverType),
                method_name = new String(node.binding.selector);
@@ -2353,6 +2235,7 @@ else System.out.println("Method " + method_name + " has no substituted parameter
                                          type_name,
                                          num_dimensions,
                                          method_name,
+                                         node.binding.parameters.length,
                                          node.typeArguments == null ? 0 : node.typeArguments.length,
                                          node.arguments == null ? 0 : node.arguments.length,
                                          javaParserSupport.createJavaToken(node));
@@ -2360,6 +2243,42 @@ else System.out.println("Method " + method_name + " has no substituted parameter
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Leaving exit (MessageSend,BlockScope)");
     }
+
+    //
+    // Push the types of the parameters of a method that was matched for a call so that the
+    // translator can retrieve the exact method in question.
+    //
+	private void pushRawMethodParameterTypes(MethodBinding binding, JavaToken location) {
+        if (binding instanceof ParameterizedMethodBinding) {
+            ParameterizedMethodBinding parameterized_method_binding = (ParameterizedMethodBinding) binding;
+            Class parameter_types[] = null;
+            if (binding.isConstructor()) {
+            	Constructor constructor = javaParserSupport.getRawConstructor(parameterized_method_binding);
+                assert(constructor != null);
+                parameter_types = constructor.getParameterTypes();
+            }
+            else {
+                Method method = javaParserSupport.getRawMethod(parameterized_method_binding);
+if (method == null) {
+System.out.println("Could not find method " + new String(binding.selector));	
+}
+                assert(method != null);
+                parameter_types = method.getParameterTypes();
+            }
+
+            assert(parameter_types != null);
+            for (int i = 0; i < parameter_types.length; i++) {
+                assert(parameter_types[i] != null);
+                javaParserSupport.generateAndPushType(parameter_types[i]);
+            }
+        }
+        else {
+            TypeBinding parameter_types[] = binding.parameters;
+            for (int i = 0; i < parameter_types.length; i++) {
+                javaParserSupport.generateAndPushType(parameter_types[i], location);
+            }
+        }
+	}
 
 
     public boolean enter(MethodDeclaration node, ClassScope scope) {
@@ -2374,30 +2293,6 @@ else System.out.println("Method " + method_name + " has no substituted parameter
         }
 
         String name = new String(node.selector);
-        if (javaParserSupport.verboseLevel > 0) {
-            System.out.println("Inside of enter (MethodDeclaration,ClassScope) method name = " + name);
-
-            // Return type
-            System.out.println("     --- method returnType = " + node.returnType);
-
-            // argument types
-            if (node.typeParameters != null) {
-                for (int i = 0, typeArgumentsLength = node.typeParameters.length; i < typeArgumentsLength; i++) {
-                    System.out.println("     --- method typeParameters = " + node.typeParameters[i]);
-                }
-            }
-            else {
-                // For a function defined in the input program, the typeParameters array is empty, but the ECJ
-                // specific AST traversal will visit the type parameters. Not clear why this is organized like this.
-                System.out.println("     --- method typeParameters (empty) = " + node.typeParameters);
-            }
-
-            if (node.statements != null) {
-                for (int i = 0, statementListLength = node.statements.length; i < statementListLength; i++) {
-                    System.out.println("     --- method statements[" + i + "] = " + node.statements[i]);
-                }
-            }
-        }
 
         if (javaParserSupport.verboseLevel > 2)
             System.out.println("Process the return type = " + node.returnType);
@@ -2405,6 +2300,15 @@ else System.out.println("Method " + method_name + " has no substituted parameter
         if (javaParserSupport.verboseLevel > 2)
             System.out.println("DONE: Process the return type = " + node.returnType);
 
+        //
+        // TODO: Do something !!!
+        //
+        if (node.typeParameters != null) {
+            System.out.println();
+            System.out.println("*** No support yet for method type parameters");
+            System.exit(1);
+        }
+            
         // Setup the function modifiers
         boolean isAbstract = node.isAbstract();
         boolean isNative   = node.isNative();

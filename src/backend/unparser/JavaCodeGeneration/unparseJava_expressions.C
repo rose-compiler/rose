@@ -347,6 +347,13 @@ Unparse_Java::unparseMFuncRef ( SgExpression* expr, SgUnparse_Info& info )
    }
 
 void
+Unparse_Java::unparseBoolVal(SgExpression* expr, SgUnparse_Info& info) {
+    SgBoolValExp *bool_val = isSgBoolValExp(expr);
+    ROSE_ASSERT(bool_val != NULL);
+    curprint (bool_val->get_value() ? "true" : "false");
+}
+
+void
 Unparse_Java::unparseStringVal(SgExpression* expr, SgUnparse_Info& info)
    {
      SgStringVal* str_val = isSgStringVal(expr);

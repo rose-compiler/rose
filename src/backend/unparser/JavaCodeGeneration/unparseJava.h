@@ -66,6 +66,7 @@ class Unparse_Java : public UnparseLanguageIndependentConstructs
           virtual void unparseStringVal               (SgExpression* expr, SgUnparse_Info& info);  
 
        // these need Java-specific treatment
+          virtual void unparseBoolVal                 (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseWCharVal                (SgExpression* expr, SgUnparse_Info& info);  
 
           virtual void unparseUIntVal                 (SgExpression* expr, SgUnparse_Info& info);  

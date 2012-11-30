@@ -707,7 +707,6 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionTypeDeclaration(JNIEnv *env, jclas
         printf ("Build class type: name = %s \n", type_name.str());
 
     ROSE_ASSERT(astJavaScopeStack.top() != NULL);
-    ROSE_ASSERT(isSgClassDefinition(astJavaScopeStack.top()) || isSgBasicBlock(astJavaScopeStack.top()));
 
     SgClassDeclaration *classDeclaration = (SgClassDeclaration *) type -> getAssociatedDeclaration() -> get_definingDeclaration();
     ROSE_ASSERT(classDeclaration);
@@ -964,6 +963,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionExplicitConstructorCallEnd(JNIEnv 
                                                                          jboolean java_is_implicit_super,
                                                                          jboolean java_is_super,
                                                                          jboolean java_has_qualification,
+                                                                         jint java_number_of_parameters,
                                                                          jint java_number_of_type_arguments,
                                                                          jint java_number_of_arguments,
                                                                          jobject jToken) {
@@ -974,8 +974,9 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionExplicitConstructorCallEnd(JNIEnv 
     bool is_implicit_super = java_is_implicit_super;
     bool is_super = java_is_super;
     bool has_qualification = java_has_qualification;
-    int  number_of_type_arguments = java_number_of_type_arguments;
-    int  number_of_arguments = java_number_of_arguments;
+    int number_of_parameters = java_number_of_parameters;
+    int number_of_type_arguments = java_number_of_type_arguments;
+    int number_of_arguments = java_number_of_arguments;
 
     ROSE_ASSERT(number_of_type_arguments == 0 && "! yet support type arguments");
 
@@ -1012,12 +1013,12 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionExplicitConstructorCallEnd(JNIEnv 
     SgName name = class_definition -> get_declaration() -> get_name();
 
     //
-    // The astJavaComponentStack has all of the arguments to the function call. Note that it is necessary to
-    // obtain the original types associated with the formal parameters of the function in order to find the
-    // perfect match.
+    // The astJavaComponentStack has all of the types of the parameters of the function being called. Note that
+    // it is necessary to use the original types of the formal parameters of the function in order to find the
+    // perfect match for the function.
     //
     list<SgType *> parameter_types;
-    for (int i = 0; i < number_of_arguments; i++) { // reverse the arguments' order
+    for (int i = 0; i < number_of_parameters; i++) { // reverse the arguments' order
         SgType *type = astJavaComponentStack.popType();
         parameter_types.push_front(type);
     }
@@ -1367,6 +1368,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMessageSendEnd(JNIEnv *env, jclass
                                                              jstring java_type_name,
                                                              jint java_num_dimensions,
                                                              jstring java_function_name,
+                                                             jint java_number_of_parameters,
                                                              jint numTypeArguments,
                                                              jint numArguments,
                                                              jobject jToken) {
@@ -1379,6 +1381,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMessageSendEnd(JNIEnv *env, jclass
            type_name  = convertJavaStringToCxxString(env, java_type_name),
            function_name  = convertJavaStringToCxxString(env, java_function_name);
     int num_dimensions = java_num_dimensions;
+    int num_parameters = java_number_of_parameters;
 
     //
     // TODO: Since array types are not properly represented as class types but as (C++) pointer types,
@@ -1393,12 +1396,12 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMessageSendEnd(JNIEnv *env, jclass
     ROSE_ASSERT(targetClassScope != NULL && (! targetClassScope -> attributeExists("namespace")));
 
     //
-    // The astJavaComponentStack has all of the arguments to the function call. Note that it is necessary to
-    // obtain the original types associated with the formal parameters of the function in order to find the
-    // perfect match.
+    // The astJavaComponentStack has all of the types of the parameters of the function being called. Note that
+    // it is necessary to use the original types of the formal parameters of the function in order to find the
+    // perfect match for the function.
     //
     list<SgType *> function_parameter_types;
-    for (int i = 0; i < numArguments; i++) { // reverse the arguments' order
+    for (int i = 0; i < num_parameters; i++) { // reverse the arguments' order
         SgType *type = astJavaComponentStack.popType();
         function_parameter_types.push_front(type);
     }
@@ -1574,7 +1577,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionANDANDExpressionEnd(JNIEnv *env, j
 
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionAnnotationMethodDeclaration(JNIEnv *env, jclass, jobject jToken) {
-    ROSE_ASSERT( ! "yet implemented");
+    cerr << "*** Ignoring a Annotation Method Declaration" << endl;
+  //    ROSE_ASSERT( ! "yet implemented");
 }
 
 
@@ -3183,12 +3187,14 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionLongLiteral(JNIEnv *env, jclass, j
 
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionMarkerAnnotation(JNIEnv *env, jclass, jobject jToken) {
-    ROSE_ASSERT(! "yet implemented Marker Annotation");
+    cerr << "*** Ignoring a Marker Annotation" << endl;
+  //    ROSE_ASSERT(! "yet implemented Marker Annotation");
 }
 
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionMemberValuePair(JNIEnv *env, jclass, jobject jToken) {
-    ROSE_ASSERT(! "yet implemented Member Value Pair");
+    cerr << "*** Ignoring a Member Value Pair" << endl;
+  //    ROSE_ASSERT(! "yet implemented Member Value Pair");
 }
 
 
@@ -3198,7 +3204,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionStringLiteralConcatenation(JNIEnv 
 
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionNormalAnnotation(JNIEnv *env, jclass, jobject jToken) {
-    ROSE_ASSERT(! "yet implemented Normal Annotation");
+    cerr << "*** Ignoring a Normal Annotation" << endl;
+//    ROSE_ASSERT(! "yet implemented Normal Annotation");
 }
 
 
@@ -3560,7 +3567,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionReturnStatementEnd(JNIEnv *env, jc
 }
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionSingleMemberAnnotation(JNIEnv *env, jclass, jobject jToken) {
-    ROSE_ASSERT(! "yet implemented Single Member Annotation");
+    cerr << "*** Ignoring a Single Member Annotation" << endl;
+  //    ROSE_ASSERT(! "yet implemented Single Member Annotation");
 }
 
 
@@ -4089,4 +4097,5 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionWildcard(JNIEnv *env, jclass, jobj
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionWildcardClassScope(JNIEnv *env, jclass, jobject jToken) {
     ROSE_ASSERT(! "yet implemented Wildcard");
+
 }

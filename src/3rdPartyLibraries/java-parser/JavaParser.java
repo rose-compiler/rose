@@ -59,7 +59,7 @@ class JavaParser  implements Callable<Boolean> {
     public static native void cactionConstructorDeclarationHeader(String filename, boolean java_is_native, boolean java_is_private, int numberOfTypeParameters, int numberOfArguments, int numberOfThrows, JavaToken jToken);
     public static native void cactionConstructorDeclarationEnd(int java_numberOfStatements, JavaToken jToken);
     public static native void cactionExplicitConstructorCall(JavaToken jToken);
-    public static native void cactionExplicitConstructorCallEnd(boolean is_implicit_super, boolean is_super, boolean has_qualification , int numberOfTypeArguments, int numberOfArguments, JavaToken jToken);
+    public static native void cactionExplicitConstructorCallEnd(boolean is_implicit_super, boolean is_super, boolean has_qualification , int num_parameters, int numberOfTypeArguments, int numberOfArguments, JavaToken jToken);
     public static native void cactionMethodDeclaration(String name, JavaToken jToken);
     public static native void cactionMethodDeclarationHeader(String name, boolean java_is_abstract, boolean java_is_native, boolean java_is_static, boolean java_is_final, boolean java_is_synchronized, boolean java_is_public, boolean java_is_protected, boolean java_is_private, boolean java_is_strictfp, int numberOfTypeParameters, int numArguments, int numThrows, JavaToken jToken);
     public static native void cactionMethodDeclarationEnd(int numberOfStatements, JavaToken jToken);
@@ -71,7 +71,7 @@ class JavaParser  implements Callable<Boolean> {
     public static native void cactionArrayTypeReference(String package_name, String type_name, int numberOfDimensions, JavaToken jToken);
     public static native void cactionArrayTypeReferenceEnd(String filename, int numberOfDimensions, JavaToken jToken);
     public static native void cactionMessageSend(String packageName, String typeName, String functionName, JavaToken jToken);
-    public static native void cactionMessageSendEnd(boolean java_is_static, String packageName, String typeName, int num_dimensions, String functionName, int numTypeArguments, int numArguments, JavaToken jToken);
+    public static native void cactionMessageSendEnd(boolean java_is_static, String packageName, String typeName, int num_dimensions, String functionName, int num_parameters, int numTypeArguments, int numArguments, JavaToken jToken);
 
     public static native void cactionStringLiteral(String value, JavaToken jToken);
 
