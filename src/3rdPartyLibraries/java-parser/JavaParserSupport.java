@@ -178,7 +178,28 @@ class JavaParserSupport {
 
     public Class findClass(String package_name, String type_name) {
         HashMap<String, Class> table = symbolTable.get(package_name);
-        return (table == null ? null : table.get(type_name));
+        int i = type_name.indexOf('.');
+        String next_name = (i == -1 ? type_name : type_name.substring(0, i));
+        Class cls = (table == null ? null : table.get(next_name));
+
+        while (i > -1) {
+            assert (cls != null);
+            type_name = type_name.substring(i + 1);
+            i = type_name.indexOf('.');
+            next_name = (i == -1 ? type_name : type_name.substring(0, i));
+            Class members[] = cls.getDeclaredClasses();
+            assert(members != null);
+            int k;
+            for (k = 0; k < members.length; k++) {
+                if (members[k].getSimpleName().equals(next_name)) {
+                    cls = members[k];
+                    break;
+                }
+            }
+            assert(k < members.length);
+        }
+
+        return cls;
     }
 
     public Class findPrimitiveClass(BaseTypeBinding binding) {
@@ -201,43 +222,97 @@ class JavaParserSupport {
         else if (binding == TypeBinding.VOID)
             return java.lang.Void.TYPE;
         else if (binding == TypeBinding.NULL) {
+            System.out.println();
             System.out.println("Don't Know what to do with ECJ's Null type!");
             System.exit(1);
         }
+        System.out.println();
         System.out.println("Don't Know what to do with ECJ's " + binding.getClass().getCanonicalName());
         System.exit(1);
         return null;
     }
     
+
     // TODO: See error statements below! 
     public Class findClass(TypeBinding binding) {
         if (binding instanceof BaseTypeBinding)
             return findPrimitiveClass((BaseTypeBinding) binding);
-        else if (binding instanceof BinaryTypeBinding) {
-              System.out.println("What(1) !???" + ((BinaryTypeBinding)binding).debugName());
-//            System.exit(1);
-        }
-        else if (binding instanceof RawTypeBinding) {
-            System.out.println("What(2) !???" + ((RawTypeBinding)binding).debugName());
-//            System.exit(1);
-        }
-        else if (binding instanceof ParameterizedTypeBinding) {
-            System.out.println("What(3) !???" + ((ParameterizedTypeBinding)binding).debugName());
-//            System.exit(1);
-        }
-        else {
-            System.out.println("*** Don't know how to process binding type " +  binding.getClass().getCanonicalName());
-//            System.exit(1);
+        else if (binding instanceof WildcardBinding) {
+            System.out.println();
+            System.out.println("What(1) !???" + ((WildcardBinding) binding).debugName());
+            System.exit(1);
         }
 
         return getClassForName(getFullyQualifiedTypeName(binding));
     }
     
+
+    private boolean typeMatch(Type in_type, TypeBinding argument) { 
+        if (in_type instanceof TypeVariable){
+            TypeVariable<?> type = (TypeVariable<?>) in_type;
+            if (type.getName().equals(argument.debugName()))
+                return true;
+        }
+        else if (in_type instanceof Class){
+            Class type_arg = (Class) in_type;
+            if (argument instanceof ArrayBinding) {
+                assert(type_arg.isArray());
+                ArrayBinding array_binding = (ArrayBinding) argument;
+                return typeMatch(type_arg.getComponentType(), array_binding.leafComponentType());
+            }
+            else {
+                if (type_arg == findClass(argument))
+                    return true;
+            }
+        }
+        else if (in_type instanceof GenericArrayType){
+            GenericArrayType generic_type = (GenericArrayType) in_type;
+            ArrayBinding array_binding = (ArrayBinding) argument;
+            return typeMatch(generic_type.getGenericComponentType(), array_binding.leafComponentType());
+        }
+        else if (in_type instanceof ParameterizedType){
+            ParameterizedType param_type = (ParameterizedType) in_type;
+            ParameterizedTypeBinding param_type_binding = (ParameterizedTypeBinding) argument;
+//System.out.println("(2) Don't know what to do with parameter type " + param_type.getRawType().getClass().getCanonicalName());
+//System.out.println("(2) The argument is " + param_type_binding.leafComponentType().debugName() + " (" + param_type_binding.leafComponentType().getClass().getCanonicalName() + ")");
+            return typeMatch(param_type.getRawType(), param_type_binding.leafComponentType());
+        }
+        else {
+            System.out.println("(3) Don't know what to do with parameter type " + in_type.getClass().getCanonicalName() + " and argument " + argument.getClass().getCanonicalName());
+            System.exit(1);
+        }
+
+        return false;
+    }
+
+
+
+private String getTypeName(Type in_type) { 
+    if (in_type instanceof TypeVariable){
+        TypeVariable<?> type = (TypeVariable<?>) in_type;
+        return type.getName();
+    }
+    else if (in_type instanceof Class){
+        Class class_arg = (Class) in_type;
+        return class_arg.getName();
+    }
+    else if (in_type instanceof GenericArrayType){
+        GenericArrayType generic_type = (GenericArrayType) in_type;
+        return getTypeName(generic_type.getGenericComponentType());
+    }
+    else if (in_type instanceof ParameterizedType){
+        ParameterizedType param_type = (ParameterizedType) in_type;
+        return getTypeName(param_type.getRawType());
+    }
+
+    return in_type.getClass().getCanonicalName() + "*";
+}
+
     Method getRawMethod(ParameterizedMethodBinding parameterized_method_binding) {
-        ParameterizedTypeBinding parameterized_type_binding = (ParameterizedTypeBinding) parameterized_method_binding.declaringClass;
+        TypeBinding type_binding = parameterized_method_binding.declaringClass;
         TypeBinding arguments[] = parameterized_method_binding.original().parameters;
-        String package_name = getPackageName(parameterized_type_binding),
-               type_name = getTypeName(parameterized_type_binding),
+        String package_name = getPackageName(type_binding),
+               type_name = getTypeName(type_binding),
                method_name = new String(parameterized_method_binding.selector);
         Class<?> cls = findClass(package_name, type_name);
         assert(cls != null);
@@ -249,38 +324,24 @@ class JavaParserSupport {
             if (types.length == arguments.length && method_name.equals(method.getName())) {
                 int j = 0;
                 for (; j < types.length; j++) {
-                    assert(types[j] != null);
-                    if (types[j] instanceof TypeVariable){
-                        TypeVariable<?> type = (TypeVariable<?>) types[j];
-                        if (! type.getName().equals(arguments[j].debugName()))
-                            break;
-                    }
-                    else if (types[j] instanceof Class){
-                        Class class_arg = (Class) types[j];
-                        if (class_arg != findClass(arguments[j]))
-                            break;
-                    }
-                    else {
-                        System.out.println("Don't know what to do with parameter type " + types[j].getClass().getCanonicalName() + " in method " + method.getName() + " in type " + parameterized_type_binding.debugName());
-  //                      break;
-                    }
+                    if (! typeMatch(types[j], arguments[j]))
+                        break;
                 }
                 if (j == types.length) {
                     return method;
                 }
             }
         }
-                
+
         return null;
     }
 
 
     Constructor getRawConstructor(ParameterizedMethodBinding parameterized_constructor_binding) {
-        ParameterizedTypeBinding parameterized_type_binding = (ParameterizedTypeBinding) parameterized_constructor_binding.declaringClass;
+        TypeBinding type_binding = parameterized_constructor_binding.declaringClass;
         TypeBinding arguments[] = parameterized_constructor_binding.original().parameters;
-        String package_name = getPackageName(parameterized_type_binding),
-               type_name = getTypeName(parameterized_type_binding),
-               constructor_name = new String(parameterized_constructor_binding.selector);
+        String package_name = getPackageName(type_binding),
+               type_name = getTypeName(type_binding);
         Class<?> cls = findClass(package_name, type_name);
         assert(cls != null);
         Constructor constructors[] = cls.getDeclaredConstructors();
@@ -288,24 +349,11 @@ class JavaParserSupport {
             Constructor constructor = constructors[i];
             Type[] types = constructor.getGenericParameterTypes();
             assert(types != null);
-            if (types.length == arguments.length && constructor_name.equals(constructor.getName())) {
+            if (types.length == arguments.length) {
                 int j = 0;
                 for (; j < types.length; j++) {
-                    assert(types[j] != null);
-                    if (types[j] instanceof TypeVariable){
-                        TypeVariable<?> type = (TypeVariable<?>) types[j];
-                        if (! type.getName().equals(arguments[j].debugName()))
-                            break;
-                    }
-                    else if (types[j] instanceof Class){
-                        Class class_arg = (Class) types[j];
-                        if (class_arg != findClass(arguments[j]))
-                            break;
-                    }
-                    else {
-                        System.out.println("Don't know what to do with parameter type " + types[j].getClass().getCanonicalName() + " in constructor " + constructor.getName() + " in type " + parameterized_type_binding.debugName());
-//                        break;
-                    }
+                    if (! typeMatch(types[j], arguments[j]))
+                        break;
                 }
                 if (j == types.length) {
                     return constructor;
@@ -338,6 +386,7 @@ class JavaParserSupport {
                 System.out.println("Class " + typename + " was not found");
                 System.out.println("(1) Caught error in JavaParserSupport (Parser failed)");
                 System.err.println(e);
+                e.printStackTrace();   
             }
         }
 
@@ -733,8 +782,12 @@ System.out.println("    Class Name           " + ": " + (cls == null ? "What!?" 
      */
     public String getFullyQualifiedTypeName(TypeBinding binding) {
         String package_name = getPackageName(binding),
-               type_name = getTypeName(binding);
-        return (package_name.length() == 0 ? type_name : package_name + "." + type_name);
+               type_name = getTypeName(binding),
+               full_name = (package_name.length() == 0 ? type_name : package_name + "." + type_name);
+        for (int i = 0; i < binding.dimensions(); i++) {
+            full_name += "[]";
+        }
+        return full_name;
     }
 
     //
@@ -1015,7 +1068,6 @@ System.out.println(">");
             Constructor ct = ctorlist[i];
             if (ct.isSynthetic()) // skip synthetic constructors
                 continue;
-
             Class pvec[] = ct.getParameterTypes();
             for (int j = 0; j < pvec.length; j++) {
                 preprocessClass(pvec[j]);
@@ -1074,50 +1126,6 @@ System.out.println(") in class " + cls.getCanonicalName());
             for (int j = 0; j < pvec.length; j++) {
                 preprocessClass(pvec[j]);
             }
-// TODO: Remove this!
-/*            
-System.out.println();
-System.out.print("    Processing method " + m.getName() + "(");
-Type[] types = m.getGenericParameterTypes();
-if (types != null && types.length > 0) {
-    assert(pvec.length == types.length);
-    System.out.print("(" + pvec[0].getCanonicalName() + ") ");
-    if (types[0] == null)
-         System.out.print("*");
-    else if (types[0] instanceof TypeVariable<?>)
-         System.out.print(((TypeVariable<?>) types[0]).getName());
-    else if (types[0] instanceof Class)
-         System.out.print("+" + ((Class) types[0]).getName());
-    else System.out.print("-" + types[0].getClass().getCanonicalName());
-
-    for (int j = 1; j < types.length; j++) {
-        System.out.print(", (" + pvec[j].getCanonicalName() + ") ");
-//        System.out.print(types[j] == null ? "*" : (types[j] instanceof TypeVariable ? ((TypeVariable<?>) types[j]).getName() : types[j].getClass().getCanonicalName()));
-        if (types[j] == null)
-            System.out.print("*");
-        else if (types[j] instanceof TypeVariable){
-            TypeVariable<?> type = (TypeVariable<?>) types[j];
-            System.out.print("(" + type.getClass().getCanonicalName() + ") " + type.getName());
-        }
-        else if (types[j] instanceof Class){
-            System.out.print("+" + ((Class) types[j]).getName());
-        }
-        else {
-            System.out.print("-" + types[j].getClass().getCanonicalName());
-        }
-    }
-
-try {
-    Method method = cls.getDeclaredMethod(m.getName(), pvec);
-}
-catch (NoSuchMethodException e) {
-    System.out.println("Can't find method " + m.getName());
-    System.exit(1);
-}
-}
-else System.out.print("...");
-System.out.println(") in class " + cls.getCanonicalName());
-*/
         }        
     
         //
@@ -1164,6 +1172,15 @@ System.out.println(") in class " + cls.getCanonicalName());
                     JavaToken method_location = createJavaToken(method);
 
                     MethodBinding method_binding = method.binding;
+
+                    //
+                    // TODO: Do something !!!
+                    //
+                    //if (method_binding.typeVariables != null) {
+                    //    System.out.println();
+                    //    System.out.println("*** No support yet for method/constructor type parameters");
+                    //    System.exit(1);
+                    //}
 
                     if (method.isConstructor()) {
                         JavaParser.cactionTypeReference("", "void", false /* not a TypeVariableBinding */, method_location);
@@ -1233,6 +1250,15 @@ System.out.println(") in class " + cls.getCanonicalName());
                 if (ct.isSynthetic()) // skip synthetic constructors
                      continue;
 
+                //
+                // TODO: Do something !!!
+                //
+                // if (ct.getTypeParameters().length > 0) {
+                //    System.out.println();
+                //    System.out.println("*** No support yet for constructor type parameters");
+                //    System.exit(1);
+                // }
+
                 Class pvec[] = ct.getParameterTypes();
 
                 JavaParser.cactionTypeReference("", "void", false /* Not a TypeVariableBinding */, location);
@@ -1260,6 +1286,17 @@ System.out.println(") in class " + cls.getCanonicalName());
             
             for (int i = 0; i < methlist.length; i++) {
                 Method m = methlist[i];
+                if (m.isSynthetic())
+                    continue;
+
+                //
+                // TODO: Do something !!!
+                //
+                // if (m.getTypeParameters().length > 0) {
+                //    System.out.println();
+                //    System.out.println("*** No support yet for method type parameters");
+                //    System.exit(1);
+                // }
 
                 Class pvec[] = m.getParameterTypes();
 
@@ -1423,10 +1460,26 @@ System.out.println(") in class " + cls.getCanonicalName());
                 JavaParser.cactionArrayTypeReference(package_name, type_name, arrayType.dimensions(), location);
             }
         }
-        else {
+        else if (type_binding instanceof TypeVariableBinding ||
+                  type_binding instanceof BaseTypeBinding ||
+                  type_binding instanceof BinaryTypeBinding ||
+                  type_binding instanceof MemberTypeBinding ||
+                  type_binding instanceof SourceTypeBinding ||
+                  type_binding instanceof ParameterizedTypeBinding ||
+                  type_binding instanceof RawTypeBinding) {
             String package_name = getPackageName(type_binding),
                    type_name = getTypeName(type_binding);
             JavaParser.cactionTypeReference(package_name, type_name, type_binding instanceof TypeVariableBinding, location);
+        }
+        else if (type_binding instanceof WildcardBinding) {
+            System.out.println();
+            System.out.println("*** No support yet for " + type_binding.getClass().getCanonicalName() + ": " + type_binding.debugName());
+            System.exit(1);
+        }
+        else {
+            System.out.println();
+            System.out.println("*** No support yet for " + type_binding.getClass().getCanonicalName() + ": " + type_binding.debugName());
+            System.exit(1);
         }
     }
 

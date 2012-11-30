@@ -83,10 +83,16 @@ SgJavaParameterizedType *getUniqueParameterizedType(SgClassType *raw_type, SgTem
 // because Rose assigns the the type SgTypeString by default to a string constant (an SgStringVal).
 //
 bool isCompatibleTypes(SgType *source_type, SgType *target_type) {
+    if (isSgJavaParameterizedType(source_type))
+        source_type = isSgJavaParameterizedType(source_type) -> get_raw_type();
+    if (isSgJavaParameterizedType(target_type))
+        target_type = isSgJavaParameterizedType(target_type) -> get_raw_type();
+
     if (isSgTypeString(source_type))
         source_type = StringClassType;
     if (isSgTypeString(target_type))
         target_type = StringClassType;
+
     return source_type == target_type;
 }
 
@@ -123,7 +129,10 @@ string getPrimitiveTypeName(SgType *type) {
     else if (isSgTypeVoid(type)) {
         type_name = "void";
     }
-    else ROSE_ASSERT(false);
+    else {
+cout << "Don't recognize type " << type -> class_name() << endl;
+        ROSE_ASSERT(false);
+    }
 
     return type_name;
 }
@@ -188,11 +197,32 @@ string getFullyQualifiedTypeName(SgClassType *class_type) {
 //
 //
 string getTypeName(SgType *type) {
+    SgJavaParameterizedType *parm_type = isSgJavaParameterizedType(type); 
     SgClassType *class_type = isSgClassType(type);
     SgPointerType *pointer_type = isSgPointerType(type);
-    return (class_type ? getFullyQualifiedTypeName(class_type)
-                       : pointer_type ? getArrayTypeName(pointer_type)
-                                      : getPrimitiveTypeName(type));
+    string result;
+
+    if (parm_type) {
+        result = getTypeName(parm_type -> get_raw_type());
+        result += "<";
+        SgTemplateParameterPtrList arg_list = parm_type -> get_type_list() -> get_args();
+        for (int i = 0; i < arg_list.size(); i++) {
+            SgTemplateParameter *templateParameter = arg_list[i];
+            SgType *argument_type = templateParameter -> get_type();
+            result += getTypeName(argument_type);
+             if (i + 1 < arg_list.size()) {
+                 result += ", ";
+             }
+        }
+        result += ">";
+    }
+    else if (class_type)
+         result = getFullyQualifiedTypeName(class_type);
+    else if (pointer_type)
+         result = getArrayTypeName(pointer_type);
+    else result = getPrimitiveTypeName(type);
+
+    return result;
 }
 
 //
@@ -660,7 +690,6 @@ SgMemberFunctionSymbol *findFunctionSymbolInClass(SgClassDefinition *classDefini
     }
 
 // TODO: Remove this !!!
-/*
 if (!function_declaration){
 cout << "Could not find function " << function_name.getString() << "(";
 std::list<SgType*>::iterator i = formal_types.begin();
@@ -675,7 +704,7 @@ cout << ") in class "
 << endl;
 cout.flush();
 }
-*/
+
     ROSE_ASSERT(function_declaration);
 
     SgSymbol *symbol =  function_declaration -> get_symbol_from_symbol_table();
@@ -970,16 +999,14 @@ SgType *lookupTypeByName(SgName &package_name, SgName &type_name, int num_dimens
     //
     if (type == NULL) { // not a primitive type
 // TODO: Remove this!!!
-/*
 if (! class_symbol){
 cout << "No symbol found for " << package_name.str() << (package_name.getString().size() ? "." : "") << type_name.str() << endl;
 cout.flush();
 }
-else{
-cout << "Found symbol " << isSgClassType(class_symbol -> get_type()) -> get_qualified_name().str() << endl;
-cout.flush();
-}
-*/
+//else{
+//cout << "Found symbol " << isSgClassType(class_symbol -> get_type()) -> get_qualified_name().str() << endl;
+//cout.flush();
+//}
         ROSE_ASSERT(class_symbol);
 
         for (name++; name != qualifiedTypeName.end(); name++) {
