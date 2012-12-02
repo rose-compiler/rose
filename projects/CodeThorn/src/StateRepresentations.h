@@ -54,7 +54,7 @@ typedef set<const PState*> PStatePtrSet;
 
 class PStateHashFun {
    public:
-    PStateHashFun(long prime=99991) : tabSize(prime) {}
+    PStateHashFun(long prime=9999991) : tabSize(prime) {}
     long operator()(PState s) const {
 	  unsigned int hash=1;
 	  for(PState::iterator i=s.begin();i!=s.end();++i) {
