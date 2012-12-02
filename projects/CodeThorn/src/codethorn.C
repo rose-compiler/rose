@@ -565,6 +565,7 @@ int main( int argc, char * argv[] ) {
   cout << "INIT: creating solver."<<endl;
   analyzer.initializeSolver1("main",root);
   analyzer.initLabeledAssertNodes(sageProject);
+  //cout<< "DEBUG: labelNodeMapping: "<<endl<<analyzer.getLabeler()->toString();
   double initRunTime=timer.getElapsedTimeInMilliSec();
 
   timer.start();

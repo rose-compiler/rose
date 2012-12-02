@@ -130,11 +130,13 @@ PStateId PStateSet::pstateId(const PState* pstate) {
 }
 
 PStateId PStateSet::pstateId(const PState pstate) {
-  PStateId id=0;
+  PStateId xid=0;
+  // MS: TODO: we may want to use the new function id(pstate) here
   for(PStateSet::iterator i=begin();i!=end();++i) {
-	if(pstate==*i)
-	  return id;
-	id++;
+	if(pstate==*i) {
+	  return xid;
+	}
+	xid++;
   }
   return NO_STATE;
 }
@@ -186,6 +188,7 @@ EStateId EStateSet::estateId(const EState* estate) const {
 
 EStateId EStateSet::estateId(const EState estate) const {
   EStateId id=0;
+  // MS: TODO: we may want to use the new function id(estate) here
   for(EStateSet::iterator i=begin();i!=end();++i) {
 	if(estate==*i)
 	  return id;

@@ -11,6 +11,7 @@
 #include "rose.h"
 #include "RoseAst.h"
 #include "VariableIdMapping.h"
+#include "Miscellaneous.h"
 
 using namespace std;
 
@@ -20,6 +21,83 @@ using namespace std;
 namespace CodeThorn {
 
 typedef size_t Label;
+
+ class LabelProperty {
+ public:
+   enum LabelType { LABEL_UNDEF=1, LABEL_OTHER=2, 
+					LABEL_FUNCTIONCALL=100, LABEL_FUNCTIONCALLRETURN,
+					LABEL_FUNCTIONENTRY, LABEL_FUNCTIONEXIT,
+					LABEL_BLOCKBEGIN, LABEL_BLOCKEND
+   };
+   enum IOType { LABELIO_NONE, LABELIO_STDIN, LABELIO_STDOUT, LABELIO_STDERR
+   };
+
+   void makeTerminationIrrelevant(bool t) {assert(_isTerminationRelevant); _isTerminationRelevant=false;}
+   bool isTerminationRelevant() {assert(_isValid); return _isTerminationRelevant;}
+   bool isLTLRelevant() {assert(_isValid); return _isLTLRelevant;}
+   SgNode* getNode() { assert(_isValid); return _node;}
+   bool isStdOutLabel() { assert(_isValid); return _ioType==LABELIO_STDOUT; }
+   bool isStdInLabel() { assert(_isValid); return _ioType==LABELIO_STDIN; }
+   bool isStdErrLabel() { assert(_isValid); return _ioType==LABELIO_STDERR; }
+   bool isIOLabel() { assert(_isValid); return isStdOutLabel()||isStdInLabel()||isStdErrLabel(); }
+   bool isFunctionCallLabel() { assert(_isValid); return _labelType==LABEL_FUNCTIONCALL; }
+   bool isFunctionCallReturnLabel() { assert(_isValid); return _labelType==LABEL_FUNCTIONCALLRETURN; }
+   bool isFunctionEntryLabel() { assert(_isValid); return _labelType==LABEL_FUNCTIONENTRY; }
+   bool isFunctionExitLabel() { assert(_isValid); return _labelType==LABEL_FUNCTIONEXIT; }
+   bool isBlockBeginLabel() { assert(_isValid); return _labelType==LABEL_BLOCKBEGIN; }
+   bool isBlockEndLabel() { assert(_isValid); return _labelType==LABEL_BLOCKEND; }
+   VariableId getIOVarId() { assert(_ioType!=LABELIO_NONE); return _variableId; }
+ LabelProperty():_isValid(false),_node(0),_labelType(LABEL_UNDEF),_ioType(LABELIO_NONE),_variableId(0),_isTerminationRelevant(false),_isLTLRelevant(false) {
+   }
+ LabelProperty(SgNode* node):_isValid(false),_node(node),_labelType(LABEL_UNDEF),_ioType(LABELIO_NONE),_variableId(0),_isTerminationRelevant(false),_isLTLRelevant(false) {
+	 initialize();
+	 assert(_isValid);
+   }
+ LabelProperty(SgNode* node, LabelType labelType):_isValid(false),_node(node),_labelType(labelType),_ioType(LABELIO_NONE),_variableId(0),_isTerminationRelevant(false),_isLTLRelevant(false) {
+	 initialize(); 
+	 assert(_isValid);
+   }
+   void initialize() {
+	 _isValid=true; // to be able to use access functions in initialization
+	 SgVarRefExp* varRefExp=0;
+	 _ioType=LABELIO_NONE;
+	 if((varRefExp=SgNodeHelper::Pattern::matchSingleVarPrintf(_node))) {
+	   _ioType=LABELIO_STDOUT;
+	 } else if((varRefExp=SgNodeHelper::Pattern::matchSingleVarScanf(_node))) {
+	   _ioType=LABELIO_STDIN;
+	 } else if((varRefExp=SgNodeHelper::Pattern::matchSingleVarFPrintf(_node))) {
+	   _ioType=LABELIO_STDERR;
+	 }
+	 if(varRefExp) {
+	   SgSymbol* sym=SgNodeHelper::getSymbolOfVariable(varRefExp);
+	   assert(sym);
+	   _variableId=VariableId(sym);
+	 }
+	 _isTerminationRelevant=SgNodeHelper::isLoopCond(_node);
+	 _isLTLRelevant=(isIOLabel()||isTerminationRelevant());
+	 assert(varRefExp==0 ||_ioType!=LABELIO_NONE);
+   }
+
+   string toString() {
+	 assert(_isValid);
+	 stringstream ss;
+	 ss<<_node<<":"<<SgNodeHelper::nodeToString(_node)<<", ";
+	 ss<<"var:"<<_variableId.toString()<<", ";
+	 ss<<"labelType:"<<_labelType<<", ";
+	 ss<<"ioType:"<<_ioType<<", ";
+	 ss<<"ltl:"<<isLTLRelevant()<<", ";
+	 ss<<"termination:"<<isTerminationRelevant();
+	 return ss.str();
+   }
+ private:
+   bool _isValid;
+   SgNode* _node;
+   LabelType _labelType;
+   IOType _ioType;
+   VariableId _variableId;
+   bool _isTerminationRelevant;
+   bool _isLTLRelevant;
+ };
 
 class LabelSet : public set<Label> {
  public:
@@ -87,7 +165,8 @@ class Labeler {
   bool isStdErrLabel(Label label, VariableId* id=0);
 
  private:
-  vector<SgNode*> labelNodeMapping;
+  //vector<SgNode*> labelNodeMapping;
+  vector<LabelProperty> labelNodeMapping;
 };
 
 } // end of namespace CodeThorn
