@@ -4963,6 +4963,16 @@ SgProject::compileOutput()
         {
        // printf ("In Project::compileOutput(): Compiling numberOfFiles() = %d \n",numberOfFiles());
 
+            // Sara Royuela (Dec 3rd, 2012): Check if the backend compiler is apropriate when using GOMP runtime library
+#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY
+            // The backend compiler must be gcc/g++
+            ROSE_ASSERT( std::string(BACKEND_C_COMPILER_NAME_WITH_PATH).find( "gcc" ) != string::npos );
+            ROSE_ASSERT( std::string(BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH) == "g++" );
+        
+            // The gcc version must be 4.4 or later
+            ROSE_ASSERT( BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER >= 4 && BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER >= 4 );
+#endif
+            
 // case 2: compilation  for each file
        // Typical case
           for (i=0; i < numberOfFiles(); i++)
