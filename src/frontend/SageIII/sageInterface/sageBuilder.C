@@ -1251,9 +1251,9 @@ SageBuilder::buildVariableDeclaration(const char* name, SgType* type, SgInitiali
 
 //!Build a typedef declaration, such as: typedef int myint; 
 SgTypedefDeclaration* 
-SageBuilder::buildTypedefDeclaration(const std::string& name, SgType* base_type, SgScopeStatement* scope /*= NULL*/)
+SageBuilder::buildTypedefDeclaration(const std::string& name, SgType* base_type, SgScopeStatement* scope /*= NULL*/, bool has_defining_base/*= false*/)
 {
-  SgTypedefDeclaration* type_decl = buildTypedefDeclaration_nfi(name, base_type, scope);
+  SgTypedefDeclaration* type_decl = buildTypedefDeclaration_nfi(name, base_type, scope, has_defining_base);
   setOneSourcePositionForTransformation(type_decl);
 
 // DQ (1/2/2010): Set the defining declaration to itself.
@@ -1265,7 +1265,7 @@ SageBuilder::buildTypedefDeclaration(const std::string& name, SgType* base_type,
 //!Build a typedef declaration, such as: typedef int myint; 
 // The side effects include: creating SgTypedefType, SgTypedefSymbol, and add SgTypedefType to the base type
 SgTypedefDeclaration* 
-SageBuilder::buildTypedefDeclaration_nfi(const std::string& name, SgType* base_type,  SgScopeStatement* scope /*= NULL*/)
+SageBuilder::buildTypedefDeclaration_nfi(const std::string& name, SgType* base_type,  SgScopeStatement* scope /*= NULL*/, bool has_defining_base/*=false*/)
    {
      ROSE_ASSERT (base_type != NULL);
 #if 0
@@ -1376,12 +1376,21 @@ SageBuilder::buildTypedefDeclaration_nfi(const std::string& name, SgType* base_t
   {
     SgClassDeclaration* def_class = isSgClassDeclaration(base_class->get_definingDeclaration());
     SgClassDeclaration* nondef_class = isSgClassDeclaration(base_class->get_firstNondefiningDeclaration());
-    if (def_class != NULL)
-      if (def_class->get_parent() == NULL)
-        def_class->set_parent(type_decl);
+    // Dan and Liao, 12/3/2012, handle test2003_08.C nested typedef
+    if (has_defining_base)  
+    {
+      if (def_class != NULL)
+        if (def_class->get_parent() == NULL)
+          def_class->set_parent(type_decl);
+    }
+    else
+    {
     if (nondef_class != NULL)
       if (nondef_class->get_parent() == NULL)
+      {
         nondef_class->set_parent(type_decl);
+      }
+    }
   }
 
   // Symbol and SgTypedefType should be associated with the first nondefining declaration
