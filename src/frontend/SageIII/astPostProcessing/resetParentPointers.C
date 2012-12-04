@@ -123,7 +123,7 @@ ResetParentPointers::traceBackToRoot ( SgNode* node )
 void 
 ResetParentPointers::resetParentPointersInDeclaration (SgDeclarationStatement* declaration, SgNode* inputParent )
    {
-  // This function makes the value in the parent consistant across the defining and non-defining declarations
+  // This function makes the value in the parent consistent across the defining and non-defining declarations
 
   // DQ (5/21/2006): Set the Sg_File_Info so that they can be traced (later we might 
   // want to remove the parent pointer since it is not really required, except that 
