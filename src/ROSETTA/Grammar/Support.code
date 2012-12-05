@@ -6822,7 +6822,10 @@ SgSymbolTable::find( const SgStatement* statement)
      SgSymbol* returnSymbol = NULL;
 
      SgName name = get_name(statement);
-
+  // Liao 11/28/2012: a declaration can have empty name "". But it will have a symbol with a mangled name starting with "__unnamed_".
+  // A ResetEmptyNames process to handle this should be used before this find is called.
+  // I cannot assert this since this function can be called before the empty name is reset. 
+  //   ROSE_ASSERT (name.getString().length() !=0);
 #if 0
      printf ("Inside of SgSymbolTable::find( const SgStatement* ): name = %s \n",name.str());
 #endif
