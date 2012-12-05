@@ -20,8 +20,10 @@ int main (int argc, char *argv[])
   SgGlobal *globalScope = getFirstGlobalScope (project);
   ROSE_ASSERT (globalScope);
 
-  // build a struct without any scope information
-  SgClassDeclaration * decl2 = buildStructDeclaration("bar");
+  // build a struct without any scope information (no longer supported!)
+  // Bottom up creation of a struct is no longer supported due to latest EDG 4.4 work
+  // Liao 11/27/2012
+  SgClassDeclaration * decl2 = buildStructDeclaration("bar",globalScope);
   ROSE_ASSERT (decl2);
 
   pushScopeStack (isSgScopeStatement (globalScope));

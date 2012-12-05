@@ -273,6 +273,7 @@ Licensed under Revised BSD License (see COPYRIGHT file at top of ROSE source cod
 =cut
 
 use strict;
+use Config;
 
 my $usage = <<EOF;
 usage: $0 [VAR=VALUE...] CONFIG TARGET
@@ -281,8 +282,8 @@ EOF
 
 sub help {
   local $_ = `(pod2man $0 |nroff -man) 2>/dev/null` ||
-	     `pod2text $0 2>/dev/null` ||
-	     `sed -ne '/^=pod/,/^=cut/p' $0 2>/dev/null`;
+             `pod2text $0 2>/dev/null` ||
+             `sed -ne '/^=pod/,/^=cut/p' $0 2>/dev/null`;
   die "$0: see source file for documentation" unless $_;
   if (open LESS, "|less -R") {
     print LESS $_;
@@ -298,7 +299,7 @@ sub help {
 sub load_config {
   my($file,%vars) = @_;
   my(%conf) = (answer=>'no', cmd=>[], diff=>'diff -u', disabled=>'no', filter=>'no', lockdir=>undef,
-	       may_fail=>'no', promote=>'yes', timeout=>15*60);
+               may_fail=>'no', promote=>'yes', timeout=>15*60);
   open CONFIG, "<", $file or die "$0: $file: $!\n";
   while (<CONFIG>) {
     s/\s*#.*//;
@@ -306,9 +307,9 @@ sub load_config {
     if (my($var,$val) = /^\s*(\w+)\s*=\s*(.*?)\s*$/) {
       die "$file: unknown setting: $var\n" unless exists $conf{$var};
       if (ref $conf{$var}) {
-	push @{$conf{$var}}, $val;
+        push @{$conf{$var}}, $val;
       } else {
-	$conf{$var} = $val;
+        $conf{$var} = $val;
       }
     } elsif (/\S/) {
       die "$file: unknown config directive: $_";
@@ -346,7 +347,20 @@ sub run_command {
     for my $cmd (@commands) {
       print STDERR "+ $cmd\n";
       $status = system $cmd;
-      last if $status;
+      # The shell usually prints messages about signals, so we'll take over that job since there's no shell.  In fact, we'll
+      # also print the exit status if it's other than zero.
+      if (-1 == $status) {
+        print STDERR "command failed to run\n";
+        last;
+      } elsif ($status & 127) {
+        my $signum = $status & 127;
+        print STDERR ("command died with SIG", (split ' ', $Config{sig_name})[$signum],
+                      ($status & 128 ? " (coredumped)" : ""), "\n");
+        last;
+      } elsif ($status) {
+        print STDERR "command exited with value ", ($status>>8), "\n";
+        last;
+      }
     }
     exit($status!=0 ? 1 : 0);
   }
@@ -367,7 +381,6 @@ sub run_command {
       close LOG;
     }
   }
-
   return $status;
 }
 
@@ -502,8 +515,8 @@ if ($config{may_fail} eq 'yes') {
     close LOCK;
     while (system "ln $prelock $lock 2>/dev/null") {
       if (--$ntries <= 0) {
-	unlink $prelock;
-	die "$0: cannot obtain lock: $lock\n";
+        unlink $prelock;
+        die "$0: cannot obtain lock: $lock\n";
       }
       select(undef, undef, undef, 0.25); # NMI machines don't have Time::HiRes
     }
@@ -535,8 +548,8 @@ if ($config{may_fail} eq 'yes') {
     } elsif ($lock) {
       $may_fail{$target} = 'no';
       open MAY_FAIL, ">", $file or do {
-	unlink $lock;
-	die "$0: $file: $!\n";
+        unlink $lock;
+        die "$0: $file: $!\n";
       };
       printf MAY_FAIL "%-40s %s\n", $_, $may_fail{$_} for sort keys %may_fail;
       close MAY_FAIL;

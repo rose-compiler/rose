@@ -341,6 +341,19 @@ void SageBuilder::clearScopeStack()
      ScopeStack.clear();
    }
 
+bool SageBuilder::inSwitchScope()
+   {
+  // DQ (11/26/2012): This is used to turn off some pragma processing which is a problem in switch statements.
+     bool returnVar = false;
+     std::list<SgScopeStatement*>::iterator i;
+     for (i = ScopeStack.begin(); i != ScopeStack.end(); i++)
+        {
+          if (isSgSwitchStatement(*i) != NULL)
+               returnVar = true;
+        }
+
+     return returnVar;
+   }
 
 
 // *******************************************************************************
@@ -1025,18 +1038,11 @@ SageBuilder::buildVariableDeclaration (const SgName & name, SgType* type, SgInit
                               // The symbol should already exist under function definition for the parameter
       fixVariableDeclaration(varDecl,scope);
   }
-#if 0
-  // SgVariableDefinition should be created internally
-  SgVariableDefinition * variableDefinition = new SgVariableDefinition(initName,(SgInitializer*)NULL);
-  initName->set_declptr(variableDefinition);
-  variableDefinition->set_parent(initName);
-#endif
 
   SgInitializedName *initName = varDecl->get_decl_item (name);   
   ROSE_ASSERT(initName != NULL);
   ROSE_ASSERT((initName->get_declptr())!=NULL);
 
-#if 1
   //bug 119, SgVariableDefintion's File_info is needed for deep copy to work
   // AstQuery based setSourcePositionForTransformation() cannot access all child nodes
   // have to set SgVariableDefintion explicitly
@@ -1044,7 +1050,7 @@ SageBuilder::buildVariableDeclaration (const SgName & name, SgType* type, SgInit
   setOneSourcePositionForTransformation(variableDefinition_original);
   ROSE_ASSERT((variableDefinition_original->get_startOfConstruct()) !=NULL);
   ROSE_ASSERT((variableDefinition_original->get_endOfConstruct())!=NULL);
-#endif
+
   setSourcePositionAtRootAndAllChildren(varDecl);
   //ROSE_ASSERT (isSgVariableDefinition(initName->get_declptr())->get_startOfConstruct()!=NULL);
   return varDecl;
@@ -1811,116 +1817,8 @@ SageBuilder::buildMemberFunctionType(SgType* return_type, SgFunctionParameterTyp
 
      ROSE_ASSERT(classType != NULL);
 
-#if 1
   // DQ (8/19/2012): This code has been refactored.
      funcType = buildMemberFunctionType(return_type,typeList,classType,mfunc_specifier);
-#else
-  // DQ (12/3/2011): We need to FIRST look into the global function type table to reuse types.
-  // SgMemberFunctionType * funcType = new SgMemberFunctionType(return_type, false, classType, mfunc_specifier);
-  // SgMemberFunctionType * funcType = SgMemberFunctionType::createType(return_type, false, classType, mfunc_specifier);
-  // SgPartialFunctionType* partialFunctionType = SgPartialFunctionType::createType(return_type, false, classType, mfunc_specifier);
-     SgPartialFunctionType* partialFunctionType = new SgPartialFunctionType(return_type, false, classType, mfunc_specifier);
-     ROSE_ASSERT(partialFunctionType != NULL);
-
-  // printf ("In buildMemberFunctionType(): partialFunctionType = %p = %s \n",partialFunctionType,partialFunctionType->class_name().c_str());
-
-  // DQ (3/8/2012): If this is non-zero then the SgPartialFunctionType should have somethin set internally.
-     if (mfunc_specifier != 0)
-        {
-#if 0
-          printf ("In buildMemberFunctionType(): partialFunctionType->isConstFunc()    = %s \n",partialFunctionType->isConstFunc()    ? "true" : "false");
-          printf ("In buildMemberFunctionType(): partialFunctionType->isVolatileFunc() = %s \n",partialFunctionType->isVolatileFunc() ? "true" : "false");
-          printf ("In buildMemberFunctionType(): partialFunctionType->isRestrictFunc() = %s \n",partialFunctionType->isRestrictFunc() ? "true" : "false");
-#endif
-       // ROSE_ASSERT(partialFunctionType->isConstFunc() == true || partialFunctionType->isVolatileFunc() == true);
-          ROSE_ASSERT(partialFunctionType->isConstFunc() == true || partialFunctionType->isVolatileFunc() == true || partialFunctionType->isRestrictFunc() == true);
-        }
-
-  // SgMemberFunctionType* funcType = SgMemberFunctionType::createType(partialFunctionType, NULL);
-     funcType = SgMemberFunctionType::createType(partialFunctionType, NULL);
-     ROSE_ASSERT(funcType != NULL);
-
-  // printf ("In buildMemberFunctionType(): funcType = %p = %s \n",funcType,funcType->class_name().c_str());
-
-     if (typeList != NULL)
-        {
-          funcType->set_argument_list(typeList);
-          typeList->set_parent(funcType);
-        }
-
-     SgName typeName = funcType->get_mangled_type();
-
-  // Maintain the global type table 
-     SgFunctionTypeTable* fTable = SgNode::get_globalFunctionTypeTable();
-     ROSE_ASSERT(fTable != NULL);
-
-  // fTable->get_function_type_table()->print("In buildMemberFunctionType(): globalFunctionTypeTable BEFORE");
-
-     SgType* typeInTable = fTable->lookup_function_type(typeName);
-
-#if 0
-     printf ("########### In buildMemberFunctionType(): Looking in global function type table for member function type = %p name = %s typeInTable = %p \n",funcType,typeName.str(),typeInTable);
-#endif
-
-     if (typeInTable == NULL)
-        {
-#if 0
-          printf ("########### In buildMemberFunctionType(): Adding funcType = %p = %s to global function type table \n",funcType,typeName.str());
-#endif
-          fTable->insert_function_type(typeName,funcType);
-        }
-       else
-        {
-       // DQ (12/3/2011): Added this case to support reuse of function types (not handled by the createType functions).
-       // Delete the one generated so that we could form the mangled name.
-
-       // printf ("Deleting funcType = %p = %s \n",funcType,funcType->class_name().c_str());
-
-       // DQ (3/22/2012): Added assertion.
-          ROSE_ASSERT(typeInTable != funcType);
-
-#if 0
-       // DQ (4/25/2012): While debugging let's skip calling delete so that the slot in the memory pool will not be reused.
-          printf ("(debugging) Skipping delete of funcType = %p = %s \n",funcType,funcType->class_name().c_str());
-#else
-          delete funcType;
-#endif
-          funcType = NULL;
-#if 0
-       // DQ (12/13/2011): Is this executed!
-          printf ("Is this executed! \n");
-          ROSE_ASSERT(false);
-#endif
-       // Return the one from the global type table.
-          funcType = isSgMemberFunctionType(typeInTable);
-          ROSE_ASSERT(funcType != NULL);
-        }
-#if 0
-        }
-       else
-        {
-       // DQ (12/4/2011): Templates should not really generate types, but we need just such a concept.
-          ROSE_ASSERT(templateClassDeclaration != NULL);
-
-          printf ("Not clear how to handle case of SgTemplateClassDeclaration \n");
-          ROSE_ASSERT(false);
-        }
-#endif
-
-  // fTable->get_function_type_table()->print("In buildMemberFunctionType(): globalFunctionTypeTable AFTER");
-
-  // DQ (1/21/2009): TODO: Need to mark the function type as const, volatile, 
-  // or restrict (assert that none are set for now).
-  // ROSE_ASSERT(mfunc_specifier == 0);
-  // funcType->set_mfunc_specifier(mfunc_specifier);
-#if 0
-     printf ("Leaving buildMemberFunctionType(): returning funcType = %p = %s mfunc_specifier = %u \n",funcType,funcType->class_name().c_str(),mfunc_specifier);
-     printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
-#endif
-
-  // DQ (3/8/2012): This should be non-zero for a const member function type.
-  // ROSE_ASSERT(mfunc_specifier == 0);
-#endif
 
      return funcType;
    }
@@ -2939,13 +2837,15 @@ SageBuilder::buildNondefiningMemberFunctionDeclaration(const SgName& name, SgTyp
      return buildNondefiningMemberFunctionDeclaration (name,return_type,paralist,scope,NULL,memberFunctionModifiers,false,NULL);
    }
 
-// DQ (8/28/2012): This preserves the original API with a simpler function (however for C++ at least, it is frequently not sufficent).
+// DQ (8/28/2012): This preserves the original API with a simpler function (however for C++ at least, it is frequently not sufficient).
 // We need to decide if the SageBuilder API should include these sorts of functions.
 SgMemberFunctionDeclaration*
 SageBuilder::buildDefiningMemberFunctionDeclaration(const SgName& name, SgType* return_type, SgFunctionParameterList* paralist, SgScopeStatement* scope)
    {
      unsigned int memberFunctionModifiers = 0;
-     return buildDefiningMemberFunctionDeclaration (name,return_type,paralist,scope,NULL,false,memberFunctionModifiers,NULL,NULL);
+     // each defining member function decl must have a non-defining counter part now. 11/27/2012, Liao
+     SgMemberFunctionDeclaration* nondefining_decl = buildNondefiningMemberFunctionDeclaration (name, return_type, paralist, scope,NULL, memberFunctionModifiers, false, NULL);
+     return buildDefiningMemberFunctionDeclaration (name,return_type,paralist,scope,NULL,false,memberFunctionModifiers,nondefining_decl,NULL);
    }
 
 
@@ -3059,9 +2959,6 @@ SageBuilder::buildNondefiningMemberFunctionDeclaration (const SgMemberFunctionDe
      return returnFunction;
    }
 
-// SgMemberFunctionDeclaration*
-// SageBuilder::buildNondefiningMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, SgScopeStatement* scope, SgExprListExp* decoratorList, unsigned int functionConstVolatileFlags)
-// SgMemberFunctionDeclaration* SageBuilder::buildNondefiningMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, SgScopeStatement* scope, SgExprListExp* decoratorList, unsigned int functionConstVolatileFlags, bool buildTemplateInstantiation)
 SgMemberFunctionDeclaration*
 SageBuilder::buildNondefiningMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, SgScopeStatement* scope, 
    SgExprListExp* decoratorList, unsigned int functionConstVolatileFlags, bool buildTemplateInstantiation, SgTemplateArgumentPtrList* templateArgumentsList)
@@ -3369,7 +3266,6 @@ SageBuilder::buildNondefiningMemberFunctionDeclaration (const SgName & name, SgM
 #if 1
 // DQ (8/29/2012): This is re-enabled because the backstroke project is using it.
 // DQ (7/26/2012): I would like to remove this from the API (at least for now while debugging the newer API required for template argument handling).
-// SgMemberFunctionDeclaration* SageBuilder::buildDefiningMemberFunctionDeclaration (const SgName & name, SgMemberFunctionType* func_type, SgScopeStatement* scope, SgExprListExp* decoratorList)
 SgMemberFunctionDeclaration*
 SageBuilder::buildDefiningMemberFunctionDeclaration (const SgName & name, SgMemberFunctionType* func_type, SgScopeStatement* scope, SgExprListExp* decoratorList, SgMemberFunctionDeclaration* first_nondefining_declaration)
    {
@@ -9526,7 +9422,7 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
        // setTemplateArgumentsInDeclaration(nondefdecl,templateArgumentsList);
 
        // DQ (3/14/2012): For C++ we need the scope set so that types will have proper locations to revolve them 
-       // from being ambigiuos or not properly defined.  Basically, we need a handle from which to generate something
+       // from being ambiguous or not properly defined.  Basically, we need a handle from which to generate something
        // that amounts to a kind of name qualification internally (maybe even exactly name qualification, but I would
        // have to think about that a bit more).
           ROSE_ASSERT(scope != NULL);
@@ -9571,6 +9467,7 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
           ROSE_ASSERT (nondefdecl->get_startOfConstruct() != __null);
 
        // DQ (5/2/2012): After EDG/ROSE translation, there should be no IR nodes marked as transformations.
+       if (SourcePositionClassificationMode != e_sourcePositionTransformation) 
           detectTransformations(nondefdecl);
 
        // DQ (6/6/2012): This has to be set before we generate the type.

@@ -567,13 +567,7 @@ else
 check-fortran:
 endif
 
-if ROSE_USE_EDG_VERSION_4_4
-# DQ (10/13/2012): Ignoring fortran tests in initial EDG 4.x work
-check-local: check-cxx check-c check-c99
-else
 check-local: check-cxx check-c check-c99 check-fortran
-endif
-# check-local: $(CXX_FILES) $(C_FILES)
 	@echo "******************************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests/staticCFG_tests: make check rule complete (terminated normally) ******"
 	@echo "******************************************************************************************************"

@@ -41,6 +41,7 @@ int main(int argc, char* argv[])
   exampleTraversal.traverse(project,preorder);
  std::cout <<"Found "<<counter<<" phase-less shared declarations." <<std::endl;
  std::cout <<"Found "<<counter2<<" private-to-shared declarations." <<std::endl;
+ int rt=  backend(project); // we want to see the unparse code even when the assertion fails.
  ROSE_ASSERT((counter==5)&&(counter2==1));
-  return backend(project);
+  return rt;
 }

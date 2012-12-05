@@ -510,121 +510,150 @@ Unparse_MOD_SAGE::RemoveArgs(SgExpression* expr)
 //  Function that returns the expression variant of overloaded operators
 //-----------------------------------------------------------------------------------
 
-int GetOperatorVariant(SgExpression* expr) {
-  SgFunctionCallExp* func_call = isSgFunctionCallExp(expr);
-  if (func_call == NULL) {
-      return expr->variantT();
-  }
-
-  SgName name;
-  SgExpression *func = func_call->get_function();
-  switch (func->variantT()) {
-  case V_SgFunctionRefExp:
-        name = isSgFunctionRefExp(func)->get_symbol()->get_name();
-        break;
-  case V_SgDotExp:
-  case V_SgArrowExp:
+int
+GetOperatorVariant(SgExpression* expr) 
    {
-       SgExpression *mfunc = isSgBinaryOp(func)->get_rhs_operand();
+     SgFunctionCallExp* func_call = isSgFunctionCallExp(expr);
+     if (func_call == NULL)
+        {
+          return expr->variantT();
+        }
 
-    // DQ (9/28/2012): Added assertion.
-       ROSE_ASSERT(mfunc != NULL);
+     SgName name;
+     SgExpression *func = func_call->get_function();
+     switch (func->variantT())
+        {
+          case V_SgFunctionRefExp:
+               name = isSgFunctionRefExp(func)->get_symbol()->get_name();
+               break;
+          case V_SgDotExp:
+          case V_SgArrowExp:
+             {
+               SgExpression *mfunc = isSgBinaryOp(func)->get_rhs_operand();
 
-       if (mfunc->variantT() == V_SgPseudoDestructorRefExp)
-            return V_SgFunctionCallExp;
+            // DQ (9/28/2012): Added assertion.
+               ROSE_ASSERT(mfunc != NULL);
 
-    // DQ (9/28/2012): This could be a variable (pointer to function).
-       SgVarRefExp* var_ref = isSgVarRefExp(mfunc);
-       if (var_ref != NULL)
-          return (int)V_SgVarRefExp;
+               if (mfunc->variantT() == V_SgPseudoDestructorRefExp)
+                    return V_SgFunctionCallExp;
 
-       SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(mfunc);
+            // DQ (9/28/2012): This could be a variable (pointer to function).
+               SgVarRefExp* var_ref = isSgVarRefExp(mfunc);
+               if (var_ref != NULL)
+                    return (int)V_SgVarRefExp;
 
-    // DQ (9/28/2012): Added debug support.
-       if (mfunc_ref == NULL)
-          {
-            printf ("ERROR: mfunc = %p = %s \n",mfunc,mfunc->class_name().c_str());
-            mfunc->get_startOfConstruct()->display("Error in GetOperatorVariant() in modified_sage.C (unparser): debug");
-          }
-       ROSE_ASSERT(mfunc_ref != NULL);
+#if 0
+               SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(mfunc);
+            // DQ (9/28/2012): Added debug support.
+               if (mfunc_ref == NULL)
+                  {
+                    printf ("ERROR: mfunc = %p = %s mfunc->get_startOfConstruct() = %p mfunc->get_operatorPosition() = %p \n",mfunc,mfunc->class_name().c_str(),mfunc->get_startOfConstruct(),mfunc->get_operatorPosition());
+                    mfunc->get_startOfConstruct()->display("Error in GetOperatorVariant() in modified_sage.C (unparser): debug");
+                  }
+               ROSE_ASSERT(mfunc_ref != NULL);
+               name = mfunc_ref->get_symbol()->get_name();
+#else
+            // DQ (11/27/2012): Added more general support for templates to include new IR nodes.
+               SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(mfunc);
+               if (mfunc_ref != NULL)
+                  {
+                    name = mfunc_ref->get_symbol()->get_name();
+                  }
+                 else
+                  {
+                    SgTemplateMemberFunctionRefExp* template_mfunc_ref = isSgTemplateMemberFunctionRefExp(mfunc);
 
-       name = mfunc_ref->get_symbol()->get_name();
-       break;
+                 // DQ (9/28/2012): Added debug support.
+                    if (template_mfunc_ref == NULL)
+                       {
+                         printf ("ERROR: mfunc = %p = %s mfunc->get_startOfConstruct() = %p mfunc->get_operatorPosition() = %p \n",mfunc,mfunc->class_name().c_str(),mfunc->get_startOfConstruct(),mfunc->get_operatorPosition());
+                         mfunc->get_startOfConstruct()->display("Error in GetOperatorVariant() in modified_sage.C (unparser): debug");
+                       }
+                    ROSE_ASSERT(template_mfunc_ref != NULL);
+                    name = template_mfunc_ref->get_symbol()->get_name();
+                  }
+#endif       
+               break;
+             }
+
+          default:
+               return V_SgFunctionCallExp;
+        }
+
+     string func_name = name.str();
+     if (func_name == "operator,") return V_SgCommaOpExp;
+       else if (func_name == "operator=") return V_SgAssignOp;
+       else if (func_name == "operator+=") return V_SgPlusAssignOp;
+       else if (func_name == "operator-=") return V_SgMinusAssignOp;
+       else if (func_name == "operator&=") return V_SgAndAssignOp;
+       else if (func_name == "operator|=") return V_SgIorAssignOp;
+       else if (func_name == "operator*=") return V_SgMultAssignOp;
+       else if (func_name == "operator/=") return V_SgDivAssignOp;
+       else if (func_name == "operator%=") return V_SgModAssignOp;
+       else if (func_name == "operator^=") return V_SgXorAssignOp;
+       else if (func_name == "operator<<=") return  V_SgLshiftAssignOp;
+       else if (func_name == "operator>>=") return V_SgRshiftAssignOp;
+       else if (func_name == "operator||") return  V_SgOrOp;
+       else if (func_name == "operator&&") return V_SgAndOp;
+       else if (func_name == "operator|") return V_SgBitOrOp;
+       else if (func_name == "operator^") return  V_SgBitXorOp;
+       else if (func_name == "operator&") return V_SgBitAndOp;
+       else if (func_name == "operator==") return V_SgEqualityOp;
+       else if (func_name == "operator!=") return V_SgNotEqualOp;
+       else if (func_name == "operator<") return V_SgLessThanOp;
+       else if (func_name == "operator>") return V_SgGreaterThanOp;
+       else if (func_name == "operator<=") return V_SgLessOrEqualOp;
+       else if (func_name == "operator>=") return V_SgGreaterOrEqualOp;
+       else if (func_name == "operator<<") return V_SgLshiftOp;
+       else if (func_name == "operator>>") return V_SgRshiftOp;
+       else if (func_name == "operator+") return V_SgAddOp;
+       else if (func_name == "operator-") return V_SgSubtractOp;
+       else if (func_name == "operator*") return V_SgMultiplyOp;
+       else if (func_name == "operator/") return V_SgDivideOp;
+       else if (func_name == "operator%") return V_SgModOp;
+       else if (func_name == "operator.*") return V_SgDotStarOp;
+       else if (func_name == "operator->*") return V_SgArrowStarOp;
+       else if (func_name == "operator++") return V_SgPlusPlusOp;
+       else if (func_name == "operator--") return V_SgMinusMinusOp;
+       else if (func_name == "operator~") return V_SgBitComplementOp;
+       else if (func_name == "operator!") return V_SgNotOp;
+       else if (func_name == "operator[]") return V_SgPntrArrRefExp;
+       else if (func_name == "operator->") return V_SgArrowExp;
+       else if (func_name == "operator.") return V_SgDotExp;
+       else if (func_name.find("operator") == string::npos ||
+                func_name == "operator()") return V_SgFunctionCallExp;
+       else if (func_name.find("operator") != string::npos) return V_SgCastExp;
+       else
+        {
+          printf ("Error: default case reached in GetOperatorVariant func_name = %s \n",func_name.c_str());
+          assert(false);
+       /* avoid MSCV warning by adding return stmt */
+          return -1;
+        }
    }
-   default:
-       return V_SgFunctionCallExp;
+
+
+SgExpression*
+GetFirstOperand(SgExpression* expr) 
+   {
+     SgFunctionCallExp* func_call = isSgFunctionCallExp(expr);
+     if (func_call != NULL)
+          return func_call->get_function();
+       else
+        {
+          SgUnaryOp *op1 = isSgUnaryOp(expr);
+          if (op1 != 0)
+               return op1->get_operand();
+            else
+             {
+               SgBinaryOp *op2 = isSgBinaryOp(expr);
+               if (op2 != 0)
+                    return op2->get_lhs_operand();
+             }
+        }
+
+     return NULL;
    }
-
-   string func_name = name.str();
-   if (func_name == "operator,") return V_SgCommaOpExp;
-    else if (func_name == "operator=") return V_SgAssignOp;
-    else if (func_name == "operator+=") return V_SgPlusAssignOp;
-    else if (func_name == "operator-=") return V_SgMinusAssignOp;
-    else if (func_name == "operator&=") return V_SgAndAssignOp;
-    else if (func_name == "operator|=") return V_SgIorAssignOp;
-    else if (func_name == "operator*=") return V_SgMultAssignOp;
-    else if (func_name == "operator/=") return V_SgDivAssignOp;
-    else if (func_name == "operator%=") return V_SgModAssignOp;
-    else if (func_name == "operator^=") return V_SgXorAssignOp;
-    else if (func_name == "operator<<=") return  V_SgLshiftAssignOp;
-    else if (func_name == "operator>>=") return V_SgRshiftAssignOp;
-    else if (func_name == "operator||") return  V_SgOrOp;
-    else if (func_name == "operator&&") return V_SgAndOp;
-    else if (func_name == "operator|") return V_SgBitOrOp;
-    else if (func_name == "operator^") return  V_SgBitXorOp;
-    else if (func_name == "operator&") return V_SgBitAndOp;
-    else if (func_name == "operator==") return V_SgEqualityOp;
-    else if (func_name == "operator!=") return V_SgNotEqualOp;
-    else if (func_name == "operator<") return V_SgLessThanOp;
-    else if (func_name == "operator>") return V_SgGreaterThanOp;
-    else if (func_name == "operator<=") return V_SgLessOrEqualOp;
-    else if (func_name == "operator>=") return V_SgGreaterOrEqualOp;
-    else if (func_name == "operator<<") return V_SgLshiftOp;
-    else if (func_name == "operator>>") return V_SgRshiftOp;
-    else if (func_name == "operator+") return V_SgAddOp;
-    else if (func_name == "operator-") return V_SgSubtractOp;
-    else if (func_name == "operator*") return V_SgMultiplyOp;
-    else if (func_name == "operator/") return V_SgDivideOp;
-    else if (func_name == "operator%") return V_SgModOp;
-    else if (func_name == "operator.*") return V_SgDotStarOp;
-    else if (func_name == "operator->*") return V_SgArrowStarOp;
-    else if (func_name == "operator++") return V_SgPlusPlusOp;
-    else if (func_name == "operator--") return V_SgMinusMinusOp;
-    else if (func_name == "operator~") return V_SgBitComplementOp;
-    else if (func_name == "operator!") return V_SgNotOp;
-    else if (func_name == "operator[]") return V_SgPntrArrRefExp;
-    else if (func_name == "operator->") return V_SgArrowExp;
-    else if (func_name == "operator.") return V_SgDotExp;
-    else if (func_name.find("operator") == string::npos ||
-             func_name == "operator()") return V_SgFunctionCallExp;
-    else if (func_name.find("operator") != string::npos) return V_SgCastExp;
-    else
-     {
-       printf ("Error: default case reached in GetOperatorVariant func_name = %s \n",func_name.c_str());
-       assert(false);
-    /* avoid MSCV warning by adding return stmt */
-       return -1;
-     }
-}
-
-
-SgExpression* GetFirstOperand(SgExpression* expr) {
-  SgFunctionCallExp* func_call = isSgFunctionCallExp(expr);
-  if (func_call != NULL)
-     return func_call->get_function();
-  else {
-    SgUnaryOp *op1 = isSgUnaryOp(expr);
-    if (op1 != 0)
-       return op1->get_operand();
-    else {
-       SgBinaryOp *op2 = isSgBinaryOp(expr);
-       if (op2 != 0)
-          return op2->get_lhs_operand();
-    }
-  }
-
-  return NULL;
-}
 
 //-----------------------------------------------------------------------------------
 //  int GetPrecedence
@@ -632,9 +661,10 @@ SgExpression* GetFirstOperand(SgExpression* expr) {
 //  returns the precedence (1-17) of the expression variants,
 //  such that 17 has the highest precedence and 1 has the lowest precedence.
 //-----------------------------------------------------------------------------------
-int GetPrecedence(int variant)
+int
+GetPrecedence(int variant)
    {
-       ROSE_ASSERT(!"Deprecated. Use UnparseLanguageIndependentConstructs::getPrecedence instead");
+     ROSE_ASSERT(!"Deprecated. Use UnparseLanguageIndependentConstructs::getPrecedence instead");
    }
 
 //-----------------------------------------------------------------------------------

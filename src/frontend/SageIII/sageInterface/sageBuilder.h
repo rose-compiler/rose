@@ -70,13 +70,16 @@ extern bool symbol_table_case_insensitive_semantics;
 void pushScopeStack (SgScopeStatement* stmt);
 void pushScopeStack (SgNode* node);
 void popScopeStack();
-SgScopeStatement* topScopeStack() ;
+SgScopeStatement* topScopeStack();
 bool emptyScopeStack();
 void clearScopeStack();
 
 // DQ (3/11/2012): Added new function to the API for the internal scope stack.
 //! Support to retrive the SgGlobal from the internal scope stack (error if not present in a non-empty list, return null for empty list).
 SgScopeStatement* getGlobalScopeFromScopeStack();
+
+bool inSwitchScope();
+
    
 //@} 
 
