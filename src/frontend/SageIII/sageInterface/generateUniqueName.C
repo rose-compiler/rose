@@ -127,6 +127,19 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                     break;
                   }
 
+            // DQ (12/5/2012): This is a fix for mergeTest_06.C where it appears to only fail for the 
+            // GNU 4.4 compiler.  Likely specific to header compiler specific header files used for 
+            // only that (and likely later) version of the compiler.
+               case V_SgModifierType:
+                  {
+                    const SgModifierType* modifierType = isSgModifierType(node);
+                    ROSE_ASSERT(modifierType != NULL);
+
+                    key = "__modifier_type_";
+                    additionalSuffix = additionalSuffix + StringUtility::numberToString(modifierType);
+                    break;
+                  }
+
             // All other types
                default:
                   {
