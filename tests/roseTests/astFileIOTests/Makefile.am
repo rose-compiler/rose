@@ -25,7 +25,24 @@ parallelMerge_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 
 # astFileIO_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
+if ROSE_USE_EDG_VERSION_4
 include $(srcdir)/../../CompileTests/Cxx_tests/Makefile-pass.inc
+else
+EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
+astFileIOtest2012_01.C 
+
+# test_CplusplusMacro_Cpp.C 
+# test2001_01.C 
+# test2001_02.C 
+# test2001_03.C 
+# test2001_04.C 
+# test2001_05.C 
+# test2001_06.C 
+# test2001_07.C 
+# test2001_08.C 
+# test2001_09.C 
+# test2001_10.C 
+endif
 
 # These currently fail (will be fixed by Alin later when ROSE works better with template functions)
 # template_function.C
