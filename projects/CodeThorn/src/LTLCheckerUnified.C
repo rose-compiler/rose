@@ -1150,11 +1150,14 @@ UChecker::UChecker(EStateSet& ess, TransitionGraph& _tg)
     eStateSet(ess)
 {
   // Build our own customized Transition graph
+
+  cerr<<"Building boost state transition graph... "<<flush;
   int i = 0;
-  map<const EState*, Label> estate_label;
+  boost::unordered_map<const EState*, Label> estate_label;
   FOR_EACH_ESTATE(state, l1) {
     estate_label[&(*state)] = i++;
   }
+  cerr<<" finished labeling "<<flush;
 
   BoostTransitionGraph full_graph(ess.size());
 
@@ -1168,6 +1171,7 @@ UChecker::UChecker(EStateSet& ess, TransitionGraph& _tg)
     assert(full_graph[src]);
     assert(full_graph[tgt]);
   }
+  cerr<<"done"<<endl;
   //start = estate_label[transitionGraph.begin()->source];
   Transition st = transitionGraph.getStartTransition();
   start = estate_label[st.source];
@@ -1179,8 +1183,11 @@ UChecker::UChecker(EStateSet& ess, TransitionGraph& _tg)
 #endif
 
 #if 1
+
+  cerr<<"Collapsing state transition graph... "<<flush;
   // Optimization
   start = collapse_transition_graph(full_graph, g);
+  cerr<<"done"<<endl;
 #else
   g = full_graph;
 #endif
