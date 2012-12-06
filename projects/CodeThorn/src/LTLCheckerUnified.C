@@ -1206,7 +1206,7 @@ UChecker::UChecker(EStateSet& ess, TransitionGraph& _tg)
 Label UChecker::collapse_transition_graph(BoostTransitionGraph& g, 
 					  BoostTransitionGraph& reduced) const {
   Label n = 0;
-  Label* renumbered=new Label[num_vertices(g)];
+  vector<Label> renumbered(num_vertices(g));
 
   FOR_EACH_STATE(state, label) {
     //cerr<<label<<endl;
@@ -1258,9 +1258,7 @@ Label UChecker::collapse_transition_graph(BoostTransitionGraph& g,
   cerr<<"Number of EStates: "<<num_vertices(g)<<endl;
   cerr<<"Number of LTLStates: "<<num_vertices(reduced)<<endl;
 
-  Label res=renumbered[start];
-  delete[] renumbered;
-  return res;
+  return renumbered[start];
 }
 
 
