@@ -29,7 +29,7 @@ ROSE_LIBS = -Wl,-rpath -Wl,$(ROSE_LIB_DIR) -L $(ROSE_LIB_DIR) -lrose
 #KNOBS = -DPSTATE_MAINTAINER_HSET -DESTATE_MAINTAINER_HSET -DCSET_MAINTAINER_HSET
 KNOBS = 
 
-CPPFLAGS              = $(KNOBS) -O3 -march=native -ftree-vectorize -ggdb $(EXTRA_INCLUDES) -fopenmp
+CPPFLAGS              = $(KNOBS) -O3 -march=native -ftree-vectorize -ggdb $(EXTRA_INCLUDES) -fopenmp 
 #CXXCPPFLAGS           = @CXXCPPFLAGS@
 CXXFLAGS              = -Wno-deprecated -Wall
 LDFLAGS               = 

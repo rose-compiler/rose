@@ -28,5 +28,6 @@ private:
 
 extern BoolOptions boolOptions; // defined in CommandLineOptions.C
 extern boost::program_options::variables_map args; // defined in CommandLineOptions.C
+extern int option_debug_mode;
 
 #endif

@@ -1157,10 +1157,9 @@ UChecker::UChecker(EStateSet& ess, TransitionGraph& _tg)
   FOR_EACH_ESTATE(state, l1) {
     estate_label[&(*state)] = i++;
   }
-  cerr<<" finished labeling "<<flush;
+  //cerr<<" finished labeling "<<flush;
 
   BoostTransitionGraph full_graph(ess.size());
-
   FOR_EACH_TRANSITION(t) {
     Label src = estate_label[((*t).source)];
     Label tgt = estate_label[((*t).target)];
@@ -1175,26 +1174,27 @@ UChecker::UChecker(EStateSet& ess, TransitionGraph& _tg)
   //start = estate_label[transitionGraph.begin()->source];
   Transition st = transitionGraph.getStartTransition();
   start = estate_label[st.source];
-#if 0
-  cout << "DEBUG: START"<<transitionGraph.begin()->source
-	   <<", news: "<<transitionGraph.getStartTransition().source
-	   <<", newt: "<<transitionGraph.getStartTransition().target
-	   <<endl;
-#endif
 
-#if 1
-
-  cerr<<"Collapsing state transition graph... "<<flush;
   // Optimization
-  start = collapse_transition_graph(full_graph, g);
-  cerr<<"done"<<endl;
-#else
-  g = full_graph;
-#endif
+  if(option_debug_mode==200) {
+    cout << "DEBUG: START"<<(*transitionGraph.begin()).source
+	 <<", news: "<<transitionGraph.getStartTransition().source
+	 <<", newt: "<<transitionGraph.getStartTransition().target
+	 <<endl;
+  }
 
-  //FOR_EACH_STATE(state, label) {
-  //  cerr<<label<<": "<<state->toString()<<endl;
-  //}
+  if(boolOptions["post-collapse-stg"]) {
+    // Optimization
+    start = collapse_transition_graph(full_graph, g);
+  } else {
+    g = full_graph;
+  }
+
+  if(option_debug_mode==201) {
+    FOR_EACH_STATE(state, label) {
+      cerr<<"DEBUG: "<<label<<": "<<state->toString()<<endl;
+    }
+  }
 }
 
 /**
@@ -1206,7 +1206,7 @@ UChecker::UChecker(EStateSet& ess, TransitionGraph& _tg)
 Label UChecker::collapse_transition_graph(BoostTransitionGraph& g, 
 					  BoostTransitionGraph& reduced) const {
   Label n = 0;
-  Label renumbered[num_vertices(g)];
+  Label* renumbered=new Label[num_vertices(g)];
 
   FOR_EACH_STATE(state, label) {
     //cerr<<label<<endl;
@@ -1257,7 +1257,10 @@ Label UChecker::collapse_transition_graph(BoostTransitionGraph& g,
   //cerr<<"## done "<<endl<<endl;
   cerr<<"Number of EStates: "<<num_vertices(g)<<endl;
   cerr<<"Number of LTLStates: "<<num_vertices(reduced)<<endl;
-  return renumbered[start];
+
+  Label res=renumbered[start];
+  delete[] renumbered;
+  return res;
 }
 
 
