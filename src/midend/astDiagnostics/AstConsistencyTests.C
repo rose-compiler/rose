@@ -524,7 +524,6 @@ AstTests::runAllTests(SgProject* sageProject)
      if ( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
           cout << "Test expressions for properly set l-values finished." << endl;
 
-
   // DQ (2/23/2009): Test the declarations to make sure that defining and non-defining appear in the same file (for outlining consistency).
      TestMultiFileConsistancy::test();
 
@@ -741,6 +740,20 @@ AstTests::runAllTests(SgProject* sageProject)
 
   // DQ (3/19/2012): Added test from Robb for parents of the IR nodes in the AST.
      TestForParentsMatchingASTStructure::test(sageProject);
+
+
+  // DQ (12/3/2012): Test source position information.
+     if ( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
+          cout << "Test source position information started." << endl;
+        {
+          TimingPerformance timer ("Test expressions for properly set l-values:");
+
+          TestForSourcePosition sourcePositionTest;
+          sourcePositionTest.traverse(sageProject,preorder);
+        }
+     if ( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
+          cout << "Test source position information finished." << endl;
+
    }
 
 
@@ -5818,5 +5831,73 @@ TestForParentsMatchingASTStructure::test( SgProject* project )
 
   // TestForParentsMatchingASTStructure traversal(project);
   // traversal.traverse();
+   }
+
+
+void
+TestForSourcePosition::testFileInfo( Sg_File_Info* fileInfo )
+   {
+  // The get_file_info() function maps to get_operator_position() for SgExpression IR nodes and to 
+  // get_startOfConstruct() for SgStatement and some other IR nodes in SgSupport that have not yet 
+  // been moved to be in SgLocatedNode.
+
+     bool isCompilerGenerated                   = (fileInfo->isCompilerGenerated() == true);
+     bool isFrontendSpecific                    = (fileInfo->isFrontendSpecific() == true);
+     bool isTransformation                      = (fileInfo->isTransformation() == true);
+     bool isShared                              = (fileInfo->isShared() == true);
+     bool isSourcePositionUnavailableInFrontend = (fileInfo->isSourcePositionUnavailableInFrontend() == true);
+
+     if (isCompilerGenerated == false && isFrontendSpecific == false && isShared == false && isSourcePositionUnavailableInFrontend == false && isTransformation == false)
+        {
+          if (fileInfo->get_filenameString() == "")
+             {
+               fileInfo->display("In TestForSourcePosition::visit(): debug");
+
+               SgNode* node = fileInfo->get_parent();
+               ROSE_ASSERT(node != NULL);
+
+               printf ("Error: detected a source position with empty filename: node = %p = %s \n",node,node->class_name().c_str());
+               ROSE_ASSERT(false);
+             }
+        }
+   }
+
+
+void
+TestForSourcePosition::visit ( SgNode* node )
+   {
+     Sg_File_Info* fileInfo = node->get_file_info();
+     if (fileInfo != NULL)
+        {
+          testFileInfo(fileInfo);
+        }
+
+     SgLocatedNode* locatedNode = isSgLocatedNode(node);
+     if (locatedNode != NULL)
+        {
+       // This is a redundant test (with get_file_info()) for SgStatement, but not for SgExpression.
+          Sg_File_Info* startOfConstruct = node->get_startOfConstruct();
+          if (startOfConstruct != NULL)
+             {
+               testFileInfo(startOfConstruct);
+             }
+
+          Sg_File_Info* endOfConstruct = node->get_endOfConstruct();
+          if (endOfConstruct != NULL)
+             {
+               testFileInfo(endOfConstruct);
+             }
+
+       // This is a redundant test (with get_file_info()) for SgExpression.
+          SgExpression* expressionNode = isSgExpression(locatedNode);
+          if (expressionNode != NULL)
+             {
+               Sg_File_Info* operatorPosition = expressionNode->get_operatorPosition();
+               if (operatorPosition != NULL)
+                  {
+                    testFileInfo(operatorPosition);
+                  }
+             }
+        }
    }
 

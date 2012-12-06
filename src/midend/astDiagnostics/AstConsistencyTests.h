@@ -546,4 +546,17 @@ class TestForParentsMatchingASTStructure: public AstPrePostProcessing
    };
 
 
+class TestForSourcePosition: public AstSimpleProcessing
+   {
+  // DQ (12/3/2012): This tests for Sg_File_Info objects that have an empty filename.
+  // These have been set at an early stage in the defelopment of the edg4x work and 
+  // now they are a problem.  so it is time to detect them and get rid of them.
+
+     public:
+          void testFileInfo( Sg_File_Info* fileInfo );
+
+          void visit ( SgNode* node );
+   };
+
+
 #endif
