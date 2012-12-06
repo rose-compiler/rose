@@ -1171,23 +1171,27 @@ UChecker::UChecker(EStateSet& ess, TransitionGraph& _tg)
   //start = estate_label[transitionGraph.begin()->source];
   Transition st = transitionGraph.getStartTransition();
   start = estate_label[st.source];
-#if 0
-  cout << "DEBUG: START"<<transitionGraph.begin()->source
-	   <<", news: "<<transitionGraph.getStartTransition().source
-	   <<", newt: "<<transitionGraph.getStartTransition().target
-	   <<endl;
-#endif
 
-#if 1
-  // Optimization
-  start = collapse_transition_graph(full_graph, g);
-#else
-  g = full_graph;
-#endif
 
-  //FOR_EACH_STATE(state, label) {
-  //  cerr<<label<<": "<<state->toString()<<endl;
-  //}
+  if(option_debug_mode==200) {
+    cout << "DEBUG: START"<<(*transitionGraph.begin()).source
+	 <<", news: "<<transitionGraph.getStartTransition().source
+	 <<", newt: "<<transitionGraph.getStartTransition().target
+	 <<endl;
+  }
+
+  if(boolOptions["post-collapse-stg"]) {
+    // Optimization
+    start = collapse_transition_graph(full_graph, g);
+  } else {
+    g = full_graph;
+  }
+
+  if(option_debug_mode==201) {
+    FOR_EACH_STATE(state, label) {
+      cerr<<"DEBUG: "<<label<<": "<<state->toString()<<endl;
+    }
+  }
 }
 
 /**

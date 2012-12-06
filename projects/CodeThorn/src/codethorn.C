@@ -346,6 +346,7 @@ int main( int argc, char * argv[] ) {
     ("internal-checks", "run internal consistency checks (without input program)")
     ("verify", po::value< string >(), "verify all LTL formulae in the file [arg]")
     ("ltl-verifier",po::value< int >(),"specify which ltl-verifier to use [=1|2]")
+    ("debug-mode",po::value< int >(),"set debug mode [arg]")
     ("csv-ltl", po::value< string >(), "output LTL verification results into a CSV file [arg]")
     ("csv-assert", po::value< string >(), "output assert reachability results into a CSV file [arg]")
     ("csv-assert-live", po::value< string >(), "output assert reachability results during analysis into a CSV file [arg]")
@@ -368,10 +369,11 @@ int main( int argc, char * argv[] ) {
     ("precision-exact-constraints",po::value< string >(),
      "(experimental) use precise constraint extraction [=yes|no]")
     ("tg-ltl-reduced",po::value< string >(),"(experimental) compute LTL-reduced transition graph based on a subset of computed estates [=yes|no]")
-    ("semantic-fold",po::value< string >(),"compute semantically folded transition graph [=yes|no]")
-    ("post-semantic-fold",po::value< string >(),"compute semantically folded transition graph only after the complete transition graph has been computed. [=yes|no]")
+    ("semantic-fold",po::value< string >(),"compute semantically folded state transition graph [=yes|no]")
+    ("post-semantic-fold",po::value< string >(),"compute semantically folded state transition graph only after the complete transition graph has been computed. [=yes|no]")
     ("report-semantic-fold",po::value< string >(),"report each folding operation with the respective number of estates. [=yes|no]")
     ("semantic-fold-threshold",po::value< int >(),"Set threshold with <arg> for semantic fold operation (experimental)")
+    ("post-collapse-stg",po::value< string >(),"compute collapsed state transition graph after the complete transition graph has been computed. [=yes|no]")
     ("viz",po::value< string >(),"generate visualizations (dot) outputs [=yes|no]")
     ("update-input-var",po::value< string >(),"For testing purposes only. Default is Yes. [=yes|no]")
     ("run-rose-tests",po::value< string >(),"Run ROSE AST tests. [=yes|no]")
@@ -424,6 +426,7 @@ int main( int argc, char * argv[] ) {
   boolOptions.registerOption("semantic-fold",false);
   boolOptions.registerOption("post-semantic-fold",false);
   boolOptions.registerOption("report-semantic-fold",false);
+  boolOptions.registerOption("post-collapse-stg",true);
 
   boolOptions.registerOption("viz",false);
   boolOptions.registerOption("update-input-var",true);
@@ -513,6 +516,9 @@ int main( int argc, char * argv[] ) {
 	int ltlVerifier=args["ltl-verifier"].as<int>();
 	analyzer.setLTLVerifier(ltlVerifier);
   }
+  if(args.count("debug-mode")) {
+	option_debug_mode=args["debug-mode"].as<int>();
+  }
 
   // clean up string-options in argv
   for (int i=1; i<argc; ++i) {
@@ -530,13 +536,6 @@ int main( int argc, char * argv[] ) {
 		argv[i+1] = strdup("");
 	}
   }
-
-#if 0
-  if(boolOptions["semantic-fold"] && numberOfThreadsToUse>1) {
-	cerr << "ERROR: semantic-fold is currently restricted to 1 thread only. Change number of threads from "<<numberOfThreadsToUse<< " to 1."<<endl;
-	exit(1);
-  }
-#endif
 
   // Build the AST used by ROSE
   cout << "INIT: Parsing and creating AST."<<endl;
