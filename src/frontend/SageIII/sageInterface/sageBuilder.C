@@ -4307,6 +4307,7 @@ SgIntVal* SageBuilder::buildIntVal_nfi(int value, const string& str)
      SgIntVal* intValue = new SgIntVal(value,str);
      ROSE_ASSERT(intValue);
      setOneSourcePositionNull(intValue);
+
 #if 0
      printf ("In buildIntVal_nfi(value = %d,str = %s): intValue = %p \n",value,str.c_str(),intValue);
 #endif
