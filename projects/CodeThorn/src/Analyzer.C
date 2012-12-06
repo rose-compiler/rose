@@ -447,7 +447,7 @@ EStateSet::ProcessingResult Analyzer::process(EState& estate) {
 }
 
 EStateSet::ProcessingResult Analyzer::process(Label label, PState pstate, ConstraintSet cset, InputOutput io) {
-  if(isLTLRelevantLabel(label) || io.op!=InputOutput::NONE) {
+  if(isLTLRelevantLabel(label) || io.op!=InputOutput::NONE || (!boolOptions["tg-ltl-reduced"])) {
 	const PState* newPStatePtr=processNewOrExisting(pstate);
 	const ConstraintSet* newCSetPtr=processNewOrExisting(cset);
 	EState newEState=EState(label,newPStatePtr,newCSetPtr,io);
@@ -473,6 +473,7 @@ EStateSet::ProcessingResult Analyzer::process(Label label, PState pstate, Constr
 	  newCSetPtr2=const_cast<ConstraintSet*>(newCSetPtr);
 	}
 #else
+	// TODO: temporary states must be marked to be able to free them later (or: any non-maintained state is considered a temporary state)
 	PState* newPStatePtr2=new PState();
 	*newPStatePtr2=pstate;
 	ConstraintSet* newCSetPtr2=new ConstraintSet();
