@@ -192,12 +192,13 @@ void generateLTLOutput(Analyzer& analyzer, string ltl_file) {
   int n_undecided = 0;
   int n_failed = 0;
 
+  assert(analyzer.getEStateSet());
+  assert(analyzer.getTransitionGraph());
   if (ltl_file.size()) {
     CodeThorn::FixpointLTL::Checker checker1(*analyzer.getEStateSet(),
-											 *analyzer.getTransitionGraph());
+					     *analyzer.getTransitionGraph());
     CodeThorn::UnifiedLTL::UChecker checker2(*analyzer.getEStateSet(),
-											 *analyzer.getTransitionGraph());
-
+					     *analyzer.getTransitionGraph());
     ltl_input = fopen(ltl_file.c_str(), "r");
 
     ofstream* csv = NULL;

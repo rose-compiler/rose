@@ -1155,9 +1155,7 @@ UChecker::UChecker(EStateSet& ess, TransitionGraph& _tg)
   FOR_EACH_ESTATE(state, l1) {
     estate_label[&(*state)] = i++;
   }
-
   BoostTransitionGraph full_graph(ess.size());
-
   FOR_EACH_TRANSITION(t) {
     Label src = estate_label[((*t).source)];
     Label tgt = estate_label[((*t).target)];
@@ -1171,7 +1169,6 @@ UChecker::UChecker(EStateSet& ess, TransitionGraph& _tg)
   //start = estate_label[transitionGraph.begin()->source];
   Transition st = transitionGraph.getStartTransition();
   start = estate_label[st.source];
-
 
   if(option_debug_mode==200) {
     cout << "DEBUG: START"<<(*transitionGraph.begin()).source
@@ -1203,7 +1200,8 @@ UChecker::UChecker(EStateSet& ess, TransitionGraph& _tg)
 Label UChecker::collapse_transition_graph(BoostTransitionGraph& g, 
 					  BoostTransitionGraph& reduced) const {
   Label n = 0;
-  Label renumbered[num_vertices(g)];
+  //Label renumbered[num_vertices(g)]; // MS: variable length arrays crash on some system configurations
+  Label* renumbered=new Label[num_vertices(g)];
 
   FOR_EACH_STATE(state, label) {
     //cerr<<label<<endl;
@@ -1254,7 +1252,10 @@ Label UChecker::collapse_transition_graph(BoostTransitionGraph& g,
   //cerr<<"## done "<<endl<<endl;
   cerr<<"Number of EStates: "<<num_vertices(g)<<endl;
   cerr<<"Number of LTLStates: "<<num_vertices(reduced)<<endl;
-  return renumbered[start];
+
+  Label res=renumbered[start];
+  delete[] renumbered;
+  return res;
 }
 
 
