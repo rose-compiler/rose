@@ -2279,14 +2279,24 @@ TestAstForUniqueNodesInAST::visit ( SgNode* node )
 
      if (astNodeSet.find(node) != astNodeSet.end())
         {
-          printf ("Error: found a shared IR node = %p = %s in the AST. \n",node,node->class_name().c_str());
           SgLocatedNode* locatedNode = isSgLocatedNode(node);
           if (locatedNode != NULL)
              {
             // Note that we must exclude IR nodes marked explicitly as shared by AST merge.
-
                ROSE_ASSERT(locatedNode->get_file_info() != NULL);
-               locatedNode->get_file_info()->display("Error: found a shared IR node (might be marked as shared after AST merge; not handled yet)");
+               if (locatedNode->get_file_info()->isShared() == false)
+                  {
+                    printf ("Warning: found a shared IR node = %p = %s in the AST. \n",node,node->class_name().c_str());
+                    locatedNode->get_file_info()->display("Error: found a shared IR node (might be marked as shared after AST merge; not handled yet)");
+                  }
+                 else
+                  {
+                    printf ("Note: found a shared IR node = %p = %s in the AST (OK if part of merged AST) \n",node,node->class_name().c_str());
+                  }
+             }
+            else
+             {
+               printf ("Warning: found a shared IR node = %p = %s in the AST (not a SgLocatedNode) \n",node,node->class_name().c_str());
              }
 
           printf ("Error: found a shared IR node = %p = %s in the AST. \n",node,node->class_name().c_str());
