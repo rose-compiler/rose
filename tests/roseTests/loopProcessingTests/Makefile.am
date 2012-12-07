@@ -1,88 +1,109 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
+EXTRA_DIST =
+MOSTLYCLEANFILES =
+TEST_NAMES =
 
-INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/src/midend/loopProcessing/driver -I$(top_srcdir)/src/midend/astUtil/astInterface -I$(top_srcdir)/src/midend/astUtil/astSupport
+########################################################################################################################
+# Executables
+########################################################################################################################
 
-## The grammar generator (ROSETTA) should use its own template repository
-CXX_TEMPLATE_REPOSITORY_PATH = .
-
-bin_PROGRAMS = LoopProcessor
-
+noinst_PROGRAMS = LoopProcessor
 LoopProcessor_SOURCES = LoopProcessor.C
+LoopProcessor_CPPFLAGS =				 \
+	$(ROSE_INCLUDES)				 \
+	-I$(top_srcdir)/src/midend/loopProcessing/driver \
+	-I$(top_srcdir)/src/midend/astUtil/astInterface	 \
+	-I$(top_srcdir)/src/midend/astUtil/astSupport
+LoopProcessor_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 
-LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS) 
+########################################################################################################################
+# Tests.  Just comment out the "TEST_NAMES+=" line to disable a test.  Each test, FOO, will produce either a FOO.passed
+# or FOO.failed file with the test output.  Each test runs in a FOO.wrk directory since they would otherwise interfere
+# with each other when run in parallel.
+########################################################################################################################
 
-ROSE_FLAGS =
+# EDG3 and EDG4 produce slightly different outputs. For instance, EDG3 adds some extra parentheses around expressions.
+# These tests aren't intended to check that EDG3 and EDG4 produce identical output, so we just maintain separate
+# answers based on the EDG major version number.
+EDG  = edg@ROSE_EDG_MAJOR_VERSION_NUMBER@
 
-VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes
-# VALGRIND = /usr/apps/valgrind/new/bin/valgrind $(VALGRIND_OPTIONS)
-VALGRIND = valgrind $(VALGRIND_OPTIONS)
+# The configuration file. Look here for the actual command that runs for each test. The command can also be found in
+# the *.failed files after the "=== CUT ===" line.
+EXTRA_DIST += LoopProcessor.conf
 
-# This file is an object file created by the misinterpretation of a -opt flag
-CLEANFILES = pt
+TEST_NAMES += test1
+EXTRA_DIST += mm.C mm.edg3.ans mm.edg4.ans
+test1.passed: LoopProcessor.conf LoopProcessor mm.C mm.$(EDG).ans
+	@$(RTH_RUN) SWITCHES="-c -bk1 -fs0" INPUT=mm.C ANSWER=mm.$(EDG).ans $< $@
 
-# This rule generates a dependency that forces the "make check" 
-# test to always compile the test code
-FORCE_TEST_CODES_TO_RUN:
-if USING_GNU_COMPILER
-#	This fails for the Intel icc or icpc compiler (restrict pointers are unparsed differently which causes dif to fail).
-	$(srcdir)/TestDriver $(srcdir)
-endif
-	echo "Commented out loopProcessor due to internal problems..."
+TEST_NAMES += test2
+EXTRA_DIST += lufac.C lufac.edg3.ans lufac.edg4.ans funcs.annot
+test2.passed: LoopProcessor.conf LoopProcessor lufac.C lufac.$(EDG).ans funcs.annot
+	@$(RTH_RUN) SWITCHES="-c -bk1 -fs0 -annot $(srcdir)/funcs.annot" INPUT=lufac.C ANSWER=lufac.$(EDG).ans $< $@
 
-EXTRA_DIST = TestDriver mm.C fusiontest1.C lufac.C tridvpk.C rmatmult3.C dgemm.C rose_mm.C.wave-save rose_mm.C.withoutwave-save rose_mm.C.save rose_lufac.C.save rose_lufac_split.C.save rose_tridvpk.C.save rose_rmatmult3.C.save rose_dgemm.C.save rose_fusiontest1.C.save rose_mm_cp0.C.save rose_lufac_cp0.C.save rose_mm_cp2_bk3.C.save funcs.annot rose_mm.C.wave-save rose_mm.C.withoutwave-save rose_lufac.C.wave-save rose_lufac.C.withoutwave-save rose_lufac_split.C.wave-save rose_lufac_split.C.withoutwave-save rose_tridvpk.C.wave-save rose_tridvpk.C.withoutwave-save rose_rmatmult3.C.wave-save rose_rmatmult3.C.withoutwave-save rose_mm.C.wave-save rose_mm.C.withoutwave-save rose_mm_cp0.C.wave-save rose_mm_cp0.C.withoutwave-save rose_lufac_cp0.C.wave-save rose_lufac_cp0.C.withoutwave-save rose_mm_cp2_bk3.C.wave-save rose_mm_cp2_bk3.C.withoutwave-save  dgemvT.C rose_dgemvT.C.save dgemm_test.C rose_dgemm_test.C.save rose_lufac_12.C.save
+TEST_NAMES += test3
+EXTRA_DIST += lufac.C lufac-split.edg3.ans lufac-split.edg4.ans funcs.annot
+test3.passed: LoopProcessor.conf LoopProcessor lufac.C lufac-split.$(EDG).ans funcs.annot
+	@$(RTH_RUN) SWITCHES="-c -bk1 -fs0 -splitloop -annot $(srcdir)/funcs.annot" \
+		INPUT=lufac.C ANSWER=lufac-split.$(EDG).ans $< $@
 
-test:
-	$(VALGRIND) ./LoopProcessor --edg:no_warnings -w -bs 60 -fs01 $(srcdir)/rmatmult3.C
+TEST_NAMES += test4
+EXTRA_DIST += tridvpk.C tridvpk.edg3.ans tridvpk.edg4.ans
+test4.passed: LoopProcessor.conf LoopProcessor tridvpk.C tridvpk.$(EDG).ans
+	@$(RTH_RUN) SWITCHES="-c -fs2 -ic1 -opt 1" INPUT=tridvpk.C ANSWER=tridvpk.$(EDG).ans $< $@
 
-# DQ (3/28/2006): These test fail becuase g++ version 4.x causes too 
-# many zeros to be output in strings (different from g++ version 3.3.2)
-# This will be fixed once we can output the constant literals as strings 
-# using Andres's work using Wave.
+TEST_NAMES += test5
+EXTRA_DIST += rmatmult3.C rmatmult3.edg3.ans rmatmult3.edg4.ans
+test5.passed: LoopProcessor.conf LoopProcessor rmatmult3.C rmatmult3.$(EDG).ans
+	@$(RTH_RUN) SWITCHES="-c -bs 60 -fs01" INPUT=rmatmult3.C ANSWER=rmatmult3.$(EDG).ans $< $@
 
-# DQ (7/25/2005): Commented out so I can work on separately with Qing
-# to deactivate tests comment out check-local
-check-local:
-#	chmod +w $(srcdir)
-if ROSE_USE_BOOST_WAVE
-#	cp $(srcdir)/rose_mm.C.wave-save $(srcdir)/rose_mm.C.save
-#	cp $(srcdir)/rose_lufac.C.wave-save $(srcdir)/rose_lufac.C.save
-#	cp $(srcdir)/rose_lufac_split.C.wave-save $(srcdir)/rose_lufac_split.C.save
-#	cp $(srcdir)/rose_tridvpk.C.wave-save $(srcdir)/rose_tridvpk.C.save
-#	cp $(srcdir)/rose_rmatmult3.C.wave-save $(srcdir)/rose_rmatmult3.C.save
-#	cp $(srcdir)/rose_mm.C.wave-save $(srcdir)/rose_mm.C.save
-#	cp $(srcdir)/rose_mm_cp0.C.wave-save $(srcdir)/rose_mm_cp0.C.save
-#	cp $(srcdir)/rose_lufac_cp0.C.wave-save $(srcdir)/rose_lufac_cp0.C.save
-#	cp $(srcdir)/rose_mm_cp2_bk3.C.wave-save $(srcdir)/rose_mm_cp2_bk3.C.save
-else
-#	DQ (1/3/2008): Commented out for now. The distcheck directory is readonly and this is a problem!
-#	cp $(srcdir)/rose_mm.C.withoutwave-save $(srcdir)/rose_mm.C.save
-#	cp $(srcdir)/rose_lufac.C.withoutwave-save $(srcdir)/rose_lufac.C.save
-#	cp $(srcdir)/rose_lufac_split.C.withoutwave-save $(srcdir)/rose_lufac_split.C.save
-#	cp $(srcdir)/rose_tridvpk.C.withoutwave-save $(srcdir)/rose_tridvpk.C.save
-#	cp $(srcdir)/rose_rmatmult3.C.withoutwave-save $(srcdir)/rose_rmatmult3.C.save
-#	cp $(srcdir)/rose_mm.C.withoutwave-save $(srcdir)/rose_mm.C.save
-#	cp $(srcdir)/rose_mm_cp0.C.withoutwave-save $(srcdir)/rose_mm_cp0.C.save
-#	cp $(srcdir)/rose_lufac_cp0.C.withoutwave-save $(srcdir)/rose_lufac_cp0.C.save
-#	cp $(srcdir)/rose_mm_cp2_bk3.C.withoutwave-save $(srcdir)/rose_mm_cp2_bk3.C.save
-endif
-	$(MAKE) FORCE_TEST_CODES_TO_RUN
-	@echo "*******************************************************************************************"
-	@echo "*** ROSE/tests/roseTests/loopProcessing: make check rule complete (terminated normally) ***"
-	@echo "*******************************************************************************************"
+TEST_NAMES += test6
+EXTRA_DIST += dgemm_test.C dgemm_test.edg3.ans dgemm_test.edg4.ans
+test6.passed: LoopProcessor.conf LoopProcessor dgemm_test.C dgemm_test.$(EDG).ans
+	@$(RTH_RUN) SWITCHES="-c -bk1 -unroll -nvar 16" INPUT=dgemm_test.C ANSWER=dgemm_test.$(EDG).ans $< $@
+
+TEST_NAMES += test7
+EXTRA_DIST += fusiontest1.C fusiontest1.edg3.ans fusiontest1.edg4.ans
+test7.passed: LoopProcessor.conf LoopProcessor fusiontest1.C fusiontest1.$(EDG).ans
+	@$(RTH_RUN) SWITCHES="-c -fs2" INPUT=fusiontest1.C ANSWER=fusiontest1.$(EDG).ans $< $@
+
+TEST_NAMES += test8
+EXTRA_DIST += mm.C mm-cp0.edg3.ans mm-cp0.edg4.ans
+test8.passed: LoopProcessor.conf LoopProcessor mm.C mm-cp0.$(EDG).ans
+	@$(RTH_RUN) SWITCHES="-c -cp 0" INPUT=mm.C ANSWER=mm-cp0.$(EDG).ans $< $@
+
+# test9 was commented out in the original "TestDriver" script, but seems to pass anyway.
+TEST_NAMES += test9
+EXTRA_DIST += lufac.C lufac-cp0.edg3.ans lufac-cp0.edg4.ans funcs.annot
+test9.passed: LoopProcessor.conf LoopProcessor lufac.C lufac-cp0.$(EDG).ans funcs.annot
+	@$(RTH_RUN) SWITCHES="-c -cp 0 -annot $(srcdir)/funcs.annot" INPUT=lufac.C ANSWER=lufac-cp0.$(EDG).ans $< $@
+
+TEST_NAMES += test10
+EXTRA_DIST += mm.C mm-cp2-bk3.edg3.ans mm-cp2-bk3.edg4.ans
+test10.passed: LoopProcessor.conf LoopProcessor mm.C mm-cp2-bk3.$(EDG).ans
+	@$(RTH_RUN) SWITCHES="-c -cp 2 -bk3" INPUT=mm.C ANSWER=mm-cp2-bk3.$(EDG).ans $< $@
+
+# test 11 was not present in the original "TestDriver" script
+
+
+TEST_NAMES += test12
+EXTRA_DIST += lufac.C lufac-12.edg3.ans lufac-12.edg4.ans
+test12.passed: LoopProcessor.conf LoopProcessor lufac.C lufac-12.$(EDG).ans
+	@$(RTH_RUN) SWITCHES="-c -fs0" INPUT=lufac.C ANSWER=lufac-12.$(EDG).ans $< $@
+
+# test 13 was called "test12" (redundantly) in the original "TestDriver" script
+TEST_NAMES += test13
+EXTRA_DIST += dgemvT.C dgemvT.edg3.ans dgemvT.edg4.ans
+test13.passed: LoopProcessor.conf LoopProcessor dgemvT.C dgemvT.$(EDG).ans
+	@$(RTH_RUN) SWITCHES="-c -fs01 -cp 0" INPUT=dgemvT.C ANSWER=dgemvT.$(EDG).ans $< $@
+
+########################################################################################################################
+# Automake targets
+########################################################################################################################
+
+check-local: $(addsuffix .passed, $(TEST_NAMES))
 
 clean-local:
-	rm -rf Templates.DB ii_files ti_files cxx_templates
-
-distclean-local:
-	rm -rf Templates.DB
-
-#dist-hook:
-#	ln -s ../STL-link ${distdir}
-# AUTOMAKE_OPTIONS = foreign
-
-
-
-
-
-
-
+	rm -f $(addsuffix .passed, $(TEST_NAMES)) $(addsuffix .failed, $(TEST_NAMES))
+	rm -f $(addsuffix .err, $(TEST_NAMES)) $(addsuffix .out, $(TEST_NAMES))
+	rm -rf $(addsuffix .wrk, $(TEST_NAMES))

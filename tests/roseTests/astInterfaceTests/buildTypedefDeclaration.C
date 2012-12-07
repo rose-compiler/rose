@@ -33,12 +33,18 @@ int main (int argc, char *argv[])
  // appendStatement(struct_1, globalScope);
 
  // build typedef from struct frame then 
-  SgTypedefDeclaration * decl_2 = buildTypedefDeclaration("frame",struct_1->get_type(),globalScope);
+  SgTypedefDeclaration * decl_2 = buildTypedefDeclaration("frame",struct_1->get_type(),globalScope, true);
   // make sure the defining struct declaration will show up
-  decl_2->set_typedefBaseTypeContainsDefiningDeclaration(true);
+// This is now part of the builder interface
+//  decl_2->set_typedefBaseTypeContainsDefiningDeclaration(true);
 
   appendStatement (decl_2,globalScope);
+//  resetParentPointers (decl_2);
 
+  // Output an optional graph of the AST (the whole graph, of bounded complexity, when active)
+ //    const int MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH = 10000;
+//     generateAstGraph(project,MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH,"");
+ 
   AstTests::runAllTests(project);
   return backend (project);
 }

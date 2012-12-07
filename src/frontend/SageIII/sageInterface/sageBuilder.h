@@ -723,12 +723,12 @@ buildVariableDeclaration_nfi(const SgName & name, SgType *type, SgInitializer *v
 SgTemplateVariableDeclaration* buildTemplateVariableDeclaration_nfi(const SgName & name, SgType *type, SgInitializer *varInit, SgScopeStatement* scope);
 // #endif
 
-//!Build a typedef declaration, such as: typedef int myint; 
+//!Build a typedef declaration, such as: typedef int myint;  typedef struct A {..} s_A; 
 SgTypedefDeclaration* 
-buildTypedefDeclaration(const std::string& name, SgType* base_type, SgScopeStatement* scope = NULL);
+buildTypedefDeclaration(const std::string& name, SgType* base_type, SgScopeStatement* scope = NULL, bool has_defining_base=false);
 
 SgTypedefDeclaration* 
-buildTypedefDeclaration_nfi(const std::string& name, SgType* base_type, SgScopeStatement* scope = NULL);
+buildTypedefDeclaration_nfi(const std::string& name, SgType* base_type, SgScopeStatement* scope = NULL, bool has_defining_base=false);
 
 //! Build an empty SgFunctionParameterList, possibly with some initialized names filled in
 SgFunctionParameterList * buildFunctionParameterList(SgInitializedName* in1 = NULL, SgInitializedName* in2 = NULL, SgInitializedName* in3 = NULL, SgInitializedName* in4 = NULL, SgInitializedName* in5 = NULL, SgInitializedName* in6 = NULL, SgInitializedName* in7 = NULL, SgInitializedName* in8 = NULL, SgInitializedName* in9 = NULL, SgInitializedName* in10 = NULL);
@@ -768,12 +768,8 @@ void setTemplateParametersInDeclaration              ( SgDeclarationStatement* d
 //! A template function for function prototype declaration builders
 // template <class actualFunction>
 // actualFunction*
-// buildNondefiningFunctionDeclaration_T (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, bool isMemberFunction, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL);
 template <class actualFunction>
 actualFunction*
-// buildNondefiningFunctionDeclaration_T (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, bool isMemberFunction, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL, unsigned int functionConstVolatileFlags = 0, bool buildTemplateInstantiation = false);
-// buildNondefiningFunctionDeclaration_T (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, bool isMemberFunction, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL, unsigned int functionConstVolatileFlags = 0);
-// buildNondefiningFunctionDeclaration_T (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, bool isMemberFunction, SgScopeStatement* scope, SgExprListExp* decoratorList, unsigned int functionConstVolatileFlags);
 buildNondefiningFunctionDeclaration_T (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, bool isMemberFunction, SgScopeStatement* scope, SgExprListExp* decoratorList, unsigned int functionConstVolatileFlags, SgTemplateArgumentPtrList* templateArgumentsList);
 
 //! Build a prototype for a function, handle function type, symbol etc transparently

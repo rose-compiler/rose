@@ -9071,7 +9071,7 @@ void SageInterface::appendStatement(SgStatement *stmt, SgScopeStatement* scope)
   // DQ (11/19/2012): If we are building the AST within the front-end then don't do this expensive 
   // fixup (we already set it properly in the AST construction within the frontend so we don't need 
   // this).  Also since this is only operating within a single scope it is likely too specific to C 
-  // instead of addessing the details of C++ where functions can be placed in alternative scopes and 
+  // instead of addressing the details of C++ where functions can be placed in alternative scopes and 
   // use name qualification).
   // update the links after insertion!
   // if (isSgFunctionDeclaration(stmt))
