@@ -336,6 +336,9 @@ class UVerifier: public BottomUpVisitor {
   deque<const EState*> endpoints;
   Label start;
   unsigned short progress;
+  
+  /// To avoid recomputing I/O LTL-leafs, we keep track of common subexpressions
+  vector< pair<LTL::NodeType, char> > stack_contents;
 
 public:
   LTLStateTransitionGraph stg;
@@ -620,6 +623,7 @@ public:
       // Pop arguments
       for (int i = 0; i<nargs; ++i)
 	state.valstack.pop_back(); 
+
       // Push result
       state.push(state.val);
       state.debug.push_back(state.val);
@@ -665,6 +669,32 @@ public:
   ///tell if a state is an exit node
   bool isEndpoint(const EState* es) const {
     return find(endpoints.begin(), endpoints.end(), es) != endpoints.end();
+  }
+
+  void pick(size_t nth) {
+    FOR_EACH_VERTEX(v, stg.g) {
+      LTLState state = stg.g[v];
+      // Copy cached result
+      BoolLattice val = state.valstack[nth];
+      state.push(val);
+      state.debug.push_back(val);
+      stg.g[v] = state;
+      stg.vertex[state] = v;
+    } END_FOR
+  }
+
+  /// figure out if we already calculated a certain IO operation and
+  /// copy the result over, if so
+  bool cached_io(pair<NodeType, char> io_op) {
+    stack_contents.push_back(io_op);
+    for (size_t i=0; i<stack_contents.size()-1; ++i) {
+      if (stack_contents[i] == io_op) {
+	pick(i);
+	cerr<<"(cached at "<<i<<")"<<endl;
+	return true;
+      }
+    }
+    return false;
   }
 
   /// verify that two constraints are consistent, ie. not true and false
@@ -759,7 +789,8 @@ public:
   }; 
   void visit(const InputSymbol* expr) {
     show_progress(*expr);
-    analyze(stg, *expr, TransferI(expr, stg), 0);
+    if (!cached_io(make_pair(e_InputSymbol, expr->c)))
+      analyze(stg, *expr, TransferI(expr, stg), 0);
   }
 
   /// return True iff that state is an !Ic operation
@@ -816,7 +847,8 @@ public:
   }; 
   void visit(const NegInputSymbol* expr) {
     show_progress(*expr);
-    analyze(stg, *expr, TransferNI(expr, stg), 0);
+    if (!cached_io(make_pair(e_NegInputSymbol, expr->c)))
+      analyze(stg, *expr, TransferNI(expr, stg), 0);
   }
 
   /// return True iff that state is an Oc operation
@@ -875,7 +907,8 @@ public:
   }; 
   void visit(const OutputSymbol* expr) {
     show_progress(*expr);
-    analyze(stg, *expr, TransferO(expr), 0);
+    if (!cached_io(make_pair(e_OutputSymbol, expr->c)))
+      analyze(stg, *expr, TransferO(expr), 0);
   }
  
 
@@ -935,7 +968,8 @@ public:
   }; 
   void visit(const NegOutputSymbol* expr) {
     show_progress(*expr);
-    analyze(stg, *expr, TransferNO(expr), 0);
+    if (!cached_io(make_pair(e_NegOutputSymbol, expr->c)))
+      analyze(stg, *expr, TransferNO(expr), 0);
   }
 
   /**
@@ -958,6 +992,9 @@ public:
   void visit(const Not* expr) {
     show_progress(*expr);
     analyze(stg, *expr, TransferNot(), 1);
+
+    stack_contents.pop_back();
+    stack_contents.push_back(make_pair(e_Not, 0));
   }
 
   /**
@@ -988,6 +1025,9 @@ public:
   void visit(const Next* expr) {
     show_progress(*expr);
     analyze(stg, *expr, TransferX(), 1);
+
+    stack_contents.pop_back();
+    stack_contents.push_back(make_pair(e_Next, 0));
   }
 
   /**
@@ -1020,6 +1060,9 @@ public:
   void visit(const Eventually* expr) {
     show_progress(*expr);
     analyze(stg, *expr, TransferF(), 1);
+
+    stack_contents.pop_back();
+    stack_contents.push_back(make_pair(e_Eventually, 0));
   }
 
   /**
@@ -1050,6 +1093,9 @@ public:
   void visit(const Globally* expr) {
     show_progress(*expr);
     analyze(stg, *expr, TransferG(), 1);
+
+    stack_contents.pop_back();
+    stack_contents.push_back(make_pair(e_Globally, 0));
   }
 
   // Implementation status: DONE
@@ -1071,6 +1117,10 @@ public:
   void visit(const And* expr) {
     show_progress(*expr);
     analyze(stg, *expr, TransferAnd(), 2);
+
+    stack_contents.pop_back();
+    stack_contents.pop_back();
+    stack_contents.push_back(make_pair(e_And, 0));
   }
 
   // Implementation status: DONE
@@ -1092,6 +1142,10 @@ public:
   void visit(const Or* expr) {
     show_progress(*expr);
     analyze(stg, *expr, TransferOr(), 2);
+
+    stack_contents.pop_back();
+    stack_contents.pop_back();
+    stack_contents.push_back(make_pair(e_Or, 0));
   }
 
   /**
@@ -1129,6 +1183,10 @@ public:
   void visit(const Until* expr) {
     show_progress(*expr);
     analyze(stg, *expr, TransferU(), 2);
+
+    stack_contents.pop_back();
+    stack_contents.pop_back();
+    stack_contents.push_back(make_pair(e_Until, 0));
   }
 
   /**
@@ -1177,6 +1235,10 @@ public:
   void visit(const Release* expr) {
     show_progress(*expr);
     analyze(stg, *expr, TransferR(), 2);
+
+    stack_contents.pop_back();
+    stack_contents.pop_back();
+    stack_contents.push_back(make_pair(e_Release, 0));
   }
 };
 
