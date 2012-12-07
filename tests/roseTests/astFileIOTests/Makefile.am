@@ -25,11 +25,15 @@ parallelMerge_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 
 # astFileIO_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
-if ROSE_USE_EDG_VERSION_4
+# Process the standard collection of C++ regression test as example test codes.
 include $(srcdir)/../../CompileTests/Cxx_tests/Makefile-pass.inc
-else
-EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
-astFileIOtest2012_01.C 
+LOCAL_EXAMPLE_TESTCODES_REQUIRED_TO_PASS = 
+
+# Build a simpler local list of files to process.
+# EXAMPLE_TESTCODES_REQUIRED_TO_PASS = 
+
+# LOCAL_EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
+# astFileIOtest2012_01.C 
 
 # test_CplusplusMacro_Cpp.C 
 # test2001_01.C 
@@ -42,7 +46,6 @@ astFileIOtest2012_01.C
 # test2001_08.C 
 # test2001_09.C 
 # test2001_10.C 
-endif
 
 # These currently fail (will be fixed by Alin later when ROSE works better with template functions)
 # template_function.C
@@ -56,9 +59,11 @@ endif
 
 # DQ (2/20/2010): Use the standard list of test codes (if possible)
 TESTCODES = $(EXAMPLE_TESTCODES_REQUIRED_TO_PASS)
+LOCAL_TESTCODES = $(LOCAL_EXAMPLE_TESTCODES_REQUIRED_TO_PASS)
 
 # Build the list of object files
 TEST_Objects = ${TESTCODES:.C=.o}
+LOCAL_TEST_Objects = ${LOCAL_TESTCODES:.C=.o}
 
 # VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=80 --leak-check=no --error-limit=no --show-reachable=yes
 # VALGRIND = /usr/apps/valgrind/new/bin/valgrind $(VALGRIND_OPTIONS)
@@ -87,6 +92,7 @@ TESTCODE_INCLUDES = \
 	make -C ../.. testAstFileIO
 ../../testAstFileRead:
 	make -C ../.. testAstFileRead
+
 # DQ (7/12/2004): Modified to run with make -j4 options
 # $(TEST_Objects): astFileIO astFileRead $(TESTCODES)
 $(TEST_Objects): astFileIO astFileRead ../../testAstFileIO
@@ -101,6 +107,13 @@ $(TEST_Objects): astFileIO astFileRead ../../testAstFileIO
 # EXTRA_DIST = $(TESTCODES) test2001_05.h
 # EXTRA_DIST = input_tiny_01.C input_tiny_02.C
 EXTRA_DIST = input_tiny_01a.C  input_tiny_01b.C  input_tiny_02a.C  input_tiny_02b.C  input_tiny_03a.C  input_tiny_03b.C
+
+$(LOCAL_TEST_Objects): astFileIO astFileRead ../../testAstFileIO
+#	@echo "QY:skipping test code using $(TEST_TRANSLATOR) ..."
+#	@echo "Compiling test code using $(TEST_TRANSLATOR) ..."
+#	$(VALGRIND) $(TEST_TRANSLATOR) $(srcdir)/$(@:.o=.C) -o $(@:.o=)
+#	$(VALGRIND) $(TEST_TRANSLATOR) -I$(srcdir)/../../CompileTests/Cxx_tests -c $(srcdir)/../../CompileTests/Cxx_tests/$(@:.o=.C) -o $(@:.o=)
+	$(VALGRIND) $(TEST_TRANSLATOR) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.o=.C)
 
 test2001_01.C.binary: test2001_01.o
 

@@ -792,8 +792,10 @@ HEADER_MEMBER_FUNCTION_TYPE_START
        // RV (2/1/2006): Changed signature, and removed 'get_mangled_type()'.
           virtual SgName get_mangled_name (void) const;
 
+       // DQ (12/6/2012): Adding member function specifier data (since this will be a part of the generated mangled name).
        // DQ (12/3/2011): Added better support for member function name mangling (symetric with SgFunctionType).
-          static SgName get_mangled(SgType* ret_type, SgFunctionParameterTypeList* typeList, SgClassType* classType );
+       // static SgName get_mangled(SgType* ret_type, SgFunctionParameterTypeList* typeList, SgClassType* classType );
+          static SgName get_mangled(SgType* ret_type, SgFunctionParameterTypeList* typeList, SgClassType* classType, unsigned int mfunc_specifier );
 
       //! I forget why this is here.
           SgMemberFunctionType * mkAnotherType(SgType *);
@@ -3291,7 +3293,11 @@ void
 SgFunctionType::post_construction_initialization ()
    {
      p_orig_return_type = NULL;
-     p_argument_list    = new SgFunctionParameterTypeList();
+
+  // DQ (12/6/2012): Added assertion.
+     ROSE_ASSERT(p_argument_list == NULL);
+
+     p_argument_list = new SgFunctionParameterTypeList();
      ROSE_ASSERT(p_argument_list != NULL);
 
   // DQ (6/25/2006): Commented out to allow File I/O to work, I don't understand why it is required!
@@ -3328,6 +3334,8 @@ SgFunctionType::insert_argument(const SgTypePtrList::iterator& where, SgType* wh
 SgName
 SgFunctionType::get_mangled(SgType* ret_type, SgFunctionParameterTypeList * typeList) 
    {
+  // Note that this is a static member function.
+
   // process argument type
      SgName arg_names;
      if (typeList != NULL)
@@ -3764,7 +3772,10 @@ SgMemberFunctionType::get_mangled_name (void) const
      return get_mangled ();
    }
 
-SgName SgMemberFunctionType::get_mangled(SgType* ret_type, SgFunctionParameterTypeList * typeList, SgClassType* classType )
+
+// DQ (12/6/2012): Adding member function specifier data (since this will be a part of the generated mangled name).
+// SgName SgMemberFunctionType::get_mangled(SgType* ret_type, SgFunctionParameterTypeList * typeList, SgClassType* classType )
+SgName SgMemberFunctionType::get_mangled(SgType* ret_type, SgFunctionParameterTypeList * typeList, SgClassType* classType, unsigned int mfunc_specifier )
    {
   // DQ (12/3/2011): Added this static function to simplify (refactor) how mangled names are generated).
   // The advantage of refactoring this code to a static function is that the managle name generated to
@@ -3803,18 +3814,47 @@ SgName SgMemberFunctionType::get_mangled(SgType* ret_type, SgFunctionParameterTy
 
   // Mangle the function type without qualifiers
      SgName basic_func_type = SgFunctionType::get_mangled();
-
-  // Compute mangled member function pointer type
-     SgName mangled_name;
-     if (mangled_cls_tag.get_length () > 0)
-          mangled_name << "__MFb_" << mangled_cls_tag.str (); // really is a member function
-
-     mangled_name << "_" << basic_func_type.str (); // Append standard argument signature.
 #else
+  // DQ (12/6/2012): New version of this function using the input parameter (mfunc_specifier) so that we can 
+  // have this be a static member function.  The goal is to use this function to rewite the SageBuilder::buildMemberFunctionType()
+  // to both be more clear and fix the handling of SgFunctionParameterTypeList which appears to be a problem for 
+  // the AST File I/O and the graphs that we generate of the AST in the new EDG 4.x branch.
+
+     if (mfunc_specifier && SgMemberFunctionType::e_const)
+        {
+       // Mark as const
+          mangled_cls_tag << "_cf";
+        }
+     
+     if (mfunc_specifier && SgMemberFunctionType::e_volatile)
+        {
+       // Mark as volatile
+          mangled_cls_tag << "_vf";
+        }
+     
+     if (mfunc_specifier && SgMemberFunctionType::e_restrict)
+        {
+       // Mark as restrict
+          mangled_cls_tag << "_rf";
+        }
+
+  // DQ (12/6/2012): Now use the static function taking extra parameters.
+  // Mangle the function type without qualifiers 
+     SgName basic_func_type = SgFunctionType::get_mangled(ret_type,typeList);
+
+#if 0
   // DQ (12/3/2011): If the data fro these non-static member fucntions were passed in as parameters it might be possible to refactor this code.
      printf ("This function can be used as a refactored version of SgMemberFunctionType::get_mangled(void) \n");
      ROSE_ASSERT(false);
 #endif
+#endif
+
+  // Compute mangled member function pointer type
+  // SgName mangled_name;
+     if (mangled_cls_tag.get_length () > 0)
+          mangled_name << "__MFb_" << mangled_cls_tag.str (); // really is a member function
+
+     mangled_name << "_" << basic_func_type.str (); // Append standard argument signature.
 
      return mangled_name;
    }

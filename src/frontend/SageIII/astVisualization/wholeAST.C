@@ -1781,6 +1781,17 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                     break;
                   }
 
+            // DQ (12/6/2012): Added support for SgFunctionParameterTypeList.
+               case V_SgFunctionParameterTypeList:
+                  {
+                    SgFunctionParameterTypeList* functionParameterTypeList = isSgFunctionParameterTypeList(node);
+                    additionalNodeOptions = "shape=house,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=1,color=\"blue\",fillcolor=blue,fontname=\"7x13bold\",fontcolor=black,style=filled";
+                    labelWithSourceCode  = string("\\n  ") + StringUtility::numberToString(functionParameterTypeList->get_arguments().size()) + "  ";
+                    labelWithSourceCode += string("\\n  ") + StringUtility::numberToString(functionParameterTypeList) + "  ";
+                 // printf ("########## typedefSeq->get_name() = %s \n",typedefSeq->get_name().str());
+                    break;
+                  }
+
                default:
                   {
                     additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=4,peripheries=1,color=\"blue\",fillcolor=red,fontname=\"7x13bold\",fontcolor=black,style=filled";

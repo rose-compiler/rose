@@ -2,10 +2,10 @@
 class A
    {
      public:
-          A();
+          A( int x );
    };
 
-A::A()
+A::A( int x )
    {
    }
 
