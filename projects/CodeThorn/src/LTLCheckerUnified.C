@@ -19,6 +19,10 @@ using namespace CodeThorn;
 using namespace LTL;
 using namespace UnifiedLTL;
 
+// really expensive debug option -- prints a dot file at every iteration
+//#define ANIM_OUTPUT
+
+
 ////////////////////////////////////////////////////////////////////////
 // Convenience loop macros for dealing with boost graphs
 // Hopefully, they increase the readability of the algorithms
@@ -63,8 +67,8 @@ using namespace UnifiedLTL;
 /**
  * is there an edge v->v?
  */
-static
-bool selfcycle(LTLVertex v, LTLTransitionGraph& g) {
+template<class Vertex, class Graph>
+bool selfcycle(Vertex v, Graph& g) {
   LTLGraphTraits::out_edge_iterator out_i, out_end;
   for (tie(out_i, out_end) = out_edges(v, g); out_i != out_end; ++out_i) {
       LTLVertex succ = target(*out_i, g);
@@ -72,6 +76,15 @@ bool selfcycle(LTLVertex v, LTLTransitionGraph& g) {
 	return true;
   }
   return false;
+}
+
+/**
+ * \return true if out_degree is 0 or the only outgoing edge is a loop.
+ */
+template<class Vertex, class Graph>
+bool is_leaf(Vertex v, Graph& g) {
+  int outd = out_degree(v, g);
+  return outd==0 || (outd==1 && selfcycle(v, g));
 }
 
 
@@ -285,11 +298,13 @@ string visualize(const LTLStateTransitionGraph& stg, const Expr& e) {
     UVisualizer viz(state, l);
     s<<"subgraph ltl_"<<l<<" {\n";
     s<<"  node[shape=rectangle, style=filled];\n  ";
+#ifndef ANIM_OUTPUT
     if (show_derivation) {
       assert(state.debug.size() == ltl_label);
       const_cast<Expr&>(e).accept(viz, UVisualizer::newAttr(l));
       s<<viz.s.str();
     }
+#endif
     s<<"}\n";
 
   } END_FOR;
@@ -440,6 +455,7 @@ public:
     LTLWorklist worklist;
     unordered_set<LTLVertex> endpoints;
 
+    //cerr<<"\n-------------------------------------------"<<endl;
     //cerr<<"analyze() initializing..."<<endl;
     stg.vertex.clear();
     FOR_EACH_VERTEX(v, stg.g) {
@@ -468,25 +484,27 @@ public:
     if (worklist.empty()) {
       cerr<<"** WARNING: empty worklist!"<<endl;
     }
-
+    //cerr<<endl;
     while (!worklist.empty()) {
+      //cerr<<worklist.size()<<"\r";
       LTLVertex succ = worklist.front(); worklist.pop();
       bool verbose = false;
 
       // Endpoint handling
-      int outd = out_degree(succ, stg.g);
-      if (outd==0 || (outd==1 && selfcycle(succ, stg.g))) {
+      if (is_leaf(succ, stg.g)) {
 	if (endpoints.count(succ) == 0) {
-	  // did it become an orphan because it was replaced by a new node?
-	  FOR_EACH_PREDECESSOR(pred, succ, stg.g)
+	  //cerr<<"orphan: "<<succ<<","<<stg.g[succ]<<endl;
+	  // Orphan: did it become an orphan because it was replaced by a new node?
+	  FOR_EACH_PREDECESSOR(pred, succ, stg.g) {
 	    FOR_EACH_SUCCESSOR(s, pred, stg.g)
 	      worklist.push(s);
-  	    END_FOR;
-	  END_FOR;
+	    END_FOR;
+	    worklist.push(pred);
+	  } END_FOR;
 	  // Cut it off.
 	  clear_vertex(succ, stg.g);
 	} else {
-	  // Real endpoint
+	  // Real endpoint (ie. exit/assert)
 	  // Endpoints always receive a strong update, because there is no ambiguity
 	  LTLState old_state = stg.g[succ];
 	  LTLState new_state = transfer(old_state, Bot(), verbose, true);	
@@ -503,10 +521,14 @@ public:
       while (!vs.empty()) {
 	LTLVertex v = vs.front(); vs.pop();
 
-	//if (nargs<1 && (stg.g[v].estate->label() == 634))
-	//  verbose = true;
+	//if (nargs<3 && (stg.g[v].estate->label() == 634))
+	//   verbose = true;
 
-	if (verbose) cerr<<"\n** Visiting state "<<v<<","<<stg.g[v]<<endl;
+	if (verbose) {
+            cerr<<"\n** Visiting state "<<v<<","<<stg.g[v]<<endl;
+	    cerr<<"  in_degree = "<< in_degree(v, stg.g)<<endl;
+	    cerr<<" out_degree = "<<out_degree(v, stg.g)<<endl;
+        }
 
 	// Always make a new state v', so we can calculate precise
 	// results for both paths.  If a v' and v'' should later turn
@@ -522,9 +544,9 @@ public:
 
 	} else if (old_state.val.isBot()) {
 
-	  // performance shortcut: perform a strong update
-	  // this is legal because we ignore old_val in the transfer function
-	  // and it reduces the total number of nodes
+	  // Performance shortcut: perform a strong update.
+	  // This is legal because we ignore old_val in the transfer function anyway.
+	  // Benefit: it reduces the total number of nodes
 	  stg.vertex[new_state] = v;
 	  stg.g[v] = new_state;
 	  worklist.push(v);
@@ -532,17 +554,20 @@ public:
 	} else {
 
 	  // create a new state in lieu of the old state, and cut off the old state
+	  // if a new v' is created, it is put into the worklist automatically
 	  LTLVertex v_prime = add_state_if_new(new_state, stg, worklist);
-	  if (verbose && v != v_prime) cerr<<"  OLD: "<<old_state<< "\n  NEW: "<<new_state<<endl;
+	  if (verbose && v != v_prime) {
+	    cerr<<"  OLD: "<<old_state<< "\n  NEW: "<<new_state<<endl;
+	    cerr<<"  v: "<<v<<","<<stg.g[v]<<" = "<<stg.g[v].val<<endl;
+	  }
 	  //assert (v_prime != v || (new_state.val != old_state.val));
-	  if (verbose) cerr<<"  v: "<<v<<","<<stg.g[v]<<" = "<<stg.g[v].val<<endl;
 
 	  // Add edge from new state to successor
 	  if (succ == v) {
 	    // self-cycle
 	    add_edge(v_prime, v_prime, stg.g);
 	    //cerr<<v_prime<<" -> "<<v_prime<<endl;
-	  } else if (v_prime != v) {
+	  } else if (!(edge(v_prime, succ, stg.g).second)) {
 	    add_edge(v_prime, succ, stg.g);
 	    //cerr<<v_prime<<" -> "<<succ<<endl;
 	    
@@ -550,19 +575,30 @@ public:
 	    remove_edge(v, succ, stg.g);
 
 	    // Add edge from predecessor to new state
-	    LTLWorklist preds = predecessors(v, stg.g);
-	    while(!preds.empty()) {
-	      LTLVertex pred = preds.front(); preds.pop();	      
-	      add_edge(pred, v_prime, stg.g);
-	      remove_edge(pred, v, stg.g);
-	      // add the v's predecessor to the worklist because v's premise changed
-	      worklist.push(pred);
-	    }
+	    FOR_EACH_PREDECESSOR(pred, v, stg.g) {
+	      if (pred == v) add_edge(v_prime, v_prime, stg.g);
+	      else           add_edge(pred,    v_prime, stg.g);
+		//  if (is_leaf(v, stg.g)) 
+		//    remove_edge(pred, v, stg.g);
+		//  // add the predecessor of v to the worklist, because v's premise changed
+		//  worklist.push(pred);
+	    } END_FOR;
+
+	    // add all remaining successors of the old v to the
+	    // worklist to force v to be recomputed
+	    FOR_EACH_SUCCESSOR(v_succ, v, stg.g)
+	      worklist.push(v_succ);
+	    END_FOR;
+	    worklist.push(v);
 	  }
+#ifdef REDUCE_DEBUG
+          static int iteration=0;
+          if (++iteration == 100000) exit(2);
+#endif
 
 #ifdef ANIM_OUTPUT
 	  static int wait=0;
-	  if (++wait > 101000) {
+	  if (++wait > 0) {
 	    ofstream animfile;
 	    stringstream fname;
 	    static int n = 1;
@@ -1186,6 +1222,7 @@ UChecker::UChecker(EStateSet& ess, TransitionGraph& _tg)
   if(boolOptions["post-collapse-stg"]) {
     // Optimization
     start = collapse_transition_graph(full_graph, g);
+
   } else {
     g = full_graph;
   }
