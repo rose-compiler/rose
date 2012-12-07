@@ -31,6 +31,7 @@ string getPrimitiveTypeName(SgType *);
 string getArrayTypeName(SgPointerType *);
 string getFullyQualifiedName(SgClassDefinition *);
 string getFullyQualifiedTypeName(SgClassType *);
+string getFullyQualifiedTypeName(SgJavaParameterizedType *);
 string getTypeName(SgType *);
 
 string normalize(string str);

@@ -193,6 +193,24 @@ string getFullyQualifiedTypeName(SgClassType *class_type) {
     return attribute -> expression;
 }
 
+string getFullyQualifiedTypeName(SgJavaParameterizedType *parm_type) {
+    string result = getTypeName(parm_type -> get_raw_type());
+
+    result += "<";
+    SgTemplateParameterPtrList arg_list = parm_type -> get_type_list() -> get_args();
+    for (int i = 0; i < arg_list.size(); i++) {
+        SgTemplateParameter *templateParameter = arg_list[i];
+        SgType *argument_type = templateParameter -> get_type();
+        result += getTypeName(argument_type);
+        if (i + 1 < arg_list.size()) {
+            result += ", ";
+        }
+    }
+    result += ">";
+
+    return result;
+}
+
 //
 //
 //
@@ -203,18 +221,7 @@ string getTypeName(SgType *type) {
     string result;
 
     if (parm_type) {
-        result = getTypeName(parm_type -> get_raw_type());
-        result += "<";
-        SgTemplateParameterPtrList arg_list = parm_type -> get_type_list() -> get_args();
-        for (int i = 0; i < arg_list.size(); i++) {
-            SgTemplateParameter *templateParameter = arg_list[i];
-            SgType *argument_type = templateParameter -> get_type();
-            result += getTypeName(argument_type);
-             if (i + 1 < arg_list.size()) {
-                 result += ", ";
-             }
-        }
-        result += ">";
+         result = getFullyQualifiedTypeName(parm_type);
     }
     else if (class_type)
          result = getFullyQualifiedTypeName(class_type);
@@ -463,17 +470,17 @@ string convertJavaPackageNameToCxxString(JNIEnv *env, const jstring &java_string
 }
 
 
-void memberFunctionSetup(SgName &name, SgClassDefinition *classDefinition, int num_arguments, SgFunctionParameterList *&parameterlist, SgMemberFunctionType *&memberFunctionType,
+void memberFunctionSetup(SgName &name, SgClassDefinition *class_definition, int num_arguments, SgFunctionParameterList *&parameterlist, SgMemberFunctionType *&memberFunctionType,
                          list<Sg_File_Info *> &startLocation, list<Sg_File_Info *> &endLocation) {
     // Refactored code.
 
     // This is abstracted so that we can build member functions as require to define Java specific default functions (e.g. super()).
 
-    ROSE_ASSERT(classDefinition != NULL);
-    ROSE_ASSERT(classDefinition -> get_declaration() != NULL);
+    ROSE_ASSERT(class_definition != NULL);
+    ROSE_ASSERT(class_definition -> get_declaration() != NULL);
 
     if (SgProject::get_verbose() > 0)
-        printf ("Inside of memberFunctionSetup(): name = %s in scope = %p = %s = %s \n", name.str(), classDefinition, classDefinition -> class_name().c_str(), classDefinition -> get_declaration() -> get_name().str());
+        printf ("Inside of memberFunctionSetup(): name = %s in scope = %p = %s = %s \n", name.str(), class_definition, class_definition -> class_name().c_str(), class_definition -> get_declaration() -> get_name().str());
 
     SgFunctionParameterTypeList *typeList = SageBuilder::buildFunctionParameterTypeList();
     ROSE_ASSERT(typeList != NULL);
@@ -513,7 +520,7 @@ void memberFunctionSetup(SgName &name, SgClassDefinition *classDefinition, int n
 cout << "Adding function " 
 << name
 << " in type "
-<< classDefinition -> get_qualified_name()
+<< class_definition -> get_qualified_name()
 << " with parameter types: (";
  SgTypePtrList::iterator i = typeList -> get_arguments().begin();
  if (i != typeList -> get_arguments().end()) {
@@ -532,7 +539,7 @@ cout.flush();
 
     // Specify if this is const, volatile, or restrict (0 implies normal member function).
     unsigned int mfunc_specifier = 0;
-    memberFunctionType = SageBuilder::buildMemberFunctionType(return_type, typeList, classDefinition, mfunc_specifier);
+    memberFunctionType = SageBuilder::buildMemberFunctionType(return_type, typeList, class_definition, mfunc_specifier);
     ROSE_ASSERT(memberFunctionType != NULL);
 
     // parameterlist = SageBuilder::buildFunctionParameterList(typeList);
@@ -548,7 +555,7 @@ cout.flush();
     bool func_symbol_found = true;
     while (func_symbol_found == true) {
         // DQ (3/24/2011): This function should not already exist (else it should be an error).
-        func_symbol = classDefinition -> lookup_function_symbol(name, func_type);
+        func_symbol = class_definition -> lookup_function_symbol(name, func_type);
         // ROSE_ASSERT(func_symbol == NULL);
 
         if (func_symbol != NULL) {
@@ -566,7 +573,7 @@ cout.flush();
 }
 
 
-SgMemberFunctionDeclaration *buildDefiningMemberFunction(const SgName &inputName, SgClassDefinition *classDefinition, int num_arguments, JNIEnv *env, jobject method_location, jobject args_location) {
+SgMemberFunctionDeclaration *buildDefiningMemberFunction(const SgName &inputName, SgClassDefinition *class_definition, int num_arguments, JNIEnv *env, jobject method_location, jobject args_location) {
     // This is abstracted so that we can build member functions as require to define Java specific default functions (e.g. super()).
 
     SgName name = inputName;
@@ -578,12 +585,12 @@ SgMemberFunctionDeclaration *buildDefiningMemberFunction(const SgName &inputName
 
     // printf("Build defining member function %s\n", inputName.str());
     // Refactored code.
-    memberFunctionSetup(name, classDefinition, num_arguments, parameterlist, memberFunctionType, startLocation, endLocation);
+    memberFunctionSetup(name, class_definition, num_arguments, parameterlist, memberFunctionType, startLocation, endLocation);
 
     ROSE_ASSERT(parameterlist != NULL);
     ROSE_ASSERT(memberFunctionType != NULL);
 
-    SgMemberFunctionDeclaration *functionDeclaration = SageBuilder::buildDefiningMemberFunctionDeclaration(name, memberFunctionType, parameterlist, classDefinition);
+    SgMemberFunctionDeclaration *functionDeclaration = SageBuilder::buildDefiningMemberFunctionDeclaration(name, memberFunctionType, parameterlist, class_definition);
     vector<SgInitializedName *> args = functionDeclaration -> get_args();
     setJavaSourcePosition(parameterlist, env, args_location);
     for (vector<SgInitializedName *>::iterator name_it = args.begin(); name_it != args.end(); name_it++) {
@@ -615,10 +622,10 @@ SgMemberFunctionDeclaration *buildDefiningMemberFunction(const SgName &inputName
  * it is in fact correct since ECJ has already chosen the correct function and what we are doing
  * here is to look for a "perfect" mach with the function that was chosen.
  */
-SgMemberFunctionDeclaration *findMemberFunctionDeclarationInClass(SgClassDefinition *classDefinition, const SgName &function_name, list<SgType *>& formal_types) {
-    SgMemberFunctionDeclaration *function_declaration = lookupMemberFunctionDeclarationInClassScope(classDefinition, function_name, formal_types);
+SgMemberFunctionDeclaration *findMemberFunctionDeclarationInClass(SgClassDefinition *class_definition, const SgName &function_name, list<SgType *>& formal_types) {
+    SgMemberFunctionDeclaration *function_declaration = lookupMemberFunctionDeclarationInClassScope(class_definition, function_name, formal_types);
     if (function_declaration == NULL) {
-        const SgBaseClassPtrList &inheritance = classDefinition->get_inheritances();
+        const SgBaseClassPtrList &inheritance = class_definition->get_inheritances();
         for (SgBaseClassPtrList::const_iterator it = inheritance.begin(); function_declaration == NULL && it != inheritance.end(); it++) { // Iterate over super class, if any, then the interfaces, if any.
             SgClassDeclaration *decl = (*it) -> get_base_class();
             function_declaration = findMemberFunctionDeclarationInClass(decl -> get_definition(), function_name, formal_types);
@@ -630,10 +637,10 @@ SgMemberFunctionDeclaration *findMemberFunctionDeclarationInClass(SgClassDefinit
 /**
  * Lookup a member function in current class only (doesn't look in super and interfaces classes)
  */
-SgMemberFunctionDeclaration *lookupMemberFunctionDeclarationInClassScope(SgClassDefinition *classDefinition, const SgName &function_name, list<SgType *>& types) {
+SgMemberFunctionDeclaration *lookupMemberFunctionDeclarationInClassScope(SgClassDefinition *class_definition, const SgName &function_name, list<SgType *>& types) {
     int num_arguments = types.size();
     SgMemberFunctionDeclaration *function_declaration = NULL;
-    vector<SgDeclarationStatement *> declarations = classDefinition -> get_members();
+    vector<SgDeclarationStatement *> declarations = class_definition -> get_members();
     for (int i = 0; i < declarations.size(); i++, function_declaration = NULL) {
         SgDeclarationStatement *declaration = declarations[i];
         function_declaration = isSgMemberFunctionDeclaration(declaration);
@@ -660,8 +667,8 @@ SgMemberFunctionDeclaration *lookupMemberFunctionDeclarationInClassScope(SgClass
     return function_declaration;
 }
 
-SgMemberFunctionDeclaration *lookupMemberFunctionDeclarationInClassScope(SgClassDefinition *classDefinition, const SgName &function_name, int num_arguments) {
-    ROSE_ASSERT(classDefinition != NULL);
+SgMemberFunctionDeclaration *lookupMemberFunctionDeclarationInClassScope(SgClassDefinition *class_definition, const SgName &function_name, int num_arguments) {
+    ROSE_ASSERT(class_definition != NULL);
 
     // Loop over the types in the astJavaComponentStack (the rest of the stack).
     list<SgType *> types;
@@ -674,17 +681,17 @@ SgMemberFunctionDeclaration *lookupMemberFunctionDeclarationInClassScope(SgClass
     ROSE_ASSERT(return_type != NULL);
 
     SgMemberFunctionDeclaration *function_declaration = NULL;
-    function_declaration = lookupMemberFunctionDeclarationInClassScope(classDefinition, function_name, types);
+    function_declaration = lookupMemberFunctionDeclarationInClassScope(class_definition, function_name, types);
 
     ROSE_ASSERT(function_declaration != NULL);
 
     return function_declaration;
 }
 
-SgMemberFunctionSymbol *findFunctionSymbolInClass(SgClassDefinition *classDefinition, const SgName &function_name, list<SgType *> &formal_types) {
-    ROSE_ASSERT(classDefinition != NULL);
+SgMemberFunctionSymbol *findFunctionSymbolInClass(SgClassDefinition *class_definition, const SgName &function_name, list<SgType *> &formal_types) {
+    ROSE_ASSERT(class_definition != NULL);
 
-    SgMemberFunctionDeclaration *function_declaration = findMemberFunctionDeclarationInClass(classDefinition, function_name, formal_types);
+    SgMemberFunctionDeclaration *function_declaration = findMemberFunctionDeclarationInClass(class_definition, function_name, formal_types);
     if (function_declaration == NULL) {
         function_declaration = lookupMemberFunctionDeclarationInClassScope(ObjectClassDefinition, function_name, formal_types);
     }
@@ -700,7 +707,7 @@ cout << ", " << getTypeName(*i);
 }
 }
 cout << ") in class " 
-<< classDefinition -> get_qualified_name()
+<< class_definition -> get_qualified_name()
 << endl;
 cout.flush();
 }
@@ -738,18 +745,18 @@ SgClassDeclaration *buildJavaClass(const SgName &className, SgScopeStatement *sc
     setJavaSourcePosition(declaration, env, jToken);
 
     ROSE_ASSERT(astJavaScopeStack.empty() == false);
-    SgClassDefinition *classDefinition = SageBuilder::buildClassDefinition(declaration);
-    ROSE_ASSERT(classDefinition != NULL);
+    SgClassDefinition *class_definition = SageBuilder::buildClassDefinition(declaration);
+    ROSE_ASSERT(class_definition != NULL);
 
-    setJavaSourcePosition(classDefinition, env, jToken);
+    setJavaSourcePosition(class_definition, env, jToken);
 
     // DQ (3/25/2011): Added testing.
-    ROSE_ASSERT(classDefinition -> get_declaration() == declaration);
-    ROSE_ASSERT(classDefinition -> get_declaration() != NULL);
-    ROSE_ASSERT(classDefinition -> get_declaration() != NULL && classDefinition -> get_declaration() -> get_symbol_from_symbol_table() == NULL);
-    ROSE_ASSERT(classDefinition -> get_declaration() != NULL && classDefinition -> get_declaration() -> get_firstNondefiningDeclaration() -> get_symbol_from_symbol_table() != NULL);
+    ROSE_ASSERT(class_definition -> get_declaration() == declaration);
+    ROSE_ASSERT(class_definition -> get_declaration() != NULL);
+    ROSE_ASSERT(class_definition -> get_declaration() != NULL && class_definition -> get_declaration() -> get_symbol_from_symbol_table() == NULL);
+    ROSE_ASSERT(class_definition -> get_declaration() != NULL && class_definition -> get_declaration() -> get_firstNondefiningDeclaration() -> get_symbol_from_symbol_table() != NULL);
 
-    size_t declarationListSize = classDefinition -> generateStatementList().size();
+    size_t declarationListSize = class_definition -> generateStatementList().size();
 
     if (SgProject::get_verbose() > 0)
         printf ("declarationListSize = %zu \n", declarationListSize);
@@ -851,16 +858,16 @@ list<SgName> generateQualifierList (const SgName &classNameWithQualification) {
 //
 //
 //
-SgClassSymbol *lookupSimpleNameTypeInClass(const SgName &name, SgClassDefinition *classDefinition) {
-    ROSE_ASSERT(classDefinition);
-    ROSE_ASSERT(classDefinition -> get_declaration());
+SgClassSymbol *lookupSimpleNameTypeInClass(const SgName &name, SgClassDefinition *class_definition) {
+    ROSE_ASSERT(class_definition);
+    ROSE_ASSERT(class_definition -> get_declaration());
 
-    SgClassSymbol *symbol = classDefinition -> lookup_class_symbol(name);
-    vector<SgBaseClass *> &inheritances = classDefinition -> get_inheritances();
+    SgClassSymbol *symbol = class_definition -> lookup_class_symbol(name);
+    vector<SgBaseClass *> &inheritances = class_definition -> get_inheritances();
     for (int k = 0; symbol == NULL && k < (int) inheritances.size(); k++) {
         SgClassDeclaration *super_declaration = inheritances[k] -> get_base_class();
-        classDefinition = super_declaration -> get_definition(); // get the super class definition
-        symbol = lookupSimpleNameTypeInClass(name, classDefinition);
+        class_definition = super_declaration -> get_definition(); // get the super class definition
+        symbol = lookupSimpleNameTypeInClass(name, class_definition);
     }
 
     if (symbol == NULL) {
@@ -871,16 +878,16 @@ SgClassSymbol *lookupSimpleNameTypeInClass(const SgName &name, SgClassDefinition
 }
 
 
-SgVariableSymbol *lookupSimpleNameVariableInClass(const SgName &name, SgClassDefinition *classDefinition) {
-    ROSE_ASSERT(classDefinition);
-    ROSE_ASSERT(classDefinition -> get_declaration());
+SgVariableSymbol *lookupSimpleNameVariableInClass(const SgName &name, SgClassDefinition *class_definition) {
+    ROSE_ASSERT(class_definition);
+    ROSE_ASSERT(class_definition -> get_declaration());
 
-    SgVariableSymbol *symbol = classDefinition -> lookup_variable_symbol(name);
-    vector<SgBaseClass *> &inheritances = classDefinition -> get_inheritances();
+    SgVariableSymbol *symbol = class_definition -> lookup_variable_symbol(name);
+    vector<SgBaseClass *> &inheritances = class_definition -> get_inheritances();
     for (int k = 0; symbol == NULL && k < (int) inheritances.size(); k++) {
         SgClassDeclaration *super_declaration = inheritances[k] -> get_base_class();
-        classDefinition = super_declaration -> get_definition(); // get the super class definition
-        symbol = lookupSimpleNameVariableInClass(name, classDefinition);
+        class_definition = super_declaration -> get_definition(); // get the super class definition
+        symbol = lookupSimpleNameVariableInClass(name, class_definition);
     }
 
     if (symbol == NULL) {
@@ -1092,10 +1099,10 @@ SgClassSymbol *lookupSymbolFromQualifiedName(string className) {
                     // ROSE_ASSERT(classType != NULL);
                     if (classType != NULL) {
                         ROSE_ASSERT(classType -> get_declaration() != NULL);
-                        SgClassDeclaration *classDeclaration = isSgClassDeclaration(classType -> get_declaration());
-                        ROSE_ASSERT(classDeclaration != NULL);
+                        SgClassDeclaration *class_declaration = isSgClassDeclaration(classType -> get_declaration());
+                        ROSE_ASSERT(class_declaration != NULL);
 
-                        SgSymbol *tmpSymbol = classDeclaration -> search_for_symbol_from_symbol_table();
+                        SgSymbol *tmpSymbol = class_declaration -> search_for_symbol_from_symbol_table();
                         ROSE_ASSERT(tmpSymbol != NULL);
                         classSymbol = isSgClassSymbol(tmpSymbol);
                         ROSE_ASSERT(classSymbol != NULL);
@@ -1131,10 +1138,10 @@ SgClassSymbol *lookupSymbolFromQualifiedName(string className) {
                 printf ("classSymbol = %p for class name = %s \n", classSymbol, (*i).str());
 
             previousClassSymbol = classSymbol;
-            SgClassDeclaration *classDeclaration = isSgClassDeclaration(classSymbol -> get_declaration() -> get_definingDeclaration());
-            ROSE_ASSERT(classDeclaration != NULL);
+            SgClassDeclaration *class_declaration = isSgClassDeclaration(classSymbol -> get_declaration() -> get_definingDeclaration());
+            ROSE_ASSERT(class_declaration != NULL);
             // previousClassScope = classSymbol -> get_declaration() -> get_scope();
-            previousClassScope = classDeclaration -> get_definition();
+            previousClassScope = class_declaration -> get_definition();
             ROSE_ASSERT(previousClassScope != NULL);
         }
         else {

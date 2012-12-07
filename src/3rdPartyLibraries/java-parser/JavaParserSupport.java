@@ -474,8 +474,8 @@ private String getTypeName(Type in_type) {
      * 
      * 
      */
-    void identifyUserDefinedTypes(String prefix, TypeDeclaration node) {
-        String typename = prefix + (prefix.length() > 0 ? "." : "") + new String(node.name);
+    void identifyUserDefinedTypes(String package_name, TypeDeclaration node) {
+        String typename = package_name + (package_name.length() > 0 ? "." : "") + new String(node.name);
 
         try {
             Class cls = getClassForName(typename);
@@ -491,6 +491,7 @@ private String getTypeName(Type in_type) {
 
             identifyUserDefinedTypes(cls, node);
         }
+        /*
         catch (ClassNotFoundException e) {
             e.printStackTrace();
             System.out.println("(2) Caught error in JavaParserSupport (Parser failed) - " + typename);
@@ -498,6 +499,14 @@ private String getTypeName(Type in_type) {
 
             System.exit(1);
         }
+        */
+catch (Throwable e) {
+    e.printStackTrace();
+    System.out.println("(2) Caught error (" + e.getClass().getCanonicalName() + ") in JavaParserSupport (Parser failed) - " + typename);
+    System.err.println(e);
+
+    System.exit(1);
+}
     }
 
     /**
@@ -569,6 +578,7 @@ private String getTypeName(Type in_type) {
                             LocalOrAnonymousTypesOf.put(enclosing_declaration, new ArrayList<TypeDeclaration>());
                         }
                         LocalOrAnonymousTypesOf.get(enclosing_declaration).add(declaration);
+// TODO: Remove this !!!
 /*
 System.out.println("Local or Anonymous Type " + i + " nested in type " + 
                    new String(localTypes[i].enclosingType.readableName()) + ": " +
@@ -588,7 +598,8 @@ System.out.println("    typename             " + ": " + typename);
 System.out.println("    Class Name           " + ": " + (cls == null ? "What!?" : cls.getCanonicalName()));
 */
                     }
-//else System.out.println("A blank Local type was encountered at index " + i);
+// TODO: Remove this !!!
+// else System.out.println("A blank Local type was encountered at index " + i);
                 }
             }
 
@@ -793,7 +804,7 @@ System.out.println("    Class Name           " + ": " + (cls == null ? "What!?" 
     //
     // If we have an an inner class, get its outermost enclosing parent.
     //
-    public String getMainPackageName(Class base_class, int num) {
+    public String getMainPackageName(Class base_class) {
         while (base_class.getDeclaringClass() != null) {
             base_class = base_class.getDeclaringClass();
         }
@@ -856,7 +867,7 @@ System.out.println("    Class Name           " + ": " + (cls == null ? "What!?" 
             String canonical_name = base_class.getCanonicalName(),
                    class_name = base_class.getName(),
                    simple_name = base_class.getSimpleName(),
-                   package_name = getMainPackageName(base_class, 1); 
+                   package_name = getMainPackageName(base_class); 
 
            if (! typeExists(package_name, simple_name)) {
                 insertType(package_name, base_class);
@@ -999,6 +1010,27 @@ else System.out.println("NO type parameters!!!");
             System.exit(1);
         }
 
+        TypeVariable<?> parameters[] = cls.getTypeParameters();
+ // TODO: Remove this !!!
+ /*
+ if (parameters.length > 0) {
+ System.out.print("Processing parameterized type " + cls.getSimpleName() + "<" + parameters[0].getName());
+ for (int i = 1; i < parameters.length; i++) {
+     System.out.print(", " + parameters[i].getName());
+ }
+ System.out.println(">");
+ }
+ */
+         //
+         // If this is a generic type, process its type parameters.  Note that it's important to process the type
+         // parameters of this "master" type (if any) prior to processing its super class and interfaces as these may
+         // themselves be parameterized types that use parameters originally associated with this "master" type.
+         //
+         for (int i = 0; i < parameters.length; i++) {
+              TypeVariable<?> parameter = parameters[i];
+              JavaParser.cactionBuildTypeParameter(parameter.getName(), location);
+         }
+
         // process the super class
         if (super_class != null) {
             if (verboseLevel > 2) {
@@ -1006,7 +1038,18 @@ else System.out.println("NO type parameters!!!");
             }
 
             preprocessClass(super_class);
-            generateAndPushType(super_class);
+
+            //
+            // When we have access to a user-specified source, we use it in case this type is a parameterized type.
+            // Note that we should not user node.superclass here (instead of node.binding.superclass) because in the
+            // case of an Anonymous type, node.superclass is null!
+            //
+            if (node != null && node.binding.superclass != null) {
+                generateAndPushType(node.binding.superclass, location);
+            }
+            else {
+                generateAndPushType(super_class);
+            }
         }
 
         // Process the interfaces.
@@ -1014,28 +1057,19 @@ else System.out.println("NO type parameters!!!");
             if (verboseLevel > 2) {
                 System.out.println("interface name = " + interfacelist[i].getName());
             }
-            preprocessClass(interfacelist[i]);
-            generateAndPushType(interfacelist[i]);
-        }
 
-        TypeVariable<?> parameters[] = cls.getTypeParameters();
-// TODO: Remove this !!!
-/*
-if (parameters.length > 0) {
-System.out.print("Processing parameterized type " + cls.getSimpleName() + "<" + parameters[0].getName());
-for (int i = 1; i < parameters.length; i++) {
-    System.out.print(", " + parameters[i].getName());
-}
-System.out.println(">");
-}
-*/
-         //
-         // If this is a generic type, process its type parameters 
-         //
-         for (int i = 0; i < parameters.length; i++) {
-             TypeVariable<?> parameter = parameters[i];
-             JavaParser.cactionBuildTypeParameter(parameter.getName(), location);
-         }
+            preprocessClass(interfacelist[i]);
+
+            //
+            // When we have access to a user-specified source, we use it in case this type is a parameterized type.
+            //
+            if (node != null && node.superInterfaces != null) {
+                generateAndPushType(node.superInterfaces[i].resolvedType, createJavaToken(node.superInterfaces[i]));
+            }
+            else {
+                generateAndPushType(interfacelist[i]);
+            }
+        }
 
         JavaParser.cactionBuildClassExtendsAndImplementsSupport(parameters.length, (super_class != null), interfacelist.length, location);
 
@@ -1349,68 +1383,41 @@ System.out.println(") in class " + cls.getCanonicalName());
     }
 
 
-
     public void generateAndPushType(Class cls) {
+        //
+        // This function is used to push a type that came from a class.
+        //
+        if (verboseLevel > 0)
+            System.out.println("Inside of generateAndPushType(Class) for class = " + cls);
+
         TypeDeclaration node = userTypeTable.get(cls);
         JavaToken location = (node != null
                                     ? createJavaToken(node)
                                     : new JavaToken("Dummy JavaToken (see createJavaToken)", new JavaSourcePositionInformation(0)));
  
-        // This function is used to build types that are classes (implicit classes 
-        // that already exist (have been built) and thus just need be found and a 
-        // reference put onto the astJavaTypeStack).
-        if (verboseLevel > 0)
-            System.out.println("Inside of generateAndPushType(Class) for class = " + cls);
+        int num_dimensions = 0;
+        while (cls.isArray()) {
+            num_dimensions++;
+            cls = cls.getComponentType();
+        }
 
-        if (! cls.isPrimitive()) {
-            // Investigate any new type.
-            if (cls.isArray() == true) {
-                // DQ (3/21/2011): If this is an array of some type then we have to query the base type and for now I will skip this.
-                // System.out.println("Skipping case of array of type for now (sorry not implemented)... " + node.getComponentType());
-
-                // Build an integer type instead of an array of the proper type (temporary fix so that I can focus on proper class support).
-                // JavaParser.cactionGenerateType("int");
-                int num_dimensions = 0;
-                Class n = cls;
-                while (n.isArray()) {
-                     num_dimensions++;
-                     n = n.getComponentType();
-                }
-
-                String canonical_name = n.getCanonicalName(),
-                       class_name = n.getName(),
-                       simple_name = n.getSimpleName(),
-                       package_name = getMainPackageName(n, 2),
-                       type_name = canonical_name.substring(package_name.length() == 0 ? 0 : package_name.length() + 1);
-                JavaParser.cactionArrayTypeReference(package_name, type_name, num_dimensions, location);
-            }
-            else {
-                // Note that "toString()" inserts "class" into the generated name of the type (so use "getName()").
-                String className = cls.getName();
-
-                // If this is a class type (e.g. in the C++ sense) then we want to build a proper SgClassType IR node.
-                // System.out.println("Build a proper class for this type = " + node);
-                // System.out.println("Build a proper class for this type = " + className);
-
-                // We know that this name should be interpreted as a proper class so we need to call a specific JNI function to cause it to be generated on the C++ side.
-                // JavaParser.cactionGenerateType(className);
-                String canonical_name = cls.getCanonicalName(),
-                       class_name = cls.getName(),
-                       simple_name = cls.getSimpleName(),
-                       package_name = getMainPackageName(cls, 3),
-                       type_name = canonical_name.substring(package_name.length() == 0 ? 0 : package_name.length() + 1);
-                JavaParser.cactionTypeReference(package_name, type_name, false /* not a TypeBindingVariable */, location);
-                // System.out.println("Exiting as a test in generateType(Class) (case of proper class)");
-                // System.exit(1);
-            }
+        if (num_dimensions > 0) {
+            String canonical_name = cls.getCanonicalName(),
+                   package_name = getMainPackageName(cls),
+                   type_name = canonical_name.substring(package_name.length() == 0 ? 0 : package_name.length() + 1);
+            JavaParser.cactionArrayTypeReference(package_name, type_name, num_dimensions, location);
+        }
+        else if (cls.isPrimitive()) {
+            String type_name = cls.getName();
+            JavaParser.cactionTypeReference("", type_name, false /* not a TypeBindingVariable */, location);
         }
         else {
-            String type_name = cls.getName();
+            String className = cls.getName();
 
-            if (verboseLevel > 0)
-                System.out.println("Build a primitive type: " + type_name);
-
-            JavaParser.cactionTypeReference("", type_name, false /* Not a TypeVariableBinding */, location);
+            String canonical_name = cls.getCanonicalName(),
+                   package_name = getMainPackageName(cls),
+                   type_name = canonical_name.substring(package_name.length() == 0 ? 0 : package_name.length() + 1);
+            JavaParser.cactionTypeReference(package_name, type_name, false /* not a TypeBindingVariable */, location);
         }
 
         if (verboseLevel > 0)
@@ -1429,7 +1436,9 @@ System.out.println(") in class " + cls.getCanonicalName());
             assert(param_type_binding.arguments != null);
             for (int i = 0; i < param_type_binding.arguments.length; i++) {
                 assert(param_type_binding.arguments[i] != null);
-                preprocessClass(param_type_binding.arguments[i]);
+                if (! (param_type_binding.arguments[i] instanceof WildcardBinding)) {
+                    preprocessClass(param_type_binding.arguments[i]);
+                }
                 generateAndPushType(param_type_binding.arguments[i], location);
             }
 
@@ -1450,7 +1459,9 @@ System.out.println(") in class " + cls.getCanonicalName());
                 assert(param_type_binding != null);
                 assert(param_type_binding.arguments != null);
                 for (int i = 0; i < param_type_binding.arguments.length; i++) {
-                    preprocessClass(param_type_binding.arguments[i]);
+                    if (! (param_type_binding.arguments[i] instanceof WildcardBinding)) {
+                        preprocessClass(param_type_binding.arguments[i]);
+                    }
                     generateAndPushType(param_type_binding.arguments[i], location);
                 }
 

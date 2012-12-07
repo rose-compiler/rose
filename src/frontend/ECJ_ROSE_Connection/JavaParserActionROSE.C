@@ -177,6 +177,65 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBuildClassExtendsAndImplementsSupp
         cout.flush();
     }
 
+    //
+    // TODO: Need to do this right !!!
+    //
+    // As an SgJavaParameterized type is not associated with a unique declaration but with the declaration of its 
+    // base raw type, we need to create an attribute that contains the list of types that extends or must be 
+    // implemented by a given base type.
+    //
+    std::vector<SgNode *> extension_list;
+
+    //
+    // Process the interfaces for this type, if any.
+    //
+    for (int i = 0; i < number_of_interfaces; i++) {
+         SgType *type = astJavaComponentStack.popType();
+         SgClassType *interface_type = isSgClassType(type);
+         SgJavaParameterizedType *param_interface_type = isSgJavaParameterizedType(type);
+         ROSE_ASSERT(interface_type || param_interface_type);
+
+         extension_list.push_back(interface_type ? (SgNode *) interface_type : (SgNode *) param_interface_type);
+
+         if (SgProject::get_verbose() > 0) {
+             string name = (interface_type ? getFullyQualifiedTypeName(interface_type) : getFullyQualifiedTypeName(param_interface_type));
+             cout << "   Type " << name
+                  << endl;
+             cout.flush();
+         }
+
+         SgDeclarationStatement *declaration = (interface_type ? interface_type -> get_declaration() : param_interface_type -> get_declaration());
+         SgClassDeclaration *interface_declaration = isSgClassDeclaration(declaration -> get_definingDeclaration());
+         SgBaseClass *base = new SgBaseClass(interface_declaration);
+         base -> set_parent(class_definition);
+         class_definition -> prepend_inheritance(base);
+    }
+
+    //
+    // Add Super class to the current Class definition.
+    //
+    if (has_super_class) {
+        SgType *type = astJavaComponentStack.popType();
+        SgClassType *class_type = isSgClassType(type);
+        SgJavaParameterizedType *param_class_type = isSgJavaParameterizedType(type);
+        ROSE_ASSERT(class_type || param_class_type);
+
+        extension_list.push_back(class_type ? (SgNode *) class_type : (SgNode *) param_class_type);
+
+        if (SgProject::get_verbose() > 0) {
+             string name = (class_type ? getFullyQualifiedTypeName(class_type) : getFullyQualifiedTypeName(param_class_type));
+             cout << "   Type " << name
+                  << endl;
+             cout.flush();
+        }
+        SgDeclarationStatement *declaration = (class_type ? class_type -> get_declaration() : param_class_type -> get_declaration());
+        SgClassDeclaration *class_declaration = isSgClassDeclaration(declaration -> get_definingDeclaration());
+        ROSE_ASSERT(! class_declaration -> get_explicit_interface()); // must be a class
+        SgBaseClass *base = new SgBaseClass(class_declaration);
+        base -> set_parent(class_definition);
+        class_definition -> prepend_inheritance(base);
+    }
+
     if (number_of_type_parameters > 0) {
         SgTemplateParameterPtrList list;
         for (int i = 0; i < number_of_type_parameters; i++) {
@@ -191,46 +250,11 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBuildClassExtendsAndImplementsSupp
         class_definition -> get_declaration() -> setAttribute("type_parameters", new AstSgNodeAttribute(template_parameter_list));
     }
 
-    //
-    // Process the interfaces for this type, if any.
-    //
-    for (int i = 0; i < number_of_interfaces; i++) {
-         SgType *type = astJavaComponentStack.popType();
-         SgClassType *interface_type = isSgClassType(type);
-
-         if (SgProject::get_verbose() > 0) {
-             string name = getFullyQualifiedTypeName(interface_type);
-             cout << "   Type " << name
-                  << endl;
-             cout.flush();
-         }
-
-         SgDeclarationStatement *declaration = interface_type -> get_declaration();
-         SgClassDeclaration *interface_declaration = isSgClassDeclaration(declaration -> get_definingDeclaration());
-         SgBaseClass *base = new SgBaseClass(interface_declaration);
-         base -> set_parent(class_definition);
-         class_definition -> prepend_inheritance(base);
+    AstSgNodeListAttribute *attribute = new AstSgNodeListAttribute();
+    for (int i = extension_list.size() - 1;  i >= 0; i--) { // We need to reverse the content of the vector  to place the parameter types in the correct order.
+        attribute -> addNode(extension_list[i]);
     }
-
-    //
-    // Add Super class to the current Class definition.
-    //
-    if (has_super_class) {
-        SgType *type = astJavaComponentStack.popType();
-        SgClassType *class_type = isSgClassType(type);
-        if (SgProject::get_verbose() > 0) {
-            string name = getFullyQualifiedTypeName(class_type);
-             cout << "   Type " << name
-                  << endl;
-             cout.flush();
-        }
-        SgDeclarationStatement *declaration = class_type -> get_declaration();
-        SgClassDeclaration *class_declaration = isSgClassDeclaration(declaration -> get_definingDeclaration());
-        ROSE_ASSERT(! class_declaration -> get_explicit_interface()); // must be a class
-        SgBaseClass *base = new SgBaseClass(class_declaration);
-        base -> set_parent(class_definition);
-        class_definition -> prepend_inheritance(base);
-    }
+    class_definition -> setAttribute("extensions", attribute); // TODO: Since declarations are not mapped one-to-one with parameterized types, we need this attribute.
 
     if (SgProject::get_verbose() > 0)
         printf ("Exiting Java_JavaParser_cactionBuildClassExtendsAndImplementsSupport()\n");
@@ -1000,11 +1024,11 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionExplicitConstructorCallEnd(JNIEnv 
 
     if (is_super) {
         vector<SgBaseClass *> &inheritances = class_definition -> get_inheritances();
-        if (inheritances.size() > 0 && (! inheritances[0] -> get_base_class() -> get_explicit_interface())) {
-            class_definition = inheritances[0] -> get_base_class() -> get_definition(); // get the super class definition
+        if (inheritances.size() == 0 || inheritances[0] -> get_base_class() -> get_explicit_interface()) { // no super class specified?
+            class_definition = ::ObjectClassDefinition;
         }
         else {
-           class_definition = ::ObjectClassDefinition;
+            class_definition = inheritances[0] -> get_base_class() -> get_definition(); // get the super class definition
         }
     }
 
@@ -3258,13 +3282,20 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionParameterizedTypeReferenceEnd(JNIE
 
     SgClassType *raw_type = isSgClassType(lookupTypeByName(package_name, type_name, 0 /* Look for the base type not the array of num_dimensions > 0 */));
     ROSE_ASSERT(raw_type != NULL);
-    SgTemplateParameterPtrList typeList;
+    list<SgTemplateParameter *> type_list;
     for (int i = 0; i < num_type_arguments; i++) {
         SgType *typeArgument = astJavaComponentStack.popType();
         SgTemplateParameter *templateParameter = new SgTemplateParameter(typeArgument, NULL);
-        typeList.push_back(templateParameter);
+        type_list.push_front(templateParameter); // place the arguments in the list in reverse to restore their proper order
     }
-    SgJavaParameterizedType *parameterizedType = getUniqueParameterizedType(raw_type, typeList);
+
+    SgTemplateParameterPtrList ordered_type_list;
+    while(! type_list.empty()) {
+        ordered_type_list.push_back(type_list.front());
+        type_list.pop_front();
+    }
+
+    SgJavaParameterizedType *parameterizedType = getUniqueParameterizedType(raw_type, ordered_type_list);
     SgType *result_type = (num_dimensions > 0 ? (SgType *) getUniquePointerType(parameterizedType, num_dimensions) : (SgType *) parameterizedType);
 
     astJavaComponentStack.push(result_type);
@@ -3418,7 +3449,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionQualifiedAllocationExpressionEnd(J
     astJavaComponentStack.push(newExpression);
 }
 
-
+/*
 JNIEXPORT void JNICALL Java_JavaParser_cactionQualifiedSuperReference(JNIEnv *env, jclass, jobject jToken) {
     // Build a member function call...
     if (SgProject::get_verbose() > 0)
@@ -3454,9 +3485,9 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionQualifiedSuperReferenceEnd(JNIEnv 
 
     astJavaComponentStack.push(superExp);
 }
+*/
 
-
-JNIEXPORT void JNICALL Java_JavaParser_cactionQualifiedSuperReferenceClassScope(JNIEnv *env, jclass, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionQualifiedSuperReference(JNIEnv *env, jclass, jobject jToken) {
     // Build a member function call...
     if (SgProject::get_verbose() > 0)
         printf ("Build a Qualified Super Reference\n");
@@ -3465,29 +3496,31 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionQualifiedSuperReferenceClassScope(
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionQualifiedSuperReferenceClassScopeEnd(JNIEnv *env, jclass, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionQualifiedSuperReferenceEnd(JNIEnv *env, jclass, jobject jToken) {
     SgClassType *type = isSgClassType(astJavaComponentStack.popType());
     ROSE_ASSERT(type);
     SgClassDeclaration *class_declaration = isSgClassDeclaration(type -> getAssociatedDeclaration() -> get_definingDeclaration());
     ROSE_ASSERT(class_declaration);
-    SgClassDefinition *classDefinition = getCurrentTypeDefinition();
-    ROSE_ASSERT(classDefinition -> get_declaration() && (! classDefinition -> attributeExists("namespace")));
+    SgClassDefinition *class_definition = getCurrentTypeDefinition();
+    ROSE_ASSERT(class_definition -> get_declaration() && (! class_definition -> attributeExists("namespace")));
 
-    vector<SgBaseClass *> &inheritances = classDefinition -> get_inheritances();
-    ROSE_ASSERT(inheritances.size() > 0);
-    SgClassDeclaration *super_declaration = inheritances[0] -> get_base_class();
-    ROSE_ASSERT(! super_declaration -> get_explicit_interface()); // this class must have a super class
+    vector<SgBaseClass *> &inheritances = class_definition -> get_inheritances();
+    if (inheritances.size() == 0 || inheritances[0] -> get_base_class() -> get_explicit_interface()) { // no super class specified?
+        class_definition = ::ObjectClassDefinition; // ... then Object is the super class.
+    }
+    else {
+        SgClassDeclaration *super_declaration = inheritances[0] -> get_base_class();
+        ROSE_ASSERT(super_declaration && (! super_declaration -> get_explicit_interface())); // this class must have a super class
+        class_definition = super_declaration -> get_definition(); // get the super class definition
+    }
 
-    classDefinition = super_declaration -> get_definition(); // get the super class definition
+    SgClassSymbol *class_symbol = isSgClassSymbol(class_definition -> get_declaration() -> search_for_symbol_from_symbol_table());
+    ROSE_ASSERT(class_symbol != NULL);
 
-    // SgClassSymbol *classSymbol = classDefinition -> get_declaration() -> get_symbol();
-    SgClassSymbol *classSymbol = isSgClassSymbol(classDefinition -> get_declaration() -> search_for_symbol_from_symbol_table());
-    ROSE_ASSERT(classSymbol != NULL);
-
-    SgSuperExp *superExp = SageBuilder::buildSuperExp(classSymbol);
+    SgSuperExp *superExp = SageBuilder::buildSuperExp(class_symbol);
     ROSE_ASSERT(superExp != NULL);
 
-    superExp -> setAttribute("prefix", new AstRegExAttribute(getFullyQualifiedTypeName(super_declaration -> get_type()))); // TODO: Figure out how to extend the Sage representation to process this feature better.
+    superExp -> setAttribute("prefix", new AstRegExAttribute(getFullyQualifiedTypeName(class_definition -> get_declaration() -> get_type()))); // TODO: Figure out how to extend the Sage representation to process this feature better.
 
     astJavaComponentStack.push(superExp);
 }
@@ -3507,12 +3540,12 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionQualifiedThisReferenceEnd(JNIEnv *
     ROSE_ASSERT(type);
     SgClassDeclaration *class_declaration = isSgClassDeclaration(type -> getAssociatedDeclaration() -> get_definingDeclaration());
     ROSE_ASSERT(class_declaration);
-    SgClassDefinition *classDefinition = class_declaration -> get_definition();
-    ROSE_ASSERT(classDefinition != NULL && (! classDefinition -> attributeExists("namespace")));
-    SgClassSymbol *classSymbol = isSgClassSymbol(classDefinition -> get_declaration() -> search_for_symbol_from_symbol_table());
-    ROSE_ASSERT(classSymbol != NULL);
+    SgClassDefinition *class_definition = class_declaration -> get_definition();
+    ROSE_ASSERT(class_definition != NULL && (! class_definition -> attributeExists("namespace")));
+    SgClassSymbol *class_symbol = isSgClassSymbol(class_definition -> get_declaration() -> search_for_symbol_from_symbol_table());
+    ROSE_ASSERT(class_symbol != NULL);
 
-    SgThisExp *thisExp = SageBuilder::buildThisExp(classSymbol);
+    SgThisExp *thisExp = SageBuilder::buildThisExp(class_symbol);
     ROSE_ASSERT(thisExp != NULL);
 
     thisExp -> setAttribute("prefix", new AstRegExAttribute(getFullyQualifiedTypeName(type))); // TODO: Figure out how to extend the Sage representation to process this feature better.
@@ -3521,6 +3554,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionQualifiedThisReferenceEnd(JNIEnv *
 }
 
 
+// TODO: Remove this !!!
+/*
 JNIEXPORT void JNICALL Java_JavaParser_cactionQualifiedThisReferenceClassScope(JNIEnv *env, jclass, jobject jToken) {
     // Build a member function call...
     if (SgProject::get_verbose() > 0)
@@ -3547,11 +3582,13 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionQualifiedThisReferenceClassScopeEn
 
     astJavaComponentStack.push(thisExp);
 }
+*/
 
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionReturnStatement(JNIEnv *env, jclass, jobject jToken) {
     // Nothing to do !!!
 }
+
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionReturnStatementEnd(JNIEnv *env, jclass, jboolean hasExpression, jobject jToken) {
     if (SgProject::get_verbose() > 2)
@@ -3614,22 +3651,23 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionSingleNameReference(JNIEnv *env, j
 
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionSuperReference(JNIEnv *env, jclass, jobject jToken) {
-    SgClassDefinition *classDefinition = getCurrentTypeDefinition();
-    ROSE_ASSERT(classDefinition -> get_declaration() && (! classDefinition -> attributeExists("namespace")));
+    SgClassDefinition *class_definition = getCurrentTypeDefinition();
+    ROSE_ASSERT(class_definition -> get_declaration() && (! class_definition -> attributeExists("namespace")));
 
-    vector<SgBaseClass *> &inheritances = classDefinition -> get_inheritances();
-    ROSE_ASSERT(inheritances.size() > 0);
-    SgClassDeclaration *super_declaration = inheritances[0] -> get_base_class();
-    ROSE_ASSERT(! super_declaration -> get_explicit_interface()); // this class must have a super class
-    string className = super_declaration -> get_name();
+    vector<SgBaseClass *> &inheritances = class_definition -> get_inheritances();
+    if (inheritances.size() == 0 || inheritances[0] -> get_base_class() -> get_explicit_interface()) { // no super class specified?
+        class_definition = ::ObjectClassDefinition; // ... then Object is the super class.
+    }
+    else {
+        SgClassDeclaration *super_declaration = inheritances[0] -> get_base_class();
+        ROSE_ASSERT(super_declaration && (! super_declaration -> get_explicit_interface())); // this class must have a super class
+        class_definition = super_declaration -> get_definition(); // get the super class definition
+    }
 
-    classDefinition = super_declaration -> get_definition(); // get the super class definition
+    SgClassSymbol *class_symbol = isSgClassSymbol(class_definition -> get_declaration() -> search_for_symbol_from_symbol_table());
+    ROSE_ASSERT(class_symbol != NULL);
 
-    // SgClassSymbol *classSymbol = classDefinition -> get_declaration() -> get_symbol();
-    SgClassSymbol *classSymbol = isSgClassSymbol(classDefinition -> get_declaration() -> search_for_symbol_from_symbol_table());
-    ROSE_ASSERT(classSymbol != NULL);
-
-    SgSuperExp *superExp = SageBuilder::buildSuperExp(classSymbol);
+    SgSuperExp *superExp = SageBuilder::buildSuperExp(class_symbol);
     ROSE_ASSERT(superExp != NULL);
 
     astJavaComponentStack.push(superExp);
@@ -3730,24 +3768,24 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionSynchronizedStatementEnd(JNIEnv *e
 
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionThisReference(JNIEnv *env, jclass, jobject jToken) {
-    SgClassDefinition *classDefinition = getCurrentTypeDefinition();
-    ROSE_ASSERT(! classDefinition -> attributeExists("namespace"));
+    SgClassDefinition *class_definition = getCurrentTypeDefinition();
+    ROSE_ASSERT(! class_definition -> attributeExists("namespace"));
 
-    string className = classDefinition -> get_declaration() -> get_name();
+    string className = class_definition -> get_declaration() -> get_name();
     // printf ("Current class for ThisReference is: %s \n", className.c_str());
 
-    // SgClassSymbol *classSymbol = classDefinition -> get_declaration() -> get_symbol();
-    SgClassSymbol *classSymbol = isSgClassSymbol(classDefinition -> get_declaration() -> search_for_symbol_from_symbol_table());
-    ROSE_ASSERT(classSymbol != NULL);
+    SgClassSymbol *class_symbol = isSgClassSymbol(class_definition -> get_declaration() -> search_for_symbol_from_symbol_table());
+    ROSE_ASSERT(class_symbol != NULL);
 
-    SgThisExp *thisExp = SageBuilder::buildThisExp(classSymbol);
+    SgThisExp *thisExp = SageBuilder::buildThisExp(class_symbol);
     ROSE_ASSERT(thisExp != NULL);
 
     astJavaComponentStack.push(thisExp);
 }
 
 
-// TODO: Same as function above... Merge it !
+// TODO: Same as function above... Remove it !
+/*
 JNIEXPORT void JNICALL Java_JavaParser_cactionThisReferenceClassScope(JNIEnv *env, jclass, jobject jToken) {
     SgClassDefinition *classDefinition = getCurrentTypeDefinition();
     ROSE_ASSERT(! classDefinition -> attributeExists("namespace"));
@@ -3764,6 +3802,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionThisReferenceClassScope(JNIEnv *en
 
     astJavaComponentStack.push(thisExp);
 }
+*/
 
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionThrowStatement(JNIEnv *env, jclass, jobject jToken) {
@@ -3982,7 +4021,7 @@ cout.flush();
     for (int i = parameter_type_list.size() - 1;  i >= 0; i--) { // We need to reverse the content of the vector  to place the parameter types in the correct order.
         attribute -> addNode(parameter_type_list[i]);
     }
-    parameter_declaration -> setAttribute("parameter_type_bounds", attribute); // TODO: Since declarations are not mapped one-to-one with parameterized types, we need this attribute.
+    class_definition -> setAttribute("parameter_type_bounds", attribute); // TODO: Since declarations are not mapped one-to-one with parameterized types, we need this attribute.
 
 // TODO: Remove this !!!
 /*
