@@ -679,8 +679,12 @@ Outliner::insert (SgFunctionDeclaration* func,
 
      SgFunctionSymbol* sourceFileFunctionPrototypeSymbol = isSgFunctionSymbol(src_global->lookup_symbol(func->get_name()));
      ROSE_ASSERT(sourceFileFunctionPrototypeSymbol != NULL);
-     ROSE_ASSERT(sourceFileFunctionPrototypeSymbol->get_declaration() == sourceFileFunctionPrototype);
-     ROSE_ASSERT(sourceFileFunctionPrototype->get_firstNondefiningDeclaration() == sourceFileFunctionPrototype);
+     // Liao 12/6/2012. The assumption now is changed. A hidden nondefining declaration is always created when a defining declaration is created.
+     // So the hidden one is the first_nondefining decl associated with the function symbol.
+     // The newly transformation generated function prototype is now actually the 2nd prototype not directly associated with the func symbol
+     ROSE_ASSERT(sourceFileFunctionPrototypeSymbol->get_declaration() == sourceFileFunctionPrototype->get_firstNondefiningDeclaration());
+     //ROSE_ASSERT(sourceFileFunctionPrototype->get_firstNondefiningDeclaration() == sourceFileFunctionPrototype);
+     ROSE_ASSERT(sourceFileFunctionPrototype->get_firstNondefiningDeclaration() != sourceFileFunctionPrototype);
      // Liao 12/6/2010, this assertion is not right. SageInterface function is smart enough 
      // to automatically set the defining declaration for the prototype
      // DQ (2/27/2009): Assert this as a test!

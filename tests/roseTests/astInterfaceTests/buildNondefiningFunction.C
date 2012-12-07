@@ -1,8 +1,8 @@
 // Liao, 1/15/2008
-// Demnostrate how to build a function using the interface close to C language
+// Demonstrate how to build a function using the interface close to C language
 //
 // SageBuilder contains the AST nodes/subtrees builders
-// SageInterface contains any other AST utitily tools 
+// SageInterface contains any other AST utility tools 
 //-------------------------------------------------------------------
 #include "rose.h"
 

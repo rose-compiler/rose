@@ -12,5 +12,5 @@ void foo()
   {
     sum[i] =i*2+j;
   }
-  
+
 }
