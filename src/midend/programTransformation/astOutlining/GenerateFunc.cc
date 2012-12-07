@@ -1229,11 +1229,20 @@ Outliner::generateFunction ( SgBasicBlock* s,
   //   replace variables to access to parameters, directly or indirectly
   variableHandling(syms, pdSyms, psyms, readOnlyVars, liveOuts, struct_decl, func);
   ROSE_ASSERT (func != NULL);
-  
-//     std::cout << func->get_type()->unparseToString() << std::endl;
-//     std::cout << func->get_parameterList()->get_args().size() << std::endl;
-     func->set_type(buildFunctionType(func->get_type()->get_return_type(), buildFunctionParameterTypeList(func->get_parameterList())));
-//     std::cout << func->get_type()->unparseToString() << std::endl;
+
+  //     std::cout << func->get_type()->unparseToString() << std::endl;
+  //     std::cout << func->get_parameterList()->get_args().size() << std::endl;
+  //     Liao 12/6/2012. It is essential to rebuild function type after the parameter list is finalized.
+  //     The original function type was build using empty parameter list.
+  SgType* stale_func_type = func->get_type();
+  func->set_type(buildFunctionType(func->get_type()->get_return_type(), buildFunctionParameterTypeList(func->get_parameterList())));
+//  ROSE_ASSERT (stale_func_type != func->get_type()); // it is possible the updated parameter list is still empty, equal to the stale one
+  //     We now have mandatory non-defining declaration for every defining decl. We have to update its type also.
+  SgFunctionDeclaration* non_def_func = isSgFunctionDeclaration(func->get_firstNondefiningDeclaration ()) ;
+  ROSE_ASSERT (non_def_func != NULL);
+  ROSE_ASSERT (stale_func_type == non_def_func->get_type());
+  non_def_func->set_type(func->get_type());
+  //     std::cout << func->get_type()->unparseToString() << std::endl;
 
   // Retest this...
   ROSE_ASSERT(func->get_definition()->get_body()->get_parent() == func->get_definition());

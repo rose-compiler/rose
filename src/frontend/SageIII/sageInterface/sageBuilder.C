@@ -1251,9 +1251,9 @@ SageBuilder::buildVariableDeclaration(const char* name, SgType* type, SgInitiali
 
 //!Build a typedef declaration, such as: typedef int myint; 
 SgTypedefDeclaration* 
-SageBuilder::buildTypedefDeclaration(const std::string& name, SgType* base_type, SgScopeStatement* scope /*= NULL*/)
+SageBuilder::buildTypedefDeclaration(const std::string& name, SgType* base_type, SgScopeStatement* scope /*= NULL*/, bool has_defining_base/*= false*/)
 {
-  SgTypedefDeclaration* type_decl = buildTypedefDeclaration_nfi(name, base_type, scope);
+  SgTypedefDeclaration* type_decl = buildTypedefDeclaration_nfi(name, base_type, scope, has_defining_base);
   setOneSourcePositionForTransformation(type_decl);
 
 // DQ (1/2/2010): Set the defining declaration to itself.
@@ -1265,7 +1265,7 @@ SageBuilder::buildTypedefDeclaration(const std::string& name, SgType* base_type,
 //!Build a typedef declaration, such as: typedef int myint; 
 // The side effects include: creating SgTypedefType, SgTypedefSymbol, and add SgTypedefType to the base type
 SgTypedefDeclaration* 
-SageBuilder::buildTypedefDeclaration_nfi(const std::string& name, SgType* base_type,  SgScopeStatement* scope /*= NULL*/)
+SageBuilder::buildTypedefDeclaration_nfi(const std::string& name, SgType* base_type,  SgScopeStatement* scope /*= NULL*/, bool has_defining_base/*=false*/)
    {
      ROSE_ASSERT (base_type != NULL);
 #if 0
@@ -1369,6 +1369,29 @@ SageBuilder::buildTypedefDeclaration_nfi(const std::string& name, SgType* base_t
 
   // Set the source code position information.
      setOneSourcePositionNull(type_decl);
+
+  // Liao 11/29/2012, for typedef struct Frame {int x;} st_frame; We have to set parent for the struct.
+  // AstPostProcessing() has resetParentPointers(). But it is kind of too late.
+  if (SgClassDeclaration* base_class = isSgClassDeclaration(base_decl))
+  {
+    SgClassDeclaration* def_class = isSgClassDeclaration(base_class->get_definingDeclaration());
+    SgClassDeclaration* nondef_class = isSgClassDeclaration(base_class->get_firstNondefiningDeclaration());
+    // Dan and Liao, 12/3/2012, handle test2003_08.C nested typedef
+    if (has_defining_base)  
+    {
+      if (def_class != NULL)
+        if (def_class->get_parent() == NULL)
+          def_class->set_parent(type_decl);
+    }
+    else
+    {
+    if (nondef_class != NULL)
+      if (nondef_class->get_parent() == NULL)
+      {
+        nondef_class->set_parent(type_decl);
+      }
+    }
+  }
 
   // Symbol and SgTypedefType should be associated with the first nondefining declaration
   // Create SgTypedefType
@@ -2863,52 +2886,45 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
 SgFunctionDeclaration *
 SageBuilder::buildNondefiningFunctionDeclaration (const SgFunctionDeclaration* funcdecl, SgScopeStatement* scope/*=NULL*/, SgExprListExp* decoratorList)
 {
-#if 1
-// DQ (7/26/2012): I am at least temporarily removing this function from the API.
-// Later if we need it, we can update it to reflect that passing for the new 
-// SgTemplateArgumentPtrList function parameter (part of the new API design).
-
-   SgFunctionDeclaration* returnFunction = NULL;
-   printf ("Error: buildNondefiningFunctionDeclaration(): This function should not be used! \n");
-   ROSE_ASSERT(false);
-
-#else
-
   ROSE_ASSERT(funcdecl!=NULL);
   SgName name=funcdecl->get_name(); 
   SgFunctionType * funcType = funcdecl->get_type();
   SgType* return_type = funcType->get_return_type();
   SgFunctionParameterList* paralist = deepCopy<SgFunctionParameterList>(funcdecl->get_parameterList());
-
-// DQ (2/19/2009): Fixed to handle extern "C" state in input "funcdecl"
-// return buildNondefiningFunctionDeclaration(name,return_type,paralist,scope);
+ 
+ // make sure the function has consistent function type based on its return type and parameter list
+ ROSE_ASSERT (funcType == buildFunctionType(funcdecl->get_type()->get_return_type(), buildFunctionParameterTypeList(funcdecl->get_parameterList())));
+#if 0
+  // DQ (2/19/2009): Fixed to handle extern "C" state in input "funcdecl"
+  // return buildNondefiningFunctionDeclaration(name,return_type,paralist,scope);
   SgFunctionDeclaration* returnFunction = buildNondefiningFunctionDeclaration(name,return_type,paralist,scope,decoratorList);
 
   returnFunction->set_linkage(funcdecl->get_linkage());
-
   if (funcdecl->get_declarationModifier().get_storageModifier().isExtern() == true)
-     {
-       returnFunction->get_declarationModifier().get_storageModifier().setExtern();
-     }
-
-// DQ (2/22/2009): I think this can be null or valid
-// ROSE_ASSERT(returnFunction->get_definingDeclaration() == NULL);
-  ROSE_ASSERT(returnFunction->get_firstNondefiningDeclaration() != NULL);
-
-  // Make sure that internal references are to the same file (else the symbol table information will not be consistent).
-     if (scope != NULL)
-        {
-       // ROSE_ASSERT(returnFunction->get_parent() != NULL);
-          ROSE_ASSERT(returnFunction->get_firstNondefiningDeclaration() != NULL);
-          ROSE_ASSERT(TransformationSupport::getSourceFile(returnFunction) == TransformationSupport::getSourceFile(returnFunction->get_firstNondefiningDeclaration()));
-          ROSE_ASSERT(TransformationSupport::getSourceFile(returnFunction->get_scope()) == TransformationSupport::getSourceFile(returnFunction->get_firstNondefiningDeclaration()));
-        }
+  {
+    returnFunction->get_declarationModifier().get_storageModifier().setExtern();
+  }
 #endif
+  // buildNondefiningFunctionDeclaration() will check if a same function is created before by looking up function symbols.
+  SgFunctionDeclaration* returnFunction  = buildNondefiningFunctionDeclaration (name, return_type, paralist, scope, decoratorList, false, NULL);
+
+  ROSE_ASSERT (returnFunction->get_linkage() == funcdecl->get_linkage());
+  ROSE_ASSERT (returnFunction->get_declarationModifier().get_storageModifier().isExtern() ==
+               funcdecl->get_declarationModifier().get_storageModifier().isExtern());
+
+  ROSE_ASSERT(returnFunction->get_firstNondefiningDeclaration() != NULL);
+  // Make sure that internal references are to the same file (else the symbol table information will not be consistent).
+  if (scope != NULL)
+  {
+    // ROSE_ASSERT(returnFunction->get_parent() != NULL);
+    ROSE_ASSERT(returnFunction->get_firstNondefiningDeclaration() != NULL);
+    ROSE_ASSERT(TransformationSupport::getSourceFile(returnFunction) == TransformationSupport::getSourceFile(returnFunction->get_firstNondefiningDeclaration()));
+    ROSE_ASSERT(TransformationSupport::getSourceFile(returnFunction->get_scope()) == TransformationSupport::getSourceFile(returnFunction->get_firstNondefiningDeclaration()));
+  }
 
   return returnFunction;
 }
 
-// SgFunctionDeclaration* SageBuilder::buildNondefiningFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, SgScopeStatement* scope, SgExprListExp* decoratorList, bool buildTemplateInstantiation)
 SgFunctionDeclaration*
 SageBuilder::buildNondefiningFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, SgScopeStatement* scope, SgExprListExp* decoratorList, bool buildTemplateInstantiation, SgTemplateArgumentPtrList* templateArgumentsList)
    {
@@ -3016,12 +3032,6 @@ SageBuilder::buildDefiningTemplateMemberFunctionDeclaration (const SgName & name
    {
   // DQ (12/1/2011): Adding support for template declarations in the AST.
 
-  // SgTemplateMemberFunctionDeclaration* result = buildNondefiningFunctionDeclaration_T <SgTemplateFunctionDeclaration> (name,return_type,paralist, /* isMemberFunction = */ false, scope, decoratorList);
-  // SgTemplateMemberFunctionDeclaration* result = NULL;
-
-  // DQ (12/4/2011): Build the SgTemplateMemberFunctionDeclaration using the buildNondefiningFunctionDeclaration_T template function and the specification (via input parameter) that this is a member function.
-  // SgTemplateMemberFunctionDeclaration* result = buildNondefiningFunctionDeclaration_T <SgTemplateMemberFunctionDeclaration> (name,return_type,paralist, /* isMemberFunction = */ true, scope, decoratorList);
-  // SgTemplateMemberFunctionDeclaration* result = buildDefiningFunctionDeclaration_T <SgTemplateMemberFunctionDeclaration> (name,return_type,paralist, /* isMemberFunction = */ true, scope, decoratorList, functionConstVolatileFlags, first_nondefining_declaration);
       SgTemplateMemberFunctionDeclaration* result = buildDefiningFunctionDeclaration_T <SgTemplateMemberFunctionDeclaration> (name,return_type,paralist, /* isMemberFunction = */ true, scope, decoratorList, functionConstVolatileFlags, first_nondefining_declaration, NULL);
      ROSE_ASSERT(result != NULL);
 
@@ -3094,13 +3104,11 @@ SageBuilder::buildNondefiningMemberFunctionDeclaration (const SgName & name, SgT
      if (buildTemplateInstantiation == true)
         {
        // This is how we build an instantiation of a template (SgTemplateInstantiationMemberFunctionDecl).
-       // result = buildNondefiningFunctionDeclaration_T <SgTemplateInstantiationMemberFunctionDecl> (name,return_type,paralist, /* isMemberFunction = */ true,scope,decoratorList,functionConstVolatileFlags);
           result = buildNondefiningFunctionDeclaration_T <SgTemplateInstantiationMemberFunctionDecl> (name,return_type,paralist, /* isMemberFunction = */ true,scope,decoratorList,functionConstVolatileFlags,templateArgumentsList);
         }
        else
         {
        // This is a non-template instatiation (normal member function).
-       // result = buildNondefiningFunctionDeclaration_T <SgMemberFunctionDeclaration> (name,return_type,paralist, /* isMemberFunction = */ true,scope,decoratorList,functionConstVolatileFlags);
           result = buildNondefiningFunctionDeclaration_T <SgMemberFunctionDeclaration> (name,return_type,paralist, /* isMemberFunction = */ true,scope,decoratorList,functionConstVolatileFlags,NULL);
         }
      ROSE_ASSERT(result != NULL);
@@ -3141,7 +3149,6 @@ SageBuilder::buildNondefiningTemplateMemberFunctionDeclaration (const SgName & n
    {
   // This function only builds template member function declarations.
 
-  // SgTemplateMemberFunctionDeclaration * result = buildNondefiningFunctionDeclaration_T <SgTemplateMemberFunctionDeclaration> (name,return_type,paralist, /* isMemberFunction = */ true,scope,decoratorList,functionConstVolatileFlags);
      SgTemplateMemberFunctionDeclaration * result = buildNondefiningFunctionDeclaration_T <SgTemplateMemberFunctionDeclaration> (name,return_type,paralist, /* isMemberFunction = */ true,scope,decoratorList,functionConstVolatileFlags,NULL);
   // set definingdecl for SgCtorInitializerList
      ROSE_ASSERT(result != NULL);
